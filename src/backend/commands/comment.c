@@ -7,7 +7,7 @@
  * Copyright (c) 1999, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.26 2001/01/23 04:32:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.27 2001/03/22 03:59:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ static void CommentAggregate(char *aggregate, List *arguments, char *comment);
 static void CommentProc(char *function, List *arguments, char *comment);
 static void CommentOperator(char *opname, List *arguments, char *comment);
 static void CommentTrigger(char *trigger, char *relation, char *comments);
-static void	CreateComments(Oid oid, char *comment);
+static void CreateComments(Oid oid, char *comment);
 
 /*------------------------------------------------------------------
  * CommentObject --

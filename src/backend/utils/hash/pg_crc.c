@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/pg_crc.c,v 1.1 2001/03/13 01:17:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/pg_crc.c,v 1.2 2001/03/22 03:59:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,7 +281,7 @@ const uint32 crc_table1[256] = {
 	0xD80C07CD, 0x9AFCE626
 };
 
-#else /* int64 works */
+#else							/* int64 works */
 
 const uint64 crc_table[256] = {
 	0x0000000000000000, 0x42F0E1EBA9EA3693,
@@ -414,4 +414,4 @@ const uint64 crc_table[256] = {
 	0xD80C07CD676F8394, 0x9AFCE626CE85B507
 };
 
-#endif /* INT64_IS_BUSTED */
+#endif	 /* INT64_IS_BUSTED */

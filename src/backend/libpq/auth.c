@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.51 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.52 2001/03/22 03:59:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ static int	map_old_to_new(Port *port, UserAuth old, int status);
 static void auth_failed(Port *port);
 
 
-char * pg_krb_server_keyfile;
+char	   *pg_krb_server_keyfile;
 
 
 #ifdef KRB4
@@ -177,7 +177,7 @@ pg_an_to_ln(char *aname)
  * Various krb5 state which is not connection specfic, and a flag to
  * indicate whether we have initialised it yet.
  */
-static int pg_krb5_initialised;
+static int	pg_krb5_initialised;
 static krb5_context pg_krb5_context;
 static krb5_keytab pg_krb5_keytab;
 static krb5_principal pg_krb5_server;
@@ -192,7 +192,8 @@ pg_krb5_init(void)
 		return STATUS_OK;
 
 	retval = krb5_init_context(&pg_krb5_context);
-	if (retval) {
+	if (retval)
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_init_context returned"
 				 " Kerberos error %d\n", retval);
@@ -201,23 +202,25 @@ pg_krb5_init(void)
 	}
 
 	retval = krb5_kt_resolve(pg_krb5_context, pg_krb_server_keyfile, &pg_krb5_keytab);
-	if (retval) {
+	if (retval)
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_kt_resolve returned"
 				 " Kerberos error %d\n", retval);
-	    com_err("postgres", retval, "while resolving keytab file %s",
+		com_err("postgres", retval, "while resolving keytab file %s",
 				pg_krb_server_keyfile);
 		krb5_free_context(pg_krb5_context);
 		return STATUS_ERROR;
 	}
 
-    retval = krb5_sname_to_principal(pg_krb5_context, NULL, PG_KRB_SRVNAM, 
+	retval = krb5_sname_to_principal(pg_krb5_context, NULL, PG_KRB_SRVNAM,
 									 KRB5_NT_SRV_HST, &pg_krb5_server);
-	if (retval) {
+	if (retval)
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_sname_to_principal returned"
 				 " Kerberos error %d\n", retval);
-	    com_err("postgres", retval, 
+		com_err("postgres", retval,
 				"while getting server principal for service %s",
 				pg_krb_server_keyfile);
 		krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
@@ -245,25 +248,26 @@ static int
 pg_krb5_recvauth(Port *port)
 {
 	krb5_error_code retval;
-	int ret;
+	int			ret;
 	krb5_auth_context auth_context = NULL;
 	krb5_ticket *ticket;
-    char *kusername;
+	char	   *kusername;
 
 	ret = pg_krb5_init();
 	if (ret != STATUS_OK)
 		return ret;
 
 	retval = krb5_recvauth(pg_krb5_context, &auth_context,
-						   (krb5_pointer)&port->sock, PG_KRB_SRVNAM,
+						   (krb5_pointer) & port->sock, PG_KRB_SRVNAM,
 						   pg_krb5_server, 0, pg_krb5_keytab, &ticket);
-	if (retval) {
+	if (retval)
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_recvauth: krb5_recvauth returned"
 				 " Kerberos error %d\n", retval);
-	    com_err("postgres", retval, "from krb5_recvauth");
+		com_err("postgres", retval, "from krb5_recvauth");
 		return STATUS_ERROR;
-	}						   
+	}
 
 	/*
 	 * The "client" structure comes out of the ticket and is therefore
@@ -272,13 +276,14 @@ pg_krb5_recvauth(Port *port)
 	 *
 	 * I have no idea why this is considered necessary.
 	 */
-    retval = krb5_unparse_name(pg_krb5_context, 
+	retval = krb5_unparse_name(pg_krb5_context,
 							   ticket->enc_part2->client, &kusername);
-	if (retval) {
+	if (retval)
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_recvauth: krb5_unparse_name returned"
 				 " Kerberos error %d\n", retval);
-	    com_err("postgres", retval, "while unparsing client name");
+		com_err("postgres", retval, "while unparsing client name");
 		krb5_free_ticket(pg_krb5_context, ticket);
 		krb5_auth_con_free(pg_krb5_context, auth_context);
 		return STATUS_ERROR;
@@ -288,13 +293,13 @@ pg_krb5_recvauth(Port *port)
 	if (strncmp(port->user, kusername, SM_USER))
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb5_recvauth: user name \"%s\" != krb5 name \"%s\"\n", 
+			  "pg_krb5_recvauth: user name \"%s\" != krb5 name \"%s\"\n",
 				 port->user, kusername);
 		ret = STATUS_ERROR;
 	}
 	else
 		ret = STATUS_OK;
-	
+
 	krb5_free_ticket(pg_krb5_context, ticket);
 	krb5_auth_con_free(pg_krb5_context, auth_context);
 	free(kusername);

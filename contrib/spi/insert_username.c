@@ -10,7 +10,7 @@
 #include "commands/trigger.h"	/* -"- and triggers */
 #include "miscadmin.h"			/* for GetUserName() */
 
-extern Datum	insert_username(PG_FUNCTION_ARGS);
+extern Datum insert_username(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(insert_username);
 
@@ -65,7 +65,7 @@ insert_username(PG_FUNCTION_ARGS)
 
 	/* create fields containing name */
 	newval = DirectFunctionCall1(textin,
-								 CStringGetDatum(GetUserName(GetUserId())));
+							  CStringGetDatum(GetUserName(GetUserId())));
 
 	/* construct new tuple */
 	rettuple = SPI_modifytuple(rel, rettuple, 1, &attnum, &newval, NULL);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.42 2001/01/24 19:43:26 momjian Exp $
+ * $Id: clauses.h,v 1.43 2001/03/22 04:00:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,8 @@
  *	Flag bits returned by get_relattval().
  *	These are used in selectivity-estimation routines, too.
  */
-#define	SEL_CONSTANT 	1		/* operator's non-var arg is a constant */
-#define	SEL_RIGHT		2		/* operator's non-var arg is on the right */
+#define SEL_CONSTANT	1		/* operator's non-var arg is a constant */
+#define SEL_RIGHT		2		/* operator's non-var arg is on the right */
 
 
 extern Expr *make_clause(int type, Node *oper, List *args);
@@ -71,13 +71,13 @@ extern void CommuteClause(Expr *clause);
 extern Node *eval_const_expressions(Node *node);
 
 extern bool expression_tree_walker(Node *node, bool (*walker) (),
-								   void *context);
+											   void *context);
 extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (),
-									 void *context);
+												 void *context);
 extern bool query_tree_walker(Query *query, bool (*walker) (),
-							  void *context, bool visitQueryRTEs);
+									 void *context, bool visitQueryRTEs);
 extern void query_tree_mutator(Query *query, Node *(*mutator) (),
-							   void *context, bool visitQueryRTEs);
+									 void *context, bool visitQueryRTEs);
 
 #define is_subplan(clause)	((clause) != NULL && \
 							 IsA(clause, Expr) && \

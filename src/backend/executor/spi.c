@@ -3,17 +3,17 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.52 2001/02/19 19:49:52 tgl Exp $
+ * $Id: spi.c,v 1.53 2001/03/22 03:59:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "executor/spi_priv.h"
 #include "access/printtup.h"
 
-uint32 SPI_processed = 0;
-Oid SPI_lastoid = InvalidOid;
+uint32		SPI_processed = 0;
+Oid			SPI_lastoid = InvalidOid;
 SPITupleTable *SPI_tuptable = NULL;
-int SPI_result;
+int			SPI_result;
 
 static _SPI_connection *_SPI_stack = NULL;
 static _SPI_connection *_SPI_current = NULL;
@@ -46,6 +46,7 @@ extern void ShowUsage(void);
 int
 SPI_connect()
 {
+
 	/*
 	 * When procedure called by Executor _SPI_curid expected to be equal
 	 * to _SPI_connected
@@ -80,14 +81,14 @@ SPI_connect()
 	/* Create memory contexts for this procedure */
 	_SPI_current->procCxt = AllocSetContextCreate(TopTransactionContext,
 												  "SPI Proc",
-												  ALLOCSET_DEFAULT_MINSIZE,
-												  ALLOCSET_DEFAULT_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
+												ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
 	_SPI_current->execCxt = AllocSetContextCreate(TopTransactionContext,
 												  "SPI Exec",
-												  ALLOCSET_DEFAULT_MINSIZE,
-												  ALLOCSET_DEFAULT_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
+												ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
 	/* ... and switch to procedure's context */
 	_SPI_current->savedcxt = MemoryContextSwitchTo(_SPI_current->procCxt);
 
@@ -146,6 +147,7 @@ SPI_finish()
 void
 AtEOXact_SPI(void)
 {
+
 	/*
 	 * Note that memory contexts belonging to SPI stack entries will be
 	 * freed automatically, so we can ignore them here.  We just need to
@@ -425,8 +427,8 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	}
 
 	/*
-	 * If we have a toasted datum, forcibly detoast it here to avoid memory
-	 * leakage inside the type's output routine.
+	 * If we have a toasted datum, forcibly detoast it here to avoid
+	 * memory leakage inside the type's output routine.
 	 */
 	if (typisvarlena)
 		val = PointerGetDatum(PG_DETOAST_DATUM(origval));
@@ -436,7 +438,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	result = OidFunctionCall3(foutoid,
 							  val,
 							  ObjectIdGetDatum(typelem),
-							  Int32GetDatum(tupdesc->attrs[fnumber - 1]->atttypmod));
+				  Int32GetDatum(tupdesc->attrs[fnumber - 1]->atttypmod));
 
 	/* Clean up detoasted copy, if any */
 	if (val != origval)
@@ -833,14 +835,13 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 #endif
 	tupdesc = ExecutorStart(queryDesc, state);
 
-	/* Don't work currently --- need to rearrange callers so that
-	 * we prepare the portal before doing CreateExecutorState() etc.
-	 * See pquery.c for the correct order of operations.
+	/*
+	 * Don't work currently --- need to rearrange callers so that we
+	 * prepare the portal before doing CreateExecutorState() etc. See
+	 * pquery.c for the correct order of operations.
 	 */
 	if (isRetrieveIntoPortal)
-	{
 		elog(FATAL, "SPI_select: retrieve into portal not implemented");
-	}
 
 	ExecutorRun(queryDesc, state, EXEC_FOR, (long) tcount);
 
@@ -901,9 +902,7 @@ _SPI_begin_call(bool execmem)
 		elog(FATAL, "SPI: stack corrupted");
 
 	if (execmem)				/* switch to the Executor memory context */
-	{
 		_SPI_execmem();
-	}
 
 	return 0;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.89 2001/01/27 04:40:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.90 2001/03/22 03:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ static RewriteInfo *gatherRewriteMeta(Query *parsetree,
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
-						int varno, Query *parsetree);
+		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree);
 
 
@@ -84,9 +84,9 @@ gatherRewriteMeta(Query *parsetree,
 	 * Adjust rule action and qual to offset its varnos, so that we can
 	 * merge its rtable into the main parsetree's rtable.
 	 *
-	 * If the rule action is an INSERT...SELECT, the OLD/NEW rtable
-	 * entries will be in the SELECT part, and we have to modify that
-	 * rather than the top-level INSERT (kluge!).
+	 * If the rule action is an INSERT...SELECT, the OLD/NEW rtable entries
+	 * will be in the SELECT part, and we have to modify that rather than
+	 * the top-level INSERT (kluge!).
 	 */
 	sub_action = getInsertSelectQuery(info->rule_action, &sub_action_ptr);
 
@@ -101,14 +101,14 @@ gatherRewriteMeta(Query *parsetree,
 	/*
 	 * We want the main parsetree's rtable to end up as the concatenation
 	 * of its original contents plus those of all the relevant rule
-	 * actions.  Also store same into all the rule_action rtables.
-	 * Some of the entries may be unused after we finish rewriting, but
-	 * if we tried to clean those out we'd have a much harder job to
-	 * adjust RT indexes in the query's Vars.  It's OK to have unused
-	 * RT entries, since planner will ignore them.
+	 * actions.  Also store same into all the rule_action rtables. Some of
+	 * the entries may be unused after we finish rewriting, but if we
+	 * tried to clean those out we'd have a much harder job to adjust RT
+	 * indexes in the query's Vars.  It's OK to have unused RT entries,
+	 * since planner will ignore them.
 	 *
-	 * NOTE KLUGY HACK: we assume the parsetree rtable had at least one
-	 * entry to begin with (OK enough, else where'd the rule come from?).
+	 * NOTE KLUGY HACK: we assume the parsetree rtable had at least one entry
+	 * to begin with (OK enough, else where'd the rule come from?).
 	 * Because of this, if multiple rules nconc() their rtable additions
 	 * onto parsetree->rtable, they'll all see the same rtable because
 	 * they all have the same list head pointer.
@@ -119,24 +119,25 @@ gatherRewriteMeta(Query *parsetree,
 
 	/*
 	 * Each rule action's jointree should be the main parsetree's jointree
-	 * plus that rule's jointree, but usually *without* the original rtindex
-	 * that we're replacing (if present, which it won't be for INSERT).
-	 * Note that if the rule action refers to OLD, its jointree will add
-	 * a reference to rt_index.  If the rule action doesn't refer to OLD,
-	 * but either the rule_qual or the user query quals do, then we need to
-	 * keep the original rtindex in the jointree to provide data for the
-	 * quals.  We don't want the original rtindex to be joined twice,
-	 * however, so avoid keeping it if the rule action mentions it.
+	 * plus that rule's jointree, but usually *without* the original
+	 * rtindex that we're replacing (if present, which it won't be for
+	 * INSERT). Note that if the rule action refers to OLD, its jointree
+	 * will add a reference to rt_index.  If the rule action doesn't refer
+	 * to OLD, but either the rule_qual or the user query quals do, then
+	 * we need to keep the original rtindex in the jointree to provide
+	 * data for the quals.	We don't want the original rtindex to be
+	 * joined twice, however, so avoid keeping it if the rule action
+	 * mentions it.
 	 */
 	if (sub_action->jointree != NULL)
 	{
-		bool	keeporig;
-		List   *newjointree;
+		bool		keeporig;
+		List	   *newjointree;
 
-		keeporig = (! rangeTableEntry_used((Node *) sub_action->jointree,
-										   rt_index, 0)) &&
+		keeporig = (!rangeTableEntry_used((Node *) sub_action->jointree,
+										  rt_index, 0)) &&
 			(rangeTableEntry_used(info->rule_qual, rt_index, 0) ||
-			 rangeTableEntry_used(parsetree->jointree->quals, rt_index, 0));
+		  rangeTableEntry_used(parsetree->jointree->quals, rt_index, 0));
 		newjointree = adjustJoinTreeList(parsetree, !keeporig, rt_index);
 		sub_action->jointree->fromlist =
 			nconc(newjointree, sub_action->jointree->fromlist);
@@ -154,17 +155,17 @@ gatherRewriteMeta(Query *parsetree,
 		parsetree->hasSubLinks = TRUE;
 
 	/*
-	 * Event Qualification forces copying of parsetree and
-	 * splitting into two queries one w/rule_qual, one w/NOT
-	 * rule_qual. Also add user query qual onto rule action
+	 * Event Qualification forces copying of parsetree and splitting into
+	 * two queries one w/rule_qual, one w/NOT rule_qual. Also add user
+	 * query qual onto rule action
 	 */
 	AddQual(sub_action, info->rule_qual);
 
 	AddQual(sub_action, parsetree->jointree->quals);
 
 	/*
-	 * Rewrite new.attribute w/ right hand side of target-list
-	 * entry for appropriate field name in insert/update.
+	 * Rewrite new.attribute w/ right hand side of target-list entry for
+	 * appropriate field name in insert/update.
 	 *
 	 * KLUGE ALERT: since ResolveNew returns a mutated copy, we can't just
 	 * apply it to sub_action; we have to remember to update the sublink
@@ -207,7 +208,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 		{
 			RangeTblRef *rtr = lfirst(jjt);
 
-			if (IsA(rtr, RangeTblRef) && rtr->rtindex == rt_index)
+			if (IsA(rtr, RangeTblRef) &&rtr->rtindex == rt_index)
 			{
 				newjointree = lremove(rtr, newjointree);
 				break;
@@ -278,7 +279,7 @@ ApplyRetrieveRule(Query *parsetree,
 		elog(ERROR, "ApplyRetrieveRule: expected just one rule action");
 	if (rule->qual != NULL)
 		elog(ERROR, "ApplyRetrieveRule: can't handle qualified ON SELECT rule");
-	if (! relation_level)
+	if (!relation_level)
 		elog(ERROR, "ApplyRetrieveRule: can't handle per-attribute ON SELECT rule");
 
 	/*
@@ -290,8 +291,8 @@ ApplyRetrieveRule(Query *parsetree,
 	rule_action = fireRIRrules(rule_action);
 
 	/*
-	 * VIEWs are really easy --- just plug the view query in as a subselect,
-	 * replacing the relation's original RTE.
+	 * VIEWs are really easy --- just plug the view query in as a
+	 * subselect, replacing the relation's original RTE.
 	 */
 	rte = rt_fetch(rt_index, parsetree->rtable);
 
@@ -317,6 +318,7 @@ ApplyRetrieveRule(Query *parsetree,
 	 */
 	if (intMember(rt_index, parsetree->rowMarks))
 	{
+
 		/*
 		 * Remove the view from the list of rels that will actually be
 		 * marked FOR UPDATE by the executor.  It will still be access-
@@ -399,6 +401,7 @@ fireRIRonSubLink(Node *node, void *context)
 		sub->subselect = (Node *) fireRIRrules((Query *) (sub->subselect));
 		/* Fall through to process lefthand args of SubLink */
 	}
+
 	/*
 	 * Do NOT recurse into Query nodes, because fireRIRrules already
 	 * processed subselects of subselects for us.
@@ -462,17 +465,17 @@ fireRIRrules(Query *parsetree)
 			continue;
 
 		/*
-		 * This may well be the first access to the relation during
-		 * the current statement (it will be, if this Query was extracted
-		 * from a rule or somehow got here other than via the parser).
-		 * Therefore, grab the appropriate lock type for the relation,
-		 * and do not release it until end of transaction.  This protects
-		 * the rewriter and planner against schema changes mid-query.
+		 * This may well be the first access to the relation during the
+		 * current statement (it will be, if this Query was extracted from
+		 * a rule or somehow got here other than via the parser).
+		 * Therefore, grab the appropriate lock type for the relation, and
+		 * do not release it until end of transaction.	This protects the
+		 * rewriter and planner against schema changes mid-query.
 		 *
-		 * If the relation is the query's result relation, then RewriteQuery()
-		 * already got the right lock on it, so we need no additional lock.
-		 * Otherwise, check to see if the relation is accessed FOR UPDATE
-		 * or not.
+		 * If the relation is the query's result relation, then
+		 * RewriteQuery() already got the right lock on it, so we need no
+		 * additional lock. Otherwise, check to see if the relation is
+		 * accessed FOR UPDATE or not.
 		 */
 		if (rt_index == parsetree->resultRelation)
 			lockmode = NoLock;
@@ -534,14 +537,14 @@ fireRIRrules(Query *parsetree)
 	 */
 	if (parsetree->hasSubLinks)
 		query_tree_walker(parsetree, fireRIRonSubLink, NULL,
-						  false /* already handled the ones in rtable */);
+						false /* already handled the ones in rtable */ );
 
 	/*
-	 * If the query was marked having aggregates, check if this is
-	 * still true after rewriting.	Ditto for sublinks.  Note there
-	 * should be no aggs in the qual at this point.  (Does this code
-	 * still do anything useful?  The view-becomes-subselect-in-FROM
-	 * approach doesn't look like it could remove aggs or sublinks...)
+	 * If the query was marked having aggregates, check if this is still
+	 * true after rewriting.  Ditto for sublinks.  Note there should be no
+	 * aggs in the qual at this point.	(Does this code still do anything
+	 * useful?	The view-becomes-subselect-in-FROM approach doesn't look
+	 * like it could remove aggs or sublinks...)
 	 */
 	if (parsetree->hasAggs)
 	{
@@ -551,9 +554,7 @@ fireRIRrules(Query *parsetree)
 				elog(ERROR, "fireRIRrules: failed to remove aggs from qual");
 	}
 	if (parsetree->hasSubLinks)
-	{
 		parsetree->hasSubLinks = checkExprHasSubLink((Node *) parsetree);
-	}
 
 	return parsetree;
 }
@@ -594,7 +595,7 @@ orderRules(List *locks)
  * This is used to generate suitable "else clauses" for conditional INSTEAD
  * rules.
  *
- * The rule_qual may contain references to OLD or NEW.  OLD references are
+ * The rule_qual may contain references to OLD or NEW.	OLD references are
  * replaced by references to the specified rt_index (the relation that the
  * rule applies to).  NEW references are only possible for INSERT and UPDATE
  * queries on the relation itself, and so they should be replaced by copies
@@ -769,12 +770,12 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	rt_entry = rt_fetch(result_relation, parsetree->rtable);
 
 	/*
-	 * This may well be the first access to the result relation during
-	 * the current statement (it will be, if this Query was extracted
-	 * from a rule or somehow got here other than via the parser).
-	 * Therefore, grab the appropriate lock type for a result relation,
-	 * and do not release it until end of transaction.  This protects the
-	 * rewriter and planner against schema changes mid-query.
+	 * This may well be the first access to the result relation during the
+	 * current statement (it will be, if this Query was extracted from a
+	 * rule or somehow got here other than via the parser). Therefore,
+	 * grab the appropriate lock type for a result relation, and do not
+	 * release it until end of transaction.  This protects the rewriter
+	 * and planner against schema changes mid-query.
 	 */
 	rt_entry_relation = heap_openr(rt_entry->relname, RowExclusiveLock);
 
@@ -793,7 +794,7 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 									qual_products);
 	}
 
-	heap_close(rt_entry_relation, NoLock); /* keep lock! */
+	heap_close(rt_entry_relation, NoLock);		/* keep lock! */
 
 	return product_queries;
 }
@@ -912,7 +913,7 @@ QueryRewrite(Query *parsetree)
 	 */
 	foreach(l, querylist)
 	{
-		Query   *query = (Query *) lfirst(l);
+		Query	   *query = (Query *) lfirst(l);
 
 		query = fireRIRrules(query);
 

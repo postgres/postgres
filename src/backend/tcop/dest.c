@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.42 2001/01/24 19:43:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.43 2001/03/22 03:59:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ DestToFunction(CommandDest dest)
 {
 	switch (dest)
 	{
-		case Remote:
+			case Remote:
 			return printtup_create_DR(false);
 
 		case RemoteInternal:

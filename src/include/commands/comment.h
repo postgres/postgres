@@ -25,8 +25,8 @@
  *------------------------------------------------------------------
  */
 
-extern void	DeleteComments(Oid oid);
+extern void DeleteComments(Oid oid);
 extern void CommentObject(int objtype, char *objname, char *objproperty,
-				List *objlist, char *comment);
+			  List *objlist, char *comment);
 
 #endif	 /* COMMENT_H */

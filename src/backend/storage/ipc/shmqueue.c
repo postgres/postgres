@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.15 2001/01/24 19:43:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.16 2001/03/22 03:59:45 momjian Exp $
  *
  * NOTES
  *
@@ -152,7 +152,8 @@ SHMQueueInsertAfter(SHM_QUEUE *queue, SHM_QUEUE *elem)
 	dumpQ(queue, "in SHMQueueInsertAfter: end");
 #endif
 }
-#endif /* NOT_USED */
+
+#endif	 /* NOT_USED */
 
 /*--------------------
  * SHMQueueNext -- Get the next element from a queue

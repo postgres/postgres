@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.17 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.18 2001/03/22 03:59:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ ExecResult(Result *node)
 
 	/* ----------------
 	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.  Note this can't
+	 *	storage allocated in the previous tuple cycle.	Note this can't
 	 *	happen until we're done projecting out tuples from a scan tuple.
 	 * ----------------
 	 */

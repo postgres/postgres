@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.83 2001/01/29 00:39:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.84 2001/03/22 03:59:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,22 +46,22 @@
 
 /* static function decls */
 static Datum ExecEvalAggref(Aggref *aggref, ExprContext *econtext,
-							bool *isNull);
+			   bool *isNull);
 static Datum ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
-							  bool *isNull, ExprDoneCond *isDone);
+				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalOper(Expr *opClause, ExprContext *econtext,
-						  bool *isNull, ExprDoneCond *isDone);
+			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
-						  bool *isNull, ExprDoneCond *isDone);
+			 bool *isNull, ExprDoneCond *isDone);
 static ExprDoneCond ExecEvalFuncArgs(FunctionCachePtr fcache,
-									 List *argList,
-									 ExprContext *econtext);
+				 List *argList,
+				 ExprContext *econtext);
 static Datum ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
-						  bool *isNull, ExprDoneCond *isDone);
+			 bool *isNull, ExprDoneCond *isDone);
 
 
 /*----------
@@ -77,7 +77,7 @@ static Datum ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
  * done in versions up through 7.0) then an assignment like
  *			UPDATE table SET arrayfield[4] = NULL
  * will result in setting the whole array to NULL, which is certainly not
- * very desirable.  By returning the source array we make the assignment
+ * very desirable.	By returning the source array we make the assignment
  * into a no-op, instead.  (Eventually we need to redesign arrays so that
  * individual elements can be NULL, but for now, let's try to protect users
  * from shooting themselves in the foot.)
@@ -112,10 +112,11 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 										 econtext,
 										 isNull,
 										 isDone));
+
 		/*
 		 * If refexpr yields NULL, result is always NULL, for now anyway.
-		 * (This means you cannot assign to an element or slice of an array
-		 * that's NULL; it'll just stay NULL.)
+		 * (This means you cannot assign to an element or slice of an
+		 * array that's NULL; it'll just stay NULL.)
 		 */
 		if (*isNull)
 			return (Datum) NULL;
@@ -147,7 +148,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 		/* If any index expr yields NULL, result is NULL or source array */
 		if (*isNull)
 		{
-			if (! isAssignment || array_source == NULL)
+			if (!isAssignment || array_source == NULL)
 				return (Datum) NULL;
 			*isNull = false;
 			return PointerGetDatum(array_source);
@@ -166,10 +167,14 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 														 econtext,
 														 isNull,
 														 NULL));
-			/* If any index expr yields NULL, result is NULL or source array */
+
+			/*
+			 * If any index expr yields NULL, result is NULL or source
+			 * array
+			 */
 			if (*isNull)
 			{
-				if (! isAssignment || array_source == NULL)
+				if (!isAssignment || array_source == NULL)
 					return (Datum) NULL;
 				*isNull = false;
 				return PointerGetDatum(array_source);
@@ -189,9 +194,10 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 											  econtext,
 											  isNull,
 											  NULL);
+
 		/*
-		 * For now, can't cope with inserting NULL into an array,
-		 * so make it a no-op per discussion above...
+		 * For now, can't cope with inserting NULL into an array, so make
+		 * it a no-op per discussion above...
 		 */
 		if (*isNull)
 		{
@@ -202,7 +208,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 		}
 
 		if (array_source == NULL)
-			return sourceData;		/* XXX do something else? */
+			return sourceData;	/* XXX do something else? */
 
 		if (lIndex == NULL)
 			resultArray = array_set(array_source, i,
@@ -215,7 +221,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 		else
 			resultArray = array_set_slice(array_source, i,
 										  upper.indx, lower.indx,
-										  (ArrayType *) DatumGetPointer(sourceData),
+							   (ArrayType *) DatumGetPointer(sourceData),
 										  arrayRef->refelembyval,
 										  arrayRef->refelemlength,
 										  arrayRef->refattrlength,
@@ -587,12 +593,12 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 	int			i;
 	List	   *arg;
 
-	argIsDone = ExprSingleResult; /* default assumption */
+	argIsDone = ExprSingleResult;		/* default assumption */
 
 	i = 0;
 	foreach(arg, argList)
 	{
-		ExprDoneCond	thisArgIsDone;
+		ExprDoneCond thisArgIsDone;
 
 		fcache->fcinfo.arg[i] = ExecEvalExpr((Node *) lfirst(arg),
 											 econtext,
@@ -601,10 +607,12 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 
 		if (thisArgIsDone != ExprSingleResult)
 		{
+
 			/*
 			 * We allow only one argument to have a set value; we'd need
-			 * much more complexity to keep track of multiple set arguments
-			 * (cf. ExecTargetList) and it doesn't seem worth it.
+			 * much more complexity to keep track of multiple set
+			 * arguments (cf. ExecTargetList) and it doesn't seem worth
+			 * it.
 			 */
 			if (argIsDone != ExprSingleResult)
 				elog(ERROR, "Functions and operators can take only one set argument");
@@ -632,15 +640,15 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 					   bool *isNull,
 					   ExprDoneCond *isDone)
 {
-	Datum				result;
-	ExprDoneCond		argDone;
-	int					i;
+	Datum		result;
+	ExprDoneCond argDone;
+	int			i;
 
 	/*
 	 * arguments is a list of expressions to evaluate before passing to
 	 * the function manager.  We skip the evaluation if it was already
-	 * done in the previous call (ie, we are continuing the evaluation
-	 * of a set-valued function).  Otherwise, collect the current argument
+	 * done in the previous call (ie, we are continuing the evaluation of
+	 * a set-valued function).	Otherwise, collect the current argument
 	 * values into fcache->fcinfo.
 	 */
 	if (fcache->fcinfo.nargs > 0 && !fcache->argsValid)
@@ -664,28 +672,30 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 	 */
 	if (fcache->func.fn_retset || fcache->hasSetArg)
 	{
+
 		/*
-		 * We need to return a set result.  Complain if caller not ready
+		 * We need to return a set result.	Complain if caller not ready
 		 * to accept one.
 		 */
 		if (isDone == NULL)
 			elog(ERROR, "Set-valued function called in context that cannot accept a set");
 
 		/*
-		 * This loop handles the situation where we have both a set argument
-		 * and a set-valued function.  Once we have exhausted the function's
-		 * value(s) for a particular argument value, we have to get the next
-		 * argument value and start the function over again.  We might have
-		 * to do it more than once, if the function produces an empty result
-		 * set for a particular input value.
+		 * This loop handles the situation where we have both a set
+		 * argument and a set-valued function.	Once we have exhausted the
+		 * function's value(s) for a particular argument value, we have to
+		 * get the next argument value and start the function over again.
+		 * We might have to do it more than once, if the function produces
+		 * an empty result set for a particular input value.
 		 */
 		for (;;)
 		{
+
 			/*
 			 * If function is strict, and there are any NULL arguments,
 			 * skip calling the function (at least for this set of args).
 			 */
-			bool	callit = true;
+			bool		callit = true;
 
 			if (fcache->func.fn_strict)
 			{
@@ -716,13 +726,15 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 
 			if (*isDone != ExprEndResult)
 			{
+
 				/*
-				 * Got a result from current argument.  If function itself
-				 * returns set, flag that we want to reuse current argument
-				 * values on next call.
+				 * Got a result from current argument.	If function itself
+				 * returns set, flag that we want to reuse current
+				 * argument values on next call.
 				 */
 				if (fcache->func.fn_retset)
 					fcache->argsValid = true;
+
 				/*
 				 * Make sure we say we are returning a set, even if the
 				 * function itself doesn't return sets.
@@ -762,11 +774,12 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 	}
 	else
 	{
+
 		/*
 		 * Non-set case: much easier.
 		 *
-		 * If function is strict, and there are any NULL arguments,
-		 * skip calling the function and return NULL.
+		 * If function is strict, and there are any NULL arguments, skip
+		 * calling the function and return NULL.
 		 */
 		if (fcache->func.fn_strict)
 		{
@@ -852,9 +865,9 @@ ExecEvalFunc(Expr *funcClause,
 	FunctionCachePtr fcache;
 
 	/*
-	 * we extract the oid of the function associated with the func node and
-	 * then pass the work onto ExecMakeFunctionResult which evaluates the
-	 * arguments and returns the result of calling the function on the
+	 * we extract the oid of the function associated with the func node
+	 * and then pass the work onto ExecMakeFunctionResult which evaluates
+	 * the arguments and returns the result of calling the function on the
 	 * evaluated arguments.
 	 *
 	 * this is nearly identical to the ExecEvalOper code.
@@ -915,7 +928,7 @@ ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
 	 * evaluation of 'not' is simple.. expr is false, then return 'true'
 	 * and vice versa.
 	 */
-	return BoolGetDatum(! DatumGetBool(expr_value));
+	return BoolGetDatum(!DatumGetBool(expr_value));
 }
 
 /* ----------------------------------------------------------------
@@ -999,7 +1012,7 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 		 */
 		if (*isNull)
 			AnyNull = true;		/* remember we got a null */
-		else if (! DatumGetBool(clause_value))
+		else if (!DatumGetBool(clause_value))
 			return clause_value;
 	}
 
@@ -1079,7 +1092,7 @@ ExecEvalFieldSelect(FieldSelect *fselect,
 					bool *isNull,
 					ExprDoneCond *isDone)
 {
-	Datum			result;
+	Datum		result;
 	TupleTableSlot *resSlot;
 
 	result = ExecEvalExpr(fselect->arg, econtext, isNull, isDone);
@@ -1111,7 +1124,7 @@ ExecEvalFieldSelect(FieldSelect *fselect,
  *
  * A caller that can only accept a singleton (non-set) result should pass
  * NULL for isDone; if the expression computes a set result then an elog()
- * error will be reported.  If the caller does pass an isDone pointer then
+ * error will be reported.	If the caller does pass an isDone pointer then
  * *isDone is set to one of these three states:
  *		ExprSingleResult		singleton result (not a set)
  *		ExprMultipleResult		return value is one element of a set
@@ -1127,7 +1140,7 @@ ExecEvalFieldSelect(FieldSelect *fselect,
  * The caller should already have switched into the temporary memory
  * context econtext->ecxt_per_tuple_memory.  The convenience entry point
  * ExecEvalExprSwitchContext() is provided for callers who don't prefer to
- * do the switch in an outer loop.  We do not do the switch here because
+ * do the switch in an outer loop.	We do not do the switch here because
  * it'd be a waste of cycles during recursive entries to ExecEvalExpr().
  *
  * This routine is an inner loop routine and must be as fast as possible.
@@ -1353,15 +1366,15 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 		{
 			if (resultForNull == false)
 			{
-				result = false;	/* treat NULL as FALSE */
+				result = false; /* treat NULL as FALSE */
 				break;
 			}
 		}
 		else
 		{
-			if (! DatumGetBool(expr_value))
+			if (!DatumGetBool(expr_value))
 			{
-				result = false;	/* definitely FALSE */
+				result = false; /* definitely FALSE */
 				break;
 			}
 		}
@@ -1383,7 +1396,7 @@ ExecTargetListLength(List *targetlist)
 
 	foreach(tl, targetlist)
 	{
-		TargetEntry	   *curTle = (TargetEntry *) lfirst(tl);
+		TargetEntry *curTle = (TargetEntry *) lfirst(tl);
 
 		if (curTle->resdom != NULL)
 			len++;
@@ -1404,17 +1417,15 @@ ExecCleanTargetListLength(List *targetlist)
 
 	foreach(tl, targetlist)
 	{
-		TargetEntry	   *curTle = (TargetEntry *) lfirst(tl);
+		TargetEntry *curTle = (TargetEntry *) lfirst(tl);
 
 		if (curTle->resdom != NULL)
 		{
-			if (! curTle->resdom->resjunk)
+			if (!curTle->resdom->resjunk)
 				len++;
 		}
 		else
-		{
 			len += curTle->fjoin->fj_nNodes;
-		}
 	}
 	return len;
 }
@@ -1440,6 +1451,7 @@ ExecTargetList(List *targetlist,
 			   ExprDoneCond *isDone)
 {
 	MemoryContext oldContext;
+
 #define NPREALLOCDOMAINS 64
 	char		nullsArray[NPREALLOCDOMAINS];
 	bool		fjIsNullArray[NPREALLOCDOMAINS];
@@ -1484,10 +1496,11 @@ ExecTargetList(List *targetlist,
 	 * we have a really large targetlist.  otherwise we use the stack.
 	 *
 	 * We also allocate a bool array that is used to hold fjoin result state,
-	 * and another array that holds the isDone status for each targetlist item.
-	 * The isDone status is needed so that we can iterate, generating multiple
-	 * tuples, when one or more tlist items return sets.  (We expect the caller
-	 * to call us again if we return *isDone = ExprMultipleResult.)
+	 * and another array that holds the isDone status for each targetlist
+	 * item. The isDone status is needed so that we can iterate,
+	 * generating multiple tuples, when one or more tlist items return
+	 * sets.  (We expect the caller to call us again if we return *isDone
+	 * = ExprMultipleResult.)
 	 */
 	if (nodomains > NPREALLOCDOMAINS)
 	{
@@ -1507,7 +1520,7 @@ ExecTargetList(List *targetlist,
 	 */
 
 	if (isDone)
-		*isDone = ExprSingleResult;	/* until proven otherwise */
+		*isDone = ExprSingleResult;		/* until proven otherwise */
 
 	haveDoneSets = false;		/* any exhausted set exprs in tlist? */
 
@@ -1554,8 +1567,10 @@ ExecTargetList(List *targetlist,
 
 			ExecEvalFjoin(tle, econtext, fjIsNull, isDone);
 
-			/* XXX this is wrong, but since fjoin code is completely broken
-			 * anyway, I'm not going to worry about it now --- tgl 8/23/00
+			/*
+			 * XXX this is wrong, but since fjoin code is completely
+			 * broken anyway, I'm not going to worry about it now --- tgl
+			 * 8/23/00
 			 */
 			if (isDone && *isDone == ExprEndResult)
 			{
@@ -1594,6 +1609,7 @@ ExecTargetList(List *targetlist,
 
 	if (haveDoneSets)
 	{
+
 		/*
 		 * note: can't get here unless we verified isDone != NULL
 		 */
@@ -1601,7 +1617,8 @@ ExecTargetList(List *targetlist,
 		{
 
 			/*
-			 * all sets are done, so report that tlist expansion is complete.
+			 * all sets are done, so report that tlist expansion is
+			 * complete.
 			 */
 			*isDone = ExprEndResult;
 			MemoryContextSwitchTo(oldContext);
@@ -1612,7 +1629,7 @@ ExecTargetList(List *targetlist,
 		{
 
 			/*
-			 * We have some done and some undone sets.  Restart the done
+			 * We have some done and some undone sets.	Restart the done
 			 * ones so that we can deliver a tuple (if possible).
 			 */
 			foreach(tl, targetlist)
@@ -1628,7 +1645,7 @@ ExecTargetList(List *targetlist,
 						values[resind] = ExecEvalExpr(tle->expr,
 													  econtext,
 													  &isNull,
-													  &itemIsDone[resind]);
+													&itemIsDone[resind]);
 						nulls[resind] = isNull ? 'n' : ' ';
 
 						if (itemIsDone[resind] == ExprEndResult)
@@ -1644,10 +1661,11 @@ ExecTargetList(List *targetlist,
 					}
 				}
 			}
+
 			/*
-			 * If we cannot make a tuple because some sets are empty,
-			 * we still have to cycle the nonempty sets to completion,
-			 * else resources will not be released from subplans etc.
+			 * If we cannot make a tuple because some sets are empty, we
+			 * still have to cycle the nonempty sets to completion, else
+			 * resources will not be released from subplans etc.
 			 */
 			if (*isDone == ExprEndResult)
 			{
@@ -1752,8 +1770,8 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	/*
 	 * store the tuple in the projection slot and return the slot.
 	 */
-	return ExecStoreTuple(newTuple,			/* tuple to store */
-						  slot,				/* slot to store in */
-						  InvalidBuffer,	/* tuple has no buffer */
+	return ExecStoreTuple(newTuple,		/* tuple to store */
+						  slot, /* slot to store in */
+						  InvalidBuffer,		/* tuple has no buffer */
 						  true);
 }

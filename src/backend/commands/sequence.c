@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.51 2001/03/07 21:20:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.52 2001/03/22 03:59:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
  * so we pre-log a few fetches in advance. In the event of
  * crash we can lose as much as we pre-logged.
  */
-#define	SEQ_LOG_VALS	32
+#define SEQ_LOG_VALS	32
 
 typedef struct sequence_magic
 {
@@ -140,7 +140,7 @@ DefineSequence(CreateSeqStmt *seq)
 			case SEQ_COL_LOG:
 				typnam->name = "int4";
 				coldef->colname = "log_cnt";
-				value[i - 1] = Int32GetDatum((int32)1);
+				value[i - 1] = Int32GetDatum((int32) 1);
 				break;
 			case SEQ_COL_CYCLE:
 				typnam->name = "char";
@@ -247,7 +247,7 @@ nextval(PG_FUNCTION_ARGS)
 		logit = true;
 	}
 
-	while (fetch)		/* try to fetch cache [+ log ] numbers */
+	while (fetch)				/* try to fetch cache [+ log ] numbers */
 	{
 
 		/*
@@ -292,8 +292,8 @@ nextval(PG_FUNCTION_ARGS)
 			log--;
 			rescnt++;
 			last = next;
-			if (rescnt == 1)		/* if it's first result - */
-				result = next;		/* it's what to return */
+			if (rescnt == 1)	/* if it's first result - */
+				result = next;	/* it's what to return */
 		}
 	}
 
@@ -306,12 +306,12 @@ nextval(PG_FUNCTION_ARGS)
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData	rdata[2];
+		XLogRecData rdata[2];
 		Page		page = BufferGetPage(buf);
 
 		xlrec.node = elm->rel->rd_node;
 		rdata[0].buffer = InvalidBuffer;
-		rdata[0].data = (char*)&xlrec;
+		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = sizeof(xl_seq_rec);
 		rdata[0].next = &(rdata[1]);
 
@@ -319,17 +319,17 @@ nextval(PG_FUNCTION_ARGS)
 		seq->is_called = 't';
 		seq->log_cnt = 0;
 		rdata[1].buffer = InvalidBuffer;
-		rdata[1].data = (char*)page + ((PageHeader) page)->pd_upper;
-		rdata[1].len = ((PageHeader)page)->pd_special - 
-						((PageHeader)page)->pd_upper;
+		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
+		rdata[1].len = ((PageHeader) page)->pd_special -
+			((PageHeader) page)->pd_upper;
 		rdata[1].next = NULL;
 
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG|XLOG_NO_TRAN, rdata);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
 
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 
-		if (fetch)		/* not all numbers were fetched */
+		if (fetch)				/* not all numbers were fetched */
 			log -= fetch;
 	}
 
@@ -374,15 +374,15 @@ currval(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
-/* 
+/*
  * Main internal procedure that handles 2 & 3 arg forms of SETVAL.
  *
  * Note that the 3 arg version (which sets the is_called flag) is
  * only for use in pg_dump, and setting the is_called flag may not
- * work if multiple users are attached to the database and referencing 
+ * work if multiple users are attached to the database and referencing
  * the sequence (unlikely if pg_dump is restoring it).
  *
- * It is necessary to have the 3 arg version so that pg_dump can 
+ * It is necessary to have the 3 arg version so that pg_dump can
  * restore the state of a sequence exactly during data-only restores -
  * it is the only way to clear the is_called flag in an existing
  * sequence.
@@ -409,18 +409,19 @@ do_setval(char *seqname, int32 next, bool iscalled)
 
 	/* save info in local cache */
 	elm->last = next;			/* last returned number */
-	elm->cached = next;			/* last cached number (forget cached values) */
+	elm->cached = next;			/* last cached number (forget cached
+								 * values) */
 
 	START_CRIT_SECTION();
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData	rdata[2];
+		XLogRecData rdata[2];
 		Page		page = BufferGetPage(buf);
 
 		xlrec.node = elm->rel->rd_node;
 		rdata[0].buffer = InvalidBuffer;
-		rdata[0].data = (char*)&xlrec;
+		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = sizeof(xl_seq_rec);
 		rdata[0].next = &(rdata[1]);
 
@@ -428,12 +429,12 @@ do_setval(char *seqname, int32 next, bool iscalled)
 		seq->is_called = 't';
 		seq->log_cnt = 0;
 		rdata[1].buffer = InvalidBuffer;
-		rdata[1].data = (char*)page + ((PageHeader) page)->pd_upper;
-		rdata[1].len = ((PageHeader)page)->pd_special - 
-						((PageHeader)page)->pd_upper;
+		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
+		rdata[1].len = ((PageHeader) page)->pd_special -
+			((PageHeader) page)->pd_upper;
 		rdata[1].next = NULL;
 
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG|XLOG_NO_TRAN, rdata);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
 
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
@@ -496,7 +497,7 @@ static char *
 get_seq_name(text *seqin)
 {
 	char	   *rawname = DatumGetCString(DirectFunctionCall1(textout,
-													PointerGetDatum(seqin)));
+												PointerGetDatum(seqin)));
 	int			rawlen = strlen(rawname);
 	char	   *seqname;
 
@@ -511,6 +512,7 @@ get_seq_name(text *seqin)
 	else
 	{
 		seqname = rawname;
+
 		/*
 		 * It's important that this match the identifier downcasing code
 		 * used by backend/parser/scan.l.
@@ -752,15 +754,16 @@ get_param(DefElem *def)
 	return -1;
 }
 
-void seq_redo(XLogRecPtr lsn, XLogRecord *record)
+void
+seq_redo(XLogRecPtr lsn, XLogRecord *record)
 {
-	uint8			info = record->xl_info & ~XLR_INFO_MASK;
-	Relation		reln;
-	Buffer			buffer;
-	Page			page;
-	char		   *item;
-	Size			itemsz;
-	xl_seq_rec	   *xlrec = (xl_seq_rec*) XLogRecGetData(record);
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	Relation	reln;
+	Buffer		buffer;
+	Page		page;
+	char	   *item;
+	Size		itemsz;
+	xl_seq_rec *xlrec = (xl_seq_rec *) XLogRecGetData(record);
 	sequence_magic *sm;
 
 	if (info != XLOG_SEQ_LOG)
@@ -772,8 +775,8 @@ void seq_redo(XLogRecPtr lsn, XLogRecord *record)
 
 	buffer = XLogReadBuffer(true, reln, 0);
 	if (!BufferIsValid(buffer))
-		elog(STOP, "seq_redo: can't read block of %u/%u", 
-			xlrec->node.tblNode, xlrec->node.relNode);
+		elog(STOP, "seq_redo: can't read block of %u/%u",
+			 xlrec->node.tblNode, xlrec->node.relNode);
 
 	page = (Page) BufferGetPage(buffer);
 
@@ -781,10 +784,10 @@ void seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 	sm->magic = SEQ_MAGIC;
 
-	item = (char*)xlrec + sizeof(xl_seq_rec);
+	item = (char *) xlrec + sizeof(xl_seq_rec);
 	itemsz = record->xl_len - sizeof(xl_seq_rec);
 	itemsz = MAXALIGN(itemsz);
-	if (PageAddItem(page, (Item)item, itemsz, 
+	if (PageAddItem(page, (Item) item, itemsz,
 					FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
 		elog(STOP, "seq_redo: failed to add item to page");
 
@@ -795,14 +798,16 @@ void seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	return;
 }
 
-void seq_undo(XLogRecPtr lsn, XLogRecord *record)
+void
+seq_undo(XLogRecPtr lsn, XLogRecord *record)
 {
 }
 
-void seq_desc(char *buf, uint8 xl_info, char* rec)
+void
+seq_desc(char *buf, uint8 xl_info, char *rec)
 {
-	uint8				info = xl_info & ~XLR_INFO_MASK;
-	xl_seq_rec		   *xlrec = (xl_seq_rec*) rec;
+	uint8		info = xl_info & ~XLR_INFO_MASK;
+	xl_seq_rec *xlrec = (xl_seq_rec *) rec;
 
 	if (info == XLOG_SEQ_LOG)
 		strcat(buf, "log: ");
@@ -813,5 +818,5 @@ void seq_desc(char *buf, uint8 xl_info, char* rec)
 	}
 
 	sprintf(buf + strlen(buf), "node %u/%u",
-		xlrec->node.tblNode, xlrec->node.relNode);
+			xlrec->node.tblNode, xlrec->node.relNode);
 }

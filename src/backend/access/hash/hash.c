@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.49 2001/02/22 21:48:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.50 2001/03/22 03:59:12 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -41,12 +41,14 @@ bool		BuildingHash = false;
 Datum
 hashbuild(PG_FUNCTION_ARGS)
 {
-	Relation		heap = (Relation) PG_GETARG_POINTER(0);
-	Relation		index = (Relation) PG_GETARG_POINTER(1);
-	IndexInfo	   *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
-	Node		   *oldPred = (Node *) PG_GETARG_POINTER(3);
+	Relation	heap = (Relation) PG_GETARG_POINTER(0);
+	Relation	index = (Relation) PG_GETARG_POINTER(1);
+	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
+	Node	   *oldPred = (Node *) PG_GETARG_POINTER(3);
+
 #ifdef NOT_USED
-	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
+	IndexStrategy istrat = (IndexStrategy) PG_GETARG_POINTER(4);
+
 #endif
 	HeapScanDesc hscan;
 	HeapTuple	htup;
@@ -59,9 +61,11 @@ hashbuild(PG_FUNCTION_ARGS)
 				nitups;
 	HashItem	hitem;
 	Node	   *pred = indexInfo->ii_Predicate;
+
 #ifndef OMIT_PARTIAL_INDEX
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
+
 #endif
 	ExprContext *econtext;
 	InsertIndexResult res = NULL;
@@ -117,6 +121,7 @@ hashbuild(PG_FUNCTION_ARGS)
 		nhtups++;
 
 #ifndef OMIT_PARTIAL_INDEX
+
 		/*
 		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
 		 * this tuple if it was already in the existing partial index
@@ -191,9 +196,7 @@ hashbuild(PG_FUNCTION_ARGS)
 
 #ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
-	{
 		ExecDropTupleTable(tupleTable, true);
-	}
 #endif	 /* OMIT_PARTIAL_INDEX */
 	FreeExprContext(econtext);
 
@@ -241,12 +244,14 @@ hashbuild(PG_FUNCTION_ARGS)
 Datum
 hashinsert(PG_FUNCTION_ARGS)
 {
-	Relation		rel = (Relation) PG_GETARG_POINTER(0);
-	Datum		   *datum = (Datum *) PG_GETARG_POINTER(1);
-	char		   *nulls = (char *) PG_GETARG_POINTER(2);
-	ItemPointer		ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+	Relation	rel = (Relation) PG_GETARG_POINTER(0);
+	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
+	char	   *nulls = (char *) PG_GETARG_POINTER(2);
+	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+
 #ifdef NOT_USED
-	Relation		heapRel = (Relation) PG_GETARG_POINTER(4);
+	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
+
 #endif
 	InsertIndexResult res;
 	HashItem	hitem;
@@ -276,8 +281,8 @@ hashinsert(PG_FUNCTION_ARGS)
 Datum
 hashgettuple(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc		scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanDirection		dir = (ScanDirection) PG_GETARG_INT32(1);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	RetrieveIndexResult res;
 
 	/*
@@ -326,11 +331,13 @@ hashbeginscan(PG_FUNCTION_ARGS)
 Datum
 hashrescan(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED					/* XXX surely it's wrong to ignore this? */
-	bool			fromEnd = PG_GETARG_BOOL(1);
+	bool		fromEnd = PG_GETARG_BOOL(1);
+
 #endif
-	ScanKey			scankey = (ScanKey) PG_GETARG_POINTER(2);
+	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
 	ItemPointer iptr;
 	HashScanOpaque so;
 
@@ -367,7 +374,7 @@ hashrescan(PG_FUNCTION_ARGS)
 Datum
 hashendscan(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	HashScanOpaque so;
 
@@ -405,7 +412,7 @@ hashendscan(PG_FUNCTION_ARGS)
 Datum
 hashmarkpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	HashScanOpaque so;
 
@@ -437,7 +444,7 @@ hashmarkpos(PG_FUNCTION_ARGS)
 Datum
 hashrestrpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	HashScanOpaque so;
 
@@ -468,8 +475,8 @@ hashrestrpos(PG_FUNCTION_ARGS)
 Datum
 hashdelete(PG_FUNCTION_ARGS)
 {
-	Relation		rel = (Relation) PG_GETARG_POINTER(0);
-	ItemPointer		tid = (ItemPointer) PG_GETARG_POINTER(1);
+	Relation	rel = (Relation) PG_GETARG_POINTER(0);
+	ItemPointer tid = (ItemPointer) PG_GETARG_POINTER(1);
 
 	/* adjust any active scans that will be affected by this deletion */
 	_hash_adjscans(rel, tid);
@@ -491,8 +498,8 @@ hash_undo(XLogRecPtr lsn, XLogRecord *record)
 {
 	elog(STOP, "hash_undo: unimplemented");
 }
- 
+
 void
-hash_desc(char *buf, uint8 xl_info, char* rec)
+hash_desc(char *buf, uint8 xl_info, char *rec)
 {
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.47 2001/02/23 19:24:06 momjian Exp $
+ * $Id: lock.h,v 1.48 2001/03/22 04:01:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,12 +33,13 @@ typedef struct proc PROC;
 extern SPINLOCK LockMgrLock;
 
 #ifdef LOCK_DEBUG
-extern int  Trace_lock_oidmin;
+extern int	Trace_lock_oidmin;
 extern bool Trace_locks;
 extern bool Trace_userlocks;
-extern int  Trace_lock_table;
+extern int	Trace_lock_table;
 extern bool Debug_deadlocks;
-#endif /* LOCK_DEBUG */
+
+#endif	 /* LOCK_DEBUG */
 
 
 /* ----------------------
@@ -60,7 +61,7 @@ typedef int LOCKMODE;
 typedef int LOCKMETHOD;
 
 /* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
-#define MAX_LOCKMODES  		8
+#define MAX_LOCKMODES		8
 
 /*
  * MAX_LOCK_METHODS corresponds to the number of spin locks allocated in
@@ -87,7 +88,7 @@ typedef int LOCKMETHOD;
 
 /*
  * This is the control structure for a lock table.	It
- * lives in shared memory.  This information is the same
+ * lives in shared memory.	This information is the same
  * for all backends.
  *
  * lockmethod -- the handle used by the lock table's clients to
@@ -132,7 +133,7 @@ typedef struct LOCKMETHODTABLE
 
 /*
  * LOCKTAG is the key information needed to look up a LOCK item in the
- * lock hashtable.  A LOCKTAG value uniquely identifies a lockable object.
+ * lock hashtable.	A LOCKTAG value uniquely identifies a lockable object.
  */
 typedef struct LOCKTAG
 {
@@ -179,9 +180,10 @@ typedef struct LOCK
 	int			waitMask;		/* bitmask for lock types awaited */
 	SHM_QUEUE	lockHolders;	/* list of HOLDER objects assoc. with lock */
 	PROC_QUEUE	waitProcs;		/* list of PROC objects waiting on lock */
-	int			requested[MAX_LOCKMODES]; /* counts of requested locks */
+	int			requested[MAX_LOCKMODES];		/* counts of requested
+												 * locks */
 	int			nRequested;		/* total of requested[] array */
-	int			granted[MAX_LOCKMODES];	/* counts of granted locks */
+	int			granted[MAX_LOCKMODES]; /* counts of granted locks */
 	int			nGranted;		/* total of granted[] array */
 } LOCK;
 
@@ -208,13 +210,13 @@ typedef struct LOCK
  * with per-transaction locks obtained by the same backend.
  *
  * The holding[] array counts the granted locks (of each type) represented
- * by this holder.  Note that there will be a holder object, possibly with
+ * by this holder.	Note that there will be a holder object, possibly with
  * zero holding[], for any lock that the process is currently waiting on.
  * Otherwise, holder objects whose counts have gone to zero are recycled
  * as soon as convenient.
  *
  * Each HOLDER object is linked into lists for both the associated LOCK object
- * and the owning PROC object.  Note that the HOLDER is entered into these
+ * and the owning PROC object.	Note that the HOLDER is entered into these
  * lists as soon as it is created, even if no lock has yet been granted.
  * A PROC that is waiting for a lock to be granted will also be linked into
  * the lock's waitProcs queue.
@@ -232,7 +234,7 @@ typedef struct HOLDER
 	HOLDERTAG	tag;			/* unique identifier of holder object */
 
 	/* data */
-	int			holding[MAX_LOCKMODES];	/* count of locks currently held */
+	int			holding[MAX_LOCKMODES]; /* count of locks currently held */
 	int			nHolding;		/* total of holding[] array */
 	SHM_QUEUE	lockLink;		/* list link for lock's list of holders */
 	SHM_QUEUE	procLink;		/* list link for process's list of holders */
@@ -261,15 +263,15 @@ extern LOCKMETHOD LockMethodTableInit(char *tabName, LOCKMASK *conflictsP,
 					int *prioP, int numModes, int maxBackends);
 extern LOCKMETHOD LockMethodTableRename(LOCKMETHOD lockmethod);
 extern bool LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
-						TransactionId xid, LOCKMODE lockmode);
+			TransactionId xid, LOCKMODE lockmode);
 extern bool LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
-						TransactionId xid, LOCKMODE lockmode);
+			TransactionId xid, LOCKMODE lockmode);
 extern bool LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
-						   bool allxids, TransactionId xid);
+			   bool allxids, TransactionId xid);
 extern int LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
-							  LOCKMODE lockmode,
-							  LOCK *lock, HOLDER *holder, PROC *proc,
-							  int *myHolding);
+				   LOCKMODE lockmode,
+				   LOCK *lock, HOLDER *holder, PROC *proc,
+				   int *myHolding);
 extern void GrantLock(LOCK *lock, HOLDER *holder, LOCKMODE lockmode);
 extern void RemoveFromWaitQueue(PROC *proc);
 extern int	LockShmemSize(int maxBackends);
@@ -279,6 +281,7 @@ extern void InitDeadLockChecking(void);
 #ifdef LOCK_DEBUG
 extern void DumpLocks(void);
 extern void DumpAllLocks(void);
+
 #endif
 
 #endif	 /* LOCK_H */

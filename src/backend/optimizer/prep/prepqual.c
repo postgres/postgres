@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.28 2001/01/24 19:42:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.29 2001/03/22 03:59:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,6 +260,7 @@ dnfify(Expr *qual)
 
 	return newqual;
 }
+
 #endif
 
 /*--------------------
@@ -663,11 +664,11 @@ or_normalize(List *orlist)
 		 * We are going to insert the orlist into multiple places in the
 		 * result expression.  For most expression types, it'd be OK to
 		 * just have multiple links to the same subtree, but this fails
-		 * badly for SubLinks (and perhaps other cases?).  For safety,
-		 * we make a distinct copy for each place the orlist is inserted.
+		 * badly for SubLinks (and perhaps other cases?).  For safety, we
+		 * make a distinct copy for each place the orlist is inserted.
 		 */
 		if (lnext(temp) == NIL)
-			neworlist = orlist;	/* can use original tree at the end */
+			neworlist = orlist; /* can use original tree at the end */
 		else
 			neworlist = copyObject(orlist);
 
@@ -791,11 +792,12 @@ and_normalize(List *andlist)
 		 * We are going to insert the andlist into multiple places in the
 		 * result expression.  For most expression types, it'd be OK to
 		 * just have multiple links to the same subtree, but this fails
-		 * badly for SubLinks (and perhaps other cases?).  For safety,
-		 * we make a distinct copy for each place the andlist is inserted.
+		 * badly for SubLinks (and perhaps other cases?).  For safety, we
+		 * make a distinct copy for each place the andlist is inserted.
 		 */
 		if (lnext(temp) == NIL)
-			newandlist = andlist;	/* can use original tree at the end */
+			newandlist = andlist;		/* can use original tree at the
+										 * end */
 		else
 			newandlist = copyObject(andlist);
 
@@ -957,8 +959,10 @@ count_bool_nodes(Expr *qual,
 	}
 	else if (contain_subplans((Node *) qual))
 	{
-		/* charge extra for subexpressions containing sub-SELECTs,
-		 * to discourage us from rearranging them in a way that might
+
+		/*
+		 * charge extra for subexpressions containing sub-SELECTs, to
+		 * discourage us from rearranging them in a way that might
 		 * generate N copies of a subselect rather than one.  The magic
 		 * constant here interacts with the "4x maximum growth" heuristic
 		 * in canonicalize_qual().

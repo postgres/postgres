@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.14 2001/03/13 01:17:05 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.15 2001/03/22 03:59:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,26 +37,26 @@
  * xaction/command and return
  *
  * - -1 if not
- * - 0  if there is no tuple at all
- * - 1  if yes
+ * - 0	if there is no tuple at all
+ * - 1	if yes
  */
 int
-XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr, 
-					TransactionId xid, CommandId cid)
+XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr,
+				   TransactionId xid, CommandId cid)
 {
-	Relation		reln;
-	Buffer			buffer;
-	Page			page;
-	ItemId			lp;
-	HeapTupleHeader	htup;
+	Relation	reln;
+	Buffer		buffer;
+	Page		page;
+	ItemId		lp;
+	HeapTupleHeader htup;
 
 	reln = XLogOpenRelation(false, RM_HEAP_ID, hnode);
 	if (!RelationIsValid(reln))
-		return(0);
+		return (0);
 
 	buffer = ReadBuffer(reln, ItemPointerGetBlockNumber(iptr));
 	if (!BufferIsValid(buffer))
-		return(0);
+		return (0);
 
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 	page = (Page) BufferGetPage(buffer);
@@ -64,13 +64,13 @@ XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr,
 		ItemPointerGetOffsetNumber(iptr) > PageGetMaxOffsetNumber(page))
 	{
 		UnlockAndReleaseBuffer(buffer);
-		return(0);
+		return (0);
 	}
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(iptr));
 	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
 	{
 		UnlockAndReleaseBuffer(buffer);
-		return(0);
+		return (0);
 	}
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
@@ -79,11 +79,11 @@ XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr,
 	if (htup->t_xmin != xid || htup->t_cmin != cid)
 	{
 		UnlockAndReleaseBuffer(buffer);
-		return(-1);
+		return (-1);
 	}
 
 	UnlockAndReleaseBuffer(buffer);
-	return(1);
+	return (1);
 }
 
 /*
@@ -95,19 +95,19 @@ XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr,
 bool
 XLogIsValidTuple(RelFileNode hnode, ItemPointer iptr)
 {
-	Relation		reln;
-	Buffer			buffer;
-	Page			page;
-	ItemId			lp;
-	HeapTupleHeader	htup;
+	Relation	reln;
+	Buffer		buffer;
+	Page		page;
+	ItemId		lp;
+	HeapTupleHeader htup;
 
 	reln = XLogOpenRelation(false, RM_HEAP_ID, hnode);
 	if (!RelationIsValid(reln))
-		return(false);
+		return (false);
 
 	buffer = ReadBuffer(reln, ItemPointerGetBlockNumber(iptr));
 	if (!BufferIsValid(buffer))
-		return(false);
+		return (false);
 
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 	page = (Page) BufferGetPage(buffer);
@@ -115,21 +115,21 @@ XLogIsValidTuple(RelFileNode hnode, ItemPointer iptr)
 		ItemPointerGetOffsetNumber(iptr) > PageGetMaxOffsetNumber(page))
 	{
 		UnlockAndReleaseBuffer(buffer);
-		return(false);
+		return (false);
 	}
 
 	if (PageGetSUI(page) != ThisStartUpID)
 	{
 		Assert(PageGetSUI(page) < ThisStartUpID);
 		UnlockAndReleaseBuffer(buffer);
-		return(true);
+		return (true);
 	}
 
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(iptr));
 	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
 	{
 		UnlockAndReleaseBuffer(buffer);
-		return(false);
+		return (false);
 	}
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
@@ -140,22 +140,22 @@ XLogIsValidTuple(RelFileNode hnode, ItemPointer iptr)
 	{
 		if (htup->t_infomask & HEAP_XMIN_INVALID ||
 			(htup->t_infomask & HEAP_MOVED_IN &&
-			TransactionIdDidAbort((TransactionId)htup->t_cmin)) ||
+			 TransactionIdDidAbort((TransactionId) htup->t_cmin)) ||
 			TransactionIdDidAbort(htup->t_xmin))
 		{
 			UnlockAndReleaseBuffer(buffer);
-			return(false);
+			return (false);
 		}
 	}
 
 	UnlockAndReleaseBuffer(buffer);
-	return(true);
+	return (true);
 }
 
 /*
  * Open pg_log in recovery
  */
-extern Relation	LogRelation;	/* pg_log relation */
+extern Relation LogRelation;	/* pg_log relation */
 
 void
 XLogOpenLogRelation(void)
@@ -189,32 +189,32 @@ XLogOpenLogRelation(void)
 Buffer
 XLogReadBuffer(bool extend, Relation reln, BlockNumber blkno)
 {
-	BlockNumber	lastblock = RelationGetNumberOfBlocks(reln);
+	BlockNumber lastblock = RelationGetNumberOfBlocks(reln);
 	Buffer		buffer;
 
 	if (blkno >= lastblock)
 	{
 		buffer = InvalidBuffer;
-		if (extend)		/* we do this in recovery only - no locks */
+		if (extend)				/* we do this in recovery only - no locks */
 		{
 			Assert(InRecovery);
 			while (lastblock <= blkno)
 			{
 				if (buffer != InvalidBuffer)
-                                        ReleaseBuffer(buffer); /* must be WriteBuffer()? */
+					ReleaseBuffer(buffer);		/* must be WriteBuffer()? */
 				buffer = ReadBuffer(reln, P_NEW);
 				lastblock++;
 			}
 		}
 		if (buffer != InvalidBuffer)
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		return(buffer);
+		return (buffer);
 	}
 
 	buffer = ReadBuffer(reln, blkno);
 	if (buffer != InvalidBuffer)
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-	return(buffer);
+	return (buffer);
 }
 
 /*
@@ -223,32 +223,33 @@ XLogReadBuffer(bool extend, Relation reln, BlockNumber blkno)
 
 typedef struct XLogRelDesc
 {
-	RelationData			reldata;
-	struct XLogRelDesc	   *lessRecently;
-	struct XLogRelDesc	   *moreRecently;
+	RelationData reldata;
+	struct XLogRelDesc *lessRecently;
+	struct XLogRelDesc *moreRecently;
 } XLogRelDesc;
 
 typedef struct XLogRelCacheEntry
 {
-	RelFileNode		rnode;
-	XLogRelDesc	   *rdesc;
+	RelFileNode rnode;
+	XLogRelDesc *rdesc;
 } XLogRelCacheEntry;
 
-static HTAB				   *_xlrelcache;
-static XLogRelDesc		   *_xlrelarr = NULL;
-static Form_pg_class		_xlpgcarr = NULL;
-static int					_xlast = 0;
-static int					_xlcnt = 0;
-#define	_XLOG_RELCACHESIZE	512
+static HTAB *_xlrelcache;
+static XLogRelDesc *_xlrelarr = NULL;
+static Form_pg_class _xlpgcarr = NULL;
+static int	_xlast = 0;
+static int	_xlcnt = 0;
+
+#define _XLOG_RELCACHESIZE	512
 
 static void
 _xl_init_rel_cache(void)
 {
-	HASHCTL			ctl;
+	HASHCTL		ctl;
 
 	_xlcnt = _XLOG_RELCACHESIZE;
 	_xlast = 0;
-	_xlrelarr = (XLogRelDesc*) malloc(sizeof(XLogRelDesc) * _xlcnt);
+	_xlrelarr = (XLogRelDesc *) malloc(sizeof(XLogRelDesc) * _xlcnt);
 	memset(_xlrelarr, 0, sizeof(XLogRelDesc) * _xlcnt);
 	_xlpgcarr = (Form_pg_class) malloc(sizeof(FormData_pg_class) * _xlcnt);
 	memset(_xlpgcarr, 0, sizeof(FormData_pg_class) * _xlcnt);
@@ -258,26 +259,26 @@ _xl_init_rel_cache(void)
 
 	memset(&ctl, 0, (int) sizeof(ctl));
 	ctl.keysize = sizeof(RelFileNode);
-	ctl.datasize = sizeof(XLogRelDesc*);
+	ctl.datasize = sizeof(XLogRelDesc *);
 	ctl.hash = tag_hash;
 
 	_xlrelcache = hash_create(_XLOG_RELCACHESIZE, &ctl,
-								HASH_ELEM | HASH_FUNCTION);
+							  HASH_ELEM | HASH_FUNCTION);
 }
 
 static void
 _xl_remove_hash_entry(XLogRelDesc **edata, Datum dummy)
 {
-	XLogRelCacheEntry	   *hentry;
-	bool					found;
-	XLogRelDesc			   *rdesc = *edata;
-	Form_pg_class			tpgc = rdesc->reldata.rd_rel;
+	XLogRelCacheEntry *hentry;
+	bool		found;
+	XLogRelDesc *rdesc = *edata;
+	Form_pg_class tpgc = rdesc->reldata.rd_rel;
 
 	rdesc->lessRecently->moreRecently = rdesc->moreRecently;
 	rdesc->moreRecently->lessRecently = rdesc->lessRecently;
 
-	hentry = (XLogRelCacheEntry*) hash_search(_xlrelcache, 
-		(char*)&(rdesc->reldata.rd_node), HASH_REMOVE, &found);
+	hentry = (XLogRelCacheEntry *) hash_search(_xlrelcache,
+				(char *) &(rdesc->reldata.rd_node), HASH_REMOVE, &found);
 
 	if (hentry == NULL)
 		elog(STOP, "_xl_remove_hash_entry: can't delete from cache");
@@ -294,16 +295,16 @@ _xl_remove_hash_entry(XLogRelDesc **edata, Datum dummy)
 	return;
 }
 
-static XLogRelDesc*
+static XLogRelDesc *
 _xl_new_reldesc(void)
 {
-	XLogRelDesc	   *res;
+	XLogRelDesc *res;
 
 	_xlast++;
 	if (_xlast < _xlcnt)
 	{
 		_xlrelarr[_xlast].reldata.rd_rel = &(_xlpgcarr[_xlast]);
-		return(&(_xlrelarr[_xlast]));
+		return (&(_xlrelarr[_xlast]));
 	}
 
 	/* reuse */
@@ -312,7 +313,7 @@ _xl_new_reldesc(void)
 	_xl_remove_hash_entry(&res, 0);
 
 	_xlast--;
-	return(res);
+	return (res);
 }
 
 
@@ -344,12 +345,12 @@ XLogCloseRelationCache(void)
 Relation
 XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 {
-	XLogRelDesc			   *res;
-	XLogRelCacheEntry	   *hentry;
-	bool					found;
+	XLogRelDesc *res;
+	XLogRelCacheEntry *hentry;
+	bool		found;
 
-	hentry = (XLogRelCacheEntry*) 
-			hash_search(_xlrelcache, (char*)&rnode, HASH_FIND, &found);
+	hentry = (XLogRelCacheEntry *)
+		hash_search(_xlrelcache, (char *) &rnode, HASH_FIND, &found);
 
 	if (hentry == NULL)
 		elog(STOP, "XLogOpenRelation: error in cache");
@@ -372,8 +373,8 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 		res->reldata.rd_lockInfo.lockRelId.relId = rnode.relNode;
 		res->reldata.rd_node = rnode;
 
-		hentry = (XLogRelCacheEntry*) 
-			hash_search(_xlrelcache, (char*)&rnode, HASH_ENTER, &found);
+		hentry = (XLogRelCacheEntry *)
+			hash_search(_xlrelcache, (char *) &rnode, HASH_ENTER, &found);
 
 		if (hentry == NULL)
 			elog(STOP, "XLogOpenRelation: can't insert into cache");
@@ -385,7 +386,7 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 
 		res->reldata.rd_fd = -1;
 		res->reldata.rd_fd = smgropen(DEFAULT_SMGR, &(res->reldata),
-									  true /* allow failure */);
+									  true /* allow failure */ );
 	}
 
 	res->moreRecently = &(_xlrelarr[0]);
@@ -393,8 +394,8 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 	_xlrelarr[0].lessRecently = res;
 	res->lessRecently->moreRecently = res;
 
-	if (res->reldata.rd_fd < 0)		/* file doesn't exist */
-		return(NULL);
+	if (res->reldata.rd_fd < 0) /* file doesn't exist */
+		return (NULL);
 
-	return(&(res->reldata));
+	return (&(res->reldata));
 }

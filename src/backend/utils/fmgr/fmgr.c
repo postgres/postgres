@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.50 2001/02/10 02:31:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.51 2001/03/22 03:59:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,10 @@
  */
 #if defined(__mc68000__) && defined(__ELF__)
 typedef int32 ((*func_ptr) ());
+
 #else
 typedef char *((*func_ptr) ());
+
 #endif
 
 /*
@@ -50,8 +52,8 @@ typedef char *((*func_ptr) ());
 typedef struct
 {
 	func_ptr	func;			/* Address of the oldstyle function */
-	bool		arg_toastable[FUNC_MAX_ARGS]; /* is n'th arg of a toastable
-											   * datatype? */
+	bool		arg_toastable[FUNC_MAX_ARGS];	/* is n'th arg of a
+												 * toastable datatype? */
 } Oldstyle_fnextra;
 
 
@@ -62,23 +64,24 @@ static Datum fmgr_untrusted(PG_FUNCTION_ARGS);
 
 
 /*
- * Lookup routines for builtin-function table.  We can search by either Oid
+ * Lookup routines for builtin-function table.	We can search by either Oid
  * or name, but search by Oid is much faster.
  */
 
 static const FmgrBuiltin *
 fmgr_isbuiltin(Oid id)
 {
-	int		low = 0;
-	int		high = fmgr_nbuiltins - 1;
+	int			low = 0;
+	int			high = fmgr_nbuiltins - 1;
 
-	/* Loop invariant: low is the first index that could contain target
+	/*
+	 * Loop invariant: low is the first index that could contain target
 	 * entry, and high is the last index that could contain it.
 	 */
 	while (low <= high)
 	{
-		int					i = (high + low) / 2;
-		const FmgrBuiltin  *ptr = &fmgr_builtins[i];
+		int			i = (high + low) / 2;
+		const FmgrBuiltin *ptr = &fmgr_builtins[i];
 
 		if (id == ptr->foid)
 			return ptr;
@@ -96,15 +99,15 @@ fmgr_isbuiltin(Oid id)
  * routine.
  */
 static const FmgrBuiltin *
-fmgr_lookupByName(const char *name) 
+fmgr_lookupByName(const char *name)
 {
-	int i;
+	int			i;
 
 	for (i = 0; i < fmgr_nbuiltins; i++)
 	{
 		if (strcmp(name, fmgr_builtins[i].funcName) == 0)
 			return fmgr_builtins + i;
-    }
+	}
 	return (const FmgrBuiltin *) NULL;
 }
 
@@ -126,8 +129,10 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 
 	if ((fbp = fmgr_isbuiltin(functionId)) != NULL)
 	{
+
 		/*
-		 * Fast path for builtin functions: don't bother consulting pg_proc
+		 * Fast path for builtin functions: don't bother consulting
+		 * pg_proc
 		 */
 		finfo->fn_nargs = fbp->nargs;
 		finfo->fn_strict = fbp->strict;
@@ -160,18 +165,18 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 	switch (procedureStruct->prolang)
 	{
 		case INTERNALlanguageId:
+
 			/*
-			 * For an ordinary builtin function, we should never get
-			 * here because the isbuiltin() search above will have
-			 * succeeded. However, if the user has done a CREATE
-			 * FUNCTION to create an alias for a builtin function, we
-			 * can end up here.  In that case we have to look up the
-			 * function by name.  The name of the internal function is
-			 * stored in prosrc (it doesn't have to be the same as the
-			 * name of the alias!)
+			 * For an ordinary builtin function, we should never get here
+			 * because the isbuiltin() search above will have succeeded.
+			 * However, if the user has done a CREATE FUNCTION to create
+			 * an alias for a builtin function, we can end up here.  In
+			 * that case we have to look up the function by name.  The
+			 * name of the internal function is stored in prosrc (it
+			 * doesn't have to be the same as the name of the alias!)
 			 */
 			prosrc = DatumGetCString(DirectFunctionCall1(textout,
-								PointerGetDatum(&procedureStruct->prosrc)));
+							 PointerGetDatum(&procedureStruct->prosrc)));
 			fbp = fmgr_lookupByName(prosrc);
 			if (fbp == NULL)
 				elog(ERROR, "fmgr_info: function %s not in internal table",
@@ -240,7 +245,11 @@ fmgr_info_C_lang(FmgrInfo *finfo, HeapTuple procedureTuple)
 		case 0:
 			/* Old style: need to use a handler */
 			finfo->fn_addr = fmgr_oldstyle;
-			/* OK to use palloc here because fn_mcxt is CurrentMemoryContext */
+
+			/*
+			 * OK to use palloc here because fn_mcxt is
+			 * CurrentMemoryContext
+			 */
 			fnextra = (Oldstyle_fnextra *) palloc(sizeof(Oldstyle_fnextra));
 			finfo->fn_extra = (void *) fnextra;
 			MemSet(fnextra, 0, sizeof(Oldstyle_fnextra));
@@ -290,10 +299,11 @@ fmgr_info_other_lang(FmgrInfo *finfo, HeapTuple procedureTuple)
 
 		fmgr_info(languageStruct->lanplcallfoid, &plfinfo);
 		finfo->fn_addr = plfinfo.fn_addr;
+
 		/*
-		 * If lookup of the PL handler function produced nonnull
-		 * fn_extra, complain --- it must be an oldstyle function!
-		 * We no longer support oldstyle PL handlers.
+		 * If lookup of the PL handler function produced nonnull fn_extra,
+		 * complain --- it must be an oldstyle function! We no longer
+		 * support oldstyle PL handlers.
 		 */
 		if (plfinfo.fn_extra != NULL)
 			elog(ERROR, "fmgr_info: language %u has old-style handler",
@@ -325,7 +335,7 @@ fetch_finfo_record(char *filename, char *funcname)
 	char	   *infofuncname;
 	PGFInfoFunction infofunc;
 	Pg_finfo_record *inforec;
-	static Pg_finfo_record default_inforec = { 0 };
+	static Pg_finfo_record default_inforec = {0};
 
 	/* Compute name of info func */
 	infofuncname = (char *) palloc(strlen(funcname) + 10);
@@ -343,7 +353,7 @@ fetch_finfo_record(char *filename, char *funcname)
 	}
 
 	/* Found, so call it */
-	inforec = (*infofunc)();
+	inforec = (*infofunc) ();
 
 	/* Validate result as best we can */
 	if (inforec == NULL)
@@ -399,10 +409,11 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 	fnextra = (Oldstyle_fnextra *) fcinfo->flinfo->fn_extra;
 
 	/*
-	 * Result is NULL if any argument is NULL, but we still call the function
-	 * (peculiar, but that's the way it worked before, and after all this is
-	 * a backwards-compatibility wrapper).  Note, however, that we'll never
-	 * get here with NULL arguments if the function is marked strict.
+	 * Result is NULL if any argument is NULL, but we still call the
+	 * function (peculiar, but that's the way it worked before, and after
+	 * all this is a backwards-compatibility wrapper).	Note, however,
+	 * that we'll never get here with NULL arguments if the function is
+	 * marked strict.
 	 *
 	 * We also need to detoast any TOAST-ed inputs, since it's unlikely that
 	 * an old-style function knows about TOASTing.
@@ -425,12 +436,13 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 			returnValue = (*user_fn) ();
 			break;
 		case 1:
+
 			/*
 			 * nullvalue() used to use isNull to check if arg is NULL;
-			 * perhaps there are other functions still out there that
-			 * also rely on this undocumented hack?
+			 * perhaps there are other functions still out there that also
+			 * rely on this undocumented hack?
 			 */
-			returnValue = (*user_fn) (fcinfo->arg[0], & fcinfo->isnull);
+			returnValue = (*user_fn) (fcinfo->arg[0], &fcinfo->isnull);
 			break;
 		case 2:
 			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1]);
@@ -534,16 +546,17 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 									  fcinfo->arg[14], fcinfo->arg[15]);
 			break;
 		default:
+
 			/*
-			 * Increasing FUNC_MAX_ARGS doesn't automatically add cases
-			 * to the above code, so mention the actual value in this error
+			 * Increasing FUNC_MAX_ARGS doesn't automatically add cases to
+			 * the above code, so mention the actual value in this error
 			 * not FUNC_MAX_ARGS.  You could add cases to the above if you
 			 * needed to support old-style functions with many arguments,
 			 * but making 'em be new-style is probably a better idea.
 			 */
 			elog(ERROR, "fmgr_oldstyle: function %u: too many arguments (%d > %d)",
 				 fcinfo->flinfo->fn_oid, n_arguments, 16);
-			returnValue = NULL;	/* keep compiler quiet */
+			returnValue = NULL; /* keep compiler quiet */
 			break;
 	}
 
@@ -557,6 +570,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 static Datum
 fmgr_untrusted(PG_FUNCTION_ARGS)
 {
+
 	/*
 	 * Currently these are unsupported.  Someday we might do something
 	 * like forking a subprocess to execute 'em.
@@ -573,20 +587,20 @@ fmgr_untrusted(PG_FUNCTION_ARGS)
 
 /* These are for invocation of a specifically named function with a
  * directly-computed parameter list.  Note that neither arguments nor result
- * are allowed to be NULL.  Also, the function cannot be one that needs to
+ * are allowed to be NULL.	Also, the function cannot be one that needs to
  * look at FmgrInfo, since there won't be any.
  */
 Datum
 DirectFunctionCall1(PGFunction func, Datum arg1)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.nargs = 1;
 	fcinfo.arg[0] = arg1;
 
-	result = (* func) (&fcinfo);
+	result = (*func) (&fcinfo);
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
@@ -599,15 +613,15 @@ DirectFunctionCall1(PGFunction func, Datum arg1)
 Datum
 DirectFunctionCall2(PGFunction func, Datum arg1, Datum arg2)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.nargs = 2;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 
-	result = (* func) (&fcinfo);
+	result = (*func) (&fcinfo);
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
@@ -621,8 +635,8 @@ Datum
 DirectFunctionCall3(PGFunction func, Datum arg1, Datum arg2,
 					Datum arg3)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.nargs = 3;
@@ -630,7 +644,7 @@ DirectFunctionCall3(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
 
-	result = (* func) (&fcinfo);
+	result = (*func) (&fcinfo);
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
@@ -644,8 +658,8 @@ Datum
 DirectFunctionCall4(PGFunction func, Datum arg1, Datum arg2,
 					Datum arg3, Datum arg4)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.nargs = 4;
@@ -654,7 +668,7 @@ DirectFunctionCall4(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.arg[2] = arg3;
 	fcinfo.arg[3] = arg4;
 
-	result = (* func) (&fcinfo);
+	result = (*func) (&fcinfo);
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
@@ -668,8 +682,8 @@ Datum
 DirectFunctionCall5(PGFunction func, Datum arg1, Datum arg2,
 					Datum arg3, Datum arg4, Datum arg5)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.nargs = 5;
@@ -679,7 +693,7 @@ DirectFunctionCall5(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.arg[3] = arg4;
 	fcinfo.arg[4] = arg5;
 
-	result = (* func) (&fcinfo);
+	result = (*func) (&fcinfo);
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
@@ -694,8 +708,8 @@ DirectFunctionCall6(PGFunction func, Datum arg1, Datum arg2,
 					Datum arg3, Datum arg4, Datum arg5,
 					Datum arg6)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.nargs = 6;
@@ -706,7 +720,7 @@ DirectFunctionCall6(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.arg[4] = arg5;
 	fcinfo.arg[5] = arg6;
 
-	result = (* func) (&fcinfo);
+	result = (*func) (&fcinfo);
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
@@ -721,8 +735,8 @@ DirectFunctionCall7(PGFunction func, Datum arg1, Datum arg2,
 					Datum arg3, Datum arg4, Datum arg5,
 					Datum arg6, Datum arg7)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.nargs = 7;
@@ -734,7 +748,7 @@ DirectFunctionCall7(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.arg[5] = arg6;
 	fcinfo.arg[6] = arg7;
 
-	result = (* func) (&fcinfo);
+	result = (*func) (&fcinfo);
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
@@ -749,8 +763,8 @@ DirectFunctionCall8(PGFunction func, Datum arg1, Datum arg2,
 					Datum arg3, Datum arg4, Datum arg5,
 					Datum arg6, Datum arg7, Datum arg8)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.nargs = 8;
@@ -763,7 +777,7 @@ DirectFunctionCall8(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.arg[6] = arg7;
 	fcinfo.arg[7] = arg8;
 
-	result = (* func) (&fcinfo);
+	result = (*func) (&fcinfo);
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
@@ -779,8 +793,8 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 					Datum arg6, Datum arg7, Datum arg8,
 					Datum arg9)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.nargs = 9;
@@ -794,7 +808,7 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.arg[7] = arg8;
 	fcinfo.arg[8] = arg9;
 
-	result = (* func) (&fcinfo);
+	result = (*func) (&fcinfo);
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
@@ -812,11 +826,11 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 Datum
 FunctionCall1(FmgrInfo *flinfo, Datum arg1)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = flinfo;
+	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 1;
 	fcinfo.arg[0] = arg1;
 
@@ -833,11 +847,11 @@ FunctionCall1(FmgrInfo *flinfo, Datum arg1)
 Datum
 FunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = flinfo;
+	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 2;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -856,11 +870,11 @@ Datum
 FunctionCall3(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 			  Datum arg3)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = flinfo;
+	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 3;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -880,11 +894,11 @@ Datum
 FunctionCall4(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 			  Datum arg3, Datum arg4)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = flinfo;
+	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 4;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -905,11 +919,11 @@ Datum
 FunctionCall5(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 			  Datum arg3, Datum arg4, Datum arg5)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = flinfo;
+	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 5;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -932,11 +946,11 @@ FunctionCall6(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 			  Datum arg3, Datum arg4, Datum arg5,
 			  Datum arg6)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = flinfo;
+	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 6;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -960,11 +974,11 @@ FunctionCall7(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 			  Datum arg3, Datum arg4, Datum arg5,
 			  Datum arg6, Datum arg7)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = flinfo;
+	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 7;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -989,11 +1003,11 @@ FunctionCall8(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 			  Datum arg3, Datum arg4, Datum arg5,
 			  Datum arg6, Datum arg7, Datum arg8)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = flinfo;
+	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 8;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1020,11 +1034,11 @@ FunctionCall9(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 			  Datum arg6, Datum arg7, Datum arg8,
 			  Datum arg9)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = flinfo;
+	fcinfo.flinfo = flinfo;
 	fcinfo.nargs = 9;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1049,21 +1063,21 @@ FunctionCall9(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 
 /* These are for invocation of a function identified by OID with a
  * directly-computed parameter list.  Note that neither arguments nor result
- * are allowed to be NULL.  These are essentially fmgr_info() followed
- * by FunctionCallN().  If the same function is to be invoked repeatedly,
+ * are allowed to be NULL.	These are essentially fmgr_info() followed
+ * by FunctionCallN().	If the same function is to be invoked repeatedly,
  * do the fmgr_info() once and then use FunctionCallN().
  */
 Datum
 OidFunctionCall1(Oid functionId, Datum arg1)
 {
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	fmgr_info(functionId, &flinfo);
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
+	fcinfo.flinfo = &flinfo;
 	fcinfo.nargs = 1;
 	fcinfo.arg[0] = arg1;
 
@@ -1080,14 +1094,14 @@ OidFunctionCall1(Oid functionId, Datum arg1)
 Datum
 OidFunctionCall2(Oid functionId, Datum arg1, Datum arg2)
 {
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	fmgr_info(functionId, &flinfo);
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
+	fcinfo.flinfo = &flinfo;
 	fcinfo.nargs = 2;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1106,14 +1120,14 @@ Datum
 OidFunctionCall3(Oid functionId, Datum arg1, Datum arg2,
 				 Datum arg3)
 {
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	fmgr_info(functionId, &flinfo);
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
+	fcinfo.flinfo = &flinfo;
 	fcinfo.nargs = 3;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1133,14 +1147,14 @@ Datum
 OidFunctionCall4(Oid functionId, Datum arg1, Datum arg2,
 				 Datum arg3, Datum arg4)
 {
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	fmgr_info(functionId, &flinfo);
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
+	fcinfo.flinfo = &flinfo;
 	fcinfo.nargs = 4;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1161,14 +1175,14 @@ Datum
 OidFunctionCall5(Oid functionId, Datum arg1, Datum arg2,
 				 Datum arg3, Datum arg4, Datum arg5)
 {
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	fmgr_info(functionId, &flinfo);
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
+	fcinfo.flinfo = &flinfo;
 	fcinfo.nargs = 5;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1191,14 +1205,14 @@ OidFunctionCall6(Oid functionId, Datum arg1, Datum arg2,
 				 Datum arg3, Datum arg4, Datum arg5,
 				 Datum arg6)
 {
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	fmgr_info(functionId, &flinfo);
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
+	fcinfo.flinfo = &flinfo;
 	fcinfo.nargs = 6;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1222,14 +1236,14 @@ OidFunctionCall7(Oid functionId, Datum arg1, Datum arg2,
 				 Datum arg3, Datum arg4, Datum arg5,
 				 Datum arg6, Datum arg7)
 {
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	fmgr_info(functionId, &flinfo);
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
+	fcinfo.flinfo = &flinfo;
 	fcinfo.nargs = 7;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1254,14 +1268,14 @@ OidFunctionCall8(Oid functionId, Datum arg1, Datum arg2,
 				 Datum arg3, Datum arg4, Datum arg5,
 				 Datum arg6, Datum arg7, Datum arg8)
 {
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	fmgr_info(functionId, &flinfo);
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
+	fcinfo.flinfo = &flinfo;
 	fcinfo.nargs = 8;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1288,14 +1302,14 @@ OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 				 Datum arg6, Datum arg7, Datum arg8,
 				 Datum arg9)
 {
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
 
 	fmgr_info(functionId, &flinfo);
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
+	fcinfo.flinfo = &flinfo;
 	fcinfo.nargs = 9;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1332,15 +1346,15 @@ OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 char *
 fmgr(Oid procedureId,...)
 {
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	int						n_arguments;
-	Datum					result;
+	FmgrInfo	flinfo;
+	FunctionCallInfoData fcinfo;
+	int			n_arguments;
+	Datum		result;
 
 	fmgr_info(procedureId, &flinfo);
 
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
+	fcinfo.flinfo = &flinfo;
 	fcinfo.nargs = flinfo.fn_nargs;
 	n_arguments = fcinfo.nargs;
 
@@ -1430,7 +1444,7 @@ pg_detoast_datum_copy(struct varlena * datum)
 	else
 	{
 		/* Make a modifiable copy of the varlena object */
-		Size			len = VARSIZE(datum);
+		Size		len = VARSIZE(datum);
 		struct varlena *result = (struct varlena *) palloc(len);
 
 		memcpy(result, datum, len);

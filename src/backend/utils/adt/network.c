@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.28 2000/12/22 18:00:20 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.29 2001/03/22 03:59:52 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -21,7 +21,7 @@
 
 
 static int32 network_cmp_internal(inet *a1, inet *a2);
-static int v4bitncmp(unsigned long a1, unsigned long a2, int bits);
+static int	v4bitncmp(unsigned long a1, unsigned long a2, int bits);
 static bool v4addressOK(unsigned long a1, int bits);
 
 /*
@@ -66,12 +66,12 @@ network_in(char *src, int type)
 	}
 
 	/*
-	 * Error check: CIDR values must not have any bits set beyond the masklen.
-	 * XXX this code is not IPV6 ready.
+	 * Error check: CIDR values must not have any bits set beyond the
+	 * masklen. XXX this code is not IPV6 ready.
 	 */
 	if (type)
 	{
-		if (! v4addressOK(ip_v4addr(dst), bits))
+		if (!v4addressOK(ip_v4addr(dst), bits))
 			elog(ERROR, "invalid CIDR value '%s': has bits set to right of mask", src);
 	}
 
@@ -116,7 +116,9 @@ inet_out(PG_FUNCTION_ARGS)
 	if (ip_family(src) == AF_INET)
 	{
 		/* It's an IP V4 address: */
-		/* Use inet style for both inet and cidr, since we don't want
+
+		/*
+		 * Use inet style for both inet and cidr, since we don't want
 		 * abbreviated CIDR style here.
 		 */
 		dst = inet_net_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
@@ -162,7 +164,7 @@ network_cmp_internal(inet *a1, inet *a2)
 {
 	if (ip_family(a1) == AF_INET && ip_family(a2) == AF_INET)
 	{
-		int		order;
+		int			order;
 
 		order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2),
 						  Min(ip_bits(a1), ip_bits(a2)));
@@ -260,7 +262,7 @@ network_sub(PG_FUNCTION_ARGS)
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) > ip_bits(a2)
-			&& v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0);
+		   && v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0);
 	}
 	else
 	{
@@ -280,7 +282,7 @@ network_subeq(PG_FUNCTION_ARGS)
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) >= ip_bits(a2)
-			&& v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0);
+		   && v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0);
 	}
 	else
 	{
@@ -300,7 +302,7 @@ network_sup(PG_FUNCTION_ARGS)
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) < ip_bits(a2)
-			&& v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0);
+		   && v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0);
 	}
 	else
 	{
@@ -320,7 +322,7 @@ network_supeq(PG_FUNCTION_ARGS)
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) <= ip_bits(a2)
-			&& v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0);
+		   && v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0);
 	}
 	else
 	{
@@ -456,8 +458,9 @@ network_broadcast(PG_FUNCTION_ARGS)
 		/* It's an IP V4 address: */
 		unsigned long mask = 0xffffffff;
 
-		/* Shifting by 32 or more bits does not yield portable results,
-		 * so don't try it.
+		/*
+		 * Shifting by 32 or more bits does not yield portable results, so
+		 * don't try it.
 		 */
 		if (ip_bits(ip) < 32)
 			mask >>= ip_bits(ip);
@@ -495,8 +498,9 @@ network_network(PG_FUNCTION_ARGS)
 		/* It's an IP V4 address: */
 		unsigned long mask = 0xffffffff;
 
-		/* Shifting by 32 or more bits does not yield portable results,
-		 * so don't try it.
+		/*
+		 * Shifting by 32 or more bits does not yield portable results, so
+		 * don't try it.
 		 */
 		if (ip_bits(ip) > 0)
 			mask <<= (32 - ip_bits(ip));
@@ -534,8 +538,9 @@ network_netmask(PG_FUNCTION_ARGS)
 		/* It's an IP V4 address: */
 		unsigned long mask = 0xffffffff;
 
-		/* Shifting by 32 or more bits does not yield portable results,
-		 * so don't try it.
+		/*
+		 * Shifting by 32 or more bits does not yield portable results, so
+		 * don't try it.
 		 */
 		if (ip_bits(ip) > 0)
 			mask <<= (32 - ip_bits(ip));
@@ -568,8 +573,9 @@ v4bitncmp(unsigned long a1, unsigned long a2, int bits)
 {
 	unsigned long mask;
 
-	/* Shifting by 32 or more bits does not yield portable results,
-	 * so don't try it.
+	/*
+	 * Shifting by 32 or more bits does not yield portable results, so
+	 * don't try it.
 	 */
 	if (bits > 0)
 		mask = (0xFFFFFFFFL << (32 - bits)) & 0xFFFFFFFFL;
@@ -592,8 +598,9 @@ v4addressOK(unsigned long a1, int bits)
 {
 	unsigned long mask;
 
-	/* Shifting by 32 or more bits does not yield portable results,
-	 * so don't try it.
+	/*
+	 * Shifting by 32 or more bits does not yield portable results, so
+	 * don't try it.
 	 */
 	if (bits > 0)
 		mask = (0xFFFFFFFFL << (32 - bits)) & 0xFFFFFFFFL;

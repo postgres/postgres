@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuplestore.h,v 1.2 2001/01/24 19:43:29 momjian Exp $
+ * $Id: tuplestore.h,v 1.3 2001/03/22 04:01:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,14 +33,14 @@ typedef struct Tuplestorestate Tuplestorestate;
  */
 
 extern Tuplestorestate *tuplestore_begin_heap(bool randomAccess,
-											  int maxKBytes);
+					  int maxKBytes);
 
 extern void tuplestore_puttuple(Tuplestorestate *state, void *tuple);
 
 extern void tuplestore_donestoring(Tuplestorestate *state);
 
 extern void *tuplestore_gettuple(Tuplestorestate *state, bool forward,
-								 bool *should_free);
+					bool *should_free);
 
 #define tuplestore_getheaptuple(state, forward, should_free) \
 	((HeapTuple) tuplestore_gettuple(state, forward, should_free))

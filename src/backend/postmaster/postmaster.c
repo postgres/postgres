@@ -7,7 +7,7 @@
  *	  message to setup a backend process.
  *
  *	  The postmaster also manages system-wide operations such as
- *	  startup, shutdown, and periodic checkpoints.  The postmaster
+ *	  startup, shutdown, and periodic checkpoints.	The postmaster
  *	  itself doesn't do those operations, mind you --- it just forks
  *	  off a subprocess to do them at the right times.  It also takes
  *	  care of resetting the system if a backend crashes.
@@ -15,7 +15,7 @@
  *	  The postmaster process creates the shared memory and semaphore
  *	  pools during startup, but as a rule does not touch them itself.
  *	  In particular, it is not a member of the PROC array of backends
- *	  and so it cannot participate in lock-manager operations.  Keeping
+ *	  and so it cannot participate in lock-manager operations.	Keeping
  *	  the postmaster away from shared memory operations makes it simpler
  *	  and more reliable.  The postmaster is almost always able to recover
  *	  from crashes of individual backends by resetting shared memory;
@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.210 2001/03/14 17:58:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.211 2001/03/22 03:59:43 momjian Exp $
  *
  * NOTES
  *
@@ -127,9 +127,9 @@ static Dllist *BackendList;
 static Dllist *PortList;
 
 /* The socket number we are listening for connections on */
-int PostPortNumber;
-char *UnixSocketDir;
-char *VirtualHost;
+int			PostPortNumber;
+char	   *UnixSocketDir;
+char	   *VirtualHost;
 
 /*
  * MaxBackends is the actual limit on the number of backends we will
@@ -139,7 +139,7 @@ char *VirtualHost;
  * memory area as well as cause the postmaster to grab more kernel
  * semaphores, even if you never actually use that many backends.
  */
-int	MaxBackends = DEF_MAXBACKENDS;
+int			MaxBackends = DEF_MAXBACKENDS;
 
 
 static char *progname = (char *) NULL;
@@ -158,10 +158,12 @@ static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
 
 #ifdef HAVE_UNIX_SOCKETS
 static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
+
 #endif
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;		/* Global SSL context */
+
 #endif
 
 /*
@@ -179,16 +181,16 @@ static char ExtraOptions[MAXPGPATH];
 static bool Reinit = true;
 static int	SendStop = false;
 
-bool NetServer = false;	/* listen on TCP/IP */
-bool EnableSSL = false;
-bool SilentMode = false;	/* silent mode (-S) */
+bool		NetServer = false;	/* listen on TCP/IP */
+bool		EnableSSL = false;
+bool		SilentMode = false; /* silent mode (-S) */
 
-int				CheckPointTimeout = 300;
+int			CheckPointTimeout = 300;
 
-static pid_t	StartupPID = 0,
-				ShutdownPID = 0,
-				CheckPointPID = 0;
-static time_t	checkpointed = 0;
+static pid_t StartupPID = 0,
+			ShutdownPID = 0,
+			CheckPointPID = 0;
+static time_t checkpointed = 0;
 
 #define			NoShutdown		0
 #define			SmartShutdown	1
@@ -196,7 +198,7 @@ static time_t	checkpointed = 0;
 
 static int	Shutdown = NoShutdown;
 
-static bool FatalError = false;	/* T if recovering from backend crash */
+static bool FatalError = false; /* T if recovering from backend crash */
 
 /*
  * State for assigning random salts and cancel keys.
@@ -262,7 +264,7 @@ checkDataDir(const char *checkdir)
 		fprintf(stderr, "%s does not know where to find the database system "
 				"data.  You must specify the directory that contains the "
 				"database system either by specifying the -D invocation "
-				"option or by setting the PGDATA environment variable.\n\n",
+			 "option or by setting the PGDATA environment variable.\n\n",
 				progname);
 		ExitPostmaster(2);
 	}
@@ -292,7 +294,7 @@ PostmasterMain(int argc, char *argv[])
 	int			opt;
 	int			status;
 	char		original_extraoptions[MAXPGPATH];
-	char       *potential_DataDir = NULL;
+	char	   *potential_DataDir = NULL;
 
 	IsUnderPostmaster = true;	/* so that backends know this */
 
@@ -303,22 +305,22 @@ PostmasterMain(int argc, char *argv[])
 	real_argc = argc;
 
 	/*
-	 * Catch standard options before doing much else.  This even works
-	 * on systems without getopt_long.
+	 * Catch standard options before doing much else.  This even works on
+	 * systems without getopt_long.
 	 */
 	if (argc > 1)
 	{
-		if (strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0)
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
 		{
 			usage(progname);
 			ExitPostmaster(0);
 		}
-		if (strcmp(argv[1], "--version")==0 || strcmp(argv[1], "-V")==0)
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
 			puts("postmaster (PostgreSQL) " PG_VERSION);
 			ExitPostmaster(0);
 		}
-	}		
+	}
 
 
 	/*
@@ -351,27 +353,26 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Options setup
 	 */
-	potential_DataDir = getenv("PGDATA"); /* default value */
+	potential_DataDir = getenv("PGDATA");		/* default value */
 
 	ResetAllOptions();
 
 	/*
-	 * First we must scan for a -D argument to get the data dir. Then
-	 * read the config file. Finally, scan all the other arguments.
-	 * (Command line switches override config file.)
+	 * First we must scan for a -D argument to get the data dir. Then read
+	 * the config file. Finally, scan all the other arguments. (Command
+	 * line switches override config file.)
 	 *
-	 * Note: The two lists of options must be exactly the same, even
-	 * though perhaps the first one would only have to be "D:" with
-	 * opterr turned off. But some versions of getopt (notably GNU)
-	 * are going to arbitrarily permute some "non-options" (according
-	 * to the local world view) which will result in some switches
-	 * being associated with the wrong argument. Death and destruction
-	 * will occur.
+	 * Note: The two lists of options must be exactly the same, even though
+	 * perhaps the first one would only have to be "D:" with opterr turned
+	 * off. But some versions of getopt (notably GNU) are going to
+	 * arbitrarily permute some "non-options" (according to the local
+	 * world view) which will result in some switches being associated
+	 * with the wrong argument. Death and destruction will occur.
 	 */
 	opterr = 1;
 	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != EOF)
 	{
-		switch(opt)
+		switch (opt)
 		{
 			case 'D':
 				potential_DataDir = optarg;
@@ -400,7 +401,7 @@ PostmasterMain(int argc, char *argv[])
 
 	IgnoreSystemIndexes(false);
 
-	optind = 1; /* start over */
+	optind = 1;					/* start over */
 #ifdef HAVE_INT_OPTRESET
 	optreset = 1;
 #endif
@@ -449,7 +450,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 #ifdef USE_SSL
 			case 'l':
-			        EnableSSL = true;
+				EnableSSL = true;
 				break;
 #endif
 			case 'm':
@@ -514,24 +515,25 @@ PostmasterMain(int argc, char *argv[])
 				break;
 			case 'c':
 			case '-':
-			{
-				char *name, *value;
-
-				ParseLongOption(optarg, &name, &value);
-				if (!value)
 				{
-					if (opt == '-')
-						elog(ERROR, "--%s requires argument", optarg);
-					else
-						elog(ERROR, "-c %s requires argument", optarg);
-				}
+					char	   *name,
+							   *value;
 
-				SetConfigOption(name, value, PGC_POSTMASTER);
-				free(name);
-				if (value)
-					free(value);
-				break;
-			}
+					ParseLongOption(optarg, &name, &value);
+					if (!value)
+					{
+						if (opt == '-')
+							elog(ERROR, "--%s requires argument", optarg);
+						else
+							elog(ERROR, "-c %s requires argument", optarg);
+					}
+
+					SetConfigOption(name, value, PGC_POSTMASTER);
+					free(name);
+					if (value)
+						free(value);
+					break;
+				}
 
 			default:
 				/* shouldn't get here */
@@ -583,11 +585,11 @@ PostmasterMain(int argc, char *argv[])
 	 *
 	 * We want to do this before we try to grab the input sockets, because
 	 * the data directory interlock is more reliable than the socket-file
-	 * interlock (thanks to whoever decided to put socket files in /tmp :-().
-	 * For the same reason, it's best to grab the TCP socket before the
-	 * Unix socket.
+	 * interlock (thanks to whoever decided to put socket files in /tmp
+	 * :-(). For the same reason, it's best to grab the TCP socket before
+	 * the Unix socket.
 	 */
-	if (! CreateDataDirLockFile(DataDir, true))
+	if (!CreateDataDirLockFile(DataDir, true))
 		ExitPostmaster(1);
 
 	/*
@@ -601,14 +603,14 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 	}
 	if (EnableSSL)
-	        InitSSL();
+		InitSSL();
 #endif
 
 	if (NetServer)
 	{
 		status = StreamServerPort(AF_INET, VirtualHost,
-						(unsigned short) PostPortNumber, UnixSocketDir,
-						&ServerSock_INET);
+						  (unsigned short) PostPortNumber, UnixSocketDir,
+								  &ServerSock_INET);
 		if (status != STATUS_OK)
 		{
 			fprintf(stderr, "%s: cannot create INET stream port\n",
@@ -619,8 +621,8 @@ PostmasterMain(int argc, char *argv[])
 
 #ifdef HAVE_UNIX_SOCKETS
 	status = StreamServerPort(AF_UNIX, VirtualHost,
-						(unsigned short) PostPortNumber, UnixSocketDir, 
-						&ServerSock_UNIX);
+						  (unsigned short) PostPortNumber, UnixSocketDir,
+							  &ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
 		fprintf(stderr, "%s: cannot create UNIX stream port\n",
@@ -644,8 +646,9 @@ PostmasterMain(int argc, char *argv[])
 	PortList = DLNewList();
 
 	/*
-	 * Record postmaster options.  We delay this till now to avoid recording
-	 * bogus options (eg, NBuffers too high for available memory).
+	 * Record postmaster options.  We delay this till now to avoid
+	 * recording bogus options (eg, NBuffers too high for available
+	 * memory).
 	 */
 	if (!CreateOptsFile(argc, argv))
 		ExitPostmaster(1);
@@ -656,13 +659,15 @@ PostmasterMain(int argc, char *argv[])
 	pqinitmask();
 	PG_SETMASK(&BlockSig);
 
-	pqsignal(SIGHUP, SIGHUP_handler);	/* reread config file and have children do same */
+	pqsignal(SIGHUP, SIGHUP_handler);	/* reread config file and have
+										 * children do same */
 	pqsignal(SIGINT, pmdie);	/* send SIGTERM and ShutdownDataBase */
 	pqsignal(SIGQUIT, pmdie);	/* send SIGQUIT and die */
 	pqsignal(SIGTERM, pmdie);	/* wait for children and ShutdownDataBase */
 	pqsignal(SIGALRM, SIG_IGN); /* ignored */
 	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
-	pqsignal(SIGUSR1, schedule_checkpoint);	/* start a background checkpoint */
+	pqsignal(SIGUSR1, schedule_checkpoint);		/* start a background
+												 * checkpoint */
 	pqsignal(SIGUSR2, pmdie);	/* send SIGUSR2, don't die */
 	pqsignal(SIGCHLD, reaper);	/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
@@ -677,7 +682,8 @@ PostmasterMain(int argc, char *argv[])
 	status = ServerLoop();
 
 	/*
-	 * ServerLoop probably shouldn't ever return, but if it does, close down.
+	 * ServerLoop probably shouldn't ever return, but if it does, close
+	 * down.
 	 */
 	ExitPostmaster(status != STATUS_OK);
 
@@ -749,7 +755,7 @@ usage(const char *progname)
 	printf("  -l              enable SSL connections\n");
 #endif
 	printf("  -N MAX-CONNECT  maximum number of allowed connections (1..%d, default %d)\n",
-			MAXBACKENDS, DEF_MAXBACKENDS);
+		   MAXBACKENDS, DEF_MAXBACKENDS);
 	printf("  -o OPTIONS      pass 'OPTIONS' to each backend server\n");
 	printf("  -p PORT         port number to listen on (default %d)\n", DEF_PGPORT);
 	printf("  -S              silent mode (start in background without logging output)\n");
@@ -782,20 +788,24 @@ ServerLoop(void)
 
 	for (;;)
 	{
-		Port		   *port;
-		fd_set			rmask,
-						wmask;
+		Port	   *port;
+		fd_set		rmask,
+					wmask;
 		struct timeval *timeout = NULL;
-		struct timeval	timeout_tv;
+		struct timeval timeout_tv;
 
 		if (CheckPointPID == 0 && checkpointed &&
 			Shutdown == NoShutdown && !FatalError)
 		{
-			time_t	now = time(NULL);
+			time_t		now = time(NULL);
 
 			if (CheckPointTimeout + checkpointed > now)
 			{
-				/* Not time for checkpoint yet, so set a timeout for select */
+
+				/*
+				 * Not time for checkpoint yet, so set a timeout for
+				 * select
+				 */
 				timeout_tv.tv_sec = CheckPointTimeout + checkpointed - now;
 				timeout_tv.tv_usec = 0;
 				timeout = &timeout_tv;
@@ -804,15 +814,18 @@ ServerLoop(void)
 			{
 				/* Time to make the checkpoint... */
 				CheckPointPID = CheckPointDataBase();
-				/* if fork failed, schedule another try at 0.1 normal delay */
+
+				/*
+				 * if fork failed, schedule another try at 0.1 normal
+				 * delay
+				 */
 				if (CheckPointPID == 0)
-				{
 					checkpointed = now - (9 * CheckPointTimeout) / 10;
-				}
 			}
 		}
 
 #ifdef USE_SSL
+
 		/*
 		 * If we are using SSL, there may be input data already read and
 		 * pending in SSL's input buffers.  If so, check for additional
@@ -955,19 +968,18 @@ ServerLoop(void)
 
 			if (status == STATUS_OK && port->pktInfo.state == Idle)
 			{
+
 				/*
 				 * Can we accept a connection now?
 				 *
-				 * Even though readStartupPacket() already checked,
-				 * we have to check again in case conditions changed
-				 * while negotiating authentication.
+				 * Even though readStartupPacket() already checked, we have
+				 * to check again in case conditions changed while
+				 * negotiating authentication.
 				 */
-				char   *rejectMsg = canAcceptConnections();
+				char	   *rejectMsg = canAcceptConnections();
 
 				if (rejectMsg != NULL)
-				{
 					PacketSendError(&port->pktInfo, rejectMsg);
-				}
 				else
 				{
 
@@ -1008,7 +1020,7 @@ ServerLoop(void)
 			}
 
 			curr = next;
-		} /* loop over active ports */
+		}						/* loop over active ports */
 	}
 }
 
@@ -1087,20 +1099,20 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 		if (send(port->sock, &SSLok, 1, 0) != 1)
 		{
 			perror("Failed to send SSL negotiation response");
-			return STATUS_ERROR; /* Close connection */
+			return STATUS_ERROR;/* Close connection */
 		}
 
 #ifdef USE_SSL
 		if (SSLok == 'S')
 		{
-		  if (!(port->ssl = SSL_new(SSL_context)) ||
-		      !SSL_set_fd(port->ssl, port->sock) ||
-		      SSL_accept(port->ssl) <= 0)
-		    {
-		      fprintf(stderr, "Failed to initialize SSL connection: %s, errno: %d (%s)\n",
-			      ERR_reason_error_string(ERR_get_error()), errno, strerror(errno));
-		      return STATUS_ERROR;
-		    }
+			if (!(port->ssl = SSL_new(SSL_context)) ||
+				!SSL_set_fd(port->ssl, port->sock) ||
+				SSL_accept(port->ssl) <= 0)
+			{
+				fprintf(stderr, "Failed to initialize SSL connection: %s, errno: %d (%s)\n",
+						ERR_reason_error_string(ERR_get_error()), errno, strerror(errno));
+				return STATUS_ERROR;
+			}
 		}
 #endif
 		/* ready for the normal startup packet */
@@ -1140,13 +1152,16 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 	if (port->database[0] == '\0')
 		StrNCpy(port->database, si->user, sizeof(port->database));
 
-	/* Truncate given database and user names to length of a Postgres name. */
+	/*
+	 * Truncate given database and user names to length of a Postgres
+	 * name.
+	 */
 	/* This avoids lookup failures when overlength names are given. */
 
 	if ((int) sizeof(port->database) >= NAMEDATALEN)
-		port->database[NAMEDATALEN-1] = '\0';
+		port->database[NAMEDATALEN - 1] = '\0';
 	if ((int) sizeof(port->user) >= NAMEDATALEN)
-		port->user[NAMEDATALEN-1] = '\0';
+		port->user[NAMEDATALEN - 1] = '\0';
 
 	/* Check a user name was given. */
 
@@ -1158,8 +1173,8 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 	}
 
 	/*
-	 * If we're going to reject the connection due to database state,
-	 * say so now instead of wasting cycles on an authentication exchange.
+	 * If we're going to reject the connection due to database state, say
+	 * so now instead of wasting cycles on an authentication exchange.
 	 * (This also allows a pg_ping utility to be written.)
 	 */
 	rejectMsg = canAcceptConnections();
@@ -1358,13 +1373,15 @@ ClosePostmasterPorts(Port *myConn)
 static void
 reset_shared(unsigned short port)
 {
+
 	/*
-	 * Reset assignment of shared mem and semaphore IPC keys.
-	 * Doing this means that in normal cases we'll assign the same keys
-	 * on each "cycle of life", and thereby avoid leaving dead IPC objects
+	 * Reset assignment of shared mem and semaphore IPC keys. Doing this
+	 * means that in normal cases we'll assign the same keys on each
+	 * "cycle of life", and thereby avoid leaving dead IPC objects
 	 * floating around if the postmaster crashes and is restarted.
 	 */
 	IpcInitKeyAssignment(port);
+
 	/*
 	 * Create or re-create shared memory and semaphores.
 	 */
@@ -1540,10 +1557,13 @@ static void
 reaper(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
+
 #ifdef HAVE_WAITPID
 	int			status;			/* backend exit status */
+
 #else
 	union wait	status;			/* backend exit status */
+
 #endif
 	int			exitstatus;
 	int			pid;			/* process id of dead backend */
@@ -1589,7 +1609,7 @@ reaper(SIGNAL_ARGS)
 				ExitPostmaster(1);
 			}
 			StartupPID = 0;
-			FatalError = false;	/* done with recovery */
+			FatalError = false; /* done with recovery */
 			if (Shutdown > NoShutdown)
 			{
 				if (ShutdownPID > 0)
@@ -1618,7 +1638,8 @@ reaper(SIGNAL_ARGS)
 	{
 
 		/*
-		 * Wait for all children exit, then reset shmem and StartupDataBase.
+		 * Wait for all children exit, then reset shmem and
+		 * StartupDataBase.
 		 */
 		if (DLGetHead(BackendList) || StartupPID > 0 || ShutdownPID > 0)
 		{
@@ -1735,14 +1756,15 @@ CleanupProc(int pid,
 		bp = (Backend *) DLE_VAL(curr);
 		if (bp->pid != pid)
 		{
+
 			/*
 			 * This backend is still alive.  Unless we did so already,
 			 * tell it to commit hara-kiri.
 			 *
 			 * SIGQUIT is the special signal that says exit without proc_exit
-			 * and let the user know what's going on. But if SendStop is set
-			 * (-s on command line), then we send SIGSTOP instead, so that we
-			 * can get core dumps from all backends by hand.
+			 * and let the user know what's going on. But if SendStop is
+			 * set (-s on command line), then we send SIGSTOP instead, so
+			 * that we can get core dumps from all backends by hand.
 			 */
 			if (!FatalError)
 			{
@@ -1756,12 +1778,13 @@ CleanupProc(int pid,
 		}
 		else
 		{
+
 			/*
 			 * Found entry for freshly-dead backend, so remove it.
 			 *
-			 * Don't call ProcRemove() here, since shmem may be corrupted!
-			 * We are going to reinitialize shmem and semaphores anyway
-			 * once all the children are dead, so no need for it.
+			 * Don't call ProcRemove() here, since shmem may be corrupted! We
+			 * are going to reinitialize shmem and semaphores anyway once
+			 * all the children are dead, so no need for it.
 			 */
 			DLRemove(curr);
 			free(bp);
@@ -2278,7 +2301,7 @@ static pid_t
 SSDataBase(int xlop)
 {
 	pid_t		pid;
-	Backend	   *bn;
+	Backend    *bn;
 
 	fflush(stdout);
 	fflush(stderr);
@@ -2340,13 +2363,14 @@ SSDataBase(int xlop)
 #endif
 
 		fprintf(stderr, "%s Data Base: fork failed: %s\n",
-				((xlop == BS_XLOG_STARTUP) ? "Startup" : 
+				((xlop == BS_XLOG_STARTUP) ? "Startup" :
 				 ((xlop == BS_XLOG_CHECKPOINT) ? "CheckPoint" :
 				  "Shutdown")),
 				strerror(errno));
+
 		/*
-		 * fork failure is fatal during startup/shutdown, but there's
-		 * no need to choke if a routine checkpoint fails.
+		 * fork failure is fatal during startup/shutdown, but there's no
+		 * need to choke if a routine checkpoint fails.
 		 */
 		if (xlop == BS_XLOG_CHECKPOINT)
 			return 0;
@@ -2354,9 +2378,9 @@ SSDataBase(int xlop)
 	}
 
 	/*
-	 * The startup and shutdown processes are not considered normal backends,
-	 * but the checkpoint process is.  Checkpoint must be added to the list
-	 * of backends.
+	 * The startup and shutdown processes are not considered normal
+	 * backends, but the checkpoint process is.  Checkpoint must be added
+	 * to the list of backends.
 	 */
 	if (xlop == BS_XLOG_CHECKPOINT)
 	{
@@ -2372,9 +2396,9 @@ SSDataBase(int xlop)
 		DLAddHead(BackendList, DLNewElem(bn));
 
 		/*
-		 * Since this code is executed periodically, it's a fine
-		 * place to do other actions that should happen every now
-		 * and then on no particular schedule.  Such as...
+		 * Since this code is executed periodically, it's a fine place to
+		 * do other actions that should happen every now and then on no
+		 * particular schedule.  Such as...
 		 */
 		TouchSocketLockFile();
 	}
@@ -2389,10 +2413,10 @@ SSDataBase(int xlop)
 static bool
 CreateOptsFile(int argc, char *argv[])
 {
-	char    fullprogname[MAXPGPATH];
-	char   *filename;
-	FILE   *fp;
-	unsigned i;
+	char		fullprogname[MAXPGPATH];
+	char	   *filename;
+	FILE	   *fp;
+	unsigned	i;
 
 	if (FindExec(fullprogname, argv[0], "postmaster") == -1)
 		return false;

@@ -23,7 +23,7 @@ main(int argc, char **argv)
 				avarchar[51],
 				atext[51];
 	time_t		aabstime;
-	char	    optstr[256];
+	char		optstr[256];
 
 	if (argc != 2)
 		halt("Usage:  %s database\n", argv[0]);

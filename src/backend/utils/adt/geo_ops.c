@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.57 2001/01/24 19:43:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.58 2001/03/22 03:59:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,11 +484,11 @@ box_ov(BOX *box1, BOX *box2)
 			 FPle(box1->low.x, box2->high.x)) ||
 			(FPge(box2->high.x, box1->high.x) &&
 			 FPle(box2->low.x, box1->high.x)))
-		&&
-		((FPge(box1->high.y, box2->high.y) &&
-		  FPle(box1->low.y, box2->high.y)) ||
-		 (FPge(box2->high.y, box1->high.y) &&
-		  FPle(box2->low.y, box1->high.y)));
+	&&
+	((FPge(box1->high.y, box2->high.y) &&
+	  FPle(box1->low.y, box2->high.y)) ||
+	 (FPge(box2->high.y, box1->high.y) &&
+	  FPle(box2->low.y, box1->high.y)));
 }
 
 /*		box_overleft	-		is the right edge of box1 to the left of
@@ -811,8 +811,10 @@ line_in(PG_FUNCTION_ARGS)
 {
 #ifdef ENABLE_LINE_TYPE
 	char	   *str = PG_GETARG_CSTRING(0);
+
 #endif
 	LINE	   *line;
+
 #ifdef ENABLE_LINE_TYPE
 	LSEG		lseg;
 	int			isopen;
@@ -838,8 +840,10 @@ line_out(PG_FUNCTION_ARGS)
 {
 #ifdef ENABLE_LINE_TYPE
 	LINE	   *line = PG_GETARG_LINE_P(0);
+
 #endif
 	char	   *result;
+
 #ifdef ENABLE_LINE_TYPE
 	LSEG		lseg;
 
@@ -996,9 +1000,9 @@ line_intersect(PG_FUNCTION_ARGS)
 	LINE	   *l1 = PG_GETARG_LINE_P(0);
 	LINE	   *l2 = PG_GETARG_LINE_P(1);
 
-	PG_RETURN_BOOL(! DatumGetBool(DirectFunctionCall2(line_parallel,
-													  LinePGetDatum(l1),
-													  LinePGetDatum(l2))));
+	PG_RETURN_BOOL(!DatumGetBool(DirectFunctionCall2(line_parallel,
+													 LinePGetDatum(l1),
+													 LinePGetDatum(l2))));
 }
 
 Datum
@@ -1089,9 +1093,9 @@ line_distance(PG_FUNCTION_ARGS)
 	float8		result;
 	Point	   *tmp;
 
-	if (! DatumGetBool(DirectFunctionCall2(line_parallel,
-										   LinePGetDatum(l1),
-										   LinePGetDatum(l2))))
+	if (!DatumGetBool(DirectFunctionCall2(line_parallel,
+										  LinePGetDatum(l1),
+										  LinePGetDatum(l2))))
 		PG_RETURN_FLOAT8(0.0);
 	if (FPzero(l1->B))			/* vertical? */
 		PG_RETURN_FLOAT8(fabs(l1->C - l2->C));
@@ -1131,9 +1135,10 @@ line_interpt_internal(LINE *l1, LINE *l2)
 				y;
 
 	/*
-	 * NOTE: if the lines are identical then we will find they are parallel
-	 * and report "no intersection".  This is a little weird, but since
-	 * there's no *unique* intersection, maybe it's appropriate behavior.
+	 * NOTE: if the lines are identical then we will find they are
+	 * parallel and report "no intersection".  This is a little weird, but
+	 * since there's no *unique* intersection, maybe it's appropriate
+	 * behavior.
 	 */
 	if (DatumGetBool(DirectFunctionCall2(line_parallel,
 										 LinePGetDatum(l1),
@@ -1226,7 +1231,7 @@ path_in(PG_FUNCTION_ARGS)
 		depth++;
 	}
 
-	size = offsetof(PATH, p[0]) + sizeof(path->p[0]) * npts;
+	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
 
 	path->size = size;
@@ -1321,7 +1326,7 @@ path_isopen(PG_FUNCTION_ARGS)
 {
 	PATH	   *path = PG_GETARG_PATH_P(0);
 
-	PG_RETURN_BOOL(! path->closed);
+	PG_RETURN_BOOL(!path->closed);
 }
 
 Datum
@@ -1434,7 +1439,7 @@ path_distance(PG_FUNCTION_ARGS)
 
 			tmp = DatumGetFloat8(DirectFunctionCall2(lseg_distance,
 													 LsegPGetDatum(&seg1),
-													 LsegPGetDatum(&seg2)));
+												  LsegPGetDatum(&seg2)));
 			if (!have_min || tmp < min)
 			{
 				min = tmp;
@@ -1443,7 +1448,7 @@ path_distance(PG_FUNCTION_ARGS)
 		}
 	}
 
-	if (! have_min)
+	if (!have_min)
 		PG_RETURN_NULL();
 
 	PG_RETURN_FLOAT8(min);
@@ -1992,9 +1997,10 @@ lseg_interpt(PG_FUNCTION_ARGS)
 	result = line_interpt_internal(&tmp1, &tmp2);
 	if (!PointerIsValid(result))
 		PG_RETURN_NULL();
+
 	/*
-	 * If the line intersection point isn't within l1 (or equivalently l2),
-	 * there is no valid segment intersection point at all.
+	 * If the line intersection point isn't within l1 (or equivalently
+	 * l2), there is no valid segment intersection point at all.
 	 */
 	if (!on_ps_internal(result, l1) ||
 		!on_ps_internal(result, l2))
@@ -2002,10 +2008,11 @@ lseg_interpt(PG_FUNCTION_ARGS)
 		pfree(result);
 		PG_RETURN_NULL();
 	}
+
 	/*
 	 * If there is an intersection, then check explicitly for matching
-	 *	endpoints since there may be rounding effects with annoying
-	 *	lsb residue. - tgl 1997-07-09
+	 * endpoints since there may be rounding effects with annoying lsb
+	 * residue. - tgl 1997-07-09
 	 */
 	if ((FPeq(l1->p[0].x, l2->p[0].x) && FPeq(l1->p[0].y, l2->p[0].y)) ||
 		(FPeq(l1->p[0].x, l2->p[1].x) && FPeq(l1->p[0].y, l2->p[1].y)))
@@ -2014,7 +2021,7 @@ lseg_interpt(PG_FUNCTION_ARGS)
 		result->y = l1->p[0].y;
 	}
 	else if ((FPeq(l1->p[1].x, l2->p[0].x) && FPeq(l1->p[1].y, l2->p[0].y)) ||
-			 (FPeq(l1->p[1].x, l2->p[1].x) && FPeq(l1->p[1].y, l2->p[1].y)))
+		  (FPeq(l1->p[1].x, l2->p[1].x) && FPeq(l1->p[1].y, l2->p[1].y)))
 	{
 		result->x = l1->p[1].x;
 		result->y = l1->p[1].y;
@@ -2048,7 +2055,7 @@ static double
 dist_pl_internal(Point *pt, LINE *line)
 {
 	return (line->A * pt->x + line->B * pt->y + line->C) /
-		HYPOT(line->A, line->B);
+	HYPOT(line->A, line->B);
 }
 
 Datum
@@ -2080,9 +2087,7 @@ dist_ps_internal(Point *pt, LSEG *lseg)
 		m = (double) DBL_MAX;
 	}
 	else
-	{
 		m = ((lseg->p[0].y - lseg->p[1].y) / (lseg->p[1].x - lseg->p[0].x));
-	}
 	ln = line_construct_pm(pt, m);
 
 #ifdef GEODEBUG
@@ -2188,9 +2193,7 @@ dist_sl(PG_FUNCTION_ARGS)
 				d2;
 
 	if (has_interpt_sl(lseg, line))
-	{
 		result = 0.0;
-	}
 	else
 	{
 		result = dist_pl_internal(&lseg->p[0], line);
@@ -2230,6 +2233,7 @@ dist_lb(PG_FUNCTION_ARGS)
 #ifdef NOT_USED
 	LINE	   *line = PG_GETARG_LINE_P(0);
 	BOX		   *box = PG_GETARG_BOX_P(1);
+
 #endif
 
 	/* think about this one for a while */
@@ -2243,7 +2247,7 @@ Datum
 dist_cpoly(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(0);
-	POLYGON	   *poly = PG_GETARG_POLYGON_P(1);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(1);
 	float8		result;
 	float8		d;
 	int			i;
@@ -2430,7 +2434,7 @@ close_ps(PG_FUNCTION_ARGS)
 	xh = lseg->p[0].x < lseg->p[1].x;
 	yh = lseg->p[0].y < lseg->p[1].y;
 
-	if (FPeq(lseg->p[0].x, lseg->p[1].x))	/* vertical? */
+	if (FPeq(lseg->p[0].x, lseg->p[1].x))		/* vertical? */
 	{
 #ifdef GEODEBUG
 		printf("close_ps- segment is vertical\n");
@@ -2450,7 +2454,7 @@ close_ps(PG_FUNCTION_ARGS)
 		result->y = pt->y;
 		PG_RETURN_POINT_P(result);
 	}
-	else if (FPeq(lseg->p[0].y, lseg->p[1].y)) /* horizontal? */
+	else if (FPeq(lseg->p[0].y, lseg->p[1].y))	/* horizontal? */
 	{
 #ifdef GEODEBUG
 		printf("close_ps- segment is horizontal\n");
@@ -2484,7 +2488,7 @@ close_ps(PG_FUNCTION_ARGS)
 												 * lower end pt */
 #ifdef GEODEBUG
 		printf("close_ps below: tmp A %f  B %f   C %f    m %f\n",
-			   tmp->A,tmp->B,tmp->C, tmp->m);
+			   tmp->A, tmp->B, tmp->C, tmp->m);
 #endif
 		PG_RETURN_POINT_P(result);
 	}
@@ -2496,7 +2500,7 @@ close_ps(PG_FUNCTION_ARGS)
 												 * higher end pt */
 #ifdef GEODEBUG
 		printf("close_ps above: tmp A %f  B %f   C %f    m %f\n",
-			   tmp->A,tmp->B,tmp->C, tmp->m);
+			   tmp->A, tmp->B, tmp->C, tmp->m);
 #endif
 		PG_RETURN_POINT_P(result);
 	}
@@ -2508,7 +2512,7 @@ close_ps(PG_FUNCTION_ARGS)
 	tmp = line_construct_pm(pt, invm);
 #ifdef GEODEBUG
 	printf("close_ps- tmp A %f  B %f   C %f    m %f\n",
-		   tmp->A,tmp->B,tmp->C, tmp->m);
+		   tmp->A, tmp->B, tmp->C, tmp->m);
 #endif
 	result = interpt_sl(lseg, tmp);
 	Assert(result != NULL);
@@ -2545,12 +2549,12 @@ close_lseg(PG_FUNCTION_ARGS)
 	if ((d = dist_ps_internal(&l2->p[0], l1)) < dist)
 	{
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
-													PointPGetDatum(&l2->p[0]),
+											   PointPGetDatum(&l2->p[0]),
 													LsegPGetDatum(l1)));
 		memcpy(&point, result, sizeof(Point));
 		pfree(result);
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
-													PointPGetDatum(&point),
+												  PointPGetDatum(&point),
 													LsegPGetDatum(l2)));
 	}
 
@@ -2560,12 +2564,12 @@ close_lseg(PG_FUNCTION_ARGS)
 			pfree(result);
 
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
-													PointPGetDatum(&l2->p[1]),
+											   PointPGetDatum(&l2->p[1]),
 													LsegPGetDatum(l1)));
 		memcpy(&point, result, sizeof(Point));
 		pfree(result);
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
-													PointPGetDatum(&point),
+												  PointPGetDatum(&point),
 													LsegPGetDatum(l2)));
 	}
 
@@ -2752,6 +2756,7 @@ close_lb(PG_FUNCTION_ARGS)
 #ifdef NOT_USED
 	LINE	   *line = PG_GETARG_LINE_P(0);
 	BOX		   *box = PG_GETARG_BOX_P(1);
+
 #endif
 
 	/* think about this one for a while */
@@ -2858,11 +2863,11 @@ on_sl(PG_FUNCTION_ARGS)
 	LINE	   *line = PG_GETARG_LINE_P(1);
 
 	PG_RETURN_BOOL(DatumGetBool(DirectFunctionCall2(on_pl,
-												PointPGetDatum(&lseg->p[0]),
-												LinePGetDatum(line))) &&
+											 PointPGetDatum(&lseg->p[0]),
+												 LinePGetDatum(line))) &&
 				   DatumGetBool(DirectFunctionCall2(on_pl,
-												PointPGetDatum(&lseg->p[1]),
-												LinePGetDatum(line))));
+											 PointPGetDatum(&lseg->p[1]),
+												  LinePGetDatum(line))));
 }
 
 Datum
@@ -2872,11 +2877,11 @@ on_sb(PG_FUNCTION_ARGS)
 	BOX		   *box = PG_GETARG_BOX_P(1);
 
 	PG_RETURN_BOOL(DatumGetBool(DirectFunctionCall2(on_pb,
-												PointPGetDatum(&lseg->p[0]),
-												BoxPGetDatum(box))) &&
+											 PointPGetDatum(&lseg->p[0]),
+													BoxPGetDatum(box))) &&
 				   DatumGetBool(DirectFunctionCall2(on_pb,
-												PointPGetDatum(&lseg->p[1]),
-												BoxPGetDatum(box))));
+											 PointPGetDatum(&lseg->p[1]),
+													BoxPGetDatum(box))));
 }
 
 /*---------------------------------------------------------------------
@@ -3058,7 +3063,7 @@ poly_in(PG_FUNCTION_ARGS)
 	if ((npts = pair_count(str, ',')) <= 0)
 		elog(ERROR, "Bad polygon external representation '%s'", str);
 
-	size = offsetof(POLYGON, p[0]) + sizeof(poly->p[0]) * npts;
+	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc(size);
 
 	MemSet((char *) poly, 0, size);		/* zero any holes */
@@ -3081,7 +3086,7 @@ poly_in(PG_FUNCTION_ARGS)
 Datum
 poly_out(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 
 	PG_RETURN_CSTRING(path_encode(TRUE, poly->npts, poly->p));
 }
@@ -3095,13 +3100,16 @@ poly_out(PG_FUNCTION_ARGS)
 Datum
 poly_left(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
-	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
 	bool		result;
 
 	result = polya->boundbox.high.x < polyb->boundbox.low.x;
 
-	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
 
@@ -3116,13 +3124,16 @@ poly_left(PG_FUNCTION_ARGS)
 Datum
 poly_overleft(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
-	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
 	bool		result;
 
 	result = polya->boundbox.low.x <= polyb->boundbox.high.x;
 
-	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
 
@@ -3137,13 +3148,16 @@ poly_overleft(PG_FUNCTION_ARGS)
 Datum
 poly_right(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
-	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
 	bool		result;
 
 	result = polya->boundbox.low.x > polyb->boundbox.high.x;
 
-	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
 
@@ -3158,13 +3172,16 @@ poly_right(PG_FUNCTION_ARGS)
 Datum
 poly_overright(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
-	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
 	bool		result;
 
 	result = polya->boundbox.high.x > polyb->boundbox.low.x;
 
-	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
 
@@ -3181,8 +3198,8 @@ poly_overright(PG_FUNCTION_ARGS)
 Datum
 poly_same(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
-	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
 	bool		result;
 
 	if (polya->npts != polyb->npts)
@@ -3190,7 +3207,10 @@ poly_same(PG_FUNCTION_ARGS)
 	else
 		result = plist_same(polya->npts, polya->p, polyb->p);
 
-	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
 
@@ -3206,13 +3226,16 @@ poly_same(PG_FUNCTION_ARGS)
 Datum
 poly_overlap(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
-	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
 	bool		result;
 
 	result = box_ov(&polya->boundbox, &polyb->boundbox);
 
-	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
 
@@ -3226,8 +3249,8 @@ poly_overlap(PG_FUNCTION_ARGS)
 Datum
 poly_contain(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
-	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
 	bool		result;
 	int			i;
 
@@ -3275,7 +3298,10 @@ poly_contain(PG_FUNCTION_ARGS)
 		result = false;
 	}
 
-	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
 
@@ -3310,7 +3336,7 @@ poly_contained(PG_FUNCTION_ARGS)
 Datum
 poly_contain_pt(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 	Point	   *p = PG_GETARG_POINT_P(1);
 
 	PG_RETURN_BOOL(point_inside(p, poly->npts, poly->p) != 0);
@@ -3320,7 +3346,7 @@ Datum
 pt_contained_poly(PG_FUNCTION_ARGS)
 {
 	Point	   *p = PG_GETARG_POINT_P(0);
-	POLYGON	   *poly = PG_GETARG_POLYGON_P(1);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(1);
 
 	PG_RETURN_BOOL(point_inside(p, poly->npts, poly->p) != 0);
 }
@@ -3330,8 +3356,9 @@ Datum
 poly_distance(PG_FUNCTION_ARGS)
 {
 #ifdef NOT_USED
-	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
-	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
+
 #endif
 
 	elog(ERROR, "poly_distance not implemented");
@@ -3531,7 +3558,7 @@ path_add(PG_FUNCTION_ARGS)
 	if (p1->closed || p2->closed)
 		PG_RETURN_NULL();
 
-	size = offsetof(PATH, p[0]) + sizeof(p1->p[0]) * (p1->npts + p2->npts);
+	size = offsetof(PATH, p[0]) +sizeof(p1->p[0]) * (p1->npts + p2->npts);
 	result = (PATH *) palloc(size);
 
 	result->size = size;
@@ -3601,7 +3628,7 @@ path_mul_pt(PG_FUNCTION_ARGS)
 	for (i = 0; i < path->npts; i++)
 	{
 		p = DatumGetPointP(DirectFunctionCall2(point_mul,
-											   PointPGetDatum(&path->p[i]),
+											 PointPGetDatum(&path->p[i]),
 											   PointPGetDatum(point)));
 		path->p[i].x = p->x;
 		path->p[i].y = p->y;
@@ -3622,7 +3649,7 @@ path_div_pt(PG_FUNCTION_ARGS)
 	for (i = 0; i < path->npts; i++)
 	{
 		p = DatumGetPointP(DirectFunctionCall2(point_div,
-											   PointPGetDatum(&path->p[i]),
+											 PointPGetDatum(&path->p[i]),
 											   PointPGetDatum(point)));
 		path->p[i].x = p->x;
 		path->p[i].y = p->y;
@@ -3638,6 +3665,7 @@ path_center(PG_FUNCTION_ARGS)
 {
 #ifdef NOT_USED
 	PATH	   *path = PG_GETARG_PATH_P(0);
+
 #endif
 
 	elog(ERROR, "path_center not implemented");
@@ -3657,7 +3685,7 @@ path_poly(PG_FUNCTION_ARGS)
 	if (!path->closed)
 		elog(ERROR, "Open path cannot be converted to polygon");
 
-	size = offsetof(POLYGON, p[0]) + sizeof(poly->p[0]) * path->npts;
+	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * path->npts;
 	poly = (POLYGON *) palloc(size);
 
 	poly->size = size;
@@ -3684,7 +3712,7 @@ path_poly(PG_FUNCTION_ARGS)
 Datum
 poly_npoints(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 
 	PG_RETURN_INT32(poly->npts);
 }
@@ -3693,7 +3721,7 @@ poly_npoints(PG_FUNCTION_ARGS)
 Datum
 poly_center(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 	Datum		result;
 	CIRCLE	   *circle;
 
@@ -3710,7 +3738,7 @@ poly_center(PG_FUNCTION_ARGS)
 Datum
 poly_box(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 	BOX		   *box;
 
 	if (poly->npts < 1)
@@ -3733,7 +3761,7 @@ box_poly(PG_FUNCTION_ARGS)
 	int			size;
 
 	/* map four corners of the box to a polygon */
-	size = offsetof(POLYGON, p[0]) + sizeof(poly->p[0]) * 4;
+	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * 4;
 	poly = (POLYGON *) palloc(size);
 
 	poly->size = size;
@@ -3758,12 +3786,12 @@ box_poly(PG_FUNCTION_ARGS)
 Datum
 poly_path(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 	PATH	   *path;
 	int			size;
 	int			i;
 
-	size = offsetof(PATH, p[0]) + sizeof(path->p[0]) * poly->npts;
+	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * poly->npts;
 	path = (PATH *) palloc(size);
 
 	path->size = size;
@@ -4133,7 +4161,7 @@ circle_mul_pt(PG_FUNCTION_ARGS)
 	result = circle_copy(circle);
 
 	p = DatumGetPointP(DirectFunctionCall2(point_mul,
-										   PointPGetDatum(&circle->center),
+										 PointPGetDatum(&circle->center),
 										   PointPGetDatum(point)));
 	result->center.x = p->x;
 	result->center.y = p->y;
@@ -4154,7 +4182,7 @@ circle_div_pt(PG_FUNCTION_ARGS)
 	result = circle_copy(circle);
 
 	p = DatumGetPointP(DirectFunctionCall2(point_div,
-										   PointPGetDatum(&circle->center),
+										 PointPGetDatum(&circle->center),
 										   PointPGetDatum(point)));
 	result->center.x = p->x;
 	result->center.y = p->y;
@@ -4381,7 +4409,7 @@ circle_poly(PG_FUNCTION_ARGS)
 Datum
 poly_circle(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *poly = PG_GETARG_POLYGON_P(0);
+	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 	CIRCLE	   *circle;
 	int			i;
 

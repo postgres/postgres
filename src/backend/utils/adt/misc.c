@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.21 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.22 2001/03/22 03:59:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ nonnullvalue(PG_FUNCTION_ARGS)
  *	   select * from TEMP where oidrand(TEMP.oid, 10)
  * will return about 1/10 of the tuples in TEMP
  *
- * NOTE: the OID input is not used at all.  It is there just because of
+ * NOTE: the OID input is not used at all.	It is there just because of
  * an old optimizer bug: a qual expression containing no variables was
  * mistakenly assumed to be a constant.  Pretending to access the row's OID
  * prevented the optimizer from treating the oidrand() result as constant.
@@ -66,6 +66,7 @@ oidrand(PG_FUNCTION_ARGS)
 {
 #ifdef NOT_USED
 	Oid			o = PG_GETARG_OID(0);
+
 #endif
 	int32		X = PG_GETARG_INT32(1);
 	bool		result;

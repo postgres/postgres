@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.41 2001/01/24 19:42:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.42 2001/03/22 03:59:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,8 @@
 static List *expand_targetlist(List *tlist, int command_type,
 				  Index result_relation, List *range_table);
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
-										TargetEntry *prior_tle,
-										int attrno);
+					TargetEntry *prior_tle,
+					int attrno);
 
 
 /*
@@ -49,9 +49,10 @@ preprocess_targetlist(List *tlist,
 					  Index result_relation,
 					  List *range_table)
 {
+
 	/*
-	 * Sanity check: if there is a result relation, it'd better be a
-	 * real relation not a subquery.  Else parser or rewriter messed up.
+	 * Sanity check: if there is a result relation, it'd better be a real
+	 * relation not a subquery.  Else parser or rewriter messed up.
 	 */
 	if (result_relation)
 	{
@@ -250,7 +251,7 @@ expand_targetlist(List *tlist, int command_type,
 						new_tle = makeTargetEntry(makeResdom(attrno,
 															 atttype,
 															 atttypmod,
-															 pstrdup(attrname),
+													   pstrdup(attrname),
 															 false),
 												  (Node *) temp_var);
 						break;
@@ -280,7 +281,7 @@ expand_targetlist(List *tlist, int command_type,
 		{
 			Resdom	   *resdom = old_tle->resdom;
 
-			if (! resdom->resjunk)
+			if (!resdom->resjunk)
 				elog(ERROR, "Unexpected assignment to attribute \"%s\"",
 					 resdom->resname);
 			/* Get the resno right, but don't copy unnecessarily */
@@ -314,9 +315,10 @@ expand_targetlist(List *tlist, int command_type,
  * Essentially, the expression we want to produce in this case is like
  *		foo = array_set(array_set(foo, 2, 42), 4, 43)
  */
-static TargetEntry *process_matched_tle(TargetEntry *src_tle,
-										TargetEntry *prior_tle,
-										int attrno)
+static TargetEntry *
+process_matched_tle(TargetEntry *src_tle,
+					TargetEntry *prior_tle,
+					int attrno)
 {
 	Resdom	   *resdom = src_tle->resdom;
 	Node	   *priorbottom;
@@ -324,11 +326,13 @@ static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 
 	if (prior_tle == NULL)
 	{
+
 		/*
-		 * Normal case where this is the first assignment to the attribute.
+		 * Normal case where this is the first assignment to the
+		 * attribute.
 		 *
-		 * We can recycle the old TLE+resdom if right resno; else make a
-		 * new one to avoid modifying the old tlist structure. (Is preserving
+		 * We can recycle the old TLE+resdom if right resno; else make a new
+		 * one to avoid modifying the old tlist structure. (Is preserving
 		 * old tlist actually necessary?  Not sure, be safe.)
 		 */
 		if (resdom->resno == attrno)
@@ -339,7 +343,7 @@ static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 	}
 
 	/*
-	 * Multiple assignments to same attribute.  Allow only if all are
+	 * Multiple assignments to same attribute.	Allow only if all are
 	 * array-assign operators with same bottom array object.
 	 */
 	if (src_tle->expr == NULL || !IsA(src_tle->expr, ArrayRef) ||
@@ -350,16 +354,19 @@ static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 		((ArrayRef *) prior_tle->expr)->refelemtype)
 		elog(ERROR, "Multiple assignments to same attribute \"%s\"",
 			 resdom->resname);
+
 	/*
-	 * Prior TLE could be a nest of ArrayRefs if we do this more than once.
+	 * Prior TLE could be a nest of ArrayRefs if we do this more than
+	 * once.
 	 */
 	priorbottom = ((ArrayRef *) prior_tle->expr)->refexpr;
 	while (priorbottom != NULL && IsA(priorbottom, ArrayRef) &&
 		   ((ArrayRef *) priorbottom)->refassgnexpr != NULL)
 		priorbottom = ((ArrayRef *) priorbottom)->refexpr;
-	if (! equal(priorbottom, ((ArrayRef *) src_tle->expr)->refexpr))
+	if (!equal(priorbottom, ((ArrayRef *) src_tle->expr)->refexpr))
 		elog(ERROR, "Multiple assignments to same attribute \"%s\"",
 			 resdom->resname);
+
 	/*
 	 * Looks OK to nest 'em.
 	 */

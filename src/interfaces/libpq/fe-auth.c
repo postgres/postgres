@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.46 2001/02/10 02:31:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.47 2001/03/22 04:01:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ static void
 pg_krb4_init()
 {
 	char	   *realm;
-	static int		init_done = 0;
+	static int	init_done = 0;
 
 	if (init_done)
 		return;
@@ -265,7 +265,7 @@ pg_an_to_ln(char *aname)
  * Various krb5 state which is not connection specfic, and a flag to
  * indicate whether we have initialised it yet.
  */
-static int pg_krb5_initialised;
+static int	pg_krb5_initialised;
 static krb5_context pg_krb5_context;
 static krb5_ccache pg_krb5_ccache;
 static krb5_principal pg_krb5_client;
@@ -281,7 +281,8 @@ pg_krb5_init(char *PQerrormsg)
 		return STATUS_OK;
 
 	retval = krb5_init_context(&pg_krb5_context);
-	if (retval) {
+	if (retval)
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_init_context: %s",
 				 error_message(retval));
@@ -289,27 +290,30 @@ pg_krb5_init(char *PQerrormsg)
 	}
 
 	retval = krb5_cc_default(pg_krb5_context, &pg_krb5_ccache);
-	if (retval) {
+	if (retval)
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_cc_default: %s",
 				 error_message(retval));
 		krb5_free_context(pg_krb5_context);
 		return STATUS_ERROR;
-    }
+	}
 
-    retval = krb5_cc_get_principal(pg_krb5_context, pg_krb5_ccache, 
+	retval = krb5_cc_get_principal(pg_krb5_context, pg_krb5_ccache,
 								   &pg_krb5_client);
-	if (retval) {
+	if (retval)
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_cc_get_principal: %s",
 				 error_message(retval));
 		krb5_cc_close(pg_krb5_context, pg_krb5_ccache);
 		krb5_free_context(pg_krb5_context);
 		return STATUS_ERROR;
-    }
+	}
 
-    retval = krb5_unparse_name(pg_krb5_context, pg_krb5_client, &pg_krb5_name);
-	if (retval) {
+	retval = krb5_unparse_name(pg_krb5_context, pg_krb5_client, &pg_krb5_name);
+	if (retval)
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_unparse_name: %s",
 				 error_message(retval));
@@ -317,7 +321,7 @@ pg_krb5_init(char *PQerrormsg)
 		krb5_cc_close(pg_krb5_context, pg_krb5_ccache);
 		krb5_free_context(pg_krb5_context);
 		return STATUS_ERROR;
-	}	
+	}
 
 	pg_krb5_name = pg_an_to_ln(pg_krb5_name);
 
@@ -351,32 +355,34 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 				 const char *hostname)
 {
 	krb5_error_code retval;
-	int ret;
+	int			ret;
 	krb5_principal server;
 	krb5_auth_context auth_context = NULL;
-    krb5_error *err_ret = NULL;
-	int flags;
+	krb5_error *err_ret = NULL;
+	int			flags;
 
 	ret = pg_krb5_init(PQerrormsg);
 	if (ret != STATUS_OK)
 		return ret;
 
-	retval = krb5_sname_to_principal(pg_krb5_context, hostname, PG_KRB_SRVNAM, 
+	retval = krb5_sname_to_principal(pg_krb5_context, hostname, PG_KRB_SRVNAM,
 									 KRB5_NT_SRV_HST, &server);
-	if (retval) {
+	if (retval)
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_sendauth: krb5_sname_to_principal: %s",
 				 error_message(retval));
 		return STATUS_ERROR;
 	}
 
-	/* 
+	/*
 	 * libpq uses a non-blocking socket. But kerberos needs a blocking
 	 * socket, and we have to block somehow to do mutual authentication
 	 * anyway. So we temporarily make it blocking.
 	 */
 	flags = fcntl(sock, F_GETFL);
-	if (flags < 0 || fcntl(sock, F_SETFL, (long)(flags & ~O_NONBLOCK))) {
+	if (flags < 0 || fcntl(sock, F_SETFL, (long) (flags & ~O_NONBLOCK)))
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_sendauth: fcntl: %s", strerror(errno));
 		krb5_free_principal(pg_krb5_context, server);
@@ -384,32 +390,36 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 	}
 
 	retval = krb5_sendauth(pg_krb5_context, &auth_context,
-						   (krb5_pointer) &sock, PG_KRB_SRVNAM,
+						   (krb5_pointer) & sock, PG_KRB_SRVNAM,
 						   pg_krb5_client, server,
 						   AP_OPTS_MUTUAL_REQUIRED,
 						   NULL, 0,		/* no creds, use ccache instead */
 						   pg_krb5_ccache, &err_ret, NULL, NULL);
-	if (retval) {
-		if (retval == KRB5_SENDAUTH_REJECTED && err_ret) {
+	if (retval)
+	{
+		if (retval == KRB5_SENDAUTH_REJECTED && err_ret)
+		{
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					 "pg_krb5_sendauth: authentication rejected: \"%*s\"",
 					 err_ret->text.length, err_ret->text.data);
 		}
-		else {
+		else
+		{
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					 "pg_krb5_sendauth: krb5_sendauth: %s",
 					 error_message(retval));
 		}
-			
+
 		if (err_ret)
 			krb5_free_error(pg_krb5_context, err_ret);
-		
+
 		ret = STATUS_ERROR;
 	}
 
 	krb5_free_principal(pg_krb5_context, server);
-	
-	if (fcntl(sock, F_SETFL, (long)flags)) {
+
+	if (fcntl(sock, F_SETFL, (long) flags))
+	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_sendauth: fcntl: %s", strerror(errno));
 		ret = STATUS_ERROR;
@@ -575,8 +585,8 @@ fe_getauthname(char *PQerrormsg)
 #endif
 
 	if (authsvc == STARTUP_MSG
-	    || (authsvc == STARTUP_KRB4_MSG && !name)
-	    || (authsvc == STARTUP_KRB5_MSG && !name))
+		|| (authsvc == STARTUP_KRB4_MSG && !name)
+		|| (authsvc == STARTUP_KRB5_MSG && !name))
 	{
 #ifdef WIN32
 		char		username[128];
@@ -593,7 +603,7 @@ fe_getauthname(char *PQerrormsg)
 	}
 
 	if (authsvc != STARTUP_MSG && authsvc != STARTUP_KRB4_MSG && authsvc != STARTUP_KRB5_MSG)
-		sprintf(PQerrormsg,"fe_getauthname: invalid authentication system: %d\n", authsvc);
+		sprintf(PQerrormsg, "fe_getauthname: invalid authentication system: %d\n", authsvc);
 
 	if (name && (authn = (char *) malloc(strlen(name) + 1)))
 		strcpy(authn, name);

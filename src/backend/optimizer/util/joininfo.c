@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.28 2001/01/24 19:43:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.29 2001/03/22 03:59:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ static JoinInfo *joininfo_member(List *join_relids, List *joininfo_list);
  * exists.
  *
  */
-static JoinInfo   *
+static JoinInfo *
 joininfo_member(List *join_relids, List *joininfo_list)
 {
 	List	   *i;

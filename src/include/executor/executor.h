@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.56 2001/01/29 00:39:20 tgl Exp $
+ * $Id: executor.h,v 1.57 2001/03/22 04:00:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,12 +55,12 @@ extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
  */
 extern TupleDesc ExecutorStart(QueryDesc *queryDesc, EState *estate);
 extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc, EState *estate,
-								   int feature, long count);
+			int feature, long count);
 extern void ExecutorEnd(QueryDesc *queryDesc, EState *estate);
 extern void ExecConstraints(char *caller, ResultRelInfo *resultRelInfo,
-							TupleTableSlot *slot, EState *estate);
+				TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
-									ItemPointer tid);
+			 ItemPointer tid);
 
 /*
  * prototypes from functions in execProcnode.c
@@ -77,23 +77,23 @@ extern TupleDesc ExecGetTupType(Plan *node);
 extern Datum ExecEvalParam(Param *expression, ExprContext *econtext,
 			  bool *isNull);
 extern Datum GetAttributeByNum(TupleTableSlot *slot, AttrNumber attrno,
-							   bool *isNull);
+				  bool *isNull);
 extern Datum GetAttributeByName(TupleTableSlot *slot, char *attname,
-								bool *isNull);
+				   bool *isNull);
 extern Datum ExecMakeFunctionResult(FunctionCachePtr fcache,
-									List *arguments,
-									ExprContext *econtext,
-									bool *isNull,
-									ExprDoneCond *isDone);
+					   List *arguments,
+					   ExprContext *econtext,
+					   bool *isNull,
+					   ExprDoneCond *isDone);
 extern Datum ExecEvalExpr(Node *expression, ExprContext *econtext,
-						  bool *isNull, ExprDoneCond *isDone);
+			 bool *isNull, ExprDoneCond *isDone);
 extern Datum ExecEvalExprSwitchContext(Node *expression, ExprContext *econtext,
-									   bool *isNull, ExprDoneCond *isDone);
+						  bool *isNull, ExprDoneCond *isDone);
 extern bool ExecQual(List *qual, ExprContext *econtext, bool resultForNull);
 extern int	ExecTargetListLength(List *targetlist);
 extern int	ExecCleanTargetListLength(List *targetlist);
 extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo,
-								   ExprDoneCond *isDone);
+			ExprDoneCond *isDone);
 
 /*
  * prototypes from functions in execScan.c
@@ -115,14 +115,14 @@ extern TupleTableSlot *ExecStoreTuple(HeapTuple tuple,
 			   bool shouldFree);
 extern TupleTableSlot *ExecClearTuple(TupleTableSlot *slot);
 extern void ExecSetSlotDescriptor(TupleTableSlot *slot,
-								  TupleDesc tupdesc, bool shouldFree);
+					  TupleDesc tupdesc, bool shouldFree);
 extern void ExecSetSlotDescriptorIsNew(TupleTableSlot *slot, bool isNew);
 extern void ExecInitResultTupleSlot(EState *estate, CommonState *commonstate);
 extern void ExecInitScanTupleSlot(EState *estate,
 					  CommonScanState *commonscanstate);
 extern TupleTableSlot *ExecInitExtraTupleSlot(EState *estate);
 extern TupleTableSlot *ExecInitNullTupleSlot(EState *estate,
-											 TupleDesc tupType);
+					  TupleDesc tupType);
 extern TupleDesc ExecTypeFromTL(List *targetList);
 extern void SetChangedParamList(Plan *node, List *newchg);
 
@@ -132,7 +132,7 @@ extern void SetChangedParamList(Plan *node, List *newchg);
 extern void ResetTupleCount(void);
 extern void ExecAssignExprContext(EState *estate, CommonState *commonstate);
 extern void ExecAssignResultType(CommonState *commonstate,
-								 TupleDesc tupDesc, bool shouldFree);
+					 TupleDesc tupDesc, bool shouldFree);
 extern void ExecAssignResultTypeFromOuterPlan(Plan *node,
 								  CommonState *commonstate);
 extern void ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate);
@@ -142,13 +142,13 @@ extern void ExecFreeProjectionInfo(CommonState *commonstate);
 extern void ExecFreeExprContext(CommonState *commonstate);
 extern TupleDesc ExecGetScanType(CommonScanState *csstate);
 extern void ExecAssignScanType(CommonScanState *csstate,
-							   TupleDesc tupDesc, bool shouldFree);
+				   TupleDesc tupDesc, bool shouldFree);
 extern void ExecAssignScanTypeFromOuterPlan(Plan *node,
 								CommonScanState *csstate);
 extern Form_pg_attribute ExecGetTypeInfo(Relation relDesc);
 
 extern ExprContext *MakeExprContext(TupleTableSlot *slot,
-									MemoryContext queryContext);
+				MemoryContext queryContext);
 extern void FreeExprContext(ExprContext *econtext);
 
 #define ResetExprContext(econtext) \

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.51 2001/02/16 00:03:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.52 2001/03/22 03:59:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 
 
 static RelOptInfo *make_join_rel(Query *root, RelOptInfo *rel1,
-								 RelOptInfo *rel2, JoinType jointype);
+			  RelOptInfo *rel2, JoinType jointype);
 
 
 /*
@@ -44,18 +44,19 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 
 	/*
 	 * First, consider left-sided and right-sided plans, in which rels of
-	 * exactly level-1 member relations are joined against initial relations.
-	 * We prefer to join using join clauses, but if we find a rel of level-1
-	 * members that has no join clauses, we will generate Cartesian-product
-	 * joins against all initial rels not already contained in it.
+	 * exactly level-1 member relations are joined against initial
+	 * relations. We prefer to join using join clauses, but if we find a
+	 * rel of level-1 members that has no join clauses, we will generate
+	 * Cartesian-product joins against all initial rels not already
+	 * contained in it.
 	 *
-	 * In the first pass (level == 2), we try to join each initial rel to each
-	 * initial rel that appears later in joinrels[1].  (The mirror-image
-	 * joins are handled automatically by make_join_rel.)  In later
-	 * passes, we try to join rels of size level-1 from joinrels[level-1]
-	 * to each initial rel in joinrels[1].
+	 * In the first pass (level == 2), we try to join each initial rel to
+	 * each initial rel that appears later in joinrels[1].	(The
+	 * mirror-image joins are handled automatically by make_join_rel.)	In
+	 * later passes, we try to join rels of size level-1 from
+	 * joinrels[level-1] to each initial rel in joinrels[1].
 	 */
-	foreach(r, joinrels[level-1])
+	foreach(r, joinrels[level - 1])
 	{
 		RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
 		List	   *other_rels;
@@ -73,9 +74,9 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 			 * Note that if all available join clauses for this rel
 			 * require more than one other rel, we will fail to make any
 			 * joins against it here.  That's OK; it'll be considered by
-			 * "bushy plan" join code in a higher-level pass where we
-			 * have those other rels collected into a join rel.  See also
-			 * the last-ditch case below.
+			 * "bushy plan" join code in a higher-level pass where we have
+			 * those other rels collected into a join rel.	See also the
+			 * last-ditch case below.
 			 */
 			new_rels = make_rels_by_clause_joins(root,
 												 old_rel,
@@ -94,16 +95,16 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 		}
 
 		/*
-		 * At levels above 2 we will generate the same joined relation
-		 * in multiple ways --- for example (a join b) join c is the same
+		 * At levels above 2 we will generate the same joined relation in
+		 * multiple ways --- for example (a join b) join c is the same
 		 * RelOptInfo as (b join c) join a, though the second case will
-		 * add a different set of Paths to it.  To avoid making extra work
-		 * for subsequent passes, do not enter the same RelOptInfo into our
-		 * output list multiple times.
+		 * add a different set of Paths to it.	To avoid making extra work
+		 * for subsequent passes, do not enter the same RelOptInfo into
+		 * our output list multiple times.
 		 */
 		foreach(nr, new_rels)
 		{
-			RelOptInfo	   *jrel = (RelOptInfo *) lfirst(nr);
+			RelOptInfo *jrel = (RelOptInfo *) lfirst(nr);
 
 			if (!ptrMember(jrel, result_rels))
 				result_rels = lcons(jrel, result_rels);
@@ -111,20 +112,21 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 	}
 
 	/*
-	 * Now, consider "bushy plans" in which relations of k initial rels are
-	 * joined to relations of level-k initial rels, for 2 <= k <= level-2.
+	 * Now, consider "bushy plans" in which relations of k initial rels
+	 * are joined to relations of level-k initial rels, for 2 <= k <=
+	 * level-2.
 	 *
 	 * We only consider bushy-plan joins for pairs of rels where there is a
 	 * suitable join clause, in order to avoid unreasonable growth of
 	 * planning time.
 	 */
-	for (k = 2; ; k++)
+	for (k = 2;; k++)
 	{
 		int			other_level = level - k;
 
 		/*
-		 * Since make_join_rel(x, y) handles both x,y and y,x cases,
-		 * we only need to go as far as the halfway point.
+		 * Since make_join_rel(x, y) handles both x,y and y,x cases, we
+		 * only need to go as far as the halfway point.
 		 */
 		if (k > other_level)
 			break;
@@ -139,7 +141,7 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 				continue;		/* we ignore clauseless joins here */
 
 			if (k == other_level)
-				other_rels = lnext(r); /* only consider remaining rels */
+				other_rels = lnext(r);	/* only consider remaining rels */
 			else
 				other_rels = joinrels[other_level];
 
@@ -153,8 +155,8 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 
 					/*
 					 * OK, we can build a rel of the right level from this
-					 * pair of rels.  Do so if there is at least one usable
-					 * join clause.
+					 * pair of rels.  Do so if there is at least one
+					 * usable join clause.
 					 */
 					foreach(i, old_rel->joininfo)
 					{
@@ -170,7 +172,8 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 							/* Avoid making duplicate entries ... */
 							if (!ptrMember(jrel, result_rels))
 								result_rels = lcons(jrel, result_rels);
-							break; /* need not consider more joininfos */
+							break;		/* need not consider more
+										 * joininfos */
 						}
 					}
 				}
@@ -180,31 +183,34 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 
 	/*
 	 * Last-ditch effort: if we failed to find any usable joins so far,
-	 * force a set of cartesian-product joins to be generated.  This
+	 * force a set of cartesian-product joins to be generated.	This
 	 * handles the special case where all the available rels have join
-	 * clauses but we cannot use any of the joins yet.  An example is
+	 * clauses but we cannot use any of the joins yet.	An example is
 	 *
 	 * SELECT * FROM a,b,c WHERE (a.f1 + b.f2 + c.f3) = 0;
 	 *
-	 * The join clause will be usable at level 3, but at level 2 we have
-	 * no choice but to make cartesian joins.  We consider only left-sided
+	 * The join clause will be usable at level 3, but at level 2 we have no
+	 * choice but to make cartesian joins.	We consider only left-sided
 	 * and right-sided cartesian joins in this case (no bushy).
 	 */
 	if (result_rels == NIL)
 	{
-		/* This loop is just like the first one, except we always call
+
+		/*
+		 * This loop is just like the first one, except we always call
 		 * make_rels_by_clauseless_joins().
 		 */
-		foreach(r, joinrels[level-1])
+		foreach(r, joinrels[level - 1])
 		{
 			RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
 			List	   *other_rels;
 
 			if (level == 2)
-				other_rels = lnext(r); /* only consider remaining initial
-										* rels */
+				other_rels = lnext(r);	/* only consider remaining initial
+										 * rels */
 			else
-				other_rels = joinrels[1]; /* consider all initial rels */
+				other_rels = joinrels[1];		/* consider all initial
+												 * rels */
 
 			new_rels = make_rels_by_clauseless_joins(root,
 													 old_rel,
@@ -212,7 +218,7 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 
 			foreach(nr, new_rels)
 			{
-				RelOptInfo	   *jrel = (RelOptInfo *) lfirst(nr);
+				RelOptInfo *jrel = (RelOptInfo *) lfirst(nr);
 
 				if (!ptrMember(jrel, result_rels))
 					result_rels = lcons(jrel, result_rels);
@@ -266,6 +272,7 @@ make_rels_by_clause_joins(Query *root,
 				RelOptInfo *jrel;
 
 				jrel = make_join_rel(root, old_rel, other_rel, JOIN_INNER);
+
 				/*
 				 * Avoid entering same joinrel into our output list more
 				 * than once.  (make_rels_by_joins doesn't really care,
@@ -310,9 +317,10 @@ make_rels_by_clauseless_joins(Query *root,
 			RelOptInfo *jrel;
 
 			jrel = make_join_rel(root, old_rel, other_rel, JOIN_INNER);
+
 			/*
-			 * As long as given other_rels are distinct, don't need
-			 * to test to see if jrel is already part of output list.
+			 * As long as given other_rels are distinct, don't need to
+			 * test to see if jrel is already part of output list.
 			 */
 			result = lcons(jrel, result);
 		}
@@ -325,7 +333,7 @@ make_rels_by_clauseless_joins(Query *root,
 /*
  * make_jointree_rel
  *		Find or build a RelOptInfojoin rel representing a specific
- *		jointree item.  For JoinExprs, we only consider the construction
+ *		jointree item.	For JoinExprs, we only consider the construction
  *		path that corresponds exactly to what the user wrote.
  */
 RelOptInfo *

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.15 2001/03/14 20:12:10 tgl Exp $
+ * $Id: timestamp.h,v 1.16 2001/03/22 04:01:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,10 @@ typedef double Timestamp;
 
 typedef struct
 {
-	double		time;	/* all time units other than months and years */
-	int32		month;	/* months and years, after time for alignment */
+	double		time;			/* all time units other than months and
+								 * years */
+	int32		month;			/* months and years, after time for
+								 * alignment */
 } Interval;
 
 
@@ -52,10 +54,10 @@ typedef struct
 #define TimestampGetDatum(X)  Float8GetDatum(X)
 #define IntervalPGetDatum(X)  PointerGetDatum(X)
 
-#define PG_GETARG_TIMESTAMP(n)  DatumGetTimestamp(PG_GETARG_DATUM(n))
+#define PG_GETARG_TIMESTAMP(n)	DatumGetTimestamp(PG_GETARG_DATUM(n))
 #define PG_GETARG_INTERVAL_P(n) DatumGetIntervalP(PG_GETARG_DATUM(n))
 
-#define PG_RETURN_TIMESTAMP(x)  return TimestampGetDatum(x)
+#define PG_RETURN_TIMESTAMP(x)	return TimestampGetDatum(x)
 #define PG_RETURN_INTERVAL_P(x) return IntervalPGetDatum(x)
 
 
@@ -172,12 +174,12 @@ extern Datum now(PG_FUNCTION_ARGS);
 /* Internal routines (not fmgr-callable) */
 
 extern int	tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *dt);
-extern int	timestamp2tm(Timestamp dt, int *tzp, struct tm * tm,
-						 double *fsec, char **tzn);
+extern int timestamp2tm(Timestamp dt, int *tzp, struct tm * tm,
+			 double *fsec, char **tzn);
 
 extern Timestamp SetTimestamp(Timestamp timestamp);
 
-extern void	isoweek2date( int woy, int *year, int *mon, int *mday);
+extern void isoweek2date(int woy, int *year, int *mon, int *mday);
 extern int	date2isoweek(int year, int mon, int mday);
 
 #endif	 /* TIMESTAMP_H */

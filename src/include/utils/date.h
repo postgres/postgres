@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: date.h,v 1.10 2001/01/24 19:43:28 momjian Exp $
+ * $Id: date.h,v 1.11 2001/03/22 04:01:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,20 +34,20 @@ typedef struct
  * For TimeADT, we make use of the same support routines as for float8.
  * Therefore TimeADT is pass-by-reference if and only if float8 is!
  */
-#define DatumGetDateADT(X)    ((DateADT) DatumGetInt32(X))
-#define DatumGetTimeADT(X)    ((TimeADT) DatumGetFloat8(X))
+#define DatumGetDateADT(X)	  ((DateADT) DatumGetInt32(X))
+#define DatumGetTimeADT(X)	  ((TimeADT) DatumGetFloat8(X))
 #define DatumGetTimeTzADTP(X) ((TimeTzADT *) DatumGetPointer(X))
 
-#define DateADTGetDatum(X)    Int32GetDatum(X)
-#define TimeADTGetDatum(X)    Float8GetDatum(X)
+#define DateADTGetDatum(X)	  Int32GetDatum(X)
+#define TimeADTGetDatum(X)	  Float8GetDatum(X)
 #define TimeTzADTPGetDatum(X) PointerGetDatum(X)
 
-#define PG_GETARG_DATEADT(n)     DatumGetDateADT(PG_GETARG_DATUM(n))
-#define PG_GETARG_TIMEADT(n)     DatumGetTimeADT(PG_GETARG_DATUM(n))
+#define PG_GETARG_DATEADT(n)	 DatumGetDateADT(PG_GETARG_DATUM(n))
+#define PG_GETARG_TIMEADT(n)	 DatumGetTimeADT(PG_GETARG_DATUM(n))
 #define PG_GETARG_TIMETZADT_P(n) DatumGetTimeTzADTP(PG_GETARG_DATUM(n))
 
-#define PG_RETURN_DATEADT(x)     return DateADTGetDatum(x)
-#define PG_RETURN_TIMEADT(x)     return TimeADTGetDatum(x)
+#define PG_RETURN_DATEADT(x)	 return DateADTGetDatum(x)
+#define PG_RETURN_TIMEADT(x)	 return TimeADTGetDatum(x)
 #define PG_RETURN_TIMETZADT_P(x) return TimeTzADTPGetDatum(x)
 
 

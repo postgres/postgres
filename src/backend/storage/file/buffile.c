@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.9 2001/01/24 19:43:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.10 2001/03/22 03:59:45 momjian Exp $
  *
  * NOTES:
  *
@@ -163,6 +163,7 @@ BufFileCreate(File file)
 {
 	return makeBufFile(file);
 }
+
 #endif
 
 /*
@@ -574,5 +575,5 @@ BufFileTellBlock(BufFile *file)
 	blknum += file->curFile * RELSEG_SIZE;
 	return blknum;
 }
-#endif
 
+#endif

@@ -203,10 +203,10 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 {
 /*	if (ind_typ == NULL)
 	{
-	        ind_typ = &ecpg_no_indicator;
-	        ind_name = "no_indicator";
+			ind_typ = &ecpg_no_indicator;
+			ind_name = "no_indicator";
 	}*/
-	
+
 	switch (typ->typ)
 	{
 			case ECPGt_array:

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.69 2001/01/24 19:43:20 momjian Exp $
+ * $Id: pg_attribute.h,v 1.70 2001/03/22 04:00:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -246,7 +246,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typreceive"},    24, 0,	4, 13, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1247, {"typsend"},	   24, 0,	4, 14, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1247, {"typalign"},	   18, 0,	1, 15, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
-{ 1247, {"typstorage"},	   18, 0,	1, 16, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
+{ 1247, {"typstorage"},    18, 0,	1, 16, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1247, {"typdefault"},    25, 0,  -1, 17, 0, -1, -1, '\0'	, 'x', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1247 typname			19 0 NAMEDATALEN   1 0 -1 -1 f p f i f f));
@@ -281,9 +281,9 @@ DATA(insert OID = 0 ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1262 datname			19 0 NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1262 datdba			23 0  4   2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1262 encoding			23 0  4   3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1262 datistemplate    16 0  1   4 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1262 datallowconn     16 0  1   5 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1262 datlastsysoid    26 0  4   6 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1262 datistemplate	16 0  1   4 0 -1 -1 t p f c f f));
+DATA(insert OID = 0 ( 1262 datallowconn		16 0  1   5 0 -1 -1 t p f c f f));
+DATA(insert OID = 0 ( 1262 datlastsysoid	26 0  4   6 0 -1 -1 t p f i f f));
 /* do not mark datpath as toastable; GetRawDatabaseInfo won't cope */
 DATA(insert OID = 0 ( 1262 datpath			25 0 -1   7 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1262 ctid				27 0  6  -1 0 -1 -1 f p f i f f));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.69 2001/01/24 19:43:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.70 2001/03/22 03:59:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,29 +60,29 @@
 
 static int	ArrayCount(char *str, int *dim, int typdelim);
 static Datum *ReadArrayStr(char *arrayStr, int nitems, int ndim, int *dim,
-			  FmgrInfo *inputproc, Oid typelem, int32 typmod,
-			  char typdelim, int typlen, bool typbyval,
-			  char typalign, int *nbytes);
+			 FmgrInfo *inputproc, Oid typelem, int32 typmod,
+			 char typdelim, int typlen, bool typbyval,
+			 char typalign, int *nbytes);
 static void CopyArrayEls(char *p, Datum *values, int nitems,
-						 bool typbyval, int typlen, char typalign,
-						 bool freedata);
+			 bool typbyval, int typlen, char typalign,
+			 bool freedata);
 static void system_cache_lookup(Oid element_type, bool input, int *typlen,
-								bool *typbyval, char *typdelim, Oid *typelem,
-								Oid *proc, char *typalign);
+					bool *typbyval, char *typdelim, Oid *typelem,
+					Oid *proc, char *typalign);
 static Datum ArrayCast(char *value, bool byval, int len);
 static int	ArrayCastAndSet(Datum src, bool typbyval, int typlen, char *dest);
 static int	array_nelems_size(char *ptr, int eltsize, int nitems);
 static char *array_seek(char *ptr, int eltsize, int nitems);
 static int	array_copy(char *destptr, int eltsize, int nitems, char *srcptr);
-static int	array_slice_size(int ndim, int *dim, int *lb, char *arraydataptr,
-							 int eltsize, int *st, int *endp);
+static int array_slice_size(int ndim, int *dim, int *lb, char *arraydataptr,
+				 int eltsize, int *st, int *endp);
 static void array_extract_slice(int ndim, int *dim, int *lb,
-								char *arraydataptr, int eltsize,
-								int *st, int *endp, char *destPtr);
+					char *arraydataptr, int eltsize,
+					int *st, int *endp, char *destPtr);
 static void array_insert_slice(int ndim, int *dim, int *lb,
-							   char *origPtr, int origdatasize,
-							   char *destPtr, int eltsize,
-							   int *st, int *endp, char *srcPtr);
+				   char *origPtr, int origdatasize,
+				   char *destPtr, int eltsize,
+				   int *st, int *endp, char *srcPtr);
 
 
 /*---------------------------------------------------------------------
@@ -96,9 +96,11 @@ static void array_insert_slice(int ndim, int *dim, int *lb,
 Datum
 array_in(PG_FUNCTION_ARGS)
 {
-	char	   *string = PG_GETARG_CSTRING(0); /* external form */
-	Oid			element_type = PG_GETARG_OID(1); /* type of an array element */
-	int32		typmod = PG_GETARG_INT32(2); /* typmod for array elements */
+	char	   *string = PG_GETARG_CSTRING(0);	/* external form */
+	Oid			element_type = PG_GETARG_OID(1);		/* type of an array
+														 * element */
+	int32		typmod = PG_GETARG_INT32(2);	/* typmod for array
+												 * elements */
 	int			typlen;
 	bool		typbyval;
 	char		typdelim;
@@ -132,8 +134,8 @@ array_in(PG_FUNCTION_ARGS)
 	 * Otherwise, we require the input to be in curly-brace style, and we
 	 * prescan the input to determine dimensions.
 	 *
-	 * Dimension info takes the form of one or more [n] or [m:n] items.
-	 * The outer loop iterates once per dimension item.
+	 * Dimension info takes the form of one or more [n] or [m:n] items. The
+	 * outer loop iterates once per dimension item.
 	 */
 	p = string_save;
 	ndim = 0;
@@ -450,6 +452,7 @@ ReadArrayStr(char *arrayStr,
 								  ObjectIdGetDatum(typelem),
 								  Int32GetDatum(typmod));
 		p = ++q;
+
 		/*
 		 * if not at the end of the array skip white space
 		 */
@@ -460,6 +463,7 @@ ReadArrayStr(char *arrayStr,
 				q++;
 			}
 	}
+
 	/*
 	 * Initialize any unset items and compute total data space needed
 	 */
@@ -511,7 +515,7 @@ ReadArrayStr(char *arrayStr,
  * referenced by Datums after copying them.
  *
  * If the input data is of varlena type, the caller must have ensured that
- * the values are not toasted.  (Doing it here doesn't work since the 
+ * the values are not toasted.	(Doing it here doesn't work since the
  * caller has already allocated space for the array...)
  *----------
  */
@@ -601,7 +605,7 @@ array_out(PG_FUNCTION_ARGS)
 		itemvalue = fetch_att(p, typbyval, typlen);
 		values[i] = DatumGetCString(FunctionCall3(&outputproc,
 												  itemvalue,
-												  ObjectIdGetDatum(typelem),
+											   ObjectIdGetDatum(typelem),
 												  Int32GetDatum(-1)));
 		if (typlen > 0)
 			p += typlen;
@@ -706,6 +710,7 @@ array_dims(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	nbytes = ARR_NDIM(v) * 33 + 1;
+
 	/*
 	 * 33 since we assume 15 digits per number + ':' +'[]'
 	 *
@@ -759,6 +764,7 @@ array_ref(ArrayType *array,
 
 	if (arraylen > 0)
 	{
+
 		/*
 		 * fixed-length arrays -- these are assumed to be 1-d, 0-based
 		 */
@@ -809,7 +815,7 @@ array_ref(ArrayType *array,
  * lowerIndx[] and upperIndx[].  These are generally just temporaries.
  *-----------------------------------------------------------------------------
  */
-ArrayType *
+ArrayType  *
 array_get_slice(ArrayType *array,
 				int nSubscripts,
 				int *upperIndx,
@@ -835,6 +841,7 @@ array_get_slice(ArrayType *array,
 
 	if (arraylen > 0)
 	{
+
 		/*
 		 * fixed-length arrays -- currently, cannot slice these because
 		 * parser labels output as being of the fixed-length array type!
@@ -866,8 +873,9 @@ array_get_slice(ArrayType *array,
 
 	/*
 	 * Check provided subscripts.  A slice exceeding the current array
-	 * limits is silently truncated to the array limits.  If we end up with
-	 * an empty slice, return NULL (should it be an empty array instead?)
+	 * limits is silently truncated to the array limits.  If we end up
+	 * with an empty slice, return NULL (should it be an empty array
+	 * instead?)
 	 */
 	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
 		RETURN_NULL(ArrayType *);
@@ -918,7 +926,7 @@ array_get_slice(ArrayType *array,
  * with NULL, which will probably not make him happy.
  *-----------------------------------------------------------------------------
  */
-ArrayType *
+ArrayType  *
 array_set(ArrayType *array,
 		  int nSubscripts,
 		  int *indx,
@@ -950,9 +958,10 @@ array_set(ArrayType *array,
 
 	if (arraylen > 0)
 	{
+
 		/*
-		 * fixed-length arrays -- these are assumed to be 1-d, 0-based.
-		 * We cannot extend them, either.
+		 * fixed-length arrays -- these are assumed to be 1-d, 0-based. We
+		 * cannot extend them, either.
 		 */
 		if (nSubscripts != 1)
 			elog(ERROR, "Invalid array subscripts");
@@ -994,9 +1003,7 @@ array_set(ArrayType *array,
 				extendbefore = true;
 			}
 			else
-			{
 				elog(ERROR, "Invalid array subscripts");
-			}
 		}
 		if (indx[i] >= (dim[i] + lb[i]))
 		{
@@ -1006,9 +1013,7 @@ array_set(ArrayType *array,
 				extendafter = true;
 			}
 			else
-			{
 				elog(ERROR, "Invalid array subscripts");
-			}
 		}
 	}
 
@@ -1085,7 +1090,7 @@ array_set(ArrayType *array,
  * with NULL, which will probably not make him happy.
  *----------------------------------------------------------------------------
  */
-ArrayType *
+ArrayType  *
 array_set_slice(ArrayType *array,
 				int nSubscripts,
 				int *upperIndx,
@@ -1118,6 +1123,7 @@ array_set_slice(ArrayType *array,
 
 	if (arraylen > 0)
 	{
+
 		/*
 		 * fixed-length arrays -- not got round to doing this...
 		 */
@@ -1141,8 +1147,8 @@ array_set_slice(ArrayType *array,
 	/*
 	 * Check provided subscripts.  A slice exceeding the current array
 	 * limits throws an error, *except* in the 1-D case where we will
-	 * extend the array as long as no hole is created.
-	 * An empty slice is an error, too.
+	 * extend the array as long as no hole is created. An empty slice is
+	 * an error, too.
 	 */
 	for (i = 0; i < ndim; i++)
 	{
@@ -1156,26 +1162,20 @@ array_set_slice(ArrayType *array,
 				lb[i] = lowerIndx[i];
 			}
 			else
-			{
 				elog(ERROR, "Invalid array subscripts");
-			}
 		}
 		if (upperIndx[i] >= (dim[i] + lb[i]))
 		{
 			if (ndim == 1 && lowerIndx[i] <= (dim[i] + lb[i]))
-			{
 				dim[i] = upperIndx[i] - lb[i] + 1;
-			}
 			else
-			{
 				elog(ERROR, "Invalid array subscripts");
-			}
 		}
 	}
 
 	/*
-	 * Make sure source array has enough entries.  Note we ignore the shape
-	 * of the source array and just read entries serially.
+	 * Make sure source array has enough entries.  Note we ignore the
+	 * shape of the source array and just read entries serially.
 	 */
 	mda_get_range(ndim, span, lowerIndx, upperIndx);
 	nsrcitems = ArrayGetNItems(ndim, span);
@@ -1192,24 +1192,27 @@ array_set_slice(ArrayType *array,
 	olddatasize = ARR_SIZE(array) - overheadlen;
 	if (ndim > 1)
 	{
+
 		/*
-		 * here we do not need to cope with extension of the array;
-		 * it would be a lot more complicated if we had to do so...
+		 * here we do not need to cope with extension of the array; it
+		 * would be a lot more complicated if we had to do so...
 		 */
 		olditemsize = array_slice_size(ndim, dim, lb, ARR_DATA_PTR(array),
 									   elmlen, lowerIndx, upperIndx);
-		lenbefore = lenafter = 0; /* keep compiler quiet */
+		lenbefore = lenafter = 0;		/* keep compiler quiet */
 	}
 	else
 	{
+
 		/*
-		 * here we must allow for possibility of slice larger than orig array
+		 * here we must allow for possibility of slice larger than orig
+		 * array
 		 */
-		int		oldlb = ARR_LBOUND(array)[0];
-		int		oldub = oldlb + ARR_DIMS(array)[0] - 1;
-		int		slicelb = MAX(oldlb, lowerIndx[0]);
-		int		sliceub = MIN(oldub, upperIndx[0]);
-		char   *oldarraydata = ARR_DATA_PTR(array);
+		int			oldlb = ARR_LBOUND(array)[0];
+		int			oldub = oldlb + ARR_DIMS(array)[0] - 1;
+		int			slicelb = MAX(oldlb, lowerIndx[0]);
+		int			sliceub = MIN(oldub, upperIndx[0]);
+		char	   *oldarraydata = ARR_DATA_PTR(array);
 
 		lenbefore = array_nelems_size(oldarraydata,
 									  elmlen,
@@ -1234,9 +1237,10 @@ array_set_slice(ArrayType *array,
 
 	if (ndim > 1)
 	{
+
 		/*
-		 * here we do not need to cope with extension of the array;
-		 * it would be a lot more complicated if we had to do so...
+		 * here we do not need to cope with extension of the array; it
+		 * would be a lot more complicated if we had to do so...
 		 */
 		array_insert_slice(ndim, dim, lb, ARR_DATA_PTR(array), olddatasize,
 						   ARR_DATA_PTR(newarray), elmlen,
@@ -1261,7 +1265,7 @@ array_set_slice(ArrayType *array,
 /*
  * array_map()
  *
- * Map an array through an arbitrary function.  Return a new array with
+ * Map an array through an arbitrary function.	Return a new array with
  * same dimensions and each source element transformed by fn().  Each
  * source element is passed as the first argument to fn(); additional
  * arguments to be passed to fn() can be specified by the caller.
@@ -1269,15 +1273,15 @@ array_set_slice(ArrayType *array,
  *
  * Parameters are:
  * * fcinfo: a function-call data structure pre-constructed by the caller
- *   to be ready to call the desired function, with everything except the
- *   first argument position filled in.  In particular, flinfo identifies
- *   the function fn(), and if nargs > 1 then argument positions after the
- *   first must be preset to the additional values to be passed.  The
- *   first argument position initially holds the input array value.
+ *	 to be ready to call the desired function, with everything except the
+ *	 first argument position filled in.  In particular, flinfo identifies
+ *	 the function fn(), and if nargs > 1 then argument positions after the
+ *	 first must be preset to the additional values to be passed.  The
+ *	 first argument position initially holds the input array value.
  * * inpType: OID of element type of input array.  This must be the same as,
- *   or binary-compatible with, the first argument type of fn().
- * * retType: OID of element type of output array.  This must be the same as,
- *   or binary-compatible with, the result type of fn().
+ *	 or binary-compatible with, the first argument type of fn().
+ * * retType: OID of element type of output array.	This must be the same as,
+ *	 or binary-compatible with, the result type of fn().
  *
  * NB: caller must assure that input array is not NULL.  Currently,
  * any additional parameters passed to fn() may not be specified as NULL
@@ -1344,9 +1348,9 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 		/*
 		 * Apply the given function to source elt and extra args.
 		 *
-		 * We assume the extra args are non-NULL, so need not check
-		 * whether fn() is strict.  Would need to do more work here
-		 * to support arrays containing nulls, too.
+		 * We assume the extra args are non-NULL, so need not check whether
+		 * fn() is strict.	Would need to do more work here to support
+		 * arrays containing nulls, too.
 		 */
 		fcinfo->arg[0] = elt;
 		fcinfo->argnull[0] = false;
@@ -1374,7 +1378,10 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 	result->ndim = ndim;
 	memcpy(ARR_DIMS(result), ARR_DIMS(v), 2 * ndim * sizeof(int));
 
-	/* Note: do not risk trying to pfree the results of the called function */
+	/*
+	 * Note: do not risk trying to pfree the results of the called
+	 * function
+	 */
 	CopyArrayEls(ARR_DATA_PTR(result), values, nitems,
 				 typbyval, typlen, typalign, false);
 	pfree(values);
@@ -1383,7 +1390,7 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 }
 
 /*----------
- * construct_array  --- simple method for constructing an array object
+ * construct_array	--- simple method for constructing an array object
  *
  * elems: array of Datum items to become the array contents
  * nelems: number of items
@@ -1394,7 +1401,7 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
  * NULL element values are not supported.
  *----------
  */
-ArrayType *
+ArrayType  *
 construct_array(Datum *elems, int nelems,
 				bool elmbyval, int elmlen, char elmalign)
 {

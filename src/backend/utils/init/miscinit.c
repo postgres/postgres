@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.63 2001/03/18 18:22:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.64 2001/03/22 04:00:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ SetDatabaseName(const char *name)
 void
 SetDataDir(const char *dir)
 {
-	char *new;
+	char	   *new;
 
 	AssertArg(dir);
 	if (DataDir)
@@ -117,8 +117,8 @@ SetDataDir(const char *dir)
 
 	if (dir[0] != '/')
 	{
-		char *buf;
-		size_t buflen;
+		char	   *buf;
+		size_t		buflen;
 
 		buflen = MAXPGPATH;
 		for (;;)
@@ -147,13 +147,11 @@ SetDataDir(const char *dir)
 		free(buf);
 	}
 	else
-	{
 		new = strdup(dir);
-	}
 
 	if (!new)
 		elog(FATAL, "out of memory");
-	DataDir = new;		
+	DataDir = new;
 }
 
 
@@ -344,7 +342,7 @@ convertstr(unsigned char *buff, int len, int dest)
 
 
 /* ----------------------------------------------------------------
- * 	User ID things
+ *	User ID things
  *
  * The session user is determined at connection start and never
  * changes.  The current user may change when "setuid" functions
@@ -415,7 +413,7 @@ SetSessionUserIdFromUserName(const char *username)
 	if (!HeapTupleIsValid(userTup))
 		elog(FATAL, "user \"%s\" does not exist", username);
 
-	SetSessionUserId( ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid );
+	SetSessionUserId(((Form_pg_shadow) GETSTRUCT(userTup))->usesysid);
 
 	ReleaseSysCache(userTup);
 }
@@ -436,7 +434,7 @@ GetUserName(Oid userid)
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "invalid user id %u", (unsigned) userid);
 
-	result = pstrdup( NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename) );
+	result = pstrdup(NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename));
 
 	ReleaseSysCache(tuple);
 	return result;
@@ -502,12 +500,14 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	 */
 	for (;;)
 	{
+
 		/*
 		 * Try to create the lock file --- O_EXCL makes this atomic.
 		 */
 		fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
 		if (fd >= 0)
 			break;				/* Success; exit the retry loop */
+
 		/*
 		 * Couldn't create the pid file. Probably it already exists.
 		 */
@@ -551,7 +551,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 #ifdef __BEOS__
 				 && errno != EINVAL
 #endif
-				))
+				 ))
 			{
 				/* lockfile belongs to a live process */
 				fprintf(stderr, "Lock file \"%s\" already exists.\n",
@@ -571,11 +571,11 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		}
 
 		/*
-		 * No, the creating process did not exist.  However, it could be that
-		 * the postmaster crashed (or more likely was kill -9'd by a clueless
-		 * admin) but has left orphan backends behind.  Check for this by
-		 * looking to see if there is an associated shmem segment that is
-		 * still in use.
+		 * No, the creating process did not exist.	However, it could be
+		 * that the postmaster crashed (or more likely was kill -9'd by a
+		 * clueless admin) but has left orphan backends behind.  Check for
+		 * this by looking to see if there is an associated shmem segment
+		 * that is still in use.
 		 */
 		if (isDDLock)
 		{
@@ -585,7 +585,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 
 			ptr = strchr(buffer, '\n');
 			if (ptr != NULL &&
-				(ptr = strchr(ptr+1, '\n')) != NULL)
+				(ptr = strchr(ptr + 1, '\n')) != NULL)
 			{
 				ptr++;
 				if (sscanf(ptr, "%lu %lu", &shmKey, &shmId) == 2)
@@ -607,8 +607,8 @@ CreateLockFile(const char *filename, bool amPostmaster,
 
 		/*
 		 * Looks like nobody's home.  Unlink the file and try again to
-		 * create it.  Need a loop because of possible race condition against
-		 * other would-be creators.
+		 * create it.  Need a loop because of possible race condition
+		 * against other would-be creators.
 		 */
 		if (unlink(filename) < 0)
 			elog(FATAL, "Can't remove old lock file %s: %m"
@@ -621,11 +621,11 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	 * Successfully created the file, now fill it.
 	 */
 	snprintf(buffer, sizeof(buffer), "%d\n%s\n",
-			 amPostmaster ? (int) my_pid : - ((int) my_pid),
+			 amPostmaster ? (int) my_pid : -((int) my_pid),
 			 DataDir);
 	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))
 	{
-		int		save_errno = errno;
+		int			save_errno = errno;
 
 		close(fd);
 		unlink(filename);
@@ -645,10 +645,10 @@ CreateLockFile(const char *filename, bool amPostmaster,
 bool
 CreateDataDirLockFile(const char *datadir, bool amPostmaster)
 {
-	char	lockfile[MAXPGPATH];
+	char		lockfile[MAXPGPATH];
 
 	snprintf(lockfile, sizeof(lockfile), "%s/postmaster.pid", datadir);
-	if (! CreateLockFile(lockfile, amPostmaster, true, datadir))
+	if (!CreateLockFile(lockfile, amPostmaster, true, datadir))
 		return false;
 	/* Save name of lockfile for RecordSharedMemoryInLockFile */
 	strcpy(directoryLockFile, lockfile);
@@ -658,10 +658,10 @@ CreateDataDirLockFile(const char *datadir, bool amPostmaster)
 bool
 CreateSocketLockFile(const char *socketfile, bool amPostmaster)
 {
-	char	lockfile[MAXPGPATH];
+	char		lockfile[MAXPGPATH];
 
 	snprintf(lockfile, sizeof(lockfile), "%s.lock", socketfile);
-	if (! CreateLockFile(lockfile, amPostmaster, false, socketfile))
+	if (!CreateLockFile(lockfile, amPostmaster, false, socketfile))
 		return false;
 	/* Save name of lockfile for TouchSocketLockFile */
 	strcpy(socketLockFile, lockfile);
@@ -698,7 +698,7 @@ TouchSocketLockFile(void)
  * lock file (if we have created one).
  *
  * This may be called multiple times in the life of a postmaster, if we
- * delete and recreate shmem due to backend crash.  Therefore, be prepared
+ * delete and recreate shmem due to backend crash.	Therefore, be prepared
  * to overwrite existing information.  (As of 7.1, a postmaster only creates
  * one shm seg anyway; but for the purposes here, if we did have more than
  * one then any one of them would do anyway.)
@@ -712,8 +712,8 @@ RecordSharedMemoryInLockFile(IpcMemoryKey shmKey, IpcMemoryId shmId)
 	char		buffer[BLCKSZ];
 
 	/*
-	 * Do nothing if we did not create a lockfile (probably because we
-	 * are running standalone).
+	 * Do nothing if we did not create a lockfile (probably because we are
+	 * running standalone).
 	 */
 	if (directoryLockFile[0] == '\0')
 		return;
@@ -732,27 +732,30 @@ RecordSharedMemoryInLockFile(IpcMemoryKey shmKey, IpcMemoryId shmId)
 		return;
 	}
 	buffer[len] = '\0';
+
 	/*
 	 * Skip over first two lines (PID and path).
 	 */
 	ptr = strchr(buffer, '\n');
 	if (ptr == NULL ||
-		(ptr = strchr(ptr+1, '\n')) == NULL)
+		(ptr = strchr(ptr + 1, '\n')) == NULL)
 	{
 		elog(DEBUG, "Bogus data in %s", directoryLockFile);
 		close(fd);
 		return;
 	}
 	ptr++;
+
 	/*
 	 * Append shm key and ID.  Format to try to keep it the same length
 	 * always (trailing junk won't hurt, but might confuse humans).
 	 */
 	sprintf(ptr, "%9lu %9lu\n",
 			(unsigned long) shmKey, (unsigned long) shmId);
+
 	/*
-	 * And rewrite the data.  Since we write in a single kernel call,
-	 * this update should appear atomic to onlookers.
+	 * And rewrite the data.  Since we write in a single kernel call, this
+	 * update should appear atomic to onlookers.
 	 */
 	len = strlen(buffer);
 	if (lseek(fd, (off_t) 0, SEEK_SET) != 0 ||
@@ -781,16 +784,18 @@ void
 ValidatePgVersion(const char *path)
 {
 	char		full_path[MAXPGPATH];
-	FILE       *file;
+	FILE	   *file;
 	int			ret;
-	long        file_major, file_minor;
-	long        my_major = 0, my_minor = 0;
-	char       *endptr;
+	long		file_major,
+				file_minor;
+	long		my_major = 0,
+				my_minor = 0;
+	char	   *endptr;
 	const char *version_string = PG_VERSION;
 
 	my_major = strtol(version_string, &endptr, 10);
 	if (*endptr == '.')
-		my_minor = strtol(endptr+1, NULL, 10);
+		my_minor = strtol(endptr + 1, NULL, 10);
 
 	snprintf(full_path, MAXPGPATH, "%s/PG_VERSION", path);
 

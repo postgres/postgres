@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.42 2001/02/27 22:07:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.43 2001/03/22 03:59:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,11 @@ PreparePortal(char *portalName)
 	portal = GetPortalByName(portalName);
 	if (PortalIsValid(portal))
 	{
-		/* XXX Should we raise an error rather than closing the old portal? */
+
+		/*
+		 * XXX Should we raise an error rather than closing the old
+		 * portal?
+		 */
 		elog(NOTICE, "Closing pre-existing portal \"%s\"",
 			 portalName);
 		PortalDrop(&portal);
@@ -226,6 +230,7 @@ ProcessQuery(Query *parsetree,
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 		parsetree = copyObject(parsetree);
 		plan = copyObject(plan);
+
 		/*
 		 * We stay in portal's memory context for now, so that query desc,
 		 * EState, and plan startup info are also allocated in the portal

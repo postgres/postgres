@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datum.h,v 1.12 2001/01/24 19:43:28 momjian Exp $
+ * $Id: datum.h,v 1.13 2001/03/22 04:01:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,6 @@ extern void datumFree(Datum value, bool typByVal, int typLen);
  * XXX : See comments in the code for restrictions!
  */
 extern bool datumIsEqual(Datum value1, Datum value2,
-						 bool typByVal, int typLen);
+			 bool typByVal, int typLen);
 
 #endif	 /* DATUM_H */

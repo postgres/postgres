@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for managed LargeObjects.
  *
- *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.7 2001/02/10 02:31:25 tgl Exp $
+ *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.8 2001/03/22 03:59:09 momjian Exp $
  *
  */
 
@@ -36,7 +36,7 @@ Blob	   *lo_in(char *str);	/* Create from String		*/
 char	   *lo_out(Blob * addr);/* Output oid as String		*/
 Oid			lo_oid(Blob * addr);/* Return oid as an oid		*/
 Blob	   *lo(Oid oid);		/* Return Blob based on oid */
-Datum		lo_manage(PG_FUNCTION_ARGS); /* Trigger handler			*/
+Datum		lo_manage(PG_FUNCTION_ARGS);		/* Trigger handler		   */
 
 /*
  * This creates a large object, and sets its OID to the value in the
@@ -69,7 +69,7 @@ lo_in(char *str)
 		 * There is no Oid passed, so create a new one
 		 */
 		oid = DatumGetObjectId(DirectFunctionCall1(lo_creat,
-							   Int32GetDatum(INV_READ | INV_WRITE)));
+								   Int32GetDatum(INV_READ | INV_WRITE)));
 		if (oid == InvalidOid)
 			elog(ERROR, "lo_in: InvalidOid returned from lo_creat");
 	}

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.56 2001/01/24 19:42:53 momjian Exp $
+ *	$Id: execAmi.c,v 1.57 2001/03/22 03:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
  *		ExecInsert		   \  executor interface   /	aminsert
  *		ExecReScanR		   /  to access methods    \	amrescan
  *		ExecMarkPos		  /							\	ammarkpos
- *		ExecRestrPos	 /							 \  amrestpos
+ *		ExecRestrPos	 /							 \	amrestpos
  */
 
 #include "postgres.h"
@@ -91,7 +91,7 @@ ExecOpenScanR(Oid relOid,
 	 *	on whether this is a heap relation or an index relation.
 	 *
 	 *	For a table, acquire AccessShareLock for the duration of the query
-	 *	execution.  For indexes, acquire no lock here; the index machinery
+	 *	execution.	For indexes, acquire no lock here; the index machinery
 	 *	does its own locks and unlocks.  (We rely on having some kind of
 	 *	lock on the parent table to ensure the index won't go away!)
 	 * ----------------
@@ -413,7 +413,7 @@ ExecMarkPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
+			case T_SeqScan:
 			ExecSeqMarkPos((SeqScan *) node);
 			break;
 
@@ -455,7 +455,7 @@ ExecRestrPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
+			case T_SeqScan:
 			ExecSeqRestrPos((SeqScan *) node);
 			break;
 

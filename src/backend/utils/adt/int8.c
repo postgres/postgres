@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.28 2001/01/26 22:50:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.29 2001/03/22 03:59:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,15 +67,15 @@ int8in(PG_FUNCTION_ARGS)
 	 * Do our own scan, rather than relying on sscanf which might be
 	 * broken for long long.
 	 */
-	while (*ptr && isspace((unsigned char) *ptr))	/* skip leading spaces */
+	while (*ptr && isspace((unsigned char) *ptr))		/* skip leading spaces */
 		ptr++;
 	if (*ptr == '-')			/* handle sign */
 		sign = -1, ptr++;
 	else if (*ptr == '+')
 		ptr++;
-	if (!isdigit((unsigned char) *ptr))		/* require at least one digit */
+	if (!isdigit((unsigned char) *ptr)) /* require at least one digit */
 		elog(ERROR, "Bad int8 external representation \"%s\"", str);
-	while (*ptr && isdigit((unsigned char) *ptr))	/* process digits */
+	while (*ptr && isdigit((unsigned char) *ptr))		/* process digits */
 	{
 		int64		newtmp = tmp * 10 + (*ptr++ - '0');
 
@@ -409,7 +409,7 @@ int8um(PG_FUNCTION_ARGS)
 {
 	int64		val = PG_GETARG_INT64(0);
 
-	PG_RETURN_INT64(- val);
+	PG_RETURN_INT64(-val);
 }
 
 Datum
@@ -702,10 +702,11 @@ dtoi8(PG_FUNCTION_ARGS)
 
 	/* Round val to nearest integer (but it's still in float form) */
 	val = rint(val);
+
 	/*
-	 * Does it fit in an int64?  Avoid assuming that we have handy constants
-	 * defined for the range boundaries, instead test for overflow by
-	 * reverse-conversion.
+	 * Does it fit in an int64?  Avoid assuming that we have handy
+	 * constants defined for the range boundaries, instead test for
+	 * overflow by reverse-conversion.
 	 */
 	result = (int64) val;
 

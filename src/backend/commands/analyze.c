@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.14 2001/02/16 03:16:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.15 2001/03/22 03:59:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,9 +86,10 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 		CommitTransactionCommand();
 		return;
 	}
+
 	/*
-	 * We can VACUUM ANALYZE any table except pg_statistic.
-	 * see update_relstats
+	 * We can VACUUM ANALYZE any table except pg_statistic. see
+	 * update_relstats
 	 */
 	if (strcmp(NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname),
 			   StatisticRelationName) == 0)
@@ -104,10 +105,12 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 	if (!pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
 					   RELNAME))
 	{
-		/* we already did an elog during vacuum
-		elog(NOTICE, "Skipping \"%s\" --- only table owner can VACUUM it",
-			 RelationGetRelationName(onerel));
-		*/
+
+		/*
+		 * we already did an elog during vacuum elog(NOTICE, "Skipping
+		 * \"%s\" --- only table owner can VACUUM it",
+		 * RelationGetRelationName(onerel));
+		 */
 		heap_close(onerel, NoLock);
 		CommitTransactionCommand();
 		return;
@@ -136,7 +139,7 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 				if (namestrcmp(&(attr[i]->attname), col) == 0)
 					break;
 			}
-			if (i < attr_cnt)		/* found */
+			if (i < attr_cnt)	/* found */
 				attnums[tcnt++] = i;
 			else
 			{
@@ -295,15 +298,16 @@ attr_stats(Relation onerel, int attr_cnt, VacAttrStats *vacattrstats, HeapTuple 
 		stats->nonnull_cnt++;
 
 		/*
-		 * If the value is toasted, detoast it to avoid repeated detoastings
-		 * and resultant memory leakage inside the comparison routines.
+		 * If the value is toasted, detoast it to avoid repeated
+		 * detoastings and resultant memory leakage inside the comparison
+		 * routines.
 		 */
 		if (!stats->attr->attbyval && stats->attr->attlen == -1)
 			value = PointerGetDatum(PG_DETOAST_DATUM(origvalue));
 		else
 			value = origvalue;
 
-		if (! stats->initialized)
+		if (!stats->initialized)
 		{
 			bucketcpy(stats->attr, value, &stats->best, &stats->best_len);
 			/* best_cnt gets incremented below */
@@ -433,7 +437,7 @@ bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len)
  *		Of course, this only works for fixed-size never-null columns, but
  *		dispersion is.
  *
- *		pg_statistic rows are just added normally.  This means that
+ *		pg_statistic rows are just added normally.	This means that
  *		pg_statistic will probably contain some deleted rows at the
  *		completion of a vacuum cycle, unless it happens to get vacuumed last.
  *
@@ -467,7 +471,7 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 		VacAttrStats *stats;
 
 		attp = (Form_pg_attribute) GETSTRUCT(atup);
-		if (attp->attnum <= 0)		/* skip system attributes for now */
+		if (attp->attnum <= 0)	/* skip system attributes for now */
 			continue;
 
 		for (i = 0; i < natts; i++)
@@ -476,47 +480,45 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 				break;
 		}
 		if (i >= natts)
-			continue;		/* skip attr if no stats collected */
+			continue;			/* skip attr if no stats collected */
 		stats = &(vacattrstats[i]);
 
 		if (VacAttrStatsEqValid(stats))
 		{
-			float4	selratio;	/* average ratio of rows selected
-								 * for a random constant */
+			float4		selratio;		/* average ratio of rows selected
+										 * for a random constant */
 
 			/* Compute dispersion */
 			if (stats->nonnull_cnt == 0 && stats->null_cnt == 0)
 			{
 
 				/*
-				 * empty relation, so put a dummy value in
-				 * attdispersion
+				 * empty relation, so put a dummy value in attdispersion
 				 */
 				selratio = 0;
 			}
 			else if (stats->null_cnt <= 1 && stats->best_cnt == 1)
 			{
+
 				/*
-				 * looks like we have a unique-key attribute --- flag
-				 * this with special -1.0 flag value.
+				 * looks like we have a unique-key attribute --- flag this
+				 * with special -1.0 flag value.
 				 *
-				 * The correct dispersion is 1.0/numberOfRows, but since
-				 * the relation row count can get updated without
-				 * recomputing dispersion, we want to store a
-				 * "symbolic" value and figure 1.0/numberOfRows on the
-				 * fly.
+				 * The correct dispersion is 1.0/numberOfRows, but since the
+				 * relation row count can get updated without recomputing
+				 * dispersion, we want to store a "symbolic" value and
+				 * figure 1.0/numberOfRows on the fly.
 				 */
 				selratio = -1;
 			}
 			else
 			{
 				if (VacAttrStatsLtGtValid(stats) &&
-				stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
+					stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
 				{
 
 					/*
-					 * exact result when there are just 1 or 2
-					 * values...
+					 * exact result when there are just 1 or 2 values...
 					 */
 					double		min_cnt_d = stats->min_cnt,
 								max_cnt_d = stats->max_cnt,
@@ -552,12 +554,12 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 
 			/*
 			 * Create pg_statistic tuples for the relation, if we have
-			 * gathered the right data.  del_stats() previously
-			 * deleted all the pg_statistic tuples for the rel, so we
-			 * just have to insert new ones here.
+			 * gathered the right data.  del_stats() previously deleted
+			 * all the pg_statistic tuples for the rel, so we just have to
+			 * insert new ones here.
 			 *
-			 * Note analyze_rel() has seen to it that we won't come here
-			 * when vacuuming pg_statistic itself.
+			 * Note analyze_rel() has seen to it that we won't come here when
+			 * vacuuming pg_statistic itself.
 			 */
 			if (VacAttrStatsLtGtValid(stats) && stats->initialized)
 			{
@@ -567,7 +569,7 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 				char	   *out_string;
 				double		best_cnt_d = stats->best_cnt,
 							null_cnt_d = stats->null_cnt,
-							nonnull_cnt_d = stats->nonnull_cnt;		/* prevent overflow */
+							nonnull_cnt_d = stats->nonnull_cnt; /* prevent overflow */
 				Datum		values[Natts_pg_statistic];
 				char		nulls[Natts_pg_statistic];
 				Relation	irelations[Num_pg_statistic_indices];
@@ -585,31 +587,31 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 				 * ----------------
 				 */
 				i = 0;
-				values[i++] = ObjectIdGetDatum(relid);		/* starelid */
-				values[i++] = Int16GetDatum(attp->attnum);	/* staattnum */
-				values[i++] = ObjectIdGetDatum(stats->op_cmplt); /* staop */
-				values[i++] = Float4GetDatum(nullratio);	/* stanullfrac */
-				values[i++] = Float4GetDatum(bestratio);	/* stacommonfrac */
+				values[i++] = ObjectIdGetDatum(relid);	/* starelid */
+				values[i++] = Int16GetDatum(attp->attnum);		/* staattnum */
+				values[i++] = ObjectIdGetDatum(stats->op_cmplt);		/* staop */
+				values[i++] = Float4GetDatum(nullratio);		/* stanullfrac */
+				values[i++] = Float4GetDatum(bestratio);		/* stacommonfrac */
 				out_string = DatumGetCString(FunctionCall3(&out_function,
-											 stats->best,
-											 ObjectIdGetDatum(stats->typelem),
-											 Int32GetDatum(stats->attr->atttypmod)));
-				values[i++] = DirectFunctionCall1(textin,	/* stacommonval */
-												  CStringGetDatum(out_string));
+														   stats->best,
+										ObjectIdGetDatum(stats->typelem),
+								 Int32GetDatum(stats->attr->atttypmod)));
+				values[i++] = DirectFunctionCall1(textin,		/* stacommonval */
+											CStringGetDatum(out_string));
 				pfree(out_string);
 				out_string = DatumGetCString(FunctionCall3(&out_function,
-											 stats->min,
-											 ObjectIdGetDatum(stats->typelem),
-											 Int32GetDatum(stats->attr->atttypmod)));
-				values[i++] = DirectFunctionCall1(textin,	/* staloval */
-												  CStringGetDatum(out_string));
+														   stats->min,
+										ObjectIdGetDatum(stats->typelem),
+								 Int32GetDatum(stats->attr->atttypmod)));
+				values[i++] = DirectFunctionCall1(textin,		/* staloval */
+											CStringGetDatum(out_string));
 				pfree(out_string);
 				out_string = DatumGetCString(FunctionCall3(&out_function,
-											 stats->max,
-											 ObjectIdGetDatum(stats->typelem),
-											 Int32GetDatum(stats->attr->atttypmod)));
-				values[i++] = DirectFunctionCall1(textin,	/* stahival */
-												  CStringGetDatum(out_string));
+														   stats->max,
+										ObjectIdGetDatum(stats->typelem),
+								 Int32GetDatum(stats->attr->atttypmod)));
+				values[i++] = DirectFunctionCall1(textin,		/* stahival */
+											CStringGetDatum(out_string));
 				pfree(out_string);
 
 				stup = heap_formtuple(sd->rd_att, values, nulls);
@@ -682,6 +684,3 @@ del_stats(Oid relid, int attcnt, int *attnums)
 	 */
 	heap_close(pgstatistic, NoLock);
 }
-
-
-

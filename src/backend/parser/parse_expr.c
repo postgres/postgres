@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.91 2001/02/16 03:16:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.92 2001/03/22 03:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,9 +384,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						left_list = lnext(left_list);
 
 						/*
-						 * It's OK to use oper() not compatible_oper() here,
-						 * because make_subplan() will insert type coercion
-						 * calls if needed.
+						 * It's OK to use oper() not compatible_oper()
+						 * here, because make_subplan() will insert type
+						 * coercion calls if needed.
 						 */
 						optup = oper(op,
 									 exprType(lexpr),
@@ -458,10 +458,12 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					c->defresult = (Node *) n;
 				}
 				c->defresult = transformExpr(pstate, c->defresult, precedence);
+
 				/*
 				 * Note: default result is considered the most significant
-				 * type in determining preferred type.  This is how the code
-				 * worked before, but it seems a little bogus to me --- tgl
+				 * type in determining preferred type.	This is how the
+				 * code worked before, but it seems a little bogus to me
+				 * --- tgl
 				 */
 				typeids = lconsi(exprType(c->defresult), typeids);
 
@@ -571,7 +573,7 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 	 * appear
 	 */
 	if (ident->indirection == NIL &&
-		refnameRangeOrJoinEntry(pstate, ident->name, &sublevels_up) != NULL)
+	 refnameRangeOrJoinEntry(pstate, ident->name, &sublevels_up) != NULL)
 	{
 		ident->isRel = TRUE;
 		result = (Node *) ident;
@@ -580,7 +582,7 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 	if (result == NULL || precedence == EXPR_COLUMN_FIRST)
 	{
 		/* try to find the ident as a column */
-		Node   *var = colnameToVar(pstate, ident->name);
+		Node	   *var = colnameToVar(pstate, ident->name);
 
 		if (var != NULL)
 			result = transformIndirection(pstate, var, ident->indirection);
@@ -852,7 +854,7 @@ parser_typecast_constant(Value *expr, TypeName *typename)
 	{
 		case T_Integer:
 			const_string = DatumGetCString(DirectFunctionCall1(int4out,
-										   Int32GetDatum(expr->val.ival)));
+										 Int32GetDatum(expr->val.ival)));
 			string_palloced = true;
 			break;
 		case T_Float:
@@ -931,7 +933,7 @@ parser_typecast_expression(ParseState *pstate,
 
 /*
  * Given a TypeName node as returned by the grammar, generate the internal
- * name of the corresponding type.  Note this does NOT check if the type
+ * name of the corresponding type.	Note this does NOT check if the type
  * exists or not.
  */
 char *
@@ -939,11 +941,12 @@ TypeNameToInternalName(TypeName *typename)
 {
 	if (typename->arrayBounds != NIL)
 	{
+
 		/*
 		 * By convention, the name of an array type is the name of its
 		 * element type with "_" prepended.
 		 */
-		char   *arrayname = palloc(strlen(typename->name) + 2);
+		char	   *arrayname = palloc(strlen(typename->name) + 2);
 
 		sprintf(arrayname, "_%s", typename->name);
 		return arrayname;

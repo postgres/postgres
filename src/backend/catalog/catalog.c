@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.39 2001/01/24 19:42:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.40 2001/03/22 03:59:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ relpath_blind(const char *dbname, const char *relname,
 	return path;
 }
 
-#else	/* ! OLD_FILE_NAMING */
+#else							/* ! OLD_FILE_NAMING */
 
 /*
  * relpath			- construct path to a relation's file
@@ -118,7 +118,7 @@ relpath(RelFileNode rnode)
 {
 	char	   *path;
 
-	if (rnode.tblNode == (Oid) 0)	/* "global tablespace" */
+	if (rnode.tblNode == (Oid) 0)		/* "global tablespace" */
 	{
 		/* Shared system relations live in {datadir}/global */
 		path = (char *) palloc(strlen(DataDir) + 8 + sizeof(NameData) + 1);
@@ -127,8 +127,8 @@ relpath(RelFileNode rnode)
 	else
 	{
 		path = (char *) palloc(strlen(DataDir) + 6 + 2 * sizeof(NameData) + 3);
-		sprintf(path, "%s%cbase%c%u%c%u", DataDir, SEP_CHAR, SEP_CHAR, 
-			rnode.tblNode, SEP_CHAR, rnode.relNode);
+		sprintf(path, "%s%cbase%c%u%c%u", DataDir, SEP_CHAR, SEP_CHAR,
+				rnode.tblNode, SEP_CHAR, rnode.relNode);
 	}
 	return path;
 }
@@ -144,7 +144,7 @@ GetDatabasePath(Oid tblNode)
 {
 	char	   *path;
 
-	if (tblNode == (Oid) 0)	/* "global tablespace" */
+	if (tblNode == (Oid) 0)		/* "global tablespace" */
 	{
 		/* Shared system relations live in {datadir}/global */
 		path = (char *) palloc(strlen(DataDir) + 8);
@@ -158,7 +158,7 @@ GetDatabasePath(Oid tblNode)
 	return path;
 }
 
-#endif	/* OLD_FILE_NAMING */
+#endif	 /* OLD_FILE_NAMING */
 
 /*
  * IsSystemRelationName

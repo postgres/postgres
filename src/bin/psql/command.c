@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.47 2001/02/17 10:03:33 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.48 2001/03/22 04:00:18 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -141,7 +141,7 @@ HandleSlashCmds(const char *line,
 
 		status = exec_command(new_cmd, my_line + 1, &continue_parse, query_buf);
 
-#if 0 /* turned out to be too annoying */
+#if 0							/* turned out to be too annoying */
 		if (status != CMD_UNKNOWN && isalpha((unsigned char) new_cmd[0]))
 			psql_error("Warning: this syntax is deprecated\n");
 #endif
@@ -186,7 +186,7 @@ exec_command(const char *cmd,
 	backslashResult status = CMD_SKIP_LINE;
 	char	   *string,
 			   *string_cpy,
-		       *val;
+			   *val;
 
 	/*
 	 * The 'string' variable will be overwritten to point to the next
@@ -310,7 +310,7 @@ exec_command(const char *cmd,
 			case 'i':
 			case 's':
 			case 'S':
-					success = listTables(&cmd[1], name, show_verbose);
+				success = listTables(&cmd[1], name, show_verbose);
 				break;
 			default:
 				status = CMD_UNKNOWN;
@@ -494,7 +494,7 @@ exec_command(const char *cmd,
 				success = false;
 			}
 			else
-			    success = do_lo_import(opt1, opt2);
+				success = do_lo_import(opt1, opt2);
 		}
 
 		else if (strcmp(cmd + 3, "list") == 0)
@@ -818,6 +818,7 @@ scan_option(char **string, enum option_type type, char *quote)
 
 	switch (options_string[pos])
 	{
+
 			/*
 			 * Double quoted string
 			 */
@@ -1038,8 +1039,8 @@ scan_option(char **string, enum option_type type, char *quote)
 			break;
 
 			/*
-			 * | could be the beginning of a pipe
-			 * if so, take rest of line as command
+			 * | could be the beginning of a pipe if so, take rest of line
+			 * as command
 			 */
 		case '|':
 			if (type == OT_FILEPIPE)
@@ -1166,13 +1167,11 @@ unescape(const unsigned char *source, size_t len)
 
 		else
 		{
-			int	i;
-			const unsigned char	*mp = p;
+			int			i;
+			const unsigned char *mp = p;
 
-			for (i = 0;i < PQmblen(p, pset.encoding);i++)
-			{
-			    *tmp++ = *mp++;
-			}
+			for (i = 0; i < PQmblen(p, pset.encoding); i++)
+				*tmp++ = *mp++;
 			esc = false;
 		}
 	}
@@ -1406,7 +1405,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 	const char *fname;
 	bool		error = false;
 	int			fd;
-	
+
 #ifndef WIN32
 	struct stat before,
 				after;
@@ -1430,7 +1429,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 #endif
 		fname = (const char *) fnametmp;
 
-		fd = open(fname, O_WRONLY|O_CREAT|O_EXCL, 0600);
+		fd = open(fname, O_WRONLY | O_CREAT | O_EXCL, 0600);
 		if (fd != -1)
 			stream = fdopen(fd, "w");
 

@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.49 2000/12/03 20:45:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.50 2001/03/22 03:59:49 momjian Exp $
  */
 
 #include "postgres.h"
@@ -82,20 +82,23 @@ cash_in(PG_FUNCTION_ARGS)
 				ssymbol,
 				psymbol,
 			   *nsymbol;
+
 #ifdef USE_LOCALE
 	struct lconv *lconvert = PGLC_localeconv();
+
 #endif
 
 #ifdef USE_LOCALE
+
 	/*
 	 * frac_digits will be CHAR_MAX in some locales, notably C.  However,
 	 * just testing for == CHAR_MAX is risky, because of compilers like
 	 * gcc that "helpfully" let you alter the platform-standard definition
 	 * of whether char is signed or not.  If we are so unfortunate as to
 	 * get compiled with a nonstandard -fsigned-char or -funsigned-char
-	 * switch, then our idea of CHAR_MAX will not agree with libc's.
-	 * The safest course is not to test for CHAR_MAX at all, but to impose
-	 * a range check for plausible frac_digits values.
+	 * switch, then our idea of CHAR_MAX will not agree with libc's. The
+	 * safest course is not to test for CHAR_MAX at all, but to impose a
+	 * range check for plausible frac_digits values.
 	 */
 	fpoint = lconvert->frac_digits;
 	if (fpoint < 0 || fpoint > 10)
@@ -238,8 +241,10 @@ cash_out(PG_FUNCTION_ARGS)
 				dsymbol,
 			   *nsymbol;
 	char		convention;
+
 #ifdef USE_LOCALE
 	struct lconv *lconvert = PGLC_localeconv();
+
 #endif
 
 #ifdef USE_LOCALE
@@ -249,8 +254,8 @@ cash_out(PG_FUNCTION_ARGS)
 		points = 2;				/* best guess in this case, I think */
 
 	/*
-	 * As with frac_digits, must apply a range check to mon_grouping
-	 * to avoid being fooled by variant CHAR_MAX values.
+	 * As with frac_digits, must apply a range check to mon_grouping to
+	 * avoid being fooled by variant CHAR_MAX values.
 	 */
 	mon_group = *lconvert->mon_grouping;
 	if (mon_group <= 0 || mon_group > 6)
@@ -680,7 +685,7 @@ cash_words(PG_FUNCTION_ARGS)
 		buf[0] = '\0';
 
 	m0 = value % 100;			/* cents */
-	m1 = (value / 100) % 1000; /* hundreds */
+	m1 = (value / 100) % 1000;	/* hundreds */
 	m2 = (value / 100000) % 1000;		/* thousands */
 	m3 = value / 100000000 % 1000;		/* millions */
 

@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.46 2001/02/17 03:37:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.47 2001/03/22 04:01:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,7 +208,7 @@ pqGetnchar(char *s, size_t len, PGconn *conn)
 	conn->inCursor += len;
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "From backend (%lu)> %.*s\n", (unsigned long)len, (int) len, s);
+		fprintf(conn->Pfdebug, "From backend (%lu)> %.*s\n", (unsigned long) len, (int) len, s);
 
 	return 0;
 }
@@ -259,13 +259,13 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 			break;
 		default:
 			sprintf(noticeBuf,
-					"pqGetInt: int size %lu not supported\n", (unsigned long)bytes);
+					"pqGetInt: int size %lu not supported\n", (unsigned long) bytes);
 			DONOTICE(conn, noticeBuf);
 			return EOF;
 	}
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "From backend (#%lu)> %d\n", (unsigned long)bytes, *result);
+		fprintf(conn->Pfdebug, "From backend (#%lu)> %d\n", (unsigned long) bytes, *result);
 
 	return 0;
 }
@@ -296,13 +296,13 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 			break;
 		default:
 			sprintf(noticeBuf,
-					"pqPutInt: int size %lu not supported\n", (unsigned long)bytes);
+					"pqPutInt: int size %lu not supported\n", (unsigned long) bytes);
 			DONOTICE(conn, noticeBuf);
 			return EOF;
 	}
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "To backend (%lu#)> %d\n", (unsigned long)bytes, value);
+		fprintf(conn->Pfdebug, "To backend (%lu#)> %d\n", (unsigned long) bytes, value);
 
 	return 0;
 }
@@ -645,9 +645,9 @@ pqFlush(PGconn *conn)
 				case ECONNRESET:
 #endif
 					printfPQExpBuffer(&conn->errorMessage,
-						"pqFlush() -- backend closed the channel unexpectedly.\n"
-						"\tThis probably means the backend terminated abnormally"
-						" before or while processing the request.\n");
+									  "pqFlush() -- backend closed the channel unexpectedly.\n"
+									  "\tThis probably means the backend terminated abnormally"
+						   " before or while processing the request.\n");
 
 					/*
 					 * We used to close the socket here, but that's a bad
@@ -661,8 +661,8 @@ pqFlush(PGconn *conn)
 
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
-						"pqFlush() --  couldn't send data: errno=%d\n%s\n",
-						errno, strerror(errno));
+					  "pqFlush() --  couldn't send data: errno=%d\n%s\n",
+									  errno, strerror(errno));
 					/* We don't assume it's a fatal error... */
 					return EOF;
 			}

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.36 2001/02/28 20:39:42 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.37 2001/03/22 04:00:21 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -19,6 +19,7 @@
 #ifndef WIN32
 #include <setjmp.h>
 sigjmp_buf	main_loop_jmp;
+
 #endif
 
 
@@ -285,14 +286,14 @@ MainLoop(FILE *source)
 			else
 				bslash_count = 0;
 
-		rescan:
+	rescan:
+
 			/*
-			 *	It is important to place the in_* test routines
-			 * 	before the in_* detection routines.
-			 *	i.e. we have to test if we are in a quote before
-			 *	testing for comments. bjm  2000-06-30
+			 * It is important to place the in_* test routines before the
+			 * in_* detection routines. i.e. we have to test if we are in
+			 * a quote before testing for comments. bjm  2000-06-30
 			 */
-			
+
 			/* in quote? */
 			if (in_quote)
 			{
@@ -307,9 +308,7 @@ MainLoop(FILE *source)
 				if (line[i] == '*' && line[i + thislen] == '/')
 				{
 					if (xcdepth > 0)
-					{
 						xcdepth--;
-					}
 					else
 					{
 						in_xcomment = false;
@@ -317,9 +316,7 @@ MainLoop(FILE *source)
 					}
 				}
 				else if (line[i] == '/' && line[i + thislen] == '*')
-				{
 					xcdepth++;
-				}
 			}
 
 			/* start of extended comment? */
@@ -393,7 +390,7 @@ MainLoop(FILE *source)
 					line = new;
 					len = strlen(new);
 
-					goto rescan;	/* reparse the just substituted */
+					goto rescan;/* reparse the just substituted */
 				}
 				else
 				{

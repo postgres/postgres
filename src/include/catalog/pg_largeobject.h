@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_largeobject.h,v 1.6 2001/01/24 19:43:21 momjian Exp $
+ * $Id: pg_largeobject.h,v 1.7 2001/03/22 04:00:39 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -27,7 +27,7 @@
  */
 
 /* ----------------
- *		pg_largeobject definition.  cpp turns this into
+ *		pg_largeobject definition.	cpp turns this into
  *		typedef struct FormData_pg_largeobject. Large object id
  *		is stored in loid;
  * ----------------
@@ -56,7 +56,7 @@ typedef FormData_pg_largeobject *Form_pg_largeobject;
 #define Anum_pg_largeobject_pageno		2
 #define Anum_pg_largeobject_data		3
 
-extern Oid LargeObjectCreate(Oid loid);
+extern Oid	LargeObjectCreate(Oid loid);
 extern void LargeObjectDrop(Oid loid);
 extern bool LargeObjectExists(Oid loid);
 

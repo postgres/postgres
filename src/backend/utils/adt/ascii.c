@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * ascii.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.6 2001/01/24 19:43:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.7 2001/03/22 03:59:49 momjian Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -33,21 +33,21 @@ multibyte_error(void)
 	elog(ERROR, "Multi-byte support is not enabled");
 }
 
-Datum 
+Datum
 to_ascii_encname(PG_FUNCTION_ARGS)
 {
 	multibyte_error();
 	return 0;					/* keep compiler quiet */
 }
 
-Datum 
+Datum
 to_ascii_enc(PG_FUNCTION_ARGS)
 {
 	multibyte_error();
 	return 0;					/* keep compiler quiet */
 }
 
-Datum 
+Datum
 to_ascii_default(PG_FUNCTION_ARGS)
 {
 	multibyte_error();
@@ -55,29 +55,29 @@ to_ascii_default(PG_FUNCTION_ARGS)
 }
 
 
-#else /* with MULTIBYTE */
+#else							/* with MULTIBYTE */
 
 
 static text *encode_to_ascii(text *data, int enc);
 
 /* ----------
- * to_ascii 
+ * to_ascii
  * ----------
  */
 char *
 pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int enc)
 {
-	unsigned char	*x 	= NULL;
-	unsigned char	*ascii	= NULL ;
-	int		range	= 0;
-	
-	/* 
-	 * relevant start for an encoding 
-	 */ 
-	#define RANGE_128	128	
-	#define RANGE_160	160
-	
-	
+	unsigned char *x = NULL;
+	unsigned char *ascii = NULL;
+	int			range = 0;
+
+	/*
+	 * relevant start for an encoding
+	 */
+#define RANGE_128	128
+#define RANGE_160	160
+
+
 	if (enc == LATIN1)
 	{
 		/* ----------
@@ -107,24 +107,24 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 	}
 	else
 	{
-		elog(ERROR, "pg_to_ascii(): unsupported encoding from %s", 
-						pg_encoding_to_char(enc));
+		elog(ERROR, "pg_to_ascii(): unsupported encoding from %s",
+			 pg_encoding_to_char(enc));
 	}
-	
+
 	/* ----------
 	 * Encode
 	 * ----------
 	 */
 	for (x = src; x <= src_end; x++)
 	{
-		if (*x < 128)			
+		if (*x < 128)
 			*desc++ = *x;
 		else if (*x < range)
-			*desc++ = ' ';  	/* bogus 128 to 'range' */
+			*desc++ = ' ';		/* bogus 128 to 'range' */
 		else
-			*desc++ = ascii[*x - range];	
-	}		
-	
+			*desc++ = ascii[*x - range];
+	}
+
 	return desc;
 }
 
@@ -136,11 +136,11 @@ static text *
 encode_to_ascii(text *data, int enc)
 {
 	pg_to_ascii(
-		(unsigned char *) VARDATA(data), 		/* src */
-		VARDATA(data) + VARSIZE(data),			/* src end */
-		(unsigned char *) VARDATA(data),		/* desc */	
-		enc);						/* encoding */
-	
+				(unsigned char *) VARDATA(data),		/* src */
+				VARDATA(data) + VARSIZE(data),	/* src end */
+				(unsigned char *) VARDATA(data),		/* desc */
+				enc);			/* encoding */
+
 	return data;
 }
 
@@ -152,30 +152,30 @@ Datum
 to_ascii_encname(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_TEXT_P
-	( 
-		encode_to_ascii
-		( 
-			PG_GETARG_TEXT_P_COPY(0), 
-			pg_char_to_encoding( NameStr(*PG_GETARG_NAME(1)) ) 
-		)
-	);	
+	(
+	 encode_to_ascii
+	 (
+	  PG_GETARG_TEXT_P_COPY(0),
+	  pg_char_to_encoding(NameStr(*PG_GETARG_NAME(1)))
+	  )
+	);
 }
 
 /* ----------
  * convert to ASCII - enc is set as int4
  * ----------
  */
-Datum 
+Datum
 to_ascii_enc(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_TEXT_P
-	( 
-		encode_to_ascii
-		( 
-			PG_GETARG_TEXT_P_COPY(0), 
-			PG_GETARG_INT32(1) 
-		)
-	);	
+	(
+	 encode_to_ascii
+	 (
+	  PG_GETARG_TEXT_P_COPY(0),
+	  PG_GETARG_INT32(1)
+	  )
+	);
 }
 
 /* ----------
@@ -185,14 +185,14 @@ to_ascii_enc(PG_FUNCTION_ARGS)
 Datum
 to_ascii_default(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TEXT_P 
-	( 
-		encode_to_ascii
-		( 
-			PG_GETARG_TEXT_P_COPY(0), 
-			GetDatabaseEncoding()
-		)
+	PG_RETURN_TEXT_P
+	(
+	 encode_to_ascii
+	 (
+	  PG_GETARG_TEXT_P_COPY(0),
+	  GetDatabaseEncoding()
+	  )
 	);
 }
 
-#endif /* MULTIBYTE */		
+#endif	 /* MULTIBYTE */

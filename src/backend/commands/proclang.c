@@ -111,7 +111,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 
 	i = 0;
 	values[i++] = PointerGetDatum(languageName);
-	values[i++] = BoolGetDatum(true); /* lanispl */
+	values[i++] = BoolGetDatum(true);	/* lanispl */
 	values[i++] = BoolGetDatum(stmt->pltrusted);
 	values[i++] = ObjectIdGetDatum(procTup->t_data->t_oid);
 	values[i++] = DirectFunctionCall1(textin,

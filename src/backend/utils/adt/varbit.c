@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.15 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.16 2001/03/22 03:59:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,10 @@ Datum
 zpbit_in(PG_FUNCTION_ARGS)
 {
 	char	   *input_string = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
+
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
 	VarBit	   *result;			/* The resulting bit string			  */
@@ -79,9 +81,10 @@ zpbit_in(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+
 		/*
-		 * Otherwise it's binary.  This allows things like cast('1001'
-		 * as bit) to work transparently.
+		 * Otherwise it's binary.  This allows things like cast('1001' as
+		 * bit) to work transparently.
 		 */
 		bit_not_hex = true;
 		sp = input_string;
@@ -214,8 +217,8 @@ zpbit_out(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Go back one step if we printed a hex number that was not part
-	 * of the bitstring anymore
+	 * Go back one step if we printed a hex number that was not part of
+	 * the bitstring anymore
 	 */
 	if (i > len)
 		r--;
@@ -263,12 +266,13 @@ _zpbit(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
 	int32		len = PG_GETARG_INT32(1);
-	FunctionCallInfoData	locfcinfo;
+	FunctionCallInfoData locfcinfo;
+
 	/*
-	 * Since zpbit() is a built-in function, we should only need to
-	 * look it up once per run.
+	 * Since zpbit() is a built-in function, we should only need to look
+	 * it up once per run.
 	 */
-	static FmgrInfo			zpbit_finfo;
+	static FmgrInfo zpbit_finfo;
 
 	if (zpbit_finfo.fn_oid == InvalidOid)
 		fmgr_info(F_ZPBIT, &zpbit_finfo);
@@ -293,8 +297,10 @@ Datum
 varbit_in(PG_FUNCTION_ARGS)
 {
 	char	   *input_string = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
+
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
 	VarBit	   *result;			/* The resulting bit string			  */
@@ -490,12 +496,13 @@ _varbit(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
 	int32		len = PG_GETARG_INT32(1);
-	FunctionCallInfoData	locfcinfo;
+	FunctionCallInfoData locfcinfo;
+
 	/*
-	 * Since varbit() is a built-in function, we should only need to
-	 * look it up once per run.
+	 * Since varbit() is a built-in function, we should only need to look
+	 * it up once per run.
 	 */
-	static FmgrInfo			varbit_finfo;
+	static FmgrInfo varbit_finfo;
 
 	if (varbit_finfo.fn_oid == InvalidOid)
 		fmgr_info(F_VARBIT, &varbit_finfo);
@@ -765,7 +772,7 @@ bitsubstr(PG_FUNCTION_ARGS)
 
 	bitlen = VARBITLEN(arg);
 	/* If we do not have an upper bound, set bitlen */
-	if (l==-1)
+	if (l == -1)
 		l = bitlen;
 	e = s + l;
 	s1 = Max(s, 1);
@@ -780,6 +787,7 @@ bitsubstr(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+
 		/*
 		 * OK, we've got a true substring starting at position s1-1 and
 		 * ending at position e1-1
@@ -823,7 +831,7 @@ bitsubstr(PG_FUNCTION_ARGS)
 	PG_RETURN_VARBIT_P(result);
 }
 
-/* bitlength, bitoctetlength 
+/* bitlength, bitoctetlength
  * Return the length of a bit string
  */
 Datum
@@ -986,7 +994,7 @@ bitnot(PG_FUNCTION_ARGS)
 	p = VARBITS(arg);
 	r = VARBITS(result);
 	for (; p < VARBITEND(arg); p++)
-		*r++ = ~ *p;
+		*r++ = ~*p;
 
 	/* Pad the result */
 	mask = BITMASK << VARBITPAD(result);
@@ -1076,8 +1084,8 @@ bitshiftright(PG_FUNCTION_ARGS)
 	/* Negative shift is a shift to the left */
 	if (shft < 0)
 		PG_RETURN_DATUM(DirectFunctionCall2(bitshiftleft,
-						    VarBitPGetDatum(arg),
-						    Int32GetDatum(-shft)));
+											VarBitPGetDatum(arg),
+											Int32GetDatum(-shft)));
 
 	result = (VarBit *) palloc(VARSIZE(arg));
 	VARATT_SIZEP(result) = VARSIZE(arg);
@@ -1121,7 +1129,7 @@ bitshiftright(PG_FUNCTION_ARGS)
 }
 
 /* This is not defined in any standard. We retain the natural ordering of
- * bits here, as it just seems more intuitive. 
+ * bits here, as it just seems more intuitive.
  */
 Datum
 bitfromint4(PG_FUNCTION_ARGS)
@@ -1130,19 +1138,21 @@ bitfromint4(PG_FUNCTION_ARGS)
 	VarBit	   *result;
 	bits8	   *r;
 	int			len;
-  
+
 	/* allocate enough space for the bits in an int4 */
-	len = VARBITTOTALLEN(sizeof(int4)*BITS_PER_BYTE);
+	len = VARBITTOTALLEN(sizeof(int4) * BITS_PER_BYTE);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
-	VARBITLEN(result) = sizeof(int4)*BITS_PER_BYTE;
-	/* masks and shifts here are just too painful and we know that an int4 has
-	 * got 4 bytes
+	VARBITLEN(result) = sizeof(int4) * BITS_PER_BYTE;
+
+	/*
+	 * masks and shifts here are just too painful and we know that an int4
+	 * has got 4 bytes
 	 */
 	r = VARBITS(result);
-	r[0] = (bits8) ((a >> (3*BITS_PER_BYTE)) & BITMASK);
-	r[1] = (bits8) ((a >> (2*BITS_PER_BYTE)) & BITMASK);
-	r[2] = (bits8) ((a >> (1*BITS_PER_BYTE)) & BITMASK);
+	r[0] = (bits8) ((a >> (3 * BITS_PER_BYTE)) & BITMASK);
+	r[1] = (bits8) ((a >> (2 * BITS_PER_BYTE)) & BITMASK);
+	r[2] = (bits8) ((a >> (1 * BITS_PER_BYTE)) & BITMASK);
 	r[3] = (bits8) (a & BITMASK);
 
 	PG_RETURN_VARBIT_P(result);
@@ -1156,7 +1166,7 @@ bittoint4(PG_FUNCTION_ARGS)
 	bits8	   *r;
 
 	/* Check that the bit string is not too long */
-	if (VARBITLEN(arg) > sizeof(int4)*BITS_PER_BYTE) 
+	if (VARBITLEN(arg) > sizeof(int4) * BITS_PER_BYTE)
 		elog(ERROR, "Bit string is too large to fit in an int4");
 	result = 0;
 	for (r = VARBITS(arg); r < VARBITEND(arg); r++)
@@ -1179,18 +1189,18 @@ bittoint4(PG_FUNCTION_ARGS)
 Datum
 bitposition(PG_FUNCTION_ARGS)
 {
-	VarBit		*substr = PG_GETARG_VARBIT_P(1);
-	VarBit		*arg = PG_GETARG_VARBIT_P(0);
-	int			substr_length, 
+	VarBit	   *substr = PG_GETARG_VARBIT_P(1);
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+	int			substr_length,
 				arg_length,
 				i,
 				is;
-	bits8		*s,				/* pointer into substring */
-				*p;				/* pointer into arg */
-	bits8		cmp,			/* shifted substring byte to compare */ 
-				mask1,          /* mask for substring byte shifted right */
-				mask2,          /* mask for substring byte shifted left */
-				end_mask,       /* pad mask for last substring byte */
+	bits8	   *s,				/* pointer into substring */
+			   *p;				/* pointer into arg */
+	bits8		cmp,			/* shifted substring byte to compare */
+				mask1,			/* mask for substring byte shifted right */
+				mask2,			/* mask for substring byte shifted left */
+				end_mask,		/* pad mask for last substring byte */
 				arg_mask;		/* pad mask for last argument byte */
 	bool		is_match;
 
@@ -1200,8 +1210,8 @@ bitposition(PG_FUNCTION_ARGS)
 
 	/* Argument has 0 length or substring longer than argument, return 0 */
 	if (arg_length == 0 || substr_length > arg_length)
-		PG_RETURN_INT32(0);	
-	
+		PG_RETURN_INT32(0);
+
 	/* 0-length means return 1 */
 	if (substr_length == 0)
 		PG_RETURN_INT32(1);
@@ -1209,23 +1219,26 @@ bitposition(PG_FUNCTION_ARGS)
 	/* Initialise the padding masks */
 	end_mask = BITMASK << VARBITPAD(substr);
 	arg_mask = BITMASK << VARBITPAD(arg);
-	for (i = 0; i < VARBITBYTES(arg) - VARBITBYTES(substr) + 1; i++) 
+	for (i = 0; i < VARBITBYTES(arg) - VARBITBYTES(substr) + 1; i++)
 	{
-		for (is = 0; is < BITS_PER_BYTE; is++) {
+		for (is = 0; is < BITS_PER_BYTE; is++)
+		{
 			is_match = true;
 			p = VARBITS(arg) + i;
 			mask1 = BITMASK >> is;
 			mask2 = ~mask1;
-			for (s = VARBITS(substr); 
-				 is_match && s < VARBITEND(substr); s++) 
+			for (s = VARBITS(substr);
+				 is_match && s < VARBITEND(substr); s++)
 			{
 				cmp = *s >> is;
-				if (s == VARBITEND(substr) - 1) 
+				if (s == VARBITEND(substr) - 1)
 				{
 					mask1 &= end_mask >> is;
-					if (p == VARBITEND(arg) - 1) {
+					if (p == VARBITEND(arg) - 1)
+					{
 						/* Check that there is enough of arg left */
-						if (mask1 & ~arg_mask) {
+						if (mask1 & ~arg_mask)
+						{
 							is_match = false;
 							break;
 						}
@@ -1237,21 +1250,24 @@ bitposition(PG_FUNCTION_ARGS)
 					break;
 				/* Move on to the next byte */
 				p++;
-				if (p == VARBITEND(arg)) {
+				if (p == VARBITEND(arg))
+				{
 					mask2 = end_mask << (BITS_PER_BYTE - is);
 					is_match = mask2 == 0;
 #if 0
-					elog(NOTICE,"S. %d %d em=%2x sm=%2x r=%d",
-						 i,is,end_mask,mask2,is_match);
+					elog(NOTICE, "S. %d %d em=%2x sm=%2x r=%d",
+						 i, is, end_mask, mask2, is_match);
 #endif
 					break;
 				}
 				cmp = *s << (BITS_PER_BYTE - is);
-				if (s == VARBITEND(substr) - 1) 
+				if (s == VARBITEND(substr) - 1)
 				{
 					mask2 &= end_mask << (BITS_PER_BYTE - is);
-					if (p == VARBITEND(arg) - 1) {
-						if (mask2 & ~arg_mask) {
+					if (p == VARBITEND(arg) - 1)
+					{
+						if (mask2 & ~arg_mask)
+						{
 							is_match = false;
 							break;
 						}
@@ -1262,7 +1278,7 @@ bitposition(PG_FUNCTION_ARGS)
 			}
 			/* Have we found a match */
 			if (is_match)
-				PG_RETURN_INT32(i*BITS_PER_BYTE + is + 1);
+				PG_RETURN_INT32(i * BITS_PER_BYTE + is + 1);
 		}
 	}
 	PG_RETURN_INT32(0);

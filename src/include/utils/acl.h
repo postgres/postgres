@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.30 2001/01/24 19:43:28 momjian Exp $
+ * $Id: acl.h,v 1.31 2001/03/22 04:01:10 momjian Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -68,8 +68,8 @@ typedef struct AclItem
 	AclMode		ai_mode;
 
 	/*
-	 * This is actually type 'aclitem', and we want a fixed size for
-	 * all platforms, so we pad this with dummies.
+	 * This is actually type 'aclitem', and we want a fixed size for all
+	 * platforms, so we pad this with dummies.
 	 */
 	char		dummy1,
 				dummy2;
@@ -86,7 +86,7 @@ typedef struct AclItem
  * and set it to zero when writing.
  *
  * CAUTION: as of Postgres 7.1, these arrays are toastable (just like all
- * other array types).  Therefore, be careful to detoast them with the
+ * other array types).	Therefore, be careful to detoast them with the
  * macros provided, unless you know for certain that a particular array
  * can't have been toasted.  Presently, we do not provide toast tables for
  * pg_class or pg_group, so the entries in those tables won't have been
@@ -117,21 +117,21 @@ typedef ArrayType IdList;
 /*
  * fmgr macros for these types
  */
-#define DatumGetAclItemP(X)        ((AclItem *) DatumGetPointer(X))
-#define PG_GETARG_ACLITEM_P(n)     DatumGetAclItemP(PG_GETARG_DATUM(n))
-#define PG_RETURN_ACLITEM_P(x)     PG_RETURN_POINTER(x)
+#define DatumGetAclItemP(X)		   ((AclItem *) DatumGetPointer(X))
+#define PG_GETARG_ACLITEM_P(n)	   DatumGetAclItemP(PG_GETARG_DATUM(n))
+#define PG_RETURN_ACLITEM_P(x)	   PG_RETURN_POINTER(x)
 
-#define DatumGetAclP(X)            ((Acl *) PG_DETOAST_DATUM(X))
-#define DatumGetAclPCopy(X)        ((Acl *) PG_DETOAST_DATUM_COPY(X))
-#define PG_GETARG_ACL_P(n)         DatumGetAclP(PG_GETARG_DATUM(n))
+#define DatumGetAclP(X)			   ((Acl *) PG_DETOAST_DATUM(X))
+#define DatumGetAclPCopy(X)		   ((Acl *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_ACL_P(n)		   DatumGetAclP(PG_GETARG_DATUM(n))
 #define PG_GETARG_ACL_P_COPY(n)    DatumGetAclPCopy(PG_GETARG_DATUM(n))
-#define PG_RETURN_ACL_P(x)         PG_RETURN_POINTER(x)
+#define PG_RETURN_ACL_P(x)		   PG_RETURN_POINTER(x)
 
-#define DatumGetIdListP(X)         ((IdList *) PG_DETOAST_DATUM(X))
-#define DatumGetIdListPCopy(X)     ((IdList *) PG_DETOAST_DATUM_COPY(X))
-#define PG_GETARG_IDLIST_P(n)      DatumGetIdListP(PG_GETARG_DATUM(n))
+#define DatumGetIdListP(X)		   ((IdList *) PG_DETOAST_DATUM(X))
+#define DatumGetIdListPCopy(X)	   ((IdList *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_IDLIST_P(n)	   DatumGetIdListP(PG_GETARG_DATUM(n))
 #define PG_GETARG_IDLIST_P_COPY(n) DatumGetIdListPCopy(PG_GETARG_DATUM(n))
-#define PG_RETURN_IDLIST_P(x)      PG_RETURN_POINTER(x)
+#define PG_RETURN_IDLIST_P(x)	   PG_RETURN_POINTER(x)
 
 
 /*

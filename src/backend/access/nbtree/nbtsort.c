@@ -6,7 +6,7 @@
  *
  * We use tuplesort.c to sort the given index tuples into order.
  * Then we scan the index tuples in order and build the btree pages
- * for each level.  We load source tuples into leaf-level pages.
+ * for each level.	We load source tuples into leaf-level pages.
  * Whenever we fill a page at one level, we add a link to it to its
  * parent level (starting a new parent level if necessary).  When
  * done, we write out each final page on each level, adding it to
@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.59 2001/01/24 19:42:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.60 2001/03/22 03:59:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ struct BTSpool
 };
 
 /*
- * Status record for a btree page being built.  We have one of these
+ * Status record for a btree page being built.	We have one of these
  * for each active tree level.
  *
  * The reason we need to store a copy of the minimum key is that we'll
@@ -73,11 +73,13 @@ typedef struct BTPageState
 {
 	Buffer		btps_buf;		/* current buffer & page */
 	Page		btps_page;
-	BTItem		btps_minkey;	/* copy of minimum key (first item) on page */
+	BTItem		btps_minkey;	/* copy of minimum key (first item) on
+								 * page */
 	OffsetNumber btps_lastoff;	/* last item offset loaded */
 	int			btps_level;		/* tree level (0 = leaf) */
-	Size		btps_full;		/* "full" if less than this much free space */
-	struct BTPageState *btps_next; /* link to parent level, if any */
+	Size		btps_full;		/* "full" if less than this much free
+								 * space */
+	struct BTPageState *btps_next;		/* link to parent level, if any */
 } BTPageState;
 
 
@@ -92,7 +94,7 @@ static void _bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags);
 static BTPageState *_bt_pagestate(Relation index, int flags, int level);
 static void _bt_slideleft(Relation index, Buffer buf, Page page);
 static void _bt_sortaddtup(Page page, Size itemsize,
-						   BTItem btitem, OffsetNumber itup_off);
+			   BTItem btitem, OffsetNumber itup_off);
 static void _bt_buildadd(Relation index, BTPageState *state, BTItem bti);
 static void _bt_uppershutdown(Relation index, BTPageState *state);
 static void _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2);
@@ -162,7 +164,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 		ShowUsage();
 		ResetUsage();
 	}
-#endif /* BTREE_BUILD_STATS */
+#endif	 /* BTREE_BUILD_STATS */
 	tuplesort_performsort(btspool->sortstate);
 
 	if (btspool2)
@@ -269,9 +271,9 @@ _bt_sortaddtup(Page page,
 			   OffsetNumber itup_off)
 {
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	BTItemData truncitem;
+	BTItemData	truncitem;
 
-	if (! P_ISLEAF(opaque) && itup_off == P_FIRSTKEY)
+	if (!P_ISLEAF(opaque) && itup_off == P_FIRSTKEY)
 	{
 		memcpy(&truncitem, btitem, sizeof(BTItemData));
 		truncitem.bti_itup.t_info = sizeof(BTItemData);
@@ -290,7 +292,7 @@ _bt_sortaddtup(Page page,
  * We must be careful to observe the page layout conventions of nbtsearch.c:
  * - rightmost pages start data items at P_HIKEY instead of at P_FIRSTKEY.
  * - on non-leaf pages, the key portion of the first item need not be
- *   stored, we should store only the link.
+ *	 stored, we should store only the link.
  *
  * A leaf page being built looks like:
  *
@@ -347,11 +349,12 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 	 */
 	if (btisz > (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
 		elog(ERROR, "btree: index item size %lu exceeds maximum %ld",
-			 (unsigned long)btisz,
-			 (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) /3 - sizeof(ItemIdData));
+			 (unsigned long) btisz,
+			 (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData));
 
 	if (pgspc < btisz || pgspc < state->btps_full)
 	{
+
 		/*
 		 * Item won't fit on this page, or we feel the page is full enough
 		 * already.  Finish off the page and write it out.
@@ -388,9 +391,9 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 		((PageHeader) opage)->pd_lower -= sizeof(ItemIdData);
 
 		/*
-		 * Link the old buffer into its parent, using its minimum key.
-		 * If we don't have a parent, we have to create one;
-		 * this adds a new btree level.
+		 * Link the old buffer into its parent, using its minimum key. If
+		 * we don't have a parent, we have to create one; this adds a new
+		 * btree level.
 		 */
 		if (state->btps_next == (BTPageState *) NULL)
 		{
@@ -405,8 +408,8 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 
 		/*
 		 * Save a copy of the minimum key for the new page.  We have to
-		 * copy it off the old page, not the new one, in case we are
-		 * not at leaf level.
+		 * copy it off the old page, not the new one, in case we are not
+		 * at leaf level.
 		 */
 		state->btps_minkey = _bt_formitem(&(obti->bti_itup));
 
@@ -414,13 +417,13 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 		 * Set the sibling links for both pages, and parent links too.
 		 *
 		 * It's not necessary to set the parent link at all, because it's
-		 * only used for handling concurrent root splits, but we may as well
-		 * do it as a debugging aid.  Note we set new page's link as well
-		 * as old's, because if the new page turns out to be the last of
-		 * the level, _bt_uppershutdown won't change it.  The links may be
-		 * out of date by the time the build finishes, but that's OK; they
-		 * need only point to a left-sibling of the true parent.  See the
-		 * README file for more info.
+		 * only used for handling concurrent root splits, but we may as
+		 * well do it as a debugging aid.  Note we set new page's link as
+		 * well as old's, because if the new page turns out to be the last
+		 * of the level, _bt_uppershutdown won't change it.  The links may
+		 * be out of date by the time the build finishes, but that's OK;
+		 * they need only point to a left-sibling of the true parent.  See
+		 * the README file for more info.
 		 */
 		{
 			BTPageOpaque oopaque = (BTPageOpaque) PageGetSpecialPointer(opage);
@@ -434,7 +437,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 		}
 
 		/*
-		 * Write out the old page.  We never want to see it again, so we
+		 * Write out the old page.	We never want to see it again, so we
 		 * can give up our lock (if we had one; most likely BuildingBtree
 		 * is set, so we aren't locking).
 		 */
@@ -449,8 +452,8 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 	/*
 	 * If the new item is the first for its page, stash a copy for later.
 	 * Note this will only happen for the first item on a level; on later
-	 * pages, the first item for a page is copied from the prior page
-	 * in the code above.
+	 * pages, the first item for a page is copied from the prior page in
+	 * the code above.
 	 */
 	if (last_off == P_HIKEY)
 	{
@@ -493,8 +496,8 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 		 *
 		 * If we're at the top, it's the root, so attach it to the metapage.
 		 * Otherwise, add an entry for it to its parent using its minimum
-		 * key.  This may cause the last page of the parent level to split,
-		 * but that's not a problem -- we haven't gotten to it yet.
+		 * key.  This may cause the last page of the parent level to
+		 * split, but that's not a problem -- we haven't gotten to it yet.
 		 */
 		if (s->btps_next == (BTPageState *) NULL)
 		{
@@ -513,7 +516,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 
 		/*
 		 * This is the rightmost page, so the ItemId array needs to be
-		 * slid back one slot.  Then we can dump out the page.
+		 * slid back one slot.	Then we can dump out the page.
 		 */
 		_bt_slideleft(index, s->btps_buf, s->btps_page);
 		_bt_wrtbuf(index, s->btps_buf);
@@ -529,22 +532,29 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 {
 	BTPageState *state = NULL;
 	bool		merge = (btspool2 != NULL);
-	BTItem		bti, bti2 = NULL;
-	bool		should_free, should_free2, load1;
+	BTItem		bti,
+				bti2 = NULL;
+	bool		should_free,
+				should_free2,
+				load1;
 	TupleDesc	tupdes = RelationGetDescr(index);
-	int		i, keysz = RelationGetNumberOfAttributes(index);
+	int			i,
+				keysz = RelationGetNumberOfAttributes(index);
 	ScanKey		indexScanKey = NULL;
 
 	if (merge)
 	{
+
 		/*
-	 	 * Another BTSpool for dead tuples exists.
-	 	 * Now we have to merge btspool and btspool2.
-	 	 */
-		ScanKey	entry;
-		Datum	attrDatum1, attrDatum2;
-		bool	isFirstNull, isSecondNull;
-		int32	compare;
+		 * Another BTSpool for dead tuples exists. Now we have to merge
+		 * btspool and btspool2.
+		 */
+		ScanKey		entry;
+		Datum		attrDatum1,
+					attrDatum2;
+		bool		isFirstNull,
+					isSecondNull;
+		int32		compare;
 
 		/* the preparation of merge */
 		bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true, &should_free);
@@ -552,7 +562,7 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 		indexScanKey = _bt_mkscankey_nodata(index);
 		for (;;)
 		{
-			load1 = true; /* load BTSpool next ? */
+			load1 = true;		/* load BTSpool next ? */
 			if (NULL == bti2)
 			{
 				if (NULL == bti)
@@ -564,8 +574,8 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 				for (i = 1; i <= keysz; i++)
 				{
 					entry = indexScanKey + i - 1;
-					attrDatum1 = index_getattr((IndexTuple)bti, i, tupdes, &isFirstNull);
-					attrDatum2 = index_getattr((IndexTuple)bti2, i, tupdes, &isSecondNull);
+					attrDatum1 = index_getattr((IndexTuple) bti, i, tupdes, &isFirstNull);
+					attrDatum2 = index_getattr((IndexTuple) bti2, i, tupdes, &isSecondNull);
 					if (isFirstNull)
 					{
 						if (!isSecondNull)
@@ -586,7 +596,7 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 						}
 						else if (compare < 0)
 							break;
-					}	
+					}
 				}
 			}
 			else
@@ -613,7 +623,8 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 		}
 		_bt_freeskey(indexScanKey);
 	}
-	else	/* merge is unnecessary */
+	else
+/* merge is unnecessary */
 	{
 		while (bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true, &should_free), bti != (BTItem) NULL)
 		{

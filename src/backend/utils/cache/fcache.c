@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.38 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.39 2001/03/22 03:59:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,10 @@ init_fcache(Oid foid, int nargs, MemoryContext fcacheCxt)
 	if (nargs > FUNC_MAX_ARGS)
 		elog(ERROR, "init_fcache: too many arguments");
 
-	/* If function returns set, prepare a resultinfo node for communication */
+	/*
+	 * If function returns set, prepare a resultinfo node for
+	 * communication
+	 */
 	if (retval->func.fn_retset)
 	{
 		retval->fcinfo.resultinfo = (Node *) &(retval->rsinfo);

@@ -37,7 +37,7 @@ typedef FormData_pg_sequence *Form_pg_sequence;
 #define SEQ_COL_MAXVALUE		4
 #define SEQ_COL_MINVALUE		5
 #define SEQ_COL_CACHE			6
-#define	SEQ_COL_LOG				7
+#define SEQ_COL_LOG				7
 #define SEQ_COL_CYCLE			8
 #define SEQ_COL_CALLED			9
 
@@ -45,11 +45,11 @@ typedef FormData_pg_sequence *Form_pg_sequence;
 #define SEQ_COL_LASTCOL			SEQ_COL_CALLED
 
 /* XLOG stuff */
-#define	XLOG_SEQ_LOG			0x00
+#define XLOG_SEQ_LOG			0x00
 
 typedef struct xl_seq_rec
 {
-	RelFileNode				node;
+	RelFileNode node;
 	/* SEQUENCE TUPLE DATA FOLLOWS AT THE END */
 } xl_seq_rec;
 
@@ -63,6 +63,6 @@ extern void CloseSequences(void);
 
 extern void seq_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_undo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void seq_desc(char *buf, uint8 xl_info, char* rec);
+extern void seq_desc(char *buf, uint8 xl_info, char *rec);
 
 #endif	 /* SEQUENCE_H */

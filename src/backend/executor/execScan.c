@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.15 2001/01/24 19:42:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.16 2001/03/22 03:59:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  */
 TupleTableSlot *
 ExecScan(Scan *node,
-		 ExecScanAccessMtd accessMtd) /* function returning a tuple */
+		 ExecScanAccessMtd accessMtd)	/* function returning a tuple */
 {
 	CommonScanState *scanstate;
 	EState	   *estate;
@@ -81,7 +81,7 @@ ExecScan(Scan *node,
 
 	/* ----------------
 	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.  Note this can't
+	 *	storage allocated in the previous tuple cycle.	Note this can't
 	 *	happen until we're done projecting out tuples from a scan tuple.
 	 * ----------------
 	 */

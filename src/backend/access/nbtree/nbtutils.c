@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.42 2001/01/24 19:42:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.43 2001/03/22 03:59:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ _bt_freestack(BTStack stack)
  * Construct a BTItem from a plain IndexTuple.
  *
  * This is now useless code, since a BTItem *is* an index tuple with
- * no extra stuff.  We hang onto it for the moment to preserve the
+ * no extra stuff.	We hang onto it for the moment to preserve the
  * notational distinction, in case we want to add some extra stuff
  * again someday.
  */
@@ -165,7 +165,7 @@ _bt_formitem(IndexTuple itup)
  * are "x = 1 AND y < 4 AND z < 5", then _bt_checkkeys will reject a tuple
  * (1,2,7), but we must continue the scan in case there are tuples (1,3,z).
  * But once we reach tuples like (1,4,z) we can stop scanning because no
- * later tuples could match.  This is reflected by setting 
+ * later tuples could match.  This is reflected by setting
  * so->numberOfRequiredKeys to the number of leading keys that must be
  * matched to continue the scan.  numberOfRequiredKeys is equal to the
  * number of leading "=" keys plus the key(s) for the first non "="
@@ -178,7 +178,7 @@ _bt_formitem(IndexTuple itup)
  *
  * XXX this routine is one of many places that fail to handle SK_COMMUTE
  * scankeys properly.  Currently, the planner is careful never to generate
- * any indexquals that would require SK_COMMUTE to be set.  Someday we ought
+ * any indexquals that would require SK_COMMUTE to be set.	Someday we ought
  * to try to fix this, though it's not real critical as long as indexable
  * operators all have commutators...
  *
@@ -191,7 +191,7 @@ _bt_formitem(IndexTuple itup)
 void
 _bt_orderkeys(Relation relation, BTScanOpaque so)
 {
-	ScanKeyData	xform[BTMaxStrategyNumber];
+	ScanKeyData xform[BTMaxStrategyNumber];
 	bool		init[BTMaxStrategyNumber];
 	uint16		numberOfKeys = so->numberOfKeys;
 	ScanKey		key;
@@ -240,14 +240,14 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 	/*
 	 * Initialize for processing of keys for attr 1.
 	 *
-	 * xform[i] holds a copy of the current scan key of strategy type i+1,
-	 * if any; init[i] is TRUE if we have found such a key for this attr.
+	 * xform[i] holds a copy of the current scan key of strategy type i+1, if
+	 * any; init[i] is TRUE if we have found such a key for this attr.
 	 */
 	attno = 1;
 	map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
 									  BTMaxStrategyNumber,
 									  attno);
-	MemSet(xform, 0, sizeof(xform)); /* not really necessary */
+	MemSet(xform, 0, sizeof(xform));	/* not really necessary */
 	MemSet(init, 0, sizeof(init));
 
 	/*
@@ -255,7 +255,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 	 * pass to handle after-last-key processing.  Actual exit from the
 	 * loop is at the "break" statement below.
 	 */
-	for (i = 0; ; cur++, i++)
+	for (i = 0;; cur++, i++)
 	{
 		if (i < numberOfKeys)
 		{
@@ -263,7 +263,9 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			if (cur->sk_flags & SK_ISNULL)
 			{
 				so->qual_ok = false;
-				/* Quit processing so we don't try to invoke comparison
+
+				/*
+				 * Quit processing so we don't try to invoke comparison
 				 * routines on NULLs.
 				 */
 				return;
@@ -271,8 +273,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 		}
 
 		/*
-		 * If we are at the end of the keys for a particular attr,
-		 * finish up processing and emit the cleaned-up keys.
+		 * If we are at the end of the keys for a particular attr, finish
+		 * up processing and emit the cleaned-up keys.
 		 */
 		if (i == numberOfKeys || cur->sk_attno != attno)
 		{
@@ -296,7 +298,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 				eq = &xform[BTEqualStrategyNumber - 1];
 				for (j = BTMaxStrategyNumber; --j >= 0;)
 				{
-					if (! init[j] ||
+					if (!init[j] ||
 						j == (BTEqualStrategyNumber - 1))
 						continue;
 					chk = &xform[j];
@@ -313,6 +315,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			}
 			else
 			{
+
 				/*
 				 * No "=" for this key, so we're done with required keys
 				 */
@@ -355,8 +358,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			 * Emit the cleaned-up keys back into the key[] array in the
 			 * correct order.  Note we are overwriting our input here!
 			 * It's OK because (a) xform[] is a physical copy of the keys
-			 * we want, (b) we cannot emit more keys than we input, so
-			 * we won't overwrite as-yet-unprocessed keys.
+			 * we want, (b) we cannot emit more keys than we input, so we
+			 * won't overwrite as-yet-unprocessed keys.
 			 */
 			for (j = BTMaxStrategyNumber; --j >= 0;)
 			{
@@ -383,7 +386,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
 											  BTMaxStrategyNumber,
 											  attno);
-			MemSet(xform, 0, sizeof(xform)); /* not really necessary */
+			MemSet(xform, 0, sizeof(xform));	/* not really necessary */
 			MemSet(init, 0, sizeof(init));
 		}
 
@@ -409,7 +412,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			if (DatumGetBool(test))
 				xform[j].sk_argument = cur->sk_argument;
 			else if (j == (BTEqualStrategyNumber - 1))
-				so->qual_ok = false; /* key == a && key == b, but a != b */
+				so->qual_ok = false;	/* key == a && key == b, but a !=
+										 * b */
 		}
 		else
 		{
@@ -473,16 +477,18 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 
 		if (isNull)
 		{
+
 			/*
 			 * Since NULLs are sorted after non-NULLs, we know we have
 			 * reached the upper limit of the range of values for this
-			 * index attr.  On a forward scan, we can stop if this qual
-			 * is one of the "must match" subset.  On a backward scan,
+			 * index attr.	On a forward scan, we can stop if this qual is
+			 * one of the "must match" subset.	On a backward scan,
 			 * however, we should keep going.
 			 */
 			if (keysok < so->numberOfRequiredKeys &&
 				ScanDirectionIsForward(dir))
 				*continuescan = false;
+
 			/*
 			 * In any case, this indextuple doesn't match the qual.
 			 */
@@ -498,9 +504,10 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 
 		if (DatumGetBool(test) == !!(key->sk_flags & SK_NEGATE))
 		{
+
 			/*
-			 * Tuple fails this qual.  If it's a required qual, then
-			 * we can conclude no further tuples will pass, either.
+			 * Tuple fails this qual.  If it's a required qual, then we
+			 * can conclude no further tuples will pass, either.
 			 */
 			if (keysok < so->numberOfRequiredKeys)
 				*continuescan = false;

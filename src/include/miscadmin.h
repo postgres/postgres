@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.82 2001/03/13 01:17:06 tgl Exp $
+ * $Id: miscadmin.h,v 1.83 2001/03/22 04:00:25 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -26,14 +26,14 @@
 #include "storage/ipc.h"
 
 /*****************************************************************************
- *    System interrupt and critical section handling
+ *	  System interrupt and critical section handling
  *
  * There are two types of interrupts that a running backend needs to accept
  * without messing up its state: QueryCancel (SIGINT) and ProcDie (SIGTERM).
  * In both cases, we need to be able to clean up the current transaction
  * gracefully, so we can't respond to the interrupt instantaneously ---
  * there's no guarantee that internal data structures would be self-consistent
- * if the code is interrupted at an arbitrary instant.  Instead, the signal
+ * if the code is interrupted at an arbitrary instant.	Instead, the signal
  * handlers set flags that are checked periodically during execution.
  *
  * The CHECK_FOR_INTERRUPTS() macro is called at strategically located spots
@@ -42,7 +42,7 @@
  * might sometimes be called in contexts that do *not* want to allow a cancel
  * or die interrupt.  The HOLD_INTERRUPTS() and RESUME_INTERRUPTS() macros
  * allow code to ensure that no cancel or die interrupt will be accepted,
- * even if CHECK_FOR_INTERRUPTS() gets called in a subroutine.  The interrupt
+ * even if CHECK_FOR_INTERRUPTS() gets called in a subroutine.	The interrupt
  * will be held off until the last matching RESUME_INTERRUPTS() occurs.
  *
  * Special mechanisms are used to let an interrupt be accepted when we are
@@ -64,6 +64,7 @@
 extern volatile bool InterruptPending;
 extern volatile bool QueryCancelPending;
 extern volatile bool ProcDiePending;
+
 /* these are marked volatile because they are examined by signal handlers: */
 extern volatile bool ImmediateInterruptOK;
 extern volatile uint32 InterruptHoldoffCount;
@@ -78,7 +79,7 @@ extern void ProcessInterrupts(void);
 			ProcessInterrupts(); \
 	} while(0)
 
-#define	HOLD_INTERRUPTS()  (InterruptHoldoffCount++)
+#define HOLD_INTERRUPTS()  (InterruptHoldoffCount++)
 
 #define RESUME_INTERRUPTS() \
 	do { \
@@ -88,7 +89,7 @@ extern void ProcessInterrupts(void);
 			ProcessInterrupts(); \
 	} while(0)
 
-#define	START_CRIT_SECTION()  (CritSectionCount++)
+#define START_CRIT_SECTION()  (CritSectionCount++)
 
 #define END_CRIT_SECTION() \
 	do { \
@@ -176,10 +177,10 @@ extern int	SortMem;
 extern bool NetServer;
 extern bool EnableSSL;
 extern bool SilentMode;
-extern int MaxBackends;
-extern int NBuffers;
-extern int PostPortNumber;
-extern int Unix_socket_permissions;
+extern int	MaxBackends;
+extern int	NBuffers;
+extern int	PostPortNumber;
+extern int	Unix_socket_permissions;
 extern char *Unix_socket_group;
 extern char *UnixSocketDir;
 extern char *VirtualHost;
@@ -203,22 +204,23 @@ extern void SetDatabasePath(const char *path);
 
 extern char *GetUserName(Oid userid);
 
-extern Oid GetUserId(void);
+extern Oid	GetUserId(void);
 extern void SetUserId(Oid userid);
-extern Oid GetSessionUserId(void);
+extern Oid	GetSessionUserId(void);
 extern void SetSessionUserId(Oid userid);
 extern void SetSessionUserIdFromUserName(const char *username);
 
 extern void SetDataDir(const char *dir);
 
-extern int	FindExec(char *full_path, const char *argv0,
-					 const char *binary_name);
+extern int FindExec(char *full_path, const char *argv0,
+		 const char *binary_name);
 extern int	CheckPathAccess(char *path, char *name, int open_mode);
 
 #ifdef CYR_RECODE
 extern void GetCharSetByHost(char *TableName, int host, const char *DataDir);
 extern void SetCharSet(void);
 extern char *convertstr(unsigned char *buff, int len, int dest);
+
 #endif
 
 /*****************************************************************************
@@ -237,7 +239,7 @@ extern char *convertstr(unsigned char *buff, int len, int dest);
  * is used during the initial generation of template databases.
  *
  * Initialization mode: used while starting a backend, until all normal
- * initialization is complete.  Some code behaves differently when executed
+ * initialization is complete.	Some code behaves differently when executed
  * in this mode to enable system bootstrapping.
  *
  * If a POSTGRES binary is in normal mode, then all code may be executed
@@ -284,7 +286,7 @@ extern bool CreateDataDirLockFile(const char *datadir, bool amPostmaster);
 extern bool CreateSocketLockFile(const char *socketfile, bool amPostmaster);
 extern void TouchSocketLockFile(void);
 extern void RecordSharedMemoryInLockFile(IpcMemoryKey shmKey,
-										 IpcMemoryId shmId);
+							 IpcMemoryId shmId);
 
 extern void ValidatePgVersion(const char *path);
 

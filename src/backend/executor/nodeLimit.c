@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.3 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.4 2001/03/22 03:59:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ ExecLimit(Limit *node)
 	 *	may not be set until now.)
 	 * ----------------
 	 */
-	if (! limitstate->parmsSet)
+	if (!limitstate->parmsSet)
 		recompute_limits(node);
 	netlimit = limitstate->offset + limitstate->count;
 
@@ -89,7 +89,7 @@ ExecLimit(Limit *node)
 		{
 			if (limitstate->atEnd)
 				return NULL;
-			if (! limitstate->noCount && limitstate->position > netlimit)
+			if (!limitstate->noCount && limitstate->position > netlimit)
 				return NULL;
 		}
 		else
@@ -104,13 +104,14 @@ ExecLimit(Limit *node)
 		slot = ExecProcNode(outerPlan, (Plan *) node);
 		if (TupIsNull(slot))
 		{
+
 			/*
 			 * We are at start or end of the subplan.  Update local state
 			 * appropriately, but always return NULL.
 			 */
 			if (ScanDirectionIsForward(direction))
 			{
-				Assert(! limitstate->atEnd);
+				Assert(!limitstate->atEnd);
 				/* must bump position to stay in sync for backwards fetch */
 				limitstate->position++;
 				limitstate->atEnd = true;
@@ -122,6 +123,7 @@ ExecLimit(Limit *node)
 			}
 			return NULL;
 		}
+
 		/*
 		 * We got the next subplan tuple successfully, so adjust state.
 		 */
@@ -135,7 +137,7 @@ ExecLimit(Limit *node)
 		limitstate->atEnd = false;
 
 		/* ----------------
-		 *	 Now, is this a tuple we want?  If not, loop around to fetch
+		 *	 Now, is this a tuple we want?	If not, loop around to fetch
 		 *	 another tuple from the subplan.
 		 * ----------------
 		 */
@@ -185,9 +187,9 @@ recompute_limits(Limit *node)
 	if (node->limitCount)
 	{
 		limitstate->count = DatumGetInt32(ExecEvalExpr(node->limitCount,
-														econtext,
-														&isNull,
-														NULL));
+													   econtext,
+													   &isNull,
+													   NULL));
 		/* Interpret NULL count as no count (LIMIT ALL) */
 		if (isNull)
 			limitstate->noCount = true;

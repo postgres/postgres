@@ -2,7 +2,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.35 2001/01/24 19:42:56 momjian Exp $
+ * $Id: password.c,v 1.36 2001/03/22 03:59:30 momjian Exp $
  *
  */
 
@@ -37,7 +37,7 @@ verify_password(const Port *port, const char *user, const char *password)
 	if (!pw_file)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "verify_password: Unable to open password file \"%s\": %s\n",
+			"verify_password: Unable to open password file \"%s\": %s\n",
 				 pw_file_fullname, strerror(errno));
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -77,12 +77,12 @@ verify_password(const Port *port, const char *user, const char *password)
 
 			/*
 			 * If the password is empty of "+" then we use the regular
-			 * pg_shadow passwords. If we use crypt then we have to
-			 * use pg_shadow passwords no matter what.
+			 * pg_shadow passwords. If we use crypt then we have to use
+			 * pg_shadow passwords no matter what.
 			 */
 			if (port->auth_method == uaCrypt
 				|| test_pw == NULL || test_pw[0] == '\0'
-				|| strcmp(test_pw, "+")==0)
+				|| strcmp(test_pw, "+") == 0)
 				return crypt_verify(port, user, password);
 
 			if (strcmp(crypt(password, test_pw), test_pw) == 0)

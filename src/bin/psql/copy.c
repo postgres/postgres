@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.17 2001/02/10 02:31:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.18 2001/03/22 04:00:19 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -80,7 +80,7 @@ parse_slash_copy(const char *args)
 	{
 		psql_error("\\copy: arguments required\n");
 		return NULL;
-	}		
+	}
 
 	if (!(result = calloc(1, sizeof(struct copy_options))))
 	{
@@ -403,7 +403,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 	int			bufleft;
 	int			c = 0;
 	int			ret;
-	unsigned int linecount=0;
+	unsigned int linecount = 0;
 
 #ifdef USE_ASSERT_CHECKING
 	assert(copy_in_state);

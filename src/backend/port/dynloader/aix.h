@@ -1,5 +1,5 @@
 /*
- * $Id: aix.h,v 1.4 2001/02/10 02:31:26 tgl Exp $
+ * $Id: aix.h,v 1.5 2001/03/22 03:59:42 momjian Exp $
  *
  * @(#)dlfcn.h	1.4 revision of 95/04/25  09:36:52
  * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
@@ -13,7 +13,7 @@
 
 #include <dlfcn.h>
 
-#else /* HAVE_DLOPEN */
+#else							/* HAVE_DLOPEN */
 
 #ifdef __cplusplus
 extern		"C"
@@ -54,13 +54,13 @@ extern		"C"
 
 #endif
 
-#endif /* HAVE_DLOPEN */
+#endif	 /* HAVE_DLOPEN */
 
 #include "utils/dynamic_loader.h"
 
 #define  pg_dlopen(f)	dlopen(f, RTLD_LAZY)
 #define  pg_dlsym	dlsym
-#define  pg_dlclose	dlclose
-#define  pg_dlerror	dlerror
+#define  pg_dlclose dlclose
+#define  pg_dlerror dlerror
 
 #endif	 /* PORT_PROTOS_H */

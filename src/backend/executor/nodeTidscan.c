@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.14 2001/01/29 00:39:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.15 2001/03/22 03:59:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,6 +371,7 @@ ExecTidRestrPos(TidScan *node)
 	tidstate = node->tidstate;
 	tidstate->tss_TidPtr = tidstate->tss_MarkTidPtr;
 }
+
 #endif
 
 /* ----------------------------------------------------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.58 2001/01/24 19:43:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.59 2001/03/22 03:59:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,9 +175,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 	/*
 	 * If we are installing an ON SELECT rule, we had better grab
 	 * AccessExclusiveLock to ensure no SELECTs are currently running on
-	 * the event relation.  For other types of rules, it might be sufficient
-	 * to grab ShareLock to lock out insert/update/delete actions.  But
-	 * for now, let's just grab AccessExclusiveLock all the time.
+	 * the event relation.	For other types of rules, it might be
+	 * sufficient to grab ShareLock to lock out insert/update/delete
+	 * actions.  But for now, let's just grab AccessExclusiveLock all the
+	 * time.
 	 */
 	event_relation = heap_openr(event_obj->relname, AccessExclusiveLock);
 	ev_relid = RelationGetRelid(event_relation);
@@ -226,7 +227,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	{
 		List	   *tllist;
 		int			i;
-		char		*expected_name;
+		char	   *expected_name;
 
 		/*
 		 * So there cannot be INSTEAD NOTHING, ...
@@ -285,9 +286,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 			/*
 			 * Allow typmods to be different only if one of them is -1,
-			 * ie, "unspecified".  This is necessary for cases like "numeric",
-			 * where the table will have a filled-in default length but the
-			 * select rule's expression will probably have typmod = -1.
+			 * ie, "unspecified".  This is necessary for cases like
+			 * "numeric", where the table will have a filled-in default
+			 * length but the select rule's expression will probably have
+			 * typmod = -1.
 			 */
 			if (attr->atttypmod != resdom->restypmod &&
 				attr->atttypmod != -1 && resdom->restypmod != -1)
@@ -327,13 +329,13 @@ DefineQueryRewrite(RuleStmt *stmt)
 		/*
 		 * Are we converting a relation to a view?
 		 *
-		 * If so, check that the relation is empty because the storage
-		 * for the relation is going to be deleted.
+		 * If so, check that the relation is empty because the storage for
+		 * the relation is going to be deleted.
 		 */
 		if (event_relation->rd_rel->relkind != RELKIND_VIEW)
 		{
-			HeapScanDesc  scanDesc;
-			HeapTuple	  tuple;
+			HeapScanDesc scanDesc;
+			HeapTuple	tuple;
 
 			scanDesc = heap_beginscan(event_relation, 0, SnapshotNow, 0, NULL);
 			tuple = heap_getnext(scanDesc, 0);
@@ -341,7 +343,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 				elog(ERROR, "Relation \"%s\" is not empty. Cannot convert it to view",
 					 event_obj->relname);
 
-			/* don't need heap_freetuple because we never got a valid tuple */
+			/*
+			 * don't need heap_freetuple because we never got a valid
+			 * tuple
+			 */
 			heap_endscan(scanDesc);
 
 			RelisBecomingView = true;
@@ -368,10 +373,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 				 is_instead, event_attype);
 
 	/*
-	 * We want the rule's table references to be checked as though by
-	 * the rule owner, not the user referencing the rule.  Therefore,
-	 * scan through the rule's rtables and set the checkAsUser field
-	 * on all rtable entries (except *OLD* and *NEW*).
+	 * We want the rule's table references to be checked as though by the
+	 * rule owner, not the user referencing the rule.  Therefore, scan
+	 * through the rule's rtables and set the checkAsUser field on all
+	 * rtable entries (except *OLD* and *NEW*).
 	 */
 	foreach(l, action)
 	{
@@ -394,21 +399,21 @@ DefineQueryRewrite(RuleStmt *stmt)
 							actionP);
 
 		/*
-		 * Set pg_class 'relhasrules' field TRUE for event relation.
-		 * If appropriate, also modify the 'relkind' field to show that
-		 * the relation is now a view.
+		 * Set pg_class 'relhasrules' field TRUE for event relation. If
+		 * appropriate, also modify the 'relkind' field to show that the
+		 * relation is now a view.
 		 *
 		 * Important side effect: an SI notice is broadcast to force all
-		 * backends (including me!) to update relcache entries with the new
-		 * rule.
+		 * backends (including me!) to update relcache entries with the
+		 * new rule.
 		 */
 		SetRelationRuleStatus(ev_relid, true, RelisBecomingView);
 	}
 
 	/*
-	 * IF the relation is becoming a view, delete the storage
-	 * files associated with it.  NB: we had better have AccessExclusiveLock
-	 * to do this ...
+	 * IF the relation is becoming a view, delete the storage files
+	 * associated with it.	NB: we had better have AccessExclusiveLock to
+	 * do this ...
 	 */
 	if (RelisBecomingView)
 		smgrunlink(DEFAULT_SMGR, event_relation);
@@ -439,21 +444,20 @@ setRuleCheckAsUser(Query *qry, Oid userid)
 
 		if (rte->subquery)
 		{
+
 			/*
 			 * Recurse into subquery in FROM
 			 */
 			setRuleCheckAsUser(rte->subquery, userid);
 		}
 		else
-		{
 			rte->checkAsUser = userid;
-		}
 	}
 
 	/* If there are sublinks, search for them and process their RTEs */
 	if (qry->hasSubLinks)
 		query_tree_walker(qry, setRuleCheckAsUser_walker, (void *) &userid,
-						  false /* already did the ones in rtable */);
+						  false /* already did the ones in rtable */ );
 }
 
 /*

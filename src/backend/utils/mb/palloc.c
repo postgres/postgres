@@ -4,7 +4,7 @@
 void
 elog(int lev, const char *fmt,...)
 {
-  printf(fmt);
+	printf(fmt);
 }
 
 MemoryContext CurrentMemoryContext;

@@ -1,5 +1,6 @@
 #if defined(__i386__)
 typedef unsigned char slock_t;
+
 #define HAS_TEST_AND_SET
 #endif
 
@@ -10,11 +11,13 @@ typedef unsigned char slock_t;
 
 #if defined(__alpha__)
 typedef long int slock_t;
+
 #define HAS_TEST_AND_SET
 #endif
 
 #if defined(__vax__)
 typedef unsigned char slock_t;
+
 #define NEED_VAX_TAS_ASM
 #define HAS_TEST_AND_SET
 #endif

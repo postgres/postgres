@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.46 2001/02/10 02:31:28 tgl Exp $
+ * $Id: postgres.h,v 1.47 2001/03/22 04:00:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ typedef struct varattrib
 
 		char		va_data[1]; /* Plain stored attribute */
 	}			va_content;
-}			varattrib;
+} varattrib;
 
 #define VARATT_FLAG_EXTERNAL	0x80000000
 #define VARATT_FLAG_COMPRESSED	0x40000000
@@ -322,7 +322,7 @@ typedef Datum *DatumPtr;
  *		Returns 64-bit integer value of a datum.
  *
  * Note: this macro hides the fact that int64 is currently a
- * pass-by-reference type.  Someday it may be pass-by-value,
+ * pass-by-reference type.	Someday it may be pass-by-value,
  * at least on some platforms.
  */
 
@@ -342,7 +342,7 @@ extern Datum Int64GetDatum(int64 X);
  *		Returns 4-byte floating point value of a datum.
  *
  * Note: this macro hides the fact that float4 is currently a
- * pass-by-reference type.  Someday it may be pass-by-value.
+ * pass-by-reference type.	Someday it may be pass-by-value.
  */
 
 #define DatumGetFloat4(X) (* ((float4 *) DatumGetPointer(X)))
@@ -361,7 +361,7 @@ extern Datum Float4GetDatum(float4 X);
  *		Returns 8-byte floating point value of a datum.
  *
  * Note: this macro hides the fact that float8 is currently a
- * pass-by-reference type.  Someday it may be pass-by-value,
+ * pass-by-reference type.	Someday it may be pass-by-value,
  * at least on some platforms.
  */
 
@@ -457,7 +457,7 @@ extern Exception FailedAssertion;
 extern Exception BadArg;
 extern Exception BadState;
 
-extern bool	assert_enabled;
+extern bool assert_enabled;
 
 /*
  * USE_ASSERT_CHECKING, if defined, turns on all the assertions.
@@ -538,7 +538,7 @@ extern bool	assert_enabled;
 extern int ExceptionalCondition(char *conditionName,
 					 Exception *exceptionP, char *details,
 					 char *fileName, int lineNumber);
-extern char *vararg_format(const char *fmt, ...);
+extern char *vararg_format(const char *fmt,...);
 
 #ifndef USE_ASSERT_CHECKING
 #define LogAssert(condition, printArgs)

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.22 2001/03/18 20:18:59 tgl Exp $
+ * $Id: xlog.h,v 1.23 2001/03/22 04:00:32 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -52,7 +52,7 @@ typedef struct XLogRecord
 /*
  * XLOG uses only low 4 bits of xl_info.  High 4 bits may be used by rmgr.
  */
-#define	XLR_INFO_MASK			0x0F
+#define XLR_INFO_MASK			0x0F
 
 /*
  * We support backup of up to 2 disk blocks per XLOG record (could support
@@ -60,9 +60,10 @@ typedef struct XLogRecord
  * do not need more than 2 anyway).  If we backed up any disk blocks then we
  * use flag bits in xl_info to signal it.
  */
-#define XLR_BKP_BLOCK_MASK		0x0C /* all info bits used for bkp blocks */
+#define XLR_BKP_BLOCK_MASK		0x0C	/* all info bits used for bkp
+										 * blocks */
 #define XLR_MAX_BKP_BLOCKS		2
-#define XLR_SET_BKP_BLOCK(iblk)	(0x08 >> (iblk))
+#define XLR_SET_BKP_BLOCK(iblk) (0x08 >> (iblk))
 #define XLR_BKP_BLOCK_1			XLR_SET_BKP_BLOCK(0)	/* 0x08 */
 #define XLR_BKP_BLOCK_2			XLR_SET_BKP_BLOCK(1)	/* 0x04 */
 
@@ -70,7 +71,7 @@ typedef struct XLogRecord
  * Sometimes we log records which are out of transaction control.
  * Rmgr may "or" XLOG_NO_TRAN into info passed to XLogInsert to indicate this.
  */
-#define	XLOG_NO_TRAN			XLR_INFO_MASK
+#define XLOG_NO_TRAN			XLR_INFO_MASK
 
 /*
  * Header info for a backup block appended to an XLOG record.
@@ -81,14 +82,14 @@ typedef struct XLogRecord
  */
 typedef struct BkpBlock
 {
-	crc64			crc;
-	RelFileNode		node;
-	BlockNumber		block;
+	crc64		crc;
+	RelFileNode node;
+	BlockNumber block;
 } BkpBlock;
 
 /*
  * When there is not enough space on current page for whole record, we
- * continue on the next page with continuation record.  (However, the
+ * continue on the next page with continuation record.	(However, the
  * XLogRecord header will never be split across pages; if there's less than
  * SizeOfXLogRecord space left at the end of a page, we just waste it.)
  *
@@ -101,9 +102,9 @@ typedef struct XLogContRecord
 
 	/* ACTUAL LOG DATA FOLLOWS AT END OF STRUCT */
 
-} XLogContRecord;
+}			XLogContRecord;
 
-#define	SizeOfXLogContRecord	MAXALIGN(sizeof(XLogContRecord))
+#define SizeOfXLogContRecord	MAXALIGN(sizeof(XLogContRecord))
 
 /*
  * Each page of XLOG file has a header like this:
@@ -132,7 +133,7 @@ typedef XLogPageHeaderData *XLogPageHeader;
  * that we don't have problems representing last-byte-position-plus-1.
  */
 #define XLogSegSize		((uint32) (16*1024*1024))
-#define XLogSegsPerFile	(((uint32) 0xffffffff) / XLogSegSize)
+#define XLogSegsPerFile (((uint32) 0xffffffff) / XLogSegSize)
 #define XLogFileSize	(XLogSegsPerFile * XLogSegSize)
 
 /*
@@ -143,9 +144,9 @@ typedef XLogPageHeaderData *XLogPageHeader;
 typedef struct RmgrData
 {
 	char	   *rm_name;
-	void	   (*rm_redo)(XLogRecPtr lsn, XLogRecord *rptr);
-	void	   (*rm_undo)(XLogRecPtr lsn, XLogRecord *rptr);
-	void	   (*rm_desc)(char *buf, uint8 xl_info, char *rec);
+	void		(*rm_redo) (XLogRecPtr lsn, XLogRecord *rptr);
+	void		(*rm_undo) (XLogRecPtr lsn, XLogRecord *rptr);
+	void		(*rm_desc) (char *buf, uint8 xl_info, char *rec);
 } RmgrData;
 
 extern RmgrData RmgrTable[];
@@ -166,21 +167,21 @@ extern RmgrData RmgrTable[];
  */
 typedef struct XLogRecData
 {
-	Buffer				buffer;		/* buffer associated with this data */
-	char			   *data;
-	uint32				len;
+	Buffer		buffer;			/* buffer associated with this data */
+	char	   *data;
+	uint32		len;
 	struct XLogRecData *next;
 } XLogRecData;
 
-extern	StartUpID	ThisStartUpID;	/* current SUI */
-extern	bool		InRecovery;
-extern	XLogRecPtr	MyLastRecPtr;
+extern StartUpID ThisStartUpID; /* current SUI */
+extern bool InRecovery;
+extern XLogRecPtr MyLastRecPtr;
 
 /* these variables are GUC parameters related to XLOG */
-extern int CheckPointSegments;
-extern int XLOGbuffers;
-extern int XLOGfiles;
-extern int XLOG_DEBUG;
+extern int	CheckPointSegments;
+extern int	XLOGbuffers;
+extern int	XLOGfiles;
+extern int	XLOG_DEBUG;
 extern char *XLOG_sync_method;
 extern const char XLOG_sync_method_default[];
 
@@ -190,10 +191,10 @@ extern void XLogFlush(XLogRecPtr RecPtr);
 
 extern void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void xlog_undo(XLogRecPtr lsn, XLogRecord *record);
-extern void xlog_desc(char *buf, uint8 xl_info, char* rec);
+extern void xlog_desc(char *buf, uint8 xl_info, char *rec);
 
 extern void UpdateControlFile(void);
-extern int XLOGShmemSize(void);
+extern int	XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
 extern void XLOGPathInit(void);
 extern void BootStrapXLOG(void);

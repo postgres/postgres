@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.2 2001/03/13 01:17:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.3 2001/03/22 03:59:09 momjian Exp $
  */
 #include "postgres.h"
 
@@ -24,7 +24,7 @@ dbState(DBState state)
 {
 	switch (state)
 	{
-		case DB_STARTUP:
+			case DB_STARTUP:
 			return "STARTUP";
 		case DB_SHUTDOWNED:
 			return "SHUTDOWNED";
@@ -43,16 +43,17 @@ int
 main()
 {
 	ControlFileData ControlFile;
-	int fd;
-	char ControlFilePath[MAXPGPATH];
-	char *DataDir;
-	crc64 crc;
-	char pgctime_str[32];
-	char ckpttime_str[32];
+	int			fd;
+	char		ControlFilePath[MAXPGPATH];
+	char	   *DataDir;
+	crc64		crc;
+	char		pgctime_str[32];
+	char		ckpttime_str[32];
 
 	DataDir = getenv("PGDATA");
-	if ( DataDir == NULL ) {
-		fprintf(stderr,"PGDATA is not defined\n");
+	if (DataDir == NULL)
+	{
+		fprintf(stderr, "PGDATA is not defined\n");
 		exit(1);
 	}
 
@@ -73,8 +74,8 @@ main()
 
 	/* Check the CRC. */
 	INIT_CRC64(crc);
-	COMP_CRC64(crc, 
-			   (char*) &ControlFile + sizeof(crc64),
+	COMP_CRC64(crc,
+			   (char *) &ControlFile + sizeof(crc64),
 			   sizeof(ControlFileData) - sizeof(crc64));
 	FIN_CRC64(crc);
 
@@ -93,7 +94,7 @@ main()
 		   "Database state:                       %s\n"
 		   "pg_control last modified:             %s\n"
 		   "Current log file id:                  %u\n"
-	       "Next log file segment:                %u\n"
+		   "Next log file segment:                %u\n"
 		   "Latest checkpoint location:           %X/%X\n"
 		   "Prior checkpoint location:            %X/%X\n"
 		   "Latest checkpoint's REDO location:    %X/%X\n"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.38 2001/02/21 18:53:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.39 2001/03/22 04:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"aggregate", AGGREGATE},
 	{"all", ALL},
 	{"alter", ALTER},
-	{"analyse", ANALYSE}, /* British spelling */
+	{"analyse", ANALYSE},		/* British spelling */
 	{"analyze", ANALYZE},
 	{"and", AND},
 	{"any", ANY},
@@ -312,16 +312,16 @@ ScanKeywordLookup(char *text)
 		return NULL;
 
 	/*
-	 * Apply an ASCII-only downcasing.  We must not use tolower() since
-	 * it may produce the wrong translation in some locales (eg, Turkish),
+	 * Apply an ASCII-only downcasing.	We must not use tolower() since it
+	 * may produce the wrong translation in some locales (eg, Turkish),
 	 * and we don't trust isupper() very much either.  In an ASCII-based
-	 * encoding the tests against A and Z are sufficient, but we also check
-	 * isupper() so that we will work correctly under EBCDIC.  The actual
-	 * case conversion step should work for either ASCII or EBCDIC.
+	 * encoding the tests against A and Z are sufficient, but we also
+	 * check isupper() so that we will work correctly under EBCDIC.  The
+	 * actual case conversion step should work for either ASCII or EBCDIC.
 	 */
 	for (i = 0; i < len; i++)
 	{
-		char	ch = text[i];
+		char		ch = text[i];
 
 		if (ch >= 'A' && ch <= 'Z' && isupper((unsigned char) ch))
 			ch += 'a' - 'A';

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.46 2001/02/10 02:31:30 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.47 2001/03/22 04:01:44 momjian Exp $
  */
 
 #include "postgres.h"
@@ -25,7 +25,7 @@ extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 extern Datum overpaid(PG_FUNCTION_ARGS);
 extern Datum boxarea(PG_FUNCTION_ARGS);
 extern char *reverse_name(char *string);
-extern int oldstyle_length(int n, text *t);
+extern int	oldstyle_length(int n, text *t);
 
 /*
 ** Distance from a point to a path
@@ -60,8 +60,8 @@ regress_dist_ptpath(PG_FUNCTION_ARGS)
 			{
 				regress_lseg_construct(&lseg, &path->p[i], &path->p[i + 1]);
 				tmp = DatumGetFloat8(DirectFunctionCall2(dist_ps,
-													PointPGetDatum(pt),
-													LsegPGetDatum(&lseg)));
+													  PointPGetDatum(pt),
+												  LsegPGetDatum(&lseg)));
 				if (i == 0 || tmp < result)
 					result = tmp;
 			}
@@ -96,7 +96,7 @@ regress_path_dist(PG_FUNCTION_ARGS)
 
 			tmp = DatumGetFloat8(DirectFunctionCall2(lseg_distance,
 													 LsegPGetDatum(&seg1),
-													 LsegPGetDatum(&seg2)));
+												  LsegPGetDatum(&seg2)));
 			if (!have_min || tmp < min)
 			{
 				min = tmp;
@@ -105,7 +105,7 @@ regress_path_dist(PG_FUNCTION_ARGS)
 		}
 	}
 
-	if (! have_min)
+	if (!have_min)
 		PG_RETURN_NULL();
 
 	PG_RETURN_FLOAT8(min);
@@ -165,7 +165,8 @@ interpt_pp(PG_FUNCTION_ARGS)
 	if (!found)
 		PG_RETURN_NULL();
 
-	/* Note: DirectFunctionCall2 will kick out an error if lseg_interpt()
+	/*
+	 * Note: DirectFunctionCall2 will kick out an error if lseg_interpt()
 	 * returns NULL, but that should be impossible since we know the two
 	 * segments intersect.
 	 */
@@ -319,7 +320,7 @@ reverse_name(char *string)
 int
 oldstyle_length(int n, text *t)
 {
-	int		len = 0;
+	int			len = 0;
 
 	if (t)
 		len = VARSIZE(t) - VARHDRSZ;
@@ -428,11 +429,11 @@ funny_dup17(PG_FUNCTION_ARGS)
 	if (SPI_processed > 0)
 	{
 		selected = DatumGetInt32(DirectFunctionCall1(int4in,
-								 CStringGetDatum(SPI_getvalue(
-									   SPI_tuptable->vals[0],
-									   SPI_tuptable->tupdesc,
-									   1
-									   ))));
+											CStringGetDatum(SPI_getvalue(
+												   SPI_tuptable->vals[0],
+												   SPI_tuptable->tupdesc,
+																		 1
+																	))));
 	}
 
 	elog(NOTICE, "funny_dup17 (fired %s) on level %3d: %d/%d tuples inserted/selected",
@@ -559,8 +560,8 @@ ttdummy(PG_FUNCTION_ARGS)
 	}
 
 	{
-		text   *seqname = DatumGetTextP(DirectFunctionCall1(textin,
-											CStringGetDatum("ttdummy_seq")));
+		text	   *seqname = DatumGetTextP(DirectFunctionCall1(textin,
+										CStringGetDatum("ttdummy_seq")));
 
 		newoff = DirectFunctionCall1(nextval,
 									 PointerGetDatum(seqname));

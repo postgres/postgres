@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.20 2001/01/24 19:43:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.21 2001/03/22 03:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,8 +123,8 @@ BufTableDelete(BufferDesc *buf)
 	/*
 	 * Clear the buffer's tag.  This doesn't matter for the hash table,
 	 * since the buffer is already removed from it, but it ensures that
-	 * sequential searches through the buffer table won't think the
-	 * buffer is still valid for its old page.
+	 * sequential searches through the buffer table won't think the buffer
+	 * is still valid for its old page.
 	 */
 	buf->tag.rnode.relNode = InvalidOid;
 	buf->tag.rnode.tblNode = InvalidOid;

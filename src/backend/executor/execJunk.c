@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.25 2001/01/29 00:39:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.26 2001/03/22 03:59:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,6 +265,7 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 void
 ExecFreeJunkFilter(JunkFilter *junkfilter)
 {
+
 	/*
 	 * Since the junkfilter is inside its own context, we just have to
 	 * delete the context and we're set.

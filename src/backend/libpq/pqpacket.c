@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.28 2001/01/24 19:42:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.29 2001/03/22 03:59:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,8 @@ PacketReceiveFragment(Port *port)
 #ifndef __BEOS__
 		got = read(port->sock, pkt->ptr, pkt->nrtodo);
 #else
-        got = recv(port->sock, pkt->ptr, pkt->nrtodo, 0);
-#endif /* __BEOS__ */
+		got = recv(port->sock, pkt->ptr, pkt->nrtodo, 0);
+#endif	 /* __BEOS__ */
 	if (got > 0)
 	{
 		pkt->nrtodo -= got;

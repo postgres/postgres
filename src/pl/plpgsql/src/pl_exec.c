@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.38 2001/02/19 19:49:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.39 2001/03/22 04:01:41 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -82,7 +82,7 @@ static int exec_stmt(PLpgSQL_execstate * estate,
 static int exec_stmt_assign(PLpgSQL_execstate * estate,
 				 PLpgSQL_stmt_assign * stmt);
 static int exec_stmt_getdiag(PLpgSQL_execstate * estate,
-							 PLpgSQL_stmt_getdiag * stmt);
+				  PLpgSQL_stmt_getdiag * stmt);
 static int exec_stmt_if(PLpgSQL_execstate * estate,
 			 PLpgSQL_stmt_if * stmt);
 static int exec_stmt_loop(PLpgSQL_execstate * estate,
@@ -104,9 +104,9 @@ static int exec_stmt_raise(PLpgSQL_execstate * estate,
 static int exec_stmt_execsql(PLpgSQL_execstate * estate,
 				  PLpgSQL_stmt_execsql * stmt);
 static int exec_stmt_dynexecute(PLpgSQL_execstate * estate,
-				  PLpgSQL_stmt_dynexecute * stmt);
+					 PLpgSQL_stmt_dynexecute * stmt);
 static int exec_stmt_dynfors(PLpgSQL_execstate * estate,
-			   PLpgSQL_stmt_dynfors * stmt);
+				  PLpgSQL_stmt_dynfors * stmt);
 
 static void exec_prepare_plan(PLpgSQL_execstate * estate,
 				  PLpgSQL_expr * expr);
@@ -330,7 +330,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 					HeapTuple	tup;
 					TupleDesc	tupdesc;
 
-					Assert(slot != NULL && ! fcinfo->argnull[i]);
+					Assert(slot != NULL && !fcinfo->argnull[i]);
 					tup = slot->val;
 					tupdesc = slot->ttc_tupleDescriptor;
 					exec_move_row(&estate, NULL, row, tup, tupdesc);
@@ -663,7 +663,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	var = (PLpgSQL_var *) (estate.datums[func->tg_name_varno]);
 	var->isnull = false;
 	var->value = DirectFunctionCall1(namein,
-							CStringGetDatum(trigdata->tg_trigger->tgname));
+						  CStringGetDatum(trigdata->tg_trigger->tgname));
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_when_varno]);
 	var->isnull = false;
@@ -690,7 +690,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	var = (PLpgSQL_var *) (estate.datums[func->tg_relname_varno]);
 	var->isnull = false;
 	var->value = DirectFunctionCall1(namein,
-			CStringGetDatum(RelationGetRelationName(trigdata->tg_relation)));
+		CStringGetDatum(RelationGetRelationName(trigdata->tg_relation)));
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_nargs_varno]);
 	var->isnull = false;
@@ -710,7 +710,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		estate.trig_argv = palloc(sizeof(Datum) * estate.trig_nargs);
 		for (i = 0; i < trigdata->tg_trigger->tgnargs; i++)
 			estate.trig_argv[i] = DirectFunctionCall1(textin,
-							CStringGetDatum(trigdata->tg_trigger->tgargs[i]));
+					   CStringGetDatum(trigdata->tg_trigger->tgargs[i]));
 	}
 
 	/* ----------
@@ -1060,24 +1060,24 @@ exec_stmt_assign(PLpgSQL_execstate * estate, PLpgSQL_stmt_assign * stmt)
 }
 
 /* ----------
- * exec_stmt_getdiag                    Put internal PG information into
- *                                      specified variables.
+ * exec_stmt_getdiag					Put internal PG information into
+ *										specified variables.
  * ----------
  */
 static int
 exec_stmt_getdiag(PLpgSQL_execstate * estate, PLpgSQL_stmt_getdiag * stmt)
 {
-	int		i;
-	PLpgSQL_datum 	*var;
-	bool            isnull = false;
+	int			i;
+	PLpgSQL_datum *var;
+	bool		isnull = false;
 
-	for ( i=0 ; i < stmt->ndtitems ; i++) 
+	for (i = 0; i < stmt->ndtitems; i++)
 	{
-		PLpgSQL_diag_item *dtitem = & stmt->dtitems[i];
+		PLpgSQL_diag_item *dtitem = &stmt->dtitems[i];
 
 		if (dtitem->target <= 0)
 			continue;
-	
+
 		var = (estate->datums[dtitem->target]);
 
 		if (var == NULL)
@@ -1098,12 +1098,12 @@ exec_stmt_getdiag(PLpgSQL_execstate * estate, PLpgSQL_stmt_getdiag * stmt)
 				break;
 
 			default:
-			
+
 				elog(ERROR, "unknown attribute request %d in get_diagnostic",
 					 dtitem->item);
 		}
 	}
-	
+
 	return PLPGSQL_RC_OK;
 }
 
@@ -1647,7 +1647,7 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 					else
 					{
 						typetup = SearchSysCache(TYPEOID,
-												 ObjectIdGetDatum(var->datatype->typoid),
+								 ObjectIdGetDatum(var->datatype->typoid),
 												 0, 0, 0);
 						if (!HeapTupleIsValid(typetup))
 							elog(ERROR, "cache lookup for type %u failed (1)",
@@ -1656,9 +1656,9 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 
 						fmgr_info(typeStruct->typoutput, &finfo_output);
 						extval = DatumGetCString(FunctionCall3(&finfo_output,
-									var->value,
-									ObjectIdGetDatum(typeStruct->typelem),
-									Int32GetDatum(var->datatype->atttypmod)));
+															   var->value,
+								   ObjectIdGetDatum(typeStruct->typelem),
+							   Int32GetDatum(var->datatype->atttypmod)));
 						ReleaseSysCache(typetup);
 					}
 					plpgsql_dstring_append(&ds, extval);
@@ -1702,7 +1702,7 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 								extval = "<OUT_OF_RANGE>";
 							else
 								extval = DatumGetCString(DirectFunctionCall1(textout,
-													estate->trig_argv[value]));
+											  estate->trig_argv[value]));
 						}
 						plpgsql_dstring_append(&ds, extval);
 					}
@@ -1945,7 +1945,7 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
  */
 static int
 exec_stmt_dynexecute(PLpgSQL_execstate * estate,
-				  PLpgSQL_stmt_dynexecute * stmt)
+					 PLpgSQL_stmt_dynexecute * stmt)
 {
 	Datum		query;
 	bool		isnull = false;
@@ -1980,16 +1980,16 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 	fmgr_info(typeStruct->typoutput, &finfo_output);
 	querystr = DatumGetCString(FunctionCall3(&finfo_output,
 											 query,
-											 ObjectIdGetDatum(typeStruct->typelem),
+								   ObjectIdGetDatum(typeStruct->typelem),
 											 Int32GetDatum(-1)));
 
-	if(!typeStruct->typbyval)
-		pfree((void *)query);
+	if (!typeStruct->typbyval)
+		pfree((void *) query);
 
 	ReleaseSysCache(typetup);
 
 	/* ----------
-	 * Call SPI_exec() without preparing a saved plan. 
+	 * Call SPI_exec() without preparing a saved plan.
 	 * The returncode can be any standard OK.  Note that
 	 * while a SELECT is allowed, its results will be discarded.
 	 * ----------
@@ -2005,17 +2005,20 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 			break;
 
 		case 0:
-			/* Also allow a zero return, which implies the querystring
+
+			/*
+			 * Also allow a zero return, which implies the querystring
 			 * contained no commands.
 			 */
 			break;
 
 		case SPI_OK_SELINTO:
+
 			/*
-			 * Disallow this for now, because its behavior is not consistent
-			 * with SELECT INTO in a normal plpgsql context.  We need to
-			 * reimplement EXECUTE to parse the string as a plpgsql command,
-			 * not just feed it to SPI_exec.
+			 * Disallow this for now, because its behavior is not
+			 * consistent with SELECT INTO in a normal plpgsql context.
+			 * We need to reimplement EXECUTE to parse the string as a
+			 * plpgsql command, not just feed it to SPI_exec.
 			 */
 			elog(ERROR, "EXECUTE of SELECT ... INTO is not implemented yet");
 			break;
@@ -2098,12 +2101,12 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 
 	fmgr_info(typeStruct->typoutput, &finfo_output);
 	querystr = DatumGetCString(FunctionCall3(&finfo_output,
-				query,
-				ObjectIdGetDatum(typeStruct->typelem),
-				Int32GetDatum(-1)));
+											 query,
+								   ObjectIdGetDatum(typeStruct->typelem),
+											 Int32GetDatum(-1)));
 
-	if(!typeStruct->typbyval)
-		pfree((void *)query);
+	if (!typeStruct->typbyval)
+		pfree((void *) query);
 
 	ReleaseSysCache(typetup);
 
@@ -2632,10 +2635,10 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	SPI_pop();
 
 	/*
-	 * Copy the result out of the expression-evaluation memory context,
-	 * so that we can free the expression context.
+	 * Copy the result out of the expression-evaluation memory context, so
+	 * that we can free the expression context.
 	 */
-	if (! *isNull)
+	if (!*isNull)
 	{
 		int16		typeLength;
 		bool		byValue;
@@ -2772,9 +2775,9 @@ exec_cast_value(Datum value, Oid valtype,
 
 			fmgr_info(typeStruct->typoutput, &finfo_output);
 			extval = DatumGetCString(FunctionCall3(&finfo_output,
-									 value,
-									 ObjectIdGetDatum(typeStruct->typelem),
-									 Int32GetDatum(-1)));
+												   value,
+								   ObjectIdGetDatum(typeStruct->typelem),
+												   Int32GetDatum(-1)));
 			value = FunctionCall3(reqinput,
 								  CStringGetDatum(extval),
 								  ObjectIdGetDatum(reqtypelem),

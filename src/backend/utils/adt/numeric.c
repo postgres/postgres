@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.37 2001/03/14 16:50:37 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.38 2001/03/22 03:59:52 momjian Exp $
  *
  * ----------
  */
@@ -192,8 +192,10 @@ Datum
 numeric_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
+
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
 	NumericVar	value;
@@ -1865,8 +1867,8 @@ do_numeric_accum(ArrayType *transarray, Numeric newval)
 							   NumericGetDatum(newval));
 	sumX2 = DirectFunctionCall2(numeric_add, sumX2,
 								DirectFunctionCall2(numeric_mul,
-													NumericGetDatum(newval),
-													NumericGetDatum(newval)));
+												 NumericGetDatum(newval),
+											   NumericGetDatum(newval)));
 
 	transdatums[0] = N;
 	transdatums[1] = sumX;
@@ -2011,8 +2013,8 @@ numeric_variance(PG_FUNCTION_ARGS)
 	mul_var(&vsumX, &vsumX, &vsumX);	/* now vsumX contains sumX * sumX */
 	mul_var(&vN, &vsumX2, &vsumX2);		/* now vsumX2 contains N * sumX2 */
 	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
-	mul_var(&vN, &vNminus1, &vNminus1);	/* N * (N - 1) */
-	div_var(&vsumX2, &vNminus1, &vsumX); /* variance */
+	mul_var(&vN, &vNminus1, &vNminus1); /* N * (N - 1) */
+	div_var(&vsumX2, &vNminus1, &vsumX);		/* variance */
 
 	res = make_result(&vsumX);
 
@@ -2078,9 +2080,9 @@ numeric_stddev(PG_FUNCTION_ARGS)
 	mul_var(&vsumX, &vsumX, &vsumX);	/* now vsumX contains sumX * sumX */
 	mul_var(&vN, &vsumX2, &vsumX2);		/* now vsumX2 contains N * sumX2 */
 	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
-	mul_var(&vN, &vNminus1, &vNminus1);	/* N * (N - 1) */
-	div_var(&vsumX2, &vNminus1, &vsumX); /* variance */
-	sqrt_var(&vsumX, &vsumX);			/* stddev */
+	mul_var(&vN, &vNminus1, &vNminus1); /* N * (N - 1) */
+	div_var(&vsumX2, &vNminus1, &vsumX);		/* variance */
+	sqrt_var(&vsumX, &vsumX);	/* stddev */
 
 	res = make_result(&vsumX);
 
@@ -2096,9 +2098,9 @@ numeric_stddev(PG_FUNCTION_ARGS)
 /*
  * SUM transition functions for integer datatypes.
  *
- * We use a Numeric accumulator to avoid overflow.  Because SQL92 defines
+ * We use a Numeric accumulator to avoid overflow.	Because SQL92 defines
  * the SUM() of no values to be NULL, not zero, the initial condition of
- * the transition data value needs to be NULL.  This means we can't rely
+ * the transition data value needs to be NULL.	This means we can't rely
  * on ExecAgg to automatically insert the first non-null data value into
  * the transition data: it doesn't know how to do the type conversion.
  * The upshot is that these routines have to be marked non-strict and
@@ -3563,7 +3565,7 @@ exp_var(NumericVar *arg, NumericVar *result)
 	set_var_from_var(&const_one, &ifac);
 	set_var_from_var(&const_one, &ni);
 
-	for (i = 2; ; i++)
+	for (i = 2;; i++)
 	{
 		add_var(&ni, &const_one, &ni);
 		mul_var(&xpow, &x, &xpow);
@@ -3647,7 +3649,7 @@ ln_var(NumericVar *arg, NumericVar *result)
 
 	set_var_from_var(&const_one, &ni);
 
-	for (i = 2; ; i++)
+	for (i = 2;; i++)
 	{
 		add_var(&ni, &const_two, &ni);
 		mul_var(&xx, &x, &xx);
@@ -3820,6 +3822,7 @@ add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 				i1,
 				i2;
 	int			carry = 0;
+
 	/* copy these values into local vars for speed in inner loop */
 	int			var1ndigits = var1->ndigits;
 	int			var2ndigits = var2->ndigits;
@@ -3906,6 +3909,7 @@ sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 				i1,
 				i2;
 	int			borrow = 0;
+
 	/* copy these values into local vars for speed in inner loop */
 	int			var1ndigits = var1->ndigits;
 	int			var2ndigits = var2->ndigits;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.58 2001/02/10 02:31:27 tgl Exp $
+ * $Id: pg_dump.h,v 1.59 2001/03/22 04:00:15 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -19,8 +19,8 @@
  *	 in pg_dump.c
  *
  * Modifications - 14-Sep-2000 - pjw@rhyme.com.au
- *	- 	Added typedefn fields to typeinfo and relinfo
- * 	- 	Added enum for findTypeByOid to allow special handling of
+ *	-	Added typedefn fields to typeinfo and relinfo
+ *	-	Added enum for findTypeByOid to allow special handling of
  *		'0' OID.
  *
  *-------------------------------------------------------------------------
@@ -114,9 +114,9 @@ typedef struct _tableInfo
 	int			ncheck;			/* # of CHECK expressions */
 	char	  **check_expr;		/* [CONSTRAINT name] CHECK expressions */
 	int			ntrig;			/* # of triggers */
-	TrigInfo	*triggers;		/* Triggers on the table */
+	TrigInfo   *triggers;		/* Triggers on the table */
 	char	   *pkIndexOid;		/* Primary Key index OID */
-	char	   *primary_key_name;	/* PRIMARY KEY name, if any */
+	char	   *primary_key_name;		/* PRIMARY KEY name, if any */
 } TableInfo;
 
 typedef struct _inhInfo
@@ -209,10 +209,11 @@ extern void dumpSchemaIdx(Archive *fout,
 			  TableInfo *tblinfo,
 			  int numTables);
 
-typedef enum _OidOptions {
+typedef enum _OidOptions
+{
 	zeroAsOpaque = 1,
 	zeroAsAny = 2,
-    useBaseTypeName = 1024
+	useBaseTypeName = 1024
 } OidOptions;
 
 extern char *findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid, OidOptions opts);

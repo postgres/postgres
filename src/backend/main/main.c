@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.41 2001/02/06 17:00:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.42 2001/03/22 03:59:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,17 +53,17 @@ main(int argc, char *argv[])
 {
 	int			len;
 	struct passwd *pw;
-	char * pw_name_persist;
+	char	   *pw_name_persist;
 
 	/*
-	 * Place platform-specific startup hacks here.  This is the right
-	 * place to put code that must be executed early in launch of either
-	 * a postmaster, a standalone backend, or a standalone bootstrap run.
+	 * Place platform-specific startup hacks here.	This is the right
+	 * place to put code that must be executed early in launch of either a
+	 * postmaster, a standalone backend, or a standalone bootstrap run.
 	 * Note that this code will NOT be executed when a backend or
 	 * sub-bootstrap run is forked by the postmaster.
 	 *
-	 * XXX The need for code here is proof that the platform in question
-	 * is too brain-dead to provide a standard C execution environment
+	 * XXX The need for code here is proof that the platform in question is
+	 * too brain-dead to provide a standard C execution environment
 	 * without help.  Avoid adding more here, if you can.
 	 */
 
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 	int			buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
 
 #endif	 /* NOPRINTADE */
-#endif /* __alpha */
+#endif	 /* __alpha */
 
 #if defined(NOFIXADE) || defined(NOPRINTADE)
 
@@ -93,38 +93,39 @@ main(int argc, char *argv[])
 #endif	 /* NOFIXADE || NOPRINTADE */
 
 #ifdef __BEOS__
- 	/* BeOS-specific actions on startup */
- 	beos_startup(argc,argv);
+	/* BeOS-specific actions on startup */
+	beos_startup(argc, argv);
 #endif
 
 	/*
-	 * Not-quite-so-platform-specific startup environment checks.
-	 * Still best to minimize these.
+	 * Not-quite-so-platform-specific startup environment checks. Still
+	 * best to minimize these.
 	 */
 
 	/*
 	 * Make sure we are not running as root.
 	 *
-	 * BeOS currently runs everything as root :-(, so this check must
-	 * be temporarily disabled there...
-	*/
+	 * BeOS currently runs everything as root :-(, so this check must be
+	 * temporarily disabled there...
+	 */
 #ifndef __BEOS__
 	if (!(argc > 1
-		  && ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0
-			   || strcmp(argv[1], "--version")==0 || strcmp(argv[1], "-V")==0 ))
-		&& (geteuid() == 0) )
+		  && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0
+	 || strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0))
+		&& (geteuid() == 0))
 	{
 		fprintf(stderr, "%s", NOROOTEXEC);
 		exit(1);
 	}
-#endif /* __BEOS__ */
+#endif	 /* __BEOS__ */
 
 	/*
 	 * Set up locale information from environment, in only the categories
 	 * needed by Postgres; leave other categories set to default "C".
-	 * (Note that CTYPE and COLLATE will be overridden later from pg_control
-	 * if we are in an already-initialized database.  We set them here so
-	 * that they will be available to fill pg_control during initdb.)
+	 * (Note that CTYPE and COLLATE will be overridden later from
+	 * pg_control if we are in an already-initialized database.  We set
+	 * them here so that they will be available to fill pg_control during
+	 * initdb.)
 	 */
 #ifdef USE_LOCALE
 	setlocale(LC_CTYPE, "");
@@ -133,9 +134,10 @@ main(int argc, char *argv[])
 #endif
 
 	/*
-	 * Now dispatch to one of PostmasterMain, PostgresMain, or BootstrapMain
-	 * depending on the program name (and possibly first argument) we
-	 * were called with.  The lack of consistency here is historical.
+	 * Now dispatch to one of PostmasterMain, PostgresMain, or
+	 * BootstrapMain depending on the program name (and possibly first
+	 * argument) we were called with.  The lack of consistency here is
+	 * historical.
 	 */
 	len = strlen(argv[0]);
 
@@ -146,15 +148,16 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * If the first argument is "-boot", then invoke bootstrap mode.
-	 * Note we remove "-boot" from the arguments passed on to BootstrapMain.
+	 * If the first argument is "-boot", then invoke bootstrap mode. Note
+	 * we remove "-boot" from the arguments passed on to BootstrapMain.
 	 */
 	if (argc > 1 && strcmp(argv[1], "-boot") == 0)
 		exit(BootstrapMain(argc - 1, argv + 1));
 
 	/*
 	 * Otherwise we're a standalone backend.  Invoke PostgresMain,
-	 * specifying current userid as the "authenticated" Postgres user name.
+	 * specifying current userid as the "authenticated" Postgres user
+	 * name.
 	 */
 	pw = getpwuid(geteuid());
 	if (pw == NULL)

@@ -40,17 +40,17 @@ halt(char *format,...)
 	fflush(stderr);
 
 	/* call one clean up function if defined */
-	if ((sig_func = signal(SIGTERM, SIG_DFL)) !=SIG_DFL &&
-		sig_func !=SIG_IGN)
+	if ((sig_func = signal(SIGTERM, SIG_DFL)) != SIG_DFL &&
+		sig_func != SIG_IGN)
 		(*sig_func) (0);
-	else if ((sig_func = signal(SIGHUP, SIG_DFL)) !=SIG_DFL &&
-			 sig_func !=SIG_IGN)
+	else if ((sig_func = signal(SIGHUP, SIG_DFL)) != SIG_DFL &&
+			 sig_func != SIG_IGN)
 		(*sig_func) (0);
-	else if ((sig_func = signal(SIGINT, SIG_DFL)) !=SIG_DFL &&
-			 sig_func !=SIG_IGN)
+	else if ((sig_func = signal(SIGINT, SIG_DFL)) != SIG_DFL &&
+			 sig_func != SIG_IGN)
 		(*sig_func) (0);
-	else if ((sig_func = signal(SIGQUIT, SIG_DFL)) !=SIG_DFL &&
-			 sig_func !=SIG_IGN)
+	else if ((sig_func = signal(SIGQUIT, SIG_DFL)) != SIG_DFL &&
+			 sig_func != SIG_IGN)
 		(*sig_func) (0);
 	exit(1);
 }

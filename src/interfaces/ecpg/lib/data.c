@@ -33,13 +33,13 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 		switch (type)
 		{
 			case ECPGt_char:
-		        case ECPGt_unsigned_char:
-		        case ECPGt_varchar:
-		 		break;
-		
-		        default:
-		                pval++;
-		                break;
+			case ECPGt_unsigned_char:
+			case ECPGt_varchar:
+				break;
+
+			default:
+				pval++;
+				break;
 		}
 	}
 
@@ -64,12 +64,12 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 			break;
 #ifdef HAVE_LONG_LONG_INT_64
 		case ECPGt_long_long:
-		        ((long long int*) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
-		        break;
+			((long long int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
+			break;
 		case ECPGt_unsigned_long_long:
-		        ((unsigned long long int*) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
-		        break;
-#endif /* HAVE_LONG_LONG_INT_64 */
+			((unsigned long long int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
+			break;
+#endif	 /* HAVE_LONG_LONG_INT_64 */
 		case ECPGt_NO_INDICATOR:
 			if (PQgetisnull(results, act_tuple, act_field))
 			{
@@ -159,7 +159,7 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 				break;
 
 #ifdef HAVE_LONG_LONG_INT_64
-# ifdef HAVE_STRTOLL
+#ifdef HAVE_STRTOLL
 			case ECPGt_long_long:
 				if (pval)
 				{
@@ -168,15 +168,15 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 					{
 						ECPGraise(lineno, ECPG_INT_FORMAT, pval);
-				                return (false);
-				        }
+						return (false);
+					}
 				}
-				else     
-					((long long int *) var)[act_tuple] = 0LL;
-				
+				else
+					((long long int *) var)[act_tuple] = (long long) 0;
+
 				break;
-# endif /* HAVE_STRTOLL */
-# ifdef HAVE_STRTOULL
+#endif	 /* HAVE_STRTOLL */
+#ifdef HAVE_STRTOULL
 			case ECPGt_unsigned_long_long:
 				if (pval)
 				{
@@ -185,16 +185,16 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 					{
 						ECPGraise(lineno, ECPG_UINT_FORMAT, pval);
-				                return (false);
-				        }
+						return (false);
+					}
 				}
-				else     
-					((unsigned long long int *) var)[act_tuple] = 0LL;
-				
+				else
+					((unsigned long long int *) var)[act_tuple] = (long long) 0;
+
 				break;
-# endif /* HAVE_STRTOULL */
-#endif /* HAVE_LONG_LONG_INT_64 */
-					
+#endif	 /* HAVE_STRTOULL */
+#endif	 /* HAVE_LONG_LONG_INT_64 */
+
 			case ECPGt_float:
 			case ECPGt_double:
 				if (pval)
@@ -203,10 +203,10 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 						dres = strtod(pval + 1, &scan_length);
 					else
 						dres = strtod(pval, &scan_length);
-					
+
 					if (isarray && *scan_length == '"')
-					        scan_length++;
-					
+						scan_length++;
+
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 					{
@@ -236,16 +236,22 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 				{
 					if (pval[0] == 'f' && pval[1] == '\0')
 					{
-						if (offset==sizeof(char)) ((char *) var)[act_tuple] = false;
-						else if (offset==sizeof(int)) ((int *) var)[act_tuple] = false;
-						else ECPGraise(lineno, ECPG_CONVERT_BOOL, "different size");
+						if (offset == sizeof(char))
+							((char *) var)[act_tuple] = false;
+						else if (offset == sizeof(int))
+							((int *) var)[act_tuple] = false;
+						else
+							ECPGraise(lineno, ECPG_CONVERT_BOOL, "different size");
 						break;
 					}
 					else if (pval[0] == 't' && pval[1] == '\0')
 					{
-						if (offset==sizeof(char)) ((char *) var)[act_tuple] = true;
-						else if (offset==sizeof(int)) ((int *) var)[act_tuple] = true;
-						else ECPGraise(lineno, ECPG_CONVERT_BOOL, "different size");
+						if (offset == sizeof(char))
+							((char *) var)[act_tuple] = true;
+						else if (offset == sizeof(int))
+							((int *) var)[act_tuple] = true;
+						else
+							ECPGraise(lineno, ECPG_CONVERT_BOOL, "different size");
 						break;
 					}
 					else if (pval[0] == '\0' && PQgetisnull(results, act_tuple, act_field))

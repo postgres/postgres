@@ -104,7 +104,7 @@ quote_postgres(char *arg, int lineno)
 		return (res);
 
 	res[ri++] = '\'';
-		
+
 	for (i = 0; arg[i]; i++, ri++)
 	{
 		switch (arg[i])
@@ -121,7 +121,7 @@ quote_postgres(char *arg, int lineno)
 
 		res[ri] = arg[i];
 	}
-	
+
 	res[ri++] = '\'';
 	res[ri] = '\0';
 
@@ -253,11 +253,10 @@ next_insert(char *text)
 
 	for (; *ptr != '\0' && (*ptr != '?' || string); ptr++)
 	{
-		if (*ptr == '\\') /* escape character */
+		if (*ptr == '\\')		/* escape character */
 			ptr++;
-		else
-			if (*ptr == '\'' )
-				string = string ? false : true;
+		else if (*ptr == '\'')
+			string = string ? false : true;
 	}
 
 	return (*ptr == '\0') ? NULL : ptr;
@@ -268,10 +267,11 @@ next_insert(char *text)
  */
 
 static void
-ECPGtypeinfocache_push(struct ECPGtype_information_cache **cache, int oid, bool isarray, int lineno)
+ECPGtypeinfocache_push(struct ECPGtype_information_cache ** cache, int oid, bool isarray, int lineno)
 {
-	struct ECPGtype_information_cache	*new_entry 
-						= (struct ECPGtype_information_cache *) ecpg_alloc(sizeof(struct ECPGtype_information_cache), lineno);
+	struct ECPGtype_information_cache *new_entry
+	= (struct ECPGtype_information_cache *) ecpg_alloc(sizeof(struct ECPGtype_information_cache), lineno);
+
 	new_entry->oid = oid;
 	new_entry->isarray = isarray;
 	new_entry->next = *cache;
@@ -279,17 +279,21 @@ ECPGtypeinfocache_push(struct ECPGtype_information_cache **cache, int oid, bool 
 }
 
 static bool
-ECPGis_type_an_array(int type,const struct statement * stmt,const struct variable *var)
+ECPGis_type_an_array(int type, const struct statement * stmt, const struct variable * var)
 {
 	char	   *array_query;
-	int		isarray = 0;
-	PGresult	*query;
-	struct ECPGtype_information_cache	*cache_entry;
-	
-	if ((stmt->connection->cache_head)==NULL)
-	{	
-		/* Text like types are not an array for ecpg, but postgres counts them as
-		   an array. This define reminds you to not 'correct' these values. */
+	int			isarray = 0;
+	PGresult   *query;
+	struct ECPGtype_information_cache *cache_entry;
+
+	if ((stmt->connection->cache_head) == NULL)
+	{
+
+		/*
+		 * Text like types are not an array for ecpg, but postgres counts
+		 * them as an array. This define reminds you to not 'correct'
+		 * these values.
+		 */
 #define not_an_array_in_ecpg false
 
 		/* populate cache with well known types to speed things up */
@@ -310,7 +314,7 @@ ECPGis_type_an_array(int type,const struct statement * stmt,const struct variabl
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), OIDVECTOROID, true, stmt->lineno);
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), POINTOID, true, stmt->lineno);
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), LSEGOID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), PATHOID, not_an_array_in_ecpg , stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), PATHOID, not_an_array_in_ecpg, stmt->lineno);
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), BOXOID, true, stmt->lineno);
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), POLYGONOID, false, stmt->lineno);
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), LINEOID, true, stmt->lineno);
@@ -336,12 +340,12 @@ ECPGis_type_an_array(int type,const struct statement * stmt,const struct variabl
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), NUMERICOID, false, stmt->lineno);
 	}
 
-	for (cache_entry = (stmt->connection->cache_head);cache_entry != NULL;cache_entry=cache_entry->next)
+	for (cache_entry = (stmt->connection->cache_head); cache_entry != NULL; cache_entry = cache_entry->next)
 	{
-		if (cache_entry->oid==type) 
+		if (cache_entry->oid == type)
 			return cache_entry->isarray;
 	}
-		
+
 	array_query = (char *) ecpg_alloc(strlen("select typelem from pg_type where oid=") + 11, stmt->lineno);
 	sprintf(array_query, "select typelem from pg_type where oid=%d", type);
 	query = PQexec(stmt->connection->connection, array_query);
@@ -354,8 +358,7 @@ ECPGis_type_an_array(int type,const struct statement * stmt,const struct variabl
 		{
 
 			/*
-			 * arrays of character strings are not yet
-			 * implemented
+			 * arrays of character strings are not yet implemented
 			 */
 			isarray = false;
 		}
@@ -391,7 +394,7 @@ ECPGexecute(struct statement * stmt)
 		char	   *tobeinserted = NULL;
 		char	   *p;
 		char		buff[20];
-		int		hostvarl = 0;
+		int			hostvarl = 0;
 
 		/*
 		 * Some special treatment is needed for records since we want
@@ -422,10 +425,10 @@ ECPGexecute(struct statement * stmt)
 #ifdef HAVE_LONG_LONG_INT_64
 			case ECPGt_long_long:
 			case ECPGt_unsigned_long_long:
-	                        if (*(long long int*) var->ind_value < 0LL)
+				if (*(long long int *) var->ind_value < (long long) 0)
 					strcpy(buff, "null");
-	                        break;
-#endif /* HAVE_LONG_LONG_INT_64 */
+				break;
+#endif	 /* HAVE_LONG_LONG_INT_64 */
 			default:
 				break;
 		}
@@ -583,11 +586,11 @@ ECPGexecute(struct statement * stmt)
 						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
-						sprintf(mallocedval, "%llu", *((unsigned long long*) var->value));
+						sprintf(mallocedval, "%llu", *((unsigned long long *) var->value));
 
 					tobeinserted = mallocedval;
 					break;
-#endif /* HAVE_LONG_LONG_INT_64 */
+#endif	 /* HAVE_LONG_LONG_INT_64 */
 				case ECPGt_float:
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
@@ -634,11 +637,15 @@ ECPGexecute(struct statement * stmt)
 					{
 						strncpy(mallocedval, "'{", sizeof("'{"));
 
-						if (var->offset==sizeof(char))
+						if (var->offset == sizeof(char))
 							for (element = 0; element < var->arrsize; element++)
 								sprintf(mallocedval + strlen(mallocedval), "%c,", (((char *) var->value)[element]) ? 't' : 'f');
-						/* this is necessary since sizeof(C++'s bool)==sizeof(int) */
-						else if (var->offset==sizeof(int))
+
+						/*
+						 * this is necessary since sizeof(C++'s
+						 * bool)==sizeof(int)
+						 */
+						else if (var->offset == sizeof(int))
 							for (element = 0; element < var->arrsize; element++)
 								sprintf(mallocedval + strlen(mallocedval), "%c,", (((int *) var->value)[element]) ? 't' : 'f');
 						else
@@ -648,9 +655,9 @@ ECPGexecute(struct statement * stmt)
 					}
 					else
 					{
-						if (var->offset==sizeof(char))
+						if (var->offset == sizeof(char))
 							sprintf(mallocedval, "'%c'", (*((char *) var->value)) ? 't' : 'f');
-						else if (var->offset==sizeof(int))
+						else if (var->offset == sizeof(int))
 							sprintf(mallocedval, "'%c'", (*((int *) var->value)) ? 't' : 'f');
 						else
 							ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, "different size");
@@ -734,6 +741,7 @@ ECPGexecute(struct statement * stmt)
 		strcpy(newcopy, copiedquery);
 		if ((p = next_insert(newcopy + hostvarl)) == NULL)
 		{
+
 			/*
 			 * We have an argument but we dont have the matched up string
 			 * in the string
@@ -932,9 +940,9 @@ ECPGexecute(struct statement * stmt)
 				sqlca.sqlerrd[1] = atol(PQoidStatus(results));
 				sqlca.sqlerrd[2] = atol(PQcmdTuples(results));
 				ECPGlog("ECPGexecute line %d Ok: %s\n", stmt->lineno, PQcmdStatus(results));
-				if (!sqlca.sqlerrd[2] && (!strncmp(PQcmdStatus(results),"UPDATE",6) 
-									|| !strncmp(PQcmdStatus(results),"INSERT",6) 
-									|| !strncmp(PQcmdStatus(results),"DELETE",6)))
+				if (!sqlca.sqlerrd[2] && (!strncmp(PQcmdStatus(results), "UPDATE", 6)
+						   || !strncmp(PQcmdStatus(results), "INSERT", 6)
+						 || !strncmp(PQcmdStatus(results), "DELETE", 6)))
 					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL);
 				break;
 			case PGRES_NONFATAL_ERROR:
@@ -1024,7 +1032,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.18 2001/02/12 13:56:37 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.19 2001/03/22 04:01:19 momjian Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);

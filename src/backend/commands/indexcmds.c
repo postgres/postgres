@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.45 2001/02/23 09:26:14 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.46 2001/03/22 03:59:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,15 +49,15 @@ static void CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid);
 static void CheckPredExpr(Node *predicate, List *rangeTable, Oid baseRelOid);
 static void CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid);
 static void FuncIndexArgs(IndexInfo *indexInfo, Oid *classOidP,
-						  IndexElem *funcIndex,
-						  Oid relId,
-						  char *accessMethodName, Oid accessMethodId);
+			  IndexElem *funcIndex,
+			  Oid relId,
+			  char *accessMethodName, Oid accessMethodId);
 static void NormIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
-						   List *attList,
-						   Oid relId,
-						   char *accessMethodName, Oid accessMethodId);
-static Oid	GetAttrOpClass(IndexElem *attribute, Oid attrType,
-						   char *accessMethodName, Oid accessMethodId);
+			   List *attList,
+			   Oid relId,
+			   char *accessMethodName, Oid accessMethodId);
+static Oid GetAttrOpClass(IndexElem *attribute, Oid attrType,
+			   char *accessMethodName, Oid accessMethodId);
 static char *GetDefaultOpClass(Oid atttypid);
 
 /*
@@ -118,9 +118,9 @@ DefineIndex(char *heapRelationName,
 			 accessMethodName);
 
 	/*
-	 * XXX Hardwired hacks to check for limitations on supported index types.
-	 * We really ought to be learning this info from entries in the pg_am
-	 * table, instead of having it wired in here!
+	 * XXX Hardwired hacks to check for limitations on supported index
+	 * types. We really ought to be learning this info from entries in the
+	 * pg_am table, instead of having it wired in here!
 	 */
 	if (unique && accessMethodId != BTREE_AM_OID)
 		elog(ERROR, "DefineIndex: unique indices are only available with the btree access method");
@@ -161,7 +161,8 @@ DefineIndex(char *heapRelationName,
 		elog(ERROR, "Existing indexes are inactive. REINDEX first");
 
 	/*
-	 * Prepare arguments for index_create, primarily an IndexInfo structure
+	 * Prepare arguments for index_create, primarily an IndexInfo
+	 * structure
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_Predicate = (Node *) cnfPred;
@@ -207,7 +208,7 @@ DefineIndex(char *heapRelationName,
 
 	/*
 	 * We update the relation's pg_class tuple even if it already has
-	 * relhasindex = true.  This is needed to cause a shared-cache-inval
+	 * relhasindex = true.	This is needed to cause a shared-cache-inval
 	 * message to be sent for the pg_class tuple, which will cause other
 	 * backends to flush their relcache entries and in particular their
 	 * cached lists of the indexes for this relation.
@@ -415,8 +416,8 @@ FuncIndexArgs(IndexInfo *indexInfo,
 	 * has exact-match or binary-compatible input types.
 	 * ----------------
 	 */
-	if (! func_get_detail(funcIndex->name, nargs, argTypes,
-						  &funcid, &rettype, &retset, &true_typeids))
+	if (!func_get_detail(funcIndex->name, nargs, argTypes,
+						 &funcid, &rettype, &retset, &true_typeids))
 		func_error("DefineIndex", funcIndex->name, nargs, argTypes, NULL);
 
 	if (retset)
@@ -425,7 +426,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 	for (i = 0; i < nargs; i++)
 	{
 		if (argTypes[i] != true_typeids[i] &&
-			! IS_BINARY_COMPATIBLE(argTypes[i], true_typeids[i]))
+			!IS_BINARY_COMPATIBLE(argTypes[i], true_typeids[i]))
 			func_error("DefineIndex", funcIndex->name, nargs, argTypes,
 					   "Index function must be binary-compatible with table datatype");
 	}
@@ -439,7 +440,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 
 	indexInfo->ii_FuncOid = funcid;
 	/* Need to do the fmgr function lookup now, too */
-	fmgr_info(funcid, & indexInfo->ii_FuncInfo);
+	fmgr_info(funcid, &indexInfo->ii_FuncInfo);
 }
 
 static void
@@ -477,7 +478,7 @@ NormIndexAttrs(IndexInfo *indexInfo,
 		indexInfo->ii_KeyAttrNumbers[attn] = attform->attnum;
 
 		classOidP[attn] = GetAttrOpClass(attribute, attform->atttypid,
-										 accessMethodName, accessMethodId);
+									   accessMethodName, accessMethodId);
 
 		ReleaseSysCache(atttuple);
 		attn++;
@@ -515,8 +516,8 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 			 attribute->class);
 
 	/*
-	 * Assume the opclass is supported by this index access method
-	 * if we can find at least one relevant entry in pg_amop.
+	 * Assume the opclass is supported by this index access method if we
+	 * can find at least one relevant entry in pg_amop.
 	 */
 	ScanKeyEntryInitialize(&entry[0], 0,
 						   Anum_pg_amop_amopid,
@@ -530,7 +531,7 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
 	scan = heap_beginscan(relation, false, SnapshotNow, 2, entry);
 
-	if (! HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	if (!HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 		elog(ERROR, "DefineIndex: opclass \"%s\" not supported by access method \"%s\"",
 			 attribute->class, accessMethodName);
 
@@ -540,17 +541,18 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	heap_close(relation, AccessShareLock);
 
 	/*
-	 * Make sure the operators associated with this opclass actually accept
-	 * the column data type.  This prevents possible coredumps caused by
-	 * user errors like applying text_ops to an int4 column.  We will accept
-	 * an opclass as OK if the operator's input datatype is binary-compatible
-	 * with the actual column datatype.  Note we assume that all the operators
-	 * associated with an opclass accept the same datatypes, so checking the
-	 * first one we happened to find in the table is sufficient.
+	 * Make sure the operators associated with this opclass actually
+	 * accept the column data type.  This prevents possible coredumps
+	 * caused by user errors like applying text_ops to an int4 column.	We
+	 * will accept an opclass as OK if the operator's input datatype is
+	 * binary-compatible with the actual column datatype.  Note we assume
+	 * that all the operators associated with an opclass accept the same
+	 * datatypes, so checking the first one we happened to find in the
+	 * table is sufficient.
 	 *
 	 * If the opclass was the default for the datatype, assume we can skip
-	 * this check --- that saves a few cycles in the most common case.
-	 * If pg_opclass is wrong then we're probably screwed anyway...
+	 * this check --- that saves a few cycles in the most common case. If
+	 * pg_opclass is wrong then we're probably screwed anyway...
 	 */
 	if (doTypeCheck)
 	{
@@ -560,11 +562,11 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 		if (HeapTupleIsValid(tuple))
 		{
 			Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tuple);
-			Oid		opInputType = (optup->oprkind == 'l') ?
-				optup->oprright : optup->oprleft;
+			Oid			opInputType = (optup->oprkind == 'l') ?
+			optup->oprright : optup->oprleft;
 
 			if (attrType != opInputType &&
-				! IS_BINARY_COMPATIBLE(attrType, opInputType))
+				!IS_BINARY_COMPATIBLE(attrType, opInputType))
 				elog(ERROR, "DefineIndex: opclass \"%s\" does not accept datatype \"%s\"",
 					 attribute->class, typeidTypeName(attrType));
 			ReleaseSysCache(tuple);
@@ -660,7 +662,7 @@ ReindexIndex(const char *name, bool force /* currently unused */ )
 	if (IsIgnoringSystemIndexes())
 		overwrite = true;
 	if (!reindex_index(tuple->t_data->t_oid, force, overwrite))
-#endif /* OLD_FILE_NAMING */
+#endif	 /* OLD_FILE_NAMING */
 		elog(NOTICE, "index \"%s\" wasn't reindexed", name);
 
 	ReleaseSysCache(tuple);
@@ -752,18 +754,18 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 		elog(ERROR, "REINDEX DATABASE: Can be executed only on the currently open database.");
 
 	/*
-	 * We cannot run inside a user transaction block; if we were
-	 * inside a transaction, then our commit- and
-	 * start-transaction-command calls would not have the intended effect!
+	 * We cannot run inside a user transaction block; if we were inside a
+	 * transaction, then our commit- and start-transaction-command calls
+	 * would not have the intended effect!
 	 */
 	if (IsTransactionBlock())
 		elog(ERROR, "REINDEX DATABASE cannot run inside a BEGIN/END block");
 
 	/*
-	 * Create a memory context that will survive forced transaction commits
-	 * we do below.  Since it is a child of QueryContext, it will go away
-	 * eventually even if we suffer an error; there's no need for special
-	 * abort cleanup logic.
+	 * Create a memory context that will survive forced transaction
+	 * commits we do below.  Since it is a child of QueryContext, it will
+	 * go away eventually even if we suffer an error; there's no need for
+	 * special abort cleanup logic.
 	 */
 	private_context = AllocSetContextCreate(QueryContext,
 											"ReindexDatabase",

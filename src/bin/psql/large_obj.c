@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.13 2001/02/10 02:31:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.14 2001/03/22 04:00:20 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -328,7 +328,7 @@ do_lo_list(void)
 	printQueryOpt myopt = pset.popt;
 
 	strcpy(buf,
-	"SELECT loid as \"ID\", obj_description(loid) as \"Description\"\n"
+	  "SELECT loid as \"ID\", obj_description(loid) as \"Description\"\n"
 		   "FROM (SELECT DISTINCT loid FROM pg_largeobject) x\n"
 		   "ORDER BY \"ID\"");
 

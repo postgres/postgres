@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.32 2001/02/10 02:31:30 tgl Exp $
+ * $Id: libpq-int.h,v 1.33 2001/03/22 04:01:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,8 +204,9 @@ struct pg_conn
 								 * numbers-and-dots notation. Takes
 								 * precedence over above. */
 	char	   *pgport;			/* the server's communication port */
-	char	   *pgunixsocket;	/* the Unix-domain socket that the server is listening on;
-						 		 * if NULL, uses a default constructed from pgport */
+	char	   *pgunixsocket;	/* the Unix-domain socket that the server
+								 * is listening on; if NULL, uses a
+								 * default constructed from pgport */
 	char	   *pgtty;			/* tty on which the backend messages is
 								 * displayed (NOT ACTUALLY USED???) */
 	char	   *pgoptions;		/* options to start the backend with */
@@ -266,7 +267,7 @@ struct pg_conn
 
 #ifdef USE_SSL
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
-	bool        require_ssl;    /* Require SSL to make connection */
+	bool		require_ssl;	/* Require SSL to make connection */
 	SSL		   *ssl;			/* SSL status, if have SSL connection */
 #endif
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.34 2001/01/24 19:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.35 2001/03/22 03:59:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
  *
  * When a temp table is created, normal entries are made for it in pg_class,
  * pg_type, etc using a unique "physical" relation name.  We also make an
- * entry in the temp table list maintained by this module.  Subsequently,
+ * entry in the temp table list maintained by this module.	Subsequently,
  * relname lookups are filtered through the temp table list, and attempts
  * to look up a temp table name are changed to look up the physical name.
  * This allows temp table names to mask a regular table of the same name
@@ -50,12 +50,13 @@ typedef struct TempTable
 	NameData	relname;		/* underlying unique name */
 	Oid			relid;			/* needed properties of rel */
 	char		relkind;
+
 	/*
-	 * If this entry was created during this xact, it should be deleted
-	 * at xact abort.  Conversely, if this entry was deleted during this
-	 * xact, it should be removed at xact commit.  We leave deleted entries
-	 * in the list until commit so that we can roll back if needed ---
-	 * but we ignore them for purposes of lookup!
+	 * If this entry was created during this xact, it should be deleted at
+	 * xact abort.	Conversely, if this entry was deleted during this
+	 * xact, it should be removed at xact commit.  We leave deleted
+	 * entries in the list until commit so that we can roll back if needed
+	 * --- but we ignore them for purposes of lookup!
 	 */
 	bool		created_in_cur_xact;
 	bool		deleted_in_cur_xact;
@@ -110,7 +111,11 @@ remove_temp_rel_by_relid(Oid relid)
 
 		if (temp_rel->relid == relid)
 			temp_rel->deleted_in_cur_xact = true;
-		/* Keep scanning 'cause there could be multiple matches; see RENAME */
+
+		/*
+		 * Keep scanning 'cause there could be multiple matches; see
+		 * RENAME
+		 */
 	}
 }
 
@@ -161,10 +166,10 @@ rename_temp_relation(const char *oldname,
 		 * xact.  One of these entries will be deleted at xact end.
 		 *
 		 * NOTE: the new mapping entry is inserted into the list just after
-		 * the old one.  We could alternatively insert it before the old one,
-		 * but that'd take more code.  It does need to be in one spot or the
-		 * other, to ensure that deletion of temp rels happens in the right
-		 * order during remove_all_temp_relations().
+		 * the old one.  We could alternatively insert it before the old
+		 * one, but that'd take more code.  It does need to be in one spot
+		 * or the other, to ensure that deletion of temp rels happens in
+		 * the right order during remove_all_temp_relations().
 		 */
 		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
@@ -208,11 +213,11 @@ remove_all_temp_relations(void)
 	StartTransactionCommand();
 
 	/*
-	 * Scan the list and delete all entries not already deleted.
-	 * We need not worry about list entries getting deleted from under us,
-	 * because remove_temp_rel_by_relid() doesn't remove entries, only
-	 * mark them dead.  Note that entries will be deleted in reverse order
-	 * of creation --- that's critical for cases involving inheritance.
+	 * Scan the list and delete all entries not already deleted. We need
+	 * not worry about list entries getting deleted from under us, because
+	 * remove_temp_rel_by_relid() doesn't remove entries, only mark them
+	 * dead.  Note that entries will be deleted in reverse order of
+	 * creation --- that's critical for cases involving inheritance.
 	 */
 	foreach(l, temp_rels)
 	{

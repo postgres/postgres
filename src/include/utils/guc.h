@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Header: /cvsroot/pgsql/src/include/utils/guc.h,v 1.5 2001/02/10 02:31:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/guc.h,v 1.6 2001/03/22 04:01:12 momjian Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -36,7 +36,8 @@
  *
  * USERSET options can be set by anyone any time.
  */
-typedef enum {
+typedef enum
+{
 	PGC_POSTMASTER,
 	PGC_SIGHUP,
 	PGC_BACKEND,
@@ -45,12 +46,12 @@ typedef enum {
 } GucContext;
 
 
-void         SetConfigOption(const char * name, const char * value, GucContext context);
-const char * GetConfigOption(const char * name);
-void         ProcessConfigFile(GucContext context);
-void         ResetAllOptions(void);
-void         ParseLongOption(const char * string, char ** name, char ** value);
-bool         set_config_option(const char * name, const char * value, GucContext context, bool DoIt);
+void		SetConfigOption(const char *name, const char *value, GucContext context);
+const char *GetConfigOption(const char *name);
+void		ProcessConfigFile(GucContext context);
+void		ResetAllOptions(void);
+void		ParseLongOption(const char *string, char **name, char **value);
+bool		set_config_option(const char *name, const char *value, GucContext context, bool DoIt);
 
 
 extern bool Debug_print_query;
@@ -67,4 +68,4 @@ extern bool Show_btree_build_stats;
 
 extern bool SQL_inheritance;
 
-#endif /*GUC_H*/
+#endif	 /* GUC_H */

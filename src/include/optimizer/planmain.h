@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.49 2001/01/24 19:43:26 momjian Exp $
+ * $Id: planmain.h,v 1.50 2001/03/22 04:00:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,20 +27,20 @@ extern Plan *query_planner(Query *root, List *tlist, double tuple_fraction);
  */
 extern Plan *create_plan(Query *root, Path *best_path);
 extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
-									   Index scanrelid, Plan *subplan);
+				  Index scanrelid, Plan *subplan);
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
 extern Sort *make_sort(List *tlist, Plan *lefttree, int keycount);
 extern Sort *make_sort_from_pathkeys(List *tlist, Plan *lefttree,
-									 List *pathkeys);
+						List *pathkeys);
 extern Agg *make_agg(List *tlist, List *qual, Plan *lefttree);
 extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,
 		   AttrNumber *grpColIdx, Plan *lefttree);
 extern Material *make_material(List *tlist, Plan *lefttree);
 extern Unique *make_unique(List *tlist, Plan *lefttree, List *distinctList);
 extern Limit *make_limit(List *tlist, Plan *lefttree,
-						 Node *limitOffset, Node *limitCount);
+		   Node *limitOffset, Node *limitCount);
 extern SetOp *make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
-						 List *distinctList, AttrNumber flagColIdx);
+		   List *distinctList, AttrNumber flagColIdx);
 extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 
 /*
@@ -50,7 +50,7 @@ extern void build_base_rel_tlists(Query *root, List *tlist);
 extern Relids distribute_quals_to_rels(Query *root, Node *jtnode);
 extern List *add_missing_rels_to_query(Query *root, Node *jtnode);
 extern void process_implied_equality(Query *root, Node *item1, Node *item2,
-									 Oid sortop1, Oid sortop2);
+						 Oid sortop1, Oid sortop2);
 
 /*
  * prototypes for plan/setrefs.c

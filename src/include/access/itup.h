@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.30 2001/02/22 21:48:49 momjian Exp $
+ * $Id: itup.h,v 1.31 2001/03/22 04:00:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,8 @@ typedef RetrieveIndexResultData *RetrieveIndexResult;
 
 #define IndexTupleSize(itup)		((Size) (((IndexTuple) (itup))->t_info & INDEX_SIZE_MASK))
 #define IndexTupleDSize(itup)		((Size) ((itup).t_info & INDEX_SIZE_MASK))
-#define IndexTupleHasNulls(itup) 	((((IndexTuple) (itup))->t_info & INDEX_NULL_MASK))
-#define IndexTupleHasVarlenas(itup)	((((IndexTuple) (itup))->t_info & INDEX_VAR_MASK))
+#define IndexTupleHasNulls(itup)	((((IndexTuple) (itup))->t_info & INDEX_NULL_MASK))
+#define IndexTupleHasVarlenas(itup) ((((IndexTuple) (itup))->t_info & INDEX_VAR_MASK))
 
 #define IndexTupleHasMinHeader(itup) (!IndexTupleHasNulls(itup))
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.88 2001/03/14 21:50:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.89 2001/03/22 03:59:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,8 @@ static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);
 static HeapTuple GetTupleForTrigger(EState *estate, ItemPointer tid,
 				   TupleTableSlot **newSlot);
 static HeapTuple ExecCallTriggerFunc(Trigger *trigger,
-									 TriggerData *trigdata,
-									 MemoryContext per_tuple_context);
+					TriggerData *trigdata,
+					MemoryContext per_tuple_context);
 static void DeferredTriggerSaveEvent(Relation rel, int event,
 						 HeapTuple oldtup, HeapTuple newtup);
 
@@ -87,7 +87,9 @@ CreateTrigger(CreateTrigStmt *stmt)
 			constrrelid = InvalidOid;
 		else
 		{
-			/* NoLock is probably sufficient here, since we're only
+
+			/*
+			 * NoLock is probably sufficient here, since we're only
 			 * interested in getting the relation's OID...
 			 */
 			rel = heap_openr(stmt->constrrelname, NoLock);
@@ -192,7 +194,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 
 	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
 	values[Anum_pg_trigger_tgname - 1] = DirectFunctionCall1(namein,
-											CStringGetDatum(stmt->trigname));
+										CStringGetDatum(stmt->trigname));
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
 	values[Anum_pg_trigger_tgenabled - 1] = BoolGetDatum(true);
@@ -211,7 +213,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 
 		foreach(le, stmt->args)
 		{
-			char	   *ar = ((Value*) lfirst(le))->val.str;
+			char	   *ar = ((Value *) lfirst(le))->val.str;
 
 			len += strlen(ar) + 4;
 			for (; *ar; ar++)
@@ -224,7 +226,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 		args[0] = '\0';
 		foreach(le, stmt->args)
 		{
-			char	   *s = ((Value*) lfirst(le))->val.str;
+			char	   *s = ((Value *) lfirst(le))->val.str;
 			char	   *d = args + strlen(args);
 
 			while (*s)
@@ -237,7 +239,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 		}
 		values[Anum_pg_trigger_tgnargs - 1] = Int16GetDatum(nargs);
 		values[Anum_pg_trigger_tgargs - 1] = DirectFunctionCall1(byteain,
-													CStringGetDatum(args));
+												  CStringGetDatum(args));
 	}
 	else
 	{
@@ -569,15 +571,16 @@ RelationBuildTriggers(Relation relation)
 													  sizeof(Trigger));
 		else
 			triggers = (Trigger *) repalloc(triggers,
-											(found + 1) * sizeof(Trigger));
+										  (found + 1) * sizeof(Trigger));
 		build = &(triggers[found]);
 
 		build->tgoid = htup->t_data->t_oid;
 		build->tgname = MemoryContextStrdup(CacheMemoryContext,
-						DatumGetCString(DirectFunctionCall1(nameout,
-						NameGetDatum(&pg_trigger->tgname))));
+							 DatumGetCString(DirectFunctionCall1(nameout,
+									NameGetDatum(&pg_trigger->tgname))));
 		build->tgfoid = pg_trigger->tgfoid;
-		build->tgfunc.fn_oid = InvalidOid; /* mark FmgrInfo as uninitialized */
+		build->tgfunc.fn_oid = InvalidOid;		/* mark FmgrInfo as
+												 * uninitialized */
 		build->tgtype = pg_trigger->tgtype;
 		build->tgenabled = pg_trigger->tgenabled;
 		build->tgisconstraint = pg_trigger->tgisconstraint;
@@ -836,22 +839,22 @@ ExecCallTriggerFunc(Trigger *trigger,
 					TriggerData *trigdata,
 					MemoryContext per_tuple_context)
 {
-	FunctionCallInfoData	fcinfo;
-	Datum					result;
-	MemoryContext			oldContext;
+	FunctionCallInfoData fcinfo;
+	Datum		result;
+	MemoryContext oldContext;
 
 	/*
-	 * Fmgr lookup info is cached in the Trigger structure,
-	 * so that we need not repeat the lookup on every call.
+	 * Fmgr lookup info is cached in the Trigger structure, so that we
+	 * need not repeat the lookup on every call.
 	 */
 	if (trigger->tgfunc.fn_oid == InvalidOid)
 		fmgr_info(trigger->tgfoid, &trigger->tgfunc);
 
 	/*
-	 * Do the function evaluation in the per-tuple memory context,
-	 * so that leaked memory will be reclaimed once per tuple.
-	 * Note in particular that any new tuple created by the trigger function
-	 * will live till the end of the tuple cycle.
+	 * Do the function evaluation in the per-tuple memory context, so that
+	 * leaked memory will be reclaimed once per tuple. Note in particular
+	 * that any new tuple created by the trigger function will live till
+	 * the end of the tuple cycle.
 	 */
 	oldContext = MemoryContextSwitchTo(per_tuple_context);
 
@@ -868,8 +871,8 @@ ExecCallTriggerFunc(Trigger *trigger,
 	MemoryContextSwitchTo(oldContext);
 
 	/*
-	 * Trigger protocol allows function to return a null pointer,
-	 * but NOT to set the isnull result flag.
+	 * Trigger protocol allows function to return a null pointer, but NOT
+	 * to set the isnull result flag.
 	 */
 	if (fcinfo.isnull)
 		elog(ERROR, "ExecCallTriggerFunc: function %u returned NULL",
@@ -885,7 +888,7 @@ ExecBRInsertTriggers(EState *estate, Relation rel, HeapTuple trigtuple)
 	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_INSERT];
 	HeapTuple	newtuple = trigtuple;
 	HeapTuple	oldtuple;
-	TriggerData	LocTriggerData;
+	TriggerData LocTriggerData;
 	int			i;
 
 	LocTriggerData.type = T_TriggerData;
@@ -915,9 +918,7 @@ ExecARInsertTriggers(EState *estate, Relation rel, HeapTuple trigtuple)
 	if (rel->trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0 ||
 		rel->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0 ||
 		rel->trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
-	{
 		DeferredTriggerSaveEvent(rel, TRIGGER_EVENT_INSERT, NULL, trigtuple);
-	}
 }
 
 bool
@@ -1240,10 +1241,11 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 static void
 deferredTriggerAddEvent(DeferredTriggerEvent event)
 {
+
 	/*
 	 * Since the event list could grow quite long, we keep track of the
-	 * list tail and append there, rather than just doing a stupid "lappend".
-	 * This avoids O(N^2) behavior for large numbers of events.
+	 * list tail and append there, rather than just doing a stupid
+	 * "lappend". This avoids O(N^2) behavior for large numbers of events.
 	 */
 	event->dte_next = NULL;
 	if (deftrig_event_tail == NULL)
@@ -1291,7 +1293,7 @@ deferredTriggerGetPreviousEvent(Oid relid, ItemPointer ctid)
 
 	if (previous == NULL)
 		elog(ERROR,
-			 "deferredTriggerGetPreviousEvent: event for tuple %s not found",
+		 "deferredTriggerGetPreviousEvent: event for tuple %s not found",
 			 DatumGetCString(DirectFunctionCall1(tidout,
 												 PointerGetDatum(ctid))));
 	return previous;
@@ -1528,7 +1530,7 @@ DeferredTriggerBeginXact(void)
 
 	if (deftrig_cxt != NULL)
 		elog(ERROR,
-			 "DeferredTriggerBeginXact() called while inside transaction");
+		   "DeferredTriggerBeginXact() called while inside transaction");
 
 	/* ----------
 	 * Create the per transaction memory context and copy all states
@@ -1671,7 +1673,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			l = deftrig_dfl_trigstates;
 			while (l != NIL)
 			{
-				List   *next = lnext(l);
+				List	   *next = lnext(l);
 
 				pfree(lfirst(l));
 				pfree(l);
@@ -1700,7 +1702,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			l = deftrig_trigstates;
 			while (l != NIL)
 			{
-				List   *next = lnext(l);
+				List	   *next = lnext(l);
 
 				pfree(lfirst(l));
 				pfree(l);
@@ -1912,7 +1914,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
  *	Called by ExecAR...Triggers() to add the event to the queue.
  *
  *	NOTE: should be called only if we've determined that an event must
- *	be added to the queue.  We must save *all* events if there is either
+ *	be added to the queue.	We must save *all* events if there is either
  *	an UPDATE or a DELETE deferred trigger; see uses of
  *	deferredTriggerGetPreviousEvent.
  * ----------
@@ -2099,15 +2101,15 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 							TRIGGER_DEFERRED_ROW_INSERTED)
 							elog(ERROR, "triggered data change violation "
 								 "on relation \"%s\"",
-								 DatumGetCString(DirectFunctionCall1(nameout,
-								 NameGetDatum(&(rel->rd_rel->relname)))));
+							 DatumGetCString(DirectFunctionCall1(nameout,
+								NameGetDatum(&(rel->rd_rel->relname)))));
 
 						if (prev_event->dte_item[i].dti_state &
 							TRIGGER_DEFERRED_KEY_CHANGED)
 							elog(ERROR, "triggered data change violation "
 								 "on relation \"%s\"",
-								 DatumGetCString(DirectFunctionCall1(nameout,
-								 NameGetDatum(&(rel->rd_rel->relname)))));
+							 DatumGetCString(DirectFunctionCall1(nameout,
+								NameGetDatum(&(rel->rd_rel->relname)))));
 					}
 
 					/* ----------
@@ -2142,7 +2144,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 				elog(ERROR, "triggered data change violation "
 					 "on relation \"%s\"",
 					 DatumGetCString(DirectFunctionCall1(nameout,
-					 NameGetDatum(&(rel->rd_rel->relname)))));
+								NameGetDatum(&(rel->rd_rel->relname)))));
 
 			break;
 	}

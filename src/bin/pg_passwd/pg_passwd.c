@@ -25,17 +25,17 @@ extern char *crypt(const char *, const char *);
  *
  * Postgres usernames are assumed to be less than NAMEDATALEN chars long.
  */
-#define CLEAR_PASSWD_LEN 8			/* not including null */
-#define CRYPTED_PASSWD_LEN 13		/* not including null */
+#define CLEAR_PASSWD_LEN 8		/* not including null */
+#define CRYPTED_PASSWD_LEN 13	/* not including null */
 
-const char * progname;
+const char *progname;
 
 static void usage(void);
 static void read_pwd_file(char *filename);
 static void write_pwd_file(char *filename, char *bkname);
-static void encrypt_pwd(char key[CLEAR_PASSWD_LEN+1],
-						char salt[3],
-						char passwd[CRYPTED_PASSWD_LEN+1]);
+static void encrypt_pwd(char key[CLEAR_PASSWD_LEN + 1],
+			char salt[3],
+			char passwd[CRYPTED_PASSWD_LEN + 1]);
 static void prompt_for_username(char *username);
 static void prompt_for_password(char *prompt, char *password);
 
@@ -140,7 +140,7 @@ try_again:
 			if (strcmp(pwds[i].uname, pwds[npwds].uname) == 0)
 			{
 				fprintf(stderr, "Duplicate username %s in entry %d\n",
-						pwds[npwds].uname, npwds+1);
+						pwds[npwds].uname, npwds + 1);
 				exit(1);
 			}
 		}
@@ -220,9 +220,9 @@ link_again:
 }
 
 static void
-encrypt_pwd(char key[CLEAR_PASSWD_LEN+1],
+encrypt_pwd(char key[CLEAR_PASSWD_LEN + 1],
 			char salt[3],
-			char passwd[CRYPTED_PASSWD_LEN+1])
+			char passwd[CRYPTED_PASSWD_LEN + 1])
 {
 	int			n;
 
@@ -302,7 +302,7 @@ prompt_for_password(char *prompt, char *password)
 	printf(prompt);
 	fflush(stdout);
 
-	if (fgets(password, CLEAR_PASSWD_LEN+1, stdin) == NULL)
+	if (fgets(password, CLEAR_PASSWD_LEN + 1, stdin) == NULL)
 		password[0] = '\0';
 
 #ifdef HAVE_TERMIOS_H
@@ -332,7 +332,7 @@ prompt_for_password(char *prompt, char *password)
 int
 main(int argc, char *argv[])
 {
-	char       *filename;
+	char	   *filename;
 	char		bkname[MAXPGPATH];
 	char		username[NAMEDATALEN];
 	char		salt[3];

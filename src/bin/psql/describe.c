@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.27 2001/02/10 02:31:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.28 2001/03/22 04:00:19 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -117,7 +117,7 @@ describeFunctions(const char *name, bool verbose)
 		strcat(buf,
 			   "\nFROM pg_proc p,  pg_language l, pg_user u\n"
 			   "WHERE p.prolang = l.oid AND p.proowner = u.usesysid\n"
-		"  AND p.prorettype <> 0 and (pronargs = 0 or oidvectortypes(p.proargtypes) <> '')\n");
+			   "  AND p.prorettype <> 0 and (pronargs = 0 or oidvectortypes(p.proargtypes) <> '')\n");
 
 	if (name)
 	{
@@ -630,7 +630,7 @@ describeTableDetails(const char *name, bool desc)
 														 * afterwards */
 		/* Type */
 		cells[i * cols + 1] = PQgetvalue(res, i, 1);	/* don't free this
-														 * either*/
+														 * either */
 
 		/* Extra: not null and default */
 		/* (I'm cutting off the 'default' string at 128) */

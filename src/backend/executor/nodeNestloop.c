@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.22 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.23 2001/03/22 03:59:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ ExecNestLoop(NestLoop *node)
 	if (nlstate->jstate.cs_TupFromTlist)
 	{
 		TupleTableSlot *result;
-		ExprDoneCond	isDone;
+		ExprDoneCond isDone;
 
 		result = ExecProject(nlstate->jstate.cs_ProjInfo, &isDone);
 		if (isDone == ExprMultipleResult)
@@ -108,7 +108,7 @@ ExecNestLoop(NestLoop *node)
 
 	/* ----------------
 	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.  Note this can't
+	 *	storage allocated in the previous tuple cycle.	Note this can't
 	 *	happen until we're done projecting out tuples from a join tuple.
 	 * ----------------
 	 */
@@ -179,14 +179,15 @@ ExecNestLoop(NestLoop *node)
 
 			nlstate->nl_NeedNewOuter = true;
 
-			if (! nlstate->nl_MatchedOuter &&
+			if (!nlstate->nl_MatchedOuter &&
 				node->join.jointype == JOIN_LEFT)
 			{
+
 				/*
-				 * We are doing an outer join and there were no join matches
-				 * for this outer tuple.  Generate a fake join tuple with
-				 * nulls for the inner tuple, and return it if it passes
-				 * the non-join quals.
+				 * We are doing an outer join and there were no join
+				 * matches for this outer tuple.  Generate a fake join
+				 * tuple with nulls for the inner tuple, and return it if
+				 * it passes the non-join quals.
 				 */
 				econtext->ecxt_innertuple = nlstate->nl_NullInnerTupleSlot;
 
@@ -215,6 +216,7 @@ ExecNestLoop(NestLoop *node)
 					}
 				}
 			}
+
 			/*
 			 * Otherwise just return to top of loop for a new outer tuple.
 			 */
@@ -328,7 +330,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent)
 		case JOIN_LEFT:
 			nlstate->nl_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-									  ExecGetTupType(innerPlan((Plan*) node)));
+							   ExecGetTupType(innerPlan((Plan *) node)));
 			break;
 		default:
 			elog(ERROR, "ExecInitNestLoop: unsupported join type %d",

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.52 2001/02/22 21:48:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.53 2001/03/22 03:59:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,11 @@ index_formtuple(TupleDesc tupleDescriptor,
 	bool		hasnull = false;
 	uint16		tupmask = 0;
 	int			numberOfAttributes = tupleDescriptor->natts;
+
 #ifdef TOAST_INDEX_HACK
 	Datum		untoasted_value[INDEX_MAX_KEYS];
 	bool		untoasted_free[INDEX_MAX_KEYS];
+
 #endif
 
 	if (numberOfAttributes > INDEX_MAX_KEYS)
@@ -57,7 +59,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 #ifdef TOAST_INDEX_HACK
 	for (i = 0; i < numberOfAttributes; i++)
 	{
-		Form_pg_attribute  att = tupleDescriptor->attrs[i];
+		Form_pg_attribute att = tupleDescriptor->attrs[i];
 
 		untoasted_value[i] = value[i];
 		untoasted_free[i] = false;
@@ -73,20 +75,20 @@ index_formtuple(TupleDesc tupleDescriptor,
 		if (VARATT_IS_EXTERNAL(value[i]))
 		{
 			untoasted_value[i] = PointerGetDatum(
-				heap_tuple_fetch_attr(
-					(varattrib *) DatumGetPointer(value[i])));
+												 heap_tuple_fetch_attr(
+							   (varattrib *) DatumGetPointer(value[i])));
 			untoasted_free[i] = true;
 		}
 
 		/*
-		 * If value is above size target, and is of a compressible datatype,
-		 * try to compress it in-line.
+		 * If value is above size target, and is of a compressible
+		 * datatype, try to compress it in-line.
 		 */
 		if (VARATT_SIZE(untoasted_value[i]) > TOAST_INDEX_TARGET &&
 			!VARATT_IS_EXTENDED(untoasted_value[i]) &&
 			(att->attstorage == 'x' || att->attstorage == 'm'))
 		{
-			Datum	cvalue = toast_compress_datum(untoasted_value[i]);
+			Datum		cvalue = toast_compress_datum(untoasted_value[i]);
 
 			if (DatumGetPointer(cvalue) != NULL)
 			{
@@ -146,8 +148,8 @@ index_formtuple(TupleDesc tupleDescriptor,
 	/*
 	 * We do this because DataFill wants to initialize a "tupmask" which
 	 * is used for HeapTuples, but we want an indextuple infomask.	The
-	 * only relevant info is the "has variable attributes" field.
-	 * We have already set the hasnull bit above.
+	 * only relevant info is the "has variable attributes" field. We have
+	 * already set the hasnull bit above.
 	 */
 
 	if (tupmask & HEAP_HASVARLENA)
@@ -315,9 +317,9 @@ nocache_index_getattr(IndexTuple tup,
 	}
 
 	/*
-	 * If slow is false, and we got here, we know that we have a tuple with
-	 * no nulls or varlenas before the target attribute. If possible, we
-	 * also want to initialize the remainder of the attribute cached
+	 * If slow is false, and we got here, we know that we have a tuple
+	 * with no nulls or varlenas before the target attribute. If possible,
+	 * we also want to initialize the remainder of the attribute cached
 	 * offset values.
 	 */
 	if (!slow)
@@ -391,9 +393,7 @@ nocache_index_getattr(IndexTuple tup,
 				usecache = false;
 			}
 			else
-			{
 				off += att[i]->attlen;
-			}
 		}
 
 		off = att_align(off, att[attnum]->attlen, att[attnum]->attalign);

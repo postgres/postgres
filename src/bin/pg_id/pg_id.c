@@ -6,7 +6,7 @@
  *
  * Copyright (C) 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.19 2001/03/01 05:05:29 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.20 2001/03/22 04:00:16 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -94,9 +94,9 @@ main(int argc, char *argv[])
 		puts(pw->pw_name);
 	else
 #ifdef __BEOS__
- 		if (pw->pw_uid==0)
- 			printf("1\n");
- 		else
+	if (pw->pw_uid == 0)
+		printf("1\n");
+	else
 #endif
 		printf("%d\n", (int) pw->pw_uid);
 

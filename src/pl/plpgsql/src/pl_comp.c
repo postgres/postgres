@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.26 2001/02/09 03:26:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.27 2001/03/22 04:01:41 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -135,10 +135,10 @@ plpgsql_compile(Oid fn_oid, int functype)
 	 */
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	proc_source = DatumGetCString(DirectFunctionCall1(textout,
-									PointerGetDatum(&procStruct->prosrc)));
+								  PointerGetDatum(&procStruct->prosrc)));
 	plpgsql_setinput(proc_source, functype);
 	plpgsql_error_funcname = DatumGetCString(DirectFunctionCall1(nameout,
-						NameGetDatum(&(procStruct->proname))));
+								  NameGetDatum(&(procStruct->proname))));
 	plpgsql_error_lineno = 0;
 
 	/* ----------
@@ -152,7 +152,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 	function->fn_functype = functype;
 	function->fn_oid = fn_oid;
 	function->fn_name = strdup(DatumGetCString(DirectFunctionCall1(nameout,
-						NameGetDatum(&(procStruct->proname)))));
+								 NameGetDatum(&(procStruct->proname)))));
 
 	switch (functype)
 	{
@@ -169,7 +169,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			 * ----------
 			 */
 			typeTup = SearchSysCache(TYPEOID,
-									 ObjectIdGetDatum(procStruct->prorettype),
+								ObjectIdGetDatum(procStruct->prorettype),
 									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 			{
@@ -206,7 +206,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 				 * ----------
 				 */
 				typeTup = SearchSysCache(TYPEOID,
-										 ObjectIdGetDatum(procStruct->proargtypes[i]),
+							ObjectIdGetDatum(procStruct->proargtypes[i]),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
 				{
@@ -228,7 +228,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 					 */
 					sprintf(buf, "%s%%rowtype",
 							DatumGetCString(DirectFunctionCall1(nameout,
-							NameGetDatum(&(typeStruct->typname)))));
+								 NameGetDatum(&(typeStruct->typname)))));
 					if (plpgsql_parse_wordrowtype(buf) != T_ROW)
 					{
 						plpgsql_comperrinfo();
@@ -262,7 +262,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 					var->refname = strdup(buf);
 					var->lineno = 0;
 					var->datatype->typname = DatumGetCString(DirectFunctionCall1(nameout,
-									NameGetDatum(&(typeStruct->typname))));
+								  NameGetDatum(&(typeStruct->typname))));
 					var->datatype->typoid = procStruct->proargtypes[i];
 					fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
 					var->datatype->typelem = typeStruct->typelem;
@@ -630,7 +630,7 @@ plpgsql_parse_word(char *word)
 		typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
 		typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
-						NameGetDatum(&(typeStruct->typname))));
+								  NameGetDatum(&(typeStruct->typname))));
 		typ->typoid = typeTup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typelem = typeStruct->typelem;
@@ -958,7 +958,7 @@ plpgsql_parse_wordtype(char *word)
 		typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
 		typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
-						NameGetDatum(&(typeStruct->typname))));
+								  NameGetDatum(&(typeStruct->typname))));
 		typ->typoid = typeTup->t_data->t_oid;
 		fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typelem = typeStruct->typelem;
@@ -1109,7 +1109,7 @@ plpgsql_parse_dblwordtype(char *string)
 	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
 	typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
-						NameGetDatum(&(typeStruct->typname))));
+								  NameGetDatum(&(typeStruct->typname))));
 	typ->typoid = typetup->t_data->t_oid;
 	fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->typelem = typeStruct->typelem;
@@ -1205,7 +1205,7 @@ plpgsql_parse_wordrowtype(char *string)
 		 * ----------
 		 */
 		attrtup = SearchSysCache(ATTNUM,
-								 ObjectIdGetDatum(classtup->t_data->t_oid),
+							   ObjectIdGetDatum(classtup->t_data->t_oid),
 								 Int16GetDatum(i + 1),
 								 0, 0);
 		if (!HeapTupleIsValid(attrtup))
@@ -1217,7 +1217,7 @@ plpgsql_parse_wordrowtype(char *string)
 		attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
 		cp = DatumGetCString(DirectFunctionCall1(nameout,
-						NameGetDatum(&(attrStruct->attname))));
+								  NameGetDatum(&(attrStruct->attname))));
 
 		typetup = SearchSysCache(TYPEOID,
 								 ObjectIdGetDatum(attrStruct->atttypid),

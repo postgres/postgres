@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.44 2001/01/24 19:43:14 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.45 2001/03/22 03:59:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,10 @@
 #define LIKE_ABORT						(-1)
 
 
-static int MatchText(unsigned char * t, int tlen,
-					 unsigned char * p, int plen);
-static int MatchTextIC(unsigned char * t, int tlen,
-					   unsigned char * p, int plen);
+static int MatchText(unsigned char *t, int tlen,
+		  unsigned char *p, int plen);
+static int MatchTextIC(unsigned char *t, int tlen,
+			unsigned char *p, int plen);
 
 
 #ifdef MULTIBYTE
@@ -42,19 +42,20 @@ static int MatchTextIC(unsigned char * t, int tlen,
  * as wide characters. If they match, returns 1 otherwise returns 0.
  *--------------------
  */
-static int wchareq(unsigned char *p1, unsigned char *p2)
+static int
+wchareq(unsigned char *p1, unsigned char *p2)
 {
-	int l;
+	int			l;
 
 	l = pg_mblen(p1);
-	if (pg_mblen(p2) != l) {
-		return(0);
-	}
-	while (l--) {
+	if (pg_mblen(p2) != l)
+		return (0);
+	while (l--)
+	{
 		if (*p1++ != *p2++)
-			return(0);
+			return (0);
 	}
-	return(1);
+	return (1);
 }
 
 /*--------------------
@@ -65,32 +66,38 @@ static int wchareq(unsigned char *p1, unsigned char *p2)
  */
 #define CHARMAX 0x80
 
-static int iwchareq(unsigned char *p1, unsigned char *p2)
+static int
+iwchareq(unsigned char *p1, unsigned char *p2)
 {
-	int c1[2], c2[2];
-	int l;
+	int			c1[2],
+				c2[2];
+	int			l;
 
-	/* short cut. if *p1 and *p2 is lower than CHARMAX, then
-	   we could assume they are ASCII */
+	/*
+	 * short cut. if *p1 and *p2 is lower than CHARMAX, then we could
+	 * assume they are ASCII
+	 */
 	if (*p1 < CHARMAX && *p2 < CHARMAX)
-		return(tolower(*p1) == tolower(*p2));
+		return (tolower(*p1) == tolower(*p2));
 
-	/* if one of them is an ASCII while the other is not, then
-	   they must be different characters
-	*/
+	/*
+	 * if one of them is an ASCII while the other is not, then they must
+	 * be different characters
+	 */
 	else if (*p1 < CHARMAX || *p2 < CHARMAX)
-		return(0);
+		return (0);
 
-	/* ok, p1 and p2 are both > CHARMAX, then they must be multi-byte
-	   characters
-	*/
+	/*
+	 * ok, p1 and p2 are both > CHARMAX, then they must be multi-byte
+	 * characters
+	 */
 	l = pg_mblen(p1);
-	(void)pg_mb2wchar_with_len(p1, (pg_wchar *)c1, l);
+	(void) pg_mb2wchar_with_len(p1, (pg_wchar *) c1, l);
 	c1[0] = tolower(c1[0]);
 	l = pg_mblen(p2);
-	(void)pg_mb2wchar_with_len(p2, (pg_wchar *)c2, l);
+	(void) pg_mb2wchar_with_len(p2, (pg_wchar *) c2, l);
 	c2[0] = tolower(c2[0]);
-	return(c1[0] == c2[0]);
+	return (c1[0] == c2[0]);
 }
 
 #endif
@@ -124,13 +131,15 @@ namelike(PG_FUNCTION_ARGS)
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char   *s, *p;
-	int			slen, plen;
+	unsigned char *s,
+			   *p;
+	int			slen,
+				plen;
 
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
+	plen = (VARSIZE(pat) - VARHDRSZ);
 
 	result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
 
@@ -143,13 +152,15 @@ namenlike(PG_FUNCTION_ARGS)
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char   *s, *p;
-	int			slen, plen;
+	unsigned char *s,
+			   *p;
+	int			slen,
+				plen;
 
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
+	plen = (VARSIZE(pat) - VARHDRSZ);
 
 	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
 
@@ -162,13 +173,15 @@ textlike(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char   *s, *p;
-	int			slen, plen;
+	unsigned char *s,
+			   *p;
+	int			slen,
+				plen;
 
 	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
+	slen = (VARSIZE(str) - VARHDRSZ);
 	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
+	plen = (VARSIZE(pat) - VARHDRSZ);
 
 	result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
 
@@ -181,13 +194,15 @@ textnlike(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char   *s, *p;
-	int			slen, plen;
+	unsigned char *s,
+			   *p;
+	int			slen,
+				plen;
 
 	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
+	slen = (VARSIZE(str) - VARHDRSZ);
 	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
+	plen = (VARSIZE(pat) - VARHDRSZ);
 
 	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
 
@@ -204,13 +219,15 @@ nameiclike(PG_FUNCTION_ARGS)
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char   *s, *p;
-	int			slen, plen;
+	unsigned char *s,
+			   *p;
+	int			slen,
+				plen;
 
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
+	plen = (VARSIZE(pat) - VARHDRSZ);
 
 	result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
 
@@ -223,13 +240,15 @@ nameicnlike(PG_FUNCTION_ARGS)
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char   *s, *p;
-	int			slen, plen;
+	unsigned char *s,
+			   *p;
+	int			slen,
+				plen;
 
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
+	plen = (VARSIZE(pat) - VARHDRSZ);
 
 	result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
 
@@ -242,13 +261,15 @@ texticlike(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char   *s, *p;
-	int			slen, plen;
+	unsigned char *s,
+			   *p;
+	int			slen,
+				plen;
 
 	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
+	slen = (VARSIZE(str) - VARHDRSZ);
 	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
+	plen = (VARSIZE(pat) - VARHDRSZ);
 
 	result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
 
@@ -261,13 +282,15 @@ texticnlike(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char   *s, *p;
-	int			slen, plen;
+	unsigned char *s,
+			   *p;
+	int			slen,
+				plen;
 
 	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
+	slen = (VARSIZE(str) - VARHDRSZ);
 	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
+	plen = (VARSIZE(pat) - VARHDRSZ);
 
 	result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
 
@@ -284,14 +307,17 @@ like_escape(PG_FUNCTION_ARGS)
 	text	   *pat = PG_GETARG_TEXT_P(0);
 	text	   *esc = PG_GETARG_TEXT_P(1);
 	text	   *result;
-	unsigned char   *p, *e, *r;
-	int			plen, elen;
+	unsigned char *p,
+			   *e,
+			   *r;
+	int			plen,
+				elen;
 	bool		afterescape;
 
 	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
+	plen = (VARSIZE(pat) - VARHDRSZ);
 	e = VARDATA(esc);
-	elen = (VARSIZE(esc)-VARHDRSZ);
+	elen = (VARSIZE(esc) - VARHDRSZ);
 
 	/*
 	 * Worst-case pattern growth is 2x --- unlikely, but it's hardly worth
@@ -302,6 +328,7 @@ like_escape(PG_FUNCTION_ARGS)
 
 	if (elen == 0)
 	{
+
 		/*
 		 * No escape character is wanted.  Double any backslashes in the
 		 * pattern to make them act like ordinary characters.
@@ -315,6 +342,7 @@ like_escape(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+
 		/*
 		 * The specified escape must be only a single character.
 		 */
@@ -322,6 +350,7 @@ like_escape(PG_FUNCTION_ARGS)
 		if (elen != 0)
 			elog(ERROR, "ESCAPE string must be empty or one character");
 		e = VARDATA(esc);
+
 		/*
 		 * If specified escape is '\', just copy the pattern as-is.
 		 */
@@ -330,15 +359,16 @@ like_escape(PG_FUNCTION_ARGS)
 			memcpy(result, pat, VARSIZE(pat));
 			PG_RETURN_TEXT_P(result);
 		}
+
 		/*
-		 * Otherwise, convert occurrences of the specified escape character
-		 * to '\', and double occurrences of '\' --- unless they immediately
-		 * follow an escape character!
+		 * Otherwise, convert occurrences of the specified escape
+		 * character to '\', and double occurrences of '\' --- unless they
+		 * immediately follow an escape character!
 		 */
 		afterescape = false;
 		while (plen > 0)
 		{
-			if (CHAREQ(p,e) && !afterescape)
+			if (CHAREQ(p, e) && !afterescape)
 			{
 				*r++ = '\\';
 				NextChar(p, plen);
@@ -347,7 +377,7 @@ like_escape(PG_FUNCTION_ARGS)
 			else if (*p == '\\')
 			{
 				*r++ = '\\';
-				if (! afterescape)
+				if (!afterescape)
 					*r++ = '\\';
 				NextChar(p, plen);
 				afterescape = false;
@@ -413,7 +443,7 @@ like_escape(PG_FUNCTION_ARGS)
  */
 
 static int
-MatchText(unsigned char * t, int tlen, unsigned char * p, int plen)
+MatchText(unsigned char *t, int tlen, unsigned char *p, int plen)
 {
 	/* Fast path for match-everything pattern */
 	if ((plen == 1) && (*p == '%'))
@@ -425,7 +455,7 @@ MatchText(unsigned char * t, int tlen, unsigned char * p, int plen)
 		{
 			/* Next pattern char must match literally, whatever it is */
 			NextChar(p, plen);
-			if ((plen <= 0) || !CHAREQ(t,p))
+			if ((plen <= 0) || !CHAREQ(t, p))
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
@@ -439,22 +469,22 @@ MatchText(unsigned char * t, int tlen, unsigned char * p, int plen)
 				return LIKE_TRUE;
 
 			/*
-			 * Otherwise, scan for a text position at which we can
-			 * match the rest of the pattern.
+			 * Otherwise, scan for a text position at which we can match
+			 * the rest of the pattern.
 			 */
 			while (tlen > 0)
 			{
+
 				/*
-				 * Optimization to prevent most recursion: don't
-				 * recurse unless first pattern char might match this
-				 * text char.
+				 * Optimization to prevent most recursion: don't recurse
+				 * unless first pattern char might match this text char.
 				 */
-				if (CHAREQ(t,p) || (*p == '\\')  || (*p == '_'))
+				if (CHAREQ(t, p) || (*p == '\\') || (*p == '_'))
 				{
-					int matched = MatchText(t, tlen, p, plen);
+					int			matched = MatchText(t, tlen, p, plen);
 
 					if (matched != LIKE_FALSE)
-						return matched;		/* TRUE or ABORT */
+						return matched; /* TRUE or ABORT */
 				}
 
 				NextChar(t, tlen);
@@ -466,9 +496,11 @@ MatchText(unsigned char * t, int tlen, unsigned char * p, int plen)
 			 */
 			return LIKE_ABORT;
 		}
-		else if ((*p != '_') && !CHAREQ(t,p))
+		else if ((*p != '_') && !CHAREQ(t, p))
 		{
-			/* Not the single-character wildcard and no explicit match?
+
+			/*
+			 * Not the single-character wildcard and no explicit match?
 			 * Then time to quit...
 			 */
 			return LIKE_FALSE;
@@ -482,7 +514,8 @@ MatchText(unsigned char * t, int tlen, unsigned char * p, int plen)
 		return LIKE_FALSE;		/* end of pattern, but not of text */
 
 	/* End of input string.  Do we have matching pattern remaining? */
-	while ((plen > 0) && (*p == '%'))	/* allow multiple %'s at end of pattern */
+	while ((plen > 0) && (*p == '%'))	/* allow multiple %'s at end of
+										 * pattern */
 		NextChar(p, plen);
 	if (plen <= 0)
 		return LIKE_TRUE;
@@ -492,13 +525,13 @@ MatchText(unsigned char * t, int tlen, unsigned char * p, int plen)
 	 * start matching this pattern.
 	 */
 	return LIKE_ABORT;
-} /* MatchText() */
+}	/* MatchText() */
 
 /*
  * Same as above, but ignore case
  */
 static int
-MatchTextIC(unsigned char * t, int tlen, unsigned char * p, int plen)
+MatchTextIC(unsigned char *t, int tlen, unsigned char *p, int plen)
 {
 	/* Fast path for match-everything pattern */
 	if ((plen == 1) && (*p == '%'))
@@ -510,7 +543,7 @@ MatchTextIC(unsigned char * t, int tlen, unsigned char * p, int plen)
 		{
 			/* Next pattern char must match literally, whatever it is */
 			NextChar(p, plen);
-			if ((plen <= 0) || !ICHAREQ(t,p))
+			if ((plen <= 0) || !ICHAREQ(t, p))
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
@@ -524,22 +557,22 @@ MatchTextIC(unsigned char * t, int tlen, unsigned char * p, int plen)
 				return LIKE_TRUE;
 
 			/*
-			 * Otherwise, scan for a text position at which we can
-			 * match the rest of the pattern.
+			 * Otherwise, scan for a text position at which we can match
+			 * the rest of the pattern.
 			 */
 			while (tlen > 0)
 			{
+
 				/*
-				 * Optimization to prevent most recursion: don't
-				 * recurse unless first pattern char might match this
-				 * text char.
+				 * Optimization to prevent most recursion: don't recurse
+				 * unless first pattern char might match this text char.
 				 */
-				if (ICHAREQ(t,p) || (*p == '\\')  || (*p == '_'))
+				if (ICHAREQ(t, p) || (*p == '\\') || (*p == '_'))
 				{
-					int matched = MatchTextIC(t, tlen, p, plen);
+					int			matched = MatchTextIC(t, tlen, p, plen);
 
 					if (matched != LIKE_FALSE)
-						return matched;		/* TRUE or ABORT */
+						return matched; /* TRUE or ABORT */
 				}
 
 				NextChar(t, tlen);
@@ -551,9 +584,11 @@ MatchTextIC(unsigned char * t, int tlen, unsigned char * p, int plen)
 			 */
 			return LIKE_ABORT;
 		}
-		else if ((*p != '_') && !ICHAREQ(t,p))
+		else if ((*p != '_') && !ICHAREQ(t, p))
 		{
-			/* Not the single-character wildcard and no explicit match?
+
+			/*
+			 * Not the single-character wildcard and no explicit match?
 			 * Then time to quit...
 			 */
 			return LIKE_FALSE;
@@ -567,7 +602,8 @@ MatchTextIC(unsigned char * t, int tlen, unsigned char * p, int plen)
 		return LIKE_FALSE;		/* end of pattern, but not of text */
 
 	/* End of input string.  Do we have matching pattern remaining? */
-	while ((plen > 0) && (*p == '%'))	/* allow multiple %'s at end of pattern */
+	while ((plen > 0) && (*p == '%'))	/* allow multiple %'s at end of
+										 * pattern */
 		NextChar(p, plen);
 	if (plen <= 0)
 		return LIKE_TRUE;
@@ -577,4 +613,4 @@ MatchTextIC(unsigned char * t, int tlen, unsigned char * p, int plen)
 	 * start matching this pattern.
 	 */
 	return LIKE_ABORT;
-} /* MatchTextIC() */
+}	/* MatchTextIC() */

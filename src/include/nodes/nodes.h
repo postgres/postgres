@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.86 2001/01/24 19:43:25 momjian Exp $
+ * $Id: nodes.h,v 1.87 2001/03/22 04:00:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,8 @@ typedef enum NodeTag
 	T_RemoveAggrStmt,
 	T_RemoveFuncStmt,
 	T_RemoveOperStmt,
-	T_RemoveStmt_XXX,			/* not used anymore; this tag# is available */
+	T_RemoveStmt_XXX,			/* not used anymore; this tag# is
+								 * available */
 	T_RenameStmt,
 	T_RuleStmt,
 	T_NotifyStmt,
@@ -225,11 +226,14 @@ typedef enum NodeTag
 	T_RangeTblEntry,
 	T_SortClause,
 	T_GroupClause,
-	T_SubSelectXXX,				/* not used anymore; this tag# is available */
-	T_oldJoinExprXXX,			/* not used anymore; this tag# is available */
+	T_SubSelectXXX,				/* not used anymore; this tag# is
+								 * available */
+	T_oldJoinExprXXX,			/* not used anymore; this tag# is
+								 * available */
 	T_CaseExpr,
 	T_CaseWhen,
-	T_RowMarkXXX,				/* not used anymore; this tag# is available */
+	T_RowMarkXXX,				/* not used anymore; this tag# is
+								 * available */
 	T_FkConstraint,
 
 	/*---------------------
@@ -347,19 +351,24 @@ typedef enum CmdType
  */
 typedef enum JoinType
 {
+
 	/*
 	 * The canonical kinds of joins
 	 */
 	JOIN_INNER,					/* matching tuple pairs only */
 	JOIN_LEFT,					/* pairs + unmatched outer tuples */
-	JOIN_FULL,					/* pairs + unmatched outer + unmatched inner */
+	JOIN_FULL,					/* pairs + unmatched outer + unmatched
+								 * inner */
 	JOIN_RIGHT,					/* pairs + unmatched inner tuples */
+
 	/*
-	 * SQL92 considers UNION JOIN to be a kind of join, so list it here for
-	 * parser convenience, even though it's not implemented like a join in
-	 * the executor.  (The planner must convert it to an Append plan.)
+	 * SQL92 considers UNION JOIN to be a kind of join, so list it here
+	 * for parser convenience, even though it's not implemented like a
+	 * join in the executor.  (The planner must convert it to an Append
+	 * plan.)
 	 */
 	JOIN_UNION
+
 	/*
 	 * Eventually we will have some additional join types for efficient
 	 * support of queries like WHERE foo IN (SELECT bar FROM ...).

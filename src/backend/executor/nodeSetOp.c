@@ -5,7 +5,7 @@
  *
  * The input of a SetOp node consists of tuples from two relations,
  * which have been combined into one dataset and sorted on all the nonjunk
- * attributes.  In addition there is a junk attribute that shows which
+ * attributes.	In addition there is a junk attribute that shows which
  * relation each tuple came from.  The SetOp node scans each group of
  * identical tuples to determine how many came from each input relation.
  * Then it is a simple matter to emit the output demanded by the SQL spec
@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.2 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.3 2001/03/22 03:59:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ ExecSetOp(SetOp *node)
 		 * ----------------
 		 */
 		if (setopstate->cstate.cs_OuterTupleSlot == NULL &&
-			! setopstate->subplan_done)
+			!setopstate->subplan_done)
 		{
 			setopstate->cstate.cs_OuterTupleSlot =
 				ExecProcNode(outerPlan, (Plan *) node);
@@ -104,6 +104,7 @@ ExecSetOp(SetOp *node)
 
 		if (TupIsNull(resultTupleSlot))
 		{
+
 			/*
 			 * First of group: save a copy in result slot, and reset
 			 * duplicate-counters for new group.
@@ -113,13 +114,15 @@ ExecSetOp(SetOp *node)
 			ExecStoreTuple(heap_copytuple(inputTupleSlot->val),
 						   resultTupleSlot,
 						   InvalidBuffer,
-						   true); /* free copied tuple at ExecClearTuple */
+						   true);		/* free copied tuple at
+										 * ExecClearTuple */
 			setopstate->numLeft = 0;
 			setopstate->numRight = 0;
 			endOfGroup = false;
 		}
 		else if (setopstate->subplan_done)
 		{
+
 			/*
 			 * Reached end of input, so finish processing final group
 			 */
@@ -127,8 +130,10 @@ ExecSetOp(SetOp *node)
 		}
 		else
 		{
+
 			/*
-			 * Else test if the new tuple and the previously saved tuple match.
+			 * Else test if the new tuple and the previously saved tuple
+			 * match.
 			 */
 			if (execTuplesMatch(inputTupleSlot->val,
 								resultTupleSlot->val,
@@ -143,6 +148,7 @@ ExecSetOp(SetOp *node)
 
 		if (endOfGroup)
 		{
+
 			/*
 			 * We've reached the end of the group containing resultTuple.
 			 * Decide how many copies (if any) to emit.  This logic is
@@ -185,12 +191,13 @@ ExecSetOp(SetOp *node)
 		}
 		else
 		{
+
 			/*
-			 * Current tuple is member of same group as resultTuple.
-			 * Count it in the appropriate counter.
+			 * Current tuple is member of same group as resultTuple. Count
+			 * it in the appropriate counter.
 			 */
-			int		flag;
-			bool	isNull;
+			int			flag;
+			bool		isNull;
 
 			flag = DatumGetInt32(heap_getattr(inputTupleSlot->val,
 											  node->flagColIdx,
@@ -207,8 +214,8 @@ ExecSetOp(SetOp *node)
 	}
 
 	/*
-	 * If we fall out of loop, then we need to emit at least one copy
-	 * of resultTuple.
+	 * If we fall out of loop, then we need to emit at least one copy of
+	 * resultTuple.
 	 */
 	Assert(setopstate->numOutput > 0);
 	setopstate->numOutput--;

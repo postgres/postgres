@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.48 2001/01/24 19:43:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.49 2001/03/22 03:59:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 
 #if defined(FLEX_SCANNER)
 extern void DeleteBuffer(void);
+
 #endif	 /* FLEX_SCANNER */
 
 char	   *parseString;		/* the char* which holds the string to be
@@ -82,7 +83,7 @@ parser(char *str, Oid *typev, int nargs)
  * token lookahead.  We reduce these cases to one-token lookahead by combining
  * tokens here, in order to keep the grammar LR(1).
  *
- * Using a filter is simpler than trying to recognize multiword tokens 
+ * Using a filter is simpler than trying to recognize multiword tokens
  * directly in scan.l, because we'd have to allow for comments between the
  * words ...
  */

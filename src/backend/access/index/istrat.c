@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.48 2001/01/24 19:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.49 2001/03/22 03:59:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,8 +239,8 @@ StrategyTermEvaluate(StrategyTerm term,
 				break;
 
 			case SK_NEGATE:
-				result = ! DatumGetBool(FunctionCall2(&entry->sk_func,
-													  left, right));
+				result = !DatumGetBool(FunctionCall2(&entry->sk_func,
+													 left, right));
 				break;
 
 			case SK_COMMUTE:
@@ -249,8 +249,8 @@ StrategyTermEvaluate(StrategyTerm term,
 				break;
 
 			case SK_NEGATE | SK_COMMUTE:
-				result = ! DatumGetBool(FunctionCall2(&entry->sk_func,
-													  right, left));
+				result = !DatumGetBool(FunctionCall2(&entry->sk_func,
+													 right, left));
 				break;
 
 			default:
@@ -263,6 +263,7 @@ StrategyTermEvaluate(StrategyTerm term,
 
 	return result;
 }
+
 #endif
 
 /* ----------------
@@ -465,6 +466,7 @@ RelationInvokeStrategy(Relation relation,
 
 
 }
+
 #endif
 
 /* ----------------
@@ -519,7 +521,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 
 	if (!RegProcedureIsValid(entry->sk_procedure))
 		elog(ERROR,
-			 "OperatorRelationFillScanKeyEntry: no procedure for operator %u",
+		"OperatorRelationFillScanKeyEntry: no procedure for operator %u",
 			 operatorObjectId);
 
 	fmgr_info(entry->sk_procedure, &entry->sk_func);
@@ -597,9 +599,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	}
 
 	if (cachesearch)
-	{
 		ReleaseSysCache(tuple);
-	}
 	else
 	{
 		heap_endscan(scan);

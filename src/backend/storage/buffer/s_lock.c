@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.34 2001/02/24 22:42:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.35 2001/03/22 03:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,16 +43,16 @@
 #define S_NSPINCYCLE	20
 
 int			s_spincycle[S_NSPINCYCLE] =
-{	1,		10,		100,	1000,
-	10000,	1000,	1000,	1000,
-	10000,	1000,	1000,	10000,
-	1000,	1000,	10000,	1000,
-	10000,	1000,	10000,	30000
+{1, 10, 100, 1000,
+	10000, 1000, 1000, 1000,
+	10000, 1000, 1000, 10000,
+	1000, 1000, 10000, 1000,
+	10000, 1000, 10000, 30000
 };
 
 #define AVG_SPINCYCLE	5000	/* average entry in microsec: 100ms / 20 */
 
-#define DEFAULT_TIMEOUT	(100*1000000) /* default timeout: 100 sec */
+#define DEFAULT_TIMEOUT (100*1000000)	/* default timeout: 100 sec */
 
 
 /*
@@ -74,10 +74,10 @@ s_lock_stuck(volatile slock_t *lock, const char *file, const int line)
 /*
  * s_lock_sleep() - sleep a pseudo-random amount of time, check for timeout
  *
- * The 'timeout' is given in microsec, or may be 0 for "infinity".  Note that
+ * The 'timeout' is given in microsec, or may be 0 for "infinity".	Note that
  * this will be a lower bound (a fairly loose lower bound, on most platforms).
  *
- * 'microsec' is the number of microsec to delay per loop.  Normally
+ * 'microsec' is the number of microsec to delay per loop.	Normally
  * 'microsec' is 0, specifying to use the next s_spincycle[] value.
  * Some callers may pass a nonzero interval, specifying to use exactly that
  * delay value rather than a pseudo-random delay.
@@ -98,7 +98,7 @@ s_lock_sleep(unsigned spins, int timeout, int microsec,
 	{
 		delay.tv_sec = 0;
 		delay.tv_usec = s_spincycle[spins % S_NSPINCYCLE];
-		microsec = AVG_SPINCYCLE; /* use average to figure timeout */
+		microsec = AVG_SPINCYCLE;		/* use average to figure timeout */
 	}
 
 	if (timeout > 0)
@@ -125,10 +125,11 @@ s_lock(volatile slock_t *lock, const char *file, const int line)
 	 * If you are thinking of changing this code, be careful.  This same
 	 * loop logic is used in other places that call TAS() directly.
 	 *
-	 * While waiting for a lock, we check for cancel/die interrupts (which
-	 * is a no-op if we are inside a critical section).  The interrupt check
-	 * can be omitted in places that know they are inside a critical section.
-	 * Note that an interrupt must NOT be accepted after acquiring the lock.
+	 * While waiting for a lock, we check for cancel/die interrupts (which is
+	 * a no-op if we are inside a critical section).  The interrupt check
+	 * can be omitted in places that know they are inside a critical
+	 * section. Note that an interrupt must NOT be accepted after
+	 * acquiring the lock.
 	 */
 	while (TAS(lock))
 	{
@@ -155,8 +156,8 @@ static void
 tas_dummy()						/* really means: extern int tas(slock_t
 								 * **lock); */
 {
-	__asm__ __volatile__(
-"\
+	__asm__		__volatile__(
+										 "\
 .global		_tas				\n\
 _tas:							\n\
 			movel	sp@(0x4),a0	\n\
@@ -180,8 +181,8 @@ _success:						\n\
 static void
 tas_dummy()
 {
-	   __asm__ __volatile__(
-"\
+	__asm__		__volatile__(
+										 "\
 			.globl 	tas			\n\
 			.globl 	_tas		\n\
 _tas:							\n\
@@ -200,15 +201,15 @@ success:						\n\
 ");
 }
 
-#endif  /* __APPLE__ && __ppc__ */
+#endif	 /* __APPLE__ && __ppc__ */
 
 #if defined(__powerpc__)
 /* Note: need a nice gcc constrained asm version so it can be inlined */
 static void
 tas_dummy()
 {
-	__asm__ __volatile__(
-"\
+	__asm__		__volatile__(
+										 "\
 .global tas 					\n\
 tas:							\n\
 			lwarx	5,0,3		\n\
@@ -231,8 +232,8 @@ success:						\n\
 static void
 tas_dummy()
 {
-	__asm__  _volatile__(
-"\
+	__asm__		_volatile__(
+										"\
 .global	tas						\n\
 tas:							\n\
 			.frame	$sp, 0, $31	\n\

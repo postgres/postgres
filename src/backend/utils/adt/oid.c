@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.44 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.45 2001/03/22 03:59:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,11 +36,11 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	cvt = strtoul(s, &endptr, 10);
 
 	/*
-	 * strtoul() normally only sets ERANGE.  On some systems it also
-	 * may set EINVAL, which simply means it couldn't parse the
-	 * input string.  This is handled by the second "if" consistent
-	 * across platforms.  Note that for historical reasons we accept
-	 * an empty string as meaning 0.
+	 * strtoul() normally only sets ERANGE.  On some systems it also may
+	 * set EINVAL, which simply means it couldn't parse the input string.
+	 * This is handled by the second "if" consistent across platforms.
+	 * Note that for historical reasons we accept an empty string as
+	 * meaning 0.
 	 */
 	if (errno && errno != EINVAL)
 		elog(ERROR, "%s: error reading \"%s\": %m",
@@ -67,21 +67,20 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	result = (Oid) cvt;
 
 	/*
-	 * Cope with possibility that unsigned long is wider than Oid,
-	 * in which case strtoul will not raise an error for some values
-	 * that are out of the range of Oid.
+	 * Cope with possibility that unsigned long is wider than Oid, in
+	 * which case strtoul will not raise an error for some values that are
+	 * out of the range of Oid.
 	 *
-	 * For backwards compatibility, we want to accept inputs that
-	 * are given with a minus sign, so allow the input value if it
-	 * matches after either signed or unsigned extension to long.
+	 * For backwards compatibility, we want to accept inputs that are given
+	 * with a minus sign, so allow the input value if it matches after
+	 * either signed or unsigned extension to long.
 	 *
-	 * To ensure consistent results on 32-bit and 64-bit platforms,
-	 * make sure the error message is the same as if strtoul() had
-	 * returned ERANGE.
+	 * To ensure consistent results on 32-bit and 64-bit platforms, make sure
+	 * the error message is the same as if strtoul() had returned ERANGE.
 	 */
 #if OID_MAX != ULONG_MAX
 	if (cvt != (unsigned long) result &&
-	    cvt != (unsigned long) ((int) result))
+		cvt != (unsigned long) ((int) result))
 		elog(ERROR, "%s: error reading \"%s\": %s",
 			 funcname, s, strerror(ERANGE));
 #endif
@@ -235,8 +234,8 @@ oidgt(PG_FUNCTION_ARGS)
 Datum
 oidvectoreq(PG_FUNCTION_ARGS)
 {
-	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
+	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
 
 	PG_RETURN_BOOL(memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) == 0);
 }
@@ -244,8 +243,8 @@ oidvectoreq(PG_FUNCTION_ARGS)
 Datum
 oidvectorne(PG_FUNCTION_ARGS)
 {
-	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
+	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
 
 	PG_RETURN_BOOL(memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) != 0);
 }
@@ -253,8 +252,8 @@ oidvectorne(PG_FUNCTION_ARGS)
 Datum
 oidvectorlt(PG_FUNCTION_ARGS)
 {
-	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
+	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
 	int			i;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
@@ -266,8 +265,8 @@ oidvectorlt(PG_FUNCTION_ARGS)
 Datum
 oidvectorle(PG_FUNCTION_ARGS)
 {
-	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
+	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
 	int			i;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
@@ -279,8 +278,8 @@ oidvectorle(PG_FUNCTION_ARGS)
 Datum
 oidvectorge(PG_FUNCTION_ARGS)
 {
-	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
+	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
 	int			i;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
@@ -292,8 +291,8 @@ oidvectorge(PG_FUNCTION_ARGS)
 Datum
 oidvectorgt(PG_FUNCTION_ARGS)
 {
-	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
+	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
 	int			i;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)

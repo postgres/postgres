@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.77 2001/02/16 03:16:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.78 2001/03/22 03:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,17 +39,17 @@
 static char *clauseText[] = {"ORDER BY", "GROUP BY", "DISTINCT ON"};
 
 static void extractUniqueColumns(List *common_colnames,
-								 List *src_colnames, List *src_colvars,
-								 List **res_colnames, List **res_colvars);
+					 List *src_colnames, List *src_colvars,
+					 List **res_colnames, List **res_colvars);
 static Node *transformJoinUsingClause(ParseState *pstate,
-									  List *leftVars, List *rightVars);
+						 List *leftVars, List *rightVars);
 static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
-								   List *containedRels);
+					  List *containedRels);
 static RangeTblRef *transformTableEntry(ParseState *pstate, RangeVar *r);
 static RangeTblRef *transformRangeSubselect(ParseState *pstate,
-											RangeSubselect *r);
+						RangeSubselect *r);
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
-									 List **containedRels);
+						List **containedRels);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
@@ -78,10 +78,10 @@ transformFromClause(ParseState *pstate, List *frmList)
 	List	   *fl;
 
 	/*
-	 * The grammar will have produced a list of RangeVars, RangeSubselects,
-	 * and/or JoinExprs. Transform each one (possibly adding entries to the
-	 * rtable), check for duplicate refnames, and then add it to the joinlist
-	 * and namespace.
+	 * The grammar will have produced a list of RangeVars,
+	 * RangeSubselects, and/or JoinExprs. Transform each one (possibly
+	 * adding entries to the rtable), check for duplicate refnames, and
+	 * then add it to the joinlist and namespace.
 	 */
 	foreach(fl, frmList)
 	{
@@ -126,11 +126,11 @@ setTargetTable(ParseState *pstate, char *relname,
 		heap_close(pstate->p_target_relation, NoLock);
 
 	/*
-	 * Open target rel and grab suitable lock (which we will hold till
-	 * end of transaction).
+	 * Open target rel and grab suitable lock (which we will hold till end
+	 * of transaction).
 	 *
-	 * analyze.c will eventually do the corresponding heap_close(),
-	 * but *not* release the lock.
+	 * analyze.c will eventually do the corresponding heap_close(), but *not*
+	 * release the lock.
 	 */
 	pstate->p_target_relation = heap_openr(relname, RowExclusiveLock);
 
@@ -148,10 +148,10 @@ setTargetTable(ParseState *pstate, char *relname,
 	 * Override addRangeTableEntry's default checkForRead, and instead
 	 * mark target table as requiring write access.
 	 *
-	 * If we find an explicit reference to the rel later during
-	 * parse analysis, scanRTEForColumn will change checkForRead
-	 * to 'true' again.  That can't happen for INSERT but it is
-	 * possible for UPDATE and DELETE.
+	 * If we find an explicit reference to the rel later during parse
+	 * analysis, scanRTEForColumn will change checkForRead to 'true'
+	 * again.  That can't happen for INSERT but it is possible for UPDATE
+	 * and DELETE.
 	 */
 	rte->checkForRead = false;
 	rte->checkForWrite = true;
@@ -169,7 +169,7 @@ setTargetTable(ParseState *pstate, char *relname,
  * Simplify InhOption (yes/no/default) into boolean yes/no.
  *
  * The reason we do things this way is that we don't want to examine the
- * SQL_inheritance option flag until parse_analyze is run.  Otherwise,
+ * SQL_inheritance option flag until parse_analyze is run.	Otherwise,
  * we'd do the wrong thing with query strings that intermix SET commands
  * with queries.
  */
@@ -178,7 +178,7 @@ interpretInhOption(InhOption inhOpt)
 {
 	switch (inhOpt)
 	{
-		case INH_NO:
+			case INH_NO:
 			return false;
 		case INH_YES:
 			return true;
@@ -246,7 +246,7 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 
 	/*
 	 * We cheat a little bit here by building an untransformed operator
-	 * tree whose leaves are the already-transformed Vars.  This is OK
+	 * tree whose leaves are the already-transformed Vars.	This is OK
 	 * because transformExpr() won't complain about already-transformed
 	 * subnodes.
 	 */
@@ -288,7 +288,11 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 
 	if (exprType(result) != BOOLOID)
 	{
-		/* This could only happen if someone defines a funny version of '=' */
+
+		/*
+		 * This could only happen if someone defines a funny version of
+		 * '='
+		 */
 		elog(ERROR, "JOIN/USING clause must return type bool, not type %s",
 			 typeidTypeName(exprType(result)));
 	}
@@ -312,11 +316,12 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	/*
 	 * This is a tad tricky, for two reasons.  First, the namespace that
 	 * the join expression should see is just the two subtrees of the JOIN
-	 * plus any outer references from upper pstate levels.  So, temporarily
-	 * set this pstate's namespace accordingly.  (We need not check for
-	 * refname conflicts, because transformFromClauseItem() already did.)
-	 * NOTE: this code is OK only because the ON clause can't legally alter
-	 * the namespace by causing implicit relation refs to be added.
+	 * plus any outer references from upper pstate levels.	So,
+	 * temporarily set this pstate's namespace accordingly.  (We need not
+	 * check for refname conflicts, because transformFromClauseItem()
+	 * already did.) NOTE: this code is OK only because the ON clause
+	 * can't legally alter the namespace by causing implicit relation refs
+	 * to be added.
 	 */
 	save_namespace = pstate->p_namespace;
 	pstate->p_namespace = makeList2(j->larg, j->rarg);
@@ -333,17 +338,18 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 
 	/*
 	 * Second, we need to check that the ON condition doesn't refer to any
-	 * rels outside the input subtrees of the JOIN.  It could do that despite
-	 * our hack on the namespace if it uses fully-qualified names.  So, grovel
-	 * through the transformed clause and make sure there are no bogus
-	 * references.  (Outer references are OK, and are ignored here.)
+	 * rels outside the input subtrees of the JOIN.  It could do that
+	 * despite our hack on the namespace if it uses fully-qualified names.
+	 * So, grovel through the transformed clause and make sure there are
+	 * no bogus references.  (Outer references are OK, and are ignored
+	 * here.)
 	 */
 	clause_varnos = pull_varnos(result);
 	foreach(l, clause_varnos)
 	{
-		int		varno = lfirsti(l);
+		int			varno = lfirsti(l);
 
-		if (! intMember(varno, containedRels))
+		if (!intMember(varno, containedRels))
 		{
 			elog(ERROR, "JOIN/ON clause refers to \"%s\", which is not part of JOIN",
 				 rt_fetch(varno, pstate->p_rtable)->eref->relname);
@@ -400,21 +406,21 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	RangeTblRef *rtr;
 
 	/*
-	 * We require user to supply an alias for a subselect, per SQL92.
-	 * To relax this, we'd have to be prepared to gin up a unique alias
-	 * for an unlabeled subselect.
+	 * We require user to supply an alias for a subselect, per SQL92. To
+	 * relax this, we'd have to be prepared to gin up a unique alias for
+	 * an unlabeled subselect.
 	 */
 	if (r->name == NULL)
 		elog(ERROR, "sub-select in FROM must have an alias");
 
 	/*
-	 * Analyze and transform the subquery.  This is a bit tricky because
+	 * Analyze and transform the subquery.	This is a bit tricky because
 	 * we don't want the subquery to be able to see any FROM items already
 	 * created in the current query (per SQL92, the scope of a FROM item
-	 * does not include other FROM items).  But it does need to be able to
-	 * see any further-up parent states, so we can't just pass a null parent
-	 * pstate link.  So, temporarily make the current query level have an
-	 * empty namespace.
+	 * does not include other FROM items).	But it does need to be able to
+	 * see any further-up parent states, so we can't just pass a null
+	 * parent pstate link.	So, temporarily make the current query level
+	 * have an empty namespace.
 	 */
 	save_namespace = pstate->p_namespace;
 	pstate->p_namespace = NIL;
@@ -422,7 +428,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	pstate->p_namespace = save_namespace;
 
 	/*
-	 * Check that we got something reasonable.  Some of these conditions
+	 * Check that we got something reasonable.	Some of these conditions
 	 * are probably impossible given restrictions of the grammar, but
 	 * check 'em anyway.
 	 */
@@ -513,9 +519,9 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		*containedRels = nconc(l_containedRels, r_containedRels);
 
 		/*
-		 * Check for conflicting refnames in left and right subtrees.  Must
-		 * do this because higher levels will assume I hand back a self-
-		 * consistent namespace subtree.
+		 * Check for conflicting refnames in left and right subtrees.
+		 * Must do this because higher levels will assume I hand back a
+		 * self- consistent namespace subtree.
 		 */
 		checkNameSpaceConflicts(pstate, j->larg, j->rarg);
 
@@ -556,12 +562,11 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		}
 
 		/*
-		 * Natural join does not explicitly specify columns; must
-		 * generate columns to join. Need to run through the list of
-		 * columns from each table or join result and match up the
-		 * column names. Use the first table, and check every column
-		 * in the second table for a match.  (We'll check that the
-		 * matches were unique later on.)
+		 * Natural join does not explicitly specify columns; must generate
+		 * columns to join. Need to run through the list of columns from
+		 * each table or join result and match up the column names. Use
+		 * the first table, and check every column in the second table for
+		 * a match.  (We'll check that the matches were unique later on.)
 		 * The result of this step is a list of column names just like an
 		 * explicitly-written USING list.
 		 */
@@ -571,7 +576,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 			List	   *lx,
 					   *rx;
 
-			Assert(j->using == NIL); /* shouldn't have USING() too */
+			Assert(j->using == NIL);	/* shouldn't have USING() too */
 
 			foreach(lx, l_colnames)
 			{
@@ -605,17 +610,18 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 
 		if (j->using)
 		{
+
 			/*
 			 * JOIN/USING (or NATURAL JOIN, as transformed above).
-			 * Transform the list into an explicit ON-condition,
-			 * and generate a list of result columns.
+			 * Transform the list into an explicit ON-condition, and
+			 * generate a list of result columns.
 			 */
 			List	   *ucols = j->using;
 			List	   *l_usingvars = NIL;
 			List	   *r_usingvars = NIL;
 			List	   *ucol;
 
-			Assert(j->quals == NULL); /* shouldn't have ON() too */
+			Assert(j->quals == NULL);	/* shouldn't have ON() too */
 
 			foreach(ucol, ucols)
 			{
@@ -679,22 +685,22 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 						colvar = r_colvar;
 						break;
 					default:
-					{
-						/* Need COALESCE(l_colvar, r_colvar) */
-						CaseExpr *c = makeNode(CaseExpr);
-						CaseWhen *w = makeNode(CaseWhen);
-						A_Expr *a = makeNode(A_Expr);
+						{
+							/* Need COALESCE(l_colvar, r_colvar) */
+							CaseExpr   *c = makeNode(CaseExpr);
+							CaseWhen   *w = makeNode(CaseWhen);
+							A_Expr	   *a = makeNode(A_Expr);
 
-						a->oper = NOTNULL;
-						a->lexpr = l_colvar;
-						w->expr = (Node *) a;
-						w->result = l_colvar;
-						c->args = makeList1(w);
-						c->defresult = r_colvar;
-						colvar = transformExpr(pstate, (Node *) c,
-											   EXPR_COLUMN_FIRST);
-						break;
-					}
+							a->oper = NOTNULL;
+							a->lexpr = l_colvar;
+							w->expr = (Node *) a;
+							w->result = l_colvar;
+							c->args = makeList1(w);
+							c->defresult = r_colvar;
+							colvar = transformExpr(pstate, (Node *) c,
+												   EXPR_COLUMN_FIRST);
+							break;
+						}
 				}
 				res_colvars = lappend(res_colvars, colvar);
 			}
@@ -730,6 +736,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		 */
 		if (j->alias)
 		{
+
 			/*
 			 * If a column alias list is specified, substitute the alias
 			 * names into my output-column list
@@ -751,7 +758,8 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 	else
 		elog(ERROR, "transformFromClauseItem: unexpected node (internal error)"
 			 "\n\t%s", nodeToString(n));
-	return NULL;				/* can't get here, just keep compiler quiet */
+	return NULL;				/* can't get here, just keep compiler
+								 * quiet */
 }
 
 
@@ -848,8 +856,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 			 * is a matching column.  If so, fall through to let
 			 * transformExpr() do the rest.  NOTE: if name could refer
 			 * ambiguously to more than one column name exposed by FROM,
-			 * colnameToVar will elog(ERROR).  That's just what
-			 * we want here.
+			 * colnameToVar will elog(ERROR).  That's just what we want
+			 * here.
 			 */
 			if (colnameToVar(pstate, name) != NULL)
 				name = NULL;

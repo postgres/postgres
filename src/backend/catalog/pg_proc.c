@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.53 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.54 2001/03/22 03:59:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ ProcedureCreate(char *procedureName,
 			text	   *prosrctext;
 
 			prosrctext = DatumGetTextP(DirectFunctionCall1(textin,
-													CStringGetDatum(prosrc)));
+											   CStringGetDatum(prosrc)));
 			retval = GetSysCacheOid(PROSRC,
 									PointerGetDatum(prosrctext),
 									0, 0, 0);
@@ -237,18 +237,18 @@ ProcedureCreate(char *procedureName,
 			prosrc = procedureName;
 		if (fmgr_internal_function(prosrc) == InvalidOid)
 			elog(ERROR,
-				 "ProcedureCreate: there is no builtin function named \"%s\"",
+			"ProcedureCreate: there is no builtin function named \"%s\"",
 				 prosrc);
 	}
 
 	/*
 	 * If this is a dynamically loadable procedure, make sure that the
 	 * library file exists, is loadable, and contains the specified link
-	 * symbol.  Also check for a valid function information record.
+	 * symbol.	Also check for a valid function information record.
 	 *
 	 * We used to perform these checks only when the function was first
-	 * called, but it seems friendlier to verify the library's validity
-	 * at CREATE FUNCTION time.
+	 * called, but it seems friendlier to verify the library's validity at
+	 * CREATE FUNCTION time.
 	 */
 
 	if (languageObjectId == ClanguageId)
@@ -355,7 +355,8 @@ checkretval(Oid rettype, List *queryTreeList)
 	tlist = parse->targetList;
 
 	/*
-	 * The last query must be a SELECT if and only if there is a return type.
+	 * The last query must be a SELECT if and only if there is a return
+	 * type.
 	 */
 	if (rettype == InvalidOid)
 	{
@@ -375,8 +376,8 @@ checkretval(Oid rettype, List *queryTreeList)
 	tlistlen = ExecCleanTargetListLength(tlist);
 
 	/*
-	 * For base-type returns, the target list should have exactly one entry,
-	 * and its type should agree with what the user declared.
+	 * For base-type returns, the target list should have exactly one
+	 * entry, and its type should agree with what the user declared.
 	 */
 	typerelid = typeidTypeRelid(rettype);
 	if (typerelid == InvalidOid)
@@ -388,7 +389,7 @@ checkretval(Oid rettype, List *queryTreeList)
 		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
 		if (resnode->restype != rettype)
 			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s",
-				 typeidTypeName(rettype), typeidTypeName(resnode->restype));
+			  typeidTypeName(rettype), typeidTypeName(resnode->restype));
 
 		return;
 	}
@@ -397,8 +398,8 @@ checkretval(Oid rettype, List *queryTreeList)
 	 * If the target list is of length 1, and the type of the varnode in
 	 * the target list is the same as the declared return type, this is
 	 * okay.  This can happen, for example, where the body of the function
-	 * is 'SELECT (x = func2())', where func2 has the same return type
-	 * as the function that's calling it.
+	 * is 'SELECT (x = func2())', where func2 has the same return type as
+	 * the function that's calling it.
 	 */
 	if (tlistlen == 1)
 	{
@@ -408,10 +409,10 @@ checkretval(Oid rettype, List *queryTreeList)
 	}
 
 	/*
-	 * By here, the procedure returns a tuple or set of tuples.  This part of
-	 * the typechecking is a hack. We look up the relation that is the
-	 * declared return type, and be sure that attributes 1 .. n in the target
-	 * list match the declared types.
+	 * By here, the procedure returns a tuple or set of tuples.  This part
+	 * of the typechecking is a hack. We look up the relation that is the
+	 * declared return type, and be sure that attributes 1 .. n in the
+	 * target list match the declared types.
 	 */
 	reln = heap_open(typerelid, AccessShareLock);
 	relid = reln->rd_id;
@@ -436,7 +437,7 @@ checkretval(Oid rettype, List *queryTreeList)
 				 typeidTypeName(rettype),
 				 typeidTypeName(tletype),
 				 typeidTypeName(reln->rd_att->attrs[i]->atttypid),
-				 i+1);
+				 i + 1);
 		i++;
 	}
 

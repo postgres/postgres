@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.64 2001/01/27 01:41:19 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.65 2001/03/22 03:59:22 momjian Exp $
  *
  */
 
@@ -271,7 +271,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 								 stringStringInfo(rte->relname));
 				if (strcmp(rte->eref->relname, rte->relname) != 0)
 					appendStringInfo(str, " %s",
-									 stringStringInfo(rte->eref->relname));
+								   stringStringInfo(rte->eref->relname));
 			}
 			break;
 		case T_SubqueryScan:

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.16 2001/01/24 19:43:21 momjian Exp $
+ * $Id: pg_database.h,v 1.17 2001/03/22 04:00:38 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -36,7 +36,8 @@ CATALOG(pg_database) BOOTSTRAP
 	NameData	datname;
 	int4		datdba;
 	int4		encoding;
-	bool		datistemplate;	/* allowed as template for CREATE DATABASE? */
+	bool		datistemplate;	/* allowed as template for CREATE
+								 * DATABASE? */
 	bool		datallowconn;	/* new connections allowed? */
 	Oid			datlastsysoid;
 	text		datpath;		/* VARIABLE LENGTH FIELD */
@@ -57,9 +58,9 @@ typedef FormData_pg_database *Form_pg_database;
 #define Anum_pg_database_datname		1
 #define Anum_pg_database_datdba			2
 #define Anum_pg_database_encoding		3
-#define Anum_pg_database_datistemplate  4
+#define Anum_pg_database_datistemplate	4
 #define Anum_pg_database_datallowconn	5
-#define Anum_pg_database_datlastsysoid  6
+#define Anum_pg_database_datlastsysoid	6
 #define Anum_pg_database_datpath		7
 
 DATA(insert OID = 1 (  template1 PGUID ENCODING t t 0 "" ));
@@ -70,7 +71,7 @@ DESCR("Default template database");
 /* Just to mark OID as used for unused_oid script -:) */
 #define DATAMARKOID(x)
 
-DATAMARKOID( = 2)
+DATAMARKOID(= 2)
 #define RecoveryDb	2
 
 #undef DATAMARKOID

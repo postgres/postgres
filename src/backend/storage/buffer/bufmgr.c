@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.108 2001/03/21 10:13:29 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.109 2001/03/22 03:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,7 +401,7 @@ BufferAlloc(Relation reln,
 			bool		smok;
 
 			/*
-			 *	skip write error buffers 
+			 * skip write error buffers
 			 */
 			if ((buf->flags & BM_IO_ERROR) != 0)
 			{
@@ -409,6 +409,7 @@ BufferAlloc(Relation reln,
 				buf = (BufferDesc *) NULL;
 				continue;
 			}
+
 			/*
 			 * Set BM_IO_IN_PROGRESS to keep anyone from doing anything
 			 * with the contents of the buffer while we write it out. We
@@ -453,6 +454,7 @@ BufferAlloc(Relation reln,
 			}
 			else
 			{
+
 				/*
 				 * BM_JUST_DIRTIED cleared by BufferReplace and shouldn't
 				 * be setted by anyone.		- vadim 01/17/97
@@ -689,9 +691,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 			bufHdr = &BufferDescriptors[buffer - 1];
 			Assert(PrivateRefCount[buffer - 1] > 0);
 			if (PrivateRefCount[buffer - 1] > 1)
-			{
 				PrivateRefCount[buffer - 1]--;
-			}
 			else
 			{
 				SpinAcquire(BufMgrLock);
@@ -724,7 +724,7 @@ BufferSync()
 	BufferDesc *bufHdr;
 	Buffer		buffer;
 	int			status;
-	RelFileNode	rnode;
+	RelFileNode rnode;
 	XLogRecPtr	recptr;
 	Relation	reln = NULL;
 
@@ -754,8 +754,8 @@ BufferSync()
 		}
 
 		/*
-		 * IO synchronization. Note that we do it with unpinned buffer
-		 * to avoid conflicts with FlushRelationBuffers.
+		 * IO synchronization. Note that we do it with unpinned buffer to
+		 * avoid conflicts with FlushRelationBuffers.
 		 */
 		if (bufHdr->flags & BM_IO_IN_PROGRESS)
 		{
@@ -769,12 +769,12 @@ BufferSync()
 		}
 
 		/*
-		 * Here: no one doing IO for this buffer and it's dirty.
-		 * Pin buffer now and set IO state for it *before* acquiring
-		 * shlock to avoid conflicts with FlushRelationBuffers.
+		 * Here: no one doing IO for this buffer and it's dirty. Pin
+		 * buffer now and set IO state for it *before* acquiring shlock to
+		 * avoid conflicts with FlushRelationBuffers.
 		 */
 		PinBuffer(bufHdr);
-		StartBufferIO(bufHdr, false);		/* output IO start */
+		StartBufferIO(bufHdr, false);	/* output IO start */
 
 		buffer = BufferDescriptorGetBuffer(bufHdr);
 		rnode = bufHdr->tag.rnode;
@@ -810,16 +810,16 @@ BufferSync()
 		if (reln == (Relation) NULL)
 		{
 			status = smgrblindwrt(DEFAULT_SMGR,
-								bufHdr->tag.rnode,
-								bufHdr->tag.blockNum,
-								(char *) MAKE_PTR(bufHdr->data),
-								true);	/* must fsync */
+								  bufHdr->tag.rnode,
+								  bufHdr->tag.blockNum,
+								  (char *) MAKE_PTR(bufHdr->data),
+								  true);		/* must fsync */
 		}
 		else
 		{
 			status = smgrwrite(DEFAULT_SMGR, reln,
-							bufHdr->tag.blockNum,
-							(char *) MAKE_PTR(bufHdr->data));
+							   bufHdr->tag.blockNum,
+							   (char *) MAKE_PTR(bufHdr->data));
 		}
 
 		if (status == SM_FAIL)	/* disk failure ?! */
@@ -827,9 +827,9 @@ BufferSync()
 				 bufHdr->tag.blockNum, bufHdr->blind.relname);
 
 		/*
-		 * Note that it's safe to change cntxDirty here because of
-		 * we protect it from upper writers by share lock and from
-		 * other bufmgr routines by BM_IO_IN_PROGRESS
+		 * Note that it's safe to change cntxDirty here because of we
+		 * protect it from upper writers by share lock and from other
+		 * bufmgr routines by BM_IO_IN_PROGRESS
 		 */
 		bufHdr->cntxDirty = false;
 
@@ -842,12 +842,11 @@ BufferSync()
 		SpinAcquire(BufMgrLock);
 
 		bufHdr->flags &= ~BM_IO_IN_PROGRESS;	/* mark IO finished */
-		TerminateBufferIO(bufHdr);				/* Sync IO finished */
+		TerminateBufferIO(bufHdr);		/* Sync IO finished */
 
 		/*
-		 * If this buffer was marked by someone as DIRTY while
-		 * we were flushing it out we must not clear DIRTY
-		 * flag - vadim 01/17/97
+		 * If this buffer was marked by someone as DIRTY while we were
+		 * flushing it out we must not clear DIRTY flag - vadim 01/17/97
 		 */
 		if (!(bufHdr->flags & BM_JUST_DIRTIED))
 			bufHdr->flags &= ~BM_DIRTY;
@@ -1020,6 +1019,7 @@ void
 BufmgrCommit(void)
 {
 	LocalBufferSync();
+
 	/*
 	 * All files created in current transaction will be fsync-ed
 	 */
@@ -1065,8 +1065,8 @@ BufferReplace(BufferDesc *bufHdr)
 	SpinRelease(BufMgrLock);
 
 	/*
-	 * No need to lock buffer context - no one should be able to
-	 * end ReadBuffer
+	 * No need to lock buffer context - no one should be able to end
+	 * ReadBuffer
 	 */
 	recptr = BufferGetLSN(bufHdr);
 	XLogFlush(recptr);
@@ -1113,8 +1113,8 @@ BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
 {
 	return ((relation->rd_myxactonly) ? relation->rd_nblocks :
-		((relation->rd_rel->relkind == RELKIND_VIEW) ? 0 :
-			smgrnblocks(DEFAULT_SMGR, relation)));
+			((relation->rd_rel->relkind == RELKIND_VIEW) ? 0 :
+			 smgrnblocks(DEFAULT_SMGR, relation)));
 }
 
 /* ---------------------------------------------------------------------
@@ -1122,7 +1122,7 @@ RelationGetNumberOfBlocks(Relation relation)
  *
  *		This function removes all the buffered pages for a relation
  *		from the buffer pool.  Dirty pages are simply dropped, without
- *		bothering to write them out first.  This is NOT rollback-able,
+ *		bothering to write them out first.	This is NOT rollback-able,
  *		and so should be used only with extreme caution!
  *
  *		We assume that the caller holds an exclusive lock on the relation,
@@ -1196,6 +1196,7 @@ recheck:
 					   bufHdr->refcount == 1);
 				ReleaseBufferWithBufferLock(i);
 			}
+
 			/*
 			 * And mark the buffer as no longer occupied by this rel.
 			 */
@@ -1212,7 +1213,7 @@ recheck:
  *		This is the same as DropRelationBuffers, except that the target
  *		relation is specified by RelFileNode.
  *
- *		This is NOT rollback-able.  One legitimate use is to clear the
+ *		This is NOT rollback-able.	One legitimate use is to clear the
  *		buffer cache of buffers for a relation that is being deleted
  *		during transaction abort.
  * --------------------------------------------------------------------
@@ -1278,6 +1279,7 @@ recheck:
 					   bufHdr->refcount == 1);
 				ReleaseBufferWithBufferLock(i);
 			}
+
 			/*
 			 * And mark the buffer as no longer occupied by this rel.
 			 */
@@ -1293,7 +1295,7 @@ recheck:
  *
  *		This function removes all the buffers in the buffer cache for a
  *		particular database.  Dirty pages are simply dropped, without
- *		bothering to write them out first.  This is used when we destroy a
+ *		bothering to write them out first.	This is used when we destroy a
  *		database, to avoid trying to flush data to disk when the directory
  *		tree no longer exists.	Implementation is pretty similar to
  *		DropRelationBuffers() which is for destroying just one relation.
@@ -1310,10 +1312,11 @@ DropBuffers(Oid dbid)
 	{
 		bufHdr = &BufferDescriptors[i - 1];
 recheck:
+
 		/*
-		 * We know that currently database OID is tblNode but
-		 * this probably will be changed in future and this
-		 * func will be used to drop tablespace buffers.
+		 * We know that currently database OID is tblNode but this
+		 * probably will be changed in future and this func will be used
+		 * to drop tablespace buffers.
 		 */
 		if (bufHdr->tag.rnode.tblNode == dbid)
 		{
@@ -1342,6 +1345,7 @@ recheck:
 			 * backends are running in that database.
 			 */
 			Assert(bufHdr->flags & BM_FREE);
+
 			/*
 			 * And mark the buffer as no longer occupied by this page.
 			 */
@@ -1383,8 +1387,8 @@ blockNum=%d, flags=0x%x, refcount=%d %ld)",
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
 			printf("[%-2d] (%s, %d) flags=0x%x, refcnt=%d %ld)\n",
-					i, buf->blind.relname, buf->tag.blockNum,
-					buf->flags, buf->refcount, PrivateRefCount[i]);
+				   i, buf->blind.relname, buf->tag.blockNum,
+				   buf->flags, buf->refcount, PrivateRefCount[i]);
 		}
 	}
 }
@@ -1441,7 +1445,7 @@ BufferPoolBlowaway()
  *
  *		This function writes all dirty pages of a relation out to disk.
  *		Furthermore, pages that have blocknumber >= firstDelBlock are
- *		actually removed from the buffer pool.  An error code is returned
+ *		actually removed from the buffer pool.	An error code is returned
  *		if we fail to dump a dirty buffer or if we find one of
  *		the target pages is pinned into the cache.
  *
@@ -1495,15 +1499,15 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 			{
 				if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
 				{
-					status = smgrwrite(DEFAULT_SMGR, rel, 
-								bufHdr->tag.blockNum,
-								(char *) MAKE_PTR(bufHdr->data));
+					status = smgrwrite(DEFAULT_SMGR, rel,
+									   bufHdr->tag.blockNum,
+									   (char *) MAKE_PTR(bufHdr->data));
 					if (status == SM_FAIL)
 					{
 						elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is dirty, could not flush it",
 							 RelationGetRelationName(rel), firstDelBlock,
 							 bufHdr->tag.blockNum);
-						return(-1);
+						return (-1);
 					}
 					bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 					bufHdr->cntxDirty = false;
@@ -1513,12 +1517,10 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 					elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is referenced (%ld)",
 						 RelationGetRelationName(rel), firstDelBlock,
 						 bufHdr->tag.blockNum, LocalRefCount[i]);
-					return(-2);
+					return (-2);
 				}
 				if (bufHdr->tag.blockNum >= firstDelBlock)
-				{
 					bufHdr->tag.rnode.relNode = InvalidOid;
-				}
 			}
 		}
 		return 0;
@@ -1559,10 +1561,10 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 					SpinRelease(BufMgrLock);
 
 					status = smgrwrite(DEFAULT_SMGR, rel,
-									bufHdr->tag.blockNum,
-									(char *) MAKE_PTR(bufHdr->data));
+									   bufHdr->tag.blockNum,
+									   (char *) MAKE_PTR(bufHdr->data));
 
-					if (status == SM_FAIL)	/* disk failure ?! */
+					if (status == SM_FAIL)		/* disk failure ?! */
 						elog(STOP, "FlushRelationBuffers: cannot write %u for %s",
 							 bufHdr->tag.blockNum, bufHdr->blind.relname);
 
@@ -1573,9 +1575,10 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 					TerminateBufferIO(bufHdr);
 					Assert(!(bufHdr->flags & BM_JUST_DIRTIED));
 					bufHdr->flags &= ~BM_DIRTY;
+
 					/*
-					 * Note that it's safe to change cntxDirty here because
-					 * of we protect it from upper writers by
+					 * Note that it's safe to change cntxDirty here
+					 * because of we protect it from upper writers by
 					 * AccessExclusiveLock and from other bufmgr routines
 					 * by BM_IO_IN_PROGRESS
 					 */
@@ -1593,9 +1596,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 				return -2;
 			}
 			if (bufHdr->tag.blockNum >= firstDelBlock)
-			{
 				BufTableDelete(bufHdr);
-			}
 		}
 	}
 	SpinRelease(BufMgrLock);
@@ -1628,9 +1629,7 @@ ReleaseBuffer(Buffer buffer)
 
 	Assert(PrivateRefCount[buffer - 1] > 0);
 	if (PrivateRefCount[buffer - 1] > 1)
-	{
 		PrivateRefCount[buffer - 1]--;
-	}
 	else
 	{
 		SpinAcquire(BufMgrLock);
@@ -1671,9 +1670,7 @@ ReleaseBufferWithBufferLock(Buffer buffer)
 
 	Assert(PrivateRefCount[buffer - 1] > 0);
 	if (PrivateRefCount[buffer - 1] > 1)
-	{
 		PrivateRefCount[buffer - 1]--;
-	}
 	else
 	{
 		PrivateRefCount[buffer - 1] = 0;
@@ -2084,8 +2081,8 @@ LockBuffer(Buffer buffer, int mode)
 		*buflock |= BL_W_LOCK;
 
 		/*
-		 * This is not the best place to set cntxDirty flag (eg indices
-		 * do not always change buffer they lock in excl mode). But please
+		 * This is not the best place to set cntxDirty flag (eg indices do
+		 * not always change buffer they lock in excl mode). But please
 		 * remember that it's critical to set cntxDirty *before* logging
 		 * changes with XLogInsert() - see comments in BufferSync().
 		 */
@@ -2200,6 +2197,7 @@ InitBufferIO(void)
 {
 	InProgressBuf = (BufferDesc *) 0;
 }
+
 #endif
 
 /*
@@ -2245,7 +2243,7 @@ AbortBufferIO(void)
  * NOTE: buffer must be excl locked.
  */
 void
-MarkBufferForCleanup(Buffer buffer, void (*CleanupFunc)(Buffer))
+MarkBufferForCleanup(Buffer buffer, void (*CleanupFunc) (Buffer))
 {
 	BufferDesc *bufHdr = &BufferDescriptors[buffer - 1];
 
@@ -2301,5 +2299,5 @@ BufferGetFileNode(Buffer buffer)
 	else
 		bufHdr = &BufferDescriptors[buffer - 1];
 
-	return(bufHdr->tag.rnode);
+	return (bufHdr->tag.rnode);
 }

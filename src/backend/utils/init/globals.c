@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.54 2001/03/13 01:17:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.55 2001/03/22 03:59:59 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -79,7 +79,7 @@ char		DateFormat[20] = "%d-%m-%Y";		/* mjl: sizes! or better
 												 * malloc? XXX */
 char		FloatFormat[20] = "%f";
 
-bool        enableFsync = true;
+bool		enableFsync = true;
 bool		allowSystemTableMods = false;
 int			SortMem = 512;
 int			NBuffers = DEF_NBUFFERS;

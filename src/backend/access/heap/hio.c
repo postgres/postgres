@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.35 2001/01/24 19:42:48 momjian Exp $
+ *	  $Id: hio.c,v 1.36 2001/03/22 03:59:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "access/hio.h"
 
 /*
- * RelationPutHeapTuple	- place tuple at specified page
+ * RelationPutHeapTuple - place tuple at specified page
  *
  * !!! ELOG(ERROR) IS DISALLOWED HERE !!!
  *
@@ -69,7 +69,7 @@ RelationPutHeapTuple(Relation relation,
  *
  * Returns (locked) buffer with free space >= given len.
  *
- * Note that we use LockPage to lock relation for extension. We can 
+ * Note that we use LockPage to lock relation for extension. We can
  * do this as long as in all other places we use page-level locking
  * for indices only. Alternatively, we could define pseudo-table as
  * we do for transactions with XactLockTable.
@@ -92,7 +92,7 @@ RelationGetBufferForTuple(Relation relation, Size len)
 	 */
 	if (len > MaxTupleSize)
 		elog(ERROR, "Tuple is too big: size %lu, max size %ld",
-			 (unsigned long)len, MaxTupleSize);
+			 (unsigned long) len, MaxTupleSize);
 
 	if (!relation->rd_myxactonly)
 		LockPage(relation, 0, ExclusiveLock);
@@ -140,13 +140,13 @@ RelationGetBufferForTuple(Relation relation, Size len)
 		{
 			/* We should not get here given the test at the top */
 			elog(STOP, "Tuple is too big: size %lu",
-				(unsigned long)len);
+				 (unsigned long) len);
 		}
 	}
 
 	if (!relation->rd_myxactonly)
 		UnlockPage(relation, 0, ExclusiveLock);
 
-	return(buffer);
+	return (buffer);
 
 }

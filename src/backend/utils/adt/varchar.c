@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.74 2001/02/10 02:31:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.75 2001/03/22 03:59:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,10 @@ Datum
 bpcharin(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
+
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
 	BpChar	   *result;
@@ -82,9 +84,9 @@ bpcharin(PG_FUNCTION_ARGS)
 	else
 #ifdef MULTIBYTE
 	{
+
 		/*
-		 * truncate multi-byte string preserving multi-byte
-		 * boundary
+		 * truncate multi-byte string preserving multi-byte boundary
 		 */
 		len = pg_mbcliplen(s, atttypmod - VARHDRSZ, atttypmod - VARHDRSZ);
 	}
@@ -169,6 +171,7 @@ bpchar(PG_FUNCTION_ARGS)
 	r = VARDATA(result);
 
 #ifdef MULTIBYTE
+
 	/*
 	 * truncate multi-byte string in a way not to break multi-byte
 	 * boundary
@@ -214,18 +217,19 @@ _bpchar(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
 	int32		len = PG_GETARG_INT32(1);
-	FunctionCallInfoData	locfcinfo;
+	FunctionCallInfoData locfcinfo;
+
 	/*
-	 * Since bpchar() is a built-in function, we should only need to
-	 * look it up once per run.
+	 * Since bpchar() is a built-in function, we should only need to look
+	 * it up once per run.
 	 */
-	static FmgrInfo			bpchar_finfo;
+	static FmgrInfo bpchar_finfo;
 
 	if (bpchar_finfo.fn_oid == InvalidOid)
 		fmgr_info(F_BPCHAR, &bpchar_finfo);
 
 	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-    locfcinfo.flinfo = &bpchar_finfo;
+	locfcinfo.flinfo = &bpchar_finfo;
 	locfcinfo.nargs = 2;
 	/* We assume we are "strict" and need not worry about null inputs */
 	locfcinfo.arg[0] = PointerGetDatum(v);
@@ -280,7 +284,7 @@ bpchar_name(PG_FUNCTION_ARGS)
 
 	/* Truncate to max length for a Name */
 	if (len >= NAMEDATALEN)
-		len = NAMEDATALEN-1;
+		len = NAMEDATALEN - 1;
 
 	/* Remove trailing blanks */
 	while (len > 0)
@@ -335,17 +339,19 @@ Datum
 varcharin(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
+
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
-	VarChar	   *result;
+	VarChar    *result;
 	int			len;
 
 	len = strlen(s) + VARHDRSZ;
 	if (atttypmod >= (int32) VARHDRSZ && len > atttypmod)
 #ifdef MULTIBYTE
- 		len = pg_mbcliplen(s, len - VARHDRSZ, atttypmod - VARHDRSZ) + VARHDRSZ;
+		len = pg_mbcliplen(s, len - VARHDRSZ, atttypmod - VARHDRSZ) + VARHDRSZ;
 #else
 		len = atttypmod;		/* clip the string at max length */
 #endif
@@ -364,7 +370,7 @@ varcharin(PG_FUNCTION_ARGS)
 Datum
 varcharout(PG_FUNCTION_ARGS)
 {
-	VarChar	   *s = PG_GETARG_VARCHAR_P(0);
+	VarChar    *s = PG_GETARG_VARCHAR_P(0);
 	char	   *result;
 	int			len;
 
@@ -388,9 +394,9 @@ varcharout(PG_FUNCTION_ARGS)
 Datum
 varchar(PG_FUNCTION_ARGS)
 {
-	VarChar	   *s = PG_GETARG_VARCHAR_P(0);
+	VarChar    *s = PG_GETARG_VARCHAR_P(0);
 	int32		slen = PG_GETARG_INT32(1);
-	VarChar	   *result;
+	VarChar    *result;
 	int			len;
 
 	len = VARSIZE(s);
@@ -402,8 +408,7 @@ varchar(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 
 	/*
-	 * truncate multi-byte string preserving multi-byte
-	 * boundary
+	 * truncate multi-byte string preserving multi-byte boundary
 	 */
 	len = pg_mbcliplen(VARDATA(s), slen - VARHDRSZ, slen - VARHDRSZ);
 	slen = len + VARHDRSZ;
@@ -427,18 +432,19 @@ _varchar(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
 	int32		len = PG_GETARG_INT32(1);
-	FunctionCallInfoData	locfcinfo;
+	FunctionCallInfoData locfcinfo;
+
 	/*
-	 * Since varchar() is a built-in function, we should only need to
-	 * look it up once per run.
+	 * Since varchar() is a built-in function, we should only need to look
+	 * it up once per run.
 	 */
-	static FmgrInfo			varchar_finfo;
+	static FmgrInfo varchar_finfo;
 
 	if (varchar_finfo.fn_oid == InvalidOid)
 		fmgr_info(F_VARCHAR, &varchar_finfo);
 
 	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-    locfcinfo.flinfo = &varchar_finfo;
+	locfcinfo.flinfo = &varchar_finfo;
 	locfcinfo.nargs = 2;
 	/* We assume we are "strict" and need not worry about null inputs */
 	locfcinfo.arg[0] = PointerGetDatum(v);
@@ -468,6 +474,7 @@ Datum
 bpcharlen(PG_FUNCTION_ARGS)
 {
 	BpChar	   *arg = PG_GETARG_BPCHAR_P(0);
+
 #ifdef MULTIBYTE
 	unsigned char *s;
 	int			len,
@@ -656,7 +663,7 @@ bpcharcmp(PG_FUNCTION_ARGS)
 
 /*
  * bpchar needs a specialized hash function because we want to ignore
- * trailing blanks in comparisons.  (varchar can use plain hashvarlena.)
+ * trailing blanks in comparisons.	(varchar can use plain hashvarlena.)
  */
 Datum
 hashbpchar(PG_FUNCTION_ARGS)
@@ -685,7 +692,8 @@ hashbpchar(PG_FUNCTION_ARGS)
 Datum
 varcharlen(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg = PG_GETARG_VARCHAR_P(0);
+	VarChar    *arg = PG_GETARG_VARCHAR_P(0);
+
 #ifdef MULTIBYTE
 	unsigned char *s;
 	int			len,
@@ -711,7 +719,7 @@ varcharlen(PG_FUNCTION_ARGS)
 Datum
 varcharoctetlen(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg = PG_GETARG_VARCHAR_P(0);
+	VarChar    *arg = PG_GETARG_VARCHAR_P(0);
 
 	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
 }
@@ -728,8 +736,8 @@ varcharoctetlen(PG_FUNCTION_ARGS)
 Datum
 varchareq(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
 	int			len1,
 				len2;
 	bool		result;
@@ -751,8 +759,8 @@ varchareq(PG_FUNCTION_ARGS)
 Datum
 varcharne(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
 	int			len1,
 				len2;
 	bool		result;
@@ -774,8 +782,8 @@ varcharne(PG_FUNCTION_ARGS)
 Datum
 varcharlt(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -794,8 +802,8 @@ varcharlt(PG_FUNCTION_ARGS)
 Datum
 varcharle(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -814,8 +822,8 @@ varcharle(PG_FUNCTION_ARGS)
 Datum
 varchargt(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -834,8 +842,8 @@ varchargt(PG_FUNCTION_ARGS)
 Datum
 varcharge(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -854,8 +862,8 @@ varcharge(PG_FUNCTION_ARGS)
 Datum
 varcharcmp(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
 	int			len1,
 				len2;
 	int			cmp;

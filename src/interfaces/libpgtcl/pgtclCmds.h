@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.20 2001/01/24 19:43:29 momjian Exp $
+ * $Id: pgtclCmds.h,v 1.21 2001/03/22 04:01:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,9 @@
  * From Tcl verion 8.0 on we can make large object access binary.
  */
 #ifdef TCL_MAJOR_VERSION
-#  if (TCL_MAJOR_VERSION >= 8)
-#    define PGTCL_USE_TCLOBJ
-#  endif
+#if (TCL_MAJOR_VERSION >= 8)
+#define PGTCL_USE_TCLOBJ
+#endif
 #endif
 
 /*
@@ -85,7 +85,7 @@ extern int Pg_disconnect(
 extern int Pg_exec(
 		ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
 extern int Pg_execute(
-		ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
+		   ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
 extern int Pg_select(
 		  ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
 extern int Pg_result(
@@ -94,18 +94,21 @@ extern int Pg_lo_open(
 		   ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
 extern int Pg_lo_close(
 			ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
+
 #ifdef PGTCL_USE_TCLOBJ
 extern int Pg_lo_read(
-		   ClientData cData, Tcl_Interp *interp, int objc, 
+		   ClientData cData, Tcl_Interp *interp, int objc,
 		   Tcl_Obj *CONST objv[]);
 extern int Pg_lo_write(
-			ClientData cData, Tcl_Interp *interp, int objc, 
+			ClientData cData, Tcl_Interp *interp, int objc,
 			Tcl_Obj *CONST objv[]);
+
 #else
 extern int Pg_lo_read(
 		   ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
 extern int Pg_lo_write(
 			ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
+
 #endif
 extern int Pg_lo_lseek(
 			ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.35 2001/03/19 22:27:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.36 2001/03/22 03:59:53 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -121,6 +121,7 @@ RE_compile_and_execute(text *text_re, char *text, int cflags)
 	regcomp_result = pg95_regcomp(&rev[oldest].cre_re, re, cflags);
 	if (regcomp_result == 0)
 	{
+
 		/*
 		 * use malloc/free for the cre_s field because the storage has to
 		 * persist across transactions
@@ -197,10 +198,10 @@ nameregexne(PG_FUNCTION_ARGS)
 	Name		n = PG_GETARG_NAME(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_BOOL(! fixedlen_regexeq(NameStr(*n),
-									  p,
-									  strlen(NameStr(*n)),
-									  REG_EXTENDED));
+	PG_RETURN_BOOL(!fixedlen_regexeq(NameStr(*n),
+									 p,
+									 strlen(NameStr(*n)),
+									 REG_EXTENDED));
 }
 
 Datum
@@ -221,15 +222,15 @@ textregexne(PG_FUNCTION_ARGS)
 	text	   *s = PG_GETARG_TEXT_P(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_BOOL(! fixedlen_regexeq(VARDATA(s),
-									  p,
-									  VARSIZE(s) - VARHDRSZ,
-									  REG_EXTENDED));
+	PG_RETURN_BOOL(!fixedlen_regexeq(VARDATA(s),
+									 p,
+									 VARSIZE(s) - VARHDRSZ,
+									 REG_EXTENDED));
 }
 
 
 /*
- *  routines that use the regexp stuff, but ignore the case.
+ *	routines that use the regexp stuff, but ignore the case.
  *	for this, we use the REG_ICASE flag to pg95_regcomp
  */
 
@@ -252,10 +253,10 @@ texticregexne(PG_FUNCTION_ARGS)
 	text	   *s = PG_GETARG_TEXT_P(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_BOOL(! fixedlen_regexeq(VARDATA(s),
-									  p,
-									  VARSIZE(s) - VARHDRSZ,
-									  REG_ICASE | REG_EXTENDED));
+	PG_RETURN_BOOL(!fixedlen_regexeq(VARDATA(s),
+									 p,
+									 VARSIZE(s) - VARHDRSZ,
+									 REG_ICASE | REG_EXTENDED));
 }
 
 Datum
@@ -276,8 +277,8 @@ nameicregexne(PG_FUNCTION_ARGS)
 	Name		n = PG_GETARG_NAME(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_BOOL(! fixedlen_regexeq(NameStr(*n),
-									  p,
-									  strlen(NameStr(*n)),
-									  REG_ICASE | REG_EXTENDED));
+	PG_RETURN_BOOL(!fixedlen_regexeq(NameStr(*n),
+									 p,
+									 strlen(NameStr(*n)),
+									 REG_ICASE | REG_EXTENDED));
 }

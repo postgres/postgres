@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_crc.h,v 1.1 2001/03/13 01:17:06 tgl Exp $
+ * $Id: pg_crc.h,v 1.2 2001/03/22 04:01:14 momjian Exp $
  */
 #ifndef PG_CRC_H
 #define PG_CRC_H
@@ -34,7 +34,7 @@
 /*
  * crc0 represents the LSBs of the 64-bit value, crc1 the MSBs.  Note that
  * with crc0 placed first, the output of 32-bit and 64-bit implementations
- * will be bit-compatible only on little-endian architectures.  If it were
+ * will be bit-compatible only on little-endian architectures.	If it were
  * important to make the two possible implementations bit-compatible on
  * all machines, we could do a configure test to decide how to order the
  * two fields, but it seems not worth the trouble.
@@ -46,7 +46,7 @@ typedef struct crc64
 } crc64;
 
 /* Initialize a CRC accumulator */
-#define INIT_CRC64(crc)	((crc).crc0 = 0xffffffff, (crc).crc1 = 0xffffffff)
+#define INIT_CRC64(crc) ((crc).crc0 = 0xffffffff, (crc).crc1 = 0xffffffff)
 
 /* Finish a CRC calculation */
 #define FIN_CRC64(crc)	((crc).crc0 ^= 0xffffffff, (crc).crc1 ^= 0xffffffff)
@@ -76,7 +76,7 @@ do { \
 extern const uint32 crc_table0[];
 extern const uint32 crc_table1[];
 
-#else /* int64 works */
+#else							/* int64 works */
 
 typedef struct crc64
 {
@@ -84,7 +84,7 @@ typedef struct crc64
 } crc64;
 
 /* Initialize a CRC accumulator */
-#define INIT_CRC64(crc)	((crc).crc0 = (uint64) 0xffffffffffffffff)
+#define INIT_CRC64(crc) ((crc).crc0 = (uint64) 0xffffffffffffffff)
 
 /* Finish a CRC calculation */
 #define FIN_CRC64(crc)	((crc).crc0 ^= (uint64) 0xffffffffffffffff)
@@ -110,6 +110,6 @@ do { \
 /* Constant table for CRC calculation */
 extern const uint64 crc_table[];
 
-#endif /* INT64_IS_BUSTED */
+#endif	 /* INT64_IS_BUSTED */
 
 #endif	 /* PG_CRC_H */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.63 2001/01/24 19:42:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.64 2001/03/22 03:59:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,20 +32,20 @@ static RetrieveIndexResult _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
  *
  * NOTE that the returned buffer is read-locked regardless of the access
  * parameter.  However, access = BT_WRITE will allow an empty root page
- * to be created and returned.  When access = BT_READ, an empty index
+ * to be created and returned.	When access = BT_READ, an empty index
  * will result in *bufP being set to InvalidBuffer.
  */
 BTStack
 _bt_search(Relation rel, int keysz, ScanKey scankey,
 		   Buffer *bufP, int access)
 {
-	BTStack stack_in = NULL;
+	BTStack		stack_in = NULL;
 
 	/* Get the root page to start with */
 	*bufP = _bt_getroot(rel, access);
 
 	/* If index is empty and access = BT_READ, no root page is created. */
-	if (! BufferIsValid(*bufP))
+	if (!BufferIsValid(*bufP))
 		return (BTStack) NULL;
 
 	/* Loop iterates once per level descended in the tree */
@@ -79,13 +79,13 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
 		par_blkno = BufferGetBlockNumber(*bufP);
 
 		/*
-		 * We need to save the bit image of the index entry we chose in the
-		 * parent page on a stack. In case we split the tree, we'll use this
-		 * bit image to figure out what our real parent page is, in case the
-		 * parent splits while we're working lower in the tree.  See the paper
-		 * by Lehman and Yao for how this is detected and handled. (We use the
-		 * child link to disambiguate duplicate keys in the index -- Lehman
-		 * and Yao disallow duplicate keys.)
+		 * We need to save the bit image of the index entry we chose in
+		 * the parent page on a stack. In case we split the tree, we'll
+		 * use this bit image to figure out what our real parent page is,
+		 * in case the parent splits while we're working lower in the
+		 * tree.  See the paper by Lehman and Yao for how this is detected
+		 * and handled. (We use the child link to disambiguate duplicate
+		 * keys in the index -- Lehman and Yao disallow duplicate keys.)
 		 */
 		new_stack = (BTStack) palloc(sizeof(BTStackData));
 		new_stack->bts_blkno = par_blkno;
@@ -98,9 +98,9 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
 		*bufP = _bt_getbuf(rel, blkno, BT_READ);
 
 		/*
-		 * Race -- the page we just grabbed may have split since we read its
-		 * pointer in the parent.  If it has, we may need to move right to its
-		 * new sibling.  Do that.
+		 * Race -- the page we just grabbed may have split since we read
+		 * its pointer in the parent.  If it has, we may need to move
+		 * right to its new sibling.  Do that.
 		 */
 		*bufP = _bt_moveright(rel, *bufP, keysz, scankey, BT_READ);
 
@@ -127,7 +127,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
  *
  *		On entry, we have the buffer pinned and a lock of the proper type.
  *		If we move right, we release the buffer and lock and acquire the
- *		same on the right sibling.  Return value is the buffer we stop at.
+ *		same on the right sibling.	Return value is the buffer we stop at.
  */
 Buffer
 _bt_moveright(Relation rel,
@@ -153,7 +153,7 @@ _bt_moveright(Relation rel,
 		   _bt_compare(rel, keysz, scankey, page, P_HIKEY) > 0)
 	{
 		/* step right one page */
-		BlockNumber		rblkno = opaque->btpo_next;
+		BlockNumber rblkno = opaque->btpo_next;
 
 		_bt_relbuf(rel, buf, access);
 		buf = _bt_getbuf(rel, rblkno, access);
@@ -184,7 +184,7 @@ _bt_moveright(Relation rel,
  * find all leaf keys >= given scankey.
  *
  * This procedure is not responsible for walking right, it just examines
- * the given page.  _bt_binsrch() has no lock or refcount side effects
+ * the given page.	_bt_binsrch() has no lock or refcount side effects
  * on the buffer.
  */
 OffsetNumber
@@ -299,7 +299,7 @@ _bt_compare(Relation rel,
 	 * Force result ">" if target item is first data item on an internal
 	 * page --- see NOTE above.
 	 */
-	if (! P_ISLEAF(opaque) && offnum == P_FIRSTDATAKEY(opaque))
+	if (!P_ISLEAF(opaque) && offnum == P_FIRSTDATAKEY(opaque))
 		return 1;
 
 	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
@@ -327,7 +327,7 @@ _bt_compare(Relation rel,
 		datum = index_getattr(itup, entry->sk_attno, itupdesc, &isNull);
 
 		/* see comments about NULLs handling in btbuild */
-		if (entry->sk_flags & SK_ISNULL)	/* key is NULL */
+		if (entry->sk_flags & SK_ISNULL)		/* key is NULL */
 		{
 			if (isNull)
 				result = 0;		/* NULL "=" NULL */
@@ -458,10 +458,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	_bt_orderkeys(rel, so);
 
 	/*
-	 * Quit now if _bt_orderkeys() discovered that the scan keys can
-	 * never be satisfied (eg, x == 1 AND x > 2).
+	 * Quit now if _bt_orderkeys() discovered that the scan keys can never
+	 * be satisfied (eg, x == 1 AND x > 2).
 	 */
-	if (! so->qual_ok)
+	if (!so->qual_ok)
 		return (RetrieveIndexResult) NULL;
 
 	/*
@@ -484,17 +484,16 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				break;
 			strat = _bt_getstrat(rel, attno,
 								 so->keyData[i].sk_procedure);
+
 			/*
 			 * Can we use this key as a starting boundary for this attr?
 			 *
-			 * We can use multiple keys if they look like, say, = >= =
-			 * but we have to stop after accepting a > or < boundary.
+			 * We can use multiple keys if they look like, say, = >= = but we
+			 * have to stop after accepting a > or < boundary.
 			 */
 			if (strat == strat_total ||
 				strat == BTEqualStrategyNumber)
-			{
 				nKeyIs[keysCount++] = i;
-			}
 			else if (ScanDirectionIsBackward(dir) &&
 					 (strat == BTLessStrategyNumber ||
 					  strat == BTLessEqualStrategyNumber))
@@ -536,7 +535,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	for (i = 0; i < keysCount; i++)
 	{
 		j = nKeyIs[i];
-		/* _bt_orderkeys disallows it, but it's place to add some code later */
+
+		/*
+		 * _bt_orderkeys disallows it, but it's place to add some code
+		 * later
+		 */
 		if (so->keyData[j].sk_flags & SK_ISNULL)
 		{
 			pfree(nKeyIs);
@@ -562,7 +565,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	/* don't need to keep the stack around... */
 	_bt_freestack(stack);
 
-	if (! BufferIsValid(buf))
+	if (!BufferIsValid(buf))
 	{
 		/* Only get here if index is completely empty */
 		ItemPointerSetInvalid(current);
@@ -601,6 +604,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	switch (strat_total)
 	{
 		case BTLessStrategyNumber:
+
 			/*
 			 * Back up one to arrive at last item < scankey
 			 */
@@ -612,6 +616,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			break;
 
 		case BTLessEqualStrategyNumber:
+
 			/*
 			 * We need to find the last item <= scankey, so step forward
 			 * till we find one > scankey, then step back one.
@@ -645,9 +650,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			break;
 
 		case BTEqualStrategyNumber:
+
 			/*
-			 * Make sure we are on the first equal item; might have to step
-			 * forward if currently at end of page.
+			 * Make sure we are on the first equal item; might have to
+			 * step forward if currently at end of page.
 			 */
 			if (offnum > PageGetMaxOffsetNumber(page))
 			{
@@ -661,7 +667,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			}
 			result = _bt_compare(rel, keysCount, scankeys, page, offnum);
 			if (result != 0)
-				goto nomatches;	/* no equal items! */
+				goto nomatches; /* no equal items! */
+
 			/*
 			 * If a backward scan was specified, need to start with last
 			 * equal item not first one.
@@ -685,6 +692,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			break;
 
 		case BTGreaterEqualStrategyNumber:
+
 			/*
 			 * We want the first item >= scankey, which is where we are...
 			 * unless we're not anywhere at all...
@@ -700,9 +708,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			break;
 
 		case BTGreaterStrategyNumber:
+
 			/*
-			 * We want the first item > scankey, so make sure we are on
-			 * an item and then step over any equal items.
+			 * We want the first item > scankey, so make sure we are on an
+			 * item and then step over any equal items.
 			 */
 			if (offnum > PageGetMaxOffsetNumber(page))
 			{
@@ -850,11 +859,12 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				*bufP = _bt_getbuf(rel, blkno, BT_READ);
 				page = BufferGetPage(*bufP);
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 				/*
 				 * If the adjacent page just split, then we have to walk
-				 * right to find the block that's now adjacent to where
-				 * we were.  Because pages only split right, we don't have
-				 * to worry about this failing to terminate.
+				 * right to find the block that's now adjacent to where we
+				 * were.  Because pages only split right, we don't have to
+				 * worry about this failing to terminate.
 				 */
 				while (opaque->btpo_next != obknum)
 				{
@@ -912,12 +922,12 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 
 	/*
 	 * Scan down to the leftmost or rightmost leaf page.  This is a
-	 * simplified version of _bt_search().  We don't maintain a stack
+	 * simplified version of _bt_search().	We don't maintain a stack
 	 * since we know we won't need it.
 	 */
 	buf = _bt_getroot(rel, BT_READ);
 
-	if (! BufferIsValid(buf))
+	if (!BufferIsValid(buf))
 	{
 		/* empty index... */
 		ItemPointerSetInvalid(current);
@@ -981,7 +991,8 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		Assert(P_RIGHTMOST(opaque));
 
 		start = PageGetMaxOffsetNumber(page);
-		if (start < P_FIRSTDATAKEY(opaque))	/* watch out for empty page */
+		if (start < P_FIRSTDATAKEY(opaque))		/* watch out for empty
+												 * page */
 			start = P_FIRSTDATAKEY(opaque);
 	}
 	else
@@ -995,8 +1006,8 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	so->btso_curbuf = buf;
 
 	/*
-	 * Left/rightmost page could be empty due to deletions,
-	 * if so step till we find a nonempty page.
+	 * Left/rightmost page could be empty due to deletions, if so step
+	 * till we find a nonempty page.
 	 */
 	if (start > maxoff)
 	{

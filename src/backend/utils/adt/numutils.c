@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.44 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.45 2001/03/22 03:59:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,11 +63,11 @@ pg_atoi(char *s, int size, int c)
 		l = (long) 0;
 	else
 		l = strtol(s, &badp, 10);
+
 	/*
-	 * strtol() normally only sets ERANGE.  On some systems it also
-	 * may set EINVAL, which simply means it couldn't parse the
-	 * input string.  This is handled by the second "if" consistent
-	 * across platforms.
+	 * strtol() normally only sets ERANGE.	On some systems it also may
+	 * set EINVAL, which simply means it couldn't parse the input string.
+	 * This is handled by the second "if" consistent across platforms.
 	 */
 	if (errno && errno != EINVAL)
 		elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);

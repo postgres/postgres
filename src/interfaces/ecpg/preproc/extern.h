@@ -19,8 +19,10 @@ extern char *connection;
 extern char *input_filename;
 extern char *yytext,
 			errortext[128];
+
 #ifdef YYDEBUG
-extern int yydebug;
+extern int	yydebug;
+
 #endif
 extern int	yylineno,
 			yyleng;

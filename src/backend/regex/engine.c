@@ -80,25 +80,25 @@ struct match
 	pg_wchar   *endp;			/* end of string -- virtual NUL here */
 	pg_wchar   *coldp;			/* can be no match starting before here */
 	pg_wchar  **lastpos;		/* [nplus+1] */
-	STATEVARS;
+				STATEVARS;
 	states		st;				/* current states */
 	states		fresh;			/* states for a fresh start */
 	states		tmp;			/* temporary */
 	states		empty;			/* empty set of states */
 };
 
-static int matcher(struct re_guts *g, pg_wchar *string, size_t nmatch,
-				   regmatch_t *pmatch, int eflags);
-static pg_wchar *dissect(struct match *m, pg_wchar *start, pg_wchar *stop,
-						 sopno startst, sopno stopst);
-static pg_wchar *backref(struct match *m, pg_wchar *start, pg_wchar *stop,
-						 sopno startst, sopno stopst, sopno lev);
-static pg_wchar *fast(struct match *m, pg_wchar *start, pg_wchar *stop,
-					  sopno startst, sopno stopst);
-static pg_wchar *slow(struct match *m, pg_wchar *start, pg_wchar *stop,
-					  sopno startst, sopno stopst);
-static states step(struct re_guts *g, sopno start,
-				   sopno stop, states bef, int ch, states aft);
+static int matcher(struct re_guts * g, pg_wchar * string, size_t nmatch,
+		regmatch_t *pmatch, int eflags);
+static pg_wchar *dissect(struct match * m, pg_wchar * start, pg_wchar * stop,
+		sopno startst, sopno stopst);
+static pg_wchar *backref(struct match * m, pg_wchar * start, pg_wchar * stop,
+		sopno startst, sopno stopst, sopno lev);
+static pg_wchar *fast(struct match * m, pg_wchar * start, pg_wchar * stop,
+	 sopno startst, sopno stopst);
+static pg_wchar *slow(struct match * m, pg_wchar * start, pg_wchar * stop,
+	 sopno startst, sopno stopst);
+static states step(struct re_guts * g, sopno start,
+	 sopno stop, states bef, int ch, states aft);
 
 #define BOL		(OUT+1)
 #define EOL		(BOL+1)
@@ -117,12 +117,13 @@ static states step(struct re_guts *g, sopno start,
 #endif
 
 #ifdef REDEBUG
-static void print(struct match *m, pg_wchar *caption, states st, int ch,
-				  FILE *d);
-static void at(struct match *m, pg_wchar *title, pg_wchar *start,
-			   pg_wchar *stop, sopno startst, sopno stopst);
+static void print(struct match * m, pg_wchar * caption, states st, int ch,
+	  FILE *d);
+static void at(struct match * m, pg_wchar * title, pg_wchar * start,
+   pg_wchar * stop, sopno startst, sopno stopst);
 static pg_wchar *pchar(int ch);
-static int pg_isprint(int c);
+static int	pg_isprint(int c);
+
 #endif
 
 #ifdef REDEBUG
@@ -139,7 +140,7 @@ static int pg_isprint(int c);
  * matcher - the actual matching engine
  */
 static int						/* 0 success, REG_NOMATCH failure */
-matcher(struct re_guts *g, pg_wchar *string, size_t nmatch,
+matcher(struct re_guts * g, pg_wchar * string, size_t nmatch,
 		regmatch_t *pmatch, int eflags)
 {
 	pg_wchar   *endp;
@@ -325,7 +326,7 @@ matcher(struct re_guts *g, pg_wchar *string, size_t nmatch,
  * dissect - figure out what matched what, no back references
  */
 static pg_wchar *				/* == stop (success) always */
-dissect(struct match *m, pg_wchar *start, pg_wchar *stop,
+dissect(struct match * m, pg_wchar * start, pg_wchar * stop,
 		sopno startst, sopno stopst)
 {
 	int			i;
@@ -521,7 +522,7 @@ dissect(struct match *m, pg_wchar *start, pg_wchar *stop,
  * lev is PLUS nesting level
  */
 static pg_wchar *				/* == stop (success) or NULL (failure) */
-backref(struct match *m, pg_wchar *start, pg_wchar *stop,
+backref(struct match * m, pg_wchar * start, pg_wchar * stop,
 		sopno startst, sopno stopst, sopno lev)
 {
 	int			i;
@@ -728,7 +729,7 @@ backref(struct match *m, pg_wchar *start, pg_wchar *stop,
  * fast - step through the string at top speed
  */
 static pg_wchar *				/* where tentative match ended, or NULL */
-fast(struct match *m, pg_wchar *start, pg_wchar *stop,
+fast(struct match * m, pg_wchar * start, pg_wchar * stop,
 	 sopno startst, sopno stopst)
 {
 	states		st = m->st;
@@ -817,7 +818,7 @@ fast(struct match *m, pg_wchar *start, pg_wchar *stop,
  * slow - step through the string more deliberately
  */
 static pg_wchar *				/* where it ended */
-slow(struct match *m, pg_wchar *start, pg_wchar *stop,
+slow(struct match * m, pg_wchar * start, pg_wchar * stop,
 	 sopno startst, sopno stopst)
 {
 	states		st = m->st;
@@ -901,7 +902,7 @@ slow(struct match *m, pg_wchar *start, pg_wchar *stop,
  * step - map set of states reachable before char to set reachable after
  */
 static states
-step(struct re_guts *g,
+step(struct re_guts * g,
 	 sopno start,				/* start state within strip */
 	 sopno stop,				/* state after stop state within strip */
 	 states bef,				/* states reachable before */
@@ -1023,7 +1024,7 @@ step(struct re_guts *g,
  * print - print a set of states
  */
 static void
-print(struct match *m, pg_wchar *caption, states st,
+print(struct match * m, pg_wchar * caption, states st,
 	  int ch, FILE *d)
 {
 	struct re_guts *g = m->g;
@@ -1049,7 +1050,7 @@ print(struct match *m, pg_wchar *caption, states st,
  * at - print current situation
  */
 static void
-at(struct match *m, pg_wchar *title, pg_wchar *start, pg_wchar *stop,
+at(struct match * m, pg_wchar * title, pg_wchar * start, pg_wchar * stop,
    sopno startst, sopno stopst)
 {
 	if (!(m->eflags & REG_TRACE))

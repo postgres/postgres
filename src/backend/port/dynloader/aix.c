@@ -609,4 +609,4 @@ findMain(void)
 	return ret;
 }
 
-#endif /* HAVE_DLOPEN */
+#endif	 /* HAVE_DLOPEN */

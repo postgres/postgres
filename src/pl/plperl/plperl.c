@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.18 2001/01/19 16:14:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.19 2001/03/22 04:01:40 momjian Exp $
  *
  **********************************************************************/
 
@@ -135,7 +135,7 @@ static Tcl_HashTable *plperl_query_hash = NULL;
 static void plperl_init_all(void);
 static void plperl_init_safe_interp(void);
 
-Datum plperl_call_handler(PG_FUNCTION_ARGS);
+Datum		plperl_call_handler(PG_FUNCTION_ARGS);
 
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 
@@ -223,14 +223,17 @@ plperl_init_safe_interp(void)
 {
 
 	char	   *embedding[3] = {
-		"", "-e", 
-		/* no commas between the next 4 please. They are supposed to be one string
+		"", "-e",
+
+		/*
+		 * no commas between the next 4 please. They are supposed to be
+		 * one string
 		 */
 		"require Safe; SPI::bootstrap();"
 		"sub ::mksafefunc { my $x = new Safe; $x->permit_only(':default');$x->permit(':base_math');"
 		"$x->share(qw[&elog &DEBUG &NOTICE &NOIND &ERROR]);"
 		" return $x->reval(qq[sub { $_[0] }]); }"
-		};
+	};
 
 	plperl_safe_interp = perl_alloc();
 	if (!plperl_safe_interp)
@@ -312,17 +315,17 @@ plperl_call_handler(PG_FUNCTION_ARGS)
  **********************************************************************/
 static
 SV *
-plperl_create_sub(char * s)
+plperl_create_sub(char *s)
 {
 	dSP;
 
 	SV		   *subref = NULL;
-	int count;
+	int			count;
 
 	ENTER;
 	SAVETMPS;
 	PUSHMARK(SP);
-	XPUSHs(sv_2mortal(newSVpv(s,0)));
+	XPUSHs(sv_2mortal(newSVpv(s, 0)));
 	PUTBACK;
 	count = perl_call_pv("mksafefunc", G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
@@ -336,9 +339,8 @@ plperl_create_sub(char * s)
 		elog(ERROR, "creation of function failed: %s", SvPV(ERRSV, PL_na));
 	}
 
-	if (count != 1) {
+	if (count != 1)
 		elog(ERROR, "creation of function failed - no return from mksafefunc");
-	}
 
 	/*
 	 * need to make a deep copy of the return. it comes off the stack as a
@@ -412,28 +414,27 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 			TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
 			SV		   *hashref;
 
-			Assert(slot != NULL && ! fcinfo->argnull[i]);
+			Assert(slot != NULL && !fcinfo->argnull[i]);
+
 			/*
 			 * plperl_build_tuple_argument better return a mortal SV.
 			 */
 			hashref = plperl_build_tuple_argument(slot->val,
-												  slot->ttc_tupleDescriptor);
+											  slot->ttc_tupleDescriptor);
 			XPUSHs(hashref);
 		}
 		else
 		{
 			if (fcinfo->argnull[i])
-			{
 				XPUSHs(&PL_sv_undef);
-			}
 			else
 			{
 				char	   *tmp;
 
 				tmp = DatumGetCString(FunctionCall3(&(desc->arg_out_func[i]),
-									  fcinfo->arg[i],
-									  ObjectIdGetDatum(desc->arg_out_elem[i]),
-									  Int32GetDatum(desc->arg_out_len[i])));
+													fcinfo->arg[i],
+								 ObjectIdGetDatum(desc->arg_out_elem[i]),
+								   Int32GetDatum(desc->arg_out_len[i])));
 				XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
 				pfree(tmp);
 			}
@@ -607,7 +608,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		 *
 		 ************************************************************/
 		proc_source = DatumGetCString(DirectFunctionCall1(textout,
-									PointerGetDatum(&procStruct->prosrc)));
+								  PointerGetDatum(&procStruct->prosrc)));
 
 		/************************************************************
 		 * Create the procedure in the interpreter
@@ -804,7 +805,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 						  "unset i v\n\n", -1);
 
 		proc_source = DatumGetCString(DirectFunctionCall1(textout,
-									PointerGetDatum(&procStruct->prosrc)));
+								  PointerGetDatum(&procStruct->prosrc)));
 		Tcl_DStringAppend(&proc_internal_body, proc_source, -1);
 		pfree(proc_source);
 		Tcl_DStringAppendElement(&proc_internal_def,
@@ -876,7 +877,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 
 	/* The oid of the trigger relation for argument TG_relid */
 	stroid = DatumGetCString(DirectFunctionCall1(oidout,
-							 ObjectIdGetDatum(trigdata->tg_relation->rd_id)));
+						ObjectIdGetDatum(trigdata->tg_relation->rd_id)));
 	Tcl_DStringAppendElement(&tcl_cmd, stroid);
 	pfree(stroid);
 
@@ -1104,7 +1105,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 			FunctionCall3(&finfo,
 						  CStringGetDatum(ret_values[i++]),
 						  ObjectIdGetDatum(typelem),
-						  Int32GetDatum(tupdesc->attrs[attnum-1]->atttypmod));
+				   Int32GetDatum(tupdesc->attrs[attnum - 1]->atttypmod));
 	}
 
 
@@ -2124,9 +2125,9 @@ plperl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 		if (!isnull && OidIsValid(typoutput))
 		{
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
-										attr,
-										ObjectIdGetDatum(typelem),
-										Int32GetDatum(tupdesc->attrs[i]->attlen)));
+														 attr,
+											   ObjectIdGetDatum(typelem),
+							  Int32GetDatum(tupdesc->attrs[i]->attlen)));
 			Tcl_SetVar2(interp, *arrptr, *nameptr, outputstr, 0);
 			pfree(outputstr);
 		}
@@ -2194,9 +2195,9 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 		if (!isnull && OidIsValid(typoutput))
 		{
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
-										attr,
-										ObjectIdGetDatum(typelem),
-										Int32GetDatum(tupdesc->attrs[i]->attlen)));
+														 attr,
+											   ObjectIdGetDatum(typelem),
+							  Int32GetDatum(tupdesc->attrs[i]->attlen)));
 			sv_catpvf(output, "'%s' => '%s',", attname, outputstr);
 			pfree(outputstr);
 		}

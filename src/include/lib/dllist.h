@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.15 2001/01/24 19:43:24 momjian Exp $
+ * $Id: dllist.h,v 1.16 2001/03/22 04:00:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ extern void DLFreeList(Dllist *list);	/* free up a list and all the
 extern Dlelem *DLNewElem(void *val);
 extern void DLInitElem(Dlelem *e, void *val);
 extern void DLFreeElem(Dlelem *e);
-extern void DLRemove(Dlelem *e);		/* removes node from list */
+extern void DLRemove(Dlelem *e);/* removes node from list */
 extern void DLAddHead(Dllist *list, Dlelem *node);
 extern void DLAddTail(Dllist *list, Dlelem *node);
 extern Dlelem *DLRemHead(Dllist *list); /* remove and return the head */
@@ -78,7 +78,7 @@ extern void DLMoveToFront(Dlelem *e);	/* move node to front of its list */
 #define DLGetTail(list)  ((list)->dll_tail)
 #define DLGetSucc(elem)  ((elem)->dle_next)
 #define DLGetPred(elem)  ((elem)->dle_prev)
-#define DLGetListHdr(elem)  ((elem)->dle_list)
+#define DLGetListHdr(elem)	((elem)->dle_list)
 
 #define DLE_VAL(elem)	((elem)->dle_val)
 

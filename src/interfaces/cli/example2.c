@@ -39,17 +39,17 @@
 #define  max(a,b) (a>b?a:b)
 
 int			print_err(SQLSMALLINT handletype, SQLINTEGER handle);
-int build_indicator_message(SQLCHAR * errmsg,
+int build_indicator_message(SQLCHAR *errmsg,
 						SQLPOINTER * data,
 						SQLINTEGER collen,
-						SQLINTEGER * outlen,
+						SQLINTEGER *outlen,
 						SQLSMALLINT colnum);
 
 SQLINTEGER display_length(SQLSMALLINT coltype,
 			   SQLINTEGER collen,
-			   SQLCHAR * colname);
+			   SQLCHAR *colname);
 
-example2(SQLCHAR * server, SQLCHAR * uid, SQLCHAR * authen, SQLCHAR * sqlstr)
+example2(SQLCHAR *server, SQLCHAR *uid, SQLCHAR *authen, SQLCHAR *sqlstr)
 {
 	int			i;
 	SQLHENV		henv;
@@ -214,13 +214,13 @@ example2(SQLCHAR * server, SQLCHAR * uid, SQLCHAR * authen, SQLCHAR * sqlstr)
 
 SQLINTEGER
 display_length(SQLSMALLINT coltype, SQLINTEGER collen,
-			   SQLCHAR * colname)
+			   SQLCHAR *colname)
 {
 	switch (coltype)
 	{
 
-		case SQL_VARCHAR:
-		case SQL_CHAR:
+			case SQL_VARCHAR:
+			case SQL_CHAR:
 			return (max(collen, strlen((char *) colname)));
 			break;
 
@@ -252,8 +252,8 @@ display_length(SQLSMALLINT coltype, SQLINTEGER collen,
 }
 
 int
-build_indicator_message(SQLCHAR * errmsg, SQLPOINTER * data,
-			  SQLINTEGER collen, SQLINTEGER * outlen, SQLSMALLINT colnum)
+build_indicator_message(SQLCHAR *errmsg, SQLPOINTER * data,
+			   SQLINTEGER collen, SQLINTEGER *outlen, SQLSMALLINT colnum)
 {
 	if (*outlen == SQL_NULL_DATA)
 	{

@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.116 2001/01/24 19:42:56 momjian Exp $
+ *	$Id: pqcomm.c,v 1.117 2001/03/22 03:59:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #ifdef HAVE_NETINET_TCP_H
-# include <netinet/tcp.h>
+#include <netinet/tcp.h>
 #endif
 #include <arpa/inet.h>
 #include <sys/file.h>
@@ -91,8 +91,8 @@ static void pq_close(void);
 /*
  * Configuration options
  */
-int Unix_socket_permissions;
-char * Unix_socket_group;
+int			Unix_socket_permissions;
+char	   *Unix_socket_group;
 
 
 /*
@@ -223,47 +223,49 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		UNIXSOCK_PATH(saddr.un, portNumber, unixSocketName);
 		len = UNIXSOCK_LEN(saddr.un);
 		strcpy(sock_path, saddr.un.sun_path);
+
 		/*
 		 * Grab an interlock file associated with the socket file.
 		 */
-		if (! CreateSocketLockFile(sock_path, true))
+		if (!CreateSocketLockFile(sock_path, true))
 			return STATUS_ERROR;
+
 		/*
-		 * Once we have the interlock, we can safely delete any pre-existing
-		 * socket file to avoid failure at bind() time.
+		 * Once we have the interlock, we can safely delete any
+		 * pre-existing socket file to avoid failure at bind() time.
 		 */
 		unlink(sock_path);
 	}
-#endif /* HAVE_UNIX_SOCKETS */
+#endif	 /* HAVE_UNIX_SOCKETS */
 
-    if (family == AF_INET) 
-    {
+	if (family == AF_INET)
+	{
 		/* TCP/IP socket */
 		if (hostName[0] == '\0')
-	 		saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
+			saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
 		else
-	    {
+		{
 			struct hostent *hp;
-	
+
 			hp = gethostbyname(hostName);
 			if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					   "FATAL: StreamServerPort: gethostbyname(%s) failed\n",
-							hostName);
-					   fputs(PQerrormsg, stderr);
-					   pqdebug("%s", PQerrormsg);
+				   "FATAL: StreamServerPort: gethostbyname(%s) failed\n",
+						 hostName);
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
 				return STATUS_ERROR;
 			}
 			memmove((char *) &(saddr.in.sin_addr), (char *) hp->h_addr,
 					hp->h_length);
 		}
-	
+
 		saddr.in.sin_port = htons(portNumber);
 		len = sizeof(struct sockaddr_in);
 	}
 
-	err = bind(fd, (struct sockaddr *)&saddr.sa, len);
+	err = bind(fd, (struct sockaddr *) & saddr.sa, len);
 	if (err < 0)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
@@ -291,16 +293,16 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		on_proc_exit(StreamDoUnlink, 0);
 
 		/*
-		 * Fix socket ownership/permission if requested.  Note we must
-		 * do this before we listen() to avoid a window where unwanted
+		 * Fix socket ownership/permission if requested.  Note we must do
+		 * this before we listen() to avoid a window where unwanted
 		 * connections could get accepted.
 		 */
 		Assert(Unix_socket_group);
 		if (Unix_socket_group[0] != '\0')
 		{
-			char *endptr;
+			char	   *endptr;
 			unsigned long int val;
-			gid_t gid;
+			gid_t		gid;
 
 			val = strtoul(Unix_socket_group, &endptr, 10);
 			if (*endptr == '\0')
@@ -346,7 +348,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			return STATUS_ERROR;
 		}
 	}
-#endif /* HAVE_UNIX_SOCKETS */
+#endif	 /* HAVE_UNIX_SOCKETS */
 
 	listen(fd, SOMAXCONN);
 
@@ -385,9 +387,10 @@ StreamConnection(int server_fd, Port *port)
 	}
 
 #ifdef SCO_ACCEPT_BUG
+
 	/*
-	 * UnixWare 7+ and OpenServer 5.0.4 are known to have this bug,
-	 * but it shouldn't hurt it catch if for all of them.
+	 * UnixWare 7+ and OpenServer 5.0.4 are known to have this bug, but it
+	 * shouldn't hurt it catch if for all of them.
 	 */
 	if (port->raddr.sa.sa_family == 0)
 		port->raddr.sa.sa_family = AF_UNIX;

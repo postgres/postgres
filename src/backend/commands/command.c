@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.122 2001/02/27 22:07:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.123 2001/03/22 03:59:21 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -173,29 +173,29 @@ PerformPortalFetch(char *name,
 	 *	at the end of the available tuples in that direction.  If so, do
 	 *	nothing.  (This check exists because not all plan node types are
 	 *	robust about being called again if they've already returned NULL
-	 *	once.)  If it's OK to do the fetch, call the executor.  Then,
+	 *	once.)	If it's OK to do the fetch, call the executor.  Then,
 	 *	update the atStart/atEnd state depending on the number of tuples
 	 *	that were retrieved.
 	 * ----------------
 	 */
 	if (forward)
 	{
-		if (! portal->atEnd)
+		if (!portal->atEnd)
 		{
 			ExecutorRun(queryDesc, estate, EXEC_FOR, (long) count);
 			if (estate->es_processed > 0)
-				portal->atStart = false; /* OK to back up now */
+				portal->atStart = false;		/* OK to back up now */
 			if (count <= 0 || (int) estate->es_processed < count)
-				portal->atEnd = true; /* we retrieved 'em all */
+				portal->atEnd = true;	/* we retrieved 'em all */
 		}
 	}
 	else
 	{
-		if (! portal->atStart)
+		if (!portal->atStart)
 		{
 			ExecutorRun(queryDesc, estate, EXEC_BACK, (long) count);
 			if (estate->es_processed > 0)
-				portal->atEnd = false; /* OK to go forward now */
+				portal->atEnd = false;	/* OK to go forward now */
 			if (count <= 0 || (int) estate->es_processed < count)
 				portal->atStart = true; /* we retrieved 'em all */
 		}
@@ -502,8 +502,8 @@ AlterTableAddColumn(const char *relationName,
 	heap_close(rel, NoLock);
 
 	/*
-	 * Automatically create the secondary relation for TOAST
-	 * if it formerly had no such but now has toastable attributes.
+	 * Automatically create the secondary relation for TOAST if it
+	 * formerly had no such but now has toastable attributes.
 	 */
 	CommandCounterIncrement();
 	AlterTableCreateToastTable(relationName, true);
@@ -842,7 +842,7 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 
 		relcheck = (Form_pg_relcheck) GETSTRUCT(htup);
 		ccbin = DatumGetCString(DirectFunctionCall1(textout,
-										PointerGetDatum(&relcheck->rcbin)));
+									 PointerGetDatum(&relcheck->rcbin)));
 		node = stringToNode(ccbin);
 		pfree(ccbin);
 		if (find_attribute_in_node(node, attnum))
@@ -890,7 +890,7 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 				else
 				{
 					htup = SearchSysCache(RELOID,
-										  ObjectIdGetDatum(index->indexrelid),
+									 ObjectIdGetDatum(index->indexrelid),
 										  0, 0, 0);
 					RemoveIndex(NameStr(((Form_pg_class) GETSTRUCT(htup))->relname));
 					ReleaseSysCache(htup);
@@ -1106,339 +1106,361 @@ AlterTableAddConstraint(char *relationName,
 #endif
 
 	/* Disallow ADD CONSTRAINT on views, indexes, sequences, etc */
-	if (! is_relation(relationName))
+	if (!is_relation(relationName))
 		elog(ERROR, "ALTER TABLE ADD CONSTRAINT: %s is not a table",
 			 relationName);
 
 	switch (nodeTag(newConstraint))
 	{
 		case T_Constraint:
-		{
-			Constraint *constr = (Constraint *) newConstraint;
-
-			switch (constr->contype)
 			{
-				case CONSTR_CHECK:
+				Constraint *constr = (Constraint *) newConstraint;
+
+				switch (constr->contype)
 				{
-					ParseState *pstate;
-					bool successful = true;
-					HeapScanDesc scan;
-					ExprContext *econtext;
-					TupleTableSlot *slot;
-					HeapTuple tuple;
-					RangeTblEntry *rte;
-					List       *qual;
-					List       *constlist;
-					Relation	rel;
-					Node *expr;
-					char *name;
-
-					if (constr->name)
-						name = constr->name;
-					else
-						name = "<unnamed>";
-
-					constlist = makeList1(constr);
-
-					rel = heap_openr(relationName, AccessExclusiveLock);
-
-					/* make sure it is not a view */
-					if (rel->rd_rel->relkind == RELKIND_VIEW)
-						elog(ERROR, "ALTER TABLE: cannot add constraint to a view");
-
-					/*
-					 * Scan all of the rows, looking for a false match
-					 */
-					scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
-					AssertState(scan != NULL);
-
-					/*
-					 * We need to make a parse state and range table to allow
-					 * us to transformExpr and fix_opids to get a version of
-					 * the expression we can pass to ExecQual
-					 */
-					pstate = make_parsestate(NULL);
-					rte = addRangeTableEntry(pstate, relationName, NULL,
-											 false, true);
-					addRTEtoQuery(pstate, rte, true, true);
-
-					/* Convert the A_EXPR in raw_expr into an EXPR */
-					expr = transformExpr(pstate, constr->raw_expr,
-										 EXPR_COLUMN_FIRST);
-
-					/*
-					 * Make sure it yields a boolean result.
-					 */
-					if (exprType(expr) != BOOLOID)
-						elog(ERROR, "CHECK '%s' does not yield boolean result",
-							 name);
-
-					/*
-					 * Make sure no outside relations are referred to.
-					 */
-					if (length(pstate->p_rtable) != 1)
-						elog(ERROR, "Only relation '%s' can be referenced in CHECK",
-							 relationName);
-
-					/*
-					 * Might as well try to reduce any constant expressions.
-					 */
-					expr = eval_const_expressions(expr);
-
-					/* And fix the opids */
-					fix_opids(expr);
-
-					qual = makeList1(expr);
-
-					/* Make tuple slot to hold tuples */
-					slot = MakeTupleTableSlot();
-					ExecSetSlotDescriptor(slot, RelationGetDescr(rel), false);
-					/* Make an expression context for ExecQual */
-					econtext = MakeExprContext(slot, CurrentMemoryContext);
-
-					/*
-					 * Scan through the rows now, checking the expression
-					 * at each row.
-					 */
-					while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-					{
-						ExecStoreTuple(tuple, slot, InvalidBuffer, false);
-						if (!ExecQual(qual, econtext, true))
+					case CONSTR_CHECK:
 						{
-							successful=false;
+							ParseState *pstate;
+							bool		successful = true;
+							HeapScanDesc scan;
+							ExprContext *econtext;
+							TupleTableSlot *slot;
+							HeapTuple	tuple;
+							RangeTblEntry *rte;
+							List	   *qual;
+							List	   *constlist;
+							Relation	rel;
+							Node	   *expr;
+							char	   *name;
+
+							if (constr->name)
+								name = constr->name;
+							else
+								name = "<unnamed>";
+
+							constlist = makeList1(constr);
+
+							rel = heap_openr(relationName, AccessExclusiveLock);
+
+							/* make sure it is not a view */
+							if (rel->rd_rel->relkind == RELKIND_VIEW)
+								elog(ERROR, "ALTER TABLE: cannot add constraint to a view");
+
+							/*
+							 * Scan all of the rows, looking for a false
+							 * match
+							 */
+							scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+							AssertState(scan != NULL);
+
+							/*
+							 * We need to make a parse state and range
+							 * table to allow us to transformExpr and
+							 * fix_opids to get a version of the
+							 * expression we can pass to ExecQual
+							 */
+							pstate = make_parsestate(NULL);
+							rte = addRangeTableEntry(pstate, relationName, NULL,
+													 false, true);
+							addRTEtoQuery(pstate, rte, true, true);
+
+							/* Convert the A_EXPR in raw_expr into an EXPR */
+							expr = transformExpr(pstate, constr->raw_expr,
+												 EXPR_COLUMN_FIRST);
+
+							/*
+							 * Make sure it yields a boolean result.
+							 */
+							if (exprType(expr) != BOOLOID)
+								elog(ERROR, "CHECK '%s' does not yield boolean result",
+									 name);
+
+							/*
+							 * Make sure no outside relations are referred
+							 * to.
+							 */
+							if (length(pstate->p_rtable) != 1)
+								elog(ERROR, "Only relation '%s' can be referenced in CHECK",
+									 relationName);
+
+							/*
+							 * Might as well try to reduce any constant
+							 * expressions.
+							 */
+							expr = eval_const_expressions(expr);
+
+							/* And fix the opids */
+							fix_opids(expr);
+
+							qual = makeList1(expr);
+
+							/* Make tuple slot to hold tuples */
+							slot = MakeTupleTableSlot();
+							ExecSetSlotDescriptor(slot, RelationGetDescr(rel), false);
+							/* Make an expression context for ExecQual */
+							econtext = MakeExprContext(slot, CurrentMemoryContext);
+
+							/*
+							 * Scan through the rows now, checking the
+							 * expression at each row.
+							 */
+							while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+							{
+								ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+								if (!ExecQual(qual, econtext, true))
+								{
+									successful = false;
+									break;
+								}
+								ResetExprContext(econtext);
+							}
+
+							FreeExprContext(econtext);
+							pfree(slot);
+
+							heap_endscan(scan);
+
+							if (!successful)
+							{
+								heap_close(rel, NoLock);
+								elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s", name);
+							}
+
+							/*
+							 * Call AddRelationRawConstraints to do the
+							 * real adding -- It duplicates some of the
+							 * above, but does not check the validity of
+							 * the constraint against tuples already in
+							 * the table.
+							 */
+							AddRelationRawConstraints(rel, NIL, constlist);
+							heap_close(rel, NoLock);
+							pfree(constlist);
+
 							break;
 						}
-						ResetExprContext(econtext);
-					}
-
-					FreeExprContext(econtext);
-					pfree(slot);
-
-					heap_endscan(scan);
-
-					if (!successful)
-					{
-						heap_close(rel, NoLock);
-						elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s", name);
-					}
-					/*
-					 * Call AddRelationRawConstraints to do the real adding --
-					 * It duplicates some of the above, but does not check the
-					 * validity of the constraint against tuples already in
-					 * the table.
-					 */
-					AddRelationRawConstraints(rel, NIL, constlist);
-					heap_close(rel, NoLock);
-					pfree(constlist);
-
-					break;
+					default:
+						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented for that constraint type.");
 				}
-				default:
-					elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented for that constraint type.");
+				break;
 			}
-			break;
-		}
 		case T_FkConstraint:
-		{
-			FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
-			Relation	rel, pkrel;
-			HeapScanDesc scan;
-			HeapTuple	tuple;
-			Trigger		trig;
-			List	   *list;
-			int			count;
-			List       *indexoidlist,
-				*indexoidscan;
-			Form_pg_attribute *rel_attrs = NULL;
-			int			i;
-			bool		found = false;
-
-			if (is_temp_rel_name(fkconstraint->pktable_name) &&
-				!is_temp_rel_name(relationName))
-				elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
-
-			/*
-			 * Grab an exclusive lock on the pk table, so that someone
-			 * doesn't delete rows out from under us.
-			 */
-
-			pkrel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
-			if (pkrel->rd_rel->relkind != RELKIND_RELATION)
-				elog(ERROR, "referenced table \"%s\" not a relation",
-					 fkconstraint->pktable_name);
-
-			/*
-			 * Grab an exclusive lock on the fk table, and then scan
-			 * through each tuple, calling the RI_FKey_Match_Ins
-			 * (insert trigger) as if that tuple had just been
-			 * inserted.  If any of those fail, it should elog(ERROR)
-			 * and that's that.
-			 */
-			rel = heap_openr(relationName, AccessExclusiveLock);
-			if (rel->rd_rel->relkind != RELKIND_RELATION)
-				elog(ERROR, "referencing table \"%s\" not a relation",
-					 relationName);
-
-			/* First we check for limited correctness of the constraint */
-
-			rel_attrs = pkrel->rd_att->attrs;
-			indexoidlist = RelationGetIndexList(pkrel);
-
-			foreach(indexoidscan, indexoidlist)
 			{
-				Oid             indexoid = lfirsti(indexoidscan);
-				HeapTuple       indexTuple;
-				Form_pg_index	indexStruct;
+				FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
+				Relation	rel,
+							pkrel;
+				HeapScanDesc scan;
+				HeapTuple	tuple;
+				Trigger		trig;
+				List	   *list;
+				int			count;
+				List	   *indexoidlist,
+						   *indexoidscan;
+				Form_pg_attribute *rel_attrs = NULL;
+				int			i;
+				bool		found = false;
 
-				indexTuple = SearchSysCache(INDEXRELID,
-											ObjectIdGetDatum(indexoid),
-											0, 0, 0);
-				if (!HeapTupleIsValid(indexTuple))
-					elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
-						 indexoid);
-				indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+				if (is_temp_rel_name(fkconstraint->pktable_name) &&
+					!is_temp_rel_name(relationName))
+					elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
 
-				if (indexStruct->indisunique)
+				/*
+				 * Grab an exclusive lock on the pk table, so that someone
+				 * doesn't delete rows out from under us.
+				 */
+
+				pkrel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
+				if (pkrel->rd_rel->relkind != RELKIND_RELATION)
+					elog(ERROR, "referenced table \"%s\" not a relation",
+						 fkconstraint->pktable_name);
+
+				/*
+				 * Grab an exclusive lock on the fk table, and then scan
+				 * through each tuple, calling the RI_FKey_Match_Ins
+				 * (insert trigger) as if that tuple had just been
+				 * inserted.  If any of those fail, it should elog(ERROR)
+				 * and that's that.
+				 */
+				rel = heap_openr(relationName, AccessExclusiveLock);
+				if (rel->rd_rel->relkind != RELKIND_RELATION)
+					elog(ERROR, "referencing table \"%s\" not a relation",
+						 relationName);
+
+				/*
+				 * First we check for limited correctness of the
+				 * constraint
+				 */
+
+				rel_attrs = pkrel->rd_att->attrs;
+				indexoidlist = RelationGetIndexList(pkrel);
+
+				foreach(indexoidscan, indexoidlist)
 				{
-					List	   *attrl;
+					Oid			indexoid = lfirsti(indexoidscan);
+					HeapTuple	indexTuple;
+					Form_pg_index indexStruct;
 
-					/* Make sure this index has the same number of keys -- It obviously
-					 * won't match otherwise. */
-					for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++);
-					if (i!=length(fkconstraint->pk_attrs))
-						found=false;
-					else {
-						/* go through the fkconstraint->pk_attrs list */
-						foreach(attrl, fkconstraint->pk_attrs)
-						{
-							Ident *attr=lfirst(attrl);
+					indexTuple = SearchSysCache(INDEXRELID,
+											  ObjectIdGetDatum(indexoid),
+												0, 0, 0);
+					if (!HeapTupleIsValid(indexTuple))
+						elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
+							 indexoid);
+					indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+
+					if (indexStruct->indisunique)
+					{
+						List	   *attrl;
+
+						/*
+						 * Make sure this index has the same number of
+						 * keys -- It obviously won't match otherwise.
+						 */
+						for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++);
+						if (i != length(fkconstraint->pk_attrs))
 							found = false;
-							for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+						else
+						{
+							/* go through the fkconstraint->pk_attrs list */
+							foreach(attrl, fkconstraint->pk_attrs)
 							{
-								int pkattno = indexStruct->indkey[i];
-								if (pkattno>0)
+								Ident	   *attr = lfirst(attrl);
+
+								found = false;
+								for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
 								{
-									char *name = NameStr(rel_attrs[pkattno-1]->attname);
-									if (strcmp(name, attr->name)==0)
+									int			pkattno = indexStruct->indkey[i];
+
+									if (pkattno > 0)
 									{
-										found = true;
-										break;
+										char	   *name = NameStr(rel_attrs[pkattno - 1]->attname);
+
+										if (strcmp(name, attr->name) == 0)
+										{
+											found = true;
+											break;
+										}
 									}
 								}
+								if (!found)
+									break;
 							}
-							if (!found)
-								break;
 						}
 					}
-				}
-				ReleaseSysCache(indexTuple);
-				if (found)
-					break;
-			}
-
-			if (!found)
-				elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
-					 fkconstraint->pktable_name);
-
-			freeList(indexoidlist);
-			heap_close(pkrel, NoLock);
-
-			rel_attrs = rel->rd_att->attrs;
-			if (fkconstraint->fk_attrs!=NIL) {
-				List *fkattrs;
-				Ident *fkattr;
-
-				found = false;
-				foreach(fkattrs, fkconstraint->fk_attrs) {
-					int count;
-					found = false;
-					fkattr=lfirst(fkattrs);
-					for (count = 0; count < rel->rd_att->natts; count++) {
-						char *name = NameStr(rel->rd_att->attrs[count]->attname);
-						if (strcmp(name, fkattr->name)==0) {
-							found = true;
-							break;
-						}
-					}
-					if (!found)
+					ReleaseSysCache(indexTuple);
+					if (found)
 						break;
 				}
+
 				if (!found)
-					elog(ERROR, "columns referenced in foreign key constraint not found.");
-			}
+					elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
+						 fkconstraint->pktable_name);
 
-			trig.tgoid = 0;
-			if (fkconstraint->constr_name)
-				trig.tgname = fkconstraint->constr_name;
-			else
-				trig.tgname = "<unknown>";
-			trig.tgfoid = 0;
-			trig.tgtype = 0;
-			trig.tgenabled = TRUE;
-			trig.tgisconstraint = TRUE;
-			trig.tginitdeferred = FALSE;
-			trig.tgdeferrable = FALSE;
+				freeList(indexoidlist);
+				heap_close(pkrel, NoLock);
 
-			trig.tgargs = (char **) palloc(
-				sizeof(char *) * (4 + length(fkconstraint->fk_attrs)
-								  + length(fkconstraint->pk_attrs)));
+				rel_attrs = rel->rd_att->attrs;
+				if (fkconstraint->fk_attrs != NIL)
+				{
+					List	   *fkattrs;
+					Ident	   *fkattr;
 
-			if (fkconstraint->constr_name)
-				trig.tgargs[0] = fkconstraint->constr_name;
-			else
-				trig.tgargs[0] = "<unknown>";
-			trig.tgargs[1] = (char *) relationName;
-			trig.tgargs[2] = fkconstraint->pktable_name;
-			trig.tgargs[3] = fkconstraint->match_type;
-			count = 4;
-			foreach(list, fkconstraint->fk_attrs)
+					found = false;
+					foreach(fkattrs, fkconstraint->fk_attrs)
+					{
+						int			count;
+
+						found = false;
+						fkattr = lfirst(fkattrs);
+						for (count = 0; count < rel->rd_att->natts; count++)
+						{
+							char	   *name = NameStr(rel->rd_att->attrs[count]->attname);
+
+							if (strcmp(name, fkattr->name) == 0)
+							{
+								found = true;
+								break;
+							}
+						}
+						if (!found)
+							break;
+					}
+					if (!found)
+						elog(ERROR, "columns referenced in foreign key constraint not found.");
+				}
+
+				trig.tgoid = 0;
+				if (fkconstraint->constr_name)
+					trig.tgname = fkconstraint->constr_name;
+				else
+					trig.tgname = "<unknown>";
+				trig.tgfoid = 0;
+				trig.tgtype = 0;
+				trig.tgenabled = TRUE;
+				trig.tgisconstraint = TRUE;
+				trig.tginitdeferred = FALSE;
+				trig.tgdeferrable = FALSE;
+
+				trig.tgargs = (char **) palloc(
+					 sizeof(char *) * (4 + length(fkconstraint->fk_attrs)
+									   + length(fkconstraint->pk_attrs)));
+
+				if (fkconstraint->constr_name)
+					trig.tgargs[0] = fkconstraint->constr_name;
+				else
+					trig.tgargs[0] = "<unknown>";
+				trig.tgargs[1] = (char *) relationName;
+				trig.tgargs[2] = fkconstraint->pktable_name;
+				trig.tgargs[3] = fkconstraint->match_type;
+				count = 4;
+				foreach(list, fkconstraint->fk_attrs)
 				{
 					Ident	   *fk_at = lfirst(list);
 
 					trig.tgargs[count] = fk_at->name;
-					count+=2;
+					count += 2;
 				}
-			count = 5;
-			foreach(list, fkconstraint->pk_attrs)
+				count = 5;
+				foreach(list, fkconstraint->pk_attrs)
 				{
 					Ident	   *pk_at = lfirst(list);
 
 					trig.tgargs[count] = pk_at->name;
-					count+=2;
+					count += 2;
 				}
-			trig.tgnargs = count-1;
+				trig.tgnargs = count - 1;
 
-			scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
-			AssertState(scan != NULL);
+				scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+				AssertState(scan != NULL);
 
-			while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-			{
-				/* Make a call to the check function */
-				/* No parameters are passed, but we do set a context */
-				FunctionCallInfoData	fcinfo;
-				TriggerData				trigdata;
+				while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+				{
+					/* Make a call to the check function */
+					/* No parameters are passed, but we do set a context */
+					FunctionCallInfoData fcinfo;
+					TriggerData trigdata;
 
-				MemSet(&fcinfo, 0, sizeof(fcinfo));
-				/* We assume RI_FKey_check_ins won't look at flinfo... */
+					MemSet(&fcinfo, 0, sizeof(fcinfo));
+					/* We assume RI_FKey_check_ins won't look at flinfo... */
 
-				trigdata.type = T_TriggerData;
-				trigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
-				trigdata.tg_relation = rel;
-				trigdata.tg_trigtuple = tuple;
-				trigdata.tg_newtuple = NULL;
-				trigdata.tg_trigger = &trig;
+					trigdata.type = T_TriggerData;
+					trigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
+					trigdata.tg_relation = rel;
+					trigdata.tg_trigtuple = tuple;
+					trigdata.tg_newtuple = NULL;
+					trigdata.tg_trigger = &trig;
 
-				fcinfo.context = (Node *) &trigdata;
+					fcinfo.context = (Node *) &trigdata;
 
-				RI_FKey_check_ins(&fcinfo);
+					RI_FKey_check_ins(&fcinfo);
+				}
+				heap_endscan(scan);
+				heap_close(rel, NoLock);		/* close rel but keep
+												 * lock! */
+
+				pfree(trig.tgargs);
+				break;
 			}
-			heap_endscan(scan);
-			heap_close(rel, NoLock);		/* close rel but keep
-											 * lock! */
-
-			pfree(trig.tgargs);
-			break;
-		}
 		default:
 			elog(ERROR, "ALTER TABLE / ADD CONSTRAINT unable to determine type of constraint passed");
 	}
@@ -1464,15 +1486,15 @@ AlterTableDropConstraint(const char *relationName,
 void
 AlterTableOwner(const char *relationName, const char *newOwnerName)
 {
-	Relation 	class_rel;
-	HeapTuple 	tuple;
+	Relation	class_rel;
+	HeapTuple	tuple;
 	int32		newOwnerSysid;
 	Relation	idescs[Num_pg_class_indices];
 
 	/*
 	 * first check that we are a superuser
 	 */
-	if (! superuser())
+	if (!superuser())
 		elog(ERROR, "ALTER TABLE: permission denied");
 
 	/*
@@ -1537,21 +1559,21 @@ AlterTableOwner(const char *relationName, const char *newOwnerName)
 void
 AlterTableCreateToastTable(const char *relationName, bool silent)
 {
-	Relation			rel;
-	Oid					myrelid;
-	HeapTuple			reltup;
-	HeapTupleData		classtuple;
-	TupleDesc			tupdesc;
-	Relation			class_rel;
-	Buffer				buffer;
-	Relation			ridescs[Num_pg_class_indices];
-	Oid					toast_relid;
-	Oid					toast_idxid;
-	char				toast_relname[NAMEDATALEN + 1];
-	char				toast_idxname[NAMEDATALEN + 1];
-	Relation			toast_idxrel;
-	IndexInfo		   *indexInfo;
-	Oid					classObjectId[1];
+	Relation	rel;
+	Oid			myrelid;
+	HeapTuple	reltup;
+	HeapTupleData classtuple;
+	TupleDesc	tupdesc;
+	Relation	class_rel;
+	Buffer		buffer;
+	Relation	ridescs[Num_pg_class_indices];
+	Oid			toast_relid;
+	Oid			toast_idxid;
+	char		toast_relname[NAMEDATALEN + 1];
+	char		toast_idxname[NAMEDATALEN + 1];
+	Relation	toast_idxrel;
+	IndexInfo  *indexInfo;
+	Oid			classObjectId[1];
 
 	/*
 	 * permissions checking.  XXX exactly what is appropriate here?
@@ -1618,7 +1640,7 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	/*
 	 * Check to see whether the table actually needs a TOAST table.
 	 */
-	if (! needs_toast_table(rel))
+	if (!needs_toast_table(rel))
 	{
 		if (silent)
 		{
@@ -1652,10 +1674,11 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 					   "chunk_data",
 					   BYTEAOID,
 					   -1, 0, false);
+
 	/*
-	 * Ensure that the toast table doesn't itself get toasted,
-	 * or we'll be toast :-(.  This is essential for chunk_data because
-	 * type bytea is toastable; hit the other two just to be sure.
+	 * Ensure that the toast table doesn't itself get toasted, or we'll be
+	 * toast :-(.  This is essential for chunk_data because type bytea is
+	 * toastable; hit the other two just to be sure.
 	 */
 	tupdesc->attrs[0]->attstorage = 'p';
 	tupdesc->attrs[1]->attstorage = 'p';
@@ -1733,7 +1756,7 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 }
 
 /*
- * Check to see whether the table needs a TOAST table.  It does only if
+ * Check to see whether the table needs a TOAST table.	It does only if
  * (1) there are any toastable attributes, and (2) the maximum length
  * of a tuple could exceed TOAST_TUPLE_THRESHOLD.  (We don't want to
  * create a toast table for something like "f1 varchar(20)".)
@@ -1745,7 +1768,7 @@ needs_toast_table(Relation rel)
 	bool		maxlength_unknown = false;
 	bool		has_toastable_attrs = false;
 	TupleDesc	tupdesc;
-	Form_pg_attribute  *att;
+	Form_pg_attribute *att;
 	int32		tuple_length;
 	int			i;
 
@@ -1762,8 +1785,8 @@ needs_toast_table(Relation rel)
 		}
 		else
 		{
-			int32	maxlen = type_maximum_size(att[i]->atttypid,
-											   att[i]->atttypmod);
+			int32		maxlen = type_maximum_size(att[i]->atttypid,
+												   att[i]->atttypmod);
 
 			if (maxlen < 0)
 				maxlength_unknown = true;
@@ -1798,7 +1821,7 @@ LockTableCommand(LockStmt *lockstmt)
 	rel = heap_openr(lockstmt->relname, NoLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-			elog(ERROR, "LOCK TABLE: %s is not a table", lockstmt->relname);
+		elog(ERROR, "LOCK TABLE: %s is not a table", lockstmt->relname);
 
 	if (lockstmt->mode == AccessShareLock)
 		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(), ACL_RD);
@@ -1817,9 +1840,9 @@ LockTableCommand(LockStmt *lockstmt)
 static bool
 is_relation(char *name)
 {
-	Relation rel = heap_openr(name, NoLock);
+	Relation	rel = heap_openr(name, NoLock);
 
-	bool retval = (rel->rd_rel->relkind == RELKIND_RELATION);
+	bool		retval = (rel->rd_rel->relkind == RELKIND_RELATION);
 
 	heap_close(rel, NoLock);
 

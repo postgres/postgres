@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.62 2001/03/18 20:18:59 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.63 2001/03/22 03:59:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,57 +45,60 @@
 /*
  * This chunk of hackery attempts to determine which file sync methods
  * are available on the current platform, and to choose an appropriate
- * default method.  We assume that fsync() is always available, and that
+ * default method.	We assume that fsync() is always available, and that
  * configure determined whether fdatasync() is.
  */
 #define SYNC_METHOD_FSYNC		0
 #define SYNC_METHOD_FDATASYNC	1
-#define SYNC_METHOD_OPEN		2 /* used for both O_SYNC and O_DSYNC */
+#define SYNC_METHOD_OPEN		2		/* used for both O_SYNC and
+										 * O_DSYNC */
 
 #if defined(O_SYNC)
-# define OPEN_SYNC_FLAG		O_SYNC
+#define OPEN_SYNC_FLAG	   O_SYNC
 #else
-# if defined(O_FSYNC)
-#  define OPEN_SYNC_FLAG	O_FSYNC
-# endif
+#if defined(O_FSYNC)
+#define OPEN_SYNC_FLAG	  O_FSYNC
+#endif
 #endif
 
 #if defined(OPEN_SYNC_FLAG)
-# if defined(O_DSYNC) && (O_DSYNC != OPEN_SYNC_FLAG)
-#  define OPEN_DATASYNC_FLAG	O_DSYNC
-# endif
+#if defined(O_DSYNC) && (O_DSYNC != OPEN_SYNC_FLAG)
+#define OPEN_DATASYNC_FLAG	  O_DSYNC
+#endif
 #endif
 
 #if defined(OPEN_DATASYNC_FLAG)
-# define DEFAULT_SYNC_METHOD_STR	"open_datasync"
-# define DEFAULT_SYNC_METHOD		SYNC_METHOD_OPEN
-# define DEFAULT_SYNC_FLAGBIT		OPEN_DATASYNC_FLAG
+#define DEFAULT_SYNC_METHOD_STR    "open_datasync"
+#define DEFAULT_SYNC_METHOD		   SYNC_METHOD_OPEN
+#define DEFAULT_SYNC_FLAGBIT	   OPEN_DATASYNC_FLAG
 #else
-# if defined(HAVE_FDATASYNC)
-#  define DEFAULT_SYNC_METHOD_STR	"fdatasync"
-#  define DEFAULT_SYNC_METHOD		SYNC_METHOD_FDATASYNC
-#  define DEFAULT_SYNC_FLAGBIT		0
-# else
-#  define DEFAULT_SYNC_METHOD_STR	"fsync"
-#  define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC
-#  define DEFAULT_SYNC_FLAGBIT		0
-# endif
+#if defined(HAVE_FDATASYNC)
+#define DEFAULT_SYNC_METHOD_STR   "fdatasync"
+#define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FDATASYNC
+#define DEFAULT_SYNC_FLAGBIT	  0
+#else
+#define DEFAULT_SYNC_METHOD_STR   "fsync"
+#define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FSYNC
+#define DEFAULT_SYNC_FLAGBIT	  0
+#endif
 #endif
 
 
 /* Max time to wait to acquire XLog activity locks */
-#define XLOG_LOCK_TIMEOUT			(5*60*1000000) /* 5 minutes */
+#define XLOG_LOCK_TIMEOUT			(5*60*1000000)		/* 5 minutes */
 /* Max time to wait to acquire checkpoint lock */
-#define CHECKPOINT_LOCK_TIMEOUT		(20*60*1000000) /* 20 minutes */
+#define CHECKPOINT_LOCK_TIMEOUT		(20*60*1000000)		/* 20 minutes */
 
 /* User-settable parameters */
 int			CheckPointSegments = 3;
 int			XLOGbuffers = 8;
-int			XLOGfiles = 0;	/* how many files to pre-allocate during ckpt */
+int			XLOGfiles = 0;		/* how many files to pre-allocate during
+								 * ckpt */
 int			XLOG_DEBUG = 0;
 char	   *XLOG_sync_method = NULL;
 const char	XLOG_sync_method_default[] = DEFAULT_SYNC_METHOD_STR;
-char		XLOG_archive_dir[MAXPGPATH]; /* null string means delete 'em */
+char		XLOG_archive_dir[MAXPGPATH];		/* null string means
+												 * delete 'em */
 
 /* these are derived from XLOG_sync_method by assign_xlog_sync_method */
 static int	sync_method = DEFAULT_SYNC_METHOD;
@@ -135,7 +138,7 @@ static XLogRecPtr ProcLastRecPtr = {0, 0};
 /*
  * RedoRecPtr is this backend's local copy of the REDO record pointer
  * (which is almost but not quite the same as a pointer to the most recent
- * CHECKPOINT record).  We update this from the shared-memory copy,
+ * CHECKPOINT record).	We update this from the shared-memory copy,
  * XLogCtl->Insert.RedoRecPtr, whenever we can safely do so (ie, when we
  * hold the Insert spinlock).  See XLogInsert for details.
  */
@@ -164,12 +167,12 @@ SPINLOCK	ControlFileLockId;
  *
  * XLogCtl->LogwrtResult and XLogCtl->Write.LogwrtResult are both "always
  * right", since both are updated by a write or flush operation before
- * it releases logwrt_lck.  The point of keeping XLogCtl->Write.LogwrtResult
+ * it releases logwrt_lck.	The point of keeping XLogCtl->Write.LogwrtResult
  * is that it can be examined/modified by code that already holds logwrt_lck
  * without needing to grab info_lck as well.
  *
  * XLogCtl->Insert.LogwrtResult may lag behind the reality of the other two,
- * but is updated when convenient.  Again, it exists for the convenience of
+ * but is updated when convenient.	Again, it exists for the convenience of
  * code that is already holding insert_lck but not the other locks.
  *
  * The unshared LogwrtResult may lag behind any or all of these, and again
@@ -187,25 +190,25 @@ typedef struct XLogwrtRqst
 {
 	XLogRecPtr	Write;			/* last byte + 1 to write out */
 	XLogRecPtr	Flush;			/* last byte + 1 to flush */
-} XLogwrtRqst;
+}			XLogwrtRqst;
 
 typedef struct XLogwrtResult
 {
 	XLogRecPtr	Write;			/* last byte + 1 written out */
 	XLogRecPtr	Flush;			/* last byte + 1 flushed */
-} XLogwrtResult;
+}			XLogwrtResult;
 
 /*
  * Shared state data for XLogInsert.
  */
 typedef struct XLogCtlInsert
 {
-	XLogwrtResult	LogwrtResult;	/* a recent value of LogwrtResult */
-	XLogRecPtr		PrevRecord;		/* start of previously-inserted record */
-	uint16			curridx;		/* current block index in cache */
-	XLogPageHeader	currpage;		/* points to header of block in cache */
-	char		   *currpos;		/* current insertion point in cache */
-	XLogRecPtr		RedoRecPtr;		/* current redo point for insertions */
+	XLogwrtResult LogwrtResult; /* a recent value of LogwrtResult */
+	XLogRecPtr	PrevRecord;		/* start of previously-inserted record */
+	uint16		curridx;		/* current block index in cache */
+	XLogPageHeader currpage;	/* points to header of block in cache */
+	char	   *currpos;		/* current insertion point in cache */
+	XLogRecPtr	RedoRecPtr;		/* current redo point for insertions */
 } XLogCtlInsert;
 
 /*
@@ -213,8 +216,8 @@ typedef struct XLogCtlInsert
  */
 typedef struct XLogCtlWrite
 {
-	XLogwrtResult	LogwrtResult;	/* current value of LogwrtResult */
-	uint16			curridx;		/* cache index of next block to write */
+	XLogwrtResult LogwrtResult; /* current value of LogwrtResult */
+	uint16		curridx;		/* cache index of next block to write */
 } XLogCtlWrite;
 
 /*
@@ -223,30 +226,31 @@ typedef struct XLogCtlWrite
 typedef struct XLogCtlData
 {
 	/* Protected by insert_lck: */
-	XLogCtlInsert	Insert;
+	XLogCtlInsert Insert;
 	/* Protected by info_lck: */
-	XLogwrtRqst		LogwrtRqst;
-	XLogwrtResult	LogwrtResult;
+	XLogwrtRqst LogwrtRqst;
+	XLogwrtResult LogwrtResult;
 	/* Protected by logwrt_lck: */
-	XLogCtlWrite	Write;
+	XLogCtlWrite Write;
+
 	/*
 	 * These values do not change after startup, although the pointed-to
-	 * pages and xlblocks values certainly do.  Permission to read/write
+	 * pages and xlblocks values certainly do.	Permission to read/write
 	 * the pages and xlblocks values depends on insert_lck and logwrt_lck.
 	 */
-	char		   *pages;			/* buffers for unwritten XLOG pages */
-	XLogRecPtr	   *xlblocks;		/* 1st byte ptr-s + BLCKSZ */
-	uint32			XLogCacheByte;	/* # bytes in xlog buffers */
-	uint32			XLogCacheBlck;	/* highest allocated xlog buffer index */
-	StartUpID		ThisStartUpID;
+	char	   *pages;			/* buffers for unwritten XLOG pages */
+	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + BLCKSZ */
+	uint32		XLogCacheByte;	/* # bytes in xlog buffers */
+	uint32		XLogCacheBlck;	/* highest allocated xlog buffer index */
+	StartUpID	ThisStartUpID;
 
 	/* This value is not protected by *any* spinlock... */
-	XLogRecPtr		RedoRecPtr;		/* see SetRedoRecPtr/GetRedoRecPtr */
+	XLogRecPtr	RedoRecPtr;		/* see SetRedoRecPtr/GetRedoRecPtr */
 
-	slock_t			insert_lck;		/* XLogInsert lock */
-	slock_t			info_lck;		/* locks shared LogwrtRqst/LogwrtResult */
-	slock_t			logwrt_lck;		/* XLogWrite/XLogFlush lock */
-	slock_t			chkp_lck;		/* checkpoint lock */
+	slock_t		insert_lck;		/* XLogInsert lock */
+	slock_t		info_lck;		/* locks shared LogwrtRqst/LogwrtResult */
+	slock_t		logwrt_lck;		/* XLogWrite/XLogFlush lock */
+	slock_t		chkp_lck;		/* checkpoint lock */
 } XLogCtlData;
 
 static XLogCtlData *XLogCtl = NULL;
@@ -271,7 +275,7 @@ static ControlFileData *ControlFile = NULL;
 	( \
 	  (recptr).xlogid = XLogCtl->xlblocks[curridx].xlogid, \
 	  (recptr).xrecoff = \
-	  	XLogCtl->xlblocks[curridx].xrecoff - INSERT_FREESPACE(Insert) \
+		XLogCtl->xlblocks[curridx].xrecoff - INSERT_FREESPACE(Insert) \
 	)
 
 
@@ -303,7 +307,7 @@ static ControlFileData *ControlFile = NULL;
  * Compute ID and segment from an XLogRecPtr.
  *
  * For XLByteToSeg, do the computation at face value.  For XLByteToPrevSeg,
- * a boundary byte is taken to be in the previous segment.  This is suitable
+ * a boundary byte is taken to be in the previous segment.	This is suitable
  * for deciding which segment to write given a pointer to a record end,
  * for example.
  */
@@ -354,8 +358,8 @@ static ControlFileData *ControlFile = NULL;
 
 
 /* File path names */
-static char		XLogDir[MAXPGPATH];
-static char		ControlFilePath[MAXPGPATH];
+static char XLogDir[MAXPGPATH];
+static char ControlFilePath[MAXPGPATH];
 
 /*
  * Private, possibly out-of-date copy of shared LogwrtResult.
@@ -384,8 +388,10 @@ static int	readFile = -1;
 static uint32 readId = 0;
 static uint32 readSeg = 0;
 static uint32 readOff = 0;
+
 /* Buffer for currently read page (BLCKSZ bytes) */
 static char *readBuf = NULL;
+
 /* State information for XLOG reading */
 static XLogRecPtr ReadRecPtr;
 static XLogRecPtr EndRecPtr;
@@ -397,16 +403,16 @@ static bool InRedo = false;
 
 static bool AdvanceXLInsertBuffer(void);
 static void XLogWrite(XLogwrtRqst WriteRqst);
-static int	XLogFileInit(uint32 log, uint32 seg,
-						 bool *use_existent, bool use_lock);
+static int XLogFileInit(uint32 log, uint32 seg,
+			 bool *use_existent, bool use_lock);
 static int	XLogFileOpen(uint32 log, uint32 seg, bool econt);
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void MoveOfflineLogs(uint32 log, uint32 seg);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer);
 static bool ValidXLOGHeader(XLogPageHeader hdr, int emode, bool checkSUI);
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr,
-										const char *whichChkpt,
-										char *buffer);
+					 const char *whichChkpt,
+					 char *buffer);
 static void WriteControlFile(void);
 static void ReadControlFile(void);
 static char *str_time(time_t tnow);
@@ -432,44 +438,44 @@ static void issue_xlog_fsync(void);
 XLogRecPtr
 XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 {
-	XLogCtlInsert  *Insert = &XLogCtl->Insert;
-	XLogRecord	   *record;
+	XLogCtlInsert *Insert = &XLogCtl->Insert;
+	XLogRecord *record;
 	XLogContRecord *contrecord;
-	XLogRecPtr		RecPtr;
-	XLogRecPtr		WriteRqst;
-	uint32			freespace;
-	uint16			curridx;
-	XLogRecData	   *rdt;
-	Buffer			dtbuf[XLR_MAX_BKP_BLOCKS];
-	bool			dtbuf_bkp[XLR_MAX_BKP_BLOCKS];
-	BkpBlock		dtbuf_xlg[XLR_MAX_BKP_BLOCKS];
-	XLogRecPtr		dtbuf_lsn[XLR_MAX_BKP_BLOCKS];
-	XLogRecData		dtbuf_rdt[2 * XLR_MAX_BKP_BLOCKS];
-	crc64			rdata_crc;
-	uint32			len,
-					write_len;
-	unsigned		i;
-	bool			do_logwrt;
-	bool			updrqst;
-	bool			no_tran = (rmid == RM_XLOG_ID) ? true : false;
+	XLogRecPtr	RecPtr;
+	XLogRecPtr	WriteRqst;
+	uint32		freespace;
+	uint16		curridx;
+	XLogRecData *rdt;
+	Buffer		dtbuf[XLR_MAX_BKP_BLOCKS];
+	bool		dtbuf_bkp[XLR_MAX_BKP_BLOCKS];
+	BkpBlock	dtbuf_xlg[XLR_MAX_BKP_BLOCKS];
+	XLogRecPtr	dtbuf_lsn[XLR_MAX_BKP_BLOCKS];
+	XLogRecData dtbuf_rdt[2 * XLR_MAX_BKP_BLOCKS];
+	crc64		rdata_crc;
+	uint32		len,
+				write_len;
+	unsigned	i;
+	bool		do_logwrt;
+	bool		updrqst;
+	bool		no_tran = (rmid == RM_XLOG_ID) ? true : false;
 
 	if (info & XLR_INFO_MASK)
 	{
 		if ((info & XLR_INFO_MASK) != XLOG_NO_TRAN)
-			elog(STOP, "XLogInsert: invalid info mask %02X", 
+			elog(STOP, "XLogInsert: invalid info mask %02X",
 				 (info & XLR_INFO_MASK));
 		no_tran = true;
 		info &= ~XLR_INFO_MASK;
 	}
 
 	/*
-	 * In bootstrap mode, we don't actually log anything but XLOG resources;
-	 * return a phony record pointer.
+	 * In bootstrap mode, we don't actually log anything but XLOG
+	 * resources; return a phony record pointer.
 	 */
 	if (IsBootstrapProcessingMode() && rmid != RM_XLOG_ID)
 	{
 		RecPtr.xlogid = 0;
-		RecPtr.xrecoff = SizeOfXLogPHD;	/* start of 1st checkpoint record */
+		RecPtr.xrecoff = SizeOfXLogPHD; /* start of 1st checkpoint record */
 		return (RecPtr);
 	}
 
@@ -479,16 +485,17 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	 * header isn't added into the CRC yet since we don't know the final
 	 * length or info bits quite yet.
 	 *
-	 * We may have to loop back to here if a race condition is detected below.
-	 * We could prevent the race by doing all this work while holding the
-	 * insert spinlock, but it seems better to avoid doing CRC calculations
-	 * while holding the lock.  This means we have to be careful about
-	 * modifying the rdata list until we know we aren't going to loop back
-	 * again.  The only change we allow ourselves to make earlier is to set
-	 * rdt->data = NULL in list items we have decided we will have to back
-	 * up the whole buffer for.  This is OK because we will certainly decide
-	 * the same thing again for those items if we do it over; doing it here
-	 * saves an extra pass over the list later.
+	 * We may have to loop back to here if a race condition is detected
+	 * below. We could prevent the race by doing all this work while
+	 * holding the insert spinlock, but it seems better to avoid doing CRC
+	 * calculations while holding the lock.  This means we have to be
+	 * careful about modifying the rdata list until we know we aren't
+	 * going to loop back again.  The only change we allow ourselves to
+	 * make earlier is to set rdt->data = NULL in list items we have
+	 * decided we will have to back up the whole buffer for.  This is OK
+	 * because we will certainly decide the same thing again for those
+	 * items if we do it over; doing it here saves an extra pass over the
+	 * list later.
 	 */
 begin:;
 	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
@@ -499,7 +506,7 @@ begin:;
 
 	INIT_CRC64(rdata_crc);
 	len = 0;
-	for (rdt = rdata; ; )
+	for (rdt = rdata;;)
 	{
 		if (rdt->buffer == InvalidBuffer)
 		{
@@ -528,13 +535,14 @@ begin:;
 				{
 					/* OK, put it in this slot */
 					dtbuf[i] = rdt->buffer;
+
 					/*
 					 * XXX We assume page LSN is first data on page
 					 */
-					dtbuf_lsn[i] = *((XLogRecPtr*)BufferGetBlock(rdt->buffer));
+					dtbuf_lsn[i] = *((XLogRecPtr *) BufferGetBlock(rdt->buffer));
 					if (XLByteLE(dtbuf_lsn[i], RedoRecPtr))
 					{
-						crc64	dtcrc;
+						crc64		dtcrc;
 
 						dtbuf_bkp[i] = true;
 						rdt->data = NULL;
@@ -545,7 +553,7 @@ begin:;
 						dtbuf_xlg[i].node = BufferGetFileNode(dtbuf[i]);
 						dtbuf_xlg[i].block = BufferGetBlockNumber(dtbuf[i]);
 						COMP_CRC64(dtcrc,
-								   (char*) &(dtbuf_xlg[i]) + sizeof(crc64),
+								(char *) &(dtbuf_xlg[i]) + sizeof(crc64),
 								   sizeof(BkpBlock) - sizeof(crc64));
 						FIN_CRC64(dtcrc);
 						dtbuf_xlg[i].crc = dtcrc;
@@ -571,7 +579,7 @@ begin:;
 	/*
 	 * NOTE: the test for len == 0 here is somewhat fishy, since in theory
 	 * all of the rmgr data might have been suppressed in favor of backup
-	 * blocks.  Currently, all callers of XLogInsert provide at least some
+	 * blocks.	Currently, all callers of XLogInsert provide at least some
 	 * not-in-a-buffer data and so len == 0 should never happen, but that
 	 * may not be true forever.  If you need to remove the len == 0 check,
 	 * also remove the check for xl_len == 0 in ReadRecord, below.
@@ -589,16 +597,16 @@ begin:;
 		/* try to update LogwrtResult while waiting for insert lock */
 		if (!TAS(&(XLogCtl->info_lck)))
 		{
-			XLogwrtRqst	LogwrtRqst;
+			XLogwrtRqst LogwrtRqst;
 
 			LogwrtRqst = XLogCtl->LogwrtRqst;
 			LogwrtResult = XLogCtl->LogwrtResult;
 			S_UNLOCK(&(XLogCtl->info_lck));
 
 			/*
-			 * If cache is half filled then try to acquire logwrt lock
-			 * and do LOGWRT work, but only once per XLogInsert call.
-			 * Ignore any fractional blocks in performing this check.
+			 * If cache is half filled then try to acquire logwrt lock and
+			 * do LOGWRT work, but only once per XLogInsert call. Ignore
+			 * any fractional blocks in performing this check.
 			 */
 			LogwrtRqst.Write.xrecoff -= LogwrtRqst.Write.xrecoff % BLCKSZ;
 			if (do_logwrt &&
@@ -625,8 +633,9 @@ begin:;
 
 	/*
 	 * Check to see if my RedoRecPtr is out of date.  If so, may have to
-	 * go back and recompute everything.  This can only happen just after a
-	 * checkpoint, so it's better to be slow in this case and fast otherwise.
+	 * go back and recompute everything.  This can only happen just after
+	 * a checkpoint, so it's better to be slow in this case and fast
+	 * otherwise.
 	 */
 	if (!XLByteEQ(RedoRecPtr, Insert->RedoRecPtr))
 	{
@@ -640,9 +649,10 @@ begin:;
 			if (dtbuf_bkp[i] == false &&
 				XLByteLE(dtbuf_lsn[i], RedoRecPtr))
 			{
+
 				/*
-				 * Oops, this buffer now needs to be backed up, but we didn't
-				 * think so above.  Start over.
+				 * Oops, this buffer now needs to be backed up, but we
+				 * didn't think so above.  Start over.
 				 */
 				S_UNLOCK(&(XLogCtl->insert_lck));
 				END_CRIT_SECTION();
@@ -658,8 +668,9 @@ begin:;
 	 * this loop, write_len includes the backup block data.
 	 *
 	 * Also set the appropriate info bits to show which buffers were backed
-	 * up.  The i'th XLR_SET_BKP_BLOCK bit corresponds to the i'th distinct
-	 * buffer value (ignoring InvalidBuffer) appearing in the rdata list.
+	 * up.	The i'th XLR_SET_BKP_BLOCK bit corresponds to the i'th
+	 * distinct buffer value (ignoring InvalidBuffer) appearing in the
+	 * rdata list.
 	 */
 	write_len = len;
 	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
@@ -671,13 +682,13 @@ begin:;
 
 		rdt->next = &(dtbuf_rdt[2 * i]);
 
-		dtbuf_rdt[2 * i].data = (char*) &(dtbuf_xlg[i]);
+		dtbuf_rdt[2 * i].data = (char *) &(dtbuf_xlg[i]);
 		dtbuf_rdt[2 * i].len = sizeof(BkpBlock);
 		write_len += sizeof(BkpBlock);
 
 		rdt = dtbuf_rdt[2 * i].next = &(dtbuf_rdt[2 * i + 1]);
 
-		dtbuf_rdt[2 * i + 1].data = (char*) BufferGetBlock(dtbuf[i]);
+		dtbuf_rdt[2 * i + 1].data = (char *) BufferGetBlock(dtbuf[i]);
 		dtbuf_rdt[2 * i + 1].len = BLCKSZ;
 		write_len += BLCKSZ;
 		dtbuf_rdt[2 * i + 1].next = NULL;
@@ -711,7 +722,7 @@ begin:;
 	record->xl_rmid = rmid;
 
 	/* Now we can finish computing the main CRC */
-	COMP_CRC64(rdata_crc, (char*) record + sizeof(crc64),
+	COMP_CRC64(rdata_crc, (char *) record + sizeof(crc64),
 			   SizeOfXLogRecord - sizeof(crc64));
 	FIN_CRC64(rdata_crc);
 	record->xl_crc = rdata_crc;
@@ -729,7 +740,7 @@ begin:;
 
 	if (XLOG_DEBUG)
 	{
-		char	buf[8192];
+		char		buf[8192];
 
 		sprintf(buf, "INSERT @ %u/%u: ", RecPtr.xlogid, RecPtr.xrecoff);
 		xlog_outrec(buf, record);
@@ -791,18 +802,19 @@ begin:;
 
 	/* Ensure next record will be properly aligned */
 	Insert->currpos = (char *) Insert->currpage +
-			MAXALIGN(Insert->currpos - (char *) Insert->currpage);
+		MAXALIGN(Insert->currpos - (char *) Insert->currpage);
 	freespace = INSERT_FREESPACE(Insert);
 
 	/*
-	 * The recptr I return is the beginning of the *next* record.
-	 * This will be stored as LSN for changed data pages...
+	 * The recptr I return is the beginning of the *next* record. This
+	 * will be stored as LSN for changed data pages...
 	 */
 	INSERT_RECPTR(RecPtr, Insert, curridx);
 
 	/* Need to update shared LogwrtRqst if some block was filled up */
 	if (freespace < SizeOfXLogRecord)
-		updrqst = true;	/* curridx is filled and available for writing out */
+		updrqst = true;			/* curridx is filled and available for
+								 * writing out */
 	else
 		curridx = PrevBufIdx(curridx);
 	WriteRqst = XLogCtl->xlblocks[curridx];
@@ -850,9 +862,9 @@ AdvanceXLInsertBuffer(void)
 		LogwrtResult = Insert->LogwrtResult;
 
 	/*
-	 * Get ending-offset of the buffer page we need to replace (this may be
-	 * zero if the buffer hasn't been used yet).  Fall through if it's already
-	 * written out.
+	 * Get ending-offset of the buffer page we need to replace (this may
+	 * be zero if the buffer hasn't been used yet).  Fall through if it's
+	 * already written out.
 	 */
 	OldPageRqstPtr = XLogCtl->xlblocks[nextidx];
 	if (!XLByteLE(OldPageRqstPtr, LogwrtResult.Write))
@@ -870,7 +882,7 @@ AdvanceXLInsertBuffer(void)
 			{
 				if (XLByteLT(XLogCtl->LogwrtRqst.Write, FinishedPageRqstPtr))
 					XLogCtl->LogwrtRqst.Write = FinishedPageRqstPtr;
-				update_needed = false; /* Did the shared-request update */
+				update_needed = false;	/* Did the shared-request update */
 				LogwrtResult = XLogCtl->LogwrtResult;
 				S_UNLOCK(&(XLogCtl->info_lck));
 
@@ -883,8 +895,8 @@ AdvanceXLInsertBuffer(void)
 			}
 
 			/*
-			 * LogwrtResult lock is busy or we know the page is still dirty.
-			 * Try to acquire logwrt lock and write full blocks.
+			 * LogwrtResult lock is busy or we know the page is still
+			 * dirty. Try to acquire logwrt lock and write full blocks.
 			 */
 			if (!TAS(&(XLogCtl->logwrt_lck)))
 			{
@@ -896,9 +908,10 @@ AdvanceXLInsertBuffer(void)
 					Insert->LogwrtResult = LogwrtResult;
 					break;
 				}
+
 				/*
-				 * Have to write buffers while holding insert lock.
-				 * This is not good, so only write as much as we absolutely
+				 * Have to write buffers while holding insert lock. This
+				 * is not good, so only write as much as we absolutely
 				 * must.
 				 */
 				WriteRqst.Write = OldPageRqstPtr;
@@ -933,14 +946,15 @@ AdvanceXLInsertBuffer(void)
 	}
 	Insert->curridx = nextidx;
 	Insert->currpage = (XLogPageHeader) (XLogCtl->pages + nextidx * BLCKSZ);
-	Insert->currpos = ((char*) Insert->currpage) + SizeOfXLogPHD;
+	Insert->currpos = ((char *) Insert->currpage) + SizeOfXLogPHD;
+
 	/*
-	 * Be sure to re-zero the buffer so that bytes beyond what we've written
-	 * will look like zeroes and not valid XLOG records...
+	 * Be sure to re-zero the buffer so that bytes beyond what we've
+	 * written will look like zeroes and not valid XLOG records...
 	 */
-	MemSet((char*) Insert->currpage, 0, BLCKSZ);
+	MemSet((char *) Insert->currpage, 0, BLCKSZ);
 	Insert->currpage->xlp_magic = XLOG_PAGE_MAGIC;
-	/* Insert->currpage->xlp_info = 0; */	/* done by memset */
+	/* Insert->currpage->xlp_info = 0; *//* done by memset */
 	Insert->currpage->xlp_sui = ThisStartUpID;
 
 	return update_needed;
@@ -959,11 +973,15 @@ XLogWrite(XLogwrtRqst WriteRqst)
 	bool		ispartialpage;
 	bool		use_existent;
 
-	/* Update local LogwrtResult (caller probably did this already, but...) */
+	/*
+	 * Update local LogwrtResult (caller probably did this already,
+	 * but...)
+	 */
 	LogwrtResult = Write->LogwrtResult;
 
 	while (XLByteLT(LogwrtResult.Write, WriteRqst.Write))
 	{
+
 		/*
 		 * Make sure we're not ahead of the insert process.  This could
 		 * happen if we're passed a bogus WriteRqst.Write that is past the
@@ -979,6 +997,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 
 		if (!XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
 		{
+
 			/*
 			 * Switch to new logfile segment.
 			 */
@@ -1011,11 +1030,12 @@ XLogWrite(XLogwrtRqst WriteRqst)
 				ControlFile->logSeg = openLogSeg + 1;
 				ControlFile->time = time(NULL);
 				UpdateControlFile();
+
 				/*
-				 * Signal postmaster to start a checkpoint if it's been too
-				 * long since the last one.  (We look at local copy of
-				 * RedoRecPtr which might be a little out of date, but should
-				 * be close enough for this purpose.)
+				 * Signal postmaster to start a checkpoint if it's been
+				 * too long since the last one.  (We look at local copy of
+				 * RedoRecPtr which might be a little out of date, but
+				 * should be close enough for this purpose.)
 				 */
 				if (IsUnderPostmaster &&
 					(openLogId != RedoRecPtr.xlogid ||
@@ -1056,14 +1076,14 @@ XLogWrite(XLogwrtRqst WriteRqst)
 		/*
 		 * If we just wrote the whole last page of a logfile segment,
 		 * fsync the segment immediately.  This avoids having to go back
-		 * and re-open prior segments when an fsync request comes along later.
-		 * Doing it here ensures that one and only one backend will perform
-		 * this fsync.
+		 * and re-open prior segments when an fsync request comes along
+		 * later. Doing it here ensures that one and only one backend will
+		 * perform this fsync.
 		 */
 		if (openLogOff >= XLogSegSize && !ispartialpage)
 		{
 			issue_xlog_fsync();
-			LogwrtResult.Flush = LogwrtResult.Write; /* end of current page */
+			LogwrtResult.Flush = LogwrtResult.Write;	/* end of current page */
 		}
 
 		if (ispartialpage)
@@ -1081,15 +1101,16 @@ XLogWrite(XLogwrtRqst WriteRqst)
 	if (XLByteLT(LogwrtResult.Flush, WriteRqst.Flush) &&
 		XLByteLT(LogwrtResult.Flush, LogwrtResult.Write))
 	{
+
 		/*
-		 * Could get here without iterating above loop, in which case
-		 * we might have no open file or the wrong one.  However, we do
-		 * not need to fsync more than one file.
+		 * Could get here without iterating above loop, in which case we
+		 * might have no open file or the wrong one.  However, we do not
+		 * need to fsync more than one file.
 		 */
 		if (sync_method != SYNC_METHOD_OPEN)
 		{
 			if (openLogFile >= 0 &&
-				!XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
+			 !XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
 			{
 				if (close(openLogFile) != 0)
 					elog(STOP, "close(logfile %u seg %u) failed: %m",
@@ -1110,8 +1131,8 @@ XLogWrite(XLogwrtRqst WriteRqst)
 	/*
 	 * Update shared-memory status
 	 *
-	 * We make sure that the shared 'request' values do not fall behind
-	 * the 'result' values.  This is not absolutely essential, but it saves
+	 * We make sure that the shared 'request' values do not fall behind the
+	 * 'result' values.  This is not absolutely essential, but it saves
 	 * some code in a couple of places.
 	 */
 	S_LOCK(&(XLogCtl->info_lck));
@@ -1163,8 +1184,9 @@ XLogFlush(XLogRecPtr record)
 	 * Since fsync is usually a horribly expensive operation, we try to
 	 * piggyback as much data as we can on each fsync: if we see any more
 	 * data entered into the xlog buffer, we'll write and fsync that too,
-	 * so that the final value of LogwrtResult.Flush is as large as possible.
-	 * This gives us some chance of avoiding another fsync immediately after.
+	 * so that the final value of LogwrtResult.Flush is as large as
+	 * possible. This gives us some chance of avoiding another fsync
+	 * immediately after.
 	 */
 
 	/* initialize to given target; may increase below */
@@ -1192,9 +1214,7 @@ XLogFlush(XLogRecPtr record)
 			uint32		freespace = INSERT_FREESPACE(Insert);
 
 			if (freespace < SizeOfXLogRecord)	/* buffer is full */
-			{
 				WriteRqstPtr = XLogCtl->xlblocks[Insert->curridx];
-			}
 			else
 			{
 				WriteRqstPtr = XLogCtl->xlblocks[Insert->curridx];
@@ -1232,7 +1252,7 @@ XLogFlush(XLogRecPtr record)
  * log, seg: identify segment to be created/opened.
  *
  * *use_existent: if TRUE, OK to use a pre-existing file (else, any
- * pre-existing file will be deleted).  On return, TRUE if a pre-existing
+ * pre-existing file will be deleted).	On return, TRUE if a pre-existing
  * file was used.
  *
  * use_lock: if TRUE, acquire ControlFileLock spinlock while moving file into
@@ -1257,7 +1277,8 @@ XLogFileInit(uint32 log, uint32 seg,
 	XLogFileName(path, log, seg);
 
 	/*
-	 * Try to use existent file (checkpoint maker may have created it already)
+	 * Try to use existent file (checkpoint maker may have created it
+	 * already)
 	 */
 	if (*use_existent)
 	{
@@ -1270,14 +1291,14 @@ XLogFileInit(uint32 log, uint32 seg,
 					 log, seg);
 		}
 		else
-			return(fd);
+			return (fd);
 	}
 
 	/*
-	 * Initialize an empty (all zeroes) segment.  NOTE: it is possible that
-	 * another process is doing the same thing.  If so, we will end up
-	 * pre-creating an extra log segment.  That seems OK, and better than
-	 * holding the spinlock throughout this lengthy process.
+	 * Initialize an empty (all zeroes) segment.  NOTE: it is possible
+	 * that another process is doing the same thing.  If so, we will end
+	 * up pre-creating an extra log segment.  That seems OK, and better
+	 * than holding the spinlock throughout this lengthy process.
 	 */
 	snprintf(tmppath, MAXPGPATH, "%s%cxlogtemp.%d",
 			 XLogDir, SEP_CHAR, (int) getpid());
@@ -1291,10 +1312,10 @@ XLogFileInit(uint32 log, uint32 seg,
 		elog(STOP, "InitCreate(%s) failed: %m", tmppath);
 
 	/*
-	 * Zero-fill the file.  We have to do this the hard way to ensure that
+	 * Zero-fill the file.	We have to do this the hard way to ensure that
 	 * all the file space has really been allocated --- on platforms that
 	 * allow "holes" in files, just seeking to the end doesn't allocate
-	 * intermediate space.  This way, we know that we have all the space
+	 * intermediate space.	This way, we know that we have all the space
 	 * and (after the fsync below) that all the indirect blocks are down
 	 * on disk.  Therefore, fdatasync(2) or O_DSYNC will be sufficient to
 	 * sync future writes to the log file.
@@ -1304,9 +1325,12 @@ XLogFileInit(uint32 log, uint32 seg,
 	{
 		if ((int) write(fd, zbuffer, sizeof(zbuffer)) != (int) sizeof(zbuffer))
 		{
-			int		save_errno = errno;
+			int			save_errno = errno;
 
-			/* If we fail to make the file, delete it to release disk space */
+			/*
+			 * If we fail to make the file, delete it to release disk
+			 * space
+			 */
 			unlink(tmppath);
 			errno = save_errno;
 
@@ -1336,10 +1360,8 @@ XLogFileInit(uint32 log, uint32 seg,
 	targseg = seg;
 	strcpy(targpath, path);
 
-	if (! *use_existent)
-	{
+	if (!*use_existent)
 		unlink(targpath);
-	}
 	else
 	{
 		while ((fd = BasicOpenFile(targpath, O_RDWR | PG_BINARY,
@@ -1451,10 +1473,10 @@ PreallocXlogFiles(XLogRecPtr endptr)
 static void
 MoveOfflineLogs(uint32 log, uint32 seg)
 {
-	DIR			   *xldir;
-	struct dirent  *xlde;
-	char			lastoff[32];
-	char			path[MAXPGPATH];
+	DIR		   *xldir;
+	struct dirent *xlde;
+	char		lastoff[32];
+	char		path[MAXPGPATH];
 
 	Assert(XLOG_archive_dir[0] == 0);	/* ! implemented yet */
 
@@ -1471,9 +1493,9 @@ MoveOfflineLogs(uint32 log, uint32 seg)
 			strspn(xlde->d_name, "0123456789ABCDEF") == 16 &&
 			strcmp(xlde->d_name, lastoff) <= 0)
 		{
-			elog(LOG, "MoveOfflineLogs: %s %s", (XLOG_archive_dir[0]) ? 
+			elog(LOG, "MoveOfflineLogs: %s %s", (XLOG_archive_dir[0]) ?
 				 "archive" : "remove", xlde->d_name);
-			sprintf(path, "%s%c%s",	XLogDir, SEP_CHAR, xlde->d_name);
+			sprintf(path, "%s%c%s", XLogDir, SEP_CHAR, xlde->d_name);
 			if (XLOG_archive_dir[0] == 0)
 				unlink(path);
 		}
@@ -1499,13 +1521,13 @@ RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
 	char	   *blk;
 	int			i;
 
-	blk = (char*)XLogRecGetData(record) + record->xl_len;
+	blk = (char *) XLogRecGetData(record) + record->xl_len;
 	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
 	{
 		if (!(record->xl_info & XLR_SET_BKP_BLOCK(i)))
 			continue;
 
-		memcpy((char*)&bkpb, blk, sizeof(BkpBlock));
+		memcpy((char *) &bkpb, blk, sizeof(BkpBlock));
 		blk += sizeof(BkpBlock);
 
 		reln = XLogOpenRelation(true, record->xl_rmid, bkpb.node);
@@ -1516,7 +1538,7 @@ RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
 			if (BufferIsValid(buffer))
 			{
 				page = (Page) BufferGetPage(buffer);
-				memcpy((char*)page, blk, BLCKSZ);
+				memcpy((char *) page, blk, BLCKSZ);
 				PageSetLSN(page, lsn);
 				PageSetSUI(page, ThisStartUpID);
 				UnlockAndWriteBuffer(buffer);
@@ -1546,7 +1568,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 	/* Check CRC of rmgr data and record header */
 	INIT_CRC64(crc);
 	COMP_CRC64(crc, XLogRecGetData(record), len);
-	COMP_CRC64(crc, (char*) record + sizeof(crc64),
+	COMP_CRC64(crc, (char *) record + sizeof(crc64),
 			   SizeOfXLogRecord - sizeof(crc64));
 	FIN_CRC64(crc);
 
@@ -1554,11 +1576,11 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 	{
 		elog(emode, "ReadRecord: bad rmgr data CRC in record at %u/%u",
 			 recptr.xlogid, recptr.xrecoff);
-		return(false);
+		return (false);
 	}
 
 	/* Check CRCs of backup blocks, if any */
-	blk = (char*)XLogRecGetData(record) + len;
+	blk = (char *) XLogRecGetData(record) + len;
 	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
 	{
 		if (!(record->xl_info & XLR_SET_BKP_BLOCK(i)))
@@ -1569,18 +1591,19 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 		COMP_CRC64(crc, blk + sizeof(crc64),
 				   sizeof(BkpBlock) - sizeof(crc64));
 		FIN_CRC64(crc);
-		memcpy((char*)&cbuf, blk, sizeof(crc64)); /* don't assume alignment */
+		memcpy((char *) &cbuf, blk, sizeof(crc64));		/* don't assume
+														 * alignment */
 
 		if (!EQ_CRC64(cbuf, crc))
 		{
 			elog(emode, "ReadRecord: bad bkp block %d CRC in record at %u/%u",
 				 i + 1, recptr.xlogid, recptr.xrecoff);
-			return(false);
+			return (false);
 		}
 		blk += sizeof(BkpBlock) + BLCKSZ;
 	}
 
-	return(true);
+	return (true);
 }
 
 /*
@@ -1609,13 +1632,14 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 
 	if (readBuf == NULL)
 	{
+
 		/*
 		 * First time through, permanently allocate readBuf.  We do it
 		 * this way, rather than just making a static array, for two
-		 * reasons: (1) no need to waste the storage in most instantiations
-		 * of the backend; (2) a static char array isn't guaranteed to
-		 * have any particular alignment, whereas malloc() will provide
-		 * MAXALIGN'd storage.
+		 * reasons: (1) no need to waste the storage in most
+		 * instantiations of the backend; (2) a static char array isn't
+		 * guaranteed to have any particular alignment, whereas malloc()
+		 * will provide MAXALIGN'd storage.
 		 */
 		readBuf = (char *) malloc(BLCKSZ);
 		Assert(readBuf != NULL);
@@ -1656,7 +1680,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 		readFile = XLogFileOpen(readId, readSeg, (emode == LOG));
 		if (readFile < 0)
 			goto next_record_is_invalid;
-		readOff = (uint32) (-1); /* force read to occur below */
+		readOff = (uint32) (-1);/* force read to occur below */
 	}
 
 	targetPageOff = ((RecPtr->xrecoff % XLogSegSize) / BLCKSZ) * BLCKSZ;
@@ -1688,9 +1712,10 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 	record = (XLogRecord *) ((char *) readBuf + RecPtr->xrecoff % BLCKSZ);
 
 got_record:;
+
 	/*
-	 * Currently, xl_len == 0 must be bad data, but that might not be
-	 * true forever.  See note in XLogInsert.
+	 * Currently, xl_len == 0 must be bad data, but that might not be true
+	 * forever.  See note in XLogInsert.
 	 */
 	if (record->xl_len == 0)
 	{
@@ -1698,8 +1723,10 @@ got_record:;
 			 RecPtr->xlogid, RecPtr->xrecoff);
 		goto next_record_is_invalid;
 	}
+
 	/*
-	 * Compute total length of record including any appended backup blocks.
+	 * Compute total length of record including any appended backup
+	 * blocks.
 	 */
 	total_len = SizeOfXLogRecord + record->xl_len;
 	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
@@ -1708,6 +1735,7 @@ got_record:;
 			continue;
 		total_len += sizeof(BkpBlock) + BLCKSZ;
 	}
+
 	/*
 	 * Make sure it will fit in buffer (currently, it is mechanically
 	 * impossible for this test to fail, but it seems like a good idea
@@ -1731,7 +1759,7 @@ got_record:;
 	{
 		/* Need to reassemble record */
 		XLogContRecord *contrecord;
-		uint32			gotlen = len;
+		uint32		gotlen = len;
 
 		memcpy(buffer, record, len);
 		record = (XLogRecord *) buffer;
@@ -1764,7 +1792,7 @@ got_record:;
 				goto next_record_is_invalid;
 			}
 			contrecord = (XLogContRecord *) ((char *) readBuf + SizeOfXLogPHD);
-			if (contrecord->xl_rem_len == 0 || 
+			if (contrecord->xl_rem_len == 0 ||
 				total_len != (contrecord->xl_rem_len + gotlen))
 			{
 				elog(emode, "ReadRecord: invalid cont-record len %u in logfile %u seg %u off %u",
@@ -1774,7 +1802,7 @@ got_record:;
 			len = BLCKSZ - SizeOfXLogPHD - SizeOfXLogContRecord;
 			if (contrecord->xl_rem_len > len)
 			{
-				memcpy(buffer, (char *)contrecord + SizeOfXLogContRecord, len);
+				memcpy(buffer, (char *) contrecord + SizeOfXLogContRecord, len);
 				gotlen += len;
 				buffer += len;
 				continue;
@@ -1788,12 +1816,12 @@ got_record:;
 		if (BLCKSZ - SizeOfXLogRecord >= SizeOfXLogPHD +
 			SizeOfXLogContRecord + MAXALIGN(contrecord->xl_rem_len))
 		{
-			nextRecord = (XLogRecord *) ((char *) contrecord + 
+			nextRecord = (XLogRecord *) ((char *) contrecord +
 				SizeOfXLogContRecord + MAXALIGN(contrecord->xl_rem_len));
 		}
 		EndRecPtr.xlogid = readId;
 		EndRecPtr.xrecoff = readSeg * XLogSegSize + readOff +
-			SizeOfXLogPHD + SizeOfXLogContRecord + 
+			SizeOfXLogPHD + SizeOfXLogContRecord +
 			MAXALIGN(contrecord->xl_rem_len);
 		ReadRecPtr = *RecPtr;
 		return record;
@@ -1822,7 +1850,7 @@ next_record_is_invalid:;
  * Check whether the xlog header of a page just read in looks valid.
  *
  * This is just a convenience subroutine to avoid duplicated code in
- * ReadRecord.  It's not intended for use from anywhere else.
+ * ReadRecord.	It's not intended for use from anywhere else.
  */
 static bool
 ValidXLOGHeader(XLogPageHeader hdr, int emode, bool checkSUI)
@@ -1839,14 +1867,16 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode, bool checkSUI)
 			 hdr->xlp_info, readId, readSeg, readOff);
 		return false;
 	}
+
 	/*
-	 * We disbelieve a SUI less than the previous page's SUI, or more
-	 * than a few counts greater.  In theory as many as 512 shutdown
-	 * checkpoint records could appear on a 32K-sized xlog page, so
-	 * that's the most differential there could legitimately be.
+	 * We disbelieve a SUI less than the previous page's SUI, or more than
+	 * a few counts greater.  In theory as many as 512 shutdown checkpoint
+	 * records could appear on a 32K-sized xlog page, so that's the most
+	 * differential there could legitimately be.
 	 *
 	 * Note this check can only be applied when we are reading the next page
-	 * in sequence, so ReadRecord passes a flag indicating whether to check.
+	 * in sequence, so ReadRecord passes a flag indicating whether to
+	 * check.
 	 */
 	if (checkSUI)
 	{
@@ -1866,7 +1896,7 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode, bool checkSUI)
  * I/O routines for pg_control
  *
  * *ControlFile is a buffer in shared memory that holds an image of the
- * contents of pg_control.  WriteControlFile() initializes pg_control
+ * contents of pg_control.	WriteControlFile() initializes pg_control
  * given a preloaded buffer, ReadControlFile() loads the buffer from
  * the pg_control file (during postmaster or standalone-backend startup),
  * and UpdateControlFile() rewrites pg_control after we modify xlog state.
@@ -1890,9 +1920,11 @@ static void
 WriteControlFile(void)
 {
 	int			fd;
-	char		buffer[BLCKSZ];	/* need not be aligned */
+	char		buffer[BLCKSZ]; /* need not be aligned */
+
 #ifdef USE_LOCALE
 	char	   *localeptr;
+
 #endif
 
 	/*
@@ -1911,16 +1943,17 @@ WriteControlFile(void)
 	if (!localeptr)
 		elog(STOP, "Invalid LC_CTYPE setting");
 	StrNCpy(ControlFile->lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
+
 	/*
 	 * Issue warning notice if initdb'ing in a locale that will not permit
-	 * LIKE index optimization.  This is not a clean place to do it, but
-	 * I don't see a better place either...
+	 * LIKE index optimization.  This is not a clean place to do it, but I
+	 * don't see a better place either...
 	 */
 	if (!locale_is_like_safe())
 		elog(NOTICE, "Initializing database with %s collation order."
 			 "\n\tThis locale setting will prevent use of index optimization for"
 			 "\n\tLIKE and regexp searches.  If you are concerned about speed of"
-			 "\n\tsuch queries, you may wish to set LC_COLLATE to \"C\" and"
+		  "\n\tsuch queries, you may wish to set LC_COLLATE to \"C\" and"
 			 "\n\tre-initdb.  For more information see the Administrator's Guide.",
 			 ControlFile->lc_collate);
 #else
@@ -1930,17 +1963,17 @@ WriteControlFile(void)
 
 	/* Contents are protected with a CRC */
 	INIT_CRC64(ControlFile->crc);
-	COMP_CRC64(ControlFile->crc, 
-			   (char*) ControlFile + sizeof(crc64),
+	COMP_CRC64(ControlFile->crc,
+			   (char *) ControlFile + sizeof(crc64),
 			   sizeof(ControlFileData) - sizeof(crc64));
 	FIN_CRC64(ControlFile->crc);
 
 	/*
-	 * We write out BLCKSZ bytes into pg_control, zero-padding the
-	 * excess over sizeof(ControlFileData).  This reduces the odds
-	 * of premature-EOF errors when reading pg_control.  We'll still
-	 * fail when we check the contents of the file, but hopefully with
-	 * a more specific error than "couldn't read pg_control".
+	 * We write out BLCKSZ bytes into pg_control, zero-padding the excess
+	 * over sizeof(ControlFileData).  This reduces the odds of
+	 * premature-EOF errors when reading pg_control.  We'll still fail
+	 * when we check the contents of the file, but hopefully with a more
+	 * specific error than "couldn't read pg_control".
 	 */
 	if (sizeof(ControlFileData) > BLCKSZ)
 		elog(STOP, "sizeof(ControlFileData) is too large ... fix xlog.c");
@@ -1993,8 +2026,8 @@ ReadControlFile(void)
 
 	/* Now check the CRC. */
 	INIT_CRC64(crc);
-	COMP_CRC64(crc, 
-			   (char*) ControlFile + sizeof(crc64),
+	COMP_CRC64(crc,
+			   (char *) ControlFile + sizeof(crc64),
 			   sizeof(ControlFileData) - sizeof(crc64));
 	FIN_CRC64(crc);
 
@@ -2002,14 +2035,15 @@ ReadControlFile(void)
 		elog(STOP, "Invalid CRC in control file");
 
 	/*
-	 * Do compatibility checking immediately.  We do this here for 2 reasons:
+	 * Do compatibility checking immediately.  We do this here for 2
+	 * reasons:
 	 *
-	 * (1) if the database isn't compatible with the backend executable,
-	 * we want to abort before we can possibly do any damage;
+	 * (1) if the database isn't compatible with the backend executable, we
+	 * want to abort before we can possibly do any damage;
 	 *
 	 * (2) this code is executed in the postmaster, so the setlocale() will
 	 * propagate to forked backends, which aren't going to read this file
-	 * for themselves.  (These locale settings are considered critical
+	 * for themselves.	(These locale settings are considered critical
 	 * compatibility items because they can affect sort order of indexes.)
 	 */
 	if (ControlFile->catalog_version_no != CATALOG_VERSION_NO)
@@ -2042,8 +2076,8 @@ UpdateControlFile(void)
 	int			fd;
 
 	INIT_CRC64(ControlFile->crc);
-	COMP_CRC64(ControlFile->crc, 
-			   (char*) ControlFile + sizeof(crc64),
+	COMP_CRC64(ControlFile->crc,
+			   (char *) ControlFile + sizeof(crc64),
 			   sizeof(ControlFileData) - sizeof(crc64));
 	FIN_CRC64(ControlFile->crc);
 
@@ -2096,6 +2130,7 @@ XLOGShmemInit(void)
 	Assert(!found);
 
 	memset(XLogCtl, 0, sizeof(XLogCtlData));
+
 	/*
 	 * Since XLogCtlData contains XLogRecPtr fields, its sizeof should be
 	 * a multiple of the alignment for same, so no extra alignment padding
@@ -2104,9 +2139,10 @@ XLOGShmemInit(void)
 	XLogCtl->xlblocks = (XLogRecPtr *)
 		(((char *) XLogCtl) + sizeof(XLogCtlData));
 	memset(XLogCtl->xlblocks, 0, sizeof(XLogRecPtr) * XLOGbuffers);
+
 	/*
-	 * Here, on the other hand, we must MAXALIGN to ensure the page buffers
-	 * have worst-case alignment.
+	 * Here, on the other hand, we must MAXALIGN to ensure the page
+	 * buffers have worst-case alignment.
 	 */
 	XLogCtl->pages =
 		((char *) XLogCtl) + MAXALIGN(sizeof(XLogCtlData) +
@@ -2114,8 +2150,8 @@ XLOGShmemInit(void)
 	memset(XLogCtl->pages, 0, BLCKSZ * XLOGbuffers);
 
 	/*
-	 * Do basic initialization of XLogCtl shared data.
-	 * (StartupXLOG will fill in additional info.)
+	 * Do basic initialization of XLogCtl shared data. (StartupXLOG will
+	 * fill in additional info.)
 	 */
 	XLogCtl->XLogCacheByte = BLCKSZ * XLOGbuffers;
 	XLogCtl->XLogCacheBlck = XLOGbuffers - 1;
@@ -2145,7 +2181,7 @@ BootStrapXLOG(void)
 	char	   *buffer;
 	XLogPageHeader page;
 	XLogRecord *record;
-	bool        use_existent;
+	bool		use_existent;
 	crc64		crc;
 
 	/* Use malloc() to ensure buffer is MAXALIGNED */
@@ -2180,7 +2216,7 @@ BootStrapXLOG(void)
 
 	INIT_CRC64(crc);
 	COMP_CRC64(crc, &checkPoint, sizeof(checkPoint));
-	COMP_CRC64(crc, (char*) record + sizeof(crc64),
+	COMP_CRC64(crc, (char *) record + sizeof(crc64),
 			   SizeOfXLogRecord - sizeof(crc64));
 	FIN_CRC64(crc);
 	record->xl_crc = crc;
@@ -2246,8 +2282,8 @@ StartupXLOG(void)
 	/*
 	 * Read control file and check XLOG status looks valid.
 	 *
-	 * Note: in most control paths, *ControlFile is already valid and we
-	 * need not do ReadControlFile() here, but might as well do it to be sure.
+	 * Note: in most control paths, *ControlFile is already valid and we need
+	 * not do ReadControlFile() here, but might as well do it to be sure.
 	 */
 	ReadControlFile();
 
@@ -2297,9 +2333,7 @@ StartupXLOG(void)
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
 		}
 		else
-		{
 			elog(STOP, "Unable to locate a valid CheckPoint record");
-		}
 	}
 	LastRec = RecPtr = checkPointLoc;
 	memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
@@ -2320,7 +2354,7 @@ StartupXLOG(void)
 	ShmemVariableCache->oidCount = 0;
 
 	ThisStartUpID = checkPoint.ThisStartUpID;
-	RedoRecPtr = XLogCtl->Insert.RedoRecPtr = 
+	RedoRecPtr = XLogCtl->Insert.RedoRecPtr =
 		XLogCtl->RedoRecPtr = checkPoint.redo;
 
 	if (XLByteLT(RecPtr, checkPoint.redo))
@@ -2328,7 +2362,7 @@ StartupXLOG(void)
 	if (checkPoint.undo.xrecoff == 0)
 		checkPoint.undo = RecPtr;
 
-	if (XLByteLT(checkPoint.undo, RecPtr) || 
+	if (XLByteLT(checkPoint.undo, RecPtr) ||
 		XLByteLT(checkPoint.redo, RecPtr))
 	{
 		if (wasShutdown)
@@ -2336,9 +2370,7 @@ StartupXLOG(void)
 		InRecovery = true;
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
-	{
 		InRecovery = true;
-	}
 
 	/* REDO */
 	if (InRecovery)
@@ -2355,7 +2387,8 @@ StartupXLOG(void)
 		/* Is REDO required ? */
 		if (XLByteLT(checkPoint.redo, RecPtr))
 			record = ReadRecord(&(checkPoint.redo), STOP, buffer);
-		else	/* read past CheckPoint record */
+		else
+/* read past CheckPoint record */
 			record = ReadRecord(NULL, LOG, buffer);
 
 		if (record != NULL)
@@ -2369,15 +2402,15 @@ StartupXLOG(void)
 					ShmemVariableCache->nextXid = record->xl_xid + 1;
 				if (XLOG_DEBUG)
 				{
-					char	buf[8192];
+					char		buf[8192];
 
-					sprintf(buf, "REDO @ %u/%u; LSN %u/%u: ", 
-						ReadRecPtr.xlogid, ReadRecPtr.xrecoff,
-						EndRecPtr.xlogid, EndRecPtr.xrecoff);
+					sprintf(buf, "REDO @ %u/%u; LSN %u/%u: ",
+							ReadRecPtr.xlogid, ReadRecPtr.xrecoff,
+							EndRecPtr.xlogid, EndRecPtr.xrecoff);
 					xlog_outrec(buf, record);
 					strcat(buf, " - ");
-					RmgrTable[record->xl_rmid].rm_desc(buf, 
-						record->xl_info, XLogRecGetData(record));
+					RmgrTable[record->xl_rmid].rm_desc(buf,
+								record->xl_info, XLogRecGetData(record));
 					fprintf(stderr, "%s\n", buf);
 				}
 
@@ -2411,8 +2444,11 @@ StartupXLOG(void)
 	XLogCtl->xlblocks[0].xrecoff =
 		((EndOfLog.xrecoff - 1) / BLCKSZ + 1) * BLCKSZ;
 	Insert = &XLogCtl->Insert;
-	/* Tricky point here: readBuf contains the *last* block that the LastRec
-	 * record spans, not the one it starts in, which is what we want.
+
+	/*
+	 * Tricky point here: readBuf contains the *last* block that the
+	 * LastRec record spans, not the one it starts in, which is what we
+	 * want.
 	 */
 	Assert(readOff == (XLogCtl->xlblocks[0].xrecoff - BLCKSZ) % XLogSegSize);
 	memcpy((char *) Insert->currpage, readBuf, BLCKSZ);
@@ -2458,6 +2494,7 @@ StartupXLOG(void)
 
 	if (InRecovery)
 	{
+
 		/*
 		 * In case we had to use the secondary checkpoint, make sure that
 		 * it will still be shown as the secondary checkpoint after this
@@ -2554,7 +2591,7 @@ SetThisStartUpID(void)
 
 /*
  * CheckPoint process called by postmaster saves copy of new RedoRecPtr
- * in shmem (using SetRedoRecPtr).  When checkpointer completes, postmaster
+ * in shmem (using SetRedoRecPtr).	When checkpointer completes, postmaster
  * calls GetRedoRecPtr to update its own copy of RedoRecPtr, so that
  * subsequently-spawned backends will start out with a reasonably up-to-date
  * local RedoRecPtr.  Since these operations are not protected by any spinlock
@@ -2605,7 +2642,7 @@ CreateCheckPoint(bool shutdown)
 	CheckPoint	checkPoint;
 	XLogRecPtr	recptr;
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
-	XLogRecData	rdata;
+	XLogRecData rdata;
 	uint32		freespace;
 	uint32		_logId;
 	uint32		_logSeg;
@@ -2613,7 +2650,7 @@ CreateCheckPoint(bool shutdown)
 
 	if (MyLastRecPtr.xrecoff != 0)
 		elog(ERROR, "CreateCheckPoint: cannot be called inside transaction block");
- 
+
 	START_CRIT_SECTION();
 
 	/* Grab lock, using larger than normal sleep between tries (1 sec) */
@@ -2639,17 +2676,17 @@ CreateCheckPoint(bool shutdown)
 	/*
 	 * If this isn't a shutdown, and we have not inserted any XLOG records
 	 * since the start of the last checkpoint, skip the checkpoint.  The
-	 * idea here is to avoid inserting duplicate checkpoints when the system
-	 * is idle.  That wastes log space, and more importantly it exposes us to
-	 * possible loss of both current and previous checkpoint records if the
-	 * machine crashes just as we're writing the update.  (Perhaps it'd make
-	 * even more sense to checkpoint only when the previous checkpoint record
-	 * is in a different xlog page?)
+	 * idea here is to avoid inserting duplicate checkpoints when the
+	 * system is idle.	That wastes log space, and more importantly it
+	 * exposes us to possible loss of both current and previous checkpoint
+	 * records if the machine crashes just as we're writing the update.
+	 * (Perhaps it'd make even more sense to checkpoint only when the
+	 * previous checkpoint record is in a different xlog page?)
 	 *
 	 * We have to make two tests to determine that nothing has happened since
-	 * the start of the last checkpoint: current insertion point must match
-	 * the end of the last checkpoint record, and its redo pointer must point
-	 * to itself.
+	 * the start of the last checkpoint: current insertion point must
+	 * match the end of the last checkpoint record, and its redo pointer
+	 * must point to itself.
 	 */
 	if (!shutdown)
 	{
@@ -2677,7 +2714,7 @@ CreateCheckPoint(bool shutdown)
 	 * NB: this is NOT necessarily where the checkpoint record itself will
 	 * be, since other backends may insert more XLOG records while we're
 	 * off doing the buffer flush work.  Those XLOG records are logically
-	 * after the checkpoint, even though physically before it.  Got that?
+	 * after the checkpoint, even though physically before it.	Got that?
 	 */
 	freespace = INSERT_FREESPACE(Insert);
 	if (freespace < SizeOfXLogRecord)
@@ -2687,16 +2724,18 @@ CreateCheckPoint(bool shutdown)
 		freespace = BLCKSZ - SizeOfXLogPHD;
 	}
 	INSERT_RECPTR(checkPoint.redo, Insert, Insert->curridx);
+
 	/*
 	 * Here we update the shared RedoRecPtr for future XLogInsert calls;
 	 * this must be done while holding the insert lock.
 	 */
 	RedoRecPtr = XLogCtl->Insert.RedoRecPtr = checkPoint.redo;
+
 	/*
-	 * Get UNDO record ptr - this is oldest of PROC->logRec values.
-	 * We do this while holding insert lock to ensure that we won't miss
-	 * any about-to-commit transactions (UNDO must include all xacts that
-	 * have commits after REDO point).
+	 * Get UNDO record ptr - this is oldest of PROC->logRec values. We do
+	 * this while holding insert lock to ensure that we won't miss any
+	 * about-to-commit transactions (UNDO must include all xacts that have
+	 * commits after REDO point).
 	 */
 	checkPoint.undo = GetUndoRecPtr();
 
@@ -2720,8 +2759,8 @@ CreateCheckPoint(bool shutdown)
 	SpinRelease(OidGenLockId);
 
 	/*
-	 * Having constructed the checkpoint record, ensure all shmem disk buffers
-	 * are flushed to disk.
+	 * Having constructed the checkpoint record, ensure all shmem disk
+	 * buffers are flushed to disk.
 	 */
 	FlushBufferPool();
 
@@ -2729,7 +2768,7 @@ CreateCheckPoint(bool shutdown)
 	 * Now insert the checkpoint record into XLOG.
 	 */
 	rdata.buffer = InvalidBuffer;
-	rdata.data = (char *)(&checkPoint);
+	rdata.data = (char *) (&checkPoint);
 	rdata.len = sizeof(checkPoint);
 	rdata.next = NULL;
 
@@ -2748,11 +2787,11 @@ CreateCheckPoint(bool shutdown)
 		elog(STOP, "XLog concurrent activity while data base is shutting down");
 
 	/*
-	 * Remember location of prior checkpoint's earliest info.
-	 * Oldest item is redo or undo, whichever is older; but watch out
-	 * for case that undo = 0.
+	 * Remember location of prior checkpoint's earliest info. Oldest item
+	 * is redo or undo, whichever is older; but watch out for case that
+	 * undo = 0.
 	 */
-	if (ControlFile->checkPointCopy.undo.xrecoff != 0 && 
+	if (ControlFile->checkPointCopy.undo.xrecoff != 0 &&
 		XLByteLT(ControlFile->checkPointCopy.undo,
 				 ControlFile->checkPointCopy.redo))
 		XLByteToSeg(ControlFile->checkPointCopy.undo, _logId, _logSeg);
@@ -2801,10 +2840,10 @@ CreateCheckPoint(bool shutdown)
 void
 XLogPutNextOid(Oid nextOid)
 {
-	XLogRecData		rdata;
+	XLogRecData rdata;
 
 	rdata.buffer = InvalidBuffer;
-	rdata.data = (char *)(&nextOid);
+	rdata.data = (char *) (&nextOid);
 	rdata.len = sizeof(Oid);
 	rdata.next = NULL;
 	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTOID, &rdata);
@@ -2816,11 +2855,11 @@ XLogPutNextOid(Oid nextOid)
 void
 xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 {
-	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_NEXTOID)
 	{
-		Oid		nextOid;
+		Oid			nextOid;
 
 		memcpy(&nextOid, XLogRecGetData(record), sizeof(Oid));
 		if (ShmemVariableCache->nextOid < nextOid)
@@ -2846,9 +2885,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 		/* In an ONLINE checkpoint, treat the counters like NEXTOID */
 		if (ShmemVariableCache->nextXid < checkPoint.nextXid)
-		{
 			ShmemVariableCache->nextXid = checkPoint.nextXid;
-		}
 		if (ShmemVariableCache->nextOid < checkPoint.nextOid)
 		{
 			ShmemVariableCache->nextOid = checkPoint.nextOid;
@@ -2856,32 +2893,33 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		}
 	}
 }
- 
+
 void
 xlog_undo(XLogRecPtr lsn, XLogRecord *record)
 {
 }
- 
+
 void
-xlog_desc(char *buf, uint8 xl_info, char* rec)
+xlog_desc(char *buf, uint8 xl_info, char *rec)
 {
-	uint8	info = xl_info & ~XLR_INFO_MASK;
+	uint8		info = xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_CHECKPOINT_SHUTDOWN ||
 		info == XLOG_CHECKPOINT_ONLINE)
 	{
-		CheckPoint	*checkpoint = (CheckPoint*) rec;
+		CheckPoint *checkpoint = (CheckPoint *) rec;
+
 		sprintf(buf + strlen(buf), "checkpoint: redo %u/%u; undo %u/%u; "
-		"sui %u; xid %u; oid %u; %s",
-			checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
-			checkpoint->undo.xlogid, checkpoint->undo.xrecoff,
-			checkpoint->ThisStartUpID, checkpoint->nextXid, 
-			checkpoint->nextOid,
-			(info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
+				"sui %u; xid %u; oid %u; %s",
+				checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
+				checkpoint->undo.xlogid, checkpoint->undo.xrecoff,
+				checkpoint->ThisStartUpID, checkpoint->nextXid,
+				checkpoint->nextOid,
+			 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
 	}
 	else if (info == XLOG_NEXTOID)
 	{
-		Oid		nextOid;
+		Oid			nextOid;
 
 		memcpy(&nextOid, rec, sizeof(Oid));
 		sprintf(buf + strlen(buf), "nextOid: %u", nextOid);
@@ -2893,13 +2931,13 @@ xlog_desc(char *buf, uint8 xl_info, char* rec)
 static void
 xlog_outrec(char *buf, XLogRecord *record)
 {
-	int		bkpb;
-	int		i;
+	int			bkpb;
+	int			i;
 
 	sprintf(buf + strlen(buf), "prev %u/%u; xprev %u/%u; xid %u",
-		record->xl_prev.xlogid, record->xl_prev.xrecoff,
-		record->xl_xact_prev.xlogid, record->xl_xact_prev.xrecoff,
-		record->xl_xid);
+			record->xl_prev.xlogid, record->xl_prev.xrecoff,
+			record->xl_xact_prev.xlogid, record->xl_xact_prev.xrecoff,
+			record->xl_xid);
 
 	for (i = 0, bkpb = 0; i < XLR_MAX_BKP_BLOCKS; i++)
 	{
@@ -2912,7 +2950,7 @@ xlog_outrec(char *buf, XLogRecord *record)
 		sprintf(buf + strlen(buf), "; bkpb %d", bkpb);
 
 	sprintf(buf + strlen(buf), ": %s",
-		RmgrTable[record->xl_rmid].rm_name);
+			RmgrTable[record->xl_rmid].rm_name);
 }
 
 
@@ -2923,15 +2961,19 @@ xlog_outrec(char *buf, XLogRecord *record)
 bool
 check_xlog_sync_method(const char *method)
 {
-	if (strcasecmp(method, "fsync") == 0) return true;
+	if (strcasecmp(method, "fsync") == 0)
+		return true;
 #ifdef HAVE_FDATASYNC
-	if (strcasecmp(method, "fdatasync") == 0) return true;
+	if (strcasecmp(method, "fdatasync") == 0)
+		return true;
 #endif
 #ifdef OPEN_SYNC_FLAG
-	if (strcasecmp(method, "open_sync") == 0) return true;
+	if (strcasecmp(method, "open_sync") == 0)
+		return true;
 #endif
 #ifdef OPEN_DATASYNC_FLAG
-	if (strcasecmp(method, "open_datasync") == 0) return true;
+	if (strcasecmp(method, "open_datasync") == 0)
+		return true;
 #endif
 	return false;
 }
@@ -2939,8 +2981,8 @@ check_xlog_sync_method(const char *method)
 void
 assign_xlog_sync_method(const char *method)
 {
-	int		new_sync_method;
-	int		new_sync_bit;
+	int			new_sync_method;
+	int			new_sync_bit;
 
 	if (strcasecmp(method, "fsync") == 0)
 	{
@@ -2978,11 +3020,12 @@ assign_xlog_sync_method(const char *method)
 
 	if (sync_method != new_sync_method || open_sync_bit != new_sync_bit)
 	{
+
 		/*
-		 * To ensure that no blocks escape unsynced, force an fsync on
-		 * the currently open log segment (if any).  Also, if the open
-		 * flag is changing, close the log file so it will be reopened
-		 * (with new flag bit) at next use.
+		 * To ensure that no blocks escape unsynced, force an fsync on the
+		 * currently open log segment (if any).  Also, if the open flag is
+		 * changing, close the log file so it will be reopened (with new
+		 * flag bit) at next use.
 		 */
 		if (openLogFile >= 0)
 		{
@@ -3011,7 +3054,7 @@ issue_xlog_fsync(void)
 {
 	switch (sync_method)
 	{
-		case SYNC_METHOD_FSYNC:
+			case SYNC_METHOD_FSYNC:
 			if (pg_fsync(openLogFile) != 0)
 				elog(STOP, "fsync(logfile %u seg %u) failed: %m",
 					 openLogId, openLogSeg);

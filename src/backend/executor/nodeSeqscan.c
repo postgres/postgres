@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.27 2001/01/29 00:39:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.28 2001/03/22 03:59:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "parser/parsetree.h"
 
 static Oid InitScanRelation(SeqScan *node, EState *estate,
-							CommonScanState *scanstate);
+				 CommonScanState *scanstate);
 static TupleTableSlot *SeqNext(SeqScan *node);
 
 /* ----------------------------------------------------------------
@@ -174,8 +174,8 @@ InitScanRelation(SeqScan *node, EState *estate,
 				  0,			/* is index */
 				  direction,	/* scan direction */
 				  estate->es_snapshot,
-				  &currentRelation, /* return: rel desc */
-				  (Pointer *) &currentScanDesc); /* return: scan desc */
+				  &currentRelation,		/* return: rel desc */
+				  (Pointer *) &currentScanDesc);		/* return: scan desc */
 
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = currentScanDesc;

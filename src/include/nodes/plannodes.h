@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.48 2001/03/04 15:43:33 momjian Exp $
+ * $Id: plannodes.h,v 1.49 2001/03/22 04:00:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ typedef struct Result
  *		Generate the concatenation of the results of sub-plans.
  *
  * Append nodes are sometimes used to switch between several result relations
- * (when the target of an UPDATE or DELETE is an inheritance set).  Such a
+ * (when the target of an UPDATE or DELETE is an inheritance set).	Such a
  * node will have isTarget true.  The Append executor is then responsible
  * for updating the executor state to point at the correct target relation
  * whenever it switches subplans.
@@ -215,11 +215,11 @@ typedef struct TidScan
  *
  * SubqueryScan is for scanning the output of a sub-query in the range table.
  * We need a special plan node above the sub-query's plan as a place to switch
- * execution contexts.  Although we are not scanning a physical relation,
+ * execution contexts.	Although we are not scanning a physical relation,
  * we make this a descendant of Scan anyway for code-sharing purposes.
  *
  * Note: we store the sub-plan in the type-specific subplan field, not in
- * the generic lefttree field as you might expect.  This is because we do
+ * the generic lefttree field as you might expect.	This is because we do
  * not want plan-tree-traversal routines to recurse into the subplan without
  * knowing that they are changing Query contexts.
  * ----------------
@@ -420,7 +420,7 @@ typedef struct Tee
 	List	   *rtentries;		/* the range table for the plan below the
 								 * Tee may be different than the parent
 								 * plans */
-} Tee;
+}			Tee;
 
 #endif
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.73 2001/01/24 19:42:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.74 2001/03/22 03:59:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ write_password_file(Relation rel)
 				CRYPT_PWD_FILE_SEPSTR
 				"%s\n",
 				DatumGetCString(DirectFunctionCall1(nameout,
-								NameGetDatum(DatumGetName(datum_n)))),
+								   NameGetDatum(DatumGetName(datum_n)))),
 				null_p ? "" :
 				DatumGetCString(DirectFunctionCall1(textout, datum_p)),
 				null_v ? "\\N" :
@@ -248,7 +248,7 @@ CreateUser(CreateUserStmt *stmt)
 	 * Build a tuple to insert
 	 */
 	new_record[Anum_pg_shadow_usename - 1] = DirectFunctionCall1(namein,
-												CStringGetDatum(stmt->user));
+											CStringGetDatum(stmt->user));
 	new_record[Anum_pg_shadow_usesysid - 1] = Int32GetDatum(havesysid ? stmt->sysid : max_id + 1);
 
 	AssertState(BoolIsValid(stmt->createdb));
@@ -312,7 +312,7 @@ CreateUser(CreateUserStmt *stmt)
 												 * this in */
 		ags.action = +1;
 		ags.listUsers = makeList1(makeInteger(havesysid ?
-							stmt->sysid : max_id + 1));
+											  stmt->sysid : max_id + 1));
 		AlterGroup(&ags, "CREATE USER");
 	}
 
@@ -377,7 +377,7 @@ AlterUser(AlterUserStmt *stmt)
 	 * Build a tuple to update, perusing the information just obtained
 	 */
 	new_record[Anum_pg_shadow_usename - 1] = DirectFunctionCall1(namein,
-												CStringGetDatum(stmt->user));
+											CStringGetDatum(stmt->user));
 	new_record_nulls[Anum_pg_shadow_usename - 1] = ' ';
 
 	/* sysid - leave as is */
@@ -561,7 +561,7 @@ DropUser(DropUserStmt *stmt)
 			elog(ERROR, "DROP USER: user \"%s\" owns database \"%s\", cannot be removed%s",
 				 user,
 				 DatumGetCString(DirectFunctionCall1(nameout,
-									NameGetDatum(DatumGetName(datum)))),
+									 NameGetDatum(DatumGetName(datum)))),
 				 (length(stmt->users) > 1) ? " (no users removed)" : ""
 				);
 		}
@@ -603,6 +603,7 @@ DropUser(DropUserStmt *stmt)
 		}
 		heap_endscan(scan);
 		heap_close(pg_rel, AccessExclusiveLock);
+
 		/*
 		 * Advance command counter so that later iterations of this loop
 		 * will see the changes already made.  This is essential if, for
@@ -873,7 +874,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			{
 				/* Get the uid of the proposed user to add. */
 				tuple = SearchSysCache(SHADOWNAME,
-									   PointerGetDatum(strVal(lfirst(item))),
+								   PointerGetDatum(strVal(lfirst(item))),
 									   0, 0, 0);
 				if (!HeapTupleIsValid(tuple))
 					elog(ERROR, "%s: user \"%s\" does not exist",
@@ -995,7 +996,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 				{
 					/* Get the uid of the proposed user to drop. */
 					tuple = SearchSysCache(SHADOWNAME,
-										   PointerGetDatum(strVal(lfirst(item))),
+								   PointerGetDatum(strVal(lfirst(item))),
 										   0, 0, 0);
 					if (!HeapTupleIsValid(tuple))
 						elog(ERROR, "ALTER GROUP: user \"%s\" does not exist", strVal(lfirst(item)));

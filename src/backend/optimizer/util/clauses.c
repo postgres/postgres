@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.82 2001/03/08 01:49:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.83 2001/03/22 03:59:39 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -544,8 +544,8 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 
 	/*
 	 * If we find an aggregate function, do not recurse into its
-	 * arguments.  Subplans invoked within aggregate calls are allowed
-	 * to receive ungrouped variables.
+	 * arguments.  Subplans invoked within aggregate calls are allowed to
+	 * receive ungrouped variables.
 	 */
 	if (IsA(node, Aggref))
 		return false;
@@ -630,7 +630,7 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
  *	  Recursively search for noncachable functions within a clause.
  *
  * Returns true if any noncachable function (or operator implemented by a
- * noncachable function) is found.  This test is needed so that we don't
+ * noncachable function) is found.	This test is needed so that we don't
  * mistakenly think that something like "WHERE random() < 0.5" can be treated
  * as a constant qualification.
  *
@@ -655,11 +655,11 @@ contain_noncachable_functions_walker(Node *node, void *context)
 		switch (expr->opType)
 		{
 			case OP_EXPR:
-				if (! op_iscachable(((Oper *) expr->oper)->opno))
+				if (!op_iscachable(((Oper *) expr->oper)->opno))
 					return true;
 				break;
 			case FUNC_EXPR:
-				if (! func_iscachable(((Func *) expr->oper)->funcid))
+				if (!func_iscachable(((Func *) expr->oper)->funcid))
 					return true;
 				break;
 			default:
@@ -680,13 +680,14 @@ contain_noncachable_functions_walker(Node *node, void *context)
  *	  Detect whether a clause is "constant", ie, it contains no variables
  *	  of the current query level and no uses of noncachable functions.
  *	  Such a clause is not necessarily a true constant: it can still contain
- *	  Params and outer-level Vars.  However, its value will be constant over
+ *	  Params and outer-level Vars.	However, its value will be constant over
  *	  any one scan of the current query, so it can be used as an indexscan
  *	  key or (if a top-level qual) can be pushed up to become a gating qual.
  */
 bool
 is_pseudo_constant_clause(Node *clause)
 {
+
 	/*
 	 * We could implement this check in one recursive scan.  But since the
 	 * check for noncachable functions is both moderately expensive and
@@ -716,7 +717,7 @@ pull_constant_clauses(List *quals, List **constantQual)
 
 	foreach(q, quals)
 	{
-		Node   *qual = (Node *) lfirst(q);
+		Node	   *qual = (Node *) lfirst(q);
 
 		if (is_pseudo_constant_clause(qual))
 			constqual = lappend(constqual, qual);
@@ -1277,8 +1278,8 @@ eval_const_expressions_mutator(Node *node, void *context)
 		arg = eval_const_expressions_mutator(relabel->arg, context);
 
 		/*
-		 * If we find stacked RelabelTypes (eg, from foo :: int :: oid)
-		 * we can discard all but the top one.
+		 * If we find stacked RelabelTypes (eg, from foo :: int :: oid) we
+		 * can discard all but the top one.
 		 */
 		while (arg && IsA(arg, RelabelType))
 			arg = ((RelabelType *) arg)->arg;
@@ -1472,8 +1473,8 @@ simplify_op_or_func(Expr *expr, List *args)
 	 * If the function is strict and has a constant-NULL input, it will
 	 * never be called at all, so we can replace the call by a NULL
 	 * constant even if there are other inputs that aren't constant.
-	 * Otherwise, we can only simplify if all inputs are constants.
-	 * We can skip the function lookup if neither case applies.
+	 * Otherwise, we can only simplify if all inputs are constants. We can
+	 * skip the function lookup if neither case applies.
 	 */
 	if (has_nonconst_input && !has_null_input)
 		return NULL;
@@ -1500,9 +1501,10 @@ simplify_op_or_func(Expr *expr, List *args)
 		funcid = func->funcid;
 		result_typeid = func->functype;
 	}
+
 	/*
-	 * we could use func_iscachable() here, but we need several fields
-	 * out of the func tuple, so might as well just look it up once.
+	 * we could use func_iscachable() here, but we need several fields out
+	 * of the func tuple, so might as well just look it up once.
 	 */
 	func_tuple = SearchSysCache(PROCOID,
 								ObjectIdGetDatum(funcid),
@@ -1530,6 +1532,7 @@ simplify_op_or_func(Expr *expr, List *args)
 	 */
 	if (proisstrict && has_null_input)
 	{
+
 		/*
 		 * It's strict and has NULL input, so must produce NULL output.
 		 * Return a NULL constant of the right type.
@@ -1538,9 +1541,9 @@ simplify_op_or_func(Expr *expr, List *args)
 	}
 
 	/*
-	 * Otherwise, can simplify only if all inputs are constants.
-	 * (For a non-strict function, constant NULL inputs are treated
-	 * the same as constant non-NULL inputs.)
+	 * Otherwise, can simplify only if all inputs are constants. (For a
+	 * non-strict function, constant NULL inputs are treated the same as
+	 * constant non-NULL inputs.)
 	 */
 	if (has_nonconst_input)
 		return NULL;
@@ -1565,10 +1568,10 @@ simplify_op_or_func(Expr *expr, List *args)
 	get_typlenbyval(result_typeid, &resultTypLen, &resultTypByVal);
 
 	/*
-	 * It is OK to pass a dummy econtext because none of the ExecEvalExpr()
-	 * code used in this situation will use econtext.  That might seem
-	 * fortuitous, but it's not so unreasonable --- a constant expression
-	 * does not depend on context, by definition, n'est ce pas?
+	 * It is OK to pass a dummy econtext because none of the
+	 * ExecEvalExpr() code used in this situation will use econtext.  That
+	 * might seem fortuitous, but it's not so unreasonable --- a constant
+	 * expression does not depend on context, by definition, n'est ce pas?
 	 */
 	econtext = MakeExprContext(NULL, CurrentMemoryContext);
 
@@ -1657,10 +1660,10 @@ simplify_op_or_func(Expr *expr, List *args)
  * expression_tree_walker itself is called on a Query node, it does nothing
  * and returns "false".  The net effect is that unless the walker does
  * something special at a Query node, sub-selects will not be visited
- * during an expression tree walk.  This is exactly the behavior wanted
+ * during an expression tree walk.	This is exactly the behavior wanted
  * in many cases --- and for those walkers that do want to recurse into
  * sub-selects, special behavior is typically needed anyway at the entry
- * to a sub-select (such as incrementing a depth counter).  A walker that
+ * to a sub-select (such as incrementing a depth counter).	A walker that
  * wants to examine sub-selects should include code along the lines of:
  *
  *		if (IsA(node, Query))
@@ -1780,9 +1783,10 @@ expression_tree_walker(Node *node,
 				/*
 				 * If the SubLink has already been processed by
 				 * subselect.c, it will have lefthand=NIL, and we need to
-				 * scan the oper list.  Otherwise we only need to look at
-				 * the lefthand list (the incomplete Oper nodes in the oper
-				 * list are deemed uninteresting, perhaps even confusing).
+				 * scan the oper list.	Otherwise we only need to look at
+				 * the lefthand list (the incomplete Oper nodes in the
+				 * oper list are deemed uninteresting, perhaps even
+				 * confusing).
 				 */
 				if (sublink->lefthand)
 				{
@@ -1794,9 +1798,10 @@ expression_tree_walker(Node *node,
 					if (walker((Node *) sublink->oper, context))
 						return true;
 				}
+
 				/*
-				 * Also invoke the walker on the sublink's Query node,
-				 * so it can recurse into the sub-query if it wants to.
+				 * Also invoke the walker on the sublink's Query node, so
+				 * it can recurse into the sub-query if it wants to.
 				 */
 				return walker(sublink->subselect, context);
 			}
@@ -1815,7 +1820,7 @@ expression_tree_walker(Node *node,
 			return walker(((TargetEntry *) node)->expr, context);
 		case T_FromExpr:
 			{
-				FromExpr    *from = (FromExpr *) node;
+				FromExpr   *from = (FromExpr *) node;
 
 				if (walker(from->fromlist, context))
 					return true;
@@ -1825,7 +1830,7 @@ expression_tree_walker(Node *node,
 			break;
 		case T_JoinExpr:
 			{
-				JoinExpr    *join = (JoinExpr *) node;
+				JoinExpr   *join = (JoinExpr *) node;
 
 				if (walker(join->larg, context))
 					return true;
@@ -1835,7 +1840,9 @@ expression_tree_walker(Node *node,
 					return true;
 				if (walker((Node *) join->colvars, context))
 					return true;
-				/* alias clause, using list, colnames list are deemed
+
+				/*
+				 * alias clause, using list, colnames list are deemed
 				 * uninteresting.
 				 */
 			}
@@ -1890,7 +1897,7 @@ query_tree_walker(Query *query,
 		return true;
 	if (visitQueryRTEs)
 	{
-		List   *rt;
+		List	   *rt;
 
 		foreach(rt, query->rtable)
 		{
@@ -2176,8 +2183,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_FromExpr:
 			{
-				FromExpr *from = (FromExpr *) node;
-				FromExpr *newnode;
+				FromExpr   *from = (FromExpr *) node;
+				FromExpr   *newnode;
 
 				FLATCOPY(newnode, from, FromExpr);
 				MUTATE(newnode->fromlist, from->fromlist, List *);
@@ -2187,8 +2194,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_JoinExpr:
 			{
-				JoinExpr *join = (JoinExpr *) node;
-				JoinExpr *newnode;
+				JoinExpr   *join = (JoinExpr *) node;
+				JoinExpr   *newnode;
 
 				FLATCOPY(newnode, join, JoinExpr);
 				MUTATE(newnode->larg, join->larg, Node *);
@@ -2226,7 +2233,7 @@ expression_tree_mutator(Node *node,
  * This routine exists just to reduce the number of places that need to know
  * where all the expression subtrees of a Query are.  Note it can be used
  * for starting a walk at top level of a Query regardless of whether the
- * mutator intends to descend into subqueries.  It is also useful for
+ * mutator intends to descend into subqueries.	It is also useful for
  * descending into subqueries within a mutator.
  *
  * The specified Query node is modified-in-place; do a FLATCOPY() beforehand
@@ -2252,8 +2259,8 @@ query_tree_mutator(Query *query,
 	MUTATE(query->havingQual, query->havingQual, Node *);
 	if (visitQueryRTEs)
 	{
-		List   *newrt = NIL;
-		List   *rt;
+		List	   *newrt = NIL;
+		List	   *rt;
 
 		foreach(rt, query->rtable)
 		{

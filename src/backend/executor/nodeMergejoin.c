@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.42 2001/01/29 00:39:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.43 2001/03/22 03:59:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ MJFormSkipQual(List *qualList, char *replaceopname)
 							   CharGetDatum('b'));
 		if (!HeapTupleIsValid(optup))
 			elog(ERROR,
-				 "MJFormSkipQual: mergejoin operator %u has no matching %s op",
+			"MJFormSkipQual: mergejoin operator %u has no matching %s op",
 				 op->opno, replaceopname);
 		opform = (Form_pg_operator) GETSTRUCT(optup);
 
@@ -258,7 +258,7 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 								   &isNull,
 								   NULL);
 
-		if (! DatumGetBool(const_value) || isNull)
+		if (!DatumGetBool(const_value) || isNull)
 			break;				/* return false */
 
 		eqclause = lnext(eqclause);
@@ -439,7 +439,7 @@ ExecMergeJoin(MergeJoin *node)
 		default:
 			elog(ERROR, "ExecMergeJoin: unsupported join type %d",
 				 (int) node->join.jointype);
-			doFillOuter = false; /* keep compiler quiet */
+			doFillOuter = false;/* keep compiler quiet */
 			doFillInner = false;
 			break;
 	}
@@ -464,7 +464,7 @@ ExecMergeJoin(MergeJoin *node)
 	if (mergestate->jstate.cs_TupFromTlist)
 	{
 		TupleTableSlot *result;
-		ExprDoneCond	isDone;
+		ExprDoneCond isDone;
 
 		result = ExecProject(mergestate->jstate.cs_ProjInfo, &isDone);
 		if (isDone == ExprMultipleResult)
@@ -475,7 +475,7 @@ ExecMergeJoin(MergeJoin *node)
 
 	/* ----------------
 	 *	Reset per-tuple memory context to free any expression evaluation
-	 *	storage allocated in the previous tuple cycle.  Note this can't
+	 *	storage allocated in the previous tuple cycle.	Note this can't
 	 *	happen until we're done projecting out tuples from a join tuple.
 	 * ----------------
 	 */
@@ -500,9 +500,9 @@ ExecMergeJoin(MergeJoin *node)
 
 				/*
 				 * EXEC_MJ_INITIALIZE means that this is the first time
-				 * ExecMergeJoin() has been called and so we have to
-				 * fetch the first tuple for both outer and inner subplans.
-				 * If we fail to get a tuple here, then that subplan is
+				 * ExecMergeJoin() has been called and so we have to fetch
+				 * the first tuple for both outer and inner subplans. If
+				 * we fail to get a tuple here, then that subplan is
 				 * empty, and we either end the join or go to one of the
 				 * fill-remaining-tuples states.
 				 */
@@ -516,6 +516,7 @@ ExecMergeJoin(MergeJoin *node)
 					MJ_printf("ExecMergeJoin: outer subplan is empty\n");
 					if (doFillInner)
 					{
+
 						/*
 						 * Need to emit right-join tuples for remaining
 						 * inner tuples.  We set MatchedInner = true to
@@ -536,11 +537,13 @@ ExecMergeJoin(MergeJoin *node)
 					MJ_printf("ExecMergeJoin: inner subplan is empty\n");
 					if (doFillOuter)
 					{
+
 						/*
-						 * Need to emit left-join tuples for all outer tuples,
-						 * including the one we just fetched.  We set
-						 * MatchedOuter = false to force the ENDINNER state
-						 * to emit this tuple before advancing outer.
+						 * Need to emit left-join tuples for all outer
+						 * tuples, including the one we just fetched.  We
+						 * set MatchedOuter = false to force the ENDINNER
+						 * state to emit this tuple before advancing
+						 * outer.
 						 */
 						mergestate->mj_JoinState = EXEC_MJ_ENDINNER;
 						mergestate->mj_MatchedOuter = false;
@@ -614,17 +617,17 @@ ExecMergeJoin(MergeJoin *node)
 
 				/*
 				 * Check the extra qual conditions to see if we actually
-				 * want to return this join tuple.  If not, can proceed with
-				 * merge.  We must distinguish the additional joinquals
-				 * (which must pass to consider the tuples "matched" for
-				 * outer-join logic) from the otherquals (which must pass
-				 * before we actually return the tuple).
+				 * want to return this join tuple.	If not, can proceed
+				 * with merge.	We must distinguish the additional
+				 * joinquals (which must pass to consider the tuples
+				 * "matched" for outer-join logic) from the otherquals
+				 * (which must pass before we actually return the tuple).
 				 *
 				 * We don't bother with a ResetExprContext here, on the
-				 * assumption that we just did one before checking the merge
-				 * qual.  One per tuple should be sufficient.  Also, the
-				 * econtext's tuple pointers were set up before checking
-				 * the merge qual, so we needn't do it again.
+				 * assumption that we just did one before checking the
+				 * merge qual.	One per tuple should be sufficient.  Also,
+				 * the econtext's tuple pointers were set up before
+				 * checking the merge qual, so we needn't do it again.
 				 */
 				qualResult = (joinqual == NIL ||
 							  ExecQual(joinqual, econtext, false));
@@ -677,11 +680,13 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (doFillInner && !mergestate->mj_MatchedInner)
 				{
+
 					/*
 					 * Generate a fake join tuple with nulls for the outer
-					 * tuple, and return it if it passes the non-join quals.
+					 * tuple, and return it if it passes the non-join
+					 * quals.
 					 */
-					mergestate->mj_MatchedInner = true;	/* do it only once */
+					mergestate->mj_MatchedInner = true; /* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -753,11 +758,13 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (doFillOuter && !mergestate->mj_MatchedOuter)
 				{
+
 					/*
 					 * Generate a fake join tuple with nulls for the inner
-					 * tuple, and return it if it passes the non-join quals.
+					 * tuple, and return it if it passes the non-join
+					 * quals.
 					 */
-					mergestate->mj_MatchedOuter = true;	/* do it only once */
+					mergestate->mj_MatchedOuter = true; /* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -810,6 +817,7 @@ ExecMergeJoin(MergeJoin *node)
 					innerTupleSlot = mergestate->mj_InnerTupleSlot;
 					if (doFillInner && !TupIsNull(innerTupleSlot))
 					{
+
 						/*
 						 * Need to emit right-join tuples for remaining
 						 * inner tuples.
@@ -879,19 +887,20 @@ ExecMergeJoin(MergeJoin *node)
 				{
 
 					/*
-					 * the merge clause matched so now we restore the inner
-					 * scan position to the first mark, and loop back to
-					 * JOINTEST.  Actually, since we know the mergeclause
-					 * matches, we can skip JOINTEST and go straight to
-					 * JOINTUPLES.
+					 * the merge clause matched so now we restore the
+					 * inner scan position to the first mark, and loop
+					 * back to JOINTEST.  Actually, since we know the
+					 * mergeclause matches, we can skip JOINTEST and go
+					 * straight to JOINTUPLES.
 					 *
 					 * NOTE: we do not need to worry about the MatchedInner
 					 * state for the rescanned inner tuples.  We know all
-					 * of them will match this new outer tuple and therefore
-					 * won't be emitted as fill tuples.  This works *only*
-					 * because we require the extra joinquals to be nil when
-					 * doing a right or full join --- otherwise some of the
-					 * rescanned tuples might fail the extra joinquals.
+					 * of them will match this new outer tuple and
+					 * therefore won't be emitted as fill tuples.  This
+					 * works *only* because we require the extra joinquals
+					 * to be nil when doing a right or full join ---
+					 * otherwise some of the rescanned tuples might fail
+					 * the extra joinquals.
 					 */
 					ExecRestrPos(innerPlan);
 					mergestate->mj_JoinState = EXEC_MJ_JOINTUPLES;
@@ -918,6 +927,7 @@ ExecMergeJoin(MergeJoin *node)
 					{
 						if (doFillOuter)
 						{
+
 							/*
 							 * Need to emit left-join tuples for remaining
 							 * outer tuples.
@@ -1044,11 +1054,13 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (doFillOuter && !mergestate->mj_MatchedOuter)
 				{
+
 					/*
 					 * Generate a fake join tuple with nulls for the inner
-					 * tuple, and return it if it passes the non-join quals.
+					 * tuple, and return it if it passes the non-join
+					 * quals.
 					 */
-					mergestate->mj_MatchedOuter = true;	/* do it only once */
+					mergestate->mj_MatchedOuter = true; /* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -1101,6 +1113,7 @@ ExecMergeJoin(MergeJoin *node)
 					innerTupleSlot = mergestate->mj_InnerTupleSlot;
 					if (doFillInner && !TupIsNull(innerTupleSlot))
 					{
+
 						/*
 						 * Need to emit right-join tuples for remaining
 						 * inner tuples.
@@ -1229,11 +1242,13 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (doFillInner && !mergestate->mj_MatchedInner)
 				{
+
 					/*
 					 * Generate a fake join tuple with nulls for the outer
-					 * tuple, and return it if it passes the non-join quals.
+					 * tuple, and return it if it passes the non-join
+					 * quals.
 					 */
-					mergestate->mj_MatchedInner = true;	/* do it only once */
+					mergestate->mj_MatchedInner = true; /* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -1286,6 +1301,7 @@ ExecMergeJoin(MergeJoin *node)
 					outerTupleSlot = mergestate->mj_OuterTupleSlot;
 					if (doFillOuter && !TupIsNull(outerTupleSlot))
 					{
+
 						/*
 						 * Need to emit left-join tuples for remaining
 						 * outer tuples.
@@ -1306,8 +1322,8 @@ ExecMergeJoin(MergeJoin *node)
 
 				/*
 				 * EXEC_MJ_ENDOUTER means we have run out of outer tuples,
-				 * but are doing a right/full join and therefore must null-
-				 * fill any remaing unmatched inner tuples.
+				 * but are doing a right/full join and therefore must
+				 * null- fill any remaing unmatched inner tuples.
 				 */
 			case EXEC_MJ_ENDOUTER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_ENDOUTER\n");
@@ -1316,11 +1332,13 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (!mergestate->mj_MatchedInner)
 				{
+
 					/*
 					 * Generate a fake join tuple with nulls for the outer
-					 * tuple, and return it if it passes the non-join quals.
+					 * tuple, and return it if it passes the non-join
+					 * quals.
 					 */
-					mergestate->mj_MatchedInner = true;	/* do it only once */
+					mergestate->mj_MatchedInner = true; /* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -1383,11 +1401,13 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (!mergestate->mj_MatchedOuter)
 				{
+
 					/*
 					 * Generate a fake join tuple with nulls for the inner
-					 * tuple, and return it if it passes the non-join quals.
+					 * tuple, and return it if it passes the non-join
+					 * quals.
 					 */
-					mergestate->mj_MatchedOuter = true;	/* do it only once */
+					mergestate->mj_MatchedOuter = true; /* do it only once */
 
 					ResetExprContext(econtext);
 
@@ -1515,14 +1535,16 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 		case JOIN_LEFT:
 			mergestate->mj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-									  ExecGetTupType(innerPlan((Plan*) node)));
+							   ExecGetTupType(innerPlan((Plan *) node)));
 			break;
 		case JOIN_RIGHT:
 			mergestate->mj_NullOuterTupleSlot =
 				ExecInitNullTupleSlot(estate,
-									  ExecGetTupType(outerPlan((Plan*) node)));
+							   ExecGetTupType(outerPlan((Plan *) node)));
+
 			/*
-			 * Can't handle right or full join with non-nil extra joinclauses.
+			 * Can't handle right or full join with non-nil extra
+			 * joinclauses.
 			 */
 			if (node->join.joinqual != NIL)
 				elog(ERROR, "RIGHT JOIN is only supported with mergejoinable join conditions");
@@ -1530,12 +1552,14 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 		case JOIN_FULL:
 			mergestate->mj_NullOuterTupleSlot =
 				ExecInitNullTupleSlot(estate,
-									  ExecGetTupType(outerPlan((Plan*) node)));
+							   ExecGetTupType(outerPlan((Plan *) node)));
 			mergestate->mj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-									  ExecGetTupType(innerPlan((Plan*) node)));
+							   ExecGetTupType(innerPlan((Plan *) node)));
+
 			/*
-			 * Can't handle right or full join with non-nil extra joinclauses.
+			 * Can't handle right or full join with non-nil extra
+			 * joinclauses.
 			 */
 			if (node->join.joinqual != NIL)
 				elog(ERROR, "FULL JOIN is only supported with mergejoinable join conditions");

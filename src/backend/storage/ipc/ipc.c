@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.63 2001/03/13 01:17:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.64 2001/03/22 03:59:45 momjian Exp $
  *
  * NOTES
  *
@@ -71,7 +71,7 @@ static IpcSemaphoreId InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
 						   int semStartValue, bool removeOnExit);
 static void CallbackSemaphoreKill(int status, Datum semId);
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size,
-									 int permission);
+						int permission);
 static void IpcMemoryDetach(int status, Datum shmaddr);
 static void IpcMemoryDelete(int status, Datum shmId);
 static void *PrivateMemoryCreate(uint32 size);
@@ -101,6 +101,7 @@ static struct ONEXIT
 	void		(*function) ();
 	Datum		arg;
 }			on_proc_exit_list[MAX_ON_EXITS],
+
 			on_shmem_exit_list[MAX_ON_EXITS];
 
 static int	on_proc_exit_index,
@@ -127,9 +128,9 @@ proc_exit(int code)
 	proc_exit_inprogress = true;
 
 	/*
-	 * Forget any pending cancel or die requests; we're doing our best
-	 * to close up shop already.  Note that the signal handlers will not
-	 * set these flags again, now that proc_exit_inprogress is set.
+	 * Forget any pending cancel or die requests; we're doing our best to
+	 * close up shop already.  Note that the signal handlers will not set
+	 * these flags again, now that proc_exit_inprogress is set.
 	 */
 	InterruptPending = false;
 	ProcDiePending = false;
@@ -198,7 +199,7 @@ shmem_exit(int code)
  * ----------------------------------------------------------------
  */
 void
-on_proc_exit(void (*function) (), Datum arg)
+			on_proc_exit(void (*function) (), Datum arg)
 {
 	if (on_proc_exit_index >= MAX_ON_EXITS)
 		elog(FATAL, "Out of on_proc_exit slots");
@@ -217,7 +218,7 @@ on_proc_exit(void (*function) (), Datum arg)
  * ----------------------------------------------------------------
  */
 void
-on_shmem_exit(void (*function) (), Datum arg)
+			on_shmem_exit(void (*function) (), Datum arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		elog(FATAL, "Out of on_shmem_exit slots");
@@ -282,11 +283,13 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
 
 	if (semId < 0)
 	{
+
 		/*
 		 * Fail quietly if error indicates a collision with existing set.
-		 * One would expect EEXIST, given that we said IPC_EXCL, but perhaps
-		 * we could get a permission violation instead?  Also, EIDRM might
-		 * occur if an old set is slated for destruction but not gone yet.
+		 * One would expect EEXIST, given that we said IPC_EXCL, but
+		 * perhaps we could get a permission violation instead?  Also,
+		 * EIDRM might occur if an old set is slated for destruction but
+		 * not gone yet.
 		 */
 		if (errno == EEXIST || errno == EACCES
 #ifdef EIDRM
@@ -294,11 +297,12 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
 #endif
 			)
 			return -1;
+
 		/*
 		 * Else complain and abort
 		 */
 		fprintf(stderr, "IpcSemaphoreCreate: semget(key=%d, num=%d, 0%o) failed: %s\n",
-				(int) semKey, numSems, (IPC_CREAT|IPC_EXCL|permission),
+			  (int) semKey, numSems, (IPC_CREAT | IPC_EXCL | permission),
 				strerror(errno));
 
 		if (errno == ENOSPC)
@@ -325,7 +329,7 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		if (errno == ERANGE)
 			fprintf(stderr,
 					"You possibly need to raise your kernel's SEMVMX value to be at least\n"
-					"%d.  Look into the PostgreSQL documentation for details.\n",
+			"%d.  Look into the PostgreSQL documentation for details.\n",
 					semStartValue);
 
 		IpcSemaphoreKill(semId);
@@ -348,12 +352,14 @@ IpcSemaphoreKill(IpcSemaphoreId semId)
 {
 	union semun semun;
 
-	semun.val = 0;		/* unused, but keep compiler quiet */
+	semun.val = 0;				/* unused, but keep compiler quiet */
 
 	if (semctl(semId, 0, IPC_RMID, semun) < 0)
 		fprintf(stderr, "IpcSemaphoreKill: semctl(%d, 0, IPC_RMID, ...) failed: %s\n",
 				semId, strerror(errno));
-	/* We used to report a failure via elog(NOTICE), but that's pretty
+
+	/*
+	 * We used to report a failure via elog(NOTICE), but that's pretty
 	 * pointless considering any client has long since disconnected ...
 	 */
 }
@@ -393,13 +399,13 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, bool interruptOK)
 	 *	section already).
 	 *
 	 *	Once we acquire the lock, we do NOT check for an interrupt before
-	 *	returning.  The caller needs to be able to record ownership of
+	 *	returning.	The caller needs to be able to record ownership of
 	 *	the lock before any interrupt can be accepted.
 	 *
 	 *	There is a window of a few instructions between CHECK_FOR_INTERRUPTS
-	 *	and entering the semop() call.  If a cancel/die interrupt occurs in
+	 *	and entering the semop() call.	If a cancel/die interrupt occurs in
 	 *	that window, we would fail to notice it until after we acquire the
-	 *	lock (or get another interrupt to escape the semop()).  We can avoid
+	 *	lock (or get another interrupt to escape the semop()).	We can avoid
 	 *	this problem by temporarily setting ImmediateInterruptOK = true
 	 *	before we do CHECK_FOR_INTERRUPTS; then, a die() interrupt in this
 	 *	interval will execute directly.  However, there is a huge pitfall:
@@ -426,7 +432,7 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, bool interruptOK)
 
 	if (errStatus == -1)
 	{
-        fprintf(stderr, "IpcSemaphoreLock: semop(id=%d) failed: %s\n",
+		fprintf(stderr, "IpcSemaphoreLock: semop(id=%d) failed: %s\n",
 				semId, strerror(errno));
 		proc_exit(255);
 	}
@@ -503,7 +509,7 @@ IpcSemaphoreTryLock(IpcSemaphoreId semId, int sem)
 			return false;		/* failed to lock it */
 #endif
 		/* Otherwise we got trouble */
-        fprintf(stderr, "IpcSemaphoreTryLock: semop(id=%d) failed: %s\n",
+		fprintf(stderr, "IpcSemaphoreTryLock: semop(id=%d) failed: %s\n",
 				semId, strerror(errno));
 		proc_exit(255);
 	}
@@ -516,7 +522,8 @@ int
 IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem)
 {
 	union semun dummy;			/* for Solaris */
-	dummy.val = 0;		/* unused */
+
+	dummy.val = 0;				/* unused */
 
 	return semctl(semId, sem, GETVAL, dummy);
 }
@@ -526,7 +533,8 @@ static pid_t
 IpcSemaphoreGetLastPID(IpcSemaphoreId semId, int sem)
 {
 	union semun dummy;			/* for Solaris */
-	dummy.val = 0;		/* unused */
+
+	dummy.val = 0;				/* unused */
 
 	return semctl(semId, sem, GETPID, dummy);
 }
@@ -563,11 +571,13 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 
 	if (shmid < 0)
 	{
+
 		/*
-		 * Fail quietly if error indicates a collision with existing segment.
-		 * One would expect EEXIST, given that we said IPC_EXCL, but perhaps
-		 * we could get a permission violation instead?  Also, EIDRM might
-		 * occur if an old seg is slated for destruction but not gone yet.
+		 * Fail quietly if error indicates a collision with existing
+		 * segment. One would expect EEXIST, given that we said IPC_EXCL,
+		 * but perhaps we could get a permission violation instead?  Also,
+		 * EIDRM might occur if an old seg is slated for destruction but
+		 * not gone yet.
 		 */
 		if (errno == EEXIST || errno == EACCES
 #ifdef EIDRM
@@ -575,6 +585,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 #endif
 			)
 			return NULL;
+
 		/*
 		 * Else complain and abort
 		 */
@@ -584,7 +595,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 
 		if (errno == EINVAL)
 			fprintf(stderr,
-					"\nThis error can be caused by one of three things:\n\n"
+				 "\nThis error can be caused by one of three things:\n\n"
 					"1. The maximum size for shared memory segments on your system was\n"
 					"   exceeded.  You need to raise the SHMMAX parameter in your kernel\n"
 					"   to be at least %u bytes.\n\n"
@@ -618,7 +629,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 
 	if (memAddress == (void *) -1)
 	{
-        fprintf(stderr, "IpcMemoryCreate: shmat(id=%d) failed: %s\n",
+		fprintf(stderr, "IpcMemoryCreate: shmat(id=%d) failed: %s\n",
 				shmid, strerror(errno));
 		proc_exit(1);
 	}
@@ -643,7 +654,9 @@ IpcMemoryDetach(int status, Datum shmaddr)
 	if (shmdt(DatumGetPointer(shmaddr)) < 0)
 		fprintf(stderr, "IpcMemoryDetach: shmdt(%p) failed: %s\n",
 				DatumGetPointer(shmaddr), strerror(errno));
-	/* We used to report a failure via elog(NOTICE), but that's pretty
+
+	/*
+	 * We used to report a failure via elog(NOTICE), but that's pretty
 	 * pointless considering any client has long since disconnected ...
 	 */
 }
@@ -658,7 +671,9 @@ IpcMemoryDelete(int status, Datum shmId)
 	if (shmctl(DatumGetInt32(shmId), IPC_RMID, (struct shmid_ds *) NULL) < 0)
 		fprintf(stderr, "IpcMemoryDelete: shmctl(%d, %d, 0) failed: %s\n",
 				DatumGetInt32(shmId), IPC_RMID, strerror(errno));
-	/* We used to report a failure via elog(NOTICE), but that's pretty
+
+	/*
+	 * We used to report a failure via elog(NOTICE), but that's pretty
 	 * pointless considering any client has long since disconnected ...
 	 */
 }
@@ -669,22 +684,23 @@ IpcMemoryDelete(int status, Datum shmId)
 bool
 SharedMemoryIsInUse(IpcMemoryKey shmKey, IpcMemoryId shmId)
 {
-	struct shmid_ds		shmStat;
+	struct shmid_ds shmStat;
 
 	/*
-	 * We detect whether a shared memory segment is in use by seeing whether
-	 * it (a) exists and (b) has any processes are attached to it.
+	 * We detect whether a shared memory segment is in use by seeing
+	 * whether it (a) exists and (b) has any processes are attached to it.
 	 *
 	 * If we are unable to perform the stat operation for a reason other than
-	 * nonexistence of the segment (most likely, because it doesn't belong to
-	 * our userid), assume it is in use.
+	 * nonexistence of the segment (most likely, because it doesn't belong
+	 * to our userid), assume it is in use.
 	 */
 	if (shmctl(shmId, IPC_STAT, &shmStat) < 0)
 	{
+
 		/*
 		 * EINVAL actually has multiple possible causes documented in the
-		 * shmctl man page, but we assume it must mean the segment no longer
-		 * exists.
+		 * shmctl man page, but we assume it must mean the segment no
+		 * longer exists.
 		 */
 		if (errno == EINVAL)
 			return false;
@@ -718,7 +734,7 @@ PrivateMemoryCreate(uint32 size)
 		fprintf(stderr, "PrivateMemoryCreate: malloc(%u) failed\n", size);
 		proc_exit(1);
 	}
-	MemSet(memAddress, 0, size);		/* keep Purify quiet */
+	MemSet(memAddress, 0, size);/* keep Purify quiet */
 
 	/* Register on-exit routine to release storage */
 	on_shmem_exit(PrivateMemoryDelete, PointerGetDatum(memAddress));
@@ -763,14 +779,14 @@ IpcInitKeyAssignment(int port)
 PGShmemHeader *
 IpcMemoryCreate(uint32 size, bool makePrivate, int permission)
 {
-	void   *memAddress;
+	void	   *memAddress;
 	PGShmemHeader *hdr;
 
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
 	/* Loop till we find a free IPC key */
-	for (NextShmemSegID++ ; ; NextShmemSegID++)
+	for (NextShmemSegID++;; NextShmemSegID++)
 	{
 		IpcMemoryId shmid;
 
@@ -799,6 +815,7 @@ IpcMemoryCreate(uint32 size, bool makePrivate, int permission)
 			shmdt(memAddress);
 			continue;			/* segment belongs to a non-Postgres app */
 		}
+
 		/*
 		 * If the creator PID is my own PID or does not belong to any
 		 * extant process, it's safe to zap it.
@@ -812,28 +829,32 @@ IpcMemoryCreate(uint32 size, bool makePrivate, int permission)
 				continue;		/* segment belongs to a live process */
 			}
 		}
+
 		/*
-		 * The segment appears to be from a dead Postgres process, or
-		 * from a previous cycle of life in this same process.  Zap it,
-		 * if possible.  This probably shouldn't fail, but if it does,
-		 * assume the segment belongs to someone else after all,
-		 * and continue quietly.
+		 * The segment appears to be from a dead Postgres process, or from
+		 * a previous cycle of life in this same process.  Zap it, if
+		 * possible.  This probably shouldn't fail, but if it does, assume
+		 * the segment belongs to someone else after all, and continue
+		 * quietly.
 		 */
 		shmdt(memAddress);
 		if (shmctl(shmid, IPC_RMID, (struct shmid_ds *) NULL) < 0)
 			continue;
+
 		/*
 		 * Now try again to create the segment.
 		 */
 		memAddress = InternalIpcMemoryCreate(NextShmemSegID, size, permission);
 		if (memAddress)
 			break;				/* successful create and attach */
+
 		/*
 		 * Can only get here if some other process managed to create the
-		 * same shmem key before we did.  Let him have that one,
-		 * loop around to try next key.
+		 * same shmem key before we did.  Let him have that one, loop
+		 * around to try next key.
 		 */
 	}
+
 	/*
 	 * OK, we created a new segment.  Mark it as created by this process.
 	 * The order of assignments here is critical so that another Postgres
@@ -843,6 +864,7 @@ IpcMemoryCreate(uint32 size, bool makePrivate, int permission)
 	hdr = (PGShmemHeader *) memAddress;
 	hdr->creatorPID = getpid();
 	hdr->magic = PGShmemMagic;
+
 	/*
 	 * Initialize space allocation status for segment.
 	 */
@@ -862,27 +884,28 @@ IpcSemaphoreId
 IpcSemaphoreCreate(int numSems, int permission,
 				   int semStartValue, bool removeOnExit)
 {
-	IpcSemaphoreId	semId;
+	IpcSemaphoreId semId;
 	union semun semun;
 
 	/* Loop till we find a free IPC key */
-	for (NextSemaID++ ; ; NextSemaID++)
+	for (NextSemaID++;; NextSemaID++)
 	{
-		pid_t	creatorPID;
+		pid_t		creatorPID;
 
 		/* Try to create new semaphore set */
-		semId = InternalIpcSemaphoreCreate(NextSemaID, numSems+1,
+		semId = InternalIpcSemaphoreCreate(NextSemaID, numSems + 1,
 										   permission, semStartValue,
 										   removeOnExit);
 		if (semId >= 0)
 			break;				/* successful create */
 
 		/* See if it looks to be leftover from a dead Postgres process */
-		semId = semget(NextSemaID, numSems+1, 0);
+		semId = semget(NextSemaID, numSems + 1, 0);
 		if (semId < 0)
 			continue;			/* failed: must be some other app's */
 		if (IpcSemaphoreGetValue(semId, numSems) != PGSemaMagic)
 			continue;			/* sema belongs to a non-Postgres app */
+
 		/*
 		 * If the creator PID is my own PID or does not belong to any
 		 * extant process, it's safe to zap it.
@@ -896,46 +919,50 @@ IpcSemaphoreCreate(int numSems, int permission,
 				errno != ESRCH)
 				continue;		/* sema belongs to a live process */
 		}
+
 		/*
 		 * The sema set appears to be from a dead Postgres process, or
-		 * from a previous cycle of life in this same process.  Zap it,
-		 * if possible.  This probably shouldn't fail, but if it does,
-		 * assume the sema set belongs to someone else after all,
-		 * and continue quietly.
+		 * from a previous cycle of life in this same process.	Zap it, if
+		 * possible.  This probably shouldn't fail, but if it does, assume
+		 * the sema set belongs to someone else after all, and continue
+		 * quietly.
 		 */
 		semun.val = 0;			/* unused, but keep compiler quiet */
 		if (semctl(semId, 0, IPC_RMID, semun) < 0)
 			continue;
+
 		/*
 		 * Now try again to create the sema set.
 		 */
-		semId = InternalIpcSemaphoreCreate(NextSemaID, numSems+1,
+		semId = InternalIpcSemaphoreCreate(NextSemaID, numSems + 1,
 										   permission, semStartValue,
 										   removeOnExit);
 		if (semId >= 0)
 			break;				/* successful create */
+
 		/*
 		 * Can only get here if some other process managed to create the
-		 * same sema key before we did.  Let him have that one,
-		 * loop around to try next key.
+		 * same sema key before we did.  Let him have that one, loop
+		 * around to try next key.
 		 */
 	}
+
 	/*
 	 * OK, we created a new sema set.  Mark it as created by this process.
 	 * We do this by setting the spare semaphore to PGSemaMagic-1 and then
-	 * incrementing it with semop().  That leaves it with value PGSemaMagic
-	 * and sempid referencing this process.
+	 * incrementing it with semop().  That leaves it with value
+	 * PGSemaMagic and sempid referencing this process.
 	 */
-	semun.val = PGSemaMagic-1;
+	semun.val = PGSemaMagic - 1;
 	if (semctl(semId, numSems, SETVAL, semun) < 0)
 	{
 		fprintf(stderr, "IpcSemaphoreCreate: semctl(id=%d, %d, SETVAL, %d) failed: %s\n",
-				semId, numSems, PGSemaMagic-1, strerror(errno));
+				semId, numSems, PGSemaMagic - 1, strerror(errno));
 
 		if (errno == ERANGE)
 			fprintf(stderr,
 					"You possibly need to raise your kernel's SEMVMX value to be at least\n"
-					"%d.  Look into the PostgreSQL documentation for details.\n",
+			"%d.  Look into the PostgreSQL documentation for details.\n",
 					PGSemaMagic);
 
 		proc_exit(1);

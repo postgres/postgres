@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.47 2001/01/24 19:43:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.48 2001/03/22 03:59:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@ typedef struct f_smgr
 										   char *buffer);
 	int			(*smgr_flush) (Relation reln, BlockNumber blocknum,
 										   char *buffer);
-	int			(*smgr_blindwrt) (RelFileNode rnode, BlockNumber blkno, 
-										char *buffer, bool dofsync);
+	int			(*smgr_blindwrt) (RelFileNode rnode, BlockNumber blkno,
+											  char *buffer, bool dofsync);
 	int			(*smgr_markdirty) (Relation reln, BlockNumber blkno);
 	int			(*smgr_blindmarkdirty) (RelFileNode, BlockNumber blkno);
 	int			(*smgr_nblocks) (Relation reln);
@@ -60,7 +60,7 @@ static f_smgr smgrsw[] = {
 	/* magnetic disk */
 	{mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
 		mdread, mdwrite, mdflush, mdblindwrt, mdmarkdirty, mdblindmarkdirty,
-	mdnblocks, mdtruncate, mdcommit, mdabort, mdsync
+		mdnblocks, mdtruncate, mdcommit, mdabort, mdsync
 	},
 
 #ifdef STABLE_MEMORY_STORAGE
@@ -96,7 +96,7 @@ static int	NSmgr = lengthof(smgrsw);
  * that have been created or deleted in the current transaction.  When
  * a relation is created, we create the physical file immediately, but
  * remember it so that we can delete the file again if the current
- * transaction is aborted.  Conversely, a deletion request is NOT
+ * transaction is aborted.	Conversely, a deletion request is NOT
  * executed immediately, but is just entered in the list.  When and if
  * the transaction commits, we can delete the physical file.
  *
@@ -108,12 +108,12 @@ static int	NSmgr = lengthof(smgrsw);
 typedef struct PendingRelDelete
 {
 	RelFileNode relnode;		/* relation that may need to be deleted */
-	int16 which;				/* which storage manager? */
-	bool atCommit;				/* T=delete at commit; F=delete at abort */
-	struct PendingRelDelete *next; /* linked-list link */
+	int16		which;			/* which storage manager? */
+	bool		atCommit;		/* T=delete at commit; F=delete at abort */
+	struct PendingRelDelete *next;		/* linked-list link */
 } PendingRelDelete;
 
-static PendingRelDelete *pendingDeletes = NULL;	/* head of linked list */
+static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
 
 
 /*
@@ -133,7 +133,7 @@ smgrinit()
 			if ((*(smgrsw[i].smgr_init)) () == SM_FAIL)
 				elog(FATAL, "initialization failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
-														 Int16GetDatum(i))));
+													 Int16GetDatum(i))));
 		}
 	}
 
@@ -155,7 +155,7 @@ smgrshutdown(void)
 			if ((*(smgrsw[i].smgr_shutdown)) () == SM_FAIL)
 				elog(FATAL, "shutdown failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
-														 Int16GetDatum(i))));
+													 Int16GetDatum(i))));
 		}
 	}
 }
@@ -213,11 +213,11 @@ smgrunlink(int16 which, Relation reln)
 
 	/*
 	 * NOTE: if the relation was created in this transaction, it will now
-	 * be present in the pending-delete list twice, once with atCommit true
-	 * and once with atCommit false.  Hence, it will be physically deleted
-	 * at end of xact in either case (and the other entry will be ignored
-	 * by smgrDoPendingDeletes, so no error will occur).  We could instead
-	 * remove the existing list entry and delete the physical file
+	 * be present in the pending-delete list twice, once with atCommit
+	 * true and once with atCommit false.  Hence, it will be physically
+	 * deleted at end of xact in either case (and the other entry will be
+	 * ignored by smgrDoPendingDeletes, so no error will occur).  We could
+	 * instead remove the existing list entry and delete the physical file
 	 * immediately, but for now I'll keep the logic simple.
 	 */
 
@@ -259,7 +259,7 @@ smgropen(int16 which, Relation reln, bool failOK)
 	if (reln->rd_rel->relkind == RELKIND_VIEW)
 		return -1;
 	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
-		if (! failOK)
+		if (!failOK)
 			elog(ERROR, "cannot open %s: %m", RelationGetRelationName(reln));
 
 	return fd;
@@ -475,17 +475,20 @@ smgrDoPendingDeletes(bool isCommit)
 		pendingDeletes = pending->next;
 		if (pending->atCommit == isCommit)
 		{
+
 			/*
 			 * Get rid of any leftover buffers for the rel (shouldn't be
-			 * any in the commit case, but there can be in the abort case).
+			 * any in the commit case, but there can be in the abort
+			 * case).
 			 */
 			DropRelFileNodeBuffers(pending->relnode);
+
 			/*
 			 * And delete the physical files.
 			 *
 			 * Note: we treat deletion failure as a NOTICE, not an error,
-			 * because we've already decided to commit or abort the current
-			 * xact.
+			 * because we've already decided to commit or abort the
+			 * current xact.
 			 */
 			if ((*(smgrsw[pending->which].smgr_unlink)) (pending->relnode) == SM_FAIL)
 				elog(NOTICE, "cannot unlink %u/%u: %m",
@@ -513,7 +516,7 @@ smgrcommit()
 			if ((*(smgrsw[i].smgr_commit)) () == SM_FAIL)
 				elog(FATAL, "transaction commit failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
-														 Int16GetDatum(i))));
+													 Int16GetDatum(i))));
 		}
 	}
 
@@ -532,7 +535,7 @@ smgrabort()
 			if ((*(smgrsw[i].smgr_abort)) () == SM_FAIL)
 				elog(FATAL, "transaction abort failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
-														 Int16GetDatum(i))));
+													 Int16GetDatum(i))));
 		}
 	}
 
@@ -551,7 +554,7 @@ smgrsync()
 			if ((*(smgrsw[i].smgr_sync)) () == SM_FAIL)
 				elog(STOP, "storage sync failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
-														 Int16GetDatum(i))));
+													 Int16GetDatum(i))));
 		}
 	}
 
@@ -579,8 +582,8 @@ void
 smgr_undo(XLogRecPtr lsn, XLogRecord *record)
 {
 }
- 
+
 void
-smgr_desc(char *buf, uint8 xl_info, char* rec)
+smgr_desc(char *buf, uint8 xl_info, char *rec)
 {
 }

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.42 2001/02/06 01:53:52 tgl Exp $
+ * $Id: memutils.h,v 1.43 2001/03/22 04:01:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,9 +30,9 @@
  *		be summarily denied.
  *
  * XXX This is deliberately chosen to correspond to the limiting size
- * of varlena objects under TOAST.  See VARATT_MASK_SIZE in postgres.h.
+ * of varlena objects under TOAST.	See VARATT_MASK_SIZE in postgres.h.
  */
-#define MaxAllocSize	((Size) 0x3fffffff)	/* 1 gigabyte - 1 */
+#define MaxAllocSize	((Size) 0x3fffffff)		/* 1 gigabyte - 1 */
 
 #define AllocSizeIsValid(size)	(0 < (size) && (size) <= MaxAllocSize)
 
@@ -40,14 +40,14 @@
  * All chunks allocated by any memory context manager are required to be
  * preceded by a StandardChunkHeader at a spacing of STANDARDCHUNKHEADERSIZE.
  * A currently-allocated chunk must contain a backpointer to its owning
- * context as well as the allocated size of the chunk.  The backpointer is
- * used by pfree() and repalloc() to find the context to call.  The allocated
+ * context as well as the allocated size of the chunk.	The backpointer is
+ * used by pfree() and repalloc() to find the context to call.	The allocated
  * size is not absolutely essential, but it's expected to be needed by any
  * reasonable implementation.
  */
 typedef struct StandardChunkHeader
 {
-	MemoryContext	context;	/* owning context */
+	MemoryContext context;		/* owning context */
 	Size		size;			/* size of data space allocated in chunk */
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* when debugging memory usage, also store actual requested size */
@@ -92,9 +92,9 @@ extern bool MemoryContextContains(MemoryContext context, void *pointer);
  * specific creation routines, and noplace else.
  */
 extern MemoryContext MemoryContextCreate(NodeTag tag, Size size,
-										 MemoryContextMethods *methods,
-										 MemoryContext parent,
-										 const char *name);
+					MemoryContextMethods *methods,
+					MemoryContext parent,
+					const char *name);
 
 
 /*
@@ -103,10 +103,10 @@ extern MemoryContext MemoryContextCreate(NodeTag tag, Size size,
 
 /* aset.c */
 extern MemoryContext AllocSetContextCreate(MemoryContext parent,
-										   const char *name,
-										   Size minContextSize,
-										   Size initBlockSize,
-										   Size maxBlockSize);
+					  const char *name,
+					  Size minContextSize,
+					  Size initBlockSize,
+					  Size maxBlockSize);
 
 /*
  * Recommended default alloc parameters, suitable for "ordinary" contexts

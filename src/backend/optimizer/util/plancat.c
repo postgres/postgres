@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.63 2001/01/24 19:43:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.64 2001/03/22 03:59:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,8 +83,8 @@ find_secondary_indexes(Oid relationObjectId)
 	Relation	relation;
 
 	/*
-	 * We used to scan pg_index directly, but now the relcache offers
-	 * a cached list of OID indexes for each relation.  So, get that list
+	 * We used to scan pg_index directly, but now the relcache offers a
+	 * cached list of OID indexes for each relation.  So, get that list
 	 * and then use the syscache to obtain pg_index entries.
 	 */
 	relation = heap_open(relationObjectId, AccessShareLock);
@@ -126,7 +126,7 @@ find_secondary_indexes(Oid relationObjectId)
 			char	   *predString;
 
 			predString = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(&index->indpred)));
+									  PointerGetDatum(&index->indpred)));
 			info->indpred = (List *) stringToNode(predString);
 			pfree(predString);
 		}
@@ -213,11 +213,11 @@ restriction_selectivity(Oid functionObjectId,
 	float8		result;
 
 	result = DatumGetFloat8(OidFunctionCall5(functionObjectId,
-							ObjectIdGetDatum(operatorObjectId),
-							ObjectIdGetDatum(relationObjectId),
-							Int16GetDatum(attributeNumber),
-							constValue,
-							Int32GetDatum(constFlag)));
+									  ObjectIdGetDatum(operatorObjectId),
+									  ObjectIdGetDatum(relationObjectId),
+										  Int16GetDatum(attributeNumber),
+											 constValue,
+											 Int32GetDatum(constFlag)));
 
 	if (result < 0.0 || result > 1.0)
 		elog(ERROR, "restriction_selectivity: bad value %f", result);
@@ -246,11 +246,11 @@ join_selectivity(Oid functionObjectId,
 	float8		result;
 
 	result = DatumGetFloat8(OidFunctionCall5(functionObjectId,
-							ObjectIdGetDatum(operatorObjectId),
-							ObjectIdGetDatum(relationObjectId1),
-							Int16GetDatum(attributeNumber1),
-							ObjectIdGetDatum(relationObjectId2),
-							Int16GetDatum(attributeNumber2)));
+									  ObjectIdGetDatum(operatorObjectId),
+									 ObjectIdGetDatum(relationObjectId1),
+										 Int16GetDatum(attributeNumber1),
+									 ObjectIdGetDatum(relationObjectId2),
+									   Int16GetDatum(attributeNumber2)));
 
 	if (result < 0.0 || result > 1.0)
 		elog(ERROR, "join_selectivity: bad value %f", result);
@@ -277,13 +277,13 @@ find_inheritance_children(Oid inhparent)
 	HeapScanDesc scan;
 	HeapTuple	inheritsTuple;
 	Oid			inhrelid;
-	ScanKeyData	key[1];
+	ScanKeyData key[1];
 
 	/*
-	 * Can skip the scan if pg_class shows the relation has never had
-	 * a subclass.
+	 * Can skip the scan if pg_class shows the relation has never had a
+	 * subclass.
 	 */
-	if (! has_subclass(inhparent))
+	if (!has_subclass(inhparent))
 		return NIL;
 
 	ScanKeyEntryInitialize(&key[0],
@@ -306,7 +306,7 @@ find_inheritance_children(Oid inhparent)
 /*
  * has_subclass
  *
- * In the current implementation, has_subclass returns whether a 
+ * In the current implementation, has_subclass returns whether a
  * particular class *might* have a subclass. It will not return the
  * correct result if a class had a subclass which was later dropped.
  * This is because relhassubclass in pg_class is not updated when a

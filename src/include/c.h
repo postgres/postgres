@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.91 2001/02/20 00:28:07 tgl Exp $
+ * $Id: c.h,v 1.92 2001/03/22 04:00:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
  *		8)		system-specific hacks
  *
  * NOTE: since this file is included by both frontend and backend modules, it's
- * almost certainly wrong to put an "extern" declaration here.  typedefs and macros
+ * almost certainly wrong to put an "extern" declaration here.	typedefs and macros
  * are the kind of thing that might go here.
  *
  *----------------------------------------------------------------
@@ -62,7 +62,7 @@
 
 #ifdef __CYGWIN__
 #include <errno.h>
-#include <sys/fcntl.h>		/* ensure O_BINARY is available */
+#include <sys/fcntl.h>			/* ensure O_BINARY is available */
 #endif
 #ifdef HAVE_SUPPORTDEFS_H
 #include <SupportDefs.h>
@@ -131,11 +131,12 @@
 /* BeOS defines bool already, but the compiler chokes on the
  * #ifndef unless we wrap it in this check.
  */
-#ifndef __BEOS__ 
+#ifndef __BEOS__
 
 #ifndef __cplusplus
 #ifndef bool
 typedef char bool;
+
 #endif	 /* ndef bool */
 #endif	 /* not C++ */
 
@@ -147,7 +148,7 @@ typedef char bool;
 #define false	((bool) 0)
 #endif
 
-#endif /* __BEOS__ */
+#endif	 /* __BEOS__ */
 
 typedef bool *BoolPtr;
 
@@ -188,11 +189,12 @@ typedef char *Pointer;
  *		used for numerical computations and the
  *		frontend/backend protocol.
  */
-#ifndef __BEOS__ /* this shouldn't be required, but is is! */
+#ifndef __BEOS__				/* this shouldn't be required, but is is! */
 typedef signed char int8;		/* == 8 bits */
 typedef signed short int16;		/* == 16 bits */
 typedef signed int int32;		/* == 32 bits */
-#endif /* __BEOS__ */
+
+#endif	 /* __BEOS__ */
 
 /*
  * uintN
@@ -200,11 +202,12 @@ typedef signed int int32;		/* == 32 bits */
  *		used for numerical computations and the
  *		frontend/backend protocol.
  */
-#ifndef __BEOS__ /* this shouldn't be required, but is is! */
+#ifndef __BEOS__				/* this shouldn't be required, but is is! */
 typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
-#endif /* __BEOS__ */
+
+#endif	 /* __BEOS__ */
 
 /*
  * boolN
@@ -250,24 +253,27 @@ typedef double *float64;
 /*
  * 64-bit integers
  */
-#ifndef __BEOS__ /* this is already defined on BeOS */
+#ifndef __BEOS__				/* this is already defined on BeOS */
 #ifdef HAVE_LONG_INT_64
 /* Plain "long int" fits, use it */
 typedef long int int64;
 typedef unsigned long int uint64;
+
 #else
 #ifdef HAVE_LONG_LONG_INT_64
 /* We have working support for "long long int", use that */
 typedef long long int int64;
 typedef unsigned long long int uint64;
+
 #else
 /* Won't actually work, but fall back to long int so that code compiles */
 typedef long int int64;
 typedef unsigned long int uint64;
+
 #define INT64_IS_BUSTED
 #endif
 #endif
-#endif /* __BEOS__ */
+#endif	 /* __BEOS__ */
 
 /*
  * Size
@@ -354,7 +360,7 @@ struct varlena
 typedef struct varlena bytea;
 typedef struct varlena text;
 typedef struct varlena BpChar;	/* blank-padded char, ie SQL char(n) */
-typedef struct varlena VarChar;	/* var-length char, ie SQL varchar(n) */
+typedef struct varlena VarChar; /* var-length char, ie SQL varchar(n) */
 
 /*
  * Fixed-length array types (these are not varlena's!)
@@ -487,7 +493,7 @@ typedef NameData *Name;
  *	datum) and add a null, do not do it with StrNCpy(..., len+1).  That
  *	might seem to work, but it fetches one byte more than there is in the
  *	text object.  One fine day you'll have a SIGSEGV because there isn't
- *	another byte before the end of memory.  Don't laugh, we've had real
+ *	another byte before the end of memory.	Don't laugh, we've had real
  *	live bug reports from real live users over exactly this mistake.
  *	Do it honestly with "memcpy(dst,src,len); dst[len] = '\0';", instead.
  */
@@ -567,19 +573,19 @@ typedef NameData *Name;
  *				Section 8: system-specific hacks
  *
  *		This should be limited to things that absolutely have to be
- *		included in every source file.  The port-specific header file
+ *		included in every source file.	The port-specific header file
  *		is usually a better place for this sort of thing.
  * ----------------------------------------------------------------
  */
 
 #ifdef __CYGWIN__
 #define PG_BINARY	O_BINARY
-#define	PG_BINARY_R	"rb"
-#define	PG_BINARY_W	"wb"
+#define PG_BINARY_R "rb"
+#define PG_BINARY_W "wb"
 #else
-#define	PG_BINARY	0
-#define	PG_BINARY_R	"r"
-#define	PG_BINARY_W	"w"
+#define PG_BINARY	0
+#define PG_BINARY_R "r"
+#define PG_BINARY_W "w"
 #endif
 
 #if defined(sun) && defined(__sparc__) && !defined(__SVR4)

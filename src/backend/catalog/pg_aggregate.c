@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.37 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.38 2001/03/22 03:59:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ AggregateCreate(char *aggName,
 	Datum		values[Natts_pg_aggregate];
 	Form_pg_proc proc;
 	Oid			transfn;
-	Oid			finalfn = InvalidOid; /* can be omitted */
+	Oid			finalfn = InvalidOid;	/* can be omitted */
 	Oid			basetype;
 	Oid			transtype;
 	Oid			finaltype;
@@ -79,8 +79,8 @@ AggregateCreate(char *aggName,
 
 	/*
 	 * Handle the aggregate's base type (input data type).  This can be
-	 * specified as 'ANY' for a data-independent transition function,
-	 * such as COUNT(*).
+	 * specified as 'ANY' for a data-independent transition function, such
+	 * as COUNT(*).
 	 */
 	basetype = GetSysCacheOid(TYPENAME,
 							  PointerGetDatum(aggbasetypeName),
@@ -118,9 +118,7 @@ AggregateCreate(char *aggName,
 		nargs = 2;
 	}
 	else
-	{
 		nargs = 1;
-	}
 	tup = SearchSysCache(PROCNAME,
 						 PointerGetDatum(aggtransfnName),
 						 Int32GetDatum(nargs),
@@ -134,16 +132,17 @@ AggregateCreate(char *aggName,
 	if (proc->prorettype != transtype)
 		elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
 			 aggtransfnName, aggtranstypeName);
+
 	/*
-	 * If the transfn is strict and the initval is NULL, make sure
-	 * input type and transtype are the same (or at least binary-
-	 * compatible), so that it's OK to use the first input value
-	 * as the initial transValue.
+	 * If the transfn is strict and the initval is NULL, make sure input
+	 * type and transtype are the same (or at least binary- compatible),
+	 * so that it's OK to use the first input value as the initial
+	 * transValue.
 	 */
 	if (proc->proisstrict && agginitval == NULL)
 	{
 		if (basetype != transtype &&
-			! IS_BINARY_COMPATIBLE(basetype, transtype))
+			!IS_BINARY_COMPATIBLE(basetype, transtype))
 			elog(ERROR, "AggregateCreate: must not omit initval when transfn is strict and transtype is not compatible with input type");
 	}
 	ReleaseSysCache(tup);
@@ -168,6 +167,7 @@ AggregateCreate(char *aggName,
 	}
 	else
 	{
+
 		/*
 		 * If no finalfn, aggregate result type is type of the state value
 		 */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.39 2001/01/24 19:43:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.40 2001/03/22 03:59:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  * for such a backend, the shared memory is already ready-to-go.
  *
  * If "makePrivate" is true then we only need private memory, not shared
- * memory.  This is true for a standalone backend, false for a postmaster.
+ * memory.	This is true for a standalone backend, false for a postmaster.
  */
 void
 CreateSharedMemoryAndSemaphores(bool makePrivate, int maxBackends)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.26 2001/02/27 22:07:34 tgl Exp $
+ * $Id: portal.h,v 1.27 2001/03/22 04:01:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,8 @@ typedef struct PortalData
 	EState	   *state;			/* Execution state of query */
 	bool		atStart;		/* T => fetch backwards is not allowed */
 	bool		atEnd;			/* T => fetch forwards is not allowed */
-	void		(*cleanup) (Portal); /* Cleanup routine (optional) */
-} PortalData;
+	void		(*cleanup) (Portal);	/* Cleanup routine (optional) */
+}			PortalData;
 
 /*
  * PortalIsValid
@@ -46,9 +46,9 @@ typedef struct PortalData
 /*
  * Access macros for Portal ... use these in preference to field access.
  */
-#define PortalGetQueryDesc(portal)  ((portal)->queryDesc)
-#define PortalGetTupleDesc(portal)  ((portal)->attinfo)
-#define PortalGetState(portal)  ((portal)->state)
+#define PortalGetQueryDesc(portal)	((portal)->queryDesc)
+#define PortalGetTupleDesc(portal)	((portal)->attinfo)
+#define PortalGetState(portal)	((portal)->state)
 #define PortalGetHeapMemory(portal)  ((portal)->heap)
 
 /*

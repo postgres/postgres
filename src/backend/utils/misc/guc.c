@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.33 2001/03/16 05:44:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.34 2001/03/22 04:00:06 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -36,39 +36,42 @@
 
 /* XXX these should be in other modules' header files */
 extern bool Log_connections;
-extern int CheckPointTimeout;
-extern int CommitDelay;
-extern int CommitSiblings;
+extern int	CheckPointTimeout;
+extern int	CommitDelay;
+extern int	CommitSiblings;
 extern bool FixBTree;
 
 #ifdef ENABLE_SYSLOG
 extern char *Syslog_facility;
 extern char *Syslog_ident;
 static bool check_facility(const char *facility);
+
 #endif
 
 /*
  * Debugging options
  */
 #ifdef USE_ASSERT_CHECKING
-bool assert_enabled         = true;
+bool		assert_enabled = true;
+
 #endif
-bool Debug_print_query      = false;
-bool Debug_print_plan       = false;
-bool Debug_print_parse      = false;
-bool Debug_print_rewritten  = false;
-bool Debug_pretty_print     = false;
+bool		Debug_print_query = false;
+bool		Debug_print_plan = false;
+bool		Debug_print_parse = false;
+bool		Debug_print_rewritten = false;
+bool		Debug_pretty_print = false;
 
-bool Show_parser_stats      = false;
-bool Show_planner_stats     = false;
-bool Show_executor_stats    = false;
-bool Show_query_stats       = false; /* this is sort of all three above together */
-bool Show_btree_build_stats = false;
+bool		Show_parser_stats = false;
+bool		Show_planner_stats = false;
+bool		Show_executor_stats = false;
+bool		Show_query_stats = false;	/* this is sort of all three above
+										 * together */
+bool		Show_btree_build_stats = false;
 
-bool SQL_inheritance        = true;
+bool		SQL_inheritance = true;
 
 #ifndef PG_KRB_SRVTAB
-# define PG_KRB_SRVTAB ""
+#define PG_KRB_SRVTAB ""
 #endif
 
 
@@ -86,39 +89,39 @@ enum config_type
 struct config_generic
 {
 	const char *name;
-	GucContext  context;
-	void       *variable;
+	GucContext	context;
+	void	   *variable;
 };
 
 
 struct config_bool
 {
 	const char *name;
-	GucContext  context;
-	bool       *variable;
-	bool        default_val;
+	GucContext	context;
+	bool	   *variable;
+	bool		default_val;
 };
 
 
 struct config_int
 {
 	const char *name;
-	GucContext  context;
-	int        *variable;
-	int         default_val;
-	int         min;
-	int         max;
+	GucContext	context;
+	int		   *variable;
+	int			default_val;
+	int			min;
+	int			max;
 };
 
 
 struct config_real
 {
 	const char *name;
-	GucContext  context;
-	double     *variable;
-	double      default_val;
-	double      min;
-	double      max;
+	GucContext	context;
+	double	   *variable;
+	double		default_val;
+	double		min;
+	double		max;
 };
 
 /*
@@ -130,11 +133,11 @@ struct config_real
 struct config_string
 {
 	const char *name;
-	GucContext  context;
-	char      **variable;
+	GucContext	context;
+	char	  **variable;
 	const char *default_val;
-	bool       (*parse_hook)(const char *proposed);
-	void       (*assign_hook)(const char *newval);
+	bool		(*parse_hook) (const char *proposed);
+	void		(*assign_hook) (const char *newval);
 };
 
 
@@ -164,189 +167,189 @@ struct config_string
 /******** option names follow ********/
 
 static struct config_bool
-ConfigureNamesBool[] =
+			ConfigureNamesBool[] =
 {
-	{"enable_seqscan",          PGC_USERSET,    &enable_seqscan,        true},
-	{"enable_indexscan",        PGC_USERSET,    &enable_indexscan,      true},
-	{"enable_tidscan",          PGC_USERSET,    &enable_tidscan,        true},
-	{"enable_sort",             PGC_USERSET,    &enable_sort,           true},
-	{"enable_nestloop",         PGC_USERSET,    &enable_nestloop,       true},
-	{"enable_mergejoin",        PGC_USERSET,    &enable_mergejoin,      true},
-	{"enable_hashjoin",         PGC_USERSET,    &enable_hashjoin,       true},
+	{"enable_seqscan", PGC_USERSET, &enable_seqscan, true},
+	{"enable_indexscan", PGC_USERSET, &enable_indexscan, true},
+	{"enable_tidscan", PGC_USERSET, &enable_tidscan, true},
+	{"enable_sort", PGC_USERSET, &enable_sort, true},
+	{"enable_nestloop", PGC_USERSET, &enable_nestloop, true},
+	{"enable_mergejoin", PGC_USERSET, &enable_mergejoin, true},
+	{"enable_hashjoin", PGC_USERSET, &enable_hashjoin, true},
 
-	{"ksqo",                    PGC_USERSET,    &_use_keyset_query_optimizer, false},
-	{"geqo",                    PGC_USERSET,    &enable_geqo,           true},
+	{"ksqo", PGC_USERSET, &_use_keyset_query_optimizer, false},
+	{"geqo", PGC_USERSET, &enable_geqo, true},
 
-	{"tcpip_socket",            PGC_POSTMASTER, &NetServer,             false},
-	{"ssl",                     PGC_POSTMASTER, &EnableSSL,             false},
-	{"fsync",                   PGC_SIGHUP,     &enableFsync,           true},
-	{"silent_mode",             PGC_POSTMASTER, &SilentMode,            false},
+	{"tcpip_socket", PGC_POSTMASTER, &NetServer, false},
+	{"ssl", PGC_POSTMASTER, &EnableSSL, false},
+	{"fsync", PGC_SIGHUP, &enableFsync, true},
+	{"silent_mode", PGC_POSTMASTER, &SilentMode, false},
 
-	{"log_connections",         PGC_SIGHUP,     &Log_connections,       false},
-	{"log_timestamp",           PGC_SIGHUP,     &Log_timestamp,         false},
-	{"log_pid",                 PGC_SIGHUP,     &Log_pid,               false},
+	{"log_connections", PGC_SIGHUP, &Log_connections, false},
+	{"log_timestamp", PGC_SIGHUP, &Log_timestamp, false},
+	{"log_pid", PGC_SIGHUP, &Log_pid, false},
 
 #ifdef USE_ASSERT_CHECKING
-	{"debug_assertions",        PGC_USERSET,    &assert_enabled,        true},
+	{"debug_assertions", PGC_USERSET, &assert_enabled, true},
 #endif
 
-	{"debug_print_query",       PGC_USERSET,    &Debug_print_query,     false},
-	{"debug_print_parse",       PGC_USERSET,    &Debug_print_parse,     false},
-	{"debug_print_rewritten",   PGC_USERSET,    &Debug_print_rewritten, false},
-	{"debug_print_plan",        PGC_USERSET,    &Debug_print_plan,      false},
-	{"debug_pretty_print",      PGC_USERSET,    &Debug_pretty_print,    false},
+	{"debug_print_query", PGC_USERSET, &Debug_print_query, false},
+	{"debug_print_parse", PGC_USERSET, &Debug_print_parse, false},
+	{"debug_print_rewritten", PGC_USERSET, &Debug_print_rewritten, false},
+	{"debug_print_plan", PGC_USERSET, &Debug_print_plan, false},
+	{"debug_pretty_print", PGC_USERSET, &Debug_pretty_print, false},
 
-	{"show_parser_stats",       PGC_USERSET,    &Show_parser_stats,     false},
-	{"show_planner_stats",      PGC_USERSET,    &Show_planner_stats,    false},
-	{"show_executor_stats",     PGC_USERSET,    &Show_executor_stats,   false},
-	{"show_query_stats",        PGC_USERSET,    &Show_query_stats,      false},
+	{"show_parser_stats", PGC_USERSET, &Show_parser_stats, false},
+	{"show_planner_stats", PGC_USERSET, &Show_planner_stats, false},
+	{"show_executor_stats", PGC_USERSET, &Show_executor_stats, false},
+	{"show_query_stats", PGC_USERSET, &Show_query_stats, false},
 #ifdef BTREE_BUILD_STATS
-	{"show_btree_build_stats",  PGC_SUSET,      &Show_btree_build_stats, false},
+	{"show_btree_build_stats", PGC_SUSET, &Show_btree_build_stats, false},
 #endif
 
-	{"trace_notify",            PGC_USERSET,    &Trace_notify,          false},
+	{"trace_notify", PGC_USERSET, &Trace_notify, false},
 
 #ifdef LOCK_DEBUG
-	{"trace_locks",             PGC_SUSET,      &Trace_locks,           false},
-	{"trace_userlocks",         PGC_SUSET,      &Trace_userlocks,       false},
-	{"trace_spinlocks",         PGC_SUSET,      &Trace_spinlocks,       false},
-	{"debug_deadlocks",         PGC_SUSET,      &Debug_deadlocks,       false},
+	{"trace_locks", PGC_SUSET, &Trace_locks, false},
+	{"trace_userlocks", PGC_SUSET, &Trace_userlocks, false},
+	{"trace_spinlocks", PGC_SUSET, &Trace_spinlocks, false},
+	{"debug_deadlocks", PGC_SUSET, &Debug_deadlocks, false},
 #endif
 
-	{"hostname_lookup",         PGC_SIGHUP,     &HostnameLookup,        false},
-	{"show_source_port",        PGC_SIGHUP,     &ShowPortNumber,        false},
+	{"hostname_lookup", PGC_SIGHUP, &HostnameLookup, false},
+	{"show_source_port", PGC_SIGHUP, &ShowPortNumber, false},
 
-	{"sql_inheritance",         PGC_USERSET,    &SQL_inheritance,       true},
+	{"sql_inheritance", PGC_USERSET, &SQL_inheritance, true},
 
-	{"fixbtree",                PGC_POSTMASTER, &FixBTree,              true},
+	{"fixbtree", PGC_POSTMASTER, &FixBTree, true},
 
 	{NULL, 0, NULL, false}
 };
 
 
 static struct config_int
-ConfigureNamesInt[] =
+			ConfigureNamesInt[] =
 {
-	{"geqo_threshold",          PGC_USERSET,            &geqo_rels,
-	 DEFAULT_GEQO_RELS, 2, INT_MAX},
-	{"geqo_pool_size",          PGC_USERSET,            &Geqo_pool_size,
-	 DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE},
-	{"geqo_effort",             PGC_USERSET,            &Geqo_effort,
-	 1, 1, INT_MAX},
-	{"geqo_generations",        PGC_USERSET,            &Geqo_generations,
-	 0, 0, INT_MAX},
-	{"geqo_random_seed",        PGC_USERSET,            &Geqo_random_seed,
-	 -1, INT_MIN, INT_MAX},
+	{"geqo_threshold", PGC_USERSET, &geqo_rels,
+	DEFAULT_GEQO_RELS, 2, INT_MAX},
+	{"geqo_pool_size", PGC_USERSET, &Geqo_pool_size,
+	DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE},
+	{"geqo_effort", PGC_USERSET, &Geqo_effort,
+	1, 1, INT_MAX},
+	{"geqo_generations", PGC_USERSET, &Geqo_generations,
+	0, 0, INT_MAX},
+	{"geqo_random_seed", PGC_USERSET, &Geqo_random_seed,
+	-1, INT_MIN, INT_MAX},
 
-	{"deadlock_timeout",        PGC_POSTMASTER,         &DeadlockTimeout,
-	 1000, 0, INT_MAX},
+	{"deadlock_timeout", PGC_POSTMASTER, &DeadlockTimeout,
+	1000, 0, INT_MAX},
 
 #ifdef ENABLE_SYSLOG
-	{"syslog",                  PGC_SIGHUP,             &Use_syslog,
-	 0, 0, 2},
+	{"syslog", PGC_SIGHUP, &Use_syslog,
+	0, 0, 2},
 #endif
 
 	/*
-	 * Note: There is some postprocessing done in PostmasterMain() to
-	 * make sure the buffers are at least twice the number of
-	 * backends, so the constraints here are partially unused.
+	 * Note: There is some postprocessing done in PostmasterMain() to make
+	 * sure the buffers are at least twice the number of backends, so the
+	 * constraints here are partially unused.
 	 */
-	{"max_connections",         PGC_POSTMASTER,         &MaxBackends,
-	 DEF_MAXBACKENDS, 1, MAXBACKENDS},
-	{"shared_buffers",          PGC_POSTMASTER,         &NBuffers,
-	 DEF_NBUFFERS, 16, INT_MAX},
-	{"port",                    PGC_POSTMASTER,         &PostPortNumber,
-	 DEF_PGPORT, 1, 65535},
+	{"max_connections", PGC_POSTMASTER, &MaxBackends,
+	DEF_MAXBACKENDS, 1, MAXBACKENDS},
+	{"shared_buffers", PGC_POSTMASTER, &NBuffers,
+	DEF_NBUFFERS, 16, INT_MAX},
+	{"port", PGC_POSTMASTER, &PostPortNumber,
+	DEF_PGPORT, 1, 65535},
 
-	{"sort_mem",                PGC_USERSET,            &SortMem,
-	 512, 1, INT_MAX},
+	{"sort_mem", PGC_USERSET, &SortMem,
+	512, 1, INT_MAX},
 
-	{"debug_level",             PGC_USERSET,            &DebugLvl,
-	 0, 0, 16},
+	{"debug_level", PGC_USERSET, &DebugLvl,
+	0, 0, 16},
 
 #ifdef LOCK_DEBUG
-	{"trace_lock_oidmin",       PGC_SUSET,              &Trace_lock_oidmin,
-	 BootstrapObjectIdData, 1, INT_MAX},
-	{"trace_lock_table",        PGC_SUSET,              &Trace_lock_table,
-	 0, 0, INT_MAX},
+	{"trace_lock_oidmin", PGC_SUSET, &Trace_lock_oidmin,
+	BootstrapObjectIdData, 1, INT_MAX},
+	{"trace_lock_table", PGC_SUSET, &Trace_lock_table,
+	0, 0, INT_MAX},
 #endif
-	{"max_expr_depth",          PGC_USERSET,            &max_expr_depth,
-	 DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX},
+	{"max_expr_depth", PGC_USERSET, &max_expr_depth,
+	DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX},
 
-	{"unix_socket_permissions", PGC_POSTMASTER,         &Unix_socket_permissions,
-	 0777, 0000, 0777},
+	{"unix_socket_permissions", PGC_POSTMASTER, &Unix_socket_permissions,
+	0777, 0000, 0777},
 
-	{"checkpoint_segments",	PGC_SIGHUP,				&CheckPointSegments,
-	 3, 1, INT_MAX},
+	{"checkpoint_segments", PGC_SIGHUP, &CheckPointSegments,
+	3, 1, INT_MAX},
 
-	{"checkpoint_timeout",	PGC_SIGHUP,				&CheckPointTimeout,
-	 300, 30, 3600},
+	{"checkpoint_timeout", PGC_SIGHUP, &CheckPointTimeout,
+	300, 30, 3600},
 
-	{"wal_buffers",			PGC_POSTMASTER,			&XLOGbuffers,
-	 8, 4, INT_MAX},
+	{"wal_buffers", PGC_POSTMASTER, &XLOGbuffers,
+	8, 4, INT_MAX},
 
-	{"wal_files",			PGC_SIGHUP,				&XLOGfiles,
-	 0, 0, 64},
+	{"wal_files", PGC_SIGHUP, &XLOGfiles,
+	0, 0, 64},
 
-	{"wal_debug",			PGC_SUSET,				&XLOG_DEBUG,
-	 0, 0, 16},
+	{"wal_debug", PGC_SUSET, &XLOG_DEBUG,
+	0, 0, 16},
 
-	{"commit_delay",		PGC_USERSET,			&CommitDelay,
-	 0, 0, 100000},
+	{"commit_delay", PGC_USERSET, &CommitDelay,
+	0, 0, 100000},
 
-	{"commit_siblings",		PGC_USERSET,			&CommitSiblings,
-	 5, 1, 1000},
+	{"commit_siblings", PGC_USERSET, &CommitSiblings,
+	5, 1, 1000},
 
 	{NULL, 0, NULL, 0, 0, 0}
 };
 
 
 static struct config_real
-ConfigureNamesReal[] =
+			ConfigureNamesReal[] =
 {
-	{"effective_cache_size",      PGC_USERSET,          &effective_cache_size,
-	 DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX},
-	{"random_page_cost",          PGC_USERSET,          &random_page_cost,
-	 DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX},
-	{"cpu_tuple_cost",            PGC_USERSET,          &cpu_tuple_cost,
-	 DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX},
-	{"cpu_index_tuple_cost",      PGC_USERSET,          &cpu_index_tuple_cost,
-	 DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX},
-	{"cpu_operator_cost",         PGC_USERSET,          &cpu_operator_cost,
-	 DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX},
+	{"effective_cache_size", PGC_USERSET, &effective_cache_size,
+	DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX},
+	{"random_page_cost", PGC_USERSET, &random_page_cost,
+	DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX},
+	{"cpu_tuple_cost", PGC_USERSET, &cpu_tuple_cost,
+	DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX},
+	{"cpu_index_tuple_cost", PGC_USERSET, &cpu_index_tuple_cost,
+	DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX},
+	{"cpu_operator_cost", PGC_USERSET, &cpu_operator_cost,
+	DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX},
 
-	{"geqo_selection_bias",       PGC_USERSET,          &Geqo_selection_bias,
-	 DEFAULT_GEQO_SELECTION_BIAS,   MIN_GEQO_SELECTION_BIAS, MAX_GEQO_SELECTION_BIAS},
+	{"geqo_selection_bias", PGC_USERSET, &Geqo_selection_bias,
+	DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS, MAX_GEQO_SELECTION_BIAS},
 
 	{NULL, 0, NULL, 0.0, 0.0, 0.0}
 };
 
 
 static struct config_string
-ConfigureNamesString[] =
+			ConfigureNamesString[] =
 {
-	{"krb_server_keyfile",        PGC_POSTMASTER,       &pg_krb_server_keyfile,
-	 PG_KRB_SRVTAB, NULL, NULL},
+	{"krb_server_keyfile", PGC_POSTMASTER, &pg_krb_server_keyfile,
+	PG_KRB_SRVTAB, NULL, NULL},
 
 #ifdef ENABLE_SYSLOG
-	{"syslog_facility",           PGC_POSTMASTER,	    &Syslog_facility,
+	{"syslog_facility", PGC_POSTMASTER, &Syslog_facility,
 	"LOCAL0", check_facility, NULL},
-	{"syslog_ident",              PGC_POSTMASTER,	    &Syslog_ident,
+	{"syslog_ident", PGC_POSTMASTER, &Syslog_ident,
 	"postgres", NULL, NULL},
 #endif
 
-	{"unix_socket_group",         PGC_POSTMASTER,       &Unix_socket_group,
-	 "", NULL, NULL},
+	{"unix_socket_group", PGC_POSTMASTER, &Unix_socket_group,
+	"", NULL, NULL},
 
-	{"unix_socket_directory",	  PGC_POSTMASTER,       &UnixSocketDir,
-	 "", NULL, NULL},
+	{"unix_socket_directory", PGC_POSTMASTER, &UnixSocketDir,
+	"", NULL, NULL},
 
-	{"virtual_host",			  PGC_POSTMASTER,		&VirtualHost,
-	 "", NULL, NULL},
+	{"virtual_host", PGC_POSTMASTER, &VirtualHost,
+	"", NULL, NULL},
 
-	{"wal_sync_method",			  PGC_SIGHUP,			&XLOG_sync_method,
-	 XLOG_sync_method_default,
-	 check_xlog_sync_method, assign_xlog_sync_method},
+	{"wal_sync_method", PGC_SIGHUP, &XLOG_sync_method,
+		XLOG_sync_method_default,
+	check_xlog_sync_method, assign_xlog_sync_method},
 
 	{NULL, 0, NULL, NULL, NULL, NULL}
 };
@@ -361,41 +364,41 @@ ConfigureNamesString[] =
  * the option there.
  */
 static enum config_type
-find_option(const char * name, struct config_generic ** record)
+find_option(const char *name, struct config_generic ** record)
 {
-	int i;
+	int			i;
 
 	Assert(name);
 
 	for (i = 0; ConfigureNamesBool[i].name; i++)
-		if (strcasecmp(ConfigureNamesBool[i].name, name)==0)
+		if (strcasecmp(ConfigureNamesBool[i].name, name) == 0)
 		{
 			if (record)
-				*record = (struct config_generic *)&ConfigureNamesBool[i];
+				*record = (struct config_generic *) & ConfigureNamesBool[i];
 			return PGC_BOOL;
 		}
 
 	for (i = 0; ConfigureNamesInt[i].name; i++)
-		if (strcasecmp(ConfigureNamesInt[i].name, name)==0)
+		if (strcasecmp(ConfigureNamesInt[i].name, name) == 0)
 		{
 			if (record)
-				*record = (struct config_generic *)&ConfigureNamesInt[i];
+				*record = (struct config_generic *) & ConfigureNamesInt[i];
 			return PGC_INT;
 		}
 
 	for (i = 0; ConfigureNamesReal[i].name; i++)
-		if (strcasecmp(ConfigureNamesReal[i].name, name)==0)
+		if (strcasecmp(ConfigureNamesReal[i].name, name) == 0)
 		{
 			if (record)
-				*record = (struct config_generic *)&ConfigureNamesReal[i];
+				*record = (struct config_generic *) & ConfigureNamesReal[i];
 			return PGC_REAL;
 		}
 
 	for (i = 0; ConfigureNamesString[i].name; i++)
-		if (strcasecmp(ConfigureNamesString[i].name, name)==0)
+		if (strcasecmp(ConfigureNamesString[i].name, name) == 0)
 		{
 			if (record)
-				*record = (struct config_generic *)&ConfigureNamesString[i];
+				*record = (struct config_generic *) & ConfigureNamesString[i];
 			return PGC_STRING;
 		}
 
@@ -411,7 +414,7 @@ find_option(const char * name, struct config_generic ** record)
 void
 ResetAllOptions(void)
 {
-	int i;
+	int			i;
 
 	for (i = 0; ConfigureNamesBool[i].name; i++)
 		*(ConfigureNamesBool[i].variable) = ConfigureNamesBool[i].default_val;
@@ -424,7 +427,7 @@ ResetAllOptions(void)
 
 	for (i = 0; ConfigureNamesString[i].name; i++)
 	{
-		char * str = NULL;
+		char	   *str = NULL;
 
 		if (ConfigureNamesString[i].default_val)
 		{
@@ -448,49 +451,49 @@ ResetAllOptions(void)
  * there.
  */
 static bool
-parse_bool(const char * value, bool * result)
+parse_bool(const char *value, bool *result)
 {
-	size_t len = strlen(value);
+	size_t		len = strlen(value);
 
-	if (strncasecmp(value, "true", len)==0)
+	if (strncasecmp(value, "true", len) == 0)
 	{
 		if (result)
 			*result = true;
 	}
-	else if (strncasecmp(value, "false", len)==0)
+	else if (strncasecmp(value, "false", len) == 0)
 	{
 		if (result)
 			*result = false;
 	}
 
-	else if (strncasecmp(value, "yes", len)==0)
+	else if (strncasecmp(value, "yes", len) == 0)
 	{
 		if (result)
 			*result = true;
 	}
-	else if (strncasecmp(value, "no", len)==0)
+	else if (strncasecmp(value, "no", len) == 0)
 	{
 		if (result)
 			*result = false;
 	}
 
-	else if (strcasecmp(value, "on")==0)
+	else if (strcasecmp(value, "on") == 0)
 	{
 		if (result)
 			*result = true;
 	}
-	else if (strcasecmp(value, "off")==0)
+	else if (strcasecmp(value, "off") == 0)
 	{
 		if (result)
 			*result = false;
 	}
 
-	else if (strcasecmp(value, "1")==0)
+	else if (strcasecmp(value, "1") == 0)
 	{
 		if (result)
 			*result = true;
 	}
-	else if (strcasecmp(value, "0")==0)
+	else if (strcasecmp(value, "0") == 0)
 	{
 		if (result)
 			*result = false;
@@ -510,17 +513,17 @@ parse_bool(const char * value, bool * result)
  * value there.
  */
 static bool
-parse_int(const char * value, int * result)
+parse_int(const char *value, int *result)
 {
-	long val;
-	char * endptr;
+	long		val;
+	char	   *endptr;
 
 	errno = 0;
 	val = strtol(value, &endptr, 0);
 	if (endptr == value || *endptr != '\0' || errno == ERANGE)
 		return false;
 	if (result)
-		*result = (int)val;
+		*result = (int) val;
 	return true;
 }
 
@@ -528,14 +531,14 @@ parse_int(const char * value, int * result)
 
 /*
  * Try to parse value as a floating point constant in the usual
- * format.  If the value parsed okay return true, else false.  If
+ * format.	If the value parsed okay return true, else false.  If
  * result is not NULL, return the semantic value there.
  */
 static bool
-parse_real(const char * value, double * result)
+parse_real(const char *value, double *result)
 {
-	double val;
-	char * endptr;
+	double		val;
+	char	   *endptr;
 
 	errno = 0;
 	val = strtod(value, &endptr);
@@ -569,12 +572,12 @@ parse_real(const char * value, double * result)
  * See also SetConfigOption for an external interface.
  */
 bool
-set_config_option(const char * name, const char * value, GucContext
+set_config_option(const char *name, const char *value, GucContext
 				  context, bool DoIt)
 {
-	struct config_generic * record;
+	struct config_generic *record;
 	enum config_type type;
-	int elevel;
+	int			elevel;
 
 	elevel = (context == PGC_SIGHUP) ? DEBUG : ERROR;
 
@@ -587,8 +590,8 @@ set_config_option(const char * name, const char * value, GucContext
 
 	/*
 	 * Check if the option can be set at this time. See guc.h for the
-	 * precise rules. Note that we don't want to throw errors if we're
-	 * in the SIGHUP context. In that case we just ignore the attempt.
+	 * precise rules. Note that we don't want to throw errors if we're in
+	 * the SIGHUP context. In that case we just ignore the attempt.
 	 */
 	if (record->context == PGC_POSTMASTER && context != PGC_POSTMASTER)
 	{
@@ -601,10 +604,13 @@ set_config_option(const char * name, const char * value, GucContext
 			 context != PGC_POSTMASTER)
 	{
 		elog(ERROR, "'%s' cannot be changed now", name);
-		/* Hmm, the idea of the SIGHUP context is "ought to be global,
-		 * but can be changed after postmaster start". But there's
-		 * nothing that prevents a crafty administrator from sending
-		 * SIGHUP signals to individual backends only. */
+
+		/*
+		 * Hmm, the idea of the SIGHUP context is "ought to be global, but
+		 * can be changed after postmaster start". But there's nothing
+		 * that prevents a crafty administrator from sending SIGHUP
+		 * signals to individual backends only.
+		 */
 	}
 	else if (record->context == PGC_BACKEND && context != PGC_BACKEND
 			 && context != PGC_POSTMASTER)
@@ -616,140 +622,139 @@ set_config_option(const char * name, const char * value, GucContext
 	}
 	else if (record->context == PGC_SUSET && (context == PGC_USERSET
 											  || context == PGC_BACKEND))
-	{
 		elog(ERROR, "permission denied");
-	}
 
 
 	/*
 	 * Evaluate value and set variable
 	 */
-	switch(type)
+	switch (type)
 	{
 		case PGC_BOOL:
-		{
-			struct config_bool * conf = (struct config_bool *)record;
-
-			if (value)
 			{
-				bool boolval;
-				if (!parse_bool(value, &boolval))
+				struct config_bool *conf = (struct config_bool *) record;
+
+				if (value)
 				{
-					elog(elevel, "option '%s' requires a boolean value", name);
-					return false;
+					bool		boolval;
+
+					if (!parse_bool(value, &boolval))
+					{
+						elog(elevel, "option '%s' requires a boolean value", name);
+						return false;
+					}
+					if (DoIt)
+						*conf->variable = boolval;
 				}
-				if (DoIt)
-					*conf->variable = boolval;
+				else if (DoIt)
+					*conf->variable = conf->default_val;
+				break;
 			}
-			else if (DoIt)
-				*conf->variable = conf->default_val;
-			break;
-		}
 
 		case PGC_INT:
-		{
-			struct config_int * conf = (struct config_int *)record;
-
-			if (value)
 			{
-				int intval;
+				struct config_int *conf = (struct config_int *) record;
 
-				if (!parse_int(value, &intval))
+				if (value)
 				{
-					elog(elevel, "option '%s' expects an integer value", name);
-					return false;
+					int			intval;
+
+					if (!parse_int(value, &intval))
+					{
+						elog(elevel, "option '%s' expects an integer value", name);
+						return false;
+					}
+					if (intval < conf->min || intval > conf->max)
+					{
+						elog(elevel, "option '%s' value %d is outside"
+							 " of permissible range [%d .. %d]",
+							 name, intval, conf->min, conf->max);
+						return false;
+					}
+					if (DoIt)
+						*conf->variable = intval;
 				}
-				if (intval < conf->min || intval > conf->max)
-				{
-					elog(elevel, "option '%s' value %d is outside"
-						 " of permissible range [%d .. %d]",
-						 name, intval, conf->min, conf->max);
-					return false;
-				}
-				if (DoIt)
-					*conf->variable = intval;
+				else if (DoIt)
+					*conf->variable = conf->default_val;
+				break;
 			}
-			else if (DoIt)
-				*conf->variable = conf->default_val;
-			break;
-		}
 
 		case PGC_REAL:
-		{
-			struct config_real * conf = (struct config_real *)record;
-
-			if (value)
 			{
-				double dval;
+				struct config_real *conf = (struct config_real *) record;
 
-				if (!parse_real(value, &dval))
+				if (value)
 				{
-					elog(elevel, "option '%s' expects a real number", name);
-					return false;
+					double		dval;
+
+					if (!parse_real(value, &dval))
+					{
+						elog(elevel, "option '%s' expects a real number", name);
+						return false;
+					}
+					if (dval < conf->min || dval > conf->max)
+					{
+						elog(elevel, "option '%s' value %g is outside"
+							 " of permissible range [%g .. %g]",
+							 name, dval, conf->min, conf->max);
+						return false;
+					}
+					if (DoIt)
+						*conf->variable = dval;
 				}
-				if (dval < conf->min || dval > conf->max)
-				{
-					elog(elevel, "option '%s' value %g is outside"
-						 " of permissible range [%g .. %g]",
-						 name, dval, conf->min, conf->max);
-					return false;
-				}
-				if (DoIt)
-					*conf->variable = dval;
+				else if (DoIt)
+					*conf->variable = conf->default_val;
+				break;
 			}
-			else if (DoIt)
-				*conf->variable = conf->default_val;
-			break;
-		}
 
 		case PGC_STRING:
-		{
-			struct config_string * conf = (struct config_string *)record;
-
-			if (value)
 			{
-				if (conf->parse_hook && !(conf->parse_hook)(value))
-				{
-					elog(elevel, "invalid value for option '%s': '%s'", name, value);
-					return false;
-				}
-				if (DoIt)
-				{
-					char * str;
+				struct config_string *conf = (struct config_string *) record;
 
-					str = strdup(value);
+				if (value)
+				{
+					if (conf->parse_hook && !(conf->parse_hook) (value))
+					{
+						elog(elevel, "invalid value for option '%s': '%s'", name, value);
+						return false;
+					}
+					if (DoIt)
+					{
+						char	   *str;
+
+						str = strdup(value);
+						if (str == NULL)
+						{
+							elog(elevel, "out of memory");
+							return false;
+						}
+						if (conf->assign_hook)
+							(conf->assign_hook) (str);
+						if (*conf->variable)
+							free(*conf->variable);
+						*conf->variable = str;
+					}
+				}
+				else if (DoIt)
+				{
+					char	   *str;
+
+					str = strdup(conf->default_val);
 					if (str == NULL)
 					{
 						elog(elevel, "out of memory");
 						return false;
 					}
 					if (conf->assign_hook)
-						(conf->assign_hook)(str);
+						(conf->assign_hook) (str);
 					if (*conf->variable)
 						free(*conf->variable);
 					*conf->variable = str;
 				}
+				break;
 			}
-			else if (DoIt)
-			{
-				char * str;
 
-				str = strdup(conf->default_val);
-				if (str == NULL)
-				{
-					elog(elevel, "out of memory");
-					return false;
-				}
-				if (conf->assign_hook)
-					(conf->assign_hook)(str);
-				if (*conf->variable)
-					free(*conf->variable);
-				*conf->variable = str;
-			}
-			break;
-		}
-
-		default: ;
+		default:;
 	}
 	return true;
 }
@@ -761,10 +766,10 @@ set_config_option(const char * name, const char * value, GucContext
  * this is just the wrapper to be called from the outside.
  */
 void
-SetConfigOption(const char * name, const char * value, GucContext
+SetConfigOption(const char *name, const char *value, GucContext
 				context)
 {
-	(void)set_config_option(name, value, context, true);
+	(void) set_config_option(name, value, context, true);
 }
 
 
@@ -780,9 +785,9 @@ SetConfigOption(const char * name, const char * value, GucContext
  * valid until the next call to configuration related functions.
  */
 const char *
-GetConfigOption(const char * name)
+GetConfigOption(const char *name)
 {
-	struct config_generic * record;
+	struct config_generic *record;
 	static char buffer[256];
 	enum config_type opttype;
 
@@ -790,21 +795,21 @@ GetConfigOption(const char * name)
 	if (opttype == PGC_NONE)
 		elog(ERROR, "Option '%s' is not recognized", name);
 
-	switch(opttype)
+	switch (opttype)
 	{
 		case PGC_BOOL:
-			return *((struct config_bool *)record)->variable ? "on" : "off";
+			return *((struct config_bool *) record)->variable ? "on" : "off";
 
 		case PGC_INT:
-			snprintf(buffer, 256, "%d", *((struct config_int *)record)->variable);
+			snprintf(buffer, 256, "%d", *((struct config_int *) record)->variable);
 			return buffer;
 
 		case PGC_REAL:
-			snprintf(buffer, 256, "%g", *((struct config_real *)record)->variable);
+			snprintf(buffer, 256, "%g", *((struct config_real *) record)->variable);
 			return buffer;
 
 		case PGC_STRING:
-			return *((struct config_string *)record)->variable;
+			return *((struct config_string *) record)->variable;
 
 		default:
 			;
@@ -822,10 +827,10 @@ GetConfigOption(const char * name)
  * there is no '=' in the input string then value will be NULL.
  */
 void
-ParseLongOption(const char * string, char ** name, char ** value)
+ParseLongOption(const char *string, char **name, char **value)
 {
-	size_t equal_pos;
-	char *cp;
+	size_t		equal_pos;
+	char	   *cp;
 
 	AssertArg(string);
 	AssertArg(name);
@@ -845,7 +850,8 @@ ParseLongOption(const char * string, char ** name, char ** value)
 		if (!*value)
 			elog(FATAL, "out of memory");
 	}
-	else						/* no equal sign in string */
+	else
+/* no equal sign in string */
 	{
 		*name = strdup(string);
 		if (!*name)
@@ -853,7 +859,7 @@ ParseLongOption(const char * string, char ** name, char ** value)
 		*value = NULL;
 	}
 
-	for(cp = *name; *cp; cp++)
+	for (cp = *name; *cp; cp++)
 		if (*cp == '-')
 			*cp = '_';
 }
@@ -864,14 +870,23 @@ ParseLongOption(const char * string, char ** name, char ** value)
 static bool
 check_facility(const char *facility)
 {
-	if (strcasecmp(facility,"LOCAL0") == 0) return true;
-	if (strcasecmp(facility,"LOCAL1") == 0) return true;
-	if (strcasecmp(facility,"LOCAL2") == 0) return true;
-	if (strcasecmp(facility,"LOCAL3") == 0) return true;
-	if (strcasecmp(facility,"LOCAL4") == 0) return true;
-	if (strcasecmp(facility,"LOCAL5") == 0) return true;
-	if (strcasecmp(facility,"LOCAL6") == 0) return true;
-	if (strcasecmp(facility,"LOCAL7") == 0) return true;
+	if (strcasecmp(facility, "LOCAL0") == 0)
+		return true;
+	if (strcasecmp(facility, "LOCAL1") == 0)
+		return true;
+	if (strcasecmp(facility, "LOCAL2") == 0)
+		return true;
+	if (strcasecmp(facility, "LOCAL3") == 0)
+		return true;
+	if (strcasecmp(facility, "LOCAL4") == 0)
+		return true;
+	if (strcasecmp(facility, "LOCAL5") == 0)
+		return true;
+	if (strcasecmp(facility, "LOCAL6") == 0)
+		return true;
+	if (strcasecmp(facility, "LOCAL7") == 0)
+		return true;
 	return false;
 }
+
 #endif

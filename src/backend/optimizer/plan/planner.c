@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.101 2001/01/27 04:42:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.102 2001/03/22 03:59:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,9 @@
 
 
 /* Expression kind codes for preprocess_expression */
-#define EXPRKIND_TARGET	0
+#define EXPRKIND_TARGET 0
 #define EXPRKIND_WHERE	1
-#define EXPRKIND_HAVING	2
+#define EXPRKIND_HAVING 2
 
 
 static Node *pull_up_subqueries(Query *parse, Node *jtnode);
@@ -68,16 +68,16 @@ planner(Query *parse)
 
 	/*
 	 * The planner can be called recursively (an example is when
-	 * eval_const_expressions tries to pre-evaluate an SQL function).
-	 * So, these global state variables must be saved and restored.
+	 * eval_const_expressions tries to pre-evaluate an SQL function). So,
+	 * these global state variables must be saved and restored.
 	 *
-	 * These vars cannot be moved into the Query structure since their
-	 * whole purpose is communication across multiple sub-Queries.
+	 * These vars cannot be moved into the Query structure since their whole
+	 * purpose is communication across multiple sub-Queries.
 	 *
 	 * Note we do NOT save and restore PlannerPlanId: it exists to assign
-	 * unique IDs to SubPlan nodes, and we want those IDs to be unique
-	 * for the life of a backend.  Also, PlannerInitPlan is saved/restored
-	 * in subquery_planner, not here.
+	 * unique IDs to SubPlan nodes, and we want those IDs to be unique for
+	 * the life of a backend.  Also, PlannerInitPlan is saved/restored in
+	 * subquery_planner, not here.
 	 */
 	save_PlannerQueryLevel = PlannerQueryLevel;
 	save_PlannerParamVar = PlannerParamVar;
@@ -150,6 +150,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 */
 	parse->jointree = (FromExpr *)
 		pull_up_subqueries(parse, (Node *) parse->jointree);
+
 	/*
 	 * If so, we may have created opportunities to simplify the jointree.
 	 */
@@ -170,26 +171,26 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 	/*
 	 * A HAVING clause without aggregates is equivalent to a WHERE clause
-	 * (except it can only refer to grouped fields).  Transfer any agg-free
-	 * clauses of the HAVING qual into WHERE.  This may seem like wasting
-	 * cycles to cater to stupidly-written queries, but there are other
-	 * reasons for doing it.  Firstly, if the query contains no aggs at all,
-	 * then we aren't going to generate an Agg plan node, and so there'll be
-	 * no place to execute HAVING conditions; without this transfer, we'd
-	 * lose the HAVING condition entirely, which is wrong.  Secondly, when
-	 * we push down a qual condition into a sub-query, it's easiest to push
-	 * the qual into HAVING always, in case it contains aggs, and then let
-	 * this code sort it out.
+	 * (except it can only refer to grouped fields).  Transfer any
+	 * agg-free clauses of the HAVING qual into WHERE.	This may seem like
+	 * wasting cycles to cater to stupidly-written queries, but there are
+	 * other reasons for doing it.	Firstly, if the query contains no aggs
+	 * at all, then we aren't going to generate an Agg plan node, and so
+	 * there'll be no place to execute HAVING conditions; without this
+	 * transfer, we'd lose the HAVING condition entirely, which is wrong.
+	 * Secondly, when we push down a qual condition into a sub-query, it's
+	 * easiest to push the qual into HAVING always, in case it contains
+	 * aggs, and then let this code sort it out.
 	 *
 	 * Note that both havingQual and parse->jointree->quals are in
 	 * implicitly-ANDed-list form at this point, even though they are
-	 * declared as Node *.  Also note that contain_agg_clause does not
+	 * declared as Node *.	Also note that contain_agg_clause does not
 	 * recurse into sub-selects, which is exactly what we need here.
 	 */
 	newHaving = NIL;
 	foreach(lst, (List *) parse->havingQual)
 	{
-		Node   *havingclause = (Node *) lfirst(lst);
+		Node	   *havingclause = (Node *) lfirst(lst);
 
 		if (contain_agg_clause(havingclause))
 			newHaving = lappend(newHaving, havingclause);
@@ -201,30 +202,32 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 	/*
 	 * Do the main planning.  If we have an inherited target relation,
-	 * that needs special processing, else go straight to grouping_planner.
+	 * that needs special processing, else go straight to
+	 * grouping_planner.
 	 */
 	if (parse->resultRelation &&
-		(lst = expand_inherted_rtentry(parse, parse->resultRelation)) != NIL)
+	(lst = expand_inherted_rtentry(parse, parse->resultRelation)) != NIL)
 		plan = inheritance_planner(parse, lst);
 	else
 		plan = grouping_planner(parse, tuple_fraction);
 
 	/*
-	 * If any subplans were generated, or if we're inside a subplan,
-	 * build subPlan, extParam and locParam lists for plan nodes.
+	 * If any subplans were generated, or if we're inside a subplan, build
+	 * subPlan, extParam and locParam lists for plan nodes.
 	 */
 	if (PlannerPlanId != saved_planid || PlannerQueryLevel > 1)
 	{
 		(void) SS_finalize_plan(plan);
+
 		/*
-		 * At the moment, SS_finalize_plan doesn't handle initPlans
-		 * and so we assign them to the topmost plan node.
+		 * At the moment, SS_finalize_plan doesn't handle initPlans and so
+		 * we assign them to the topmost plan node.
 		 */
 		plan->initPlan = PlannerInitPlan;
 		/* Must add the initPlans' extParams to the topmost node's, too */
 		foreach(lst, plan->initPlan)
 		{
-			SubPlan *subplan = (SubPlan *) lfirst(lst);
+			SubPlan    *subplan = (SubPlan *) lfirst(lst);
 
 			plan->extParam = set_unioni(plan->extParam,
 										subplan->plan->extParam);
@@ -266,44 +269,47 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 		Query	   *subquery = rte->subquery;
 
 		/*
-		 * Is this a subquery RTE, and if so, is the subquery simple enough
-		 * to pull up?  (If not, do nothing at this node.)
+		 * Is this a subquery RTE, and if so, is the subquery simple
+		 * enough to pull up?  (If not, do nothing at this node.)
 		 */
 		if (subquery && is_simple_subquery(subquery))
 		{
-			int		rtoffset;
-			Node   *subjointree;
-			List   *subtlist;
-			List   *l;
+			int			rtoffset;
+			Node	   *subjointree;
+			List	   *subtlist;
+			List	   *l;
 
 			/*
-			 * First, recursively pull up the subquery's subqueries,
-			 * so that this routine's processing is complete for its
-			 * jointree and rangetable.  NB: if the same subquery is
-			 * referenced from multiple jointree items (which can't happen
-			 * normally, but might after rule rewriting), then we will invoke
-			 * this processing multiple times on that subquery.  OK because
+			 * First, recursively pull up the subquery's subqueries, so
+			 * that this routine's processing is complete for its jointree
+			 * and rangetable.	NB: if the same subquery is referenced
+			 * from multiple jointree items (which can't happen normally,
+			 * but might after rule rewriting), then we will invoke this
+			 * processing multiple times on that subquery.	OK because
 			 * nothing will happen after the first time.  We do have to be
 			 * careful to copy everything we pull up, however, or risk
 			 * having chunks of structure multiply linked.
 			 */
 			subquery->jointree = (FromExpr *)
 				pull_up_subqueries(subquery, (Node *) subquery->jointree);
+
 			/*
-			 * Append the subquery's rangetable to mine (currently,
-			 * no adjustments will be needed in the subquery's rtable).
+			 * Append the subquery's rangetable to mine (currently, no
+			 * adjustments will be needed in the subquery's rtable).
 			 */
 			rtoffset = length(parse->rtable);
 			parse->rtable = nconc(parse->rtable,
 								  copyObject(subquery->rtable));
+
 			/*
-			 * Make copies of the subquery's jointree and targetlist
-			 * with varnos adjusted to match the merged rangetable.
+			 * Make copies of the subquery's jointree and targetlist with
+			 * varnos adjusted to match the merged rangetable.
 			 */
 			subjointree = copyObject(subquery->jointree);
 			OffsetVarNodes(subjointree, rtoffset, 0);
 			subtlist = copyObject(subquery->targetList);
 			OffsetVarNodes((Node *) subtlist, rtoffset, 0);
+
 			/*
 			 * Replace all of the top query's references to the subquery's
 			 * outputs with copies of the adjusted subtlist items, being
@@ -316,16 +322,18 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 			parse->havingQual =
 				ResolveNew(parse->havingQual,
 						   varno, 0, subtlist, CMD_SELECT, 0);
+
 			/*
 			 * Pull up any FOR UPDATE markers, too.
 			 */
 			foreach(l, subquery->rowMarks)
 			{
-				int		submark = lfirsti(l);
+				int			submark = lfirsti(l);
 
 				parse->rowMarks = lappendi(parse->rowMarks,
 										   submark + rtoffset);
 			}
+
 			/*
 			 * Miscellaneous housekeeping.
 			 */
@@ -345,9 +353,7 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 		List	   *l;
 
 		foreach(l, f->fromlist)
-		{
 			lfirst(l) = pull_up_subqueries(parse, lfirst(l));
-		}
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -370,6 +376,7 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 static bool
 is_simple_subquery(Query *subquery)
 {
+
 	/*
 	 * Let's just make sure it's a valid subselect ...
 	 */
@@ -379,12 +386,14 @@ is_simple_subquery(Query *subquery)
 		subquery->into != NULL ||
 		subquery->isPortal)
 		elog(ERROR, "is_simple_subquery: subquery is bogus");
+
 	/*
-	 * Can't currently pull up a query with setops.
-	 * Maybe after querytree redesign...
+	 * Can't currently pull up a query with setops. Maybe after querytree
+	 * redesign...
 	 */
 	if (subquery->setOperations)
 		return false;
+
 	/*
 	 * Can't pull up a subquery involving grouping, aggregation, sorting,
 	 * or limiting.
@@ -397,12 +406,13 @@ is_simple_subquery(Query *subquery)
 		subquery->limitOffset ||
 		subquery->limitCount)
 		return false;
+
 	/*
 	 * Hack: don't try to pull up a subquery with an empty jointree.
 	 * query_planner() will correctly generate a Result plan for a
 	 * jointree that's totally empty, but I don't think the right things
-	 * happen if an empty FromExpr appears lower down in a jointree.
-	 * Not worth working hard on this, just to collapse SubqueryScan/Result
+	 * happen if an empty FromExpr appears lower down in a jointree. Not
+	 * worth working hard on this, just to collapse SubqueryScan/Result
 	 * into Result...
 	 */
 	if (subquery->jointree->fromlist == NIL)
@@ -443,7 +453,9 @@ resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist)
 		resolvenew_in_jointree(j->rarg, varno, subtlist);
 		j->quals = ResolveNew(j->quals,
 							  varno, 0, subtlist, CMD_SELECT, 0);
-		/* We don't bother to update the colvars list, since it won't be
+
+		/*
+		 * We don't bother to update the colvars list, since it won't be
 		 * used again ...
 		 */
 	}
@@ -458,13 +470,13 @@ resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist)
  *
  * If we succeed in pulling up a subquery then we might form a jointree
  * in which a FromExpr is a direct child of another FromExpr.  In that
- * case we can consider collapsing the two FromExprs into one.  This is
+ * case we can consider collapsing the two FromExprs into one.	This is
  * an optional conversion, since the planner will work correctly either
  * way.  But we may find a better plan (at the cost of more planning time)
  * if we merge the two nodes.
  *
  * NOTE: don't try to do this in the same jointree scan that does subquery
- * pullup!  Since we're changing the jointree structure here, that wouldn't
+ * pullup!	Since we're changing the jointree structure here, that wouldn't
  * work reliably --- see comments for pull_up_subqueries().
  */
 static Node *
@@ -484,27 +496,29 @@ preprocess_jointree(Query *parse, Node *jtnode)
 
 		foreach(l, f->fromlist)
 		{
-			Node   *child = (Node *) lfirst(l);
+			Node	   *child = (Node *) lfirst(l);
 
 			/* Recursively simplify the child... */
 			child = preprocess_jointree(parse, child);
 			/* Now, is it a FromExpr? */
 			if (child && IsA(child, FromExpr))
 			{
+
 				/*
-				 * Yes, so do we want to merge it into parent?  Always do so
-				 * if child has just one element (since that doesn't make the
-				 * parent's list any longer).  Otherwise we have to be careful
-				 * about the increase in planning time caused by combining the
-				 * two join search spaces into one.  Our heuristic is to merge
-				 * if the merge will produce a join list no longer than
-				 * GEQO_RELS/2.  (Perhaps need an additional user parameter?)
+				 * Yes, so do we want to merge it into parent?	Always do
+				 * so if child has just one element (since that doesn't
+				 * make the parent's list any longer).  Otherwise we have
+				 * to be careful about the increase in planning time
+				 * caused by combining the two join search spaces into
+				 * one.  Our heuristic is to merge if the merge will
+				 * produce a join list no longer than GEQO_RELS/2.
+				 * (Perhaps need an additional user parameter?)
 				 */
 				FromExpr   *subf = (FromExpr *) child;
 				int			childlen = length(subf->fromlist);
 				int			myothers = length(newlist) + length(lnext(l));
 
-				if (childlen <= 1 || (childlen+myothers) <= geqo_rels/2)
+				if (childlen <= 1 || (childlen + myothers) <= geqo_rels / 2)
 				{
 					newlist = nconc(newlist, subf->fromlist);
 					f->quals = make_and_qual(f->quals, subf->quals);
@@ -540,6 +554,7 @@ preprocess_jointree(Query *parse, Node *jtnode)
 static Node *
 preprocess_expression(Query *parse, Node *expr, int kind)
 {
+
 	/*
 	 * Simplify constant expressions.
 	 *
@@ -551,8 +566,8 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	expr = eval_const_expressions(expr);
 
 	/*
-	 * If it's a qual or havingQual, canonicalize it, and convert it
-	 * to implicit-AND format.
+	 * If it's a qual or havingQual, canonicalize it, and convert it to
+	 * implicit-AND format.
 	 *
 	 * XXX Is there any value in re-applying eval_const_expressions after
 	 * canonicalize_qual?
@@ -575,10 +590,11 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 		if (kind != EXPRKIND_WHERE &&
 			(parse->groupClause != NIL || parse->hasAggs))
 		{
+
 			/*
 			 * Check for ungrouped variables passed to subplans.  Note we
-			 * do NOT do this for subplans in WHERE (or JOIN/ON); it's legal
-			 * there because WHERE is evaluated pre-GROUP.
+			 * do NOT do this for subplans in WHERE (or JOIN/ON); it's
+			 * legal there because WHERE is evaluated pre-GROUP.
 			 */
 			check_subplans_for_ungrouped_vars(expr, parse);
 		}
@@ -635,12 +651,12 @@ preprocess_qual_conditions(Query *parse, Node *jtnode)
  *	  inheritance set.
  *
  * We have to handle this case differently from cases where a source
- * relation is an inheritance set.  Source inheritance is expanded at
+ * relation is an inheritance set.	Source inheritance is expanded at
  * the bottom of the plan tree (see allpaths.c), but target inheritance
  * has to be expanded at the top.  The reason is that for UPDATE, each
  * target relation needs a different targetlist matching its own column
  * set.  (This is not so critical for DELETE, but for simplicity we treat
- * inherited DELETE the same way.)  Fortunately, the UPDATE/DELETE target
+ * inherited DELETE the same way.)	Fortunately, the UPDATE/DELETE target
  * can never be the nullable side of an outer join, so it's OK to generate
  * the plan this way.
  *
@@ -661,17 +677,17 @@ inheritance_planner(Query *parse, List *inheritlist)
 
 	foreach(l, inheritlist)
 	{
-		int		childRTindex = lfirsti(l);
-		Oid		childOID = getrelid(childRTindex, parse->rtable);
-		Query  *subquery;
-		Plan   *subplan;
+		int			childRTindex = lfirsti(l);
+		Oid			childOID = getrelid(childRTindex, parse->rtable);
+		Query	   *subquery;
+		Plan	   *subplan;
 
 		/* Generate modified query with this rel as target */
 		subquery = (Query *) adjust_inherited_attrs((Node *) parse,
-													parentRTindex, parentOID,
-													childRTindex, childOID);
+												parentRTindex, parentOID,
+												 childRTindex, childOID);
 		/* Generate plan */
-		subplan = grouping_planner(subquery, 0.0 /* retrieve all tuples */);
+		subplan = grouping_planner(subquery, 0.0 /* retrieve all tuples */ );
 		subplans = lappend(subplans, subplan);
 		/* Save preprocessed tlist from first rel for use in Append */
 		if (tlist == NIL)
@@ -718,6 +734,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 	if (parse->setOperations)
 	{
+
 		/*
 		 * Construct the plan for set operations.  The result will not
 		 * need any work except perhaps a top-level sort and/or LIMIT.
@@ -736,17 +753,17 @@ grouping_planner(Query *parse, double tuple_fraction)
 		tlist = postprocess_setop_tlist(result_plan->targetlist, tlist);
 
 		/*
-		 * Can't handle FOR UPDATE here (parser should have checked already,
-		 * but let's make sure).
+		 * Can't handle FOR UPDATE here (parser should have checked
+		 * already, but let's make sure).
 		 */
 		if (parse->rowMarks)
 			elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
 
 		/*
 		 * We set current_pathkeys NIL indicating we do not know sort
-		 * order.  This is correct when the top set operation is UNION ALL,
-		 * since the appended-together results are unsorted even if the
-		 * subplans were sorted.  For other set operations we could be
+		 * order.  This is correct when the top set operation is UNION
+		 * ALL, since the appended-together results are unsorted even if
+		 * the subplans were sorted.  For other set operations we could be
 		 * smarter --- room for future improvement!
 		 */
 		current_pathkeys = NIL;
@@ -772,22 +789,26 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 		/*
 		 * Add TID targets for rels selected FOR UPDATE (should this be
-		 * done in preprocess_targetlist?).  The executor uses the TID
-		 * to know which rows to lock, much as for UPDATE or DELETE.
+		 * done in preprocess_targetlist?).  The executor uses the TID to
+		 * know which rows to lock, much as for UPDATE or DELETE.
 		 */
 		if (parse->rowMarks)
 		{
 			List	   *l;
 
 			/*
-			 * We've got trouble if the FOR UPDATE appears inside grouping,
-			 * since grouping renders a reference to individual tuple CTIDs
-			 * invalid.  This is also checked at parse time, but that's
-			 * insufficient because of rule substitution, query pullup, etc.
+			 * We've got trouble if the FOR UPDATE appears inside
+			 * grouping, since grouping renders a reference to individual
+			 * tuple CTIDs invalid.  This is also checked at parse time,
+			 * but that's insufficient because of rule substitution, query
+			 * pullup, etc.
 			 */
 			CheckSelectForUpdate(parse);
 
-			/* Currently the executor only supports FOR UPDATE at top level */
+			/*
+			 * Currently the executor only supports FOR UPDATE at top
+			 * level
+			 */
 			if (PlannerQueryLevel > 1)
 				elog(ERROR, "SELECT FOR UPDATE is not allowed in subselects");
 
@@ -873,9 +894,9 @@ grouping_planner(Query *parse, double tuple_fraction)
 					int32		count = DatumGetInt32(limitc->constvalue);
 
 					/*
-					 * A NULL-constant LIMIT represents "LIMIT ALL",
-					 * which we treat the same as no limit (ie,
-					 * expect to retrieve all the tuples).
+					 * A NULL-constant LIMIT represents "LIMIT ALL", which
+					 * we treat the same as no limit (ie, expect to
+					 * retrieve all the tuples).
 					 */
 					if (!limitc->constisnull && count > 0)
 					{
@@ -902,17 +923,19 @@ grouping_planner(Query *parse, double tuple_fraction)
 				}
 				else
 				{
+
 					/*
-					 * COUNT is an expression ... don't know exactly what the
-					 * limit will be, but for lack of a better idea assume
-					 * 10% of the plan's result is wanted.
+					 * COUNT is an expression ... don't know exactly what
+					 * the limit will be, but for lack of a better idea
+					 * assume 10% of the plan's result is wanted.
 					 */
 					tuple_fraction = 0.10;
 				}
 			}
 
 			/*
-			 * If no LIMIT, check for retrieve-into-portal, ie DECLARE CURSOR.
+			 * If no LIMIT, check for retrieve-into-portal, ie DECLARE
+			 * CURSOR.
 			 *
 			 * We have no real idea how many tuples the user will ultimately
 			 * FETCH from a cursor, but it seems a good bet that he

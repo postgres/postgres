@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.101 2001/02/12 20:07:20 tgl Exp $
+ * $Id: pg_type.h,v 1.102 2001/03/22 04:00:41 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -51,11 +51,11 @@ CATALOG(pg_type) BOOTSTRAP
 
 	/*
 	 * typbyval determines whether internal Postgres routines pass a value
-	 * of this type by value or by reference.  typbyval had better be FALSE
-	 * if the length is not 1, 2, or 4 (or 8 on 8-byte-Datum machines).
-	 * Variable-length types are always passed by reference. Note that
-	 * typbyval can be false even if the length would allow pass-by-value;
-	 * this is currently true for type float4, for example.
+	 * of this type by value or by reference.  typbyval had better be
+	 * FALSE if the length is not 1, 2, or 4 (or 8 on 8-byte-Datum
+	 * machines). Variable-length types are always passed by reference.
+	 * Note that typbyval can be false even if the length would allow
+	 * pass-by-value; this is currently true for type float4, for example.
 	 */
 	bool		typbyval;
 
@@ -71,14 +71,14 @@ CATALOG(pg_type) BOOTSTRAP
 	Oid			typrelid;		/* 0 if not a class type */
 
 	/*
-	 * If typelem is not 0 then it identifies another row in pg_type.
-	 * The current type can then be subscripted like an array yielding
-	 * values of type typelem. A non-zero typelem does not guarantee
-	 * this type to be a "real" array type; some ordinary fixed-length
-	 * types can also be subscripted (e.g., oidvector). Variable-length
-	 * types can *not* be turned into pseudo-arrays like that. Hence,
-	 * the way to determine whether a type is a "true" array type is
-	 * typelem != 0 and typlen < 0.
+	 * If typelem is not 0 then it identifies another row in pg_type. The
+	 * current type can then be subscripted like an array yielding values
+	 * of type typelem. A non-zero typelem does not guarantee this type to
+	 * be a "real" array type; some ordinary fixed-length types can also
+	 * be subscripted (e.g., oidvector). Variable-length types can *not*
+	 * be turned into pseudo-arrays like that. Hence, the way to determine
+	 * whether a type is a "true" array type is typelem != 0 and typlen <
+	 * 0.
 	 */
 	Oid			typelem;
 	regproc		typinput;
@@ -114,10 +114,10 @@ CATALOG(pg_type) BOOTSTRAP
 	 * typstorage tells if the type is prepared for toasting and what
 	 * the default strategy for attributes of this type should be.
 	 *
-	 * 'p' PLAIN      type not prepared for toasting
+	 * 'p' PLAIN	  type not prepared for toasting
 	 * 'e' EXTERNAL   external storage possible, don't try to compress
 	 * 'x' EXTENDED   try to compress and store external if required
-	 * 'm' MAIN       like 'x' but try to keep in main tuple
+	 * 'm' MAIN		  like 'x' but try to keep in main tuple
 	 * ----------------
 	 */
 	char		typstorage;

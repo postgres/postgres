@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * fmgrtab.h
- *    The function manager's table of internal functions.
+ *	  The function manager's table of internal functions.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgrtab.h,v 1.15 2001/01/24 19:43:28 momjian Exp $
+ * $Id: fmgrtab.h,v 1.16 2001/03/22 04:01:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,14 +26,15 @@ typedef struct
 {
 	Oid			foid;			/* OID of the function */
 	const char *funcName;		/* C name of the function */
-    short       nargs;			/* 0..FUNC_MAX_ARGS, or -1 if variable count */
-    bool        strict;			/* T if function is "strict" */
+	short		nargs;			/* 0..FUNC_MAX_ARGS, or -1 if variable
+								 * count */
+	bool		strict;			/* T if function is "strict" */
 	bool		retset;			/* T if function returns a set */
-    PGFunction  func;			/* pointer to compiled function */
+	PGFunction	func;			/* pointer to compiled function */
 } FmgrBuiltin;
 
 extern const FmgrBuiltin fmgr_builtins[];
 
-extern const int fmgr_nbuiltins; /* number of entries in table */
+extern const int fmgr_nbuiltins;/* number of entries in table */
 
 #endif	 /* FMGRTAB_H */

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.27 2001/02/06 01:53:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.28 2001/03/22 04:00:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,10 @@ void
 MemoryContextInit(void)
 {
 	AssertState(TopMemoryContext == NULL);
+
 	/*
-	 * Initialize TopMemoryContext as an AllocSetContext with slow
-	 * growth rate --- we don't really expect much to be allocated in it.
+	 * Initialize TopMemoryContext as an AllocSetContext with slow growth
+	 * rate --- we don't really expect much to be allocated in it.
 	 *
 	 * (There is special-case code in MemoryContextCreate() for this call.)
 	 */
@@ -83,18 +84,20 @@ MemoryContextInit(void)
 											 8 * 1024,
 											 8 * 1024,
 											 8 * 1024);
+
 	/*
-	 * Not having any other place to point CurrentMemoryContext,
-	 * make it point to TopMemoryContext.  Caller should change this soon!
+	 * Not having any other place to point CurrentMemoryContext, make it
+	 * point to TopMemoryContext.  Caller should change this soon!
 	 */
 	CurrentMemoryContext = TopMemoryContext;
+
 	/*
-	 * Initialize ErrorContext as an AllocSetContext with slow
-	 * growth rate --- we don't really expect much to be allocated in it.
-	 * More to the point, require it to contain at least 8K at all times.
-	 * This is the only case where retained memory in a context is
-	 * *essential* --- we want to be sure ErrorContext still has some
-	 * memory even if we've run out elsewhere!
+	 * Initialize ErrorContext as an AllocSetContext with slow growth rate
+	 * --- we don't really expect much to be allocated in it. More to the
+	 * point, require it to contain at least 8K at all times. This is the
+	 * only case where retained memory in a context is *essential* --- we
+	 * want to be sure ErrorContext still has some memory even if we've
+	 * run out elsewhere!
 	 */
 	ErrorContext = AllocSetContextCreate(TopMemoryContext,
 										 "ErrorContext",
@@ -129,14 +132,12 @@ MemoryContextReset(MemoryContext context)
 void
 MemoryContextResetChildren(MemoryContext context)
 {
-	MemoryContext	child;
+	MemoryContext child;
 
 	AssertArg(MemoryContextIsValid(context));
 
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
-	{
 		MemoryContextReset(child);
-	}
 }
 
 /*
@@ -146,7 +147,7 @@ MemoryContextResetChildren(MemoryContext context)
  *
  * The type-specific delete routine removes all subsidiary storage
  * for the context, but we have to delete the context node itself,
- * as well as recurse to get the children.  We must also delink the
+ * as well as recurse to get the children.	We must also delink the
  * node from its parent, if it has one.
  */
 void
@@ -159,23 +160,21 @@ MemoryContextDelete(MemoryContext context)
 	Assert(context != CurrentMemoryContext);
 
 	MemoryContextDeleteChildren(context);
+
 	/*
-	 * We delink the context from its parent before deleting it,
-	 * so that if there's an error we won't have deleted/busted
-	 * contexts still attached to the context tree.  Better a leak
-	 * than a crash.
+	 * We delink the context from its parent before deleting it, so that
+	 * if there's an error we won't have deleted/busted contexts still
+	 * attached to the context tree.  Better a leak than a crash.
 	 */
 	if (context->parent)
 	{
-		MemoryContext	parent = context->parent;
+		MemoryContext parent = context->parent;
 
 		if (context == parent->firstchild)
-		{
 			parent->firstchild = context->nextchild;
-		}
 		else
 		{
-			MemoryContext	child;
+			MemoryContext child;
 
 			for (child = parent->firstchild; child; child = child->nextchild)
 			{
@@ -200,14 +199,13 @@ void
 MemoryContextDeleteChildren(MemoryContext context)
 {
 	AssertArg(MemoryContextIsValid(context));
+
 	/*
-	 * MemoryContextDelete will delink the child from me,
-	 * so just iterate as long as there is a child.
+	 * MemoryContextDelete will delink the child from me, so just iterate
+	 * as long as there is a child.
 	 */
 	while (context->firstchild != NULL)
-	{
 		MemoryContextDelete(context->firstchild);
-	}
 }
 
 /*
@@ -237,15 +235,13 @@ MemoryContextResetAndDeleteChildren(MemoryContext context)
 void
 MemoryContextStats(MemoryContext context)
 {
-	MemoryContext	child;
+	MemoryContext child;
 
 	AssertArg(MemoryContextIsValid(context));
 
 	(*context->methods->stats) (context);
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
-	{
 		MemoryContextStats(child);
-	}
 }
 
 
@@ -253,22 +249,21 @@ MemoryContextStats(MemoryContext context)
  * MemoryContextCheck
  *		Check all chunks in the named context.
  *
- * This is just a debugging utility, so it's not fancy.  
+ * This is just a debugging utility, so it's not fancy.
  */
 #ifdef MEMORY_CONTEXT_CHECKING
 void
 MemoryContextCheck(MemoryContext context)
 {
-	MemoryContext	child;
+	MemoryContext child;
 
 	AssertArg(MemoryContextIsValid(context));
 
 	(*context->methods->check) (context);
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
-	{
 		MemoryContextCheck(child);
-	}
 }
+
 #endif
 
 /*
@@ -285,24 +280,26 @@ MemoryContextCheck(MemoryContext context)
 bool
 MemoryContextContains(MemoryContext context, void *pointer)
 {
-	StandardChunkHeader	   *header;
+	StandardChunkHeader *header;
 
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
-	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at
-	 * an allocated chunk.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
+	 * allocated chunk.
 	 */
 	if (pointer == NULL || pointer != (void *) MAXALIGN(pointer))
 		return false;
+
 	/*
 	 * OK, it's probably safe to look at the chunk header.
 	 */
 	header = (StandardChunkHeader *)
 		((char *) pointer - STANDARDCHUNKHEADERSIZE);
+
 	/*
 	 * If the context link doesn't match then we certainly have a
-	 * non-member chunk.  Also check for a reasonable-looking size
-	 * as extra guard against being fooled by bogus pointers.
+	 * non-member chunk.  Also check for a reasonable-looking size as
+	 * extra guard against being fooled by bogus pointers.
 	 */
 	if (header->context == context && AllocSizeIsValid(header->size))
 		return true;
@@ -347,7 +344,7 @@ MemoryContextContains(MemoryContext context, void *pointer)
  *
  * Normally, the context node and the name are allocated from
  * TopMemoryContext (NOT from the parent context, since the node must
- * survive resets of its parent context!).  However, this routine is itself
+ * survive resets of its parent context!).	However, this routine is itself
  * used to create TopMemoryContext!  If we see that TopMemoryContext is NULL,
  * we assume we are creating TopMemoryContext and use malloc() to allocate
  * the node.
@@ -363,8 +360,8 @@ MemoryContextCreate(NodeTag tag, Size size,
 					MemoryContext parent,
 					const char *name)
 {
-	MemoryContext	node;
-	Size			needed = size + strlen(name) + 1;
+	MemoryContext node;
+	Size		needed = size + strlen(name) + 1;
 
 	/* Get space for node and name */
 	if (TopMemoryContext != NULL)
@@ -431,15 +428,16 @@ MemoryContextAlloc(MemoryContext context, Size size)
 void
 pfree(void *pointer)
 {
-	StandardChunkHeader	   *header;
+	StandardChunkHeader *header;
 
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
-	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at
-	 * an allocated chunk.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
+	 * allocated chunk.
 	 */
 	Assert(pointer != NULL);
 	Assert(pointer == (void *) MAXALIGN(pointer));
+
 	/*
 	 * OK, it's probably safe to look at the chunk header.
 	 */
@@ -448,7 +446,7 @@ pfree(void *pointer)
 
 	AssertArg(MemoryContextIsValid(header->context));
 
-    (*header->context->methods->free_p) (header->context, pointer);
+	(*header->context->methods->free_p) (header->context, pointer);
 }
 
 /*
@@ -458,15 +456,16 @@ pfree(void *pointer)
 void *
 repalloc(void *pointer, Size size)
 {
-	StandardChunkHeader	   *header;
+	StandardChunkHeader *header;
 
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
-	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at
-	 * an allocated chunk.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
+	 * allocated chunk.
 	 */
 	Assert(pointer != NULL);
 	Assert(pointer == (void *) MAXALIGN(pointer));
+
 	/*
 	 * OK, it's probably safe to look at the chunk header.
 	 */
@@ -479,7 +478,7 @@ repalloc(void *pointer, Size size)
 		elog(ERROR, "repalloc: invalid request size %lu",
 			 (unsigned long) size);
 
-    return (*header->context->methods->realloc) (header->context,
+	return (*header->context->methods->realloc) (header->context,
 												 pointer, size);
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *       $Header: /cvsroot/pgsql/src/include/port/darwin/Attic/sem.h,v 1.1 2000/12/11 00:49:53 tgl Exp $
+ *		 $Header: /cvsroot/pgsql/src/include/port/darwin/Attic/sem.h,v 1.2 2001/03/22 04:01:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.9 2000/11/10 20:13:25 tgl Exp $";
+static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.10 2001/03/22 03:59:51 momjian Exp $";
 
 #endif
 
@@ -56,7 +56,7 @@ inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	switch (af)
 	{
-		case AF_INET:
+			case AF_INET:
 			return (inet_cidr_ntop_ipv4(src, bits, dst, size));
 		default:
 			errno = EAFNOSUPPORT;
@@ -157,7 +157,7 @@ inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	switch (af)
 	{
-		case AF_INET:
+			case AF_INET:
 			return (inet_net_ntop_ipv4(src, bits, dst, size));
 		default:
 			errno = EAFNOSUPPORT;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.20 2001/02/10 02:31:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.21 2001/03/22 04:01:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,14 +87,14 @@ Pgtcl_Init(Tcl_Interp *interp)
 
 #ifdef PGTCL_USE_TCLOBJ
 	Tcl_CreateObjCommand(interp,
-					  "pg_lo_read",
-					  Pg_lo_read,
-					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
+						 "pg_lo_read",
+						 Pg_lo_read,
+						 (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
 	Tcl_CreateObjCommand(interp,
-					  "pg_lo_write",
-					  Pg_lo_write,
-					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
+						 "pg_lo_write",
+						 Pg_lo_write,
+						 (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 #else
 	Tcl_CreateCommand(interp,
 					  "pg_lo_read",

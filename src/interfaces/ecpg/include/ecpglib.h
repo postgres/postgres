@@ -9,26 +9,26 @@
 #ifndef __cplusplus
 #ifndef bool
 #define bool char
-#endif   /* ndef bool */
+#endif	 /* ndef bool */
 
 #ifndef true
-#define true    ((bool) 1)
-#endif /* ndef true */
-#ifndef false    
-#define false	((bool) 0)    
-#endif   /* ndef false */
-#endif   /* not C++ */   
-#else /* __BEOS__ */
+#define true	((bool) 1)
+#endif	 /* ndef true */
+#ifndef false
+#define false	((bool) 0)
+#endif	 /* ndef false */
+#endif	 /* not C++ */
+#else							/* __BEOS__ */
 #include <SupportDefs.h>
-#endif /* __BEOS__ */
+#endif	 /* __BEOS__ */
 
 #ifndef TRUE
-#define TRUE    1
-#endif   /* TRUE */
+#define TRUE	1
+#endif	 /* TRUE */
 
 #ifndef FALSE
-#define FALSE   0
-#endif   /* FALSE */
+#define FALSE	0
+#endif	 /* FALSE */
 
 #ifdef __cplusplus
 extern		"C"

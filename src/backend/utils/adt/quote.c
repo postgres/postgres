@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.3 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.4 2001/03/22 03:59:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,10 @@ quote_ident(PG_FUNCTION_ARGS)
 	text	   *result;
 
 	if (quote_ident_required(t))
-	{
-	    result = do_quote_ident(t);
-	}
+		result = do_quote_ident(t);
 	else
 	{
-		result = (text *)palloc(VARSIZE(t));
+		result = (text *) palloc(VARSIZE(t));
 		memcpy(result, t, VARSIZE(t));
 	}
 
@@ -79,23 +77,26 @@ quote_literal(PG_FUNCTION_ARGS)
 static bool
 quote_ident_required(text *iptr)
 {
-    char   *cp;
-	char   *ep;
+	char	   *cp;
+	char	   *ep;
 
 	cp = VARDATA(iptr);
-    ep = VARDATA(iptr) + VARSIZE(iptr) - VARHDRSZ;
+	ep = VARDATA(iptr) + VARSIZE(iptr) - VARHDRSZ;
 
 	if (cp >= ep)
 		return true;
 
-    if (!(*cp == '_' || (*cp >= 'a' && *cp <= 'z')))
+	if (!(*cp == '_' || (*cp >= 'a' && *cp <= 'z')))
 		return true;
 
-	while((++cp) < ep)
+	while ((++cp) < ep)
 	{
-	    if (*cp >= 'a' && *cp <= 'z') continue;
-		if (*cp >= '0' && *cp <= '9') continue;
-		if (*cp == '_') continue;
+		if (*cp >= 'a' && *cp <= 'z')
+			continue;
+		if (*cp >= '0' && *cp <= '9')
+			continue;
+		if (*cp == '_')
+			continue;
 
 		return true;
 	}
@@ -107,29 +108,29 @@ quote_ident_required(text *iptr)
 static text *
 do_quote_ident(text *iptr)
 {
-    text   *result;
-	char   *cp1;
-	char   *cp2;
-	int		len;
+	text	   *result;
+	char	   *cp1;
+	char	   *cp2;
+	int			len;
 
-    len = VARSIZE(iptr) - VARHDRSZ;
-	result = (text *)palloc(len * 2 + VARHDRSZ + 2);
+	len = VARSIZE(iptr) - VARHDRSZ;
+	result = (text *) palloc(len * 2 + VARHDRSZ + 2);
 
 	cp1 = VARDATA(iptr);
 	cp2 = VARDATA(result);
 
 	*cp2++ = '"';
-	while(len-- > 0)
+	while (len-- > 0)
 	{
-	    if (*cp1 == '"')
+		if (*cp1 == '"')
 			*cp2++ = '"';
-	    if (*cp1 == '\\')
+		if (*cp1 == '\\')
 			*cp2++ = '\\';
-	    *cp2++ = *cp1++;
+		*cp2++ = *cp1++;
 	}
 	*cp2++ = '"';
 
-	VARATT_SIZEP(result) = cp2 - ((char *)result);
+	VARATT_SIZEP(result) = cp2 - ((char *) result);
 
 	return result;
 }
@@ -138,29 +139,29 @@ do_quote_ident(text *iptr)
 static text *
 do_quote_literal(text *lptr)
 {
-    text   *result;
-	char   *cp1;
-	char   *cp2;
-	int		len;
+	text	   *result;
+	char	   *cp1;
+	char	   *cp2;
+	int			len;
 
-    len = VARSIZE(lptr) - VARHDRSZ;
-	result = (text *)palloc(len * 2 + VARHDRSZ + 2);
+	len = VARSIZE(lptr) - VARHDRSZ;
+	result = (text *) palloc(len * 2 + VARHDRSZ + 2);
 
 	cp1 = VARDATA(lptr);
 	cp2 = VARDATA(result);
 
 	*cp2++ = '\'';
-	while(len-- > 0)
+	while (len-- > 0)
 	{
-	    if (*cp1 == '\'')
+		if (*cp1 == '\'')
 			*cp2++ = '\'';
-	    if (*cp1 == '\\')
+		if (*cp1 == '\\')
 			*cp2++ = '\\';
-	    *cp2++ = *cp1++;
+		*cp2++ = *cp1++;
 	}
 	*cp2++ = '\'';
 
-	VARATT_SIZEP(result) = cp2 - ((char *)result);
+	VARATT_SIZEP(result) = cp2 - ((char *) result);
 
 	return result;
 }
@@ -171,28 +172,31 @@ do_quote_literal(text *lptr)
 static bool
 quote_ident_required(text *iptr)
 {
-    char   *cp;
-	char   *ep;
+	char	   *cp;
+	char	   *ep;
 
 	cp = VARDATA(iptr);
-    ep = VARDATA(iptr) + VARSIZE(iptr) - VARHDRSZ;
+	ep = VARDATA(iptr) + VARSIZE(iptr) - VARHDRSZ;
 
 	if (cp >= ep)
 		return true;
 
-	if(pg_mblen(cp) != 1)
+	if (pg_mblen(cp) != 1)
 		return true;
-    if (!(*cp == '_' || (*cp >= 'a' && *cp <= 'z')))
+	if (!(*cp == '_' || (*cp >= 'a' && *cp <= 'z')))
 		return true;
 
-	while((++cp) < ep)
+	while ((++cp) < ep)
 	{
 		if (pg_mblen(cp) != 1)
 			return true;
 
-	    if (*cp >= 'a' && *cp <= 'z') continue;
-		if (*cp >= '0' && *cp <= '9') continue;
-		if (*cp == '_') continue;
+		if (*cp >= 'a' && *cp <= 'z')
+			continue;
+		if (*cp >= '0' && *cp <= '9')
+			continue;
+		if (*cp == '_')
+			continue;
 
 		return true;
 	}
@@ -204,41 +208,41 @@ quote_ident_required(text *iptr)
 static text *
 do_quote_ident(text *iptr)
 {
-    text   *result;
-	char   *cp1;
-	char   *cp2;
-	int		len;
-	int		wl;
+	text	   *result;
+	char	   *cp1;
+	char	   *cp2;
+	int			len;
+	int			wl;
 
-    len = VARSIZE(iptr) - VARHDRSZ;
-	result = (text *)palloc(len * 2 + VARHDRSZ + 2);
+	len = VARSIZE(iptr) - VARHDRSZ;
+	result = (text *) palloc(len * 2 + VARHDRSZ + 2);
 
 	cp1 = VARDATA(iptr);
 	cp2 = VARDATA(result);
 
 	*cp2++ = '"';
-	while(len > 0)
+	while (len > 0)
 	{
 		if ((wl = pg_mblen(cp1)) != 1)
 		{
 			len -= wl;
 
-			while(wl-- > 0)
+			while (wl-- > 0)
 				*cp2++ = *cp1++;
 			continue;
 		}
 
-	    if (*cp1 == '"')
+		if (*cp1 == '"')
 			*cp2++ = '"';
-	    if (*cp1 == '\\')
+		if (*cp1 == '\\')
 			*cp2++ = '\\';
-	    *cp2++ = *cp1++;
+		*cp2++ = *cp1++;
 
 		len--;
 	}
 	*cp2++ = '"';
 
-	VARATT_SIZEP(result) = cp2 - ((char *)result);
+	VARATT_SIZEP(result) = cp2 - ((char *) result);
 
 	return result;
 }
@@ -247,45 +251,43 @@ do_quote_ident(text *iptr)
 static text *
 do_quote_literal(text *lptr)
 {
-    text   *result;
-	char   *cp1;
-	char   *cp2;
-	int		len;
-	int		wl;
+	text	   *result;
+	char	   *cp1;
+	char	   *cp2;
+	int			len;
+	int			wl;
 
-    len = VARSIZE(lptr) - VARHDRSZ;
-	result = (text *)palloc(len * 2 + VARHDRSZ + 2);
+	len = VARSIZE(lptr) - VARHDRSZ;
+	result = (text *) palloc(len * 2 + VARHDRSZ + 2);
 
 	cp1 = VARDATA(lptr);
 	cp2 = VARDATA(result);
 
 	*cp2++ = '\'';
-	while(len > 0)
+	while (len > 0)
 	{
 		if ((wl = pg_mblen(cp1)) != 1)
 		{
 			len -= wl;
 
-			while(wl-- > 0)
+			while (wl-- > 0)
 				*cp2++ = *cp1++;
 			continue;
 		}
 
-	    if (*cp1 == '\'')
+		if (*cp1 == '\'')
 			*cp2++ = '\'';
-	    if (*cp1 == '\\')
+		if (*cp1 == '\\')
 			*cp2++ = '\\';
-	    *cp2++ = *cp1++;
+		*cp2++ = *cp1++;
 
 		len--;
 	}
 	*cp2++ = '\'';
 
-	VARATT_SIZEP(result) = cp2 - ((char *)result);
+	VARATT_SIZEP(result) = cp2 - ((char *) result);
 
 	return result;
 }
 
 #endif
-
-

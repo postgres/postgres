@@ -4,7 +4,7 @@
 */
 
 PGresult   *doquery(char *query);
-PGconn 	   *connectdb(char *options);
+PGconn	   *connectdb(char *options);
 void		disconnectdb(void);
 int			fetch(void *param,...);
 int			fetchwithnulls(void *param,...);

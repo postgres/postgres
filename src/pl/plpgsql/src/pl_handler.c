@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.6 2000/11/20 20:36:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.7 2001/03/22 04:01:42 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -94,7 +94,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 		 * Check if we already compiled this function
 		 * ----------
 		 */
-		Oid		funcOid = fcinfo->flinfo->fn_oid;
+		Oid			funcOid = fcinfo->flinfo->fn_oid;
 
 		for (func = compiled_functions; func != NULL; func = func->next)
 		{
@@ -128,7 +128,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	 */
 	if (isTrigger)
 		retval = PointerGetDatum(plpgsql_exec_trigger(func,
-										(TriggerData *) fcinfo->context));
+									   (TriggerData *) fcinfo->context));
 	else
 		retval = plpgsql_exec_function(func, fcinfo);
 

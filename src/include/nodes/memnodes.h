@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.20 2001/01/24 19:43:25 momjian Exp $
+ * $Id: memnodes.h,v 1.21 2001/03/22 04:00:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ typedef struct MemoryContextMethods
 	void		(*init) (MemoryContext context);
 	void		(*reset) (MemoryContext context);
 	void		(*delete) (MemoryContext context);
-#ifdef MEMORY_CONTEXT_CHECKING	
+#ifdef MEMORY_CONTEXT_CHECKING
 	void		(*check) (MemoryContext context);
 #endif
 	void		(*stats) (MemoryContext context);
@@ -51,12 +51,12 @@ typedef struct MemoryContextMethods
 
 typedef struct MemoryContextData
 {
-	NodeTag		type;				/* identifies exact kind of context */
-	MemoryContextMethods *methods;	/* virtual function table */
-	MemoryContext parent;			/* NULL if no parent (toplevel context) */
-	MemoryContext firstchild;		/* head of linked list of children */
-	MemoryContext nextchild;		/* next child of same parent */
-	char	   *name;				/* context name (just for debugging) */
+	NodeTag		type;			/* identifies exact kind of context */
+	MemoryContextMethods *methods;		/* virtual function table */
+	MemoryContext parent;		/* NULL if no parent (toplevel context) */
+	MemoryContext firstchild;	/* head of linked list of children */
+	MemoryContext nextchild;	/* next child of same parent */
+	char	   *name;			/* context name (just for debugging) */
 } MemoryContextData;
 
 /* utils/palloc.h contains typedef struct MemoryContextData *MemoryContext */

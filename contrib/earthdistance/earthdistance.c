@@ -9,7 +9,7 @@
 const int	EARTH_RADIUS = 3958.747716;
 const int	TWO_PI = 2.0 * M_PI;
 
-double *geo_distance(Point *pt1, Point *pt2);
+double	   *geo_distance(Point *pt1, Point *pt2);
 
 
 /******************************************************

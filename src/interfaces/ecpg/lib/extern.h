@@ -24,12 +24,12 @@ struct ECPGgeneric_varchar
 /*
  * type information cache
  */
- 
+
 struct ECPGtype_information_cache
 {
-	struct ECPGtype_information_cache	*next;
-	int		oid;
-	bool	isarray;
+	struct ECPGtype_information_cache *next;
+	int			oid;
+	bool		isarray;
 };
 
 /* structure to store one statement */
@@ -47,8 +47,8 @@ struct connection
 {
 	char	   *name;
 	PGconn	   *connection;
-	bool	    committed;
-	int	    autocommit;
-	struct ECPGtype_information_cache        *cache_head;
+	bool		committed;
+	int			autocommit;
+	struct ECPGtype_information_cache *cache_head;
 	struct connection *next;
 };

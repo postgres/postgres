@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.40 2001/02/27 22:07:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.41 2001/03/22 04:00:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,8 +126,8 @@ EnablePortalManager(void)
 	ctl.datasize = sizeof(Portal);
 
 	/*
-	 * use PORTALS_PER_USER, defined in utils/portal.h as a guess of
-	 * how many hash table entries to create, initially
+	 * use PORTALS_PER_USER, defined in utils/portal.h as a guess of how
+	 * many hash table entries to create, initially
 	 */
 	PortalHashTable = hash_create(PORTALS_PER_USER * 3, &ctl, HASH_ELEM);
 }

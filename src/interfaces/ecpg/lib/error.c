@@ -119,15 +119,16 @@ ECPGraise(int line, int code, const char *str)
 			break;
 
 		case ECPG_PGSQL:
-		{
-			int		slen = strlen(str);
-			/* strip trailing newline */
-			if (slen > 0 && str[slen - 1] == '\n')
-				slen--;
-			snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),
-					 "'%.*s' in line %d.", slen, str, line);
-			break;
-		}
+			{
+				int			slen = strlen(str);
+
+				/* strip trailing newline */
+				if (slen > 0 && str[slen - 1] == '\n')
+					slen--;
+				snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),
+						 "'%.*s' in line %d.", slen, str, line);
+				break;
+			}
 
 		case ECPG_TRANS:
 			snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),

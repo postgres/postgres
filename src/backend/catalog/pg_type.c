@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.59 2001/02/12 20:07:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.60 2001/03/22 03:59:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,24 +171,24 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
-	values[i++] = NameGetDatum(&name);			/* 1 */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 2 */
-	values[i++] = Int16GetDatum(0);				/* 3 */
-	values[i++] = Int16GetDatum(0);				/* 4 */
-	values[i++] = BoolGetDatum(false);			/* 5 */
-	values[i++] = CharGetDatum(0);				/* 6 */
-	values[i++] = BoolGetDatum(false);			/* 7 */
-	values[i++] = CharGetDatum(0);				/* 8 */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 9 */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 10 */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 11 */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 12 */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 13 */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 14 */
-	values[i++] = CharGetDatum('i');			/* 15 */
-	values[i++] = CharGetDatum('p');			/* 16 */
+	values[i++] = NameGetDatum(&name);	/* 1 */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* 2 */
+	values[i++] = Int16GetDatum(0);		/* 3 */
+	values[i++] = Int16GetDatum(0);		/* 4 */
+	values[i++] = BoolGetDatum(false);	/* 5 */
+	values[i++] = CharGetDatum(0);		/* 6 */
+	values[i++] = BoolGetDatum(false);	/* 7 */
+	values[i++] = CharGetDatum(0);		/* 8 */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* 9 */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* 10 */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* 11 */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* 12 */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* 13 */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* 14 */
+	values[i++] = CharGetDatum('i');	/* 15 */
+	values[i++] = CharGetDatum('p');	/* 16 */
 	values[i++] = DirectFunctionCall1(textin,
-									  CStringGetDatum(typeName));	/* 17 */
+									  CStringGetDatum(typeName));		/* 17 */
 
 	/* ----------------
 	 *	create a new type tuple with FormHeapTuple
@@ -368,16 +368,16 @@ TypeCreate(char *typeName,
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
-	values[i++] = NameGetDatum(&name);			/* 1 */
+	values[i++] = NameGetDatum(&name);	/* 1 */
 	values[i++] = Int32GetDatum(GetUserId());	/* 2 */
 	values[i++] = Int16GetDatum(internalSize);	/* 3 */
 	values[i++] = Int16GetDatum(externalSize);	/* 4 */
 	values[i++] = BoolGetDatum(passedByValue);	/* 5 */
 	values[i++] = CharGetDatum(typeType);		/* 6 */
-	values[i++] = BoolGetDatum(true);			/* 7 */
+	values[i++] = BoolGetDatum(true);	/* 7 */
 	values[i++] = CharGetDatum(typDelim);		/* 8 */
 	values[i++] = ObjectIdGetDatum(typeType == 'c' ? relationOid : InvalidOid); /* 9 */
-	values[i++] = ObjectIdGetDatum(elementObjectId); /* 10 */
+	values[i++] = ObjectIdGetDatum(elementObjectId);	/* 10 */
 
 	procs[0] = inputProcedure;
 	procs[1] = outputProcedure;
@@ -386,7 +386,7 @@ TypeCreate(char *typeName,
 
 	for (j = 0; j < 4; ++j)
 	{
-		Oid		procOid;
+		Oid			procOid;
 
 		procname = procs[j];
 
@@ -438,27 +438,27 @@ TypeCreate(char *typeName,
 				func_error("TypeCreate", procname, 1, argList, NULL);
 		}
 
-		values[i++] = ObjectIdGetDatum(procOid);	/* 11 - 14 */
+		values[i++] = ObjectIdGetDatum(procOid);		/* 11 - 14 */
 	}
 
 	/* ----------------
 	 * set default alignment
 	 * ----------------
 	 */
-	values[i++] = CharGetDatum(alignment);	/* 15 */
+	values[i++] = CharGetDatum(alignment);		/* 15 */
 
 	/* ----------------
 	 *	set default storage for TOAST
 	 * ----------------
 	 */
-	values[i++] = CharGetDatum(storage);	/* 16 */
+	values[i++] = CharGetDatum(storage);		/* 16 */
 
 	/* ----------------
 	 *	initialize the default value for this type.
 	 * ----------------
 	 */
-	values[i] = DirectFunctionCall1(textin,	/* 17 */
-				CStringGetDatum(defaultTypeValue ? defaultTypeValue : "-"));
+	values[i] = DirectFunctionCall1(textin,		/* 17 */
+			 CStringGetDatum(defaultTypeValue ? defaultTypeValue : "-"));
 
 	/* ----------------
 	 *	open pg_type and begin a scan for the type name.

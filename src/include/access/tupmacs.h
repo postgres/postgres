@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.16 2001/01/24 19:43:20 momjian Exp $
+ * $Id: tupmacs.h,v 1.17 2001/03/22 04:00:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@
 	PointerGetDatum((char *) (T)) \
 )
 
-#else /* SIZEOF_DATUM != 8 */
+#else							/* SIZEOF_DATUM != 8 */
 
 #define fetch_att(T,attbyval,attlen) \
 ( \
@@ -91,7 +91,7 @@
 	PointerGetDatum((char *) (T)) \
 )
 
-#endif /* SIZEOF_DATUM == 8 */
+#endif	 /* SIZEOF_DATUM == 8 */
 
 /*
  * att_align aligns the given offset as needed for a datum of length attlen
@@ -158,7 +158,7 @@
 		} \
 	} while (0)
 
-#else /* SIZEOF_DATUM != 8 */
+#else							/* SIZEOF_DATUM != 8 */
 
 #define store_att_byval(T,newdatum,attlen) \
 	do { \
@@ -180,6 +180,6 @@
 		} \
 	} while (0)
 
-#endif /* SIZEOF_DATUM == 8 */
+#endif	 /* SIZEOF_DATUM == 8 */
 
 #endif

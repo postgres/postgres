@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.46 2001/01/29 00:39:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.47 2001/03/22 03:59:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
  *		TupIsNull				- true when slot contains no tuple(Macro)
  *
  *	 CONVENIENCE INITIALIZATION ROUTINES
- *		ExecInitResultTupleSlot	   \	convenience routines to initialize
+ *		ExecInitResultTupleSlot    \	convenience routines to initialize
  *		ExecInitScanTupleSlot		\	the various tuple slots for nodes
  *		ExecInitExtraTupleSlot		/	which store copies of tuples.
  *		ExecInitNullTupleSlot	   /
@@ -422,7 +422,7 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 
 	slot->val = (HeapTuple) NULL;
 
-	slot->ttc_shouldFree = true;	/* probably useless code... */
+	slot->ttc_shouldFree = true;/* probably useless code... */
 
 	/* ----------------
 	 *	Drop the pin on the referenced buffer, if there is one.
@@ -446,7 +446,7 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 void
 ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 					  TupleDesc tupdesc,		/* new tuple descriptor */
-					  bool shouldFree)			/* is desc owned by slot? */
+					  bool shouldFree)	/* is desc owned by slot? */
 {
 	if (slot->ttc_shouldFreeDesc &&
 		slot->ttc_tupleDescriptor != NULL)
@@ -482,7 +482,7 @@ ExecSetSlotDescriptorIsNew(TupleTableSlot *slot,		/* slot to change */
  *		ExecInit{Result,Scan,Extra}TupleSlot
  *
  *		These are convenience routines to initialize the specified slot
- *		in nodes inheriting the appropriate state.  ExecInitExtraTupleSlot
+ *		in nodes inheriting the appropriate state.	ExecInitExtraTupleSlot
  *		is used for initializing special-purpose slots.
  * --------------------------------
  */
@@ -541,11 +541,13 @@ ExecInitExtraTupleSlot(EState *estate)
 TupleTableSlot *
 ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
 {
-	TupleTableSlot*   slot = ExecInitExtraTupleSlot(estate);
+	TupleTableSlot *slot = ExecInitExtraTupleSlot(estate);
+
 	/*
 	 * Since heap_getattr() will treat attributes beyond a tuple's t_natts
-	 * as being NULL, we can make an all-nulls tuple just by making it be of
-	 * zero length.  However, the slot descriptor must match the real tupType.
+	 * as being NULL, we can make an all-nulls tuple just by making it be
+	 * of zero length.	However, the slot descriptor must match the real
+	 * tupType.
 	 */
 	HeapTuple	nullTuple;
 	Datum		values[1];

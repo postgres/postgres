@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.33 2001/02/10 02:31:29 tgl Exp $
+ * $Id: geo_decls.h,v 1.34 2001/03/22 04:01:12 momjian Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -141,25 +141,25 @@ typedef struct
  * fixed-size pass-by-reference types.
  */
 
-#define DatumGetPointP(X)    ((Point *) DatumGetPointer(X))
-#define PointPGetDatum(X)    PointerGetDatum(X)
+#define DatumGetPointP(X)	 ((Point *) DatumGetPointer(X))
+#define PointPGetDatum(X)	 PointerGetDatum(X)
 #define PG_GETARG_POINT_P(n) DatumGetPointP(PG_GETARG_DATUM(n))
 #define PG_RETURN_POINT_P(x) return PointPGetDatum(x)
 
-#define DatumGetLsegP(X)    ((LSEG *) DatumGetPointer(X))
-#define LsegPGetDatum(X)    PointerGetDatum(X)
+#define DatumGetLsegP(X)	((LSEG *) DatumGetPointer(X))
+#define LsegPGetDatum(X)	PointerGetDatum(X)
 #define PG_GETARG_LSEG_P(n) DatumGetLsegP(PG_GETARG_DATUM(n))
 #define PG_RETURN_LSEG_P(x) return LsegPGetDatum(x)
 
-#define DatumGetPathP(X)         ((PATH *) PG_DETOAST_DATUM(X))
-#define DatumGetPathPCopy(X)     ((PATH *) PG_DETOAST_DATUM_COPY(X))
-#define PathPGetDatum(X)         PointerGetDatum(X)
-#define PG_GETARG_PATH_P(n)      DatumGetPathP(PG_GETARG_DATUM(n))
+#define DatumGetPathP(X)		 ((PATH *) PG_DETOAST_DATUM(X))
+#define DatumGetPathPCopy(X)	 ((PATH *) PG_DETOAST_DATUM_COPY(X))
+#define PathPGetDatum(X)		 PointerGetDatum(X)
+#define PG_GETARG_PATH_P(n)		 DatumGetPathP(PG_GETARG_DATUM(n))
 #define PG_GETARG_PATH_P_COPY(n) DatumGetPathPCopy(PG_GETARG_DATUM(n))
-#define PG_RETURN_PATH_P(x)      return PathPGetDatum(x)
+#define PG_RETURN_PATH_P(x)		 return PathPGetDatum(x)
 
-#define DatumGetLineP(X)    ((LINE *) DatumGetPointer(X))
-#define LinePGetDatum(X)    PointerGetDatum(X)
+#define DatumGetLineP(X)	((LINE *) DatumGetPointer(X))
+#define LinePGetDatum(X)	PointerGetDatum(X)
 #define PG_GETARG_LINE_P(n) DatumGetLineP(PG_GETARG_DATUM(n))
 #define PG_RETURN_LINE_P(x) return LinePGetDatum(x)
 
@@ -168,15 +168,15 @@ typedef struct
 #define PG_GETARG_BOX_P(n) DatumGetBoxP(PG_GETARG_DATUM(n))
 #define PG_RETURN_BOX_P(x) return BoxPGetDatum(x)
 
-#define DatumGetPolygonP(X)         ((POLYGON *) PG_DETOAST_DATUM(X))
-#define DatumGetPolygonPCopy(X)     ((POLYGON *) PG_DETOAST_DATUM_COPY(X))
-#define PolygonPGetDatum(X)         PointerGetDatum(X)
-#define PG_GETARG_POLYGON_P(n)      DatumGetPolygonP(PG_GETARG_DATUM(n))
+#define DatumGetPolygonP(X)			((POLYGON *) PG_DETOAST_DATUM(X))
+#define DatumGetPolygonPCopy(X)		((POLYGON *) PG_DETOAST_DATUM_COPY(X))
+#define PolygonPGetDatum(X)			PointerGetDatum(X)
+#define PG_GETARG_POLYGON_P(n)		DatumGetPolygonP(PG_GETARG_DATUM(n))
 #define PG_GETARG_POLYGON_P_COPY(n) DatumGetPolygonPCopy(PG_GETARG_DATUM(n))
-#define PG_RETURN_POLYGON_P(x)      return PolygonPGetDatum(x)
+#define PG_RETURN_POLYGON_P(x)		return PolygonPGetDatum(x)
 
-#define DatumGetCircleP(X)    ((CIRCLE *) DatumGetPointer(X))
-#define CirclePGetDatum(X)    PointerGetDatum(X)
+#define DatumGetCircleP(X)	  ((CIRCLE *) DatumGetPointer(X))
+#define CirclePGetDatum(X)	  PointerGetDatum(X)
 #define PG_GETARG_CIRCLE_P(n) DatumGetCircleP(PG_GETARG_DATUM(n))
 #define PG_RETURN_CIRCLE_P(x) return CirclePGetDatum(x)
 

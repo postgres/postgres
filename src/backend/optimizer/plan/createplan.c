@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.103 2001/01/24 19:42:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.104 2001/03/22 03:59:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,19 +42,19 @@ static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
 static TidScan *create_tidscan_plan(TidPath *best_path, List *tlist,
 					List *scan_clauses);
 static SubqueryScan *create_subqueryscan_plan(Path *best_path,
-					  List *tlist, List *scan_clauses);
+						 List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_plan(NestPath *best_path, List *tlist,
-									  List *joinclauses, List *otherclauses,
-									  Plan *outer_plan, List *outer_tlist,
-									  Plan *inner_plan, List *inner_tlist);
+					 List *joinclauses, List *otherclauses,
+					 Plan *outer_plan, List *outer_tlist,
+					 Plan *inner_plan, List *inner_tlist);
 static MergeJoin *create_mergejoin_plan(MergePath *best_path, List *tlist,
-										List *joinclauses, List *otherclauses,
-										Plan *outer_plan, List *outer_tlist,
-										Plan *inner_plan, List *inner_tlist);
+					  List *joinclauses, List *otherclauses,
+					  Plan *outer_plan, List *outer_tlist,
+					  Plan *inner_plan, List *inner_tlist);
 static HashJoin *create_hashjoin_plan(HashPath *best_path, List *tlist,
-									  List *joinclauses, List *otherclauses,
-									  Plan *outer_plan, List *outer_tlist,
-									  Plan *inner_plan, List *inner_tlist);
+					 List *joinclauses, List *otherclauses,
+					 Plan *outer_plan, List *outer_tlist,
+					 Plan *inner_plan, List *inner_tlist);
 static List *fix_indxqual_references(List *indexquals, IndexPath *index_path);
 static List *fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 					 Form_pg_index index);
@@ -72,20 +72,20 @@ static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tideval);
 static NestLoop *make_nestloop(List *tlist,
-							   List *joinclauses, List *otherclauses,
-							   Plan *lefttree, Plan *righttree,
-							   JoinType jointype);
+			  List *joinclauses, List *otherclauses,
+			  Plan *lefttree, Plan *righttree,
+			  JoinType jointype);
 static HashJoin *make_hashjoin(List *tlist,
-							   List *joinclauses, List *otherclauses,
-							   List *hashclauses,
-							   Plan *lefttree, Plan *righttree,
-							   JoinType jointype);
+			  List *joinclauses, List *otherclauses,
+			  List *hashclauses,
+			  Plan *lefttree, Plan *righttree,
+			  JoinType jointype);
 static Hash *make_hash(List *tlist, Node *hashkey, Plan *lefttree);
 static MergeJoin *make_mergejoin(List *tlist,
-								 List *joinclauses, List *otherclauses,
-								 List *mergeclauses,
-								 Plan *lefttree, Plan *righttree,
-								 JoinType jointype);
+			   List *joinclauses, List *otherclauses,
+			   List *mergeclauses,
+			   Plan *lefttree, Plan *righttree,
+			   JoinType jointype);
 
 /*
  * create_plan
@@ -313,8 +313,8 @@ create_append_plan(Query *root, AppendPath *best_path)
 
 	foreach(subpaths, best_path->subpaths)
 	{
-		Path   *subpath = (Path *) lfirst(subpaths);
-		
+		Path	   *subpath = (Path *) lfirst(subpaths);
+
 		subplans = lappend(subplans, create_plan(root, subpath));
 	}
 
@@ -344,7 +344,7 @@ create_seqscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->parent->relids) == 1);
-	Assert(! best_path->parent->issubquery);
+	Assert(!best_path->parent->issubquery);
 
 	scan_relid = (Index) lfirsti(best_path->parent->relids);
 
@@ -386,7 +386,7 @@ create_indexscan_plan(Query *root,
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
-	Assert(! best_path->path.parent->issubquery);
+	Assert(!best_path->path.parent->issubquery);
 
 	baserelid = lfirsti(best_path->path.parent->relids);
 
@@ -496,7 +496,7 @@ create_tidscan_plan(TidPath *best_path, List *tlist, List *scan_clauses)
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
-	Assert(! best_path->path.parent->issubquery);
+	Assert(!best_path->path.parent->issubquery);
 
 	scan_relid = (Index) lfirsti(best_path->path.parent->relids);
 
@@ -737,21 +737,22 @@ create_mergejoin_plan(MergePath *best_path,
 									best_path->innersortkeys);
 
 	/*
-	 * The executor requires the inner side of a mergejoin to support "mark"
-	 * and "restore" operations.  Not all plan types do, so we must be careful
-	 * not to generate an invalid plan.  If necessary, an invalid inner plan
-	 * can be handled by inserting a Materialize node.
+	 * The executor requires the inner side of a mergejoin to support
+	 * "mark" and "restore" operations.  Not all plan types do, so we must
+	 * be careful not to generate an invalid plan.	If necessary, an
+	 * invalid inner plan can be handled by inserting a Materialize node.
 	 *
-	 * Since the inner side must be ordered, and only Sorts and IndexScans can
-	 * create order to begin with, you might think there's no problem --- but
-	 * you'd be wrong.  Nestloop and merge joins can *preserve* the order of
-	 * their inputs, so they can be selected as the input of a mergejoin,
-	 * and that won't work in the present executor.
+	 * Since the inner side must be ordered, and only Sorts and IndexScans
+	 * can create order to begin with, you might think there's no problem
+	 * --- but you'd be wrong.  Nestloop and merge joins can *preserve*
+	 * the order of their inputs, so they can be selected as the input of
+	 * a mergejoin, and that won't work in the present executor.
 	 *
 	 * Doing this here is a bit of a kluge since the cost of the Materialize
-	 * wasn't taken into account in our earlier decisions.  But Materialize
-	 * is hard to estimate a cost for, and the above consideration shows that
-	 * this is a rare case anyway, so this seems an acceptable way to proceed.
+	 * wasn't taken into account in our earlier decisions.  But
+	 * Materialize is hard to estimate a cost for, and the above
+	 * consideration shows that this is a rare case anyway, so this seems
+	 * an acceptable way to proceed.
 	 *
 	 * This check must agree with ExecMarkPos/ExecRestrPos in
 	 * executor/execAmi.c!
@@ -1015,6 +1016,7 @@ static Node *
 fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 					 Oid *opclass)
 {
+
 	/*
 	 * Remove any binary-compatible relabeling of the indexkey
 	 */
@@ -1025,8 +1027,8 @@ fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 	 * We represent index keys by Var nodes having the varno of the base
 	 * table but varattno equal to the index's attribute number (index
 	 * column position).  This is a bit hokey ... would be cleaner to use
-	 * a special-purpose node type that could not be mistaken for a regular
-	 * Var.  But it will do for now.
+	 * a special-purpose node type that could not be mistaken for a
+	 * regular Var.  But it will do for now.
 	 */
 	if (IsA(node, Var))
 	{
@@ -1062,7 +1064,7 @@ fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 	 * the returned varattno must be 1.
 	 */
 
-	Assert(is_funcclause(node)); /* not a very thorough check, but easy */
+	Assert(is_funcclause(node));/* not a very thorough check, but easy */
 
 	/* indclass[0] is the only class of a functional index */
 	*opclass = index->indclass[0];
@@ -1493,7 +1495,7 @@ make_sort_from_pathkeys(List *tlist, Plan *lefttree, List *pathkeys)
 	return make_sort(sort_tlist, lefttree, numsortkeys);
 }
 
-Material *
+Material   *
 make_material(List *tlist, Plan *lefttree)
 {
 	Material   *node = makeNode(Material);
@@ -1734,10 +1736,10 @@ make_limit(List *tlist, Plan *lefttree,
 	copy_plan_costsize(plan, lefttree);
 
 	/*
-	 * If offset/count are constants, adjust the output rows count and costs
-	 * accordingly.  This is only a cosmetic issue if we are at top level,
-	 * but if we are building a subquery then it's important to report
-	 * correct info to the outer planner.
+	 * If offset/count are constants, adjust the output rows count and
+	 * costs accordingly.  This is only a cosmetic issue if we are at top
+	 * level, but if we are building a subquery then it's important to
+	 * report correct info to the outer planner.
 	 */
 	if (limitOffset && IsA(limitOffset, Const))
 	{

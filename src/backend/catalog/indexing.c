@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.76 2001/01/24 19:42:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.77 2001/03/22 03:59:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ CatalogCloseIndices(int nIndices, Relation *idescs)
  * NOTE: since this routine looks up all the pg_index data on each call,
  * it's relatively inefficient for inserting a large number of tuples into
  * the same catalog.  We use it only for inserting one or a few tuples
- * in a given command.  See ExecOpenIndices() and related routines if you
+ * in a given command.	See ExecOpenIndices() and related routines if you
  * are inserting tuples in bulk.
  *
  * NOTE: we do not bother to handle partial indices.  Nor do we try to

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.34 2001/01/24 19:43:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.35 2001/03/22 03:59:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,7 @@ typeTypElem(Type typ)
 
 	return typtup->typelem;
 }
+
 #endif
 
 #ifdef NOT_USED
@@ -149,6 +150,7 @@ typeInfunc(Type typ)
 
 	return typtup->typinput;
 }
+
 #endif
 
 #ifdef NOT_USED
@@ -162,6 +164,7 @@ typeOutfunc(Type typ)
 
 	return typtup->typoutput;
 }
+
 #endif
 
 /* Given a type structure and a string, returns the internal form of
@@ -218,10 +221,11 @@ typeidTypeName(Oid id)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "Unable to locate type oid %u in catalog", id);
 	typetuple = (Form_pg_type) GETSTRUCT(tup);
+
 	/*
 	 * pstrdup here because result may need to outlive the syscache entry
-	 * (eg, it might end up as part of a parse tree that will outlive
-	 * the current transaction...)
+	 * (eg, it might end up as part of a parse tree that will outlive the
+	 * current transaction...)
 	 */
 	result = pstrdup(NameStr(typetuple->typname));
 	ReleaseSysCache(tup);

@@ -373,7 +373,7 @@ set_timetravel(PG_FUNCTION_ARGS)
 	else
 		TTOff = realloc(TTOff, (nTTOff + 1) * sizeof(char *));
 	s = rname = DatumGetCString(DirectFunctionCall1(nameout,
-													NameGetDatum(relname)));
+												 NameGetDatum(relname)));
 	d = TTOff[nTTOff] = malloc(strlen(rname) + 1);
 	while (*s)
 		*d++ = tolower((unsigned char) *s++);

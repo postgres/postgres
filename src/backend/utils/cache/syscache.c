@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.59 2001/02/22 18:39:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.60 2001/03/22 03:59:57 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -60,7 +60,7 @@
 	In include/catalog/indexing.h, add a define for the number of indexes
 	on the relation, add define(s) for the index name(s), add an extern
 	array to hold the index names, and use DECLARE_UNIQUE_INDEX to define
-	the index.  Cache lookups return only one row, so the index should be
+	the index.	Cache lookups return only one row, so the index should be
 	unique in most cases.
 
 	In backend/catalog/indexing.c, initialize the relation array with
@@ -89,261 +89,262 @@ struct cachedesc
 
 static struct cachedesc cacheinfo[] = {
 	{AggregateRelationName,		/* AGGNAME */
-	 AggregateNameTypeIndex,
+		AggregateNameTypeIndex,
 		2,
 		{
 			Anum_pg_aggregate_aggname,
 			Anum_pg_aggregate_aggbasetype,
 			0,
 			0
-		}},
+	}},
 	{AccessMethodRelationName,	/* AMNAME */
-	 AmNameIndex,
+		AmNameIndex,
 		1,
 		{
 			Anum_pg_am_amname,
 			0,
 			0,
 			0
-		}},
+	}},
 	{AccessMethodOperatorRelationName,	/* AMOPOPID */
-	 AccessMethodOpidIndex,
+		AccessMethodOpidIndex,
 		3,
 		{
 			Anum_pg_amop_amopclaid,
 			Anum_pg_amop_amopopr,
 			Anum_pg_amop_amopid,
 			0
-		}},
+	}},
 	{AccessMethodOperatorRelationName,	/* AMOPSTRATEGY */
-	 AccessMethodStrategyIndex,
+		AccessMethodStrategyIndex,
 		3,
 		{
 			Anum_pg_amop_amopid,
 			Anum_pg_amop_amopclaid,
 			Anum_pg_amop_amopstrategy,
 			0
-		}},
+	}},
 	{AttributeRelationName,		/* ATTNAME */
-	 AttributeRelidNameIndex,
+		AttributeRelidNameIndex,
 		2,
 		{
 			Anum_pg_attribute_attrelid,
 			Anum_pg_attribute_attname,
 			0,
 			0
-		}},
+	}},
 	{AttributeRelationName,		/* ATTNUM */
-	 AttributeRelidNumIndex,
+		AttributeRelidNumIndex,
 		2,
 		{
 			Anum_pg_attribute_attrelid,
 			Anum_pg_attribute_attnum,
 			0,
 			0
-		}},
+	}},
 	{OperatorClassRelationName, /* CLADEFTYPE */
-	 OpclassDeftypeIndex,
+		OpclassDeftypeIndex,
 		1,
 		{
 			Anum_pg_opclass_opcdeftype,
 			0,
 			0,
 			0
-		}},
+	}},
 	{OperatorClassRelationName, /* CLANAME */
-	 OpclassNameIndex,
+		OpclassNameIndex,
 		1,
 		{
 			Anum_pg_opclass_opcname,
 			0,
 			0,
 			0
-		}},
+	}},
 	{GroupRelationName,			/* GRONAME */
-	 GroupNameIndex,
+		GroupNameIndex,
 		1,
 		{
 			Anum_pg_group_groname,
 			0,
 			0,
 			0
-		}},
+	}},
 	{GroupRelationName,			/* GROSYSID */
-	 GroupSysidIndex,
+		GroupSysidIndex,
 		1,
 		{
 			Anum_pg_group_grosysid,
 			0,
 			0,
 			0
-		}},
+	}},
 	{IndexRelationName,			/* INDEXRELID */
-	 IndexRelidIndex,
+		IndexRelidIndex,
 		1,
 		{
 			Anum_pg_index_indexrelid,
 			0,
 			0,
 			0
-		}},
+	}},
 	{InheritsRelationName,		/* INHRELID */
-	 InheritsRelidSeqnoIndex,
+		InheritsRelidSeqnoIndex,
 		2,
 		{
 			Anum_pg_inherits_inhrelid,
 			Anum_pg_inherits_inhseqno,
 			0,
 			0
-		}},
+	}},
 	{LanguageRelationName,		/* LANGNAME */
-	 LanguageNameIndex,
+		LanguageNameIndex,
 		1,
 		{
 			Anum_pg_language_lanname,
 			0,
 			0,
 			0
-		}},
+	}},
 	{LanguageRelationName,		/* LANGOID */
-	 LanguageOidIndex,
+		LanguageOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		}},
+	}},
 	{ListenerRelationName,		/* LISTENREL */
-	 ListenerPidRelnameIndex,
+		ListenerPidRelnameIndex,
 		2,
 		{
 			Anum_pg_listener_pid,
 			Anum_pg_listener_relname,
 			0,
 			0
-		}},
+	}},
 	{OperatorRelationName,		/* OPERNAME */
-	 OperatorNameIndex,
+		OperatorNameIndex,
 		4,
 		{
 			Anum_pg_operator_oprname,
 			Anum_pg_operator_oprleft,
 			Anum_pg_operator_oprright,
 			Anum_pg_operator_oprkind
-		}},
+	}},
 	{OperatorRelationName,		/* OPEROID */
-	 OperatorOidIndex,
+		OperatorOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		}},
+	}},
 	{ProcedureRelationName,		/* PROCNAME */
-	 ProcedureNameIndex,
+		ProcedureNameIndex,
 		3,
 		{
 			Anum_pg_proc_proname,
 			Anum_pg_proc_pronargs,
 			Anum_pg_proc_proargtypes,
 			0
-		}},
+	}},
 	{ProcedureRelationName,		/* PROCOID */
-	 ProcedureOidIndex,
+		ProcedureOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		}},
+	}},
 	{RelationRelationName,		/* RELNAME */
-	 ClassNameIndex,
+		ClassNameIndex,
 		1,
 		{
 			Anum_pg_class_relname,
 			0,
 			0,
 			0
-		}},
+	}},
 	{RelationRelationName,		/* RELOID */
-	 ClassOidIndex,
+		ClassOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		}},
+	}},
 	{RewriteRelationName,		/* REWRITENAME */
-	 RewriteRulenameIndex,
+		RewriteRulenameIndex,
 		1,
 		{
 			Anum_pg_rewrite_rulename,
 			0,
 			0,
 			0
-		}},
+	}},
 	{RewriteRelationName,		/* RULEOID */
-	 RewriteOidIndex,
+		RewriteOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		}},
+	}},
 	{ShadowRelationName,		/* SHADOWNAME */
-	 ShadowNameIndex,
+		ShadowNameIndex,
 		1,
 		{
 			Anum_pg_shadow_usename,
 			0,
 			0,
 			0
-		}},
+	}},
 	{ShadowRelationName,		/* SHADOWSYSID */
-	 ShadowSysidIndex,
+		ShadowSysidIndex,
 		1,
 		{
 			Anum_pg_shadow_usesysid,
 			0,
 			0,
 			0
-		}},
+	}},
 	{StatisticRelationName,		/* STATRELID */
-	 StatisticRelidAttnumIndex,
+		StatisticRelidAttnumIndex,
 		2,
 		{
 			Anum_pg_statistic_starelid,
 			Anum_pg_statistic_staattnum,
 			0,
 			0
-		}},
+	}},
 	{TypeRelationName,			/* TYPENAME */
-	 TypeNameIndex,
+		TypeNameIndex,
 		1,
 		{
 			Anum_pg_type_typname,
 			0,
 			0,
 			0
-		}},
+	}},
 	{TypeRelationName,			/* TYPEOID */
-	 TypeOidIndex,
+		TypeOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		}}
+	}}
 };
 
-static CatCache *SysCache[lengthof(cacheinfo)];
-static int SysCacheSize = lengthof(cacheinfo);
+static CatCache *SysCache[
+						  lengthof(cacheinfo)];
+static int	SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
 
 
@@ -358,7 +359,7 @@ IsCacheInitialized(void)
  * InitCatalogCache - initialize the caches
  *
  * Note that no database access is done here; we only allocate memory
- * and initialize the cache structure.  Interrogation of the database
+ * and initialize the cache structure.	Interrogation of the database
  * to complete initialization of a cache happens only upon first use
  * of that cache.
  */
@@ -419,8 +420,8 @@ SearchSysCache(int cacheId,
 
 	/*
 	 * If someone tries to look up a relname, translate temp relation
-	 * names to real names.  Less obviously, apply the same translation
-	 * to type names, so that the type tuple of a temp table will be found
+	 * names to real names.  Less obviously, apply the same translation to
+	 * type names, so that the type tuple of a temp table will be found
 	 * when sought.  This is a kluge ... temp table substitution should be
 	 * happening at a higher level ...
 	 */
@@ -522,8 +523,8 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 	/*
 	 * We just need to get the TupleDesc out of the cache entry, and then
 	 * we can apply heap_getattr().  We expect that the cache control data
-	 * is currently valid --- if the caller recently fetched the tuple, then
-	 * it should be.
+	 * is currently valid --- if the caller recently fetched the tuple,
+	 * then it should be.
 	 */
 	if (cacheId < 0 || cacheId >= SysCacheSize)
 		elog(ERROR, "SysCacheGetAttr: Bad cache id %d", cacheId);

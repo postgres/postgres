@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.82 2001/03/10 04:21:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.83 2001/03/22 03:59:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,24 +52,24 @@ extern CommandDest whereToSendOutput;
  * 2 = syslog only
  * ... in theory anyway
  */
-int Use_syslog = 0;
-char *Syslog_facility;
-char *Syslog_ident;
+int			Use_syslog = 0;
+char	   *Syslog_facility;
+char	   *Syslog_ident;
 
 static void write_syslog(int level, const char *line);
 
 #else
-# define Use_syslog 0
+#define Use_syslog 0
 #endif
 
-bool Log_timestamp;
-bool Log_pid;
+bool		Log_timestamp;
+bool		Log_pid;
 
 #define TIMESTAMP_SIZE 20		/* format `YYYY-MM-DD HH:MM:SS ' */
 #define PID_SIZE 9				/* format `[123456] ' */
 
-static const char * print_timestamp(void);
-static const char * print_pid(void);
+static const char *print_timestamp(void);
+static const char *print_pid(void);
 
 static int	Debugfile = -1;
 static int	ElogDebugIndentLevel = 0;
@@ -93,9 +93,10 @@ static int	ElogDebugIndentLevel = 0;
  *--------------------
  */
 void
-elog(int lev, const char *fmt, ...)
+elog(int lev, const char *fmt,...)
 {
 	va_list		ap;
+
 	/*
 	 * The expanded format and final output message are dynamically
 	 * allocated if necessary, but not if they fit in the "reasonable
@@ -108,17 +109,19 @@ elog(int lev, const char *fmt, ...)
 	 * Note that we use malloc() not palloc() because we want to retain
 	 * control if we run out of memory.  palloc() would recursively call
 	 * elog(ERROR), which would be all right except if we are working on a
-	 * FATAL or REALLYFATAL error.  We'd lose track of the fatal condition
+	 * FATAL or REALLYFATAL error.	We'd lose track of the fatal condition
 	 * and report a mere ERROR to outer loop, which would be a Bad Thing.
-	 * So, we substitute an appropriate message in-place, without downgrading
-	 * the level if it's above ERROR.
+	 * So, we substitute an appropriate message in-place, without
+	 * downgrading the level if it's above ERROR.
 	 */
 	char		fmt_fixedbuf[128];
 	char		msg_fixedbuf[256];
 	char	   *fmt_buf = fmt_fixedbuf;
 	char	   *msg_buf = msg_fixedbuf;
+
 	/* this buffer is only used for strange values of lev: */
 	char		prefix_buf[32];
+
 	/* this buffer is only used if errno has a bogus value: */
 	char		errorstr_buf[32];
 	const char *errorstr;
@@ -128,6 +131,7 @@ elog(int lev, const char *fmt, ...)
 	int			indent = 0;
 	int			space_needed;
 	int			len;
+
 	/* size of the prefix needed for timestamp and pid, if enabled */
 	size_t		timestamp_size;
 
@@ -136,6 +140,7 @@ elog(int lev, const char *fmt, ...)
 
 	/* Save error str before calling any function that might change errno */
 	errorstr = strerror(errno);
+
 	/*
 	 * Some strerror()s return an empty string for out-of-range errno.
 	 * This is ANSI C spec compliant, but not exactly useful.
@@ -148,16 +153,18 @@ elog(int lev, const char *fmt, ...)
 
 	if (lev == ERROR || lev == FATAL)
 	{
+
 		/*
-		 * Convert initialization errors into fatal errors.
-		 * This is probably redundant, because Warn_restart_ready won't
-		 * be set anyway...
+		 * Convert initialization errors into fatal errors. This is
+		 * probably redundant, because Warn_restart_ready won't be set
+		 * anyway...
 		 */
 		if (IsInitProcessingMode())
 			lev = FATAL;
+
 		/*
-		 * If we are inside a critical section, all errors become STOP errors.
-		 * See miscadmin.h.
+		 * If we are inside a critical section, all errors become STOP
+		 * errors. See miscadmin.h.
 		 */
 		if (CritSectionCount > 0)
 			lev = STOP;
@@ -334,7 +341,7 @@ elog(int lev, const char *fmt, ...)
 	/* Write to syslog, if enabled */
 	if (Use_syslog >= 1)
 	{
-		int syslog_level;
+		int			syslog_level;
 
 		switch (lev)
 		{
@@ -360,7 +367,7 @@ elog(int lev, const char *fmt, ...)
 
 		write_syslog(syslog_level, msg_buf + timestamp_size);
 	}
-#endif /* ENABLE_SYSLOG */
+#endif	 /* ENABLE_SYSLOG */
 
 	/* syslog doesn't want a trailing newline, but other destinations do */
 	strcat(msg_buf, "\n");
@@ -379,10 +386,10 @@ elog(int lev, const char *fmt, ...)
 		char		msgtype;
 
 		/*
-		 * Since backend libpq may call palloc(), switch to a context where
-		 * there's fairly likely to be some free space.  After all the
-		 * pushups above, we don't want to drop the ball by running out of
-		 * space now...
+		 * Since backend libpq may call palloc(), switch to a context
+		 * where there's fairly likely to be some free space.  After all
+		 * the pushups above, we don't want to drop the ball by running
+		 * out of space now...
 		 */
 		oldcxt = MemoryContextSwitchTo(ErrorContext);
 
@@ -452,17 +459,19 @@ elog(int lev, const char *fmt, ...)
 		 * responsibility to see that this doesn't turn into infinite
 		 * recursion!)	But in the latter case, we exit with nonzero exit
 		 * code to indicate that something's pretty wrong.  We also want
-		 * to exit with nonzero exit code if not running under the postmaster
-		 * (for example, if we are being run from the initdb script, we'd
-		 * better return an error status).
+		 * to exit with nonzero exit code if not running under the
+		 * postmaster (for example, if we are being run from the initdb
+		 * script, we'd better return an error status).
 		 */
 		if (lev == FATAL || !Warn_restart_ready || proc_exit_inprogress)
 		{
+
 			/*
 			 * fflush here is just to improve the odds that we get to see
-			 * the error message, in case things are so hosed that proc_exit
-			 * crashes.  Any other code you might be tempted to add here
-			 * should probably be in an on_proc_exit callback instead.
+			 * the error message, in case things are so hosed that
+			 * proc_exit crashes.  Any other code you might be tempted to
+			 * add here should probably be in an on_proc_exit callback
+			 * instead.
 			 */
 			fflush(stdout);
 			fflush(stderr);
@@ -484,6 +493,7 @@ elog(int lev, const char *fmt, ...)
 
 	if (lev > FATAL)
 	{
+
 		/*
 		 * Serious crash time. Postmaster will observe nonzero process
 		 * exit status and kill the other backends too.
@@ -511,6 +521,7 @@ DebugFileOpen(void)
 
 	if (OutputFileName[0])
 	{
+
 		/*
 		 * A debug-output file name was given.
 		 *
@@ -530,6 +541,7 @@ DebugFileOpen(void)
 			elog(FATAL, "DebugFileOpen: %s reopen as stderr: %m",
 				 OutputFileName);
 		Debugfile = fileno(stderr);
+
 		/*
 		 * If the file is a tty and we're running under the postmaster,
 		 * try to send stdout there as well (if it isn't a tty then stderr
@@ -565,12 +577,12 @@ DebugFileOpen(void)
 /*
  * Return a timestamp string like
  *
- *   "2000-06-04 13:12:03 "
+ *	 "2000-06-04 13:12:03 "
  */
 static const char *
 print_timestamp(void)
 {
-	time_t curtime;
+	time_t		curtime;
 	static char buf[TIMESTAMP_SIZE + 1];
 
 	curtime = time(NULL);
@@ -587,7 +599,7 @@ print_timestamp(void)
 /*
  * Return a string like
  *
- *     "[123456] "
+ *	   "[123456] "
  *
  * with the current pid.
  */
@@ -596,7 +608,7 @@ print_pid(void)
 {
 	static char buf[PID_SIZE + 1];
 
-	snprintf(buf, PID_SIZE + 1, "[%d]      ", (int)MyProcPid);
+	snprintf(buf, PID_SIZE + 1, "[%d]      ", (int) MyProcPid);
 	return buf;
 }
 
@@ -605,7 +617,7 @@ print_pid(void)
 #ifdef ENABLE_SYSLOG
 
 #ifndef PG_SYSLOG_LIMIT
-# define PG_SYSLOG_LIMIT 128
+#define PG_SYSLOG_LIMIT 128
 #endif
 
 /*
@@ -619,32 +631,32 @@ print_pid(void)
 static void
 write_syslog(int level, const char *line)
 {
-	static bool	openlog_done = false;
+	static bool openlog_done = false;
 	static unsigned long seq = 0;
 	static int	syslog_fac = LOG_LOCAL0;
 
-	int len = strlen(line);
+	int			len = strlen(line);
 
 	if (Use_syslog == 0)
 		return;
 
 	if (!openlog_done)
 	{
-		if (strcasecmp(Syslog_facility,"LOCAL0") == 0) 
+		if (strcasecmp(Syslog_facility, "LOCAL0") == 0)
 			syslog_fac = LOG_LOCAL0;
-		if (strcasecmp(Syslog_facility,"LOCAL1") == 0)
+		if (strcasecmp(Syslog_facility, "LOCAL1") == 0)
 			syslog_fac = LOG_LOCAL1;
-		if (strcasecmp(Syslog_facility,"LOCAL2") == 0)
+		if (strcasecmp(Syslog_facility, "LOCAL2") == 0)
 			syslog_fac = LOG_LOCAL2;
-		if (strcasecmp(Syslog_facility,"LOCAL3") == 0)
+		if (strcasecmp(Syslog_facility, "LOCAL3") == 0)
 			syslog_fac = LOG_LOCAL3;
-		if (strcasecmp(Syslog_facility,"LOCAL4") == 0)
+		if (strcasecmp(Syslog_facility, "LOCAL4") == 0)
 			syslog_fac = LOG_LOCAL4;
-		if (strcasecmp(Syslog_facility,"LOCAL5") == 0)
+		if (strcasecmp(Syslog_facility, "LOCAL5") == 0)
 			syslog_fac = LOG_LOCAL5;
-		if (strcasecmp(Syslog_facility,"LOCAL6") == 0)
+		if (strcasecmp(Syslog_facility, "LOCAL6") == 0)
 			syslog_fac = LOG_LOCAL6;
-		if (strcasecmp(Syslog_facility,"LOCAL7") == 0)
+		if (strcasecmp(Syslog_facility, "LOCAL7") == 0)
 			syslog_fac = LOG_LOCAL7;
 		openlog(Syslog_ident, LOG_PID | LOG_NDELAY, syslog_fac);
 		openlog_done = true;
@@ -658,16 +670,16 @@ write_syslog(int level, const char *line)
 
 	/* divide into multiple syslog() calls if message is too long */
 	/* or if the message contains embedded NewLine(s) '\n' */
-	if (len > PG_SYSLOG_LIMIT || strchr(line,'\n') != NULL )
+	if (len > PG_SYSLOG_LIMIT || strchr(line, '\n') != NULL)
 	{
-		int		chunk_nr = 0;
+		int			chunk_nr = 0;
 
 		while (len > 0)
 		{
-			char	buf[PG_SYSLOG_LIMIT+1];
-			int		buflen;
-			int		l;
-			int		i;
+			char		buf[PG_SYSLOG_LIMIT + 1];
+			int			buflen;
+			int			l;
+			int			i;
 
 			/* if we start at a newline, move ahead one char */
 			if (line[0] == '\n')
@@ -679,15 +691,15 @@ write_syslog(int level, const char *line)
 
 			strncpy(buf, line, PG_SYSLOG_LIMIT);
 			buf[PG_SYSLOG_LIMIT] = '\0';
-			if (strchr(buf,'\n') != NULL) 
-				*strchr(buf,'\n') = '\0';
+			if (strchr(buf, '\n') != NULL)
+				*strchr(buf, '\n') = '\0';
 
 			l = strlen(buf);
 #ifdef MULTIBYTE
-			/* trim to multibyte letter boundary */ 
+			/* trim to multibyte letter boundary */
 			buflen = pg_mbcliplen(buf, l, l);
 			if (buflen <= 0)
-			    return;
+				return;
 			buf[buflen] = '\0';
 			l = strlen(buf);
 #endif
@@ -701,7 +713,7 @@ write_syslog(int level, const char *line)
 				while (i > 0 && !isspace((unsigned char) buf[i]))
 					i--;
 
-				if (i <= 0)	/* couldn't divide word boundary */
+				if (i <= 0)		/* couldn't divide word boundary */
 					buflen = l;
 				else
 				{
@@ -724,4 +736,4 @@ write_syslog(int level, const char *line)
 	}
 }
 
-#endif /* ENABLE_SYSLOG */
+#endif	 /* ENABLE_SYSLOG */

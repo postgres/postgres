@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.100 2001/03/14 23:55:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.101 2001/03/22 03:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 	if (attr->paramNo != NULL)
 	{
 		Param	   *param = (Param *) transformExpr(pstate,
-													(Node *) attr->paramNo,
+												  (Node *) attr->paramNo,
 													EXPR_RELATION_FIRST);
 
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
@@ -277,7 +277,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	if (nargs == 1 && !must_be_agg)
 	{
 		/* Is it a plain Relation name from the parser? */
-		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
+		if (IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel)
 		{
 			Ident	   *ident = (Ident *) first_arg;
 
@@ -337,7 +337,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		if (nargs != 1)
 			elog(ERROR, "Aggregate functions may only have one parameter");
 		/* Agg's argument can't be a relation name, either */
-		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
+		if (IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel)
 			elog(ERROR, "Aggregate functions cannot be applied to relation names");
 		could_be_agg = true;
 	}
@@ -345,7 +345,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{
 		/* Try to parse as an aggregate if above-mentioned checks are OK */
 		could_be_agg = (nargs == 1) &&
-			!(IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel);
+			!(IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel);
 	}
 
 	if (could_be_agg)
@@ -424,7 +424,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{
 		Node	   *arg = lfirst(i);
 
-		if (IsA(arg, Ident) && ((Ident *) arg)->isRel)
+		if (IsA(arg, Ident) &&((Ident *) arg)->isRel)
 		{
 			RangeTblEntry *rte;
 			int			vnum;
@@ -440,21 +440,18 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 												&sublevels_up);
 
 			if (rteorjoin == NULL)
-			{
 				rte = addImplicitRTE(pstate, refname);
-			}
 			else if (IsA(rteorjoin, RangeTblEntry))
-			{
 				rte = (RangeTblEntry *) rteorjoin;
-			}
 			else if (IsA(rteorjoin, JoinExpr))
 			{
+
 				/*
 				 * We have f(x) or more likely x.f where x is a join and f
-				 * is not one of the attribute names of the join (else we'd
-				 * have recognized it above).  We don't support functions on
-				 * join tuples (since we don't have a named type for the join
-				 * tuples), so error out.
+				 * is not one of the attribute names of the join (else
+				 * we'd have recognized it above).  We don't support
+				 * functions on join tuples (since we don't have a named
+				 * type for the join tuples), so error out.
 				 */
 				elog(ERROR, "No such attribute or function %s.%s",
 					 refname, funcname);
@@ -525,14 +522,14 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{							/* we know all of these fields already */
 
 		/*
-		 * We create a funcnode with a placeholder function seteval().
-		 * At runtime, seteval() will execute the function identified
-		 * by the funcid it receives as parameter.
+		 * We create a funcnode with a placeholder function seteval(). At
+		 * runtime, seteval() will execute the function identified by the
+		 * funcid it receives as parameter.
 		 *
 		 * Example: retrieve (emp.mgr.name).  The plan for this will scan the
-		 * emp relation, projecting out the mgr attribute, which is a funcid.
-		 * This function is then called (via seteval()) and "name" is
-		 * projected from its result.
+		 * emp relation, projecting out the mgr attribute, which is a
+		 * funcid. This function is then called (via seteval()) and "name"
+		 * is projected from its result.
 		 */
 		funcid = F_SETEVAL;
 		rettype = toid;
@@ -639,11 +636,12 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	retval = (Node *) expr;
 
 	/*
-	 * For sets, we want to project out the desired attribute of the tuples.
+	 * For sets, we want to project out the desired attribute of the
+	 * tuples.
 	 */
 	if (attisset)
 	{
-		FieldSelect	   *fselect;
+		FieldSelect *fselect;
 
 		fselect = setup_field_select(retval, funcname, argrelid);
 		rettype = fselect->resulttype;
@@ -952,31 +950,31 @@ func_select_candidate(int nargs,
 	 * columns.
 	 *
 	 * We do this by examining each unknown argument position to see if we
-	 * can determine a "type category" for it.  If any candidate has an
+	 * can determine a "type category" for it.	If any candidate has an
 	 * input datatype of STRING category, use STRING category (this bias
 	 * towards STRING is appropriate since unknown-type literals look like
 	 * strings).  Otherwise, if all the candidates agree on the type
 	 * category of this argument position, use that category.  Otherwise,
 	 * fail because we cannot determine a category.
 	 *
-	 * If we are able to determine a type category, also notice whether
-	 * any of the candidates takes a preferred datatype within the category.
+	 * If we are able to determine a type category, also notice whether any
+	 * of the candidates takes a preferred datatype within the category.
 	 *
-	 * Having completed this examination, remove candidates that accept
-	 * the wrong category at any unknown position.  Also, if at least one
-	 * candidate accepted a preferred type at a position, remove candidates
-	 * that accept non-preferred types.
+	 * Having completed this examination, remove candidates that accept the
+	 * wrong category at any unknown position.	Also, if at least one
+	 * candidate accepted a preferred type at a position, remove
+	 * candidates that accept non-preferred types.
 	 *
 	 * If we are down to one candidate at the end, we win.
 	 */
 	resolved_unknowns = false;
 	for (i = 0; i < nargs; i++)
 	{
-		bool	have_conflict;
+		bool		have_conflict;
 
 		if (input_typeids[i] != UNKNOWNOID)
 			continue;
-		resolved_unknowns = true; /* assume we can do it */
+		resolved_unknowns = true;		/* assume we can do it */
 		slot_category[i] = INVALID_TYPE;
 		slot_has_preferred_type[i] = false;
 		have_conflict = false;
@@ -1012,7 +1010,11 @@ func_select_candidate(int nargs,
 				}
 				else
 				{
-					/* Remember conflict, but keep going (might find STRING) */
+
+					/*
+					 * Remember conflict, but keep going (might find
+					 * STRING)
+					 */
 					have_conflict = true;
 				}
 			}
@@ -1034,7 +1036,7 @@ func_select_candidate(int nargs,
 			 current_candidate != NULL;
 			 current_candidate = current_candidate->next)
 		{
-			bool	keepit = true;
+			bool		keepit = true;
 
 			current_typeids = current_candidate->args;
 			for (i = 0; i < nargs; i++)
@@ -1185,7 +1187,7 @@ func_get_detail(char *funcname,
 						ftup = SearchSysCache(PROCNAME,
 											  PointerGetDatum(funcname),
 											  Int32GetDatum(nargs),
-											  PointerGetDatum(*true_typeids),
+										  PointerGetDatum(*true_typeids),
 											  0);
 						Assert(HeapTupleIsValid(ftup));
 						break;
@@ -1542,12 +1544,12 @@ ParseComplexProjection(ParseState *pstate,
 				Iter	   *iter = (Iter *) first_arg;
 
 				/*
-				 * If the argument of the Iter returns a tuple,
-				 * funcname may be a projection.  If so, we stick
-				 * the FieldSelect *inside* the Iter --- this is
-				 * klugy, but necessary because ExecTargetList()
-				 * currently does the right thing only when the
-				 * Iter node is at the top level of a targetlist item.
+				 * If the argument of the Iter returns a tuple, funcname
+				 * may be a projection.  If so, we stick the FieldSelect
+				 * *inside* the Iter --- this is klugy, but necessary
+				 * because ExecTargetList() currently does the right thing
+				 * only when the Iter node is at the top level of a
+				 * targetlist item.
 				 */
 				argtype = iter->itertype;
 				argrelid = typeidTypeRelid(argtype);

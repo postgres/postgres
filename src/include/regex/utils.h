@@ -61,4 +61,4 @@ typedef unsigned char uch;
 #endif
 #endif
 
-#endif	/* _REGEX_UTILS_H */
+#endif	 /* _REGEX_UTILS_H */

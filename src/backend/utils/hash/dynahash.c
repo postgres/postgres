@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.34 2001/01/24 19:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.35 2001/03/22 03:59:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -719,7 +719,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 
 			curElem = GET_BUCKET(hashp, status->curIndex);
 			status->curIndex = curElem->next;
-			if (status->curIndex == INVALID_INDEX)	/* end of this bucket */
+			if (status->curIndex == INVALID_INDEX)		/* end of this bucket */
 				++status->curBucket;
 			return &(curElem->key);
 		}

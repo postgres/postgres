@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.12 2001/02/19 19:49:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.13 2001/03/22 04:01:42 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -115,8 +115,8 @@ enum
  */
 enum
 {
-        PLPGSQL_GETDIAG_ROW_COUNT,
-        PLPGSQL_GETDIAG_RESULT_OID
+	PLPGSQL_GETDIAG_ROW_COUNT,
+	PLPGSQL_GETDIAG_RESULT_OID
 };
 
 
@@ -512,9 +512,9 @@ extern Datum plpgsql_call_handler(PG_FUNCTION_ARGS);
  * ----------
  */
 extern Datum plpgsql_exec_function(PLpgSQL_function * func,
-								   FunctionCallInfo fcinfo);
+					  FunctionCallInfo fcinfo);
 extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function * func,
-									  TriggerData *trigdata);
+					 TriggerData *trigdata);
 
 
 /* ----------

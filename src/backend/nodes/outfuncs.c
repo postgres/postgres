@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.139 2001/01/24 19:42:57 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.140 2001/03/22 03:59:32 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -224,6 +224,7 @@ _outQuery(StringInfo str, Query *node)
 
 	if (node->utilityStmt)
 	{
+
 		/*
 		 * Hack to make up for lack of outfuncs for utility-stmt nodes
 		 */
@@ -602,7 +603,7 @@ _outGroup(StringInfo str, Group *node)
 static void
 _outUnique(StringInfo str, Unique *node)
 {
-	int		i;
+	int			i;
 
 	appendStringInfo(str, " UNIQUE ");
 	_outPlanInfo(str, (Plan *) node);
@@ -616,7 +617,7 @@ _outUnique(StringInfo str, Unique *node)
 static void
 _outSetOp(StringInfo str, SetOp *node)
 {
-	int		i;
+	int			i;
 
 	appendStringInfo(str, " SETOP ");
 	_outPlanInfo(str, (Plan *) node);
@@ -889,7 +890,7 @@ _outFieldSelect(StringInfo str, FieldSelect *node)
 	_outNode(str, node->arg);
 
 	appendStringInfo(str, " :fieldnum %d :resulttype %u :resulttypmod %d ",
-					 node->fieldnum, node->resulttype, node->resulttypmod);
+				   node->fieldnum, node->resulttype, node->resulttypmod);
 }
 
 /*
@@ -1279,14 +1280,14 @@ static void
 _outStream(StringInfo str, Stream *node)
 {
 	appendStringInfo(str,
-					 " STREAM :pathptr @ %p :cinfo @ %p :clausetype %p :upstream @ %p ",
+	  " STREAM :pathptr @ %p :cinfo @ %p :clausetype %p :upstream @ %p ",
 					 node->pathptr,
 					 node->cinfo,
 					 node->clausetype,
 					 node->upstream);
 
 	appendStringInfo(str,
-		   " :downstream @ %p :groupup %d :groupcost %f :groupsel %f ",
+			 " :downstream @ %p :groupup %d :groupcost %f :groupsel %f ",
 					 node->downstream,
 					 node->groupup,
 					 node->groupcost,
@@ -1332,7 +1333,7 @@ _outValue(StringInfo str, Value *value)
 {
 	switch (value->type)
 	{
-		case T_Integer:
+			case T_Integer:
 			appendStringInfo(str, " %ld ", value->val.ival);
 			break;
 		case T_Float:

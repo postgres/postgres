@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.43 2001/01/24 19:43:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.44 2001/03/22 03:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ RewriteGetRuleEventRel(char *rulename)
 						  0, 0, 0);
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "Rule or view \"%s\" not found",
-		  ((strncmp(rulename, "_RET", 4) == 0) ? (rulename + 4) : rulename));
+			 ((strncmp(rulename, "_RET", 4) == 0) ? (rulename + 4) : rulename));
 	eventrel = ((Form_pg_rewrite) GETSTRUCT(htup))->ev_class;
 	ReleaseSysCache(htup);
 
@@ -102,15 +102,15 @@ RemoveRewriteRule(char *ruleName)
 
 	/*
 	 * We had better grab AccessExclusiveLock so that we know no other
-	 * rule additions/deletions are going on for this relation.  Else
-	 * we cannot set relhasrules correctly.  Besides, we don't want to
-	 * be changing the ruleset while queries are executing on the rel.
+	 * rule additions/deletions are going on for this relation.  Else we
+	 * cannot set relhasrules correctly.  Besides, we don't want to be
+	 * changing the ruleset while queries are executing on the rel.
 	 */
 	event_relation = heap_open(eventRelationOid, AccessExclusiveLock);
 
 	/* do not allow the removal of a view's SELECT rule */
 	if (event_relation->rd_rel->relkind == RELKIND_VIEW &&
-		((Form_pg_rewrite) GETSTRUCT(tuple))->ev_type == '1' )
+		((Form_pg_rewrite) GETSTRUCT(tuple))->ev_type == '1')
 		elog(ERROR, "Cannot remove a view's SELECT rule");
 
 	hasMoreRules = event_relation->rd_rules != NULL &&
@@ -133,10 +133,9 @@ RemoveRewriteRule(char *ruleName)
 	/*
 	 * Set pg_class 'relhasrules' field correctly for event relation.
 	 *
-	 * Important side effect: an SI notice is broadcast to force all
-	 * backends (including me!) to update relcache entries with the
-	 * new rule set.  Therefore, must do this even if relhasrules is
-	 * still true!
+	 * Important side effect: an SI notice is broadcast to force all backends
+	 * (including me!) to update relcache entries with the new rule set.
+	 * Therefore, must do this even if relhasrules is still true!
 	 */
 	SetRelationRuleStatus(eventRelationOid, hasMoreRules, false);
 

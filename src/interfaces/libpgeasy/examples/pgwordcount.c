@@ -15,7 +15,7 @@ main(int argc, char **argv)
 	int			row = 0;
 	int			count;
 	char		line[4000];
-	char	    optstr[256];
+	char		optstr[256];
 
 	if (argc != 2)
 		halt("Usage:  %s database\n", argv[0]);

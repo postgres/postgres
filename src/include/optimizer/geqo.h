@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.23 2001/01/24 19:43:26 momjian Exp $
+ * $Id: geqo.h,v 1.24 2001/03/22 04:00:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,21 +46,25 @@
  * Configuration options
  */
 /* If you change these, update backend/utils/misc/postgresql.sample.conf */
-extern int  	    Geqo_pool_size;
-#define DEFAULT_GEQO_POOL_SIZE 0 /* = default based on no. of relations. */
+extern int	Geqo_pool_size;
+
+#define DEFAULT_GEQO_POOL_SIZE 0/* = default based on no. of relations. */
 #define MIN_GEQO_POOL_SIZE 128
 #define MAX_GEQO_POOL_SIZE 1024
 
-extern int          Geqo_effort; /* 1 .. inf, only used to calculate generations default */
-extern int  	    Geqo_generations; /* 1 .. inf, or 0 to use default based on pool size */
+extern int	Geqo_effort;		/* 1 .. inf, only used to calculate
+								 * generations default */
+extern int	Geqo_generations;	/* 1 .. inf, or 0 to use default based on
+								 * pool size */
 
-extern double 		Geqo_selection_bias;
+extern double Geqo_selection_bias;
+
 /* If you change these, update backend/utils/misc/postgresql.sample.conf */
 #define DEFAULT_GEQO_SELECTION_BIAS 2.0
 #define MIN_GEQO_SELECTION_BIAS 1.5
 #define MAX_GEQO_SELECTION_BIAS 2.0
 
-extern int          Geqo_random_seed; /* or negative to use current time */
+extern int	Geqo_random_seed;	/* or negative to use current time */
 
 
 /* routines in geqo_main.c */
@@ -68,9 +72,9 @@ extern RelOptInfo *geqo(Query *root, int number_of_rels, List *initial_rels);
 
 /* routines in geqo_eval.c */
 extern Cost geqo_eval(Query *root, List *initial_rels,
-					  Gene *tour, int num_gene);
+		  Gene *tour, int num_gene);
 extern RelOptInfo *gimme_tree(Query *root, List *initial_rels,
-							  Gene *tour, int num_gene,
-							  int rel_count, RelOptInfo *old_rel);
+		   Gene *tour, int num_gene,
+		   int rel_count, RelOptInfo *old_rel);
 
 #endif	 /* GEQO_H */

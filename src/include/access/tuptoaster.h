@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000, PostgreSQL Development Team
  *
- * $Id: tuptoaster.h,v 1.9 2001/02/15 20:57:01 tgl Exp $
+ * $Id: tuptoaster.h,v 1.10 2001/03/22 04:00:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@
 
 /*
  * When we store an oversize datum externally, we divide it into chunks
- * containing at most TOAST_MAX_CHUNK_SIZE data bytes.  This number *must*
+ * containing at most TOAST_MAX_CHUNK_SIZE data bytes.	This number *must*
  * be small enough that the completed toast-table tuple (including the
  * ID and sequence fields and all overhead) is no more than MaxTupleSize
  * bytes.  It *should* be small enough to make toast-table tuples no more
@@ -80,7 +80,7 @@
  * ----------
  */
 extern void heap_tuple_toast_attrs(Relation rel,
-				HeapTuple newtup, HeapTuple oldtup);
+					   HeapTuple newtup, HeapTuple oldtup);
 
 /* ----------
  * heap_tuple_fetch_attr() -
@@ -90,7 +90,7 @@ extern void heap_tuple_toast_attrs(Relation rel,
  *		in compressed format.
  * ----------
  */
-extern varattrib *heap_tuple_fetch_attr(varattrib * attr);
+extern varattrib *heap_tuple_fetch_attr(varattrib *attr);
 
 /* ----------
  * heap_tuple_untoast_attr() -
@@ -99,7 +99,7 @@ extern varattrib *heap_tuple_fetch_attr(varattrib * attr);
  *		it as needed.
  * ----------
  */
-extern varattrib *heap_tuple_untoast_attr(varattrib * attr);
+extern varattrib *heap_tuple_untoast_attr(varattrib *attr);
 
 /* ----------
  * toast_compress_datum -

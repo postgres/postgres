@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.69 2001/01/24 19:43:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.70 2001/03/22 03:59:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@
 #include <limits.h>
 /* for finite() on Solaris */
 #ifdef HAVE_IEEEFP_H
-# include <ieeefp.h>
+#include <ieeefp.h>
 #endif
 
 #include "fmgr.h"
@@ -69,6 +69,7 @@
 
 #ifndef atof
 extern double atof(const char *p);
+
 #endif
 
 #ifndef HAVE_CBRT
@@ -78,8 +79,9 @@ static double cbrt(double x);
 #else
 #if !defined(nextstep)
 extern double cbrt(double x);
+
 #endif
-#endif /* HAVE_CBRT */
+#endif	 /* HAVE_CBRT */
 
 #ifndef HAVE_RINT
 #define rint my_rint
@@ -87,9 +89,10 @@ static double rint(double x);
 
 #else
 extern double rint(double x);
-#endif /* HAVE_RINT */
 
-#endif /* NeXT check */
+#endif	 /* HAVE_RINT */
+
+#endif	 /* NeXT check */
 
 
 static void CheckFloat4Val(double val);
@@ -1345,7 +1348,7 @@ setseed(PG_FUNCTION_ARGS)
  *		float8_accum	- accumulate for AVG(), STDDEV(), etc
  *		float4_accum	- same, but input data is float4
  *		float8_avg		- produce final result for float AVG()
- *		float8_variance	- produce final result for float VARIANCE()
+ *		float8_variance - produce final result for float VARIANCE()
  *		float8_stddev	- produce final result for float STDDEV()
  *
  * The transition datatype for all these aggregates is a 3-element array
@@ -1360,10 +1363,11 @@ setseed(PG_FUNCTION_ARGS)
 static float8 *
 check_float8_array(ArrayType *transarray, const char *caller)
 {
+
 	/*
-	 * We expect the input to be a 3-element float array; verify that.
-	 * We don't need to use deconstruct_array() since the array data
-	 * is just going to look like a C array of 3 float8 values.
+	 * We expect the input to be a 3-element float array; verify that. We
+	 * don't need to use deconstruct_array() since the array data is just
+	 * going to look like a C array of 3 float8 values.
 	 */
 	if (ARR_SIZE(transarray) != (ARR_OVERHEAD(1) + 3 * sizeof(float8)) ||
 		ARR_NDIM(transarray) != 1 ||
@@ -1398,7 +1402,7 @@ float8_accum(PG_FUNCTION_ARGS)
 	transdatums[2] = Float8GetDatumFast(sumX2);
 
 	result = construct_array(transdatums, 3,
-							 false /* float8 byval */, sizeof(float8), 'd');
+						 false /* float8 byval */ , sizeof(float8), 'd');
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -1433,7 +1437,7 @@ float4_accum(PG_FUNCTION_ARGS)
 	transdatums[2] = Float8GetDatumFast(sumX2);
 
 	result = construct_array(transdatums, 3,
-							 false /* float8 byval */, sizeof(float8), 'd');
+						 false /* float8 byval */ , sizeof(float8), 'd');
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.26 2001/01/24 19:42:57 momjian Exp $
+ * $Id: geqo_main.c,v 1.27 2001/03/22 03:59:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,11 +36,11 @@
 /*
  * Configuration options
  */
-int 	    Geqo_pool_size;
-int         Geqo_effort;
-int 		Geqo_generations;
+int			Geqo_pool_size;
+int			Geqo_effort;
+int			Geqo_generations;
 double		Geqo_selection_bias;
-int         Geqo_random_seed;
+int			Geqo_random_seed;
 
 
 static int	gimme_pool_size(int nr_rel);
@@ -101,10 +101,10 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 
 /* seed random number generator */
 /* XXX why is this done every time around? */
-    if (Geqo_random_seed >= 0)
-        srandom((unsigned int) Geqo_random_seed);
-    else
-        srandom((unsigned int) time(NULL));
+	if (Geqo_random_seed >= 0)
+		srandom((unsigned int) Geqo_random_seed);
+	else
+		srandom((unsigned int) time(NULL));
 
 /* allocate genetic pool memory */
 	pool = alloc_pool(pool_size, number_of_rels);
@@ -160,8 +160,8 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 	{
 
 		/* SELECTION */
-		geqo_selection(momma, daddy, pool, Geqo_selection_bias);/* using linear bias
-																 * function */
+		geqo_selection(momma, daddy, pool, Geqo_selection_bias);		/* using linear bias
+																		 * function */
 
 
 
@@ -293,15 +293,15 @@ gimme_pool_size(int nr_rel)
 {
 	double		size;
 
-    if (Geqo_pool_size != 0)
-    {
-        if (Geqo_pool_size < MIN_GEQO_POOL_SIZE)
-            return MIN_GEQO_POOL_SIZE;
-        else if (Geqo_pool_size > MAX_GEQO_POOL_SIZE)
-            return MAX_GEQO_POOL_SIZE;
-        else
-            return Geqo_pool_size;
-    }
+	if (Geqo_pool_size != 0)
+	{
+		if (Geqo_pool_size < MIN_GEQO_POOL_SIZE)
+			return MIN_GEQO_POOL_SIZE;
+		else if (Geqo_pool_size > MAX_GEQO_POOL_SIZE)
+			return MAX_GEQO_POOL_SIZE;
+		else
+			return Geqo_pool_size;
+	}
 
 	size = pow(2.0, nr_rel + 1.0);
 
@@ -323,8 +323,8 @@ gimme_pool_size(int nr_rel)
 static int
 gimme_number_generations(int pool_size, int effort)
 {
-    if (Geqo_generations <= 0)
-        return effort * (int) ceil(log((double) pool_size) / log(2.0));
-    else
-        return Geqo_generations;
+	if (Geqo_generations <= 0)
+		return effort * (int) ceil(log((double) pool_size) / log(2.0));
+	else
+		return Geqo_generations;
 }

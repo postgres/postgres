@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.87 2001/01/24 19:43:21 momjian Exp $
+ * $Id: pg_operator.h,v 1.88 2001/03/22 04:00:39 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -691,30 +691,30 @@ DATA(insert OID = 828 (  ">>"	   PGUID 0 b t f 650 650	 16 826   0 0 0 network_s
 DATA(insert OID = 1004 ( ">>="	   PGUID 0 b t f 650 650	 16 827   0 0 0 network_supeq - - ));
 
 /* case-insensitive LIKE hacks */
-DATA(insert OID = 1625 (  "~~*"	  PGUID 0 b t f  19   25  16 0 1626 0 0 nameiclike iclikesel iclikejoinsel ));
+DATA(insert OID = 1625 (  "~~*"   PGUID 0 b t f  19   25  16 0 1626 0 0 nameiclike iclikesel iclikejoinsel ));
 #define OID_NAME_ICLIKE_OP		1625
 DATA(insert OID = 1626 (  "!~~*"  PGUID 0 b t f  19   25  16 0 1625 0 0 nameicnlike icnlikesel icnlikejoinsel ));
-DATA(insert OID = 1627 (  "~~*"	  PGUID 0 b t f  25   25  16 0 1628 0 0 texticlike iclikesel iclikejoinsel ));
+DATA(insert OID = 1627 (  "~~*"   PGUID 0 b t f  25   25  16 0 1628 0 0 texticlike iclikesel iclikejoinsel ));
 #define OID_TEXT_ICLIKE_OP		1627
 DATA(insert OID = 1628 (  "!~~*"  PGUID 0 b t f  25   25  16 0 1627 0 0 texticnlike icnlikesel icnlikejoinsel ));
-DATA(insert OID = 1629 (  "~~*"	  PGUID 0 b t f  1042 25  16 0 1630 0 0 texticlike iclikesel iclikejoinsel ));
+DATA(insert OID = 1629 (  "~~*"   PGUID 0 b t f  1042 25  16 0 1630 0 0 texticlike iclikesel iclikejoinsel ));
 #define OID_BPCHAR_ICLIKE_OP	1629
 DATA(insert OID = 1630 (  "!~~*"  PGUID 0 b t f  1042 25  16 0 1629 0 0 texticnlike icnlikesel icnlikejoinsel ));
-DATA(insert OID = 1631 (  "~~*"	  PGUID 0 b t f  1043 25  16 0 1632 0 0 texticlike iclikesel iclikejoinsel ));
+DATA(insert OID = 1631 (  "~~*"   PGUID 0 b t f  1043 25  16 0 1632 0 0 texticlike iclikesel iclikejoinsel ));
 #define OID_VARCHAR_ICLIKE_OP	1631
 DATA(insert OID = 1632 (  "!~~*"  PGUID 0 b t f  1043 25  16 0 1631 0 0 texticnlike icnlikesel icnlikejoinsel ));
 
 /* int4 vs oid comparisons --- use oid (unsigned) comparison */
-DATA(insert OID = 1656 (  "<>"	   PGUID 0 b t f  23  26  16 1661 1136  0  0 oidne neqsel neqjoinsel ));
-DATA(insert OID = 1657 (  "<"	   PGUID 0 b t f  23  26  16 1663 1660  0  0 oidlt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1658 (  ">"	   PGUID 0 b t f  23  26  16 1662 1659  0  0 oidgt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1659 (  "<="	   PGUID 0 b t f  23  26  16 1665 1658  0  0 oidle scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1660 (  ">="	   PGUID 0 b t f  23  26  16 1664 1657  0  0 oidge scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1661 (  "<>"	   PGUID 0 b t f  26  23  16 1656 1137  0  0 oidne neqsel neqjoinsel ));
-DATA(insert OID = 1662 (  "<"	   PGUID 0 b t f  26  23  16 1658 1665  0  0 oidlt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1663 (  ">"	   PGUID 0 b t f  26  23  16 1657 1664  0  0 oidgt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1664 (  "<="	   PGUID 0 b t f  26  23  16 1660 1663  0  0 oidle scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1665 (  ">="	   PGUID 0 b t f  26  23  16 1659 1662  0  0 oidge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1656 (  "<>"	   PGUID 0 b t f  23  26  16 1661 1136	0  0 oidne neqsel neqjoinsel ));
+DATA(insert OID = 1657 (  "<"	   PGUID 0 b t f  23  26  16 1663 1660	0  0 oidlt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1658 (  ">"	   PGUID 0 b t f  23  26  16 1662 1659	0  0 oidgt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1659 (  "<="	   PGUID 0 b t f  23  26  16 1665 1658	0  0 oidle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1660 (  ">="	   PGUID 0 b t f  23  26  16 1664 1657	0  0 oidge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1661 (  "<>"	   PGUID 0 b t f  26  23  16 1656 1137	0  0 oidne neqsel neqjoinsel ));
+DATA(insert OID = 1662 (  "<"	   PGUID 0 b t f  26  23  16 1658 1665	0  0 oidlt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1663 (  ">"	   PGUID 0 b t f  26  23  16 1657 1664	0  0 oidgt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1664 (  "<="	   PGUID 0 b t f  26  23  16 1660 1663	0  0 oidle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1665 (  ">="	   PGUID 0 b t f  26  23  16 1659 1662	0  0 oidge scalargtsel scalargtjoinsel ));
 
 /* NUMERIC type - OID's 1700-1799 */
 DATA(insert OID = 1751 (  "-"	   PGUID 0 l t f	0 1700 1700    0	0 0 0 numeric_uminus - - ));
@@ -773,26 +773,26 @@ DATA(insert OID = 1871 ( ">"	   PGUID 0 b t f  20  21  16  1864 1872   0  0 int8
 DATA(insert OID = 1872 ( "<="	   PGUID 0 b t f  20  21  16  1867 1871   0  0 int82le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1873 ( ">="	   PGUID 0 b t f  20  21  16  1866 1870   0  0 int82ge scalargtsel scalargtjoinsel ));
 
-DATA(insert OID = 1874 ( "&"	   PGUID 0 b t f  21  21  21  1874    0   0  0 int2and - - ));
-DATA(insert OID = 1875 ( "|"	   PGUID 0 b t f  21  21  21  1875    0   0  0 int2or - - ));
-DATA(insert OID = 1876 ( "#"	   PGUID 0 b t f  21  21  21  1876    0   0  0 int2xor - - ));
-DATA(insert OID = 1877 ( "~"	   PGUID 0 l t f   0  21  21     0    0   0  0 int2not - - ));
-DATA(insert OID = 1878 ( "<<"	   PGUID 0 b t f  21  23  21     0    0   0  0 int2shl - - ));
-DATA(insert OID = 1879 ( ">>"	   PGUID 0 b t f  21  23  21     0    0   0  0 int2shr - - ));
+DATA(insert OID = 1874 ( "&"	   PGUID 0 b t f  21  21  21  1874	  0   0  0 int2and - - ));
+DATA(insert OID = 1875 ( "|"	   PGUID 0 b t f  21  21  21  1875	  0   0  0 int2or - - ));
+DATA(insert OID = 1876 ( "#"	   PGUID 0 b t f  21  21  21  1876	  0   0  0 int2xor - - ));
+DATA(insert OID = 1877 ( "~"	   PGUID 0 l t f   0  21  21	 0	  0   0  0 int2not - - ));
+DATA(insert OID = 1878 ( "<<"	   PGUID 0 b t f  21  23  21	 0	  0   0  0 int2shl - - ));
+DATA(insert OID = 1879 ( ">>"	   PGUID 0 b t f  21  23  21	 0	  0   0  0 int2shr - - ));
 
-DATA(insert OID = 1880 ( "&"	   PGUID 0 b t f  23  23  23  1880    0   0  0 int4and - - ));
-DATA(insert OID = 1881 ( "|"	   PGUID 0 b t f  23  23  23  1881    0   0  0 int4or - - ));
-DATA(insert OID = 1882 ( "#"	   PGUID 0 b t f  23  23  23  1882    0   0  0 int4xor - - ));
-DATA(insert OID = 1883 ( "~"	   PGUID 0 l t f   0  23  23     0    0   0  0 int4not - - ));
-DATA(insert OID = 1884 ( "<<"	   PGUID 0 b t f  23  23  23     0    0   0  0 int4shl - - ));
-DATA(insert OID = 1885 ( ">>"	   PGUID 0 b t f  23  23  23     0    0   0  0 int4shr - - ));
+DATA(insert OID = 1880 ( "&"	   PGUID 0 b t f  23  23  23  1880	  0   0  0 int4and - - ));
+DATA(insert OID = 1881 ( "|"	   PGUID 0 b t f  23  23  23  1881	  0   0  0 int4or - - ));
+DATA(insert OID = 1882 ( "#"	   PGUID 0 b t f  23  23  23  1882	  0   0  0 int4xor - - ));
+DATA(insert OID = 1883 ( "~"	   PGUID 0 l t f   0  23  23	 0	  0   0  0 int4not - - ));
+DATA(insert OID = 1884 ( "<<"	   PGUID 0 b t f  23  23  23	 0	  0   0  0 int4shl - - ));
+DATA(insert OID = 1885 ( ">>"	   PGUID 0 b t f  23  23  23	 0	  0   0  0 int4shr - - ));
 
-DATA(insert OID = 1886 ( "&"	   PGUID 0 b t f  20  20  20  1886    0   0  0 int8and - - ));
-DATA(insert OID = 1887 ( "|"	   PGUID 0 b t f  20  20  20  1887    0   0  0 int8or - - ));
-DATA(insert OID = 1888 ( "#"	   PGUID 0 b t f  20  20  20  1888    0   0  0 int8xor - - ));
-DATA(insert OID = 1889 ( "~"	   PGUID 0 l t f   0  20  20     0    0   0  0 int8not - - ));
-DATA(insert OID = 1890 ( "<<"	   PGUID 0 b t f  20  23  20     0    0   0  0 int8shl - - ));
-DATA(insert OID = 1891 ( ">>"	   PGUID 0 b t f  20  23  20     0    0   0  0 int8shr - - ));
+DATA(insert OID = 1886 ( "&"	   PGUID 0 b t f  20  20  20  1886	  0   0  0 int8and - - ));
+DATA(insert OID = 1887 ( "|"	   PGUID 0 b t f  20  20  20  1887	  0   0  0 int8or - - ));
+DATA(insert OID = 1888 ( "#"	   PGUID 0 b t f  20  20  20  1888	  0   0  0 int8xor - - ));
+DATA(insert OID = 1889 ( "~"	   PGUID 0 l t f   0  20  20	 0	  0   0  0 int8not - - ));
+DATA(insert OID = 1890 ( "<<"	   PGUID 0 b t f  20  23  20	 0	  0   0  0 int8shl - - ));
+DATA(insert OID = 1891 ( ">>"	   PGUID 0 b t f  20  23  20	 0	  0   0  0 int8shr - - ));
 
 /*
  * function prototypes

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/include/port/solaris.h,v 1.3 2000/10/29 13:17:34 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/include/port/solaris.h,v 1.4 2001/03/22 04:01:00 momjian Exp $ */
 
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
@@ -9,15 +9,15 @@ typedef unsigned char slock_t;
  * doesn't document them.  The __xxx__ symbols are only on GCC.
  */
 #if defined(__i386) && !defined(__i386__)
-# define __i386__
+#define __i386__
 #endif
 
 #if defined(__sparc) && !defined(__sparc__)
-# define __sparc__
+#define __sparc__
 #endif
 
 #if defined(__i386__)
-# include <sys/isa_defs.h>
+#include <sys/isa_defs.h>
 #endif
 
 #ifndef			BIG_ENDIAN
@@ -31,31 +31,32 @@ typedef unsigned char slock_t;
 #endif
 
 #ifndef			BYTE_ORDER
-# ifdef __sparc__
-#  define		BYTE_ORDER		BIG_ENDIAN
-# endif
-# ifdef __i386__
-#   define		BYTE_ORDER		LITTLE_ENDIAN
-# endif
+#ifdef __sparc__
+#define		  BYTE_ORDER	  BIG_ENDIAN
+#endif
+#ifdef __i386__
+#define		 BYTE_ORDER		 LITTLE_ENDIAN
+#endif
 #endif
 
 
-#ifndef	NAN
+#ifndef NAN
 
-# if defined(__GNUC__) && defined(__i386__)
+#if defined(__GNUC__) && defined(__i386__)
 
-#  ifndef __nan_bytes
-#   define __nan_bytes				{ 0, 0, 0, 0, 0, 0, 0xf8, 0x7f }
-#  endif
+#ifndef __nan_bytes
+#define __nan_bytes				 { 0, 0, 0, 0, 0, 0, 0xf8, 0x7f }
+#endif
 
-#  define NAN \
+#define NAN \
 	(__extension__ ((union { unsigned char __c[8]; double __d; }) \
 					{ __nan_bytes }).__d)
 
-# else /* not GNUC and i386 */
+#else
+/* not GNUC and i386 */
 
-#  define NAN (0.0/0.0)
+#define NAN (0.0/0.0)
 
-# endif /* GCC.  */
+#endif	 /* GCC.  */
 
 #endif	 /* not NAN */

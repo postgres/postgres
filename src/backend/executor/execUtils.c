@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.73 2001/01/29 00:39:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.74 2001/03/22 03:59:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,6 +148,7 @@ ExecAssignExprContext(EState *estate, CommonState *commonstate)
 	econtext->ecxt_innertuple = NULL;
 	econtext->ecxt_outertuple = NULL;
 	econtext->ecxt_per_query_memory = CurrentMemoryContext;
+
 	/*
 	 * Create working memory for expression evaluation in this context.
 	 */
@@ -184,14 +185,16 @@ MakeExprContext(TupleTableSlot *slot,
 	econtext->ecxt_innertuple = NULL;
 	econtext->ecxt_outertuple = NULL;
 	econtext->ecxt_per_query_memory = queryContext;
+
 	/*
 	 * We make the temporary context a child of current working context,
 	 * not of the specified queryContext.  This seems reasonable but I'm
 	 * not totally sure about it...
 	 *
 	 * Expression contexts made via this routine typically don't live long
-	 * enough to get reset, so specify a minsize of 0.  That avoids alloc'ing
-	 * any memory in the common case where expr eval doesn't use any.
+	 * enough to get reset, so specify a minsize of 0.	That avoids
+	 * alloc'ing any memory in the common case where expr eval doesn't use
+	 * any.
 	 */
 	econtext->ecxt_per_tuple_memory =
 		AllocSetContextCreate(CurrentMemoryContext,
@@ -209,7 +212,7 @@ MakeExprContext(TupleTableSlot *slot,
 
 /*
  * Free an ExprContext made by MakeExprContext, including the temporary
- * context used for expression evaluation.  Note this will cause any
+ * context used for expression evaluation.	Note this will cause any
  * pass-by-reference expression result to go away!
  */
 void
@@ -447,7 +450,7 @@ ExecAssignScanTypeFromOuterPlan(Plan *node, CommonScanState *csstate)
  *		resultRelInfo->ri_RelationDesc.
  *
  *		This used to be horribly ugly code, and slow too because it
- *		did a sequential scan of pg_index.  Now we rely on the relcache
+ *		did a sequential scan of pg_index.	Now we rely on the relcache
  *		to cache a list of the OIDs of the indices associated with any
  *		specific relation, and we use the pg_index syscache to get the
  *		entries we need from pg_index.
@@ -467,7 +470,7 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 	resultRelInfo->ri_NumIndices = 0;
 
 	/* checks for disabled indexes */
-	if (! RelationGetForm(resultRelation)->relhasindex)
+	if (!RelationGetForm(resultRelation)->relhasindex)
 		return;
 	if (IsIgnoringSystemIndexes() &&
 		IsSystemRelationName(RelationGetRelationName(resultRelation)))
@@ -635,8 +638,9 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	heapDescriptor = RelationGetDescr(heapRelation);
 
 	/*
-	 * We will use the EState's per-tuple context for evaluating predicates
-	 * and functional-index functions (creating it if it's not already there).
+	 * We will use the EState's per-tuple context for evaluating
+	 * predicates and functional-index functions (creating it if it's not
+	 * already there).
 	 */
 	econtext = GetPerTupleExprContext(estate);
 

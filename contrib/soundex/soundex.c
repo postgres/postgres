@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/contrib/soundex/Attic/soundex.c,v 1.10 2001/02/10 02:31:26 tgl Exp $ */
+/* $Header: /cvsroot/pgsql/contrib/soundex/Attic/soundex.c,v 1.11 2001/03/22 03:59:10 momjian Exp $ */
 #include "postgres.h"
 
 #include <ctype.h>
@@ -7,7 +7,7 @@
 #include "utils/builtins.h"
 
 
-Datum text_soundex(PG_FUNCTION_ARGS);
+Datum		text_soundex(PG_FUNCTION_ARGS);
 
 static void soundex(const char *instr, char *outstr);
 
@@ -37,11 +37,12 @@ text_soundex(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(_textin(outstr));
 }
 
-#endif /* not SOUNDEX_TEST */
+#endif	 /* not SOUNDEX_TEST */
 
 
-/*                                  ABCDEFGHIJKLMNOPQRSTUVWXYZ */
+/*									ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 static const char *soundex_table = "01230120022455012623010202";
+
 #define soundex_code(letter) soundex_table[toupper((unsigned char) (letter)) - 'A']
 
 
@@ -98,7 +99,7 @@ soundex(const char *instr, char *outstr)
 
 #ifdef SOUNDEX_TEST
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
 	if (argc < 2)
 	{
@@ -107,11 +108,12 @@ main (int argc, char *argv[])
 	}
 	else
 	{
-		char output[SOUNDEX_LEN + 1];
+		char		output[SOUNDEX_LEN + 1];
 
 		soundex(argv[1], output);
 		printf("soundex(%s) = %s\n", argv[1], output);
 		return 0;
 	}
 }
-#endif /* SOUNDEX_TEST */
+
+#endif	 /* SOUNDEX_TEST */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.160 2001/02/14 21:34:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.161 2001/03/22 03:59:19 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -68,7 +68,7 @@
 
 
 static void AddNewRelationTuple(Relation pg_class_desc,
-					Relation new_rel_desc, Oid new_rel_oid, Oid new_type_oid,
+				Relation new_rel_desc, Oid new_rel_oid, Oid new_type_oid,
 					int natts, char relkind, char *temp_relname);
 static void DeleteAttributeTuples(Relation rel);
 static void DeleteRelationTuple(Relation rel);
@@ -76,7 +76,7 @@ static void DeleteTypeTuple(Relation rel);
 static void RelationRemoveIndexes(Relation relation);
 static void RelationRemoveInheritance(Relation relation);
 static void AddNewRelationType(char *typeName, Oid new_rel_oid,
-							   Oid new_type_oid);
+				   Oid new_type_oid);
 static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 				 bool updatePgAttribute);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
@@ -178,13 +178,13 @@ heap_create(char *relname,
 {
 	static unsigned int uniqueId = 0;
 
-	Oid				relid;
-	Relation		rel;
-	bool			nailme = false;
-	int				natts = tupDesc->natts;
-	int				i;
-	MemoryContext	oldcxt;
-	Oid				tblNode = MyDatabaseId;
+	Oid			relid;
+	Relation	rel;
+	bool		nailme = false;
+	int			natts = tupDesc->natts;
+	int			i;
+	MemoryContext oldcxt;
+	Oid			tblNode = MyDatabaseId;
 
 	/* ----------------
 	 *	sanity checks
@@ -270,7 +270,11 @@ heap_create(char *relname,
 
 	if (istemp)
 	{
-		/* replace relname of caller with a unique name for a temp relation */
+
+		/*
+		 * replace relname of caller with a unique name for a temp
+		 * relation
+		 */
 		snprintf(relname, NAMEDATALEN, "pg_temp.%d.%u",
 				 (int) MyProcPid, uniqueId++);
 	}
@@ -738,6 +742,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 static void
 AddNewRelationType(char *typeName, Oid new_rel_oid, Oid new_type_oid)
 {
+
 	/*
 	 * The sizes are set to oid size because it makes implementing sets
 	 * MUCH easier, and no one (we hope) uses these fields to figure out
@@ -1025,9 +1030,7 @@ RelationRemoveInheritance(Relation relation)
 						  &entry);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-	{
 		simple_heap_delete(catalogRelation, &tuple->t_self);
-	}
 
 	heap_endscan(scan);
 	heap_close(catalogRelation, RowExclusiveLock);
@@ -1152,8 +1155,8 @@ RelationTruncateIndexes(Oid heapId)
 		/*
 		 * We have to re-open the heap rel each time through this loop
 		 * because index_build will close it again.  We need grab no lock,
-		 * however, because we assume heap_truncate is holding an exclusive
-		 * lock on the heap rel.
+		 * however, because we assume heap_truncate is holding an
+		 * exclusive lock on the heap rel.
 		 */
 		heapRelation = heap_open(heapId, NoLock);
 
@@ -1164,8 +1167,8 @@ RelationTruncateIndexes(Oid heapId)
 		LockRelation(currentIndex, AccessExclusiveLock);
 
 		/*
-		 * Drop any buffers associated with this index.	If they're
-		 * dirty, they're just dropped without bothering to flush to disk.
+		 * Drop any buffers associated with this index. If they're dirty,
+		 * they're just dropped without bothering to flush to disk.
 		 */
 		DropRelationBuffers(currentIndex);
 
@@ -1177,6 +1180,7 @@ RelationTruncateIndexes(Oid heapId)
 		InitIndexStrategy(indexInfo->ii_NumIndexAttrs,
 						  currentIndex, accessMethodId);
 		index_build(heapRelation, currentIndex, indexInfo, NULL);
+
 		/*
 		 * index_build will close both the heap and index relations (but
 		 * not give up the locks we hold on them).
@@ -1514,7 +1518,7 @@ heap_drop_with_catalog(const char *relname,
 
 	if (has_toasttable)
 	{
-		char	toast_relname[NAMEDATALEN];
+		char		toast_relname[NAMEDATALEN];
 
 		sprintf(toast_relname, "pg_toast_%u", rid);
 		heap_drop_with_catalog(toast_relname, true);
@@ -1553,16 +1557,16 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	 * deparse it
 	 */
 	adsrc = deparse_expression(expr,
-							   deparse_context_for(RelationGetRelationName(rel),
-												   RelationGetRelid(rel)),
+						deparse_context_for(RelationGetRelationName(rel),
+											RelationGetRelid(rel)),
 							   false);
 
 	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_attrdef_adnum - 1] = attnum;
 	values[Anum_pg_attrdef_adbin - 1] = DirectFunctionCall1(textin,
-													CStringGetDatum(adbin));
+												 CStringGetDatum(adbin));
 	values[Anum_pg_attrdef_adsrc - 1] = DirectFunctionCall1(textin,
-													CStringGetDatum(adsrc));
+												 CStringGetDatum(adsrc));
 	adrel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
 	tuple = heap_formtuple(adrel->rd_att, values, nulls);
 	heap_insert(adrel, tuple);
@@ -1631,17 +1635,17 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	 * deparse it
 	 */
 	ccsrc = deparse_expression(expr,
-							   deparse_context_for(RelationGetRelationName(rel),
-												   RelationGetRelid(rel)),
+						deparse_context_for(RelationGetRelationName(rel),
+											RelationGetRelid(rel)),
 							   false);
 
 	values[Anum_pg_relcheck_rcrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_relcheck_rcname - 1] = DirectFunctionCall1(namein,
-													CStringGetDatum(ccname));
+												CStringGetDatum(ccname));
 	values[Anum_pg_relcheck_rcbin - 1] = DirectFunctionCall1(textin,
-													CStringGetDatum(ccbin));
+												 CStringGetDatum(ccbin));
 	values[Anum_pg_relcheck_rcsrc - 1] = DirectFunctionCall1(textin,
-													CStringGetDatum(ccsrc));
+												 CStringGetDatum(ccsrc));
 	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
 	tuple = heap_formtuple(rcrel->rd_att, values, nulls);
 	heap_insert(rcrel, tuple);
@@ -1981,9 +1985,7 @@ RemoveAttrDefault(Relation rel)
 	adscan = heap_beginscan(adrel, 0, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = heap_getnext(adscan, 0)))
-	{
 		simple_heap_delete(adrel, &tup->t_self);
-	}
 
 	heap_endscan(adscan);
 	heap_close(adrel, RowExclusiveLock);
@@ -2005,9 +2007,7 @@ RemoveRelCheck(Relation rel)
 	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = heap_getnext(rcscan, 0)))
-	{
 		simple_heap_delete(rcrel, &tup->t_self);
-	}
 
 	heap_endscan(rcscan);
 	heap_close(rcrel, RowExclusiveLock);
@@ -2044,9 +2044,7 @@ RemoveStatistics(Relation rel)
 	scan = heap_beginscan(pgstatistic, false, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-	{
 		simple_heap_delete(pgstatistic, &tuple->t_self);
-	}
 
 	heap_endscan(scan);
 	heap_close(pgstatistic, RowExclusiveLock);

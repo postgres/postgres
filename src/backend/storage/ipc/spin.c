@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.31 2001/01/24 19:43:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.32 2001/03/22 03:59:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,17 +83,18 @@ typedef struct slock
 } SLock;
 
 #ifdef LOCK_DEBUG
-bool Trace_spinlocks = false;
+bool		Trace_spinlocks = false;
 
 inline static void
-PRINT_SLDEBUG(const char * where, SPINLOCK lockid, const SLock * lock)
+PRINT_SLDEBUG(const char *where, SPINLOCK lockid, const SLock *lock)
 {
-    if (Trace_spinlocks)
-        elog(DEBUG, "%s: id=%d", where, lockid);
+	if (Trace_spinlocks)
+		elog(DEBUG, "%s: id=%d", where, lockid);
 }
-#else  /* not LOCK_DEBUG */
+
+#else							/* not LOCK_DEBUG */
 #define PRINT_SLDEBUG(a,b,c)
-#endif /* not LOCK_DEBUG */
+#endif	 /* not LOCK_DEBUG */
 
 
 static SLock *SLockArray = NULL;
@@ -146,15 +147,17 @@ SpinAcquire(SPINLOCK lockid)
 	SLock	   *slckP = &(SLockArray[lockid]);
 
 	PRINT_SLDEBUG("SpinAcquire", lockid, slckP);
+
 	/*
-	 * Acquire the lock, then record that we have done so (for recovery
-	 * in case of elog(ERROR) while holding the lock).  Note we assume
-	 * here that S_LOCK will not accept cancel/die interrupts once it has
+	 * Acquire the lock, then record that we have done so (for recovery in
+	 * case of elog(ERROR) while holding the lock).  Note we assume here
+	 * that S_LOCK will not accept cancel/die interrupts once it has
 	 * acquired the lock.  However, interrupts should be accepted while
 	 * waiting, if InterruptHoldoffCount is zero.
 	 */
 	S_LOCK(&(slckP->shlock));
 	PROC_INCR_SLOCK(lockid);
+
 	/*
 	 * Lock out cancel/die interrupts until we exit the code section
 	 * protected by the spinlock.  This ensures that interrupts will not
@@ -162,7 +165,7 @@ SpinAcquire(SPINLOCK lockid)
 	 */
 	HOLD_INTERRUPTS();
 
-    PRINT_SLDEBUG("SpinAcquire/done", lockid, slckP);
+	PRINT_SLDEBUG("SpinAcquire/done", lockid, slckP);
 }
 
 void
@@ -170,26 +173,29 @@ SpinRelease(SPINLOCK lockid)
 {
 	SLock	   *slckP = &(SLockArray[lockid]);
 
-    PRINT_SLDEBUG("SpinRelease", lockid, slckP);
+	PRINT_SLDEBUG("SpinRelease", lockid, slckP);
+
 	/*
 	 * Check that we are actually holding the lock we are releasing. This
 	 * can be done only after MyProc has been initialized.
 	 */
-    Assert(!MyProc || MyProc->sLocks[lockid] > 0);
+	Assert(!MyProc || MyProc->sLocks[lockid] > 0);
+
 	/*
 	 * Record that we no longer hold the spinlock, and release it.
 	 */
 	PROC_DECR_SLOCK(lockid);
 	S_UNLOCK(&(slckP->shlock));
+
 	/*
 	 * Exit the interrupt holdoff entered in SpinAcquire().
 	 */
 	RESUME_INTERRUPTS();
 
-    PRINT_SLDEBUG("SpinRelease/done", lockid, slckP);
+	PRINT_SLDEBUG("SpinRelease/done", lockid, slckP);
 }
 
-#else /* !HAS_TEST_AND_SET */
+#else							/* !HAS_TEST_AND_SET */
 
 /*
  * No TAS, so spinlocks are implemented using SysV semaphores.
@@ -217,9 +223,9 @@ SpinRelease(SPINLOCK lockid)
 
 static IpcSemaphoreId *SpinLockIds = NULL;
 
-static int numSpinSets = 0;		/* number of sema sets used */
-static int numSpinLocks = 0;	/* total number of semas allocated */
-static int nextSpinLock = 0;	/* next free spinlock index */
+static int	numSpinSets = 0;	/* number of sema sets used */
+static int	numSpinLocks = 0;	/* total number of semas allocated */
+static int	nextSpinLock = 0;	/* next free spinlock index */
 
 static void SpinFreeAllSemaphores(void);
 
@@ -238,17 +244,18 @@ SLockShmemSize(void)
 void
 CreateSpinlocks(PGShmemHeader *seghdr)
 {
-	int		i;
+	int			i;
 
 	if (SpinLockIds == NULL)
 	{
+
 		/*
-		 * Compute number of spinlocks needed.  If this logic gets any more
-		 * complicated, it should be distributed into the affected modules,
-		 * similar to the way shmem space estimation is handled.
+		 * Compute number of spinlocks needed.	If this logic gets any
+		 * more complicated, it should be distributed into the affected
+		 * modules, similar to the way shmem space estimation is handled.
 		 *
-		 * For now, though, we just need the fixed spinlocks (MAX_SPINS),
-		 * two spinlocks per shared disk buffer, and four spinlocks for XLOG.
+		 * For now, though, we just need the fixed spinlocks (MAX_SPINS), two
+		 * spinlocks per shared disk buffer, and four spinlocks for XLOG.
 		 */
 		numSpinLocks = (int) MAX_SPINS + 2 * NBuffers + 4;
 
@@ -265,11 +272,11 @@ CreateSpinlocks(PGShmemHeader *seghdr)
 		SpinLockIds[i] = -1;
 
 	/*
-	 * Arrange to delete semas on exit --- set this up now so that we
-	 * will clean up if allocation fails.  We use our own freeproc,
-	 * rather than IpcSemaphoreCreate's removeOnExit option, because
-	 * we don't want to fill up the on_shmem_exit list with a separate
-	 * entry for each semaphore set.
+	 * Arrange to delete semas on exit --- set this up now so that we will
+	 * clean up if allocation fails.  We use our own freeproc, rather than
+	 * IpcSemaphoreCreate's removeOnExit option, because we don't want to
+	 * fill up the on_shmem_exit list with a separate entry for each
+	 * semaphore set.
 	 */
 	on_shmem_exit(SpinFreeAllSemaphores, 0);
 
@@ -320,12 +327,13 @@ SpinFreeAllSemaphores(void)
 void
 SpinAcquire(SPINLOCK lock)
 {
+
 	/*
 	 * See the TAS() version of this routine for primary commentary.
 	 *
 	 * NOTE we must pass interruptOK = false to IpcSemaphoreLock, to ensure
-	 * that a cancel/die interrupt cannot prevent us from recording ownership
-	 * of a lock we have just acquired.
+	 * that a cancel/die interrupt cannot prevent us from recording
+	 * ownership of a lock we have just acquired.
 	 */
 	IpcSemaphoreLock(SpinLockIds[0], lock, false);
 	PROC_INCR_SLOCK(lock);
@@ -348,7 +356,7 @@ SpinRelease(SPINLOCK lock)
 	semval = IpcSemaphoreGetValue(SpinLockIds[0], lock);
 	Assert(semval < 1);
 #endif
-    Assert(!MyProc || MyProc->sLocks[lockid] > 0);
+	Assert(!MyProc || MyProc->sLocks[lockid] > 0);
 	PROC_DECR_SLOCK(lock);
 	IpcSemaphoreUnlock(SpinLockIds[0], lock);
 	RESUME_INTERRUPTS();
@@ -384,7 +392,7 @@ int
 tas_sema(volatile slock_t *lock)
 {
 	/* Note that TAS macros return 0 if *success* */
-	return ! IpcSemaphoreTryLock(lock->semId, lock->sem);
+	return !IpcSemaphoreTryLock(lock->semId, lock->sem);
 }
 
-#endif /* !HAS_TEST_AND_SET */
+#endif	 /* !HAS_TEST_AND_SET */

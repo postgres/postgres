@@ -23,17 +23,21 @@ extern		"C"
 		/* Element 0: empty						*/
 		/* 1: OID of processed tuple if applicable			*/
 		/* 2: number of rows processed				*/
-		/* after an INSERT, UPDATE or 				*/
+		/* after an INSERT, UPDATE or				*/
 		/* DELETE statement					*/
 		/* 3: empty						*/
 		/* 4: empty						*/
 		/* 5: empty						*/
 		char		sqlwarn[8];
-		/* Element 0: set to 'W' if at least one other is 'W' 	*/
-		/* 1: if 'W' at least one character string	  	*/
-		/* value was truncated when it was		   	*/
-		/* stored into a host variable.			   	*/
-		/* 2: if 'W' a (hopefully) non-fatal notice occured 	*/		/* 3: empty									  */
+		/* Element 0: set to 'W' if at least one other is 'W'	*/
+		/* 1: if 'W' at least one character string		*/
+		/* value was truncated when it was			*/
+		/* stored into a host variable.				*/
+
+		/*
+		 * 2: if 'W' a (hopefully) non-fatal notice occured		*//* 3:
+		 * empty
+		 */
 		/* 4: empty						*/
 		/* 5: empty						*/
 		/* 6: empty						*/
@@ -47,6 +51,7 @@ extern		"C"
 
 #ifdef __cplusplus
 }
+
 #endif
 
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.61 2001/01/24 19:42:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.62 2001/03/22 03:59:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,32 +25,32 @@
 #include "utils/lsyscache.h"
 
 static void sort_inner_and_outer(Query *root, RelOptInfo *joinrel,
-								 RelOptInfo *outerrel, RelOptInfo *innerrel,
-								 List *restrictlist, List *mergeclause_list,
-								 JoinType jointype);
+					 RelOptInfo *outerrel, RelOptInfo *innerrel,
+					 List *restrictlist, List *mergeclause_list,
+					 JoinType jointype);
 static void match_unsorted_outer(Query *root, RelOptInfo *joinrel,
-								 RelOptInfo *outerrel, RelOptInfo *innerrel,
-								 List *restrictlist, List *mergeclause_list,
-								 JoinType jointype);
+					 RelOptInfo *outerrel, RelOptInfo *innerrel,
+					 List *restrictlist, List *mergeclause_list,
+					 JoinType jointype);
 
 #ifdef NOT_USED
 static void match_unsorted_inner(Query *root, RelOptInfo *joinrel,
-								 RelOptInfo *outerrel, RelOptInfo *innerrel,
-								 List *restrictlist, List *mergeclause_list,
-								 JoinType jointype);
+					 RelOptInfo *outerrel, RelOptInfo *innerrel,
+					 List *restrictlist, List *mergeclause_list,
+					 JoinType jointype);
 
 #endif
 static void hash_inner_and_outer(Query *root, RelOptInfo *joinrel,
-								 RelOptInfo *outerrel, RelOptInfo *innerrel,
-								 List *restrictlist, JoinType jointype);
+					 RelOptInfo *outerrel, RelOptInfo *innerrel,
+					 List *restrictlist, JoinType jointype);
 static Path *best_innerjoin(List *join_paths, List *outer_relid,
-							JoinType jointype);
+			   JoinType jointype);
 static Selectivity estimate_dispersion(Query *root, Var *var);
 static List *select_mergejoin_clauses(RelOptInfo *joinrel,
-									  RelOptInfo *outerrel,
-									  RelOptInfo *innerrel,
-									  List *restrictlist,
-									  JoinType jointype);
+						 RelOptInfo *outerrel,
+						 RelOptInfo *innerrel,
+						 List *restrictlist,
+						 JoinType jointype);
 
 
 /*
@@ -160,26 +160,27 @@ sort_inner_and_outer(Query *root,
 	 * generate a differently-sorted result path at essentially the same
 	 * cost.  We have no basis for choosing one over another at this level
 	 * of joining, but some sort orders may be more useful than others for
-	 * higher-level mergejoins, so it's worth considering multiple orderings.
+	 * higher-level mergejoins, so it's worth considering multiple
+	 * orderings.
 	 *
 	 * Actually, it's not quite true that every mergeclause ordering will
 	 * generate a different path order, because some of the clauses may be
-	 * redundant.  Therefore, what we do is convert the mergeclause list to
-	 * a list of canonical pathkeys, and then consider different orderings
-	 * of the pathkeys.
+	 * redundant.  Therefore, what we do is convert the mergeclause list
+	 * to a list of canonical pathkeys, and then consider different
+	 * orderings of the pathkeys.
 	 *
-	 * Generating a path for *every* permutation of the pathkeys doesn't
-	 * seem like a winning strategy; the cost in planning time is too high.
-	 * For now, we generate one path for each pathkey, listing that pathkey
-	 * first and the rest in random order.  This should allow at
-	 * least a one-clause mergejoin without re-sorting against any other
-	 * possible mergejoin partner path.  But if we've not guessed the
-	 * right ordering of secondary keys, we may end up evaluating
-	 * clauses as qpquals when they could have been done as mergeclauses.
-	 * We need to figure out a better way.	(Two possible approaches: look
-	 * at all the relevant index relations to suggest plausible sort
-	 * orders, or make just one output path and somehow mark it as having
-	 * a sort-order that can be rearranged freely.)
+	 * Generating a path for *every* permutation of the pathkeys doesn't seem
+	 * like a winning strategy; the cost in planning time is too high. For
+	 * now, we generate one path for each pathkey, listing that pathkey
+	 * first and the rest in random order.	This should allow at least a
+	 * one-clause mergejoin without re-sorting against any other possible
+	 * mergejoin partner path.	But if we've not guessed the right
+	 * ordering of secondary keys, we may end up evaluating clauses as
+	 * qpquals when they could have been done as mergeclauses. We need to
+	 * figure out a better way.  (Two possible approaches: look at all the
+	 * relevant index relations to suggest plausible sort orders, or make
+	 * just one output path and somehow mark it as having a sort-order
+	 * that can be rearranged freely.)
 	 */
 	all_pathkeys = make_pathkeys_for_mergeclauses(root,
 												  mergeclause_list,
@@ -200,16 +201,17 @@ sort_inner_and_outer(Query *root,
 								 lremove(front_pathkey,
 										 listCopy(all_pathkeys)));
 		else
-			cur_pathkeys = all_pathkeys;	/* no work at first one... */
+			cur_pathkeys = all_pathkeys;		/* no work at first one... */
 
 		/*
 		 * Select mergeclause(s) that match this sort ordering.  If we had
-		 * redundant merge clauses then we will get a subset of the original
-		 * clause list.  There had better be some match, however...
+		 * redundant merge clauses then we will get a subset of the
+		 * original clause list.  There had better be some match,
+		 * however...
 		 */
 		cur_mergeclauses = find_mergeclauses_for_pathkeys(root,
 														  cur_pathkeys,
-														  mergeclause_list);
+													   mergeclause_list);
 		Assert(cur_mergeclauses != NIL);
 
 		/*
@@ -334,10 +336,12 @@ match_unsorted_outer(Query *root,
 
 		if (nestjoinOK)
 		{
+
 			/*
-			 * Always consider a nestloop join with this outer and cheapest-
-			 * total-cost inner.  Consider nestloops using the cheapest-
-			 * startup-cost inner as well, and the best innerjoin indexpath.
+			 * Always consider a nestloop join with this outer and
+			 * cheapest- total-cost inner.	Consider nestloops using the
+			 * cheapest- startup-cost inner as well, and the best
+			 * innerjoin indexpath.
 			 */
 			add_path(joinrel, (Path *)
 					 create_nestloop_path(joinrel,
@@ -352,7 +356,7 @@ match_unsorted_outer(Query *root,
 						 create_nestloop_path(joinrel,
 											  jointype,
 											  outerpath,
-											  innerrel->cheapest_startup_path,
+										 innerrel->cheapest_startup_path,
 											  restrictlist,
 											  merge_pathkeys));
 			if (bestinnerjoin != NULL)
@@ -382,8 +386,8 @@ match_unsorted_outer(Query *root,
 		/*
 		 * Generate a mergejoin on the basis of sorting the cheapest
 		 * inner. Since a sort will be needed, only cheapest total cost
-		 * matters.  (But create_mergejoin_path will do the right thing
-		 * if innerrel->cheapest_total_path is already correctly sorted.)
+		 * matters.  (But create_mergejoin_path will do the right thing if
+		 * innerrel->cheapest_total_path is already correctly sorted.)
 		 */
 		add_path(joinrel, (Path *)
 				 create_mergejoin_path(joinrel,
@@ -400,13 +404,14 @@ match_unsorted_outer(Query *root,
 		 * Look for presorted inner paths that satisfy the innersortkey
 		 * list or any truncation thereof.	Here, we consider both cheap
 		 * startup cost and cheap total cost.  Ignore
-		 * innerrel->cheapest_total_path, since we already made a path with it.
+		 * innerrel->cheapest_total_path, since we already made a path
+		 * with it.
 		 */
 		num_sortkeys = length(innersortkeys);
 		if (num_sortkeys > 1)
-			trialsortkeys = listCopy(innersortkeys); /* need modifiable copy */
+			trialsortkeys = listCopy(innersortkeys);	/* need modifiable copy */
 		else
-			trialsortkeys = innersortkeys; /* won't really truncate */
+			trialsortkeys = innersortkeys;		/* won't really truncate */
 		cheapest_startup_inner = NULL;
 		cheapest_total_inner = NULL;
 
@@ -417,8 +422,8 @@ match_unsorted_outer(Query *root,
 
 			/*
 			 * Look for an inner path ordered well enough for the first
-			 * 'sortkeycnt' innersortkeys.	NB: trialsortkeys list
-			 * is modified destructively, which is why we made a copy...
+			 * 'sortkeycnt' innersortkeys.	NB: trialsortkeys list is
+			 * modified destructively, which is why we made a copy...
 			 */
 			trialsortkeys = ltruncate(sortkeycnt, trialsortkeys);
 			innerpath = get_cheapest_path_for_pathkeys(innerrel->pathlist,
@@ -478,8 +483,8 @@ match_unsorted_outer(Query *root,
 						{
 							newclauses =
 								find_mergeclauses_for_pathkeys(root,
-															   trialsortkeys,
-															   mergeclauses);
+														   trialsortkeys,
+														   mergeclauses);
 							Assert(newclauses != NIL);
 						}
 						else
@@ -601,7 +606,7 @@ match_unsorted_inner(Query *root,
 		if (startupouterpath != NULL && startupouterpath != totalouterpath)
 		{
 			merge_pathkeys = build_join_pathkeys(root, joinrel,
-												 startupouterpath->pathkeys);
+											 startupouterpath->pathkeys);
 			add_path(joinrel, (Path *)
 					 create_mergejoin_path(joinrel,
 										   jointype,
@@ -696,8 +701,8 @@ hash_inner_and_outer(Query *root,
 		 * estimate dispersion of inner var for costing purposes.
 		 *
 		 * Since we tend to visit the same clauses over and over when
-		 * planning a large query, we cache the dispersion estimates in the
-		 * RestrictInfo node to avoid repeated lookups of statistics.
+		 * planning a large query, we cache the dispersion estimates in
+		 * the RestrictInfo node to avoid repeated lookups of statistics.
 		 */
 		if (intMember(left->varno, outerrelids) &&
 			intMember(right->varno, innerrelids))
@@ -793,13 +798,13 @@ best_innerjoin(List *join_paths, Relids outer_relids, JoinType jointype)
 
 	foreach(join_path, join_paths)
 	{
-		IndexPath   *path = (IndexPath *) lfirst(join_path);
+		IndexPath  *path = (IndexPath *) lfirst(join_path);
 
 		Assert(IsA(path, IndexPath));
 
 		/*
-		 * If processing an outer join, only use explicit join clauses in the
-		 * inner indexscan.  For inner joins we need not be so picky.
+		 * If processing an outer join, only use explicit join clauses in
+		 * the inner indexscan.  For inner joins we need not be so picky.
 		 */
 		if (isouterjoin && !path->alljoinquals)
 			continue;
@@ -879,15 +884,15 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 				   *right;
 
 		/*
-		 * If processing an outer join, only use its own join clauses in the
-		 * merge.  For inner joins we need not be so picky.
+		 * If processing an outer join, only use its own join clauses in
+		 * the merge.  For inner joins we need not be so picky.
 		 *
 		 * Furthermore, if it is a right/full join then *all* the explicit
-		 * join clauses must be mergejoinable, else the executor will fail.
-		 * If we are asked for a right join then just return NIL to indicate
-		 * no mergejoin is possible (we can handle it as a left join instead).
-		 * If we are asked for a full join then emit an error, because there
-		 * is no fallback.
+		 * join clauses must be mergejoinable, else the executor will
+		 * fail. If we are asked for a right join then just return NIL to
+		 * indicate no mergejoin is possible (we can handle it as a left
+		 * join instead). If we are asked for a full join then emit an
+		 * error, because there is no fallback.
 		 */
 		if (isouterjoin)
 		{
@@ -897,7 +902,7 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			{
 				case JOIN_RIGHT:
 					if (restrictinfo->mergejoinoperator == InvalidOid)
-						return NIL;	/* not mergejoinable */
+						return NIL;		/* not mergejoinable */
 					break;
 				case JOIN_FULL:
 					if (restrictinfo->mergejoinoperator == InvalidOid)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.45 2001/01/24 19:42:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.46 2001/03/22 03:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,6 +453,7 @@ parse_DefaultXactIsoLevel(char *value)
 {
 #if 0
 	TransactionState s = CurrentTransactionState;
+
 #endif
 
 	if (value == NULL)
@@ -632,7 +633,7 @@ parse_client_encoding(char *value)
 	}
 #else
 	if (value &&
-		strcasecmp(value, pg_encoding_to_char(pg_get_client_encoding())) != 0)
+	strcasecmp(value, pg_encoding_to_char(pg_get_client_encoding())) != 0)
 		elog(ERROR, "Client encoding %s is not supported", value);
 #endif
 	return TRUE;
@@ -701,28 +702,27 @@ reset_server_encoding(void)
 void
 SetPGVariable(const char *name, const char *value)
 {
-	char	   *mvalue = value ? pstrdup(value) : ((char*) NULL);
+	char	   *mvalue = value ? pstrdup(value) : ((char *) NULL);
 
-    /*
-     * Special cases ought to be removed and handled separately
-     * by TCOP
-     */
-    if (strcasecmp(name, "datestyle")==0)
-        parse_date(mvalue);
-    else if (strcasecmp(name, "timezone")==0)
-        parse_timezone(mvalue);
-    else if (strcasecmp(name, "DefaultXactIsoLevel")==0)
-        parse_DefaultXactIsoLevel(mvalue);
-    else if (strcasecmp(name, "XactIsoLevel")==0)
-        parse_XactIsoLevel(mvalue);
-    else if (strcasecmp(name, "client_encoding")==0)
-        parse_client_encoding(mvalue);
-    else if (strcasecmp(name, "server_encoding")==0)
-        parse_server_encoding(mvalue);
-    else if (strcasecmp(name, "random_seed")==0)
-        parse_random_seed(mvalue);
-    else
-        SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET);
+	/*
+	 * Special cases ought to be removed and handled separately by TCOP
+	 */
+	if (strcasecmp(name, "datestyle") == 0)
+		parse_date(mvalue);
+	else if (strcasecmp(name, "timezone") == 0)
+		parse_timezone(mvalue);
+	else if (strcasecmp(name, "DefaultXactIsoLevel") == 0)
+		parse_DefaultXactIsoLevel(mvalue);
+	else if (strcasecmp(name, "XactIsoLevel") == 0)
+		parse_XactIsoLevel(mvalue);
+	else if (strcasecmp(name, "client_encoding") == 0)
+		parse_client_encoding(mvalue);
+	else if (strcasecmp(name, "server_encoding") == 0)
+		parse_server_encoding(mvalue);
+	else if (strcasecmp(name, "random_seed") == 0)
+		parse_random_seed(mvalue);
+	else
+		SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET);
 
 	if (mvalue)
 		pfree(mvalue);
@@ -732,44 +732,45 @@ SetPGVariable(const char *name, const char *value)
 void
 GetPGVariable(const char *name)
 {
-    if (strcasecmp(name, "datestyle")==0)
-        show_date();
-    else if (strcasecmp(name, "timezone")==0)
-        show_timezone();
-    else if (strcasecmp(name, "DefaultXactIsoLevel")==0)
-        show_DefaultXactIsoLevel();
-    else if (strcasecmp(name, "XactIsoLevel")==0)
-        show_XactIsoLevel();
-    else if (strcasecmp(name, "client_encoding")==0)
-        show_client_encoding();
-    else if (strcasecmp(name, "server_encoding")==0)
-        show_server_encoding();
-    else if (strcasecmp(name, "random_seed")==0)
-        show_random_seed();
-    else
-    {
-        const char * val = GetConfigOption(name);
-        elog(NOTICE, "%s is %s", name, val);
-    }
-} 
+	if (strcasecmp(name, "datestyle") == 0)
+		show_date();
+	else if (strcasecmp(name, "timezone") == 0)
+		show_timezone();
+	else if (strcasecmp(name, "DefaultXactIsoLevel") == 0)
+		show_DefaultXactIsoLevel();
+	else if (strcasecmp(name, "XactIsoLevel") == 0)
+		show_XactIsoLevel();
+	else if (strcasecmp(name, "client_encoding") == 0)
+		show_client_encoding();
+	else if (strcasecmp(name, "server_encoding") == 0)
+		show_server_encoding();
+	else if (strcasecmp(name, "random_seed") == 0)
+		show_random_seed();
+	else
+	{
+		const char *val = GetConfigOption(name);
+
+		elog(NOTICE, "%s is %s", name, val);
+	}
+}
 
 void
 ResetPGVariable(const char *name)
 {
-    if (strcasecmp(name, "datestyle")==0)
-        reset_date();
-    else if (strcasecmp(name, "timezone")==0)
-        reset_timezone();
-    else if (strcasecmp(name, "DefaultXactIsoLevel")==0)
-			reset_DefaultXactIsoLevel();
-    else if (strcasecmp(name, "XactIsoLevel")==0)
-			reset_XactIsoLevel();
-    else if (strcasecmp(name, "client_encoding")==0)
-        reset_client_encoding();
-    else if (strcasecmp(name, "server_encoding")==0)
-        reset_server_encoding();
-    else if (strcasecmp(name, "random_seed")==0)
-        reset_random_seed();
-    else
-        SetConfigOption(name, NULL, superuser() ? PGC_SUSET : PGC_USERSET);
-}  
+	if (strcasecmp(name, "datestyle") == 0)
+		reset_date();
+	else if (strcasecmp(name, "timezone") == 0)
+		reset_timezone();
+	else if (strcasecmp(name, "DefaultXactIsoLevel") == 0)
+		reset_DefaultXactIsoLevel();
+	else if (strcasecmp(name, "XactIsoLevel") == 0)
+		reset_XactIsoLevel();
+	else if (strcasecmp(name, "client_encoding") == 0)
+		reset_client_encoding();
+	else if (strcasecmp(name, "server_encoding") == 0)
+		reset_server_encoding();
+	else if (strcasecmp(name, "random_seed") == 0)
+		reset_random_seed();
+	else
+		SetConfigOption(name, NULL, superuser() ? PGC_SUSET : PGC_USERSET);
+}

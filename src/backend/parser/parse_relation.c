@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.52 2001/02/14 21:35:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.53 2001/03/22 03:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,11 +31,11 @@
 
 
 static Node *scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
-									 char *refname);
+						char *refname);
 static Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
-							  char *colname);
+				 char *colname);
 static Node *scanJoinForColumn(JoinExpr *join, char *colname,
-							   int sublevels_up);
+				  int sublevels_up);
 static bool isForUpdate(ParseState *pstate, char *relname);
 static List *expandNamesVars(ParseState *pstate, List *names, List *vars);
 static void warnAutoRange(ParseState *pstate, char *refname);
@@ -145,7 +145,8 @@ scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 		if (j->alias)
 		{
 			if (strcmp(j->alias->relname, refname) == 0)
-				return (Node *) j; /* matched a join alias */
+				return (Node *) j;		/* matched a join alias */
+
 			/*
 			 * Tables within an aliased join are invisible from outside
 			 * the join, according to the scope rules of SQL92 (the join
@@ -154,7 +155,7 @@ scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 			return NULL;
 		}
 		result = scanNameSpaceForRefname(pstate, j->larg, refname);
-		if (! result)
+		if (!result)
 			result = scanNameSpaceForRefname(pstate, j->rarg, refname);
 	}
 	else if (IsA(nsnode, List))
@@ -185,7 +186,7 @@ scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 
 /*
  * Recursively check for refname conflicts between two namespaces or
- * namespace subtrees.  Raise an error if any is found.
+ * namespace subtrees.	Raise an error if any is found.
  *
  * Works by recursively scanning namespace1 in the same way that
  * scanNameSpaceForRefname does, and then looking in namespace2 for
@@ -214,6 +215,7 @@ checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
 		if (j->alias)
 		{
 			scanNameSpaceForConflict(pstate, namespace2, j->alias->relname);
+
 			/*
 			 * Tables within an aliased join are invisible from outside
 			 * the join, according to the scope rules of SQL92 (the join
@@ -229,9 +231,7 @@ checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
 		List	   *l;
 
 		foreach(l, (List *) namespace1)
-		{
 			checkNameSpaceConflicts(pstate, lfirst(l), namespace2);
-		}
 	}
 	else
 		elog(ERROR, "checkNameSpaceConflicts: unexpected node type %d",
@@ -290,8 +290,8 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 	List	   *c;
 
 	/*
-	 * Scan the user column names (or aliases) for a match.
-	 * Complain if multiple matches.
+	 * Scan the user column names (or aliases) for a match. Complain if
+	 * multiple matches.
 	 */
 	foreach(c, rte->eref->attrs)
 	{
@@ -354,7 +354,8 @@ scanJoinForColumn(JoinExpr *join, char *colname, int sublevels_up)
 		{
 			if (result)
 				elog(ERROR, "Column reference \"%s\" is ambiguous", colname);
-			result = copyObject(nth(attnum-1, join->colvars));
+			result = copyObject(nth(attnum - 1, join->colvars));
+
 			/*
 			 * If referencing an uplevel join item, we must adjust
 			 * sublevels settings in the copied expression.
@@ -385,20 +386,20 @@ colnameToVar(ParseState *pstate, char *colname)
 
 		/*
 		 * We need to look only at top-level namespace items, and even for
-		 * those, ignore RTEs that are marked as not inFromCl and not
-		 * the query's target relation.
+		 * those, ignore RTEs that are marked as not inFromCl and not the
+		 * query's target relation.
 		 */
 		foreach(ns, pstate->p_namespace)
 		{
-			Node   *nsnode = (Node *) lfirst(ns);
-			Node   *newresult = NULL;
+			Node	   *nsnode = (Node *) lfirst(ns);
+			Node	   *newresult = NULL;
 
 			if (IsA(nsnode, RangeTblRef))
 			{
 				int			varno = ((RangeTblRef *) nsnode)->rtindex;
 				RangeTblEntry *rte = rt_fetch(varno, pstate->p_rtable);
 
-				if (! rte->inFromCl &&
+				if (!rte->inFromCl &&
 					rte != pstate->p_target_rangetblentry)
 					continue;
 
@@ -452,7 +453,7 @@ qualifiedNameToVar(ParseState *pstate, char *refname, char *colname,
 
 	if (rteorjoin == NULL)
 	{
-		if (! implicitRTEOK)
+		if (!implicitRTEOK)
 			return NULL;
 		rteorjoin = (Node *) addImplicitRTE(pstate, refname);
 		sublevels_up = 0;
@@ -505,9 +506,9 @@ addRangeTableEntry(ParseState *pstate,
 
 	/*
 	 * Get the rel's OID.  This access also ensures that we have an
-	 * up-to-date relcache entry for the rel.  Since this is typically
-	 * the first access to a rel in a statement, be careful to get the
-	 * right access level depending on whether we're doing SELECT FOR UPDATE.
+	 * up-to-date relcache entry for the rel.  Since this is typically the
+	 * first access to a rel in a statement, be careful to get the right
+	 * access level depending on whether we're doing SELECT FOR UPDATE.
 	 */
 	lockmode = isForUpdate(pstate, relname) ? RowShareLock : AccessShareLock;
 	rel = heap_openr(relname, lockmode);
@@ -517,8 +518,8 @@ addRangeTableEntry(ParseState *pstate,
 	numaliases = length(eref->attrs);
 
 	/*
-	 * Since the rel is open anyway, let's check that the
-	 * number of column aliases is reasonable. - Thomas 2000-02-04
+	 * Since the rel is open anyway, let's check that the number of column
+	 * aliases is reasonable. - Thomas 2000-02-04
 	 */
 	maxattrs = RelationGetNumberOfAttributes(rel);
 	if (maxattrs < numaliases)
@@ -536,9 +537,9 @@ addRangeTableEntry(ParseState *pstate,
 	rte->eref = eref;
 
 	/*
-	 * Drop the rel refcount, but keep the access lock till end of transaction
-	 * so that the table can't be deleted or have its schema modified
-	 * underneath us.
+	 * Drop the rel refcount, but keep the access lock till end of
+	 * transaction so that the table can't be deleted or have its schema
+	 * modified underneath us.
 	 */
 	heap_close(rel, NoLock);
 
@@ -557,11 +558,11 @@ addRangeTableEntry(ParseState *pstate,
 	rte->checkForRead = true;
 	rte->checkForWrite = false;
 
-	rte->checkAsUser = InvalidOid; /* not set-uid by default, either */
+	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, but not to join
+	 * list nor namespace --- caller must do that if appropriate.
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
@@ -637,8 +638,8 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->checkAsUser = InvalidOid;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, but not to join
+	 * list nor namespace --- caller must do that if appropriate.
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
@@ -665,7 +666,7 @@ isForUpdate(ParseState *pstate, char *relname)
 			else
 			{
 				/* just the named tables */
-				List   *l;
+				List	   *l;
 
 				foreach(l, pstate->p_forUpdate)
 				{
@@ -683,7 +684,7 @@ isForUpdate(ParseState *pstate, char *relname)
 
 /*
  * Add the given RTE as a top-level entry in the pstate's join list
- * and/or name space list.  (We assume caller has checked for any
+ * and/or name space list.	(We assume caller has checked for any
  * namespace conflict.)
  */
 void
@@ -854,9 +855,10 @@ expandJoinAttrs(ParseState *pstate, JoinExpr *join, int sublevels_up)
 	List	   *vars;
 
 	vars = copyObject(join->colvars);
+
 	/*
-	 * If referencing an uplevel join item, we must adjust
-	 * sublevels settings in the copied expression.
+	 * If referencing an uplevel join item, we must adjust sublevels
+	 * settings in the copied expression.
 	 */
 	if (sublevels_up > 0)
 		IncrementVarSublevelsUp((Node *) vars, sublevels_up, 0);
@@ -922,15 +924,17 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	 * If there is an alias, use it
 	 */
 	if (attnum > 0 && attnum <= length(rte->eref->attrs))
-		return strVal(nth(attnum-1, rte->eref->attrs));
+		return strVal(nth(attnum - 1, rte->eref->attrs));
+
 	/*
-	 * Can get here for a system attribute (which never has an alias),
-	 * or if alias name list is too short (which probably can't happen
+	 * Can get here for a system attribute (which never has an alias), or
+	 * if alias name list is too short (which probably can't happen
 	 * anymore).  Neither of these cases is valid for a subselect RTE.
 	 */
 	if (rte->relid == InvalidOid)
 		elog(ERROR, "Invalid attnum %d for rangetable entry %s",
 			 attnum, rte->eref->relname);
+
 	/*
 	 * Use the real name of the table's column
 	 */
@@ -1007,6 +1011,7 @@ attnameIsSet(Relation rd, char *name)
 	}
 	return get_attisset(RelationGetRelid(rd), name);
 }
+
 #endif
 
 #ifdef NOT_USED
@@ -1020,6 +1025,7 @@ attnumAttNelems(Relation rd, int attid)
 {
 	return rd->rd_att->attrs[attid - 1]->attnelems;
 }
+
 #endif
 
 /* given attribute id, return type of that attribute */

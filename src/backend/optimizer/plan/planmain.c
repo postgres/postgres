@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.63 2001/01/24 19:42:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.64 2001/03/22 03:59:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 
 
 static Plan *subplanner(Query *root, List *flat_tlist,
-						double tuple_fraction);
+		   double tuple_fraction);
 
 
 /*--------------------
@@ -82,7 +82,7 @@ query_planner(Query *root,
 
 	/*
 	 * If the query has an empty join tree, then it's something easy like
-	 * "SELECT 2+2;" or "INSERT ... VALUES()".  Fall through quickly.
+	 * "SELECT 2+2;" or "INSERT ... VALUES()".	Fall through quickly.
 	 */
 	if (root->jointree->fromlist == NIL)
 	{
@@ -213,9 +213,9 @@ subplanner(Query *root,
 	foreach(brel, root->base_rel_list)
 	{
 		RelOptInfo *baserel = (RelOptInfo *) lfirst(brel);
-		int		relid = lfirsti(baserel->relids);
+		int			relid = lfirsti(baserel->relids);
 
-		if (! ptrMember(baserel, joined_rels))
+		if (!ptrMember(baserel, joined_rels))
 			elog(ERROR, "Internal error: no jointree entry for rel %s (%d)",
 				 rt_fetch(relid, root->rtable)->eref->relname, relid);
 	}
@@ -334,9 +334,9 @@ subplanner(Query *root,
 	/*
 	 * Nothing for it but to sort the cheapest-total-cost path --- but we
 	 * let the caller do that.	grouping_planner has to be able to add a
-	 * sort node anyway, so no need for extra code here.  (Furthermore, the
-	 * given pathkeys might involve something we can't compute here, such
-	 * as an aggregate function...)
+	 * sort node anyway, so no need for extra code here.  (Furthermore,
+	 * the given pathkeys might involve something we can't compute here,
+	 * such as an aggregate function...)
 	 */
 	root->query_pathkeys = cheapestpath->pathkeys;
 	resultplan = create_plan(root, cheapestpath);

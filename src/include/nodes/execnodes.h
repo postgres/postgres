@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.56 2001/01/29 00:39:20 tgl Exp $
+ * $Id: execnodes.h,v 1.57 2001/03/22 04:00:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ typedef struct IndexInfo
  *	There are two memory contexts associated with an ExprContext:
  *	* ecxt_per_query_memory is a relatively long-lived context (such as
  *	  TransactionCommandContext); typically it's the same context the
- *	  ExprContext node itself is allocated in.  This context can be
+ *	  ExprContext node itself is allocated in.	This context can be
  *	  used for purposes such as storing operator/function fcache nodes.
  *	* ecxt_per_tuple_memory is a short-term context for expression results.
  *	  As the name suggests, it will typically be reset once per tuple,
@@ -86,8 +86,8 @@ typedef struct ExprContext
 	MemoryContext ecxt_per_query_memory;
 	MemoryContext ecxt_per_tuple_memory;
 	/* Values to substitute for Param nodes in expression */
-	ParamExecData *ecxt_param_exec_vals;	/* for PARAM_EXEC params */
-	ParamListInfo ecxt_param_list_info;		/* for other param types */
+	ParamExecData *ecxt_param_exec_vals;		/* for PARAM_EXEC params */
+	ParamListInfo ecxt_param_list_info; /* for other param types */
 	/* Values to substitute for Aggref nodes in expression */
 	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
 	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
@@ -153,7 +153,7 @@ typedef struct ProjectionInfo
  *	  in emitted tuples.	For example, when we do an UPDATE query,
  *	  the planner adds a "junk" entry to the targetlist so that the tuples
  *	  returned to ExecutePlan() contain an extra attribute: the ctid of
- *	  the tuple to be updated.  This is needed to do the update, but we
+ *	  the tuple to be updated.	This is needed to do the update, but we
  *	  don't want the ctid to be part of the stored new tuple!  So, we
  *	  apply a "junk filter" to remove the junk attributes and form the
  *	  real output tuple.
@@ -246,10 +246,11 @@ typedef struct EState
 	ScanDirection es_direction;
 	Snapshot	es_snapshot;
 	List	   *es_range_table;
-	ResultRelInfo *es_result_relations;		/* array of ResultRelInfos */
-	int			es_num_result_relations;	/* length of array */
-	ResultRelInfo *es_result_relation_info;	/* currently active array elt */
-	JunkFilter *es_junkFilter;				/* currently active junk filter */
+	ResultRelInfo *es_result_relations; /* array of ResultRelInfos */
+	int			es_num_result_relations;		/* length of array */
+	ResultRelInfo *es_result_relation_info;		/* currently active array
+												 * elt */
+	JunkFilter *es_junkFilter;	/* currently active junk filter */
 	Relation	es_into_relation_descriptor;
 	ParamListInfo es_param_list_info;
 	ParamExecData *es_param_exec_vals;	/* this is for subselects */
@@ -257,11 +258,13 @@ typedef struct EState
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
 	List	   *es_rowMark;		/* not good place, but there is no other */
-	MemoryContext es_query_cxt;	/* per-query context in which EState lives */
+	MemoryContext es_query_cxt; /* per-query context in which EState lives */
+
 	/*
 	 * this ExprContext is for per-output-tuple operations, such as
-	 * constraint checks and index-value computations.  It will be reset
-	 * for each output tuple.  Note that it will be created only if needed.
+	 * constraint checks and index-value computations.	It will be reset
+	 * for each output tuple.  Note that it will be created only if
+	 * needed.
 	 */
 	ExprContext *es_per_tuple_exprcontext;
 	/* Below is to re-evaluate plan qual in READ COMMITTED mode */
@@ -484,8 +487,8 @@ typedef CommonState JoinState;
 /* ----------------
  *	 NestLoopState information
  *
- *		NeedNewOuter       true if need new outer tuple on next call
- *		MatchedOuter       true if found a join match for current outer tuple
+ *		NeedNewOuter	   true if need new outer tuple on next call
+ *		MatchedOuter	   true if found a join match for current outer tuple
  *		NullInnerTupleSlot prepared null tuple for left outer joins
  * ----------------
  */
@@ -503,10 +506,10 @@ typedef struct NestLoopState
  *		OuterSkipQual	   outerKey1 < innerKey1 ...
  *		InnerSkipQual	   outerKey1 > innerKey1 ...
  *		JoinState		   current "state" of join. see executor.h
- *		MatchedOuter       true if found a join match for current outer tuple
- *		MatchedInner       true if found a join match for current inner tuple
- *		OuterTupleSlot     pointer to slot in tuple table for cur outer tuple
- *		InnerTupleSlot     pointer to slot in tuple table for cur inner tuple
+ *		MatchedOuter	   true if found a join match for current outer tuple
+ *		MatchedInner	   true if found a join match for current inner tuple
+ *		OuterTupleSlot	   pointer to slot in tuple table for cur outer tuple
+ *		InnerTupleSlot	   pointer to slot in tuple table for cur inner tuple
  *		MarkedTupleSlot    pointer to slot in tuple table for marked tuple
  *		NullOuterTupleSlot prepared null tuple for right outer joins
  *		NullInnerTupleSlot prepared null tuple for left outer joins
@@ -539,9 +542,9 @@ typedef struct MergeJoinState
  *		hj_InnerHashKey			the inner hash key in the hashjoin condition
  *		hj_OuterTupleSlot		tuple slot for outer tuples
  *		hj_HashTupleSlot		tuple slot for hashed tuples
- *		hj_NullInnerTupleSlot   prepared null tuple for left outer joins
- *		hj_NeedNewOuter         true if need new outer tuple on next call
- *		hj_MatchedOuter         true if found a join match for current outer
+ *		hj_NullInnerTupleSlot	prepared null tuple for left outer joins
+ *		hj_NeedNewOuter			true if need new outer tuple on next call
+ *		hj_MatchedOuter			true if found a join match for current outer
  *		hj_hashdone				true if hash-table-build phase is done
  * ----------------
  */
@@ -593,7 +596,7 @@ typedef struct MaterialState
  *	during evaluation of an Agg node's output tuple(s).
  * -------------------------
  */
-typedef struct AggStatePerAggData *AggStatePerAgg;	/* private in nodeAgg.c */
+typedef struct AggStatePerAggData *AggStatePerAgg;		/* private in nodeAgg.c */
 
 typedef struct AggState
 {
@@ -601,7 +604,8 @@ typedef struct AggState
 	List	   *aggs;			/* all Aggref nodes in targetlist & quals */
 	int			numaggs;		/* length of list (could be zero!) */
 	AggStatePerAgg peragg;		/* per-Aggref working state */
-	MemoryContext tup_cxt;		/* context for per-output-tuple expressions */
+	MemoryContext tup_cxt;		/* context for per-output-tuple
+								 * expressions */
 	MemoryContext agg_cxt[2];	/* pair of expression eval memory contexts */
 	int			which_cxt;		/* 0 or 1, indicates current agg_cxt */
 	bool		agg_done;		/* indicates completion of Agg scan */
@@ -659,7 +663,7 @@ typedef struct UniqueState
  *	 SetOpState information
  *
  *		SetOp nodes are used "on top of" sort nodes to discard
- *		duplicate tuples returned from the sort phase.  These are
+ *		duplicate tuples returned from the sort phase.	These are
  *		more complex than a simple Unique since we have to count
  *		how many duplicates to return.
  * ----------------

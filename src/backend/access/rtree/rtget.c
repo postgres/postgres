@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.24 2001/01/24 19:42:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.25 2001/03/22 03:59:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,8 @@ static ItemPointer rtheapptr(Relation r, ItemPointer itemp);
 Datum
 rtgettuple(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc		s = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanDirection		dir = (ScanDirection) PG_GETARG_INT32(1);
+	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	RetrieveIndexResult res;
 
 	/* if we have it cached in the scan desc, just return the value */

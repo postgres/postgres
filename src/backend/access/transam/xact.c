@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.99 2001/03/13 01:17:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.100 2001/03/22 03:59:18 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -222,9 +222,10 @@ int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
 
 int			CommitDelay = 0;	/* precommit delay in microseconds */
-int			CommitSiblings = 5;	/* number of concurrent xacts needed to sleep */
+int			CommitSiblings = 5; /* number of concurrent xacts needed to
+								 * sleep */
 
-static void (*_RollbackFunc)(void*) = NULL;
+static void (*_RollbackFunc) (void *) = NULL;
 static void *_RollbackData = NULL;
 
 /* ----------------
@@ -666,39 +667,40 @@ RecordTransactionCommit()
 
 	if (MyLastRecPtr.xrecoff != 0)
 	{
-		XLogRecData		rdata;
-		xl_xact_commit	xlrec;
-		XLogRecPtr		recptr;
+		XLogRecData rdata;
+		xl_xact_commit xlrec;
+		XLogRecPtr	recptr;
 
 		BufmgrCommit();
 
 		xlrec.xtime = time(NULL);
 		rdata.buffer = InvalidBuffer;
-		rdata.data = (char *)(&xlrec);
+		rdata.data = (char *) (&xlrec);
 		rdata.len = SizeOfXactCommit;
 		rdata.next = NULL;
 
 		START_CRIT_SECTION();
+
 		/*
 		 * SHOULD SAVE ARRAY OF RELFILENODE-s TO DROP
 		 */
 		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT, &rdata);
 
-		/* 
-		 * Sleep before commit! So we can flush more than one
-		 * commit records per single fsync.  (The idea is some other
-		 * backend may do the XLogFlush while we're sleeping.  This
-		 * needs work still, because on most Unixen, the minimum
-		 * select() delay is 10msec or more, which is way too long.)
+		/*
+		 * Sleep before commit! So we can flush more than one commit
+		 * records per single fsync.  (The idea is some other backend may
+		 * do the XLogFlush while we're sleeping.  This needs work still,
+		 * because on most Unixen, the minimum select() delay is 10msec or
+		 * more, which is way too long.)
 		 *
-		 * We do not sleep if enableFsync is not turned on, nor if there
-		 * are fewer than CommitSiblings other backends with active
+		 * We do not sleep if enableFsync is not turned on, nor if there are
+		 * fewer than CommitSiblings other backends with active
 		 * transactions.
 		 */
 		if (CommitDelay > 0 && enableFsync &&
 			CountActiveBackends() >= CommitSiblings)
 		{
-			struct timeval	delay;
+			struct timeval delay;
 
 			delay.tv_sec = 0;
 			delay.tv_usec = CommitDelay;
@@ -812,13 +814,13 @@ RecordTransactionAbort(void)
 	 */
 	if (MyLastRecPtr.xrecoff != 0 && !TransactionIdDidCommit(xid))
 	{
-		XLogRecData		rdata;
-		xl_xact_abort	xlrec;
-		XLogRecPtr		recptr;
+		XLogRecData rdata;
+		xl_xact_abort xlrec;
+		XLogRecPtr	recptr;
 
 		xlrec.xtime = time(NULL);
 		rdata.buffer = InvalidBuffer;
-		rdata.data = (char *)(&xlrec);
+		rdata.data = (char *) (&xlrec);
 		rdata.len = SizeOfXactAbort;
 		rdata.next = NULL;
 
@@ -879,7 +881,7 @@ AtAbort_Memory(void)
 {
 	/* ----------------
 	 *	Make sure we are in a valid context (not a child of
-	 *	TransactionCommandContext...).  Note that it is possible
+	 *	TransactionCommandContext...).	Note that it is possible
 	 *	for this code to be called when we aren't in a transaction
 	 *	at all; go directly to TopMemoryContext in that case.
 	 * ----------------
@@ -896,9 +898,7 @@ AtAbort_Memory(void)
 		MemoryContextResetAndDeleteChildren(TransactionCommandContext);
 	}
 	else
-	{
 		MemoryContextSwitchTo(TopMemoryContext);
-	}
 }
 
 
@@ -1021,6 +1021,7 @@ CurrentXactInProgress(void)
 {
 	return CurrentTransactionState->state == TRANS_INPROGRESS;
 }
+
 #endif
 
 /* --------------------------------
@@ -1106,7 +1107,7 @@ CommitTransaction(void)
 	AtCommit_Memory();
 	AtEOXact_Files();
 
-	SharedBufferChanged = false; /* safest place to do it */
+	SharedBufferChanged = false;/* safest place to do it */
 
 	/* ----------------
 	 *	done with commit processing, set current transaction
@@ -1143,15 +1144,16 @@ AbortTransaction(void)
 
 	/*
 	 * Release any spinlocks or buffer context locks we might be holding
-	 * as quickly as possible.  (Real locks, however, must be held till
-	 * we finish aborting.)  Releasing spinlocks is critical since we
-	 * might try to grab them again while cleaning up!
+	 * as quickly as possible.	(Real locks, however, must be held till we
+	 * finish aborting.)  Releasing spinlocks is critical since we might
+	 * try to grab them again while cleaning up!
 	 */
 	ProcReleaseSpins(NULL);
 	UnlockBuffers();
+
 	/*
-	 * Also clean up any open wait for lock, since the lock manager
-	 * will choke if we try to wait for another lock before doing this.
+	 * Also clean up any open wait for lock, since the lock manager will
+	 * choke if we try to wait for another lock before doing this.
 	 */
 	LockWaitCancel();
 
@@ -1203,7 +1205,7 @@ AbortTransaction(void)
 	AtEOXact_Files();
 	AtAbort_Locks();
 
-	SharedBufferChanged = false; /* safest place to do it */
+	SharedBufferChanged = false;/* safest place to do it */
 
 	/* ----------------
 	 *	State remains TRANS_ABORT until CleanupTransaction().
@@ -1327,8 +1329,8 @@ StartTransactionCommand(void)
 	}
 
 	/*
-	 * We must switch to TransactionCommandContext before returning.
-	 * This is already done if we called StartTransaction, otherwise not.
+	 * We must switch to TransactionCommandContext before returning. This
+	 * is already done if we called StartTransaction, otherwise not.
 	 */
 	Assert(TransactionCommandContext != NULL);
 	MemoryContextSwitchTo(TransactionCommandContext);
@@ -1757,7 +1759,7 @@ IsTransactionBlock(void)
 void
 xact_redo(XLogRecPtr lsn, XLogRecord *record)
 {
-	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_XACT_COMMIT)
 	{
@@ -1765,9 +1767,7 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 		/* SHOULD REMOVE FILES OF ALL DROPPED RELATIONS */
 	}
 	else if (info == XLOG_XACT_ABORT)
-	{
 		TransactionIdAbort(record->xl_xid);
-	}
 	else
 		elog(STOP, "xact_redo: unknown op code %u", info);
 }
@@ -1775,43 +1775,43 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 void
 xact_undo(XLogRecPtr lsn, XLogRecord *record)
 {
-	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
-	if (info == XLOG_XACT_COMMIT)	/* shouldn't be called by XLOG */
+	if (info == XLOG_XACT_COMMIT)		/* shouldn't be called by XLOG */
 		elog(STOP, "xact_undo: can't undo committed xaction");
 	else if (info != XLOG_XACT_ABORT)
 		elog(STOP, "xact_redo: unknown op code %u", info);
 }
- 
+
 void
-xact_desc(char *buf, uint8 xl_info, char* rec)
+xact_desc(char *buf, uint8 xl_info, char *rec)
 {
-	uint8	info = xl_info & ~XLR_INFO_MASK;
+	uint8		info = xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_XACT_COMMIT)
 	{
-		xl_xact_commit	*xlrec = (xl_xact_commit*) rec;
-		struct tm	    *tm = localtime(&xlrec->xtime);
+		xl_xact_commit *xlrec = (xl_xact_commit *) rec;
+		struct tm  *tm = localtime(&xlrec->xtime);
 
 		sprintf(buf + strlen(buf), "commit: %04u-%02u-%02u %02u:%02u:%02u",
-			tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-			tm->tm_hour, tm->tm_min, tm->tm_sec);
+				tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+				tm->tm_hour, tm->tm_min, tm->tm_sec);
 	}
 	else if (info == XLOG_XACT_ABORT)
 	{
-		xl_xact_abort	*xlrec = (xl_xact_abort*) rec;
-		struct tm	    *tm = localtime(&xlrec->xtime);
+		xl_xact_abort *xlrec = (xl_xact_abort *) rec;
+		struct tm  *tm = localtime(&xlrec->xtime);
 
 		sprintf(buf + strlen(buf), "abort: %04u-%02u-%02u %02u:%02u:%02u",
-			tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-			tm->tm_hour, tm->tm_min, tm->tm_sec);
+				tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+				tm->tm_hour, tm->tm_min, tm->tm_sec);
 	}
 	else
 		strcat(buf, "UNKNOWN");
 }
 
 void
-XactPushRollback(void (*func) (void *), void* data)
+			XactPushRollback(void (*func) (void *), void *data)
 {
 #ifdef XLOG_II
 	if (_RollbackFunc != NULL)

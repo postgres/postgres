@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.36 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.37 2001/03/22 03:59:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,8 +62,8 @@ SetDefine(char *querystr, char *typename)
 							 false,		/* canCache (assume unsafe) */
 							 false,		/* isStrict (irrelevant, no args) */
 							 100,		/* byte_pct */
-							 0,			/* perbyte_cpu */
-							 0,			/* percall_cpu */
+							 0, /* perbyte_cpu */
+							 0, /* percall_cpu */
 							 100,		/* outin_ratio */
 							 NIL,		/* argList */
 							 whereToSendOutput);
@@ -165,8 +165,8 @@ seteval(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Evaluate the function.  NOTE: we need no econtext because there
-	 * are no arguments to evaluate.
+	 * Evaluate the function.  NOTE: we need no econtext because there are
+	 * no arguments to evaluate.
 	 */
 
 	/* ExecMakeFunctionResult assumes these are initialized at call: */
@@ -175,14 +175,14 @@ seteval(PG_FUNCTION_ARGS)
 
 	result = ExecMakeFunctionResult(fcache,
 									NIL,
-									NULL, /* no econtext, see above */
+									NULL,		/* no econtext, see above */
 									&isNull,
 									&isDone);
 
 	/*
-	 * If we're done with the results of this set function, get rid of
-	 * its func cache so that we will start from the top next time.
-	 * (Can you say "memory leak"?  This feature is a crock anyway...)
+	 * If we're done with the results of this set function, get rid of its
+	 * func cache so that we will start from the top next time. (Can you
+	 * say "memory leak"?  This feature is a crock anyway...)
 	 */
 	if (isDone != ExprMultipleResult)
 	{
@@ -197,7 +197,7 @@ seteval(PG_FUNCTION_ARGS)
 
 	if (isDone != ExprSingleResult)
 	{
-		ReturnSetInfo  *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+		ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 		if (rsi && IsA(rsi, ReturnSetInfo))
 			rsi->isDone = isDone;

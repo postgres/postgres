@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.160 2001/02/10 02:31:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.161 2001/03/22 04:01:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #ifdef HAVE_NETINET_TCP_H
-# include <netinet/tcp.h>
+#include <netinet/tcp.h>
 #endif
 #include <arpa/inet.h>
 #endif
@@ -65,6 +65,7 @@ inet_aton(const char *cp, struct in_addr * inp)
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
+
 #endif
 
 #define NOTIFYLIST_INITIAL_SIZE 10
@@ -108,7 +109,7 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	"Database-Authtype", "D", 20},
 
 	{"service", "PGSERVICE", NULL, NULL,
-	 "Database-Service", "", 20},
+	"Database-Service", "", 20},
 
 	{"user", "PGUSER", NULL, NULL,
 	"Database-User", "", 20},
@@ -137,7 +138,7 @@ static const PQconninfoOption PQconninfoOptions[] = {
 
 #ifdef USE_SSL
 	{"requiressl", "PGREQUIRESSL", "0", NULL,
-	 "Require-SSL", "", 1 },
+	"Require-SSL", "", 1},
 #endif
 
 	/* Terminating entry --- MUST BE LAST */
@@ -186,8 +187,8 @@ static PQconninfoOption *conninfo_parse(const char *conninfo,
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
 static void defaultNoticeProcessor(void *arg, const char *message);
-static int  parseServiceInfo(PQconninfoOption *options, 
-			     PQExpBuffer errorMessage);
+static int parseServiceInfo(PQconninfoOption *options,
+				 PQExpBuffer errorMessage);
 
 
 /* ----------------
@@ -316,7 +317,7 @@ PQconnectStart(const char *conninfo)
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
 #ifdef USE_SSL
 	tmp = conninfo_getval(connOptions, "requiressl");
-	conn->require_ssl = tmp ? (tmp[0]=='1'?true:false) : false;
+	conn->require_ssl = tmp ? (tmp[0] == '1' ? true : false) : false;
 #endif
 
 	/* ----------
@@ -516,7 +517,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 
 #ifdef USE_SSL
 	if ((tmp = getenv("PGREQUIRESSL")) != NULL)
-		conn->require_ssl = (tmp[0]=='1')?true:false;
+		conn->require_ssl = (tmp[0] == '1') ? true : false;
 	else
 		conn->require_ssl = 0;
 #endif
@@ -533,7 +534,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 }
 
 
-#ifdef NOT_USED /* because it's broken */
+#ifdef NOT_USED					/* because it's broken */
 /*
  * update_db_info -
  * get all additional info out of dbName
@@ -542,7 +543,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 static int
 update_db_info(PGconn *conn)
 {
-	char	   *tmp, *tmp2,
+	char	   *tmp,
+			   *tmp2,
 			   *old = conn->dbName;
 
 	if (strchr(conn->dbName, '@') != NULL)
@@ -588,7 +590,8 @@ update_db_info(PGconn *conn)
 
 			/*
 			 * new style:
-			 * <tcp|unix>:postgresql://server[:port|:/unixsocket/path:][/dbname][?options]
+			 * <tcp|unix>:postgresql://server[:port|:/unixsocket/path:][/db
+			 * name][?options]
 			 */
 			offset += strlen("postgresql://");
 
@@ -611,7 +614,11 @@ update_db_info(PGconn *conn)
 			}
 			else
 			{
-				/* Why do we default only this value from the environment again?  */
+
+				/*
+				 * Why do we default only this value from the environment
+				 * again?
+				 */
 				if ((tmp = getenv("PGDATABASE")) != NULL)
 				{
 					if (conn->dbName)
@@ -635,10 +642,10 @@ update_db_info(PGconn *conn)
 					if (strncmp(old, "unix:", 5) != 0)
 					{
 						printfPQExpBuffer(&conn->errorMessage,
-								  "connectDBStart() -- "
-								  "socket name can only be specified with "
-								  "non-TCP\n");
-						return 1; 
+										  "connectDBStart() -- "
+								"socket name can only be specified with "
+										  "non-TCP\n");
+						return 1;
 					}
 					*tmp2 = '\0';
 					if (conn->pgunixsocket)
@@ -682,7 +689,8 @@ update_db_info(PGconn *conn)
 
 	return 0;
 }
-#endif /* NOT_USED */
+
+#endif	 /* NOT_USED */
 
 
 /* ----------
@@ -696,12 +704,14 @@ connectMakeNonblocking(PGconn *conn)
 {
 #ifdef WIN32
 	int			on = 1;
+
 	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
 #elif defined(__BEOS__)
-	int			on = 1;
-    if (ioctl(conn->sock, FIONBIO, &on) != 0)
+		int			on = 1;
+
+	if (ioctl(conn->sock, FIONBIO, &on) != 0)
 #else
-	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
+	if			(fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
 #endif
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -754,7 +764,7 @@ connectFailureMessage(PGconn *conn, const char *caller, int errorno)
 		printfPQExpBuffer(&conn->errorMessage,
 						  "%s -- connect() failed: %s\n"
 						  "\tIs the postmaster running locally\n"
-						  "\tand accepting connections on Unix socket '%s'?\n",
+					"\tand accepting connections on Unix socket '%s'?\n",
 						  caller,
 						  strerror(errorno),
 						  conn->raddr.un.sun_path);
@@ -762,8 +772,8 @@ connectFailureMessage(PGconn *conn, const char *caller, int errorno)
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
 						  "%s -- connect() failed: %s\n"
-						  "\tIs the postmaster running (with -i) at '%s'\n"
-						  "\tand accepting connections on TCP/IP port %s?\n",
+						"\tIs the postmaster running (with -i) at '%s'\n"
+					  "\tand accepting connections on TCP/IP port %s?\n",
 						  caller,
 						  strerror(errorno),
 						  conn->pghost ? conn->pghost : "localhost",
@@ -794,6 +804,7 @@ connectDBStart(PGconn *conn)
 		return 0;
 
 #ifdef NOT_USED
+
 	/*
 	 * parse dbName to get all additional info in it, if any
 	 */
@@ -822,7 +833,7 @@ connectDBStart(PGconn *conn)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  "connectDBStart() -- "
-						 	  "invalid host address: %s\n", conn->pghostaddr);
+						 "invalid host address: %s\n", conn->pghostaddr);
 			goto connect_errReturn;
 		}
 
@@ -963,15 +974,15 @@ connectDBStart(PGconn *conn)
 		if (pqPacketSend(conn, (char *) &np, sizeof(StartupPacket)) != STATUS_OK)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-					"connectDB() -- couldn't send SSL negotiation packet: errno=%d\n%s\n",
-					errno, strerror(errno));
+							  "connectDB() -- couldn't send SSL negotiation packet: errno=%d\n%s\n",
+							  errno, strerror(errno));
 			goto connect_errReturn;
 		}
 		/* Now receive the postmasters response */
 		if (recv(conn->sock, &SSLok, 1, 0) != 1)
 		{
 			printfPQExpBuffer(&conn->errorMessage, "PQconnectDB() -- couldn't read postmaster response: errno=%d\n%s\n",
-					errno, strerror(errno));
+							  errno, strerror(errno));
 			goto connect_errReturn;
 		}
 		if (SSLok == 'S')
@@ -985,7 +996,7 @@ connectDBStart(PGconn *conn)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 					  "connectDB() -- couldn't create SSL context: %s\n",
-							ERR_reason_error_string(ERR_get_error()));
+							   ERR_reason_error_string(ERR_get_error()));
 					goto connect_errReturn;
 				}
 			}
@@ -995,7 +1006,7 @@ connectDBStart(PGconn *conn)
 			{
 				printfPQExpBuffer(&conn->errorMessage,
 				"connectDB() -- couldn't establish SSL connection: %s\n",
-						ERR_reason_error_string(ERR_get_error()));
+							   ERR_reason_error_string(ERR_get_error()));
 				goto connect_errReturn;
 			}
 			/* SSL connection finished. Continue to send startup packet */
@@ -1012,15 +1023,15 @@ connectDBStart(PGconn *conn)
 		else if (SSLok != 'N')
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				   "Received invalid negotiation response.\n");
+							  "Received invalid negotiation response.\n");
 			goto connect_errReturn;
 		}
 	}
-	if (conn->require_ssl && !conn->ssl) 
+	if (conn->require_ssl && !conn->ssl)
 	{
 		/* Require SSL, but server does not support/want it */
 		printfPQExpBuffer(&conn->errorMessage,
-						  "Server does not support SSL when SSL was required.\n");
+				 "Server does not support SSL when SSL was required.\n");
 		goto connect_errReturn;
 	}
 #endif
@@ -1065,6 +1076,7 @@ static int
 connectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
+
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
 
@@ -1144,6 +1156,7 @@ PostgresPollingStatusType
 PQconnectPoll(PGconn *conn)
 {
 	PGresult   *res;
+
 	if (conn == NULL)
 		return PGRES_POLLING_FAILED;
 
@@ -1621,8 +1634,11 @@ keep_going:						/* We will come back to here until there
 				env = getenv(envname);
 				if (!env || *env == '\0')
 				{
-					/* query server encoding if PGCLIENTENCODING
-					   is not specified */
+
+					/*
+					 * query server encoding if PGCLIENTENCODING is not
+					 * specified
+					 */
 					if (!PQsendQuery(conn,
 									 "select getdatabaseencoding()"))
 						goto error_return;
@@ -1633,16 +1649,17 @@ keep_going:						/* We will come back to here until there
 				else
 				{
 					/* otherwise set client encoding in pg_conn struct */
-					int encoding = pg_char_to_encoding(env);
+					int			encoding = pg_char_to_encoding(env);
+
 					if (encoding < 0)
 					{
 						strcpy(conn->errorMessage.data,
-							   "PGCLIENTENCODING has no valid encoding name.\n");
+						"PGCLIENTENCODING has no valid encoding name.\n");
 						goto error_return;
 					}
 					conn->client_encoding = encoding;
 				}
-					
+
 			}
 
 		case SETENV_STATE_ENCODINGS_WAIT:
@@ -2209,7 +2226,7 @@ pqPacketSend(PGconn *conn, const char *buf, size_t len)
 
 
 #ifndef SYSCONFDIR
-# error "You must compile this file with SYSCONFDIR defined."
+#error "You must compile this file with SYSCONFDIR defined."
 #endif
 
 #define MAXBUFSIZE 256
@@ -2217,111 +2234,131 @@ pqPacketSend(PGconn *conn, const char *buf, size_t len)
 static int
 parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 {
-  char *service = conninfo_getval(options, "service");
-  char *serviceFile = SYSCONFDIR "/pg_service.conf";
-  int  group_found = 0;
-  int  linenr=0, i;
+	char	   *service = conninfo_getval(options, "service");
+	char	   *serviceFile = SYSCONFDIR "/pg_service.conf";
+	int			group_found = 0;
+	int			linenr = 0,
+				i;
 
-  if(service != NULL) {
-    FILE *f;
-    char buf[MAXBUFSIZE], *line;
-    
-    f = fopen(serviceFile, "r");
-    if(f == NULL) {
-      printfPQExpBuffer(errorMessage, "ERROR: Service file '%s' not found\n",
-			serviceFile);
-      return 1;
-    }
+	if (service != NULL)
+	{
+		FILE	   *f;
+		char		buf[MAXBUFSIZE],
+				   *line;
 
-    /* As default, set the database name to the name of the service */
-    for(i = 0; options[i].keyword; i++)
-      if(strcmp(options[i].keyword, "dbname") == 0) {
-	if(options[i].val != NULL)
-	  free(options[i].val);
-	options[i].val = strdup(service);
-      }
-    
-    while((line = fgets(buf, MAXBUFSIZE-1, f)) != NULL) {
-      linenr++;
+		f = fopen(serviceFile, "r");
+		if (f == NULL)
+		{
+			printfPQExpBuffer(errorMessage, "ERROR: Service file '%s' not found\n",
+							  serviceFile);
+			return 1;
+		}
 
-      if(strlen(line) >= MAXBUFSIZE - 2) {
-	fclose(f);
-	printfPQExpBuffer(errorMessage,
-			 "ERROR: line %d too long in service file '%s'\n",
-			  linenr,
-			 serviceFile);
-	return 2;
-      }
+		/* As default, set the database name to the name of the service */
+		for (i = 0; options[i].keyword; i++)
+			if (strcmp(options[i].keyword, "dbname") == 0)
+			{
+				if (options[i].val != NULL)
+					free(options[i].val);
+				options[i].val = strdup(service);
+			}
 
-      /* ignore EOL at end of line */
-      if(strlen(line) && line[strlen(line)-1] == '\n')
-	line[strlen(line)-1] = 0;
+		while ((line = fgets(buf, MAXBUFSIZE - 1, f)) != NULL)
+		{
+			linenr++;
 
-      /* ignore leading blanks */
-      while(*line && isspace((unsigned char) line[0]))
-		  line++;
+			if (strlen(line) >= MAXBUFSIZE - 2)
+			{
+				fclose(f);
+				printfPQExpBuffer(errorMessage,
+						"ERROR: line %d too long in service file '%s'\n",
+								  linenr,
+								  serviceFile);
+				return 2;
+			}
 
-      /* ignore comments and empty lines */
-      if(strlen(line) == 0 || line[0] == '#')
-		  continue;
+			/* ignore EOL at end of line */
+			if (strlen(line) && line[strlen(line) - 1] == '\n')
+				line[strlen(line) - 1] = 0;
 
-      /* Check for right groupname */
-      if(line[0] == '[')
-	  {
-		  if(group_found) {
-			  /* group info already read */
-			  fclose(f);
-			  return 0;
-		  }
+			/* ignore leading blanks */
+			while (*line && isspace((unsigned char) line[0]))
+				line++;
 
-	if(strncmp(line+1, service, strlen(service)) == 0 &&
-	   line[strlen(service)+1] == ']')
-	  group_found = 1;
-	else
-	  group_found = 0;
-      } else {
-	if(group_found) {
-	  /* Finally, we are in the right group and can parse the line */
-	  char *key, *val;
-	  int found_keyword;
+			/* ignore comments and empty lines */
+			if (strlen(line) == 0 || line[0] == '#')
+				continue;
 
-	  key = strtok(line, "=");
-	  if(key == NULL) {
-	    printfPQExpBuffer(errorMessage,
-			      "ERROR: syntax error in service file '%s', line %d\n",
-			      serviceFile,
-			      linenr);
-	    fclose(f);
-	    return 3;
-	  }
-	  val = line + strlen(line) + 1;
-	  
-	  found_keyword = 0;
-	  for(i = 0; options[i].keyword; i++) {
-	    if(strcmp(options[i].keyword, key) == 0) {
- 	      if(options[i].val != NULL)
- 		free(options[i].val);
- 	      options[i].val = strdup(val);
-	      found_keyword = 1;
-	    }
-	  }
+			/* Check for right groupname */
+			if (line[0] == '[')
+			{
+				if (group_found)
+				{
+					/* group info already read */
+					fclose(f);
+					return 0;
+				}
 
-	  if(!found_keyword) {
-	    printfPQExpBuffer(errorMessage,
-			      "ERROR: syntax error in service file '%s', line %d\n",
-			      serviceFile,
-			      linenr);
-	    fclose(f);
-	    return 3;
-	  }
+				if (strncmp(line + 1, service, strlen(service)) == 0 &&
+					line[strlen(service) + 1] == ']')
+					group_found = 1;
+				else
+					group_found = 0;
+			}
+			else
+			{
+				if (group_found)
+				{
+
+					/*
+					 * Finally, we are in the right group and can parse
+					 * the line
+					 */
+					char	   *key,
+							   *val;
+					int			found_keyword;
+
+					key = strtok(line, "=");
+					if (key == NULL)
+					{
+						printfPQExpBuffer(errorMessage,
+										  "ERROR: syntax error in service file '%s', line %d\n",
+										  serviceFile,
+										  linenr);
+						fclose(f);
+						return 3;
+					}
+					val = line + strlen(line) + 1;
+
+					found_keyword = 0;
+					for (i = 0; options[i].keyword; i++)
+					{
+						if (strcmp(options[i].keyword, key) == 0)
+						{
+							if (options[i].val != NULL)
+								free(options[i].val);
+							options[i].val = strdup(val);
+							found_keyword = 1;
+						}
+					}
+
+					if (!found_keyword)
+					{
+						printfPQExpBuffer(errorMessage,
+										  "ERROR: syntax error in service file '%s', line %d\n",
+										  serviceFile,
+										  linenr);
+						fclose(f);
+						return 3;
+					}
+				}
+			}
+		}
+
+		fclose(f);
 	}
-      }
-    }
 
-    fclose(f);
-  }
-
-  return 0;
+	return 0;
 }
 
 
@@ -2500,11 +2537,12 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 
 	}
 
-	/* Now check for service info */	
-	if(parseServiceInfo(options, errorMessage)) {
-	  PQconninfoFree(options);
-	  free(buf);
-	  return NULL;
+	/* Now check for service info */
+	if (parseServiceInfo(options, errorMessage))
+	{
+		PQconninfoFree(options);
+		free(buf);
+		return NULL;
 	}
 
 	/* Done with the modifiable input string */
@@ -2749,12 +2787,14 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 #endif
 
 #ifdef USE_SSL
-SSL *PQgetssl(PGconn *conn)
+SSL *
+PQgetssl(PGconn *conn)
 {
 	if (!conn)
 		return NULL;
 	return conn->ssl;
 }
+
 #endif
 
 void
@@ -2819,31 +2859,32 @@ defaultNoticeProcessor(void *arg, const char *message)
  * if there's no valid encoding, returns -1
  */
 
-typedef struct {
-	int encoding;	/* encoding symbol value */
-	char *name;	/* encoding string */
-} PQ_encoding_conv_tbl;
+typedef struct
+{
+	int			encoding;		/* encoding symbol value */
+	char	   *name;			/* encoding string */
+}			PQ_encoding_conv_tbl;
 
 static PQ_encoding_conv_tbl pq_conv_tbl[] = {
-		{SQL_ASCII, "SQL_ASCII"},
-		{EUC_JP, "EUC_JP"},
-		{EUC_CN, "EUC_CN"},
-		{EUC_KR, "EUC_KR"},
-		{EUC_TW, "EUC_TW"},
-		{UNICODE, "UNICODE"},
-		{MULE_INTERNAL, "MULE_INTERNAL"},
-		{LATIN1, "LATIN1"},
-		{LATIN2, "LATIN2"},
-		{LATIN3, "LATIN3"},
-		{LATIN4, "LATIN4"},
-		{LATIN5, "LATIN5"},
-		{KOI8, "KOI8"},
-		{WIN, "WIN"},
-		{ALT, "ALT"},
-		{SJIS, "SJIS"},
-		{BIG5, "BIG5"},
-		{WIN1250, "WIN1250"},
-		{-1, ""}
+	{SQL_ASCII, "SQL_ASCII"},
+	{EUC_JP, "EUC_JP"},
+	{EUC_CN, "EUC_CN"},
+	{EUC_KR, "EUC_KR"},
+	{EUC_TW, "EUC_TW"},
+	{UNICODE, "UNICODE"},
+	{MULE_INTERNAL, "MULE_INTERNAL"},
+	{LATIN1, "LATIN1"},
+	{LATIN2, "LATIN2"},
+	{LATIN3, "LATIN3"},
+	{LATIN4, "LATIN4"},
+	{LATIN5, "LATIN5"},
+	{KOI8, "KOI8"},
+	{WIN, "WIN"},
+	{ALT, "ALT"},
+	{SJIS, "SJIS"},
+	{BIG5, "BIG5"},
+	{WIN1250, "WIN1250"},
+	{-1, ""}
 };
 
 int
@@ -2878,4 +2919,5 @@ pg_encoding_to_char(int encoding)
 	}
 	return ("");
 }
+
 #endif

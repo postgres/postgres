@@ -9,7 +9,7 @@
  *	the backend does.  This works because the hashtable structures
  *	themselves are allocated by dynahash.c in its permanent DynaHashCxt,
  *	and the parse/plan node trees they point to are copied into
- *	TopMemoryContext using SPI_saveplan().  This is pretty ugly, since there
+ *	TopMemoryContext using SPI_saveplan().	This is pretty ugly, since there
  *	is no way to free a no-longer-needed plan tree, but then again we don't
  *	yet have any bookkeeping that would allow us to detect that a plan isn't
  *	needed anymore.  Improve it someday.
@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.21 2001/02/15 21:57:43 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.22 2001/03/22 03:59:53 momjian Exp $
  *
  * ----------
  */
@@ -535,7 +535,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	char		del_nulls[RI_MAX_NUMKEYS + 1];
 	bool		isnull;
 	int			i;
-	Oid         save_uid;
+	Oid			save_uid;
 
 	save_uid = GetUserId();
 
@@ -750,7 +750,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	char		upd_nulls[RI_MAX_NUMKEYS + 1];
 	bool		isnull;
 	int			i;
-	Oid         save_uid;
+	Oid			save_uid;
 
 	save_uid = GetUserId();
 
@@ -1611,7 +1611,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	char		upd_nulls[RI_MAX_NUMKEYS + 1];
 	bool		isnull;
 	int			i;
-	Oid         save_uid;
+	Oid			save_uid;
 
 	save_uid = GetUserId();
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.41 2001/01/24 19:42:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.42 2001/03/22 03:59:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,8 @@ clauselist_selectivity(Query *root,
 		 * behave in the simple way we are expecting.)
 		 *
 		 * NB: for consistency of results, this fragment of code had better
-		 * match what clause_selectivity() would do in the cases it handles.
+		 * match what clause_selectivity() would do in the cases it
+		 * handles.
 		 */
 		if (varRelid != 0 || NumRelids(clause) == 1)
 		{
@@ -148,7 +149,7 @@ clauselist_selectivity(Query *root,
 					get_leftop((Expr *) clause);
 				if (is_pseudo_constant_clause((Node *) other))
 				{
-					Oid		opno = ((Oper *) ((Expr *) clause)->oper)->opno;
+					Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
 					RegProcedure oprrest = get_oprrest(opno);
 
 					if (!oprrest)
@@ -156,15 +157,16 @@ clauselist_selectivity(Query *root,
 					else
 						s2 = restriction_selectivity(oprrest, opno,
 													 getrelid(relidx,
-															  root->rtable),
+														   root->rtable),
 													 attno,
 													 constval, flag);
 
 					/*
-					 * If we reach here, we have computed the same result that
-					 * clause_selectivity would, so we can just use s2 if it's
-					 * the wrong oprrest.  But if it's the right oprrest, add
-					 * the clause to rqlist for later processing.
+					 * If we reach here, we have computed the same result
+					 * that clause_selectivity would, so we can just use
+					 * s2 if it's the wrong oprrest.  But if it's the
+					 * right oprrest, add the clause to rqlist for later
+					 * processing.
 					 */
 					switch (oprrest)
 					{
@@ -384,18 +386,20 @@ clause_selectivity(Query *root,
 
 			if (rte->subquery)
 			{
+
 				/*
-				 * XXX not smart about subquery references...
-				 * any way to do better?
+				 * XXX not smart about subquery references... any way to
+				 * do better?
 				 */
 				s1 = 0.5;
 			}
 			else
 			{
+
 				/*
-				 * A Var at the top of a clause must be a bool Var.
-				 * This is equivalent to the clause reln.attribute = 't',
-				 * so we compute the selectivity as if that is what we have.
+				 * A Var at the top of a clause must be a bool Var. This
+				 * is equivalent to the clause reln.attribute = 't', so we
+				 * compute the selectivity as if that is what we have.
 				 */
 				s1 = restriction_selectivity(F_EQSEL,
 											 BooleanEqualOperator,

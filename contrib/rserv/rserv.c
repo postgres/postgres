@@ -16,18 +16,20 @@
 PG_FUNCTION_INFO_V1(_rserv_log_);
 PG_FUNCTION_INFO_V1(_rserv_sync_);
 PG_FUNCTION_INFO_V1(_rserv_debug_);
-Datum _rserv_log_(PG_FUNCTION_ARGS);
-Datum _rserv_sync_(PG_FUNCTION_ARGS);
-Datum _rserv_debug_(PG_FUNCTION_ARGS);
+Datum		_rserv_log_(PG_FUNCTION_ARGS);
+Datum		_rserv_sync_(PG_FUNCTION_ARGS);
+Datum		_rserv_debug_(PG_FUNCTION_ARGS);
+
 #else
 HeapTuple	_rserv_log_(void);
 int32		_rserv_sync_(int32);
 int32		_rserv_debug_(int32);
+
 #endif
 
 static int	debug = 0;
 
-static char* OutputValue(char *key, char *buf, int size);
+static char *OutputValue(char *key, char *buf, int size);
 
 #ifdef PG_FUNCTION_INFO_V1
 Datum
@@ -68,7 +70,7 @@ _rserv_log_()
 	nargs = trigger->tgnargs;
 	args = trigger->tgargs;
 
-	if (nargs != 1)			/* odd number of arguments! */
+	if (nargs != 1)				/* odd number of arguments! */
 		elog(ERROR, "_rserv_log_: need in *one* argument");
 
 	keynum = atoi(args[0]);
@@ -79,7 +81,7 @@ _rserv_log_()
 	rel = CurrentTriggerData->tg_relation;
 	tupdesc = rel->rd_att;
 
-	deleted = (TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event)) ? 
+	deleted = (TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event)) ?
 		1 : 0;
 
 	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
@@ -115,7 +117,7 @@ _rserv_log_()
 		if (strcmp(newkey, key) == 0)
 			newkey = NULL;
 		else
-			deleted = 1;	/* old key was deleted */
+			deleted = 1;		/* old key was deleted */
 	}
 
 	if (strpbrk(key, "\\	\n'"))
@@ -124,7 +126,7 @@ _rserv_log_()
 		okey = key;
 
 	sprintf(sql, "update _RSERV_LOG_ set logid = %d, logtime = now(), "
-			"deleted = %d where reloid = %u and key = '%s'", 
+			"deleted = %d where reloid = %u and key = '%s'",
 			GetCurrentTransactionId(), deleted, rel->rd_id, okey);
 
 	if (debug)
@@ -145,7 +147,7 @@ _rserv_log_()
 		sprintf(sql, "insert into _RSERV_LOG_ "
 				"(reloid, logid, logtime, deleted, key) "
 				"values (%u, %d, now(), %d, '%s')",
-				rel->rd_id, GetCurrentTransactionId(), 
+				rel->rd_id, GetCurrentTransactionId(),
 				deleted, okey);
 
 		if (debug)
@@ -169,7 +171,7 @@ _rserv_log_()
 
 		sprintf(sql, "insert into _RSERV_LOG_ "
 				"(reloid, logid, logtime, deleted, key) "
-				"values (%u, %d, now(), 0, '%s')", 
+				"values (%u, %d, now(), 0, '%s')",
 				rel->rd_id, GetCurrentTransactionId(), okey);
 
 		if (debug)
@@ -202,13 +204,14 @@ _rserv_sync_(int32 server)
 #endif
 {
 #ifdef PG_FUNCTION_INFO_V1
-	int32 server = PG_GETARG_INT32(0);
+	int32		server = PG_GETARG_INT32(0);
+
 #endif
-	char	sql[8192];
-	char	buf[8192];
-	char   *active = buf;
-	uint32	xcnt;
-	int		ret;
+	char		sql[8192];
+	char		buf[8192];
+	char	   *active = buf;
+	uint32		xcnt;
+	int			ret;
 
 	if (SerializableSnapshot == NULL)
 		elog(ERROR, "_rserv_sync_: SerializableSnapshot is NULL");
@@ -217,7 +220,7 @@ _rserv_sync_(int32 server)
 	for (xcnt = 0; xcnt < SerializableSnapshot->xcnt; xcnt++)
 	{
 		sprintf(buf + strlen(buf), "%s%u", (xcnt) ? ", " : "",
-			SerializableSnapshot->xip[xcnt]);
+				SerializableSnapshot->xip[xcnt]);
 	}
 
 	if ((ret = SPI_connect()) < 0)
@@ -225,7 +228,7 @@ _rserv_sync_(int32 server)
 
 	sprintf(sql, "insert into _RSERV_SYNC_ "
 			"(server, syncid, synctime, status, minid, maxid, active) "
-			"values (%u, currval('_rserv_sync_seq_'), now(), 0, %d, %d, '%s')", 
+	  "values (%u, currval('_rserv_sync_seq_'), now(), 0, %d, %d, '%s')",
 			server, SerializableSnapshot->xmin, SerializableSnapshot->xmax, active);
 
 	ret = SPI_exec(sql, 0);
@@ -247,18 +250,19 @@ _rserv_debug_(int32 newval)
 #endif
 {
 #ifdef PG_FUNCTION_INFO_V1
-	int32	newval = PG_GETARG_INT32(0);
+	int32		newval = PG_GETARG_INT32(0);
+
 #endif
-	int32	oldval = debug;
+	int32		oldval = debug;
 
 	debug = newval;
 
 	return (oldval);
 }
 
-#define	ExtendBy	1024
+#define ExtendBy	1024
 
-static char*
+static char *
 OutputValue(char *key, char *buf, int size)
 {
 	int			i = 0;
@@ -267,39 +271,45 @@ OutputValue(char *key, char *buf, int size)
 	int			slen = 0;
 
 	size--;
-	for ( ; ; )
+	for (;;)
 	{
 		switch (*key)
 		{
-			case '\\':	subst ="\\\\";
-						slen = 2;
-						break;
-			case '	':	subst = "\\011";
-						slen = 4;
-						break;
-			case '\n':	subst = "\\012";
-						slen = 4;
-						break;
-			case '\'':	subst = "\\047";
-						slen = 4;
-						break;
-			case '\0':	out[i] = 0;
-						return(out);
-			default:	slen = 1;
-						break;
+			case '\\':
+				subst = "\\\\";
+				slen = 2;
+				break;
+			case '	':
+				subst = "\\011";
+				slen = 4;
+				break;
+			case '\n':
+				subst = "\\012";
+				slen = 4;
+				break;
+			case '\'':
+				subst = "\\047";
+				slen = 4;
+				break;
+			case '\0':
+				out[i] = 0;
+				return (out);
+			default:
+				slen = 1;
+				break;
 		}
 
 		if (i + slen >= size)
 		{
 			if (out == buf)
 			{
-				out = (char*) palloc(size + ExtendBy);
+				out = (char *) palloc(size + ExtendBy);
 				strncpy(out, buf, i);
 				size += ExtendBy;
 			}
 			else
 			{
-				out = (char*) repalloc(out, size + ExtendBy);
+				out = (char *) repalloc(out, size + ExtendBy);
 				size += ExtendBy;
 			}
 		}
@@ -314,6 +324,6 @@ OutputValue(char *key, char *buf, int size)
 		key++;
 	}
 
-	return(out);
+	return (out);
 
 }

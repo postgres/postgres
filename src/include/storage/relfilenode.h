@@ -11,12 +11,12 @@
  */
 typedef struct RelFileNode
 {
-	Oid					tblNode;		/* tablespace */
-	Oid					relNode;		/* relation */
+	Oid			tblNode;		/* tablespace */
+	Oid			relNode;		/* relation */
 } RelFileNode;
 
-#define	RelFileNodeEquals(node1, node2)	\
+#define RelFileNodeEquals(node1, node2) \
 	((node1).relNode == (node2).relNode && \
 	 (node1).tblNode == (node2).tblNode)
 
-#endif	/* RELFILENODE_H */
+#endif	 /* RELFILENODE_H */

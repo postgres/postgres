@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.14 2001/02/16 03:16:58 tgl Exp $
+ * $Id: parse_oper.h,v 1.15 2001/03/22 04:00:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,12 +27,13 @@ extern Operator left_oper(char *op, Oid arg);
 /* Routines to find operators that DO NOT require coercion --- ie, their */
 /* input types are either exactly as given, or binary-compatible */
 extern Operator compatible_oper(char *op, Oid arg1, Oid arg2, bool noError);
+
 /* currently no need for compatible_left_oper/compatible_right_oper */
 
 /* Convenience routines that call compatible_oper() and return either */
 /* the operator OID or the underlying function OID, or InvalidOid if fail */
-extern Oid compatible_oper_opid(char *op, Oid arg1, Oid arg2, bool noError);
-extern Oid compatible_oper_funcid(char *op, Oid arg1, Oid arg2, bool noError);
+extern Oid	compatible_oper_opid(char *op, Oid arg1, Oid arg2, bool noError);
+extern Oid	compatible_oper_funcid(char *op, Oid arg1, Oid arg2, bool noError);
 
 /* Convenience routine that packages a specific call on compatible_oper */
 extern Oid	any_ordering_op(Oid argtype);

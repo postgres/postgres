@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.47 2001/01/24 19:43:20 momjian Exp $
+ * $Id: indexing.h,v 1.48 2001/03/22 04:00:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,14 +115,14 @@ extern char *IndexedCatalogNames[];
 extern void CatalogOpenIndices(int nIndices, char **names, Relation *idescs);
 extern void CatalogCloseIndices(int nIndices, Relation *idescs);
 extern void CatalogIndexInsert(Relation *idescs, int nIndices,
-							   Relation heapRelation, HeapTuple heapTuple);
+				   Relation heapRelation, HeapTuple heapTuple);
 
 /*
  * Canned functions for indexscans on certain system indexes.
  * All index-value arguments should be passed as Datum for portability!
  */
 extern HeapTuple AttributeRelidNumIndexScan(Relation heapRelation,
-											Datum relid, Datum attnum);
+						   Datum relid, Datum attnum);
 extern HeapTuple ClassNameIndexScan(Relation heapRelation, Datum relName);
 extern HeapTuple ClassOidIndexScan(Relation heapRelation, Datum relId);
 

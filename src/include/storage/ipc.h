@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.48 2001/03/13 01:17:06 tgl Exp $
+ * $Id: ipc.h,v 1.49 2001/03/22 04:01:05 momjian Exp $
  *
  * Some files that would normally need to include only sys/ipc.h must
  * instead include this file because on Ultrix, sys/ipc.h is not designed
@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
-#endif /* HAVE_SYS_IPC_H */
+#endif	 /* HAVE_SYS_IPC_H */
 
 #ifndef HAVE_UNION_SEMUN
 union semun
@@ -30,6 +30,7 @@ union semun
 	struct semid_ds *buf;
 	unsigned short *array;
 };
+
 #endif
 
 /* generic IPC definitions */
@@ -94,8 +95,8 @@ extern void on_exit_reset(void);
 extern void IpcInitKeyAssignment(int port);
 
 extern IpcSemaphoreId IpcSemaphoreCreate(int numSems, int permission,
-										 int semStartValue,
-										 bool removeOnExit);
+				   int semStartValue,
+				   bool removeOnExit);
 extern void IpcSemaphoreKill(IpcSemaphoreId semId);
 extern void IpcSemaphoreLock(IpcSemaphoreId semId, int sem, bool interruptOK);
 extern void IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem);
@@ -103,12 +104,12 @@ extern bool IpcSemaphoreTryLock(IpcSemaphoreId semId, int sem);
 extern int	IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem);
 
 extern PGShmemHeader *IpcMemoryCreate(uint32 size, bool makePrivate,
-									  int permission);
+				int permission);
 
 extern bool SharedMemoryIsInUse(IpcMemoryKey shmKey, IpcMemoryId shmId);
 
 /* ipci.c */
 extern void CreateSharedMemoryAndSemaphores(bool makePrivate,
-											int maxBackends);
+								int maxBackends);
 
 #endif	 /* IPC_H */

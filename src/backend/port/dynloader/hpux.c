@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.17 2001/02/10 02:31:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.18 2001/03/22 03:59:43 momjian Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -28,13 +28,14 @@
 void *
 pg_dlopen(char *filename)
 {
+
 	/*
 	 * Use BIND_IMMEDIATE so that undefined symbols cause a failure return
 	 * from shl_load(), rather than an abort() later on when we attempt to
 	 * call the library!
 	 */
 	shl_t		handle = shl_load(filename,
-								  BIND_IMMEDIATE | BIND_VERBOSE | DYNAMIC_PATH,
+							BIND_IMMEDIATE | BIND_VERBOSE | DYNAMIC_PATH,
 								  0L);
 
 	return (void *) handle;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.54 2001/01/24 19:42:54 momjian Exp $
+ *	$Id: nodeHash.c,v 1.55 2001/03/22 03:59:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,9 +540,7 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	 * ------------------
 	 */
 	if (isNull)
-	{
 		bucketno = 0;
-	}
 	else
 	{
 		bucketno = hashFunc(keyval,

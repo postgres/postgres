@@ -6,7 +6,7 @@
  * NOTE: for largely-historical reasons, the intersection functions should
  * return a NULL pointer (*not* an SQL null value) to indicate "no
  * intersection".  The size functions must be prepared to accept such
- * a pointer and return 0.  This convention means that only pass-by-reference
+ * a pointer and return 0.	This convention means that only pass-by-reference
  * data types can be used as the output of the union and intersection
  * routines, but that's not a big problem.
  *
@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.31 2001/01/24 19:42:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.32 2001/03/22 03:59:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@ Datum
 rt_box_size(PG_FUNCTION_ARGS)
 {
 	BOX		   *a = PG_GETARG_BOX_P(0);
+
 	/* NB: size is an output argument */
 	float	   *size = (float *) PG_GETARG_POINTER(1);
 
@@ -98,8 +99,8 @@ rt_bigbox_size(PG_FUNCTION_ARGS)
 Datum
 rt_poly_union(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *a = PG_GETARG_POLYGON_P(0);
-	POLYGON	   *b = PG_GETARG_POLYGON_P(1);
+	POLYGON    *a = PG_GETARG_POLYGON_P(0);
+	POLYGON    *b = PG_GETARG_POLYGON_P(1);
 	POLYGON    *p;
 
 	p = (POLYGON *) palloc(sizeof(POLYGON));
@@ -122,8 +123,8 @@ rt_poly_union(PG_FUNCTION_ARGS)
 Datum
 rt_poly_inter(PG_FUNCTION_ARGS)
 {
-	POLYGON	   *a = PG_GETARG_POLYGON_P(0);
-	POLYGON	   *b = PG_GETARG_POLYGON_P(1);
+	POLYGON    *a = PG_GETARG_POLYGON_P(0);
+	POLYGON    *b = PG_GETARG_POLYGON_P(1);
 	POLYGON    *p;
 
 	p = (POLYGON *) palloc(sizeof(POLYGON));
@@ -155,13 +156,15 @@ Datum
 rt_poly_size(PG_FUNCTION_ARGS)
 {
 	Pointer		aptr = PG_GETARG_POINTER(0);
+
 	/* NB: size is an output argument */
 	float	   *size = (float *) PG_GETARG_POINTER(1);
-	POLYGON	   *a;
+	POLYGON    *a;
 	double		xdim,
 				ydim;
 
-	/* Can't just use GETARG because of possibility that input is NULL;
+	/*
+	 * Can't just use GETARG because of possibility that input is NULL;
 	 * since POLYGON is toastable, GETARG will try to inspect its value
 	 */
 	if (aptr == NULL)

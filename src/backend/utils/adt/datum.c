@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.19 2001/01/24 19:43:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.20 2001/03/22 03:59:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,10 +153,11 @@ datumFree(Datum value, bool typByVal, int typLen)
 bool
 datumIsEqual(Datum value1, Datum value2, bool typByVal, int typLen)
 {
-	bool	res;
+	bool		res;
 
 	if (typByVal)
 	{
+
 		/*
 		 * just compare the two datums. NOTE: just comparing "len" bytes
 		 * will not do the work, because we do not know how these bytes

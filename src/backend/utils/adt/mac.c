@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.19 2000/12/08 23:57:03 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.20 2001/03/22 03:59:51 momjian Exp $
  */
 
 #include "postgres.h"
@@ -82,7 +82,7 @@ macaddr_in(PG_FUNCTION_ARGS)
 Datum
 macaddr_out(PG_FUNCTION_ARGS)
 {
-	macaddr	   *addr = PG_GETARG_MACADDR_P(0);
+	macaddr    *addr = PG_GETARG_MACADDR_P(0);
 	char	   *result;
 
 	result = (char *) palloc(32);
@@ -139,16 +139,16 @@ text_macaddr(PG_FUNCTION_ARGS)
 	char		str[18];
 	int			len;
 
-	len = (VARSIZE(addr)-VARHDRSZ);
+	len = (VARSIZE(addr) - VARHDRSZ);
 	if (len >= 18)
 		elog(ERROR, "Text is too long to convert to MAC address");
 
 	memmove(str, VARDATA(addr), len);
-	*(str+len) = '\0';
+	*(str + len) = '\0';
 
-    result = DirectFunctionCall1(macaddr_in, CStringGetDatum(str));
+	result = DirectFunctionCall1(macaddr_in, CStringGetDatum(str));
 
-	return(result);
+	return (result);
 }
 
 /*
@@ -173,8 +173,8 @@ macaddr_cmp_internal(macaddr *a1, macaddr *a2)
 Datum
 macaddr_cmp(PG_FUNCTION_ARGS)
 {
-	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
-	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *a2 = PG_GETARG_MACADDR_P(1);
 
 	PG_RETURN_INT32(macaddr_cmp_internal(a1, a2));
 }
@@ -186,8 +186,8 @@ macaddr_cmp(PG_FUNCTION_ARGS)
 Datum
 macaddr_lt(PG_FUNCTION_ARGS)
 {
-	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
-	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *a2 = PG_GETARG_MACADDR_P(1);
 
 	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) < 0);
 }
@@ -195,8 +195,8 @@ macaddr_lt(PG_FUNCTION_ARGS)
 Datum
 macaddr_le(PG_FUNCTION_ARGS)
 {
-	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
-	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *a2 = PG_GETARG_MACADDR_P(1);
 
 	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) <= 0);
 }
@@ -204,8 +204,8 @@ macaddr_le(PG_FUNCTION_ARGS)
 Datum
 macaddr_eq(PG_FUNCTION_ARGS)
 {
-	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
-	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *a2 = PG_GETARG_MACADDR_P(1);
 
 	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) == 0);
 }
@@ -213,8 +213,8 @@ macaddr_eq(PG_FUNCTION_ARGS)
 Datum
 macaddr_ge(PG_FUNCTION_ARGS)
 {
-	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
-	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *a2 = PG_GETARG_MACADDR_P(1);
 
 	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) >= 0);
 }
@@ -222,8 +222,8 @@ macaddr_ge(PG_FUNCTION_ARGS)
 Datum
 macaddr_gt(PG_FUNCTION_ARGS)
 {
-	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
-	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *a2 = PG_GETARG_MACADDR_P(1);
 
 	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) > 0);
 }
@@ -231,8 +231,8 @@ macaddr_gt(PG_FUNCTION_ARGS)
 Datum
 macaddr_ne(PG_FUNCTION_ARGS)
 {
-	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
-	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *a2 = PG_GETARG_MACADDR_P(1);
 
 	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) != 0);
 }
@@ -243,7 +243,7 @@ macaddr_ne(PG_FUNCTION_ARGS)
 Datum
 hashmacaddr(PG_FUNCTION_ARGS)
 {
-	macaddr	   *key = PG_GETARG_MACADDR_P(0);
+	macaddr    *key = PG_GETARG_MACADDR_P(0);
 
 	return hash_any((char *) key, sizeof(macaddr));
 }
@@ -255,8 +255,8 @@ hashmacaddr(PG_FUNCTION_ARGS)
 Datum
 macaddr_trunc(PG_FUNCTION_ARGS)
 {
-	macaddr	   *result;
-	macaddr	   *addr = PG_GETARG_MACADDR_P(0);
+	macaddr    *result;
+	macaddr    *addr = PG_GETARG_MACADDR_P(0);
 
 	result = (macaddr *) palloc(sizeof(macaddr));
 

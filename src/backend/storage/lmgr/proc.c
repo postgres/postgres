@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.98 2001/01/26 18:23:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.99 2001/03/22 03:59:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@
 #include "storage/proc.h"
 
 
-int DeadlockTimeout = 1000;
+int			DeadlockTimeout = 1000;
 
 /* --------------------
  * Spin lock for manipulating the shared process data structure:
@@ -147,10 +147,10 @@ InitProcGlobal(int maxBackends)
 
 		/*
 		 * Arrange to delete semas on exit --- set this up now so that we
-		 * will clean up if pre-allocation fails.  We use our own freeproc,
-		 * rather than IpcSemaphoreCreate's removeOnExit option, because
-		 * we don't want to fill up the on_shmem_exit list with a separate
-		 * entry for each semaphore set.
+		 * will clean up if pre-allocation fails.  We use our own
+		 * freeproc, rather than IpcSemaphoreCreate's removeOnExit option,
+		 * because we don't want to fill up the on_shmem_exit list with a
+		 * separate entry for each semaphore set.
 		 */
 		on_shmem_exit(ProcFreeAllSemaphores, 0);
 
@@ -159,9 +159,9 @@ InitProcGlobal(int maxBackends)
 		 */
 		Assert(maxBackends > 0 && maxBackends <= MAXBACKENDS);
 
-		for (i = 0; i < ((maxBackends-1)/PROC_NSEMS_PER_SET+1); i++)
+		for (i = 0; i < ((maxBackends - 1) / PROC_NSEMS_PER_SET + 1); i++)
 		{
-			IpcSemaphoreId		semId;
+			IpcSemaphoreId semId;
 
 			semId = IpcSemaphoreCreate(PROC_NSEMS_PER_SET,
 									   IPCProtection,
@@ -242,6 +242,7 @@ InitProcess(void)
 	if (IsUnderPostmaster)
 	{
 		ProcGetNewSemIdAndNum(&MyProc->sem.semId, &MyProc->sem.semNum);
+
 		/*
 		 * we might be reusing a semaphore that belongs to a dead backend.
 		 * So be careful and reinitialize its value here.
@@ -288,8 +289,8 @@ InitProcess(void)
 	on_shmem_exit(ProcKill, 0);
 
 	/*
-	 * Now that we have a PROC, we could try to acquire locks,
-	 * so initialize the deadlock checker.
+	 * Now that we have a PROC, we could try to acquire locks, so
+	 * initialize the deadlock checker.
 	 */
 	InitDeadLockChecking();
 }
@@ -300,7 +301,7 @@ InitProcess(void)
 static void
 ZeroProcSemaphore(PROC *proc)
 {
-	union semun		semun;
+	union semun semun;
 
 	semun.val = 0;
 	if (semctl(proc->sem.semId, proc->sem.semNum, SETVAL, semun) < 0)
@@ -333,15 +334,15 @@ LockWaitCancel(void)
 #ifndef __BEOS__
 	{
 		struct itimerval timeval,
-						 dummy;
+					dummy;
 
 		MemSet(&timeval, 0, sizeof(struct itimerval));
 		setitimer(ITIMER_REAL, &timeval, &dummy);
 	}
 #else
 	/* BeOS doesn't have setitimer, but has set_alarm */
-    set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM);
-#endif /* __BEOS__ */
+	set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM);
+#endif	 /* __BEOS__ */
 
 	/* Unlink myself from the wait queue, if on it (might not be anymore!) */
 	LockLockTable();
@@ -352,17 +353,17 @@ LockWaitCancel(void)
 	/*
 	 * Reset the proc wait semaphore to zero.  This is necessary in the
 	 * scenario where someone else granted us the lock we wanted before we
-	 * were able to remove ourselves from the wait-list.  The semaphore will
-	 * have been bumped to 1 by the would-be grantor, and since we are no
-	 * longer going to wait on the sema, we have to force it back to zero.
-	 * Otherwise, our next attempt to wait for a lock will fall through
-	 * prematurely.
+	 * were able to remove ourselves from the wait-list.  The semaphore
+	 * will have been bumped to 1 by the would-be grantor, and since we
+	 * are no longer going to wait on the sema, we have to force it back
+	 * to zero. Otherwise, our next attempt to wait for a lock will fall
+	 * through prematurely.
 	 */
 	ZeroProcSemaphore(MyProc);
 
 	/*
-	 * Return true even if we were kicked off the lock before we were
-	 * able to remove ourselves.
+	 * Return true even if we were kicked off the lock before we were able
+	 * to remove ourselves.
 	 */
 	return true;
 }
@@ -467,7 +468,7 @@ ProcQueueAlloc(char *name)
 {
 	bool		found;
 	PROC_QUEUE *queue = (PROC_QUEUE *)
-		ShmemInitStruct(name, sizeof(PROC_QUEUE), &found);
+	ShmemInitStruct(name, sizeof(PROC_QUEUE), &found);
 
 	if (!queue)
 		return NULL;
@@ -520,11 +521,14 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	int			myHeldLocks = MyProc->heldLocks;
 	PROC	   *proc;
 	int			i;
+
 #ifndef __BEOS__
 	struct itimerval timeval,
 				dummy;
+
 #else
-    bigtime_t time_interval;
+	bigtime_t	time_interval;
+
 #endif
 
 	/* ----------------------
@@ -582,6 +586,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 			aheadRequests |= (1 << proc->waitLockMode);
 			proc = (PROC *) MAKE_PTR(proc->links.next);
 		}
+
 		/*
 		 * If we fall out of loop normally, proc points to waitQueue head,
 		 * so we will insert at tail of queue as desired.
@@ -607,7 +612,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	MyProc->waitHolder = holder;
 	MyProc->waitLockMode = lockmode;
 
-	MyProc->errType = STATUS_OK; /* initialize result for success */
+	MyProc->errType = STATUS_OK;/* initialize result for success */
 
 	/* mark that we are waiting for a lock */
 	waitingForLock = true;
@@ -643,7 +648,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	if (setitimer(ITIMER_REAL, &timeval, &dummy))
 		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 #else
-    time_interval = DeadlockTimeout * 1000000; /* usecs */
+	time_interval = DeadlockTimeout * 1000000;	/* usecs */
 	if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
 		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 #endif
@@ -674,7 +679,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	if (setitimer(ITIMER_REAL, &timeval, &dummy))
 		elog(FATAL, "ProcSleep: Unable to disable timer for process wakeup");
 #else
-    if (set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM) < 0)
+	if (set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM) < 0)
 		elog(FATAL, "ProcSleep: Unable to disable timer for process wakeup");
 #endif
 
@@ -759,7 +764,7 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 
 	while (queue_size-- > 0)
 	{
-		LOCKMODE lockmode = proc->waitLockMode;
+		LOCKMODE	lockmode = proc->waitLockMode;
 
 		/*
 		 * Waken if (a) doesn't conflict with requests of earlier waiters,
@@ -776,15 +781,20 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 			/* OK to waken */
 			GrantLock(lock, proc->waitHolder, lockmode);
 			proc = ProcWakeup(proc, STATUS_OK);
+
 			/*
-			 * ProcWakeup removes proc from the lock's waiting process queue
-			 * and returns the next proc in chain; don't use proc's next-link,
-			 * because it's been cleared.
+			 * ProcWakeup removes proc from the lock's waiting process
+			 * queue and returns the next proc in chain; don't use proc's
+			 * next-link, because it's been cleared.
 			 */
 		}
 		else
 		{
-			/* Cannot wake this guy. Remember his request for later checks. */
+
+			/*
+			 * Cannot wake this guy. Remember his request for later
+			 * checks.
+			 */
 			aheadRequests |= (1 << lockmode);
 			proc = (PROC *) MAKE_PTR(proc->links.next);
 		}
@@ -807,11 +817,11 @@ HandleDeadLock(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	/*
-	 * Acquire locktable lock.  Note that the SIGALRM interrupt had better
-	 * not be enabled anywhere that this process itself holds the locktable
-	 * lock, else this will wait forever.  Also note that this calls
-	 * SpinAcquire which creates a critical section, so that this routine
-	 * cannot be interrupted by cancel/die interrupts.
+	 * Acquire locktable lock.	Note that the SIGALRM interrupt had better
+	 * not be enabled anywhere that this process itself holds the
+	 * locktable lock, else this will wait forever.  Also note that this
+	 * calls SpinAcquire which creates a critical section, so that this
+	 * routine cannot be interrupted by cancel/die interrupts.
 	 */
 	LockLockTable();
 
@@ -836,8 +846,8 @@ HandleDeadLock(SIGNAL_ARGS)
 	}
 
 #ifdef LOCK_DEBUG
-    if (Debug_deadlocks)
-        DumpAllLocks();
+	if (Debug_deadlocks)
+		DumpAllLocks();
 #endif
 
 	if (!DeadLockCheck(MyProc))

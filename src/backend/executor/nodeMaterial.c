@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.33 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.34 2001/03/22 03:59:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
  *
  *		The first time this is called, ExecMaterial retrieves tuples
  *		from this node's outer subplan and inserts them into a tuplestore
- *		(a temporary tuple storage structure).  The first tuple is then
+ *		(a temporary tuple storage structure).	The first tuple is then
  *		returned.  Successive calls to ExecMaterial return successive
  *		tuples from the tuplestore.
  *
@@ -85,7 +85,7 @@ ExecMaterial(Material *node)
 		 *	 Initialize tuplestore module.
 		 * ----------------
 		 */
-		tuplestorestate = tuplestore_begin_heap(true, /* randomAccess */
+		tuplestorestate = tuplestore_begin_heap(true,	/* randomAccess */
 												SortMem);
 
 		matstate->tuplestorestate = (void *) tuplestorestate;
@@ -250,7 +250,7 @@ ExecEndMaterial(Material *node)
 void
 ExecMaterialMarkPos(Material *node)
 {
-	MaterialState  *matstate = node->matstate;
+	MaterialState *matstate = node->matstate;
 
 	/* ----------------
 	 *	if we haven't materialized yet, just return.
@@ -271,7 +271,7 @@ ExecMaterialMarkPos(Material *node)
 void
 ExecMaterialRestrPos(Material *node)
 {
-	MaterialState  *matstate = node->matstate;
+	MaterialState *matstate = node->matstate;
 
 	/* ----------------
 	 *	if we haven't materialized yet, just return.
@@ -299,8 +299,8 @@ ExecMaterialReScan(Material *node, ExprContext *exprCtxt, Plan *parent)
 	MaterialState *matstate = node->matstate;
 
 	/*
-	 * If we haven't materialized yet, just return. If outerplan' chgParam is
-	 * not NULL then it will be re-scanned by ExecProcNode, else - no
+	 * If we haven't materialized yet, just return. If outerplan' chgParam
+	 * is not NULL then it will be re-scanned by ExecProcNode, else - no
 	 * reason to re-scan it at all.
 	 */
 	if (!matstate->tuplestorestate)
@@ -309,8 +309,8 @@ ExecMaterialReScan(Material *node, ExprContext *exprCtxt, Plan *parent)
 	ExecClearTuple(matstate->csstate.cstate.cs_ResultTupleSlot);
 
 	/*
-	 * If subnode is to be rescanned then we forget previous stored results;
-	 * we have to re-read the subplan and re-store.
+	 * If subnode is to be rescanned then we forget previous stored
+	 * results; we have to re-read the subplan and re-store.
 	 *
 	 * Otherwise we can just rewind and rescan the stored output.
 	 */

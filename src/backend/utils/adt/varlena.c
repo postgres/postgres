@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.68 2001/02/10 02:31:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.69 2001/03/22 03:59:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,6 +202,7 @@ Datum
 textlen(PG_FUNCTION_ARGS)
 {
 	text	   *t = PG_GETARG_TEXT_P(0);
+
 #ifdef MULTIBYTE
 	unsigned char *s;
 	int			len,
@@ -236,10 +237,10 @@ textlen(PG_FUNCTION_ARGS)
 Datum
 textoctetlen(PG_FUNCTION_ARGS)
 {
-	struct varattrib   *t = (struct varattrib *) PG_GETARG_RAW_VARLENA_P(0);
+	struct varattrib *t = (struct varattrib *) PG_GETARG_RAW_VARLENA_P(0);
 
 	if (!VARATT_IS_EXTERNAL(t))
-	    PG_RETURN_INT32(VARATT_SIZE(t) - VARHDRSZ);
+		PG_RETURN_INT32(VARATT_SIZE(t) - VARHDRSZ);
 
 	PG_RETURN_INT32(t->va_content.va_external.va_extsize);
 }
@@ -320,9 +321,11 @@ text_substr(PG_FUNCTION_ARGS)
 	int32		n = PG_GETARG_INT32(2);
 	text	   *ret;
 	int			len;
+
 #ifdef MULTIBYTE
 	int			i;
 	char	   *p;
+
 #endif
 
 	len = VARSIZE(string) - VARHDRSZ;
@@ -392,9 +395,11 @@ textpos(PG_FUNCTION_ARGS)
 				len2;
 	pg_wchar   *p1,
 			   *p2;
+
 #ifdef MULTIBYTE
 	pg_wchar   *ps1,
 			   *ps2;
+
 #endif
 
 	if (VARSIZE(t2) <= VARHDRSZ)
@@ -843,7 +848,7 @@ text_name(PG_FUNCTION_ARGS)
 
 	/* Truncate oversize input */
 	if (len >= NAMEDATALEN)
-		len = NAMEDATALEN-1;
+		len = NAMEDATALEN - 1;
 
 #ifdef STRINGDEBUG
 	printf("text- convert string length %d (%d) ->%d\n",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.81 2001/01/24 19:43:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.82 2001/03/22 03:59:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ static int	_mdfd_getrelnfd(Relation reln);
 static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);
 static MdfdVec *_mdfd_getseg(Relation reln, int blkno);
 
-static int _mdfd_blind_getseg(RelFileNode rnode, int blkno);
+static int	_mdfd_blind_getseg(RelFileNode rnode, int blkno);
 
 static int	_fdvec_alloc(void);
 static void _fdvec_free(int);
@@ -135,13 +135,14 @@ mdcreate(Relation reln)
 
 	if (fd < 0)
 	{
-		int		save_errno = errno;
+		int			save_errno = errno;
 
 		/*
-		 * During bootstrap, there are cases where a system relation will be
-		 * accessed (by internal backend processes) before the bootstrap
-		 * script nominally creates it.  Therefore, allow the file to exist
-		 * already, but in bootstrap mode only.  (See also mdopen)
+		 * During bootstrap, there are cases where a system relation will
+		 * be accessed (by internal backend processes) before the
+		 * bootstrap script nominally creates it.  Therefore, allow the
+		 * file to exist already, but in bootstrap mode only.  (See also
+		 * mdopen)
 		 */
 		if (IsBootstrapProcessingMode())
 			fd = FileNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
@@ -197,7 +198,7 @@ mdunlink(RelFileNode rnode)
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
 		int			segno;
 
-		for (segno = 1; ; segno++)
+		for (segno = 1;; segno++)
 		{
 			sprintf(segpath, "%s.%d", path, segno);
 			if (unlink(segpath) < 0)
@@ -293,11 +294,13 @@ mdopen(Relation reln)
 
 	if (fd < 0)
 	{
+
 		/*
-		 * During bootstrap, there are cases where a system relation will be
-		 * accessed (by internal backend processes) before the bootstrap
-		 * script nominally creates it.  Therefore, accept mdopen() as a
-		 * substitute for mdcreate() in bootstrap mode only.  (See mdcreate)
+		 * During bootstrap, there are cases where a system relation will
+		 * be accessed (by internal backend processes) before the
+		 * bootstrap script nominally creates it.  Therefore, accept
+		 * mdopen() as a substitute for mdcreate() in bootstrap mode only.
+		 * (See mdcreate)
 		 */
 		if (IsBootstrapProcessingMode())
 			fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
@@ -666,12 +669,13 @@ mdnblocks(Relation reln)
 
 			if (v->mdfd_chain == (MdfdVec *) NULL)
 			{
+
 				/*
-				 * Because we pass O_CREAT, we will create the next segment
-				 * (with zero length) immediately, if the last segment is of
-				 * length REL_SEGSIZE.  This is unnecessary but harmless, and
-				 * testing for the case would take more cycles than it seems
-				 * worth.
+				 * Because we pass O_CREAT, we will create the next
+				 * segment (with zero length) immediately, if the last
+				 * segment is of length REL_SEGSIZE.  This is unnecessary
+				 * but harmless, and testing for the case would take more
+				 * cycles than it seems worth.
 				 */
 				v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
 				if (v->mdfd_chain == (MdfdVec *) NULL)
@@ -700,8 +704,10 @@ mdtruncate(Relation reln, int nblocks)
 	int			curnblk;
 	int			fd;
 	MdfdVec    *v;
+
 #ifndef LET_OS_MANAGE_FILESIZE
 	int			priorblocks;
+
 #endif
 
 	/*
@@ -1004,14 +1010,16 @@ _mdfd_getseg(Relation reln, int blkno)
 
 		if (v->mdfd_chain == (MdfdVec *) NULL)
 		{
+
 			/*
-			 * We will create the next segment only if the target block
-			 * is within it.  This prevents Sorcerer's Apprentice syndrome
-			 * if a bug at higher levels causes us to be handed a ridiculously
-			 * large blkno --- otherwise we could create many thousands of
-			 * empty segment files before reaching the "target" block.  We
-			 * should never need to create more than one new segment per call,
-			 * so this restriction seems reasonable.
+			 * We will create the next segment only if the target block is
+			 * within it.  This prevents Sorcerer's Apprentice syndrome if
+			 * a bug at higher levels causes us to be handed a
+			 * ridiculously large blkno --- otherwise we could create many
+			 * thousands of empty segment files before reaching the
+			 * "target" block.	We should never need to create more than
+			 * one new segment per call, so this restriction seems
+			 * reasonable.
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln, i, (segno == 1) ? O_CREAT : 0);
 

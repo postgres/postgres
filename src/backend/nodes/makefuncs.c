@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.25 2001/01/24 19:42:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.26 2001/03/22 03:59:32 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -109,9 +109,10 @@ makeResdom(AttrNumber resno,
 	resdom->resname = resname;
 
 	/*
-	 * We always set the sorting/grouping fields to 0.  If the caller wants
-	 * to change them he must do so explicitly.  Few if any callers should
-	 * be doing that, so omitting these arguments reduces the chance of error.
+	 * We always set the sorting/grouping fields to 0.	If the caller
+	 * wants to change them he must do so explicitly.  Few if any callers
+	 * should be doing that, so omitting these arguments reduces the
+	 * chance of error.
 	 */
 	resdom->ressortgroupref = 0;
 	resdom->reskey = 0;

@@ -6,7 +6,7 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.37 2001/03/18 20:18:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.38 2001/03/22 03:59:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,8 @@
 #define VAR_OID_PREFETCH		8192
 
 /* Spinlocks for serializing generation of XIDs and OIDs, respectively */
-SPINLOCK XidGenLockId;
-SPINLOCK OidGenLockId;
+SPINLOCK	XidGenLockId;
+SPINLOCK	OidGenLockId;
 
 /* pointer to "variable cache" in shared memory (set up by shmem.c) */
 VariableCache ShmemVariableCache = NULL;
@@ -32,9 +32,10 @@ VariableCache ShmemVariableCache = NULL;
 void
 GetNewTransactionId(TransactionId *xid)
 {
+
 	/*
-	 * During bootstrap initialization, we return the special
-	 * bootstrap transaction id.
+	 * During bootstrap initialization, we return the special bootstrap
+	 * transaction id.
 	 */
 	if (AMI_OVERRIDE)
 	{
@@ -60,9 +61,10 @@ GetNewTransactionId(TransactionId *xid)
 void
 ReadNewTransactionId(TransactionId *xid)
 {
+
 	/*
-	 * During bootstrap initialization, we return the special
-	 * bootstrap transaction id.
+	 * During bootstrap initialization, we return the special bootstrap
+	 * transaction id.
 	 */
 	if (AMI_OVERRIDE)
 	{
@@ -80,7 +82,7 @@ ReadNewTransactionId(TransactionId *xid)
  * ----------------------------------------------------------------
  */
 
-static Oid lastSeenOid = InvalidOid;
+static Oid	lastSeenOid = InvalidOid;
 
 void
 GetNewObjectId(Oid *oid_return)
@@ -119,10 +121,10 @@ CheckMaxObjectId(Oid assigned_oid)
 	}
 
 	/* If we are in the logged oid range, just bump nextOid up */
-	if (assigned_oid <= ShmemVariableCache->nextOid + 
-						ShmemVariableCache->oidCount - 1)
+	if (assigned_oid <= ShmemVariableCache->nextOid +
+		ShmemVariableCache->oidCount - 1)
 	{
-		ShmemVariableCache->oidCount -= 
+		ShmemVariableCache->oidCount -=
 			assigned_oid - ShmemVariableCache->nextOid + 1;
 		ShmemVariableCache->nextOid = assigned_oid + 1;
 		SpinRelease(OidGenLockId);
@@ -130,10 +132,9 @@ CheckMaxObjectId(Oid assigned_oid)
 	}
 
 	/*
-	 * We have exceeded the logged oid range.
-	 * We should lock the database and kill all other backends
-	 * but we are loading oid's that we can not guarantee are unique
-	 * anyway, so we must rely on the user.
+	 * We have exceeded the logged oid range. We should lock the database
+	 * and kill all other backends but we are loading oid's that we can
+	 * not guarantee are unique anyway, so we must rely on the user.
 	 */
 
 	XLogPutNextOid(assigned_oid + VAR_OID_PREFETCH);

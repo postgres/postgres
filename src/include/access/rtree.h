@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.21 2001/01/24 19:43:19 momjian Exp $
+ * $Id: rtree.h,v 1.22 2001/03/22 04:00:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ extern void _rtdump(Relation r);
 
 extern void rtree_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void rtree_undo(XLogRecPtr lsn, XLogRecord *record);
-extern void rtree_desc(char *buf, uint8 xl_info, char* rec);
+extern void rtree_desc(char *buf, uint8 xl_info, char *rec);
 
 /* rtscan.c */
 extern void rtadjscans(Relation r, int op, BlockNumber blkno,

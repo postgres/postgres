@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.28 2001/01/24 19:43:28 momjian Exp $
+ * $Id: array.h,v 1.29 2001/03/22 04:01:10 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be MAXALIGN'd -- currently we only INTALIGN
@@ -40,11 +40,11 @@ typedef struct
 /*
  * fmgr macros for array objects
  */
-#define DatumGetArrayTypeP(X)         ((ArrayType *) PG_DETOAST_DATUM(X))
-#define DatumGetArrayTypePCopy(X)     ((ArrayType *) PG_DETOAST_DATUM_COPY(X))
-#define PG_GETARG_ARRAYTYPE_P(n)      DatumGetArrayTypeP(PG_GETARG_DATUM(n))
+#define DatumGetArrayTypeP(X)		  ((ArrayType *) PG_DETOAST_DATUM(X))
+#define DatumGetArrayTypePCopy(X)	  ((ArrayType *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_ARRAYTYPE_P(n)	  DatumGetArrayTypeP(PG_GETARG_DATUM(n))
 #define PG_GETARG_ARRAYTYPE_P_COPY(n) DatumGetArrayTypePCopy(PG_GETARG_DATUM(n))
-#define PG_RETURN_ARRAYTYPE_P(x)      PG_RETURN_POINTER(x)
+#define PG_RETURN_ARRAYTYPE_P(x)	  PG_RETURN_POINTER(x)
 
 /*
  * Access macros for array header fields.
@@ -90,29 +90,29 @@ extern Datum array_eq(PG_FUNCTION_ARGS);
 extern Datum array_dims(PG_FUNCTION_ARGS);
 
 extern Datum array_ref(ArrayType *array, int nSubscripts, int *indx,
-					   bool elmbyval, int elmlen,
-					   int arraylen, bool *isNull);
+		  bool elmbyval, int elmlen,
+		  int arraylen, bool *isNull);
 extern ArrayType *array_set(ArrayType *array, int nSubscripts, int *indx,
-							Datum dataValue,
-							bool elmbyval, int elmlen,
-							int arraylen, bool *isNull);
+		  Datum dataValue,
+		  bool elmbyval, int elmlen,
+		  int arraylen, bool *isNull);
 extern ArrayType *array_get_slice(ArrayType *array, int nSubscripts,
-								  int *upperIndx, int *lowerIndx,
-								  bool elmbyval, int elmlen,
-								  int arraylen, bool *isNull);
+				int *upperIndx, int *lowerIndx,
+				bool elmbyval, int elmlen,
+				int arraylen, bool *isNull);
 extern ArrayType *array_set_slice(ArrayType *array, int nSubscripts,
-								  int *upperIndx, int *lowerIndx,
-								  ArrayType *srcArray,
-								  bool elmbyval, int elmlen,
-								  int arraylen, bool *isNull);
+				int *upperIndx, int *lowerIndx,
+				ArrayType *srcArray,
+				bool elmbyval, int elmlen,
+				int arraylen, bool *isNull);
 
 extern Datum array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType);
 
 extern ArrayType *construct_array(Datum *elems, int nelems,
-								  bool elmbyval, int elmlen, char elmalign);
+				bool elmbyval, int elmlen, char elmalign);
 extern void deconstruct_array(ArrayType *array,
-							  bool elmbyval, int elmlen, char elmalign,
-							  Datum **elemsp, int *nelemsp);
+				  bool elmbyval, int elmlen, char elmalign,
+				  Datum **elemsp, int *nelemsp);
 
 
 /*

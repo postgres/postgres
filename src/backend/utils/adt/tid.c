@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.23 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.24 2001/03/22 03:59:54 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -21,8 +21,8 @@
 #include "access/heapam.h"
 #include "utils/builtins.h"
 
-#define DatumGetItemPointer(X)   ((ItemPointer) DatumGetPointer(X))
-#define ItemPointerGetDatum(X)   PointerGetDatum(X)
+#define DatumGetItemPointer(X)	 ((ItemPointer) DatumGetPointer(X))
+#define ItemPointerGetDatum(X)	 PointerGetDatum(X)
 #define PG_GETARG_ITEMPOINTER(n) DatumGetItemPointer(PG_GETARG_DATUM(n))
 #define PG_RETURN_ITEMPOINTER(x) return ItemPointerGetDatum(x)
 
@@ -70,7 +70,7 @@ tidin(PG_FUNCTION_ARGS)
 Datum
 tidout(PG_FUNCTION_ARGS)
 {
-	ItemPointer	itemPtr = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer itemPtr = PG_GETARG_ITEMPOINTER(0);
 	BlockId		blockId;
 	BlockNumber blockNumber;
 	OffsetNumber offsetNumber;
@@ -97,8 +97,8 @@ tidout(PG_FUNCTION_ARGS)
 Datum
 tideq(PG_FUNCTION_ARGS)
 {
-	ItemPointer		arg1 = PG_GETARG_ITEMPOINTER(0);
-	ItemPointer		arg2 = PG_GETARG_ITEMPOINTER(1);
+	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
 	PG_RETURN_BOOL(BlockIdGetBlockNumber(&(arg1->ip_blkid)) ==
 				   BlockIdGetBlockNumber(&(arg2->ip_blkid)) &&
@@ -109,13 +109,14 @@ tideq(PG_FUNCTION_ARGS)
 Datum
 tidne(PG_FUNCTION_ARGS)
 {
-	ItemPointer		arg1 = PG_GETARG_ITEMPOINTER(0);
-	ItemPointer		arg2 = PG_GETARG_ITEMPOINTER(1);
+	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
 	PG_RETURN_BOOL(BlockIdGetBlockNumber(&(arg1->ip_blkid)) !=
 				   BlockIdGetBlockNumber(&(arg2->ip_blkid)) ||
 				   arg1->ip_posid != arg2->ip_posid);
 }
+
 #endif
 
 /*
@@ -126,11 +127,11 @@ tidne(PG_FUNCTION_ARGS)
 Datum
 currtid_byreloid(PG_FUNCTION_ARGS)
 {
-	Oid				reloid = PG_GETARG_OID(0);
-	ItemPointer		tid = PG_GETARG_ITEMPOINTER(1);
-	ItemPointer		result,
-					ret;
-	Relation		rel;
+	Oid			reloid = PG_GETARG_OID(0);
+	ItemPointer tid = PG_GETARG_ITEMPOINTER(1);
+	ItemPointer result,
+				ret;
+	Relation	rel;
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 	ItemPointerSetInvalid(result);
@@ -150,12 +151,12 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 Datum
 currtid_byrelname(PG_FUNCTION_ARGS)
 {
-	text		   *relname = PG_GETARG_TEXT_P(0);
-	ItemPointer		tid = PG_GETARG_ITEMPOINTER(1);
-	ItemPointer		result,
-					ret;
-	char		   *str;
-	Relation		rel;
+	text	   *relname = PG_GETARG_TEXT_P(0);
+	ItemPointer tid = PG_GETARG_ITEMPOINTER(1);
+	ItemPointer result,
+				ret;
+	char	   *str;
+	Relation	rel;
 
 	str = DatumGetCString(DirectFunctionCall1(textout,
 											  PointerGetDatum(relname)));

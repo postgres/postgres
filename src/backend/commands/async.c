@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.76 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.77 2001/03/22 03:59:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ static void NotifyMyFrontEnd(char *relname, int32 listenerPID);
 static int	AsyncExistsPendingNotify(char *relname);
 static void ClearPendingNotifies(void);
 
-bool Trace_notify = false;
+bool		Trace_notify = false;
 
 
 /*
@@ -161,6 +161,7 @@ Async_Notify(char *relname)
 	/* no point in making duplicate entries in the list ... */
 	if (!AsyncExistsPendingNotify(relname))
 	{
+
 		/*
 		 * We allocate list memory from the global malloc pool to ensure
 		 * that it will live until we want to use it.  This is probably
@@ -349,9 +350,7 @@ Async_UnlistenAll()
 	sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, key);
 
 	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
-	{
 		simple_heap_delete(lRel, &lTuple->t_self);
-	}
 
 	heap_endscan(sRel);
 	heap_close(lRel, AccessExclusiveLock);
@@ -499,6 +498,7 @@ AtCommit_Notify()
 				 */
 				if (kill(listenerPID, SIGUSR2) < 0)
 				{
+
 					/*
 					 * Get rid of pg_listener entry if it refers to a PID
 					 * that no longer exists.  Presumably, that backend
@@ -794,7 +794,7 @@ ProcessIncomingNotify(void)
 
 			if (Trace_notify)
 				elog(DEBUG, "ProcessIncomingNotify: received %s from %d",
-					relname, (int) sourcePID);
+					 relname, (int) sourcePID);
 
 			NotifyMyFrontEnd(relname, sourcePID);
 			/* Rewrite the tuple with 0 in notification column */

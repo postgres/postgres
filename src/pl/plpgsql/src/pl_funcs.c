@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.10 2001/02/19 19:49:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.11 2001/03/22 04:01:41 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -711,16 +711,16 @@ dump_getdiag(PLpgSQL_stmt_getdiag * stmt)
 	printf("GET DIAGNOSTICS ");
 	for (i = 0; i < stmt->ndtitems; i++)
 	{
-		PLpgSQL_diag_item *dtitem = & stmt->dtitems[i];
+		PLpgSQL_diag_item *dtitem = &stmt->dtitems[i];
 
 		if (i != 0)
 			printf(", ");
 
 		printf("{var %d} = ", dtitem->target);
 
-	    switch (dtitem->item)
+		switch (dtitem->item)
 		{
-		    case PLPGSQL_GETDIAG_ROW_COUNT:
+			case PLPGSQL_GETDIAG_ROW_COUNT:
 				printf("ROW_COUNT");
 				break;
 
@@ -729,7 +729,7 @@ dump_getdiag(PLpgSQL_stmt_getdiag * stmt)
 				break;
 
 			default:
-			    printf("???");
+				printf("???");
 				break;
 		}
 	}

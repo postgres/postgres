@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.6 2001/02/10 02:31:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.7 2001/03/22 03:59:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,59 +18,66 @@
 #include "utils/dynamic_loader.h"
 
 
-void	   *
+void *
 pg_dlopen(char *filename)
 {
-	image_id* im; 
-	
-	/* Handle memory allocation to store the Id of the shared object*/
-	im=(image_id*)(malloc(sizeof(image_id)));
-	
+	image_id   *im;
+
+	/* Handle memory allocation to store the Id of the shared object */
+	im = (image_id *) (malloc(sizeof(image_id)));
+
 	/* Add-on loading */
-	*im=beos_dl_open(filename);
-			
+	*im = beos_dl_open(filename);
+
 	return im;
 }
 
 
-char	   *
+char *
 pg_dlerror()
 {
 	static char errmsg[] = "Load Add-On failed";
+
 	return errmsg;
 }
 
-PGFunction 
+PGFunction
 pg_dlsym(void *handle, char *funcname)
 {
-	PGFunction fpt;
+	PGFunction	fpt;
 
 	/* Checking that "Handle" is valid */
-	if ((handle) && ((*(int*)(handle))>=0))
+	if ((handle) && ((*(int *) (handle)) >= 0))
 	{
 		/* Loading symbol */
-		if(get_image_symbol(*((int*)(handle)),funcname,B_SYMBOL_TYPE_TEXT,(void**)&fpt)==B_OK);
+		if (get_image_symbol(*((int *) (handle)), funcname, B_SYMBOL_TYPE_TEXT, (void **) &fpt) == B_OK);
 		{
-			/* Sometime the loader return B_OK for an inexistant function with an invalid address !!! 
-			Check that the return address is in the image range */
-			image_info info;
-			get_image_info(*((int*)(handle)),&info);
-			if ((fpt<info.text) || (fpt>=(info.text+info.text_size))) return NULL;
+
+			/*
+			 * Sometime the loader return B_OK for an inexistant function
+			 * with an invalid address !!! Check that the return address
+			 * is in the image range
+			 */
+			image_info	info;
+
+			get_image_info(*((int *) (handle)), &info);
+			if ((fpt < info.text) ||(fpt >= (info.text +info.text_size)))
+				return NULL;
 			return fpt;
 		}
-		elog(NOTICE, "loading symbol '%s' failed ",funcname);
+		elog(NOTICE, "loading symbol '%s' failed ", funcname);
 	}
 	elog(NOTICE, "add-on not loaded correctly");
 	return NULL;
 }
 
-void 
+void
 pg_dlclose(void *handle)
 {
 	/* Checking that "Handle" is valid */
-	if ((handle) && ((*(int*)(handle))>=0))
+	if ((handle) && ((*(int *) (handle)) >= 0))
 	{
-		if (beos_dl_close(*(image_id*)handle)!=B_OK)
+		if (beos_dl_close(*(image_id *) handle) != B_OK)
 			elog(NOTICE, "error while unloading add-on");
 		free(handle);
 	}

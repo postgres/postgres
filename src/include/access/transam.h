@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.31 2001/03/18 20:18:59 tgl Exp $
+ * $Id: transam.h,v 1.32 2001/03/22 04:00:31 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -84,8 +84,8 @@ typedef unsigned char XidStatus;/* (2 bits) */
  */
 typedef struct LogRelationContentsData
 {
-	XLogRecPtr	LSN;		/* temp hack: LSN is member of any block */
-							/* so should be described in bufmgr */
+	XLogRecPtr	LSN;			/* temp hack: LSN is member of any block */
+	/* so should be described in bufmgr */
 	int			TransSystemVersion;
 } LogRelationContentsData;
 
@@ -120,7 +120,8 @@ typedef struct VariableRelationContentsData
 } VariableRelationContentsData;
 
 typedef VariableRelationContentsData *VariableRelationContents;
-#endif /* NOT_USED */
+
+#endif	 /* NOT_USED */
 
 /*
  * VariableCache is placed in shmem and used by
@@ -128,9 +129,9 @@ typedef VariableRelationContentsData *VariableRelationContents;
  */
 typedef struct VariableCacheData
 {
-	TransactionId	nextXid;	/* next XID to assign */
-	Oid				nextOid;	/* next OID to assign */
-	uint32			oidCount;	/* OIDs available before must do XLOG work */
+	TransactionId nextXid;		/* next XID to assign */
+	Oid			nextOid;		/* next OID to assign */
+	uint32		oidCount;		/* OIDs available before must do XLOG work */
 } VariableCacheData;
 
 typedef VariableCacheData *VariableCache;

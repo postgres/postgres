@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.41 2001/02/10 02:31:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.42 2001/03/22 04:01:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,14 +92,17 @@ PQprint(FILE *fout,
 		int			usePipe = 0;
 		pqsigfunc	oldsigpipehandler = NULL;
 		char	   *pagerenv;
+
 #ifdef TIOCGWINSZ
 		struct winsize screen_size;
+
 #else
 		struct winsize
 		{
 			int			ws_row;
 			int			ws_col;
 		}			screen_size;
+
 #endif
 
 		nTups = PQntuples(res);
@@ -149,9 +152,10 @@ PQprint(FILE *fout,
 #endif
 			)
 		{
+
 			/*
-			 * If we think there'll be more than one screen of output,
-			 * try to pipe to the pager program.
+			 * If we think there'll be more than one screen of output, try
+			 * to pipe to the pager program.
 			 */
 #ifdef TIOCGWINSZ
 			if (ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||

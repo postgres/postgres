@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.78 2001/02/07 23:35:33 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.79 2001/03/22 03:59:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,8 @@
 
 bool		BuildingBtree = false;		/* see comment in btbuild() */
 bool		FastBuild = true;	/* use sort/build instead */
-								/* of insertion build */
+
+ /* of insertion build */
 
 
 /*
@@ -52,12 +53,14 @@ static void _bt_restscan(IndexScanDesc scan);
 Datum
 btbuild(PG_FUNCTION_ARGS)
 {
-	Relation		heap = (Relation) PG_GETARG_POINTER(0);
-	Relation		index = (Relation) PG_GETARG_POINTER(1);
-	IndexInfo	   *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
-	Node		   *oldPred = (Node *) PG_GETARG_POINTER(3);
+	Relation	heap = (Relation) PG_GETARG_POINTER(0);
+	Relation	index = (Relation) PG_GETARG_POINTER(1);
+	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
+	Node	   *oldPred = (Node *) PG_GETARG_POINTER(3);
+
 #ifdef NOT_USED
-	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
+	IndexStrategy istrat = (IndexStrategy) PG_GETARG_POINTER(4);
+
 #endif
 	HeapScanDesc hscan;
 	HeapTuple	htup;
@@ -69,9 +72,11 @@ btbuild(PG_FUNCTION_ARGS)
 	int			nhtups,
 				nitups;
 	Node	   *pred = indexInfo->ii_Predicate;
+
 #ifndef OMIT_PARTIAL_INDEX
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
+
 #endif
 	ExprContext *econtext;
 	InsertIndexResult res = NULL;
@@ -79,15 +84,16 @@ btbuild(PG_FUNCTION_ARGS)
 	BTItem		btitem;
 	bool		usefast;
 	Snapshot	snapshot;
-	TransactionId	XmaxRecent;
+	TransactionId XmaxRecent;
+
 	/*
-	 * spool2 is needed only when the index is an unique index.
-	 * Dead tuples are put into spool2 instead of spool in
-	 * order to avoid uniqueness check.
+	 * spool2 is needed only when the index is an unique index. Dead
+	 * tuples are put into spool2 instead of spool in order to avoid
+	 * uniqueness check.
 	 */
-	BTSpool		*spool2 = NULL;
+	BTSpool    *spool2 = NULL;
 	bool		tupleIsAlive;
-	int		dead_count;
+	int			dead_count;
 
 	/* note that this is a new btree */
 	BuildingBtree = true;
@@ -103,7 +109,7 @@ btbuild(PG_FUNCTION_ARGS)
 #ifdef BTREE_BUILD_STATS
 	if (Show_btree_build_stats)
 		ResetUsage();
-#endif /* BTREE_BUILD_STATS */
+#endif	 /* BTREE_BUILD_STATS */
 
 	/* initialize the btree index metadata page (if this is a new index) */
 	if (oldPred == NULL)
@@ -155,10 +161,10 @@ btbuild(PG_FUNCTION_ARGS)
 	if (usefast)
 	{
 		spool = _bt_spoolinit(index, indexInfo->ii_Unique);
+
 		/*
-	 	 * Different from spool,the uniqueness isn't checked
-		 * for spool2.
-	 	 */
+		 * Different from spool,the uniqueness isn't checked for spool2.
+		 */
 		if (indexInfo->ii_Unique)
 			spool2 = _bt_spoolinit(index, false);
 	}
@@ -187,12 +193,13 @@ btbuild(PG_FUNCTION_ARGS)
 		}
 		else
 			tupleIsAlive = true;
-		
+
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
 		nhtups++;
 
 #ifndef OMIT_PARTIAL_INDEX
+
 		/*
 		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
 		 * this tuple if it was already in the existing partial index
@@ -253,8 +260,7 @@ btbuild(PG_FUNCTION_ARGS)
 		 * btree pages - NULLs greater NOT_NULLs and NULL = NULL is TRUE.
 		 * Sure, it's just rule for placing/finding items and no more -
 		 * keytest'll return FALSE for a = 5 for items having 'a' isNULL.
-		 * Look at _bt_compare for how it works.
-		 *				 - vadim 03/23/97
+		 * Look at _bt_compare for how it works. - vadim 03/23/97
 		 *
 		 * if (itup->t_info & INDEX_NULL_MASK) { pfree(itup); continue; }
 		 */
@@ -271,7 +277,8 @@ btbuild(PG_FUNCTION_ARGS)
 		{
 			if (tupleIsAlive || !spool2)
 				_bt_spool(btitem, spool);
-			else /* dead tuples are put into spool2 */
+			else
+/* dead tuples are put into spool2 */
 			{
 				dead_count++;
 				_bt_spool(btitem, spool2);
@@ -288,7 +295,7 @@ btbuild(PG_FUNCTION_ARGS)
 
 	/* okay, all heap tuples are indexed */
 	heap_endscan(hscan);
-	if (spool2 && !dead_count) /* spool2 was found to be unnecessary */
+	if (spool2 && !dead_count)	/* spool2 was found to be unnecessary */
 	{
 		_bt_spooldestroy(spool2);
 		spool2 = NULL;
@@ -296,9 +303,7 @@ btbuild(PG_FUNCTION_ARGS)
 
 #ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
-	{
 		ExecDropTupleTable(tupleTable, true);
-	}
 #endif	 /* OMIT_PARTIAL_INDEX */
 	FreeExprContext(econtext);
 
@@ -322,7 +327,7 @@ btbuild(PG_FUNCTION_ARGS)
 		ShowUsage();
 		ResetUsage();
 	}
-#endif /* BTREE_BUILD_STATS */
+#endif	 /* BTREE_BUILD_STATS */
 
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats
@@ -368,11 +373,11 @@ btbuild(PG_FUNCTION_ARGS)
 Datum
 btinsert(PG_FUNCTION_ARGS)
 {
-	Relation		rel = (Relation) PG_GETARG_POINTER(0);
-	Datum		   *datum = (Datum *) PG_GETARG_POINTER(1);
-	char		   *nulls = (char *) PG_GETARG_POINTER(2);
-	ItemPointer		ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
-	Relation		heapRel = (Relation) PG_GETARG_POINTER(4);
+	Relation	rel = (Relation) PG_GETARG_POINTER(0);
+	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
+	char	   *nulls = (char *) PG_GETARG_POINTER(2);
+	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 	InsertIndexResult res;
 	BTItem		btitem;
 	IndexTuple	itup;
@@ -396,8 +401,8 @@ btinsert(PG_FUNCTION_ARGS)
 Datum
 btgettuple(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc		scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanDirection		dir = (ScanDirection) PG_GETARG_INT32(1);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	RetrieveIndexResult res;
 
 	/*
@@ -408,10 +413,11 @@ btgettuple(PG_FUNCTION_ARGS)
 
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
+
 		/*
 		 * Restore scan position using heap TID returned by previous call
-		 * to btgettuple(). _bt_restscan() re-grabs the read lock on
-		 * the buffer, too.
+		 * to btgettuple(). _bt_restscan() re-grabs the read lock on the
+		 * buffer, too.
 		 */
 		_bt_restscan(scan);
 		res = _bt_next(scan, dir);
@@ -421,8 +427,8 @@ btgettuple(PG_FUNCTION_ARGS)
 
 	/*
 	 * Save heap TID to use it in _bt_restscan.  Then release the read
-	 * lock on the buffer so that we aren't blocking other backends.
-	 * NOTE: we do keep the pin on the buffer!
+	 * lock on the buffer so that we aren't blocking other backends. NOTE:
+	 * we do keep the pin on the buffer!
 	 */
 	if (res)
 	{
@@ -461,11 +467,13 @@ btbeginscan(PG_FUNCTION_ARGS)
 Datum
 btrescan(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED					/* XXX surely it's wrong to ignore this? */
-	bool			fromEnd = PG_GETARG_BOOL(1);
+	bool		fromEnd = PG_GETARG_BOOL(1);
+
 #endif
-	ScanKey			scankey = (ScanKey) PG_GETARG_POINTER(2);
+	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
 	ItemPointer iptr;
 	BTScanOpaque so;
 
@@ -540,7 +548,7 @@ btmovescan(IndexScanDesc scan, Datum v)
 Datum
 btendscan(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	BTScanOpaque so;
 
@@ -578,7 +586,7 @@ btendscan(PG_FUNCTION_ARGS)
 Datum
 btmarkpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	BTScanOpaque so;
 
@@ -610,7 +618,7 @@ btmarkpos(PG_FUNCTION_ARGS)
 Datum
 btrestrpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	BTScanOpaque so;
 
@@ -640,8 +648,8 @@ btrestrpos(PG_FUNCTION_ARGS)
 Datum
 btdelete(PG_FUNCTION_ARGS)
 {
-	Relation		rel = (Relation) PG_GETARG_POINTER(0);
-	ItemPointer		tid = (ItemPointer) PG_GETARG_POINTER(1);
+	Relation	rel = (Relation) PG_GETARG_POINTER(0);
+	ItemPointer tid = (ItemPointer) PG_GETARG_POINTER(1);
 
 	/* adjust any active scans that will be affected by this deletion */
 	_bt_adjscans(rel, tid);
@@ -671,8 +679,8 @@ _bt_restscan(IndexScanDesc scan)
 	BlockNumber blkno;
 
 	/*
-	 * Get back the read lock we were holding on the buffer.
-	 * (We still have a reference-count pin on it, though.)
+	 * Get back the read lock we were holding on the buffer. (We still
+	 * have a reference-count pin on it, though.)
 	 */
 	LockBuffer(buf, BT_READ);
 
@@ -689,13 +697,13 @@ _bt_restscan(IndexScanDesc scan)
 	if (!ItemPointerIsValid(&target))
 	{
 		ItemPointerSetOffsetNumber(current,
-								   OffsetNumberPrev(P_FIRSTDATAKEY(opaque)));
+							   OffsetNumberPrev(P_FIRSTDATAKEY(opaque)));
 		return;
 	}
 
 	/*
-	 * The item we were on may have moved right due to insertions.
-	 * Find it again.
+	 * The item we were on may have moved right due to insertions. Find it
+	 * again.
 	 */
 	for (;;)
 	{
@@ -717,7 +725,8 @@ _bt_restscan(IndexScanDesc scan)
 		}
 
 		/*
-		 * By here, the item we're looking for moved right at least one page
+		 * By here, the item we're looking for moved right at least one
+		 * page
 		 */
 		if (P_RIGHTMOST(opaque))
 			elog(FATAL, "_bt_restscan: my bits moved right off the end of the world!"
@@ -742,14 +751,14 @@ _bt_restore_page(Page page, char *from, int len)
 	Size		itemsz;
 	char	   *end = from + len;
 
-	for ( ;	from < end; )
+	for (; from < end;)
 	{
 		memcpy(&btdata, from, sizeof(BTItemData));
 		itemsz = IndexTupleDSize(btdata.bti_itup) +
-					(sizeof(BTItemData) - sizeof(IndexTupleData));
+			(sizeof(BTItemData) - sizeof(IndexTupleData));
 		itemsz = MAXALIGN(itemsz);
 		if (PageAddItem(page, (Item) from, itemsz,
-				FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
+					  FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
 			elog(STOP, "_bt_restore_page: can't add item to page");
 		from += itemsz;
 	}
@@ -758,20 +767,20 @@ _bt_restore_page(Page page, char *from, int len)
 static void
 btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
-	xl_btree_delete	   *xlrec;
-	Relation			reln;
-	Buffer				buffer;
-	Page				page;
+	xl_btree_delete *xlrec;
+	Relation	reln;
+	Buffer		buffer;
+	Page		page;
 
 	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
 		return;
 
-	xlrec = (xl_btree_delete*) XLogRecGetData(record);
+	xlrec = (xl_btree_delete *) XLogRecGetData(record);
 	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->target.node);
 	if (!RelationIsValid(reln))
 		return;
-	buffer = XLogReadBuffer(false, reln, 
-				ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+	buffer = XLogReadBuffer(false, reln,
+						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
 		elog(STOP, "btree_delete_redo: block unfound");
 	page = (Page) BufferGetPage(buffer);
@@ -796,21 +805,21 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 static void
 btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
-	xl_btree_insert	   *xlrec;
-	Relation			reln;
-	Buffer				buffer;
-	Page				page;
-	BTPageOpaque		pageop;
+	xl_btree_insert *xlrec;
+	Relation	reln;
+	Buffer		buffer;
+	Page		page;
+	BTPageOpaque pageop;
 
 	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
 		return;
 
-	xlrec = (xl_btree_insert*) XLogRecGetData(record);
+	xlrec = (xl_btree_insert *) XLogRecGetData(record);
 	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->target.node);
 	if (!RelationIsValid(reln))
 		return;
-	buffer = XLogReadBuffer(false, reln, 
-				ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+	buffer = XLogReadBuffer(false, reln,
+						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
 		elog(STOP, "btree_insert_%sdo: block unfound", (redo) ? "re" : "un");
 	page = (Page) BufferGetPage(buffer);
@@ -825,11 +834,11 @@ btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 			UnlockAndReleaseBuffer(buffer);
 			return;
 		}
-		if (PageAddItem(page, (Item)((char*)xlrec + SizeOfBtreeInsert),
-					record->xl_len - SizeOfBtreeInsert,
-					ItemPointerGetOffsetNumber(&(xlrec->target.tid)),	
-					LP_USED) == InvalidOffsetNumber)
-				elog(STOP, "btree_insert_redo: failed to add item");
+		if (PageAddItem(page, (Item) ((char *) xlrec + SizeOfBtreeInsert),
+						record->xl_len - SizeOfBtreeInsert,
+						ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
+						LP_USED) == InvalidOffsetNumber)
+			elog(STOP, "btree_insert_redo: failed to add item");
 
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
@@ -840,7 +849,7 @@ btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		if (XLByteLT(PageGetLSN(page), lsn))
 			elog(STOP, "btree_insert_undo: bad page LSN");
 
-		if (! P_ISLEAF(pageop))
+		if (!P_ISLEAF(pageop))
 		{
 			UnlockAndReleaseBuffer(buffer);
 			return;
@@ -855,14 +864,14 @@ btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 static void
 btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 {
-	xl_btree_split	   *xlrec = (xl_btree_split*) XLogRecGetData(record);
-	Relation			reln;
-	BlockNumber			blkno;
-	Buffer				buffer;
-	Page				page;
-	BTPageOpaque		pageop;
-	char			   *op = (redo) ? "redo" : "undo";
-	bool				isleaf = (record->xl_info & XLOG_BTREE_LEAF);
+	xl_btree_split *xlrec = (xl_btree_split *) XLogRecGetData(record);
+	Relation	reln;
+	BlockNumber blkno;
+	Buffer		buffer;
+	Page		page;
+	BTPageOpaque pageop;
+	char	   *op = (redo) ? "redo" : "undo";
+	bool		isleaf = (record->xl_info & XLOG_BTREE_LEAF);
 
 	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->target.node);
 	if (!RelationIsValid(reln))
@@ -870,7 +879,7 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 
 	/* Left (original) sibling */
 	blkno = (onleft) ? ItemPointerGetBlockNumber(&(xlrec->target.tid)) :
-					BlockIdGetBlockNumber(&(xlrec->otherblk));
+		BlockIdGetBlockNumber(&(xlrec->otherblk));
 	buffer = XLogReadBuffer(false, reln, blkno);
 	if (!BufferIsValid(buffer))
 		elog(STOP, "btree_split_%s: lost left sibling", op);
@@ -892,13 +901,14 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 			pageop->btpo_next = ItemPointerGetBlockNumber(&(xlrec->target.tid));
 		pageop->btpo_flags = (isleaf) ? BTP_LEAF : 0;
 
-		_bt_restore_page(page, (char*)xlrec + SizeOfBtreeSplit, xlrec->leftlen);
+		_bt_restore_page(page, (char *) xlrec + SizeOfBtreeSplit, xlrec->leftlen);
 
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
 		UnlockAndWriteBuffer(buffer);
 	}
-	else	/* undo */
+	else
+/* undo */
 	{
 		if (XLByteLT(PageGetLSN(page), lsn))
 			elog(STOP, "btree_split_undo: bad left sibling LSN");
@@ -906,8 +916,8 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/* Right (new) sibling */
-	blkno = (onleft) ? BlockIdGetBlockNumber(&(xlrec->otherblk)) : 
-					ItemPointerGetBlockNumber(&(xlrec->target.tid));
+	blkno = (onleft) ? BlockIdGetBlockNumber(&(xlrec->otherblk)) :
+		ItemPointerGetBlockNumber(&(xlrec->target.tid));
 	buffer = XLogReadBuffer((redo) ? true : false, reln, blkno);
 	if (!BufferIsValid(buffer))
 		elog(STOP, "btree_split_%s: lost right sibling", op);
@@ -922,21 +932,22 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 	if (redo)
 	{
 		pageop->btpo_parent = BlockIdGetBlockNumber(&(xlrec->parentblk));
-		pageop->btpo_prev = (onleft) ? 
-				ItemPointerGetBlockNumber(&(xlrec->target.tid)) :
-				BlockIdGetBlockNumber(&(xlrec->otherblk));
+		pageop->btpo_prev = (onleft) ?
+			ItemPointerGetBlockNumber(&(xlrec->target.tid)) :
+			BlockIdGetBlockNumber(&(xlrec->otherblk));
 		pageop->btpo_next = BlockIdGetBlockNumber(&(xlrec->rightblk));
 		pageop->btpo_flags = (isleaf) ? BTP_LEAF : 0;
 
 		_bt_restore_page(page,
-				(char*)xlrec + SizeOfBtreeSplit + xlrec->leftlen,
-				record->xl_len - SizeOfBtreeSplit - xlrec->leftlen);
+					  (char *) xlrec + SizeOfBtreeSplit + xlrec->leftlen,
+					 record->xl_len - SizeOfBtreeSplit - xlrec->leftlen);
 
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
 		UnlockAndWriteBuffer(buffer);
 	}
-	else	/* undo */
+	else
+/* undo */
 	{
 		if (XLByteLT(PageGetLSN(page), lsn))
 			elog(STOP, "btree_split_undo: bad right sibling LSN");
@@ -965,9 +976,9 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 		return;
 	}
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-	pageop->btpo_prev = (onleft) ? 
-			BlockIdGetBlockNumber(&(xlrec->otherblk)) :
-			ItemPointerGetBlockNumber(&(xlrec->target.tid));
+	pageop->btpo_prev = (onleft) ?
+		BlockIdGetBlockNumber(&(xlrec->otherblk)) :
+		ItemPointerGetBlockNumber(&(xlrec->target.tid));
 
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);
@@ -977,14 +988,14 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 static void
 btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
-	xl_btree_newroot   *xlrec = (xl_btree_newroot*) XLogRecGetData(record);
-	Relation			reln;
-	Buffer				buffer;
-	Page				page;
-	BTPageOpaque		pageop;
-	Buffer				metabuf;
-	Page				metapg;
-	BTMetaPageData		md;
+	xl_btree_newroot *xlrec = (xl_btree_newroot *) XLogRecGetData(record);
+	Relation	reln;
+	Buffer		buffer;
+	Page		page;
+	BTPageOpaque pageop;
+	Buffer		metabuf;
+	Page		metapg;
+	BTMetaPageData md;
 
 	if (!redo)
 		return;
@@ -1011,8 +1022,8 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (record->xl_len > SizeOfBtreeNewroot)
 		_bt_restore_page(page,
-				(char*)xlrec + SizeOfBtreeNewroot,
-				record->xl_len - SizeOfBtreeNewroot);
+						 (char *) xlrec + SizeOfBtreeNewroot,
+						 record->xl_len - SizeOfBtreeNewroot);
 
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);
@@ -1037,7 +1048,7 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 void
 btree_redo(XLogRecPtr lsn, XLogRecord *record)
 {
-	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	info &= ~XLOG_BTREE_LEAF;
 	if (info == XLOG_BTREE_DELETE)
@@ -1045,9 +1056,9 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 	else if (info == XLOG_BTREE_INSERT)
 		btree_xlog_insert(true, lsn, record);
 	else if (info == XLOG_BTREE_SPLIT)
-		btree_xlog_split(true, false, lsn, record);	/* new item on the right */
+		btree_xlog_split(true, false, lsn, record);		/* new item on the right */
 	else if (info == XLOG_BTREE_SPLEFT)
-		btree_xlog_split(true, true, lsn, record);	/* new item on the left */
+		btree_xlog_split(true, true, lsn, record);		/* new item on the left */
 	else if (info == XLOG_BTREE_NEWROOT)
 		btree_xlog_newroot(true, lsn, record);
 	else
@@ -1057,7 +1068,7 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 void
 btree_undo(XLogRecPtr lsn, XLogRecord *record)
 {
-	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	info &= ~XLOG_BTREE_LEAF;
 	if (info == XLOG_BTREE_DELETE)
@@ -1065,9 +1076,9 @@ btree_undo(XLogRecPtr lsn, XLogRecord *record)
 	else if (info == XLOG_BTREE_INSERT)
 		btree_xlog_insert(false, lsn, record);
 	else if (info == XLOG_BTREE_SPLIT)
-		btree_xlog_split(false, false, lsn, record);/* new item on the right */
+		btree_xlog_split(false, false, lsn, record);	/* new item on the right */
 	else if (info == XLOG_BTREE_SPLEFT)
-		btree_xlog_split(false, true, lsn, record);	/* new item on the left */
+		btree_xlog_split(false, true, lsn, record);		/* new item on the left */
 	else if (info == XLOG_BTREE_NEWROOT)
 		btree_xlog_newroot(false, lsn, record);
 	else
@@ -1078,45 +1089,49 @@ static void
 out_target(char *buf, xl_btreetid *target)
 {
 	sprintf(buf + strlen(buf), "node %u/%u; tid %u/%u",
-		target->node.tblNode, target->node.relNode,
-		ItemPointerGetBlockNumber(&(target->tid)), 
-		ItemPointerGetOffsetNumber(&(target->tid)));
+			target->node.tblNode, target->node.relNode,
+			ItemPointerGetBlockNumber(&(target->tid)),
+			ItemPointerGetOffsetNumber(&(target->tid)));
 }
- 
+
 void
-btree_desc(char *buf, uint8 xl_info, char* rec)
+btree_desc(char *buf, uint8 xl_info, char *rec)
 {
-	uint8	info = xl_info & ~XLR_INFO_MASK;
+	uint8		info = xl_info & ~XLR_INFO_MASK;
 
 	info &= ~XLOG_BTREE_LEAF;
 	if (info == XLOG_BTREE_INSERT)
 	{
-		xl_btree_insert	*xlrec = (xl_btree_insert*) rec;
+		xl_btree_insert *xlrec = (xl_btree_insert *) rec;
+
 		strcat(buf, "insert: ");
 		out_target(buf, &(xlrec->target));
 	}
 	else if (info == XLOG_BTREE_DELETE)
 	{
-		xl_btree_delete	*xlrec = (xl_btree_delete*) rec;
+		xl_btree_delete *xlrec = (xl_btree_delete *) rec;
+
 		strcat(buf, "delete: ");
 		out_target(buf, &(xlrec->target));
 	}
 	else if (info == XLOG_BTREE_SPLIT || info == XLOG_BTREE_SPLEFT)
 	{
-		xl_btree_split	*xlrec = (xl_btree_split*) rec;
-		sprintf(buf + strlen(buf), "split(%s): ", 
-			(info == XLOG_BTREE_SPLIT) ? "right" : "left");
+		xl_btree_split *xlrec = (xl_btree_split *) rec;
+
+		sprintf(buf + strlen(buf), "split(%s): ",
+				(info == XLOG_BTREE_SPLIT) ? "right" : "left");
 		out_target(buf, &(xlrec->target));
 		sprintf(buf + strlen(buf), "; oth %u; rgh %u",
-			BlockIdGetBlockNumber(&xlrec->otherblk),
-			BlockIdGetBlockNumber(&xlrec->rightblk));
+				BlockIdGetBlockNumber(&xlrec->otherblk),
+				BlockIdGetBlockNumber(&xlrec->rightblk));
 	}
 	else if (info == XLOG_BTREE_NEWROOT)
 	{
-		xl_btree_newroot	*xlrec = (xl_btree_newroot*) rec;
+		xl_btree_newroot *xlrec = (xl_btree_newroot *) rec;
+
 		sprintf(buf + strlen(buf), "root: node %u/%u; blk %u",
-			xlrec->node.tblNode, xlrec->node.relNode,
-			BlockIdGetBlockNumber(&xlrec->rootblk));
+				xlrec->node.tblNode, xlrec->node.relNode,
+				BlockIdGetBlockNumber(&xlrec->rootblk));
 	}
 	else
 		strcat(buf, "UNKNOWN");

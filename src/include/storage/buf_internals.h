@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.47 2001/01/24 19:43:27 momjian Exp $
+ * $Id: buf_internals.h,v 1.48 2001/03/22 04:01:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ typedef bits16 BufFlags;
 
 typedef struct buftag
 {
-	RelFileNode	rnode;
+	RelFileNode rnode;
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 } BufferTag;
 
@@ -69,7 +69,7 @@ typedef struct bufblindid
 {
 	char		dbname[NAMEDATALEN];	/* name of db in which buf belongs */
 	char		relname[NAMEDATALEN];	/* name of reln */
-}			BufferBlindId;
+} BufferBlindId;
 
 /*
  *	BufferDesc -- shared buffer cache metadata for a single
@@ -96,7 +96,7 @@ typedef struct sbufdesc
 	BufFlags	flags;			/* see bit definitions above */
 	unsigned	refcount;		/* # of times buffer is pinned */
 
-	slock_t		io_in_progress_lock; /* to block for I/O to complete */
+	slock_t		io_in_progress_lock;	/* to block for I/O to complete */
 	slock_t		cntx_lock;		/* to lock access to page context */
 
 	unsigned	r_locks;		/* # of shared locks */
@@ -108,12 +108,12 @@ typedef struct sbufdesc
 	BufferBlindId blind;		/* was used to support blind write */
 
 	/*
-	 * When we can't delete item from page (someone else has buffer pinned)
-	 * we mark buffer for cleanup by specifying appropriate for buffer
-	 * content cleanup function. Buffer will be cleaned up from release
-	 * buffer functions.
+	 * When we can't delete item from page (someone else has buffer
+	 * pinned) we mark buffer for cleanup by specifying appropriate for
+	 * buffer content cleanup function. Buffer will be cleaned up from
+	 * release buffer functions.
 	 */
-	void		(*CleanupFunc)(Buffer);
+	void		(*CleanupFunc) (Buffer);
 } BufferDesc;
 
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)

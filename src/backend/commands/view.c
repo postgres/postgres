@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.53 2001/01/24 19:42:53 momjian Exp $
+ *	$Id: view.c,v 1.54 2001/03/22 03:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ DefineVirtualRelation(char *relname, List *tlist)
 		TargetEntry *entry = lfirst(t);
 		Resdom	   *res = entry->resdom;
 
-		if (! res->resjunk)
+		if (!res->resjunk)
 		{
 			char	   *resname = res->resname;
 			char	   *restypename = typeidTypeName(res->restype);
@@ -118,9 +118,9 @@ MakeRetrieveViewRuleName(char *viewName)
 	snprintf(buf, buflen, "_RET%s", viewName);
 	/* clip to less than NAMEDATALEN bytes, if necessary */
 #ifdef MULTIBYTE
-	maxlen = pg_mbcliplen(buf, strlen(buf), NAMEDATALEN-1);
+	maxlen = pg_mbcliplen(buf, strlen(buf), NAMEDATALEN - 1);
 #else
-	maxlen = NAMEDATALEN-1;
+	maxlen = NAMEDATALEN - 1;
 #endif
 	if (maxlen < buflen)
 		buf[maxlen] = '\0';
@@ -211,12 +211,12 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 			   *rt_entry2;
 
 	/*
-	 * Make a copy of the given parsetree.  It's not so much that we
-	 * don't want to scribble on our input, it's that the parser has
-	 * a bad habit of outputting multiple links to the same subtree
-	 * for constructs like BETWEEN, and we mustn't have OffsetVarNodes
-	 * increment the varno of a Var node twice.  copyObject will expand
-	 * any multiply-referenced subtree into multiple copies.
+	 * Make a copy of the given parsetree.	It's not so much that we don't
+	 * want to scribble on our input, it's that the parser has a bad habit
+	 * of outputting multiple links to the same subtree for constructs
+	 * like BETWEEN, and we mustn't have OffsetVarNodes increment the
+	 * varno of a Var node twice.  copyObject will expand any
+	 * multiply-referenced subtree into multiple copies.
 	 */
 	viewParse = (Query *) copyObject(viewParse);
 
@@ -261,6 +261,7 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 void
 DefineView(char *viewName, Query *viewParse)
 {
+
 	/*
 	 * Create the "view" relation NOTE: if it already exists, the xact
 	 * will be aborted.
@@ -295,9 +296,10 @@ DefineView(char *viewName, Query *viewParse)
 void
 RemoveView(char *viewName)
 {
+
 	/*
-	 * We just have to drop the relation; the associated rules will
-	 * be cleaned up automatically.
+	 * We just have to drop the relation; the associated rules will be
+	 * cleaned up automatically.
 	 */
 	heap_drop_with_catalog(viewName, allowSystemTableMods);
 }

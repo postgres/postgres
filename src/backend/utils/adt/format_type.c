@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.9 2001/02/05 17:35:04 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.10 2001/03/22 03:59:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,10 @@ static char *format_type_internal(Oid type_oid, int32 typemod);
 
 
 static char *
-psnprintf(size_t len, const char * fmt, ...)
+psnprintf(size_t len, const char *fmt,...)
 {
-	va_list ap;
-	char * buf;
+	va_list		ap;
+	char	   *buf;
 
 	buf = palloc(len);
 
@@ -136,7 +136,9 @@ format_type_internal(Oid type_oid, int32 typemod)
 			break;
 
 		case CHAROID:
-			/* This char type is the single-byte version. You have to
+
+			/*
+			 * This char type is the single-byte version. You have to
 			 * double-quote it to get at it in the parser.
 			 */
 			buf = pstrdup("\"char\"");
@@ -252,7 +254,7 @@ type_maximum_size(Oid type_oid, int32 typemod)
 			/* precision (ie, max # of digits) is in upper bits of typmod */
 			if (typemod > VARHDRSZ)
 			{
-				int		precision = ((typemod - VARHDRSZ) >> 16) & 0xffff;
+				int			precision = ((typemod - VARHDRSZ) >> 16) & 0xffff;
 
 				/* Numeric stores 2 decimal digits/byte, plus header */
 				return (precision + 1) / 2 + NUMERIC_HDRSZ;
@@ -262,7 +264,7 @@ type_maximum_size(Oid type_oid, int32 typemod)
 		case VARBITOID:
 		case ZPBITOID:
 			/* typemod is the (max) number of bits */
-			return (typemod + (BITS_PER_BYTE-1)) / BITS_PER_BYTE
+			return (typemod + (BITS_PER_BYTE - 1)) / BITS_PER_BYTE
 				+ 2 * sizeof(int32);
 	}
 
@@ -300,10 +302,10 @@ oidvectortypes(PG_FUNCTION_ARGS)
 	result = palloc(total);
 	result[0] = '\0';
 	left = total - 1;
-					
+
 	for (num = 0; num < numargs; num++)
 	{
-		char * typename = format_type_internal(oidArray[num], -1);
+		char	   *typename = format_type_internal(oidArray[num], -1);
 
 		if (left < strlen(typename) + 2)
 		{

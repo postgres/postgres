@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.57 2001/01/24 19:42:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.58 2001/03/22 03:59:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
 
 	*typOutput = pt->typoutput;
 	*typElem = pt->typelem;
-	*typIsVarlena = (! pt->typbyval) && (pt->typlen == -1);
+	*typIsVarlena = (!pt->typbyval) && (pt->typlen == -1);
 	ReleaseSysCache(typeTuple);
 	return OidIsValid(*typOutput);
 }
@@ -200,9 +200,10 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 			continue;
 		if (OidIsValid(thisState->typoutput))
 		{
+
 			/*
-			 * If we have a toasted datum, forcibly detoast it here to avoid
-			 * memory leakage inside the type's output routine.
+			 * If we have a toasted datum, forcibly detoast it here to
+			 * avoid memory leakage inside the type's output routine.
 			 */
 			if (thisState->typisvarlena)
 				attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
@@ -210,9 +211,9 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 				attr = origattr;
 
 			outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
-										attr,
-										ObjectIdGetDatum(thisState->typelem),
-										Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
+													  attr,
+									ObjectIdGetDatum(thisState->typelem),
+						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr));
 
@@ -308,9 +309,10 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		if (getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
 							  &typoutput, &typelem, &typisvarlena))
 		{
+
 			/*
-			 * If we have a toasted datum, forcibly detoast it here to avoid
-			 * memory leakage inside the type's output routine.
+			 * If we have a toasted datum, forcibly detoast it here to
+			 * avoid memory leakage inside the type's output routine.
 			 */
 			if (typisvarlena)
 				attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
@@ -318,9 +320,9 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 				attr = origattr;
 
 			value = DatumGetCString(OidFunctionCall3(typoutput,
-									attr,
-									ObjectIdGetDatum(typelem),
-									Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
+													 attr,
+											   ObjectIdGetDatum(typelem),
+						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 
 			printatt((unsigned) i + 1, typeinfo->attrs[i], value);
 
@@ -405,6 +407,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		/* send # of bytes, and opaque data */
 		if (thisState->typisvarlena)
 		{
+
 			/*
 			 * If we have a toasted datum, must detoast before sending.
 			 */

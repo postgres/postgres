@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.55 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.56 2001/03/22 03:59:20 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -263,7 +263,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	values[i++] = NameGetDatum(&oname);
 	values[i++] = Int32GetDatum(GetUserId());
 	values[i++] = UInt16GetDatum(0);
-	values[i++] = CharGetDatum('b'); /* assume it's binary */
+	values[i++] = CharGetDatum('b');	/* assume it's binary */
 	values[i++] = BoolGetDatum(false);
 	values[i++] = BoolGetDatum(false);
 	values[i++] = ObjectIdGetDatum(leftObjectId);		/* <-- left oid */
@@ -595,7 +595,7 @@ OperatorDef(char *operatorName,
 	 */
 	if (restrictionName)
 	{							/* optional */
-		Oid		restOid;
+		Oid			restOid;
 
 		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		typeId[0] = OIDOID;		/* operator OID */
@@ -623,7 +623,7 @@ OperatorDef(char *operatorName,
 	 */
 	if (joinName)
 	{							/* optional */
-		Oid		joinOid;
+		Oid			joinOid;
 
 		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		typeId[0] = OIDOID;		/* operator OID */
@@ -745,7 +745,7 @@ OperatorDef(char *operatorName,
 											  otherRightTypeName);
 				if (!OidIsValid(other_oid))
 					elog(ERROR,
-						 "OperatorDef: can't create operator shell \"%s\"",
+					   "OperatorDef: can't create operator shell \"%s\"",
 						 name[j]);
 				values[i++] = ObjectIdGetDatum(other_oid);
 			}

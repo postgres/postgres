@@ -1,6 +1,6 @@
 /**********************************************************************
  * pltcl.c		- PostgreSQL support for Tcl as
- *			  	  procedural language (PL)
+ *				  procedural language (PL)
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.33 2001/03/07 16:18:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.34 2001/03/22 04:01:42 momjian Exp $
  *
  **********************************************************************/
 
@@ -116,8 +116,8 @@ static void pltcl_init_load_unknown(Tcl_Interp *interp);
 
 #endif	 /* PLTCL_UNKNOWN_SUPPORT */
 
-Datum pltcl_call_handler(PG_FUNCTION_ARGS);
-Datum pltclu_call_handler(PG_FUNCTION_ARGS);
+Datum		pltcl_call_handler(PG_FUNCTION_ARGS);
+Datum		pltclu_call_handler(PG_FUNCTION_ARGS);
 
 static Datum pltcl_func_handler(PG_FUNCTION_ARGS);
 
@@ -128,9 +128,9 @@ static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 static int pltcl_quote(ClientData cdata, Tcl_Interp *interp,
 			int argc, char *argv[]);
 static int pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
-			int argc, char *argv[]);
+				int argc, char *argv[]);
 static int pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
-			int argc, char *argv[]);
+				 int argc, char *argv[]);
 
 static int pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			   int argc, char *argv[]);
@@ -178,7 +178,7 @@ pltcl_init_all(void)
 		 Tcl_CreateSlave(pltcl_hold_interp, "norm", 0)) == NULL)
 	{
 		elog(ERROR,
-			 "pltcl: internal error - cannot create 'normal' interpreter");
+		   "pltcl: internal error - cannot create 'normal' interpreter");
 	}
 	pltcl_init_interp(pltcl_norm_interp);
 
@@ -360,7 +360,9 @@ pltcl_call_handler(PG_FUNCTION_ARGS)
 	{
 		pltcl_current_fcinfo = NULL;
 		retval = PointerGetDatum(pltcl_trigger_handler(fcinfo));
-	} else {
+	}
+	else
+	{
 		pltcl_current_fcinfo = fcinfo;
 		retval = pltcl_func_handler(fcinfo);
 	}
@@ -422,17 +424,17 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		 *
 		 * Then we load the procedure into the safe interpreter.
 		 ************************************************************/
-		HeapTuple		procTup;
-		HeapTuple		langTup;
-		HeapTuple		typeTup;
-		Form_pg_proc	procStruct;
+		HeapTuple	procTup;
+		HeapTuple	langTup;
+		HeapTuple	typeTup;
+		Form_pg_proc procStruct;
 		Form_pg_language langStruct;
-		Form_pg_type	typeStruct;
-		Tcl_DString		proc_internal_def;
-		Tcl_DString		proc_internal_body;
-		char			proc_internal_args[4096];
-		char		   *proc_source;
-		char			buf[512];
+		Form_pg_type typeStruct;
+		Tcl_DString proc_internal_def;
+		Tcl_DString proc_internal_body;
+		char		proc_internal_args[4096];
+		char	   *proc_source;
+		char		buf[512];
 
 		/************************************************************
 		 * Allocate a new procedure description block
@@ -584,7 +586,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 			Tcl_DStringAppend(&proc_internal_body, buf, -1);
 		}
 		proc_source = DatumGetCString(DirectFunctionCall1(textout,
-									PointerGetDatum(&procStruct->prosrc)));
+								  PointerGetDatum(&procStruct->prosrc)));
 		Tcl_DStringAppend(&proc_internal_body, proc_source, -1);
 		pfree(proc_source);
 		Tcl_DStringAppendElement(&proc_internal_def,
@@ -622,9 +624,9 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
 
 		if (prodesc->lanpltrusted)
-		    interp = pltcl_safe_interp;
+			interp = pltcl_safe_interp;
 		else
-		    interp = pltcl_norm_interp;
+			interp = pltcl_norm_interp;
 	}
 
 	/************************************************************
@@ -662,7 +664,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 			 **************************************************/
 			TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
 
-			Assert(slot != NULL && ! fcinfo->argnull[i]);
+			Assert(slot != NULL && !fcinfo->argnull[i]);
 			Tcl_DStringInit(&list_tmp);
 			pltcl_build_tuple_argument(slot->val,
 									   slot->ttc_tupleDescriptor,
@@ -678,17 +680,15 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 			 * of their external representation
 			 **************************************************/
 			if (fcinfo->argnull[i])
-			{
 				Tcl_DStringAppendElement(&tcl_cmd, "");
-			}
 			else
 			{
 				char	   *tmp;
 
 				tmp = DatumGetCString(FunctionCall3(&prodesc->arg_out_func[i],
-									  fcinfo->arg[i],
-									  ObjectIdGetDatum(prodesc->arg_out_elem[i]),
-									  Int32GetDatum(prodesc->arg_out_len[i])));
+													fcinfo->arg[i],
+							  ObjectIdGetDatum(prodesc->arg_out_elem[i]),
+								Int32GetDatum(prodesc->arg_out_len[i])));
 				Tcl_DStringAppendElement(&tcl_cmd, tmp);
 				pfree(tmp);
 			}
@@ -902,7 +902,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 						  "unset i v\n\n", -1);
 
 		proc_source = DatumGetCString(DirectFunctionCall1(textout,
-									PointerGetDatum(&procStruct->prosrc)));
+								  PointerGetDatum(&procStruct->prosrc)));
 		Tcl_DStringAppend(&proc_internal_body, proc_source, -1);
 		pfree(proc_source);
 		Tcl_DStringAppendElement(&proc_internal_def,
@@ -979,7 +979,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 
 	/* The oid of the trigger relation for argument TG_relid */
 	stroid = DatumGetCString(DirectFunctionCall1(oidout,
-							 ObjectIdGetDatum(trigdata->tg_relation->rd_id)));
+						ObjectIdGetDatum(trigdata->tg_relation->rd_id)));
 	Tcl_DStringAppendElement(&tcl_cmd, stroid);
 	pfree(stroid);
 
@@ -1208,7 +1208,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 			FunctionCall3(&finfo,
 						  CStringGetDatum(ret_values[i++]),
 						  ObjectIdGetDatum(typelem),
-						  Int32GetDatum(tupdesc->attrs[attnum-1]->atttypmod));
+				   Int32GetDatum(tupdesc->attrs[attnum - 1]->atttypmod));
 	}
 
 	rettup = SPI_modifytuple(trigdata->tg_relation, rettup, tupdesc->natts,
@@ -1352,9 +1352,9 @@ pltcl_quote(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
-			int argc, char *argv[])
+				int argc, char *argv[])
 {
-	int		argno;
+	int			argno;
 	FunctionCallInfo fcinfo = pltcl_current_fcinfo;
 
 	/************************************************************
@@ -1371,7 +1371,7 @@ pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	if (fcinfo == NULL)
 	{
-		Tcl_SetResult(interp, "argisnull cannot be used in triggers", 
+		Tcl_SetResult(interp, "argisnull cannot be used in triggers",
 					  TCL_VOLATILE);
 		return TCL_ERROR;
 	}
@@ -1409,9 +1409,9 @@ pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
-			int argc, char *argv[])
+				 int argc, char *argv[])
 {
-	int		argno;
+	int			argno;
 	FunctionCallInfo fcinfo = pltcl_current_fcinfo;
 
 	/************************************************************
@@ -1428,7 +1428,7 @@ pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	if (fcinfo == NULL)
 	{
-		Tcl_SetResult(interp, "return_null cannot be used in triggers", 
+		Tcl_SetResult(interp, "return_null cannot be used in triggers",
 					  TCL_VOLATILE);
 		return TCL_ERROR;
 	}
@@ -1851,9 +1851,9 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 * the key to the caller
 	 ************************************************************/
 	if (interp == pltcl_norm_interp)
-	    query_hash = pltcl_norm_query_hash;
+		query_hash = pltcl_norm_query_hash;
 	else
-	    query_hash = pltcl_safe_query_hash;
+		query_hash = pltcl_safe_query_hash;
 
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 	hashent = Tcl_CreateHashEntry(query_hash, qdesc->qname, &hashnew);
@@ -2335,9 +2335,9 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 		if (!isnull && OidIsValid(typoutput))
 		{
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
-										attr,
-										ObjectIdGetDatum(typelem),
-										Int32GetDatum(tupdesc->attrs[i]->attlen)));
+														 attr,
+											   ObjectIdGetDatum(typelem),
+							  Int32GetDatum(tupdesc->attrs[i]->attlen)));
 			Tcl_SetVar2(interp, *arrptr, *nameptr, outputstr, 0);
 			pfree(outputstr);
 		}
@@ -2405,9 +2405,9 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 		if (!isnull && OidIsValid(typoutput))
 		{
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
-										attr,
-										ObjectIdGetDatum(typelem),
-										Int32GetDatum(tupdesc->attrs[i]->attlen)));
+														 attr,
+											   ObjectIdGetDatum(typelem),
+							  Int32GetDatum(tupdesc->attrs[i]->attlen)));
 			Tcl_DStringAppendElement(retval, attname);
 			Tcl_DStringAppendElement(retval, outputstr);
 			pfree(outputstr);

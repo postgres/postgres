@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.60 2001/03/07 21:20:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.61 2001/03/22 03:59:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,12 +68,12 @@ static InsertIndexResult rtdoinsert(Relation r, IndexTuple itup,
 static void rttighten(Relation r, RTSTACK *stk, Datum datum, int att_size,
 		  RTSTATE *rtstate);
 static InsertIndexResult rtdosplit(Relation r, Buffer buffer, RTSTACK *stack,
-		IndexTuple itup, RTSTATE *rtstate);
+		  IndexTuple itup, RTSTATE *rtstate);
 static void rtintinsert(Relation r, RTSTACK *stk, IndexTuple ltup,
 			IndexTuple rtup, RTSTATE *rtstate);
 static void rtnewroot(Relation r, IndexTuple lt, IndexTuple rt);
 static void rtpicksplit(Relation r, Page page, SPLITVEC *v, IndexTuple itup,
-		  RTSTATE *rtstate);
+			RTSTATE *rtstate);
 static void RTInitBuffer(Buffer b, uint32 f);
 static OffsetNumber choose(Relation r, Page p, IndexTuple it,
 	   RTSTATE *rtstate);
@@ -84,12 +84,14 @@ static void initRtstate(RTSTATE *rtstate, Relation index);
 Datum
 rtbuild(PG_FUNCTION_ARGS)
 {
-	Relation		heap = (Relation) PG_GETARG_POINTER(0);
-	Relation		index = (Relation) PG_GETARG_POINTER(1);
-	IndexInfo	   *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
-	Node		   *oldPred = (Node *) PG_GETARG_POINTER(3);
+	Relation	heap = (Relation) PG_GETARG_POINTER(0);
+	Relation	index = (Relation) PG_GETARG_POINTER(1);
+	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
+	Node	   *oldPred = (Node *) PG_GETARG_POINTER(3);
+
 #ifdef NOT_USED
-	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
+	IndexStrategy istrat = (IndexStrategy) PG_GETARG_POINTER(4);
+
 #endif
 	HeapScanDesc hscan;
 	HeapTuple	htup;
@@ -101,9 +103,11 @@ rtbuild(PG_FUNCTION_ARGS)
 	int			nhtups,
 				nitups;
 	Node	   *pred = indexInfo->ii_Predicate;
+
 #ifndef OMIT_PARTIAL_INDEX
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
+
 #endif
 	ExprContext *econtext;
 	InsertIndexResult res = NULL;
@@ -171,6 +175,7 @@ rtbuild(PG_FUNCTION_ARGS)
 		nhtups++;
 
 #ifndef OMIT_PARTIAL_INDEX
+
 		/*
 		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
 		 * this tuple if it was already in the existing partial index
@@ -232,9 +237,7 @@ rtbuild(PG_FUNCTION_ARGS)
 
 #ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
-	{
 		ExecDropTupleTable(tupleTable, true);
-	}
 #endif	 /* OMIT_PARTIAL_INDEX */
 	FreeExprContext(econtext);
 
@@ -278,12 +281,14 @@ rtbuild(PG_FUNCTION_ARGS)
 Datum
 rtinsert(PG_FUNCTION_ARGS)
 {
-	Relation		r = (Relation) PG_GETARG_POINTER(0);
-	Datum		   *datum = (Datum *) PG_GETARG_POINTER(1);
-	char		   *nulls = (char *) PG_GETARG_POINTER(2);
-	ItemPointer		ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+	Relation	r = (Relation) PG_GETARG_POINTER(0);
+	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
+	char	   *nulls = (char *) PG_GETARG_POINTER(2);
+	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+
 #ifdef NOT_USED
-	Relation		heapRel = (Relation) PG_GETARG_POINTER(4);
+	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
+
 #endif
 	InsertIndexResult res;
 	IndexTuple	itup;
@@ -412,7 +417,7 @@ rttighten(Relation r,
 	p = BufferGetPage(b);
 
 	oldud = IndexTupleGetDatum(PageGetItem(p,
-										   PageGetItemId(p, stk->rts_child)));
+									  PageGetItemId(p, stk->rts_child)));
 
 	FunctionCall2(&rtstate->sizeFn, oldud,
 				  PointerGetDatum(&old_size));
@@ -564,7 +569,7 @@ rtdosplit(Relation r,
 	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
 
 	/* now insert the new index tuple */
-	if (*spl_left == maxoff+1)
+	if (*spl_left == maxoff + 1)
 	{
 		if (PageAddItem(left, (Item) itup, IndexTupleSize(itup),
 						leftoff, LP_USED) == InvalidOffsetNumber)
@@ -576,7 +581,7 @@ rtdosplit(Relation r,
 	}
 	else
 	{
-		Assert(*spl_right == maxoff+1);
+		Assert(*spl_right == maxoff + 1);
 		if (PageAddItem(right, (Item) itup, IndexTupleSize(itup),
 						rightoff, LP_USED) == InvalidOffsetNumber)
 			elog(ERROR, "rtdosplit: failed to add index item to %s",
@@ -665,10 +670,10 @@ rtintinsert(Relation r,
 	old = (IndexTuple) PageGetItem(p, PageGetItemId(p, stk->rts_child));
 
 	/*
-	 * This is a hack.	Right now, we force rtree internal keys to be constant
-	 * size. To fix this, need delete the old key and add both left and
-	 * right for the two new pages.  The insertion of left may force a
-	 * split if the new left key is bigger than the old key.
+	 * This is a hack.	Right now, we force rtree internal keys to be
+	 * constant size. To fix this, need delete the old key and add both
+	 * left and right for the two new pages.  The insertion of left may
+	 * force a split if the new left key is bigger than the old key.
 	 */
 
 	if (IndexTupleSize(old) != IndexTupleSize(ltup))
@@ -734,7 +739,7 @@ rtnewroot(Relation r, IndexTuple lt, IndexTuple rt)
  * We return two vectors of index item numbers, one for the items to be
  * put on the left page, one for the items to be put on the right page.
  * In addition, the item to be added (itup) is listed in the appropriate
- * vector.  It is represented by item number N+1 (N = # of items on page).
+ * vector.	It is represented by item number N+1 (N = # of items on page).
  *
  * Both vectors appear in sequence order with a terminating sentinel value
  * of InvalidOffsetNumber.
@@ -747,9 +752,9 @@ rtnewroot(Relation r, IndexTuple lt, IndexTuple rt)
  *
  * We must also deal with a consideration not found in Guttman's algorithm:
  * variable-length data.  In particular, the incoming item might be
- * large enough that not just any split will work.  In the worst case,
+ * large enough that not just any split will work.	In the worst case,
  * our "split" may have to be the new item on one page and all the existing
- * items on the other.  Short of that, we have to take care that we do not
+ * items on the other.	Short of that, we have to take care that we do not
  * make a split that leaves both pages too full for the new item.
  */
 static void
@@ -794,9 +799,10 @@ rtpicksplit(Relation r,
 				right_avail_space;
 
 	/*
-	 * First, make sure the new item is not so large that we can't possibly
-	 * fit it on a page, even by itself.  (It's sufficient to make this test
-	 * here, since any oversize tuple must lead to a page split attempt.)
+	 * First, make sure the new item is not so large that we can't
+	 * possibly fit it on a page, even by itself.  (It's sufficient to
+	 * make this test here, since any oversize tuple must lead to a page
+	 * split attempt.)
 	 */
 	newitemsz = IndexTupleTotalSize(itup);
 	if (newitemsz > RTPageAvailSpace)
@@ -804,7 +810,8 @@ rtpicksplit(Relation r,
 			 (unsigned long) newitemsz, (unsigned long) RTPageAvailSpace);
 
 	maxoff = PageGetMaxOffsetNumber(page);
-	newitemoff = OffsetNumberNext(maxoff); /* phony index for new item */
+	newitemoff = OffsetNumberNext(maxoff);		/* phony index for new
+												 * item */
 
 	/* Make arrays big enough for worst case, including sentinel */
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
@@ -827,8 +834,8 @@ rtpicksplit(Relation r,
 			item_2_sz = IndexTupleTotalSize(item_2);
 
 			/*
-			 * Ignore seed pairs that don't leave room for the new item
-			 * on either split page.
+			 * Ignore seed pairs that don't leave room for the new item on
+			 * either split page.
 			 */
 			if (newitemsz + item_1_sz > RTPageAvailSpace &&
 				newitemsz + item_2_sz > RTPageAvailSpace)
@@ -841,8 +848,10 @@ rtpicksplit(Relation r,
 						  PointerGetDatum(&size_union));
 			inter_d = FunctionCall2(&rtstate->interFn,
 									datum_alpha, datum_beta);
-			/* The interFn may return a NULL pointer (not an SQL null!)
-			 * to indicate no intersection.  sizeFn must cope with this.
+
+			/*
+			 * The interFn may return a NULL pointer (not an SQL null!) to
+			 * indicate no intersection.  sizeFn must cope with this.
 			 */
 			FunctionCall2(&rtstate->sizeFn, inter_d,
 						  PointerGetDatum(&size_inter));
@@ -869,6 +878,7 @@ rtpicksplit(Relation r,
 
 	if (firsttime)
 	{
+
 		/*
 		 * There is no possible split except to put the new item on its
 		 * own page.  Since we still have to compute the union rectangles,
@@ -916,14 +926,14 @@ rtpicksplit(Relation r,
 
 	for (i = FirstOffsetNumber; i <= newitemoff; i = OffsetNumberNext(i))
 	{
-		bool	left_feasible,
-				right_feasible,
-				choose_left;
+		bool		left_feasible,
+					right_feasible,
+					choose_left;
 
 		/*
 		 * If we've already decided where to place this item, just put it
-		 * on the correct list.  Otherwise, we need to figure out which page
-		 * needs the least enlargement in order to store the item.
+		 * on the correct list.  Otherwise, we need to figure out which
+		 * page needs the least enlargement in order to store the item.
 		 */
 
 		if (i == seed_1)
@@ -961,12 +971,13 @@ rtpicksplit(Relation r,
 					  PointerGetDatum(&size_beta));
 
 		/*
-		 * We prefer the page that shows smaller enlargement of its union area
-		 * (Guttman's algorithm), but we must take care that at least one page
-		 * will still have room for the new item after this one is added.
+		 * We prefer the page that shows smaller enlargement of its union
+		 * area (Guttman's algorithm), but we must take care that at least
+		 * one page will still have room for the new item after this one
+		 * is added.
 		 *
-		 * (We know that all the old items together can fit on one page,
-		 * so we need not worry about any other problem than failing to fit
+		 * (We know that all the old items together can fit on one page, so
+		 * we need not worry about any other problem than failing to fit
 		 * the new item.)
 		 */
 		left_feasible = (left_avail_space >= item_1_sz &&
@@ -987,7 +998,7 @@ rtpicksplit(Relation r,
 		else
 		{
 			elog(ERROR, "rtpicksplit: failed to find a workable page split");
-			choose_left = false; /* keep compiler quiet */
+			choose_left = false;/* keep compiler quiet */
 		}
 
 		if (choose_left)
@@ -1012,7 +1023,7 @@ rtpicksplit(Relation r,
 		}
 	}
 
-	*left = *right = InvalidOffsetNumber; /* add ending sentinels */
+	*left = *right = InvalidOffsetNumber;		/* add ending sentinels */
 
 	v->spl_ldatum = datum_l;
 	v->spl_rdatum = datum_r;
@@ -1096,8 +1107,8 @@ freestack(RTSTACK *s)
 Datum
 rtdelete(PG_FUNCTION_ARGS)
 {
-	Relation		r = (Relation) PG_GETARG_POINTER(0);
-	ItemPointer		tid = (ItemPointer) PG_GETARG_POINTER(1);
+	Relation	r = (Relation) PG_GETARG_POINTER(0);
+	ItemPointer tid = (ItemPointer) PG_GETARG_POINTER(1);
 	BlockNumber blkno;
 	OffsetNumber offnum;
 	Buffer		buf;
@@ -1203,14 +1214,14 @@ rtree_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	elog(STOP, "rtree_redo: unimplemented");
 }
- 
+
 void
 rtree_undo(XLogRecPtr lsn, XLogRecord *record)
 {
 	elog(STOP, "rtree_undo: unimplemented");
 }
- 
+
 void
-rtree_desc(char *buf, uint8 xl_info, char* rec)
+rtree_desc(char *buf, uint8 xl_info, char *rec)
 {
 }

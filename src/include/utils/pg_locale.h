@@ -4,7 +4,7 @@
  *	 The PostgreSQL locale utils.
  *
  *
- * $Id: pg_locale.h,v 1.6 2001/01/24 19:43:28 momjian Exp $
+ * $Id: pg_locale.h,v 1.7 2001/03/22 04:01:14 momjian Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -38,7 +38,7 @@ extern void PGLC_current(PG_LocaleCategories * lc);
 
 /*------
  * Return the POSIX lconv struct (contains number/money formatting information)
- * with locale information for all categories.  Note that returned lconv
+ * with locale information for all categories.	Note that returned lconv
  * does not depend on currently active category settings, but on external
  * environment variables for locale.
  *------

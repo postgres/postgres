@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.65 2001/02/14 21:35:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.66 2001/03/22 03:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,11 +131,11 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				if (IsA(rteorjoin, RangeTblEntry))
 					p_target = nconc(p_target,
 									 expandRelAttrs(pstate,
-													(RangeTblEntry *) rteorjoin));
+										   (RangeTblEntry *) rteorjoin));
 				else if (IsA(rteorjoin, JoinExpr))
 					p_target = nconc(p_target,
 									 expandJoinAttrs(pstate,
-													 (JoinExpr *) rteorjoin,
+												  (JoinExpr *) rteorjoin,
 													 sublevels_up));
 				else
 					elog(ERROR, "transformTargetList: unexpected node type %d",
@@ -217,6 +217,7 @@ updateTargetListEntry(ParseState *pstate,
 
 		if (pstate->p_is_insert)
 		{
+
 			/*
 			 * The command is INSERT INTO table (arraycol[subscripts]) ...
 			 * so there is not really a source array value to work with.
@@ -229,6 +230,7 @@ updateTargetListEntry(ParseState *pstate,
 		}
 		else
 		{
+
 			/*
 			 * Build a Var for the array to be updated.
 			 */

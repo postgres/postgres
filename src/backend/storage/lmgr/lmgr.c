@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.44 2001/01/24 19:43:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.45 2001/03/22 03:59:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 /*
  *		LockRelationForSession
  *
- * This routine grabs a session-level lock on the target relation.  The
+ * This routine grabs a session-level lock on the target relation.	The
  * session lock persists across transaction boundaries.  It will be removed
  * when UnlockRelationForSession() is called, or if an elog(ERROR) occurs,
  * or if the backend exits.
@@ -291,6 +291,7 @@ XactLockTableDelete(TransactionId xid)
 
 	LockRelease(LockTableId, &tag, xid, ExclusiveLock);
 }
+
 #endif
 
 void

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.134 2001/03/14 21:47:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.135 2001/03/22 03:59:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,7 @@ static StringInfoData attribute_buf;
 #ifdef MULTIBYTE
 static int	client_encoding;
 static int	server_encoding;
+
 #endif
 
 
@@ -285,6 +286,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		elog(ERROR, "You must have Postgres superuser privilege to do a COPY "
 			 "directly to or from a file.  Anyone can COPY to stdout or "
 			 "from stdin.  Psql's \\copy command also works for anyone.");
+
 	/*
 	 * This restriction is unfortunate, but necessary until the frontend
 	 * COPY protocol is redesigned to be binary-safe...
@@ -344,8 +346,8 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 			mode_t		oumask; /* Pre-existing umask value */
 
 			/*
-			 * Prevent write to relative path ... too easy to shoot oneself
-			 * in the foot by overwriting a database file ...
+			 * Prevent write to relative path ... too easy to shoot
+			 * oneself in the foot by overwriting a database file ...
 			 */
 			if (filename[0] != '/')
 				elog(ERROR, "Relative path not allowed for server side"
@@ -408,7 +410,10 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 	attr_count = rel->rd_att->natts;
 	attr = rel->rd_att->attrs;
 
-	/* For binary copy we really only need isvarlena, but compute it all... */
+	/*
+	 * For binary copy we really only need isvarlena, but compute it
+	 * all...
+	 */
 	out_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
 	elements = (Oid *) palloc(attr_count * sizeof(Oid));
 	isvarlena = (bool *) palloc(attr_count * sizeof(bool));
@@ -417,7 +422,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 		Oid			out_func_oid;
 
 		if (!getTypeOutputInfo(attr[i]->atttypid,
-							   &out_func_oid, &elements[i], &isvarlena[i]))
+							 &out_func_oid, &elements[i], &isvarlena[i]))
 			elog(ERROR, "COPY: couldn't lookup info for type %u",
 				 attr[i]->atttypid);
 		fmgr_info(out_func_oid, &out_functions[i]);
@@ -454,7 +459,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 		if (binary)
 		{
 			/* Binary per-tuple header */
-			int16	fld_count = attr_count;
+			int16		fld_count = attr_count;
 
 			CopySendData(&fld_count, sizeof(int16), fp);
 			/* Send OID if wanted --- note fld_count doesn't include it */
@@ -471,7 +476,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 			if (oids)
 			{
 				string = DatumGetCString(DirectFunctionCall1(oidout,
-									ObjectIdGetDatum(tuple->t_data->t_oid)));
+								ObjectIdGetDatum(tuple->t_data->t_oid)));
 				CopySendString(string, fp);
 				pfree(string);
 				need_delim = true;
@@ -497,20 +502,22 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 			{
 				if (!binary)
 				{
-					CopySendString(null_print, fp);	/* null indicator */
+					CopySendString(null_print, fp);		/* null indicator */
 				}
 				else
 				{
-					fld_size = 0; /* null marker */
+					fld_size = 0;		/* null marker */
 					CopySendData(&fld_size, sizeof(int16), fp);
 				}
 			}
 			else
 			{
+
 				/*
-				 * If we have a toasted datum, forcibly detoast it to avoid
-				 * memory leakage inside the type's output routine (or
-				 * for binary case, becase we must output untoasted value).
+				 * If we have a toasted datum, forcibly detoast it to
+				 * avoid memory leakage inside the type's output routine
+				 * (or for binary case, becase we must output untoasted
+				 * value).
 				 */
 				if (isvarlena[i])
 					value = PointerGetDatum(PG_DETOAST_DATUM(origvalue));
@@ -520,9 +527,9 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 				if (!binary)
 				{
 					string = DatumGetCString(FunctionCall3(&out_functions[i],
-										value,
-										ObjectIdGetDatum(elements[i]),
-										Int32GetDatum(attr[i]->atttypmod)));
+														   value,
+										   ObjectIdGetDatum(elements[i]),
+									 Int32GetDatum(attr[i]->atttypmod)));
 					CopyAttributeOut(fp, string, delim);
 					pfree(string);
 				}
@@ -552,8 +559,9 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 						Datum		datumBuf;
 
 						/*
-						 * We need this horsing around because we don't know
-						 * how shorter data values are aligned within a Datum.
+						 * We need this horsing around because we don't
+						 * know how shorter data values are aligned within
+						 * a Datum.
 						 */
 						store_att_byval(&datumBuf, value, fld_size);
 						CopySendData(&datumBuf,
@@ -577,7 +585,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 	if (binary)
 	{
 		/* Generate trailer for a binary copy */
-		int16	fld_count = -1;
+		int16		fld_count = -1;
 
 		CopySendData(&fld_count, sizeof(int16), fp);
 	}
@@ -609,7 +617,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 	int			done = 0;
 	char	   *string;
 	ResultRelInfo *resultRelInfo;
-	EState	   *estate = CreateExecutorState();	/* for ExecConstraints() */
+	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 	Oid			loaded_oid = InvalidOid;
@@ -622,11 +630,11 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 
 	/*
 	 * We need a ResultRelInfo so we can use the regular executor's
-	 * index-entry-making machinery.  (There used to be a huge amount
-	 * of code here that basically duplicated execUtils.c ...)
+	 * index-entry-making machinery.  (There used to be a huge amount of
+	 * code here that basically duplicated execUtils.c ...)
 	 */
 	resultRelInfo = makeNode(ResultRelInfo);
-	resultRelInfo->ri_RangeTableIndex = 1; /* dummy */
+	resultRelInfo->ri_RangeTableIndex = 1;		/* dummy */
 	resultRelInfo->ri_RelationDesc = rel;
 
 	ExecOpenIndices(resultRelInfo);
@@ -673,7 +681,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 		if (CopyGetEof(fp))
 			elog(ERROR, "COPY BINARY: bogus file header (missing flags)");
 		file_has_oids = (tmp & (1 << 16)) != 0;
-		tmp &= ~ (1 << 16);
+		tmp &= ~(1 << 16);
 		if ((tmp >> 16) != 0)
 			elog(ERROR, "COPY BINARY: unrecognized critical flags in header");
 		/* Header extension length */
@@ -727,7 +735,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 				else
 				{
 					loaded_oid = DatumGetObjectId(DirectFunctionCall1(oidin,
-												  CStringGetDatum(string)));
+											   CStringGetDatum(string)));
 					if (loaded_oid == InvalidOid)
 						elog(ERROR, "COPY TEXT: Invalid Oid");
 				}
@@ -747,8 +755,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 				{
 					values[i] = FunctionCall3(&in_functions[i],
 											  CStringGetDatum(string),
-											  ObjectIdGetDatum(elements[i]),
-											  Int32GetDatum(attr[i]->atttypmod));
+										   ObjectIdGetDatum(elements[i]),
+									  Int32GetDatum(attr[i]->atttypmod));
 					nulls[i] = ' ';
 				}
 			}
@@ -757,8 +765,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 		}
 		else
 		{						/* binary */
-			int16	fld_count,
-					fld_size;
+			int16		fld_count,
+						fld_size;
 
 			CopyGetData(&fld_count, sizeof(int16), fp);
 			if (CopyGetEof(fp) ||
@@ -791,15 +799,15 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 					if (CopyGetEof(fp))
 						elog(ERROR, "COPY BINARY: unexpected EOF");
 					if (fld_size == 0)
-						continue; /* it's NULL; nulls[i] already set */
+						continue;		/* it's NULL; nulls[i] already set */
 					if (fld_size != attr[i]->attlen)
 						elog(ERROR, "COPY BINARY: sizeof(field %d) is %d, expected %d",
-							 i+1, (int) fld_size, (int) attr[i]->attlen);
+						   i + 1, (int) fld_size, (int) attr[i]->attlen);
 					if (fld_size == -1)
 					{
 						/* varlena field */
-						int32	varlena_size;
-						Pointer	varlena_ptr;
+						int32		varlena_size;
+						Pointer		varlena_ptr;
 
 						CopyGetData(&varlena_size, sizeof(int32), fp);
 						if (CopyGetEof(fp))
@@ -818,7 +826,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 					else if (!attr[i]->attbyval)
 					{
 						/* fixed-length pass-by-reference */
-						Pointer	refval_ptr;
+						Pointer		refval_ptr;
 
 						Assert(fld_size > 0);
 						refval_ptr = (Pointer) palloc(fld_size);
@@ -833,8 +841,9 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 						Datum		datumBuf;
 
 						/*
-						 * We need this horsing around because we don't know
-						 * how shorter data values are aligned within a Datum.
+						 * We need this horsing around because we don't
+						 * know how shorter data values are aligned within
+						 * a Datum.
 						 */
 						Assert(fld_size > 0 && fld_size <= sizeof(Datum));
 						CopyGetData(&datumBuf, fld_size, fp);
@@ -1163,6 +1172,7 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	char	   *string_start;
 	int			mblen;
 	int			i;
+
 #endif
 
 #ifdef MULTIBYTE
@@ -1182,7 +1192,7 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 #endif
 
 #ifdef MULTIBYTE
-	for (; (mblen = (server_encoding == client_encoding? 1 : pg_encoding_mblen(client_encoding, string))) &&
+	for (; (mblen = (server_encoding == client_encoding ? 1 : pg_encoding_mblen(client_encoding, string))) &&
 		 ((c = *string) != '\0'); string += mblen)
 #else
 	for (; (c = *string) != '\0'; string++)
@@ -1199,7 +1209,7 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	}
 
 #ifdef MULTIBYTE
-	if (client_encoding != server_encoding)	
+	if (client_encoding != server_encoding)
 		pfree(string_start);	/* pfree pg_server_to_client result */
 #endif
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.47 2001/01/24 19:43:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.48 2001/03/22 03:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,8 @@ SetRelationRuleStatus(Oid relationId, bool relHasRules,
 	Relation	idescs[Num_pg_class_indices];
 
 	/*
-	 * Find the tuple to update in pg_class, using syscache for the lookup.
+	 * Find the tuple to update in pg_class, using syscache for the
+	 * lookup.
 	 */
 	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELOID,

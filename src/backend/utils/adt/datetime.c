@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.61 2001/03/14 20:12:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.62 2001/03/22 03:59:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,16 +25,16 @@
 #include "utils/datetime.h"
 
 static int DecodeNumber(int flen, char *field,
-						int fmask, int *tmask,
-						struct tm * tm, double *fsec, int *is2digits);
+			 int fmask, int *tmask,
+			 struct tm * tm, double *fsec, int *is2digits);
 static int DecodeNumberField(int len, char *str,
-							 int fmask, int *tmask,
-							 struct tm * tm, double *fsec, int *is2digits);
+				  int fmask, int *tmask,
+				  struct tm * tm, double *fsec, int *is2digits);
 static int DecodeTime(char *str, int fmask, int *tmask,
-					  struct tm * tm, double *fsec);
+		   struct tm * tm, double *fsec);
 static int	DecodeTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
-static int DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
+static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
@@ -271,10 +271,13 @@ static datetkn deltatktbl[] = {
 	{"m", UNITS, DTK_MINUTE},	/* "minute" relative time units */
 	{"microsecon", UNITS, DTK_MICROSEC},		/* "microsecond" relative
 												 * time units */
-	{"mil", UNITS, DTK_MILLENNIUM},		/* "millennium" relative time units */
-	{"mils", UNITS, DTK_MILLENNIUM},	  /* "millennia" relative time units */
-	{"millennia", UNITS, DTK_MILLENNIUM}, /* "millennia" relative time units */
-	{DMILLENNIUM, UNITS, DTK_MILLENNIUM}, /* "millennium" relative time units */
+	{"mil", UNITS, DTK_MILLENNIUM},		/* "millennium" relative time
+										 * units */
+	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative time units */
+	{"millennia", UNITS, DTK_MILLENNIUM},		/* "millennia" relative
+												 * time units */
+	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},		/* "millennium" relative
+												 * time units */
 	{"millisecon", UNITS, DTK_MILLISEC},		/* relative time units */
 	{"min", UNITS, DTK_MINUTE}, /* "minute" relative time units */
 	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative time units */
@@ -876,14 +879,14 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				tm->tm_year += 1900;
 				tm->tm_mon += 1;
 
-# if defined(HAVE_TM_ZONE)
+#if defined(HAVE_TM_ZONE)
 				*tzp = -(tm->tm_gmtoff);		/* tm_gmtoff is
 												 * Sun/DEC-ism */
-# elif defined(HAVE_INT_TIMEZONE)
+#elif defined(HAVE_INT_TIMEZONE)
 				*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-# endif /* HAVE_INT_TIMEZONE */
+#endif	 /* HAVE_INT_TIMEZONE */
 
-#else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
+#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 				*tzp = CTimeZone;
 #endif
 			}
@@ -1121,13 +1124,13 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		mktime(tmp);
 		tm->tm_isdst = tmp->tm_isdst;
 
-# if defined(HAVE_TM_ZONE)
+#if defined(HAVE_TM_ZONE)
 		*tzp = -(tmp->tm_gmtoff);		/* tm_gmtoff is Sun/DEC-ism */
-# elif defined(HAVE_INT_TIMEZONE)
+#elif defined(HAVE_INT_TIMEZONE)
 		*tzp = ((tmp->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-# endif
+#endif
 
-#else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
+#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 		*tzp = CTimeZone;
 #endif
 	}
@@ -1492,7 +1495,7 @@ DecodeNumberField(int len, char *str, int fmask,
 		return -1;
 
 	return 0;
-}	/*  DecodeNumberField() */
+}	/* DecodeNumberField() */
 
 
 /* DecodeTimezone()
@@ -1674,20 +1677,26 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 				break;
 
 			case DTK_TZ:
+
 				/*
 				 * Timezone is a token with a leading sign character and
 				 * otherwise the same as a non-signed time field
 				 */
 				Assert((*field[i] == '-') || (*field[i] == '+'));
-				/* A single signed number ends up here, but will be rejected by DecodeTime().
-				 * So, work this out to drop through to DTK_NUMBER, which *can* tolerate this.
+
+				/*
+				 * A single signed number ends up here, but will be
+				 * rejected by DecodeTime(). So, work this out to drop
+				 * through to DTK_NUMBER, which *can* tolerate this.
 				 */
-				cp = field[i]+1;
+				cp = field[i] + 1;
 				while ((*cp != '\0') && (*cp != ':') && (*cp != '.'))
 					cp++;
 				if ((*cp == ':')
-					&& (DecodeTime((field[i]+1), fmask, &tmask, tm, fsec) == 0)) {
-					if (*field[i] == '-') {
+					&& (DecodeTime((field[i] + 1), fmask, &tmask, tm, fsec) == 0))
+				{
+					if (*field[i] == '-')
+					{
 						/* flip the sign on all fields */
 						tm->tm_hour = -tm->tm_hour;
 						tm->tm_min = -tm->tm_min;
@@ -1695,18 +1704,33 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 						*fsec = -(*fsec);
 					}
 
-					/* Set the next type to be a day, if units are not specified.
-					 * This handles the case of '1 +02:03' since we are reading right to left.
+					/*
+					 * Set the next type to be a day, if units are not
+					 * specified. This handles the case of '1 +02:03'
+					 * since we are reading right to left.
 					 */
 					type = DTK_DAY;
 					tmask = DTK_M(TZ);
 					break;
-				} else if (type == IGNORE) {
-					if (*cp == '.') {
-						/* Got a decimal point? Then assume some sort of seconds specification */
+				}
+				else if (type == IGNORE)
+				{
+					if (*cp == '.')
+					{
+
+						/*
+						 * Got a decimal point? Then assume some sort of
+						 * seconds specification
+						 */
 						type = DTK_SECOND;
-					} else if (*cp == '\0') {
-						/* Only a signed integer? Then must assume a timezone-like usage */
+					}
+					else if (*cp == '\0')
+					{
+
+						/*
+						 * Only a signed integer? Then must assume a
+						 * timezone-like usage
+						 */
 						type = DTK_HOUR;
 					}
 				}
@@ -1921,7 +1945,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
  * Binary search -- from Knuth (6.2.1) Algorithm B.  Special case like this
  * is WAY faster than the generic bsearch().
  */
-static datetkn    *
+static datetkn *
 datebsearch(char *key, datetkn *base, unsigned int nel)
 {
 	datetkn    *last = base + nel - 1,
@@ -2166,7 +2190,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 					{
 						strcpy((str + 27), " ");
-						StrNCpy((str + 28), *tzn, MAXTZLEN+1);
+						StrNCpy((str + 28), *tzn, MAXTZLEN + 1);
 					}
 				}
 				else
@@ -2175,7 +2199,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 					{
 						strcpy((str + 24), " ");
-						StrNCpy((str + 25), *tzn, MAXTZLEN+1);
+						StrNCpy((str + 25), *tzn, MAXTZLEN + 1);
 					}
 				}
 
@@ -2207,10 +2231,11 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 	int			is_nonzero = FALSE;
 	char	   *cp = str;
 
-	/* The sign of year and month are guaranteed to match,
-	 * since they are stored internally as "month".
-	 * But we'll need to check for is_before and is_nonzero
-	 * when determining the signs of hour/minute/seconds fields.
+	/*
+	 * The sign of year and month are guaranteed to match, since they are
+	 * stored internally as "month". But we'll need to check for is_before
+	 * and is_nonzero when determining the signs of hour/minute/seconds
+	 * fields.
 	 */
 	switch (style)
 	{
@@ -2247,8 +2272,8 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			if ((!is_nonzero) || (tm->tm_hour != 0) || (tm->tm_min != 0)
 				|| (tm->tm_sec != 0) || (fsec != 0))
 			{
-				int minus = ((tm->tm_hour < 0) || (tm->tm_min < 0)
-							 || (tm->tm_sec < 0) || (fsec < 0));
+				int			minus = ((tm->tm_hour < 0) || (tm->tm_min < 0)
+									 || (tm->tm_sec < 0) || (fsec < 0));
 
 				sprintf(cp, "%s%s%02d:%02d", (is_nonzero ? " " : ""),
 						(minus ? "-" : (is_before ? "+" : "")),
@@ -2283,7 +2308,8 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 			if (tm->tm_year != 0)
 			{
-				int year = tm->tm_year;
+				int			year = tm->tm_year;
+
 				if (tm->tm_year < 0)
 					year = -year;
 
@@ -2296,55 +2322,59 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 			if (tm->tm_mon != 0)
 			{
-				int mon = tm->tm_mon;
+				int			mon = tm->tm_mon;
+
 				if (is_before || ((!is_nonzero) && (tm->tm_mon < 0)))
 					mon = -mon;
 
 				sprintf(cp, "%s%d mon%s", (is_nonzero ? " " : ""), mon,
 						((mon != 1) ? "s" : ""));
 				cp += strlen(cp);
-				if (! is_nonzero)
+				if (!is_nonzero)
 					is_before = (tm->tm_mon < 0);
 				is_nonzero = TRUE;
 			}
 
 			if (tm->tm_mday != 0)
 			{
-				int day = tm->tm_mday;
+				int			day = tm->tm_mday;
+
 				if (is_before || ((!is_nonzero) && (tm->tm_mday < 0)))
 					day = -day;
 
 				sprintf(cp, "%s%d day%s", (is_nonzero ? " " : ""), day,
 						((day != 1) ? "s" : ""));
 				cp += strlen(cp);
-				if (! is_nonzero)
+				if (!is_nonzero)
 					is_before = (tm->tm_mday < 0);
 				is_nonzero = TRUE;
 			}
 			if (tm->tm_hour != 0)
 			{
-				int hour = tm->tm_hour;
+				int			hour = tm->tm_hour;
+
 				if (is_before || ((!is_nonzero) && (tm->tm_hour < 0)))
 					hour = -hour;
 
 				sprintf(cp, "%s%d hour%s", (is_nonzero ? " " : ""), hour,
 						((hour != 1) ? "s" : ""));
 				cp += strlen(cp);
-				if (! is_nonzero)
+				if (!is_nonzero)
 					is_before = (tm->tm_hour < 0);
 				is_nonzero = TRUE;
 			}
 
 			if (tm->tm_min != 0)
 			{
-				int min = tm->tm_min;
+				int			min = tm->tm_min;
+
 				if (is_before || ((!is_nonzero) && (tm->tm_min < 0)))
 					min = -min;
 
 				sprintf(cp, "%s%d min%s", (is_nonzero ? " " : ""), min,
 						((min != 1) ? "s" : ""));
 				cp += strlen(cp);
-				if (! is_nonzero)
+				if (!is_nonzero)
 					is_before = (tm->tm_min < 0);
 				is_nonzero = TRUE;
 			}
@@ -2352,7 +2382,8 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			/* fractional seconds? */
 			if (fsec != 0)
 			{
-				double sec;
+				double		sec;
+
 				fsec += tm->tm_sec;
 				sec = fsec;
 				if (is_before || ((!is_nonzero) && (fsec < 0)))
@@ -2360,7 +2391,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 				sprintf(cp, "%s%.2f secs", (is_nonzero ? " " : ""), sec);
 				cp += strlen(cp);
-				if (! is_nonzero)
+				if (!is_nonzero)
 					is_before = (fsec < 0);
 				is_nonzero = TRUE;
 
@@ -2368,14 +2399,15 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			}
 			else if (tm->tm_sec != 0)
 			{
-				int sec = tm->tm_sec;
+				int			sec = tm->tm_sec;
+
 				if (is_before || ((!is_nonzero) && (tm->tm_sec < 0)))
 					sec = -sec;
 
 				sprintf(cp, "%s%d sec%s", (is_nonzero ? " " : ""), sec,
 						((sec != 1) ? "s" : ""));
 				cp += strlen(cp);
-				if (! is_nonzero)
+				if (!is_nonzero)
 					is_before = (tm->tm_sec < 0);
 				is_nonzero = TRUE;
 			}
@@ -2383,7 +2415,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 	}
 
 	/* identically zero? then put in a unitless zero... */
-	if (! is_nonzero)
+	if (!is_nonzero)
 	{
 		strcat(cp, "0");
 		cp += strlen(cp);

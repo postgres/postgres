@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.85 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.86 2001/03/22 03:59:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,18 +61,18 @@
 #define NOT_MOST_COMMON_RATIO  0.1
 
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
-							  Datum lobound, Datum hibound, Oid boundstypid,
-							  double *scaledlobound, double *scaledhibound);
+				  Datum lobound, Datum hibound, Oid boundstypid,
+				  double *scaledlobound, double *scaledhibound);
 static double convert_numeric_to_scalar(Datum value, Oid typid);
 static void convert_string_to_scalar(unsigned char *value,
-									 double *scaledvalue,
-									 unsigned char *lobound,
-									 double *scaledlobound,
-									 unsigned char *hibound,
-									 double *scaledhibound);
+						 double *scaledvalue,
+						 unsigned char *lobound,
+						 double *scaledlobound,
+						 unsigned char *hibound,
+						 double *scaledhibound);
 static double convert_one_string_to_scalar(unsigned char *value,
-										   int rangelo, int rangehi);
-static unsigned char * convert_string_datum(Datum value, Oid typid);
+							 int rangelo, int rangehi);
+static unsigned char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static void getattproperties(Oid relid, AttrNumber attnum,
 				 Oid *typid,
@@ -87,9 +87,9 @@ static bool getattstatistics(Oid relid, AttrNumber attnum,
 				 Datum *loval,
 				 Datum *hival);
 static Selectivity prefix_selectivity(char *prefix,
-									  Oid relid,
-									  AttrNumber attno,
-									  Oid datatype);
+				   Oid relid,
+				   AttrNumber attno,
+				   Oid datatype);
 static Selectivity pattern_selectivity(char *patt, Pattern_Type ptype);
 static bool string_lessthan(const char *str1, const char *str2,
 				Oid datatype);
@@ -102,7 +102,7 @@ static Datum string_to_datum(const char *str, Oid datatype);
  *
  * Note: this routine is also used to estimate selectivity for some
  * operators that are not "=" but have comparable selectivity behavior,
- * such as "~=" (geometric approximate-match).  Even for "=", we must
+ * such as "~=" (geometric approximate-match).	Even for "=", we must
  * keep in mind that the left and right datatypes may differ, so the type
  * of the given constant "value" may be different from the type of the
  * attribute.
@@ -165,7 +165,7 @@ eqsel(PG_FUNCTION_ARGS)
 				else
 					mostcommon = DatumGetBool(OidFunctionCall2(eqproc,
 															   value,
-															   commonval));
+															 commonval));
 
 				if (mostcommon)
 				{
@@ -264,15 +264,15 @@ neqsel(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/*
-	 * We want 1 - eqsel() where the equality operator is the one associated
-	 * with this != operator, that is, its negator.
+	 * We want 1 - eqsel() where the equality operator is the one
+	 * associated with this != operator, that is, its negator.
 	 */
 	eqopid = get_negator(opid);
 	if (eqopid)
 	{
 		result = DatumGetFloat8(DirectFunctionCall5(eqsel,
-													ObjectIdGetDatum(eqopid),
-													ObjectIdGetDatum(relid),
+												ObjectIdGetDatum(eqopid),
+												 ObjectIdGetDatum(relid),
 													Int16GetDatum(attno),
 													value,
 													Int32GetDatum(flag)));
@@ -432,16 +432,16 @@ scalargtsel(PG_FUNCTION_ARGS)
 
 	/*
 	 * Compute selectivity of "<", then invert --- but only if we were
-	 * able to produce a non-default estimate.  Note that we get the
-	 * negator which strictly speaking means we are looking at "<="
-	 * for ">" or "<" for ">=".  We assume this won't matter.
+	 * able to produce a non-default estimate.	Note that we get the
+	 * negator which strictly speaking means we are looking at "<=" for
+	 * ">" or "<" for ">=".  We assume this won't matter.
 	 */
 	ltopid = get_negator(opid);
 	if (ltopid)
 	{
 		result = DatumGetFloat8(DirectFunctionCall5(scalarltsel,
-													ObjectIdGetDatum(ltopid),
-													ObjectIdGetDatum(relid),
+												ObjectIdGetDatum(ltopid),
+												 ObjectIdGetDatum(relid),
 													Int16GetDatum(attno),
 													value,
 													Int32GetDatum(flag)));
@@ -506,23 +506,28 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 
 		if (pstatus == Pattern_Prefix_Exact)
 		{
-			/* Pattern specifies an exact match, so pretend operator is '=' */
-			Oid		eqopr = find_operator("=", ltype);
-			Datum	eqcon;
+
+			/*
+			 * Pattern specifies an exact match, so pretend operator is
+			 * '='
+			 */
+			Oid			eqopr = find_operator("=", ltype);
+			Datum		eqcon;
 
 			if (eqopr == InvalidOid)
 				elog(ERROR, "patternsel: no = operator for type %u", ltype);
 			eqcon = string_to_datum(prefix, ltype);
 			result = DatumGetFloat8(DirectFunctionCall5(eqsel,
-									ObjectIdGetDatum(eqopr),
-									ObjectIdGetDatum(relid),
-									Int16GetDatum(attno),
-									eqcon,
-									Int32GetDatum(SEL_CONSTANT|SEL_RIGHT)));
+												 ObjectIdGetDatum(eqopr),
+												 ObjectIdGetDatum(relid),
+													Int16GetDatum(attno),
+														eqcon,
+							   Int32GetDatum(SEL_CONSTANT | SEL_RIGHT)));
 			pfree(DatumGetPointer(eqcon));
 		}
 		else
 		{
+
 			/*
 			 * Not exact-match pattern.  We estimate selectivity of the
 			 * fixed prefix and remainder of pattern separately, then
@@ -648,6 +653,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 {
 #ifdef NOT_USED					/* see neqjoinsel() before removing me! */
 	Oid			opid = PG_GETARG_OID(0);
+
 #endif
 	Oid			relid1 = PG_GETARG_OID(1);
 	AttrNumber	attno1 = PG_GETARG_INT16(2);
@@ -701,8 +707,8 @@ neqjoinsel(PG_FUNCTION_ARGS)
 
 	/*
 	 * XXX we skip looking up the negator operator here because we know
-	 * eqjoinsel() won't look at it anyway.  If eqjoinsel() ever does look,
-	 * this routine will need to look more like neqsel() does.
+	 * eqjoinsel() won't look at it anyway.  If eqjoinsel() ever does
+	 * look, this routine will need to look more like neqsel() does.
 	 */
 	result = DatumGetFloat8(eqjoinsel(fcinfo));
 	result = 1.0 - result;
@@ -845,48 +851,48 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 	switch (valuetypid)
 	{
 
-		/*
-		 * Built-in numeric types
-		 */
-		case BOOLOID:
-		case INT2OID:
-		case INT4OID:
-		case INT8OID:
-		case FLOAT4OID:
-		case FLOAT8OID:
-		case NUMERICOID:
-		case OIDOID:
-		case REGPROCOID:
+			/*
+			 * Built-in numeric types
+			 */
+			case BOOLOID:
+			case INT2OID:
+			case INT4OID:
+			case INT8OID:
+			case FLOAT4OID:
+			case FLOAT8OID:
+			case NUMERICOID:
+			case OIDOID:
+			case REGPROCOID:
 			*scaledvalue = convert_numeric_to_scalar(value, valuetypid);
 			*scaledlobound = convert_numeric_to_scalar(lobound, boundstypid);
 			*scaledhibound = convert_numeric_to_scalar(hibound, boundstypid);
 			return true;
 
-		/*
-		 * Built-in string types
-		 */
+			/*
+			 * Built-in string types
+			 */
 		case CHAROID:
 		case BPCHAROID:
 		case VARCHAROID:
 		case TEXTOID:
 		case NAMEOID:
-		{
-			unsigned char *valstr = convert_string_datum(value, valuetypid);
-			unsigned char *lostr = convert_string_datum(lobound, boundstypid);
-			unsigned char *histr = convert_string_datum(hibound, boundstypid);
+			{
+				unsigned char *valstr = convert_string_datum(value, valuetypid);
+				unsigned char *lostr = convert_string_datum(lobound, boundstypid);
+				unsigned char *histr = convert_string_datum(hibound, boundstypid);
 
-			convert_string_to_scalar(valstr, scaledvalue,
-									 lostr, scaledlobound,
-									 histr, scaledhibound);
-			pfree(valstr);
-			pfree(lostr);
-			pfree(histr);
-			return true;
-		}
+				convert_string_to_scalar(valstr, scaledvalue,
+										 lostr, scaledlobound,
+										 histr, scaledhibound);
+				pfree(valstr);
+				pfree(lostr);
+				pfree(histr);
+				return true;
+			}
 
-		/*
-		 * Built-in time types
-		 */
+			/*
+			 * Built-in time types
+			 */
 		case TIMESTAMPOID:
 		case ABSTIMEOID:
 		case DATEOID:
@@ -911,7 +917,7 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 {
 	switch (typid)
 	{
-		case BOOLOID:
+			case BOOLOID:
 			return (double) DatumGetBool(value);
 		case INT2OID:
 			return (double) DatumGetInt16(value);
@@ -931,7 +937,9 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 			/* we can treat OIDs as integers... */
 			return (double) DatumGetObjectId(value);
 	}
-	/* Can't get here unless someone tries to use scalarltsel/scalargtsel
+
+	/*
+	 * Can't get here unless someone tries to use scalarltsel/scalargtsel
 	 * on an operator with one numeric and one non-numeric operand.
 	 */
 	elog(ERROR, "convert_numeric_to_scalar: unsupported type %u", typid);
@@ -1007,7 +1015,9 @@ convert_string_to_scalar(unsigned char *value,
 		if (rangehi < '9')
 			rangehi = '9';
 	}
-	/* If range includes less than 10 chars, assume we have not got enough
+
+	/*
+	 * If range includes less than 10 chars, assume we have not got enough
 	 * data, and make it include regular ASCII set.
 	 */
 	if (rangehi - rangelo < 9)
@@ -1045,7 +1055,10 @@ convert_one_string_to_scalar(unsigned char *value, int rangelo, int rangehi)
 	if (slen <= 0)
 		return 0.0;				/* empty string has scalar value 0 */
 
-	/* Since base is at least 10, need not consider more than about 20 chars */
+	/*
+	 * Since base is at least 10, need not consider more than about 20
+	 * chars
+	 */
 	if (slen > 20)
 		slen = 20;
 
@@ -1055,12 +1068,12 @@ convert_one_string_to_scalar(unsigned char *value, int rangelo, int rangehi)
 	denom = base;
 	while (slen-- > 0)
 	{
-		int		ch = *value++;
+		int			ch = *value++;
 
 		if (ch < rangelo)
-			ch = rangelo-1;
+			ch = rangelo - 1;
 		else if (ch > rangehi)
-			ch = rangehi+1;
+			ch = rangehi + 1;
 		num += ((double) (ch - rangelo)) / denom;
 		denom *= base;
 	}
@@ -1078,10 +1091,12 @@ static unsigned char *
 convert_string_datum(Datum value, Oid typid)
 {
 	char	   *val;
+
 #ifdef USE_LOCALE
 	char	   *xfrmstr;
 	size_t		xfrmsize;
 	size_t		xfrmlen;
+
 #endif
 
 	switch (typid)
@@ -1094,25 +1109,27 @@ convert_string_datum(Datum value, Oid typid)
 		case BPCHAROID:
 		case VARCHAROID:
 		case TEXTOID:
-		{
-			char	   *str = (char *) VARDATA(DatumGetPointer(value));
-			int			strlength = VARSIZE(DatumGetPointer(value)) - VARHDRSZ;
+			{
+				char	   *str = (char *) VARDATA(DatumGetPointer(value));
+				int			strlength = VARSIZE(DatumGetPointer(value)) - VARHDRSZ;
 
-			val = (char *) palloc(strlength+1);
-			memcpy(val, str, strlength);
-			val[strlength] = '\0';
-			break;
-		}
+				val = (char *) palloc(strlength + 1);
+				memcpy(val, str, strlength);
+				val[strlength] = '\0';
+				break;
+			}
 		case NAMEOID:
-		{
-			NameData   *nm = (NameData *) DatumGetPointer(value);
+			{
+				NameData   *nm = (NameData *) DatumGetPointer(value);
 
-			val = pstrdup(NameStr(*nm));
-			break;
-		}
+				val = pstrdup(NameStr(*nm));
+				break;
+			}
 		default:
-			/* Can't get here unless someone tries to use scalarltsel
-			 * on an operator with one string and one non-string operand.
+
+			/*
+			 * Can't get here unless someone tries to use scalarltsel on
+			 * an operator with one string and one non-string operand.
 			 */
 			elog(ERROR, "convert_string_datum: unsupported type %u", typid);
 			return NULL;
@@ -1120,7 +1137,7 @@ convert_string_datum(Datum value, Oid typid)
 
 #ifdef USE_LOCALE
 	/* Guess that transformed string is not much bigger than original */
-	xfrmsize = strlen(val) + 32;		/* arbitrary pad value here... */
+	xfrmsize = strlen(val) + 32;/* arbitrary pad value here... */
 	xfrmstr = (char *) palloc(xfrmsize);
 	xfrmlen = strxfrm(xfrmstr, val, xfrmsize);
 	if (xfrmlen >= xfrmsize)
@@ -1145,7 +1162,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 {
 	switch (typid)
 	{
-		case TIMESTAMPOID:
+			case TIMESTAMPOID:
 			return DatumGetTimestamp(value);
 		case ABSTIMEOID:
 			return DatumGetTimestamp(DirectFunctionCall1(abstime_timestamp,
@@ -1154,31 +1171,33 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 			return DatumGetTimestamp(DirectFunctionCall1(date_timestamp,
 														 value));
 		case INTERVALOID:
-		{
-			Interval   *interval = DatumGetIntervalP(value);
+			{
+				Interval   *interval = DatumGetIntervalP(value);
 
-			/*
-			 * Convert the month part of Interval to days using
-			 * assumed average month length of 365.25/12.0 days.  Not
-			 * too accurate, but plenty good enough for our purposes.
-			 */
-			return interval->time +
-				interval->month * (365.25 / 12.0 * 24.0 * 60.0 * 60.0);
-		}
+				/*
+				 * Convert the month part of Interval to days using
+				 * assumed average month length of 365.25/12.0 days.  Not
+				 * too accurate, but plenty good enough for our purposes.
+				 */
+				return interval->time +
+					interval->month * (365.25 / 12.0 * 24.0 * 60.0 * 60.0);
+			}
 		case RELTIMEOID:
 			return DatumGetRelativeTime(value);
 		case TINTERVALOID:
-		{
-			TimeInterval interval = DatumGetTimeInterval(value);
+			{
+				TimeInterval interval = DatumGetTimeInterval(value);
 
-			if (interval->status != 0)
-				return interval->data[1] - interval->data[0];
-			return 0;			/* for lack of a better idea */
-		}
+				if (interval->status != 0)
+					return interval->data[1] - interval->data[0];
+				return 0;		/* for lack of a better idea */
+			}
 		case TIMEOID:
 			return DatumGetTimeADT(value);
 	}
-	/* Can't get here unless someone tries to use scalarltsel/scalargtsel
+
+	/*
+	 * Can't get here unless someone tries to use scalarltsel/scalargtsel
 	 * on an operator with one timevalue and one non-timevalue operand.
 	 */
 	elog(ERROR, "convert_timevalue_to_scalar: unsupported type %u", typid);
@@ -1305,7 +1324,7 @@ getattstatistics(Oid relid,
 		else
 		{
 			char	   *strval = DatumGetCString(DirectFunctionCall1(textout,
-																	 val));
+																   val));
 
 			*commonval = FunctionCall3(&inputproc,
 									   CStringGetDatum(strval),
@@ -1329,7 +1348,7 @@ getattstatistics(Oid relid,
 		else
 		{
 			char	   *strval = DatumGetCString(DirectFunctionCall1(textout,
-																	 val));
+																   val));
 
 			*loval = FunctionCall3(&inputproc,
 								   CStringGetDatum(strval),
@@ -1353,7 +1372,7 @@ getattstatistics(Oid relid,
 		else
 		{
 			char	   *strval = DatumGetCString(DirectFunctionCall1(textout,
-																	 val));
+																   val));
 
 			*hival = FunctionCall3(&inputproc,
 								   CStringGetDatum(strval),
@@ -1417,12 +1436,14 @@ like_fixed_prefix(char *patt, bool case_insensitive,
 			if (patt[pos] == '\0')
 				break;
 		}
+
 		/*
 		 * XXX I suspect isalpha() is not an adequately locale-sensitive
 		 * test for characters that can vary under case folding?
 		 */
 		if (case_insensitive && isalpha((unsigned char) patt[pos]))
 			break;
+
 		/*
 		 * NOTE: this code used to think that %% meant a literal %, but
 		 * textlike() itself does not think that, and the SQL92 spec
@@ -1436,7 +1457,8 @@ like_fixed_prefix(char *patt, bool case_insensitive,
 
 	/* in LIKE, an empty pattern is an exact match! */
 	if (patt[pos] == '\0')
-		return Pattern_Prefix_Exact;	/* reached end of pattern, so exact */
+		return Pattern_Prefix_Exact;	/* reached end of pattern, so
+										 * exact */
 
 	if (match_pos > 0)
 		return Pattern_Prefix_Partial;
@@ -1463,7 +1485,8 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 		return Pattern_Prefix_None;
 	}
 
-	/* If unquoted | is present at paren level 0 in pattern, then there
+	/*
+	 * If unquoted | is present at paren level 0 in pattern, then there
 	 * are multiple alternatives for the start of the string.
 	 */
 	paren_depth = 0;
@@ -1495,10 +1518,12 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 	/* note start at pos 1 to skip leading ^ */
 	for (pos = 1; patt[pos]; pos++)
 	{
+
 		/*
-		 * Check for characters that indicate multiple possible matches here.
-		 * XXX I suspect isalpha() is not an adequately locale-sensitive
-		 * test for characters that can vary under case folding?
+		 * Check for characters that indicate multiple possible matches
+		 * here. XXX I suspect isalpha() is not an adequately
+		 * locale-sensitive test for characters that can vary under case
+		 * folding?
 		 */
 		if (patt[pos] == '.' ||
 			patt[pos] == '(' ||
@@ -1506,9 +1531,11 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 			patt[pos] == '$' ||
 			(case_insensitive && isalpha((unsigned char) patt[pos])))
 			break;
+
 		/*
 		 * Check for quantifiers.  Except for +, this means the preceding
-		 * character is optional, so we must remove it from the prefix too!
+		 * character is optional, so we must remove it from the prefix
+		 * too!
 		 */
 		if (patt[pos] == '*' ||
 			patt[pos] == '?' ||
@@ -1573,7 +1600,7 @@ pattern_fixed_prefix(char *patt, Pattern_Type ptype,
 			break;
 		default:
 			elog(ERROR, "pattern_fixed_prefix: bogus ptype");
-			result = Pattern_Prefix_None; /* keep compiler quiet */
+			result = Pattern_Prefix_None;		/* keep compiler quiet */
 			break;
 	}
 	return result;
@@ -1596,7 +1623,7 @@ prefix_selectivity(char *prefix,
 				   AttrNumber attno,
 				   Oid datatype)
 {
-	Selectivity	prefixsel;
+	Selectivity prefixsel;
 	Oid			cmpopr;
 	Datum		prefixcon;
 	char	   *greaterstr;
@@ -1608,21 +1635,21 @@ prefix_selectivity(char *prefix,
 	prefixcon = string_to_datum(prefix, datatype);
 	/* Assume scalargtsel is appropriate for all supported types */
 	prefixsel = DatumGetFloat8(DirectFunctionCall5(scalargtsel,
-							   ObjectIdGetDatum(cmpopr),
-							   ObjectIdGetDatum(relid),
-							   Int16GetDatum(attno),
-							   prefixcon,
-							   Int32GetDatum(SEL_CONSTANT|SEL_RIGHT)));
+												ObjectIdGetDatum(cmpopr),
+												 ObjectIdGetDatum(relid),
+												   Int16GetDatum(attno),
+												   prefixcon,
+							   Int32GetDatum(SEL_CONSTANT | SEL_RIGHT)));
 	pfree(DatumGetPointer(prefixcon));
 
 	/*
-	 * If we can create a string larger than the prefix,
-	 * say "x < greaterstr".
+	 * If we can create a string larger than the prefix, say "x <
+	 * greaterstr".
 	 */
 	greaterstr = make_greater_string(prefix, datatype);
 	if (greaterstr)
 	{
-		Selectivity		topsel;
+		Selectivity topsel;
 
 		cmpopr = find_operator("<", datatype);
 		if (cmpopr == InvalidOid)
@@ -1631,28 +1658,28 @@ prefix_selectivity(char *prefix,
 		prefixcon = string_to_datum(greaterstr, datatype);
 		/* Assume scalarltsel is appropriate for all supported types */
 		topsel = DatumGetFloat8(DirectFunctionCall5(scalarltsel,
-								ObjectIdGetDatum(cmpopr),
-								ObjectIdGetDatum(relid),
-								Int16GetDatum(attno),
-								prefixcon,
-								Int32GetDatum(SEL_CONSTANT|SEL_RIGHT)));
+												ObjectIdGetDatum(cmpopr),
+												 ObjectIdGetDatum(relid),
+													Int16GetDatum(attno),
+													prefixcon,
+							   Int32GetDatum(SEL_CONSTANT | SEL_RIGHT)));
 		pfree(DatumGetPointer(prefixcon));
 		pfree(greaterstr);
 
 		/*
-		 * Merge the two selectivities in the same way as for
-		 * a range query (see clauselist_selectivity()).
+		 * Merge the two selectivities in the same way as for a range
+		 * query (see clauselist_selectivity()).
 		 */
 		prefixsel = topsel + prefixsel - 1.0;
 
 		/*
-		 * A zero or slightly negative prefixsel should be converted into a
-		 * small positive value; we probably are dealing with a very
+		 * A zero or slightly negative prefixsel should be converted into
+		 * a small positive value; we probably are dealing with a very
 		 * tight range and got a bogus result due to roundoff errors.
 		 * However, if prefixsel is very negative, then we probably have
 		 * default selectivity estimates on one or both sides of the
-		 * range.  In that case, insert a not-so-wildly-optimistic
-		 * default estimate.
+		 * range.  In that case, insert a not-so-wildly-optimistic default
+		 * estimate.
 		 */
 		if (prefixsel <= 0.0)
 		{
@@ -1660,8 +1687,8 @@ prefix_selectivity(char *prefix,
 			{
 
 				/*
-				 * No data available --- use a default estimate that
-				 * is small, but not real small.
+				 * No data available --- use a default estimate that is
+				 * small, but not real small.
 				 */
 				prefixsel = 0.01;
 			}
@@ -1691,15 +1718,16 @@ prefix_selectivity(char *prefix,
 
 #define FIXED_CHAR_SEL	0.04	/* about 1/25 */
 #define CHAR_RANGE_SEL	0.25
-#define ANY_CHAR_SEL	0.9		/* not 1, since it won't match end-of-string */
+#define ANY_CHAR_SEL	0.9		/* not 1, since it won't match
+								 * end-of-string */
 #define FULL_WILDCARD_SEL 5.0
 #define PARTIAL_WILDCARD_SEL 2.0
 
 static Selectivity
 like_selectivity(char *patt, bool case_insensitive)
 {
-	Selectivity		sel = 1.0;
-	int				pos;
+	Selectivity sel = 1.0;
+	int			pos;
 
 	/* Skip any leading %; it's already factored into initial sel */
 	pos = (*patt == '%') ? 1 : 0;
@@ -1730,17 +1758,17 @@ like_selectivity(char *patt, bool case_insensitive)
 static Selectivity
 regex_selectivity_sub(char *patt, int pattlen, bool case_insensitive)
 {
-	Selectivity		sel = 1.0;
-	int				paren_depth = 0;
-	int				paren_pos = 0; /* dummy init to keep compiler quiet */
-	int				pos;
+	Selectivity sel = 1.0;
+	int			paren_depth = 0;
+	int			paren_pos = 0;	/* dummy init to keep compiler quiet */
+	int			pos;
 
 	for (pos = 0; pos < pattlen; pos++)
 	{
 		if (patt[pos] == '(')
 		{
 			if (paren_depth == 0)
-				paren_pos = pos; /* remember start of parenthesized item */
+				paren_pos = pos;/* remember start of parenthesized item */
 			paren_depth++;
 		}
 		else if (patt[pos] == ')' && paren_depth > 0)
@@ -1753,9 +1781,10 @@ regex_selectivity_sub(char *patt, int pattlen, bool case_insensitive)
 		}
 		else if (patt[pos] == '|' && paren_depth == 0)
 		{
+
 			/*
-			 * If unquoted | is present at paren level 0 in pattern,
-			 * we have multiple alternatives; sum their probabilities.
+			 * If unquoted | is present at paren level 0 in pattern, we
+			 * have multiple alternatives; sum their probabilities.
 			 */
 			sel += regex_selectivity_sub(patt + (pos + 1),
 										 pattlen - (pos + 1),
@@ -1764,19 +1793,20 @@ regex_selectivity_sub(char *patt, int pattlen, bool case_insensitive)
 		}
 		else if (patt[pos] == '[')
 		{
-			bool	negclass = false;
+			bool		negclass = false;
 
 			if (patt[++pos] == '^')
 			{
 				negclass = true;
 				pos++;
 			}
-			if (patt[pos] == ']') /* ']' at start of class is not special */
+			if (patt[pos] == ']')		/* ']' at start of class is not
+										 * special */
 				pos++;
 			while (pos < pattlen && patt[pos] != ']')
 				pos++;
 			if (paren_depth == 0)
-				sel *= (negclass ? (1.0-CHAR_RANGE_SEL) : CHAR_RANGE_SEL);
+				sel *= (negclass ? (1.0 - CHAR_RANGE_SEL) : CHAR_RANGE_SEL);
 		}
 		else if (patt[pos] == '.')
 		{
@@ -1822,15 +1852,15 @@ regex_selectivity_sub(char *patt, int pattlen, bool case_insensitive)
 static Selectivity
 regex_selectivity(char *patt, bool case_insensitive)
 {
-	Selectivity		sel;
-	int				pattlen = strlen(patt);
+	Selectivity sel;
+	int			pattlen = strlen(patt);
 
 	/* If patt doesn't end with $, consider it to have a trailing wildcard */
-	if (pattlen > 0 && patt[pattlen-1] == '$' &&
-		(pattlen == 1 || patt[pattlen-2] != '\\'))
+	if (pattlen > 0 && patt[pattlen - 1] == '$' &&
+		(pattlen == 1 || patt[pattlen - 2] != '\\'))
 	{
 		/* has trailing $ */
-		sel = regex_selectivity_sub(patt, pattlen-1, case_insensitive);
+		sel = regex_selectivity_sub(patt, pattlen - 1, case_insensitive);
 	}
 	else
 	{
@@ -1893,6 +1923,7 @@ locale_is_like_safe(void)
 	localeptr = setlocale(LC_COLLATE, NULL);
 	if (!localeptr)
 		elog(STOP, "Invalid LC_COLLATE setting");
+
 	/*
 	 * Currently we accept only "C" and "POSIX" (do any systems still
 	 * return "POSIX"?).  Which other locales allow safe optimization?
@@ -1904,9 +1935,9 @@ locale_is_like_safe(void)
 	else
 		result = false;
 	return (bool) result;
-#else /* not USE_LOCALE */
-	return true;				/* We must be in C locale, which is OK */
-#endif /* USE_LOCALE */
+#else							/* not USE_LOCALE */
+				return true;	/* We must be in C locale, which is OK */
+#endif	 /* USE_LOCALE */
 }
 
 /*
@@ -2039,6 +2070,7 @@ find_operator(const char *opname, Oid datatype)
 static Datum
 string_to_datum(const char *str, Oid datatype)
 {
+
 	/*
 	 * We cheat a little by assuming that textin() will do for bpchar and
 	 * varchar constants too...

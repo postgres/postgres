@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.57 2001/01/24 19:43:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.58 2001/03/22 03:59:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,7 @@ aclitemin(PG_FUNCTION_ARGS)
 Datum
 aclitemout(PG_FUNCTION_ARGS)
 {
-	AclItem	   *aip = PG_GETARG_ACLITEM_P(0);
+	AclItem    *aip = PG_GETARG_ACLITEM_P(0);
 	char	   *p;
 	char	   *out;
 	HeapTuple	htup;
@@ -281,7 +281,7 @@ aclitemout(PG_FUNCTION_ARGS)
 			if (HeapTupleIsValid(htup))
 			{
 				strncat(p,
-						NameStr(((Form_pg_shadow) GETSTRUCT(htup))->usename),
+					NameStr(((Form_pg_shadow) GETSTRUCT(htup))->usename),
 						NAMEDATALEN);
 				ReleaseSysCache(htup);
 			}
@@ -291,7 +291,7 @@ aclitemout(PG_FUNCTION_ARGS)
 				char	   *tmp;
 
 				tmp = DatumGetCString(DirectFunctionCall1(int4out,
-									  Int32GetDatum((int32) aip->ai_id)));
+									 Int32GetDatum((int32) aip->ai_id)));
 				strcat(p, tmp);
 				pfree(tmp);
 			}
@@ -307,7 +307,7 @@ aclitemout(PG_FUNCTION_ARGS)
 				char	   *tmp;
 
 				tmp = DatumGetCString(DirectFunctionCall1(int4out,
-									  Int32GetDatum((int32) aip->ai_id)));
+									 Int32GetDatum((int32) aip->ai_id)));
 				strcat(p, tmp);
 				pfree(tmp);
 			}
@@ -473,9 +473,9 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 	}
 
 	/*
-	 * if the adjusted entry has no permissions, delete it from the
-	 * list.  For example, this helps in removing entries for users who no
-	 * longer exist.  EXCEPTION: never remove the world entry.
+	 * if the adjusted entry has no permissions, delete it from the list.
+	 * For example, this helps in removing entries for users who no longer
+	 * exist.  EXCEPTION: never remove the world entry.
 	 */
 	if (new_aip[dst].ai_mode == 0 && dst > 0)
 	{
@@ -502,7 +502,7 @@ Datum
 aclinsert(PG_FUNCTION_ARGS)
 {
 	Acl		   *old_acl = PG_GETARG_ACL_P(0);
-	AclItem	   *mod_aip = PG_GETARG_ACLITEM_P(1);
+	AclItem    *mod_aip = PG_GETARG_ACLITEM_P(1);
 
 	PG_RETURN_ACL_P(aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL));
 }
@@ -511,7 +511,7 @@ Datum
 aclremove(PG_FUNCTION_ARGS)
 {
 	Acl		   *old_acl = PG_GETARG_ACL_P(0);
-	AclItem	   *mod_aip = PG_GETARG_ACLITEM_P(1);
+	AclItem    *mod_aip = PG_GETARG_ACLITEM_P(1);
 	Acl		   *new_acl;
 	AclItem    *old_aip,
 			   *new_aip;
@@ -575,7 +575,7 @@ Datum
 aclcontains(PG_FUNCTION_ARGS)
 {
 	Acl		   *acl = PG_GETARG_ACL_P(0);
-	AclItem	   *aip = PG_GETARG_ACLITEM_P(1);
+	AclItem    *aip = PG_GETARG_ACLITEM_P(1);
 	AclItem    *aidat;
 	int			i,
 				num;
@@ -599,7 +599,7 @@ aclcontains(PG_FUNCTION_ARGS)
 void
 ExecuteChangeACLStmt(ChangeACLStmt *stmt)
 {
-	AclItem		aclitem;
+	AclItem aclitem;
 	unsigned	modechg;
 	List	   *i;
 

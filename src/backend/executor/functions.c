@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.43 2001/01/29 00:39:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.44 2001/03/22 03:59:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,15 +70,15 @@ typedef SQLFunctionCache *SQLFunctionCachePtr;
 
 /* non-export function prototypes */
 static execution_state *init_execution_state(char *src,
-											 Oid *argOidVect, int nargs);
+					 Oid *argOidVect, int nargs);
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es);
 static TupleTableSlot *postquel_getnext(execution_state *es);
 static void postquel_end(execution_state *es);
 static void postquel_sub_params(execution_state *es, FunctionCallInfo fcinfo);
 static Datum postquel_execute(execution_state *es,
-							  FunctionCallInfo fcinfo,
-							  SQLFunctionCachePtr fcache);
+				 FunctionCallInfo fcinfo,
+				 SQLFunctionCachePtr fcache);
 
 
 static execution_state *
@@ -180,7 +180,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	 * ----------------
 	 */
 	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(procedureStruct->prorettype),
+						   ObjectIdGetDatum(procedureStruct->prorettype),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "init_sql_fcache: Cache lookup failed for type %u",
@@ -235,9 +235,7 @@ init_sql_fcache(FmgrInfo *finfo)
 			   nargs * sizeof(Oid));
 	}
 	else
-	{
 		argOidVect = (Oid *) NULL;
-	}
 
 	tmp = SysCacheGetAttr(PROCOID,
 						  procedureTuple,
@@ -346,8 +344,8 @@ copy_function_result(SQLFunctionCachePtr fcache,
 		return resultSlot;		/* no need to copy result */
 
 	/*
-	 * If first time through, we have to initialize the funcSlot's
-	 * tuple descriptor.
+	 * If first time through, we have to initialize the funcSlot's tuple
+	 * descriptor.
 	 */
 	if (funcSlot->ttc_tupleDescriptor == NULL)
 	{
@@ -415,12 +413,14 @@ postquel_execute(execution_state *es,
 
 		/*
 		 * If we are supposed to return a tuple, we return the tuple slot
-		 * pointer converted to Datum.  If we are supposed to return a simple
-		 * value, then project out the first attribute of the result tuple
-		 * (ie, take the first result column of the final SELECT).
+		 * pointer converted to Datum.	If we are supposed to return a
+		 * simple value, then project out the first attribute of the
+		 * result tuple (ie, take the first result column of the final
+		 * SELECT).
 		 */
 		if (fcache->returnsTuple)
 		{
+
 			/*
 			 * XXX do we need to remove junk attrs from the result tuple?
 			 * Probably OK to leave them, as long as they are at the end.
@@ -434,6 +434,7 @@ postquel_execute(execution_state *es,
 								 1,
 								 resSlot->ttc_tupleDescriptor,
 								 &(fcinfo->isnull));
+
 			/*
 			 * Note: if result type is pass-by-reference then we are
 			 * returning a pointer into the tuple copied by
@@ -546,7 +547,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		 */
 		if (fcinfo->flinfo->fn_retset)
 		{
-			ReturnSetInfo  *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+			ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 			if (rsi && IsA(rsi, ReturnSetInfo))
 				rsi->isDone = ExprEndResult;
@@ -572,7 +573,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 */
 	if (fcinfo->flinfo->fn_retset)
 	{
-		ReturnSetInfo  *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+		ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 		if (rsi && IsA(rsi, ReturnSetInfo))
 			rsi->isDone = ExprMultipleResult;

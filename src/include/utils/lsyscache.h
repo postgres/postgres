@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.29 2001/01/24 19:43:28 momjian Exp $
+ * $Id: lsyscache.h,v 1.30 2001/03/22 04:01:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,6 @@ extern void get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval);
 extern char get_typstorage(Oid typid);
 extern Datum get_typdefault(Oid typid);
 
-#define TypeIsToastable(typid)  (get_typstorage(typid) != 'p')
+#define TypeIsToastable(typid)	(get_typstorage(typid) != 'p')
 
 #endif	 /* LSYSCACHE_H */

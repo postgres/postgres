@@ -1,9 +1,9 @@
 
-/* File:            socket.h
+/* File:			socket.h
  *
- * Description:     See "socket.c"
+ * Description:		See "socket.c"
  *
- * Comments:        See "notice.txt" for copyright and license information.
+ * Comments:		See "notice.txt" for copyright and license information.
  *
  */
 
@@ -25,10 +25,11 @@
 #define closesocket(xxx) close(xxx)
 #define SOCKETFD int
 
-#ifndef       INADDR_NONE
+#ifndef		  INADDR_NONE
 #ifndef _IN_ADDR_T
 #define _IN_ADDR_T
-typedef unsigned int    in_addr_t;
+typedef unsigned int in_addr_t;
+
 #endif
 #define INADDR_NONE ((in_addr_t)-1)
 #endif
@@ -52,20 +53,22 @@ typedef unsigned int    in_addr_t;
 #define SOCKET_CLOSED 10
 
 
-struct SocketClass_ {
+struct SocketClass_
+{
 
-	int buffer_filled_in;
-	int buffer_filled_out;
-	int buffer_read_in;
+	int			buffer_filled_in;
+	int			buffer_filled_out;
+	int			buffer_read_in;
 	unsigned char *buffer_in;
 	unsigned char *buffer_out;
 
-	SOCKETFD socket;
+	SOCKETFD	socket;
 
-	char *errormsg;
-	int errornumber;
+	char	   *errormsg;
+	int			errornumber;
 
-	char reverse;	/* used to handle Postgres 6.2 protocol (reverse byte order) */
+	char		reverse;		/* used to handle Postgres 6.2 protocol
+								 * (reverse byte order) */
 
 };
 
@@ -80,17 +83,17 @@ struct SocketClass_ {
 
 /* Socket prototypes */
 SocketClass *SOCK_Constructor(void);
-void SOCK_Destructor(SocketClass *self);
-char SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname);
-void SOCK_get_n_char(SocketClass *self, char *buffer, int len);
-void SOCK_put_n_char(SocketClass *self, char *buffer, int len);
-void SOCK_get_string(SocketClass *self, char *buffer, int bufsize);
-void SOCK_put_string(SocketClass *self, char *string);
-int SOCK_get_int(SocketClass *self, short len);
-void SOCK_put_int(SocketClass *self, int value, short len);
-void SOCK_flush_output(SocketClass *self);
+void		SOCK_Destructor(SocketClass *self);
+char		SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname);
+void		SOCK_get_n_char(SocketClass *self, char *buffer, int len);
+void		SOCK_put_n_char(SocketClass *self, char *buffer, int len);
+void		SOCK_get_string(SocketClass *self, char *buffer, int bufsize);
+void		SOCK_put_string(SocketClass *self, char *string);
+int			SOCK_get_int(SocketClass *self, short len);
+void		SOCK_put_int(SocketClass *self, int value, short len);
+void		SOCK_flush_output(SocketClass *self);
 unsigned char SOCK_get_next_byte(SocketClass *self);
-void SOCK_put_next_byte(SocketClass *self, unsigned char next_byte);
-void SOCK_clear_error(SocketClass *self);
+void		SOCK_put_next_byte(SocketClass *self, unsigned char next_byte);
+void		SOCK_clear_error(SocketClass *self);
 
 #endif

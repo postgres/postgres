@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlogdefs.h,v 1.2 2001/03/13 01:17:06 tgl Exp $
+ * $Id: xlogdefs.h,v 1.3 2001/03/22 04:00:32 momjian Exp $
  */
 #ifndef XLOG_DEFS_H
 #define XLOG_DEFS_H
@@ -23,8 +23,8 @@
  * NOTE: the "log file number" is somewhat misnamed, since the actual files
  * making up the XLOG are much smaller than 4Gb.  Each actual file is an
  * XLogSegSize-byte "segment" of a logical log file having the indicated
- * xlogid.  The log file number and segment number together identify a
- * physical XLOG file.  Segment number and offset within the physical file
+ * xlogid.	The log file number and segment number together identify a
+ * physical XLOG file.	Segment number and offset within the physical file
  * are computed from xrecoff div and mod XLogSegSize.
  */
 typedef struct XLogRecPtr
@@ -54,6 +54,6 @@ typedef struct XLogRecPtr
  * StartUpID (SUI) - system startups counter. It's to allow removing
  * pg_log after shutdown, in future.
  */
-typedef	uint32		StartUpID;
+typedef uint32 StartUpID;
 
 #endif	 /* XLOG_DEFS_H */

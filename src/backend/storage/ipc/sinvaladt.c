@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.37 2001/01/24 19:43:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.38 2001/03/22 03:59:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@ static void SISetProcStateInvalid(SISeg *segP);
 int
 SInvalShmemSize(int maxBackends)
 {
+
 	/*
 	 * Figure space needed. Note sizeof(SISeg) includes the first
 	 * ProcState entry.
@@ -91,7 +92,7 @@ SIBackendInit(SISeg *segP)
 	/* Look for a free entry in the procState array */
 	for (index = 0; index < segP->lastBackend; index++)
 	{
-		if (segP->procState[index].nextMsgNum < 0) /* inactive slot? */
+		if (segP->procState[index].nextMsgNum < 0)		/* inactive slot? */
 		{
 			stateP = &segP->procState[index];
 			break;
@@ -108,9 +109,10 @@ SIBackendInit(SISeg *segP)
 		}
 		else
 		{
+
 			/*
-			 * elog() with spinlock held is probably not too cool, but this
-			 * condition should never happen anyway.
+			 * elog() with spinlock held is probably not too cool, but
+			 * this condition should never happen anyway.
 			 */
 			elog(NOTICE, "SIBackendInit: no free procState slot available");
 			MyBackendId = InvalidBackendId;

@@ -73,7 +73,7 @@ static int	nope = 0;			/* for use in asserts; shuts lint up */
 #define onestate		long
 #define INIT(o, n)		((o) = (1L << (n)))
 #define INC(o)			((o) <<= 1)
-#define ISSTATEIN(v, o)	((v) & (o))
+#define ISSTATEIN(v, o) ((v) & (o))
 /* some abbreviations; note that some of these know variable names! */
 /* do "if I'm here, I can also be there" etc without branches */
 #define FWD(dst, src, n)		((dst) |= ((src) & (here)) << (n))

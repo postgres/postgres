@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.50 2001/02/07 23:35:33 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.51 2001/03/22 03:59:14 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -28,7 +28,7 @@
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 
-extern bool FixBTree;	/* comments in nbtree.c */
+extern bool FixBTree;			/* comments in nbtree.c */
 extern Buffer _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release);
 
 /*
@@ -100,7 +100,7 @@ _bt_metapinit(Relation rel)
  *
  *		The access type parameter (BT_READ or BT_WRITE) controls whether
  *		a new root page will be created or not.  If access = BT_READ,
- *		and no root page exists, we just return InvalidBuffer.  For
+ *		and no root page exists, we just return InvalidBuffer.	For
  *		BT_WRITE, we try to create the root page if it doesn't exist.
  *		NOTE that the returned root page will have only a read lock set
  *		on it even if access = BT_WRITE!
@@ -178,20 +178,20 @@ _bt_getroot(Relation rel, int access)
 
 			/* XLOG stuff */
 			{
-				xl_btree_newroot	xlrec;
-				XLogRecPtr			recptr;
-				XLogRecData			rdata;
+				xl_btree_newroot xlrec;
+				XLogRecPtr	recptr;
+				XLogRecData rdata;
 
 				xlrec.node = rel->rd_node;
 				xlrec.level = 1;
 				BlockIdSet(&(xlrec.rootblk), rootblkno);
 				rdata.buffer = InvalidBuffer;
-				rdata.data = (char*)&xlrec;
+				rdata.data = (char *) &xlrec;
 				rdata.len = SizeOfBtreeNewroot;
 				rdata.next = NULL;
 
 				recptr = XLogInsert(RM_BTREE_ID,
-							XLOG_BTREE_NEWROOT|XLOG_BTREE_LEAF, &rdata);
+						   XLOG_BTREE_NEWROOT | XLOG_BTREE_LEAF, &rdata);
 
 				PageSetLSN(rootpage, recptr);
 				PageSetSUI(rootpage, ThisStartUpID);
@@ -212,6 +212,7 @@ _bt_getroot(Relation rel, int access)
 		}
 		else
 		{
+
 			/*
 			 * Metadata initialized by someone else.  In order to
 			 * guarantee no deadlocks, we have to release the metadata
@@ -232,30 +233,31 @@ _bt_getroot(Relation rel, int access)
 	/*
 	 * Race condition:	If the root page split between the time we looked
 	 * at the metadata page and got the root buffer, then we got the wrong
-	 * buffer.  Release it and try again.
+	 * buffer.	Release it and try again.
 	 */
 	rootpage = BufferGetPage(rootbuf);
 	rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 
-	if (! P_ISROOT(rootopaque))
+	if (!P_ISROOT(rootopaque))
 	{
+
 		/*
-		 * It happened, but if root page splitter failed to create
-		 * new root page then we'll go in loop trying to call
-		 * _bt_getroot again and again.
+		 * It happened, but if root page splitter failed to create new
+		 * root page then we'll go in loop trying to call _bt_getroot
+		 * again and again.
 		 */
 		if (FixBTree)
 		{
-			Buffer	newrootbuf;
+			Buffer		newrootbuf;
 
-check_parent:;
-			if (BTreeInvalidParent(rootopaque))	/* unupdated! */
+	check_parent:;
+			if (BTreeInvalidParent(rootopaque)) /* unupdated! */
 			{
 				LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
 				LockBuffer(rootbuf, BT_WRITE);
 
 				/* handle concurrent fix of root page */
-				if (BTreeInvalidParent(rootopaque))	/* unupdated! */
+				if (BTreeInvalidParent(rootopaque))		/* unupdated! */
 				{
 					elog(NOTICE, "bt_getroot[%s]: fixing root page", RelationGetRelationName(rel));
 					newrootbuf = _bt_fixroot(rel, rootbuf, true);
@@ -266,20 +268,22 @@ check_parent:;
 					rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 					/* New root might be splitted while changing lock */
 					if (P_ISROOT(rootopaque))
-						return(rootbuf);
+						return (rootbuf);
 					/* rootbuf is read locked */
 					goto check_parent;
 				}
-				else	/* someone else already fixed root */
+				else
+/* someone else already fixed root */
 				{
 					LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
 					LockBuffer(rootbuf, BT_READ);
 				}
 			}
+
 			/*
-			 * Ok, here we have old root page with btpo_parent pointing
-			 * to upper level - check parent page because of there is
-			 * good chance that parent is root page.
+			 * Ok, here we have old root page with btpo_parent pointing to
+			 * upper level - check parent page because of there is good
+			 * chance that parent is root page.
 			 */
 			newrootbuf = _bt_getbuf(rel, rootopaque->btpo_parent, BT_READ);
 			_bt_relbuf(rel, rootbuf, BT_READ);
@@ -287,7 +291,7 @@ check_parent:;
 			rootpage = BufferGetPage(rootbuf);
 			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 			if (P_ISROOT(rootopaque))
-				return(rootbuf);
+				return (rootbuf);
 			/* no luck -:( */
 		}
 
@@ -366,7 +370,7 @@ _bt_relbuf(Relation rel, Buffer buf, int access)
  *		and a pin on the buffer.
  *
  * NOTE: actually, the buffer manager just marks the shared buffer page
- * dirty here, the real I/O happens later.  Since we can't persuade the
+ * dirty here, the real I/O happens later.	Since we can't persuade the
  * Unix kernel to schedule disk writes in a particular order, there's not
  * much point in worrying about this.  The most we can say is that all the
  * writes will occur before commit.
@@ -468,14 +472,14 @@ _bt_pagedel(Relation rel, ItemPointer tid)
 	PageIndexTupleDelete(page, offno);
 	/* XLOG stuff */
 	{
-		xl_btree_delete	xlrec;
-		XLogRecPtr		recptr;
-		XLogRecData		rdata[2];
+		xl_btree_delete xlrec;
+		XLogRecPtr	recptr;
+		XLogRecData rdata[2];
 
 		xlrec.target.node = rel->rd_node;
 		xlrec.target.tid = *tid;
 		rdata[0].buffer = InvalidBuffer;
-		rdata[0].data = (char*)&xlrec;
+		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeDelete;
 		rdata[0].next = &(rdata[1]);
 

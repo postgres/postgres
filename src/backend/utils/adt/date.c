@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.55 2001/01/24 19:43:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.56 2001/03/22 03:59:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ date_in(PG_FUNCTION_ARGS)
 	char		lowstr[MAXDATELEN + 1];
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
+	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
 		elog(ERROR, "Bad date external representation '%s'", str);
 
 	switch (dtype)
@@ -244,15 +244,15 @@ date_timestamp(PG_FUNCTION_ARGS)
 		if (utime == -1)
 			elog(ERROR, "Unable to convert date to tm");
 
-		result = utime + ((date2j(1970,1,1)-date2j(2000,1,1))*86400.0);
+		result = utime + ((date2j(1970, 1, 1) - date2j(2000, 1, 1)) * 86400.0);
 #else
-		result = dateVal*86400.0+CTimeZone;
+		result = dateVal * 86400.0 + CTimeZone;
 #endif
 	}
 	else
 	{
 		/* Outside of range for timezone support, so assume UTC */
-		result = dateVal*86400.0;
+		result = dateVal * 86400.0;
 	}
 
 	PG_RETURN_TIMESTAMP(result);
@@ -277,13 +277,9 @@ timestamp_date(PG_FUNCTION_ARGS)
 		elog(ERROR, "Unable to convert timestamp to date");
 
 	if (TIMESTAMP_IS_EPOCH(timestamp))
-	{
 		timestamp2tm(SetTimestamp(timestamp), NULL, tm, &fsec, NULL);
-	}
 	else if (TIMESTAMP_IS_CURRENT(timestamp))
-	{
 		timestamp2tm(SetTimestamp(timestamp), &tz, tm, &fsec, &tzn);
-	}
 	else
 	{
 		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
@@ -538,8 +534,10 @@ time_smaller(PG_FUNCTION_ARGS)
 Datum
 overlaps_time(PG_FUNCTION_ARGS)
 {
-	/* The arguments are TimeADT, but we leave them as generic Datums
-	 * to avoid dereferencing nulls (TimeADT is pass-by-reference!)
+
+	/*
+	 * The arguments are TimeADT, but we leave them as generic Datums to
+	 * avoid dereferencing nulls (TimeADT is pass-by-reference!)
 	 */
 	Datum		ts1 = PG_GETARG_DATUM(0);
 	Datum		te1 = PG_GETARG_DATUM(1);
@@ -556,9 +554,9 @@ overlaps_time(PG_FUNCTION_ARGS)
 	(DatumGetTimeADT(t1) < DatumGetTimeADT(t2))
 
 	/*
-	 * If both endpoints of interval 1 are null, the result is null (unknown).
-	 * If just one endpoint is null, take ts1 as the non-null one.
-	 * Otherwise, take ts1 as the lesser endpoint.
+	 * If both endpoints of interval 1 are null, the result is null
+	 * (unknown). If just one endpoint is null, take ts1 as the non-null
+	 * one. Otherwise, take ts1 as the lesser endpoint.
 	 */
 	if (ts1IsNull)
 	{
@@ -572,7 +570,7 @@ overlaps_time(PG_FUNCTION_ARGS)
 	{
 		if (TIMEADT_GT(ts1, te1))
 		{
-			Datum	tt = ts1;
+			Datum		tt = ts1;
 
 			ts1 = te1;
 			te1 = tt;
@@ -592,7 +590,7 @@ overlaps_time(PG_FUNCTION_ARGS)
 	{
 		if (TIMEADT_GT(ts2, te2))
 		{
-			Datum	tt = ts2;
+			Datum		tt = ts2;
 
 			ts2 = te2;
 			te2 = tt;
@@ -605,7 +603,9 @@ overlaps_time(PG_FUNCTION_ARGS)
 	 */
 	if (TIMEADT_GT(ts1, ts2))
 	{
-		/* This case is ts1 < te2 OR te1 < te2, which may look redundant
+
+		/*
+		 * This case is ts1 < te2 OR te1 < te2, which may look redundant
 		 * but in the presence of nulls it's not quite completely so.
 		 */
 		if (te2IsNull)
@@ -614,7 +614,9 @@ overlaps_time(PG_FUNCTION_ARGS)
 			PG_RETURN_BOOL(true);
 		if (te1IsNull)
 			PG_RETURN_NULL();
-		/* If te1 is not null then we had ts1 <= te1 above, and we just
+
+		/*
+		 * If te1 is not null then we had ts1 <= te1 above, and we just
 		 * found ts1 >= te2, hence te1 >= te2.
 		 */
 		PG_RETURN_BOOL(false);
@@ -628,15 +630,20 @@ overlaps_time(PG_FUNCTION_ARGS)
 			PG_RETURN_BOOL(true);
 		if (te2IsNull)
 			PG_RETURN_NULL();
-		/* If te2 is not null then we had ts2 <= te2 above, and we just
+
+		/*
+		 * If te2 is not null then we had ts2 <= te2 above, and we just
 		 * found ts2 >= te1, hence te2 >= te1.
 		 */
 		PG_RETURN_BOOL(false);
 	}
 	else
 	{
-		/* For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
-		 * rather silly way of saying "true if both are nonnull, else null".
+
+		/*
+		 * For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
+		 * rather silly way of saying "true if both are nonnull, else
+		 * null".
 		 */
 		if (te1IsNull || te2IsNull)
 			PG_RETURN_NULL();
@@ -690,7 +697,7 @@ datetime_timestamp(PG_FUNCTION_ARGS)
 	Timestamp	result;
 
 	result = DatumGetTimestamp(DirectFunctionCall1(date_timestamp,
-												   DateADTGetDatum(date)));
+												 DateADTGetDatum(date)));
 	result += time;
 
 	PG_RETURN_TIMESTAMP(result);
@@ -895,62 +902,62 @@ timetz_out(PG_FUNCTION_ARGS)
 Datum
 timetz_eq(PG_FUNCTION_ARGS)
 {
-	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
-	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time+time1->zone) == (time2->time+time2->zone)));
+	PG_RETURN_BOOL(((time1->time + time1->zone) == (time2->time + time2->zone)));
 }
 
 Datum
 timetz_ne(PG_FUNCTION_ARGS)
 {
-	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
-	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time+time1->zone) != (time2->time+time2->zone)));
+	PG_RETURN_BOOL(((time1->time + time1->zone) != (time2->time + time2->zone)));
 }
 
 Datum
 timetz_lt(PG_FUNCTION_ARGS)
 {
-	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
-	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time+time1->zone) < (time2->time+time2->zone)));
+	PG_RETURN_BOOL(((time1->time + time1->zone) < (time2->time + time2->zone)));
 }
 
 Datum
 timetz_le(PG_FUNCTION_ARGS)
 {
-	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
-	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time+time1->zone) <= (time2->time+time2->zone)));
+	PG_RETURN_BOOL(((time1->time + time1->zone) <= (time2->time + time2->zone)));
 }
 
 Datum
 timetz_gt(PG_FUNCTION_ARGS)
 {
-	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
-	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time+time1->zone) > (time2->time+time2->zone)));
+	PG_RETURN_BOOL(((time1->time + time1->zone) > (time2->time + time2->zone)));
 }
 
 Datum
 timetz_ge(PG_FUNCTION_ARGS)
 {
-	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
-	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time+time1->zone) >= (time2->time+time2->zone)));
+	PG_RETURN_BOOL(((time1->time + time1->zone) >= (time2->time + time2->zone)));
 }
 
 Datum
 timetz_cmp(PG_FUNCTION_ARGS)
 {
-	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
-	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
 	if (DatumGetBool(DirectFunctionCall2(timetz_lt,
 										 TimeTzADTPGetDatum(time1),
@@ -969,7 +976,7 @@ timetz_cmp(PG_FUNCTION_ARGS)
 Datum
 timetz_hash(PG_FUNCTION_ARGS)
 {
-	TimeTzADT   *key = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *key = PG_GETARG_TIMETZADT_P(0);
 
 	/*
 	 * Specify hash length as sizeof(double) + sizeof(int4), not as
@@ -982,8 +989,8 @@ timetz_hash(PG_FUNCTION_ARGS)
 Datum
 timetz_larger(PG_FUNCTION_ARGS)
 {
-	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
-	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
 	if (DatumGetBool(DirectFunctionCall2(timetz_gt,
 										 TimeTzADTPGetDatum(time1),
@@ -995,8 +1002,8 @@ timetz_larger(PG_FUNCTION_ARGS)
 Datum
 timetz_smaller(PG_FUNCTION_ARGS)
 {
-	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
-	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
 	if (DatumGetBool(DirectFunctionCall2(timetz_lt,
 										 TimeTzADTPGetDatum(time1),
@@ -1058,7 +1065,9 @@ timetz_mi_interval(PG_FUNCTION_ARGS)
 Datum
 overlaps_timetz(PG_FUNCTION_ARGS)
 {
-	/* The arguments are TimeTzADT *, but we leave them as generic Datums
+
+	/*
+	 * The arguments are TimeTzADT *, but we leave them as generic Datums
 	 * for convenience of notation --- and to avoid dereferencing nulls.
 	 */
 	Datum		ts1 = PG_GETARG_DATUM(0);
@@ -1076,9 +1085,9 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 	DatumGetBool(DirectFunctionCall2(timetz_lt,t1,t2))
 
 	/*
-	 * If both endpoints of interval 1 are null, the result is null (unknown).
-	 * If just one endpoint is null, take ts1 as the non-null one.
-	 * Otherwise, take ts1 as the lesser endpoint.
+	 * If both endpoints of interval 1 are null, the result is null
+	 * (unknown). If just one endpoint is null, take ts1 as the non-null
+	 * one. Otherwise, take ts1 as the lesser endpoint.
 	 */
 	if (ts1IsNull)
 	{
@@ -1092,7 +1101,7 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 	{
 		if (TIMETZ_GT(ts1, te1))
 		{
-			Datum	tt = ts1;
+			Datum		tt = ts1;
 
 			ts1 = te1;
 			te1 = tt;
@@ -1112,7 +1121,7 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 	{
 		if (TIMETZ_GT(ts2, te2))
 		{
-			Datum	tt = ts2;
+			Datum		tt = ts2;
 
 			ts2 = te2;
 			te2 = tt;
@@ -1125,7 +1134,9 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 	 */
 	if (TIMETZ_GT(ts1, ts2))
 	{
-		/* This case is ts1 < te2 OR te1 < te2, which may look redundant
+
+		/*
+		 * This case is ts1 < te2 OR te1 < te2, which may look redundant
 		 * but in the presence of nulls it's not quite completely so.
 		 */
 		if (te2IsNull)
@@ -1134,7 +1145,9 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 			PG_RETURN_BOOL(true);
 		if (te1IsNull)
 			PG_RETURN_NULL();
-		/* If te1 is not null then we had ts1 <= te1 above, and we just
+
+		/*
+		 * If te1 is not null then we had ts1 <= te1 above, and we just
 		 * found ts1 >= te2, hence te1 >= te2.
 		 */
 		PG_RETURN_BOOL(false);
@@ -1148,15 +1161,20 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 			PG_RETURN_BOOL(true);
 		if (te2IsNull)
 			PG_RETURN_NULL();
-		/* If te2 is not null then we had ts2 <= te2 above, and we just
+
+		/*
+		 * If te2 is not null then we had ts2 <= te2 above, and we just
 		 * found ts2 >= te1, hence te2 >= te1.
 		 */
 		PG_RETURN_BOOL(false);
 	}
 	else
 	{
-		/* For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
-		 * rather silly way of saying "true if both are nonnull, else null".
+
+		/*
+		 * For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
+		 * rather silly way of saying "true if both are nonnull, else
+		 * null".
 		 */
 		if (te1IsNull || te2IsNull)
 			PG_RETURN_NULL();
@@ -1219,7 +1237,7 @@ datetimetz_timestamp(PG_FUNCTION_ARGS)
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
 	Timestamp	result;
 
-	result = date*86400.0 + time->time + time->zone;
+	result = date * 86400.0 + time->time + time->zone;
 
 	PG_RETURN_TIMESTAMP(result);
 }

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.4 2001/01/29 00:39:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.5 2001/03/22 03:59:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,8 +67,8 @@ SubqueryNext(SubqueryScan *node)
 	/*
 	 * Check if we are evaluating PlanQual for tuple of this relation.
 	 * Additional checking is not good, but no other way for now. We could
-	 * introduce new nodes for this case and handle SubqueryScan --> NewNode
-	 * switching in Init/ReScan plan...
+	 * introduce new nodes for this case and handle SubqueryScan -->
+	 * NewNode switching in Init/ReScan plan...
 	 */
 	if (estate->es_evTuple != NULL &&
 		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
@@ -202,6 +202,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 int
 ExecCountSlotsSubqueryScan(SubqueryScan *node)
 {
+
 	/*
 	 * The subplan has its own tuple table and must not be counted here!
 	 */

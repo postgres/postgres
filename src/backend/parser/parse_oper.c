@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.47 2001/02/16 03:16:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.48 2001/03/22 03:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ oprid(Operator op)
 Oid
 oprfuncid(Operator op)
 {
-	Form_pg_operator	pgopform = (Form_pg_operator) GETSTRUCT(op);
+	Form_pg_operator pgopform = (Form_pg_operator) GETSTRUCT(op);
 
 	return pgopform->oprcode;
 }
@@ -416,34 +416,35 @@ oper_select_candidate(int nargs,
 	}
 
 	/*
-	 * Second try: same algorithm as for unknown resolution in parse_func.c.
+	 * Second try: same algorithm as for unknown resolution in
+	 * parse_func.c.
 	 *
 	 * We do this by examining each unknown argument position to see if we
-	 * can determine a "type category" for it.  If any candidate has an
+	 * can determine a "type category" for it.	If any candidate has an
 	 * input datatype of STRING category, use STRING category (this bias
 	 * towards STRING is appropriate since unknown-type literals look like
 	 * strings).  Otherwise, if all the candidates agree on the type
 	 * category of this argument position, use that category.  Otherwise,
 	 * fail because we cannot determine a category.
 	 *
-	 * If we are able to determine a type category, also notice whether
-	 * any of the candidates takes a preferred datatype within the category.
+	 * If we are able to determine a type category, also notice whether any
+	 * of the candidates takes a preferred datatype within the category.
 	 *
-	 * Having completed this examination, remove candidates that accept
-	 * the wrong category at any unknown position.  Also, if at least one
-	 * candidate accepted a preferred type at a position, remove candidates
-	 * that accept non-preferred types.
+	 * Having completed this examination, remove candidates that accept the
+	 * wrong category at any unknown position.	Also, if at least one
+	 * candidate accepted a preferred type at a position, remove
+	 * candidates that accept non-preferred types.
 	 *
 	 * If we are down to one candidate at the end, we win.
 	 */
 	resolved_unknowns = false;
 	for (i = 0; i < nargs; i++)
 	{
-		bool	have_conflict;
+		bool		have_conflict;
 
 		if (input_typeids[i] != UNKNOWNOID)
 			continue;
-		resolved_unknowns = true; /* assume we can do it */
+		resolved_unknowns = true;		/* assume we can do it */
 		slot_category[i] = INVALID_TYPE;
 		slot_has_preferred_type[i] = false;
 		have_conflict = false;
@@ -479,7 +480,11 @@ oper_select_candidate(int nargs,
 				}
 				else
 				{
-					/* Remember conflict, but keep going (might find STRING) */
+
+					/*
+					 * Remember conflict, but keep going (might find
+					 * STRING)
+					 */
 					have_conflict = true;
 				}
 			}
@@ -501,7 +506,7 @@ oper_select_candidate(int nargs,
 			 current_candidate != NULL;
 			 current_candidate = current_candidate->next)
 		{
-			bool	keepit = true;
+			bool		keepit = true;
 
 			current_typeids = current_candidate->args;
 			for (i = 0; i < nargs; i++)
@@ -602,7 +607,8 @@ oper_inexact(char *op, Oid arg1, Oid arg2)
 	if (ncandidates == 0)
 		return NULL;
 
-	/* Otherwise, check for compatible datatypes, and then try to resolve
+	/*
+	 * Otherwise, check for compatible datatypes, and then try to resolve
 	 * the conflict if more than one candidate remains.
 	 */
 	inputOids[0] = arg1;
@@ -659,18 +665,18 @@ oper(char *opname, Oid ltypeId, Oid rtypeId, bool noError)
  *
  *	This is tighter than oper() because it will not return an operator that
  *	requires coercion of the input datatypes (but binary-compatible operators
- *	are accepted).  Otherwise, the semantics are the same.
+ *	are accepted).	Otherwise, the semantics are the same.
  */
 Operator
 compatible_oper(char *op, Oid arg1, Oid arg2, bool noError)
 {
 	Operator	optup;
-	Form_pg_operator	opform;
+	Form_pg_operator opform;
 
 	/* oper() will find the best available match */
 	optup = oper(op, arg1, arg2, noError);
 	if (optup == (Operator) NULL)
-		return (Operator) NULL;	/* must be noError case */
+		return (Operator) NULL; /* must be noError case */
 
 	/* but is it good enough? */
 	opform = (Form_pg_operator) GETSTRUCT(optup);
@@ -825,8 +831,11 @@ right_oper(char *op, Oid arg)
 			unary_op_error(op, arg, FALSE);
 		else
 		{
-			/* We must run oper_select_candidate even if only one candidate,
-			 * otherwise we may falsely return a non-type-compatible operator.
+
+			/*
+			 * We must run oper_select_candidate even if only one
+			 * candidate, otherwise we may falsely return a
+			 * non-type-compatible operator.
 			 */
 			targetOid = oper_select_candidate(1, &arg, candidates);
 			if (targetOid != NULL)
@@ -879,8 +888,11 @@ left_oper(char *op, Oid arg)
 			unary_op_error(op, arg, TRUE);
 		else
 		{
-			/* We must run oper_select_candidate even if only one candidate,
-			 * otherwise we may falsely return a non-type-compatible operator.
+
+			/*
+			 * We must run oper_select_candidate even if only one
+			 * candidate, otherwise we may falsely return a
+			 * non-type-compatible operator.
 			 */
 			targetOid = oper_select_candidate(1, &arg, candidates);
 			if (targetOid != NULL)

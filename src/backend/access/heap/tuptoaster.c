@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.17 2001/02/15 20:57:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.18 2001/03/22 03:59:13 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -41,12 +41,12 @@
 
 #undef TOAST_DEBUG
 
-static void			toast_delete(Relation rel, HeapTuple oldtup);
-static void			toast_delete_datum(Relation rel, Datum value);
-static void			toast_insert_or_update(Relation rel, HeapTuple newtup,
-								HeapTuple oldtup);
-static Datum		toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value);
-static varattrib   *toast_fetch_datum(varattrib *attr);
+static void toast_delete(Relation rel, HeapTuple oldtup);
+static void toast_delete_datum(Relation rel, Datum value);
+static void toast_insert_or_update(Relation rel, HeapTuple newtup,
+					   HeapTuple oldtup);
+static Datum toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value);
+static varattrib *toast_fetch_datum(varattrib *attr);
 
 
 /* ----------
@@ -70,14 +70,14 @@ heap_tuple_toast_attrs(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 /* ----------
  * heap_tuple_fetch_attr -
  *
- *	Public entry point to get back a toasted value 
+ *	Public entry point to get back a toasted value
  *	external storage (possibly still in compressed format).
  * ----------
  */
-varattrib *
+varattrib  *
 heap_tuple_fetch_attr(varattrib *attr)
 {
-	varattrib	*result;
+	varattrib  *result;
 
 	if (VARATT_IS_EXTERNAL(attr))
 	{
@@ -94,7 +94,7 @@ heap_tuple_fetch_attr(varattrib *attr)
 		 * ----------
 		 */
 		result = attr;
-    }
+	}
 
 	return result;
 }
@@ -107,10 +107,10 @@ heap_tuple_fetch_attr(varattrib *attr)
  *	or external storage.
  * ----------
  */
-varattrib *
+varattrib  *
 heap_tuple_untoast_attr(varattrib *attr)
 {
-	varattrib	*result;
+	varattrib  *result;
 
 	if (VARATT_IS_EXTERNAL(attr))
 	{
@@ -121,14 +121,14 @@ heap_tuple_untoast_attr(varattrib *attr)
 			 * Fetch it from the toast heap and decompress.
 			 * ----------
 			 */
-			varattrib *tmp;
+			varattrib  *tmp;
 
 			tmp = toast_fetch_datum(attr);
-			result = (varattrib *)palloc(attr->va_content.va_external.va_rawsize
-								+ VARHDRSZ);
+			result = (varattrib *) palloc(attr->va_content.va_external.va_rawsize
+										  + VARHDRSZ);
 			VARATT_SIZEP(result) = attr->va_content.va_external.va_rawsize
-								+ VARHDRSZ;
-			pglz_decompress((PGLZ_Header *)tmp, VARATT_DATA(result));
+				+ VARHDRSZ;
+			pglz_decompress((PGLZ_Header *) tmp, VARATT_DATA(result));
 
 			pfree(tmp);
 		}
@@ -147,11 +147,11 @@ heap_tuple_untoast_attr(varattrib *attr)
 		 * This is a compressed value inside of the main tuple
 		 * ----------
 		 */
-		result = (varattrib *)palloc(attr->va_content.va_compressed.va_rawsize
-							+ VARHDRSZ);
+		result = (varattrib *) palloc(attr->va_content.va_compressed.va_rawsize
+									  + VARHDRSZ);
 		VARATT_SIZEP(result) = attr->va_content.va_compressed.va_rawsize
-							+ VARHDRSZ;
-		pglz_decompress((PGLZ_Header *)attr, VARATT_DATA(result));
+			+ VARHDRSZ;
+		pglz_decompress((PGLZ_Header *) attr, VARATT_DATA(result));
 	}
 	else
 		/* ----------
@@ -173,21 +173,21 @@ heap_tuple_untoast_attr(varattrib *attr)
 static void
 toast_delete(Relation rel, HeapTuple oldtup)
 {
-	TupleDesc			tupleDesc;
-	Form_pg_attribute  *att;
-	int					numAttrs;
-	int					i;
-	Datum				value;
-	bool				isnull;
+	TupleDesc	tupleDesc;
+	Form_pg_attribute *att;
+	int			numAttrs;
+	int			i;
+	Datum		value;
+	bool		isnull;
 
 	/* ----------
 	 * Get the tuple descriptor, the number of and attribute
 	 * descriptors.
 	 * ----------
 	 */
-	tupleDesc	= rel->rd_att;
-	numAttrs	= tupleDesc->natts;
-	att			= tupleDesc->attrs;
+	tupleDesc = rel->rd_att;
+	numAttrs = tupleDesc->natts;
+	att = tupleDesc->attrs;
 
 	/* ----------
 	 * Check for external stored attributes and delete them
@@ -216,35 +216,35 @@ toast_delete(Relation rel, HeapTuple oldtup)
 static void
 toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 {
-	TupleDesc			tupleDesc;
-	Form_pg_attribute  *att;
-	int					numAttrs;
-	int					i;
-	bool				old_isnull;
-	bool				new_isnull;
+	TupleDesc	tupleDesc;
+	Form_pg_attribute *att;
+	int			numAttrs;
+	int			i;
+	bool		old_isnull;
+	bool		new_isnull;
 
-	bool				need_change = false;
-	bool				need_free   = false;
-	bool				need_delold = false;
-	bool				has_nulls   = false;
+	bool		need_change = false;
+	bool		need_free = false;
+	bool		need_delold = false;
+	bool		has_nulls = false;
 
-	Size				maxDataLen;
+	Size		maxDataLen;
 
-	char				toast_action[MaxHeapAttributeNumber];
-	char				toast_nulls[MaxHeapAttributeNumber];
-	Datum				toast_values[MaxHeapAttributeNumber];
-	int32				toast_sizes[MaxHeapAttributeNumber];
-	bool				toast_free[MaxHeapAttributeNumber];
-	bool				toast_delold[MaxHeapAttributeNumber];
+	char		toast_action[MaxHeapAttributeNumber];
+	char		toast_nulls[MaxHeapAttributeNumber];
+	Datum		toast_values[MaxHeapAttributeNumber];
+	int32		toast_sizes[MaxHeapAttributeNumber];
+	bool		toast_free[MaxHeapAttributeNumber];
+	bool		toast_delold[MaxHeapAttributeNumber];
 
 	/* ----------
 	 * Get the tuple descriptor, the number of and attribute
 	 * descriptors and the location of the tuple values.
 	 * ----------
 	 */
-	tupleDesc	= rel->rd_att;
-	numAttrs	= tupleDesc->natts;
-	att			= tupleDesc->attrs;
+	tupleDesc = rel->rd_att;
+	numAttrs = tupleDesc->natts;
+	att = tupleDesc->attrs;
 
 	/* ----------
 	 * Then collect information about the values given
@@ -255,14 +255,14 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 *		'x'		incompressible, but OK to move off
 	 * ----------
 	 */
-	memset(toast_action,    ' ', numAttrs * sizeof(char));
-	memset(toast_nulls,     ' ', numAttrs * sizeof(char));
-	memset(toast_free,      0,   numAttrs * sizeof(bool));
-	memset(toast_delold,    0,   numAttrs * sizeof(bool));
+	memset(toast_action, ' ', numAttrs * sizeof(char));
+	memset(toast_nulls, ' ', numAttrs * sizeof(char));
+	memset(toast_free, 0, numAttrs * sizeof(bool));
+	memset(toast_delold, 0, numAttrs * sizeof(bool));
 	for (i = 0; i < numAttrs; i++)
 	{
-		varattrib	   *old_value;
-		varattrib	   *new_value;
+		varattrib  *old_value;
+		varattrib  *new_value;
 
 		if (oldtup != NULL)
 		{
@@ -270,25 +270,25 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			 * For UPDATE get the old and new values of this attribute
 			 * ----------
 			 */
-			old_value = (varattrib *)DatumGetPointer(
-						heap_getattr(oldtup, i + 1, tupleDesc, &old_isnull));
-			toast_values[i] = 
-						heap_getattr(newtup, i + 1, tupleDesc, &new_isnull);
-			new_value = (varattrib *)DatumGetPointer(toast_values[i]);
+			old_value = (varattrib *) DatumGetPointer(
+					heap_getattr(oldtup, i + 1, tupleDesc, &old_isnull));
+			toast_values[i] =
+				heap_getattr(newtup, i + 1, tupleDesc, &new_isnull);
+			new_value = (varattrib *) DatumGetPointer(toast_values[i]);
 
 			/* ----------
 			 * If the old value is an external stored one, check if it
 			 * has changed so we have to delete it later.
 			 * ----------
 			 */
-			if (!old_isnull && att[i]->attlen == -1 && 
-						VARATT_IS_EXTERNAL(old_value))
+			if (!old_isnull && att[i]->attlen == -1 &&
+				VARATT_IS_EXTERNAL(old_value))
 			{
 				if (new_isnull || !VARATT_IS_EXTERNAL(new_value) ||
-						old_value->va_content.va_external.va_rowid !=
-						new_value->va_content.va_external.va_rowid ||
-						old_value->va_content.va_external.va_attno !=
-						new_value->va_content.va_external.va_attno)
+					old_value->va_content.va_external.va_rowid !=
+					new_value->va_content.va_external.va_rowid ||
+					old_value->va_content.va_external.va_attno !=
+					new_value->va_content.va_external.va_attno)
 				{
 					/* ----------
 					 * The old external store value isn't needed any
@@ -318,8 +318,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			 * For INSERT simply get the new value
 			 * ----------
 			 */
-			toast_values[i] = 
-						heap_getattr(newtup, i + 1, tupleDesc, &new_isnull);
+			toast_values[i] =
+				heap_getattr(newtup, i + 1, tupleDesc, &new_isnull);
 		}
 
 		/* ----------
@@ -356,7 +356,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			if (VARATT_IS_EXTERNAL(DatumGetPointer(toast_values[i])))
 			{
 				toast_values[i] = PointerGetDatum(heap_tuple_untoast_attr(
-					(varattrib *)DatumGetPointer(toast_values[i])));
+						(varattrib *) DatumGetPointer(toast_values[i])));
 				toast_free[i] = true;
 				need_change = true;
 				need_free = true;
@@ -366,7 +366,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			 * Remember the size of this attribute
 			 * ----------
 			 */
-			toast_sizes[i]  = VARATT_SIZE(DatumGetPointer(toast_values[i]));
+			toast_sizes[i] = VARATT_SIZE(DatumGetPointer(toast_values[i]));
 		}
 		else
 		{
@@ -375,7 +375,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			 * ----------
 			 */
 			toast_action[i] = 'p';
-			toast_sizes[i]  = att[i]->attlen;
+			toast_sizes[i] = att[i]->attlen;
 		}
 	}
 
@@ -384,7 +384,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 *
 	 *	1: Inline compress attributes with attstorage 'x'
 	 *	2: Store attributes with attstorage 'x' or 'e' external
-	 *  3: Inline compress attributes with attstorage 'm'
+	 *	3: Inline compress attributes with attstorage 'm'
 	 *	4: Store attributes with attstorage 'm' external
 	 * ----------
 	 */
@@ -398,12 +398,12 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 * ----------
 	 */
 	while (MAXALIGN(ComputeDataSize(tupleDesc, toast_values, toast_nulls)) >
-				maxDataLen)
+		   maxDataLen)
 	{
-		int		biggest_attno = -1;
-		int32	biggest_size  = MAXALIGN(sizeof(varattrib));
-		Datum	old_value;
-		Datum	new_value;
+		int			biggest_attno = -1;
+		int32		biggest_size = MAXALIGN(sizeof(varattrib));
+		Datum		old_value;
+		Datum		new_value;
 
 		/* ----------
 		 * Search for the biggest yet uncompressed internal attribute
@@ -420,7 +420,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			if (toast_sizes[i] > biggest_size)
 			{
 				biggest_attno = i;
-				biggest_size  = toast_sizes[i];
+				biggest_size = toast_sizes[i];
 			}
 		}
 
@@ -431,24 +431,28 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		 * Attempt to compress it inline
 		 * ----------
 		 */
-		i					= biggest_attno;
-		old_value			= toast_values[i];
-		new_value			= toast_compress_datum(old_value);
+		i = biggest_attno;
+		old_value = toast_values[i];
+		new_value = toast_compress_datum(old_value);
 
 		if (DatumGetPointer(new_value) != NULL)
 		{
 			/* successful compression */
 			if (toast_free[i])
 				pfree(DatumGetPointer(old_value));
-			toast_values[i]	= new_value;
-			toast_free[i]	= true;
-			toast_sizes[i]	= VARATT_SIZE(toast_values[i]);
-			need_change		= true;
-			need_free		= true;
+			toast_values[i] = new_value;
+			toast_free[i] = true;
+			toast_sizes[i] = VARATT_SIZE(toast_values[i]);
+			need_change = true;
+			need_free = true;
 		}
 		else
 		{
-			/* incompressible data, ignore on subsequent compression passes */
+
+			/*
+			 * incompressible data, ignore on subsequent compression
+			 * passes
+			 */
 			toast_action[i] = 'x';
 		}
 	}
@@ -459,11 +463,11 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 * ----------
 	 */
 	while (MAXALIGN(ComputeDataSize(tupleDesc, toast_values, toast_nulls)) >
-				maxDataLen && rel->rd_rel->reltoastrelid != InvalidOid)
+		   maxDataLen && rel->rd_rel->reltoastrelid != InvalidOid)
 	{
-		int		biggest_attno = -1;
-		int32	biggest_size  = MAXALIGN(sizeof(varattrib));
-		Datum	old_value;
+		int			biggest_attno = -1;
+		int32		biggest_size = MAXALIGN(sizeof(varattrib));
+		Datum		old_value;
 
 		/* ----------
 		 * Search for the biggest yet inlined attribute with
@@ -481,7 +485,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			if (toast_sizes[i] > biggest_size)
 			{
 				biggest_attno = i;
-				biggest_size  = toast_sizes[i];
+				biggest_size = toast_sizes[i];
 			}
 		}
 
@@ -492,21 +496,21 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		 * Store this external
 		 * ----------
 		 */
-		i					= biggest_attno;
-		old_value			= toast_values[i];
-		toast_action[i]		= 'p';
-		toast_values[i]		= toast_save_datum(rel,
-									newtup->t_data->t_oid,
-									i + 1,
-									toast_values[i]);
+		i = biggest_attno;
+		old_value = toast_values[i];
+		toast_action[i] = 'p';
+		toast_values[i] = toast_save_datum(rel,
+										   newtup->t_data->t_oid,
+										   i + 1,
+										   toast_values[i]);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 
-		toast_free[i]		= true;
-		toast_sizes[i]		= VARATT_SIZE(toast_values[i]);
+		toast_free[i] = true;
+		toast_sizes[i] = VARATT_SIZE(toast_values[i]);
 
 		need_change = true;
-		need_free   = true;
+		need_free = true;
 	}
 
 	/* ----------
@@ -515,12 +519,12 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 * ----------
 	 */
 	while (MAXALIGN(ComputeDataSize(tupleDesc, toast_values, toast_nulls)) >
-				maxDataLen)
+		   maxDataLen)
 	{
-		int		biggest_attno = -1;
-		int32	biggest_size  = MAXALIGN(sizeof(varattrib));
-		Datum	old_value;
-		Datum	new_value;
+		int			biggest_attno = -1;
+		int32		biggest_size = MAXALIGN(sizeof(varattrib));
+		Datum		old_value;
+		Datum		new_value;
 
 		/* ----------
 		 * Search for the biggest yet uncompressed internal attribute
@@ -537,7 +541,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			if (toast_sizes[i] > biggest_size)
 			{
 				biggest_attno = i;
-				biggest_size  = toast_sizes[i];
+				biggest_size = toast_sizes[i];
 			}
 		}
 
@@ -548,24 +552,28 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		 * Attempt to compress it inline
 		 * ----------
 		 */
-		i					= biggest_attno;
-		old_value			= toast_values[i];
-		new_value			= toast_compress_datum(old_value);
+		i = biggest_attno;
+		old_value = toast_values[i];
+		new_value = toast_compress_datum(old_value);
 
 		if (DatumGetPointer(new_value) != NULL)
 		{
 			/* successful compression */
 			if (toast_free[i])
 				pfree(DatumGetPointer(old_value));
-			toast_values[i]	= new_value;
-			toast_free[i]	= true;
-			toast_sizes[i]	= VARATT_SIZE(toast_values[i]);
-			need_change		= true;
-			need_free		= true;
+			toast_values[i] = new_value;
+			toast_free[i] = true;
+			toast_sizes[i] = VARATT_SIZE(toast_values[i]);
+			need_change = true;
+			need_free = true;
 		}
 		else
 		{
-			/* incompressible data, ignore on subsequent compression passes */
+
+			/*
+			 * incompressible data, ignore on subsequent compression
+			 * passes
+			 */
 			toast_action[i] = 'x';
 		}
 	}
@@ -575,11 +583,11 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 * ----------
 	 */
 	while (MAXALIGN(ComputeDataSize(tupleDesc, toast_values, toast_nulls)) >
-				maxDataLen && rel->rd_rel->reltoastrelid != InvalidOid)
+		   maxDataLen && rel->rd_rel->reltoastrelid != InvalidOid)
 	{
-		int		biggest_attno = -1;
-		int32	biggest_size  = MAXALIGN(sizeof(varattrib));
-		Datum	old_value;
+		int			biggest_attno = -1;
+		int32		biggest_size = MAXALIGN(sizeof(varattrib));
+		Datum		old_value;
 
 		/* ----------
 		 * Search for the biggest yet inlined attribute with
@@ -597,7 +605,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			if (toast_sizes[i] > biggest_size)
 			{
 				biggest_attno = i;
-				biggest_size  = toast_sizes[i];
+				biggest_size = toast_sizes[i];
 			}
 		}
 
@@ -608,21 +616,21 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		 * Store this external
 		 * ----------
 		 */
-		i					= biggest_attno;
-		old_value			= toast_values[i];
-		toast_action[i]		= 'p';
-		toast_values[i]		= toast_save_datum(rel,
-									newtup->t_data->t_oid,
-									i + 1,
-									toast_values[i]);
+		i = biggest_attno;
+		old_value = toast_values[i];
+		toast_action[i] = 'p';
+		toast_values[i] = toast_save_datum(rel,
+										   newtup->t_data->t_oid,
+										   i + 1,
+										   toast_values[i]);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 
-		toast_free[i]		= true;
-		toast_sizes[i]		= VARATT_SIZE(toast_values[i]);
+		toast_free[i] = true;
+		toast_sizes[i] = VARATT_SIZE(toast_values[i]);
 
 		need_change = true;
-		need_free   = true;
+		need_free = true;
 	}
 
 	/* ----------
@@ -632,10 +640,10 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 */
 	if (need_change)
 	{
-		char		   *new_data;
-		int32			new_len;
-		MemoryContext	oldcxt;
-		HeapTupleHeader	olddata;
+		char	   *new_data;
+		int32		new_len;
+		MemoryContext oldcxt;
+		HeapTupleHeader olddata;
 
 		/* ----------
 		 * Calculate the new size of the tuple
@@ -662,24 +670,24 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		 * ----------
 		 */
 		memcpy(new_data, newtup->t_data, newtup->t_data->t_hoff);
-		newtup->t_data = (HeapTupleHeader)new_data;
+		newtup->t_data = (HeapTupleHeader) new_data;
 		newtup->t_len = new_len;
 
-		DataFill((char *)(MAXALIGN((long)new_data +
-						offsetof(HeapTupleHeaderData, t_bits) + 
-						((has_nulls) ? BITMAPLEN(numAttrs) : 0))),
-				tupleDesc,
-				toast_values,
-				toast_nulls,
-				&(newtup->t_data->t_infomask),
-				has_nulls ? newtup->t_data->t_bits : NULL);
+		DataFill((char *) (MAXALIGN((long) new_data +
+								  offsetof(HeapTupleHeaderData, t_bits) +
+							   ((has_nulls) ? BITMAPLEN(numAttrs) : 0))),
+				 tupleDesc,
+				 toast_values,
+				 toast_nulls,
+				 &(newtup->t_data->t_infomask),
+				 has_nulls ? newtup->t_data->t_bits : NULL);
 
 		/* ----------
 		 * In the case we modified a previously modified tuple again,
 		 * free the memory from the previous run
 		 * ----------
 		 */
-		if ((char *)olddata != ((char *)newtup + HEAPTUPLESIZE))
+		if ((char *) olddata != ((char *) newtup + HEAPTUPLESIZE))
 			pfree(olddata);
 
 		/* ----------
@@ -723,7 +731,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 Datum
 toast_compress_datum(Datum value)
 {
-	varattrib	   *tmp;
+	varattrib  *tmp;
 
 	tmp = (varattrib *) palloc(sizeof(PGLZ_Header) + VARATT_SIZE(value));
 	pglz_compress(VARATT_DATA(value), VARATT_SIZE(value) - VARHDRSZ,
@@ -754,45 +762,45 @@ toast_compress_datum(Datum value)
 static Datum
 toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 {
-	Relation			toastrel;
-	Relation			toastidx;
-	HeapTuple			toasttup;
-	InsertIndexResult	idxres;
-	TupleDesc			toasttupDesc;
-	Datum				t_values[3];
-	char				t_nulls[3];
-	varattrib		   *result;
-	char				chunk_data[VARHDRSZ + TOAST_MAX_CHUNK_SIZE];
-	int32				chunk_size;
-	int32				chunk_seq = 0;
-	char			   *data_p;
-	int32				data_todo;
+	Relation	toastrel;
+	Relation	toastidx;
+	HeapTuple	toasttup;
+	InsertIndexResult idxres;
+	TupleDesc	toasttupDesc;
+	Datum		t_values[3];
+	char		t_nulls[3];
+	varattrib  *result;
+	char		chunk_data[VARHDRSZ + TOAST_MAX_CHUNK_SIZE];
+	int32		chunk_size;
+	int32		chunk_seq = 0;
+	char	   *data_p;
+	int32		data_todo;
 
 	/* ----------
 	 * Create the varattrib reference
 	 * ----------
 	 */
-	result = (varattrib *)palloc(sizeof(varattrib));
+	result = (varattrib *) palloc(sizeof(varattrib));
 
-	result->va_header	= sizeof(varattrib) | VARATT_FLAG_EXTERNAL;
+	result->va_header = sizeof(varattrib) | VARATT_FLAG_EXTERNAL;
 	if (VARATT_IS_COMPRESSED(value))
 	{
 		result->va_header |= VARATT_FLAG_COMPRESSED;
-		result->va_content.va_external.va_rawsize = 
-					((varattrib *)value)->va_content.va_compressed.va_rawsize;
+		result->va_content.va_external.va_rawsize =
+			((varattrib *) value)->va_content.va_compressed.va_rawsize;
 	}
 	else
 		result->va_content.va_external.va_rawsize = VARATT_SIZE(value);
-					
-	result->va_content.va_external.va_extsize		= 
-					VARATT_SIZE(value) - VARHDRSZ;
-	result->va_content.va_external.va_valueid		= newoid();
-	result->va_content.va_external.va_toastrelid	= 
-					rel->rd_rel->reltoastrelid;
-	result->va_content.va_external.va_toastidxid	= 
-					rel->rd_rel->reltoastidxid;
-	result->va_content.va_external.va_rowid			= mainoid;
-	result->va_content.va_external.va_attno			= attno;
+
+	result->va_content.va_external.va_extsize =
+		VARATT_SIZE(value) - VARHDRSZ;
+	result->va_content.va_external.va_valueid = newoid();
+	result->va_content.va_external.va_toastrelid =
+		rel->rd_rel->reltoastrelid;
+	result->va_content.va_external.va_toastidxid =
+		rel->rd_rel->reltoastidxid;
+	result->va_content.va_external.va_rowid = mainoid;
+	result->va_content.va_external.va_attno = attno;
 
 	/* ----------
 	 * Initialize constant parts of the tuple data
@@ -808,8 +816,8 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 	 * Get the data to process
 	 * ----------
 	 */
-	data_p		= VARATT_DATA(value);
-	data_todo	= VARATT_SIZE(value) - VARHDRSZ;
+	data_p = VARATT_DATA(value);
+	data_todo = VARATT_SIZE(value) - VARHDRSZ;
 
 	/* ----------
 	 * Open the toast relation
@@ -818,9 +826,9 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 	toastrel = heap_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
 	toasttupDesc = toastrel->rd_att;
 	toastidx = index_open(rel->rd_rel->reltoastidxid);
-	
+
 	/* ----------
-	 * Split up the item into chunks 
+	 * Split up the item into chunks
 	 * ----------
 	 */
 	while (data_todo > 0)
@@ -848,8 +856,8 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 		 */
 		heap_insert(toastrel, toasttup);
 		idxres = index_insert(toastidx, t_values, t_nulls,
-						&(toasttup->t_self),
-						toastrel);
+							  &(toasttup->t_self),
+							  toastrel);
 		if (idxres == NULL)
 			elog(ERROR, "Failed to insert index entry for TOAST tuple");
 
@@ -888,14 +896,14 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 static void
 toast_delete_datum(Relation rel, Datum value)
 {
-	register varattrib	   *attr = (varattrib *)value;
-	Relation				toastrel;
-	Relation				toastidx;
-	ScanKeyData				toastkey;
-	IndexScanDesc			toastscan;
-	HeapTupleData			toasttup;
-	RetrieveIndexResult		indexRes;
-	Buffer					buffer;
+	register varattrib *attr = (varattrib *) value;
+	Relation	toastrel;
+	Relation	toastidx;
+	ScanKeyData toastkey;
+	IndexScanDesc toastscan;
+	HeapTupleData toasttup;
+	RetrieveIndexResult indexRes;
+	Buffer		buffer;
 
 	if (!VARATT_IS_EXTERNAL(attr))
 		return;
@@ -904,8 +912,8 @@ toast_delete_datum(Relation rel, Datum value)
 	 * Open the toast relation and it's index
 	 * ----------
 	 */
-	toastrel	= heap_open(attr->va_content.va_external.va_toastrelid,
-					RowExclusiveLock);
+	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
+						 RowExclusiveLock);
 	toastidx = index_open(attr->va_content.va_external.va_toastidxid);
 
 	/* ----------
@@ -913,10 +921,10 @@ toast_delete_datum(Relation rel, Datum value)
 	 * ----------
 	 */
 	ScanKeyEntryInitialize(&toastkey,
-					(bits16) 0, 
-					(AttrNumber) 1, 
-					(RegProcedure) F_OIDEQ, 
-					ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+						   (bits16) 0,
+						   (AttrNumber) 1,
+						   (RegProcedure) F_OIDEQ,
+			  ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
 
 	/* ----------
 	 * Read the chunks by index
@@ -961,36 +969,36 @@ toast_delete_datum(Relation rel, Datum value)
 static varattrib *
 toast_fetch_datum(varattrib *attr)
 {
-	Relation				toastrel;
-	Relation				toastidx;
-	ScanKeyData				toastkey;
-	IndexScanDesc			toastscan;
-	HeapTupleData			toasttup;
-	HeapTuple				ttup;
-	TupleDesc				toasttupDesc;
-	RetrieveIndexResult		indexRes;
-	Buffer					buffer;
+	Relation	toastrel;
+	Relation	toastidx;
+	ScanKeyData toastkey;
+	IndexScanDesc toastscan;
+	HeapTupleData toasttup;
+	HeapTuple	ttup;
+	TupleDesc	toasttupDesc;
+	RetrieveIndexResult indexRes;
+	Buffer		buffer;
 
-	varattrib			   *result;
-	int32					ressize;
-	int32					residx;
-	int						numchunks;
-	Pointer					chunk;
-	bool					isnull;
-	int32					chunksize;
+	varattrib  *result;
+	int32		ressize;
+	int32		residx;
+	int			numchunks;
+	Pointer		chunk;
+	bool		isnull;
+	int32		chunksize;
 
-	char				   *chunks_found;
-	char				   *chunks_expected;
+	char	   *chunks_found;
+	char	   *chunks_expected;
 
 	ressize = attr->va_content.va_external.va_extsize;
-    numchunks = ((ressize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
+	numchunks = ((ressize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
 
-	chunks_found    = palloc(numchunks);
+	chunks_found = palloc(numchunks);
 	chunks_expected = palloc(numchunks);
-	memset(chunks_found,    0, numchunks);
+	memset(chunks_found, 0, numchunks);
 	memset(chunks_expected, 1, numchunks);
 
-	result = (varattrib *)palloc(ressize + VARHDRSZ);
+	result = (varattrib *) palloc(ressize + VARHDRSZ);
 	VARATT_SIZEP(result) = ressize + VARHDRSZ;
 	if (VARATT_IS_COMPRESSED(attr))
 		VARATT_SIZEP(result) |= VARATT_FLAG_COMPRESSED;
@@ -999,8 +1007,8 @@ toast_fetch_datum(varattrib *attr)
 	 * Open the toast relation and it's index
 	 * ----------
 	 */
-	toastrel	= heap_open(attr->va_content.va_external.va_toastrelid,
-					AccessShareLock);
+	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
+						 AccessShareLock);
 	toasttupDesc = toastrel->rd_att;
 	toastidx = index_open(attr->va_content.va_external.va_toastidxid);
 
@@ -1009,10 +1017,10 @@ toast_fetch_datum(varattrib *attr)
 	 * ----------
 	 */
 	ScanKeyEntryInitialize(&toastkey,
-					(bits16) 0, 
-					(AttrNumber) 1, 
-					(RegProcedure) F_OIDEQ, 
-					ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+						   (bits16) 0,
+						   (AttrNumber) 1,
+						   (RegProcedure) F_OIDEQ,
+			  ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
 
 	/* ----------
 	 * Read the chunks by index
@@ -1049,7 +1057,7 @@ toast_fetch_datum(varattrib *attr)
 			elog(ERROR, "unexpected chunk number %d for toast value %d",
 				 residx,
 				 attr->va_content.va_external.va_valueid);
-		if (residx < numchunks-1)
+		if (residx < numchunks - 1)
 		{
 			if (chunksize != TOAST_MAX_CHUNK_SIZE)
 				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %d",
@@ -1072,7 +1080,7 @@ toast_fetch_datum(varattrib *attr)
 		 * Copy the data into proper place in our result
 		 * ----------
 		 */
-		memcpy(((char *)VARATT_DATA(result)) + residx * TOAST_MAX_CHUNK_SIZE,
+		memcpy(((char *) VARATT_DATA(result)) + residx * TOAST_MAX_CHUNK_SIZE,
 			   VARATT_DATA(chunk),
 			   chunksize);
 
@@ -1085,7 +1093,7 @@ toast_fetch_datum(varattrib *attr)
 	 */
 	if (memcmp(chunks_found, chunks_expected, numchunks) != 0)
 		elog(ERROR, "not all toast chunks found for value %d",
-						attr->va_content.va_external.va_valueid);
+			 attr->va_content.va_external.va_valueid);
 	pfree(chunks_expected);
 	pfree(chunks_found);
 

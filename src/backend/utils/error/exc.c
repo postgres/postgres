@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.36 2001/01/24 19:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.37 2001/03/22 03:59:58 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -112,6 +112,7 @@ ExcPrint(Exception *excP,
 
 	/* Save error str before calling any function that might change errno */
 	errorstr = strerror(errno);
+
 	/*
 	 * Some strerror()s return an empty string for out-of-range errno.
 	 * This is ANSI C spec compliant, but not exactly useful.

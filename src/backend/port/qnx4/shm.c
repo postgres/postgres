@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/shm.c,v 1.3 2001/03/13 01:17:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/shm.c,v 1.4 2001/03/22 03:59:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,8 +184,10 @@ shmctl(int shmid, int cmd, struct shmid_ds * buf)
 	}
 	if (cmd == IPC_STAT)
 	{
-		/* Can we support IPC_STAT?  We only need shm_nattch ...
-		 * For now, punt and assume the shm seg does not exist.
+
+		/*
+		 * Can we support IPC_STAT?  We only need shm_nattch ... For now,
+		 * punt and assume the shm seg does not exist.
 		 */
 		errno = EINVAL;
 		return -1;

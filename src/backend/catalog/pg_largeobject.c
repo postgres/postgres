@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.7 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.8 2001/03/22 03:59:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ LargeObjectCreate(Oid loid)
 	 */
 	for (i = 0; i < Natts_pg_largeobject; i++)
 	{
-		values[i] = (Datum)NULL;
+		values[i] = (Datum) NULL;
 		nulls[i] = ' ';
 	}
 
@@ -60,7 +60,7 @@ LargeObjectCreate(Oid loid)
 	values[i++] = Int32GetDatum(0);
 	values[i++] = DirectFunctionCall1(byteain,
 									  CStringGetDatum(""));
-	
+
 	ntup = heap_formtuple(pg_largeobject->rd_att, values, nulls);
 
 	/*
@@ -77,7 +77,7 @@ LargeObjectCreate(Oid loid)
 		CatalogIndexInsert(idescs, Num_pg_largeobject_indices, pg_largeobject, ntup);
 		CatalogCloseIndices(Num_pg_largeobject_indices, idescs);
 	}
-	
+
 	heap_close(pg_largeobject, RowExclusiveLock);
 
 	heap_freetuple(ntup);
@@ -91,9 +91,9 @@ LargeObjectDrop(Oid loid)
 	bool		found = false;
 	Relation	pg_largeobject;
 	Relation	pg_lo_idx;
-	ScanKeyData	skey[1];
+	ScanKeyData skey[1];
 	IndexScanDesc sd;
-	RetrieveIndexResult	indexRes;
+	RetrieveIndexResult indexRes;
 	HeapTupleData tuple;
 	Buffer		buffer;
 
@@ -139,9 +139,9 @@ LargeObjectExists(Oid loid)
 	bool		retval = false;
 	Relation	pg_largeobject;
 	Relation	pg_lo_idx;
-	ScanKeyData	skey[1];
+	ScanKeyData skey[1];
 	IndexScanDesc sd;
-	RetrieveIndexResult	indexRes;
+	RetrieveIndexResult indexRes;
 	HeapTupleData tuple;
 	Buffer		buffer;
 

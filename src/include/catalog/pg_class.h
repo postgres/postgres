@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.46 2001/01/24 19:43:21 momjian Exp $
+ * $Id: pg_class.h,v 1.47 2001/03/22 04:00:38 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -59,6 +59,7 @@ CATALOG(pg_class) BOOTSTRAP
 	bool		relisshared;
 	char		relkind;
 	int2		relnatts;
+
 	/*
 	 * relnatts is the number of user attributes this class has.  There
 	 * must be exactly this many instances in Class pg_attribute for this
@@ -71,7 +72,8 @@ CATALOG(pg_class) BOOTSTRAP
 	int2		relrefs;		/* # of references to this rel (not used!) */
 	bool		relhaspkey;		/* has PRIMARY KEY */
 	bool		relhasrules;	/* has associated rules */
-	bool		relhassubclass;	/* has derived classes */
+	bool		relhassubclass; /* has derived classes */
+
 	/*
 	 * relacl may or may not be present, see note above!
 	 */
@@ -138,21 +140,21 @@ DATA(insert OID = 1255 (  pg_proc 81		  PGUID 0 1255 0 0 0 0 f f r 17 0 0 0 0 0 
 DESCR("");
 DATA(insert OID = 1259 (  pg_class 83		  PGUID 0 1259 0 0 0 0 f f r 22 0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1260 (  pg_shadow 86		  PGUID 0 1260 0 0 0 0 f t r 8  0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1260 (  pg_shadow 86		  PGUID 0 1260 0 0 0 0 f t r 8	0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1261 (  pg_group 87		  PGUID 0 1261 0 0 0 0 f t r 3  0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1261 (  pg_group 87		  PGUID 0 1261 0 0 0 0 f t r 3	0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1262 (  pg_database 88	  PGUID 0 1262 0 0 0 0 f t r 7  0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1262 (  pg_database 88	  PGUID 0 1262 0 0 0 0 f t r 7	0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1264 (  pg_variable 90	  PGUID 0 1264 0 0 0 0 f t s 1  0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1264 (  pg_variable 90	  PGUID 0 1264 0 0 0 0 f t s 1	0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1269 (  pg_log  99		  PGUID 0 1269 0 0 0 0 f t s 1  0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1269 (  pg_log  99		  PGUID 0 1269 0 0 0 0 f t s 1	0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 376  (  pg_xactlock  0	  PGUID 0    0 0 0 0 0 f t s 1  0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 376  (  pg_xactlock  0	  PGUID 0	 0 0 0 0 0 f t s 1	0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1215 (  pg_attrdef 109	  PGUID 0 1215 0 0 0 0 t t r 4  0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1215 (  pg_attrdef 109	  PGUID 0 1215 0 0 0 0 t t r 4	0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1216 (  pg_relcheck 110	  PGUID 0 1216 0 0 0 0 t t r 4  0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1216 (  pg_relcheck 110	  PGUID 0 1216 0 0 0 0 t t r 4	0 0 0 0 0 f f f _null_ ));
 DESCR("");
 DATA(insert OID = 1219 (  pg_trigger 111	  PGUID 0 1219 0 0 0 0 t t r 13  0 0 0 0 0 f f f _null_ ));
 DESCR("");

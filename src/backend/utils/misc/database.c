@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.43 2001/01/24 19:43:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.44 2001/03/22 04:00:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,8 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 	sprintf(dbfname, "%s/global/%s", DataDir, DatabaseRelationName);
 #else
 	{
-		RelFileNode	rnode;
+		RelFileNode rnode;
+
 		rnode.tblNode = 0;
 		rnode.relNode = RelOid_pg_database;
 		dbfname = relpath(rnode);
@@ -182,8 +183,8 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 
 	while ((nbytes = read(dbfd, pg, BLCKSZ)) == BLCKSZ)
 	{
-		OffsetNumber	max = PageGetMaxOffsetNumber(pg);
-		OffsetNumber	lineoff;
+		OffsetNumber max = PageGetMaxOffsetNumber(pg);
+		OffsetNumber lineoff;
 
 		/* look at each tuple on the page */
 		for (lineoff = FirstOffsetNumber; lineoff <= max; lineoff++)
@@ -202,7 +203,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			 * Check to see if tuple is valid (committed).
 			 *
 			 * XXX warning, will robinson: violation of transaction semantics
-			 * happens right here.  We cannot really determine if the tuple
+			 * happens right here.	We cannot really determine if the tuple
 			 * is valid without checking transaction commit status, and the
 			 * only way to do that at init time is to paw over pg_log by hand,
 			 * too.  Instead of checking, we assume that the inserting
@@ -222,7 +223,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			 * handle the password relation?
 			 *--------------------
 			 */
-			if (! PhonyHeapTupleSatisfiesNow(tup.t_data))
+			if (!PhonyHeapTupleSatisfiesNow(tup.t_data))
 				continue;
 
 			/*
@@ -236,7 +237,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 				*db_id = tup.t_data->t_oid;
 				pathlen = VARSIZE(&(tup_db->datpath)) - VARHDRSZ;
 				if (pathlen >= MAXPGPATH)
-					pathlen = MAXPGPATH-1; /* pure paranoia */
+					pathlen = MAXPGPATH - 1;	/* pure paranoia */
 				strncpy(path, VARDATA(&(tup_db->datpath)), pathlen);
 				path[pathlen] = '\0';
 				goto done;
@@ -257,7 +258,7 @@ done:
  * PhonyHeapTupleSatisfiesNow --- cut-down tuple time qual test
  *
  * This is a simplified version of HeapTupleSatisfiesNow() that does not
- * depend on having transaction commit info available.  Any transaction
+ * depend on having transaction commit info available.	Any transaction
  * that touched the tuple is assumed committed unless later marked invalid.
  * (While we could think about more complex rules, this seems appropriate
  * for examining pg_database, since both CREATE DATABASE and DROP DATABASE

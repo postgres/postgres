@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.81 2001/02/07 23:35:33 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.82 2001/03/22 03:59:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,23 +23,23 @@
 typedef struct
 {
 	/* context data for _bt_checksplitloc */
-	Size	newitemsz;			/* size of new item to be inserted */
-	bool	non_leaf;			/* T if splitting an internal node */
+	Size		newitemsz;		/* size of new item to be inserted */
+	bool		non_leaf;		/* T if splitting an internal node */
 
-	bool	have_split;			/* found a valid split? */
+	bool		have_split;		/* found a valid split? */
 
 	/* these fields valid only if have_split is true */
-	bool	newitemonleft;		/* new item on left or right of best split */
+	bool		newitemonleft;	/* new item on left or right of best split */
 	OffsetNumber firstright;	/* best split point */
-	int		best_delta;			/* best size delta so far */
+	int			best_delta;		/* best size delta so far */
 } FindSplitData;
 
 extern bool FixBTree;
 
-Buffer _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release);
+Buffer		_bt_fixroot(Relation rel, Buffer oldrootbuf, bool release);
 static void _bt_fixtree(Relation rel, BlockNumber blkno);
-static void _bt_fixbranch(Relation rel, BlockNumber lblkno, 
-				BlockNumber rblkno, BTStack true_stack);
+static void _bt_fixbranch(Relation rel, BlockNumber lblkno,
+			  BlockNumber rblkno, BTStack true_stack);
 static void _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit);
 static void _bt_fixup(Relation rel, Buffer buf);
 static OffsetNumber _bt_getoff(Page page, BlockNumber blkno);
@@ -47,34 +47,34 @@ static OffsetNumber _bt_getoff(Page page, BlockNumber blkno);
 static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 
 static TransactionId _bt_check_unique(Relation rel, BTItem btitem,
-									  Relation heapRel, Buffer buf,
-									  ScanKey itup_scankey);
+				 Relation heapRel, Buffer buf,
+				 ScanKey itup_scankey);
 static InsertIndexResult _bt_insertonpg(Relation rel, Buffer buf,
-										BTStack stack,
-										int keysz, ScanKey scankey,
-										BTItem btitem,
-										OffsetNumber afteritem);
-static void _bt_insertuple(Relation rel, Buffer buf, 
-						Size itemsz, BTItem btitem, OffsetNumber newitemoff);
+			   BTStack stack,
+			   int keysz, ScanKey scankey,
+			   BTItem btitem,
+			   OffsetNumber afteritem);
+static void _bt_insertuple(Relation rel, Buffer buf,
+			   Size itemsz, BTItem btitem, OffsetNumber newitemoff);
 static Buffer _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
-						OffsetNumber newitemoff, Size newitemsz,
-						BTItem newitem, bool newitemonleft,
-						OffsetNumber *itup_off, BlockNumber *itup_blkno);
+		  OffsetNumber newitemoff, Size newitemsz,
+		  BTItem newitem, bool newitemonleft,
+		  OffsetNumber *itup_off, BlockNumber *itup_blkno);
 static OffsetNumber _bt_findsplitloc(Relation rel, Page page,
-									 OffsetNumber newitemoff,
-									 Size newitemsz,
-									 bool *newitemonleft);
+				 OffsetNumber newitemoff,
+				 Size newitemsz,
+				 bool *newitemonleft);
 static void _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
-							  int leftfree, int rightfree,
-							  bool newitemonleft, Size firstrightitemsz);
+				  int leftfree, int rightfree,
+				  bool newitemonleft, Size firstrightitemsz);
 static Buffer _bt_getstackbuf(Relation rel, BTStack stack, int access);
 static void _bt_pgaddtup(Relation rel, Page page,
-						 Size itemsize, BTItem btitem,
-						 OffsetNumber itup_off, const char *where);
+			 Size itemsize, BTItem btitem,
+			 OffsetNumber itup_off, const char *where);
 static bool _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
-						int keysz, ScanKey scankey);
+			int keysz, ScanKey scankey);
 
-static Relation		_xlheapRel;	/* temporary hack */
+static Relation _xlheapRel;		/* temporary hack */
 
 /*
  *	_bt_doinsert() -- Handle insertion of a single btitem in the tree.
@@ -114,8 +114,8 @@ top:
 	buf = _bt_moveright(rel, buf, natts, itup_scankey, BT_WRITE);
 
 	/*
-	 * If we're not allowing duplicates, make sure the key isn't
-	 * already in the index.  XXX this belongs somewhere else, likely
+	 * If we're not allowing duplicates, make sure the key isn't already
+	 * in the index.  XXX this belongs somewhere else, likely
 	 */
 	if (index_is_unique)
 	{
@@ -134,7 +134,7 @@ top:
 		}
 	}
 
-	_xlheapRel = heapRel;	/* temporary hack */
+	_xlheapRel = heapRel;		/* temporary hack */
 
 	/* do the insertion */
 	res = _bt_insertonpg(rel, buf, stack, natts, itup_scankey, btitem, 0);
@@ -150,7 +150,7 @@ top:
  *	_bt_check_unique() -- Check for violation of unique index constraint
  *
  * Returns NullTransactionId if there is no conflict, else an xact ID we
- * must wait for to see if it commits a conflicting tuple.  If an actual
+ * must wait for to see if it commits a conflicting tuple.	If an actual
  * conflict is detected, no return --- just elog().
  */
 static TransactionId
@@ -171,8 +171,8 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	/*
-	 * Find first item >= proposed new item.  Note we could also get
-	 * a pointer to end-of-page here.
+	 * Find first item >= proposed new item.  Note we could also get a
+	 * pointer to end-of-page here.
 	 */
 	offset = _bt_binsrch(rel, buf, natts, itup_scankey);
 
@@ -187,24 +187,24 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 		BlockNumber nblkno;
 
 		/*
-		 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's
-		 * how we handling NULLs - and so we must not use _bt_compare
-		 * in real comparison, but only for ordering/finding items on
-		 * pages. - vadim 03/24/97
+		 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's how we
+		 * handling NULLs - and so we must not use _bt_compare in real
+		 * comparison, but only for ordering/finding items on pages. -
+		 * vadim 03/24/97
 		 *
-		 * make sure the offset points to an actual key
-		 * before trying to compare it...
+		 * make sure the offset points to an actual key before trying to
+		 * compare it...
 		 */
 		if (offset <= maxoff)
 		{
-			if (! _bt_isequal(itupdesc, page, offset, natts, itup_scankey))
+			if (!_bt_isequal(itupdesc, page, offset, natts, itup_scankey))
 				break;			/* we're past all the equal tuples */
 
 			/*
-			 * Have to check is inserted heap tuple deleted one (i.e.
-			 * just moved to another place by vacuum)!  We only need to
-			 * do this once, but don't want to do it at all unless
-			 * we see equal tuples, so as not to slow down unequal case.
+			 * Have to check is inserted heap tuple deleted one (i.e. just
+			 * moved to another place by vacuum)!  We only need to do this
+			 * once, but don't want to do it at all unless we see equal
+			 * tuples, so as not to slow down unequal case.
 			 */
 			if (chtup)
 			{
@@ -220,11 +220,11 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 			cbti = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
 			htup.t_self = cbti->bti_itup.t_tid;
 			heap_fetch(heapRel, SnapshotDirty, &htup, &buffer);
-			if (htup.t_data != NULL)		/* it is a duplicate */
+			if (htup.t_data != NULL)	/* it is a duplicate */
 			{
 				TransactionId xwait =
-					(TransactionIdIsValid(SnapshotDirty->xmin)) ?
-					SnapshotDirty->xmin : SnapshotDirty->xmax;
+				(TransactionIdIsValid(SnapshotDirty->xmin)) ?
+				SnapshotDirty->xmin : SnapshotDirty->xmax;
 
 				/*
 				 * If this tuple is being updated by other transaction
@@ -238,6 +238,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 					/* Tell _bt_doinsert to wait... */
 					return xwait;
 				}
+
 				/*
 				 * Otherwise we have a definite conflict.
 				 */
@@ -304,7 +305,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
  *		NOTE: if the new key is equal to one or more existing keys, we can
  *		legitimately place it anywhere in the series of equal keys --- in fact,
  *		if the new key is equal to the page's "high key" we can place it on
- *		the next page.  If it is equal to the high key, and there's not room
+ *		the next page.	If it is equal to the high key, and there's not room
  *		to insert the new tuple on the current page without splitting, then
  *		we can move right hoping to find more free space and avoid a split.
  *		(We should not move right indefinitely, however, since that leads to
@@ -358,16 +359,14 @@ _bt_insertonpg(Relation rel,
 	 */
 	if (itemsz > (PageGetPageSize(page) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
 		elog(ERROR, "btree: index item size %lu exceeds maximum %lu",
-			 (unsigned long)itemsz,
-			 (PageGetPageSize(page) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) /3 - sizeof(ItemIdData));
+			 (unsigned long) itemsz,
+			 (PageGetPageSize(page) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData));
 
 	/*
 	 * Determine exactly where new item will go.
 	 */
 	if (afteritem > 0)
-	{
 		newitemoff = afteritem + 1;
-	}
 	else
 	{
 		/*----------
@@ -383,12 +382,12 @@ _bt_insertonpg(Relation rel,
 		 * on every insert.  We implement "get tired" as a random choice,
 		 * since stopping after scanning a fixed number of pages wouldn't work
 		 * well (we'd never reach the right-hand side of previously split
-		 * pages).  Currently the probability of moving right is set at 0.99,
+		 * pages).	Currently the probability of moving right is set at 0.99,
 		 * which may seem too high to change the behavior much, but it does an
 		 * excellent job of preventing O(N^2) behavior with many equal keys.
 		 *----------
 		 */
-		bool	movedright = false;
+		bool		movedright = false;
 
 		while (PageGetFreeSpace(page) < itemsz &&
 			   !P_RIGHTMOST(lpageop) &&
@@ -396,7 +395,7 @@ _bt_insertonpg(Relation rel,
 			   random() > (MAX_RANDOM_VALUE / 100))
 		{
 			/* step right one page */
-			BlockNumber		rblkno = lpageop->btpo_next;
+			BlockNumber rblkno = lpageop->btpo_next;
 
 			_bt_relbuf(rel, buf, BT_WRITE);
 			buf = _bt_getbuf(rel, rblkno, BT_WRITE);
@@ -404,10 +403,11 @@ _bt_insertonpg(Relation rel,
 			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
 			movedright = true;
 		}
+
 		/*
-		 * Now we are on the right page, so find the insert position.
-		 * If we moved right at all, we know we should insert at the
-		 * start of the page, else must find the position by searching.
+		 * Now we are on the right page, so find the insert position. If
+		 * we moved right at all, we know we should insert at the start of
+		 * the page, else must find the position by searching.
 		 */
 		if (movedright)
 			newitemoff = P_FIRSTDATAKEY(lpageop);
@@ -418,9 +418,9 @@ _bt_insertonpg(Relation rel,
 	/*
 	 * Do we need to split the page to fit the item on it?
 	 *
-	 * Note: PageGetFreeSpace() subtracts sizeof(ItemIdData) from its
-	 * result, so this comparison is correct even though we appear to
-	 * be accounting only for the item and not for its line pointer.
+	 * Note: PageGetFreeSpace() subtracts sizeof(ItemIdData) from its result,
+	 * so this comparison is correct even though we appear to be
+	 * accounting only for the item and not for its line pointer.
 	 */
 	if (PageGetFreeSpace(page) < itemsz)
 	{
@@ -468,7 +468,7 @@ _bt_insertonpg(Relation rel,
 
 		if (is_root)
 		{
-			Buffer	rootbuf;
+			Buffer		rootbuf;
 
 			Assert(stack == (BTStack) NULL);
 			/* create a new root node and release the split buffers */
@@ -481,7 +481,7 @@ _bt_insertonpg(Relation rel,
 		{
 			InsertIndexResult newres;
 			BTItem		new_item;
-			BTStackData	fakestack;
+			BTStackData fakestack;
 			BTItem		ritem;
 			Buffer		pbuf;
 
@@ -489,10 +489,11 @@ _bt_insertonpg(Relation rel,
 			if (stack == (BTStack) NULL)
 			{
 				elog(DEBUG, "btree: concurrent ROOT page split");
+
 				/*
 				 * If root page splitter failed to create new root page
-				 * then old root' btpo_parent still points to metapage.
-				 * We have to fix root page in this case.
+				 * then old root' btpo_parent still points to metapage. We
+				 * have to fix root page in this case.
 				 */
 				if (BTreeInvalidParent(lpageop))
 				{
@@ -531,9 +532,9 @@ _bt_insertonpg(Relation rel,
 			 * item! We want to find parent pointing to where we are,
 			 * right ?	  - vadim 05/27/97
 			 *
-			 * Interestingly, this means we didn't *really* need to stack
-			 * the parent key at all; all we really care about is the
-			 * saved block and offset as a starting point for our search...
+			 * Interestingly, this means we didn't *really* need to stack the
+			 * parent key at all; all we really care about is the saved
+			 * block and offset as a starting point for our search...
 			 */
 			ItemPointerSet(&(stack->bts_btitem.bti_itup.t_tid),
 						   bknum, P_HIKEY);
@@ -583,25 +584,26 @@ formres:;
 }
 
 static void
-_bt_insertuple(Relation rel, Buffer buf, 
-				Size itemsz, BTItem btitem, OffsetNumber newitemoff)
+_bt_insertuple(Relation rel, Buffer buf,
+			   Size itemsz, BTItem btitem, OffsetNumber newitemoff)
 {
-	Page			page = BufferGetPage(buf);
-	BTPageOpaque	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
+	Page		page = BufferGetPage(buf);
+	BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	START_CRIT_SECTION();
 	_bt_pgaddtup(rel, page, itemsz, btitem, newitemoff, "page");
 	/* XLOG stuff */
 	{
-		xl_btree_insert		xlrec;
-		uint8				flag = XLOG_BTREE_INSERT;
-		XLogRecPtr			recptr;
-		XLogRecData			rdata[2];
-		BTItemData			truncitem;
-			xlrec.target.node = rel->rd_node;
+		xl_btree_insert xlrec;
+		uint8		flag = XLOG_BTREE_INSERT;
+		XLogRecPtr	recptr;
+		XLogRecData rdata[2];
+		BTItemData	truncitem;
+
+		xlrec.target.node = rel->rd_node;
 		ItemPointerSet(&(xlrec.target.tid), BufferGetBlockNumber(buf), newitemoff);
 		rdata[0].buffer = InvalidBuffer;
-		rdata[0].data = (char*)&xlrec;
+		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeInsert;
 		rdata[0].next = &(rdata[1]);
 
@@ -610,14 +612,14 @@ _bt_insertuple(Relation rel, Buffer buf,
 		{
 			truncitem = *btitem;
 			truncitem.bti_itup.t_info = sizeof(BTItemData);
-			rdata[1].data = (char*)&truncitem;
+			rdata[1].data = (char *) &truncitem;
 			rdata[1].len = sizeof(BTItemData);
 		}
 		else
 		{
-			rdata[1].data = (char*)btitem;
-			rdata[1].len = IndexTupleDSize(btitem->bti_itup) + 
-						(sizeof(BTItemData) - sizeof(IndexTupleData));
+			rdata[1].data = (char *) btitem;
+			rdata[1].len = IndexTupleDSize(btitem->bti_itup) +
+				(sizeof(BTItemData) - sizeof(IndexTupleData));
 		}
 		rdata[1].buffer = buf;
 		rdata[1].next = NULL;
@@ -700,8 +702,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 	/*
 	 * If the page we're splitting is not the rightmost page at its level
-	 * in the tree, then the first entry on the page is the high key
-	 * for the page.  We need to copy that to the right half.  Otherwise
+	 * in the tree, then the first entry on the page is the high key for
+	 * the page.  We need to copy that to the right half.  Otherwise
 	 * (meaning the rightmost page case), all the items on the right half
 	 * will be user data.
 	 */
@@ -779,13 +781,13 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		if (i < firstright)
 		{
 			_bt_pgaddtup(rel, leftpage, itemsz, item, leftoff,
-							 "left sibling");
+						 "left sibling");
 			leftoff = OffsetNumberNext(leftoff);
 		}
 		else
 		{
 			_bt_pgaddtup(rel, rightpage, itemsz, item, rightoff,
-							 "right sibling");
+						 "right sibling");
 			rightoff = OffsetNumberNext(rightoff);
 		}
 	}
@@ -812,11 +814,11 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	}
 
 	/*
-	 * We have to grab the right sibling (if any) and fix the prev
-	 * pointer there. We are guaranteed that this is deadlock-free
-	 * since no other writer will be holding a lock on that page
-	 * and trying to move left, and all readers release locks on a page
-	 * before trying to fetch its neighbors.
+	 * We have to grab the right sibling (if any) and fix the prev pointer
+	 * there. We are guaranteed that this is deadlock-free since no other
+	 * writer will be holding a lock on that page and trying to move left,
+	 * and all readers release locks on a page before trying to fetch its
+	 * neighbors.
 	 */
 
 	if (!P_RIGHTMOST(ropaque))
@@ -834,12 +836,12 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 */
 	START_CRIT_SECTION();
 	{
-		xl_btree_split	xlrec;
-		int				flag = (newitemonleft) ? 
-								XLOG_BTREE_SPLEFT : XLOG_BTREE_SPLIT;
-		BlockNumber		blkno;
-		XLogRecPtr		recptr;
-		XLogRecData		rdata[4];
+		xl_btree_split xlrec;
+		int			flag = (newitemonleft) ?
+		XLOG_BTREE_SPLEFT : XLOG_BTREE_SPLIT;
+		BlockNumber blkno;
+		XLogRecPtr	recptr;
+		XLogRecData rdata[4];
 
 		xlrec.target.node = rel->rd_node;
 		ItemPointerSet(&(xlrec.target.tid), *itup_blkno, *itup_off);
@@ -856,31 +858,33 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		BlockIdSet(&(xlrec.parentblk), lopaque->btpo_parent);
 		BlockIdSet(&(xlrec.leftblk), lopaque->btpo_prev);
 		BlockIdSet(&(xlrec.rightblk), ropaque->btpo_next);
-		/* 
-		 * Dirrect access to page is not good but faster - we should 
+
+		/*
+		 * Dirrect access to page is not good but faster - we should
 		 * implement some new func in page API.
 		 */
-		xlrec.leftlen = ((PageHeader)leftpage)->pd_special -
-							((PageHeader)leftpage)->pd_upper;
+		xlrec.leftlen = ((PageHeader) leftpage)->pd_special -
+			((PageHeader) leftpage)->pd_upper;
 		rdata[0].buffer = InvalidBuffer;
-		rdata[0].data = (char*)&xlrec;
+		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeSplit;
 		rdata[0].next = &(rdata[1]);
 
 		rdata[1].buffer = InvalidBuffer;
-		rdata[1].data = (char*)leftpage + ((PageHeader)leftpage)->pd_upper;
+		rdata[1].data = (char *) leftpage + ((PageHeader) leftpage)->pd_upper;
 		rdata[1].len = xlrec.leftlen;
 		rdata[1].next = &(rdata[2]);
 
 		rdata[2].buffer = InvalidBuffer;
-		rdata[2].data = (char*)rightpage + ((PageHeader)rightpage)->pd_upper;
-		rdata[2].len = ((PageHeader)rightpage)->pd_special -
-							((PageHeader)rightpage)->pd_upper;
+		rdata[2].data = (char *) rightpage + ((PageHeader) rightpage)->pd_upper;
+		rdata[2].len = ((PageHeader) rightpage)->pd_special -
+			((PageHeader) rightpage)->pd_upper;
 		rdata[2].next = NULL;
 
 		if (!P_RIGHTMOST(ropaque))
 		{
-			BTPageOpaque	sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
+			BTPageOpaque sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
+
 			sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
 
 			rdata[2].next = &(rdata[3]);
@@ -942,7 +946,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
  *
  * We return the index of the first existing tuple that should go on the
  * righthand page, plus a boolean indicating whether the new tuple goes on
- * the left or right page.  The bool is necessary to disambiguate the case
+ * the left or right page.	The bool is necessary to disambiguate the case
  * where firstright == newitemoff.
  */
 static OffsetNumber
@@ -968,23 +972,23 @@ _bt_findsplitloc(Relation rel,
 	/* Passed-in newitemsz is MAXALIGNED but does not include line pointer */
 	newitemsz += sizeof(ItemIdData);
 	state.newitemsz = newitemsz;
-	state.non_leaf = ! P_ISLEAF(opaque);
+	state.non_leaf = !P_ISLEAF(opaque);
 	state.have_split = false;
 
 	/* Total free space available on a btree page, after fixed overhead */
 	leftspace = rightspace =
 		PageGetPageSize(page) - sizeof(PageHeaderData) -
 		MAXALIGN(sizeof(BTPageOpaqueData))
-		+ sizeof(ItemIdData);
+		+sizeof(ItemIdData);
 
 	/*
-	 * Finding the best possible split would require checking all the possible
-	 * split points, because of the high-key and left-key special cases.
-	 * That's probably more work than it's worth; instead, stop as soon as
-	 * we find a "good-enough" split, where good-enough is defined as an
-	 * imbalance in free space of no more than pagesize/16 (arbitrary...)
-	 * This should let us stop near the middle on most pages, instead of
-	 * plowing to the end.
+	 * Finding the best possible split would require checking all the
+	 * possible split points, because of the high-key and left-key special
+	 * cases. That's probably more work than it's worth; instead, stop as
+	 * soon as we find a "good-enough" split, where good-enough is defined
+	 * as an imbalance in free space of no more than pagesize/16
+	 * (arbitrary...) This should let us stop near the middle on most
+	 * pages, instead of plowing to the end.
 	 */
 	goodenough = leftspace / 16;
 
@@ -1024,6 +1028,7 @@ _bt_findsplitloc(Relation rel,
 		 */
 		leftfree = leftspace - dataitemstoleft - (int) itemsz;
 		rightfree = rightspace - (dataitemtotal - dataitemstoleft);
+
 		/*
 		 * Will the new item go to left or right of split?
 		 */
@@ -1051,10 +1056,10 @@ _bt_findsplitloc(Relation rel,
 	}
 
 	/*
-	 * I believe it is not possible to fail to find a feasible split,
-	 * but just in case ...
+	 * I believe it is not possible to fail to find a feasible split, but
+	 * just in case ...
 	 */
-	if (! state.have_split)
+	if (!state.have_split)
 		elog(FATAL, "_bt_findsplitloc: can't find a feasible split point for %s",
 			 RelationGetRelationName(rel));
 
@@ -1071,6 +1076,7 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 				  int leftfree, int rightfree,
 				  bool newitemonleft, Size firstrightitemsz)
 {
+
 	/*
 	 * Account for the new item on whichever side it is to be put.
 	 */
@@ -1078,19 +1084,21 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 		leftfree -= (int) state->newitemsz;
 	else
 		rightfree -= (int) state->newitemsz;
+
 	/*
-	 * If we are not on the leaf level, we will be able to discard the
-	 * key data from the first item that winds up on the right page.
+	 * If we are not on the leaf level, we will be able to discard the key
+	 * data from the first item that winds up on the right page.
 	 */
 	if (state->non_leaf)
 		rightfree += (int) firstrightitemsz -
 			(int) (MAXALIGN(sizeof(BTItemData)) + sizeof(ItemIdData));
+
 	/*
 	 * If feasible split point, remember best delta.
 	 */
 	if (leftfree >= 0 && rightfree >= 0)
 	{
-		int		delta = leftfree - rightfree;
+		int			delta = leftfree - rightfree;
 
 		if (delta < 0)
 			delta = -delta;
@@ -1134,10 +1142,11 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	start = stack->bts_offset;
+
 	/*
-	 * _bt_insertonpg set bts_offset to InvalidOffsetNumber in the
-	 * case of concurrent ROOT page split.  Also, watch out for
-	 * possibility that page has a high key now when it didn't before.
+	 * _bt_insertonpg set bts_offset to InvalidOffsetNumber in the case of
+	 * concurrent ROOT page split.	Also, watch out for possibility that
+	 * page has a high key now when it didn't before.
 	 */
 	if (start < P_FIRSTDATAKEY(opaque))
 		start = P_FIRSTDATAKEY(opaque);
@@ -1159,11 +1168,15 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 				return buf;
 			}
 		}
-		/* by here, the item we're looking for moved right at least one page */
+
+		/*
+		 * by here, the item we're looking for moved right at least one
+		 * page
+		 */
 		if (P_RIGHTMOST(opaque))
 		{
 			_bt_relbuf(rel, buf, access);
-			return(InvalidBuffer);
+			return (InvalidBuffer);
 		}
 
 		blkno = opaque->btpo_next;
@@ -1190,27 +1203,27 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
  *
  *		On entry, lbuf (the old root) and rbuf (its new peer) are write-
  *		locked. On exit, a new root page exists with entries for the
- *		two new children, metapage is updated and unlocked/unpinned. 
- *      The new root buffer is returned to caller which has to unlock/unpin
- *      lbuf, rbuf & rootbuf.
+ *		two new children, metapage is updated and unlocked/unpinned.
+ *		The new root buffer is returned to caller which has to unlock/unpin
+ *		lbuf, rbuf & rootbuf.
  */
 static Buffer
 _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 {
-	Buffer			rootbuf;
-	Page			lpage,
-					rpage,
-					rootpage;
-	BlockNumber		lbkno,
-					rbkno;
-	BlockNumber		rootblknum;
-	BTPageOpaque	rootopaque;
-	ItemId			itemid;
-	BTItem			item;
-	Size			itemsz;
-	BTItem			new_item;
-	Buffer			metabuf;
-	Page			metapg;
+	Buffer		rootbuf;
+	Page		lpage,
+				rpage,
+				rootpage;
+	BlockNumber lbkno,
+				rbkno;
+	BlockNumber rootblknum;
+	BTPageOpaque rootopaque;
+	ItemId		itemid;
+	BTItem		item;
+	Size		itemsz;
+	BTItem		new_item;
+	Buffer		metabuf;
+	Page		metapg;
 	BTMetaPageData *metad;
 
 	/* get a new root page */
@@ -1236,9 +1249,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	rpage = BufferGetPage(rbuf);
 
 	/*
-	 * Make sure pages in old root level have valid parent links --- we will
-	 * need this in _bt_insertonpg() if a concurrent root split happens (see
-	 * README).
+	 * Make sure pages in old root level have valid parent links --- we
+	 * will need this in _bt_insertonpg() if a concurrent root split
+	 * happens (see README).
 	 */
 	((BTPageOpaque) PageGetSpecialPointer(lpage))->btpo_parent =
 		((BTPageOpaque) PageGetSpecialPointer(rpage))->btpo_parent =
@@ -1264,8 +1277,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	pfree(new_item);
 
 	/*
-	 * Create downlink item for right page.  The key for it is obtained from
-	 * the "high key" position in the left page.
+	 * Create downlink item for right page.  The key for it is obtained
+	 * from the "high key" position in the left page.
 	 */
 	itemid = PageGetItemId(lpage, P_HIKEY);
 	itemsz = ItemIdGetLength(itemid);
@@ -1285,26 +1298,26 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 
 	/* XLOG stuff */
 	{
-		xl_btree_newroot	xlrec;
-		XLogRecPtr			recptr;
-		XLogRecData			rdata[2];
+		xl_btree_newroot xlrec;
+		XLogRecPtr	recptr;
+		XLogRecData rdata[2];
 
 		xlrec.node = rel->rd_node;
 		xlrec.level = metad->btm_level;
 		BlockIdSet(&(xlrec.rootblk), rootblknum);
 		rdata[0].buffer = InvalidBuffer;
-		rdata[0].data = (char*)&xlrec;
+		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeNewroot;
 		rdata[0].next = &(rdata[1]);
 
-		/* 
-		 * Dirrect access to page is not good but faster - we should 
+		/*
+		 * Dirrect access to page is not good but faster - we should
 		 * implement some new func in page API.
 		 */
 		rdata[1].buffer = InvalidBuffer;
-		rdata[1].data = (char*)rootpage + ((PageHeader) rootpage)->pd_upper;
-		rdata[1].len = ((PageHeader)rootpage)->pd_special - 
-							((PageHeader)rootpage)->pd_upper;
+		rdata[1].data = (char *) rootpage + ((PageHeader) rootpage)->pd_upper;
+		rdata[1].len = ((PageHeader) rootpage)->pd_special -
+			((PageHeader) rootpage)->pd_upper;
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, rdata);
@@ -1325,7 +1338,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	/* write and let go of metapage buffer */
 	_bt_wrtbuf(rel, metabuf);
 
-	return(rootbuf);
+	return (rootbuf);
 }
 
 /*
@@ -1339,24 +1352,31 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 Buffer
 _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 {
-	Buffer			rootbuf;
-	BlockNumber		rootblk;
-	Page			rootpage;
-	XLogRecPtr		rootLSN;
-	Page			oldrootpage = BufferGetPage(oldrootbuf);
-	BTPageOpaque	oldrootopaque = (BTPageOpaque)
-						PageGetSpecialPointer(oldrootpage);
-	Buffer			buf, leftbuf, rightbuf;
-	Page			page, leftpage, rightpage;
-	BTPageOpaque	opaque, leftopaque, rightopaque;
-	OffsetNumber	newitemoff;
-	BTItem			btitem, ritem;
-	Size			itemsz;
+	Buffer		rootbuf;
+	BlockNumber rootblk;
+	Page		rootpage;
+	XLogRecPtr	rootLSN;
+	Page		oldrootpage = BufferGetPage(oldrootbuf);
+	BTPageOpaque oldrootopaque = (BTPageOpaque)
+	PageGetSpecialPointer(oldrootpage);
+	Buffer		buf,
+				leftbuf,
+				rightbuf;
+	Page		page,
+				leftpage,
+				rightpage;
+	BTPageOpaque opaque,
+				leftopaque,
+				rightopaque;
+	OffsetNumber newitemoff;
+	BTItem		btitem,
+				ritem;
+	Size		itemsz;
 
-	if (! P_LEFTMOST(oldrootopaque) || P_RIGHTMOST(oldrootopaque))
+	if (!P_LEFTMOST(oldrootopaque) || P_RIGHTMOST(oldrootopaque))
 		elog(ERROR, "bt_fixroot: not valid old root page");
 
-	/* Read right neighbor and create new root page*/
+	/* Read right neighbor and create new root page */
 	leftbuf = _bt_getbuf(rel, oldrootopaque->btpo_next, BT_WRITE);
 	leftpage = BufferGetPage(leftbuf);
 	leftopaque = (BTPageOpaque) PageGetSpecialPointer(leftpage);
@@ -1377,26 +1397,26 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 	 *
 	 * If concurrent process will split one of pages on this level then it
 	 * will see either btpo_parent == metablock or btpo_parent == rootblk.
-	 * In first case it will give up its locks and walk to the leftmost page
-	 * (oldrootbuf) in _bt_fixup() - ie it will wait for us and let us
-	 * continue. In second case it will try to lock rootbuf keeping its locks
-	 * on buffers we already passed, also waiting for us. If we'll have to
-	 * unlock rootbuf (split it) and that process will have to split page
-	 * of new level we created (level of rootbuf) then it will wait while
-	 * we create upper level. Etc.
+	 * In first case it will give up its locks and walk to the leftmost
+	 * page (oldrootbuf) in _bt_fixup() - ie it will wait for us and let
+	 * us continue. In second case it will try to lock rootbuf keeping its
+	 * locks on buffers we already passed, also waiting for us. If we'll
+	 * have to unlock rootbuf (split it) and that process will have to
+	 * split page of new level we created (level of rootbuf) then it will
+	 * wait while we create upper level. Etc.
 	 */
-	while(! P_RIGHTMOST(leftopaque))
+	while (!P_RIGHTMOST(leftopaque))
 	{
 		rightbuf = _bt_getbuf(rel, leftopaque->btpo_next, BT_WRITE);
 		rightpage = BufferGetPage(rightbuf);
 		rightopaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
 
 		/*
-		 * Update LSN & StartUpID of child page buffer to ensure that
-		 * it will be written on disk after flushing log record for new
-		 * root creation. Unfortunately, for the moment (?) we do not
-		 * log this operation and so possibly break our rule to log entire
-		 * page content on first after checkpoint modification.
+		 * Update LSN & StartUpID of child page buffer to ensure that it
+		 * will be written on disk after flushing log record for new root
+		 * creation. Unfortunately, for the moment (?) we do not log this
+		 * operation and so possibly break our rule to log entire page
+		 * content on first after checkpoint modification.
 		 */
 		HOLD_INTERRUPTS();
 		rightopaque->btpo_parent = rootblk;
@@ -1416,17 +1436,17 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 
 		if (PageGetFreeSpace(page) < itemsz)
 		{
-			Buffer			newbuf;
-			OffsetNumber	firstright;
-			OffsetNumber	itup_off;
-			BlockNumber		itup_blkno;
-			bool			newitemonleft;
+			Buffer		newbuf;
+			OffsetNumber firstright;
+			OffsetNumber itup_off;
+			BlockNumber itup_blkno;
+			bool		newitemonleft;
 
 			firstright = _bt_findsplitloc(rel, page,
-							newitemoff, itemsz, &newitemonleft);
+									 newitemoff, itemsz, &newitemonleft);
 			newbuf = _bt_split(rel, buf, firstright,
-						newitemoff, itemsz, btitem, newitemonleft,
-						&itup_off, &itup_blkno);
+							   newitemoff, itemsz, btitem, newitemonleft,
+							   &itup_off, &itup_blkno);
 			/* Keep lock on new "root" buffer ! */
 			if (buf != rootbuf)
 				_bt_relbuf(rel, buf, BT_WRITE);
@@ -1450,10 +1470,10 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 
 	/*
 	 * Here we hold locks on old root buffer, new root buffer we've
-	 * created with _bt_newroot() - rootbuf, - and buf we've used
-	 * for last insert ops - buf. If rootbuf != buf then we have to
-	 * create at least one more level. And if "release" is TRUE
-	 * then we give up oldrootbuf.
+	 * created with _bt_newroot() - rootbuf, - and buf we've used for last
+	 * insert ops - buf. If rootbuf != buf then we have to create at least
+	 * one more level. And if "release" is TRUE then we give up
+	 * oldrootbuf.
 	 */
 	if (release)
 		_bt_wrtbuf(rel, oldrootbuf);
@@ -1461,10 +1481,10 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 	if (rootbuf != buf)
 	{
 		_bt_wrtbuf(rel, buf);
-		return(_bt_fixroot(rel, rootbuf, true));
+		return (_bt_fixroot(rel, rootbuf, true));
 	}
 
-	return(rootbuf);
+	return (rootbuf);
 }
 
 /*
@@ -1474,17 +1494,17 @@ _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release)
 static void
 _bt_fixtree(Relation rel, BlockNumber blkno)
 {
-	Buffer			buf;
-	Page			page;
-	BTPageOpaque	opaque;
-	BlockNumber		pblkno;
+	Buffer		buf;
+	Page		page;
+	BTPageOpaque opaque;
+	BlockNumber pblkno;
 
-	for ( ; ; )
+	for (;;)
 	{
 		buf = _bt_getbuf(rel, blkno, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-		if (! P_LEFTMOST(opaque) || P_ISLEAF(opaque))
+		if (!P_LEFTMOST(opaque) || P_ISLEAF(opaque))
 			elog(ERROR, "bt_fixtree[%s]: invalid start page (need to recreate index)", RelationGetRelationName(rel));
 		pblkno = opaque->btpo_parent;
 
@@ -1534,25 +1554,26 @@ _bt_fixtree(Relation rel, BlockNumber blkno)
 static void
 _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 {
-	BlockNumber		blkno = BufferGetBlockNumber(buf);
-	Page			page;
-	BTPageOpaque	opaque;
-	BlockNumber		cblkno[3];
-	OffsetNumber	coff[3];
-	Buffer			cbuf[3];
-	Page			cpage[3];
-	BTPageOpaque	copaque[3];
-	BTItem			btitem;
-	int				cidx, i;
-	bool			goodbye = false;
-	char			tbuf[BLCKSZ];
+	BlockNumber blkno = BufferGetBlockNumber(buf);
+	Page		page;
+	BTPageOpaque opaque;
+	BlockNumber cblkno[3];
+	OffsetNumber coff[3];
+	Buffer		cbuf[3];
+	Page		cpage[3];
+	BTPageOpaque copaque[3];
+	BTItem		btitem;
+	int			cidx,
+				i;
+	bool		goodbye = false;
+	char		tbuf[BLCKSZ];
 
 	page = BufferGetPage(buf);
 	/* copy page to temp storage */
 	memmove(tbuf, page, PageGetPageSize(page));
 	_bt_relbuf(rel, buf, BT_READ);
 
-	page = (Page)tbuf;
+	page = (Page) tbuf;
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/* Initialize first child data */
@@ -1564,20 +1585,21 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 	cbuf[0] = _bt_getbuf(rel, cblkno[0], BT_READ);
 	cpage[0] = BufferGetPage(cbuf[0]);
 	copaque[0] = (BTPageOpaque) PageGetSpecialPointer(cpage[0]);
-	if (P_LEFTMOST(opaque) && ! P_LEFTMOST(copaque[0]))
+	if (P_LEFTMOST(opaque) && !P_LEFTMOST(copaque[0]))
 		elog(ERROR, "bt_fixtlevel[%s]: non-leftmost child page of leftmost parent (need to recreate index)", RelationGetRelationName(rel));
 	/* caller should take care and avoid this */
 	if (P_RIGHTMOST(copaque[0]))
 		elog(ERROR, "bt_fixtlevel[%s]: invalid start child (need to recreate index)", RelationGetRelationName(rel));
 
-	for ( ; ; )
+	for (;;)
 	{
+
 		/*
-		 * Read up to 2 more child pages and look for pointers
-		 * to them in *saved* parent page
+		 * Read up to 2 more child pages and look for pointers to them in
+		 * *saved* parent page
 		 */
 		coff[1] = coff[2] = InvalidOffsetNumber;
-		for (cidx = 0; cidx < 2; )
+		for (cidx = 0; cidx < 2;)
 		{
 			cidx++;
 			cblkno[cidx] = (copaque[cidx - 1])->btpo_next;
@@ -1609,20 +1631,20 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 		if (coff[1] == InvalidOffsetNumber ||
 			(cidx == 2 && coff[2] == InvalidOffsetNumber))
 		{
-			Buffer			newbuf;
-			Page			newpage;
-			BTPageOpaque	newopaque;
-			BTItem			ritem;
-			Size			itemsz;
-			OffsetNumber	newitemoff;
-			BlockNumber		parblk[3];
-			BTStackData		stack;
+			Buffer		newbuf;
+			Page		newpage;
+			BTPageOpaque newopaque;
+			BTItem		ritem;
+			Size		itemsz;
+			OffsetNumber newitemoff;
+			BlockNumber parblk[3];
+			BTStackData stack;
 
 			stack.bts_parent = NULL;
 			stack.bts_blkno = blkno;
 			stack.bts_offset = InvalidOffsetNumber;
 			ItemPointerSet(&(stack.bts_btitem.bti_itup.t_tid),
-							cblkno[0], P_HIKEY);
+						   cblkno[0], P_HIKEY);
 
 			buf = _bt_getstackbuf(rel, &stack, BT_WRITE);
 			if (buf == InvalidBuffer)
@@ -1644,19 +1666,19 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 				if (coff[i] != InvalidOffsetNumber)
 				{
 					if (parblk[i] == parblk[i - 1] &&
-								coff[i] != coff[i - 1] + 1)
+						coff[i] != coff[i - 1] + 1)
 						elog(ERROR, "bt_fixlevel[%s]: invalid item order(2) (need to recreate index)", RelationGetRelationName(rel));
 					continue;
 				}
 				/* Have to check next page ? */
-				if ((! P_RIGHTMOST(opaque)) &&
-					coff[i - 1] == PageGetMaxOffsetNumber(page))	/* yes */
+				if ((!P_RIGHTMOST(opaque)) &&
+					coff[i - 1] == PageGetMaxOffsetNumber(page))		/* yes */
 				{
 					newbuf = _bt_getbuf(rel, opaque->btpo_next, BT_WRITE);
 					newpage = BufferGetPage(newbuf);
 					newopaque = (BTPageOpaque) PageGetSpecialPointer(newpage);
 					coff[i] = _bt_getoff(newpage, cblkno[i]);
-					if (coff[i] != InvalidOffsetNumber)	/* found ! */
+					if (coff[i] != InvalidOffsetNumber) /* found ! */
 					{
 						if (coff[i] != P_FIRSTDATAKEY(newopaque))
 							elog(ERROR, "bt_fixlevel[%s]: invalid item order(3) (need to recreate index)", RelationGetRelationName(rel));
@@ -1673,7 +1695,7 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 				}
 				/* insert pointer */
 				ritem = (BTItem) PageGetItem(cpage[i - 1],
-									PageGetItemId(cpage[i - 1], P_HIKEY));
+								   PageGetItemId(cpage[i - 1], P_HIKEY));
 				btitem = _bt_formitem(&(ritem->bti_itup));
 				ItemPointerSet(&(btitem->bti_itup.t_tid), cblkno[i], P_HIKEY);
 				itemsz = IndexTupleDSize(btitem->bti_itup)
@@ -1684,16 +1706,16 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 
 				if (PageGetFreeSpace(page) < itemsz)
 				{
-					OffsetNumber	firstright;
-					OffsetNumber	itup_off;
-					BlockNumber		itup_blkno;
-					bool			newitemonleft;
+					OffsetNumber firstright;
+					OffsetNumber itup_off;
+					BlockNumber itup_blkno;
+					bool		newitemonleft;
 
 					firstright = _bt_findsplitloc(rel, page,
-									newitemoff, itemsz, &newitemonleft);
+									 newitemoff, itemsz, &newitemonleft);
 					newbuf = _bt_split(rel, buf, firstright,
-								newitemoff, itemsz, btitem, newitemonleft,
-								&itup_off, &itup_blkno);
+							   newitemoff, itemsz, btitem, newitemonleft,
+									   &itup_off, &itup_blkno);
 					/* what buffer we need in ? */
 					if (newitemonleft)
 						_bt_relbuf(rel, newbuf, BT_WRITE);
@@ -1720,7 +1742,7 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
 			/* copy page with pointer to cblkno[cidx] to temp storage */
 			memmove(tbuf, page, PageGetPageSize(page));
 			_bt_relbuf(rel, buf, BT_WRITE);
-			page = (Page)tbuf;
+			page = (Page) tbuf;
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		}
 
@@ -1760,18 +1782,19 @@ _bt_fixlevel(Relation rel, Buffer buf, BlockNumber limit)
  * but it doesn't guarantee full consistency of tree.)
  */
 static void
-_bt_fixbranch(Relation rel, BlockNumber lblkno, 
-				BlockNumber rblkno, BTStack true_stack)
+_bt_fixbranch(Relation rel, BlockNumber lblkno,
+			  BlockNumber rblkno, BTStack true_stack)
 {
-	BlockNumber		blkno = true_stack->bts_blkno;
-	BTStackData		stack;
-	BTPageOpaque	opaque;
-	Buffer			buf, rbuf;
-	Page			page;
-	OffsetNumber	offnum;
+	BlockNumber blkno = true_stack->bts_blkno;
+	BTStackData stack;
+	BTPageOpaque opaque;
+	Buffer		buf,
+				rbuf;
+	Page		page;
+	OffsetNumber offnum;
 
 	true_stack = true_stack->bts_parent;
-	for ( ; ; )
+	for (;;)
 	{
 		buf = _bt_getbuf(rel, blkno, BT_READ);
 
@@ -1779,8 +1802,8 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		_bt_fixlevel(rel, buf, rblkno);
 
 		/*
-		 * Here parent level should have pointers for both
-		 * lblkno and rblkno and we have to find them.
+		 * Here parent level should have pointers for both lblkno and
+		 * rblkno and we have to find them.
 		 */
 		stack.bts_parent = NULL;
 		stack.bts_blkno = blkno;
@@ -1792,7 +1815,7 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		page = BufferGetPage(buf);
 		offnum = _bt_getoff(page, rblkno);
 
-		if (offnum != InvalidOffsetNumber)	/* right pointer found */
+		if (offnum != InvalidOffsetNumber)		/* right pointer found */
 		{
 			if (offnum <= stack.bts_offset)
 				elog(ERROR, "bt_fixbranch[%s]: invalid item order (need to recreate index)", RelationGetRelationName(rel));
@@ -1829,10 +1852,10 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		}
 
 		/*
-		 * Well, we are on the level that was root or unexistent when
-		 * we started traversing tree down. If btpo_parent is updated
-		 * then we'll use it to continue, else we'll fix/restore upper
-		 * levels entirely.
+		 * Well, we are on the level that was root or unexistent when we
+		 * started traversing tree down. If btpo_parent is updated then
+		 * we'll use it to continue, else we'll fix/restore upper levels
+		 * entirely.
 		 */
 		if (!BTreeInvalidParent(opaque))
 		{
@@ -1874,18 +1897,18 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 static void
 _bt_fixup(Relation rel, Buffer buf)
 {
-	Page			page;
-	BTPageOpaque	opaque;
-	BlockNumber		blkno;
+	Page		page;
+	BTPageOpaque opaque;
+	BlockNumber blkno;
 
-	for ( ; ; )
+	for (;;)
 	{
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
 		/*
-		 * If someone else already created parent pages
-		 * then it's time for _bt_fixtree() to check upper
-		 * levels and fix them, if required.
+		 * If someone else already created parent pages then it's time for
+		 * _bt_fixtree() to check upper levels and fix them, if required.
 		 */
 		if (!BTreeInvalidParent(opaque))
 		{
@@ -1904,13 +1927,12 @@ _bt_fixup(Relation rel, Buffer buf)
 	}
 
 	/*
-	 * Ok, we are on the leftmost page, it's write locked
-	 * by us and its btpo_parent points to meta page - time
-	 * for _bt_fixroot().
+	 * Ok, we are on the leftmost page, it's write locked by us and its
+	 * btpo_parent points to meta page - time for _bt_fixroot().
 	 */
 	elog(NOTICE, "bt_fixup[%s]: fixing root page", RelationGetRelationName(rel));
-	 buf = _bt_fixroot(rel, buf, true);
-	 _bt_relbuf(rel, buf, BT_WRITE);
+	buf = _bt_fixroot(rel, buf, true);
+	_bt_relbuf(rel, buf, BT_WRITE);
 
 	return;
 }
@@ -1918,23 +1940,23 @@ _bt_fixup(Relation rel, Buffer buf)
 static OffsetNumber
 _bt_getoff(Page page, BlockNumber blkno)
 {
-	BTPageOpaque	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	OffsetNumber	maxoff = PageGetMaxOffsetNumber(page);
-	OffsetNumber	offnum = P_FIRSTDATAKEY(opaque);
-	BlockNumber		curblkno;
-	ItemId			itemid;
-	BTItem			item;
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
+	OffsetNumber offnum = P_FIRSTDATAKEY(opaque);
+	BlockNumber curblkno;
+	ItemId		itemid;
+	BTItem		item;
 
-	for ( ; offnum <= maxoff; offnum++)
+	for (; offnum <= maxoff; offnum++)
 	{
 		itemid = PageGetItemId(page, offnum);
 		item = (BTItem) PageGetItem(page, itemid);
 		curblkno = ItemPointerGetBlockNumber(&(item->bti_itup.t_tid));
 		if (curblkno == blkno)
-			return(offnum);
+			return (offnum);
 	}
 
-	return(InvalidOffsetNumber);
+	return (InvalidOffsetNumber);
 }
 
 /*
@@ -1961,9 +1983,9 @@ _bt_pgaddtup(Relation rel,
 			 const char *where)
 {
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	BTItemData truncitem;
+	BTItemData	truncitem;
 
-	if (! P_ISLEAF(opaque) && itup_off == P_FIRSTDATAKEY(opaque))
+	if (!P_ISLEAF(opaque) && itup_off == P_FIRSTDATAKEY(opaque))
 	{
 		memcpy(&truncitem, btitem, sizeof(BTItemData));
 		truncitem.bti_itup.t_info = sizeof(BTItemData);

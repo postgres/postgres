@@ -102,12 +102,12 @@ typedef struct
 #define REG_LARGE		01000	/* force large representation */
 #define REG_BACKR		02000	/* force use of backref code */
 
-extern int pg95_regcomp(regex_t *preg, const char *pattern, int cflags);
+extern int	pg95_regcomp(regex_t *preg, const char *pattern, int cflags);
 extern size_t pg95_regerror(int errcode, const regex_t *preg,
-							char *errbuf, size_t errbuf_size);
+			  char *errbuf, size_t errbuf_size);
 extern int pg95_regexec(const regex_t *preg, const char *string,
-						size_t nmatch,
-						regmatch_t *pmatch, int eflags);
+			 size_t nmatch,
+			 regmatch_t *pmatch, int eflags);
 extern void pg95_regfree(regex_t *preg);
 
 #endif	 /* !_REGEX_H_ */

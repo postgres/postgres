@@ -13,14 +13,14 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.31 2001/01/24 19:43:28 momjian Exp $
+ * $Id: catcache.h,v 1.32 2001/03/22 04:01:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef CATCACHE_H
 #define CATCACHE_H
 
-/* #define CACHEDEBUG */	/* turns DEBUG elogs on */
+ /* #define CACHEDEBUG *//* turns DEBUG elogs on */
 
 #include "access/htup.h"
 #include "lib/dllist.h"
@@ -72,7 +72,7 @@ typedef struct catcache
 	PGFunction	cc_hashfunc[4]; /* hash function to use for each key */
 	ScanKeyData cc_skey[4];		/* precomputed key info for heap scans */
 	Dllist		cc_lrulist;		/* overall LRU list, most recent first */
-	Dllist		cc_cache[NCCBUCK]; /* hash buckets */
+	Dllist		cc_cache[NCCBUCK];		/* hash buckets */
 } CatCache;
 
 #define InvalidCatalogCacheId	(-1)
@@ -84,19 +84,19 @@ extern void CreateCacheMemoryContext(void);
 extern void AtEOXact_CatCache(bool isCommit);
 
 extern CatCache *InitCatCache(int id, char *relname, char *indname,
-							  int nkeys, int *key);
+			 int nkeys, int *key);
 
 extern HeapTuple SearchCatCache(CatCache *cache,
-								Datum v1, Datum v2,
-								Datum v3, Datum v4);
+			   Datum v1, Datum v2,
+			   Datum v3, Datum v4);
 extern void ReleaseCatCache(HeapTuple tuple);
 
 extern void ResetSystemCache(void);
 extern void SystemCacheRelationFlushed(Oid relId);
 extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
-									 ItemPointer pointer);
+						 ItemPointer pointer);
 extern void PrepareToInvalidateCacheTuple(Relation relation,
-								HeapTuple tuple,
-								void (*function) (int, Index, ItemPointer));
+							  HeapTuple tuple,
+							  void (*function) (int, Index, ItemPointer));
 
 #endif	 /* CATCACHE_H */

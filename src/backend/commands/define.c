@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.52 2001/02/12 20:07:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.53 2001/03/22 03:59:22 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -70,7 +70,7 @@ case_translate_language_name(const char *input, char *output)
 --------------------------------------------------------------------------*/
 	int			i;
 
-	for (i = 0; i < NAMEDATALEN-1 && input[i]; ++i)
+	for (i = 0; i < NAMEDATALEN - 1 && input[i]; ++i)
 		output[i] = tolower((unsigned char) input[i]);
 
 	output[i] = '\0';
@@ -110,12 +110,12 @@ compute_full_attributes(List *parameters,
   Note: currently, only two of these parameters actually do anything:
 
   * canCache means the optimizer's constant-folder is allowed to
-    pre-evaluate the function when all its inputs are constants.
+	pre-evaluate the function when all its inputs are constants.
 
   * isStrict means the function should not be called when any NULL
-    inputs are present; instead a NULL result value should be assumed.
+	inputs are present; instead a NULL result value should be assumed.
 
-  The other four parameters are not used anywhere.  They used to be
+  The other four parameters are not used anywhere.	They used to be
   used in the "expensive functions" optimizer, but that's been dead code
   for a long time.
 
@@ -217,21 +217,26 @@ void
 CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 {
 	char	   *probin_str;
+
 	/* pathname of executable file that executes this function, if any */
 
 	char	   *prosrc_str;
+
 	/* SQL that executes this function, if any */
 
 	char	   *prorettype;
+
 	/* Type of return value (or member of set of values) from function */
 
 	char		languageName[NAMEDATALEN];
+
 	/*
-	 * name of language of function, with case adjusted: "C",
-	 * "internal", "sql", etc.
+	 * name of language of function, with case adjusted: "C", "internal",
+	 * "sql", etc.
 	 */
 
 	bool		returnsSet;
+
 	/* The function returns a set of values, as opposed to a singleton. */
 
 	/*
@@ -257,7 +262,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 		if (!superuser())
 			elog(ERROR,
 				 "Only users with Postgres superuser privilege are "
-				 "permitted to create a function in the '%s' language.\n\t"
+			   "permitted to create a function in the '%s' language.\n\t"
 				 "Others may use the 'sql' language "
 				 "or the created procedural languages.",
 				 languageName);
@@ -380,14 +385,14 @@ DefineOperator(char *oprName,
 		{
 			typeName1 = defGetString(defel);
 			if (IsA(defel->arg, TypeName)
-				&& ((TypeName *) defel->arg)->setof)
+				&&((TypeName *) defel->arg)->setof)
 				elog(ERROR, "setof type not implemented for leftarg");
 		}
 		else if (strcasecmp(defel->defname, "rightarg") == 0)
 		{
 			typeName2 = defGetString(defel);
 			if (IsA(defel->arg, TypeName)
-				&& ((TypeName *) defel->arg)->setof)
+				&&((TypeName *) defel->arg)->setof)
 				elog(ERROR, "setof type not implemented for rightarg");
 		}
 		else if (strcasecmp(defel->defname, "procedure") == 0)
@@ -478,8 +483,8 @@ DefineAggregate(char *aggName, List *parameters)
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
 		/*
-		 * sfunc1, stype1, and initcond1 are accepted as obsolete spellings
-		 * for sfunc, stype, initcond.
+		 * sfunc1, stype1, and initcond1 are accepted as obsolete
+		 * spellings for sfunc, stype, initcond.
 		 */
 		if (strcasecmp(defel->defname, "sfunc") == 0)
 			transfuncName = defGetString(defel);
@@ -515,12 +520,12 @@ DefineAggregate(char *aggName, List *parameters)
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
-	AggregateCreate(aggName,		/* aggregate name */
-					transfuncName,	/* step function name */
-					finalfuncName,	/* final function name */
-					baseType,		/* type of data being aggregated */
-					transType,		/* transition data type */
-					initval);		/* initial condition */
+	AggregateCreate(aggName,	/* aggregate name */
+					transfuncName,		/* step function name */
+					finalfuncName,		/* final function name */
+					baseType,	/* type of data being aggregated */
+					transType,	/* transition data type */
+					initval);	/* initial condition */
 }
 
 /*
@@ -543,13 +548,13 @@ DefineType(char *typeName, List *parameters)
 	char		delimiter = DEFAULT_TYPDELIM;
 	char	   *shadow_type;
 	List	   *pl;
-	char		alignment = 'i'; /* default alignment */
+	char		alignment = 'i';/* default alignment */
 	char		storage = 'p';	/* default storage in TOAST */
 
 	/*
-	 * Type names must be one character shorter than other names,
-	 * allowing room to create the corresponding array type name with
-	 * prepended "_".
+	 * Type names must be one character shorter than other names, allowing
+	 * room to create the corresponding array type name with prepended
+	 * "_".
 	 */
 	if (strlen(typeName) > (NAMEDATALEN - 2))
 	{
@@ -692,14 +697,16 @@ defGetString(DefElem *def)
 	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
-		{
-			char *str = palloc(32);
+			{
+				char	   *str = palloc(32);
 
-			snprintf(str, 32, "%ld", (long) intVal(def->arg));
-			return str;
-		}
+				snprintf(str, 32, "%ld", (long) intVal(def->arg));
+				return str;
+			}
 		case T_Float:
-			/* T_Float values are kept in string form, so this type cheat
+
+			/*
+			 * T_Float values are kept in string form, so this type cheat
 			 * works (and doesn't risk losing precision)
 			 */
 			return strVal(def->arg);

@@ -41,7 +41,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.68 2001/02/16 00:03:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.69 2001/03/22 03:59:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,11 +67,11 @@
 #define LOG6(x)  (log(x) / 1.79175946922805)
 
 
-double      effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
-double      random_page_cost = DEFAULT_RANDOM_PAGE_COST;
-double      cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
-double      cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
-double      cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
+double		effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
+double		random_page_cost = DEFAULT_RANDOM_PAGE_COST;
+double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
+double		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
+double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
 
 Cost		disable_cost = 100000000.0;
 
@@ -117,14 +117,14 @@ cost_seqscan(Path *path, RelOptInfo *baserel)
 	/*
 	 * disk costs
 	 *
-	 * The cost of reading a page sequentially is 1.0, by definition.
-	 * Note that the Unix kernel will typically do some amount of
-	 * read-ahead optimization, so that this cost is less than the
-	 * true cost of reading a page from disk.  We ignore that issue
-	 * here, but must take it into account when estimating the cost of
-	 * non-sequential accesses!
+	 * The cost of reading a page sequentially is 1.0, by definition. Note
+	 * that the Unix kernel will typically do some amount of read-ahead
+	 * optimization, so that this cost is less than the true cost of
+	 * reading a page from disk.  We ignore that issue here, but must take
+	 * it into account when estimating the cost of non-sequential
+	 * accesses!
 	 */
-	run_cost += baserel->pages;	/* sequential fetches with cost 1.0 */
+	run_cost += baserel->pages; /* sequential fetches with cost 1.0 */
 
 	/* CPU costs */
 	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
@@ -600,12 +600,12 @@ cost_hashjoin(Path *path,
 	/*
 	 * The number of tuple comparisons needed is the number of outer
 	 * tuples times the typical hash bucket size.  nodeHash.c tries for
-	 * average bucket loading of NTUP_PER_BUCKET, but that goal will
-	 * be reached only if data values are uniformly distributed among
-	 * the buckets.  To be conservative, we scale up the target bucket
-	 * size by the number of inner rows times inner dispersion, giving
-	 * an estimate of the typical number of duplicates of each value.
-	 * We then charge one cpu_operator_cost per tuple comparison.
+	 * average bucket loading of NTUP_PER_BUCKET, but that goal will be
+	 * reached only if data values are uniformly distributed among the
+	 * buckets.  To be conservative, we scale up the target bucket size by
+	 * the number of inner rows times inner dispersion, giving an estimate
+	 * of the typical number of duplicates of each value. We then charge
+	 * one cpu_operator_cost per tuple comparison.
 	 */
 	run_cost += cpu_operator_cost * outer_path->parent->rows *
 		NTUP_PER_BUCKET * ceil(inner_path->parent->rows * innerdispersion);
@@ -672,7 +672,7 @@ cost_qual_eval(List *quals)
 
 	foreach(l, quals)
 	{
-		Node   *qual = (Node *) lfirst(l);
+		Node	   *qual = (Node *) lfirst(l);
 
 		/*
 		 * RestrictInfo nodes contain an eval_cost field reserved for this

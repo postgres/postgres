@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.21 2001/01/24 19:43:23 momjian Exp $
+ * $Id: hashjoin.h,v 1.22 2001/03/22 04:00:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,8 +69,8 @@ typedef struct HashTableData
 								 * file */
 
 	/*
-	 * Info about the datatype being hashed.  We assume that the inner
-	 * and outer sides of the hash are the same type, or at least
+	 * Info about the datatype being hashed.  We assume that the inner and
+	 * outer sides of the hash are the same type, or at least
 	 * binary-compatible types.
 	 */
 	int16		typLen;

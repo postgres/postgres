@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.71 2001/01/24 19:42:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.72 2001/03/22 03:59:11 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -242,9 +242,9 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		/*
 		 * We do not need to check every single field here, and in fact
 		 * some fields such as attdispersion probably shouldn't be
-		 * compared.  We can also disregard attnum (it was used to
-		 * place the row in the attrs array) and everything derived
-		 * from the column datatype.
+		 * compared.  We can also disregard attnum (it was used to place
+		 * the row in the attrs array) and everything derived from the
+		 * column datatype.
 		 */
 		if (strcmp(NameStr(attr1->attname), NameStr(attr2->attname)) != 0)
 			return false;
@@ -276,8 +276,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 
 			/*
 			 * We can't assume that the items are always read from the
-			 * system catalogs in the same order; so use the adnum field to
-			 * identify the matching item to compare.
+			 * system catalogs in the same order; so use the adnum field
+			 * to identify the matching item to compare.
 			 */
 			for (j = 0; j < n; defval2++, j++)
 			{
@@ -298,9 +298,9 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			ConstrCheck *check2 = constr2->check;
 
 			/*
-			 * Similarly, don't assume that the checks are always read
-			 * in the same order; match them up by name and contents.
-			 * (The name *should* be unique, but...)
+			 * Similarly, don't assume that the checks are always read in
+			 * the same order; match them up by name and contents. (The
+			 * name *should* be unique, but...)
 			 */
 			for (j = 0; j < n; check2++, j++)
 			{

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.30 2001/01/24 19:42:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.31 2001/03/22 03:59:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 static PathKeyItem *makePathKeyItem(Node *key, Oid sortop);
 static List *make_canonical_pathkey(Query *root, PathKeyItem *item);
 static Var *find_indexkey_var(Query *root, RelOptInfo *rel,
-							  AttrNumber varattno);
+				  AttrNumber varattno);
 
 
 /*
@@ -89,10 +89,10 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 	 * into our new set. When done, we add the new set to the front of
 	 * equi_key_list.
 	 *
-	 * It may well be that the two items we're given are already known to
-	 * be equijoin-equivalent, in which case we don't need to change our
-	 * data structure.  If we find both of them in the same equivalence
-	 * set to start with, we can quit immediately.
+	 * It may well be that the two items we're given are already known to be
+	 * equijoin-equivalent, in which case we don't need to change our data
+	 * structure.  If we find both of them in the same equivalence set to
+	 * start with, we can quit immediately.
 	 *
 	 * This is a standard UNION-FIND problem, for which there exist better
 	 * data structures than simple lists.  If this code ever proves to be
@@ -109,7 +109,11 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 
 		if (item1here || item2here)
 		{
-			/* If find both in same equivalence set, no need to do any more */
+
+			/*
+			 * If find both in same equivalence set, no need to do any
+			 * more
+			 */
 			if (item1here && item2here)
 			{
 				/* Better not have seen only one in an earlier set... */
@@ -126,7 +130,8 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 
 			/*
 			 * Remove old set from equi_key_list.  NOTE this does not
-			 * change lnext(cursetlink), so the foreach loop doesn't break.
+			 * change lnext(cursetlink), so the foreach loop doesn't
+			 * break.
 			 */
 			root->equi_key_list = lremove(curset, root->equi_key_list);
 			freeList(curset);	/* might as well recycle old cons cells */
@@ -171,8 +176,8 @@ generate_implied_equalities(Query *root)
 			continue;
 
 		/*
-		 * Match each item in the set with all that appear after it
-		 * (it's sufficient to generate A=B, need not process B=A too).
+		 * Match each item in the set with all that appear after it (it's
+		 * sufficient to generate A=B, need not process B=A too).
 		 */
 		foreach(ptr1, curset)
 		{
@@ -246,11 +251,12 @@ canonicalize_pathkeys(Query *root, List *pathkeys)
 		Assert(pathkey != NIL);
 		item = (PathKeyItem *) lfirst(pathkey);
 		cpathkey = make_canonical_pathkey(root, item);
+
 		/*
-		 * Eliminate redundant ordering requests --- ORDER BY A,A
-		 * is the same as ORDER BY A.  We want to check this only
-		 * after we have canonicalized the keys, so that equivalent-key
-		 * knowledge is used when deciding if an item is redundant.
+		 * Eliminate redundant ordering requests --- ORDER BY A,A is the
+		 * same as ORDER BY A.	We want to check this only after we have
+		 * canonicalized the keys, so that equivalent-key knowledge is
+		 * used when deciding if an item is redundant.
 		 */
 		if (!ptrMember(cpathkey, new_pathkeys))
 			new_pathkeys = lappend(new_pathkeys, cpathkey);
@@ -285,8 +291,8 @@ compare_pathkeys(List *keys1, List *keys2)
 		List	   *subkey2 = lfirst(key2);
 
 		/*
-		 * XXX would like to check that we've been given canonicalized input,
-		 * but query root not accessible here...
+		 * XXX would like to check that we've been given canonicalized
+		 * input, but query root not accessible here...
 		 */
 #ifdef NOT_USED
 		Assert(ptrMember(subkey1, root->equi_key_list));
@@ -295,7 +301,7 @@ compare_pathkeys(List *keys1, List *keys2)
 
 		/*
 		 * We will never have two subkeys where one is a subset of the
-		 * other, because of the canonicalization process.  Either they
+		 * other, because of the canonicalization process.	Either they
 		 * are equal or they ain't.  Furthermore, we only need pointer
 		 * comparison to detect equality.
 		 */
@@ -555,9 +561,10 @@ build_index_pathkeys(Query *root,
 			/* OK, make a sublist for this sort key */
 			item = makePathKeyItem((Node *) relvar, sortop);
 			cpathkey = make_canonical_pathkey(root, item);
+
 			/*
-			 * Eliminate redundant ordering info; could happen if query
-			 * is such that index keys are equijoined...
+			 * Eliminate redundant ordering info; could happen if query is
+			 * such that index keys are equijoined...
 			 */
 			if (!ptrMember(cpathkey, retval))
 				retval = lappend(retval, cpathkey);
@@ -693,7 +700,7 @@ make_pathkeys_for_sortclauses(List *sortclauses,
  *
  * RestrictInfo contains fields in which we may cache the result
  * of looking up the canonical pathkeys for the left and right sides
- * of the mergeclause.  (Note that in normal cases they will be the
+ * of the mergeclause.	(Note that in normal cases they will be the
  * same, but not if the mergeclause appears above an OUTER JOIN.)
  * This is a worthwhile savings because these routines will be invoked
  * many times when dealing with a many-relation query.
@@ -756,8 +763,8 @@ find_mergeclauses_for_pathkeys(Query *root,
 		/*
 		 * We can match a pathkey against either left or right side of any
 		 * mergejoin clause we haven't used yet.  For the moment we use a
-		 * dumb "greedy" algorithm with no backtracking.  Is it worth being
-		 * any smarter to make a longer list of usable mergeclauses?
+		 * dumb "greedy" algorithm with no backtracking.  Is it worth
+		 * being any smarter to make a longer list of usable mergeclauses?
 		 * Probably not.
 		 */
 		foreach(j, restrictinfos)
@@ -765,9 +772,10 @@ find_mergeclauses_for_pathkeys(Query *root,
 			RestrictInfo *restrictinfo = lfirst(j);
 
 			cache_mergeclause_pathkeys(root, restrictinfo);
+
 			/*
-			 * We can compare canonical pathkey sublists by simple
-			 * pointer equality; see compare_pathkeys.
+			 * We can compare canonical pathkey sublists by simple pointer
+			 * equality; see compare_pathkeys.
 			 */
 			if ((pathkey == restrictinfo->left_pathkey ||
 				 pathkey == restrictinfo->right_pathkey) &&
@@ -830,7 +838,7 @@ make_pathkeys_for_mergeclauses(Query *root,
 		cache_mergeclause_pathkeys(root, restrictinfo);
 
 		key = (Node *) get_leftop(restrictinfo->clause);
-		if (IsA(key, Var) && intMember(((Var *) key)->varno, rel->relids))
+		if (IsA(key, Var) &&intMember(((Var *) key)->varno, rel->relids))
 		{
 			/* Rel is left side of mergeclause */
 			pathkey = restrictinfo->left_pathkey;
@@ -838,7 +846,7 @@ make_pathkeys_for_mergeclauses(Query *root,
 		else
 		{
 			key = (Node *) get_rightop(restrictinfo->clause);
-			if (IsA(key, Var) && intMember(((Var *) key)->varno, rel->relids))
+			if (IsA(key, Var) &&intMember(((Var *) key)->varno, rel->relids))
 			{
 				/* Rel is right side of mergeclause */
 				pathkey = restrictinfo->right_pathkey;
@@ -851,13 +859,14 @@ make_pathkeys_for_mergeclauses(Query *root,
 		}
 
 		/*
-		 * When we are given multiple merge clauses, it's possible that some
-		 * clauses refer to the same vars as earlier clauses.  There's no
-		 * reason for us to specify sort keys like (A,B,A) when (A,B) will
-		 * do --- and adding redundant sort keys makes add_path think that
-		 * this sort order is different from ones that are really the same,
-		 * so don't do it.  Since we now have a canonicalized pathkey,
-		 * a simple ptrMember test is sufficient to detect redundant keys.
+		 * When we are given multiple merge clauses, it's possible that
+		 * some clauses refer to the same vars as earlier clauses.
+		 * There's no reason for us to specify sort keys like (A,B,A) when
+		 * (A,B) will do --- and adding redundant sort keys makes add_path
+		 * think that this sort order is different from ones that are
+		 * really the same, so don't do it.  Since we now have a
+		 * canonicalized pathkey, a simple ptrMember test is sufficient to
+		 * detect redundant keys.
 		 */
 		if (!ptrMember(pathkey, pathkeys))
 			pathkeys = lappend(pathkeys, pathkey);
@@ -911,6 +920,7 @@ pathkeys_useful_for_merging(Query *root, RelOptInfo *rel, List *pathkeys)
 				if (restrictinfo->mergejoinoperator == InvalidOid)
 					continue;
 				cache_mergeclause_pathkeys(root, restrictinfo);
+
 				/*
 				 * We can compare canonical pathkey sublists by simple
 				 * pointer equality; see compare_pathkeys.
@@ -984,7 +994,9 @@ truncate_useless_pathkeys(Query *root,
 	nuseful2 = pathkeys_useful_for_ordering(root, pathkeys);
 	if (nuseful2 > nuseful)
 		nuseful = nuseful2;
-	/* Note: not safe to modify input list destructively, but we can avoid
+
+	/*
+	 * Note: not safe to modify input list destructively, but we can avoid
 	 * copying the list if we're not actually going to change it
 	 */
 	if (nuseful == length(pathkeys))

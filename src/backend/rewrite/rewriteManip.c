@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.55 2001/01/27 01:44:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.56 2001/03/22 03:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +43,10 @@ static bool checkExprHasSubLink_walker(Node *node, void *context);
 bool
 checkExprHasAggs(Node *node)
 {
+
 	/*
-	 * If a Query is passed, examine it --- but we will not recurse
-	 * into sub-Queries.
+	 * If a Query is passed, examine it --- but we will not recurse into
+	 * sub-Queries.
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node, checkExprHasAggs_walker,
@@ -73,9 +74,10 @@ checkExprHasAggs_walker(Node *node, void *context)
 bool
 checkExprHasSubLink(Node *node)
 {
+
 	/*
-	 * If a Query is passed, examine it --- but we will not recurse
-	 * into sub-Queries.
+	 * If a Query is passed, examine it --- but we will not recurse into
+	 * sub-Queries.
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node, checkExprHasSubLink_walker,
@@ -101,7 +103,7 @@ checkExprHasSubLink_walker(Node *node, void *context)
  *
  * Find all Var nodes in the given tree with varlevelsup == sublevels_up,
  * and increment their varno fields (rangetable indexes) by 'offset'.
- * The varnoold fields are adjusted similarly.  Also, RangeTblRef nodes
+ * The varnoold fields are adjusted similarly.	Also, RangeTblRef nodes
  * in join trees and setOp trees are adjusted.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
@@ -133,7 +135,7 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 	}
 	if (IsA(node, RangeTblRef))
 	{
-		RangeTblRef	   *rtr = (RangeTblRef *) node;
+		RangeTblRef *rtr = (RangeTblRef *) node;
 
 		if (context->sublevels_up == 0)
 			rtr->rtindex += context->offset;
@@ -170,24 +172,22 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 	 */
 	if (node && IsA(node, Query))
 	{
-		Query  *qry = (Query *) node;
-		List   *l;
+		Query	   *qry = (Query *) node;
+		List	   *l;
 
 		/*
-		 * If we are starting at a Query, and sublevels_up is zero, then we
-		 * must also fix rangetable indexes in the Query itself --- namely
-		 * resultRelation and rowMarks entries.  sublevels_up cannot be zero
-		 * when recursing into a subquery, so there's no need to have the
-		 * same logic inside OffsetVarNodes_walker.
+		 * If we are starting at a Query, and sublevels_up is zero, then
+		 * we must also fix rangetable indexes in the Query itself ---
+		 * namely resultRelation and rowMarks entries.	sublevels_up
+		 * cannot be zero when recursing into a subquery, so there's no
+		 * need to have the same logic inside OffsetVarNodes_walker.
 		 */
 		if (sublevels_up == 0)
 		{
 			if (qry->resultRelation)
 				qry->resultRelation += offset;
 			foreach(l, qry->rowMarks)
-			{
 				lfirsti(l) += offset;
-			}
 		}
 		query_tree_walker(qry, OffsetVarNodes_walker,
 						  (void *) &context, true);
@@ -235,7 +235,7 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 	}
 	if (IsA(node, RangeTblRef))
 	{
-		RangeTblRef	   *rtr = (RangeTblRef *) node;
+		RangeTblRef *rtr = (RangeTblRef *) node;
 
 		if (context->sublevels_up == 0 &&
 			rtr->rtindex == context->rt_index)
@@ -274,15 +274,15 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 	 */
 	if (node && IsA(node, Query))
 	{
-		Query  *qry = (Query *) node;
-		List   *l;
+		Query	   *qry = (Query *) node;
+		List	   *l;
 
 		/*
-		 * If we are starting at a Query, and sublevels_up is zero, then we
-		 * must also fix rangetable indexes in the Query itself --- namely
-		 * resultRelation and rowMarks entries.  sublevels_up cannot be zero
-		 * when recursing into a subquery, so there's no need to have the
-		 * same logic inside ChangeVarNodes_walker.
+		 * If we are starting at a Query, and sublevels_up is zero, then
+		 * we must also fix rangetable indexes in the Query itself ---
+		 * namely resultRelation and rowMarks entries.	sublevels_up
+		 * cannot be zero when recursing into a subquery, so there's no
+		 * need to have the same logic inside ChangeVarNodes_walker.
 		 */
 		if (sublevels_up == 0)
 		{
@@ -541,11 +541,12 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 		return parsetree;
 	if (parsetree->commandType != CMD_INSERT)
 		return parsetree;
+
 	/*
-	 * Currently, this is ONLY applied to rule-action queries, and so
-	 * we expect to find the *OLD* and *NEW* placeholder entries in the
-	 * given query.  If they're not there, it must be an INSERT/SELECT
-	 * in which they've been pushed down to the SELECT.
+	 * Currently, this is ONLY applied to rule-action queries, and so we
+	 * expect to find the *OLD* and *NEW* placeholder entries in the given
+	 * query.  If they're not there, it must be an INSERT/SELECT in which
+	 * they've been pushed down to the SELECT.
 	 */
 	if (length(parsetree->rtable) >= 2 &&
 		strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->relname,
@@ -560,17 +561,17 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 	Assert(IsA(rtr, RangeTblRef));
 	selectrte = rt_fetch(rtr->rtindex, parsetree->rtable);
 	selectquery = selectrte->subquery;
-	if (! (selectquery && IsA(selectquery, Query) &&
-		   selectquery->commandType == CMD_SELECT))
+	if (!(selectquery && IsA(selectquery, Query) &&
+		  selectquery->commandType == CMD_SELECT))
 		elog(ERROR, "getInsertSelectQuery: expected to find SELECT subquery");
 	if (length(selectquery->rtable) >= 2 &&
-		strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->relname,
-			   "*OLD*") == 0 &&
-		strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->relname,
-			   "*NEW*") == 0)
+	 strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->relname,
+			"*OLD*") == 0 &&
+	 strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->relname,
+			"*NEW*") == 0)
 	{
 		if (subquery_ptr)
-			*subquery_ptr = & (selectrte->subquery);
+			*subquery_ptr = &(selectrte->subquery);
 		return selectquery;
 	}
 	elog(ERROR, "getInsertSelectQuery: can't find rule placeholders");
@@ -591,11 +592,12 @@ AddQual(Query *parsetree, Node *qual)
 
 	if (parsetree->commandType == CMD_UTILITY)
 	{
+
 		/*
 		 * Noplace to put the qual on a utility statement.
 		 *
-		 * For now, we expect utility stmt to be a NOTIFY, so give a
-		 * specific error message for that case.
+		 * For now, we expect utility stmt to be a NOTIFY, so give a specific
+		 * error message for that case.
 		 */
 		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
 			elog(ERROR, "Conditional NOTIFY is not implemented");
@@ -632,11 +634,12 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 
 	if (parsetree->commandType == CMD_UTILITY)
 	{
+
 		/*
 		 * Noplace to put the qual on a utility statement.
 		 *
-		 * For now, we expect utility stmt to be a NOTIFY, so give a
-		 * specific error message for that case.
+		 * For now, we expect utility stmt to be a NOTIFY, so give a specific
+		 * error message for that case.
 		 */
 		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
 			elog(ERROR, "Conditional NOTIFY is not implemented");
@@ -839,8 +842,8 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, go straight to query_tree_mutator to make sure that
-	 * sublevels_up doesn't get incremented prematurely.
+	 * if it's a Query, go straight to query_tree_mutator to make sure
+	 * that sublevels_up doesn't get incremented prematurely.
 	 */
 	if (node && IsA(node, Query))
 	{
@@ -876,11 +879,11 @@ typedef struct
 	int		   *modified;
 	int		   *badsql;
 	int			sublevels_up;
-} HandleRIRAttributeRule_context;
+}			HandleRIRAttributeRule_context;
 
 static Node *
 HandleRIRAttributeRule_mutator(Node *node,
-							   HandleRIRAttributeRule_context *context)
+							   HandleRIRAttributeRule_context * context)
 {
 	if (node == NULL)
 		return NULL;
@@ -988,4 +991,4 @@ HandleRIRAttributeRule(Query *parsetree,
 					   (void *) &context, true);
 }
 
-#endif /* NOT_USED */
+#endif	 /* NOT_USED */

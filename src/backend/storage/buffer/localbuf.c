@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.39 2001/01/24 19:43:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.40 2001/03/22 03:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	/* a low tech search for now -- not optimized for scans */
 	for (i = 0; i < NLocBuffer; i++)
 	{
-		if (LocalBufferDescriptors[i].tag.rnode.relNode == 
+		if (LocalBufferDescriptors[i].tag.rnode.relNode ==
 			reln->rd_node.relNode &&
 			LocalBufferDescriptors[i].tag.blockNum == blockNum)
 		{
@@ -125,8 +125,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	/*
 	 * it's all ours now.
 	 *
-	 * We need not in tblNode currently but will in future I think,
-	 * when we'll give up rel->rd_fd to fmgr cache.
+	 * We need not in tblNode currently but will in future I think, when
+	 * we'll give up rel->rd_fd to fmgr cache.
 	 */
 	bufHdr->tag.rnode = reln->rd_node;
 	bufHdr->tag.blockNum = blockNum;
@@ -142,12 +142,14 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 
 		if (data == NULL)
 			elog(FATAL, "Out of memory in LocalBufferAlloc");
+
 		/*
-		 * This is a bit of a hack: bufHdr->data needs to be a shmem offset
-		 * for consistency with the shared-buffer case, so make it one
-		 * even though it's not really a valid shmem offset.
+		 * This is a bit of a hack: bufHdr->data needs to be a shmem
+		 * offset for consistency with the shared-buffer case, so make it
+		 * one even though it's not really a valid shmem offset.
 		 */
 		bufHdr->data = MAKE_OFFSET(data);
+
 		/*
 		 * Set pointer for use by BufferGetBlock() macro.
 		 */

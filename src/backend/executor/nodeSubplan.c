@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.29 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.30 2001/03/22 03:59:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	{
 		HeapTuple	tup = slot->val;
 		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
-		Datum		rowresult = BoolGetDatum(! useor);
+		Datum		rowresult = BoolGetDatum(!useor);
 		bool		rownull = false;
 		int			col = 1;
 
@@ -213,7 +213,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 				/* combine within row per AND semantics */
 				if (expnull)
 					rownull = true;
-				else if (! DatumGetBool(expresult))
+				else if (!DatumGetBool(expresult))
 				{
 					rowresult = BoolGetDatum(false);
 					rownull = false;
@@ -240,7 +240,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 			/* combine across rows per AND semantics */
 			if (rownull)
 				*isNull = true;
-			else if (! DatumGetBool(rowresult))
+			else if (!DatumGetBool(rowresult))
 			{
 				result = BoolGetDatum(false);
 				*isNull = false;
@@ -332,7 +332,7 @@ ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
  *
  * This is called from ExecEvalParam() when the value of a PARAM_EXEC
  * parameter is requested and the param's execPlan field is set (indicating
- * that the param has not yet been evaluated).  This allows lazy evaluation
+ * that the param has not yet been evaluated).	This allows lazy evaluation
  * of initplans: we don't run the subplan until/unless we need its output.
  * Note that this routine MUST clear the execPlan fields of the plan's
  * output parameters after evaluating them!

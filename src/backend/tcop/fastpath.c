@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.46 2001/01/24 19:43:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.47 2001/03/22 03:59:47 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -75,7 +75,7 @@
  * ----------------
  */
 static void
-SendFunctionResult(Datum retval, /* actual return value */
+SendFunctionResult(Datum retval,/* actual return value */
 				   bool retbyval,
 				   int retlen)	/* the length according to the catalogs */
 {
@@ -292,26 +292,29 @@ HandleFunctionRequest(void)
 	 * XXX FIXME: This protocol is misdesigned.
 	 *
 	 * We really do not want to elog() before having swallowed all of the
-	 * frontend's fastpath message; otherwise we will lose sync with the input
-	 * datastream.  What should happen is we absorb all of the input message
-	 * per protocol syntax, and *then* do error checking (including lookup of
-	 * the given function ID) and elog if appropriate.  Unfortunately, because
-	 * we cannot even read the message properly without knowing whether the
-	 * data types are pass-by-ref or pass-by-value, it's not all that easy to
-	 * do :-(.  The protocol should require the client to supply what it
-	 * thinks is the typbyval and typlen value for each arg, so that we can
-	 * read the data without having to do any lookups.  Then after we've read
-	 * the message, we should do the lookups, verify agreement of the actual
-	 * function arg types with what we received, and finally call the function.
+	 * frontend's fastpath message; otherwise we will lose sync with the
+	 * input datastream.  What should happen is we absorb all of the input
+	 * message per protocol syntax, and *then* do error checking
+	 * (including lookup of the given function ID) and elog if
+	 * appropriate.  Unfortunately, because we cannot even read the
+	 * message properly without knowing whether the data types are
+	 * pass-by-ref or pass-by-value, it's not all that easy to do :-(.
+	 * The protocol should require the client to supply what it thinks is
+	 * the typbyval and typlen value for each arg, so that we can read the
+	 * data without having to do any lookups.  Then after we've read the
+	 * message, we should do the lookups, verify agreement of the actual
+	 * function arg types with what we received, and finally call the
+	 * function.
 	 *
 	 * As things stand, not only will we lose sync for an invalid message
-	 * (such as requested function OID doesn't exist), but we may lose sync
-	 * for a perfectly valid message if we are in transaction-aborted state!
-	 * This can happen because our database lookup attempts may fail entirely
-	 * in abort state.
+	 * (such as requested function OID doesn't exist), but we may lose
+	 * sync for a perfectly valid message if we are in transaction-aborted
+	 * state! This can happen because our database lookup attempts may
+	 * fail entirely in abort state.
 	 *
 	 * Unfortunately I see no way to fix this without breaking a lot of
-	 * existing clients.  Maybe do it as part of next protocol version change.
+	 * existing clients.  Maybe do it as part of next protocol version
+	 * change.
 	 */
 
 	if (pq_getint(&tmp, 4))		/* function oid */
@@ -323,7 +326,8 @@ HandleFunctionRequest(void)
 	/*
 	 * This is where the one-back caching is done. If you want to save
 	 * more state, make this a loop around an array.  Given the relatively
-	 * short lifespan of the cache, not clear that there's any win possible.
+	 * short lifespan of the cache, not clear that there's any win
+	 * possible.
 	 */
 	fip = &last_fp;
 	if (!valid_fp_info(fid, fip))
@@ -365,9 +369,9 @@ HandleFunctionRequest(void)
 					elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
 						 argsize);
 				/* I suspect this +1 isn't really needed - tgl 5/2000 */
-				p = palloc(argsize + VARHDRSZ + 1);	/* Added +1 to solve
-													 * memory leak - Peter
-													 * 98 Jan 6 */
+				p = palloc(argsize + VARHDRSZ + 1);		/* Added +1 to solve
+														 * memory leak - Peter
+														 * 98 Jan 6 */
 				VARATT_SIZEP(p) = argsize + VARHDRSZ;
 				if (pq_getbytes(VARDATA(p), argsize))
 					return EOF;
@@ -377,7 +381,7 @@ HandleFunctionRequest(void)
 				if (argsize != fip->arglen[i])
 					elog(ERROR, "HandleFunctionRequest: bogus argsize %d, should be %d",
 						 argsize, fip->arglen[i]);
-				p = palloc(argsize + 1); /* +1 in case argsize is 0 */
+				p = palloc(argsize + 1);		/* +1 in case argsize is 0 */
 				if (pq_getbytes(p, argsize))
 					return EOF;
 			}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.62 2001/01/24 19:43:19 momjian Exp $
+ * $Id: heapam.h,v 1.63 2001/03/22 04:00:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,12 +136,12 @@ extern Datum nocachegetattr(HeapTuple tup, int attnum,
 	)																\
 )
 
-#else /* defined(DISABLE_COMPLEX_MACRO) */
+#else							/* defined(DISABLE_COMPLEX_MACRO) */
 
 extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
-						 bool *isnull);
+			bool *isnull);
 
-#endif /* defined(DISABLE_COMPLEX_MACRO) */
+#endif	 /* defined(DISABLE_COMPLEX_MACRO) */
 
 
 /* ----------------
@@ -211,13 +211,13 @@ extern int heap_update(Relation relation, ItemPointer otid, HeapTuple tup,
 extern int	heap_mark4update(Relation relation, HeapTuple tup, Buffer *userbuf);
 extern void simple_heap_delete(Relation relation, ItemPointer tid);
 extern void simple_heap_update(Relation relation, ItemPointer otid,
-							   HeapTuple tup);
+				   HeapTuple tup);
 extern void heap_markpos(HeapScanDesc scan);
 extern void heap_restrpos(HeapScanDesc scan);
 
 extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_undo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap_desc(char *buf, uint8 xl_info, char* rec);
+extern void heap_desc(char *buf, uint8 xl_info, char *rec);
 
 /* in common/heaptuple.c */
 extern Size ComputeDataSize(TupleDesc tupleDesc, Datum *value, char *nulls);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.57 2001/01/24 19:42:57 momjian Exp $
+ * $Id: geqo_eval.c,v 1.58 2001/03/22 03:59:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,8 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 	 * allocated inside gimme_tree().
 	 *
 	 * Since geqo_eval() will be called many times, we can't afford to let
-	 * all that memory go unreclaimed until end of statement.  Note we make
-	 * the temp context a child of TransactionCommandContext, so that
+	 * all that memory go unreclaimed until end of statement.  Note we
+	 * make the temp context a child of TransactionCommandContext, so that
 	 * it will be freed even if we abort via elog(ERROR).
 	 */
 	mycontext = AllocSetContextCreate(TransactionCommandContext,

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.17 2001/02/10 02:31:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.18 2001/03/22 04:00:22 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -20,8 +20,8 @@
 #endif
 
 #ifdef HAVE_UNIX_SOCKETS
-# include <unistd.h>
-# include <netdb.h>
+#include <unistd.h>
+#include <netdb.h>
 #endif
 
 /*--------------------------
@@ -104,7 +104,7 @@ localhost(int type, char *buf, int siz)
 	return buf;
 }
 
-#endif /* HAVE_UNIX_SOCKETS */
+#endif	 /* HAVE_UNIX_SOCKETS */
 
 
 char *
@@ -182,7 +182,7 @@ get_prompt(promptStatus_t status)
 							else
 								localhost(DOMAINNAME, buf, MAX_PROMPT_SIZE);
 						}
-#endif /* HAVE_UNIX_SOCKETS */
+#endif	 /* HAVE_UNIX_SOCKETS */
 					}
 					break;
 					/* DB server port number */

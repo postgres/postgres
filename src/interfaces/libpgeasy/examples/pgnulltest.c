@@ -34,7 +34,7 @@ main(int argc, char **argv)
 				avarchar_null,
 				atext_null,
 				aabstime_null;
-	char	    optstr[256];
+	char		optstr[256];
 
 	if (argc != 2)
 		halt("Usage:  %s database\n", argv[0]);

@@ -72,9 +72,9 @@ gistbeginscan(PG_FUNCTION_ARGS)
 Datum
 gistrescan(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
-	bool			fromEnd = PG_GETARG_BOOL(1);
-	ScanKey			key = (ScanKey) PG_GETARG_POINTER(2);
+	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	bool		fromEnd = PG_GETARG_BOOL(1);
+	ScanKey		key = (ScanKey) PG_GETARG_POINTER(2);
 	GISTScanOpaque p;
 	int			i;
 
@@ -160,7 +160,7 @@ gistrescan(PG_FUNCTION_ARGS)
 Datum
 gistmarkpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque p;
 	GISTSTACK  *o,
 			   *n,
@@ -196,7 +196,7 @@ gistmarkpos(PG_FUNCTION_ARGS)
 Datum
 gistrestrpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque p;
 	GISTSTACK  *o,
 			   *n,
@@ -232,8 +232,8 @@ gistrestrpos(PG_FUNCTION_ARGS)
 Datum
 gistendscan(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GISTScanOpaque	p;
+	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	GISTScanOpaque p;
 
 	p = (GISTScanOpaque) s->opaque;
 

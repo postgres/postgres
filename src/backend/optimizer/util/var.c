@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.29 2001/01/24 19:43:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.30 2001/03/22 03:59:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ typedef struct
 } pull_var_clause_context;
 
 static bool pull_varnos_walker(Node *node,
-							   pull_varnos_context *context);
+				   pull_varnos_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
@@ -90,15 +90,16 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 	}
 	if (is_subplan(node))
 	{
+
 		/*
-		 * Already-planned subquery.  Examine the args list (parameters
-		 * to be passed to subquery), as well as the "oper" list which
-		 * is executed by the outer query.  But short-circuit recursion into
+		 * Already-planned subquery.  Examine the args list (parameters to
+		 * be passed to subquery), as well as the "oper" list which is
+		 * executed by the outer query.  But short-circuit recursion into
 		 * the subquery itself, which would be a waste of effort.
 		 */
 		Expr	   *expr = (Expr *) node;
 
-		if (pull_varnos_walker((Node*) ((SubPlan*) expr->oper)->sublink->oper,
+		if (pull_varnos_walker((Node *) ((SubPlan *) expr->oper)->sublink->oper,
 							   context))
 			return true;
 		if (pull_varnos_walker((Node *) expr->args,

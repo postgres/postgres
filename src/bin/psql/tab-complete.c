@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.27 2001/02/26 00:50:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.28 2001/03/22 04:00:23 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -20,9 +20,9 @@
  * you can turn off tab completion in your ~/.inputrc (or else
  * ${INPUTRC}) file so:
  *
- *   $if psql
- *   set disable-completion on
- *   $endif
+ *	 $if psql
+ *	 set disable-completion on
+ *	 $endif
  *
  * See `man 3 readline' or `info readline' for the full details. Also,
  * hence the
@@ -30,15 +30,15 @@
  * BUGS:
  *
  * - If you split your queries across lines, this whole things gets
- *   confused. (To fix this, one would have to read psql's query
- *   buffer rather than readline's line buffer, which would require
- *   some major revisions of things.)
+ *	 confused. (To fix this, one would have to read psql's query
+ *	 buffer rather than readline's line buffer, which would require
+ *	 some major revisions of things.)
  *
  * - Table or attribute names with spaces in it will equally confuse
- *   it.
+ *	 it.
  *
  * - Quotes, parenthesis, and other funny characters are not handled
- *   all that gracefully.
+ *	 all that gracefully.
  *----------------------------------------------------------------------
  */
 
@@ -208,7 +208,11 @@ psql_completion(char *text, int start, int end)
 		"client_encoding",
 		"server_encoding",
 		"random_seed",
-		/* the rest should match USERSET entries in backend/utils/misc/guc.c */
+
+		/*
+		 * the rest should match USERSET entries in
+		 * backend/utils/misc/guc.c
+		 */
 		"enable_seqscan",
 		"enable_indexscan",
 		"enable_tidscan",
@@ -304,7 +308,11 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTER);
 	}
-	/* If we detect ALTER TABLE <name>, suggest either ADD, ALTER, or RENAME */
+
+	/*
+	 * If we detect ALTER TABLE <name>, suggest either ADD, ALTER, or
+	 * RENAME
+	 */
 	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "TABLE") == 0)
 	{
 		char	   *list_ALTER2[] = {"ADD", "ALTER", "RENAME", NULL};
@@ -320,15 +328,16 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "GROUP") == 0)
 	{
 		char	   *list_ALTERGROUP[] = {"ADD", "DROP", NULL};
+
 		COMPLETE_WITH_LIST(list_ALTERGROUP);
 	}
 	/* complete ALTER GROUP <foo> ADD|DROP with USER */
 	else if (strcasecmp(prev4_wd, "ALTER") == 0 && strcasecmp(prev3_wd, "GROUP") == 0
-			 && (strcasecmp(prev_wd, "ADD")==0 || strcasecmp(prev_wd, "DROP")==0))
+			 && (strcasecmp(prev_wd, "ADD") == 0 || strcasecmp(prev_wd, "DROP") == 0))
 		COMPLETE_WITH_CONST("USER");
 	/* complete {ALTER} GROUP <foo> ADD|DROP USER with a user name */
 	else if (strcasecmp(prev4_wd, "GROUP") == 0
-			 && (strcasecmp(prev2_wd, "ADD")==0 || strcasecmp(prev2_wd, "DROP")==0)
+			 && (strcasecmp(prev2_wd, "ADD") == 0 || strcasecmp(prev2_wd, "DROP") == 0)
 			 && strcasecmp(prev_wd, "USER") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_users);
 
@@ -358,16 +367,17 @@ psql_completion(char *text, int start, int end)
 	}
 
 /* COMMENT */
-	else if (strcasecmp(prev_wd, "COMMENT")==0)
+	else if (strcasecmp(prev_wd, "COMMENT") == 0)
 		COMPLETE_WITH_CONST("ON");
-	else if (strcasecmp(prev2_wd, "COMMENT")==0 && strcasecmp(prev_wd, "ON")==0)
+	else if (strcasecmp(prev2_wd, "COMMENT") == 0 && strcasecmp(prev_wd, "ON") == 0)
 	{
-		char * list_COMMENT[] =
+		char	   *list_COMMENT[] =
 		{"DATABASE", "INDEX", "RULE", "SEQUENCE", "TABLE", "TYPE", "VIEW",
-		 "COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR", "TRIGGER", NULL};
+		"COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR", "TRIGGER", NULL};
+
 		COMPLETE_WITH_LIST(list_COMMENT);
 	}
-	else if (strcasecmp(prev4_wd, "COMMENT")==0 && strcasecmp(prev3_wd, "ON")==0)
+	else if (strcasecmp(prev4_wd, "COMMENT") == 0 && strcasecmp(prev3_wd, "ON") == 0)
 		COMPLETE_WITH_CONST("IS");
 
 /* COPY */
@@ -578,22 +588,23 @@ psql_completion(char *text, int start, int end)
 	/* (If you want more with LOCK, you better think about it yourself.) */
 
 /* NOTIFY */
-	else if (strcasecmp(prev_wd, "NOTIFY")==0)
+	else if (strcasecmp(prev_wd, "NOTIFY") == 0)
 		COMPLETE_WITH_QUERY("SELECT relname FROM pg_listener WHERE substr(relname,1,%d)='%s'");
 
 /* REINDEX */
 	else if (strcasecmp(prev_wd, "REINDEX") == 0)
 	{
-		char *list_REINDEX[] = {"TABLE", "DATABASE", "INDEX", NULL};
+		char	   *list_REINDEX[] = {"TABLE", "DATABASE", "INDEX", NULL};
+
 		COMPLETE_WITH_LIST(list_REINDEX);
 	}
-	else if (strcasecmp(prev2_wd, "REINDEX")==0)
+	else if (strcasecmp(prev2_wd, "REINDEX") == 0)
 	{
-		if (strcasecmp(prev_wd, "TABLE")==0)
+		if (strcasecmp(prev_wd, "TABLE") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_tables);
-		else if (strcasecmp(prev_wd, "DATABASE")==0)
+		else if (strcasecmp(prev_wd, "DATABASE") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
-		else if (strcasecmp(prev_wd, "INDEX")==0)
+		else if (strcasecmp(prev_wd, "INDEX") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_indexes);
 	}
 
@@ -628,9 +639,10 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev_wd, "READ") == 0)
 		COMPLETE_WITH_CONST("COMMITTED");
 	/* Complete SET CONSTRAINTS <foo> with DEFERRED|IMMEDIATE */
-	else if (strcasecmp(prev3_wd, "SET")==0 && strcasecmp(prev2_wd, "CONSTRAINTS")==0)
+	else if (strcasecmp(prev3_wd, "SET") == 0 && strcasecmp(prev2_wd, "CONSTRAINTS") == 0)
 	{
-		char *constraint_list[] = {"DEFERRED", "IMMEDIATE", NULL};
+		char	   *constraint_list[] = {"DEFERRED", "IMMEDIATE", NULL};
+
 		COMPLETE_WITH_LIST(constraint_list);
 	}
 	/* Complete SET <var> with "TO" */
@@ -662,11 +674,11 @@ psql_completion(char *text, int start, int end)
 	}
 
 /* TRUNCATE */
-	else if (strcasecmp(prev_wd, "TRUNCATE")==0)
+	else if (strcasecmp(prev_wd, "TRUNCATE") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 
 /* UNLISTEN */
-	else if (strcasecmp(prev_wd, "UNLISTEN")==0)
+	else if (strcasecmp(prev_wd, "UNLISTEN") == 0)
 		COMPLETE_WITH_QUERY("SELECT relname FROM pg_listener WHERE substr(relname,1,%d)='%s' UNION SELECT '*'::text");
 
 /* UPDATE */
@@ -719,9 +731,7 @@ psql_completion(char *text, int start, int end)
 			 strcmp(prev_wd, "\\s") == 0 ||
 		   strcmp(prev_wd, "\\w") == 0 || strcmp(prev_wd, "\\write") == 0
 		)
-	{
 		matches = completion_matches(text, filename_completion_function);
-	}
 
 
 	/*

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.73 2001/02/21 18:53:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.74 2001/03/22 03:59:53 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -82,7 +82,7 @@ typedef struct
 	List	   *rtable;			/* List of RangeTblEntry nodes */
 	List	   *namespace;		/* List of joinlist items (RangeTblRef and
 								 * JoinExpr nodes) */
-} deparse_namespace;
+}			deparse_namespace;
 
 
 /* ----------
@@ -118,15 +118,15 @@ static void get_delete_query_def(Query *query, deparse_context *context);
 static void get_utility_query_def(Query *query, deparse_context *context);
 static void get_basic_select_query(Query *query, deparse_context *context);
 static void get_setop_query(Node *setOp, Query *query,
-							deparse_context *context, bool toplevel);
+				deparse_context *context, bool toplevel);
 static bool simple_distinct(List *distinctClause, List *targetList);
 static void get_names_for_var(Var *var, deparse_context *context,
-							  char **refname, char **attname);
+				  char **refname, char **attname);
 static bool get_alias_for_case(CaseExpr *caseexpr, deparse_context *context,
-							   char **refname, char **attname);
+				   char **refname, char **attname);
 static bool find_alias_in_namespace(Node *nsnode, Node *expr,
-									List *rangetable, int levelsup,
-									char **refname, char **attname);
+						List *rangetable, int levelsup,
+						char **refname, char **attname);
 static bool phony_equal(Node *expr1, Node *expr2, int levelsup);
 static void get_rule_expr(Node *node, deparse_context *context);
 static void get_func_expr(Expr *expr, deparse_context *context);
@@ -135,7 +135,7 @@ static void get_const_expr(Const *constval, deparse_context *context);
 static void get_sublink_expr(Node *node, deparse_context *context);
 static void get_from_clause(Query *query, deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
-								 deparse_context *context);
+					 deparse_context *context);
 static bool tleIsArrayAssign(TargetEntry *tle);
 static char *quote_identifier(char *ident);
 static char *get_relation_name(Oid relid);
@@ -478,7 +478,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		 * ----------
 		 */
 		appendStringInfo(&keybuf, "%s",
-				quote_identifier(get_relid_attribute_name(idxrec->indrelid,
+			  quote_identifier(get_relid_attribute_name(idxrec->indrelid,
 												idxrec->indkey[keyno])));
 
 		/* ----------
@@ -767,8 +767,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 					 quote_identifier(get_relation_name(ev_class)));
 	if (ev_attr > 0)
 		appendStringInfo(buf, ".%s",
-						 quote_identifier(get_relid_attribute_name(ev_class,
-																   ev_attr)));
+					  quote_identifier(get_relid_attribute_name(ev_class,
+															  ev_attr)));
 
 	/* If the rule has an event qualification, add it */
 	if (ev_qual == NULL)
@@ -1043,9 +1043,7 @@ get_basic_select_query(Query *query, deparse_context *context)
 	if (query->distinctClause != NIL)
 	{
 		if (simple_distinct(query->distinctClause, query->targetList))
-		{
 			appendStringInfo(buf, " DISTINCT");
-		}
 		else
 		{
 			appendStringInfo(buf, " DISTINCT ON (");
@@ -1146,7 +1144,7 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 	{
 		RangeTblRef *rtr = (RangeTblRef *) setOp;
 		RangeTblEntry *rte = rt_fetch(rtr->rtindex, query->rtable);
-		Query  *subquery = rte->subquery;
+		Query	   *subquery = rte->subquery;
 
 		Assert(subquery != NULL);
 		get_query_def(subquery, buf, context->namespaces);
@@ -1155,10 +1153,11 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 	{
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
 
-		/* Must suppress parens at top level of a setop tree because
-		 * of grammar limitations...
+		/*
+		 * Must suppress parens at top level of a setop tree because of
+		 * grammar limitations...
 		 */
-		if (! toplevel)
+		if (!toplevel)
 			appendStringInfo(buf, "(");
 		get_setop_query(op->larg, query, context, false);
 		switch (op->op)
@@ -1179,7 +1178,7 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 		if (op->all)
 			appendStringInfo(buf, "ALL ");
 		get_setop_query(op->rarg, query, context, false);
-		if (! toplevel)
+		if (!toplevel)
 			appendStringInfo(buf, ")");
 	}
 	else
@@ -1201,7 +1200,7 @@ simple_distinct(List *distinctClause, List *targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(targetList);
 
-		if (! tle->resdom->resjunk)
+		if (!tle->resdom->resjunk)
 		{
 			if (distinctClause == NIL)
 				return false;
@@ -1288,9 +1287,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		appendStringInfoChar(buf, ')');
 	}
 	else
-	{
 		get_query_def(select_rte->subquery, buf, NIL);
-	}
 }
 
 
@@ -1326,12 +1323,13 @@ get_update_query_def(Query *query, deparse_context *context)
 
 		appendStringInfo(buf, sep);
 		sep = ", ";
+
 		/*
-		 * If the update expression is an array assignment, we mustn't
-		 * put out "attname =" here; it will come out of the display
-		 * of the ArrayRef node instead.
+		 * If the update expression is an array assignment, we mustn't put
+		 * out "attname =" here; it will come out of the display of the
+		 * ArrayRef node instead.
 		 */
-		if (! tleIsArrayAssign(tle))
+		if (!tleIsArrayAssign(tle))
 			appendStringInfo(buf, "%s = ",
 							 quote_identifier(tle->resdom->resname));
 		get_tle_expr(tle, context);
@@ -1389,6 +1387,7 @@ get_utility_query_def(Query *query, deparse_context *context)
 	if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
 	{
 		NotifyStmt *stmt = (NotifyStmt *) query->utilityStmt;
+
 		appendStringInfo(buf, "NOTIFY %s", quote_identifier(stmt->relname));
 	}
 	else
@@ -1428,8 +1427,8 @@ get_names_for_var(Var *var, deparse_context *context,
 
 	/*
 	 * Otherwise, fall back on the rangetable entry.  This should happen
-	 * only for uses of special RTEs like *NEW* and *OLD*, which won't
-	 * get placed in our namespace.
+	 * only for uses of special RTEs like *NEW* and *OLD*, which won't get
+	 * placed in our namespace.
 	 */
 	rte = rt_fetch(var->varno, dpns->rtable);
 	*refname = rte->eref->relname;
@@ -1448,9 +1447,9 @@ get_alias_for_case(CaseExpr *caseexpr, deparse_context *context,
 	int			sup;
 
 	/*
-	 * This could be done more efficiently if we first groveled through the
-	 * CASE to find varlevelsup values, but it's probably not worth the
-	 * trouble.  All this code will go away someday anyway ...
+	 * This could be done more efficiently if we first groveled through
+	 * the CASE to find varlevelsup values, but it's probably not worth
+	 * the trouble.  All this code will go away someday anyway ...
 	 */
 
 	sup = 0;
@@ -1525,6 +1524,7 @@ find_alias_in_namespace(Node *nsnode, Node *expr,
 				}
 				nlist = lnext(nlist);
 			}
+
 			/*
 			 * Tables within an aliased join are invisible from outside
 			 * the join, according to the scope rules of SQL92 (the join
@@ -1579,8 +1579,8 @@ phony_equal(Node *expr1, Node *expr2, int levelsup)
 		return false;
 	if (IsA(expr1, Var))
 	{
-		Var	   *a = (Var *) expr1;
-		Var	   *b = (Var *) expr2;
+		Var		   *a = (Var *) expr1;
+		Var		   *b = (Var *) expr2;
 
 		if (a->varno != b->varno)
 			return false;
@@ -1600,8 +1600,8 @@ phony_equal(Node *expr1, Node *expr2, int levelsup)
 	}
 	if (IsA(expr1, CaseExpr))
 	{
-		CaseExpr	   *a = (CaseExpr *) expr1;
-		CaseExpr	   *b = (CaseExpr *) expr2;
+		CaseExpr   *a = (CaseExpr *) expr1;
+		CaseExpr   *b = (CaseExpr *) expr2;
 
 		if (a->casetype != b->casetype)
 			return false;
@@ -1615,8 +1615,8 @@ phony_equal(Node *expr1, Node *expr2, int levelsup)
 	}
 	if (IsA(expr1, CaseWhen))
 	{
-		CaseWhen	   *a = (CaseWhen *) expr1;
-		CaseWhen	   *b = (CaseWhen *) expr2;
+		CaseWhen   *a = (CaseWhen *) expr1;
+		CaseWhen   *b = (CaseWhen *) expr2;
 
 		if (!phony_equal(a->expr, b->expr, levelsup))
 			return false;
@@ -1840,9 +1840,10 @@ get_rule_expr(Node *node, deparse_context *context)
 
 				/*
 				 * If we are doing UPDATE array[n] = expr, we need to
-				 * suppress any prefix on the array name.  Currently,
-				 * that is the only context in which we will see a non-null
-				 * refassgnexpr --- but someday a smarter test may be needed.
+				 * suppress any prefix on the array name.  Currently, that
+				 * is the only context in which we will see a non-null
+				 * refassgnexpr --- but someday a smarter test may be
+				 * needed.
 				 */
 				if (aref->refassgnexpr)
 					context->varprefix = false;
@@ -1880,7 +1881,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				/* we do NOT parenthesize the arg expression, for now */
 				get_rule_expr(fselect->arg, context);
 				typetup = SearchSysCache(TYPEOID,
-										 ObjectIdGetDatum(exprType(fselect->arg)),
+								ObjectIdGetDatum(exprType(fselect->arg)),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typetup))
 					elog(ERROR, "cache lookup of type %u failed",
@@ -2163,9 +2164,9 @@ get_const_expr(Const *constval, deparse_context *context)
 	}
 
 	extval = DatumGetCString(OidFunctionCall3(typeStruct->typoutput,
-							 constval->constvalue,
-							 ObjectIdGetDatum(typeStruct->typelem),
-							 Int32GetDatum(-1)));
+											  constval->constvalue,
+								   ObjectIdGetDatum(typeStruct->typelem),
+											  Int32GetDatum(-1)));
 
 	switch (constval->consttype)
 	{
@@ -2317,16 +2318,16 @@ get_from_clause(Query *query, deparse_context *context)
 
 	/*
 	 * We use the query's jointree as a guide to what to print.  However,
-	 * we must ignore auto-added RTEs that are marked not inFromCl.
-	 * (These can only appear at the top level of the jointree, so it's
-	 * sufficient to check here.)
-	 * Also ignore the rule pseudo-RTEs for NEW and OLD.
+	 * we must ignore auto-added RTEs that are marked not inFromCl. (These
+	 * can only appear at the top level of the jointree, so it's
+	 * sufficient to check here.) Also ignore the rule pseudo-RTEs for NEW
+	 * and OLD.
 	 */
 	sep = " FROM ";
 
 	foreach(l, query->jointree->fromlist)
 	{
-		Node   *jtnode = (Node *) lfirst(l);
+		Node	   *jtnode = (Node *) lfirst(l);
 
 		if (IsA(jtnode, RangeTblRef))
 		{
@@ -2396,7 +2397,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 					if (col != rte->alias->attrs)
 						appendStringInfo(buf, ", ");
 					appendStringInfo(buf, "%s",
-									 quote_identifier(strVal(lfirst(col))));
+								  quote_identifier(strVal(lfirst(col))));
 				}
 				appendStringInfoChar(buf, ')');
 			}
@@ -2435,7 +2436,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 					 (int) j->jointype);
 		}
 		get_from_clause_item(j->rarg, query, context);
-		if (! j->isNatural)
+		if (!j->isNatural)
 		{
 			if (j->using)
 			{
@@ -2447,7 +2448,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 					if (col != j->using)
 						appendStringInfo(buf, ", ");
 					appendStringInfo(buf, "%s",
-									 quote_identifier(strVal(lfirst(col))));
+								  quote_identifier(strVal(lfirst(col))));
 				}
 				appendStringInfoChar(buf, ')');
 			}
@@ -2475,7 +2476,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 					if (col != j->alias->attrs)
 						appendStringInfo(buf, ", ");
 					appendStringInfo(buf, "%s",
-									 quote_identifier(strVal(lfirst(col))));
+								  quote_identifier(strVal(lfirst(col))));
 				}
 				appendStringInfoChar(buf, ')');
 			}
@@ -2503,6 +2504,7 @@ tleIsArrayAssign(TargetEntry *tle)
 	aref = (ArrayRef *) tle->expr;
 	if (aref->refassgnexpr == NULL)
 		return false;
+
 	/*
 	 * Currently, it should only be possible to see non-null refassgnexpr
 	 * if we are indeed looking at an "UPDATE array[n] = expr" situation.
@@ -2563,8 +2565,8 @@ quote_identifier(char *ident)
 		 * but the parser doesn't provide any easy way to test for whether
 		 * an identifier is safe or not... so be safe not sorry.
 		 *
-		 * Note: ScanKeywordLookup() does case-insensitive comparison,
-		 * but that's fine, since we already know we have all-lower-case.
+		 * Note: ScanKeywordLookup() does case-insensitive comparison, but
+		 * that's fine, since we already know we have all-lower-case.
 		 */
 		if (ScanKeywordLookup(ident) != NULL)
 			safe = false;

@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.13 2001/01/29 00:39:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.14 2001/03/22 04:00:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1851,7 +1851,7 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 		else
 		{
 			compare = DatumGetInt32(FunctionCall2(&entry->sk_func,
-												  attrDatum1, attrDatum2));
+												attrDatum1, attrDatum2));
 		}
 
 		if (compare != 0)

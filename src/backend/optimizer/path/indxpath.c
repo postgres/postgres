@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.102 2001/02/16 03:16:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.103 2001/03/22 03:59:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,8 +183,8 @@ create_index_paths(Query *root,
 													restrictinfo_list);
 
 		/*
-		 * 3. Compute pathkeys describing index's ordering, if any,
-		 * then see how many of them are actually useful for this query.
+		 * 3. Compute pathkeys describing index's ordering, if any, then
+		 * see how many of them are actually useful for this query.
 		 */
 		index_pathkeys = build_index_pathkeys(root, rel, index,
 											  ForwardScanDirection);
@@ -207,8 +207,9 @@ create_index_paths(Query *root,
 									   NoMovementScanDirection));
 
 		/*
-		 * 5. If the index is ordered, a backwards scan might be interesting.
-		 * Currently this is only possible for a DESC query result ordering.
+		 * 5. If the index is ordered, a backwards scan might be
+		 * interesting. Currently this is only possible for a DESC query
+		 * result ordering.
 		 */
 		if (index_is_ordered)
 		{
@@ -422,10 +423,11 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 
 	if (and_clause((Node *) orsubclause))
 	{
+
 		/*
-		 * Extract relevant sub-subclauses in indexkey order.  This is just
-		 * like group_clauses_by_indexkey() except that the input and output
-		 * are lists of bare clauses, not of RestrictInfo nodes.
+		 * Extract relevant sub-subclauses in indexkey order.  This is
+		 * just like group_clauses_by_indexkey() except that the input and
+		 * output are lists of bare clauses, not of RestrictInfo nodes.
 		 */
 		int		   *indexkeys = index->indexkeys;
 		Oid		   *classes = index->classlist;
@@ -446,8 +448,8 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 			}
 
 			/*
-			 * If no clauses match this key, we're done; we don't want to look
-			 * at keys to its right.
+			 * If no clauses match this key, we're done; we don't want to
+			 * look at keys to its right.
 			 */
 			if (clausegroup == NIL)
 				break;
@@ -748,8 +750,8 @@ match_clause_to_indexkey(RelOptInfo *rel,
 		/*
 		 * Check for an indexqual that could be handled by a nestloop
 		 * join. We need the index key to be compared against an
-		 * expression that uses none of the indexed relation's vars
-		 * and contains no non-cachable functions.
+		 * expression that uses none of the indexed relation's vars and
+		 * contains no non-cachable functions.
 		 */
 		if (match_index_to_operand(indexkey, leftop, rel, index))
 		{
@@ -793,7 +795,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
  * recognizing binary-compatible datatypes.  For example, if we have
  * an expression like "oid = 123", the operator will be oideqint4,
  * which we need to replace with oideq in order to recognize it as
- * matching an oid_ops index on the oid field.  A variant case is where
+ * matching an oid_ops index on the oid field.	A variant case is where
  * the expression is like "oid::int4 = 123", where the given operator
  * will be int4eq and again we need to intuit that we want to use oideq.
  *
@@ -832,13 +834,13 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 	/*
 	 * Maybe the index uses a binary-compatible operator set.
 	 *
-	 * Get the nominal input types of the given operator and the actual
-	 * type (before binary-compatible relabeling) of the index key.
+	 * Get the nominal input types of the given operator and the actual type
+	 * (before binary-compatible relabeling) of the index key.
 	 */
 	oldoptup = SearchSysCache(OPEROID,
 							  ObjectIdGetDatum(expr_op),
 							  0, 0, 0);
-	if (! HeapTupleIsValid(oldoptup))
+	if (!HeapTupleIsValid(oldoptup))
 		return InvalidOid;		/* probably can't happen */
 	oldopform = (Form_pg_operator) GETSTRUCT(oldoptup);
 	opname = pstrdup(NameStr(oldopform->oprname));
@@ -848,7 +850,7 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 
 	if (indexkey_on_left)
 	{
-		Node   *leftop = (Node *) get_leftop(clause);
+		Node	   *leftop = (Node *) get_leftop(clause);
 
 		if (leftop && IsA(leftop, RelabelType))
 			leftop = ((RelabelType *) leftop)->arg;
@@ -856,7 +858,7 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 	}
 	else
 	{
-		Node   *rightop = (Node *) get_rightop(clause);
+		Node	   *rightop = (Node *) get_rightop(clause);
 
 		if (rightop && IsA(rightop, RelabelType))
 			rightop = ((RelabelType *) rightop)->arg;
@@ -874,9 +876,10 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 		return InvalidOid;
 
 	/*
-	 * OK, look for operator of the same name with the indexkey's data type.
-	 * (In theory this might find a non-semantically-comparable operator,
-	 * but in practice that seems pretty unlikely for binary-compatible types.)
+	 * OK, look for operator of the same name with the indexkey's data
+	 * type. (In theory this might find a non-semantically-comparable
+	 * operator, but in practice that seems pretty unlikely for
+	 * binary-compatible types.)
 	 */
 	new_op = compatible_oper_opid(opname, indexkeytype, indexkeytype, true);
 
@@ -886,8 +889,8 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 		{
 
 			/*
-			 * OK, we found a binary-compatible operator of the same
-			 * name; now does it match the index?
+			 * OK, we found a binary-compatible operator of the same name;
+			 * now does it match the index?
 			 */
 			if (indexkey_on_left)
 				commuted_op = new_op;
@@ -1491,8 +1494,9 @@ match_index_to_operand(int indexkey,
 					   RelOptInfo *rel,
 					   IndexOptInfo *index)
 {
+
 	/*
-	 * Ignore any RelabelType node above the indexkey.  This is needed to
+	 * Ignore any RelabelType node above the indexkey.	This is needed to
 	 * be able to apply indexscanning in binary-compatible-operator cases.
 	 * Note: we can assume there is at most one RelabelType node;
 	 * eval_const_expressions() will have simplified if more than one.
@@ -1670,7 +1674,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 				patt = DatumGetCString(DirectFunctionCall1(textout,
 														   constvalue));
 				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-												   &prefix, &rest) != Pattern_Prefix_None;
+								  &prefix, &rest) != Pattern_Prefix_None;
 				if (prefix)
 					pfree(prefix);
 				pfree(patt);
@@ -1687,7 +1691,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 				patt = DatumGetCString(DirectFunctionCall1(textout,
 														   constvalue));
 				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-												   &prefix, &rest) != Pattern_Prefix_None;
+								  &prefix, &rest) != Pattern_Prefix_None;
 				if (prefix)
 					pfree(prefix);
 				pfree(patt);
@@ -1704,7 +1708,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 				patt = DatumGetCString(DirectFunctionCall1(textout,
 														   constvalue));
 				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-												   &prefix, &rest) != Pattern_Prefix_None;
+								  &prefix, &rest) != Pattern_Prefix_None;
 				if (prefix)
 					pfree(prefix);
 				pfree(patt);
@@ -1721,7 +1725,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 				patt = DatumGetCString(DirectFunctionCall1(textout,
 														   constvalue));
 				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-												   &prefix, &rest) != Pattern_Prefix_None;
+								  &prefix, &rest) != Pattern_Prefix_None;
 				if (prefix)
 					pfree(prefix);
 				pfree(patt);
@@ -1983,8 +1987,8 @@ prefix_quals(Var *leftop, Oid expr_op,
 	result = makeList1(expr);
 
 	/*
-	 * If we can create a string larger than the prefix, we can say
-	 * "x < greaterstr".
+	 * If we can create a string larger than the prefix, we can say "x <
+	 * greaterstr".
 	 */
 	greaterstr = make_greater_string(prefix, datatype);
 	if (greaterstr)
@@ -2025,6 +2029,7 @@ find_operator(const char *opname, Oid datatype)
 static Datum
 string_to_datum(const char *str, Oid datatype)
 {
+
 	/*
 	 * We cheat a little by assuming that textin() will do for bpchar and
 	 * varchar constants too...

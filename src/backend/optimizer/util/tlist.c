@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.49 2001/01/24 19:43:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.50 2001/03/22 03:59:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ matching_tlist_expr(Node *node, List *targetlist)
 
 	return (Node *) NULL;
 }
+
 #endif
 
 /*

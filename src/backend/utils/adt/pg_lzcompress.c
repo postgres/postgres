@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.9 2000/10/03 03:11:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.10 2001/03/22 03:59:52 momjian Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -120,7 +120,7 @@
  *			8 times the size of the input!).
  *
  *			The compressor creates a table for 8192 lists of positions.
- *			For each input position (except the last 3), a hash key is 
+ *			For each input position (except the last 3), a hash key is
  *			built from the 4 next input bytes and the posiiton remembered
  *			in the appropriate list. Thus, the table points to linked
  *			lists of likely to be at least in the first 4 characters
@@ -152,7 +152,7 @@
  *
  *				- a match >= good_match is found
  *				- there are no more history entries to look at
- *              - the next history entry is already too far back
+ *				- the next history entry is already too far back
  *				  to be coded into a tag.
  *
  *			Finally the match algorithm checks that at least a match
@@ -286,18 +286,18 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
 #define pglz_hist_add(_hs,_he,_hn,_s,_e) {									\
 			int __hindex = pglz_hist_idx((_s),(_e));						\
 			if ((_he)[(_hn)].prev == NULL) {								\
-			    (_hs)[__hindex] = (_he)[(_hn)].next;						\
+				(_hs)[__hindex] = (_he)[(_hn)].next;						\
 			} else {														\
-			    (_he)[(_hn)].prev->next = (_he)[(_hn)].next;				\
+				(_he)[(_hn)].prev->next = (_he)[(_hn)].next;				\
 			}																\
 			if ((_he)[(_hn)].next != NULL) {								\
-			    (_he)[(_hn)].next->prev = (_he)[(_hn)].prev;				\
+				(_he)[(_hn)].next->prev = (_he)[(_hn)].prev;				\
 			}																\
 			(_he)[(_hn)].next = (_hs)[__hindex];							\
 			(_he)[(_hn)].prev = NULL;										\
 			(_he)[(_hn)].pos  = (_s);										\
 			if ((_hs)[__hindex] != NULL) {									\
-			    (_hs)[__hindex]->prev = &((_he)[(_hn)]);					\
+				(_hs)[__hindex]->prev = &((_he)[(_hn)]);					\
 			}																\
 			(_hs)[__hindex] = &((_he)[(_hn)]);								\
 			if (++(_hn) >= PGLZ_HISTORY_SIZE) {								\
@@ -476,7 +476,7 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 int
 pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strategy)
 {
-	int            hist_next = 0;
+	int			hist_next = 0;
 
 	unsigned char *bp = ((unsigned char *) dest) + sizeof(PGLZ_Header);
 	unsigned char *bstart = bp;

@@ -1,5 +1,5 @@
 /*
- * $Id: utftest.c,v 1.4 2000/10/12 06:06:50 ishii Exp $
+ * $Id: utftest.c,v 1.5 2001/03/22 04:00:05 momjian Exp $
  */
 #include "conv.c"
 #include "wchar.c"
@@ -49,5 +49,5 @@ main()
 	}
 	printf("\n");
 
-	return(0);
+	return (0);
 }

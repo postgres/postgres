@@ -20,7 +20,7 @@ main(int argc, char **argv)
 	char		attname[256];
 	char		typname[256];
 	int			count;
-	char	    optstr[256];
+	char		optstr[256];
 
 	if (argc != 2)
 		halt("Usage:  %s database\n", argv[0]);

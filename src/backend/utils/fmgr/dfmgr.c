@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.47 2001/01/24 19:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.48 2001/03/22 03:59:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,9 @@ typedef struct df_files
 	ino_t		inode;			/* Inode number of file */
 	void	   *handle;			/* a handle for pg_dl* functions */
 	char		filename[1];	/* Full pathname of file */
-	/* we allocate the block big enough for actual length of pathname.
+
+	/*
+	 * we allocate the block big enough for actual length of pathname.
 	 * filename[] must be last item in struct!
 	 */
 } DynamicFileList;
@@ -48,7 +50,7 @@ static DynamicFileList *file_tail = (DynamicFileList *) NULL;
  * named funcname in it.  If the function is not found, we raise an error
  * if signalNotFound is true, else return (PGFunction) NULL.  Note that
  * errors in loading the library will provoke elog regardless of
- * signalNotFound. 
+ * signalNotFound.
  */
 PGFunction
 load_external_function(char *filename, char *funcname,
@@ -64,11 +66,12 @@ load_external_function(char *filename, char *funcname,
 	 */
 	for (file_scanner = file_list;
 		 file_scanner != (DynamicFileList *) NULL &&
-			 strcmp(filename, file_scanner->filename) != 0;
+		 strcmp(filename, file_scanner->filename) != 0;
 		 file_scanner = file_scanner->next)
 		;
 	if (file_scanner == (DynamicFileList *) NULL)
 	{
+
 		/*
 		 * Check for same files - different paths (ie, symlink or link)
 		 */
@@ -77,13 +80,14 @@ load_external_function(char *filename, char *funcname,
 
 		for (file_scanner = file_list;
 			 file_scanner != (DynamicFileList *) NULL &&
-				 !SAME_INODE(stat_buf, *file_scanner);
+			 !SAME_INODE(stat_buf, *file_scanner);
 			 file_scanner = file_scanner->next)
 			;
 	}
 
 	if (file_scanner == (DynamicFileList *) NULL)
 	{
+
 		/*
 		 * File not loaded yet.
 		 */
@@ -130,7 +134,7 @@ load_external_function(char *filename, char *funcname,
 
 /*
  * This function loads a shlib file without looking up any particular
- * function in it.  If the same shlib has previously been loaded,
+ * function in it.	If the same shlib has previously been loaded,
  * unload and reload it.
  */
 void

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.50 2001/01/24 19:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.51 2001/03/22 03:59:57 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -62,7 +62,7 @@ get_attname(Oid relid, AttrNumber attnum)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		char   *result;
+		char	   *result;
 
 		result = pstrdup(NameStr(att_tup->attname));
 		ReleaseSysCache(tp);
@@ -118,7 +118,7 @@ get_atttype(Oid relid, AttrNumber attnum)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		Oid		result;
+		Oid			result;
 
 		result = att_tup->atttypid;
 		ReleaseSysCache(tp);
@@ -144,7 +144,7 @@ get_attisset(Oid relid, char *attname)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		bool	result;
+		bool		result;
 
 		result = att_tup->attisset;
 		ReleaseSysCache(tp);
@@ -172,7 +172,7 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		int32	result;
+		int32		result;
 
 		result = att_tup->atttypmod;
 		ReleaseSysCache(tp);
@@ -306,7 +306,7 @@ get_opcode(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
-		RegProcedure	result;
+		RegProcedure result;
 
 		result = optup->oprcode;
 		ReleaseSysCache(tp);
@@ -333,7 +333,7 @@ get_opname(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
-		char   *result;
+		char	   *result;
 
 		result = pstrdup(NameStr(optup->oprname));
 		ReleaseSysCache(tp);
@@ -412,7 +412,7 @@ op_hashjoinable(Oid opno, Oid ltype, Oid rtype)
 bool
 op_iscachable(Oid opno)
 {
-	RegProcedure	funcid = get_opcode(opno);
+	RegProcedure funcid = get_opcode(opno);
 
 	if (funcid == (RegProcedure) InvalidOid)
 		elog(ERROR, "Operator OID %u does not exist", opno);
@@ -436,7 +436,7 @@ get_commutator(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
-		Oid		result;
+		Oid			result;
 
 		result = optup->oprcom;
 		ReleaseSysCache(tp);
@@ -462,7 +462,7 @@ get_negator(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
-		Oid		result;
+		Oid			result;
 
 		result = optup->oprnegate;
 		ReleaseSysCache(tp);
@@ -488,7 +488,7 @@ get_oprrest(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
-		RegProcedure	result;
+		RegProcedure result;
 
 		result = optup->oprrest;
 		ReleaseSysCache(tp);
@@ -514,7 +514,7 @@ get_oprjoin(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
-		RegProcedure	result;
+		RegProcedure result;
 
 		result = optup->oprjoin;
 		ReleaseSysCache(tp);
@@ -587,7 +587,7 @@ get_relnatts(Oid relid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
-		int		result;
+		int			result;
 
 		result = reltup->relnatts;
 		ReleaseSysCache(tp);
@@ -596,6 +596,7 @@ get_relnatts(Oid relid)
 	else
 		return InvalidAttrNumber;
 }
+
 #endif
 
 /*
@@ -616,7 +617,7 @@ get_rel_name(Oid relid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
-		char   *result;
+		char	   *result;
 
 		result = pstrdup(NameStr(reltup->relname));
 		ReleaseSysCache(tp);
@@ -644,7 +645,7 @@ get_typlen(Oid typid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-		int16	result;
+		int16		result;
 
 		result = typtup->typlen;
 		ReleaseSysCache(tp);
@@ -671,7 +672,7 @@ get_typbyval(Oid typid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-		bool	result;
+		bool		result;
 
 		result = typtup->typbyval;
 		ReleaseSysCache(tp);
@@ -687,7 +688,7 @@ get_typbyval(Oid typid)
  *		A two-fer: given the type OID, return both typlen and typbyval.
  *
  *		Since both pieces of info are needed to know how to copy a Datum,
- *		many places need both.  Might as well get them with one cache lookup
+ *		many places need both.	Might as well get them with one cache lookup
  *		instead of two.  Also, this routine raises an error instead of
  *		returning a bogus value when given a bad type OID.
  */
@@ -720,7 +721,7 @@ get_typalign(Oid typid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-		char	result;
+		char		result;
 
 		result = typtup->typalign;
 		ReleaseSysCache(tp);
@@ -743,7 +744,7 @@ get_typstorage(Oid typid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-		char	result;
+		char		result;
 
 		result = typtup->typstorage;
 		ReleaseSysCache(tp);
@@ -864,7 +865,7 @@ get_typtype(Oid typid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-		char	result;
+		char		result;
 
 		result = typtup->typtype;
 		ReleaseSysCache(tp);

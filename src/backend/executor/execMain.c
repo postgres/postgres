@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.138 2001/01/29 00:39:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.139 2001/03/22 03:59:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,15 +51,15 @@ static TupleDesc InitPlan(CmdType operation,
 		 Plan *plan,
 		 EState *estate);
 static void initResultRelInfo(ResultRelInfo *resultRelInfo,
-							  Index resultRelationIndex,
-							  List *rangeTable,
-							  CmdType operation);
+				  Index resultRelationIndex,
+				  List *rangeTable,
+				  CmdType operation);
 static void EndPlan(Plan *plan, EState *estate);
 static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
-								   CmdType operation,
-								   long numberTuples,
-								   ScanDirection direction,
-								   DestReceiver *destfunc);
+			CmdType operation,
+			long numberTuples,
+			ScanDirection direction,
+			DestReceiver *destfunc);
 static void ExecRetrieve(TupleTableSlot *slot,
 			 DestReceiver *destfunc,
 			 EState *estate);
@@ -72,9 +72,9 @@ static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
 static void ExecCheckQueryPerms(CmdType operation, Query *parseTree,
-								Plan *plan);
+					Plan *plan);
 static void ExecCheckPlanPerms(Plan *plan, List *rangeTable,
-							   CmdType operation);
+				   CmdType operation);
 static void ExecCheckRTPerms(List *rangeTable, CmdType operation);
 static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
 
@@ -91,7 +91,7 @@ static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
  *		be returned by the query.
  *
  * NB: the CurrentMemoryContext when this is called must be the context
- * to be used as the per-query context for the query plan.  ExecutorRun()
+ * to be used as the per-query context for the query plan.	ExecutorRun()
  * and ExecutorEnd() must be called in this same memory context.
  * ----------------------------------------------------------------
  */
@@ -287,6 +287,7 @@ ExecutorEnd(QueryDesc *queryDesc, EState *estate)
 static void
 ExecCheckQueryPerms(CmdType operation, Query *parseTree, Plan *plan)
 {
+
 	/*
 	 * Check RTEs in the query's primary rangetable.
 	 */
@@ -339,7 +340,7 @@ ExecCheckPlanPerms(Plan *plan, List *rangeTable, CmdType operation)
 	{
 		case T_SubqueryScan:
 			{
-				SubqueryScan   *scan = (SubqueryScan *) plan;
+				SubqueryScan *scan = (SubqueryScan *) plan;
 				RangeTblEntry *rte;
 
 				/* Recursively check the subquery */
@@ -405,12 +406,13 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	relName = rte->relname;
 
 	/*
-	 * userid to check as: current user unless we have a setuid indication.
+	 * userid to check as: current user unless we have a setuid
+	 * indication.
 	 *
-	 * Note: GetUserId() is presently fast enough that there's no harm
-	 * in calling it separately for each RTE.  If that stops being true,
-	 * we could call it once in ExecCheckQueryPerms and pass the userid
-	 * down from there.  But for now, no need for the extra clutter.
+	 * Note: GetUserId() is presently fast enough that there's no harm in
+	 * calling it separately for each RTE.	If that stops being true, we
+	 * could call it once in ExecCheckQueryPerms and pass the userid down
+	 * from there.	But for now, no need for the extra clutter.
 	 */
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
@@ -426,6 +428,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 
 	if (rte->checkForWrite)
 	{
+
 		/*
 		 * Note: write access in a SELECT context means SELECT FOR UPDATE.
 		 * Right now we don't distinguish that from true update as far as
@@ -519,6 +522,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 		if (resultRelations != NIL)
 		{
+
 			/*
 			 * Multiple result relations (due to inheritance)
 			 * parseTree->resultRelations identifies them all
@@ -541,8 +545,10 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		}
 		else
 		{
+
 			/*
-			 * Single result relation identified by parseTree->resultRelation
+			 * Single result relation identified by
+			 * parseTree->resultRelation
 			 */
 			numResultRelations = 1;
 			resultRelInfos = (ResultRelInfo *) palloc(sizeof(ResultRelInfo));
@@ -559,6 +565,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	}
 	else
 	{
+
 		/*
 		 * if no result relation, then set state appropriately
 		 */
@@ -616,10 +623,10 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	tupType = ExecGetTupType(plan);		/* tuple descriptor */
 
 	/*
-	 * Initialize the junk filter if needed. SELECT and INSERT queries need
-	 * a filter if there are any junk attrs in the tlist.  UPDATE and
-	 * DELETE always need one, since there's always a junk 'ctid' attribute
-	 * present --- no need to look first.
+	 * Initialize the junk filter if needed. SELECT and INSERT queries
+	 * need a filter if there are any junk attrs in the tlist.	UPDATE and
+	 * DELETE always need one, since there's always a junk 'ctid'
+	 * attribute present --- no need to look first.
 	 */
 	{
 		bool		junk_filter_needed = false;
@@ -650,11 +657,12 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 		if (junk_filter_needed)
 		{
+
 			/*
-			 * If there are multiple result relations, each one needs
-			 * its own junk filter.  Note this is only possible for
-			 * UPDATE/DELETE, so we can't be fooled by some needing
-			 * a filter and some not.
+			 * If there are multiple result relations, each one needs its
+			 * own junk filter.  Note this is only possible for
+			 * UPDATE/DELETE, so we can't be fooled by some needing a
+			 * filter and some not.
 			 */
 			if (parseTree->resultRelations != NIL)
 			{
@@ -678,6 +686,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 					resultRelInfo++;
 					subplans = lnext(subplans);
 				}
+
 				/*
 				 * Set active junkfilter too; at this point ExecInitAppend
 				 * has already selected an active result relation...
@@ -750,10 +759,10 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				CommandCounterIncrement();
 
 				/*
-				 * If necessary, create a TOAST table for the into relation.
-				 * Note that AlterTableCreateToastTable ends with
-				 * CommandCounterIncrement(), so that the TOAST table will
-				 * be visible for insertion.
+				 * If necessary, create a TOAST table for the into
+				 * relation. Note that AlterTableCreateToastTable ends
+				 * with CommandCounterIncrement(), so that the TOAST table
+				 * will be visible for insertion.
 				 */
 				AlterTableCreateToastTable(intoName, true);
 
@@ -817,9 +826,8 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 	/*
 	 * If there are indices on the result relation, open them and save
 	 * descriptors in the result relation info, so that we can add new
-	 * index entries for the tuples we add/update.	We need not do
-	 * this for a DELETE, however, since deletion doesn't affect
-	 * indexes.
+	 * index entries for the tuples we add/update.	We need not do this
+	 * for a DELETE, however, since deletion doesn't affect indexes.
 	 */
 	if (resultRelationDesc->rd_rel->relhasindex &&
 		operation != CMD_DELETE)
@@ -857,8 +865,8 @@ EndPlan(Plan *plan, EState *estate)
 	estate->es_tupleTable = NULL;
 
 	/*
-	 * close the result relation(s) if any, but hold locks
-	 * until xact commit.  Also clean up junkfilters if present.
+	 * close the result relation(s) if any, but hold locks until xact
+	 * commit.	Also clean up junkfilters if present.
 	 */
 	resultRelInfo = estate->es_result_relations;
 	for (i = estate->es_num_result_relations; i > 0; i--)
@@ -1033,7 +1041,7 @@ lnext:	;
 					/*
 					 * Unlike the UPDATE/DELETE case, a null result is
 					 * possible here, when the referenced table is on the
-					 * nullable side of an outer join.  Ignore nulls.
+					 * nullable side of an outer join.	Ignore nulls.
 					 */
 					if (isNull)
 						continue;
@@ -1216,7 +1224,7 @@ ExecAppend(TupleTableSlot *slot,
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelationDesc->trigdesc &&
-		resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
+	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
 	{
 		HeapTuple	newtuple;
 
@@ -1227,11 +1235,12 @@ ExecAppend(TupleTableSlot *slot,
 
 		if (newtuple != tuple)	/* modified by Trigger(s) */
 		{
+
 			/*
 			 * Insert modified tuple into tuple table slot, replacing the
 			 * original.  We assume that it was allocated in per-tuple
-			 * memory context, and therefore will go away by itself.
-			 * The tuple table slot should not try to clear it.
+			 * memory context, and therefore will go away by itself. The
+			 * tuple table slot should not try to clear it.
 			 */
 			ExecStoreTuple(newtuple, slot, InvalidBuffer, false);
 			tuple = newtuple;
@@ -1294,7 +1303,7 @@ ExecDelete(TupleTableSlot *slot,
 
 	/* BEFORE ROW DELETE Triggers */
 	if (resultRelationDesc->trigdesc &&
-		resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
+	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
 	{
 		bool		dodelete;
 
@@ -1323,7 +1332,7 @@ ldelete:;
 			else if (!(ItemPointerEquals(tupleid, &ctid)))
 			{
 				TupleTableSlot *epqslot = EvalPlanQual(estate,
-						  resultRelInfo->ri_RangeTableIndex, &ctid);
+							   resultRelInfo->ri_RangeTableIndex, &ctid);
 
 				if (!TupIsNull(epqslot))
 				{
@@ -1400,7 +1409,7 @@ ExecReplace(TupleTableSlot *slot,
 
 	/* BEFORE ROW UPDATE Triggers */
 	if (resultRelationDesc->trigdesc &&
-		resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
+	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
 		HeapTuple	newtuple;
 
@@ -1411,11 +1420,12 @@ ExecReplace(TupleTableSlot *slot,
 
 		if (newtuple != tuple)	/* modified by Trigger(s) */
 		{
+
 			/*
 			 * Insert modified tuple into tuple table slot, replacing the
 			 * original.  We assume that it was allocated in per-tuple
-			 * memory context, and therefore will go away by itself.
-			 * The tuple table slot should not try to clear it.
+			 * memory context, and therefore will go away by itself. The
+			 * tuple table slot should not try to clear it.
 			 */
 			ExecStoreTuple(newtuple, slot, InvalidBuffer, false);
 			tuple = newtuple;
@@ -1447,7 +1457,7 @@ lreplace:;
 			else if (!(ItemPointerEquals(tupleid, &ctid)))
 			{
 				TupleTableSlot *epqslot = EvalPlanQual(estate,
-						  resultRelInfo->ri_RangeTableIndex, &ctid);
+							   resultRelInfo->ri_RangeTableIndex, &ctid);
 
 				if (!TupIsNull(epqslot))
 				{
@@ -1469,10 +1479,10 @@ lreplace:;
 
 	/*
 	 * Note: instead of having to update the old index tuples associated
-	 * with the heap tuple, all we do is form and insert new index
-	 * tuples.  This is because replaces are actually deletes and inserts
-	 * and index tuple deletion is done automagically by the vacuum
-	 * daemon. All we do is insert new index tuples.  -cim 9/27/89
+	 * with the heap tuple, all we do is form and insert new index tuples.
+	 * This is because replaces are actually deletes and inserts and index
+	 * tuple deletion is done automagically by the vacuum daemon. All we
+	 * do is insert new index tuples.  -cim 9/27/89
 	 */
 
 	/*
@@ -1525,8 +1535,8 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 	}
 
 	/*
-	 * We will use the EState's per-tuple context for evaluating constraint
-	 * expressions (creating it if it's not already there).
+	 * We will use the EState's per-tuple context for evaluating
+	 * constraint expressions (creating it if it's not already there).
 	 */
 	econtext = GetPerTupleExprContext(estate);
 
@@ -1568,10 +1578,10 @@ ExecConstraints(char *caller, ResultRelInfo *resultRelInfo,
 
 		for (attrChk = 1; attrChk <= natts; attrChk++)
 		{
-			if (rel->rd_att->attrs[attrChk-1]->attnotnull &&
+			if (rel->rd_att->attrs[attrChk - 1]->attnotnull &&
 				heap_attisnull(tuple, attrChk))
 				elog(ERROR, "%s: Fail to add null value in not null attribute %s",
-					 caller, NameStr(rel->rd_att->attrs[attrChk-1]->attname));
+					 caller, NameStr(rel->rd_att->attrs[attrChk - 1]->attname));
 		}
 	}
 

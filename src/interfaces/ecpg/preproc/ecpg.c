@@ -25,9 +25,9 @@ usage(char *progname)
 	fprintf(stderr, "ecpg - the postgresql preprocessor, version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
 	fprintf(stderr, "Usage: %s: "
 #ifdef YYDEBUG
-								"[-d]"
+			"[-d]"
 #endif
-									" [-v] [-t] [-I include path] [ -o output file name] [-D define name] file1 [file2] ...\n", progname);
+			" [-v] [-t] [-I include path] [ -o output file name] [-D define name] file1 [file2] ...\n", progname);
 }
 
 static void
@@ -92,9 +92,9 @@ main(int argc, char *const argv[])
 			case 'D':
 				add_preprocessor_define(optarg);
 				break;
-#ifdef YYDEBUG				
+#ifdef YYDEBUG
 			case 'd':
-				yydebug=1;
+				yydebug = 1;
 				break;
 #endif
 			default:

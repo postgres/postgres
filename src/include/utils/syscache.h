@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.28 2001/01/24 19:43:29 momjian Exp $
+ * $Id: syscache.h,v 1.29 2001/03/22 04:01:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,14 +60,14 @@
 extern void InitCatalogCache(void);
 
 extern HeapTuple SearchSysCache(int cacheId,
-					Datum key1, Datum key2, Datum key3, Datum key4);
+			   Datum key1, Datum key2, Datum key3, Datum key4);
 extern void ReleaseSysCache(HeapTuple tuple);
 
 /* convenience routines */
 extern HeapTuple SearchSysCacheCopy(int cacheId,
-					Datum key1, Datum key2, Datum key3, Datum key4);
+				   Datum key1, Datum key2, Datum key3, Datum key4);
 extern Oid GetSysCacheOid(int cacheId,
-					Datum key1, Datum key2, Datum key3, Datum key4);
+			   Datum key1, Datum key2, Datum key3, Datum key4);
 
 /* macro for just probing for existence of a tuple via the syscache */
 #define SearchSysCacheExists(c,k1,k2,k3,k4)  \

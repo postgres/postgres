@@ -2,7 +2,7 @@
  *
  * pg_dump.c
  *	  pg_dump is an utility for dumping out a postgres database
- *    into a script file.
+ *	  into a script file.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.195 2001/03/19 02:35:29 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.196 2001/03/22 04:00:14 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -55,7 +55,7 @@
  *		   output formats and simple rearrangement of order.
  *		 - Discouraged operations more appropriate to the 'restore'
  *		   operation. (eg. -c "clear schema" - now always dumps
- *		   commands, but pg_restore can be told not to output them). 
+ *		   commands, but pg_restore can be told not to output them).
  *		 - Added RI warnings to the 'as insert strings' output mode
  *		 - Added a small number of comments
  *		 - Added a -Z option for compression level on compressed formats
@@ -68,7 +68,7 @@
  *
  * Modifications - 28-Jul-2000 - pjw@rhyme.com.au (1.45)
  *
- * 		Added --create, --no-owner, --superuser, --no-reconnect (pg_dump & pg_restore)
+ *		Added --create, --no-owner, --superuser, --no-reconnect (pg_dump & pg_restore)
  *		Added code to dump 'Create Schema' statement (pg_dump)
  *		Don't bother to disable/enable triggers if we don't have a superuser (pg_restore)
  *		Cleaned up code for reconnecting to database.
@@ -79,10 +79,10 @@
  *		Fixed minor bug in language dumping code: expbuffres were not being reset.
  *		Fixed version number initialization in _allocAH (pg_backup_archiver.c)
  *
- * Modifications - 14-Sep-2000 - pjw@rhyme.com.au 
+ * Modifications - 14-Sep-2000 - pjw@rhyme.com.au
  *		Use symbols for tests on relkind (ie. use RELKIND_VIEW, not 'v')
- * 		Support for relkind = RELKIND_VIEW.
- * 		Fix bug in support for -b option (== --blobs).
+ *		Support for relkind = RELKIND_VIEW.
+ *		Fix bug in support for -b option (== --blobs).
  *		Dump views as views (using 'create view').
  *		Remove 'isViewRule' since we check the relkind when getting tables.
  *		Now uses temp table 'pgdump_oid' rather than 'pg_dump_oid' (errors otherwise).
@@ -91,8 +91,8 @@
  *
  *	  - Be more paranoid when getting views: call get_viewdef in separate statement
  *		so we can be more informative in error messages.
- *	  - Support for 'isstrict' procedure attribute. 
- *	  - Disable --blobs and --table since (a) it's a pain to get ONLY the blobs for the 
+ *	  - Support for 'isstrict' procedure attribute.
+ *	  - Disable --blobs and --table since (a) it's a pain to get ONLY the blobs for the
  *		table with the currently implementation, and (b) it's not clear how to restore
  *		a partial BLOB backup (given the current OID-based BLOB implementation).
  *
@@ -103,13 +103,13 @@
  *
  * Modifications - 13-Feb-2001 - pjw@rhyme.com.au
  *
- *    - Fix help output: replace 'f' with 't' and change desc.
- *    - Add extra arg to formatStringLiteral to specify how to handle LF & TAB.
- *      I opted for encoding them except in procedure bodies.
+ *	  - Fix help output: replace 'f' with 't' and change desc.
+ *	  - Add extra arg to formatStringLiteral to specify how to handle LF & TAB.
+ *		I opted for encoding them except in procedure bodies.
  *	  - Dump relevant parts of sequences only when doing schemaOnly & dataOnly
  *	  - Prevent double-dumping of sequences when dataOnly.
  *
- * Modifications - 19-Mar-2001 - pjw@rhyme.com.au 
+ * Modifications - 19-Mar-2001 - pjw@rhyme.com.au
  *
  *	  - Remove fmtId calls for all ArchiveEntry name fields. This fixes
  *		quoting problems in trigger enable/disable code for mixed case
@@ -155,12 +155,14 @@
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 
-typedef enum _formatLiteralOptions {
-        CONV_ALL = 0,
-        PASS_LFTAB = 3	/* NOTE: 1 and 2 are reserved in case we want to make a mask. */ 
-						/* We could make this a bit mask for control chars, but I don't */
-						/* see any value in making it more complex...the current code */
-						/* only checks for 'opts == CONV_ALL' anyway. */
+typedef enum _formatLiteralOptions
+{
+	CONV_ALL = 0,
+	PASS_LFTAB = 3				/* NOTE: 1 and 2 are reserved in case we
+								 * want to make a mask. */
+	/* We could make this a bit mask for control chars, but I don't */
+	/* see any value in making it more complex...the current code */
+	/* only checks for 'opts == CONV_ALL' anyway. */
 } formatLiteralOptions;
 
 static void dumpComment(Archive *outfile, const char *target, const char *oid);
@@ -174,14 +176,14 @@ static void formatStringLiteral(PQExpBuffer buf, const char *str, const formatLi
 static void clearTableInfo(TableInfo *, int);
 static void dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 			TypeInfo *tinfo, int numTypes);
-static Oid	findLastBuiltinOid(const char*);
+static Oid	findLastBuiltinOid(const char *);
 static void setMaxOid(Archive *fout);
 
 static void AddAcl(char *aclbuf, const char *keyword);
 static char *GetPrivileges(const char *s);
 
-static int dumpBlobs(Archive *AH, char*, void*);
-static int dumpDatabase(Archive *AH);
+static int	dumpBlobs(Archive *AH, char *, void *);
+static int	dumpDatabase(Archive *AH);
 static PQExpBuffer getPKconstraint(TableInfo *tblInfo, IndInfo *indInfo);
 
 extern char *optarg;
@@ -192,7 +194,7 @@ extern int	optind,
 bool		g_verbose;			/* User wants verbose narration of our
 								 * activities. */
 Oid			g_last_builtin_oid; /* value of the last builtin oid */
-Archive	   *g_fout;				/* the script file */
+Archive    *g_fout;				/* the script file */
 PGconn	   *g_conn;				/* the database connection */
 
 bool		force_quotes;		/* User wants to suppress double-quotes */
@@ -209,9 +211,10 @@ char		g_comment_start[10];
 char		g_comment_end[10];
 
 
-typedef struct _dumpContext {
-	TableInfo	*tblinfo;
-	int		tblidx;
+typedef struct _dumpContext
+{
+	TableInfo  *tblinfo;
+	int			tblidx;
 	bool		oids;
 } DumpContext;
 
@@ -225,61 +228,61 @@ help(const char *progname)
 
 #ifdef HAVE_GETOPT_LONG
 	puts(
-		"  -a, --data-only          dump out only the data, not the schema\n"
-		"  -b, --blobs              dump out blob data\n"
-	   	"  -c, --clean              clean (drop) schema prior to create\n"
-		"  -C, --create             output commands to create database\n"
-		"  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
-		"  -D, --attribute-inserts  dump data as INSERT commands with attribute names\n"
-		"  -f, --file=FILENAME      specify output file name\n"
-		"  -F, --format {c|t|p}     output file format (custom, tar, plain text)\n"
-		"  -h, --host=HOSTNAME      server host name\n"
-		"  -i, --ignore-version     proceed when database version != pg_dump version\n"
-		"  -n, --no-quotes          suppress most quotes around identifiers\n"
-		"  -N, --quotes             enable most quotes around identifiers\n"
-		"  -o, --oids               dump object ids (oids)\n"
-		"  -O, --no-owner           do not output \\connect commands in plain text\n"
-		"                           format\n"
-		"  -p, --port=PORT          server port number\n"
-		"  -R, --no-reconnect       disable ALL reconnections to the database in\n"
-		"                           plain text format\n"
-		"  -s, --schema-only        dump out only the schema, no data\n"
-		"  -S, --superuser=NAME     specify the superuser user name to use in plain\n"
-		"                           text format\n"
-		"  -t, --table=TABLE        dump for this table only (* for all)\n"
-		"  -u, --password           use password authentication\n"
-		"  -v, --verbose            verbose\n"
-		"  -x, --no-acl             do not dump ACL's (grant/revoke)\n"
-		"  -Z, --compress {0-9}     compression level for compressed formats\n"
+	"  -a, --data-only          dump out only the data, not the schema\n"
+		 "  -b, --blobs              dump out blob data\n"
+	   "  -c, --clean              clean (drop) schema prior to create\n"
+		 "  -C, --create             output commands to create database\n"
+		 "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
+		 "  -D, --attribute-inserts  dump data as INSERT commands with attribute names\n"
+		 "  -f, --file=FILENAME      specify output file name\n"
+		 "  -F, --format {c|t|p}     output file format (custom, tar, plain text)\n"
+		 "  -h, --host=HOSTNAME      server host name\n"
+		 "  -i, --ignore-version     proceed when database version != pg_dump version\n"
+	"  -n, --no-quotes          suppress most quotes around identifiers\n"
+	 "  -N, --quotes             enable most quotes around identifiers\n"
+		 "  -o, --oids               dump object ids (oids)\n"
+		 "  -O, --no-owner           do not output \\connect commands in plain text\n"
+		 "                           format\n"
+		 "  -p, --port=PORT          server port number\n"
+		 "  -R, --no-reconnect       disable ALL reconnections to the database in\n"
+		 "                           plain text format\n"
+		 "  -s, --schema-only        dump out only the schema, no data\n"
+		 "  -S, --superuser=NAME     specify the superuser user name to use in plain\n"
+		 "                           text format\n"
+	  "  -t, --table=TABLE        dump for this table only (* for all)\n"
+		 "  -u, --password           use password authentication\n"
+		 "  -v, --verbose            verbose\n"
+		 "  -x, --no-acl             do not dump ACL's (grant/revoke)\n"
+		 "  -Z, --compress {0-9}     compression level for compressed formats\n"
 		);
 #else
 	puts(
-		"  -a                       dump out only the data, no schema\n"
-		"  -b                       dump out blob data\n"
-		"  -c                       clean (drop) schema prior to create\n"
-		"  -C                       output commands to create database\n"
-		"  -d                       dump data as INSERT, rather than COPY, commands\n"
-		"  -D                       dump data as INSERT commands with attribute names\n"
-		"  -f FILENAME              specify output file name\n"
-		"  -F {c|t|p}               output file format (custom, tar, plain text)\n"
-		"  -h HOSTNAME              server host name\n"
-		"  -i                       proceed when database version != pg_dump version\n"
-		"  -n                       suppress most quotes around identifiers\n"
-		"  -N                       enable most quotes around identifiers\n"
-		"  -o                       dump object ids (oids)\n"
-		"  -O                       do not output \\connect commands in plain text\n"
-		"                           format\n"
-		"  -p PORT                  server port number\n"
-		"  -R                       disable ALL reconnections to the database in\n"
-		"                           plain text format\n"
-		"  -s                       dump out only the schema, no data\n"
-		"  -S NAME                  specify the superuser user name to use in plain\n"
-		"                           text format\n"
-		"  -t TABLE                 dump for this table only (* for all)\n"
-		"  -u                       use password authentication\n"
-		"  -v                       verbose\n"
-		"  -x                       do not dump ACL's (grant/revoke)\n"
-		"  -Z {0-9}                 compression level for compressed formats\n"
+		 "  -a                       dump out only the data, no schema\n"
+		 "  -b                       dump out blob data\n"
+	   "  -c                       clean (drop) schema prior to create\n"
+		 "  -C                       output commands to create database\n"
+		 "  -d                       dump data as INSERT, rather than COPY, commands\n"
+		 "  -D                       dump data as INSERT commands with attribute names\n"
+		 "  -f FILENAME              specify output file name\n"
+		 "  -F {c|t|p}               output file format (custom, tar, plain text)\n"
+		 "  -h HOSTNAME              server host name\n"
+		 "  -i                       proceed when database version != pg_dump version\n"
+	"  -n                       suppress most quotes around identifiers\n"
+	 "  -N                       enable most quotes around identifiers\n"
+		 "  -o                       dump object ids (oids)\n"
+		 "  -O                       do not output \\connect commands in plain text\n"
+		 "                           format\n"
+		 "  -p PORT                  server port number\n"
+		 "  -R                       disable ALL reconnections to the database in\n"
+		 "                           plain text format\n"
+		 "  -s                       dump out only the schema, no data\n"
+		 "  -S NAME                  specify the superuser user name to use in plain\n"
+		 "                           text format\n"
+	  "  -t TABLE                 dump for this table only (* for all)\n"
+		 "  -u                       use password authentication\n"
+		 "  -v                       verbose\n"
+		 "  -x                       do not dump ACL's (grant/revoke)\n"
+		 "  -Z {0-9}                 compression level for compressed formats\n"
 		);
 #endif
 	puts("If no database name is not supplied, then the PGDATABASE environment\nvariable value is used.\n");
@@ -313,11 +316,11 @@ exit_nicely(PGconn *conn)
  *	  to be dumped.
  */
 
-static int 
-dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
+static int
+dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 {
-	const DumpContext	*dctx = (DumpContext*)dctxv; 	
-	const char 	*classname = dctx->tblinfo[dctx->tblidx].relname;
+	const DumpContext *dctx = (DumpContext *) dctxv;
+	const char *classname = dctx->tblinfo[dctx->tblidx].relname;
 	const bool	oids = dctx->oids;
 
 	PGresult   *res;
@@ -326,16 +329,17 @@ dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
 	bool		copydone;
 	char		copybuf[COPYBUFSIZ];
 
-    if (g_verbose)
-        fprintf(stderr, "%s dumping out the contents of table %s\n", g_comment_start, classname);
+	if (g_verbose)
+		fprintf(stderr, "%s dumping out the contents of table %s\n", g_comment_start, classname);
 
 	if (oids == true)
 	{
-		/* 
+
+		/*
 		 * archprintf(fout, "COPY %s WITH OIDS FROM stdin;\n",
-		 *		fmtId(classname, force_quotes));
+		 * fmtId(classname, force_quotes));
 		 *
-		 *  - Not used as of V1.3 (needs to be in ArchiveEntry call)
+		 * - Not used as of V1.3 (needs to be in ArchiveEntry call)
 		 *
 		 */
 
@@ -344,8 +348,10 @@ dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
 	}
 	else
 	{
-		/* 
-		 *archprintf(fout, "COPY %s FROM stdin;\n", fmtId(classname, force_quotes));
+
+		/*
+		 * archprintf(fout, "COPY %s FROM stdin;\n", fmtId(classname,
+		 * force_quotes));
 		 *
 		 * - Not used as of V1.3 (needs to be in ArchiveEntry call)
 		 *
@@ -404,45 +410,50 @@ dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
 					}
 				}
 
-				/* 
+				/*
 				 * THROTTLE:
 				 *
-				 * There was considerable discussion in late July, 2000 regarding slowing down
-				 * pg_dump when backing up large tables. Users with both slow & fast (muti-processor)
-				 * machines experienced performance degradation when doing a backup.
+				 * There was considerable discussion in late July, 2000
+				 * regarding slowing down pg_dump when backing up large
+				 * tables. Users with both slow & fast (muti-processor)
+				 * machines experienced performance degradation when doing
+				 * a backup.
 				 *
-				 * Initial attempts based on sleeping for a number of ms for each ms of work were deemed
-				 * too complex, then a simple 'sleep in each loop' implementation was suggested. The latter
-				 * failed because the loop was too tight. Finally, the following was implemented:
+				 * Initial attempts based on sleeping for a number of ms for
+				 * each ms of work were deemed too complex, then a simple
+				 * 'sleep in each loop' implementation was suggested. The
+				 * latter failed because the loop was too tight. Finally,
+				 * the following was implemented:
 				 *
-				 * If throttle is non-zero, then
-				 * 		See how long since the last sleep.
-				 *		Work out how long to sleep (based on ratio).
-				 * 		If sleep is more than 100ms, then 
-			     *			sleep 
-				 *			reset timer
-				 *		EndIf
+				 * If throttle is non-zero, then See how long since the last
+				 * sleep. Work out how long to sleep (based on ratio). If
+				 * sleep is more than 100ms, then sleep reset timer EndIf
 				 * EndIf
 				 *
-				 * where the throttle value was the number of ms to sleep per ms of work. The calculation was 
-				 * done in each loop.
+				 * where the throttle value was the number of ms to sleep per
+				 * ms of work. The calculation was done in each loop.
 				 *
-				 * Most of the hard work is done in the backend, and this solution still did not work 
-				 * particularly well: on slow machines, the ratio was 50:1, and on medium paced machines, 1:1,
-				 * and on fast multi-processor machines, it had little or no effect, for reasons that were unclear.
+				 * Most of the hard work is done in the backend, and this
+				 * solution still did not work particularly well: on slow
+				 * machines, the ratio was 50:1, and on medium paced
+				 * machines, 1:1, and on fast multi-processor machines, it
+				 * had little or no effect, for reasons that were unclear.
 				 *
 				 * Further discussion ensued, and the proposal was dropped.
 				 *
-				 * For those people who want this feature, it can be implemented using gettimeofday in each
-				 * loop, calculating the time since last sleep, multiplying that by the sleep ratio, then
-				 * if the result is more than a preset 'minimum sleep time' (say 100ms), call the 'select'
-				 * function to sleep for a subsecond period ie.
+				 * For those people who want this feature, it can be
+				 * implemented using gettimeofday in each loop,
+				 * calculating the time since last sleep, multiplying that
+				 * by the sleep ratio, then if the result is more than a
+				 * preset 'minimum sleep time' (say 100ms), call the
+				 * 'select' function to sleep for a subsecond period ie.
 				 *
-				 *        select(0, NULL, NULL, NULL, &tvi);
+				 * select(0, NULL, NULL, NULL, &tvi);
 				 *
-				 * This will return after the interval specified in the structure tvi. Fianally, call
-				 * gettimeofday again to save the 'last sleep time'.
-				 */	
+				 * This will return after the interval specified in the
+				 * structure tvi. Fianally, call gettimeofday again to
+				 * save the 'last sleep time'.
+				 */
 			}
 			archprintf(fout, "\\.\n");
 		}
@@ -464,10 +475,10 @@ dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
 }
 
 static int
-dumpClasses_dumpData(Archive *fout, char* oid, void *dctxv)
+dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 {
-	const DumpContext	*dctx = (DumpContext*)dctxv;
-	const char			*classname = dctx->tblinfo[dctx->tblidx].relname;
+	const DumpContext *dctx = (DumpContext *) dctxv;
+	const char *classname = dctx->tblinfo[dctx->tblidx].relname;
 
 	PGresult   *res;
 	PQExpBuffer q = createPQExpBuffer();
@@ -479,8 +490,8 @@ dumpClasses_dumpData(Archive *fout, char* oid, void *dctxv)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "dumpClasses(): command failed.  Explanation from backend: '%s'.\n", 
-					PQerrorMessage(g_conn));
+		fprintf(stderr, "dumpClasses(): command failed.  Explanation from backend: '%s'.\n",
+				PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	for (tuple = 0; tuple < PQntuples(res); tuple++)
@@ -518,7 +529,7 @@ dumpClasses_dumpData(Archive *fout, char* oid, void *dctxv)
 				case FLOAT8OID:/* float types */
 					/* These types are printed without quotes */
 					archprintf(fout, "%s",
-							PQgetvalue(res, tuple, field));
+							   PQgetvalue(res, tuple, field));
 					break;
 				case ZPBITOID:
 				case VARBITOID:
@@ -556,19 +567,23 @@ formatStringLiteral(PQExpBuffer buf, const char *str, const formatLiteralOptions
 	appendPQExpBufferChar(buf, '\'');
 	while (*str)
 	{
-		char	ch = *str++;
+		char		ch = *str++;
 
 		if (ch == '\\' || ch == '\'')
 		{
-			appendPQExpBufferChar(buf, ch);	/* double these */
+			appendPQExpBufferChar(buf, ch);		/* double these */
 			appendPQExpBufferChar(buf, ch);
 		}
 		else if ((unsigned char) ch < (unsigned char) ' ' &&
-				(		opts == CONV_ALL
-					|| 	(ch != '\n' && ch != '\t')
-				))
+				 (opts == CONV_ALL
+				  || (ch != '\n' && ch != '\t')
+				  ))
 		{
-			/* generate octal escape for control chars other than whitespace */
+
+			/*
+			 * generate octal escape for control chars other than
+			 * whitespace
+			 */
 			appendPQExpBufferChar(buf, '\\');
 			appendPQExpBufferChar(buf, ((ch >> 6) & 3) + '0');
 			appendPQExpBufferChar(buf, ((ch >> 3) & 7) + '0');
@@ -586,18 +601,18 @@ formatStringLiteral(PQExpBuffer buf, const char *str, const formatLiteralOptions
  */
 static void
 dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
-			const char *onlytable, const bool oids, const bool force_quotes)
+		 const char *onlytable, const bool oids, const bool force_quotes)
 {
 
-	int				i;
-	char	   		*all_only;
-	DataDumperPtr	dumpFn;
-	DumpContext		*dumpCtx;
-	char			*oidsPart;
-	char			copyBuf[512];
-	char			*copyStmt;
+	int			i;
+	char	   *all_only;
+	DataDumperPtr dumpFn;
+	DumpContext *dumpCtx;
+	char	   *oidsPart;
+	char		copyBuf[512];
+	char	   *copyStmt;
 
-	if (onlytable == NULL || (strlen(onlytable) == 0) )
+	if (onlytable == NULL || (strlen(onlytable) == 0))
 		all_only = "all";
 	else
 		all_only = "only";
@@ -611,9 +626,9 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 	if (g_verbose)
 		fprintf(stderr, "%s preparing to dump out the contents of %s %d table%s/sequence%s %s\n",
 				g_comment_start, all_only,
-				(onlytable == NULL || (strlen(onlytable) == 0)) ? numTables : 1,
-				(onlytable == NULL || (strlen(onlytable) == 0)) ? "s" : "", 
-				(onlytable == NULL || (strlen(onlytable) == 0)) ? "s" : "",
+		 (onlytable == NULL || (strlen(onlytable) == 0)) ? numTables : 1,
+			  (onlytable == NULL || (strlen(onlytable) == 0)) ? "s" : "",
+			  (onlytable == NULL || (strlen(onlytable) == 0)) ? "s" : "",
 				g_comment_end);
 
 	for (i = 0; i < numTables; i++)
@@ -635,12 +650,12 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 
 			/* becomeUser(fout, tblinfo[i].usename); */
 
-			dumpCtx = (DumpContext*)malloc(sizeof(DumpContext));
-			dumpCtx->tblinfo = (TableInfo*)tblinfo;
+			dumpCtx = (DumpContext *) malloc(sizeof(DumpContext));
+			dumpCtx->tblinfo = (TableInfo *) tblinfo;
 			dumpCtx->tblidx = i;
 			dumpCtx->oids = oids;
 
-			if (!dumpData) /* Dump/restore using COPY */
+			if (!dumpData)		/* Dump/restore using COPY */
 			{
 				dumpFn = dumpClasses_nodumpData;
 				/* dumpClasses_nodumpData(fout, classname, oids); */
@@ -648,7 +663,8 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 						oidsPart);
 				copyStmt = copyBuf;
 			}
-			else /* Restore using INSERT */
+			else
+/* Restore using INSERT */
 			{
 				dumpFn = dumpClasses_dumpData;
 				/* dumpClasses_dumpData(fout, classname); */
@@ -656,8 +672,8 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 			}
 
 			ArchiveEntry(fout, tblinfo[i].oid, tblinfo[i].relname,
-							"TABLE DATA", NULL, "", "", copyStmt, tblinfo[i].usename,
-							dumpFn, dumpCtx);
+				"TABLE DATA", NULL, "", "", copyStmt, tblinfo[i].usename,
+						 dumpFn, dumpCtx);
 		}
 	}
 }
@@ -685,14 +701,14 @@ main(int argc, char **argv)
 	int			outputBlobs = 0;
 	int			outputNoOwner = 0;
 	int			outputNoReconnect = 0;
-	char		*outputSuperuser = NULL;
+	char	   *outputSuperuser = NULL;
 
-	RestoreOptions	*ropt;
+	RestoreOptions *ropt;
 
 #ifdef HAVE_GETOPT_LONG
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
-		{"blobs", no_argument, NULL, 'b' },
+		{"blobs", no_argument, NULL, 'b'},
 		{"clean", no_argument, NULL, 'c'},
 		{"create", no_argument, NULL, 'C'},
 		{"file", required_argument, NULL, 'f'},
@@ -744,12 +760,12 @@ main(int argc, char **argv)
 
 	if (argc > 1)
 	{
-		if (strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0)
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
 		{
 			help(progname);
 			exit(0);
 		}
-		if (strcmp(argv[1], "--version")==0 || strcmp(argv[1], "-V")==0)
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
 			version();
 			exit(0);
@@ -774,10 +790,10 @@ main(int argc, char **argv)
 				break;
 
 			case 'c':			/* clean (i.e., drop) schema prior to
- 								 * create */
+								 * create */
 				outputClean = 1;
- 				break;
- 
+				break;
+
 			case 'C':			/* Create DB */
 
 				outputCreate = 1;
@@ -839,7 +855,8 @@ main(int argc, char **argv)
 				schemaOnly = true;
 				break;
 
-			case 'S':			/* Username for superuser in plain text output */
+			case 'S':			/* Username for superuser in plain text
+								 * output */
 				outputSuperuser = strdup(optarg);
 				break;
 
@@ -866,8 +883,11 @@ main(int argc, char **argv)
 							if (isupper((unsigned char) tablename[i]))
 								tablename[i] = tolower((unsigned char) tablename[i]);
 
-						/* '*' is a special case meaning ALL tables, but only if unquoted */
-						if (strcmp(tablename,"*") == 0)
+						/*
+						 * '*' is a special case meaning ALL tables, but
+						 * only if unquoted
+						 */
+						if (strcmp(tablename, "*") == 0)
 							tablename[0] = '\0';
 
 					}
@@ -898,7 +918,7 @@ main(int argc, char **argv)
 #ifndef HAVE_GETOPT_LONG
 			case '-':
 				fprintf(stderr, "%s was compiled without support for long options.\n"
-				   "Use --help for help on invocation options.\n", progname);
+				"Use --help for help on invocation options.\n", progname);
 				exit(1);
 				break;
 #endif
@@ -908,23 +928,24 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (optind < (argc - 1)) {
+	if (optind < (argc - 1))
+	{
 		fprintf(stderr,
 				"%s: extra parameters found on command line after '%s' (first is '%s').\n"
-			    "Please respecify command.\nUse --help for help on invocation options.\n",
-				progname, argv[optind], argv[optind+1]);
+				"Please respecify command.\nUse --help for help on invocation options.\n",
+				progname, argv[optind], argv[optind + 1]);
 		exit(1);
 	}
 
 	if (dataOnly && schemaOnly)
 	{
 		fprintf(stderr,
-				"%s: 'Schema Only' and 'Data Only' are incompatible options.\n",
+		 "%s: 'Schema Only' and 'Data Only' are incompatible options.\n",
 				progname);
 		exit(1);
 	}
 
-	if (outputBlobs && tablename != NULL && strlen(tablename) > 0 )
+	if (outputBlobs && tablename != NULL && strlen(tablename) > 0)
 	{
 		fprintf(stderr,
 				"%s: BLOB output is not supported for a single table. Use all tables or a full dump instead.\n",
@@ -940,16 +961,17 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (outputBlobs == true && (format[0] == 'p' || format[0] == 'P') )
+	if (outputBlobs == true && (format[0] == 'p' || format[0] == 'P'))
 	{
 		fprintf(stderr,
-			"%s: BLOB output is not supported for plain text dump files. Use a different output format.\n",
-			progname);
+				"%s: BLOB output is not supported for plain text dump files. Use a different output format.\n",
+				progname);
 		exit(1);
 	}
 
 	/* open the output file */
-	switch (format[0]) {
+	switch (format[0])
+	{
 
 		case 'c':
 		case 'C':
@@ -974,14 +996,14 @@ main(int argc, char **argv)
 
 		default:
 			fprintf(stderr,
-				"%s: invalid output format '%s' specified\n", progname, format);
-		    exit(1);	
+					"%s: invalid output format '%s' specified\n", progname, format);
+			exit(1);
 	}
 
 	if (g_fout == NULL)
 	{
 		fprintf(stderr,
-			 "%s: could not open output file named %s for writing\n",
+				"%s: could not open output file named %s for writing\n",
 				progname, filename);
 		exit(1);
 	}
@@ -991,7 +1013,10 @@ main(int argc, char **argv)
 
 	dbname = argv[optind];
 
-	/* Open the database using the Archiver, so it knows about it. Errors mean death */
+	/*
+	 * Open the database using the Archiver, so it knows about it. Errors
+	 * mean death
+	 */
 	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport, use_password, ignore_version);
 
 	/*
@@ -1002,14 +1027,14 @@ main(int argc, char **argv)
 
 		res = PQexec(g_conn, "begin");
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-		    exit_horribly(g_fout, "BEGIN command failed. Explanation from backend: '%s'.\n",
-				PQerrorMessage(g_conn));
+			exit_horribly(g_fout, "BEGIN command failed. Explanation from backend: '%s'.\n",
+						  PQerrorMessage(g_conn));
 
 		PQclear(res);
 		res = PQexec(g_conn, "set transaction isolation level serializable");
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-		    exit_horribly(g_fout, "SET TRANSACTION command failed. Explanation from backend: '%s'.\n",
-				PQerrorMessage(g_conn));
+			exit_horribly(g_fout, "SET TRANSACTION command failed. Explanation from backend: '%s'.\n",
+						  PQerrorMessage(g_conn));
 
 		PQclear(res);
 	}
@@ -1024,17 +1049,15 @@ main(int argc, char **argv)
 		setMaxOid(g_fout);
 
 	if (g_verbose)
-			fprintf(stderr, "%s last builtin oid is %u %s\n",
-					g_comment_start, g_last_builtin_oid, g_comment_end);
+		fprintf(stderr, "%s last builtin oid is %u %s\n",
+				g_comment_start, g_last_builtin_oid, g_comment_end);
 	tblinfo = dumpSchema(g_fout, &numTables, tablename, aclsSkip, oids, schemaOnly, dataOnly);
 
 	if (!schemaOnly)
-	{
-	    dumpClasses(tblinfo, numTables, g_fout, tablename, oids, force_quotes);
-	}
+		dumpClasses(tblinfo, numTables, g_fout, tablename, oids, force_quotes);
 
 	if (outputBlobs)
-		ArchiveEntry(g_fout, "0", "BLOBS", "BLOBS", NULL, "", "", "", "", dumpBlobs, 0); 
+		ArchiveEntry(g_fout, "0", "BLOBS", "BLOBS", NULL, "", "", "", "", dumpBlobs, 0);
 
 	if (!dataOnly)				/* dump indexes and triggers at the end
 								 * for performance */
@@ -1054,10 +1077,10 @@ main(int argc, char **argv)
 	MoveToEnd(g_fout, "RULE");
 	MoveToEnd(g_fout, "SEQUENCE SET");
 
-	if (plainText) 
+	if (plainText)
 	{
 		ropt = NewRestoreOptions();
-		ropt->filename = (char*)filename;
+		ropt->filename = (char *) filename;
 		ropt->dropSchema = outputClean;
 		ropt->aclsSkip = aclsSkip;
 		ropt->superuser = outputSuperuser;
@@ -1071,9 +1094,9 @@ main(int argc, char **argv)
 			ropt->superuser = PQuser(g_conn);
 
 		if (compressLevel == -1)
-		    ropt->compression = 0;
+			ropt->compression = 0;
 		else
-		    ropt->compression = compressLevel;
+			ropt->compression = compressLevel;
 
 		RestoreArchive(g_fout, ropt);
 	}
@@ -1090,30 +1113,30 @@ main(int argc, char **argv)
  *	dump the database definition
  *
  */
-static int 
+static int
 dumpDatabase(Archive *AH)
 {
-	PQExpBuffer		dbQry = createPQExpBuffer();
-	PQExpBuffer		delQry = createPQExpBuffer();
-	PQExpBuffer		creaQry = createPQExpBuffer();
-	PGresult		*res;
-	int				ntups;
-	int				i_dba;
+	PQExpBuffer dbQry = createPQExpBuffer();
+	PQExpBuffer delQry = createPQExpBuffer();
+	PQExpBuffer creaQry = createPQExpBuffer();
+	PGresult   *res;
+	int			ntups;
+	int			i_dba;
 
 	if (g_verbose)
 		fprintf(stderr, "%s saving database definition\n", g_comment_start);
 
 	/* Get the dba */
 	appendPQExpBuffer(dbQry, "select (select usename from pg_user where datdba = usesysid) as dba from pg_database"
-							" where datname = ");
+					  " where datname = ");
 	formatStringLiteral(dbQry, PQdb(g_conn), CONV_ALL);
 
 	res = PQexec(g_conn, dbQry->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getDatabase(): SELECT failed.  Explanation from backend: '%s'.\n", 
-						PQerrorMessage(g_conn));
+		fprintf(stderr, "getDatabase(): SELECT failed.  Explanation from backend: '%s'.\n",
+				PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -1129,10 +1152,10 @@ dumpDatabase(Archive *AH)
 	appendPQExpBuffer(delQry, "Drop Database \"%s\";\n", PQdb(g_conn));
 	i_dba = PQfnumber(res, "dba");
 
-	ArchiveEntry(AH, "0" /* OID */, PQdb(g_conn) /* Name */, "DATABASE", NULL, 
-						creaQry->data /* Create */, delQry->data /*Del*/,
-						"" /* Copy */, PQgetvalue(res, 0, i_dba) /*Owner*/, 
-						NULL /* Dumper */, NULL /* Dumper Arg */);	
+	ArchiveEntry(AH, "0" /* OID */ , PQdb(g_conn) /* Name */ , "DATABASE", NULL,
+				 creaQry->data /* Create */ , delQry->data /* Del */ ,
+				 "" /* Copy */ , PQgetvalue(res, 0, i_dba) /* Owner */ ,
+				 NULL /* Dumper */ , NULL /* Dumper Arg */ );
 
 	PQclear(res);
 
@@ -1146,47 +1169,48 @@ dumpDatabase(Archive *AH)
  *
  */
 
-#define loBufSize 16384 
+#define loBufSize 16384
 #define loFetchSize 1000
 
-static int 
-dumpBlobs(Archive *AH, char* junkOid, void *junkVal)
+static int
+dumpBlobs(Archive *AH, char *junkOid, void *junkVal)
 {
-	PQExpBuffer		oidQry = createPQExpBuffer();
-	PQExpBuffer		oidFetchQry = createPQExpBuffer();
-	PGresult		*res;
-	int				i;
-	int				loFd;
-	char			buf[loBufSize];
-	int				cnt;
-	int				blobOid;
+	PQExpBuffer oidQry = createPQExpBuffer();
+	PQExpBuffer oidFetchQry = createPQExpBuffer();
+	PGresult   *res;
+	int			i;
+	int			loFd;
+	char		buf[loBufSize];
+	int			cnt;
+	int			blobOid;
 
 	if (g_verbose)
 		fprintf(stderr, "%s saving BLOBs\n", g_comment_start);
 
 	/* Cursor to get all BLOB tables */
-    appendPQExpBuffer(oidQry, "Declare blobOid Cursor for SELECT DISTINCT loid FROM pg_largeobject");
+	appendPQExpBuffer(oidQry, "Declare blobOid Cursor for SELECT DISTINCT loid FROM pg_largeobject");
 
 	res = PQexec(g_conn, oidQry->data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "dumpBlobs(): Declare Cursor failed.  Explanation from backend: '%s'.\n", 
-										PQerrorMessage(g_conn));
+		fprintf(stderr, "dumpBlobs(): Declare Cursor failed.  Explanation from backend: '%s'.\n",
+				PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
 	/* Fetch for cursor */
 	appendPQExpBuffer(oidFetchQry, "Fetch %d in blobOid", loFetchSize);
 
-	do {
+	do
+	{
 		/* Do a fetch */
 		PQclear(res);
 		res = PQexec(g_conn, oidFetchQry->data);
 
 		if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-		    fprintf(stderr, "dumpBlobs(): Fetch Cursor failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		    exit_nicely(g_conn);
+			fprintf(stderr, "dumpBlobs(): Fetch Cursor failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+			exit_nicely(g_conn);
 		}
 
 		/* Process the tuples, if any */
@@ -1198,22 +1222,24 @@ dumpBlobs(Archive *AH, char* junkOid, void *junkVal)
 			if (loFd == -1)
 			{
 				fprintf(stderr, "dumpBlobs(): Could not open large object.  "
-									"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+						"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 
 			StartBlob(AH, blobOid);
 
 			/* Now read it in chunks, sending data to archive */
-			do {
+			do
+			{
 				cnt = lo_read(g_conn, loFd, buf, loBufSize);
-				if (cnt < 0) {
+				if (cnt < 0)
+				{
 					fprintf(stderr, "dumpBlobs(): Error reading large object. "
-								" Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+							" Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 					exit_nicely(g_conn);
 				}
 
-				WriteData(AH, buf, cnt); 
+				WriteData(AH, buf, cnt);
 
 			} while (cnt > 0);
 
@@ -1273,11 +1299,11 @@ getTypes(int *numTypes)
 	 */
 
 	appendPQExpBuffer(query, "SELECT pg_type.oid, typowner, typname, typlen, typprtlen, "
-		"typinput, typoutput, typreceive, typsend, typelem, typdelim, "
-		"typdefault, typrelid, typbyval, "
-		"(select usename from pg_user where typowner = usesysid) as usename, "
-		"format_type(pg_type.oid, NULL) as typedefn "
-		"from pg_type" );
+		  "typinput, typoutput, typreceive, typsend, typelem, typdelim, "
+					  "typdefault, typrelid, typbyval, "
+	"(select usename from pg_user where typowner = usesysid) as usename, "
+					  "format_type(pg_type.oid, NULL) as typedefn "
+					  "from pg_type");
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||
@@ -1327,7 +1353,7 @@ getTypes(int *numTypes)
 		tinfo[i].typedefn = strdup(PQgetvalue(res, i, i_typedefn));
 
 		if (strlen(tinfo[i].usename) == 0)
-			fprintf(stderr, "WARNING: owner of type '%s' appears to be invalid\n",tinfo[i].typname);
+			fprintf(stderr, "WARNING: owner of type '%s' appears to be invalid\n", tinfo[i].typname);
 
 		if (strcmp(PQgetvalue(res, i, i_typbyval), "f") == 0)
 			tinfo[i].passedbyvalue = 0;
@@ -1392,9 +1418,9 @@ getOperators(int *numOprs)
 
 	appendPQExpBuffer(query, "SELECT pg_operator.oid, oprname, oprkind, oprcode, "
 			   "oprleft, oprright, oprcom, oprnegate, oprrest, oprjoin, "
-					"oprcanhash, oprlsortop, oprrsortop, "
-					"(select usename from pg_user where oprowner = usesysid) as usename "
-					"from pg_operator");
+					  "oprcanhash, oprlsortop, oprrsortop, "
+	"(select usename from pg_user where oprowner = usesysid) as usename "
+					  "from pg_operator");
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||
@@ -1443,7 +1469,7 @@ getOperators(int *numOprs)
 
 		if (strlen(oprinfo[i].usename) == 0)
 			fprintf(stderr, "WARNING: owner of operator '%s' appears to be invalid\n",
-						oprinfo[i].oprname);
+					oprinfo[i].oprname);
 
 	}
 
@@ -1553,8 +1579,9 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
 				free(tblinfo[i].typnames[j]);
 		}
 
-		if (tblinfo[i].triggers) {
-			for (j = 0; j < tblinfo[i].ntrig ; j++)
+		if (tblinfo[i].triggers)
+		{
+			for (j = 0; j < tblinfo[i].ntrig; j++)
 			{
 				if (tblinfo[i].triggers[j].tgsrc)
 					free(tblinfo[i].triggers[j].tgsrc);
@@ -1738,18 +1765,18 @@ getAggregates(int *numAggs)
 	/* find all user-defined aggregates */
 
 	appendPQExpBuffer(query,
-						"SELECT pg_aggregate.oid, aggname, aggtransfn, "
-						"aggfinalfn, aggtranstype, aggbasetype, "
-						"agginitval, "
-						"(select usename from pg_user where aggowner = usesysid) as usename "
-						"from pg_aggregate" );
+					  "SELECT pg_aggregate.oid, aggname, aggtransfn, "
+					  "aggfinalfn, aggtranstype, aggbasetype, "
+					  "agginitval, "
+	"(select usename from pg_user where aggowner = usesysid) as usename "
+					  "from pg_aggregate");
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, "getAggregates(): SELECT failed.  Explanation from backend: '%s'.\n",
-					PQerrorMessage(g_conn));
+				PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -1779,7 +1806,7 @@ getAggregates(int *numAggs)
 		agginfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		if (strlen(agginfo[i].usename) == 0)
 			fprintf(stderr, "WARNING: owner of aggregate '%s' appears to be invalid\n",
-						agginfo[i].aggname);
+					agginfo[i].aggname);
 
 	}
 
@@ -1824,18 +1851,18 @@ getFuncs(int *numFuncs)
 	appendPQExpBuffer(query,
 		   "SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
 					  "proretset, proargtypes, prosrc, probin, "
-					  "(select usename from pg_user where proowner = usesysid) as usename, "
+	"(select usename from pg_user where proowner = usesysid) as usename, "
 					  "proiscachable, proisstrict "
 					  "from pg_proc "
-				 "where pg_proc.oid > '%u'::oid",
+					  "where pg_proc.oid > '%u'::oid",
 					  g_last_builtin_oid);
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getFuncs(): SELECT failed.  Explanation from backend: '%s'.\n", 
-					PQerrorMessage(g_conn));
+		fprintf(stderr, "getFuncs(): SELECT failed.  Explanation from backend: '%s'.\n",
+				PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -1873,12 +1900,12 @@ getFuncs(int *numFuncs)
 		finfo[i].nargs = atoi(PQgetvalue(res, i, i_pronargs));
 		finfo[i].lang = atoi(PQgetvalue(res, i, i_prolang));
 		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
-		finfo[i].iscachable = (strcmp(PQgetvalue(res, i, i_iscachable),"t") == 0);
-		finfo[i].isstrict = (strcmp(PQgetvalue(res, i, i_isstrict),"t") == 0);
+		finfo[i].iscachable = (strcmp(PQgetvalue(res, i, i_iscachable), "t") == 0);
+		finfo[i].isstrict = (strcmp(PQgetvalue(res, i, i_isstrict), "t") == 0);
 
 		if (strlen(finfo[i].usename) == 0)
 			fprintf(stderr, "WARNING: owner of function '%s' appears to be invalid\n",
-						finfo[i].proname);
+					finfo[i].proname);
 
 		if (finfo[i].nargs < 0 || finfo[i].nargs > FUNC_MAX_ARGS)
 		{
@@ -1941,21 +1968,21 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	 */
 
 	appendPQExpBuffer(query,
-			   "SELECT pg_class.oid, relname, relkind, relacl, "
-					  "(select usename from pg_user where relowner = usesysid) as usename, "
+					  "SELECT pg_class.oid, relname, relkind, relacl, "
+	"(select usename from pg_user where relowner = usesysid) as usename, "
 					  "relchecks, reltriggers, relhasindex "
 					  "from pg_class "
 					  "where relname !~ '^pg_' "
 					  "and relkind in ('%c', '%c', '%c') "
 					  "order by oid",
-				RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+					  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getTables(): SELECT failed.  Explanation from backend: '%s'.\n", 
-					PQerrorMessage(g_conn));
+		fprintf(stderr, "getTables(): SELECT failed.  Explanation from backend: '%s'.\n",
+				PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -1986,7 +2013,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 		if (strlen(tblinfo[i].usename) == 0)
 			fprintf(stderr, "WARNING: owner of table '%s' appears to be invalid\n",
-						tblinfo[i].relname);
+					tblinfo[i].relname);
 
 		/* Get view definition */
 		if (strcmp(PQgetvalue(res, i, i_relkind), relkindview) == 0)
@@ -2001,30 +2028,32 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "getTables(): SELECT (for VIEW DEFINITION) failed.  "
-							"Explanation from backend: %s",
-							PQerrorMessage(g_conn));
+						"Explanation from backend: %s",
+						PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 
-			if (PQntuples(res2) != 1) 
+			if (PQntuples(res2) != 1)
 			{
 				if (PQntuples(res2) < 1)
 				{
 					fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned no definitions",
-								tblinfo[i].relname);
-				} else {
+							tblinfo[i].relname);
+				}
+				else
+				{
 					fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned more than 1 definition",
-								tblinfo[i].relname);
+							tblinfo[i].relname);
 				}
 				exit_nicely(g_conn);
 			}
 
 			tblinfo[i].viewdef = strdup(PQgetvalue(res2, 0, 0));
 
-			if (strlen(tblinfo[i].viewdef) == 0) 
+			if (strlen(tblinfo[i].viewdef) == 0)
 			{
 				fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned empty definition",
-							tblinfo[i].relname);
+						tblinfo[i].relname);
 				exit_nicely(g_conn);
 			}
 		}
@@ -2048,7 +2077,10 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						tblinfo[i].relname,
 						g_comment_end);
 
-			/* XXXX: Use LOJ maybe - need to compare with subsequent query for non-inherited */
+			/*
+			 * XXXX: Use LOJ maybe - need to compare with subsequent query
+			 * for non-inherited
+			 */
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "SELECT rcname from pg_relcheck, pg_inherits as i "
 							  "where rcrelid = '%s'::oid "
@@ -2064,7 +2096,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "getTables(): SELECT (for inherited CHECK) failed.  "
-							"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+						"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 			ntups2 = PQntuples(res2);
@@ -2158,17 +2190,17 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				exit_nicely(g_conn);
 			}
 
-			if (PQntuples(res2) > 1) {
+			if (PQntuples(res2) > 1)
+			{
 				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) produced more than one row on table %s.\n",
 						tblinfo[i].relname);
 				exit_nicely(g_conn);
 			}
 
-			if (PQntuples(res2) == 1) {
+			if (PQntuples(res2) == 1)
 				tblinfo[i].pkIndexOid = strdup(PQgetvalue(res2, 0, 0));
-			} else {
+			else
 				tblinfo[i].pkIndexOid = NULL;
-			}
 
 		}
 		else
@@ -2178,7 +2210,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		if (tblinfo[i].pkIndexOid != NULL)
 		{
 			PGresult   *res2;
-			int		   n;
+			int			n;
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query,
@@ -2200,7 +2232,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			{
 				fprintf(stderr,
 						"getTables(): SELECT (for PRIMARY KEY NAME) failed for table %s. "
-							"This is impossible but object with OID == %s have %d primary keys.\n",
+						"This is impossible but object with OID == %s have %d primary keys.\n",
 						tblinfo[i].relname,
 						tblinfo[i].oid,
 						n);
@@ -2210,7 +2242,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			/* Sanity check on LOJ */
 			if (PQgetisnull(res2, 0, 0))
 			{
-				fprintf(stderr,"getTables(): SELECT (for PRIMARY KEY NAME) on table %s returned NULL value.\n",
+				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY NAME) on table %s returned NULL value.\n",
 						tblinfo[i].relname);
 				exit_nicely(g_conn);
 			}
@@ -2259,7 +2291,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "getTables(): SELECT (for TRIGGER) failed.  "
-							"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+						"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 			ntups2 = PQntuples(res2);
@@ -2280,7 +2312,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			i_tgdeferrable = PQfnumber(res2, "tgdeferrable");
 			i_tginitdeferred = PQfnumber(res2, "tginitdeferred");
 
-			tblinfo[i].triggers = (TrigInfo*) malloc(ntups2 * sizeof(TrigInfo));
+			tblinfo[i].triggers = (TrigInfo *) malloc(ntups2 * sizeof(TrigInfo));
 			resetPQExpBuffer(query);
 			for (i2 = 0; i2 < ntups2; i2++)
 			{
@@ -2339,16 +2371,17 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					r = PQexec(g_conn, query->data);
 					if (!r || PQresultStatus(r) != PGRES_TUPLES_OK)
 					{
-						fprintf(stderr, "getTables(): SELECT (funcname) failed for trigger %s.  Explanation from backend: '%s'.\n", 
-									PQgetvalue(res2, i2, i_tgname), PQerrorMessage(g_conn));
+						fprintf(stderr, "getTables(): SELECT (funcname) failed for trigger %s.  Explanation from backend: '%s'.\n",
+								PQgetvalue(res2, i2, i_tgname), PQerrorMessage(g_conn));
 						exit_nicely(g_conn);
 					}
 
 					/* Sanity: Check we got only one tuple */
 					numFuncs = PQntuples(r);
-					if (numFuncs != 1) {
-						fprintf(stderr, "getTables(): SELECT (funcname) for trigger %s returned %d tuples. Expected 1.\n", 
-									PQgetvalue(res2, i2, i_tgname), numFuncs);
+					if (numFuncs != 1)
+					{
+						fprintf(stderr, "getTables(): SELECT (funcname) for trigger %s returned %d tuples. Expected 1.\n",
+								PQgetvalue(res2, i2, i_tgname), numFuncs);
 						exit_nicely(g_conn);
 					}
 
@@ -2359,10 +2392,10 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					tgfunc = strdup(finfo[findx].proname);
 
 				appendPQExpBuffer(delqry, "DROP TRIGGER %s ",
-									fmtId(PQgetvalue(res2, i2, i_tgname),
-									force_quotes));
+								  fmtId(PQgetvalue(res2, i2, i_tgname),
+										force_quotes));
 				appendPQExpBuffer(delqry, "ON %s;\n",
-									fmtId(tblinfo[i].relname, force_quotes));
+								fmtId(tblinfo[i].relname, force_quotes));
 
 				resetPQExpBuffer(query);
 				if (tgisconstraint)
@@ -2469,7 +2502,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 								fmtId(tblinfo[i].relname, force_quotes));
 				tblinfo[i].triggers[i2].tgcomment = strdup(query->data);
 				tblinfo[i].triggers[i2].oid = strdup(PQgetvalue(res2, i2, i_tgoid));
-				tblinfo[i].triggers[i2].tgname = strdup(fmtId(PQgetvalue(res2, i2, i_tgname),false));
+				tblinfo[i].triggers[i2].tgname = strdup(fmtId(PQgetvalue(res2, i2, i_tgname), false));
 				tblinfo[i].triggers[i2].tgdel = strdup(delqry->data);
 
 				if (tgfunc)
@@ -2478,9 +2511,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			PQclear(res2);
 		}
 		else
-		{
 			tblinfo[i].triggers = NULL;
-		}
 
 	}
 
@@ -2519,7 +2550,7 @@ getInherits(int *numInherits)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getInherits(): SELECT failed.  Explanation from backend: '%s'.\n", 
+		fprintf(stderr, "getInherits(): SELECT failed.  Explanation from backend: '%s'.\n",
 				PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
@@ -2592,7 +2623,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		appendPQExpBuffer(q, "SELECT a.oid as attoid, a.attnum, a.attname, t.typname, a.atttypmod, "
 						  "a.attnotnull, a.atthasdef, format_type(a.atttypid, a.atttypmod) as atttypedefn "
 						  "from pg_attribute a LEFT OUTER JOIN pg_type t ON a.atttypid = t.oid "
-				   "where a.attrelid = '%s'::oid "
+						  "where a.attrelid = '%s'::oid "
 						  "and a.attnum > 0 order by attnum",
 						  tblinfo[i].oid);
 		res = PQexec(g_conn, q->data);
@@ -2600,7 +2631,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
 			fprintf(stderr, "getTableAttrs(): SELECT failed.  "
-					"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+			"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 			exit_nicely(g_conn);
 		}
 
@@ -2670,9 +2701,10 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 				/* Sanity: Check we got only one tuple */
 				numAttr = PQntuples(res2);
-				if (numAttr != 1) {
-					fprintf(stderr, "getTableAttrs(): SELECT (for DEFAULT) for attr %s returned %d tuples. Expected 1.\n", 
-										tblinfo[i].attnames[j], numAttr);
+				if (numAttr != 1)
+				{
+					fprintf(stderr, "getTableAttrs(): SELECT (for DEFAULT) for attr %s returned %d tuples. Expected 1.\n",
+							tblinfo[i].attnames[j], numAttr);
 					exit_nicely(g_conn);
 				}
 
@@ -2730,7 +2762,7 @@ getIndices(int *numIndices)
 	appendPQExpBuffer(query,
 					  "SELECT i.oid, t1.oid as indoid, t1.relname as indexrelname, t2.relname as indrelname, "
 					  "i.indproc, i.indkey, i.indclass, "
-					  "a.amname as indamname, i.indisunique, i.indisprimary "
+				  "a.amname as indamname, i.indisunique, i.indisprimary "
 					"from pg_index i, pg_class t1, pg_class t2, pg_am a "
 				   "WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
 					  "and t1.relam = a.oid and i.indexrelid > '%u'::oid "
@@ -2742,7 +2774,7 @@ getIndices(int *numIndices)
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, "getIndices(): SELECT failed.  "
-					"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+			"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -2833,8 +2865,8 @@ dumpComment(Archive *fout, const char *target, const char *oid)
 		formatStringLiteral(query, PQgetvalue(res, 0, i_description), PASS_LFTAB);
 		appendPQExpBuffer(query, ";\n");
 
-		ArchiveEntry(fout, oid, target, "COMMENT", NULL, query->data, "" /*Del*/,
-					   "" /* Copy */, "" /*Owner*/, NULL, NULL);	
+		ArchiveEntry(fout, oid, target, "COMMENT", NULL, query->data, "" /* Del */ ,
+					 "" /* Copy */ , "" /* Owner */ , NULL, NULL);
 
 	}
 
@@ -2905,7 +2937,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 {
 	int			i;
 	PQExpBuffer q = createPQExpBuffer();
-	PQExpBuffer	delq = createPQExpBuffer();
+	PQExpBuffer delq = createPQExpBuffer();
 	int			funcInd;
 
 	for (i = 0; i < numTypes; i++)
@@ -2979,7 +3011,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 			appendPQExpBuffer(q, ");\n");
 
 		ArchiveEntry(fout, tinfo[i].oid, tinfo[i].typname, "TYPE", NULL,
-						q->data, delq->data, "", tinfo[i].usename, NULL, NULL);
+				  q->data, delq->data, "", tinfo[i].usename, NULL, NULL);
 
 		/*** Dump Type Comments ***/
 
@@ -3054,7 +3086,7 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs,
 		if (fidx >= numFuncs)
 		{
 			fprintf(stderr, "dumpProcLangs(): handler procedure for "
-						"language %s not found\n", PQgetvalue(res, i, i_lanname));
+			   "language %s not found\n", PQgetvalue(res, i, i_lanname));
 			exit_nicely(g_conn);
 		}
 
@@ -3077,7 +3109,7 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs,
 		appendPQExpBuffer(defqry, ";\n");
 
 		ArchiveEntry(fout, PQgetvalue(res, i, i_oid), lanname, "PROCEDURAL LANGUAGE",
-			    NULL, defqry->data, delqry->data, "", "", NULL, NULL);
+				   NULL, defqry->data, delqry->data, "", "", NULL, NULL);
 
 		resetPQExpBuffer(defqry);
 		resetPQExpBuffer(delqry);
@@ -3125,10 +3157,10 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	int			i_lanname;
 	char		query[256];
 
-	char		*listSep;
-	char		*listSepComma = ",";
-	char		*listSepNone = "";
-	char		*rettypename;
+	char	   *listSep;
+	char	   *listSepComma = ",";
+	char	   *listSepNone = "";
+	char	   *rettypename;
 
 	if (finfo[i].dumped)
 		return;
@@ -3142,23 +3174,23 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	res = PQexec(g_conn, query);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
-  	{
+	{
 		fprintf(stderr, "dumpOneFunc(): SELECT for procedural language failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
-  	}
+	}
 	nlangs = PQntuples(res);
 
 	if (nlangs != 1)
-  	{
+	{
 		fprintf(stderr, "dumpOneFunc(): procedural language for function %s not found\n", finfo[i].proname);
 		exit_nicely(g_conn);
-  	}
-  
+	}
+
 	i_lanname = PQfnumber(res, "lanname");
 
 	/*
-	 * See backend/commands/define.c for details of how the 'AS' clause
-	 * is used.
+	 * See backend/commands/define.c for details of how the 'AS' clause is
+	 * used.
 	 */
 	if (strcmp(finfo[i].probin, "-") != 0)
 	{
@@ -3180,14 +3212,14 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	}
 
 	strcpy(func_lang, PQgetvalue(res, 0, i_lanname));
-  
+
 	PQclear(res);
- 
+
 	resetPQExpBuffer(fn);
 	appendPQExpBuffer(fn, "%s (", fmtId(finfo[i].proname, force_quotes));
 	for (j = 0; j < finfo[i].nargs; j++)
 	{
-		char			*typname;
+		char	   *typname;
 
 		typname = findTypeByOid(tinfo, numTypes, finfo[i].argtypes[j], zeroAsOpaque);
 		if (typname == NULL)
@@ -3205,17 +3237,17 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 			return;
 		}
 
-		appendPQExpBuffer(fn, "%s%s", 
-							(j > 0) ? "," : "", 
-							typname);
+		appendPQExpBuffer(fn, "%s%s",
+						  (j > 0) ? "," : "",
+						  typname);
 		appendPQExpBuffer(fnlist, "%s%s",
-							(j > 0) ? "," : "", 
-							typname );
+						  (j > 0) ? "," : "",
+						  typname);
 	}
 	appendPQExpBuffer(fn, ")");
 
 	resetPQExpBuffer(delqry);
-	appendPQExpBuffer(delqry, "DROP FUNCTION %s;\n", fn->data );
+	appendPQExpBuffer(delqry, "DROP FUNCTION %s;\n", fn->data);
 
 	rettypename = findTypeByOid(tinfo, numTypes, finfo[i].prorettype, zeroAsOpaque);
 
@@ -3226,33 +3258,35 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 
 		fprintf(stderr, "Reason: return type name (oid %s) not found.\n",
 				finfo[i].prorettype);
-			resetPQExpBuffer(q);
-			resetPQExpBuffer(fn);
-			resetPQExpBuffer(delqry);
-			resetPQExpBuffer(fnlist);
-			resetPQExpBuffer(asPart);
-			return;
+		resetPQExpBuffer(q);
+		resetPQExpBuffer(fn);
+		resetPQExpBuffer(delqry);
+		resetPQExpBuffer(fnlist);
+		resetPQExpBuffer(asPart);
+		return;
 	}
 
 	resetPQExpBuffer(q);
-	appendPQExpBuffer(q, "CREATE FUNCTION %s ", fn->data );
+	appendPQExpBuffer(q, "CREATE FUNCTION %s ", fn->data);
 	appendPQExpBuffer(q, "RETURNS %s%s %s LANGUAGE ",
 					  (finfo[i].retset) ? "SETOF " : "",
 					  rettypename,
 					  asPart->data);
 	formatStringLiteral(q, func_lang, CONV_ALL);
 
-	if (finfo[i].iscachable || finfo[i].isstrict) /* OR in new attrs here */
+	if (finfo[i].iscachable || finfo[i].isstrict)		/* OR in new attrs here */
 	{
 		appendPQExpBuffer(q, " WITH (");
 		listSep = listSepNone;
 
-		if (finfo[i].iscachable) {
+		if (finfo[i].iscachable)
+		{
 			appendPQExpBuffer(q, "%s iscachable", listSep);
 			listSep = listSepComma;
 		}
 
-		if (finfo[i].isstrict) {
+		if (finfo[i].isstrict)
+		{
 			appendPQExpBuffer(q, "%s isstrict", listSep);
 			listSep = listSepComma;
 		}
@@ -3262,7 +3296,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	appendPQExpBuffer(q, ";\n");
 
 	ArchiveEntry(fout, finfo[i].oid, fn->data, "FUNCTION", NULL, q->data, delqry->data,
-					"", finfo[i].usename, NULL, NULL);
+				 "", finfo[i].usename, NULL, NULL);
 
 	/*** Dump Function Comments ***/
 
@@ -3303,7 +3337,7 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 
 	for (i = 0; i < numOperators; i++)
 	{
-	    char *name;
+		char	   *name;
 
 		resetPQExpBuffer(leftarg);
 		resetPQExpBuffer(rightarg);
@@ -3332,21 +3366,21 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 		if (strcmp(oprinfo[i].oprkind, "r") == 0 ||
 			strcmp(oprinfo[i].oprkind, "b") == 0)
 		{
-		    name = findTypeByOid(tinfo, numTypes, 
-								  oprinfo[i].oprleft, zeroAsOpaque);
+			name = findTypeByOid(tinfo, numTypes,
+								 oprinfo[i].oprleft, zeroAsOpaque);
 			if (name == NULL)
 			{
 				OPR_NOTICE(oprleft);
 				continue;
 			}
-			appendPQExpBuffer(leftarg, ",\n\tLEFTARG = %s ",name);
+			appendPQExpBuffer(leftarg, ",\n\tLEFTARG = %s ", name);
 		}
 
 		if (strcmp(oprinfo[i].oprkind, "l") == 0 ||
 			strcmp(oprinfo[i].oprkind, "b") == 0)
 		{
-		    name = findTypeByOid(tinfo, numTypes, 
-								  oprinfo[i].oprright, zeroAsOpaque);
+			name = findTypeByOid(tinfo, numTypes,
+								 oprinfo[i].oprright, zeroAsOpaque);
 			if (name == NULL)
 			{
 				OPR_NOTICE(oprright);
@@ -3385,7 +3419,7 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 
 		if (!(strcmp(oprinfo[i].oprlsortop, "0") == 0))
 		{
-			name = 	findOprByOid(oprinfo, numOperators, oprinfo[i].oprlsortop);
+			name = findOprByOid(oprinfo, numOperators, oprinfo[i].oprlsortop);
 			if (name == NULL)
 			{
 				OPR_NOTICE(oprlsortop);
@@ -3396,7 +3430,7 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 
 		if (!(strcmp(oprinfo[i].oprrsortop, "0") == 0))
 		{
-			name = 	findOprByOid(oprinfo, numOperators, oprinfo[i].oprrsortop);
+			name = findOprByOid(oprinfo, numOperators, oprinfo[i].oprrsortop);
 			if (name == NULL)
 			{
 				OPR_NOTICE(oprrsortop);
@@ -3407,9 +3441,9 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 
 		resetPQExpBuffer(delq);
 		appendPQExpBuffer(delq, "DROP OPERATOR %s (%s", oprinfo[i].oprname,
-					findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft, zeroAsOpaque) );
+		findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft, zeroAsOpaque));
 		appendPQExpBuffer(delq, ", %s);\n",
-					findTypeByOid(tinfo, numTypes, oprinfo[i].oprright, zeroAsOpaque) );
+						  findTypeByOid(tinfo, numTypes, oprinfo[i].oprright, zeroAsOpaque));
 
 		resetPQExpBuffer(q);
 		appendPQExpBuffer(q,
@@ -3422,13 +3456,13 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 						  commutator->data,
 						  negator->data,
 						  restrictor->data,
-						(strcmp(oprinfo[i].oprcanhash, "t") == 0) ? ",\n\tHASHES" : "",
+		  (strcmp(oprinfo[i].oprcanhash, "t") == 0) ? ",\n\tHASHES" : "",
 						  join->data,
 						  sort1->data,
 						  sort2->data);
 
 		ArchiveEntry(fout, oprinfo[i].oid, oprinfo[i].oprname, "OPERATOR", NULL,
-						q->data, delq->data, "", oprinfo[i].usename, NULL, NULL);
+				q->data, delq->data, "", oprinfo[i].usename, NULL, NULL);
 	}
 }
 
@@ -3455,7 +3489,7 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 
 	for (i = 0; i < numAggs; i++)
 	{
-		char *name;
+		char	   *name;
 
 		resetPQExpBuffer(details);
 
@@ -3493,7 +3527,7 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 
 		resetPQExpBuffer(aggSig);
 		appendPQExpBuffer(aggSig, "%s %s", agginfo[i].aggname,
-							findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype, zeroAsOpaque + useBaseTypeName));
+						  findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype, zeroAsOpaque + useBaseTypeName));
 
 		resetPQExpBuffer(delq);
 		appendPQExpBuffer(delq, "DROP AGGREGATE %s;\n", aggSig->data);
@@ -3504,7 +3538,7 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 						  details->data);
 
 		ArchiveEntry(fout, agginfo[i].oid, aggSig->data, "AGGREGATE", NULL,
-						q->data, delq->data, "", agginfo[i].usename, NULL, NULL);
+				q->data, delq->data, "", agginfo[i].usename, NULL, NULL);
 
 		/*** Dump Aggregate Comments ***/
 
@@ -3564,19 +3598,22 @@ GetPrivileges(const char *s)
 }
 
 /*
- * The name says it all; a function to append a string is the dest 
+ * The name says it all; a function to append a string is the dest
  * is big enough. If not, it does a realloc.
  */
-static void strcatalloc(char **dest, int *dSize, char *src)
+static void
+strcatalloc(char **dest, int *dSize, char *src)
 {
-    int dLen = strlen(*dest);
-    int sLen = strlen(src);
-    if ( (dLen + sLen) >= *dSize) {
-	*dSize = (dLen + sLen) * 2;
-	*dest = realloc(*dest, *dSize);
-    }
-    strcpy(*dest + dLen, src);
-} 
+	int			dLen = strlen(*dest);
+	int			sLen = strlen(src);
+
+	if ((dLen + sLen) >= *dSize)
+	{
+		*dSize = (dLen + sLen) * 2;
+		*dest = realloc(*dest, *dSize);
+	}
+	strcpy(*dest + dLen, src);
+}
 
 
 /*
@@ -3588,14 +3625,14 @@ static void strcatalloc(char **dest, int *dSize, char *src)
 static void
 dumpACL(Archive *fout, TableInfo tbinfo)
 {
-	const char 	*acls = tbinfo.relacl;
-	char	   	*aclbuf,
+	const char *acls = tbinfo.relacl;
+	char	   *aclbuf,
 			   *tok,
 			   *eqpos,
 			   *priv;
-	char		*sql;
+	char	   *sql;
 	char		tmp[1024];
-	int		sSize = 4096;
+	int			sSize = 4096;
 
 	if (strlen(acls) == 0)
 		return;					/* table has default permissions */
@@ -3603,13 +3640,13 @@ dumpACL(Archive *fout, TableInfo tbinfo)
 	/*
 	 * Allocate a larginsh buffer for the output SQL.
 	 */
-	sql = (char*)malloc(sSize);
+	sql = (char *) malloc(sSize);
 
 	/*
 	 * Revoke Default permissions for PUBLIC. Is this actually necessary,
 	 * or is it just a waste of time?
 	 */
-	sprintf(sql,	"REVOKE ALL on %s from PUBLIC;\n",
+	sprintf(sql, "REVOKE ALL on %s from PUBLIC;\n",
 			fmtId(tbinfo.relname, force_quotes));
 
 	/* Make a working copy of acls so we can use strtok */
@@ -3644,7 +3681,7 @@ dumpACL(Archive *fout, TableInfo tbinfo)
 		priv = GetPrivileges(eqpos + 1);
 		if (*priv)
 		{
-			sprintf(tmp,	"GRANT %s on %s to ",
+			sprintf(tmp, "GRANT %s on %s to ",
 					priv, fmtId(tbinfo.relname, force_quotes));
 			strcatalloc(&sql, &sSize, tmp);
 
@@ -3770,13 +3807,13 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 						/* Attr name & type */
 						appendPQExpBuffer(q, "%s %s",
-							fmtId(tblinfo[i].attnames[j], force_quotes),
-							tblinfo[i].atttypedefns[j]);
+							 fmtId(tblinfo[i].attnames[j], force_quotes),
+										  tblinfo[i].atttypedefns[j]);
 
 						/* Default value */
 						if (tblinfo[i].adef_expr[j] != NULL)
 							appendPQExpBuffer(q, " DEFAULT %s",
-										  tblinfo[i].adef_expr[j]);
+											  tblinfo[i].adef_expr[j]);
 
 						/* Not Null constraint */
 						if (tblinfo[i].notnull[j])
@@ -3795,31 +3832,31 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 						appendPQExpBuffer(q, ",\n\t");
 
 					appendPQExpBuffer(q, "%s",
-								  tblinfo[i].check_expr[k]);
+									  tblinfo[i].check_expr[k]);
 				}
 
 				/* Primary Key */
 				if (tblinfo[i].pkIndexOid != NULL)
 				{
-					PQExpBuffer	consDef;
+					PQExpBuffer consDef;
 
 					/* Find the corresponding index */
 					for (k = 0; k < numIndices; k++)
 					{
-						if (strcmp(indinfo[k].oid, tblinfo[i].pkIndexOid) == 0) 
+						if (strcmp(indinfo[k].oid, tblinfo[i].pkIndexOid) == 0)
 							break;
 					}
 
 					if (k >= numIndices)
 					{
 						fprintf(stderr, "dumpTables(): failed sanity check, could not find index (%s) for PK constraint\n",
-									tblinfo[i].pkIndexOid);
+								tblinfo[i].pkIndexOid);
 						exit_nicely(g_conn);
 					}
 
 					consDef = getPKconstraint(&tblinfo[i], &indinfo[k]);
 
-					if ( (actual_atts + tblinfo[i].ncheck) > 0)
+					if ((actual_atts + tblinfo[i].ncheck) > 0)
 						appendPQExpBuffer(q, ",\n\t");
 
 					appendPQExpBuffer(q, "%s", consDef->data);
@@ -3836,8 +3873,8 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 					for (k = 0; k < numParents; k++)
 					{
 						appendPQExpBuffer(q, "%s%s",
-									  (k > 0) ? ", " : "",
-									  fmtId(parentRels[k], force_quotes));
+										  (k > 0) ? ", " : "",
+									 fmtId(parentRels[k], force_quotes));
 					}
 					appendPQExpBuffer(q, ")");
 				}
@@ -3845,11 +3882,12 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 				appendPQExpBuffer(q, ";\n");
 			}
 
-			if (!dataOnly) {
+			if (!dataOnly)
+			{
 
 				ArchiveEntry(fout, tblinfo[i].oid, tblinfo[i].relname,
-								reltypename, NULL, q->data, delq->data, "", tblinfo[i].usename,
-								NULL, NULL);
+							 reltypename, NULL, q->data, delq->data, "", tblinfo[i].usename,
+							 NULL, NULL);
 
 				if (!aclsSkip)
 					dumpACL(fout, tblinfo[i]);
@@ -3877,16 +3915,17 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 	}
 }
 
-static PQExpBuffer getPKconstraint(TableInfo *tblInfo, IndInfo *indInfo)
+static PQExpBuffer
+getPKconstraint(TableInfo *tblInfo, IndInfo *indInfo)
 {
-	PQExpBuffer 	pkBuf = createPQExpBuffer();
-	int				k;
-	int				indkey;
+	PQExpBuffer pkBuf = createPQExpBuffer();
+	int			k;
+	int			indkey;
 
-   	resetPQExpBuffer(pkBuf);
+	resetPQExpBuffer(pkBuf);
 
 	appendPQExpBuffer(pkBuf, "Constraint %s Primary Key (",
-						tblInfo->primary_key_name);
+					  tblInfo->primary_key_name);
 
 
 	for (k = 0; k < INDEX_MAX_KEYS; k++)
@@ -3903,8 +3942,8 @@ static PQExpBuffer getPKconstraint(TableInfo *tblInfo, IndInfo *indInfo)
 			attname = tblInfo->attnames[indkey];
 
 		appendPQExpBuffer(pkBuf, "%s%s",
-							(k == 0) ? "" : ", ", 
-							fmtId(attname, force_quotes));
+						  (k == 0) ? "" : ", ",
+						  fmtId(attname, force_quotes));
 	}
 
 	appendPQExpBuffer(pkBuf, ")");
@@ -3954,21 +3993,25 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 /*
  *			***PK: Enable this code when ALTER TABLE supports PK constraints. ***
  *
- *			PQExpBuffer	consDef = getPKconstraint(&tblinfo[tableInd], &indinfo[i]);
+ *			PQExpBuffer consDef = getPKconstraint(&tblinfo[tableInd], &indinfo[i]);
  *
  *			resetPQExpBuffer(attlist);
  *
- *			appendPQExpBuffer(attlist, "Alter Table %s Add %s;", 
+ *			appendPQExpBuffer(attlist, "Alter Table %s Add %s;",
  *								fmtId(tblinfo[tableInd].relname, force_quotes),
  *								consDef->data);
  *
- *			ArchiveEntry(fout, indinfo[i].oid, tblinfo[tableInd].primary_key_name, "CONSTRAINT", NULL, 
+ *			ArchiveEntry(fout, indinfo[i].oid, tblinfo[tableInd].primary_key_name, "CONSTRAINT", NULL,
  *							attlist->data, "",
  *							"", tblinfo[tableInd].usename, NULL, NULL);
  *
  *			destroyPQExpBuffer(consDef);
  */
-			/* Don't need to do anything else for this system-generated index */
+
+			/*
+			 * Don't need to do anything else for this system-generated
+			 * index
+			 */
 			continue;
 		}
 
@@ -3977,7 +4020,7 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 			funcname = NULL;
 		else
 		{
-			int		numFuncs;
+			int			numFuncs;
 
 			/*
 			 * the funcname is an oid which we use to find the name of the
@@ -4000,9 +4043,10 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 
 			/* Sanity: Check we got only one tuple */
 			numFuncs = PQntuples(res);
-			if (numFuncs != 1) {
-				fprintf(stderr, "dumpIndices(): SELECT (funcname) for index %s returned %d tuples. Expected 1.\n", 
-								indinfo[i].indrelname, numFuncs);
+			if (numFuncs != 1)
+			{
+				fprintf(stderr, "dumpIndices(): SELECT (funcname) for index %s returned %d tuples. Expected 1.\n",
+						indinfo[i].indrelname, numFuncs);
 				exit_nicely(g_conn);
 			}
 
@@ -4013,7 +4057,7 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 		/* convert opclass oid(s) into names */
 		for (nclass = 0; nclass < INDEX_MAX_KEYS; nclass++)
 		{
-			int		numRows;
+			int			numRows;
 
 			indclass = atoi(indinfo[i].indclass[nclass]);
 			if (indclass == 0)
@@ -4027,15 +4071,16 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 			if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "dumpIndices(): SELECT (classname) failed.  "
-									"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+						"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 
 			/* Sanity: Check we got only one tuple */
 			numRows = PQntuples(res);
-			if (numRows != 1) {
-				fprintf(stderr, "dumpIndices(): SELECT (classname) for index %s returned %d tuples. Expected 1.\n", 
-									indinfo[i].indrelname, numRows);
+			if (numRows != 1)
+			{
+				fprintf(stderr, "dumpIndices(): SELECT (classname) for index %s returned %d tuples. Expected 1.\n",
+						indinfo[i].indrelname, numRows);
 				exit_nicely(g_conn);
 			}
 
@@ -4086,7 +4131,7 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 			}
 		}
 
-		if (!tablename || (strcmp(indinfo[i].indrelname, tablename) == 0) || (strlen(tablename) == 0) )
+		if (!tablename || (strcmp(indinfo[i].indrelname, tablename) == 0) || (strlen(tablename) == 0))
 		{
 
 			/*
@@ -4105,16 +4150,16 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "CREATE %s INDEX %s on %s using %s (",
-					(strcmp(indinfo[i].indisunique, "t") == 0) ? "UNIQUE" : "",
-					id1->data,
-					id2->data,
-					indinfo[i].indamname);
+			  (strcmp(indinfo[i].indisunique, "t") == 0) ? "UNIQUE" : "",
+							  id1->data,
+							  id2->data,
+							  indinfo[i].indamname);
 			if (funcname)
 			{
 				/* need 2 printf's here cuz fmtId has static return area */
 				appendPQExpBuffer(q, " %s", fmtId(funcname, false));
-				appendPQExpBuffer(q, " (%s) %s );\n", attlist->data, 
-									fmtId(classname[0], force_quotes));
+				appendPQExpBuffer(q, " (%s) %s );\n", attlist->data,
+								  fmtId(classname[0], force_quotes));
 				free(funcname);
 				free(classname[0]);
 			}
@@ -4124,7 +4169,7 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 			/* Dump Index Comments */
 
 			ArchiveEntry(fout, tblinfo[tableInd].oid, id1->data, "INDEX", NULL, q->data, delq->data,
-							"", tblinfo[tableInd].usename, NULL, NULL);
+						 "", tblinfo[tableInd].usename, NULL, NULL);
 
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "INDEX %s", id1->data);
@@ -4208,17 +4253,17 @@ dumpTuples(PGresult *res, FILE *fout, int *attrmap)
 static void
 setMaxOid(Archive *fout)
 {
-	PGresult   	*res;
-	Oid		max_oid;
+	PGresult   *res;
+	Oid			max_oid;
 	char		sql[1024];
-	int		pos;
+	int			pos;
 
 	res = PQexec(g_conn, "CREATE TEMPORARY TABLE pgdump_oid (dummy int4)");
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "Can not create pgdump_oid table.  "
-					"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+			"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -4227,7 +4272,7 @@ setMaxOid(Archive *fout)
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "Can not insert into pgdump_oid table.  "
-					"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+			"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	max_oid = atol(PQoidStatus(res));
@@ -4242,7 +4287,7 @@ setMaxOid(Archive *fout)
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "Can not drop pgdump_oid table.  "
-							"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+			"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -4250,10 +4295,10 @@ setMaxOid(Archive *fout)
 		fprintf(stderr, "%s maximum system oid is %u %s\n",
 				g_comment_start, max_oid, g_comment_end);
 	pos = snprintf(sql, 1024, "CREATE TEMPORARY TABLE pgdump_oid (dummy int4);\n");
-	pos = pos + snprintf(sql+pos, 1024-pos, "COPY pgdump_oid WITH OIDS FROM stdin;\n");
-	pos = pos + snprintf(sql+pos, 1024-pos, "%-d\t0\n", max_oid);
-	pos = pos + snprintf(sql+pos, 1024-pos, "\\.\n");
-	pos = pos + snprintf(sql+pos, 1024-pos, "DROP TABLE pgdump_oid;\n");
+	pos = pos + snprintf(sql + pos, 1024 - pos, "COPY pgdump_oid WITH OIDS FROM stdin;\n");
+	pos = pos + snprintf(sql + pos, 1024 - pos, "%-d\t0\n", max_oid);
+	pos = pos + snprintf(sql + pos, 1024 - pos, "\\.\n");
+	pos = pos + snprintf(sql + pos, 1024 - pos, "DROP TABLE pgdump_oid;\n");
 
 	ArchiveEntry(fout, "0", "Max OID", "<Init>", NULL, sql, "", "", "", NULL, NULL);
 }
@@ -4265,7 +4310,7 @@ setMaxOid(Archive *fout)
  */
 
 static Oid
-findLastBuiltinOid(const char* dbname)
+findLastBuiltinOid(const char *dbname)
 {
 	PGresult   *res;
 	int			ntups;
@@ -4327,7 +4372,7 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, "dumpSequence(%s): SELECT failed.  "
-					"Explanation from backend: '%s'.\n", tbinfo.relname, PQerrorMessage(g_conn));
+				"Explanation from backend: '%s'.\n", tbinfo.relname, PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -4358,10 +4403,10 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 	called = *t;
 
 	/*
-	 * The logic we use for restoring sequences is as follows:
-	 *		- 	Add a basic CREATE SEQUENCE statement 
-	 *			(use last_val for start if called == 'f', else use min_val for start_val).
-	 *		-	Add a 'SETVAL(seq, last_val, iscalled)' at restore-time iff we load data
+	 * The logic we use for restoring sequences is as follows: -   Add a
+	 * basic CREATE SEQUENCE statement (use last_val for start if called
+	 * == 'f', else use min_val for start_val). -	Add a 'SETVAL(seq,
+	 * last_val, iscalled)' at restore-time iff we load data
 	 */
 
 	if (!dataOnly)
@@ -4373,15 +4418,15 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query,
-					  "CREATE SEQUENCE %s start %d increment %d maxvalue %d "
+				  "CREATE SEQUENCE %s start %d increment %d maxvalue %d "
 						  "minvalue %d  cache %d %s;\n",
-						fmtId(tbinfo.relname, force_quotes), 
+						  fmtId(tbinfo.relname, force_quotes),
 						  (called == 't') ? minv : last,
 						  incby, maxv, minv, cache,
 						  (cycled == 't') ? "cycle" : "");
 
 		ArchiveEntry(fout, tbinfo.oid, tbinfo.relname, "SEQUENCE", NULL,
-						query->data, delqry->data, "", tbinfo.usename, NULL, NULL);
+			  query->data, delqry->data, "", tbinfo.usename, NULL, NULL);
 	}
 
 	if (!schemaOnly)
@@ -4392,7 +4437,7 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 		appendPQExpBuffer(query, ", %d, '%c');\n", last, called);
 
 		ArchiveEntry(fout, tbinfo.oid, tbinfo.relname, "SEQUENCE SET", NULL,
-						query->data, "" /* Del */, "", "", NULL, NULL);
+					 query->data, "" /* Del */ , "", "", NULL, NULL);
 	}
 
 	if (!dataOnly)
@@ -4419,14 +4464,14 @@ dumpTriggers(Archive *fout, const char *tablename,
 
 	for (i = 0; i < numTables; i++)
 	{
-		if (tablename && (strcmp(tblinfo[i].relname, tablename) != 0) && (strlen(tablename) > 0) )
+		if (tablename && (strcmp(tblinfo[i].relname, tablename) != 0) && (strlen(tablename) > 0))
 			continue;
 
 		for (j = 0; j < tblinfo[i].ntrig; j++)
 		{
 			ArchiveEntry(fout, tblinfo[i].triggers[j].oid, tblinfo[i].triggers[j].tgname,
-						"TRIGGER", NULL, tblinfo[i].triggers[j].tgsrc, "", "", 
-						tblinfo[i].usename, NULL, NULL);
+				   "TRIGGER", NULL, tblinfo[i].triggers[j].tgsrc, "", "",
+						 tblinfo[i].usename, NULL, NULL);
 			dumpComment(fout, tblinfo[i].triggers[j].tgcomment, tblinfo[i].triggers[j].oid);
 		}
 	}
@@ -4457,13 +4502,12 @@ dumpRules(Archive *fout, const char *tablename,
 	 */
 	for (t = 0; t < numTables; t++)
 	{
-		if (tablename && (strcmp(tblinfo[t].relname, tablename) != 0) && (strlen(tablename) > 0) )
+		if (tablename && (strcmp(tblinfo[t].relname, tablename) != 0) && (strlen(tablename) > 0))
 			continue;
 
 		/*
-		 * Get all rules defined for this table
-		 * We include pg_rules in the cross since it filters out
-		 * all view rules (pjw 15-Sep-2000).
+		 * Get all rules defined for this table We include pg_rules in the
+		 * cross since it filters out all view rules (pjw 15-Sep-2000).
 		 *
 		 * XXXX: Use LOJ here
 		 */
@@ -4477,7 +4521,7 @@ dumpRules(Archive *fout, const char *tablename,
 		appendPQExpBuffer(query,
 						  "    AND pg_rewrite.ev_class = pg_class.oid "
 						  "    AND pg_rules.tablename = pg_class.relname "
-						  "    AND pg_rules.rulename = pg_rewrite.rulename "
+					   "    AND pg_rules.rulename = pg_rewrite.rulename "
 						  "ORDER BY pg_rewrite.oid");
 		res = PQexec(g_conn, query->data);
 		if (!res ||
@@ -4501,8 +4545,8 @@ dumpRules(Archive *fout, const char *tablename,
 		for (i = 0; i < nrules; i++)
 		{
 			ArchiveEntry(fout, PQgetvalue(res, i, i_oid), PQgetvalue(res, i, i_rulename),
-							"RULE", NULL, PQgetvalue(res, i, i_definition),
-							"", "", PQgetvalue(res, i, i_owner), NULL, NULL);
+						 "RULE", NULL, PQgetvalue(res, i, i_definition),
+						 "", "", PQgetvalue(res, i, i_owner), NULL, NULL);
 
 			/* Dump rule comments */
 
@@ -4515,4 +4559,3 @@ dumpRules(Archive *fout, const char *tablename,
 		PQclear(res);
 	}
 }
-

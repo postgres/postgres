@@ -11,7 +11,7 @@
  * space limit specified by the caller.
  *
  * The (approximate) amount of memory allowed to the tuplestore is specified
- * in kilobytes by the caller.  We absorb tuples and simply store them in an
+ * in kilobytes by the caller.	We absorb tuples and simply store them in an
  * in-memory array as long as we haven't exceeded maxKBytes.  If we reach the
  * end of the input without exceeding maxKBytes, we just return tuples during
  * the read phase by scanning the tuple array sequentially.  If we do exceed
@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.2 2001/01/24 19:43:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.3 2001/03/22 04:00:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
 #include "utils/tuplestore.h"
 
 /*
- * Possible states of a Tuplestore object.  These denote the states that
+ * Possible states of a Tuplestore object.	These denote the states that
  * persist between calls of Tuplestore routines.
  */
 typedef enum
@@ -66,12 +66,12 @@ struct Tuplestorestate
 	 * know it. They are set up by the tuplestore_begin_xxx routines.
 	 *
 	 * (Although tuplestore.c currently only supports heap tuples, I've
-	 * copied this part of tuplesort.c so that extension to other kinds
-	 * of objects will be easy if it's ever needed.)
+	 * copied this part of tuplesort.c so that extension to other kinds of
+	 * objects will be easy if it's ever needed.)
 	 *
-	 * Function to copy a supplied input tuple into palloc'd space. (NB:
-	 * we assume that a single pfree() is enough to release the tuple
-	 * later, so the representation must be "flat" in one palloc chunk.)
+	 * Function to copy a supplied input tuple into palloc'd space. (NB: we
+	 * assume that a single pfree() is enough to release the tuple later,
+	 * so the representation must be "flat" in one palloc chunk.)
 	 * state->availMem must be decreased by the amount of space used.
 	 */
 	void	   *(*copytup) (Tuplestorestate *state, void *tup);
@@ -95,7 +95,8 @@ struct Tuplestorestate
 
 	/*
 	 * This array holds pointers to tuples in memory if we are in state
-	 * INITIAL or READMEM.  In states WRITEFILE and READFILE it's not used.
+	 * INITIAL or READMEM.	In states WRITEFILE and READFILE it's not
+	 * used.
 	 */
 	void	  **memtuples;		/* array of pointers to palloc'd tuples */
 	int			memtupcount;	/* number of tuples currently present */
@@ -116,7 +117,7 @@ struct Tuplestorestate
 };
 
 #define COPYTUP(state,tup)	((*(state)->copytup) (state, tup))
-#define WRITETUP(state,tup)	((*(state)->writetup) (state, tup))
+#define WRITETUP(state,tup) ((*(state)->writetup) (state, tup))
 #define READTUP(state,len)	((*(state)->readtup) (state, len))
 #define LACKMEM(state)		((state)->availMem < 0)
 #define USEMEM(state,amt)	((state)->availMem -= (amt))
@@ -145,7 +146,7 @@ struct Tuplestorestate
  * the back length word (if present).
  *
  * The write/read routines can make use of the tuple description data
- * stored in the Tuplestorestate record, if needed.	They are also expected
+ * stored in the Tuplestorestate record, if needed. They are also expected
  * to adjust state->availMem by the amount of memory space (not tape space!)
  * released or consumed.  There is no error return from either writetup
  * or readtup; they should elog() on failure.
@@ -183,7 +184,7 @@ struct Tuplestorestate
 
 
 static Tuplestorestate *tuplestore_begin_common(bool randomAccess,
-												int maxKBytes);
+						int maxKBytes);
 static void dumptuples(Tuplestorestate *state);
 static unsigned int getlen(Tuplestorestate *state, bool eofOK);
 static void markrunend(Tuplestorestate *state);
@@ -222,7 +223,7 @@ tuplestore_begin_common(bool randomAccess, int maxKBytes)
 
 	state->memtupcount = 0;
 	if (maxKBytes > 0)
-		state->memtupsize = 1024; /* initial guess */
+		state->memtupsize = 1024;		/* initial guess */
 	else
 		state->memtupsize = 1;	/* won't really need any space */
 	state->memtuples = (void **) palloc(state->memtupsize * sizeof(void *));
@@ -270,14 +271,16 @@ tuplestore_end(Tuplestorestate *state)
 void
 tuplestore_puttuple(Tuplestorestate *state, void *tuple)
 {
+
 	/*
-	 * Copy the tuple.  (Must do this even in WRITEFILE case.)
+	 * Copy the tuple.	(Must do this even in WRITEFILE case.)
 	 */
 	tuple = COPYTUP(state, tuple);
 
 	switch (state->status)
 	{
 		case TSS_INITIAL:
+
 			/*
 			 * Stash the tuple in the in-memory array.
 			 */
@@ -321,7 +324,8 @@ tuplestore_donestoring(Tuplestorestate *state)
 {
 	switch (state->status)
 	{
-		case TSS_INITIAL:
+			case TSS_INITIAL:
+
 			/*
 			 * We were able to accumulate all the tuples within the
 			 * allowed amount of memory.  Just set up to scan them.
@@ -333,10 +337,12 @@ tuplestore_donestoring(Tuplestorestate *state)
 			state->status = TSS_READMEM;
 			break;
 		case TSS_WRITEFILE:
+
 			/*
 			 * Write the EOF marker.
 			 */
 			markrunend(state);
+
 			/*
 			 * Set up for reading from tape.
 			 */
@@ -361,7 +367,7 @@ tuplestore_donestoring(Tuplestorestate *state)
  */
 void *
 tuplestore_gettuple(Tuplestorestate *state, bool forward,
-				   bool *should_free)
+					bool *should_free)
 {
 	unsigned int tuplen;
 	void	   *tup;
@@ -434,7 +440,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 				 * empty file.
 				 */
 				if (BufFileSeek(state->myfile, 0,
-								- (long) (2 * sizeof(unsigned int)),
+								-(long) (2 * sizeof(unsigned int)),
 								SEEK_CUR) != 0)
 					return NULL;
 				state->eof_reached = false;
@@ -448,7 +454,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 				 * file.
 				 */
 				if (BufFileSeek(state->myfile, 0,
-								- (long) sizeof(unsigned int),
+								-(long) sizeof(unsigned int),
 								SEEK_CUR) != 0)
 					return NULL;
 				tuplen = getlen(state, false);
@@ -457,7 +463,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 				 * Back up to get ending length word of tuple before it.
 				 */
 				if (BufFileSeek(state->myfile, 0,
-								- (long) (tuplen + 2 * sizeof(unsigned int)),
+							 -(long) (tuplen + 2 * sizeof(unsigned int)),
 								SEEK_CUR) != 0)
 				{
 
@@ -468,7 +474,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 					 * but that is what in-memory case does).
 					 */
 					if (BufFileSeek(state->myfile, 0,
-									- (long) (tuplen + sizeof(unsigned int)),
+								 -(long) (tuplen + sizeof(unsigned int)),
 									SEEK_CUR) != 0)
 						elog(ERROR, "tuplestore_gettuple: bogus tuple len in backward scan");
 					return NULL;
@@ -483,7 +489,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			 * initial length word of the tuple, so back up to that point.
 			 */
 			if (BufFileSeek(state->myfile, 0,
-							- (long) tuplen,
+							-(long) tuplen,
 							SEEK_CUR) != 0)
 				elog(ERROR, "tuplestore_gettuple: bogus tuple len in backward scan");
 			tup = READTUP(state, tuplen);
@@ -504,9 +510,7 @@ dumptuples(Tuplestorestate *state)
 	int			i;
 
 	for (i = 0; i < state->memtupcount; i++)
-	{
 		WRITETUP(state, state->memtuples[i]);
-	}
 	state->memtupcount = 0;
 }
 

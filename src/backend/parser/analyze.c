@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.181 2001/02/15 01:10:28 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.182 2001/03/22 03:59:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ transformStmt(ParseState *pstate, Node *parseTree)
 											 (SelectStmt *) parseTree);
 			else
 				result = transformSetOperationStmt(pstate,
-												   (SelectStmt *) parseTree);
+											   (SelectStmt *) parseTree);
 			break;
 
 		default:
@@ -302,11 +302,11 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/*
 	 * If a non-nil rangetable/namespace was passed in, and we are doing
 	 * INSERT/SELECT, arrange to pass the rangetable/namespace down to the
-	 * SELECT.  This can only happen if we are inside a CREATE RULE,
-	 * and in that case we want the rule's OLD and NEW rtable entries to
+	 * SELECT.	This can only happen if we are inside a CREATE RULE, and
+	 * in that case we want the rule's OLD and NEW rtable entries to
 	 * appear as part of the SELECT's rtable, not as outer references for
-	 * it.  (Kluge!)  The SELECT's joinlist is not affected however.
-	 * We must do this before adding the target table to the INSERT's rtable.
+	 * it.	(Kluge!)  The SELECT's joinlist is not affected however. We
+	 * must do this before adding the target table to the INSERT's rtable.
 	 */
 	if (stmt->selectStmt)
 	{
@@ -324,7 +324,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/*
 	 * Must get write lock on INSERT target table before scanning SELECT,
 	 * else we will grab the wrong kind of initial lock if the target
-	 * table is also mentioned in the SELECT part.  Note that the target
+	 * table is also mentioned in the SELECT part.	Note that the target
 	 * table is not added to the joinlist or namespace.
 	 */
 	qry->resultRelation = setTargetTable(pstate, stmt->relname,
@@ -336,17 +336,17 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	if (stmt->selectStmt)
 	{
 		ParseState *sub_pstate = make_parsestate(pstate->parentParseState);
-		Query  *selectQuery;
+		Query	   *selectQuery;
 		RangeTblEntry *rte;
 		RangeTblRef *rtr;
 
 		/*
 		 * Process the source SELECT.
 		 *
-		 * It is important that this be handled just like a standalone SELECT;
-		 * otherwise the behavior of SELECT within INSERT might be different
-		 * from a stand-alone SELECT. (Indeed, Postgres up through 6.5 had
-		 * bugs of just that nature...)
+		 * It is important that this be handled just like a standalone
+		 * SELECT; otherwise the behavior of SELECT within INSERT might be
+		 * different from a stand-alone SELECT. (Indeed, Postgres up
+		 * through 6.5 had bugs of just that nature...)
 		 */
 		sub_pstate->p_rtable = sub_rtable;
 		sub_pstate->p_namespace = sub_namespace;
@@ -360,9 +360,10 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		Assert(selectQuery->commandType == CMD_SELECT);
 		if (selectQuery->into || selectQuery->isPortal)
 			elog(ERROR, "INSERT ... SELECT may not specify INTO");
+
 		/*
-		 * Make the source be a subquery in the INSERT's rangetable,
-		 * and add it to the INSERT's joinlist.
+		 * Make the source be a subquery in the INSERT's rangetable, and
+		 * add it to the INSERT's joinlist.
 		 */
 		rte = addRangeTableEntryForSubquery(pstate,
 											selectQuery,
@@ -373,18 +374,19 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		rtr->rtindex = length(pstate->p_rtable);
 		Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 		pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
+
 		/*
-		 * Generate a targetlist for the INSERT that selects all
-		 * the non-resjunk columns from the subquery.  (We need this to
-		 * be separate from the subquery's tlist because we may add
-		 * columns, insert datatype coercions, etc.)
+		 * Generate a targetlist for the INSERT that selects all the
+		 * non-resjunk columns from the subquery.  (We need this to be
+		 * separate from the subquery's tlist because we may add columns,
+		 * insert datatype coercions, etc.)
 		 *
 		 * HACK: constants in the INSERT's targetlist are copied up as-is
-		 * rather than being referenced as subquery outputs.  This is mainly
-		 * to ensure that when we try to coerce them to the target column's
-		 * datatype, the right things happen for UNKNOWN constants.
-		 * Otherwise this fails:
-		 *		INSERT INTO foo SELECT 'bar', ... FROM baz
+		 * rather than being referenced as subquery outputs.  This is
+		 * mainly to ensure that when we try to coerce them to the target
+		 * column's datatype, the right things happen for UNKNOWN
+		 * constants. Otherwise this fails: INSERT INTO foo SELECT 'bar',
+		 * ... FROM baz
 		 */
 		qry->targetList = NIL;
 		foreach(tl, selectQuery->targetList)
@@ -411,9 +413,10 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	}
 	else
 	{
+
 		/*
-		 * For INSERT ... VALUES, transform the given list of values
-		 * to form a targetlist for the INSERT.
+		 * For INSERT ... VALUES, transform the given list of values to
+		 * form a targetlist for the INSERT.
 		 */
 		qry->targetList = transformTargetList(pstate, stmt->targetList);
 	}
@@ -466,8 +469,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * have defaults and were not assigned to by the user.
 	 *
 	 * XXX wouldn't it make more sense to do this further downstream, after
-	 * the rule rewriter?  As is, altering a column default will not change
-	 * the behavior of INSERTs in already-defined rules.
+	 * the rule rewriter?  As is, altering a column default will not
+	 * change the behavior of INSERTs in already-defined rules.
 	 */
 	rd_att = pstate->p_target_relation->rd_att;
 	if (rd_att->constr && rd_att->constr->num_defval > 0)
@@ -618,8 +621,8 @@ CreateIndexName(char *table_name, char *column_name,
 	 * The type name for makeObjectName is label, or labelN if that's
 	 * necessary to prevent collisions among multiple indexes for the same
 	 * table.  Note there is no check for collisions with already-existing
-	 * indexes, only among the indexes we're about to create now; this ought
-	 * to be improved someday.
+	 * indexes, only among the indexes we're about to create now; this
+	 * ought to be improved someday.
 	 */
 	strcpy(typename, label);
 
@@ -748,7 +751,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_UNIQUE;
-					constraint->name = NULL; /* assign later */
+					constraint->name = NULL;	/* assign later */
 					column->constraints = lappend(column->constraints,
 												  constraint);
 
@@ -948,7 +951,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		else if (constraint->contype == CONSTR_PRIMARY)
 			index->idxname = makeObjectName(stmt->relname, NULL, "pkey");
 		else
-			index->idxname = NULL; /* will set it later */
+			index->idxname = NULL;		/* will set it later */
 
 		index->relname = stmt->relname;
 		index->accessMethod = "btree";
@@ -956,9 +959,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		index->withClause = NIL;
 		index->whereClause = NULL;
 
-		foreach (keys, constraint->keys)
+		foreach(keys, constraint->keys)
 		{
-			bool	found = false;
+			bool		found = false;
 
 			key = (Ident *) lfirst(keys);
 			Assert(IsA(key, Ident));
@@ -982,14 +985,14 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			else
 			{
 				/* try inherited tables */
-				List *inhRelnames = stmt->inhRelnames;
-				List *inher;
+				List	   *inhRelnames = stmt->inhRelnames;
+				List	   *inher;
 
-				foreach (inher, inhRelnames)
+				foreach(inher, inhRelnames)
 				{
-					Value *inh = lfirst(inher);
-					Relation rel;
-					int count;
+					Value	   *inh = lfirst(inher);
+					Relation	rel;
+					int			count;
 
 					Assert(IsA(inh, String));
 					rel = heap_openr(strVal(inh), AccessShareLock);
@@ -999,26 +1002,28 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					for (count = 0; count < rel->rd_att->natts; count++)
 					{
 						Form_pg_attribute inhattr = rel->rd_att->attrs[count];
-						char *inhname = NameStr(inhattr->attname);
+						char	   *inhname = NameStr(inhattr->attname);
 
 						if (strcmp(key->name, inhname) == 0)
 						{
 							found = true;
+
 							/*
-							 * If the column is inherited, we currently have
-							 * no easy way to force it to be NOT NULL.
-							 * Only way I can see to fix this would be to
-							 * convert the inherited-column info to ColumnDef
-							 * nodes before we reach this point, and then
-							 * create the table from those nodes rather than
-							 * referencing the parent tables later.  That
-							 * would likely be cleaner, but too much work
-							 * to contemplate right now.  Instead, raise an
-							 * error if the inherited column won't be NOT NULL.
-							 * (Would a NOTICE be more reasonable?)
+							 * If the column is inherited, we currently
+							 * have no easy way to force it to be NOT
+							 * NULL. Only way I can see to fix this would
+							 * be to convert the inherited-column info to
+							 * ColumnDef nodes before we reach this point,
+							 * and then create the table from those nodes
+							 * rather than referencing the parent tables
+							 * later.  That would likely be cleaner, but
+							 * too much work to contemplate right now.
+							 * Instead, raise an error if the inherited
+							 * column won't be NOT NULL. (Would a NOTICE
+							 * be more reasonable?)
 							 */
 							if (constraint->contype == CONSTR_PRIMARY &&
-								! inhattr->attnotnull)
+								!inhattr->attnotnull)
 								elog(ERROR, "inherited attribute \"%s\" cannot be a PRIMARY KEY because it is not marked NOT NULL",
 									 inhname);
 							break;
@@ -1047,10 +1052,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 	/*
 	 * Scan the index list and remove any redundant index specifications.
-	 * This can happen if, for instance, the user writes SERIAL PRIMARY KEY
-	 * or SERIAL UNIQUE.  A strict reading of SQL92 would suggest raising
-	 * an error instead, but that strikes me as too anal-retentive.
-	 * - tgl 2001-02-14
+	 * This can happen if, for instance, the user writes SERIAL PRIMARY
+	 * KEY or SERIAL UNIQUE.  A strict reading of SQL92 would suggest
+	 * raising an error instead, but that strikes me as too
+	 * anal-retentive. - tgl 2001-02-14
 	 */
 	dlist = ilist;
 	ilist = NIL;
@@ -1075,12 +1080,13 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 				if (equal(index->indexParams, priorindex->indexParams))
 				{
+
 					/*
 					 * If the prior index is as yet unnamed, and this one
-					 * is named, then transfer the name to the prior index.
-					 * This ensures that if we have named and unnamed
-					 * constraints, we'll use (at least one of) the names
-					 * for the index.
+					 * is named, then transfer the name to the prior
+					 * index. This ensures that if we have named and
+					 * unnamed constraints, we'll use (at least one of)
+					 * the names for the index.
 					 */
 					if (priorindex->idxname == NULL)
 						priorindex->idxname = index->idxname;
@@ -1149,46 +1155,57 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			if (fkconstraint->constr_name == NULL)
 				fkconstraint->constr_name = "<unnamed>";
 
-			/* 
+			/*
 			 * Check to see if the attributes mentioned by the constraint
 			 * actually exist on this table.
 			 */
-			if (fkconstraint->fk_attrs!=NIL) {
-				int found=0;
-				List *cols;
-				List *fkattrs;
-				Ident *fkattr = NULL;
-				ColumnDef *col;
-				foreach(fkattrs, fkconstraint->fk_attrs) {
-					found=0;
-					fkattr=lfirst(fkattrs);
-					foreach(cols, stmt->tableElts) {
-						col=lfirst(cols);
-						if (strcmp(col->colname, fkattr->name)==0) {
-							found=1;
+			if (fkconstraint->fk_attrs != NIL)
+			{
+				int			found = 0;
+				List	   *cols;
+				List	   *fkattrs;
+				Ident	   *fkattr = NULL;
+				ColumnDef  *col;
+
+				foreach(fkattrs, fkconstraint->fk_attrs)
+				{
+					found = 0;
+					fkattr = lfirst(fkattrs);
+					foreach(cols, stmt->tableElts)
+					{
+						col = lfirst(cols);
+						if (strcmp(col->colname, fkattr->name) == 0)
+						{
+							found = 1;
 							break;
 						}
 					}
 					if (!found)
 						break;
 				}
-				if (!found) { /* try inherited tables */
-					List *inher;
-					List *inhRelnames=stmt->inhRelnames;
-					Relation rel;
-					foreach (inher, inhRelnames) {
-						Value *inh=lfirst(inher);
-						int count;
+				if (!found)
+				{				/* try inherited tables */
+					List	   *inher;
+					List	   *inhRelnames = stmt->inhRelnames;
+					Relation	rel;
+
+					foreach(inher, inhRelnames)
+					{
+						Value	   *inh = lfirst(inher);
+						int			count;
 
 						Assert(IsA(inh, String));
-						rel=heap_openr(strVal(inh), AccessShareLock);
+						rel = heap_openr(strVal(inh), AccessShareLock);
 						if (rel->rd_rel->relkind != RELKIND_RELATION)
 							elog(ERROR, "inherited table \"%s\" is not a relation",
-								strVal(inh));
-						for (count = 0; count < rel->rd_att->natts; count++) {
-							char *name=NameStr(rel->rd_att->attrs[count]->attname);
-							if (strcmp(fkattr->name, name) == 0) {
-								found=1;
+								 strVal(inh));
+						for (count = 0; count < rel->rd_att->natts; count++)
+						{
+							char	   *name = NameStr(rel->rd_att->attrs[count]->attname);
+
+							if (strcmp(fkattr->name, name) == 0)
+							{
+								found = 1;
 								break;
 							}
 						}
@@ -1197,9 +1214,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							break;
 					}
 				}
-				else {
-					found=1;
-				}
+				else
+					found = 1;
 				if (!found)
 					elog(ERROR, "columns referenced in foreign key constraint not found.");
 			}
@@ -1238,35 +1254,44 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						 fkconstraint->pktable_name);
 				}
 			}
-			else {
-				if (strcmp(fkconstraint->pktable_name, stmt->relname)!=0)
+			else
+			{
+				if (strcmp(fkconstraint->pktable_name, stmt->relname) != 0)
 					transformFkeyCheckAttrs(fkconstraint);
-				else {
+				else
+				{
 					/* Get a unique/pk constraint from above */
-					List *index;
-					int found=0;
+					List	   *index;
+					int			found = 0;
+
 					foreach(index, ilist)
 					{
-						IndexStmt *ind=lfirst(index);
-						IndexElem *indparm;
-						List *indparms;
-						List *pkattrs;
-						Ident *pkattr;
-						if (ind->unique) {
-							int count=0;
-							foreach(indparms, ind->indexParams) {
+						IndexStmt  *ind = lfirst(index);
+						IndexElem  *indparm;
+						List	   *indparms;
+						List	   *pkattrs;
+						Ident	   *pkattr;
+
+						if (ind->unique)
+						{
+							int			count = 0;
+
+							foreach(indparms, ind->indexParams)
 								count++;
-							}
-							if (count!=length(fkconstraint->pk_attrs))
-								found=0;
-							else {
-								foreach(pkattrs, fkconstraint->pk_attrs) {
-									found=0;
-									pkattr=lfirst(pkattrs);
-									foreach(indparms, ind->indexParams) {
-										indparm=lfirst(indparms);
-										if (strcmp(indparm->name, pkattr->name)==0) {
-											found=1;
+							if (count != length(fkconstraint->pk_attrs))
+								found = 0;
+							else
+							{
+								foreach(pkattrs, fkconstraint->pk_attrs)
+								{
+									found = 0;
+									pkattr = lfirst(pkattrs);
+									foreach(indparms, ind->indexParams)
+									{
+										indparm = lfirst(indparms);
+										if (strcmp(indparm->name, pkattr->name) == 0)
+										{
+											found = 1;
 											break;
 										}
 									}
@@ -1283,6 +1308,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							 fkconstraint->pktable_name);
 				}
 			}
+
 			/*
 			 * Build a CREATE CONSTRAINT TRIGGER statement for the CHECK
 			 * action.
@@ -1309,13 +1335,13 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 			fk_trigger->args = NIL;
 			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(fkconstraint->constr_name));
+								  makeString(fkconstraint->constr_name));
 			fk_trigger->args = lappend(fk_trigger->args,
 									   makeString(stmt->relname));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable_name));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(fkconstraint->match_type));
+								   makeString(fkconstraint->match_type));
 			fk_attr = fkconstraint->fk_attrs;
 			pk_attr = fkconstraint->pk_attrs;
 			if (length(fk_attr) != length(pk_attr))
@@ -1388,13 +1414,13 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 			fk_trigger->args = NIL;
 			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(fkconstraint->constr_name));
+								  makeString(fkconstraint->constr_name));
 			fk_trigger->args = lappend(fk_trigger->args,
 									   makeString(stmt->relname));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable_name));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(fkconstraint->match_type));
+								   makeString(fkconstraint->match_type));
 			fk_attr = fkconstraint->fk_attrs;
 			pk_attr = fkconstraint->pk_attrs;
 			while (fk_attr != NIL)
@@ -1461,13 +1487,13 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 			fk_trigger->args = NIL;
 			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(fkconstraint->constr_name));
+								  makeString(fkconstraint->constr_name));
 			fk_trigger->args = lappend(fk_trigger->args,
 									   makeString(stmt->relname));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable_name));
 			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(fkconstraint->match_type));
+								   makeString(fkconstraint->match_type));
 			fk_attr = fkconstraint->fk_attrs;
 			pk_attr = fkconstraint->pk_attrs;
 			while (fk_attr != NIL)
@@ -1558,18 +1584,18 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 
 	/*
 	 * To avoid deadlock, make sure the first thing we do is grab
-	 * AccessExclusiveLock on the target relation.  This will be
-	 * needed by DefineQueryRewrite(), and we don't want to grab a lesser
-	 * lock beforehand.  We don't need to hold a refcount on the relcache
+	 * AccessExclusiveLock on the target relation.	This will be needed by
+	 * DefineQueryRewrite(), and we don't want to grab a lesser lock
+	 * beforehand.	We don't need to hold a refcount on the relcache
 	 * entry, however.
 	 */
 	heap_close(heap_openr(stmt->object->relname, AccessExclusiveLock),
 			   NoLock);
 
 	/*
-	 * NOTE: 'OLD' must always have a varno equal to 1 and 'NEW'
-	 * equal to 2.  Set up their RTEs in the main pstate for use
-	 * in parsing the rule qualification.
+	 * NOTE: 'OLD' must always have a varno equal to 1 and 'NEW' equal to
+	 * 2.  Set up their RTEs in the main pstate for use in parsing the
+	 * rule qualification.
 	 */
 	Assert(pstate->p_rtable == NIL);
 	oldrte = addRangeTableEntry(pstate, stmt->object->relname,
@@ -1581,13 +1607,15 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	/* Must override addRangeTableEntry's default access-check flags */
 	oldrte->checkForRead = false;
 	newrte->checkForRead = false;
+
 	/*
 	 * They must be in the namespace too for lookup purposes, but only add
 	 * the one(s) that are relevant for the current kind of rule.  In an
 	 * UPDATE rule, quals must refer to OLD.field or NEW.field to be
-	 * unambiguous, but there's no need to be so picky for INSERT & DELETE.
-	 * (Note we marked the RTEs "inFromCl = true" above to allow unqualified
-	 * references to their fields.)  We do not add them to the joinlist.
+	 * unambiguous, but there's no need to be so picky for INSERT &
+	 * DELETE. (Note we marked the RTEs "inFromCl = true" above to allow
+	 * unqualified references to their fields.)  We do not add them to the
+	 * joinlist.
 	 */
 	switch (stmt->event)
 	{
@@ -1613,7 +1641,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	/* take care of the where clause */
 	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
 
-	if (length(pstate->p_rtable) != 2) /* naughty, naughty... */
+	if (length(pstate->p_rtable) != 2)	/* naughty, naughty... */
 		elog(ERROR, "Rule WHERE condition may not contain references to other relations");
 
 	/* save info about sublinks in where clause */
@@ -1632,7 +1660,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 
 		nothing_qry->commandType = CMD_NOTHING;
 		nothing_qry->rtable = pstate->p_rtable;
-		nothing_qry->jointree = makeFromExpr(NIL, NULL); /* no join wanted */
+		nothing_qry->jointree = makeFromExpr(NIL, NULL);		/* no join wanted */
 
 		stmt->actions = makeList1(nothing_qry);
 	}
@@ -1652,12 +1680,12 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 						has_new;
 
 			/*
-			 * Set up OLD/NEW in the rtable for this statement.  The entries
-			 * are marked not inFromCl because we don't want them to be
-			 * referred to by unqualified field names nor "*" in the rule
-			 * actions.  We must add them to the namespace, however, or they
-			 * won't be accessible at all.  We decide later whether to put
-			 * them in the joinlist.
+			 * Set up OLD/NEW in the rtable for this statement.  The
+			 * entries are marked not inFromCl because we don't want them
+			 * to be referred to by unqualified field names nor "*" in the
+			 * rule actions.  We must add them to the namespace, however,
+			 * or they won't be accessible at all.  We decide later
+			 * whether to put them in the joinlist.
 			 */
 			oldrte = addRangeTableEntry(sub_pstate, stmt->object->relname,
 										makeAttr("*OLD*", NULL),
@@ -1676,7 +1704,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			/*
 			 * If the action is INSERT...SELECT, OLD/NEW have been pushed
 			 * down into the SELECT, and that's what we need to look at.
-			 * (Ugly kluge ... try to fix this when we redesign querytrees.)
+			 * (Ugly kluge ... try to fix this when we redesign
+			 * querytrees.)
 			 */
 			sub_qry = getInsertSelectQuery(top_subqry, NULL);
 
@@ -1716,19 +1745,21 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			}
 
 			/*
-			 * For efficiency's sake, add OLD to the rule action's jointree
-			 * only if it was actually referenced in the statement or qual.
+			 * For efficiency's sake, add OLD to the rule action's
+			 * jointree only if it was actually referenced in the
+			 * statement or qual.
 			 *
 			 * For INSERT, NEW is not really a relation (only a reference to
 			 * the to-be-inserted tuple) and should never be added to the
 			 * jointree.
 			 *
 			 * For UPDATE, we treat NEW as being another kind of reference to
-			 * OLD, because it represents references to *transformed* tuples
-			 * of the existing relation.  It would be wrong to enter NEW
-			 * separately in the jointree, since that would cause a double
-			 * join of the updated relation.  It's also wrong to fail to make
-			 * a jointree entry if only NEW and not OLD is mentioned.
+			 * OLD, because it represents references to *transformed*
+			 * tuples of the existing relation.  It would be wrong to
+			 * enter NEW separately in the jointree, since that would
+			 * cause a double join of the updated relation.  It's also
+			 * wrong to fail to make a jointree entry if only NEW and not
+			 * OLD is mentioned.
 			 */
 			if (has_old || (has_new && stmt->event == CMD_UPDATE))
 			{
@@ -1772,12 +1803,12 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 		if (stmt->forUpdate)
 			elog(ERROR, "DECLARE/UPDATE is not supported"
 				 "\n\tCursors must be READ ONLY");
+
 		/*
-		 *	15 august 1991 -- since 3.0 postgres does locking
-		 *	right, we discovered that portals were violating
-		 *	locking protocol.  portal locks cannot span xacts.
-		 *	as a short-term fix, we installed the check here.
-		 *							-- mao
+		 * 15 august 1991 -- since 3.0 postgres does locking right, we
+		 * discovered that portals were violating locking protocol.
+		 * portal locks cannot span xacts. as a short-term fix, we
+		 * installed the check here. -- mao
 		 */
 		if (!IsTransactionBlock())
 			elog(ERROR, "DECLARE CURSOR may only be used in begin/end transaction blocks");
@@ -1785,7 +1816,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 		qry->into = stmt->portalname;
 		qry->isTemp = stmt->istemp;
 		qry->isPortal = TRUE;
-		qry->isBinary = stmt->binary; /* internal portal */
+		qry->isBinary = stmt->binary;	/* internal portal */
 	}
 	else
 	{
@@ -1881,8 +1912,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->commandType = CMD_SELECT;
 
 	/*
-	 * Find leftmost leaf SelectStmt; extract the one-time-only items
-	 * from it and from the top-level node.
+	 * Find leftmost leaf SelectStmt; extract the one-time-only items from
+	 * it and from the top-level node.
 	 */
 	leftmostSelect = stmt->larg;
 	while (leftmostSelect && leftmostSelect->op != SETOP_NONE)
@@ -1902,8 +1933,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	/*
 	 * These are not one-time, exactly, but we want to process them here
-	 * and not let transformSetOperationTree() see them --- else it'll just
-	 * recurse right back here!
+	 * and not let transformSetOperationTree() see them --- else it'll
+	 * just recurse right back here!
 	 */
 	sortClause = stmt->sortClause;
 	limitOffset = stmt->limitOffset;
@@ -1936,11 +1967,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	leftmostRTI = ((RangeTblRef *) node)->rtindex;
 	leftmostQuery = rt_fetch(leftmostRTI, pstate->p_rtable)->subquery;
 	Assert(leftmostQuery != NULL);
+
 	/*
 	 * Generate dummy targetlist for outer query using column names of
-	 * leftmost select and common datatypes of topmost set operation.
-	 * Also make lists of the dummy vars and their names for use in
-	 * parsing ORDER BY.
+	 * leftmost select and common datatypes of topmost set operation. Also
+	 * make lists of the dummy vars and their names for use in parsing
+	 * ORDER BY.
 	 */
 	qry->targetList = NIL;
 	targetvars = NIL;
@@ -1948,11 +1980,11 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	lefttl = leftmostQuery->targetList;
 	foreach(dtlist, sostmt->colTypes)
 	{
-		Oid		colType = (Oid) lfirsti(dtlist);
-		Resdom *leftResdom = ((TargetEntry *) lfirst(lefttl))->resdom;
-		char   *colName = pstrdup(leftResdom->resname);
-		Resdom *resdom;
-		Node   *expr;
+		Oid			colType = (Oid) lfirsti(dtlist);
+		Resdom	   *leftResdom = ((TargetEntry *) lfirst(lefttl))->resdom;
+		char	   *colName = pstrdup(leftResdom->resname);
+		Resdom	   *resdom;
+		Node	   *expr;
 
 		resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
 							colType,
@@ -1970,6 +2002,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		targetnames = lappend(targetnames, makeString(colName));
 		lefttl = lnext(lefttl);
 	}
+
 	/*
 	 * Insert one-time items into top-level query
 	 *
@@ -1983,12 +2016,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		if (forUpdate)
 			elog(ERROR, "DECLARE/UPDATE is not supported"
 				 "\n\tCursors must be READ ONLY");
+
 		/*
-		 *	15 august 1991 -- since 3.0 postgres does locking
-		 *	right, we discovered that portals were violating
-		 *	locking protocol.  portal locks cannot span xacts.
-		 *	as a short-term fix, we installed the check here.
-		 *							-- mao
+		 * 15 august 1991 -- since 3.0 postgres does locking right, we
+		 * discovered that portals were violating locking protocol.
+		 * portal locks cannot span xacts. as a short-term fix, we
+		 * installed the check here. -- mao
 		 */
 		if (!IsTransactionBlock())
 			elog(ERROR, "DECLARE CURSOR may only be used in begin/end transaction blocks");
@@ -2008,10 +2041,11 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	/*
-	 * As a first step towards supporting sort clauses that are expressions
-	 * using the output columns, generate a namespace entry that makes the
-	 * output columns visible.  A JoinExpr node is handy for this, since
-	 * we can easily control the Vars generated upon matches.
+	 * As a first step towards supporting sort clauses that are
+	 * expressions using the output columns, generate a namespace entry
+	 * that makes the output columns visible.  A JoinExpr node is handy
+	 * for this, since we can easily control the Vars generated upon
+	 * matches.
 	 *
 	 * Note: we don't yet do anything useful with such cases, but at least
 	 * "ORDER BY upper(foo)" will draw the right error message rather than
@@ -2065,7 +2099,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 static Node *
 transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 {
-	bool	isLeaf;
+	bool		isLeaf;
 
 	Assert(stmt && IsA(stmt, SelectStmt));
 
@@ -2104,9 +2138,9 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 	if (isLeaf)
 	{
 		/* Process leaf SELECT */
-		List   *selectList;
-		Query  *selectQuery;
-		char	selectName[32];
+		List	   *selectList;
+		Query	   *selectQuery;
+		char		selectName[32];
 		RangeTblEntry *rte;
 		RangeTblRef *rtr;
 
@@ -2114,13 +2148,14 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		 * Transform SelectStmt into a Query.
 		 *
 		 * Note: previously transformed sub-queries don't affect the parsing
-		 * of this sub-query, because they are not in the toplevel pstate's
-		 * namespace list.
+		 * of this sub-query, because they are not in the toplevel
+		 * pstate's namespace list.
 		 */
 		selectList = parse_analyze((Node *) stmt, pstate);
 
 		Assert(length(selectList) == 1);
 		selectQuery = (Query *) lfirst(selectList);
+
 		/*
 		 * Make the leaf query be a subquery in the top-level rangetable.
 		 */
@@ -2130,8 +2165,10 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 											makeAttr(pstrdup(selectName),
 													 NULL),
 											false);
+
 		/*
-		 * Return a RangeTblRef to replace the SelectStmt in the set-op tree.
+		 * Return a RangeTblRef to replace the SelectStmt in the set-op
+		 * tree.
 		 */
 		rtr = makeNode(RangeTblRef);
 		/* assume new rte is at end */
@@ -2143,8 +2180,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 	{
 		/* Process an internal node (set operation node) */
 		SetOperationStmt *op = makeNode(SetOperationStmt);
-		List   *lcoltypes;
-		List   *rcoltypes;
+		List	   *lcoltypes;
+		List	   *rcoltypes;
 		const char *context;
 
 		context = (stmt->op == SETOP_UNION ? "UNION" :
@@ -2159,6 +2196,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		 */
 		op->larg = transformSetOperationTree(pstate, stmt->larg);
 		op->rarg = transformSetOperationTree(pstate, stmt->rarg);
+
 		/*
 		 * Verify that the two children have the same number of non-junk
 		 * columns, and determine the types of the merged output columns.
@@ -2171,9 +2209,9 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		op->colTypes = NIL;
 		while (lcoltypes != NIL)
 		{
-			Oid		lcoltype = (Oid) lfirsti(lcoltypes);
-			Oid		rcoltype = (Oid) lfirsti(rcoltypes);
-			Oid		rescoltype;
+			Oid			lcoltype = (Oid) lfirsti(lcoltypes);
+			Oid			rcoltype = (Oid) lfirsti(rcoltypes);
+			Oid			rescoltype;
 
 			rescoltype = select_common_type(makeListi2(lcoltype, rcoltype),
 											context);
@@ -2197,9 +2235,9 @@ getSetColTypes(ParseState *pstate, Node *node)
 	{
 		RangeTblRef *rtr = (RangeTblRef *) node;
 		RangeTblEntry *rte = rt_fetch(rtr->rtindex, pstate->p_rtable);
-		Query  *selectQuery = rte->subquery;
-		List   *result = NIL;
-		List   *tl;
+		Query	   *selectQuery = rte->subquery;
+		List	   *result = NIL;
+		List	   *tl;
 
 		Assert(selectQuery != NULL);
 		/* Get types of non-junk columns */
@@ -2392,13 +2430,13 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 
 				fk_trigger->args = NIL;
 				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(fkconstraint->constr_name));
+								  makeString(fkconstraint->constr_name));
 				fk_trigger->args = lappend(fk_trigger->args,
 										   makeString(stmt->relname));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable_name));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(fkconstraint->match_type));
+								   makeString(fkconstraint->match_type));
 				fk_attr = fkconstraint->fk_attrs;
 				pk_attr = fkconstraint->pk_attrs;
 				if (length(fk_attr) != length(pk_attr))
@@ -2469,13 +2507,13 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 
 				fk_trigger->args = NIL;
 				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(fkconstraint->constr_name));
+								  makeString(fkconstraint->constr_name));
 				fk_trigger->args = lappend(fk_trigger->args,
 										   makeString(stmt->relname));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable_name));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(fkconstraint->match_type));
+								   makeString(fkconstraint->match_type));
 				fk_attr = fkconstraint->fk_attrs;
 				pk_attr = fkconstraint->pk_attrs;
 				while (fk_attr != NIL)
@@ -2540,13 +2578,13 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 
 				fk_trigger->args = NIL;
 				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(fkconstraint->constr_name));
+								  makeString(fkconstraint->constr_name));
 				fk_trigger->args = lappend(fk_trigger->args,
 										   makeString(stmt->relname));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable_name));
 				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(fkconstraint->match_type));
+								   makeString(fkconstraint->match_type));
 				fk_attr = fkconstraint->fk_attrs;
 				pk_attr = fkconstraint->pk_attrs;
 				while (fk_attr != NIL)
@@ -2613,7 +2651,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 			}
 			else
 			{
-				if (!intMember(i, rowMarks)) /* avoid duplicates */
+				if (!intMember(i, rowMarks))	/* avoid duplicates */
 					rowMarks = lappendi(rowMarks, i);
 				rte->checkForWrite = true;
 			}
@@ -2641,7 +2679,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 					}
 					else
 					{
-						if (!intMember(i, rowMarks)) /* avoid duplicates */
+						if (!intMember(i, rowMarks))	/* avoid duplicates */
 							rowMarks = lappendi(rowMarks, i);
 						rte->checkForWrite = true;
 					}
@@ -2662,10 +2700,10 @@ transformForUpdate(Query *qry, List *forUpdate)
  * transformFkeyCheckAttrs -
  *
  *	Try to make sure that the attributes of a referenced table
- *      belong to a unique (or primary key) constraint.
+ *		belong to a unique (or primary key) constraint.
  *
  */
-static void 
+static void
 transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 {
 	Relation	pkrel;
@@ -2696,7 +2734,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid		indexoid = lfirsti(indexoidscan);
+		Oid			indexoid = lfirsti(indexoidscan);
 		HeapTuple	indexTuple;
 		Form_pg_index indexStruct;
 
@@ -2710,24 +2748,28 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 
 		if (indexStruct->indisunique)
 		{
-			List *attrl;
+			List	   *attrl;
 
 			for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++);
-			if (i!=length(fkconstraint->pk_attrs))
-				found=false;
-			else {
+			if (i != length(fkconstraint->pk_attrs))
+				found = false;
+			else
+			{
 				/* go through the fkconstraint->pk_attrs list */
 				foreach(attrl, fkconstraint->pk_attrs)
 				{
-					Ident *attr=lfirst(attrl);
+					Ident	   *attr = lfirst(attrl);
+
 					found = false;
 					for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
 					{
-						int		pkattno = indexStruct->indkey[i];
-						if (pkattno>0)
+						int			pkattno = indexStruct->indkey[i];
+
+						if (pkattno > 0)
 						{
-							char *name = NameStr(pkrel_attrs[pkattno - 1]->attname);
-							if (strcmp(name, attr->name)==0)
+							char	   *name = NameStr(pkrel_attrs[pkattno - 1]->attname);
+
+							if (strcmp(name, attr->name) == 0)
 							{
 								found = true;
 								break;
@@ -2741,7 +2783,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 		}
 		ReleaseSysCache(indexTuple);
 		if (found)
-			break;		
+			break;
 	}
 	if (!found)
 		elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
@@ -2790,7 +2832,7 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid		indexoid = lfirsti(indexoidscan);
+		Oid			indexoid = lfirsti(indexoidscan);
 
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexoid),
@@ -2826,7 +2868,7 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 		Ident	   *pkattr = makeNode(Ident);
 
 		pkattr->name = DatumGetCString(DirectFunctionCall1(nameout,
-						NameGetDatum(&(pkrel_attrs[pkattno - 1]->attname))));
+					NameGetDatum(&(pkrel_attrs[pkattno - 1]->attname))));
 		pkattr->indirection = NIL;
 		pkattr->isRel = false;
 
@@ -2935,7 +2977,7 @@ transformConstraintAttrs(List *constraintList)
 static FromExpr *
 makeFromExpr(List *fromlist, Node *quals)
 {
-	FromExpr *f = makeNode(FromExpr);
+	FromExpr   *f = makeNode(FromExpr);
 
 	f->fromlist = fromlist;
 	f->quals = quals;
@@ -2978,19 +3020,20 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 	}
 
 	/*
-	 * Is this the name of a complex type? If so, implement
-	 * it as a set.
+	 * Is this the name of a complex type? If so, implement it as a set.
 	 *
 	 * XXX this is a hangover from ancient Berkeley code that probably
 	 * doesn't work anymore anyway.
 	 */
-	 if (typeTypeRelid(ctype) != InvalidOid)
-	 {
-		 /* (Eventually add in here that the set can only
-		  * contain one element.)
-		  */
-		 typename->setof = true;
-	 }
+	if (typeTypeRelid(ctype) != InvalidOid)
+	{
 
-	 ReleaseSysCache(ctype);
+		/*
+		 * (Eventually add in here that the set can only contain one
+		 * element.)
+		 */
+		typename->setof = true;
+	}
+
+	ReleaseSysCache(ctype);
 }

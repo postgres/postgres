@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.27 2001/03/18 20:18:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.28 2001/03/22 03:59:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -411,6 +411,7 @@ GetUndoRecPtr(void)
 		if (pOffset != INVALID_OFFSET)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+
 			tempr = proc->logRec;
 			if (tempr.xrecoff == 0)
 				continue;
@@ -422,5 +423,5 @@ GetUndoRecPtr(void)
 
 	SpinRelease(SInvalLock);
 
-	return(urec);
+	return (urec);
 }

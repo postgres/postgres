@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.187 2001/03/14 08:40:57 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.188 2001/03/22 03:59:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,11 +47,11 @@
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 
-extern XLogRecPtr	log_heap_clean(Relation reln, Buffer buffer,
-									char *unused, int unlen);
-extern XLogRecPtr	log_heap_move(Relation reln, 
-						Buffer oldbuf, ItemPointerData from,
-						Buffer newbuf, HeapTuple newtup);
+extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
+			   char *unused, int unlen);
+extern XLogRecPtr log_heap_move(Relation reln,
+			  Buffer oldbuf, ItemPointerData from,
+			  Buffer newbuf, HeapTuple newtup);
 
 static MemoryContext vac_context = NULL;
 
@@ -78,9 +78,9 @@ static void vpage_insert(VacPageList vacpagelist, VacPage vpnew);
 static void get_indices(Relation relation, int *nindices, Relation **Irel);
 static void close_indices(int nindices, Relation *Irel);
 static IndexInfo **get_index_desc(Relation onerel, int nindices,
-								  Relation *Irel);
+			   Relation *Irel);
 static void *vac_find_eq(void *bot, int nelem, int size, void *elm,
-			 int (*compar) (const void *, const void *));
+			int (*compar) (const void *, const void *));
 static int	vac_cmp_blk(const void *left, const void *right);
 static int	vac_cmp_offno(const void *left, const void *right);
 static int	vac_cmp_vtlinks(const void *left, const void *right);
@@ -120,9 +120,9 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols)
 	/*
 	 * Create special memory context for cross-transaction storage.
 	 *
-	 * Since it is a child of QueryContext, it will go away eventually
-	 * even if we suffer an error; there's no need for special abort
-	 * cleanup logic.
+	 * Since it is a child of QueryContext, it will go away eventually even
+	 * if we suffer an error; there's no need for special abort cleanup
+	 * logic.
 	 */
 	vac_context = AllocSetContextCreate(QueryContext,
 										"Vacuum",
@@ -215,8 +215,8 @@ vacuum_shutdown()
 
 	/*
 	 * Clean up working storage --- note we must do this after
-	 * StartTransactionCommand, else we might be trying to delete
-	 * the active context!
+	 * StartTransactionCommand, else we might be trying to delete the
+	 * active context!
 	 */
 	MemoryContextDelete(vac_context);
 	vac_context = NULL;
@@ -360,10 +360,10 @@ vacuum_rel(Oid relid)
 {
 	Relation	onerel;
 	LockRelId	onerelid;
-	VacPageListData vacuum_pages; /* List of pages to vacuum and/or clean
-								   * indices */
-	VacPageListData fraged_pages; /* List of pages with space enough for
-								   * re-using */
+	VacPageListData vacuum_pages;		/* List of pages to vacuum and/or
+										 * clean indices */
+	VacPageListData fraged_pages;		/* List of pages with space enough
+										 * for re-using */
 	Relation   *Irel;
 	int32		nindices,
 				i;
@@ -411,10 +411,10 @@ vacuum_rel(Oid relid)
 	}
 
 	/*
-	 * Get a session-level exclusive lock too.  This will protect our
-	 * exclusive access to the relation across multiple transactions,
-	 * so that we can vacuum the relation's TOAST table (if any) secure
-	 * in the knowledge that no one is diddling the parent relation.
+	 * Get a session-level exclusive lock too.	This will protect our
+	 * exclusive access to the relation across multiple transactions, so
+	 * that we can vacuum the relation's TOAST table (if any) secure in
+	 * the knowledge that no one is diddling the parent relation.
 	 *
 	 * NOTE: this cannot block, even if someone else is waiting for access,
 	 * because the lock manager knows that both lock requests are from the
@@ -458,10 +458,11 @@ vacuum_rel(Oid relid)
 		vacrelstats->hasindex = true;
 	else
 		vacrelstats->hasindex = false;
-#ifdef NOT_USED	
+#ifdef NOT_USED
+
 	/*
-	 *	reindex in VACUUM is dangerous under WAL.
-	 *	ifdef out until it becomes safe.		
+	 * reindex in VACUUM is dangerous under WAL. ifdef out until it
+	 * becomes safe.
 	 */
 	if (reindex)
 	{
@@ -470,7 +471,7 @@ vacuum_rel(Oid relid)
 		Irel = (Relation *) NULL;
 		activate_indexes_of_a_table(relid, false);
 	}
-#endif /* NOT_USED */
+#endif	 /* NOT_USED */
 
 	/* Clean/scan index relation(s) */
 	if (Irel != (Relation *) NULL)
@@ -506,6 +507,7 @@ vacuum_rel(Oid relid)
 		}
 		else
 		{
+
 			/*
 			 * Flush dirty pages out to disk.  We must do this even if we
 			 * didn't do anything else, because we want to ensure that all
@@ -518,10 +520,10 @@ vacuum_rel(Oid relid)
 					 i);
 		}
 	}
-#ifdef NOT_USED	
+#ifdef NOT_USED
 	if (reindex)
 		activate_indexes_of_a_table(relid, true);
-#endif /* NOT_USED */	
+#endif	 /* NOT_USED */
 
 	/* all done with this class, but hold lock until commit */
 	heap_close(onerel, NoLock);
@@ -537,11 +539,11 @@ vacuum_rel(Oid relid)
 	CommitTransactionCommand();
 
 	/*
-	 * If the relation has a secondary toast one, vacuum that too
-	 * while we still hold the session lock on the master table.
-	 * We don't need to propagate "analyze" to it, because the toaster
-	 * always uses hardcoded index access and statistics are
-	 * totally unimportant for toast relations
+	 * If the relation has a secondary toast one, vacuum that too while we
+	 * still hold the session lock on the master table. We don't need to
+	 * propagate "analyze" to it, because the toaster always uses
+	 * hardcoded index access and statistics are totally unimportant for
+	 * toast relations
 	 */
 	if (toast_relid != InvalidOid)
 		vacuum_rel(toast_relid);
@@ -563,7 +565,7 @@ vacuum_rel(Oid relid)
  */
 static void
 scan_heap(VRelStats *vacrelstats, Relation onerel,
-			VacPageList vacuum_pages, VacPageList fraged_pages)
+		  VacPageList vacuum_pages, VacPageList fraged_pages)
 {
 	BlockNumber nblocks,
 				blkno;
@@ -845,7 +847,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				 * dead tuples removed.  Below we will apply
 				 * PageRepairFragmentation to the copy, so that we can
 				 * determine how much space will be available after
-				 * removal of dead tuples.  But note we are NOT changing
+				 * removal of dead tuples.	But note we are NOT changing
 				 * the real page yet...
 				 */
 				if (tempPage == (Page) NULL)
@@ -964,8 +966,8 @@ Re-using: Free/Avail. Space %lu/%lu; EndEmpty/Avail. Pages %u/%u. %s",
 		 nblocks, changed_pages, vacuum_pages->num_pages, empty_pages,
 		 new_pages, num_tuples, tups_vacuumed,
 		 nkeep, vacrelstats->num_vtlinks, ncrash,
-		 nunused, (unsigned long)min_tlen, (unsigned long)max_tlen,
-		 (unsigned long)free_size, (unsigned long)usable_free_size,
+		 nunused, (unsigned long) min_tlen, (unsigned long) max_tlen,
+		 (unsigned long) free_size, (unsigned long) usable_free_size,
 		 empty_end_pages, fraged_pages->num_pages,
 		 show_rusage(&ru0));
 
@@ -984,8 +986,8 @@ Re-using: Free/Avail. Space %lu/%lu; EndEmpty/Avail. Pages %u/%u. %s",
  */
 static void
 repair_frag(VRelStats *vacrelstats, Relation onerel,
-			   VacPageList vacuum_pages, VacPageList fraged_pages,
-			   int nindices, Relation *Irel)
+			VacPageList vacuum_pages, VacPageList fraged_pages,
+			int nindices, Relation *Irel)
 {
 	TransactionId myXID;
 	CommandId	myCID;
@@ -1077,7 +1079,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		dowrite = false;
 		if (blkno == last_vacuum_block) /* it's reaped page */
 		{
-			if (last_vacuum_page->offsets_free > 0) /* there are dead tuples */
+			if (last_vacuum_page->offsets_free > 0)		/* there are dead tuples */
 			{					/* on this page - clean */
 				Assert(!isempty);
 				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
@@ -1100,7 +1102,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				last_vacuum_block = -1;
 			}
 			if (num_fraged_pages > 0 &&
-			fraged_pages->pagedesc[num_fraged_pages - 1]->blkno ==
+				fraged_pages->pagedesc[num_fraged_pages - 1]->blkno ==
 				(BlockNumber) blkno)
 			{
 				/* page is in fraged_pages too; remove it */
@@ -1142,8 +1144,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 				/*
 				 * If this (chain) tuple is moved by me already then I
-				 * have to check is it in vacpage or not - i.e. is it moved
-				 * while cleaning this page or some previous one.
+				 * have to check is it in vacpage or not - i.e. is it
+				 * moved while cleaning this page or some previous one.
 				 */
 				if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
 				{
@@ -1232,8 +1234,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						 * xaction and this tuple is already deleted by
 						 * me. Actually, upper part of chain should be
 						 * removed and seems that this should be handled
-						 * in scan_heap(), but it's not implemented at
-						 * the moment and so we just stop shrinking here.
+						 * in scan_heap(), but it's not implemented at the
+						 * moment and so we just stop shrinking here.
 						 */
 						ReleaseBuffer(Cbuf);
 						pfree(vtmove);
@@ -1256,15 +1258,15 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					{
 
 						/*
-						 * if to_vacpage no longer has enough free space to be
-						 * useful, remove it from fraged_pages list
+						 * if to_vacpage no longer has enough free space
+						 * to be useful, remove it from fraged_pages list
 						 */
 						if (to_vacpage != NULL &&
-						 !enough_space(to_vacpage, vacrelstats->min_tlen))
+						!enough_space(to_vacpage, vacrelstats->min_tlen))
 						{
 							Assert(num_fraged_pages > to_item);
 							memmove(fraged_pages->pagedesc + to_item,
-								fraged_pages->pagedesc + to_item + 1,
+									fraged_pages->pagedesc + to_item + 1,
 									sizeof(VacPage) * (num_fraged_pages - to_item - 1));
 							num_fraged_pages--;
 						}
@@ -1326,10 +1328,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						vtld.new_tid = tp.t_self;
 						vtlp = (VTupleLink)
 							vac_find_eq((void *) (vacrelstats->vtlinks),
-									   vacrelstats->num_vtlinks,
-									   sizeof(VTupleLinkData),
-									   (void *) &vtld,
-									   vac_cmp_vtlinks);
+										vacrelstats->num_vtlinks,
+										sizeof(VTupleLinkData),
+										(void *) &vtld,
+										vac_cmp_vtlinks);
 						if (vtlp == NULL)
 							elog(ERROR, "Parent tuple was not found");
 						tp.t_self = vtlp->this_tid;
@@ -1416,7 +1418,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				ItemPointerSetInvalid(&Ctid);
 				for (ti = 0; ti < num_vtmove; ti++)
 				{
-					VacPage	destvacpage = vtmove[ti].vacpage;
+					VacPage		destvacpage = vtmove[ti].vacpage;
 
 					/* Get page to move from */
 					tuple.t_self = vtmove[ti].tid;
@@ -1460,21 +1462,22 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					 *
 					 * NOTE: a nasty bug used to lurk here.  It is possible
 					 * for the source and destination pages to be the same
-					 * (since this tuple-chain member can be on a page lower
-					 * than the one we're currently processing in the outer
-					 * loop).  If that's true, then after vacuum_page() the
-					 * source tuple will have been moved, and tuple.t_data
-					 * will be pointing at garbage.  Therefore we must do
-					 * everything that uses tuple.t_data BEFORE this step!!
+					 * (since this tuple-chain member can be on a page
+					 * lower than the one we're currently processing in
+					 * the outer loop).  If that's true, then after
+					 * vacuum_page() the source tuple will have been
+					 * moved, and tuple.t_data will be pointing at
+					 * garbage.  Therefore we must do everything that uses
+					 * tuple.t_data BEFORE this step!!
 					 *
 					 * This path is different from the other callers of
-					 * vacuum_page, because we have already incremented the
-					 * vacpage's offsets_used field to account for the
+					 * vacuum_page, because we have already incremented
+					 * the vacpage's offsets_used field to account for the
 					 * tuple(s) we expect to move onto the page. Therefore
-					 * vacuum_page's check for offsets_used == 0 is
-					 * wrong. But since that's a good debugging check for
-					 * all other callers, we work around it here rather
-					 * than remove it.
+					 * vacuum_page's check for offsets_used == 0 is wrong.
+					 * But since that's a good debugging check for all
+					 * other callers, we work around it here rather than
+					 * remove it.
 					 */
 					if (!PageIsEmpty(ToPage) && vtmove[ti].cleanVpd)
 					{
@@ -1498,7 +1501,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					if (newoff == InvalidOffsetNumber)
 					{
 						elog(STOP, "moving chain: failed to add item with len = %lu to page %u",
-							 (unsigned long)tuple_len, destvacpage->blkno);
+						  (unsigned long) tuple_len, destvacpage->blkno);
 					}
 					newitemid = PageGetItemId(ToPage, newoff);
 					pfree(newtup.t_data);
@@ -1507,9 +1510,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					ItemPointerSet(&(newtup.t_self), destvacpage->blkno, newoff);
 
 					{
-						XLogRecPtr	recptr = 
-							log_heap_move(onerel, Cbuf, tuple.t_self,
-												cur_buffer, &newtup);
+						XLogRecPtr	recptr =
+						log_heap_move(onerel, Cbuf, tuple.t_self,
+									  cur_buffer, &newtup);
 
 						if (Cbuf != cur_buffer)
 						{
@@ -1526,7 +1529,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					/*
 					 * Set new tuple's t_ctid pointing to itself for last
-					 * tuple in chain, and to next tuple in chain otherwise.
+					 * tuple in chain, and to next tuple in chain
+					 * otherwise.
 					 */
 					if (!ItemPointerIsValid(&Ctid))
 						newtup.t_data->t_ctid = newtup.t_self;
@@ -1552,13 +1556,15 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					if (Irel != (Relation *) NULL)
 					{
+
 						/*
 						 * XXX using CurrentMemoryContext here means
-						 * intra-vacuum memory leak for functional indexes.
-						 * Should fix someday.
+						 * intra-vacuum memory leak for functional
+						 * indexes. Should fix someday.
 						 *
 						 * XXX This code fails to handle partial indexes!
-						 * Probably should change it to use ExecOpenIndices.
+						 * Probably should change it to use
+						 * ExecOpenIndices.
 						 */
 						for (i = 0; i < nindices; i++)
 						{
@@ -1653,8 +1659,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			{
 				elog(STOP, "\
 failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)",
-					 (unsigned long)tuple_len, cur_page->blkno, (unsigned long)cur_page->free,
-				 cur_page->offsets_used, cur_page->offsets_free);
+					 (unsigned long) tuple_len, cur_page->blkno, (unsigned long) cur_page->free,
+					 cur_page->offsets_used, cur_page->offsets_free);
 			}
 			newitemid = PageGetItemId(ToPage, newoff);
 			pfree(newtup.t_data);
@@ -1673,9 +1679,9 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 			tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
 
 			{
-				XLogRecPtr	recptr = 
-					log_heap_move(onerel, buf, tuple.t_self,
-										cur_buffer, &newtup);
+				XLogRecPtr	recptr =
+				log_heap_move(onerel, buf, tuple.t_self,
+							  cur_buffer, &newtup);
 
 				PageSetLSN(page, recptr);
 				PageSetSUI(page, ThisStartUpID);
@@ -1698,13 +1704,13 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 			/* insert index' tuples if needed */
 			if (Irel != (Relation *) NULL)
 			{
+
 				/*
-				 * XXX using CurrentMemoryContext here means
-				 * intra-vacuum memory leak for functional indexes.
-				 * Should fix someday.
+				 * XXX using CurrentMemoryContext here means intra-vacuum
+				 * memory leak for functional indexes. Should fix someday.
 				 *
-				 * XXX This code fails to handle partial indexes!
-				 * Probably should change it to use ExecOpenIndices.
+				 * XXX This code fails to handle partial indexes! Probably
+				 * should change it to use ExecOpenIndices.
 				 */
 				for (i = 0; i < nindices; i++)
 				{
@@ -1803,14 +1809,15 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 
 	if (num_moved > 0)
 	{
+
 		/*
 		 * We have to commit our tuple movings before we truncate the
 		 * relation.  Ideally we should do Commit/StartTransactionCommand
 		 * here, relying on the session-level table lock to protect our
 		 * exclusive access to the relation.  However, that would require
 		 * a lot of extra code to close and re-open the relation, indices,
-		 * etc.  For now, a quick hack: record status of current transaction
-		 * as committed, and continue.
+		 * etc.  For now, a quick hack: record status of current
+		 * transaction as committed, and continue.
 		 */
 		RecordTransactionCommit();
 	}
@@ -1873,7 +1880,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 		 nblocks, blkno, num_moved,
 		 show_rusage(&ru0));
 
-	/* 
+	/*
 	 * Reflect the motion of system tuples to catalog cache here.
 	 */
 	CommandCounterIncrement();
@@ -1883,13 +1890,13 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 		/* vacuum indices again if needed */
 		if (Irel != (Relation *) NULL)
 		{
-			VacPage	   *vpleft,
+			VacPage    *vpleft,
 					   *vpright,
 						vpsave;
 
 			/* re-sort Nvacpagelist.pagedesc */
 			for (vpleft = Nvacpagelist.pagedesc,
-				 vpright = Nvacpagelist.pagedesc + Nvacpagelist.num_pages - 1;
+			vpright = Nvacpagelist.pagedesc + Nvacpagelist.num_pages - 1;
 				 vpleft < vpright; vpleft++, vpright--)
 			{
 				vpsave = *vpleft;
@@ -1906,9 +1913,9 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 		if (vacpage->blkno == (BlockNumber) (blkno - 1) &&
 			vacpage->offsets_free > 0)
 		{
-			char			unbuf[BLCKSZ];
-			OffsetNumber   *unused = (OffsetNumber*)unbuf;
-			int				uncnt;
+			char		unbuf[BLCKSZ];
+			OffsetNumber *unused = (OffsetNumber *) unbuf;
+			int			uncnt;
 
 			buf = ReadBuffer(onerel, vacpage->blkno);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
@@ -1943,8 +1950,9 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 			uncnt = PageRepairFragmentation(page, unused);
 			{
 				XLogRecPtr	recptr;
-				recptr = log_heap_clean(onerel, buf, (char*)unused,
-					(char*)(&(unused[uncnt])) - (char*)unused);
+
+				recptr = log_heap_clean(onerel, buf, (char *) unused,
+						  (char *) (&(unused[uncnt])) - (char *) unused);
 				PageSetLSN(page, recptr);
 				PageSetSUI(page, ThisStartUpID);
 			}
@@ -1962,9 +1970,9 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 
 	/*
 	 * Flush dirty pages out to disk.  We do this unconditionally, even if
-	 * we don't need to truncate, because we want to ensure that all tuples
-	 * have correct on-row commit status on disk (see bufmgr.c's comments
-	 * for FlushRelationBuffers()).
+	 * we don't need to truncate, because we want to ensure that all
+	 * tuples have correct on-row commit status on disk (see bufmgr.c's
+	 * comments for FlushRelationBuffers()).
 	 */
 	i = FlushRelationBuffers(onerel, blkno);
 	if (i < 0)
@@ -2005,8 +2013,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 	int			i;
 
 	nblocks = vacuum_pages->num_pages;
-	nblocks -= vacuum_pages->empty_end_pages;		/* nothing to do with
-													 * them */
+	nblocks -= vacuum_pages->empty_end_pages;	/* nothing to do with them */
 
 	for (i = 0, vacpage = vacuum_pages->pagedesc; i < nblocks; i++, vacpage++)
 	{
@@ -2022,9 +2029,9 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 
 	/*
 	 * Flush dirty pages out to disk.  We do this unconditionally, even if
-	 * we don't need to truncate, because we want to ensure that all tuples
-	 * have correct on-row commit status on disk (see bufmgr.c's comments
-	 * for FlushRelationBuffers()).
+	 * we don't need to truncate, because we want to ensure that all
+	 * tuples have correct on-row commit status on disk (see bufmgr.c's
+	 * comments for FlushRelationBuffers()).
 	 */
 	Assert(vacrelstats->num_pages >= vacuum_pages->empty_end_pages);
 	nblocks = vacrelstats->num_pages - vacuum_pages->empty_end_pages;
@@ -2042,7 +2049,8 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 			 vacrelstats->num_pages, nblocks);
 		nblocks = smgrtruncate(DEFAULT_SMGR, onerel, nblocks);
 		Assert(nblocks >= 0);
-		vacrelstats->num_pages = nblocks; /* set new number of blocks */
+		vacrelstats->num_pages = nblocks;		/* set new number of
+												 * blocks */
 	}
 }
 
@@ -2053,12 +2061,12 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 static void
 vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 {
-	char			unbuf[BLCKSZ];
-	OffsetNumber   *unused = (OffsetNumber*)unbuf;
-	int				uncnt;
-	Page			page = BufferGetPage(buffer);
-	ItemId			itemid;
-	int				i;
+	char		unbuf[BLCKSZ];
+	OffsetNumber *unused = (OffsetNumber *) unbuf;
+	int			uncnt;
+	Page		page = BufferGetPage(buffer);
+	ItemId		itemid;
+	int			i;
 
 	/* There shouldn't be any tuples moved onto the page yet! */
 	Assert(vacpage->offsets_used == 0);
@@ -2072,8 +2080,9 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 	uncnt = PageRepairFragmentation(page, unused);
 	{
 		XLogRecPtr	recptr;
-		recptr = log_heap_clean(onerel, buffer, (char*)unused,
-					(char*)(&(unused[uncnt])) - (char*)unused);
+
+		recptr = log_heap_clean(onerel, buffer, (char *) unused,
+						  (char *) (&(unused[uncnt])) - (char *) unused);
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
@@ -2220,8 +2229,8 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
 
 	vp = &vacpage;
 	vpp = (VacPage *) vac_find_eq((void *) (vacpagelist->pagedesc),
-					vacpagelist->num_pages, sizeof(VacPage), (void *) &vp,
-									vac_cmp_blk);
+				   vacpagelist->num_pages, sizeof(VacPage), (void *) &vp,
+								  vac_cmp_blk);
 
 	if (vpp == (VacPage *) NULL)
 		return (VacPage) NULL;
@@ -2235,8 +2244,8 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
 	}
 
 	voff = (OffsetNumber *) vac_find_eq((void *) (vp->offsets),
-			vp->offsets_free, sizeof(OffsetNumber), (void *) &ioffno,
-									   vac_cmp_offno);
+				vp->offsets_free, sizeof(OffsetNumber), (void *) &ioffno,
+										vac_cmp_offno);
 
 	if (voff == (OffsetNumber *) NULL)
 		return (VacPage) NULL;
@@ -2265,7 +2274,7 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
  */
 static void
 update_relstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
-			VRelStats *vacrelstats)
+				VRelStats *vacrelstats)
 {
 	Relation	rd;
 	HeapTupleData rtup;
@@ -2313,7 +2322,7 @@ update_relstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 static void
 reap_page(VacPageList vacpagelist, VacPage vacpage)
 {
-	VacPage	newvacpage;
+	VacPage		newvacpage;
 
 	/* allocate a VacPageData entry */
 	newvacpage = (VacPage) palloc(sizeof(VacPageData) + vacpage->offsets_free * sizeof(OffsetNumber));
@@ -2354,7 +2363,7 @@ vpage_insert(VacPageList vacpagelist, VacPage vpnew)
 
 static void *
 vac_find_eq(void *bot, int nelem, int size, void *elm,
-		   int (*compar) (const void *, const void *))
+			int (*compar) (const void *, const void *))
 {
 	int			res;
 	int			last = nelem - 1;

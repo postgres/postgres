@@ -194,7 +194,7 @@ extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber, RegProcedure
 
 extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gist_undo(XLogRecPtr lsn, XLogRecord *record);
-extern void gist_desc(char *buf, uint8 xl_info, char* rec);
+extern void gist_desc(char *buf, uint8 xl_info, char *rec);
 
 /* gistget.c */
 extern Datum gistgettuple(PG_FUNCTION_ARGS);

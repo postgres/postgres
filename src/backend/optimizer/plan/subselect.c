@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.48 2001/01/24 19:42:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.49 2001/03/22 03:59:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,12 +82,12 @@ replace_var(Var *var)
 
 	/*
 	 * If there's already a PlannerParamVar entry for this same Var, just
-	 * use it.	NOTE: in sufficiently complex querytrees, it is
-	 * possible for the same varno/varlevel to refer to different RTEs in
-	 * different parts of the parsetree, so that different fields might
-	 * end up sharing the same Param number.  As long as we check the
-	 * vartype as well, I believe that this sort of aliasing will cause no
-	 * trouble. The correct field should get stored into the Param slot at
+	 * use it.	NOTE: in sufficiently complex querytrees, it is possible
+	 * for the same varno/varlevel to refer to different RTEs in different
+	 * parts of the parsetree, so that different fields might end up
+	 * sharing the same Param number.  As long as we check the vartype as
+	 * well, I believe that this sort of aliasing will cause no trouble.
+	 * The correct field should get stored into the Param slot at
 	 * execution in each part of the tree.
 	 */
 	i = 0;
@@ -142,10 +142,10 @@ make_subplan(SubLink *slink)
 		elog(ERROR, "make_subplan: invalid expression structure (subquery already processed?)");
 
 	/*
-	 * Copy the source Query node.  This is a quick and dirty kluge to resolve
-	 * the fact that the parser can generate trees with multiple links to the
-	 * same sub-Query node, but the planner wants to scribble on the Query.
-	 * Try to clean this up when we do querytree redesign...
+	 * Copy the source Query node.	This is a quick and dirty kluge to
+	 * resolve the fact that the parser can generate trees with multiple
+	 * links to the same sub-Query node, but the planner wants to scribble
+	 * on the Query. Try to clean this up when we do querytree redesign...
 	 */
 	subquery = (Query *) copyObject(subquery);
 
@@ -183,7 +183,8 @@ make_subplan(SubLink *slink)
 	 */
 	node->plan = plan = subquery_planner(subquery, tuple_fraction);
 
-	node->plan_id = PlannerPlanId++; /* Assign unique ID to this SubPlan */
+	node->plan_id = PlannerPlanId++;	/* Assign unique ID to this
+										 * SubPlan */
 
 	node->rtable = subquery->rtable;
 	node->sublink = slink;
@@ -191,8 +192,8 @@ make_subplan(SubLink *slink)
 	slink->subselect = NULL;	/* cool ?! see error check above! */
 
 	/*
-	 * Make parParam list of params that current query level will pass
-	 * to this child plan.
+	 * Make parParam list of params that current query level will pass to
+	 * this child plan.
 	 */
 	foreach(lst, plan->extParam)
 	{
@@ -275,7 +276,7 @@ make_subplan(SubLink *slink)
 			tup = SearchSysCache(OPEROID,
 								 ObjectIdGetDatum(oper->opno),
 								 0, 0, 0);
-			if (! HeapTupleIsValid(tup))
+			if (!HeapTupleIsValid(tup))
 				elog(ERROR, "cache lookup failed for operator %u", oper->opno);
 			opform = (Form_pg_operator) GETSTRUCT(tup);
 
@@ -413,7 +414,7 @@ make_subplan(SubLink *slink)
 			tup = SearchSysCache(OPEROID,
 								 ObjectIdGetDatum(oper->opno),
 								 0, 0, 0);
-			if (! HeapTupleIsValid(tup))
+			if (!HeapTupleIsValid(tup))
 				elog(ERROR, "cache lookup failed for operator %u", oper->opno);
 			opform = (Form_pg_operator) GETSTRUCT(tup);
 
@@ -614,15 +615,16 @@ SS_finalize_plan(Plan *plan)
 			break;
 
 		case T_SubqueryScan:
+
 			/*
-			 * In a SubqueryScan, SS_finalize_plan has already been run
-			 * on the subplan by the inner invocation of subquery_planner,
-			 * so there's no need to do it again.  Instead, just pull out
-			 * the subplan's extParams list, which represents the params
-			 * it needs from my level and higher levels.
+			 * In a SubqueryScan, SS_finalize_plan has already been run on
+			 * the subplan by the inner invocation of subquery_planner, so
+			 * there's no need to do it again.  Instead, just pull out the
+			 * subplan's extParams list, which represents the params it
+			 * needs from my level and higher levels.
 			 */
 			results.paramids = set_unioni(results.paramids,
-								((SubqueryScan *) plan)->subplan->extParam);
+							 ((SubqueryScan *) plan)->subplan->extParam);
 			break;
 
 		case T_IndexScan:

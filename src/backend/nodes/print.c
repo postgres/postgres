@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.46 2001/01/24 19:42:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.47 2001/03/22 03:59:32 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -290,7 +290,7 @@ plannode_type(Plan *p)
 {
 	switch (nodeTag(p))
 	{
-		case T_Plan:
+			case T_Plan:
 			return "PLAN";
 		case T_Result:
 			return "RESULT";

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.29 2001/01/24 19:42:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.30 2001/03/22 03:59:13 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -25,32 +25,32 @@
 Datum
 hashchar(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_UINT32(~ ((uint32) PG_GETARG_CHAR(0)));
+	PG_RETURN_UINT32(~((uint32) PG_GETARG_CHAR(0)));
 }
 
 Datum
 hashint2(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_UINT32(~ ((uint32) PG_GETARG_INT16(0)));
+	PG_RETURN_UINT32(~((uint32) PG_GETARG_INT16(0)));
 }
 
 Datum
 hashint4(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_UINT32(~ PG_GETARG_UINT32(0));
+	PG_RETURN_UINT32(~PG_GETARG_UINT32(0));
 }
 
 Datum
 hashint8(PG_FUNCTION_ARGS)
 {
 	/* we just use the low 32 bits... */
-	PG_RETURN_UINT32(~ ((uint32) PG_GETARG_INT64(0)));
+	PG_RETURN_UINT32(~((uint32) PG_GETARG_INT64(0)));
 }
 
 Datum
 hashoid(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_UINT32(~ ((uint32) PG_GETARG_OID(0)));
+	PG_RETURN_UINT32(~((uint32) PG_GETARG_OID(0)));
 }
 
 Datum
@@ -93,7 +93,7 @@ hashint2vector(PG_FUNCTION_ARGS)
 Datum
 hashname(PG_FUNCTION_ARGS)
 {
-	char	   *key = NameStr(* PG_GETARG_NAME(0));
+	char	   *key = NameStr(*PG_GETARG_NAME(0));
 
 	return hash_any((char *) key, NAMEDATALEN);
 }

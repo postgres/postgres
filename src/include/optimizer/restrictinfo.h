@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: restrictinfo.h,v 1.10 2001/01/24 19:43:26 momjian Exp $
+ * $Id: restrictinfo.h,v 1.11 2001/03/22 04:00:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,6 @@
 extern bool restriction_is_or_clause(RestrictInfo *restrictinfo);
 extern List *get_actual_clauses(List *restrictinfo_list);
 extern void get_actual_join_clauses(List *restrictinfo_list,
-									List **joinquals, List **otherquals);
+						List **joinquals, List **otherquals);
 
 #endif	 /* RESTRICTINFO_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.54 2001/02/22 23:02:33 momjian Exp $
+ * $Id: nbtree.h,v 1.55 2001/03/22 04:00:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 /*
  *	BTPageOpaqueData -- At the end of every page, we store a pointer
  *	to both siblings in the tree.  This is used to do forward/backward
- *  index scans.  See Lehman and Yao's paper for more
+ *	index scans.  See Lehman and Yao's paper for more
  *	info.  In addition, we need to know what type of page this is
  *	(leaf or internal), and whether the page is available for reuse.
  *
@@ -35,8 +35,8 @@ typedef struct BTPageOpaqueData
 {
 	BlockNumber btpo_prev;		/* used for backward index scans */
 	BlockNumber btpo_next;		/* used for forward index scans */
-	BlockNumber btpo_parent;	/* pointer to parent, but not updated
-								   on parent split */
+	BlockNumber btpo_parent;	/* pointer to parent, but not updated on
+								 * parent split */
 	uint16		btpo_flags;		/* LEAF?, ROOT?, FREE?, META?, REORDER? */
 
 } BTPageOpaqueData;
@@ -44,11 +44,11 @@ typedef struct BTPageOpaqueData
 typedef BTPageOpaqueData *BTPageOpaque;
 
 /* Bits defined in btpo_flags */
-#define BTP_LEAF		(1 << 0)	/* leaf page, if not internal page */
-#define BTP_ROOT		(1 << 1)	/* root page (has no parent) */
-#define BTP_FREE		(1 << 2)	/* page not in use */
-#define BTP_META		(1 << 3)	/* meta-page */
-#define	BTP_REORDER		(1 << 4)	/* items need reordering */
+#define BTP_LEAF		(1 << 0)/* leaf page, if not internal page */
+#define BTP_ROOT		(1 << 1)/* root page (has no parent) */
+#define BTP_FREE		(1 << 2)/* page not in use */
+#define BTP_META		(1 << 3)/* meta-page */
+#define BTP_REORDER		(1 << 4)/* items need reordering */
 
 
 /*
@@ -67,15 +67,15 @@ typedef struct BTMetaPageData
 #define BTPageGetMeta(p) \
 	((BTMetaPageData *) &((PageHeader) p)->pd_linp[0])
 
-#define BTREE_METAPAGE	0			/* first page is meta */
-#define BTREE_MAGIC		0x053162	/* magic number of btree pages */
+#define BTREE_METAPAGE	0		/* first page is meta */
+#define BTREE_MAGIC		0x053162/* magic number of btree pages */
 
 #define BTreeInvalidParent(opaque)	\
 	(opaque->btpo_parent == InvalidBlockNumber || \
 		opaque->btpo_parent == BTREE_METAPAGE)
 
 #define BTREE_VERSION	1
-	
+
 /*
  *	BTScanOpaqueData is used to remember which buffers we're currently
  *	examining in the scan.	We keep these buffers pinned (but not locked,
@@ -101,8 +101,8 @@ typedef struct BTScanOpaqueData
 	/* these fields are set by _bt_orderkeys(), which see for more info: */
 	bool		qual_ok;		/* false if qual can never be satisfied */
 	uint16		numberOfKeys;	/* number of scan keys */
-	uint16		numberOfRequiredKeys; /* number of keys that must be matched
-									   * to continue the scan */
+	uint16		numberOfRequiredKeys;	/* number of keys that must be
+										 * matched to continue the scan */
 	ScanKey		keyData;		/* array of scan keys */
 } BTScanOpaqueData;
 
@@ -136,7 +136,7 @@ typedef struct BTItemData
 
 typedef BTItemData *BTItem;
 
-/* 
+/*
  * For XLOG: size without alignement. Sizeof works as long as
  * IndexTupleData has exactly 8 bytes.
  */
@@ -217,28 +217,28 @@ typedef BTStackData *BTStack;
 
 #define P_HIKEY				((OffsetNumber) 1)
 #define P_FIRSTKEY			((OffsetNumber) 2)
-#define P_FIRSTDATAKEY(opaque)  (P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY)
+#define P_FIRSTDATAKEY(opaque)	(P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY)
 
 /*
  * XLOG allows to store some information in high 4 bits of log
  * record xl_info field
  */
-#define	XLOG_BTREE_DELETE	0x00	/* delete btitem */
-#define	XLOG_BTREE_INSERT	0x10	/* add btitem without split */
-#define	XLOG_BTREE_SPLIT	0x20	/* add btitem with split */
-#define	XLOG_BTREE_SPLEFT	0x30	/* as above + flag that new btitem */
-									/* goes to the left sibling */
-#define	XLOG_BTREE_NEWROOT	0x40	/* new root page */
+#define XLOG_BTREE_DELETE	0x00/* delete btitem */
+#define XLOG_BTREE_INSERT	0x10/* add btitem without split */
+#define XLOG_BTREE_SPLIT	0x20/* add btitem with split */
+#define XLOG_BTREE_SPLEFT	0x30/* as above + flag that new btitem */
+ /* goes to the left sibling */
+#define XLOG_BTREE_NEWROOT	0x40/* new root page */
 
-#define	XLOG_BTREE_LEAF		0x80	/* leaf/internal page was changed */
+#define XLOG_BTREE_LEAF		0x80/* leaf/internal page was changed */
 
 /*
  * All what we need to find changed index tuple
  */
 typedef struct xl_btreetid
 {
-	RelFileNode			node;
-	ItemPointerData		tid;		/* changed tuple id */
+	RelFileNode node;
+	ItemPointerData tid;		/* changed tuple id */
 } xl_btreetid;
 
 /*
@@ -246,48 +246,48 @@ typedef struct xl_btreetid
  */
 typedef struct xl_btree_delete
 {
-	xl_btreetid			target;		/* deleted tuple id */
+	xl_btreetid target;			/* deleted tuple id */
 } xl_btree_delete;
 
-#define	SizeOfBtreeDelete	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
+#define SizeOfBtreeDelete	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
 
-/* 
+/*
  * This is what we need to know about pure (without split) insert
  */
 typedef struct xl_btree_insert
 {
-	xl_btreetid			target;		/* inserted tuple id */
+	xl_btreetid target;			/* inserted tuple id */
 	/* BTITEM FOLLOWS AT END OF STRUCT */
 } xl_btree_insert;
 
 #define SizeOfBtreeInsert	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
 
-/* 
+/*
  * On insert with split we save items of both left and right siblings
  * and restore content of both pages from log record
  */
 typedef struct xl_btree_split
 {
-	xl_btreetid			target;		/* inserted tuple id */
-	BlockIdData			otherblk;	/* second block participated in split: */
-									/* first one is stored in target' tid */
-	BlockIdData			parentblk;	/* parent block */
-	BlockIdData			leftblk;	/* prev left block */
-	BlockIdData			rightblk;	/* next right block */
-	uint16				leftlen;	/* len of left page items below */
+	xl_btreetid target;			/* inserted tuple id */
+	BlockIdData otherblk;		/* second block participated in split: */
+	/* first one is stored in target' tid */
+	BlockIdData parentblk;		/* parent block */
+	BlockIdData leftblk;		/* prev left block */
+	BlockIdData rightblk;		/* next right block */
+	uint16		leftlen;		/* len of left page items below */
 	/* LEFT AND RIGHT PAGES ITEMS FOLLOW AT THE END */
 } xl_btree_split;
 
 #define SizeOfBtreeSplit	(offsetof(xl_btree_split, leftlen) + sizeof(uint16))
 
-/* 
- * New root log record. 
+/*
+ * New root log record.
  */
 typedef struct xl_btree_newroot
 {
-	RelFileNode			node;
-	int32				level;
-	BlockIdData			rootblk;
+	RelFileNode node;
+	int32		level;
+	BlockIdData rootblk;
 	/* 0 or 2 BTITEMS FOLLOW AT END OF STRUCT */
 } xl_btree_newroot;
 
@@ -332,7 +332,7 @@ extern Datum btdelete(PG_FUNCTION_ARGS);
 
 extern void btree_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void btree_undo(XLogRecPtr lsn, XLogRecord *record);
-extern void btree_desc(char *buf, uint8 xl_info, char* rec);
+extern void btree_desc(char *buf, uint8 xl_info, char *rec);
 
 /*
  * prototypes for functions in nbtinsert.c
@@ -365,13 +365,13 @@ extern void AtEOXact_nbtree(void);
  * prototypes for functions in nbtsearch.c
  */
 extern BTStack _bt_search(Relation rel, int keysz, ScanKey scankey,
-						  Buffer *bufP, int access);
+		   Buffer *bufP, int access);
 extern Buffer _bt_moveright(Relation rel, Buffer buf, int keysz,
 			  ScanKey scankey, int access);
 extern OffsetNumber _bt_binsrch(Relation rel, Buffer buf, int keysz,
-								ScanKey scankey);
+			ScanKey scankey);
 extern int32 _bt_compare(Relation rel, int keysz, ScanKey scankey,
-						 Page page, OffsetNumber offnum);
+			Page page, OffsetNumber offnum);
 extern RetrieveIndexResult _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern RetrieveIndexResult _bt_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
@@ -391,7 +391,7 @@ extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
 extern void _bt_orderkeys(Relation relation, BTScanOpaque so);
 extern bool _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
-						  ScanDirection dir, bool *continuescan);
+			  ScanDirection dir, bool *continuescan);
 extern BTItem _bt_formitem(IndexTuple itup);
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.81 2001/02/16 18:50:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.82 2001/03/22 04:00:00 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -118,7 +118,7 @@ ReverifyMyDatabase(const char *name)
 	 * Also check that the database is currently allowing connections.
 	 */
 	dbform = (Form_pg_database) GETSTRUCT(tup);
-	if (! dbform->datallowconn)
+	if (!dbform->datallowconn)
 		elog(FATAL, "Database \"%s\" is not currently accepting connections",
 			 name);
 
@@ -175,6 +175,7 @@ InitCommunication(void)
 void
 BaseInit(void)
 {
+
 	/*
 	 * Attach to shared memory and semaphores, and initialize our
 	 * input/output/debugging file descriptors.
@@ -230,8 +231,8 @@ InitPostgres(const char *dbname, const char *username)
 		ValidatePgVersion(DataDir);
 
 		/*
-		 * Find oid and path of the database we're about to open.
-		 * Since we're not yet up and running we have to use the hackish
+		 * Find oid and path of the database we're about to open. Since
+		 * we're not yet up and running we have to use the hackish
 		 * GetRawDatabaseInfo.
 		 */
 		GetRawDatabaseInfo(dbname, &MyDatabaseId, datpath);
@@ -347,8 +348,8 @@ InitPostgres(const char *dbname, const char *username)
 
 	/*
 	 * Unless we are bootstrapping, double-check that InitMyDatabaseInfo()
-	 * got a correct result.  We can't do this until all the database-access
-	 * infrastructure is up.
+	 * got a correct result.  We can't do this until all the
+	 * database-access infrastructure is up.
 	 */
 	if (!bootstrap)
 		ReverifyMyDatabase(dbname);
@@ -359,14 +360,18 @@ InitPostgres(const char *dbname, const char *username)
 #endif
 
 	/*
-	 * Set up process-exit callbacks to remove temp relations and then
-	 * do pre-shutdown cleanup.  This should be last because we want
+	 * Set up process-exit callbacks to remove temp relations and then do
+	 * pre-shutdown cleanup.  This should be last because we want
 	 * shmem_exit to call these routines before the exit callbacks that
-	 * are registered by buffer manager, lock manager, etc.  We need
-	 * to run this code before we close down database access!
+	 * are registered by buffer manager, lock manager, etc.  We need to
+	 * run this code before we close down database access!
 	 */
 	on_shmem_exit(ShutdownPostgres, 0);
-	/* because callbacks are called in reverse order, this gets done first: */
+
+	/*
+	 * because callbacks are called in reverse order, this gets done
+	 * first:
+	 */
 	on_shmem_exit(remove_all_temp_relations, 0);
 
 	/* close the transaction we started above */
@@ -389,21 +394,24 @@ InitPostgres(const char *dbname, const char *username)
 static void
 ShutdownPostgres(void)
 {
+
 	/*
-	 * These operations are really just a minimal subset of AbortTransaction().
-	 * We don't want to do any inessential cleanup, since that just raises
-	 * the odds of failure --- but there's some stuff we need to do.
+	 * These operations are really just a minimal subset of
+	 * AbortTransaction(). We don't want to do any inessential cleanup,
+	 * since that just raises the odds of failure --- but there's some
+	 * stuff we need to do.
 	 *
 	 * Release any spinlocks or buffer context locks we might be holding.
-	 * This is a kluge to improve the odds that we won't get into a self-made
-	 * stuck-spinlock scenario while trying to shut down.
+	 * This is a kluge to improve the odds that we won't get into a
+	 * self-made stuck-spinlock scenario while trying to shut down.
 	 */
 	ProcReleaseSpins(NULL);
 	UnlockBuffers();
+
 	/*
-	 * In case a transaction is open, delete any files it created.  This
+	 * In case a transaction is open, delete any files it created.	This
 	 * has to happen before bufmgr shutdown, so having smgr register a
 	 * callback for it wouldn't work.
 	 */
-	smgrDoPendingDeletes(false); /* delete as though aborting xact */
+	smgrDoPendingDeletes(false);/* delete as though aborting xact */
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.46 2001/01/24 19:42:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.47 2001/03/22 03:59:18 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -34,7 +34,7 @@
 #include "utils/syscache.h"
 
 static int32 aclcheck(char *relname, Acl *acl, AclId id,
-					  AclIdType idtype, AclMode mode);
+		 AclIdType idtype, AclMode mode);
 
 /* warning messages, now more explicit. */
 /* MUST correspond to the order of the ACLCHK_* result codes in acl.h. */
@@ -59,7 +59,7 @@ dumpacl(Acl *acl)
 	for (i = 0; i < ACL_NUM(acl); ++i)
 		elog(DEBUG, "	acl[%d]: %s", i,
 			 DatumGetCString(DirectFunctionCall1(aclitemout,
-												 PointerGetDatum(aip + i))));
+											 PointerGetDatum(aip + i))));
 }
 
 #endif
@@ -250,8 +250,8 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 				num;
 
 	/*
-	 * If ACL is null, default to "OK" --- this should not happen,
-	 * since caller should have inserted appropriate default
+	 * If ACL is null, default to "OK" --- this should not happen, since
+	 * caller should have inserted appropriate default
 	 */
 	if (!acl)
 	{
@@ -265,8 +265,8 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	/*
 	 * We'll treat the empty ACL like that, too, although this is more
 	 * like an error (i.e., you manually blew away your ACL array) -- the
-	 * system never creates an empty ACL, since there must always be
-	 * a "world" entry in the first slot.
+	 * system never creates an empty ACL, since there must always be a
+	 * "world" entry in the first slot.
 	 */
 	if (num < 1)
 	{
@@ -352,7 +352,7 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 {
 	int32		result;
 	HeapTuple	tuple;
-	char       *usename;
+	char	   *usename;
 	Datum		aclDatum;
 	bool		isNull;
 	Acl		   *acl;
@@ -439,7 +439,7 @@ pg_ownercheck(Oid userid,
 {
 	HeapTuple	tuple;
 	AclId		owner_id;
-	char       *usename;
+	char	   *usename;
 
 	tuple = SearchSysCache(SHADOWSYSID,
 						   ObjectIdGetDatum(userid),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.55 2001/02/27 07:07:00 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.56 2001/03/22 03:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		{
 			/* We know the source constant is really of type 'text' */
 			char	   *val = DatumGetCString(DirectFunctionCall1(textout,
-														con->constvalue));
+													   con->constvalue));
 
 			newcon->constvalue = stringTypeDatum(targetType, val, atttypmod);
 			pfree(val);
@@ -227,9 +227,9 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 
 		/* don't choke on references to no-longer-existing types */
 		if (!typeidIsValid(inputTypeId))
- 		    return false;
- 		if (!typeidIsValid(targetTypeId))
- 		    return false;
+			return false;
+		if (!typeidIsValid(targetTypeId))
+			return false;
 
 		/*
 		 * Else, try for explicit conversion using functions: look for a
@@ -240,7 +240,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 		oid_array[0] = inputTypeId;
 
 		ftup = SearchSysCache(PROCNAME,
-							  PointerGetDatum(typeidTypeName(targetTypeId)),
+						   PointerGetDatum(typeidTypeName(targetTypeId)),
 							  Int32GetDatum(1),
 							  PointerGetDatum(oid_array),
 							  0);
@@ -333,7 +333,7 @@ coerce_type_typmod(ParseState *pstate, Node *node,
  *
  * XXX this code is WRONG, since (for example) given the input (int4,int8)
  * it will select int4, whereas according to SQL92 clause 9.3 the correct
- * answer is clearly int8.  To fix this we need a notion of a promotion
+ * answer is clearly int8.	To fix this we need a notion of a promotion
  * hierarchy within type categories --- something more complete than
  * just a single preferred type.
  */
@@ -349,7 +349,7 @@ select_common_type(List *typeids, const char *context)
 	pcategory = TypeCategory(ptype);
 	foreach(l, lnext(typeids))
 	{
-		Oid		ntype = (Oid) lfirsti(l);
+		Oid			ntype = (Oid) lfirsti(l);
 
 		/* move on to next one if no new information... */
 		if (ntype && (ntype != UNKNOWNOID) && (ntype != ptype))
@@ -362,20 +362,21 @@ select_common_type(List *typeids, const char *context)
 			}
 			else if (TypeCategory(ntype) != pcategory)
 			{
+
 				/*
-				 * both types in different categories? then
-				 * not much hope...
+				 * both types in different categories? then not much
+				 * hope...
 				 */
 				elog(ERROR, "%s types \"%s\" and \"%s\" not matched",
-					 context, typeidTypeName(ptype), typeidTypeName(ntype));
+				  context, typeidTypeName(ptype), typeidTypeName(ntype));
 			}
 			else if (IsPreferredType(pcategory, ntype)
 					 && !IsPreferredType(pcategory, ptype)
 					 && can_coerce_type(1, &ptype, &ntype))
 			{
+
 				/*
-				 * new one is preferred and can convert? then
-				 * take it...
+				 * new one is preferred and can convert? then take it...
 				 */
 				ptype = ntype;
 				pcategory = TypeCategory(ptype);
@@ -384,16 +385,15 @@ select_common_type(List *typeids, const char *context)
 	}
 
 	/*
-	 * If all the inputs were UNKNOWN type --- ie, unknown-type literals ---
-	 * then resolve as type TEXT.  This situation comes up with constructs
-	 * like
-	 *			SELECT (CASE WHEN foo THEN 'bar' ELSE 'baz' END);
-	 *			SELECT 'foo' UNION SELECT 'bar';
-	 * It might seem desirable to leave the construct's output type as
-	 * UNKNOWN, but that really doesn't work, because we'd probably end up
-	 * needing a runtime coercion from UNKNOWN to something else, and we
-	 * usually won't have it.  We need to coerce the unknown literals while
-	 * they are still literals, so a decision has to be made now.
+	 * If all the inputs were UNKNOWN type --- ie, unknown-type literals
+	 * --- then resolve as type TEXT.  This situation comes up with
+	 * constructs like SELECT (CASE WHEN foo THEN 'bar' ELSE 'baz' END);
+	 * SELECT 'foo' UNION SELECT 'bar'; It might seem desirable to leave
+	 * the construct's output type as UNKNOWN, but that really doesn't
+	 * work, because we'd probably end up needing a runtime coercion from
+	 * UNKNOWN to something else, and we usually won't have it.  We need
+	 * to coerce the unknown literals while they are still literals, so a
+	 * decision has to be made now.
 	 */
 	if (ptype == UNKNOWNOID)
 		ptype = TEXTOID;
@@ -420,9 +420,7 @@ coerce_to_common_type(ParseState *pstate, Node *node,
 	if (inputTypeId == targetTypeId)
 		return node;			/* no work */
 	if (can_coerce_type(1, &inputTypeId, &targetTypeId))
-	{
 		node = coerce_type(pstate, node, inputTypeId, targetTypeId, -1);
-	}
 	else
 	{
 		elog(ERROR, "%s unable to convert to type \"%s\"",

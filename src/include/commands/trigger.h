@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.25 2001/03/14 21:50:32 tgl Exp $
+ * $Id: trigger.h,v 1.26 2001/03/22 04:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,15 +90,15 @@ extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 extern bool equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2);
 
 extern HeapTuple ExecBRInsertTriggers(EState *estate,
-									  Relation rel, HeapTuple tuple);
+					 Relation rel, HeapTuple tuple);
 extern void ExecARInsertTriggers(EState *estate,
-								 Relation rel, HeapTuple tuple);
+					 Relation rel, HeapTuple tuple);
 extern bool ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid);
 extern void ExecARDeleteTriggers(EState *estate, ItemPointer tupleid);
 extern HeapTuple ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid,
-									  HeapTuple tuple);
+					 HeapTuple tuple);
 extern void ExecARUpdateTriggers(EState *estate, ItemPointer tupleid,
-								 HeapTuple tuple);
+					 HeapTuple tuple);
 
 
 /* ----------
@@ -125,7 +125,7 @@ typedef struct DeferredTriggerEventData *DeferredTriggerEvent;
 
 typedef struct DeferredTriggerEventData
 {
-	DeferredTriggerEvent dte_next; /* list link */
+	DeferredTriggerEvent dte_next;		/* list link */
 	int32		dte_event;
 	Oid			dte_relid;
 	ItemPointerData dte_oldctid;

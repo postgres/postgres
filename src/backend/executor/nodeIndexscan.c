@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.57 2001/01/29 00:39:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.58 2001/03/22 03:59:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,7 @@ IndexNext(IndexScan *node)
 					qual = lnext(qual);
 				}
 				if (!prev_matches)
-					return slot; /* OK to return tuple */
+					return slot;/* OK to return tuple */
 				/* Duplicate tuple, so drop it and loop back for another */
 				ExecClearTuple(slot);
 			}
@@ -326,7 +326,8 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 
 	estate = node->scan.plan.state;
 	indexstate = node->indxstate;
-	econtext = indexstate->iss_RuntimeContext; /* context for runtime keys */
+	econtext = indexstate->iss_RuntimeContext;	/* context for runtime
+												 * keys */
 	direction = estate->es_direction;
 	numIndices = indexstate->iss_NumIndices;
 	scanDescs = indexstate->iss_ScanDescs;
@@ -340,16 +341,18 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 
 	if (econtext)
 	{
+
 		/*
-		 * If we are being passed an outer tuple,
-		 * save it for runtime key calc
+		 * If we are being passed an outer tuple, save it for runtime key
+		 * calc
 		 */
 		if (exprCtxt != NULL)
 			econtext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
+
 		/*
-		 * Reset the runtime-key context so we don't leak memory as
-		 * each outer tuple is scanned.  Note this assumes that we
-		 * will recalculate *all* runtime keys on each call.
+		 * Reset the runtime-key context so we don't leak memory as each
+		 * outer tuple is scanned.	Note this assumes that we will
+		 * recalculate *all* runtime keys on each call.
 		 */
 		ResetExprContext(econtext);
 	}
@@ -385,8 +388,8 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 				 * outer tuple.  We then stick the result into the scan
 				 * key.
 				 *
-				 * Note: the result of the eval could be a pass-by-ref
-				 * value that's stored in the outer scan's tuple, not in
+				 * Note: the result of the eval could be a pass-by-ref value
+				 * that's stored in the outer scan's tuple, not in
 				 * econtext->ecxt_per_tuple_memory.  We assume that the
 				 * outer tuple will stay put throughout our scan.  If this
 				 * is wrong, we could copy the result into our context
@@ -790,7 +793,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			Assert(leftop != NULL);
 
-			if (IsA(leftop, Var) && var_is_rel((Var *) leftop))
+			if (IsA(leftop, Var) &&var_is_rel((Var *) leftop))
 			{
 				/* ----------------
 				 *	if the leftop is a "rel-var", then it means
@@ -862,7 +865,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			Assert(rightop != NULL);
 
-			if (IsA(rightop, Var) && var_is_rel((Var *) rightop))
+			if (IsA(rightop, Var) &&var_is_rel((Var *) rightop))
 			{
 				/* ----------------
 				 *	here we make sure only one op identifies the
@@ -986,7 +989,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	 */
 	if (have_runtime_keys)
 	{
-		ExprContext	   *stdecontext = scanstate->cstate.cs_ExprContext;
+		ExprContext *stdecontext = scanstate->cstate.cs_ExprContext;
 
 		ExecAssignExprContext(estate, &scanstate->cstate);
 		indexstate->iss_RuntimeKeyInfo = runtimeKeyInfo;

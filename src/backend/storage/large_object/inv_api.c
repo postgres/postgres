@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.85 2001/02/10 02:31:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.86 2001/03/22 03:59:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@
 static int32
 getbytealen(bytea *data)
 {
-	Assert(! VARATT_IS_EXTENDED(data));
+	Assert(!VARATT_IS_EXTENDED(data));
 	if (VARSIZE(data) < VARHDRSZ)
 		elog(ERROR, "getbytealen: VARSIZE(data) < VARHDRSZ. This is internal error.");
 	return (VARSIZE(data) - VARHDRSZ);
@@ -75,7 +75,8 @@ inv_create(int flags)
 		elog(ERROR, "inv_create: large object %u already exists. This is internal error.", file_oid);
 
 	/*
-	 * Create the LO by writing an empty first page for it in pg_largeobject
+	 * Create the LO by writing an empty first page for it in
+	 * pg_largeobject
 	 */
 	(void) LargeObjectCreate(file_oid);
 
@@ -93,13 +94,17 @@ inv_create(int flags)
 	retval->id = file_oid;
 	retval->offset = 0;
 
-	if (flags & INV_WRITE) {
+	if (flags & INV_WRITE)
+	{
 		retval->flags = IFS_WRLOCK | IFS_RDLOCK;
 		retval->heap_r = heap_openr(LargeObjectRelationName, RowExclusiveLock);
-	} else if (flags & INV_READ) {
+	}
+	else if (flags & INV_READ)
+	{
 		retval->flags = IFS_RDLOCK;
 		retval->heap_r = heap_openr(LargeObjectRelationName, AccessShareLock);
-	} else
+	}
+	else
 		elog(ERROR, "inv_create: invalid flags: %d", flags);
 
 	retval->index_r = index_openr(LargeObjectLOidPNIndex);
@@ -118,21 +123,25 @@ inv_open(Oid lobjId, int flags)
 {
 	LargeObjectDesc *retval;
 
-	if (! LargeObjectExists(lobjId))
+	if (!LargeObjectExists(lobjId))
 		elog(ERROR, "inv_open: large object %u not found", lobjId);
-	
+
 	retval = (LargeObjectDesc *) palloc(sizeof(LargeObjectDesc));
 
 	retval->id = lobjId;
 	retval->offset = 0;
 
-	if (flags & INV_WRITE) {
+	if (flags & INV_WRITE)
+	{
 		retval->flags = IFS_WRLOCK | IFS_RDLOCK;
 		retval->heap_r = heap_openr(LargeObjectRelationName, RowExclusiveLock);
-	} else if (flags & INV_READ) {
+	}
+	else if (flags & INV_READ)
+	{
 		retval->flags = IFS_RDLOCK;
 		retval->heap_r = heap_openr(LargeObjectRelationName, AccessShareLock);
-	} else
+	}
+	else
 		elog(ERROR, "inv_open: invalid flags: %d", flags);
 
 	retval->index_r = index_openr(LargeObjectLOidPNIndex);
@@ -185,16 +194,16 @@ inv_drop(Oid lobjId)
 static uint32
 inv_getsize(LargeObjectDesc *obj_desc)
 {
-	bool			found = false;
-	uint32			lastbyte = 0;
-	ScanKeyData		skey[1];
-	IndexScanDesc	sd;
-	RetrieveIndexResult	indexRes;
-	HeapTupleData	tuple;
-	Buffer			buffer;
-	Form_pg_largeobject	data;
-	bytea		   *datafield;
-	bool			pfreeit;
+	bool		found = false;
+	uint32		lastbyte = 0;
+	ScanKeyData skey[1];
+	IndexScanDesc sd;
+	RetrieveIndexResult indexRes;
+	HeapTupleData tuple;
+	Buffer		buffer;
+	Form_pg_largeobject data;
+	bytea	   *datafield;
+	bool		pfreeit;
 
 	Assert(PointerIsValid(obj_desc));
 
@@ -210,10 +219,10 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	tuple.t_data = NULL;
 
 	/*
-	 * Because the pg_largeobject index is on both loid and pageno,
-	 * but we constrain only loid, a backwards scan should visit all
-	 * pages of the large object in reverse pageno order.  So, it's
-	 * sufficient to examine the first valid tuple (== last valid page).
+	 * Because the pg_largeobject index is on both loid and pageno, but we
+	 * constrain only loid, a backwards scan should visit all pages of the
+	 * large object in reverse pageno order.  So, it's sufficient to
+	 * examine the first valid tuple (== last valid page).
 	 */
 	while ((indexRes = index_getnext(sd, BackwardScanDirection)))
 	{
@@ -238,7 +247,7 @@ inv_getsize(LargeObjectDesc *obj_desc)
 		ReleaseBuffer(buffer);
 		break;
 	}
-	
+
 	index_endscan(sd);
 
 	if (!found)
@@ -259,15 +268,15 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 			obj_desc->offset = offset;
 			break;
 		case SEEK_CUR:
-			if (offset < 0 && obj_desc->offset < ((uint32) (- offset)))
+			if (offset < 0 && obj_desc->offset < ((uint32) (-offset)))
 				elog(ERROR, "inv_seek: invalid offset: %d", offset);
 			obj_desc->offset += offset;
 			break;
 		case SEEK_END:
 			{
-				uint32	size = inv_getsize(obj_desc);
+				uint32		size = inv_getsize(obj_desc);
 
-				if (offset < 0 && size < ((uint32) (- offset)))
+				if (offset < 0 && size < ((uint32) (-offset)))
 					elog(ERROR, "inv_seek: invalid offset: %d", offset);
 				obj_desc->offset = size + offset;
 			}
@@ -289,20 +298,20 @@ inv_tell(LargeObjectDesc *obj_desc)
 int
 inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 {
-	int				nread = 0;
-	int				n;
-	int				off;
-	int				len;
-	int32			pageno = (int32) (obj_desc->offset / LOBLKSIZE);
-	uint32			pageoff;
-	ScanKeyData		skey[2];
-	IndexScanDesc	sd;
-	RetrieveIndexResult	indexRes;
-	HeapTupleData	tuple;
-	Buffer			buffer;
-	Form_pg_largeobject	data;
-	bytea		   *datafield;
-	bool			pfreeit;
+	int			nread = 0;
+	int			n;
+	int			off;
+	int			len;
+	int32		pageno = (int32) (obj_desc->offset / LOBLKSIZE);
+	uint32		pageoff;
+	ScanKeyData skey[2];
+	IndexScanDesc sd;
+	RetrieveIndexResult indexRes;
+	HeapTupleData tuple;
+	Buffer		buffer;
+	Form_pg_largeobject data;
+	bytea	   *datafield;
+	bool		pfreeit;
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -335,13 +344,13 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 		if (tuple.t_data == NULL)
 			continue;
-		
+
 		data = (Form_pg_largeobject) GETSTRUCT(&tuple);
 
 		/*
 		 * We assume the indexscan will deliver pages in order.  However,
-		 * there may be missing pages if the LO contains unwritten "holes".
-		 * We want missing sections to read out as zeroes.
+		 * there may be missing pages if the LO contains unwritten
+		 * "holes". We want missing sections to read out as zeroes.
 		 */
 		pageoff = ((uint32) data->pageno) * LOBLKSIZE;
 		if (pageoff > obj_desc->offset)
@@ -393,28 +402,28 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 int
 inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 {
-	int				nwritten = 0;
-	int				n;
-	int				off;
-	int				len;
-	int32			pageno = (int32) (obj_desc->offset / LOBLKSIZE);
-	ScanKeyData		skey[2];
-	IndexScanDesc	sd;
-	RetrieveIndexResult	indexRes;
-	HeapTupleData	oldtuple;
-	Buffer			buffer;
-	Form_pg_largeobject	olddata;
-	bool			neednextpage;
-	bytea		   *datafield;
-	bool			pfreeit;
-	char			workbuf[LOBLKSIZE + VARHDRSZ];
-	char		   *workb = VARATT_DATA(workbuf);
-	HeapTuple		newtup;
-	Datum			values[Natts_pg_largeobject];
-	char			nulls[Natts_pg_largeobject];
-	char			replace[Natts_pg_largeobject];
-	bool			write_indices;
-	Relation		idescs[Num_pg_largeobject_indices];
+	int			nwritten = 0;
+	int			n;
+	int			off;
+	int			len;
+	int32		pageno = (int32) (obj_desc->offset / LOBLKSIZE);
+	ScanKeyData skey[2];
+	IndexScanDesc sd;
+	RetrieveIndexResult indexRes;
+	HeapTupleData oldtuple;
+	Buffer		buffer;
+	Form_pg_largeobject olddata;
+	bool		neednextpage;
+	bytea	   *datafield;
+	bool		pfreeit;
+	char		workbuf[LOBLKSIZE + VARHDRSZ];
+	char	   *workb = VARATT_DATA(workbuf);
+	HeapTuple	newtup;
+	Datum		values[Natts_pg_largeobject];
+	char		nulls[Natts_pg_largeobject];
+	char		replace[Natts_pg_largeobject];
+	bool		write_indices;
+	Relation	idescs[Num_pg_largeobject_indices];
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -422,7 +431,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	if (nbytes <= 0)
 		return 0;
 
-	write_indices = ! IsIgnoringSystemIndexes();
+	write_indices = !IsIgnoringSystemIndexes();
 	if (write_indices)
 		CatalogOpenIndices(Num_pg_largeobject_indices,
 						   Name_pg_largeobject_indices,
@@ -450,6 +459,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	while (nwritten < nbytes)
 	{
+
 		/*
 		 * If possible, get next pre-existing page of the LO.  We assume
 		 * the indexscan will deliver these in order --- but there may be
@@ -471,12 +481,14 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			}
 			neednextpage = false;
 		}
+
 		/*
 		 * If we have a pre-existing page, see if it is the page we want
 		 * to write, or a later one.
 		 */
 		if (olddata != NULL && olddata->pageno == pageno)
 		{
+
 			/*
 			 * Update an existing page with fresh data.
 			 *
@@ -495,12 +507,14 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			memcpy(workb, VARDATA(datafield), len);
 			if (pfreeit)
 				pfree(datafield);
+
 			/*
 			 * Fill any hole
 			 */
 			off = (int) (obj_desc->offset % LOBLKSIZE);
 			if (off > len)
 				MemSet(workb + len, 0, off - len);
+
 			/*
 			 * Insert appropriate portion of new data
 			 */
@@ -513,6 +527,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			/* compute valid length of new page */
 			len = (len >= off) ? len : off;
 			VARATT_SIZEP(workbuf) = len + VARHDRSZ;
+
 			/*
 			 * Form and insert updated tuple
 			 */
@@ -528,6 +543,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				CatalogIndexInsert(idescs, Num_pg_largeobject_indices,
 								   obj_desc->heap_r, newtup);
 			heap_freetuple(newtup);
+
 			/*
 			 * We're done with this old page.
 			 */
@@ -539,6 +555,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		}
 		else
 		{
+
 			/*
 			 * Write a brand new page.
 			 *
@@ -547,6 +564,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			off = (int) (obj_desc->offset % LOBLKSIZE);
 			if (off > 0)
 				MemSet(workb, 0, off);
+
 			/*
 			 * Insert appropriate portion of new data
 			 */
@@ -558,6 +576,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			/* compute valid length of new page */
 			len = off + n;
 			VARATT_SIZEP(workbuf) = len + VARHDRSZ;
+
 			/*
 			 * Form and insert updated tuple
 			 */
@@ -585,8 +604,8 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		CatalogCloseIndices(Num_pg_largeobject_indices, idescs);
 
 	/*
-	 * Advance command counter so that my tuple updates will be seen by later
-	 * large-object operations in this transaction.
+	 * Advance command counter so that my tuple updates will be seen by
+	 * later large-object operations in this transaction.
 	 */
 	CommandCounterIncrement();
 

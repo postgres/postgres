@@ -14,5 +14,5 @@ typedef unsigned char slock_t;
  * Check for b20.1 and disable AF_UNIX family socket support.
  */
 #if CYGWIN_VERSION_DLL_MAJOR < 1001
-# undef HAVE_UNIX_SOCKETS
+#undef HAVE_UNIX_SOCKETS
 #endif

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_control.h,v 1.2 2001/03/18 20:18:59 tgl Exp $
+ * $Id: pg_control.h,v 1.3 2001/03/22 04:00:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,16 +30,16 @@
  */
 typedef struct CheckPoint
 {
-	XLogRecPtr		redo;		/* next RecPtr available when we */
-								/* began to create CheckPoint */
-								/* (i.e. REDO start point) */
-	XLogRecPtr		undo;		/* first record of oldest in-progress */
-								/* transaction when we started */
-								/* (i.e. UNDO end point) */
-	StartUpID		ThisStartUpID;	/* current SUI */
-	TransactionId	nextXid;	/* next free XID */
-	Oid				nextOid;	/* next free OID */
-	time_t			time;		/* time stamp of checkpoint */
+	XLogRecPtr	redo;			/* next RecPtr available when we */
+	/* began to create CheckPoint */
+	/* (i.e. REDO start point) */
+	XLogRecPtr	undo;			/* first record of oldest in-progress */
+	/* transaction when we started */
+	/* (i.e. UNDO end point) */
+	StartUpID	ThisStartUpID;	/* current SUI */
+	TransactionId nextXid;		/* next free XID */
+	Oid			nextOid;		/* next free OID */
+	time_t		time;			/* time stamp of checkpoint */
 } CheckPoint;
 
 /* XLOG info values for XLOG rmgr */
@@ -58,7 +58,7 @@ typedef enum DBState
 	DB_IN_PRODUCTION
 } DBState;
 
-#define LOCALE_NAME_BUFLEN  128
+#define LOCALE_NAME_BUFLEN	128
 
 /*
  * Contents of pg_control.
@@ -74,16 +74,16 @@ typedef struct ControlFileData
 	crc64		crc;			/* CRC for remainder of struct */
 
 	/*
-	 * Version identifier information.  Keep these fields at the front,
+	 * Version identifier information.	Keep these fields at the front,
 	 * especially pg_control_version; they won't be real useful if they
 	 * move around.
 	 *
 	 * pg_control_version identifies the format of pg_control itself.
 	 * catalog_version_no identifies the format of the system catalogs.
 	 *
-	 * There are additional version identifiers in individual files;
-	 * for example, WAL logs contain per-page magic numbers that can serve
-	 * as version cues for the WAL log.
+	 * There are additional version identifiers in individual files; for
+	 * example, WAL logs contain per-page magic numbers that can serve as
+	 * version cues for the WAL log.
 	 */
 	uint32		pg_control_version;		/* PG_CONTROL_VERSION */
 	uint32		catalog_version_no;		/* see catversion.h */
@@ -96,9 +96,9 @@ typedef struct ControlFileData
 	uint32		logId;			/* current log file id */
 	uint32		logSeg;			/* current log file segment, + 1 */
 	XLogRecPtr	checkPoint;		/* last check point record ptr */
-	XLogRecPtr	prevCheckPoint;	/* previous check point record ptr */
+	XLogRecPtr	prevCheckPoint; /* previous check point record ptr */
 
-	CheckPoint	checkPointCopy;	/* copy of last check point record */
+	CheckPoint	checkPointCopy; /* copy of last check point record */
 
 	/*
 	 * This data is used to make sure that configuration of this database

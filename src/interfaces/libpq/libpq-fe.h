@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.70 2001/01/24 19:43:31 momjian Exp $
+ * $Id: libpq-fe.h,v 1.71 2001/03/22 04:01:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,7 @@ extern		"C"
 	extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
 #ifdef USE_SSL
 	/* Get the SSL structure associated with a connection */
-	extern SSL  *PQgetssl(PGconn *conn);
+	extern SSL *PQgetssl(PGconn *conn);
 #endif
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.72 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.73 2001/03/22 03:59:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 static int checkAttrExists(const char *attributeName,
 				const char *attributeType, List *schema);
 static List *MergeAttributes(List *schema, List *supers, bool istemp,
-							 List **supOids, List **supconstr);
+				List **supOids, List **supconstr);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 
@@ -150,10 +150,10 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	CommandCounterIncrement();
 
 	/*
-	 * Open the new relation and acquire exclusive lock on it.  This isn't
+	 * Open the new relation and acquire exclusive lock on it.	This isn't
 	 * really necessary for locking out other backends (since they can't
-	 * see the new rel anyway until we commit), but it keeps the lock manager
-	 * from complaining about deadlock risks.
+	 * see the new rel anyway until we commit), but it keeps the lock
+	 * manager from complaining about deadlock risks.
 	 */
 	rel = heap_openr(relname, AccessExclusiveLock);
 
@@ -242,7 +242,7 @@ TruncateRelation(char *name)
  * Varattnos of pg_relcheck.rcbin should be rewritten when
  * subclasses inherit the constraints from the super class.
  * Note that these functions rewrite varattnos while walking
- * through a node tree. 
+ * through a node tree.
  */
 static bool
 change_varattnos_walker(Node *node, const AttrNumber *newattno)
@@ -251,15 +251,15 @@ change_varattnos_walker(Node *node, const AttrNumber *newattno)
 		return false;
 	if (IsA(node, Var))
 	{
-		Var	*var = (Var *) node;
+		Var		   *var = (Var *) node;
 
 		if (var->varlevelsup == 0 && var->varno == 1)
 		{
+
 			/*
-			 * ??? the following may be a problem when the
-			 * node is multiply referenced though
-			 * stringToNode() doesn't create such a node
-			 * currently. 
+			 * ??? the following may be a problem when the node is
+			 * multiply referenced though stringToNode() doesn't create
+			 * such a node currently.
 			 */
 			Assert(newattno[var->varattno - 1] > 0);
 			var->varattno = newattno[var->varattno - 1];
@@ -373,9 +373,12 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		AttrNumber	attrno;
 		TupleDesc	tupleDesc;
 		TupleConstr *constr;
-		AttrNumber	*newattno, *partialAttidx;
-		Node		*expr;
-		int		i, attidx, attno_exist;
+		AttrNumber *newattno,
+				   *partialAttidx;
+		Node	   *expr;
+		int			i,
+					attidx,
+					attno_exist;
 
 		relation = heap_openr(name, AccessShareLock);
 
@@ -385,7 +388,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		if (!istemp && is_temp_rel_name(name))
 			elog(ERROR, "CREATE TABLE: cannot inherit from temp relation \"%s\"", name);
 
-		/* We should have an UNDER permission flag for this, but for now,
+		/*
+		 * We should have an UNDER permission flag for this, but for now,
 		 * demand that creator of a child table own the parent.
 		 */
 		if (!pg_ownercheck(GetUserId(), name, RELNAME))
@@ -397,14 +401,15 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		/* allocate a new attribute number table and initialize */
 		newattno = (AttrNumber *) palloc(tupleDesc->natts * sizeof(AttrNumber));
 		for (i = 0; i < tupleDesc->natts; i++)
-			newattno [i] = 0;
+			newattno[i] = 0;
+
 		/*
-		 * searching and storing order are different.
-		 * another table is needed.
-		 */ 
+		 * searching and storing order are different. another table is
+		 * needed.
+		 */
 		partialAttidx = (AttrNumber *) palloc(tupleDesc->natts * sizeof(AttrNumber));
 		for (i = 0; i < tupleDesc->natts; i++)
-			partialAttidx [i] = 0;
+			partialAttidx[i] = 0;
 		constr = tupleDesc->constr;
 
 		attidx = 0;
@@ -577,9 +582,9 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		Datum		datum[Natts_pg_inherits];
 		char		nullarr[Natts_pg_inherits];
 
-		datum[0] = ObjectIdGetDatum(relationId);	/* inhrel */
-		datum[1] = ObjectIdGetDatum(entryOid);		/* inhparent */
-		datum[2] = Int16GetDatum(seqNumber);		/* inhseqno */
+		datum[0] = ObjectIdGetDatum(relationId);		/* inhrel */
+		datum[1] = ObjectIdGetDatum(entryOid);	/* inhparent */
+		datum[2] = Int16GetDatum(seqNumber);	/* inhseqno */
 
 		nullarr[0] = ' ';
 		nullarr[1] = ' ';
@@ -730,7 +735,7 @@ checkAttrExists(const char *attributeName, const char *attributeType,
 				List *schema)
 {
 	List	   *s;
-	int	i = 0;
+	int			i = 0;
 
 	foreach(s, schema)
 	{
@@ -756,9 +761,9 @@ checkAttrExists(const char *attributeName, const char *attributeType,
 static void
 setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 {
-	Relation		relationRelation;
-	HeapTuple       tuple;
-	Relation        idescs[Num_pg_class_indices];
+	Relation	relationRelation;
+	HeapTuple	tuple;
+	Relation	idescs[Num_pg_class_indices];
 
 	/*
 	 * Fetch a modifiable copy of the tuple, modify it, update pg_class.

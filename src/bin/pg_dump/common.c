@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.53 2001/02/10 02:31:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.54 2001/03/22 04:00:11 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -16,8 +16,8 @@
  *	 - Added single. quote to twin single quote expansion for 'insert' string
  *	   mode.
  *
- * Modifications 14-Sep-2000 - pjw@rhyme.com.au 
- *	-	Added enum for findTypeByOid to specify how to handle OID and which 
+ * Modifications 14-Sep-2000 - pjw@rhyme.com.au
+ *	-	Added enum for findTypeByOid to specify how to handle OID and which
  *		string to return - formatted type, or base type. If the base type
  *		is returned then fmtId is called on the string.
  *
@@ -59,13 +59,17 @@ findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid, OidOptions opts)
 {
 	int			i;
 
-	if (strcmp(oid, "0") == 0) {
+	if (strcmp(oid, "0") == 0)
+	{
 
-		if ( (opts & zeroAsOpaque) != 0 ) {
+		if ((opts & zeroAsOpaque) != 0)
+		{
 
 			return g_opaque_type;
 
-		} else if ( (opts & zeroAsAny) != 0 ) {
+		}
+		else if ((opts & zeroAsAny) != 0)
+		{
 
 			return "'any'";
 
@@ -74,17 +78,17 @@ findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid, OidOptions opts)
 
 	for (i = 0; i < numTypes; i++)
 	{
-		if (strcmp(tinfo[i].oid, oid) == 0) {
-			if ( (opts & useBaseTypeName) != 0 ) {
-				return (char*) fmtId(tinfo[i].typname, false);
-			} else {
+		if (strcmp(tinfo[i].oid, oid) == 0)
+		{
+			if ((opts & useBaseTypeName) != 0)
+				return (char *) fmtId(tinfo[i].typname, false);
+			else
 				return tinfo[i].typedefn;
-			}
 		}
 	}
 
 	/* no suitable type name was found */
-	return(NULL);
+	return (NULL);
 }
 
 /*
@@ -111,7 +115,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 			oid);
 
 	/* no suitable operator name was found */
-	return(NULL);
+	return (NULL);
 }
 
 
@@ -253,13 +257,13 @@ strInArray(const char *pattern, char **arr, int arr_size)
  */
 
 TableInfo  *
-dumpSchema(Archive  *fout,
-		    int *numTablesPtr,
-		    const char *tablename,
-		    const bool aclsSkip,
-		    const bool oids,
-		    const bool schemaOnly,
-		    const bool dataOnly)
+dumpSchema(Archive *fout,
+		   int *numTablesPtr,
+		   const char *tablename,
+		   const bool aclsSkip,
+		   const bool oids,
+		   const bool schemaOnly,
+		   const bool dataOnly)
 {
 	int			numTypes;
 	int			numFuncs;
@@ -342,7 +346,7 @@ dumpSchema(Archive  *fout,
 				g_comment_start, g_comment_end);
 
 	dumpTables(fout, tblinfo, numTables, indinfo, numIndices, inhinfo, numInherits,
-			   tinfo, numTypes, tablename, aclsSkip, oids, schemaOnly, dataOnly);
+	   tinfo, numTypes, tablename, aclsSkip, oids, schemaOnly, dataOnly);
 
 	if (fout && !dataOnly)
 	{
@@ -555,10 +559,12 @@ fmtId(const char *rawid, bool force_quotes)
 	appendPQExpBufferChar(id_return, '\"');
 	for (cp = rawid; *cp; cp++)
 	{
-		/* Did we find a double-quote in the string?
-		 * Then make this a double double-quote per SQL99.
-		 * Before, we put in a backslash/double-quote pair.
-		 * - thomas 2000-08-05 */
+
+		/*
+		 * Did we find a double-quote in the string? Then make this a
+		 * double double-quote per SQL99. Before, we put in a
+		 * backslash/double-quote pair. - thomas 2000-08-05
+		 */
 		if (*cp == '\"')
 		{
 			appendPQExpBufferChar(id_return, '\"');

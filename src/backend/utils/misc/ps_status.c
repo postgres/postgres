@@ -5,7 +5,7 @@
  * to contain some useful information. Differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.3 2001/03/20 22:31:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.4 2001/03/22 04:00:06 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -18,11 +18,11 @@
 
 
 #ifdef HAVE_SYS_PSTAT_H
-# include <sys/pstat.h>			/* for HP-UX */
+#include <sys/pstat.h>			/* for HP-UX */
 #endif
 #ifdef HAVE_PS_STRINGS
-# include <machine/vmparam.h>	/* for old BSD */
-# include <sys/exec.h>
+#include <machine/vmparam.h>	/* for old BSD */
+#include <sys/exec.h>
 #endif
 
 #include "miscadmin.h"
@@ -36,44 +36,44 @@ extern char **environ;
  * Alternative ways of updating ps display:
  *
  * PS_USE_SETPROCTITLE
- *     use the function setproctitle(const char *, ...)
- *     (newer BSD systems)
+ *	   use the function setproctitle(const char *, ...)
+ *	   (newer BSD systems)
  * PS_USE_PSTAT
- *     use the pstat(PSTAT_SETCMD, )
- *     (HPUX)
+ *	   use the pstat(PSTAT_SETCMD, )
+ *	   (HPUX)
  * PS_USE_PS_STRINGS
- *     assign PS_STRINGS->ps_argvstr = "string"
- *     (some BSD systems)
+ *	   assign PS_STRINGS->ps_argvstr = "string"
+ *	   (some BSD systems)
  * PS_USE_CHANGE_ARGV
- *     assign argv[0] = "string"
- *     (some other BSD systems)
+ *	   assign argv[0] = "string"
+ *	   (some other BSD systems)
  * PS_USE_CLOBBER_ARGV
- *     write over the argv and environment area
- *     (most SysV-like systems)
+ *	   write over the argv and environment area
+ *	   (most SysV-like systems)
  * PS_USE_NONE
- *     don't update ps display
- *     (This is the default, as it is safest.)
+ *	   don't update ps display
+ *	   (This is the default, as it is safest.)
  */
 #if defined(HAVE_SETPROCTITLE)
-# define PS_USE_SETPROCTITLE
+#define PS_USE_SETPROCTITLE
 #elif defined(HAVE_PSTAT) && defined(PSTAT_SETCMD)
-# define PS_USE_PSTAT
+#define PS_USE_PSTAT
 #elif defined(HAVE_PS_STRINGS)
-# define PS_USE_PS_STRINGS 
+#define PS_USE_PS_STRINGS
 #elif defined(BSD) || defined(__bsdi__) || defined(__hurd__)
-# define PS_USE_CHANGE_ARGV
+#define PS_USE_CHANGE_ARGV
 #elif defined(__linux__) || defined(_AIX4) || defined(_AIX3) || defined(__sgi) || (defined(sun) && !defined(BSD)) || defined(ultrix) || defined(__ksr__) || defined(__osf__) || defined(__QNX__) || defined(__svr4__) || defined(__svr5__)
-# define PS_USE_CLOBBER_ARGV
+#define PS_USE_CLOBBER_ARGV
 #else
-# define PS_USE_NONE
+#define PS_USE_NONE
 #endif
 
 
 /* Different systems want the buffer padded differently */
 #if defined(_AIX3) || defined(__linux__) || defined(__QNX__) || defined(__svr4__)
-# define PS_PADDING '\0'
+#define PS_PADDING '\0'
 #else
-# define PS_PADDING ' '
+#define PS_PADDING ' '
 #endif
 
 
@@ -83,12 +83,13 @@ extern char **environ;
 static char ps_buffer[PS_BUFFER_SIZE];
 static const size_t ps_buffer_size = PS_BUFFER_SIZE;
 
-#else  /* PS_USE_CLOBBER_ARGV */
-static char * ps_buffer; /* will point to argv area */
-static size_t ps_buffer_size; /* space determined at run time */
-#endif /* PS_USE_CLOBBER_ARGV */
+#else							/* PS_USE_CLOBBER_ARGV */
+static char *ps_buffer;			/* will point to argv area */
+static size_t ps_buffer_size;	/* space determined at run time */
 
-static size_t ps_buffer_fixed_size; /* size of the constant prefix */
+#endif	 /* PS_USE_CLOBBER_ARGV */
+
+static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
 
 
 
@@ -97,30 +98,31 @@ static size_t ps_buffer_fixed_size; /* size of the constant prefix */
  */
 void
 init_ps_display(int argc, char *argv[],
-				const char * username, const char * dbname,
-				const char * host_info)
+				const char *username, const char *dbname,
+				const char *host_info)
 {
 #ifndef PS_USE_NONE
-    Assert(username);
-    Assert(dbname);
+	Assert(username);
+	Assert(dbname);
 
 	/* no ps display for stand-alone backend */
-    if (!IsUnderPostmaster)
-        return;
+	if (!IsUnderPostmaster)
+		return;
 
-# ifdef PS_USE_CHANGE_ARGV
+#ifdef PS_USE_CHANGE_ARGV
 	argv[0] = ps_buffer;
 	argv[1] = NULL;
-# endif /* PS_USE_CHANGE_ARGV */
+#endif	 /* PS_USE_CHANGE_ARGV */
 
-# ifdef PS_USE_CLOBBER_ARGV
-    /*
-     * If we're going to overwrite the argv area, count the space.
-     */
+#ifdef PS_USE_CLOBBER_ARGV
+
+	/*
+	 * If we're going to overwrite the argv area, count the space.
+	 */
 	{
-		char * end_of_area = NULL;
-		char **new_environ;
-		int i;
+		char	   *end_of_area = NULL;
+		char	  **new_environ;
+		int			i;
 
 		/*
 		 * check for contiguous argv strings
@@ -153,31 +155,34 @@ init_ps_display(int argc, char *argv[],
 		 */
 		for (i = 0; environ[i] != NULL; i++)
 			;
-		new_environ = malloc(sizeof (char *) * (i + 1));
+		new_environ = malloc(sizeof(char *) * (i + 1));
 		for (i = 0; environ[i] != NULL; i++)
-		new_environ[i] = strdup(environ[i]);
+			new_environ[i] = strdup(environ[i]);
 		new_environ[i] = NULL;
 		environ = new_environ;
 	}
-# endif /* PS_USE_CLOBBER_ARGV */
+#endif	 /* PS_USE_CLOBBER_ARGV */
 
 	/*
 	 * Make fixed prefix
 	 */
-# ifdef PS_USE_SETPROCTITLE
-	/* apparently setproctitle() already adds a `progname:' prefix to
-	 * the ps line */
+#ifdef PS_USE_SETPROCTITLE
+
+	/*
+	 * apparently setproctitle() already adds a `progname:' prefix to the
+	 * ps line
+	 */
 	snprintf(ps_buffer, ps_buffer_size,
 			 "%s %s %s ",
 			 username, dbname, host_info);
-# else
+#else
 	snprintf(ps_buffer, ps_buffer_size,
 			 "postgres: %s %s %s ",
 			 username, dbname, host_info);
-# endif
+#endif
 
-    ps_buffer_fixed_size = strlen(ps_buffer);
-#endif /* not PS_USE_NONE */
+	ps_buffer_fixed_size = strlen(ps_buffer);
+#endif	 /* not PS_USE_NONE */
 }
 
 
@@ -187,18 +192,18 @@ init_ps_display(int argc, char *argv[],
  * indication of what you're currently doing passed in the argument.
  */
 void
-set_ps_display(const char * value)
+set_ps_display(const char *value)
 {
 #ifndef PS_USE_NONE
 	/* no ps display for stand-alone backend */
 	if (!IsUnderPostmaster)
 		return;
 
-# ifdef PS_USE_CLOBBER_ARGV
+#ifdef PS_USE_CLOBBER_ARGV
 	/* If ps_buffer is a pointer, it might still be null */
 	if (!ps_buffer)
 		return;
-# endif
+#endif
 
 	/* Update ps_buffer to contain both fixed part and value */
 	StrNCpy(ps_buffer + ps_buffer_fixed_size, value,
@@ -206,42 +211,43 @@ set_ps_display(const char * value)
 
 	/* Transmit new setting to kernel, if necessary */
 
-# ifdef PS_USE_SETPROCTITLE
+#ifdef PS_USE_SETPROCTITLE
 	setproctitle("%s", ps_buffer);
-# endif
+#endif
 
-# ifdef PS_USE_PSTAT
-		{
-			union pstun pst;
+#ifdef PS_USE_PSTAT
+	{
+		union pstun pst;
 
-			pst.pst_command = ps_buffer;
-			pstat(PSTAT_SETCMD, pst, strlen(ps_buffer), 0, 0);
-		}
-# endif /* PS_USE_PSTAT */
+		pst.pst_command = ps_buffer;
+		pstat(PSTAT_SETCMD, pst, strlen(ps_buffer), 0, 0);
+	}
+#endif	 /* PS_USE_PSTAT */
 
-# ifdef PS_USE_PS_STRINGS
-		PS_STRINGS->ps_nargvstr = 1;
-		PS_STRINGS->ps_argvstr = ps_buffer;
-# endif /* PS_USE_PS_STRINGS */
+#ifdef PS_USE_PS_STRINGS
+	PS_STRINGS->ps_nargvstr = 1;
+	PS_STRINGS->ps_argvstr = ps_buffer;
+#endif	 /* PS_USE_PS_STRINGS */
 
-# ifdef PS_USE_CLOBBER_ARGV
-		{
-			char * cp;
-			/* pad unused memory */
-			for(cp = ps_buffer + strlen(ps_buffer);
-				cp < ps_buffer + ps_buffer_size;
-				cp++)
-				*cp = PS_PADDING;
-		}
-# endif /* PS_USE_CLOBBER_ARGV */
+#ifdef PS_USE_CLOBBER_ARGV
+	{
+		char	   *cp;
 
-#endif /* not PS_USE_NONE */
+		/* pad unused memory */
+		for (cp = ps_buffer + strlen(ps_buffer);
+			 cp < ps_buffer + ps_buffer_size;
+			 cp++)
+			*cp = PS_PADDING;
+	}
+#endif	 /* PS_USE_CLOBBER_ARGV */
+
+#endif	 /* not PS_USE_NONE */
 }
 
 
 /*
  * Returns what's currently in the ps display, in case someone needs
- * it.  Note that only the variable part is returned.
+ * it.	Note that only the variable part is returned.
  */
 const char *
 get_ps_display(void)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.73 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.74 2001/03/22 03:59:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,8 @@
 
 /* non-export function prototypes */
 static bool get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
-						int *encodingP, bool *dbIsTemplateP,
-						Oid *dbLastSysOidP, char *dbpath);
+			int *encodingP, bool *dbIsTemplateP,
+			Oid *dbLastSysOidP, char *dbpath);
 static bool get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb);
 static char *resolve_alt_dbpath(const char *dbpath, Oid dboid);
 static bool remove_dbdirs(const char *real_loc, const char *altloc);
@@ -82,12 +82,12 @@ createdb(const char *dbname, const char *dbpath,
 		elog(ERROR, "CREATE DATABASE: may not be called in a transaction block");
 
 	/*
-	 * Check for db name conflict.  There is a race condition here, since
+	 * Check for db name conflict.	There is a race condition here, since
 	 * another backend could create the same DB name before we commit.
-	 * However, holding an exclusive lock on pg_database for the whole time
-	 * we are copying the source database doesn't seem like a good idea,
-	 * so accept possibility of race to create.  We will check again after
-	 * we grab the exclusive lock.
+	 * However, holding an exclusive lock on pg_database for the whole
+	 * time we are copying the source database doesn't seem like a good
+	 * idea, so accept possibility of race to create.  We will check again
+	 * after we grab the exclusive lock.
 	 */
 	if (get_db_info(dbname, NULL, NULL, NULL, NULL, NULL, NULL))
 		elog(ERROR, "CREATE DATABASE: database \"%s\" already exists", dbname);
@@ -96,15 +96,16 @@ createdb(const char *dbname, const char *dbpath,
 	 * Lookup database (template) to be cloned.
 	 */
 	if (!dbtemplate)
-		dbtemplate = "template1"; /* Default template database name */
+		dbtemplate = "template1";		/* Default template database name */
 
 	if (!get_db_info(dbtemplate, &src_dboid, &src_owner, &src_encoding,
 					 &src_istemplate, &src_lastsysoid, src_dbpath))
 		elog(ERROR, "CREATE DATABASE: template \"%s\" does not exist",
 			 dbtemplate);
+
 	/*
-	 * Permission check: to copy a DB that's not marked datistemplate,
-	 * you must be superuser or the owner thereof.
+	 * Permission check: to copy a DB that's not marked datistemplate, you
+	 * must be superuser or the owner thereof.
 	 */
 	if (!src_istemplate)
 	{
@@ -112,6 +113,7 @@ createdb(const char *dbname, const char *dbpath,
 			elog(ERROR, "CREATE DATABASE: permission to copy \"%s\" denied",
 				 dbtemplate);
 	}
+
 	/*
 	 * Determine physical path of source database
 	 */
@@ -133,14 +135,16 @@ createdb(const char *dbname, const char *dbpath,
 	if (encoding < 0)
 		encoding = src_encoding;
 
-	/* 
-	 * Preassign OID for pg_database tuple, so that we can compute db path.
+	/*
+	 * Preassign OID for pg_database tuple, so that we can compute db
+	 * path.
 	 */
 	dboid = newoid();
 
 	/*
-	 * Compute nominal location (where we will try to access the database),
-	 * and resolve alternate physical location if one is specified.
+	 * Compute nominal location (where we will try to access the
+	 * database), and resolve alternate physical location if one is
+	 * specified.
 	 */
 	nominal_loc = GetDatabasePath(dboid);
 	alt_loc = resolve_alt_dbpath(dbpath, dboid);
@@ -155,8 +159,8 @@ createdb(const char *dbname, const char *dbpath,
 
 	/*
 	 * Force dirty buffers out to disk, to ensure source database is
-	 * up-to-date for the copy.  (We really only need to flush buffers
-	 * for the source database...)
+	 * up-to-date for the copy.  (We really only need to flush buffers for
+	 * the source database...)
 	 */
 	BufferSync();
 
@@ -231,7 +235,8 @@ createdb(const char *dbname, const char *dbpath,
 
 	tuple = heap_formtuple(pg_database_dsc, new_record, new_record_nulls);
 
-	tuple->t_data->t_oid = dboid;	/* override heap_insert's OID selection */
+	tuple->t_data->t_oid = dboid;		/* override heap_insert's OID
+										 * selection */
 
 	heap_insert(pg_database_rel, tuple);
 
@@ -273,9 +278,9 @@ dropdb(const char *dbname)
 	bool		db_istemplate;
 	bool		use_super;
 	Oid			db_id;
-	char       *alt_loc;
-	char       *nominal_loc;
-	char        dbpath[MAXPGPATH];
+	char	   *alt_loc;
+	char	   *nominal_loc;
+	char		dbpath[MAXPGPATH];
 	Relation	pgdbrel;
 	HeapScanDesc pgdbscan;
 	ScanKeyData key;
@@ -311,8 +316,8 @@ dropdb(const char *dbname)
 		elog(ERROR, "DROP DATABASE: permission denied");
 
 	/*
-	 * Disallow dropping a DB that is marked istemplate.  This is just
-	 * to prevent people from accidentally dropping template0 or template1;
+	 * Disallow dropping a DB that is marked istemplate.  This is just to
+	 * prevent people from accidentally dropping template0 or template1;
 	 * they can do so if they're really determined ...
 	 */
 	if (db_istemplate)
@@ -338,6 +343,7 @@ dropdb(const char *dbname)
 	tup = heap_getnext(pgdbscan, 0);
 	if (!HeapTupleIsValid(tup))
 	{
+
 		/*
 		 * This error should never come up since the existence of the
 		 * database is checked earlier
@@ -437,7 +443,7 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 		{
 			tmptext = DatumGetTextP(heap_getattr(tuple,
 												 Anum_pg_database_datpath,
-												 RelationGetDescr(relation),
+											  RelationGetDescr(relation),
 												 &isnull));
 			if (!isnull)
 			{
@@ -481,11 +487,11 @@ get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb)
 
 
 static char *
-resolve_alt_dbpath(const char * dbpath, Oid dboid)
+resolve_alt_dbpath(const char *dbpath, Oid dboid)
 {
-	const char * prefix;
-	char * ret;
-	size_t len;
+	const char *prefix;
+	char	   *ret;
+	size_t		len;
 
 	if (dbpath == NULL || dbpath[0] == '\0')
 		return NULL;
@@ -502,7 +508,8 @@ resolve_alt_dbpath(const char * dbpath, Oid dboid)
 	else
 	{
 		/* must be environment variable */
-		char * var = getenv(dbpath);
+		char	   *var = getenv(dbpath);
+
 		if (!var)
 			elog(ERROR, "Postmaster environment variable '%s' not set", dbpath);
 		if (var[0] != '/')
@@ -519,11 +526,11 @@ resolve_alt_dbpath(const char * dbpath, Oid dboid)
 
 
 static bool
-remove_dbdirs(const char * nominal_loc, const char * alt_loc)
+remove_dbdirs(const char *nominal_loc, const char *alt_loc)
 {
-	const char   *target_dir;
-	char buf[MAXPGPATH + 100];
-	bool success = true;
+	const char *target_dir;
+	char		buf[MAXPGPATH + 100];
+	bool		success = true;
 
 	target_dir = alt_loc ? alt_loc : nominal_loc;
 

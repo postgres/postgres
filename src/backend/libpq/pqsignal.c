@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.19 2001/02/10 02:31:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.20 2001/03/22 03:59:30 momjian Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -61,10 +61,11 @@ pqinitmask(void)
 #ifdef HAVE_SIGPROCMASK
 	sigemptyset(&UnBlockSig);
 	sigfillset(&BlockSig);
+
 	/*
-	 * Unmark those signals that should never be blocked.
-	 * Some of these signal names don't exist on all platforms.  Most do,
-	 * but might as well ifdef them all for consistency...
+	 * Unmark those signals that should never be blocked. Some of these
+	 * signal names don't exist on all platforms.  Most do, but might as
+	 * well ifdef them all for consistency...
 	 */
 #ifdef SIGTRAP
 	sigdelset(&BlockSig, SIGTRAP);

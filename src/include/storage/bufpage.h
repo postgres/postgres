@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.40 2001/02/21 19:07:04 momjian Exp $
+ * $Id: bufpage.h,v 1.41 2001/03/22 04:01:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,12 +118,12 @@ typedef OpaqueData *Opaque;
  */
 typedef struct PageHeaderData
 {
-								/* XXX LSN is member of *any* block, not */
-								/* only page-organized - 'll change later */
+	/* XXX LSN is member of *any* block, not */
+	/* only page-organized - 'll change later */
 	XLogRecPtr	pd_lsn;			/* LSN: next byte after last byte of xlog */
-								/* record for last change of this page */
+	/* record for last change of this page */
 	StartUpID	pd_sui;			/* SUI of last changes (currently it's */
-								/* used by heap AM only) */
+	/* used by heap AM only) */
 
 	LocationIndex pd_lower;		/* offset to start of free space */
 	LocationIndex pd_upper;		/* offset to end of free space */
@@ -319,7 +319,7 @@ extern OffsetNumber PageAddItem(Page page, Item item, Size size,
 			OffsetNumber offsetNumber, ItemIdFlags flags);
 extern Page PageGetTempPage(Page page, Size specialSize);
 extern void PageRestoreTempPage(Page tempPage, Page oldPage);
-extern int PageRepairFragmentation(Page page, OffsetNumber *unused);
+extern int	PageRepairFragmentation(Page page, OffsetNumber *unused);
 extern Size PageGetFreeSpace(Page page);
 extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
 extern void IndexPageCleanup(Buffer buffer);

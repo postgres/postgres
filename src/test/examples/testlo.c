@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.17 2001/01/24 19:43:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.18 2001/03/22 04:01:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,9 +236,7 @@ main(int argc, char **argv)
 /*	lobjOid = importFile(conn, in_filename); */
 	lobjOid = lo_import(conn, in_filename);
 	if (lobjOid == 0)
-	{
 		fprintf(stderr, "%s\n", PQerrorMessage(conn));
-	}
 	else
 	{
 		printf("\tas large object %u.\n", lobjOid);

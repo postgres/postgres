@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.25 2001/01/24 19:43:28 momjian Exp $
+ * $Id: sinvaladt.h,v 1.26 2001/03/22 04:01:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,8 @@ typedef struct SISeg
 	 */
 	int			minMsgNum;		/* oldest message still needed */
 	int			maxMsgNum;		/* next message number to be assigned */
-	int			lastBackend;	/* index of last active procState entry, +1 */
+	int			lastBackend;	/* index of last active procState entry,
+								 * +1 */
 	int			maxBackends;	/* size of procState array */
 
 	/*

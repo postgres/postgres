@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.70 2001/01/24 19:42:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.71 2001/03/22 03:59:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,16 +97,17 @@ set_plan_references(Plan *plan)
 			fix_expr_references(plan,
 								(Node *) ((IndexScan *) plan)->indxqual);
 			fix_expr_references(plan,
-								(Node *) ((IndexScan *) plan)->indxqualorig);
+							(Node *) ((IndexScan *) plan)->indxqualorig);
 			break;
 		case T_TidScan:
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
 			break;
 		case T_SubqueryScan:
+
 			/*
-			 * We do not do set_uppernode_references() here, because
-			 * a SubqueryScan will always have been created with correct
+			 * We do not do set_uppernode_references() here, because a
+			 * SubqueryScan will always have been created with correct
 			 * references to its subplan's outputs to begin with.
 			 */
 			fix_expr_references(plan, (Node *) plan->targetlist);
@@ -126,7 +127,7 @@ set_plan_references(Plan *plan)
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
 			fix_expr_references(plan,
-								(Node *) ((MergeJoin *) plan)->mergeclauses);
+							(Node *) ((MergeJoin *) plan)->mergeclauses);
 			break;
 		case T_HashJoin:
 			set_join_references((Join *) plan);
@@ -134,7 +135,7 @@ set_plan_references(Plan *plan)
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
 			fix_expr_references(plan,
-								(Node *) ((HashJoin *) plan)->hashclauses);
+							  (Node *) ((HashJoin *) plan)->hashclauses);
 			break;
 		case T_Material:
 		case T_Sort:
@@ -148,10 +149,10 @@ set_plan_references(Plan *plan)
 			 * targetlists or quals (because they just return their
 			 * unmodified input tuples).  The optimizer is lazy about
 			 * creating really valid targetlists for them.	Best to just
-			 * leave the targetlist alone.  In particular, we do not want
+			 * leave the targetlist alone.	In particular, we do not want
 			 * to pull a subplan list for them, since we will likely end
-			 * up with duplicate list entries for subplans that also appear
-			 * in lower levels of the plan tree!
+			 * up with duplicate list entries for subplans that also
+			 * appear in lower levels of the plan tree!
 			 */
 			break;
 		case T_Agg:
@@ -175,11 +176,12 @@ set_plan_references(Plan *plan)
 			fix_expr_references(plan, ((Result *) plan)->resconstantqual);
 			break;
 		case T_Append:
+
 			/*
 			 * Append, like Sort et al, doesn't actually evaluate its
-			 * targetlist or quals, and we haven't bothered to give it
-			 * its own tlist copy.  So, don't fix targetlist/qual.
-			 * But do recurse into subplans.
+			 * targetlist or quals, and we haven't bothered to give it its
+			 * own tlist copy.	So, don't fix targetlist/qual. But do
+			 * recurse into subplans.
 			 */
 			foreach(pl, ((Append *) plan)->appendplans)
 				set_plan_references((Plan *) lfirst(pl));
@@ -296,7 +298,7 @@ set_uppernode_references(Plan *plan, Index subvarno)
 		subplanTargetList = NIL;
 
 	outputTargetList = NIL;
-	foreach (l, plan->targetlist)
+	foreach(l, plan->targetlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		TargetEntry *subplantle;
@@ -306,8 +308,8 @@ set_uppernode_references(Plan *plan, Index subvarno)
 		if (subplantle)
 		{
 			/* Found a matching subplan output expression */
-			Resdom *resdom = subplantle->resdom;
-			Var	   *newvar;
+			Resdom	   *resdom = subplantle->resdom;
+			Var		   *newvar;
 
 			newvar = makeVar(subvarno,
 							 resdom->resno,
@@ -317,7 +319,7 @@ set_uppernode_references(Plan *plan, Index subvarno)
 			/* If we're just copying a simple Var, copy up original info */
 			if (subplantle->expr && IsA(subplantle->expr, Var))
 			{
-				Var	   *subvar = (Var *) subplantle->expr;
+				Var		   *subvar = (Var *) subplantle->expr;
 
 				newvar->varnoold = subvar->varnoold;
 				newvar->varoattno = subvar->varoattno;

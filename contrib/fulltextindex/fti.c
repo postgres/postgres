@@ -62,11 +62,11 @@ select p.* from product p, title_fti f1, title_fti f2 where
    that can build the final query automatigally?
    */
 
-extern Datum	fti(PG_FUNCTION_ARGS);
-static char	   *breakup(char *, char *);
-static bool		is_stopword(char *);
+extern Datum fti(PG_FUNCTION_ARGS);
+static char *breakup(char *, char *);
+static bool is_stopword(char *);
 
-static bool		new_tuple = false;
+static bool new_tuple = false;
 
 
 /* THIS LIST MUST BE IN SORTED ORDER, A BINARY SEARCH IS USED!!!! */

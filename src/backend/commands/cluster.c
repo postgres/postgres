@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.64 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.65 2001/03/22 03:59:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 #include "utils/temprel.h"
 
 
-static Oid copy_heap(Oid OIDOldHeap, char *NewName, bool istemp);
+static Oid	copy_heap(Oid OIDOldHeap, char *NewName, bool istemp);
 static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName);
 static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 
@@ -75,8 +75,8 @@ cluster(char *oldrelname, char *oldindexname)
 	StrNCpy(saveoldindexname, oldindexname, NAMEDATALEN);
 
 	/*
-	 * We grab exclusive access to the target rel and index for the duration
-	 * of the transaction.
+	 * We grab exclusive access to the target rel and index for the
+	 * duration of the transaction.
 	 */
 	OldHeap = heap_openr(saveoldrelname, AccessExclusiveLock);
 	OIDOldHeap = RelationGetRelid(OldHeap);
@@ -154,8 +154,8 @@ copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
 	OldHeapDesc = RelationGetDescr(OldHeap);
 
 	/*
-	 * Need to make a copy of the tuple descriptor,
-	 * since heap_create_with_catalog modifies it.
+	 * Need to make a copy of the tuple descriptor, since
+	 * heap_create_with_catalog modifies it.
 	 */
 	tupdesc = CreateTupleDescCopyConstr(OldHeapDesc);
 
@@ -164,16 +164,15 @@ copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
 										  allowSystemTableMods);
 
 	/*
-	 * Advance command counter so that the newly-created
-	 * relation's catalog tuples will be visible to heap_open.
+	 * Advance command counter so that the newly-created relation's
+	 * catalog tuples will be visible to heap_open.
 	 */
 	CommandCounterIncrement();
 
 	/*
-	 * If necessary, create a TOAST table for the new relation.
-	 * Note that AlterTableCreateToastTable ends with
-	 * CommandCounterIncrement(), so that the TOAST table will
-	 * be visible for insertion.
+	 * If necessary, create a TOAST table for the new relation. Note that
+	 * AlterTableCreateToastTable ends with CommandCounterIncrement(), so
+	 * that the TOAST table will be visible for insertion.
 	 */
 	AlterTableCreateToastTable(NewName, true);
 
@@ -198,12 +197,12 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 
 	/*
 	 * Create a new index like the old one.  To do this I get the info
-	 * from pg_index, and add a new index with a temporary name (that
-	 * will be changed later).
+	 * from pg_index, and add a new index with a temporary name (that will
+	 * be changed later).
 	 *
-	 * NOTE: index_create will cause the new index to be a temp relation
-	 * if its parent table is, so we don't need to do anything special
-	 * for the temp-table case here.
+	 * NOTE: index_create will cause the new index to be a temp relation if
+	 * its parent table is, so we don't need to do anything special for
+	 * the temp-table case here.
 	 */
 	Old_pg_index_Tuple = SearchSysCache(INDEXRELID,
 										ObjectIdGetDatum(OIDOldIndex),
@@ -214,7 +213,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 	indexInfo = BuildIndexInfo(Old_pg_index_Tuple);
 
 	Old_pg_index_relation_Tuple = SearchSysCache(RELOID,
-												 ObjectIdGetDatum(OIDOldIndex),
+										   ObjectIdGetDatum(OIDOldIndex),
 												 0, 0, 0);
 	Assert(Old_pg_index_relation_Tuple);
 	Old_pg_index_relation_Form = (Form_pg_class) GETSTRUCT(Old_pg_index_relation_Tuple);
@@ -266,13 +265,15 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		LocalHeapTuple.t_datamcxt = NULL;
 		LocalHeapTuple.t_data = NULL;
 		heap_fetch(LocalOldHeap, SnapshotNow, &LocalHeapTuple, &LocalBuffer);
-		if (LocalHeapTuple.t_data != NULL) {
+		if (LocalHeapTuple.t_data != NULL)
+		{
+
 			/*
 			 * We must copy the tuple because heap_insert() will overwrite
 			 * the commit-status fields of the tuple it's handed, and the
 			 * retrieved tuple will actually be in a disk buffer!  Thus,
-			 * the source relation would get trashed, which is bad news
-			 * if we abort later on.  (This was a bug in releases thru 7.0)
+			 * the source relation would get trashed, which is bad news if
+			 * we abort later on.  (This was a bug in releases thru 7.0)
 			 */
 			HeapTuple	copiedTuple = heap_copytuple(&LocalHeapTuple);
 

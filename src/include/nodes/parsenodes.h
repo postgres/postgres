@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.124 2001/01/24 19:43:25 momjian Exp $
+ * $Id: parsenodes.h,v 1.125 2001/03/22 04:00:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,8 @@ typedef struct Query
 	bool		hasSubLinks;	/* has subquery SubLink */
 
 	List	   *rtable;			/* list of range table entries */
-	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
+	FromExpr   *jointree;		/* table join tree (FROM and WHERE
+								 * clauses) */
 
 	List	   *rowMarks;		/* integer list of RT indexes of relations
 								 * that are selected FOR UPDATE */
@@ -78,7 +79,7 @@ typedef struct Query
 	 * commit to the exact set of child tables at parse time.  This field
 	 * ought to go in some sort of TopPlan plan node, not in the Query.
 	 */
-	List	   *resultRelations; /* integer list of RT indexes, or NIL */
+	List	   *resultRelations;/* integer list of RT indexes, or NIL */
 
 	/* internal to planner */
 	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
@@ -115,13 +116,14 @@ typedef enum InhOption
 typedef struct AlterTableStmt
 {
 	NodeTag		type;
-	char		subtype;		/* A = add column, T = alter column, D = drop column,
-								 * C = add constraint, X = drop constraint,
-								 * E = add toast table,
-								 * U = change owner */
+	char		subtype;		/* A = add column, T = alter column, D =
+								 * drop column, C = add constraint, X =
+								 * drop constraint, E = add toast table, U
+								 * = change owner */
 	char	   *relname;		/* table to work on */
 	InhOption	inhOpt;			/* recursively act on children? */
-	char	   *name;			/* column or constraint name to act on, or new owner */
+	char	   *name;			/* column or constraint name to act on, or
+								 * new owner */
 	Node	   *def;			/* definition of new column or constraint */
 	int			behavior;		/* CASCADE or RESTRICT drop behavior */
 } AlterTableStmt;
@@ -414,11 +416,11 @@ typedef struct DefineStmt
  * ----------------------
  */
 
-#define DROP_TABLE    1
+#define DROP_TABLE	  1
 #define DROP_SEQUENCE 2
-#define DROP_VIEW     3
-#define DROP_INDEX    4
-#define DROP_RULE     5
+#define DROP_VIEW	  3
+#define DROP_INDEX	  4
+#define DROP_RULE	  5
 #define DROP_TYPE_P   6
 
 typedef struct DropStmt
@@ -798,10 +800,11 @@ typedef struct InsertStmt
 	NodeTag		type;
 	char	   *relname;		/* relation to insert into */
 	List	   *cols;			/* optional: names of the target columns */
+
 	/*
-	 * An INSERT statement has *either* VALUES or SELECT, never both.
-	 * If VALUES, a targetList is supplied (empty for DEFAULT VALUES).
-	 * If SELECT, a complete SelectStmt (or set-operation tree) is supplied.
+	 * An INSERT statement has *either* VALUES or SELECT, never both. If
+	 * VALUES, a targetList is supplied (empty for DEFAULT VALUES). If
+	 * SELECT, a complete SelectStmt (or set-operation tree) is supplied.
 	 */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	Node	   *selectStmt;		/* the source SELECT */
@@ -857,6 +860,7 @@ typedef enum SetOperation
 typedef struct SelectStmt
 {
 	NodeTag		type;
+
 	/*
 	 * These fields are used only in "leaf" SelectStmts.
 	 */
@@ -870,6 +874,7 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* WHERE qualification */
 	List	   *groupClause;	/* GROUP BY clauses */
 	Node	   *havingClause;	/* HAVING conditional-expression */
+
 	/*
 	 * These fields are used in both "leaf" SelectStmts and upper-level
 	 * SelectStmts.  portalname/binary may only be set at the top level.
@@ -880,6 +885,7 @@ typedef struct SelectStmt
 	Node	   *limitOffset;	/* # of result tuples to skip */
 	Node	   *limitCount;		/* # of result tuples to return */
 	List	   *forUpdate;		/* FOR UPDATE clause */
+
 	/*
 	 * These fields are used only in upper-level SelectStmts.
 	 */
@@ -910,7 +916,8 @@ typedef struct SetOperationStmt
 	/* Eventually add fields for CORRESPONDING spec here */
 
 	/* Fields derived during parse analysis: */
-	List	   *colTypes;		/* integer list of OIDs of output column types */
+	List	   *colTypes;		/* integer list of OIDs of output column
+								 * types */
 } SetOperationStmt;
 
 /****************************************************************************
@@ -1237,15 +1244,18 @@ typedef struct TargetEntry
 typedef struct RangeTblEntry
 {
 	NodeTag		type;
+
 	/*
 	 * Fields valid for a plain relation RTE (else NULL/zero):
 	 */
 	char	   *relname;		/* real name of the relation */
 	Oid			relid;			/* OID of the relation */
+
 	/*
 	 * Fields valid for a subquery RTE (else NULL):
 	 */
 	Query	   *subquery;		/* the sub-query */
+
 	/*
 	 * Fields valid in all RTEs:
 	 */

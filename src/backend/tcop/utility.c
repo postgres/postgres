@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.107 2001/01/27 10:19:52 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.108 2001/03/22 03:59:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,24 +52,25 @@
  * Error-checking support for DROP commands
  */
 
-struct kindstrings {
-	char kind;
-	char *indef_article;
-	char *name;
-	char *command;
+struct kindstrings
+{
+	char		kind;
+	char	   *indef_article;
+	char	   *name;
+	char	   *command;
 };
 
 static struct kindstrings kindstringarray[] = {
-	{ RELKIND_RELATION, "a", "table", "TABLE" },
-	{ RELKIND_SEQUENCE, "a", "sequence", "SEQUENCE" },
-	{ RELKIND_VIEW, "a", "view", "VIEW" },
-	{ RELKIND_INDEX, "an", "index", "INDEX" },
-	{ '\0', "a", "???", "???" }
+	{RELKIND_RELATION, "a", "table", "TABLE"},
+	{RELKIND_SEQUENCE, "a", "sequence", "SEQUENCE"},
+	{RELKIND_VIEW, "a", "view", "VIEW"},
+	{RELKIND_INDEX, "an", "index", "INDEX"},
+	{'\0', "a", "???", "???"}
 };
 
 
 static void
-DropErrorMsg(char* relname, char wrongkind, char rightkind)
+DropErrorMsg(char *relname, char wrongkind, char rightkind)
 {
 	struct kindstrings *rentry;
 	struct kindstrings *wentry;
@@ -218,12 +219,12 @@ ProcessUtility(Node *parsetree,
 			DefineRelation((CreateStmt *) parsetree, RELKIND_RELATION);
 
 			/*
-			 * Let AlterTableCreateToastTable decide if this
-			 * one needs a secondary relation too.
+			 * Let AlterTableCreateToastTable decide if this one needs a
+			 * secondary relation too.
 			 */
 			CommandCounterIncrement();
-			AlterTableCreateToastTable(((CreateStmt *)parsetree)->relname,
-										true);
+			AlterTableCreateToastTable(((CreateStmt *) parsetree)->relname,
+									   true);
 			break;
 
 		case T_DropStmt:
@@ -238,7 +239,7 @@ ProcessUtility(Node *parsetree,
 				{
 					relname = strVal(lfirst(arg));
 
-					switch(stmt->removeType)
+					switch (stmt->removeType)
 					{
 						case DROP_TABLE:
 							CheckDropPermissions(relname, RELKIND_RELATION);
@@ -268,8 +269,8 @@ ProcessUtility(Node *parsetree,
 								relationName = RewriteGetRuleEventRel(rulename);
 								aclcheck_result = pg_aclcheck(relationName, GetUserId(), ACL_RU);
 								if (aclcheck_result != ACLCHECK_OK)
-									elog(ERROR, "%s: %s", relationName, 
-											aclcheck_error_strings[aclcheck_result]);
+									elog(ERROR, "%s: %s", relationName,
+										 aclcheck_error_strings[aclcheck_result]);
 								RemoveRewriteRule(rulename);
 							}
 							break;
@@ -281,9 +282,9 @@ ProcessUtility(Node *parsetree,
 					}
 
 					/*
-					 * Make sure subsequent loop iterations will see results
-					 * of this one; needed if removing multiple rules for
-					 * same table, for example.
+					 * Make sure subsequent loop iterations will see
+					 * results of this one; needed if removing multiple
+					 * rules for same table, for example.
 					 */
 					CommandCounterIncrement();
 				}
@@ -402,7 +403,7 @@ ProcessUtility(Node *parsetree,
 					renameatt(relname,	/* relname */
 							  stmt->column,		/* old att name */
 							  stmt->newname,	/* new att name */
-							  interpretInhOption(stmt->inhOpt)); /* recursive? */
+							  interpretInhOption(stmt->inhOpt));		/* recursive? */
 				}
 			}
 			break;
@@ -423,29 +424,29 @@ ProcessUtility(Node *parsetree,
 				{
 					case 'A':	/* ADD COLUMN */
 						AlterTableAddColumn(stmt->relname,
-											interpretInhOption(stmt->inhOpt),
+										interpretInhOption(stmt->inhOpt),
 											(ColumnDef *) stmt->def);
 						break;
 					case 'T':	/* ALTER COLUMN */
 						AlterTableAlterColumn(stmt->relname,
-											  interpretInhOption(stmt->inhOpt),
+										interpretInhOption(stmt->inhOpt),
 											  stmt->name,
 											  stmt->def);
 						break;
 					case 'D':	/* ALTER DROP */
 						AlterTableDropColumn(stmt->relname,
-											 interpretInhOption(stmt->inhOpt),
+										interpretInhOption(stmt->inhOpt),
 											 stmt->name,
 											 stmt->behavior);
 						break;
 					case 'C':	/* ADD CONSTRAINT */
 						AlterTableAddConstraint(stmt->relname,
-												interpretInhOption(stmt->inhOpt),
+										interpretInhOption(stmt->inhOpt),
 												stmt->def);
 						break;
 					case 'X':	/* DROP CONSTRAINT */
 						AlterTableDropConstraint(stmt->relname,
-												 interpretInhOption(stmt->inhOpt),
+										interpretInhOption(stmt->inhOpt),
 												 stmt->name,
 												 stmt->behavior);
 						break;
@@ -872,10 +873,10 @@ ProcessUtility(Node *parsetree,
 						{
 							if (!allowSystemTableMods && IsSystemRelationName(relname))
 								elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -O -P options",
-								 relname);
+									 relname);
 							if (!IsIgnoringSystemIndexes())
 								elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -P -O options",
-								 relname);
+									 relname);
 						}
 						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
@@ -888,12 +889,12 @@ ProcessUtility(Node *parsetree,
 #ifdef	OLD_FILE_NAMING
 							if (!allowSystemTableMods && IsSystemRelationName(relname))
 								elog(ERROR, "\"%s\" is a system table. call REINDEX under standalone postgres with -O -P options",
-								 relname);
+									 relname);
 							if (!IsIgnoringSystemIndexes())
 								elog(ERROR, "\"%s\" is a system table. call REINDEX under standalone postgres with -P -O options",
 
-								 relname);
-#endif /* OLD_FILE_NAMING */
+									 relname);
+#endif	 /* OLD_FILE_NAMING */
 						}
 						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);

@@ -104,7 +104,8 @@ transformKeySetQuery(Query *origNode)
 		Node_Copy(origNode, unionNode, distinctClause);
 		Node_Copy(origNode, unionNode, sortClause);
 		Node_Copy(origNode, unionNode, rtable);
-		origNode->jointree->quals = NULL; /* avoid unnecessary copying */
+		origNode->jointree->quals = NULL;		/* avoid unnecessary
+												 * copying */
 		Node_Copy(origNode, unionNode, jointree);
 		Node_Copy(origNode, unionNode, targetList);
 
@@ -216,4 +217,4 @@ inspectOpNode(Expr *expr)
 	return (firstExpr && secondExpr && nodeTag(firstExpr) == T_Var && nodeTag(secondExpr) == T_Const);
 }
 
-#endif /* ENABLE_KEY_SET_QUERY */
+#endif	 /* ENABLE_KEY_SET_QUERY */

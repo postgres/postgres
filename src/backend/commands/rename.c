@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.55 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.56 2001/03/22 03:59:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,15 +189,15 @@ renamerel(const char *oldrelname, const char *newrelname)
 			 newrelname);
 
 	/*
-	 * Check for renaming a temp table, which only requires altering
-	 * the temp-table mapping, not the underlying table.
+	 * Check for renaming a temp table, which only requires altering the
+	 * temp-table mapping, not the underlying table.
 	 */
 	if (rename_temp_relation(oldrelname, newrelname))
 		return;					/* all done... */
 
 	/*
-	 * Instead of using heap_openr(), do it the hard way, so that we
-	 * can rename indexes as well as regular relations.
+	 * Instead of using heap_openr(), do it the hard way, so that we can
+	 * rename indexes as well as regular relations.
 	 */
 	targetrelation = RelationNameGetRelation(oldrelname);
 
@@ -219,8 +219,9 @@ renamerel(const char *oldrelname, const char *newrelname)
 	heap_close(targetrelation, NoLock);
 
 	/*
-	 * Flush the relcache entry (easier than trying to change it at exactly
-	 * the right instant).  It'll get rebuilt on next access to relation.
+	 * Flush the relcache entry (easier than trying to change it at
+	 * exactly the right instant).	It'll get rebuilt on next access to
+	 * relation.
 	 *
 	 * XXX What if relation is myxactonly?
 	 *
@@ -244,8 +245,8 @@ renamerel(const char *oldrelname, const char *newrelname)
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
 
 	/*
-	 * Update pg_class tuple with new relname.  (Scribbling on reltup
-	 * is OK because it's a copy...)
+	 * Update pg_class tuple with new relname.	(Scribbling on reltup is
+	 * OK because it's a copy...)
 	 */
 	StrNCpy(NameStr(((Form_pg_class) GETSTRUCT(reltup))->relname),
 			newrelname, NAMEDATALEN);

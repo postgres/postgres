@@ -5,7 +5,7 @@
 
 typedef unsigned char slock_t;
 
-#define AF_UNIX     10 /* no domain sockets on BeOS */
+#define AF_UNIX		10			/* no domain sockets on BeOS */
 
 /* Beos doesn't have all the required getrusage fields */
 #undef HAVE_GETRUSAGE
@@ -40,9 +40,9 @@ union semun
 
 struct sembuf
 {
-	int sem_flg;
-	int sem_op;
-	int sem_num;
+	int			sem_flg;
+	int			sem_op;
+	int			sem_num;
 };
 
 struct shmid_ds
@@ -50,28 +50,33 @@ struct shmid_ds
 	int			dummy;
 	int			shm_nattch;
 };
-	
-int semctl(int semId,int semNum,int flag,union semun);
-int semget(int semKey, int semNum, int flags);
-int semop(int semId, struct sembuf *sops, int flag);
 
-int shmdt(char* shmaddr);
-int* shmat(int memId,int m1,int m2);
-int shmctl(int shmid,int flag, struct shmid_ds* dummy);
-int shmget(int memKey,int size,int flag);
+int			semctl(int semId, int semNum, int flag, union semun);
+int			semget(int semKey, int semNum, int flags);
+int			semop(int semId, struct sembuf * sops, int flag);
+
+int			shmdt(char *shmaddr);
+int		   *shmat(int memId, int m1, int m2);
+int			shmctl(int shmid, int flag, struct shmid_ds * dummy);
+int			shmget(int memKey, int size, int flag);
 
 
 /* Support functions */
 
 /* Specific beos action made on postgres/postmaster startup */
-void beos_startup(int argc,char** argv);
+void		beos_startup(int argc, char **argv);
+
 /* Load a shared library */
-image_id beos_dl_open(char * filename);
+image_id	beos_dl_open(char *filename);
+
 /* UnLoad a shared library */
-status_t beos_dl_close(image_id im);
+status_t	beos_dl_close(image_id im);
+
 /* Specific beos action made on backend startup */
-void beos_before_backend_startup(void);
+void		beos_before_backend_startup(void);
+
 /* Specific beos action made on backend startup */
-void beos_backend_startup(void);
-/* Specific beos action made on backend startup failure*/	
-void beos_backend_startup_failed(void);
+void		beos_backend_startup(void);
+
+/* Specific beos action made on backend startup failure*/
+void		beos_backend_startup_failed(void);

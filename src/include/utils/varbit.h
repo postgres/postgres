@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: varbit.h,v 1.9 2001/01/24 19:43:29 momjian Exp $
+ * $Id: varbit.h,v 1.10 2001/03/22 04:01:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,8 @@
  */
 typedef struct
 {
-	int32		vl_len;			/* standard varlena header (total size in bytes) */
+	int32		vl_len;			/* standard varlena header (total size in
+								 * bytes) */
 	int32		bit_len;		/* number of valid bits */
 	bits8		bit_dat[1];		/* bit string, most sig. byte first */
 } VarBit;
@@ -33,12 +34,12 @@ typedef struct
  * BIT and BIT VARYING are toastable varlena types.  They are the same
  * as far as representation goes, so we just have one set of macros.
  */
-#define DatumGetVarBitP(X)         ((VarBit *) PG_DETOAST_DATUM(X))
-#define DatumGetVarBitPCopy(X)     ((VarBit *) PG_DETOAST_DATUM_COPY(X))
-#define VarBitPGetDatum(X)         PointerGetDatum(X)
-#define PG_GETARG_VARBIT_P(n)      DatumGetVarBitP(PG_GETARG_DATUM(n))
+#define DatumGetVarBitP(X)		   ((VarBit *) PG_DETOAST_DATUM(X))
+#define DatumGetVarBitPCopy(X)	   ((VarBit *) PG_DETOAST_DATUM_COPY(X))
+#define VarBitPGetDatum(X)		   PointerGetDatum(X)
+#define PG_GETARG_VARBIT_P(n)	   DatumGetVarBitP(PG_GETARG_DATUM(n))
 #define PG_GETARG_VARBIT_P_COPY(n) DatumGetVarBitPCopy(PG_GETARG_DATUM(n))
-#define PG_RETURN_VARBIT_P(x)      return VarBitPGetDatum(x)
+#define PG_RETURN_VARBIT_P(x)	   return VarBitPGetDatum(x)
 
 /* Header overhead *in addition to* VARHDRSZ */
 #define VARBITHDRSZ			sizeof(int32)

@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/pg_dumplo.h,v 1.3 2001/01/24 19:42:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/pg_dumplo.h,v 1.4 2001/03/22 03:59:10 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -17,12 +17,12 @@
 /* ----------
  * Define
  * ----------
- */        
+ */
 #define QUERY_BUFSIZ	(8*1024)
 #define DIR_UMASK	0755
 #define FILE_UMASK	0644
 
-#define	TRUE		1
+#define TRUE		1
 #define FALSE		0
 #define RE_OK		0
 #define RE_ERROR	1
@@ -36,44 +36,47 @@
  * LO struct
  * ----------
  */
-typedef struct { 
-	char	*lo_table,
-			*lo_attr;
-	Oid		lo_oid;
-} LOlist;
+typedef struct
+{
+	char	   *lo_table,
+			   *lo_attr;
+	Oid			lo_oid;
+}			LOlist;
 
-typedef struct {
-	int		action;
-	LOlist		*lolist;
-	char		**argv,
-			*user,
-			*db,
-			*host,
-			*space;
-	FILE		*index;
-	int		counter,
-			argc,
-			lolist_start,
-			remove,
-			quiet;
-	PGresult	*res;
-	PGconn		*conn;
-} LODumpMaster;
+typedef struct
+{
+	int			action;
+	LOlist	   *lolist;
+	char	  **argv,
+			   *user,
+			   *db,
+			   *host,
+			   *space;
+	FILE	   *index;
+	int			counter,
+				argc,
+				lolist_start,
+				remove,
+				quiet;
+	PGresult   *res;
+	PGconn	   *conn;
+}			LODumpMaster;
 
-typedef enum {	
+typedef enum
+{
 	ACTION_NONE,
 	ACTION_SHOW,
-	ACTION_EXPORT_ATTR,	
-	ACTION_EXPORT_ALL,	
+	ACTION_EXPORT_ATTR,
+	ACTION_EXPORT_ALL,
 	ACTION_IMPORT
-} PGLODUMP_ACTIONS;
+}			PGLODUMP_ACTIONS;
 
 extern char *progname;
 
-extern void	notice		(LODumpMaster *pgLO, int set);
-extern void	index_file	(LODumpMaster *pgLO);
-extern void	load_lolist	(LODumpMaster *pgLO);
-extern void	pglo_export	(LODumpMaster *pgLO);
-extern void	pglo_import	(LODumpMaster *pgLO);
+extern void notice(LODumpMaster * pgLO, int set);
+extern void index_file(LODumpMaster * pgLO);
+extern void load_lolist(LODumpMaster * pgLO);
+extern void pglo_export(LODumpMaster * pgLO);
+extern void pglo_import(LODumpMaster * pgLO);
 
-#endif /* PG_DUMPLO_H */
+#endif	 /* PG_DUMPLO_H */

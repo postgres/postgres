@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.41 2001/01/24 19:43:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.42 2001/03/22 03:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,8 @@ long	   *PrivateRefCount;	/* also used in freelist.c */
 bits8	   *BufferLocks;		/* flag bits showing locks I have set */
 BufferTag  *BufferTagLastDirtied;		/* tag buffer had when last
 										 * dirtied by me */
-BufferBlindId  *BufferBlindLastDirtied;
-bool		   *BufferDirtiedByMe;	/* T if buf has been dirtied in cur xact */
+BufferBlindId *BufferBlindLastDirtied;
+bool	   *BufferDirtiedByMe;	/* T if buf has been dirtied in cur xact */
 
 
 /*
@@ -149,7 +149,8 @@ InitBufferPool(void)
 
 	/*
 	 * It's probably not really necessary to grab the lock --- if there's
-	 * anyone else attached to the shmem at this point, we've got problems.
+	 * anyone else attached to the shmem at this point, we've got
+	 * problems.
 	 */
 	SpinAcquire(BufMgrLock);
 
@@ -240,13 +241,11 @@ InitBufferPoolAccess(void)
 	BufferDirtiedByMe = (bool *) calloc(NBuffers, sizeof(bool));
 
 	/*
-	 * Convert shmem offsets into addresses as seen by this process.
-	 * This is just to speed up the BufferGetBlock() macro.
+	 * Convert shmem offsets into addresses as seen by this process. This
+	 * is just to speed up the BufferGetBlock() macro.
 	 */
 	for (i = 0; i < NBuffers; i++)
-	{
 		BufferBlockPointers[i] = (Block) MAKE_PTR(BufferDescriptors[i].data);
-	}
 
 	/*
 	 * Now that buffer access is initialized, set up a callback to shut it

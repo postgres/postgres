@@ -8,14 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.56 2001/01/24 19:43:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.57 2001/03/22 03:59:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * POSTGRES processes share one or more regions of shared memory.
  * The shared memory is created by a postmaster and is inherited
- * by each backend via fork().  The routines in this file are used for
+ * by each backend via fork().	The routines in this file are used for
  * allocating and binding to shared memory data structures.
  *
  * NOTES:
@@ -65,7 +65,7 @@
 
 /* shared memory global variables */
 
-static PGShmemHeader *ShmemSegHdr; /* shared mem segment header */
+static PGShmemHeader *ShmemSegHdr;		/* shared mem segment header */
 
 SHMEM_OFFSET ShmemBase;			/* start address of shared memory */
 
@@ -75,9 +75,9 @@ SPINLOCK	ShmemLock;			/* lock for shared memory allocation */
 
 SPINLOCK	ShmemIndexLock;		/* lock for shmem index access */
 
-static HTAB *ShmemIndex = NULL;	/* primary index hashtable for shmem */
+static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
-static bool ShmemBootstrap = false;	/* bootstrapping shmem index? */
+static bool ShmemBootstrap = false;		/* bootstrapping shmem index? */
 
 
 /*
@@ -99,9 +99,9 @@ InitShmemAllocation(PGShmemHeader *seghdr)
 
 	/*
 	 * Since ShmemInitHash calls ShmemInitStruct, which expects the
-	 * ShmemIndex hashtable to exist already, we have a bit of a circularity
-	 * problem in initializing the ShmemIndex itself.  We set ShmemBootstrap
-	 * to tell ShmemInitStruct to fake it.
+	 * ShmemIndex hashtable to exist already, we have a bit of a
+	 * circularity problem in initializing the ShmemIndex itself.  We set
+	 * ShmemBootstrap to tell ShmemInitStruct to fake it.
 	 */
 	ShmemIndex = (HTAB *) NULL;
 	ShmemBootstrap = true;
@@ -373,6 +373,7 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 
 	if (!ShmemIndex)
 	{
+
 		/*
 		 * If the shmem index doesn't exist, we are bootstrapping: we must
 		 * be trying to init the shmem index itself.

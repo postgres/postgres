@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.53 2001/01/24 19:43:26 momjian Exp $
+ * $Id: relation.h,v 1.54 2001/03/22 04:00:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ typedef struct RelOptInfo
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if
 										 * base rel) */
 	Cost		baserestrictcost;		/* cost of evaluating the above */
-	Relids		outerjoinset;			/* integer list of base relids */
+	Relids		outerjoinset;	/* integer list of base relids */
 	List	   *joininfo;		/* JoinInfo structures */
 	List	   *innerjoin;		/* potential indexscans for nestloop joins */
 
@@ -436,7 +436,7 @@ typedef struct HashPath
  * When we construct a join rel that includes all the base rels referenced
  * in a multi-relation restriction clause, we place that clause into the
  * joinrestrictinfo lists of paths for the join rel, if neither left nor
- * right sub-path includes all base rels referenced in the clause.  The clause
+ * right sub-path includes all base rels referenced in the clause.	The clause
  * will be applied at that join level, and will not propagate any further up
  * the join tree.  (Note: the "predicate migration" code was once intended to
  * push restriction clauses up and down the plan tree based on evaluation
@@ -512,8 +512,8 @@ typedef struct RestrictInfo
 	Oid			hashjoinoperator;		/* copy of clause operator */
 
 	/* cache space for hashclause processing; -1 if not yet set */
-	Selectivity	left_dispersion;	/* dispersion of left side */
-	Selectivity	right_dispersion;	/* dispersion of right side */
+	Selectivity left_dispersion;/* dispersion of left side */
+	Selectivity right_dispersion;		/* dispersion of right side */
 } RestrictInfo;
 
 /*
@@ -533,7 +533,7 @@ typedef struct RestrictInfo
 typedef struct JoinInfo
 {
 	NodeTag		type;
-	Relids		unjoined_relids; /* some rels not yet part of my RelOptInfo */
+	Relids		unjoined_relids;/* some rels not yet part of my RelOptInfo */
 	List	   *jinfo_restrictinfo;		/* relevant RestrictInfos */
 } JoinInfo;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.57 2001/01/24 19:42:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.58 2001/03/22 03:59:30 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -60,7 +60,7 @@
  * entries, of which any unused entries will be NULL.
  */
 static LargeObjectDesc **cookies = NULL;
-static int cookies_size = 0;
+static int	cookies_size = 0;
 
 static MemoryContext fscxt = NULL;
 
@@ -329,10 +329,10 @@ loread(PG_FUNCTION_ARGS)
 Datum
 lowrite(PG_FUNCTION_ARGS)
 {
-	int32			fd = PG_GETARG_INT32(0);
+	int32		fd = PG_GETARG_INT32(0);
 	struct varlena *wbuf = PG_GETARG_VARLENA_P(1);
-	int				bytestowrite;
-	int				totalwritten;
+	int			bytestowrite;
+	int			totalwritten;
 
 	bytestowrite = VARSIZE(wbuf) - VARHDRSZ;
 	totalwritten = lo_write(fd, VARDATA(wbuf), bytestowrite);
@@ -371,7 +371,7 @@ lo_import(PG_FUNCTION_ARGS)
 	 */
 	nbytes = VARSIZE(filename) - VARHDRSZ;
 	if (nbytes >= MAXPGPATH)
-		nbytes = MAXPGPATH-1;
+		nbytes = MAXPGPATH - 1;
 	memcpy(fnamebuf, VARDATA(filename), nbytes);
 	fnamebuf[nbytes] = '\0';
 	fd = PathNameOpenFile(fnamebuf, O_RDONLY | PG_BINARY, 0666);
@@ -445,7 +445,7 @@ lo_export(PG_FUNCTION_ARGS)
 	 */
 	nbytes = VARSIZE(filename) - VARHDRSZ;
 	if (nbytes >= MAXPGPATH)
-		nbytes = MAXPGPATH-1;
+		nbytes = MAXPGPATH - 1;
 	memcpy(fnamebuf, VARDATA(filename), nbytes);
 	fnamebuf[nbytes] = '\0';
 	oumask = umask((mode_t) 0022);

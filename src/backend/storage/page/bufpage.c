@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.36 2001/02/06 06:24:00 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.37 2001/03/22 03:59:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,14 +59,14 @@ PageInit(Page page, Size pageSize, Size specialSize)
 void
 PageZero(Page page)
 {
-	MemSet((char*)page + ((PageHeader)page)->pd_lower, 0,
-			((PageHeader)page)->pd_special - ((PageHeader)page)->pd_lower);
+	MemSet((char *) page + ((PageHeader) page)->pd_lower, 0,
+		((PageHeader) page)->pd_special - ((PageHeader) page)->pd_lower);
 }
 
 /* ----------------
  *		PageAddItem
  *
- *		Add an item to a page.  Return value is offset at which it was
+ *		Add an item to a page.	Return value is offset at which it was
  *		inserted, or InvalidOffsetNumber if there's not room to insert.
  *
  *		If offsetNumber is valid and <= current max offset in the page,
@@ -75,7 +75,7 @@ PageZero(Page page)
  *		If offsetNumber is not valid, then assign one by finding the first
  *		one that is both unused and deallocated.
  *
- *   !!! ELOG(ERROR) IS DISALLOWED HERE !!!
+ *	 !!! ELOG(ERROR) IS DISALLOWED HERE !!!
  *
  * ----------------
  */
@@ -125,10 +125,12 @@ PageAddItem(Page page,
 		}
 		else
 		{
+
 			/*
-			 * Don't actually do the shuffle till we've checked free space!
+			 * Don't actually do the shuffle till we've checked free
+			 * space!
 			 */
-			needshuffle = true;		/* need to increase "lower" */
+			needshuffle = true; /* need to increase "lower" */
 		}
 	}
 	else
@@ -162,7 +164,8 @@ PageAddItem(Page page,
 		return InvalidOffsetNumber;
 
 	/*
-	 * OK to insert the item.  First, shuffle the existing pointers if needed.
+	 * OK to insert the item.  First, shuffle the existing pointers if
+	 * needed.
 	 */
 	if (needshuffle)
 	{
@@ -284,12 +287,12 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 	for (i = 0; i < nline; i++)
 	{
 		lp = ((PageHeader) page)->pd_linp + i;
-		if ((*lp).lp_flags & LP_DELETE)		/* marked for deletion */
+		if ((*lp).lp_flags & LP_DELETE) /* marked for deletion */
 			(*lp).lp_flags &= ~(LP_USED | LP_DELETE);
 		if ((*lp).lp_flags & LP_USED)
 			nused++;
 		else if (unused)
-			unused[i - nused] = (OffsetNumber)i;
+			unused[i - nused] = (OffsetNumber) i;
 	}
 
 	if (nused == 0)
@@ -347,7 +350,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		pfree(itemidbase);
 	}
 
-	return(nline - nused);
+	return (nline - nused);
 }
 
 /*
@@ -377,16 +380,16 @@ PageGetFreeSpace(Page page)
 void
 IndexPageCleanup(Buffer buffer)
 {
-	Page			page = (Page) BufferGetPage(buffer);
-	ItemId			lp;
-	OffsetNumber	maxoff;
-	OffsetNumber	i;
+	Page		page = (Page) BufferGetPage(buffer);
+	ItemId		lp;
+	OffsetNumber maxoff;
+	OffsetNumber i;
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (i = 0; i < maxoff; i++)
 	{
 		lp = ((PageHeader) page)->pd_linp + i;
-		if ((*lp).lp_flags & LP_DELETE)		/* marked for deletion */
+		if ((*lp).lp_flags & LP_DELETE) /* marked for deletion */
 		{
 			PageIndexTupleDelete(page, i + 1);
 			maxoff--;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.57 2001/02/16 03:16:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.58 2001/03/22 03:59:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,11 +35,11 @@
 
 
 static void mark_baserels_for_outer_join(Query *root, Relids rels,
-										 Relids outerrels);
+							 Relids outerrels);
 static void distribute_qual_to_rels(Query *root, Node *clause,
-									bool ispusheddown,
-									bool isouterjoin,
-									Relids qualscope);
+						bool ispusheddown,
+						bool isouterjoin,
+						Relids qualscope);
 static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 					  Relids join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars);
@@ -57,7 +57,7 @@ static void check_hashjoinable(RestrictInfo *restrictinfo);
  * build_base_rel_tlists
  *	  Creates rel nodes for every relation mentioned in the target list
  *	  'tlist' (if a node hasn't already been created) and adds them to
- *	  root->base_rel_list.  Creates targetlist entries for each var seen
+ *	  root->base_rel_list.	Creates targetlist entries for each var seen
  *	  in 'tlist' and adds them to the tlist of the appropriate rel node.
  */
 void
@@ -118,6 +118,7 @@ add_missing_rels_to_query(Query *root, Node *jtnode)
 	if (IsA(jtnode, RangeTblRef))
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
+
 		/* This call to get_base_rel does the primary work... */
 		RelOptInfo *rel = get_base_rel(root, varno);
 
@@ -160,7 +161,7 @@ add_missing_rels_to_query(Query *root, Node *jtnode)
  * distribute_quals_to_rels
  *	  Recursively scan the query's join tree for WHERE and JOIN/ON qual
  *	  clauses, and add these to the appropriate RestrictInfo and JoinInfo
- *	  lists belonging to base RelOptInfos.  New base rel entries are created
+ *	  lists belonging to base RelOptInfos.	New base rel entries are created
  *	  as needed.  Also, base RelOptInfos are marked with outerjoinset
  *	  information, to aid in proper positioning of qual clauses that appear
  *	  above outer joins.
@@ -169,7 +170,7 @@ add_missing_rels_to_query(Query *root, Node *jtnode)
  * be evaluated at the lowest level where all the variables it mentions are
  * available.  However, we cannot push a qual down into the nullable side(s)
  * of an outer join since the qual might eliminate matching rows and cause a
- * NULL row to be incorrectly emitted by the join.  Therefore, rels appearing
+ * NULL row to be incorrectly emitted by the join.	Therefore, rels appearing
  * within the nullable side(s) of an outer join are marked with
  * outerjoinset = list of Relids used at the outer join node.
  * This list will be added to the list of rels referenced by quals using such
@@ -228,14 +229,14 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 		List	   *qual;
 
 		/*
-		 * Order of operations here is subtle and critical.  First we recurse
-		 * to handle sub-JOINs.  Their join quals will be placed without
-		 * regard for whether this level is an outer join, which is correct.
-		 * Then, if we are an outer join, we mark baserels contained within
-		 * the nullable side(s) with our own rel list; this will restrict
-		 * placement of subsequent quals using those rels, including our own
-		 * quals and quals above us in the join tree.
-		 * Finally we place our own join quals.
+		 * Order of operations here is subtle and critical.  First we
+		 * recurse to handle sub-JOINs.  Their join quals will be placed
+		 * without regard for whether this level is an outer join, which
+		 * is correct. Then, if we are an outer join, we mark baserels
+		 * contained within the nullable side(s) with our own rel list;
+		 * this will restrict placement of subsequent quals using those
+		 * rels, including our own quals and quals above us in the join
+		 * tree. Finally we place our own join quals.
 		 */
 		leftids = distribute_quals_to_rels(root, j->larg);
 		rightids = distribute_quals_to_rels(root, j->rarg);
@@ -261,9 +262,10 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 				isouterjoin = true;
 				break;
 			case JOIN_UNION:
+
 				/*
-				 * This is where we fail if upper levels of planner haven't
-				 * rewritten UNION JOIN as an Append ...
+				 * This is where we fail if upper levels of planner
+				 * haven't rewritten UNION JOIN as an Append ...
 				 */
 				elog(ERROR, "UNION JOIN is not implemented yet");
 				break;
@@ -338,12 +340,12 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	bool		can_be_equijoin;
 
 	restrictinfo->clause = (Expr *) clause;
-	restrictinfo->eval_cost = -1; /* not computed until needed */
+	restrictinfo->eval_cost = -1;		/* not computed until needed */
 	restrictinfo->subclauseindices = NIL;
 	restrictinfo->mergejoinoperator = InvalidOid;
 	restrictinfo->left_sortop = InvalidOid;
 	restrictinfo->right_sortop = InvalidOid;
-	restrictinfo->left_pathkey = NIL; /* not computable yet */
+	restrictinfo->left_pathkey = NIL;	/* not computable yet */
 	restrictinfo->right_pathkey = NIL;
 	restrictinfo->hashjoinoperator = InvalidOid;
 	restrictinfo->left_dispersion = -1; /* not computed until needed */
@@ -358,7 +360,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	 * Cross-check: clause should contain no relids not within its scope.
 	 * Otherwise the parser messed up.
 	 */
-	if (! is_subseti(relids, qualscope))
+	if (!is_subseti(relids, qualscope))
 		elog(ERROR, "JOIN qualification may not refer to other relations");
 
 	/*
@@ -377,14 +379,14 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	 * This ensures that the clause will be evaluated exactly at the level
 	 * of joining corresponding to the outer join.
 	 *
-	 * For a non-outer-join qual, we can evaluate the qual as soon as
-	 * (1) we have all the rels it mentions, and (2) we are at or above any
-	 * outer joins that can null any of these rels and are below the syntactic
-	 * location of the given qual.  To enforce the latter, scan the base rels
-	 * listed in relids, and merge their outer-join lists into the clause's
-	 * own reference list.  At the time we are called, the outerjoinset list
-	 * of each baserel will show exactly those outer joins that are below the
-	 * qual in the join tree.
+	 * For a non-outer-join qual, we can evaluate the qual as soon as (1) we
+	 * have all the rels it mentions, and (2) we are at or above any outer
+	 * joins that can null any of these rels and are below the syntactic
+	 * location of the given qual.	To enforce the latter, scan the base
+	 * rels listed in relids, and merge their outer-join lists into the
+	 * clause's own reference list.  At the time we are called, the
+	 * outerjoinset list of each baserel will show exactly those outer
+	 * joins that are below the qual in the join tree.
 	 */
 	if (isouterjoin)
 	{
@@ -396,19 +398,24 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		Relids		newrelids = relids;
 		List	   *relid;
 
-		/* We rely on set_unioni to be nondestructive of its input lists... */
+		/*
+		 * We rely on set_unioni to be nondestructive of its input
+		 * lists...
+		 */
 		can_be_equijoin = true;
 		foreach(relid, relids)
 		{
 			RelOptInfo *rel = get_base_rel(root, lfirsti(relid));
 
 			if (rel->outerjoinset &&
-				! is_subseti(rel->outerjoinset, relids))
+				!is_subseti(rel->outerjoinset, relids))
 			{
 				newrelids = set_unioni(newrelids, rel->outerjoinset);
+
 				/*
-				 * Because application of the qual will be delayed by outer
-				 * join, we mustn't assume its vars are equal everywhere.
+				 * Because application of the qual will be delayed by
+				 * outer join, we mustn't assume its vars are equal
+				 * everywhere.
 				 */
 				can_be_equijoin = false;
 			}
@@ -419,10 +426,11 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	}
 
 	/*
-	 * Mark the qual as "pushed down" if it can be applied at a level below
-	 * its original syntactic level.  This allows us to distinguish original
-	 * JOIN/ON quals from higher-level quals pushed down to the same joinrel.
-	 * A qual originating from WHERE is always considered "pushed down".
+	 * Mark the qual as "pushed down" if it can be applied at a level
+	 * below its original syntactic level.	This allows us to distinguish
+	 * original JOIN/ON quals from higher-level quals pushed down to the
+	 * same joinrel. A qual originating from WHERE is always considered
+	 * "pushed down".
 	 */
 	restrictinfo->ispusheddown = ispusheddown || !sameseti(relids,
 														   qualscope);
@@ -458,10 +466,10 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		 * the relid list.	Set additional RestrictInfo fields for
 		 * joining.
 		 *
-		 * We don't bother setting the merge/hashjoin info if we're not
-		 * going to need it.  We do want to know about mergejoinable ops
-		 * in any potential equijoin clause (see later in this routine),
-		 * and we ignore enable_mergejoin if isouterjoin is true, because
+		 * We don't bother setting the merge/hashjoin info if we're not going
+		 * to need it.	We do want to know about mergejoinable ops in any
+		 * potential equijoin clause (see later in this routine), and we
+		 * ignore enable_mergejoin if isouterjoin is true, because
 		 * mergejoin is the only implementation we have for full and right
 		 * outer joins.
 		 */
@@ -485,6 +493,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	}
 	else
 	{
+
 		/*
 		 * 'clause' references no rels, and therefore we have no place to
 		 * attach it.  Shouldn't get here if callers are working properly.
@@ -493,12 +502,12 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	}
 
 	/*
-	 * If the clause has a mergejoinable operator, and is not an outer-join
-	 * qualification nor bubbled up due to an outer join, then the two sides
-	 * represent equivalent PathKeyItems for path keys: any path that is
-	 * sorted by one side will also be sorted by the other (as soon as the
-	 * two rels are joined, that is).  Record the key equivalence for future
-	 * use.
+	 * If the clause has a mergejoinable operator, and is not an
+	 * outer-join qualification nor bubbled up due to an outer join, then
+	 * the two sides represent equivalent PathKeyItems for path keys: any
+	 * path that is sorted by one side will also be sorted by the other
+	 * (as soon as the two rels are joined, that is).  Record the key
+	 * equivalence for future use.
 	 */
 	if (can_be_equijoin && restrictinfo->mergejoinoperator != InvalidOid)
 		add_equijoined_keys(root, restrictinfo);
@@ -569,15 +578,16 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	Expr	   *clause;
 
 	/*
-	 * Currently, since check_mergejoinable only accepts Var = Var clauses,
-	 * we should only see Var nodes here.  Would have to work a little
-	 * harder to locate the right rel(s) if more-general mergejoin clauses
-	 * were accepted.
+	 * Currently, since check_mergejoinable only accepts Var = Var
+	 * clauses, we should only see Var nodes here.	Would have to work a
+	 * little harder to locate the right rel(s) if more-general mergejoin
+	 * clauses were accepted.
 	 */
 	Assert(IsA(item1, Var));
 	irel1 = ((Var *) item1)->varno;
 	Assert(IsA(item2, Var));
 	irel2 = ((Var *) item2)->varno;
+
 	/*
 	 * If both vars belong to same rel, we need to look at that rel's
 	 * baserestrictinfo list.  If different rels, each will have a
@@ -593,6 +603,7 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 
 		restrictlist = joininfo->jinfo_restrictinfo;
 	}
+
 	/*
 	 * Scan to see if equality is already known.
 	 */
@@ -611,6 +622,7 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 			(equal(item2, left) && equal(item1, right)))
 			return;				/* found a matching clause */
 	}
+
 	/*
 	 * This equality is new information, so construct a clause
 	 * representing it to add to the query data structures.
@@ -620,6 +632,7 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	eq_operator = compatible_oper("=", ltype, rtype, true);
 	if (!HeapTupleIsValid(eq_operator))
 	{
+
 		/*
 		 * Would it be safe to just not add the equality to the query if
 		 * we have no suitable equality operator for the combination of
@@ -629,6 +642,7 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 			 typeidTypeName(ltype), typeidTypeName(rtype));
 	}
 	pgopform = (Form_pg_operator) GETSTRUCT(eq_operator);
+
 	/*
 	 * Let's just make sure this appears to be a compatible operator.
 	 */
@@ -641,21 +655,21 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	clause = makeNode(Expr);
 	clause->typeOid = BOOLOID;
 	clause->opType = OP_EXPR;
-	clause->oper = (Node *) makeOper(oprid(eq_operator), /* opno */
-									 InvalidOid, /* opid */
-									 BOOLOID); /* operator result type */
+	clause->oper = (Node *) makeOper(oprid(eq_operator),		/* opno */
+									 InvalidOid,		/* opid */
+									 BOOLOID);	/* operator result type */
 	clause->args = makeList2(item1, item2);
 
 	ReleaseSysCache(eq_operator);
 
 	/*
 	 * Note: we mark the qual "pushed down" to ensure that it can never be
-	 * taken for an original JOIN/ON clause.  We also claim it is an outer-
-	 * join clause, which it isn't, but that keeps distribute_qual_to_rels
-	 * from examining the outerjoinsets of the relevant rels (which are no
-	 * longer of interest, but could keep the qual from being pushed down
-	 * to where it should be).  It'll also save a useless call to
-	 * add_equijoined keys...
+	 * taken for an original JOIN/ON clause.  We also claim it is an
+	 * outer- join clause, which it isn't, but that keeps
+	 * distribute_qual_to_rels from examining the outerjoinsets of the
+	 * relevant rels (which are no longer of interest, but could keep the
+	 * qual from being pushed down to where it should be).	It'll also
+	 * save a useless call to add_equijoined keys...
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
 							true, true,

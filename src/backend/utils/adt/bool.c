@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.24 2001/01/24 19:43:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.25 2001/03/22 03:59:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,8 @@ boolin(PG_FUNCTION_ARGS)
 
 	switch (*b)
 	{
-			case 't':
-			case 'T':
+		case 't':
+		case 'T':
 			if (strncasecmp(b, "true", strlen(b)) == 0)
 				PG_RETURN_BOOL(true);
 			break;
@@ -187,7 +187,7 @@ isfalse(PG_FUNCTION_ARGS)
 
 	b = PG_GETARG_BOOL(0);
 
-	PG_RETURN_BOOL(! b);
+	PG_RETURN_BOOL(!b);
 }
 
 Datum
@@ -200,7 +200,7 @@ isnottrue(PG_FUNCTION_ARGS)
 
 	b = PG_GETARG_BOOL(0);
 
-	PG_RETURN_BOOL(! b);
+	PG_RETURN_BOOL(!b);
 }
 
 Datum

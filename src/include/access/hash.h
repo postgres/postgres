@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.37 2001/01/24 19:43:19 momjian Exp $
+ * $Id: hash.h,v 1.38 2001/03/22 04:00:27 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -335,6 +335,6 @@ extern void _hash_checkpage(Page page, int flags);
 /* hash.c */
 extern void hash_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void hash_undo(XLogRecPtr lsn, XLogRecord *record);
-extern void hash_desc(char *buf, uint8 xl_info, char* rec);
+extern void hash_desc(char *buf, uint8 xl_info, char *rec);
 
 #endif	 /* HASH_H */

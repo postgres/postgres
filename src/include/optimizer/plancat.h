@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.21 2001/01/24 19:43:26 momjian Exp $
+ * $Id: plancat.h,v 1.22 2001/03/22 04:00:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 
 extern void relation_info(Oid relationObjectId,
-						  bool *hasindex, long *pages, double *tuples);
+			  bool *hasindex, long *pages, double *tuples);
 
 extern List *find_secondary_indexes(Oid relationObjectId);
 

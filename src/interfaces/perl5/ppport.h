@@ -6,11 +6,11 @@
 
 /* Copyright (C) 1999, Kenneth Albanowski. This code may be used and
    distributed under the same license as any version of Perl. */
-   
+
 /* For the latest version of this code, please retreive the Devel::PPPort
    module from CPAN, contact the author at <kjahds@kjahds.com>, or check
    with the Perl maintainers. */
-   
+
 /* If you needed to customize this file for your project, please mention
    your changes, and visible alter the version number. */
 
@@ -29,29 +29,29 @@
    for a static include, or use the GLOBAL request in a single module to
    produce a global definition that can be referenced from the other
    modules.
-   
-   Function:            Static define:           Extern define:
-   newCONSTSUB()        NEED_newCONSTSUB         NEED_newCONSTSUB_GLOBAL
+
+   Function:			Static define:			 Extern define:
+   newCONSTSUB()		NEED_newCONSTSUB		 NEED_newCONSTSUB_GLOBAL
 
 */
- 
+
 
 /* To verify whether ppport.h is needed for your module, and whether any
    special defines should be used, ppport.h can be run through Perl to check
    your source code. Simply say:
-   
-   	perl -x ppport.h *.c *.h *.xs foo/*.c [etc]
-   
+
+	perl -x ppport.h *.c *.h *.xs foo/*.c [etc]
+
    The result will be a list of patches suggesting changes that should at
    least be acceptable, if not necessarily the most efficient solution, or a
    fix for all possible problems. It won't catch where dTHR is needed, and
    doesn't attempt to account for global macro or function definitions,
    nested includes, typemaps, etc.
-   
+
    In order to test for the need of dTHR, please try your module under a
    recent version of Perl that has threading compiled-in.
- 
-*/ 
+
+*/
 
 
 /*
@@ -109,11 +109,11 @@ foreach $filename (map(glob($_),@ARGV)) {
 			$need_include = 1;
 		}
 	}
-	
+
 	if (scalar(keys %add_func) or $need_include != $has_include) {
 		if (!$has_include) {
 			$inc = join('',map("#define NEED_$_\n", sort keys %add_func)).
-			       "#include \"ppport.h\"\n";
+				   "#include \"ppport.h\"\n";
 			$c = "$inc$c" unless $c =~ s/#.*include.*XSUB.*\n/$&$inc/m;
 		} elsif (keys %add_func) {
 			$inc = join('',map("#define NEED_$_\n", sort keys %add_func));
@@ -125,7 +125,7 @@ foreach $filename (map(glob($_),@ARGV)) {
 		}
 		$changes++;
 	}
-	
+
 	if ($changes) {
 		open(OUT,">/tmp/ppport.h.$$");
 		print OUT $c;
@@ -142,87 +142,90 @@ __DATA__
 */
 
 #ifndef PERL_REVISION
-#   ifndef __PATCHLEVEL_H_INCLUDED__
-#       include "patchlevel.h"
-#   endif
-#   ifndef PERL_REVISION
-#	define PERL_REVISION	(5)
-        /* Replace: 1 */
-#       define PERL_VERSION	PATCHLEVEL
-#       define PERL_SUBVERSION	SUBVERSION
-        /* Replace PERL_PATCHLEVEL with PERL_VERSION */
-        /* Replace: 0 */
-#   endif
+#ifndef __PATCHLEVEL_H_INCLUDED__
+#include "patchlevel.h"
+#endif
+#ifndef PERL_REVISION
+#define PERL_REVISION	 (5)
+ /* Replace: 1 */
+#define PERL_VERSION PATCHLEVEL
+#define PERL_SUBVERSION  SUBVERSION
+ /* Replace PERL_PATCHLEVEL with PERL_VERSION */
+ /* Replace: 0 */
+#endif
 #endif
 
 #define PERL_BCDVERSION ((PERL_REVISION * 0x1000000L) + (PERL_VERSION * 0x1000L) + PERL_SUBVERSION)
 
 #ifndef ERRSV
-#	define ERRSV perl_get_sv("@",FALSE)
+#define ERRSV perl_get_sv("@",FALSE)
 #endif
 
 #if (PERL_VERSION < 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION <= 5))
 /* Replace: 1 */
-#	define PL_sv_undef	sv_undef
-#	define PL_sv_yes	sv_yes
-#	define PL_sv_no		sv_no
-#	define PL_na		na
-#	define PL_stdingv	stdingv
-#	define PL_hints		hints
-#	define PL_curcop	curcop
-#	define PL_curstash	curstash
-#	define PL_copline	copline
-#	define PL_Sv		Sv
+#define PL_sv_undef  sv_undef
+#define PL_sv_yes	 sv_yes
+#define PL_sv_no	 sv_no
+#define PL_na		 na
+#define PL_stdingv	 stdingv
+#define PL_hints	 hints
+#define PL_curcop	 curcop
+#define PL_curstash  curstash
+#define PL_copline	 copline
+#define PL_Sv		 Sv
 /* Replace: 0 */
 #endif
 
 #ifndef dTHR
-#  ifdef WIN32
-#	define dTHR extern int Perl___notused
-#  else
-#	define dTHR extern int errno
-#  endif
+#ifdef WIN32
+#define dTHR extern int Perl___notused
+#else
+#define dTHR extern int errno
+#endif
 #endif
 
 #ifndef boolSV
-#	define boolSV(b) ((b) ? &PL_sv_yes : &PL_sv_no)
+#define boolSV(b) ((b) ? &PL_sv_yes : &PL_sv_no)
 #endif
 
 #ifndef gv_stashpvn
-#	define gv_stashpvn(str,len,flags) gv_stashpv(str,flags)
+#define gv_stashpvn(str,len,flags) gv_stashpv(str,flags)
 #endif
 
 #ifndef newSVpvn
-#	define newSVpvn(data,len) ((len) ? newSVpv ((data), (len)) : newSVpv ("", 0))
+#define newSVpvn(data,len) ((len) ? newSVpv ((data), (len)) : newSVpv ("", 0))
 #endif
 
 #ifndef newRV_inc
 /* Replace: 1 */
-#	define newRV_inc(sv) newRV(sv)
+#define newRV_inc(sv) newRV(sv)
 /* Replace: 0 */
 #endif
 
 #ifndef newRV_noinc
-#  ifdef __GNUC__
-#    define newRV_noinc(sv)               \
-      ({                                  \
-          SV *nsv = (SV*)newRV(sv);       \
-          SvREFCNT_dec(sv);               \
-          nsv;                            \
-      })
-#  else
-#    if defined(CRIPPLED_CC) || defined(USE_THREADS)
-static SV * newRV_noinc (SV * sv)
+#ifdef __GNUC__
+#define newRV_noinc(sv)				  \
+	  ({								  \
+		  SV *nsv = (SV*)newRV(sv);		  \
+		  SvREFCNT_dec(sv);				  \
+		  nsv;							  \
+	  })
+#else
+#if defined(CRIPPLED_CC) || defined(USE_THREADS)
+static SV  *
+newRV_noinc(SV * sv)
 {
-          SV *nsv = (SV*)newRV(sv);       
-          SvREFCNT_dec(sv);               
-          return nsv;                     
+	SV		   *nsv = (SV *) newRV(sv);
+
+	SvREFCNT_dec(sv);
+	return nsv;
 }
-#    else
-#      define newRV_noinc(sv)    \
-        ((PL_Sv=(SV*)newRV(sv), SvREFCNT_dec(sv), (SV*)PL_Sv)
-#    endif
-#  endif
+
+#else
+#define newRV_noinc(sv)    \
+		((PL_Sv=(SV*)newRV(sv), SvREFCNT_dec(sv), (SV*)PL_Sv)
+#endif
+#endif
 #endif
 
 /* Provide: newCONSTSUB */
@@ -233,20 +236,22 @@ static SV * newRV_noinc (SV * sv)
 #if defined(NEED_newCONSTSUB)
 static
 #else
-extern void newCONSTSUB _((HV * stash, char * name, SV *sv));
+extern void newCONSTSUB _((HV * stash, char *name, SV * sv));
+
 #endif
 
 #if defined(NEED_newCONSTSUB) || defined(NEED_newCONSTSUB_GLOBAL)
 void
-newCONSTSUB(stash,name,sv)
-HV *stash;
-char *name;
-SV *sv;
+newCONSTSUB(stash, name, sv)
+HV		   *stash;
+char	   *name;
+SV		   *sv;
 {
-	U32 oldhints = PL_hints;
-	HV *old_cop_stash = PL_curcop->cop_stash;
-	HV *old_curstash = PL_curstash;
-	line_t oldline = PL_curcop->cop_line;
+	U32			oldhints = PL_hints;
+	HV		   *old_cop_stash = PL_curcop->cop_stash;
+	HV		   *old_curstash = PL_curstash;
+	line_t		oldline = PL_curcop->cop_line;
+
 	PL_curcop->cop_line = PL_copline;
 
 	PL_hints &= ~HINT_BLOCK_SCOPE;
@@ -256,31 +261,33 @@ SV *sv;
 	newSUB(
 
 #if (PERL_VERSION < 3) || ((PERL_VERSION == 3) && (PERL_SUBVERSION < 22))
-     /* before 5.003_22 */
-		start_subparse(),
+	/* before 5.003_22 */
+		   start_subparse(),
 #else
-#  if (PERL_VERSION == 3) && (PERL_SUBVERSION == 22)
-     /* 5.003_22 */
-     		start_subparse(0),
-#  else
-     /* 5.003_23  onwards */
-     		start_subparse(FALSE, 0),
-#  endif
+#if (PERL_VERSION == 3) && (PERL_SUBVERSION == 22)
+	/* 5.003_22 */
+		   start_subparse(0),
+#else
+	/* 5.003_23  onwards */
+		   start_subparse(FALSE, 0),
+#endif
 #endif
 
-		newSVOP(OP_CONST, 0, newSVpv(name,0)),
-		newSVOP(OP_CONST, 0, &PL_sv_no),   /* SvPV(&PL_sv_no) == "" -- GMB */
-		newSTATEOP(0, Nullch, newSVOP(OP_CONST, 0, sv))
-	);
+		   newSVOP(OP_CONST, 0, newSVpv(name, 0)),
+		   newSVOP(OP_CONST, 0, &PL_sv_no),		/* SvPV(&PL_sv_no) == ""
+												 * -- GMB */
+		   newSTATEOP(0, Nullch, newSVOP(OP_CONST, 0, sv))
+		);
 
 	PL_hints = oldhints;
 	PL_curcop->cop_stash = old_cop_stash;
 	PL_curstash = old_curstash;
 	PL_curcop->cop_line = oldline;
 }
+
 #endif
 
-#endif /* newCONSTSUB */
+#endif	 /* newCONSTSUB */
 
 
-#endif /* _P_P_PORTABILITY_H_ */
+#endif	 /* _P_P_PORTABILITY_H_ */

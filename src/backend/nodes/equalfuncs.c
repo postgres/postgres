@@ -6,7 +6,7 @@
  * NOTE: a general convention when copying or comparing plan nodes is
  * that we ignore the executor state subnode.  We do not need to look
  * at it because no current uses of copyObject() or equal() need to
- * deal with already-executing plan trees.  By leaving the state subnodes
+ * deal with already-executing plan trees.	By leaving the state subnodes
  * out, we avoid needing to write copy/compare routines for all the
  * different executor state node types.
  *
@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.87 2001/01/24 19:42:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.88 2001/03/22 03:59:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 
 
 /* Macro for comparing string fields that might be NULL */
-#define equalstr(a, b)  \
+#define equalstr(a, b)	\
 	(((a) != NULL && (b) != NULL) ? (strcmp(a, b) == 0) : (a) == (b))
 
 
@@ -134,9 +134,9 @@ _equalOper(Oper *a, Oper *b)
 		return false;
 
 	/*
-	 * We do not examine opid or op_fcache, since these are
-	 * logically derived from opno, and they may not be set yet depending
-	 * on how far along the node is in the parse/plan pipeline.
+	 * We do not examine opid or op_fcache, since these are logically
+	 * derived from opno, and they may not be set yet depending on how far
+	 * along the node is in the parse/plan pipeline.
 	 *
 	 * (Besides, op_fcache is executor state, which we don't check --- see
 	 * notes at head of file.)
@@ -514,6 +514,7 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	if (!equal(a->clause, b->clause))
 		return false;
+
 	/*
 	 * ignore eval_cost, left/right_pathkey, and left/right_dispersion,
 	 * since they may not be set yet, and should be derivable from the

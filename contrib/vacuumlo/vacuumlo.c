@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.8 2001/01/24 19:42:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.9 2001/03/22 03:59:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,7 @@ vacuumlo(char *database, int verbose)
 		return -1;
 	}
 	PQclear(res);
+
 	/*
 	 * Vacuum the temp table so that planner will generate decent plans
 	 * for the DELETEs below.
@@ -96,13 +97,13 @@ vacuumlo(char *database, int verbose)
 	/*
 	 * Now find any candidate tables who have columns of type oid.
 	 *
-	 * NOTE: the temp table formed above is ignored, because its real
-	 * table name will be pg_something.  Also, pg_largeobject will be
-	 * ignored.  If either of these were scanned, obviously we'd end up
-	 * with nothing to delete...
+	 * NOTE: the temp table formed above is ignored, because its real table
+	 * name will be pg_something.  Also, pg_largeobject will be ignored.
+	 * If either of these were scanned, obviously we'd end up with nothing
+	 * to delete...
 	 *
-	 * NOTE: the system oid column is ignored, as it has attnum < 1.
-	 * This shouldn't matter for correctness, but it saves time.
+	 * NOTE: the system oid column is ignored, as it has attnum < 1. This
+	 * shouldn't matter for correctness, but it saves time.
 	 */
 	buf[0] = '\0';
 	strcat(buf, "SELECT c.relname, a.attname ");
@@ -135,9 +136,9 @@ vacuumlo(char *database, int verbose)
 			fprintf(stdout, "Checking %s in %s\n", field, table);
 
 		/*
-		 * We use a DELETE with implicit join for efficiency.  This
-		 * is a Postgres-ism and not portable to other DBMSs, but
-		 * then this whole program is a Postgres-ism.
+		 * We use a DELETE with implicit join for efficiency.  This is a
+		 * Postgres-ism and not portable to other DBMSs, but then this
+		 * whole program is a Postgres-ism.
 		 */
 		sprintf(buf, "DELETE FROM vacuum_l WHERE lo = \"%s\".\"%s\" ",
 				table, field);
@@ -157,10 +158,10 @@ vacuumlo(char *database, int verbose)
 	PQclear(res);
 
 	/*
-	 * Run the actual deletes in a single transaction.  Note that this
+	 * Run the actual deletes in a single transaction.	Note that this
 	 * would be a bad idea in pre-7.1 Postgres releases (since rolling
-	 * back a table delete used to cause problems), but it should
-	 * be safe now.
+	 * back a table delete used to cause problems), but it should be safe
+	 * now.
 	 */
 	res = PQexec(conn, "begin");
 	PQclear(res);

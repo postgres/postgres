@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/tutorial/Attic/beard.c,v 1.5 2001/01/24 19:43:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/tutorial/Attic/beard.c,v 1.6 2001/03/22 04:01:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ beard(Oid picture)
 
 	beard_fd = DatumGetInt32(DirectFunctionCall2(lo_open,
 												 ObjectIdGetDatum(beard),
-												 Int32GetDatum(INV_WRITE)));
+											  Int32GetDatum(INV_WRITE)));
 	if (beard_fd < 0)
 		elog(ERROR, "Cannot access beard large object");
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.142 2001/02/23 09:31:52 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.143 2001/03/22 03:59:19 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -63,19 +63,19 @@ static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName,
 				   bool istemp);
 static TupleDesc BuildFuncTupleDesc(Oid funcOid);
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
-										  int numatts, AttrNumber *attNums);
+						 int numatts, AttrNumber *attNums);
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
 static Oid	UpdateRelationRelation(Relation indexRelation, char *temp_relname);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
 static void AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
-								IndexInfo *indexInfo,
-								Oid *classOids,
-								bool islossy, bool primary);
+					IndexInfo *indexInfo,
+					Oid *classOids,
+					bool islossy, bool primary);
 static void DefaultBuild(Relation heapRelation, Relation indexRelation,
-						 IndexInfo *indexInfo, Node *oldPred,
-						 IndexStrategy indexStrategy);
+			 IndexInfo *indexInfo, Node *oldPred,
+			 IndexStrategy indexStrategy);
 static Oid	IndexGetRelation(Oid indexId);
 static bool activate_index(Oid indexId, bool activate, bool inplace);
 
@@ -301,7 +301,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 		memcpy(to, from, ATTRIBUTE_TUPLE_SIZE);
 
 		/*
-		 * Fix the stuff that should not be the same as the underlying attr
+		 * Fix the stuff that should not be the same as the underlying
+		 * attr
 		 */
 		to->attnum = i + 1;
 
@@ -311,9 +312,9 @@ ConstructTupleDescriptor(Relation heapRelation,
 		to->attcacheoff = -1;
 
 		/*
-		 * We do not yet have the correct relation OID for the index,
-		 * so just set it invalid for now.  InitializeAttributeOids()
-		 * will fix it later.
+		 * We do not yet have the correct relation OID for the index, so
+		 * just set it invalid for now.  InitializeAttributeOids() will
+		 * fix it later.
 		 */
 		to->attrelid = InvalidOid;
 	}
@@ -331,7 +332,7 @@ ConstructTupleDescriptor(Relation heapRelation,
  * typically CacheMemoryContext).
  *
  * There was a note here about adding indexing, but I don't see a need
- * for it.  There are so few tuples in pg_am that an indexscan would
+ * for it.	There are so few tuples in pg_am that an indexscan would
  * surely be slower.
  * ----------------------------------------------------------------
  */
@@ -394,7 +395,7 @@ static void
 ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 {
 	indexRelation->rd_am = AccessMethodObjectIdGetForm(amoid,
-													   CacheMemoryContext);
+													 CacheMemoryContext);
 
 	/* ----------------
 	 *	 XXX missing the initialization of some other fields
@@ -625,12 +626,12 @@ UpdateIndexRelation(Oid indexoid,
 	{
 		predString = nodeToString(indexInfo->ii_Predicate);
 		predText = DatumGetTextP(DirectFunctionCall1(textin,
-											CStringGetDatum(predString)));
+										   CStringGetDatum(predString)));
 		pfree(predString);
 	}
 	else
 		predText = DatumGetTextP(DirectFunctionCall1(textin,
-													 CStringGetDatum("")));
+												   CStringGetDatum("")));
 
 	predLen = VARSIZE(predText);
 	itupLen = predLen + sizeof(FormData_pg_index);
@@ -646,7 +647,7 @@ UpdateIndexRelation(Oid indexoid,
 	indexForm->indproc = indexInfo->ii_FuncOid;
 	indexForm->indisclustered = false;
 	indexForm->indislossy = islossy;
-	indexForm->indhaskeytype = true; /* not actually used anymore */
+	indexForm->indhaskeytype = true;	/* not actually used anymore */
 	indexForm->indisunique = indexInfo->ii_Unique;
 	indexForm->indisprimary = primary;
 	memcpy((char *) &indexForm->indpred, (char *) predText, predLen);
@@ -747,12 +748,12 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 	{
 		predString = nodeToString(newPred);
 		predText = DatumGetTextP(DirectFunctionCall1(textin,
-											CStringGetDatum(predString)));
+										   CStringGetDatum(predString)));
 		pfree(predString);
 	}
 	else
 		predText = DatumGetTextP(DirectFunctionCall1(textin,
-													 CStringGetDatum("")));
+												   CStringGetDatum("")));
 
 	/* open the index system catalog relation */
 	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
@@ -911,15 +912,15 @@ index_create(char *heapRelationName,
 	else
 		indexTupDesc = ConstructTupleDescriptor(heapRelation,
 												indexInfo->ii_NumKeyAttrs,
-												indexInfo->ii_KeyAttrNumbers);
+										   indexInfo->ii_KeyAttrNumbers);
 
 	if (istemp)
 	{
 		/* save user relation name because heap_create changes it */
-		temp_relname = pstrdup(indexRelationName);	/* save original value */
+		temp_relname = pstrdup(indexRelationName);		/* save original value */
 		indexRelationName = palloc(NAMEDATALEN);
-		strcpy(indexRelationName, temp_relname);	/* heap_create will
-													 * change this */
+		strcpy(indexRelationName, temp_relname);		/* heap_create will
+														 * change this */
 	}
 
 	/* ----------------
@@ -1008,9 +1009,7 @@ index_create(char *heapRelationName,
 		/* XXX shouldn't we close the heap and index rels here? */
 	}
 	else
-	{
 		index_build(heapRelation, indexRelation, indexInfo, NULL);
-	}
 }
 
 /* ----------------------------------------------------------------
@@ -1081,12 +1080,12 @@ index_drop(Oid indexId)
 	heap_freetuple(tuple);
 
 	/*
-	 * Update the pg_class tuple for the owning relation.  We are presently
-	 * too lazy to attempt to compute the new correct value of relhasindex
-	 * (the next VACUUM will fix it if necessary).  But we must send out a
-	 * shared-cache-inval notice on the owning relation to ensure other
-	 * backends update their relcache lists of indexes.  So, unconditionally
-	 * do setRelhasindex(true).
+	 * Update the pg_class tuple for the owning relation.  We are
+	 * presently too lazy to attempt to compute the new correct value of
+	 * relhasindex (the next VACUUM will fix it if necessary).	But we
+	 * must send out a shared-cache-inval notice on the owning relation to
+	 * ensure other backends update their relcache lists of indexes.  So,
+	 * unconditionally do setRelhasindex(true).
 	 */
 	setRelhasindex(heapId, true);
 
@@ -1160,11 +1159,11 @@ index_drop(Oid indexId)
  *
  * IndexInfo stores the information about the index that's needed by
  * FormIndexDatum, which is used for both index_build() and later insertion
- * of individual index tuples.  Normally we build an IndexInfo for an index
+ * of individual index tuples.	Normally we build an IndexInfo for an index
  * just once per command, and then use it for (potentially) many tuples.
  * ----------------
  */
-IndexInfo *
+IndexInfo  *
 BuildIndexInfo(HeapTuple indexTuple)
 {
 	Form_pg_index indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
@@ -1199,7 +1198,7 @@ BuildIndexInfo(HeapTuple indexTuple)
 	{
 		ii->ii_NumIndexAttrs = 1;
 		/* Do a lookup on the function, too */
-		fmgr_info(indexStruct->indproc, & ii->ii_FuncInfo);
+		fmgr_info(indexStruct->indproc, &ii->ii_FuncInfo);
 	}
 	else
 		ii->ii_NumIndexAttrs = numKeys;
@@ -1213,7 +1212,7 @@ BuildIndexInfo(HeapTuple indexTuple)
 		char	   *predString;
 
 		predString = DatumGetCString(DirectFunctionCall1(textout,
-									 PointerGetDatum(&indexStruct->indpred)));
+								PointerGetDatum(&indexStruct->indpred)));
 		ii->ii_Predicate = stringToNode(predString);
 		pfree(predString);
 	}
@@ -1262,8 +1261,8 @@ FormIndexDatum(IndexInfo *indexInfo,
 		 *	Functional index --- compute the single index attribute
 		 * ----------------
 		 */
-		FunctionCallInfoData	fcinfo;
-		bool					anynull = false;
+		FunctionCallInfoData fcinfo;
+		bool		anynull = false;
 
 		MemSet(&fcinfo, 0, sizeof(fcinfo));
 		fcinfo.flinfo = &indexInfo->ii_FuncInfo;
@@ -1326,8 +1325,8 @@ LockClassinfoForUpdate(Oid relid, HeapTuple rtup,
 	Relation	relationRelation;
 
 	/*
-	 * NOTE: get and hold RowExclusiveLock on pg_class, because caller will
-	 * probably modify the rel's pg_class tuple later on.
+	 * NOTE: get and hold RowExclusiveLock on pg_class, because caller
+	 * will probably modify the rel's pg_class tuple later on.
 	 */
 	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
 	classTuple = SearchSysCache(RELOID, PointerGetDatum(relid),
@@ -1342,7 +1341,7 @@ LockClassinfoForUpdate(Oid relid, HeapTuple rtup,
 
 	while (1)
 	{
-		ItemPointerData	tidsave;
+		ItemPointerData tidsave;
 
 		ItemPointerCopy(&(rtup->t_self), &tidsave);
 		test = heap_mark4update(relationRelation, rtup, buffer);
@@ -1393,7 +1392,7 @@ IndexesAreActive(Oid relid, bool confirmCommitted)
 	if (!LockClassinfoForUpdate(relid, &tuple, &buffer, confirmCommitted))
 		elog(ERROR, "IndexesAreActive couldn't lock %u", relid);
 	if (((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_RELATION &&
-		((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_TOASTVALUE)
+	  ((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_TOASTVALUE)
 		elog(ERROR, "relation %u isn't an indexable relation", relid);
 	isactive = ((Form_pg_class) GETSTRUCT(&tuple))->relhasindex;
 	ReleaseBuffer(buffer);
@@ -1438,7 +1437,7 @@ setRelhasindex(Oid relid, bool hasindex)
 	if (!IsIgnoringSystemIndexes())
 #else
 	if (!IsIgnoringSystemIndexes() && (!IsReindexProcessing() || pg_class->rd_rel->relhasindex))
-#endif /* OLD_FILE_NAMING */
+#endif	 /* OLD_FILE_NAMING */
 	{
 		tuple = SearchSysCacheCopy(RELOID,
 								   ObjectIdGetDatum(relid),
@@ -1513,18 +1512,19 @@ setRelhasindex(Oid relid, bool hasindex)
 void
 setNewRelfilenode(Relation relation)
 {
-	Relation	pg_class, idescs[Num_pg_class_indices];
-	Oid		newrelfilenode;
+	Relation	pg_class,
+				idescs[Num_pg_class_indices];
+	Oid			newrelfilenode;
 	bool		in_place_update = false;
-	HeapTupleData 	lockTupleData;
-	HeapTuple 	classTuple = NULL;
+	HeapTupleData lockTupleData;
+	HeapTuple	classTuple = NULL;
 	Buffer		buffer;
-	RelationData	workrel;
-	
+	RelationData workrel;
+
 	Assert(!IsSystemRelationName(NameStr(relation->rd_rel->relname)) || relation->rd_rel->relkind == RELKIND_INDEX);
 
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
-	 /* Fetch and lock the classTuple associated with this relation */
+	/* Fetch and lock the classTuple associated with this relation */
 	if (!LockClassinfoForUpdate(relation->rd_id, &lockTupleData, &buffer, true))
 		elog(ERROR, "setNewRelfilenode impossible to lock class tuple");
 	if (IsIgnoringSystemIndexes())
@@ -1567,7 +1567,7 @@ setNewRelfilenode(Relation relation)
 	if (!in_place_update && pg_class->rd_rel->relhasindex)
 	{
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
-							   idescs);
+						   idescs);
 		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, classTuple);
 		CatalogCloseIndices(Num_pg_class_indices, idescs);
 	}
@@ -1577,7 +1577,8 @@ setNewRelfilenode(Relation relation)
 	/* Make sure the relfilenode change */
 	CommandCounterIncrement();
 }
-#endif /* OLD_FILE_NAMING */
+
+#endif	 /* OLD_FILE_NAMING */
 
 /* ----------------
  *		UpdateStats
@@ -1639,7 +1640,7 @@ UpdateStats(Oid relid, long reltuples)
 	in_place_upd = (IsReindexProcessing() || IsBootstrapProcessingMode());
 #else
 	in_place_upd = (IsIgnoringSystemIndexes() || IsReindexProcessing());
-#endif /* OLD_FILE_NAMING */
+#endif	 /* OLD_FILE_NAMING */
 
 	if (!in_place_upd)
 	{
@@ -1713,9 +1714,10 @@ UpdateStats(Oid relid, long reltuples)
 	 */
 	if (in_place_upd)
 	{
+
 		/*
 		 * At bootstrap time, we don't need to worry about concurrency or
-		 * visibility of changes, so we cheat.  Also cheat if REINDEX.
+		 * visibility of changes, so we cheat.	Also cheat if REINDEX.
 		 */
 		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
@@ -1777,7 +1779,7 @@ DefaultBuild(Relation heapRelation,
 			 Relation indexRelation,
 			 IndexInfo *indexInfo,
 			 Node *oldPred,
-			 IndexStrategy indexStrategy) /* not used */
+			 IndexStrategy indexStrategy)		/* not used */
 {
 	HeapScanDesc scan;
 	HeapTuple	heapTuple;
@@ -1787,9 +1789,11 @@ DefaultBuild(Relation heapRelation,
 	long		reltuples,
 				indtuples;
 	Node	   *predicate = indexInfo->ii_Predicate;
+
 #ifndef OMIT_PARTIAL_INDEX
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
+
 #endif
 	ExprContext *econtext;
 	InsertIndexResult insertResult;
@@ -1855,6 +1859,7 @@ DefaultBuild(Relation heapRelation,
 		reltuples++;
 
 #ifndef OMIT_PARTIAL_INDEX
+
 		/*
 		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
 		 * this tuple if it was already in the existing partial index
@@ -1906,9 +1911,7 @@ DefaultBuild(Relation heapRelation,
 
 #ifndef OMIT_PARTIAL_INDEX
 	if (predicate != NULL || oldPred != NULL)
-	{
 		ExecDropTupleTable(tupleTable, true);
-	}
 #endif	 /* OMIT_PARTIAL_INDEX */
 	FreeExprContext(econtext);
 
@@ -1972,7 +1975,7 @@ index_build(Relation heapRelation,
 						 PointerGetDatum(indexRelation),
 						 PointerGetDatum(indexInfo),
 						 PointerGetDatum(oldPred),
-						 PointerGetDatum(RelationGetIndexStrategy(indexRelation)));
+			   PointerGetDatum(RelationGetIndexStrategy(indexRelation)));
 	else
 		DefaultBuild(heapRelation,
 					 indexRelation,
@@ -2087,21 +2090,22 @@ reindex_index(Oid indexId, bool force, bool inplace)
 
 #ifndef OLD_FILE_NAMING
 	if (!inplace)
-        {
-                inplace = IsSharedSystemRelationName(NameStr(iRel->rd_rel->relname));
+	{
+		inplace = IsSharedSystemRelationName(NameStr(iRel->rd_rel->relname));
 		if (!inplace)
 			setNewRelfilenode(iRel);
 	}
-#endif /* OLD_FILE_NAMING */
+#endif	 /* OLD_FILE_NAMING */
 	/* Obtain exclusive lock on it, just to be sure */
 	LockRelation(iRel, AccessExclusiveLock);
 
 	if (inplace)
 	{
+
 		/*
-	 	 * Release any buffers associated with this index.	If they're dirty,
-	 	 * they're just dropped without bothering to flush to disk.
-	 	 */
+		 * Release any buffers associated with this index.	If they're
+		 * dirty, they're just dropped without bothering to flush to disk.
+		 */
 		DropRelationBuffers(iRel);
 
 		/* Now truncate the actual data and set blocks to zero */
@@ -2115,7 +2119,7 @@ reindex_index(Oid indexId, bool force, bool inplace)
 
 	/*
 	 * index_build will close both the heap and index relations (but not
-	 * give up the locks we hold on them).  So we're done.
+	 * give up the locks we hold on them).	So we're done.
 	 */
 
 	SetReindexProcessing(old);
@@ -2164,31 +2168,37 @@ reindex_relation(Oid relid, bool force)
 	bool		old,
 				reindexed;
 
-	bool	deactivate_needed, overwrite, upd_pg_class_inplace;
+	bool		deactivate_needed,
+				overwrite,
+				upd_pg_class_inplace;
+
 #ifdef OLD_FILE_NAMING
-	overwrite = upd_pg_class_inplace = deactivate_needed = true;	
+	overwrite = upd_pg_class_inplace = deactivate_needed = true;
 #else
-	Relation rel;
-	overwrite = upd_pg_class_inplace = deactivate_needed = false;	
+	Relation	rel;
+
+	overwrite = upd_pg_class_inplace = deactivate_needed = false;
+
 	/*
- 	 * avoid heap_update() pg_class tuples while processing
- 	 * reindex for pg_class. 
- 	 */
+	 * avoid heap_update() pg_class tuples while processing reindex for
+	 * pg_class.
+	 */
 	if (IsIgnoringSystemIndexes())
 		upd_pg_class_inplace = true;
+
 	/*
 	 * ignore the indexes of the target system relation while processing
 	 * reindex.
-	 */ 
+	 */
 	rel = RelationIdGetRelation(relid);
 	if (!IsIgnoringSystemIndexes() && IsSystemRelationName(NameStr(rel->rd_rel->relname)))
 		deactivate_needed = true;
-#ifndef	ENABLE_REINDEX_NAILED_RELATIONS
-	/* 
- 	 * nailed relations are never updated.
- 	 * We couldn't keep the consistency between the relation
- 	 * descriptors and pg_class tuples.
- 	 */
+#ifndef ENABLE_REINDEX_NAILED_RELATIONS
+
+	/*
+	 * nailed relations are never updated. We couldn't keep the
+	 * consistency between the relation descriptors and pg_class tuples.
+	 */
 	if (rel->rd_isnailed)
 	{
 		if (IsIgnoringSystemIndexes())
@@ -2199,10 +2209,11 @@ reindex_relation(Oid relid, bool force)
 		else
 			elog(ERROR, "the target relation %u is nailed", relid);
 	}
-#endif /* ENABLE_REINDEX_NAILED_RELATIONS */
+#endif	 /* ENABLE_REINDEX_NAILED_RELATIONS */
+
 	/*
-	 * Shared system indexes must be overwritten because it's
-	 * impossible to update pg_class tuples of all databases.
+	 * Shared system indexes must be overwritten because it's impossible
+	 * to update pg_class tuples of all databases.
 	 */
 	if (IsSharedSystemRelationName(NameStr(rel->rd_rel->relname)))
 	{
@@ -2215,7 +2226,7 @@ reindex_relation(Oid relid, bool force)
 			elog(ERROR, "the target relation %u is shared", relid);
 	}
 	RelationClose(rel);
-#endif /* OLD_FILE_NAMING */
+#endif	 /* OLD_FILE_NAMING */
 	old = SetReindexProcessing(true);
 	if (deactivate_needed)
 	{
@@ -2252,24 +2263,27 @@ reindex_relation(Oid relid, bool force)
 	heap_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
 	if (reindexed)
-	/*
-	 * Ok,we could use the reindexed indexes of the target
-	 * system relation now.
-	 */
-	{ 
+
+		/*
+		 * Ok,we could use the reindexed indexes of the target system
+		 * relation now.
+		 */
+	{
 		if (deactivate_needed)
 		{
 			if (!overwrite && relid == RelOid_pg_class)
 			{
-				/* 
-				 * For pg_class, relhasindex should be set
-				 * to true here in place.
+
+				/*
+				 * For pg_class, relhasindex should be set to true here in
+				 * place.
 				 */
 				setRelhasindex(relid, true);
 				CommandCounterIncrement();
-				/* 
-				 * However the following setRelhasindex()
-				 * is needed to keep consistency with WAL.
+
+				/*
+				 * However the following setRelhasindex() is needed to
+				 * keep consistency with WAL.
 				 */
 			}
 			setRelhasindex(relid, true);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.59 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.60 2001/03/22 03:59:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,8 @@
  */
 void
 RemoveOperator(char *operatorName,		/* operator name */
-			   char *typeName1,			/* left argument type name */
-			   char *typeName2)			/* right argument type name */
+			   char *typeName1, /* left argument type name */
+			   char *typeName2) /* right argument type name */
 {
 	Relation	relation;
 	HeapTuple	tup;

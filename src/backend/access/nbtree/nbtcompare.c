@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.40 2001/01/24 19:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.41 2001/03/22 03:59:14 momjian Exp $
  *
  * NOTES
  *
@@ -150,8 +150,8 @@ btoidvectorcmp(PG_FUNCTION_ARGS)
 Datum
 btabstimecmp(PG_FUNCTION_ARGS)
 {
-	AbsoluteTime	a = PG_GETARG_ABSOLUTETIME(0);
-	AbsoluteTime	b = PG_GETARG_ABSOLUTETIME(1);
+	AbsoluteTime a = PG_GETARG_ABSOLUTETIME(0);
+	AbsoluteTime b = PG_GETARG_ABSOLUTETIME(1);
 
 	if (AbsoluteTimeIsBefore(a, b))
 		PG_RETURN_INT32(-1);
@@ -236,9 +236,10 @@ bttextcmp(PG_FUNCTION_ARGS)
 
 	if (res == 0 && VARSIZE(a) != VARSIZE(b))
 	{
+
 		/*
-		 * The two strings are the same in the first len bytes,
-		 * and they are of different lengths.
+		 * The two strings are the same in the first len bytes, and they
+		 * are of different lengths.
 		 */
 		if (VARSIZE(a) < VARSIZE(b))
 			res = -1;

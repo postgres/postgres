@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.45 2001/02/13 14:32:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.46 2001/03/22 03:59:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 
 		default:
 			elog(ERROR, "Internal coding error, can't input timestamp '%s'", str);
-			TIMESTAMP_INVALID(result); /* keep compiler quiet */
+			TIMESTAMP_INVALID(result);	/* keep compiler quiet */
 	}
 
 	PG_RETURN_TIMESTAMP(result);
@@ -315,14 +315,14 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 			tx = localtime(&utime);
-# ifdef NO_MKTIME_BEFORE_1970
+#ifdef NO_MKTIME_BEFORE_1970
 			if (tx->tm_year < 70 && tx->tm_isdst == 1)
 			{
 				utime -= 3600;
 				tx = localtime(&utime);
 				tx->tm_isdst = 0;
 			}
-# endif
+#endif
 			tm->tm_year = tx->tm_year + 1900;
 			tm->tm_mon = tx->tm_mon + 1;
 			tm->tm_mday = tx->tm_mday;
@@ -341,20 +341,20 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 #endif
 			tm->tm_isdst = tx->tm_isdst;
 
-# if defined(HAVE_TM_ZONE)
+#if defined(HAVE_TM_ZONE)
 			tm->tm_gmtoff = tx->tm_gmtoff;
 			tm->tm_zone = tx->tm_zone;
 
 			*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 			if (tzn != NULL)
 				*tzn = (char *) tm->tm_zone;
-# elif defined(HAVE_INT_TIMEZONE)
+#elif defined(HAVE_INT_TIMEZONE)
 			*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
 			if (tzn != NULL)
 				*tzn = tzname[(tm->tm_isdst > 0)];
-# endif
+#endif
 
-#else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
+#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 			*tzp = CTimeZone;	/* V7 conventions; don't know timezone? */
 			if (tzn != NULL)
 				*tzn = CTZName;
@@ -482,7 +482,7 @@ timestamp_finite(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 
-	PG_RETURN_BOOL(! TIMESTAMP_NOT_FINITE(timestamp));
+	PG_RETURN_BOOL(!TIMESTAMP_NOT_FINITE(timestamp));
 }
 
 Datum
@@ -490,7 +490,7 @@ interval_finite(PG_FUNCTION_ARGS)
 {
 	Interval   *interval = PG_GETARG_INTERVAL_P(0);
 
-	PG_RETURN_BOOL(! INTERVAL_NOT_FINITE(*interval));
+	PG_RETURN_BOOL(!INTERVAL_NOT_FINITE(*interval));
 }
 
 
@@ -656,13 +656,9 @@ timestamp_cmp(PG_FUNCTION_ARGS)
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
 	if (TIMESTAMP_IS_INVALID(dt1))
-	{
 		PG_RETURN_INT32(TIMESTAMP_IS_INVALID(dt2) ? 0 : 1);
-	}
 	else if (TIMESTAMP_IS_INVALID(dt2))
-	{
 		PG_RETURN_INT32(-1);
-	}
 	else
 	{
 		if (TIMESTAMP_IS_RELATIVE(dt1))
@@ -839,7 +835,9 @@ interval_hash(PG_FUNCTION_ARGS)
 Datum
 overlaps_timestamp(PG_FUNCTION_ARGS)
 {
-	/* The arguments are Timestamps, but we leave them as generic Datums
+
+	/*
+	 * The arguments are Timestamps, but we leave them as generic Datums
 	 * to avoid unnecessary conversions between value and reference forms
 	 * --- not to mention possible dereferences of null pointers.
 	 */
@@ -858,9 +856,9 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 	DatumGetBool(DirectFunctionCall2(timestamp_lt,t1,t2))
 
 	/*
-	 * If both endpoints of interval 1 are null, the result is null (unknown).
-	 * If just one endpoint is null, take ts1 as the non-null one.
-	 * Otherwise, take ts1 as the lesser endpoint.
+	 * If both endpoints of interval 1 are null, the result is null
+	 * (unknown). If just one endpoint is null, take ts1 as the non-null
+	 * one. Otherwise, take ts1 as the lesser endpoint.
 	 */
 	if (ts1IsNull)
 	{
@@ -874,7 +872,7 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 	{
 		if (TIMESTAMP_GT(ts1, te1))
 		{
-			Datum	tt = ts1;
+			Datum		tt = ts1;
 
 			ts1 = te1;
 			te1 = tt;
@@ -894,7 +892,7 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 	{
 		if (TIMESTAMP_GT(ts2, te2))
 		{
-			Datum	tt = ts2;
+			Datum		tt = ts2;
 
 			ts2 = te2;
 			te2 = tt;
@@ -907,7 +905,9 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 	 */
 	if (TIMESTAMP_GT(ts1, ts2))
 	{
-		/* This case is ts1 < te2 OR te1 < te2, which may look redundant
+
+		/*
+		 * This case is ts1 < te2 OR te1 < te2, which may look redundant
 		 * but in the presence of nulls it's not quite completely so.
 		 */
 		if (te2IsNull)
@@ -916,7 +916,9 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 			PG_RETURN_BOOL(true);
 		if (te1IsNull)
 			PG_RETURN_NULL();
-		/* If te1 is not null then we had ts1 <= te1 above, and we just
+
+		/*
+		 * If te1 is not null then we had ts1 <= te1 above, and we just
 		 * found ts1 >= te2, hence te1 >= te2.
 		 */
 		PG_RETURN_BOOL(false);
@@ -930,15 +932,20 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 			PG_RETURN_BOOL(true);
 		if (te2IsNull)
 			PG_RETURN_NULL();
-		/* If te2 is not null then we had ts2 <= te2 above, and we just
+
+		/*
+		 * If te2 is not null then we had ts2 <= te2 above, and we just
 		 * found ts2 >= te1, hence te2 >= te1.
 		 */
 		PG_RETURN_BOOL(false);
 	}
 	else
 	{
-		/* For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
-		 * rather silly way of saying "true if both are nonnull, else null".
+
+		/*
+		 * For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
+		 * rather silly way of saying "true if both are nonnull, else
+		 * null".
 		 */
 		if (te1IsNull || te2IsNull)
 			PG_RETURN_NULL();
@@ -1086,13 +1093,14 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 					tm->tm_year += 1900;
 					tm->tm_mon += 1;
 
-# if defined(HAVE_TM_ZONE)
-					tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
-# elif defined(HAVE_INT_TIMEZONE)
+#if defined(HAVE_TM_ZONE)
+					tz = -(tm->tm_gmtoff);		/* tm_gmtoff is
+												 * Sun/DEC-ism */
+#elif defined(HAVE_INT_TIMEZONE)
 					tz = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-# endif
+#endif
 
-#else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
+#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 					tz = CTimeZone;
 #endif
 				}
@@ -1129,8 +1137,8 @@ timestamp_mi_span(PG_FUNCTION_ARGS)
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	Interval	tspan;
 
-	tspan.month = - span->month;
-	tspan.time = - span->time;
+	tspan.month = -span->month;
+	tspan.time = -span->time;
 
 	return DirectFunctionCall2(timestamp_pl_span,
 							   TimestampGetDatum(timestamp),
@@ -1351,18 +1359,19 @@ interval_accum(PG_FUNCTION_ARGS)
 					  &transdatums, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "interval_accum: expected 2-element interval array");
+
 	/*
 	 * XXX memcpy, instead of just extracting a pointer, to work around
 	 * buggy array code: it won't ensure proper alignment of Interval
-	 * objects on machines where double requires 8-byte alignment.
-	 * That should be fixed, but in the meantime...
+	 * objects on machines where double requires 8-byte alignment. That
+	 * should be fixed, but in the meantime...
 	 */
 	memcpy(&sumX, DatumGetIntervalP(transdatums[0]), sizeof(Interval));
 	memcpy(&N, DatumGetIntervalP(transdatums[1]), sizeof(Interval));
 
 	newsum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
-												   IntervalPGetDatum(&sumX),
-												   IntervalPGetDatum(newval)));
+												IntervalPGetDatum(&sumX),
+											 IntervalPGetDatum(newval)));
 	N.time += 1;
 
 	transdatums[0] = IntervalPGetDatum(newsum);
@@ -1389,11 +1398,12 @@ interval_avg(PG_FUNCTION_ARGS)
 					  &transdatums, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "interval_avg: expected 2-element interval array");
+
 	/*
 	 * XXX memcpy, instead of just extracting a pointer, to work around
 	 * buggy array code: it won't ensure proper alignment of Interval
-	 * objects on machines where double requires 8-byte alignment.
-	 * That should be fixed, but in the meantime...
+	 * objects on machines where double requires 8-byte alignment. That
+	 * should be fixed, but in the meantime...
 	 */
 	memcpy(&sumX, DatumGetIntervalP(transdatums[0]), sizeof(Interval));
 	memcpy(&N, DatumGetIntervalP(transdatums[1]), sizeof(Interval));
@@ -1439,9 +1449,7 @@ timestamp_age(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_IS_INVALID(dt1)
 		|| TIMESTAMP_IS_INVALID(dt2))
-	{
 		TIMESTAMP_INVALID(result->time);
-	}
 	else if ((timestamp2tm(dt1, NULL, tm1, &fsec1, NULL) == 0)
 			 && (timestamp2tm(dt2, NULL, tm2, &fsec2, NULL) == 0))
 	{
@@ -1597,7 +1605,7 @@ interval_text(PG_FUNCTION_ARGS)
 	int			len;
 
 	str = DatumGetCString(DirectFunctionCall1(interval_out,
-											  IntervalPGetDatum(interval)));
+										   IntervalPGetDatum(interval)));
 
 	len = (strlen(str) + VARHDRSZ);
 
@@ -1662,7 +1670,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "Interval units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1672,9 +1680,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	type = DecodeUnits(0, lowunits, &val);
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-	{
 		PG_RETURN_NULL();
-	}
 	else
 	{
 		dt = (TIMESTAMP_IS_RELATIVE(timestamp) ? SetTimestamp(timestamp) : timestamp);
@@ -1729,13 +1735,13 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 				tm->tm_year += 1900;
 				tm->tm_mon += 1;
 
-# if defined(HAVE_TM_ZONE)
+#if defined(HAVE_TM_ZONE)
 				tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
-# elif defined(HAVE_INT_TIMEZONE)
+#elif defined(HAVE_INT_TIMEZONE)
 				tz = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-# endif
+#endif
 
-#else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
+#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 				tz = CTimeZone;
 #endif
 			}
@@ -1789,7 +1795,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "Interval units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1872,7 +1878,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 	{
 		elog(ERROR, "Interval units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 		PG_RETURN_NULL();
 	}
 
@@ -1885,75 +1891,80 @@ interval_trunc(PG_FUNCTION_ARGS)
  * karel 2000/08/07
  */
 void
-isoweek2date( int woy, int *year, int *mon, int *mday)
+isoweek2date(int woy, int *year, int *mon, int *mday)
 {
-	int     day0, day4, dayn;
-	
+	int			day0,
+				day4,
+				dayn;
+
 	if (!*year)
 		elog(ERROR, "isoweek2date(): can't convert without year information");
 
 	/* fourth day of current year */
 	day4 = date2j(*year, 1, 4);
-	
+
 	/* day0 == offset to first day of week (Monday) */
 	day0 = (j2day(day4 - 1) % 7);
 
 	dayn = ((woy - 1) * 7) + (day4 - day0);
-	
+
 	j2date(dayn, year, mon, mday);
 }
 
 /* date2isoweek()
- * 
+ *
  *	Returns ISO week number of year.
  */
 int
-date2isoweek(int year, int mon, int mday) 
+date2isoweek(int year, int mon, int mday)
 {
-	float8	result;
-	int	day0, day4, dayn;
-	
-	/* current day */	
+	float8		result;
+	int			day0,
+				day4,
+				dayn;
+
+	/* current day */
 	dayn = date2j(year, mon, mday);
-	
+
 	/* fourth day of current year */
 	day4 = date2j(year, 1, 4);
-	
+
 	/* day0 == offset to first day of week (Monday) */
 	day0 = (j2day(day4 - 1) % 7);
-	
-	/* We need the first week containing a Thursday,
-	 * otherwise this day falls into the previous year
-	 * for purposes of counting weeks
+
+	/*
+	 * We need the first week containing a Thursday, otherwise this day
+	 * falls into the previous year for purposes of counting weeks
 	 */
 	if (dayn < (day4 - day0))
 	{
 		day4 = date2j((year - 1), 1, 4);
-	
+
 		/* day0 == offset to first day of week (Monday) */
 		day0 = (j2day(day4 - 1) % 7);
 	}
-	
+
 	result = (((dayn - (day4 - day0)) / 7) + 1);
-	
-	/* Sometimes the last few days in a year will fall into
-	 * the first week of the next year, so check for this.
+
+	/*
+	 * Sometimes the last few days in a year will fall into the first week
+	 * of the next year, so check for this.
 	 */
 	if (result >= 53)
 	{
 		day4 = date2j((year + 1), 1, 4);
-	
+
 		/* day0 == offset to first day of week (Monday) */
 		day0 = (j2day(day4 - 1) % 7);
-		
+
 		if (dayn >= (day4 - day0))
 			result = (((dayn - (day4 - day0)) / 7) + 1);
 	}
 
 	return (int) result;
-} 
- 
- 
+}
+
+
 /* timestamp_part()
  * Extract specified field from timestamp.
  */
@@ -1980,7 +1991,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "Interval units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1992,9 +2003,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 		type = DecodeSpecial(0, lowunits, &val);
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-	{
 		PG_RETURN_NULL();
-	}
 	else
 	{
 		dt = (TIMESTAMP_IS_RELATIVE(timestamp) ? SetTimestamp(timestamp) : timestamp);
@@ -2096,7 +2105,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 						elog(ERROR, "Unable to encode timestamp");
 
 					result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
-							   - date2j(tm->tm_year, 1, 1) + 1);
+							  - date2j(tm->tm_year, 1, 1) + 1);
 					break;
 
 				default:
@@ -2138,7 +2147,7 @@ interval_part(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "Interval units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2213,7 +2222,7 @@ interval_part(PG_FUNCTION_ARGS)
 				default:
 					elog(ERROR, "Interval units '%s' not yet supported",
 						 DatumGetCString(DirectFunctionCall1(textout,
-													PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 					result = 0;
 			}
 
@@ -2237,7 +2246,7 @@ interval_part(PG_FUNCTION_ARGS)
 	{
 		elog(ERROR, "Interval units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(units))));
+											   PointerGetDatum(units))));
 		result = 0;
 	}
 
@@ -2283,9 +2292,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	type = DecodeSpecial(0, lowzone, &val);
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-	{
 		PG_RETURN_NULL();
-	}
 	else if ((type == TZ) || (type == DTZ))
 	{
 		tm->tm_isdst = ((type == DTZ) ? 1 : 0);
@@ -2320,7 +2327,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TEXT_P(result);
-} /* timestamp_zone() */
+}	/* timestamp_zone() */
 
 /* timestamp_izone()
  * Encode timestamp type with specified time interval as time zone.
@@ -2364,4 +2371,4 @@ timestamp_izone(PG_FUNCTION_ARGS)
 	memmove(VARDATA(result), buf, (len - VARHDRSZ));
 
 	PG_RETURN_TEXT_P(result);
-} /* timestamp_izone() */
+}	/* timestamp_izone() */
