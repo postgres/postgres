@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.52 2002/06/20 16:57:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.53 2002/07/18 04:47:17 momjian Exp $
 -->
 
  <chapter id="xfunc">
@@ -1461,12 +1461,348 @@ AS '<replaceable>PGROOT</replaceable>/tutorial/funcs'
 LANGUAGE C;
 </programlisting>
     </para>
+   </sect2>
+
+   <sect2>
+    <title>Table Function API</title>
 
     <para>
-     While there are ways to construct new rows or modify  
-     existing rows from within a C function, these
-     are far too complex to discuss in this manual.
-     Consult the backend source code for examples.
+     The Table Function API assists in the creation of a user defined
+     C Language table functions (<xref linkend="xfunc-tablefunctions">).
+     Table functions are functions that produce a set of rows, made up of
+     either base (scalar) data types, or composite (multi-column) data types.
+     The API is split into two main components: support for returning
+     composite data types, and support for returning multiple rows
+     (set returning functions or SRFs).
+    </para>
+
+    <para>
+     The Table Function API relies on macros and functions to suppress most
+     of the complexity of building composite data types and return multiple
+     results.  In addition to the version-1 conventions discussed elsewhere,
+     a table function always requires the following:
+<programlisting>
+#include "funcapi.h"
+</programlisting>
+    </para>
+
+    <para>
+     The Table Function API support for returning composite data types
+     (or tuples) starts with the AttInMetadata struct. This struct holds
+     arrays of individual attribute information needed to create a tuple from
+     raw C strings. It also requires a copy of the TupleDesc. The information
+     carried here is derived from the TupleDesc, but it is stored here to
+     avoid redundant cpu cycles on each call to a Table Function.
+<programlisting>
+typedef struct
+{
+	/* full TupleDesc */
+	TupleDesc	   tupdesc;
+
+	/* pointer to array of attribute "type"in finfo */
+	FmgrInfo	   *attinfuncs;
+
+	/* pointer to array of attribute type typelem */
+	Oid			   *attelems;
+
+	/* pointer to array of attribute type typtypmod */
+	int4		   *atttypmods;
+
+}	AttInMetadata;
+</programlisting>
+     To assist you in populating this struct, several functions and a macro
+     are available. Use
+<programlisting>
+TupleDesc RelationNameGetTupleDesc(char *relname)
+</programlisting>
+     to get a TupleDesc based on the function's return type relation, or
+<programlisting>
+TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases)
+</programlisting>
+     to get a TupleDesc based on the function's type oid. This can be used to
+     get a TupleDesc for a base (scalar), or composite (relation) type. Then
+<programlisting>
+AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)
+</programlisting>
+     will return a pointer to an AttInMetadata struct, initialized based on
+     the function's TupleDesc. AttInMetadata is be used in conjunction with
+     C strings to produce a properly formed tuple. The metadata is stored here
+     for use across calls to avoid redundant work.
+    </para>
+
+    <para>
+     In order to return a tuple you must create a tuple slot based on the
+     TupleDesc. You can use
+<programlisting>
+TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc)
+</programlisting>
+     to initialize this tuple slot, or obtain one through other (user provided)
+     means. The tuple slot is needed to create a Datum for return by the
+     function.
+    </para>
+
+    <para>
+     If desired,
+<programlisting>
+HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
+</programlisting>
+     can be used to build a HeapTuple given user data in C string form.
+     "values" is an array of C strings, one for each attribute of the return
+     tuple. The C strings should be in the form expected by the "in" function
+     of the attribute data type. For more information on this requirement,
+     see the individual data type "in" functions in the source code
+     (e.g. textin() for data type TEXT). In order to return a NULL value for
+     one of the attributes, the corresponding pointer in the "values" array
+     should be set to NULL.
+    </para>
+
+    <para>
+     Finally, in order to return a tuple using the SRF portion of the API
+     (described below), the tuple must be converted into a Datum. Use
+<programlisting>
+TupleGetDatum(TupleTableSlot *slot, HeapTuple tuple)
+</programlisting>
+     to get a Datum given a tuple and a slot.
+    </para>
+
+    <para>
+     The Table Function API support for set returning functions starts with
+     the FuncCallContext struct. This struct holds function context for
+     SRFs using fcinfo->flinfo->fn_extra to hold a pointer to it across calls.
+<programlisting>
+typedef struct
+{
+	/*
+	 * Number of times we've been called before.
+	 * 
+	 * call_cntr is initialized to 0 for you by SRF_FIRSTCALL_INIT(), and
+	 * incremented for you every time SRF_RETURN_NEXT() is called.
+	 */
+	uint32			call_cntr;
+
+	/*
+	 * OPTIONAL maximum number of calls
+	 *
+	 * max_calls is here for convenience ONLY and setting it is OPTIONAL.
+	 * If not set, you must provide alternative means to know when the
+	 * function is done.
+	 */
+	uint32			max_calls;
+
+	/*
+	 * OPTIONAL pointer to result slot
+	 * 
+	 * slot is for use when returning tuples (i.e. composite data types)
+	 * and is not needed when returning base (i.e. scalar) data types.
+	 */
+	TupleTableSlot *slot;
+
+	/*
+	 * OPTIONAL pointer to misc user provided context info
+	 * 
+	 * user_fctx is for use as a pointer to your own struct to retain
+	 * arbitrary context information between calls for your function.
+	 */
+	void		   *user_fctx;
+
+	/*
+	 * OPTIONAL pointer to struct containing arrays of attribute type input
+	 * metainfo
+	 * 
+	 * attinmeta is for use when returning tuples (i.e. composite data types)
+	 * and is not needed when returning base (i.e. scalar) data types. It
+	 * is ONLY needed if you intend to use BuildTupleFromCStrings() to create
+	 * the return tuple.
+	 */
+	AttInMetadata	   *attinmeta;
+
+	/*
+	 * memory context used to initialize structure
+	 *
+	 * fmctx is set by SRF_FIRSTCALL_INIT() for you, and used by
+	 * SRF_RETURN_DONE() for cleanup. It is primarily for internal use
+	 * by the API.
+	 */
+	MemoryContext	fmctx;
+
+}	FuncCallContext;
+</programlisting>
+     To assist you in populating this struct, several functions and macros
+     are available. Use
+<programlisting>
+SRF_IS_FIRSTCALL()
+</programlisting>
+     to determine if your function has been called for the first or a
+     subsequent time. On the first call (only) use
+<programlisting>
+SRF_FIRSTCALL_INIT()
+</programlisting>
+     to initialize the FuncCallContext struct. On every function call,
+     including the first, use
+<programlisting>
+SRF_PERCALL_SETUP()
+</programlisting>
+     to properly set up for using the FuncCallContext struct and clearing
+     any previously returned data left over from the previous pass.
+    </para>
+
+    <para>
+     If your function has data to return, use
+<programlisting>
+SRF_RETURN_NEXT(funcctx, result)
+</programlisting>
+     to send it and prepare for the next call. Finally, when your function
+     is finished returning data, use
+<programlisting>
+SRF_RETURN_DONE(funcctx)
+</programlisting>
+     to clean up and end the SRF.
+    </para>
+
+    <para>
+     A complete pseudo-code example looks like the following:
+<programlisting>
+Datum
+my_Set_Returning_Function(PG_FUNCTION_ARGS)
+{
+	FuncCallContext	   *funcctx;
+	Datum				result;
+
+	[user defined declarations]
+
+	if(SRF_IS_FIRSTCALL())
+	{
+		[user defined code]
+		funcctx = SRF_FIRSTCALL_INIT();
+		[if returning composite]
+			[obtain slot]
+			funcctx->slot = slot;
+		[endif returning composite]
+		[user defined code]
+	}
+	[user defined code]
+	funcctx = SRF_PERCALL_SETUP();
+	[user defined code]
+
+	if (funcctx->call_cntr < funcctx->max_calls)
+	{
+		[user defined code]
+		[obtain result Datum]
+		SRF_RETURN_NEXT(funcctx, result);
+	}
+	else
+	{
+		SRF_RETURN_DONE(funcctx);
+	}
+}
+</programlisting>
+    </para>
+
+    <para>
+     An example of a simple composite returning SRF looks like:
+<programlisting>
+PG_FUNCTION_INFO_V1(testpassbyval);
+Datum
+testpassbyval(PG_FUNCTION_ARGS)
+{
+	FuncCallContext	   *funcctx;
+	int					call_cntr;
+	int					max_calls;
+	TupleDesc			tupdesc;
+	TupleTableSlot	   *slot;
+	AttInMetadata	   *attinmeta;
+
+	/* stuff done only on the first call of the function */
+ 	if(SRF_IS_FIRSTCALL())
+ 	{
+		/* create a function context for cross-call persistence */
+ 		funcctx = SRF_FIRSTCALL_INIT();
+
+		/* total number of tuples to be returned */
+		funcctx->max_calls = PG_GETARG_UINT32(0);
+
+		/*
+		 * Build a tuple description for a __testpassbyval tuple
+		 */
+		tupdesc = RelationNameGetTupleDesc("__testpassbyval");
+
+		/* allocate a slot for a tuple with this tupdesc */
+		slot = TupleDescGetSlot(tupdesc);
+
+		/* assign slot to function context */
+		funcctx->slot = slot;
+
+		/*
+		 * Generate attribute metadata needed later to produce tuples from raw
+		 * C strings
+		 */
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		funcctx->attinmeta = attinmeta;
+    }
+
+	/* stuff done on every call of the function */
+ 	funcctx = SRF_PERCALL_SETUP();
+
+	call_cntr = funcctx->call_cntr;
+	max_calls = funcctx->max_calls;
+	slot = funcctx->slot;
+	attinmeta = funcctx->attinmeta;
+ 
+ 	if (call_cntr < max_calls)	/* do when there is more left to send */
+ 	{
+		char	   **values;
+		HeapTuple	tuple;
+		Datum		result;
+
+		/*
+		 * Prepare a values array for storage in our slot.
+		 * This should be an array of C strings which will
+		 * be processed later by the appropriate "in" functions.
+		 */
+		values = (char **) palloc(3 * sizeof(char *));
+		values[0] = (char *) palloc(16 * sizeof(char));
+		values[1] = (char *) palloc(16 * sizeof(char));
+		values[2] = (char *) palloc(16 * sizeof(char));
+
+		snprintf(values[0], 16, "%d", 1 * PG_GETARG_INT32(1));
+		snprintf(values[1], 16, "%d", 2 * PG_GETARG_INT32(1));
+		snprintf(values[2], 16, "%d", 3 * PG_GETARG_INT32(1));
+
+		/* build a tuple */
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+
+		/* make the tuple into a datum */
+		result = TupleGetDatum(slot, tuple);
+
+		/* Clean up */
+		pfree(values[0]);
+		pfree(values[1]);
+		pfree(values[2]);
+		pfree(values);
+
+ 		SRF_RETURN_NEXT(funcctx, result);
+ 	}
+ 	else	/* do when there is no more left */
+ 	{
+ 		SRF_RETURN_DONE(funcctx);
+ 	}
+}
+</programlisting>
+     with supporting SQL code of
+<programlisting>
+CREATE VIEW __testpassbyval AS
+  SELECT
+    0::INT4 AS f1,
+    0::INT4 AS f2,
+    0::INT4 AS f3;
+
+CREATE OR REPLACE FUNCTION testpassbyval(int4, int4) RETURNS setof __testpassbyval
+  AS 'MODULE_PATHNAME','testpassbyval' LANGUAGE 'c' IMMUTABLE STRICT;
+</programlisting>
+    </para>
+
+    <para>
+     See contrib/tablefunc for more examples of Table Functions.
     </para>
    </sect2>
 
