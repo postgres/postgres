@@ -1,0 +1,141 @@
+2001-05-18 12:00  tgl
+
+	* src/include/catalog/pg_aggregate.h (1.29.2.1): Correct
+	recently-broken avg(interval) definition.  We can't force an initdb
+	to fix this in 7.1 installations, but it seems better to be
+	shipping a correct entry than a wrong one.
+
+2001-05-17 09:29  momjian
+
+	* HISTORY (1.106.2.2), doc/src/sgml/release.sgml (1.90.2.2): Add
+	HISTORY items for 7.1.2.
+
+2001-05-16 20:48  tgl
+
+	* src/backend/access/heap/heapam.c (1.113.2.1): Back-patch fix for
+	race condition in heap_update (make sure we hold the buffer lock
+	while checking page free space).
+
+2001-05-15 13:05  momjian
+
+	* src/backend/access/gist/: gist.c (1.72.2.1), gistget.c
+	(1.25.2.1): Update crypto with patch for computation.
+
+2001-05-15 00:45  momjian
+
+	* contrib/pgcrypto/encode.c (1.4.2.2): Well, the correct code -
+	that corresponds to current encode - is below.	I even got the
+	linefeed stuff wrong.
+	
+	-- marko
+
+2001-05-14 20:34  tgl
+
+	* src/: backend/executor/execMain.c (1.139.2.1),
+	backend/executor/nodeAppend.c (1.40.2.2), include/nodes/execnodes.h
+	(1.57.2.1): EvalPlanQual was thoroughly broken for concurrent
+	update/delete on inheritance trees (mostly my fault).  Repair. 
+	Also fix long-standing bug in ExecReplace: after recomputing a
+	concurrently updated tuple, we must recheck constraints.  Make
+	EvalPlanQual leak memory with somewhat less enthusiasm than before,
+	although plugging leaks fully will require more changes than I care
+	to risk in a dot-release.
+
+2001-05-14 16:25  tgl
+
+	* src/backend/optimizer/plan/initsplan.c (1.59.2.1): Current
+	implementation of FOR UPDATE has no hope of working correctly for
+	relations on the nullable side of an OUTER JOIN.  For now I think
+	we'd better refuse such queries.
+
+2001-05-14 11:11  momjian
+
+	* doc/src/sgml/installation.sgml (1.45.2.1): Fix 'set path' for
+	csh, path -> $path.
+	
+	Pierce Tyler
+
+2001-05-13 07:36  petere
+
+	* src/bin/pg_config/pg_config.sh (1.2.2.1): Cope with configure
+	arguments that contain spaces.
+
+2001-05-12 23:27  momjian
+
+	* contrib/pgcrypto/encode.c (1.4.2.1): update.
+
+2001-05-12 19:36  tgl
+
+	* src/bin/pg_dump/pg_dump.c (1.205.2.2): proisstrict must be
+	assumed FALSE when dumping from a 7.0 database, not TRUE. 
+	Otherwise we break pl call handler functions.  fmgr_oldstyle will
+	take care of making sure the semantics are the same for C
+	functions.  Clean up some slightly grotty coding in 7.0 pg_class
+	reading, also.
+
+2001-05-12 16:45  momjian
+
+	* src/interfaces/jdbc/org/postgresql/jdbc1/Statement.java
+	(1.7.2.1): Backpatch jdbc1 compile failure fix.
+
+2001-05-11 21:09  pjw
+
+	* src/bin/pg_dump/: pg_backup_archiver.c (1.25.2.1),
+	pg_backup_archiver.h (1.32.2.1), pg_dump.c (1.205.2.1):  - Don't
+	dump COMMENTs in data-only dumps
+	 - Fix view dumping SQL for V7.0
+	 - Fix bug when getting view oid with long view names
+	 - Treat SEQUENCE SET TOC entries as data entries rather than
+	schema
+	   entries.
+	 - Make allowance for data entries that did not have a data dumper
+	   routine (eg. SEQUENCE SET)
+
+2001-05-11 18:26  petere
+
+	* doc/FAQ_MSWIN (1.9.2.1): no more Andy Piper tools
+
+2001-05-10 21:35  momjian
+
+	* configure (1.127.2.1): Can't run autoconf on rel, so just
+	manually update.
+
+2001-05-10 21:34  momjian
+
+	* HISTORY (1.106.2.1), README (1.23.2.1), configure.in (1.120.2.1),
+	register.txt (1.31.2.1), doc/FAQ (1.104.2.1), doc/bug.template
+	(1.18.2.1), doc/src/sgml/release.sgml (1.90.2.1),
+	doc/src/sgml/version.sgml (1.3.2.1), src/include/config.h.win32
+	(1.6.2.1), src/interfaces/libpq/libpq.rc (1.7.2.1): Stamp for
+	7.1.2.	Ready when you are...
+
+2001-05-09 12:28  petere
+
+	* src/backend/utils/adt/ri_triggers.c (1.23.2.1): Fix remaining RI
+	permission problems (cascaded update/delete, restrict, set
+	null/default).
+
+2001-05-08 15:48  tgl
+
+	* src/backend/executor/: nodeAppend.c (1.40.2.1),
+	nodeSubqueryscan.c (1.6.2.1): Append and SubqueryScan nodes were
+	not passing changed-parameter signals down to their children,
+	leading to misbehavior if they had any children that paid attention
+	to chgParam (most plan node types don't).  Append's bug has been
+	there a long time, but nobody had noticed because it used to be
+	difficult to create a query where an Append would be used below the
+	top level of a plan; so there were never any parameters getting
+	passed down.  SubqueryScan is new in 7.1 ... and I'd modeled its
+	behavior on Append :-(
+
+2001-05-07 21:02  tgl
+
+	* src/pl/plpgsql/src/pl_exec.c (1.41.2.1): Un-break exec_move_row()
+	for case that a NULL tuple and tupdesc are passed, which occurs
+	when no rows are retrieved by a SELECT.  Mea maxima culpa ... I
+	should have caught this.
+
+2001-05-06 17:44  petere
+
+	* src/bin/psql/command.c (1.49.2.1): Fix collateral damage from
+	previous (rev 1.49) patch.
