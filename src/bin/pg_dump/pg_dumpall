@@ -54,4 +54,3 @@ do
 	echo "${BS}connect $DATABASE $POSTGRES_USER"
 	pg_dump "$@" $DATABASE || echo "pg_dump failed on $DATABASE" 1>&2
 done
-# done
