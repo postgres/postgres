@@ -1,12 +1,12 @@
 \set ECHO none
 psql:ltree.sql:9: NOTICE:  ProcedureCreate: type ltree is not yet defined
 psql:ltree.sql:14: NOTICE:  Argument type "ltree" is only a shell
-psql:ltree.sql:281: NOTICE:  ProcedureCreate: type lquery is not yet defined
-psql:ltree.sql:286: NOTICE:  Argument type "lquery" is only a shell
-psql:ltree.sql:345: NOTICE:  ProcedureCreate: type ltxtquery is not yet defined
-psql:ltree.sql:350: NOTICE:  Argument type "ltxtquery" is only a shell
-psql:ltree.sql:412: NOTICE:  ProcedureCreate: type ltree_gist is not yet defined
-psql:ltree.sql:417: NOTICE:  Argument type "ltree_gist" is only a shell
+psql:ltree.sql:301: NOTICE:  ProcedureCreate: type lquery is not yet defined
+psql:ltree.sql:306: NOTICE:  Argument type "lquery" is only a shell
+psql:ltree.sql:365: NOTICE:  ProcedureCreate: type ltxtquery is not yet defined
+psql:ltree.sql:370: NOTICE:  Argument type "ltxtquery" is only a shell
+psql:ltree.sql:432: NOTICE:  ProcedureCreate: type ltree_gist is not yet defined
+psql:ltree.sql:437: NOTICE:  Argument type "ltree_gist" is only a shell
 SELECT ''::ltree;
  ltree 
 -------
@@ -29,6 +29,18 @@ SELECT '1.2._3'::ltree;
  ltree  
 --------
  1.2._3
+(1 row)
+
+SELECT ltree2text('1.2.3.34.sdf');
+  ltree2text  
+--------------
+ 1.2.3.34.sdf
+(1 row)
+
+SELECT text2ltree('1.2.3.34.sdf');
+  text2ltree  
+--------------
+ 1.2.3.34.sdf
 (1 row)
 
 SELECT subltree('Top.Child1.Child2',1,2);
@@ -83,6 +95,114 @@ SELECT subpath('Top.Child1.Child2',1);
     subpath    
 ---------------
  Child1.Child2
+(1 row)
+
+SELECT index('1.2.3.4.5.6','1.2');
+ index 
+-------
+     0
+(1 row)
+
+SELECT index('a.1.2.3.4.5.6','1.2');
+ index 
+-------
+     1
+(1 row)
+
+SELECT index('a.1.2.3.4.5.6','1.2.3');
+ index 
+-------
+     1
+(1 row)
+
+SELECT index('a.1.2.3.4.5.6','1.2.3.j');
+ index 
+-------
+    -1
+(1 row)
+
+SELECT index('a.1.2.3.4.5.6','1.2.3.j.4.5.5.5.5.5.5');
+ index 
+-------
+    -1
+(1 row)
+
+SELECT index('a.1.2.3.4.5.6','1.2.3');
+ index 
+-------
+     1
+(1 row)
+
+SELECT index('a.1.2.3.4.5.6','6');
+ index 
+-------
+     6
+(1 row)
+
+SELECT index('a.1.2.3.4.5.6','6.1');
+ index 
+-------
+    -1
+(1 row)
+
+SELECT index('a.1.2.3.4.5.6','5.6');
+ index 
+-------
+     5
+(1 row)
+
+SELECT index('0.1.2.3.5.4.5.6','5.6');
+ index 
+-------
+     6
+(1 row)
+
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',3);
+ index 
+-------
+     6
+(1 row)
+
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',6);
+ index 
+-------
+     6
+(1 row)
+
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',7);
+ index 
+-------
+     9
+(1 row)
+
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-7);
+ index 
+-------
+     6
+(1 row)
+
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-4);
+ index 
+-------
+     9
+(1 row)
+
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-3);
+ index 
+-------
+     9
+(1 row)
+
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-2);
+ index 
+-------
+    -1
+(1 row)
+
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-20000);
+ index 
+-------
+     6
 (1 row)
 
 SELECT 'Top.Child1.Child2'::ltree || 'Child3'::text;

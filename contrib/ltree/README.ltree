@@ -187,6 +187,22 @@ int4 nlevel
     Note, that arguments start, end, OFFSET, LEN have meaning of level of the
     node !
    
+int4 index(ltree,ltree), int4 index(ltree,ltree,OFFSET)
+    returns number of level of the first occurence of second argument in first
+    one beginning from OFFSET. if OFFSET is negative, than search begins from |
+    OFFSET| levels from the end of the path.
+     SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',3);
+      index 
+     -------
+          6
+     SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-4);
+      index
+     -------
+          9
+   
+ltree text2ltree(text), text ltree2text(text)
+    cast functions for ltree and text.
+   
 ltree lca(ltree,ltree,...) (up to 8 arguments)
     ltree lca(ltree[])
     Returns Lowest Common Ancestor (lca)
@@ -426,6 +442,9 @@ appreciate your input. So far, below some (rather obvious) results:
 
 CHANGES
 
+Mar 28, 2003
+   Added finctions index(ltree,ltree,offset), text2ltree(text), 
+                   ltree2text(text)
 Feb 7, 2003
    Fix ~ operation bug: eg '1.1.1' ~ '*.1'
 Aug 9, 2002
