@@ -1013,5 +1013,11 @@ Fri Nov  3 11:34:43 CET 2000
 Sat Nov  4 17:42:43 CET 2000
 
 	- Added patch by Christof Petig to fix several small bugs.
+
+Thu Nov  9 14:40:18 CET 2000
+
+	- Synced gram.y and preproc.y. 
+	- Synced keyword.c.
+	- Added just another patch by Christof Petig.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

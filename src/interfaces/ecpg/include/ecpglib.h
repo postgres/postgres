@@ -1,5 +1,30 @@
-#include "postgres.h"
-#include "libpq-fe.h"
+/*
+ * this is a small part of c.h since we don't want to leak all postgres
+ * definitions into ecpg programs
+ */
+
+#ifndef __BEOS__
+#ifndef __cplusplus
+#ifndef bool
+#define bool char
+#endif   /* ndef bool */
+#endif   /* not C++ */
+
+#ifndef true
+#define true    ((bool) 1)
+#endif
+#ifndef false    
+#define bool char
+#endif   /* ndef bool */
+#endif /* __BEOS__ */
+
+#ifndef TRUE
+#define TRUE    1
+#endif   /* TRUE */
+
+#ifndef FALSE
+#define FALSE   0
+#endif   /* FALSE */
 
 #ifdef __cplusplus
 extern		"C"

@@ -153,7 +153,7 @@ make_name(void)
 }
 
 /* special embedded SQL token */
-%token		SQL_ALLOCATE SQL_AT SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK 
+%token		SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK 
 %token		SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE SQL_COUNT
 %token		SQL_DATA SQL_DATETIME_INTERVAL_CODE SQL_DATETIME_INTERVAL_PRECISION
 %token		SQL_DEALLOCATE SQL_DESCRIPTOR SQL_DISCONNECT SQL_ENUM 
@@ -220,9 +220,9 @@ make_name(void)
  * when some sort of pg_privileges relation is introduced.
  * - Todd A. Brandys 1998-01-01?
  */
-%token  ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE,
-		BACKWARD, BEFORE, BINARY, BIT, CACHE, CLUSTER, COMMENT,
-		COPY, CREATEDB, CREATEUSER, CYCLE, DATABASE,
+%token  ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYSE, ANALYZE,
+		BACKWARD, BEFORE, BINARY, BIT, CACHE, CHECKPOINT, CLUSTER,
+		COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE, DATABASE,
 		DELIMITERS, DO, EACH, ENCODING, EXCLUSIVE, EXPLAIN,
 		EXTEND, FORCE, FORWARD, FUNCTION, HANDLER, INCREMENT,
 		INDEX, INHERITS, INSTEAD, ISNULL, LANCOMPILER, LIMIT,
@@ -272,9 +272,11 @@ make_name(void)
 %left		'*' '/' '%'
 %left		'^'
 /* Unary Operators */
+%left           AT
 %right		UMINUS
 %left		'.'
 %left		'[' ']'
+%left		'(' ')'
 %left		TYPECAST
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
@@ -296,7 +298,7 @@ make_name(void)
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate datetime opt_timezone opt_interval table_ref
 %type  <str>	row_expr row_descriptor row_list ConstDatetime opt_chain
-%type  <str>	SelectStmt select_subclause result OptTemp ConstraintAttributeSpec
+%type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr 
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
 %type  <str>	group_clause having_clause from_clause opt_distinct
@@ -316,7 +318,7 @@ make_name(void)
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
 %type  <str>    RuleStmt opt_column opt_name oper_argtypes sysid_clause
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
-%type  <str>    RemoveAggrStmt ExtendStmt
+%type  <str>    RemoveAggrStmt ExtendStmt opt_procedural select_no_parens
 %type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>    VariableResetStmt AlterTableStmt DropUserStmt from_list
@@ -326,7 +328,7 @@ make_name(void)
 %type  <str>    OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
 %type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt PLangTrusted
-%type  <str>    CreatePLangStmt TriggerFuncArgs TriggerFuncArg
+%type  <str>    CreatePLangStmt TriggerFuncArgs TriggerFuncArg simple_select
 %type  <str>    ViewStmt LoadStmt CreatedbStmt createdb_opt_encoding
 %type  <str>	createdb_opt_location opt_encoding OptInherit Geometric
 %type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt Bit bit
@@ -343,6 +345,7 @@ make_name(void)
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
 %type  <str>	opt_force key_update CreateSchemaStmt PosIntStringConst
 %type  <str>    SessionList SessionClause SetSessionStmt IntConst PosIntConst
+%type  <str>    select_limit opt_for_update_clause CheckPointStmt
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using
@@ -392,7 +395,7 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 	| blockend			{ fputs($1, yyout); free($1); }
 	;
 
-opt_at:	SQL_AT connection_target	{ connection = $2; };
+opt_at:	AT connection_target	{ connection = $2; };
 
 stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 		| AlterTableStmt	{ output_statement($1, 0, NULL, connection); }
@@ -426,6 +429,7 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 		| ListenStmt		{ output_statement($1, 0, NULL, connection); }
 		| UnlistenStmt		{ output_statement($1, 0, NULL, connection); }
 		| LockStmt		{ output_statement($1, 0, NULL, connection); }
+		| NotifyStmt		{ output_statement($1, 0, NULL, connection); }
 		| ProcedureStmt		{ output_statement($1, 0, NULL, connection); }
 		| ReindexStmt		{ output_statement($1, 0, NULL, connection); }
 		| RemoveAggrStmt	{ output_statement($1, 0, NULL, connection); }
@@ -455,6 +459,7 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 		| VariableShowStmt	{ output_statement($1, 0, NULL, connection); }
 		| VariableResetStmt	{ output_statement($1, 0, NULL, connection); }
 		| ConstraintsSetStmt	{ output_statement($1, 0, NULL, connection); }
+		| CheckPointStmt	{ output_statement($1, 0, NULL, connection); }
 		| ECPGAllocateDescr	{	fprintf(yyout,"ECPGallocate_desc(__LINE__, \"%s\");",$1);
 								whenever_action(0);
 								free($1);
@@ -936,6 +941,13 @@ constraints_set_mode:  DEFERRED
                                }
                ;
 
+/*
+ * Checkpoint statement
+ */
+CheckPointStmt: CHECKPOINT     { $$= make_str("checkpoint"); }
+                        ;  
+
+
 /*****************************************************************************
  *
  *		QUERY :
@@ -1356,21 +1368,26 @@ OptSeqElem:  CACHE IntConst
  *
  *****************************************************************************/
 
-CreatePLangStmt:  CREATE PLangTrusted PROCEDURAL LANGUAGE StringConst 
+CreatePLangStmt:  CREATE PLangTrusted opt_procedural LANGUAGE StringConst 
 			HANDLER def_name LANCOMPILER StringConst
 			{
-				$$ = cat_str(8, make_str("create"), $2, make_str("precedural language"), $5, make_str("handler"), $7, make_str("langcompiler"), $9);
+				$$ = cat_str(9, make_str("create"), $2, $3, make_str("language"), $5, make_str("handler"), $7, make_str("langcompiler"), $9);
 			}
 		;
 
 PLangTrusted:		TRUSTED { $$ = make_str("trusted"); }
 			|	{ $$ = EMPTY; }
+			;
 
-DropPLangStmt:  DROP PROCEDURAL LANGUAGE StringConst
+DropPLangStmt:  DROP opt_procedural LANGUAGE StringConst
 			{
-				$$ = cat2_str(make_str("drop procedural language"), $4);
+				$$ = cat_str(4, make_str("drop"), $2, make_str("language"), $4);
 			}
 		;
+
+opt_procedural: PROCEDURAL             { $$ = make_str("prcedural"); }
+                       | /*EMPTY*/     { $$ = EMPTY; }
+               ;
 
 /*****************************************************************************
  *
@@ -2086,7 +2103,6 @@ RuleStmt:  CREATE RULE name AS
 		;
 
 RuleActionList:  NOTHING                               { $$ = make_str("nothing"); }
-               | SelectStmt                            { $$ = $1; }
                | RuleActionStmt                        { $$ = $1; }
                | '[' RuleActionMulti ']'               { $$ = cat_str(3, make_str("["), $2, make_str("]")); }
                | '(' RuleActionMulti ')'               { $$ = cat_str(3, make_str("("), $2, make_str(")")); }
@@ -2099,7 +2115,17 @@ RuleActionMulti:  RuleActionMulti ';' RuleActionStmtOrEmpty
 				{ $$ = cat2_str($1, make_str(";")); }
 		;
 
-RuleActionStmt:        InsertStmt
+/*
+ * Allowing RuleActionStmt to be a SelectStmt creates an ambiguity:
+ * is the RuleActionList "((SELECT foo))" a standalone RuleActionStmt,
+ * or a one-entry RuleActionMulti list?  We don't really care, but yacc
+ * wants to know.  We use operator precedence to resolve the ambiguity:
+ * giving this rule a higher precedence than ')' will force a reduce
+ * rather than shift decision, causing the one-entry-list interpretation
+ * to be chosen.
+ */    
+RuleActionStmt:   SelectStmt %prec TYPECAST      
+		| InsertStmt
                 | UpdateStmt
                 | DeleteStmt
 		| NotifyStmt
@@ -2305,7 +2331,8 @@ opt_verbose:  VERBOSE					{ $$ = make_str("verbose"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_analyze:  ANALYZE					{ $$ = make_str("analyse"); }
+opt_analyze:  ANALYZE					{ $$ = make_str("analyze"); }
+		| ANALYSE				{ $$ = make_str("analyse"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
@@ -2349,7 +2376,6 @@ OptimizableStmt:  SelectStmt
 		| CursorStmt
 		| UpdateStmt
 		| InsertStmt
-		| NotifyStmt
 		| DeleteStmt
 		;
 
@@ -2513,39 +2539,47 @@ opt_cursor:  BINARY             	{ $$ = make_str("binary"); }
  *
  *****************************************************************************/
 
-SelectStmt:      select_clause sort_clause for_update_clause opt_select_limit
+SelectStmt: select_no_parens                    %prec TYPECAST
+                        {
+                                $$ = $1;
+                        }
+                | '(' SelectStmt ')'
+                        {
+                                $$ = cat_str(3, make_str("("), $2, make_str(")"));
+                        }
+                ;       
+
+select_no_parens:      simple_select
+			{
+				$$ = $1;
+			}
+		| select_clause sort_clause opt_for_update_clause opt_select_limit
 			{
 				$$ = cat_str(4, $1, $2, $3, $4);
 			}
+		| select_clause for_update_clause opt_select_limit
+			{
+				$$ = cat_str(3, $1, $2, $3);
+			}
+		| select_clause select_limit  
+			{
+				$$ = cat2_str($1, $2);
+			}
 
-/* This rule parses Select statements including UNION INTERSECT and EXCEPT.
- * '(' and ')' can be used to specify the order of the operations 
- * (UNION EXCEPT INTERSECT). Without the use of '(' and ')' we want the
- * operations to be ordered per the precedence specs at the head of this file.
- *
- * Since parentheses around SELECTs also appear in the expression grammar,
- * there is a parse ambiguity if parentheses are allowed at the top level of a
- * select_clause: are the parens part of the expression or part of the select?
- * We separate select_clause into two levels to resolve this: select_clause
- * can have top-level parentheses, select_subclause cannot.  
- * Note that sort clauses cannot be included at this level --- a sort clau
- * can only appear at the end of the complete Select, and it will be handl
- * by the topmost SelectStmt rule.  Likewise FOR UPDATE and LIMIT.
- */
- 
-select_clause: '(' select_subclause ')'
+select_clause: simple_select
                         {
-                                $$ = cat_str(3, make_str("("), $2, make_str(")")); 
+				FoundInto = 0; 
+                                $$ = $1;
+
                         }
-                | select_subclause
+                | '(' SelectStmt ')' 
                         {
-								FoundInto = 0;
-                                $$ = $1; 
+				$$ = cat_str(3, make_str("("), $2, make_str(")")); 
                         }
 		;
 
-select_subclause:     SELECT opt_distinct target_list
-                         result from_clause where_clause
+simple_select:     SELECT opt_distinct target_list
+                         into_clause from_clause where_clause
                          group_clause having_clause
 				{
 					$$ = cat_str(8, make_str("select"), $2, $3, $4, $5, $6, $7, $8);
@@ -2564,7 +2598,7 @@ select_subclause:     SELECT opt_distinct target_list
                 		} 
 		;
 
-result:  INTO OptTempTableName 		{
+into_clause:  INTO OptTempTableName	{
 						FoundInto = 1;
 						$$= cat2_str(make_str("into"), $2);
 					}
@@ -2632,7 +2666,6 @@ opt_distinct:  DISTINCT					{ $$ = make_str("distinct"); }
 sort_clause:  ORDER BY sortby_list	{ 
 						$$ = cat2_str(make_str("order by"), $3);
 					}
-		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 sortby_list:  sortby					{ $$ = $1; }
@@ -2651,7 +2684,7 @@ OptUseOp:  USING all_Op				{ $$ = cat2_str(make_str("using"), $2); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
-opt_select_limit:      LIMIT select_limit_value ',' select_offset_value
+select_limit:      LIMIT select_limit_value ',' select_offset_value
                        { $$ = cat_str(4, make_str("limit"), $2, make_str(","), $4); }
                | LIMIT select_limit_value OFFSET select_offset_value
                        { $$ = cat_str(4, make_str("limit"), $2, make_str("offset"), $4); }
@@ -2661,16 +2694,26 @@ opt_select_limit:      LIMIT select_limit_value ',' select_offset_value
                        { $$ = cat_str(4, make_str("offset"), $2, make_str("limit"), $4); }
                | OFFSET select_offset_value
                        { $$ = cat2_str(make_str("offset"), $2); }
-               | /* EMPTY */
-                       { $$ = EMPTY; }
                ;
 
-select_limit_value:	PosIntConst	{ $$ = $1; }
+opt_select_limit:	select_limit	{ $$ = $1; }  
+			| /*EMPTY*/     { $$ = EMPTY; } 
+			;
+
+select_limit_value:	PosIntConst	{ 
+						if (atoi($1) < 0)
+							mmerror(ET_ERROR, "LIMIT must not be negative");
+						$$ = $1;
+					}
 	          	| ALL	{ $$ = make_str("all"); }
 			| PARAM { $$ = make_name(); }
                ;
 
-select_offset_value:  	PosIntConst	{ $$ = $1; }
+select_offset_value:  	PosIntConst	{
+						if (atoi($1) < 0)
+							mmerror(ET_ERROR, "OFFSET must not be negative");
+						$$ = $1;
+					}
 			| PARAM { $$ = make_name(); }
                ;
 
@@ -2712,11 +2755,12 @@ for_update_clause:  FOR UPDATE update_list
 		{
 			$$ = make_str("for read only");
 		}
-		| /* EMPTY */
-                {
-                        $$ = EMPTY;
-                }
+		;
+
+opt_for_update_clause: for_update_clause                { $$ = $1; }
+		| /* EMPTY */				{ $$ = EMPTY; }
                 ;
+
 update_list:  OF va_list
               {
 			$$ = cat2_str(make_str("of"), $2);
@@ -2762,7 +2806,7 @@ table_ref:  relation_expr
 		{
 			$$= cat2_str($1, $2);
 		}
-	| '(' select_subclause ')' alias_clause 
+	| '(' SelectStmt ')' alias_clause 
 		{
 			$$=cat_str(4, make_str("("), $2, make_str(")"), $4);
 		}
@@ -3181,19 +3225,19 @@ opt_interval:  datetime					{ $$ = $1; }
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
  */
-row_expr: '(' row_descriptor ')' IN '(' select_subclause ')'
+row_expr: '(' row_descriptor ')' IN '(' SelectStmt ')'
 				{
 					$$ = cat_str(5, make_str("("), $2, make_str(") in ("), $6, make_str(")"));
 				}
-		| '(' row_descriptor ')' NOT IN '(' select_subclause ')'
+		| '(' row_descriptor ')' NOT IN '(' SelectStmt ')'
 				{
 					$$ = cat_str(5, make_str("("), $2, make_str(") not in ("), $7, make_str(")"));
 				}
-		| '(' row_descriptor ')' all_Op sub_type  '(' select_subclause ')'
+		| '(' row_descriptor ')' all_Op sub_type  '(' SelectStmt ')'
 				{
 					$$ = cat_str(8, make_str("("), $2, make_str(")"), $4, $5, make_str("("), $7, make_str(")"));
 				}
-		| '(' row_descriptor ')' all_Op '(' select_subclause ')'
+		| '(' row_descriptor ')' all_Op '(' SelectStmt ')'
 				{
 					$$ = cat_str(7, make_str("("), $2, make_str(")"), $4, make_str("("), $6, make_str(")"));
 				}
@@ -3262,6 +3306,8 @@ a_expr:  c_expr
 				{	$$ = $1; }
 		| a_expr TYPECAST Typename
 				{	$$ = cat_str(3, $1, make_str("::"), $3); }
+		| a_expr AT TIME ZONE c_expr 
+				{	$$ = cat_str(3, $1, make_str("at time zone"), $5); }
 		/*
                  * These operators must be called out explicitly in order to make use
                  * of yacc/bison's automatic operator-precedence handling.  All other
@@ -3366,7 +3412,7 @@ a_expr:  c_expr
 				{
 					$$ = cat_str(4, $1, make_str(" not in ("), $5, make_str(")")); 
 				}
-		| a_expr all_Op sub_type '(' select_subclause ')'
+		| a_expr all_Op sub_type '(' SelectStmt ')'
 				{
 					$$ = cat_str(6, $1, $2, $3, make_str("("), $5, make_str(")")); 
 				}
@@ -3503,9 +3549,9 @@ c_expr:  attr
 				{	$$ = cat_str(3, make_str("trim(trailing"), $4, make_str(")")); }
 		| TRIM '(' trim_list ')'
 				{	$$ = cat_str(3, make_str("trim("), $3, make_str(")")); }
-		| '(' select_subclause ')'
+		| '(' SelectStmt ')'
 				{	$$ = cat_str(3, make_str("("), $2, make_str(")")); }
-		| EXISTS '(' select_subclause ')'
+		| EXISTS '(' SelectStmt ')'
 				{	$$ = cat_str(3, make_str("exists("), $3, make_str(")")); }
 		;
 /* 
@@ -3582,7 +3628,7 @@ trim_list:  a_expr FROM expr_list
 				{ $$ = $1; }
 		;
 
-in_expr:  select_subclause
+in_expr:  SelectStmt
 				{
 					$$ = $1;
 				}
@@ -4859,8 +4905,7 @@ action : SQL_CONTINUE
 /* some other stuff for ecpg */
 
 /* additional ColId entries */
-ECPGKeywords: 	  SQL_AT			{ $$ = make_str("at"); }
-		| SQL_BREAK			{ $$ = make_str("break"); }
+ECPGKeywords: 	  SQL_BREAK			{ $$ = make_str("break"); }
 		| SQL_CALL			{ $$ = make_str("call"); }
 		| SQL_CONNECT			{ $$ = make_str("connect"); }
 		| SQL_CONTINUE			{ $$ = make_str("continue"); }
@@ -4938,12 +4983,14 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| AFTER				{ $$ = make_str("after"); }
 	| AGGREGATE			{ $$ = make_str("aggregate"); }
 	| ALTER				{ $$ = make_str("alter"); }
+	| AT				{ $$ = make_str("at"); }
 	| BACKWARD			{ $$ = make_str("backward"); }
 	| BEFORE			{ $$ = make_str("before"); }
 	| BEGIN_TRANS			{ $$ = make_str("begin"); }
 	| CACHE				{ $$ = make_str("cache"); }
 	| CASCADE			{ $$ = make_str("cascade"); }
 	| CHAIN				{ $$ = make_str("chain"); }
+	| CHECKPOINT			{ $$ = make_str("checkpoint"); }
 	| CLOSE				{ $$ = make_str("close"); }
 	| COMMENT			{ $$ = make_str("comment"); } 
 	| COMMIT			{ $$ = make_str("commit"); }
@@ -5068,10 +5115,11 @@ ECPGColId: ident			{ $$ = $1; }
 ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| ABORT_TRANS   { $$ = make_str("abort"); }
 		| ALL		{ $$ = make_str("all"); }
+		| ANALYSE       { $$ = make_str("analyse"); }
 		| ANALYZE       { $$ = make_str("analyze"); }
 		| ANY		{ $$ = make_str("any"); }
 		| ASC		{ $$ = make_str("asc"); }
-    	| BETWEEN       { $$ = make_str("between"); }
+	    	| BETWEEN       { $$ = make_str("between"); }
 		| BINARY        { $$ = make_str("binary"); }
 		| BIT	        { $$ = make_str("bit"); }
 		| BOTH		{ $$ = make_str("both"); }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.31 2000/11/07 08:46:27 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.32 2000/11/09 14:06:57 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,11 +38,13 @@ static ScanKeyword ScanKeywords[] = {
 	{"aggregate", AGGREGATE},
 	{"all", ALL},
 	{"alter", ALTER},
+	{"analyse", ANALYSE},
 	{"analyze", ANALYZE},
 	{"and", AND},
 	{"any", ANY},
 	{"as", AS},
 	{"asc", ASC},
+	{"at", AT},
 	{"backward", BACKWARD},
 	{"before", BEFORE},
 	{"begin", BEGIN_TRANS},
@@ -60,6 +62,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"character", CHARACTER},
 	{"characteristics", CHARACTERISTICS},     
 	{"check", CHECK},
+	{"checkpoint", CHECKPOINT},
 	{"close", CLOSE},
 	{"cluster", CLUSTER},
 	{"coalesce", COALESCE},

@@ -20,7 +20,6 @@
 static ScanKeyword ScanKeywords[] = {
 	/* name					value			*/
 	{"allocate", SQL_ALLOCATE},
-	{"at", SQL_AT},
 	{"autocommit", SQL_AUTOCOMMIT},
 	{"bool", SQL_BOOL},
 	{"break", SQL_BREAK},
