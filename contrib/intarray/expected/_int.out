@@ -5,223 +5,223 @@
 \set ECHO none
 --test query_int
 select '1'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  1
 (1 row)
 
 select ' 1'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  1
 (1 row)
 
 select '1 '::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  1
 (1 row)
 
 select ' 1 '::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  1
 (1 row)
 
 select ' ! 1 '::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  !1
 (1 row)
 
 select '!1'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  !1
 (1 row)
 
 select '1|2'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  1 | 2
 (1 row)
 
 select '1|!2'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  1 | !2
 (1 row)
 
 select '!1|2'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  !1 | 2
 (1 row)
 
 select '!1|!2'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  !1 | !2
 (1 row)
 
 select '!(!1|!2)'::query_int;
-   ?column?   
+  query_int   
 --------------
  !( !1 | !2 )
 (1 row)
 
 select '!(!1|2)'::query_int;
-  ?column?   
+  query_int  
 -------------
  !( !1 | 2 )
 (1 row)
 
 select '!(1|!2)'::query_int;
-  ?column?   
+  query_int  
 -------------
  !( 1 | !2 )
 (1 row)
 
 select '!(1|2)'::query_int;
-  ?column?  
+ query_int  
 ------------
  !( 1 | 2 )
 (1 row)
 
 select '1&2'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  1 & 2
 (1 row)
 
 select '!1&2'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  !1 & 2
 (1 row)
 
 select '1&!2'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  1 & !2
 (1 row)
 
 select '!1&!2'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  !1 & !2
 (1 row)
 
 select '(1&2)'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  1 & 2
 (1 row)
 
 select '1&(2)'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  1 & 2
 (1 row)
 
 select '!(1)&2'::query_int;
- ?column? 
-----------
+ query_int 
+-----------
  !1 & 2
 (1 row)
 
 select '!(1&2)'::query_int;
-  ?column?  
+ query_int  
 ------------
  !( 1 & 2 )
 (1 row)
 
 select '1|2&3'::query_int;
- ?column?  
+ query_int 
 -----------
  1 | 2 & 3
 (1 row)
 
 select '1|(2&3)'::query_int;
- ?column?  
+ query_int 
 -----------
  1 | 2 & 3
 (1 row)
 
 select '(1|2)&3'::query_int;
-   ?column?    
+   query_int   
 ---------------
  ( 1 | 2 ) & 3
 (1 row)
 
 select '1|2&!3'::query_int;
-  ?column?  
+ query_int  
 ------------
  1 | 2 & !3
 (1 row)
 
 select '1|!2&3'::query_int;
-  ?column?  
+ query_int  
 ------------
  1 | !2 & 3
 (1 row)
 
 select '!1|2&3'::query_int;
-  ?column?  
+ query_int  
 ------------
  !1 | 2 & 3
 (1 row)
 
 select '!1|(2&3)'::query_int;
-  ?column?  
+ query_int  
 ------------
  !1 | 2 & 3
 (1 row)
 
 select '!(1|2)&3'::query_int;
-    ?column?    
+   query_int    
 ----------------
  !( 1 | 2 ) & 3
 (1 row)
 
 select '(!1|2)&3'::query_int;
-    ?column?    
+   query_int    
 ----------------
  ( !1 | 2 ) & 3
 (1 row)
 
 select '1|(2|(4|(5|6)))'::query_int;
-           ?column?            
+           query_int           
 -------------------------------
  1 | ( 2 | ( 4 | ( 5 | 6 ) ) )
 (1 row)
 
 select '1|2|4|5|6'::query_int;
-           ?column?            
+           query_int           
 -------------------------------
  ( ( ( 1 | 2 ) | 4 ) | 5 ) | 6
 (1 row)
 
 select '1&(2&(4&(5&6)))'::query_int;
-     ?column?      
+     query_int     
 -------------------
  1 & 2 & 4 & 5 & 6
 (1 row)
 
 select '1&2&4&5&6'::query_int;
-     ?column?      
+     query_int     
 -------------------
  1 & 2 & 4 & 5 & 6
 (1 row)
 
 select '1&(2&(4&(5|6)))'::query_int;
-       ?column?        
+       query_int       
 -----------------------
  1 & 2 & 4 & ( 5 | 6 )
 (1 row)
 
 select '1&(2&(4&(5|!6)))'::query_int;
-        ?column?        
+       query_int        
 ------------------------
  1 & 2 & 4 & ( 5 | !6 )
 (1 row)
