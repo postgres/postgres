@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.29 2004/08/08 04:34:43 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.30 2004/11/15 04:35:57 neilc Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -104,17 +104,17 @@
   </para>
 
   <para>
-   <firstterm>Checkpoints</firstterm><indexterm><primary>checkpoint</></> are points in the sequence of
-   transactions at which it is guaranteed that the data files have
-   been updated with all information logged before the checkpoint.  At
-   checkpoint time, all dirty data pages are flushed to disk and a
-   special checkpoint record is written to the log file. As result, in
-   the event of a crash, the recoverer knows from what point in the
-   log (known as the redo record) it should start the REDO operation,
-   since any changes made to data files before that record are already
-   on disk. After a checkpoint has been made, any log segments written
-   before the redo record are no longer needed and can be recycled or
-   removed. (When <acronym>WAL</acronym> archiving is being done, the
+   <firstterm>Checkpoints</firstterm><indexterm><primary>checkpoint</></>
+   are points in the sequence of transactions at which it is guaranteed
+   that the data files have been updated with all information logged before
+   the checkpoint.  At checkpoint time, all dirty data pages are flushed to
+   disk and a special checkpoint record is written to the log file. As a
+   result, in the event of a crash, the crash recovery procedure knows from
+   what point in the log (known as the redo record) it should start the
+   REDO operation, since any changes made to data files before that point
+   are already on disk. After a checkpoint has been made, any log segments
+   written before the redo record are no longer needed and can be recycled
+   or removed. (When <acronym>WAL</acronym> archiving is being done, the
    log segments must be archived before being recycled or removed.)
   </para>
 
