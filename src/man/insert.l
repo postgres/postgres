@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/insert.l,v 1.11 1998/06/24 13:21:27 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/insert.l,v 1.12 1998/10/14 02:54:36 momjian Exp $
 .TH INSERT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 insert - insert tuples to a relation
@@ -60,8 +60,7 @@ or
 .IR uIndex
 is an integer constant and
 .IR array_str
-is an array constant (see
-.IR pgintro(1)).
+is an array constant.
 .PP
 
 If the user does not specify any array bounds (as in the third form)
