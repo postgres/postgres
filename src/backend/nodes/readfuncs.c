@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.28 1998/02/26 04:32:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.29 1998/04/27 02:58:07 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1978,188 +1978,187 @@ parsePlanString(void)
 
 	token = lsptok(NULL, &length);
 
-	if (!strncmp(token, "PLAN", 4))
+	if (!strncmp(token, "PLAN", length))
 	{
 		return_value = _readPlan();
 	}
-	else if (!strncmp(token, "RESULT", 6))
+	else if (!strncmp(token, "RESULT", length))
 	{
 		return_value = _readResult();
 	}
-	else if (!strncmp(token, "APPEND", 6))
+	else if (!strncmp(token, "APPEND", length))
 	{
 		return_value = _readAppend();
 	}
-	else if (!strncmp(token, "JOIN", 4))
+	else if (!strncmp(token, "JOIN", length))
 	{
 		return_value = _readJoin();
 	}
-	else if (!strncmp(token, "NESTLOOP", 8))
+	else if (!strncmp(token, "NESTLOOP", length))
 	{
 		return_value = _readNestLoop();
 	}
-	else if (!strncmp(token, "MERGEJOIN", 9))
+	else if (!strncmp(token, "MERGEJOIN", length))
 	{
 		return_value = _readMergeJoin();
 	}
-	else if (!strncmp(token, "HASHJOIN", 8))
+	else if (!strncmp(token, "HASHJOIN", length))
 	{
 		return_value = _readHashJoin();
 	}
-	else if (!strncmp(token, "SCAN", 4))
+	else if (!strncmp(token, "SCAN", length))
 	{
 		return_value = _readScan();
 	}
-	else if (!strncmp(token, "SEQSCAN", 7))
+	else if (!strncmp(token, "SEQSCAN", length))
 	{
 		return_value = _readSeqScan();
 	}
-	else if (!strncmp(token, "INDEXSCAN", 9))
+	else if (!strncmp(token, "INDEXSCAN", length))
 	{
 		return_value = _readIndexScan();
 	}
-	else if (!strncmp(token, "TEMP", 4))
+	else if (!strncmp(token, "TEMP", length))
 	{
 		return_value = _readTemp();
 	}
-	else if (!strncmp(token, "SORT", 4))
+	else if (!strncmp(token, "SORT", length))
 	{
 		return_value = _readSort();
 	}
-	else if (!strncmp(token, "AGGREG", 6))
+	else if (!strncmp(token, "AGGREG", length))
 	{
 		return_value = _readAggreg();
 	}
-	else if (!strncmp(token, "SUBLINK", 6))
+	else if (!strncmp(token, "SUBLINK", length))
 	{
 		return_value = _readSubLink();
 	}
-	else if (!strncmp(token, "AGG", 3))
+	else if (!strncmp(token, "AGG", length))
 	{
 		return_value = _readAgg();
 	}
-	else if (!strncmp(token, "UNIQUE", 4))
+	else if (!strncmp(token, "UNIQUE", length))
 	{
 		return_value = _readUnique();
 	}
-	else if (!strncmp(token, "HASH", 4))
+	else if (!strncmp(token, "HASH", length))
 	{
 		return_value = _readHash();
 	}
-	else if (!strncmp(token, "RESDOM", 6))
+	else if (!strncmp(token, "RESDOM", length))
 	{
 		return_value = _readResdom();
 	}
-	else if (!strncmp(token, "EXPR", 4))
+	else if (!strncmp(token, "EXPR", length))
 	{
 		return_value = _readExpr();
 	}
-	else if (!strncmp(token, "ARRAYREF", 7))
+	else if (!strncmp(token, "ARRAYREF", length))
 	{
-		/* make sure this strncmp is done before that of ARRAY */
 		return_value = _readArrayRef();
 	}
-	else if (!strncmp(token, "ARRAY", 5))
+	else if (!strncmp(token, "ARRAY", length))
 	{
 		return_value = _readArray();
 	}
-	else if (!strncmp(token, "VAR", 3))
+	else if (!strncmp(token, "VAR", length))
 	{
 		return_value = _readVar();
 	}
-	else if (!strncmp(token, "CONST", 5))
+	else if (!strncmp(token, "CONST", length))
 	{
 		return_value = _readConst();
 	}
-	else if (!strncmp(token, "FUNC", 4))
+	else if (!strncmp(token, "FUNC", length))
 	{
 		return_value = _readFunc();
 	}
-	else if (!strncmp(token, "OPER", 4))
+	else if (!strncmp(token, "OPER", length))
 	{
 		return_value = _readOper();
 	}
-	else if (!strncmp(token, "PARAM", 5))
+	else if (!strncmp(token, "PARAM", length))
 	{
 		return_value = _readParam();
 	}
-	else if (!strncmp(token, "ESTATE", 6))
+	else if (!strncmp(token, "ESTATE", length))
 	{
 		return_value = _readEState();
 	}
-	else if (!strncmp(token, "REL", 3))
+	else if (!strncmp(token, "REL", length))
 	{
 		return_value = _readRel();
 	}
-	else if (!strncmp(token, "TLE", 3))
+	else if (!strncmp(token, "TLE", length))
 	{
 		return_value = _readTargetEntry();
 	}
-	else if (!strncmp(token, "RTE", 3))
+	else if (!strncmp(token, "RTE", length))
 	{
 		return_value = _readRangeTblEntry();
 	}
-	else if (!strncmp(token, "PATH", 4))
+	else if (!strncmp(token, "PATH", length))
 	{
 		return_value = _readPath();
 	}
-	else if (!strncmp(token, "INDEXPATH", 9))
+	else if (!strncmp(token, "INDEXPATH", length))
 	{
 		return_value = _readIndexPath();
 	}
-	else if (!strncmp(token, "JOINPATH", 8))
+	else if (!strncmp(token, "JOINPATH", length))
 	{
 		return_value = _readJoinPath();
 	}
-	else if (!strncmp(token, "MERGEPATH", 9))
+	else if (!strncmp(token, "MERGEPATH", length))
 	{
 		return_value = _readMergePath();
 	}
-	else if (!strncmp(token, "HASHPATH", 8))
+	else if (!strncmp(token, "HASHPATH", length))
 	{
 		return_value = _readHashPath();
 	}
-	else if (!strncmp(token, "ORDERKEY", 8))
+	else if (!strncmp(token, "ORDERKEY", length))
 	{
 		return_value = _readOrderKey();
 	}
-	else if (!strncmp(token, "JOINKEY", 7))
+	else if (!strncmp(token, "JOINKEY", length))
 	{
 		return_value = _readJoinKey();
 	}
-	else if (!strncmp(token, "MERGEORDER", 10))
+	else if (!strncmp(token, "MERGEORDER", length))
 	{
 		return_value = _readMergeOrder();
 	}
-	else if (!strncmp(token, "CINFO", 5))
+	else if (!strncmp(token, "CINFO", length))
 	{
 		return_value = _readCInfo();
 	}
-	else if (!strncmp(token, "JOINMETHOD", 10))
+	else if (!strncmp(token, "JOINMETHOD", length))
 	{
 		return_value = _readJoinMethod();
 	}
-	else if (!strncmp(token, "JINFO", 5))
+	else if (!strncmp(token, "JINFO", length))
 	{
 		return_value = _readJInfo();
 	}
-	else if (!strncmp(token, "HINFO", 5))
+	else if (!strncmp(token, "HINFO", length))
 	{
 		return_value = _readHInfo();
 	}
-	else if (!strncmp(token, "ITER", 4))
+	else if (!strncmp(token, "ITER", length))
 	{
 		return_value = _readIter();
 	}
-	else if (!strncmp(token, "QUERY", 5))
+	else if (!strncmp(token, "QUERY", length))
 	{
 		return_value = _readQuery();
 	}
-	else if (!strncmp(token, "SORTCLAUSE", 10))
+	else if (!strncmp(token, "SORTCLAUSE", length))
 	{
 		return_value = _readSortClause();
 	}
-	else if (!strncmp(token, "GROUPCLAUSE", 10))
+	else if (!strncmp(token, "GROUPCLAUSE", length))
 	{
 		return_value = _readGroupClause();
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.33 1998/02/26 04:32:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.34 1998/04/27 02:58:05 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -70,22 +70,22 @@ _outIntList(StringInfo str, List *list)
 static void
 _outCreateStmt(StringInfo str, CreateStmt *node)
 {
-	appendStringInfo(str, "CREATE");
+	appendStringInfo(str, " CREATE ");
 
 	appendStringInfo(str, " :relname ");
 	appendStringInfo(str, node->relname);
-	appendStringInfo(str, " :columns");
+	appendStringInfo(str, " :columns ");
 	_outNode(str, node->tableElts);
-	appendStringInfo(str, " :inhRelnames");
+	appendStringInfo(str, " :inhRelnames ");
 	_outNode(str, node->inhRelnames);
-	appendStringInfo(str, " :constraints");
+	appendStringInfo(str, " :constraints ");
 	_outNode(str, node->constraints);
 }
 
 static void
 _outIndexStmt(StringInfo str, IndexStmt *node)
 {
-	appendStringInfo(str, "INDEX");
+	appendStringInfo(str, " INDEX ");
 
 	appendStringInfo(str, " :idxname ");
 	appendStringInfo(str, node->idxname);
@@ -110,7 +110,7 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 static void
 _outColumnDef(StringInfo str, ColumnDef *node)
 {
-	appendStringInfo(str, "COLUMNDEF");
+	appendStringInfo(str, " COLUMNDEF ");
 
 	appendStringInfo(str, " :colname ");
 	appendStringInfo(str, node->colname);
@@ -120,7 +120,7 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	appendStringInfo(str, (node->is_not_null ? "true" : "false"));
 	appendStringInfo(str, " :defval ");
 	appendStringInfo(str, node->defval);
-	appendStringInfo(str, " :constraints");
+	appendStringInfo(str, " :constraints ");
 	_outNode(str, node->constraints);
 }
 
@@ -129,7 +129,7 @@ _outTypeName(StringInfo str, TypeName *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "TYPENAME");
+	appendStringInfo(str, " TYPENAME ");
 
 	appendStringInfo(str, " :name ");
 	appendStringInfo(str, node->name);
@@ -147,7 +147,7 @@ _outTypeName(StringInfo str, TypeName *node)
 static void
 _outIndexElem(StringInfo str, IndexElem *node)
 {
-	appendStringInfo(str, "INDEXELEM");
+	appendStringInfo(str, " INDEXELEM ");
 
 	appendStringInfo(str, " :name ");
 	appendStringInfo(str, node->name);
@@ -155,7 +155,7 @@ _outIndexElem(StringInfo str, IndexElem *node)
 	_outNode(str, node->args);
 	appendStringInfo(str, " :class ");
 	appendStringInfo(str, node->class);
-	appendStringInfo(str, " :tname");
+	appendStringInfo(str, " :tname ");
 	_outNode(str, node->tname);
 }
 
@@ -164,7 +164,7 @@ _outQuery(StringInfo str, Query *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "QUERY");
+	appendStringInfo(str, " QUERY ");
 
 	appendStringInfo(str, " :command ");
 	sprintf(buf, " %d ", node->commandType);
@@ -241,7 +241,7 @@ _outSortClause(StringInfo str, SortClause *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "SORTCLAUSE");
+	appendStringInfo(str, " SORTCLAUSE ");
 
 	appendStringInfo(str, " :resdom ");
 	_outNode(str, node->resdom);
@@ -255,7 +255,7 @@ _outGroupClause(StringInfo str, GroupClause *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "GROUPCLAUSE");
+	appendStringInfo(str, " GROUPCLAUSE ");
 
 	appendStringInfo(str, " :entry ");
 	_outNode(str, node->entry);
@@ -304,14 +304,14 @@ _outPlanInfo(StringInfo str, Plan *node)
 static void
 _outPlan(StringInfo str, Plan *node)
 {
-	appendStringInfo(str, "PLAN");
+	appendStringInfo(str, " PLAN ");
 	_outPlanInfo(str, (Plan *) node);
 }
 
 static void
 _outResult(StringInfo str, Result *node)
 {
-	appendStringInfo(str, "RESULT");
+	appendStringInfo(str, " RESULT ");
 	_outPlanInfo(str, (Plan *) node);
 
 	appendStringInfo(str, " :resconstantqual ");
@@ -327,7 +327,7 @@ _outAppend(StringInfo str, Append *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "APPEND");
+	appendStringInfo(str, " APPEND ");
 	_outPlanInfo(str, (Plan *) node);
 
 	appendStringInfo(str, " :unionplans ");
@@ -350,7 +350,7 @@ _outAppend(StringInfo str, Append *node)
 static void
 _outJoin(StringInfo str, Join *node)
 {
-	appendStringInfo(str, "JOIN");
+	appendStringInfo(str, " JOIN ");
 	_outPlanInfo(str, (Plan *) node);
 
 }
@@ -361,7 +361,7 @@ _outJoin(StringInfo str, Join *node)
 static void
 _outNestLoop(StringInfo str, NestLoop *node)
 {
-	appendStringInfo(str, "NESTLOOP");
+	appendStringInfo(str, " NESTLOOP ");
 	_outPlanInfo(str, (Plan *) node);
 }
 
@@ -373,7 +373,7 @@ _outMergeJoin(StringInfo str, MergeJoin *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "MERGEJOIN");
+	appendStringInfo(str, " MERGEJOIN ");
 	_outPlanInfo(str, (Plan *) node);
 
 	appendStringInfo(str, " :mergeclauses ");
@@ -397,7 +397,7 @@ _outHashJoin(StringInfo str, HashJoin *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "HASHJOIN");
+	appendStringInfo(str, " HASHJOIN ");
 	_outPlanInfo(str, (Plan *) node);
 
 	appendStringInfo(str, " :hashclauses ");
@@ -420,7 +420,7 @@ _outSubPlan(StringInfo str, SubPlan *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "SUBPLAN");
+	appendStringInfo(str, " SUBPLAN ");
 	appendStringInfo(str, " :plan ");
 	_outNode(str, node->plan);
 	sprintf(buf, " :planid %u ", node->plan_id);
@@ -443,7 +443,7 @@ _outScan(StringInfo str, Scan *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "SCAN");
+	appendStringInfo(str, " SCAN ");
 	_outPlanInfo(str, (Plan *) node);
 
 	sprintf(buf, " :scanrelid %d ", node->scanrelid);
@@ -459,7 +459,7 @@ _outSeqScan(StringInfo str, SeqScan *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "SEQSCAN");
+	appendStringInfo(str, " SEQSCAN ");
 	_outPlanInfo(str, (Plan *) node);
 
 	sprintf(buf, " :scanrelid %d ", node->scanrelid);
@@ -476,7 +476,7 @@ _outIndexScan(StringInfo str, IndexScan *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "INDEXSCAN");
+	appendStringInfo(str, " INDEXSCAN ");
 	_outPlanInfo(str, (Plan *) node);
 
 	sprintf(buf, " :scanrelid %d ", node->scan.scanrelid);
@@ -498,7 +498,7 @@ _outTemp(StringInfo str, Temp *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "TEMP");
+	appendStringInfo(str, " TEMP ");
 	_outPlanInfo(str, (Plan *) node);
 
 	sprintf(buf, " :tempid %u ", node->tempid);
@@ -516,7 +516,7 @@ _outSort(StringInfo str, Sort *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "SORT");
+	appendStringInfo(str, " SORT ");
 	_outPlanInfo(str, (Plan *) node);
 
 	sprintf(buf, " :tempid %u ", node->tempid);
@@ -530,7 +530,7 @@ static void
 _outAgg(StringInfo str, Agg *node)
 {
 
-	appendStringInfo(str, "AGG");
+	appendStringInfo(str, " AGG ");
 	_outPlanInfo(str, (Plan *) node);
 
 	appendStringInfo(str, " :aggs ");
@@ -542,7 +542,7 @@ _outGroup(StringInfo str, Group *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "GRP");
+	appendStringInfo(str, " GRP ");
 	_outPlanInfo(str, (Plan *) node);
 
 	/* the actual Group fields */
@@ -561,7 +561,7 @@ _outUnique(StringInfo str, Unique *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "UNIQUE");
+	appendStringInfo(str, " UNIQUE ");
 	_outPlanInfo(str, (Plan *) node);
 
 	sprintf(buf, " :tempid %u ", node->tempid);
@@ -580,7 +580,7 @@ _outHash(StringInfo str, Hash *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "HASH");
+	appendStringInfo(str, " HASH ");
 	_outPlanInfo(str, (Plan *) node);
 
 	appendStringInfo(str, " :hashkey ");
@@ -599,7 +599,7 @@ _outTee(StringInfo str, Tee *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "TEE");
+	appendStringInfo(str, " TEE ");
 	_outPlanInfo(str, (Plan *) node);
 
 	sprintf(buf, " :leftParent %X ", (int) (node->leftParent));
@@ -628,7 +628,7 @@ _outResdom(StringInfo str, Resdom *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "RESDOM");
+	appendStringInfo(str, " RESDOM ");
 	sprintf(buf, " :resno %d ", node->resno);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :restype %u ", node->restype);
@@ -652,7 +652,7 @@ _outFjoin(StringInfo str, Fjoin *node)
 	char		buf[500];
 	int			i;
 
-	appendStringInfo(str, "FJOIN");
+	appendStringInfo(str, " FJOIN ");
 	appendStringInfo(str, " :initialized ");
 	appendStringInfo(str, node->fj_initialized ? "true" : "false");
 	sprintf(buf, " :nNodes %d ", node->fj_nNodes);
@@ -680,7 +680,7 @@ _outExpr(StringInfo str, Expr *node)
 	char		buf[500];
 	char	   *opstr = NULL;
 
-	appendStringInfo(str, "EXPR");
+	appendStringInfo(str, " EXPR ");
 
 	sprintf(buf, " :typeOid %u ", node->typeOid);
 	appendStringInfo(str, buf);
@@ -721,7 +721,7 @@ _outVar(StringInfo str, Var *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "VAR");
+	appendStringInfo(str, " VAR ");
 	sprintf(buf, " :varno %d ", node->varno);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :varattno %d ", node->varattno);
@@ -746,7 +746,7 @@ _outConst(StringInfo str, Const *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "CONST");
+	appendStringInfo(str, " CONST ");
 	sprintf(buf, " :consttype %u ", node->consttype);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :constlen %d ", node->constlen);
@@ -774,7 +774,7 @@ _outAggreg(StringInfo str, Aggreg *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "AGGREG");
+	appendStringInfo(str, " AGGREG ");
 	appendStringInfo(str, " :aggname ");
 	appendStringInfo(str, (char *) node->aggname);
 	sprintf(buf, " :basetype %u ", node->basetype);
@@ -797,7 +797,7 @@ _outSubLink(StringInfo str, SubLink *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "SUBLINK");
+	appendStringInfo(str, " SUBLINK ");
 	sprintf(buf, " :subLinkType %d ", node->subLinkType);
 	appendStringInfo(str, buf);
 	appendStringInfo(str, " :useor ");
@@ -819,7 +819,7 @@ _outArray(StringInfo str, Array *node)
 	char		buf[500];
 	int			i;
 
-	appendStringInfo(str, "ARRAY");
+	appendStringInfo(str, " ARRAY ");
 	sprintf(buf, " :arrayelemtype %u ", node->arrayelemtype);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :arrayelemlength %d ", node->arrayelemlength);
@@ -852,7 +852,7 @@ _outArrayRef(StringInfo str, ArrayRef *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "ARRAYREF");
+	appendStringInfo(str, " ARRAYREF ");
 	sprintf(buf, " :refelemtype %u ", node->refelemtype);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :refattrlength %d ", node->refattrlength);
@@ -883,7 +883,7 @@ _outFunc(StringInfo str, Func *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "FUNC");
+	appendStringInfo(str, " FUNC ");
 	sprintf(buf, " :funcid %u ", node->funcid);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :functype %u ", node->functype);
@@ -910,7 +910,7 @@ _outOper(StringInfo str, Oper *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "OPER");
+	appendStringInfo(str, " OPER ");
 	sprintf(buf, " :opno %u ", node->opno);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :opid %u ", node->opid);
@@ -928,7 +928,7 @@ _outParam(StringInfo str, Param *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "PARAM");
+	appendStringInfo(str, " PARAM ");
 	sprintf(buf, " :paramkind %d ", node->paramkind);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :paramid %d ", node->paramid);
@@ -954,7 +954,7 @@ _outEState(StringInfo str, EState *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "ESTATE");
+	appendStringInfo(str, " ESTATE ");
 	sprintf(buf, " :direction %d ", node->es_direction);
 	appendStringInfo(str, buf);
 
@@ -975,7 +975,7 @@ _outRel(StringInfo str, Rel *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "REL");
+	appendStringInfo(str, " REL ");
 
 	appendStringInfo(str, " :relids ");
 	_outIntList(str, node->relids);
@@ -1039,7 +1039,7 @@ _outRel(StringInfo str, Rel *node)
 static void
 _outTargetEntry(StringInfo str, TargetEntry *node)
 {
-	appendStringInfo(str, "TLE");
+	appendStringInfo(str, " TLE ");
 	appendStringInfo(str, " :resdom ");
 	_outNode(str, node->resdom);
 
@@ -1052,7 +1052,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "RTE");
+	appendStringInfo(str, " RTE ");
 
 	appendStringInfo(str, " :relname ");
 	appendStringInfo(str, node->relname);
@@ -1082,7 +1082,7 @@ _outPath(StringInfo str, Path *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "PATH");
+	appendStringInfo(str, " PATH ");
 
 	sprintf(buf, " :pathtype %d ", node->pathtype);
 	appendStringInfo(str, buf);
@@ -1103,7 +1103,7 @@ _outIndexPath(StringInfo str, IndexPath *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "INDEXPATH");
+	appendStringInfo(str, " INDEXPATH ");
 
 	sprintf(buf, " :pathtype %d ", node->path.pathtype);
 	appendStringInfo(str, buf);
@@ -1139,7 +1139,7 @@ _outJoinPath(StringInfo str, JoinPath *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "JOINPATH");
+	appendStringInfo(str, " JOINPATH ");
 
 	sprintf(buf, " :pathtype %d ", node->path.pathtype);
 	appendStringInfo(str, buf);
@@ -1188,7 +1188,7 @@ _outMergePath(StringInfo str, MergePath *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "MERGEPATH");
+	appendStringInfo(str, " MERGEPATH ");
 
 	sprintf(buf, " :pathtype %d ", node->jpath.path.pathtype);
 	appendStringInfo(str, buf);
@@ -1237,7 +1237,7 @@ _outHashPath(StringInfo str, HashPath *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "HASHPATH");
+	appendStringInfo(str, " HASHPATH ");
 
 	sprintf(buf, " :pathtype %d ", node->jpath.path.pathtype);
 	appendStringInfo(str, buf);
@@ -1286,7 +1286,7 @@ _outOrderKey(StringInfo str, OrderKey *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "ORDERKEY");
+	appendStringInfo(str, " ORDERKEY ");
 	sprintf(buf, " :attribute_number %d ", node->attribute_number);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :array_index %d ", node->array_index);
@@ -1300,7 +1300,7 @@ _outOrderKey(StringInfo str, OrderKey *node)
 static void
 _outJoinKey(StringInfo str, JoinKey *node)
 {
-	appendStringInfo(str, "JOINKEY");
+	appendStringInfo(str, " JOINKEY ");
 
 	appendStringInfo(str, " :outer ");
 	_outNode(str, node->outer);
@@ -1318,7 +1318,7 @@ _outMergeOrder(StringInfo str, MergeOrder *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "MERGEORDER");
+	appendStringInfo(str, " MERGEORDER ");
 
 	sprintf(buf, " :join_operator %d ", node->join_operator);
 	appendStringInfo(str, buf);
@@ -1341,7 +1341,7 @@ _outCInfo(StringInfo str, CInfo *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "CINFO");
+	appendStringInfo(str, " CINFO ");
 
 	appendStringInfo(str, " :clause ");
 	_outNode(str, node->clause);
@@ -1368,7 +1368,7 @@ _outCInfo(StringInfo str, CInfo *node)
 static void
 _outJoinMethod(StringInfo str, JoinMethod *node)
 {
-	appendStringInfo(str, "JOINMETHOD");
+	appendStringInfo(str, " JOINMETHOD ");
 
 	appendStringInfo(str, " :jmkeys ");
 	_outNode(str, node->jmkeys);
@@ -1387,7 +1387,7 @@ _outHInfo(StringInfo str, HInfo *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "HASHINFO");
+	appendStringInfo(str, " HASHINFO ");
 
 	appendStringInfo(str, " :hashop ");
 	sprintf(buf, " %u ", node->hashop);
@@ -1407,7 +1407,7 @@ _outHInfo(StringInfo str, HInfo *node)
 static void
 _outJInfo(StringInfo str, JInfo *node)
 {
-	appendStringInfo(str, "JINFO");
+	appendStringInfo(str, " JINFO ");
 
 	appendStringInfo(str, " :otherrels ");
 	_outIntList(str, node->otherrels);
@@ -1492,7 +1492,7 @@ _outDatum(StringInfo str, Datum value, Oid type)
 static void
 _outIter(StringInfo str, Iter *node)
 {
-	appendStringInfo(str, "ITER");
+	appendStringInfo(str, " ITER ");
 
 	appendStringInfo(str, " :iterexpr ");
 	_outNode(str, node->iterexpr);
@@ -1503,7 +1503,7 @@ _outStream(StringInfo str, Stream *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, "STREAM");
+	appendStringInfo(str, " STREAM ");
 
 	sprintf(buf, " :pathptr @ 0x%x ", (int) (node->pathptr));
 	appendStringInfo(str, buf);
