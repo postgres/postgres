@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.100 2000/11/12 00:36:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.101 2000/12/12 23:33:33 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1845,6 +1845,9 @@ _readRestrictInfo(void)
 	token = lsptok(NULL, &length);		/* get :hashjoinoperator */
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->hashjoinoperator = (Oid) atol(token);
+
+	/* eval_cost is not part of saved representation; compute on first use */
+	local_node->eval_cost = -1;
 
 	return local_node;
 }

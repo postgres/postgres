@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.83 2000/11/24 20:16:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.84 2000/12/12 23:33:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -514,6 +514,10 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	if (!equal(a->clause, b->clause))
 		return false;
+	/*
+	 * ignore eval_cost, since it may not be set yet, and should be
+	 * derivable from the clause anyway
+	 */
 	if (a->ispusheddown != b->ispusheddown)
 		return false;
 	if (!equal(a->subclauseindices, b->subclauseindices))

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.56 2000/11/12 00:36:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.57 2000/12/12 23:33:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -652,7 +652,7 @@ adjust_inherited_attrs_mutator(Node *node,
 	/*
 	 * We have to process RestrictInfo nodes specially: we do NOT want to
 	 * copy the original subclauseindices list, since the new rel may have
-	 * different indices.  The list will be rebuilt during planning anyway.
+	 * different indices.  The list will be rebuilt during later planning.
 	 */
 	if (IsA(node, RestrictInfo))
 	{
@@ -666,6 +666,7 @@ adjust_inherited_attrs_mutator(Node *node,
 			adjust_inherited_attrs_mutator((Node *) oldinfo->clause, context);
 
 		newinfo->subclauseindices = NIL;
+		newinfo->eval_cost = -1; /* reset this too */
 
 		return (Node *) newinfo;
 	}

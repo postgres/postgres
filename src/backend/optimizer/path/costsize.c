@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.64 2000/10/05 19:48:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.65 2000/12/12 23:33:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -672,8 +672,38 @@ Cost
 cost_qual_eval(List *quals)
 {
 	Cost		total = 0;
+	List	   *l;
 
-	cost_qual_eval_walker((Node *) quals, &total);
+	/* We don't charge any cost for the implicit ANDing at top level ... */
+
+	foreach(l, quals)
+	{
+		Node   *qual = (Node *) lfirst(l);
+
+		/*
+		 * RestrictInfo nodes contain an eval_cost field reserved for this
+		 * routine's use, so that it's not necessary to evaluate the qual
+		 * clause's cost more than once.  If the clause's cost hasn't been
+		 * computed yet, the field will contain -1.
+		 */
+		if (qual && IsA(qual, RestrictInfo))
+		{
+			RestrictInfo *restrictinfo = (RestrictInfo *) qual;
+
+			if (restrictinfo->eval_cost < 0)
+			{
+				restrictinfo->eval_cost = 0;
+				cost_qual_eval_walker((Node *) restrictinfo->clause,
+									  &restrictinfo->eval_cost);
+			}
+			total += restrictinfo->eval_cost;
+		}
+		else
+		{
+			/* If it's a bare expression, must always do it the hard way */
+			cost_qual_eval_walker(qual, &total);
+		}
+	}
 	return total;
 }
 
@@ -748,18 +778,6 @@ cost_qual_eval_walker(Node *node, Cost *total)
 		}
 		/* fall through to examine args of Expr node */
 	}
-
-	/*
-	 * expression_tree_walker doesn't know what to do with RestrictInfo
-	 * nodes, but we just want to recurse through them.
-	 */
-	if (IsA(node, RestrictInfo))
-	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) node;
-
-		return cost_qual_eval_walker((Node *) restrictinfo->clause, total);
-	}
-	/* Otherwise, recurse. */
 	return expression_tree_walker(node, cost_qual_eval_walker,
 								  (void *) total);
 }
