@@ -1,6 +1,5 @@
 if test "$GCC" = yes ; then
   CFLAGS=-pipe
-  CXXFLAGS=-pipe
 else # not GCC
   case $host_os in
     aix3.2.5)

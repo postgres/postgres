@@ -1,3 +1,2 @@
 CFLAGS=
 LIBS=-lunix
-CXXFLAGS=-I/usr/local/lib/gcc-lib/i386-pc-qnx4/egcs-2.91.60/include/g++

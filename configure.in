@@ -543,7 +543,28 @@ PGAC_ARG_OPTARG(with, CXX, [  --with-CXX              build C++ modules (libpq++
                 [CXX=$withval],
 [
   AC_MSG_RESULT(yes)
+
+  # If the user has specified CXXFLAGS in the environment, leave it
+  # alone, else use a default.
+
+  has_cmdline_CXXFLAGS="${CXXFLAGS+yes}"
   AC_PROG_CXX
+  if test "$has_cmdline_CXXFLAGS" != yes; then
+    if test "$GXX" = yes; then
+      CXXFLAGS=-O2
+    else
+      case $template in
+	osf)		CXXFLAGS='-O4 -Olimit 2000' ;;
+        unixware)	CXXFLAGS='-O' ;;
+	*)		CXXFLAGS= ;;
+      esac
+    fi
+  fi
+  if test "$enable_debug" = yes && test "$ac_cv_prog_cxx_g" = yes; then
+    CXXFLAGS="$CXXFLAGS -g"
+  fi
+  echo "using CXXFLAGS=$CXXFLAGS"
+
   AC_PROG_CXXCPP
   AC_SUBST(GXX)
   PGAC_CLASS_STRING

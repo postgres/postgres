@@ -14,3 +14,6 @@ CFLAGS_SL =
 
 %$(DLSUFFIX): %.o
 	@echo 'cannot make shared object $@ from $<'
+
+# Hack alert!  Fix your compiler installation...
+override CXXFLAGS +=-I/usr/local/lib/gcc-lib/i386-pc-qnx4/egcs-2.91.60/include/g++
