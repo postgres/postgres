@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.2 1999/12/06 08:35:34 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.3 1999/12/06 08:49:00 ishii Exp $
 #
 #-------------------------------------------------------------------------
 CMDNAME=`basename $0`
@@ -165,7 +165,7 @@ if [ $op = "start" -o $op = "restart" ];then
 	    eval `cat $POSTOPTSFILE` &
 	fi
     else
-	$po_path $POSTOPTS &
+	eval "$po_path $POSTOPTS "&
     fi
 
     if [ -f $PIDFILE ];then
