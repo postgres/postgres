@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.60 2000/06/15 00:52:04 momjian Exp $
+ * $Id: miscadmin.h,v 1.61 2000/06/28 03:32:56 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -105,8 +105,6 @@ extern bool enableFsync;
 extern bool allowSystemTableMods;
 extern int	SortMem;
 
-extern Oid	LastOidProcessed;	/* for query rewrite */
-
 /* a few postmaster startup options are exported here so the
    configuration file processor has access to them */
 
@@ -189,9 +187,10 @@ typedef int16 ExitStatus;
 
 /* in utils/init/postinit.c */
 
-extern bool PostgresIsInitialized;
+extern int	lockingOff;
 
 extern void InitPostgres(const char *dbname);
+extern void BaseInit(void);
 
 /* one of the ways to get out of here */
 #define ExitPostgres(status) proc_exec(status)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.133 2000/06/18 22:43:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.134 2000/06/28 03:31:22 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -189,37 +189,26 @@ heap_create(char *relname,
 	}
 
 	/* ----------------
-	 *	switch to the cache context so that we don't lose
-	 *	allocations at the end of this transaction, I guess.
-	 *	-cim 6/14/90
-	 * ----------------
-	 */
-	if (!CacheCxt)
-		CacheCxt = CreateGlobalMemory("Cache");
-
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-
-	/* ----------------
 	 *	real ugly stuff to assign the proper relid in the relation
 	 *	descriptor follows.
 	 * ----------------
 	 */
-	if (relname && !strcmp(RelationRelationName, relname))
+	if (relname && strcmp(RelationRelationName, relname) == 0)
 	{
 		relid = RelOid_pg_class;
 		nailme = true;
 	}
-	else if (relname && !strcmp(AttributeRelationName, relname))
+	else if (relname && strcmp(AttributeRelationName, relname) == 0)
 	{
 		relid = RelOid_pg_attribute;
 		nailme = true;
 	}
-	else if (relname && !strcmp(ProcedureRelationName, relname))
+	else if (relname && strcmp(ProcedureRelationName, relname) == 0)
 	{
 		relid = RelOid_pg_proc;
 		nailme = true;
 	}
-	else if (relname && !strcmp(TypeRelationName, relname))
+	else if (relname && strcmp(TypeRelationName, relname) == 0)
 	{
 		relid = RelOid_pg_type;
 		nailme = true;
@@ -233,6 +222,15 @@ heap_create(char *relname,
 		snprintf(relname, NAMEDATALEN, "pg_temp.%d.%u",
 				 (int) MyProcPid, uniqueId++);
 	}
+
+	/* ----------------
+	 *	switch to the cache context to create the relcache entry.
+	 * ----------------
+	 */
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
+
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	allocate a new relation descriptor.
@@ -287,6 +285,8 @@ heap_create(char *relname,
 
 	/* ----------------
 	 *	have the storage manager create the relation.
+	 *
+	 * XXX shouldn't we switch out of CacheMemoryContext for that?
 	 * ----------------
 	 */
 

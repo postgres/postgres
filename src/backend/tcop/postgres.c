@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.161 2000/06/22 22:31:20 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.162 2000/06/28 03:32:18 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -79,7 +79,6 @@ bool Log_connections = false;
 CommandDest whereToSendOutput = Debug;
 
 
-extern void BaseInit(void);
 extern void StartupXLOG(void);
 extern void ShutdownXLOG(void);
 
@@ -88,10 +87,8 @@ extern void HandleDeadLock(SIGNAL_ARGS);
 extern char XLogDir[];
 extern char ControlFilePath[];
 
-extern int	lockingOff;
-extern int	NBuffers;
+static bool	dontExecute = false;
 
-int			dontExecute = 0;
 static bool IsEmptyQuery = false;
 
 /* note: these declarations had better match tcopprot.h */
@@ -100,8 +97,6 @@ DLLIMPORT sigjmp_buf Warn_restart;
 bool		Warn_restart_ready = false;
 bool		InError = false;
 bool		ExitAfterAbort = false;
-
-extern int	NBuffers;
 
 static bool EchoQuery = false;	/* default don't echo */
 char		pg_pathname[MAXPGPATH];
@@ -133,7 +128,6 @@ int			XfuncMode = 0;
 static int	InteractiveBackend(StringInfo inBuf);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
-static void pg_exec_query(char *query_string);
 static void SigHupHandler(SIGNAL_ARGS);
 static void FloatExceptionHandler(SIGNAL_ARGS);
 static void quickdie(SIGNAL_ARGS);
@@ -331,19 +325,12 @@ SocketBackend(StringInfo inBuf)
 static int
 ReadCommand(StringInfo inBuf)
 {
-	MemoryContext oldcontext;
 	int			result;
 
-	/*
-	 * Make sure any expansion of inBuf happens in permanent memory
-	 * context, so that we can keep using it for future command cycles.
-	 */
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 	if (IsUnderPostmaster)
 		result = SocketBackend(inBuf);
 	else
 		result = InteractiveBackend(inBuf);
-	MemoryContextSwitchTo(oldcontext);
 	return result;
 }
 
@@ -355,10 +342,9 @@ ReadCommand(StringInfo inBuf)
  * multiple queries and/or the rewriter might expand one query to several.
  */
 List *
-pg_parse_and_rewrite(char *query_string,		/* string to execute */
-					 Oid *typev,/* argument types */
-					 int nargs, /* number of arguments */
-					 bool aclOverride)
+pg_parse_and_rewrite(char *query_string,	/* string to execute */
+					 Oid *typev,			/* parameter types */
+					 int nargs)				/* number of parameters */
 {
 	List	   *querytree_list;
 	List	   *querytree_list_item;
@@ -421,30 +407,6 @@ pg_parse_and_rewrite(char *query_string,		/* string to execute */
 	}
 
 	querytree_list = new_list;
-
-	/* ----------------
-	 *	(3) If ACL override is requested, mark queries for no ACL check.
-	 * ----------------
-	 */
-	if (aclOverride)
-	{
-		foreach(querytree_list_item, querytree_list)
-		{
-			List	   *l;
-
-			querytree = (Query *) lfirst(querytree_list_item);
-
-			if (querytree->commandType == CMD_UTILITY)
-				continue;
-
-			foreach(l, querytree->rtable)
-			{
-				RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
-
-				rte->skipAcl = TRUE;
-			}
-		}
-	}
 
 	if (Debug_print_rewritten)
 	{
@@ -516,63 +478,66 @@ pg_plan_query(Query *querytree)
 
 
 /* ----------------------------------------------------------------
- *		pg_exec_query()
+ *		pg_exec_query_dest()
  *
  *		Takes a querystring, runs the parser/utilities or
- *		parser/planner/executor over it as necessary
- *		Begin Transaction Should have been called before this
- *		and CommitTransaction After this is called
- *		This is strictly because we do not allow for nested xactions.
+ *		parser/planner/executor over it as necessary.
  *
- *		NON-OBVIOUS-RESTRICTIONS
- *		this function _MUST_ allocate a new "parsetree" each time,
- *		since it may be stored in a named portal and should not
- *		change its value.
+ * Assumptions:
+ *
+ * Caller is responsible for calling StartTransactionCommand() beforehand
+ * and CommitTransactionCommand() afterwards (if successful).
+ *
+ * The CurrentMemoryContext at entry references a context that is
+ * appropriate for execution of individual queries (typically this will be
+ * TransactionCommandContext).  Note that this routine resets that context
+ * after each individual query, so don't store anything there that
+ * must outlive the call!
+ *
+ * parse_context references a context suitable for holding the
+ * parse/rewrite trees (typically this will be QueryContext).
+ * This context must be longer-lived than the CurrentMemoryContext!
+ * In fact, if the query string might contain BEGIN/COMMIT commands,
+ * parse_context had better outlive TopTransactionContext!
+ *
+ * We could have hard-wired knowledge about QueryContext and
+ * TransactionCommandContext into this routine, but it seems better
+ * not to, in case callers from outside this module need to use some
+ * other contexts.
  *
  * ----------------------------------------------------------------
  */
 
-static void
-pg_exec_query(char *query_string)
-{
-	pg_exec_query_dest(query_string, whereToSendOutput, FALSE);
-}
-
-#ifdef NOT_USED
-void
-pg_exec_query_acl_override(char *query_string)
-{
-	pg_exec_query_dest(query_string, whereToSendOutput, TRUE);
-}
-#endif
-
 void
 pg_exec_query_dest(char *query_string,	/* string to execute */
 				   CommandDest dest,	/* where results should go */
-				   bool aclOverride)	/* to give utility commands power
-										 * of superusers */
+				   MemoryContext parse_context)	/* context for parsetrees */
 {
-	List	   *querytree_list;
-
-	/* parse and rewrite the queries */
-	querytree_list = pg_parse_and_rewrite(query_string, NULL, 0,
-										  aclOverride);
+	MemoryContext oldcontext;
+	List	   *querytree_list,
+			   *querytree_item;
 
 	/*
-	 * NOTE: we do not use "foreach" here because we want to be sure the
-	 * list pointer has been advanced before the query is executed. We
-	 * need to do that because VACUUM has a nasty little habit of doing
-	 * CommitTransactionCommand at startup, and that will release the
-	 * memory holding our parse list :-(.  This needs a better solution
-	 * --- currently, the code will crash if someone submits "vacuum;
-	 * something-else" in a single query string.  But memory allocation
-	 * needs redesigned anyway, so this will have to do for now.
+	 * Switch to appropriate context for constructing parsetrees.
 	 */
-	while (querytree_list)
-	{
-		Query	   *querytree = (Query *) lfirst(querytree_list);
+	oldcontext = MemoryContextSwitchTo(parse_context);
 
-		querytree_list = lnext(querytree_list);
+	/*
+	 * Parse and rewrite the query or queries.
+	 */
+	querytree_list = pg_parse_and_rewrite(query_string, NULL, 0);
+
+	/*
+	 * Switch back to execution context for planning and execution.
+	 */
+	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * Run through the query or queries and execute each one.
+	 */
+	foreach(querytree_item, querytree_list)
+	{
+		Query	   *querytree = (Query *) lfirst(querytree_item);
 
 		/* if we got a cancel signal in parsing or prior command, quit */
 		if (QueryCancel)
@@ -636,9 +601,17 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			if (Show_executor_stats)
 				ResetUsage();
 
-			if (DebugLvl > 1)
-				elog(DEBUG, "ProcessQuery");
-			ProcessQuery(querytree, plan, dest);
+			if (dontExecute)
+			{
+				/* don't execute it, just show the query plan */
+				print_plan(plan, querytree);
+			}
+			else
+			{
+				if (DebugLvl > 1)
+					elog(DEBUG, "ProcessQuery");
+				ProcessQuery(querytree, plan, dest);
+			}
 
 			if (Show_executor_stats)
 			{
@@ -652,8 +625,15 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 		 * between queries so that the effects of early queries are
 		 * visible to subsequent ones.
 		 */
-
 		CommandCounterIncrement();
+		/*
+		 * Also, clear the execution context to recover temporary
+		 * memory used by the query.  NOTE: if query string contains
+		 * BEGIN/COMMIT transaction commands, execution context may
+		 * now be different from what we were originally passed;
+		 * so be careful to clear current context not "oldcontext".
+		 */
+		MemoryContextResetAndDeleteChildren(CurrentMemoryContext);
 	}
 }
 
@@ -822,6 +802,17 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	extern int	DebugLvl;
 
 	/*
+	 * Fire up essential subsystems: error and memory management
+	 *
+	 * If we are running under the postmaster, this is done already.
+	 */
+	if (!IsUnderPostmaster)
+	{
+		EnableExceptionHandling(true);
+		MemoryContextInit();
+	}
+
+	/*
 	 * Set default values for command-line options.
 	 */
 	Noversion = false;
@@ -973,7 +964,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 
 			case 'i':
-				dontExecute = 1;
+				dontExecute = true;
 				break;
 
 			case 'L':
@@ -1182,17 +1173,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 *
 	 * Note that postmaster already blocked ALL signals to make us happy.
 	 */
-	if (!IsUnderPostmaster)
-	{
-		PG_INITMASK();
-		PG_SETMASK(&BlockSig);
-	}
+	pqinitmask();
 
 #ifdef HAVE_SIGPROCMASK
 	sigdelset(&BlockSig, SIGUSR1);
 #else
 	BlockSig &= ~(sigmask(SIGUSR1));
 #endif
+
+	PG_SETMASK(&BlockSig);		/* block everything except SIGUSR1 */
 
 	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
@@ -1214,8 +1203,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	pqsignal(SIGTTIN, SIG_DFL);
 	pqsignal(SIGTTOU, SIG_DFL);
 	pqsignal(SIGCONT, SIG_DFL);
-
-	PG_SETMASK(&BlockSig);		/* block everything except SIGUSR1 */
 
 	/*
 	 * Get user name (needed now in case it is the default database name)
@@ -1360,13 +1347,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	on_shmem_exit(remove_all_temp_relations, NULL);
 
-	{
-		MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-
-		parser_input = makeStringInfo();		/* initialize input buffer */
-		MemoryContextSwitchTo(oldcontext);
-	}
-
 	/*
 	 * Send this backend's cancellation info to the frontend.
 	 */
@@ -1386,7 +1366,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.161 $ $Date: 2000/06/22 22:31:20 $\n");
+		puts("$Revision: 1.162 $ $Date: 2000/06/28 03:32:18 $\n");
 	}
 
 	/*
@@ -1398,6 +1378,20 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	SetProcessingMode(NormalProcessing);
 
 	/*
+	 * Create the memory context we will use in the main loop.
+	 *
+	 * QueryContext is reset once per iteration of the main loop,
+	 * ie, upon completion of processing of each supplied query string.
+	 * It can therefore be used for any data that should live just as
+	 * long as the query string --- parse trees, for example.
+	 */
+	QueryContext = AllocSetContextCreate(TopMemoryContext,
+										 "QueryContext",
+										 ALLOCSET_DEFAULT_MINSIZE,
+										 ALLOCSET_DEFAULT_INITSIZE,
+										 ALLOCSET_DEFAULT_MAXSIZE);
+
+	/*
 	 * POSTGRES main processing loop begins here
 	 *
 	 * If an exception is encountered, processing resumes here so we abort
@@ -1406,18 +1400,30 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
-		/* Make sure we are in a valid memory context */
-		MemoryContextSwitchTo(TopMemoryContext);
+		/*
+		 * Make sure we are in a valid memory context during recovery.
+		 *
+		 * We use ErrorContext in hopes that it will have some free space
+		 * even if we're otherwise up against it...
+		 */
+		MemoryContextSwitchTo(ErrorContext);
 
 		if (DebugLvl >= 1)
 			elog(DEBUG, "AbortCurrentTransaction");
 		AbortCurrentTransaction();
-		InError = false;
+
 		if (ExitAfterAbort)
 		{
 			ProcReleaseLocks(); /* Just to be sure... */
 			proc_exit(0);
 		}
+		/*
+		 * If we recovered successfully, return to normal top-level context
+		 * and clear ErrorContext for next time.
+		 */
+		MemoryContextSwitchTo(TopMemoryContext);
+		MemoryContextResetAndDeleteChildren(ErrorContext);
+		InError = false;
 	}
 
 	Warn_restart_ready = true;	/* we can now handle elog(ERROR) */
@@ -1430,7 +1436,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	for (;;)
 	{
-		set_ps_display("idle");
+		/*
+		 * Release storage left over from prior query cycle, and
+		 * create a new query input buffer in the cleared QueryContext.
+		 */
+		MemoryContextSwitchTo(QueryContext);
+		MemoryContextResetAndDeleteChildren(QueryContext);
+
+		parser_input = makeStringInfo();
 
 		/* XXX this could be moved after ReadCommand below to get more
 		 * sensical behaviour */
@@ -1462,6 +1475,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		 *	 (3) read a command (loop blocks here)
 		 * ----------------
 		 */
+		set_ps_display("idle");
+
 		firstchar = ReadCommand(parser_input);
 
 		QueryCancel = false;	/* forget any earlier CANCEL signal */
@@ -1528,7 +1543,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 						elog(DEBUG, "StartTransactionCommand");
 					StartTransactionCommand();
 
-					pg_exec_query(parser_input->data);
+					pg_exec_query_dest(parser_input->data,
+									   whereToSendOutput,
+									   QueryContext);
 
 					/*
 					 * Invoke IMMEDIATE constraint triggers
@@ -1566,7 +1583,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		 *	 (6) commit the current transaction
 		 *
 		 *	 Note: if we had an empty input buffer, then we didn't
-		 *	 call pg_exec_query, so we don't bother to commit this transaction.
+		 *	 call pg_exec_query_dest, so we don't bother to commit
+		 *	 this transaction.
 		 * ----------------
 		 */
 		if (!IsEmptyQuery)
@@ -1578,7 +1596,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 #ifdef SHOW_MEMORY_STATS
 			/* print global-context stats at each commit for leak tracking */
 			if (ShowStats)
-				GlobalMemoryStats();
+				MemoryContextStats(TopMemoryContext);
 #endif
 		}
 		else

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.50 2000/05/30 00:49:46 momjian Exp $
+ * $Id: geqo_eval.c,v 1.51 2000/06/28 03:31:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,9 @@
    =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
-#include <math.h>
-
 #include "postgres.h"
+
+#include <math.h>
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #else
@@ -33,41 +33,8 @@
 #include "optimizer/geqo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "utils/portal.h"
+#include "utils/memutils.h"
 
-
-/*
- * Variables set by geqo_eval_startup for use within a single GEQO run
- */
-static MemoryContext geqo_eval_context;
-
-/*
- * geqo_eval_startup:
- *	 Must be called during geqo_main startup (before geqo_eval may be called)
- *
- * The main thing we need to do here is prepare a private memory context for
- * allocation of temp storage used while constructing a path in geqo_eval().
- * Since geqo_eval() will be called many times, we can't afford to let all
- * that memory go unreclaimed until end of statement.  We use a special
- * named portal to hold the context, so that it will be freed even if
- * we abort via elog(ERROR).  The working data is allocated in the portal's
- * heap memory context.
- */
-void
-geqo_eval_startup(void)
-{
-#define GEQO_PORTAL_NAME	"<geqo workspace>"
-	Portal		geqo_portal = GetPortalByName(GEQO_PORTAL_NAME);
-
-	if (!PortalIsValid(geqo_portal))
-	{
-		/* First time through (within current transaction, that is) */
-		geqo_portal = CreatePortal(GEQO_PORTAL_NAME);
-		Assert(PortalIsValid(geqo_portal));
-	}
-
-	geqo_eval_context = (MemoryContext) PortalGetHeapMemory(geqo_portal);
-}
 
 /*
  * geqo_eval
@@ -77,20 +44,30 @@ geqo_eval_startup(void)
 Cost
 geqo_eval(Query *root, Gene *tour, int num_gene)
 {
+	MemoryContext mycontext;
 	MemoryContext oldcxt;
 	RelOptInfo *joinrel;
 	Cost		fitness;
 	List	   *savelist;
 
+	/*
+	 * Create a private memory context that will hold all temp storage
+	 * allocated inside gimme_tree().
+	 *
+	 * Since geqo_eval() will be called many times, we can't afford to let
+	 * all that memory go unreclaimed until end of statement.  Note we make
+	 * the temp context a child of TransactionCommandContext, so that
+	 * it will be freed even if we abort via elog(ERROR).
+	 */
+	mycontext = AllocSetContextCreate(TransactionCommandContext,
+									  "GEQO",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
+	oldcxt = MemoryContextSwitchTo(mycontext);
+
 	/* preserve root->join_rel_list, which gimme_tree changes */
 	savelist = root->join_rel_list;
-
-	/*
-	 * create a temporary allocation context for the path construction
-	 * work
-	 */
-	oldcxt = MemoryContextSwitchTo(geqo_eval_context);
-	StartPortalAllocMode(DefaultAllocMode, 0);
 
 	/* construct the best path for the given combination of relations */
 	joinrel = gimme_tree(root, tour, 0, num_gene, NULL);
@@ -107,8 +84,8 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
 	root->join_rel_list = savelist;
 
 	/* release all the memory acquired within gimme_tree */
-	EndPortalAllocMode();
 	MemoryContextSwitchTo(oldcxt);
+	MemoryContextDelete(mycontext);
 
 	return fitness;
 }

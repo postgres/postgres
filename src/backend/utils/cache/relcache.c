@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.103 2000/06/19 23:40:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.104 2000/06/28 03:32:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -917,10 +917,10 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	/* ----------------
 	 *	allocate storage for the relation descriptor,
 	 *	initialize relation->rd_rel and get the access method id.
-	 *	The storage is allocated in memory context CacheCxt.
+	 *	The storage is allocated in memory context CacheMemoryContext.
 	 * ----------------
 	 */
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	relation = AllocateRelationDesc(oldrelation, natts, relp);
 	relam = relation->rd_rel->relam;
 
@@ -1383,7 +1383,7 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	if (relation->rd_isnailed)
 		return;
 
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
 	 * Remove relation from hash tables
@@ -1574,7 +1574,7 @@ RelationForgetRelation(Oid rid)
 			List	   *curr;
 			List	   *prev = NIL;
 
-			oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 			foreach(curr, newlyCreatedRelns)
 			{
@@ -1731,10 +1731,7 @@ RelationRegisterRelation(Relation relation)
 {
 	MemoryContext oldcxt;
 
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-
-	if (oldcxt != (MemoryContext) CacheCxt)
-		elog(NOIND, "RelationRegisterRelation: WARNING: Context != CacheCxt");
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	RelationInitLockInfo(relation);
 
@@ -1769,7 +1766,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 	if (newlyCreatedRelns == NULL)
 		return;
 
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	while (newlyCreatedRelns)
 	{
@@ -1822,10 +1819,10 @@ RelationInitialize(void)
 	 *	switch to cache memory context
 	 * ----------------
 	 */
-	if (!CacheCxt)
-		CacheCxt = CreateGlobalMemory("Cache");
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
 
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	create global caches
@@ -2186,7 +2183,7 @@ RelationGetIndexList(Relation relation)
 	heap_close(indrel, AccessShareLock);
 
 	/* Now save a copy of the completed list in the relcache entry. */
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	relation->rd_indexlist = listCopy(result);
 	relation->rd_indexfound = true;
 	MemoryContextSwitchTo(oldcxt);

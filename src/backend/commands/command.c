@@ -8,13 +8,9 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.80 2000/06/15 04:09:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.81 2000/06/28 03:31:28 tgl Exp $
  *
  * NOTES
- *	  The PortalExecutorHeapMemory crap needs to be eliminated
- *	  by designing a better executor / portal processing memory
- *	  interface.
- *
  *	  The PerformAddAttribute() code, like most of the relation
  *	  manipulating code in the commands/ directory, should go
  *	  someplace closer to the lib/catalog code.
@@ -40,13 +36,6 @@
 #include "parser/parse.h"
 #endif	 /* _DROP_COLUMN_HACK__ */
 
-/* ----------------
- *		PortalExecutorHeapMemory stuff
- *
- *		This is where the XXXSuperDuperHacky code was. -cim 3/15/90
- * ----------------
- */
-MemoryContext PortalExecutorHeapMemory = NULL;
 
 /* --------------------------------
  *		PortalCleanup
@@ -55,7 +44,7 @@ MemoryContext PortalExecutorHeapMemory = NULL;
 void
 PortalCleanup(Portal portal)
 {
-	MemoryContext context;
+	MemoryContext oldcontext;
 
 	/* ----------------
 	 *	sanity checks
@@ -68,8 +57,7 @@ PortalCleanup(Portal portal)
 	 *	set proper portal-executor context before calling ExecMain.
 	 * ----------------
 	 */
-	context = MemoryContextSwitchTo((MemoryContext) PortalGetHeapMemory(portal));
-	PortalExecutorHeapMemory = (MemoryContext) PortalGetHeapMemory(portal);
+	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
 	/* ----------------
 	 *	tell the executor to shutdown the query
@@ -81,8 +69,7 @@ PortalCleanup(Portal portal)
 	 *	switch back to previous context
 	 * ----------------
 	 */
-	MemoryContextSwitchTo(context);
-	PortalExecutorHeapMemory = (MemoryContext) NULL;
+	MemoryContextSwitchTo(oldcontext);
 }
 
 /* --------------------------------
@@ -99,7 +86,7 @@ PerformPortalFetch(char *name,
 	Portal		portal;
 	int			feature;
 	QueryDesc  *queryDesc;
-	MemoryContext context;
+	MemoryContext oldcontext;
 	Const		limcount;
 
 	/* ----------------
@@ -108,7 +95,7 @@ PerformPortalFetch(char *name,
 	 */
 	if (name == NULL)
 	{
-		elog(NOTICE, "PerformPortalFetch: blank portal unsupported");
+		elog(NOTICE, "PerformPortalFetch: missing portal name");
 		return;
 	}
 
@@ -120,12 +107,11 @@ PerformPortalFetch(char *name,
 	limcount.type = T_Const;
 	limcount.consttype = INT4OID;
 	limcount.constlen = sizeof(int4);
-	limcount.constvalue = (Datum) count;
-	limcount.constisnull = FALSE;
-	limcount.constbyval = TRUE;
-	limcount.constisset = FALSE;
-	limcount.constiscast = FALSE;
-
+	limcount.constvalue = Int32GetDatum(count);
+	limcount.constisnull = false;
+	limcount.constbyval = true;
+	limcount.constisset = false;
+	limcount.constiscast = false;
 
 	/* ----------------
 	 *	get the portal from the portal name
@@ -143,9 +129,7 @@ PerformPortalFetch(char *name,
 	 *	switch into the portal context
 	 * ----------------
 	 */
-	context = MemoryContextSwitchTo((MemoryContext) PortalGetHeapMemory(portal));
-
-	AssertState(context == (MemoryContext) PortalGetHeapMemory(GetPortalByName(NULL)));
+	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
 	/* ----------------
 	 *	setup "feature" to tell the executor what direction and
@@ -174,8 +158,7 @@ PerformPortalFetch(char *name,
 
 	BeginCommand(name,
 				 queryDesc->operation,
-				 portal->attinfo,		/* QueryDescGetTypeInfo(queryDesc),
-										 * */
+				 portal->attinfo, /* QueryDescGetTypeInfo(queryDesc) */
 				 false,			/* portal fetches don't end up in
 								 * relations */
 				 false,			/* this is a portal fetch, not a "retrieve
@@ -187,8 +170,6 @@ PerformPortalFetch(char *name,
 	 *	execute the portal fetch operation
 	 * ----------------
 	 */
-	PortalExecutorHeapMemory = (MemoryContext) PortalGetHeapMemory(portal);
-
 	ExecutorRun(queryDesc, PortalGetState(portal), feature,
 				(Node *) NULL, (Node *) &limcount);
 
@@ -196,18 +177,16 @@ PerformPortalFetch(char *name,
 		pfree(queryDesc);
 
 	/* ----------------
-	 * Note: the "end-of-command" tag is returned by higher-level
-	 *		 utility code
-	 *
-	 * Return blank portal for now.
-	 * Otherwise, this named portal will be cleaned.
-	 * Note: portals will only be supported within a BEGIN...END
-	 * block in the near future.  Later, someone will fix it to
-	 * do what is possible across transaction boundries.
+	 * Switch back to old context.
 	 * ----------------
 	 */
-	MemoryContextSwitchTo(
-			 (MemoryContext) PortalGetHeapMemory(GetPortalByName(NULL)));
+	MemoryContextSwitchTo(oldcontext);
+
+	/* ----------------
+	 * Note: the "end-of-command" tag is returned by higher-level
+	 *		 utility code
+	 * ----------------
+	 */
 }
 
 /* --------------------------------
@@ -225,14 +204,9 @@ PerformPortalClose(char *name, CommandDest dest)
 	 */
 	if (name == NULL)
 	{
-		elog(NOTICE, "PerformPortalClose: blank portal unsupported");
+		elog(NOTICE, "PerformPortalClose: missing portal name");
 		return;
 	}
-
-	if (PortalNameIsSpecial(name))
-		elog(ERROR,
-			 "The portal name \"%s\" is reserved for internal use",
-			 name);
 
 	/* ----------------
 	 *	get the portal from the portal name

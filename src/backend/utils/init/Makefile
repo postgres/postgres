@@ -4,14 +4,14 @@
 #    Makefile for utils/init
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.13 2000/05/29 05:45:32 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.14 2000/06/28 03:32:43 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-OBJS = enbl.o findbe.o globals.o miscinit.o postinit.o
+OBJS = findbe.o globals.o miscinit.o postinit.o
 
 all: SUBSYS.o
 
@@ -27,4 +27,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

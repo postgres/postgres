@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.34 2000/06/12 03:40:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.35 2000/06/28 03:32:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,6 @@
 #include "utils/ps_status.h"
 
 static char *CreateOperationTag(int operationType);
-static void ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset,
-				 Node *limcount);
 
 
 /* ----------------------------------------------------------------
@@ -115,7 +113,7 @@ CreateOperationTag(int operationType)
 		default:
 			elog(DEBUG, "CreateOperationTag: unknown operation type %d",
 				 operationType);
-			tag = NULL;
+			tag = "???";
 			break;
 	}
 
@@ -123,31 +121,18 @@ CreateOperationTag(int operationType)
 }
 
 /* ----------------
- *		ProcessPortal
+ *		PreparePortal
  * ----------------
  */
-
-void
-ProcessPortal(char *portalName,
-			  Query *parseTree,
-			  Plan *plan,
-			  EState *state,
-			  TupleDesc attinfo,
-			  CommandDest dest)
+Portal
+PreparePortal(char *portalName)
 {
 	Portal		portal;
-	MemoryContext portalContext;
 
 	/* ----------------
-	 *	 Check for reserved or already-in-use portal name.
+	 *	 Check for already-in-use portal name.
 	 * ----------------
 	 */
-
-	if (PortalNameIsSpecial(portalName))
-		elog(ERROR,
-			 "The portal name \"%s\" is reserved for internal use",
-			 portalName);
-
 	portal = GetPortalByName(portalName);
 	if (PortalIsValid(portal))
 	{
@@ -158,70 +143,39 @@ ProcessPortal(char *portalName,
 	}
 
 	/* ----------------
-	 *	 Convert the current blank portal into the user-specified
-	 *	 portal and initialize the state and query descriptor.
-	 *
-	 *	 Since the parsetree has been created in the current blank portal,
-	 *	 we don't have to do any work to copy it into the user-named portal.
+	 *	 Create the new portal and make its memory context active.
 	 * ----------------
 	 */
+	portal = CreatePortal(portalName);
 
-	portal = BlankPortalAssignName(portalName);
+	MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-	PortalSetQuery(portal,
-				   CreateQueryDesc(parseTree, plan, dest),
-				   attinfo,
-				   state,
-				   PortalCleanup);
-
-	/* ----------------
-	 *	Now create a new blank portal and switch to it.
-	 *	Otherwise, the new named portal will be cleaned at statement end.
-	 *
-	 *	Note: portals will only be supported within a BEGIN...END
-	 *	block in the near future.  Later, someone will fix it to
-	 *	do what is possible across transaction boundries. -hirohama
-	 * ----------------
-	 */
-	portalContext = (MemoryContext) PortalGetHeapMemory(GetPortalByName(NULL));
-
-	MemoryContextSwitchTo(portalContext);
-
-	StartPortalAllocMode(DefaultAllocMode, 0);
+	return portal;
 }
 
 
 /* ----------------------------------------------------------------
- *		ProcessQueryDesc
+ *		ProcessQuery
  *
- *		Read the comments for ProcessQuery() below...
+ *		Execute a plan, the non-parallel version
  * ----------------------------------------------------------------
  */
-static void
-ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset, Node *limcount)
+void
+ProcessQuery(Query *parsetree,
+			 Plan *plan,
+			 CommandDest dest)
 {
-	Query	   *parseTree;
-	Plan	   *plan;
-	int			operation;
-	char	   *tag = NULL;
+	int			operation = parsetree->commandType;
+	char	   *tag;
+	bool		isRetrieveIntoPortal;
+	bool		isRetrieveIntoRelation;
+	Portal		portal = NULL;
+	char	   *intoName = NULL;
+	QueryDesc  *queryDesc;
 	EState	   *state;
 	TupleDesc	attinfo;
 
-	bool		isRetrieveIntoPortal;
-	bool		isRetrieveIntoRelation;
-	char	   *intoName = NULL;
-	CommandDest dest;
-
-	/* ----------------
-	 *	get info from the query desc
-	 * ----------------
-	 */
-	parseTree = queryDesc->parsetree;
-	plan = queryDesc->plantree;
-
-	operation = queryDesc->operation;
 	set_ps_display(tag = CreateOperationTag(operation));
-	dest = queryDesc->dest;
 
 	/* ----------------
 	 *	initialize portal/into relation status
@@ -232,11 +186,11 @@ ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset, Node *limcount)
 
 	if (operation == CMD_SELECT)
 	{
-		if (parseTree->isPortal)
+		if (parsetree->isPortal)
 		{
 			isRetrieveIntoPortal = true;
-			intoName = parseTree->into;
-			if (parseTree->isBinary)
+			intoName = parsetree->into;
+			if (parsetree->isBinary)
 			{
 
 				/*
@@ -244,19 +198,38 @@ ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset, Node *limcount)
 				 * (externalized form) to RemoteInternal (internalized
 				 * form)
 				 */
-				dest = queryDesc->dest = RemoteInternal;
+				dest = RemoteInternal;
 			}
 		}
-		else if (parseTree->into != NULL)
+		else if (parsetree->into != NULL)
 		{
 			/* select into table */
 			isRetrieveIntoRelation = true;
 		}
-
 	}
 
 	/* ----------------
-	 *	when performing a retrieve into, we override the normal
+	 *	If retrieving into a portal, set up the portal and copy
+	 *	the parsetree and plan into its memory context.
+	 * ----------------
+	 */
+	if (isRetrieveIntoPortal)
+	{
+		portal = PreparePortal(intoName);
+		/* CurrentMemoryContext is now pointing to portal's context */
+		parsetree = copyObject(parsetree);
+		plan = copyObject(plan);
+	}
+
+	/* ----------------
+	 *	Now we can create the QueryDesc object (this is also in
+	 *	the portal context, if portal retrieve).
+	 * ----------------
+	 */
+	queryDesc = CreateQueryDesc(parsetree, plan, dest);
+
+	/* ----------------
+	 *	When performing a retrieve into, we override the normal
 	 *	communication destination during the processing of the
 	 *	the query.	This only affects the tuple-output function
 	 *	- the correct destination will still see BeginCommand()
@@ -293,26 +266,19 @@ ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset, Node *limcount)
 				 dest);
 
 	/* ----------------
-	 *	Named portals do not do a "fetch all" initially, so now
-	 *	we return since ExecMain has been called with EXEC_START
-	 *	to initialize the query plan.
-	 *
-	 *	Note: ProcessPortal transforms the current "blank" portal
-	 *		  into a named portal and creates a new blank portal so
-	 *		  everything we allocated in the current "blank" memory
-	 *		  context will be preserved across queries.  -cim 2/22/91
+	 *	If retrieve into portal, stop now; we do not run the plan
+	 *	until a FETCH command is received.
 	 * ----------------
 	 */
 	if (isRetrieveIntoPortal)
 	{
-		PortalExecutorHeapMemory = NULL;
+		PortalSetQuery(portal,
+					   queryDesc,
+					   attinfo,
+					   state,
+					   PortalCleanup);
 
-		ProcessPortal(intoName,
-					  parseTree,
-					  plan,
-					  state,
-					  attinfo,
-					  dest);
+		MemoryContextSwitchTo(TransactionCommandContext);
 
 		EndCommand(tag, dest);
 		return;
@@ -323,14 +289,14 @@ ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset, Node *limcount)
 	 *	 actually run the plan..
 	 * ----------------
 	 */
-	ExecutorRun(queryDesc, state, EXEC_RUN, limoffset, limcount);
+	ExecutorRun(queryDesc, state, EXEC_RUN,
+				parsetree->limitOffset, parsetree->limitCount);
 
 	/* save infos for EndCommand */
 	UpdateCommandInfo(operation, state->es_lastoid, state->es_processed);
 
 	/* ----------------
-	 *	 now, we close down all the scans and free allocated resources...
-	 * with ExecutorEnd()
+	 *	 Now, we close down all the scans and free allocated resources.
 	 * ----------------
 	 */
 	ExecutorEnd(queryDesc, state);
@@ -340,32 +306,4 @@ ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset, Node *limcount)
 	 * ----------------
 	 */
 	EndCommand(tag, dest);
-}
-
-/* ----------------------------------------------------------------
- *		ProcessQuery
- *
- *		Execute a plan, the non-parallel version
- * ----------------------------------------------------------------
- */
-
-void
-ProcessQuery(Query *parsetree,
-			 Plan *plan,
-			 CommandDest dest)
-{
-	QueryDesc  *queryDesc;
-	extern int	dontExecute;	/* from postgres.c */
-	extern void print_plan(Plan *p, Query *parsetree);	/* from print.c */
-
-	queryDesc = CreateQueryDesc(parsetree, plan, dest);
-
-	if (dontExecute)
-	{
-		/* don't execute it, just show the query plan */
-		print_plan(plan, parsetree);
-	}
-	else
-		ProcessQueryDesc(queryDesc, parsetree->limitOffset,
-						 parsetree->limitCount);
 }

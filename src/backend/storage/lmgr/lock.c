@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.69 2000/06/04 01:44:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.70 2000/06/28 03:32:07 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -225,6 +225,11 @@ LockMethodInit(LOCKMETHODTABLE *lockMethodTable,
  *		has its name stored in the shmem index at its creation.  It
  *		is wasteful, in this case, but not much space is involved.
  *
+ * NOTE: data structures allocated here are allocated permanently, using
+ * TopMemoryContext and shared memory.  We don't ever release them anyway,
+ * and in normal multi-backend operation the lock table structures set up
+ * by the postmaster are inherited by each backend, so they must be in
+ * TopMemoryContext.
  */
 LOCKMETHOD
 LockMethodTableInit(char *tabName,
@@ -246,29 +251,19 @@ LockMethodTableInit(char *tabName,
 		return INVALID_LOCKMETHOD;
 	}
 
-	/* allocate a string for the shmem index table lookup */
-	shmemName = (char *) palloc((unsigned) (strlen(tabName) + 32));
-	if (!shmemName)
-	{
-		elog(NOTICE, "LockMethodTableInit: couldn't malloc string %s \n", tabName);
-		return INVALID_LOCKMETHOD;
-	}
+	/* Allocate a string for the shmem index table lookups. */
+	/* This is just temp space in this routine, so palloc is OK. */
+	shmemName = (char *) palloc(strlen(tabName) + 32);
 
-	/* each lock table has a non-shared header */
-	lockMethodTable = (LOCKMETHODTABLE *) palloc((unsigned) sizeof(LOCKMETHODTABLE));
-	if (!lockMethodTable)
-	{
-		elog(NOTICE, "LockMethodTableInit: couldn't malloc lock table %s\n", tabName);
-		pfree(shmemName);
-		return INVALID_LOCKMETHOD;
-	}
+	/* each lock table has a non-shared, permanent header */
+	lockMethodTable = (LOCKMETHODTABLE *)
+		MemoryContextAlloc(TopMemoryContext, sizeof(LOCKMETHODTABLE));
 
 	/* ------------------------
 	 * find/acquire the spinlock for the table
 	 * ------------------------
 	 */
 	SpinAcquire(LockMgrLock);
-
 
 	/* -----------------------
 	 * allocate a control structure from shared memory or attach to it
@@ -277,7 +272,7 @@ LockMethodTableInit(char *tabName,
 	 */
 	sprintf(shmemName, "%s (ctl)", tabName);
 	lockMethodTable->ctl = (LOCKMETHODCTL *)
-		ShmemInitStruct(shmemName, (unsigned) sizeof(LOCKMETHODCTL), &found);
+		ShmemInitStruct(shmemName, sizeof(LOCKMETHODCTL), &found);
 
 	if (!lockMethodTable->ctl)
 	{
@@ -910,7 +905,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode)
 	LOCK_PRINT("WaitOnLock: sleeping on lock", lock, lockmode);
 
 	old_status = pstrdup(get_ps_display());
-	new_status = palloc(strlen(get_ps_display()) + 10);
+	new_status = (char *) palloc(strlen(get_ps_display()) + 10);
 	strcpy(new_status, get_ps_display());
 	strcat(new_status, " waiting");
 	set_ps_display(new_status);

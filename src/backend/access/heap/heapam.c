@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.71 2000/06/15 04:09:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.72 2000/06/28 03:31:04 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1230,10 +1230,7 @@ heap_insert(Relation relation, HeapTuple tup)
 	 * ----------------
 	 */
 	if (!OidIsValid(tup->t_data->t_oid))
-	{
 		tup->t_data->t_oid = newoid();
-		LastOidProcessed = tup->t_data->t_oid;
-	}
 	else
 		CheckMaxObjectId(tup->t_data->t_oid);
 

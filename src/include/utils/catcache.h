@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.24 2000/06/17 04:56:29 tgl Exp $
+ * $Id: catcache.h,v 1.25 2000/06/28 03:33:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,10 @@ typedef struct catcache
 
 #define InvalidCatalogCacheId	(-1)
 
-extern GlobalMemory CacheCxt;
+/* this extern duplicates utils/memutils.h... */
+extern MemoryContext CacheMemoryContext;
 
+extern void CreateCacheMemoryContext(void);
 extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
 						 ItemPointer pointer);
 extern void ResetSystemCache(void);

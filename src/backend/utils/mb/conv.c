@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.15 2000/05/20 13:12:26 ishii Exp $
+ * $Id: conv.c,v 1.16 2000/06/28 03:32:45 tgl Exp $
  *
  *
  */
@@ -1521,7 +1521,8 @@ pg_encoding_conv_tbl pg_conv_tbl[] = {
 };
 
 #ifdef DEBUGMAIN
-#include "utils/mcxt.h"
+#include "postgres.h"
+#include "utils/memutils.h"
 /*
  *	testing for sjis2mic() and mic2sjis()
  */
@@ -1565,21 +1566,23 @@ main()
 void
 elog(int lev, const char *fmt,...)
 {
-};
+}
+
 MemoryContext CurrentMemoryContext;
-Pointer
+
+void *
 MemoryContextAlloc(MemoryContext context, Size size)
 {
-};
-Pointer
-MemoryContextRealloc(MemoryContext context,
-					 Pointer pointer,
-					 Size size)
-{
-};
+}
+
 void
-MemoryContextFree(MemoryContext context, Pointer pointer)
+pfree(void *pointer)
 {
-};
+}
+
+void *
+repalloc(void *pointer, Size size)
+{
+}
 
 #endif

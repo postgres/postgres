@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.15 2000/04/12 17:16:55 momjian Exp $
+ * $Id: hsearch.h,v 1.16 2000/06/28 03:33:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,8 +84,7 @@ typedef struct htab
 	char	   *segbase;		/* segment base address for calculating
 								 * pointer values */
 	SEG_OFFSET *dir;			/* 'directory' of segm starts */
-	long	   *(*alloc) ();	/* memory allocator (long * for alignment
-								 * reasons) */
+	void	   *(*alloc) (Size);	/* memory allocator */
 } HTAB;
 
 typedef struct hashctl
@@ -99,7 +98,7 @@ typedef struct hashctl
 	long		max_dsize;		/* limit to dsize if directory size is
 								 * limited */
 	long	   *segbase;		/* base for calculating bucket + seg ptrs */
-	long	   *(*alloc) ();	/* memory allocation function */
+	void	   *(*alloc) (Size);	/* memory allocation function */
 	long	   *dir;			/* directory if allocated already */
 	long	   *hctl;			/* location of header information in shd
 								 * mem */

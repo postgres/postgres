@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.67 2000/06/19 03:54:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.68 2000/06/28 03:32:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,10 +59,6 @@ static Datum cc_hashname(PG_FUNCTION_ARGS);
 #endif
 
 static CatCache *Caches = NULL; /* head of list of caches */
-
-GlobalMemory CacheCxt;			/* context in which caches are allocated */
-
-/* CacheCxt is global because relcache uses it too. */
 
 
 /* ----------------
@@ -135,6 +131,28 @@ cc_hashname(PG_FUNCTION_ARGS)
 }
 
 
+/*
+ * Standard routine for creating cache context if it doesn't exist yet
+ *
+ * There are a lot of places (probably far more than necessary) that check
+ * whether CacheMemoryContext exists yet and want to create it if not.
+ * We centralize knowledge of exactly how to create it here.
+ */
+void
+CreateCacheMemoryContext(void)
+{
+	/* Purely for paranoia, check that context doesn't exist;
+	 * caller probably did so already.
+	 */
+	if (!CacheMemoryContext)
+		CacheMemoryContext = AllocSetContextCreate(TopMemoryContext,
+												   "CacheMemoryContext",
+												   ALLOCSET_DEFAULT_MINSIZE,
+												   ALLOCSET_DEFAULT_INITSIZE,
+												   ALLOCSET_DEFAULT_MAXSIZE);
+}
+
+
 /* --------------------------------
  *		CatalogCacheInitializeCache
  * --------------------------------
@@ -183,9 +201,10 @@ CatalogCacheInitializeCache(CatCache * cache,
 	 *	do not vanish at the end of a transaction
 	 * ----------------
 	 */
-	if (!CacheCxt)
-		CacheCxt = CreateGlobalMemory("Cache");
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
+
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	If no relation was passed we must open it to get access to
@@ -415,7 +434,7 @@ CatalogCacheComputeTupleHashIndex(CatCache * cacheInOutP,
 /* --------------------------------
  *		CatCacheRemoveCTup
  *
- *		NB: assumes caller has switched to CacheCxt
+ *		NB: assumes caller has switched to CacheMemoryContext
  * --------------------------------
  */
 static void
@@ -477,9 +496,10 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
 	 *	switch to the cache context for our memory allocations
 	 * ----------------
 	 */
-	if (!CacheCxt)
-		CacheCxt = CreateGlobalMemory("Cache");
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
+
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	inspect every cache that could contain the tuple
@@ -552,10 +572,10 @@ ResetSystemCache()
 	 *	do not vanish at the end of a transaction
 	 * ----------------
 	 */
-	if (!CacheCxt)
-		CacheCxt = CreateGlobalMemory("Cache");
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
 
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	here we purge the contents of all the caches
@@ -681,10 +701,10 @@ InitSysCache(char *relname,
 	 *	do not vanish at the end of a transaction
 	 * ----------------
 	 */
-	if (!CacheCxt)
-		CacheCxt = CreateGlobalMemory("Cache");
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
 
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	allocate a new cache structure
@@ -839,14 +859,14 @@ SearchSelfReferences(CatCache * cache)
 			HeapScanDesc sd;
 			MemoryContext oldcxt;
 
-			if (!CacheCxt)
-				CacheCxt = CreateGlobalMemory("Cache");
 			rel = heap_open(cache->relationId, AccessShareLock);
 			sd = heap_beginscan(rel, false, SnapshotNow, 1, cache->cc_skey);
 			ntp = heap_getnext(sd, 0);
 			if (!HeapTupleIsValid(ntp))
 				elog(ERROR, "SearchSelfReferences: tuple not found");
-			oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+			if (!CacheMemoryContext)
+				CreateCacheMemoryContext();
+			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 			indexSelfTuple = heap_copytuple(ntp);
 			MemoryContextSwitchTo(oldcxt);
 			heap_endscan(sd);
@@ -868,14 +888,14 @@ SearchSelfReferences(CatCache * cache)
 			HeapScanDesc sd;
 			MemoryContext oldcxt;
 
-			if (!CacheCxt)
-				CacheCxt = CreateGlobalMemory("Cache");
 			rel = heap_open(cache->relationId, AccessShareLock);
 			sd = heap_beginscan(rel, false, SnapshotNow, 1, cache->cc_skey);
 			ntp = heap_getnext(sd, 0);
 			if (!HeapTupleIsValid(ntp))
 				elog(ERROR, "SearchSelfReferences: tuple not found");
-			oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+			if (!CacheMemoryContext)
+				CreateCacheMemoryContext();
+			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 			operatorSelfTuple[lookup_oid - MIN_OIDCMP] = heap_copytuple(ntp);
 			MemoryContextSwitchTo(oldcxt);
 			heap_endscan(sd);
@@ -908,7 +928,6 @@ SearchSysCache(CatCache * cache,
 	CatCTup    *nct2;
 	Dlelem	   *elt;
 	HeapTuple	ntp = NULL;
-
 	Relation	relation;
 	MemoryContext oldcxt;
 
@@ -1020,10 +1039,10 @@ SearchSysCache(CatCache * cache,
 	 * ----------------
 	 */
 
-	if (!CacheCxt)
-		CacheCxt = CreateGlobalMemory("Cache");
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
 
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	Scan the relation to find the tuple.  If there's an index, and
@@ -1060,12 +1079,13 @@ SearchSysCache(CatCache * cache,
 		 */
 		if (HeapTupleIsValid(indextp))
 		{
-			MemoryContextSwitchTo((MemoryContext) CacheCxt);
+			MemoryContextSwitchTo(CacheMemoryContext);
 			ntp = heap_copytuple(indextp);
+			/* this switch is probably not needed anymore: */
 			MemoryContextSwitchTo(oldcxt);
 			heap_freetuple(indextp);
 		}
-		MemoryContextSwitchTo((MemoryContext) CacheCxt);
+		MemoryContextSwitchTo(CacheMemoryContext);
 	}
 	else
 	{
@@ -1084,7 +1104,7 @@ SearchSysCache(CatCache * cache,
 
 		ntp = heap_getnext(sd, 0);
 
-		MemoryContextSwitchTo((MemoryContext) CacheCxt);
+		MemoryContextSwitchTo(CacheMemoryContext);
 
 		if (HeapTupleIsValid(ntp))
 		{
@@ -1097,7 +1117,7 @@ SearchSysCache(CatCache * cache,
 
 		heap_endscan(sd);
 
-		MemoryContextSwitchTo((MemoryContext) CacheCxt);
+		MemoryContextSwitchTo(CacheMemoryContext);
 	}
 
 	cache->busy = false;
@@ -1205,9 +1225,10 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 	 *	switch to the cache memory context
 	 * ----------------
 	 */
-	if (!CacheCxt)
-		CacheCxt = CreateGlobalMemory("Cache");
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
+
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
 	 *	for each cache

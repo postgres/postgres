@@ -7,16 +7,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.23 2000/04/12 17:16:55 momjian Exp $
+ * $Id: portal.h,v 1.24 2000/06/28 03:33:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * Note:
  *		A portal is an abstraction which represents the execution state of
- * a running query (or a fixed sequence of queries).  The "blank portal" is
- * a portal with an InvalidName.  This blank portal is in existance except
- * between calls to BlankPortalAssignName and GetPortalByName(NULL).
+ * a running query (or a fixed sequence of queries).
  *
  * Note:
  *		now that PQ calls can be made from within a backend, a portal
@@ -29,27 +27,18 @@
 #include "executor/execdesc.h"
 #include "nodes/memnodes.h"
 
-typedef struct PortalBlockData
+
+typedef struct PortalD *Portal;
+
+typedef struct PortalD
 {
-	AllocSetData setData;
-	FixedItemData itemData;
-} PortalBlockData;
-
-typedef PortalBlockData *PortalBlock;
-
-typedef struct PortalD PortalD;
-typedef PortalD *Portal;
-
-struct PortalD
-{
-	char	   *name;			/* XXX PortalName */
-	struct PortalVariableMemoryData variable;
-	struct PortalHeapMemoryData heap;
-	QueryDesc  *queryDesc;
+	char	   *name;			/* Portal's name */
+	MemoryContext heap;			/* subsidiary memory */
+	QueryDesc  *queryDesc;		/* Info about query associated with portal */
 	TupleDesc	attinfo;
 	EState	   *state;
-	void		(*cleanup) (Portal);
-};
+	void		(*cleanup) (Portal); /* Cleanup routine (optional) */
+} PortalD;
 
 /*
  * PortalIsValid
@@ -57,36 +46,20 @@ struct PortalD
  */
 #define PortalIsValid(p) PointerIsValid(p)
 
-/*
- * Special portals (well, their names anyway)
- */
-#define VACPNAME		"<vacuum>"
-#define TRUNCPNAME				"<truncate>"
-
-extern bool PortalNameIsSpecial(char *pname);
+extern void EnablePortalManager(void);
 extern void AtEOXact_portals(void);
-extern void EnablePortalManager(bool on);
+extern Portal CreatePortal(char *name);
+extern void PortalDrop(Portal *portalP);
 extern Portal GetPortalByName(char *name);
-extern Portal BlankPortalAssignName(char *name);
 extern void PortalSetQuery(Portal portal, QueryDesc *queryDesc,
 			   TupleDesc attinfo, EState *state,
 			   void (*cleanup) (Portal portal));
 extern QueryDesc *PortalGetQueryDesc(Portal portal);
 extern EState *PortalGetState(Portal portal);
-extern Portal CreatePortal(char *name);
-extern void PortalDrop(Portal *portalP);
-extern void StartPortalAllocMode(AllocMode mode, Size limit);
-extern void EndPortalAllocMode(void);
-extern void PortalResetHeapMemory(Portal portal);
-extern PortalVariableMemory PortalGetVariableMemory(Portal portal);
-extern PortalHeapMemory PortalGetHeapMemory(Portal portal);
-extern void CommonSpecialPortalOpen(void);
-extern void CommonSpecialPortalClose(void);
-extern PortalVariableMemory CommonSpecialPortalGetMemory(void);
-extern bool CommonSpecialPortalIsOpen(void);
+extern MemoryContext PortalGetHeapMemory(Portal portal);
 
 /* estimate of the maximum number of open portals a user would have,
- * used in initially sizing the PortalHashTable in	EnablePortalManager()
+ * used in initially sizing the PortalHashTable in EnablePortalManager()
  */
 #define PORTALS_PER_USER	   10
 

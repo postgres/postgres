@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.31 2000/04/12 17:16:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.32 2000/06/28 03:32:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,8 +56,7 @@
 /*
  * Private function prototypes
  */
-static long *DynaHashAlloc(unsigned int size);
-static void DynaHashFree(Pointer ptr);
+static void *DynaHashAlloc(Size size);
 static uint32 call_hash(HTAB *hashp, char *k);
 static SEG_OFFSET seg_alloc(HTAB *hashp);
 static int	bucket_alloc(HTAB *hashp);
@@ -66,9 +65,7 @@ static int	expand_table(HTAB *hashp);
 static int	hdefault(HTAB *hashp);
 static int	init_htab(HTAB *hashp, int nelem);
 
-typedef long *((*dhalloc_ptr) ());
 
-#ifndef FRONTEND
 /* ----------------
  * memory allocation routines
  *
@@ -84,33 +81,23 @@ typedef long *((*dhalloc_ptr) ());
  *	   do the latter -cim 1/19/91
  * ----------------
  */
-GlobalMemory DynaHashCxt = (GlobalMemory) NULL;
+static MemoryContext DynaHashCxt = NULL;
 
-static long *
-DynaHashAlloc(unsigned int size)
+static void *
+DynaHashAlloc(Size size)
 {
 	if (!DynaHashCxt)
-		DynaHashCxt = CreateGlobalMemory("DynaHash");
+		DynaHashCxt = AllocSetContextCreate(TopMemoryContext,
+											"DynaHash",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
 
-	return (long *)
-		MemoryContextAlloc((MemoryContext) DynaHashCxt, size);
-}
-
-static void
-DynaHashFree(Pointer ptr)
-{
-	MemoryContextFree((MemoryContext) DynaHashCxt, ptr);
+	return MemoryContextAlloc(DynaHashCxt, size);
 }
 
 #define MEM_ALLOC		DynaHashAlloc
-#define MEM_FREE		DynaHashFree
-
-#else							/* FRONTEND */
-
-#define MEM_ALLOC		palloc
 #define MEM_FREE		pfree
-
-#endif	 /* FRONTEND */
 
 
 /*
@@ -147,7 +134,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	HTAB	   *hashp;
 
 
-	hashp = (HTAB *) MEM_ALLOC((unsigned long) sizeof(HTAB));
+	hashp = (HTAB *) MEM_ALLOC(sizeof(HTAB));
 	MemSet(hashp, 0, sizeof(HTAB));
 
 	if (flags & HASH_FUNCTION)
@@ -181,7 +168,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 		/* setup hash table defaults */
 
 		hashp->hctl = NULL;
-		hashp->alloc = (dhalloc_ptr) MEM_ALLOC;
+		hashp->alloc = MEM_ALLOC;
 		hashp->dir = NULL;
 		hashp->segbase = NULL;
 
@@ -189,7 +176,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 
 	if (!hashp->hctl)
 	{
-		hashp->hctl = (HHDR *) hashp->alloc((unsigned long) sizeof(HHDR));
+		hashp->hctl = (HHDR *) hashp->alloc(sizeof(HHDR));
 		if (!hashp->hctl)
 			return 0;
 	}
@@ -318,7 +305,8 @@ init_htab(HTAB *hashp, int nelem)
 	/* Allocate a directory */
 	if (!(hashp->dir))
 	{
-		hashp->dir = (SEG_OFFSET *) hashp->alloc(hctl->dsize * sizeof(SEG_OFFSET));
+		hashp->dir = (SEG_OFFSET *)
+			hashp->alloc(hctl->dsize * sizeof(SEG_OFFSET));
 		if (!hashp->dir)
 			return -1;
 	}
@@ -445,7 +433,7 @@ hash_destroy(HTAB *hashp)
 		/* cannot destroy a shared memory hash table */
 		Assert(!hashp->segbase);
 		/* allocation method must be one we know how to free, too */
-		Assert(hashp->alloc == (dhalloc_ptr) MEM_ALLOC);
+		Assert(hashp->alloc == MEM_ALLOC);
 
 		hash_stats("destroy", hashp);
 
@@ -885,7 +873,7 @@ dir_realloc(HTAB *hashp)
 	new_dirsize = new_dsize * sizeof(SEG_OFFSET);
 
 	old_p = (char *) hashp->dir;
-	p = (char *) hashp->alloc((unsigned long) new_dirsize);
+	p = (char *) hashp->alloc((Size) new_dirsize);
 
 	if (p != NULL)
 	{
@@ -906,8 +894,7 @@ seg_alloc(HTAB *hashp)
 	SEGMENT		segp;
 	SEG_OFFSET	segOffset;
 
-	segp = (SEGMENT) hashp->alloc((unsigned long)
-							  sizeof(BUCKET_INDEX) * hashp->hctl->ssize);
+	segp = (SEGMENT) hashp->alloc(sizeof(BUCKET_INDEX) * hashp->hctl->ssize);
 
 	if (!segp)
 		return 0;
@@ -937,8 +924,7 @@ bucket_alloc(HTAB *hashp)
 	/* make sure its aligned correctly */
 	bucketSize = MAXALIGN(bucketSize);
 
-	tmpBucket = (ELEMENT *)
-		hashp->alloc((unsigned long) BUCKET_ALLOC_INCR * bucketSize);
+	tmpBucket = (ELEMENT *) hashp->alloc(BUCKET_ALLOC_INCR * bucketSize);
 
 	if (!tmpBucket)
 		return 0;

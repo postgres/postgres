@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.31 2000/06/17 23:41:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.32 2000/06/28 03:31:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "miscadmin.h"			/* ReindexDatabase() */
-#include "utils/portal.h"		/* ReindexDatabase() */
 #include "catalog/catalog.h"	/* ReindexDatabase() */
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args != NIL)
@@ -764,7 +763,6 @@ ReindexTable(const char *name, bool force)
  *		"ERROR" if table nonexistent.
  *		...
  */
-extern Oid	MyDatabaseId;
 void
 ReindexDatabase(const char *dbname, bool force, bool all)
 {
@@ -780,7 +778,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	Oid			db_id;
 	char	   *username;
 	ScanKeyData scankey;
-	PortalVariableMemory pmem;
+	MemoryContext private_context;
 	MemoryContext old;
 	int			relcnt,
 				relalc,
@@ -808,16 +806,34 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	db_id = dbtuple->t_data->t_oid;
 	db_owner = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
 	heap_endscan(scan);
+	heap_close(relation, NoLock);
+
 	if (user_id != db_owner && !superuser)
 		elog(ERROR, "REINDEX DATABASE: Permission denied.");
 
 	if (db_id != MyDatabaseId)
 		elog(ERROR, "REINDEX DATABASE: Can be executed only on the currently open database.");
 
-	heap_close(relation, NoLock);
+	/*
+	 * We cannot run inside a user transaction block; if we were
+	 * inside a transaction, then our commit- and
+	 * start-transaction-command calls would not have the intended effect!
+	 */
+	if (IsTransactionBlock())
+		elog(ERROR, "REINDEX DATABASE cannot run inside a BEGIN/END block");
 
-	CommonSpecialPortalOpen();
-	pmem = CommonSpecialPortalGetMemory();
+	/*
+	 * Create a memory context that will survive forced transaction commits
+	 * we do below.  Since it is a child of QueryContext, it will go away
+	 * eventually even if we suffer an error; there's no need for special
+	 * abort cleanup logic.
+	 */
+	private_context = AllocSetContextCreate(QueryContext,
+											"ReindexDatabase",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
+
 	relationRelation = heap_openr(RelationRelationName, AccessShareLock);
 	scan = heap_beginscan(relationRelation, false, SnapshotNow, 0, NULL);
 	relcnt = relalc = 0;
@@ -832,7 +848,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 		}
 		if (((Form_pg_class) GETSTRUCT(tuple))->relkind == RELKIND_RELATION)
 		{
-			old = MemoryContextSwitchTo((MemoryContext) pmem);
+			old = MemoryContextSwitchTo(private_context);
 			if (relcnt == 0)
 			{
 				relalc = oncealc;
@@ -859,6 +875,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 			elog(NOTICE, "relation %d was reindexed", relids[i]);
 		CommitTransactionCommand();
 	}
-	CommonSpecialPortalClose();
 	StartTransactionCommand();
+
+	MemoryContextDelete(private_context);
 }

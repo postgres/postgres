@@ -1,14 +1,20 @@
 /*-------------------------------------------------------------------------
  *
  * mcxt.c
- *	  POSTGRES memory context code.
+ *	  POSTGRES memory context management code.
+ *
+ * This module handles context management operations that are independent
+ * of the particular kind of context being operated on.  It calls
+ * context-type-specific operations via the function pointers in a
+ * context's MemoryContextMethods struct.
+ *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.21 2000/05/21 02:23:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.22 2000/06/28 03:32:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,41 +23,8 @@
 
 #include "nodes/memnodes.h"
 #include "utils/excid.h"
-#include "utils/module.h"
+#include "utils/memutils.h"
 
-
-
-#undef MemoryContextAlloc
-#undef MemoryContextFree
-#undef malloc
-#undef free
-
-/*
- * Global State
- */
-static int	MemoryContextEnableCount = 0;
-
-#define MemoryContextEnabled	(MemoryContextEnableCount > 0)
-
-static OrderedSetData ActiveGlobalMemorySetData;		/* uninitialized */
-
-#define ActiveGlobalMemorySet	(&ActiveGlobalMemorySetData)
-
-/*
- * description of allocated memory representation goes here
- */
-
-#define PSIZE(PTR)		(*((int32 *)(PTR) - 1))
-#define PSIZEALL(PTR)	(*((int32 *)(PTR) - 1) + sizeof (int32))
-#define PSIZESKIP(PTR)	((char *)((int32 *)(PTR) + 1))
-#define PSIZEFIND(PTR)	((char *)((int32 *)(PTR) - 1))
-#define PSIZESPACE(LEN) ((LEN) + sizeof (int32))
-
-/*
- * AllocSizeIsValid
- *		True iff 0 < size and size <= MaxAllocSize.
- */
-#define AllocSizeIsValid(size)	(0 < (size) && (size) <= MaxAllocSize)
 
 /*****************************************************************************
  *	  GLOBAL MEMORY															 *
@@ -59,281 +32,431 @@ static OrderedSetData ActiveGlobalMemorySetData;		/* uninitialized */
 
 /*
  * CurrentMemoryContext
- *		Memory context for general global allocations.
+ *		Default memory context for allocations.
  */
 DLLIMPORT MemoryContext CurrentMemoryContext = NULL;
 
+/*
+ * Standard top-level contexts
+ */
+MemoryContext TopMemoryContext = NULL;
+MemoryContext ErrorContext = NULL;
+MemoryContext PostmasterContext = NULL;
+MemoryContext CacheMemoryContext = NULL;
+MemoryContext QueryContext = NULL;
+MemoryContext TopTransactionContext = NULL;
+MemoryContext TransactionCommandContext = NULL;
+
+
 /*****************************************************************************
- *	  PRIVATE DEFINITIONS													 *
+ *	  EXPORTED ROUTINES														 *
  *****************************************************************************/
 
-static Pointer GlobalMemoryAlloc(GlobalMemory this, Size size);
-static void GlobalMemoryFree(GlobalMemory this, Pointer pointer);
-static Pointer GlobalMemoryRealloc(GlobalMemory this, Pointer pointer,
-					Size size);
-static char *GlobalMemoryGetName(GlobalMemory this);
-static void GlobalMemoryDump(GlobalMemory this);
-
-#ifdef NOT_USED
-static void DumpGlobalMemories(void);
-
-#endif
 
 /*
- * Global Memory Methods
- */
-
-static struct MemoryContextMethodsData GlobalContextMethodsData = {
-	GlobalMemoryAlloc,			/* Pointer (*)(this, uint32)  palloc */
-	GlobalMemoryFree,			/* void (*)(this, Pointer)	  pfree */
-	GlobalMemoryRealloc,		/* Pointer (*)(this, Pointer) repalloc */
-	GlobalMemoryGetName,		/* char* (*)(this)			  getName */
-	GlobalMemoryDump			/* void (*)(this)			  dump */
-};
-
-/*
- * Note:
- *		TopGlobalMemory is handled specially because of bootstrapping.
- */
-/* extern bool EqualGlobalMemory(); */
-
-static struct GlobalMemoryData TopGlobalMemoryData = {
-	T_GlobalMemory,				/* NodeTag				tag		  */
-	&GlobalContextMethodsData,	/* ContextMethods		method	  */
-	{NULL, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-	/* free AllocSet   */
-	"TopGlobal",				/* char* name	   */
-	{0}							/* uninitialized OrderedElemData elemD */
-};
-
-/*
- * TopMemoryContext
- *		Memory context for general global allocations.
+ * MemoryContextInit
+ *		Start up the memory-context subsystem.
  *
- * Note:
- *		Don't use this memory context for random allocations.  If you
- *		allocate something here, you are expected to clean it up when
- *		appropriate.
- */
-MemoryContext TopMemoryContext = (MemoryContext) &TopGlobalMemoryData;
-
-
-
-
-/*
- * Module State
- */
-
-/*
- * EnableMemoryContext
- *		Enables/disables memory management and global contexts.
+ * This must be called before creating contexts or allocating memory in
+ * contexts.  TopMemoryContext and ErrorContext are initialized here;
+ * other contexts must be created afterwards.
  *
- * Note:
- *		This must be called before creating contexts or allocating memory.
- *		This must be called before other contexts are created.
+ * In normal multi-backend operation, this is called once during
+ * postmaster startup, and not at all by individual backend startup
+ * (since the backends inherit an already-initialized context subsystem
+ * by virtue of being forked off the postmaster).
  *
- * Exceptions:
- *		BadArg if on is invalid.
- *		BadState if on is false when disabled.
+ * In a standalone backend this must be called during backend startup.
  */
 void
-EnableMemoryContext(bool on)
+MemoryContextInit(void)
 {
-	static bool processing = false;
+	AssertState(TopMemoryContext == NULL);
+	/*
+	 * Initialize TopMemoryContext as an AllocSetContext with slow
+	 * growth rate --- we don't really expect much to be allocated in it.
+	 *
+	 * (There is special-case code in MemoryContextCreate() for this call.)
+	 */
+	TopMemoryContext = AllocSetContextCreate((MemoryContext) NULL,
+											 "TopMemoryContext",
+											 8 * 1024,
+											 8 * 1024,
+											 8 * 1024);
+	/*
+	 * Not having any other place to point CurrentMemoryContext,
+	 * make it point to TopMemoryContext.  Caller should change this soon!
+	 */
+	CurrentMemoryContext = TopMemoryContext;
+	/*
+	 * Initialize ErrorContext as an AllocSetContext with slow
+	 * growth rate --- we don't really expect much to be allocated in it.
+	 * More to the point, require it to contain at least 8K at all times.
+	 * This is the only case where retained memory in a context is
+	 * *essential* --- we want to be sure ErrorContext still has some
+	 * memory even if we've run out elsewhere!
+	 */
+	ErrorContext = AllocSetContextCreate(TopMemoryContext,
+										 "ErrorContext",
+										 8 * 1024,
+										 8 * 1024,
+										 8 * 1024);
+}
 
-	AssertState(!processing);
-	AssertArg(BoolIsValid(on));
+/*
+ * MemoryContextReset
+ *		Release all space allocated within a context and its descendants,
+ *		but don't delete the contexts themselves.
+ *
+ * The type-specific reset routine handles the context itself, but we
+ * have to do the recursion for the children.
+ */
+void
+MemoryContextReset(MemoryContext context)
+{
+	MemoryContextResetChildren(context);
+	(*context->methods->reset) (context);
+}
 
-	if (BypassEnable(&MemoryContextEnableCount, on))
-		return;
+/*
+ * MemoryContextResetChildren
+ *		Release all space allocated within a context's descendants,
+ *		but don't delete the contexts themselves.  The named context
+ *		itself is not touched.
+ */
+void
+MemoryContextResetChildren(MemoryContext context)
+{
+	MemoryContext	child;
 
-	processing = true;
+	for (child = context->firstchild; child != NULL; child = child->nextchild)
+	{
+		MemoryContextReset(child);
+	}
+}
 
-	if (on)
-	{							/* initialize */
-		/* initialize TopGlobalMemoryData.setData */
-		AllocSetInit(&TopGlobalMemoryData.setData, DynamicAllocMode,
-					 (Size) 0);
+/*
+ * MemoryContextDelete
+ *		Delete a context and its descendants, and release all space
+ *		allocated therein.
+ *
+ * The type-specific delete routine removes all subsidiary storage
+ * for the context, but we have to delete the context node itself,
+ * as well as recurse to get the children.  We must also delink the
+ * node from its parent, if it has one.
+ */
+void
+MemoryContextDelete(MemoryContext context)
+{
+	/* We had better not be deleting TopMemoryContext ... */
+	Assert(context != TopMemoryContext);
+	/* And not CurrentMemoryContext, either */
+	Assert(context != CurrentMemoryContext);
 
-		/* make TopGlobalMemoryData member of ActiveGlobalMemorySet */
-		OrderedSetInit(ActiveGlobalMemorySet,
-					   offsetof(struct GlobalMemoryData, elemData));
-		OrderedElemPushInto(&TopGlobalMemoryData.elemData,
-							ActiveGlobalMemorySet);
+	MemoryContextDeleteChildren(context);
+	/*
+	 * We delink the context from its parent before deleting it,
+	 * so that if there's an error we won't have deleted/busted
+	 * contexts still attached to the context tree.  Better a leak
+	 * than a crash.
+	 */
+	if (context->parent)
+	{
+		MemoryContext	parent = context->parent;
 
-		/* initialize CurrentMemoryContext */
-		CurrentMemoryContext = TopMemoryContext;
+		if (context == parent->firstchild)
+		{
+			parent->firstchild = context->nextchild;
+		}
+		else
+		{
+			MemoryContext	child;
 
+			for (child = parent->firstchild; child; child = child->nextchild)
+			{
+				if (context == child->nextchild)
+				{
+					child->nextchild = context->nextchild;
+					break;
+				}
+			}
+		}
+	}
+	(*context->methods->delete) (context);
+	pfree(context);
+}
+
+/*
+ * MemoryContextDeleteChildren
+ *		Delete all the descendants of the named context and release all
+ *		space allocated therein.  The named context itself is not touched.
+ */
+void
+MemoryContextDeleteChildren(MemoryContext context)
+{
+	/*
+	 * MemoryContextDelete will delink the child from me,
+	 * so just iterate as long as there is a child.
+	 */
+	while (context->firstchild != NULL)
+	{
+		MemoryContextDelete(context->firstchild);
+	}
+}
+
+/*
+ * MemoryContextResetAndDeleteChildren
+ *		Release all space allocated within a context and delete all
+ *		its descendants.
+ *
+ * This is a common combination case where we want to preserve the
+ * specific context but get rid of absolutely everything under it.
+ */
+void
+MemoryContextResetAndDeleteChildren(MemoryContext context)
+{
+	MemoryContextDeleteChildren(context);
+	(*context->methods->reset) (context);
+}
+
+/*
+ * MemoryContextStats
+ *		Print statistics about the named context and all its descendants.
+ *
+ * This is just a debugging utility, so it's not fancy.  The statistics
+ * are merely sent to stderr.
+ */
+void
+MemoryContextStats(MemoryContext context)
+{
+	MemoryContext	child;
+
+	(*context->methods->stats) (context);
+	for (child = context->firstchild; child != NULL; child = child->nextchild)
+	{
+		MemoryContextStats(child);
+	}
+}
+
+/*
+ * MemoryContextContains
+ *		Detect whether an allocated chunk of memory belongs to a given
+ *		context or not.
+ *
+ * Caution: this test is reliable as long as 'pointer' does point to
+ * a chunk of memory allocated from *some* context.  If 'pointer' points
+ * at memory obtained in some other way, there is a small chance of a
+ * false-positive result, since the bits right before it might look like
+ * a valid chunk header by chance.
+ */
+bool
+MemoryContextContains(MemoryContext context, void *pointer)
+{
+	StandardChunkHeader	   *header;
+
+	/*
+	 * Try to detect bogus pointers handed to us, poorly though we can.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at
+	 * an allocated chunk.
+	 */
+	if (pointer == NULL || pointer != (void *) MAXALIGN(pointer))
+		return false;
+	/*
+	 * OK, it's probably safe to look at the chunk header.
+	 */
+	header = (StandardChunkHeader *)
+		((char *) pointer - STANDARDCHUNKHEADERSIZE);
+	/*
+	 * If the context link doesn't match then we certainly have a
+	 * non-member chunk.  Also check for a reasonable-looking size
+	 * as extra guard against being fooled by bogus pointers.
+	 */
+	if (header->context == context && AllocSizeIsValid(header->size))
+		return true;
+	return false;
+}
+
+/*--------------------
+ * MemoryContextCreate
+ *		Context-type-independent part of context creation.
+ *
+ * This is only intended to be called by context-type-specific
+ * context creation routines, not by the unwashed masses.
+ *
+ * The context creation procedure is a little bit tricky because
+ * we want to be sure that we don't leave the context tree invalid
+ * in case of failure (such as insufficient memory to allocate the
+ * context node itself).  The procedure goes like this:
+ *	1.	Context-type-specific routine first calls MemoryContextCreate(),
+ *		passing the appropriate tag/size/methods values (the methods
+ *		pointer will ordinarily point to statically allocated data).
+ *		The parent and name parameters usually come from the caller.
+ *	2.	MemoryContextCreate() attempts to allocate the context node,
+ *		plus space for the name.  If this fails we can elog() with no
+ *		damage done.
+ *	3.	We fill in all of the type-independent MemoryContext fields.
+ *	4.	We call the type-specific init routine (using the methods pointer).
+ *		The init routine is required to make the node minimally valid
+ *		with zero chance of failure --- it can't allocate more memory,
+ *		for example.
+ *	5.	Now we have a minimally valid node that can behave correctly
+ *		when told to reset or delete itself.  We link the node to its
+ *		parent (if any), making the node part of the context tree.
+ *	6.	We return to the context-type-specific routine, which finishes
+ *		up type-specific initialization.  This routine can now do things
+ *		that might fail (like allocate more memory), so long as it's
+ *		sure the node is left in a state that delete will handle.
+ *
+ * This protocol doesn't prevent us from leaking memory if step 6 fails
+ * during creation of a top-level context, since there's no parent link
+ * in that case.  However, if you run out of memory while you're building
+ * a top-level context, you might as well go home anyway...
+ *
+ * Normally, the context node and the name are allocated from
+ * TopMemoryContext (NOT from the parent context, since the node must
+ * survive resets of its parent context!).  However, this routine is itself
+ * used to create TopMemoryContext!  If we see that TopMemoryContext is NULL,
+ * we assume we are creating TopMemoryContext and use malloc() to allocate
+ * the node.
+ *
+ * Note that the name field of a MemoryContext does not point to
+ * separately-allocated storage, so it should not be freed at context
+ * deletion.
+ *--------------------
+ */
+MemoryContext
+MemoryContextCreate(NodeTag tag, Size size,
+					MemoryContextMethods *methods,
+					MemoryContext parent,
+					const char *name)
+{
+	MemoryContext	node;
+	Size			needed = size + strlen(name) + 1;
+
+	/* Get space for node and name */
+	if (TopMemoryContext != NULL)
+	{
+		/* Normal case: allocate the node in TopMemoryContext */
+		node = (MemoryContext) MemoryContextAlloc(TopMemoryContext,
+												  needed);
 	}
 	else
-	{							/* cleanup */
-		GlobalMemory context;
-
-		/* walk the list of allocations */
-		while (PointerIsValid(context = (GlobalMemory)
-							  OrderedSetGetHead(ActiveGlobalMemorySet)))
-		{
-
-			if (context == &TopGlobalMemoryData)
-			{
-				/* don't free it and clean it last */
-				OrderedElemPop(&TopGlobalMemoryData.elemData);
-			}
-			else
-				GlobalMemoryDestroy(context);
-			/* what is needed for the top? */
-		}
-
-		/*
-		 * Freeing memory here should be safe as this is called only after
-		 * all modules which allocate in TopMemoryContext have been
-		 * disabled.
-		 */
-
-		/* step through remaining allocations and log */
-		/* AllocSetStep(...); */
-
-		/* deallocate whatever is left */
-		AllocSetReset(&TopGlobalMemoryData.setData);
+	{
+		/* Special case for startup: use good ol' malloc */
+		node = (MemoryContext) malloc(needed);
+		Assert(node != NULL);
 	}
 
-	processing = false;
+	/* Initialize the node as best we can */
+	MemSet(node, 0, size);
+	node->type = tag;
+	node->methods = methods;
+	node->parent = NULL;		/* for the moment */
+	node->firstchild = NULL;
+	node->nextchild = NULL;
+	node->name = ((char *) node) + size;
+	strcpy(node->name, name);
+
+	/* Type-specific routine finishes any other essential initialization */
+	(*node->methods->init) (node);
+
+	/* OK to link node to parent (if any) */
+	if (parent)
+	{
+		node->parent = parent;
+		node->nextchild = parent->firstchild;
+		parent->firstchild = node;
+	}
+
+	/* Return to type-specific creation routine to finish up */
+	return node;
 }
 
 /*
  * MemoryContextAlloc
- *		Returns pointer to aligned allocated memory in the given context.
+ *		Allocate space within the specified context.
  *
- * Note:
- *		none
- *
- * Exceptions:
- *		BadState if called before InitMemoryManager.
- *		BadArg if context is invalid or if size is 0.
- *		BadAllocSize if size is larger than MaxAllocSize.
+ * This could be turned into a macro, but we'd have to import
+ * nodes/memnodes.h into postgres.h which seems a bad idea.
  */
-Pointer
+void *
 MemoryContextAlloc(MemoryContext context, Size size)
 {
-	AssertState(MemoryContextEnabled);
 	AssertArg(MemoryContextIsValid(context));
 
 	LogTrap(!AllocSizeIsValid(size), BadAllocSize,
 			("size=%d [0x%x]", size, size));
 
-	return context->method->alloc(context, size);
+	return (*context->methods->alloc) (context, size);
 }
 
 /*
- * MemoryContextFree
- *		Frees allocated memory referenced by pointer in the given context.
- *
- * Note:
- *		none
- *
- * Exceptions:
- *		???
- *		BadArgumentsErr if firstTime is true for subsequent calls.
+ * pfree
+ *		Release an allocated chunk.
  */
 void
-MemoryContextFree(MemoryContext context, Pointer pointer)
+pfree(void *pointer)
 {
-	AssertState(MemoryContextEnabled);
-	AssertArg(MemoryContextIsValid(context));
-	AssertArg(PointerIsValid(pointer));
+	StandardChunkHeader	   *header;
 
-	context->method->free_p(context, pointer);
+	/*
+	 * Try to detect bogus pointers handed to us, poorly though we can.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at
+	 * an allocated chunk.
+	 */
+	Assert(pointer != NULL);
+	Assert(pointer == (void *) MAXALIGN(pointer));
+	/*
+	 * OK, it's probably safe to look at the chunk header.
+	 */
+	header = (StandardChunkHeader *)
+		((char *) pointer - STANDARDCHUNKHEADERSIZE);
+
+	AssertArg(MemoryContextIsValid(header->context));
+
+    (*header->context->methods->free_p) (header->context, pointer);
 }
 
 /*
- * MemoryContextRelloc
- *		Returns pointer to aligned allocated memory in the given context.
+ * repalloc
  *
- * Note:
- *		none
- *
- * Exceptions:
- *		???
- *		BadArgumentsErr if firstTime is true for subsequent calls.
  */
-Pointer
-MemoryContextRealloc(MemoryContext context,
-					 Pointer pointer,
-					 Size size)
+void *
+repalloc(void *pointer, Size size)
 {
-	AssertState(MemoryContextEnabled);
-	AssertArg(MemoryContextIsValid(context));
-	AssertArg(PointerIsValid(pointer));
+	StandardChunkHeader	   *header;
+
+	/*
+	 * Try to detect bogus pointers handed to us, poorly though we can.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at
+	 * an allocated chunk.
+	 */
+	Assert(pointer != NULL);
+	Assert(pointer == (void *) MAXALIGN(pointer));
+	/*
+	 * OK, it's probably safe to look at the chunk header.
+	 */
+	header = (StandardChunkHeader *)
+		((char *) pointer - STANDARDCHUNKHEADERSIZE);
+
+	AssertArg(MemoryContextIsValid(header->context));
 
 	LogTrap(!AllocSizeIsValid(size), BadAllocSize,
 			("size=%d [0x%x]", size, size));
 
-	return context->method->realloc(context, pointer, size);
+    return (*header->context->methods->realloc) (header->context,
+												 pointer, size);
 }
-
-/*
- * MemoryContextGetName
- *		Returns pointer to aligned allocated memory in the given context.
- *
- * Note:
- *		none
- *
- * Exceptions:
- *		???
- *		BadArgumentsErr if firstTime is true for subsequent calls.
- */
-#ifdef NOT_USED
-char *
-MemoryContextGetName(MemoryContext context)
-{
-	AssertState(MemoryContextEnabled);
-	AssertArg(MemoryContextIsValid(context));
-
-	return context->method->getName(context);
-}
-
-#endif
-
-/*
- * PointerGetAllocSize
- *		Returns size of aligned allocated memory given pointer to it.
- *
- * Note:
- *		none
- *
- * Exceptions:
- *		???
- *		BadArgumentsErr if firstTime is true for subsequent calls.
- */
-#ifdef NOT_USED
-Size
-PointerGetAllocSize(Pointer pointer)
-{
-	AssertState(MemoryContextEnabled);
-	AssertArg(PointerIsValid(pointer));
-
-	return PSIZE(pointer);
-}
-
-#endif
 
 /*
  * MemoryContextSwitchTo
  *		Returns the current context; installs the given context.
- *
- * Note:
- *		none
- *
- * Exceptions:
- *		BadState if called when disabled.
- *		BadArg if context is invalid.
  */
 MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
 {
 	MemoryContext old;
 
-	AssertState(MemoryContextEnabled);
 	AssertArg(MemoryContextIsValid(context));
 
 	old = CurrentMemoryContext;
@@ -342,195 +465,18 @@ MemoryContextSwitchTo(MemoryContext context)
 }
 
 /*
- * External Functions
+ * MemoryContextStrdup
+ *		Like strdup(), but allocate from the specified context
  */
-/*
- * CreateGlobalMemory
- *		Returns new global memory context.
- *
- * Note:
- *		Assumes name is static.
- *
- * Exceptions:
- *		BadState if called when disabled.
- *		BadState if called outside TopMemoryContext (TopGlobalMemory).
- *		BadArg if name is invalid.
- */
-GlobalMemory
-CreateGlobalMemory(char *name)	/* XXX MemoryContextName */
+char *
+MemoryContextStrdup(MemoryContext context, const char *string)
 {
-	GlobalMemory context;
-	MemoryContext savecxt;
+	char	   *nstr;
+	Size		len = strlen(string) + 1;
 
-	AssertState(MemoryContextEnabled);
+	nstr = (char *) MemoryContextAlloc(context, len);
 
-	savecxt = MemoryContextSwitchTo(TopMemoryContext);
+	memcpy(nstr, string, len);
 
-	context = (GlobalMemory) newNode(sizeof(struct GlobalMemoryData), T_GlobalMemory);
-	context->method = &GlobalContextMethodsData;
-	context->name = name;		/* assumes name is static */
-	AllocSetInit(&context->setData, DynamicAllocMode, (Size) 0);
-
-	/* link the context */
-	OrderedElemPushInto(&context->elemData, ActiveGlobalMemorySet);
-
-	MemoryContextSwitchTo(savecxt);
-	return context;
-}
-
-/*
- * GlobalMemoryDestroy
- *		Destroys given global memory context.
- *
- * Exceptions:
- *		BadState if called when disabled.
- *		BadState if called outside TopMemoryContext (TopGlobalMemory).
- *		BadArg if context is invalid GlobalMemory.
- *		BadArg if context is TopMemoryContext (TopGlobalMemory).
- */
-void
-GlobalMemoryDestroy(GlobalMemory context)
-{
-	AssertState(MemoryContextEnabled);
-	AssertArg(IsA(context, GlobalMemory));
-	AssertArg(context != &TopGlobalMemoryData);
-
-	AllocSetReset(&context->setData);
-
-	/* unlink and delete the context */
-	OrderedElemPop(&context->elemData);
-	MemoryContextFree(TopMemoryContext, (Pointer) context);
-}
-
-/*****************************************************************************
- *	  PRIVATE																 *
- *****************************************************************************/
-
-/*
- * GlobalMemoryAlloc
- *		Returns pointer to aligned space in the global context.
- *
- * Exceptions:
- *		ExhaustedMemory if allocation fails.
- */
-static Pointer
-GlobalMemoryAlloc(GlobalMemory this, Size size)
-{
-	return AllocSetAlloc(&this->setData, size);
-}
-
-/*
- * GlobalMemoryFree
- *		Frees allocated memory in the global context.
- *
- * Exceptions:
- *		BadContextErr if current context is not the global context.
- *		BadArgumentsErr if pointer is invalid.
- */
-static void
-GlobalMemoryFree(GlobalMemory this,
-				 Pointer pointer)
-{
-	AllocSetFree(&this->setData, pointer);
-}
-
-/*
- * GlobalMemoryRealloc
- *		Returns pointer to aligned space in the global context.
- *
- * Note:
- *		Memory associated with the pointer is freed before return.
- *
- * Exceptions:
- *		BadContextErr if current context is not the global context.
- *		BadArgumentsErr if pointer is invalid.
- *		NoMoreMemoryErr if allocation fails.
- */
-static Pointer
-GlobalMemoryRealloc(GlobalMemory this,
-					Pointer pointer,
-					Size size)
-{
-	return AllocSetRealloc(&this->setData, pointer, size);
-}
-
-/*
- * GlobalMemoryGetName
- *		Returns name string for context.
- *
- * Exceptions:
- *		???
- */
-static char *
-GlobalMemoryGetName(GlobalMemory this)
-{
-	return this->name;
-}
-
-/*
- * GlobalMemoryDump
- *		Dumps global memory context for debugging.
- *
- * Exceptions:
- *		???
- */
-static void
-GlobalMemoryDump(GlobalMemory this)
-{
-	GlobalMemory context;
-
-	printf("--\n%s:\n", GlobalMemoryGetName(this));
-
-	context = (GlobalMemory) OrderedElemGetPredecessor(&this->elemData);
-	if (PointerIsValid(context))
-		printf("\tpredecessor=%s\n", GlobalMemoryGetName(context));
-
-	context = (GlobalMemory) OrderedElemGetSuccessor(&this->elemData);
-	if (PointerIsValid(context))
-		printf("\tsucessor=%s\n", GlobalMemoryGetName(context));
-
-	AllocSetDump(&this->setData);
-}
-
-/*
- * DumpGlobalMemories
- *		Dumps all global memory contexts for debugging.
- *
- * Exceptions:
- *		???
- */
-#ifdef NOT_USED
-static void
-DumpGlobalMemories()
-{
-	GlobalMemory context;
-
-	context = (GlobalMemory) OrderedSetGetHead(&ActiveGlobalMemorySetData);
-
-	while (PointerIsValid(context))
-	{
-		GlobalMemoryDump(context);
-
-		context = (GlobalMemory) OrderedElemGetSuccessor(&context->elemData);
-	}
-}
-
-#endif
-
-/*
- * GlobalMemoryStats
- *		Displays stats about memory consumption of all global contexts.
- */
-void
-GlobalMemoryStats(void)
-{
-	GlobalMemory context;
-
-	context = (GlobalMemory) OrderedSetGetHead(&ActiveGlobalMemorySetData);
-
-	while (PointerIsValid(context))
-	{
-		AllocSetStats(&context->setData, GlobalMemoryGetName(context));
-		context = (GlobalMemory) OrderedElemGetSuccessor(&context->elemData);
-	}
+	return nstr;
 }

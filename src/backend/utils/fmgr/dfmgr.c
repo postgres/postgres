@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.42 2000/06/15 04:10:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.43 2000/06/28 03:32:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ load_external_function(char *filename, char *funcname)
 		file_scanner = (DynamicFileList *)
 			malloc(sizeof(DynamicFileList) + strlen(filename));
 		if (file_scanner == NULL)
-			elog(FATAL, "Out of memory in load_external_function");
+			elog(ERROR, "Out of memory in load_external_function");
 
 		MemSet((char *) file_scanner, 0, sizeof(DynamicFileList));
 		strcpy(file_scanner->filename, filename);

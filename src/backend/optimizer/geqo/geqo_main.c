@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.21 2000/05/31 00:28:19 petere Exp $
+ * $Id: geqo_main.c,v 1.22 2000/06/28 03:31:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,9 +109,6 @@ geqo(Query *root)
         srandom(Geqo_random_seed);
     else
         srandom(time(NULL));
-
-/* initialize plan evaluator */
-	geqo_eval_startup();
 
 /* allocate genetic pool memory */
 	pool = alloc_pool(pool_size, number_of_rels);

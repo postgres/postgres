@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.32 2000/05/28 17:55:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.33 2000/06/28 03:31:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,9 +135,11 @@ PQexec(char *query)
 	/* ----------------
 	 *	pg_exec_query_dest will put the query results in a portal which will
 	 *	end up on the top of the portal stack.
+	 *
+	 * XXX memory context manipulation needs thought here.
 	 * ----------------
 	 */
-	pg_exec_query_dest(query, Local, FALSE);
+	pg_exec_query_dest(query, Local, CurrentMemoryContext);
 
 	/* ----------------
 	 *	pop the portal off the portal stack and return the

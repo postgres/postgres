@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.55 2000/06/17 00:09:34 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.56 2000/06/28 03:30:57 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -237,8 +237,6 @@ install-headers: prebuildheaders $(SRCDIR)/include/config.h
           $(HEADERDIR)/utils/fmgroids.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/palloc.h \
           $(HEADERDIR)/utils/palloc.h
-	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/mcxt.h \
-          $(HEADERDIR)/utils/mcxt.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/access/attnum.h \
           $(HEADERDIR)/access/attnum.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/executor/spi.h \

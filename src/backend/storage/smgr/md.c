@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.71 2000/06/19 23:37:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.72 2000/06/28 03:32:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,19 +94,15 @@ static BlockNumber _mdnblocks(File file, Size blcksz);
 int
 mdinit()
 {
-	MemoryContext oldcxt;
 	int			i;
 
-	MdCxt = (MemoryContext) CreateGlobalMemory("MdSmgr");
-	if (MdCxt == (MemoryContext) NULL)
-		return SM_FAIL;
+	MdCxt = AllocSetContextCreate(TopMemoryContext,
+								  "MdSmgr",
+								  ALLOCSET_DEFAULT_MINSIZE,
+								  ALLOCSET_DEFAULT_INITSIZE,
+								  ALLOCSET_DEFAULT_MAXSIZE);
 
-	oldcxt = MemoryContextSwitchTo(MdCxt);
-	Md_fdvec = (MdfdVec *) palloc(Nfds * sizeof(MdfdVec));
-	MemoryContextSwitchTo(oldcxt);
-
-	if (Md_fdvec == (MdfdVec *) NULL)
-		return SM_FAIL;
+	Md_fdvec = (MdfdVec *) MemoryContextAlloc(MdCxt, Nfds * sizeof(MdfdVec));
 
 	MemSet(Md_fdvec, 0, Nfds * sizeof(MdfdVec));
 
@@ -208,7 +204,6 @@ mdunlink(Relation reln)
 	int			nblocks;
 	int			fd;
 	MdfdVec    *v;
-	MemoryContext oldcxt;
 
 	/*
 	 * If the relation is already unlinked,we have nothing to do any more.
@@ -238,7 +233,6 @@ mdunlink(Relation reln)
 
 	Md_fdvec[fd].mdfd_flags = (uint16) 0;
 
-	oldcxt = MemoryContextSwitchTo(MdCxt);
 #ifndef LET_OS_MANAGE_FILESIZE
 	for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL;)
 	{
@@ -256,7 +250,6 @@ mdunlink(Relation reln)
 	FileTruncate(v->mdfd_vfd, 0);
 	FileUnlink(v->mdfd_vfd);
 #endif
-	MemoryContextSwitchTo(oldcxt);
 
 	_fdvec_free(fd);
 
@@ -400,9 +393,7 @@ static void
 mdclose_fd(int fd)
 {
 	MdfdVec    *v;
-	MemoryContext oldcxt;
 
-	oldcxt = MemoryContextSwitchTo(MdCxt);
 #ifndef LET_OS_MANAGE_FILESIZE
 	for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL;)
 	{
@@ -446,7 +437,6 @@ mdclose_fd(int fd)
 		}
 	}
 #endif
-	MemoryContextSwitchTo(oldcxt);
 
 	_fdvec_free(fd);
 }
@@ -751,11 +741,8 @@ mdtruncate(Relation reln, int nblocks)
 	int			curnblk;
 	int			fd;
 	MdfdVec    *v;
-
 #ifndef LET_OS_MANAGE_FILESIZE
-	MemoryContext oldcxt;
 	int			priorblocks;
-
 #endif
 
 	/*
@@ -772,7 +759,6 @@ mdtruncate(Relation reln, int nblocks)
 	v = &Md_fdvec[fd];
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	oldcxt = MemoryContextSwitchTo(MdCxt);
 	priorblocks = 0;
 	while (v != (MdfdVec *) NULL)
 	{
@@ -825,7 +811,6 @@ mdtruncate(Relation reln, int nblocks)
 		}
 		priorblocks += RELSEG_SIZE;
 	}
-	MemoryContextSwitchTo(oldcxt);
 #else
 	if (FileTruncate(v->mdfd_vfd, nblocks * BLCKSZ) < 0)
 		return -1;
@@ -833,8 +818,7 @@ mdtruncate(Relation reln, int nblocks)
 #endif
 
 	return nblocks;
-
-}	/* mdtruncate */
+}
 
 /*
  *	mdcommit() -- Commit a transaction.
@@ -907,7 +891,6 @@ _fdvec_alloc()
 	MdfdVec    *nvec;
 	int			fdvec,
 				i;
-	MemoryContext oldcxt;
 
 	if (Md_Free >= 0)			/* get from free list */
 	{
@@ -930,14 +913,10 @@ _fdvec_alloc()
 
 	Nfds *= 2;
 
-	oldcxt = MemoryContextSwitchTo(MdCxt);
-
-	nvec = (MdfdVec *) palloc(Nfds * sizeof(MdfdVec));
+	nvec = (MdfdVec *) MemoryContextAlloc(MdCxt, Nfds * sizeof(MdfdVec));
 	MemSet(nvec, 0, Nfds * sizeof(MdfdVec));
-	memmove(nvec, (char *) Md_fdvec, CurFd * sizeof(MdfdVec));
+	memcpy(nvec, (char *) Md_fdvec, CurFd * sizeof(MdfdVec));
 	pfree(Md_fdvec);
-
-	MemoryContextSwitchTo(oldcxt);
 
 	Md_fdvec = nvec;
 
@@ -976,7 +955,6 @@ _fdvec_free(int fdvec)
 static MdfdVec *
 _mdfd_openseg(Relation reln, int segno, int oflags)
 {
-	MemoryContext oldcxt;
 	MdfdVec    *v;
 	int			fd;
 	char	   *path,
@@ -1003,9 +981,7 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 		return (MdfdVec *) NULL;
 
 	/* allocate an mdfdvec entry for it */
-	oldcxt = MemoryContextSwitchTo(MdCxt);
-	v = (MdfdVec *) palloc(sizeof(MdfdVec));
-	MemoryContextSwitchTo(oldcxt);
+	v = (MdfdVec *) MemoryContextAlloc(MdCxt, sizeof(MdfdVec));
 
 	/* fill the entry */
 	v->mdfd_vfd = fd;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.67 2000/06/18 22:43:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.68 2000/06/28 03:31:05 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -18,14 +18,14 @@
  *
  *		These two cases used to be treated identically, but now
  *		we need to distinguish them.  Why?	consider the following
- *		two situatuons:
+ *		two situations:
  *
  *				case 1							case 2
  *				------							------
  *		1) user types BEGIN				1) user types BEGIN
  *		2) user does something			2) user does something
  *		3) user does not like what		3) system aborts for some reason
- *		   she shes and types ABORT
+ *		   she sees and types ABORT
  *
  *		In case 1, we want to abort the transaction and return to the
  *		default state.	In case 2, there may be more commands coming
@@ -41,6 +41,15 @@
  *
  *		* AbortTransactionBlock() leaves us in TBLOCK_ABORT and
  *		* UserAbortTransactionBlock() leaves us in TBLOCK_ENDABORT
+ *
+ *		Low-level transaction abort handling is divided into two phases:
+ *		* AbortTransaction() executes as soon as we realize the transaction
+ *		  has failed.  It should release all shared resources (locks etc)
+ *		  so that we do not delay other backends unnecessarily.
+ *		* CleanupTransaction() executes when we finally see a user COMMIT
+ *		  or ROLLBACK command; it cleans things up and gets us out of
+ *		  the transaction internally.  In particular, we mustn't destroy
+ *		  TransactionCommandContext until this point.
  *
  *	 NOTES
  *		This file is an attempt at a redesign of the upper layer
@@ -70,7 +79,7 @@
  *				StartTransaction
  *				CommitTransaction
  *				AbortTransaction
- *				UserAbortTransaction
+ *				CleanupTransaction
  *
  *		are provided to do the lower level work like recording
  *		the transaction status in the log and doing memory cleanup.
@@ -151,13 +160,15 @@
 #include "commands/async.h"
 #include "commands/sequence.h"
 #include "commands/trigger.h"
+#include "executor/spi.h"
 #include "libpq/be-fsstubs.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
-#include "utils/temprel.h"
 #include "utils/inval.h"
+#include "utils/memutils.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"
+#include "utils/temprel.h"
 
 extern bool SharedBufferChanged;
 
@@ -165,6 +176,7 @@ static void AbortTransaction(void);
 static void AtAbort_Cache(void);
 static void AtAbort_Locks(void);
 static void AtAbort_Memory(void);
+static void AtCleanup_Memory(void);
 static void AtCommit_Cache(void);
 static void AtCommit_LocalCache(void);
 static void AtCommit_Locks(void);
@@ -172,6 +184,7 @@ static void AtCommit_Memory(void);
 static void AtStart_Cache(void);
 static void AtStart_Locks(void);
 static void AtStart_Memory(void);
+static void CleanupTransaction(void);
 static void CommitTransaction(void);
 static void RecordTransactionAbort(void);
 static void RecordTransactionCommit(void);
@@ -243,7 +256,7 @@ bool		AMI_OVERRIDE = false;
 
 /* --------------------------------
  *		TranactionFlushEnabled()
- *		SetTranactionFlushEnabled()
+ *		SetTransactionFlushEnabled()
  *
  *		These are used to test and set the "TransactionFlushState"
  *		varable.  If this variable is true (the default), then
@@ -580,22 +593,35 @@ AtStart_Locks()
 static void
 AtStart_Memory()
 {
-	Portal		portal;
-	MemoryContext portalContext;
-
 	/* ----------------
-	 *	get the blank portal and its memory context
+	 *	We shouldn't have any transaction contexts already.
 	 * ----------------
 	 */
-	portal = GetPortalByName(NULL);
-	portalContext = (MemoryContext) PortalGetHeapMemory(portal);
+	Assert(TopTransactionContext == NULL);
+	Assert(TransactionCommandContext == NULL);
 
 	/* ----------------
-	 *	tell system to allocate in the blank portal context
+	 *	Create a toplevel context for the transaction.
 	 * ----------------
 	 */
-	MemoryContextSwitchTo(portalContext);
-	StartPortalAllocMode(DefaultAllocMode, 0);
+	TopTransactionContext =
+		AllocSetContextCreate(TopMemoryContext,
+							  "TopTransactionContext",
+							  ALLOCSET_DEFAULT_MINSIZE,
+							  ALLOCSET_DEFAULT_INITSIZE,
+							  ALLOCSET_DEFAULT_MAXSIZE);
+
+	/* ----------------
+	 *	Create a statement-level context and make it active.
+	 * ----------------
+	 */
+	TransactionCommandContext =
+		AllocSetContextCreate(TopTransactionContext,
+							  "TransactionCommandContext",
+							  ALLOCSET_DEFAULT_MINSIZE,
+							  ALLOCSET_DEFAULT_INITSIZE,
+							  ALLOCSET_DEFAULT_MAXSIZE);
+	MemoryContextSwitchTo(TransactionCommandContext);
 }
 
 
@@ -711,22 +737,21 @@ AtCommit_Locks()
 static void
 AtCommit_Memory()
 {
-	Portal		portal;
-
-	/* ----------------
-	 *	Release all heap memory in the blank portal.
-	 * ----------------
-	 */
-	portal = GetPortalByName(NULL);
-	PortalResetHeapMemory(portal);
-
 	/* ----------------
 	 *	Now that we're "out" of a transaction, have the
 	 *	system allocate things in the top memory context instead
-	 *	of the blank portal memory context.
+	 *	of per-transaction contexts.
 	 * ----------------
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
+
+	/* ----------------
+	 *	Release all transaction-local memory.
+	 * ----------------
+	 */
+	MemoryContextDelete(TopTransactionContext);
+	TopTransactionContext = NULL;
+	TransactionCommandContext = NULL;
 }
 
 /* ----------------------------------------------------------------
@@ -798,23 +823,51 @@ AtAbort_Locks()
 static void
 AtAbort_Memory()
 {
-	Portal		portal;
-
 	/* ----------------
-	 *	Release all heap memory in the blank portal.
+	 *	Make sure we are in a valid context (not a child of
+	 *	TransactionCommandContext...)
 	 * ----------------
 	 */
-	portal = GetPortalByName(NULL);
-	PortalResetHeapMemory(portal);
+	MemoryContextSwitchTo(TransactionCommandContext);
 
+	/* ----------------
+	 *	We do not want to destroy transaction contexts yet,
+	 *	but it should be OK to delete any command-local memory.
+	 * ----------------
+	 */
+	MemoryContextResetAndDeleteChildren(TransactionCommandContext);
+}
+
+
+/* ----------------------------------------------------------------
+ *						CleanupTransaction stuff
+ * ----------------------------------------------------------------
+ */
+
+/* --------------------------------
+ *		AtCleanup_Memory
+ * --------------------------------
+ */
+static void
+AtCleanup_Memory()
+{
 	/* ----------------
 	 *	Now that we're "out" of a transaction, have the
 	 *	system allocate things in the top memory context instead
-	 *	of the blank portal memory context.
+	 *	of per-transaction contexts.
 	 * ----------------
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
+
+	/* ----------------
+	 *	Release all transaction-local memory.
+	 * ----------------
+	 */
+	MemoryContextDelete(TopTransactionContext);
+	TopTransactionContext = NULL;
+	TransactionCommandContext = NULL;
 }
+
 
 /* ----------------------------------------------------------------
  *						interface routines
@@ -854,6 +907,7 @@ StartTransaction()
 	s->state = TRANS_START;
 
 	SetReindexProcessing(false);
+
 	/* ----------------
 	 *	generate a new transaction id
 	 * ----------------
@@ -874,9 +928,9 @@ StartTransaction()
 	 *	initialize the various transaction subsystems
 	 * ----------------
 	 */
+	AtStart_Memory();
 	AtStart_Cache();
 	AtStart_Locks();
-	AtStart_Memory();
 
 	/* ----------------
 	 *	Tell the trigger manager to we're starting a transaction
@@ -974,11 +1028,14 @@ CommitTransaction()
 	}
 
 	RelationPurgeLocalRelation(true);
+	AtEOXact_SPI();
 	AtEOXact_nbtree();
 	AtCommit_Cache();
 	AtCommit_Locks();
 	AtCommit_Memory();
 	AtEOXact_Files();
+
+	SharedBufferChanged = false; /* safest place to do it */
 
 	/* ----------------
 	 *	done with commit processing, set current transaction
@@ -986,8 +1043,6 @@ CommitTransaction()
 	 * ----------------
 	 */
 	s->state = TRANS_DEFAULT;
-	SharedBufferChanged = false;/* safest place to do it */
-
 }
 
 /* --------------------------------
@@ -1018,7 +1073,7 @@ AbortTransaction()
 		return;
 
 	if (s->state != TRANS_INPROGRESS)
-		elog(NOTICE, "AbortTransaction and not in in-progress state ");
+		elog(NOTICE, "AbortTransaction and not in in-progress state");
 
 	/* ----------------
 	 *	Tell the trigger manager that this transaction is about to be
@@ -1043,16 +1098,49 @@ AbortTransaction()
 	AtAbort_Notify();
 	CloseSequences();
 	AtEOXact_portals();
-	if (CommonSpecialPortalIsOpen())
-		CommonSpecialPortalClose();
 	RecordTransactionAbort();
 	RelationPurgeLocalRelation(false);
 	invalidate_temp_relations();
+	AtEOXact_SPI();
 	AtEOXact_nbtree();
 	AtAbort_Cache();
 	AtAbort_Locks();
 	AtAbort_Memory();
 	AtEOXact_Files();
+
+	SharedBufferChanged = false; /* safest place to do it */
+
+	/* ----------------
+	 *	State remains TRANS_ABORT until CleanupTransaction().
+	 * ----------------
+	 */
+}
+
+/* --------------------------------
+ *		CleanupTransaction
+ *
+ * --------------------------------
+ */
+static void
+CleanupTransaction()
+{
+	TransactionState s = CurrentTransactionState;
+
+	if (s->state == TRANS_DISABLED)
+		return;
+
+	/* ----------------
+	 *	State should still be TRANS_ABORT from AbortTransaction().
+	 * ----------------
+	 */
+	if (s->state != TRANS_ABORT)
+		elog(FATAL, "CleanupTransaction and not in abort state");
+
+	/* ----------------
+	 *	do abort cleanup processing
+	 * ----------------
+	 */
+	AtCleanup_Memory();
 
 	/* ----------------
 	 *	done with abort processing, set current transaction
@@ -1060,7 +1148,6 @@ AbortTransaction()
 	 * ----------------
 	 */
 	s->state = TRANS_DEFAULT;
-	SharedBufferChanged = false;/* safest place to do it */
 }
 
 /* --------------------------------
@@ -1133,7 +1220,7 @@ StartTransactionCommand()
 			/* ----------------
 			 *		This means we somehow aborted and the last call to
 			 *		CommitTransactionCommand() didn't clear the state so
-			 *		we remain in the ENDABORT state and mabey next time
+			 *		we remain in the ENDABORT state and maybe next time
 			 *		we get to CommitTransactionCommand() the state will
 			 *		get reset to default.
 			 * ----------------
@@ -1142,6 +1229,13 @@ StartTransactionCommand()
 			elog(NOTICE, "StartTransactionCommand: unexpected TBLOCK_ENDABORT");
 			break;
 	}
+
+	/*
+	 * We must switch to TransactionCommandContext before returning.
+	 * This is already done if we called StartTransaction, otherwise not.
+	 */
+	Assert(TransactionCommandContext != NULL);
+	MemoryContextSwitchTo(TransactionCommandContext);
 }
 
 /* --------------------------------
@@ -1181,28 +1275,25 @@ CommitTransactionCommand()
 			 *		command counter and return.  Someday we may free resources
 			 *		local to the command.
 			 *
-			 *		That someday is today, at least for memory allocated by
-			 *		command in the BlankPortal' HeapMemory context.
+			 *		That someday is today, at least for memory allocated in
+			 *		TransactionCommandContext.
 			 *				- vadim 03/25/97
 			 * ----------------
 			 */
 		case TBLOCK_INPROGRESS:
 			CommandCounterIncrement();
-#ifdef TBL_FREE_CMD_MEMORY
-			EndPortalAllocMode();
-			StartPortalAllocMode(DefaultAllocMode, 0);
-#endif
+			MemoryContextResetAndDeleteChildren(TransactionCommandContext);
 			break;
 
 			/* ----------------
 			 *		This is the case when we just got the "END TRANSACTION"
-			 *		statement, so we go back to the default state and
-			 *		commit the transaction.
+			 *		statement, so we commit the transaction and go back to
+			 *		the default state.
 			 * ----------------
 			 */
 		case TBLOCK_END:
-			s->blockState = TBLOCK_DEFAULT;
 			CommitTransaction();
+			s->blockState = TBLOCK_DEFAULT;
 			break;
 
 			/* ----------------
@@ -1218,10 +1309,11 @@ CommitTransactionCommand()
 			/* ----------------
 			 *		Here we were in an aborted transaction block which
 			 *		just processed the "END TRANSACTION" command from the
-			 *		user, so now we return the to default state.
+			 *		user, so clean up and return to the default state.
 			 * ----------------
 			 */
 		case TBLOCK_ENDABORT:
+			CleanupTransaction();
 			s->blockState = TBLOCK_DEFAULT;
 			break;
 	}
@@ -1240,11 +1332,12 @@ AbortCurrentTransaction()
 	{
 			/* ----------------
 			 *		if we aren't in a transaction block, we
-			 *		just do our usual abort transaction.
+			 *		just do the basic abort & cleanup transaction.
 			 * ----------------
 			 */
 		case TBLOCK_DEFAULT:
 			AbortTransaction();
+			CleanupTransaction();
 			break;
 
 			/* ----------------
@@ -1257,6 +1350,7 @@ AbortCurrentTransaction()
 		case TBLOCK_BEGIN:
 			s->blockState = TBLOCK_ABORT;
 			AbortTransaction();
+			/* CleanupTransaction happens when we exit TBLOCK_ABORT */
 			break;
 
 			/* ----------------
@@ -1269,6 +1363,7 @@ AbortCurrentTransaction()
 		case TBLOCK_INPROGRESS:
 			s->blockState = TBLOCK_ABORT;
 			AbortTransaction();
+			/* CleanupTransaction happens when we exit TBLOCK_ABORT */
 			break;
 
 			/* ----------------
@@ -1281,6 +1376,7 @@ AbortCurrentTransaction()
 		case TBLOCK_END:
 			s->blockState = TBLOCK_DEFAULT;
 			AbortTransaction();
+			CleanupTransaction();
 			break;
 
 			/* ----------------
@@ -1297,10 +1393,11 @@ AbortCurrentTransaction()
 			 *		Here we were in an aborted transaction block which
 			 *		just processed the "END TRANSACTION" command but somehow
 			 *		aborted again.. since we must have done the abort
-			 *		processing, we return to the default state.
+			 *		processing, we clean up and return to the default state.
 			 * ----------------
 			 */
 		case TBLOCK_ENDABORT:
+			CleanupTransaction();
 			s->blockState = TBLOCK_DEFAULT;
 			break;
 	}
@@ -1394,13 +1491,14 @@ EndTransactionBlock(void)
 	}
 
 	/* ----------------
-	 *	We should not get here, but if we do, we go to the ENDABORT
-	 *	state after printing a warning.  The upcoming call to
+	 *	here, the user issued COMMIT when not inside a transaction.
+	 *	Issue a notice and go to abort state.  The upcoming call to
 	 *	CommitTransactionCommand() will then put us back into the
 	 *	default state.
 	 * ----------------
 	 */
 	elog(NOTICE, "COMMIT: no transaction in progress");
+	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
 }
 
@@ -1427,29 +1525,23 @@ AbortTransactionBlock(void)
 		 *	here we were inside a transaction block something
 		 *	screwed up inside the system so we enter the abort state,
 		 *	do the abort processing and then return.
-		 *	We remain in the abort state until we see the upcoming
+		 *	We remain in the abort state until we see an
 		 *	END TRANSACTION command.
 		 * ----------------
 		 */
 		s->blockState = TBLOCK_ABORT;
-
-		/* ----------------
-		 *	do abort processing and return
-		 * ----------------
-		 */
 		AbortTransaction();
 		return;
 	}
 
 	/* ----------------
-	 *	this case should not be possible, because it would mean
-	 *	the user entered an "abort" from outside a transaction block.
-	 *	So we print an error message, abort the transaction and
-	 *	enter the "ENDABORT" state so we will end up in the default
-	 *	state after the upcoming CommitTransactionCommand().
+	 *	here, the user issued ABORT when not inside a transaction.
+	 *	Issue a notice and go to abort state.  The upcoming call to
+	 *	CommitTransactionCommand() will then put us back into the
+	 *	default state.
 	 * ----------------
 	 */
-	elog(NOTICE, "AbortTransactionBlock and not in in-progress state");
+	elog(NOTICE, "ROLLBACK: no transaction in progress");
 	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
 }
@@ -1495,27 +1587,16 @@ UserAbortTransactionBlock()
 		 * ----------------
 		 */
 		s->blockState = TBLOCK_ABORT;
-
-		/* ----------------
-		 *	do abort processing
-		 * ----------------
-		 */
 		AbortTransaction();
-
-		/* ----------------
-		 *	change to the end abort state and return
-		 * ----------------
-		 */
 		s->blockState = TBLOCK_ENDABORT;
 		return;
 	}
 
 	/* ----------------
-	 *	this case should not be possible, because it would mean
-	 *	the user entered a "rollback" from outside a transaction block.
-	 *	So we print an error message, abort the transaction and
-	 *	enter the "ENDABORT" state so we will end up in the default
-	 *	state after the upcoming CommitTransactionCommand().
+	 *	here, the user issued ABORT when not inside a transaction.
+	 *	Issue a notice and go to abort state.  The upcoming call to
+	 *	CommitTransactionCommand() will then put us back into the
+	 *	default state.
 	 * ----------------
 	 */
 	elog(NOTICE, "ROLLBACK: no transaction in progress");
@@ -1540,7 +1621,10 @@ AbortOutOfAnyTransaction()
 	 * Get out of any low-level transaction
 	 */
 	if (s->state != TRANS_DEFAULT)
+	{
 		AbortTransaction();
+		CleanupTransaction();
+	}
 
 	/*
 	 * Now reset the high-level state

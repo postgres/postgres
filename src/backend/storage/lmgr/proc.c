@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.75 2000/06/15 04:10:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.76 2000/06/28 03:32:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.75 2000/06/15 04:10:07 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.76 2000/06/28 03:32:07 tgl Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -119,7 +119,7 @@ InitProcGlobal(IPCKey key, int maxBackends)
 
 	/* attach to the free list */
 	ProcGlobal = (PROC_HDR *)
-		ShmemInitStruct("Proc Header", (unsigned) sizeof(PROC_HDR), &found);
+		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &found);
 
 	/* --------------------
 	 * We're the first - initialize.
@@ -185,7 +185,7 @@ InitProcess(IPCKey key)
 
 	/* attach to the free list */
 	ProcGlobal = (PROC_HDR *)
-		ShmemInitStruct("Proc Header", (unsigned) sizeof(PROC_HDR), &found);
+		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &found);
 	if (!found)
 	{
 		/* this should not happen. InitProcGlobal() is called before this. */
@@ -218,7 +218,7 @@ InitProcess(IPCKey key)
 		 * cleanup dead processes).
 		 */
 
-		MyProc = (PROC *) ShmemAlloc((unsigned) sizeof(PROC));
+		MyProc = (PROC *) ShmemAlloc(sizeof(PROC));
 		if (!MyProc)
 		{
 			SpinRelease(ProcStructLock);
@@ -458,7 +458,7 @@ ProcQueueAlloc(char *name)
 {
 	bool		found;
 	PROC_QUEUE *queue = (PROC_QUEUE *)
-	ShmemInitStruct(name, (unsigned) sizeof(PROC_QUEUE), &found);
+		ShmemInitStruct(name, sizeof(PROC_QUEUE), &found);
 
 	if (!queue)
 		return NULL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.34 2000/05/28 17:55:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.35 2000/06/28 03:31:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,8 +87,8 @@ init_execution_state(FunctionCachePtr fcache)
 	nextes = newes;
 	preves = (execution_state *) NULL;
 
-	queryTree_list = pg_parse_and_rewrite(fcache->src, fcache->argOidVect,
-										  nargs, FALSE);
+	queryTree_list = pg_parse_and_rewrite(fcache->src,
+										  fcache->argOidVect, nargs);
 
 	foreach(qtl_item, queryTree_list)
 	{

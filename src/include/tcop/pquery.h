@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pquery.h,v 1.14 2000/01/26 05:58:35 momjian Exp $
+ * $Id: pquery.h,v 1.15 2000/06/28 03:33:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,20 +15,13 @@
 #define PQUERY_H
 
 #include "executor/execdesc.h"
+#include "utils/portal.h"
 
-/* moved to execdesc.h
-extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
-								  CommandDest dest);
 
-*/
+extern void ProcessQuery(Query *parsetree, Plan *plan, CommandDest dest);
+
 extern EState *CreateExecutorState(void);
 
+extern Portal PreparePortal(char *portalName);
 
-extern void ProcessPortal(char *portalName, Query *parseTree,
-			  Plan *plan, EState *state, TupleDesc attinfo,
-			  CommandDest dest);
-
-extern void
-			ProcessQuery(Query *parsetree, Plan *plan, CommandDest dest);
-
-#endif	 /* pqueryIncluded */
+#endif	 /* PQUERY_H */

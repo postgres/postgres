@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.46 2000/06/15 04:09:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.47 2000/06/28 03:31:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,50 +16,19 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "lib/stringinfo.h"
+#include "utils/builtins.h"
+#include "catalog/catname.h"
+#include "catalog/indexing.h"
+#include "catalog/pg_rewrite.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteSupport.h"
-#include "tcop/tcopprot.h"
 
-Oid			LastOidProcessed = InvalidOid;
-
-
-/*
- * Convert given string to a suitably quoted string constant,
- * and append it to the StringInfo buffer.
- * XXX Any MULTIBYTE considerations here?
- */
-static void
-quoteString(StringInfo buf, char *source)
-{
-	char	   *current;
-
-	appendStringInfoChar(buf, '\'');
-	for (current = source; *current; current++)
-	{
-		char		ch = *current;
-
-		if (ch == '\'' || ch == '\\')
-		{
-			appendStringInfoChar(buf, '\\');
-			appendStringInfoChar(buf, ch);
-		}
-		else if (ch >= 0 && ch < ' ')
-			appendStringInfo(buf, "\\%03o", (int) ch);
-		else
-			appendStringInfoChar(buf, ch);
-	}
-	appendStringInfoChar(buf, '\'');
-}
 
 /*
  * InsertRule -
  *	  takes the arguments and inserts them as attributes into the system
  *	  relation "pg_rewrite"
- *
- *		MODS :	changes the value of LastOidProcessed as a side
- *				effect of inserting the rule tuple
  *
  *		ARGS :	rulname			-		name of the rule
  *				evtype			-		one of RETRIEVE,REPLACE,DELETE,APPEND
@@ -78,11 +47,17 @@ InsertRule(char *rulname,
 		   bool evinstead,
 		   char *actiontree)
 {
-	StringInfoData rulebuf;
 	Relation	eventrel;
 	Oid			eventrel_oid;
 	AttrNumber	evslot_index;
-	char	   *is_instead = "f";
+	int			i;
+	Datum		values[Natts_pg_rewrite];
+	char		nulls[Natts_pg_rewrite];
+	NameData	rname;
+	Relation	pg_rewrite_desc;
+	TupleDesc	tupDesc;
+	HeapTuple	tup;
+	Oid			rewriteObjectId;
 
 	eventrel = heap_openr(evobj, AccessShareLock);
 	eventrel_oid = RelationGetRelid(eventrel);
@@ -96,9 +71,6 @@ InsertRule(char *rulname,
 		evslot_index = attnameAttNum(eventrel, evslot);
 	heap_close(eventrel, AccessShareLock);
 
-	if (evinstead)
-		is_instead = "t";
-
 	if (evqual == NULL)
 		evqual = "<>";
 
@@ -106,23 +78,54 @@ InsertRule(char *rulname,
 		elog(ERROR, "Attempt to insert rule '%s' failed: already exists",
 			 rulname);
 
-	initStringInfo(&rulebuf);
-	appendStringInfo(&rulebuf,
-					 "INSERT INTO pg_rewrite (rulename, ev_type, ev_class, ev_attr, ev_action, ev_qual, is_instead) VALUES (");
-	quoteString(&rulebuf, rulname);
-	appendStringInfo(&rulebuf, ", %d::char, %u::oid, %d::int2, ",
-					 evtype, eventrel_oid, evslot_index);
-	quoteString(&rulebuf, actiontree);
-	appendStringInfo(&rulebuf, "::text, ");
-	quoteString(&rulebuf, evqual);
-	appendStringInfo(&rulebuf, "::text, '%s'::bool);",
-					 is_instead);
+	/* ----------------
+	 *	Set up *nulls and *values arrays
+	 * ----------------
+	 */
+	MemSet(nulls, ' ', sizeof(nulls));
 
-	pg_exec_query_dest(rulebuf.data, None, true);
+	i = 0;
+	namestrcpy(&rname, rulname);
+	values[i++] = NameGetDatum(&rname);
+	values[i++] = CharGetDatum(evtype + '0');
+	values[i++] = ObjectIdGetDatum(eventrel_oid);
+	values[i++] = Int16GetDatum(evslot_index);
+	values[i++] = BoolGetDatum(evinstead);
+	values[i++] = PointerGetDatum(lztextin(evqual));
+	values[i++] = PointerGetDatum(lztextin(actiontree));
 
-	pfree(rulebuf.data);
+	/* ----------------
+	 *	create a new pg_rewrite tuple
+	 * ----------------
+	 */
+	pg_rewrite_desc = heap_openr(RewriteRelationName, RowExclusiveLock);
 
-	return LastOidProcessed;
+	tupDesc = pg_rewrite_desc->rd_att;
+
+	tup = heap_formtuple(tupDesc,
+						 values,
+						 nulls);
+
+	heap_insert(pg_rewrite_desc, tup);
+
+	rewriteObjectId = tup->t_data->t_oid;
+
+	if (RelationGetForm(pg_rewrite_desc)->relhasindex)
+	{
+		Relation	idescs[Num_pg_rewrite_indices];
+
+		CatalogOpenIndices(Num_pg_rewrite_indices, Name_pg_rewrite_indices,
+						   idescs);
+		CatalogIndexInsert(idescs, Num_pg_rewrite_indices, pg_rewrite_desc,
+						   tup);
+		CatalogCloseIndices(Num_pg_rewrite_indices, idescs);
+	}
+
+	heap_freetuple(tup);
+
+	heap_close(pg_rewrite_desc, RowExclusiveLock);
+
+	return rewriteObjectId;
 }
 
 /*

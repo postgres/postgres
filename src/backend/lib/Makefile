@@ -4,14 +4,14 @@
 #    Makefile for lib (miscellaneous stuff)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.13 2000/05/29 05:44:45 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.14 2000/06/28 03:31:34 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-OBJS = bit.o fstack.o hasht.o lispsort.o stringinfo.o dllist.o
+OBJS = bit.o hasht.o lispsort.o stringinfo.o dllist.o
 
 all: SUBSYS.o
 

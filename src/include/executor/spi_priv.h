@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface private declarations
  *
- * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.6 1999/07/15 15:21:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.7 2000/06/28 03:33:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,8 @@ typedef struct
 	List	   *qtlist;
 	uint32		processed;		/* by Executor */
 	SPITupleTable *tuptable;
-	Portal		portal;			/* portal per procedure */
+	MemoryContext procCxt;		/* procedure context */
+	MemoryContext execCxt;		/* executor context */
 	MemoryContext savedcxt;
 	CommandId	savedId;
 } _SPI_connection;

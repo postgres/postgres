@@ -28,7 +28,6 @@
 #include "utils/fcache.h"
 #include "utils/datum.h"
 #include "utils/syscache.h"
-#include "utils/portal.h"
 #include "utils/builtins.h"
 #include "catalog/pg_language.h"
 #include "access/heapam.h"
@@ -94,5 +93,7 @@ extern void *SPI_palloc(Size size);
 extern void *SPI_repalloc(void *pointer, Size size);
 extern void SPI_pfree(void *pointer);
 extern void SPI_freetuple(HeapTuple pointer);
+
+extern void AtEOXact_SPI(void);
 
 #endif	 /* SPI_H */

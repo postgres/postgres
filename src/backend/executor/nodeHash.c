@@ -7,14 +7,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.47 2000/06/15 04:09:52 momjian Exp $
+ *	$Id: nodeHash.c,v 1.48 2000/06/28 03:31:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
  *		ExecHash		- generate an in-memory hash table of the relation
- *		ExecInitHash	- initialize node and subnodes..
+ *		ExecInitHash	- initialize node and subnodes
  *		ExecEndHash		- shutdown node and subnodes
  *
  */
@@ -23,11 +23,12 @@
 #include <math.h>
 
 #include "postgres.h"
+
 #include "executor/execdebug.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
-#include "utils/portal.h"
+
 
 static int	hashFunc(Datum key, int len, bool byVal);
 
@@ -235,8 +236,6 @@ ExecHashTableCreate(Hash *node)
 	int			totalbuckets;
 	int			bucketsize;
 	int			i;
-	Portal		myPortal;
-	char		myPortalName[64];
 	MemoryContext oldcxt;
 
 	/* ----------------
@@ -348,23 +347,21 @@ ExecHashTableCreate(Hash *node)
 	hashtable->outerBatchSize = NULL;
 
 	/* ----------------
-	 *	Create a named portal in which to keep the hashtable working storage.
-	 *	Each hashjoin must have its own portal, so be wary of name conflicts.
+	 *	Create temporary memory contexts in which to keep the hashtable
+	 *	working storage.  See notes in executor/hashjoin.h.
 	 * ----------------
 	 */
-	i = 0;
-	do
-	{
-		i++;
-		sprintf(myPortalName, "<hashtable %d>", i);
-		myPortal = GetPortalByName(myPortalName);
-	} while (PortalIsValid(myPortal));
-	myPortal = CreatePortal(myPortalName);
-	Assert(PortalIsValid(myPortal));
-	hashtable->myPortal = (void *) myPortal;	/* kluge for circular
-												 * includes */
-	hashtable->hashCxt = (MemoryContext) PortalGetVariableMemory(myPortal);
-	hashtable->batchCxt = (MemoryContext) PortalGetHeapMemory(myPortal);
+	hashtable->hashCxt = AllocSetContextCreate(TransactionCommandContext,
+											   "HashTableContext",
+											   ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
+
+	hashtable->batchCxt = AllocSetContextCreate(hashtable->hashCxt,
+												"HashBatchContext",
+												ALLOCSET_DEFAULT_MINSIZE,
+												ALLOCSET_DEFAULT_INITSIZE,
+												ALLOCSET_DEFAULT_MAXSIZE);
 
 	/* Allocate data that will live for the life of the hashjoin */
 
@@ -395,11 +392,10 @@ ExecHashTableCreate(Hash *node)
 	}
 
 	/*
-	 * Prepare portal for the first-scan space allocations; allocate the
+	 * Prepare context for the first-scan space allocations; allocate the
 	 * hashbucket array therein, and set each bucket "empty".
 	 */
 	MemoryContextSwitchTo(hashtable->batchCxt);
-	StartPortalAllocMode(DefaultAllocMode, 0);
 
 	hashtable->buckets = (HashJoinTuple *)
 		palloc(nbuckets * sizeof(HashJoinTuple));
@@ -435,9 +431,8 @@ ExecHashTableDestroy(HashJoinTable hashtable)
 			BufFileClose(hashtable->outerBatchFile[i]);
 	}
 
-	/* Destroy the portal to release all working memory */
-	/* cast here is a kluge for circular includes... */
-	PortalDrop((Portal *) &hashtable->myPortal);
+	/* Release working memory (batchCxt is a child, so it goes away too) */
+	MemoryContextDelete(hashtable->hashCxt);
 
 	/* And drop the control block */
 	pfree(hashtable);
@@ -676,11 +671,10 @@ ExecHashTableReset(HashJoinTable hashtable, long ntuples)
 
 	/*
 	 * Release all the hash buckets and tuples acquired in the prior pass,
-	 * and reinitialize the portal for a new pass.
+	 * and reinitialize the context for a new pass.
 	 */
+	MemoryContextReset(hashtable->batchCxt);
 	oldcxt = MemoryContextSwitchTo(hashtable->batchCxt);
-	EndPortalAllocMode();
-	StartPortalAllocMode(DefaultAllocMode, 0);
 
 	/*
 	 * We still use the same number of physical buckets as in the first

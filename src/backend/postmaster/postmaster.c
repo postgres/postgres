@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.149 2000/06/22 22:31:20 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.150 2000/06/28 03:31:52 tgl Exp $
  *
  * NOTES
  *
@@ -378,14 +378,37 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	umask((mode_t) 0077);
 
-	ResetAllOptions();
-
 	MyProcPid = getpid();
+
+	/*
+	 * Fire up essential subsystems: error and memory management
+	 */
+	EnableExceptionHandling(true);
+	MemoryContextInit();
+
+	/*
+	 * By default, palloc() requests in the postmaster will be allocated
+	 * in the PostmasterContext, which is space that can be recycled by
+	 * backends.  Allocated data that needs to be available to backends
+	 * should be allocated in TopMemoryContext.
+	 */
+	PostmasterContext = AllocSetContextCreate(TopMemoryContext,
+											  "Postmaster",
+											  ALLOCSET_DEFAULT_MINSIZE,
+											  ALLOCSET_DEFAULT_INITSIZE,
+											  ALLOCSET_DEFAULT_MAXSIZE);
+	MemoryContextSwitchTo(PostmasterContext);
+
+	/*
+	 * Options setup
+	 */
 	if (getenv("PGDATA"))
 		DataDir = strdup(getenv("PGDATA")); /* default value */
 
 	if (getenv("PGPORT"))
 		PostPortName = atoi(getenv("PGPORT"));
+
+	ResetAllOptions();
 
 	/*
 	 * First we must scan for a -D argument to get the data dir. Then
@@ -600,7 +623,6 @@ PostmasterMain(int argc, char *argv[])
 	}
 #endif
 	/* set up shared memory and semaphores */
-	EnableMemoryContext(TRUE);
 	reset_shared(PostPortName);
 
 	/*
@@ -662,7 +684,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Set up signal handlers for the postmaster process.
 	 */
-	PG_INITMASK();
+	pqinitmask();
 	PG_SETMASK(&BlockSig);
 
 	pqsignal(SIGHUP, SIGHUP_handler);	/* reread config file and have children do same */
@@ -1867,6 +1889,7 @@ DoBackend(Port *port)
 	/* Save port etc. for ps status */
 	MyProcPort = port;
 
+	/* Reset MyProcPid to new backend's pid */
 	MyProcPid = getpid();
 
 	/*
@@ -1946,6 +1969,19 @@ DoBackend(Port *port)
 
 	av[ac] = (char *) NULL;
 
+	/*
+	 * Release postmaster's working memory context so that backend can
+	 * recycle the space.  Note we couldn't do it earlier than here,
+	 * because port pointer is pointing into that space!  But now we
+	 * have copied all the interesting info into safe local storage.
+	 */
+	MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContextDelete(PostmasterContext);
+	PostmasterContext = NULL;
+
+	/*
+	 * Debug: print arguments being passed to backend
+	 */
 	if (DebugLvl > 1)
 	{
 		fprintf(stderr, "%s child[%d]: starting with (",

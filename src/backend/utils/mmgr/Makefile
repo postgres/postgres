@@ -4,14 +4,14 @@
 #    Makefile for utils/mmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Makefile,v 1.8 2000/05/29 05:45:40 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Makefile,v 1.9 2000/06/28 03:32:50 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-OBJS = aset.o mcxt.o palloc.o portalmem.o oset.o
+OBJS = aset.o mcxt.o portalmem.o
 
 all: SUBSYS.o
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.41 2000/01/26 05:56:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.42 2000/06/28 03:31:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,7 +136,7 @@ prs2_addToRelation(Oid relid,
 	 * create an in memory RewriteRule data structure which is cached by
 	 * every Relation descriptor. (see utils/cache/relcache.c)
 	 */
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	thisRule = (RewriteRule *) palloc(sizeof(RewriteRule));
 	if (qual != NULL)
 		qual = copyObject(qual);
@@ -159,7 +159,7 @@ prs2_addToRelation(Oid relid,
 	if (relation->rd_rules == NULL)
 	{
 
-		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 		rulelock = (RuleLock *) palloc(sizeof(RuleLock));
 		rulelock->numLocks = 1;
 		rulelock->rules = (RewriteRule **) palloc(sizeof(RewriteRule *));
@@ -181,7 +181,7 @@ prs2_addToRelation(Oid relid,
 		rulelock = relation->rd_rules;
 		numlock = rulelock->numLocks;
 		/* expand, for safety reasons */
-		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 		rulelock->rules = (RewriteRule **) repalloc(rulelock->rules,
 								  sizeof(RewriteRule *) * (numlock + 1));
 		MemoryContextSwitchTo(oldcxt);
@@ -212,7 +212,7 @@ prs2_deleteFromRelation(Oid relid, Oid ruleId)
 			break;
 	}
 	Assert(i < numlock);
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	pfree(rulelock->rules[i]);
 	MemoryContextSwitchTo(oldcxt);
 	if (numlock == 1)

@@ -3,12 +3,15 @@
  * aset.c
  *	  Allocation set definitions.
  *
+ * AllocSet is our standard implementation of the abstract MemoryContext
+ * type.
+ *
+ *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.27 2000/05/21 02:23:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.28 2000/06/28 03:32:50 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -30,15 +33,68 @@
  *	AllocSetReset() under the old way.
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
+
 #include "utils/memutils.h"
 
 
-#undef AllocSetReset
-#undef malloc
-#undef free
-#undef realloc
+/*
+ * AllocSetContext is defined in nodes/memnodes.h.
+ */
+typedef AllocSetContext *AllocSet;
 
+/*
+ * AllocPointer
+ *		Aligned pointer which may be a member of an allocation set.
+ */
+typedef void *AllocPointer;
+
+/*
+ * AllocBlock
+ *		An AllocBlock is the unit of memory that is obtained by aset.c
+ *		from malloc().	It contains one or more AllocChunks, which are
+ *		the units requested by palloc() and freed by pfree().  AllocChunks
+ *		cannot be returned to malloc() individually, instead they are put
+ *		on freelists by pfree() and re-used by the next palloc() that has
+ *		a matching request size.
+ *
+ *		AllocBlockData is the header data for a block --- the usable space
+ *		within the block begins at the next alignment boundary.
+ */
+typedef struct AllocBlockData
+{
+	AllocSet	aset;			/* aset that owns this block */
+	AllocBlock	next;			/* next block in aset's blocks list */
+	char	   *freeptr;		/* start of free space in this block */
+	char	   *endptr;			/* end of space in this block */
+} AllocBlockData;
+
+/*
+ * AllocChunk
+ *		The prefix of each piece of memory in an AllocBlock
+ *
+ * NB: this MUST match StandardChunkHeader as defined by utils/memutils.h.
+ */
+typedef struct AllocChunkData
+{
+	/* aset is the owning aset if allocated, or the freelist link if free */
+	void	   *aset;
+	/* size is always the size of the usable space in the chunk */
+	Size		size;
+} AllocChunkData;
+
+/*
+ * AllocPointerIsValid
+ *		True iff pointer is valid allocation pointer.
+ */
+#define AllocPointerIsValid(pointer) PointerIsValid(pointer)
+
+/*
+ * AllocSetIsValid
+ *		True iff set is valid allocation set.
+ */
+#define AllocSetIsValid(set) PointerIsValid(set)
 
 /*--------------------
  * Chunk freelist k holds chunks of size 1 << (k + ALLOC_MINBITS),
@@ -59,9 +115,9 @@
 /* Size of largest chunk that we use a fixed size for */
 
 /*--------------------
- * The first block allocated for an allocset has size ALLOC_MIN_BLOCK_SIZE.
+ * The first block allocated for an allocset has size initBlockSize.
  * Each time we have to allocate another block, we double the block size
- * (if possible, and without exceeding ALLOC_MAX_BLOCK_SIZE), so as to reduce
+ * (if possible, and without exceeding maxBlockSize), so as to reduce
  * the bookkeeping load on malloc().
  *
  * Blocks allocated to hold oversize chunks do not follow this rule, however;
@@ -74,19 +130,20 @@
  * AllocSetAlloc has discretion whether to put the request into an existing
  * block or make a single-chunk block.
  *
- * We must have ALLOC_MIN_BLOCK_SIZE > ALLOC_SMALLCHUNK_LIMIT and
+ * We must have initBlockSize > ALLOC_SMALLCHUNK_LIMIT and
  * ALLOC_BIGCHUNK_LIMIT > ALLOC_SMALLCHUNK_LIMIT.
  *--------------------
  */
-
-#define ALLOC_MIN_BLOCK_SIZE	(8 * 1024)
-#define ALLOC_MAX_BLOCK_SIZE	(8 * 1024 * 1024)
 
 #define ALLOC_BIGCHUNK_LIMIT	(64 * 1024)
 /* Chunks >= ALLOC_BIGCHUNK_LIMIT are immediately free()d by pfree() */
 
 #define ALLOC_BLOCKHDRSZ	MAXALIGN(sizeof(AllocBlockData))
 #define ALLOC_CHUNKHDRSZ	MAXALIGN(sizeof(AllocChunkData))
+
+/* Min safe value of allocation block size */
+#define ALLOC_MIN_BLOCK_SIZE  \
+	(ALLOC_SMALLCHUNK_LIMIT + ALLOC_CHUNKHDRSZ + ALLOC_BLOCKHDRSZ)
 
 #define AllocPointerGetChunk(ptr)	\
 					((AllocChunk)(((char *)(ptr)) - ALLOC_CHUNKHDRSZ))
@@ -95,6 +152,29 @@
 #define AllocPointerGetAset(ptr)	((AllocSet)(AllocPointerGetChunk(ptr)->aset))
 #define AllocPointerGetSize(ptr)	(AllocPointerGetChunk(ptr)->size)
 
+/*
+ * These functions implement the MemoryContext API for AllocSet contexts.
+ */
+static void *AllocSetAlloc(MemoryContext context, Size size);
+static void AllocSetFree(MemoryContext context, void *pointer);
+static void *AllocSetRealloc(MemoryContext context, void *pointer, Size size);
+static void AllocSetInit(MemoryContext context);
+static void AllocSetReset(MemoryContext context);
+static void AllocSetDelete(MemoryContext context);
+static void AllocSetStats(MemoryContext context);
+
+/*
+ * This is the virtual function table for AllocSet contexts.
+ */
+static MemoryContextMethods AllocSetMethods = {
+	AllocSetAlloc,
+	AllocSetFree,
+	AllocSetRealloc,
+	AllocSetInit,
+	AllocSetReset,
+	AllocSetDelete,
+	AllocSetStats
+};
 
 
 /* ----------
@@ -127,52 +207,159 @@ AllocSetFreeIndex(Size size)
  * Public routines
  */
 
+
 /*
- * AllocSetInit
- *		Initializes given allocation set.
+ * AllocSetContextCreate
+ *		Create a new AllocSet context.
  *
- * Note:
- *		The semantics of the mode are explained above.	Limit is ignored
- *		for dynamic and static modes.
- *
- * Exceptions:
- *		BadArg if set is invalid pointer.
- *		BadArg if mode is invalid.
+ * parent: parent context, or NULL if top-level context
+ * name: name of context (for debugging --- string will be copied)
+ * minContextSize: minimum context size
+ * initBlockSize: initial allocation block size
+ * maxBlockSize: maximum allocation block size
  */
-void
-AllocSetInit(AllocSet set, AllocMode mode, Size limit)
+MemoryContext
+AllocSetContextCreate(MemoryContext parent,
+					  const char *name,
+					  Size minContextSize,
+					  Size initBlockSize,
+					  Size maxBlockSize)
 {
-	AssertArg(PointerIsValid(set));
-	AssertArg((int) DynamicAllocMode <= (int) mode);
-	AssertArg((int) mode <= (int) BoundedAllocMode);
+	AllocSet	context;
+
+	/* Do the type-independent part of context creation */
+	context = (AllocSet) MemoryContextCreate(T_AllocSetContext,
+											 sizeof(AllocSetContext),
+											 &AllocSetMethods,
+											 parent,
+											 name);
+	/*
+	 * Make sure alloc parameters are safe, and save them
+	 */
+	initBlockSize = MAXALIGN(initBlockSize);
+	if (initBlockSize < ALLOC_MIN_BLOCK_SIZE)
+		initBlockSize = ALLOC_MIN_BLOCK_SIZE;
+	maxBlockSize = MAXALIGN(maxBlockSize);
+	if (maxBlockSize < initBlockSize)
+		maxBlockSize = initBlockSize;
+	context->initBlockSize = initBlockSize;
+	context->maxBlockSize = maxBlockSize;
 
 	/*
-	 * XXX mode is currently ignored and treated as DynamicAllocMode. XXX
-	 * limit is also ignored.  This affects this whole file.
+	 * Grab always-allocated space, if requested
 	 */
+	if (minContextSize > ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ)
+	{
+		Size		blksize = MAXALIGN(minContextSize);
+		AllocBlock	block;
 
-	memset(set, 0, sizeof(AllocSetData));
+		block = (AllocBlock) malloc(blksize);
+		if (block == NULL)
+			elog(ERROR, "Memory exhausted in AllocSetContextCreate()");
+		block->aset = context;
+		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
+		block->endptr = ((char *) block) + blksize;
+		block->next = context->blocks;
+		context->blocks = block;
+		/* Mark block as not to be released at reset time */
+		context->keeper = block;
+	}
+
+	return (MemoryContext) context;
 }
 
+/*
+ * AllocSetInit
+ *		Context-type-specific initialization routine.
+ *
+ * This is called by MemoryContextCreate() after setting up the
+ * generic MemoryContext fields and before linking the new context
+ * into the context tree.  We must do whatever is needed to make the
+ * new context minimally valid for deletion.  We must *not* risk
+ * failure --- thus, for example, allocating more memory is not cool.
+ * (AllocSetContextCreate can allocate memory when it gets control
+ * back, however.)
+ */
+static void
+AllocSetInit(MemoryContext context)
+{
+	/*
+	 * Since MemoryContextCreate already zeroed the context node,
+	 * we don't have to do anything here: it's already OK.
+	 */
+}
 
 /*
  * AllocSetReset
  *		Frees all memory which is allocated in the given set.
  *
- * Exceptions:
- *		BadArg if set is invalid.
+ * Actually, this routine has some discretion about what to do.
+ * It should mark all allocated chunks freed, but it need not
+ * necessarily give back all the resources the set owns.  Our
+ * actual implementation is that we hang on to any "keeper"
+ * block specified for the set.
  */
-void
-AllocSetReset(AllocSet set)
+static void
+AllocSetReset(MemoryContext context)
 {
+	AllocSet	set = (AllocSet) context;
 	AllocBlock	block = set->blocks;
-	AllocBlock	next;
 
 	AssertArg(AllocSetIsValid(set));
 
 	while (block != NULL)
 	{
-		next = block->next;
+		AllocBlock	next = block->next;
+
+		if (block == set->keeper)
+		{
+			/* Reset the block, but don't return it to malloc */
+			block->next = NULL;
+			block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
+#ifdef CLOBBER_FREED_MEMORY
+			/* Wipe freed memory for debugging purposes */
+			memset(block->freeptr, 0x7F,
+				   ((char *) block->endptr) - ((char *) block->freeptr));
+#endif
+		}
+		else
+		{
+			/* Normal case, release the block */
+#ifdef CLOBBER_FREED_MEMORY
+			/* Wipe freed memory for debugging purposes */
+			memset(block, 0x7F, ((char *) block->endptr) - ((char *) block));
+#endif
+			free(block);
+		}
+		block = next;
+	}
+
+	/* Now blocks list is either empty or just the keeper block */
+	set->blocks = set->keeper;
+	/* Clear chunk freelists in any case */
+	MemSet(set->freelist, 0, sizeof(set->freelist));
+}
+
+/*
+ * AllocSetDelete
+ *		Frees all memory which is allocated in the given set,
+ *		in preparation for deletion of the set.
+ *
+ * Unlike AllocSetReset, this *must* free all resources of the set.
+ * But note we are not responsible for deleting the context node itself.
+ */
+static void
+AllocSetDelete(MemoryContext context)
+{
+	AllocSet	set = (AllocSet) context;
+	AllocBlock	block = set->blocks;
+
+	AssertArg(AllocSetIsValid(set));
+
+	while (block != NULL)
+	{
+		AllocBlock	next = block->next;
+
 #ifdef CLOBBER_FREED_MEMORY
 		/* Wipe freed memory for debugging purposes */
 		memset(block, 0x7F, ((char *) block->endptr) - ((char *) block));
@@ -181,38 +368,21 @@ AllocSetReset(AllocSet set)
 		block = next;
 	}
 
-	memset(set, 0, sizeof(AllocSetData));
-}
-
-/*
- * AllocSetContains
- *		True iff allocation set contains given allocation element.
- *
- * Exceptions:
- *		BadArg if set is invalid.
- *		BadArg if pointer is invalid.
- */
-bool
-AllocSetContains(AllocSet set, AllocPointer pointer)
-{
-	AssertArg(AllocSetIsValid(set));
-	AssertArg(AllocPointerIsValid(pointer));
-
-	return (AllocPointerGetAset(pointer) == set);
+	/* Make it look empty, just in case... */
+	set->blocks = NULL;
+	MemSet(set->freelist, 0, sizeof(set->freelist));
+	set->keeper = NULL;
 }
 
 /*
  * AllocSetAlloc
  *		Returns pointer to allocated memory of given size; memory is added
  *		to the set.
- *
- * Exceptions:
- *		BadArg if set is invalid.
- *		MemoryExhausted if allocation fails.
  */
-AllocPointer
-AllocSetAlloc(AllocSet set, Size size)
+static void *
+AllocSetAlloc(MemoryContext context, Size size)
 {
+	AllocSet	set = (AllocSet) context;
 	AllocBlock	block;
 	AllocChunk	chunk;
 	AllocChunk	priorfree = NULL;
@@ -225,7 +395,6 @@ AllocSetAlloc(AllocSet set, Size size)
 	/*
 	 * Lookup in the corresponding free list if there is a free chunk we
 	 * could reuse
-	 *
 	 */
 	fidx = AllocSetFreeIndex(size);
 	for (chunk = set->freelist[fidx]; chunk; chunk = (AllocChunk) chunk->aset)
@@ -238,7 +407,6 @@ AllocSetAlloc(AllocSet set, Size size)
 	/*
 	 * If one is found, remove it from the free list, make it again a
 	 * member of the alloc set and return its data address.
-	 *
 	 */
 	if (chunk != NULL)
 	{
@@ -284,7 +452,7 @@ AllocSetAlloc(AllocSet set, Size size)
 		blksize = chunk_size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) malloc(blksize);
 		if (block == NULL)
-			elog(FATAL, "Memory exhausted in AllocSetAlloc()");
+			elog(ERROR, "Memory exhausted in AllocSetAlloc()");
 		block->aset = set;
 		block->freeptr = block->endptr = ((char *) block) + blksize;
 
@@ -317,7 +485,7 @@ AllocSetAlloc(AllocSet set, Size size)
 	{
 		if (set->blocks == NULL)
 		{
-			blksize = ALLOC_MIN_BLOCK_SIZE;
+			blksize = set->initBlockSize;
 			block = (AllocBlock) malloc(blksize);
 		}
 		else
@@ -327,15 +495,18 @@ AllocSetAlloc(AllocSet set, Size size)
 
 			/*
 			 * Special case: if very first allocation was for a large
-			 * chunk, could have a funny-sized top block.  Do something
-			 * reasonable.
+			 * chunk (or we have a small "keeper" block), could have an
+			 * undersized top block.  Do something reasonable.
 			 */
-			if (blksize < ALLOC_MIN_BLOCK_SIZE)
-				blksize = ALLOC_MIN_BLOCK_SIZE;
-			/* Crank it up, but not past max */
-			blksize <<= 1;
-			if (blksize > ALLOC_MAX_BLOCK_SIZE)
-				blksize = ALLOC_MAX_BLOCK_SIZE;
+			if (blksize < set->initBlockSize)
+				blksize = set->initBlockSize;
+			else
+			{
+				/* Crank it up, but not past max */
+				blksize <<= 1;
+				if (blksize > set->maxBlockSize)
+					blksize = set->maxBlockSize;
+			}
 			/* Try to allocate it */
 			block = (AllocBlock) malloc(blksize);
 
@@ -352,7 +523,7 @@ AllocSetAlloc(AllocSet set, Size size)
 		}
 
 		if (block == NULL)
-			elog(FATAL, "Memory exhausted in AllocSetAlloc()");
+			elog(ERROR, "Memory exhausted in AllocSetAlloc()");
 		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
 		block->endptr = ((char *) block) + blksize;
@@ -376,22 +547,12 @@ AllocSetAlloc(AllocSet set, Size size)
 /*
  * AllocSetFree
  *		Frees allocated memory; memory is removed from the set.
- *
- * Exceptions:
- *		BadArg if set is invalid.
- *		BadArg if pointer is invalid.
- *		BadArg if pointer is not member of set.
  */
-void
-AllocSetFree(AllocSet set, AllocPointer pointer)
+static void
+AllocSetFree(MemoryContext context, void *pointer)
 {
-	AllocChunk	chunk;
-
-	/* AssertArg(AllocSetIsValid(set)); */
-	/* AssertArg(AllocPointerIsValid(pointer)); */
-	AssertArg(AllocSetContains(set, pointer));
-
-	chunk = AllocPointerGetChunk(pointer);
+	AllocSet	set = (AllocSet) context;
+	AllocChunk	chunk = AllocPointerGetChunk(pointer);
 
 #ifdef CLOBBER_FREED_MEMORY
 	/* Wipe freed memory for debugging purposes */
@@ -446,24 +607,15 @@ AllocSetFree(AllocSet set, AllocPointer pointer)
  *		Returns new pointer to allocated memory of given size; this memory
  *		is added to the set.  Memory associated with given pointer is copied
  *		into the new memory, and the old memory is freed.
- *
- * Exceptions:
- *		BadArg if set is invalid.
- *		BadArg if pointer is invalid.
- *		BadArg if pointer is not member of set.
- *		MemoryExhausted if allocation fails.
  */
-AllocPointer
-AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
+static void *
+AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 {
+	AllocSet	set = (AllocSet) context;
 	Size		oldsize;
 
-	/* AssertArg(AllocSetIsValid(set)); */
-	/* AssertArg(AllocPointerIsValid(pointer)); */
-	AssertArg(AllocSetContains(set, pointer));
-
 	/*
-	 * Chunk sizes are aligned to power of 2 on AllocSetAlloc(). Maybe the
+	 * Chunk sizes are aligned to power of 2 in AllocSetAlloc(). Maybe the
 	 * allocated area already is >= the new size.  (In particular, we
 	 * always fall out here if the requested size is a decrease.)
 	 */
@@ -503,7 +655,7 @@ AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
 		blksize = size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) realloc(block, blksize);
 		if (block == NULL)
-			elog(FATAL, "Memory exhausted in AllocSetReAlloc()");
+			elog(ERROR, "Memory exhausted in AllocSetReAlloc()");
 		block->freeptr = block->endptr = ((char *) block) + blksize;
 
 		/* Update pointers since block has likely been moved */
@@ -520,35 +672,26 @@ AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
 		/* Normal small-chunk case: just do it by brute force. */
 
 		/* allocate new chunk */
-		AllocPointer newPointer = AllocSetAlloc(set, size);
+		AllocPointer newPointer = AllocSetAlloc((MemoryContext) set, size);
 
 		/* transfer existing data (certain to fit) */
 		memcpy(newPointer, pointer, oldsize);
 
 		/* free old chunk */
-		AllocSetFree(set, pointer);
+		AllocSetFree((MemoryContext) set, pointer);
 
 		return newPointer;
 	}
 }
 
 /*
- * AllocSetDump
- *		Displays allocated set.
- */
-void
-AllocSetDump(AllocSet set)
-{
-	elog(DEBUG, "Currently unable to dump AllocSet");
-}
-
-/*
  * AllocSetStats
  *		Displays stats about memory consumption of an allocset.
  */
-void
-AllocSetStats(AllocSet set, const char *ident)
+static void
+AllocSetStats(MemoryContext context)
 {
+	AllocSet	set = (AllocSet) context;
 	long		nblocks = 0;
 	long		nchunks = 0;
 	long		totalspace = 0;
@@ -556,8 +699,6 @@ AllocSetStats(AllocSet set, const char *ident)
 	AllocBlock	block;
 	AllocChunk	chunk;
 	int			fidx;
-
-	AssertArg(AllocSetIsValid(set));
 
 	for (block = set->blocks; block != NULL; block = block->next)
 	{
@@ -576,6 +717,6 @@ AllocSetStats(AllocSet set, const char *ident)
 	}
 	fprintf(stderr,
 			"%s: %ld total in %ld blocks; %ld free (%ld chunks); %ld used\n",
-			ident, totalspace, nblocks, freespace, nchunks,
+			set->header.name, totalspace, nblocks, freespace, nchunks,
 			totalspace - freespace);
 }

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.8 1999/12/30 22:58:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.9 2000/06/28 03:30:54 tgl Exp $
 Postgres documentation
 -->
 
@@ -153,12 +153,13 @@ SELECT
 
      <varlistentry>
       <term><computeroutput>
-NOTICE
-BlankPortalAssignName: portal "<replaceable class="parameter">cursorname</replaceable>" already exists
+NOTICE:  Closing pre-existing portal "<replaceable class="parameter">cursorname</replaceable>"
        </computeroutput></term>
       <listitem>
        <para>
-	This error occurs if <replaceable class="parameter">cursorname</replaceable> is already declared.
+	This message is reported if the same cursor name was already declared
+	in the current transaction block.  The previous definition is
+	discarded.
        </para>
       </listitem>
      </varlistentry>

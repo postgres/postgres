@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.51 2000/05/30 00:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.52 2000/06/28 03:31:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,29 +262,23 @@ InitShmem(unsigned int key, unsigned int size)
 }
 
 /*
- * ShmemAlloc -- allocate word-aligned byte string from
- *		shared memory
+ * ShmemAlloc -- allocate max-aligned byte string from shared memory
  *
  * Assumes ShmemLock and ShmemFreeStart are initialized.
  * Returns: real pointer to memory or NULL if we are out
  *		of space.  Has to return a real pointer in order
- *		to be compatable with malloc().
+ *		to be compatible with malloc().
  */
-long *
-ShmemAlloc(unsigned long size)
+void *
+ShmemAlloc(Size size)
 {
 	unsigned long tmpFree;
-	long	   *newSpace;
+	void	   *newSpace;
 
 	/*
-	 * ensure space is word aligned.
-	 *
-	 * Word-alignment is not good enough. We have to be more conservative:
-	 * doubles need 8-byte alignment. (We probably only need this on RISC
-	 * platforms but this is not a big waste of space.) - ay 12/94
+	 * ensure all space is adequately aligned.
 	 */
-	if (size % sizeof(double))
-		size += sizeof(double) - (size % sizeof(double));
+	size = MAXALIGN(size);
 
 	Assert(*ShmemFreeStart);
 
@@ -293,7 +287,7 @@ ShmemAlloc(unsigned long size)
 	tmpFree = *ShmemFreeStart + size;
 	if (tmpFree <= ShmemSize)
 	{
-		newSpace = (long *) MAKE_PTR(*ShmemFreeStart);
+		newSpace = (void *) MAKE_PTR(*ShmemFreeStart);
 		*ShmemFreeStart += size;
 	}
 	else
@@ -302,7 +296,8 @@ ShmemAlloc(unsigned long size)
 	SpinRelease(ShmemLock);
 
 	if (!newSpace)
-		elog(NOTICE, "ShmemAlloc: out of memory ");
+		elog(NOTICE, "ShmemAlloc: out of memory");
+
 	return newSpace;
 }
 
@@ -336,7 +331,7 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 			  int hash_flags)	/* info about infoP */
 {
 	bool		found;
-	long	   *location;
+	void	   *location;
 
 	/*
 	 * Hash tables allocated in shared memory have a fixed directory; it
@@ -478,12 +473,12 @@ ShmemPIDDestroy(int pid)
  *		the object is already in the shmem index (hence, already
  *		initialized).
  */
-long *
-ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
+void *
+ShmemInitStruct(char *name, Size size, bool *foundPtr)
 {
 	ShmemIndexEnt *result,
 				item;
-	long	   *structPtr;
+	void	   *structPtr;
 
 	strncpy(item.key, name, SHMEM_INDEX_KEYSIZE);
 	item.location = BAD_LOCATION;
@@ -498,27 +493,27 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 #endif
 
 		/*
-		 * If the shmem index doesnt exist, we fake it.
+		 * If the shmem index doesn't exist, we fake it.
 		 *
 		 * If we are creating the first shmem index, then let shmemalloc()
 		 * allocate the space for a new HTAB.  Otherwise, find the old one
 		 * and return that.  Notice that the ShmemIndexLock is held until
 		 * the shmem index has been completely initialized.
 		 */
-		Assert(!strcmp(name, strname));
+		Assert(strcmp(name, strname) == 0);
 		if (ShmemBootstrap)
 		{
 			/* in POSTMASTER/Single process */
 
 			*foundPtr = FALSE;
-			return (long *) ShmemAlloc(size);
+			return ShmemAlloc(size);
 		}
 		else
 		{
 			Assert(ShmemIndexOffset);
 
 			*foundPtr = TRUE;
-			return (long *) MAKE_PTR(*ShmemIndexOffset);
+			return (void *) MAKE_PTR(*ShmemIndexOffset);
 		}
 
 
@@ -554,12 +549,12 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 			/* let caller print its message too */
 			return NULL;
 		}
-		structPtr = (long *) MAKE_PTR(result->location);
+		structPtr = (void *) MAKE_PTR(result->location);
 	}
 	else
 	{
 		/* It isn't in the table yet. allocate and initialize it */
-		structPtr = ShmemAlloc((long) size);
+		structPtr = ShmemAlloc(size);
 		if (!structPtr)
 		{
 			/* out of memory */

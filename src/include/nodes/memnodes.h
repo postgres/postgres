@@ -7,100 +7,88 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.16 2000/01/26 05:58:16 momjian Exp $
+ * $Id: memnodes.h,v 1.17 2000/06/28 03:33:15 tgl Exp $
  *
- * XXX the typedefs in this file are different from the other ???nodes.h;
- *	  they are pointers to structures instead of the structures themselves.
- *	  If you're wondering, this is plain laziness. I don't want to touch
- *	  the memory context code which should be revamped altogether some day.
- *														- ay 10/94
  *-------------------------------------------------------------------------
  */
 #ifndef MEMNODES_H
 #define MEMNODES_H
 
-#include "lib/fstack.h"
 #include "nodes/nodes.h"
-#include "utils/memutils.h"
 
 /*
  * MemoryContext
  *		A logical context in which memory allocations occur.
  *
- * The types of memory contexts can be thought of as members of the
- * following inheritance hierarchy with properties summarized below.
+ * MemoryContext itself is an abstract type that can have multiple
+ * implementations, though for now we have only AllocSetContext.
+ * The function pointers in MemoryContextMethods define one specific
+ * implementation of MemoryContext --- they are a virtual function table
+ * in C++ terms.
  *
- *						Node
- *						|
- *				MemoryContext___
- *				/				\
- *		GlobalMemory	PortalMemoryContext
- *						/				\
- *		PortalVariableMemory	PortalHeapMemory
+ * Node types that are actual implementations of memory contexts must
+ * begin with the same fields as MemoryContext.
  *
- *						Flushed at		Flushed at		Checkpoints
- *						Transaction		Portal
- *						Commit			Close
- *
- * GlobalMemory					n				n				n
- * PortalVariableMemory			n				y				n
- * PortalHeapMemory				y				y				y
+ * Note: for largely historical reasons, typedef MemoryContext is a pointer
+ * to the context struct rather than the struct type itself.
  */
 
-typedef struct MemoryContextMethodsData
+typedef struct MemoryContextMethods
 {
-	Pointer		(*alloc) ();
-	void		(*free_p) ();	/* need to use free as a #define, so can't
-								 * use free */
-	Pointer		(*realloc) ();
-	char	   *(*getName) ();
-	void		(*dump) ();
-}		   *MemoryContextMethods;
+	void	   *(*alloc) (MemoryContext context, Size size);
+	/* call this free_p in case someone #define's free() */
+	void		(*free_p) (MemoryContext context, void *pointer);
+	void	   *(*realloc) (MemoryContext context, void *pointer, Size size);
+	void		(*init) (MemoryContext context);
+	void		(*reset) (MemoryContext context);
+	void		(*delete) (MemoryContext context);
+	void		(*stats) (MemoryContext context);
+} MemoryContextMethods;
+
 
 typedef struct MemoryContextData
 {
-	NodeTag		type;
-	MemoryContextMethods method;
+	NodeTag		type;				/* identifies exact kind of context */
+	MemoryContextMethods *methods;	/* virtual function table */
+	MemoryContext parent;			/* NULL if no parent (toplevel context) */
+	MemoryContext firstchild;		/* head of linked list of children */
+	MemoryContext nextchild;		/* next child of same parent */
+	char	   *name;				/* context name (just for debugging) */
 } MemoryContextData;
 
-/* utils/mcxt.h contains typedef struct MemoryContextData *MemoryContext */
+/* utils/palloc.h contains typedef struct MemoryContextData *MemoryContext */
 
-/* think about doing this right some time but we'll have explicit fields
-   for now -ay 10/94 */
-typedef struct GlobalMemoryData
+
+/*
+ * AllocSetContext is our standard implementation of MemoryContext.
+ */
+typedef struct AllocBlockData *AllocBlock; /* internal to aset.c */
+typedef struct AllocChunkData *AllocChunk;
+
+typedef struct AllocSetContext
 {
-	NodeTag		type;
-	MemoryContextMethods method;
-	AllocSetData setData;
-	char	   *name;
-	OrderedElemData elemData;
-} GlobalMemoryData;
+	MemoryContextData header;		/* Standard memory-context fields */
+	/* Info about storage allocated in this context: */
+	AllocBlock	blocks;				/* head of list of blocks in this set */
+#define ALLOCSET_NUM_FREELISTS	8
+	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS]; /* free chunk lists */
+	/* Allocation parameters for this context: */
+	Size		initBlockSize;		/* initial block size */
+	Size		maxBlockSize;		/* maximum block size */
+	AllocBlock	keeper;				/* if not NULL, keep this block
+									 * over resets */
+} AllocSetContext;
 
-/* utils/mcxt.h contains typedef struct GlobalMemoryData *GlobalMemory */
-
-typedef struct MemoryContextData *PortalMemoryContext;
-
-typedef struct PortalVariableMemoryData
-{
-	NodeTag		type;
-	MemoryContextMethods method;
-	AllocSetData setData;
-}		   *PortalVariableMemory;
-
-typedef struct PortalHeapMemoryData
-{
-	NodeTag		type;
-	MemoryContextMethods method;
-	Pointer		block;
-	FixedStackData stackData;
-}		   *PortalHeapMemory;
 
 /*
  * MemoryContextIsValid
  *		True iff memory context is valid.
+ *
+ * Add new context types to the set accepted by this macro.
  */
 #define MemoryContextIsValid(context) \
-	(IsA(context,MemoryContext) || IsA(context,GlobalMemory) || \
-	 IsA(context,PortalVariableMemory) || IsA(context,PortalHeapMemory))
+	((context) != NULL && \
+	 (IsA((context), AllocSetContext)))
+
 
 #endif	 /* MEMNODES_H */

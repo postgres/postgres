@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.69 2000/06/18 22:44:31 tgl Exp $
+ * $Id: nodes.h,v 1.70 2000/06/28 03:33:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,10 +122,7 @@ typedef enum NodeTag
 	 *---------------------
 	 */
 	T_MemoryContext = 400,
-	T_GlobalMemory,
-	T_PortalMemoryContext,
-	T_PortalVariableMemory,
-	T_PortalHeapMemory,
+	T_AllocSetContext,
 
 	/*---------------------
 	 * TAGS FOR VALUE NODES (pg_list.h)

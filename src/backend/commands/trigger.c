@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.69 2000/06/08 22:37:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.70 2000/06/28 03:31:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1029,8 +1029,8 @@ ltrmark:;
  * end.
  * ----------
  */
-static GlobalMemory deftrig_gcxt = NULL;
-static GlobalMemory deftrig_cxt = NULL;
+static MemoryContext deftrig_gcxt = NULL;
+static MemoryContext deftrig_cxt = NULL;
 
 /* ----------
  * Global data that tells which triggers are actually in
@@ -1104,7 +1104,7 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 	 * as the current and return that.
 	 * ----------
 	 */
-	oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_cxt);
+	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
 	trigstate = (DeferredTriggerStatus)
 		palloc(sizeof(DeferredTriggerStatusData));
@@ -1366,7 +1366,12 @@ deferredTriggerInvokeEvents(bool immediate_only)
 int
 DeferredTriggerInit(void)
 {
-	deftrig_gcxt = CreateGlobalMemory("DeferredTriggerSession");
+	deftrig_gcxt = AllocSetContextCreate(TopMemoryContext,
+										 "DeferredTriggerSession",
+										 ALLOCSET_DEFAULT_MINSIZE,
+										 ALLOCSET_DEFAULT_INITSIZE,
+										 ALLOCSET_DEFAULT_MAXSIZE);
+
 	return 0;
 }
 
@@ -1395,8 +1400,12 @@ DeferredTriggerBeginXact(void)
 	 * from the per session context to here.
 	 * ----------
 	 */
-	deftrig_cxt = CreateGlobalMemory("DeferredTriggerXact");
-	oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_cxt);
+	deftrig_cxt = AllocSetContextCreate(TopTransactionContext,
+										"DeferredTriggerXact",
+										ALLOCSET_DEFAULT_MINSIZE,
+										ALLOCSET_DEFAULT_INITSIZE,
+										ALLOCSET_DEFAULT_MAXSIZE);
+	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
 	deftrig_all_isset = deftrig_dfl_all_isset;
 	deftrig_all_isdeferred = deftrig_dfl_all_isdeferred;
@@ -1461,7 +1470,7 @@ DeferredTriggerEndXact(void)
 
 	deferredTriggerInvokeEvents(false);
 
-	GlobalMemoryDestroy(deftrig_cxt);
+	MemoryContextDelete(deftrig_cxt);
 	deftrig_cxt = NULL;
 }
 
@@ -1484,7 +1493,7 @@ DeferredTriggerAbortXact(void)
 	if (deftrig_cxt == NULL)
 		return;
 
-	GlobalMemoryDestroy(deftrig_cxt);
+	MemoryContextDelete(deftrig_cxt);
 	deftrig_cxt = NULL;
 }
 
@@ -1521,7 +1530,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			 * ... outside of a transaction block
 			 * ----------
 			 */
-			oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_gcxt);
+			oldcxt = MemoryContextSwitchTo(deftrig_gcxt);
 
 			/* ----------
 			 * Drop all information about individual trigger states per
@@ -1555,7 +1564,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			 * ... inside of a transaction block
 			 * ----------
 			 */
-			oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_cxt);
+			oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
 			/* ----------
 			 * Drop all information about individual trigger states per
@@ -1701,7 +1710,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		 * states of individual triggers on session level.
 		 * ----------
 		 */
-		oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_gcxt);
+		oldcxt = MemoryContextSwitchTo(deftrig_gcxt);
 
 		foreach(l, loid)
 		{
@@ -1739,7 +1748,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		 * states of individual triggers on transaction level.
 		 * ----------
 		 */
-		oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_cxt);
+		oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
 		foreach(l, loid)
 		{
@@ -1827,7 +1836,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	 * Create a new event
 	 * ----------
 	 */
-	oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_cxt);
+	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
 	ntriggers = rel->trigdesc->n_after_row[event];
 	triggers = rel->trigdesc->tg_after_row[event];
@@ -2022,7 +2031,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	 * Anything's fine up to here. Add the new event to the queue.
 	 * ----------
 	 */
-	oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_cxt);
+	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 	deferredTriggerAddEvent(new_event);
 	MemoryContextSwitchTo(oldcxt);
 

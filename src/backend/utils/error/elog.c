@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.60 2000/06/04 15:06:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.61 2000/06/28 03:32:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #include <sys/time.h>
 #include <ctype.h>
 #ifdef ENABLE_SYSLOG
-# include <syslog.h>
+#include <syslog.h>
 #endif
 
 #include "libpq/libpq.h"
@@ -89,10 +89,9 @@ static int	ElogDebugIndentLevel = 0;
  *--------------------
  */
 void
-elog(int lev, const char *fmt,...)
+elog(int lev, const char *fmt, ...)
 {
 	va_list		ap;
-
 	/*
 	 * The expanded format and final output message are dynamically
 	 * allocated if necessary, but not if they fit in the "reasonable
@@ -101,12 +100,21 @@ elog(int lev, const char *fmt,...)
 	 * working (since memory-clobber errors often take out malloc first).
 	 * Don't make these buffers unreasonably large though, on pain of
 	 * having to chase a bug with no error message.
+	 *
+	 * Note that we use malloc() not palloc() because we want to retain
+	 * control if we run out of memory.  palloc() would recursively call
+	 * elog(ERROR), which would be all right except if we are working on a
+	 * FATAL or REALLYFATAL error.  We'd lose track of the fatal condition
+	 * and report a mere ERROR to outer loop, which would be a Bad Thing.
+	 * So, we substitute an appropriate message in-place, without downgrading
+	 * the level if it's above ERROR.
 	 */
 	char		fmt_fixedbuf[128];
 	char		msg_fixedbuf[256];
 	char	   *fmt_buf = fmt_fixedbuf;
 	char	   *msg_buf = msg_fixedbuf;
-
+	/* this buffer is only used for strange values of lev: */
+	char		prefix_buf[32];
 	/* this buffer is only used if errno has a bogus value: */
 	char		errorstr_buf[32];
 	const char *errorstr;
@@ -115,13 +123,21 @@ elog(int lev, const char *fmt,...)
 	char	   *bp;
 	int			indent = 0;
 	int			space_needed;
-
 	int			len;
 	/* size of the prefix needed for timestamp and pid, if enabled */
 	size_t      timestamp_size;
 
 	if (lev <= DEBUG && Debugfile < 0)
 		return;					/* ignore debug msgs if noplace to send */
+
+	/* save errno string for %m */
+	if (errno < sys_nerr && errno >= 0)
+		errorstr = strerror(errno);
+	else
+	{
+		sprintf(errorstr_buf, "error %d", errno);
+		errorstr = errorstr_buf;
+	}
 
 	if (lev == ERROR || lev == FATAL)
 	{
@@ -156,19 +172,9 @@ elog(int lev, const char *fmt,...)
 			prefix = "ERROR:  ";
 			break;
 		default:
-			/* temporarily use msg buf for prefix */
-			sprintf(msg_fixedbuf, "FATAL %d:  ", lev);
-			prefix = msg_fixedbuf;
+			sprintf(prefix_buf, "FATAL %d:  ", lev);
+			prefix = prefix_buf;
 			break;
-	}
-
-	/* get errno string for %m */
-	if (errno < sys_nerr && errno >= 0)
-		errorstr = strerror(errno);
-	else
-	{
-		sprintf(errorstr_buf, "error %d", errno);
-		errorstr = errorstr_buf;
 	}
 
 	timestamp_size = 0;
@@ -190,9 +196,13 @@ elog(int lev, const char *fmt,...)
 		fmt_buf = (char *) malloc(space_needed);
 		if (fmt_buf == NULL)
 		{
-			/* We're up against it, convert to fatal out-of-memory error */
+			/* We're up against it, convert to out-of-memory error */
 			fmt_buf = fmt_fixedbuf;
-			lev = REALLYFATAL;
+			if (lev < FATAL)
+			{
+				lev = ERROR;
+				prefix = "ERROR:  ";
+			}
 			fmt = "elog: out of memory";		/* this must fit in
 												 * fmt_fixedbuf! */
 		}
@@ -281,15 +291,20 @@ elog(int lev, const char *fmt,...)
 		msg_buf = (char *) malloc(space_needed);
 		if (msg_buf == NULL)
 		{
-			/* We're up against it, convert to fatal out-of-memory error */
+			/* We're up against it, convert to out-of-memory error */
 			msg_buf = msg_fixedbuf;
-			lev = REALLYFATAL;
+			if (lev < FATAL)
+			{
+				lev = ERROR;
+				prefix = "ERROR:  ";
+			}
 			msg_buf[0] = '\0';
 			if (Log_timestamp)
 				strcat(msg_buf, print_timestamp());
 			if (Log_pid)
 				strcat(msg_buf, print_pid());
-			strcat(msg_buf, "FATAL:  elog: out of memory");
+			strcat(msg_buf, prefix);
+			strcat(msg_buf, "elog: out of memory");
 			break;
 		}
 	}

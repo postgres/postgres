@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.160 2000/06/17 21:48:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.161 2000/06/28 03:31:28 tgl Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -35,7 +35,6 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
-#include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
@@ -48,9 +47,7 @@
 #endif
 
 
-bool		CommonSpecialPortalInUse = false;
-
-static Portal vac_portal;
+static MemoryContext vac_context = NULL;
 
 static int	MESSAGE_LEVEL;		/* message level */
 
@@ -82,14 +79,13 @@ static int	vac_cmp_offno(const void *left, const void *right);
 static int	vac_cmp_vtlinks(const void *left, const void *right);
 static bool enough_space(VacPage vacpage, Size len);
 static char *show_rusage(struct rusage * ru0);
-/* CommonSpecialPortal function at the bottom */
+
 
 void
 vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols)
 {
 	NameData	VacRel;
 	Name		VacRelName;
-	PortalVariableMemory pmem;
 	MemoryContext old;
 	List	   *le;
 	List	   *anal_cols2 = NIL;
@@ -114,8 +110,18 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols)
 	else
 		MESSAGE_LEVEL = DEBUG;
 
-	/* Create special portal for cross-transaction storage */
-	CommonSpecialPortalOpen();
+	/*
+	 * Create special memory context for cross-transaction storage.
+	 *
+	 * Since it is a child of QueryContext, it will go away eventually
+	 * even if we suffer an error; there's no need for special abort
+	 * cleanup logic.
+	 */
+	vac_context = AllocSetContextCreate(QueryContext,
+										"Vacuum",
+										ALLOCSET_DEFAULT_MINSIZE,
+										ALLOCSET_DEFAULT_INITSIZE,
+										ALLOCSET_DEFAULT_MAXSIZE);
 
 	/* vacrel gets de-allocated on xact commit, so copy it to safe storage */
 	if (vacrel)
@@ -127,8 +133,7 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols)
 		VacRelName = NULL;
 
 	/* must also copy the column list, if any, to safe storage */
-	pmem = CommonSpecialPortalGetMemory();
-	old = MemoryContextSwitchTo((MemoryContext) pmem);
+	old = MemoryContextSwitchTo(vac_context);
 	foreach(le, anal_cols)
 	{
 		char	   *col = (char *) lfirst(le);
@@ -198,11 +203,16 @@ vacuum_shutdown()
 	 */
 	unlink(RELCACHE_INIT_FILENAME);
 
-	/* Clean up working storage */
-	CommonSpecialPortalClose();
-
 	/* matches the CommitTransaction in PostgresMain() */
 	StartTransactionCommand();
+
+	/*
+	 * Clean up working storage --- note we must do this after
+	 * StartTransactionCommand, else we might be trying to delete
+	 * the active context!
+	 */
+	MemoryContextDelete(vac_context);
+	vac_context = NULL;
 }
 
 /*
@@ -239,8 +249,6 @@ getrels(NameData *VacRelP)
 	TupleDesc	tupdesc;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
-	PortalVariableMemory portalmem;
-	MemoryContext old;
 	VRelList	vrl,
 				cur;
 	Datum		d;
@@ -276,7 +284,6 @@ getrels(NameData *VacRelP)
 							   F_CHAREQ, CharGetDatum('r'));
 	}
 
-	portalmem = CommonSpecialPortalGetMemory();
 	vrl = cur = (VRelList) NULL;
 
 	rel = heap_openr(RelationRelationName, AccessShareLock);
@@ -302,24 +309,25 @@ getrels(NameData *VacRelP)
 		}
 
 		/* get a relation list entry for this guy */
-		old = MemoryContextSwitchTo((MemoryContext) portalmem);
 		if (vrl == (VRelList) NULL)
-			vrl = cur = (VRelList) palloc(sizeof(VRelListData));
+			vrl = cur = (VRelList)
+				MemoryContextAlloc(vac_context, sizeof(VRelListData));
 		else
 		{
-			cur->vrl_next = (VRelList) palloc(sizeof(VRelListData));
+			cur->vrl_next = (VRelList)
+				MemoryContextAlloc(vac_context, sizeof(VRelListData));
 			cur = cur->vrl_next;
 		}
-		MemoryContextSwitchTo(old);
 
 		cur->vrl_relid = tuple->t_data->t_oid;
 		cur->vrl_next = (VRelList) NULL;
 	}
-	if (found == false)
-		elog(NOTICE, "Vacuum: table not found");
 
 	heap_endscan(scan);
 	heap_close(rel, AccessShareLock);
+
+	if (!found)
+		elog(NOTICE, "Vacuum: table not found");
 
 	CommitTransactionCommand();
 
@@ -2273,62 +2281,6 @@ vac_cmp_vtlinks(const void *left, const void *right)
 		return 1;
 	return 0;
 
-}
-
-/*
- * This routines handle a special cross-transaction portal.
- * However it is automatically closed in case of abort.
- */
-void
-CommonSpecialPortalOpen(void)
-{
-	char	   *pname;
-
-
-	if (CommonSpecialPortalInUse)
-		elog(ERROR, "CommonSpecialPortal is in use");
-
-	/*
-	 * Create a portal for safe memory across transactions. We need to
-	 * palloc the name space for it because our hash function expects the
-	 * name to be on a longword boundary.  CreatePortal copies the name to
-	 * safe storage for us.
-	 */
-	pname = pstrdup(VACPNAME);
-	vac_portal = CreatePortal(pname);
-	pfree(pname);
-
-	/*
-	 * Set flag to indicate that vac_portal must be removed after an error.
-	 * This global variable is checked in the transaction manager on xact
-	 * abort, and the routine CommonSpecialPortalClose() is called if
-	 * necessary.
-	 */
-	CommonSpecialPortalInUse = true;
-}
-
-void
-CommonSpecialPortalClose(void)
-{
-	/* Clear flag first, to avoid recursion if PortalDrop elog's */
-	CommonSpecialPortalInUse = false;
-
-	/*
-	 * Release our portal for cross-transaction memory.
-	 */
-	PortalDrop(&vac_portal);
-}
-
-PortalVariableMemory
-CommonSpecialPortalGetMemory(void)
-{
-	return PortalGetVariableMemory(vac_portal);
-}
-
-bool
-CommonSpecialPortalIsOpen(void)
-{
-	return CommonSpecialPortalInUse;
 }
 
 

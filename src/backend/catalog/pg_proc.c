@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.44 2000/06/14 04:53:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.45 2000/06/28 03:31:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,8 +217,7 @@ ProcedureCreate(char *procedureName,
 
 	if (languageObjectId == SQLlanguageId)
 	{
-		querytree_list = pg_parse_and_rewrite(prosrc, typev, parameterCount,
-											  FALSE);
+		querytree_list = pg_parse_and_rewrite(prosrc, typev, parameterCount);
 		/* typecheck return value */
 		pg_checkretval(typeObjectId, querytree_list);
 	}

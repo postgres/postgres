@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.46 2000/06/09 01:11:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.47 2000/06/28 03:31:41 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -16,7 +16,7 @@
  *
  *	  Builtin functions for open/close/read/write operations on large objects.
  *
- *	  These functions operate in a private GlobalMemoryContext, which means
+ *	  These functions operate in a private MemoryContext, which means
  *	  that large object descriptors hang around until we destroy the context.
  *	  That happens in lo_commit().	It'd be possible to prolong the lifetime
  *	  of the context so that LO FDs are good across transactions (for example,
@@ -24,8 +24,10 @@
  *	  But we'd need additional state in order to do the right thing at the
  *	  end of an aborted transaction.  FDs opened during an aborted xact would
  *	  still need to be closed, since they might not be pointing at valid
- *	  relations at all.  For now, we'll stick with the existing documented
- *	  semantics of LO FDs: they're only good within a transaction.
+ *	  relations at all.  Locking semantics are also an interesting problem
+ *	  if LOs stay open across transactions.  For now, we'll stick with the
+ *	  existing documented semantics of LO FDs: they're only good within a
+ *	  transaction.
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +58,7 @@
  */
 static LargeObjectDesc *cookies[MAX_LOBJ_FDS];
 
-static GlobalMemory fscxt = NULL;
+static MemoryContext fscxt = NULL;
 
 
 static int	newLOfd(LargeObjectDesc *lobjCookie);
@@ -80,8 +82,13 @@ lo_open(PG_FUNCTION_ARGS)
 #endif
 
 	if (fscxt == NULL)
-		fscxt = CreateGlobalMemory("Filesystem");
-	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+		fscxt = AllocSetContextCreate(TopMemoryContext,
+									  "Filesystem",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
+
+	currentContext = MemoryContextSwitchTo(fscxt);
 
 	lobjDesc = inv_open(lobjId, mode);
 
@@ -128,7 +135,7 @@ lo_close(PG_FUNCTION_ARGS)
 #endif
 
 	Assert(fscxt != NULL);
-	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+	currentContext = MemoryContextSwitchTo(fscxt);
 
 	inv_close(cookies[fd]);
 
@@ -166,7 +173,7 @@ lo_read(int fd, char *buf, int len)
 	}
 
 	Assert(fscxt != NULL);
-	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+	currentContext = MemoryContextSwitchTo(fscxt);
 
 	status = inv_read(cookies[fd], buf, len);
 
@@ -193,7 +200,7 @@ lo_write(int fd, char *buf, int len)
 	}
 
 	Assert(fscxt != NULL);
-	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+	currentContext = MemoryContextSwitchTo(fscxt);
 
 	status = inv_write(cookies[fd], buf, len);
 
@@ -224,7 +231,7 @@ lo_lseek(PG_FUNCTION_ARGS)
 	}
 
 	Assert(fscxt != NULL);
-	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+	currentContext = MemoryContextSwitchTo(fscxt);
 
 	status = inv_seek(cookies[fd], offset, whence);
 
@@ -242,9 +249,13 @@ lo_creat(PG_FUNCTION_ARGS)
 	Oid			lobjId;
 
 	if (fscxt == NULL)
-		fscxt = CreateGlobalMemory("Filesystem");
+		fscxt = AllocSetContextCreate(TopMemoryContext,
+									  "Filesystem",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
 
-	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+	currentContext = MemoryContextSwitchTo(fscxt);
 
 	lobjDesc = inv_create(mode);
 
@@ -493,7 +504,7 @@ lo_commit(bool isCommit)
 	if (fscxt == NULL)
 		return;					/* no LO operations in this xact */
 
-	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+	currentContext = MemoryContextSwitchTo(fscxt);
 
 	/*
 	 * Clean out still-open index scans (not necessary if aborting) and
@@ -512,7 +523,7 @@ lo_commit(bool isCommit)
 	MemoryContextSwitchTo(currentContext);
 
 	/* Release the LO memory context to prevent permanent memory leaks. */
-	GlobalMemoryDestroy(fscxt);
+	MemoryContextDelete(fscxt);
 	fscxt = NULL;
 }
 

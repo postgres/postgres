@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.71 2000/06/17 23:41:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.72 2000/06/28 03:32:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1090,7 +1090,7 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 
 	ntup->t_len = tupsize;
 	ItemPointerSet(&ntup->t_self, BufferGetBlockNumber(buffer), off);
-	LastOidProcessed = ntup->t_data->t_oid = newoid();
+	ntup->t_data->t_oid = newoid();
 	TransactionIdStore(GetCurrentTransactionId(), &(ntup->t_data->t_xmin));
 	ntup->t_data->t_cmin = GetCurrentCommandId();
 	StoreInvalidTransactionId(&(ntup->t_data->t_xmax));

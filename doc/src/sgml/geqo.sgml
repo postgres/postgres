@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.9 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.10 2000/06/28 03:30:53 tgl Exp $
 Genetic Optimizer
 -->
 
@@ -227,22 +227,6 @@ Improved cost size approximation of query plans since no longer
 
 <Sect2>
 <Title>Basic Improvements</Title>
-
-<Sect3>
-<Title>Improve freeing of memory when query is already processed</Title>
-
-<Para>
-With large <Command>join</Command> queries the computing time spent for the genetic query
-optimization seems to be a mere <Emphasis>fraction</Emphasis> of the time
- <ProductName>Postgres</ProductName>
-needs for freeing memory via routine <Function>MemoryContextFree</Function>,
-file <FileName>backend/utils/mmgr/mcxt.c</FileName>.
-Debugging showed that it get stucked in a loop of routine
-<Function>OrderedElemPop</Function>, file <FileName>backend/utils/mmgr/oset.c</FileName>.
-The same problems arise with long queries when using the normal
-<ProductName>Postgres</ProductName> query optimization algorithm.
-</para>
-</sect3>
 
 <Sect3>
 <Title>Improve genetic algorithm parameter settings</Title>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.59 2000/05/30 00:49:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.60 2000/06/28 03:32:43 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -39,8 +39,6 @@
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
-
-void		BaseInit(void);
 
 static void ReverifyMyDatabase(const char *name);
 static void InitCommunication(void);
@@ -222,8 +220,6 @@ InitCommunication()
  *		Be very careful with the order of calls in the InitPostgres function.
  * --------------------------------
  */
-extern int	NBuffers;
-
 int			lockingOff = 0;		/* backend -L switch */
 
 /*
@@ -405,21 +401,6 @@ InitPostgres(const char *dbname)
 void
 BaseInit(void)
 {
-
-	/*
-	 * Turn on the exception handler. Note: we cannot use elog, Assert,
-	 * AssertState, etc. until after exception handling is on.
-	 */
-	EnableExceptionHandling(true);
-
-	/*
-	 * Memory system initialization - we may call palloc after
-	 * EnableMemoryContext()).	Note that EnableMemoryContext() must
-	 * happen before EnablePortalManager().
-	 */
-	EnableMemoryContext(true);	/* initializes the "top context" */
-	EnablePortalManager(true);	/* memory for portal/transaction stuff */
-
 	/*
 	 * Attach to shared memory and semaphores, and initialize our
 	 * input/output/debugging file descriptors.
@@ -427,4 +408,6 @@ BaseInit(void)
 	InitCommunication();
 	DebugFileOpen();
 	smgrinit();
+
+	EnablePortalManager();		/* memory for portal/transaction stuff */
 }

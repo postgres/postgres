@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.18 2000/04/12 17:16:31 momjian Exp $
+ * $Id: command.h,v 1.19 2000/06/28 03:32:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "utils/portal.h"
 
-extern MemoryContext PortalExecutorHeapMemory;
 
 /*
  * PerformPortalFetch

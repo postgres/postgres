@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.41 2000/06/13 07:35:24 tgl Exp $
+ * $Id: postgres.h,v 1.42 2000/06/28 03:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@
 #include "postgres_ext.h"
 #include "c.h"
 #include "utils/elog.h"
-#include "utils/mcxt.h"
 #include "utils/palloc.h"
 
 /* ----------------------------------------------------------------

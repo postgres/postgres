@@ -1,0 +1,379 @@
+Proposal for memory allocation fixes, take 2		21-Jun-2000
+--------------------------------------------
+
+We know that Postgres has serious problems with memory leakage during
+large queries that process a lot of pass-by-reference data.  There is
+no provision for recycling memory until end of query.  This needs to be
+fixed, even more so with the advent of TOAST which will allow very large
+chunks of data to be passed around in the system.  So, here is a proposal.
+
+
+Background
+----------
+
+We already do most of our memory allocation in "memory contexts", which
+are usually AllocSets as implemented by backend/utils/mmgr/aset.c.  What
+we need to do is create more contexts and define proper rules about when
+they can be freed.
+
+The basic operations on a memory context are:
+
+* create a context
+
+* allocate a chunk of memory within a context (equivalent of standard
+  C library's malloc())
+
+* delete a context (including freeing all the memory allocated therein)
+
+* reset a context (free all memory allocated in the context, but not the
+  context object itself)
+
+Given a chunk of memory previously allocated from a context, one can
+free it or reallocate it larger or smaller (corresponding to standard
+library's free() and realloc() routines).  These operations return memory
+to or get more memory from the same context the chunk was originally
+allocated in.
+
+At all times there is a "current" context denoted by the
+CurrentMemoryContext global variable.  The backend macro palloc()
+implicitly allocates space in that context.  The MemoryContextSwitchTo()
+operation selects a new current context (and returns the previous context,
+so that the caller can restore the previous context before exiting).
+
+The main advantage of memory contexts over plain use of malloc/free is
+that the entire contents of a memory context can be freed easily, without
+having to request freeing of each individual chunk within it.  This is
+both faster and more reliable than per-chunk bookkeeping.  We already use
+this fact to clean up at transaction end: by resetting all the active
+contexts, we reclaim all memory.  What we need are additional contexts
+that can be reset or deleted at strategic times within a query, such as
+after each tuple.
+
+
+pfree/repalloc no longer depend on CurrentMemoryContext
+-------------------------------------------------------
+
+In this proposal, pfree() and repalloc() can be applied to any chunk
+whether it belongs to CurrentMemoryContext or not --- the chunk's owning
+context will be invoked to handle the operation, regardless.  This is a
+change from the old requirement that CurrentMemoryContext must be set
+to the same context the memory was allocated from before one can use
+pfree() or repalloc().  The old coding requirement is obviously fairly
+error-prone, and will become more so the more context-switching we do;
+so I think it's essential to use CurrentMemoryContext only for palloc.
+We can avoid needing it for pfree/repalloc by putting restrictions on
+context managers as discussed below.
+
+We could even consider getting rid of CurrentMemoryContext entirely,
+instead requiring the target memory context for allocation to be specified
+explicitly.  But I think that would be too much notational overhead ---
+we'd have to pass an apppropriate memory context to called routines in
+many places.  For example, the copyObject routines would need to be passed
+a context, as would function execution routines that return a
+pass-by-reference datatype.  And what of routines that temporarily
+allocate space internally, but don't return it to their caller?  We
+certainly don't want to clutter every call in the system with "here is
+a context to use for any temporary memory allocation you might want to
+do".  So there'd still need to be a global variable specifying a suitable
+temporary-allocation context.  That might as well be CurrentMemoryContext.
+
+
+Additions to the memory-context mechanism
+-----------------------------------------
+
+If we are going to have more contexts, we need more mechanism for keeping
+track of them; else we risk leaking whole contexts under error conditions.
+
+We can do this by creating trees of "parent" and "child" contexts.  When
+creating a memory context, the new context can be specified to be a child
+of some existing context.  A context can have many children, but only one
+parent.  In this way the contexts form a forest (not necessarily a single
+tree, since there could be more than one top-level context).
+
+We then say that resetting or deleting any particular context resets or
+deletes all its direct and indirect children as well.  This feature allows
+us to manage a lot of contexts without fear that some will be leaked; we
+only need to keep track of one top-level context that we are going to
+delete at transaction end, and make sure that any shorter-lived contexts
+we create are descendants of that context.  Since the tree can have
+multiple levels, we can deal easily with nested lifetimes of storage,
+such as per-transaction, per-statement, per-scan, per-tuple.  Storage
+lifetimes that only partially overlap can be handled by allocating
+from different trees of the context forest (there are some examples
+in the next section).
+
+For convenience we will also want operations like "reset/delete all
+children of a given context, but don't reset or delete that context
+itself".
+
+
+Top-level contexts
+------------------
+
+There will be several top-level contexts --- these contexts have no parent
+and will be referenced by global variables.  At any instant the system may
+contain many additional contexts, but all other contexts should be direct
+or indirect children of one of the top-level contexts to ensure they are
+not leaked in event of an error.  I presently envision these top-level
+contexts:
+
+TopMemoryContext --- allocating here is essentially the same as "malloc",
+because this context will never be reset or deleted.  This is for stuff
+that should live forever, or for stuff that you know you will delete
+at the appropriate time.  An example is fd.c's tables of open files,
+as well as the context management nodes for memory contexts themselves.
+Avoid allocating stuff here unless really necessary, and especially
+avoid running with CurrentMemoryContext pointing here.
+
+PostmasterContext --- this is the postmaster's normal working context.
+After a backend is spawned, it can delete PostmasterContext to free its
+copy of memory the postmaster was using that it doesn't need.  (Anything
+that has to be passed from postmaster to backends will be passed in
+TopMemoryContext.  The postmaster will probably have only TopMemoryContext,
+PostmasterContext, and possibly ErrorContext --- the remaining top-level
+contexts will be set up in each backend during startup.)
+
+CacheMemoryContext --- permanent storage for relcache, catcache, and
+related modules.  This will never be reset or deleted, either, so it's
+not truly necessary to distinguish it from TopMemoryContext.  But it
+seems worthwhile to maintain the distinction for debugging purposes.
+(Note: CacheMemoryContext may well have child-contexts with shorter
+lifespans.  For example, a child context seems like the best place to
+keep the subsidiary storage associated with a relcache entry; that way
+we can free rule parsetrees and so forth easily, without having to depend
+on constructing a reliable version of freeObject().)
+
+QueryContext --- this is where the storage holding a received query string
+is kept, as well as storage that should live as long as the query string,
+notably the parsetree constructed from it.  This context will be reset at
+the top of each cycle of the outer loop of PostgresMain, thereby freeing
+the old query and parsetree.  We must keep this separate from
+TopTransactionContext because a query string might need to live either a
+longer or shorter time than a transaction, depending on whether it
+contains begin/end commands or not.  (This'll also fix the nasty bug that
+"vacuum; anything else" crashes if submitted as a single query string,
+because vacuum's xact commit frees the memory holding the parsetree...)
+
+TopTransactionContext --- this holds everything that lives until end of
+transaction (longer than one statement within a transaction!).  An example
+of what has to be here is the list of pending NOTIFY messages to be sent
+at xact commit.  This context will be reset, and all its children deleted,
+at conclusion of each transaction cycle.  Note: presently I envision that
+this context will NOT be cleared immediately upon error; its contents
+will survive anyway until the transaction block is exited by
+COMMIT/ROLLBACK.  This seems appropriate since we want to move in the
+direction of allowing a transaction to continue processing after an error.
+
+TransactionCommandContext --- this is really a child of
+TopTransactionContext, not a top-level context, but we'll probably store a
+link to it in a global variable anyway for convenience.  All the memory
+allocated during planning and execution lives here or in a child context.
+This context is deleted at statement completion, whether normal completion
+or error abort.
+
+ErrorContext --- this permanent context will be switched into
+for error recovery processing, and then reset on completion of recovery.
+We'll arrange to have, say, 8K of memory available in it at all times.
+In this way, we can ensure that some memory is available for error
+recovery even if the backend has run out of memory otherwise.  This should
+allow out-of-memory to be treated as a normal ERROR condition, not a FATAL
+error.
+
+If we ever implement nested transactions, there may need to be some
+additional levels of transaction-local contexts between
+TopTransactionContext and TransactionCommandContext, but that's beyond
+the scope of this proposal.
+
+
+Transient contexts during execution
+-----------------------------------
+
+The planner will probably have a transient context in which it stores
+pathnodes; this will allow it to release the bulk of its temporary space
+usage (which can be a lot, for large joins) at completion of planning.
+The completed plan tree will be in TransactionCommandContext.
+
+The executor will have contexts with lifetime similar to plan nodes
+(I'm not sure at the moment whether there's need for one such context
+per plan level, or whether a single context is sufficient).  These
+contexts will hold plan-node-local execution state and related items.
+There will also be a context on each plan level that is reset at the start
+of each tuple processing cycle.  This per-tuple context will be the normal
+CurrentMemoryContext during evaluation of expressions and so forth.  By
+resetting it, we reclaim transient memory that was used during processing
+of the prior tuple.  That should be enough to solve the problem of running
+out of memory on large queries.  We must have a per-tuple context in each
+plan node, and we must reset it at the start of a tuple cycle rather than
+the end, so that each plan node can use results of expression evaluation
+as part of the tuple it returns to its parent node.
+
+By resetting the per-tuple context, we will be able to free memory after
+each tuple is processed, rather than only after the whole plan is
+processed.  This should solve our memory leakage problems pretty well;
+yet we do not need to add very much new bookkeeping logic to do it.
+In particular, we do *not* need to try to keep track of individual values
+palloc'd during expression evaluation.
+
+Note we assume that resetting a context is a cheap operation.  This is
+true already, and we can make it even more true with a little bit of
+tuning in aset.c.
+
+There will be some special cases, such as aggregate functions.  nodeAgg.c
+needs to remember the results of evaluation of aggregate transition
+functions from one tuple cycle to the next, so it can't just discard
+all per-tuple state in each cycle.  The easiest way to handle this seems
+to be to have two per-tuple contexts in an aggregate node, and to
+ping-pong between them, so that at each tuple one is the active allocation
+context and the other holds any results allocated by the prior cycle's
+transition function.
+
+Executor routines that switch the active CurrentMemoryContext may need
+to copy data into their caller's current memory context before returning.
+I think there will be relatively little need for that, because of the
+convention of resetting the per-tuple context at the *start* of an
+execution cycle rather than at its end.  With that rule, an execution
+node can return a tuple that is palloc'd in its per-tuple context, and
+the tuple will remain good until the node is called for another tuple
+or told to end execution.  This is pretty much the same state of affairs
+that exists now, since a scan node can return a direct pointer to a tuple
+in a disk buffer that is only guaranteed to remain good that long.
+
+A more common reason for copying data will be to transfer a result from
+per-tuple context to per-run context; for example, a Unique node will
+save the last distinct tuple value in its per-run context, requiring a
+copy step.  (Actually, Unique could use the same trick with two per-tuple
+contexts as described above for Agg, but there will probably be other
+cases where doing an extra copy step is the right thing.)
+
+Another interesting special case is VACUUM, which needs to allocate
+working space that will survive its forced transaction commits, yet
+be released on error.  Currently it does that through a "portal",
+which is essentially a child context of TopMemoryContext.  While that
+way still works, it's ugly since xact abort needs special processing
+to delete the portal.  Better would be to use a context that's a child
+of QueryContext and hence is certain to go away as part of normal
+processing.  (Eventually we might have an even better solution from
+nested transactions, but this'll do fine for now.)
+
+
+Mechanisms to allow multiple types of contexts
+----------------------------------------------
+
+We may want several different types of memory contexts with different
+allocation policies but similar external behavior.  To handle this,
+memory allocation functions will be accessed via function pointers,
+and we will require all context types to obey the conventions given here.
+(This is not very far different from the existing code.)
+
+A memory context will be represented by an object like
+
+typedef struct MemoryContextData
+{
+    NodeTag        type;           /* identifies exact kind of context */
+    MemoryContextMethods methods;
+    MemoryContextData *parent;     /* NULL if no parent (toplevel context) */
+    MemoryContextData *firstchild; /* head of linked list of children */
+    MemoryContextData *nextchild;  /* next child of same parent */
+    char          *name;           /* context name (just for debugging) */
+} MemoryContextData, *MemoryContext;
+
+This is essentially an abstract superclass, and the "methods" pointer is
+its virtual function table.  Specific memory context types will use
+derived structs having these fields as their first fields.  All the
+contexts of a specific type will have methods pointers that point to the
+same static table of function pointers, which will look like
+
+typedef struct MemoryContextMethodsData
+{
+    Pointer     (*alloc) (MemoryContext c, Size size);
+    void        (*free_p) (Pointer chunk);
+    Pointer     (*realloc) (Pointer chunk, Size newsize);
+    void        (*reset) (MemoryContext c);
+    void        (*delete) (MemoryContext c);
+} MemoryContextMethodsData, *MemoryContextMethods;
+
+Alloc, reset, and delete requests will take a MemoryContext pointer
+as parameter, so they'll have no trouble finding the method pointer
+to call.  Free and realloc are trickier.  To make those work, we will
+require all memory context types to produce allocated chunks that
+are immediately preceded by a standard chunk header, which has the
+layout
+
+typedef struct StandardChunkHeader
+{
+    MemoryContext mycontext;         /* Link to owning context object */
+    Size          size;              /* Allocated size of chunk */
+};
+
+It turns out that the existing aset.c memory context type does this
+already, and probably any other kind of context would need to have the
+same data available to support realloc, so this is not really creating
+any additional overhead.  (Note that if a context type needs more per-
+allocated-chunk information than this, it can make an additional
+nonstandard header that precedes the standard header.  So we're not
+constraining context-type designers very much.)
+
+Given this, the pfree routine will look something like
+
+    StandardChunkHeader * header = 
+        (StandardChunkHeader *) ((char *) p - sizeof(StandardChunkHeader));
+
+    (*header->mycontext->methods->free_p) (p);
+
+We could do it as a macro, but the macro would have to evaluate its
+argument twice, which seems like a bad idea (the current pfree macro
+does not do that).  This is already saving two levels of function call
+compared to the existing code, so I think we're doing fine without
+squeezing out that last little bit ...
+
+
+More control over aset.c behavior
+---------------------------------
+
+Currently, aset.c allocates an 8K block upon the first allocation in
+a context, and doubles that size for each successive block request.
+That's good behavior for a context that might hold *lots* of data, and
+the overhead wasn't bad when we had only a few contexts in existence.
+With dozens if not hundreds of smaller contexts in the system, we will
+want to be able to fine-tune things a little better.
+
+The creator of a context will be able to specify an initial block size
+and a maximum block size.  Selecting smaller values will prevent wastage
+of space in contexts that aren't expected to hold very much (an example is
+the relcache's per-relation contexts).
+
+Also, it will be possible to specify a minimum context size.  If this
+value is greater than zero then a block of that size will be grabbed
+immediately upon context creation, and cleared but not released during
+context resets.  This feature is needed for ErrorContext (see above).
+It is also useful for per-tuple contexts, which will be reset frequently
+and typically will not allocate very much space per tuple cycle.  We can
+save a lot of unnecessary malloc traffic if these contexts hang onto one
+allocation block rather than releasing and reacquiring the block on
+each tuple cycle.
+
+
+Other notes
+-----------
+
+The original version of this proposal suggested that functions returning
+pass-by-reference datatypes should be required to return a value freshly
+palloc'd in their caller's memory context, never a pointer to an input
+value.  I've abandoned that notion since it clearly is prone to error.
+In the current proposal, it is possible to discover which context a
+chunk of memory is allocated in (by checking the required standard chunk
+header), so nodeAgg can determine whether or not it's safe to reset
+its working context; it doesn't have to rely on the transition function
+to do what it's expecting.
+
+It might be that the executor per-run contexts described above should
+be tied directly to executor "EState" nodes, that is, one context per
+EState.  I'm not real clear on the lifespan of EStates or the situations
+where we have just one or more than one, so I'm not sure.  Comments?
+
+It would probably be possible to adapt the existing "portal" memory
+management mechanism to do what we need.  I am instead proposing setting
+up a totally new mechanism, because the portal code strikes me as
+extremely crufty and unwieldy.  It may be that we can eventually remove
+portals entirely, or perhaps reimplement them with this mechanism
+underneath.

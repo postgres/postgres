@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.16 2000/01/26 05:58:05 momjian Exp $
+ * $Id: hashjoin.h,v 1.17 2000/06/28 03:33:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,20 +22,19 @@
  *
  * Each active hashjoin has a HashJoinTable control block which is
  * palloc'd in the executor's context.	All other storage needed for
- * the hashjoin is kept in a private "named portal", one for each hashjoin.
+ * the hashjoin is kept in private memory contexts, two for each hashjoin.
  * This makes it easy and fast to release the storage when we don't need it
  * anymore.
  *
- * The portal manager guarantees that portals will be discarded at end of
- * transaction, so we have no problem with a memory leak if the join is
+ * The contexts are made children of TransactionCommandContext, ensuring
+ * that they will be discarded at end of statement even if the join is
  * aborted early by an error.  (Likewise, any temporary files we make will
  * be cleaned up by the virtual file manager in event of an error.)
  *
  * Storage that should live through the entire join is allocated from the
- * portal's "variable context", while storage that is only wanted for the
- * current batch is allocated in the portal's "heap context".  By popping
- * the portal's heap at the end of a batch, we free all the per-batch storage
- * reliably and without tedium.
+ * "hashCxt", while storage that is only wanted for the current batch is
+ * allocated in the "batchCxt".  By resetting the batchCxt at the end of
+ * each batch, we free all the per-batch storage reliably and without tedium.
  * ----------------------------------------------------------------
  */
 
@@ -80,15 +79,6 @@ typedef struct HashTableData
 	 * to hash buckets and output.
 	 */
 
-	/*
-	 * Ugly kluge: myPortal ought to be declared as type Portal (ie,
-	 * PortalD*) but if we try to include utils/portal.h here, we end up
-	 * with a circular dependency of include files!  Until the various
-	 * node.h files are restructured in a cleaner way, we have to fake it.
-	 * The most reliable fake seems to be to declare myPortal as void *
-	 * and then cast it to the right things in nodeHash.c.
-	 */
-	void	   *myPortal;		/* where to keep working storage */
 	MemoryContext hashCxt;		/* context for whole-hash-join storage */
 	MemoryContext batchCxt;		/* context for this-batch-only storage */
 } HashTableData;

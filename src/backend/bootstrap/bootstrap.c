@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.87 2000/06/22 22:31:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.88 2000/06/28 03:31:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,14 +34,14 @@
 #include "miscadmin.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/exc.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
-#include "utils/portal.h"
+
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
 
-extern void BaseInit(void);
 extern void StartupXLOG(void);
 extern void ShutdownXLOG(void);
 extern void BootStrapXLOG(void);
@@ -144,8 +144,8 @@ static Datum values[MAXATTR];	/* corresponding attribute values */
 int			numattr;			/* number of attributes for cur. rel */
 
 int			DebugMode;
-static GlobalMemory nogc = (GlobalMemory) NULL; /* special no-gc mem
-												 * context */
+
+static MemoryContext nogc = NULL; /* special no-gc mem context */
 
 extern int	optind;
 extern char *optarg;
@@ -239,6 +239,17 @@ BootstrapMain(int argc, char *argv[])
 	 */
 
 	MyProcPid = getpid();
+
+	/*
+	 * Fire up essential subsystems: error and memory management
+	 *
+	 * If we are running under the postmaster, this is done already.
+	 */
+	if (!IsUnderPostmaster)
+	{
+		EnableExceptionHandling(true);
+		MemoryContextInit();
+	}
 
 	/* ----------------
 	 *	process command arguments
@@ -428,7 +439,6 @@ boot_openrel(char *relname)
 
 	if (Typ == (struct typmap **) NULL)
 	{
-		StartPortalAllocMode(DefaultAllocMode, 0);
 		rel = heap_openr(TypeRelationName, NoLock);
 		Assert(rel);
 		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
@@ -445,13 +455,13 @@ boot_openrel(char *relname)
 		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
 		{
 			(*app)->am_oid = tup->t_data->t_oid;
-			memmove((char *) &(*app++)->am_typ,
-					(char *) GETSTRUCT(tup),
-					sizeof((*app)->am_typ));
+			memcpy((char *) &(*app)->am_typ,
+				   (char *) GETSTRUCT(tup),
+				   sizeof((*app)->am_typ));
+			app++;
 		}
 		heap_endscan(scan);
 		heap_close(rel, NoLock);
-		EndPortalAllocMode();
 	}
 
 	if (reldesc != NULL)
@@ -1088,10 +1098,14 @@ index_register(char *heap,
 	 * them later.
 	 */
 
-	if (nogc == (GlobalMemory) NULL)
-		nogc = CreateGlobalMemory("BootstrapNoGC");
+	if (nogc == NULL)
+		nogc = AllocSetContextCreate((MemoryContext) NULL,
+									 "BootstrapNoGC",
+									 ALLOCSET_DEFAULT_MINSIZE,
+									 ALLOCSET_DEFAULT_INITSIZE,
+									 ALLOCSET_DEFAULT_MAXSIZE);
 
-	oldcxt = MemoryContextSwitchTo((MemoryContext) nogc);
+	oldcxt = MemoryContextSwitchTo(nogc);
 
 	newind = (IndexList *) palloc(sizeof(IndexList));
 	newind->il_heap = pstrdup(heap);

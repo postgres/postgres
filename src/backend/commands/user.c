@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * user.c
- *	  use pg_exec_query to create a new user in the catalog
+ *	  Commands for manipulating users and groups.
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.61 2000/06/25 14:24:59 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.62 2000/06/28 03:31:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

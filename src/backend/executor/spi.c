@@ -3,21 +3,20 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.46 2000/05/30 04:24:45 tgl Exp $
+ * $Id: spi.c,v 1.47 2000/06/28 03:31:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "executor/spi_priv.h"
 #include "access/printtup.h"
 
-static Portal _SPI_portal = (Portal) NULL;
 static _SPI_connection *_SPI_stack = NULL;
 static _SPI_connection *_SPI_current = NULL;
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
 DLLIMPORT uint32 SPI_processed = 0;
-DLLIMPORT SPITupleTable *SPI_tuptable;
+DLLIMPORT SPITupleTable *SPI_tuptable = NULL;
 DLLIMPORT int SPI_result;
 
 static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
@@ -46,28 +45,6 @@ extern void ShowUsage(void);
 int
 SPI_connect()
 {
-	char		pname[64];
-	PortalVariableMemory pvmem;
-
-	/*
-	 * It's possible on startup and after commit/abort. In future we'll
-	 * catch commit/abort in some way...
-	 */
-	strcpy(pname, "<SPI manager>");
-	_SPI_portal = GetPortalByName(pname);
-	if (!PortalIsValid(_SPI_portal))
-	{
-		if (_SPI_stack != NULL) /* there was abort */
-			free(_SPI_stack);
-		_SPI_current = _SPI_stack = NULL;
-		_SPI_connected = _SPI_curid = -1;
-		SPI_processed = 0;
-		SPI_tuptable = NULL;
-		_SPI_portal = CreatePortal(pname);
-		if (!PortalIsValid(_SPI_portal))
-			elog(FATAL, "SPI_connect: global initialization failed");
-	}
-
 	/*
 	 * When procedure called by Executor _SPI_curid expected to be equal
 	 * to _SPI_connected
@@ -99,15 +76,19 @@ SPI_connect()
 	_SPI_current->processed = 0;
 	_SPI_current->tuptable = NULL;
 
-	/* Create Portal for this procedure ... */
-	snprintf(pname, 64, "<SPI %d>", _SPI_connected);
-	_SPI_current->portal = CreatePortal(pname);
-	if (!PortalIsValid(_SPI_current->portal))
-		elog(FATAL, "SPI_connect: initialization failed");
-
-	/* ... and switch to Portal' Variable memory - procedure' context */
-	pvmem = PortalGetVariableMemory(_SPI_current->portal);
-	_SPI_current->savedcxt = MemoryContextSwitchTo((MemoryContext) pvmem);
+	/* Create memory contexts for this procedure */
+	_SPI_current->procCxt = AllocSetContextCreate(TopTransactionContext,
+												  "SPI Proc",
+												  ALLOCSET_DEFAULT_MINSIZE,
+												  ALLOCSET_DEFAULT_INITSIZE,
+												  ALLOCSET_DEFAULT_MAXSIZE);
+	_SPI_current->execCxt = AllocSetContextCreate(TopTransactionContext,
+												  "SPI Exec",
+												  ALLOCSET_DEFAULT_MINSIZE,
+												  ALLOCSET_DEFAULT_INITSIZE,
+												  ALLOCSET_DEFAULT_MAXSIZE);
+	/* ... and switch to procedure's context */
+	_SPI_current->savedcxt = MemoryContextSwitchTo(_SPI_current->procCxt);
 
 	_SPI_current->savedId = GetScanCommandId();
 	SetScanCommandId(GetCurrentCommandId());
@@ -127,7 +108,10 @@ SPI_finish()
 
 	/* Restore memory context as it was before procedure call */
 	MemoryContextSwitchTo(_SPI_current->savedcxt);
-	PortalDrop(&(_SPI_current->portal));
+
+	/* Release memory used in procedure call */
+	MemoryContextDelete(_SPI_current->execCxt);
+	MemoryContextDelete(_SPI_current->procCxt);
 
 	SetScanCommandId(_SPI_current->savedId);
 
@@ -142,6 +126,7 @@ SPI_finish()
 	{
 		free(_SPI_stack);
 		_SPI_stack = NULL;
+		_SPI_current = NULL;
 	}
 	else
 	{
@@ -152,6 +137,25 @@ SPI_finish()
 
 	return SPI_OK_FINISH;
 
+}
+
+/*
+ * Clean up SPI state at transaction commit or abort (we don't care which).
+ */
+void
+AtEOXact_SPI(void)
+{
+	/*
+	 * Note that memory contexts belonging to SPI stack entries will be
+	 * freed automatically, so we can ignore them here.  We just need to
+	 * restore our static variables to initial state.
+	 */
+	if (_SPI_stack != NULL)		/* there was abort */
+		free(_SPI_stack);
+	_SPI_current = _SPI_stack = NULL;
+	_SPI_connected = _SPI_curid = -1;
+	SPI_processed = 0;
+	SPI_tuptable = NULL;
 }
 
 void
@@ -508,61 +512,22 @@ SPI_palloc(Size size)
 void *
 SPI_repalloc(void *pointer, Size size)
 {
-	MemoryContext oldcxt = NULL;
-
-	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
-	{
-		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(FATAL, "SPI: stack corrupted");
-		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
-	}
-
-	pointer = repalloc(pointer, size);
-
-	if (oldcxt)
-		MemoryContextSwitchTo(oldcxt);
-
-	return pointer;
+	/* No longer need to worry which context chunk was in... */
+	return repalloc(pointer, size);
 }
 
 void
 SPI_pfree(void *pointer)
 {
-	MemoryContext oldcxt = NULL;
-
-	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
-	{
-		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(FATAL, "SPI: stack corrupted");
-		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
-	}
-
+	/* No longer need to worry which context chunk was in... */
 	pfree(pointer);
-
-	if (oldcxt)
-		MemoryContextSwitchTo(oldcxt);
-
-	return;
 }
 
 void
 SPI_freetuple(HeapTuple tuple)
 {
-	MemoryContext oldcxt = NULL;
-
-	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
-	{
-		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(FATAL, "SPI: stack corrupted");
-		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
-	}
-
+	/* No longer need to worry which context tuple was in... */
 	heap_freetuple(tuple);
-
-	if (oldcxt)
-		MemoryContextSwitchTo(oldcxt);
-
-	return;
 }
 
 /* =================== private functions =================== */
@@ -647,7 +612,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 		argtypes = plan->argtypes;
 	}
 
-	queryTree_list = pg_parse_and_rewrite(src, argtypes, nargs, FALSE);
+	queryTree_list = pg_parse_and_rewrite(src, argtypes, nargs);
 
 	_SPI_current->qtlist = queryTree_list;
 
@@ -790,7 +755,6 @@ static int
 _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 {
 	Query	   *parseTree = queryDesc->parsetree;
-	Plan	   *plan = queryDesc->plantree;
 	int			operation = queryDesc->operation;
 	CommandDest dest = queryDesc->dest;
 	TupleDesc	tupdesc;
@@ -875,16 +839,13 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 #endif
 	tupdesc = ExecutorStart(queryDesc, state);
 
-	/* Don't work currently */
+	/* Don't work currently --- need to rearrange callers so that
+	 * we prepare the portal before doing CreateExecutorState() etc.
+	 * See pquery.c for the correct order of operations.
+	 */
 	if (isRetrieveIntoPortal)
 	{
-		ProcessPortal(intoName,
-					  parseTree,
-					  plan,
-					  state,
-					  tupdesc,
-					  None);
-		return SPI_OK_CURSOR;
+		elog(FATAL, "SPI_select: retrieve into portal not implemented");
 	}
 
 	ExecutorRun(queryDesc, state, EXEC_FOR, parseTree->limitOffset, count);
@@ -920,27 +881,13 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 static MemoryContext
 _SPI_execmem()
 {
-	MemoryContext oldcxt;
-	PortalHeapMemory phmem;
-
-	phmem = PortalGetHeapMemory(_SPI_current->portal);
-	oldcxt = MemoryContextSwitchTo((MemoryContext) phmem);
-
-	return oldcxt;
-
+	return MemoryContextSwitchTo(_SPI_current->execCxt);
 }
 
 static MemoryContext
 _SPI_procmem()
 {
-	MemoryContext oldcxt;
-	PortalVariableMemory pvmem;
-
-	pvmem = PortalGetVariableMemory(_SPI_current->portal);
-	oldcxt = MemoryContextSwitchTo((MemoryContext) pvmem);
-
-	return oldcxt;
-
+	return MemoryContextSwitchTo(_SPI_current->procCxt);
 }
 
 /*
@@ -959,7 +906,6 @@ _SPI_begin_call(bool execmem)
 	if (execmem)				/* switch to the Executor memory context */
 	{
 		_SPI_execmem();
-		StartPortalAllocMode(DefaultAllocMode, 0);
 	}
 
 	return 0;
@@ -977,9 +923,10 @@ _SPI_end_call(bool procmem)
 	_SPI_current->qtlist = NULL;
 
 	if (procmem)				/* switch to the procedure memory context */
-	{							/* but free Executor memory before */
-		EndPortalAllocMode();
+	{
 		_SPI_procmem();
+		/* and free Executor memory */
+		MemoryContextResetAndDeleteChildren(_SPI_current->execCxt);
 	}
 
 	return 0;
@@ -1016,8 +963,7 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 	MemoryContext oldcxt = NULL;
 
 	if (location == _SPI_CPLAN_PROCXT)
-		oldcxt = MemoryContextSwitchTo((MemoryContext)
-						  PortalGetVariableMemory(_SPI_current->portal));
+		oldcxt = MemoryContextSwitchTo(_SPI_current->procCxt);
 	else if (location == _SPI_CPLAN_TOPCXT)
 		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 
@@ -1033,7 +979,7 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 	else
 		newplan->argtypes = NULL;
 
-	if (location != _SPI_CPLAN_CURCXT)
+	if (oldcxt != NULL)
 		MemoryContextSwitchTo(oldcxt);
 
 	return newplan;
