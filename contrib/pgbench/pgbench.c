@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.19 2002/09/04 20:31:08 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.20 2002/10/07 05:10:02 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -184,17 +184,16 @@ doOne(CState * state, int n, int debug, int ttype)
 	{							/* are we receiver? */
 		if (debug)
 			fprintf(stderr, "client %d receiving\n", n);
-		while (PQisBusy(st->con) == TRUE)
-		{
-			if (!PQconsumeInput(st->con))
-			{					/* there's something wrong */
-				fprintf(stderr, "Client %d aborted in state %d. Probably the backend died while processing.\n", n, st->state);
-				remains--;		/* I've aborted */
-				PQfinish(st->con);
-				st->con = NULL;
-				return;
-			}
+		if (!PQconsumeInput(st->con))
+		{						/* there's something wrong */
+			fprintf(stderr, "Client %d aborted in state %d. Probably the backend died while processing.\n", n, st->state);
+			remains--;			/* I've aborted */
+			PQfinish(st->con);
+			st->con = NULL;
+			return;
 		}
+		if (PQisBusy(st->con))
+			return;				/* don't have the whole result yet */
 
 		switch (st->state)
 		{
@@ -367,17 +366,16 @@ doSelectOnly(CState * state, int n, int debug)
 	{							/* are we receiver? */
 		if (debug)
 			fprintf(stderr, "client %d receiving\n", n);
-		while (PQisBusy(st->con) == TRUE)
-		{
-			if (!PQconsumeInput(st->con))
-			{					/* there's something wrong */
-				fprintf(stderr, "Client %d aborted in state %d. Probably the backend died while processing.\n", n, st->state);
-				remains--;		/* I've aborted */
-				PQfinish(st->con);
-				st->con = NULL;
-				return;
-			}
+		if (!PQconsumeInput(st->con))
+		{						/* there's something wrong */
+			fprintf(stderr, "Client %d aborted in state %d. Probably the backend died while processing.\n", n, st->state);
+			remains--;			/* I've aborted */
+			PQfinish(st->con);
+			st->con = NULL;
+			return;
 		}
+		if (PQisBusy(st->con))
+			return;				/* don't have the whole result yet */
 
 		switch (st->state)
 		{
