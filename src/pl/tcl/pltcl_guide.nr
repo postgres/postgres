@@ -121,12 +121,12 @@ from the CREATE FUNCTION section of the manual would be defined in Tcl as
 .in +4
     returns bool as '
 .in +4
-    if {200000.0 < $EMP(salary)} {
+    if {200000.0 < $1(salary)} {
 .in +4
     return 't'
 .in -4
     }
-    if {$EMP(age) < 30 && 100000.0 < $EMP(salary)} {
+    if {$1(age) < 30 && 100000.0 < $1(salary)} {
 .in +4
     return 't'
 .in -4
