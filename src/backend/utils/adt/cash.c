@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.51 2001/10/25 05:49:43 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.52 2002/02/19 22:19:34 tgl Exp $
  */
 
 #include "postgres.h"
@@ -287,7 +287,7 @@ cash_out(PG_FUNCTION_ARGS)
 	if (value < 0)
 	{
 		minus = 1;
-		value *= -1;
+		value = -value;
 	}
 
 	/* allow for trailing negative strings */
@@ -301,8 +301,8 @@ cash_out(PG_FUNCTION_ARGS)
 		else if (comma && count % (mon_group + 1) == comma_position)
 			buf[count--] = comma;
 
-		buf[count--] = (value % 10) + '0';
-		value /= 10;
+		buf[count--] = ((unsigned int) value % 10) + '0';
+		value = ((unsigned int) value) / 10;
 	}
 
 	strncpy((buf + count - strlen(csymbol) + 1), csymbol, strlen(csymbol));
@@ -664,6 +664,7 @@ Datum
 cash_words(PG_FUNCTION_ARGS)
 {
 	Cash		value = PG_GETARG_CASH(0);
+	unsigned int val;
 	char		buf[128];
 	char	   *p = buf;
 	Cash		m0;
@@ -682,10 +683,13 @@ cash_words(PG_FUNCTION_ARGS)
 	else
 		buf[0] = '\0';
 
-	m0 = value % 100;			/* cents */
-	m1 = (value / 100) % 1000;	/* hundreds */
-	m2 = (value / 100000) % 1000;		/* thousands */
-	m3 = value / 100000000 % 1000;		/* millions */
+	/* Now treat as unsigned, to avoid trouble at INT_MIN */
+	val = (unsigned int) value;
+
+	m0 = val % 100;				/* cents */
+	m1 = (val / 100) % 1000;	/* hundreds */
+	m2 = (val / 100000) % 1000;	/* thousands */
+	m3 = val / 100000000 % 1000; /* millions */
 
 	if (m3)
 	{
@@ -705,7 +709,7 @@ cash_words(PG_FUNCTION_ARGS)
 	if (!*p)
 		strcat(buf, "zero");
 
-	strcat(buf, (int) (value / 100) == 1 ? " dollar and " : " dollars and ");
+	strcat(buf, (val / 100) == 1 ? " dollar and " : " dollars and ");
 	strcat(buf, num_word(m0));
 	strcat(buf, m0 == 1 ? " cent" : " cents");
 
@@ -733,7 +737,7 @@ num_word(Cash value)
 		"zero", "one", "two", "three", "four", "five", "six", "seven",
 		"eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
 		"fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty",
-		"thirty", "fourty", "fifty", "sixty", "seventy", "eighty", "ninety"
+		"thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"
 	};
 	const char **big = small + 18;
 	int			tu = value % 100;
