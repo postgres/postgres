@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.2 1996/11/08 05:57:01 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.3 1997/06/10 07:55:47 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,7 @@ prune_rel_paths(List *rel_list)
     
     foreach(x, rel_list) {
 	rel = (Rel*)lfirst(x);
+	rel->size = 0;
 	foreach(y, rel->pathlist) {
 	    path = (Path*)lfirst(y);
 

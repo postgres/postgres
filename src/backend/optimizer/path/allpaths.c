@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.9 1997/06/05 09:33:50 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.10 1997/06/10 07:55:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,9 +216,8 @@ find_join_paths(Query *root, List *outer_rels, int levels_left)
 
     foreach(x, new_rels) {
 	rel = (Rel*)lfirst(x);
-#if 0	/* compute_joinrel_size already called by prune_rel_paths */
-	rel->size = compute_rel_size(rel);
-#endif
+	if ( rel->size <= 0 )
+	    rel->size = compute_rel_size(rel);
 	rel->width = compute_rel_width(rel);
 
 /*#define OPTIMIZER_DEBUG*/
