@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/qsort.c,v 1.1.1.1 1996/07/09 06:21:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/qsort.c,v 1.2 1996/11/06 08:27:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,11 @@
 static char sccsid[] = "@(#)qsort.c	5.9 (Berkeley) 2/23/91";
 #endif /* LIBC_SCCS and not lint */
 
-#include "postgres.h"
-#include "lib/qsort.h"
+#include <sys/types.h>
+
+#include <postgres.h>
+
+#include <lib/qsort.h>
 
 /*
  * MTHRESH is the smallest partition for which we compare for a median

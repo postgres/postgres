@@ -6,22 +6,21 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.2 1996/10/31 10:26:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.3 1996/11/06 08:27:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <sys/types.h>
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/relation.h"
-#include "lib/lispsort.h"
-#include "utils/palloc.h"
-#include "lib/qsort.h"
+#include <nodes/pg_list.h>
+#include <nodes/primnodes.h>
+#include <nodes/plannodes.h>
+#include <nodes/relation.h>
+#include <lib/lispsort.h>
+#include <lib/qsort.h>
 
 /*
 ** lisp_qsort: Takes a lisp list as input, copies it into an array of lisp 

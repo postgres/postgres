@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.3 1996/11/06 06:47:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.4 1996/11/06 08:27:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,10 @@
 /*
  * utils/memutils.h contains declarations of the functions in this file
  */
-#include "postgres.h"
+#include <postgres.h>
 
-#include "utils/bit.h"
-#include "utils/memutils.h"	
+#include <utils/bit.h>
+#include <utils/memutils.h>
 
 void
 BitArraySetBit(BitArray bitArray, BitIndex bitIndex)

@@ -9,16 +9,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.1.1.1 1996/07/09 06:21:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.2 1996/11/06 08:27:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
-#include "postgres.h"
-#include "nodes/pg_list.h"
-#include "lib/stringinfo.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
+
+#include <postgres.h>
+
+#include <nodes/pg_list.h>
+#include <lib/stringinfo.h>
 
 /*---------------------------------------------------------------------
  * makeStringInfo

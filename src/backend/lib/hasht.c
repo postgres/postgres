@@ -8,15 +8,15 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.2 1996/10/31 10:26:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.3 1996/11/06 08:27:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
-#include "utils/memutils.h"
-#include "utils/elog.h"
-#include "utils/hsearch.h"
-#include "lib/hasht.h"
+#include <postgres.h>
+
+#include <utils/memutils.h>
+#include <utils/hsearch.h>
+#include <lib/hasht.h>
 
 /* -----------------------------------
  *	HashTableWalk

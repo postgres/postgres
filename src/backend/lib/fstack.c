@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.2 1996/10/31 10:26:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.3 1996/11/06 08:27:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
-#include "lib/fstack.h"
+#include <postgres.h>
+
+#include <lib/fstack.h>
 
 /*
  * Internal function definitions

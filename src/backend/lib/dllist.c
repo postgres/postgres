@@ -9,14 +9,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.2 1996/10/31 10:26:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.3 1996/11/06 08:27:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "lib/dllist.h"
+#include <lib/dllist.h>
 
 Dllist*
 DLNewList()
