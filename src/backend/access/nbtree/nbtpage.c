@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.37 2000/07/21 06:42:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.38 2000/10/04 00:04:42 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -128,7 +128,7 @@ _bt_getroot(Relation rel, int access)
 	Page		metapg;
 	BTPageOpaque metaopaque;
 	Buffer		rootbuf;
-	Page		rootpg;
+	Page		rootpage;
 	BTPageOpaque rootopaque;
 	BlockNumber rootblkno;
 	BTMetaPageData *metad;
@@ -177,14 +177,31 @@ _bt_getroot(Relation rel, int access)
 			 */
 			rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 			rootblkno = BufferGetBlockNumber(rootbuf);
-			rootpg = BufferGetPage(rootbuf);
+			rootpage = BufferGetPage(rootbuf);
+
+			/* NO ELOG(ERROR) till meta is updated */
+
+			_bt_pageinit(rootpage, BufferGetPageSize(rootbuf));
+			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
+			rootopaque->btpo_flags |= (BTP_LEAF | BTP_ROOT);
+
+#ifdef XLOG
+			/* XLOG stuff */
+			{
+				xl_btree_insert	   xlrec;
+				xlrec.node = rel->rd_node;
+
+				XLogRecPtr recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT,
+					&xlrec, SizeOfBtreeNewroot, NULL, 0);
+
+				PageSetLSN(rootpage, recptr);
+				PageSetSUI(rootpage, ThisStartUpID);
+			}
+#endif
 
 			metad->btm_root = rootblkno;
 			metad->btm_level = 1;
 
-			_bt_pageinit(rootpg, BufferGetPageSize(rootbuf));
-			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpg);
-			rootopaque->btpo_flags |= (BTP_LEAF | BTP_ROOT);
 			_bt_wrtnorelbuf(rel, rootbuf);
 
 			/* swap write lock for read lock */
@@ -218,8 +235,8 @@ _bt_getroot(Relation rel, int access)
 	 * at the metadata page and got the root buffer, then we got the wrong
 	 * buffer.  Release it and try again.
 	 */
-	rootpg = BufferGetPage(rootbuf);
-	rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpg);
+	rootpage = BufferGetPage(rootbuf);
+	rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 
 	if (! P_ISROOT(rootopaque))
 	{
@@ -395,6 +412,20 @@ _bt_pagedel(Relation rel, ItemPointer tid)
 
 	buf = _bt_getbuf(rel, blkno, BT_WRITE);
 	page = BufferGetPage(buf);
+
+#ifdef XLOG
+	/* XLOG stuff */
+	{
+		xl_btree_delete	xlrec;
+		xlrec.target.node = rel->rd_node;
+		xlrec.target.tid = *tid;
+		XLogRecPtr recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE,
+			(char*) xlrec, SizeOfBtreeDelete, NULL, 0);
+
+		PageSetLSN(page, recptr);
+		PageSetSUI(page, ThisStartUpID);
+	}
+#endif
 
 	PageIndexTupleDelete(page, offno);
 

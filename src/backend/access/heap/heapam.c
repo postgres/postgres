@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.85 2000/09/07 09:58:34 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.86 2000/10/04 00:04:41 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -86,8 +86,8 @@
 #include "utils/inval.h"
 #include "utils/relcache.h"
 
-#ifdef XLOG	/* comments are in _heap_update */
-static ItemPointerData	_locked_tuple;
+#ifdef XLOG	/* comments are in heap_update */
+static xl_heaptid	_locked_tuple_;
 #endif
 
 
@@ -1650,8 +1650,9 @@ l2:
 		 * In the event of crash prio logging, TQUAL routines will see
 		 * HEAP_XMAX_UNLOGGED flag...
 		 */
-		_locked_tuple = *otid;
-		XactPushRollback(_heap_unlock_tuple, (void*) &_locked_tuple);
+		_locked_tuple_.node = relation->rd_node;
+		_locked_tuple_.tid = *otid;
+		XactPushRollback(_heap_unlock_tuple, (void*) &_locked_tuple_);
 #endif
 		TransactionIdStore(GetCurrentTransactionId(), &(oldtup.t_data->t_xmax));
 		oldtup.t_data->t_cmax = GetCurrentCommandId();

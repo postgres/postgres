@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.62 2000/08/25 23:13:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.63 2000/10/04 00:04:42 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@ typedef struct
 	int		best_delta;			/* best size delta so far */
 } FindSplitData;
 
+void _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 
 static TransactionId _bt_check_unique(Relation rel, BTItem btitem,
 									  Relation heapRel, Buffer buf,
@@ -54,7 +55,6 @@ static void _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 							  int leftfree, int rightfree,
 							  bool newitemonleft, Size firstrightitemsz);
 static Buffer _bt_getstackbuf(Relation rel, BTStack stack);
-static void _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static void _bt_pgaddtup(Relation rel, Page page,
 						 Size itemsize, BTItem btitem,
 						 OffsetNumber itup_off, const char *where);
@@ -514,6 +514,29 @@ _bt_insertonpg(Relation rel,
 	}
 	else
 	{
+#ifdef XLOG
+		/* XLOG stuff */
+		{
+			char				xlbuf[sizeof(xl_btree_insert) + 2 * sizeof(CommandId)];
+			xl_btree_insert	   *xlrec = xlbuf;
+			int					hsize = SizeOfBtreeInsert;
+
+			xlrec->target.node = rel->rd_node;
+			ItemPointerSet(&(xlrec->target.tid), BufferGetBlockNumber(buf), newitemoff);
+			if (P_ISLEAF(lpageop))
+			{
+				CommandId	cid = GetCurrentCommandId();
+				memcpy(xlbuf + SizeOfBtreeInsert, &(char*)cid, sizeof(CommandId));
+				hsize += sizeof(CommandId);
+			}
+
+			XLogRecPtr recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_INSERT,
+				xlbuf, hsize, (char*) btitem, itemsz);
+
+			PageSetLSN(page, recptr);
+			PageSetSUI(page, ThisStartUpID);
+		}
+#endif
 		_bt_pgaddtup(rel, page, itemsz, btitem, newitemoff, "page");
 		itup_off = newitemoff;
 		itup_blkno = BufferGetBlockNumber(buf);
@@ -578,8 +601,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
 
 	/* if we're splitting this page, it won't be the root when we're done */
-	oopaque->btpo_flags &= ~BTP_ROOT;
-	lopaque->btpo_flags = ropaque->btpo_flags = oopaque->btpo_flags;
+	lopaque->btpo_flags = oopaque->btpo_flags;
+	lopaque->btpo_flags &= ~BTP_ROOT;
+	ropaque->btpo_flags = lopaque->btpo_flags;
 	lopaque->btpo_prev = oopaque->btpo_prev;
 	lopaque->btpo_next = BufferGetBlockNumber(rbuf);
 	ropaque->btpo_prev = BufferGetBlockNumber(buf);
@@ -608,7 +632,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		item = (BTItem) PageGetItem(origpage, itemid);
 		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
 						LP_USED) == InvalidOffsetNumber)
-			elog(FATAL, "btree: failed to add hikey to the right sibling");
+			elog(STOP, "btree: failed to add hikey to the right sibling");
 		rightoff = OffsetNumberNext(rightoff);
 	}
 
@@ -633,7 +657,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	}
 	if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
 					LP_USED) == InvalidOffsetNumber)
-		elog(FATAL, "btree: failed to add hikey to the left sibling");
+		elog(STOP, "btree: failed to add hikey to the left sibling");
 	leftoff = OffsetNumberNext(leftoff);
 
 	/*
@@ -705,6 +729,75 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	}
 
 	/*
+	 * We have to grab the right sibling (if any) and fix the prev
+	 * pointer there. We are guaranteed that this is deadlock-free
+	 * since no other writer will be holding a lock on that page
+	 * and trying to move left, and all readers release locks on a page
+	 * before trying to fetch its neighbors.
+	 */
+
+	if (!P_RIGHTMOST(ropaque))
+	{
+		sbuf = _bt_getbuf(rel, ropaque->btpo_next, BT_WRITE);
+		spage = BufferGetPage(sbuf);
+	}
+
+#ifdef XLOG
+	/*
+	 * Right sibling is locked, new siblings are prepared, but original
+	 * page is not updated yet. Log changes before continuing.
+	 *
+	 * NO ELOG(ERROR) till right sibling is updated.
+	 *
+	 */
+	{
+		char				xlbuf[sizeof(xl_btree_split) + 
+			2 * sizeof(CommandId) + BLCKSZ];
+		xl_btree_split	   *xlrec = xlbuf;
+		int					hsize = SizeOfBtreeSplit;
+		int					flag = (newitemonleft) ? 
+				XLOG_BTREE_SPLEFT : XLOG_BTREE_SPLIT;
+
+		xlrec->target.node = rel->rd_node;
+		ItemPointerSet(&(xlrec->target.tid), itup_blkno, itup_off);
+		if (P_ISLEAF(lopaque))
+		{
+			CommandId	cid = GetCurrentCommandId();
+			memcpy(xlbuf + hsize, &(char*)cid, sizeof(CommandId));
+			hsize += sizeof(CommandId);
+		}
+		if (newitemonleft)
+		{
+			memcpy(xlbuf + hsize, (char*) newitem, newitemsz);
+			hsize += newitemsz;
+			xlrec->otherblk = BufferGetBlockNumber(rbuf);
+		}
+		else
+			xlrec->otherblk = BufferGetBlockNumber(buf);
+
+		xlrec->rightblk = ropaque->btpo_next;
+
+		/* 
+		 * Dirrect access to page is not good but faster - we should 
+		 * implement some new func in page API.
+		 */
+		XLogRecPtr recptr = XLogInsert(RM_BTREE_ID, flag, xlbuf, 
+			hsize, (char*)rightpage + (PageHeader) rightpage)->pd_upper,
+			((PageHeader) rightpage)->pd_special - ((PageHeader) rightpage)->upper);
+
+		PageSetLSN(leftpage, recptr);
+		PageSetSUI(leftpage, ThisStartUpID);
+		PageSetLSN(rightpage, recptr);
+		PageSetSUI(rightpage, ThisStartUpID);
+		if (!P_RIGHTMOST(ropaque))
+		{
+			PageSetLSN(spage, recptr);
+			PageSetSUI(spage, ThisStartUpID);
+		}
+	}
+#endif
+
+	/*
 	 * By here, the original data page has been split into two new halves,
 	 * and these are correct.  The algorithm requires that the left page
 	 * never move during a split, so we copy the new left page back on top
@@ -716,18 +809,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 	PageRestoreTempPage(leftpage, origpage);
 
-	/*
-	 * Finally, we need to grab the right sibling (if any) and fix the
-	 * prev pointer there.	We are guaranteed that this is deadlock-free
-	 * since no other writer will be holding a lock on that page
-	 * and trying to move left, and all readers release locks on a page
-	 * before trying to fetch its neighbors.
-	 */
-
 	if (!P_RIGHTMOST(ropaque))
 	{
-		sbuf = _bt_getbuf(rel, ropaque->btpo_next, BT_WRITE);
-		spage = BufferGetPage(sbuf);
 		sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
 		sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
 
@@ -1002,7 +1085,7 @@ _bt_getstackbuf(Relation rel, BTStack stack)
  *		two new children.  The new root page is neither pinned nor locked, and
  *		we have also written out lbuf and rbuf and dropped their pins/locks.
  */
-static void
+void
 _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 {
 	Buffer		rootbuf;
@@ -1011,7 +1094,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 				rootpage;
 	BlockNumber lbkno,
 				rbkno;
-	BlockNumber rootbknum;
+	BlockNumber rootblknum;
 	BTPageOpaque rootopaque;
 	ItemId		itemid;
 	BTItem		item;
@@ -1021,12 +1104,16 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	/* get a new root page */
 	rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 	rootpage = BufferGetPage(rootbuf);
-	rootbknum = BufferGetBlockNumber(rootbuf);
+	rootblknum = BufferGetBlockNumber(rootbuf);
+
+
+	/* NO ELOG(ERROR) from here till newroot op is logged */
 
 	/* set btree special data */
 	rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 	rootopaque->btpo_prev = rootopaque->btpo_next = P_NONE;
 	rootopaque->btpo_flags |= BTP_ROOT;
+	rootopaque->btpo_parent = BTREE_METAPAGE;
 
 	lbkno = BufferGetBlockNumber(lbuf);
 	rbkno = BufferGetBlockNumber(rbuf);
@@ -1040,7 +1127,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 */
 	((BTPageOpaque) PageGetSpecialPointer(lpage))->btpo_parent =
 		((BTPageOpaque) PageGetSpecialPointer(rpage))->btpo_parent =
-		rootbknum;
+		rootblknum;
 
 	/*
 	 * Create downlink item for left page (old root).  Since this will be
@@ -1058,7 +1145,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * the two items will go into positions P_HIKEY and P_FIRSTKEY.
 	 */
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber)
-		elog(FATAL, "btree: failed to add leftkey to new root page");
+		elog(STOP, "btree: failed to add leftkey to new root page");
 	pfree(new_item);
 
 	/*
@@ -1075,14 +1162,35 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * insert the right page pointer into the new root page.
 	 */
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY, LP_USED) == InvalidOffsetNumber)
-		elog(FATAL, "btree: failed to add rightkey to new root page");
+		elog(STOP, "btree: failed to add rightkey to new root page");
 	pfree(new_item);
+
+#ifdef XLOG
+	/* XLOG stuff */
+	{
+		xl_btree_newroot	   xlrec;
+		xlrec.node = rel->rd_node;
+		xlrec.rootblk = rootblknum;
+
+		/* 
+		 * Dirrect access to page is not good but faster - we should 
+		 * implement some new func in page API.
+		 */
+		XLogRecPtr recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT,
+			&xlrec, SizeOfBtreeNewroot, 
+			(char*)rootpage + (PageHeader) rootpage)->pd_upper,
+			((PageHeader) rootpage)->pd_special - ((PageHeader) rootpage)->upper);
+
+		PageSetLSN(rootpage, recptr);
+		PageSetSUI(rootpage, ThisStartUpID);
+	}
+#endif
 
 	/* write and let go of the new root buffer */
 	_bt_wrtbuf(rel, rootbuf);
 
 	/* update metadata page with new root block number */
-	_bt_metaproot(rel, rootbknum, 0);
+	_bt_metaproot(rel, rootblknum, 0);
 
 	/* update and release new sibling, and finally the old root */
 	_bt_wrtbuf(rel, rbuf);
@@ -1125,7 +1233,7 @@ _bt_pgaddtup(Relation rel,
 
 	if (PageAddItem(page, (Item) btitem, itemsize, itup_off,
 					LP_USED) == InvalidOffsetNumber)
-		elog(FATAL, "btree: failed to add item to the %s for %s",
+		elog(STOP, "btree: failed to add item to the %s for %s",
 			 where, RelationGetRelationName(rel));
 }
 

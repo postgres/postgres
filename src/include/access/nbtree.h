@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.42 2000/09/12 06:07:52 vadim Exp $
+ * $Id: nbtree.h,v 1.43 2000/10/04 00:04:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,8 @@ typedef struct BTPageOpaqueData
 } BTPageOpaqueData;
 
 typedef BTPageOpaqueData *BTPageOpaque;
+
+#define BTREE_METAPAGE	0	/* first page is meta */
 
 /*
  *	BTScanOpaqueData is used to remember which buffers we're currently
@@ -105,6 +107,12 @@ typedef struct BTItemData
 } BTItemData;
 
 typedef BTItemData *BTItem;
+
+/* 
+ * For XLOG: size without alignement. Sizeof works as long as
+ * IndexTupleData has exactly 8 bytes.
+ */
+#define SizeOfBTItem	sizeof(BTItemData)
 
 /* Test whether items are the "same" per the above notes */
 #define BTItemSame(i1, i2)	  ( (i1)->bti_itup.t_tid.ip_blkid.bi_hi == \
@@ -195,55 +203,75 @@ typedef BTStackData *BTStack;
 #define	XLOG_BTREE_DELETE	0x00	/* delete btitem */
 #define	XLOG_BTREE_INSERT	0x10	/* add btitem without split */
 #define	XLOG_BTREE_SPLIT	0x20	/* add btitem with split */
-#define	XLOG_BTREE_ONLEFT	0x40	/* flag for split case: new btitem */
+#define	XLOG_BTREE_SPLEFT	0x30	/* as above + flag that new btitem */
 									/* goes to the left sibling */
+#define	XLOG_BTREE_NEWROOT	0x40	/* new root page */
 
 /*
- * All what we need to find changed index tuple (18 bytes)
+ * All what we need to find changed index tuple (14 bytes)
  */
 typedef struct xl_btreetid
 {
 	RelFileNode			node;
-	CommandId			cid;		/* this is for "better" tuple' */
-									/* identification - it allows to avoid */
-									/* "compensation" records for undo */
 	ItemPointerData		tid;		/* changed tuple id */
 } xl_btreetid;
 
-/* This is what we need to know about delete - ALIGN(18) = 24 bytes */
+/*
+ * This is what we need to know about delete - ALIGN(14) = 18 bytes.
+ */
 typedef struct xl_btree_delete
 {
 	xl_btreetid			target;		/* deleted tuple id */
 } xl_btree_delete;
 
-#define	SizeOfBtreeDelete	(offsetof(xl_btreetid, tid) + SizeOfIptrData))
+#define	SizeOfBtreeDelete	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
 
-/* This is what we need to know about pure (without split) insert - 26 + key data */
+/* 
+ * This is what we need to know about pure (without split) insert - 
+ * 14 + [4] + btitem with key data. Note that we need in CommandID
+ * (4 bytes) only for leaf page insert.
+ */
 typedef struct xl_btree_insert
 {
 	xl_btreetid			target;		/* inserted tuple id */
-	BTItemData			btitem;
-	/* KEY DATA FOLLOWS AT END OF STRUCT */
+	/* [CommandID and ] BTITEM FOLLOWS AT END OF STRUCT */
 } xl_btree_insert;
 
-#define SizeOfBtreeInsert	(offsetof(xl_btree_insert, btitem) + sizeof(BTItemData))
+#define SizeOfBtreeInsert	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
 
 
-/* This is what we need to know about insert with split - 26 + right sibling btitems */
+/* 
+ * This is what we need to know about insert with split - 
+ * 22 + [4] + [btitem] + right sibling btitems. Note that we need in
+ * CommandID (4 bytes) only for leaf page insert.
+ */
 typedef struct xl_btree_split
 {
 	xl_btreetid			target;		/* inserted tuple id */
-	BlockNumber			othblk;		/* second block participated in split: */
+	BlockId				otherblk;	/* second block participated in split: */
 									/* first one is stored in target' tid */
-	BlockNumber			parblk;		/* parent block to be updated */
+	BlockId				rightblk;	/* next right block */
 	/* 
 	 * We log all btitems from the right sibling. If new btitem goes on
-	 * the left sibling then we log it too and it will be first BTItemData
-	 * at the end of this struct.
+	 * the left sibling then we log it too and it will be the first
+	 * BTItemData at the end of this struct, but after (for the leaf
+	 * pages) CommandId.
 	 */
 } xl_btree_split;
 
-#define SizeOfBtreeSplit	(offsetof(xl_btree_insert, parblk) + sizeof(BlockNumber))
+#define SizeOfBtreeSplit	(offsetof(xl_btree_insert, rightblk) + sizeof(BlockId))
+
+/* 
+ * New root log record. 
+ */
+typedef struct xl_btree_newroot
+{
+	RelFileNode			node;
+	BlockId				rootblk;
+	/* 0 or 2 BTITEMS FOLLOW AT END OF STRUCT */
+} xl_btree_newroot;
+
+#define SizeOfBtreeNewroot	(offsetof(xl_btree_newroot, rootblk) + sizeof(BlockId))
 
 /* end of XLOG stuff */
 
