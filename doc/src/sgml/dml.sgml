@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.10 2005/01/22 22:56:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.11 2005/03/01 23:45:00 neilc Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -38,10 +38,10 @@
   </para>
 
   <para>
-   To create a new row, use the <literal>INSERT</literal> command.
-   The command requires the table name and a value for each of the
-   columns of the table.  For example, consider the products table
-   from <xref linkend="ddl">:
+   To create a new row, use the <xref linkend="sql-insert"
+   xreflabel="sql-insert-title"> command.  The command requires the
+   table name and a value for each of the columns of the table.  For
+   example, consider the products table from <xref linkend="ddl">:
 <programlisting>
 CREATE TABLE products (
     product_no integer,
@@ -98,7 +98,9 @@ INSERT INTO products DEFAULT VALUES;
     To do <quote>bulk loads</quote>, that is, inserting a lot of data,
     take a look at the <xref linkend="sql-copy"
     endterm="sql-copy-title"> command.  It is not as flexible as the
-    <command>INSERT</command> command, but is more efficient.
+    <command>INSERT</command> command, but is more efficient. Refer to
+    <xref linkend="populate"> for more information on improving bulk
+    loading performance.
    </para>
   </tip>
  </sect1>
@@ -188,7 +190,7 @@ UPDATE products SET price = price * 1.10;
 
   <para>
    You can update more than one column in an
-   <literal>UPDATE</literal> command by listing more than one
+   <command>UPDATE</command> command by listing more than one
    assignment in the <literal>SET</literal> clause.  For example:
 <programlisting>
 UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a &gt; 0;
@@ -222,9 +224,11 @@ UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a &gt; 0;
   </para>
 
   <para>
-   You use the <literal>DELETE</literal> command to remove rows; the
-   syntax is very similar to the <literal>UPDATE</literal> command.
-   For instance, to remove all rows from the products table that have a price of 10, use
+   You use the <xref linkend="sql-delete"
+   xreflabel="sql-delete-title"> command to remove rows; the syntax is
+   very similar to the <command>UPDATE</command> command.  For
+   instance, to remove all rows from the products table that have a
+   price of 10, use
 <programlisting>
 DELETE FROM products WHERE price = 10;
 </programlisting>
