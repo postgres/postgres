@@ -1,13 +1,15 @@
 /*-------------------------------------------------------------------------
  *
  * copy.c
+ *		COPY command.
+ *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.183 2002/11/26 03:01:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.184 2002/12/01 18:14:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -532,6 +534,8 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	char	   *string;
 	Snapshot	mySnapshot;
 	List	   *cur;
+	MemoryContext oldcontext;
+	MemoryContext mycontext;
 
 	tupDesc = rel->rd_att;
 	attr = tupDesc->attrs;
@@ -560,6 +564,18 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		if (binary && attr[attnum - 1]->attlen == -2)
 			elog(ERROR, "COPY BINARY: cstring not supported");
 	}
+
+	/*
+	 * Create a temporary memory context that we can reset once per row
+	 * to recover palloc'd memory.  This avoids any problems with leaks
+	 * inside datatype output routines, and should be faster than retail
+	 * pfree's anyway.  (We don't need a whole econtext as CopyFrom does.)
+	 */
+	mycontext = AllocSetContextCreate(CurrentMemoryContext,
+									  "COPY TO",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
 
 	if (binary)
 	{
@@ -591,6 +607,9 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 
 		CHECK_FOR_INTERRUPTS();
 
+		MemoryContextReset(mycontext);
+		oldcontext = MemoryContextSwitchTo(mycontext);
+
 		if (binary)
 		{
 			/* Binary per-tuple header */
@@ -615,7 +634,6 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 				string = DatumGetCString(DirectFunctionCall1(oidout,
 							  ObjectIdGetDatum(HeapTupleGetOid(tuple))));
 				CopySendString(string, fp);
-				pfree(string);
 				need_delim = true;
 			}
 		}
@@ -623,11 +641,10 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		foreach(cur, attnumlist)
 		{
 			int			attnum = lfirsti(cur);
-			Datum		origvalue,
-						value;
+			Datum		value;
 			bool		isnull;
 
-			origvalue = heap_getattr(tuple, attnum, tupDesc, &isnull);
+			value = heap_getattr(tuple, attnum, tupDesc, &isnull);
 
 			if (!binary)
 			{
@@ -650,17 +667,6 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			}
 			else
 			{
-				/*
-				 * If we have a toasted datum, forcibly detoast it to
-				 * avoid memory leakage inside the type's output routine
-				 * (or for binary case, becase we must output untoasted
-				 * value).
-				 */
-				if (isvarlena[attnum - 1])
-					value = PointerGetDatum(PG_DETOAST_DATUM(origvalue));
-				else
-					value = origvalue;
-
 				if (!binary)
 				{
 					string = DatumGetCString(FunctionCall3(&out_functions[attnum - 1],
@@ -668,7 +674,6 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 								  ObjectIdGetDatum(elements[attnum - 1]),
 							Int32GetDatum(attr[attnum - 1]->atttypmod)));
 					CopyAttributeOut(fp, string, delim);
-					pfree(string);
 				}
 				else
 				{
@@ -678,6 +683,10 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 					{
 						/* varlena */
 						Assert(fld_size == -1);
+
+						/* If we have a toasted datum, detoast it */
+						value = PointerGetDatum(PG_DETOAST_DATUM(value));
+
 						CopySendData(DatumGetPointer(value),
 									 VARSIZE(value),
 									 fp);
@@ -706,15 +715,13 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 									 fp);
 					}
 				}
-
-				/* Clean up detoasted copy, if any */
-				if (value != origvalue)
-					pfree(DatumGetPointer(value));
 			}
 		}
 
 		if (!binary)
 			CopySendChar('\n', fp);
+
+		MemoryContextSwitchTo(oldcontext);
 	}
 
 	heap_endscan(scandesc);
@@ -726,6 +733,8 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 
 		CopySendData(&fld_count, sizeof(int16), fp);
 	}
+
+	MemoryContextDelete(mycontext);
 
 	pfree(out_functions);
 	pfree(elements);
@@ -1235,12 +1244,12 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	 */
 	copy_lineno = 0;
 
+	MemoryContextSwitchTo(oldcontext);
+
 	/*
 	 * Execute AFTER STATEMENT insertion triggers
 	 */
 	ExecASInsertTriggers(estate, resultRelInfo);
-
-	MemoryContextSwitchTo(oldcontext);
 
 	pfree(values);
 	pfree(nulls);
@@ -1463,7 +1472,6 @@ copy_eof:
 			attribute_buf.len = 0;
 			attribute_buf.data[0] = '\0';
 			appendBinaryStringInfo(&attribute_buf, cvt, strlen(cvt));
-			pfree(cvt);
 		}
 	}
 
@@ -1476,24 +1484,16 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	char	   *string;
 	char		c;
 	char		delimc = delim[0];
-
 	bool		same_encoding;
-	char	   *string_start;
 	int			mblen;
 	int			i;
 
 	same_encoding = (server_encoding == client_encoding);
 	if (!same_encoding)
-	{
 		string = (char *) pg_server_to_client((unsigned char *) server_string,
 											  strlen(server_string));
-		string_start = string;
-	}
 	else
-	{
 		string = server_string;
-		string_start = NULL;
-	}
 
 	for (; (c = *string) != '\0'; string += mblen)
 	{
@@ -1527,7 +1527,11 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 					CopySendChar('\\', fp);
 				CopySendChar(c, fp);
 
-				/* XXX shouldn't this be done even when encoding is same? */
+				/*
+				 * We can skip pg_encoding_mblen() overhead when encoding
+				 * is same, because in valid backend encodings, extra
+				 * bytes of a multibyte character never look like ASCII.
+				 */
 				if (!same_encoding)
 				{
 					/* send additional bytes of the char, if any */
@@ -1538,9 +1542,6 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 				break;
 		}
 	}
-
-	if (string_start)
-		pfree(string_start);	/* pfree pg_server_to_client result */
 }
 
 /*
