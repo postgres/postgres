@@ -4,7 +4,7 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.13 2000/06/07 16:26:48 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.14 2000/06/09 02:38:36 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,7 +27,8 @@ endif
 SUBSYS.o: $(OBJS) 
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-.PHONY: submake clean dep
+.PHONY: submake clean dep depend
+
 submake:
 	for i in $(DIRS); do $(MAKE) -C $$i SUBSYS.o; done
 
@@ -38,13 +39,18 @@ submake:
 # autoconf and autoheader.)
 
 fmgroids.h fmgrtab.c: fmgrstamp-h
+
 fmgrstamp-h: Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
 	$(SHELL) $(SHOPTS) Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
-	echo timestamp > fmgrstamp-h
+	date > fmgrstamp-h
 
-# don't clean fmgroids.h and fmgrtab.c
+# don't clean fmgroids.h and fmgrtab.c, but do clean fmgrstamp-h
+# (we don't really want to put that much trust in timestamps in
+# distribution files and CVS pulls, so force at least one run of
+# Gen_fmgrtab.sh after a make clean)
+
 clean:
-	rm -f SUBSYS.o fmgrtab.o
+	rm -f SUBSYS.o fmgrtab.o fmgrstamp-h
 	for i in $(DIRS); do $(MAKE) -C $$i clean; done
 
 dep depend: fmgroids.h fmgrtab.c
@@ -53,4 +59,3 @@ dep depend: fmgroids.h fmgrtab.c
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-
