@@ -700,3 +700,8 @@ Fri Oct 29 21:36:25 CEST 1999
 	- Fixed bug that caused ecpg to not allow FOR UPDATE.
 	- Set ecpg version to 2.6.9
 
+Mon Nov  1 11:22:06 CET 1999
+
+	- Print SQL error message to STDERR instead of STDOUT.
+	- Added a fourth test source.
+	- Set library version to 3.0.5.

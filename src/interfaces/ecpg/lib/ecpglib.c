@@ -1294,7 +1294,7 @@ void
 sqlprint(void)
 {
 	sqlca.sqlerrm.sqlerrmc[sqlca.sqlerrm.sqlerrml] = '\0';
-	printf("sql error %s\n", sqlca.sqlerrm.sqlerrmc);
+	fprintf(stderr, "sql error %s\n", sqlca.sqlerrm.sqlerrmc);
 }
 
 static bool

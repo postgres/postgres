@@ -1,4 +1,4 @@
-exec sql whenever sqlerror sqlprint;
+exec sql include header_test;
 
 exec sql include sqlca;
 
