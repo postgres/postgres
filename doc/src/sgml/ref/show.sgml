@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.8 2000/02/15 20:49:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.9 2000/04/08 02:39:02 tgl Exp $
 Postgres documentation
 -->
 
@@ -40,8 +40,9 @@ SHOW <replaceable class="PARAMETER">keyword</replaceable>
       <term><replaceable class="PARAMETER">keyword</replaceable></term>
       <listitem>
        <para>
-	Refer to <command>SET</command> for more information on available
-	arguments.
+	Refer to
+	<xref linkend="sql-set-title" endterm="sql-set-title">
+	for more information on available variables.
        </para>
       </listitem>
      </varlistentry>
@@ -62,7 +63,6 @@ SHOW <replaceable class="PARAMETER">keyword</replaceable>
      <varlistentry>
       <term><computeroutput>
 NOTICE: <replaceable class="PARAMETER">variable</replaceable> is <replaceable>value</replaceable>
-SHOW VARIABLE
        </computeroutput></term>
       <listitem>
        <para>
@@ -76,7 +76,7 @@ NOTICE:  Unrecognized variable <replaceable>value</replaceable>
        </computeroutput></term>
       <listitem>
        <para>
-	Message returned if <returnvalue>value</returnvalue> does not exist.
+	Message returned if <returnvalue>variable</returnvalue> does not exist.
        </para>
       </listitem>
      </varlistentry>
@@ -84,7 +84,6 @@ NOTICE:  Unrecognized variable <replaceable>value</replaceable>
      <varlistentry>
       <term><computeroutput>
 NOTICE:  Time zone is unknown
-SHOW VARIABLE
        </computeroutput></term>
       <listitem>
        <para>
@@ -125,12 +124,10 @@ SHOW VARIABLE
     Notes
    </title>
    <para>
-    <command>SHOW</command> is a <productname>Postgres</productname>
-    language extension.
-   </para>
-   <para>
-    Refer to  <command>SET</command>/<command>RESET</command> 
-    to set/reset variable values.
+    See also
+    <xref linkend="sql-set-title" endterm="sql-set-title"> and
+    <xref linkend="sql-reset-title" endterm="sql-reset-title">
+    to manipulate variable values.
    </para>
   </refsect2>
  </refsect1>
@@ -144,7 +141,7 @@ SHOW VARIABLE
 
    <programlisting>
 SHOW DateStyle;
-NOTICE:DateStyle is Postgres with US (NonEuropean) conventions
+NOTICE:  DateStyle is ISO with US (NonEuropean) conventions
    </programlisting>
   </para>
 
@@ -152,7 +149,7 @@ NOTICE:DateStyle is Postgres with US (NonEuropean) conventions
    Show the current genetic optimizer (<literal>geqo</literal>) setting:
    <programlisting>
 SHOW GEQO;
-NOTICE:GEQO is ON
+NOTICE:  GEQO is ON beginning with 11 relations
    </programlisting>
   </para>
  </refsect1>

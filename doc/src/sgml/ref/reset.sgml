@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.7 1999/07/22 15:09:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.8 2000/04/08 02:39:02 tgl Exp $
 Postgres documentation
 -->
 
@@ -41,8 +41,7 @@ RESET <replaceable class="PARAMETER">variable</replaceable>
        <para>
 	Refer to
 	<xref linkend="sql-set-title" endterm="sql-set-title">
-	for more information on available
-	variables.
+	for more information on available variables.
        </para>
       </listitem>
      </varlistentry>
@@ -68,7 +67,7 @@ RESET VARIABLE
        <para>
 	Message returned if 
 	<replaceable class="PARAMETER">variable</replaceable> is successfully reset
-	to its default value..
+	to its default value.
        </para>
       </listitem>
      </varlistentry>
@@ -85,7 +84,7 @@ RESET VARIABLE
    Description
   </title>
   <para>
-   <command>RESET</command> restores variables to the
+   <command>RESET</command> restores variables to their
    default values.
    Refer to
    <xref linkend="sql-set-title" endterm="sql-set-title">
@@ -106,12 +105,7 @@ SET <replaceable class="parameter">variable</replaceable> = DEFAULT
    </title>
 
    <para>
-    <command>RESET</command> is a <productname>Postgres</productname>
-    language extension.
-   </para>
-
-   <para>
-    Use to
+    See also
     <xref linkend="sql-set-title" endterm="sql-set-title"> and
     <xref linkend="sql-show-title" endterm="sql-show-title">
     to manipulate variable values.
