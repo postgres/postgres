@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.163 2001/05/07 00:43:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.164 2001/05/09 21:13:35 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1832,8 +1832,47 @@ AddRelationRawConstraints(Relation rel,
 		}
 		else
 		{
+			int			i;
+			int			j;
+			bool			success;
+			List	   *listptr2;
 			ccname = (char *) palloc(NAMEDATALEN);
-			snprintf(ccname, NAMEDATALEN, "$%d", numchecks + 1);
+
+			/* Loop until we find a non-conflicting constraint name */
+			/* What happens if this loops forever? */
+			j = numchecks + 1;
+			do {
+				success = true;
+				snprintf(ccname, NAMEDATALEN, "$%d", j);
+
+				/* Check against old constraints */
+				for (i = 0; i < numoldchecks; i++)
+				{
+					if (strcmp(oldchecks[i].ccname, ccname) == 0) {
+						success = false;
+						break;
+					}
+				}
+				/* Check against other new constraints, if the check hasn't already failed */
+				if (success) {
+					foreach(listptr2, rawConstraints)
+					{
+						Constraint *cdef2 = (Constraint *) lfirst(listptr2);
+		
+						if (cdef2 == cdef ||
+							cdef2->contype != CONSTR_CHECK ||
+							cdef2->raw_expr == NULL ||
+							cdef2->name == NULL)
+							continue;
+						if (strcmp(cdef2->name, ccname) == 0) {
+							success = false;
+							break;
+						}
+					}
+				}
+
+				++j;
+			} while (!success);
 		}
 
 		/*
