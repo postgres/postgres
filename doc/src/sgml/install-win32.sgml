@@ -1,101 +1,112 @@
- <chapter id="install-win32">
-  <title>Installation on Win32</title>
+<chapter id="install-win32">
+ <title>Installation on <productname>Windows</productname></title>
 
-  <abstract>
-   <para>
-    Build and installation instructions for <productname>Postgres</productname>
-    v6.4 client libraries on Win32.
-   </para>
-  </abstract>
+ <abstract>
+  <para>
+   Build, installation, and use instructions for
+   <productname>PostgreSQL</productname> client libraries on
+   <productname>Windows</productname>
+  </para>
+ </abstract>
 
-  <sect1 id="win32-install-build">
-   <title>Building the libraries</title>
+ <para>
+  Although <productname>PostgreSQL</productname> is written for
+  Unix-like operating systems, the C client library
+  (<application>libpq</application>) and the interactive terminal
+  (<application>psql</application>) can be compiled natively under
+  Windows.  The makefiles included in the source distribution are
+  written for <productname>Microsoft Visual C++</productname> and will
+  probably not work with other systems.  It should be possible to
+  compile the libaries manually in other cases.
+ </para>
 
-   <para>
-    The makefiles included in <productname>Postgres</productname> are written
-    for <productname>Microsoft Visual C++</productname>, and will probably
-    not work with other systems. It should be possible to compile the libaries
-    manually in other cases.
-   </para>
+ <tip>
+  <para>
+   If you are using Windows NT/2000 you can build and use all of
+   <productname>PostgreSQL</productname> <quote>the Unix way</quote>
+   if you install the <productname>Cygwin</productname> toolkit first.
+   In that case see <xref linkend="installation">.
+  </para>
+ </tip>
 
-   <para>
-    To build the libraries, change directory into the <filename>src</filename>
-    directory, and type the commands
-    <programlisting>
-copy include\config.h.win32 include\config.h
-nmake /f win32.mak
-    </programlisting>
-    This assumes that you have <productname>Visual C++</productname> in your
-    path.
-   </para>
+ <para>
+  To build everything that you can on
+  <productname>Windows</productname>, change into the
+  <filename>src</filename> directory and type the command
+<screen>
+<userinput>nmake /f win32.mak</userinput>
+</screen>
+  This assumes that you have <productname>Visual C++</productname> in
+  your path.
+ </para>
 
-   <para>
-    The following files will be built:
+ <para>
+  The following files will be built:
 
-    <itemizedlist spacing="compact" mark="bullet">
-     <listitem>
-      <para>
-       <filename>interfaces\libpq\Release\libpq.dll</filename>
-       - The dynamically linkable frontend library
-      </para>
-     </listitem>
+  <variablelist>
+   <varlistentry>
+    <term><filename>interfaces\libpq\Release\libpq.dll</filename></term>
+    <listitem>
+     <para>
+      The dynamically linkable frontend library
+     </para>
+    </listitem>
+   </varlistentry>
+  
+   <varlistentry>
+    <term><filename>interfaces\libpq\Release\libpqdll.lib</filename></term>
+    <listitem>
+     <para>
+      Import library to link your program to <filename>libpq.dll</filename>
+     </para>
+    </listitem>
+   </varlistentry>
 
-     <listitem>
-      <para>
-       <filename>interfaces\libpq\Release\libpqdll.lib</filename>
-       - Import library to link your program to libpq.dll
-      </para>
-     </listitem>
+   <varlistentry>
+    <term><filename>interfaces\libpq\Release\libpq.lib</filename></term>
+    <listitem>
+     <para>
+      Static library version of the frontend library
+     </para>
+    </listitem>
+   </varlistentry>
 
-     <listitem>
-      <para>
-       <filename>interfaces\libpq\Release\libpq.lib</filename> - Static library version of the frontend library
-      </para>
-     </listitem>
+   <varlistentry>
+    <term><filename>bin\psql\Release\psql.exe</filename></term>
+    <listitem>
+     <para>
+      The <productname>PostgreSQL</productname> interactive terminal
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </para>
 
-     <listitem>
-      <para>
-       <filename>bin\psql\Release\psql.exe</filename> - The <productname>Postgresql</productname> interactive SQL monitor
-      </para>
-     </listitem>
+ <para>
+  The only file that really needs to be installed is the
+  <filename>libpq.dll</filename> library.  This file should in most
+  cases be placed in the <filename>WINNT\SYSTEM32</filename> directory
+  (or in <filename>WINDOWS\SYSTEM</filename> on a Windows 95/98/ME
+  system).  If this file is installed using a setup program, it should
+  be installed with version checking using the
+  <symbol>VERSIONINFO</symbol> resource included in the file, to
+  ensure that a newer version of the library is not overwritten.
+ </para>
 
-    </itemizedlist>
-   </para>
+ <para>
+  If you plan to do development using libpq on this machine, you will
+  have to add the <filename>src\include</filename> and
+  <filename>src\interfaces\libpq</filename> subdirectories of the
+  source tree to the include path in your compilers settings.
+ </para>
 
-  </sect1>
+ <para>
+  To use the libraries, you must add the
+  <filename>libpqdll.lib</filename> file to your project.  (In Visual
+  C++, just right-click on the project and chose to add it.)
+ </para>
 
-  <sect1 id="win32-install-install">
-   <title>Installing the libraries</title>
-   <para>
-    The only part of the library to really be installed is the 
-    <filename>libpq.dll</filename> library. This file should in most cases 
-    be placed in the <filename>WINNT\SYSTEM32</filename> directory (or in
-    <filename>WINDOWS\SYSTEM</filename> on a Windows 95/98 system). If this
-    file is installed using a setup program, it should be installed with
-    version checking using the VERSIONINFO resource included in the file,
-    to ensure that a newer version of the library is not overwritten.
-   </para>
-   <para>
-    If you plan to do development using libpq on this machine, you will have
-    to add the <filename>src\include</filename> and 
-    <filename>src\interfaces\libpq</filename> directories to the include
-    path in your compilers settings.
-   </para>
-  </sect1>
-
-  <sect1 id="win32-install-use">
-   <title>Using the libraries</title>
-   <para>
-    To use the libraries, you must add the <filename>libpqdll.lib</filename>
-    file to your project (in Visual C++, just right-click on the project and
-    chose to add it).
-   </para>
-   <para>
-    Once this is done, it should be possible to use the library just as you
-    would on a Unix platform.
-   </para>
-  </sect1>
- </chapter>
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
