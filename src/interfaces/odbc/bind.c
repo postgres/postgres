@@ -124,7 +124,8 @@ static char *func="SQLBindParameter";
 	}
 
 	if (stmt->parameters[ipar].EXEC_buffer) {
-		free(stmt->parameters[ipar].EXEC_buffer);
+		if (stmt->parameters[ipar].SQLType != SQL_LONGVARBINARY)
+			free(stmt->parameters[ipar].EXEC_buffer);
 		stmt->parameters[ipar].EXEC_buffer = NULL;
 	}
 

@@ -327,7 +327,8 @@ int i;
 			}
 
 			if (self->parameters[i].EXEC_buffer) {
-				free(self->parameters[i].EXEC_buffer);
+				if (self->parameters[i].SQLType != SQL_LONGVARBINARY)
+					free(self->parameters[i].EXEC_buffer);
 				self->parameters[i].EXEC_buffer = NULL;
 			}
 		}
@@ -875,7 +876,7 @@ QueryInfo qi;
 			*/
 		}
 		else {
-			self->errornumber = STMT_BAD_ERROR;
+			self->errornumber = STMT_EXEC_ERROR;
 			self->errormsg = "Error while executing the query";
 		}
 
