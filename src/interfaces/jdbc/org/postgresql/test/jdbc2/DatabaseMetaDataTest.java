@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.11 2002/08/14 20:35:40 barry Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.12 2002/08/23 20:45:49 barry Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -102,7 +102,10 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue(dbmd.supportsMinimumSQLGrammar());
 			assertTrue(!dbmd.supportsCoreSQLGrammar());
 			assertTrue(!dbmd.supportsExtendedSQLGrammar());
-			assertTrue(dbmd.supportsANSI92EntryLevelSQL());
+                        if (((org.postgresql.jdbc1.AbstractJdbc1Connection)con).haveMinimumServerVersion("7.3"))
+ 			  assertTrue(dbmd.supportsANSI92EntryLevelSQL());
+                        else
+ 			  assertTrue(!dbmd.supportsANSI92EntryLevelSQL());
 			assertTrue(!dbmd.supportsANSI92IntermediateSQL());
 			assertTrue(!dbmd.supportsANSI92FullSQL());
 
@@ -426,12 +429,12 @@ public class DatabaseMetaDataTest extends TestCase
 			assertNotNull(dbmd);
 
 			assertTrue(dbmd.getDatabaseProductName().equals("PostgreSQL"));
-                        //The test below doesn't make sense to me, it tests that 
+                        //The test below doesn't make sense to me, it tests that
                         //the version of the driver = the version of the database it is connected to
-                        //since the driver should be backwardly compatible this test is commented out 
+                        //since the driver should be backwardly compatible this test is commented out
 			//assertTrue(dbmd.getDatabaseProductVersion().startsWith(
-                        //         Integer.toString(pc.getDriver().getMajorVersion()) 
-                        //         + "." 
+                        //         Integer.toString(pc.getDriver().getMajorVersion())
+                        //         + "."
                         //         + Integer.toString(pc.getDriver().getMinorVersion())));
 			assertTrue(dbmd.getDriverName().equals("PostgreSQL Native Driver"));
 

@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.3 2002/07/25 22:45:28 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.4 2002/08/23 20:45:49 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Statement which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Statement
@@ -43,32 +43,28 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 	 *	an update count or there are no more results
 	 * @exception SQLException if a database access error occurs
 	 */
-	public boolean execute(String sql) throws SQLException
+	public boolean execute() throws SQLException
 	{
-	        boolean l_return = super.execute(sql);
+	        boolean l_return = super.execute();
                 //Now do the jdbc2 specific stuff
 		//required for ResultSet.getStatement() to work and updateable resultsets
 		((AbstractJdbc2ResultSet)result).setStatement((Statement)this);
-
-		// Added this so that the Updateable resultset knows the query that gave this
-		((AbstractJdbc2ResultSet)result).setSQLQuery(sql);
 
 		return l_return;
 	}
 
 	// ** JDBC 2 Extensions **
 
-	public void addBatch(String sql) throws SQLException
+	public void addBatch(String p_sql) throws SQLException
 	{
 		if (batch == null)
 			batch = new Vector();
-		batch.addElement(sql);
+		batch.addElement(p_sql);
 	}
 
 	public void clearBatch() throws SQLException
 	{
-		if (batch != null)
-			batch.removeAllElements();
+	    batch = null;
 	}
 
 	public int[] executeBatch() throws SQLException
@@ -155,7 +151,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 
 	public void addBatch() throws SQLException
 	{
-		addBatch(compileQuery());
+		addBatch(this.toString());
 	}
 
 	public java.sql.ResultSetMetaData getMetaData() throws SQLException
@@ -387,5 +383,10 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 		throw org.postgresql.Driver.notImplemented();
 	}
 
+
+    //This is needed by AbstractJdbc2ResultSet to determine if the query is updateable or not
+    protected String[] getSqlFragments() {
+	return m_sqlFragments;
+    }
 
 }

@@ -13,24 +13,26 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.13 2002/07/23 03:59:55 barry Exp $
+ * $Id: QueryExecutor.java,v 1.14 2002/08/23 20:45:49 barry Exp $
  */
 
 public class QueryExecutor
 {
 
-        private final String sql;
+        private final String[] m_sqlFrags;
+        private final Object[] m_binds;
         private final java.sql.Statement statement;
         private final PG_Stream pg_stream;
         private final org.postgresql.jdbc1.AbstractJdbc1Connection connection;
 
-        public QueryExecutor(String sql,
+    public QueryExecutor(String[] p_sqlFrags, Object[] p_binds,
                                                  java.sql.Statement statement,
                                                  PG_Stream pg_stream,
                                                  java.sql.Connection connection)
         throws SQLException
         {
-                this.sql = sql;
+                this.m_sqlFrags = p_sqlFrags;
+                this.m_binds = p_binds;
                 this.statement = statement;
                 this.pg_stream = pg_stream;
                 this.connection = (org.postgresql.jdbc1.AbstractJdbc1Connection)connection;
@@ -60,7 +62,7 @@ public class QueryExecutor
                 synchronized (pg_stream)
                 {
 
-                        sendQuery(sql);
+                        sendQuery();
 
                         int c;
                         boolean l_endQuery = false;
@@ -129,12 +131,18 @@ public class QueryExecutor
         /*
          * Send a query to the backend.
          */
-        private void sendQuery(String query) throws SQLException
+        private void sendQuery() throws SQLException
         {
                 try
                 {
                         pg_stream.SendChar('Q');
-                        pg_stream.Send(connection.getEncoding().encode(query));
+   	                for (int i = 0 ; i < m_binds.length ; ++i) {
+			  if (m_binds[i] == null)
+				throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
+			  pg_stream.Send(connection.getEncoding().encode(m_sqlFrags[i]));
+                          pg_stream.Send(connection.getEncoding().encode(m_binds[i].toString()));
+		        }
+                        pg_stream.Send(connection.getEncoding().encode(m_sqlFrags[m_binds.length]));
                         pg_stream.SendChar(0);
                         pg_stream.flush();
 

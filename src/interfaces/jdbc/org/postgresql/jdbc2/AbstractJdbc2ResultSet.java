@@ -15,14 +15,12 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.4 2002/08/14 20:35:39 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.5 2002/08/23 20:45:49 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
  */
 public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.AbstractJdbc1ResultSet {
-
-  protected String sqlQuery = null;
 
   //needed for updateable result set support
   protected boolean updateable = false;
@@ -1254,7 +1252,9 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
 
   public void parseQuery() {
-    StringTokenizer st = new StringTokenizer(sqlQuery, " \r\t");
+      String[] l_sqlFragments = ((AbstractJdbc2Statement)statement).getSqlFragments();
+      String l_sql = l_sqlFragments[0];
+    StringTokenizer st = new StringTokenizer(l_sql, " \r\t");
     boolean tableFound = false, tablesChecked = false;
     String name = "";
 
@@ -1323,11 +1323,6 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
   public void setStatement(Statement statement) {
     this.statement = statement;
-  }
-
-
-  public void setSQLQuery(String sqlQuery) {
-    this.sqlQuery = sqlQuery;
   }
 
 

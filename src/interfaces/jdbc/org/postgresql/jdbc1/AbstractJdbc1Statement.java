@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.4 2002/08/16 17:51:38 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.5 2002/08/23 20:45:49 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -28,12 +28,12 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	/** Timeout (in seconds) for a query (not used) */
 	protected int timeout = 0;
 
-	protected boolean escapeProcessing = true;
+	protected boolean replaceProcessingEnabled = true;
 
 	/** The current results */
 	protected java.sql.ResultSet result = null;
 
-	// Static variables for parsing SQL when escapeProcessing is true.
+	// Static variables for parsing SQL when replaceProcessing is true.
 	private static final short IN_SQLCODE = 0;
 	private static final short IN_STRING = 1;
 	private static final short BACKSLASH = 2;
@@ -43,9 +43,8 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	private StringBuffer sbuf = new StringBuffer(32);
 
         //Used by the preparedstatement style methods
-	protected String sql;
-	protected String[] templateStrings;
-	protected String[] inStrings;
+	protected String[] m_sqlFragments;
+	protected Object[] m_binds = new Object[0];
 
 	//Used by the callablestatement style methods
 	private static final String JDBC_SYNTAX = "{[? =] call <some_function> ([? [,?]*]) }";
@@ -68,42 +67,46 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		this.connection = connection;
 	}
 
-	public AbstractJdbc1Statement (AbstractJdbc1Connection connection, String sql) throws SQLException
+	public AbstractJdbc1Statement (AbstractJdbc1Connection connection, String p_sql) throws SQLException
 	{
-		this.sql = sql;
 		this.connection = connection;
-                parseSqlStmt();  // this allows Callable stmt to override
+                parseSqlStmt(p_sql);  // this allows Callable stmt to override
 	}
 
-	protected void parseSqlStmt () throws SQLException {
-	    if (this instanceof CallableStatement) {
-                modifyJdbcCall();
+	protected void parseSqlStmt (String p_sql) throws SQLException {
+	    String l_sql = p_sql;
+
+	    l_sql = replaceProcessing(l_sql);
+
+            if (this instanceof CallableStatement) {
+                l_sql = modifyJdbcCall(l_sql);
 	    }
 
 		Vector v = new Vector();
 		boolean inQuotes = false;
 		int lastParmEnd = 0, i;
 
-		for (i = 0; i < sql.length(); ++i)
+		for (i = 0; i < l_sql.length(); ++i)
 		{
-			int c = sql.charAt(i);
+			int c = l_sql.charAt(i);
 
 			if (c == '\'')
 				inQuotes = !inQuotes;
 			if (c == '?' && !inQuotes)
 			{
-				v.addElement(sql.substring (lastParmEnd, i));
+				v.addElement(l_sql.substring (lastParmEnd, i));
 				lastParmEnd = i + 1;
 			}
 		}
-		v.addElement(sql.substring (lastParmEnd, sql.length()));
+		v.addElement(l_sql.substring (lastParmEnd, l_sql.length()));
 
-		templateStrings = new String[v.size()];
-		inStrings = new String[v.size() - 1];
+		m_sqlFragments = new String[v.size()];
+		m_binds = new String[v.size() - 1];
+ //BJL why if binds is new???
 		clearParameters();
 
-		for (i = 0 ; i < templateStrings.length; ++i)
-			templateStrings[i] = (String)v.elementAt(i);
+		for (i = 0 ; i < m_sqlFragments.length; ++i)
+			m_sqlFragments[i] = (String)v.elementAt(i);
 	}
 
 
@@ -114,14 +117,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 * @return a ResulSet that contains the data produced by the query
 	 * @exception SQLException if a database access error occurs
 	 */
-	public java.sql.ResultSet executeQuery(String sql) throws SQLException
+	public java.sql.ResultSet executeQuery(String p_sql) throws SQLException
 	{
-		this.execute(sql);
-		while (result != null && !((AbstractJdbc1ResultSet)result).reallyResultSet())
-			result = ((AbstractJdbc1ResultSet)result).getNext();
-		if (result == null)
-			throw new PSQLException("postgresql.stat.noresult");
-		return result;
+	    String l_sql = replaceProcessing(p_sql);
+            m_sqlFragments = new String[] {l_sql};
+	    return executeQuery();
 	}
 
 	/*
@@ -133,7 +133,12 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public java.sql.ResultSet executeQuery() throws SQLException
 	{
-	    return executeQuery(compileQuery());
+		this.execute();
+		while (result != null && !((AbstractJdbc1ResultSet)result).reallyResultSet())
+			result = ((AbstractJdbc1ResultSet)result).getNext();
+		if (result == null)
+			throw new PSQLException("postgresql.stat.noresult");
+		return result;
 	}
 
 	/*
@@ -145,12 +150,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 * @return either a row count, or 0 for SQL commands
 	 * @exception SQLException if a database access error occurs
 	 */
-	public int executeUpdate(String sql) throws SQLException
+	public int executeUpdate(String p_sql) throws SQLException
 	{
-		this.execute(sql);
-		if (((AbstractJdbc1ResultSet)result).reallyResultSet())
-			throw new PSQLException("postgresql.stat.result");
-		return this.getUpdateCount();
+	    String l_sql = replaceProcessing(p_sql);
+            m_sqlFragments = new String[] {l_sql};
+	    return executeUpdate();
 	}
 
 	/*
@@ -164,7 +168,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public int executeUpdate() throws SQLException
 	{
-	    return executeUpdate(compileQuery());
+		this.execute();
+		if (((AbstractJdbc1ResultSet)result).reallyResultSet())
+			throw new PSQLException("postgresql.stat.result");
+		return this.getUpdateCount();
 	}
 
 	/*
@@ -178,10 +185,30 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 *	an update count or there are no more results
 	 * @exception SQLException if a database access error occurs
 	 */
-	public boolean execute(String sql) throws SQLException
+	public boolean execute(String p_sql) throws SQLException
 	{
-		if (escapeProcessing)
-			sql = escapeSQL(sql);
+	    String l_sql = replaceProcessing(p_sql);
+            m_sqlFragments = new String[] {l_sql};
+	    return execute();
+	}
+
+	/*
+	 * Some prepared statements return multiple results; the execute method
+	 * handles these complex statements as well as the simpler form of
+	 * statements handled by executeQuery and executeUpdate
+	 *
+	 * @return true if the next result is a ResultSet; false if it is an
+	 *		 *	update count or there are no more results
+	 * @exception SQLException if a database access error occurs
+	 */
+	public boolean execute() throws SQLException
+	{
+		if (isFunction && !returnTypeSet)
+			throw new PSQLException("postgresql.call.noreturntype");
+		if (isFunction) { // set entry 1 to dummy entry..
+			m_binds[0] = ""; // dummy entry which ensured that no one overrode
+			// and calls to setXXX (2,..) really went to first arg in a function call..
+		}
 
 		// New in 7.1, if we have a previous resultset then force it to close
 		// This brings us nearer to compliance, and helps memory management.
@@ -195,7 +222,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 
 
 		// New in 7.1, pass Statement so that ExecSQL can customise to it
-		result = ((AbstractJdbc1Connection)connection).ExecSQL(sql, (java.sql.Statement)this);
+		result = ((AbstractJdbc1Connection)connection).ExecSQL(m_sqlFragments, m_binds, (java.sql.Statement)this);
 
                 //If we are executing a callable statement function set the return data
 		if (isFunction) {
@@ -214,20 +241,6 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		} else {
 		        return (result != null && ((AbstractJdbc1ResultSet)result).reallyResultSet());
 		}
-	}
-
-	/*
-	 * Some prepared statements return multiple results; the execute method
-	 * handles these complex statements as well as the simpler form of
-	 * statements handled by executeQuery and executeUpdate
-	 *
-	 * @return true if the next result is a ResultSet; false if it is an
-	 *		 *	update count or there are no more results
-	 * @exception SQLException if a database access error occurs
-	 */
-	public boolean execute() throws SQLException
-	{
-	    return execute(compileQuery());
 	}
 
 	/*
@@ -336,7 +349,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setEscapeProcessing(boolean enable) throws SQLException
 	{
-		escapeProcessing = enable;
+		replaceProcessingEnabled = enable;
 	}
 
 	/*
@@ -494,18 +507,19 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 * So, something like "select * from x where d={d '2001-10-09'}" would
 	 * return "select * from x where d= '2001-10-09'".
 	 */
-	protected static String escapeSQL(String sql)
+	protected String replaceProcessing(String p_sql)
 	{
+	    if (replaceProcessingEnabled) {
 		// Since escape codes can only appear in SQL CODE, we keep track
 		// of if we enter a string or not.
-		StringBuffer newsql = new StringBuffer(sql.length());
+		StringBuffer newsql = new StringBuffer(p_sql.length());
 		short state = IN_SQLCODE;
 
 		int i = -1;
-		int len = sql.length();
+		int len = p_sql.length();
 		while (++i < len)
 		{
-			char c = sql.charAt(i);
+			char c = p_sql.charAt(i);
 			switch (state)
 			{
 				case IN_SQLCODE:
@@ -514,7 +528,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 					else if (c == '{')			  // start of an escape code?
 						if (i + 1 < len)
 						{
-							char next = sql.charAt(i + 1);
+							char next = p_sql.charAt(i + 1);
 							if (next == 'd')
 							{
 								state = ESC_TIMEDATE;
@@ -524,7 +538,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 							else if (next == 't')
 							{
 								state = ESC_TIMEDATE;
-								i += (i + 2 < len && sql.charAt(i + 2) == 's') ? 2 : 1;
+								i += (i + 2 < len && p_sql.charAt(i + 2) == 's') ? 2 : 1;
 								break;
 							}
 						}
@@ -556,6 +570,9 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		}
 
 		return newsql.toString();
+	    } else {
+		return p_sql;
+	    }
 	}
 
     /* 
@@ -1113,8 +1130,8 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		int i;
 
-		for (i = 0 ; i < inStrings.length ; i++)
-			inStrings[i] = null;
+		for (i = 0 ; i < m_binds.length ; i++)
+			m_binds[i] = null;
 	}
 
 	/*
@@ -1532,8 +1549,6 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	/*
 	 * Returns the SQL statement with the current template values
 	 * substituted.
-			* NB: This is identical to compileQuery() except instead of throwing
-			* SQLException if a parameter is null, it places ? instead.
 	 */
 	public String toString()
 	{
@@ -1542,15 +1557,15 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			sbuf.setLength(0);
 			int i;
 
-			for (i = 0 ; i < inStrings.length ; ++i)
+			for (i = 0 ; i < m_binds.length ; ++i)
 			{
-				if (inStrings[i] == null)
+				if (m_binds[i] == null)
 					sbuf.append( '?' );
 				else
-					sbuf.append (templateStrings[i]);
-				sbuf.append (inStrings[i]);
+					sbuf.append (m_sqlFragments[i]);
+				sbuf.append (m_binds[i]);
 			}
-			sbuf.append(templateStrings[inStrings.length]);
+			sbuf.append(m_sqlFragments[m_binds.length]);
 			return sbuf.toString();
 		}
 	}
@@ -1566,39 +1581,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	protected void set(int paramIndex, String s) throws SQLException
 	{
-		if (paramIndex < 1 || paramIndex > inStrings.length)
+		if (paramIndex < 1 || paramIndex > m_binds.length)
 			throw new PSQLException("postgresql.prep.range");
 		if (paramIndex == 1 && isFunction) // need to registerOut instead
 			throw new PSQLException ("postgresql.call.funcover");             
-		inStrings[paramIndex - 1] = s;
-	}
-
-	/*
-	 * Helper - this compiles the SQL query from the various parameters
-	 * This is identical to toString() except it throws an exception if a
-	 * parameter is unused.
-	 */
-	protected synchronized String compileQuery()
-	throws SQLException
-	{
-		sbuf.setLength(0);
-		int i;
-
-		if (isFunction && !returnTypeSet)
-			throw new PSQLException("postgresql.call.noreturntype");
-		if (isFunction) { // set entry 1 to dummy entry..
-			inStrings[0] = ""; // dummy entry which ensured that no one overrode
-			// and calls to setXXX (2,..) really went to first arg in a function call..
-		}
-
-		for (i = 0 ; i < inStrings.length ; ++i)
-		{
-			if (inStrings[i] == null)
-				throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
-			sbuf.append (templateStrings[i]).append (inStrings[i]);
-		}
-		sbuf.append(templateStrings[inStrings.length]);
-		return sbuf.toString();
+		m_binds[paramIndex - 1] = s;
 	}
 
 	/*
@@ -1630,26 +1617,27 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 * select <some_function> (?, [?, ...]) as result
 	 * 
 	 */
-	private void modifyJdbcCall() throws SQLException {
+	private String modifyJdbcCall(String p_sql) throws SQLException {
 		// syntax checking is not complete only a few basics :(
-		originalSql = sql; // save for error msgs..
-		int index = sql.indexOf ("="); // is implied func or proc?
+		originalSql = p_sql; // save for error msgs..
+                String l_sql = p_sql;
+		int index = l_sql.indexOf ("="); // is implied func or proc?
 		boolean isValid = true;
 		if (index != -1) {
 			isFunction = true;
-			isValid = sql.indexOf ("?") < index; // ? before =			
+			isValid = l_sql.indexOf ("?") < index; // ? before =			
 		}
-		sql = sql.trim ();
-		if (sql.startsWith ("{") && sql.endsWith ("}")) {
-			sql = sql.substring (1, sql.length() -1);
+		l_sql = l_sql.trim ();
+		if (l_sql.startsWith ("{") && l_sql.endsWith ("}")) {
+			l_sql = l_sql.substring (1, l_sql.length() -1);
 		} else isValid = false;
-		index = sql.indexOf ("call"); 
+		index = l_sql.indexOf ("call"); 
 		if (index == -1 || !isValid)
 			throw new PSQLException ("postgresql.call.malformed", 
-									 new Object[]{sql, JDBC_SYNTAX});
-		sql = sql.replace ('{', ' '); // replace these characters
-		sql = sql.replace ('}', ' ');
-		sql = sql.replace (';', ' ');
+									 new Object[]{l_sql, JDBC_SYNTAX});
+		l_sql = l_sql.replace ('{', ' '); // replace these characters
+		l_sql = l_sql.replace ('}', ' ');
+		l_sql = l_sql.replace (';', ' ');
 		
 		// this removes the 'call' string and also puts a hidden '?'
 		// at the front of the line for functions, this will
@@ -1658,9 +1646,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
                 // value that is not needed by the postgres syntax.  But to make 
                 // sure that the parameter numbers are the same as in the original
                 // sql we add a dummy parameter in this case
-		sql = (isFunction ? "?" : "") + sql.substring (index + 4);
+		l_sql = (isFunction ? "?" : "") + l_sql.substring (index + 4);
 		
-		sql = "select " + sql + " as " + RESULT_COLUMN + ";";	  
+		l_sql = "select " + l_sql + " as " + RESULT_COLUMN + ";";
+                return l_sql;	  
 	}
 
 	/** helperfunction for the getXXX calls to check isFunction and index == 1

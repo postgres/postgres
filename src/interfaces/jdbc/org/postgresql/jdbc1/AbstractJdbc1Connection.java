@@ -13,7 +13,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.4 2002/08/16 19:34:57 davec Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.5 2002/08/23 20:45:49 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -426,7 +426,26 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
          */
         public java.sql.ResultSet ExecSQL(String sql, java.sql.Statement stat) throws SQLException
         {
-                return new QueryExecutor(sql, stat, pg_stream, (java.sql.Connection)this).execute();
+            return new QueryExecutor(new String[] {sql}, EMPTY_OBJECT_ARRAY, stat, pg_stream, (java.sql.Connection)this).execute();
+        }
+        private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+
+        /*
+         * Send a query to the backend.  Returns one of the ResultSet
+         * objects.
+         *
+         * <B>Note:</B> there does not seem to be any method currently
+         * in existance to return the update count.
+         *
+         * @param p_sqlFragmentss the SQL statement parts to be executed
+         * @param p_binds the SQL bind values
+         * @param stat The Statement associated with this query (may be null)
+         * @return a ResultSet holding the results
+         * @exception SQLException if a database error occurs
+         */
+        public java.sql.ResultSet ExecSQL(String[] p_sqlFragments, Object[] p_binds, java.sql.Statement stat) throws SQLException
+        {
+                return new QueryExecutor(p_sqlFragments, p_binds, stat, pg_stream, (java.sql.Connection)this).execute();
         }
 
         /*
