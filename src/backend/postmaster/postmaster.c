@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.175 2000/10/25 22:27:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.176 2000/10/28 18:27:55 momjian Exp $
  *
  * NOTES
  *
@@ -1719,8 +1719,16 @@ BackendStartup(Port *port)
 	fflush(stdout);
 	fflush(stderr);
 
+#ifdef __BEOS__
+	/* Specific beos actions before backend startup */
+	beos_before_backend_startup();
+#endif
 	if ((pid = fork()) == 0)
 	{							/* child */
+#ifdef __BEOS__
+		/* Specific beos backend stratup actions */
+		beos_backend_startup();
+#endif
 		if (DoBackend(port))
 		{
 			fprintf(stderr, "%s child[%d]: BackendStartup: backend startup failed\n",
@@ -1734,6 +1742,10 @@ BackendStartup(Port *port)
 	/* in parent */
 	if (pid < 0)
 	{
+#ifdef __BEOS__
+		/* Specific beos backend stratup actions */
+		beos_backend_startup_failed();
+#endif
 		fprintf(stderr, "%s: BackendStartup: fork failed: %s\n",
 				progname, strerror(errno));
 		return STATUS_ERROR;

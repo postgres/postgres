@@ -13,160 +13,179 @@
 #include <stdio.h>
 #include <errno.h>
 #include <OS.h>
+#include "utils/elog.h"
 
-// Controle d'un pool de sémaphores
-// On considere que le semId utilisé correspond bien a une area de notre adress space
-// Les informations du pool de sémaphore sont stockés dans cette area
+
+/* Control of a semaphore pool. The pool is an area in which we stored all
+the semIds of the pool. The first 4 bytes are the number of semaphore allocated
+in the pool followed by SemIds */ 
+
 int semctl(int semId,int semNum,int flag,union semun semun)
 {
-	
-	// Recherche de l'adresse de base de l'area
 	int32* Address;
 	area_info info; 
-//	printf("semctl : semid  %d, semnum %d, cmd %d\n",semId,semNum,flag);
+
+	/* Try to find the pool */
 	if (get_area_info(semId,&info)!=B_OK)
 	{
-//		printf("area not found\n");
+		/* pool is invalid (BeOS area id is invalid) */
 		errno=EINVAL;
 		return -1;
 	}
+	
+	/* Get the pool address */
 	Address=(int32*)info.address;
 	
-	// semnum peut etre égal à 0
-	// semun.array contient la valeur de départ du sémaphore
 	
-	// si flag = set_all il faut définir la valeur du sémaphore sue semun.array
+	/* semNum might be 0 */
+	/* semun.array contain the sem initial values */
+	
+	/* Fix the count of all sem of the pool to semun.array */
 	if (flag==SETALL)
 	{
 		long i;
-//		printf("setall %d\n",Address[0]);
 		for (i=0;i<Address[0];i++)
 		{
 			int32 cnt;
+			/* Get the current count */
 			get_sem_count(Address[i+1],&cnt);
-//			printf("Set de ALl %d  %d = %d\n",Address[i+1],semun.array[i],cnt);
+
+			/* Compute and set the new count (relative to the old one) */
 			cnt-=semun.array[i];
 			if (cnt > 0)
-				acquire_sem_etc(Address[i+1],cnt,0,0);
+				while(acquire_sem_etc(Address[i+1],cnt,0,0)==B_INTERRUPTED);
 			if (cnt < 0)
 				release_sem_etc(Address[i+1],-cnt,0);
 		}
 		return 1;
 	}
 	
-	/* si flag = SET_VAL il faut définir la valeur du sémaphore sur semun.val*/
+	/* Fix the count of one semaphore to semun.val */
 	if (flag==SETVAL)
 	{
 		int32 cnt;
+		/* Get the current count */
 		get_sem_count(Address[semNum+1],&cnt);
-//		printf("semctl set val id : %d val : %d = %d\n",semId,semun.val,cnt);
+
+		/* Compute and set the new count (relative to the old one) */
 		cnt-=semun.val;
 		if (cnt > 0)
-			acquire_sem_etc(Address[semNum+1],cnt,0,0);
+			while(acquire_sem_etc(Address[semNum+1],cnt,0,0)==B_INTERRUPTED);
 		if (cnt < 0)
 			release_sem_etc(Address[semNum+1],-cnt,0);
 		return 1;
 	}
 	
-	/* si flag=rm_id il faut supprimer le sémaphore*/
+	/* Delete the pool */
 	if (flag==IPC_RMID)
 	{
 		long i;
-		// Suppression des sémaphores (ils appartienent au kernel maintenant)
+
 		thread_info ti;
-//		printf("remove set\n");
 		get_thread_info(find_thread(NULL),&ti);
+		
+		/* Loop over all semaphore to delete them */
 		for (i=0;i<Address[0];i++)
 		{
+			/* Don't remember why I do that */
 			set_sem_owner(Address[i+1],ti.team);
+			
+			/* Delete the semaphore */
 			delete_sem(Address[i+1]);
+
+			/* Reset to an invalid semId (in case other process try to get the infos from a cloned area */
+			Address[i+1]=0;
 		}
-		// Il faudrait supprimer en boucle toutes les area portant le même nom
+		
+		/* Set the semaphore count to 0 */
+		Address[0]=0;
+		
+		/* Delete the area (it might be cloned by other process. Let them live with it,
+		in all cases semIds are 0 so if another process try to use it, it will fail */
 		delete_area(semId);
+
 		return 1;
 	}
 	
-	/* si flag = GETNCNT il faut renvoyer le semaphore count*/
+	/* Get the current semaphore count */
 	if (flag==GETNCNT)
 	{
-//		printf("getncnt : impossible sur BeOS\n");
-		return 0; // a faire (peut etre impossible sur Beos)
+		/* TO BE IMPLEMENTED */
+		elog(ERROR,"beos : semctl error : GETNCNT not implemented");
+		return 0;
 	}
 	
-	/* si flag = GETVAL il faut renvoyer la valeur du sémaphore*/
+	/* Get the current semaphore count of the first semaphore in the pool */
 	if (flag==GETVAL)
 	{
 		int32 cnt;
 		get_sem_count(Address[semNum+1],&cnt);
-//		printf("semctl getval id : %d cnt : %d\n",semId,cnt);
 		return cnt;
 	}
-//	printf("semctl erreur\n");
+
+	elog(ERROR,"beos : semctl error : unknown flag");
+
 	return 0;
 }
 
-// L'area dans laquelle est stockée le pool est identifiée par son nom (convention à moi : SYSV_IPC_SEM : "semId)
+/* Find a pool id based on IPC key */
 int semget(int semKey, int semNum, int flags)
 {
 	char Nom[50];
 	area_id parea;
 	void* Address;
 
-//	printf("semget get k: %d n: %d fl:%d\n",semKey,semNum,flags);
-	// Construction du nom que doit avoir l'area
+	/* Name of the area to find */
 	sprintf(Nom,"SYSV_IPC_SEM : %d",semKey);
 
-	// Recherche de l'area
+	/* find area */
 	parea=find_area(Nom);
 
-	// L'area existe
+	/* Test of area existance */
 	if (parea!=B_NAME_NOT_FOUND)
 	{
-//		printf("area found\n");
-		// On demande une creatrion d'un pool existant : erreur
+		/* Area exist and creation is requested, error */
 		if ((flags&IPC_CREAT)&&(flags&IPC_EXCL))
 		{
-//			printf("creat asking exist\n");
 			errno=EEXIST;
 			return -1;
 		}
 		
-		// Clone de l'area et renvoi de son ID		
+		/* Get an area clone (in case it's not in our address space) */
+		/* TODO : a check of address space might be done to avoid duplicate areas in the same address space*/
 		parea=clone_area(Nom,&Address,B_ANY_ADDRESS,B_READ_AREA | B_WRITE_AREA,parea);
 		return parea;
 	}
-	// L'area n'existe pas
 	else
 	{
-//		printf("set don't exist\n");
-		// Demande de creation
+		/* Area does not  exist, but creation is requested, so create it */
 		if (flags&IPC_CREAT)
 		{
 			int32* Address;
-			thread_info ti;
 			void* Ad;
 			long i;
 
-//			printf("create set\n");
-			// On ne peut pas creer plus de 500 semaphores dans un pool (limite tout à fait arbitraire de ma part)
+			/* Limit to 500 semaphore in a pool */
 			if (semNum>500)
 			{
 				errno=ENOSPC;
 				return -1;
 			}
-					
-			// Creation de la zone de mémoire partagée
+
+			/* Create the shared memory area which will hold the pool */
 			parea=create_area(Nom,&Ad,B_ANY_ADDRESS,4096,B_NO_LOCK,B_READ_AREA | B_WRITE_AREA);		
 			if ((parea==B_BAD_VALUE)|| (parea==B_NO_MEMORY)||(parea==B_ERROR))
 			{
 				errno=ENOMEM;
 				return -1;
 			}
+			
+			/* fill up informations (sem number and sem ids) */
 			Address=(int32*)Ad;
 			Address[0]=semNum;
 			for (i=1;i<=Address[0];i++)
 			{
-				// Creation des sémaphores 1 par 1
+				/* Create the semaphores */
 				Address[i]=create_sem(0,Nom);
 				
 				if ((Address[i]==B_BAD_VALUE)|| (Address[i]==B_NO_MEMORY)||(Address[i]==B_NO_MORE_SEMS))
@@ -176,44 +195,43 @@ int semget(int semKey, int semNum, int flags)
 				}
 			}
 
-//			printf("returned %d\n",parea);
 			return parea;
 		}
-		// Le pool n'existe pas et pas de demande de création
 		else
 		{
-//			printf("set does not exist no creat requested\n");
+			/* Area does not exist and no creation is requested */
 			errno=ENOENT;
 			return -1;
 		}
 	}
 }
 
-// Opération sur le pool de sémaphores
+/* Acquire or release in the semaphore pool */
 int semop(int semId, struct sembuf *sops, int nsops)
 {
-	// Recherche de l'adresse du pool
-	int32* Address;
+	int32* Address; /*Pool address*/
    	area_info info; 
 	long i;
 
-//	printf("semop id : %d n: %d\n",semId,sops->sem_op);
+	/* Get the pool address (semId IS an area id) */
 	get_area_info(semId,&info);
 	Address=(int32*)info.address;
+	
+	/* Check the validity of semId (it should be an area id) */
 	if ((semId==B_BAD_VALUE)||(semId==B_NO_MEMORY)||(semId==B_ERROR))
 	{
 		errno=EINVAL;
 		return -1;
 	}
 
-	// Execution de l'action
+	/* Perform acquire or release */
 	for(i=0;i<nsops;i++)
 	{
-
-//		printf("semid %d, n %d\n",Address[sops[i].sem_num+1],sops[i].sem_op);
+		/* For each sem in the pool, check the operation to perform */
 		if (sops[i].sem_op < 0)
 		{
-			acquire_sem_etc(Address[sops[i].sem_num+1],-sops[i].sem_op,0,0);
+			/* Try acuiring the semaphore till we are not inteerupted by a signal */
+			while (acquire_sem_etc(Address[sops[i].sem_num+1],-sops[i].sem_op,0,0)==B_INTERRUPTED);
 		}
 		if (sops[i].sem_op > 0)
 		{

@@ -12,26 +12,25 @@
 #include <stdio.h>
 #include <OS.h>
 
-// Detachement d'une zone de mémoire partagée
-// On detruit le clone de l'area dans notre adress-space
+/* Emulating SYS shared memory with beos areas. WARNING : fork clone
+areas in copy on write mode */
+
+
+/* Detach from a shared mem area based on its address */
 int shmdt(char* shmaddr)
 {
-	// Recherche de l'id de l'area présente à cette adresse
+	/* Find area id for this address */
 	area_id s;
 	s=area_for(shmaddr);
-//	printf("detach area %d\n",s);
-	
-	// Suppression de l'area
+
+	/* Delete area */
 	return delete_area(s);
 }
 
-// Attachement à une zone de mémoire partagée
-// L'area doit bien partie de notre adress-space et on retourne directement l'adress
+/* Attach to an existing area */
 int* shmat(int memId,int m1,int m2)
 {
-//	printf("shmat %d %d %d\n",memId,m1,m2);
-
-	// Lecture de notre team_id
+	/* Get our team id */
 	thread_info thinfo;
 	team_info teinfo;
 	area_info ainfo; 
@@ -39,74 +38,59 @@ int* shmat(int memId,int m1,int m2)
 	get_thread_info(find_thread(NULL),&thinfo);
 	get_team_info(thinfo.team,&teinfo);
 	
-	// Lecture du teamid de l'area
+	/* Get area teamid */
 	if (get_area_info(memId,&ainfo)!=B_OK)
 		printf("AREA %d Invalide\n",memId);
 	
 	if (ainfo.team==teinfo.team)
 	{
-		//retour de l'adresse
-//		printf("attach area %d add %d\n",memId,ainfo.address);
+		/* the area is already in our address space, just return the address */
 		return (int*)ainfo.address;
 	}	
 	else
 	{
-		// Clone de l'area
+		/* the area is not in our address space, clone it before and return the address */
 		area_id narea;
 		narea = clone_area(ainfo.name,&(ainfo.address),B_CLONE_ADDRESS,B_READ_AREA | B_WRITE_AREA,memId);	
 		get_area_info(narea,&ainfo);	
-//		printf("attach area %d in %d add %d\n",memId,narea,ainfo.address);
 		return (int*)ainfo.address;
 	}
 }
 
-// Utilisé uniquement pour supprimer une zone de mémoire partagée
-// On fait la meme chose que le detach mais avec un id direct
+/* Control a shared mem area : Used only to delete it */
 int shmctl(int shmid,int flag, struct shmid_ds* dummy)
 {
-//	printf("shmctl %d %d \n",shmid,flag);
+	/* Delete the area */
 	delete_area(shmid);
 	return 0;
 }
 
-// Recupération d'une area en fonction de sa référence
-// L'area source est identifiée par son nom (convention à moi : SYSV_IPC_SHM : "memId)
+/* Get an area based on the IPC key */
 int shmget(int memKey,int size,int flag)
 {
-	int32 n_size;
 	char nom[50];
-	area_id parea;
 	void* Address;
-	area_id a;
-	
-	n_size=((size/4096)+1)*4096;
+	area_id parea;
 
-//	printf("shmget %d %d %d %d\n",memKey,size,flag,nsize);
-
-	// Determination du nom que doit avoir l'area
+	/* Area name */
 	sprintf(nom,"SYSV_IPC_SHM : %d",memKey);
 
-
-	// Recherche de cette area
+	/* Find area */
 	parea=find_area(nom);
 	
-	// L'area existe
+	/* area exist, just return its id */
 	if (parea!=B_NAME_NOT_FOUND)
 	{
-//		printf("area found\n");
 		return parea;
 	}	
 
-	// L'area n'existe pas et on n'en demande pas la création : erreur
+	/* area does not exist and no creation is requested : error */
 	if (flag==0)
 	{
-//		printf("area %s not found\n",nom);
 		return -1;
 	}
 	
-	// L'area n'existe pas mais on demande sa création
-	a=create_area(nom,&Address,B_ANY_ADDRESS,n_size,B_NO_LOCK,B_READ_AREA | B_WRITE_AREA);		
-//	printf("area %s : %d created addresse %d\n",nom,a,Address);
-	return a;
+	/* area does not exist and its creation is requested, create it (be sure to have a 4ko multiple size */
+	return create_area(nom,&Address,B_ANY_ADDRESS,((size/4096)+1)*4096,B_NO_LOCK,B_READ_AREA | B_WRITE_AREA);		
 }
 
