@@ -606,7 +606,43 @@ int does_int64_work()
 main() {
   exit(! does_int64_work());
 }],
-	[AC_DEFINE(HAVE_LONG_LONG_INT_64) AC_MSG_RESULT(yes)],
+	[AC_DEFINE(HAVE_LONG_LONG_INT_64_Ld) AC_MSG_RESULT(yes)],
+	AC_MSG_RESULT(no),
+	AC_MSG_RESULT(assuming not on target machine))
+
+AC_TRY_RUN([#include <stdio.h>
+typedef long long int int64;
+#define INT64_FORMAT "%qd"
+
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_work()
+{
+  int64 c,d,e;
+  char buf[100];
+
+  if (sizeof(int64) != 8)
+    return 0;			/* doesn't look like the right size */
+
+  /* we do perfunctory checks on multiply, divide, sprintf, sscanf */
+  c = a * b;
+  sprintf(buf, INT64_FORMAT, c);
+  if (strcmp(buf, "800000140000005") != 0)
+    return 0;			/* either multiply or sprintf is busted */
+  if (sscanf(buf, INT64_FORMAT, &d) != 1)
+    return 0;
+  if (d != c)
+    return 0;
+  e = d / b;
+  if (e != a)
+    return 0;
+  return 1;
+}
+main() {
+  exit(! does_int64_work());
+}],
+	[AC_DEFINE(HAVE_LONG_LONG_INT_64_qd) AC_MSG_RESULT(yes)],
 	AC_MSG_RESULT(no),
 	AC_MSG_RESULT(assuming not on target machine))
 
