@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.135 2002/10/14 16:51:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.136 2002/10/21 19:55:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1991,11 +1991,9 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	List	   *l;
 
 	/*
-	 * If called outside a transaction block, we can safely return: this
-	 * command cannot effect any subsequent transactions, and there are no
-	 * "session-level" trigger settings.
+	 * Ignore call if we aren't in a transaction.
 	 */
-	if (!IsTransactionBlock())
+	if (deftrig_cxt == NULL)
 		return;
 
 	/*
