@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.7 2003/09/09 18:28:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.8 2003/11/06 22:08:14 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | READ ONLY ]
+START TRANSACTION
+    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]
+    [ READ WRITE | READ ONLY ]
 </synopsis>
  </refsynopsisdiv>
 

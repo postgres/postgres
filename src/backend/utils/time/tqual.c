@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.70 2003/10/01 21:30:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.71 2003/11/06 22:08:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -984,7 +984,7 @@ SetQuerySnapshot(void)
 		return;
 	}
 
-	if (XactIsoLevel == XACT_SERIALIZABLE)
+	if (IsXactIsoLevelSerializable)
 		QuerySnapshot = SerializableSnapshot;
 	else
 		QuerySnapshot = GetSnapshotData(&QuerySnapshotData, false);

@@ -156,10 +156,10 @@ F051	Basic date and time	07	LOCALTIME	YES
 F051	Basic date and time	08	LOCALTIMESTAMP	YES	
 F052	Intervals and datetime arithmetic			YES	
 F081	UNION and EXCEPT in views			YES	
-F111	Isolation levels other than SERIALIZABLE			NO	
-F111	Isolation levels other than SERIALIZABLE	01	READ UNCOMMITTED isolation level	NO	
+F111	Isolation levels other than SERIALIZABLE			YES	
+F111	Isolation levels other than SERIALIZABLE	01	READ UNCOMMITTED isolation level	YES	behaves like READ COMMITTED
 F111	Isolation levels other than SERIALIZABLE	02	READ COMMITTED isolation level	YES	
-F111	Isolation levels other than SERIALIZABLE	03	REPEATABLE READ isolation level	NO	
+F111	Isolation levels other than SERIALIZABLE	03	REPEATABLE READ isolation level	YES	behaves like SERIALIZABLE
 F121	Basic diagnostics management			NO	
 F121	Basic diagnostics management	01	GET DIAGNOSTICS statement	NO	
 F121	Basic diagnostics management	02	SET TRANSACTION statement: DIAGNOSTICS SIZE clause	NO	

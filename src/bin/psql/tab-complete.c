@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.91 2003/10/30 21:37:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.92 2003/11/06 22:08:15 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -466,7 +466,7 @@ psql_completion(char *text, int start, int end)
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER", "COMMENT",
 		"COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE", "DELETE", "DROP", "EXECUTE",
 		"EXPLAIN", "FETCH", "GRANT", "INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY",
-		"PREPARE", "REINDEX", "RESET", "REVOKE", "ROLLBACK", "SELECT", "SET", "SHOW",
+		"PREPARE", "REINDEX", "RESET", "REVOKE", "ROLLBACK", "SELECT", "SET", "SHOW", "START",
 		"TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", NULL
 	};
 
@@ -1101,30 +1101,36 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev_wd, "SHOW") == 0)
 		COMPLETE_WITH_LIST(pgsql_variables);
 	/* Complete "SET TRANSACTION" */
-	else if ((strcasecmp(prev2_wd, "SET") == 0 &&
-			  strcasecmp(prev_wd, "TRANSACTION") == 0) ||
-			 (strcasecmp(prev4_wd, "SESSION") == 0 &&
-			  strcasecmp(prev3_wd, "CHARACTERISTICS") == 0 &&
-			  strcasecmp(prev2_wd, "AS") == 0 &&
-			  strcasecmp(prev_wd, "TRANSACTION") == 0))
+	else if ((strcasecmp(prev2_wd, "SET") == 0
+			  && strcasecmp(prev_wd, "TRANSACTION") == 0)
+			 || (strcasecmp(prev2_wd, "START") == 0
+				 && strcasecmp(prev_wd, "TRANSACTION") == 0)
+			 || (strcasecmp(prev4_wd, "SESSION") == 0
+				 && strcasecmp(prev3_wd, "CHARACTERISTICS") == 0
+				 && strcasecmp(prev2_wd, "AS") == 0
+				 && strcasecmp(prev_wd, "TRANSACTION") == 0))
 	{
 		static const char * const my_list[] =
 		{"ISOLATION", "READ", NULL};
 
 		COMPLETE_WITH_LIST(my_list);
 	}
-	else if (strcasecmp(prev3_wd, "SET") == 0 &&
-			 strcasecmp(prev2_wd, "TRANSACTION") == 0 &&
-			 strcasecmp(prev_wd, "ISOLATION") == 0)
+	else if ((strcasecmp(prev3_wd, "SET") == 0
+			  || strcasecmp(prev3_wd, "START") == 0
+			  || (strcasecmp(prev4_wd, "CHARACTERISTICS") == 0
+				  && strcasecmp(prev3_wd, "AS") == 0))
+			 && strcasecmp(prev2_wd, "TRANSACTION") == 0
+			 && strcasecmp(prev_wd, "ISOLATION") == 0)
 		COMPLETE_WITH_CONST("LEVEL");
-	else if ((strcasecmp(prev4_wd, "SET") == 0 ||
-			  strcasecmp(prev4_wd, "AS") == 0) &&
-			 strcasecmp(prev3_wd, "TRANSACTION") == 0 &&
-			 strcasecmp(prev2_wd, "ISOLATION") == 0 &&
-			 strcasecmp(prev_wd, "LEVEL") == 0)
+	else if ((strcasecmp(prev4_wd, "SET") == 0
+			  || strcasecmp(prev4_wd, "START") == 0
+			  || strcasecmp(prev4_wd, "AS") == 0)
+			 && strcasecmp(prev3_wd, "TRANSACTION") == 0
+			 && strcasecmp(prev2_wd, "ISOLATION") == 0
+			 && strcasecmp(prev_wd, "LEVEL") == 0)
 	{
 		static const char * const my_list[] =
-		{"READ", "SERIALIZABLE", NULL};
+		{"READ", "REPEATABLE", "SERIALIZABLE", NULL};
 
 		COMPLETE_WITH_LIST(my_list);
 	}
@@ -1132,7 +1138,17 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev3_wd, "ISOLATION") == 0 &&
 			 strcasecmp(prev2_wd, "LEVEL") == 0 &&
 			 strcasecmp(prev_wd, "READ") == 0)
-		COMPLETE_WITH_CONST("COMMITTED");
+	{
+		static const char * const my_list[] =
+		{"UNCOMMITTED", "COMMITTED", NULL};
+
+		COMPLETE_WITH_LIST(my_list);
+	}
+	else if (strcasecmp(prev4_wd, "TRANSACTION") == 0 &&
+			 strcasecmp(prev3_wd, "ISOLATION") == 0 &&
+			 strcasecmp(prev2_wd, "LEVEL") == 0 &&
+			 strcasecmp(prev_wd, "REPEATABLE") == 0)
+		COMPLETE_WITH_CONST("READ");
 	else if ((strcasecmp(prev3_wd, "SET") == 0 ||
 			  strcasecmp(prev3_wd, "AS") == 0) &&
 			 strcasecmp(prev2_wd, "TRANSACTION") == 0 &&
@@ -1199,6 +1215,10 @@ psql_completion(char *text, int start, int end)
 			COMPLETE_WITH_LIST(my_list);
 		}
 	}
+
+/* START TRANSACTION */
+	else if (strcasecmp(prev_wd, "START") == 0)
+		COMPLETE_WITH_CONST("TRANSACTION");
 
 /* TRUNCATE */
 	else if (strcasecmp(prev_wd, "TRUNCATE") == 0)

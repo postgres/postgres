@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.63 2003/10/31 03:58:20 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.64 2003/11/06 22:08:15 petere Exp $
  *
  * ----------
  */
@@ -3073,7 +3073,7 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	 * rows under current snapshot that wouldn't be visible per the
 	 * transaction snapshot).
 	 */
-	if (XactIsoLevel == XACT_SERIALIZABLE)
+	if (IsXactIsoLevelSerializable)
 	{
 		useCurrentSnapshot = detectNewRows;
 	}

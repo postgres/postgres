@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.159 2003/10/02 06:34:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.160 2003/11/06 22:08:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1576,7 +1576,7 @@ ltrmark:;
 
 			case HeapTupleUpdated:
 				ReleaseBuffer(buffer);
-				if (XactIsoLevel == XACT_SERIALIZABLE)
+				if (IsXactIsoLevelSerializable)
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.141 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.142 2003/11/06 22:08:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,6 +251,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"reindex", REINDEX},
 	{"relative", RELATIVE_P},
 	{"rename", RENAME},
+	{"repeatable", REPEATABLE},
 	{"replace", REPLACE},
 	{"reset", RESET},
 	{"restart", RESTART},
@@ -307,6 +308,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"truncate", TRUNCATE},
 	{"trusted", TRUSTED},
 	{"type", TYPE_P},
+	{"uncommitted", UNCOMMITTED},
 	{"unencrypted", UNENCRYPTED},
 	{"union", UNION},
 	{"unique", UNIQUE},

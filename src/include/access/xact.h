@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.57 2003/10/16 16:50:41 tgl Exp $
+ * $Id: xact.h,v 1.58 2003/11/06 22:08:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,19 @@
 /*
  * Xact isolation levels
  */
-#define XACT_DIRTY_READ			0		/* not implemented */
+#define XACT_READ_UNCOMMITTED	0
 #define XACT_READ_COMMITTED		1
-#define XACT_REPEATABLE_READ	2		/* not implemented */
+#define XACT_REPEATABLE_READ	2
 #define XACT_SERIALIZABLE		3
 
 extern int	DefaultXactIsoLevel;
 extern int	XactIsoLevel;
+
+/*
+ * We only implement two distinct levels, so this is a convenience to
+ * check which level we're really using internally.
+ */
+#define IsXactIsoLevelSerializable ((XactIsoLevel == XACT_REPEATABLE_READ || XactIsoLevel == XACT_SERIALIZABLE))
 
 /* Xact read-only state */
 extern bool DefaultXactReadOnly;

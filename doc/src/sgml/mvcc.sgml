@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.40 2003/11/04 09:55:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.41 2003/11/06 22:08:14 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -206,8 +206,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.40 2003/11/04 09:55:38 petere
     </table>
 
    <para>
-    <productname>PostgreSQL</productname>
-    offers the Read Committed and Serializable isolation levels.
+    In <productname>PostgreSQL</productname>, you can use all four
+    possible transaction isolation levels.  Internally, there are only
+    two distinct isolation levels, which correspond to the levels Read
+    Committed and Serializable.  When you select the level Read
+    Uncommitted you really get Read Committed, and when you select
+    Repeatable Read you really get Serializable, so the actual
+    isolation level may be stricter than what you select.  This is
+    permitted by the SQL standard: the four isolation levels only
+    define which phenomena must not happen, they do not define which
+    phenomena must happen.  The reason that PostgreSQL only provides
+    two isolation levels is that this is the only sensible way to map
+    the isolation levels to the multiversion concurrency control
+    architecture.  The behavior of the available isolation levels is
+    detailed in the following subsections.
+   </para>
+
+   <para>
+    To set the transaction isolation level of a transaction, use the
+    command <xref linkend="sql-set-transaction">.
    </para>
 
   <sect2 id="xact-read-committed">
