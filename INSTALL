@@ -182,7 +182,7 @@ Substitute your paths appropriately.
       if you need to do this.
       To make the backup, you can use the "pg_dumpall" command from the version
       you are currently running. For best results, however, try to use the
-      "pg_dumpall" command from PostgreSQL 7.3.4, since this version contains
+      "pg_dumpall" command from PostgreSQL 7.3.5, since this version contains
       bug fixes and improvements over older versions. While this advice might
       seem idiosyncratic since you haven't installed the new version yet, it is
       advisable to follow it if you plan to install the new version in parallel
@@ -214,7 +214,7 @@ Substitute your paths appropriately.
 
         mv /usr/local/pgsql /usr/local/pgsql.old
 
-After you have installed PostgreSQL 7.3.4, create a new database directory and
+After you have installed PostgreSQL 7.3.5, create a new database directory and
 start the new server. Remember that you must execute these commands while
 logged in to the special database user account (which you already have if you
 are upgrading).
