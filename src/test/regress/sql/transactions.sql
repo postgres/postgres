@@ -61,13 +61,14 @@ SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE;
 CREATE TABLE foobar (a int);
 BEGIN;
 	CREATE TABLE foo (a int);
-	BEGIN;
+	SAVEPOINT one;
 		DROP TABLE foo;
 		CREATE TABLE bar (a int);
-	ROLLBACK;
-	BEGIN;
+	ROLLBACK TO one;
+	RELEASE one;
+	SAVEPOINT two;
 		CREATE TABLE baz (a int);
-	COMMIT;
+	RELEASE two;
 	drop TABLE foobar;
 	CREATE TABLE barbaz (a int);
 COMMIT;
@@ -80,75 +81,155 @@ SELECT * FROM baz;		-- should be empty
 -- inserts
 BEGIN;
 	INSERT INTO foo VALUES (1);
-	BEGIN;
+	SAVEPOINT one;
 		INSERT into bar VALUES (1);
-	ROLLBACK;
-	BEGIN;
+	ROLLBACK TO one;
+	RELEASE one;
+	SAVEPOINT two;
 		INSERT into barbaz VALUES (1);
-	COMMIT;
-	BEGIN;
-		BEGIN;
+	RELEASE two;
+	SAVEPOINT three;
+		SAVEPOINT four;
 			INSERT INTO foo VALUES (2);
-		COMMIT;
-	ROLLBACK;
+		RELEASE four;
+	ROLLBACK TO three;
+	RELEASE three;
 	INSERT INTO foo VALUES (3);
 COMMIT;
 SELECT * FROM foo;		-- should have 1 and 3
 SELECT * FROM barbaz;	-- should have 1
 
--- check that starting a subxact in a failed xact or subxact works
+-- test whole-tree commit
 BEGIN;
-	SELECT 0/0;		-- fail the outer xact
-	BEGIN;
-		SELECT 1;	-- this should NOT work
-	COMMIT;
-	SELECT 1;		-- this should NOT work
-	BEGIN;
-		SELECT 1;	-- this should NOT work
-	ROLLBACK;
-	SELECT 1;		-- this should NOT work
+	SAVEPOINT one;
+		SELECT foo;
+	ROLLBACK TO one;
+	RELEASE one;
+	SAVEPOINT two;
+		CREATE TABLE savepoints (a int);
+		SAVEPOINT three;
+			INSERT INTO savepoints VALUES (1);
+			SAVEPOINT four;
+				INSERT INTO savepoints VALUES (2);
+				SAVEPOINT five;
+					INSERT INTO savepoints VALUES (3);
+				ROLLBACK TO five;
 COMMIT;
-SELECT 1;			-- this should work
+COMMIT;		-- should not be in a transaction block
+SELECT * FROM savepoints;
+
+-- test whole-tree rollback
+BEGIN;
+	SAVEPOINT one;
+		DELETE FROM savepoints WHERE a=1;
+	RELEASE one;
+	SAVEPOINT two;
+		DELETE FROM savepoints WHERE a=1;
+		SAVEPOINT three;
+			DELETE FROM savepoints WHERE a=2;
+ROLLBACK;
+COMMIT;		-- should not be in a transaction block
+		
+SELECT * FROM savepoints;
+
+-- test whole-tree commit on an aborted subtransaction
+BEGIN;
+	INSERT INTO savepoints VALUES (4);
+	SAVEPOINT one;
+		INSERT INTO savepoints VALUES (5);
+		SELECT foo;
+COMMIT;
+SELECT * FROM savepoints;
 
 BEGIN;
-	BEGIN;
-		SELECT 1;	-- this should work
-		SELECT 0/0;	-- fail the subxact
-		SELECT 1;	-- this should NOT work
-		BEGIN;
-			SELECT 1;	-- this should NOT work
-		ROLLBACK;
-		BEGIN;
-			SELECT 1;	-- this should NOT work
-		COMMIT;
-		SELECT 1;	-- this should NOT work
-	ROLLBACK;
-	SELECT 1;		-- this should work
+	INSERT INTO savepoints VALUES (6);
+	SAVEPOINT one;
+		INSERT INTO savepoints VALUES (7);
+	RELEASE one;
+	INSERT INTO savepoints VALUES (8);
+COMMIT;
+-- rows 6 and 8 should have been created by the same xact
+SELECT a.xmin = b.xmin FROM savepoints a, savepoints b WHERE a.a=6 AND b.a=8;
+-- rows 6 and 7 should have been created by different xacts
+SELECT a.xmin = b.xmin FROM savepoints a, savepoints b WHERE a.a=6 AND b.a=7;
+
+BEGIN;
+	INSERT INTO savepoints VALUES (9);
+	SAVEPOINT one;
+		INSERT INTO savepoints VALUES (10);
+	ROLLBACK TO one;
+		INSERT INTO savepoints VALUES (11);
+COMMIT;
+SELECT a FROM savepoints WHERE a in (9, 10, 11);
+-- rows 9 and 11 should have been created by different xacts
+SELECT a.xmin = b.xmin FROM savepoints a, savepoints b WHERE a.a=9 AND b.a=11;
+
+BEGIN;
+	INSERT INTO savepoints VALUES (12);
+	SAVEPOINT one;
+		INSERT INTO savepoints VALUES (13);
+		SAVEPOINT two;
+			INSERT INTO savepoints VALUES (14);
+	ROLLBACK TO one;
+		INSERT INTO savepoints VALUES (15);
+		SAVEPOINT two;
+			INSERT INTO savepoints VALUES (16);
+			SAVEPOINT three;
+				INSERT INTO savepoints VALUES (17);
+COMMIT;
+SELECT a FROM savepoints WHERE a BETWEEN 12 AND 17;
+
+BEGIN;
+	INSERT INTO savepoints VALUES (18);
+	SAVEPOINT one;
+		INSERT INTO savepoints VALUES (19);
+		SAVEPOINT two;
+			INSERT INTO savepoints VALUES (20);
+	ROLLBACK TO one;
+		INSERT INTO savepoints VALUES (21);
+	ROLLBACK TO one;
+		INSERT INTO savepoints VALUES (22);
+COMMIT;
+SELECT a FROM savepoints WHERE a BETWEEN 18 AND 22;
+
+DROP TABLE savepoints;
+
+-- only in a transaction block:
+SAVEPOINT one;
+ROLLBACK TO one;
+RELEASE one;
+
+-- Only "rollback to" allowed in aborted state
+BEGIN;
+  SAVEPOINT one;
+  SELECT 0/0;
+  SAVEPOINT two;    -- ignored till the end of ...
+  RELEASE one;      -- ignored till the end of ...
+  ROLLBACK TO one;
+  SELECT 1;
 COMMIT;
 SELECT 1;			-- this should work
 
 -- check non-transactional behavior of cursors
 BEGIN;
 	DECLARE c CURSOR FOR SELECT unique2 FROM tenk1;
-	BEGIN;
+	SAVEPOINT one;
 		FETCH 10 FROM c;
-	ROLLBACK;
-	BEGIN;
+	ROLLBACK TO one;
 		FETCH 10 FROM c;
-	COMMIT;
+	RELEASE one;
 	FETCH 10 FROM c;
 	CLOSE c;
 	DECLARE c CURSOR FOR SELECT unique2/0 FROM tenk1;
-	BEGIN;
+	SAVEPOINT two;
 		FETCH 10 FROM c;
-	ROLLBACK;
+	ROLLBACK TO two;
 	-- c is now dead to the world ...
-	BEGIN;
 		FETCH 10 FROM c;
-	ROLLBACK;
+	ROLLBACK TO two;
+	RELEASE two;
 	FETCH 10 FROM c;
 COMMIT;
-
 
 DROP TABLE foo;
 DROP TABLE baz;

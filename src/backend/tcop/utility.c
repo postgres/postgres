@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.220 2004/06/25 21:55:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.221 2004/07/27 05:11:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,11 +354,50 @@ ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_COMMIT:
-						EndTransactionBlock();
+						if (!EndTransactionBlock())
+						{
+							/* report unsuccessful commit in completionTag */
+							if (completionTag)
+								strcpy(completionTag, "ROLLBACK");
+						}
 						break;
 
 					case TRANS_STMT_ROLLBACK:
 						UserAbortTransactionBlock();
+						break;
+
+					case TRANS_STMT_SAVEPOINT:
+						{
+							ListCell *cell;
+							char     *name = NULL;
+
+							RequireTransactionChain((void *)stmt, "SAVEPOINT");
+
+							foreach (cell, stmt->options)
+							{
+								DefElem *elem = lfirst(cell);
+								if (strcmp(elem->defname, "savepoint_name") == 0)
+									name = strVal(elem->arg);
+							}
+
+							Assert(PointerIsValid(name));
+
+							DefineSavepoint(name);
+						}
+						break;
+
+					case TRANS_STMT_RELEASE:
+						RequireTransactionChain((void *)stmt, "RELEASE");
+						ReleaseSavepoint(stmt->options);
+						break;
+
+					case TRANS_STMT_ROLLBACK_TO:
+						RequireTransactionChain((void *)stmt, "ROLLBACK TO");
+						RollbackToSavepoint(stmt->options);
+						/*
+						 * CommitTransactionCommand is in charge
+						 * of re-defining the savepoint again
+						 */
 						break;
 				}
 			}
@@ -1114,7 +1153,16 @@ CreateCommandTag(Node *parsetree)
 						break;
 
 					case TRANS_STMT_ROLLBACK:
+					case TRANS_STMT_ROLLBACK_TO:
 						tag = "ROLLBACK";
+						break;
+
+					case TRANS_STMT_SAVEPOINT:
+						tag = "SAVEPOINT";
+						break;
+
+					case TRANS_STMT_RELEASE:
+						tag = "RELEASE";
 						break;
 
 					default:

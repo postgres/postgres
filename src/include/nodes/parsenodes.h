@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.262 2004/07/12 05:38:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.263 2004/07/27 05:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1514,14 +1514,17 @@ typedef enum TransactionStmtKind
 	TRANS_STMT_BEGIN,
 	TRANS_STMT_START,			/* semantically identical to BEGIN */
 	TRANS_STMT_COMMIT,
-	TRANS_STMT_ROLLBACK
+	TRANS_STMT_ROLLBACK,
+	TRANS_STMT_SAVEPOINT,
+	TRANS_STMT_RELEASE,
+	TRANS_STMT_ROLLBACK_TO
 } TransactionStmtKind;
 
 typedef struct TransactionStmt
 {
 	NodeTag		type;
 	TransactionStmtKind kind;	/* see above */
-	List	   *options;		/* for BEGIN/START only */
+	List	   *options;		/* for BEGIN/START and savepoint commands */
 } TransactionStmt;
 
 /* ----------------------

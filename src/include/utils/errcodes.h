@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.12 2004/06/01 21:49:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.13 2004/07/27 05:11:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,6 +212,10 @@
 #define ERRCODE_E_R_I_E_NULL_VALUE_NOT_ALLOWED	MAKE_SQLSTATE('3','9', '0','0','4')
 #define ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED	MAKE_SQLSTATE('3','9', 'P','0','1')
 #define ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED	MAKE_SQLSTATE('3','9', 'P','0','2')
+
+/* Class 3B - Savepoint Exception */
+#define ERRCODE_SAVEPOINT_EXCEPTION			MAKE_SQLSTATE('3','B', '0','0','0')
+#define ERRCODE_S_E_INVALID_SPECIFICATION	MAKE_SQLSTATE('3','B', '0','0','1')
 
 /* Class 3D - Invalid Catalog Name */
 #define ERRCODE_INVALID_CATALOG_NAME		MAKE_SQLSTATE('3','D', '0','0','0')

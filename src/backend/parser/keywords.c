@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.151 2004/07/12 05:37:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.152 2004/07/27 05:10:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,6 +254,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"references", REFERENCES},
 	{"reindex", REINDEX},
 	{"relative", RELATIVE_P},
+	{"release", RELEASE},
 	{"rename", RENAME},
 	{"repeatable", REPEATABLE},
 	{"replace", REPLACE},
@@ -267,6 +268,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"row", ROW},
 	{"rows", ROWS},
 	{"rule", RULE},
+	{"savepoint", SAVEPOINT},
 	{"schema", SCHEMA},
 	{"scroll", SCROLL},
 	{"second", SECOND_P},

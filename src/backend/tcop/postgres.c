@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.424 2004/07/17 03:29:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.425 2004/07/27 05:11:03 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -841,8 +841,8 @@ exec_simple_query(const char *query_string)
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
 				if (stmt->kind == TRANS_STMT_COMMIT ||
-					stmt->kind == TRANS_STMT_BEGIN ||
-					stmt->kind == TRANS_STMT_ROLLBACK)
+					stmt->kind == TRANS_STMT_ROLLBACK ||
+					stmt->kind == TRANS_STMT_ROLLBACK_TO)
 					allowit = true;
 			}
 
@@ -1162,8 +1162,8 @@ exec_parse_message(const char *query_string,	/* string to execute */
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
 				if (stmt->kind == TRANS_STMT_COMMIT ||
-					stmt->kind == TRANS_STMT_BEGIN ||
-					stmt->kind == TRANS_STMT_ROLLBACK)
+					stmt->kind == TRANS_STMT_ROLLBACK ||
+					stmt->kind == TRANS_STMT_ROLLBACK_TO)
 					allowit = true;
 			}
 
@@ -1625,8 +1625,8 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 			is_trans_stmt = true;
 			if (stmt->kind == TRANS_STMT_COMMIT ||
-				stmt->kind == TRANS_STMT_BEGIN ||
-				stmt->kind == TRANS_STMT_ROLLBACK)
+				stmt->kind == TRANS_STMT_ROLLBACK ||
+				stmt->kind == TRANS_STMT_ROLLBACK_TO)
 				is_trans_exit = true;
 		}
 	}
@@ -2809,6 +2809,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * even if we're otherwise up against it...
 		 */
 		MemoryContextSwitchTo(ErrorContext);
+
+		/* Make sure we are using a sane ResourceOwner, too */
+		CurrentResourceOwner = CurTransactionResourceOwner;
 
 		/* Do the recovery */
 		ereport(DEBUG2,

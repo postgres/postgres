@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.171 2004/07/17 03:28:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.172 2004/07/27 05:10:49 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -186,21 +186,26 @@ typedef enum TransState
  */
 typedef enum TBlockState
 {
+	/* not-in-transaction-block states */
 	TBLOCK_DEFAULT,
 	TBLOCK_STARTED,
+
+	/* transaction block states */
 	TBLOCK_BEGIN,
 	TBLOCK_INPROGRESS,
 	TBLOCK_END,
 	TBLOCK_ABORT,
 	TBLOCK_ENDABORT,
 
+	/* subtransaction states */
 	TBLOCK_SUBBEGIN,
-	TBLOCK_SUBBEGINABORT,
 	TBLOCK_SUBINPROGRESS,
 	TBLOCK_SUBEND,
 	TBLOCK_SUBABORT,
-	TBLOCK_SUBENDABORT_OK,
-	TBLOCK_SUBENDABORT_ERROR
+	TBLOCK_SUBABORT_PENDING,
+	TBLOCK_SUBENDABORT_ALL,
+	TBLOCK_SUBENDABORT_RELEASE,
+	TBLOCK_SUBENDABORT
 } TBlockState;
 
 /*
@@ -209,6 +214,8 @@ typedef enum TBlockState
 typedef struct TransactionStateData
 {
 	TransactionId	transactionIdData;		/* my XID */
+	char		   *name;					/* savepoint name, if any */
+	int				savepointLevel;			/* savepoint level */
 	CommandId		commandId;				/* current CID */
 	TransState		state;					/* low-level state */
 	TBlockState		blockState;				/* high-level state */
@@ -245,6 +252,8 @@ static void CleanupSubTransaction(void);
 static void StartAbortedSubTransaction(void);
 static void PushTransaction(void);
 static void PopTransaction(void);
+static void CommitTransactionToLevel(int level);
+static char *CleanupAbortedSubTransactions(bool returnName);
 
 static void AtSubAbort_Memory(void);
 static void AtSubCleanup_Memory(void);
@@ -264,6 +273,8 @@ static const char *TransStateAsString(TransState state);
  */
 static TransactionStateData TopTransactionStateData = {
 	0,							/* transaction id */
+	NULL,						/* savepoint name */
+	0,							/* savepoint level */
 	FirstCommandId,				/* command id */
 	TRANS_DEFAULT,				/* transaction state */
 	TBLOCK_DEFAULT,				/* transaction block state from the client
@@ -1638,11 +1649,12 @@ StartTransactionCommand(void)
 		case TBLOCK_STARTED:
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
-		case TBLOCK_SUBBEGINABORT:
 		case TBLOCK_END:
 		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_OK:
-		case TBLOCK_SUBENDABORT_ERROR:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
 		case TBLOCK_ENDABORT:
 			elog(FATAL, "StartTransactionCommand: unexpected state %s",
 				 BlockStateAsString(s->blockState));
@@ -1670,10 +1682,13 @@ CommitTransactionCommand(void)
 			/*
 			 * This shouldn't happen, because it means the previous
 			 * StartTransactionCommand didn't set the STARTED state
-			 * appropiately.
+			 * appropriately, or we didn't manage previous pending
+			 * abort states.
 			 */
 		case TBLOCK_DEFAULT:
-			elog(FATAL, "CommitTransactionCommand: unexpected TBLOCK_DEFAULT");
+		case TBLOCK_SUBABORT_PENDING:
+			elog(FATAL, "CommitTransactionCommand: unexpected state %s",
+				 BlockStateAsString(s->blockState));
 			break;
 
 			/*
@@ -1710,6 +1725,12 @@ CommitTransactionCommand(void)
 			 * default state.
 			 */
 		case TBLOCK_END:
+			/* commit all open subtransactions */
+			if (s->nestingLevel > 1)
+				CommitTransactionToLevel(2);
+			s = CurrentTransactionState;
+			Assert(s->parent == NULL);
+			/* and now the outer transaction */
 			CommitTransaction();
 			s->blockState = TBLOCK_DEFAULT;
 			break;
@@ -1734,7 +1755,17 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We were just issued a BEGIN inside a transaction block.
+			 * Ditto, but in a subtransaction.  AbortOutOfAnyTransaction
+			 * will do the dirty work.
+			 */
+		case TBLOCK_SUBENDABORT_ALL:
+			AbortOutOfAnyTransaction();
+			s = CurrentTransactionState;		/* changed by AbortOutOfAnyTransaction */
+			/* AbortOutOfAnyTransaction sets the blockState */
+			break;
+
+			/*
+			 * We were just issued a SAVEPOINT inside a transaction block.
 			 * Start a subtransaction.  (BeginTransactionBlock already
 			 * did PushTransaction, so as to have someplace to put the
 			 * SUBBEGIN state.)
@@ -1745,15 +1776,6 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We were issued a BEGIN inside an aborted transaction block.
-			 * Start a subtransaction, and put it in aborted state.
-			 */
-		case TBLOCK_SUBBEGINABORT:
-			StartAbortedSubTransaction();
-			s->blockState = TBLOCK_SUBABORT;
-			break;
-
-			/*
 			 * Inside a subtransaction, increment the command counter.
 			 */
 		case TBLOCK_SUBINPROGRESS:
@@ -1761,7 +1783,7 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We were issued a COMMIT command, so we end the current
+			 * We were issued a RELEASE command, so we end the current
 			 * subtransaction and return to the parent transaction.
 			 */
 		case TBLOCK_SUBEND:
@@ -1777,27 +1799,78 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We are ending an aborted subtransaction via ROLLBACK,
-			 * so the parent can be allowed to live.
+			 * The current subtransaction is ending.  Do the equivalent
+			 * of a ROLLBACK TO followed by a RELEASE command.
 			 */
-		case TBLOCK_SUBENDABORT_OK:
-			CleanupSubTransaction();
-			PopTransaction();
-			s = CurrentTransactionState;		/* changed by pop */
+		case TBLOCK_SUBENDABORT_RELEASE:
+			CleanupAbortedSubTransactions(false);
 			break;
 
 			/*
-			 * We are ending an aborted subtransaction via COMMIT.
-			 * End the subtransaction, and abort the parent too.
+			 * The current subtransaction is ending due to a ROLLBACK
+			 * TO command, so close all savepoints up to the target
+			 * level.  When finished, recreate the savepoint.
 			 */
-		case TBLOCK_SUBENDABORT_ERROR:
-			CleanupSubTransaction();
-			PopTransaction();
-			s = CurrentTransactionState;		/* changed by pop */
-			Assert(s->blockState != TBLOCK_SUBENDABORT_ERROR);
-			AbortCurrentTransaction();
+		case TBLOCK_SUBENDABORT:
+			{
+				char *name = CleanupAbortedSubTransactions(true);
+
+				Assert(PointerIsValid(name));
+				DefineSavepoint(name);
+				s = CurrentTransactionState; /* changed by DefineSavepoint */
+				pfree(name);
+
+				/* This is the same as TBLOCK_SUBBEGIN case */
+				AssertState(s->blockState == TBLOCK_SUBBEGIN);
+				StartSubTransaction();
+				s->blockState = TBLOCK_SUBINPROGRESS;
+			}
 			break;
 	}
+}
+
+/*
+ * CleanupAbortedSubTransactions
+ *
+ * Helper function for CommitTransactionCommand.  Aborts and cleans up
+ * dead subtransactions after a ROLLBACK TO command.  Optionally returns
+ * the name of the last dead subtransaction so it can be reused to redefine
+ * the savepoint.  (Caller is responsible for pfree'ing the result.)
+ */
+static char *
+CleanupAbortedSubTransactions(bool returnName)
+{
+	TransactionState s = CurrentTransactionState;
+	char *name = NULL;
+	
+	AssertState(PointerIsValid(s->parent));
+	Assert(s->parent->blockState == TBLOCK_SUBINPROGRESS ||
+		   s->parent->blockState == TBLOCK_INPROGRESS ||
+		   s->parent->blockState == TBLOCK_SUBABORT_PENDING);
+
+	/*
+	 * Abort everything up to the target level.  The current
+	 * subtransaction only needs cleanup.  If we need to save the name,
+	 * look for the last subtransaction in TBLOCK_SUBABORT_PENDING state.
+	 */
+	if (returnName && s->parent->blockState != TBLOCK_SUBABORT_PENDING)
+		name = MemoryContextStrdup(TopMemoryContext, s->name);
+
+	CleanupSubTransaction();
+	PopTransaction();
+	s = CurrentTransactionState;		/* changed by pop */
+
+	while (s->blockState == TBLOCK_SUBABORT_PENDING)
+	{
+		AbortSubTransaction();
+		if (returnName && s->parent->blockState != TBLOCK_SUBABORT_PENDING)
+			name = MemoryContextStrdup(TopMemoryContext, s->name);
+		CleanupSubTransaction();
+		PopTransaction();
+		s = CurrentTransactionState;
+	}
+
+	return name;
 }
 
 /*
@@ -1887,7 +1960,6 @@ AbortCurrentTransaction(void)
 			 * in aborted state.
 			 */
 		case TBLOCK_SUBBEGIN:
-		case TBLOCK_SUBBEGINABORT:
 			StartAbortedSubTransaction();
 			s->blockState = TBLOCK_SUBABORT;
 			break;
@@ -1902,28 +1974,35 @@ AbortCurrentTransaction(void)
 			 * we have to abort the parent transaction too.
 			 */
 		case TBLOCK_SUBEND:
+		case TBLOCK_SUBABORT_PENDING:
 			AbortSubTransaction();
 			CleanupSubTransaction();
 			PopTransaction();
 			s = CurrentTransactionState;		/* changed by pop */
 			Assert(s->blockState != TBLOCK_SUBEND &&
-					s->blockState != TBLOCK_SUBENDABORT_OK &&
-					s->blockState != TBLOCK_SUBENDABORT_ERROR);
+					s->blockState != TBLOCK_SUBENDABORT);
 			AbortCurrentTransaction();
 			break;
 
 			/*
 			 * Same as above, except the Abort() was already done.
 			 */
-		case TBLOCK_SUBENDABORT_OK:
-		case TBLOCK_SUBENDABORT_ERROR:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBENDABORT_RELEASE:
 			CleanupSubTransaction();
 			PopTransaction();
 			s = CurrentTransactionState;		/* changed by pop */
 			Assert(s->blockState != TBLOCK_SUBEND &&
-					s->blockState != TBLOCK_SUBENDABORT_OK &&
-					s->blockState != TBLOCK_SUBENDABORT_ERROR);
+					s->blockState != TBLOCK_SUBENDABORT);
 			AbortCurrentTransaction();
+			break;
+
+			/*
+			 * We are already aborting the whole transaction tree.
+			 * Do nothing, CommitTransactionCommand will call
+			 * AbortOutOfAnyTransaction and set things straight.
+			 */
+		case TBLOCK_SUBENDABORT_ALL:
 			break;
 	}
 }
@@ -2135,7 +2214,8 @@ BeginTransactionBlock(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	switch (s->blockState) {
+	switch (s->blockState)
+	{
 			/*
 			 * We are not inside a transaction block, so allow one
 			 * to begin.
@@ -2146,35 +2226,26 @@ BeginTransactionBlock(void)
 
 			/*
 			 * Already a transaction block in progress.
-			 * Start a subtransaction.
 			 */
 		case TBLOCK_INPROGRESS:
 		case TBLOCK_SUBINPROGRESS:
-			PushTransaction();
-			s = CurrentTransactionState;		/* changed by push */
-			s->blockState = TBLOCK_SUBBEGIN;
-			break;
-
-			/*
-			 * An aborted transaction block should be allowed to start
-			 * a subtransaction, but it must put it in aborted state.
-			 */
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
-			PushTransaction();
-			s = CurrentTransactionState;		/* changed by push */
-			s->blockState = TBLOCK_SUBBEGINABORT;
+			ereport(WARNING,
+					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+					 errmsg("there is already a transaction in progress")));
 			break;
 
 			/* These cases are invalid.  Reject them altogether. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_BEGIN:
 		case TBLOCK_SUBBEGIN:
-		case TBLOCK_SUBBEGINABORT:
 		case TBLOCK_ENDABORT:
 		case TBLOCK_END:
-		case TBLOCK_SUBENDABORT_OK:
-		case TBLOCK_SUBENDABORT_ERROR:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
 		case TBLOCK_SUBEND:
 			elog(FATAL, "BeginTransactionBlock: unexpected state %s",
 				 BlockStateAsString(s->blockState));
@@ -2185,34 +2256,32 @@ BeginTransactionBlock(void)
 /*
  *	EndTransactionBlock
  *		This executes a COMMIT command.
+ *
+ * Since COMMIT may actually do a ROLLBACK, the result indicates what
+ * happened: TRUE for COMMIT, FALSE for ROLLBACK.
  */
-void
+bool
 EndTransactionBlock(void)
 {
 	TransactionState s = CurrentTransactionState;
+	bool		result = false;
 
-	switch (s->blockState) {
+	switch (s->blockState)
+	{
 		/*
-		 * here we are in a transaction block which should commit when we
+		 * We are in a transaction block which should commit when we
 		 * get to the upcoming CommitTransactionCommand() so we set the
 		 * state to "END".	CommitTransactionCommand() will recognize this
-		 * and commit the transaction and return us to the default state
+		 * and commit the transaction and return us to the default state.
 		 */
 		case TBLOCK_INPROGRESS:
-			s->blockState = TBLOCK_END;
-			break;
-
-			/*
-			 * here we are in a subtransaction block.  Signal
-			 * CommitTransactionCommand() to end it and return to the
-			 * parent transaction.
-			 */
 		case TBLOCK_SUBINPROGRESS:
-			s->blockState = TBLOCK_SUBEND;
+			s->blockState = TBLOCK_END;
+			result = true;
 			break;
 
 			/*
-			 * here, we are in a transaction block which aborted. Since the
+			 * We are in a transaction block which aborted. Since the
 			 * AbortTransaction() was already done, we need only
 			 * change to the special "END ABORT" state.  The upcoming
 			 * CommitTransactionCommand() will recognise this and then put us
@@ -2223,13 +2292,12 @@ EndTransactionBlock(void)
 			break;
 
 			/*
-			 * here we are in an aborted subtransaction.  Signal
-			 * CommitTransactionCommand() to clean up and return to the
-			 * parent transaction.  Since the user said COMMIT, we must
-			 * fail the parent transaction.
+			 * Here we are inside an aborted subtransaction.  Go to the "abort
+			 * the whole tree" state so that CommitTransactionCommand() calls
+			 * AbortOutOfAnyTransaction.
 			 */
 		case TBLOCK_SUBABORT:
-			s->blockState = TBLOCK_SUBENDABORT_ERROR;
+			s->blockState = TBLOCK_SUBENDABORT_ALL;
 			break;
 
 		case TBLOCK_STARTED:
@@ -2252,14 +2320,17 @@ EndTransactionBlock(void)
 		case TBLOCK_ENDABORT:
 		case TBLOCK_END:
 		case TBLOCK_SUBBEGIN:
-		case TBLOCK_SUBBEGINABORT:
 		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_OK:
-		case TBLOCK_SUBENDABORT_ERROR:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
 			elog(FATAL, "EndTransactionBlock: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
 	}
+
+	return result;
 }
 
 /*
@@ -2271,27 +2342,32 @@ UserAbortTransactionBlock(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	switch (s->blockState) {
-		/*
-		 * here we are inside a failed transaction block and we got an abort
-		 * command from the user.  Abort processing is already done, we just
-		 * need to move to the ENDABORT state so we will end up in the default
-		 * state after the upcoming CommitTransactionCommand().
-		 */
+	switch (s->blockState)
+	{
+			/*
+			 * We are inside a failed transaction block and we got an
+			 * abort command from the user.  Abort processing is already
+			 * done, we just need to move to the ENDABORT state so we will
+			 * end up in the default state after the upcoming
+			 * CommitTransactionCommand().
+			 */
 		case TBLOCK_ABORT:
 			s->blockState = TBLOCK_ENDABORT;
 			break;
 
 			/*
-			 * Ditto, for a subtransaction.  Here it is okay to allow the
-			 * parent transaction to continue.
+			 * We are inside a failed subtransaction and we got an
+			 * abort command from the user.  Abort processing is already
+			 * done, so go to the "abort all" state and
+			 * CommitTransactionCommand will call AbortOutOfAnyTransaction
+			 * to set things straight.
 			 */
 		case TBLOCK_SUBABORT:
-			s->blockState = TBLOCK_SUBENDABORT_OK;
+			s->blockState = TBLOCK_SUBENDABORT_ALL;
 			break;
 
 			/*
-			 * here we are inside a transaction block and we got an abort
+			 * We are inside a transaction block and we got an abort
 			 * command from the user, so we move to the ENDABORT state and
 			 * do abort processing so we will end up in the default state
 			 * after the upcoming CommitTransactionCommand().
@@ -2301,17 +2377,22 @@ UserAbortTransactionBlock(void)
 			s->blockState = TBLOCK_ENDABORT;
 			break;
 
-			/* Ditto, for a subtransaction. */
+			/*
+			 * We are inside a subtransaction.  Abort the current
+			 * subtransaction and go to the "abort all" state, so
+			 * CommitTransactionCommand will call AbortOutOfAnyTransaction
+			 * to set things straight.
+			 */
 		case TBLOCK_SUBINPROGRESS:
 			AbortSubTransaction();
-			s->blockState = TBLOCK_SUBENDABORT_OK;
+			s->blockState = TBLOCK_SUBENDABORT_ALL;
 			break;
 
 			/*
-			 * here, the user issued ABORT when not inside a
-			 * transaction. Issue a WARNING and go to abort state.  The
-			 * upcoming call to CommitTransactionCommand() will then put us
-			 * back into the default state.
+			 * The user issued ABORT when not inside a transaction. Issue
+			 * a WARNING and go to abort state.  The upcoming call to
+			 * CommitTransactionCommand() will then put us back into the
+			 * default state.
 			 */
 		case TBLOCK_STARTED:
 			ereport(WARNING,
@@ -2321,21 +2402,265 @@ UserAbortTransactionBlock(void)
 			s->blockState = TBLOCK_ENDABORT;
 			break;
 
-			/* these cases are invalid. */
+			/* These cases are invalid. */
 		case TBLOCK_DEFAULT:
 		case TBLOCK_BEGIN:
 		case TBLOCK_END:
 		case TBLOCK_ENDABORT:
 		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_OK:
-		case TBLOCK_SUBENDABORT_ERROR:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
 		case TBLOCK_SUBBEGIN:
-		case TBLOCK_SUBBEGINABORT:
 			elog(FATAL, "UserAbortTransactionBlock: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
 	}
+}
 
+/*
+ * DefineSavepoint
+ *		This executes a SAVEPOINT command.
+ */
+void
+DefineSavepoint(char *name)
+{
+	TransactionState	s = CurrentTransactionState;
+
+	switch (s->blockState)
+	{
+		case TBLOCK_INPROGRESS:
+		case TBLOCK_SUBINPROGRESS:
+			/* Normal subtransaction start */
+			PushTransaction();
+			s = CurrentTransactionState;	/* changed by push */
+			/*
+			 * Note that we are allocating the savepoint name in the
+			 * parent transaction's CurTransactionContext, since we
+			 * don't yet have a transaction context for the new guy.
+			 */
+			s->name = MemoryContextStrdup(CurTransactionContext, name);
+			s->blockState = TBLOCK_SUBBEGIN;
+			break;
+
+			/* These cases are invalid.  Reject them altogether. */
+		case TBLOCK_DEFAULT:
+		case TBLOCK_STARTED:
+		case TBLOCK_BEGIN:
+		case TBLOCK_SUBBEGIN:
+		case TBLOCK_ABORT:
+		case TBLOCK_SUBABORT:
+		case TBLOCK_ENDABORT:
+		case TBLOCK_END:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
+		case TBLOCK_SUBEND:
+			elog(FATAL, "BeginTransactionBlock: unexpected state %s",
+				 BlockStateAsString(s->blockState));
+			break;
+	}
+}
+
+/*
+ * ReleaseSavepoint
+ * 		This executes a RELEASE command.
+ */
+void
+ReleaseSavepoint(List *options)
+{
+	TransactionState	s = CurrentTransactionState;
+	TransactionState	target = s;
+	char			   *name = NULL;
+	ListCell		   *cell;
+
+	/*
+	 * Check valid block state transaction status.
+	 */
+	switch (s->blockState)
+	{
+		case TBLOCK_INPROGRESS:
+		case TBLOCK_ABORT:
+			ereport(ERROR,
+					(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
+					 errmsg("no such savepoint")));
+			break;
+
+			/*
+			 * We are in a non-aborted subtransaction.  This is
+			 * the only valid case.
+			 */
+		case TBLOCK_SUBINPROGRESS:
+			break;
+
+			/* these cases are invalid. */
+		case TBLOCK_DEFAULT:
+		case TBLOCK_STARTED:
+		case TBLOCK_BEGIN:
+		case TBLOCK_ENDABORT:
+		case TBLOCK_END:
+		case TBLOCK_SUBABORT:
+		case TBLOCK_SUBBEGIN:
+		case TBLOCK_SUBEND:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
+			elog(FATAL, "ReleaseSavepoint: unexpected state %s",
+				 BlockStateAsString(s->blockState));
+			break;
+	}
+
+	foreach (cell, options)
+	{
+		DefElem *elem = lfirst(cell);
+
+		if (strcmp(elem->defname, "savepoint_name") == 0)
+			name = strVal(elem->arg);
+	}
+
+	Assert(PointerIsValid(name));
+
+	while (target != NULL)
+	{
+		if (PointerIsValid(target->name) && strcmp(target->name, name) == 0)
+			break;
+		target = target->parent;
+	}
+
+	if (!PointerIsValid(target))
+		ereport(ERROR,
+				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
+				 errmsg("no such savepoint")));
+
+	CommitTransactionToLevel(target->nestingLevel);
+}
+
+/*
+ * RollbackToSavepoint
+ * 		This executes a ROLLBACK TO <savepoint> command.
+ */
+void
+RollbackToSavepoint(List *options)
+{
+	TransactionState s = CurrentTransactionState;
+	TransactionState target,
+					 xact;
+	ListCell		*cell;
+	char			*name = NULL;
+
+	switch (s->blockState)
+	{
+		/*
+		 * We can't rollback to a savepoint if there is no saveopint
+		 * defined.
+		 */
+		case TBLOCK_ABORT:
+		case TBLOCK_INPROGRESS:
+			ereport(ERROR,
+					(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
+					 errmsg("no such savepoint")));
+			break;
+
+			/*
+			 * There is at least one savepoint, so proceed.
+			 */
+		case TBLOCK_SUBABORT:
+		case TBLOCK_SUBINPROGRESS:
+			/*
+			 * Have to do AbortSubTransaction, but first check
+			 * if this is the right subtransaction
+			 */
+			break;
+
+			/* these cases are invalid. */
+		case TBLOCK_DEFAULT:
+		case TBLOCK_STARTED:
+		case TBLOCK_BEGIN:
+		case TBLOCK_END:
+		case TBLOCK_ENDABORT:
+		case TBLOCK_SUBEND:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
+		case TBLOCK_SUBBEGIN:
+			elog(FATAL, "RollbackToSavepoint: unexpected state %s",
+				 BlockStateAsString(s->blockState));
+			break;
+	}
+
+	foreach (cell, options)
+	{
+		DefElem *elem = lfirst(cell);
+
+		if (strcmp(elem->defname, "savepoint_name") == 0)
+			name = strVal(elem->arg);
+	}
+
+	Assert(PointerIsValid(name));
+
+	target = CurrentTransactionState;
+
+	while (target != NULL)
+	{
+		if (PointerIsValid(target->name) && strcmp(target->name, name) == 0)
+			break;
+		target = target->parent;
+
+		/* we don't cross savepoint level boundaries */
+		if (target->savepointLevel != s->savepointLevel)
+			ereport(ERROR,
+					(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
+					 errmsg("no such savepoint")));
+	}
+
+	if (!PointerIsValid(target))
+		ereport(ERROR,
+				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
+				 errmsg("no such savepoint")));
+
+	/*
+	 * Abort the current subtransaction, if needed.  We can't Cleanup the
+	 * savepoint yet, so signal CommitTransactionCommand to do it and
+	 * close all savepoints up to the target level.
+	 */
+	if (s->blockState == TBLOCK_SUBINPROGRESS)
+		AbortSubTransaction();
+	s->blockState = TBLOCK_SUBENDABORT;
+
+	/*
+	 * Mark "abort pending" all subtransactions up to the target
+	 * subtransaction.  (Except the current subtransaction!)
+	 */
+	xact = CurrentTransactionState;
+
+	while (xact != target)
+	{
+		xact = xact->parent;
+		Assert(PointerIsValid(xact));
+		Assert(xact->blockState == TBLOCK_SUBINPROGRESS);
+		xact->blockState = TBLOCK_SUBABORT_PENDING;
+	}
+}
+
+/*
+ * RollbackAndReleaseSavepoint
+ *
+ * Executes a ROLLBACK TO command, immediately followed by a RELEASE
+ * of the same savepoint.
+ */
+void
+RollbackAndReleaseSavepoint(List *options)
+{
+	TransactionState s;
+
+	RollbackToSavepoint(options);
+	s = CurrentTransactionState;
+	Assert(s->blockState == TBLOCK_SUBENDABORT);
+	s->blockState = TBLOCK_SUBENDABORT_RELEASE;
 }
 
 /*
@@ -2375,7 +2700,6 @@ AbortOutOfAnyTransaction(void)
 				s->blockState = TBLOCK_DEFAULT;
 				break;
 			case TBLOCK_SUBBEGIN:
-			case TBLOCK_SUBBEGINABORT:
 				/*
 				 * We didn't get as far as starting the subxact, so there's
 				 * nothing to abort.  Just pop back to parent.
@@ -2385,6 +2709,7 @@ AbortOutOfAnyTransaction(void)
 				break;
 			case TBLOCK_SUBINPROGRESS:
 			case TBLOCK_SUBEND:
+			case TBLOCK_SUBABORT_PENDING:
 				/* In a subtransaction, so clean it up and abort parent too */
 				AbortSubTransaction();
 				CleanupSubTransaction();
@@ -2392,8 +2717,9 @@ AbortOutOfAnyTransaction(void)
 				s = CurrentTransactionState;		/* changed by pop */
 				break;
 			case TBLOCK_SUBABORT:
-			case TBLOCK_SUBENDABORT_OK:
-			case TBLOCK_SUBENDABORT_ERROR:
+			case TBLOCK_SUBENDABORT_ALL:
+			case TBLOCK_SUBENDABORT:
+			case TBLOCK_SUBENDABORT_RELEASE:
 				/* As above, but AbortSubTransaction already done */
 				CleanupSubTransaction();
 				PopTransaction();
@@ -2404,6 +2730,28 @@ AbortOutOfAnyTransaction(void)
 
 	/* Should be out of all subxacts now */
 	Assert(s->parent == NULL);
+}
+
+/*
+ * CommitTransactionToLevel
+ *
+ * Commit everything from the current transaction level
+ * up to the specified level (inclusive).
+ */
+void
+CommitTransactionToLevel(int level)
+{
+	TransactionState s = CurrentTransactionState;
+
+	Assert(s->state == TRANS_INPROGRESS);
+
+	while (s->nestingLevel >= level)
+	{
+		CommitSubTransaction();
+		PopTransaction();
+		s = CurrentTransactionState;				/* changed by pop */
+		Assert(s->state == TRANS_INPROGRESS);
+	}
 }
 
 /*
@@ -2461,9 +2809,10 @@ TransactionBlockStatusCode(void)
 		case TBLOCK_ABORT:
 		case TBLOCK_ENDABORT:
 		case TBLOCK_SUBABORT:
-		case TBLOCK_SUBENDABORT_OK:
-		case TBLOCK_SUBENDABORT_ERROR:
-		case TBLOCK_SUBBEGINABORT:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
 			return 'E';			/* in failed transaction */
 	}
 
@@ -2481,7 +2830,8 @@ IsSubTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 	
-	switch (s->blockState) {
+	switch (s->blockState)
+	{
 		case TBLOCK_DEFAULT:
 		case TBLOCK_STARTED:
 		case TBLOCK_BEGIN:
@@ -2491,12 +2841,13 @@ IsSubTransaction(void)
 		case TBLOCK_ENDABORT:
 			return false;
 		case TBLOCK_SUBBEGIN:
-		case TBLOCK_SUBBEGINABORT:
 		case TBLOCK_SUBINPROGRESS:
 		case TBLOCK_SUBABORT:
 		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_OK:
-		case TBLOCK_SUBENDABORT_ERROR:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
 			return true;
 	}
 
@@ -2531,6 +2882,8 @@ StartSubTransaction(void)
 	s->transactionIdData = GetNewTransactionId(true);
 
 	SubTransSetParent(s->transactionIdData, s->parent->transactionIdData);
+
+	XactLockTableInsert(s->transactionIdData);
 
 	/*
 	 * Finish setup of other transaction state fields.
@@ -2618,6 +2971,9 @@ AbortSubTransaction(void)
 	TransactionState s = CurrentTransactionState;
 
 	ShowTransactionState("AbortSubTransaction");
+
+	if (s->state != TRANS_INPROGRESS)
+		elog(WARNING, "AbortSubTransaction and not in in-progress state");
 
 	HOLD_INTERRUPTS();
 
@@ -2762,6 +3118,9 @@ StartAbortedSubTransaction(void)
 /*
  * PushTransaction
  *		Set up transaction state for a subtransaction
+ *
+ *	The caller has to make sure to always reassign CurrentTransactionState
+ *	if it has a local pointer to it after calling this function.
  */
 static void
 PushTransaction(void)
@@ -2777,6 +3136,7 @@ PushTransaction(void)
 							   sizeof(TransactionStateData));
 	s->parent = p;
 	s->nestingLevel = p->nestingLevel + 1;
+	s->savepointLevel = p->savepointLevel;
 	s->state = TRANS_DEFAULT;
 	s->blockState = TBLOCK_SUBBEGIN;
 
@@ -2798,6 +3158,9 @@ PushTransaction(void)
 /*
  * PopTransaction
  *		Pop back to parent transaction state
+ *
+ *	The caller has to make sure to always reassign CurrentTransactionState
+ *	if it has a local pointer to it after calling this function.
  */
 static void
 PopTransaction(void)
@@ -2824,6 +3187,8 @@ PopTransaction(void)
 	CurrentResourceOwner = s->parent->curTransactionOwner;
 
 	/* Free the old child structure */
+	if (s->name)
+		pfree(s->name);
 	pfree(s);
 }
 
@@ -2854,7 +3219,8 @@ ShowTransactionStateRec(TransactionState s)
 
 	/* use ereport to suppress computation if msg will not be printed */
 	ereport(DEBUG2,
-			(errmsg_internal("blockState: %13s; state: %7s, xid/cid: %u/%02u, nestlvl: %d, children: %s",
+			(errmsg_internal("name: %s; blockState: %13s; state: %7s, xid/cid: %u/%02u, nestlvl: %d, children: %s",
+							 PointerIsValid(s->name) ? s->name : "unnamed",
 							 BlockStateAsString(s->blockState),
 							 TransStateAsString(s->state),
 							 (unsigned int) s->transactionIdData,
@@ -2870,7 +3236,8 @@ ShowTransactionStateRec(TransactionState s)
 static const char *
 BlockStateAsString(TBlockState blockState)
 {
-	switch (blockState) {
+	switch (blockState)
+	{
 		case TBLOCK_DEFAULT:
 			return "DEFAULT";
 		case TBLOCK_STARTED:
@@ -2887,18 +3254,20 @@ BlockStateAsString(TBlockState blockState)
 			return "ENDABORT";
 		case TBLOCK_SUBBEGIN:
 			return "SUB BEGIN";
-		case TBLOCK_SUBBEGINABORT:
-			return "SUB BEGIN AB";
 		case TBLOCK_SUBINPROGRESS:
 			return "SUB INPROGRS";
 		case TBLOCK_SUBEND:
 			return "SUB END";
 		case TBLOCK_SUBABORT:
 			return "SUB ABORT";
-		case TBLOCK_SUBENDABORT_OK:
-			return "SUB ENDAB OK";
-		case TBLOCK_SUBENDABORT_ERROR:
-			return "SUB ENDAB ERR";
+		case TBLOCK_SUBENDABORT_ALL:
+			return "SUB ENDAB ALL";
+		case TBLOCK_SUBENDABORT:
+			return "SUB ENDAB";
+		case TBLOCK_SUBABORT_PENDING:
+			return "SUB ABRT PEND";
+		case TBLOCK_SUBENDABORT_RELEASE:
+			return "SUB ENDAB REL";
 	}
 	return "UNRECOGNIZED";
 }
@@ -2910,7 +3279,8 @@ BlockStateAsString(TBlockState blockState)
 static const char *
 TransStateAsString(TransState state)
 {
-	switch (state) {
+	switch (state)
+	{
 		case TRANS_DEFAULT:
 			return "DEFAULT";
 		case TRANS_START:

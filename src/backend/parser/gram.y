@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.467 2004/07/12 05:37:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.468 2004/07/27 05:10:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -386,11 +386,11 @@ static void doNegateFloat(Value *v);
 
 	QUOTE
 
-	READ REAL RECHECK REFERENCES REINDEX RELATIVE_P RENAME REPEATABLE REPLACE
-	RESET RESTART RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW ROWS
-	RULE
+	READ REAL RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
+	REPEATABLE REPLACE RESET RESTART RESTRICT RETURNS REVOKE RIGHT
+	ROLLBACK ROW ROWS RULE
 
-	SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
+	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE START STATEMENT
 	STATISTICS STDIN STDOUT STORAGE STRICT_P SUBSTRING SYSID
@@ -3959,6 +3959,30 @@ TransactionStmt:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK;
 					n->options = NIL;
+					$$ = (Node *)n;
+				}
+			| SAVEPOINT ColId
+				{
+					TransactionStmt *n = makeNode(TransactionStmt);
+					n->kind = TRANS_STMT_SAVEPOINT;
+					n->options = list_make1(makeDefElem("savepoint_name",
+														(Node *)makeString($2)));
+					$$ = (Node *)n;
+				}
+			| RELEASE ColId
+				{
+					TransactionStmt *n = makeNode(TransactionStmt);
+					n->kind = TRANS_STMT_RELEASE;
+					n->options = list_make1(makeDefElem("savepoint_name",
+														(Node *)makeString($2)));
+					$$ = (Node *)n;
+				}
+			| ROLLBACK TO ColId
+				{
+					TransactionStmt *n = makeNode(TransactionStmt);
+					n->kind = TRANS_STMT_ROLLBACK_TO;
+					n->options = list_make1(makeDefElem("savepoint_name",
+														(Node *)makeString($3)));
 					$$ = (Node *)n;
 				}
 		;
@@ -7688,6 +7712,7 @@ unreserved_keyword:
 			| RECHECK
 			| REINDEX
 			| RELATIVE_P
+			| RELEASE
 			| RENAME
 			| REPEATABLE
 			| REPLACE
@@ -7699,6 +7724,7 @@ unreserved_keyword:
 			| ROLLBACK
 			| ROWS
 			| RULE
+			| SAVEPOINT
 			| SCHEMA
 			| SCROLL
 			| SECOND_P

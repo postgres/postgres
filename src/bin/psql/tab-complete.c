@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.107 2004/05/26 13:56:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.108 2004/07/27 05:11:11 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -463,8 +463,8 @@ psql_completion(char *text, int start, int end)
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER", "COMMENT",
 		"COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE", "DELETE", "DROP", "EXECUTE",
 		"EXPLAIN", "FETCH", "GRANT", "INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY",
-		"PREPARE", "REINDEX", "RESET", "REVOKE", "ROLLBACK", "SELECT", "SET", "SHOW", "START",
-		"TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", NULL
+		"PREPARE", "REINDEX", "RELEASE", "RESET", "REVOKE", "ROLLBACK", "SAVEPOINT", 
+                "SELECT", "SET", "SHOW", "START", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", NULL
 	};
 
 	static const char * const pgsql_variables[] = {
@@ -722,15 +722,22 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev2_wd, "ANALYZE") == 0)
 		COMPLETE_WITH_CONST(";");
 
-/* BEGIN, COMMIT, ROLLBACK, ABORT, */
+/* BEGIN, COMMIT, ABORT */
 	else if (pg_strcasecmp(prev_wd, "BEGIN") == 0 ||
 	         pg_strcasecmp(prev_wd, "END") == 0 ||
 	         pg_strcasecmp(prev_wd, "COMMIT") == 0 ||
-	         pg_strcasecmp(prev_wd, "ROLLBACK") == 0 ||
 	         pg_strcasecmp(prev_wd, "ABORT") == 0)
 	{
 		static const char * const list_TRANS[] =
 		{"WORK", "TRANSACTION", NULL};
+
+		COMPLETE_WITH_LIST(list_TRANS);
+	}
+/* ROLLBACK*/
+	else if ( pg_strcasecmp(prev_wd, "ROLLBACK") == 0 )
+	{
+		static const char * const list_TRANS[] =
+		{"WORK", "TRANSACTION", "TO", NULL};
 
 		COMPLETE_WITH_LIST(list_TRANS);
 	}

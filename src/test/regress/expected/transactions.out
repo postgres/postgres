@@ -74,13 +74,14 @@ SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE;
 CREATE TABLE foobar (a int);
 BEGIN;
 	CREATE TABLE foo (a int);
-	BEGIN;
+	SAVEPOINT one;
 		DROP TABLE foo;
 		CREATE TABLE bar (a int);
-	ROLLBACK;
-	BEGIN;
+	ROLLBACK TO one;
+	RELEASE one;
+	SAVEPOINT two;
 		CREATE TABLE baz (a int);
-	COMMIT;
+	RELEASE two;
 	drop TABLE foobar;
 	CREATE TABLE barbaz (a int);
 COMMIT;
@@ -105,18 +106,20 @@ SELECT * FROM baz;		-- should be empty
 -- inserts
 BEGIN;
 	INSERT INTO foo VALUES (1);
-	BEGIN;
+	SAVEPOINT one;
 		INSERT into bar VALUES (1);
 ERROR:  relation "bar" does not exist
-	ROLLBACK;
-	BEGIN;
+	ROLLBACK TO one;
+	RELEASE one;
+	SAVEPOINT two;
 		INSERT into barbaz VALUES (1);
-	COMMIT;
-	BEGIN;
-		BEGIN;
+	RELEASE two;
+	SAVEPOINT three;
+		SAVEPOINT four;
 			INSERT INTO foo VALUES (2);
-		COMMIT;
-	ROLLBACK;
+		RELEASE four;
+	ROLLBACK TO three;
+	RELEASE three;
 	INSERT INTO foo VALUES (3);
 COMMIT;
 SELECT * FROM foo;		-- should have 1 and 3
@@ -132,53 +135,168 @@ SELECT * FROM barbaz;	-- should have 1
  1
 (1 row)
 
--- check that starting a subxact in a failed xact or subxact works
+-- test whole-tree commit
 BEGIN;
-	SELECT 0/0;		-- fail the outer xact
-ERROR:  division by zero
-	BEGIN;
-		SELECT 1;	-- this should NOT work
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
-	COMMIT;
-	SELECT 1;		-- this should NOT work
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
-	BEGIN;
-		SELECT 1;	-- this should NOT work
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
-	ROLLBACK;
-	SELECT 1;		-- this should NOT work
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+	SAVEPOINT one;
+		SELECT foo;
+ERROR:  column "foo" does not exist
+	ROLLBACK TO one;
+	RELEASE one;
+	SAVEPOINT two;
+		CREATE TABLE savepoints (a int);
+		SAVEPOINT three;
+			INSERT INTO savepoints VALUES (1);
+			SAVEPOINT four;
+				INSERT INTO savepoints VALUES (2);
+				SAVEPOINT five;
+					INSERT INTO savepoints VALUES (3);
+				ROLLBACK TO five;
 COMMIT;
-SELECT 1;			-- this should work
+COMMIT;		-- should not be in a transaction block
+WARNING:  there is no transaction in progress
+SELECT * FROM savepoints;
+ a 
+---
+ 1
+ 2
+(2 rows)
+
+-- test whole-tree rollback
+BEGIN;
+	SAVEPOINT one;
+		DELETE FROM savepoints WHERE a=1;
+	RELEASE one;
+	SAVEPOINT two;
+		DELETE FROM savepoints WHERE a=1;
+		SAVEPOINT three;
+			DELETE FROM savepoints WHERE a=2;
+ROLLBACK;
+COMMIT;		-- should not be in a transaction block
+WARNING:  there is no transaction in progress
+		
+SELECT * FROM savepoints;
+ a 
+---
+ 1
+ 2
+(2 rows)
+
+-- test whole-tree commit on an aborted subtransaction
+BEGIN;
+	INSERT INTO savepoints VALUES (4);
+	SAVEPOINT one;
+		INSERT INTO savepoints VALUES (5);
+		SELECT foo;
+ERROR:  column "foo" does not exist
+COMMIT;
+SELECT * FROM savepoints;
+ a 
+---
+ 1
+ 2
+(2 rows)
+
+BEGIN;
+	INSERT INTO savepoints VALUES (6);
+	SAVEPOINT one;
+		INSERT INTO savepoints VALUES (7);
+	RELEASE one;
+	INSERT INTO savepoints VALUES (8);
+COMMIT;
+-- rows 6 and 8 should have been created by the same xact
+SELECT a.xmin = b.xmin FROM savepoints a, savepoints b WHERE a.a=6 AND b.a=8;
  ?column? 
 ----------
-        1
+ t
+(1 row)
+
+-- rows 6 and 7 should have been created by different xacts
+SELECT a.xmin = b.xmin FROM savepoints a, savepoints b WHERE a.a=6 AND b.a=7;
+ ?column? 
+----------
+ f
 (1 row)
 
 BEGIN;
-	BEGIN;
-		SELECT 1;	-- this should work
+	INSERT INTO savepoints VALUES (9);
+	SAVEPOINT one;
+		INSERT INTO savepoints VALUES (10);
+	ROLLBACK TO one;
+		INSERT INTO savepoints VALUES (11);
+COMMIT;
+SELECT a FROM savepoints WHERE a in (9, 10, 11);
+ a  
+----
+  9
+ 11
+(2 rows)
+
+-- rows 9 and 11 should have been created by different xacts
+SELECT a.xmin = b.xmin FROM savepoints a, savepoints b WHERE a.a=9 AND b.a=11;
  ?column? 
 ----------
-        1
+ f
 (1 row)
 
-		SELECT 0/0;	-- fail the subxact
+BEGIN;
+	INSERT INTO savepoints VALUES (12);
+	SAVEPOINT one;
+		INSERT INTO savepoints VALUES (13);
+		SAVEPOINT two;
+			INSERT INTO savepoints VALUES (14);
+	ROLLBACK TO one;
+		INSERT INTO savepoints VALUES (15);
+		SAVEPOINT two;
+			INSERT INTO savepoints VALUES (16);
+			SAVEPOINT three;
+				INSERT INTO savepoints VALUES (17);
+COMMIT;
+SELECT a FROM savepoints WHERE a BETWEEN 12 AND 17;
+ a  
+----
+ 12
+ 15
+ 16
+ 17
+(4 rows)
+
+BEGIN;
+	INSERT INTO savepoints VALUES (18);
+	SAVEPOINT one;
+		INSERT INTO savepoints VALUES (19);
+		SAVEPOINT two;
+			INSERT INTO savepoints VALUES (20);
+	ROLLBACK TO one;
+		INSERT INTO savepoints VALUES (21);
+	ROLLBACK TO one;
+		INSERT INTO savepoints VALUES (22);
+COMMIT;
+SELECT a FROM savepoints WHERE a BETWEEN 18 AND 22;
+ a  
+----
+ 18
+ 22
+(2 rows)
+
+DROP TABLE savepoints;
+-- only in a transaction block:
+SAVEPOINT one;
+ERROR:  SAVEPOINT may only be used in transaction blocks
+ROLLBACK TO one;
+ERROR:  ROLLBACK TO may only be used in transaction blocks
+RELEASE one;
+ERROR:  RELEASE may only be used in transaction blocks
+-- Only "rollback to" allowed in aborted state
+BEGIN;
+  SAVEPOINT one;
+  SELECT 0/0;
 ERROR:  division by zero
-		SELECT 1;	-- this should NOT work
+  SAVEPOINT two;    -- ignored till the end of ...
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
-		BEGIN;
-			SELECT 1;	-- this should NOT work
+  RELEASE one;      -- ignored till the end of ...
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
-		ROLLBACK;
-		BEGIN;
-			SELECT 1;	-- this should NOT work
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
-		COMMIT;
-		SELECT 1;	-- this should NOT work
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
-	ROLLBACK;
-	SELECT 1;		-- this should work
+  ROLLBACK TO one;
+  SELECT 1;
  ?column? 
 ----------
         1
@@ -194,7 +312,7 @@ SELECT 1;			-- this should work
 -- check non-transactional behavior of cursors
 BEGIN;
 	DECLARE c CURSOR FOR SELECT unique2 FROM tenk1;
-	BEGIN;
+	SAVEPOINT one;
 		FETCH 10 FROM c;
  unique2 
 ---------
@@ -210,8 +328,7 @@ BEGIN;
        9
 (10 rows)
 
-	ROLLBACK;
-	BEGIN;
+	ROLLBACK TO one;
 		FETCH 10 FROM c;
  unique2 
 ---------
@@ -227,7 +344,7 @@ BEGIN;
       19
 (10 rows)
 
-	COMMIT;
+	RELEASE one;
 	FETCH 10 FROM c;
  unique2 
 ---------
@@ -245,15 +362,15 @@ BEGIN;
 
 	CLOSE c;
 	DECLARE c CURSOR FOR SELECT unique2/0 FROM tenk1;
-	BEGIN;
+	SAVEPOINT two;
 		FETCH 10 FROM c;
 ERROR:  division by zero
-	ROLLBACK;
+	ROLLBACK TO two;
 	-- c is now dead to the world ...
-	BEGIN;
 		FETCH 10 FROM c;
 ERROR:  portal "c" cannot be run
-	ROLLBACK;
+	ROLLBACK TO two;
+	RELEASE two;
 	FETCH 10 FROM c;
 ERROR:  portal "c" cannot be run
 COMMIT;
