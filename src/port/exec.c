@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.14 2004/05/24 20:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.15 2004/05/24 22:35:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,12 +27,6 @@
 #include "miscadmin.h"
 
 #define _(x) gettext(x)
-
-#ifdef FRONTEND
-#undef pstrdup
-#define pstrdup(p)	strdup(p)
-#define pfree(p)	free(p)
-#endif
 
 /* $PATH (or %PATH%) path separator */
 #ifdef WIN32
@@ -185,11 +179,8 @@ validate_exec(const char *path)
 int
 find_my_exec(const char *argv0, char *retpath)
 {
-	char		cwd[MAXPGPATH];
-	char	   *p;
-	char	   *path,
-			   *startp,
-			   *endp;
+	char		cwd[MAXPGPATH], test_path[MAXPGPATH];
+ 	char	   *path;
 
 	if (!getcwd(cwd, MAXPGPATH))
 		cwd[0] = '\0';
@@ -205,9 +196,9 @@ find_my_exec(const char *argv0, char *retpath)
 	 * it).
 	 */
 	/* Does argv0 have a separator? */
-	if ((p = last_path_separator(argv0)))
+	if ((path = last_path_separator(argv0)))
 	{
-		if (*++p == '\0')
+		if (*++path == '\0')
 		{
 			log_error("argv[0] ends with a path separator \"%s\"", argv0);
 			return -1;
@@ -245,41 +236,41 @@ find_my_exec(const char *argv0, char *retpath)
 	 * Second try: since no explicit path was supplied, the user must have
 	 * been relying on PATH.  We'll use the same PATH.
 	 */
-	if ((p = getenv("PATH")) && *p)
+	if ((path = getenv("PATH")) && *path)
 	{
-		path = pstrdup(p);		/* make a modifiable copy */
-		for (startp = path, endp = strchr(path, PATHSEP);
-			 startp && *startp;
-			 startp = endp + 1, endp = strchr(startp, PATHSEP))
-		{
-			if (startp == endp) /* it's a "::" */
-				continue;
-			if (endp)
-				*endp = '\0';
+	 	char	   *startp = NULL, *endp = NULL;
 
-			if (is_absolute_path(startp))
-				snprintf(retpath, MAXPGPATH, "%s/%s", startp, argv0);
+		do
+		{
+			if (!startp)
+				startp = path;
 			else
-				snprintf(retpath, MAXPGPATH, "%s/%s/%s", cwd, startp, argv0);
+				startp = endp + 1;
+
+			endp = strchr(startp, PATHSEP);
+			if (!endp)
+				endp = startp + strlen(startp);	/* point to end */
+
+			StrNCpy(test_path, startp, Min(endp - startp + 1, MAXPGPATH));
+
+			if (is_absolute_path(test_path))
+				snprintf(retpath, MAXPGPATH, "%s/%s", test_path, argv0);
+			else
+				snprintf(retpath, MAXPGPATH, "%s/%s/%s", cwd, test_path, argv0);
 
 			canonicalize_path(retpath);
 			switch (validate_exec(retpath))
 			{
 				case 0: /* found ok */
 					win32_make_absolute(retpath);
-					pfree(path);
 					return 0;
 				case -1:		/* wasn't even a candidate, keep looking */
-					break;
+					continue;
 				case -2:		/* found but disqualified */
 					log_error("could not read binary \"%s\"", retpath);
-					pfree(path);
-					return -1;
+					continue;
 			}
-			if (!endp)			/* last one */
-				break;
-		}
-		pfree(path);
+		} while (*endp);
 	}
 
 	log_error("could not find a \"%s\" to execute", argv0);
