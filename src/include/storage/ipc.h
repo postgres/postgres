@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.21 1997/09/18 14:20:54 momjian Exp $
+ * $Id: ipc.h,v 1.22 1997/09/22 15:49:11 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -25,20 +25,6 @@
 #include <sys/ipc.h>			/* For IPC_PRIVATE */
 
 #include <config.h>
-
-#if defined(HAS_TEST_AND_SET)
-
-#if (defined(alpha) && !defined(linuxalpha)) || \
-	defined(hpux) || \
-	defined(irix5) || \
-	defined(nextstep)
-extern int	S_LOCK_FREE(slock_t *lock);
-
-#else
-#define S_LOCK_FREE(lock)		((*lock) == 0)
-#endif
-
-#endif							/* HAS_TEST_AND_SET */
 
 #ifndef HAVE_UNION_SEMUN
 union semun

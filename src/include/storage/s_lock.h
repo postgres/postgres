@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.2 1997/09/22 04:21:51 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.3 1997/09/22 15:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,11 +301,11 @@ tas_dummy()
 
 #define	S_LOCK(lock)	do \
 						{ \
-							slock_t		res; \
+							slock_t		_res; \
 							do \
 							{ \
-				__asm__("xchgb %0,%1": "=q"(res), "=m"(*lock):"0"(0x1)); \
-							} while (res != 0); \
+				__asm__("xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(0x1)); \
+							} while (_res != 0); \
 						} while (0)
 
 #define	S_UNLOCK(lock)	(*(lock) = 0)
@@ -319,7 +319,7 @@ tas_dummy()
 
 #define	S_LOCK(lock)	do \
 						{ \
-							slock_t		res; \
+							slock_t		_res; \
 							do \
 							{ \
 								__asm__("    ldq   $0, %0	     \n\
@@ -334,8 +334,8 @@ tas_dummy()
 							     jmp   $31, end	     \n\
 					stqc_fail:   or    $31, 1, $0	     \n\
 					already_set: bis   $0, $0, %1	     \n\
-					end:	     nop      ": "=m"(*lock), "=r"(res): :"0"); \
-							} while (res != 0); \
+					end:	     nop      ": "=m"(*lock), "=r"(_res): :"0"); \
+							} while (_res != 0); \
 						} while (0)
 
 						
@@ -349,13 +349,13 @@ tas_dummy()
 
 #define S_LOCK(lock)	do \
 						{ \
-							slock_t		res; \
+							slock_t		_res; \
 							do \
 							{ \
 								__asm__("ldstub [%1], %0" \
-						:		"=&r"(res) \
+						:		"=&r"(_res) \
 						:		"r"(lock)); \
-							} while (!res != 0); \
+							} while (!_res != 0); \
 						} while (0)
 
 #define	S_UNLOCK(lock)	(*(lock) = 0)
@@ -398,6 +398,10 @@ success:		\n\
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
 #endif							/* defined(linux) && defined(PPC) */
+
+#else							/* HAS_TEST_AND_SET */
+
+#define S_LOCK_FREE(lock)		((*lock) == 0)
 
 #endif							/* HAS_TEST_AND_SET */
 
