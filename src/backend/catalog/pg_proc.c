@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.51 2000/11/20 20:36:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.52 2000/12/07 19:40:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,6 +338,15 @@ checkretval(Oid rettype, List *queryTreeList)
 	Oid			relid;
 	int			relnatts;
 	int			i;
+
+	/* guard against empty function body; OK only if no return type */
+	if (queryTreeList == NIL)
+	{
+		if (rettype != InvalidOid)
+			elog(ERROR, "function declared to return %s, but no SELECT provided",
+				 typeidTypeName(rettype));
+		return;
+	}
 
 	/* find the final query */
 	parse = (Query *) nth(length(queryTreeList) - 1, queryTreeList);
