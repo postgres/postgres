@@ -20,7 +20,7 @@ Updates for protocol 2.0 by <ULink url="mailto:tgl@sss.pgh.pa.us">Tom Lane</ULin
 <Para>
 <ProductName>Postgres</ProductName> uses a message-based protocol for communication between frontends
 and backends.  The protocol is implemented over <Acronym>TCP/IP</Acronym> and also on Unix sockets.
-<ProductName>Postgres</ProductName> v6.3 introduced version numbers into the protocol.
+<ProductName>Postgres</ProductName> 6.3 introduced version numbers into the protocol.
 This was done in such
 a way as to still allow connections from earlier versions of frontends, but
 this document does not cover the protocol used by those earlier versions.
@@ -28,7 +28,7 @@ this document does not cover the protocol used by those earlier versions.
 
 <Para>
 This document describes version 2.0 of the protocol, implemented in
-<ProductName>Postgres</ProductName> v6.4 and later.
+<ProductName>Postgres</ProductName> 6.4 and later.
 </para>
 
 <Para>

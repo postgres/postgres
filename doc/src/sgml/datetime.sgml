@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.13 2000/10/20 13:57:10 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.14 2000/12/21 22:55:27 petere Exp $
 Date/time details
 -->
 
@@ -622,7 +622,7 @@ Date/time details
 	Gregorian years 1-99AD may be entered by using 4 digits with leading
 	zeros (e.g. 0099 is 99AD). Previous versions of
 	<productname>Postgres</productname> accepted years with three
-	digits and with single digits, but as of v7.0 the rules have
+	digits and with single digits, but as of version 7.0 the rules have
 	been tightened up to reduce the possibility of ambiguity.
        </para>
       </tip>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.13 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.14 2000/12/21 22:55:27 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -70,7 +70,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.13 2000/09/29 20:21:34 petere
      <para>
       All large object manipulation <emphasis>must</emphasis> take
       place within an SQL transaction. This requirement is strictly
-      enforced as of Postgres v6.5, though it has been an
+      enforced as of Postgres 6.5, though it has been an
       implicit requirement in previous versions, resulting in
       misbehavior if ignored.
      </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.69 2000/12/20 15:44:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.70 2000/12/21 22:55:27 petere Exp $
 -->
 
  <chapter id="release">
@@ -106,7 +106,7 @@ Subqueries in FROM are now supported.
    </para>
 
    <sect2>
-    <title>Migration to v7.1</title>
+    <title>Migration to version 7.1</title>
 
     <para>
 	A dump/restore using pg_dump is required for those wishing to migrate
@@ -306,11 +306,11 @@ New template0 database that contains no user additions(Tom)
 
 
    <sect2>
-    <title>Migration to v7.0.3</title>
+    <title>Migration to version 7.0.3</title>
 
     <para>
      A dump/restore is <emphasis>not</emphasis> required for those running
-     v7.0.*.
+     7.0.*.
     </para>
    </sect2>
 
@@ -384,11 +384,11 @@ Fix for crash of backend, on abort (Tom)
 
 
    <sect2>
-    <title>Migration to v7.0.2</title>
+    <title>Migration to version 7.0.2</title>
 
     <para>
      A dump/restore is <emphasis>not</emphasis> required for those running
-     v7.*.
+     7.*.
     </para>
    </sect2>
 
@@ -424,11 +424,11 @@ Added documentation to tarball.
    </para>
 
    <sect2>
-    <title>Migration to v7.0.1</title>
+    <title>Migration to version 7.0.1</title>
 
     <para>
      A dump/restore is <emphasis>not</emphasis> required for those running
-     v7.0.
+     7.0.
     </para>
    </sect2>
 
@@ -561,7 +561,7 @@ ecpg changes (Michael)
    </para>
 
    <sect2>
-    <title>Migration to v7.0</title>
+    <title>Migration to version 7.0</title>
 
     <para>
      A dump/restore using <application>pg_dump</application>
@@ -987,7 +987,7 @@ New multibyte encodings
 
 
    <sect2>
-    <title>Migration to v6.5.3</title>
+    <title>Migration to version 6.5.3</title>
 
     <para>
      A dump/restore is <emphasis>not</emphasis> required for those running
@@ -1030,7 +1030,7 @@ Fix dumping rules on inherited tables
 
 
    <sect2>
-    <title>Migration to v6.5.2</title>
+    <title>Migration to version 6.5.2</title>
 
     <para>
      A dump/restore is <emphasis>not</emphasis> required for those running
@@ -1095,7 +1095,7 @@ Updated version of pgaccess 0.98
    </para>
 
    <sect2>
-    <title>Migration to v6.5.1</title>
+    <title>Migration to version 6.5.1</title>
 
     <para>
      A dump/restore is <emphasis>not</emphasis> required for those running
@@ -1299,7 +1299,7 @@ Add Win1250 (Czech) support (Pavel Behal)
    </para>
 
    <sect2>
-    <title>Migration to v6.5</title>
+    <title>Migration to version 6.5</title>
 
     <para>
      A dump/restore using <application>pg_dump</application>
@@ -1565,7 +1565,7 @@ bug fix.
 
 
 <sect2>
-<title>Migration to v6.4.2</title>
+<title>Migration to version 6.4.2</title>
 
 <para>
 A dump/restore is <emphasis>not</emphasis> required for those running
@@ -1609,7 +1609,7 @@ problems reported by 6.4 users.
 
 
 <sect2>
-<title>Migration to v6.4.1</title>
+<title>Migration to version 6.4.1</title>
 
 <para>
 A dump/restore is <emphasis>not</emphasis> required for those running
@@ -1752,7 +1752,7 @@ been.
 </para>
 
 <sect2>
-<title>Migration to v6.4</title>
+<title>Migration to version 6.4</title>
 
 <para>
 A dump/restore using <application>pg_dump</application> 
@@ -1983,7 +1983,7 @@ new Makefile.shlib for shared library configuration(Tom)
 </para>
 <para>
 This is a bugfix release for 6.3.x.
-Refer to the release notes for v6.3 for a more complete summary of new features.
+Refer to the release notes for version 6.3 for a more complete summary of new features.
 </para>
 <para>
 Summary:
@@ -1992,7 +1992,7 @@ Summary:
 <listitem>
 <para>
 Repairs automatic configuration support for some platforms, including Linux,
-from breakage inadvertently introduced in v6.3.1.
+from breakage inadvertently introduced in version 6.3.1.
 </para>
 </listitem>
 
@@ -2011,8 +2011,8 @@ This last step should be performed while the postmaster is not running.
 You should re-link any custom applications that use <productname>Postgres</productname> libraries.
 </para>
 <para>
-For upgrades from pre-v6.3 installations,
-refer to the installation and migration instructions for v6.3.
+For upgrades from pre-6.3 installations,
+refer to the installation and migration instructions for version 6.3.
 </para>
 
    <sect2>
@@ -2095,8 +2095,8 @@ This last step should be performed while the postmaster is not running.
 You should re-link any custom applications that use <productname>Postgres</productname> libraries.
 </para>
 <para>
-For upgrades from pre-v6.3 installations,
-refer to the installation and migration instructions for v6.3.
+For upgrades from pre-6.3 installations,
+refer to the installation and migration instructions for version 6.3.
 </para>
 
    <sect2>
@@ -2271,7 +2271,7 @@ Better identify tcl and tk libs and includes(Bruce)
    </para>
 
    <sect2>
-    <title>Migration to v6.3</title>
+    <title>Migration to version 6.3</title>
 
     <para>
      A dump/restore using <application>pg_dump</application> 
@@ -2473,7 +2473,7 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
 1997-10-17
 </para>
 <para>
-v6.2.1 is a bug-fix and usability release on v6.2.
+6.2.1 is a bug-fix and usability release on 6.2.
 </para>
 <para>
 Summary:
@@ -2494,20 +2494,20 @@ Include example trigger function for inserting user names on table updates.
 </itemizedlist>
 </para>
 <para>
-This is a minor bug-fix release on v6.2. 
-For upgrades from pre-v6.2 systems, a full dump/reload is required. 
-Refer to the v6.2 release notes for instructions.
+This is a minor bug-fix release on 6.2. 
+For upgrades from pre-6.2 systems, a full dump/reload is required. 
+Refer to the 6.2 release notes for instructions.
 </para>
 
 <sect2>
-<title>Migration from v6.2 to v6.2.1</title>
+<title>Migration from version 6.2 to version 6.2.1</title>
 
 <para>
-This is a minor bug-fix release. A dump/reload is not required from v6.2,
-but is required from any release prior to v6.2.
+This is a minor bug-fix release. A dump/reload is not required from version 6.2,
+but is required from any release prior to 6.2.
 </para>
 <para>
-In upgrading from v6.2, if you choose to dump/reload you will find that
+In upgrading from version 6.2, if you choose to dump/reload you will find that
 avg(money) is now calculated correctly. All other bug fixes take effect
 upon updating the executables.
 </para>
@@ -2570,7 +2570,7 @@ previous releases of <productname>Postgres</productname>.
 </para>
 
 <sect2>
-<title>Migration from v6.1 to v6.2</title>
+<title>Migration from version 6.1 to version 6.2</title>
 
 <para>
 This migration requires a complete dump of the 6.1 database and a
@@ -2583,7 +2583,7 @@ to dump the 6.1 database.
 </sect2>
 
 <sect2>
-<title>Migration from v1.x to v6.2</title>
+<title>Migration from version 1.<replaceable>x</> to version 6.2</title>
 
 <para>
 Those migrating from earlier 1.* releases should first upgrade to 1.09
@@ -2725,15 +2725,15 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
 
 
 <sect2>
-<title>Migration from v6.1 to v6.1.1</title>
+<title>Migration from version 6.1 to version 6.1.1</title>
 
 <para>
 1997-07-22
 </para>
 <para>
-This is a minor bug-fix release. A dump/reload is not required from v6.1,
-but is required from any release prior to v6.1.
-Refer to the release notes for v6.1 for more details.
+This is a minor bug-fix release. A dump/reload is not required from version 6.1,
+but is required from any release prior to 6.1.
+Refer to the release notes for 6.1 for more details.
 </para>
 </sect2>
 
@@ -2783,7 +2783,7 @@ pg_dumpall now returns proper status, portability fix(Bruce)
 </para>
 <para>
   The regression tests have been adapted and extensively modified for the
-  v6.1 release of <productname>Postgres</productname>.
+  6.1 release of <productname>Postgres</productname>.
 </para>
 
 <para>
@@ -2795,7 +2795,7 @@ pg_dumpall now returns proper status, portability fix(Bruce)
 </para>
 
 <para>
-  <productname>Postgres</productname> v6.1 introduces a new, alternate
+  <productname>Postgres</productname> 6.1 introduces a new, alternate
 optimizer which uses <firstterm>genetic</firstterm>
   algorithms. These algorithms introduce a random behavior in the ordering
   of query results when the query contains multiple qualifiers or multiple
@@ -2828,7 +2828,7 @@ optimizer which uses <firstterm>genetic</firstterm>
 </para>
 
 <sect2>
-<title>Migration to v6.1</title>
+<title>Migration to version 6.1</title>
 
 <para>
 This migration requires a complete dump of the 6.0 database and a
@@ -2945,7 +2945,7 @@ DG-UX, Ultrix, Irix, AIX portability fixes
 </sect1>
 
 <sect1 id="release-6-0">
-<title>Release v6.0</title>
+<title>Release 6.0</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -2967,7 +2967,7 @@ previous releases of <productname>Postgres</productname>.
 </para>
 
 <sect2>
-<title>Migration from v1.09 to v6.0</title>
+<title>Migration from version 1.09 to version 6.0</title>
 
 <para>
 This migration requires a complete dump of the 1.09 database and a
@@ -2976,7 +2976,7 @@ restore of the database in 6.0.
 </sect2>
 
 <sect2>
-<title>Migration from pre-v1.09 to v6.0</title>
+<title>Migration from pre-1.09 to version 6.0</title>
 
 <para>
 Those migrating from earlier 1.* releases should first upgrade to 1.09
@@ -3098,7 +3098,7 @@ Unused/uninialized variables corrected
 </sect1>
 
 <sect1 id="release-1-09">
-<title>Release v1.09</title>
+<title>Release 1.09</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -3123,7 +3123,7 @@ releases.
 </sect1>
 
 <sect1 id="release-1-02">
-<title>Release v1.02</title>
+<title>Release 1.02</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -3137,7 +3137,7 @@ releases.
 -->
 
 <sect2>
-<title>Migration from v1.02 to v1.02.1</title>
+<title>Migration from version 1.02 to version 1.02.1</title>
 
 <para>
 1996-08-01
@@ -3281,7 +3281,7 @@ Contributors (appologies to any missed)
 </sect1>
 
 <sect1 id="release-1-01">
-<title>Release v1.01</title>
+<title>Release 1.01</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -3295,7 +3295,7 @@ Contributors (appologies to any missed)
 -->
 
 <sect2>
-<title>Migration from v1.0 to v1.01</title>
+<title>Migration from version 1.0 to version 1.01</title>
 
 <para>
 1996-02-23
@@ -3481,7 +3481,7 @@ Bug fixes:
 </sect1>
 
 <sect1 id="release-1-0">
-<title>Release v1.0</title>
+<title>Release 1.0</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -3778,12 +3778,12 @@ Initial release.
    </para>
 
    <sect2>
-    <title>v6.5</title>
+    <title>Version 6.5</title>
 
     <para>
      As has been the case for previous releases, timing between
      releases is not directly comparable since new regression tests
-     have been added. In general, v6.5 is faster than previous
+     have been added. In general, 6.5 is faster than previous
      releases.
     </para>
 
@@ -3811,12 +3811,12 @@ Initial release.
    </sect2>
 
 <sect2>
-<title>v6.4beta</title>
+<title>Version 6.4beta</title>
 
 <para>
 The times for this release are not directly comparable to those for previous releases
 since some additional regression tests have been included.
-In general, however, v6.4 should be slightly faster than the previous release (thanks, Bruce!).
+In general, however, 6.4 should be slightly faster than the previous release (thanks, Bruce!).
 </para>
 <para>
 <programlisting>
@@ -3827,13 +3827,13 @@ In general, however, v6.4 should be slightly faster than the previous release (t
 </sect2>
 
 <sect2>
-<title>v6.3</title>
+<title>Version 6.3</title>
 
 <para>
 The times for this release are not directly comparable to those for previous releases
 since some additional regression tests have been included and some obsolete tests involving
 time travel have been removed.
-In general, however, v6.3 is substantially faster than previous releases (thanks, Bruce!).
+In general, however, 6.3 is substantially faster than previous releases (thanks, Bruce!).
 </para>
 <para>
 <programlisting>
@@ -3845,7 +3845,7 @@ In general, however, v6.3 is substantially faster than previous releases (thanks
 </sect2>
 
 <sect2>
-<title>v6.1</title>
+<title>Version 6.1</title>
 
 <para>
 <programlisting>

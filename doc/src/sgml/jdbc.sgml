@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.15 2000/10/27 22:28:23 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.16 2000/12/21 22:55:27 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -438,7 +438,7 @@ db.close();
       For <productname>Postgres</productname>, you must access large
       objects within an SQL transaction. Although this has always been 
       true in principle, it was not strictly enforced until the
-      release of v6.5. You would open a transaction by using the
+      release of version 6.5. You would open a transaction by using the
       <function>setAutoCommit()</function> method with an input
       parameter of <literal>false</literal>:
 
@@ -2642,7 +2642,7 @@ Both are available on
 <para>
 <ulink url="http://www.retep.org.uk">My own web site</ulink>
  contains updated information not included in this 
-document, and also includes precompiled drivers for v6.4, and earlier.
+document, and also includes precompiled drivers for versions 6.4 and earlier.
 </para>
 </sect1>
 </chapter>

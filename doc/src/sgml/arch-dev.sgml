@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.10 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.11 2000/12/21 22:55:26 petere Exp $
 -->
 
  <chapter id="overview">
@@ -1724,7 +1724,7 @@ havingQual} to the one attached to the field {\tt havingQual} of the
 {\it parsetree} given by the parameter {\tt parsetree}. This is done
 by adding a new {\tt AND} node and attaching the old and the new {\it
 operator tree} as arguments to it. {\tt AddHavingQual()} has not been
-existing until v6.3.2. It has been created for the {\it having logic}.
+existing until version 6.3.2. It has been created for the {\it having logic}.
 %
 \begin{verbatim}
   void
@@ -1752,7 +1752,7 @@ existing until v6.3.2. It has been created for the {\it having logic}.
 This function is similar to the above described function  {\tt
 AddHavingQual()}. It also adds the {\it operator tree} given by the
 parameter {\tt havingQual} but prefixes it by a {\tt NOT} node. {\tt
-AddNotHavingQual()} has also not been existing until v6.3.2 and has been
+AddNotHavingQual()} has also not been existing until version 6.3.2 and has been
 created for the {\it having logic}.
 %
 \begin{verbatim}

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.29 2000/12/18 23:39:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.30 2000/12/21 22:55:27 petere Exp $
 -->
 
  <chapter id="syntax">
@@ -184,8 +184,7 @@ DATETIME TIMESPAN
 
      (translated to <type>TIMESTAMP</type> and <type>INTERVAL</type>,
      respectively). This feature is intended to help with
-     transitioning to v7.0, and will be removed in the next full
-     release (likely v7.1).
+     transitioning to version 7.0, and will be removed in a future release.
     </para>
 
     <para>
@@ -193,7 +192,7 @@ DATETIME TIMESPAN
      or <acronym>SQL3</acronym> reserved key words
      which are not key words in <productname>Postgres</productname>.
      These have no proscribed usage in <productname>Postgres</productname>
-     at the time of writing (v7.0) but may become reserved key words in the
+     at the time of writing (version 7.0) but may become reserved key words in the
      future:
 
      <note>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.10 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.11 2000/12/21 22:55:26 petere Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -99,7 +99,7 @@ $ cvs checkout -r REL6_4 tc
   </para>
 
   <para>
-   So, to create the v6.4 release
+   So, to create the 6.4 release
    I did the following:
 
    <programlisting>
