@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Aug 23 17:51:33 EDT 2004</P>
+    <P>Last updated: Wed Aug 25 23:18:13 EDT 2004</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -635,11 +635,11 @@
     hosts?</H4>
 
     <P>By default, PostgreSQL only allows connections from the local
-    machine using Unix domain sockets. Other machines will not be able
-    to connect unless you turn on tcpip_sockets in the postgresql.conf  
-    <B>and</B> enable host-based authentication by modifying the file
-    <I>$PGDATA/pg_hba.conf</I> accordingly. This will allow TCP/IP
-    connections.</P>
+    machine using Unix domain sockets or TCP/IP connections. Other
+    machines will not be able to connect unless you modify
+    listen_addresses in the postgresql.conf <B>and</B> enable
+    host-based authentication by modifying the file
+    <I>$PGDATA/pg_hba.conf</I> accordingly.</P>
 
     <H4><A name="3.6">3.6</A>) How do I tune the database engine for
     better performance?</H4>

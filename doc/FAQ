@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Aug 23 17:51:33 EDT 2004
+   Last updated: Wed Aug 25 23:18:13 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -488,10 +488,10 @@
     3.5) How do I control connections from other hosts?
     
    By default, PostgreSQL only allows connections from the local machine
-   using Unix domain sockets. Other machines will not be able to connect
-   unless you turn on tcpip_sockets in the postgresql.conf and enable
-   host-based authentication by modifying the file $PGDATA/pg_hba.conf
-   accordingly. This will allow TCP/IP connections.
+   using Unix domain sockets or TCP/IP connections. Other machines will
+   not be able to connect unless you modify listen_addresses in the
+   postgresql.conf and enable host-based authentication by modifying the
+   file $PGDATA/pg_hba.conf accordingly.
    
     3.6) How do I tune the database engine for better performance?
     
