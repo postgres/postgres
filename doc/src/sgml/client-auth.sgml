@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.41 2002/11/15 03:11:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.42 2002/12/03 21:50:44 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -318,7 +318,8 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
           support Unix-domain socket credentials (currently
           <systemitem class=osname>Linux</>, <systemitem
           class=osname>FreeBSD</>, <systemitem class=osname>NetBSD</>,
-          and <systemitem class=osname>BSD/OS</>).
+          <systemitem class=osname>OpenBSD</>, and 
+          <systemitem class=osname>BSD/OS</>).
          </para>
 
          <para>

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.87 2002/09/04 20:31:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.88 2002/12/03 21:50:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1216,7 +1216,34 @@ ident_inet(const struct in_addr remote_ip_addr,
 static bool
 ident_unix(int sock, char *ident_user)
 {
-#if defined(SO_PEERCRED)
+#if defined(HAVE_GETPEEREID)
+	/* OpenBSD style:  */
+	uid_t uid;
+	gid_t gid;
+	struct passwd *pass;
+
+	errno = 0;
+	if (getpeereid(sock,&uid,&gid) != 0)
+	{
+		/* We didn't get a valid credentials struct. */
+		elog(LOG, "ident_unix: error receiving credentials: %m");
+		return false;
+	}
+
+	pass = getpwuid(uid);
+
+	if (pass == NULL)
+	{
+		elog(LOG, "ident_unix: unknown local user with uid %d",
+			 (int) uid);
+		return false;
+	}
+
+	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
+
+	return true;
+
+#elsif defined(SO_PEERCRED)
 	/* Linux style: use getsockopt(SO_PEERCRED) */
 	struct ucred peercred;
 	ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
