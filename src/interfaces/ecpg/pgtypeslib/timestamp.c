@@ -546,7 +546,7 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					break;
 				case 's':
 #ifdef HAVE_INT64_TIMESTAMP
-					replace_val.replace_int64 = ((*ts - SetEpochTimestamp()) / 1000000e0);
+					replace_val.int64_val = ((*ts - SetEpochTimestamp()) / 1000000e0);
 					replace_type = PGTYPES_TYPE_INT64;
 #else
 					replace_val.double_val = *ts - SetEpochTimestamp();
