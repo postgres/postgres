@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.89 2000/09/12 21:06:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.90 2000/09/25 18:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 		parse->qual = SS_process_sublinks(parse->qual);
 		parse->havingQual = SS_process_sublinks(parse->havingQual);
 
-		if (parse->groupClause != NIL)
+		if (parse->groupClause != NIL || parse->hasAggs)
 		{
 
 			/*
