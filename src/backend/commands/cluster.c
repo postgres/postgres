@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.84 2002/08/10 20:43:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.85 2002/08/10 21:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,9 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/catname.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_proc.h"
 #include "commands/cluster.h"
 #include "commands/tablecmds.h"
 #include "miscadmin.h"
-#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -81,8 +78,6 @@ Relation RelationIdGetRelation(Oid relationId);
  * 		AccessExclusiveLock right before swapping the filenodes.
  * 		This would allow users to CLUSTER on a regular basis,
  * 		practically eliminating the need for auto-clustered indexes.
- *
- *		Preserve constraint bit for the indexes.
  */
 void
 cluster(RangeVar *oldrelation, char *oldindexname)
@@ -349,9 +344,6 @@ recreate_indexattr(Oid OIDOldHeap, List *indexes)
 		swap_relfilenodes(newIndexOID, attrs->indexOID);
 		setRelhasindex(OIDOldHeap, true, attrs->isPrimary, InvalidOid);
 
-		/* I'm not sure this one is needed, but let's be safe. */
-		CommandCounterIncrement();
-
 		/* Destroy new index with old filenode */
 		object.classId = RelOid_pg_class;
 		object.objectId = newIndexOID;
@@ -380,11 +372,11 @@ swap_relfilenodes(Oid r1, Oid r2)
 	 * it every time.
 	 */
 	Relation	relRelation,
-				irels[Num_pg_class_indices],
 				rel;
 	HeapTuple	reltup[2];
 	Oid			tempRFNode;
 	int			i;
+	CatalogIndexState indstate;
 
 	/* We need both RelationRelationName tuples.  */
 	relRelation = heap_openr(RelationRelationName, RowExclusiveLock);
@@ -429,11 +421,10 @@ swap_relfilenodes(Oid r1, Oid r2)
 	simple_heap_update(relRelation, &reltup[0]->t_self, reltup[0]);
 	
 	/* To keep system catalogs current. */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, irels);
-	CatalogIndexInsert(irels, Num_pg_class_indices, relRelation, reltup[1]);
-	CatalogIndexInsert(irels, Num_pg_class_indices, relRelation, reltup[0]);
-	CatalogCloseIndices(Num_pg_class_indices, irels);
-	CommandCounterIncrement();
+	indstate = CatalogOpenIndexes(relRelation);
+	CatalogIndexInsert(indstate, reltup[1]);
+	CatalogIndexInsert(indstate, reltup[0]);
+	CatalogCloseIndexes(indstate);
 
 	heap_close(relRelation, NoLock);
 	heap_freetuple(reltup[0]);
