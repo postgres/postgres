@@ -14,10 +14,10 @@
  * files within a tablespace into database-specific subdirectories.
  *
  * To support file access via the information given in RelFileNode, we
- * maintain a symbolic-link map in $PGDATA/pg_tablespaces. The symlinks are
+ * maintain a symbolic-link map in $PGDATA/pg_tblspc. The symlinks are
  * named by tablespace OIDs and point to the actual tablespace directories.
  * Thus the full path to an arbitrary file is
- *			$PGDATA/pg_tablespaces/spcoid/dboid/relfilenode
+ *			$PGDATA/pg_tblspc/spcoid/dboid/relfilenode
  *
  * There are two tablespaces created at initdb time: global (for shared
  * tables) and default (for everything else).  For backwards compatibility
@@ -45,7 +45,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.1 2004/06/18 06:13:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.2 2004/06/21 01:04:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,7 +305,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * All seems well, create the symlink
 	 */
 	linkloc = (char *) palloc(strlen(DataDir) + 16 + 10 + 1);
-	sprintf(linkloc, "%s/pg_tablespaces/%u", DataDir, tablespaceoid);
+	sprintf(linkloc, "%s/pg_tblspc/%u", DataDir, tablespaceoid);
 
 	if (symlink(location, linkloc) < 0)
 		ereport(ERROR,
@@ -385,7 +385,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 					   tablespacename);
 
 	location = (char *) palloc(strlen(DataDir) + 16 + 10 + 1);
-	sprintf(location, "%s/pg_tablespaces/%u", DataDir, tablespaceoid);
+	sprintf(location, "%s/pg_tblspc/%u", DataDir, tablespaceoid);
 
 	/*
 	 * Check if the tablespace still contains any files.  We try to rmdir
