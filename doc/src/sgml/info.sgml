@@ -1,71 +1,76 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.15 2001/11/28 20:49:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.16 2002/10/24 17:48:54 petere Exp $
 -->
 
 <sect1 id="resources">
- <title>Documentation Resources</title>
+ <title>Overview of Documentation Resources</title>
 
  <para>
-  This manual set is organized into several parts:
+  The PostgreSQL documentation is organized into several books:
 
   <variablelist>
    <varlistentry>
-    <term>Tutorial</term>
+    <term>&cite-tutorial;</term>
     <listitem>
      <para>
-      An informal introduction for new users
+      An informal introduction for new users.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>User's Guide</term>
+    <term>&cite-user;</term>
     <listitem>
      <para>
-      Documents the SQL query language environment, including data types
-      and functions.
+      Documents the SQL query language environment, including data
+      types and functions, as well as user-level performance tuning.
+      Every PostgreSQL user should read this.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>Programmer's Guide</term>
+    <term>&cite-admin;</term>
+    <listitem>
+     <para>
+      Installation and server management information.  Everyone who
+      runs a PostgreSQL server, either for personal use or for other
+      users, needs to read this.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>&cite-programmer;</term>
     <listitem>
      <para>
       Advanced information for application programmers. Topics include
-      type and function extensibility, library interfaces,
-      and application design issues.
+      type and function extensibility, library interfaces, and
+      application design issues.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>Administrator's Guide</term>
+    <term>&cite-reference;</term>
     <listitem>
      <para>
-      Installation and server management information
+      Reference pages for SQL command syntax, and client and server
+      programs.  This book is auxiliary to the User's,
+      Administrator's, and Programmer's Guides.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>Reference Manual</term>
+    <term>&cite-developer;</term>
     <listitem>
      <para>
-      Reference pages for SQL command syntax and client and server programs
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>Developer's Guide</term>
-    <listitem>
-     <para>
-      Information for <productname>PostgreSQL</productname> developers.
-      This is intended for those who are contributing to the
-      <productname>PostgreSQL</productname> project;
-      application development information appears in the 
-      <citetitle>Programmer's Guide</citetitle>.
+      Information for <productname>PostgreSQL</productname>
+      developers.  This is intended for those who are contributing to
+      the <productname>PostgreSQL</productname> project; application
+      development information appears in the <citetitle>Programmer's
+      Guide</citetitle>.
      </para>
     </listitem>
    </varlistentry>
@@ -81,8 +86,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.15 2001/11/28 20:49:10 petere
     <term>man pages</term>
     <listitem>
      <para>
-      The <citetitle>Reference Manual</citetitle>'s pages in the traditional
-      Unix man format.
+      The <citetitle>Reference Manual</citetitle>'s pages in the
+      traditional Unix man format.  There is no difference in content.
      </para>
     </listitem>
    </varlistentry>

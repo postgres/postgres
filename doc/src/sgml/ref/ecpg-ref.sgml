@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.21 2002/10/21 18:04:05 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.22 2002/10/24 17:48:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -49,7 +49,7 @@ PostgreSQL documentation
 
   <para>
    This reference page does not describe the embedded SQL language.
-   See &cite-programmer; for that.
+   See the &cite-programmer; for that.
   </para>
  </refsect1>
 

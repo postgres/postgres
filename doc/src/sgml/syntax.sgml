@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.71 2002/10/20 05:05:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.72 2002/10/24 17:48:54 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -73,7 +73,7 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
    a <token>SET</token> token to appear in a certain position, and
    this particular variation of <command>INSERT</command> also
    requires a <token>VALUES</token> in order to be complete.  The
-   precise syntax rules for each command are described in
+   precise syntax rules for each command are described in the
    &cite-reference;.
   </para>
 

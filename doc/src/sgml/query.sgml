@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.26 2002/10/20 05:05:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.27 2002/10/24 17:48:54 petere Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -259,7 +259,7 @@ COPY weather FROM '/home/user/weather.txt';
     where the file name for the source file must be available to the
     backend server machine, not the client, since the backend server
     reads the file directly.  You can read more about the
-    <command>COPY</command> command in &cite-reference;.
+    <command>COPY</command> command in the &cite-reference;.
    </para>
   </sect1>
 

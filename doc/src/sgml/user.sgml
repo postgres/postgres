@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.32 2002/09/25 21:16:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.33 2002/10/24 17:48:54 petere Exp $
 -->
 
 <book id="user">
@@ -13,8 +13,57 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.32 2002/09/25 21:16:10 
   &legal;
  </bookinfo>
 
- &intro;
+ <preface id="user-preface">
+  <title>Preface</title>
 
+  &intro;
+  &history;
+
+  <sect1 id="user-preface-thisbook">
+   <title>What's In This Book</title>
+
+   <para>
+    This book describes the use of the SQL language in PostgreSQL.  We
+    start with describing the general syntax of SQL, then explain how
+    to create the structures to hold data, how to populate the
+    database, and how to query it.  The middle part lists the
+    available data types and functions for use in SQL data commands.
+    The rest of the book treats several aspects that are important for
+    tuning a database for optimial performance.
+   </para>
+
+   <para>
+    The information in this book is arranged so that a novice user can
+    follow it start to end to gain a full understanding of the topics
+    without having to refer forward too many times.  The chapters are
+    intended to be self-contained, so that advanced users can read the
+    chapters individually as they choose.  The information in this
+    book is presented in a narrative fashion in topical units.
+    Readers looking for a complete description of a particular command
+    should look into the &cite-reference;.
+   </para>
+
+   <para>
+    Readers of this book should know how to connect to a PostgreSQL
+    database and issue SQL commands.  Readers that are unfamiliar with
+    these issues are encouraged to read the &cite-tutorial; first.  SQL
+    commands are typically entered using the PostgreSQL interactive
+    terminal <application>psql</application>, but other programs that
+    have similar functionality can be used as well.
+   </para>
+
+   <para>
+    This book covers <productname>PostgreSQL &version;</productname>
+    only.  For information on other versions, please read the
+    documentation that accompanies that release.
+   </para>
+  </sect1>
+
+  &info;
+  &notation;
+  &problems;
+ </preface>
+ 
  &syntax;
  &ddl;
  &dml;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.16 2002/09/25 21:16:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.17 2002/10/24 17:48:54 petere Exp $
 -->
 
 <chapter id="user-manag">
@@ -16,7 +16,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.16 2002/09/25 21:16:10 
  <para>
   This chapter describes how to create and manage users and introduces
   the privilege system.  More information about the various types of
-  database objects and the effects of privileges can be found in
+  database objects and the effects of privileges can be found in the
   &cite-user;.
  </para>
 

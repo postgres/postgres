@@ -1,9 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.19 2002/01/07 02:29:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.20 2002/10/24 17:48:54 petere Exp $
 -->
-
- <preface id="preface">
-  <title>Preface</title>
 
   <sect1 id="intro-whatis">
    <title> What is <productname>PostgreSQL</productname>?</title>
@@ -94,14 +91,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.19 2002/01/07 02:29:12 peter
    </para>
 
   </sect1>
-
-   &history;
-   &info;
-   &notation;
-   &problems;
-   &y2k;
-
- </preface>
 
 <!-- Keep this comment at the end of the file
 Local variables:

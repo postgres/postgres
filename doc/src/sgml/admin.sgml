@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.39 2002/10/16 22:06:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.40 2002/10/24 17:48:54 petere Exp $
 -->
 
 <book id="admin">
@@ -13,14 +13,60 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.39 2002/10/16 22:06:33
   &legal;
  </bookinfo>
 
-<!--
-  Disable these extra intro chapters since some elements (e.g. y2k
-  statement) are included in the first intro.sgml and cause errors if
-  included twice.
--->
+ <preface id="admin-preface">
+  <title>Preface</title>
+
 <![%single-book;[
   &intro;
+  &history;
 ]]>
+
+  <sect1 id="admin-preface-thisbook">
+   <title>What's In This Book</title>
+
+   <para>
+    This book covers topics that are of interest to a PostgreSQL
+    database administrator.  This includes installation of the
+    software, set up and configuration of the server, management of
+    users and databases, and maintenance tasks.  Anyone who runs a
+    PostgreSQL server, either for personal use, but especially in
+    production, should be familiar with the topics covered in this
+    book.
+   </para>
+
+   <para>
+    The information in this book is arranged approximately in the
+    order in which a new user should read it.  But the chapters are
+    self-contained and can be read individually as desired.  The
+    information in this book is presented in a narrative fashion in
+    topical units.  Readers looking for a complete description of a
+    particular command should look into the &cite-reference;.
+   </para>
+
+   <para>
+    The first few chapters are written so that they can be understood
+    without prerequisite knowledge, so that new users who need to set
+    up their own server can begin their exploration with this book.
+    The rest of this book which is about tuning and management
+    presupposes that the reader is familiar with the general use of
+    the PostgreSQL database system.  Readers are encouraged to look at
+    the &cite-tutorial; and the &cite-user; for additional
+    information.
+   </para>
+
+   <para>
+    This book covers <productname>PostgreSQL &version;</productname>
+    only.  For information on other versions, please read the
+    documentation that accompanies that release.
+   </para>
+  </sect1>
+
+<![%single-book;[
+  &info;
+  &notation;
+  &problems;
+]]>
+ </preface>
 
   &installation;
   &installw;

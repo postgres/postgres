@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.42 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.43 2002/10/24 17:48:54 petere Exp $
 
 PostgreSQL Programmer's Guide.
 -->
@@ -12,9 +12,60 @@ PostgreSQL Programmer's Guide.
   &legal;
  </bookinfo>
 
-<![%single-book[
+ <preface id="programmer-preface">
+  <title>Preface</title>
+
+<![%single-book;[
   &intro;
+  &history;
 ]]>
+
+  <sect1 id="programmer-preface-thisbook">
+   <title>What's In This Book</title>
+
+   <para>
+    This book is for PostgreSQL application programmers.  It is divided into three parts.
+   </para>
+
+   <para>
+    The first part of this book describes the client programming
+    interfaces distributed with PostgreSQL.  Each of these chapters
+    can be read independently.  Note that there are many other
+    programming interfaces for client programs that are distributed
+    separately and contain their own documentation.  Readers of the
+    first part should be familiar with using SQL commands to
+    manipulate and query the database (see the &cite-user;) and of
+    course with the programming language that the interface uses.
+   </para>
+
+   <para>
+    The second part of this book is about extending the server
+    functionality with user-defined functions, data types, triggers,
+    etc.  These are advanced topics which should probably be
+    approached only after all the other user documentation about
+    PostgreSQL has been understood.
+   </para>
+
+   <para>
+    The third part of this book described the available server-side
+    programming languages.  This information is related to the second
+    part and is only useful to readers that have read at least the
+    first few chapters thereof.
+   </para>
+
+   <para>
+    This book covers <productname>PostgreSQL &version;</productname>
+    only.  For information on other versions, please read the
+    documentation that accompanies that release.
+   </para>
+  </sect1>
+
+<![%single-book[
+  &info;
+  &notation;
+  &problems;
+]]>
+ </preface>
 
  <part id="programmer-client">
   <title>Client Interfaces</title>

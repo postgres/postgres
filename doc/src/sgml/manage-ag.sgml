@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.21 2002/09/25 21:16:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.22 2002/10/24 17:48:54 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -47,7 +47,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.21 2002/09/25 21:16:10 p
    into separate databases.  If the projects or users are interrelated
    and should be able to use each other's resources they should be put
    in the same databases but possibly into separate schemas.  More
-   information about managing schemas is in &cite-user;.
+   information about managing schemas is in the &cite-user;.
   </para>
 
   <note>
