@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.12 1998/02/26 04:38:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.13 1998/04/05 05:51:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,20 +229,20 @@ GetProcessingMode()
  *		Returns path to database.
  *
  */
-char *
+const char *
 GetDatabasePath()
 {
-	return strdup(DatabasePath);
+	return DatabasePath;
 }
 
 /*
  * GetDatabaseName --
  *		Returns name of database.
  */
-char *
+const char *
 GetDatabaseName()
 {
-	return strdup(DatabaseName);
+	return DatabaseName;
 }
 
 void

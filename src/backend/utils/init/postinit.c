@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.25 1998/02/26 04:38:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.26 1998/04/05 05:52:00 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -195,8 +195,8 @@ VerifySystemDatabase()
 static void
 VerifyMyDatabase()
 {
-	char	   *name;
-	char	   *myPath;
+	const char	   *name;
+	const char	   *myPath;
 
 	/* Failure reason returned by some function.  NULL if no failure */
 	char	   *reason;

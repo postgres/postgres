@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.20 1998/02/26 04:39:48 momjian Exp $
+ * $Id: miscadmin.h,v 1.21 1998/04/05 05:52:10 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -116,8 +116,8 @@ extern int	GetDatabaseInfo(char *name, Oid *owner, char *path);
 extern char *ExpandDatabasePath(char *path);
 
 /* now in utils/init/miscinit.c */
-extern char *GetDatabasePath(void);
-extern char *GetDatabaseName(void);
+extern const char *GetDatabasePath(void);
+extern const char *GetDatabaseName(void);
 extern void SetDatabaseName(char *name);
 extern void SetDatabasePath(char *path);
 extern char *getpgusername(void);
