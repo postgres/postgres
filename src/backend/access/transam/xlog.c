@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.10 2000/02/15 03:00:37 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.11 2000/03/07 23:49:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -726,7 +726,11 @@ XLogFileInit(uint32 log, uint32 seg)
 	unlink(path);
 
 tryAgain:
+#ifndef __CYGWIN__
 	fd = open(path, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+#else
+	fd = open(path, O_RDWR|O_CREAT|O_EXCL|O_BINARY, S_IRUSR|S_IWUSR);
+#endif
 	if (fd < 0 && (errno == EMFILE || errno == ENFILE))
 	{
 		fd = errno;
@@ -767,7 +771,11 @@ XLogFileOpen(uint32 log, uint32 seg, bool econt)
 	XLogFileName(path, log, seg);
 
 tryAgain:
+#ifndef __CYGWIN__
 	fd = open(path, O_RDWR);
+#else
+	fd = open(path, O_RDWR | O_BINARY);
+#endif
 	if (fd < 0 && (errno == EMFILE || errno == ENFILE))
 	{
 		fd = errno;
@@ -1083,7 +1091,11 @@ UpdateControlFile()
 	int		fd;
 
 tryAgain:
+#ifndef __CYGWIN__
 	fd = open(ControlFilePath, O_RDWR);
+#else
+	fd = open(ControlFilePath, O_RDWR | O_BINARY);
+#endif
 	if (fd < 0 && (errno == EMFILE || errno == ENFILE))
 	{
 		fd = errno;
@@ -1145,7 +1157,11 @@ BootStrapXLOG()
 	CheckPoint		checkPoint;
 	XLogRecord	   *record;
 
+#ifndef __CYGWIN__
 	fd = open(ControlFilePath, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+#else
+	fd = open(ControlFilePath, O_RDWR|O_CREAT|O_EXCL|O_BINARY, S_IRUSR|S_IWUSR);
+#endif
 	if (fd < 0)
 		elog(STOP, "BootStrapXLOG failed to create control file (%s): %d", 
 					ControlFilePath, errno);
@@ -1249,7 +1265,11 @@ StartupXLOG()
 	 * Open/read Control file
 	 */
 tryAgain:
+#ifndef __CYGWIN__
 	fd = open(ControlFilePath, O_RDWR);
+#else
+	fd = open(ControlFilePath, O_RDWR | O_BINARY);
+#endif
 	if (fd < 0 && (errno == EMFILE || errno == ENFILE))
 	{
 		fd = errno;
