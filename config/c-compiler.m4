@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.13 2004/10/20 02:12:07 neilc Exp $
+# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.14 2004/12/16 17:48:25 momjian Exp $
 
 
 # PGAC_C_SIGNED
@@ -26,20 +26,20 @@ AC_DEFUN([PGAC_TYPE_64BIT_INT],
 define([Ac_cachevar], [translit([pgac_cv_type_$1_64], [ *], [_p])])dnl
 AC_CACHE_CHECK([whether $1 is 64 bits], [Ac_cachevar],
 [AC_TRY_RUN(
-[typedef $1 int64;
+[typedef $1 ac_int64;
 
 /*
  * These are globals to discourage the compiler from folding all the
  * arithmetic tests down to compile-time constants.
  */
-int64 a = 20000001;
-int64 b = 40000005;
+ac_int64 a = 20000001;
+ac_int64 b = 40000005;
 
 int does_int64_work()
 {
-  int64 c,d;
+  ac_int64 c,d;
 
-  if (sizeof(int64) != 8)
+  if (sizeof(ac_int64) != 8)
     return 0;			/* definitely not the right size */
 
   /* Do perfunctory checks to see if 64-bit arithmetic seems to work */

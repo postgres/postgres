@@ -14611,7 +14611,12 @@ else
 int
 main ()
 {
+#ifndef _AIX
 int strerror_r(int, char *, size_t);
+#else
+/* Older AIX has 'int' for the third argument so we don't test the args. */
+int strerror_r();
+#endif
   ;
   return 0;
 }
@@ -14761,20 +14766,20 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-typedef long int int64;
+typedef long int ac_int64;
 
 /*
  * These are globals to discourage the compiler from folding all the
  * arithmetic tests down to compile-time constants.
  */
-int64 a = 20000001;
-int64 b = 40000005;
+ac_int64 a = 20000001;
+ac_int64 b = 40000005;
 
 int does_int64_work()
 {
-  int64 c,d;
+  ac_int64 c,d;
 
-  if (sizeof(int64) != 8)
+  if (sizeof(ac_int64) != 8)
     return 0;			/* definitely not the right size */
 
   /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
@@ -14875,20 +14880,20 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-typedef long long int int64;
+typedef long long int ac_int64;
 
 /*
  * These are globals to discourage the compiler from folding all the
  * arithmetic tests down to compile-time constants.
  */
-int64 a = 20000001;
-int64 b = 40000005;
+ac_int64 a = 20000001;
+ac_int64 b = 40000005;
 
 int does_int64_work()
 {
-  int64 c,d;
+  ac_int64 c,d;
 
-  if (sizeof(int64) != 8)
+  if (sizeof(ac_int64) != 8)
     return 0;			/* definitely not the right size */
 
   /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
@@ -15007,18 +15012,18 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <stdio.h>
-typedef long long int int64;
+typedef long long int ac_int64;
 #define INT64_FORMAT "$pgac_format"
 
-int64 a = 20000001;
-int64 b = 40000005;
+ac_int64 a = 20000001;
+ac_int64 b = 40000005;
 
 int does_int64_snprintf_work()
 {
-  int64 c;
+  ac_int64 c;
   char buf[100];
 
-  if (sizeof(int64) != 8)
+  if (sizeof(ac_int64) != 8)
     return 0;			/* doesn't look like the right size */
 
   c = a * b;

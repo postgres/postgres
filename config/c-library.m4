@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $PostgreSQL: pgsql/config/c-library.m4,v 1.28 2004/10/04 18:14:18 momjian Exp $
+# $PostgreSQL: pgsql/config/c-library.m4,v 1.29 2004/12/16 17:48:26 momjian Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -108,7 +108,12 @@ AC_DEFUN([PGAC_FUNC_STRERROR_R_INT],
 [AC_CACHE_CHECK(whether strerror_r returns int,
 pgac_func_strerror_r_int,
 [AC_TRY_COMPILE([#include <string.h>],
-[int strerror_r(int, char *, size_t);],
+[#ifndef _AIX
+int strerror_r(int, char *, size_t);
+#else
+/* Older AIX has 'int' for the third argument so we don't test the args. */
+int strerror_r();
+#endif],
 [pgac_func_strerror_r_int=yes],
 [pgac_func_strerror_r_int=no])])
 if test x"$pgac_func_strerror_r_int" = xyes ; then
@@ -225,18 +230,18 @@ AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT],
 AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_format,
 [for pgac_format in '%lld' '%qd' '%I64d'; do
 AC_TRY_RUN([#include <stdio.h>
-typedef long long int int64;
+typedef long long int ac_int64;
 #define INT64_FORMAT "$pgac_format"
 
-int64 a = 20000001;
-int64 b = 40000005;
+ac_int64 a = 20000001;
+ac_int64 b = 40000005;
 
 int does_int64_snprintf_work()
 {
-  int64 c;
+  ac_int64 c;
   char buf[100];
 
-  if (sizeof(int64) != 8)
+  if (sizeof(ac_int64) != 8)
     return 0;			/* doesn't look like the right size */
 
   c = a * b;

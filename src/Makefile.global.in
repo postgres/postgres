@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.205 2004/11/19 00:41:38 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.206 2004/12/16 17:48:29 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -308,6 +308,12 @@ endif
 
 libpq = -L$(libpq_builddir) -lpq
 
+# AIX libraries do not remember their required libs so we have to force
+# thread dependent libraires in the link
+ifeq ($(PORTNAME), aix)
+libpq += $(PTHREAD_LIBS)
+endif
+
 submake-libpq:
 	$(MAKE) -C $(libpq_builddir) all
 
@@ -346,13 +352,13 @@ ifneq ($(CUSTOM_COPT),)
 endif
 
 ifdef COPT
-   CFLAGS+= $(COPT)
-   LDFLAGS+= $(COPT)
+   CFLAGS += $(COPT)
+   LDFLAGS += $(COPT)
 endif
 
 ifdef PROFILE
-   CFLAGS+= $(PROFILE)
-   LDFLAGS+= $(PROFILE)
+   CFLAGS += $(PROFILE)
+   LDFLAGS += $(PROFILE)
 endif
 
 
