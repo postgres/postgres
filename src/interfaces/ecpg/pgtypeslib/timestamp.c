@@ -12,6 +12,7 @@
 #include "pgtypes_timestamp.h"
 #include "pgtypes_date.h"
 
+
 int PGTYPEStimestamp_defmt_scan(char **, char *, timestamp *, int *, int *, int *,
 							int *, int *, int *, int *);
 
@@ -844,3 +845,87 @@ PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d)
 	free(mfmt);
 	return i;
 }
+
+/*
+* add an interval to a time stamp
+*
+*   *tout = tin + span
+*
+*    returns 0 if successful
+*    returns -1 if it fails
+*
+*/
+                                                                                                               
+int
+PGTYPEStimestamp_add_interval(timestamp *tin, interval *span, timestamp *tout)
+{
+                                                                                                               
+                                                                                                               
+    if (TIMESTAMP_NOT_FINITE(*tin))
+        *tout = *tin;
+                                                                                                               
+                                                                                                               
+    else
+    {
+        if (span->month != 0)
+        {
+            struct tm tt,
+                  *tm = &tt;
+            fsec_t          fsec;
+                                                                                                               
+                                                                                                               
+            if (timestamp2tm(*tin, NULL, tm, &fsec, NULL) !=0)
+                return -1;
+            tm->tm_mon += span->month;
+            if (tm->tm_mon > 12)
+            {
+                tm->tm_year += ((tm->tm_mon - 1) / 12);
+                tm->tm_mon = (((tm->tm_mon - 1) % 12) + 1);
+            }
+            else if (tm->tm_mon < 1)
+            {
+                tm->tm_year += ((tm->tm_mon / 12) - 1);
+                tm->tm_mon = ((tm->tm_mon % 12) + 12);
+            }
+                                                                                                               
+                                                                                                               
+            /* adjust for end of month boundary problems... */
+            if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
+                tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
+                                                                                                               
+                                                                                                               
+                if (tm2timestamp(tm, fsec, NULL, tin) !=0)
+                    return -1;
+          }
+                                                                                                               
+                                                                                                               
+          *tin +=span->time;
+          *tout = *tin;
+    }
+    return 0;
+                                                                                                               
+}
+                                                                                                               
+                                                                                                               
+/*
+* subtract an interval from a time stamp
+*
+*   *tout = tin - span
+*
+*    returns 0 if successful
+*    returns -1 if it fails
+*
+*/
+                                                                                                               
+int
+PGTYPEStimestamp_sub_interval(timestamp *tin, interval *span, timestamp *tout)
+{
+    interval        tspan;
+                                                                                                               
+    tspan.month = -span->month;
+    tspan.time = -span->time;
+                                                                                                               
+                                                                                                               
+    return PGTYPEStimestamp_add_interval(tin, &tspan, tout );
+}
+

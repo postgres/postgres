@@ -305,5 +305,6 @@ extern char *pgtypes_date_weekdays_short[];
 extern char *pgtypes_date_months[];
 extern char *months[];
 extern char *days[];
+extern int  day_tab[2][13];
 
 #endif   /* DT_H */

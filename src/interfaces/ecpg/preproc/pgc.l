@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.132 2004/08/29 04:13:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.133 2004/12/23 10:46:10 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -611,9 +611,9 @@ cppline			{space}*#(.*\\{space})+.*
 								yb->buffer =  YY_CURRENT_BUFFER;
 								yb->lineno = yylineno;
 								yb->filename = mm_strdup(input_filename);
-								ptr->used = yb->next = yy_buffer;
+								yb->next = yy_buffer;
 								
-								yy_buffer = yb;
+								ptr->used = yy_buffer = yb;
 
 								yy_scan_string(ptr->new);
 								break;
@@ -712,9 +712,9 @@ cppline			{space}*#(.*\\{space})+.*
 									yb->buffer =  YY_CURRENT_BUFFER;
 									yb->lineno = yylineno;
 									yb->filename = mm_strdup(input_filename);
-									ptr->used = yb->next = yy_buffer;
+									yb->next = yy_buffer;
 
-									yy_buffer = yb;
+									ptr->used = yy_buffer = yb;
 
 									yy_scan_string(ptr->new);
 									break;
