@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.46 1999/12/10 03:55:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.47 1999/12/12 05:15:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,12 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 	char	   *lp,
 				loc[MAXPGPATH];
 
+    /* no single quotes in dbname */
+    if (strchr(dbname, '\'') != NULL)
+        elog(ERROR, "Single quotes are not allowed in database names.");
+    if (dbpath && strchr(dbpath, '\'') != NULL)
+        elog(ERROR, "Single quotes are not allowed in database paths.");
+
 	/*
 	 * If this call returns, the database does not exist and we're allowed
 	 * to create databases.
@@ -52,7 +58,7 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 	/* close virtual file descriptors so we can do system() calls */
 	closeAllVfds();
 
-	/* Now create directory for this new database */
+	/* Make directory name for this new database */
 	if ((dbpath != NULL) && (strcmp(dbpath, dbname) != 0))
 	{
 		if (*(dbpath + strlen(dbpath) - 1) == SEP_CHAR)
@@ -65,24 +71,44 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 	lp = ExpandDatabasePath(loc);
 
 	if (lp == NULL)
-		elog(ERROR, "Unable to locate path '%s'"
-			 "\n\tThis may be due to a missing environment variable"
-			 " in the server", loc);
+		elog(ERROR, "The path '%s' is invalid.\n"
+			 "This may be due to a missing environment variable"
+			 " on the server.", loc);
 
-	if (mkdir(lp, S_IRWXU) != 0)
-		elog(ERROR, "Unable to create database directory '%s'", lp);
+    /* no single quotes in expanded path */
+    if (strchr(lp, '\'') != NULL)
+        elog(ERROR, "Single quotes are not allowed in database paths.");
+
+    /* don't call this in a transaction block */
+	if (IsTransactionBlock())
+        elog(ERROR, "createdb: May not be called in a transaction block.");
+    else            
+		BeginTransactionBlock();
+
+	snprintf(buf, sizeof(buf),
+             "INSERT INTO pg_database (datname, datdba, encoding, datpath)"
+             " VALUES ('%s', '%d', '%d', '%s')", dbname, user_id, encoding, loc);
+
+	pg_exec_query_dest(buf, dest, false);
+
+	if (mkdir(lp, S_IRWXU) != 0) {
+		UserAbortTransactionBlock();
+		elog(ERROR, "Unable to create database directory '%s'.", lp);
+    }
 
 	snprintf(buf, sizeof(buf), "%s %s%cbase%ctemplate1%c* '%s'",
 			 COPY_CMD, DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, lp);
-	system(buf);
+	if (system(buf) != 0) {
+        rmdir(lp);
+		UserAbortTransactionBlock();
+        elog(ERROR, "Could not initialize database directory.");
+    }
 
-	snprintf(buf, sizeof(buf),
-		   "insert into pg_database (datname, datdba, encoding, datpath)"
-		  " values ('%s', '%d', '%d', '%s');", dbname, user_id, encoding,
-			 loc);
-
-	pg_exec_query_dest(buf, dest, false);
+	if (IsTransactionBlock())
+		EndTransactionBlock();
 }
+
+
 
 void
 dropdb(char *dbname, CommandDest dest)
@@ -97,6 +123,10 @@ dropdb(char *dbname, CommandDest dest)
 	ScanKeyData	key;
 	HeapTuple	tup;
 
+    /* no single quotes in dbname */
+    if (strchr(dbname, '\'') != NULL)
+        elog(ERROR, "Single quotes are not allowed in database names.");
+
 	/*
 	 * If this call returns, the database exists and we're allowed to
 	 * remove it.
@@ -109,12 +139,18 @@ dropdb(char *dbname, CommandDest dest)
 
 	path = ExpandDatabasePath(dbpath);
 	if (path == NULL)
-		elog(ERROR, "Unable to locate path '%s'"
-			 "\n\tThis may be due to a missing environment variable"
-			 " in the server", dbpath);
+		elog(ERROR, "The path '%s' is invalid.\n"
+			 "This may be due to a missing environment variable"
+			 " on the server.", path);
 
 	/* stop the vacuum daemon (dead code...) */
 	stop_vacuum(dbpath, dbname);
+
+    /* don't call this in a transaction block */
+	if (IsTransactionBlock())
+        elog(ERROR, "dropdb: May not be called in a transaction block.");
+    else            
+		BeginTransactionBlock();
 
 	/*
 	 * Obtain exclusive lock on pg_database.  We need this to ensure
@@ -130,9 +166,12 @@ dropdb(char *dbname, CommandDest dest)
 	/*
 	 * Check for active backends in the target database.
 	 */
-	if (DatabaseHasActiveBackends(db_id))
-		elog(ERROR, "Database '%s' has running backends, can't destroy it",
+	if (DatabaseHasActiveBackends(db_id)) {
+		heap_close(pgdbrel, AccessExclusiveLock);
+        UserAbortTransactionBlock();
+		elog(ERROR, "Database '%s' has running backends, can't drop it.",
 			 dbname);
+    }
 
 	/*
 	 * Find the database's tuple by OID (should be unique, we trust).
@@ -146,6 +185,7 @@ dropdb(char *dbname, CommandDest dest)
 	if (!HeapTupleIsValid(tup))
 	{
 		heap_close(pgdbrel, AccessExclusiveLock);
+        UserAbortTransactionBlock();
 		elog(ERROR, "Database '%s', OID %u, not found in pg_database",
 			 dbname, db_id);
 	}
@@ -179,9 +219,15 @@ dropdb(char *dbname, CommandDest dest)
 	/*
 	 * Remove the database's subdirectory and everything in it.
 	 */
-	snprintf(buf, sizeof(buf), "rm -r '%s'", path);
-	system(buf);
+	snprintf(buf, sizeof(buf), "rm -rf '%s'", path);
+	if (system(buf)!=0)
+        elog(NOTICE, "The database directory '%s' could not be removed.", path);
+
+	if (IsTransactionBlock())
+		EndTransactionBlock();
 }
+
+
 
 static HeapTuple
 get_pg_dbtup(char *command, char *dbname, Relation dbrel)
@@ -252,7 +298,7 @@ check_permissions(char *command,
 	/* Check to make sure user has permission to use createdb */
 	if (!use_createdb)
 	{
-		elog(ERROR, "user '%s' is not allowed to create/destroy databases",
+		elog(ERROR, "user '%s' is not allowed to create/drop databases",
 			 userName);
 	}
 

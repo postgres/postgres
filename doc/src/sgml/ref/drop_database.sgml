@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.8 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.9 1999/12/12 05:15:09 momjian Exp $
 Postgres documentation
 -->
 
@@ -15,12 +15,12 @@ Postgres documentation
    DROP DATABASE
   </refname>
   <refpurpose>
-   Destroys an existing database
+   Removes an existing database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>1999-12-11</date>
   </refsynopsisdivinfo>
   <synopsis>
 DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
@@ -28,7 +28,7 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
 
   <refsect2 id="R2-SQL-DROPDATABASE-1">
    <refsect2info>
-    <date>1998-04-15</date>
+    <date>1999-12-11</date>
    </refsect2info>
    <title>
     Inputs
@@ -49,7 +49,7 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
 
   <refsect2 id="R2-SQL-DROPDATABASE-2">
    <refsect2info>
-    <date>1998-04-15</date>
+    <date>1999-12-11</date>
    </refsect2info>
    <title>
     Outputs
@@ -57,36 +57,86 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
    <para>
 
     <variablelist>
+
      <varlistentry>
-      <term><computeroutput>
-DROP DATABASE
-       </computeroutput></term>
+      <term><computeroutput>DROP DATABASE</computeroutput></term>
       <listitem>
        <para>
 	This message is returned if the command is successful.
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
-      <term><computeroutput>
-WARN: destroydb: database "<replaceable class="parameter">name</replaceable>" does not exist.
-       </computeroutput></term>
+      <term><computeroutput>ERROR:  user '<replaceable class="parameter">username</replaceable>' is not allowed to create/drop databases</computeroutput></term>
+      <listitem>
+       <para>
+        You must have the special CREATEDB privilege to drop databases.
+        See <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>ERROR:  dropdb: cannot be executed on the template database</computeroutput></term>
+      <listitem>
+       <para>
+        The <literal>template1</literal> database cannot be removed. It's not in
+        your interest.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>ERROR:  dropdb: cannot be executed on an open database</computeroutput></term>
+      <listitem>
+       <para>
+        You cannot be connected to the the database your are about to remove.
+        Instead, you could connect to <literal>template1</literal> or any other
+        database and run this command again.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>ERROR:  dropdb: database '<replaceable class="parameter">name</replaceable>' does not exist</computeroutput></term>
       <listitem>
        <para>
 	This message occurs if the specified database does not exist.
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
-      <term><computeroutput>
-	ERROR:  destroydb cannot be executed on an open database
-       </computeroutput></term>
+      <term><computeroutput>ERROR:  dropdb: database '<replaceable class="parameter">name</replaceable>' is not owned by you</computeroutput></term>
       <listitem>
        <para>
-	This message occurs if the specified database does not exist.
+        You must be the owner of the database. Being the owner usually means that
+        you created it as well.
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>ERROR:  dropdb: May not be called in a transaction block.</computeroutput></term>
+      <listitem>
+       <para>
+        You must finish the transaction in progress before you can call this command.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>NOTICE:  The database directory 'xxx' could not be removed.</computeroutput></term>
+      <listitem>
+       <para>
+        The database was dropped (unless other error messages came up), but the
+        directory where the data is stored could not be removed. You must delete
+        it manually.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </refsect2>
@@ -94,7 +144,7 @@ WARN: destroydb: database "<replaceable class="parameter">name</replaceable>" do
  
  <refsect1 id="R1-SQL-DROPDATABASE-1">
   <refsect1info>
-   <date>1998-04-15</date>
+   <date>1999-12-11</date>
   </refsect1info>
   <title>
    Description
@@ -102,23 +152,23 @@ WARN: destroydb: database "<replaceable class="parameter">name</replaceable>" do
   <para>
    <command>DROP DATABASE</command> removes the catalog entries for an existing
    database and deletes the directory containing the data.
-   It can only be executed by the database administrator
-   (See the <command>CREATE DATABASE</command> command for details).
+   It can only be executed by the database owner (usually the user that created
+   it).
   </para>
 
   <refsect2 id="R2-SQL-DROPDATABASE-3">
    <refsect2info>
-    <date>1998-04-15</date>
+    <date>1999-12-11</date>
    </refsect2info>
    <title>
     Notes
    </title>
 
    <para>
-    This query cannot be executed while connected to the target
-    database. Thus, it might be more convenient to use
-    <xref linkend="app-dropdb" endterm="app-dropdb-title">
-    from the shell instead.
+    This command cannot be executed while connected to the target
+    database. Thus, it might be more convenient to use the shell
+    script <xref linkend="app-dropdb" endterm="app-dropdb-title">,
+    which is a wrapper around this command, instead.
    </para>
 
    <para>

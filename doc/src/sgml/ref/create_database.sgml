@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.10 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.11 1999/12/12 05:15:09 momjian Exp $
 Postgres documentation
 -->
 
@@ -20,7 +20,7 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>1999-12-11</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATION = '<replaceable class="parameter">dbpath</replaceable>' ]
@@ -28,7 +28,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
 
   <refsect2 id="R2-SQL-CREATEDATABASE-1">
    <refsect2info>
-    <date>1998-04-15</date>
+    <date>1999-12-11</date>
    </refsect2info>
    <title>
     Inputs
@@ -48,7 +48,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
       <term><replaceable class="parameter">dbpath</replaceable></term>
       <listitem>
        <para>
-	An alternate location for the new database. See below for caveats.
+	An alternate location where to store the new database in the filesystem.
+        See below for caveats.
        </para>
       </listitem>
      </varlistentry>
@@ -58,7 +59,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
 
   <refsect2 id="R2-SQL-CREATEDATABASE-2">
    <refsect2info>
-    <date>1998-04-15</date>
+    <date>1999-12-11</date>
    </refsect2info>
    <title>
     Outputs
@@ -67,36 +68,81 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
 
     <variablelist>
      <varlistentry>
-      <term><computeroutput>
-CREATE DATABASE
-       </computeroutput></term>
+      <term><computeroutput>CREATE DATABASE</computeroutput></term>
       <listitem>
        <para>
 	Message returned if the command completes successfully.
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
-      <term><computeroutput>
-WARN:  createdb: database "<replaceable class="parameter">name</replaceable>" already exists.
-       </computeroutput></term>
+      <term><computeroutput>ERROR:  user '<replaceable class="parameter">username</replaceable>' is not allowed to create/drop databases</computeroutput></term>
       <listitem>
        <para>
-	This occurs if <replaceable class="parameter">database</replaceable> specified already exists.
+        You must have the special CREATEDB privilege to create databases.
+        See <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">.
        </para>
       </listitem>
      </varlistentry>
+
+
      <varlistentry>
-      <term><computeroutput>
-ERROR:  Unable to create database directory <replaceable class="parameter">directory</replaceable>
-       </computeroutput></term>
+      <term><computeroutput>ERROR:  createdb: database "<replaceable class="parameter">name</replaceable>" already exists</computeroutput></term>
       <listitem>
        <para>
-	There was a problem with creating the required directory; this operation will
-	need permissions for the <literal>postgres</literal> user on the specified location.
+	This occurs if a database with the <replaceable class="parameter">name</replaceable>
+        specified already exists.
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>ERROR:  Single quotes are not allowed in database names.</computeroutput></term>
+      <term><computeroutput>ERROR:  Single quotes are not allowed in database paths.</computeroutput></term>
+      <listitem>
+       <para>
+	The database <replaceable class="parameter">name</replaceable> and
+        <replaceable class="parameter">dbpath</replaceable> cannot contain
+        single quotes. This is required so that the shell commands that
+        create the database directory can execute safely.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>ERROR:  The path 'xxx' is invalid.</computeroutput></term>
+      <listitem>
+       <para>
+        The expansion of the specified <replaceable class="parameter">dbpath</replaceable>
+        (see below how) failed. Check the path you entered or make sure that the
+        environment variable you are referencing does exist.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>ERROR:  createdb: May not be called in a transaction block.</computeroutput></term>
+      <listitem>
+       <para>
+        If you have an explicit transaction block in progress you cannot call
+        <command>CREATE DATABASE</command>. You must finish the transaction first.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>ERROR:  Unable to create database directory 'xxx'.</computeroutput></term>
+      <term><computeroutput>ERROR:  Could not initialize database directory.</computeroutput></term>
+      <listitem>
+       <para>
+        These are most likely related to insufficient permissions on the data
+        directory, a full disk, or other file system problems. The user under
+        which the database server is running, must have access to the location.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </refsect2>
@@ -104,29 +150,40 @@ ERROR:  Unable to create database directory <replaceable class="parameter">direc
 
  <refsect1 id="R1-SQL-CREATEDATABASE-1">
   <refsect1info>
-   <date>1998-04-15</date>
+   <date>1999-12-11</date>
   </refsect1info>
   <title>
    Description
   </title>
   <para>
-   <command>CREATE DATABASE</command> creates a new Postgres database.
-   The creator becomes the administrator of the new database.
+   <command>CREATE DATABASE</command> creates a new
+   <productname>PostgreSQL</productname> database.
+   The creator becomes the owner of the new database.
   </para>
 
   <para>
-   An alternate location can be specified as either an
-   environment variable known to the backend server
-   (e.g. '<envar>PGDATA2</envar>') or, if the server is built to
-   allow it, as an absolute path name
-   (e.g. '<filename>/usr/local/pgsql/data</filename>').
-   In either case, the location must be pre-configured
-   by <command>initlocation</command>.
+   An alternate location can be specified in order to,
+   for example, store the database on a different disk.
+   The path must have been prepared with the <xref
+   linkend="APP-INITLOCATION" endterm="APP-INITLOCATION-title">
+   command.
+  </para>
+  <para>
+   If the path contains a slash, the leading part is interpreted
+   as an environment variable, which must be known to the
+   server process. This way the database administrator can
+   exercise control over at which locations databases can be created.
+   (A customary choice is, e.g., '<envar>PGDATA2</envar>'.)
+   If the server is compiled with <literal>ALLOW_ABSOLUTE_DBPATHS</literal>
+   (not so by default), absolute path names, as identified by
+   a leading slash
+   (e.g. '<filename>/usr/local/pgsql/data</filename>'),
+   are allowed as well.
   </para>
 
   <refsect2 id="R2-SQL-CREATEDATABASE-3">
    <refsect2info>
-    <date>1998-04-15</date>
+    <date>1999-12-11</date>
    </refsect2info>
    <title>
     Notes
@@ -136,7 +193,11 @@ ERROR:  Unable to create database directory <replaceable class="parameter">direc
     language extension.
    </para>
    <para>
-    Use <command>DROP DATABASE</command> to remove a database.
+    Use <xref linkend="SQL-DROPDATABASE" endterm="SQL-DROPDATABASE-title"> to remove a database.
+   </para>
+   <para>
+    The program <xref linkend="APP-CREATEDB" endterm="APP-CREATEDB-title"> is a
+    shell script wrapper around this command, provided for convenience.
    </para>
 
    <para>
@@ -183,16 +244,16 @@ comment from Olly; response from Thomas...
 <prompt>$</prompt> <userinput>initlocation ~/private_db</userinput>
 <computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
    
-   <prompt>$</prompt> <userinput>psql olly</userinput>
-   <computeroutput>Welcome to psql, the PostgreSQL interactive terminal.
+<prompt>$</prompt> <userinput>psql olly</userinput>
+<computeroutput>Welcome to psql, the PostgreSQL interactive terminal.
 (Please type \copyright to see the distribution terms of PostgreSQL.)
  
 Type \h for help with SQL commands,
      \? for help on internal slash commands,
      \q to quit,
      \g or terminate with semicolon to execute query.
-    <prompt>olly=></prompt></computeroutput> <userinput>create database elsewhere with location = '/home/olly/private_db';</userinput>
-   <computeroutput>CREATE DATABASE</computeroutput>
+<prompt>olly=></prompt></computeroutput> <userinput>CREATE DATABASE elsewhere WITH LOCATION = '/home/olly/private_db';</userinput>
+<computeroutput>CREATE DATABASE</computeroutput>
    </programlisting>
   </para>
  </refsect1>

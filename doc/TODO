@@ -71,7 +71,7 @@ MISC
 * Fix btree to give a useful elog when key > 1/2 (page - overhead)
 * -pg_dump should preserve primary key information
 * plpgsql regression tests fail on BSD/OS
-* database names with spaces fail
+* -database names with spaces fail
 * insert of 0.0 into DECIMAL(4,4) field fails
 
 ENHANCEMENTS
