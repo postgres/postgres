@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.17 2003/03/07 18:39:43 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.18 2003/03/19 04:06:20 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -892,7 +892,11 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
                 //We do the select to ensure a transaction is in process
 				//before we do the commit to avoid warning messages
 				//from issuing a commit without a transaction in process
-				execSQL("select 1; commit; set autocommit = on;");
+				//NOTE this is done in two network roundtrips to work around
+				//a server bug in 7.3 where the select wouldn't actually start
+				//a new transaction if in the same command as the commit
+				execSQL("select 1;");
+				execSQL("commit; set autocommit = on;");
 			}
 			else
 			{
