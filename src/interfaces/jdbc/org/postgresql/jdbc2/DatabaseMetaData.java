@@ -1651,7 +1651,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     f[4] = new Field(connection, new String("REMARKS"), iVarcharOid, 32);
     
     // Now form the query
-    StringBuffer sql = new StringBuffer("select relname,oid from pg_class where (");
+    StringBuffer sql = new StringBuffer("select relname,oid,relkind from pg_class where (");
     boolean notFirst=false;
     for(int i=0;i<types.length;i++) {
       for(int j=0;j<getTableTypes.length;j++)
@@ -1687,10 +1687,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	  remarks = defaultRemarks;
 	dr.close();
 	
+	String relKind;
+	switch (r.getBytes(3)[0]) {
+	case 'r':
+	    relKind = "TABLE";
+	    break;
+	case 'i':
+	    relKind = "INDEX";
+	    break;
+	case 'S':
+	    relKind = "SEQUENCE";
+	    break;
+	default:
+	    relKind = null;
+	}
+
 	tuple[0] = null;		// Catalog name
 	tuple[1] = null;		// Schema name
-	tuple[2] = r.getBytes(1);	// Table name
-	tuple[3] = null;		// Table type
+	tuple[2] = r.getBytes(1);	// Table name	
+	tuple[3] = relKind.getBytes();	// Table type
 	tuple[4] = remarks;		// Remarks
 	v.addElement(tuple);
       }
