@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.7 2000/01/23 08:20:24 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.8 2000/02/06 00:49:03 ishii Exp $
 #
 #-------------------------------------------------------------------------
 CMDNAME=`basename $0`
@@ -76,6 +76,7 @@ do
 	-D)
 	    shift
 	    PGDATA="$1"
+	    export PGDATA
 	    ;;
 	-p)
 	    shift
