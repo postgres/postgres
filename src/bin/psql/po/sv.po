@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.16 2004/01/11 06:55:10 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.17 2004/01/14 12:14:01 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-01-11 07:42+0100\n"
-"PO-Revision-Date: 2004-01-11 07:53+0100\n"
+"PO-Revision-Date: 2004-01-14 13:12+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -540,7 +540,7 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"För mer information, skriv \"\\?\" (för interna kommandona) eller\n"
+"För mer information, skriv \"\\?\" (för interna kommandon) eller\n"
 "\"\\help\" (för SQL-kommandon) i psql, eller läs avsnittet om psql\n"
 "i PostgreSQL-dokumentationen.\n"
 "\n"
