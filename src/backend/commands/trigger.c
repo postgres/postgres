@@ -42,7 +42,7 @@ void		FreeTriggerDesc(Relation relation);
 
 static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);
 static HeapTuple GetTupleForTrigger(EState *estate, ItemPointer tid,
-				   bool before);
+				   TupleTableSlot **newSlot);
 
 extern GlobalMemory CacheCxt;
 
@@ -664,9 +664,10 @@ ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid)
 	Trigger		  **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_DELETE];
 	HeapTuple		trigtuple;
 	HeapTuple		newtuple = NULL;
+	TupleTableSlot *newSlot;
 	int				i;
 
-	trigtuple = GetTupleForTrigger(estate, tupleid, true);
+	trigtuple = GetTupleForTrigger(estate, tupleid, &newSlot);
 	if (trigtuple == NULL)
 		return false;
 
@@ -701,7 +702,7 @@ ExecARDeleteTriggers(EState *estate, ItemPointer tupleid)
 	HeapTuple	trigtuple;
 	int			i;
 
-	trigtuple = GetTupleForTrigger(estate, tupleid, false);
+	trigtuple = GetTupleForTrigger(estate, tupleid, NULL);
 	Assert(trigtuple != NULL);
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
@@ -732,11 +733,19 @@ ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 	HeapTuple		trigtuple;
 	HeapTuple		oldtuple;
 	HeapTuple		intuple = newtuple;
+	TupleTableSlot *newSlot;
 	int				i;
 
-	trigtuple = GetTupleForTrigger(estate, tupleid, true);
+	trigtuple = GetTupleForTrigger(estate, tupleid, &newSlot);
 	if (trigtuple == NULL)
 		return NULL;
+
+	/*
+	 * In READ COMMITTED isolevel it's possible that newtuple
+	 * was changed due to concurrent update.
+	 */
+	if (newSlot != NULL)
+		intuple = newtuple = ExecRemoveJunk(estate->es_junkFilter, newSlot);
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
 	SaveTriggerData->tg_event =
@@ -770,7 +779,7 @@ ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 	HeapTuple	trigtuple;
 	int			i;
 
-	trigtuple = GetTupleForTrigger(estate, tupleid, false);
+	trigtuple = GetTupleForTrigger(estate, tupleid, NULL);
 	Assert(trigtuple != NULL);
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
@@ -794,20 +803,21 @@ ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 extern	TupleTableSlot *EvalPlanQual(EState *estate, Index rti, ItemPointer tid);
 
 static HeapTuple
-GetTupleForTrigger(EState *estate, ItemPointer tid, bool before)
+GetTupleForTrigger(EState *estate, ItemPointer tid, TupleTableSlot **newSlot)
 {
 	Relation		relation = estate->es_result_relation_info->ri_RelationDesc;
 	HeapTupleData	tuple;
 	HeapTuple		result;
 	Buffer			buffer;
 
-	if (before)
+	if (newSlot != NULL)
 	{
 		int		test;
 
 		/*
 		 *	mark tuple for update
 		 */
+		*newSlot = NULL;
 		tuple.t_self = *tid;
 ltrmark:;
 		test = heap_mark4update(relation, &tuple, &buffer);
@@ -826,13 +836,14 @@ ltrmark:;
 					elog(ERROR, "Can't serialize access due to concurrent update");
 				else if (!(ItemPointerEquals(&(tuple.t_self), tid)))
 				{
-					TupleTableSlot *slot = EvalPlanQual(estate, 
+					TupleTableSlot *epqslot = EvalPlanQual(estate, 
 						estate->es_result_relation_info->ri_RangeTableIndex, 
 						&(tuple.t_self));
 
-					if (!(TupIsNull(slot)))
+					if (!(TupIsNull(epqslot)))
 					{
 						*tid = tuple.t_self;
+						*newSlot = epqslot;
 						goto ltrmark;
 					}
 				}

@@ -65,7 +65,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/gram.c,v 1.3 1999/01/28 11:50:41 wieck Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/gram.c,v 1.4 1999/01/29 11:56:01 vadim Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -414,7 +414,7 @@ static const short yycheck[] = {    21,
    152,    62
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/share/bison.simple"
+#line 3 "/usr/share/misc/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -466,16 +466,6 @@ void *alloca ();
 #endif /* not sparc.  */
 #endif /* not GNU C.  */
 #endif /* alloca not defined.  */
-
-#ifdef __cplusplus
-extern "C" {
-  void yyerror(char *);
-  int yylex();
-};
-#else
-  extern void yyerror(char *);
-  extern int yylex();
-#endif
 
 /* This is the parser code that is written into each bison parser
   when the %semantic_parser declaration is not specified in the grammar.
@@ -573,13 +563,9 @@ int yydebug;			/*  nonzero means print parse trace	*/
 #define YYMAXDEPTH 10000
 #endif
 
-#ifndef YYPARSE_RETURN_TYPE
-#define YYPARSE_RETURN_TYPE int
-#endif
-
 /* Prevent warning if -Wstrict-prototypes.  */
 #ifdef __GNUC__
-YYPARSE_RETURN_TYPE yyparse (void);
+int yyparse (void);
 #endif
 
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
@@ -621,7 +607,7 @@ __yy_memcpy (char *to, char *from, int count)
 #endif
 #endif
 
-#line 196 "/usr/share/bison.simple"
+#line 196 "/usr/share/misc/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -642,7 +628,7 @@ __yy_memcpy (char *to, char *from, int count)
 #define YYPARSE_PARAM_DECL
 #endif /* not YYPARSE_PARAM */
 
-YYPARSE_RETURN_TYPE
+int
 yyparse(YYPARSE_PARAM_ARG)
      YYPARSE_PARAM_DECL
 {
@@ -1905,7 +1891,7 @@ case 105:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 498 "/usr/share/bison.simple"
+#line 498 "/usr/share/misc/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
