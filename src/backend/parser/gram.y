@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.272 2001/11/05 05:00:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.273 2001/11/10 22:31:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -257,8 +257,8 @@ static void doNegateFloat(Value *v);
 %type <paramno> ParamNo
 
 %type <typnam>	Typename, SimpleTypename, ConstTypename
-				GenericType, Numeric, Geometric, Character, ConstDatetime, ConstInterval, Bit
-%type <str>		character, datetime, bit
+				GenericType, Numeric, Character, ConstDatetime, ConstInterval, Bit
+%type <str>		character, bit
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float
@@ -268,7 +268,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	Iconst
 %type <str>		Sconst, comment_text
 %type <str>		UserId, opt_boolean, var_value, ColId_or_Sconst
-%type <str>		ColId, ColLabel, TokenId
+%type <str>		ColId, TypeFuncId, ColLabel
 %type <node>	zone_value
 
 %type <node>	TableConstraint
@@ -1007,11 +1007,11 @@ constraints_set_list:	ALL
 		;
 
 
-constraints_set_namelist:	IDENT
+constraints_set_namelist:	ColId
 				{
 					$$ = makeList1($1);
 				}
-		| constraints_set_namelist ',' IDENT
+		| constraints_set_namelist ',' ColId
 				{
 					$$ = lappend($1, $3);
 				}
@@ -2007,8 +2007,8 @@ def_elem:  ColLabel '=' def_arg
 				}
 		;
 
+/* Note: any simple identifier will be returned as a type name! */
 def_arg:  func_return  					{  $$ = (Node *)$1; }
-		| TokenId						{  $$ = (Node *)makeString($1); }
 		| all_Op						{  $$ = (Node *)makeString($1); }
 		| NumericOnly					{  $$ = (Node *)$1; }
 		| Sconst						{  $$ = (Node *)makeString($1); }
@@ -2629,11 +2629,15 @@ func_return:  func_type
 				}
 		;
 
+/*
+ * We would like to make the second production here be ColId '.' ColId etc,
+ * but that causes reduce/reduce conflicts.  TypeFuncId is next best choice.
+ */
 func_type:	Typename
 				{
 					$$ = $1;
 				}
-		| IDENT '.' ColId '%' TYPE_P
+		| TypeFuncId '.' ColId '%' TYPE_P
 				{
 					$$ = makeNode(TypeName);
 					$$->name = $1;
@@ -4064,13 +4068,12 @@ SimpleTypename:  ConstTypename
 
 ConstTypename:  GenericType
 		| Numeric
-		| Geometric
 		| Bit
 		| Character
 		| ConstDatetime
 		;
 
-GenericType:  IDENT
+GenericType:  TypeFuncId
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType($1);
@@ -4086,7 +4089,7 @@ GenericType:  IDENT
 Numeric:  FLOAT opt_float
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType($2);
+					$$->name = $2; /* already xlated */
 					$$->typmod = -1;
 				}
 		| DOUBLE PRECISION
@@ -4112,14 +4115,6 @@ Numeric:  FLOAT opt_float
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("numeric");
 					$$->typmod = $2;
-				}
-		;
-
-Geometric:  PATH_P
-				{
-					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("path");
-					$$->typmod = -1;
 				}
 		;
 
@@ -4299,13 +4294,7 @@ opt_collate:  COLLATE ColId						{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-ConstDatetime:  datetime
-				{
-					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType($1);
-					$$->typmod = -1;
-				}
-		| TIMESTAMP '(' Iconst ')' opt_timezone_x
+ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
 				{
 					$$ = makeNode(TypeName);
 					if ($5)
@@ -4369,14 +4358,6 @@ ConstInterval:  INTERVAL
 					$$->name = xlateSqlType("interval");
 					$$->typmod = -1;
 				}
-		;
-
-datetime:  YEAR_P								{ $$ = "year"; }
-		| MONTH_P								{ $$ = "month"; }
-		| DAY_P									{ $$ = "day"; }
-		| HOUR_P								{ $$ = "hour"; }
-		| MINUTE_P								{ $$ = "minute"; }
-		| SECOND_P								{ $$ = "second"; }
 		;
 
 /* XXX Make the default be WITH TIME ZONE for 7.2 to help with database upgrades
@@ -5270,9 +5251,14 @@ extract_list:  extract_arg FROM a_expr
  * - thomas 2001-04-12
  */
 
-extract_arg:  datetime						{ $$ = $1; }
-		| SCONST							{ $$ = $1; }
-		| IDENT								{ $$ = $1; }
+extract_arg:  IDENT						{ $$ = $1; }
+		| YEAR_P						{ $$ = "year"; }
+		| MONTH_P						{ $$ = "month"; }
+		| DAY_P							{ $$ = "day"; }
+		| HOUR_P						{ $$ = "hour"; }
+		| MINUTE_P						{ $$ = "minute"; }
+		| SECOND_P						{ $$ = "second"; }
+		| SCONST						{ $$ = $1; }
 		;
 
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
@@ -5555,32 +5541,6 @@ access_method:			ColId			{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
 class:					ColId			{ $$ = $1; };
 index_name:				ColId			{ $$ = $1; };
-
-/* Functions
- * Include date/time keywords as SQL92 extension.
- * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
- * Any tokens which show up as operators will screw up the parsing if
- * allowed as identifiers, but are acceptable as ColLabels:
- *  BETWEEN, IN, IS, ISNULL, NOTNULL, OVERLAPS
- * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
- * We need OVERLAPS allowed as a function name to enable the implementation
- *  of argument type variations on the underlying implementation. These
- *  variations are done as SQL-language entries in the pg_proc catalog.
- * Do not include SUBSTRING here since it has explicit productions
- *  in a_expr to support the goofy SQL9x argument syntax.
- *  - thomas 2000-11-28
- */
-func_name:  ColId						{ $$ = xlateSqlFunc($1); }
-		| BETWEEN						{ $$ = xlateSqlFunc("between"); }
-		| ILIKE							{ $$ = xlateSqlFunc("ilike"); }
-		| IN							{ $$ = xlateSqlFunc("in"); }
-		| IS							{ $$ = xlateSqlFunc("is"); }
-		| ISNULL						{ $$ = xlateSqlFunc("isnull"); }
-		| LIKE							{ $$ = xlateSqlFunc("like"); }
-		| NOTNULL						{ $$ = xlateSqlFunc("notnull"); }
-		| OVERLAPS						{ $$ = xlateSqlFunc("overlaps"); }
-		;
-
 file_name:				Sconst			{ $$ = $1; };
 
 /* Constants
@@ -5692,27 +5652,23 @@ Iconst:  ICONST							{ $$ = $1; };
 Sconst:  SCONST							{ $$ = $1; };
 UserId:  ColId							{ $$ = $1; };
 
-/* Column identifier
- * Include date/time keywords as SQL92 extension.
- * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
- * Add other keywords. Note that as the syntax expands,
- *  some of these keywords will have to be removed from this
- *  list due to shift/reduce conflicts in yacc. If so, move
- *  down to the ColLabel entity. - thomas 1997-11-06
+/*
+ * Keyword classification lists.  Generally, every keyword present in
+ * the Postgres grammar should be in one of these lists.  (Presently,
+ * "AS" is the sole exception: it is our only completely-reserved word.)
+ *
+ * Put a new keyword into the earliest list (of TypeFuncId, ColId, ColLabel)
+ * that it can go into without creating shift or reduce conflicts.  The
+ * earlier lists define "less reserved" categories of keywords.  Notice that
+ * each list includes by reference the ones before it.
  */
-ColId:  IDENT							{ $$ = $1; }
-		| datetime						{ $$ = $1; }
-		| TokenId						{ $$ = $1; }
-		| NATIONAL						{ $$ = "national"; }
-		| NONE							{ $$ = "none"; }
-		| PATH_P						{ $$ = "path"; }
-		;
 
-/* Parser tokens to be used as identifiers.
- * Tokens involving data types should appear in ColId only,
- * since they will conflict with real TypeName productions.
+/* Type/func identifier --- names that can be type and function names
+ * (as well as ColIds --- ie, these are completely unreserved keywords).
  */
-TokenId:  ABSOLUTE						{ $$ = "absolute"; }
+TypeFuncId:  IDENT						{ $$ = $1; }
+		| ABORT_TRANS					{ $$ = "abort"; }
+		| ABSOLUTE						{ $$ = "absolute"; }
 		| ACCESS						{ $$ = "access"; }
 		| ACTION						{ $$ = "action"; }
 		| ADD							{ $$ = "add"; }
@@ -5731,16 +5687,19 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| CHARACTERISTICS				{ $$ = "characteristics"; }
 		| CHECKPOINT					{ $$ = "checkpoint"; }
 		| CLOSE							{ $$ = "close"; }
+		| CLUSTER						{ $$ = "cluster"; }
 		| COMMENT						{ $$ = "comment"; }
 		| COMMIT						{ $$ = "commit"; }
 		| COMMITTED						{ $$ = "committed"; }
 		| CONSTRAINTS					{ $$ = "constraints"; }
+		| COPY							{ $$ = "copy"; }
 		| CREATE						{ $$ = "create"; }
 		| CREATEDB						{ $$ = "createdb"; }
 		| CREATEUSER					{ $$ = "createuser"; }
 		| CURSOR						{ $$ = "cursor"; }
 		| CYCLE							{ $$ = "cycle"; }
 		| DATABASE						{ $$ = "database"; }
+		| DAY_P							{ $$ = "day"; }
 		| DECLARE						{ $$ = "declare"; }
 		| DEFERRED						{ $$ = "deferred"; }
 		| DELETE						{ $$ = "delete"; }
@@ -5753,16 +5712,20 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| ESCAPE						{ $$ = "escape"; }
 		| EXCLUSIVE						{ $$ = "exclusive"; }
 		| EXECUTE						{ $$ = "execute"; }
+		| EXPLAIN						{ $$ = "explain"; }
 		| FETCH							{ $$ = "fetch"; }
 		| FORCE							{ $$ = "force"; }
 		| FORWARD						{ $$ = "forward"; }
 		| FUNCTION						{ $$ = "function"; }
+		| GLOBAL						{ $$ = "global"; }
 		| GRANT							{ $$ = "grant"; }
 		| HANDLER						{ $$ = "handler"; }
+		| HOUR_P						{ $$ = "hour"; }
 		| IMMEDIATE						{ $$ = "immediate"; }
 		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }
 		| INHERITS						{ $$ = "inherits"; }
+		| INOUT							{ $$ = "inout"; }
 		| INSENSITIVE					{ $$ = "insensitive"; }
 		| INSERT						{ $$ = "insert"; }
 		| INSTEAD						{ $$ = "instead"; }
@@ -5771,12 +5734,20 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| LANGUAGE						{ $$ = "language"; }
 		| LANCOMPILER					{ $$ = "lancompiler"; }
 		| LEVEL							{ $$ = "level"; }
+		| LISTEN						{ $$ = "listen"; }
+		| LOAD							{ $$ = "load"; }
+		| LOCAL							{ $$ = "local"; }
 		| LOCATION						{ $$ = "location"; }
+		| LOCK_P						{ $$ = "lock"; }
 		| MATCH							{ $$ = "match"; }
 		| MAXVALUE						{ $$ = "maxvalue"; }
+		| MINUTE_P						{ $$ = "minute"; }
 		| MINVALUE						{ $$ = "minvalue"; }
 		| MODE							{ $$ = "mode"; }
+		| MONTH_P						{ $$ = "month"; }
+		| MOVE							{ $$ = "move"; }
 		| NAMES							{ $$ = "names"; }
+		| NATIONAL						{ $$ = "national"; }
 		| NEXT							{ $$ = "next"; }
 		| NO							{ $$ = "no"; }
 		| NOCREATEDB					{ $$ = "nocreatedb"; }
@@ -5787,10 +5758,13 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| OIDS							{ $$ = "oids"; }
 		| OPERATOR						{ $$ = "operator"; }
 		| OPTION						{ $$ = "option"; }
+		| OUT							{ $$ = "out"; }
 		| OWNER							{ $$ = "owner"; }
 		| PARTIAL						{ $$ = "partial"; }
 		| PASSWORD						{ $$ = "password"; }
+		| PATH_P						{ $$ = "path"; }
 		| PENDANT						{ $$ = "pendant"; }
+		| PRECISION						{ $$ = "precision"; }
 		| PRIOR							{ $$ = "prior"; }
 		| PRIVILEGES					{ $$ = "privileges"; }
 		| PROCEDURAL					{ $$ = "procedural"; }
@@ -5800,6 +5774,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| RELATIVE						{ $$ = "relative"; }
 		| RENAME						{ $$ = "rename"; }
 		| REPLACE						{ $$ = "replace"; }
+		| RESET							{ $$ = "reset"; }
 		| RESTRICT						{ $$ = "restrict"; }
 		| RETURNS						{ $$ = "returns"; }
 		| REVOKE						{ $$ = "revoke"; }
@@ -5808,11 +5783,13 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| RULE							{ $$ = "rule"; }
 		| SCHEMA						{ $$ = "schema"; }
 		| SCROLL						{ $$ = "scroll"; }
+		| SECOND_P						{ $$ = "second"; }
 		| SESSION						{ $$ = "session"; }
 		| SEQUENCE						{ $$ = "sequence"; }
 		| SERIALIZABLE					{ $$ = "serializable"; }
 		| SET							{ $$ = "set"; }
 		| SHARE							{ $$ = "share"; }
+		| SHOW							{ $$ = "show"; }
 		| START							{ $$ = "start"; }
 		| STATEMENT						{ $$ = "statement"; }
 		| STATISTICS					{ $$ = "statistics"; }
@@ -5823,14 +5800,17 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| TEMPLATE						{ $$ = "template"; }
 		| TEMPORARY						{ $$ = "temporary"; }
 		| TOAST							{ $$ = "toast"; }
+		| TRANSACTION					{ $$ = "transaction"; }
 		| TRIGGER						{ $$ = "trigger"; }
 		| TRUNCATE						{ $$ = "truncate"; }
 		| TRUSTED						{ $$ = "trusted"; }
 		| TYPE_P						{ $$ = "type"; }
 		| UNENCRYPTED					{ $$ = "unencrypted"; }
+		| UNKNOWN						{ $$ = "unknown"; }
 		| UNLISTEN						{ $$ = "unlisten"; }
 		| UNTIL							{ $$ = "until"; }
 		| UPDATE						{ $$ = "update"; }
+		| VACUUM						{ $$ = "vacuum"; }
 		| VALID							{ $$ = "valid"; }
 		| VALUES						{ $$ = "values"; }
 		| VARYING						{ $$ = "varying"; }
@@ -5839,21 +5819,45 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| WITH							{ $$ = "with"; }
 		| WITHOUT						{ $$ = "without"; }
 		| WORK							{ $$ = "work"; }
+		| YEAR_P						{ $$ = "year"; }
 		| ZONE							{ $$ = "zone"; }
 		;
 
-/* Column label
- * Allowed labels in "AS" clauses.
- * Include TRUE/FALSE SQL3 reserved words for Postgres backward
- *  compatibility. Cannot allow this for column names since the
- *  syntax would not distinguish between the constant value and
- *  a column name. - thomas 1997-10-24
- * Add other keywords to this list. Note that they appear here
- *  rather than in ColId if there was a shift/reduce conflict
- *  when used as a full identifier. - thomas 1997-11-06
+/* Column identifier --- names that can be column, table, etc names.
+ *
+ * This contains the TypeFuncId list plus those keywords that conflict
+ * only with typename productions, not with other uses.  Note that
+ * most of these keywords will in fact be recognized as type names too;
+ * they just have to have special productions for the purpose.
+ *
+ * Most of these cannot be in TypeFuncId (ie, are not also usable as function
+ * names) because they can be followed by '(' in typename productions, which
+ * looks too much like a function call for a LALR(1) parser.
+ */
+ColId:  TypeFuncId						{ $$ = $1; }
+		| BIT							{ $$ = "bit"; }
+		| CHAR							{ $$ = "char"; }
+		| CHARACTER						{ $$ = "character"; }
+		| DEC							{ $$ = "dec"; }
+		| DECIMAL						{ $$ = "decimal"; }
+		| FLOAT							{ $$ = "float"; }
+		| INTERVAL						{ $$ = "interval"; }
+		| NCHAR							{ $$ = "nchar"; }
+		| NONE							{ $$ = "none"; }
+		| NUMERIC						{ $$ = "numeric"; }
+		| SETOF							{ $$ = "setof"; }
+		| TIME							{ $$ = "time"; }
+		| TIMESTAMP						{ $$ = "timestamp"; }
+		| VARCHAR						{ $$ = "varchar"; }
+		;
+
+/* Column label --- allowed labels in "AS" clauses.
+ *
+ * Keywords appear here if they could not be distinguished from variable,
+ * type, or function names in some contexts.
+ * When adding a ColLabel, consider whether it can be added to func_name.
  */
 ColLabel:  ColId						{ $$ = $1; }
-		| ABORT_TRANS					{ $$ = "abort"; }
 		| ALL							{ $$ = "all"; }
 		| ANALYSE						{ $$ = "analyse"; } /* British */
 		| ANALYZE						{ $$ = "analyze"; }
@@ -5862,26 +5866,19 @@ ColLabel:  ColId						{ $$ = $1; }
 		| ASC							{ $$ = "asc"; }
 		| BETWEEN						{ $$ = "between"; }
 		| BINARY						{ $$ = "binary"; }
-		| BIT							{ $$ = "bit"; }
 		| BOTH							{ $$ = "both"; }
 		| CASE							{ $$ = "case"; }
 		| CAST							{ $$ = "cast"; }
-		| CHAR							{ $$ = "char"; }
-		| CHARACTER						{ $$ = "character"; }
 		| CHECK							{ $$ = "check"; }
-		| CLUSTER						{ $$ = "cluster"; }
 		| COALESCE						{ $$ = "coalesce"; }
 		| COLLATE						{ $$ = "collate"; }
 		| COLUMN						{ $$ = "column"; }
 		| CONSTRAINT					{ $$ = "constraint"; }
-		| COPY							{ $$ = "copy"; }
 		| CROSS							{ $$ = "cross"; }
 		| CURRENT_DATE					{ $$ = "current_date"; }
 		| CURRENT_TIME					{ $$ = "current_time"; }
 		| CURRENT_TIMESTAMP				{ $$ = "current_timestamp"; }
 		| CURRENT_USER					{ $$ = "current_user"; }
-		| DEC							{ $$ = "dec"; }
-		| DECIMAL						{ $$ = "decimal"; }
 		| DEFAULT						{ $$ = "default"; }
 		| DEFERRABLE					{ $$ = "deferrable"; }
 		| DESC							{ $$ = "desc"; }
@@ -5891,25 +5888,20 @@ ColLabel:  ColId						{ $$ = $1; }
 		| END_TRANS						{ $$ = "end"; }
 		| EXCEPT						{ $$ = "except"; }
 		| EXISTS						{ $$ = "exists"; }
-		| EXPLAIN						{ $$ = "explain"; }
 		| EXTRACT						{ $$ = "extract"; }
 		| FALSE_P						{ $$ = "false"; }
-		| FLOAT							{ $$ = "float"; }
 		| FOR							{ $$ = "for"; }
 		| FOREIGN						{ $$ = "foreign"; }
 		| FREEZE						{ $$ = "freeze"; }
 		| FROM							{ $$ = "from"; }
 		| FULL							{ $$ = "full"; }
-		| GLOBAL						{ $$ = "global"; }
 		| GROUP							{ $$ = "group"; }
 		| HAVING						{ $$ = "having"; }
 		| ILIKE							{ $$ = "ilike"; }
 		| IN							{ $$ = "in"; }
 		| INITIALLY						{ $$ = "initially"; }
 		| INNER_P						{ $$ = "inner"; }
-		| INOUT							{ $$ = "inout"; }
 		| INTERSECT						{ $$ = "intersect"; }
-		| INTERVAL						{ $$ = "interval"; }
 		| INTO							{ $$ = "into"; }
 		| IS							{ $$ = "is"; }
 		| ISNULL						{ $$ = "isnull"; }
@@ -5918,19 +5910,12 @@ ColLabel:  ColId						{ $$ = $1; }
 		| LEFT							{ $$ = "left"; }
 		| LIKE							{ $$ = "like"; }
 		| LIMIT							{ $$ = "limit"; }
-		| LISTEN						{ $$ = "listen"; }
-		| LOAD							{ $$ = "load"; }
-		| LOCAL							{ $$ = "local"; }
-		| LOCK_P						{ $$ = "lock"; }
-		| MOVE							{ $$ = "move"; }
 		| NATURAL						{ $$ = "natural"; }
-		| NCHAR							{ $$ = "nchar"; }
 		| NEW							{ $$ = "new"; }
 		| NOT							{ $$ = "not"; }
 		| NOTNULL						{ $$ = "notnull"; }
 		| NULLIF						{ $$ = "nullif"; }
 		| NULL_P						{ $$ = "null"; }
-		| NUMERIC						{ $$ = "numeric"; }
 		| OFF							{ $$ = "off"; }
 		| OFFSET						{ $$ = "offset"; }
 		| OLD							{ $$ = "old"; }
@@ -5938,41 +5923,64 @@ ColLabel:  ColId						{ $$ = $1; }
 		| ONLY							{ $$ = "only"; }
 		| OR							{ $$ = "or"; }
 		| ORDER							{ $$ = "order"; }
-		| OUT							{ $$ = "out"; }
 		| OUTER_P						{ $$ = "outer"; }
 		| OVERLAPS						{ $$ = "overlaps"; }
 		| POSITION						{ $$ = "position"; }
-		| PRECISION						{ $$ = "precision"; }
 		| PRIMARY						{ $$ = "primary"; }
 		| PUBLIC						{ $$ = "public"; }
 		| REFERENCES					{ $$ = "references"; }
-		| RESET							{ $$ = "reset"; }
 		| RIGHT							{ $$ = "right"; }
 		| SELECT						{ $$ = "select"; }
 		| SESSION_USER					{ $$ = "session_user"; }
-		| SETOF							{ $$ = "setof"; }
-		| SHOW							{ $$ = "show"; }
 		| SOME							{ $$ = "some"; }
 		| SUBSTRING						{ $$ = "substring"; }
 		| TABLE							{ $$ = "table"; }
 		| THEN							{ $$ = "then"; }
-		| TIME							{ $$ = "time"; }
-		| TIMESTAMP						{ $$ = "timestamp"; }
 		| TO							{ $$ = "to"; }
 		| TRAILING						{ $$ = "trailing"; }
-		| TRANSACTION					{ $$ = "transaction"; }
 		| TRIM							{ $$ = "trim"; }
 		| TRUE_P						{ $$ = "true"; }
 		| UNION							{ $$ = "union"; }
 		| UNIQUE						{ $$ = "unique"; }
-		| UNKNOWN						{ $$ = "unknown"; }
 		| USER							{ $$ = "user"; }
 		| USING							{ $$ = "using"; }
-		| VACUUM						{ $$ = "vacuum"; }
-		| VARCHAR						{ $$ = "varchar"; }
 		| VERBOSE						{ $$ = "verbose"; }
 		| WHEN							{ $$ = "when"; }
 		| WHERE							{ $$ = "where"; }
+		;
+
+/* Function identifier --- names that can be function names.
+ *
+ * This contains the TypeFuncId list plus some ColLabel keywords
+ * that are used as operators in expressions; in general such keywords
+ * can't be ColId because they would be ambiguous with variable names,
+ * but they are unambiguous as function identifiers.
+ *
+ * Do not include POSITION, SUBSTRING, etc here since they have explicit
+ * productions in a_expr to support the goofy SQL9x argument syntax.
+ *  - thomas 2000-11-28
+ */
+func_name:  TypeFuncId					{ $$ = xlateSqlFunc($1); }
+		| BETWEEN						{ $$ = xlateSqlFunc("between"); }
+		| BINARY						{ $$ = xlateSqlFunc("binary"); }
+		| CROSS							{ $$ = xlateSqlFunc("cross"); }
+		| FREEZE						{ $$ = xlateSqlFunc("freeze"); }
+		| FULL							{ $$ = xlateSqlFunc("full"); }
+		| ILIKE							{ $$ = xlateSqlFunc("ilike"); }
+		| IN							{ $$ = xlateSqlFunc("in"); }
+		| INNER_P						{ $$ = xlateSqlFunc("inner"); }
+		| IS							{ $$ = xlateSqlFunc("is"); }
+		| ISNULL						{ $$ = xlateSqlFunc("isnull"); }
+		| JOIN							{ $$ = xlateSqlFunc("join"); }
+		| LEFT							{ $$ = xlateSqlFunc("left"); }
+		| LIKE							{ $$ = xlateSqlFunc("like"); }
+		| NATURAL						{ $$ = xlateSqlFunc("natural"); }
+		| NOTNULL						{ $$ = xlateSqlFunc("notnull"); }
+		| OUTER_P						{ $$ = xlateSqlFunc("outer"); }
+		| OVERLAPS						{ $$ = xlateSqlFunc("overlaps"); }
+		| PUBLIC						{ $$ = xlateSqlFunc("public"); }
+		| RIGHT							{ $$ = xlateSqlFunc("right"); }
+		| VERBOSE						{ $$ = xlateSqlFunc("verbose"); }
 		;
 
 SpecialRuleRelation:  OLD
