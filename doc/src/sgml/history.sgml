@@ -1,233 +1,267 @@
-<Sect1>
-<Title>A Short History of <ProductName>Postgres</ProductName></Title>
+<sect1>
+ <title>A Short History of <productname>Postgres</productname></title>
 
-<Para>
-The Object-Relational Database Management System now known as 
-<ProductName>PostgreSQL</ProductName> was originally called
-<ProductName>Postgres</ProductName>, and briefly called
-<ProductName>Postgres95</ProductName>.  With over a decade of
-development behind it, <ProductName>PostgreSQL</ProductName> 
-is the most advanced open-source database available anywhere,
-offering multi-version concurrency control and supporting almost
-all SQL constructs, including subselects, transactions, and
-user-defined types and functions.
-</Para>
+ <para>
+  The Object-Relational Database Management System now known as 
+  <productname>PostgreSQL</productname> (and briefly called
+  <productname>Postgres95</productname>) is derived from the
+  <productname>Postgres</productname> package written at Berkeley.
+  With over a decade of
+  development behind it, <productname>PostgreSQL</productname> 
+  is the most advanced open-source database available anywhere,
+  offering multi-version concurrency control, supporting almost
+  all SQL constructs (including subselects, transactions, and
+  user-defined types and functions), and having a wide range of
+  language bindings available (including C, C++, Java, perl, tcl, and python).
+ </para>
 
-<Sect2>
-<Title>The Berkeley <ProductName>Postgres</ProductName> Project</Title>
+ <sect2>
+  <title>The Berkeley <productname>Postgres</productname> Project</title>
 
-<Para>
-     Implementation of the <ProductName>Postgres</ProductName> 
-<Acronym>DBMS</Acronym> began in 1986.  The
-     initial  concepts  for  the  system  were  presented in
-<XRef LinkEnd="STON86" endterm="STON86-full">
- and the definition of the initial  data  model
-     appeared in 
-<XRef LinkEnd="ROWE87" endterm="ROWE87-full">.
-The design of the rule system at
-     that time was described in  
-<XRef LinkEnd="STON87a" endterm="STON87a-full">.
-The  rationale
-     and  architecture  of the storage manager were detailed in 
-<XRef LinkEnd="STON87b" endterm="STON87b-full">.
-</Para>
+  <para>
+   Implementation of the <productname>Postgres</productname> 
+   <acronym>DBMS</acronym> began in 1986.  The
+   initial  concepts  for  the  system  were  presented in
+   <xref endterm="STON86-full" linkend="STON86">
+   and the definition of the initial  data  model
+   appeared in 
+   <xref endterm="ROWE87-full" linkend="ROWE87">.
+   The design of the rule system at
+   that time was described in  
+   <xref endterm="STON87a-full" linkend="STON87a">.
+   The  rationale
+   and  architecture  of the storage manager were detailed in 
+   <xref endterm="STON87b-full" linkend="STON87b">.
+  </para>
 
-<Para>
-<ProductName>Postgres</ProductName> has undergone  several  major  releases  since
-     then.   The  first "demoware" system became operational
-     in 1987 and was shown at the  1988  <Acronym>ACM-SIGMOD</Acronym>  
-     Conference.   We  released Version 1, described in 
-<XRef LinkEnd="STON90a" endterm="STON90a-full">,
-     to a few external users in June 1989.  In response to a
-     critique  of  the  first rule system 
-(<XRef LinkEnd="STON89" endterm="STON89-full">), 
-the rule
-     system was  redesigned 
-(<XRef LinkEnd="STON90b" endterm="STON90b-full">)
-and  Version  2  was
-     released  in  June 1990 with the new rule system.  
-     Version 3 appeared in 1991 and added support for  multiple
-     storage  managers,  an  improved  query executor, and a
-     rewritten rewrite rule  system.   For  the  most  part,
-     releases  until <ProductName>Postgres95</ProductName> (see below)
-     focused on portability and reliability.
-</Para>
+  <para>
+   <productname>Postgres</productname> has undergone  several  major  releases  since
+   then.   The  first "demoware" system became operational
+   in 1987 and was shown at the  1988  <acronym>ACM-SIGMOD</acronym>  
+   Conference.   We  released Version 1, described in 
+   <xref endterm="STON90a-full" linkend="STON90a">,
+   to a few external users in June 1989.  In response to a
+   critique  of  the  first rule system 
+   (<xref endterm="STON89-full" linkend="STON89">), 
+   the rule
+   system was  redesigned 
+   (<xref endterm="STON90b-full" linkend="STON90b">)
+   and  Version  2  was
+   released  in  June 1990 with the new rule system.  
+   Version 3 appeared in 1991 and added support for  multiple
+   storage  managers,  an  improved  query executor, and a
+   rewritten rewrite rule  system.   For  the  most  part,
+   releases  until <productname>Postgres95</productname> (see below)
+   focused on portability and reliability.
+  </para>
 
-<Para>
-<ProductName>Postgres</ProductName> has been  used  to  implement  many  different
-     research and production applications.  These include: a
-     financial data analysis system, a  jet  engine  
-     performance   monitoring   package,   an   asteroid  tracking
-     database, a medical information database,  and  several
-     geographic information systems.  
-<ProductName>Postgres</ProductName> has also been
-     used as an educational tool  at  several  universities.
-     Finally,  
-<Ulink url="http://www.illustra.com/">Illustra  Information  Technologies</Ulink>
-(since merged into
-<Ulink url="http://www.informix.com/">Informix</Ulink>)
+  <para>
+   <productname>Postgres</productname> has been  used
+   to  implement  many  different
+   research and production applications.  These include: a
+   financial data analysis system, a  jet  engine  
+   performance   monitoring   package,   an   asteroid  tracking
+   database, a medical information database,  and  several
+   geographic information systems.  
+   <productname>Postgres</productname> has also been
+   used as an educational tool  at  several  universities.
+   Finally,  
+   <ulink url="http://www.illustra.com/">Illustra  Information  Technologies</ulink>
+   (since merged into
+   <ulink url="http://www.informix.com/">Informix</ulink>)
+   picked up
+   the code and commercialized it.
+   <productname>Postgres</productname>  became  the  primary  data  manager
+   for  the
+   <ulink url="http://www.sdsc.edu/0/Parts_Collabs/S2K/s2k_home.html">Sequoia 2000</ulink>
+   scientific computing project in late 1992.
+  </para>
 
- picked up
-     the code and commercialized it.
-     <ProductName>Postgres</ProductName>  became  the  primary  data  manager
-  for  the
-<Ulink url="http://www.sdsc.edu/0/Parts_Collabs/S2K/s2k_home.html">Sequoia 2000</Ulink>
- scientific computing project in late 1992.
-     Furthermore, the size of the  external  user  community
-     nearly  doubled  during  1993.   It became increasingly
-     obvious that maintenance of the prototype code and 
-     support  was  taking  up large amounts of time that should
-     have been devoted to database research.  In  an  effort
-     to  reduce  this support burden, the project officially
-     ended with Version 4.2.
-</Para>
-</Sect2>
+  <para>
+   The size of the  external  user  community
+   nearly  doubled  during  1993.   It became increasingly
+   obvious that maintenance of the prototype code and 
+   support  was  taking  up large amounts of time that should
+   have been devoted to database research.  In  an  effort
+   to  reduce  this support burden, the project officially
+   ended with Version 4.2.
+  </para>
+ </sect2>
 
-<Sect2>
-<Title><ProductName>Postgres95</ProductName></Title>
+ <sect2>
+  <title><productname>Postgres95</productname></title>
 
-<Para>
-In 1994,
-<ULink url="mailto:ayu@informix.com">Andrew Yu</ULink>
-and
-<ULink url="http://http.cs.berkeley.edu/~jolly/">Jolly Chen</ULink>
-added a SQL language interpreter to <ProductName>Postgres</ProductName>.
-<ProductName>Postgres95</ProductName> was subsequently released to
-the Web to find its own way in the world as a public-domain,
-open source descendant of the original <ProductName>Postgres</ProductName>
-Berkeley code.
-</Para>
+  <para>
+   In 1994,
+   <ulink url="mailto:ayu@informix.com">Andrew Yu</ulink>
+   and
+   <ulink url="http://http.cs.berkeley.edu/~jolly/">Jolly Chen</ulink>
+   added a SQL language interpreter to <productname>Postgres</productname>.
+   <productname>Postgres95</productname> was subsequently released to
+   the Web to find its own way in the world as a public-domain,
+   open source descendant of the original <productname>Postgres</productname>
+   Berkeley code.
+  </para>
 
-<Para>
-     <ProductName>Postgres95</ProductName> code was completely
-     ANSI C and trimmed in size by 25%. Many
-     internal changes improved performance and maintainability. 
-<ProductName>Postgres95</ProductName> v1.0.x ran about  30-50%
-     faster  on  the  Wisconsin  Benchmark compared to 
-<ProductName>Postgres</ProductName> v4.2.
-     Apart from bug fixes, these were the major enhancements:
+  <para>
+   <productname>Postgres95</productname> code was completely
+   ANSI C and trimmed in size by 25%. Many
+   internal changes improved performance and maintainability. 
+   <productname>Postgres95</productname> v1.0.x ran about  30-50%
+   faster  on  the  Wisconsin  Benchmark compared to 
+   <productname>Postgres</productname> v4.2.
+   Apart from bug fixes, these were the major enhancements:
 
-<ItemizedList>
-<ListItem>
-<Para>
-      	The query language <ProductName>Postquel</ProductName> was replaced with
-        	<Acronym>SQL</Acronym> (implemented in the server). Subqueries were not supported until <ProductName>PostgreSQL</ProductName> (see below), but they
-could be imitated in <ProductName>Postgres95</ProductName> with user-defined
-        	<Acronym>SQL</Acronym> functions. Aggregates were
-        	re-implemented.  Support for ``GROUP BY'' was also added.
-        	The <FileName>libpq</FileName> interface remained available  for  <Acronym>C</Acronym>  
-        	programs.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-In addition to the monitor program, a new program
-(<Application>psql</Application>) was provided for interactive SQL queries
-using <Acronym>GNU</Acronym> <FileName>readline</FileName>.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-      	A new  front-end  library,  <FileName>libpgtcl</FileName>,
-        	supported  <Acronym>Tcl</Acronym>-based  clients.   A sample shell, 
-        	pgtclsh, provided new Tcl  commands  to  interface  <Application>tcl</Application>
-        	programs with the <ProductName>Postgres95</ProductName> backend.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-The  large  object interface was overhauled. The Inversion large objects were
-the  only  mechanism for  storing  large objects.
-(The Inversion file system was removed.)
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-      	The  instance-level  rule  system  was removed.
-        	Rules were still available as rewrite rules.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-      	A short tutorial introducing regular <Acronym>SQL</Acronym> features as
-        	well as those of <ProductName>Postgres95</ProductName> was
- distributed with the source code.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-<Acronym>GNU</Acronym> make (instead of  <Acronym>BSD</Acronym>  make)  was  used
-for  the build.  Also,  <ProductName>Postgres95</ProductName>  could  be
-compiled with an unpatched <ProductName>gcc</ProductName>
-(data alignment of  doubles  was fixed).
-</Para>
-</ListItem>
-</ItemizedList>
-</Para>
-</Sect2>
+   <itemizedlist>
+    <listitem>
+     <para>
+      The query language <productname>Postquel</productname> was replaced with
+      <acronym>SQL</acronym> (implemented in the server).
+      Subqueries were not supported until
+      <productname>PostgreSQL</productname> (see below), but they
+      could be imitated in <productname>Postgres95</productname> with user-defined
+      <acronym>SQL</acronym> functions. Aggregates were
+      re-implemented.  Support for the GROUP BY query clause was also added.
+      The <filename>libpq</filename> interface remained
+      available  for  <acronym>C</acronym>  
+      programs.
+     </para>
+    </listitem>
 
-<Sect2>
-<Title><ProductName>PostgreSQL</ProductName></Title>
+    <listitem>
+     <para>
+      In addition to the monitor program, a new program
+      (<application>psql</application>) was provided for interactive SQL queries
+      using <acronym>GNU</acronym> <filename>readline</filename>.
+     </para>
+    </listitem>
 
-<Para>
-By 1996, it became clear that the name <Quote>Postgres95</Quote> would
-not stand the test of time. We chose a new name,
-<ProductName>PostgreSQL</ProductName>, to reflect the relationship
-between the original <ProductName>Postgres</ProductName> and the more
-recent versions with <Acronym>SQL</Acronym> capability.  At the same
-time, we set the version numbering to start at 6.0, putting the
-numbers back into the sequence originally begun by the
-<ProductName>Postgres</ProductName> Project.
-</Para>
+    <listitem>
+     <para>
+      A new  front-end  library,  <filename>libpgtcl</filename>,
+      supported  <acronym>Tcl</acronym>-based  clients.   A sample shell, 
+      pgtclsh, provided new Tcl  commands  to  interface
+      <application>tcl</application>
+      programs with the <productname>Postgres95</productname> backend.
+     </para>
+    </listitem>
 
-<Para>
-The emphasis during development of <ProductName>Postgres95</ProductName>
-was on identifying and understanding existing problems in the backend code.
-With <ProductName>PostgreSQL</ProductName>, 
-the emphasis has shifted to augmenting features and capabilities, although
-work continues in all areas.
-</Para>
+    <listitem>
+     <para>
+      The  large  object interface was overhauled. The Inversion large objects were
+      the  only  mechanism for  storing  large objects.
+      (The Inversion file system was removed.)
+     </para>
+    </listitem>
 
-<Para>
-Major enhancements in <ProductName>PostgreSQL</ProductName> include:
-</Para>
+    <listitem>
+     <para>
+      The  instance-level  rule  system  was removed.
+      Rules were still available as rewrite rules.
+     </para>
+    </listitem>
 
-<ItemizedList>
-<ListItem>
-<Para>
-Table-level locking has been replaced with multi-version concurrency control,
-which allows readers to continue reading consistent data during writer activity
-and enables hot backups from pg_dump while the database stays available for
-queries.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-Important backend features, including subselects, defaults, 
-constraints, and triggers, have been implemented.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-Additional <Acronym>SQL92</Acronym>-compliant language features have been added,
- including primary keys, quoted identifiers, literal string type coersion, 
-type casting, and binary and hexadecimal integer input.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-Built-in types have been improved, including new wide-range date/time types 
-and additional geometric type support.
-</Para>
+    <listitem>
+     <para>
+      A short tutorial introducing regular <acronym>SQL</acronym> features as
+      well as those of <productname>Postgres95</productname> was
+      distributed with the source code.
+     </para>
+    </listitem>
 
-</ListItem>
-<ListItem>
-<Para>
-Overall backend code speed has been increased by approximately 20-40%, 
-and backend startup time has decreased 80% since v6.0 was released.
-</Para>
-</ListItem>
-</ItemizedList>
-</Sect2>
+    <listitem>
+     <para>
+      <acronym>GNU</acronym> make (instead of  <acronym>BSD</acronym>  make)  was  used
+      for  the build.  Also,  <productname>Postgres95</productname>  could  be
+      compiled with an unpatched <productname>gcc</productname>
+      (data alignment of  doubles  was fixed).
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </sect2>
 
+ <sect2>
+  <title><productname>PostgreSQL</productname></title>
+
+  <para>
+   By 1996, it became clear that the name <quote>Postgres95</quote> would
+   not stand the test of time. We chose a new name,
+   <productname>PostgreSQL</productname>, to reflect the relationship
+   between the original <productname>Postgres</productname> and the more
+   recent versions with <acronym>SQL</acronym> capability.  At the same
+   time, we set the version numbering to start at 6.0, putting the
+   numbers back into the sequence originally begun by the
+   <productname>Postgres</productname> Project.
+  </para>
+
+  <para>
+   The emphasis during development of <productname>Postgres95</productname>
+   was on identifying and understanding existing problems in the backend code.
+   With <productname>PostgreSQL</productname>, 
+   the emphasis has shifted to augmenting features and capabilities, although
+   work continues in all areas.
+  </para>
+
+  <para>
+   Major enhancements in <productname>PostgreSQL</productname> include:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     Table-level locking has been replaced with multi-version concurrency control,
+     which allows readers to continue reading consistent data during writer activity
+     and enables hot backups from pg_dump while the database stays available for
+     queries.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Important backend features, including subselects, defaults, 
+     constraints, and triggers, have been implemented.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Additional <acronym>SQL92</acronym>-compliant language features have been added,
+     including primary keys, quoted identifiers, literal string type coersion, 
+     type casting, and binary and hexadecimal integer input.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Built-in types have been improved, including new wide-range date/time types 
+     and additional geometric type support.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Overall backend code speed has been increased by approximately 20-40%, 
+     and backend startup time has decreased 80% since v6.0 was released.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
 </sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
