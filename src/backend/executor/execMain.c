@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.45 1998/02/27 08:43:52 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.46 1998/05/21 03:53:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,14 +521,16 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	 *	  NOTE: in the future we might want to initialize the junk
 	 *	  filter for all queries.
 	 * ----------------
+	 *        SELECT added by daveh@insightdist.com  5/20/98 to allow 
+	 *        ORDER/GROUP BY have an identifier missing from the target.
 	 */
 	if (operation == CMD_UPDATE || operation == CMD_DELETE ||
-		operation == CMD_INSERT)
+		operation == CMD_INSERT || operation == CMD_SELECT)
 	{
-
 		JunkFilter *j = (JunkFilter *) ExecInitJunkFilter(targetList);
-
 		estate->es_junkFilter = j;
+
+		tupType = j->jf_cleanTupType;       /*  Added by daveh@insightdist.com  5/20/98   */
 	}
 	else
 		estate->es_junkFilter = NULL;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.12 1998/05/09 23:29:54 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.13 1998/05/21 03:53:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,51 @@ coerce_target_expr(ParseState *pstate,
 				   Oid type_id,
 				   Oid attrtype);
 
+
+/*
+ *   transformTargetId - transforms an Ident Node to a Target Entry
+ *   Created this a function to allow the ORDER/GROUP BY clause be able 
+ *   to construct a TargetEntry from an Ident.
+ *
+ *   resjunk = TRUE will hide the target entry in the final result tuple.
+ *        daveh@insightdist.com     5/20/98
+ */
+void
+transformTargetId(ParseState *pstate,
+				Ident *ident,
+				TargetEntry *tent,
+				char *resname,
+				int16 resjunk)
+{
+	Node   *expr;
+	Oid	type_id;
+	int16	type_mod;
+
+	/*
+	 * here we want to look for column names only, not
+	 * relation names (even though they can be stored in
+	 * Ident nodes, too)
+	 */
+	expr = transformIdent(pstate, (Node *) ident, EXPR_COLUMN_FIRST);
+	type_id = exprType(expr);
+	if (nodeTag(expr) == T_Var)
+		type_mod = ((Var *) expr)->vartypmod;
+	else
+		type_mod = -1;
+	tent->resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
+							  (Oid) type_id,
+							  type_mod,
+							  resname,
+							  (Index) 0,
+							  (Oid) 0,
+							  resjunk);
+
+	tent->expr = expr;
+	return;
+}
+
+
+
 /*
  * transformTargetList -
  *	  turns a list of ResTarget's into a list of TargetEntry's
@@ -71,36 +116,13 @@ transformTargetList(ParseState *pstate, List *targetlist)
 		{
 			case T_Ident:
 				{
-					Node	   *expr;
-					Oid			type_id;
-					int16		type_mod;
 					char	   *identname;
 					char	   *resname;
 
 					identname = ((Ident *) res->val)->name;
 					handleTargetColname(pstate, &res->name, NULL, identname);
-
-					/*
-					 * here we want to look for column names only, not
-					 * relation names (even though they can be stored in
-					 * Ident nodes, too)
-					 */
-					expr = transformIdent(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
-					type_id = exprType(expr);
-					if (nodeTag(expr) == T_Var)
-						type_mod = ((Var *) expr)->vartypmod;
-					else
-						type_mod = -1;
 					resname = (res->name) ? res->name : identname;
-					tent->resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
-											  (Oid) type_id,
-											  type_mod,
-											  resname,
-											  (Index) 0,
-											  (Oid) 0,
-											  0);
-
-					tent->expr = expr;
+					transformTargetId(pstate, (Ident*)res->val, tent, resname, FALSE);
 					break;
 				}
 			case T_ParamNo:

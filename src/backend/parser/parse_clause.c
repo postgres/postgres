@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.15 1998/03/31 04:43:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.16 1998/05/21 03:53:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,6 +182,37 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 			}
 		}
 	}
+
+	/*    BEGIN add missing target entry hack.
+	 *
+	 *    Prior to this hack, this function returned NIL if no target_result.
+	 *    Thus, ORDER/GROUP BY required the attributes be in the target list.
+	 *    Now it constructs a new target entry which is appended to the end of
+	 *    the target list.   This target is set to be  resjunk = TRUE so that
+	 *    it will not be projected into the final tuple.
+	 *          daveh@insightdist.com    5/20/98
+	 */  
+	if ( ! target_result)  {  
+		List   *p_target = tlist;
+		Ident *missingTargetId = (Ident *)makeNode(Ident);
+		TargetEntry *tent = makeNode(TargetEntry);
+		
+		/*   Fill in the constructed Ident node   */
+		missingTargetId->type = T_Ident;
+		missingTargetId->name = palloc(strlen(sortgroupby->name) + 1);
+		strcpy(missingTargetId->name, sortgroupby->name);
+
+		transformTargetId(pstate, missingTargetId, tent, missingTargetId->name, TRUE);
+
+		/* Add to the end of the target list */
+		while (lnext(p_target) != NIL)  {
+			p_target = lnext(p_target);
+		}
+		lnext(p_target) = lcons(tent, NIL);
+		target_result = tent;
+	}
+	/*    END add missing target entry hack.   */
+
 	return target_result;
 }
 
@@ -203,10 +234,6 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 		Resdom	   *resdom;
 
 		restarget = find_targetlist_entry(pstate, lfirst(grouplist), targetlist);
-
-		if (restarget == NULL)
-			elog(ERROR, "The field being grouped by must appear in the target list");
-
 		grpcl->entry = restarget;
 		resdom = restarget->resdom;
 		grpcl->grpOpoid = oprid(oper("<",
@@ -262,9 +289,6 @@ transformSortClause(ParseState *pstate,
 
 
 		restarget = find_targetlist_entry(pstate, sortby, targetlist);
-		if (restarget == NULL)
-			elog(ERROR, "The field being ordered by must appear in the target list");
-
 		sortcl->resdom = resdom = restarget->resdom;
 		sortcl->opoid = oprid(oper(sortby->useOp,
 								   resdom->restype,
