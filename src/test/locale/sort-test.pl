@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#! /usr/bin/perl
 use locale;
 
 open(INFILE, "<$ARGV[0]");
@@ -9,4 +9,3 @@ $"="\n";
 my(@result) = sort @words;
 
 print "@result\n";
-
