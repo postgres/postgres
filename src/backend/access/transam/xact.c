@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.157 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.158 2003/12/02 19:26:47 joe Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -977,7 +977,7 @@ CommitTransaction(void)
 
 	CallEOXactCallbacks(true);
 	AtEOXact_GUC(true);
-	AtEOXact_SPI();
+	AtEOXact_SPI(true);
 	AtEOXact_gist();
 	AtEOXact_hash();
 	AtEOXact_nbtree();
@@ -1087,7 +1087,7 @@ AbortTransaction(void)
 
 	CallEOXactCallbacks(false);
 	AtEOXact_GUC(false);
-	AtEOXact_SPI();
+	AtEOXact_SPI(false);
 	AtEOXact_gist();
 	AtEOXact_hash();
 	AtEOXact_nbtree();

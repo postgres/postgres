@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.108 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.109 2003/12/02 19:26:47 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,18 +174,26 @@ SPI_finish(void)
 }
 
 /*
- * Clean up SPI state at transaction commit or abort (we don't care which).
+ * Clean up SPI state at transaction commit or abort.
  */
 void
-AtEOXact_SPI(void)
+AtEOXact_SPI(bool isCommit)
 {
 	/*
 	 * Note that memory contexts belonging to SPI stack entries will be
 	 * freed automatically, so we can ignore them here.  We just need to
 	 * restore our static variables to initial state.
 	 */
-	if (_SPI_stack != NULL)		/* there was abort */
+	if (_SPI_stack != NULL)
+	{
 		free(_SPI_stack);
+		if (isCommit)
+			ereport(WARNING,
+					(errcode(ERRCODE_WARNING),
+					 errmsg("freeing non-empty SPI stack"),
+					 errhint("Check for missing \"SPI_finish\" calls")));
+	}
+
 	_SPI_current = _SPI_stack = NULL;
 	_SPI_connected = _SPI_curid = -1;
 	SPI_processed = 0;
