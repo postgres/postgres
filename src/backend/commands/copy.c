@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.133 2001/01/29 00:39:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.134 2001/03/14 21:47:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -877,12 +877,12 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 
 		if (!skip_tuple)
 		{
+			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+
 			/* ----------------
 			 * Check the constraints of the tuple
 			 * ----------------
 			 */
-			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
-
 			if (rel->rd_att->constr)
 				ExecConstraints("CopyFrom", resultRelInfo, slot, estate);
 
@@ -896,8 +896,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 				ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 			/* AFTER ROW INSERT Triggers */
-			if (rel->trigdesc &&
-				rel->trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
+			if (rel->trigdesc)
 				ExecARInsertTriggers(estate, rel, tuple);
 		}
 
