@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.92 2003/04/19 00:02:30 tgl Exp $
+ * $Id: libpq-fe.h,v 1.93 2003/06/08 17:43:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,9 @@ extern		"C"
 typedef enum
 {
 	/*
-	 * Although you may decide to change this list in some way, values
-	 * which become unused should never be removed, nor should constants
-	 * be redefined - that would break compatibility with existing code.
+	 * Although it is okay to add to this list, values which become unused
+	 * should never be removed, nor should constants be redefined - that would
+	 * break compatibility with existing code.
 	 */
 	CONNECTION_OK,
 	CONNECTION_BAD,
@@ -56,7 +56,9 @@ typedef enum
 										 * postmaster.		  */
 	CONNECTION_AUTH_OK,			/* Received authentication; waiting for
 								 * backend startup. */
-	CONNECTION_SETENV			/* Negotiating environment.    */
+	CONNECTION_SETENV,			/* Negotiating environment. */
+	CONNECTION_SSL_STARTUP,		/* Negotiating SSL. */
+	CONNECTION_NEEDED			/* Internal state: connect() needed */
 } ConnStatusType;
 
 typedef enum
@@ -71,7 +73,7 @@ typedef enum
 
 typedef enum
 {
-	PGRES_EMPTY_QUERY = 0,
+	PGRES_EMPTY_QUERY = 0,		/* empty query string was executed */
 	PGRES_COMMAND_OK,			/* a query command that doesn't return
 								 * anything was executed properly by the
 								 * backend */
@@ -82,8 +84,8 @@ typedef enum
 	PGRES_COPY_IN,				/* Copy In data transfer in progress */
 	PGRES_BAD_RESPONSE,			/* an unexpected response was recv'd from
 								 * the backend */
-	PGRES_NONFATAL_ERROR,
-	PGRES_FATAL_ERROR
+	PGRES_NONFATAL_ERROR,		/* notice or warning message */
+	PGRES_FATAL_ERROR			/* query failed */
 } ExecStatusType;
 
 /* PGconn encapsulates a connection to the backend.

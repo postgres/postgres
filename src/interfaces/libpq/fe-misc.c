@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.91 2003/04/25 01:24:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.92 2003/06/08 17:43:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,6 @@
 #include "pqsignal.h"
 #include "mb/pg_wchar.h"
 
-#define DONOTICE(conn,message) \
-	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
 
 static int	pqPutMsgBytes(const void *buf, size_t len, PGconn *conn);
 static int	pqSendSome(PGconn *conn, int len);
@@ -227,7 +225,7 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 			snprintf(noticeBuf, sizeof(noticeBuf),
 					 libpq_gettext("integer of size %lu not supported by pqGetInt\n"),
 					 (unsigned long) bytes);
-			DONOTICE(conn, noticeBuf);
+			PGDONOTICE(conn, noticeBuf);
 			return EOF;
 	}
 
@@ -265,7 +263,7 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 			snprintf(noticeBuf, sizeof(noticeBuf),
 					 libpq_gettext("integer of size %lu not supported by pqPutInt\n"),
 					 (unsigned long) bytes);
-			DONOTICE(conn, noticeBuf);
+			PGDONOTICE(conn, noticeBuf);
 			return EOF;
 	}
 
@@ -401,38 +399,57 @@ pqCheckInBufferSpace(int bytes_needed, PGconn *conn)
  * msg_type is the message type byte, or 0 for a message without type byte
  * (only startup messages have no type byte)
  *
+ * force_len forces the message to have a length word; otherwise, we add
+ * a length word if protocol 3.
+ *
  * Returns 0 on success, EOF on error
  *
  * The idea here is that we construct the message in conn->outBuffer,
  * beginning just past any data already in outBuffer (ie, at
  * outBuffer+outCount).  We enlarge the buffer as needed to hold the message.
- * When the message is complete, we fill in the length word and then advance
- * outCount past the message, making it eligible to send.  The state
- * variable conn->outMsgStart points to the incomplete message's length word
- * (it is either outCount or outCount+1 depending on whether there is a
- * type byte).  The state variable conn->outMsgEnd is the end of the data
- * collected so far.
+ * When the message is complete, we fill in the length word (if needed) and
+ * then advance outCount past the message, making it eligible to send.
+ *
+ * The state variable conn->outMsgStart points to the incomplete message's
+ * length word: it is either outCount or outCount+1 depending on whether
+ * there is a type byte.  If we are sending a message without length word
+ * (pre protocol 3.0 only), then outMsgStart is -1.  The state variable
+ * conn->outMsgEnd is the end of the data collected so far.
  */
 int
-pqPutMsgStart(char msg_type, PGconn *conn)
+pqPutMsgStart(char msg_type, bool force_len, PGconn *conn)
 {
 	int			lenPos;
+	int			endPos;
 
-	/* where the message length word will go */
+	/* allow room for message type byte */
 	if (msg_type)
-		lenPos = conn->outCount + 1;
+		endPos = conn->outCount + 1;
 	else
-		lenPos = conn->outCount;
-	/* make sure there is room for it */
-	if (pqCheckOutBufferSpace(lenPos + 4, conn))
+		endPos = conn->outCount;
+
+	/* do we want a length word? */
+	if (force_len || PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+	{
+		lenPos = endPos;
+		/* allow room for message length */
+		endPos += 4;
+	}
+	else
+	{
+		lenPos = -1;
+	}
+
+	/* make sure there is room for message header */
+	if (pqCheckOutBufferSpace(endPos, conn))
 		return EOF;
 	/* okay, save the message type byte if any */
 	if (msg_type)
 		conn->outBuffer[conn->outCount] = msg_type;
 	/* set up the message pointers */
 	conn->outMsgStart = lenPos;
-	conn->outMsgEnd = lenPos + 4;
-	/* length word will be filled in by pqPutMsgEnd */
+	conn->outMsgEnd = endPos;
+	/* length word, if needed, will be filled in by pqPutMsgEnd */
 
 	if (conn->Pfdebug)
 		fprintf(conn->Pfdebug, "To backend> Msg %c\n",
@@ -472,14 +489,20 @@ pqPutMsgBytes(const void *buf, size_t len, PGconn *conn)
 int
 pqPutMsgEnd(PGconn *conn)
 {
-	uint32		msgLen = conn->outMsgEnd - conn->outMsgStart;
-
 	if (conn->Pfdebug)
 		fprintf(conn->Pfdebug, "To backend> Msg complete, length %u\n",
-				msgLen);
+				conn->outMsgEnd - conn->outCount);
 
-	msgLen = htonl(msgLen);
-	memcpy(conn->outBuffer + conn->outMsgStart, &msgLen, 4);
+	/* Fill in length word if needed */
+	if (conn->outMsgStart >= 0)
+	{
+		uint32		msgLen = conn->outMsgEnd - conn->outMsgStart;
+
+		msgLen = htonl(msgLen);
+		memcpy(conn->outBuffer + conn->outMsgStart, &msgLen, 4);
+	}
+
+	/* Make message eligible to send */
 	conn->outCount = conn->outMsgEnd;
 
 	if (conn->outCount >= 8192)

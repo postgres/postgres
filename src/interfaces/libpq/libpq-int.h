@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.70 2003/05/08 18:33:39 tgl Exp $
+ * $Id: libpq-int.h,v 1.71 2003/06/08 17:43:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@ typedef int ssize_t;			/* ssize_t doesn't exist in VC (atleast
 #include "postgres_fe.h"
 
 /* include stuff common to fe and be */
+#include "getaddrinfo.h"
 #include "libpq/pqcomm.h"
 #include "lib/dllist.h"
 /* include stuff found in fe only */
@@ -45,23 +46,9 @@ typedef int ssize_t;			/* ssize_t doesn't exist in VC (atleast
 #include <openssl/err.h>
 #endif
 
-/* libpq supports this version of the frontend/backend protocol.
- *
- * NB: we used to use PG_PROTOCOL_LATEST from the backend pqcomm.h file,
- * but that's not really the right thing: just recompiling libpq
- * against a more recent backend isn't going to magically update it
- * for most sorts of protocol changes.	So, when you change libpq
- * to support a different protocol revision, you have to change this
- * constant too.  PG_PROTOCOL_EARLIEST and PG_PROTOCOL_LATEST in
- * pqcomm.h describe what the backend knows, not what libpq knows.
- */
-
-#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,0)
-
 /*
  * POSTGRES backend dependent Constants.
  */
-
 #define PQERRORMSG_LENGTH 1024
 #define CMDSTATUS_LEN 40
 
@@ -96,20 +83,22 @@ typedef struct pgresAttDesc
 	int			atttypmod;		/* type-specific modifier info */
 }	PGresAttDesc;
 
-/* Data for a single attribute of a single tuple */
-
-/* We use char* for Attribute values.
-   The value pointer always points to a null-terminated area; we add a
-   null (zero) byte after whatever the backend sends us.  This is only
-   particularly useful for text tuples ... with a binary value, the
-   value might have embedded nulls, so the application can't use C string
-   operators on it.  But we add a null anyway for consistency.
-   Note that the value itself does not contain a length word.
-
-   A NULL attribute is a special case in two ways: its len field is NULL_LEN
-   and its value field points to null_field in the owning PGresult.  All the
-   NULL attributes in a query result point to the same place (there's no need
-   to store a null string separately for each one).
+/*
+ * Data for a single attribute of a single tuple
+ *
+ * We use char* for Attribute values.
+ *
+ * The value pointer always points to a null-terminated area; we add a
+ * null (zero) byte after whatever the backend sends us.  This is only
+ * particularly useful for text tuples ... with a binary value, the
+ * value might have embedded nulls, so the application can't use C string
+ * operators on it.  But we add a null anyway for consistency.
+ * Note that the value itself does not contain a length word.
+ *
+ * A NULL attribute is a special case in two ways: its len field is NULL_LEN
+ * and its value field points to null_field in the owning PGresult.  All the
+ * NULL attributes in a query result point to the same place (there's no need
+ * to store a null string separately for each one).
  */
 
 #define NULL_LEN		(-1)	/* pg_result len for NULL value */
@@ -134,15 +123,6 @@ struct pg_result
 												 * last query */
 	int			binary;			/* binary tuple values if binary == 1,
 								 * otherwise text */
-
-	/*
-	 * The conn link in PGresult is no longer used by any libpq code. It
-	 * should be removed entirely, because it could be a dangling link
-	 * (the application could keep the PGresult around longer than it
-	 * keeps the PGconn!)  But there may be apps out there that depend on
-	 * it, so we will leave it here at least for a release or so.
-	 */
-	PGconn	   *xconn;			/* connection we did the query on, if any */
 
 	/*
 	 * These fields are copied from the originating PGconn, so that
@@ -194,6 +174,35 @@ typedef enum
 	PGASYNC_COPY_OUT			/* Copy Out data transfer in progress */
 }	PGAsyncStatusType;
 
+/* PGSetenvStatusType defines the state of the PQSetenv state machine */
+/* (this is used only for 2.0-protocol connections) */
+typedef enum
+{
+	SETENV_STATE_OPTION_SEND,	/* About to send an Environment Option */
+	SETENV_STATE_OPTION_WAIT,	/* Waiting for above send to complete */
+	SETENV_STATE_QUERY1_SEND,	/* About to send a status query */
+	SETENV_STATE_QUERY1_WAIT,	/* Waiting for query to complete */
+	SETENV_STATE_QUERY2_SEND,	/* About to send a status query */
+	SETENV_STATE_QUERY2_WAIT,	/* Waiting for query to complete */
+	SETENV_STATE_IDLE
+}	PGSetenvStatusType;
+
+/* Typedef for the EnvironmentOptions[] array */
+typedef struct PQEnvironmentOption
+{
+	const char *envName,		/* name of an environment variable */
+			   *pgName;			/* name of corresponding SET variable */
+} PQEnvironmentOption;
+
+/* Typedef for parameter-status list entries */
+typedef struct pgParameterStatus
+{
+	struct pgParameterStatus *next;	/* list link */
+	char	   *name;			/* parameter name */
+	char	   *value;			/* parameter value */
+	/* Note: name and value are stored in same malloc block as struct is */
+} pgParameterStatus;
+
 /* large-object-access data ... allocated only if large-object code is used. */
 typedef struct pgLobjfuncs
 {
@@ -207,7 +216,8 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
 }	PGlobjfuncs;
 
-/* PGconn stores all the state data associated with a single connection
+/*
+ * PGconn stores all the state data associated with a single connection
  * to a backend.
  */
 struct pg_conn
@@ -254,12 +264,21 @@ struct pg_conn
 	SockAddr	laddr;			/* Local address */
 	SockAddr	raddr;			/* Remote address */
 	int			raddr_len;		/* Length of remote address */
+	ProtocolVersion pversion;	/* FE/BE protocol version in use */
+	char		sversion[8];	/* The first few bytes of server version */
+
+	/* Transient state needed while establishing connection */
+	struct addrinfo *addrlist;	/* list of possible backend addresses */
+	struct addrinfo *addr_cur;	/* the one currently being tried */
+	PGSetenvStatusType setenv_state; /* for 2.0 protocol only */
+	const PQEnvironmentOption *next_eo;
 
 	/* Miscellaneous stuff */
 	int			be_pid;			/* PID of backend --- needed for cancels */
 	int			be_key;			/* key of backend --- needed for cancels */
 	char		md5Salt[4];		/* password salt received from backend */
 	char		cryptSalt[2];	/* password salt received from backend */
+	pgParameterStatus *pstatus;	/* ParameterStatus data */
 	int			client_encoding; /* encoding id */
 	PGlobjfuncs *lobjfuncs;		/* private state for large-object access
 								 * fns */
@@ -279,7 +298,8 @@ struct pg_conn
 	int			outCount;		/* number of chars waiting in buffer */
 
 	/* State for constructing messages in outBuffer */
-	int			outMsgStart;	/* offset to msg start (length word) */
+	int			outMsgStart;	/* offset to msg start (length word);
+								 * if -1, msg has no length word */
 	int			outMsgEnd;		/* offset to msg end (so far) */
 
 	/* Status for asynchronous result construction */
@@ -324,10 +344,46 @@ extern int	pqPacketSend(PGconn *conn, char pack_type,
 /* === in fe-exec.c === */
 
 extern void pqSetResultError(PGresult *res, const char *msg);
+extern void pqCatenateResultError(PGresult *res, const char *msg);
 extern void *pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary);
 extern char *pqResultStrdup(PGresult *res, const char *str);
 extern void pqClearAsyncResult(PGconn *conn);
-extern int	pqGetErrorNotice(PGconn *conn, bool isError);
+extern void pqSaveErrorResult(PGconn *conn);
+extern PGresult *pqPrepareAsyncResult(PGconn *conn);
+extern int	pqAddTuple(PGresult *res, PGresAttValue *tup);
+extern void pqSaveParameterStatus(PGconn *conn, const char *name,
+								  const char *value);
+extern const char *pqGetParameterStatus(PGconn *conn, const char *name);
+extern void pqHandleSendFailure(PGconn *conn);
+
+/* === in fe-protocol2.c === */
+
+extern PostgresPollingStatusType pqSetenvPoll(PGconn *conn);
+
+extern char *pqBuildStartupPacket2(PGconn *conn, int *packetlen,
+								   const PQEnvironmentOption *options);
+extern void pqParseInput2(PGconn *conn);
+extern int	pqGetline2(PGconn *conn, char *s, int maxlen);
+extern int	pqGetlineAsync2(PGconn *conn, char *buffer, int bufsize);
+extern int	pqEndcopy2(PGconn *conn);
+extern PGresult *pqFunctionCall2(PGconn *conn, Oid fnid,
+								 int *result_buf, int *actual_result_len,
+								 int result_is_int,
+								 const PQArgBlock *args, int nargs);
+
+/* === in fe-protocol3.c === */
+
+extern char *pqBuildStartupPacket3(PGconn *conn, int *packetlen,
+								   const PQEnvironmentOption *options);
+extern void pqParseInput3(PGconn *conn);
+extern int	pqGetErrorNotice3(PGconn *conn, bool isError);
+extern int	pqGetline3(PGconn *conn, char *s, int maxlen);
+extern int	pqGetlineAsync3(PGconn *conn, char *buffer, int bufsize);
+extern int	pqEndcopy3(PGconn *conn);
+extern PGresult *pqFunctionCall3(PGconn *conn, Oid fnid,
+								 int *result_buf, int *actual_result_len,
+								 int result_is_int,
+								 const PQArgBlock *args, int nargs);
 
 /* === in fe-misc.c === */
 
@@ -345,7 +401,7 @@ extern int	pqGetnchar(char *s, size_t len, PGconn *conn);
 extern int	pqPutnchar(const char *s, size_t len, PGconn *conn);
 extern int	pqGetInt(int *result, size_t bytes, PGconn *conn);
 extern int	pqPutInt(int value, size_t bytes, PGconn *conn);
-extern int	pqPutMsgStart(char msg_type, PGconn *conn);
+extern int	pqPutMsgStart(char msg_type, bool force_len, PGconn *conn);
 extern int	pqPutMsgEnd(PGconn *conn);
 extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
@@ -359,21 +415,14 @@ extern int	pqWriteReady(PGconn *conn);
 
 extern int	pqsecure_initialize(PGconn *);
 extern void pqsecure_destroy(void);
-extern int	pqsecure_open_client(PGconn *);
+extern PostgresPollingStatusType pqsecure_open_client(PGconn *);
 extern void pqsecure_close(PGconn *);
 extern ssize_t pqsecure_read(PGconn *, void *ptr, size_t len);
 extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);
 
-/* bits in a byte */
-#define BYTELEN 8
-
-/* fall back options if they are not specified by arguments or defined
-   by environment variables */
-#define DefaultHost		"localhost"
-#define DefaultTty		""
-#define DefaultOption	""
-#define DefaultAuthtype		  ""
-#define DefaultPassword		  ""
+/* Note: PGDONOTICE macro will work if applied to either PGconn or PGresult */
+#define PGDONOTICE(conn,message) \
+	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
 
 /*
  * this is so that we can check is a connection is non-blocking internally

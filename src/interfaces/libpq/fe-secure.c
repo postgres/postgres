@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.22 2003/04/10 23:03:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.23 2003/06/08 17:43:00 tgl Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -132,7 +132,7 @@ static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int	client_cert_cb(SSL *, X509 **, EVP_PKEY **);
 static int	initialize_SSL(PGconn *);
 static void destroy_SSL(void);
-static int	open_client_SSL(PGconn *);
+static PostgresPollingStatusType open_client_SSL(PGconn *);
 static void close_SSL(PGconn *);
 static const char *SSLerrmessage(void);
 #endif
@@ -231,16 +231,30 @@ pqsecure_destroy(void)
 /*
  *	Attempt to negotiate secure session.
  */
-int
+PostgresPollingStatusType
 pqsecure_open_client(PGconn *conn)
 {
-	int			r = 0;
-
 #ifdef USE_SSL
-	r = open_client_SSL(conn);
+	/* First time through? */
+	if (conn->ssl == NULL)
+	{
+		if (!(conn->ssl = SSL_new(SSL_context)) ||
+			!SSL_set_app_data(conn->ssl, conn) ||
+			!SSL_set_fd(conn->ssl, conn->sock))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+			   libpq_gettext("could not establish SSL connection: %s\n"),
+							  SSLerrmessage());
+			close_SSL(conn);
+			return PGRES_POLLING_FAILED;
+		}
+	}
+	/* Begin or continue the actual handshake */
+	return open_client_SSL(conn);
+#else
+	/* shouldn't get here */
+	return PGRES_POLLING_FAILED;
 #endif
-
-	return r;
 }
 
 /*
@@ -273,8 +287,15 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 			case SSL_ERROR_NONE:
 				break;
 			case SSL_ERROR_WANT_READ:
+				n = 0;
+				break;
 			case SSL_ERROR_WANT_WRITE:
-				/* XXX to support nonblock I/O, we should return 0 here */
+				/*
+				 * Returning 0 here would cause caller to wait for read-ready,
+				 * which is not correct since what SSL wants is wait for
+				 * write-ready.  The former could get us stuck in an infinite
+				 * wait, so don't risk it; busy-loop instead.
+				 */
 				goto rloop;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
@@ -322,16 +343,22 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 #ifdef USE_SSL
 	if (conn->ssl)
 	{
-	wloop:
 		n = SSL_write(conn->ssl, ptr, len);
 		switch (SSL_get_error(conn->ssl, n))
 		{
 			case SSL_ERROR_NONE:
 				break;
 			case SSL_ERROR_WANT_READ:
+				/*
+				 * Returning 0 here causes caller to wait for write-ready,
+				 * which is not really the right thing, but it's the best
+				 * we can do.
+				 */
+				n = 0;
+				break;
 			case SSL_ERROR_WANT_WRITE:
-				/* XXX to support nonblock I/O, we should return 0 here */
-				goto wloop;
+				n = 0;
+				break;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
 					printfPQExpBuffer(&conn->errorMessage,
@@ -802,23 +829,45 @@ destroy_SSL(void)
 /*
  *	Attempt to negotiate SSL connection.
  */
-static int
+static PostgresPollingStatusType
 open_client_SSL(PGconn *conn)
 {
-#ifdef NOT_USED
 	int			r;
-#endif
 
-	if (!(conn->ssl = SSL_new(SSL_context)) ||
-		!SSL_set_app_data(conn->ssl, conn) ||
-		!SSL_set_fd(conn->ssl, conn->sock) ||
-		SSL_connect(conn->ssl) <= 0)
+	r = SSL_connect(conn->ssl);
+	if (r <= 0)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-			   libpq_gettext("could not establish SSL connection: %s\n"),
-						  SSLerrmessage());
-		close_SSL(conn);
-		return -1;
+		switch (SSL_get_error(conn->ssl, r))
+		{
+			case SSL_ERROR_WANT_READ:
+				return PGRES_POLLING_READING;
+				
+			case SSL_ERROR_WANT_WRITE:
+				return PGRES_POLLING_WRITING;
+
+			case SSL_ERROR_SYSCALL:
+				if (r == -1)
+					printfPQExpBuffer(&conn->errorMessage,
+								libpq_gettext("SSL SYSCALL error: %s\n"),
+								  SOCK_STRERROR(SOCK_ERRNO));
+				else
+					printfPQExpBuffer(&conn->errorMessage,
+								libpq_gettext("SSL SYSCALL error: EOF detected\n"));
+				close_SSL(conn);
+				return PGRES_POLLING_FAILED;
+
+			case SSL_ERROR_SSL:
+				printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
+				close_SSL(conn);
+				return PGRES_POLLING_FAILED;
+
+			default:
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("Unknown SSL error code\n"));
+				close_SSL(conn);
+				return PGRES_POLLING_FAILED;
+		}
 	}
 
 	/* check the certificate chain of the server */
@@ -836,7 +885,7 @@ open_client_SSL(PGconn *conn)
 			   libpq_gettext("certificate could not be validated: %s\n"),
 						  X509_verify_cert_error_string(r));
 		close_SSL(conn);
-		return -1;
+		return PGRES_POLLING_FAILED;
 	}
 #endif
 
@@ -848,7 +897,7 @@ open_client_SSL(PGconn *conn)
 				libpq_gettext("certificate could not be obtained: %s\n"),
 						  SSLerrmessage());
 		close_SSL(conn);
-		return -1;
+		return PGRES_POLLING_FAILED;
 	}
 
 	X509_NAME_oneline(X509_get_subject_name(conn->peer),
@@ -871,11 +920,12 @@ open_client_SSL(PGconn *conn)
 	if (verify_peer(conn) == -1)
 	{
 		close_SSL(conn);
-		return -1;
+		return PGRES_POLLING_FAILED;
 	}
 #endif
 
-	return 0;
+	/* SSL handshake is complete */
+	return PGRES_POLLING_OK;
 }
 
 /*

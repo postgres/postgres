@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.7 2003/04/22 03:52:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.8 2003/06/08 17:42:59 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -72,27 +72,29 @@ getaddrinfo2(const char *hostname, const char *servname,
 
 
 /*
- *	freeaddrinfo2 - free IPv6 addrinfo structures
+ *	freeaddrinfo2 - free addrinfo structures for IPv4, IPv6, or Unix
  */
 void
-freeaddrinfo2(int hint_ai_family, struct addrinfo *ai)
+freeaddrinfo2(struct addrinfo *ai)
 {
-#ifdef HAVE_UNIX_SOCKETS
-	if (hint_ai_family == AF_UNIX)
+	if (ai != NULL)
 	{
-		struct addrinfo *p;
-
-		while (ai != NULL)
+#ifdef HAVE_UNIX_SOCKETS
+		if (ai->ai_family == AF_UNIX)
 		{
-			p = ai;
-			ai = ai->ai_next;
-			free(p->ai_addr);
-			free(p);
+			while (ai != NULL)
+			{
+				struct addrinfo *p = ai;
+
+				ai = ai->ai_next;
+				free(p->ai_addr);
+				free(p);
+			}
 		}
-	}
-	else
+		else
 #endif   /* HAVE_UNIX_SOCKETS */
-		freeaddrinfo(ai);
+			freeaddrinfo(ai);
+	}
 }
 
 

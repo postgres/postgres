@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.241 2003/05/15 16:35:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.242 2003/06/08 17:43:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,21 +50,16 @@
 #include "mb/pg_wchar.h"
 
 
-#ifdef WIN32
-static int
-inet_aton(const char *cp, struct in_addr * inp)
-{
-	unsigned long a = inet_addr(cp);
-
-	if (a == -1)
-		return 0;
-	inp->s_addr = a;
-	return 1;
-}
-#endif
-
-
 #define PGPASSFILE ".pgpass"
+
+/* fall back options if they are not specified by arguments or defined
+   by environment variables */
+#define DefaultHost		"localhost"
+#define DefaultTty		""
+#define DefaultOption	""
+#define DefaultAuthtype		  ""
+#define DefaultPassword		  ""
+
 
 /* ----------
  * Definition of the conninfo parameters and their fallback resources.
@@ -73,10 +68,9 @@ inet_aton(const char *cp, struct in_addr * inp)
  * fallback is available. If after all no value can be determined
  * for an option, an error is returned.
  *
- * The values for dbname and user are treated specially in conninfo_parse.
+ * The value for the username is treated specially in conninfo_parse.
  * If the Compiled-in resource is specified as a NULL value, the
- * user is determined by fe_getauthname() and for dbname the user
- * name is copied.
+ * user is determined by fe_getauthname().
  *
  * The Label and Disp-Char entries are provided for applications that
  * want to use PQconndefaults() to create a generic database connection
@@ -145,12 +139,7 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	NULL, NULL, 0}
 };
 
-static const struct EnvironmentOptions
-{
-	const char *envName,
-			   *pgName;
-}	EnvironmentOptions[] =
-
+static const PQEnvironmentOption EnvironmentOptions[] =
 {
 	/* common user-interface settings */
 	{
@@ -183,7 +172,6 @@ static PQconninfoOption *conninfo_parse(const char *conninfo,
 			   PQExpBuffer errorMessage);
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
-static int	build_startup_packet(const PGconn *conn, char *packet);
 static void defaultNoticeProcessor(void *arg, const char *message);
 static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
@@ -791,8 +779,8 @@ connectFailureMessage(PGconn *conn, int errorno)
 
 /* ----------
  * connectDBStart -
- * Start to make a connection to the backend so it is ready to receive
- * queries.
+ *		Begin the process of making a connection to the backend.
+ *
  * Returns 1 if successful, 0 if not.
  * ----------
  */
@@ -802,30 +790,26 @@ connectDBStart(PGconn *conn)
 	int			portnum;
 	char		portstr[64];
 	struct addrinfo *addrs = NULL;
-	struct addrinfo *addr_cur = NULL;
 	struct addrinfo hint;
 	const char *node = NULL;
-	const char *unix_node = "unix";
 	int			ret;
 
 	if (!conn)
 		return 0;
-
-	/* Initialize hint structure */
-	MemSet(&hint, 0, sizeof(hint));
-	hint.ai_socktype = SOCK_STREAM;
 
 	/* Ensure our buffers are empty */
 	conn->inStart = conn->inCursor = conn->inEnd = 0;
 	conn->outCount = 0;
 
 	/*
-	 * Set up the connection to postmaster/backend.
+	 * Determine the parameters to pass to getaddrinfo2.
 	 */
 
-	MemSet((char *) &conn->raddr, 0, sizeof(conn->raddr));
+	/* Initialize hint structure */
+	MemSet(&hint, 0, sizeof(hint));
+	hint.ai_socktype = SOCK_STREAM;
 
-	/* Set port number */
+	/* Set up port number as a string */
 	if (conn->pgport != NULL && conn->pgport[0] != '\0')
 		portnum = atoi(conn->pgport);
 	else
@@ -849,16 +833,11 @@ connectDBStart(PGconn *conn)
 	{
 		/* pghostaddr and pghost are NULL, so use Unix domain socket */
 #ifdef HAVE_UNIX_SOCKETS
-		node = unix_node;
+		node = "unix";
 		hint.ai_family = AF_UNIX;
 		UNIXSOCK_PATH(conn->raddr.un, portnum, conn->pgunixsocket);
 		conn->raddr_len = UNIXSOCK_LEN(conn->raddr.un);
 		StrNCpy(portstr, conn->raddr.un.sun_path, sizeof(portstr));
-#ifdef USE_SSL
-		/* Don't bother requesting SSL over a Unix socket */
-		conn->allow_ssl_try = false;
-		conn->require_ssl = false;
-#endif
 #endif   /* HAVE_UNIX_SOCKETS */
 	}
 
@@ -869,183 +848,27 @@ connectDBStart(PGconn *conn)
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("getaddrinfo() failed: %s\n"),
 						  gai_strerror(ret));
+		freeaddrinfo2(addrs);
 		goto connect_errReturn;
 	}
 
 	/*
-	 * We loop over the possible addresses returned by getaddrinfo2(),
-	 * and fail only when they all fail (reporting the error returned
-	 * for the *last* alternative, which may not be what users expect
-	 * :-().
-	 *
-	 * Notice we never actually fall out of the loop; the only exits are
-	 * via "break" or "goto connect_errReturn".  Thus, there is no exit
-	 * test in the for().
+	 * Set up to try to connect, with protocol 3.0 as the first attempt.
 	 */
-	for (addr_cur = addrs; ; addr_cur = addr_cur->ai_next)
-	{
-		/* Open a socket */
-		conn->sock = socket(addr_cur->ai_family, SOCK_STREAM,
-							addr_cur->ai_protocol);
-		if (conn->sock < 0)
-		{
-			/* ignore socket() failure if we have more addrs to try */
-			if (addr_cur->ai_next != NULL)
-				continue;
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not create socket: %s\n"),
-							  SOCK_STRERROR(SOCK_ERRNO));
-			goto connect_errReturn;
-		}
-
-		/*
-		 * Set the right options. Normally, we need nonblocking I/O, and we
-		 * don't want delay of outgoing data for AF_INET sockets.  If we are
-		 * using SSL, then we need the blocking I/O (XXX Can this be fixed?).
-		 */
-
-		if (isAF_INETx(addr_cur->ai_family))
-		{
-			if (!connectNoDelay(conn))
-				goto connect_errReturn;
-		}
-
-#if !defined(USE_SSL)
-		if (connectMakeNonblocking(conn) == 0)
-			goto connect_errReturn;
-#endif
-
-		/* ----------
-		 * Start / make connection.  We are hopefully in non-blocking mode
-		 * now, but it is possible that:
-		 *	 1. Older systems will still block on connect, despite the
-		 *		non-blocking flag. (Anyone know if this is true?)
-		 *	 2. We are using SSL.
-		 * Thus, we have to make arrangements for all eventualities.
-		 * ----------
-		 */
-retry1:
-		if (connect(conn->sock, addr_cur->ai_addr, addr_cur->ai_addrlen) < 0)
-		{
-			if (SOCK_ERRNO == EINTR)
-				/* Interrupted system call - we'll just try again */
-				goto retry1;
-
-			if (SOCK_ERRNO == EINPROGRESS || SOCK_ERRNO == EWOULDBLOCK || SOCK_ERRNO == 0)
-			{
-				/*
-				 * This is fine - we're in non-blocking mode, and the
-				 * connection is in progress.
-				 */
-				conn->status = CONNECTION_STARTED;
-				break;
-			}
-			/* otherwise, trouble */
-		}
-		else
-		{
-			/* We're connected already */
-			conn->status = CONNECTION_MADE;
-			break;
-		}
-		/*
-		 * This connection failed.  We need to close the socket,
-		 * and either loop to try the next address or report an error.
-		 */
-		/* ignore connect() failure if we have more addrs to try */
-		if (addr_cur->ai_next != NULL)
-		{
-			closesocket(conn->sock);
-			conn->sock = -1;
-			continue;
-		}
-		/* copy failed address for error report */
-		memcpy(&conn->raddr, addr_cur->ai_addr, addr_cur->ai_addrlen);
-		conn->raddr_len = addr_cur->ai_addrlen;
-		connectFailureMessage(conn, SOCK_ERRNO);
-		goto connect_errReturn;
-	} /* loop over addrs */
-
-	/* Remember the successfully opened address alternative */
-	memcpy(&conn->raddr, addr_cur->ai_addr, addr_cur->ai_addrlen);
-	conn->raddr_len = addr_cur->ai_addrlen;
-	/* and release the address list */
-	freeaddrinfo2(hint.ai_family, addrs);
-	addrs = NULL;
-
-#ifdef USE_SSL
-	/* Attempt to negotiate SSL usage */
-	if (conn->allow_ssl_try)
-	{
-		ProtocolVersion pv;
-		char		SSLok;
-
-		pv = htonl(NEGOTIATE_SSL_CODE);
-		if (pqPacketSend(conn, 0, &pv, sizeof(ProtocolVersion)) != STATUS_OK)
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("could not send SSL negotiation packet: %s\n"),
-							  SOCK_STRERROR(SOCK_ERRNO));
-			goto connect_errReturn;
-		}
-retry2:
-		/* Now receive the postmasters response */
-		if (recv(conn->sock, &SSLok, 1, 0) != 1)
-		{
-			if (SOCK_ERRNO == EINTR)
-				/* Interrupted system call - we'll just try again */
-				goto retry2;
-
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not receive server response to SSL negotiation packet: %s\n"),
-							  SOCK_STRERROR(SOCK_ERRNO));
-			goto connect_errReturn;
-		}
-		if (SSLok == 'S')
-		{
-			if (pqsecure_initialize(conn) == -1 ||
-				pqsecure_open_client(conn) == -1)
-				goto connect_errReturn;
-			/* SSL connection finished. Continue to send startup packet */
-		}
-		else if (SSLok == 'E')
-		{
-			/* Received error - probably protocol mismatch */
-			if (conn->Pfdebug)
-				fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-7.0.\n");
-			pqsecure_close(conn);
-			closesocket(conn->sock);
-			conn->sock = -1;
-			conn->allow_ssl_try = FALSE;
-			return connectDBStart(conn);
-		}
-		else if (SSLok != 'N')
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("received invalid response to SSL negotiation: %c\n"),
-							  SSLok);
-			goto connect_errReturn;
-		}
-	}
-	if (conn->require_ssl && !conn->ssl)
-	{
-		/* Require SSL, but server does not support/want it */
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("server does not support SSL, but SSL was required\n"));
-		goto connect_errReturn;
-	}
-#endif
+	conn->addrlist = addrs;
+	conn->addr_cur = addrs;
+	conn->pversion = PG_PROTOCOL(3,0);
+	conn->status = CONNECTION_NEEDED;
 
 	/*
-	 * This makes the connection non-blocking, for all those cases which
-	 * forced us not to do it above.
+	 * The code for processing CONNECTION_NEEDED state is in PQconnectPoll(),
+	 * so that it can easily be re-executed if needed again during the
+	 * asynchronous startup process.  However, we must run it once here,
+	 * because callers expect a success return from this routine to mean
+	 * that we are in PGRES_POLLING_WRITING connection state.
 	 */
-#if defined(USE_SSL)
-	if (connectMakeNonblocking(conn) == 0)
-		goto connect_errReturn;
-#endif
-
-	return 1;
+	if (PQconnectPoll(conn) == PGRES_POLLING_WRITING)
+		return 1;
 
 connect_errReturn:
 	if (conn->sock >= 0)
@@ -1055,8 +878,6 @@ connect_errReturn:
 		conn->sock = -1;
 	}
 	conn->status = CONNECTION_BAD;
-	if (addrs != NULL)
-		freeaddrinfo2(hint.ai_family, addrs);
 	return 0;
 }
 
@@ -1156,13 +977,12 @@ connectDBComplete(PGconn *conn)
  *	 o	If you call PQtrace, ensure that the stream object into which you trace
  *		will not block.
  *	 o	If you do not supply an IP address for the remote host (i.e. you
- *		supply a host name instead) then this function will block on
+ *		supply a host name instead) then PQconnectStart will block on
  *		gethostbyname.	You will be fine if using Unix sockets (i.e. by
  *		supplying neither a host name nor a host address).
  *	 o	If your backend wants to use Kerberos authentication then you must
  *		supply both a host name and a host address, otherwise this function
  *		may block on gethostname.
- *	 o	This function will block if compiled with USE_SSL.
  *
  * ----------------
  */
@@ -1206,6 +1026,15 @@ PQconnectPoll(PGconn *conn)
 		case CONNECTION_MADE:
 			break;
 
+			/* We allow pqSetenvPoll to decide whether to proceed. */
+		case CONNECTION_SETENV:
+			break;
+
+			/* Special cases: proceed without waiting. */
+		case CONNECTION_SSL_STARTUP:
+		case CONNECTION_NEEDED:
+			break;
+
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
@@ -1217,9 +1046,120 @@ PQconnectPoll(PGconn *conn)
 
 
 keep_going:						/* We will come back to here until there
-								 * is nothing left to parse. */
+								 * is nothing left to do. */
 	switch (conn->status)
 	{
+		case CONNECTION_NEEDED:
+			{
+				/*
+				 * Try to initiate a connection to one of the addresses
+				 * returned by getaddrinfo2().  conn->addr_cur is the
+				 * next one to try.  We fail when we run out of addresses
+				 * (reporting the error returned for the *last* alternative,
+				 * which may not be what users expect :-().
+				 */
+				while (conn->addr_cur != NULL)
+				{
+					struct addrinfo *addr_cur = conn->addr_cur;
+
+					/* Remember current address for possible error msg */
+					memcpy(&conn->raddr, addr_cur->ai_addr,
+						   addr_cur->ai_addrlen);
+					conn->raddr_len = addr_cur->ai_addrlen;
+
+					/* Open a socket */
+					conn->sock = socket(addr_cur->ai_family,
+										SOCK_STREAM,
+										addr_cur->ai_protocol);
+					if (conn->sock < 0)
+					{
+						/*
+						 * ignore socket() failure if we have more addresses
+						 * to try
+						 */
+						if (addr_cur->ai_next != NULL)
+						{
+							conn->addr_cur = addr_cur->ai_next;
+							continue;
+						}
+						printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not create socket: %s\n"),
+										  SOCK_STRERROR(SOCK_ERRNO));
+						break;
+					}
+
+					/*
+					 * Select socket options: no delay of outgoing data for
+					 * TCP sockets, and nonblock mode.  Fail if this fails.
+					 */
+					if (isAF_INETx(addr_cur->ai_family))
+					{
+						if (!connectNoDelay(conn))
+							break;
+					}
+					if (connectMakeNonblocking(conn) == 0)
+						break;
+					/*
+					 * Start/make connection.  This should not block, since
+					 * we are in nonblock mode.  If it does, well, too bad.
+					 */
+retry_connect:
+					if (connect(conn->sock, addr_cur->ai_addr,
+								addr_cur->ai_addrlen) < 0)
+					{
+						if (SOCK_ERRNO == EINTR)
+							/* Interrupted system call - just try again */
+							goto retry_connect;
+						if (SOCK_ERRNO == EINPROGRESS ||
+							SOCK_ERRNO == EWOULDBLOCK ||
+							SOCK_ERRNO == 0)
+						{
+							/*
+							 * This is fine - we're in non-blocking mode,
+							 * and the connection is in progress.  Tell
+							 * caller to wait for write-ready on socket.
+							 */
+							conn->status = CONNECTION_STARTED;
+							return PGRES_POLLING_WRITING;
+						}
+						/* otherwise, trouble */
+					}
+					else
+					{
+						/*
+						 * Hm, we're connected already --- seems the
+						 * "nonblock connection" wasn't.  Advance the state
+						 * machine and go do the next stuff.
+						 */
+						conn->status = CONNECTION_STARTED;
+						goto keep_going;
+					}
+					/*
+					 * This connection failed --- set up error report,
+					 * then close socket (do it this way in case close()
+					 * affects the value of errno...).  We will ignore the
+					 * connect() failure and keep going if there are
+					 * more addresses.
+					 */
+					connectFailureMessage(conn, SOCK_ERRNO);
+					if (conn->sock >= 0)
+					{
+						closesocket(conn->sock);
+						conn->sock = -1;
+					}
+					/*
+					 * Try the next address, if any.
+					 */
+					conn->addr_cur = addr_cur->ai_next;
+				} /* loop over addresses */
+
+				/*
+				 * Ooops, no more addresses.  An appropriate error message
+				 * is already set up, so just set the right status.
+				 */
+				goto error_return;
+			}
+
 		case CONNECTION_STARTED:
 			{
 				ACCEPT_TYPE_ARG3 laddrlen;
@@ -1228,7 +1168,7 @@ keep_going:						/* We will come back to here until there
 
 				/*
 				 * Write ready, since we've made it here, so the
-				 * connection has been made.
+				 * connection has been made ... or has failed.
 				 */
 
 				/*
@@ -1252,6 +1192,21 @@ keep_going:						/* We will come back to here until there
 					 * friendly error message.
 					 */
 					connectFailureMessage(conn, optval);
+					/*
+					 * If more addresses remain, keep trying, just as in
+					 * the case where connect() returned failure immediately.
+					 */
+					if (conn->addr_cur->ai_next != NULL)
+					{
+						if (conn->sock >= 0)
+						{
+							closesocket(conn->sock);
+							conn->sock = -1;
+						}
+						conn->addr_cur = conn->addr_cur->ai_next;
+						conn->status = CONNECTION_NEEDED;
+						goto keep_going;
+					}
 					goto error_return;
 				}
 
@@ -1265,6 +1220,9 @@ keep_going:						/* We will come back to here until there
 					goto error_return;
 				}
 
+				/*
+				 * Make sure we can write before advancing to next step.
+				 */
 				conn->status = CONNECTION_MADE;
 				return PGRES_POLLING_WRITING;
 			}
@@ -1274,18 +1232,59 @@ keep_going:						/* We will come back to here until there
 				char   *startpacket;
 				int		packetlen;
 
+#ifdef USE_SSL
+				/*
+				 * If SSL is enabled and we haven't already got it running,
+				 * request it instead of sending the startup message.
+				 */
+
+#ifdef HAVE_UNIX_SOCKETS
+				if (conn->raddr.sa.sa_family == AF_UNIX)
+				{
+					/* Don't bother requesting SSL over a Unix socket */
+					conn->allow_ssl_try = false;
+					conn->require_ssl = false;
+				}
+#endif
+				if (conn->allow_ssl_try && conn->ssl == NULL)
+				{
+					ProtocolVersion pv;
+
+					/*
+					 * Send the SSL request packet.
+					 *
+					 * Theoretically, this could block, but it really shouldn't
+					 * since we only got here if the socket is write-ready.
+					 */
+					pv = htonl(NEGOTIATE_SSL_CODE);
+					if (pqPacketSend(conn, 0, &pv, sizeof(pv)) != STATUS_OK)
+					{
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("could not send SSL negotiation packet: %s\n"),
+										  SOCK_STRERROR(SOCK_ERRNO));
+						goto error_return;
+					}
+					/* Ok, wait for response */
+					conn->status = CONNECTION_SSL_STARTUP;
+					return PGRES_POLLING_READING;
+				}
+#endif /* USE_SSL */
+
 				/*
 				 * Build the startup packet.
 				 */
-				packetlen = build_startup_packet(conn, NULL);
-				startpacket = (char *) malloc(packetlen);
+				if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+					startpacket = pqBuildStartupPacket3(conn, &packetlen,
+														EnvironmentOptions);
+				else
+					startpacket = pqBuildStartupPacket2(conn, &packetlen,
+														EnvironmentOptions);
 				if (!startpacket)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("out of memory\n"));
 					goto error_return;
 				}
-				packetlen = build_startup_packet(conn, startpacket);
 
 				/*
 				 * Send the startup packet.
@@ -1309,7 +1308,109 @@ keep_going:						/* We will come back to here until there
 			}
 
 			/*
-			 * Handle the authentication exchange: wait for postmaster
+			 * Handle SSL negotiation: wait for postmaster
+			 * messages and respond as necessary.
+			 */
+		case CONNECTION_SSL_STARTUP:
+			{
+#ifdef USE_SSL
+				PostgresPollingStatusType pollres;
+
+				/*
+				 * On first time through, get the postmaster's response
+				 * to our SSL negotiation packet.  Be careful to read only
+				 * one byte (if there's more, it could be SSL data).
+				 */
+				if (conn->ssl == NULL)
+				{
+					char		SSLok;
+					int			nread;
+
+retry_ssl_read:
+					nread = recv(conn->sock, &SSLok, 1, 0);
+					if (nread < 0)
+					{
+						if (SOCK_ERRNO == EINTR)
+							/* Interrupted system call - just try again */
+							goto retry_ssl_read;
+
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("could not receive server response to SSL negotiation packet: %s\n"),
+										  SOCK_STRERROR(SOCK_ERRNO));
+						goto error_return;
+					}
+					if (nread == 0)
+						/* caller failed to wait for data */
+						return PGRES_POLLING_READING;
+					if (SSLok == 'S')
+					{
+						/* Do one-time setup; this creates conn->ssl */
+						if (pqsecure_initialize(conn) == -1)
+							goto error_return;
+					}
+					else if (SSLok == 'N')
+					{
+						if (conn->require_ssl)
+						{
+							/* Require SSL, but server does not want it */
+							printfPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("server does not support SSL, but SSL was required\n"));
+							goto error_return;
+						}
+						/* Otherwise, proceed with normal startup */
+						conn->allow_ssl_try = false;
+						conn->status = CONNECTION_MADE;
+						return PGRES_POLLING_WRITING;
+					}
+					else if (SSLok == 'E')
+					{
+						/* Received error - probably protocol mismatch */
+						if (conn->Pfdebug)
+							fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-7.0.\n");
+						if (conn->require_ssl)
+						{
+							/* Require SSL, but server is too old */
+							printfPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("server does not support SSL, but SSL was required\n"));
+							goto error_return;
+						}
+						/* Otherwise, try again without SSL */
+						conn->allow_ssl_try = false;
+						/* Assume it ain't gonna handle protocol 3, either */
+						conn->pversion = PG_PROTOCOL(2,0);
+						/* Must drop the old connection */
+						closesocket(conn->sock);
+						conn->sock = -1;
+						conn->status = CONNECTION_NEEDED;
+						goto keep_going;
+					}
+					else
+					{
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("received invalid response to SSL negotiation: %c\n"),
+										  SSLok);
+						goto error_return;
+					}
+				}
+				/*
+				 * Begin or continue the SSL negotiation process.
+				 */
+				pollres = pqsecure_open_client(conn);
+				if (pollres == PGRES_POLLING_OK)
+				{
+					/* SSL handshake done, ready to send startup packet */
+					conn->status = CONNECTION_MADE;
+					return PGRES_POLLING_WRITING;
+				}
+				return pollres;
+#else /* !USE_SSL */
+				/* can't get here */
+				goto error_return;
+#endif /* USE_SSL */
+			}
+
+			/*
+			 * Handle authentication exchange: wait for postmaster
 			 * messages and respond as necessary.
 			 */
 		case CONNECTION_AWAITING_RESPONSE:
@@ -1343,17 +1444,24 @@ keep_going:						/* We will come back to here until there
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
 								  "expected authentication request from "
-											  "server, but received %c\n"
-													),
+											  "server, but received %c\n"),
 									  beresp);
 					goto error_return;
 				}
 
-				/* Read message length word */
-				if (pqGetInt(&msgLength, 4, conn))
+				if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
 				{
-					/* We'll come back when there is more data */
-					return PGRES_POLLING_READING;
+					/* Read message length word */
+					if (pqGetInt(&msgLength, 4, conn))
+					{
+						/* We'll come back when there is more data */
+						return PGRES_POLLING_READING;
+					}
+				}
+				else
+				{
+					/* Set phony message length to disable checks below */
+					msgLength = 8;
 				}
 
 				/*
@@ -1368,8 +1476,7 @@ keep_going:						/* We will come back to here until there
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
 								  "expected authentication request from "
-											  "server, but received %c\n"
-													),
+											  "server, but received %c\n"),
 									  beresp);
 					goto error_return;
 				}
@@ -1392,11 +1499,30 @@ keep_going:						/* We will come back to here until there
 					 * conventions.
 					 */
 					appendPQExpBufferChar(&conn->errorMessage, '\n');
+
+					/*
+					 * If we tried to open the connection in 3.0 protocol,
+					 * fall back to 2.0 protocol.
+					 */
+					if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+					{
+						conn->pversion = PG_PROTOCOL(2,0);
+						/* Must drop the old connection */
+						pqsecure_close(conn);
+						closesocket(conn->sock);
+						conn->sock = -1;
+						conn->status = CONNECTION_NEEDED;
+						goto keep_going;
+					}
+
 					goto error_return;
 				}
 
 				/*
 				 * Can't process if message body isn't all here yet.
+				 *
+				 * (In protocol 2.0 case, we are assuming messages carry
+				 * at least 4 bytes of data.)
 				 */
 				msgLength -= 4;
 				avail = conn->inEnd - conn->inCursor;
@@ -1405,7 +1531,7 @@ keep_going:						/* We will come back to here until there
 					/*
 					 * Before returning, try to enlarge the input buffer if
 					 * needed to hold the whole message; see notes in
-					 * parseInput.
+					 * pqParseInput3.
 					 */
 					if (pqCheckInBufferSpace(conn->inCursor + msgLength, conn))
 						goto error_return;
@@ -1416,10 +1542,21 @@ keep_going:						/* We will come back to here until there
 				/* Handle errors. */
 				if (beresp == 'E')
 				{
-					if (pqGetErrorNotice(conn, true))
+					if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
 					{
-						/* We'll come back when there is more data */
-						return PGRES_POLLING_READING;
+						if (pqGetErrorNotice3(conn, true))
+						{
+							/* We'll come back when there is more data */
+							return PGRES_POLLING_READING;
+						}
+					}
+					else
+					{
+						if (pqGets(&conn->errorMessage, conn))
+						{
+							/* We'll come back when there is more data */
+							return PGRES_POLLING_READING;
+						}
 					}
 					/* OK, we read the message; mark data consumed */
 					conn->inStart = conn->inCursor;
@@ -1548,12 +1685,55 @@ keep_going:						/* We will come back to here until there
 					goto error_return;
 				}
 
-				/*
-				 * We are open for business!
-				 */
+				/* We can release the address list now. */
+				freeaddrinfo2(conn->addrlist);
+				conn->addrlist = NULL;
+				conn->addr_cur = NULL;
+
+				/* Fire up post-connection housekeeping if needed */
+				if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
+				{
+					conn->status = CONNECTION_SETENV;
+					conn->setenv_state = SETENV_STATE_OPTION_SEND;
+					conn->next_eo = EnvironmentOptions;
+					return PGRES_POLLING_WRITING;
+				}
+
+				/* Otherwise, we are open for business! */
 				conn->status = CONNECTION_OK;
 				return PGRES_POLLING_OK;
 			}
+
+		case CONNECTION_SETENV:
+
+			/*
+			 * Do post-connection housekeeping (only needed in protocol 2.0).
+			 *
+			 * We pretend that the connection is OK for the duration of
+			 * these queries.
+			 */
+			conn->status = CONNECTION_OK;
+
+			switch (pqSetenvPoll(conn))
+			{
+				case PGRES_POLLING_OK:	/* Success */
+					break;
+
+				case PGRES_POLLING_READING:		/* Still going */
+					conn->status = CONNECTION_SETENV;
+					return PGRES_POLLING_READING;
+
+				case PGRES_POLLING_WRITING:		/* Still going */
+					conn->status = CONNECTION_SETENV;
+					return PGRES_POLLING_WRITING;
+
+				default:
+					goto error_return;
+			}
+
+			/* We are open for business! */
+			conn->status = CONNECTION_OK;
+			return PGRES_POLLING_OK;
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
@@ -1576,6 +1756,7 @@ error_return:
 	 * socket closed when PQfinish is called (which is compulsory even
 	 * after an error, since the connection structure must be freed).
 	 */
+	conn->status = CONNECTION_BAD;
 	return PGRES_POLLING_FAILED;
 }
 
@@ -1598,6 +1779,8 @@ makeEmptyPGconn(void)
 	conn->noticeHook = defaultNoticeProcessor;
 	conn->status = CONNECTION_BAD;
 	conn->asyncStatus = PGASYNC_IDLE;
+	conn->setenv_state = SETENV_STATE_IDLE;
+	conn->client_encoding = PG_SQL_ASCII;
 	conn->notifyList = DLNewList();
 	conn->sock = -1;
 #ifdef USE_SSL
@@ -1622,6 +1805,7 @@ makeEmptyPGconn(void)
 	conn->nonblocking = FALSE;
 	initPQExpBuffer(&conn->errorMessage);
 	initPQExpBuffer(&conn->workBuffer);
+
 	if (conn->inBuffer == NULL ||
 		conn->outBuffer == NULL ||
 		conn->errorMessage.data == NULL ||
@@ -1631,6 +1815,7 @@ makeEmptyPGconn(void)
 		freePGconn(conn);
 		conn = NULL;
 	}
+
 	return conn;
 }
 
@@ -1660,6 +1845,8 @@ freePGconn(PGconn *conn)
 		free(conn->pgunixsocket);
 	if (conn->pgtty)
 		free(conn->pgtty);
+	if (conn->connect_timeout)
+		free(conn->connect_timeout);
 	if (conn->pgoptions)
 		free(conn->pgoptions);
 	if (conn->dbName)
@@ -1668,11 +1855,10 @@ freePGconn(PGconn *conn)
 		free(conn->pguser);
 	if (conn->pgpass)
 		free(conn->pgpass);
-	if (conn->connect_timeout)
-		free(conn->connect_timeout);
 	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);
+	freeaddrinfo2(conn->addrlist);
 	if (conn->lobjfuncs)
 		free(conn->lobjfuncs);
 	if (conn->inBuffer)
@@ -1701,7 +1887,7 @@ closePGconn(PGconn *conn)
 		 * Try to send "close connection" message to backend. Ignore any
 		 * error.
 		 */
-		pqPutMsgStart('X', conn);
+		pqPutMsgStart('X', false, conn);
 		pqPutMsgEnd(conn);
 		pqFlush(conn);
 	}
@@ -1731,8 +1917,6 @@ closePGconn(PGconn *conn)
 	conn->lobjfuncs = NULL;
 	conn->inStart = conn->inCursor = conn->inEnd = 0;
 	conn->outCount = 0;
-	conn->nonblocking = FALSE;
-
 }
 
 /*
@@ -1936,13 +2120,16 @@ cancel_errReturn:
  *
  * RETURNS: STATUS_ERROR if the write fails, STATUS_OK otherwise.
  * SIDE_EFFECTS: may block.
-*/
+ *
+ * Note: all messages sent with this routine have a length word, whether
+ * it's protocol 2.0 or 3.0.
+ */
 int
 pqPacketSend(PGconn *conn, char pack_type,
 			 const void *buf, size_t buf_len)
 {
 	/* Start the message. */
-	if (pqPutMsgStart(pack_type, conn))
+	if (pqPutMsgStart(pack_type, true, conn))
 		return STATUS_ERROR;
 
 	/* Send the message body. */
@@ -2341,11 +2528,6 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 			/* note any error message is thrown away */
 			continue;
 		}
-
-		/*
-		 * We used to special-case dbname too, but it's easier to let the
-		 * backend handle the fallback for that.
-		 */
 	}
 
 	return options;
@@ -2382,87 +2564,6 @@ PQconninfoFree(PQconninfoOption *connOptions)
 			free(option->val);
 	}
 	free(connOptions);
-}
-
-
-/*
- * Build a startup packet given a filled-in PGconn structure.
- *
- * We need to figure out how much space is needed, then fill it in.
- * To avoid duplicate logic, this routine is called twice: the first time
- * (with packet == NULL) just counts the space needed, the second time
- * (with packet == allocated space) fills it in.  Return value is the number
- * of bytes used.
- */
-static int
-build_startup_packet(const PGconn *conn, char *packet)
-{
-	int		packet_len = 0;
-	const struct EnvironmentOptions *next_eo;
-
-	/* Protocol version comes first. */
-	if (packet)
-	{
-		ProtocolVersion pv = htonl(PG_PROTOCOL_LIBPQ);
-
-		memcpy(packet + packet_len, &pv, sizeof(ProtocolVersion));
-	}
-	packet_len += sizeof(ProtocolVersion);
-
-	/* Add user name, database name, options */
-	if (conn->pguser && conn->pguser[0])
-	{
-		if (packet)
-			strcpy(packet + packet_len, "user");
-		packet_len += strlen("user") + 1;
-		if (packet)
-			strcpy(packet + packet_len, conn->pguser);
-		packet_len += strlen(conn->pguser) + 1;
-	}
-	if (conn->dbName && conn->dbName[0])
-	{
-		if (packet)
-			strcpy(packet + packet_len, "database");
-		packet_len += strlen("database") + 1;
-		if (packet)
-			strcpy(packet + packet_len, conn->dbName);
-		packet_len += strlen(conn->dbName) + 1;
-	}
-	if (conn->pgoptions && conn->pgoptions[0])
-	{
-		if (packet)
-			strcpy(packet + packet_len, "options");
-		packet_len += strlen("options") + 1;
-		if (packet)
-			strcpy(packet + packet_len, conn->pgoptions);
-		packet_len += strlen(conn->pgoptions) + 1;
-	}
-
-	/* Add any environment-driven GUC settings needed */
-	for (next_eo = EnvironmentOptions; next_eo->envName; next_eo++)
-	{
-		const char *val;
-
-		if ((val = getenv(next_eo->envName)) != NULL)
-		{
-			if (strcasecmp(val, "default") != 0)
-			{
-				if (packet)
-					strcpy(packet + packet_len, next_eo->pgName);
-				packet_len += strlen(next_eo->pgName) + 1;
-				if (packet)
-					strcpy(packet + packet_len, val);
-				packet_len += strlen(val) + 1;
-			}
-		}
-	}
-
-	/* Add trailing terminator */
-	if (packet)
-		packet[packet_len] = '\0';
-	packet_len++;
-
-	return packet_len;
 }
 
 

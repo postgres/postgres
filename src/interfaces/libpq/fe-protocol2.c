@@ -1,0 +1,1239 @@
+/*-------------------------------------------------------------------------
+ *
+ * fe-protocol2.c
+ *	  functions that are specific to frontend/backend protocol version 2
+ *
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.1 2003/06/08 17:43:00 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
+#include "postgres_fe.h"
+
+#include <errno.h>
+#include <ctype.h>
+#include <fcntl.h>
+
+#include "libpq-fe.h"
+#include "libpq-int.h"
+
+#include "mb/pg_wchar.h"
+
+#ifdef WIN32
+#include "win32.h"
+#else
+#include <unistd.h>
+#include <netinet/in.h>
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
+#include <arpa/inet.h>
+#endif
+
+
+static int	getRowDescriptions(PGconn *conn);
+static int	getAnotherTuple(PGconn *conn, bool binary);
+static int	pqGetErrorNotice2(PGconn *conn, bool isError);
+static int	getNotify(PGconn *conn);
+
+
+/*
+ *		pqSetenvPoll
+ *
+ * Polls the process of passing the values of a standard set of environment
+ * variables to the backend.
+ */
+PostgresPollingStatusType
+pqSetenvPoll(PGconn *conn)
+{
+	PGresult   *res;
+
+	if (conn == NULL || conn->status == CONNECTION_BAD)
+		return PGRES_POLLING_FAILED;
+
+	/* Check whether there are any data for us */
+	switch (conn->setenv_state)
+	{
+			/* These are reading states */
+		case SETENV_STATE_OPTION_WAIT:
+		case SETENV_STATE_QUERY1_WAIT:
+		case SETENV_STATE_QUERY2_WAIT:
+			{
+				/* Load waiting data */
+				int			n = pqReadData(conn);
+
+				if (n < 0)
+					goto error_return;
+				if (n == 0)
+					return PGRES_POLLING_READING;
+
+				break;
+			}
+
+			/* These are writing states, so we just proceed. */
+		case SETENV_STATE_OPTION_SEND:
+		case SETENV_STATE_QUERY1_SEND:
+		case SETENV_STATE_QUERY2_SEND:
+			break;
+
+			/* Should we raise an error if called when not active? */
+		case SETENV_STATE_IDLE:
+			return PGRES_POLLING_OK;
+
+		default:
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext(
+											"invalid setenv state %c, "
+							 "probably indicative of memory corruption\n"
+											),
+							  conn->setenv_state);
+			goto error_return;
+	}
+
+	/* We will loop here until there is nothing left to do in this call. */
+	for (;;)
+	{
+		switch (conn->setenv_state)
+		{
+			case SETENV_STATE_OPTION_SEND:
+				{
+					/*
+					 * Send SET commands for stuff directed by Environment
+					 * Options.  Note: we assume that SET commands won't
+					 * start transaction blocks, even in a 7.3 server with
+					 * autocommit off.
+					 */
+					char		setQuery[100];	/* note length limit in
+												 * sprintf below */
+
+					if (conn->next_eo->envName)
+					{
+						const char *val;
+
+						if ((val = getenv(conn->next_eo->envName)))
+						{
+							if (strcasecmp(val, "default") == 0)
+								sprintf(setQuery, "SET %s = DEFAULT",
+										conn->next_eo->pgName);
+							else
+								sprintf(setQuery, "SET %s = '%.60s'",
+										conn->next_eo->pgName, val);
+#ifdef CONNECTDEBUG
+							fprintf(stderr,
+									"Use environment variable %s to send %s\n",
+									conn->next_eo->envName, setQuery);
+#endif
+							if (!PQsendQuery(conn, setQuery))
+								goto error_return;
+
+							conn->setenv_state = SETENV_STATE_OPTION_WAIT;
+						}
+						else
+							conn->next_eo++;
+					}
+					else
+					{
+						/* No more options to send, so move on to querying */
+						conn->setenv_state = SETENV_STATE_QUERY1_SEND;
+					}
+					break;
+				}
+
+			case SETENV_STATE_OPTION_WAIT:
+				{
+					if (PQisBusy(conn))
+						return PGRES_POLLING_READING;
+
+					res = PQgetResult(conn);
+
+					if (res)
+					{
+						if (PQresultStatus(res) != PGRES_COMMAND_OK)
+						{
+							PQclear(res);
+							goto error_return;
+						}
+						PQclear(res);
+						/* Keep reading until PQgetResult returns NULL */
+					}
+					else
+					{
+						/* Query finished, so send the next option */
+						conn->next_eo++;
+						conn->setenv_state = SETENV_STATE_OPTION_SEND;
+					}
+					break;
+				}
+
+			case SETENV_STATE_QUERY1_SEND:
+				{
+					/*
+					 * Issue query to get information we need.  Here we must
+					 * use begin/commit in case autocommit is off by default
+					 * in a 7.3 server.
+					 *
+					 * Note: version() and getdatabaseencoding() exist in
+					 * all protocol-2.0-supporting backends.
+					 */
+					if (!PQsendQuery(conn, "begin; select version(), getdatabaseencoding(); end"))
+						goto error_return;
+
+					conn->setenv_state = SETENV_STATE_QUERY1_WAIT;
+					return PGRES_POLLING_READING;
+				}
+
+			case SETENV_STATE_QUERY1_WAIT:
+				{
+					if (PQisBusy(conn))
+						return PGRES_POLLING_READING;
+
+					res = PQgetResult(conn);
+
+					if (res)
+					{
+						char	   *val;
+
+						if (PQresultStatus(res) == PGRES_COMMAND_OK)
+						{
+							/* ignore begin/commit command results */
+							PQclear(res);
+							continue;
+						}
+
+						if (PQresultStatus(res) != PGRES_TUPLES_OK ||
+							PQntuples(res) != 1)
+						{
+							PQclear(res);
+							goto error_return;
+						}
+
+						/*
+						 * Extract server version and database encoding,
+						 * and save as if ParameterStatus
+						 */
+						val = PQgetvalue(res, 0, 0);
+						if (val && strncmp(val, "PostgreSQL ", 11) == 0)
+						{
+							char   *ptr;
+
+							/* strip off PostgreSQL part */
+							val += 11;
+							/*
+							 * strip off platform part (scribbles on result,
+							 * naughty naughty)
+							 */
+							ptr = strchr(val, ' ');
+							if (ptr)
+								*ptr = '\0';
+
+							pqSaveParameterStatus(conn, "server_version",
+												  val);
+						}
+
+						val = PQgetvalue(res, 0, 1);
+						if (val && *val) /* null should not happen, but */
+							pqSaveParameterStatus(conn, "server_encoding",
+												  val);
+
+						PQclear(res);
+						/* Keep reading until PQgetResult returns NULL */
+					}
+					else
+					{
+						/* Query finished, move to next */
+						conn->setenv_state = SETENV_STATE_QUERY2_SEND;
+					}
+					break;
+				}
+
+			case SETENV_STATE_QUERY2_SEND:
+				{
+					const char *query;
+
+					/*
+					 * pg_client_encoding does not exist in pre-7.2 servers.
+					 * So we need to be prepared for an error here.  Do *not*
+					 * start a transaction block, except in 7.3 servers where
+					 * we need to prevent autocommit-off from starting a
+					 * transaction anyway.
+					 */
+					if (strncmp(conn->sversion, "7.3", 3) == 0)
+						query = "begin; select pg_client_encoding(); end";
+					else
+						query = "select pg_client_encoding()";
+					if (!PQsendQuery(conn, query))
+						goto error_return;
+
+					conn->setenv_state = SETENV_STATE_QUERY2_WAIT;
+					return PGRES_POLLING_READING;
+				}
+
+			case SETENV_STATE_QUERY2_WAIT:
+				{
+					if (PQisBusy(conn))
+						return PGRES_POLLING_READING;
+
+					res = PQgetResult(conn);
+
+					if (res)
+					{
+						const char *val;
+
+						if (PQresultStatus(res) == PGRES_COMMAND_OK)
+						{
+							/* ignore begin/commit command results */
+							PQclear(res);
+							continue;
+						}
+
+						if (PQresultStatus(res) == PGRES_TUPLES_OK &&
+							PQntuples(res) == 1)
+						{
+							/* Extract client encoding and save it */
+							val = PQgetvalue(res, 0, 0);
+							if (val && *val) /* null should not happen, but */
+								pqSaveParameterStatus(conn, "client_encoding",
+													  val);
+						}
+						else
+						{
+							/*
+							 * Error: presumably function not available, so
+							 * use PGCLIENTENCODING or database encoding as
+							 * the fallback.
+							 */
+							val = getenv("PGCLIENTENCODING");
+							if (val && *val)
+								pqSaveParameterStatus(conn, "client_encoding",
+													  val);
+							else
+							{
+								val = pqGetParameterStatus(conn, "server_encoding");
+								if (val && *val)
+									pqSaveParameterStatus(conn, "client_encoding",
+														  val);
+							}
+						}
+
+						PQclear(res);
+						/* Keep reading until PQgetResult returns NULL */
+					}
+					else
+					{
+						/* Query finished, so we're done */
+						conn->setenv_state = SETENV_STATE_IDLE;
+						return PGRES_POLLING_OK;
+					}
+					break;
+				}
+
+			default:
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("invalid state %c, "
+						   "probably indicative of memory corruption\n"),
+								  conn->setenv_state);
+				goto error_return;
+		}
+	}
+
+	/* Unreachable */
+
+error_return:
+	conn->setenv_state = SETENV_STATE_IDLE;
+	return PGRES_POLLING_FAILED;
+}
+
+
+/*
+ * parseInput: if appropriate, parse input data from backend
+ * until input is exhausted or a stopping state is reached.
+ * Note that this function will NOT attempt to read more data from the backend.
+ */
+void
+pqParseInput2(PGconn *conn)
+{
+	char		id;
+	char		noticeWorkspace[128];
+
+	/*
+	 * Loop to parse successive complete messages available in the buffer.
+	 */
+	for (;;)
+	{
+		/*
+		 * Quit if in COPY_OUT state: we expect raw data from the server
+		 * until PQendcopy is called.  Don't try to parse it according to
+		 * the normal protocol.  (This is bogus.  The data lines ought to
+		 * be part of the protocol and have identifying leading
+		 * characters.)
+		 */
+		if (conn->asyncStatus == PGASYNC_COPY_OUT)
+			return;
+
+		/*
+		 * OK to try to read a message type code.
+		 */
+		conn->inCursor = conn->inStart;
+		if (pqGetc(&id, conn))
+			return;
+
+		/*
+		 * NOTIFY and NOTICE messages can happen in any state besides
+		 * COPY OUT; always process them right away.
+		 *
+		 * Most other messages should only be processed while in BUSY state.
+		 * (In particular, in READY state we hold off further parsing
+		 * until the application collects the current PGresult.)
+		 *
+		 * However, if the state is IDLE then we got trouble; we need to deal
+		 * with the unexpected message somehow.
+		 */
+		if (id == 'A')
+		{
+			if (getNotify(conn))
+				return;
+		}
+		else if (id == 'N')
+		{
+			if (pqGetErrorNotice2(conn, false))
+				return;
+		}
+		else if (conn->asyncStatus != PGASYNC_BUSY)
+		{
+			/* If not IDLE state, just wait ... */
+			if (conn->asyncStatus != PGASYNC_IDLE)
+				return;
+
+			/*
+			 * Unexpected message in IDLE state; need to recover somehow.
+			 * ERROR messages are displayed using the notice processor;
+			 * anything else is just dropped on the floor after displaying
+			 * a suitable warning notice.  (An ERROR is very possibly the
+			 * backend telling us why it is about to close the connection,
+			 * so we don't want to just discard it...)
+			 */
+			if (id == 'E')
+			{
+				if (pqGetErrorNotice2(conn, false /* treat as notice */))
+					return;
+			}
+			else
+			{
+				snprintf(noticeWorkspace, sizeof(noticeWorkspace),
+						 libpq_gettext("message type 0x%02x arrived from server while idle\n"),
+						 id);
+				PGDONOTICE(conn, noticeWorkspace);
+				/* Discard the unexpected message; good idea?? */
+				conn->inStart = conn->inEnd;
+				break;
+			}
+		}
+		else
+		{
+			/*
+			 * In BUSY state, we can process everything.
+			 */
+			switch (id)
+			{
+				case 'C':		/* command complete */
+					if (pqGets(&conn->workBuffer, conn))
+						return;
+					if (conn->result == NULL)
+						conn->result = PQmakeEmptyPGresult(conn,
+													   PGRES_COMMAND_OK);
+					strncpy(conn->result->cmdStatus, conn->workBuffer.data,
+							CMDSTATUS_LEN);
+					conn->asyncStatus = PGASYNC_READY;
+					break;
+				case 'E':		/* error return */
+					if (pqGetErrorNotice2(conn, true))
+						return;
+					conn->asyncStatus = PGASYNC_READY;
+					break;
+				case 'Z':		/* backend is ready for new query */
+					conn->asyncStatus = PGASYNC_IDLE;
+					break;
+				case 'I':		/* empty query */
+					/* read and throw away the closing '\0' */
+					if (pqGetc(&id, conn))
+						return;
+					if (id != '\0')
+					{
+						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
+								 libpq_gettext("unexpected character %c following empty query response (\"I\" message)\n"),
+								 id);
+						PGDONOTICE(conn, noticeWorkspace);
+					}
+					if (conn->result == NULL)
+						conn->result = PQmakeEmptyPGresult(conn,
+													  PGRES_EMPTY_QUERY);
+					conn->asyncStatus = PGASYNC_READY;
+					break;
+				case 'K':		/* secret key data from the backend */
+
+					/*
+					 * This is expected only during backend startup, but
+					 * it's just as easy to handle it as part of the main
+					 * loop.  Save the data and continue processing.
+					 */
+					if (pqGetInt(&(conn->be_pid), 4, conn))
+						return;
+					if (pqGetInt(&(conn->be_key), 4, conn))
+						return;
+					break;
+				case 'P':		/* synchronous (normal) portal */
+					if (pqGets(&conn->workBuffer, conn))
+						return;
+					/* We pretty much ignore this message type... */
+					break;
+				case 'T':		/* row descriptions (start of query
+								 * results) */
+					if (conn->result == NULL)
+					{
+						/* First 'T' in a query sequence */
+						if (getRowDescriptions(conn))
+							return;
+					}
+					else
+					{
+						/*
+						 * A new 'T' message is treated as the start of
+						 * another PGresult.  (It is not clear that this
+						 * is really possible with the current backend.)
+						 * We stop parsing until the application accepts
+						 * the current result.
+						 */
+						conn->asyncStatus = PGASYNC_READY;
+						return;
+					}
+					break;
+				case 'D':		/* ASCII data tuple */
+					if (conn->result != NULL)
+					{
+						/* Read another tuple of a normal query response */
+						if (getAnotherTuple(conn, FALSE))
+							return;
+					}
+					else
+					{
+						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
+								 libpq_gettext("server sent data (\"D\" message) without prior row description (\"T\" message)\n"));
+						PGDONOTICE(conn, noticeWorkspace);
+						/* Discard the unexpected message; good idea?? */
+						conn->inStart = conn->inEnd;
+						return;
+					}
+					break;
+				case 'B':		/* Binary data tuple */
+					if (conn->result != NULL)
+					{
+						/* Read another tuple of a normal query response */
+						if (getAnotherTuple(conn, TRUE))
+							return;
+					}
+					else
+					{
+						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
+								 libpq_gettext("server sent binary data (\"B\" message) without prior row description (\"T\" message)\n"));
+						PGDONOTICE(conn, noticeWorkspace);
+						/* Discard the unexpected message; good idea?? */
+						conn->inStart = conn->inEnd;
+						return;
+					}
+					break;
+				case 'G':		/* Start Copy In */
+					conn->asyncStatus = PGASYNC_COPY_IN;
+					break;
+				case 'H':		/* Start Copy Out */
+					conn->asyncStatus = PGASYNC_COPY_OUT;
+					break;
+				default:
+					printfPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext(
+													"unexpected response from server; first received character was \"%c\"\n"),
+									  id);
+					/* build an error result holding the error message */
+					pqSaveErrorResult(conn);
+					/* Discard the unexpected message; good idea?? */
+					conn->inStart = conn->inEnd;
+					conn->asyncStatus = PGASYNC_READY;
+					return;
+			}					/* switch on protocol character */
+		}
+		/* Successfully consumed this message */
+		conn->inStart = conn->inCursor;
+	}
+}
+
+/*
+ * parseInput subroutine to read a 'T' (row descriptions) message.
+ * We build a PGresult structure containing the attribute data.
+ * Returns: 0 if completed message, EOF if not enough data yet.
+ *
+ * Note that if we run out of data, we have to release the partially
+ * constructed PGresult, and rebuild it again next time.  Fortunately,
+ * that shouldn't happen often, since 'T' messages usually fit in a packet.
+ */
+static int
+getRowDescriptions(PGconn *conn)
+{
+	PGresult   *result;
+	int			nfields;
+	int			i;
+
+	result = PQmakeEmptyPGresult(conn, PGRES_TUPLES_OK);
+
+	/* parseInput already read the 'T' label. */
+	/* the next two bytes are the number of fields	*/
+	if (pqGetInt(&(result->numAttributes), 2, conn))
+	{
+		PQclear(result);
+		return EOF;
+	}
+	nfields = result->numAttributes;
+
+	/* allocate space for the attribute descriptors */
+	if (nfields > 0)
+	{
+		result->attDescs = (PGresAttDesc *)
+			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), TRUE);
+		MemSet((char *) result->attDescs, 0, nfields * sizeof(PGresAttDesc));
+	}
+
+	/* get type info */
+	for (i = 0; i < nfields; i++)
+	{
+		int			typid;
+		int			typlen;
+		int			atttypmod;
+
+		if (pqGets(&conn->workBuffer, conn) ||
+			pqGetInt(&typid, 4, conn) ||
+			pqGetInt(&typlen, 2, conn) ||
+			pqGetInt(&atttypmod, 4, conn))
+		{
+			PQclear(result);
+			return EOF;
+		}
+
+		/*
+		 * Since pqGetInt treats 2-byte integers as unsigned, we need to
+		 * coerce the result to signed form.
+		 */
+		typlen = (int) ((int16) typlen);
+
+		result->attDescs[i].name = pqResultStrdup(result,
+												  conn->workBuffer.data);
+		result->attDescs[i].typid = typid;
+		result->attDescs[i].typlen = typlen;
+		result->attDescs[i].atttypmod = atttypmod;
+	}
+
+	/* Success! */
+	conn->result = result;
+	return 0;
+}
+
+/*
+ * parseInput subroutine to read a 'B' or 'D' (row data) message.
+ * We add another tuple to the existing PGresult structure.
+ * Returns: 0 if completed message, EOF if error or not enough data yet.
+ *
+ * Note that if we run out of data, we have to suspend and reprocess
+ * the message after more data is received.  We keep a partially constructed
+ * tuple in conn->curTuple, and avoid reallocating already-allocated storage.
+ */
+static int
+getAnotherTuple(PGconn *conn, bool binary)
+{
+	PGresult   *result = conn->result;
+	int			nfields = result->numAttributes;
+	PGresAttValue *tup;
+
+	/* the backend sends us a bitmap of which attributes are null */
+	char		std_bitmap[64]; /* used unless it doesn't fit */
+	char	   *bitmap = std_bitmap;
+	int			i;
+	size_t		nbytes;			/* the number of bytes in bitmap  */
+	char		bmap;			/* One byte of the bitmap */
+	int			bitmap_index;	/* Its index */
+	int			bitcnt;			/* number of bits examined in current byte */
+	int			vlen;			/* length of the current field value */
+
+	result->binary = binary;
+
+	/* Allocate tuple space if first time for this data message */
+	if (conn->curTuple == NULL)
+	{
+		conn->curTuple = (PGresAttValue *)
+			pqResultAlloc(result, nfields * sizeof(PGresAttValue), TRUE);
+		if (conn->curTuple == NULL)
+			goto outOfMemory;
+		MemSet((char *) conn->curTuple, 0, nfields * sizeof(PGresAttValue));
+	}
+	tup = conn->curTuple;
+
+	/* Get the null-value bitmap */
+	nbytes = (nfields + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
+	/* malloc() only for unusually large field counts... */
+	if (nbytes > sizeof(std_bitmap))
+		bitmap = (char *) malloc(nbytes);
+
+	if (pqGetnchar(bitmap, nbytes, conn))
+		goto EOFexit;
+
+	/* Scan the fields */
+	bitmap_index = 0;
+	bmap = bitmap[bitmap_index];
+	bitcnt = 0;
+
+	for (i = 0; i < nfields; i++)
+	{
+		if (!(bmap & 0200))
+		{
+			/* if the field value is absent, make it a null string */
+			tup[i].value = result->null_field;
+			tup[i].len = NULL_LEN;
+		}
+		else
+		{
+			/* get the value length (the first four bytes are for length) */
+			if (pqGetInt(&vlen, 4, conn))
+				goto EOFexit;
+			if (!binary)
+				vlen = vlen - 4;
+			if (vlen < 0)
+				vlen = 0;
+			if (tup[i].value == NULL)
+			{
+				tup[i].value = (char *) pqResultAlloc(result, vlen + 1, binary);
+				if (tup[i].value == NULL)
+					goto outOfMemory;
+			}
+			tup[i].len = vlen;
+			/* read in the value */
+			if (vlen > 0)
+				if (pqGetnchar((char *) (tup[i].value), vlen, conn))
+					goto EOFexit;
+			/* we have to terminate this ourselves */
+			tup[i].value[vlen] = '\0';
+		}
+		/* advance the bitmap stuff */
+		bitcnt++;
+		if (bitcnt == BITS_PER_BYTE)
+		{
+			bitmap_index++;
+			bmap = bitmap[bitmap_index];
+			bitcnt = 0;
+		}
+		else
+			bmap <<= 1;
+	}
+
+	/* Success!  Store the completed tuple in the result */
+	if (!pqAddTuple(result, tup))
+		goto outOfMemory;
+	/* and reset for a new message */
+	conn->curTuple = NULL;
+
+	if (bitmap != std_bitmap)
+		free(bitmap);
+	return 0;
+
+outOfMemory:
+	/* Replace partially constructed result with an error result */
+
+	/*
+	 * we do NOT use pqSaveErrorResult() here, because of the likelihood
+	 * that there's not enough memory to concatenate messages...
+	 */
+	pqClearAsyncResult(conn);
+	printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext("out of memory for query result\n"));
+	conn->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+	conn->asyncStatus = PGASYNC_READY;
+	/* Discard the failed message --- good idea? */
+	conn->inStart = conn->inEnd;
+
+EOFexit:
+	if (bitmap != std_bitmap)
+		free(bitmap);
+	return EOF;
+}
+
+
+/*
+ * Attempt to read an Error or Notice response message.
+ * This is possible in several places, so we break it out as a subroutine.
+ * Entry: 'E' or 'N' message type has already been consumed.
+ * Exit: returns 0 if successfully consumed message.
+ *		 returns EOF if not enough data.
+ */
+static int
+pqGetErrorNotice2(PGconn *conn, bool isError)
+{
+	PGresult   *res;
+	PQExpBufferData workBuf;
+
+	/*
+	 * Since the message might be pretty long, we create a temporary
+	 * PQExpBuffer rather than using conn->workBuffer.	workBuffer is
+	 * intended for stuff that is expected to be short.
+	 */
+	initPQExpBuffer(&workBuf);
+	if (pqGets(&workBuf, conn))
+	{
+		termPQExpBuffer(&workBuf);
+		return EOF;
+	}
+
+	/*
+	 * Make a PGresult to hold the message.  We temporarily
+	 * lie about the result status, so that PQmakeEmptyPGresult doesn't
+	 * uselessly copy conn->errorMessage.
+	 */
+	res = PQmakeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
+	res->resultStatus = isError ? PGRES_FATAL_ERROR : PGRES_NONFATAL_ERROR;
+	res->errMsg = pqResultStrdup(res, workBuf.data);
+
+	/*
+	 * Either save error as current async result, or just emit the notice.
+	 */
+	if (isError)
+	{
+		pqClearAsyncResult(conn);
+		conn->result = res;
+		resetPQExpBuffer(&conn->errorMessage);
+		appendPQExpBufferStr(&conn->errorMessage, workBuf.data);
+	}
+	else
+	{
+		PGDONOTICE(conn, workBuf.data);
+		PQclear(res);
+	}
+
+	termPQExpBuffer(&workBuf);
+	return 0;
+}
+
+
+/*
+ * Attempt to read a Notify response message.
+ * This is possible in several places, so we break it out as a subroutine.
+ * Entry: 'A' message type and length have already been consumed.
+ * Exit: returns 0 if successfully consumed Notify message.
+ *		 returns EOF if not enough data.
+ */
+static int
+getNotify(PGconn *conn)
+{
+	int			be_pid;
+	PGnotify   *newNotify;
+
+	if (pqGetInt(&be_pid, 4, conn))
+		return EOF;
+	if (pqGets(&conn->workBuffer, conn))
+		return EOF;
+
+	/*
+	 * Store the relation name right after the PQnotify structure so it
+	 * can all be freed at once.  We don't use NAMEDATALEN because we
+	 * don't want to tie this interface to a specific server name length.
+	 */
+	newNotify = (PGnotify *) malloc(sizeof(PGnotify) +
+									strlen(conn->workBuffer.data) +1);
+	if (newNotify)
+	{
+		newNotify->relname = (char *) newNotify + sizeof(PGnotify);
+		strcpy(newNotify->relname, conn->workBuffer.data);
+		newNotify->be_pid = be_pid;
+		DLAddTail(conn->notifyList, DLNewElem(newNotify));
+	}
+
+	return 0;
+}
+
+
+/*
+ * PQgetline - gets a newline-terminated string from the backend.
+ *
+ * See fe-exec.c for documentation.
+ */
+int
+pqGetline2(PGconn *conn, char *s, int maxlen)
+{
+	int			result = 1;		/* return value if buffer overflows */
+
+	if (conn->sock < 0)
+	{
+		*s = '\0';
+		return EOF;
+	}
+
+	/*
+	 * Since this is a purely synchronous routine, we don't bother to
+	 * maintain conn->inCursor; there is no need to back up.
+	 */
+	while (maxlen > 1)
+	{
+		if (conn->inStart < conn->inEnd)
+		{
+			char		c = conn->inBuffer[conn->inStart++];
+
+			if (c == '\n')
+			{
+				result = 0;		/* success exit */
+				break;
+			}
+			*s++ = c;
+			maxlen--;
+		}
+		else
+		{
+			/* need to load more data */
+			if (pqWait(TRUE, FALSE, conn) ||
+				pqReadData(conn) < 0)
+			{
+				result = EOF;
+				break;
+			}
+		}
+	}
+	*s = '\0';
+
+	return result;
+}
+
+/*
+ * PQgetlineAsync - gets a COPY data row without blocking.
+ *
+ * See fe-exec.c for documentation.
+ */
+int
+pqGetlineAsync2(PGconn *conn, char *buffer, int bufsize)
+{
+	int			avail;
+
+	if (conn->asyncStatus != PGASYNC_COPY_OUT)
+		return -1;				/* we are not doing a copy... */
+
+	/*
+	 * Move data from libpq's buffer to the caller's. We want to accept
+	 * data only in units of whole lines, not partial lines.  This ensures
+	 * that we can recognize the terminator line "\\.\n".  (Otherwise, if
+	 * it happened to cross a packet/buffer boundary, we might hand the
+	 * first one or two characters off to the caller, which we shouldn't.)
+	 */
+
+	conn->inCursor = conn->inStart;
+
+	avail = bufsize;
+	while (avail > 0 && conn->inCursor < conn->inEnd)
+	{
+		char		c = conn->inBuffer[conn->inCursor++];
+
+		*buffer++ = c;
+		--avail;
+		if (c == '\n')
+		{
+			/* Got a complete line; mark the data removed from libpq */
+			conn->inStart = conn->inCursor;
+			/* Is it the endmarker line? */
+			if (bufsize - avail == 3 && buffer[-3] == '\\' && buffer[-2] == '.')
+				return -1;
+			/* No, return the data line to the caller */
+			return bufsize - avail;
+		}
+	}
+
+	/*
+	 * We don't have a complete line. We'd prefer to leave it in libpq's
+	 * buffer until the rest arrives, but there is a special case: what if
+	 * the line is longer than the buffer the caller is offering us?  In
+	 * that case we'd better hand over a partial line, else we'd get into
+	 * an infinite loop. Do this in a way that ensures we can't
+	 * misrecognize a terminator line later: leave last 3 characters in
+	 * libpq buffer.
+	 */
+	if (avail == 0 && bufsize > 3)
+	{
+		conn->inStart = conn->inCursor - 3;
+		return bufsize - 3;
+	}
+	return 0;
+}
+
+/*
+ * PQendcopy
+ *
+ * See fe-exec.c for documentation.
+ */
+int
+pqEndcopy2(PGconn *conn)
+{
+	PGresult   *result;
+
+	if (conn->asyncStatus != PGASYNC_COPY_IN &&
+		conn->asyncStatus != PGASYNC_COPY_OUT)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("no COPY in progress\n"));
+		return 1;
+	}
+
+	/*
+	 * make sure no data is waiting to be sent, abort if we are
+	 * non-blocking and the flush fails
+	 */
+	if (pqFlush(conn) && pqIsnonblocking(conn))
+		return (1);
+
+	/* non blocking connections may have to abort at this point. */
+	if (pqIsnonblocking(conn) && PQisBusy(conn))
+		return (1);
+
+	/* Return to active duty */
+	conn->asyncStatus = PGASYNC_BUSY;
+	resetPQExpBuffer(&conn->errorMessage);
+
+	/* Wait for the completion response */
+	result = PQgetResult(conn);
+
+	/* Expecting a successful result */
+	if (result && result->resultStatus == PGRES_COMMAND_OK)
+	{
+		PQclear(result);
+		return 0;
+	}
+
+	/*
+	 * Trouble. The worst case is that we've lost sync with the backend
+	 * entirely due to application screwup of the copy in/out protocol. To
+	 * recover, reset the connection (talk about using a sledgehammer...)
+	 */
+	PQclear(result);
+
+	if (conn->errorMessage.len > 0)
+		PGDONOTICE(conn, conn->errorMessage.data);
+
+	PGDONOTICE(conn, libpq_gettext("lost synchronization with server, resetting connection\n"));
+
+	/*
+	 * Users doing non-blocking connections need to handle the reset
+	 * themselves, they'll need to check the connection status if we
+	 * return an error.
+	 */
+	if (pqIsnonblocking(conn))
+		PQresetStart(conn);
+	else
+		PQreset(conn);
+
+	return 1;
+}
+
+
+/*
+ * PQfn - Send a function call to the POSTGRES backend.
+ *
+ * See fe-exec.c for documentation.
+ */
+PGresult *
+pqFunctionCall2(PGconn *conn, Oid fnid,
+				int *result_buf, int *actual_result_len,
+				int result_is_int,
+				const PQArgBlock *args, int nargs)
+{
+	bool		needInput = false;
+	ExecStatusType status = PGRES_FATAL_ERROR;
+	char		id;
+	int			i;
+
+	/* PQfn already validated connection state */
+
+	if (pqPutMsgStart('F', false, conn) < 0 || /* function call msg */
+		pqPuts(" ", conn) < 0 ||		/* dummy string */
+		pqPutInt(fnid, 4, conn) != 0 || /* function id */
+		pqPutInt(nargs, 4, conn) != 0)	/* # of args */
+	{
+		pqHandleSendFailure(conn);
+		return NULL;
+	}
+
+	for (i = 0; i < nargs; ++i)
+	{							/* len.int4 + contents	   */
+		if (pqPutInt(args[i].len, 4, conn))
+		{
+			pqHandleSendFailure(conn);
+			return NULL;
+		}
+
+		if (args[i].isint)
+		{
+			if (pqPutInt(args[i].u.integer, 4, conn))
+			{
+				pqHandleSendFailure(conn);
+				return NULL;
+			}
+		}
+		else
+		{
+			if (pqPutnchar((char *) args[i].u.ptr, args[i].len, conn))
+			{
+				pqHandleSendFailure(conn);
+				return NULL;
+			}
+		}
+	}
+
+	if (pqPutMsgEnd(conn) < 0 ||
+		pqFlush(conn))
+	{
+		pqHandleSendFailure(conn);
+		return NULL;
+	}
+
+	for (;;)
+	{
+		if (needInput)
+		{
+			/* Wait for some data to arrive (or for the channel to close) */
+			if (pqWait(TRUE, FALSE, conn) ||
+				pqReadData(conn) < 0)
+				break;
+		}
+
+		/*
+		 * Scan the message. If we run out of data, loop around to try
+		 * again.
+		 */
+		conn->inCursor = conn->inStart;
+		needInput = true;
+
+		if (pqGetc(&id, conn))
+			continue;
+
+		/*
+		 * We should see V or E response to the command, but might get N
+		 * and/or A notices first. We also need to swallow the final Z
+		 * before returning.
+		 */
+		switch (id)
+		{
+			case 'V':			/* function result */
+				if (pqGetc(&id, conn))
+					continue;
+				if (id == 'G')
+				{
+					/* function returned nonempty value */
+					if (pqGetInt(actual_result_len, 4, conn))
+						continue;
+					if (result_is_int)
+					{
+						if (pqGetInt(result_buf, 4, conn))
+							continue;
+					}
+					else
+					{
+						if (pqGetnchar((char *) result_buf,
+									   *actual_result_len,
+									   conn))
+							continue;
+					}
+					if (pqGetc(&id, conn))		/* get the last '0' */
+						continue;
+				}
+				if (id == '0')
+				{
+					/* correctly finished function result message */
+					status = PGRES_COMMAND_OK;
+				}
+				else
+				{
+					/* The backend violates the protocol. */
+					printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("protocol error: id=0x%x\n"),
+									  id);
+					pqSaveErrorResult(conn);
+					conn->inStart = conn->inCursor;
+					return pqPrepareAsyncResult(conn);
+				}
+				break;
+			case 'E':			/* error return */
+				if (pqGetErrorNotice2(conn, true))
+					continue;
+				status = PGRES_FATAL_ERROR;
+				break;
+			case 'A':			/* notify message */
+				/* handle notify and go back to processing return values */
+				if (getNotify(conn))
+					continue;
+				break;
+			case 'N':			/* notice */
+				/* handle notice and go back to processing return values */
+				if (pqGetErrorNotice2(conn, false))
+					continue;
+				break;
+			case 'Z':			/* backend is ready for new query */
+				/* consume the message and exit */
+				conn->inStart = conn->inCursor;
+				/* if we saved a result object (probably an error), use it */
+				if (conn->result)
+					return pqPrepareAsyncResult(conn);
+				return PQmakeEmptyPGresult(conn, status);
+			default:
+				/* The backend violates the protocol. */
+				printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("protocol error: id=0x%x\n"),
+								  id);
+				pqSaveErrorResult(conn);
+				conn->inStart = conn->inCursor;
+				return pqPrepareAsyncResult(conn);
+		}
+		/* Completed this message, keep going */
+		conn->inStart = conn->inCursor;
+		needInput = false;
+	}
+
+	/*
+	 * We fall out of the loop only upon failing to read data.
+	 * conn->errorMessage has been set by pqWait or pqReadData. We want to
+	 * append it to any already-received error message.
+	 */
+	pqSaveErrorResult(conn);
+	return pqPrepareAsyncResult(conn);
+}
+
+
+/*
+ * Construct startup packet
+ *
+ * Returns a malloc'd packet buffer, or NULL if out of memory
+ */
+char *
+pqBuildStartupPacket2(PGconn *conn, int *packetlen,
+					  const PQEnvironmentOption *options)
+{
+	StartupPacket *startpacket;
+
+	*packetlen = sizeof(StartupPacket);
+	startpacket = (StartupPacket *) malloc(sizeof(StartupPacket));
+	if (!startpacket)
+		return NULL;
+
+	MemSet((char *) startpacket, 0, sizeof(StartupPacket));
+
+	startpacket->protoVersion = htonl(conn->pversion);
+
+	strncpy(startpacket->user, conn->pguser, SM_USER);
+	strncpy(startpacket->database, conn->dbName, SM_DATABASE);
+	strncpy(startpacket->tty, conn->pgtty, SM_TTY);
+
+	if (conn->pgoptions)
+		strncpy(startpacket->options, conn->pgoptions, SM_OPTIONS);
+
+	return (char *) startpacket;
+}

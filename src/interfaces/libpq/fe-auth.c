@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.78 2003/05/16 04:58:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.79 2003/06/08 17:43:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,7 +559,11 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 		default:
 			return STATUS_ERROR;
 	}
-	ret = pqPacketSend(conn, 'p', crypt_pwd, strlen(crypt_pwd) + 1);
+	/* Packet has a message type as of protocol 3.0 */
+	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+		ret = pqPacketSend(conn, 'p', crypt_pwd, strlen(crypt_pwd) + 1);
+	else
+		ret = pqPacketSend(conn, 0, crypt_pwd, strlen(crypt_pwd) + 1);
 	if (areq == AUTH_REQ_MD5)
 		free(crypt_pwd);
 	return ret;
