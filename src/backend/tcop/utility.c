@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.68 1999/09/29 16:06:11 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.69 1999/09/30 01:12:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,35 +206,30 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-		case T_TruncateStmt:     
-		        {
+		case T_TruncateStmt:
+			{
+				Relation	rel;
 
-			  Relation	rel;
+				PS_SET_STATUS(commandTag = "TRUNCATE");
+				CHECK_IF_ABORTED();
 
-			  PS_SET_STATUS(commandTag = "TRUNCATE");
-			  CHECK_IF_ABORTED();		
+				relname = ((TruncateStmt *) parsetree)->relName;			
+				if (!allowSystemTableMods && IsSystemRelationName(relname))
+					elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
+						 relname);
 
-			  relname = ((TruncateStmt *) parsetree)->relName;			  
-			  if (!allowSystemTableMods && IsSystemRelationName(relname)) {
-			    elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table", 
-				 relname);
-			  }			  
-			  
-			  rel = heap_openr(relname, AccessExclusiveLock);
-			  if (RelationIsValid(rel)) {
-			    if (rel->rd_rel->relkind == RELKIND_SEQUENCE) {
-			      elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence", 
-				   relname);
-			    }			    
+				/* Grab exclusive lock in preparation for truncate... */
+				rel = heap_openr(relname, AccessExclusiveLock);
+			    if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+					elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence",
+						 relname);
 			    heap_close(rel, NoLock);
-			  }
+
 #ifndef NO_SECURITY
-			  if (!pg_ownercheck(userName, relname, RELNAME)) {
-			    elog(ERROR, "you do not own class \"%s\"", relname);
-			  }
+				if (!pg_ownercheck(userName, relname, RELNAME))
+					elog(ERROR, "you do not own class \"%s\"", relname);
 #endif
-			  TruncateRelation(((TruncateStmt *) parsetree)->relName);
-			  
+				TruncateRelation(relname);
 			}
 			break;
 
