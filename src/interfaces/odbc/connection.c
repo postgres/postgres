@@ -726,6 +726,11 @@ CC_connect(ConnectionClass *self, char do_password)
 							self->errornumber = CONN_AUTH_TYPE_UNSUPPORTED;
 							return 0;
 
+						case AUTH_REQ_SCM_CREDS:
+							self->errormsg = "Unix socket credential authentication not supported";
+							self->errornumber = CONN_AUTH_TYPE_UNSUPPORTED;
+							return 0;
+
 						default:
 							self->errormsg = "Unknown authentication type";
 							self->errornumber = CONN_AUTH_TYPE_UNSUPPORTED;

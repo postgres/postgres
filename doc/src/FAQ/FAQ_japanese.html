@@ -5,9 +5,9 @@
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#FF0000" VLINK="#A00000" ALINK="#0000FF">
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=x-euc-jp">
 <H1>
-PostgreSQL(ポストグレス・キュー・エル)についてよくある質問(FAQ)</H1>
+PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</H1>
 <P>
-原文最終更新日:		Mon Apr  9 15:27:47 EDT 2001
+原文最終更新日:		Tue Jul 10 21:01:47 EDT 2001
 <P>
 現在の維持管理者:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
@@ -24,48 +24,15 @@ HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 
 <P>
 <small><PRE>
+(以下、訳者による注釈を [訳注： と ] とで囲んで記します。)
 [訳注：
-	(以下、訳者による注釈を [訳注： と ] とで囲んで記します。)
+	日本語版製作についてのメモは最後尾へ移動しました。
 
-	  http://www.PostgreSQL.org/ にアクセスすると http://postgresql.nucba.ac.jp/
-にリダイレクトされ、"Not Found" になってしまうことがあります。その場合は、
-		<A HREF="http://www.PostgreSQL.org/index.html">http://www.PostgreSQL.org/index.html</A>
-	にアクセスしてみてください。
+	日本語版のこの文書は "User's Lounge" の "Collection of FAQs" の
+	"Japanese" という見出しのところにあります。
+	(<A HREF="http://www.PostgreSQL.org/docs/faq-japanese.html">http://www.PostgreSQL.org/docs/faq-japanese.html</A>)
 
-
-  日本語版の製作については以下の通りです。
-
-  最終更新日:	2001年04月15日
-  翻訳者:	桑村 潤 (<A HREF="mailto:juk@jp.postgresql.org">Jun Kuwamura &lt;juk@jp.postgresql.org&gt;</A>)
-
-  このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
-
-		田仲 稔(<A HREF="mailto:Tanaka.Minoru@keiken.co.jp">Minoru Tanaka &lt;Tanaka.Minoru@keiken.co.jp&gt;</A>)
-		石井 達夫(<A HREF="mailto:t-ishii@sra.co.jp">Tatsuo Ishii &lt;t-ishii@sra.co.jp&gt;</A>)
-		齊藤 知人(<A HREF="mailto:tomos@elelab.nsc.co.jp">Tomohito Saitoh &lt;tomos@elelab.nsc.co.jp&gt;</A>)
-		馬場  肇(<A HREF="mailto:baba@kusastro.kyoto-u.ac.jp">Hajime Baba &lt;baba@kusastro.kyoto-u.ac.jp&gt;</A>)
-		岡本 一幸(<A HREF="mailto:kokamoto@itg.hitachi.co.jp">Kazuyuki Okamoto &lt;kokamoto@itg.hitachi.co.jp&gt;</A>)
-		小菅 昭一(<A HREF="mailto:s-kosuge@str.hitachi.co.jp">Shoichi Kosuge &lt;s-kosuge@str.hitachi.co.jp&gt;</A>)
-		山下 義之(<A HREF="mailto:dica@eurus.dti.ne.jp">Yoshiyuki Yamashita &lt;dica@eurus.dti.ne.jp&gt;</A>)
-		境 真太郎(<A HREF="mailto:s_sakai@mxn.mesh.ne.jp">Sintaro Sakai &lt;s_sakai@mxn.mesh.ne.jp&gt;</A>)
-		生越 昌己(<A HREF="mailto:ogochan@zetabits.com">Masami Ogoshi &lt;ogochan@zetabits.com&gt;</A>)
-		石川 俊行(<A HREF="mailto:tosiyuki@gol.com">Toshiyuki Ishikawa &lt;tosiyuki@gol.com&gt;</A>)
-		本田 茂広(<A HREF="mailto:fwif0083@mb.infoweb.ne.jp">Shigehiro Honda &lt;fwif0083@mb.infoweb.ne.jp&gt;</A>)
-		せせ じゅん(<A HREF="mailto:sesejun@linet.gr.jp">Jun Sese &lt;sesejun@linet.gr.jp&gt;</A>)
-
-  をはじめ、ポストグレスに関する話題豊富な<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html">日本語ポストグレス・メーリングリスト</A>、
-  和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェクト</A>、その他、
-  直接あるいは間接的にかかわっているすべてのオープンソースコミュニティーの
-  皆さんに感謝します。
-
-  日本語版のこの文書は<A HREF="http://www.PostgreSQL.org/users-lounge/docs/faq-japanese.html">http://www.PostgreSQL.org/users-lounge/docs/faq-japanese.html</A>にあるほか,
-  以下のサイトからもたどれます。
-	<A HREF="http://www.jp.postgresql.org/">http://www.jp.postgresql.org/</A>
-	<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>
-	<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/">http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/</A>
-	<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>
-
-  なお、この和訳に関するご意見は(<A HREF="mailto:juk@jp.postgresql.org">juk@jp.postgresql.org</A>)までお寄せ下さい。
+	この和訳についてお気づきの点は(<A HREF="mailto:juk@jp.postgresql.org">juk@jp.postgresql.org</A>)までメールでお寄せ下さい。
 ]
 </PRE></small>
 
@@ -79,11 +46,11 @@ HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 <A HREF="#1.2">1.2</A>)	PostgreSQLの著作権はどうなってますか？<BR>
 <A HREF="#1.3">1.3</A>)	PostgreSQLの動作するUnixプラットホームは？<BR>
 <A HREF="#1.4">1.4</A>)	Unix以外の移植版で使えるものは？<BR>
-<A HREF="#1.5">1.5</A>)	PostgreSQLはどこから手に入りますか？<BR>
+<A HREF="#1.5">1.5</A>)	PostgreSQLはどこから入手できますか？<BR>
 <A HREF="#1.6">1.6</A>)	サポートはどこで受けられますか？<BR>
-<A HREF="#1.7">1.7</A>)	最新版は何ですか<BR>
+<A HREF="#1.7">1.7</A>)	最新版はどれですか<BR>
 <A HREF="#1.8">1.8</A>)	どのような文書がありますか？<BR>
-<A HREF="#1.9">1.9</A>)	既知のバグや無い機能はどうやって見つけますか？<BR>
+<A HREF="#1.9">1.9</A>)	既知のバグや未だ無い機能はどうやって見つけますか？<BR>
 <A HREF="#1.10">1.10</A>)	<font size=-1>SQL</font>はどうすれば学べますか？<BR>
 <A HREF="#1.11">1.11</A>)	PostgreSQLは西暦2000年問題(Y2K)に対応していますか？<BR>
 <A HREF="#1.12">1.12</A>)	開発チームにはどのように参加しますか？<BR>
@@ -95,8 +62,8 @@ HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 
 <A HREF="#2.1">2.1</A>)	PostgreSQL の <font size=-1>ODBC</font> ドライバーはありますか？<BR>
 <A HREF="#2.2">2.2</A>)	PostgreSQL を Web ページと連携させるにはどんなツールがありますか？<BR>
-<A HREF="#2.3">2.3</A>)	PostgreSQL はグラフィカル・ユーザインターフェースを持ちますか？
-リポートジェネレータは？ 埋め込み問い合わせ言語インターフェースは？<BR>
+<A HREF="#2.3">2.3</A>)	PostgreSQL にグラフィカル・ユーザインターフェースはありますか？
+レポートジェネレータは？ 埋め込み問い合わせ言語インターフェースは？<BR>
 <A HREF="#2.4">2.4</A>)	PostgreSQL と通信するにはどんな言語が使えますか？<BR>
 
 
@@ -120,23 +87,24 @@ HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 <H2><CENTER>操作上の質問</CENTER></H2>
 
 <A HREF="#4.1">4.1</A>)	なぜ、システムはカンマや小数点や日付フォーマットで混乱するのですか？<BR>
-<A HREF="#4.2">4.2</A>)	バイナリ・カーソルと通常のカーソルとの厳密な違いは何ですか？<BR>
+<A HREF="#4.2">4.2</A>)	バイナリ・カーソルと通常カーソルとの厳密な違いは何ですか？<BR>
 <A HREF="#4.3">4.3</A>)	最初の数行のみを <font size=-1>select</font> するにはどうしますか？<BR>
 <A HREF="#4.4">4.4</A>)	テーブルやその他の情報のリストを <I>psql</I> で見るにはどうしますか？<BR>
-<A HREF="#4.5">4.5</A>)	テーブルからの列の削除はどのようにしますか？<BR>
+<A HREF="#4.5">4.5</A>)	テーブルから列の削除はどのようにしますか？<BR>
 <A HREF="#4.6">4.6</A>)	行、テーブル、データベースの最大サイズは？<BR>
 <A HREF="#4.7">4.7</A>)	一般的なテキストファイルからデータを保存するには、
 データベースのディスク容量はどのくらい必要ですか？<BR>
-<A HREF="#4.8">4.8</A>)	データベース内に定義されたテーブルやインデックスをどのように見つけ出しますか？<BR>
+<A HREF="#4.8">4.8</A>)	データベース内に定義されたテーブルやインデックスをどのようにして見つけ出しますか？<BR>
 <A HREF="#4.9">4.9</A>)	問い合わせが遅いうえ、インデックスを使っている様子がありません。なぜですか？<BR>
 <A HREF="#4.10">4.10</A>) 問い合わせオブティマイザがどのように問い合わせを評価するかを見るにはどうしますか？<BR>
 <A HREF="#4.11">4.11</A>) R-tree インデックスとは何ですか？<BR>
 <A HREF="#4.12">4.12</A>) 遺伝的問い合わせ最適化とは何ですか？<BR>
-<A HREF="#4.13">4.13</A>) 正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？<BR>
+<A HREF="#4.13">4.13</A>) 正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？大文字と小文字とを区別しない検索のためのインデックスはどのように使いますか？
+<BR>
 <A HREF="#4.14">4.14</A>) 問い合わせの中で、フィールドが <font size=-1>NULL</font> であることを検出するにはどうしますか？<BR>
 <A HREF="#4.15">4.15</A>) 色々な文字型のそれぞれの違いは何ですか？<BR>
 <A HREF="#4.16.1">4.16.1</A>) 通番(serial)／自動増分フィールドはどのようにつくりますか？<BR>
-<A HREF="#4.16.2">4.16.2</A>) <font size=-1>SERIAL</font>インサートの値はどうすれば得られますか？<BR>
+<A HREF="#4.16.2">4.16.2</A>) <font size=-1>SERIAL</font>データ型に挿入される値は、どうすれば得られますか？<BR>
 <A HREF="#4.16.3">4.16.3</A>) 他のユーザとの競合状態を避けるためには、<I>currval()</I> と <I>nextval()</I> は使わないほうがよいのでしょうか？<BR>
 <A HREF="#4.17">4.17</A>) <font size=-1>OID</font> とは何ですか？ <font size=-1>TID</font> とは何ですか？<BR>
 <A HREF="#4.18">4.18</A>) PostgreSQL で使われるいくつかの用語の意味は何ですか？<BR>
@@ -150,7 +118,7 @@ HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 <H2><CENTER>PostgreSQLの拡張についての質問</CENTER></H2>
 
 <A HREF="#5.1">5.1</A>)	自分で書いたユーザ定義関数を psql の中で実行するとコア・ダンプしてしまうのはなぜですか？<BR>
-<A HREF="#5.2">5.2</A>)	PostgreSQL 用に書いた粋な新しい型や関数は、どうすれば寄贈できますか？<BR>
+<A HREF="#5.2">5.2</A>)	PostgreSQL 用に書いたちょっと素敵な新しい型や関数を提供してプロジェクトに貢献したいのですが？<BR>
 <A HREF="#5.3">5.3</A>)	タプルを返す C言語の関数はどのように書きますか？<BR>
 <A HREF="#5.4">5.4</A>)	ソース・ファイルを変更しました。再コンパイルしても変化が見られないのはなぜですか？<BR>
 <P>
@@ -160,13 +128,13 @@ HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 
 <H4><A NAME="1.1">1.1</A>)	PostgreSQL とは何ですか？</H4>
 
-<P>PostgreSQL は POSTGRES データベース管理システムの改良版で、次世代 <font size=-1>DBMS</font> 研究用のプロトタイプです。PostgreSQL は POSTGRES の強力なデータ・モデルと豊富なデータ・タイプ(型)を内包しつつ、POSTGRES で使われた PostQuel 問い合わせ言語を、拡張した <font size=-1>SQL</font> のサブセットに置き換えています。PostgreSQL は無料で完全なソースを利用できます。
+<P>PostgreSQL は次世代 <font size=-1>DBMS</font> 研究用のプロトタイプであった POSTGRES データベース管理システムの改良版です。PostgreSQL は POSTGRES の強力なデータ・モデルと豊富なデータ・タイプ(型)を保持しながら、POSTGRES で使われた PostQuel 問い合わせ言語を、拡張した <font size=-1>SQL</font> のサブセットに置き換えています。PostgreSQL は無料で完全なソースを利用できます。
 
-<P>PostgreSQL のすべての開発は、PostgreSQL 開発メーリングリストに参加しているインターネット上の開発者チームで行なっています。現在の座長は Marc G. Fournier ( <A HREF="mailto:scrappy@PostgreSQL.org">scrappy@PostgreSQL.org</A> )です。(以下に参加の仕方があります。)現在、このチームが PostgreSQL開発のすべての 面倒を見ます。
+<P>PostgreSQL の開発は、PostgreSQL 開発メーリングリストに参加しているインターネット上の開発者チームですべて行なわれています。現在の座長は Marc G. Fournier ( <A HREF="mailto:scrappy@PostgreSQL.org">scrappy@PostgreSQL.org</A> )です。(以下に参加の仕方があります。)現在、このチームが PostgreSQL 開発のすべての面倒をみています。
 
-<P>PostgreSQL 1.01 の著者は Andrew Yu と Jolly Chen でした。その他大勢の人々がこのコードの移植、テスト、デバグ、および、改良に貢献しました。PostgreSQL の派生元コードである POSTGRES はカリフォルニア大学バークレイ校において、 Michael Stonebraker 教授の指揮のもと、多くの学生、卒業生、職業プログラマたちの努力により作られました。
+<P>Postgres95-1.01 の中心的な開発者は Andrew Yu と Jolly Chen でしたが、その他大勢の人々がこのコードの移植、テスト、デバグ、および、改良に参加しました。PostgreSQL の派生元コードである POSTGRES はカリフォルニア大学バークレイ校において、 Michael Stonebraker 教授の指揮のもと、多くの学生、卒業生、本職のプログラマたちの努力により作られました。
 
-<P>バークレイにおけるこのソフトウェアのもとの名前は Postgres でした。<FONT SIZE=-1>SQL</FONT> の機能が追加された 1995 年にその名前は Postgres95 に変更されました。1996 年の終りにその名前は PostgreSQL に変更されました。
+<P>バークレイにおけるこのソフトウェアのもとの名前は Postgres でしたが、<FONT SIZE=-1>SQL</FONT> の機能が追加された 1995 年にその名前は Postgres95 に変更され、1996 年の終りにその名前は PostgreSQL に変更されました。
 
 <I>Post-Gres-Q-L.</I>(ポスト - グレス - キュー - エル) と発音します。
 
@@ -182,7 +150,7 @@ HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 <P>
 PostgreSQL Data Base Management System<P>
 
-Portions copyright (c) 1996-2000, PostgreSQL Global Development Group
+Portions Copyright (c) 1996-2000, PostgreSQL Global Development Group
 Portions Copyright (c) 1994-6 Regents of the University of California<P>
 
 Permission to use, copy, modify, and distribute this software and its
@@ -254,7 +222,7 @@ MODIFICATIONS.
 
 
 <P>
-<H4><A NAME="1.5">1.5</A>)	PostgreSQL はどこから手に入りますか？</H4>
+<H4><A NAME="1.5">1.5</A>)	PostgreSQL はどこから入手できますか？</H4>
 <P> PostgreSQL の元の anonymous ftp サイトです：
 
 <UL>
@@ -304,9 +272,9 @@ MODIFICATIONS.
 
 と書いて <A HREF="mailto:pgsql-general-digest-request@PostgreSQL.org"> pgsql-general-digest-request@PostgreSQL.org</A> へ電子メールを送って下さい。
 
-<P> ダイジェスト版は、メインリストが受信するメッセージ 30k 程度溜る毎にダイジェスト版リストのメンバーに送付されます。
+<P> ダイジェスト版は、メインリストで受信するメッセージが 30k 程度溜る毎にダイジェスト版リストのメンバーに送付されます。
 
-<P> バグのメーリングリストも利用できます。このリストへの参加は "本文"といっしょに：
+<P> バグレポート用のメーリングリストもあります。このリストへの参加は "本文"といっしょに：
 <A
 HREF="mailto:bugs-request@PostgreSQL.org">bugs-request@PostgreSQL.org</A>
 
@@ -329,7 +297,7 @@ HREF="mailto:bugs-request@PostgreSQL.org">bugs-request@PostgreSQL.org</A>
 </BLOCKQUOTE>
 <P>
 
-IRC チャンネルも EFNet にあります。そのチャンネルは <I>#PostgreSQL</I> です。
+ EFNet に <I>#PostgreSQL</I> という IRC チャンネルもあります。
 unix コマンドで<tt>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</tt>
 を使います。<P>
 
@@ -361,19 +329,19 @@ unix コマンドで<tt>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</tt>
 
 <P>
 
-<H4><A NAME="1.7">1.7</A>)	最新版は何ですか</H4>
+<H4><A NAME="1.7">1.7</A>)	最新版はどれですか</H4>
 
-<P> PostgreSQL の最新版はバージョン 7.0.3 です。
+<P> PostgreSQL の最新版はバージョン 7.1.2 です。
 <P>
 我々は、4カ月毎にメジャーリリースを行なうことを計画しています。
 <P>
 
 <H4><A NAME="1.8">1.8</A>)	どのような文書がありますか？</H4>
 
-<P> 配付の中に、いくつかのマニュアルとオンライン・マニュアル(マニュアル・ページ)およびいくつかの小さなテスト例題が含まれます。<I>/doc</I> ディレクトリをご覧下さい。また、オンラインでのマニュアルを、<A
+<P> 配付の中に、いくつかのマニュアルとオンライン・マニュアル(マニュアル・ページ)およびいくつかの小さなテスト例題が含まれます。<I>/doc</I> ディレクトリをご覧下さい。また、マニュアルは、<A
 HREF="http://www.PostgreSQL.org/users-lounge/docs/">
 http://www.PostgreSQL.org/users-lounge/docs/</A>
-でも閲覧できます。
+でオンラインでも閲覧できます。
 
 <P>  PostgreSQL の本もあります。 <A
 HREF="http://www.PostgreSQL.org/docs/awbook.html">
@@ -391,7 +359,7 @@ http://www.PostgreSQL.org/docs/awbook.html</A><P>
 <P> 我々の Web サイトには、もっと沢山の文書があります。
 
 <P>
-<H4><A NAME="1.9">1.9</A>)	既知のバグや無い機能はどうやって見つけますか？
+<H4><A NAME="1.9">1.9</A>)	既知のバグや未だ無い機能はどうやって見つけますか？
 </H4><P>
 
 PostgreSQLは拡張されたSQL-92のサブセットをサポートします。
@@ -400,7 +368,7 @@ PostgreSQLは拡張されたSQL-92のサブセットをサポートします。
 TODO</A> リストに、既知のバグや欠落機能や将来計画についての記述があります。
 
 <P> 
-<H3><A NAME="1.10">1.10</A>)	<font size=-1>SQL</font> はどのように学べば良いですか？</H3>
+<H3><A NAME="1.10">1.10</A>)	<font size=-1>SQL</font> はどうすれば学べますか？</H3>
 <P>
 <A HREF="http://www.PostgreSQL.org/docs/awbook.html">
 http://www.PostgreSQL.org/docs/awbook.html</A>
@@ -532,18 +500,19 @@ PostgreSQLは、Unixプロセスを起動することによりユーザー接続を操作します。
 <DT> <B>サポート(Support)</B>
 <DD>
 
-我々のメーリングリストは、遭遇するどんな問題についても解決を助けてくれ
-る、開発者やユーザの膨大なグループを擁しています。我々は問題の解決を保
-証することはできませんが、商用データベースであっても常に解決されるわけ
-ではありません。開発者達、ユーザ・コミュニティ、マニュアル類、それに、
-ソースコードなどに直接アクセスできることよって、PostgreSQLのサポートは、
-他の<font size=-1>DBMS</font>サポートよりも優れたものとなっています。御要望に答えて、事柄毎
-の商用サポートもあります（サポートFAQ項目をご覧下さい）。
+    我々のメーリングリストは、遭遇するいかなる問題についても解決への手
+助けをしてくれる、開発者やユーザの大きな集まりを提供しています。我々は
+問題の解決を保証することはできませんが、商用データベースであっても常に
+解決されるわけではありません。開発者や、ユーザ・コミュニティ、マニュア
+ル類、それに、ソースコードなどへ直接アクセスできることよって、
+PostgreSQLのサポートは、他の<font size=-1>DBMS</font>サポートよりも優れたものとなっています。
+御要望に答えて、事柄毎の商用サポートなどもあります（サポートFAQ項目をご覧
+下さい）。
 
 <DT> <B>価格(Price)</B>
 <DD>
 
-PostgreSQLの使用は、商用でも非商用でも、すべて無料です。上記に示してあ
+PostgreSQLの利用は、商用でも非商用でも、すべて無料です。上記に示してあ
 るBSDスタイルの使用許諾に外れない限り、PostgreSQLのコードを制限無しで
 商品に組み込むことができます。
 <BR><BR>
@@ -605,9 +574,7 @@ Programmer's Guide</A>
     ]
 </PRE></small>
 
-<P> 複雑な場合、多くの人は Perl インターフェースと CGI.pm を使います。
-
-<P> Perl を使った WDB を基にした WWW ゲートウェイは<A HREF="http://www.eol.ists.ca/~dunlop/wdb-p95">http://www.eol.ists.ca/~dunlop/wdb-p95</A>からダウンロードできます。
+<P> 処理が複雑な場合、多くの人は Perl インターフェースと CGI.pm を使います。
 
 <small><PRE>
     [訳注:
@@ -622,7 +589,8 @@ Programmer's Guide</A>
 </PRE></small>
 
 <P>
-<H4><A NAME="2.3">2.3</A>)	PostgreSQL はグラフィカル・ユーザ・インターフェースを持っていますか？ レポート・ジェネレータは？ 埋め込み問い合わせ言語へのインターフェースは？
+<H4><A NAME="2.3">2.3</A>)	PostgreSQL にグラフィカル・ユーザインターフェースはありますか？
+レポート・ジェネレータは？ 埋め込み問い合わせ言語へのインターフェースは？
 </H4>
 
 <P> <I>pgaccess</I> と呼ばれる素晴らしいグラフィカル・ユーザ・インターフェースがあり、この配布と共に出荷されます。<I>Pgaccess</I> にはレポート・ジェネレータもあります。Web ページは<A HREF="http://www.flex.ro/pgaccess">http://www.flex.ro/pgaccess</A>です。
@@ -657,6 +625,8 @@ Programmer's Guide</A>
         PgBash は 境田 雅明 さんが作った bash の PostgreSQL インターフェースです。
 		<A HREF="http://www.psn.co.jp/PostgreSQL/pgbash/">http://www.psn.co.jp/PostgreSQL/pgbash/</A>
 	Bashコマンドラインでpostgres に問い合わせできます。
+	Perl のモジュールは古くからある Pg と DBI ドライバの DBD::Pg とがあり、
+	いずれも Edmund Mergl 氏によるもので <A HREF="http://www.cpan.org/">CPAN サイト</A>にあります。
     ]
 </PRE></small>
 
@@ -706,7 +676,7 @@ PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があ
 <P> 既定の設定ではローカルマシンからの unix ドメインのソケット接続しか許しません。TCP/IP 接続を可能にするには postmaster が <I>-i</I> オプションで開始されていて、<I>pgsql/data/pg_hba.conf</I> ファイルに適切なホストの記載が追加されていることを確認してください。
 
 <P>
-<H4><A NAME="3.7">3.7</A>)	よりよい性能を得るために、どのようにデータベース・エンジンを調整できますか？
+<H4><A NAME="3.7">3.7</A>)	より良い性能を得るためには、データベース・エンジンをどのように調整すれば良いですか？
 </H4>
 
 <P> 確かにインデックスは問い合わせの速度を増します。<font size=-1>EXPLAIN</font>コマンドで PostgreSQL がどのようにあなたの問い合わせを翻訳しているかを見ることができ、そして、どのインデックスが使われているかを見ることができます。
@@ -770,7 +740,7 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 
 <P> 問い合わせ実行モジュールによって生成された一時的なファイルです。例えば、もし <font size=-1>ORDER BY</font> 句を満たすためにバックエンドの <I>-S</I> パラメータで許可した値よりも大きなスペースがソートの際に必要だとすると、溢れたデータを保持するために一時的なファイルがいくつか生成されます。
 <P>
-一時的なファイルは自動的に消し去られるはずですが、もし、ソートの途中でバックエンドが潰れてしまうとそうなりません。もし、そのときバックエンドがひとつも走ってなければ、pg_tempNNN.NNファイルを消しても安全です。
+一時的なファイルは自動的に消し去られるはずですが、もし、ソートの途中でバックエンドがクラッシュしてしまうとそうはなりません。そのときバックエンドがひとつも走ってなければ、pg_tempNNN.NNファイルを消しても大丈夫です。
 
 
 <small><PRE>
@@ -798,13 +768,13 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 <P> ロケールの設定を確かめて下さい。PostgreSQL は <I>postmaster</I> プロセスを走らせたユーザーのロケールの設定を使います。postgres とpsql には SET コマンドがあり、データ書式を制御できます。これらをあなたの操作環境に合わせて設定して下さい。
 
 <P>
-<H4><A NAME="4.2">4.2</A>)	バイナリ・カーソルと通常のカーソルとの厳密な違いは何ですか？
+<H4><A NAME="4.2">4.2</A>)	バイナリ・カーソルと通常カーソルとの厳密な違いは何ですか？
 </H4>
 
 <P> 詳述は、オンラインマニュアルで <font size=-1>DECLARE</font> を見て下さい。
 
 <P>
-<H4><A NAME="4.3">4.3</A>)	問い合わせの最初の数行のみを <font size=-1>SELECT</font> するにはどうしますか？
+<H4><A NAME="4.3">4.3</A>)	最初の数行のみを <font size=-1>SELECT</font> するにはどうしますか？
 </H4>
 
 <P> オンラインマニュアルで<font size=-1>FETCH</font>を見てください。あるいは、SELECT ... LIMIT....を使ってみて下さい。
@@ -817,12 +787,12 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 </H4>
 
 <P>
-  <I>psql</I>のソースコードが書かれた <I>pgsql/src/bin/psql/describe.c</I> ファイルを読むことができます。
+  <I>psql</I>のソースコードとして書かれた <I>pgsql/src/bin/psql/describe.c</I> ファイルを読むことがその答えです。
 そこには、psqlのバックスラッシュコマンドによる出力のための<font size=-1>SQL</font>コマンドが含まれています。 <I>psql</I> に <I>-E</I> オプションをつけて起動すれば、与えたコマンドを実行するための問い合わせが出力されます。
 <P>
 
 
-<H4><A NAME="4.5">4.5</A>)	テーブルからの列の削除はどのようにしますか？
+<H4><A NAME="4.5">4.5</A>)	テーブルから列の削除はどのようにしますか？
 </H4>
 
 <P> <font size=-1>ALTER TABLE DROP COLUMN</font> はサポートしていませんが、その代わりにこうします:
@@ -855,7 +825,7 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 
 <P> もちろん、これらは実際は無制限ではなく、ディスク容量とメモリーやスワップスペースの大きさにより制限されます。性能はこれらの値がことのほか大きな時に煽りを受けます。
 
-<P> 最大テーブルサイズの16TBはオペレーティングシステムのラージ・ファイルサポートは必要としません。ラージ・テーブルは複数の1GBのファイルのように保存されます。
+<P> 最大テーブルサイズの16TBはオペレーティングシステムによる巨大ファイルのサポートは必要としません。巨大なテーブルは複数の1GBのファイルに分けて保存されますので、ファイルシステムの制限は重要ではありません。
 
 <P> デフォルトのブロックサイズを32kにすると最大テーブルサイズと最大カラム数とが増加します。
 
@@ -891,7 +861,7 @@ PostgreSQL のデータベースに保存するには、普通のファイルの約6.5倍のディスク容量を
 インデックスは、これほどのオーバヘッドは要求しませんが、インデックス付けされるデータを含む以上、それなりに大きくなります。
 
 <P>
-<H4><A NAME="4.8">4.8</A>)	データベース内に定義されたテーブルやインデックスをどのように見つけ出しますか？
+<H4><A NAME="4.8">4.8</A>)	データベース内に定義されたテーブルやインデックスをどのようにして見つけ出しますか？
 </H4>
 
 <P> <I>psql</I> にはいろいろなバックスラッシュ・コマンドがあり、こうした情報を表示します。バックスラッシュ・コマンドの種類を見るには \? を使って下さい。
@@ -905,7 +875,7 @@ PostgreSQL のデータベースに保存するには、普通のファイルの約6.5倍のディスク容量を
 
 <P> 列特定の最適化統計のために<font size=-1>VACUUM ANALYZE</font>を使います。<font size=-1>VACUUM ANALYZE</font>は複雑な複合結合(multi-join)問い合わせのために大切ですので、オブティマイザはそれぞれのテーブルから返される行の数を見積ることができ、特定の結合順序を選びます。バックエンドはそれ自身では列の統計を保持しないので、定期的にそれらを集めるためには <font size=-1>VACUUM ANALYZE</font> を走らせなくてはなりません。
 
-<P> インデックスは <font size=-1>ORDER BY</font> 操作のためには普通は使われません。すなわち、順次スキャンに続く明示的ソートは、ディスクアクセスがより少なくて済むので、巨大なテーブルの全件をインデックススキャンするよりも高速です。
+<P> 普通、インデックスは <font size=-1>ORDER BY</font> や結合の操作のためには使われません。ランダムなディスクアクセスはとても遅いので、順次スキャンに続く明示的ソートは、巨大なテーブルの全件をインデックススキャンするよりも高速です。
 
 <P> <font size=-1>LIKE</font> あるいは <I>~</I> のようなワイルドカード演算子(wild-card  operators)を使うとき、検索の開始が文字列の始めの部分に固定されているときにのみ、インデックスが使われます。
 そういうわけで、インデックスを使うためには、<font size=-1>LIKE</font> 検索では<I>%</I>で始めないようにして、また、<I>~</I>(正規表現検索)は<I>^</I> で始めるようにするべきです。
@@ -962,11 +932,29 @@ Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
 <P> GEQO モジュールは、沢山のテーブルを結合するときに、遺伝的アルゴリズム(GA)で問合わせを高速化します。これにより、しらみつぶしに探索を行なわなくても、大きな結合(join queries)を扱うことができるようになります。
 
 <P>
-<H4><A NAME="4.13">4.13</A>)	正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？
+<H4><A NAME="4.13">4.13</A>)	正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？大文字と小文字とを区別しない検索のためのインデックスはどのように使いますか？
 </H4>
 
 <P>
 <I>~</I>演算子は正規表現照合を行ない、<I>~*</I> は大文字と小文字を区別しない(case-insensitive)正規表現照合を行います。 PostgreSQL 7.1 以降では、大文字と小文字を区別しない <font size=-1>LIKE</font> 演算子を <font size=-1>ILIKE</font> といいます。
+
+
+<P>大文字と小文字を区別しない等値比較次のように表現できる：
+   
+    <PRE>
+    SELECT *
+    FROM tab
+    WHERE lower(col) = 'abc'
+    </PRE>
+
+標準インデックスでは使われず、しかしながら、もし関数インデックスを
+作ったならそれが使われるでしょう。
+
+   <PRE>
+   CREATE INDEX tabindex on tab (lower(col));
+   </PRE>
+
+
 
 
 <PRE>
@@ -1026,18 +1014,16 @@ BYTEA           bytea           可変長のバイト配列
  Bruce Momjian の<A HREF="http://www.PostgreSQL.org/docs/aw_pgsql_book">(http://www.PostgreSQL.org/docs/aw_pgsql_book)の Numbering Rows</A>の章にありあます。
 
 
-<H4><A NAME="4.16.2">4.16.2</A>)	<font size=-1>SERIAL</font>インサートの値はどうすれば得られますか？
+<H4><A NAME="4.16.2">4.16.2</A>)	<font size=-1>SERIAL</font>データ型に挿入される値は、どうすれば得られますか？
 </H4><P>
-
- ひとつの方法は、<I>nextval()</I> 関数で挿入する<I>前に(before)</I> SEQUENCEオブジェクトから次の<font size=-1>SERIAL</font>値を取り出し、それから実際に挿入をすることでしょう。
-<A HREF="#4.16.1">4.16.1</A>の例で使ったテーブルを使うとすると、次のようになるでしょう。
+  ひとつの方法は、<I>nextval()</I> 関数を使ってその値を挿入する<I>前(before)に</I> SEQUENCE オブジェクトから次の <font size=-1>SERIAL</font> 値を取り出し、それから実際に挿入をすることです。 <A HREF="#4.16.1">4.16.1</A> の例で使ったテーブルを使うとすると、次のようになります。
 
 <PRE>
 	$newSerialID = nextval('person_id_seq');
 	INSERT INTO person (id, name) VALUES ($newSerialID, 'Blaise Pascal');
 </PRE>
 
-そうして、<tt>$newSerialID</tt> に保存した新しい値を他の問い合わせに(たとえば、<tt>person</tt> テーブルに対する外部鍵(foreign key)のように)使うとよいでしょう。自動的に作られた<font size=-1>SEQUENCE</font>オブジェクトの名前は、&lt;<I>table</I>&gt;_&lt;<I>serialcolumn</I>&gt;_<I>seq</I> のようになり、このうち、<I>table</I> と <I>serialcolumn</I> はそれぞれテーブルの名前と<font size=-1>SERIAL</font>列の名前です。
+そうして、<tt>$newSerialID</tt> に保存した新しい値を他の問い合わせに(たとえば、<tt>person</tt> テーブルに対する外部キー(foreign key)のように)使うとよいでしょう。自動的に作られた<font size=-1>SEQUENCE</font>オブジェクトの名前は、&lt;<I>table</I>&gt;_&lt;<I>serialcolumn</I>&gt;_<I>seq</I> のようになり、このうち、<I>table</I> と <I>serialcolumn</I> はそれぞれテーブルの名前と<font size=-1>SERIAL</font>列の名前です。
 <P>
 
 あるいは、与えられた<font size=-1>SERIAL</font>値を、それが既定値として挿入された<I>後で(after)</I>、 <I>currval</I>() 関数を使って取り出すこともできます。たとえば、
@@ -1047,27 +1033,29 @@ BYTEA           bytea           可変長のバイト配列
 	$newID = currval('person_id_seq');
 </PRE>
 
-最後に、<font size=-1>INSERT</font>文から返る<A HREF="#4.17"><font size=-1>OID</font></A>を使って、既定値をみつけることもできますが、しかし、これは最も移植性の低いやり方でしょう。PerlのDBIで Edmund Mergl の DBD::Pg モジュールを使えば、$sth->execute() の後に $sth-&gt{pg_oid_status} を経由してその OID 値を使えるようにすることはできます。
+最後に、<font size=-1>INSERT</font>文から返る<A HREF="#4.17"><font size=-1>OID</font></A>を使って、既定値をみつけることもできますが、しかし、これは最も移植性の低いやり方でしょう。PerlのDBIで Edmund Mergl の作った DBD::Pg モジュールを使えば、$sth->execute() の後に $sth-&gt{pg_oid_status} を経由してその OID 値を使えるようにすることはできます。
 
 <P> 
 <H4><A NAME="4.16.3">4.16.3</A>)	他のユーザとの競合状態を避けるためには、<I>currval()</I> と <I>nextval()</I> は使わないほうがよいのでしょうか？
 </H4><P>
 
-ありません。バックエンドで処理されています。
+バックエンドが上手に処理するので、競合状態になることは有りません。
 
 
 <P> 
 <H4><A NAME="4.17">4.17</A>)	<font size=-1>OID</font> とは何ですか？ <font size=-1>TID</font> とは何ですか？
 </H4>
 
-<P> <font size=-1>OID</font> とは一意の行 ID に対する PostgreSQL の答えです。PostgreSQL の中でつくられるすべての行は一意の <font size=-1>OID</font> を得ます。<I>initdb</I> で(<I>backend/access/transam.h</I> から)発生される <font size=-1>OID</font> はすべて 16384より小さな値です。<I>initdb</I> 後のすべての <font size=-1>OID</font> (ユーザ作成)はそれ以上の値になります。既定では、これらすべての <font size=-1>OID</font> はテーブル内やデータベース内に留まらず、PostgreSQL のそのインストレーション全体内で一意であります。
+<P> <font size=-1>OID</font> とは一意の行 ID に対する PostgreSQL の答えです。PostgreSQL の中でつくられるすべての行は一意の <font size=-1>OID</font> を得ます。<I>initdb</I> で発生される <font size=-1>OID</font> はすべて 16384 (<I>backend/access/transam.h</I> から)より小さな値です。<I>initdb</I> 後のすべての <font size=-1>OID</font> (ユーザ作成)はそれ以上の値になります。
+既定では、これらすべての <font size=-1>OID</font>は一つのデーブルやデータベース内に留まらず、PostgreSQL インストレーション全体の中で一意です。
 
 <P> PostgreSQL はテーブル間の行を結びつけるために、そのシステムテーブル内に <font size=-1>OID</font> を使います。この <font size=-1>OID</font> は特定のユーザの行を識別するためや結合の中で使われることができます。<font size=-1>OID</font> の値を保存するためには <I>OID</I> 型を列に使うことを奨めます。より速くアクセスするために <I>OID</I> フィールドにインデックスを作ることができます。
 
-<P> O<font size=-1>ID</font> は、全てのデータベースから使われる中央領域から、全ての新しい行に割り当てられます。<font size=-1>OID</font> を他の何かに変えたい、もしくは元の <font size=-1>OID</font> でテーブルをコピーしたいのなら、そうできない理由はありません。
+  O<font size=-1>ID</font> は、全てのデータベースで使われる中央領域から、全ての新しい行に割り当てられます。<font size=-1>OID</font> を他の何かに変えたい、あるいは元の <font size=-1>OID</font> もテーブルと一緒にコピーしたいのなら、できなくはありません。
+
 
 <PRE>
-        CREATE TABLE new_table(old_oid oid, mycol int);
+        CREATE TABLE new (old_oid oid, mycol int);
         SELECT old_oid, mycol INTO new FROM old;
         COPY new TO '/tmp/pgtable';
         DELETE FROM new;
@@ -1108,9 +1096,9 @@ http://www.comptechnews.com/~reaster/dbdesign.html</a>
 <H4><A NAME="4.19">4.19</A>) エラーメッセージ <I>"ERROR: Memory exhausted in AllocSetAlloc()"</I>が出るのはなぜですか？
 </H4>
 <P>
-システムの仮想メモリーを全て使い果たしてしまっている可能性があるか、あるいは
-カーネルがあるリソースについて低い制限値を持っている可能性があります。
-<I>postmaster</I> を開始する前にこれを試してみて下さい：
+もし、7.1 よりも古いバージョンをお使いの場合は、アップデートによってこの問題を
+解決できるでしょう。それと、システムの仮想メモリーを全て使い果たしてしまっている可能性があるか、カーネルがあるリソースについてもつ制限値が低すぎる可能性があります。
+<I>postmaster</I> を始動する前にこれを試してみて下さい：
 
 <PRE>
 	ulimit -d 262144
@@ -1202,11 +1190,11 @@ PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージ
 <H4><A NAME="5.1">5.1</A>)	自分で書いたユーザ定義関数を psql の中で実行するとコア・ダンプしてしまうのはなぜですか？
 </H4>
 
-<P> 問題は色々と考えられます。まず最初に、作成したユーザ定義関数を単独のテストプログラムにして試してみて下さい。
+<P> 問題は色々と考えられますが、まず最初に、作成したユーザ定義関数を単独のテストプログラムにして試してみて下さい。
 
 
 <P>
-<H4><A NAME="5.2">5.2</A>)	PostgreSQL 用に書いた粋な新しい型や関数は、どうすれば寄贈できますか？
+<H4><A NAME="5.2">5.2</A>)	PostgreSQL 用に書いたちょっと素敵な新しい型や関数を提供してプロジェクトに貢献したいのですが？
 </H4>
 
 <P> 皆さんの行なった拡張を、<I>pgsql-hackers</I> メーリング・リストに送ってください。そして、ゆくゆくはそうした拡張が <I>contrib/</I> サブディレクトリの中に入ることになるでしょう。
@@ -1227,6 +1215,39 @@ PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージ
 
 <small><PRE>
 [訳注：
+  日本語版の製作については以下の通りです。
+
+  最終更新日:	2001年07月05日
+  翻訳者:	桑村 潤 (<A HREF="mailto:juk@jp.postgresql.org">Jun Kuwamura &lt;juk@jp.postgresql.org&gt;</A>)
+
+  このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
+
+		田仲 稔(<A HREF="mailto:Tanaka.Minoru@keiken.co.jp">Minoru Tanaka &lt;Tanaka.Minoru@keiken.co.jp&gt;</A>)
+		石井 達夫(<A HREF="mailto:t-ishii@sra.co.jp">Tatsuo Ishii &lt;t-ishii@sra.co.jp&gt;</A>)
+		齊藤 知人(<A HREF="mailto:tomos@elelab.nsc.co.jp">Tomohito Saitoh &lt;tomos@elelab.nsc.co.jp&gt;</A>)
+		馬場  肇(<A HREF="mailto:baba@kusastro.kyoto-u.ac.jp">Hajime Baba &lt;baba@kusastro.kyoto-u.ac.jp&gt;</A>)
+		岡本 一幸(<A HREF="mailto:kokamoto@itg.hitachi.co.jp">Kazuyuki Okamoto &lt;kokamoto@itg.hitachi.co.jp&gt;</A>)
+		小菅 昭一(<A HREF="mailto:s-kosuge@str.hitachi.co.jp">Shoichi Kosuge &lt;s-kosuge@str.hitachi.co.jp&gt;</A>)
+		山下 義之(<A HREF="mailto:dica@eurus.dti.ne.jp">Yoshiyuki Yamashita &lt;dica@eurus.dti.ne.jp&gt;</A>)
+		境 真太郎(<A HREF="mailto:s_sakai@mxn.mesh.ne.jp">Sintaro Sakai &lt;s_sakai@mxn.mesh.ne.jp&gt;</A>)
+		生越 昌己(<A HREF="mailto:ogochan@zetabits.com">Masami Ogoshi &lt;ogochan@zetabits.com&gt;</A>)
+		石川 俊行(<A HREF="mailto:tosiyuki@gol.com">Toshiyuki Ishikawa &lt;tosiyuki@gol.com&gt;</A>)
+		本田 茂広(<A HREF="mailto:fwif0083@mb.infoweb.ne.jp">Shigehiro Honda &lt;fwif0083@mb.infoweb.ne.jp&gt;</A>)
+		せせ じゅん(<A HREF="mailto:sesejun@linet.gr.jp">Jun Sese &lt;sesejun@linet.gr.jp&gt;</A>)
+		神谷 英孝(<A HREF="mailto:hkamiya@catvmics.ne.jp">Hidetaka Kamiya &lt;hkamiya@catvmics.ne.jp&gt;</A>)
+
+  をはじめ、ポストグレスに関する話題豊富な<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html">日本語ポストグレス・メーリングリスト</A>、
+  和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェクト</A>、その他、
+  直接あるいは間接的にかかわっているすべてのオープンソースコミュニティーの
+  皆さんに感謝します。
+
+
+  日本語版のこの文書は、以下からもたどれます。
+	<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>(FAQ和訳 PostgreSQL についてよくある質問)
+	<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>(PostgreSQL-FAQ.j)
+	<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/">http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/</A>
+
+  なお、この和訳に関するご意見は(<A HREF="mailto:juk@jp.postgresql.org">juk@jp.postgresql.org</A>)までお寄せ下さい。
 ]
 </PRE></small>
 

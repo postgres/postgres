@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.57 2001/08/16 04:27:18 momjian Exp $
+ * $Id: pqcomm.h,v 1.58 2001/08/21 00:33:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,6 +133,7 @@ typedef struct StartupPacket
 #define AUTH_REQ_PASSWORD	3	/* Password */
 #define AUTH_REQ_CRYPT		4	/* crypt password */
 #define AUTH_REQ_MD5		5	/* md5 password */
+#define AUTH_REQ_SCM_CREDS	6	/* transfer SCM credentials */
 
 typedef uint32 AuthRequest;
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.64 2001/08/16 16:24:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.65 2001/08/21 00:33:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,13 @@
 
 #include <errno.h>
 #include <pwd.h>
-#include <sys/types.h>
 #include <fcntl.h>
-#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/socket.h>			/* for SCM_CREDS */
+#ifdef SCM_CREDS
+#include <sys/uio.h>			/* for struct iovec */
+#include <sys/ucred.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -876,39 +880,103 @@ ident_unix(int sock, char *ident_user)
 	{
 		/* We didn't get a valid credentials struct. */
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "Could not get valid credentials from the UNIX socket: %s\n",
+				 "ident_unix: error receiving credentials: %s\n",
 				 strerror(errno));
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return false;
 	}
 
-	/* Convert UID to user login name */
 	pass = getpwuid(peercred.uid);
 
 	if (pass == NULL)
 	{
-		/* Error - no username with the given uid */
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "There is no entry in /etc/passwd with the socket's uid\n");
+			 "ident_unix: unknown local user with uid %d\n",
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return false;
 	}
 
-	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX);
+	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX+1);
 
 	return true;
 
-#else /* not SO_PEERCRED */
+#elif defined(SCM_CREDS)
+	struct msghdr msg;
 
+/* Credentials structure */
+#ifndef fc_uid
+	typedef struct cmsgcred Cred;
+#define cruid cmcred_uid
+#else
+	typedef struct fcred Cred;
+#define cruid fc_uid
+#endif
+	Cred *cred;
+
+	/* Compute size without padding */
+	char cmsgmem[sizeof(struct cmsghdr) + sizeof(Cred)];
+	/* Point to start of first structure */
+	struct cmsghdr *cmsg = (struct cmsghdr *)cmsgmem;
+
+	struct iovec iov;
+	char buf;
+	struct passwd *pw;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = (char *)cmsg;
+	msg.msg_controllen = sizeof(cmsgmem);
+	memset(cmsg, 0, sizeof(cmsgmem));
+
+	/*
+	 * The one character which is received here is not meaningful;
+	 * its purposes is only to make sure that recvmsg() blocks
+	 * long enough for the other side to send its credentials.
+	 */
+	iov.iov_base = &buf;
+	iov.iov_len = 1;
+
+	if (recvmsg(sock, &msg, 0) < 0 ||
+		cmsg->cmsg_len < sizeof(cmsgmem) ||
+		cmsg->cmsg_type != SCM_CREDS)
+	{
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "ident_unix: error receiving credentials: %s\n",
+				 strerror(errno));
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
+		return false;
+	}
+
+	cred = (Cred *)CMSG_DATA(cmsg);
+
+	pw = getpwuid(cred->fc_uid);
+	if (pw == NULL)
+	{
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			 "ident_unix: unknown local user with uid %d\n",
+			 cred->fc_uid);
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
+		return false;
+	}
+
+	StrNCpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX+1);
+
+	return true;
+
+#else
 	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "IDENT auth is not supported on local connections on this platform\n");
+			 "'ident' auth is not supported on local connections on this platform\n");
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
+
 	return false;
 
-#endif /* SO_PEERCRED */
+#endif
 }
 
 /*

@@ -8,17 +8,22 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.62 2001/08/17 15:44:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.63 2001/08/21 00:33:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include <sys/types.h>			/* needed by in.h on Ultrix */
+#include <sys/types.h>
+#include <sys/socket.h>			/* for SCM_CREDS */
+#ifdef SCM_CREDS
+#include <sys/uio.h>			/* for struct iovec */
+#include <sys/ucred.h>
+#include <errno.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
 #include "libpq/hba.h"
@@ -28,12 +33,10 @@
 #include "miscadmin.h"
 
 static void sendAuthRequest(Port *port, AuthRequest areq);
-
 static int	checkPassword(Port *port, char *user, char *password);
 static int	old_be_recvauth(Port *port);
 static int	map_old_to_new(Port *port, UserAuth old, int status);
 static void auth_failed(Port *port);
-
 static int	recv_and_check_password_packet(Port *port);
 static int	recv_and_check_passwordv0(Port *port);
 
@@ -493,6 +496,26 @@ ClientAuthentication(Port *port)
 			break;
 
 		case uaIdent:
+#if !defined(SO_PEERCRED) && defined(SCM_CREDS)
+			/*
+			 *	If we are doing ident on unix-domain sockets,
+			 *	use SCM_CREDS only if it is defined and SO_PEERCRED isn't.
+			 */
+#ifdef fc_uid
+			/* Receive credentials on next message receipt, BSD/OS */
+			{
+				int on = 1;
+				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)
+				{
+					elog(FATAL,
+						 "pg_local_sendauth: can't do setsockopt: %s\n", strerror(errno));
+					return;
+				}
+			}
+#endif
+			if (port->raddr.sa.sa_family ==	AF_UNIX)
+				sendAuthRequest(port, AUTH_REQ_SCM_CREDS);
+#endif
 			status = authident(port);
 			break;
 
@@ -676,3 +699,4 @@ map_old_to_new(Port *port, UserAuth old, int status)
 
 	return status;
 }
+

@@ -94,6 +94,7 @@ typedef enum
 #define AUTH_REQ_PASSWORD							3
 #define AUTH_REQ_CRYPT								4
 #define AUTH_REQ_MD5								5
+#define AUTH_REQ_SCM_CREDS							6
 
 /*	Startup Packet sizes */
 #define SM_DATABASE									64

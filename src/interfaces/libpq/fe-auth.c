@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.55 2001/08/17 15:40:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.56 2001/08/21 00:33:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 
 #include "postgres_fe.h"
 
+/* XXX is there a reason these appear before the system defines? */
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "fe-auth.h"
@@ -40,6 +41,13 @@
 #else
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>			/* for SCM_CREDS */
+#ifdef SCM_CREDS
+#include <sys/uio.h>			/* for struct iovec */
+#include <sys/ucred.h>
+#endif
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #ifndef  MAXHOSTNAMELEN
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
@@ -428,6 +436,53 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 
 #endif	 /* KRB5 */
 
+#ifdef SCM_CREDS
+static int
+pg_local_sendauth(char *PQerrormsg, PGconn *conn)
+{
+	char buf;
+	struct iovec iov;
+	struct msghdr msg;
+#ifndef fc_uid
+	/* Prevent padding */
+	char cmsgmem[sizeof(struct cmsghdr) + sizeof(struct cmsgcred)];
+	/* Point to start of first structure */
+    struct cmsghdr *cmsg = (struct cmsghdr *)cmsgmem;
+#endif
+
+	/*
+	 * The backend doesn't care what we send here, but it wants
+	 * exactly one character to force recvmsg() to block and wait
+	 * for us.
+	 */
+	buf = '\0';
+	iov.iov_base = &buf;
+	iov.iov_len = 1;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+
+#ifndef fc_uid
+	/* Create control header, FreeBSD */
+	msg.msg_control = cmsg;
+	msg.msg_controllen = sizeof(cmsgmem);
+	memset(cmsg, 0, sizeof(cmsgmem));
+	cmsg.hdr.cmsg_len = sizeof(cmsgmem);
+	cmsg.hdr.cmsg_level = SOL_SOCKET;
+	cmsg.hdr.cmsg_type = SCM_CREDS;
+#endif
+
+	if (sendmsg(conn->sock, &msg, 0) == -1)
+	{
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			 "pg_local_sendauth: sendmsg: %s\n", strerror(errno));
+		return STATUS_ERROR;
+	}
+	return STATUS_OK;
+}
+#endif
+
 static int
 pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 {
@@ -473,12 +528,13 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 			crypt_pwd = crypt(password, salt);
 			break;
 		}
-		default:
+		case AUTH_REQ_PASSWORD:
 			/* discard const so we can assign it */
 			crypt_pwd = (char *)password;
 			break;
+		default:
+			return STATUS_ERROR;
 	}
-
 	ret = pqPacketSend(conn, crypt_pwd, strlen(crypt_pwd) + 1);
 	if (areq == AUTH_REQ_MD5)
 		free(crypt_pwd);
@@ -551,6 +607,18 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 				return STATUS_ERROR;
 			}
 			break;
+
+		case AUTH_REQ_SCM_CREDS:
+#ifdef SCM_CREDS
+			if (pg_local_sendauth(PQerrormsg, conn) != STATUS_OK)
+				return STATUS_ERROR;
+#else
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+					 libpq_gettext("SCM_CRED authentication method not supported\n"));
+			return STATUS_ERROR;
+#endif
+			break;
+
 		default:
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					 libpq_gettext("authentication method %u not supported\n"), areq);
