@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.96 2002/08/02 18:15:09 tgl Exp $
+ * $Id: pg_attribute.h,v 1.97 2002/08/08 19:37:11 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -216,12 +216,12 @@ typedef FormData_pg_attribute *Form_pg_attribute;
  */
 #define Schema_pg_type \
 { 1247, {"typname"},	   19, -1, NAMEDATALEN,	1, 0, -1, -1, false, 'p', false, 'i', true, false, false }, \
-{ 1247, {"typnamespace"},  26, 0,	4,	2, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
+{ 1247, {"typnamespace"},  26, -1,	4,	2, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
 { 1247, {"typowner"},	   23, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
 { 1247, {"typlen"},		   21, 0,	2,	4, 0, -1, -1, true, 'p', false, 's', true, false, false }, \
 { 1247, {"typbyval"},	   16, 0,	1,	5, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
-{ 1247, {"typtype"},	   18, 0,	1,	6, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
-{ 1247, {"typisdefined"},  16, 0,	1,	7, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
+{ 1247, {"typtype"},	   18, -1,	1,	6, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
+{ 1247, {"typisdefined"},  16, -1,	1,	7, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
 { 1247, {"typdelim"},	   18, 0,	1,	8, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
 { 1247, {"typrelid"},	   26, 0,	4,	9, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
 { 1247, {"typelem"},	   26, 0,	4, 10, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
@@ -238,12 +238,12 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 
 
 DATA(insert ( 1247 typname			19 -1 NAMEDATALEN   1 0 -1 -1 f p f i t f f));
-DATA(insert ( 1247 typnamespace		26 0  4   2 0 -1 -1 t p f i t f f));
+DATA(insert ( 1247 typnamespace		26 -1 4   2 0 -1 -1 t p f i t f f));
 DATA(insert ( 1247 typowner			23 0  4   3 0 -1 -1 t p f i t f f));
 DATA(insert ( 1247 typlen			21 0  2   4 0 -1 -1 t p f s t f f));
 DATA(insert ( 1247 typbyval			16 0  1   5 0 -1 -1 t p f c t f f));
-DATA(insert ( 1247 typtype			18 0  1   6 0 -1 -1 t p f c t f f));
-DATA(insert ( 1247 typisdefined		16 0  1   7 0 -1 -1 t p f c t f f));
+DATA(insert ( 1247 typtype			18 -1 1   6 0 -1 -1 t p f c t f f));
+DATA(insert ( 1247 typisdefined		16 -1 1   7 0 -1 -1 t p f c t f f));
 DATA(insert ( 1247 typdelim			18 0  1   8 0 -1 -1 t p f c t f f));
 DATA(insert ( 1247 typrelid			26 0  4   9 0 -1 -1 t p f i t f f));
 DATA(insert ( 1247 typelem			26 0  4  10 0 -1 -1 t p f i t f f));
@@ -295,10 +295,10 @@ DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i t f f));
  */
 #define Schema_pg_proc \
 { 1255, {"proname"},			19, -1, NAMEDATALEN,  1, 0, -1, -1, false, 'p', false, 'i', true, false, false }, \
-{ 1255, {"pronamespace"},		26, 0,	4,	2, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
+{ 1255, {"pronamespace"},		26, -1,	4,	2, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
 { 1255, {"proowner"},			23, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
 { 1255, {"prolang"},			26, 0,	4,	4, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
-{ 1255, {"proisagg"},			16, 0,	1,	5, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
+{ 1255, {"proisagg"},			16, -1,	1,	5, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
 { 1255, {"prosecdef"},			16, 0,	1,	6, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
 { 1255, {"proisstrict"},		16, 0,	1,	7, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
 { 1255, {"proretset"},			16, 0,	1,  8, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
@@ -311,10 +311,10 @@ DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i t f f));
 { 1255, {"proacl"},			  1034, 0, -1, 15, 0, -1, -1, false, 'x', false, 'i', false, false, false }
 
 DATA(insert ( 1255 proname			19 -1 NAMEDATALEN   1 0 -1 -1 f p f i t f f));
-DATA(insert ( 1255 pronamespace		26 0  4   2 0 -1 -1 t p f i t f f));
+DATA(insert ( 1255 pronamespace		26 -1 4   2 0 -1 -1 t p f i t f f));
 DATA(insert ( 1255 proowner			23 0  4   3 0 -1 -1 t p f i t f f));
 DATA(insert ( 1255 prolang			26 0  4   4 0 -1 -1 t p f i t f f));
-DATA(insert ( 1255 proisagg			16 0  1   5 0 -1 -1 t p f c t f f));
+DATA(insert ( 1255 proisagg			16 -1 1   5 0 -1 -1 t p f c t f f));
 DATA(insert ( 1255 prosecdef		16 0  1   6 0 -1 -1 t p f c t f f));
 DATA(insert ( 1255 proisstrict		16 0  1   7 0 -1 -1 t p f c t f f));
 DATA(insert ( 1255 proretset		16 0  1   8 0 -1 -1 t p f c t f f));
@@ -420,7 +420,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i t f f));
  */
 #define Schema_pg_class \
 { 1259, {"relname"},	   19, -1, NAMEDATALEN,	1, 0, -1, -1, false, 'p', false, 'i', true, false, false }, \
-{ 1259, {"relnamespace"},  26, 0,	4,	2, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
+{ 1259, {"relnamespace"},  26, -1,	4,	2, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
 { 1259, {"reltype"},	   26, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
 { 1259, {"relowner"},	   23, 0,	4,	4, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
 { 1259, {"relam"},		   26, 0,	4,	5, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
@@ -431,7 +431,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i t f f));
 { 1259, {"reltoastidxid"}, 26, 0,	4, 10, 0, -1, -1, true, 'p', false, 'i', true, false, false }, \
 { 1259, {"relhasindex"},   16, 0,	1, 11, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
 { 1259, {"relisshared"},   16, 0,	1, 12, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
-{ 1259, {"relkind"},	   18, 0,	1, 13, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
+{ 1259, {"relkind"},	   18, -1,	1, 13, 0, -1, -1, true, 'p', false, 'c', true, false, false }, \
 { 1259, {"relnatts"},	   21, 0,	2, 14, 0, -1, -1, true, 'p', false, 's', true, false, false }, \
 { 1259, {"relchecks"},	   21, 0,	2, 15, 0, -1, -1, true, 'p', false, 's', true, false, false }, \
 { 1259, {"reltriggers"},   21, 0,	2, 16, 0, -1, -1, true, 'p', false, 's', true, false, false }, \
@@ -445,7 +445,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i t f f));
 { 1259, {"relacl"},		 1034, 0,  -1, 24, 0, -1, -1, false, 'x', false, 'i', false, false, false }
 
 DATA(insert ( 1259 relname			19 -1 NAMEDATALEN   1 0 -1 -1 f p f i t f f));
-DATA(insert ( 1259 relnamespace		26 0  4   2 0 -1 -1 t p f i t f f));
+DATA(insert ( 1259 relnamespace		26 -1 4   2 0 -1 -1 t p f i t f f));
 DATA(insert ( 1259 reltype			26 0  4   3 0 -1 -1 t p f i t f f));
 DATA(insert ( 1259 relowner			23 0  4   4 0 -1 -1 t p f i t f f));
 DATA(insert ( 1259 relam			26 0  4   5 0 -1 -1 t p f i t f f));
@@ -456,7 +456,7 @@ DATA(insert ( 1259 reltoastrelid	26 0  4   9 0 -1 -1 t p f i t f f));
 DATA(insert ( 1259 reltoastidxid	26 0  4  10 0 -1 -1 t p f i t f f));
 DATA(insert ( 1259 relhasindex		16 0  1  11 0 -1 -1 t p f c t f f));
 DATA(insert ( 1259 relisshared		16 0  1  12 0 -1 -1 t p f c t f f));
-DATA(insert ( 1259 relkind			18 0  1  13 0 -1 -1 t p f c t f f));
+DATA(insert ( 1259 relkind			18 -1 1  13 0 -1 -1 t p f c t f f));
 DATA(insert ( 1259 relnatts			21 0  2  14 0 -1 -1 t p f s t f f));
 DATA(insert ( 1259 relchecks		21 0  2  15 0 -1 -1 t p f s t f f));
 DATA(insert ( 1259 reltriggers		21 0  2  16 0 -1 -1 t p f s t f f));
