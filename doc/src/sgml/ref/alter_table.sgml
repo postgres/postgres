@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.52 2002/10/19 23:09:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.53 2002/12/16 19:08:25 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -505,6 +505,12 @@ ALTER TABLE distributors ADD PRIMARY KEY (dist_id);
    <para>
     The clauses to rename tables, columns, indexes, and sequences are
     <productname>PostgreSQL</productname> extensions from SQL92.
+   </para>
+
+   <para>
+    <command>ALTER TABLE DROP COLUMN</> can be used to drop the only column
+    of a table, leaving a zero-column table.  This is an extension from SQL92,
+    which disallows zero-column tables.
    </para>
  
   </refsect2>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.59 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.60 2002/12/16 19:08:25 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -913,6 +913,19 @@ CREATE ASSERTION <replaceable>name</replaceable> CHECK ( <replaceable>condition<
    <para>
     The <productname>PostgreSQL</productname> concept of OIDs is not
     standard.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Zero-column tables</title>
+
+   <para>
+    <productname>PostgreSQL</productname> allows a table of no columns
+    to be created (for example, <literal>CREATE TABLE foo();</>).  This
+    is an extension from the SQL standard, which does not allow zero-column
+    tables.  Zero-column tables are not in themselves very useful, but
+    disallowing them creates odd special cases for <command>ALTER TABLE
+    DROP COLUMN</>, so it seems cleaner to ignore this spec restriction.
    </para>
   </refsect2>
  </refsect1>
