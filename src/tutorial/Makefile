@@ -4,7 +4,7 @@
 #    Makefile for tutorial
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.13 2001/08/09 13:52:06 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.14 2001/10/26 20:45:33 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ override CFLAGS+= $(CFLAGS_SL)
 override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 #
-# DLOBJS is the dynamically-loaded object files.  The "funcs" queries
+# DLOBJS are the dynamically-loaded object files.  The "funcs" queries
 # include CREATE FUNCTIONs that load routines from these files.
 #
 DLOBJS= complex$(DLSUFFIX) funcs$(DLSUFFIX)
@@ -26,15 +26,9 @@ QUERIES= advanced.sql basics.sql complex.sql funcs.sql syscat.sql
 all: $(DLOBJS) $(QUERIES)
 
 %.sql: %.source
-	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
-	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
-	if [ -z "$$USER" ]; then echo 'Cannot deduce $$USER.'; exit 1; fi; \
 	rm -f $@; \
 	C=`pwd`; \
-	sed -e "s:_CWD_:$$C:g" \
-	    -e "s:_OBJWD_:$$C:g" \
-	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
-	    -e "s/_USER_/$$USER/g" < $< > $@
+	sed -e "s:_OBJWD_:$$C:g" < $< > $@
 
 clean:
 	rm -f $(DLOBJS) $(QUERIES)

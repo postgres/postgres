@@ -7,7 +7,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: complex.source,v 1.10 2001/10/03 20:54:22 tgl Exp $
+-- $Id: complex.source,v 1.11 2001/10/26 20:45:33 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -18,7 +18,8 @@
 --	called 'complex' which represents complex numbers.
 -----------------------------
 
--- Assume the user defined functions are in _OBJWD_/complex_DLSUFFIX_
+-- Assume the user defined functions are in _OBJWD_/complex$DLSUFFIX
+-- (we do not want to assume this is in the dynamic loader search path)
 -- Look at $PWD/complex.c for the source.
 
 -- the input function 'complex_in' takes a null-terminated string (the 
@@ -28,7 +29,7 @@
 
 CREATE FUNCTION complex_in(opaque)
    RETURNS complex
-   AS '_OBJWD_/complex_DLSUFFIX_'
+   AS '_OBJWD_/complex'
    LANGUAGE 'c';
 
 -- the output function 'complex_out' takes the internal representation and
@@ -36,7 +37,7 @@ CREATE FUNCTION complex_in(opaque)
 
 CREATE FUNCTION complex_out(opaque)
    RETURNS opaque
-   AS '_OBJWD_/complex_DLSUFFIX_'
+   AS '_OBJWD_/complex'
    LANGUAGE 'c';
 
 -- now, we can create the type. The internallength specifies the size of the
@@ -80,7 +81,7 @@ SELECT * FROM test_complex;
 -- first, define a function complex_add (also in complex.c)
 CREATE FUNCTION complex_add(complex, complex)
    RETURNS complex
-   AS '_OBJWD_/complex_DLSUFFIX_'
+   AS '_OBJWD_/complex'
    LANGUAGE 'c';
 
 -- we can now define the operator. We show a binary operator here but you
@@ -138,15 +139,15 @@ SELECT 'READ ABOVE!' AS STOP;
 
 -- first, define the required operators
 CREATE FUNCTION complex_abs_lt(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_le(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_eq(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_ge(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_gt(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE 'c';
 
 CREATE OPERATOR < (
    leftarg = complex, rightarg = complex, procedure = complex_abs_lt,
@@ -231,7 +232,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 --
 CREATE FUNCTION complex_abs_cmp(complex, complex) RETURNS int4
-   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE 'c';
 
 SELECT oid, proname FROM pg_proc WHERE proname = 'complex_abs_cmp';
 
