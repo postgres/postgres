@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.48 1998/08/19 02:01:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.49 1998/08/24 19:04:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ static AttributeTupleForm AllocateAttribute(void);
 static bool BootstrapAlreadySeen(Oid id);
 static int	CompHash(char *str, int len);
 static hashnode *FindStr(char *str, int length, hashnode *mderef);
-static int	gettype(char *type);
+static Oid	gettype(char *type);
 static void cleanup(void);
 
 /* ----------------
@@ -571,7 +571,7 @@ void
 DefineAttr(char *name, char *type, int attnum)
 {
 	int			attlen;
-	int			t;
+	Oid			typeoid;
 
 	if (reldesc != NULL)
 	{
@@ -579,7 +579,7 @@ DefineAttr(char *name, char *type, int attnum)
 		closerel(relname);
 	}
 
-	t = gettype(type);
+	typeoid = gettype(type);
 	if (attrtypes[attnum] == (AttributeTupleForm) NULL)
 		attrtypes[attnum] = AllocateAttribute();
 	if (Typ != (struct typmap **) NULL)
@@ -591,16 +591,18 @@ DefineAttr(char *name, char *type, int attnum)
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
 		attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
+		attrtypes[attnum]->attalign = Ap->am_typ.typalign;
 	}
 	else
 	{
-		attrtypes[attnum]->atttypid = Procid[t].oid;
+		attrtypes[attnum]->atttypid = Procid[typeoid].oid;
 		namestrcpy(&attrtypes[attnum]->attname, name);
 		if (!Quiet)
 			printf("<%s %s> ", attrtypes[attnum]->attname.data, type);
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
-		attlen = attrtypes[attnum]->attlen = Procid[t].len;
-		attrtypes[attnum]->attbyval = (attlen == 1) || (attlen == 2) || (attlen == 4);
+		attlen = attrtypes[attnum]->attlen = Procid[typeoid].len;
+		attrtypes[attnum]->attbyval = (attlen == 1) || (attlen == 2) ||(attlen == 4);
+		attrtypes[attnum]->attalign = 'i';
 	}
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
@@ -784,7 +786,7 @@ cleanup()
  *		gettype
  * ----------------
  */
-static int
+static Oid
 gettype(char *type)
 {
 	int			i;

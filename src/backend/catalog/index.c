@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.52 1998/08/21 23:22:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.53 1998/08/24 19:04:04 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -279,6 +279,7 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 	funcTupDesc->attrs[0]->attbyval = ((TypeTupleForm) GETSTRUCT(tuple))->typbyval;
 	funcTupDesc->attrs[0]->attcacheoff = -1;
 	funcTupDesc->attrs[0]->atttypmod = -1;
+	funcTupDesc->attrs[0]->attalign = ((TypeTupleForm) GETSTRUCT(tuple))->typalign;
 
 	/*
 	 * make the attributes name the same as the functions
@@ -378,7 +379,6 @@ ConstructTupleDescriptor(Oid heapoid,
 			 *	  here we are indexing on a normal attribute (1...n)
 			 * ----------------
 			 */
-
 			heapTupDesc = RelationGetTupleDescriptor(heapRelation);
 			atind = AttrNumberGetAttrOffset(atnum);
 
@@ -400,6 +400,7 @@ ConstructTupleDescriptor(Oid heapoid,
 		((AttributeTupleForm) to)->atthasdef = false;
 		((AttributeTupleForm) to)->attcacheoff = -1;
 		((AttributeTupleForm) to)->atttypmod = -1;
+		((AttributeTupleForm) to)->attalign = 'i';
 
 		/*
 		 * if the keytype is defined, we need to change the tuple form's
@@ -417,11 +418,11 @@ ConstructTupleDescriptor(Oid heapoid,
 					 IndexKeyType->name);
 			((AttributeTupleForm) to)->atttypid = tup->t_oid;
 			((AttributeTupleForm) to)->attbyval =
-				((TypeTupleForm) ((char *) tup + tup->t_hoff))->typbyval;
-
+				((TypeTupleForm) GETSTRUCT(tup))->typbyval;
 			((AttributeTupleForm) to)->attlen =
-				((TypeTupleForm) ((char *) tup + tup->t_hoff))->typlen;
-
+				((TypeTupleForm) GETSTRUCT(tup))->typlen;
+			((AttributeTupleForm) to)->attalign =
+				((TypeTupleForm) GETSTRUCT(tup))->typalign;
 			((AttributeTupleForm) to)->atttypmod = IndexKeyType->typmod;
 		}
 
