@@ -142,8 +142,8 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
   </para>
 
   <para>
-   Currently, there are four different privileges: select (read),
-   insert (append), and update/delete (write), as well as
+   Currently, there are five different privileges: select (read),
+   insert (append), update (write), delete, and
    <literal>RULE</literal>, the permission to create a rewrite rule on
    a table. The right to modify or destroy an object is always the
    privilege of the owner only. To assign privileges, the
