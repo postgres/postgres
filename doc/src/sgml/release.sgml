@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.311 2004/11/22 00:37:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.312 2004/11/22 07:30:22 neilc Exp $
 -->
 
 <appendix id="release">
@@ -1862,7 +1862,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.311 2004/11/22 00:37:59 tgl Exp
 
     <listitem>
      <para>
-      Allow <application>g_restore</> to ignore some SQL errors (Fabien Coelho)
+      Allow <application>pg_restore</> to ignore some SQL errors (Fabien Coelho)
      </para>
      <para>
       This makes <application>pg_restore</>'s behavior similar to the
