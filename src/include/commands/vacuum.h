@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.29 2000/05/29 16:21:05 momjian Exp $
+ * $Id: vacuum.h,v 1.30 2000/05/29 17:06:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,29 +30,29 @@ typedef struct VAttListData
 
 typedef VAttListData *VAttList;
 
-typedef struct VPageDescrData
+typedef struct VacPageData
 {
-	BlockNumber vpd_blkno;		/* BlockNumber of this Page */
-	Size		vpd_free;		/* FreeSpace on this Page */
-	uint16		vpd_offsets_used;		/* Number of OffNums used by
+	BlockNumber blkno;		/* BlockNumber of this Page */
+	Size		free;		/* FreeSpace on this Page */
+	uint16		offsets_used;		/* Number of OffNums used by
 										 * vacuum */
-	uint16		vpd_offsets_free;		/* Number of OffNums free or to be
+	uint16		offsets_free;		/* Number of OffNums free or to be
 										 * free */
-	OffsetNumber vpd_offsets[1];/* Array of its OffNums */
-} VPageDescrData;
+	OffsetNumber offsets[1];/* Array of its OffNums */
+} VacPageData;
 
-typedef VPageDescrData *VPageDescr;
+typedef VacPageData *VacPage;
 
-typedef struct VPageListData
+typedef struct VacPageListData
 {
-	int			vpl_empty_end_pages;	/* Number of "empty" end-pages */
-	int			vpl_num_pages;	/* Number of pages in vpl_pagedesc */
-	int			vpl_num_allocated_pages;		/* Number of allocated
-												 * pages in vpl_pagedesc */
-	VPageDescr *vpl_pagedesc;	/* Descriptions of pages */
-} VPageListData;
+	int			empty_end_pages;	/* Number of "empty" end-pages */
+	int			num_pages;	/* Number of pages in pagedesc */
+	int			num_allocated_pages;		/* Number of allocated
+												 * pages in pagedesc */
+	VacPage *pagedesc;	/* Descriptions of pages */
+} VacPageListData;
 
-typedef VPageListData *VPageList;
+typedef VacPageListData *VacPageList;
 
 typedef struct
 {
@@ -111,8 +111,8 @@ typedef VTupleLinkData *VTupleLink;
 typedef struct VTupleMoveData
 {
 	ItemPointerData tid;		/* tuple ID */
-	VPageDescr	vpd;			/* where to move */
-	bool		cleanVpd;		/* clean vpd before using */
+	VacPage		vacpage;			/* where to move */
+	bool		cleanVpd;		/* clean vacpage before using */
 } VTupleMoveData;
 
 typedef VTupleMoveData *VTupleMove;
