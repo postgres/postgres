@@ -250,6 +250,9 @@
 /* Set to 1 if you have <netdb.h> */
 #undef HAVE_NETDB_H
 
+/* Set to 1 if you have <netinet/in.h> */
+#undef HAVE_NETINET_IN_H
+
 /* Set to 1 if you have <readline.h> */
 #undef HAVE_READLINE_H
 
