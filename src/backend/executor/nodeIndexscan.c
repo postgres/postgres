@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.21 1998/08/01 22:44:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.22 1998/08/03 19:41:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,9 +258,8 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	if (exprCtxt == NULL)
 		exprCtxt = node->scan.scanstate->cstate.cs_ExprContext;
 
-	if (exprCtxt != NULL)
-		node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple =
-			exprCtxt->ecxt_outertuple;
+	node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple =
+		exprCtxt->ecxt_outertuple;
 		
 	/*
 	 * get the index qualifications and recalculate the appropriate
@@ -268,43 +267,40 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
-		if (runtimeKeyInfo && runtimeKeyInfo[i] != NULL)
-		{
-			qual = nth(i, indxqual);
-			n_keys = numScanKeys[i];
-			run_keys = (int *) runtimeKeyInfo[i];
-			scan_keys = (ScanKey) scanKeys[i];
-		
-			for (j = 0; j < n_keys; j++)
-			{
-				/*
-				 * If we have a run-time key, then extract the run-time
-				 * expression and evaluate it with respect to the current
-				 * outer tuple.  We then stick the result into the scan key.
-				 */
-				if (run_keys[j] != NO_OP)
-				{
-					clause = nth(j, qual);
-					scanexpr = (run_keys[j] == RIGHT_OP) ?
-						(Node *) get_rightop(clause) : (Node *) get_leftop(clause);
+		qual = nth(i, indxqual);
+		n_keys = numScanKeys[i];
+		run_keys = (int *) runtimeKeyInfo[i];
+		scan_keys = (ScanKey) scanKeys[i];
 	
-					/*
-					 * pass in isDone but ignore it.  We don't iterate in
-					 * quals
-					 */
-					scanvalue = (Datum)
-						ExecEvalExpr(scanexpr, exprCtxt, &isNull, &isDone);
-					scan_keys[j].sk_argument = scanvalue;
-					if (isNull)
-						scan_keys[j].sk_flags |= SK_ISNULL;
-					else
-						scan_keys[j].sk_flags &= ~SK_ISNULL;
-				}
+		for (j = 0; j < n_keys; j++)
+		{
+			/*
+			 * If we have a run-time key, then extract the run-time
+			 * expression and evaluate it with respect to the current
+			 * outer tuple.  We then stick the result into the scan key.
+			 */
+			if (run_keys[j] != NO_OP)
+			{
+				clause = nth(j, qual);
+				scanexpr = (run_keys[j] == RIGHT_OP) ?
+					(Node *) get_rightop(clause) : (Node *) get_leftop(clause);
+
+				/*
+				 * pass in isDone but ignore it.  We don't iterate in
+				 * quals
+				 */
+				scanvalue = (Datum)
+					ExecEvalExpr(scanexpr, exprCtxt, &isNull, &isDone);
+				scan_keys[j].sk_argument = scanvalue;
+				if (isNull)
+					scan_keys[j].sk_flags |= SK_ISNULL;
+				else
+					scan_keys[j].sk_flags &= ~SK_ISNULL;
 			}
-			sdesc = scanDescs[i];
-			skey = scanKeys[i];
-			index_rescan(sdesc, direction, skey);
 		}
+		sdesc = scanDescs[i];
+		skey = scanKeys[i];
+		index_rescan(sdesc, direction, skey);
 	}
 	/* ----------------
 	 *	perhaps return something meaningful
@@ -416,7 +412,7 @@ ExecIndexMarkPos(IndexScan *node)
 	int			indexPtr;
 
 	indexstate = node->indxstate;
-	indexPtr = indexstate->iss_IndexPtr;
+	indexPtr = indexstate->iss_MarkIndexPtr = indexstate->iss_IndexPtr;
 	indexScanDescs = indexstate->iss_ScanDescs;
 	scanDesc = indexScanDescs[indexPtr];
 
@@ -445,7 +441,7 @@ ExecIndexRestrPos(IndexScan *node)
 	int			indexPtr;
 
 	indexstate = node->indxstate;
-	indexPtr = indexstate->iss_IndexPtr;
+	indexPtr = indexstate->iss_IndexPtr = indexstate->iss_MarkIndexPtr;
 	indexScanDescs = indexstate->iss_ScanDescs;
 	scanDesc = indexScanDescs[indexPtr];
 

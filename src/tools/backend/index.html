@@ -11,10 +11,6 @@ by Bruce Momjian
 </H2>
 <P>
 <CENTER>
-<EM><BIG>
-Click on an item to see more detail or look at the full
-<A HREF="backend_dirs.html">index.</A>
-</BIG></EM>
 <BR>
 <BR>
 <IMG src="flow.jpg" usemap="#flowmap" alt="flowchart">
@@ -38,10 +34,12 @@ Click on an item to see more detail or look at the full
 <AREA COORDS="340,900,500,950" HREF="backend_dirs.html#nodes">
 <AREA COORDS="20,990,180,1030" HREF="backend_dirs.html#bootstrap">
 </MAP>
+<CENTER><EM>
+Click on an item to see more detail or look at the full
+<A HREF="backend_dirs.html">index.</A>
+</EM></CENTER>
 <BR>
-<P>
 
-<HR>
 <P>
 
 A query comes to the backend via data packets arriving through TCP/IP or
@@ -117,8 +115,8 @@ can be accessed by clicking on the flowchart.<P>
 
 
 Another area of interest is the shared memory area, which contains data
-accessable to all backends.  It has table recently used data/index
-blocks, locks, backend information, and lookup tables for these
+accessable to all backends.  It has recently used data/index blocks,
+locks, backend process information, and lookup tables for these
 structures:
 
 <UL> 

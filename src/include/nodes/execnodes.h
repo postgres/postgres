@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.16 1998/07/27 19:38:34 vadim Exp $
+ * $Id: execnodes.h,v 1.17 1998/08/03 19:41:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,6 +399,7 @@ typedef struct IndexScanState
 	CommonState cstate;			/* its first field is NodeTag */
 	int			iss_NumIndices;
 	int			iss_IndexPtr;
+	int			iss_MarkIndexPtr;
 	ScanKey    *iss_ScanKeys;
 	int		   *iss_NumScanKeys;
 	Pointer		iss_RuntimeKeyInfo;
