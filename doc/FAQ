@@ -543,7 +543,7 @@ Section 3: PostgreSQL Features
         jolly=>
 
    The fields in pg_group are:
-     * groname: the group name. This a char16 and should be purely
+     * groname: the group name. This a name and should be purely
        alphanumeric. Do not include underscores or other punctuation.
      * grosysid: the group id. This is an int4. This should be unique for
        each group.
@@ -622,11 +622,7 @@ Section 3: PostgreSQL Features
   
 Type            Internal Name   Notes
 --------------------------------------------------
-CHAR            char            1 character   }
-CHAR2           char2           2 characters  }
-CHAR4           char4           4 characters  } optimized for a fixed length
-CHAR8           char8           8 characters  }
-CHAR16          char16          16 characters }
+CHAR            char            1 character
 CHAR(#)         bpchar          blank padded to the specified fixed length
 VARCHAR(#)      varchar         size specifies maximum length, no padding
 TEXT            text            length limited only by maximum tuple length

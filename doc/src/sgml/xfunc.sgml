@@ -136,7 +136,7 @@
      AS 'SELECT \'None\'::text AS name,
       1000 AS salary,
       25 AS age,
-      \'none\'::char16 AS dept;'
+      \'none\'::text AS dept;'
       LANGUAGE 'sql';
 </ProgramListing>
 
@@ -263,7 +263,7 @@ The reason why, in general, we must use the function
 <Para>
      On  the  other hand, fixed-length types of any size may
      be passed by-reference.  For example, here is a  sample
-     implementation of the <ProductName>Postgres</ProductName> char16 type:
+     implementation of a <ProductName>Postgres</ProductName> type:
      
 <ProgramListing>
          /* 16-byte structure, passed by reference */
@@ -305,7 +305,6 @@ The reason why, in general, we must use the function
      structure, we might use a code fragment like this:
 <ProgramListing>
          #include "postgres.h"
-         #include "utils/palloc.h"
          ...
          char buffer[40]; /* our source data */
          ...
@@ -322,20 +321,23 @@ The reason why, in general, we must use the function
      Suppose <FileName>funcs.c</FileName> look like:
 <ProgramListing>
          #include &lt;string.h&gt;
-         #include "postgres.h"  /* for char16, etc. */
-         #include "utils/palloc.h" /* for palloc */
+         #include "postgres.h"
          int
          add_one(int arg)
          {
              return(arg + 1);
          }
-         char16 *
-         concat16(char16 *arg1, char16 *arg2)
+         text *
+         concat_text(text *arg1, text *arg2)
          {
-             char16 *new_c16 = (char16 *) palloc(sizeof(char16));
-             memset((void *) new_c16, 0, sizeof(char16));
-             (void) strncpy(new_c16, arg1, 16);
-             return (char16 *)(strncat(new_c16, arg2, 16));
+             int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
+             text *new_text = (text *) palloc(new_text_size);
+
+             memset((void *) new_text, 0, new_text_size);
+             VARSIZE(new_text) = new_text_size;
+             strncpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
+             strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
+             return (new_text);
          }
          text *
          copytext(text *t)
@@ -364,7 +366,7 @@ The reason why, in general, we must use the function
          CREATE FUNCTION add_one(int4) RETURNS int4
               AS 'PGROOT/tutorial/obj/funcs.so' LANGUAGE 'c';
 
-         CREATE FUNCTION concat16(char16, char16) RETURNS char16
+         CREATE FUNCTION concat_text(text, text) RETURNS text
               AS 'PGROOT/tutorial/obj/funcs.so' LANGUAGE 'c';
 
          CREATE FUNCTION copytext(text) RETURNS text
@@ -401,7 +403,7 @@ The reason why, in general, we must use the function
      In the query above, we can define c_overpaid as:
      
 <ProgramListing>
-         #include "postgres.h"  /* for char16, etc. */
+         #include "postgres.h"
          #include "libpq-fe.h" /* for TUPLE */
          bool
          c_overpaid(TUPLE t,/* the current instance of EMP */
@@ -426,7 +428,7 @@ The reason why, in general, we must use the function
      is  null.   <Acronym>GetAttributeByName</Acronym> will align data properly
      so you can cast its return value to the  desired  type.
      For  example, if you have an attribute name which is of
-     the type char16, the <Acronym>GetAttributeByName</Acronym> call would look
+     the type name, the <Acronym>GetAttributeByName</Acronym> call would look
      like:
 <ProgramListing>
          char *str;
@@ -517,8 +519,9 @@ Most of the header (include) files for  <ProductName>Postgres</ProductName>
 </Para>
       <ListItem>
 <Para>   Most of the internal <ProductName>Postgres</ProductName> types are declared
-            in  postgres.h,  so  it's usually a good idea to
-            include that file as well.
+            in  postgres.h,  so  it's a good idea to always
+            include that file as well.  Including postgres.h
+            will also include elog.h and palloc.h for you.
 </Para>
       <ListItem>
 <Para>   Compiling and loading your object code  so  that

@@ -736,7 +736,7 @@ void PQputline(PGconn *conn,
 int PQendcopy(PGconn *conn);
 </ProgramListing>
 <ProgramListing>
-PQexec(conn, "create table foo (a int4, b char16, d float8)");
+PQexec(conn, "create table foo (a int4, b text, d float8)");
 PQexec(conn, "copy foo from stdin");
 PQputline(conn, "3&lt;TAB&gt;hello world&lt;TAB&gt;4.5\n");
 PQputline(conn,"4&lt;TAB&gt;goodbye world&lt;TAB&gt;7.11\n");

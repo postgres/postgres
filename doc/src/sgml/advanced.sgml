@@ -126,7 +126,7 @@ SELECT c.name, c.altitude
 CREATE TABLE SAL_EMP (
     name            text,
     pay_by_quarter  int4[],
-    schedule        char16[][]
+    schedule        text[][]
 );
 </ProgramListing>
 </Para>
@@ -135,7 +135,7 @@ CREATE TABLE SAL_EMP (
      The above query will create a class named SAL_EMP  with
      a  <FirstTerm>text</FirstTerm>  string (name), a one-dimensional array of <FirstTerm>int4</FirstTerm>
      (pay_by_quarter),  which  represents   the   employee's
-     salary by quarter and a two-dimensional array of <FirstTerm>char16</FirstTerm>
+     salary by quarter and a two-dimensional array of <FirstTerm>text</FirstTerm>
      (schedule),  which  represents  the  employee's  weekly
      schedule.   Now  we  do  some  <FirstTerm>INSERTS</FirstTerm>s; note that when
      appending to an array, we  enclose  the  values  within

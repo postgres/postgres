@@ -368,13 +368,16 @@ limit to be declared on the size of the field.
 </Para>
 
 <Para>
-There are currently other fixed-length character types. These provide no additional
-functionality and are likely to be deprecated in the future.
+There is currently one other fixed-length character type. The <Type>name</Type> type
+only has one purpose and that is to provide <ProductName>Postgres</ProductName> with a
+special type to use for internal names.  It is not intended for use by the general user.
+It's length is currently defined as 32 chars but should be reference using NAMEDATALEN.
+This is set at compile time and may change in any future release.
 </Para>
 
 <Para>
 <TABLE TOCENTRY="1">
-<TITLE><ProductName>Postgres</ProductName> Specialty Character Types</TITLE>
+<TITLE><ProductName>Postgres</ProductName> Specialty Character Type</TITLE>
 <TITLEABBREV>Specialty Characters</TITLEABBREV>
 <TGROUP COLS="3">
 <THEAD>
@@ -386,24 +389,9 @@ functionality and are likely to be deprecated in the future.
 </THEAD>
 <TBODY>
   <ROW>
-    <ENTRY>char2</ENTRY>
-    <ENTRY>2 bytes</ENTRY>
-    <ENTRY>Two characters</ENTRY>
-  </ROW>
-  <ROW>
-    <ENTRY>char4</ENTRY>
-    <ENTRY>4 bytes</ENTRY>
-    <ENTRY>Four characters</ENTRY>
-  </ROW>
-  <ROW>
-    <ENTRY>char8</ENTRY>
-    <ENTRY>8 bytes</ENTRY>
-    <ENTRY>Eight characters</ENTRY>
-  </ROW>
-  <ROW>
-    <ENTRY>char16</ENTRY>
-    <ENTRY>16 bytes</ENTRY>
-    <ENTRY>Sixteen characters</ENTRY>
+    <ENTRY>name</ENTRY>
+    <ENTRY>32 bytes</ENTRY>
+    <ENTRY>Thirty-two character internal type</ENTRY>
   </ROW>
 </TBODY>
 </TGROUP>
