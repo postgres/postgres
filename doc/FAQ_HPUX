@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.3
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2002/11/02 00:46:23 $
+last updated:           $Date: 2002/11/11 20:04:05 $
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
@@ -48,9 +48,9 @@ ftp://us-ffs.external.hp.com/ for free copies of their latest patches.
 
 If you have both HP's C compiler and GCC's, then you might want to
 explicitly select the compiler to use when you run `configure':
-	CC=cc ./configure
+	./configure CC=cc
 for HP's C compiler, or
-	CC=gcc ./configure
+	./configure CC=gcc
 for GCC.  If you omit this setting, then configure will pick gcc
 if it has a choice.
 
