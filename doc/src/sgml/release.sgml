@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.284 2004/08/15 00:27:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.285 2004/08/18 03:03:32 tgl Exp $
 -->
 
 <appendix id="release">
@@ -1891,6 +1891,42 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.284 2004/08/15 00:27:14 tgl Exp
 
    </itemizedlist>
   </sect3>
+
+  </sect2>
+ </sect1>
+
+  <sect1 id="release-7-4-5">
+   <title>Release 7.4.5</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-08-18</simpara>
+   </note>
+
+   <para>
+    This release contains one serious bug fix over 7.4.4.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.4.5</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Repair possible crash during concurrent btree index insertions</para>
+<para>
+This patch fixes a rare case in which concurrent insertions into a btree index
+could result in a server panic.  No permanent damage would result, but it's
+still worth a re-release.  The bug does not exist in pre-7.4 releases.
+</para></listitem>
+</itemizedlist>
 
   </sect2>
  </sect1>
