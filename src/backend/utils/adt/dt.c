@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.34 1997/09/01 06:13:21 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.35 1997/09/04 18:43:21 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,6 +473,35 @@ datetime_ge(DateTime *datetime1, DateTime *datetime2)
 } /* datetime_ge() */
 
 
+/*	datetime_cmp	- 3-state comparison for datetime
+ *	collate invalid datetime at the end
+ */
+int
+datetime_cmp(DateTime *datetime1, DateTime *datetime2)
+{
+    DateTime dt1, dt2;
+
+    if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
+	return 0;
+
+    dt1 = *datetime1;
+    dt2 = *datetime2;
+
+    if (DATETIME_IS_INVALID(dt1)) {
+	return( (DATETIME_IS_INVALID(dt2)? 0: 1));
+
+    } else if (DATETIME_IS_INVALID(dt2)) {
+	return( -1);
+
+    } else {
+	if (DATETIME_IS_RELATIVE(dt1)) dt1 = SetDateTime(dt1);
+	if (DATETIME_IS_RELATIVE(dt2)) dt2 = SetDateTime(dt2);
+    };
+
+    return( ((dt1 < dt2)? -1: ((dt1 > dt2)? 1: 0)));
+} /* datetime_cmp() */
+
+
 /*	timespan_relop	- is timespan1 relop timespan2
  */
 bool
@@ -576,6 +605,32 @@ timespan_ge(TimeSpan *timespan1, TimeSpan *timespan2)
 
     return( span1 >= span2);
 } /* timespan_ge() */
+
+
+/*	timespan_cmp	- 3-state comparison for timespan
+ */
+int
+timespan_cmp(TimeSpan *timespan1, TimeSpan *timespan2)
+{
+    double span1, span2;
+
+    if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
+	return 0;
+
+    if (TIMESPAN_IS_INVALID(*timespan1)) {
+	return( TIMESPAN_IS_INVALID(*timespan2)? 0: 1);
+
+    } else if (TIMESPAN_IS_INVALID(*timespan2)) {
+	return( -1);
+    };
+
+    span1 = timespan1->time;
+    if (timespan1->month != 0) span1 += (timespan1->month * (30.0*86400));
+    span2 = timespan2->time;
+    if (timespan2->month != 0) span2 += (timespan2->month * (30.0*86400));
+
+    return( (span1 < span2)? -1: (span1 > span2)? 1: 0);
+} /* timespan_cmp() */
 
 
 /*----------------------------------------------------------

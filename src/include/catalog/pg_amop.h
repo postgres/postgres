@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.4 1996/11/13 20:50:50 scrappy Exp $
+ * $Id: pg_amop.h,v 1.5 1997/09/04 18:43:57 thomas Exp $
  *
  * NOTES
  *   the genbki.sh script reads this file and generates .bki
@@ -102,6 +102,19 @@ DATA(insert OID = 0 (  402 434 489 5 rtsel rtnpage ));
 DATA(insert OID = 0 (  402 434 490 6 rtsel rtnpage ));
 DATA(insert OID = 0 (  402 434 491 7 rtsel rtnpage ));
 DATA(insert OID = 0 (  402 434 492 8 rtsel rtnpage ));
+
+/*
+ *  rtree circle_ops (supports circles)
+ */
+
+DATA(insert OID = 0 (  402 714 1506 1 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1507 2 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1508 3 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1509 4 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1510 5 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1511 6 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1512 7 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1513 8 rtsel rtnpage ));
 
 /*
  *  nbtree int2_ops
@@ -324,6 +337,26 @@ DATA(insert OID = 0 (  403 1115 1108 3 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 1115 1113 4 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 1115 1112 5 btreesel btreenpage ));
 
+/*
+ *  nbtree datetime_ops
+ */
+
+DATA(insert OID = 0 (  403 1312 1322 1 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 1312 1323 2 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 1312 1320 3 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 1312 1325 4 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 1312 1324 5 btreesel btreenpage ));
+
+/*
+ *  nbtree timespan_ops
+ */
+
+DATA(insert OID = 0 (  403 1313 1332 1 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 1313 1333 2 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 1313 1330 3 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 1313 1335 4 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 1313 1334 5 btreesel btreenpage ));
+
 BKI_BEGIN
 #ifdef NOBTREE
 BKI_END
@@ -477,78 +510,69 @@ DATA(insert OID = 0 (  404 432 560 3 btreesel btreenpage ));
 DATA(insert OID = 0 (  404 432 565 4 btreesel btreenpage ));
 DATA(insert OID = 0 (  404 432 563 5 btreesel btreenpage ));
 
+/*
+ *  nobtree datetime_ops
+ */
+
+DATA(insert OID = 0 (  404 1312 1322 1 btreesel btreenpage ));
+DATA(insert OID = 0 (  404 1312 1323 2 btreesel btreenpage ));
+DATA(insert OID = 0 (  404 1312 1320 3 btreesel btreenpage ));
+DATA(insert OID = 0 (  404 1312 1325 4 btreesel btreenpage ));
+DATA(insert OID = 0 (  404 1312 1324 5 btreesel btreenpage ));
+
+/*
+ *  nobtree timespan_ops
+ */
+
+DATA(insert OID = 0 (  404 1313 1332 1 btreesel btreenpage ));
+DATA(insert OID = 0 (  404 1313 1333 2 btreesel btreenpage ));
+DATA(insert OID = 0 (  404 1313 1330 3 btreesel btreenpage ));
+DATA(insert OID = 0 (  404 1313 1335 4 btreesel btreenpage ));
+DATA(insert OID = 0 (  404 1313 1334 5 btreesel btreenpage ));
+
 BKI_BEGIN
 #endif /* NOBTREE */
 BKI_END
 
 /*
- *  hash table int2_ops
+ *  hash table _ops
  */
+
+/*  hash table int2_ops */
 DATA(insert OID = 0 (  405 421  94 1 btreesel btreenpage ));
-/*
- *  hash table float8_ops
- */
+/*  hash table float8_ops */
 DATA(insert OID = 0 (  405 423 670 1 btreesel btreenpage ));
-/*
- *  hash table int4_ops
- */
+/*  hash table int4_ops */
 DATA(insert OID = 0 (  405 426  96 1 hashsel hashnpage ));
-/*
- *  hash table oid_ops
- */
+/*  hash table oid_ops */
 DATA(insert OID = 0 (  405 427 607 1 hashsel hashnpage ));
-/*
- *  hash table float4_ops
- */
+/*  hash table float4_ops */
 DATA(insert OID = 0 (  405 428 620 1 hashsel hashnpage ));
-/*
- *  hash table char_ops
- */
+/*  hash table char_ops */
 DATA(insert OID = 0 (  405 429 92 1 hashsel hashnpage ));
-/*
- *  hash table char2_ops
- */
+/*  hash table char2_ops */
 DATA(insert OID = 0 (  405 406 412 1 hashsel hashnpage ));
-/*
- *  hash table char4_ops
- */
+/*  hash table char4_ops */
 DATA(insert OID = 0 (  405 407 413 1 hashsel hashnpage ));
-/*
- *  hash table char8_ops
- */
+/*  hash table char8_ops */
 DATA(insert OID = 0 (  405 408 414 1 hashsel hashnpage ));
-/*
- *  hash table char16_ops
- */
+/*  hash table char16_ops */
 DATA(insert OID = 0 (  405 430 1267 1 hashsel hashnpage ));
-/*
- *  hash table name_ops
- */
+/*  hash table name_ops */
 DATA(insert OID = 0 (  405 1181 93 1 hashsel hashnpage ));
-/*
- *  hash table text_ops
- */
+/*  hash table text_ops */
 DATA(insert OID = 0 (  405 431 98 1 hashsel hashnpage ));
-
-/*
- *  hash table bpchar_ops
- */
+/*  hash table bpchar_ops */
 DATA(insert OID = 0 (  405 1076 1054 1 hashsel hashnpage ));
-
-/*
- *  hash table varchar_ops
- */
+/*  hash table varchar_ops */
 DATA(insert OID = 0 (  405 1077 1062 1 hashsel hashnpage ));
-
-/*
- *  hash table date_ops
- */
+/*  hash table date_ops */
 DATA(insert OID = 0 (  405 1114 1093 1 hashsel hashnpage ));
-
-/*
- *  hash table time_ops
- */
+/*  hash table time_ops */
 DATA(insert OID = 0 (  405 1115 1108 1 hashsel hashnpage ));
-
+/*  hash table datetime_ops */
+DATA(insert OID = 0 (  405 1312 1320 1 hashsel hashnpage ));
+/*  hash table timespan_ops */
+DATA(insert OID = 0 (  405 1313 1330 1 hashsel hashnpage ));
 
 #endif /* PG_AMOP_H */
