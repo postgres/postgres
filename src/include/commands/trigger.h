@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.24 2001/01/24 19:43:23 momjian Exp $
+ * $Id: trigger.h,v 1.25 2001/03/14 21:50:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,6 +110,7 @@ typedef struct DeferredTriggerStatusData
 	Oid			dts_tgoid;
 	bool		dts_tgisdeferred;
 } DeferredTriggerStatusData;
+
 typedef struct DeferredTriggerStatusData *DeferredTriggerStatus;
 
 
@@ -120,16 +121,19 @@ typedef struct DeferredTriggerEventItem
 } DeferredTriggerEventItem;
 
 
+typedef struct DeferredTriggerEventData *DeferredTriggerEvent;
+
 typedef struct DeferredTriggerEventData
 {
+	DeferredTriggerEvent dte_next; /* list link */
 	int32		dte_event;
 	Oid			dte_relid;
 	ItemPointerData dte_oldctid;
 	ItemPointerData dte_newctid;
 	int32		dte_n_items;
+	/* dte_item is actually a variable-size array, of length dte_n_items */
 	DeferredTriggerEventItem dte_item[1];
 } DeferredTriggerEventData;
-typedef struct DeferredTriggerEventData *DeferredTriggerEvent;
 
 
 extern void DeferredTriggerInit(void);

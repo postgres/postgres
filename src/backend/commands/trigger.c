@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.87 2001/03/12 23:02:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.88 2001/03/14 21:50:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1153,15 +1153,18 @@ static List *deftrig_trigstates;
 
 /* ----------
  * The list of events during the entire transaction.  deftrig_events
- * is the head, deftrig_event_tail is the last entry.
+ * is the head, deftrig_event_tail is the last entry.  Because this can
+ * grow pretty large, we don't use separate List nodes, but instead thread
+ * the list through the dte_next fields of the member nodes.  Saves just a
+ * few bytes per entry, but that adds up.
  *
  * XXX Need to be able to shove this data out to a file if it grows too
  *	   large...
  * ----------
  */
 static int	deftrig_n_events;
-static List *deftrig_events;
-static List *deftrig_event_tail;
+static DeferredTriggerEvent deftrig_events;
+static DeferredTriggerEvent deftrig_event_tail;
 
 
 /* ----------
@@ -1242,16 +1245,17 @@ deferredTriggerAddEvent(DeferredTriggerEvent event)
 	 * list tail and append there, rather than just doing a stupid "lappend".
 	 * This avoids O(N^2) behavior for large numbers of events.
 	 */
-	if (deftrig_event_tail == NIL)
+	event->dte_next = NULL;
+	if (deftrig_event_tail == NULL)
 	{
 		/* first list entry */
-		deftrig_events = makeList1(event);
-		deftrig_event_tail = deftrig_events;
+		deftrig_events = event;
+		deftrig_event_tail = event;
 	}
 	else
 	{
-		lnext(deftrig_event_tail) = makeList1(event);
-		deftrig_event_tail = lnext(deftrig_event_tail);
+		deftrig_event_tail->dte_next = event;
+		deftrig_event_tail = event;
 	}
 	deftrig_n_events++;
 }
@@ -1268,13 +1272,11 @@ static DeferredTriggerEvent
 deferredTriggerGetPreviousEvent(Oid relid, ItemPointer ctid)
 {
 	DeferredTriggerEvent previous = NULL;
-	List   *dtev;
+	DeferredTriggerEvent prev;
 
 	/* Search the list to find the last event affecting this tuple */
-	foreach(dtev, deftrig_events)
+	for (prev = deftrig_events; prev != NULL; prev = prev->dte_next)
 	{
-		DeferredTriggerEvent prev = (DeferredTriggerEvent) lfirst(dtev);
-
 		if (prev->dte_relid != relid)
 			continue;
 		if (prev->dte_event & TRIGGER_DEFERRED_CANCELED)
@@ -1411,7 +1413,6 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 static void
 deferredTriggerInvokeEvents(bool immediate_only)
 {
-	List	   *el;
 	DeferredTriggerEvent event;
 	int			still_deferred_ones;
 	int			i;
@@ -1435,18 +1436,17 @@ deferredTriggerInvokeEvents(bool immediate_only)
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-	foreach(el, deftrig_events)
+	for (event = deftrig_events; event != NULL; event = event->dte_next)
 	{
-		MemoryContextReset(per_tuple_context);
-
 		/* ----------
-		 * Get the event and check if it is completely done.
+		 * Check if event is completely done.
 		 * ----------
 		 */
-		event = (DeferredTriggerEvent) lfirst(el);
 		if (event->dte_event & (TRIGGER_DEFERRED_DONE |
 								TRIGGER_DEFERRED_CANCELED))
 			continue;
+
+		MemoryContextReset(per_tuple_context);
 
 		/* ----------
 		 * Check each trigger item in the event.
@@ -1561,8 +1561,8 @@ DeferredTriggerBeginXact(void)
 	MemoryContextSwitchTo(oldcxt);
 
 	deftrig_n_events = 0;
-	deftrig_events = NIL;
-	deftrig_event_tail = NIL;
+	deftrig_events = NULL;
+	deftrig_event_tail = NULL;
 }
 
 
@@ -1957,16 +1957,16 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 
 	ntriggers = rel->trigdesc->n_after_row[event];
 	triggers = rel->trigdesc->tg_after_row[event];
-	new_size = sizeof(DeferredTriggerEventData) +
+	new_size = offsetof(DeferredTriggerEventData, dte_item[0]) +
 		ntriggers * sizeof(DeferredTriggerEventItem);
 
 	new_event = (DeferredTriggerEvent) palloc(new_size);
+	new_event->dte_next = NULL;
 	new_event->dte_event = event & TRIGGER_EVENT_OPMASK;
 	new_event->dte_relid = rel->rd_id;
 	ItemPointerCopy(&oldctid, &(new_event->dte_oldctid));
 	ItemPointerCopy(&newctid, &(new_event->dte_newctid));
 	new_event->dte_n_items = ntriggers;
-	new_event->dte_item[ntriggers].dti_state = new_size;
 	for (i = 0; i < ntriggers; i++)
 	{
 		new_event->dte_item[i].dti_tgoid = triggers[i]->tgoid;
@@ -1978,6 +1978,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 			((rel->trigdesc->n_before_row[event] > 0) ?
 			 TRIGGER_DEFERRED_HAS_BEFORE : 0);
 	}
+
 	MemoryContextSwitchTo(oldcxt);
 
 	switch (event & TRIGGER_EVENT_OPMASK)
