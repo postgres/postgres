@@ -356,48 +356,6 @@ echo "- setting LDFLAGS=$LDFLAGS"
 dnl Checks for programs.
 AC_PROG_CPP
 
-dnl Check to see what flags are required to get stdin into cpp.
-dnl Note that we need to look at the output, since the C compiler might
-dnl not raise an error when no input files are named on the cmd line.
-dnl (This is a somewhat modified version of AC_EGREP_CPP)
-dnl AC_TRY_CPPSTDIN(PATTERN, PROGRAM, [ACTION-IF-FOUND [,
-dnl                 ACTION-IF-NOT-FOUND]])
-AC_DEFUN(AC_TRY_CPPSTDIN,
-	[AC_REQUIRE_CPP()dnl
-	cat > conftest.$ac_ext <<EOF
-[#]line __oline__ "configure"
-#include "confdefs.h"
-[$2]
-EOF
-dnl eval is necessary to expand ac_cpp.
-dnl Ultrix and Pyramid sh refuse to redirect output of eval, so use subshell.
-if (eval "$ac_cpp $CPPSTDIN <conftest.$ac_ext") 2>&AC_FD_CC |
-  grep "$1" >/dev/null 2>&1; then
-  ifelse([$3], , :, [rm -rf conftest*
-  $3])
-ifelse([$4], , , [else
-  rm -rf conftest*
-  $4
-])dnl
-fi
-rm -f conftest*
-])
-
-AC_MSG_CHECKING(how to use cpp with stdin)
-if test -z "$CPPSTDIN"; then
-AC_CACHE_VAL(ac_cv_cpp_stdin,
-	[  CPPSTDIN="-"
-	  AC_TRY_CPPSTDIN([^Find Me Or Else],
-[#include <assert.h>
-Find Me Or Else], , CPPSTDIN="")
-	  ac_cv_cpp_stdin="$CPPSTDIN"])
-	  CPPSTDIN="$ac_cv_cpp_stdin"
-else
-  ac_cv_cpp_stdin="$CPPSTDIN"
-fi
-AC_MSG_RESULT($CPP $CPPSTDIN)
-AC_SUBST(CPPSTDIN)
-
 AC_SUBST(PORTNAME)
 AC_SUBST(SRCDIR)
 AC_SUBST(LDFLAGS)
