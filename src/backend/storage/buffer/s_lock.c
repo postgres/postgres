@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.29 2001/01/14 05:08:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.30 2001/01/19 20:39:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,9 +115,6 @@ s_lock(volatile slock_t *lock, const char *file, const int line)
 	}
 }
 
-
-
-
 /*
  * Various TAS implementations that cannot live in s_lock.h as no inline
  * definition exists (yet).
@@ -136,18 +133,18 @@ static void
 tas_dummy()						/* really means: extern int tas(slock_t
 								 * **lock); */
 {
-	__asm__("		\n\
-.global		_tas		\n\
-_tas:				\n\
-	movel   sp@(0x4),a0	\n\
-	tas a0@			\n\
-	beq _success		\n\
-	moveq   #-128,d0	\n\
-	rts			\n\
-_success:			\n\
-	moveq   #0,d0		\n\
-	rts			\n\
-	");
+	__asm__ __volatile__(
+"\
+.global		_tas				\n\
+_tas:							\n\
+			movel	sp@(0x4),a0	\n\
+			tas 	a0@			\n\
+			beq 	_success	\n\
+			moveq 	#-128,d0	\n\
+			rts					\n\
+_success:						\n\
+			moveq 	#0,d0		\n\
+			rts");
 }
 
 #endif	 /* __m68k__ */
@@ -160,22 +157,23 @@ _success:			\n\
 static void
 tas_dummy()
 {
-       __asm__("               \n\
-               .globl  tas     \n\
-               .globl  _tas    \n\
-_tas:                          \n\
-tas:                           \n\
-               lwarx   r5,0,r3 \n\
-               cmpwi   r5,0    \n\
-               bne     fail    \n\
-               addi    r5,r5,1 \n\
-               stwcx.  r5,0,r3 \n\
-               beq     success \n\
-fail:          li      r3,1    \n\
-               blr             \n\
-success:                       \n\
-               li r3,0         \n\
-               blr             \n\
+       __asm__ __volatile__(
+"\
+			.globl tas			\n\
+			.globl _tas			\n\
+_tas:							\n\
+tas:							\n\
+			lwarx	r5,0,r3		\n\
+			cmpwi 	r5,0		\n\
+			bne 	fail		\n\
+			addi 	r5,r5,1		\n\
+			stwcx. 	r5,0,r3		\n\
+			beq 	success		\n\
+fail:		li 		r3,1		\n\
+			blr 				\n\
+success:						\n\
+			li 		r3,0		\n\
+			blr 				\n\
 	");
 }
 
@@ -186,21 +184,21 @@ success:                       \n\
 static void
 tas_dummy()
 {
-	__asm__("		\n\
-.global		tas		\n\
-tas:				\n\
-		lwarx	5,0,3	\n\
-		cmpwi	5,0	\n\
-		bne	fail	\n\
-		addi	5,5,1	\n\
-        	stwcx.  5,0,3	\n\
-     		beq	success	\n\
-fail:		li	3,1	\n\
-		blr		\n\
-success:			\n\
-		li 3,0		\n\
-        	blr		\n\
-	");
+	__asm__ __volatile__(
+"\
+.global tas 					\n\
+tas:							\n\
+			lwarx	5,0,3		\n\
+			cmpwi 	5,0 		\n\
+			bne 	fail		\n\
+			addi 	5,5,1		\n\
+			stwcx.	5,0,3		\n\
+			beq 	success 	\n\
+fail:		li		3,1 		\n\
+			blr 				\n\
+success:						\n\
+			li 		3,0			\n\
+			blr");
 }
 
 #endif	 /* __powerpc__ */
@@ -209,22 +207,22 @@ success:			\n\
 static void
 tas_dummy()
 {
-	__asm__("		\n\
-.global	tas			\n\
-tas:				\n\
-	.frame	$sp, 0, $31	\n\
-	ll	$14, 0($4)	\n\
-	or	$15, $14, 1	\n\
-	sc	$15, 0($4)	\n\
-	beq	$15, 0, fail	\n\
-	bne	$14, 0, fail	\n\
-	li	$2, 0		\n\
-	.livereg 0x2000FF0E,0x00000FFF	\n\
-	j       $31		\n\
-fail:				\n\
-	li	$2, 1		\n\
-	j       $31		\n\
-	");
+	__asm__  _volatile__(
+"\
+.global	tas						\n\
+tas:							\n\
+			.frame	$sp, 0, $31	\n\
+			ll		$14, 0($4)	\n\
+			or		$15, $14, 1	\n\
+			sc		$15, 0($4)	\n\
+			beq		$15, 0, fail\n\
+			bne		$14, 0, fail\n\
+			li		$2, 0		\n\
+			.livereg 0x2000FF0E,0x00000FFF	\n\
+			j		$31			\n\
+fail:							\n\
+			li		$2, 1		\n\
+			j   	$31");
 }
 
 #endif	 /* __mips__ */
