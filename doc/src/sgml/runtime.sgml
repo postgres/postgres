@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.50 2001/02/10 00:50:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.51 2001/02/15 04:28:50 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -639,7 +639,7 @@ env PGOPTIONS='-c geqo=off' psql
         algorithm: The pool size is the number of individuals in one
         population. Valid values are between 128 and 1024. If it is
         set to 0 (the default) a pool size of 2^(QS+1), where QS
-        is the number of relations in the query, is taken. The effort
+        is the number of FROM items in the query, is taken. The effort
         is used to calculate a default for generations. Valid values
         are between 1 and 80, 40 being the default. Generations
         specifies the number of iterations in the algorithm. The
@@ -659,9 +659,10 @@ env PGOPTIONS='-c geqo=off' psql
       <term>GEQO_THRESHOLD (<type>integer</type>)</term>
       <listitem>
        <para>
-        Only use genetic query optimization for queries with at least
-        this many relations involved. The default is 11. For less
-        relations it is probably more efficient to use the
+        Use genetic query optimization to plan queries with at least
+        this many FROM items involved.  (Note that a JOIN construct
+	counts as only one FROM item.) The default is 11. For simpler
+	queries it is usually best to use the
         deterministic, exhaustive planner.
        </para>
       </listitem>
