@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.9 2003/10/25 15:32:11 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.10 2003/11/01 20:48:51 petere Exp $
 
 
 # PGAC_C_SIGNED
@@ -149,3 +149,43 @@ CFLAGS=$pgac_save_CFLAGS
 if test "$ac_env_CFLAGS_set" != set; then
   CFLAGS="$CFLAGS $pgac_cv_prog_cc_no_strict_aliasing"
 fi])# PGAC_PROG_CC_NO_STRICT_ALIASING
+
+
+# The below backpatches the following Autoconf change:
+#
+# 2002-03-28  Kevin Ryde  <user42@zip.com.au>
+#
+#         * lib/autoconf/c.m4 (AC_C_INLINE): Test with a typedef return value,
+#         to avoid versions of HP C which don't allow that.
+#
+# When we upgrade to Autoconf >= 2.53a then we can drop this and rely
+# on the standard macro.
+
+# AC_C_INLINE
+# -----------
+# Do nothing if the compiler accepts the inline keyword.
+# Otherwise define inline to __inline__ or __inline if one of those work,
+# otherwise define inline to be empty.
+AC_DEFUN([AC_C_INLINE],
+[AC_REQUIRE([AC_PROG_CC_STDC])dnl
+AC_CACHE_CHECK([for inline], ac_cv_c_inline,
+[ac_cv_c_inline=no
+for ac_kw in inline __inline__ __inline; do
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[#ifndef __cplusplus
+typedef int foo_t;
+static $ac_kw foo_t static_foo () {return 0; }
+$ac_kw int foo () {return 0; }
+#endif
+])],
+                    [ac_cv_c_inline=$ac_kw; break])
+done
+])
+case $ac_cv_c_inline in
+  inline | yes) ;;
+  no) AC_DEFINE(inline,,
+                [Define as `__inline' if that's what the C compiler calls it,
+                 or to nothing if it is not supported.]) ;;
+  *)  AC_DEFINE_UNQUOTED(inline, $ac_cv_c_inline) ;;
+esac
+])# AC_C_INLINE

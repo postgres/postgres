@@ -2384,7 +2384,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-pgac_CFLAGS_before_template=$CFLAGS
+unset CFLAGS
 
 #
 # Read the template
@@ -2399,12 +2399,15 @@ pgac_CFLAGS_before_template=$CFLAGS
 
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
-elif test "$pgac_CFLAGS_before_template" != "$CFLAGS"; then
+elif test "${CFLAGS+set}" = set; then
   : # (keep what template set)
 elif test "$GCC" = yes; then
   CFLAGS="-O2"
 else
-  CFLAGS="-O"
+  # if the user selected debug mode, don't use -O
+  if test "$enable_debug" != yes; then
+    CFLAGS="-O"
+  fi
 fi
 
 # Need to specify -fno-strict-aliasing too in case it's gcc 3.3 or later.
@@ -2473,7 +2476,7 @@ if test "$ac_env_CFLAGS_set" != set; then
 fi
 
 # supply -g if --enable-debug
-if test "$enable_debug" = yes -a "$ac_cv_prog_cc_g" = yes; then
+if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
   CFLAGS="$CFLAGS -g"
 fi
 
@@ -9314,7 +9317,8 @@ for ac_kw in inline __inline__ __inline; do
 #line $LINENO "configure"
 #include "confdefs.h"
 #ifndef __cplusplus
-static $ac_kw int static_foo () {return 0; }
+typedef int foo_t;
+static $ac_kw foo_t static_foo () {return 0; }
 $ac_kw int foo () {return 0; }
 #endif
 

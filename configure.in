@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.299 2003/10/28 20:26:45 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.300 2003/11/01 20:48:51 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -229,7 +229,7 @@ esac
 
 AC_PROG_CC([$pgac_cc_list])
 
-pgac_CFLAGS_before_template=$CFLAGS
+unset CFLAGS
 
 #
 # Read the template
@@ -244,19 +244,22 @@ pgac_CFLAGS_before_template=$CFLAGS
 
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
-elif test "$pgac_CFLAGS_before_template" != "$CFLAGS"; then
+elif test "${CFLAGS+set}" = set; then
   : # (keep what template set)
 elif test "$GCC" = yes; then
   CFLAGS="-O2"
 else
-  CFLAGS="-O"
+  # if the user selected debug mode, don't use -O
+  if test "$enable_debug" != yes; then
+    CFLAGS="-O"
+  fi
 fi
 
 # Need to specify -fno-strict-aliasing too in case it's gcc 3.3 or later.
 PGAC_PROG_CC_NO_STRICT_ALIASING
 
 # supply -g if --enable-debug
-if test "$enable_debug" = yes -a "$ac_cv_prog_cc_g" = yes; then
+if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
   CFLAGS="$CFLAGS -g"
 fi
 
