@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.36 2000/11/30 20:36:10 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.37 2000/12/06 19:37:08 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -221,7 +221,7 @@ ifeq ($(PORTNAME), beos)
 endif
 
 # Pull in any extra -L options that the user might have specified.
-SHLIB_LINK := $(filter -L%, $(LIBS)) $(SHLIB_LINK)
+SHLIB_LINK := $(filter -L%, $(LDFLAGS)) $(SHLIB_LINK)
 
 ifeq ($(enable_rpath), yes)
 SHLIB_LINK += $(rpath)
