@@ -8,62 +8,56 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.24 2000/10/17 15:26:39 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.25 2000/11/05 21:04:06 petere Exp $
 #
 #----------------------------------------------------------------------------
 
-# Pick up Makefile.global from the source area
-# This is the only resource from the code source area and is optional.
-# Actually, we want this to get Makefile.custom - thomas 1998-03-01
 subdir = doc/src/sgml
 top_builddir = ../../..
--include $(top_builddir)/src/Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 
-# This is where the default stylesheets appear on my linux system.
-# Probably no need to change this; rather, put definitions
-#  for HSTYLE and PSTYLE and/or for HDSL and PDSL
-#  in Makefile.custom in your code src directory.
-#HSTYLE=/usr/lib/sgml/stylesheets/nwalsh-modular/html
-#PSTYLE=/usr/lib/sgml/stylesheets/nwalsh-modular/print
-# This is where the production stylesheets appear on postgresql.org
+ifndef DOCBOOKSTYLE
+DOCBOOKSTYLE = /home/projects/pgsql/developers/thomas/db143.d/docbook
+endif
+
 ifndef HSTYLE
-HSTYLE= /home/projects/pgsql/developers/thomas/db143.d/docbook/html
+HSTYLE = $(DOCBOOKSTYLE)/html
 endif
 ifndef PSTYLE
-PSTYLE= /home/projects/pgsql/developers/thomas/db143.d/docbook/print
+PSTYLE = $(DOCBOOKSTYLE)/print
 endif
 
 HDSL=$(HSTYLE)/docbook.dsl
 PDSL=$(PSTYLE)/docbook.dsl
 
-# Options for DocBook style sheets
+ifndef JADE
+JADE = jade
+endif
+SGMLINCLUDE = -D ref -D ../graphics
 
-DBOPTS= -D ref -D ../graphics
-#DBOPTS+= -V %no-split-output% -V %no-make-index%
-# use-id-as-filename picks up the "Id=" fields to use as file names.
-# If this is omitted then file names are generic "c01.htm"
-#  as in v6.3 documentation. Yuck.
-DBOPTS+= -V %use-id-as-filename%
+ifndef NSGMLS
+NSGMLS = nsgmls
+endif
+
+ifndef SGMLSPL
+SGMLSPL = sgmlspl
+endif
+
 
 # docbook2man generates man pages from docbook refentry source code.
-# This is where the (patched) docbook2man perl scripts reside on hub.org.
 
+ifndef D2MDIR
+# This is where the (patched) docbook2man perl scripts reside on hub.org.
 D2MDIR= /home/users/t/thomas/d2x/docbook2man
+endif
 D2MSCRIPT= $(D2MDIR)/docbook2man-spec.pl
 
-TAR= tar
-
-# Hmm, made this optional but jade _really_ doesn't like them missing
-# - thomas 1998-03-01
-ifneq ($(HDSL), )
-HTMLOPTS= -d $(HDSL)
-endif
-ifneq ($(PDSL), )
-PRINTOPTS= -d $(PDSL)
-endif
-
 vpath %.sgml ./ref
+
+ALLDOCUMENTS = admin user programmer developer tutorial postgres
+
+ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml)
 
 MANSOURCES= $(wildcard ref/*.sgml)
 
@@ -119,79 +113,73 @@ APPTARGETS= $(XAPPTARGETS:-ref.1=.1)
 XSQLTARGETS= $(COMMANDS:.sgml=.l)
 SQLTARGETS= $(XSQLTARGETS:-ref.l=.l)
 
-.PRECIOUS: postgres.tex postgres.dvi
-.PHONY: install all clean distclean
 
-install:
+##
+## Man pages
+##
 
-all:
+.PHONY: man man1 manl
 
 man:
 	$(MAKE) man1 manl
-	($(RM) -r *.1 *.l man1 manl)
+	rm -r *.1 *.l man1 manl
 	$(MAKE) man1 manl
 
 manpage.refs:
 	$(MAKE) man
 
 man1: $(APPTARGETS) manpage.refs
-	$(RM) -rf man1
+	rm -rf man1
 	if [ ! -d man1 ]; then mkdir man1; fi
 	cp *.1 man1/
 
 manl: $(SQLTARGETS) manpage.refs
-	$(RM) -rf manl/*
+	rm -rf manl/*
 	if [ ! -d manl ]; then mkdir manl; fi
 	cp *.l manl/
 
-clean:
-	(rm -rf HTML.manifest *.html *.htm *.1 *.l man1 manl manpage*)
-
-distclean:
-	$(MAKE) clean
-
-#
-# Generic production rules
-#
-
 %.1: %-ref.sgml
-	nsgmls $(NSGMLS_FLAGS) refentry.sgml $< \
-	| sgmlspl $(D2MSCRIPT) --lowercase --blockformat --section 1
+	$(NSGMLS) $(NSGMLS_FLAGS) refentry.sgml $< \
+	| $(SGMLSPL) $(D2MSCRIPT) --lowercase --section 1
 
 %.1: %.sgml
-	nsgmls $(NSGMLS_FLAGS) refentry.sgml $< \
-	| sgmlspl $(D2MSCRIPT) --lowercase --blockformat --section 1
+	$(NSGMLS) $(NSGMLS_FLAGS) refentry.sgml $< \
+	| $(SGMLSPL) $(D2MSCRIPT) --lowercase --section 1
 
 %.l: %.sgml
-	nsgmls $(NSGMLS_FLAGS) refentry.sgml $< \
-	| sgmlspl $(D2MSCRIPT) --lowercase --blockformat --section l
+	$(NSGMLS) $(NSGMLS_FLAGS) refentry.sgml $< \
+	| $(SGMLSPL) $(D2MSCRIPT) --lowercase --section l
 
-# HTML
+
+##
+## HTML
+##
+
+%.html: %.sgml $(ALLSGML)
+	@rm -f *.htm
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(HDSL) -V %use-id-as-filename% -t sgml $<
 # Include some softlinks to the generic default file names
+	ln -sf $*.htm index.html
+	ln -sf $*.htm $*.html
 
-%.html:	%.sgml #$(HDSL)
-	(rm -rf *.htm)
-	jade $(DBOPTS) $(HTMLOPTS) -t sgml $<
-	(ln -sf $*.htm index.html)
-	(ln -sf $*.htm $*.html)
+
+##
+## Print
+##
 
 # RTF to allow minor editing for hardcopy
-# This is used for v6.3 docs
-
-%.rtf: %.sgml #$(PDSL)
-	jade $(DBOPTS) $(PRINTOPTS) -t rtf $<
+%.rtf: %.sgml
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t rtf $<
 
 # TeX and DVI
-
-%.tex: %.sgml #$(PDSL)
-	jade $(DBOPTS) $(PRINTOPTS) -t tex $<
+%.tex: %.sgml
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t tex $<
 
 %.dvi: %.tex
 	jadetex $<
 	jadetex $<
 
 # Postscript from TeX
-
 %.ps: %.dvi
 	dvips -o $@ $<
 
@@ -201,9 +189,9 @@ distclean:
 	cp -p ../graphics/$@ .
 
 
-#
-# Semi-automatic generation of some text files.
-#
+##
+## Semi-automatic generation of some text files.
+##
 
 INSTALL HISTORY: % : %.html
 	@echo "|";\
@@ -216,7 +204,7 @@ INSTALL.html HISTORY.html: %.html : tempfile_%.html
 	sed 's/Chapter 1. *//g' $< >$@
 
 tempfile_INSTALL.html tempfile_HISTORY.html: tempfile_%.html : tempfile_%.sgml
-	jade -d $(HDSL) -V nochunks -t sgml $< >$@
+	$(JADE) $(JADEFLAGS) -d $(HDSL) -V nochunks -t sgml $< >$@
 
 
 tempfile_INSTALL.sgml: standalone-install.sgml installation.sgml
@@ -228,3 +216,27 @@ tempfile_HISTORY.sgml: release.sgml
 
 
 .INTERMEDIATE: tempfile_INSTALL.html tempfile_HISTORY.html tempfile_INSTALL.sgml tempfile_HISTORY.sgml
+
+
+##
+## Check
+##
+
+check: $(addprefix check-, $(ALLDOCUMENTS))
+
+# Quick syntax check without style processing
+check-%: %.sgml
+	$(NSGMLS) $(SGMLINCLUDE) -s $<
+
+
+##
+## Clean
+##
+
+clean distclean maintainer-clean:
+# HTML
+	rm -f HTML.manifest *.html *.htm
+# man
+	rm -rf *.1 *.l man1 manl manpage.refs manpage.links manpage.log
+# print
+	rm -f *.rtf *.tex *.dvi *.aux *.log *.ps *.pdf

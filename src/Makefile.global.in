@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.109 2000/11/04 16:39:02 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.110 2000/11/05 21:04:07 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -125,6 +125,9 @@ krb_srvtab = @krb_srvtab@
 TCL_CONFIG_SH = @TCL_CONFIG_SH@
 TK_CONFIG_SH = @TK_CONFIG_SH@
 
+have_docbook	= @have_docbook@
+DOCBOOKSTYLE	= @DOCBOOKSTYLE@
+
 
 ##########################################################################
 #
@@ -189,6 +192,12 @@ INSTALL_SHLIB	= @INSTALL_SHLIB@
 
 mkinstalldirs	= $(SHELL) $(top_srcdir)/config/mkinstalldirs
 missing		= $(SHELL) $(top_srcdir)/config/missing
+
+# Documentation
+
+JADE	= @JADE@
+NSGMLS	= @NSGMLS@
+SGMLSPL	= @SGMLSPL@
 
 
 ##########################################################################
