@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.108 1999/04/25 03:19:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.109 1999/05/01 17:16:25 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -907,26 +907,28 @@ usage(char *progname)
 	fprintf(stderr,
 			"Usage: %s [options] [dbname]\n", progname);
 #ifdef USE_ASSERT_CHECKING
-	fprintf(stderr, "\t-A enable/disable assert checking\n");
+	fprintf(stderr, "\t-A on\t\tenable/disable assert checking\n");
 #endif
 	fprintf(stderr, "\t-B buffers\tset number of buffers in buffer pool\n");
-	fprintf(stderr, "\t-C \t\tsupress version info\n");
+	fprintf(stderr, "\t-C \t\tsuppress version info\n");
 	fprintf(stderr, "\t-D dir\t\tdata directory\n");
 	fprintf(stderr, "\t-E \t\techo query before execution\n");
 	fprintf(stderr, "\t-F \t\tturn off fsync\n");
 #ifdef LOCK_MGR_DEBUG
-	fprintf(stderr, "\t-K \t\tset locking debug level [0|1|2]\n");
+	fprintf(stderr, "\t-K lev\t\tset locking debug level [0|1|2]\n");
 #endif
 	fprintf(stderr, "\t-O \t\tallow system table structure changes\n");
 	fprintf(stderr, "\t-P port\t\tset port file descriptor\n");
 	fprintf(stderr, "\t-Q \t\tsuppress informational messages\n");
 	fprintf(stderr, "\t-S buffers\tset amount of sort memory available\n");
+	fprintf(stderr, "\t-T options\tspecify pg_options\n");
+	fprintf(stderr, "\t-W sec\t\twait N seconds to allow attach from a debugger\n");
 	fprintf(stderr, "\t-d [1|2|3]\tset debug level\n");
 	fprintf(stderr, "\t-e \t\tturn on European date format\n");
+	fprintf(stderr, "\t-f [s|i|n|m|h]\tforbid use of some plan types\n");
 	fprintf(stderr, "\t-o file\t\tsend stdout and stderr to given filename \n");
 	fprintf(stderr, "\t-s \t\tshow stats after each query\n");
 	fprintf(stderr, "\t-v version\tset protocol version being used by frontend\n");
-	fprintf(stderr, "\t-W \t\twait N seconds to allow attach from a debugger\n");
 }
 
 /* ----------------------------------------------------------------
@@ -1018,7 +1020,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	optind = 1;					/* reset after postmaster usage */
 
 	while ((flag = getopt(argc, argv,
-						  "A:B:CD:d:Eef:iK:Lm:MNOo:P:pQS:st:v:x:FW:"))
+						  "A:B:CD:d:EeFf:iK:LMm:NOo:P:pQS:sT:t:v:W:x:"))
 		   != EOF)
 		switch (flag)
 		{
@@ -1051,7 +1053,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 
 			case 'D':			/* PGDATA directory */
-			        if (!DataDir) {
+				if (!DataDir) {
 				    DataDir = optarg;
 				    /* must be done after DataDir is defined */
 				    read_pg_options(0);
@@ -1147,12 +1149,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				lockingOff = 1;
 				break;
 
-			case 'm':
-				/* Multiplexed backends are no longer supported. */
-				break;
 			case 'M':
 				exit(PostmasterMain(argc, argv));
 				break;
+
+			case 'm':
+				/* Multiplexed backends are no longer supported. */
+				break;
+
 			case 'N':
 				/* ----------------
 				 *	N - Don't use newline as a query delimiter
@@ -1161,20 +1165,20 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				UseNewLine = 0;
 				break;
 
-			case 'o':
-				/* ----------------
-				 *	o - send output (stdout and stderr) to the given file
-				 * ----------------
-				 */
-				StrNCpy(OutputFileName, optarg, MAXPGPATH);
-				break;
-
 			case 'O':
 				/* --------------------
 				 *	allow system table structure modifications
 				 * --------------------
 				 */
 				allowSystemTableMods = true;
+				break;
+
+			case 'o':
+				/* ----------------
+				 *	o - send output (stdout and stderr) to the given file
+				 * ----------------
+				 */
+				StrNCpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 
 			case 'p':			/* started by postmaster */
@@ -1314,6 +1318,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 * ----------------
 				 */
 				errs++;
+				break;
 		}
 
 	/* ----------------
@@ -1534,7 +1539,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.108 $ $Date: 1999/04/25 03:19:10 $\n");
+		puts("$Revision: 1.109 $ $Date: 1999/05/01 17:16:25 $\n");
 	}
 
 	/* ----------------
