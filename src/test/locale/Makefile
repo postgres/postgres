@@ -14,7 +14,7 @@ CFLAGS+= $(KRBFLAGS)
 endif
 
 PROGS = test-pgsql-locale test-ctype
-DIRS = koi8-r
+DIRS = koi8-r ISO8859-7 koi8-to-win1251
 
 all: $(PROGS)
 

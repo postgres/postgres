@@ -1,0 +1,1 @@
+SELECT * FROM usastates WHERE name_gr ~* '^Ã.*' ORDER BY name_gr;

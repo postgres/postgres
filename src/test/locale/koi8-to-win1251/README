@@ -1,0 +1,4 @@
+koi8-to-win1251 test. The database should be created in koi8 (createdb -E koi8),
+test uses koi8-to-win1251 converting feature.
+Created by Oleg Broytmann <phd2@earthling.net>. Code for encodings
+converting created by Tatsuo Ishii <t-ishii@sra.co.jp>.
