@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.11 1997/01/15 08:21:14 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.12 1997/01/22 04:56:34 scrappy Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -81,7 +81,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh,v 1.11 1997/01/15 08:21:14 scrappy Exp $
+ * $Id: Gen_fmgrtab.sh,v 1.12 1997/01/22 04:56:34 scrappy Exp $
  *
  * NOTES
  *	******************************
@@ -175,7 +175,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.11 1997/01/15 08:21:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.12 1997/01/22 04:56:34 scrappy Exp $
  *
  * NOTES
  *
@@ -201,7 +201,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
 # include <limits.h>
 #else
 # if defined(USE_LIMITS_H)
-#  include <machine/limits.h>
+#  include <limits.h>
 #  define MAXINT	INT_MAX
 # else
 #  include <values.h>
