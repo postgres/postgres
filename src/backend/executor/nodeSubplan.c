@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.22 2000/03/09 05:15:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.23 2000/03/21 04:20:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,7 +336,7 @@ ExecSetParamPlan(SubPlan *node)
 		if (found &&
 			(sublink->subLinkType == EXPR_SUBLINK ||
 			 sublink->subLinkType == MULTIEXPR_SUBLINK))
-			elog(ERROR, "More than one tuple returned a subselect used as an expression.");
+			elog(ERROR, "More than one tuple returned by a subselect used as an expression.");
 
 		found = true;
 
