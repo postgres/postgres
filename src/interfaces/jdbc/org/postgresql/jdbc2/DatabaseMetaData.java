@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.53 2002/06/05 19:12:01 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.54 2002/06/06 14:47:52 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -2057,7 +2057,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
 		if ((tableNamePattern != null) && ! tableNamePattern.equals("%"))
 		{
-			sql.append(" and c.relname like \'" + tableNamePattern + "\'");
+			sql.append(" and c.relname like \'" + tableNamePattern.toLowerCase() + "\'");
 		}
 
 		if ((columnNamePattern != null) && ! columnNamePattern.equals("%"))
