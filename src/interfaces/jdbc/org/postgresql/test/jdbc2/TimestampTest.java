@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: TimestampTest.java,v 1.9 2002/09/06 21:23:06 momjian Exp $
+ * $Id: TimestampTest.java,v 1.9.2.1 2003/01/14 09:15:35 barry Exp $
  *
  * Test get/setTimestamp for both timestamp with time zone and
  * timestamp without time zone datatypes
@@ -52,11 +52,12 @@ public class TimestampTest extends TestCase
 			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWTZ_TABLE, "'" + TS1WTZ_PGFORMAT + "'")));
 			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWTZ_TABLE, "'" + TS2WTZ_PGFORMAT + "'")));
 			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWTZ_TABLE, "'" + TS3WTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWTZ_TABLE, "'" + TS4WTZ_PGFORMAT + "'")));
 
 			// Fall through helper
 			timestampTestWTZ();
 
-			assertEquals(3, stmt.executeUpdate("DELETE FROM " + TSWTZ_TABLE));
+			assertEquals(4, stmt.executeUpdate("DELETE FROM " + TSWTZ_TABLE));
 
 			stmt.close();
 		}
@@ -88,10 +89,13 @@ public class TimestampTest extends TestCase
 			pstmt.setTimestamp(1, TS3WTZ);
 			assertEquals(1, pstmt.executeUpdate());
 
+			pstmt.setTimestamp(1, TS4WTZ);
+			assertEquals(1, pstmt.executeUpdate());
+
 			// Fall through helper
 			timestampTestWTZ();
 
-			assertEquals(3, stmt.executeUpdate("DELETE FROM " + TSWTZ_TABLE));
+			assertEquals(4, stmt.executeUpdate("DELETE FROM " + TSWTZ_TABLE));
 
 			pstmt.close();
 			stmt.close();
@@ -117,11 +121,12 @@ public class TimestampTest extends TestCase
 			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWOTZ_TABLE, "'" + TS1WOTZ_PGFORMAT + "'")));
 			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWOTZ_TABLE, "'" + TS2WOTZ_PGFORMAT + "'")));
 			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWOTZ_TABLE, "'" + TS3WOTZ_PGFORMAT + "'")));
+			assertEquals(1, stmt.executeUpdate(TestUtil.insertSQL(TSWOTZ_TABLE, "'" + TS4WOTZ_PGFORMAT + "'")));
 
 			// Fall through helper
 			timestampTestWOTZ();
 
-			assertEquals(3, stmt.executeUpdate("DELETE FROM " + TSWOTZ_TABLE));
+			assertEquals(4, stmt.executeUpdate("DELETE FROM " + TSWOTZ_TABLE));
 
 			stmt.close();
 		}
@@ -154,10 +159,13 @@ public class TimestampTest extends TestCase
 			pstmt.setTimestamp(1, TS3WOTZ);
 			assertEquals(1, pstmt.executeUpdate());
 
+			pstmt.setTimestamp(1, TS4WOTZ);
+			assertEquals(1, pstmt.executeUpdate());
+
 			// Fall through helper
 			timestampTestWOTZ();
 
-			assertEquals(3, stmt.executeUpdate("DELETE FROM " + TSWOTZ_TABLE));
+			assertEquals(4, stmt.executeUpdate("DELETE FROM " + TSWOTZ_TABLE));
 
 			pstmt.close();
 			stmt.close();
@@ -195,6 +203,11 @@ public class TimestampTest extends TestCase
 		assertNotNull(t);
 		assertTrue(t.equals(TS3WTZ));
 
+		assertTrue(rs.next());
+		t = rs.getTimestamp(1);
+		assertNotNull(t);
+		assertTrue(t.equals(TS4WTZ));
+
 		assertTrue(! rs.next()); // end of table. Fail if more entries exist.
 
 		rs.close();
@@ -216,17 +229,22 @@ public class TimestampTest extends TestCase
 		assertTrue(rs.next());
 		t = rs.getTimestamp(1);
 		assertNotNull(t);
-		assertTrue(t.toString().equals(TS1WOTZ_JAVAFORMAT));
+		assertTrue(t.equals(TS1WOTZ));
 
 		assertTrue(rs.next());
 		t = rs.getTimestamp(1);
 		assertNotNull(t);
-		assertTrue(t.toString().equals(TS2WOTZ_JAVAFORMAT));
+		assertTrue(t.equals(TS2WOTZ));
 
 		assertTrue(rs.next());
 		t = rs.getTimestamp(1);
 		assertNotNull(t);
-		assertTrue(t.toString().equals(TS3WOTZ_JAVAFORMAT));
+		assertTrue(t.equals(TS3WOTZ));
+
+		assertTrue(rs.next());
+		t = rs.getTimestamp(1);
+		assertNotNull(t);
+		assertTrue(t.equals(TS4WOTZ));
 
 		assertTrue(! rs.next()); // end of table. Fail if more entries exist.
 
@@ -277,20 +295,21 @@ public class TimestampTest extends TestCase
 	private static final java.sql.Timestamp TS3WTZ = getTimestamp(2000, 7, 7, 15, 0, 0, 123000000, "GMT");
 	private static final String TS3WTZ_PGFORMAT = "2000-07-07 15:00:00.123+00";
 
+	private static final java.sql.Timestamp TS4WTZ = getTimestamp(2000, 7, 7, 15, 0, 0, 123456000, "GMT");
+	private static final String TS4WTZ_PGFORMAT = "2000-07-07 15:00:00.123456+00";
+
 
 	private static final java.sql.Timestamp TS1WOTZ = getTimestamp(1950, 2, 7, 15, 0, 0, 100000000, null);
 	private static final String TS1WOTZ_PGFORMAT = "1950-02-07 15:00:00.1";
-	private static final String TS1WOTZ_JAVAFORMAT = "1950-02-07 15:00:00.1";
 
 	private static final java.sql.Timestamp TS2WOTZ = getTimestamp(2000, 2, 7, 15, 0, 0, 120000000, null);
 	private static final String TS2WOTZ_PGFORMAT = "2000-02-07 15:00:00.12";
-	//there is probably a bug here in that this needs to be .1 instead of .12, but I couldn't find it now
-	private static final String TS2WOTZ_JAVAFORMAT = "2000-02-07 15:00:00.1";
 
 	private static final java.sql.Timestamp TS3WOTZ = getTimestamp(2000, 7, 7, 15, 0, 0, 123000000, null);
 	private static final String TS3WOTZ_PGFORMAT = "2000-07-07 15:00:00.123";
-	//there is probably a bug here in that this needs to be .12 instead of .123, but I couldn't find it now
-	private static final String TS3WOTZ_JAVAFORMAT = "2000-07-07 15:00:00.12";
+
+	private static final java.sql.Timestamp TS4WOTZ = getTimestamp(2000, 7, 7, 15, 0, 0, 123456000, null);
+	private static final String TS4WOTZ_PGFORMAT = "2000-07-07 15:00:00.123456";
 
 	private static final String TSWTZ_TABLE = "testtimestampwtz";
 	private static final String TSWOTZ_TABLE = "testtimestampwotz";
