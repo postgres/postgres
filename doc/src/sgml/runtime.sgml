@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.202 2003/09/05 02:54:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.203 2003/09/05 16:13:38 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -3104,7 +3104,7 @@ kernel.shmmax = 134217728
 	of overcommit handling, you can also relieve this problem by 
 	altering the system's default behaviour. This can be determined 
 	by examining the function <function>vm_enough_memory</>
-	in the file <filename>mm/mmap.c</>in the kernel source. 
+	in the file <filename>mm/mmap.c</> in the kernel source. 
 	If this file reveals that strict and/or paranoid modes are 
 	supported by your kernel, turn one of these modes on by using
 <programlisting>
