@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.82 2002/04/25 00:56:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.83 2002/04/28 22:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,18 +335,33 @@ tokenize_file(FILE *file)
 
 
 /*
- * Compare two password-file lines on the basis of their user names.
+ * Compare two lines based on their user/group names.
  *
- * Used for qsort() sorting and bsearch() lookup.
+ * Used for qsort() sorting.
  */
 static int
-user_group_cmp(const void *user, const void *list)
+user_group_qsort_cmp(const void *list1, const void *list2)
 {
 						/* first node is line number */
-	char 	   *user1 = (char *)user;
-	char	   *user2 = lfirst(lnext(*(List **)list));
+	char	   *user1 = lfirst(lnext(*(List **)list1));
+	char	   *user2 = lfirst(lnext(*(List **)list2));
 
 	return strcmp(user1, user2);
+}
+
+
+/*
+ * Compare two lines based on their user/group names.
+ *
+ * Used for bsearch() lookup.
+ */
+static int
+user_group_bsearch_cmp(const void *user, const void *list)
+{
+						/* first node is line number */
+	char	   *user2 = lfirst(lnext(*(List **)list));
+
+	return strcmp(user, user2);
 }
 
 
@@ -360,7 +375,7 @@ get_group_line(const char *group)
 							(void *) group_sorted,
 							group_length,
 							sizeof(List *),
-							user_group_cmp);
+							user_group_bsearch_cmp);
 }
 
 
@@ -374,7 +389,7 @@ get_user_line(const char *user)
 							(void *) user_sorted,
 							user_length,
 							sizeof(List *),
-							user_group_cmp);
+							user_group_bsearch_cmp);
 }
 
 
@@ -754,7 +769,7 @@ load_group()
 		foreach(line, group_lines)
 			group_sorted[i++] = lfirst(line);
 
-		qsort((void *) group_sorted, group_length, sizeof(List *), user_group_cmp);
+		qsort((void *) group_sorted, group_length, sizeof(List *), user_group_qsort_cmp);
 	}
 	else
 		group_sorted = NULL;
@@ -792,7 +807,7 @@ load_user()
 		foreach(line, user_lines)
 			user_sorted[i++] = lfirst(line);
 
-		qsort((void *) user_sorted, user_length, sizeof(List *), user_group_cmp);
+		qsort((void *) user_sorted, user_length, sizeof(List *), user_group_qsort_cmp);
 	}
 	else
 		user_sorted = NULL;
