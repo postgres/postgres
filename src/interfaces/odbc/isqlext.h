@@ -5,7 +5,7 @@
 #ifndef	_INTRINSIC_SQLEXT_H
 # define _INTRINSIC_SQLEXT_H
 
-# include	<isql.h>
+# include "isql.h"
 
 # define SQL_STILL_EXECUTING 		2
 # define SQL_NEED_DATA			99

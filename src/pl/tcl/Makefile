@@ -4,7 +4,7 @@
 #    Makefile for the pltcl shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.12 2000/04/21 03:28:17 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.13 2000/05/22 23:56:44 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -66,7 +66,7 @@ CC = $(TCL_CC)
 # Instead use TCL's CFLAGS plus necessary -I directives.
 
 # Can choose either TCL_CFLAGS_OPTIMIZE or TCL_CFLAGS_DEBUG here, as needed
-CFLAGS= $(TCL_CFLAGS_OPTIMIZE)
+CFLAGS+= $(TCL_CFLAGS_OPTIMIZE)
 
 CFLAGS+= $(TCL_SHLIB_CFLAGS) $(TCL_DEFS)
 
