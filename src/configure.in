@@ -133,6 +133,7 @@ DL_LIB=`grep '^DL_LIB:' $TEMPLATE | awk -F: '{print $2}'`
 YACC=`grep '^YACC:' $TEMPLATE | awk -F: '{print $2}'`
 YFLAGS=`grep '^YFLAGS:' $TEMPLATE | awk -F: '{print $2}'`
 CC=`grep '^CC:' $TEMPLATE | awk -F: '{print $2}'`
+LIBS=`grep '^LIBS:' $TEMPLATE | awk -F: '{print $2}'`
 
 
 dnl We now need to check for additional directories (include

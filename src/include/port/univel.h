@@ -5,11 +5,16 @@
 
 #define HAS_TEST_AND_SET
 #define NEED_I386_TAS_ASM
-#define USE_UNIVEL_CC_ASM	/***************************************\
-							| Define this if you are compiling with	|
-							| the native UNIXWARE C compiler.		|
-							\***************************************/
+/***************************************
+ * Define this if you are compiling with
+ * the native UNIXWARE C compiler.		
+ ***************************************/
+#define USE_UNIVEL_CC_ASM	
 typedef unsigned char slock_t;
+/***************************************************************
+ * strcasecmp() is in c89, but is not in any include file :-(  
+ ***************************************************************/
+int strcasecmp(char *, char *);
 
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321
