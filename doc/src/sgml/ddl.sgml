@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.26 2004/03/07 04:31:01 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.27 2004/08/03 20:32:30 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1723,7 +1723,7 @@ SET search_path TO myschema;
    </para>
 
    <para>
-    See also <xref linkend="functions-misc"> for other ways to access
+    See also <xref linkend="functions-info"> for other ways to access
     the schema search path.
    </para>
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.153 2004/08/01 17:45:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.154 2004/08/03 20:32:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5047,4 +5047,234 @@ issue_xlog_fsync(void)
 			elog(PANIC, "unrecognized wal_sync_method: %d", sync_method);
 			break;
 	}
+}
+
+
+/*
+ * pg_start_backup: set up for taking an on-line backup dump
+ *
+ * Essentially what this does is to create a backup label file in $PGDATA,
+ * where it will be archived as part of the backup dump.  The label file
+ * contains the user-supplied label string (typically this would be used
+ * to tell where the backup dump will be stored) and the starting time and
+ * starting WAL offset for the dump.
+ */
+Datum
+pg_start_backup(PG_FUNCTION_ARGS)
+{
+	text	   *backupid = PG_GETARG_TEXT_P(0);
+	text	   *result;
+	char	   *backupidstr;
+	XLogRecPtr	startpoint;
+	time_t stamp_time;
+	char		strfbuf[128];
+	char		labelfilename[MAXPGPATH];
+	char		xlogfilename[MAXFNAMELEN];
+	uint32		_logId;
+	uint32		_logSeg;
+	struct stat stat_buf;
+	FILE	   *fp;
+
+	if (!superuser()) 
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to run a backup"))));
+	backupidstr = DatumGetCString(DirectFunctionCall1(textout,
+													  PointerGetDatum(backupid)));
+	/*
+	 * The oldest point in WAL that would be needed to restore starting from
+	 * the most recent checkpoint is precisely the RedoRecPtr.
+	 */
+	startpoint = GetRedoRecPtr();
+	XLByteToSeg(startpoint, _logId, _logSeg);
+	XLogFileName(xlogfilename, ThisTimeLineID, _logId, _logSeg);
+	/*
+	 * We deliberately use strftime/localtime not the src/timezone functions,
+	 * so that backup labels will consistently be recorded in the same
+	 * timezone regardless of TimeZone setting.  This matches elog.c's
+	 * practice.
+	 */
+	stamp_time = time(NULL);
+	strftime(strfbuf, sizeof(strfbuf),
+			 "%Y-%m-%d %H:%M:%S %Z",
+			 localtime(&stamp_time));
+	/*
+	 * Check for existing backup label --- implies a backup is already running
+	 */
+	snprintf(labelfilename, MAXPGPATH, "%s/backup_label", DataDir);
+	if (stat(labelfilename, &stat_buf) != 0)
+	{
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat \"%s\": %m",
+							labelfilename)));
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("a backup is already in progress"),
+				 errhint("If you're sure there is no backup in progress, remove file \"%s\" and try again.",
+						 labelfilename)));
+	/*
+	 * Okay, write the file
+	 */
+	fp = AllocateFile(labelfilename, "w");
+	if (!fp)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not create file \"%s\": %m",
+						labelfilename)));
+	fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
+			startpoint.xlogid, startpoint.xrecoff, xlogfilename);
+	fprintf(fp, "START TIME: %s\n", strfbuf);
+	fprintf(fp, "LABEL: %s\n", backupidstr);
+	if (fflush(fp) || ferror(fp) || FreeFile(fp))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write file \"%s\": %m",
+						labelfilename)));
+	/*
+	 * We're done.  As a convenience, return the starting WAL offset.
+	 */
+	snprintf(xlogfilename, sizeof(xlogfilename), "%X/%X",
+			 startpoint.xlogid, startpoint.xrecoff);
+	result = DatumGetTextP(DirectFunctionCall1(textin,
+											   CStringGetDatum(xlogfilename)));
+	PG_RETURN_TEXT_P(result);
+}
+
+/*
+ * pg_stop_backup: finish taking an on-line backup dump
+ *
+ * We remove the backup label file created by pg_start_backup, and instead
+ * create a backup history file in pg_xlog (whence it will immediately be
+ * archived).  The backup history file contains the same info found in
+ * the label file, plus the backup-end time and WAL offset.
+ */
+Datum
+pg_stop_backup(PG_FUNCTION_ARGS)
+{
+	text	   *result;
+	XLogCtlInsert *Insert = &XLogCtl->Insert;
+	XLogRecPtr	startpoint;
+	XLogRecPtr	stoppoint;
+	time_t stamp_time;
+	char		strfbuf[128];
+	char		labelfilename[MAXPGPATH];
+	char		histfilename[MAXPGPATH];
+	char		startxlogfilename[MAXFNAMELEN];
+	char		stopxlogfilename[MAXFNAMELEN];
+	uint32		_logId;
+	uint32		_logSeg;
+	FILE	   *lfp;
+	FILE	   *fp;
+	char		ch;
+	int			ich;
+
+	if (!superuser()) 
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to run a backup"))));
+	/*
+	 * Get the current end-of-WAL position; it will be unsafe to use this
+	 * dump to restore to a point in advance of this time.
+	 */
+	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
+	INSERT_RECPTR(stoppoint, Insert, Insert->curridx);
+	LWLockRelease(WALInsertLock);
+
+	XLByteToSeg(stoppoint, _logId, _logSeg);
+	XLogFileName(stopxlogfilename, ThisTimeLineID, _logId, _logSeg);
+	/*
+	 * We deliberately use strftime/localtime not the src/timezone functions,
+	 * so that backup labels will consistently be recorded in the same
+	 * timezone regardless of TimeZone setting.  This matches elog.c's
+	 * practice.
+	 */
+	stamp_time = time(NULL);
+	strftime(strfbuf, sizeof(strfbuf),
+			 "%Y-%m-%d %H:%M:%S %Z",
+			 localtime(&stamp_time));
+	/*
+	 * Open the existing label file
+	 */
+	snprintf(labelfilename, MAXPGPATH, "%s/backup_label", DataDir);
+	lfp = AllocateFile(labelfilename, "r");
+	if (!lfp)
+	{
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m",
+							labelfilename)));
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("a backup is not in progress")));
+	}
+	/*
+	 * Read and parse the START WAL LOCATION line (this code is pretty
+	 * crude, but we are not expecting any variability in the file format).
+	 */
+	if (fscanf(lfp, "START WAL LOCATION: %X/%X (file %24s)%c",
+			   &startpoint.xlogid, &startpoint.xrecoff, startxlogfilename,
+			   &ch) != 4 || ch != '\n')
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("invalid data in file \"%s\"", labelfilename)));
+	/*
+	 * Write the backup history file
+	 */
+	XLByteToSeg(startpoint, _logId, _logSeg);
+	BackupHistoryFilePath(histfilename, ThisTimeLineID, _logId, _logSeg,
+						  startpoint.xrecoff % XLogSegSize);
+	fp = AllocateFile(histfilename, "w");
+	if (!fp)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not create file \"%s\": %m",
+						histfilename)));
+	fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
+			startpoint.xlogid, startpoint.xrecoff, startxlogfilename);
+	fprintf(fp, "STOP WAL LOCATION: %X/%X (file %s)\n",
+			stoppoint.xlogid, stoppoint.xrecoff, stopxlogfilename);
+	/* transfer start time and label lines from label to history file */
+	while ((ich = fgetc(lfp)) != EOF)
+		fputc(ich, fp);
+	fprintf(fp, "STOP TIME: %s\n", strfbuf);
+	if (fflush(fp) || ferror(fp) || FreeFile(fp))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write file \"%s\": %m",
+						histfilename)));
+	/*
+	 * Close and remove the backup label file
+	 */
+	if (ferror(lfp) || FreeFile(lfp))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read file \"%s\": %m",
+						labelfilename)));
+	if (unlink(labelfilename) != 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not remove file \"%s\": %m",
+						labelfilename)));
+	/*
+	 * Notify archiver that history file may be archived immediately
+	 */
+	if (XLogArchivingActive())
+	{
+		BackupHistoryFileName(histfilename, ThisTimeLineID, _logId, _logSeg,
+							  startpoint.xrecoff % XLogSegSize);
+		XLogArchiveNotify(histfilename);
+	}
+	/*
+	 * We're done.  As a convenience, return the ending WAL offset.
+	 */
+	snprintf(stopxlogfilename, sizeof(stopxlogfilename), "%X/%X",
+			 stoppoint.xlogid, stoppoint.xrecoff);
+	result = DatumGetTextP(DirectFunctionCall1(textin,
+											   CStringGetDatum(stopxlogfilename)));
+	PG_RETURN_TEXT_P(result);
 }

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.39 2004/04/22 07:02:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.40 2004/08/03 20:32:30 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -14,12 +14,14 @@ $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.39 2004/04/22 07:02:35 neilc Exp
  </para>
 
  <para>
-  There are two fundamentally different approaches to backing up
+  There are three fundamentally different approaches to backing up
   <productname>PostgreSQL</> data:
   <itemizedlist>
    <listitem><para><acronym>SQL</> dump</para></listitem>
    <listitem><para>File system level backup</para></listitem>
+   <listitem><para>On-line backup</para></listitem>
   </itemizedlist>
+  Each has its own strengths and weaknesses.
  </para>
 
  <sect1 id="backup-dump">
@@ -314,8 +316,8 @@ tar -cf backup.tar /usr/local/pgsql/data
       The database server <emphasis>must</> be shut down in order to
       get a usable backup. Half-way measures such as disallowing all
       connections will <emphasis>not</emphasis> work
-      (<command>tar</command> and similar tools do not take an atomic
-      snapshot of the state of the filesystem at a point in
+      (mainly because <command>tar</command> and similar tools do not take an
+      atomic snapshot of the state of the filesystem at a point in
       time). Information about stopping the server can be found in
       <xref linkend="postmaster-shutdown">.  Needless to say that you
       also need to shut down the server before restoring the data.
@@ -335,7 +337,8 @@ tar -cf backup.tar /usr/local/pgsql/data
       information. Of course it is also impossible to restore only a
       table and the associated <filename>pg_clog</filename> data
       because that would render all other tables in the database
-      cluster useless.
+      cluster useless.  So file system backups only work for complete
+      restoration of an entire database cluster.
      </para>
     </listitem>
    </orderedlist>
@@ -355,7 +358,7 @@ tar -cf backup.tar /usr/local/pgsql/data
    properly shut down; therefore, when you start the database server
    on the backed-up data, it will think the server had crashed
    and replay the WAL log.  This is not a problem, just be aware of
-   it.
+   it (and be sure to include the WAL files in your dump).
   </para>
 
   <para>
@@ -372,6 +375,70 @@ tar -cf backup.tar /usr/local/pgsql/data
    larger. (<application>pg_dump</application> does not need to dump
    the contents of indexes for example, just the commands to recreate
    them.)
+  </para>
+ </sect1>
+
+ <sect1 id="backup-online">
+  <title>On-line backup and point-in-time recovery</title>
+
+  <para>
+   At all times, <productname>PostgreSQL</> maintains a <firstterm>write ahead
+   log</> (WAL) that shows details of every change made to the database's data
+   files.  This log exists primarily for crash-safety purposes: if the system
+   crashes, the database can be restored to consistency by <quote>replaying</>
+   the log entries made since the last checkpoint.  However, the existence
+   of the log makes it possible to use a third strategy for backing up
+   databases: we can combine a filesystem-level backup with backup of the WAL
+   files.  If recovery is needed, we restore the backup and then replay from
+   the backed-up WAL files to bring the backup up to current time.  This
+   approach is notably more complex to administer than either of the previous
+   approaches, but it has some significant benefits to offer:
+  <itemizedlist>
+   <listitem>
+    <para>
+     We do not need a perfectly consistent backup as the starting point.
+     Any internal inconsistency in the backup will be corrected by log
+     replay (this is not significantly different from what happens during
+     crash recovery).  So we don't need filesystem snapshot capability,
+     just <application>tar</> or a similar archiving tool.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Since we can string together an indefinitely long sequence of WAL files
+     for replay, continuous backup can be had simply by continuing to archive
+     the WAL files.  This is particularly valuable for large databases, where
+     making a full backup may take an unreasonable amount of time.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     There is nothing that says we have to replay the WAL entries all the
+     way to the end.  We could stop the replay at any point and have a
+     consistent snapshot of the database as it was at that time.  Thus,
+     this technique supports <firstterm>point-in-time recovery</>: it is
+     possible to restore the database to its state at any time since your base
+     backup was taken.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     If we continuously feed the series of WAL files to another machine
+     that's been loaded with the same base backup, we have a <quote>hot
+     standby</> system: at any point we can bring up the second machine
+     and it will have a nearly-current copy of the database.
+    </para>
+   </listitem>
+  </itemizedlist>
+  </para>
+
+  <para>
+   As with the plain filesystem-backup technique, this method can only
+   support restoration of an entire database cluster, not a subset.
+   Also, it requires a lot of archival storage: the base backup is bulky,
+   and a busy system will generate many megabytes of WAL traffic that
+   have to be archived.  Still, it is the preferred backup technique in
+   many situations where high reliability is needed.
   </para>
 
  </sect1>
@@ -393,16 +460,16 @@ tar -cf backup.tar /usr/local/pgsql/data
    change between major releases of <productname>PostgreSQL</> (where
    the number after the first dot changes). This does not apply to
    different minor releases under the same major release (where the
-   number of the second dot changes); these always have compatible
+   number after the second dot changes); these always have compatible
    storage formats. For example, releases 7.0.1, 7.1.2, and 7.2 are
    not compatible, whereas 7.1.1 and 7.1.2 are. When you update
-   between compatible versions, then you can simply reuse the data
-   area in disk by the new executables. Otherwise you need to
+   between compatible versions, you can simply replace the executables
+   and reuse the data area on disk. Otherwise you need to
    <quote>back up</> your data and <quote>restore</> it on the new
    server, using <application>pg_dump</>. (There are checks in place
    that prevent you from doing the wrong thing, so no harm can be done
    by confusing these things.) The precise installation procedure is
-   not subject of this section; these details are in <xref
+   not the subject of this section; those details are in <xref
    linkend="installation">.
   </para>
 
@@ -427,7 +494,7 @@ pg_dumpall -p 5432 | psql -d template1 -p 6543
 
   <para>
    If you cannot or do not want to run two servers in parallel you can
-   do the back up step before installing the new version, bring down
+   do the backup step before installing the new version, bring down
    the server, move the old version out of the way, install the new
    version, start the new server, restore the data. For example:
 
@@ -445,6 +512,14 @@ psql template1 < backup
    See <xref linkend="runtime"> about ways to start and stop the
    server and other details. The installation instructions will advise
    you of strategic places to perform these steps.
+  </para>
+
+  <para>
+   You will always need a SQL dump (<application>pg_dump</> dump) for
+   migrating to a new release.  Filesystem-level backups (including
+   on-line backups) will not work, for the same reason that you can't
+   just do the update in-place: the file formats won't necessarily be
+   compatible across major releases.
   </para>
 
   <note>

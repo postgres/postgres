@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.35 2004/01/06 17:26:23 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.36 2004/08/03 20:32:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -130,7 +130,7 @@ SHOW ALL
 
   <para>
    The function <function>current_setting</function> produces
-   equivalent output. See <xref linkend="functions-misc">.
+   equivalent output. See <xref linkend="functions-admin">.
   </para>
  </refsect1>
 

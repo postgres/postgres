@@ -11,12 +11,13 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.1 2004/07/21 22:31:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.2 2004/08/03 20:32:34 tgl Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
 
 #include "access/xlog.h"
+#include "fmgr.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
 
@@ -177,7 +178,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * These macros encapsulate knowledge about the exact layout of XLog file
  * names, timeline history file names, and archive-status file names.
  */
-#define MAXFNAMELEN		32
+#define MAXFNAMELEN		64
 
 #define XLogFileName(fname, tli, log, seg)	\
 	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli, log, seg)
@@ -193,6 +194,12 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 
 #define StatusFilePath(path, xlog, suffix)	\
 	snprintf(path, MAXPGPATH, "%s/archive_status/%s%s", XLogDir, xlog, suffix)
+
+#define BackupHistoryFileName(fname, tli, log, seg, offset)	\
+	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X.%08X.backup", tli, log, seg, offset)
+
+#define BackupHistoryFilePath(path, tli, log, seg, offset)	\
+	snprintf(path, MAXPGPATH, "%s/%08X%08X%08X.%08X.backup", XLogDir, tli, log, seg, offset)
 
 extern char XLogDir[MAXPGPATH];
 
@@ -220,5 +227,11 @@ typedef struct RmgrData
 } RmgrData;
 
 extern const RmgrData RmgrTable[];
+
+/*
+ * These aren't in xlog.h because I'd rather not include fmgr.h there.
+ */
+extern Datum pg_start_backup(PG_FUNCTION_ARGS);
+extern Datum pg_stop_backup(PG_FUNCTION_ARGS);
 
 #endif   /* XLOG_INTERNAL_H */

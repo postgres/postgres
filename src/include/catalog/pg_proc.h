@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.342 2004/07/12 20:23:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.343 2004/08/03 20:32:35 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2815,11 +2815,6 @@ DESCR("Statistics: Blocks fetched for database");
 DATA(insert OID = 1945 (  pg_stat_get_db_blocks_hit		PGNSP PGUID 12 f f t f s 1 20 "26" _null_	pg_stat_get_db_blocks_hit - _null_ ));
 DESCR("Statistics: Blocks found in cache for database");
 
-DATA(insert OID = 2171 ( pg_terminate_backend           PGNSP PGUID 12 f f t f s 1 23 "23" _null_ pg_terminate_backend - _null_ ));
-DESCR("Terminate a backend process");
-DATA(insert OID = 2172 ( pg_cancel_backend              PGNSP PGUID 12 f f t f s 1 23 "23" _null_ pg_cancel_backend - _null_ ));
-DESCR("Cancel running query on a backend process");
-
 DATA(insert OID = 1946 (  encode						PGNSP PGUID 12 f f t f i 2 25 "17 25" _null_  binary_encode - _null_ ));
 DESCR("Convert bytea value into some ascii-only text string");
 DATA(insert OID = 1947 (  decode						PGNSP PGUID 12 f f t f i 2 17 "25 25" _null_  binary_decode - _null_ ));
@@ -2993,8 +2988,16 @@ DATA(insert OID = 2082 (  pg_operator_is_visible	PGNSP PGUID 12 f f t f s 1 16 "
 DESCR("is operator visible in search path?");
 DATA(insert OID = 2083 (  pg_opclass_is_visible		PGNSP PGUID 12 f f t f s 1 16 "26" _null_	pg_opclass_is_visible - _null_ ));
 DESCR("is opclass visible in search path?");
-DATA(insert OID = 2093 (  pg_conversion_is_visible		PGNSP PGUID 12 f f t f s 1 16 "26" _null_	pg_conversion_is_visible - _null_ ));
+DATA(insert OID = 2093 (  pg_conversion_is_visible	PGNSP PGUID 12 f f t f s 1 16 "26" _null_	pg_conversion_is_visible - _null_ ));
 DESCR("is conversion visible in search path?");
+
+
+DATA(insert OID = 2171 ( pg_cancel_backend		PGNSP PGUID 12 f f t f v 1 23 "23" _null_ pg_cancel_backend - _null_ ));
+DESCR("Cancel a server process' current query");
+DATA(insert OID = 2172 ( pg_start_backup		PGNSP PGUID 12 f f t f v 1 25 "25" _null_ pg_start_backup - _null_ ));
+DESCR("Prepare for taking an online backup");
+DATA(insert OID = 2173 ( pg_stop_backup			PGNSP PGUID 12 f f t f v 0 25 "" _null_ pg_stop_backup - _null_ ));
+DESCR("Finish taking an online backup");
 
 
 /* Aggregates (moved here from pg_aggregate for 7.3) */

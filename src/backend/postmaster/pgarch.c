@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.3 2004/08/01 17:45:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.4 2004/08/03 20:32:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,8 @@
  * ----------
  */
 #define MIN_XFN_CHARS	16
-#define MAX_XFN_CHARS	24
-#define VALID_XFN_CHARS	"0123456789ABCDEF.history"
+#define MAX_XFN_CHARS	40
+#define VALID_XFN_CHARS	"0123456789ABCDEF.history.backup"
 
 #define NUM_ARCHIVE_RETRIES 3
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.35 2004/07/02 18:59:22 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.36 2004/08/03 20:32:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,8 @@
 #include "funcapi.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_tablespace.h"
+
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 
 /*
@@ -67,8 +69,7 @@ current_database(PG_FUNCTION_ARGS)
 
 
 /*
- * Functions to terminate a backend or cancel a query running on
- * a different backend.
+ * Functions to send signals to other backends.
  */
 
 static int pg_signal_backend(int pid, int sig) 
@@ -76,14 +77,16 @@ static int pg_signal_backend(int pid, int sig)
 	if (!superuser()) 
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("only superuser can signal other backends"))));
+				 (errmsg("must be superuser to signal other server processes"))));
 	
 	if (!IsBackendPid(pid))
 	{
-		/* This is just a warning so a loop-through-resultset will not abort
-		 * if one backend terminated on it's own during the run */
+		/*
+		 * This is just a warning so a loop-through-resultset will not abort
+		 * if one backend terminated on it's own during the run
+		 */
 		ereport(WARNING,
-				(errmsg("pid %i is not a postgresql backend",pid)));
+				(errmsg("PID %d is not a PostgreSQL server process", pid)));
 		return 0;
 	}
 
@@ -91,16 +94,10 @@ static int pg_signal_backend(int pid, int sig)
 	{
 		/* Again, just a warning to allow loops */
 		ereport(WARNING,
-				(errmsg("failed to send signal to backend %i: %m",pid)));
+				(errmsg("could not send signal to process %d: %m",pid)));
 		return 0;
 	}
 	return 1;
-}
-
-Datum
-pg_terminate_backend(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_INT32(pg_signal_backend(PG_GETARG_INT32(0),SIGTERM));
 }
 
 Datum
@@ -109,6 +106,20 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(pg_signal_backend(PG_GETARG_INT32(0),SIGINT));
 }
 
+#ifdef NOT_USED
+
+/* Disabled in 8.0 due to reliability concerns; FIXME someday */
+
+Datum
+pg_terminate_backend(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT32(pg_signal_backend(PG_GETARG_INT32(0),SIGTERM));
+}
+
+#endif
+
+
+/* Function to find out which databases make use of a tablespace */
 
 typedef struct 
 {
@@ -140,9 +151,8 @@ Datum pg_tablespace_databases(PG_FUNCTION_ARGS)
 		if (tablespaceOid == GLOBALTABLESPACE_OID)
 		{
 			fctx->dirdesc = NULL;
-			ereport(NOTICE,
-					(errcode(ERRCODE_WARNING),
-					 errmsg("global tablespace never has databases.")));
+			ereport(WARNING,
+					(errmsg("global tablespace never has databases")));
 		}
 		else
 		{
@@ -154,10 +164,17 @@ Datum pg_tablespace_databases(PG_FUNCTION_ARGS)
 		
 			fctx->dirdesc = AllocateDir(fctx->location);
 
-			if (!fctx->dirdesc)  /* not a tablespace */
-				ereport(NOTICE,
-						(errcode(ERRCODE_WARNING),
-						 errmsg("%d is no tablespace oid.", tablespaceOid)));
+			if (!fctx->dirdesc)
+			{
+				/* the only expected error is ENOENT */
+				if (errno != ENOENT)
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not open directory \"%s\": %m",
+									fctx->location)));
+				ereport(WARNING,
+						(errmsg("%u is not a tablespace oid", tablespaceOid)));
+			}
 		}
 		funcctx->user_fctx = fctx;
 		MemoryContextSwitchTo(oldcontext);
@@ -174,27 +191,30 @@ Datum pg_tablespace_databases(PG_FUNCTION_ARGS)
 		char *subdir;
 		DIR *dirdesc;
 
-		Oid datOid = atol(de->d_name);
+		Oid datOid = atooid(de->d_name);
+		/* this test skips . and .., but is awfully weak */
 		if (!datOid)
 			continue;
+
+		/* if database subdir is empty, don't report tablespace as used */
 
 		/* size = path length + dir sep char + file name + terminator */
 		subdir = palloc(strlen(fctx->location) + 1 + strlen(de->d_name) + 1);
 		sprintf(subdir, "%s/%s", fctx->location, de->d_name);
 		dirdesc = AllocateDir(subdir);
-		if (dirdesc)
-		{
-			while ((de = readdir(dirdesc)) != 0)
-			{
-				if (strcmp(de->d_name, ".") && strcmp(de->d_name, ".."))
-					break;
-			}
-			pfree(subdir);
-			FreeDir(dirdesc);
+		pfree(subdir);
+		if (!dirdesc)
+			continue;			/* XXX more sloppiness */
 
-			if (!de)   /* database subdir is empty; don't report tablespace as used */
-				continue;
+		while ((de = readdir(dirdesc)) != 0)
+		{
+			if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
+				break;
 		}
+		FreeDir(dirdesc);
+
+		if (!de)
+			continue;			/* indeed, nothing in it */
 
 		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(datOid));
 	}
