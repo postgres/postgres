@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.9 1999/02/13 23:15:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.10 2000/01/19 23:54:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,9 +137,10 @@ ExecScan(Scan *node,
 
 		/*
 		 * add a check for non-nil qual here to avoid a function call to
-		 * ExecQual() when the qual is nil
+		 * ExecQual() when the qual is nil ... saves only a few cycles,
+		 * but they add up ...
 		 */
-		if (!qual || ExecQual(qual, econtext) == true)
+		if (!qual || ExecQual(qual, econtext, false))
 			break;
 	}
 

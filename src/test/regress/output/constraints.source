@@ -106,8 +106,6 @@ CREATE TABLE INSERT_TBL (x INT DEFAULT nextval('insert_seq'),
 	z INT DEFAULT -1 * currval('insert_seq'),
 	CONSTRAINT INSERT_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8),
 	CHECK (x + z = 0));
-INSERT INTO INSERT_TBL VALUES (null, null, null);
-ERROR:  ExecAppend: rejected due to CHECK constraint $2
 INSERT INTO INSERT_TBL(x,z) VALUES (2, -2);
 ERROR:  ExecAppend: rejected due to CHECK constraint insert_con
 SELECT '' AS zero, * FROM INSERT_TBL;
@@ -171,6 +169,22 @@ SELECT 'eight' AS one, currval('insert_seq');
  eight |       8
 (1 row)
 
+-- According to SQL92, it is OK to insert a record that gives rise to NULL
+-- constraint-condition results.  Postgres used to reject this, but it
+-- was wrong:
+INSERT INTO INSERT_TBL VALUES (null, null, null);
+SELECT '' AS nine, * FROM INSERT_TBL;
+ nine | x |       y       | z  
+------+---+---------------+----
+      | 3 | Y             | -3
+      | 7 | -NULL-        | -7
+      | 7 | !check failed | -7
+      | 4 | -!NULL-       | -4
+      | 5 | !check failed | -5
+      | 6 | -!NULL-       | -6
+      |   |               |   
+(7 rows)
+
 --
 -- Check inheritance of defaults and constraints
 --
@@ -212,7 +226,6 @@ SELECT '' AS three, * FROM INSERT_TBL;
 (3 rows)
 
 INSERT INTO INSERT_TBL SELECT * FROM tmp WHERE yd = 'try again';
-ERROR:  ExecAppend: rejected due to CHECK constraint $2
 INSERT INTO INSERT_TBL(y,z) SELECT yd, -7 FROM tmp WHERE yd = 'try again';
 INSERT INTO INSERT_TBL(y,z) SELECT yd, -8 FROM tmp WHERE yd = 'try again';
 ERROR:  ExecAppend: rejected due to CHECK constraint insert_con
@@ -222,15 +235,15 @@ SELECT '' AS four, * FROM INSERT_TBL;
       | 4 | Y             | -4
       | 5 | !check failed | -5
       | 6 | try again     | -6
+      |   | try again     |   
       | 7 | try again     | -7
-(4 rows)
+(5 rows)
 
 DROP TABLE tmp;
 --
 -- Check constraints on UPDATE
 --
-UPDATE INSERT_TBL SET x = NULL WHERE x = 6;
-ERROR:  ExecReplace: rejected due to CHECK constraint $2
+UPDATE INSERT_TBL SET x = NULL WHERE x = 5;
 UPDATE INSERT_TBL SET x = 6 WHERE x = 6;
 UPDATE INSERT_TBL SET x = -z, z = -x;
 UPDATE INSERT_TBL SET x = z, z = x;
@@ -239,10 +252,11 @@ SELECT * FROM INSERT_TBL;
  x |       y       | z  
 ---+---------------+----
  4 | Y             | -4
- 5 | !check failed | -5
+   | try again     |   
  7 | try again     | -7
+ 5 | !check failed |   
  6 | try again     | -6
-(4 rows)
+(5 rows)
 
 -- DROP TABLE INSERT_TBL;
 --

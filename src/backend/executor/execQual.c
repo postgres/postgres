@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.65 2000/01/10 17:14:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.66 2000/01/19 23:54:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1283,12 +1283,33 @@ ExecEvalExpr(Node *expression,
 /* ----------------------------------------------------------------
  *		ExecQual
  *
- *		Evaluates a conjunctive boolean expression and returns t
- *		iff none of the subexpressions are false (or null).
+ *		Evaluates a conjunctive boolean expression (qual list) and
+ *		returns true iff none of the subexpressions are false.
+ *		(We also return true if the list is empty.)
+ *
+ *	If some of the subexpressions yield NULL but none yield FALSE,
+ *	then the result of the conjunction is NULL (ie, unknown)
+ *	according to three-valued boolean logic.  In this case,
+ *	we return the value specified by the "resultForNull" parameter.
+ *
+ *	Callers evaluating WHERE clauses should pass resultForNull=FALSE,
+ *	since SQL specifies that tuples with null WHERE results do not
+ *	get selected.  On the other hand, callers evaluating constraint
+ *	conditions should pass resultForNull=TRUE, since SQL also specifies
+ *	that NULL constraint conditions are not failures.
+ *
+ *	NOTE: it would not be correct to use this routine to evaluate an
+ *	AND subclause of a boolean expression; for that purpose, a NULL
+ *	result must be returned as NULL so that it can be properly treated
+ *	in the next higher operator (cf. ExecEvalAnd and ExecEvalOr).
+ *	This routine is only used in contexts where a complete expression
+ *	is being evaluated and we know that NULL can be treated the same
+ *	as one boolean result or the other.
+ *
  * ----------------------------------------------------------------
  */
 bool
-ExecQual(List *qual, ExprContext *econtext)
+ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 {
 	List	   *qlist;
 
@@ -1302,18 +1323,18 @@ ExecQual(List *qual, ExprContext *econtext)
 	IncrProcessed();
 
 	/*
-	 * a "qual" is a list of clauses.  To evaluate the qual, we evaluate
-	 * each of the clauses in the list.  (For an empty list, we'll return
-	 * TRUE.)
+	 * Evaluate the qual conditions one at a time.  If we find a FALSE
+	 * result, we can stop evaluating and return FALSE --- the AND result
+	 * must be FALSE.  Also, if we find a NULL result when resultForNull
+	 * is FALSE, we can stop and return FALSE --- the AND result must be
+	 * FALSE or NULL in that case, and the caller doesn't care which.
 	 *
-	 * If any of the clauses return NULL, we treat this as FALSE.  This
-	 * is correct per the SQL spec: if any ANDed conditions are NULL, then
-	 * the AND result is either FALSE or NULL, and in either case the
-	 * WHERE condition fails.  NOTE: it would NOT be correct to use this
-	 * simplified logic in a sub-clause; ExecEvalAnd must do the full
-	 * three-state condition evaluation.  We can get away with simpler
-	 * logic here because we know how the result will be used.
+	 * If we get to the end of the list, we can return TRUE.  This will
+	 * happen when the AND result is indeed TRUE, or when the AND result
+	 * is NULL (one or more NULL subresult, with all the rest TRUE) and
+	 * the caller has specified resultForNull = TRUE.
 	 */
+
 	foreach(qlist, qual)
 	{
 		Node	   *clause = (Node *) lfirst(qlist);
@@ -1321,7 +1342,11 @@ ExecQual(List *qual, ExprContext *econtext)
 		bool		isNull;
 		bool		isDone;
 
-		/* if there is a null clause, consider the qualification to fail */
+		/*
+		 * If there is a null clause, consider the qualification to fail.
+		 * XXX is this still correct for constraints?  It probably shouldn't
+		 * happen at all ...
+		 */
 		if (clause == NULL)
 			return false;
 		/*
@@ -1329,10 +1354,17 @@ ExecQual(List *qual, ExprContext *econtext)
 		 * in the qualifications.
 		 */
 		expr_value = ExecEvalExpr(clause, econtext, &isNull, &isDone);
+
 		if (isNull)
-			return false;		/* treat NULL as FALSE */
-		if (DatumGetInt32(expr_value) == 0)
-			return false;
+		{
+			if (resultForNull == false)
+				return false;	/* treat NULL as FALSE */
+		}
+		else
+		{
+			if (DatumGetInt32(expr_value) == 0)
+				return false;	/* definitely FALSE */
+		}
 	}
 
 	return true;

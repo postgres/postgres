@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.41 1999/12/10 03:55:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.42 2000/01/19 23:54:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,7 @@ rtbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
-			if (ExecQual((List *) oldPred, econtext) == true)
+			if (ExecQual((List *) oldPred, econtext, false))
 			{
 				ni++;
 				continue;
@@ -180,7 +180,7 @@ rtbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
-			if (ExecQual((List *) pred, econtext) == false)
+			if (! ExecQual((List *) pred, econtext, false))
 				continue;
 #endif	 /* OMIT_PARTIAL_INDEX */
 		}

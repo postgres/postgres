@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.13 1999/07/16 04:58:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.14 2000/01/19 23:54:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,6 @@ ExecNestLoop(NestLoop *node, Plan *parent)
 	TupleTableSlot *innerTupleSlot;
 
 	List	   *qual;
-	bool		qualResult;
 	ExprContext *econtext;
 
 	/* ----------------
@@ -208,9 +207,8 @@ ExecNestLoop(NestLoop *node, Plan *parent)
 		 * ----------------
 		 */
 		ENL1_printf("testing qualification");
-		qualResult = ExecQual((List *) qual, econtext);
 
-		if (qualResult)
+		if (ExecQual((List *) qual, econtext, false))
 		{
 			/* ----------------
 			 *	qualification was satisified so we project and

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.102 2000/01/17 23:57:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.103 2000/01/19 23:54:51 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1590,7 +1590,7 @@ DefaultBuild(Relation heapRelation,
 		{
 			/* SetSlotContents(slot, heapTuple); */
 			slot->val = heapTuple;
-			if (ExecQual((List *) oldPred, econtext) == true)
+			if (ExecQual((List *) oldPred, econtext, false))
 			{
 				indtuples++;
 				continue;
@@ -1605,7 +1605,7 @@ DefaultBuild(Relation heapRelation,
 		{
 			/* SetSlotContents(slot, heapTuple); */
 			slot->val = heapTuple;
-			if (ExecQual((List *) predicate, econtext) == false)
+			if (! ExecQual((List *) predicate, econtext, false))
 				continue;
 		}
 #endif	 /* OMIT_PARTIAL_INDEX */

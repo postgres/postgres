@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.42 2000/01/09 00:26:18 tgl Exp $
+ *	$Id: nodeHash.c,v 1.43 2000/01/19 23:54:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -584,7 +584,6 @@ ExecScanHashBucket(HashJoinState *hjstate,
 	{
 		HeapTuple	heapTuple = &hashTuple->htup;
 		TupleTableSlot *inntuple;
-		bool		qualResult;
 
 		/* insert hashtable's tuple into exec slot so ExecQual sees it */
 		inntuple = ExecStoreTuple(heapTuple,	/* tuple to store */
@@ -593,9 +592,7 @@ ExecScanHashBucket(HashJoinState *hjstate,
 								  false);		/* do not pfree this tuple */
 		econtext->ecxt_innertuple = inntuple;
 
-		qualResult = ExecQual(hjclauses, econtext);
-
-		if (qualResult)
+		if (ExecQual(hjclauses, econtext, false))
 		{
 			hjstate->hj_CurTuple = hashTuple;
 			return heapTuple;

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.96 2000/01/16 21:37:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.97 2000/01/19 23:54:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -886,7 +886,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 						 */
 						slot->val = tuple;
 						/* SetSlotContents(slot, tuple); */
-						if (ExecQual((List *) indexPred[i], econtext) == false)
+						if (! ExecQual((List *) indexPred[i], econtext, false))
 							continue;
 #endif	 /* OMIT_PARTIAL_INDEX */
 					}

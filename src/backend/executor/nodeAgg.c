@@ -31,7 +31,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.60 1999/12/13 01:26:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.61 2000/01/19 23:54:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -580,7 +580,7 @@ ExecAgg(Agg *node)
 		 * Otherwise, return the tuple.
 		 */
 	}
-	while (! ExecQual(node->plan.qual, econtext));
+	while (! ExecQual(node->plan.qual, econtext, false));
 
 	return resultSlot;
 }

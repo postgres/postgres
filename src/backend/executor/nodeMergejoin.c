@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.32 1999/11/22 17:56:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.33 2000/01/19 23:54:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,12 +186,12 @@ MJFormSkipQual(List *qualList, char *replaceopname)
  *		MergeCompare
  *
  *		Compare the keys according to 'compareQual' which is of the
- *		form: {(key1a > key2a)(key1b > key2b) ...}.
+ *		form: { (key1a > key2a) (key1b > key2b) ... }.
  *
- *		(actually, it could also be the form (key1a < key2a)..)
+ *		(actually, it could also be of the form (key1a < key2a)...)
  *
  *		This is different from calling ExecQual because ExecQual returns
- *		true only if ALL the comparisions clauses are satisfied.
+ *		true only if ALL the comparison clauses are satisfied.
  *		However, there is an order of significance among the keys with
  *		the first keys being most significant. Therefore, the clauses
  *		are evaluated in order and the 'compareQual' is satisfied
@@ -217,14 +217,14 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 
 	/* ----------------
 	 *	for each pair of clauses, test them until
-	 *	our compare conditions are satisified
+	 *	our compare conditions are satisfied
 	 * ----------------
 	 */
 	eqclause = eqQual;
 	foreach(clause, compareQual)
 	{
 		/* ----------------
-		 *	 first test if our compare clause is satisified.
+		 *	 first test if our compare clause is satisfied.
 		 *	 if so then return true. ignore isDone, don't iterate in
 		 *	 quals.
 		 * ----------------
@@ -255,7 +255,7 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 
 	/* ----------------
 	 *	if we get here then it means none of our key greater-than
-	 *	conditions were satisified so we return false.
+	 *	conditions were satisfied so we return false.
 	 * ----------------
 	 */
 	return false;
@@ -547,7 +547,7 @@ ExecMergeJoin(MergeJoin *node)
 			case EXEC_MJ_JOINTEST:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINTEST\n");
 
-				qualResult = ExecQual((List *) mergeclauses, econtext);
+				qualResult = ExecQual((List *) mergeclauses, econtext, false);
 				MJ_DEBUG_QUAL(mergeclauses, qualResult);
 
 				if (qualResult)
@@ -558,14 +558,14 @@ ExecMergeJoin(MergeJoin *node)
 
 				/*
 				 * EXEC_MJ_JOINTUPLES means we have two tuples which
-				 * satisified the merge clause so we join them and then
+				 * satisfied the merge clause so we join them and then
 				 * proceed to get the next inner tuple (EXEC_NEXT_INNER).
 				 */
 			case EXEC_MJ_JOINTUPLES:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINTUPLES\n");
 				mergestate->mj_JoinState = EXEC_MJ_NEXTINNER;
 
-				qualResult = ExecQual((List *) qual, econtext);
+				qualResult = ExecQual((List *) qual, econtext, false);
 				MJ_DEBUG_QUAL(qual, qualResult);
 
 				if (qualResult)
@@ -693,7 +693,7 @@ ExecMergeJoin(MergeJoin *node)
 				innerTupleSlot = econtext->ecxt_innertuple;
 				econtext->ecxt_innertuple = mergestate->mj_MarkedTupleSlot;
 
-				qualResult = ExecQual((List *) mergeclauses, econtext);
+				qualResult = ExecQual((List *) mergeclauses, econtext, false);
 				MJ_DEBUG_QUAL(mergeclauses, qualResult);
 
 				if (qualResult)
@@ -777,7 +777,7 @@ ExecMergeJoin(MergeJoin *node)
 				 *	we update the marked tuple and go join them.
 				 * ----------------
 				 */
-				qualResult = ExecQual((List *) mergeclauses, econtext);
+				qualResult = ExecQual((List *) mergeclauses, econtext, false);
 				MJ_DEBUG_QUAL(mergeclauses, qualResult);
 
 				if (qualResult)
@@ -886,7 +886,7 @@ ExecMergeJoin(MergeJoin *node)
 				 *	we update the marked tuple and go join them.
 				 * ----------------
 				 */
-				qualResult = ExecQual((List *) mergeclauses, econtext);
+				qualResult = ExecQual((List *) mergeclauses, econtext, false);
 				MJ_DEBUG_QUAL(mergeclauses, qualResult);
 
 				if (qualResult)

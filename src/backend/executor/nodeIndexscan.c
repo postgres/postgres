@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.43 1999/09/24 00:24:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.44 2000/01/19 23:54:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,8 @@ IndexNext(IndexScan *node)
 		{
 			scanstate->cstate.cs_ExprContext->ecxt_scantuple = slot;
 			if (ExecQual(nth(iptr, node->indxqualorig),
-						 scanstate->cstate.cs_ExprContext))
+						 scanstate->cstate.cs_ExprContext,
+						 false))
 				break;
 		}
 		if (iptr == numIndices) /* would not be returned by indices */
@@ -220,7 +221,8 @@ IndexNext(IndexScan *node)
 				{
 					scanstate->cstate.cs_ExprContext->ecxt_scantuple = slot;
 					if (ExecQual(nth(prev_index, node->indxqualorig),
-								 scanstate->cstate.cs_ExprContext))
+								 scanstate->cstate.cs_ExprContext,
+								 false))
 					{
 						prev_matches = true;
 						break;

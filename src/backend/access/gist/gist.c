@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.49 2000/01/17 23:57:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.50 2000/01/19 23:54:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ gistbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
-			if (ExecQual((List *) oldPred, econtext) == true)
+			if (ExecQual((List *) oldPred, econtext, false))
 			{
 				ni++;
 				continue;
@@ -186,7 +186,7 @@ gistbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
-			if (ExecQual((List *) pred, econtext) == false)
+			if (! ExecQual((List *) pred, econtext, false))
 				continue;
 #endif	 /* OMIT_PARTIAL_INDEX */
 		}

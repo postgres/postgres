@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.40 1999/12/10 03:56:08 momjian Exp $
+ * $Id: executor.h,v 1.41 2000/01/19 23:55:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,17 +24,7 @@
  */
 /* return: true if tuple in slot is NULL, slot is slot to test */
 #define TupIsNull(slot) \
-( \
-	((slot) == NULL) ? \
-		true \
-	: \
-	( \
-		((slot)->val == NULL) ? \
-			true \
-		: \
-			false \
-	) \
-)
+	((slot) == NULL || (slot)->val == NULL)
 
 /*
  * prototypes from functions in execAmi.c
@@ -88,13 +78,12 @@ extern Datum ExecExtractResult(TupleTableSlot *slot, AttrNumber attnum,
 extern Datum ExecEvalParam(Param *expression, ExprContext *econtext,
 			  bool *isNull);
 
-/* stop here */
 extern char *GetAttributeByNum(TupleTableSlot *slot, AttrNumber attrno,
 				  bool *isNull);
 extern char *GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull);
 extern Datum ExecEvalExpr(Node *expression, ExprContext *econtext, bool *isNull,
 			 bool *isDone);
-extern bool ExecQual(List *qual, ExprContext *econtext);
+extern bool ExecQual(List *qual, ExprContext *econtext, bool resultForNull);
 extern int	ExecTargetListLength(List *targetlist);
 extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo, bool *isDone);
 

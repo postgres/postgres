@@ -27,7 +27,7 @@
  *				   SeqScan (emp.all)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.11 1999/05/25 16:08:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.12 2000/01/19 23:54:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,9 @@ ExecResult(Result *node)
 	 */
 	if (resstate->rs_checkqual)
 	{
-		bool		qualResult = ExecQual((List *) node->resconstantqual, econtext);
+		bool		qualResult = ExecQual((List *) node->resconstantqual,
+										  econtext,
+										  false);
 
 		resstate->rs_checkqual = false;
 		if (qualResult == false)

@@ -89,7 +89,6 @@ CREATE TABLE INSERT_TBL (x INT DEFAULT nextval('insert_seq'),
 	CONSTRAINT INSERT_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8),
 	CHECK (x + z = 0));
 
-INSERT INTO INSERT_TBL VALUES (null, null, null);
 INSERT INTO INSERT_TBL(x,z) VALUES (2, -2);
 
 SELECT '' AS zero, * FROM INSERT_TBL;
@@ -118,6 +117,13 @@ SELECT 'seven' AS one, nextval('insert_seq');
 INSERT INTO INSERT_TBL(y) VALUES ('Y');
 
 SELECT 'eight' AS one, currval('insert_seq');
+
+-- According to SQL92, it is OK to insert a record that gives rise to NULL
+-- constraint-condition results.  Postgres used to reject this, but it
+-- was wrong:
+INSERT INTO INSERT_TBL VALUES (null, null, null);
+
+SELECT '' AS nine, * FROM INSERT_TBL;
 
 --
 -- Check inheritance of defaults and constraints
@@ -166,7 +172,7 @@ DROP TABLE tmp;
 -- Check constraints on UPDATE
 --
 
-UPDATE INSERT_TBL SET x = NULL WHERE x = 6;
+UPDATE INSERT_TBL SET x = NULL WHERE x = 5;
 UPDATE INSERT_TBL SET x = 6 WHERE x = 6;
 UPDATE INSERT_TBL SET x = -z, z = -x;
 UPDATE INSERT_TBL SET x = z, z = x;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.33 1999/12/10 03:55:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.34 2000/01/19 23:54:47 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -131,7 +131,7 @@ hashbuild(Relation heap,
 			/* SetSlotContents(slot, htup); */
 #ifndef OMIT_PARTIAL_INDEX
 			slot->val = htup;
-			if (ExecQual((List *) oldPred, econtext) == true)
+			if (ExecQual((List *) oldPred, econtext, false))
 			{
 				nitups++;
 				continue;
@@ -148,7 +148,7 @@ hashbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
-			if (ExecQual((List *) pred, econtext) == false)
+			if (! ExecQual((List *) pred, econtext, false))
 				continue;
 #endif	 /* OMIT_PARTIAL_INDEX */
 		}

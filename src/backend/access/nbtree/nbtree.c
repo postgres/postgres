@@ -11,7 +11,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.50 1999/12/10 03:55:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.51 2000/01/19 23:54:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ btbuild(Relation heap,
 
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
-			if (ExecQual((List *) oldPred, econtext) == true)
+			if (ExecQual((List *) oldPred, econtext, false))
 			{
 				nitups++;
 				continue;
@@ -184,7 +184,7 @@ btbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
-			if (ExecQual((List *) pred, econtext) == false)
+			if (! ExecQual((List *) pred, econtext, false))
 				continue;
 #endif	 /* OMIT_PARTIAL_INDEX */
 		}
