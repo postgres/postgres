@@ -95,6 +95,11 @@ Migration to version 7.3
 
      * TIMESTAMP and TIME data types now default to WITHOUT TIMEZONE
 
+     * Pre-7.3 databases loaded into 7.3 will not have the new object
+       dependencies for SERIAL, UNIQUE contraints, and foreign keys. See
+       /contrib/adddepend for a detailed description and a script that
+       will add the such dependencies.
+
      ----------------------------------------------------------------------
 
 Changes
