@@ -15,27 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.18 2002/02/11 00:18:20 tgl Exp $
- *
- * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
- *
- *	Initial version.
- *
- *
- * Modifications - 28-Jul-2000 - pjw@rhyme.com.au (1.45)
- *
- *		Added --create, --no-owner, --superuser, --no-reconnect (pg_dump & pg_restore)
- *		Added code to dump 'Create Schema' statement (pg_dump)
- *		Don't bother to disable/enable triggers if we don't have a superuser (pg_restore)
- *		Cleaned up code for reconnecting to database.
- *		Force a reconnect as superuser before enabling/disabling triggers.
- *
- * Modifications - 31-Jul-2000 - pjw@rhyme.com.au (1.46, 1.47)
- *		Added & Removed --throttle (pg_dump)
- *		Fixed minor bug in language dumping code: expbuffres were not being reset.
- *		Fixed version number initialization in _allocAH (pg_backup_archiver.c)
- *		Added second connection when restoring BLOBs to allow temp. table to survive
- *		(db reconnection causes temp tables to be lost).
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.19 2002/05/10 22:36:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +67,7 @@ typedef struct _restoreOptions
 								 * cirsumstances */
 	int			use_setsessauth;/* use SET SESSSION AUTHORIZATION instead
 								 * of \connect */
+	int			disable_triggers;/* disable triggers during data-only restore */
 	char	   *superuser;		/* Username to use as superuser */
 	int			dataOnly;
 	int			dropSchema;
@@ -152,10 +133,12 @@ PGconn *ConnectDatabase(Archive *AH,
 
 
 /* Called to add a TOC entry */
-extern void ArchiveEntry(Archive *AH, const char *oid, const char *name,
-			 const char *desc, const char *((*deps)[]), const char *defn,
-		   const char *dropStmt, const char *copyStmt, const char *owner,
-			 DataDumperPtr dumpFn, void *dumpArg);
+extern void ArchiveEntry(Archive *AHX, const char *oid, const char *name,
+						 const char *namespace, const char *owner,
+						 const char *desc, const char *((*deps)[]),
+						 const char *defn, const char *dropStmt,
+						 const char *copyStmt,
+						 DataDumperPtr dumpFn, void *dumpArg);
 
 /* Called to write *data* to the archive */
 extern int	WriteData(Archive *AH, const void *data, int dLen);

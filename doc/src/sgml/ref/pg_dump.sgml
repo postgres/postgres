@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.44 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.45 2002/05/10 22:36:26 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -407,10 +407,11 @@ PostgreSQL documentation
       <term><option>--superuser=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
-        The scripts or archives created by <command>pg_dump</command>
-        need to have superuser access in certain cases, such as when
-        disabling triggers or setting ownership of schema elements.
-        This option specifies the user name to use for those cases.
+        Specify the superuser user name to use when disabling triggers.
+	This is only relevant if <option>--disable-triggers</> is used.
+	(Usually, it's better to specify
+	<option>--use-set-session-authorization</>, and then start the
+	resulting script as superuser.)
        </para>
       </listitem>
      </varlistentry>
@@ -471,6 +472,36 @@ PostgreSQL documentation
         standard SQL command, whereas <command>\connect</command> only
         works in <xref linkend="app-psql">, this option also enhances
         the theoretical portability of the output script.
+       </para>
+
+       <para>
+        This option is only meaningful for the plain-text format.  For
+        the other formats, you may specify the option when you
+        call <command>pg_restore</command>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-X disable-triggers</></term>
+      <term><option>--disable-triggers</></term>
+      <listitem>
+       <para>
+        This option is only relevant when creating a data-only dump.
+	It instructs <command>pg_dump</command> to include commands
+	to temporarily disable triggers on the target tables while
+	the data is reloaded.  Use this if you have referential
+	integrity checks or other triggers on the tables that you
+	do not want to invoke during data reload.
+       </para>
+
+       <para>
+        Presently, the commands emitted for <option>--disable-triggers</>
+	must be done as superuser.  So, you should also specify
+	a superuser name with <option>-S</>, or preferably specify
+	<option>--use-set-session-authorization</> and then be careful to
+	start the resulting script as a superuser.  If you give neither
+	option, the entire script must be run as superuser.
        </para>
 
        <para>

@@ -5,25 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.31 2002/01/18 19:17:05 momjian Exp $
- *
- * NOTES
- *
- * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
- *
- *	  - Check results of PQ routines more carefully.
- *
- * Modifications - 19-Mar-2001 - pjw@rhyme.com.au
- *
- *	  - Avoid forcing table name to lower case in FixupBlobXrefs!
- *
- *
- * Modifications - 18-Jan-2002 - pjw@rhyme.com.au
- *
- *	  - Split ExecuteSqlCommandBuf into 3 routines for (slightly) improved
- *		clarity. Modify loop to cater for COPY commands buried in the SQL
- *		command buffer (prev version assumed COPY command was executed
- *		in prior call). This was to fix the buf in the 'set max oid' code.
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.32 2002/05/10 22:36:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,57 +202,6 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 }
 
 /*
- * Check if a given user is a superuser.
- */
-int
-UserIsSuperuser(ArchiveHandle *AH, char *user)
-{
-	PQExpBuffer qry = createPQExpBuffer();
-	PGresult   *res;
-	int			i_usesuper;
-	int			ntups;
-	int			isSuper;
-
-	/* Get the superuser setting */
-	appendPQExpBuffer(qry, "select usesuper from pg_user where usename = '%s'", user);
-	res = PQexec(AH->connection, qry->data);
-
-	if (!res)
-		die_horribly(AH, modulename, "null result checking superuser status of %s\n", user);
-
-	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-		die_horribly(AH, modulename, "could not check superuser status of %s: %s",
-					 user, PQerrorMessage(AH->connection));
-
-	ntups = PQntuples(res);
-
-	if (ntups == 0)
-		isSuper = 0;
-	else
-	{
-		i_usesuper = PQfnumber(res, "usesuper");
-		isSuper = (strcmp(PQgetvalue(res, 0, i_usesuper), "t") == 0);
-	}
-	PQclear(res);
-
-	destroyPQExpBuffer(qry);
-
-	return isSuper;
-}
-
-int
-ConnectedUserIsSuperuser(ArchiveHandle *AH)
-{
-	return UserIsSuperuser(AH, PQuser(AH->connection));
-}
-
-char *
-ConnectedUser(ArchiveHandle *AH)
-{
-	return PQuser(AH->connection);
-}
-
-/*
  * Reconnect to the server.  If dbname is not NULL, use that database,
  * else the one associated with the archive handle.  If username is
  * not NULL, use that user name, else the one from the handle.	If
@@ -309,6 +240,11 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *username)
 	free(AH->username);
 	AH->username = strdup(newusername);
 	/* XXX Why don't we update AH->dbname? */
+
+	/* don't assume we still know the output schema */
+	if (AH->currSchema)
+		free(AH->currSchema);
+	AH->currSchema = strdup("");
 
 	return 1;
 }
@@ -480,13 +416,6 @@ ConnectDatabase(Archive *AHX,
 	_check_database_version(AH, ignoreVersion);
 
 	PQsetNoticeProcessor(AH->connection, notice_processor, NULL);
-
-	/*
-	 * AH->currUser = PQuser(AH->connection);
-	 *
-	 * Removed because it prevented an initial \connect when dumping to SQL
-	 * in pg_dump.
-	 */
 
 	return AH->connection;
 }
@@ -775,8 +704,9 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
 }
 
 void
-FixupBlobRefs(ArchiveHandle *AH, char *tablename)
+FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 {
+	PQExpBuffer tblName;
 	PQExpBuffer tblQry;
 	PGresult   *res,
 			   *uRes;
@@ -784,44 +714,55 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 				n;
 	char	   *attr;
 
-	if (strcmp(tablename, BLOB_XREF_TABLE) == 0)
+	if (strcmp(te->name, BLOB_XREF_TABLE) == 0)
 		return;
 
+	tblName = createPQExpBuffer();
 	tblQry = createPQExpBuffer();
 
-	appendPQExpBuffer(tblQry, "SELECT a.attname FROM pg_class c, pg_attribute a, pg_type t "
-	 " WHERE a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid "
-	 " AND t.typname in ('oid', 'lo') AND c.relname = '%s';", tablename);
+	if (te->namespace && strlen(te->namespace) > 0)
+		appendPQExpBuffer(tblName, "%s.",
+						  fmtId(te->namespace, false));
+	appendPQExpBuffer(tblName, "%s",
+					  fmtId(te->name, false));
+
+	appendPQExpBuffer(tblQry,
+					  "SELECT a.attname FROM "
+					  "pg_catalog.pg_attribute a, pg_catalog.pg_type t "
+					  "WHERE a.attnum > 0 AND a.attrelid = '%s'::regclass "
+					  "AND a.atttypid = t.oid AND t.typname in ('oid', 'lo')",
+					  tblName->data);
 
 	res = PQexec(AH->blobConnection, tblQry->data);
 	if (!res)
 		die_horribly(AH, modulename, "could not find oid columns of table \"%s\": %s",
-					 tablename, PQerrorMessage(AH->connection));
+					 te->name, PQerrorMessage(AH->connection));
 
 	if ((n = PQntuples(res)) == 0)
 	{
 		/* nothing to do */
-		ahlog(AH, 1, "no OID type columns in table %s\n", tablename);
+		ahlog(AH, 1, "no OID type columns in table %s\n", te->name);
 	}
 
 	for (i = 0; i < n; i++)
 	{
 		attr = PQgetvalue(res, i, 0);
 
-		ahlog(AH, 1, "fixing large object cross-references for %s.%s\n", tablename, attr);
+		ahlog(AH, 1, "fixing large object cross-references for %s.%s\n",
+			  te->name, attr);
 
 		resetPQExpBuffer(tblQry);
 
-		/*
-		 * We should use coalesce here (rather than 'exists'), but it
-		 * seems to be broken in 7.0.2 (weird optimizer strategy)
-		 */
-		appendPQExpBuffer(tblQry, "UPDATE \"%s\" SET \"%s\" = ", tablename, attr);
-		appendPQExpBuffer(tblQry, " (SELECT x.newOid FROM \"%s\" x WHERE x.oldOid = \"%s\".\"%s\")",
-						  BLOB_XREF_TABLE, tablename, attr);
-		appendPQExpBuffer(tblQry, " where exists"
-				  "(select * from %s x where x.oldOid = \"%s\".\"%s\");",
-						  BLOB_XREF_TABLE, tablename, attr);
+		/* Can't use fmtId twice in one call... */
+		appendPQExpBuffer(tblQry,
+						  "UPDATE %s SET %s = %s.newOid",
+						  tblName->data, fmtId(attr, false),
+						  BLOB_XREF_TABLE);
+		appendPQExpBuffer(tblQry,
+						  " FROM %s WHERE %s.oldOid = %s.%s",
+						  BLOB_XREF_TABLE,
+						  BLOB_XREF_TABLE,
+						  tblName->data, fmtId(attr, false));
 
 		ahlog(AH, 10, "SQL: %s\n", tblQry->data);
 
@@ -829,17 +770,18 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 		if (!uRes)
 			die_horribly(AH, modulename,
 					"could not update column \"%s\" of table \"%s\": %s",
-					attr, tablename, PQerrorMessage(AH->blobConnection));
+					attr, te->name, PQerrorMessage(AH->blobConnection));
 
 		if (PQresultStatus(uRes) != PGRES_COMMAND_OK)
 			die_horribly(AH, modulename,
 				"error while updating column \"%s\" of table \"%s\": %s",
-					attr, tablename, PQerrorMessage(AH->blobConnection));
+					attr, te->name, PQerrorMessage(AH->blobConnection));
 
 		PQclear(uRes);
 	}
 
 	PQclear(res);
+	destroyPQExpBuffer(tblName);
 	destroyPQExpBuffer(tblQry);
 }
 

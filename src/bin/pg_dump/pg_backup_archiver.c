@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.45 2002/05/06 17:34:45 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.46 2002/05/10 22:36:26 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -95,8 +95,10 @@ static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
 static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
 
+static void _doSetSessionAuth(ArchiveHandle *AH, const char *autharg);
 static void _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te);
 static void _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user);
+static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
 
 static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
@@ -208,23 +210,13 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		AHX->minRemoteVersion = 070100;
 		AHX->maxRemoteVersion = 999999;
 
-		ConnectDatabase(AHX, ropt->dbname, ropt->pghost, ropt->pgport, ropt->username,
+		ConnectDatabase(AHX, ropt->dbname,
+						ropt->pghost, ropt->pgport, ropt->username,
 						ropt->requirePassword, ropt->ignoreVersion);
-
-		/*
-		 * If no superuser was specified then see if the current user will
-		 * do...
-		 */
-		if (!ropt->superuser)
-		{
-			if (UserIsSuperuser(AH, ConnectedUser(AH)))
-				ropt->superuser = strdup(ConnectedUser(AH));
-		}
-
 	}
 
 	/*
-	 * Work out if we have an implied data-only retore. This can happen if
+	 * Work out if we have an implied data-only restore. This can happen if
 	 * the dump was data only or if the user has used a toc list to
 	 * exclude all of the schema data. All we do is look for schema
 	 * entries - if none are found then we set the dataOnly flag.
@@ -253,12 +245,6 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		}
 	}
 
-	if (!ropt->superuser)
-		write_msg(modulename, "WARNING:\n"
-				  "  Data restoration may fail because existing triggers cannot be disabled\n"
-				  "  (no superuser user name specified).  This is only a problem when\n"
-		"  restoring into a database with already existing triggers.\n");
-
 	/*
 	 * Setup the output file if necessary.
 	 */
@@ -280,8 +266,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			{
 				/* We want the schema */
 				ahlog(AH, 1, "dropping %s %s\n", te->desc, te->name);
-				/* Reconnect if necessary */
+				/* Select owner and schema as necessary */
 				_reconnectAsOwner(AH, NULL, te);
+				_selectOutputSchema(AH, te->namespace);
 				/* Drop it */
 				ahprintf(AH, "%s", te->dropStmt);
 			}
@@ -376,6 +363,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 * have reconnected)
 						 */
 						_reconnectAsOwner(AH, NULL, te);
+						_selectOutputSchema(AH, te->namespace);
 
 						ahlog(AH, 1, "restoring data for table %s\n", te->name);
 
@@ -433,7 +421,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				if ((reqs & REQ_DATA) != 0)		/* We loaded the data */
 				{
 					ahlog(AH, 1, "fixing up large object cross-reference for %s\n", te->name);
-					FixupBlobRefs(AH, te->name);
+					FixupBlobRefs(AH, te);
 				}
 			}
 			else
@@ -501,30 +489,31 @@ _canRestoreBlobs(ArchiveHandle *AH)
 static void
 _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
-	char	   *oldUser = NULL;
+	char	   *oldUser;
+	char	   *oldSchema;
 
-	/* Can't do much if we're connected & don't have a superuser */
-	/* Also, don't bother with triggers unless a data-only retore. */
-	if (!ropt->dataOnly || (_restoringToDB(AH) && !ropt->superuser))
+	/* This hack is only needed in a data-only restore */
+	if (!ropt->dataOnly || !ropt->disable_triggers)
 		return;
 
+	oldUser = strdup(AH->currUser);
+	oldSchema = strdup(AH->currSchema);
+
 	/*
-	 * Reconnect as superuser if possible, since they are the only ones
-	 * who can update pg_class...
+	 * Become superuser if possible, since they are the only ones
+	 * who can update pg_class.  If -S was not given, but we are allowed
+	 * to use SET SESSION AUTHORIZATION, assume the initial user identity
+	 * is a superuser.  Otherwise we just have to bull ahead anyway.
 	 */
 	if (ropt->superuser)
 	{
-		if (!_restoringToDB(AH) || !ConnectedUserIsSuperuser(AH))
-		{
-			/*
-			 * If we're not allowing changes for ownership, then remember
-			 * the user so we can change it back here. Otherwise, let
-			 * _reconnectAsOwner do what it has to do.
-			 */
-			if (ropt->noOwner)
-				oldUser = strdup(ConnectedUser(AH));
-			_reconnectAsUser(AH, NULL, ropt->superuser);
-		}
+		_reconnectAsUser(AH, NULL, ropt->superuser);
+		/* be careful to preserve schema setting */
+		_selectOutputSchema(AH, oldSchema);
+	}
+	else if (AH->ropt->use_setsessauth)
+	{
+		_doSetSessionAuth(AH, "DEFAULT");
 	}
 
 	ahlog(AH, 1, "disabling triggers\n");
@@ -538,52 +527,59 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	/*
 	 * Just update the AFFECTED table, if known.
 	 */
-
 	if (te && te->name && strlen(te->name) > 0)
-		ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = 0 WHERE \"relname\" = '%s';\n\n",
-				 te->name);
+		ahprintf(AH, "UPDATE pg_class SET reltriggers = 0 "
+				 "WHERE oid = '%s'::regclass;\n\n",
+				 fmtId(te->name, false));
 	else
-		ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = 0 WHERE \"relname\" !~ '^pg_';\n\n");
+		ahprintf(AH, "UPDATE pg_class SET reltriggers = 0 FROM pg_namespace "
+				 "WHERE relnamespace = pg_namespace.oid AND nspname !~ '^pg_';\n\n");
 
 	/*
-	 * Restore the user connection from the start of this procedure if
-	 * _reconnectAsOwner is disabled.
+	 * Restore original user and schema state.
 	 */
-	if (ropt->noOwner && oldUser)
+	if (ropt->superuser)
 	{
 		_reconnectAsUser(AH, NULL, oldUser);
-		free(oldUser);
+		/* be careful to preserve schema setting */
+		_selectOutputSchema(AH, oldSchema);
 	}
+	else if (AH->ropt->use_setsessauth)
+	{
+		_doSetSessionAuth(AH, fmtId(oldUser, false));
+	}
+	free(oldUser);
+	free(oldSchema);
 }
 
 static void
 _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
-	char	   *oldUser = NULL;
+	char	   *oldUser;
+	char	   *oldSchema;
 
-	/* Can't do much if we're connected & don't have a superuser */
-	/* Also, don't bother with triggers unless a data-only retore. */
-	if (!ropt->dataOnly || (_restoringToDB(AH) && !ropt->superuser))
+	/* This hack is only needed in a data-only restore */
+	if (!ropt->dataOnly || !ropt->disable_triggers)
 		return;
 
+	oldUser = strdup(AH->currUser);
+	oldSchema = strdup(AH->currSchema);
+
 	/*
-	 * Reconnect as superuser if possible, since they are the only ones
-	 * who can update pg_class...
+	 * Become superuser if possible, since they are the only ones
+	 * who can update pg_class.  If -S was not given, but we are allowed
+	 * to use SET SESSION AUTHORIZATION, assume the initial user identity
+	 * is a superuser.  Otherwise we just have to bull ahead anyway.
 	 */
 	if (ropt->superuser)
 	{
-		if (!_restoringToDB(AH) || !ConnectedUserIsSuperuser(AH))
-		{
-			/*
-			 * If we're not allowing changes for ownership, then remember
-			 * the user so we can change it back here. Otherwise, let
-			 * _reconnectAsOwner do what it has to do
-			 */
-			if (ropt->noOwner)
-				oldUser = strdup(ConnectedUser(AH));
-
-			_reconnectAsUser(AH, NULL, ropt->superuser);
-		}
+		_reconnectAsUser(AH, NULL, ropt->superuser);
+		/* be careful to preserve schema setting */
+		_selectOutputSchema(AH, oldSchema);
+	}
+	else if (AH->ropt->use_setsessauth)
+	{
+		_doSetSessionAuth(AH, "DEFAULT");
 	}
 
 	ahlog(AH, 1, "enabling triggers\n");
@@ -593,29 +589,36 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	 * 'SET' command when one is available.
 	 */
 	ahprintf(AH, "-- Enable triggers\n");
-	if (te && te->name && strlen(te->name) > 0)
-	{
-		ahprintf(AH, "UPDATE pg_class SET reltriggers = "
-		"(SELECT count(*) FROM pg_trigger where pg_class.oid = tgrelid) "
-				 "WHERE relname = '%s';\n\n",
-				 te->name);
-	}
-	else
-	{
-		ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = "
-		"(SELECT count(*) FROM pg_trigger where pg_class.oid = tgrelid) "
-				 "WHERE \"relname\" !~ '^pg_';\n\n");
-	}
 
 	/*
-	 * Restore the user connection from the start of this procedure if
-	 * _reconnectAsOwner is disabled.
+	 * Just update the AFFECTED table, if known.
 	 */
-	if (ropt->noOwner && oldUser)
+	if (te && te->name && strlen(te->name) > 0)
+		ahprintf(AH, "UPDATE pg_class SET reltriggers = "
+				 "(SELECT count(*) FROM pg_trigger where pg_class.oid = tgrelid) "
+				 "WHERE oid = '%s'::regclass;\n\n",
+				 fmtId(te->name, false));
+	else
+		ahprintf(AH, "UPDATE pg_class SET reltriggers = "
+				 "(SELECT count(*) FROM pg_trigger where pg_class.oid = tgrelid) "
+				 "FROM pg_namespace "
+				 "WHERE relnamespace = pg_namespace.oid AND nspname !~ '^pg_';\n\n");
+
+	/*
+	 * Restore original user and schema state.
+	 */
+	if (ropt->superuser)
 	{
 		_reconnectAsUser(AH, NULL, oldUser);
-		free(oldUser);
+		/* be careful to preserve schema setting */
+		_selectOutputSchema(AH, oldSchema);
 	}
+	else if (AH->ropt->use_setsessauth)
+	{
+		_doSetSessionAuth(AH, fmtId(oldUser, false));
+	}
+	free(oldUser);
+	free(oldSchema);
 }
 
 /*
@@ -642,8 +645,10 @@ WriteData(Archive *AHX, const void *data, int dLen)
 /* Public */
 void
 ArchiveEntry(Archive *AHX, const char *oid, const char *name,
-			 const char *desc, const char *((*deps)[]), const char *defn,
-		   const char *dropStmt, const char *copyStmt, const char *owner,
+			 const char *namespace, const char *owner,
+			 const char *desc, const char *((*deps)[]),
+			 const char *defn, const char *dropStmt,
+			 const char *copyStmt,
 			 DataDumperPtr dumpFn, void *dumpArg)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
@@ -664,21 +669,21 @@ ArchiveEntry(Archive *AHX, const char *oid, const char *name,
 	newToc->id = AH->lastID;
 
 	newToc->name = strdup(name);
+	newToc->namespace = namespace ? strdup(namespace) : NULL;
+	newToc->owner = strdup(owner);
 	newToc->desc = strdup(desc);
-
-	newToc->oid = strdup(oid);
-	newToc->depOid = deps;
-	_fixupOidInfo(newToc);
-
-
 	newToc->defn = strdup(defn);
 	newToc->dropStmt = strdup(dropStmt);
 	newToc->copyStmt = copyStmt ? strdup(copyStmt) : NULL;
-	newToc->owner = strdup(owner);
+
+	newToc->oid = strdup(oid);
+	newToc->depOid = deps;		/* NB: not copied */
+	_fixupOidInfo(newToc);
+
 	newToc->printed = 0;
 	newToc->formatData = NULL;
-	newToc->dataDumper = dumpFn,
-		newToc->dataDumperArg = dumpArg;
+	newToc->dataDumper = dumpFn;
+	newToc->dataDumperArg = dumpArg;
 
 	newToc->hadDumper = dumpFn ? 1 : 0;
 
@@ -1667,6 +1672,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 	AH->currUser = strdup("");	/* So it's valid, but we can free() it
 								 * later if necessary */
+	AH->currSchema = strdup(""); /* ditto */
 
 	AH->toc = (TocEntry *) calloc(1, sizeof(TocEntry));
 	if (!AH->toc)
@@ -1789,6 +1795,7 @@ WriteToc(ArchiveHandle *AH)
 		WriteStr(AH, te->defn);
 		WriteStr(AH, te->dropStmt);
 		WriteStr(AH, te->copyStmt);
+		WriteStr(AH, te->namespace);
 		WriteStr(AH, te->owner);
 
 		/* Dump list of dependencies */
@@ -1839,6 +1846,9 @@ ReadToc(ArchiveHandle *AH)
 
 		if (AH->version >= K_VERS_1_3)
 			te->copyStmt = ReadStr(AH);
+
+		if (AH->version >= K_VERS_1_6)
+			te->namespace = ReadStr(AH);
 
 		te->owner = ReadStr(AH);
 
@@ -1975,6 +1985,33 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 	return res;
 }
 
+/*
+ * Issue a SET SESSION AUTHORIZATION command.  Caller is responsible
+ * for updating state if appropriate.  Note that caller must also quote
+ * the argument if it's a username (it might be DEFAULT, too).
+ */
+static void
+_doSetSessionAuth(ArchiveHandle *AH, const char *autharg)
+{
+	if (RestoringToDB(AH))
+	{
+		PQExpBuffer qry = createPQExpBuffer();
+		PGresult   *res;
+
+		appendPQExpBuffer(qry, "SET SESSION AUTHORIZATION %s;", autharg);
+		res = PQexec(AH->connection, qry->data);
+
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			die_horribly(AH, modulename, "could not set session user to %s: %s",
+						 autharg, PQerrorMessage(AH->connection));
+
+		PQclear(res);
+		destroyPQExpBuffer(qry);
+	}
+	else
+		ahprintf(AH, "SET SESSION AUTHORIZATION %s;\n\n", autharg);
+}
+
 
 /*
  * Issue the commands to connect to the database as the specified user
@@ -1999,25 +2036,7 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 	 */
 	if (!dbname && AH->ropt->use_setsessauth)
 	{
-		if (RestoringToDB(AH))
-		{
-			PQExpBuffer qry = createPQExpBuffer();
-			PGresult   *res;
-
-			appendPQExpBuffer(qry, "SET SESSION AUTHORIZATION %s;",
-							  fmtId(user, false));
-			res = PQexec(AH->connection, qry->data);
-
-			if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-				die_horribly(AH, modulename, "could not set session user to %s: %s",
-							 user, PQerrorMessage(AH->connection));
-
-			PQclear(res);
-			destroyPQExpBuffer(qry);
-		}
-		else
-			ahprintf(AH, "SET SESSION AUTHORIZATION %s;\n\n",
-					 fmtId(user, false));
+		_doSetSessionAuth(AH, fmtId(user, false));
 	}
 	else if (AH->ropt && AH->ropt->noReconnect)
 	{
@@ -2038,6 +2057,11 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 		ahprintf(AH, qry->data);
 
 		destroyPQExpBuffer(qry);
+
+		/* don't assume we still know the output schema */
+		if (AH->currSchema)
+			free(AH->currSchema);
+		AH->currSchema = strdup("");
 	}
 
 	/*
@@ -2063,6 +2087,43 @@ _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te)
 		return;
 
 	_reconnectAsUser(AH, dbname, te->owner);
+}
+
+
+/*
+ * Issue the commands to select the specified schema as the current schema
+ * in the target database.
+ */
+static void
+_selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
+{
+	if (!schemaName || *schemaName == '\0' ||
+		strcmp(AH->currSchema, schemaName) == 0)
+		return;					/* no need to do anything */
+
+	if (RestoringToDB(AH))
+	{
+		PQExpBuffer qry = createPQExpBuffer();
+		PGresult   *res;
+
+		appendPQExpBuffer(qry, "SET search_path = %s;",
+						  fmtId(schemaName, false));
+		res = PQexec(AH->connection, qry->data);
+
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			die_horribly(AH, modulename, "could not set search_path to %s: %s",
+						 schemaName, PQerrorMessage(AH->connection));
+
+		PQclear(res);
+		destroyPQExpBuffer(qry);
+	}
+	else
+		ahprintf(AH, "SET search_path = %s;\n\n",
+				 fmtId(schemaName, false));
+
+	if (AH->currSchema)
+		free(AH->currSchema);
+	AH->currSchema = strdup(schemaName);
 }
 
 
@@ -2139,16 +2200,19 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 {
 	char	   *pfx;
 
-	/* Reconnect if necessary */
+	/* Select owner and schema as necessary */
 	_reconnectAsOwner(AH, NULL, te);
+	_selectOutputSchema(AH, te->namespace);
 
 	if (isData)
 		pfx = "Data for ";
 	else
 		pfx = "";
 
-	ahprintf(AH, "--\n-- %sTOC Entry ID %d (OID %s)\n--\n-- Name: %s Type: %s Owner: %s\n",
-			 pfx, te->id, te->oid, te->name, te->desc, te->owner);
+	ahprintf(AH, "--\n-- %sTOC Entry ID %d (OID %s)\n--\n-- Name: %s Type: %s Schema: %s Owner: %s\n",
+			 pfx, te->id, te->oid, te->name, te->desc,
+			 te->namespace ? te->namespace : "-",
+			 te->owner);
 	if (AH->PrintExtraTocPtr !=NULL)
 		(*AH->PrintExtraTocPtr) (AH, te);
 	ahprintf(AH, "--\n\n");

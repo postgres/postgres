@@ -17,17 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.42 2002/04/24 02:21:04 momjian Exp $
- *
- * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
- *	-	Initial version.
- *
- * Modifications - 15-Sep-2000 - pjw@rhyme.com.au
- *	-	Added braceDepth to sqlparseInfo to handle braces in rule definitions.
- *
- * Modifications - 31-Mar-2001 - pjw@rhyme.com.au (1.50)
- *	-	Make dependencies work on ArchiveEntry calls so that UDTs will
- *		dump in correct order.
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.43 2002/05/10 22:36:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,8 +58,8 @@ typedef z_stream *z_streamp;
 #include "libpq-fe.h"
 
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 5
-#define K_VERS_REV 7
+#define K_VERS_MINOR 6
+#define K_VERS_REV 0
 
 /* Data block types */
 #define BLK_DATA 1
@@ -82,7 +72,8 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_3 (( (1 * 256 + 3) * 256 + 0) * 256 + 0)		/* BLOBs */
 #define K_VERS_1_4 (( (1 * 256 + 4) * 256 + 0) * 256 + 0)		/* Date & name in header */
 #define K_VERS_1_5 (( (1 * 256 + 5) * 256 + 0) * 256 + 0)		/* Handle dependencies */
-#define K_VERS_MAX (( (1 * 256 + 5) * 256 + 255) * 256 + 0)
+#define K_VERS_1_6 (( (1 * 256 + 6) * 256 + 0) * 256 + 0)		/* Schema field in TOCs */
+#define K_VERS_MAX (( (1 * 256 + 6) * 256 + 255) * 256 + 0)
 
 /* No of BLOBs to restore in 1 TX */
 #define BLOB_BATCH_SIZE 100
@@ -235,6 +226,7 @@ typedef struct _archiveHandle
 	int			tocCount;		/* Number of TOC entries */
 	struct _tocEntry *currToc;	/* Used when dumping data */
 	char	   *currUser;		/* Restore: current username in script */
+	char	   *currSchema;		/* Restore: current schema in script */
 	int			compression;	/* Compression requested on open */
 	ArchiveMode mode;			/* File mode - r or w */
 	void	   *formatData;		/* Header data specific to file format */
@@ -254,11 +246,12 @@ typedef struct _tocEntry
 	int			hadDumper;		/* Archiver was passed a dumper routine
 								 * (used in restore) */
 	char	   *name;
+	char	   *namespace;		/* null or empty string if not in a schema */
+	char	   *owner;
 	char	   *desc;
 	char	   *defn;
 	char	   *dropStmt;
 	char	   *copyStmt;
-	char	   *owner;
 	char	   *oid;			/* Oid of source of entry */
 	Oid			oidVal;			/* Value of above */
 	const char *((*depOid)[]);
@@ -314,9 +307,6 @@ extern OutputContext SetOutput(ArchiveHandle *AH, char *filename, int compressio
 extern void ResetOutput(ArchiveHandle *AH, OutputContext savedContext);
 extern int	RestoringToDB(ArchiveHandle *AH);
 extern int	ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *newUser);
-extern int	UserIsSuperuser(ArchiveHandle *AH, char *user);
-extern char *ConnectedUser(ArchiveHandle *AH);
-extern int	ConnectedUserIsSuperuser(ArchiveHandle *AH);
 
 int			ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);
 int			ahprintf(ArchiveHandle *AH, const char *fmt,...) __attribute__((format(printf, 2, 3)));

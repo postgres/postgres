@@ -2,12 +2,12 @@
  *	Definitions for pg_backup_db.c
  *
  *	IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.h,v 1.5 2001/06/27 21:21:37 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.h,v 1.6 2002/05/10 22:36:26 tgl Exp $
  */
 
-#define BLOB_XREF_TABLE "dump_blob_xref"		/* MUST be lower case */
+#define BLOB_XREF_TABLE "pg_dump_blob_xref"		/* MUST be lower case */
 
-extern void FixupBlobRefs(ArchiveHandle *AH, char *tablename);
+extern void FixupBlobRefs(ArchiveHandle *AH, TocEntry *te);
 extern int	ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc, bool use_blob);
 extern int	ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qry, int bufLen);
 
