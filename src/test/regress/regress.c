@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.33 1999/07/17 20:18:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.34 1999/10/22 02:08:37 tgl Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -317,7 +317,9 @@ funny_dup17()
 	Relation	rel;
 	TupleDesc	tupdesc;
 	HeapTuple	tuple;
-	char		sql[MAX_QUERY_SIZE];
+	char	   *query,
+			   *fieldval,
+			   *fieldtype;
 	char	   *when;
 	int			inserted;
 	int			selected = 0;
@@ -363,25 +365,29 @@ funny_dup17()
 
 	SPI_connect();
 
-	sprintf(sql, "insert into %s select * from %s where %s = '%s'::%s",
+	fieldval = SPI_getvalue(tuple, tupdesc, 1);
+	fieldtype = SPI_gettype(tupdesc, 1);
+
+	query = (char *) palloc(100 + NAMEDATALEN*3 +
+							strlen(fieldval) + strlen(fieldtype));
+
+	sprintf(query, "insert into %s select * from %s where %s = '%s'::%s",
 			SPI_getrelname(rel), SPI_getrelname(rel),
 			SPI_fname(tupdesc, 1),
-			SPI_getvalue(tuple, tupdesc, 1),
-			SPI_gettype(tupdesc, 1));
+			fieldval, fieldtype);
 
-	if ((ret = SPI_exec(sql, 0)) < 0)
+	if ((ret = SPI_exec(query, 0)) < 0)
 		elog(ERROR, "funny_dup17 (fired %s) on level %3d: SPI_exec (insert ...) returned %d",
 			 when, *level, ret);
 
 	inserted = SPI_processed;
 
-	sprintf(sql, "select count (*) from %s where %s = '%s'::%s",
+	sprintf(query, "select count (*) from %s where %s = '%s'::%s",
 			SPI_getrelname(rel),
 			SPI_fname(tupdesc, 1),
-			SPI_getvalue(tuple, tupdesc, 1),
-			SPI_gettype(tupdesc, 1));
+			fieldval, fieldtype);
 
-	if ((ret = SPI_exec(sql, 0)) < 0)
+	if ((ret = SPI_exec(query, 0)) < 0)
 		elog(ERROR, "funny_dup17 (fired %s) on level %3d: SPI_exec (select ...) returned %d",
 			 when, *level, ret);
 
@@ -561,24 +567,25 @@ ttdummy()
 	{
 		void	   *pplan;
 		Oid		   *ctypes;
-		char		sql[MAX_QUERY_SIZE];
+		char	   *query;
 
-		/* allocate ctypes for preparation */
+		/* allocate space in preparation */
 		ctypes = (Oid *) palloc(natts * sizeof(Oid));
+		query = (char *) palloc(100 + 16 * natts);
 
 		/*
 		 * Construct query: INSERT INTO _relation_ VALUES ($1, ...)
 		 */
-		sprintf(sql, "INSERT INTO %s VALUES (", relname);
+		sprintf(query, "INSERT INTO %s VALUES (", relname);
 		for (i = 1; i <= natts; i++)
 		{
-			sprintf(sql + strlen(sql), "$%d%s",
+			sprintf(query + strlen(query), "$%d%s",
 					i, (i < natts) ? ", " : ")");
 			ctypes[i - 1] = SPI_gettypeid(tupdesc, i);
 		}
 
 		/* Prepare plan for query */
-		pplan = SPI_prepare(sql, natts, ctypes);
+		pplan = SPI_prepare(query, natts, ctypes);
 		if (pplan == NULL)
 			elog(ERROR, "ttdummy (%s): SPI_prepare returned %d", relname, SPI_result);
 
