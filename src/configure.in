@@ -564,11 +564,6 @@ if test "$USE_TCL" = "true"
 then
 TCL_INCDIR=no
 AC_CHECK_HEADER(tcl.h, TCL_INCDIR=)
-for f in /usr/include /usr/include/tcl /usr/include/tcl8.0 /usr/local/include /usr/local/include/tcl /usr/local/include/tcl8.0; do
-if test "$TCL_INCDIR" = "no"; then
-AC_CHECK_HEADER($f/tcl.h, TCL_INCDIR=$f)
-fi
-done
 if test "$TCL_INCDIR" = "no"; then
 AC_MSG_WARN(tcl support disabled; tcl.h missing)
 USE_TCL=
@@ -580,11 +575,7 @@ dnl Check for Tcl archive
 if test "$USE_TCL" = "true"
 then
 TCL_LIB=
-for f in tcl tcl8.0 tcl80; do
-if test -z "$TCL_LIB"; then
-AC_CHECK_LIB($f, main, TCL_LIB=$f)
-fi
-done
+AC_CHECK_LIB(tcl, main, TCL_LIB=tcl)
 if test -z "$TCL_LIB"; then
 AC_MSG_WARN(tcl support disabled; Tcl library missing)
 USE_TCL=
@@ -610,11 +601,6 @@ CPPFLAGS="$CPPFLAGS $X_CFLAGS -I$TCL_INCDIR"
 
 TK_INCDIR=no
 AC_CHECK_HEADER(tk.h, TK_INCDIR=)
-for f in /usr/include /usr/include/tk /usr/include/tk8.0 /usr/local/include /usr/local/include/tk /usr/local/include/tk8.0; do
-if test "$TK_INCDIR" = "no"; then
-AC_CHECK_HEADER($f/tk.h, TK_INCDIR=$f)
-fi
-done
 if test "$TK_INCDIR" = "no"; then
 AC_MSG_WARN(tcl support disabled; tk.h missing)
 USE_TCL=
@@ -631,11 +617,7 @@ dnl Check for Tk archive
 if test "$USE_TCL" = "true"
 then
 TK_LIB=
-for f in tk tk8.0 tk80; do
-if test -z "$TK_LIB"; then
-AC_CHECK_LIB($f, main, TK_LIB=$f)
-fi
-done
+AC_CHECK_LIB(tk, main, TK_LIB=tk)
 if test -z "$TK_LIB"; then
 AC_MSG_WARN(tcl support disabled; Tk library missing)
 USE_TCL=
