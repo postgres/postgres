@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.19 1998/06/23 17:52:32 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.20 1998/06/24 12:52:47 momjian Exp $
 .TH "CREATE TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
 create table - create a new class
@@ -63,7 +63,7 @@ Each new class
 .IR classname 
 is automatically created as a type.  Therefore, one or more instances
 from the class are automatically a type and can be used in 
-.IR "alter table" (l)
+.IR "alter_table" (l)
 or other 
 .BR "create table"
 statements.  See 
