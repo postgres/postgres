@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.35 1999/07/17 20:17:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.36 1999/07/25 23:07:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,16 +20,20 @@
 #include "catalog/catname.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_inherits.h"
+#include "optimizer/clauses.h"
 #include "optimizer/internal.h"
 #include "optimizer/plancat.h"
 #include "parser/parsetree.h"
 #include "utils/syscache.h"
 
 
-static void IndexSelectivity(Oid indexrelid, Oid indrelid, int32 nIndexKeys,
-				 Oid *AccessMethodOperatorClasses, Oid *operatorObjectIds,
-	   int32 *varAttributeNumbers, char **constValues, int32 *constFlags,
-				 float *idxPages, float *idxSelec);
+static void IndexSelectivity(Oid indexrelid, Oid baserelid, int nIndexKeys,
+							 Oid *operatorObjectIds,
+							 AttrNumber *varAttributeNumbers,
+							 Datum *constValues,
+							 int *constFlags,
+							 float *idxPages,
+							 float *idxSelec);
 
 
 /*
@@ -212,85 +216,75 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 
 /*
  * index_selectivity
+ *	  Estimate the selectivity of an index scan with the given index quals.
  *
- *	  Call util/plancat.c:IndexSelectivity with the indicated arguments.
+ *	  NOTE: an indexscan plan node can actually represent several passes,
+ *	  but here we consider the cost of just one pass.
  *
- * 'indid' is the index OID
- * 'classes' is a list of index key classes
- * 'opnos' is a list of index key operator OIDs
- * 'relid' is the OID of the relation indexed
- * 'attnos' is a list of the relation attnos which the index keys over
- * 'values' is a list of the values of the clause's constants
- * 'flags' is a list of fixnums which describe the constants
- * 'nkeys' is the number of index keys
- *
- * Returns two floats: index pages and index selectivity in 'idxPages' and
- *		'idxSelec'.
- *
+ * 'root' is the query root
+ * 'relid' is the RT index of the relation being scanned
+ * 'indexid' is the OID of the index to be used
+ * 'indexquals' is the list of qual condition exprs (implicit AND semantics)
+ * '*idxPages' receives an estimate of the number of index pages touched
+ * '*idxSelec' receives an estimate of selectivity of the scan
  */
 void
-index_selectivity(Oid indid,
-				  Oid *classes,
-				  List *opnos,
-				  Oid relid,
-				  List *attnos,
-				  List *values,
-				  List *flags,
-				  int32 nkeys,
+index_selectivity(Query *root,
+				  int relid,
+				  Oid indexid,
+				  List *indexquals,
 				  float *idxPages,
 				  float *idxSelec)
 {
+	int			nclauses = length(indexquals);
 	Oid		   *opno_array;
-	int		   *attno_array,
-			   *flag_array;
-	char	  **value_array;
-	int			i = 0;
-	List	   *xopno,
-			   *xattno,
-			   *value,
-			   *flag;
+	AttrNumber *attno_array;
+	Datum	   *value_array;
+	int		   *flag_array;
+	List	   *q;
+	int			i;
 
-	if (length(opnos) != nkeys || length(attnos) != nkeys ||
-		length(values) != nkeys || length(flags) != nkeys)
+	if (nclauses <= 0)
 	{
-
 		*idxPages = 0.0;
 		*idxSelec = 1.0;
 		return;
 	}
-
-	opno_array = (Oid *) palloc(nkeys * sizeof(Oid));
-	attno_array = (int *) palloc(nkeys * sizeof(int32));
-	value_array = (char **) palloc(nkeys * sizeof(char *));
-	flag_array = (int *) palloc(nkeys * sizeof(int32));
-
-	i = 0;
-	foreach(xopno, opnos)
-		opno_array[i++] = lfirsti(xopno);
+	opno_array = (Oid *) palloc(nclauses * sizeof(Oid));
+	attno_array = (AttrNumber *) palloc(nclauses * sizeof(AttrNumber));
+	value_array = (Datum *) palloc(nclauses * sizeof(Datum));
+	flag_array = (int *) palloc(nclauses * sizeof(int));
 
 	i = 0;
-	foreach(xattno, attnos)
-		attno_array[i++] = lfirsti(xattno);
+	foreach(q, indexquals)
+	{
+		Node	   *expr = (Node *) lfirst(q);
+		int			dummyrelid;
 
-	i = 0;
-	foreach(value, values)
-		value_array[i++] = (char *) lfirst(value);
+		if (is_opclause(expr))
+			opno_array[i] = ((Oper *) ((Expr *) expr)->oper)->opno;
+		else
+			opno_array[i] = InvalidOid;
 
-	i = 0;
-	foreach(flag, flags)
-		flag_array[i++] = lfirsti(flag);
+		get_relattval(expr, relid, &dummyrelid, &attno_array[i],
+					  &value_array[i], &flag_array[i]);
+		i++;
+	}
 
-	IndexSelectivity(indid,
-					 relid,
-					 nkeys,
-					 classes,	/* not used */
+	IndexSelectivity(indexid,
+					 getrelid(relid, root->rtable),
+					 nclauses,
 					 opno_array,
 					 attno_array,
 					 value_array,
 					 flag_array,
 					 idxPages,
 					 idxSelec);
-	return;
+
+	pfree(opno_array);
+	pfree(attno_array);
+	pfree(value_array);
+	pfree(flag_array);
 }
 
 /*
@@ -312,8 +306,8 @@ restriction_selectivity(Oid functionObjectId,
 						Oid operatorObjectId,
 						Oid relationObjectId,
 						AttrNumber attributeNumber,
-						char *constValue,
-						int32 constFlag)
+						Datum constValue,
+						int constFlag)
 {
 	float64		result;
 
@@ -456,35 +450,29 @@ VersionGetParents(Oid verrelid)
  *****************************************************************************/
 
 /*
- * IdexSelectivity
+ * IndexSelectivity
  *
- *	  Retrieves the 'amopnpages' and 'amopselect' parameters for each
+ *	  Calls the 'amopnpages' and 'amopselect' functions for each
  *	  AM operator when a given index (specified by 'indexrelid') is used.
- *	  These two parameters are returned by copying them to into an array of
- *	  floats.
+ *	  The total number of pages and product of the selectivities are returned.
  *
  *	  Assumption: the attribute numbers and operator ObjectIds are in order
  *	  WRT to each other (otherwise, you have no way of knowing which
  *	  AM operator class or attribute number corresponds to which operator.
  *
+ * 'nIndexKeys' is the number of qual clauses in use
  * 'varAttributeNumbers' contains attribute numbers for variables
  * 'constValues' contains the constant values
  * 'constFlags' describes how to treat the constants in each clause
- * 'nIndexKeys' describes how many keys the index actually has
- *
- * Returns 'selectivityInfo' filled with the sum of all pages touched
- * and the product of each clause's selectivity.
- *
  */
 static void
 IndexSelectivity(Oid indexrelid,
-				 Oid indrelid,
-				 int32 nIndexKeys,
-				 Oid *AccessMethodOperatorClasses,		/* XXX not used? */
+				 Oid baserelid,
+				 int nIndexKeys,
 				 Oid *operatorObjectIds,
-				 int32 *varAttributeNumbers,
-				 char **constValues,
-				 int32 *constFlags,
+				 AttrNumber *varAttributeNumbers,
+				 Datum *constValues,
+				 int *constFlags,
 				 float *idxPages,
 				 float *idxSelec)
 {
@@ -493,6 +481,7 @@ IndexSelectivity(Oid indexrelid,
 	HeapTuple	indexTuple,
 				amopTuple,
 				indRel;
+	Form_pg_class indexrelation;
 	Form_pg_index index;
 	Form_pg_amop amop;
 	Oid			indclass;
@@ -510,7 +499,8 @@ IndexSelectivity(Oid indexrelid,
 	if (!HeapTupleIsValid(indRel))
 		elog(ERROR, "IndexSelectivity: index %u not found",
 			 indexrelid);
-	relam = ((Form_pg_class) GETSTRUCT(indRel))->relam;
+	indexrelation = (Form_pg_class) GETSTRUCT(indRel);
+	relam = indexrelation->relam;
 
 	indexTuple = SearchSysCacheTuple(INDEXRELID,
 									 ObjectIdGetDatum(indexrelid),
@@ -530,9 +520,8 @@ IndexSelectivity(Oid indexrelid,
 
 	npages = 0.0;
 	select = 1.0;
-	for (n = 0; n < nIndexKeys; ++n)
+	for (n = 0; n < nIndexKeys; n++)
 	{
-
 		/*
 		 * Find the AM class for this key.
 		 *
@@ -567,49 +556,43 @@ IndexSelectivity(Oid indexrelid,
 
 		amopTuple = SearchSysCacheTuple(AMOPOPID,
 										ObjectIdGetDatum(indclass),
-								  ObjectIdGetDatum(operatorObjectIds[n]),
+										ObjectIdGetDatum(operatorObjectIds[n]),
 										ObjectIdGetDatum(relam),
 										0);
 		if (!HeapTupleIsValid(amopTuple))
-			elog(ERROR, "IndexSelectivity: no amop %u %u",
-				 indclass, operatorObjectIds[n]);
+			elog(ERROR, "IndexSelectivity: no amop %u %u %u",
+				 indclass, operatorObjectIds[n], relam);
 		amop = (Form_pg_amop) GETSTRUCT(amopTuple);
 
 		if (!nphack)
 		{
 			amopnpages = (float64) fmgr(amop->amopnpages,
 										(char *) operatorObjectIds[n],
-										(char *) indrelid,
-										(char *) varAttributeNumbers[n],
+										(char *) baserelid,
+										(char *) (int) varAttributeNumbers[n],
 										(char *) constValues[n],
 										(char *) constFlags[n],
 										(char *) nIndexKeys,
 										(char *) indexrelid);
-#ifdef NOT_USED
-/*
- * So cool guys! Npages for x > 10 and x < 20 is twice as
- * npages for x > 10!	- vadim 04/09/97
- */
-			npages += PointerIsValid(amopnpages) ? *amopnpages : 0.0;
-			if ((i = npages) < npages)	/* ceil(npages)? */
-				npages += 1.0;
-#endif
-			npages += PointerIsValid(amopnpages) ? *amopnpages : 0.0;
+			if (PointerIsValid(amopnpages))
+				npages += *amopnpages;
 		}
 
 		amopselect = (float64) fmgr(amop->amopselect,
 									(char *) operatorObjectIds[n],
-									(char *) indrelid,
-									(char *) varAttributeNumbers[n],
+									(char *) baserelid,
+									(char *) (int) varAttributeNumbers[n],
 									(char *) constValues[n],
 									(char *) constFlags[n],
 									(char *) nIndexKeys,
 									(char *) indexrelid);
 
-		if (nphack && varAttributeNumbers[n] == index->indkey[0])
-			fattr_select *= PointerIsValid(amopselect) ? *amopselect : 1.0;
-
-		select *= PointerIsValid(amopselect) ? *amopselect : 1.0;
+		if (PointerIsValid(amopselect))
+		{
+			select *= *amopselect;
+			if (nphack && varAttributeNumbers[n] == index->indkey[0])
+				fattr_select *= *amopselect;
+		}
 	}
 
 	/*
@@ -618,7 +601,7 @@ IndexSelectivity(Oid indexrelid,
 	 */
 	if (nphack)
 	{
-		npages = fattr_select * ((Form_pg_class) GETSTRUCT(indRel))->relpages;
+		npages = fattr_select * indexrelation->relpages;
 		*idxPages = ceil((double) npages);
 	}
 	else

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.22 1999/07/15 15:21:21 momjian Exp $
+ * $Id: internal.h,v 1.23 1999/07/25 23:07:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,20 +62,6 @@
 /*	   Identifier for (sort) temp relations   */
 /* used to be -1 */
 #define _NONAME_RELATION_ID_	 InvalidOid
-
-/*	   Identifier for invalid relation OIDs and attribute numbers for use by
- *	   selectivity functions
- */
-#define _SELEC_VALUE_UNKNOWN_	(-1)
-
-/*	   Flag indicating that a clause constant is really a parameter (or other
- *		non-constant?), a non-parameter, or a constant on the right side
- *		of the clause.
- */
-#define _SELEC_NOT_CONSTANT_   0
-#define _SELEC_IS_CONSTANT_    1
-#define _SELEC_CONSTANT_LEFT_  0
-#define _SELEC_CONSTANT_RIGHT_ 2
 
 /* #define deactivate_joininfo(joininfo)		joininfo->inactive=true*/
 /*#define joininfo_inactive(joininfo)	joininfo->inactive */

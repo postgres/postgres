@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.64 1999/07/25 17:53:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.65 1999/07/25 23:07:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1216,25 +1216,20 @@ index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 	{
 		List	   *clausegroup = lfirst(i);
 		IndexPath  *pathnode = makeNode(IndexPath);
-		Cost		temp_selec;
-		float		temp_pages;
-		List	   *attnos,
-				   *values,
-				   *flags;
+		List	   *indexquals;
+		float		npages;
+		float		selec;
 
-		get_joinvars(lfirsti(rel->relids), clausegroup,
-					 &attnos, &values, &flags);
-		index_selectivity(lfirsti(index->relids),
-						  index->classlist,
-						  get_opnos(clausegroup),
-						  getrelid(lfirsti(rel->relids),
-								   root->rtable),
-						  attnos,
-						  values,
-						  flags,
-						  length(clausegroup),
-						  &temp_pages,
-						  &temp_selec);
+		indexquals = get_actual_clauses(clausegroup);
+
+		index_selectivity(root,
+						  lfirsti(rel->relids),
+						  lfirsti(index->relids),
+						  indexquals,
+						  &npages,
+						  &selec);
+
+		/* XXX this code ought to be merged with create_index_path */
 
 		pathnode->path.pathtype = T_IndexScan;
 		pathnode->path.parent = rel;
@@ -1249,14 +1244,14 @@ index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 		 */
 		pathnode->indexid = index->relids;
 		pathnode->indexkeys = index->indexkeys;
-		pathnode->indexqual = lcons(get_actual_clauses(clausegroup), NIL);
+		pathnode->indexqual = lcons(indexquals, NIL);
 
 		/* joinid saves the rels needed on the outer side of the join */
 		pathnode->path.joinid = lfirst(outerrelids_list);
 
 		pathnode->path.path_cost = cost_index((Oid) lfirsti(index->relids),
-											  (int) temp_pages,
-											  temp_selec,
+											  (int) npages,
+											  selec,
 											  rel->pages,
 											  rel->tuples,
 											  index->pages,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.29 1999/07/24 23:21:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.30 1999/07/25 23:07:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,11 +121,14 @@ create_or_index_paths(Query *root,
 				pathnode->indexqual = NIL;
 				foreach(orclause, clausenode->clause->args)
 				{
-					List	*sublist;
-					if (and_clause(lfirst(orclause)))
-						sublist = ((Expr *) lfirst(orclause))->args;
+					Expr   *subclause = (Expr *) lfirst(orclause);
+					List   *sublist;
+
+					if (and_clause((Node *) subclause))
+						sublist = subclause->args;
 					else
-						sublist = lcons(lfirst(orclause), NIL);
+						sublist = lcons(subclause, NIL);
+					/* expansion call... */
 					pathnode->indexqual = lappend(pathnode->indexqual,
 												  sublist);
 				}
@@ -224,18 +227,8 @@ best_or_subclause_index(Query *root,
 						Cost *retCost,	/* return value */
 						Cost *retSelec) /* return value */
 {
-	Oid			relid = getrelid(lfirsti(rel->relids),
-								 root->rtable);
-	Oid			opno = ((Oper *) subclause->oper)->opno;
-	AttrNumber	attno = (get_leftop(subclause))->varattno;
-	bool		constant_on_right = non_null((Expr *) get_rightop(subclause));
-	Datum		value;
-	int			flag;
-	List	   *opnos,
-			   *attnos,
-			   *values,
-			   *flags;
 	bool		first_run = true;
+	List	   *indexquals;
 	List	   *ilist;
 
 	/* if we don't match anything, return zeros */
@@ -243,37 +236,25 @@ best_or_subclause_index(Query *root,
 	*retCost = (Cost) 0.0;
 	*retSelec = (Cost) 0.0;
 
-	if (constant_on_right)		/* XXX looks pretty bogus ... tgl */
-		value = ((Const *) get_rightop(subclause))->constvalue;
+	/* convert 'or' subclause to an indexqual list */
+	if (and_clause((Node *) subclause))
+		indexquals = subclause->args;
 	else
-		value = NameGetDatum("");
-	if (constant_on_right)
-		flag = (_SELEC_IS_CONSTANT_ || _SELEC_CONSTANT_RIGHT_);
-	else
-		flag = _SELEC_CONSTANT_RIGHT_;
-
-	/* prebuild lists since we will pass same list to each index */
-	opnos = lconsi(opno, NIL);
-	attnos = lconsi(attno, NIL);
-	values = lconsi(value, NIL);
-	flags = lconsi(flag, NIL);
+		indexquals = lcons(subclause, NIL);
+	/* expansion call... */
 
 	foreach(ilist, indices)
 	{
 		RelOptInfo *index = (RelOptInfo *) lfirst(ilist);
 		Oid			indexid = (Oid) lfirsti(index->relids);
 		Cost		subcost;
-		float		npages,
-					selec;
+		float		npages;
+		float		selec;
 
-		index_selectivity(indexid,
-						  index->classlist,
-						  opnos,
-						  relid,
-						  attnos,
-						  values,
-						  flags,
-						  1,
+		index_selectivity(root,
+						  lfirsti(rel->relids),
+						  indexid,
+						  indexquals,
 						  &npages,
 						  &selec);
 

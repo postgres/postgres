@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.22 1999/07/24 23:21:05 tgl Exp $
+ * $Id: clauses.h,v 1.23 1999/07/25 23:07:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,9 @@ extern bool is_joinable(Node *clause);
 extern bool qual_clause_p(Node *clause);
 extern void fix_opid(Node *clause);
 extern List *fix_opids(List *clauses);
-extern void get_relattval(Node *clause, int *relid,
-			  AttrNumber *attno, Datum *constval, int *flag);
+extern void get_relattval(Node *clause, int targetrelid,
+						  int *relid, AttrNumber *attno,
+						  Datum *constval, int *flag);
 extern void get_rels_atts(Node *clause, int *relid1,
 			  AttrNumber *attno1, int *relid2, AttrNumber *attno2);
 extern void CommuteClause(Node *clause);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.47 1999/07/24 23:21:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.48 1999/07/25 23:07:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,7 +334,12 @@ create_index_path(Query *root,
 	pathnode->path.pathorder = makeNode(PathOrder);
 	pathnode->path.pathorder->ordtype = SORTOP_ORDER;
 	pathnode->path.pathorder->ord.sortop = index->ordering;
+	pathnode->path.pathkeys = NIL;
 
+	/* Note that we are making a pathnode for a single-scan indexscan;
+	 * therefore, both indexid and indexqual should be single-element
+	 * lists (unless indexqual is empty).
+	 */
 	pathnode->indexid = index->relids;
 	pathnode->indexkeys = index->indexkeys;
 	pathnode->indexqual = NIL;
@@ -344,7 +349,7 @@ create_index_path(Query *root,
 	 * JMH, 7/7/92
 	 */
 	pathnode->path.loc_restrictinfo = set_difference((List *) copyObject((Node *) rel->restrictinfo),
-										   (List *) restriction_clauses);
+													 restriction_clauses);
 
 	/*
 	 * The index must have an ordering for the path to have (ordering)
@@ -385,49 +390,28 @@ create_index_path(Query *root,
 											  index->pages,
 											  index->tuples,
 											  false);
-#ifdef NOT_USED
-		/* add in expensive functions cost!  -- JMH, 7/7/92 */
-		if (XfuncMode != XFUNC_OFF)
-		{
-			pathnode->path_cost = (pathnode->path_cost +
-								 xfunc_get_path_cost((Path *) pathnode));
-		}
-#endif
 	}
 	else
 	{
-
 		/*
 		 * Compute scan cost for the case when 'index' is used with a
 		 * restriction clause.
 		 */
-		List	   *attnos;
-		List	   *values;
-		List	   *flags;
+		List	   *indexquals;
 		float		npages;
 		float		selec;
 		Cost		clausesel;
 
-		get_relattvals(restriction_clauses,
-					   &attnos,
-					   &values,
-					   &flags);
-		index_selectivity(lfirsti(index->relids),
-						  index->classlist,
-						  get_opnos(restriction_clauses),
-						  getrelid(lfirsti(rel->relids),
-								   root->rtable),
-						  attnos,
-						  values,
-						  flags,
-						  length(restriction_clauses),
+		indexquals = get_actual_clauses(restriction_clauses);
+
+		index_selectivity(root,
+						  lfirsti(rel->relids),
+						  lfirsti(index->relids),
+						  indexquals,
 						  &npages,
 						  &selec);
-		/* each clause gets an equal selectivity */
-		clausesel = pow(selec, 1.0 / (double) length(restriction_clauses));
 
-		pathnode->indexqual = lcons(get_actual_clauses(restriction_clauses),
-									NIL);
+		pathnode->indexqual = lcons(indexquals, NIL);
 		pathnode->path.path_cost = cost_index(lfirsti(index->relids),
 											  (int) npages,
 											  selec,
@@ -437,21 +421,24 @@ create_index_path(Query *root,
 											  index->tuples,
 											  false);
 
-#ifdef NOT_USED
-		/* add in expensive functions cost!  -- JMH, 7/7/92 */
-		if (XfuncMode != XFUNC_OFF)
-			pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
-#endif
-
 		/*
 		 * Set selectivities of clauses used with index to the selectivity
 		 * of this index, subdividing the selectivity equally over each of
 		 * the clauses.
+		 * XXX Can this divide the selectivities in a better way?
+		 * XXX In fact, why the heck are we doing this at all?  We already
+		 * set the cost for the indexpath.
 		 */
-
-		/* XXX Can this divide the selectivities in a better way? */
+		clausesel = pow(selec, 1.0 / (double) length(restriction_clauses));
 		set_clause_selectivities(restriction_clauses, clausesel);
 	}
+
+#ifdef NOT_USED
+	/* add in expensive functions cost!  -- JMH, 7/7/92 */
+	if (XfuncMode != XFUNC_OFF)
+		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
+#endif
+
 	return pathnode;
 }
 

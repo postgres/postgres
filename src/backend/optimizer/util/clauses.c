@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.41 1999/07/24 23:21:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.42 1999/07/25 23:07:25 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -29,6 +29,7 @@
 
 
 static bool fix_opid_walker(Node *node, void *context);
+static int is_single_func(Node *node);
 
 
 Expr *
@@ -533,36 +534,36 @@ fix_opids(List *clauses)
 
 /*
  * get_relattval
- *		For a non-join clause, returns a list consisting of the
- *				relid,
- *				attno,
- *				value of the CONST node (if any), and a
- *				flag indicating whether the value appears on the left or right
- *						of the operator and whether the value varied.
- *
- * OLD OBSOLETE COMMENT FOLLOWS:
- *		If 'clause' is not of the format (op var node) or (op node var),
- *		or if the var refers to a nested attribute, then -1's are returned for
- *		everything but the value  a blank string "" (pointer to \0) is
- *		returned for the value if it is unknown or null.
- * END OF OLD OBSOLETE COMMENT.
- * NEW COMMENT:
- * when defining rules one of the attributes of the operator can
- * be a Param node (which is supposed to be treated as a constant).
- * However as there is no value specified for a parameter until run time
- * this routine used to return "" as value, which caused 'compute_selec'
- * to bomb (because it was expecting a lisp integer and got back a lisp
- * string). Now the code returns a plain old good "lispInteger(0)".
+ *		Extract information from a restriction or join clause for
+ *		selectivity estimation.  The inputs are an expression
+ *		and a relation number (which can be 0 if we don't care which
+ *		relation is used; that'd normally be the case for restriction
+ *		clauses, where the caller already knows that only one relation
+ *		is referenced in the clause).  The routine checks that the
+ *		expression is of the form (var op something) or (something op var)
+ *		where the var is an attribute of the specified relation, or
+ *		a function of a var of the specified relation.  If so, it
+ *		returns the following info:
+ *			the found relation number (same as targetrelid unless that is 0)
+ *			the found var number (or InvalidAttrNumber if a function)
+ *			if the "something" is a constant, the value of the constant
+ *			flags indicating whether a constant was found, and on which side.
+ *		Default values are returned if the expression is too complicated,
+ *		specifically -1 for the relid and attno, 0 for the constant value.
+ *		Note that InvalidAttrNumber is *not* -1, but 0.
  */
 void
 get_relattval(Node *clause,
+			  int targetrelid,
 			  int *relid,
 			  AttrNumber *attno,
 			  Datum *constval,
 			  int *flag)
 {
 	Var		   *left,
-			   *right;
+			   *right,
+			   *other;
+	int			funcvarno;
 
 	/* Careful; the passed clause might not be a binary operator at all */
 
@@ -575,71 +576,96 @@ get_relattval(Node *clause,
 	if (!right)
 		goto default_results;
 
-	if (IsA(left, Var) &&IsA(right, Const))
+	/* First look for the var or func */
+
+	if (IsA(left, Var) &&
+		(targetrelid == 0 || targetrelid == left->varno))
 	{
 		*relid = left->varno;
 		*attno = left->varattno;
-		*constval = ((Const *) right)->constvalue;
-		*flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_IS_CONSTANT_);
+		*flag = SEL_RIGHT;
 	}
-	else if (IsA(left, Var) &&IsA(right, Param))
-	{
-		*relid = left->varno;
-		*attno = left->varattno;
-		*constval = 0;
-		*flag = (_SELEC_NOT_CONSTANT_);
-	}
-	else if (is_funcclause((Node *) left) && IsA(right, Const))
-	{
-		List	   *vars = pull_var_clause((Node *) left);
-
-		*relid = ((Var *) lfirst(vars))->varno;
-		*attno = InvalidAttrNumber;
-		*constval = ((Const *) right)->constvalue;
-		*flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_IS_CONSTANT_);
-	}
-	else if (IsA(right, Var) &&IsA(left, Const))
+	else if (IsA(right, Var) &&
+			 (targetrelid == 0 || targetrelid == right->varno))
 	{
 		*relid = right->varno;
 		*attno = right->varattno;
-		*constval = ((Const *) left)->constvalue;
-		*flag = (_SELEC_IS_CONSTANT_);
+		*flag = 0;
 	}
-	else if (IsA(right, Var) &&IsA(left, Param))
+	else if ((funcvarno = is_single_func((Node *) left)) != 0 &&
+			 (targetrelid == 0 || targetrelid == funcvarno))
 	{
-		*relid = right->varno;
-		*attno = right->varattno;
-		*constval = 0;
-		*flag = (_SELEC_NOT_CONSTANT_);
-	}
-	else if (is_funcclause((Node *) right) && IsA(left, Const))
-	{
-		List	   *vars = pull_var_clause((Node *) right);
-
-		*relid = ((Var *) lfirst(vars))->varno;
+		*relid = funcvarno;
 		*attno = InvalidAttrNumber;
-		*constval = ((Const *) left)->constvalue;
-		*flag = (_SELEC_IS_CONSTANT_);
+		*flag = SEL_RIGHT;
+	}
+	else if ((funcvarno = is_single_func((Node *) right)) != 0 &&
+			 (targetrelid == 0 || targetrelid == funcvarno))
+	{
+		*relid = funcvarno;
+		*attno = InvalidAttrNumber;
+		*flag = 0;
 	}
 	else
 	{
 		/* Duh, it's too complicated for me... */
 default_results:
-		*relid = _SELEC_VALUE_UNKNOWN_;
-		*attno = _SELEC_VALUE_UNKNOWN_;
+		*relid = -1;
+		*attno = -1;
 		*constval = 0;
-		*flag = (_SELEC_NOT_CONSTANT_);
+		*flag = 0;
+		return;
+	}
+
+	/* OK, we identified the var or func; now look at the other side */
+
+	other = (*flag == 0) ? left : right;
+
+	if (IsA(other, Const))
+	{
+		*constval = ((Const *) other)->constvalue;
+		*flag |= SEL_CONSTANT;
+	}
+	else
+	{
+		*constval = 0;
 	}
 }
 
 /*
- * get_relsatts
+ * is_single_func
+ *   If the given expression is a function of a single relation,
+ *   return the relation number; else return 0
+ */
+static int is_single_func(Node *node)
+{
+	if (is_funcclause(node))
+	{
+		List	   *vars = pull_var_clause(node);
+
+		if (vars != NIL)
+		{
+			int		funcvarno = ((Var *) lfirst(vars))->varno;
+			/* need to check that all args of func are same relation */
+			while ((vars = lnext(vars)) != NIL)
+			{
+				if (((Var *) lfirst(vars))->varno != funcvarno)
+					return 0;
+			}
+			return funcvarno;
+		}
+	}
+	return 0;
+}
+
+/*
+ * get_rels_atts
  *
- * Returns a list
+ * Returns the info
  *				( relid1 attno1 relid2 attno2 )
  *		for a joinclause.
  *
- * If the clause is not of the form (op var var) or if any of the vars
+ * If the clause is not of the form (var op var) or if any of the vars
  * refer to nested attributes, then -1's are returned.
  *
  */
@@ -650,6 +676,12 @@ get_rels_atts(Node *clause,
 			  int *relid2,
 			  AttrNumber *attno2)
 {
+	/* set default values */
+	*relid1 = -1;
+	*attno1 = -1;
+	*relid2 = -1;
+	*attno2 = -1;
+
 	if (is_opclause(clause))
 	{
 		Var		   *left = get_leftop((Expr *) clause);
@@ -657,47 +689,31 @@ get_rels_atts(Node *clause,
 
 		if (left && right)
 		{
-			bool		var_left = IsA(left, Var);
-			bool		var_right = IsA(right, Var);
-			bool		varexpr_left = (bool) ((IsA(left, Func) ||IsA(left, Oper)) &&
-									  contain_var_clause((Node *) left));
-			bool		varexpr_right = (bool) ((IsA(right, Func) ||IsA(right, Oper)) &&
-									 contain_var_clause((Node *) right));
+			int			funcvarno;
 
-			if (var_left && var_right)
+			if (IsA(left, Var))
 			{
-
 				*relid1 = left->varno;
-				*attno1 = left->varoattno;
-				*relid2 = right->varno;
-				*attno2 = right->varoattno;
-				return;
+				*attno1 = left->varattno;
 			}
-			if (var_left && varexpr_right)
+			else if ((funcvarno = is_single_func((Node *) left)) != 0)
 			{
-
-				*relid1 = left->varno;
-				*attno1 = left->varoattno;
-				*relid2 = _SELEC_VALUE_UNKNOWN_;
-				*attno2 = _SELEC_VALUE_UNKNOWN_;
-				return;
+				*relid1 = funcvarno;
+				*attno1 = InvalidAttrNumber;
 			}
-			if (varexpr_left && var_right)
-			{
 
-				*relid1 = _SELEC_VALUE_UNKNOWN_;
-				*attno1 = _SELEC_VALUE_UNKNOWN_;
+			if (IsA(right, Var))
+			{
 				*relid2 = right->varno;
-				*attno2 = right->varoattno;
-				return;
+				*attno2 = right->varattno;
+			}
+			else if ((funcvarno = is_single_func((Node *) right)) != 0)
+			{
+				*relid2 = funcvarno;
+				*attno2 = InvalidAttrNumber;
 			}
 		}
 	}
-
-	*relid1 = _SELEC_VALUE_UNKNOWN_;
-	*attno1 = _SELEC_VALUE_UNKNOWN_;
-	*relid2 = _SELEC_VALUE_UNKNOWN_;
-	*attno2 = _SELEC_VALUE_UNKNOWN_;
 }
 
 /*--------------------

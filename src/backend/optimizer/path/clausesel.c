@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.24 1999/07/24 23:21:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.25 1999/07/25 23:07:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,8 +142,8 @@ compute_clause_selec(Query *root, Node *clause)
 									 BooleanEqualOperator,
 									 relid,
 									 ((Var *) clause)->varoattno,
-									 "t",
-									 _SELEC_CONSTANT_RIGHT_);
+									 Int8GetDatum(true),
+									 SEL_CONSTANT | SEL_RIGHT);
 	}
 	else if (IsA(clause, Param))
 	{
@@ -215,14 +215,6 @@ compute_clause_selec(Query *root, Node *clause)
 			 */
 			Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
 			RegProcedure oprrest = get_oprrest(opno);
-			Oid			relid;
-			int			relidx;
-			AttrNumber	attno;
-			Datum		constval;
-			int			flag;
-
-			get_relattval(clause, &relidx, &attno, &constval, &flag);
-			relid = getrelid(relidx, root->rtable);
 
 			/*
 			 * if the oprrest procedure is missing for whatever reason, use a
@@ -230,22 +222,33 @@ compute_clause_selec(Query *root, Node *clause)
 			 */
 			if (!oprrest)
 				s1 = (Cost) 0.5;
-			else if (attno == InvalidAttrNumber)
-			{
-				/*
-				 * attno can be Invalid if the clause had a function in it,
-				 * i.e.   WHERE myFunc(f) = 10
-				 */
-				/* this should be FIXED somehow to use function selectivity */
-				s1 = (Cost) (0.5);
-			}
 			else
-				s1 = (Cost) restriction_selectivity(oprrest,
-													opno,
-													relid,
-													attno,
-													(char *) constval,
-													flag);
+			{
+				int			relidx;
+				AttrNumber	attno;
+				Datum		constval;
+				int			flag;
+
+				get_relattval(clause, 0, &relidx, &attno, &constval, &flag);
+				if (relidx <= 0 || attno <= 0)
+				{
+					/*
+					 * attno can be Invalid if the clause had a function in it,
+					 * i.e.   WHERE myFunc(f) = 10
+					 *
+					 * XXX should be FIXED to use function selectivity
+					 */
+					s1 = (Cost) (0.5);
+				}
+				else
+					s1 = (Cost) restriction_selectivity(oprrest,
+														opno,
+														getrelid(relidx,
+																 root->rtable),
+														attno,
+														constval,
+														flag);
+			}
 		}
 		else
 		{
@@ -256,14 +259,6 @@ compute_clause_selec(Query *root, Node *clause)
 			 */
 			Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
 			RegProcedure oprjoin = get_oprjoin(opno);
-			int			relid1,
-						relid2;
-			AttrNumber	attno1,
-						attno2;
-
-			get_rels_atts(clause, &relid1, &attno1, &relid2, &attno2);
-			relid1 = getrelid(relid1, root->rtable);
-			relid2 = getrelid(relid2, root->rtable);
 
 			/*
 			 * if the oprjoin procedure is missing for whatever reason, use a
@@ -272,12 +267,25 @@ compute_clause_selec(Query *root, Node *clause)
 			if (!oprjoin)
 				s1 = (Cost) (0.5);
 			else
-				s1 = (Cost) join_selectivity(oprjoin,
-											 opno,
-											 relid1,
-											 attno1,
-											 relid2,
-											 attno2);
+			{
+				int			relid1,
+							relid2;
+				AttrNumber	attno1,
+							attno2;
+
+				get_rels_atts(clause, &relid1, &attno1, &relid2, &attno2);
+				if (relid1 > 0 && relid2 > 0 && attno1 > 0 && attno2 > 0)
+					s1 = (Cost) join_selectivity(oprjoin,
+												 opno,
+												 getrelid(relid1,
+														  root->rtable),
+												 attno1,
+												 getrelid(relid2,
+														  root->rtable),
+												 attno2);
+				else			/* XXX more code for function selectivity? */
+					s1 = (Cost) (0.5);
+			}
 		}
 	}
 
