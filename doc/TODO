@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Feb 14 10:12:28 EST 2001
+Last updated:		Thu Feb 15 11:03:37 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -202,7 +202,7 @@ CLIENTS
 * add XML interface capability
 * -Allow dumping of users/groups separately
 * Add a global RESET command for use with connection pooling
-* Remove <=6.3 version compatibility in ODBC
+* Remove <=6.3 version compatibility in ODBC?
 
 REFERENTIAL INTEGRITY
 
@@ -258,6 +258,7 @@ MISCELLANEOUS
 * Encrpyt passwords in pg_shadow table using MD5 (Vince)
 * -Use flock() to prevent multiple postmasters on the same port (Tom)
 * Allow Java server-side programming [java]
+* Add sed-like regular expression search/replace capability
 
 PERFORMANCE
 -----------
