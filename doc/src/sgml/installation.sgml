@@ -1,13 +1,14 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.42 2001/03/24 02:36:01 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.43 2001/04/02 15:19:15 thomas Exp $ -->
 
 <chapter id="installation">
- <title><![%flattext-install-include[<productname>PostgreSQL</>]]> Installation Instructions</title>
+ <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
+  Installation Instructions</title>
 
  <sect1 id="install-short">
   <title>Short Version</title>
 
   <para>
-<synopsis>
+   <synopsis>
 ./configure
 gmake
 gmake install
@@ -17,7 +18,7 @@ su - postgres
 /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;
 /usr/local/pgsql/bin/createdb test
 /usr/local/pgsql/bin/psql test
-</synopsis>
+   </synopsis>
    The long version is the rest of this
    <![%flattext-install-include;[document.]]>
    <![%flattext-install-ignore;[chapter.]]>
@@ -1193,24 +1194,25 @@ gunzip -c user.ps.gz \
         <entry>See also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
-	<entry>BeOS 5.0.3</entry>
+	<entry>BeOS 5.0.4</entry>
 	<entry>x86</entry>
 	<entry>7.1</entry>
-	<entry>2000-12-18, Cyril Velter(<email>cyril.velter@libertysurf.fr</email>)</entry>
+	<entry>2001-02-26, Cyril Velter(<email>cyril.velter@libertysurf.fr</email>)</entry>
         <entry>Requires new BONE networking stack</entry>
        </row>
        <row>
 	<entry>BSDI 4.01</entry>
 	<entry>x86</entry>
 	<entry>7.1</entry>
-	<entry>2001-03-19, Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
+	<entry>2001-03-20, Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry>Compaq Tru64 4.0[dg]</entry>
+	<entry>Compaq Tru64 4.0[dfg]</entry>
 	<entry>Alpha</entry>
 	<entry>7.1</entry>
-	<entry>2001-03-19, Brent Verner (<email>brent@rcfile.org</email>)</entry>
+	<entry>2001-03-19, Brent Verner (<email>brent@rcfile.org</email>),
+	       2001-03-26, Adriaan Joubert (<email>a.joubert@albourne.com</email>)</entry>
         <entry></entry>
        </row>
        <row>
@@ -1221,11 +1223,12 @@ gunzip -c user.ps.gz \
         <entry></entry>
        </row>
        <row>
-	<entry>HPUX 10.20</entry>
+	<entry>HPUX</entry>
 	<entry>PA-RISC</entry>
 	<entry>7.1</entry>
-	<entry>2001-03-19, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
-        <entry>See also <filename>doc/FAQ_HPUX</filename></entry>
+	<entry>2001-03-19, 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>),
+	       2001-03-22, 11.00, 11i Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
+        <entry>32- and 64-bit on 11.00. See <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
 	<entry>IRIX 6.5.11</entry>
@@ -1249,17 +1252,10 @@ gunzip -c user.ps.gz \
 	<entry></entry>
        </row>
        <row>
-	<entry>Linux 2.2.16</entry>
-	<entry>x86</entry>
-	<entry>7.1</entry>
-	<entry>2001-03-19, Thomas Lockhart (<email>thomas@fourpalms.org</email>)</entry>
-	<entry>Also tested on a patched 2.4.2</entry>
-       </row>
-       <row>
 	<entry>Linux 2.0.x</entry>
 	<entry>MIPS</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-13, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-30, Dominic  J. Eidson (<email>sauron@the-infinite.org</email>)</entry>
 	<entry>Cobalt Qube</entry>
        </row>
        <row>
@@ -1284,10 +1280,18 @@ gunzip -c user.ps.gz \
 	<entry></entry>
        </row>
        <row>
-	<entry>MacOS X</entry>
-	<entry>PowerPC</entry>
+	<entry>Linux 2.2.16</entry>
+	<entry>x86</entry>
 	<entry>7.1</entry>
-	<entry>2000-12-11, Peter Bierman (<email>bierman@apple.com</email>)</entry>
+	<entry>2001-03-19, Thomas Lockhart (<email>thomas@fourpalms.org</email>)</entry>
+	<entry>Also tested on a patched 2.4.2</entry>
+       </row>
+       <row>
+	<entry>MacOS X</entry>
+	<entry>PPC</entry>
+	<entry>7.1</entry>
+	<entry>2000-12-11, Peter Bierman (<email>bierman@apple.com</email>),
+	       2000-12-11, Daniel Luke (<email>dluke@geeklair.net</email>)</entry>
 	<entry>Darwin (only) Beta-2 or higher</entry>
        </row>
        <row>
@@ -1298,24 +1302,17 @@ gunzip -c user.ps.gz \
 	<entry></entry>
        </row>
        <row>
-	<entry>NetBSD 1.5E</entry>
-	<entry>arm32</entry>
-	<entry>7.1</entry>
-	<entry>2001-03-21, Patrick Welche (<email>prlw1@cam.ac.uk</email>)</entry>
-	<entry></entry>
-       </row>
-       <row>
-	<entry>NetBSD 1.5S</entry>
-	<entry>x86</entry>
-	<entry>7.1</entry>
-	<entry>2001-03-21, Patrick Welche (<email>prlw1@cam.ac.uk</email>)</entry>
-	<entry></entry>
-       </row>
-       <row>
 	<entry>NetBSD 1.5</entry>
 	<entry>Alpha</entry>
 	<entry>7.1</entry>
 	<entry>2001-03-22, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
+	<entry></entry>
+       </row>
+       <row>
+	<entry>NetBSD 1.5E</entry>
+	<entry>arm32</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-21, Patrick Welche (<email>prlw1@cam.ac.uk</email>)</entry>
 	<entry></entry>
        </row>
        <row>
@@ -1331,6 +1328,27 @@ gunzip -c user.ps.gz \
 	<entry>7.0</entry>
 	<entry>2000-04-13, Tom I. Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
 	<entry></entry>
+       </row>
+       <row>
+        <entry>NetBSD 1.5</entry>
+        <entry>VAX</entry>
+        <entry>7.1</entry>
+        <entry>2001-03-30, Tom I Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
+        <entry></entry>
+       </row>
+       <row>
+	<entry>NetBSD 1.5</entry>
+	<entry>x86</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-23, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
+	<entry></entry>
+       </row>
+       <row>
+	<entry>OpenBSD 2.8</entry>
+	<entry>Sparc</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-23, Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
+        <entry></entry>
        </row>
        <row>
 	<entry>OpenBSD 2.8</entry>
@@ -1361,17 +1379,18 @@ gunzip -c user.ps.gz \
 	<entry>UDK FS compiler. See <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
-	<entry>Solaris</entry>
-	<entry>x86</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-12, Marc Fournier (<email>scrappy@hub.org</email>)</entry>
+	<entry>Solaris 2.7-8</entry>
+	<entry>Sparc</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-22, Marc Fournier (<email>scrappy@hub.org</email>),
+       2001-03-25, Justin Clift (<email>justin@postgresql.org</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry>Solaris 2.7</entry>
-	<entry>Sparc</entry>
+	<entry>Solaris 2.8</entry>
+	<entry>x86</entry>
 	<entry>7.1</entry>
-	<entry>2001-03-22, Marc Fournier (<email>scrappy@hub.org</email>)</entry>
+	<entry>2001-03-27, Mathijs Brands (<email>mathijs@ilse.nl</email>)</entry>
 	<entry></entry>
        </row>
        <row>
@@ -1384,8 +1403,8 @@ gunzip -c user.ps.gz \
        <row>
 	<entry>Windows/Win32</entry>
 	<entry>x86</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-02, Magnus Hagander (<email>mha@sollentuna.net</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-26, Magnus Hagander (<email>mha@sollentuna.net</email>)</entry>
 	<entry>Client-side libraries or ODBC/JDBC, no server-side</entry>
        </row>
        <row>
@@ -1429,17 +1448,17 @@ gunzip -c user.ps.gz \
       <entry>m88k</entry>
       <entry>6.3</entry>
       <entry>1998-03-01, Brian E Gallew (<email>geek+@cmu.edu</email>)</entry>
-      <entry>6.4 probably OK. Needs new maintainer.</entry>
+      <entry>6.4 probably OK.</entry>
      </row>
      <row>
-      <entry>NetBSD 1.3</entry>
-      <entry>VAX</entry>
-      <entry>6.3</entry>
-      <entry>1998-03-01, Tom I Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
-      <entry>7.0 should work.</entry>
+      <entry>NextStep</entry>
+      <entry>x86</entry>
+      <entry>6.x</entry>
+      <entry>1998-03-01, David Wetzel (<email>dave@turbocat.de</email>)</entry>
+      <entry>Client-only support</entry>
      </row>
      <row>
-      <entry>System V R4 4.4</entry>
+      <entry>System V R4</entry>
       <entry>m88k</entry>
       <entry>6.2.1</entry>
       <entry>1998-03-01, Doug Winterburn (<email>dlw@seavme.xroads.com</email>)</entry>
@@ -1454,17 +1473,17 @@ gunzip -c user.ps.gz \
      </row>
      <row>
       <entry>Ultrix</entry>
-      <entry>MIPS, VAX</entry>
+      <entry>MIPS</entry>
+      <entry>7.1</entry>
+      <entry>2001-03-26</entry>
+      <entry>TAS spinlock code not detected</entry>
+     </row>
+     <row>
+      <entry>Ultrix</entry>
+      <entry>VAX</entry>
       <entry>6.x</entry>
       <entry>1998-03-01</entry>
       <entry>No recent reports. Obsolete?</entry>
-     </row>
-     <row>
-      <entry>NextStep</entry>
-      <entry>x86</entry>
-      <entry>6.x</entry>
-      <entry>1998-03-01, David Wetzel (<email>dave@turbocat.de</email>)</entry>
-      <entry>Client-only support</entry>
      </row>
     </tbody>
    </tgroup>
