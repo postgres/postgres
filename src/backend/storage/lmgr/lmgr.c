@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.61 2003/11/29 19:51:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.62 2003/12/01 21:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,26 +65,24 @@ static LOCKMASK LockConflicts[] = {
 
 };
 
-LOCKMETHOD	LockTableId = (LOCKMETHOD) NULL;
-LOCKMETHOD	LongTermTableId = (LOCKMETHOD) NULL;
+static	LOCKMETHODID	LockTableId = INVALID_LOCKMETHOD;
 
 /*
  * Create the lock table described by LockConflicts
  */
-LOCKMETHOD
+void
 InitLockTable(int maxBackends)
 {
-	int			lockmethod;
+	LOCKMETHODID	LongTermTableId;
 
 	/* number of lock modes is lengthof()-1 because of dummy zero */
-	lockmethod = LockMethodTableInit("LockTable",
-									 LockConflicts,
-									 lengthof(LockConflicts) - 1,
-									 maxBackends);
-	LockTableId = lockmethod;
-
-	if (!(LockTableId))
+	LockTableId = LockMethodTableInit("LockTable",
+									  LockConflicts,
+									  lengthof(LockConflicts) - 1,
+									  maxBackends);
+	if (!LockMethodIsValid(LockTableId))
 		elog(ERROR, "could not initialize lock table");
+	Assert(LockTableId == DEFAULT_LOCKMETHOD);
 
 #ifdef USER_LOCKS
 
@@ -92,11 +90,10 @@ InitLockTable(int maxBackends)
 	 * Allocate another tableId for long-term locks
 	 */
 	LongTermTableId = LockMethodTableRename(LockTableId);
-	if (!(LongTermTableId))
+	if (!LockMethodIsValid(LongTermTableId))
 		elog(ERROR, "could not rename long-term lock table");
+	Assert(LongTermTableId == USER_LOCKMETHOD);
 #endif
-
-	return LockTableId;
 }
 
 /*

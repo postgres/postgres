@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.138 2003/11/29 19:51:57 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.139 2003/12/01 21:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -543,14 +543,14 @@ ProcQueueInit(PROC_QUEUE *queue)
  * semaphore is normally zero, so when we try to acquire it, we sleep.
  */
 int
-ProcSleep(LOCKMETHODTABLE *lockMethodTable,
+ProcSleep(LockMethod lockMethodTable,
 		  LOCKMODE lockmode,
 		  LOCK *lock,
 		  PROCLOCK *proclock)
 {
 	LWLockId	masterLock = lockMethodTable->masterLock;
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
-	int			myHeldLocks = MyProc->heldLocks;
+	LOCKMASK	myHeldLocks = MyProc->heldLocks;
 	bool		early_deadlock = false;
 	PGPROC	   *proc;
 	int			i;
@@ -575,7 +575,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	 */
 	if (myHeldLocks != 0)
 	{
-		int			aheadRequests = 0;
+		LOCKMASK	aheadRequests = 0;
 
 		proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
 		for (i = 0; i < waitQueue->size; i++)
@@ -615,7 +615,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 				break;
 			}
 			/* Nope, so advance to next waiter */
-			aheadRequests |= (1 << proc->waitLockMode);
+			aheadRequests |= LOCKBIT_ON(proc->waitLockMode);
 			proc = (PGPROC *) MAKE_PTR(proc->links.next);
 		}
 
@@ -637,7 +637,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	SHMQueueInsertBefore(&(proc->links), &(MyProc->links));
 	waitQueue->size++;
 
-	lock->waitMask |= (1 << lockmode);
+	lock->waitMask |= LOCKBIT_ON(lockmode);
 
 	/* Set up wait information in PGPROC object, too */
 	MyProc->waitLock = lock;
@@ -769,12 +769,12 @@ ProcWakeup(PGPROC *proc, int errType)
  *		for lock, waken any that are no longer blocked.
  */
 void
-ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
+ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
 	PGPROC	   *proc;
-	int			aheadRequests = 0;
+	LOCKMASK	aheadRequests = 0;
 
 	Assert(queue_size >= 0);
 
@@ -815,7 +815,7 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 			 * Cannot wake this guy. Remember his request for later
 			 * checks.
 			 */
-			aheadRequests |= (1 << lockmode);
+			aheadRequests |= LOCKBIT_ON(lockmode);
 			proc = (PGPROC *) MAKE_PTR(proc->links.next);
 		}
 	}

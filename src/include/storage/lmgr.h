@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.41 2003/11/29 22:41:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.42 2003/12/01 21:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,10 +40,7 @@
  * so increase that if you want to add more modes.
  */
 
-extern LOCKMETHOD LockTableId;
-
-
-extern LOCKMETHOD InitLockTable(int maxBackends);
+extern void InitLockTable(int maxBackends);
 extern void RelationInitLockInfo(Relation relation);
 
 /* Lock a relation */

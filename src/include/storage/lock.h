@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.74 2003/11/29 22:41:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.75 2003/12/01 21:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,21 +42,22 @@ extern bool Debug_deadlocks;
 
 
 typedef int LOCKMASK;
-
 typedef int LOCKMODE;
-typedef int LOCKMETHOD;
-
 /* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
 #define MAX_LOCKMODES		10
 
+#define LOCKBIT_ON(lockmode) (1 << (lockmode))
+#define LOCKBIT_OFF(lockmode) (~(1 << (lockmode)))
+
+typedef uint16 LOCKMETHODID;
 /* MAX_LOCK_METHODS is the number of distinct lock control tables allowed */
 #define MAX_LOCK_METHODS	3
 
-#define INVALID_TABLEID		0
-
-#define INVALID_LOCKMETHOD	INVALID_TABLEID
+#define INVALID_LOCKMETHOD	0
 #define DEFAULT_LOCKMETHOD	1
 #define USER_LOCKMETHOD		2
+
+#define LockMethodIsValid(lockmethodid) ((lockmethodid) != INVALID_LOCKMETHOD)
 
 /*
  * There is normally only one lock method, the default one.
@@ -83,15 +84,16 @@ typedef int LOCKMETHOD;
  * masterLock -- synchronizes access to the table
  *
  */
-typedef struct LOCKMETHODTABLE
+typedef struct LockMethodData
 {
-	HTAB	   *lockHash;
-	HTAB	   *proclockHash;
-	LOCKMETHOD	lockmethod;
-	int			numLockModes;
-	int			conflictTab[MAX_LOCKMODES];
-	LWLockId	masterLock;
-} LOCKMETHODTABLE;
+	HTAB		   *lockHash;
+	HTAB		   *proclockHash;
+	LOCKMETHODID	lockmethodid;
+	int				numLockModes;
+	LOCKMASK		conflictTab[MAX_LOCKMODES];
+	LWLockId		masterLock;
+} LockMethodData;
+typedef LockMethodData *LockMethod;
 
 
 /*
@@ -115,7 +117,7 @@ typedef struct LOCKTAG
 	 */
 	OffsetNumber offnum;
 
-	uint16		lockmethod;		/* needed by userlocks */
+	LOCKMETHODID lockmethodid;		/* needed by userlocks */
 } LOCKTAG;
 
 
@@ -139,8 +141,8 @@ typedef struct LOCK
 	LOCKTAG		tag;			/* unique identifier of lockable object */
 
 	/* data */
-	int			grantMask;		/* bitmask for lock types already granted */
-	int			waitMask;		/* bitmask for lock types awaited */
+	LOCKMASK	grantMask;		/* bitmask for lock types already granted */
+	LOCKMASK	waitMask;		/* bitmask for lock types awaited */
 	SHM_QUEUE	lockHolders;	/* list of PROCLOCK objects assoc. with
 								 * lock */
 	PROC_QUEUE	waitProcs;		/* list of PGPROC objects waiting on lock */
@@ -151,7 +153,7 @@ typedef struct LOCK
 	int			nGranted;		/* total of granted[] array */
 } LOCK;
 
-#define LOCK_LOCKMETHOD(lock) ((lock).tag.lockmethod)
+#define LOCK_LOCKMETHOD(lock) ((lock).tag.lockmethodid)
 
 
 /*
@@ -204,7 +206,7 @@ typedef struct PROCLOCK
 } PROCLOCK;
 
 #define PROCLOCK_LOCKMETHOD(proclock) \
-		(((LOCK *) MAKE_PTR((proclock).tag.lock))->tag.lockmethod)
+		(((LOCK *) MAKE_PTR((proclock).tag.lock))->tag.lockmethodid)
 
 /*
  * This struct holds information passed from lmgr internals to the lock
@@ -227,17 +229,17 @@ typedef struct
  * function prototypes
  */
 extern void InitLocks(void);
-extern LOCKMETHODTABLE *GetLocksMethodTable(LOCK *lock);
-extern LOCKMETHOD LockMethodTableInit(char *tabName, LOCKMASK *conflictsP,
+extern LockMethod GetLocksMethodTable(LOCK *lock);
+extern LOCKMETHODID LockMethodTableInit(char *tabName, LOCKMASK *conflictsP,
 					int numModes, int maxBackends);
-extern LOCKMETHOD LockMethodTableRename(LOCKMETHOD lockmethod);
-extern bool LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
+extern LOCKMETHODID LockMethodTableRename(LOCKMETHODID lockmethodid);
+extern bool LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode, bool dontWait);
-extern bool LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
+extern bool LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode);
-extern bool LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
+extern bool LockReleaseAll(LOCKMETHODID lockmethodid, PGPROC *proc,
 			   bool allxids, TransactionId xid);
-extern int LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
+extern int LockCheckConflicts(LockMethod lockMethodTable,
 				   LOCKMODE lockmode,
 				   LOCK *lock, PROCLOCK *proclock, PGPROC *proc,
 				   int *myHolding);
