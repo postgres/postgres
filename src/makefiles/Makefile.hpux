@@ -1,7 +1,10 @@
+HPUX_MAJOR= $(shell uname -r|sed 's/^[^.]*\.\([^.]*\).*/\1/')
+# HP-UX 10 has a select() in libcurses, so we need to get the libc version first
+ifeq ($(HPUX_MAJOR), 10)
+   LDFLAGS:= -lc $(LDFLAGS)
+endif
 
-#HPUX_VERS:= $(shell uname -r)
-#HPUX_MAJOR= ${HPUX_VERS:R:E}
-#HPUX_MINOR= ${HPUX_VERS:E}
+# Does anyone use this stuff?
 #ifdef ENFORCE_ALIGNMENT
 #   CFLAGS+= -DNOFIXADE
 #else
@@ -16,10 +19,6 @@
 #      endif
 #   endif
 #   endif
-#endif
-# HP-UX 10 has a select() in libcurses, so we need to get the libc version first
-#ifeq ($(HPUX_MAJOR), 10)
-#   LDFLAGS:= -lc $(LDFLAGS)
 #endif
 
 %.sl: %.o
