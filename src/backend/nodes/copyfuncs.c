@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.4 1996/11/13 20:48:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.5 1997/04/10 07:59:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1073,6 +1073,19 @@ _copyIndexPath(IndexPath *from)
      */
     newnode->indexid = listCopy(from->indexid);
     Node_Copy(from, newnode, indexqual);
+
+    if (from->indexkeys)
+    {
+    	int i, len;
+    	
+	for(len=0; from->indexkeys[len]!=0; len++)
+	    ;
+	newnode->indexkeys = (int *)palloc(sizeof(int) * (len+1));
+	for(i=0; i < len; i++) {
+	    newnode->indexkeys[i] = from->indexkeys[i];
+	}
+	newnode->indexkeys[len] = 0;
+    }
     
     return newnode;
 }
