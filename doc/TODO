@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct 25 15:02:55 EDT 2002
+Last updated:		Mon Oct 28 15:05:02 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -89,7 +89,7 @@ Data Types
 * Allow INET subnet tests using non-constants
 * -Allow bytea to handle LIKE with non-TEXT patterns
 * -to_char(0,'FM999.99') returns a period, to_char(1,'FM999.99') doesn't (Karel)
-* Add floor(float8) and other missing functions
+* -Add floor(float8) and other missing functions
 * Add now("transaction|statement|clock") functionality
 
 * CONVERSION
@@ -171,7 +171,7 @@ Indexes
   float4, numeric/decimal too [optimizer]
 * Add FILLFACTOR to btree index creation
 * Improve concurrency in GIST
-* Improve concurrency of hash indexes (Neil Conway)
+* Improve concurrency of hash indexes (Neil)
 * -Test hash index performance and discourage usage
 
 
@@ -274,7 +274,7 @@ Commands
 	o Allow function parameters to be passed by name,
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
 	o Add PL/PgSQL packages
-	o Allow array declarations and other data types in PL/PgSQl DECLARE
+	o Allow array declarations and other data types in PL/PgSQL DECLARE
 	o Add PL/PgSQL PROCEDURES that can return multiple values
 	o Add table function support to pltcl, plperl, plpython
 	o Make PL/PgSQL %TYPE schema-aware 
@@ -290,7 +290,7 @@ Clients
 * -Allow psql \d to show temporary table structure (Tom)
 * Allow psql to show transaction status if backend protocol changes made
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
-* -Have pg_dump use ADD PRIMARY KEY after COPY, for performance (Neil Conway)
+* -Have pg_dump use ADD PRIMARY KEY after COPY, for performance (Neil)
 * Add schema, cast, and conversion backslash commands to psql
 * Allow pg_dump to dump a specific schema
 
@@ -471,7 +471,7 @@ Optimizer / Executor
 * Allow ORDER BY ... LIMIT to select top values without sort or index
   using a sequential scan for highest/lowest values (Oleg)
 * Inline simple SQL functions to avoid overhead (Tom)
-* Precompile SQL functions to avoid overhead (Neil Conway)
+* Precompile SQL functions to avoid overhead (Neil)
 * Add utility to compute accurate random_page_cost value
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
 * Use CHECK constraints to improve optimizer decisions
@@ -546,7 +546,7 @@ Developers who have claimed items are:
 * Mark is Mark Hollomon <mhh@mindspring.com>
 * Marko is Marko Kreen <marko@l-t.ee>
 * Michael is Michael Meskes <meskes@postgresql.org>
-* Neil is Neil Conway <nconway@klamath.dyndns.org>
+* Neil is Neil Conway <neilc@samurai.com>
 * Oleg is Oleg Bartunov <oleg@sai.msu.su>
 * Peter M is Peter T Mount <peter@retep.org.uk>
 * Peter E is Peter Eisentraut <peter_e@gmx.net>
