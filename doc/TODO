@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul 21 21:06:50 EDT 2003
+Last updated:		Wed Jul 23 14:16:36 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -182,6 +182,7 @@ Commands
 * Allow SET CONSTRAINTS to be qualified by schema/table
 * Have SELECT '13 minutes'::interval display zero seconds in ISO datestyle
 * Prevent COMMENT ON DATABASE from using a database name
+* Add GUC variable to prevent waiting on locks
 
 
 * ALTER
@@ -471,7 +472,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1095 2003/07/22 01:06:51 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1095 2003/07/22 01:06:51 momjian Exp $
+* Change CVS $Id: TODO,v 1.1096 2003/07/23 18:16:39 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1096 2003/07/23 18:16:39 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
