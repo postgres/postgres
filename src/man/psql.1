@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.24 1998/05/12 21:44:05 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.25 1998/06/23 15:43:19 momjian Exp $
 .TH PSQL UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 psql - run the interactive query front-end
@@ -79,10 +79,6 @@ results.
 .IR psql
 can be used in a pipe sequence, and automatically detects when it
 is not listening or talking to a real tty.
-.IR psql
-is designed to be an enhanced version of the older
-.IR "monitor"
-program.
 .PP
 .IR "psql"
 is a frontend application, like any other.  Hence, a
@@ -357,7 +353,7 @@ into the query input buffer.
 .IP "\el"
 List all the databases in the server.
 .IP "\em"
-Toggle monitor-like table display.
+Toggle old monitor-like table display.
 This is standard SQL output (i.e extra border characters).
 .IP "\eo [\fI|command\fR] | [\fIfilename\fR]"
 Send query results to
@@ -439,7 +435,6 @@ will also return 1 if the connection to a database could not be made for
 any reason.
 .SH "SEE ALSO"
 libpq(3),
-monitor(1)
 postgres(1),
 postmaster(1).
 
