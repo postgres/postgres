@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.49 2002/07/12 18:43:19 tgl Exp $
+ * $Id: index.h,v 1.50 2002/09/23 00:42:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ extern void FormIndexDatum(IndexInfo *indexInfo,
 			   char *nullv);
 
 extern void UpdateStats(Oid relid, double reltuples);
-extern bool IndexesAreActive(Oid relid, bool comfirmCommitted);
+extern bool IndexesAreActive(Relation heaprel);
 extern void setRelhasindex(Oid relid, bool hasindex,
 			   bool isprimary, Oid reltoastidxid);
 
@@ -68,8 +68,9 @@ extern double IndexBuildHeapScan(Relation heapRelation,
 				   IndexBuildCallback callback,
 				   void *callback_state);
 
+extern bool activate_indexes_of_a_table(Relation heaprel, bool activate);
+
 extern bool reindex_index(Oid indexId, bool force, bool inplace);
-extern bool activate_indexes_of_a_table(Oid relid, bool activate);
 extern bool reindex_relation(Oid relid, bool force);
 
 #endif   /* INDEX_H */

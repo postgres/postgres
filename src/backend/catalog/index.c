@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.199 2002/09/22 23:03:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.200 2002/09/23 00:42:48 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1020,96 +1020,36 @@ FormIndexDatum(IndexInfo *indexInfo,
 }
 
 
-/* --------------------------------------------
- *		Lock class info for update
- * --------------------------------------------
- */
-static bool
-LockClassinfoForUpdate(Oid relid, HeapTuple rtup,
-					   Buffer *buffer, bool confirmCommitted)
-{
-	HeapTuple	classTuple;
-	bool		test;
-	Relation	relationRelation;
-
-	/*
-	 * NOTE: get and hold RowExclusiveLock on pg_class, because caller
-	 * will probably modify the rel's pg_class tuple later on.
-	 */
-	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
-	classTuple = SearchSysCache(RELOID, PointerGetDatum(relid),
-								0, 0, 0);
-	if (!HeapTupleIsValid(classTuple))
-	{
-		heap_close(relationRelation, NoLock);
-		return false;
-	}
-	rtup->t_self = classTuple->t_self;
-	ReleaseSysCache(classTuple);
-
-	while (1)
-	{
-		ItemPointerData tidsave;
-
-		ItemPointerCopy(&(rtup->t_self), &tidsave);
-		test = heap_mark4update(relationRelation, rtup, buffer,
-								GetCurrentCommandId());
-		switch (test)
-		{
-			case HeapTupleSelfUpdated:
-			case HeapTupleMayBeUpdated:
-				break;
-			case HeapTupleUpdated:
-				ReleaseBuffer(*buffer);
-				if (!ItemPointerEquals(&(rtup->t_self), &tidsave))
-					continue;
-			default:
-				elog(ERROR, "LockClassinfoForUpdate couldn't lock relid %u", relid);
-				return false;
-		}
-		break;
-	}
-	CacheInvalidateHeapTuple(relationRelation, rtup);
-	if (confirmCommitted)
-	{
-		HeapTupleHeader th = rtup->t_data;
-
-		if (!(th->t_infomask & HEAP_XMIN_COMMITTED))
-			elog(ERROR, "The tuple isn't committed");
-		if (th->t_infomask & HEAP_XMAX_COMMITTED)
-			if (!(th->t_infomask & HEAP_MARKED_FOR_UPDATE))
-				elog(ERROR, "The tuple is already deleted");
-	}
-	heap_close(relationRelation, NoLock);
-	return true;
-}
-
 /* ---------------------------------------------
  *		Indexes of the relation active ?
+ *
+ * Caller must hold an adequate lock on the relation to ensure the
+ * answer won't be changing.
  * ---------------------------------------------
  */
 bool
-IndexesAreActive(Oid relid, bool confirmCommitted)
+IndexesAreActive(Relation heaprel)
 {
-	HeapTupleData tuple;
+	bool		isactive;
 	Relation	indexRelation;
-	Buffer		buffer;
 	HeapScanDesc scan;
 	ScanKeyData entry;
-	bool		isactive;
 
-	if (!LockClassinfoForUpdate(relid, &tuple, &buffer, confirmCommitted))
-		elog(ERROR, "IndexesAreActive couldn't lock %u", relid);
-	if (((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_RELATION &&
-	  ((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_TOASTVALUE)
-		elog(ERROR, "relation %u isn't an indexable relation", relid);
-	isactive = ((Form_pg_class) GETSTRUCT(&tuple))->relhasindex;
-	ReleaseBuffer(buffer);
+	if (heaprel->rd_rel->relkind != RELKIND_RELATION &&
+		heaprel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		elog(ERROR, "relation %s isn't an indexable relation",
+			 RelationGetRelationName(heaprel));
+
+	/* If pg_class.relhasindex is set, indexes are active */
+	isactive = heaprel->rd_rel->relhasindex;
 	if (isactive)
 		return isactive;
+
+	/* Otherwise, look to see if there are any indexes */
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid,
-						   F_OIDEQ, ObjectIdGetDatum(relid));
+	ScanKeyEntryInitialize(&entry, 0,
+						   Anum_pg_index_indrelid, F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(heaprel)));
 	scan = heap_beginscan(indexRelation, SnapshotNow, 1, &entry);
 	if (heap_getnext(scan, ForwardScanDirection) == NULL)
 		isactive = true;		/* no indexes, so report "active" */
@@ -1235,65 +1175,96 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	heap_close(pg_class, RowExclusiveLock);
 }
 
+/*
+ * setNewRelfilenode		- assign a new relfilenode value to the relation
+ *
+ * Caller must already hold exclusive lock on the relation.
+ */
 void
 setNewRelfilenode(Relation relation)
 {
-	Relation	pg_class;
 	Oid			newrelfilenode;
-	bool		in_place_update = false;
-	HeapTupleData lockTupleData;
-	HeapTuple	classTuple = NULL;
-	Buffer		buffer;
+	Relation	pg_class;
+	HeapTuple	tuple;
+	Form_pg_class rd_rel;
+	HeapScanDesc pg_class_scan = NULL;
+	bool		in_place_upd;
 	RelationData workrel;
 
 	Assert(!IsSystemRelation(relation) || IsToastRelation(relation) ||
 		   relation->rd_rel->relkind == RELKIND_INDEX);
 
-	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
-	/* Fetch and lock the classTuple associated with this relation */
-	if (!LockClassinfoForUpdate(relation->rd_id, &lockTupleData, &buffer, true))
-		elog(ERROR, "setNewRelfilenode impossible to lock class tuple");
-	if (IsIgnoringSystemIndexes())
-		in_place_update = true;
 	/* Allocate a new relfilenode */
 	newrelfilenode = newoid();
-	/* update pg_class tuple with new relfilenode */
-	if (!in_place_update)
+
+	/*
+	 * Find the RELATION relation tuple for the given relation.
+	 */
+	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
+
+	in_place_upd = IsIgnoringSystemIndexes();
+
+	if (!in_place_upd)
 	{
-		classTuple = heap_copytuple(&lockTupleData);
-		ReleaseBuffer(buffer);
-		((Form_pg_class) GETSTRUCT(classTuple))->relfilenode = newrelfilenode;
-		simple_heap_update(pg_class, &classTuple->t_self, classTuple);
+		tuple = SearchSysCacheCopy(RELOID,
+								   ObjectIdGetDatum(RelationGetRelid(relation)),
+								   0, 0, 0);
 	}
+	else
+	{
+		ScanKeyData key[1];
+
+		ScanKeyEntryInitialize(&key[0], 0,
+							   ObjectIdAttributeNumber,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(RelationGetRelid(relation)));
+
+		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
+		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
+	}
+
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "setNewRelfilenode: cannot find relation %u in pg_class",
+			 RelationGetRelid(relation));
+	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
+
 	/* schedule unlinking old relfilenode */
 	smgrunlink(DEFAULT_SMGR, relation);
+
 	/* create another storage file. Is it a little ugly ? */
 	memcpy((char *) &workrel, relation, sizeof(RelationData));
+	workrel.rd_fd = -1;
 	workrel.rd_node.relNode = newrelfilenode;
 	heap_storage_create(&workrel);
 	smgrclose(DEFAULT_SMGR, &workrel);
-	/* update pg_class tuple with new relfilenode in place */
-	if (in_place_update)
+
+	/* update the pg_class row */
+	if (in_place_upd)
 	{
-		classTuple = &lockTupleData;
+		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
+		rd_rel->relfilenode = newrelfilenode;
+		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
+		BufferSync();
 		/* Send out shared cache inval if necessary */
 		if (!IsBootstrapProcessingMode())
-			CacheInvalidateHeapTuple(pg_class, classTuple);
-		/* Update the buffer in-place */
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		((Form_pg_class) GETSTRUCT(classTuple))->relfilenode = newrelfilenode;
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
-		BufferSync();
+			CacheInvalidateHeapTuple(pg_class, tuple);
 	}
-	/* Keep the catalog indexes up to date */
-	if (!in_place_update)
-		CatalogUpdateIndexes(pg_class, classTuple);
+	else
+	{
+		rd_rel->relfilenode = newrelfilenode;
+		simple_heap_update(pg_class, &tuple->t_self, tuple);
+		CatalogUpdateIndexes(pg_class, tuple);
+	}
 
-	heap_close(pg_class, NoLock);
-	if (!in_place_update)
-		heap_freetuple(classTuple);
-	/* Make sure the relfilenode change */
+	if (!pg_class_scan)
+		heap_freetuple(tuple);
+	else
+		heap_endscan(pg_class_scan);
+
+	heap_close(pg_class, RowExclusiveLock);
+
+	/* Make sure the relfilenode change is visible */
 	CommandCounterIncrement();
 }
 
@@ -1312,7 +1283,6 @@ UpdateStats(Oid relid, double reltuples)
 	Relation	whichRel;
 	Relation	pg_class;
 	HeapTuple	tuple;
-	HeapTuple	newtup;
 	BlockNumber relpages;
 	Form_pg_class rd_rel;
 	HeapScanDesc pg_class_scan = NULL;
@@ -1430,13 +1400,10 @@ UpdateStats(Oid relid, double reltuples)
 		else
 		{
 			/* During normal processing, must work harder. */
-			newtup = heap_copytuple(tuple);
-			rd_rel = (Form_pg_class) GETSTRUCT(newtup);
 			rd_rel->relpages = (int32) relpages;
 			rd_rel->reltuples = (float4) reltuples;
-			simple_heap_update(pg_class, &tuple->t_self, newtup);
-			CatalogUpdateIndexes(pg_class, newtup);
-			heap_freetuple(newtup);
+			simple_heap_update(pg_class, &tuple->t_self, tuple);
+			CatalogUpdateIndexes(pg_class, tuple);
 		}
 	}
 
@@ -1806,8 +1773,6 @@ reindex_index(Oid indexId, bool force, bool inplace)
 
 	/* Get OID of index's parent table */
 	heapId = iRel->rd_index->indrelid;
-	/* Fetch info needed for index_build */
-	indexInfo = BuildIndexInfo(iRel->rd_index);
 
 	/* Open the parent heap relation */
 	heapRelation = heap_open(heapId, AccessExclusiveLock);
@@ -1815,11 +1780,29 @@ reindex_index(Oid indexId, bool force, bool inplace)
 		elog(ERROR, "reindex_index: can't open heap relation");
 
 	/*
-	 * Force inplace processing if it's a shared index.  Necessary because
-	 * we have no way to update relfilenode in other databases.
+	 * If it's a shared index, we must do inplace processing (because we
+	 * have no way to update relfilenode in other databases).  Also, if
+	 * it's a nailed-in-cache index, we must do inplace processing because
+	 * the relcache can't cope with changing its relfilenode.
+	 *
+	 * In either of these cases, we are definitely processing a system
+	 * index, so we'd better be ignoring system indexes.
 	 */
 	if (iRel->rd_rel->relisshared)
+	{
+		if (!IsIgnoringSystemIndexes())
+			elog(ERROR, "the target relation %u is shared", indexId);
 		inplace = true;
+	}
+	if (iRel->rd_isnailed)
+	{
+		if (!IsIgnoringSystemIndexes())
+			elog(ERROR, "the target relation %u is nailed", indexId);
+		inplace = true;
+	}
+
+	/* Fetch info needed for index_build */
+	indexInfo = BuildIndexInfo(iRel->rd_index);
 
 	if (inplace)
 	{
@@ -1859,22 +1842,25 @@ reindex_index(Oid indexId, bool force, bool inplace)
  * ----------------------------
  * activate_indexes_of_a_table
  *	activate/deactivate indexes of the specified table.
+ *
+ * Caller must already hold exclusive lock on the table.
  * ----------------------------
  */
 bool
-activate_indexes_of_a_table(Oid relid, bool activate)
+activate_indexes_of_a_table(Relation heaprel, bool activate)
 {
-	if (IndexesAreActive(relid, true))
+	if (IndexesAreActive(heaprel))
 	{
 		if (!activate)
-			setRelhasindex(relid, false, false, InvalidOid);
+			setRelhasindex(RelationGetRelid(heaprel), false, false,
+						   InvalidOid);
 		else
 			return false;
 	}
 	else
 	{
 		if (activate)
-			reindex_relation(relid, false);
+			reindex_relation(RelationGetRelid(heaprel), false);
 		else
 			return false;
 	}
@@ -1896,18 +1882,10 @@ reindex_relation(Oid relid, bool force)
 	bool		old,
 				reindexed;
 	bool		deactivate_needed,
-				overwrite,
-				upd_pg_class_inplace;
+				overwrite;
 	Relation	rel;
 
-	overwrite = upd_pg_class_inplace = deactivate_needed = false;
-
-	/*
-	 * avoid heap_update() pg_class tuples while processing reindex for
-	 * pg_class.
-	 */
-	if (IsIgnoringSystemIndexes())
-		upd_pg_class_inplace = true;
+	overwrite = deactivate_needed = false;
 
 	/*
 	 * Ensure to hold an exclusive lock throughout the transaction. The
@@ -1923,23 +1901,6 @@ reindex_relation(Oid relid, bool force)
 	if (!IsIgnoringSystemIndexes() &&
 		IsSystemRelation(rel) && !IsToastRelation(rel))
 		deactivate_needed = true;
-#ifndef ENABLE_REINDEX_NAILED_RELATIONS
-
-	/*
-	 * nailed relations are never updated. We couldn't keep the
-	 * consistency between the relation descriptors and pg_class tuples.
-	 */
-	if (rel->rd_isnailed)
-	{
-		if (IsIgnoringSystemIndexes())
-		{
-			overwrite = true;
-			deactivate_needed = true;
-		}
-		else
-			elog(ERROR, "the target relation %u is nailed", relid);
-	}
-#endif   /* ENABLE_REINDEX_NAILED_RELATIONS */
 
 	/*
 	 * Shared system indexes must be overwritten because it's impossible
@@ -1956,25 +1917,27 @@ reindex_relation(Oid relid, bool force)
 			elog(ERROR, "the target relation %u is shared", relid);
 	}
 
-	/*
-	 * Continue to hold the lock.
-	 */
-	heap_close(rel, NoLock);
-
 	old = SetReindexProcessing(true);
+
 	if (deactivate_needed)
 	{
-		if (IndexesAreActive(relid, upd_pg_class_inplace))
+		if (IndexesAreActive(rel))
 		{
 			if (!force)
 			{
 				SetReindexProcessing(old);
+				heap_close(rel, NoLock);
 				return false;
 			}
-			activate_indexes_of_a_table(relid, false);
+			activate_indexes_of_a_table(rel, false);
 			CommandCounterIncrement();
 		}
 	}
+
+	/*
+	 * Continue to hold the lock.
+	 */
+	heap_close(rel, NoLock);
 
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid,

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.238 2002/09/20 19:56:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.239 2002/09/23 00:42:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -894,7 +894,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	{
 		vac_close_indexes(nindexes, Irel);
 		Irel = (Relation *) NULL;
-		activate_indexes_of_a_table(RelationGetRelid(onerel), false);
+		activate_indexes_of_a_table(onerel, false);
 	}
 #endif   /* NOT_USED */
 
@@ -947,7 +947,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 
 #ifdef NOT_USED
 	if (reindex)
-		activate_indexes_of_a_table(RelationGetRelid(onerel), true);
+		activate_indexes_of_a_table(onerel, true);
 #endif   /* NOT_USED */
 
 	/* update shared free space map with final free space info */
