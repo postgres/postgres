@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/rlstubs.c,v 1.4 1996/11/11 12:14:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/rlstubs.c,v 1.5 1996/11/11 14:55:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ readline(const char *prompt)
 }
 
 int
-write_history(char *dum)
+write_history(const char *dum)
 {
     return 0;
 }
@@ -42,7 +42,7 @@ using_history(void)
 }
 
 int
-add_history(char *dum)
+add_history(const char *dum)
 {
     return 0;
 }

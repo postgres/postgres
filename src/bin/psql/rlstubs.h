@@ -7,14 +7,11 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/rlstubs.h,v 1.1 1996/11/11 05:55:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/rlstubs.h,v 1.2 1996/11/11 14:55:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-extern char *readline(char *prompt);
-
-extern int write_history(char *dum);
-
+extern char *readline(const char *prompt);
+extern int write_history(const char *dum);
 extern int using_history(void);
-
-extern int add_history(char *dum);
+extern int add_history(const char *dum);
