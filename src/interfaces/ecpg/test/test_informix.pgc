@@ -24,6 +24,7 @@ int main()
 	if (sqlca.sqlcode != 0) $rollback;
 
 	$insert into test (i, j) values (:i, 1);
+	$commit;
 
 	$select i from test where j=(select j from test);
 	printf("SELECT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
@@ -41,7 +42,7 @@ int main()
 		else if (sqlca.sqlcode != 0) printf ("Error: %ld\n", sqlca.sqlcode);
 
 		if (risnull(CDECIMALTYPE, (char *)&j))
-			printf("%d\n", i);
+			printf("%d NULL\n", i);
 		else
 		{
 			int a;
