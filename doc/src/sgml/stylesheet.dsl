@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.2 2001/02/13 22:35:15 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.3 2001/02/14 19:35:14 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -22,6 +22,10 @@
 (define pgsql-docs-list "pgsql-docs@postgresql.org")
 
 (define %refentry-xref-manvolnum% #f)
+
+(element structfield ($mono-seq$))
+(element structname ($mono-seq$))
+(element type ($mono-seq$))
 
 <![ %output-html; [
 ;; customize the html stylesheet
