@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.62 1999/11/22 17:56:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.63 1999/12/07 04:09:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,9 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
-#include "lib/dllist.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "nodes/pg_list.h"
 #include "nodes/relation.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
@@ -69,11 +69,6 @@ static int	agg_get_candidates(char *aggname, Oid typeId, CandidateList *candidat
 static Oid	agg_select_candidate(Oid typeid, CandidateList candidates);
 
 #define ISCOMPLEX(type) (typeidTypeRelid(type) ? true : false)
-
-typedef struct _SuperQE
-{
-	Oid			sqe_relid;
-} SuperQE;
 
 /*
  ** ParseNestedFuncOrColumn
@@ -1078,39 +1073,34 @@ argtype_inherit(int nargs, Oid *oid_array)
 static int
 find_inheritors(Oid relid, Oid **supervec)
 {
-	Oid		   *relidvec;
 	Relation	inhrel;
 	HeapScanDesc inhscan;
 	ScanKeyData skey;
 	HeapTuple	inhtup;
-	TupleDesc	inhtupdesc;
+	Oid		   *relidvec;
 	int			nvisited;
-	SuperQE    *qentry,
-			   *vnode;
-	Dllist	   *visited,
+	List	   *visited,
 			   *queue;
-	Dlelem	   *qe,
-			   *elt;
-
-	Relation	rd;
-	Datum		d;
+	List	   *elt;
 	bool		newrelid;
-	char		isNull;
 
 	nvisited = 0;
-	queue = DLNewList();
-	visited = DLNewList();
-
+	queue = NIL;
+	visited = NIL;
 
 	inhrel = heap_openr(InheritsRelationName, AccessShareLock);
-	inhtupdesc = RelationGetDescr(inhrel);
 
 	/*
 	 * Use queue to do a breadth-first traversal of the inheritance graph
-	 * from the relid supplied up to the root.
+	 * from the relid supplied up to the root.  At the top of the loop,
+	 * relid is the OID of the reltype to check next, queue is the list
+	 * of pending rels to check after this one, and visited is the list
+	 * of relids we need to output.
 	 */
 	do
 	{
+		/* find all types this relid inherits from, and add them to queue */
+
 		ScanKeyEntryInitialize(&skey, 0x0, Anum_pg_inherits_inhrelid,
 							   F_OIDEQ,
 							   ObjectIdGetDatum(relid));
@@ -1119,55 +1109,33 @@ find_inheritors(Oid relid, Oid **supervec)
 
 		while (HeapTupleIsValid(inhtup = heap_getnext(inhscan, 0)))
 		{
-			qentry = (SuperQE *) palloc(sizeof(SuperQE));
+			Form_pg_inherits inh = (Form_pg_inherits) GETSTRUCT(inhtup);
 
-			d = fastgetattr(inhtup, Anum_pg_inherits_inhparent,
-							inhtupdesc, &isNull);
-			qentry->sqe_relid = DatumGetObjectId(d);
-
-			/* put this one on the queue */
-			DLAddTail(queue, DLNewElem(qentry));
+			queue = lappendi(queue, inh->inhparent);
 		}
 
 		heap_endscan(inhscan);
 
 		/* pull next unvisited relid off the queue */
-		do
+
+		newrelid = false;
+		while (queue != NIL)
 		{
-			qe = DLRemHead(queue);
-			qentry = qe ? (SuperQE *) DLE_VAL(qe) : NULL;
-
-			if (qentry == (SuperQE *) NULL)
-				break;
-
-			relid = qentry->sqe_relid;
-			newrelid = true;
-
-			for (elt = DLGetHead(visited); elt; elt = DLGetSucc(elt))
+			relid = lfirsti(queue);
+			queue = lnext(queue);
+			if (! intMember(relid, visited))
 			{
-				vnode = (SuperQE *) DLE_VAL(elt);
-				if (vnode && (qentry->sqe_relid == vnode->sqe_relid))
-				{
-					newrelid = false;
-					break;
-				}
+				newrelid = true;
+				break;
 			}
-		} while (!newrelid);
+		}
 
-		if (qentry != (SuperQE *) NULL)
+		if (newrelid)
 		{
-			/* save the type id, rather than the relation id */
-			rd = heap_open(qentry->sqe_relid, NoLock);
-			if (! RelationIsValid(rd))
-				elog(ERROR, "Relid %u does not exist", qentry->sqe_relid);
-			qentry->sqe_relid = typeTypeId(typenameType(RelationGetRelationName(rd)));
-			heap_close(rd, NoLock);
-
-			DLAddTail(visited, qe);
-
+			visited = lappendi(visited, relid);
 			nvisited++;
 		}
-	} while (qentry != (SuperQE *) NULL);
+	} while (newrelid);
 
 	heap_close(inhrel, AccessShareLock);
 
@@ -1176,15 +1144,28 @@ find_inheritors(Oid relid, Oid **supervec)
 		relidvec = (Oid *) palloc(nvisited * sizeof(Oid));
 		*supervec = relidvec;
 
-		for (elt = DLGetHead(visited); elt; elt = DLGetSucc(elt))
+		foreach(elt, visited)
 		{
-			vnode = (SuperQE *) DLE_VAL(elt);
-			*relidvec++ = vnode->sqe_relid;
-		}
+			/* return the type id, rather than the relation id */
+			Relation	rd;
+			Oid			trelid;
 
+			relid = lfirsti(elt);
+			rd = heap_open(relid, NoLock);
+			if (! RelationIsValid(rd))
+				elog(ERROR, "Relid %u does not exist", relid);
+			trelid = typeTypeId(typenameType(RelationGetRelationName(rd)));
+			heap_close(rd, NoLock);
+			*relidvec++ = trelid;
+		}
 	}
 	else
 		*supervec = (Oid *) NULL;
+
+	freeList(visited);
+	/* there doesn't seem to be any equally easy way to release the queue
+	 * list cells, but since they're palloc'd space it's not critical.
+	 */
 
 	return nvisited;
 }
