@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.38 2002/04/24 02:49:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.39 2002/04/25 21:47:07 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -60,6 +60,7 @@ Complete list of usable sgml source files in this directory.
 <!entity createLanguage     system "create_language.sgml">
 <!entity createOperator     system "create_operator.sgml">
 <!entity createRule         system "create_rule.sgml">
+<!entity createSchema       system "create_schema.sgml">
 <!entity createSequence     system "create_sequence.sgml">
 <!entity createTable        system "create_table.sgml">
 <!entity createTableAs      system "create_table_as.sgml">

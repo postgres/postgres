@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.27 2002/04/24 02:49:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.28 2002/04/25 21:47:06 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -69,6 +69,7 @@ PostgreSQL Reference Manual
    &createLanguage;
    &createOperator;
    &createRule;
+   &createSchema;
    &createSequence;
    &createTable;
    &createTableAs;
