@@ -12,13 +12,18 @@ enum COMPAT_MODE
 
 #define INFORMIX_MODE(X) ((X) == ECPG_COMPAT_INFORMIX || (X) == ECPG_COMPAT_INFORMIX_SE)
 
+enum ARRAY_TYPE
+{
+	ECPG_ARRAY_NOT_SET, ECPG_ARRAY_ARRAY, ECPG_ARRAY_VECTOR, ECPG_ARRAY_NONE
+};
+
 /* Here are some methods used by the lib. */
 
 /* Returns a pointer to a string containing a simple type name. */
 void		ECPGadd_mem(void *ptr, int lineno);
 
 bool ECPGget_data(const PGresult *, int, int, int, enum ECPGttype type,
-			 enum ECPGttype, char *, char *, long, long, long, bool, enum COMPAT_MODE, bool);
+			 enum ECPGttype, char *, char *, long, long, long, enum ARRAY_TYPE, enum COMPAT_MODE, bool);
 struct connection *ECPGget_connection(const char *);
 char	   *ECPGalloc(long, int);
 char	   *ECPGrealloc(void *, long, int);
