@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/install-win32.sgml,v 1.13 2003/09/29 18:21:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/install-win32.sgml,v 1.14 2003/09/30 01:26:29 tgl Exp $
 -->
 
 <chapter id="install-win32">
@@ -108,30 +108,31 @@ $Header: /cvsroot/pgsql/doc/src/sgml/install-win32.sgml,v 1.13 2003/09/29 18:21:
  </para>
 
  <para>
-  <application>psql</application> is compiled as a "console application". As
-  the win32 console windows use a different encoding than the rest of the
-  system, you must take special care when using 8-bit characaters (eg. german
-  Umlauts) at the <application>psql</application> prompt. When
+  <application>psql</application> is compiled as a <quote>console
+  application</>. As 
+  the Win32 console windows use a different encoding than the rest of the
+  system, you must take special care when using 8-bit characters (eg. German
+  umlauts) at the <application>psql</application> prompt. When
   <application>psql</application> detects a problematic console codepage, it
   will warn you at startup. To change the console codepage, two things are
   neccessary:
 
-  <variablelist>
-   <varlistentry>
+   <itemizedlist>
     <listitem>
+     <para>
       Set the codepage with <userinput>cmd.exe /c chcp 1252</userinput>
-	  (1252 is the german value, replace it with your value). If you are using
-	  cygwin, you can put this command in <filename>/etc/profile</filename>.
+      (1252 is the German value, replace it with your value). If you are using
+      cygwin, you can put this command in <filename>/etc/profile</filename>.
+     </para>
     </listitem>
-   </varlistentry>
-   <varlistentry>
-    <listitem>
-      Set the console font to "Lucida Console", because the raster font
-	  does not work with the ANSI codepage.
-    </listitem>
-   </varlistentry>
-  </variablelist>
 
+    <listitem>
+     <para>
+      Set the console font to <quote>Lucida Console</>, because the raster font
+      does not work with the ANSI codepage.
+     </para>
+    </listitem>
+   </itemizedlist>
  </para>
 
 </chapter>
