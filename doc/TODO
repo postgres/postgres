@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Mar 14 11:36:52 EST 2005
+Last updated:		Mon Mar 14 23:01:08 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -933,15 +933,12 @@ Source Code
 	  shorter timezone string is available
 	o Improve dlerror() reporting string
 	o Fix problem with shared memory on the Win32 Terminal Server
-        o Disallow encodings like UTF8 which PostgreSQL supports
-          but the operating system does not (already disallowed by
-	  pginstaller)
+        o Add support for Unicode
 
-	  To fix UTF8, the data needs to be converted to UTF16 and then
-	  the Win32 wcscoll() can be used, and perhaps other functions
+	  To fix this, the data needs to be converted to/from UTF16/UTF8
+          so the Win32 wcscoll() can be used, and perhaps other functions
 	  like towupper().  However, UTF8 already works with normal
-	  locales but provides no ordering.
-
+	  locales but provides no ordering or character set classes.
 
 * Wire Protocol Changes
 	o Allow dynamic character set handling
