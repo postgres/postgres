@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.22 1999/06/19 03:48:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.23 1999/06/21 01:18:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +43,7 @@ static bool exprIsAggOrGroupCol_walker(Node *node, List *groupClauses);
  *	  Returns true if any aggregate found.
  *
  * NOTE: we assume that the given clause has been transformed suitably for
- * parser output.  This means we can use the planner's expression_tree_walker,
- * except that we have to process SubLink nodes specially, since they haven't
- * been turned into SubPlan nodes yet.
+ * parser output.  This means we can use the planner's expression_tree_walker.
  */
 static bool
 contain_agg_clause(Node *clause)
@@ -60,12 +58,6 @@ contain_agg_clause_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, Aggref))
 		return true;			/* abort the tree traversal and return true */
-	if (IsA(node, SubLink))
-	{
-		/* Examine the lefthand side, but not the oper list nor the subquery */
-		SubLink    *sublink = (SubLink *) node;
-		return contain_agg_clause_walker((Node *) sublink->lefthand, context);
-	}
 	return expression_tree_walker(node, contain_agg_clause_walker, context);
 }
 
@@ -75,16 +67,15 @@ contain_agg_clause_walker(Node *node, void *context)
  *	  other than within the arguments of aggregate functions.
  *
  * NOTE: we assume that the given clause has been transformed suitably for
- * parser output.  This means we can use the planner's expression_tree_walker,
- * except that we have to process SubLink nodes specially, since they haven't
- * been turned into SubPlan nodes yet.
+ * parser output.  This means we can use the planner's expression_tree_walker.
  *
- * NOTE: in the case of a SubLink, we do not descend into the subquery.  This
- * means we will fail to detect ungrouped columns that appear as outer-level
- * variables within a subquery.  That seems unreasonably hard to handle here.
- * Instead, we expect the planner to check for ungrouped columns after it's
- * found all the outer-level references inside the subquery and converted
- * them into a list of parameters for the subquery.
+ * NOTE: in the case of a SubLink, expression_tree_walker does not descend
+ * into the subquery.  This means we will fail to detect ungrouped columns
+ * that appear as outer-level variables within a subquery.  That case seems
+ * unreasonably hard to handle here.  Instead, we expect the planner to check
+ * for ungrouped columns after it's found all the outer-level references
+ * inside the subquery and converted them into a list of parameters for the
+ * subquery.
  */
 static bool
 exprIsAggOrGroupCol(Node *expr, List *groupClauses)
@@ -128,13 +119,6 @@ exprIsAggOrGroupCol_walker(Node *node, List *groupClauses)
 		return false;			/* outer-level Var is acceptable */
 	}
 	/* Otherwise, recurse. */
-	if (IsA(node, SubLink))
-	{
-		/* Examine the lefthand side, but not the oper list nor the subquery */
-		SubLink    *sublink = (SubLink *) node;
-		return exprIsAggOrGroupCol_walker((Node *) sublink->lefthand,
-										  groupClauses);
-	}
 	return expression_tree_walker(node, exprIsAggOrGroupCol_walker,
 								  (void *) groupClauses);
 }

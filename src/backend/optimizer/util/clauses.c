@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.36 1999/06/19 03:41:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.37 1999/06/21 01:18:02 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -810,7 +810,8 @@ CommuteClause(Node *clause)
  * The walker routine should return "false" to continue the tree walk, or
  * "true" to abort the walk and immediately return "true" to the top-level
  * caller.  This can be used to short-circuit the traversal if the walker
- * has found what it came for.
+ * has found what it came for.  "false" is returned to the top-level caller
+ * iff no invocation of the walker returned "true".
  *
  * The node types handled by expression_tree_walker include all those
  * normally found in target lists and qualifier clauses during the planning
@@ -827,10 +828,11 @@ CommuteClause(Node *clause)
  * appropriate behavior by recognizing subplan nodes and doing the right
  * thing.
  *
- * Bare SubLink nodes (without a SUBPLAN_EXPR) will trigger an error unless
- * detected and processed by the walker.  We expect that walkers used before
- * sublink processing is done will handle them properly.  (XXX Maybe ignoring
- * them would be better default behavior?)
+ * Bare SubLink nodes (without a SUBPLAN_EXPR) are handled by recursing into
+ * the "lefthand" argument list only.  (A bare SubLink should be seen only if
+ * the tree has not yet been processed by subselect.c.)  Again, this can be
+ * overridden by the walker, but it seems to be the most useful default
+ * behavior.
  *--------------------
  */
 
@@ -923,6 +925,12 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
 					return true;
 			}
 			break;
+		case T_SubLink:
+			/* A "bare" SubLink (note we will not come here if we found
+			 * a SUBPLAN_EXPR node above).  Examine the lefthand side,
+			 * but not the oper list nor the subquery.
+			 */
+			return walker(((SubLink *) node)->lefthand, context);
 		case T_List:
 			foreach(temp, (List *) node)
 			{
