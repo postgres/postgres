@@ -33,7 +33,7 @@ public class Driver implements java.sql.Driver
   protected static final int ERROR = 3;
   protected static final int FATAL = 4;
 
-  private static int logLevel= DEBUG;
+  private static int logLevel= FATAL;
 
   static
   {
