@@ -1,5 +1,5 @@
 QUERY: drop table ìÞÙ¸æñÕè;
-ERROR:  Relation ìÞÙ¸æñÕè Does Not Exist!
+ERROR:  Relation 'ìÞÙ¸æñÕè' does not exist
 QUERY: create table ìÞÙ¸æñÕè (ÈçäÆÉ± text, ÄüÆ³Íñó¤ varchar, ÇâÉß varchar(16));
 QUERY: create index ìÞÙ¸æñÕèindex1 on ìÞÙ¸æñÕè using btree (ÈçäÆÉ±);
 QUERY: create index ìÞÙ¸æñÕèindex2 on ìÞÙ¸æñÕè using hash (ÄüÆ³Íñó¤);
