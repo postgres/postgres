@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.15 1997/06/02 02:52:06 scrappy Exp $
+ * $Id: pg_dump.h,v 1.16 1997/06/21 16:08:15 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -38,6 +38,7 @@ typedef struct _typeInfo {
     char* typdelim;
     char* typdefault;
     char* typrelid;
+    char* usename;
     int passedbyvalue;
     int isArray;
 } TypeInfo;
@@ -53,6 +54,7 @@ typedef struct _funcInfo {
     int retset; /* 1 if the function returns a set, 0 otherwise */
     char* prosrc;
     char* probin;
+    char* usename;
     int dumped; /* 1 if already dumped */
 } FuncInfo;
 
@@ -78,6 +80,7 @@ typedef struct _tableInfo {
 			       not have the same order of attributes as
 			       the POSTQUEL tables */
     int *attlen;	    /* attribute lengths */
+    char* usename;
            
 } TableInfo;
 
@@ -108,6 +111,7 @@ typedef struct _aggInfo {
     char *aggtranstype2;
     char *agginitval1;
     char *agginitval2;
+    char* usename;
 } AggInfo;
 
 typedef struct _oprInfo {
@@ -126,6 +130,7 @@ typedef struct _oprInfo {
     char *oprcanhash; /* can we use hash join strategy ? */
     char *oprlsortop; /* oid's of the left and right sort operators */
     char *oprrsortop;
+    char* usename;
 } OprInfo;
 
 
