@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.50 2004/12/21 17:38:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.51 2004/12/21 17:58:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1078,7 +1078,11 @@ pgwin32_doRunAsService(void)
 	SERVICE_TABLE_ENTRY st[] = {{register_servicename, pgwin32_ServiceMain},
 	{NULL, NULL}};
 
-	StartServiceCtrlDispatcher(st);
+	if (StartServiceCtrlDispatcher(st)) == 0)
+	{
+		write_stderr(_("%s: could not start service \"%s\": error code %d\n"), progname, register_servicename, (int) GetLastError());
+		exit(1);
+	}
 }
 #endif
 
