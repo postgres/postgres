@@ -2,7 +2,7 @@ POSTGRESQL INSTALLATION INSTRUCTIONS
 Copyright (c) 1996 Regents of the University of California
 
 This directory contains the source and documentation for PostgreSQL
-(version 6.0) PostgreSQL is a derivative of POSTGRES 4.2 (the last
+(version 6.1) PostgreSQL is a derivative of POSTGRES 4.2 (the last
 release of the UC Berkeley research project).  For copyright terms for
 PostgreSQL, please see the file named COPYRIGHT.  This version was
 developed by a team of developers on the postgres developers mailing
@@ -26,7 +26,7 @@ PostgreSQL has been tested on the following platforms:
    linux          Intel x86 on Linux 1.2 and Linux ELF
                   (For non-ELF Linux, see LINUX_ELF below).
    sparc_solaris  SUN SPARC on Solaris 2.4
-   sunos4          SUN SPARC on SunOS 4.1.3
+   sunos4         SUN SPARC on SunOS 4.1.3
    svr4           Intel x86 on Intel SVR4
    ultrix4        DEC MIPS on Ultrix 4.4
 
@@ -45,9 +45,9 @@ MIGRATING FROM POSTGRES VERSION 1.*
 -----------------------------------
 
 People migrating data from earlier releases must dump the data under
-1.09 and reload them under 6.0.  The pg_dump utility is designed to do
+1.09 and reload them under 6.1.  The pg_dump utility is designed to do
 this.  It is important you use 1.09 because earlier releases may not
-have the proper copy format to load into the 6.0 database.
+have the proper copy format to load into the 6.1 database.
 
 INSTALLING POSTGRESQL
 ---------------------
@@ -85,55 +85,60 @@ To install PostgreSQL on UNIX platforms:
    install to the location of this program. (eg. bsdinst, which comes
    with the MIT X Window System distribution) 
 
-   Customization can be done by editing src/Makefile.global. You may change
-   the various configuration options here, such as where the PostgreSQL
-   executable files are installed and where postgres looks for the database
-   directory.  
-
-   PostgreSQL V6.0 also supports src/Makefile.custom. This is not supplied
-   with the distribution, but may be created to contain only the options 
-   you wish to change in src/Makefile.global. This has the advantage that
-   it will not be overwritten when you install a new version of PostgreSQL
-   over the top of your current installation.
-
-   The configuration switches are fairly self-explanatory, but we
-   will go over some of the more commonly-changed options:
-
-     - PORTNAME specifies the platform on which PostgreSQL is being built.
-       This is set to UNDEFINED. You will need to change it to reflect
-       your platform. (sparc for SunOS 4.1.x, sparc_solaris for Solaris
-       2.4, ultrix4 for Ultrix 4.4, and hpux for HP-UX 9.0, etc.)
-
-     - SRCDIR specifies where the source files are located. (defaults to
-       $(POSTGRESDIR)/src.)
-
-     - POSTGRESDIR specifies the top-level directory where PostgreSQL
-       binaries, header files, libraries, and databases are installed.
-
-     - USE_READLINE specifies whether you want to use the GNU readline and
-       history libraries for the psql interactive frontend program.  GNU
-       readline is not supplied with PostgreSQL and can be found in the
-       usual ftp sites for GNU software.
-
-   In the simplest case, you would create src/Makefile.custom containing
-   just the line:
-
-       PORTNAME= portname
-
-   (where you replace portname with the name of the system you are using).
-
-   Even easier is to enter the src directory and run the customize shell
-   script which will prompt you with various questions and create
-   Makefile.custom for you:
+   In the simplest version, you can just do the following:
 
      % cd src
-     % customize
+     % ./configure
 
-   After editing src/Makefile.global or src/Makefile.custom, you are ready 
-   to compile PostgreSQL (it takes about 10 minutes on a 133Mhz Pentium 
-   running linux):
+   The configure program will list the template files available and ask
+   you to choose one.  A lot of times, an appropriate template file is
+   chosen for you, and you can just press Enter to accept the default.  If
+   the default is not appropriate, then type in the appropriate template
+   file and press Enter.  (If you do this, then send email to scrappy@hub.org
+   stating the output of the program './config.guess' and what the template
+   file should be.)
 
-     % cd src                              ( if you're not already there )
+   Once you have entered the template file, you will be asked a number of
+   questions about your particular configuration.  These can be skipped by
+   adding parameters to the configure command above.  The following parameters
+   can be tagged onto the end of the configure command:
+
+     --prefix=BASEDIR	Selects a different base directory for the installation
+			of the PostgreSQL configuration.  The default is
+			/usr/local/pgsql
+
+     --enable-hba	Enables Host Based Authentication
+
+     --disable-hba	Disables Host Based Authentication
+
+     --enable-locale	Enables USE_LOCALE
+
+     --disable-locale	Disables USE_LOCALE
+			
+     --with-template=TEMPLATE
+			Use template file TEMPLATE - the template files are
+			assumed to be in the directory src/template, so look
+			there for proper values. (If the configure script
+			cannot find the specified template file, it will ask
+			you for one).
+
+     --with-pgport=PORT	Sets the port that the postmaster process listens
+			for incoming connections on.  The default for this
+			is port 5432.
+			
+   As an example, here is the configure script I use on a Sparc
+   Solaris 2.5 system with /opt/postgres being the install base.
+
+     % ./configure --prefix=/opt/postgres 
+		--with-template=sparc_solaris-gcc --with-pgport=5432
+		--enable-hba --disable-locale
+
+   Of course, in a real shell, you would type these three lines all on the
+   same line.
+
+   After configure has completed running, you can make the binaries.  We use 
+   'gmake' to mean GNU make.
+    
      % gmake 
 
    The gmake ultimately issues the message "All of PostgreSQL is
@@ -331,5 +336,3 @@ NeXT:
         a product so contact him for information.  He has also indicated that
         binary releases of PostgreSQL for NEXTSTEP will be made available to
         the general public.  Contact Info@RnA.nl for information.
-
-
