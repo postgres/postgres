@@ -101,7 +101,7 @@ ERROR:  parser: parse error at or near "("
 QUERY: drop function 314159();
 ERROR:  parser: parse error at or near "314159"
 QUERY: drop function nonesuch();
-ERROR:  RemoveFunction: function nonesuch() does not exist
+ERROR:  RemoveFunction: function 'nonesuch()' does not exist
 QUERY: drop type;
 ERROR:  parser: parse error at or near ";"
 QUERY: drop type 314159;
