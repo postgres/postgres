@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.3 1996/07/19 05:21:28 scrappy Exp $
+ * $Id: pg_type.h,v 1.4 1996/08/24 20:56:16 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -30,14 +30,34 @@
 /* ----------------
  *	pg_type definition.  cpp turns this into
  *	typedef struct FormData_pg_type
+ *
+ *      Some of the values in a pg_type instance are copied into 
+ *      pg_attribute intances.  Some parts of Postgres use the pg_type copy,
+ *      while others use the pg_attribute copy, so they must match.
+ *      See struct FormData_pg_attribute for details.
  * ----------------
  */
 CATALOG(pg_type) BOOTSTRAP {
     NameData 	typname;
     Oid  	typowner;
     int2  	typlen;
+      /* typlen is the number of bytes we use to represent a value of
+         this type, e.g. 4 for an int4.  But for a variable length
+         attribute, typlen is -1.  
+         */
     int2  	typprtlen;
     bool  	typbyval;
+      /* typbyval determines whether internal Postgres routines pass a value
+         of this type by value or by reference.  Postgres uses a 4 byte 
+         area for passing class data, so if the value is not 1, 2,
+         or 4 bytes long, Postgres does not have the option of passing by
+         value and ignores typbyval.  
+
+         (I don't understand why this attribute exists.  The above description
+         may be an oversimplification.  Also, there appear to be bugs in which
+         Postgres doesn't ignore typbyval when it should, but I'm 
+         afraid to change them until I see proof of damage. -BRYANH 96.08).
+         */
     char  	typtype;
     bool  	typisdefined;
     char	typdelim;
@@ -47,7 +67,23 @@ CATALOG(pg_type) BOOTSTRAP {
     regproc  	typoutput;
     regproc  	typreceive;
     regproc  	typsend;
-    char	typalign;	/* alignment (c=char, s=short, i=int, d=double) */
+    char	typalign;
+      /* typalign is the alignment required when storing a value of this
+         type.  It applies to storage on disk as well as most representations
+         of the value inside Postgres.  When multiple values are stored 
+         consecutively, such as in the representation of a complete tuple
+         on disk, padding is inserted before a datum of this type so that it
+         begins on the specified boundary.  The alignment reference is the 
+         beginning of the first datum in the sequence.
+
+         'c' = 1 byte alignment.
+         's' = 2 byte alignment.
+         'i' = 4 byte alignment.
+         'd' = 8 byte alignment.
+
+         (This might actually be flexible depending on machine architecture,
+         but I doubt it - BRYANH 96.08).
+         */
     text     	typdefault;	/* VARIABLE LENGTH FIELD */
 } TypeTupleFormData;
 
@@ -87,6 +123,11 @@ typedef TypeTupleFormData	*TypeTupleForm;
 
 /* keep the following ordered by OID so that later changes can be made easier*/
 
+/* Make sure the typlen, typbyval, and typalign values here match the initial
+   values for attlen, attbyval, and attalign in both places in pg_attribute.h 
+   for every instance.
+*/
+
 /* OIDS 1 - 99 */
 DATA(insert OID = 16 (  bool       PGUID  1   1 t b t \054 0   0 boolin boolout boolin boolout c _null_ ));
 
@@ -95,7 +136,7 @@ DATA(insert OID = 16 (  bool       PGUID  1   1 t b t \054 0   0 boolin boolout 
 DATA(insert OID = 17 (  bytea      PGUID -1  -1 f b t \054 0  18 byteain byteaout byteain byteaout i _null_ ));
 DATA(insert OID = 18 (  char       PGUID  1   1 t b t \054 0   0 charin charout charin charout c _null_ ));
 
-DATA(insert OID = 19 (  name      PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0  18 namein nameout namein nameout d _null_ ));
+DATA(insert OID = 19 (  name      PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0  18 namein nameout namein nameout i _null_ ));
 DATA(insert OID = 20 (  char16     PGUID 16  16 f b t \054 0  18 char16in char16out char16in char16out i _null_ ));
 /*DATA(insert OID = 20 (  dt         PGUID  4  10 t b t \054 0   0 dtin dtout dtin dtout i _null_ )); */
 DATA(insert OID = 21 (  int2       PGUID  2   5 t b t \054 0   0 int2in int2out int2in int2out s _null_ ));
