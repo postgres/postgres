@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.29 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.30 2003/11/02 12:59:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -67,9 +67,8 @@ CLUSTER
   <para>
    When a table is being clustered, an <literal>ACCESS
    EXCLUSIVE</literal> lock is acquired on it. This prevents any other
-   database operations (both reads and writes) from preceding on the
-   table until the <command>CLUSTER</command> is finished. See
-   <xref linkend="explicit-locking"> for more information on database locking.
+   database operations (both reads and writes) from operating on the
+   table until the <command>CLUSTER</command> is finished.
   </para>
  </refsect1>
 
