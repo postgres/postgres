@@ -107,6 +107,8 @@
 #
 #wal_buffers = 8 # min 4
 #wal_files = 0 # range 0-64
+#wal_sync_method = fsync # fsync or fdatasync or open_sync or open_datasync
+# Note: default wal_sync_method varies across platforms
 #wal_debug = 0 # range 0-16
 #commit_delay = 0 # range 0-100000
 #commit_siblings = 5 # range 1-1000

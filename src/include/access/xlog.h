@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.20 2001/03/13 20:32:37 tgl Exp $
+ * $Id: xlog.h,v 1.21 2001/03/16 05:44:33 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -176,6 +176,15 @@ extern	StartUpID	ThisStartUpID;	/* current SUI */
 extern	bool		InRecovery;
 extern	XLogRecPtr	MyLastRecPtr;
 
+/* these variables are GUC parameters related to XLOG */
+extern int CheckPointSegments;
+extern int XLOGbuffers;
+extern int XLOGfiles;
+extern int XLOG_DEBUG;
+extern char *XLOG_sync_method;
+extern const char XLOG_sync_method_default[];
+
+
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern void XLogFlush(XLogRecPtr RecPtr);
 
@@ -201,5 +210,8 @@ extern void GetRedoRecPtr(void);
  * we'd have to include xlog.h into that ...
  */
 extern XLogRecPtr GetUndoRecPtr(void);
+
+extern bool check_xlog_sync_method(const char *method);
+extern void assign_xlog_sync_method(const char *method);
 
 #endif	 /* XLOG_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.58 2001/03/14 20:23:04 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.59 2001/03/16 05:44:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,47 @@
 #include "miscadmin.h"
 
 
+/*
+ * This chunk of hackery attempts to determine which file sync methods
+ * are available on the current platform, and to choose an appropriate
+ * default method.  We assume that fsync() is always available, and that
+ * configure determined whether fdatasync() is.
+ */
+#define SYNC_METHOD_FSYNC		0
+#define SYNC_METHOD_FDATASYNC	1
+#define SYNC_METHOD_OPEN		2 /* used for both O_SYNC and O_DSYNC */
+
+#if defined(O_SYNC)
+# define OPEN_SYNC_FLAG		O_SYNC
+#else
+# if defined(O_FSYNC)
+#  define OPEN_SYNC_FLAG	O_FSYNC
+# endif
+#endif
+
+#if defined(OPEN_SYNC_FLAG)
+# if defined(O_DSYNC) && (O_DSYNC != OPEN_SYNC_FLAG)
+#  define OPEN_DATASYNC_FLAG	O_DSYNC
+# endif
+#endif
+
+#if defined(OPEN_DATASYNC_FLAG)
+# define DEFAULT_SYNC_METHOD_STR	"open_datasync"
+# define DEFAULT_SYNC_METHOD		SYNC_METHOD_OPEN
+# define DEFAULT_SYNC_FLAGBIT		OPEN_DATASYNC_FLAG
+#else
+# if defined(HAVE_FDATASYNC)
+#  define DEFAULT_SYNC_METHOD_STR	"fdatasync"
+#  define DEFAULT_SYNC_METHOD		SYNC_METHOD_FDATASYNC
+#  define DEFAULT_SYNC_FLAGBIT		0
+# else
+#  define DEFAULT_SYNC_METHOD_STR	"fsync"
+#  define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC
+#  define DEFAULT_SYNC_FLAGBIT		0
+# endif
+#endif
+
+
 /* Max time to wait to acquire XLog activity locks */
 #define XLOG_LOCK_TIMEOUT			(5*60*1000000) /* 5 minutes */
 /* Max time to wait to acquire checkpoint lock */
@@ -52,9 +93,17 @@ int			CheckPointSegments = 3;
 int			XLOGbuffers = 8;
 int			XLOGfiles = 0;	/* how many files to pre-allocate during ckpt */
 int			XLOG_DEBUG = 0;
+char	   *XLOG_sync_method = NULL;
+const char	XLOG_sync_method_default[] = DEFAULT_SYNC_METHOD_STR;
 char		XLOG_archive_dir[MAXPGPATH]; /* null string means delete 'em */
 
+/* these are derived from XLOG_sync_method by assign_xlog_sync_method */
+static int	sync_method = DEFAULT_SYNC_METHOD;
+static int	open_sync_bit = DEFAULT_SYNC_FLAGBIT;
+
 #define MinXLOGbuffers	4
+
+#define XLOG_SYNC_BIT  (enableFsync ? open_sync_bit : 0)
 
 
 /*
@@ -365,6 +414,7 @@ static void WriteControlFile(void);
 static void ReadControlFile(void);
 static char *str_time(time_t tnow);
 static void xlog_outrec(char *buf, XLogRecord *record);
+static void issue_xlog_fsync(void);
 
 
 /*
@@ -917,6 +967,15 @@ XLogWrite(XLogwrtRqst WriteRqst)
 
 	while (XLByteLT(LogwrtResult.Write, WriteRqst.Write))
 	{
+		/*
+		 * Make sure we're not ahead of the insert process.  This could
+		 * happen if we're passed a bogus WriteRqst.Write that is past the
+		 * end of the last page that's been initialized by
+		 * AdvanceXLInsertBuffer.
+		 */
+		if (!XLByteLT(LogwrtResult.Write, XLogCtl->xlblocks[Write->curridx]))
+			elog(STOP, "XLogWrite: write request is past end of log");
+
 		/* Advance LogwrtResult.Write to end of current buffer page */
 		LogwrtResult.Write = XLogCtl->xlblocks[Write->curridx];
 		ispartialpage = XLByteLT(WriteRqst.Write, LogwrtResult.Write);
@@ -1004,9 +1063,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 		 */
 		if (openLogOff >= XLogSegSize && !ispartialpage)
 		{
-			if (pg_fdatasync(openLogFile) != 0)
-				elog(STOP, "fsync(logfile %u seg %u) failed: %m",
-					 openLogId, openLogSeg);
+			issue_xlog_fsync();
 			LogwrtResult.Flush = LogwrtResult.Write; /* end of current page */
 		}
 
@@ -1030,24 +1087,24 @@ XLogWrite(XLogwrtRqst WriteRqst)
 		 * we might have no open file or the wrong one.  However, we do
 		 * not need to fsync more than one file.
 		 */
-		if (openLogFile >= 0 &&
-			!XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
+		if (sync_method != SYNC_METHOD_OPEN)
 		{
-			if (close(openLogFile) != 0)
-				elog(STOP, "close(logfile %u seg %u) failed: %m",
-					 openLogId, openLogSeg);
-			openLogFile = -1;
+			if (openLogFile >= 0 &&
+				!XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
+			{
+				if (close(openLogFile) != 0)
+					elog(STOP, "close(logfile %u seg %u) failed: %m",
+						 openLogId, openLogSeg);
+				openLogFile = -1;
+			}
+			if (openLogFile < 0)
+			{
+				XLByteToPrevSeg(LogwrtResult.Write, openLogId, openLogSeg);
+				openLogFile = XLogFileOpen(openLogId, openLogSeg, false);
+				openLogOff = 0;
+			}
+			issue_xlog_fsync();
 		}
-		if (openLogFile < 0)
-		{
-			XLByteToPrevSeg(LogwrtResult.Write, openLogId, openLogSeg);
-			openLogFile = XLogFileOpen(openLogId, openLogSeg, false);
-			openLogOff = 0;
-		}
-
-		if (pg_fdatasync(openLogFile) != 0)
-			elog(STOP, "fsync(logfile %u seg %u) failed: %m",
-				 openLogId, openLogSeg);
 		LogwrtResult.Flush = LogwrtResult.Write;
 	}
 
@@ -1191,7 +1248,8 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 	 */
 	if (*usexistent)
 	{
-		fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+		fd = BasicOpenFile(path, O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
+						   S_IRUSR | S_IWUSR);
 		if (fd < 0)
 		{
 			if (errno != ENOENT)
@@ -1208,6 +1266,7 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 	unlink(tpath);
 	unlink(path);
 
+	/* do not use XLOG_SYNC_BIT here --- want to fsync only at end of fill */
 	fd = BasicOpenFile(tpath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
@@ -1220,8 +1279,8 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 	 * allow "holes" in files, just seeking to the end doesn't allocate
 	 * intermediate space.  This way, we know that we have all the space
 	 * and (after the fsync below) that all the indirect blocks are down
-	 * on disk.  Therefore, fdatasync(2) will be sufficient to sync future
-	 * writes to the log file.
+	 * on disk.  Therefore, fdatasync(2) or O_DSYNC will be sufficient to
+	 * sync future writes to the log file.
 	 */
 	MemSet(zbuffer, 0, sizeof(zbuffer));
 	for (nbytes = 0; nbytes < XLogSegSize; nbytes += sizeof(zbuffer))
@@ -1261,7 +1320,8 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 			 log, seg);
 #endif
 
-	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
+					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		elog(STOP, "InitReopen(logfile %u seg %u) failed: %m",
 			 log, seg);
@@ -1280,7 +1340,8 @@ XLogFileOpen(uint32 log, uint32 seg, bool econt)
 
 	XLogFileName(path, log, seg);
 
-	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
+					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 	{
 		if (econt && errno == ENOENT)
@@ -1845,7 +1906,8 @@ WriteControlFile(void)
 	memset(buffer, 0, BLCKSZ);
 	memcpy(buffer, ControlFile, sizeof(ControlFileData));
 
-	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		elog(STOP, "WriteControlFile failed to create control file (%s): %m",
 			 ControlFilePath);
@@ -2851,4 +2913,121 @@ xlog_outrec(char *buf, XLogRecord *record)
 
 	sprintf(buf + strlen(buf), ": %s",
 		RmgrTable[record->xl_rmid].rm_name);
+}
+
+
+/*
+ * GUC support routines
+ */
+
+bool
+check_xlog_sync_method(const char *method)
+{
+	if (strcasecmp(method, "fsync") == 0) return true;
+#ifdef HAVE_FDATASYNC
+	if (strcasecmp(method, "fdatasync") == 0) return true;
+#endif
+#ifdef OPEN_SYNC_FLAG
+	if (strcasecmp(method, "open_sync") == 0) return true;
+#endif
+#ifdef OPEN_DATASYNC_FLAG
+	if (strcasecmp(method, "open_datasync") == 0) return true;
+#endif
+	return false;
+}
+
+void
+assign_xlog_sync_method(const char *method)
+{
+	int		new_sync_method;
+	int		new_sync_bit;
+
+	if (strcasecmp(method, "fsync") == 0)
+	{
+		new_sync_method = SYNC_METHOD_FSYNC;
+		new_sync_bit = 0;
+	}
+#ifdef HAVE_FDATASYNC
+	else if (strcasecmp(method, "fdatasync") == 0)
+	{
+		new_sync_method = SYNC_METHOD_FDATASYNC;
+		new_sync_bit = 0;
+	}
+#endif
+#ifdef OPEN_SYNC_FLAG
+	else if (strcasecmp(method, "open_sync") == 0)
+	{
+		new_sync_method = SYNC_METHOD_OPEN;
+		new_sync_bit = OPEN_SYNC_FLAG;
+	}
+#endif
+#ifdef OPEN_DATASYNC_FLAG
+	else if (strcasecmp(method, "open_datasync") == 0)
+	{
+		new_sync_method = SYNC_METHOD_OPEN;
+		new_sync_bit = OPEN_DATASYNC_FLAG;
+	}
+#endif
+	else
+	{
+		/* Can't get here unless guc.c screwed up */
+		elog(ERROR, "Bogus xlog sync method %s", method);
+		new_sync_method = 0;	/* keep compiler quiet */
+		new_sync_bit = 0;
+	}
+
+	if (sync_method != new_sync_method || open_sync_bit != new_sync_bit)
+	{
+		/*
+		 * To ensure that no blocks escape unsynced, force an fsync on
+		 * the currently open log segment (if any).  Also, if the open
+		 * flag is changing, close the log file so it will be reopened
+		 * (with new flag bit) at next use.
+		 */
+		if (openLogFile >= 0)
+		{
+			if (pg_fsync(openLogFile) != 0)
+				elog(STOP, "fsync(logfile %u seg %u) failed: %m",
+					 openLogId, openLogSeg);
+			if (open_sync_bit != new_sync_bit)
+			{
+				if (close(openLogFile) != 0)
+					elog(STOP, "close(logfile %u seg %u) failed: %m",
+						 openLogId, openLogSeg);
+				openLogFile = -1;
+			}
+		}
+		sync_method = new_sync_method;
+		open_sync_bit = new_sync_bit;
+	}
+}
+
+
+/*
+ * Issue appropriate kind of fsync (if any) on the current XLOG output file
+ */
+static void
+issue_xlog_fsync(void)
+{
+	switch (sync_method)
+	{
+		case SYNC_METHOD_FSYNC:
+			if (pg_fsync(openLogFile) != 0)
+				elog(STOP, "fsync(logfile %u seg %u) failed: %m",
+					 openLogId, openLogSeg);
+			break;
+#ifdef HAVE_FDATASYNC
+		case SYNC_METHOD_FDATASYNC:
+			if (pg_fdatasync(openLogFile) != 0)
+				elog(STOP, "fdatasync(logfile %u seg %u) failed: %m",
+					 openLogId, openLogSeg);
+			break;
+#endif
+		case SYNC_METHOD_OPEN:
+			/* write synced it already */
+			break;
+		default:
+			elog(STOP, "bogus sync_method %d", sync_method);
+			break;
+	}
 }

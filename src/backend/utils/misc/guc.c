@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.32 2001/03/13 01:17:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.33 2001/03/16 05:44:33 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -20,6 +20,7 @@
 
 #include "utils/guc.h"
 
+#include "access/xlog.h"
 #include "commands/async.h"
 #include "libpq/auth.h"
 #include "libpq/pqcomm.h"
@@ -33,23 +34,17 @@
 #include "tcop/tcopprot.h"
 
 
-/* XXX should be in a header file */
+/* XXX these should be in other modules' header files */
 extern bool Log_connections;
-
-extern int CheckPointSegments;
 extern int CheckPointTimeout;
-extern int XLOGbuffers;
-extern int XLOGfiles;
-extern int XLOG_DEBUG;
 extern int CommitDelay;
 extern int CommitSiblings;
-
 extern bool FixBTree;
 
 #ifdef ENABLE_SYSLOG
 extern char *Syslog_facility;
 extern char *Syslog_ident;
-bool check_facility(const char *facility);
+static bool check_facility(const char *facility);
 #endif
 
 /*
@@ -138,7 +133,8 @@ struct config_string
 	GucContext  context;
 	char      **variable;
 	const char *default_val;
-	bool       (*parse_hook)(const char *);
+	bool       (*parse_hook)(const char *proposed);
+	void       (*assign_hook)(const char *newval);
 };
 
 
@@ -330,25 +326,29 @@ static struct config_string
 ConfigureNamesString[] =
 {
 	{"krb_server_keyfile",        PGC_POSTMASTER,       &pg_krb_server_keyfile,
-	 PG_KRB_SRVTAB, NULL},
-
-	{"unix_socket_group",         PGC_POSTMASTER,       &Unix_socket_group,
-	 "", NULL},
+	 PG_KRB_SRVTAB, NULL, NULL},
 
 #ifdef ENABLE_SYSLOG
 	{"syslog_facility",           PGC_POSTMASTER,	    &Syslog_facility,
-	"LOCAL0", check_facility},
+	"LOCAL0", check_facility, NULL},
 	{"syslog_ident",              PGC_POSTMASTER,	    &Syslog_ident,
-	"postgres", NULL},
+	"postgres", NULL, NULL},
 #endif
 
+	{"unix_socket_group",         PGC_POSTMASTER,       &Unix_socket_group,
+	 "", NULL, NULL},
+
 	{"unix_socket_directory",	  PGC_POSTMASTER,       &UnixSocketDir,
-	 "", NULL},
+	 "", NULL, NULL},
 
 	{"virtual_host",			  PGC_POSTMASTER,		&VirtualHost,
-	 "", NULL},
+	 "", NULL, NULL},
 
-	{NULL, 0, NULL, NULL, NULL}
+	{"wal_sync_method",			  PGC_SIGHUP,			&XLOG_sync_method,
+	 XLOG_sync_method_default,
+	 check_xlog_sync_method, assign_xlog_sync_method},
+
+	{NULL, 0, NULL, NULL, NULL, NULL}
 };
 
 /******** end of options list ********/
@@ -723,7 +723,10 @@ set_config_option(const char * name, const char * value, GucContext
 						elog(elevel, "out of memory");
 						return false;
 					}
-					free(*conf->variable);
+					if (conf->assign_hook)
+						(conf->assign_hook)(str);
+					if (*conf->variable)
+						free(*conf->variable);
 					*conf->variable = str;
 				}
 			}
@@ -737,7 +740,10 @@ set_config_option(const char * name, const char * value, GucContext
 					elog(elevel, "out of memory");
 					return false;
 				}
-				free(*conf->variable);
+				if (conf->assign_hook)
+					(conf->assign_hook)(str);
+				if (*conf->variable)
+					free(*conf->variable);
 				*conf->variable = str;
 			}
 			break;
@@ -855,7 +861,7 @@ ParseLongOption(const char * string, char ** name, char ** value)
 
 
 #ifdef ENABLE_SYSLOG
-bool
+static bool
 check_facility(const char *facility)
 {
 	if (strcasecmp(facility,"LOCAL0") == 0) return true;

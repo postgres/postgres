@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.4 2001/03/13 01:17:05 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.5 2001/03/16 05:44:33 tgl Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -282,15 +282,6 @@
   </para>
 
   <para>
-   Setting the <varname>WAL_DEBUG</varname> parameter to any non-zero
-   value will result in each <function>LogInsert</function> and
-   <function>LogFlush</function> <acronym>WAL</acronym> call being
-   logged to standard error.  At present, it makes no difference what
-   the non-zero value is.  This option may be replaced by a more
-   general mechanism in the future.
-  </para>
-
-  <para>
    The <varname>COMMIT_DELAY</varname> parameter defines for how many
    microseconds the backend will sleep after writing a commit
    record to the log with <function>LogInsert</function> but before
@@ -303,6 +294,24 @@
    Note that on most platforms, the resolution of a sleep request is
    ten milliseconds, so that any nonzero <varname>COMMIT_DELAY</varname>
    setting between 1 and 10000 microseconds will have the same effect.
+  </para>
+
+  <para>
+   The <varname>WAL_SYNC_METHOD</varname> parameter determines how
+   Postgres will ask the kernel to force WAL updates out to disk.
+   All the options should be the same as far as reliability goes,
+   but it's quite platform-specific which one will be the fastest.
+   Note that this parameter is irrelevant if <varname>FSYNC</varname>
+   has been turned off.
+  </para>
+
+  <para>
+   Setting the <varname>WAL_DEBUG</varname> parameter to any non-zero
+   value will result in each <function>LogInsert</function> and
+   <function>LogFlush</function> <acronym>WAL</acronym> call being
+   logged to standard error.  At present, it makes no difference what
+   the non-zero value is.  This option may be replaced by a more
+   general mechanism in the future.
   </para>
  </sect1>
 </chapter>

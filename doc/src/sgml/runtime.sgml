@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.56 2001/03/13 01:17:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.57 2001/03/16 05:44:33 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1224,8 +1224,8 @@ env PGOPTIONS='-c geqo=off' psql
       <term>WAL_BUFFERS (<type>integer</type>)</term>
       <listitem>
        <para>
-        Number of disk-page buffers for WAL log.  This option can only be set
-	at server start.
+        Number of disk-page buffers in shared memory for WAL log.
+	This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -1246,6 +1246,23 @@ env PGOPTIONS='-c geqo=off' psql
        <para>
         Number of log files that are created in advance at checkpoint
         time.  This option can only be set at server start or in the
+	<filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>WAL_SYNC_METHOD (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Method used for forcing WAL updates out to disk.  Possible
+	values are
+	<literal>FSYNC</> (call fsync() at each commit),
+	<literal>FDATASYNC</> (call fdatasync() at each commit),
+	<literal>OPEN_SYNC</> (write WAL files with open() option O_SYNC), or
+	<literal>OPEN_DATASYNC</> (write WAL files with open() option O_DSYNC).
+	Not all of these choices are available on all platforms.
+        This option can only be set at server start or in the
 	<filename>postgresql.conf</filename> file.
        </para>
       </listitem>
