@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.2 2002/08/28 20:17:44 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.3 2002/09/05 21:32:23 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -151,7 +151,7 @@ DROP TABLE products;
    columns will be filled with their respective default values.  A
    data manipulation command can also request explicitly that a column
    be set to its default value, without knowing what this value is.
-   (Details about data manipulation commands are in the next chapter.)
+   (Details about data manipulation commands are in <xref linkend="dml">.)
   </para>
 
   <para>
@@ -263,7 +263,7 @@ CREATE TABLE products (
     The first two constraints should look familiar.  The third one
     uses a new syntax.  It is not attached to a particular column,
     instead it appears as a separate item in the comma-separated
-    column list.  In general, column definitions and constraint
+    column list.  Column definitions and these constraint
     definitions can be listed in mixed order.
    </para>
 
@@ -299,8 +299,10 @@ CREATE TABLE products (
 
    <para>
     It should be noted that a check constraint is satisfied if the
-    check expression evaluates to true or the null value.  To ensure
-    that a column does not contain null values, the not-null
+    check expression evaluates to true or the null value.  Since most
+    expressions will evaluate to the null value if one operand is null
+    they will not prevent null values in the constrained columns.  To
+    ensure that a column does not contain null values, the not-null
     constraint described in the next section should be used.
    </para>
   </sect2>
@@ -322,12 +324,13 @@ CREATE TABLE products (
 
    <para>
     A not-null constraint is always written as a column constraint.  A
-    not-null constraint is equivalent to creating a check constraint
-    <literal>CHECK (<replaceable>column_name</replaceable> IS NOT
-    NULL)</literal>, but in <productname>PostgreSQL</productname>
-    creating an explicit not-null constraint is more efficient.  The
-    drawback is that you cannot give explicit names to not-null
-    constraints created that way.
+    not-null constraint is functionally equivalent to creating a check
+    constraint <literal>CHECK (<replaceable>column_name</replaceable>
+    IS NOT NULL)</literal>, but in
+    <productname>PostgreSQL</productname> creating an explicit
+    not-null constraint is more efficient.  The drawback is that you
+    cannot give explicit names to not-null constraints created that
+    way.
    </para>
 
    <para>
@@ -564,8 +567,8 @@ CREATE TABLE t1 (
   <emphasis>FOREIGN KEY (b, c) REFERENCES other_table (c1, c2)</emphasis>
 );
 </programlisting>
-    Of course, the number and type of constrained columns needs to
-    match the number and type of referenced columns.
+    Of course, the number and type of the constrained columns needs to
+    match the number and type of the referenced columns.
    </para>
 
    <para>
@@ -847,13 +850,14 @@ SET SQL_Inheritance TO OFF;
   <title>Modifying Tables</title>
 
   <para>
-   When you create a table and you realize that you made a mistake,
-   then you can drop the table and create it again.  But this is not a
-   convenient option if the table is already filled with data, or if
-   the table is referenced by other database objects (for instance a
-   foreign key constraint).  Therefore
-   <productname>PostgreSQL</productname> provides a family of commands
-   to make modifications on existing tables.
+   When you create a table and you realize that you made a mistake, or
+   the requirements of the application changed, then you can drop the
+   table and create it again.  But this is not a convenient option if
+   the table is already filled with data, or if the table is
+   referenced by other database objects (for instance a foreign key
+   constraint).  Therefore <productname>PostgreSQL</productname>
+   provides a family of commands to make modifications on existing
+   tables.
   </para>
 
   <para>
@@ -861,6 +865,9 @@ SET SQL_Inheritance TO OFF;
    <itemizedlist spacing="compact">
     <listitem>
      <para>Add columns,</para>
+    </listitem>
+    <listitem>
+     <para>Remove a column,</para>
     </listitem>
     <listitem>
      <para>Add constraints,</para>
@@ -879,22 +886,135 @@ SET SQL_Inheritance TO OFF;
     </listitem>
    </itemizedlist>
 
-   In the current implementation you cannot
-   <itemizedlist spacing="compact">
-    <listitem>
-     <para>Remove a column,</para>
-    </listitem>
-    <listitem>
-     <para>Change the data type of a column.</para>
-    </listitem>
-   </itemizedlist>
-   These may be possible in a future release.
+   All these actions are performed using the <literal>ALTER
+   TABLE</literal> command.
   </para>
 
-  <comment>
-   OK, now explain how to do this.  There's currently so much activity
-   on <literal>ALTER TABLE</literal> that I'm holding off a bit.
-  </comment>
+  <sect2>
+   <title>Adding a Column</title>
+
+   <para>
+    To add a column, use this command:
+<programlisting>
+ALTER TABLE products ADD COLUMN description text;
+</programlisting>
+    The new column will initially be filled with null values in the
+    existing rows of the table.
+   </para>
+
+   <para>
+    You can also define a constraint on the column at the same time,
+    using the usual syntax:
+<programlisting>
+ALTER TABLE products ADD COLUMN description text CHECK (description &lt;&gt; '');
+</programlisting>
+    A new column cannot have a not-null constraint since the column
+    initially has to contain null values.  But you can add a not-null
+    constraint later.  Also, you cannot define a default value on a
+    new column.  According to the SQL standard, this would have to
+    fill the new columns in the existing rows with the default value,
+    which is not implemented yet.  But you can adjust the column
+    default later on.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Removing a Column</title>
+
+   <para>
+    To remove a column, use this command:
+<programlisting>
+ALTER TABLE products DROP COLUMN description;
+</programlisting>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Adding a Constraint</title>
+
+   <para>
+    To add a constraint, the table constraint syntax is used.  For example:
+<programlisting>
+ALTER TABLE products ADD CHECK (name &lt;&gt; '');
+ALTER TABLE products ADD CONSTRAINT some_name UNIQUE (product_no);
+ALTER TABLE products ADD FOREIGN KEY (product_group_id) REFERENCES product_groups;
+</programlisting>
+    To add a not-null constraint, which cannot be written as a table
+    constraint, use this syntax:
+<programlisting>
+ALTER TABLE products ALTER COLUMN product_no SET NOT NULL;
+</programlisting>
+   </para>
+
+   <para>
+    The constraint will be checked immediately, so the table data must
+    satisfy the constraint before it can be added.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Removing a Constraint</title>
+
+   <para>
+    To remove a constraint you need to know its name.  If you gave it
+    a name then that's easy.  Otherwise the system assigned a
+    generated name, which you need to find out.  The
+    <application>psql</application> command <literal>\d
+    <replaceable>tablename</replaceable></literal> can be helpful
+    here; other interfaces might also provide a way to inspect table
+    details.  Then the command is:
+<programlisting>
+ALTER TABLE products DROP CONSTRAINT some_name;
+</programlisting>
+    This works the same for all constraint types except not-null
+    constraints. To drop a not null constraint use
+<programlisting>
+ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
+</programlisting>
+    (Recall that not-null constraints do not have names.)
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changing the Default</title>
+
+   <para>
+    To set a new default for a column, use a command like this:
+<programlisting>
+ALTER TABLE products ALTER COLUMN price SET DEFAULT 7.77;
+</programlisting>
+    To remove any default value, use
+<programlisting>
+ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
+</programlisting>
+    This is equivalent to setting the default to null, at least in
+    PostgreSQL.  As a consequence, it is not an error to drop a
+    default where one hadn't been defined, because the default is
+    implicitly the null value.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Renaming a Column</title>
+
+   <para>
+    To rename a column:
+<programlisting>
+ALTER TABLE products RENAME COLUMN product_no TO product_number;
+</programlisting>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Renaming a Table</title>
+
+   <para>
+    To rename a table:
+<programlisting>
+ALTER TABLE products RENAME TO items;
+</programlisting>
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="ddl-schemas">
@@ -990,10 +1110,10 @@ DROP TABLE products CASCADE;
 
   <note>
    <para>
-    Foreign Key constraint dependencies and SERIAL dependencies from
-    <productname>PostgreSQL</productname> versions prior to 7.3 are
-    <emphasis>not</emphasis> maintained or created during the upgrade
-    process.  However, all other dependency types are created successfully.
+    Foreign key constraint dependencies and serial column dependencies
+    from <productname>PostgreSQL</productname> versions prior to 7.3
+    are <emphasis>not</emphasis> maintained or created during the
+    upgrade process.  All other dependency types survive the upgrade.
    </para>
   </note>
  </sect1>
