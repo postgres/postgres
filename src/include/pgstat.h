@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *  $Id: pgstat.h,v 1.1 2001/06/22 19:18:36 wieck Exp $
+ *  $Id: pgstat.h,v 1.2 2001/06/29 16:29:37 wieck Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -347,22 +347,65 @@ extern void		pgstat_reset_counters(void);
 
 extern void		pgstat_initstats(PgStat_Info *stats, Relation rel);
 
-extern void		pgstat_reset_heap_scan(PgStat_Info *stats);
-extern void		pgstat_count_heap_scan(PgStat_Info *stats);
-extern void		pgstat_count_heap_getnext(PgStat_Info *stats);
-extern void		pgstat_count_heap_fetch(PgStat_Info *stats);
-extern void		pgstat_count_heap_insert(PgStat_Info *stats);
-extern void		pgstat_count_heap_update(PgStat_Info *stats);
-extern void		pgstat_count_heap_delete(PgStat_Info *stats);
 
-extern void		pgstat_reset_index_scan(PgStat_Info *stats);
-extern void		pgstat_count_index_scan(PgStat_Info *stats);
-extern void		pgstat_count_index_getnext(PgStat_Info *stats);
+#define pgstat_reset_heap_scan(s)										\
+	if ((s)->tabentry != NULL)											\
+		(s)->heap_scan_counted = FALSE
+#define pgstat_count_heap_scan(s)										\
+	if ((s)->tabentry != NULL && !(s)->heap_scan_counted) {				\
+		((PgStat_TableEntry *)((s)->tabentry))->t_numscans++;			\
+		(s)->heap_scan_counted = TRUE;									\
+	}
+#define pgstat_count_heap_getnext(s)									\
+	if ((s)->tabentry != NULL)											\
+		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_returned++
+#define pgstat_count_heap_fetch(s)										\
+	if ((s)->tabentry != NULL)											\
+		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_fetched++
+#define pgstat_count_heap_insert(s)										\
+	if ((s)->tabentry != NULL)											\
+		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_inserted++
+#define pgstat_count_heap_update(s)										\
+	if ((s)->tabentry != NULL)											\
+		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_updated++
+#define pgstat_count_heap_delete(s)										\
+	if ((s)->tabentry != NULL)											\
+		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_deleted++
 
-extern void		pgstat_count_buffer_read(PgStat_Info *stats,
-											Relation rel);
-extern void		pgstat_count_buffer_hit(PgStat_Info *stats,
-											Relation rel);
+#define pgstat_reset_index_scan(s)										\
+	if ((s)->tabentry != NULL)											\
+		(s)->index_scan_counted = FALSE
+#define pgstat_count_index_scan(s)										\
+	if ((s)->tabentry != NULL && !(s)->index_scan_counted) {			\
+		((PgStat_TableEntry *)((s)->tabentry))->t_numscans++;			\
+		(s)->index_scan_counted = TRUE;									\
+	}
+#define pgstat_count_index_getnext(s)									\
+	if ((s)->tabentry != NULL)											\
+		((PgStat_TableEntry *)((s)->tabentry))->t_tuples_returned++
+
+#define pgstat_count_buffer_read(s,r)									\
+	if ((s)->tabentry != NULL)											\
+		((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++;		\
+	else {																\
+		if (!(s)->no_stats) {											\
+			pgstat_initstats((s), (r));									\
+			if ((s)->tabentry != NULL)									\
+				((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++; \
+		}																\
+	}
+#define pgstat_count_buffer_hit(s,r)									\
+	if ((s)->tabentry != NULL)											\
+		((PgStat_TableEntry *)((s)->tabentry))->t_blocks_hit++;			\
+	else {																\
+		if (!(s)->no_stats) {											\
+			pgstat_initstats((s), (r));									\
+			if ((s)->tabentry != NULL)									\
+				((PgStat_TableEntry *)((s)->tabentry))->t_blocks_hit++;	\
+		}																\
+	}
+
+
 extern void		pgstat_count_xact_commit(void);
 extern void		pgstat_count_xact_rollback(void);
 
