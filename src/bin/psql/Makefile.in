@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.21 2000/03/08 01:58:22 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.22 2000/04/14 23:43:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -65,6 +65,7 @@ sql_help.h: $(wildcard $(SRCDIR)/../doc/src/sgml/ref/*.sgml) create_help.pl
 	$(PERL) create_help.pl sql_help.h 
 else
 sql_help.h:
+	@echo "*** Perl is needed to build psql help."
 endif
 
 .PHONY: submake

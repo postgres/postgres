@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.13 2000/04/12 17:16:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.14 2000/04/14 23:43:44 petere Exp $
  */
 #include "postgres.h"
 #include "copy.h"
@@ -82,7 +82,7 @@ parse_slash_copy(const char *args)
 		exit(EXIT_FAILURE);
 	}
 
-	token = strtokx(line, " \t", "\"", '\\', &quote, NULL, pset.encoding);
+	token = strtokx(line, " \t\n\r", "\"", '\\', &quote, NULL, pset.encoding);
 	if (!token)
 		error = true;
 	else
@@ -92,7 +92,7 @@ parse_slash_copy(const char *args)
 		if (!quote && strcasecmp(token, "binary") == 0)
 		{
 			result->binary = true;
-			token = strtokx(NULL, " \t", "\"", '\\', &quote, NULL, pset.encoding);
+			token = strtokx(NULL, " \t\n\r", "\"", '\\', &quote, NULL, pset.encoding);
 			if (!token)
 				error = true;
 		}
@@ -107,14 +107,14 @@ parse_slash_copy(const char *args)
 
 	if (!error)
 	{
-		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
+		token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
 		if (!token)
 			error = true;
 		else
 		{
 			if (strcasecmp(token, "with") == 0)
 			{
-				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
+				token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
 				if (!token || strcasecmp(token, "oids") != 0)
 					error = true;
 				else
@@ -122,7 +122,7 @@ parse_slash_copy(const char *args)
 
 				if (!error)
 				{
-					token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
+					token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
 					if (!token)
 						error = true;
 				}
@@ -139,7 +139,7 @@ parse_slash_copy(const char *args)
 
 	if (!error)
 	{
-		token = strtokx(NULL, " \t", "'", '\\', &quote, NULL, pset.encoding);
+		token = strtokx(NULL, " \t\n\r", "'", '\\', &quote, NULL, pset.encoding);
 		if (!token)
 			error = true;
 		else if (!quote && (strcasecmp(token, "stdin") == 0 || strcasecmp(token, "stdout") == 0))
@@ -150,21 +150,21 @@ parse_slash_copy(const char *args)
 
 	if (!error)
 	{
-		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
+		token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
 		if (token)
 		{
 			if (strcasecmp(token, "using") == 0)
 			{
-				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
+				token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
 				if (!token || strcasecmp(token, "delimiters") != 0)
 					error = true;
 				else
 				{
-					token = strtokx(NULL, " \t", "'", '\\', NULL, NULL, pset.encoding);
+					token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
 					if (token)
 					{
 						result->delim = xstrdup(token);
-						token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
+						token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
 					}
 					else
 						error = true;
@@ -175,17 +175,17 @@ parse_slash_copy(const char *args)
 			{
 				if (strcasecmp(token, "with") == 0)
 				{
-					token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
+					token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
 					if (!token || strcasecmp(token, "null") != 0)
 						error = true;
 					else
 					{
-						token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
+						token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
 						if (!token || strcasecmp(token, "as") != 0)
 							error = true;
 						else
 						{
-							token = strtokx(NULL, " \t", "'", '\\', NULL, NULL, pset.encoding);
+							token = strtokx(NULL, " \t\n\r", "'", '\\', NULL, NULL, pset.encoding);
 							if (token)
 								result->null = xstrdup(token);
 						}

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.28 2000/04/12 17:16:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.29 2000/04/14 23:43:44 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -51,7 +51,7 @@ static backslashResult exec_command(const char *cmd,
 
 enum option_type
 {
-	OT_NORMAL, OT_SQLID
+	OT_NORMAL, OT_SQLID, OT_FILEPIPE
 };
 static char *scan_option(char **string, enum option_type type, char *quote);
 static char *unescape(const unsigned char *source, size_t len);
@@ -105,7 +105,7 @@ HandleSlashCmds(const char *line,
 	 *
 	 * Also look for a backslash, so stuff like \p\g works.
 	 */
-	blank_loc = strcspn(my_line, " \t\\");
+	blank_loc = strcspn(my_line, " \t\n\r\\");
 
 	if (my_line[blank_loc] == '\\')
 	{
@@ -408,7 +408,7 @@ exec_command(const char *cmd,
 	/* \g means send query */
 	else if (strcmp(cmd, "g") == 0)
 	{
-		char	   *fname = scan_option(&string, OT_NORMAL, NULL);
+		char	   *fname = scan_option(&string, OT_FILEPIPE, NULL);
 
 		if (!fname)
 			pset.gfname = NULL;
@@ -421,7 +421,7 @@ exec_command(const char *cmd,
 	/* help */
 	else if (strcmp(cmd, "h") == 0 || strcmp(cmd, "help") == 0)
 	{
-		helpSQL(options_string ? &options_string[strspn(options_string, " \t")] : NULL);
+		helpSQL(options_string ? &options_string[strspn(options_string, " \t\n\r")] : NULL);
 		/* set pointer to end of line */
 		if (string)
 			string += strlen(string);
@@ -518,7 +518,7 @@ exec_command(const char *cmd,
 	/* \o -- set query output */
 	else if (strcmp(cmd, "o") == 0 || strcmp(cmd, "out") == 0)
 	{
-		char	   *fname = scan_option(&string, OT_NORMAL, NULL);
+		char	   *fname = scan_option(&string, OT_FILEPIPE, NULL);
 
 		success = setQFout(fname);
 		free(fname);
@@ -676,7 +676,7 @@ exec_command(const char *cmd,
 		}
 		else
 		{
-			fname = scan_option(&string, OT_NORMAL, NULL);
+			fname = scan_option(&string, OT_FILEPIPE, NULL);
 
 			if (!fname)
 			{
@@ -806,7 +806,7 @@ scan_option(char **string, enum option_type type, char *quote)
 
 	options_string = *string;
 	/* skip leading whitespace */
-	pos += strspn(options_string + pos, " \t");
+	pos += strspn(options_string + pos, " \t\n\r");
 
 	switch (options_string[pos])
 	{
@@ -845,17 +845,11 @@ scan_option(char **string, enum option_type type, char *quote)
 					exit(EXIT_FAILURE);
 				}
 
-				if (type == OT_NORMAL)
-				{
-					strncpy(return_val, &options_string[pos], jj - pos + 1);
-					return_val[jj - pos + 1] = '\0';
-				}
-
 				/*
 				 * If this is expected to be an SQL identifier like option
 				 * then we strip out the double quotes
 				 */
-				else if (type == OT_SQLID)
+				if (type == OT_SQLID)
 				{
 					unsigned int k,
 								cc;
@@ -875,6 +869,12 @@ scan_option(char **string, enum option_type type, char *quote)
 						return_val[cc++] = options_string[k];
 					}
 					return_val[cc] = '\0';
+				}
+
+				else
+				{
+					strncpy(return_val, &options_string[pos], jj - pos + 1);
+					return_val[jj - pos + 1] = '\0';
 				}
 
 				*string = options_string + jj + 1;
@@ -1010,7 +1010,7 @@ scan_option(char **string, enum option_type type, char *quote)
 				const char *value;
 				char		save_char;
 
-				token_end = strcspn(&options_string[pos + 1], " \t");
+				token_end = strcspn(&options_string[pos + 1], " \t\n\r");
 				save_char = options_string[pos + token_end + 1];
 				options_string[pos + token_end + 1] = '\0';
 				value = GetVariable(pset.vars, options_string + pos + 1);
@@ -1031,6 +1031,19 @@ scan_option(char **string, enum option_type type, char *quote)
 			break;
 
 			/*
+			 * | could be the beginning of a pipe
+			 * if so, take rest of line as command
+			 */
+		case '|':
+			if (type == OT_FILEPIPE)
+			{
+				*string += strlen(options_string + pos);
+				return xstrdup(options_string + pos);
+				break;
+			}
+			/* fallthrough for other option types */
+
+			/*
 			 * A normal word
 			 */
 		default:
@@ -1038,7 +1051,7 @@ scan_option(char **string, enum option_type type, char *quote)
 				size_t		token_end;
 				char	   *cp;
 
-				token_end = strcspn(&options_string[pos], " \t");
+				token_end = strcspn(&options_string[pos], " \t\n\r");
 				return_val = malloc(token_end + 1);
 				if (!return_val)
 				{

@@ -594,10 +594,9 @@ AC_PATH_PROG(tar, tar)
 AC_PATH_PROG(split, split)
 AC_PATH_PROG(etags, etags)
 AC_PATH_PROG(xargs, xargs)
-AC_PATH_PROG(ipcs, ipcs)
-AC_PATH_PROG(ipcrm, ipcrm)
 AC_PATH_PROGS(TR, trbsd tr, NOT_FOUND)
 AC_PATH_PROGS(GZCAT, gzcat zcat, gzcat)
+AC_CHECK_PROGS(PERL, perl,)
 
 dnl Check tr flags to convert from lower to upper case
 TRSTRINGS="`echo ABCdef | $TR '[[a-z]]' '[[A-Z]]' 2>/dev/null | grep ABCDEF`"

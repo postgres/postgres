@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.69 2000/03/31 14:14:31 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.70 2000/04/14 23:43:41 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -156,7 +156,7 @@ USE_TK= @USE_TK@
 WISH= @WISH@
 
 USE_PERL= @USE_PERL@
-PERL= perl
+PERL= @PERL@
 
 #
 # enable native odbc driver support
