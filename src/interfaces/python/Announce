@@ -1,0 +1,48 @@
+
+Announce : Release of PyGreSQL version 2.0
+===============================================
+
+PyGreSQL v2.0 has been released.
+It is available at: ftp://ftp.druid.net/pub/distrib/PyGreSQL-2.0.tgz.
+
+PostgreSQL is a database system derived from Postgres4.2. It conforms to
+(most of) ANSI SQL and offers many interesting capabilities (C dynamic linking 
+for functions or type definition, etc.). This package is copyright by the 
+Regents of the University of California, and is freely distributable.
+
+Python is a interpretated programming langage. It is object oriented, simple
+to use (light syntax, simple and straighforward statements), and has many
+extensions for building GUIs, interfacing with WWW, etc. An intelligent web  
+browser (HotJava like) is currently under development (november 1995), and
+this should open programmers many doors. Python is copyrighted by Stichting S
+Mathematisch Centrum, Amsterdam, The Netherlands, and is freely distributable.
+
+PyGreSQL is a python module that interfaces to a PostgreSQL database. It
+embeds the PostgreSQL query library to allow easy use of the powerful
+PostgreSQL features from a Python script.
+
+PyGreSQL 2.0 was developed and tested on a NetBSD 1.3_BETA system.  It is
+based on the PyGres95 code written by Pascal Andre, andre@chimay.via.ecp.fr.
+I changed the version to 2.0 and updated the code for Python 1.5 and
+PostgreSQL 6.2.1.  While I was at it I upgraded the code to use full ANSI
+style prototypes and changed the order of arguments to connect.
+
+Important changes from Pygres95 1.0b to PyGreSQL 2.0:
+  - Updated code for PostgreSQL 6.2.1 and Python 1.5.
+  - Reformatted code and converted to ANSI .
+  - Changed name to PyGreSQL (from PyGres95.)
+  - Changed order of arguments to connect function.
+  - Created new type pgqueryobject and moved certain methods to it.
+  - Added a print function for pgqueryobject
+  - Various code changes - mostly stylistic.
+
+For more information about each package, please have a look to their web pages:
+  - Python :     http://www.python.org/
+  - PostgreSQL : http://www.PostgreSQL.org/
+  - PyGreSQL :   http://www.druid.net/pygresql/
+
+
+D'Arcy J.M. Cain
+darcy@druid.net
+
+

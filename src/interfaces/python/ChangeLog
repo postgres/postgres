@@ -1,0 +1,31 @@
+PyGreSQL changelog.
+===================
+
+This software is copyright (c) 1995, Pascal Andre (andre@via.ecp.fr)
+Further copyright 1997 by D'Arcy J.M. Cain (darcy@druid.net)
+See file README for copyright information.
+
+Version 2.0  (23/12/1997):
+  - updated code for PostgreSQL 6.2.1 and Python 1.5
+  - reformatted code and converted to ANSI
+  - Changed name to PyGreSQL (from PyGres95)
+  - changed order of arguments to connect function
+  - Created new type pgqueryobject and moved certain methods to it.
+  - Added a print function for pgqueryobject
+Version 1.0b (4/11/1995):
+  - keyword support for connect function moved from library file to C code
+    and taken away from library.
+  - rewrote documentation
+  - bug fix in connect function
+  - enhancements in large objects interface methods
+Version 1.0a (30/10/1995) (limited release):
+  - module adapted to standard Python syntax
+  - keyword support for connect function in library file
+  - rewrote default parameters interface (internal use of strings)
+  - fixed minor bugs in module interface
+  - redefinition of error messages
+Version 0.9b (10/10/1995) (first public release):
+  - large objects implementation
+  - many bug fixes, enhancments, ...
+Version 0.1a (7/10/1995):
+  - basic libpq functions (SQL access)

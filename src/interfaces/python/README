@@ -1,0 +1,719 @@
+
+PyGreSQL - v2.0: PostgreSQL module for Python
+==============================================
+
+0. Copyright notice
+===================
+
+  PyGreSQL, version 2.0
+  A Python interface for PostgreSQL database.
+  Written by D'Arcy J.M. Cain, darcy@druid.net<BR>
+  Based heavily on code written by Pascal Andre, andre@chimay.via.ecp.fr.
+  Copyright (c) 1995, Pascal ANDRE (andre@via.ecp.fr)
+
+  Permission to use, copy, modify, and distribute this software and its
+  documentation for any purpose, without fee, and without a written agreement
+  is hereby granted, provided that the above copyright notice and this
+  paragraph and the following two paragraphs appear in all copies or in any 
+  new file that contains a substantial portion of this file.
+
+  IN NO EVENT SHALL THE AUTHOR BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, 
+  SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, 
+  ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE 
+  AUTHOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+  THE AUTHOR SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED
+  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+  PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE 
+  AUTHOR HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, 
+  ENHANCEMENTS, OR MODIFICATIONS.
+
+  Further modifications copyright 1997 by D'Arcy J.M. Cain (darcy@druid.net)
+  subject to the same terms and conditions as above.
+
+1. Presentation
+===============
+
+1.1. Introduction
+-----------------
+
+PostgreSQL is a database system derived from Postgres4.2. It conforms to
+(most of) ANSI SQL and offers many interesting capabilities (C dynamic linking
+for functions or type definition, etc.). This package is copyright by the
+Regents of the University of California, and is freely distributable.
+
+Python is a interpretated programming langage. It is object oriented, simple
+to use (light syntax, simple and straighforward statements), and has many
+extensions for building GUIs, interfacing with WWW, etc. An intelligent web
+browser (HotJava like) is currently under development (november 1995), and
+this should open programmers many doors. Python is copyrighted by Stichting S
+Mathematisch Centrum, Amsterdam, The Netherlands, and is freely distributable.
+
+PyGreSQL is a python module that interfaces to a PostgreSQL database. It
+embeds the PostgreSQL query library to allow easy use of the powerful
+PostgreSQL features from a Python script.
+
+PyGreSQL 2.0 was developed and tested on a NetBSD 1.3_BETA system.  It is
+based on the PyGres95 code written by Pascal Andre, andre@chimay.via.ecp.fr.
+I changed the version to 2.0 and updated the code for Python 1.5 and
+PostgreSQL 6.2.1.  While I was at it I upgraded the code to use full ANSI 
+style prototypes and changed the order of arguments to connect.
+
+
+1.2. Distribution files
+-----------------------
+
+  README       - this file
+  Announce     - announcement of this release
+  ChangeLog    - changes that affected this package during its history
+  pgmodule.c   - the C python module
+  pgext.py     - PyGreSQL library
+                 This file should go in your Python library directory.  It
+                 contains some interesting functions for pg use.   All pg
+                 function are imported in this file.
+  tutorial/    - demos directory
+                 Content: basics.py, syscat.py, advanced.py, func.py and
+                 pgtools.py.  The samples here have been taken from the
+                 PostgreSQL manual and were used for module testing.  They
+                 demonstrate some PostgreSQL features.  Pgtools.py is an
+                 add-in used for demonstation.
+
+1.3. Installation
+-----------------
+
+You first have to get and build Python and PostgreSQL.  You have to copy the
+pgmodule.c file to the Python Modules directory and add the following line to
+the Setup file there.
+    pg  pgmodule.c -I[pg inc] -L[pg lib] -lpq
+or, for a dynamic module:
+    pg  [pg mod]pgmodule.c ../Objects/access.c -I[pg inc] -L[pg lib] -lpd
+where:
+    pg mod       - directory where you did put the module files
+    pg inc       - path of the PostgreSQL include 
+    pg lib       - path of the PostgreSQL libraries 
+
+Some options may be added to this line:
+  -DNO_DEF_VAR - no default variables support
+  -DNO_DIRECT  - no direct access methods
+  -DNO_LARGE   - no large object support
+
+These options will be described in the next sections.
+
+
+1.4. Where to get ... ?
+-----------------------
+
+The home sites of the differents packages are:
+
+  - Python:     ftp://ftp.python.org:/pub/python
+  - PosgreSQL:  ftp://ftp.PostgreSQL.org/pub/postgresql-6.2.1.tar.gz
+  - PyGreSQL:   ftp://ftp.druid.net/pub/contrib/pygresql-2.0.tgz
+
+1.5. Information and support
+----------------------------
+
+If you need information about these packages please check their web sites:
+
+  - Python:     http://www.python.org/
+  - PyGres95:   http://www.via.ecp.fr/via/products/pygres.html
+  - PyGreSQL:   http://www.druid.net/pygresql/
+
+For support:
+
+  - Python:      newgroup comp.lang.python
+  - PostgreSQL:  mailing list (see package documentation for information)
+  - PyGres95:    contact me (andre@via.ecp.fr) for bug reports, ideas, remarks
+                 I will try to answer as long as my free time allow me to do 
+                 that.
+  - PyGreSQL:    contact me (darcy@druid.net) concerning the changes to 2.0.
+
+
+2. Programming information
+==========================
+
+This module defines three objects: the pgobject that handles the connection 
+and all the requests to the database, the pglargeobject that handles
+all the accesses to Postgres large objects and pgqueryobject that handles
+query results.
+
+2.1. pg module description
+----------------------------
+
+The module defines only a few methods that allow to connect to a database and
+to allow to define "default variables" that override the environment variables
+used by PostgreSQL. 
+
+These "default variables" were designed to allow you to handle general 
+connections parameters without heavy code in your programs. You can prompt the
+user for a value, put it in the default variable, and forget it, without 
+having to modify environment. The support for default variables can be disabled
+by setting the -DNO_DEF_VAR option in the Python Setup file. Methods relative 
+to this are specified by te tag [DV].
+
+All variables are set to None at module initialisation, specifying that 
+standard environment variables should be used.
+
+  2.1.1. connect - opens a pg connection
+  ----------------------------------------
+
+  Syntax:      
+    connect(dbname, host, port, opt, tty)
+  Parameters: 
+    dbname        - name of connected database (string/None)
+    host          - name of the server host (string/None)
+    port          - port used by the database server (integer/-1)
+    opt           - connection options (string/None)
+    tty           - debug terminal (string/None)
+  Return type:
+    pgobject      - the object handling the connection
+  Exceptions raised:
+    TypeError     - bad argument type, or too many arguments
+    SyntaxError   - duplicate argument definition 
+    pg.error      - some error occured during pg connection definition
+    (+ all exceptions relative to object allocation)
+  Description:
+    This method opens a connection to a specified database on a given
+    PostgreSQL server. You can use keywords here, as described in the
+    Python tutorial; 
+    the names of the keywords are the name of the parameters given in the 
+    syntax line. For a precise description of the parameters, please refer to 
+    the PostgreSQL user manual.
+
+  2.1.2. get_defhost, set_defhost - default server host name handling [DV]
+  ------------------------------------------------------------------------
+
+  Syntax: get_defhost()
+  Parameters: 
+    none
+  Return type:
+    string, None  - default host specification
+  Exceptions raised:
+    SyntaxError   - too many arguments
+  Description:
+    This method returns the current default host specification, or None if the
+    environment variables should be used. Environment variables won't be looked
+    up.
+
+  Syntax: set_defhost(host)
+  Parameters:
+    host          - new default host (string/None)
+  Return type:
+    string, None  - previous default host specification
+  Exceptions raised:
+    TypeError     - bad argument type, or too many arguments
+  Description:
+    This methods sets the default host value for new connections. If None is
+    supplied as parameter, environment variables will be used in future 
+    connections. It returns the previous setting for default host.
+
+  2.1.3. get_defport, set_defport - default server port handling [DV]
+  -------------------------------------------------------------------
+
+  Syntax: get_defport()
+  Parameters: none
+  Return type:
+    integer, None - default port specification
+  Exceptions raised:
+    SyntaxError   - too many arguments
+  Description: 
+    This method returns the current default port specification, or None if
+    the environment variables should be used. Environment variables won't
+    be looked up.
+
+  Syntax: set_defport(port)
+  Parameters:
+    port          - new default port (integer/-1)
+  Return type:
+    integer, None - previous default port specification
+  Description:
+    This methods sets the default port value for new connections. If -1 is
+    supplied as parameter, environment variables will be used in future 
+    connections. It returns the previous setting for default port.
+
+  2.1.4. get_defopt, set_defopt - default connection options handling [DV]
+  ------------------------------------------------------------------------
+
+  Syntax: get_defopt()
+  Parameters: none
+  Return type:
+    string, None  - default options specification
+  Exceptions raised:
+    SyntaxError   - too many arguments
+  Description:
+    This method returns the current default connection options  specification,
+    or None if the environment variables should be used. Environment variables 
+    won't be looked up.
+
+  Syntax: set_defopt(options)
+  Parameters:
+    options       - new default connection options (string/None)
+  Return type:
+    string, None  - previous default options specification
+  Exceptions raised:
+    TypeError     - bad argument type, or too many arguments
+  Description:
+    This methods sets the default connection options value for new connections.
+    If None is supplied as parameter, environment variables will be used in 
+    future connections. It returns the previous setting for default options.
+
+  2.1.5. get_deftty, set_deftty - default connection debug tty handling [DV]
+  --------------------------------------------------------------------------
+
+  Syntax: get_deftty()
+  Parameters: none
+  Return type:
+    string, None  - default debug terminal specification
+  Exceptions raised:
+    SyntaxError   - too many arguments
+  Description:
+    This method returns the current default debug terminal specification, or 
+    None if the environment variables should be used. Environment variables 
+    won't be looked up.
+
+  Syntax: set_deftty(terminal)
+  Parameters:
+    terminal      - new default debug terminal (string/None)
+  Return type:
+    string, None  - previous default debug terminal specification
+  Exceptions raised:
+    TypeError     - bad argument type, or too many arguments
+  Description:
+    This methods sets the default debug terminal value for new connections. If
+    None is supplied as parameter, environment variables will be used in future
+    connections. It returns the previous setting for default terminal.
+
+  2.1.6. get_defbase, set_defbase - default database name handling [DV]
+  ---------------------------------------------------------------------
+
+  Syntax: get_defbase()
+  Parameters: none
+  Return type:
+    string, None  - default database name specification
+  Exceptions raised:
+    SyntaxError   - too many arguments
+  Description:
+    This method returns the current default database name specification, or 
+    None if the environment variables should be used. Environment variables 
+    won't be looked up.
+
+  Syntax: set_defbase(base)
+  Parameters:
+    base          - new default base name (string/None)
+  Return type:
+    string, None  - previous default database name specification
+  Exceptions raised:
+    TypeError     - bad argument type, or too many arguments
+  Description:
+    This methods sets the default database name value for new connections. If 
+    None is supplied as parameter, environment variables will be used in 
+    future connections. It returns the previous setting for default host.
+
+  2.1.7. Module constants
+  -----------------------
+
+  Some constants are defined in the module dictionnary. They are intended to be
+used as parameters for methods calls. You should refer to PostgreSQL user 
+manual for more information about them. These constants are:
+
+  - large objects access modes, used by (pgobject.)locreate and 
+    (pglarge.)open: (pg.)INV_READ, (pg.)INV_WRITE, (pg.)INV_ARCHIVE
+  - positionnal flags, used by (pglarge.)seek: (pg.)SEEK_SET, 
+    (pg.)SEEK_CUR, (pg.)SEEK_END.
+
+2.2. pgobject description
+---------------------------
+
+  This object handle a connection to a PostgreSQL database. It embends and 
+hides all the parameters that define this connection, thus just leaving really
+significant parameters in function calls.
+  Some methods give direct access to the connection socket. They are specified
+by the tag [DA]. DO NOT USE THEM UNLESS YOU REALLY KNOW WHAT YOU ARE DOING. If
+you prefer disabling them, set the -DNO_DIRECT option in the Python Setup file.
+  Some other methods give access to large objects (refer to PostgreSQL user
+manual for more information about these). if you want to forbid access to these
+from the module, set the -DNO_LARGE option in the Python Setup file. These 
+methods are specified by the tag [LO].
+
+  2.2.1. query - executes a SQL command string
+  --------------------------------------------
+
+  Syntax: query(command)
+  Parameters:
+    command       - SQL command (string)
+  Return type:
+    pgqueryobject, None    - result values
+  Exceptions raised:
+    TypeError     - bad argument type, or too many arguments.
+    ValueError    - empty SQL query
+    pg.error      - error during query processing, or invalid connection
+  Description:
+    This method simply sends a SQL query to the database. If the command does
+    not return a result (ie. is not a some kind of SELECT statement), it 
+    returns None.  Otherwise, it returns a pgqueryobject that can be
+    accessed via the getresult method or printed.
+
+  pgqueryobject methods
+  ---------------------
+
+    2.2.1.1. getresult - gets the values returned by the query
+    -------------------------------------------------------------
+
+    Syntax: getresult()
+    Parameters: none
+    Return type:
+      list          - result values
+    Exceptions raised:
+      SyntaxError   - too many parameters
+      pg.error      - invalid previous result
+    Description:
+      This method returns the list of the values returned by the last query.
+      More information about this result may be get using listfields,
+      fieldname and fiednum methods. All list elements are strings.
+
+    2.2.3. listfields - lists the fields names of the previous query result
+    -----------------------------------------------------------------------
+
+    Syntax: listfields()
+    Parameters: none
+    Return type:
+      list          - fields names
+    Exceptions raised:
+      SyntaxError   - too many parameters
+      pg.error      - invalid previous result, or invalid connection
+    Description:
+      This method returns the list of names of the fields defined for the
+      query result. The fields are in the same order as the result values.
+  
+    2.2.4. fieldname, fieldnum - field name-number conversion
+    ---------------------------------------------------------
+
+    Syntax: fieldname(i)
+    Parameters:
+      i              - field number (integer)
+    Return type:
+      string         - field name
+    Exceptions raised:
+      TypeError      - bad parameter type, or too many parameters
+      ValueError     - invalid field number
+      pg.error       - invalid previous result, or invalid connection
+    Description:
+      This method allows to find a field name from its rank number. It can be 
+      useful for displaying a result. The fields are in the same order than the
+      result values.
+
+    Syntax: fieldnum(name)
+    Parameters:
+      name           - field name (string)
+    Return type:
+      integer        - field number
+    Exceptions raised:
+      TypeError      - bad parameter type, or too many parameters
+      ValueError     - unknown field name
+      pg.error       - invalid previous result, or invalid connection
+    Description:
+      This method returns a field number from its name.  It can be used to
+      build a function that converts result list strings to their correct
+      type, using a hardcoded table definition.  The number returned is the
+      field rank in the result values list.
+
+  2.2.5. getnotify - gets the last notify from the server
+  -------------------------------------------------------
+
+  Syntax: getnotify()
+  Parameters: none
+  Return type:
+    tuple, None    - last notify from server
+  Exceptions raised:
+    SyntaxError    - too many parameters
+    pg.error       - invalid connection
+  Description:
+    This methods try to get a notify from the server (from the SQL statement 
+    NOTIFY). If the server returns no notify, the methods retuns None. 
+    Otherwise, it returns a tuple (couple) (relname, pid), where relname is the
+    name of the notify and pid the process id of the connection that triggered 
+    the notify.
+
+  2.2.6. inserttable - insert a list into a table
+  -----------------------------------------------
+
+  Syntax: inserttable(table, values)
+  Parameters:
+    table          - the table name (string)
+    values         - list of rows values (list)
+  Return type:
+    None
+  Exception raised:
+    pg.error       - invalid connection
+    TypeError      - bad argument type, or too many arguments
+  Description:
+    This method allow to quickly insert large blocks of data in a table: it
+    inserts the whole values list into the given table. The list is a list of
+    tuples/lists that define the values for each inserted row. The rows values
+    may contain string, integer, long or double (real) values. 
+    BE VERY CAREFUL: this method doesn't typecheck the fields according to the
+    table definition; it just look whether or not it knows how to handle such
+    types.
+
+  2.2.7. putline - writes a line to the server socket [DA]
+  --------------------------------------------------------
+
+  Syntax: putline(line)
+  Parameters:
+    line           - line to be written (string)
+  Return type:
+    None
+  Exceptions raised:
+    pg.error       - invalid connection
+    TypeError      - bad parameter type, or too many parameters
+  Description: 
+    This method allows to directly write a string to the server socket.
+
+  2.2.8. getline - gets a line from server socket [DA]
+  ----------------------------------------------------
+
+  Syntax: getline()
+  Parameters: none
+  Return type:
+    string         - the line read
+  Exceptions raised:
+    pg.error       - invalid connection
+    SyntaxError    - too many parameters
+  Description:
+    This method allows to directly read a string from the server socket.
+
+  2.2.9. endcopy - synchronizes client and server [DA]
+  ----------------------------------------------------
+
+  Syntax: endcopy()
+  Parameters: none
+  Return type:
+    None
+  Exceptions raised:
+    pg.error       - invalid connection
+    SyntaxError    - too many parameters
+  Description:
+    The use of direct access methods may desynchonize client and server. This
+    method ensure that client and server will be synchronized.
+
+  2.2.10. locreate - creates of large object in the database [LO]
+  ---------------------------------------------------------------
+
+  Syntax: locreate(mode)
+  Parameters:
+    mode           - large object create mode
+  Return type:
+    pglarge        - object handling the postgres large object
+  Exceptions raised:
+    pg.error       - invalid connection, or creation error
+    TypeError      - bad parameter type, or too many parameters
+  Description:
+    This method creates a large object in the database. The mode can be defined
+    by OR-ing the constants defined in the pg module (INV_READ, INV_WRITE and
+    INV_ARCHIVE). Please refer to PostgreSQL user manual for a description of
+    the mode values.
+
+  2.2.11. getlo - builds a large object from given oid [LO]
+  ---------------------------------------------------------
+
+  Syntax: getlo(oid)
+  Parameters:
+    oid            - oid of the existing large object (integer)
+  Return type:
+    pglarge        - object handling the postgres large object
+  Exceptions raised:
+    pg.error       - invalid connection
+    TypeError      - bad parameter type, or too many parameters
+    ValueError     - bad oid value (0 is invalid_oid)
+  Description:
+    This method allows to reuse a formerly created large object through the 
+    pglarge interface, providing the user have its oid.
+
+  2.2.12. loimport - import a file to a postgres large object [LO]
+  ----------------------------------------------------------------
+
+  Syntax: loimport(name)
+  Parameters:
+    name           - the name of the file to be imported (string)
+  Return type:
+    pglarge        - object handling the postgres large object
+  Exceptions raised:
+    pg.error       - invalid connection, or error during file import
+    TypeError      - bad argument type, or too many arguments
+  Description: 
+    This methods allows to create large objects in a very simple way. You just 
+    give the name of a file containing the data to be use.
+
+  2.2.13. pgobject attributes
+  -----------------------------
+
+  Every pgobject defines a set of read-only attributes that describe the 
+connection and its status. These attributes are:
+  host             - the hostname of the server (string)
+  port             - the port of the server (integer)
+  db               - the selected database (string)
+  options          - the connection options (string)
+  tty              - the connection debug terminal (string)
+  user             - the username on the database system (string)
+  status           - the status of the connection (integer: 1 - OK, 0 - BAD)
+  error            - the last warning/error message from the server (string)
+
+2.3. pglarge description
+--------------------------
+
+  This object handles all the request concerning a postgres large object. It 
+embends and hides all the 'recurrent' variables (object oid and connection), 
+exactly in the same way pgobjects do, thus only keeping significant 
+parameters in function calls. It keeps a reference to the pgobject used for
+its creation, sending requests though with its parameters. Any modification but
+dereferencing the pgobject will thus affect the pglarge object. 
+Dereferencing the initial pgobject is not a problem since Python won't 
+deallocate it before the large object dereference it.
+  All functions return a generic error message on call error, whatever the 
+exact error was. The 'error' attribute of the object allow to get the exact 
+error message.
+
+  2.3.1. open - opens a large object
+  ----------------------------------
+
+  Syntax: open(mode)
+  Parameters:
+    mode           - open mode definition (integer)
+  Return type:
+    None
+  Exceptions raised:
+    pg.error       - invalid connection
+    TypeError      - bad parameter type, or too many parameters
+    IOError        - already opened object, or open error
+  Description:
+    This method opens a large object for reading/writing, in the same way than
+    the UNIX open() function. The mode value can be obtained by OR-ing the 
+    constants defined in the pgmodule (INV_READ, INV_WRITE).
+
+  2.3.2. close - closes a large object
+  ------------------------------------
+
+  Syntax: close()
+  Parameters: none
+  Return type:
+    None
+  Exceptions raised:
+    pg.error       - invalid connection
+    SyntaxError    - too many parameters
+    IOError        - object is not opened, or close error
+  Description:
+    This method closes a previously opened large object, in the same way than 
+    the UNIX close() function.
+
+  2.3.4. read, write, tell, seek, unlink - file like large object handling
+  ------------------------------------------------------------------------
+
+  Syntax: read(size)
+  Parameters:
+    size           - maximal size of the buffer to be read
+  Return type:
+    sized string   - the read buffer
+  Exceptions raised:
+    pg.error       - invalid connection or invalid object
+    TypeError      - bad parameter type, or too many parameters
+    IOError        - object is not opened, or read error
+  Description:
+    This function allows to read data from a large object, starting at current
+    position.
+
+  Syntax: write(string)
+  Parameters:
+    (sized) string - buffer to be written
+  Return type:
+    None
+  Exceptions raised:
+    pg.error       - invalid connection or invalid object
+    TypeError      - bad parameter type, or too many parameters
+    IOError        - object is not opened, or write error
+  Description:
+    This function allows to write data to a large object, starting at current 
+    position.
+
+  Syntax: seek(offset, whence)
+  Parameters:
+    offset          - position offset
+    whence          - positionnal parameter
+  Return type:
+    integer         - new position in object
+  Exception raised:
+    pg.error        - invalid connection or invalid object
+    TypeError       - bad parameter type, or too many parameters
+    IOError         - object is not opened, or seek error
+  Description:
+    This method allows to move the position cursor in the large object. The 
+    whence parameter can be obtained by OR-ing the constants defined in the 
+    pg module (SEEK_SET, SEEK_CUR, SEEK_END).
+
+  Syntax: tell()
+  Parameters: none
+  Return type:
+    integer         - current position in large object
+  Exception raised:
+    pg.error        - invalid connection or invalid object
+    SyntaxError     - too many parameters
+    IOError         - object is not opened, or seek error
+  Description:
+    This method allows to get the current position in the large object.
+
+  Syntax: unlink()
+  Parameter: none
+  Return type:
+    None
+  Exception raised:
+    pg.error        - invalid connection or incaid object
+    SyntaxError     - too many parameters
+    IOError         - object is not closed, or unlink error
+  Description:
+    This methods unlinks (deletes) the postgres large object.
+
+  2.3.5. size - gives the large object size
+  -----------------------------------------
+
+  Syntax: size()
+  Parameters: none
+  Return type:
+    integer         - large object size
+  Exceptions raised:
+    pg.error        - invalid connection or invalid object
+    SyntaxError     - too many parameters
+    IOError         - object is not opened, or seek/tell error
+  Description:
+    This (composite) method allows to get the size of a large object. Currently
+    the large object needs to be opened. It was implemented because this 
+    function is very useful for a WWW interfaced database.
+
+  2.3.6. export - saves a large object to a file
+  ----------------------------------------------
+
+  Syntax: export(name)
+  Parameters:
+    name            - file to be created
+  Return type:
+    None
+  Exception raised:
+    pg.error        - invalid connection or invalid object
+    TypeError       - bad parameter type, or too many parameters
+    IOError         - object is not closed, or export error
+  Description:
+    This methods allows to dump the content of a large object in a very simple
+    way. The exported file is created on the host of the program, not the 
+    server host.
+
+  2.3.7. Object attributes
+  ------------------------
+
+  pglarge objects define a read-only set of attributes that allow to get some
+information about it. These attributes are:
+  oid                - the oid associated with the object
+  pgcnx              - the pgobject associated with the object
+  error              - the last warning/error message of the connection
+BE CAREFUL:  in multithreaded environments, 'error' may be modified by another
+thread using the same pgobject. Remember these object are shared, not 
+duplicated. You should provide some locking to be able if you want to check 
+this.
+  The oid attribute is very interesting because it allow you reuse the oid 
+later, creating the pglarge object with a pgobject getlo() method call.
