@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.2 2001/06/30 21:58:06 petere Exp $
+# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.3 2001/07/15 11:43:55 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -53,7 +53,9 @@ $(srcdir)/$(CATALOG_NAME).pot: $(word 2, $(GETTEXT_FILES))
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) -f $<
 else
 $(srcdir)/$(CATALOG_NAME).pot: $(GETTEXT_FILES)
-	$(XGETTEXT) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) $^
+# Change to srcdir explicitly, don't rely on $^.  That way we get
+# consistent #: file references in the po files.
+	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) $(GETTEXT_FILES)
 endif
 	mv messages.po $@
 else # not XGETTEXT
@@ -83,7 +85,7 @@ maintainer-clean-po: clean-po
 
 maintainer-check-po: $(PO_FILES)
 	for file in $^; do \
-	  $(MSGFMT) -v -o /dev/null $$file || exit 1; \
+	  $(MSGFMT) -c -v -o /dev/null $$file || exit 1; \
 	done
 
 
