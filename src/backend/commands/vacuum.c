@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.145 2000/04/06 00:29:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.146 2000/04/06 18:12:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+#include "utils/temprel.h"
 
 #ifndef HAVE_GETRUSAGE
 #include "rusagestub.h"
@@ -315,14 +316,20 @@ vc_getrels(NameData *VacRelP)
 
 	if (NameStr(*VacRelP))
 	{
-
 		/*
 		 * we could use the cache here, but it is clearer to use scankeys
 		 * for both vacuum cases, bjm 2000/01/19
 		 */
+		char *nontemp_relname;
+
+		/* We must re-map temp table names bjm 2000-04-06 */
+		if ((nontemp_relname =
+			 get_temp_rel_by_username(NameStr(*VacRelP))) == NULL)
+			nontemp_relname = NameStr(*VacRelP);
+
 		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relname,
 							   F_NAMEEQ,
-							   PointerGetDatum(NameStr(*VacRelP)));
+							   PointerGetDatum(nontemp_relname));
 	}
 	else
 	{
