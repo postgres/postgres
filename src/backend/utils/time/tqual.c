@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.32 1999/10/06 21:58:11 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.33 1999/12/10 12:34:14 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@ Snapshot	SnapshotDirty = &SnapshotDirtyData;
 
 Snapshot	QuerySnapshot = NULL;
 Snapshot	SerializableSnapshot = NULL;
+
+bool		ReferentialIntegritySnapshotOverride = false;
 
 /*
  * XXX Transaction system override hacks start here
@@ -493,6 +495,9 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 	if (AMI_OVERRIDE)
 		return true;
 
+	if (ReferentialIntegritySnapshotOverride)
+		return HeapTupleSatisfiesNow(tuple);
+
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -605,6 +610,9 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 void
 SetQuerySnapshot(void)
 {
+
+	/* Initialize snapshot overriding to false */
+	ReferentialIntegritySnapshotOverride = false;
 
 	/* 1st call in xaction */
 	if (SerializableSnapshot == NULL)

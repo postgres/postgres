@@ -24,6 +24,7 @@
 #include "utils/builtins.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 DLLIMPORT TriggerData *CurrentTriggerData = NULL;
 
@@ -1150,6 +1151,13 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 	CurrentTriggerData = NULL;
 	if (rettuple != NULL && rettuple != &oldtuple && rettuple != &newtuple)
 		pfree(rettuple);
+
+	/* ----------
+	 * Might have been a referential integrity constraint trigger.
+	 * Reset the snapshot overriding flag.
+	 * ----------
+	 */
+	ReferentialIntegritySnapshotOverride = false;
 
 	/* ----------
 	 * Release buffers and close the relation

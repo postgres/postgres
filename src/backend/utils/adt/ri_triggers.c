@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.9 1999/12/08 20:41:22 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.10 1999/12/10 12:34:13 wieck Exp $
  *
  * ----------
  */
@@ -163,6 +163,7 @@ RI_FKey_check (FmgrInfo *proinfo)
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
+	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
@@ -489,6 +490,7 @@ RI_FKey_cascade_del (FmgrInfo *proinfo)
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
+	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
@@ -686,6 +688,7 @@ RI_FKey_cascade_upd (FmgrInfo *proinfo)
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
+	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
@@ -911,6 +914,7 @@ RI_FKey_restrict_del (FmgrInfo *proinfo)
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
+	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
@@ -1118,6 +1122,7 @@ RI_FKey_restrict_upd (FmgrInfo *proinfo)
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
+	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
@@ -1333,6 +1338,7 @@ RI_FKey_setnull_del (FmgrInfo *proinfo)
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
+	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
@@ -1540,6 +1546,7 @@ RI_FKey_setnull_upd (FmgrInfo *proinfo)
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
+	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
@@ -1758,6 +1765,7 @@ RI_FKey_setdefault_del (FmgrInfo *proinfo)
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
+	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
@@ -2005,6 +2013,7 @@ RI_FKey_setdefault_upd (FmgrInfo *proinfo)
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
+	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.

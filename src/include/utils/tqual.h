@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.25 1999/09/29 16:06:28 wieck Exp $
+ * $Id: tqual.h,v 1.26 1999/12/10 12:34:15 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,8 @@ typedef SnapshotData *Snapshot;
 extern Snapshot SnapshotDirty;
 extern Snapshot QuerySnapshot;
 extern Snapshot SerializableSnapshot;
+
+extern bool ReferentialIntegritySnapshotOverride;
 
 #define IsSnapshotNow(snapshot)		((Snapshot) snapshot == SnapshotNow)
 #define IsSnapshotSelf(snapshot)	((Snapshot) snapshot == SnapshotSelf)
