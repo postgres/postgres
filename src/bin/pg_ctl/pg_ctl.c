@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.42 2004/10/22 00:24:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.43 2004/10/27 17:17:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1279,19 +1279,23 @@ main(int argc, char **argv)
 			{
 				case 'D':
 					{
-						int			len = strlen(optarg);
-						char	   *env_var;
+						char	   *pgdata_D = xmalloc(strlen(optarg));
+						char	   *env_var = xmalloc(strlen(optarg) + 8);
 
-						env_var = xmalloc(len + 8);
-						snprintf(env_var, len + 8, "PGDATA=%s", optarg);
+						strcpy(pgdata_D, optarg);
+						canonicalize_path(pgdata_D);
+						snprintf(env_var, strlen(pgdata_D) + 8, "PGDATA=%s",
+								 pgdata_D);
 						putenv(env_var);
 
 						/*
-						 * Show -D for easier postmaster 'ps'
-						 * identification
+						 *	We could pass PGDATA just in an environment
+						 *	variable but we do -D too for clearer
+						 *	postmaster 'ps' display
 						 */
-						pgdata_opt = xmalloc(len + 7);
-						snprintf(pgdata_opt, len + 7, "-D \"%s\" ", optarg);
+						pgdata_opt = xmalloc(strlen(pgdata_D) + 7);
+						snprintf(pgdata_opt, strlen(pgdata_D) + 7, "-D \"%s\" ",
+								 pgdata_D);
 						break;
 					}
 				case 'l':

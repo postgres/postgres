@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.37 2004/10/24 22:08:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.38 2004/10/27 17:17:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,12 @@ make_native_path(char *filename)
 
 
 /*
- * Make all paths look like Unix
+ *	Clean up path by:
+ *		o  make Win32 path use Unix slashes
+ *		o  remove trailling quote on Win32
+ *		o  remove trailling slash
+ *		o  remove trailing '.'
+ *		o  process trailing '..' ourselves
  */
 void
 canonicalize_path(char *path)
@@ -145,13 +150,13 @@ canonicalize_path(char *path)
 
 	/*
 	 * Removing the trailing slash on a path means we never get ugly
-	 * double slashes.	Also, Win32 can't stat() a directory with a
-	 * trailing slash. Don't remove a leading slash, though.
+	 * double trailing slashes.	Also, Win32 can't stat() a directory
+	 * with a trailing slash. Don't remove a leading slash, though.
 	 */
 	trim_trailing_separator(path);
 
 	/*
-	 * Remove any trailing uses of "." or "..", too.
+	 * Remove any trailing uses of "." and process ".." ourselves
 	 */
 	for (;;)
 	{
@@ -165,7 +170,7 @@ canonicalize_path(char *path)
 		else if (len >= 3 && strcmp(path + len - 3, "/..") == 0)
 		{
 			trim_directory(path);
-			trim_directory(path);
+			trim_directory(path);	/* remove directory above */
 			trim_trailing_separator(path);
 		}
 		else
