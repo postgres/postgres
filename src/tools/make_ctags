@@ -10,6 +10,8 @@ fi
 find `pwd`/ \( -name _deadcode -a -prune \) -o \
 	-type f -name '*.[chyl]' -print|xargs ctags "$FLAGS" -a -f tags
 
+LANG=C
+LC_ALL=C
 sort tags >/tmp/$$ && mv /tmp/$$ tags
 
 find . -name  'CVS' -prune -o -type d -print  |while read DIR
