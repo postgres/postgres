@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.10 1998/01/05 03:30:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.11 1998/01/06 19:42:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,16 +84,16 @@ AggregateCreate(char *aggName,
 
 	/* sanity checks */
 	if (!aggName)
-		elog(ABORT, "AggregateCreate: no aggregate name supplied");
+		elog(ERROR, "AggregateCreate: no aggregate name supplied");
 
 	if (!aggtransfn1Name && !aggtransfn2Name)
-		elog(ABORT, "AggregateCreate: aggregate must have at least one transition function");
+		elog(ERROR, "AggregateCreate: aggregate must have at least one transition function");
 
 	tup = SearchSysCacheTuple(TYPNAME,
 							  PointerGetDatum(aggbasetypeName),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ABORT, "AggregateCreate: Type '%s' undefined", aggbasetypeName);
+		elog(ERROR, "AggregateCreate: Type '%s' undefined", aggbasetypeName);
 	xbase = tup->t_oid;
 
 	if (aggtransfn1Name)
@@ -102,7 +102,7 @@ AggregateCreate(char *aggName,
 								  PointerGetDatum(aggtransfn1typeName),
 								  0, 0, 0);
 		if (!HeapTupleIsValid(tup))
-			elog(ABORT, "AggregateCreate: Type '%s' undefined",
+			elog(ERROR, "AggregateCreate: Type '%s' undefined",
 				 aggtransfn1typeName);
 		xret1 = tup->t_oid;
 
@@ -114,16 +114,16 @@ AggregateCreate(char *aggName,
 								  PointerGetDatum(fnArgs),
 								  0);
 		if (!HeapTupleIsValid(tup))
-			elog(ABORT, "AggregateCreate: '%s('%s', '%s') does not exist",
+			elog(ERROR, "AggregateCreate: '%s('%s', '%s') does not exist",
 				 aggtransfn1Name, aggtransfn1typeName, aggbasetypeName);
 		if (((Form_pg_proc) GETSTRUCT(tup))->prorettype != xret1)
-			elog(ABORT, "AggregateCreate: return type of '%s' is not '%s'",
+			elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
 				 aggtransfn1Name,
 				 aggtransfn1typeName);
 		xfn1 = tup->t_oid;
 		if (!OidIsValid(xfn1) || !OidIsValid(xret1) ||
 			!OidIsValid(xbase))
-			elog(ABORT, "AggregateCreate: bogus function '%s'", aggfinalfnName);
+			elog(ERROR, "AggregateCreate: bogus function '%s'", aggfinalfnName);
 	}
 
 	if (aggtransfn2Name)
@@ -132,7 +132,7 @@ AggregateCreate(char *aggName,
 								  PointerGetDatum(aggtransfn2typeName),
 								  0, 0, 0);
 		if (!HeapTupleIsValid(tup))
-			elog(ABORT, "AggregateCreate: Type '%s' undefined",
+			elog(ERROR, "AggregateCreate: Type '%s' undefined",
 				 aggtransfn2typeName);
 		xret2 = tup->t_oid;
 
@@ -144,30 +144,30 @@ AggregateCreate(char *aggName,
 								  PointerGetDatum(fnArgs),
 								  0);
 		if (!HeapTupleIsValid(tup))
-			elog(ABORT, "AggregateCreate: '%s'('%s') does not exist",
+			elog(ERROR, "AggregateCreate: '%s'('%s') does not exist",
 				 aggtransfn2Name, aggtransfn2typeName);
 		if (((Form_pg_proc) GETSTRUCT(tup))->prorettype != xret2)
-			elog(ABORT, "AggregateCreate: return type of '%s' is not '%s'",
+			elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
 				 aggtransfn2Name, aggtransfn2typeName);
 		xfn2 = tup->t_oid;
 		if (!OidIsValid(xfn2) || !OidIsValid(xret2))
-			elog(ABORT, "AggregateCreate: bogus function '%s'", aggfinalfnName);
+			elog(ERROR, "AggregateCreate: bogus function '%s'", aggfinalfnName);
 	}
 
 	tup = SearchSysCacheTuple(AGGNAME, PointerGetDatum(aggName),
 							  ObjectIdGetDatum(xbase),
 							  0, 0);
 	if (HeapTupleIsValid(tup))
-		elog(ABORT,
+		elog(ERROR,
 			 "AggregateCreate: aggregate '%s' with base type '%s' already exists",
 			 aggName, aggbasetypeName);
 
 	/* more sanity checks */
 	if (aggtransfn1Name && aggtransfn2Name && !aggfinalfnName)
-		elog(ABORT, "AggregateCreate: Aggregate must have final function with both transition functions");
+		elog(ERROR, "AggregateCreate: Aggregate must have final function with both transition functions");
 
 	if ((!aggtransfn1Name || !aggtransfn2Name) && aggfinalfnName)
-		elog(ABORT, "AggregateCreate: Aggregate cannot have final function without both transition functions");
+		elog(ERROR, "AggregateCreate: Aggregate cannot have final function without both transition functions");
 
 	if (aggfinalfnName)
 	{
@@ -179,13 +179,13 @@ AggregateCreate(char *aggName,
 								  PointerGetDatum(fnArgs),
 								  0);
 		if (!HeapTupleIsValid(tup))
-			elog(ABORT, "AggregateCreate: '%s'('%s','%s') does not exist",
+			elog(ERROR, "AggregateCreate: '%s'('%s','%s') does not exist",
 			   aggfinalfnName, aggtransfn1typeName, aggtransfn2typeName);
 		ffn = tup->t_oid;
 		proc = (Form_pg_proc) GETSTRUCT(tup);
 		fret = proc->prorettype;
 		if (!OidIsValid(ffn) || !OidIsValid(fret))
-			elog(ABORT, "AggregateCreate: bogus function '%s'", aggfinalfnName);
+			elog(ERROR, "AggregateCreate: bogus function '%s'", aggfinalfnName);
 	}
 
 	/*
@@ -194,7 +194,7 @@ AggregateCreate(char *aggName,
 	 * aggregates to return NULL if they are evaluated on empty sets.
 	 */
 	if (OidIsValid(xfn2) && !agginitval2)
-		elog(ABORT, "AggregateCreate: transition function 2 MUST have an initial value");
+		elog(ERROR, "AggregateCreate: transition function 2 MUST have an initial value");
 
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_aggregate; i++)
@@ -253,16 +253,16 @@ AggregateCreate(char *aggName,
 		nulls[Anum_pg_aggregate_agginitval2 - 1] = 'n';
 
 	if (!RelationIsValid(aggdesc = heap_openr(AggregateRelationName)))
-		elog(ABORT, "AggregateCreate: could not open '%s'",
+		elog(ERROR, "AggregateCreate: could not open '%s'",
 			 AggregateRelationName);
 
 	tupDesc = aggdesc->rd_att;
 	if (!HeapTupleIsValid(tup = heap_formtuple(tupDesc,
 											   values,
 											   nulls)))
-		elog(ABORT, "AggregateCreate: heap_formtuple failed");
+		elog(ERROR, "AggregateCreate: heap_formtuple failed");
 	if (!OidIsValid(heap_insert(aggdesc, tup)))
-		elog(ABORT, "AggregateCreate: heap_insert failed");
+		elog(ERROR, "AggregateCreate: heap_insert failed");
 	heap_close(aggdesc);
 
 }
@@ -287,7 +287,7 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 							  PointerGetDatum(basetype),
 							  0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ABORT, "AggNameGetInitVal: cache lookup failed for aggregate '%s'",
+		elog(ERROR, "AggNameGetInitVal: cache lookup failed for aggregate '%s'",
 			 aggName);
 	if (xfuncno == 1)
 	{
@@ -303,7 +303,7 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 
 	aggRel = heap_openr(AggregateRelationName);
 	if (!RelationIsValid(aggRel))
-		elog(ABORT, "AggNameGetInitVal: could not open \"%-.*s\"",
+		elog(ERROR, "AggNameGetInitVal: could not open \"%-.*s\"",
 			 AggregateRelationName);
 
 	/*
@@ -328,7 +328,7 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 	if (!HeapTupleIsValid(tup))
 	{
 		pfree(strInitVal);
-		elog(ABORT, "AggNameGetInitVal: cache lookup failed on aggregate transition function return type");
+		elog(ERROR, "AggNameGetInitVal: cache lookup failed on aggregate transition function return type");
 	}
 	initVal = fmgr(((TypeTupleForm) GETSTRUCT(tup))->typinput, strInitVal, -1);
 	pfree(strInitVal);

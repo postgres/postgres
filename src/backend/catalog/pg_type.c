@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.16 1998/01/05 03:30:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.17 1998/01/06 19:42:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,7 +334,7 @@ TypeCreate(char *typeName,
 	typeObjectId = TypeGet(typeName, &defined);
 	if (OidIsValid(typeObjectId) && defined)
 	{
-		elog(ABORT, "TypeCreate: type %s already defined", typeName);
+		elog(ERROR, "TypeCreate: type %s already defined", typeName);
 	}
 
 	/* ----------------
@@ -347,7 +347,7 @@ TypeCreate(char *typeName,
 		elementObjectId = TypeGet(elementTypeName, &defined);
 		if (!defined)
 		{
-			elog(ABORT, "TypeCreate: type %s is not defined", elementTypeName);
+			elog(ERROR, "TypeCreate: type %s is not defined", elementTypeName);
 		}
 	}
 
@@ -558,7 +558,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 	type_oid = TypeGet(newTypeName, &defined);
 	if (OidIsValid(type_oid) && defined)
 	{
-		elog(ABORT, "TypeRename: type %s already defined", newTypeName);
+		elog(ERROR, "TypeRename: type %s already defined", newTypeName);
 	}
 
 	/* get the type tuple from the catalog index scan manager */
@@ -591,7 +591,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 	}
 	else
 	{
-		elog(ABORT, "TypeRename: type %s not defined", oldTypeName);
+		elog(ERROR, "TypeRename: type %s not defined", oldTypeName);
 	}
 
 	/* finish up */

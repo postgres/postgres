@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.11 1998/01/05 03:30:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.12 1998/01/06 19:42:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ newoid()
 
 	GetNewObjectId(&lastoid);
 	if (!OidIsValid(lastoid))
-		elog(ABORT, "newoid: GetNewObjectId returns invalid oid");
+		elog(ERROR, "newoid: GetNewObjectId returns invalid oid");
 	return lastoid;
 }
 
@@ -162,7 +162,7 @@ fillatt(TupleDesc tupleDesc)
 	AttributeTupleForm *att = tupleDesc->attrs;
 
 	if (natts < 0 || natts > MaxHeapAttributeNumber)
-		elog(ABORT, "fillatt: %d attributes is too large", natts);
+		elog(ERROR, "fillatt: %d attributes is too large", natts);
 	if (natts == 0)
 	{
 		elog(DEBUG, "fillatt: called with natts == 0");
@@ -178,7 +178,7 @@ fillatt(TupleDesc tupleDesc)
 									0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
 		{
-			elog(ABORT, "fillatt: unknown atttypid %ld",
+			elog(ERROR, "fillatt: unknown atttypid %ld",
 				 (*attributeP)->atttypid);
 		}
 		else

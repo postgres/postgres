@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.42 1998/01/05 03:30:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.43 1998/01/06 19:42:27 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -194,7 +194,7 @@ heap_create(char *name,
 
 	if (IsSystemRelationName(relname) && IsNormalProcessingMode())
 	{
-		elog(ABORT,
+		elog(ERROR,
 		 "Illegal class name: %s -- pg_ is reserved for system catalogs",
 			 relname);
 	}
@@ -396,7 +396,7 @@ heap_create(char *name,
  *
  *		this is used to make certain the tuple descriptor contains a
  *		valid set of attribute names.  a problem simply generates
- *		elog(ABORT) which aborts the current transaction.
+ *		elog(ERROR) which aborts the current transaction.
  * --------------------------------
  */
 static void
@@ -421,7 +421,7 @@ CheckAttributeNames(TupleDesc tupdesc)
 			if (nameeq(&(HeapAtt[j]->attname),
 					   &(tupdesc->attrs[i]->attname)))
 			{
-				elog(ABORT,
+				elog(ERROR,
 					 "create: system attribute named \"%s\"",
 					 HeapAtt[j]->attname.data);
 			}
@@ -445,7 +445,7 @@ CheckAttributeNames(TupleDesc tupdesc)
 			if (nameeq(&(tupdesc->attrs[j]->attname),
 					   &(tupdesc->attrs[i]->attname)))
 			{
-				elog(ABORT,
+				elog(ERROR,
 					 "create: repeated attribute \"%s\"",
 					 tupdesc->attrs[j]->attname.data);
 			}
@@ -762,7 +762,7 @@ heap_create_with_catalog(char relname[],
 	 */
 	AssertState(IsNormalProcessingMode() || IsBootstrapProcessingMode());
 	if (natts == 0 || natts > MaxHeapAttributeNumber)
-		elog(ABORT, "amcreate: from 1 to %d attributes must be specified",
+		elog(ERROR, "amcreate: from 1 to %d attributes must be specified",
 			 MaxHeapAttributeNumber);
 
 	CheckAttributeNames(tupdesc);
@@ -777,7 +777,7 @@ heap_create_with_catalog(char relname[],
 	if (RelationAlreadyExists(pg_class_desc, relname))
 	{
 		heap_close(pg_class_desc);
-		elog(ABORT, "amcreate: %s relation already exists", relname);
+		elog(ERROR, "amcreate: %s relation already exists", relname);
 	}
 
 	/* ----------------
@@ -910,7 +910,7 @@ RelationRemoveInheritance(Relation relation)
 		heap_endscan(scan);
 		heap_close(catalogRelation);
 
-		elog(ABORT, "relation <%d> inherits \"%s\"",
+		elog(ERROR, "relation <%d> inherits \"%s\"",
 			 ((InheritsTupleForm) GETSTRUCT(tuple))->inhrel,
 			 RelationGetRelationName(relation));
 	}
@@ -1054,7 +1054,7 @@ DeletePgRelationTuple(Relation rdesc)
 	{
 		heap_endscan(pg_class_scan);
 		heap_close(pg_class_desc);
-		elog(ABORT, "DeletePgRelationTuple: %s relation nonexistent",
+		elog(ERROR, "DeletePgRelationTuple: %s relation nonexistent",
 			 &rdesc->rd_rel->relname);
 	}
 
@@ -1187,7 +1187,7 @@ DeletePgTypeTuple(Relation rdesc)
 	{
 		heap_endscan(pg_type_scan);
 		heap_close(pg_type_desc);
-		elog(ABORT, "DeletePgTypeTuple: %s type nonexistent",
+		elog(ERROR, "DeletePgTypeTuple: %s type nonexistent",
 			 &rdesc->rd_rel->relname);
 	}
 
@@ -1229,7 +1229,7 @@ DeletePgTypeTuple(Relation rdesc)
 		heap_endscan(pg_attribute_scan);
 		heap_close(pg_attribute_desc);
 
-		elog(ABORT, "DeletePgTypeTuple: att of type %s exists in relation %d",
+		elog(ERROR, "DeletePgTypeTuple: att of type %s exists in relation %d",
 			 &rdesc->rd_rel->relname, relid);
 	}
 	heap_endscan(pg_attribute_scan);
@@ -1265,7 +1265,7 @@ heap_destroy_with_catalog(char *relname)
 	 */
 	rdesc = heap_openr(relname);
 	if (rdesc == NULL)
-		elog(ABORT, "Relation %s Does Not Exist!", relname);
+		elog(ERROR, "Relation %s Does Not Exist!", relname);
 
 	RelationSetLockForWrite(rdesc);
 	rid = rdesc->rd_id;
@@ -1275,7 +1275,7 @@ heap_destroy_with_catalog(char *relname)
 	 * ----------------
 	 */
 	if (IsSystemRelationName(RelationGetRelationName(rdesc)->data))
-		elog(ABORT, "amdestroy: cannot destroy %s relation",
+		elog(ERROR, "amdestroy: cannot destroy %s relation",
 			 &rdesc->rd_rel->relname);
 
 	/* ----------------
@@ -1516,7 +1516,7 @@ start:;
 
 	if (length(query->rtable) > 1 ||
 		flatten_tlist(query->targetList) != NIL)
-		elog(ABORT, "DEFAULT: cannot use attribute(s)");
+		elog(ERROR, "DEFAULT: cannot use attribute(s)");
 	te = (TargetEntry *) lfirst(query->targetList);
 	resdom = te->resdom;
 	expr = te->expr;
@@ -1526,13 +1526,13 @@ start:;
 		if (((Const *) expr)->consttype != atp->atttypid)
 		{
 			if (*cast != 0)
-				elog(ABORT, "DEFAULT: const type mismatched");
+				elog(ERROR, "DEFAULT: const type mismatched");
 			sprintf(cast, ":: %s", typeidTypeName(atp->atttypid));
 			goto start;
 		}
 	}
 	else if (exprType(expr) != atp->atttypid)
-		elog(ABORT, "DEFAULT: type mismatched");
+		elog(ERROR, "DEFAULT: type mismatched");
 
 	adbin = nodeToString(expr);
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
@@ -1585,7 +1585,7 @@ StoreRelCheck(Relation rel, ConstrCheck *check)
 	query = (Query *) (queryTree_list->qtrees[0]);
 
 	if (length(query->rtable) > 1)
-		elog(ABORT, "CHECK: only relation %.*s can be referenced",
+		elog(ERROR, "CHECK: only relation %.*s can be referenced",
 			 NAMEDATALEN, rel->rd_rel->relname.data);
 
 	plan = (Plan *) lfirst(planTree_list);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.18 1998/01/05 03:30:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.19 1998/01/06 19:42:31 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -171,7 +171,7 @@ OperatorGet(char *operatorName,
 		leftObjectId = TypeGet(leftTypeName, &leftDefined);
 
 		if (!OidIsValid(leftObjectId) || !leftDefined)
-			elog(ABORT, "OperatorGet: left type '%s' nonexistent", leftTypeName);
+			elog(ERROR, "OperatorGet: left type '%s' nonexistent", leftTypeName);
 	}
 
 	if (rightTypeName)
@@ -179,13 +179,13 @@ OperatorGet(char *operatorName,
 		rightObjectId = TypeGet(rightTypeName, &rightDefined);
 
 		if (!OidIsValid(rightObjectId) || !rightDefined)
-			elog(ABORT, "OperatorGet: right type '%s' nonexistent",
+			elog(ERROR, "OperatorGet: right type '%s' nonexistent",
 				 rightTypeName);
 	}
 
 	if (!((OidIsValid(leftObjectId) && leftDefined) ||
 		  (OidIsValid(rightObjectId) && rightDefined)))
-		elog(ABORT, "OperatorGet: no argument types??");
+		elog(ERROR, "OperatorGet: no argument types??");
 
 	/* ----------------
 	 *	open the pg_operator relation
@@ -327,7 +327,7 @@ OperatorShellMake(char *operatorName,
 
 	if (!((OidIsValid(leftObjectId) && leftDefined) ||
 		  (OidIsValid(rightObjectId) && rightDefined)))
-		elog(ABORT, "OperatorShellMake: no valid argument types??");
+		elog(ERROR, "OperatorShellMake: no valid argument types??");
 
 	/* ----------------
 	 *	open pg_operator
@@ -494,7 +494,7 @@ OperatorDef(char *operatorName,
 								   rightTypeName);
 
 	if (OidIsValid(operatorObjectId) && !definedOK)
-		elog(ABORT, "OperatorDef: operator \"%s\" already defined",
+		elog(ERROR, "OperatorDef: operator \"%s\" already defined",
 			 operatorName);
 
 	if (leftTypeName)
@@ -505,7 +505,7 @@ OperatorDef(char *operatorName,
 
 	if (!((OidIsValid(leftTypeId && leftDefined)) ||
 		  (OidIsValid(rightTypeId && rightDefined))))
-		elog(ABORT, "OperatorGet: no argument types??");
+		elog(ERROR, "OperatorGet: no argument types??");
 
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
@@ -668,7 +668,7 @@ OperatorDef(char *operatorName,
 				}
 
 				if (!OidIsValid(other_oid))
-					elog(ABORT,
+					elog(ERROR,
 						 "OperatorDef: can't create operator '%s'",
 						 name[j]);
 				values[i++] = ObjectIdGetDatum(other_oid);
@@ -719,7 +719,7 @@ OperatorDef(char *operatorName,
 			setheapoverride(false);
 		}
 		else
-			elog(ABORT, "OperatorDef: no operator %d", other_oid);
+			elog(ERROR, "OperatorDef: no operator %d", other_oid);
 
 		heap_endscan(pg_operator_scan);
 
@@ -994,7 +994,7 @@ OperatorCreate(char *operatorName,
 	int			definedOK;
 
 	if (!leftTypeName && !rightTypeName)
-		elog(ABORT, "OperatorCreate : at least one of leftarg or rightarg must be defined");
+		elog(ERROR, "OperatorCreate : at least one of leftarg or rightarg must be defined");
 
 	/* ----------------
 	 *	get the oid's of the operator's associated operators, if possible.

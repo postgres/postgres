@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.32 1998/01/05 03:30:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.33 1998/01/06 19:42:29 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -237,7 +237,7 @@ GetHeapRelationOid(char *heapRelationName, char *indexRelationName)
 									 false);
 
 	if (OidIsValid(indoid))
-		elog(ABORT, "Cannot create index: '%s' already exists",
+		elog(ERROR, "Cannot create index: '%s' already exists",
 			 indexRelationName);
 
 	/* ----------------
@@ -253,7 +253,7 @@ GetHeapRelationOid(char *heapRelationName, char *indexRelationName)
 	 * ----------------
 	 */
 	if (!OidIsValid(heapoid))
-		elog(ABORT, "Cannot create index on '%s': relation does not exist",
+		elog(ERROR, "Cannot create index on '%s': relation does not exist",
 			 heapRelationName);
 
 	/* ----------------
@@ -306,7 +306,7 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 								ObjectIdGetDatum(retType),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ABORT, "Function %s return type does not exist", FIgetname(funcInfo));
+		elog(ERROR, "Function %s return type does not exist", FIgetname(funcInfo));
 
 	/*
 	 * Assign some of the attributes values. Leave the rest as 0.
@@ -374,7 +374,7 @@ ConstructTupleDescriptor(Oid heapoid,
 		 */
 		atnum = attNums[i];
 		if (atnum > natts)
-			elog(ABORT, "Cannot create index: attribute %d does not exist",
+			elog(ERROR, "Cannot create index: attribute %d does not exist",
 				 atnum);
 		if (attributeList)
 		{
@@ -404,7 +404,7 @@ ConstructTupleDescriptor(Oid heapoid,
 			 * ----------------
 			 */
 			if (atnum <= FirstLowInvalidHeapAttributeNumber || atnum >= 0)
-				elog(ABORT, "Cannot create index on system attribute: attribute number out of range (%d)", atnum);
+				elog(ERROR, "Cannot create index on system attribute: attribute number out of range (%d)", atnum);
 			atind = (-atnum) - 1;
 
 			from = (char *) (&sysatts[atind]);
@@ -450,7 +450,7 @@ ConstructTupleDescriptor(Oid heapoid,
 									  PointerGetDatum(IndexKeyType->name),
 									  0, 0, 0);
 			if (!HeapTupleIsValid(tup))
-				elog(ABORT, "create index: type '%s' undefined",
+				elog(ERROR, "create index: type '%s' undefined",
 					 IndexKeyType->name);
 			((AttributeTupleForm) to)->atttypid = tup->t_oid;
 			((AttributeTupleForm) to)->attbyval =
@@ -1082,7 +1082,7 @@ index_create(char *heapRelationName,
 	 * ----------------
 	 */
 	if (numatts < 1)
-		elog(ABORT, "must index at least one attribute");
+		elog(ERROR, "must index at least one attribute");
 
 	/* ----------------
 	 *	  get heap relation oid and open the heap relation
@@ -1297,7 +1297,7 @@ index_destroy(Oid indexId)
 	 * physically remove the file
 	 */
 	if (FileNameUnlink(relpath(indexRelation->rd_rel->relname.data)) < 0)
-		elog(ABORT, "amdestroyr: unlink: %m");
+		elog(ERROR, "amdestroyr: unlink: %m");
 
 	index_close(indexRelation);
 }
@@ -1398,7 +1398,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	whichRel = RelationIdGetRelation(relid);
 
 	if (!RelationIsValid(whichRel))
-		elog(ABORT, "UpdateStats: cannot open relation id %d", relid);
+		elog(ERROR, "UpdateStats: cannot open relation id %d", relid);
 
 	/* ----------------
 	 * Find the RELATION relation tuple for the given relation.
@@ -1407,7 +1407,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	pg_class = heap_openr(RelationRelationName);
 	if (!RelationIsValid(pg_class))
 	{
-		elog(ABORT, "UpdateStats: could not open RELATION relation");
+		elog(ERROR, "UpdateStats: could not open RELATION relation");
 	}
 	key[0].sk_argument = ObjectIdGetDatum(relid);
 
@@ -1417,7 +1417,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	if (!HeapScanIsValid(pg_class_scan))
 	{
 		heap_close(pg_class);
-		elog(ABORT, "UpdateStats: cannot scan RELATION relation");
+		elog(ERROR, "UpdateStats: cannot scan RELATION relation");
 	}
 
 	/* if the heap_open above succeeded, then so will this heap_getnext() */
@@ -1784,7 +1784,7 @@ IndexIsUnique(Oid indexId)
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(ABORT, "IndexIsUnique: can't find index id %d",
+		elog(ERROR, "IndexIsUnique: can't find index id %d",
 			 indexId);
 	}
 	index = (IndexTupleForm) GETSTRUCT(tuple);
@@ -1827,7 +1827,7 @@ IndexIsUniqueNoCache(Oid indexId)
 	tuple = heap_getnext(scandesc, 0, NULL);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(ABORT, "IndexIsUniqueNoCache: can't find index id %d",
+		elog(ERROR, "IndexIsUniqueNoCache: can't find index id %d",
 			 indexId);
 	}
 	index = (IndexTupleForm) GETSTRUCT(tuple);
