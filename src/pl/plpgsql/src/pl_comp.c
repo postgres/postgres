@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.71 2004/01/06 23:55:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.72 2004/01/07 06:20:02 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -54,6 +54,7 @@
 #include "parser/gramparse.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
@@ -102,6 +103,7 @@ static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
 		   PLpgSQL_func_hashkey *hashkey);
 static void plpgsql_compile_error_callback(void *arg);
+static char **fetchArgNames(HeapTuple procTup, int nargs);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
 static void compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
@@ -248,6 +250,7 @@ do_compile(FunctionCallInfo fcinfo,
 	ErrorContextCallback plerrcontext;
 	int			parse_rc;
 	Oid			rettypeid;
+	char	  **argnames;
 
 	/*
 	 * Setup the scanner input and error info.	We assume that this
@@ -408,12 +411,16 @@ do_compile(FunctionCallInfo fcinfo,
 			/*
 			 * Create the variables for the procedure's parameters
 			 */
+			argnames = fetchArgNames(procTup, procStruct->pronargs);
+
 			for (i = 0; i < procStruct->pronargs; i++)
 			{
 				char		buf[32];
 				Oid			argtypeid;
+				PLpgSQL_datum *argdatum;
+				int			argitemtype;
 
-				/* name for variable */
+				/* Create $n name for variable */
 				snprintf(buf, sizeof(buf), "$%d", i + 1);
 
 				/*
@@ -424,7 +431,7 @@ do_compile(FunctionCallInfo fcinfo,
 				argtypeid = hashkey->argtypes[i];
 
 				/*
-				 * Get the parameters type
+				 * Get the parameter type
 				 */
 				typeTup = SearchSysCache(TYPEOID,
 										 ObjectIdGetDatum(argtypeid),
@@ -448,14 +455,10 @@ do_compile(FunctionCallInfo fcinfo,
 					 * that type
 					 */
 					row = plpgsql_build_rowtype(typeStruct->typrelid);
-
 					row->refname = strdup(buf);
 
-					plpgsql_adddatum((PLpgSQL_datum *) row);
-					plpgsql_ns_additem(PLPGSQL_NSTYPE_ROW, row->rowno,
-									   row->refname);
-
-					arg_varnos[i] = row->rowno;
+					argdatum = (PLpgSQL_datum *) row;
+					argitemtype = PLPGSQL_NSTYPE_ROW;
 				}
 				else
 				{
@@ -473,12 +476,22 @@ do_compile(FunctionCallInfo fcinfo,
 					var->notnull = false;
 					var->default_val = NULL;
 
-					plpgsql_adddatum((PLpgSQL_datum *) var);
-					plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno,
-									   var->refname);
-
-					arg_varnos[i] = var->varno;
+					argdatum = (PLpgSQL_datum *) var;
+					argitemtype = PLPGSQL_NSTYPE_VAR;
 				}
+
+				/* Add it to datum list, and remember datum number */
+				plpgsql_adddatum(argdatum);
+				arg_varnos[i] = argdatum->dno;
+
+				/* Add to namespace under the $n name */
+				plpgsql_ns_additem(argitemtype, argdatum->dno, buf);
+
+				/* If there's a name for the argument, make an alias */
+				if (argnames && argnames[i] && argnames[i][0])
+					plpgsql_ns_additem(argitemtype, argdatum->dno,
+									   argnames[i]);
+
 				ReleaseSysCache(typeTup);
 			}
 			break;
@@ -727,6 +740,44 @@ plpgsql_compile_error_callback(void *arg)
 	if (plpgsql_error_funcname)
 		errcontext("compile of PL/pgSQL function \"%s\" near line %d",
 				   plpgsql_error_funcname, plpgsql_error_lineno);
+}
+
+
+/*
+ * Fetch the argument names, if any, from the proargnames field of the
+ * pg_proc tuple.  Results are palloc'd.
+ */
+static char **
+fetchArgNames(HeapTuple procTup, int nargs)
+{
+	Datum		argnamesDatum;
+	bool		isNull;
+	Datum	   *elems;
+	int			nelems;
+	char	  **result;
+	int			i;
+
+	if (nargs == 0)
+		return NULL;
+
+	argnamesDatum = SysCacheGetAttr(PROCOID, procTup, Anum_pg_proc_proargnames,
+									&isNull);
+	if (isNull)
+		return NULL;
+
+	deconstruct_array(DatumGetArrayTypeP(argnamesDatum),
+					  TEXTOID, -1, false, 'i',
+					  &elems, &nelems);
+
+	if (nelems != nargs)		/* should not happen */
+		elog(ERROR, "proargnames must have the same number of elements as the function has arguments");
+
+	result = (char **) palloc(sizeof(char *) * nargs);
+
+	for (i=0; i < nargs; i++)
+		result[i] = DatumGetCString(DirectFunctionCall1(textout, elems[i]));
+
+	return result;
 }
 
 
