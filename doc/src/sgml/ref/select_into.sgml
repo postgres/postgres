@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.13 2001/10/22 18:14:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.14 2001/10/23 16:42:36 momjian Exp $
 Postgres documentation
 -->
 
@@ -29,7 +29,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
     [ GROUP BY <replaceable class="PARAMETER">expression</replaceable> [, ...] ]
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
-    [ { UNION | INTERSECT | EXCEPT [ ALL ] } <replaceable class="PARAMETER">select</replaceable> ]
+    [ { UNION | INTERSECT | EXCEPT } [ ALL ] <replaceable class="PARAMETER">select</replaceable> ]
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
     [ FOR UPDATE [ OF <replaceable class="PARAMETER">tablename</replaceable> [, ...] ] ]
     [ LIMIT [ <replaceable class="PARAMETER">start</replaceable> , ] { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
