@@ -1,0 +1,1331 @@
+From pgsql-hackers-owner+M45196@postgresql.org Thu Oct  9 21:02:52 2003
+Return-path: <pgsql-hackers-owner+M45196@postgresql.org>
+Received: from www.postgresql.com (www.postgresql.com [64.117.225.209] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9A12Sd24438
+	for <pgman@candle.pha.pa.us>; Thu, 9 Oct 2003 21:02:51 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by www.postgresql.com (Postfix) with ESMTP
+	id 65DB0CF4A2C; Thu,  9 Oct 2003 22:02:19 -0300 (ADT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id F01F8D1B50F
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 10 Oct 2003 01:02:07 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 76113-08
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu,  9 Oct 2003 22:01:21 -0300 (ADT)
+Received: from ganymede.hub.org (u173n10.eastlink.ca [24.224.173.10])
+	by svr1.postgresql.org (Postfix) with ESMTP id 1C741D1B4EE
+	for <pgsql-hackers@postgresql.org>; Thu,  9 Oct 2003 22:01:18 -0300 (ADT)
+Received: by ganymede.hub.org (Postfix, from userid 1000)
+	id 585F835332; Thu,  9 Oct 2003 22:00:10 -0300 (ADT)
+Received: from localhost (localhost [127.0.0.1])
+	by ganymede.hub.org (Postfix) with ESMTP
+	id 4CD8F35320; Thu,  9 Oct 2003 22:00:10 -0300 (ADT)
+Date: Thu, 9 Oct 2003 22:00:10 -0300 (ADT)
+From: "Marc G. Fournier" <scrappy@postgresql.org>
+X-X-Sender: scrappy@ganymede.hub.org
+To: Tatsuo Ishii <t-ishii@sra.co.jp>
+cc: andrew@libertyrms.info, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] 2-phase commit
+In-Reply-To: <20031010.094635.104030040.t-ishii@sra.co.jp>
+Message-ID: <20031009215935.S28590@ganymede.hub.org>
+References: <20031009160718.GC14394@libertyrms.info> <1065723448.1821.2288.camel@camel>
+	<20031009204141.GS14394@libertyrms.info> <20031010.094635.104030040.t-ishii@sra.co.jp>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+
+On Fri, 10 Oct 2003, Tatsuo Ishii wrote:
+
+> > Yes.  I don't think that 2PC is a solution for robustness in face of
+> > network failure.  It's too slow, to begin with.  Some sort of
+> > multi-master system is very desirable for network failures, &c., but
+> > I don't think anybody does active/hot standby with 2PC any more; the
+> > performance is too bad.
+>
+> I'm tired of this kind of "2PC is too slow" arguments. I think
+> Satoshi, the only guy who made a trial implementation of 2PC for
+> PostgreSQL, has already showed that 2PC is not that slow.
+
+Where does Satoshi's implementation sit right now?  Will it patch to v7.4?
+Can it provide us with a base to work from, or is it complete?
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M45212@postgresql.org Fri Oct 10 00:22:09 2003
+Return-path: <pgsql-hackers-owner+M45212@postgresql.org>
+Received: from svr4.postgresql.org (svr4.postgresql.org [64.117.224.192])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9A4M7d22170
+	for <pgman@candle.pha.pa.us>; Fri, 10 Oct 2003 00:22:07 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr4.postgresql.org (Postfix) with ESMTP
+	id 3EE8D1CB47E5; Fri, 10 Oct 2003 04:22:02 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id D3959D1B517
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 10 Oct 2003 04:21:49 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 22978-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 10 Oct 2003 01:21:04 -0300 (ADT)
+Received: from news.hub.org (unknown [64.117.224.194])
+	by svr1.postgresql.org (Postfix) with ESMTP id D9041D1B52E
+	for <pgsql-hackers@postgresql.org>; Fri, 10 Oct 2003 01:21:03 -0300 (ADT)
+Received: from news.hub.org (host-64-117-224-194.altec1.com [64.117.224.194] (may be forged))
+	by news.hub.org (8.12.9/8.12.9) with ESMTP id h9A4L3Qh008720
+	for <pgsql-hackers@postgresql.org>; Fri, 10 Oct 2003 04:21:03 GMT
+	(envelope-from news@news.hub.org)
+Received: (from news@localhost)
+	by news.hub.org (8.12.9/8.12.9/Submit) id h9A4CJ7w007607
+	for pgsql-hackers@postgresql.org; Fri, 10 Oct 2003 04:12:19 GMT
+X-Newsgroups: comp.databases.postgresql.hackers
+Subject: Re: [HACKERS] 2-phase commit
+References: <20031009160718.GC14394@libertyrms.info> <1065723448.1821.2288.camel@camel> <20031009204141.GS14394@libertyrms.info> <20031010.094635.104030040.t-ishii@sra.co.jp>
+From: Christopher Browne <cbbrowne@acm.org>
+X-message-flag: Outlook is rather hackable, isn't it?
+X-Home-Page: http://www.cbbrowne.com/info/
+X-Affero: http://svcs.affero.net/rm.php?r=cbbrowne
+Message-ID: <m31xtl4uk5.fsf@wolfe.cbbrowne.com>
+User-Agent: Gnus/5.1003 (Gnus v5.10.3) XEmacs/21.4 (Reasonable Discussion, linux)
+Cancel-Lock: sha1:Bu9MHyjwMgreAAWr2UkPGXHzz04=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Lines: 40
+Date: Thu, 09 Oct 2003 23:53:46 -0400
+X-Complaints-To: abuse@sympatico.ca
+Organization: Bell Sympatico
+To: pgsql-hackers@postgresql.org
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+The world rejoiced as t-ishii@sra.co.jp (Tatsuo Ishii) wrote:
+> I'm tired of this kind of "2PC is too slow" arguments. I think
+> Satoshi, the only guy who made a trial implementation of 2PC for
+> PostgreSQL, has already showed that 2PC is not that slow.
+
+I'm tired of it for a different reason, namely that there are "use
+cases" where speed is not _relevant_.  The REAL problem that is taking
+place is that people are talking past each other.
+
+- Some say, "It's too slow; no point in doing it."
+
+  The fact that it may be too slow _for them_ means they probably
+  shouldn't use it.  I somehow doubt that there are Vastly Faster
+  alternatives waiting in the wings.
+
+- The other problem that gets pointed out:  "2PC is inherently
+  fragile, and prone to deadlock."
+
+  Again, those that _need_ to use 2PC will forcibly need to address
+  those concerns in the way they manage their systems.
+
+  Those that can't afford the fragility are not 'customers' for use of
+  2PC.  And, pointing back to the speed controversy, it is not at all
+  obvious that there is any other alternative for handling distributed
+  processing that _totally addresses_ the concerns about fragility.
+
+Those that can't afford these costs associated with 2PC will simply
+Not Use It.
+
+Probably in much the same way that most people _aren't_ using
+replication.  And most people _aren't_ using PL/R.  And most people
+_aren't_ using any number of the contributed things.
+
+If 2PC gets implemented, that simply means that there will be another
+module that some will be interested in, and which many people won't
+bother using.  Which shouldn't seem to be a particularly big deal.
+-- 
+"aa454","@","freenet.carleton.ca"
+http://www.ntlug.org/~cbbrowne/
+The way to a man's heart is with a broadsword.
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M45350@postgresql.org Tue Oct 14 12:34:46 2003
+Return-path: <pgsql-hackers-owner+M45350@postgresql.org>
+Received: from svr5.postgresql.org (182.204.46.200.psinetpa.net [200.46.204.182] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9EGYid02191
+	for <pgman@candle.pha.pa.us>; Tue, 14 Oct 2003 12:34:45 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr5.postgresql.org (Postfix) with ESMTP
+	id 3DE8872EE24; Tue, 14 Oct 2003 16:33:48 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 4C2BAD1B541
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 10 Oct 2003 05:33:39 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 26706-05
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 10 Oct 2003 02:32:51 -0300 (ADT)
+Received: from mx-00.sil.at (mx-00.sil.at [62.116.68.196])
+	by svr1.postgresql.org (Postfix) with ESMTP id 274E4D1B517
+	for <pgsql-hackers@postgresql.org>; Fri, 10 Oct 2003 02:32:49 -0300 (ADT)
+Received: (qmail-ldap/ctrl 40676 invoked from network); 10 Oct 2003 05:32:48 -0000
+Received: from unknown (HELO waste.silverserver.co.at) ([194.152.178.7]) (envelope-sender <hs@cybertec.at>)
+          by mx-00.sil.at (qmail-ldap-1.03) with SMTP
+          for <pgsql-hackers@postgresql.org>; 10 Oct 2003 05:32:48 -0000
+Received: from cybertec.at (vie-213-129-225-105.async.sil.at [213.129.225.105])
+	by waste.silverserver.co.at (8.12.10/8.12.10) with ESMTP id h9A5WhNj032622;
+	Fri, 10 Oct 2003 07:32:44 +0200
+Message-ID: <3F86460B.6030905@cybertec.at>
+Date: Fri, 10 Oct 2003 07:39:23 +0200
+From: =?ISO-8859-1?Q?Hans-J=FCrgen_Sch=F6nig?= <hs@cybertec.at>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.0.1) Gecko/20020826
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: "Marc G. Fournier" <scrappy@postgresql.org>
+cc: Tatsuo Ishii <t-ishii@sra.co.jp>, andrew@libertyrms.info,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] 2-phase commit
+References: <20031009160718.GC14394@libertyrms.info> <1065723448.1821.2288.camel@camel> <20031009204141.GS14394@libertyrms.info> <20031010.094635.104030040.t-ishii@sra.co.jp> <20031009215935.S28590@ganymede.hub.org>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+>>I'm tired of this kind of "2PC is too slow" arguments. I think
+>>Satoshi, the only guy who made a trial implementation of 2PC for
+>>PostgreSQL, has already showed that 2PC is not that slow.
+> 
+> 
+> Where does Satoshi's implementation sit right now?  Will it patch to v7.4?
+> Can it provide us with a base to work from, or is it complete?
+
+
+It is not ready yet.
+You can find it at ...
+
+http://snaga.org/pgsql/
+
+It is based on 7.3
+
+     * the 2-phase commit protocol (precommit and commit)
+     * the multi-master replication using 2PC
+     * distributed transaction (distributed query)
+
+current work
+
+     * restarting (from 2nd phase) when the session is disconnected in 
+2nd phase (XLOG stuffs)
+     * XA compliance
+
+future work
+
+     * hot failover and recovery in PostgreSQL cluster
+     * data partitioning on different servers
+
+
+I have compiled it a while ago.
+Seems to be pretty nice :).
+
+	Hans
+
+
+-- 
+Cybertec Geschwinde u Schoenig
+Ludo-Hartmannplatz 1/14, A-1160 Vienna, Austria
+Tel: +43/2952/30706 or +43/660/816 40 77
+www.cybertec.at, www.postgresql.at, kernel.cybertec.at
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M45361@postgresql.org Tue Oct 14 12:36:29 2003
+Return-path: <pgsql-hackers-owner+M45361@postgresql.org>
+Received: from svr5.postgresql.org (182.204.46.200.psinetpa.net [200.46.204.182] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9EGaOd02587
+	for <pgman@candle.pha.pa.us>; Tue, 14 Oct 2003 12:36:27 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr5.postgresql.org (Postfix) with ESMTP
+	id DE0D872EF5B; Tue, 14 Oct 2003 16:35:20 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 1E506D1B528
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 10 Oct 2003 05:41:53 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 33519-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 10 Oct 2003 02:41:05 -0300 (ADT)
+Received: from mx-00.sil.at (mx-00.sil.at [62.116.68.196])
+	by svr1.postgresql.org (Postfix) with ESMTP id 15845D1B541
+	for <pgsql-hackers@postgresql.org>; Fri, 10 Oct 2003 02:41:00 -0300 (ADT)
+Received: (qmail-ldap/ctrl 41629 invoked from network); 10 Oct 2003 05:40:59 -0000
+Received: from unknown (HELO waste.silverserver.co.at) ([194.152.178.7]) (envelope-sender <hs@cybertec.at>)
+          by mx-00.sil.at (qmail-ldap-1.03) with SMTP
+          for <pgsql-hackers@postgresql.org>; 10 Oct 2003 05:40:59 -0000
+Received: from cybertec.at (vie-213-129-225-110.async.sil.at [213.129.225.110])
+	by waste.silverserver.co.at (8.12.10/8.12.10) with ESMTP id h9A5etNj000228;
+	Fri, 10 Oct 2003 07:40:56 +0200
+Message-ID: <3F8647F7.7000509@cybertec.at>
+Date: Fri, 10 Oct 2003 07:47:35 +0200
+From: =?ISO-8859-1?Q?Hans-J=FCrgen_Sch=F6nig?= <hs@cybertec.at>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.0.1) Gecko/20020826
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Peter Eisentraut <peter_e@gmx.net>,
+   Andrew Sullivan <andrew@libertyrms.info>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] 2-phase commit
+References: <200310091442.h99Eg3R29404@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+>>Why would you spent time on implementing a mechanism whose ultimate
+>>benefit is supposed to be increasing reliability and performance, when you
+>>already realize that it will have to lock up at the slightest sight of
+>>trouble?  There are better mechanisms out there that you can use instead.
+> 
+> 
+> If you want cross-server transactions, what other methods are there that
+> are more reliable?  It seems network unreliability is going to be a
+> problem no matter what method you use.
+> 
+
+
+I guess we need something like PITR to make this work because otherwise 
+I cannot see a way to get in sync again.
+Maybe I should call the desired mechanism "Entire cluster back to 
+transaction X recovery".
+Did anybody hear about PITR recently?
+
+How else would you recover from any kind of problem?
+No matter what you are doing network reliability will be a problem so we 
+have to live with it.
+Having some "going back to something consistent" is necessary anyway.
+People might argue now that committed transactions might be lost. If 
+people knew which ones, its ok. 90% of all people will understand that 
+in case of a crash something evil might happen.
+
+	Hans
+
+-- 
+Cybertec Geschwinde u Schoenig
+Ludo-Hartmannplatz 1/14, A-1160 Vienna, Austria
+Tel: +43/2952/30706 or +43/660/816 40 77
+www.cybertec.at, www.postgresql.at, kernel.cybertec.at
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: the planner will ignore your desire to choose an index scan if your
+      joining column's datatypes do not match
+
+From pgsql-hackers-owner+M45354@postgresql.org Tue Oct 14 12:35:50 2003
+Return-path: <pgsql-hackers-owner+M45354@postgresql.org>
+Received: from svr4.postgresql.org (70.204.46.200.psinetpa.net [200.46.204.70] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9EGZmd02374
+	for <pgman@candle.pha.pa.us>; Tue, 14 Oct 2003 12:35:49 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr4.postgresql.org (Postfix) with ESMTP
+	id A59181CB4CC8; Tue, 14 Oct 2003 16:35:03 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3AFC7D1B4E2
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Sun, 12 Oct 2003 15:41:02 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 87949-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Sun, 12 Oct 2003 12:40:28 -0300 (ADT)
+Received: from main.gmane.org (main.gmane.org [80.91.224.249])
+	by svr1.postgresql.org (Postfix) with ESMTP id C8021D1B4EF
+	for <pgsql-hackers@postgresql.org>; Sun, 12 Oct 2003 12:40:11 -0300 (ADT)
+Received: from root by main.gmane.org with local (Exim 3.35 #1 (Debian))
+	id 1A8iKO-0003GE-00
+	for <pgsql-hackers@postgresql.org>; Sun, 12 Oct 2003 17:40:16 +0200
+X-Injected-Via-Gmane: http://gmane.org/
+To: pgsql-hackers@postgresql.org
+Received: from sea.gmane.org ([80.91.224.252])
+	by main.gmane.org with esmtp (Exim 3.35 #1 (Debian))
+	id 1A7sHs-0001ff-00
+	for <gmane-comp-db-postgresql-devel-general@m.gmane.org>; Fri, 10 Oct 2003 10:06:12 +0200
+Received: from news by sea.gmane.org with local (Exim 3.35 #1 (Debian))
+	id 1A7sHs-0006Wa-00
+	for <gmane-comp-db-postgresql-devel-general@m.gmane.org>; Fri, 10 Oct 2003 10:06:12 +0200
+From: Heikki Linnakangas <hlinnaka@iki.fi>
+Subject: Re: [HACKERS] 2-phase commit
+Date: Fri, 10 Oct 2003 11:06:11 +0300
+Lines: 13
+Message-ID: <Pine.OSF.4.58.0310101101400.188711@kosh.hut.fi>
+References: <20031010.094635.104030040.t-ishii@sra.co.jp>
+	<200310100053.h9A0rkl23681@candle.pha.pa.us>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Complaints-To: usenet@sea.gmane.org
+X-X-Sender: hlinnaka@kosh.hut.fi
+In-Reply-To: <200310100053.h9A0rkl23681@candle.pha.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Thu, 9 Oct 2003, Bruce Momjian wrote:
+
+> Agreed.  Let's get it into 7.5 and see it in action.  If we need to
+> adjust it, we can, but right now, we need something for distributed
+> transactions, and this seems like the logical direction.
+
+I've started working on two-phase commits last week, and the very
+basic stuff is now working. Still a lot of bugs though.
+
+I posted the stuff I've put together to patches-list. I'd appreciate any
+comments.
+
+- Heikki
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From pgsql-hackers-owner+M45235@postgresql.org Fri Oct 10 15:27:57 2003
+Return-path: <pgsql-hackers-owner+M45235@postgresql.org>
+Received: from svr4.postgresql.org (svr4.postgresql.org [64.117.224.192])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9AJRud06174
+	for <pgman@candle.pha.pa.us>; Fri, 10 Oct 2003 15:27:57 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr4.postgresql.org (Postfix) with ESMTP
+	id E57971CB4834; Fri, 10 Oct 2003 19:27:46 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id E3E14D1B502
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 10 Oct 2003 19:27:28 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 91104-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 10 Oct 2003 16:26:40 -0300 (ADT)
+Received: from ns1.oak.forus.or.jp (ns1.oak.forus.or.jp [210.190.22.53])
+	by svr1.postgresql.org (Postfix) with ESMTP id D3222D1B528
+	for <pgsql-hackers@postgresql.org>; Fri, 10 Oct 2003 16:26:36 -0300 (ADT)
+Received: from athena (W173177.ppp.dion.ne.jp [210.198.173.177])
+	by ns1.oak.forus.or.jp (8.12.8p1/8.11.3) with SMTP id h9B4dDdV008901;
+	Sat, 11 Oct 2003 13:39:14 +0900
+Date: Sat, 11 Oct 2003 04:26:26 +0900
+From: Satoshi Nagayasu <pgsql@snaga.org>
+To: Andrew Sullivan <andrew@libertyrms.info>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] 2-phase commit
+Message-ID: <20031011042626.6019bff2.pgsql@snaga.org>
+In-Reply-To: <20031010190255.GT16336@libertyrms.info>
+References: <20031009160718.GC14394@libertyrms.info>
+	<1065723448.1821.2288.camel@camel>
+	<20031009204141.GS14394@libertyrms.info>
+	<20031010.094635.104030040.t-ishii@sra.co.jp>
+	<20031010190255.GT16336@libertyrms.info>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+Andrew Sullivan <andrew@libertyrms.info> wrote:
+> On Fri, Oct 10, 2003 at 09:46:35AM +0900, Tatsuo Ishii wrote:
+> > Satoshi, the only guy who made a trial implementation of 2PC for
+> > PostgreSQL, has already showed that 2PC is not that slow.
+> 
+> If someone has a fast implementation, so much the better.  I'm not
+> opposed to fast implementations! 
+
+The pgbench results of my experimental 2PC implementation
+and plain postgresql are available.
+
+PostgreSQL 7.3
+  http://snaga.org/pgsql/pgbench/pgbench-REL7_3.log
+
+Experimental 2PC in PostgreSQL 7.3
+  http://snaga.org/pgsql/pgbench/pgbench-TPC0_0_2.log
+
+I can't see a grave overhead from this comparison.
+
+> 
+> A
+> 
+> -- 
+> ----
+> Andrew Sullivan                         204-4141 Yonge Street
+> Afilias Canada                        Toronto, Ontario Canada
+> <andrew@libertyrms.info>                              M2P 2A8
+>                                          +1 416 646 3304 x110
+> 
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 8: explain analyze is your friend
+> 
+
+
+-- 
+NAGAYASU Satoshi <snaga@snaga.org>
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+               http://archives.postgresql.org
+
+From pgsql-hackers-owner+M45240@postgresql.org Fri Oct 10 18:29:40 2003
+Return-path: <pgsql-hackers-owner+M45240@postgresql.org>
+Received: from svr4.postgresql.org (svr4.postgresql.org [64.117.224.192])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9AMTdd18233
+	for <pgman@candle.pha.pa.us>; Fri, 10 Oct 2003 18:29:40 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr4.postgresql.org (Postfix) with ESMTP
+	id 504471CB4652; Fri, 10 Oct 2003 22:29:32 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 4DADED1B53E
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 10 Oct 2003 22:29:13 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 15392-08
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 10 Oct 2003 19:28:29 -0300 (ADT)
+Received: from voyager.corporate.connx.com (voyager.corporate.connx.com [65.212.159.131])
+	by svr1.postgresql.org (Postfix) with ESMTP id A857CD1B4E9
+	for <pgsql-hackers@postgresql.org>; Fri, 10 Oct 2003 19:28:25 -0300 (ADT)
+Content-Class: urn:content-classes:message
+Subject: Re: [HACKERS] 2-phase commit
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Date: Fri, 10 Oct 2003 15:28:05 -0700
+Message-ID: <D90A5A6C612A39408103E6ECDD77B829408BF2@voyager.corporate.connx.com>
+X-MimeOLE: Produced By Microsoft Exchange V6.0.6249.0
+Thread-Topic: [HACKERS] 2-phase commit
+Thread-Index: AcOPezZr87PXbIlLRH6225JV2yf6zgAAc1Ig
+From: "Dann Corbit" <DCorbit@connx.com>
+To: "Satoshi Nagayasu" <pgsql@snaga.org>,
+   "Andrew Sullivan" <andrew@libertyrms.info>
+cc: <pgsql-hackers@postgresql.org>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id h9AMTdd18233
+Status: OR
+
+> -----Original Message-----
+> From: Satoshi Nagayasu [mailto:pgsql@snaga.org] 
+> Sent: Friday, October 10, 2003 12:26 PM
+> To: Andrew Sullivan
+> Cc: pgsql-hackers@postgresql.org
+> Subject: Re: [HACKERS] 2-phase commit
+> 
+> Andrew Sullivan <andrew@libertyrms.info> wrote:
+> > On Fri, Oct 10, 2003 at 09:46:35AM +0900, Tatsuo Ishii wrote:
+> > > Satoshi, the only guy who made a trial implementation of 2PC for 
+> > > PostgreSQL, has already showed that 2PC is not that slow.
+> > 
+> > If someone has a fast implementation, so much the better.  I'm not 
+> > opposed to fast implementations!
+> 
+> The pgbench results of my experimental 2PC implementation
+> and plain postgresql are available.
+> 
+> PostgreSQL 7.3
+>   http://snaga.org/pgsql/pgbench/pgbench-REL7_3.log
+> 
+> Experimental 2PC in PostgreSQL 7.3
+>   http://snaga.org/pgsql/pgbench/pgbench-TPC0_0_2.log
+> 
+> I can't see a grave overhead from this comparison.
+
+2PC is absolutely essential when you have to have both parts of the
+transaction complete for a logical unit of work.  For a project that
+needs it, if you don't have it you will be forced to go to another tool,
+or perform lots of custom programming to work around it.
+
+If you have 2PC and it is ten times slower than without it, you will
+still need it for projects requiring that capability.
+
+Now, a good model to start with is a very good idea.  So some discussion
+and analysis is a good thing.  From the looks of it, Satoshi Nagayasu
+has done a very good job.  Having a functional 2PC would be a huge
+feather in the cap of PostgreSQL.
+
+IMO-YMMV
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M45242@postgresql.org Fri Oct 10 23:22:31 2003
+Return-path: <pgsql-hackers-owner+M45242@postgresql.org>
+Received: from svr5.postgresql.org (svr5.postgresql.org [64.117.225.181])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9B3MUd13414
+	for <pgman@candle.pha.pa.us>; Fri, 10 Oct 2003 23:22:30 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr5.postgresql.org (Postfix) with ESMTP
+	id 9C48072DCAF; Sat, 11 Oct 2003 03:22:23 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 547CED1B55D
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Sat, 11 Oct 2003 03:21:58 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 74332-03
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Sat, 11 Oct 2003 00:21:15 -0300 (ADT)
+Received: from news.hub.org (unknown [64.117.224.194])
+	by svr1.postgresql.org (Postfix) with ESMTP id EB54CD1B51D
+	for <pgsql-hackers@postgresql.org>; Sat, 11 Oct 2003 00:21:10 -0300 (ADT)
+Received: from news.hub.org (host-64-117-224-194.altec1.com [64.117.224.194] (may be forged))
+	by news.hub.org (8.12.9/8.12.9) with ESMTP id h9B3LAQh017763
+	for <pgsql-hackers@postgresql.org>; Sat, 11 Oct 2003 03:21:10 GMT
+	(envelope-from news@news.hub.org)
+Received: (from news@localhost)
+	by news.hub.org (8.12.9/8.12.9/Submit) id h9B3JDdq017363
+	for pgsql-hackers@postgresql.org; Sat, 11 Oct 2003 03:19:13 GMT
+X-Newsgroups: comp.databases.postgresql.hackers
+Subject: Re: [HACKERS] 2-phase commit
+References: <D90A5A6C612A39408103E6ECDD77B829408BF2@voyager.corporate.connx.com>
+From: Christopher Browne <cbbrowne@acm.org>
+X-message-flag: Outlook is rather hackable, isn't it?
+X-Home-Page: http://www.cbbrowne.com/info/
+X-Affero: http://svcs.affero.net/rm.php?r=cbbrowne
+Message-ID: <m3u16gzdp4.fsf@wolfe.cbbrowne.com>
+User-Agent: Gnus/5.1003 (Gnus v5.10.3) XEmacs/21.4 (Reasonable Discussion, linux)
+Cancel-Lock: sha1:YeipjZkXVBbpujQ/QjmB13rksFQ=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Lines: 52
+Date: Fri, 10 Oct 2003 22:54:31 -0400
+X-Complaints-To: abuse@sympatico.ca
+Organization: Bell Sympatico
+To: pgsql-hackers@postgresql.org
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Martha Stewart called it a Good Thing whenDCorbit@connx.com ("Dann Corbit")wrote:
+>> I can't see a grave overhead from this comparison.
+>
+> 2PC is absolutely essential when you have to have both parts of the
+> transaction complete for a logical unit of work.  For a project that
+> needs it, if you don't have it you will be forced to go to another
+> tool, or perform lots of custom programming to work around it.
+>
+> If you have 2PC and it is ten times slower than without it, you will
+> still need it for projects requiring that capability.
+
+Just so.
+
+I would be completely unsurprised if an attempt to use 2PC to support
+generalized "multimaster replication" would involve 10-fold slowdowns
+as compared to having all the activity take place on one database.
+
+Which would imply that 2PC is not a tool that may be appropriately
+used to naively do replication.  But that should not come as any grand
+surprise.
+
+To each tool the right job, and to each job the right tool...
+
+There seems to be enough room for there to be evidence both of 2PC
+being useful for improving performance, and for it to cut
+performance:
+
+ - TPC benchmarks often specify the inclusion of Tuxedo as a
+   component; the combination of vendors would surely NOT put it
+   on the list if it were not an aid to performance;
+
+ - There is also indication that there can be a cost, notably in the
+   form of the concerns of deadlock, but it should also be obvious
+   that slow network links would lead to _hideous_ increases in
+   latency.
+
+As you say, even if there is a substantial cost, it's still worthwhile
+if a project needs it.
+
+> Now, a good model to start with is a very good idea.  So some
+> discussion and analysis is a good thing.  From the looks of it,
+> Satoshi Nagayasu has done a very good job.  Having a functional 2PC
+> would be a huge feather in the cap of PostgreSQL.
+
+It would seem so.  I look forward to seeing how this progresses.
+-- 
+wm(X,Y):-write(X),write('@'),write(Y). wm('cbbrowne','acm.org').
+http://cbbrowne.com/info/linuxdistributions.html
+"XFS might  (or might not)  come out before  the year 3000.  As far as
+kernel patches go,  SGI are brilliant.  As far as graphics, especially
+OpenGL,  go,  SGI is  untouchable.  As  far as   filing  systems go, a
+concussed doormouse in a tarpit would move faster."  -- jd on Slashdot
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
+From pgsql-hackers-owner+M45243@postgresql.org Sat Oct 11 00:39:02 2003
+Return-path: <pgsql-hackers-owner+M45243@postgresql.org>
+Received: from svr5.postgresql.org (svr5.postgresql.org [64.117.225.181])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9B4d0d19644
+	for <pgman@candle.pha.pa.us>; Sat, 11 Oct 2003 00:39:01 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr5.postgresql.org (Postfix) with ESMTP
+	id 141E272E6B5; Sat, 11 Oct 2003 04:38:54 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 90A3AD1B4E3
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Sat, 11 Oct 2003 04:38:35 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 76273-09
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Sat, 11 Oct 2003 01:37:54 -0300 (ADT)
+Received: from voyager.corporate.connx.com (voyager.corporate.connx.com [65.212.159.131])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0C599D1B4FE
+	for <pgsql-hackers@postgresql.org>; Sat, 11 Oct 2003 01:37:49 -0300 (ADT)
+Content-Class: urn:content-classes:message
+Subject: Re: [HACKERS] 2-phase commit
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Date: Fri, 10 Oct 2003 21:37:53 -0700
+X-MimeOLE: Produced By Microsoft Exchange V6.0.6249.0
+Message-ID: <D90A5A6C612A39408103E6ECDD77B8294CE1EC@voyager.corporate.connx.com>
+Thread-Topic: [HACKERS] 2-phase commit
+Thread-Index: AcOPp2jLw1yNPbdnRFGP5HwssCpXCwACbcFw
+From: "Dann Corbit" <DCorbit@connx.com>
+To: "Christopher Browne" <cbbrowne@acm.org>, <pgsql-hackers@postgresql.org>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id h9B4d0d19644
+Status: OR
+
+Why not apply the effort to something already done and compatibly
+licensed?
+
+This:
+http://dog.intalio.com/ots.html
+
+Appears to be a Berkeley style licensed:
+http://dog.intalio.com/license.html
+
+Transaction monitor.
+
+"Overview
+The OpenORB Transaction Service is a very scalable transaction monitor
+which also provides several extensions like XA management, a management
+interface to control all transaction processes and a high reliable
+recovery system. 
+
+By coordinating OpenORB and OpenORB Transaction Service, you provide a
+reliable and powerful foundation for building large scalable distributed
+applications. 
+
+Datasheet
+The OpenORB Transaction Service is a fully compliant implementation of
+the OMG Transaction Service specification. 
+The OpenORB Transaction Service features are :  
+  Management of distributed transactions with a two phase commit
+protocol 
+ Sub Transactions management ( nested transactions ) 
+ Propagation of the transaction context between CORBA objects 
+ Management of distributed transactions propagation through databases
+with the XA protocol 
+ Automatic logs to be able to make recovery in case of failures 
+ Can be used as a transaction initiator or subordinate 
+ High-performance, multiple thread architecture 
+ Developed with POA 
+ Provides a management interface to control all transactions 
+ Full support of JTA 
+ JDBC pooling and automatic resource enlistment 
+
+
+Download
+To download the OpenORB Transaction Service, do one of the following :  
+  CVS : you can use CVS to grab the sources directly.  
+ FTP : you get either a CVS snapshot or a prebuilt version 
+To use one of these possibilities, go to the Download Services page. 
+
+ChangeLog
+August 15th 2001. Version 1.2.0.  
+  Changed the transaction client side to support late binding to the
+transaction monitor. 
+ Bug fixed in the transactional client interceptor. This bug was due to
+a change in the OpenORB behavior concerning the slot 
+
+
+To get previous change log, please refer to the CHANGELOG file available
+within this service distribution."
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M45244@postgresql.org Sat Oct 11 01:23:16 2003
+Return-path: <pgsql-hackers-owner+M45244@postgresql.org>
+Received: from svr5.postgresql.org (svr5.postgresql.org [64.117.225.181])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9B5NFd23659
+	for <pgman@candle.pha.pa.us>; Sat, 11 Oct 2003 01:23:15 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr5.postgresql.org (Postfix) with ESMTP
+	id A052972E6E6; Sat, 11 Oct 2003 05:23:07 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 7E090D1B4E1
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Sat, 11 Oct 2003 05:22:45 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 87418-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Sat, 11 Oct 2003 02:22:03 -0300 (ADT)
+Received: from voyager.corporate.connx.com (voyager.corporate.connx.com [65.212.159.131])
+	by svr1.postgresql.org (Postfix) with ESMTP id 1756CD1B4FC
+	for <pgsql-hackers@postgresql.org>; Sat, 11 Oct 2003 02:21:58 -0300 (ADT)
+Content-Class: urn:content-classes:message
+Subject: Re: [HACKERS] 2-phase commit
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Date: Fri, 10 Oct 2003 22:22:03 -0700
+X-MimeOLE: Produced By Microsoft Exchange V6.0.6249.0
+Message-ID: <D90A5A6C612A39408103E6ECDD77B8294CE1EE@voyager.corporate.connx.com>
+Thread-Topic: [HACKERS] 2-phase commit
+Thread-Index: AcOPp2jLw1yNPbdnRFGP5HwssCpXCwACbcFwAAGb7AA=
+From: "Dann Corbit" <DCorbit@connx.com>
+To: "Dann Corbit" <DCorbit@connx.com>, "Christopher Browne" <cbbrowne@acm.org>,
+   <pgsql-hackers@postgresql.org>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id h9B5NFd23659
+Status: OR
+
+Here is a sourceforge version of the same thing
+http://openorb.sourceforge.net/
+
+> -----Original Message-----
+> From: Dann Corbit 
+> Sent: Friday, October 10, 2003 9:38 PM
+> To: Christopher Browne; pgsql-hackers@postgresql.org
+> Subject: Re: [HACKERS] 2-phase commit
+> 
+> 
+> Why not apply the effort to something already done and 
+> compatibly licensed?
+> 
+> This:
+> http://dog.intalio.com/ots.html
+> 
+> Appears to be a Berkeley style licensed: 
+> http://dog.intalio.com/license.html
+> 
+> Transaction monitor.
+> 
+> "Overview
+> The OpenORB Transaction Service is a very scalable 
+> transaction monitor which also provides several extensions 
+> like XA management, a management interface to control all 
+> transaction processes and a high reliable recovery system. 
+> 
+> By coordinating OpenORB and OpenORB Transaction Service, you 
+> provide a reliable and powerful foundation for building large 
+> scalable distributed applications. 
+> 
+> Datasheet
+> The OpenORB Transaction Service is a fully compliant 
+> implementation of the OMG Transaction Service specification. 
+> The OpenORB Transaction Service features are :  
+>   Management of distributed transactions with a two phase 
+> commit protocol 
+>  Sub Transactions management ( nested transactions ) 
+>  Propagation of the transaction context between CORBA objects 
+>  Management of distributed transactions propagation through 
+> databases with the XA protocol 
+>  Automatic logs to be able to make recovery in case of failures 
+>  Can be used as a transaction initiator or subordinate 
+>  High-performance, multiple thread architecture 
+>  Developed with POA 
+>  Provides a management interface to control all transactions 
+>  Full support of JTA 
+>  JDBC pooling and automatic resource enlistment 
+> 
+> 
+> Download
+> To download the OpenORB Transaction Service, do one of the 
+> following :  
+>   CVS : you can use CVS to grab the sources directly.  
+>  FTP : you get either a CVS snapshot or a prebuilt version 
+> To use one of these possibilities, go to the Download Services page. 
+> 
+> ChangeLog
+> August 15th 2001. Version 1.2.0.  
+>   Changed the transaction client side to support late binding 
+> to the transaction monitor. 
+>  Bug fixed in the transactional client interceptor. This bug 
+> was due to a change in the OpenORB behavior concerning the slot 
+> 
+> 
+> To get previous change log, please refer to the CHANGELOG 
+> file available within this service distribution."
+> 
+> ---------------------------(end of 
+> broadcast)---------------------------
+> TIP 5: Have you checked our extensive FAQ?
+> 
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: the planner will ignore your desire to choose an index scan if your
+      joining column's datatypes do not match
+
+From pgsql-hackers-owner+M45247@postgresql.org Sat Oct 11 08:38:03 2003
+Return-path: <pgsql-hackers-owner+M45247@postgresql.org>
+Received: from svr4.postgresql.org (svr4.postgresql.org [64.117.224.192])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9BCc1d20782
+	for <pgman@candle.pha.pa.us>; Sat, 11 Oct 2003 08:38:01 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr4.postgresql.org (Postfix) with ESMTP
+	id E4FAE1CB46A9; Sat, 11 Oct 2003 12:37:48 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 8A364D1B4EF
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Sat, 11 Oct 2003 12:37:37 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 48999-05
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Sat, 11 Oct 2003 09:36:55 -0300 (ADT)
+Received: from smtpzilla2.xs4all.nl (smtpzilla2.xs4all.nl [194.109.127.138])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0F175D1B4E1
+	for <pgsql-hackers@postgresql.org>; Sat, 11 Oct 2003 09:36:47 -0300 (ADT)
+Received: from xs1.xs4all.nl (xs1.xs4all.nl [194.109.3.11])
+	by smtpzilla2.xs4all.nl (8.12.9/8.12.9) with ESMTP id h9BCaQMW052048;
+	Sat, 11 Oct 2003 14:36:30 +0200 (CEST)
+Received: from xs1.xs4all.nl (jtv@localhost.xs4all.nl [127.0.0.1])
+	by xs1.xs4all.nl (8.12.10/8.12.9) with ESMTP id h9BCaPpX097890;
+	Sat, 11 Oct 2003 14:36:25 +0200 (CEST)
+	(envelope-from jtv@xs4all.nl)
+Received: (from jtv@localhost)
+	by xs1.xs4all.nl (8.12.10/8.12.9/Submit) id h9BCaPPT097880;
+	Sat, 11 Oct 2003 14:36:25 +0200 (CEST)
+	(envelope-from jtv)
+Date: Sat, 11 Oct 2003 14:36:25 +0200
+From: "Jeroen T. Vermeulen" <jtv@xs4all.nl>
+To: Dann Corbit <DCorbit@connx.com>
+cc: Christopher Browne <cbbrowne@acm.org>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] 2-phase commit
+Message-ID: <20031011123624.GA97612@xs4all.nl>
+Mail-Followup-To: Dann Corbit <DCorbit@connx.com>,
+	Christopher Browne <cbbrowne@acm.org>, pgsql-hackers@postgresql.org
+References: <D90A5A6C612A39408103E6ECDD77B8294CE1EC@voyager.corporate.connx.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <D90A5A6C612A39408103E6ECDD77B8294CE1EC@voyager.corporate.connx.com>
+User-Agent: Mutt/1.4.1i
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Fri, Oct 10, 2003 at 09:37:53PM -0700, Dann Corbit wrote:
+> Why not apply the effort to something already done and compatibly
+> licensed?
+> 
+> This:
+> http://dog.intalio.com/ots.html
+> 
+> Appears to be a Berkeley style licensed:
+> http://dog.intalio.com/license.html
+> 
+> Transaction monitor.
+
+I'd say this is complementary, not an alternative to 2PC implementation
+issues.  
+
+The transaction monitor lives on the other side of the problem.  2PC is
+needed in the database _so that_ the transaction monitor can do its job.
+
+That said, having a 3-tier model is probably a good idea if distributed
+transaction management is what we want.  :-)
+
+
+Jeroen
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M45298@postgresql.org Mon Oct 13 15:55:48 2003
+Return-path: <pgsql-hackers-owner+M45298@postgresql.org>
+Received: from www.postgresql.com (209.204.46.200.psinetpa.net [200.46.204.209] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9DJtkd05408
+	for <pgman@candle.pha.pa.us>; Mon, 13 Oct 2003 15:55:47 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by www.postgresql.com (Postfix) with ESMTP
+	id B7324CF5197; Mon, 13 Oct 2003 16:55:34 -0300 (ADT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id CCFF7D1B4FE
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 13 Oct 2003 19:55:32 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 16288-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 13 Oct 2003 16:55:01 -0300 (ADT)
+Received: from voyager.corporate.connx.com (voyager.corporate.connx.com [65.212.159.131])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0636BD1B532
+	for <pgsql-hackers@postgresql.org>; Mon, 13 Oct 2003 16:54:58 -0300 (ADT)
+Content-Class: urn:content-classes:message
+Subject: Re: [HACKERS] 2-phase commit
+Date: Mon, 13 Oct 2003 12:54:53 -0700
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Message-ID: <D90A5A6C612A39408103E6ECDD77B829408BF5@voyager.corporate.connx.com>
+X-MimeOLE: Produced By Microsoft Exchange V6.0.6249.0
+Thread-Topic: [HACKERS] 2-phase commit
+Thread-Index: AcOP9Fpw1EtLlhHkTKKwePp/YkaQTgBzmnCQ
+From: "Dann Corbit" <DCorbit@connx.com>
+To: "Jeroen T. Vermeulen" <jtv@xs4all.nl>
+cc: "Christopher Browne" <cbbrowne@acm.org>, <pgsql-hackers@postgresql.org>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id h9DJtkd05408
+Status: OR
+
+> -----Original Message-----
+> From: Jeroen T. Vermeulen [mailto:jtv@xs4all.nl] 
+> Sent: Saturday, October 11, 2003 5:36 AM
+> To: Dann Corbit
+> Cc: Christopher Browne; pgsql-hackers@postgresql.org
+> Subject: Re: [HACKERS] 2-phase commit
+> 
+> 
+> On Fri, Oct 10, 2003 at 09:37:53PM -0700, Dann Corbit wrote:
+> > Why not apply the effort to something already done and compatibly 
+> > licensed?
+> > 
+> > This:
+> > http://dog.intalio.com/ots.html
+> > 
+> > Appears to be a Berkeley style licensed: 
+> > http://dog.intalio.com/license.html
+> > 
+> > Transaction monitor.
+> 
+> I'd say this is complementary, not an alternative to 2PC 
+> implementation issues.  
+
+My notion is that the specification has been created that describes how
+the system should operate, what the API's are, etc.  I think that most
+of the work is involved in that area.  The notion is that if you program
+to this spec, it will already have been well thought out and it should
+be standards based when completed.
+ 
+> The transaction monitor lives on the other side of the 
+> problem.  2PC is needed in the database _so that_ the 
+> transaction monitor can do its job.
+
+Theoretically, if any database in the chain supports 2PC, you could make
+all connected systems 2PC compliant by using the one functional system
+as a persistent store.  But you are right.  PostgreSQL still would need
+the "I promise to commit when you ask" method if it is to really support
+it.
+
+I think another way it could be handled is with nested transactions.
+Just have the promise phase be an inner transaction commit but have an
+outer transaction bracket that one for the actual commit.
+ 
+> That said, having a 3-tier model is probably a good idea if 
+> distributed transaction management is what we want.  :-)
+
+In real life, I think it is _always_ done this way.
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M45310@postgresql.org Mon Oct 13 20:18:25 2003
+Return-path: <pgsql-hackers-owner+M45310@postgresql.org>
+Received: from www.postgresql.com (209.204.46.200.psinetpa.net [200.46.204.209] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9E0IMd02430
+	for <pgman@candle.pha.pa.us>; Mon, 13 Oct 2003 20:18:23 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by www.postgresql.com (Postfix) with ESMTP
+	id 16454CF7280; Mon, 13 Oct 2003 21:18:12 -0300 (ADT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id F411ED1B538
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 14 Oct 2003 00:18:09 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 73033-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 13 Oct 2003 21:17:39 -0300 (ADT)
+Received: from mail.hive.nj2.inquent.com (mc.carriermail.com [205.178.180.9])
+	by svr1.postgresql.org (Postfix) with SMTP id BA9E8D1B575
+	for <pgsql-hackers@postgresql.org>; Mon, 13 Oct 2003 21:17:37 -0300 (ADT)
+Received: (qmail 6743 invoked from network); 14 Oct 2003 00:10:32 -0000
+Received: from unknown (HELO ?192.168.1.199?) (134.22.69.154)
+  by 205.178.180.9 with SMTP; 14 Oct 2003 00:10:32 -0000
+Subject: Re: [HACKERS] 2-phase commit
+From: Rod Taylor <rbt@rbt.ca>
+To: Dann Corbit <DCorbit@connx.com>
+cc: "Jeroen T. Vermeulen" <jtv@xs4all.nl>,
+   Christopher Browne <cbbrowne@acm.org>,
+   PostgreSQL Development <pgsql-hackers@postgresql.org>
+In-Reply-To: <D90A5A6C612A39408103E6ECDD77B829408BF5@voyager.corporate.connx.com>
+References:  <D90A5A6C612A39408103E6ECDD77B829408BF5@voyager.corporate.connx.com>
+Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-b4H+7106Ap3EF98tkvjh"
+Message-ID: <1066090267.46588.14.camel@jester>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 13 Oct 2003 20:11:08 -0400
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+--=-b4H+7106Ap3EF98tkvjh
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
+
+> I think another way it could be handled is with nested transactions.
+> Just have the promise phase be an inner transaction commit but have an
+> outer transaction bracket that one for the actual commit.
+
+Not really. In the event of a crash, most 2PC systems will expect the
+participant to come back in the same state it crashed in.
+
+Our nested-transaction implementation (like our standard transaction
+implementation) aborts all transactions on crash.
+
+--=-b4H+7106Ap3EF98tkvjh
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.3 (FreeBSD)
+
+iD8DBQA/iz8a6DETLow6vwwRAs9mAJ0VLew5oH18eL/7BArqWj0H7pYJAwCePLbQ
+hpvlKlmUIzIA38T5R62+Ts8=
+=xuTB
+-----END PGP SIGNATURE-----
+
+--=-b4H+7106Ap3EF98tkvjh--
+
+From pgsql-hackers-owner+M45319@postgresql.org Mon Oct 13 22:15:41 2003
+Return-path: <pgsql-hackers-owner+M45319@postgresql.org>
+Received: from svr4.postgresql.org (70.204.46.200.psinetpa.net [200.46.204.70] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9E2Fbd17197
+	for <pgman@candle.pha.pa.us>; Mon, 13 Oct 2003 22:15:38 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr4.postgresql.org (Postfix) with ESMTP
+	id B2DC01CB4910; Tue, 14 Oct 2003 02:15:27 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 22899D1B538
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 14 Oct 2003 02:15:24 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 92845-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 13 Oct 2003 23:14:54 -0300 (ADT)
+Received: from snipe.mail.pas.earthlink.net (snipe.mail.pas.earthlink.net [207.217.120.62])
+	by svr1.postgresql.org (Postfix) with ESMTP id 6C8F3D1B515
+	for <pgsql-hackers@postgresql.org>; Mon, 13 Oct 2003 23:14:52 -0300 (ADT)
+Received: from dialup-65.58.151.117.dial1.pittsburgh1.level3.net ([65.58.151.117])
+	by snipe.mail.pas.earthlink.net with esmtp (Exim 3.33 #1)
+	id 1A9Ehw-0004TJ-00; Mon, 13 Oct 2003 19:14:45 -0700
+From: Jordan Henderson <jordan_henders@yahoo.com>
+To: Rod Taylor <rbt@rbt.ca>, Dann Corbit <DCorbit@connx.com>
+Subject: Re: [HACKERS] 2-phase commit
+Date: Mon, 13 Oct 2003 22:13:53 -0400
+User-Agent: KMail/1.5.3
+cc: "Jeroen T. Vermeulen" <jtv@xs4all.nl>,
+   Christopher Browne <cbbrowne@acm.org>,
+   PostgreSQL Development <pgsql-hackers@postgresql.org>
+References: <D90A5A6C612A39408103E6ECDD77B829408BF5@voyager.corporate.connx.com> <1066090267.46588.14.camel@jester>
+In-Reply-To: <1066090267.46588.14.camel@jester>
+MIME-Version: 1.0
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+Message-ID: <200310132213.53751.jordan_henders@yahoo.com>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Monday 13 October 2003 20:11, Rod Taylor wrote:
+> > I think another way it could be handled is with nested transactions.
+> > Just have the promise phase be an inner transaction commit but have an
+> > outer transaction bracket that one for the actual commit.
+>
+> Not really. In the event of a crash, most 2PC systems will expect the
+> participant to come back in the same state it crashed in.
+>
+
+Yes, this is correct.  There are certain phases of the protocol in which the 
+transaction state must be re-instated from the log file after a crash of the 
+DB server.  The re-instatement must occur prior to any connections being 
+accepted by the server.  Additionally, the coordinator must be fully 
+recoverable as well.  The coordinator may, depending on the phase of the 
+commit/abort, contact child servers after it crashes.  The requirement is 
+that during log replay, the transaction structures might have to be fully 
+reconstructed and remain in-place after log replay has completed, until the 
+disposition of the (sub)transaction is settled by the coordinator.  All 
+dependent on the phase of course.
+
+> Our nested-transaction implementation (like our standard transaction
+> implementation) aborts all transactions on crash.
+
+Jordan Henderson
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From JanWieck@Yahoo.com Tue Oct 14 00:21:11 2003
+Return-path: <JanWieck@Yahoo.com>
+Received: from smtp017.mail.yahoo.com (smtp017.mail.yahoo.com [216.136.174.114])
+	by candle.pha.pa.us (8.11.6/8.11.6) with SMTP id h9E4L8d06728
+	for <pgman@candle.pha.pa.us>; Tue, 14 Oct 2003 00:21:09 -0400 (EDT)
+Received: from pcp01341166pcs.wilog301.pa.comcast.net (HELO europa.janwieck.net) (janwieck@68.80.245.191 with login)
+  by smtp.mail.vip.sc5.yahoo.com with SMTP; 14 Oct 2003 04:21:03 -0000
+Received: from Yahoo.com (pcp01341166pcs.wilog301.pa.comcast.net [68.80.245.191])
+	(authenticated)
+	by europa.janwieck.net (8.11.6/8.11.6) with ESMTP id h9E4L1311359;
+	Tue, 14 Oct 2003 00:21:01 -0400
+Message-ID: <3F8B7990.60207@Yahoo.com>
+Date: Tue, 14 Oct 2003 00:20:32 -0400
+From: Jan Wieck <JanWieck@Yahoo.com>
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:1.4) Gecko/20030624
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Tatsuo Ishii <t-ishii@sra.co.jp>, andrew@libertyrms.info,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] 2-phase commit
+References: <200310100053.h9A0rkl23681@candle.pha.pa.us>
+In-Reply-To: <200310100053.h9A0rkl23681@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+
+> Tatsuo Ishii wrote:
+>> > Yes.  I don't think that 2PC is a solution for robustness in face of
+>> > network failure.  It's too slow, to begin with.  Some sort of
+>> > multi-master system is very desirable for network failures, &c., but
+>> > I don't think anybody does active/hot standby with 2PC any more; the
+>> > performance is too bad.
+>> 
+>> I'm tired of this kind of "2PC is too slow" arguments. I think
+>> Satoshi, the only guy who made a trial implementation of 2PC for
+>> PostgreSQL, has already showed that 2PC is not that slow.
+> 
+> Agreed.  Let's get it into 7.5 and see it in action.  If we need to
+> adjust it, we can, but right now, we need something for distributed
+> transactions, and this seems like the logical direction.
+> 
+
+Are you guy's kidding or what?
+
+2PC is not too slow in normal operations when everything is purring like 
+little kittens and you're just wasting your excess bandwidth on it. The 
+point is that it behaves horrible and like a dirty backstreet cat at the 
+time when things go wrong ... basically it's a neat thing to have, but 
+from the second you need it it becomes useless.
+
+
+Jan
+
+-- 
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#================================================== JanWieck@Yahoo.com #
+
+From peter.galbavy@knowtion.net Tue Oct 14 05:00:23 2003
+Return-path: <peter.galbavy@knowtion.net>
+Received: from mailstore-1.mail.knowledge.com ([213.170.2.69])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9E90Ld00955
+	for <pgman@candle.pha.pa.us>; Tue, 14 Oct 2003 05:00:23 -0400 (EDT)
+Received: from [213.155.153.61] (helo=MBLOXD98BTT0J)
+	by mailstore-1.mail.knowledge.com with asmtp (Exim 3.36 #1)
+	id 1A9L2A-0004lK-00; Tue, 14 Oct 2003 10:00:02 +0100
+Message-ID: <004601c39231$8db3f5e0$2f28a8c0@cblan.mblox.com>
+From: "Peter Galbavy" <peter.galbavy@knowtion.net>
+To: "Jan Wieck" <JanWieck@Yahoo.com>, "Bruce Momjian" <pgman@candle.pha.pa.us>
+cc: "Tatsuo Ishii" <t-ishii@sra.co.jp>, <andrew@libertyrms.info>,
+   <pgsql-hackers@postgresql.org>
+References: <200310100053.h9A0rkl23681@candle.pha.pa.us> <3F8B7990.60207@Yahoo.com>
+Subject: Re: [HACKERS] 2-phase commit
+Date: Tue, 14 Oct 2003 09:59:58 +0100
+Organization: Knowtion Ltd.
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="Windows-1252"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2800.1158
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1165
+Status: OR
+
+Jan Wieck wrote:
+> 2PC is not too slow in normal operations when everything is purring
+> like little kittens and you're just wasting your excess bandwidth on
+> it. The point is that it behaves horrible and like a dirty backstreet
+> cat at the time when things go wrong ... basically it's a neat thing
+> to have, but from the second you need it it becomes useless.
+
+I can't see anyone being forced to use it once it maybe/is supported. Like
+many tools, "ouch!" is a good reaction when used untrained/incorrectly.
+
+Peter
+
