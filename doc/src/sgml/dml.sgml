@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.11 2005/03/01 23:45:00 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.12 2005/03/17 20:24:34 momjian Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -98,9 +98,9 @@ INSERT INTO products DEFAULT VALUES;
     To do <quote>bulk loads</quote>, that is, inserting a lot of data,
     take a look at the <xref linkend="sql-copy"
     endterm="sql-copy-title"> command.  It is not as flexible as the
-    <command>INSERT</command> command, but is more efficient. Refer to
-    <xref linkend="populate"> for more information on improving bulk
-    loading performance.
+    <xref linkend="sql-insert"  endterm="sql-insert-title">  command, 
+    but is more efficient. Refer to <xref linkend="populate"> for more 
+    information on improving bulk loading performance.
    </para>
   </tip>
  </sect1>
