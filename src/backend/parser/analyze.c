@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.54 1997/12/16 15:45:46 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.55 1997/12/23 19:39:42 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -822,8 +822,15 @@ transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt)
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
 	/* check subselect clause */
-	if (stmt->selectClause)
+	if (stmt->unionClause)
+	{
 		elog(NOTICE, "UNION not yet supported; using first SELECT only", NULL);
+
+		/* XXX HACK just playing with union clause - thomas 1997-12-19 */
+		if ((qry->uniqueFlag == NULL)
+		 && (! ((SubSelect *)lfirst(stmt->unionClause))->unionall))
+			qry->uniqueFlag = "*";
+	}
 
 	/* check subselect clause */
 	if (stmt->havingClause)
