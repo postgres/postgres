@@ -48,11 +48,11 @@
 #
 #	Shared Memory Size
 #
-#shared_buffers = 64		# 2*max_connections, min 16, 8K each
+#shared_buffers = 64		# 2*max_connections, min 16, typically 8K each
 #max_fsm_relations = 100	# min 10, fsm is free space map
 #max_fsm_pages = 10000		# min 1000, fsm is free space map
 #max_locks_per_transaction = 64	# min 10
-#wal_buffers = 8		# min 4, 8K each
+#wal_buffers = 8		# min 4, typically 8K each
 
 #
 #	Non-shared Memory Sizes
@@ -89,11 +89,11 @@
 #enable_mergejoin = true
 #enable_hashjoin = true
 
-#effective_cache_size = 1000	# 8K each
-#random_page_cost = 4
-#cpu_tuple_cost = 0.01
-#cpu_index_tuple_cost = 0.001
-#cpu_operator_cost = 0.0025
+#effective_cache_size = 1000	# typically 8K each
+#random_page_cost = 4		# units are one sequential page fetch cost
+#cpu_tuple_cost = 0.01		# (same)
+#cpu_index_tuple_cost = 0.001	# (same)
+#cpu_operator_cost = 0.0025	# (same)
 
 #default_statistics_target = 10	# range 1-1000
 
