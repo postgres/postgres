@@ -766,7 +766,7 @@ if test "${with_includes+set}" = set; then
 fi
 
 
-if test "$INCLUDE_DIRS"; then
+if test "$INCLUDE_DIRS" -o "$SRCH_INC"; then
 	for dir in $INCLUDE_DIRS $SRCH_INC; do
 		if test -d "$dir"; then
 			PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir"
@@ -804,7 +804,7 @@ if test "${with_libraries+set}" = set; then
 fi
 
 
-if test "$LIBRARY_DIRS"; then
+if test "$LIBRARY_DIRS" -o "$SRCH_LIB"; then
 	for dir in $LIBRARY_DIRS $SRCH_LIB; do
 		if test -d "$dir"; then
 			PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
