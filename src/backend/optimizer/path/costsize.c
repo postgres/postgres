@@ -7,10 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.7 1997/01/06 00:08:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.8 1997/01/08 10:33:46 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include "postgres.h"
+
 #include <math.h>
 #ifdef WIN32
 # include <float.h>
@@ -24,8 +27,6 @@
 #  include <values.h>
 # endif 
 #endif 
-
-#include "postgres.h"
 
 #include <utils/lsyscache.h>
 #include "nodes/relation.h"
