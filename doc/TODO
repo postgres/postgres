@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Aug 16 00:31:51 EDT 2002
+Last updated:		Fri Aug 16 00:45:36 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -119,7 +119,8 @@ Multi-Language Support
 * Optimize locale to have minimal performance impact when not used (Peter E)
 * Add octet_length_server() and octet_length_client() (Thomas, Tatsuo)
 * Make octet_length_client the same as octet_length() (?)
-
+* Prevent mismatch of frontend/backend encodings from converting bytea
+  data from being interpreted as encoded strings
 
 Views / Rules
 =============
@@ -510,6 +511,8 @@ Source Code
 * Remove or relicense modules that are not under the BSD license, if possible
 * Remove memory/file descriptor freeing befor elog(ERROR)  (Bruce)
 * Create native Win32 port [win32]
+* Fix glibc's mktime() to handle pre-1970's dates
+
 
 ---------------------------------------------------------------------------
 
