@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.9 1999/07/22 15:09:07 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.10 1999/12/04 04:53:15 momjian Exp $
 Postgres documentation
 -->
 
@@ -68,7 +68,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-CREATEDB
+CREATE DATABASE
        </computeroutput></term>
       <listitem>
        <para>
@@ -184,16 +184,15 @@ comment from Olly; response from Thomas...
 <computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
    
    <prompt>$</prompt> <userinput>psql olly</userinput>
-   <computeroutput>Welcome to the POSTGRESQL interactive sql monitor:
-    Please read the file COPYRIGHT for copyright terms of POSTGRESQL
-    
-    type \? for help on slash commands
-    type \q to quit
-    type \g or terminate with semicolon to execute query
-    You are currently connected to the database: template1
-    
+   <computeroutput>Welcome to psql, the PostgreSQL interactive terminal.
+(Please type \copyright to see the distribution terms of PostgreSQL.)
+ 
+Type \h for help with SQL commands,
+     \? for help on internal slash commands,
+     \q to quit,
+     \g or terminate with semicolon to execute query.
     <prompt>olly=></prompt></computeroutput> <userinput>create database elsewhere with location = '/home/olly/private_db';</userinput>
-   <computeroutput>CREATEDB</computeroutput>
+   <computeroutput>CREATE DATABASE</computeroutput>
    </programlisting>
   </para>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.19 1999/10/01 15:24:09 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.20 1999/12/04 04:53:15 momjian Exp $
 Postgres documentation
 -->
 
@@ -107,11 +107,9 @@ functions supported by <productname>Postgres</productname>.
   </abstract>
 
    &createdb;
-   &createlang;
    &createuser;
-   &destroydb;
-   &destroylang;
-   &destroyuser;
+   &dropdb;
+   &dropuser;
    &ecpgRef;
    &pgAccess;
    &pgAdmin;

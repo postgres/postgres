@@ -1,0 +1,98 @@
+#!/bin/sh
+#-------------------------------------------------------------------------
+#
+# dropuser--
+#    Utility for remocing a user from the PostgreSQL database.
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.1 1999/12/04 04:53:21 momjian Exp $
+#
+# Note - this should NOT be setuid.
+#
+#-------------------------------------------------------------------------
+
+CMDNAME=`basename $0`
+PSQLOPT=
+forcedel=t
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+	--help|-\?)
+		usage=t
+		break
+		;;
+# options passed on to psql
+	--host|-h)
+		PSQLOPT="$PSQLOPT -h $2"
+		shift;;
+	--port|-p)
+		PSQLOPT="$PSQLOPT -p $2"
+		shift;;
+# Uncomment these lines if you need the -U and -W options.
+# They are confusing in this context, however.
+#	--user|--username|-U)
+#		PSQLOPT="$PSQLOPT -U $2"
+#		shift;;
+#	--password|-W)
+#		PSQLOPT="$PSQLOPT -W"
+#		;;
+	--echo|-e)
+		PSQLOPT="$PSQLOPT -e"
+		;;
+	--quiet|-q)
+		PSQLOPT="$PSQLOPT -o /dev/null"
+		;;
+# other options
+	--interactive|-i)
+		forcedel=f
+		;;
+	-*)
+		echo "$CMDNAME: Unrecognized option: $1. Try -? for help."
+		exit 1
+		;;
+         *)
+		DelUser="$1"
+		;;
+    esac
+    shift;
+done
+
+
+# Help
+
+if [ "$usage" ]; then
+	echo "Usage: $CMDNAME [-h <server>] [-p <port>] [-i] [username]"
+	exit 0
+fi
+
+# Prompt for username if missing
+
+if [ -z "$DelUser" ]; then
+	echo -n "Enter name of user to delete: "
+	read -r NewUser
+	[ $? -ne 0 ] && exit 1
+fi
+
+
+if [ "$forcedel" = f ]; then
+	echo "User \"$DelUser\" and any owned databases will be permanently deleted."
+	echo -n "Are you sure? (y/n) "
+	read -r
+
+	[ $? -eq 1 ] && exit 1
+	[ "$REPLY" != "y" -a "$REPLY" != "Y" ] && exit 0
+fi
+
+
+psql $PSQLOPT -d template1 -c "DROP USER \"$DelUser\""
+
+if [ $? -ne 0 ]; then
+	echo "$CMDNAME: Deletion of user \"$DelUser\" failed."
+	exit 1
+fi
+
+exit 0

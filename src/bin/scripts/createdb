@@ -1,0 +1,112 @@
+#!/bin/sh
+#-------------------------------------------------------------------------
+#
+# createdb.sh--
+#    create a postgres database
+#
+#    This program runs psql with the "-c" option to create
+#    the requested database.
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.1 1999/12/04 04:53:21 momjian Exp $
+#
+#-------------------------------------------------------------------------
+
+CMDNAME=`basename $0`
+
+MB=
+PSQLOPT=
+dbname=
+dbcomment=
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+	--help|-\?)
+		usage=t
+		break
+		;;
+# options passed on to psql
+	--host|-h)
+		PSQLOPT="$PSQLOPT -h $2"
+		shift;;
+	--port|-p)
+		PSQLOPT="$PSQLOPT -p $2"
+		shift;;
+	--user|--username|-U)
+		PSQLOPT="$PSQLOPT -U $2"
+		shift;;
+	--password|-W)
+		PSQLOPT="$PSQLOPT -W"
+		;;
+	--echo|-e)
+		PSQLOPT="$PSQLOPT -e"
+		;;
+	--quiet|-q)
+		PSQLOPT="$PSQLOPT -o /dev/null"
+		;;
+# options converted into SQL command
+	--dbpath|-D)
+		dbpath="$2"
+		shift;;
+	--encoding|-E)
+		MB=$2
+		shift
+		if [ -z `pg_encoding $MB` ]; then
+			echo "$CMDNAME: $MB is not a valid encoding name"
+			exit 1
+		fi
+		;;
+
+	-*)
+		echo "$CMDNAME: Unrecognized option: $1. Try -? for help."
+		exit 1
+		;;
+	*)
+		if [ -z "$dbname" ]; then
+			dbname="$1"
+		else
+			dbcomment="$1"
+		fi
+		;;
+    esac
+    shift
+done
+
+
+if [ "$usage" ]; then
+	echo "Usage: $CMDNAME [-h <server>] [-p <port>] [-D <path>] \\"
+	echo "       [-E <encoding>] [-U <username>] [-W] dbname [description]"
+	exit 0
+fi
+
+if [ -z "$dbname" ]; then
+	echo "$CMDNAME: Missing required argument database name. Try -? for help."
+	exit 1
+fi
+
+
+withstring=
+[ "$dbpath" ] &&     withstring="$withstring LOCATION = '$dbpath'"
+[ "$MB" ] &&         withstring="$withstring ENCODING = '$MB'"
+[ "$withstring" ] && withstring=" WITH$withstring"
+
+psql $PSQLOPT -d template1 -c "CREATE DATABASE \"$dbname\"$withstring"
+if [ $? -ne 0 ]; then
+	echo "$CMDNAME: Database creation failed."
+	exit 1
+fi
+
+# Insert comment as well, if requested
+[ -z "$dbcomment" ] && exit 0
+
+psql $PSQLOPT -d template1 -c "COMMENT ON DATABASE \"$dbname\" IS \'$dbcomment\'"
+if [ $? -ne 0 ]; then
+	echo "$CMDNAME: Comment creation failed."
+	exit 1
+fi
+
+exit 0

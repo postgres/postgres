@@ -1,21 +1,21 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.7 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.1 1999/12/04 04:53:15 momjian Exp $
 Postgres documentation
 -->
 
-<refentry id="APP-CREATEDB" xreflabel="createdb">
+<refentry id="APP-DROPDB">
  <refmeta>
-  <refentrytitle id="APP-CREATEDB-TITLE">
-   <application>createdb</application>
+  <refentrytitle id="APP-DROPDB-TITLE">
+   <application>dropdb</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
  <refnamediv>
   <refname>
-   <application>createdb</application>
+   <application>dropdb</application>
   </refname>
   <refpurpose>
-   Create a new <productname>PostgreSQL</productname> database
+   Remove an existing <productname>PostgreSQL</productname> database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -23,10 +23,10 @@ Postgres documentation
    <date>1999-11-07</date>
   </refsynopsisdivinfo>
   <synopsis>
-createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">description</replaceable> ]
+dropdb [ <replaceable class="parameter">options</replaceable> ] <replaceable class="parameter">dbname</replaceable>
   </synopsis>
 
-  <refsect2 id="R2-APP-CREATEDB-1">
+  <refsect2 id="R2-APP-DROPDB-1">
    <refsect2info>
     <date>1999-11-07</date>
    </refsect2info>
@@ -80,7 +80,7 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
       <term>-e, --echo</term>
       <listitem>
        <para>
-        Echo the queries that <application>createdb</application> generates
+        Echo the queries that <application>dropdb</application> generates
 	and sends to the backend.
        </para>
       </listitem>
@@ -96,21 +96,10 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
      </varlistentry>
 
      <varlistentry>
-      <term>-D, --dbpath <replaceable class="parameter">datadir</replaceable></term>
+      <term>-i, --interactive</term>
       <listitem>
        <para>
-	Specifies the alternate database location for this database installation.
-	This is the location of the installation system tables, not the location
-	of this specific database, which may be different.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-E, --encoding <replaceable class="parameter">encoding</replaceable></term>
-      <listitem>
-       <para>
-        Specifies the character encoding scheme to be used with this database.
+       Issues a verification prompt before doing anything destructive.
        </para>
       </listitem>
      </varlistentry>
@@ -119,22 +108,12 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
       <term><replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the database to be created.  The name must be
-	unique among all <productname>Postgres</productname> databases in this installation.
+	Specifies the name of the database to be removed.  The database
+	must be one of the existing <productname>PostgreSQL</productname> databases
+	in this installation.
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">description</replaceable></term>
-      <listitem>
-       <para>
-        This optionally specifies a comment to be associated with the newly created
-	database.
-       </para>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
 
     The options <literal>-h</literal>, <literal>-p</literal>, <literal>-U</literal>,
@@ -143,68 +122,61 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
    </para>
   </refsect2>
 
-  <refsect2 id="R2-APP-CREATEDB-2">
+
+  <refsect2 id="R2-APP-DROPDB-2">
    <refsect2info>
-    <date>1999-11-07</date>
+    <date>1998-10-02</date>
    </refsect2info>
    <title>
     Outputs
    </title>
    <para>
+
     <variablelist>
      <varlistentry>
-      <term><computeroutput>CREATE DATABASE</computeroutput></term>
+      <term><computeroutput>DROP DATABASE</computeroutput></term>
       <listitem>
-       <para>The database was successfully created.</para>
+       <para>The database was successfully removed.</para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>createdb: Database creation failed.</computeroutput></term>
+      <term><computeroutput>dropdb: Database removal failed.</computeroutput></term>
       <listitem>
-       <para>(Says it all.)</para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>createdb: Comment creation failed.</computeroutput></term>
-      <listitem>
-       <para>
-       The comment/description for the database could not be created.
-       the database itself will have been created already. You can use the
-       <acronym>SQL</acronym> command <command>COMMENT ON DATABASE</command> to
-       create the comment later on.
-       </para>
+       <para>Something didn't work out.</para>
       </listitem>
      </varlistentry>
     </variablelist>
 
     If there is an error condition, the backend error message will be displayed.
-    See <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title">
+    See <xref linkend="SQL-DROPDATABASE" endterm="SQL-DROPDATABASE-title">
     and <xref linkend="APP-PSQL" endterm="APP-PSQL-title"> for possibilities.
    </para>
   </refsect2>
  </refsynopsisdiv>
 
- <refsect1 id="R1-APP-CREATEDB-1">
+
+ <refsect1 id="R1-APP-DROPDB-1">
   <refsect1info>
-   <date>1999-11-07</date>
+   <date>1998-10-02</date>
   </refsect1info>
   <title>
    Description
   </title>
   <para>
-   <application>createdb</application> creates a new <productname>PostgreSQL</productname>
-   database. The user who executes this command becomes the database owner.
+   <application>dropdb</application> destroys an existing
+   <productname>PostgreSQL</productname> database.
+   The user who executes this command must be a database
+   superuser or the owner of the database.
   </para>
 
   <para>
-   <application>createdb</application> is a shell script wrapper around the
+   <application>dropdb</application> is a shell script wrapper around the
    <acronym>SQL</acronym> command
-   <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title"> via
+   <xref linkend="SQL-DROPDATABASE" endterm="SQL-DROPDATABASE-title"> via
    the <productname>PostgreSQL</productname> interactive terminal
    <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. Thus, there is nothing
-   special about creating databases via this or other methods. This means
+   special about dropping databases via this or other methods. This means
    that the <application>psql</application> must be found by the script and that
    a database server is running at the targeted host. Also, any default
    settings and environment variables available to <application>psql</application>
@@ -212,7 +184,7 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
   </para>
  </refsect1>
 
- <refsect1 id="R1-APP-CREATEDB-2">
+ <refsect1 id="R1-APP-DROPDB-2">
   <refsect1info>
    <date>1999-11-07</date>
   </refsect1info>
@@ -220,27 +192,23 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
    Usage
   </title>
   <para>
-   To create the database <literal>demo</literal>
-   using the default database server:
-
+   To destroy the database <literal>demo</literal>
+   on the default database server:
    <programlisting>
-$ <userinput>createdb demo</userinput>
-CREATE DATABASE
+$ <userinput>dropdb demo</userinput>
+DROP DATABASE
    </programlisting>
-
-   The response is the same as you would have gotten from running the
-   <command>CREATE DATABASE</command> <acronym>SQL</acronym> command.
   </para>
-
   <para>
-   To create the database <literal>demo</literal>
-   using the postmaster on host eden, port 5000, using the <literal>LATIN1</literal>
-   encoding scheme and look at the underlying query:
-
+   To destroy the database <literal>demo</literal>
+   using the postmaster on host eden, port 5000, with verification
+   and a peek at the underlying query:
    <programlisting>
-$ <userinput>createdb -p 5000 -h eden -E LATIN1 -e demo</userinput>
-QUERY: CREATE DATABASE "demo" WITH ENCODING = 'LATIN1'
-CREATE DATABASE
+$ <userinput>dropdb -p 5000 -h eden -i -e demo</userinput>
+Database "demo" will be permanently deleted.
+Are you sure? (y/n) <userinput>y</userinput>
+QUERY: DROP DATABASE "demo"
+DROP DATABASE
    </programlisting>
   </para>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.7 1999/08/06 13:50:30 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.8 1999/12/04 04:53:15 momjian Exp $
 Postgres documentation
 -->
 
@@ -59,7 +59,7 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-DESTROYDB
+DROP DATABASE
        </computeroutput></term>
       <listitem>
        <para>
@@ -116,14 +116,13 @@ WARN: destroydb: database "<replaceable class="parameter">name</replaceable>" do
 
    <para>
     This query cannot be executed while connected to the target
-    database. It is usually preferable to use
-    <xref linkend="app-destroydb" endterm="app-destroydb-title">
-    instead.
+    database. Thus, it might be more convenient to use
+    <xref linkend="app-dropdb" endterm="app-dropdb-title">
+    from the shell instead.
    </para>
 
    <para>
     Refer to
-    <xref linkend="app-createdb" endterm="app-createdb-title"> and
     <xref linkend="sql-createdatabase" endterm="sql-createdatabase-title">
     for information on how to create a database.
    </para>

@@ -1,0 +1,92 @@
+#!/bin/sh
+#-------------------------------------------------------------------------
+#
+# dropdb--
+#    destroy a postgres database
+#
+#    this program runs psql to drop the requested database.
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.1 1999/12/04 04:53:21 momjian Exp $
+#
+#-------------------------------------------------------------------------
+
+CMDNAME=`basename $0`
+
+PSQLOPT=
+dbname=
+forcedel=t
+
+while [ $# -gt 0 ]
+do
+    case "$1" in 
+	--help|-\?)
+		usage=t
+		break
+		;;
+# options passed on to psql
+	--host|-h)
+		PSQLOPT="$PSQLOPT -h $2"
+		shift;;
+	--port|-p)
+		PSQLOPT="$PSQLOPT -p $2"
+		shift;;
+	--user|--username|-U)
+		PSQLOPT="$PSQLOPT -U $2"
+		shift;;
+	--password|-W)
+		PSQLOPT="$PSQLOPT -W"
+		;;
+	--echo|-e)
+		PSQLOPT="$PSQLOPT -e"
+		;;
+	--quiet|-q)
+		PSQLOPT="$PSQLOPT -o /dev/null"
+		;;
+# other options
+        --interactive|-i)
+		forcedel=f
+		;;
+	-*)
+		echo "$CMDNAME: Unrecognized option: $1. Try -? for help."
+		exit 1
+		;;
+	 *)
+		dbname="$1"
+		;;
+    esac
+    shift
+done
+
+
+if [ "$usage" ]; then
+	echo "Usage: $CMDNAME [-h <server>] [-p <port>] [-U <username>] [-W] [-i] dbname"
+	exit 0
+fi
+
+if [ -z "$dbname" ]; then
+	echo "$CMDNAME: Missing required argument database name. Try -? for help."
+	exit 1
+fi
+
+
+if [ "$forcedel" = f ]; then
+	echo "Database \"$dbname\" will be permanently deleted."
+	echo -n "Are you sure? (y/n) "
+	read -r
+
+	[ $? -eq 1 ] && exit 1
+	[ "$REPLY" != "y" -a "$REPLY" != "Y" ] && exit 0
+fi
+
+
+psql $PSQLOPT -d template1 -c "DROP DATABASE \"$dbname\""
+if [ $? -ne 0 ]; then
+	echo "$CMDNAME: Database removal failed."
+	exit 1
+fi
+
+exit 0

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.22 1999/10/09 02:29:15 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.23 1999/12/04 04:53:14 momjian Exp $
 Documentation Guide
 Thomas Lockhart
 
@@ -503,8 +503,8 @@ Status
 <row><entry> ./doc/src/sgml/ref/createuser.sgml	</entry><entry>	New for v6.4	</entry></row>
 <row><entry> ./doc/src/sgml/ref/declare.sgml	</entry><entry>	New for v6.4	</entry></row>
 <row><entry> ./doc/src/sgml/ref/delete.sgml	</entry><entry>	New for v6.4	</entry></row>
-<row><entry> ./doc/src/sgml/ref/destroydb.sgml	</entry><entry>	New for v6.4	</entry></row>
-<row><entry> ./doc/src/sgml/ref/destroyuser.sgml	</entry><entry>	New for v6.4	</entry></row>
+<row><entry> ./doc/src/sgml/ref/dropdb.sgml	</entry><entry>	Renamed for v7.0	</entry></row>
+<row><entry> ./doc/src/sgml/ref/dropuser.sgml	</entry><entry>	Renamed for v7.0	</entry></row>
 <row><entry> ./doc/src/sgml/ref/drop_aggregate.sgml	</entry><entry>	New for v6.4	</entry></row>
 <row><entry> ./doc/src/sgml/ref/drop_database.sgml	</entry><entry>	New for v6.4	</entry></row>
 <row><entry> ./doc/src/sgml/ref/drop_function.sgml	</entry><entry>	New for v6.4	</entry></row>

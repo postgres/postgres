@@ -1,33 +1,32 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.6 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.1 1999/12/04 04:53:15 momjian Exp $
 Postgres documentation
 -->
 
-<refentry id="APP-CREATEUSER">
+<refentry id="APP-DROPUSER">
  <refmeta>
-  <refentrytitle id="APP-CREATEUSER-TITLE">
-   <application>createuser</application>
+  <refentrytitle id="APP-DROPUSER-TITLE">
+   <application>dropuser</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
  <refnamediv>
   <refname>
-   <application>createuser</application>
+   <application>dropuser</application>
   </refname>
   <refpurpose>
-   Create a new <productname>PostgreSQL</productname> user
+   Drops (removes) a <productname>Postgres</productname> user
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
    <date>1999-11-07</date>
   </refsynopsisdivinfo>
-
   <synopsis>
-createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceable class="parameter">username</replaceable> ]
+dropuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceable class="parameter">username</replaceable> ]
   </synopsis>
 
-  <refsect2 id="R2-APP-CREATEUSER-1">
+  <refsect2 id="R2-APP-DROPUSER-1">
    <refsect2info>
     <date>1999-11-07</date>
    </refsect2info>
@@ -79,48 +78,10 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
      </varlistentry>
 
      <varlistentry>
-      <term>-d, --createdb</term>
+      <term>-i, --interactive</term>
       <listitem>
        <para>
-	Allows the new user to create databases.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-D, --no-createdb</term>
-      <listitem>
-       <para>
-	Forbids the new user to create databases.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-a, --adduser</term>
-      <listitem>
-       <para>
-	Allows the new user to create other users.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-A, --no-adduser</term>
-      <listitem>
-       <para>
-	Forbids the new user to create other users.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-P, --pwprompt</term>
-      <listitem>
-       <para>
-       If given, <application>createuser</application> will issue a prompt for
-       the password of the new user. This is not necessary if you do not plan
-       on using password authentication.
+        Prompt for confirmation before actually removing the user.
        </para>
       </listitem>
      </varlistentry>
@@ -129,15 +90,13 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
       <term><replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the <productname>PostgreSQL</productname> user to be created. 
-	This name must be unique among all <productname>PostgreSQL</productname> users.
+	Specifies the name of the <productname>PostgreSQL</productname> user to be removed. 
+	This name must exist in the <productname>Postgres</productname> installation.
+	You will be prompted for a name if none is specified on the command line.
        </para>
       </listitem>
-     </varlistentry>  
+     </varlistentry>
     </variablelist>
-
-    You will be prompted for a name and other missing information if it is not
-    specified on the command line.
     </para>
 
     <para>
@@ -150,17 +109,18 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
    </para>
   </refsect2>
 
-  <refsect2 id="R2-APP-CREATEUSER-2">
+  <refsect2 id="R2-APP-DROPUSER-2">
    <refsect2info>
     <date>1999-11-07</date>
    </refsect2info>
    <title>
     Outputs
    </title>
+
    <para>
     <variablelist>
      <varlistentry>
-      <term><computeroutput>CREATE USER</computeroutput></term>
+      <term><computeroutput>DROP USER</computeroutput></term>
       <listitem>
        <para>
         All is well.
@@ -169,10 +129,10 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>createuser: Creation of user "<replaceable class="parameter">username</replaceable>" failed.</computeroutput></term>
+      <term><computeroutput>dropuser: Deletion of user "<replaceable class="parameter">username</replaceable>" failed.</computeroutput></term>
       <listitem>
        <para>
-        Something went wrong. The user was not created.
+        Something went wrong. The user was not removed.
        </para>
       </listitem>
      </varlistentry>
@@ -180,34 +140,35 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
     </variablelist>
 
     If there is an error condition, the backend error message will be displayed.
-    See <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
+    See <xref linkend="SQL-DROPUSER" endterm="SQL-DROPUSER-title">
     and <xref linkend="APP-PSQL" endterm="APP-PSQL-title"> for possibilities.
    </para>
   </refsect2>
  </refsynopsisdiv>
-  
- <refsect1 id="R1-APP-CREATEUSER-1">
+
+ <refsect1 id="R1-APP-DROPUSER-1">
   <refsect1info>
-   <date>1998-11-07</date>
+   <date>1999-11-07</date>
   </refsect1info>
   <title>
    Description
   </title>
   <para>
-   <application>createuser</application> creates a 
-   new <productname>PostgreSQL</productname> user.  
+   <application>dropuser</application> removes an existing
+   <productname>PostgreSQL</productname> user
+   <emphasis>and</emphasis> the databases which that user owned.
    Only users with <literal>usesuper</literal> set in
-   the <literal>pg_shadow</literal> class can create 
-   new <productname>Postgres</productname> users.
+   the <literal>pg_shadow</literal> class can destroy 
+   <productname>PostgreSQL</productname> users.
   </para>
 
   <para>
-   <application>createuser</application> is a shell script wrapper around the
+   <application>dropuser</application> is a shell script wrapper around the
    <acronym>SQL</acronym> command
-   <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title"> via
+   <xref linkend="SQL-DROPUSER" endterm="SQL-DROPUSER-title"> via
    the <productname>PostgreSQL</productname> interactive terminal
    <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. Thus, there is nothing
-   special about creating users via this or other methods. This means
+   special about removing users via this or other methods. This means
    that the <application>psql</application> must be found by the script and that
    a database server is running at the targeted host. Also, any default
    settings and environment variables available to <application>psql</application>
@@ -216,8 +177,7 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
 
  </refsect1>
 
-
- <refsect1 id="R1-APP-CREATEUSER-2">
+ <refsect1 id="R1-APP-DROPUSER-2">
   <refsect1info>
    <date>1999-11-07</date>
   </refsect1info>
@@ -225,26 +185,24 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
    Usage
   </title>
   <para>
-   To create a user <literal>joe</literal>
-   on the default database server:
-
+   To remove user <literal>joe</literal>
+   from the default database server:
    <programlisting>
-$ <userinput>createuser joe</userinput>
-Is the new user allowed to create databases? (y/n) <userinput>n</userinput>
-Shall the new user be allowed to create more new users? (y/n) <userinput>n</userinput>
-CREATE USER
+$ <userinput>dropuser joe</userinput>
+DROP USER
    </programlisting>
   </para>
 
   <para>
-   To create the same user <literal>joe</literal>
-   using the postmaster on host eden, port 5000, avoiding
-   the prompts and taking a look at the underlying query:
-
+   To remove user <literal>joe</literal>
+   using the postmaster on host eden, port 5000, with verification
+   and a peek at the underlying query:
    <programlisting>
-$ <userinput>createuser -p 5000 -h eden -D -A -e joe</userinput>
-QUERY: CREATE USER "joe" NOCREATEDB NOCREATEUSER
-CREATE USER
+$ <userinput>dropuser -p 5000 -h eden -i -e joe</userinput>
+User "joe" and any owned databases will be permanently deleted.
+Are you sure? (y/n) <userinput>y</userinput>
+QUERY: DROP USER "joe"
+DROP USER
    </programlisting>
   </para>
  </refsect1>
