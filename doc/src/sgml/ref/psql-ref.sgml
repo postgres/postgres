@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.132 2005/01/22 23:22:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.133 2005/02/11 04:19:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -348,7 +348,7 @@ PostgreSQL documentation
       <term><option>-u</></term>
       <listitem>
       <para>
-      Makes <application>psql</application> prompt for the user name and
+      Forces <application>psql</application> to prompt for the user name and
       password before connecting to the database.
       </para>
 
@@ -406,21 +406,25 @@ PostgreSQL documentation
       <term><option>--password</></term>
       <listitem>
       <para>
-      Cause <application>psql</application> to prompt for a
-      password before connecting to a database. This will remain set for
-      the entire session, even if you change the database connection
-      with the meta-command <command>\connect</command>.
+      Forces <application>psql</application> to prompt for a
+      password before connecting to a database.  
       </para>
 
       <para>
-      In the current version, <application>psql</application>
-      automatically issues a password prompt whenever the server
-      requests password authentication. Because this is currently based
-      on a hack, the automatic recognition might mysteriously fail,
-      hence this option to force a prompt. If no password prompt is
-      issued and the server requires password authentication, the
-      connection attempt will fail.
+      <application>psql</application> should automatically prompt for a
+      password whenever the server requests password authentication.
+      However, currently password request detection is not totally
+      reliable, hence this option to force a prompt. If no password
+      prompt is issued and the server requires password authentication,
+      the connection attempt will fail.
       </para>
+
+      <para>
+      This option will remain set for the entire session, even if you
+      change the database connection with the meta-command
+      <command>\connect</command>.
+      </para>
+
       </listitem>
     </varlistentry>
 
@@ -508,7 +512,10 @@ PostgreSQL documentation
     some typing by setting the environment variables
     <envar>PGDATABASE</envar>, <envar>PGHOST</envar>,
     <envar>PGPORT</envar> and/or <envar>PGUSER</envar> to appropriate
-    values.
+    values. (For additional environment variables, see <xref
+    linkend="libpq-envars">.) It is also convenient to have a
+    <filename>~/.pgpass</> file to avoid regularly having to type in
+    passwords. See <xref linkend="libpq-pgpass"> for more information.
     </para>
 
     <para>
@@ -2460,7 +2467,7 @@ $endif
 
     <listitem>
      <para>
-      Default database to connect to
+      Default connection database
      </para>
     </listitem>
    </varlistentry>
