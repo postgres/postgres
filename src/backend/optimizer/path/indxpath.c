@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.57 1999/06/19 04:54:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.57.2.1 1999/09/14 20:26:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -585,12 +585,13 @@ match_clause_to_indexkey(RelOptInfo *rel,
 	Oid			restrict_op = InvalidOid;
 	bool		isIndexable = false;
 
-	if (or_clause((Node *) clause) ||
-		not_clause((Node *) clause) || single_node((Node *) clause))
-		return (RestrictInfo *) NULL;
-
+	/* Clause must be a binary opclause. */
+	if (! is_opclause((Node *) clause))
+		return NULL;
 	leftop = get_leftop(clause);
 	rightop = get_rightop(clause);
+	if (! leftop || ! rightop)
+		return NULL;
 
 	/*
 	 * If this is not a join clause, check for clauses of the form:
