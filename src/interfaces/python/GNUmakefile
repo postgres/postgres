@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.11 2001/08/24 14:07:50 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.12 2001/12/03 12:39:44 darcy Exp $
 
 subdir = src/interfaces/python
 top_builddir = ../../..
@@ -19,9 +19,22 @@ include $(top_srcdir)/src/Makefile.shlib
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS) $(python_includespec)
 
-all: all-lib
+PY_SCRIPTS = pg.py pgdb.py
+ifeq ($(with_python_compile), yes)
+PY_COMPILED_SCRIPTS = $(PY_SCRIPTS:%.py=%.pyc) $(PY_SCRIPTS:%.py=%.pyo)
+else
+PY_COMPILED_SCRIPTS =
+endif
+
+all: all-lib $(PY_COMPILED_SCRIPTS)
 
 all-lib: libpq-all
+
+%.pyc: %.py
+	$(PYTHON) -c "import py_compile; py_compile.compile(\"$<\")"
+
+%.pyo: %.py
+	$(PYTHON) -O -c "import py_compile; py_compile.compile(\"$<\")"
 
 .PHONY: libpq-all
 libpq-all:
@@ -38,11 +51,10 @@ install: all installdirs
 	  echo "$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(python_moduleexecdir)/_pgmodule$(DLSUFFIX)"; \
 	  $(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(python_moduleexecdir)/_pgmodule$(DLSUFFIX); \
 	\
-	  echo "$(INSTALL_DATA) $(srcdir)/pg.py $(DESTDIR)$(python_moduledir)/pg.py"; \
-	  $(INSTALL_DATA) $(srcdir)/pg.py $(DESTDIR)$(python_moduledir)/pg.py; \
-	\
-	  echo "$(INSTALL_DATA) $(srcdir)/pgdb.py $(DESTDIR)$(python_moduledir)/pgdb.py"; \
-	  $(INSTALL_DATA) $(srcdir)/pgdb.py $(DESTDIR)$(python_moduledir)/pgdb.py; \
+	  for i in $(PY_SCRIPTS) $(PY_COMPILED_SCRIPTS); do \
+		echo $(INSTALL_DATA) $$i $(python_moduledir); \
+		$(INSTALL_DATA) $$i $(python_moduledir); \
+	  done \
 	else \
 	  $(install-warning-msg); \
 	fi

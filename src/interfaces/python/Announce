@@ -1,8 +1,8 @@
 
-Announce: Release of PyGreSQL version 3.2
+Announce: Release of PyGreSQL version 3.3
 =========================================
 
-PyGreSQL v3.2 has been released.
+PyGreSQL v3.3 has been released.
 It is available at: ftp://ftp.druid.net/pub/distrib/PyGreSQL.tgz.  If
 you are running NetBSD, look in the packages directory under databases.
 There is also a package in the FreeBSD ports collection.              
@@ -43,6 +43,10 @@ code for Python 1.5 and PostgreSQL 6.2.1.  While I was at it I upgraded
 the code to use full ANSI style prototypes and changed the order of
 arguments to connect.  Later versions are fixes and enhancements to that.
 The latest version of PyGreSQL works with Python 1.5.2 and PostgreSQL 7.0.x
+
+Important changes from PyGreSQL 3.2 to PyGreSQL 3.3
+  - Added NUMERICOID to list of returned types.  This fixes a bug when
+    returning aggregates in the latest version of PostgreSQL.
 
 Important changes from PyGreSQL 3.1 to PyGreSQL 3.2
   Note that there are very few changes to PostgreSQL between 3.1 and

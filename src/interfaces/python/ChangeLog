@@ -5,11 +5,16 @@ This software is copyright (c) 1995, Pascal Andre (andre@via.ecp.fr)
 Further copyright 1997, 1998 and 1999 by D'Arcy J.M. Cain (darcy@druid.net)
 See file README for copyright information.
 
+Version 3.3
+  A few cleanups.  Mostly there was some confusion about the latest version
+  and so I am bumping the number to keep it straight.
+  - Added NUMERICOID to list of returned types.  This fixes a bug when
+    returning aggregates.
+
 Version 3.2
   - Add WIN32 support (gerhard@bigfoot.de)
   - Fix some DB-API quoting problems (niall.smart@ebeon.com)
   - Moved development into PostgreSQL development tree.
-  - Added NUMERICOID to list of returned types.
 
 Version 3.1
   - Fix some quoting functions.  In particular handle NULLs better.
