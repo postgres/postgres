@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.29 1998/07/12 04:37:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.30 1998/07/12 04:43:28 momjian Exp $
  *
  * NOTES
  *
@@ -156,13 +156,8 @@ shmem_exit(int code)
 	 *	and so we return immediately to avoid recursion.
 	 * ----------------
 	 */
-	if (shmem_exit_inprogress > 9)
-		exit(-1);
-	else
-	{
-		shmem_exit_inprogress++;
+	if (shmem_exit_inprogress)
 		return;
-	}
 
 	shmem_exit_inprogress = 1;
 
