@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.162 2000/08/29 09:36:41 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.163 2000/08/29 16:40:19 tgl Exp $
  *
  * NOTES
  *
@@ -278,7 +278,7 @@ checkDataDir(const char *DataDir)
 		fprintf(stderr, "%s does not know where to find the database system "
 				"data.  You must specify the directory that contains the "
 				"database system either by specifying the -D invocation "
-			 "option or by setting the PGDATA environment variable.\n\n",
+				"option or by setting the PGDATA environment variable.\n\n",
 				progname);
 		exit(2);
 	}
@@ -289,11 +289,10 @@ checkDataDir(const char *DataDir)
 	fp = AllocateFile(path, PG_BINARY_R);
 	if (fp == NULL)
 	{
-		fprintf(stderr, "%s does not find the database system.  "
-				"Expected to find it "
-				"in the PGDATA directory \"%s\", but unable to open file "
-				"with pathname \"%s\".\n\n",
-				progname, DataDir, path);
+		fprintf(stderr, "%s does not find the database system."
+				"\n\tExpected to find it in the PGDATA directory \"%s\","
+				"\n\tbut unable to open file \"%s\": %s\n\n",
+				progname, DataDir, path, strerror(errno));
 		exit(2);
 	}
 
