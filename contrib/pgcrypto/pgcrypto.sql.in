@@ -1,6 +1,9 @@
 
 -- drop function digest(text, text);
 -- drop function digest_exists(text);
+-- drop function encode(text, text);
+-- drop function decode(text, text);
+
 
 CREATE FUNCTION digest(text, text) RETURNS text
   AS '@MODULE_FILENAME@',
@@ -9,4 +12,12 @@ CREATE FUNCTION digest(text, text) RETURNS text
 CREATE FUNCTION digest_exists(text) RETURNS bool
   AS '@MODULE_FILENAME@',
   'digest_exists' LANGUAGE 'C';
+
+CREATE FUNCTION encode(text, text) RETURNS text
+  AS '@MODULE_FILENAME@',
+  'encode' LANGUAGE 'C';
+
+CREATE FUNCTION decode(text, text) RETURNS text
+  AS '@MODULE_FILENAME@',
+  'decode' LANGUAGE 'C';
 

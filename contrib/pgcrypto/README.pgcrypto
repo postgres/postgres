@@ -1,14 +1,21 @@
 
 DESCRIPTION
 
-  Here is a implementation of crypto hashes for PostgreSQL.
-  It exports 2 functions to SQL level:
+  Here are various cryptographic and otherwise useful
+  functions for PostgreSQL.
+
+    encode(data, type)
+        encodes binary data into ASCII-only representation.
+	Types supported are 'hex' and 'base64'.
+
+    decode(data, type)
+    	decodes the data processed by encode()
 
     digest(data::text, hash_name::text)
-	which returns hexadecimal coded hash over data by
+	which returns cryptographic checksum over data by
 	specified algorithm. eg
 
-	> select digest('blah', 'sha1');
+	> select encode(digest('blah', 'sha1'), 'hex');
 	5bf1fd927dfb8679496a2e6cf00cbe50c1c87145
 
     digest_exists(hash_name::text)::bool

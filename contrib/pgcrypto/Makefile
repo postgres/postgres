@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.1 2000/10/31 13:11:28 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.2 2001/01/24 03:46:16 momjian Exp $
 #
 
 subdir = contrib/pgcrypto
@@ -34,7 +34,7 @@ SRCS=krb.c
 endif
 
 NAME	:= pgcrypto
-SRCS	+= pgcrypto.c
+SRCS	+= pgcrypto.c encode.c
 OBJS	:= $(SRCS:.c=.o)
 SO_MAJOR_VERSION = 0
 SO_MINOR_VERSION = 1
