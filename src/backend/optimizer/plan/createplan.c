@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.24 1998/01/20 22:11:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.25 1998/02/10 04:01:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -701,6 +701,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 		makeVar((Index) lfirsti(index_path->parent->relids),
 				1,				/* func indices have one key */
 				((Func *) ((Expr *) clause)->oper)->functype,
+				-1,
 				0,
 				(Index) lfirsti(index_path->parent->relids),
 				0);

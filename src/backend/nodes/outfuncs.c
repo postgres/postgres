@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.27 1998/01/25 04:07:52 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.28 1998/02/10 04:00:57 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -606,7 +606,7 @@ _outResdom(StringInfo str, Resdom *node)
 	appendStringInfo(str, buf);
 	sprintf(buf, " :restype %u ", node->restype);
 	appendStringInfo(str, buf);
-	sprintf(buf, " :reslen %d ", node->reslen);
+	sprintf(buf, " :restypmod %d ", node->restypmod);
 	appendStringInfo(str, buf);
 	appendStringInfo(str, " :resname ");
 	appendStringInfo(str, node->resname);
@@ -697,6 +697,8 @@ _outVar(StringInfo str, Var *node)
 	sprintf(buf, " :varattno %hd ", node->varattno);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :vartype %u ", node->vartype);
+	appendStringInfo(str, buf);
+	sprintf(buf, " :vartypmod %u ", node->vartypmod);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :varlevelsup %u ", node->varlevelsup);
 	appendStringInfo(str, buf);

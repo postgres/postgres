@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.24 1998/01/05 16:38:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.25 1998/02/10 04:00:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,6 +304,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 			typename = makeNode(TypeName);
 			def->colname = pstrdup(attributeName);
 			typename->name = pstrdup(attributeType);
+			typename->typmod = attribute->atttypmod;
 			def->typename = typename;
 			def->is_not_null = attribute->attnotnull;
 			def->defval = NULL;

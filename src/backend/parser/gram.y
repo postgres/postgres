@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.104 1998/02/04 06:11:46 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.105 1998/02/10 04:01:44 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1314,6 +1314,7 @@ def_arg:  ColId							{  $$ = (Node *)makeString($1); }
 					n->name = $2;
 					n->setof = TRUE;
 					n->arrayBounds = NULL;
+					n->typmod = -1;
 					$$ = (Node *)n;
 				}
 		| DOUBLE						{  $$ = (Node *)makeString("double"); }
@@ -2218,6 +2219,7 @@ LockStmt:  LOCK_P relation_name
 					c->val.val.str = "f";
 					c->typename = makeNode(TypeName);
 					c->typename->name = xlateSqlType("bool");
+					c->typename->typmod = -1;
 
 					n->relname = $2;
 					n->whereClause = (Node *)c;
@@ -2656,6 +2658,7 @@ Generic:  generic
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType($1);
+					$$->typmod = -1;
 				}
 		;
 
@@ -2674,16 +2677,19 @@ Numeric:  FLOAT opt_float
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType($2);
+					$$->typmod = -1;
 				}
 		| DECIMAL opt_decimal
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("integer");
+					$$->typmod = -1;
 				}
 		| NUMERIC opt_numeric
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("integer");
+					$$->typmod = -1;
 				}
 		;
 
@@ -2779,6 +2785,7 @@ Character:  character '(' Iconst ')'
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType($1);
+					$$->typmod = -1;
 				}
 		;
 
@@ -2824,22 +2831,26 @@ Datetime:  datetime
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType($1);
+					$$->typmod = -1;
 				}
 		| TIMESTAMP opt_timezone
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("timestamp");
 					$$->timezone = $2;
+					$$->typmod = -1;
 				}
 		| TIME
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("time");
+					$$->typmod = -1;
 				}
 		| INTERVAL opt_interval
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("interval");
+					$$->typmod = -1;
 				}
 		;
 
@@ -3327,7 +3338,8 @@ a_expr:  attr opt_indirection
 
 					t->name = xlateSqlType("date");
 					t->setof = FALSE;
-
+					t->typmod = -1;
+ 
 					$$ = (Node *)n;
 				}
 		| CURRENT_TIME
@@ -3341,6 +3353,7 @@ a_expr:  attr opt_indirection
 
 					t->name = xlateSqlType("time");
 					t->setof = FALSE;
+					t->typmod = -1;
 
 					$$ = (Node *)n;
 				}
@@ -3359,6 +3372,7 @@ a_expr:  attr opt_indirection
 
 					t->name = xlateSqlType("time");
 					t->setof = FALSE;
+					t->typmod = -1;
 
 					if ($3 != 0)
 						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented; zero used instead",$3);
@@ -3376,6 +3390,7 @@ a_expr:  attr opt_indirection
 
 					t->name = xlateSqlType("timestamp");
 					t->setof = FALSE;
+					t->typmod = -1;
 
 					$$ = (Node *)n;
 				}
@@ -3394,6 +3409,7 @@ a_expr:  attr opt_indirection
 
 					t->name = xlateSqlType("timestamp");
 					t->setof = FALSE;
+					t->typmod = -1;
 
 					if ($3 != 0)
 						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented; zero used instead",$3);
@@ -3487,6 +3503,7 @@ a_expr:  attr opt_indirection
 					n->val.val.str = "t";
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("bool");
+					n->typename->typmod = -1;
 					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
 				}
 		| a_expr IS NOT FALSE_P
@@ -3496,6 +3513,7 @@ a_expr:  attr opt_indirection
 					n->val.val.str = "t";
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("bool");
+					n->typename->typmod = -1;
 					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
 				}
 		| a_expr IS FALSE_P
@@ -3505,6 +3523,7 @@ a_expr:  attr opt_indirection
 					n->val.val.str = "f";
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("bool");
+					n->typename->typmod = -1;
 					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
 				}
 		| a_expr IS NOT TRUE_P
@@ -3514,6 +3533,7 @@ a_expr:  attr opt_indirection
 					n->val.val.str = "f";
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("bool");
+					n->typename->typmod = -1;
 					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
 				}
 		| a_expr BETWEEN b_expr AND b_expr
@@ -3906,6 +3926,7 @@ b_expr:  attr opt_indirection
 
 					t->name = xlateSqlType("date");
 					t->setof = FALSE;
+					t->typmod = -1;
 
 					$$ = (Node *)n;
 				}
@@ -3920,6 +3941,7 @@ b_expr:  attr opt_indirection
 
 					t->name = xlateSqlType("time");
 					t->setof = FALSE;
+					t->typmod = -1;
 
 					$$ = (Node *)n;
 				}
@@ -3938,6 +3960,7 @@ b_expr:  attr opt_indirection
 
 					t->name = xlateSqlType("time");
 					t->setof = FALSE;
+					t->typmod = -1;
 
 					if ($3 != 0)
 						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented; zero used instead",$3);
@@ -3955,6 +3978,7 @@ b_expr:  attr opt_indirection
 
 					t->name = xlateSqlType("timestamp");
 					t->setof = FALSE;
+					t->typmod = -1;
 
 					$$ = (Node *)n;
 				}
@@ -3973,6 +3997,7 @@ b_expr:  attr opt_indirection
 
 					t->name = xlateSqlType("timestamp");
 					t->setof = FALSE;
+					t->typmod = -1;
 
 					if ($3 != 0)
 						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented; zero used instead",$3);
@@ -4478,6 +4503,7 @@ AexprConst:  Iconst
 					n->val.val.str = "t";
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("bool");
+					n->typename->typmod = -1;
 					$$ = (Node *)n;
 				}
 		| FALSE_P
@@ -4487,6 +4513,7 @@ AexprConst:  Iconst
 					n->val.val.str = "f";
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("bool");
+					n->typename->typmod = -1;
 					$$ = (Node *)n;
 				}
 		;

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/explain.l,v 1.8 1998/01/11 22:17:35 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/explain.l,v 1.9 1998/02/10 04:02:59 momjian Exp $
 .TH EXPLAIN SQL 06/12/97 PostgreSQL PostgreSQL
 .SH NAME
 explain - explains statement execution details
@@ -30,12 +30,12 @@ tgl=> explain verbose select sum(a) from test;
 NOTICE:QUERY PLAN:
 
 {AGG :cost 0 :size 0 :width 0 :state <> :qptargetlist
- ({TLE :resdom {RESDOM :resno 1 :restype 700 :reslen 4 :resname "sum"
+ ({TLE :resdom {RESDOM :resno 1 :restype 700 :restypmod 4 :resname "sum"
    :reskey 0 :reskeyop 0 :resjunk 0}
   :expr {AGGREG :aggname "sum" :basetype 700 :aggtype 700 :aggno 0
  :target {VAR :varno 1 :varattno 1 :vartype 700 :varnoold 1 :varoattno 1}}})
  :qpqual <> :lefttree {SEQSCAN :cost 0 :size 0 :width 4 :state <>
-  :qptargetlist ({TLE :resdom {RESDOM :resno 1 :restype 700 :reslen 4
+  :qptargetlist ({TLE :resdom {RESDOM :resno 1 :restype 700 :restypmod 4
    :resname "null" :reskey 0 :reskeyop 0 :resjunk 0}
   :expr {VAR :varno 1 :varattno 1 :vartype 700 :varnoold 1 :varoattno 1}})
  :qpqual <> :lefttree <> :righttree <> :scanrelid 1} :righttree <> :numagg 1 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.7 1998/01/24 22:49:25 momjian Exp $
+ * $Id: makefuncs.h,v 1.8 1998/02/10 04:02:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,13 +25,14 @@ extern Oper * makeOper(Oid opno,
 extern Var * makeVar(Index varno,
 		AttrNumber varattno,
 		Oid vartype,
+		int vartypmod,
 		Index varlevelsup,
 		Index varnoold,
 		AttrNumber varoattno);
 
 extern Resdom * makeResdom(AttrNumber resno,
 		   Oid restype,
-		   int reslen,
+		   int restypmod,
 		   char *resname,
 		   Index reskey,
 		   Oid reskeyop,

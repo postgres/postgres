@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.16 1998/01/20 22:12:14 momjian Exp $
+ * $Id: primnodes.h,v 1.17 1998/02/10 04:02:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  * Resdom (Result Domain)
  *		resno			- attribute number
  *		restype			- type of the resdom
- *		reslen			- length (in bytes) of the result
+ *		restypmod		- type-specific modifier of the result
  *		resname			- name of the resdom (could be NULL)
  *		reskey			- order of key in a sort (for those > 0)
  *		reskeyop		- sort operator Oid
@@ -41,7 +41,7 @@ typedef struct Resdom
 	NodeTag		type;
 	AttrNumber	resno;
 	Oid			restype;
-	int			reslen;
+	int			restypmod;
 	char	   *resname;
 	Index		reskey;
 	Oid			reskeyop;
@@ -104,6 +104,7 @@ typedef struct Expr
  *						  (could be INNER or OUTER)
  *		varattno		- attribute number of this var, or zero for all
  *		vartype			- pg_type tuple oid for the type of this var
+ *		vartypmod		- pg_attribute typmod value
  *		varlevelsup		- for subquery variables referencing outer relations
  *		varnoold		- keep varno around in case it got changed to INNER/
  *						  OUTER (see match_varid)
@@ -123,6 +124,7 @@ typedef struct Var
 	Index		varno;
 	AttrNumber	varattno;
 	Oid			vartype;
+	int			vartypmod;
 	Index		varlevelsup;	/* erased by upper optimizer */
 	Index		varnoold;		/* only used by optimizer */
 	AttrNumber	varoattno;		/* only used by optimizer */

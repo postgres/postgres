@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.31 1998/02/04 21:32:12 momjian Exp $
+ * $Id: pg_type.h,v 1.32 1998/02/10 04:02:17 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -156,6 +156,8 @@ DESCR("boolean 'true'/'false'");
 
 DATA(insert OID = 17 (	bytea	   PGUID -1  -1 f b t \054 0  18 byteain byteaout byteain byteaout i _null_ ));
 DESCR("variable length array of bytes");
+#define BYTEAOID		17
+
 DATA(insert OID = 18 (	char	   PGUID  1   1 t b t \054 0   0 charin charout charin charout c _null_ ));
 DESCR("single character");
 #define CHAROID 18

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.27 1998/01/31 04:38:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.28 1998/02/10 04:02:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "catalog/index.h"		/* for index_create() */
 #include "catalog/catalog.h"	/* for newoid() */
 #include "catalog/pg_am.h"		/* for BTREE_AM_OID */
+#include "catalog/pg_type.h"	/* for INT4OID */
 #include "catalog/pg_opclass.h" /* for INT4_OPS_OID */
 #include "catalog/pg_proc.h"	/* for INT4GE_PROC_OID */
 #include "storage/itemptr.h"
@@ -127,12 +128,12 @@ inv_create(int flags)
 	tupdesc = CreateTemplateTupleDesc(2);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "olastbye",
-					   "int4",
-					   0, false);
+					   INT4OID,
+					   -1, 0, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2,
 					   "odata",
-					   "bytea",
-					   0, false);
+					   BYTEAOID,
+					   -1, 0, false);
 
 	/*
 	 * First create the table to hold the inversion large object.  It will

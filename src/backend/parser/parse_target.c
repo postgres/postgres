@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.7 1998/01/20 05:04:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.8 1998/02/10 04:01:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 
 static List *expandAllTables(ParseState *pstate);
 static char *figureColname(Node *expr, Node *resval);
@@ -54,7 +55,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				{
 					Node	   *expr;
 					Oid			type_id;
-					int			type_len;
+					int			type_mod;
 					char	   *identname;
 					char	   *resname;
 
@@ -67,11 +68,14 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					 */
 					expr = transformIdent(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
 					type_id = exprType(expr);
-					type_len = typeLen(typeidType(type_id));
+					if (nodeTag(expr) == T_Var)
+						type_mod = ((Var *)expr)->vartypmod;
+					else
+						type_mod = -1;
 					resname = (res->name) ? res->name : identname;
 					tent->resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
 											  (Oid) type_id,
-											  (Size) type_len,
+											  type_mod,
 											  resname,
 											  (Index) 0,
 											  (Oid) 0,
@@ -190,7 +194,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 			case T_Attr:
 				{
 					Oid			type_id;
-					int			type_len;
+					int			type_mod;
 					Attr	   *att = (Attr *) res->val;
 					Node	   *result;
 					char	   *attrname;
@@ -253,8 +257,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 
 					/*
-					 * Target item is fully specified: ie.
-					 * relation.attribute
+					 * Target item is fully specified: ie. relation.attribute
 					 */
 					result = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,EXPR_COLUMN_FIRST);
 					handleTargetColname(pstate, &res->name, att->relname, attrname);
@@ -273,14 +276,17 @@ transformTargetList(ParseState *pstate, List *targetlist)
 						result = (Node *) make_array_ref(result, att->indirection);
 					}
 					type_id = exprType(result);
-					type_len = typeLen(typeidType(type_id));
+					if (nodeTag(result) == T_Var)
+						type_mod = ((Var *)result)->vartypmod;
+					else
+						type_mod = -1;
 					/* move to last entry */
 					while (lnext(attrs) != NIL)
 						attrs = lnext(attrs);
 					resname = (res->name) ? res->name : strVal(lfirst(attrs));
 					resnode = makeResdom((AttrNumber) pstate->p_last_resno++,
 										 (Oid) type_id,
-										 (Size) type_len,
+										 type_mod,
 										 resname,
 										 (Index) 0,
 										 (Oid) 0,
@@ -326,8 +332,7 @@ make_targetlist_expr(ParseState *pstate,
 {
 	Oid			type_id,
 				attrtype;
-	int			type_len,
-				attrlen,
+	int			type_mod,
 				attrtypmod;
 	int			resdomno;
 	Relation	rd;
@@ -339,12 +344,10 @@ make_targetlist_expr(ParseState *pstate,
 		elog(ERROR, "make_targetlist_expr: invalid use of NULL expression");
 
 	type_id = exprType(expr);
-	if (type_id == InvalidOid)
-	{
-		type_len = 0;
-	}
+	if (nodeTag(expr) == T_Var)
+		type_mod = ((Var *)expr)->vartypmod;
 	else
-		type_len = typeLen(typeidType(type_id));
+		type_mod = -1;
 
 	/* Processes target columns that will be receiving results */
 	if (pstate->p_is_insert || pstate->p_is_update)
@@ -361,7 +364,6 @@ make_targetlist_expr(ParseState *pstate,
 		attrtype = attnumTypeId(rd, resdomno);
 		if ((arrayRef != NIL) && (lfirst(arrayRef) == NIL))
 			attrtype = GetArrayElementType(attrtype);
-		attrlen = typeLen(typeidType(attrtype));
 		attrtypmod = rd->rd_att->attrs[resdomno - 1]->atttypmod;
 #if 0
 		if (Input_is_string && Typecast_ok)
@@ -438,7 +440,7 @@ make_targetlist_expr(ParseState *pstate,
 				else
 					expr = (Node *) parser_typecast2(expr,
 													 type_id,
-												   typeidType(attrtype),
+													 typeidType(attrtype),
 													 attrtypmod);
 			}
 			else
@@ -486,20 +488,20 @@ make_targetlist_expr(ParseState *pstate,
 										   lowerIndexpr,
 										   (Expr *) expr);
 			attrtype = attnumTypeId(rd, resdomno);
-			attrlen = typeLen(typeidType(attrtype));
+			attrtypmod = get_atttypmod(rd->rd_id, resdomno);
 		}
 	}
 	else
 	{
 		resdomno = pstate->p_last_resno++;
 		attrtype = type_id;
-		attrlen = type_len;
+		attrtypmod = type_mod;
 	}
 	tent = makeNode(TargetEntry);
 
 	resnode = makeResdom((AttrNumber) resdomno,
 						 (Oid) attrtype,
-						 (Size) attrlen,
+						 attrtypmod,
 						 colname,
 						 (Index) 0,
 						 (Oid) 0,

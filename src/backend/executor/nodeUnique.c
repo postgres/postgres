@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.12 1998/01/31 04:38:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.13 1998/02/10 04:00:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,8 +196,12 @@ ExecUnique(Unique *node)
 			{
 				if (isNull1)	/* both are null, they are equal */
 					continue;
-				val1 = fmgr(typoutput, attr1, gettypelem(tupDesc->attrs[uniqueAttrNum - 1]->atttypid));
-				val2 = fmgr(typoutput, attr2, gettypelem(tupDesc->attrs[uniqueAttrNum - 1]->atttypid));
+				val1 = fmgr(typoutput, attr1,
+					gettypelem(tupDesc->attrs[uniqueAttrNum - 1]->atttypid),
+						  (int)tupDesc->attrs[uniqueAttrNum - 1]->atttypmod);
+				val2 = fmgr(typoutput, attr2,
+					gettypelem(tupDesc->attrs[uniqueAttrNum - 1]->atttypid),
+						  (int)tupDesc->attrs[uniqueAttrNum - 1]->atttypmod);
 
 				/*
 				 * now, val1 and val2 are ascii representations so we can

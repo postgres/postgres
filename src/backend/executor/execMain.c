@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.40 1998/01/19 02:37:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.41 1998/02/10 04:00:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -562,8 +562,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				 * have to copy tupType to get rid of constraints
 				 */
 				tupdesc = CreateTupleDescCopy(tupType);
-
-				setAtttypmodForCreateTable(tupdesc, targetList, rangeTable);
 
 				intoRelationId = heap_create_with_catalog(intoName, tupdesc);
 

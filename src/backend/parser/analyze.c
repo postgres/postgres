@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.69 1998/02/06 16:46:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.70 1998/02/10 04:01:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,7 +307,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			te = makeNode(TargetEntry);
 			te->resdom = makeResdom(defval[ndef].adnum,
 									att[defval[ndef].adnum - 1]->atttypid,
-									att[defval[ndef].adnum - 1]->attlen,
+									att[defval[ndef].adnum - 1]->atttypmod,
 									pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
 									0, 0, 0);
 			te->fjoin = NULL;

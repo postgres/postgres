@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.11 1998/01/21 04:24:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.12 1998/02/10 04:02:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,7 @@ FixResdomTypes(List *tlist)
 			Var		   *var = (Var *) tle->expr;
 
 			tle->resdom->restype = var->vartype;
-			tle->resdom->reslen = get_typlen(var->vartype);
+			tle->resdom->restypmod = var->vartypmod;
 		}
 	}
 }

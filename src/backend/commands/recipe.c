@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.18 1998/01/20 22:10:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.19 1998/02/10 04:00:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -493,7 +493,8 @@ tg_replaceNumberedParam(Node *expression,
 						{
 							newVar = makeVar(rt_ind,
 											 0, /* the whole tuple */
-										   TypeGet(teeRelName, &defined),
+											 TypeGet(teeRelName, &defined),
+											 -1,
 										     0,
 											 rt_ind,
 											 0);
@@ -503,7 +504,8 @@ tg_replaceNumberedParam(Node *expression,
 							newVar = makeVar(rt_ind,
 											 1, /* just the first field,
 												 * which is 'result' */
-										   TypeGet(teeRelName, &defined),
+											 TypeGet(teeRelName, &defined),
+											 -1,
 										     0,
 											 rt_ind,
 											 0);
@@ -1067,8 +1069,8 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 
 				if (!TupleDescInitEntry(tupdesc, 1,
 										"result",
-										NULL,
-										0, false))
+										InvalidOid,
+										-1, 0, false))
 				{
 					elog(NOTICE, "tg_parseSubQuery: unexpected result from TupleDescInitEntry");
 				}

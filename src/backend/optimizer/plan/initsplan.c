@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.9 1998/01/20 22:11:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.10 1998/02/10 04:01:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ add_missing_vars_to_base_rels(Query *root, List *tlist)
 			!rel_member(relids, root->base_relation_list_))
 		{
 
-			var = makeVar(varno, -2, 26, 0, varno, -2);
+			var = makeVar(varno, -2, -1, 26, 0, varno, -2);
 			/* add it to base_relation_list_ */
 			result = get_base_rel(root, varno);
 			add_tl_element(result, var);

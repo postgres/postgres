@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.12 1998/02/05 04:08:42 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.13 1998/02/10 04:01:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,13 +192,10 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 */
 			if (get_attnum(relid, funcname) != InvalidAttrNumber)
 			{
-				Oid			dummyTypeId;
-
-				return ((Node *) make_var(pstate,
+				return (Node *) make_var(pstate,
 									   relid,
 									   refname,
-									   funcname,
-									   &dummyTypeId));
+									   funcname);
 			}
 			else
 			{
@@ -311,7 +308,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			toid = typeTypeId(typenameType(relname));
 			/* replace it in the arg list */
 			lfirst(fargs) =
-				makeVar(vnum, 0, toid, 0, vnum, 0);
+				makeVar(vnum, 0, toid, -1, 0, vnum, 0);
 		}
 		else if (!attisset)
 		{						/* set functions don't have parameters */
@@ -1059,6 +1056,7 @@ setup_tlist(char *attname, Oid relid)
 	Resdom	   *resnode;
 	Var		   *varnode;
 	Oid			typeid;
+	int			type_mod;
 	int			attno;
 
 	attno = get_attnum(relid, attname);
@@ -1066,14 +1064,16 @@ setup_tlist(char *attname, Oid relid)
 		elog(ERROR, "cannot reference attribute '%s' of tuple params/return values for functions", attname);
 
 	typeid = get_atttype(relid, attno);
+	type_mod = get_atttypmod(relid, attno);
+	
 	resnode = makeResdom(1,
 						 typeid,
-						 typeLen(typeidType(typeid)),
+						 type_mod,
 						 get_attname(relid, attno),
 						 0,
 						 (Oid) 0,
 						 0);
-	varnode = makeVar(-1, attno, typeid, 0, -1, attno);
+	varnode = makeVar(-1, attno, typeid, type_mod, 0, -1, attno);
 
 	tle = makeNode(TargetEntry);
 	tle->resdom = resnode;
@@ -1095,12 +1095,12 @@ setup_base_tlist(Oid typeid)
 
 	resnode = makeResdom(1,
 						 typeid,
-						 typeLen(typeidType(typeid)),
+						 -1,
 						 "<noname>",
 						 0,
 						 (Oid) 0,
 						 0);
-	varnode = makeVar(-1, 1, typeid, 0, -1, 1);
+	varnode = makeVar(-1, 1, typeid, -1, 0, -1, 1);
 	tle = makeNode(TargetEntry);
 	tle->resdom = resnode;
 	tle->expr = (Node *) varnode;

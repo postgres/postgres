@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.10 1998/01/20 22:11:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.11 1998/02/10 04:01:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,12 +240,13 @@ make_op(char *opname, Node *ltree, Node *rtree)
 
 Var		   *
 make_var(ParseState *pstate, Oid relid, char *refname,
-				char *attrname, Oid *type_id)
+				char *attrname)
 {
 	Var		   *varnode;
 	int			vnum,
 				attid;
 	Oid			vartypeid;
+	int			type_mod;
 	int			sublevels_up;
 
 	vnum = refnameRangeTablePosn(pstate, refname, &sublevels_up);
@@ -255,9 +256,10 @@ make_var(ParseState *pstate, Oid relid, char *refname,
 		elog(ERROR, "Relation %s does not have attribute %s",
 			 refname, attrname);
 	vartypeid = get_atttype(relid, attid);
+	type_mod = get_atttypmod(relid, attid);
 
-	varnode = makeVar(vnum, attid, vartypeid, sublevels_up, vnum, attid);
-	*type_id = vartypeid;
+	varnode = makeVar(vnum, attid, vartypeid, type_mod,
+					  sublevels_up, vnum, attid);
 
 	return varnode;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.27 1998/02/07 06:11:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.28 1998/02/10 04:00:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1179,46 +1179,3 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	if (econtext != NULL)
 		pfree(econtext);
 }
-
-/* ----------------------------------------------------------------
- * setAtttyplenForCreateTable -
- *	  called when we do a SELECT * INTO TABLE tab
- *	  needed for attributes that have atttypmod like bpchar and
- *	  varchar
- * ----------------------------------------------------------------
- */
-void
-setAtttypmodForCreateTable(TupleDesc tupType, List *targetList,
-							List *rangeTable)
-{
-	List	   *tl;
-	TargetEntry *tle;
-	Node	   *expr;
-	int			varno;
-
-	tl = targetList;
-
-	for (varno = 0; varno < tupType->natts; varno++)
-	{
-		tle = lfirst(tl);
-
-		if (USE_ATTTYPMOD(tupType->attrs[varno]->atttypid))
-		{
-			expr = tle->expr;
-			if (expr && IsA(expr, Var))
-			{
-				Var		   *var;
-				RangeTblEntry *rtentry;
-
-				var = (Var *) expr;
-				rtentry = rt_fetch(var->varnoold, rangeTable);
-				tupType->attrs[varno]->atttypmod =
-					get_atttypmod(rtentry->relid, var->varoattno);
-			}
-			else
-				elog(ERROR, "setAtttypmodForCreateTable: can't get atttypmod for field (for length, etc.)");
-		}
-		tl = lnext(tl);
-	}
-}
-

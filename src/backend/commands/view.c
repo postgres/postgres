@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.19 1998/01/05 16:39:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.20 1998/02/10 04:00:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,8 @@ DefineVirtualRelation(char *relname, List *tlist)
 			typename = makeNode(TypeName);
 
 			typename->name = pstrdup(restypename);
+			typename->typmod = res->restypmod;
+
 			def->colname = pstrdup(resname);
 
 			def->typename = typename;

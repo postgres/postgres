@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.5 1998/01/20 22:11:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.6 1998/02/10 04:00:50 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -53,6 +53,7 @@ Var		   *
 makeVar(Index varno,
 		AttrNumber varattno,
 		Oid vartype,
+		int vartypmod,
 		Index varlevelsup,
 		Index varnoold,
 		AttrNumber varoattno)
@@ -62,6 +63,7 @@ makeVar(Index varno,
 	var->varno = varno;
 	var->varattno = varattno;
 	var->vartype = vartype;
+	var->vartypmod = vartypmod;
 	var->varlevelsup = varlevelsup;
 	var->varnoold = varnoold;
 	var->varoattno = varoattno;
@@ -76,7 +78,7 @@ makeVar(Index varno,
 Resdom	   *
 makeResdom(AttrNumber resno,
 		   Oid restype,
-		   int reslen,
+		   int restypmod,
 		   char *resname,
 		   Index reskey,
 		   Oid reskeyop,
@@ -86,7 +88,7 @@ makeResdom(AttrNumber resno,
 
 	resdom->resno = resno;
 	resdom->restype = restype;
-	resdom->reslen = reslen;
+	resdom->restypmod = restypmod;
 	resdom->resname = resname;
 	resdom->reskey = reskey;
 	resdom->reskeyop = reskeyop;

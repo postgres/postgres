@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.33 1998/02/07 06:10:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.34 1998/02/10 04:00:14 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -254,7 +254,8 @@ bool
 TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   char *attributeName,
-				   char *typeName,
+				   Oid typeid,
+				   int typmod,
 				   int attdim,
 				   bool attisset)
 {
@@ -274,7 +275,6 @@ TupleDescInitEntry(TupleDesc desc,
 	 * why that is, though -- Jolly
 	 */
 /*	  AssertArg(NameIsValid(attributeName));*/
-/*	  AssertArg(NameIsValid(typeName));*/
 
 	AssertArg(!PointerIsValid(desc->attrs[attributeNumber - 1]));
 
@@ -301,7 +301,7 @@ TupleDescInitEntry(TupleDesc desc,
 
 	att->attdisbursion = 0;		/* dummy value */
 	att->attcacheoff = -1;
-	att->atttypmod = -1;
+	att->atttypmod = typmod;
 
 	att->attnum = attributeNumber;
 	att->attnelems = attdim;
@@ -327,7 +327,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 *	-cim 6/14/90
 	 * ----------------
 	 */
-	tuple = SearchSysCacheTuple(TYPNAME, PointerGetDatum(typeName),
+	tuple = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(typeid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
@@ -448,6 +448,7 @@ BuildDescForRelation(List *schema, char *relname)
 	TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
 	char	   *attname;
 	char	   *typename;
+	int			atttypmod;
 	int			attdim;
 	int			ndef = 0;
 	bool		attisset;
@@ -481,6 +482,7 @@ BuildDescForRelation(List *schema, char *relname)
 		attname = entry->colname;
 		arry = entry->typename->arrayBounds;
 		attisset = entry->typename->setof;
+		atttypmod = entry->typename->typmod;
 
 		if (arry != NIL)
 		{
@@ -495,7 +497,8 @@ BuildDescForRelation(List *schema, char *relname)
 		}
 
 		if (!TupleDescInitEntry(desc, attnum, attname,
-								typename, attdim, attisset))
+								typeTypeId(typenameType(typename)),
+								atttypmod, attdim, attisset))
 		{
 			/* ----------------
 			 *	if TupleDescInitEntry() fails, it means there is

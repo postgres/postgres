@@ -430,7 +430,9 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 		return (NULL);
 	}
 
-	return (fmgr(foutoid, val, gettypelem(tupdesc->attrs[fnumber - 1]->atttypid)));
+	return (fmgr(foutoid, val,
+			gettypelem(tupdesc->attrs[fnumber - 1]->atttypid),
+				  (int)tupdesc->attrs[fnumber - 1]->atttypmod));
 }
 
 Datum

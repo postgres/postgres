@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.8 1998/01/20 22:11:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.9 1998/02/10 04:01:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,13 +108,13 @@ preprocess_targetlist(List *tlist,
 
 		resdom = makeResdom(length(t_list) + 1,
 							27,
-							6,
+							-1,
 							"ctid",
 							0,
 							0,
 							1);
 
-		var = makeVar(result_relation, -1, 27, 0, result_relation, -1);
+		var = makeVar(result_relation, -1, 27, -1, 0, result_relation, -1);
 
 		ctid = makeNode(TargetEntry);
 		ctid->resdom = resdom;
@@ -260,23 +260,20 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 	AttrNumber	attno;
 	List	   *t_list = NIL;
 	char	   *attname;
+	int			typlen;
 	Oid			atttype = 0;
-	int16		typlen = 0;
 	bool		attisset = false;
-
-/*	  Oid type_id; */
-/*	  type_id = RelationIdGetTypeId(relid); */
 
 	for (attno = 1; attno <= get_relnatts(relid); attno++)
 	{
-		attname = get_attname( /* type_id, */ relid, attno);
-		atttype = get_atttype( /* type_id, */ relid, attno);
+		attname = get_attname(relid, attno);
+		atttype = get_atttype(relid, attno);
 
 		/*
 		 * Since this is an append or replace, the size of any set
 		 * attribute is the size of the OID used to represent it.
 		 */
-		attisset = get_attisset( /* type_id, */ relid, attname);
+		attisset = get_attisset(relid, attname);
 		if (attisset)
 			typlen = typeLen(typeidType(OIDOID));
 		else
@@ -300,14 +297,14 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 									  temp,
 									  (Datum) typedefault,
 								(typedefault == (struct varlena *) NULL),
-					/* XXX this is bullshit */
+									/* XXX ? */
 									  false,
 									  false,	/* not a set */
 									  false);
 
 					temp3 = MakeTLE(makeResdom(attno,
 											   atttype,
-											   typlen,
+											   -1,
 											   attname,
 											   0,
 											   (Oid) 0,
@@ -322,11 +319,13 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 					TargetEntry *temp_list = NULL;
 
 					temp_var =
-						makeVar(rt_index, attno, atttype, 0, rt_index, attno);
+						makeVar(rt_index, attno, atttype,
+								get_atttypmod(relid, attno),
+								0, rt_index, attno);
 
 					temp_list = MakeTLE(makeResdom(attno,
 												   atttype,
-												   typlen,
+												   get_atttypmod(relid, attno),
 												   attname,
 												   0,
 												   (Oid) 0,

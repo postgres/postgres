@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.17 1998/01/20 22:11:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.18 1998/02/10 04:01:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -464,6 +464,7 @@ make_groupPlan(List **tlist,
 		else
 			te->expr = (Node *) makeVar(1, resdom->resno,
 										resdom->restype,
+										resdom->restypmod,
 										0, -1, resdom->resno);
 	}
 
