@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.69 2000/11/16 22:30:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.70 2000/11/18 04:40:18 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1841,7 +1841,7 @@ get_const_expr(Const *constval, deparse_context *context)
 					appendStringInfoChar(buf, '\\');
 					appendStringInfoChar(buf, ch);
 				}
-				else if (ch >= 0 && ch < ' ')
+				else if (((unsigned char) ch) < ((unsigned char) ' '))
 					appendStringInfo(buf, "\\%03o", (int) ch);
 				else
 					appendStringInfoChar(buf, ch);
