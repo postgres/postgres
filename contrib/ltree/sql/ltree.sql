@@ -1,6 +1,4 @@
 \set ECHO none
-SET autocommit TO 'on';
-
 \i ltree.sql
 \set ECHO all
 

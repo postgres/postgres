@@ -7,7 +7,6 @@
 -- does not depend on contents of cube.sql.
 --
 \set ECHO none
-SET autocommit TO 'on';
 \i cube.sql
 \set ECHO all
 

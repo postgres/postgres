@@ -2,8 +2,6 @@
 -- HMAC-MD5
 --
 
-SET autocommit TO 'on';
-
 SELECT encode(hmac(
 'Hi There',
 decode('0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b', 'hex'),

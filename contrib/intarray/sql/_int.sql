@@ -3,7 +3,6 @@
 -- does not depend on contents of seg.sql.
 --
 \set ECHO none
-SET autocommit TO 'on';
 \i _int.sql
 \set ECHO all
 

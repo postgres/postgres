@@ -3,7 +3,6 @@
 --
 
 \set ECHO none
-SET autocommit TO 'on';
 \i pgcrypto.sql
 \set ECHO all
 

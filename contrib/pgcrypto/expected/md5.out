@@ -1,7 +1,6 @@
 --
 -- MD5 message digest
 --
-SET autocommit TO 'on';
 SELECT encode(digest('', 'md5'), 'hex');
               encode              
 ----------------------------------

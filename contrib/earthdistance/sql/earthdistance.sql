@@ -7,7 +7,6 @@
 -- does not depend on contents of earthdistance.sql or cube.sql.
 --
 \set ECHO none
-SET autocommit TO 'on';
 \i earthdistance.sql
 \set ECHO all
 

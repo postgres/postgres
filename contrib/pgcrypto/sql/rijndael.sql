@@ -2,8 +2,6 @@
 -- AES / Rijndael-128 cipher
 --
 
-SET autocommit TO 'on';
-
 -- some standard Rijndael testvalues
 SELECT encode(encrypt(
 decode('00112233445566778899aabbccddeeff', 'hex'),

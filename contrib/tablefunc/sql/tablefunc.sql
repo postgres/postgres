@@ -3,7 +3,6 @@
 -- does not depend on contents of tablefunc.sql.
 --
 \set ECHO none
-SET autocommit TO 'on';
 \i tablefunc.sql
 \set ECHO all
 

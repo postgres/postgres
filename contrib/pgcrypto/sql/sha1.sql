@@ -2,8 +2,6 @@
 -- SHA1 message digest
 --
 
-SET autocommit TO 'on';
-
 SELECT encode(digest('', 'sha1'), 'hex');
 SELECT encode(digest('a', 'sha1'), 'hex');
 SELECT encode(digest('abc', 'sha1'), 'hex');

@@ -2,8 +2,6 @@
 -- Blowfish cipher
 --
 
-SET autocommit TO 'on';
-
 -- some standard Blowfish testvalues
 SELECT encode(encrypt(
 decode('0000000000000000', 'hex'),

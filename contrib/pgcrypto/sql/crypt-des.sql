@@ -2,8 +2,6 @@
 -- crypt() and gen_salt(): crypt-des
 --
 
-SET autocommit TO 'on';
-
 SELECT crypt('', 'NB');
 
 SELECT crypt('foox', 'NB');

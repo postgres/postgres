@@ -2,8 +2,6 @@
 -- crypt() and gen_salt(): extended des
 --
 
-SET autocommit TO 'on';
-
 SELECT crypt('', '_J9..j2zz');
 
 SELECT crypt('foox', '_J9..j2zz');

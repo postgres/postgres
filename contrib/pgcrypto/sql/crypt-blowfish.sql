@@ -2,8 +2,6 @@
 -- crypt() and gen_salt(): bcrypt
 --
 
-SET autocommit TO 'on';
-
 SELECT crypt('', '$2a$06$RQiOJ.3ELirrXwxIZY8q0O');
 
 SELECT crypt('foox', '$2a$06$RQiOJ.3ELirrXwxIZY8q0O');

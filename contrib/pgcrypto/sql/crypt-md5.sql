@@ -2,8 +2,6 @@
 -- crypt() and gen_salt(): md5
 --
 
-SET autocommit TO 'on';
-
 SELECT crypt('', '$1$Szzz0yzz');
 
 SELECT crypt('foox', '$1$Szzz0yzz');
