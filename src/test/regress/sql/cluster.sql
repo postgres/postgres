@@ -125,7 +125,7 @@ INSERT INTO clstr_3 VALUES (1);
 -- this user can only cluster clstr_1 and clstr_3, but the latter
 -- has not been clustered
 SET SESSION AUTHORIZATION clstr_user;
-CLUSTER ALL;
+CLUSTER;
 SELECT * FROM clstr_1 UNION ALL
   SELECT * FROM clstr_2 UNION ALL
   SELECT * FROM clstr_3;
