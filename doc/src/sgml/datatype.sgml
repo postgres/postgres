@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.92 2002/05/03 04:11:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.93 2002/06/11 15:32:32 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -2637,7 +2637,8 @@ SELECT * FROM test1 WHERE a;
      The <type>inet</type> type holds an IP host address, and
      optionally the identity of the subnet it is in, all in one field.
      The subnet identity is represented by the number of bits in the
-     network part of the address (the <quote>netmask</quote>).  If the netmask is 32,
+     network part of the address (the <quote>netmask</quote>).  If the
+     netmask is 32, 
      then the value does not indicate a subnet, only a single host.
      Note that if you want to accept networks only, you should use the
      <type>cidr</type> type rather than <type>inet</type>.

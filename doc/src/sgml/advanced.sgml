@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.27 2002/02/12 22:25:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.28 2002/06/11 15:32:32 thomas Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -46,14 +46,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.27 2002/02/12 22:25:15 mo
     <firstterm>view</firstterm> over the query, which gives a name to
     the query that you can refer to like an ordinary table.
 
-<programlisting>
+    <programlisting>
 CREATE VIEW myview AS
     SELECT city, temp_lo, temp_hi, prcp, date, location
         FROM weather, cities
         WHERE city = name;
 
 SELECT * FROM myview;
-</programlisting>
+    </programlisting>
    </para>
 
    <para>
@@ -101,32 +101,30 @@ SELECT * FROM myview;
    <para>
     The new declaration of the tables would look like this:
 
-<programlisting>
+    <programlisting>
 CREATE TABLE cities (
-	city		varchar(80) primary key,
-	location	point
+ 	city     varchar(80) primary key,
+	 location point
 );
 
 CREATE TABLE weather (
-	city		varchar(80) references cities,
-	temp_lo		int,
-	temp_hi		int,
-	prcp		real,
-	date		date
+	city      varchar(80) references cities,
+	temp_lo   int,
+	temp_hi   int,
+	prcp      real,
+	date      date
 );
-
-</programlisting>
+    </programlisting>
 
     Now try inserting an invalid record:
 
-<programlisting>
+    <programlisting>
 INSERT INTO weather VALUES ('Berkeley', 45, 53, 0.0, '1994-11-28');
-</programlisting>
+    </programlisting>
 
-<screen>
+    <screen>
 ERROR:  &lt;unnamed&gt; referential integrity violation - key referenced from weather not found in cities
-</screen>
-
+    </screen>
    </para>
 
    <para>
@@ -162,7 +160,8 @@ ERROR:  &lt;unnamed&gt; referential integrity violation - key referenced from we
     Suppose that we want to record a payment of $100.00 from Alice's account
     to Bob's account.  Simplifying outrageously, the SQL commands for this
     might look like
-<programlisting>
+
+    <programlisting>
 UPDATE accounts SET balance = balance - 100.00
     WHERE name = 'Alice';
 UPDATE branches SET balance = balance - 100.00
@@ -171,7 +170,10 @@ UPDATE accounts SET balance = balance + 100.00
     WHERE name = 'Bob';
 UPDATE branches SET balance = balance + 100.00
     WHERE name = (SELECT branch_name FROM accounts WHERE name = 'Bob');
-</programlisting>
+    </programlisting>
+   </para>
+
+   <para>
     The details of these commands are not important here; the important
     point is that there are several separate updates involved to accomplish
     this rather simple operation.  Our bank's officers will want to be
@@ -219,13 +221,17 @@ UPDATE branches SET balance = balance + 100.00
     the SQL commands of the transaction with
     <command>BEGIN</> and <command>COMMIT</> commands.  So our banking
     transaction would actually look like
-<programlisting>
+
+    <programlisting>
 BEGIN;
 UPDATE accounts SET balance = balance - 100.00
     WHERE name = 'Alice';
 -- etc etc
 COMMIT;
-</programlisting>
+    </programlisting>
+   </para>
+
+   <para>
     If, partway through the transaction, we decide we don't want to
     commit (perhaps we just noticed that Alice's balance went negative),
     we can issue the command <command>ROLLBACK</> instead of
@@ -272,25 +278,25 @@ COMMIT;
     implicitly when you list all cities.  If you're really clever you
     might invent some scheme like this:
 
-<programlisting>
+    <programlisting>
 CREATE TABLE capitals (
-    name            text,
-    population      real,
-    altitude        int,    -- (in ft)
-    state           char(2)
+  name       text,
+  population real,
+  altitude   int,    -- (in ft)
+  state      char(2)
 );
 
 CREATE TABLE non_capitals (
-    name            text,
-    population      real,
-    altitude        int     -- (in ft)
+  name       text,
+  population real,
+  altitude   int     -- (in ft)
 );
 
 CREATE VIEW cities AS
-    SELECT name, population, altitude FROM capitals
-        UNION
-    SELECT name, population, altitude FROM non_capitals;
-</programlisting>
+  SELECT name, population, altitude FROM capitals
+    UNION
+  SELECT name, population, altitude FROM non_capitals;
+    </programlisting>
 
     This works OK as far as querying goes, but it gets ugly when you
     need to update several rows, to name one thing.
@@ -299,18 +305,20 @@ CREATE VIEW cities AS
    <para>
     A better solution is this:
 
-<programlisting>
+    <programlisting>
 CREATE TABLE cities (
-    name            text,
-    population      real,
-    altitude        int     -- (in ft)
+  name       text,
+  population real,
+  altitude   int     -- (in ft)
 );
 
 CREATE TABLE capitals (
-    state           char(2)
+  state      char(2)
 ) INHERITS (cities);
-</programlisting>
+    </programlisting>
+   </para>
 
+   <para>
     In this case, a row of <classname>capitals</classname>
     <firstterm>inherits</firstterm> all columns (<structfield>name</>,
     <structfield>population</>, and <structfield>altitude</>) from its
@@ -328,22 +336,22 @@ CREATE TABLE capitals (
     including  state capitals, that are located at an altitude 
     over 500 ft.:
 
-<programlisting>
+    <programlisting>
 SELECT name, altitude
-    FROM cities
-    WHERE altitude &gt; 500;
-</programlisting>
+  FROM cities
+  WHERE altitude &gt; 500;
+    </programlisting>
 
     which returns:
 
-<screen>
+    <screen>
    name    | altitude
 -----------+----------
  Las Vegas |     2174
  Mariposa  |     1953
  Madison   |      845
 (3 rows)
-</screen>
+    </screen>
    </para>
 
    <para>
@@ -351,11 +359,11 @@ SELECT name, altitude
     all  the cities that are not state capitals and
     are situated at an altitude of 500 ft. or higher:
 
-<programlisting>
+    <programlisting>
 SELECT name, altitude
     FROM ONLY cities
     WHERE altitude &gt; 500;
-</programlisting>
+    </programlisting>
 
 <screen>
    name    | altitude
@@ -363,7 +371,7 @@ SELECT name, altitude
  Las Vegas |     2174
  Mariposa  |     1953
 (2 rows)
-</screen>         
+</screen>
    </para>
 
    <para>
@@ -397,7 +405,6 @@ SELECT name, altitude
     site</ulink> for links to more resources.
    </para>
   </sect1>
-
  </chapter>
 
 <!-- Keep this comment at the end of the file

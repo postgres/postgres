@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.138 2002/05/22 17:20:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.139 2002/06/11 15:32:33 thomas Exp $
 -->
 
 <appendix id="release">
@@ -44,6 +44,9 @@ Access privileges on procedural languages
 CREATE DATABASE has OWNER option so superuser can create DB for someone else
 Kerberos 5 support now works with Heimdal
 Database and user-specific session defaults for run-time configuration variables (ALTER DATABASE ... SET and ALTER USER ... SET)
+String function OVERLAY() implemented per SQL99
+Regular expression operator SIMILAR TO implemented per SQL99
+Regular expression function SUBSTRING() implemented per SQL99
 ]]></literallayout>
 
  </sect1>
