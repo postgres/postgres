@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.157 2003/10/01 21:30:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.157.2.1 2004/10/13 22:22:02 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1230,6 +1230,7 @@ heap_delete(Relation relation, ItemPointer tid,
 	PageHeader	dp;
 	Buffer		buffer;
 	int			result;
+	uint16		sv_infomask;
 
 	Assert(ItemPointerIsValid(tid));
 
@@ -1249,7 +1250,10 @@ heap_delete(Relation relation, ItemPointer tid,
 	tp.t_tableOid = relation->rd_id;
 
 l1:
+	sv_infomask = tp.t_data->t_infomask;
 	result = HeapTupleSatisfiesUpdate(tp.t_data, cid);
+	if (sv_infomask != tp.t_data->t_infomask)
+		SetBufferCommitInfoNeedsSave(buffer);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1266,7 +1270,7 @@ l1:
 		XactLockTableWait(xwait);
 
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		if (TransactionIdDidAbort(xwait))
+		if (!TransactionIdDidCommit(xwait))
 			goto l1;
 
 		/*
@@ -1291,8 +1295,11 @@ l1:
 	if (crosscheck != SnapshotAny && result == HeapTupleMayBeUpdated)
 	{
 		/* Perform additional check for serializable RI updates */
+		sv_infomask = tp.t_data->t_infomask;
 		if (!HeapTupleSatisfiesSnapshot(tp.t_data, crosscheck))
 			result = HeapTupleUpdated;
+		if (sv_infomask != tp.t_data->t_infomask)
+			SetBufferCommitInfoNeedsSave(buffer);
 	}
 
 	if (result != HeapTupleMayBeUpdated)
@@ -1455,6 +1462,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	Size		newtupsize,
 				pagefree;
 	int			result;
+	uint16		sv_infomask;
 
 	Assert(ItemPointerIsValid(otid));
 
@@ -1479,7 +1487,10 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 */
 
 l2:
+	sv_infomask = oldtup.t_data->t_infomask;
 	result = HeapTupleSatisfiesUpdate(oldtup.t_data, cid);
+	if (sv_infomask != oldtup.t_data->t_infomask)
+		SetBufferCommitInfoNeedsSave(buffer);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1496,7 +1507,7 @@ l2:
 		XactLockTableWait(xwait);
 
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		if (TransactionIdDidAbort(xwait))
+		if (!TransactionIdDidCommit(xwait))
 			goto l2;
 
 		/*
@@ -1521,8 +1532,11 @@ l2:
 	if (crosscheck != SnapshotAny && result == HeapTupleMayBeUpdated)
 	{
 		/* Perform additional check for serializable RI updates */
+		sv_infomask = oldtup.t_data->t_infomask;
 		if (!HeapTupleSatisfiesSnapshot(oldtup.t_data, crosscheck))
 			result = HeapTupleUpdated;
+		if (sv_infomask != oldtup.t_data->t_infomask)
+			SetBufferCommitInfoNeedsSave(buffer);
 	}
 
 	if (result != HeapTupleMayBeUpdated)
@@ -1789,6 +1803,7 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer,
 	ItemId		lp;
 	PageHeader	dp;
 	int			result;
+	uint16		sv_infomask;
 
 	*buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
@@ -1804,7 +1819,10 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer,
 	tuple->t_len = ItemIdGetLength(lp);
 
 l3:
+	sv_infomask = tuple->t_data->t_infomask;
 	result = HeapTupleSatisfiesUpdate(tuple->t_data, cid);
+	if (sv_infomask != tuple->t_data->t_infomask)
+		SetBufferCommitInfoNeedsSave(*buffer);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1821,7 +1839,7 @@ l3:
 		XactLockTableWait(xwait);
 
 		LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
-		if (TransactionIdDidAbort(xwait))
+		if (!TransactionIdDidCommit(xwait))
 			goto l3;
 
 		/*
