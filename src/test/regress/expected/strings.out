@@ -17,7 +17,7 @@ SELECT 'first line'
 ' - next line' /* this comment is not allowed here */
 ' - third line'
 	AS "Illegal comment within continuation";
-ERROR:  parser: parse error at or near "'"
+ERROR:  parser: syntax error at or near "'"
 --
 -- test conversions between various string types
 --
