@@ -3,10 +3,10 @@ psql:ltree.sql:9: NOTICE:  ProcedureCreate: type ltree is not yet defined
 psql:ltree.sql:14: NOTICE:  Argument type "ltree" is only a shell
 psql:ltree.sql:281: NOTICE:  ProcedureCreate: type lquery is not yet defined
 psql:ltree.sql:286: NOTICE:  Argument type "lquery" is only a shell
-psql:ltree.sql:345: NOTICE:  ProcedureCreate: type ltxtquery is not yet defined
-psql:ltree.sql:350: NOTICE:  Argument type "ltxtquery" is only a shell
-psql:ltree.sql:412: NOTICE:  ProcedureCreate: type ltree_gist is not yet defined
-psql:ltree.sql:417: NOTICE:  Argument type "ltree_gist" is only a shell
+psql:ltree.sql:392: NOTICE:  ProcedureCreate: type ltxtquery is not yet defined
+psql:ltree.sql:397: NOTICE:  Argument type "ltxtquery" is only a shell
+psql:ltree.sql:459: NOTICE:  ProcedureCreate: type ltree_gist is not yet defined
+psql:ltree.sql:464: NOTICE:  Argument type "ltree_gist" is only a shell
 SELECT ''::ltree;
  ltree 
 -------
@@ -958,6 +958,36 @@ SELECT '{ltree.asd, tree.awdfg}'::ltree[] @ 'tree & aWdfg@'::ltxtquery;
 (1 row)
 
 SELECT '{j.k.l.m, g.b.c.d.e}'::ltree[] ~ 'A*@|g.b.c.d.e';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'a.b.c.d.e'::ltree ? '{A.b.c.d.e}';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT 'a.b.c.d.e'::ltree ? '{a.b.c.d.e}';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'a.b.c.d.e'::ltree ? '{A.b.c.d.e, a.*}';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '{a.b.c.d.e,B.df}'::ltree[] ? '{A.b.c.d.e}';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT '{a.b.c.d.e,B.df}'::ltree[] ? '{A.b.c.d.e,*.df}';
  ?column? 
 ----------
  t
@@ -3058,58 +3088,6 @@ SELECT * FROM ltreetest WHERE t <@ '1.1.1' order by t asc;
  1.1.1.2.1
 (4 rows)
 
-SELECT * FROM ltreetest WHERE t ~ '1.1.1.*' order by t asc;
-     t     
------------
- 1.1.1
- 1.1.1.1
- 1.1.1.2
- 1.1.1.2.1
-(4 rows)
-
-SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
-               t                
---------------------------------
- 1
- 10.22.1
- 10.26.30.15.1
- 11.1
- 17.25.2.13.10.27.13.1
- 18.13.6.12.26.26.26.29.18.20.1
- 19.20.25.7.27.28.27.17.9.3.1
- 19.9.32.23.13.24.1
- 20.17.18.21.1
- 20.4.27.31.1
- 21.18.2.1
- 21.23.17.8.23.11.8.1
- 22.30.31.24.23.22.5.20.28.1
- 23.28.1
- 23.3.32.21.5.14.10.17.1
- 25.6.12.16.1
- 29.1
- 29.15.29.8.31.26.1
- 32.31.11.22.1
- 4.7.1
- 6.27.29.14.8.12.26.3.21.4.1
- 8.13.1
- 8.2.18.23.5.16.17.1
- 8.32.30.1
- 9.21.20.29.1
-(25 rows)
-
-SELECT * FROM ltreetest WHERE t ~ '23.*.1' order by t asc;
-            t            
--------------------------
- 23.28.1
- 23.3.32.21.5.14.10.17.1
-(2 rows)
-
-SELECT * FROM ltreetest WHERE t ~ '23.*{1}.1' order by t asc;
-    t    
----------
- 23.28.1
-(1 row)
-
 SELECT * FROM ltreetest WHERE t @ '23 & 1' order by t asc;
                t                
 --------------------------------
@@ -3153,6 +3131,83 @@ SELECT * FROM ltreetest WHERE t @ '23 & 1' order by t asc;
  8.2.18.23.5.16.17.1
  9.5.9.3.23.9.25.14.1.29.28
 (39 rows)
+
+SELECT * FROM ltreetest WHERE t ~ '1.1.1.*' order by t asc;
+     t     
+-----------
+ 1.1.1
+ 1.1.1.1
+ 1.1.1.2
+ 1.1.1.2.1
+(4 rows)
+
+SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
+               t                
+--------------------------------
+ 1
+ 1.1
+ 1.1.1
+ 1.1.1.1
+ 1.1.1.2.1
+ 1.1.2.1
+ 1.26.15.23.5.31.29.11.19.28.1
+ 10.13.22.1.8.30.9.24.1.2.1
+ 10.22.1
+ 10.26.30.15.1
+ 11.1
+ 12.1.1
+ 17.25.2.13.10.27.13.1
+ 18.13.6.12.26.26.26.29.18.20.1
+ 19.20.25.7.27.28.27.17.9.3.1
+ 19.9.32.23.13.24.1
+ 20.17.18.21.1
+ 20.4.27.31.1
+ 21.18.2.1
+ 21.23.17.8.23.11.8.1
+ 22.30.31.24.23.22.5.20.28.1
+ 23.17.22.1.23.4.29.32.4.1
+ 23.28.1
+ 23.3.32.21.5.14.10.17.1
+ 25.6.12.16.1
+ 29.1
+ 29.15.29.8.31.26.1
+ 32.31.11.22.1
+ 4.7.1
+ 6.27.29.14.8.12.26.3.21.4.1
+ 8.13.1
+ 8.2.18.23.5.16.17.1
+ 8.32.30.1
+ 9.21.20.29.1
+(34 rows)
+
+SELECT * FROM ltreetest WHERE t ~ '23.*{1}.1' order by t asc;
+    t    
+---------
+ 23.28.1
+(1 row)
+
+SELECT * FROM ltreetest WHERE t ~ '23.*.1' order by t asc;
+             t             
+---------------------------
+ 23.17.22.1.23.4.29.32.4.1
+ 23.28.1
+ 23.3.32.21.5.14.10.17.1
+(3 rows)
+
+SELECT * FROM ltreetest WHERE t ~ '23.*.2' order by t asc;
+        t         
+------------------
+ 23.20.12.16.15.2
+(1 row)
+
+SELECT * FROM ltreetest WHERE t ? '{23.*.1,23.*.2}' order by t asc;
+             t             
+---------------------------
+ 23.17.22.1.23.4.29.32.4.1
+ 23.20.12.16.15.2
+ 23.28.1
+ 23.3.32.21.5.14.10.17.1
+(4 rows)
 
 create unique index tstidx on ltreetest (t);
 set enable_seqscan=off;
@@ -7253,58 +7308,6 @@ SELECT * FROM ltreetest WHERE t <@ '1.1.1' order by t asc;
  1.1.1.2.1
 (4 rows)
 
-SELECT * FROM ltreetest WHERE t ~ '1.1.1.*' order by t asc;
-     t     
------------
- 1.1.1
- 1.1.1.1
- 1.1.1.2
- 1.1.1.2.1
-(4 rows)
-
-SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
-               t                
---------------------------------
- 1
- 10.22.1
- 10.26.30.15.1
- 11.1
- 17.25.2.13.10.27.13.1
- 18.13.6.12.26.26.26.29.18.20.1
- 19.20.25.7.27.28.27.17.9.3.1
- 19.9.32.23.13.24.1
- 20.17.18.21.1
- 20.4.27.31.1
- 21.18.2.1
- 21.23.17.8.23.11.8.1
- 22.30.31.24.23.22.5.20.28.1
- 23.28.1
- 23.3.32.21.5.14.10.17.1
- 25.6.12.16.1
- 29.1
- 29.15.29.8.31.26.1
- 32.31.11.22.1
- 4.7.1
- 6.27.29.14.8.12.26.3.21.4.1
- 8.13.1
- 8.2.18.23.5.16.17.1
- 8.32.30.1
- 9.21.20.29.1
-(25 rows)
-
-SELECT * FROM ltreetest WHERE t ~ '23.*.1' order by t asc;
-            t            
--------------------------
- 23.28.1
- 23.3.32.21.5.14.10.17.1
-(2 rows)
-
-SELECT * FROM ltreetest WHERE t ~ '23.*{1}.1' order by t asc;
-    t    
----------
- 23.28.1
-(1 row)
-
 SELECT * FROM ltreetest WHERE t @ '23 & 1' order by t asc;
                t                
 --------------------------------
@@ -7349,6 +7352,83 @@ SELECT * FROM ltreetest WHERE t @ '23 & 1' order by t asc;
  9.5.9.3.23.9.25.14.1.29.28
 (39 rows)
 
+SELECT * FROM ltreetest WHERE t ~ '1.1.1.*' order by t asc;
+     t     
+-----------
+ 1.1.1
+ 1.1.1.1
+ 1.1.1.2
+ 1.1.1.2.1
+(4 rows)
+
+SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
+               t                
+--------------------------------
+ 1
+ 1.1
+ 1.1.1
+ 1.1.1.1
+ 1.1.1.2.1
+ 1.1.2.1
+ 1.26.15.23.5.31.29.11.19.28.1
+ 10.13.22.1.8.30.9.24.1.2.1
+ 10.22.1
+ 10.26.30.15.1
+ 11.1
+ 12.1.1
+ 17.25.2.13.10.27.13.1
+ 18.13.6.12.26.26.26.29.18.20.1
+ 19.20.25.7.27.28.27.17.9.3.1
+ 19.9.32.23.13.24.1
+ 20.17.18.21.1
+ 20.4.27.31.1
+ 21.18.2.1
+ 21.23.17.8.23.11.8.1
+ 22.30.31.24.23.22.5.20.28.1
+ 23.17.22.1.23.4.29.32.4.1
+ 23.28.1
+ 23.3.32.21.5.14.10.17.1
+ 25.6.12.16.1
+ 29.1
+ 29.15.29.8.31.26.1
+ 32.31.11.22.1
+ 4.7.1
+ 6.27.29.14.8.12.26.3.21.4.1
+ 8.13.1
+ 8.2.18.23.5.16.17.1
+ 8.32.30.1
+ 9.21.20.29.1
+(34 rows)
+
+SELECT * FROM ltreetest WHERE t ~ '23.*{1}.1' order by t asc;
+    t    
+---------
+ 23.28.1
+(1 row)
+
+SELECT * FROM ltreetest WHERE t ~ '23.*.1' order by t asc;
+             t             
+---------------------------
+ 23.17.22.1.23.4.29.32.4.1
+ 23.28.1
+ 23.3.32.21.5.14.10.17.1
+(3 rows)
+
+SELECT * FROM ltreetest WHERE t ~ '23.*.2' order by t asc;
+        t         
+------------------
+ 23.20.12.16.15.2
+(1 row)
+
+SELECT * FROM ltreetest WHERE t ? '{23.*.1,23.*.2}' order by t asc;
+             t             
+---------------------------
+ 23.17.22.1.23.4.29.32.4.1
+ 23.20.12.16.15.2
+ 23.28.1
+ 23.3.32.21.5.14.10.17.1
+(4 rows)
+
 create table _ltreetest (t ltree[]);
 \copy _ltreetest FROM 'data/_ltree.data'
 SELECT count(*) FROM _ltreetest WHERE t @> '1.1.1' ;
@@ -7363,6 +7443,12 @@ SELECT count(*) FROM _ltreetest WHERE t <@ '1.1.1' ;
     19
 (1 row)
 
+SELECT count(*) FROM _ltreetest WHERE t @ '23 & 1' ;
+ count 
+-------
+   147
+(1 row)
+
 SELECT count(*) FROM _ltreetest WHERE t ~ '1.1.1.*' ;
  count 
 -------
@@ -7372,13 +7458,7 @@ SELECT count(*) FROM _ltreetest WHERE t ~ '1.1.1.*' ;
 SELECT count(*) FROM _ltreetest WHERE t ~ '*.1' ;
  count 
 -------
-    83
-(1 row)
-
-SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
- count 
--------
-    10
+   109
 (1 row)
 
 SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
@@ -7387,10 +7467,22 @@ SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
      5
 (1 row)
 
-SELECT count(*) FROM _ltreetest WHERE t @ '23 & 1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
  count 
 -------
-   147
+    11
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.2' ;
+ count 
+-------
+     5
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
+ count 
+-------
+    15
 (1 row)
 
 create index _tstidx on _ltreetest using gist (t);
@@ -7407,6 +7499,12 @@ SELECT count(*) FROM _ltreetest WHERE t <@ '1.1.1' ;
     19
 (1 row)
 
+SELECT count(*) FROM _ltreetest WHERE t @ '23 & 1' ;
+ count 
+-------
+   147
+(1 row)
+
 SELECT count(*) FROM _ltreetest WHERE t ~ '1.1.1.*' ;
  count 
 -------
@@ -7416,13 +7514,7 @@ SELECT count(*) FROM _ltreetest WHERE t ~ '1.1.1.*' ;
 SELECT count(*) FROM _ltreetest WHERE t ~ '*.1' ;
  count 
 -------
-    83
-(1 row)
-
-SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
- count 
--------
-    10
+   109
 (1 row)
 
 SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
@@ -7431,9 +7523,21 @@ SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
      5
 (1 row)
 
-SELECT count(*) FROM _ltreetest WHERE t @ '23 & 1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
  count 
 -------
-   147
+    11
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.2' ;
+ count 
+-------
+     5
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
+ count 
+-------
+    15
 (1 row)
 

@@ -140,10 +140,14 @@ Datum		ltree_isparent(PG_FUNCTION_ARGS);
 Datum		ltree_risparent(PG_FUNCTION_ARGS);
 Datum		ltq_regex(PG_FUNCTION_ARGS);
 Datum		ltq_rregex(PG_FUNCTION_ARGS);
+Datum		lt_q_regex(PG_FUNCTION_ARGS);
+Datum		lt_q_rregex(PG_FUNCTION_ARGS);
 Datum		ltxtq_exec(PG_FUNCTION_ARGS);
 Datum		ltxtq_rexec(PG_FUNCTION_ARGS);
 Datum		_ltq_regex(PG_FUNCTION_ARGS);
 Datum		_ltq_rregex(PG_FUNCTION_ARGS);
+Datum		_lt_q_regex(PG_FUNCTION_ARGS);
+Datum		_lt_q_rregex(PG_FUNCTION_ARGS);
 Datum		_ltxtq_exec(PG_FUNCTION_ARGS);
 Datum		_ltxtq_rexec(PG_FUNCTION_ARGS);
 Datum		_ltree_isparent(PG_FUNCTION_ARGS);
@@ -173,7 +177,7 @@ ltree	   *lca_inner(ltree ** a, int len);
 /* GiST support for ltree */
 
 #define BITBYTE 8
-#define SIGLENINT  8
+#define SIGLENINT  2
 #define SIGLEN	( sizeof(int4)*SIGLENINT )
 #define SIGLENBIT (SIGLEN*BITBYTE)
 typedef unsigned char BITVEC[SIGLEN];

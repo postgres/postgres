@@ -110,6 +110,9 @@ ltree <@ ltree
     equal).
 ltree ~ lquery, lquery ~ ltree
     - return TRUE if node represented by ltree satisfies lquery.
+ltree ? lquery[], lquery ? ltree[]
+    - return TRUE if node represented by ltree satisfies at least one lquery
+	from array.
 ltree @ ltxtquery, ltxtquery @ ltree
     - return TRUE if node represented by ltree satisfies ltxtquery.
 ltree || ltree, ltree || text, text || ltree
@@ -123,6 +126,9 @@ ltree @> ltree[], ltree[] <@ ltree
     - returns TRUE if array ltree[] contains a descendant of ltree.
 ltree[] ~ lquery, lquery ~ ltree[]
     - returns TRUE if array ltree[] contains label paths matched lquery.
+ltree[] ? lquery[], lquery[] ? ltree[]
+    - returns TRUE if array ltree[] contains label paths matched atleaset one
+	lquery from array.
 ltree[] @ ltxtquery, ltxtquery @ ltree[]
     - returns TRUE if array ltree[] contains label paths matched ltxtquery
     (full text search).
@@ -142,11 +148,11 @@ Various indices could be created to speed up execution of operations:
   * B-tree index over ltree:
     <, <=, =, =>, >
   * GiST index over ltree:
-    <, <=, =, =>, >, @>, <@, @, ~
+    <, <=, =, =>, >, @>, <@, @, ~, ?
     Example:
     create index path_gist_idx on test using gist (path);
   * GiST index over ltree[]:
-    ltree[]<@ ltree, ltree @> ltree[], @, ~.
+    ltree[]<@ ltree, ltree @> ltree[], @, ~, ?.
     Example:
     create index path_gist_idx on test using gist (array_path);
     Notices: This index is lossy.
@@ -426,6 +432,10 @@ appreciate your input. So far, below some (rather obvious) results:
 
 CHANGES
 
+Feb 7, 2003
+   Add ? operation
+   Fix ~ operation bug: eg '1.1.1' ~ '*.1'
+   Optimize index storage
 Aug 9, 2002
    Fixed very stupid but important bug :-)
 July 31, 2002

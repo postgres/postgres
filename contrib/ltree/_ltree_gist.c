@@ -96,7 +96,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 					  entry->rel, entry->page,
 					  entry->offset, key->len, FALSE);
 	}
-	else
+	else if ( !LTG_ISALLTRUE(entry->key) ) 
 	{
 		int4		i,
 					len;
@@ -105,10 +105,9 @@ _ltree_compress(PG_FUNCTION_ARGS)
 		BITVECP		sign = LTG_SIGN(DatumGetPointer(entry->key));
 
 		ALOOPBYTE(
-				  if (sign[i] != 0xff)
+				  if ((sign[i]&0xff) != 0xff)
 				  PG_RETURN_POINTER(retval);
 		);
-
 		len = LTG_HDRSIZE;
 		key = (ltree_gist *) palloc(len);
 		key->len = len;
@@ -222,7 +221,7 @@ _ltree_penalty(PG_FUNCTION_ARGS)
 
 	if (LTG_ISALLTRUE(origval))
 	{
-		*penalty = 0.0;
+		*penalty = 0.1;
 		PG_RETURN_POINTER(penalty);
 	}
 
@@ -489,7 +488,7 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			);
 		}
 
-		if (size_alpha - size_l < size_beta - size_r + WISH_F(v->spl_nleft, v->spl_nright, 0.1))
+		if (size_alpha - size_l < size_beta - size_r + WISH_F(v->spl_nleft, v->spl_nright, 0.00001))
 		{
 			if (!LTG_ISALLTRUE(datum_l))
 			{
@@ -613,6 +612,22 @@ gist_qe(ltree_gist * key, lquery * query)
 	return true;
 }
 
+static bool
+_arrq_cons(ltree_gist *key, ArrayType *_query) {
+        lquery  *query = (lquery *) ARR_DATA_PTR(_query);
+        int     num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
+
+        if (ARR_NDIM(_query) != 1)
+                elog(ERROR, "Dimension of array != 1");
+
+        while (num > 0) {
+                if ( gist_qe(key, query) )
+                        return true;
+                num--;
+                query = (lquery*)NEXTVAL(query);
+        }
+        return false;
+}
 
 Datum
 _ltree_consistent(PG_FUNCTION_ARGS)
@@ -640,6 +655,10 @@ _ltree_consistent(PG_FUNCTION_ARGS)
 		case 14:
 		case 15:
 			res = gist_qtxt(key, (ltxtquery *) query);
+			break;
+		case 16:
+		case 17:
+			res = _arrq_cons(key, (ArrayType *) query);
 			break;
 		default:
 			elog(ERROR, "Unknown StrategyNumber: %d", strategy);

@@ -339,6 +339,53 @@ CREATE OPERATOR ^~ (
 	JOIN = contjoinsel
 );
 
+CREATE FUNCTION lt_q_regex(ltree,_lquery)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE FUNCTION lt_q_rregex(_lquery,ltree)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE OPERATOR ? (
+        LEFTARG = ltree,
+	RIGHTARG = _lquery,
+	PROCEDURE = lt_q_regex,
+	COMMUTATOR = '?',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR ? (
+        LEFTARG = _lquery,
+	RIGHTARG = ltree,
+	PROCEDURE = lt_q_rregex,
+	COMMUTATOR = '?',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+--not-indexed
+CREATE OPERATOR ^? (
+        LEFTARG = ltree,
+	RIGHTARG = _lquery,
+	PROCEDURE = lt_q_regex,
+	COMMUTATOR = '^?',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR ^? (
+        LEFTARG = _lquery,
+	RIGHTARG = ltree,
+	PROCEDURE = lt_q_rregex,
+	COMMUTATOR = '^?',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
 CREATE FUNCTION ltxtq_in(cstring)
 RETURNS ltxtquery
 AS 'MODULE_PATHNAME'
@@ -452,6 +499,8 @@ CREATE OPERATOR CLASS gist_ltree_ops
 	OPERATOR	13	~ (lquery, ltree) ,
 	OPERATOR	14	@ (ltree, ltxtquery) ,
 	OPERATOR	15	@ (ltxtquery, ltree) ,
+	OPERATOR	16	? (ltree, _lquery) ,
+	OPERATOR	17	? (_lquery, ltree) ,
 	FUNCTION	1	ltree_consistent (internal, internal, int2),
 	FUNCTION	2	ltree_union (bytea, internal),
 	FUNCTION	3	ltree_compress (internal),
@@ -490,6 +539,16 @@ AS 'MODULE_PATHNAME'
 LANGUAGE 'C' WITH (isstrict,iscachable);
 
 CREATE FUNCTION _ltq_rregex(lquery,_ltree)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE FUNCTION _lt_q_regex(_ltree,_lquery)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE FUNCTION _lt_q_rregex(_lquery,_ltree)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C' WITH (isstrict,iscachable);
@@ -554,6 +613,24 @@ CREATE OPERATOR ~ (
 	RIGHTARG = _ltree,
 	PROCEDURE = _ltq_rregex,
         COMMUTATOR = '~',
+        RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR ? (
+        LEFTARG = _ltree,
+	RIGHTARG = _lquery,
+	PROCEDURE = _lt_q_regex,
+        COMMUTATOR = '?',
+        RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR ? (
+        LEFTARG = _lquery,
+	RIGHTARG = _ltree,
+	PROCEDURE = _lt_q_rregex,
+        COMMUTATOR = '?',
         RESTRICT = contsel,
 	JOIN = contjoinsel
 );
@@ -628,6 +705,24 @@ CREATE OPERATOR ^~ (
 	RIGHTARG = _ltree,
 	PROCEDURE = _ltq_rregex,
         COMMUTATOR = '^~',
+        RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR ^? (
+        LEFTARG = _ltree,
+	RIGHTARG = _lquery,
+	PROCEDURE = _lt_q_regex,
+        COMMUTATOR = '^?',
+        RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR ^? (
+        LEFTARG = _lquery,
+	RIGHTARG = _ltree,
+	PROCEDURE = _lt_q_rregex,
+        COMMUTATOR = '^?',
         RESTRICT = contsel,
 	JOIN = contjoinsel
 );
@@ -729,6 +824,8 @@ CREATE OPERATOR CLASS gist__ltree_ops
 	OPERATOR	13	~ (lquery, _ltree)	RECHECK ,
 	OPERATOR	14	@ (_ltree, ltxtquery)	RECHECK ,
 	OPERATOR	15	@ (ltxtquery, _ltree)	RECHECK ,
+	OPERATOR	16	? (_ltree, _lquery)	RECHECK ,
+	OPERATOR	17	? (_lquery, _ltree)	RECHECK ,
 	FUNCTION	1	_ltree_consistent (internal, internal, int2),
 	FUNCTION	2	_ltree_union (bytea, internal),
 	FUNCTION	3	_ltree_compress (internal),

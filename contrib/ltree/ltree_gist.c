@@ -7,8 +7,10 @@
 #include "access/gist.h"
 #include "access/rtree.h"
 #include "access/nbtree.h"
-
+#include "utils/array.h"
 #include "crc32.h"
+
+#define NEXTVAL(x) ( (lquery*)( (char*)(x) + INTALIGN( VARSIZE(x) ) ) )
 
 PG_FUNCTION_INFO_V1(ltree_gist_in);
 Datum		ltree_gist_in(PG_FUNCTION_ARGS);
@@ -596,6 +598,22 @@ gist_qtxt(ltree_gist * key, ltxtquery * query)
 		);
 }
 
+static bool
+arrq_cons(ltree_gist *key, ArrayType *_query) {
+        lquery  *query = (lquery *) ARR_DATA_PTR(_query);
+        int     num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
+
+        if (ARR_NDIM(_query) != 1)
+                elog(ERROR, "Dimension of array != 1");
+
+        while (num > 0) {
+		if ( gist_qe(key, query) && gist_between(key, query) ) 
+                        return true;
+                num--;
+                query = NEXTVAL(query);
+        }
+	return false;
+}
 
 Datum
 ltree_consistent(PG_FUNCTION_ARGS)
@@ -671,6 +689,16 @@ ltree_consistent(PG_FUNCTION_ARGS)
 													   ));
 			else
 				res = gist_qtxt(key, (ltxtquery *) query);
+			break;
+		case 16:
+		case 17:
+			if (GIST_LEAF(entry))
+				res = DatumGetBool(DirectFunctionCall2(lt_q_regex,
+										  PointerGetDatum(LTG_NODE(key)),
+										PointerGetDatum((ArrayType *) query)
+													   ));
+			else
+				res = arrq_cons(key, (ArrayType *) query);
 			break;
 		default:
 			elog(ERROR, "Unknown StrategyNumber: %d", strategy);

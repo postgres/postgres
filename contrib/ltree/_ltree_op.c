@@ -13,6 +13,8 @@ PG_FUNCTION_INFO_V1(_ltree_risparent);
 PG_FUNCTION_INFO_V1(_ltree_r_risparent);
 PG_FUNCTION_INFO_V1(_ltq_regex);
 PG_FUNCTION_INFO_V1(_ltq_rregex);
+PG_FUNCTION_INFO_V1(_lt_q_regex);
+PG_FUNCTION_INFO_V1(_lt_q_rregex);
 PG_FUNCTION_INFO_V1(_ltxtq_exec);
 PG_FUNCTION_INFO_V1(_ltxtq_rexec);
 
@@ -125,6 +127,42 @@ _ltq_rregex(PG_FUNCTION_ARGS)
 										PG_GETARG_DATUM(0)
 										));
 }
+
+Datum
+_lt_q_regex(PG_FUNCTION_ARGS)
+{
+        ArrayType      *_tree = PG_GETARG_ARRAYTYPE_P(0);
+        ArrayType   *_query =  PG_GETARG_ARRAYTYPE_P(1);
+        lquery  *query = (lquery *) ARR_DATA_PTR(_query);
+        bool    res = false;
+        int     num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
+
+        if (ARR_NDIM(_query) != 1)
+                elog(ERROR, "Dimension of array != 1");
+
+        while (num > 0) {
+		if ( array_iterator(_tree, ltq_regex, (void*)query, NULL) ) {
+                        res = true;
+                        break;
+                }
+                num--;
+                query = (lquery*)NEXTVAL(query);
+        }
+
+        PG_FREE_IF_COPY(_tree, 0);
+        PG_FREE_IF_COPY(_query, 1);
+        PG_RETURN_BOOL(res);
+}
+
+Datum
+_lt_q_rregex(PG_FUNCTION_ARGS)
+{
+        PG_RETURN_DATUM(DirectFunctionCall2(_lt_q_regex,
+                                                                                PG_GETARG_DATUM(1),
+                                                                                PG_GETARG_DATUM(0)
+                                                                                ));
+}
+
 
 Datum
 _ltxtq_exec(PG_FUNCTION_ARGS)
