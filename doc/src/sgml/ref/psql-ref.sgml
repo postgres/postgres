@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.130 2005/01/14 00:24:23 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.131 2005/01/22 22:31:52 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -536,7 +536,7 @@ Type:  \copyright for distribution terms
        \g or terminate with semicolon to execute query
        \q to quit
 
-testdb=>
+testdb=&gt;
 </programlisting>
     </para>
 
@@ -881,7 +881,7 @@ testdb=>
         types, relations (tables, views, indexes, sequences, large
         objects), rules, and triggers.) For example:
 <programlisting>
-=> <userinput>\dd version</userinput>
+=&gt; <userinput>\dd version</userinput>
                      Object descriptions
    Schema   |  Name   |  Object  |        Description
 ------------+---------+----------+---------------------------
@@ -1107,7 +1107,7 @@ testdb=>
         space and followed by a newline. This can be useful to
         intersperse information in the output of scripts. For example:
 <programlisting>
-=> <userinput>\echo `date`</userinput>
+=&gt; <userinput>\echo `date`</userinput>
 Tue Oct 26 21:40:57 CEST 1999
 </programlisting>
         If the first argument is an unquoted <literal>-n</literal> the trailing
@@ -1271,7 +1271,7 @@ Tue Oct 26 21:40:57 CEST 1999
         large object. Optionally, it associates the given
         comment with the object. Example:
 <programlisting>
-foo=> <userinput>\lo_import '/home/peter/pictures/photo.xcf' 'a picture of me'</userinput>
+foo=&gt; <userinput>\lo_import '/home/peter/pictures/photo.xcf' 'a picture of me'</userinput>
 lo_import 152801
 </programlisting>
         The response indicates that the large object received object ID
@@ -1817,14 +1817,14 @@ lo_import 152801
     <application>psql</application> meta-command
     <command>\set</command>:
 <programlisting>
-testdb=> <userinput>\set foo bar</userinput>
+testdb=&gt; <userinput>\set foo bar</userinput>
 </programlisting>
     sets the variable <literal>foo</literal> to the value
     <literal>bar</literal>. To retrieve the content of the variable, precede
     the name with a colon and use it as the argument of any slash
     command:
 <programlisting>
-testdb=> <userinput>\echo :foo</userinput>
+testdb=&gt; <userinput>\echo :foo</userinput>
 bar
 </programlisting>
     </para>
@@ -2154,8 +2154,8 @@ bar
     this is again to prepend the variable name with a colon
     (<literal>:</literal>).
 <programlisting>
-testdb=> <userinput>\set foo 'my_table'</userinput>
-testdb=> <userinput>SELECT * FROM :foo;</userinput>
+testdb=&gt; <userinput>\set foo 'my_table'</userinput>
+testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
 </programlisting>
     would then query the table <literal>my_table</literal>. The value of
     the variable is copied literally, so it can even contain unbalanced
@@ -2171,15 +2171,15 @@ testdb=> <userinput>SELECT * FROM :foo;</userinput>
     copy the contents of a file into a table column. First load the file into a
     variable and then proceed as above.
 <programlisting>
-testdb=> <userinput>\set content '\'' `cat my_file.txt` '\''</userinput>
-testdb=> <userinput>INSERT INTO my_table VALUES (:content);</userinput>
+testdb=&gt; <userinput>\set content '\'' `cat my_file.txt` '\''</userinput>
+testdb=&gt; <userinput>INSERT INTO my_table VALUES (:content);</userinput>
 </programlisting>
     One possible problem with this approach is that <filename>my_file.txt</filename>
     might contain single quotes. These need to be escaped so that
     they don't cause a syntax error when the second line is processed. This
     could be done with the program <command>sed</command>:
 <programlisting>
-testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\''</userinput>
+testdb=&gt; <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\''</userinput>
 </programlisting>
     Observe the correct number of backslashes (6)! It works
     this way: After <application>psql</application> has parsed this
@@ -2384,7 +2384,7 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
          <literal>%]</literal>. Multiple pairs of these may occur within
          the prompt.  For example,
 <programlisting>
-testdb=> \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%#%] '
+testdb=&gt; \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%#%] '
 </programlisting>
          results in a boldfaced (<literal>1;</literal>) yellow-on-black
          (<literal>33;40</literal>) prompt on VT100-compatible, color-capable
@@ -2569,7 +2569,7 @@ $endif
       discouraged.  If you get strange messages, keep this in mind.
       For example
 <programlisting>
-testdb=> <userinput>\foo</userinput>
+testdb=&gt; <userinput>\foo</userinput>
 Field separator is "oo".
 </programlisting>
       which is perhaps not what one would expect.
@@ -2631,15 +2631,15 @@ Field separator is "oo".
   The first example shows how to spread a command over several lines of
   input. Notice the changing prompt:
 <programlisting>
-testdb=> <userinput>CREATE TABLE my_table (</userinput>
+testdb=&gt; <userinput>CREATE TABLE my_table (</userinput>
 testdb(> <userinput> first integer not null default 0,</userinput>
 testdb(> <userinput> second text)</userinput>
-testdb-> <userinput>;</userinput>
+testdb-&gt; <userinput>;</userinput>
 CREATE TABLE
 </programlisting>
   Now look at the table definition again:
 <programlisting>
-testdb=> <userinput>\d my_table</userinput>
+testdb=&gt; <userinput>\d my_table</userinput>
              Table "my_table"
  Attribute |  Type   |      Modifier
 -----------+---------+--------------------
@@ -2649,13 +2649,13 @@ testdb=> <userinput>\d my_table</userinput>
 </programlisting>
   Now we change the prompt to something more interesting:
 <programlisting>
-testdb=> <userinput>\set PROMPT1 '%n@%m %~%R%# '</userinput>
-peter@localhost testdb=>
+testdb=&gt; <userinput>\set PROMPT1 '%n@%m %~%R%# '</userinput>
+peter@localhost testdb=&gt;
 </programlisting>
   Let's assume you have filled the table with data and want to take a
   look at it:
 <programlisting>
-peter@localhost testdb=> SELECT * FROM my_table;
+peter@localhost testdb=&gt; SELECT * FROM my_table;
  first | second
 -------+--------
      1 | one
@@ -2668,9 +2668,9 @@ peter@localhost testdb=> SELECT * FROM my_table;
   You can display tables in different ways by using the
   <command>\pset</command> command:
 <programlisting>
-peter@localhost testdb=> <userinput>\pset border 2</userinput>
+peter@localhost testdb=&gt; <userinput>\pset border 2</userinput>
 Border style is 2.
-peter@localhost testdb=> <userinput>SELECT * FROM my_table;</userinput>
+peter@localhost testdb=&gt; <userinput>SELECT * FROM my_table;</userinput>
 +-------+--------+
 | first | second |
 +-------+--------+
@@ -2681,9 +2681,9 @@ peter@localhost testdb=> <userinput>SELECT * FROM my_table;</userinput>
 +-------+--------+
 (4 rows)
 
-peter@localhost testdb=> <userinput>\pset border 0</userinput>
+peter@localhost testdb=&gt; <userinput>\pset border 0</userinput>
 Border style is 0.
-peter@localhost testdb=> <userinput>SELECT * FROM my_table;</userinput>
+peter@localhost testdb=&gt; <userinput>SELECT * FROM my_table;</userinput>
 first second
 ----- ------
     1 one
@@ -2692,15 +2692,15 @@ first second
     4 four
 (4 rows)
 
-peter@localhost testdb=> <userinput>\pset border 1</userinput>
+peter@localhost testdb=&gt; <userinput>\pset border 1</userinput>
 Border style is 1.
-peter@localhost testdb=> <userinput>\pset format unaligned</userinput>
+peter@localhost testdb=&gt; <userinput>\pset format unaligned</userinput>
 Output format is unaligned.
-peter@localhost testdb=> <userinput>\pset fieldsep ","</userinput>
+peter@localhost testdb=&gt; <userinput>\pset fieldsep ","</userinput>
 Field separator is ",".
-peter@localhost testdb=> <userinput>\pset tuples_only</userinput>
+peter@localhost testdb=&gt; <userinput>\pset tuples_only</userinput>
 Showing only tuples.
-peter@localhost testdb=> <userinput>SELECT second, first FROM my_table;</userinput>
+peter@localhost testdb=&gt; <userinput>SELECT second, first FROM my_table;</userinput>
 one,1
 two,2
 three,3
@@ -2708,11 +2708,11 @@ four,4
 </programlisting>
   Alternatively, use the short commands:
 <programlisting>
-peter@localhost testdb=> <userinput>\a \t \x</userinput>
+peter@localhost testdb=&gt; <userinput>\a \t \x</userinput>
 Output format is aligned.
 Tuples only is off.
 Expanded display is on.
-peter@localhost testdb=> <userinput>SELECT * FROM my_table;</userinput>
+peter@localhost testdb=&gt; <userinput>SELECT * FROM my_table;</userinput>
 -[ RECORD 1 ]-
 first  | 1
 second | one
