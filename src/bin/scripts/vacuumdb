@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.5 1999/12/18 08:34:50 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.6 1999/12/18 08:39:12 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,8 +39,6 @@ do
         --host=*)
                 PSQLOPT="$PSQLOPT -h "`echo $1 | sed 's/^--host=//'`
                 ;;
-	--alldb|-a) 
-		dbname="`psql $PASSWDOPT $AUTHOPT $PGHOSTOPT $PGPORTOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database'`";;
 	--port|-p)
 		PSQLOPT="$PSQLOPT -p $2"
 		shift;;
@@ -86,6 +84,9 @@ do
 # options converted into SQL command
 	--analyze|-z)
 		analyze="ANALYZE "
+		;;
+	--alldb|-a)
+		dbname="`psql $PASSWDOPT $AUTHOPT $PGHOSTOPT $PGPORTOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database'`"
 		;;
 	--table|-t)
 		table="$2"
