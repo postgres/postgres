@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * indexcmds.c
- *	  POSTGRES define, extend and remove index code.
+ *	  POSTGRES define and remove index code.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.52 2001/07/16 05:06:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.53 2001/07/17 21:53:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,9 @@
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args != NIL)
 
@@ -232,10 +234,21 @@ CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid)
 		elog(ERROR,
 			 "Partial-index predicates may refer only to the base relation");
 
+	/*
+	 * We don't currently support generation of an actual query plan for a
+	 * predicate, only simple scalar expressions; hence these restrictions.
+	 */
 	if (contain_subplans((Node *) predList))
 		elog(ERROR, "Cannot use subselect in index predicate");
 	if (contain_agg_clause((Node *) predList))
 		elog(ERROR, "Cannot use aggregate in index predicate");
+
+	/*
+	 * A predicate using noncachable functions is probably wrong, for the
+	 * same reasons that we don't allow a functional index to use one.
+	 */
+	if (contain_noncachable_functions((Node *) predList))
+		elog(ERROR, "Cannot use non-cachable function in index predicate");
 }
 
 
@@ -307,6 +320,15 @@ FuncIndexArgs(IndexInfo *indexInfo,
 			func_error("DefineIndex", funcIndex->name, nargs, argTypes,
 					   "Index function must be binary-compatible with table datatype");
 	}
+
+	/*
+	 * Require that the function be marked cachable.  Using a noncachable
+	 * function for a functional index is highly questionable, since if you
+	 * aren't going to get the same result for the same data every time,
+	 * it's not clear what the index entries mean at all.
+	 */
+	if (!func_iscachable(funcid))
+		elog(ERROR, "DefineIndex: index function must be marked iscachable");
 
 	/* Process opclass, using func return type as default type */
 
