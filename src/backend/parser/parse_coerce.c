@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.30 2000/02/16 17:24:37 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.31 2000/02/20 06:28:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,12 +298,15 @@ TypeCategory(Oid inType)
 			result = NUMERIC_TYPE;
 			break;
 
+		case (DATEOID):
+		case (TIMEOID):
 		case (ABSTIMEOID):
 		case (TIMESTAMPOID):
 			result = DATETIME_TYPE;
 			break;
 
 		case (RELTIMEOID):
+		case (TINTERVALOID):
 		case (INTERVALOID):
 			result = TIMESPAN_TYPE;
 			break;

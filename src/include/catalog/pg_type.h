@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.81 2000/02/16 17:26:07 thomas Exp $
+ * $Id: pg_type.h,v 1.82 2000/02/20 06:28:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -287,6 +287,7 @@ DESCR("relative, limited-range time interval (Unix delta time)");
 #define RELTIMEOID		703
 DATA(insert OID = 704 (  tinterval PGUID 12  47 f b t \054 0   0 tintervalin tintervalout tintervalin tintervalout i _null_ ));
 DESCR("(abstime,abstime), time interval");
+#define TINTERVALOID	704
 DATA(insert OID = 705 (  unknown   PGUID -1  -1 f b t \054 0   18 textin textout textin textout i _null_ ));
 DESCR("");
 #define UNKNOWNOID		705
