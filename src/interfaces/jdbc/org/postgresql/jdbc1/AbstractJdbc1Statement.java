@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.12.2.2 2002/11/20 07:54:27 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.12.2.3 2003/02/12 17:14:49 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1934,7 +1934,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	private static final String PG_INT8 = "int8";
 	private static final String PG_NUMERIC = "numeric";
 	private static final String PG_FLOAT = "float";
-	private static final String PG_DOUBLE = "double";
+	private static final String PG_DOUBLE = "double precision";
 	private static final String PG_BOOLEAN = "boolean";
 	private static final String PG_DATE = "date";
 	private static final String PG_TIME = "time";
