@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.4 1996/12/17 01:53:40 momjian Exp $
+ * $Id: nodes.h,v 1.5 1997/03/02 02:12:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ extern Node *newNode(Size size, NodeTag tag);
 /*
  * nodes/{outfuncs.c,print.c}
  */
-#define nodeDisplay	print
+#define nodeDisplay	pprint
 
 extern char *nodeToString(void *obj);
 extern void print(void *obj);
