@@ -299,7 +299,7 @@ NOTICE:  trigger_func() called: action = UPDATE, when = AFTER, level = STATEMENT
 COPY main_table (a, b) FROM stdin;
 NOTICE:  trigger_func() called: action = INSERT, when = BEFORE, level = STATEMENT
 NOTICE:  trigger_func() called: action = INSERT, when = AFTER, level = STATEMENT
-SELECT * FROM main_table ORDER BY a;
+SELECT * FROM main_table ORDER BY a, b;
  a  | b  
 ----+----
   6 | 10

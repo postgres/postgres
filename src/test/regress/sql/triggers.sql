@@ -247,4 +247,4 @@ COPY main_table (a, b) FROM stdin;
 50	60
 \.
 
-SELECT * FROM main_table ORDER BY a;
+SELECT * FROM main_table ORDER BY a, b;
