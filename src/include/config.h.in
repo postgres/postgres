@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.131 2000/08/20 10:55:34 petere Exp $
+ * $Id: config.h.in,v 1.132 2000/08/26 21:53:40 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -221,7 +221,7 @@
  * You can try changing this if you have a machine with bytes of another
  * size, but no guarantee...
  */
-#define BITSPERBYTE		8
+#define BITS_PER_BYTE		8
 
 /*
  * Define this is your operating system kernel supports AF_UNIX family

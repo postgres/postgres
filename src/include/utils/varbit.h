@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: varbit.h,v 1.6 2000/08/21 04:48:54 tgl Exp $
+ * $Id: varbit.h,v 1.7 2000/08/26 21:53:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,13 +49,13 @@ typedef struct
 /* Number of bytes in the data section of a bit string */
 #define VARBITBYTES(PTR)	(VARSIZE(PTR) - VARHDRSZ - VARBITHDRSZ)
 /* Padding of the bit string at the end (in bits) */
-#define VARBITPAD(PTR)		(VARBITBYTES(PTR)*BITSPERBYTE - VARBITLEN(PTR))
+#define VARBITPAD(PTR)		(VARBITBYTES(PTR)*BITS_PER_BYTE - VARBITLEN(PTR))
 /* Number of bytes needed to store a bit string of a given length */
-#define VARBITTOTALLEN(BITLEN)	(((BITLEN) + BITSPERBYTE-1)/BITSPERBYTE + \
+#define VARBITTOTALLEN(BITLEN)	(((BITLEN) + BITS_PER_BYTE-1)/BITS_PER_BYTE + \
 								 VARHDRSZ + VARBITHDRSZ)
 /* pointer beyond the end of the bit string (like end() in STL containers) */
 #define VARBITEND(PTR)		(((bits8 *) (PTR)) + VARSIZE(PTR))
-/* Mask that will cover exactly one byte, i.e. BITSPERBYTE bits */
+/* Mask that will cover exactly one byte, i.e. BITS_PER_BYTE bits */
 #define BITMASK 0xFF
 #define BITHIGH 0x80
 

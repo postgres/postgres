@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.8 2000/08/21 04:48:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.9 2000/08/26 21:53:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ zpbit_in(PG_FUNCTION_ARGS)
 		 * The bottom ipad bits of the byte pointed to by r need to be
 		 * zero
 		 */
-		if (((*r << (BITSPERBYTE - ipad)) & BITMASK) != 0)
+		if (((*r << (BITS_PER_BYTE - ipad)) & BITMASK) != 0)
 			elog(ERROR, "zpbit_in: bit string too long for bit(%d)",
 				 atttypmod);
 	}
@@ -387,7 +387,7 @@ varbit_in(PG_FUNCTION_ARGS)
 		 * The bottom ipad bits of the byte pointed to by r need to be
 		 * zero
 		 */
-		if (((*r << (BITSPERBYTE - ipad)) & BITMASK) != 0)
+		if (((*r << (BITS_PER_BYTE - ipad)) & BITMASK) != 0)
 			elog(ERROR, "varbit_in: bit string too long for bit varying(%d)",
 				 atttypmod);
 	}
@@ -415,10 +415,10 @@ varbit_out(PG_FUNCTION_ARGS)
 	sp = VARBITS(s);
 	r = result;
 	*r++ = 'B';
-	for (i = 0; i < len - BITSPERBYTE; i += BITSPERBYTE, sp++)
+	for (i = 0; i < len - BITS_PER_BYTE; i += BITS_PER_BYTE, sp++)
 	{
 		x = *sp;
-		for (k = 0; k < BITSPERBYTE; k++)
+		for (k = 0; k < BITS_PER_BYTE; k++)
 		{
 			*r++ = (x & BITHIGH) ? '1' : '0';
 			x <<= 1;
@@ -704,7 +704,7 @@ bitcat(PG_FUNCTION_ARGS)
 	else if (bitlen2 > 0)
 	{
 		/* We need to shift all the bits to fit */
-		bit2shift = BITSPERBYTE - bit1pad;
+		bit2shift = BITS_PER_BYTE - bit1pad;
 		pr = VARBITS(result) + VARBITBYTES(arg1) - 1;
 		for (pa = VARBITS(arg2); pa < VARBITEND(arg2); pa++)
 		{
@@ -768,23 +768,23 @@ bitsubstr(PG_FUNCTION_ARGS)
 		VARBITLEN(result) = rbitlen;
 		len -= VARHDRSZ + VARBITHDRSZ;
 		/* Are we copying from a byte boundary? */
-		if ((s1 - 1) % BITSPERBYTE == 0)
+		if ((s1 - 1) % BITS_PER_BYTE == 0)
 		{
 			/* Yep, we are copying bytes */
-			memcpy(VARBITS(result), VARBITS(arg) + (s1 - 1) / BITSPERBYTE,
+			memcpy(VARBITS(result), VARBITS(arg) + (s1 - 1) / BITS_PER_BYTE,
 				   len);
 		}
 		else
 		{
 			/* Figure out how much we need to shift the sequence by */
-			ishift = (s1 - 1) % BITSPERBYTE;
+			ishift = (s1 - 1) % BITS_PER_BYTE;
 			r = VARBITS(result);
-			ps = VARBITS(arg) + (s1 - 1) / BITSPERBYTE;
+			ps = VARBITS(arg) + (s1 - 1) / BITS_PER_BYTE;
 			for (i = 0; i < len; i++)
 			{
 				*r = (*ps << ishift) & BITMASK;
 				if ((++ps) < VARBITEND(arg))
-					*r |= *ps >> (BITSPERBYTE - ishift);
+					*r |= *ps >> (BITS_PER_BYTE - ishift);
 				r++;
 			}
 		}
@@ -1009,8 +1009,8 @@ bitshiftleft(PG_FUNCTION_ARGS)
 		PG_RETURN_VARBIT_P(result);
 	}
 
-	byte_shift = shft / BITSPERBYTE;
-	ishift = shft % BITSPERBYTE;
+	byte_shift = shft / BITS_PER_BYTE;
+	ishift = shft % BITS_PER_BYTE;
 	p = VARBITS(arg) + byte_shift;
 
 	if (ishift == 0)
@@ -1026,7 +1026,7 @@ bitshiftleft(PG_FUNCTION_ARGS)
 		{
 			*r = *p << ishift;
 			if ((++p) < VARBITEND(arg))
-				*r |= *p >> (BITSPERBYTE - ishift);
+				*r |= *p >> (BITS_PER_BYTE - ishift);
 		}
 		for (; r < VARBITEND(result); r++)
 			*r = 0;
@@ -1068,8 +1068,8 @@ bitshiftright(PG_FUNCTION_ARGS)
 		PG_RETURN_VARBIT_P(result);
 	}
 
-	byte_shift = shft / BITSPERBYTE;
-	ishift = shft % BITSPERBYTE;
+	byte_shift = shft / BITS_PER_BYTE;
+	ishift = shft % BITS_PER_BYTE;
 	p = VARBITS(arg);
 
 	/* Set the first part of the result to 0 */
@@ -1090,7 +1090,7 @@ bitshiftright(PG_FUNCTION_ARGS)
 		{
 			*r |= *p >> ishift;
 			if ((++r) < VARBITEND(result))
-				*r = (*p << (BITSPERBYTE - ishift)) & BITMASK;
+				*r = (*p << (BITS_PER_BYTE - ishift)) & BITMASK;
 		}
 	}
 
@@ -1109,17 +1109,17 @@ bitfromint4(PG_FUNCTION_ARGS)
 	int			len;
   
 	/* allocate enough space for the bits in an int4 */
-	len = VARBITTOTALLEN(sizeof(int4)*BITSPERBYTE);
+	len = VARBITTOTALLEN(sizeof(int4)*BITS_PER_BYTE);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
-	VARBITLEN(result) = sizeof(int4)*BITSPERBYTE;
+	VARBITLEN(result) = sizeof(int4)*BITS_PER_BYTE;
 	/* masks and shifts here are just too painful and we know that an int4 has
 	 * got 4 bytes
 	 */
 	r = VARBITS(result);
-	r[0] = (bits8) ((a >> (3*BITSPERBYTE)) & BITMASK);
-	r[1] = (bits8) ((a >> (2*BITSPERBYTE)) & BITMASK);
-	r[2] = (bits8) ((a >> (1*BITSPERBYTE)) & BITMASK);
+	r[0] = (bits8) ((a >> (3*BITS_PER_BYTE)) & BITMASK);
+	r[1] = (bits8) ((a >> (2*BITS_PER_BYTE)) & BITMASK);
+	r[2] = (bits8) ((a >> (1*BITS_PER_BYTE)) & BITMASK);
 	r[3] = (bits8) (a & BITMASK);
 
 	PG_RETURN_VARBIT_P(result);
@@ -1133,12 +1133,12 @@ bittoint4(PG_FUNCTION_ARGS)
 	bits8	   *r;
 
 	/* Check that the bit string is not too long */
-	if (VARBITLEN(arg) > sizeof(int4)*BITSPERBYTE) 
+	if (VARBITLEN(arg) > sizeof(int4)*BITS_PER_BYTE) 
 		elog(ERROR, "Bit string is too large to fit in an int4");
 	result = 0;
 	for (r = VARBITS(arg); r < VARBITEND(arg); r++)
 	{
-		result <<= BITSPERBYTE;
+		result <<= BITS_PER_BYTE;
 		result |= *r;
 	}
 	/* Now shift the result to take account of the padding at the end */

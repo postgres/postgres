@@ -3116,10 +3116,10 @@ Bit:  bit '(' Iconst ')'
                                                 sprintf(errortext,"length for type '%s' must be at least 1",$1);  
 												mmerror(ET_ERROR, errortext);
 					}
-                                        else if (atol($3) > (MaxAttrSize * BITSPERBYTE))
+                                        else if (atol($3) > (MaxAttrSize * BITS_PER_BYTE))
 					{
                                                 sprintf(errortext, "length for type '%s' cannot exceed %d", $1,
-                                                         (MaxAttrSize * BITSPERBYTE));
+                                                         (MaxAttrSize * BITS_PER_BYTE));
 												mmerror(ET_ERROR, errortext);
 					}
                                 }

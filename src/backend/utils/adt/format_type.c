@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.4 2000/08/25 18:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.5 2000/08/26 21:53:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,7 +254,7 @@ type_maximum_size(Oid type_oid, int32 typemod)
 		case VARBITOID:
 		case ZPBITOID:
 			/* typemod is the (max) number of bits */
-			return (typemod + (BITSPERBYTE-1)) / BITSPERBYTE
+			return (typemod + (BITS_PER_BYTE-1)) / BITS_PER_BYTE
 				+ 2 * sizeof(int32);
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.10 2000/08/20 19:31:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.11 2000/08/26 21:53:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,21 +21,21 @@
 void
 BitArraySetBit(BitArray bitArray, BitIndex bitIndex)
 {
-	bitArray[bitIndex / BITSPERBYTE] |=
-		(1 << (BITSPERBYTE - 1 - (bitIndex % BITSPERBYTE)));
+	bitArray[bitIndex / BITS_PER_BYTE] |=
+		(1 << (BITS_PER_BYTE - 1 - (bitIndex % BITS_PER_BYTE)));
 }
 
 void
 BitArrayClearBit(BitArray bitArray, BitIndex bitIndex)
 {
-	bitArray[bitIndex / BITSPERBYTE] &=
-		~(1 << (BITSPERBYTE - 1 - (bitIndex % BITSPERBYTE)));
+	bitArray[bitIndex / BITS_PER_BYTE] &=
+		~(1 << (BITS_PER_BYTE - 1 - (bitIndex % BITS_PER_BYTE)));
 }
 
 bool
 BitArrayBitIsSet(BitArray bitArray, BitIndex bitIndex)
 {
-	return ((bitArray[bitIndex / BITSPERBYTE] &
-			 (1 << (BITSPERBYTE - 1 - (bitIndex % BITSPERBYTE)))
+	return ((bitArray[bitIndex / BITS_PER_BYTE] &
+			 (1 << (BITS_PER_BYTE - 1 - (bitIndex % BITS_PER_BYTE)))
 		) != 0);
 }
