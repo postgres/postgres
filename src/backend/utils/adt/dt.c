@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.72.2.1 1999/08/02 05:24:51 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.72.2.2 2000/01/04 07:56:23 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -811,6 +811,7 @@ datetime_mi(DateTime *datetime1, DateTime *datetime2)
  * To add a month, increment the month, and use the same day of month.
  * Then, if the next month has fewer days, set the day of month
  *	to the last day of month.
+ * Lastly, add in the "quantitative time".
  */
 DateTime   *
 datetime_pl_span(DateTime *datetime, TimeSpan *span)
@@ -842,12 +843,6 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 	else
 	{
 		dt = (DATETIME_IS_RELATIVE(*datetime) ? SetDateTime(*datetime) : *datetime);
-
-#ifdef ROUND_ALL
-		dt = JROUND(dt + span->time);
-#else
-		dt += span->time;
-#endif
 
 		if (span->month != 0)
 		{
@@ -888,6 +883,12 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 			else
 				DATETIME_INVALID(dt);
 		}
+
+#ifdef ROUND_ALL
+		dt = JROUND(dt + span->time);
+#else
+		dt += span->time;
+#endif
 
 		*result = dt;
 	}
@@ -2569,7 +2570,10 @@ static int
 tm2timespan(struct tm * tm, double fsec, TimeSpan *span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
-	span->time = ((((((tm->tm_mday * 24) + tm->tm_hour) * 60) + tm->tm_min) * 60) + tm->tm_sec);
+	span->time = ((((((tm->tm_mday * 24.0)
+					 + tm->tm_hour) * 60.0)
+					 + tm->tm_min) * 60.0)
+					 + tm->tm_sec);
 	span->time = JROUND(span->time + fsec);
 
 #ifdef DATEDEBUG
