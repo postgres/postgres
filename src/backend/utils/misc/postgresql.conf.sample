@@ -120,19 +120,17 @@
 #debug_print_plan = false
 #debug_pretty_print = false
 
-#ifdef USE_ASSERT_CHECKING
+# requires USE_ASSERT_CHECKING
 #debug_assertions = true
-#endif
 
 
 #
 #	Syslog
 #
-#ifdef ENABLE_SYSLOG
+# requires ENABLE_SYSLOG
 #syslog = 0 # range 0-2
 #syslog_facility = 'LOCAL0'
 #syslog_ident = 'postgres'
-#endif
 
 
 #
@@ -142,9 +140,9 @@
 #show_planner_stats = false
 #show_executor_stats = false
 #show_query_stats = false
-#ifdef BTREE_BUILD_STATS
+
+# requires BTREE_BUILD_STATS
 #show_btree_build_stats = false
-#endif
 
 
 #
@@ -161,14 +159,14 @@
 #	Lock Tracing
 #
 #trace_notify = false
-#ifdef LOCK_DEBUG
+
+# requires LOCK_DEBUG
 #trace_locks = false
 #trace_userlocks = false
 #trace_lwlocks = false
 #debug_deadlocks = false
 #trace_lock_oidmin = 16384
 #trace_lock_table = 0
-#endif
 
 
 #
