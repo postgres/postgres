@@ -1,5 +1,5 @@
-
 VACUUM;
+
 --
 -- sanity check, if we don't have indices the test will take years to
 -- complete.  But skip TOAST relations since they will have varying
@@ -10,3 +10,15 @@ SELECT relname, relhasindex
    WHERE relhasindex AND relkind != 't'
    ORDER BY relname;
 
+--
+-- another sanity check: every system catalog that has OIDs should have
+-- a unique index on OID.  This ensures that the OIDs will be unique,
+-- even after the OID counter wraps around.
+-- We exclude non-system tables from the check by looking at nspname.
+--
+SELECT relname, nspname
+FROM pg_class c LEFT JOIN pg_namespace n ON n.oid = relnamespace
+WHERE relhasoids
+    AND ((nspname ~ '^pg_') IS NOT FALSE)
+    AND NOT EXISTS (SELECT 1 FROM pg_index i WHERE indrelid = c.oid
+                    AND indkey[0] = -2 AND indkey[1] = 0 AND indisunique);
