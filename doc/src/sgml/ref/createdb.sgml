@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.30 2002/10/11 23:03:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.31 2003/03/18 22:19:46 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -42,16 +42,13 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <application>createdb</application> is a shell script wrapper around the
-   <acronym>SQL</acronym> command
-   <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title"> via
-   the <productname>PostgreSQL</productname> interactive terminal
-   <xref linkend="APP-PSQL">. Thus, there is nothing
-   special about creating databases via this or other methods. This means
-   that the <application>psql</application> program must be found by the script and that
-   a database server must be running at the targeted port. Also, any default
-   settings and environment variables available to <application>psql</application>
-   and the <application>libpq</application> front-end library will apply.
+   <application>createdb</application> is a wrapper around the
+   <acronym>SQL</acronym> command <xref linkend="SQL-CREATEDATABASE"
+   endterm="SQL-CREATEDATABASE-title">.  Thus, there is nothing
+   special about creating databases via this or other methods.  This
+   means that a database server must be running at the targeted
+   port. Also, any default settings and environment variables used by
+   the <application>libpq</application> front-end library will apply.
   </para>
  </refsect1>
 
@@ -245,7 +242,7 @@ PostgreSQL documentation
    <para>
     If there is an error condition, the backend error message will be displayed.
     See <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-TITLE">
-    and <xref linkend="APP-PSQL"> for possibilities.
+    for possibilities.
    </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.25 2003/03/13 01:30:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.26 2003/03/18 22:19:46 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -120,8 +120,8 @@ createdb <replaceable class="parameter">dbname</replaceable>
 
    <command>createdb</> does no magic. It connects to the <literal>template1</>
    database and issues the <command>CREATE DATABASE</> command,
-   exactly as described above. It uses the <command>psql</> program
-   internally. The reference page on <command>createdb</> contains the invocation
+   exactly as described above.
+   The reference page on <command>createdb</> contains the invocation
    details. Note that <command>createdb</> without any arguments will create
    a database with the current user name, which may or may not be what
    you want.

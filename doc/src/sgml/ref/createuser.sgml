@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.30 2003/02/13 05:37:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.31 2003/03/18 22:19:46 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -43,17 +43,13 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <application>createuser</application> is a shell script wrapper around the
-   <acronym>SQL</acronym> command
-   <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title"> via
-   the <productname>PostgreSQL</productname> interactive terminal
-   <xref linkend="APP-PSQL">. Thus, there is nothing
-   special about creating users via this or other methods. This means
-   that the <application>psql</application> application must be found by the
-   script and that 
-   a database server must be running at the targeted host. Also, any default
-   settings and environment variables used by <application>psql</application>
-   and the <application>libpq</application> front-end library will apply.
+   <application>createuser</application> is a wrapper around the
+   <acronym>SQL</acronym> command <xref linkend="SQL-CREATEUSER"
+   endterm="SQL-CREATEUSER-title">.  Thus, there is nothing special
+   about creating users via this or other methods. This means that a
+   database server must be running at the targeted host. Also, any
+   default settings and environment variables used by the
+   <application>libpq</application> front-end library will apply.
   </para>
 
  </refsect1>
@@ -293,7 +289,7 @@ PostgreSQL documentation
    <para>
     If there is an error condition, the backend error message will be displayed.
     See <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
-    and <xref linkend="APP-PSQL"> for possibilities.
+    for possibilities.
    </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.21 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.22 2003/03/18 22:19:46 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -186,8 +186,7 @@ PostgreSQL documentation
     Most error messages are self-explanatory. If not, run
     <application>droplang</application> with the <option>--echo</option>
     option and see under the respective <acronym>SQL</acronym> command
-    for details. Check also under <xref linkend="APP-PSQL">
-    for more possibilities.
+    for details.
    </para>
  </refsect1>
 

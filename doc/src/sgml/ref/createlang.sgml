@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.29 2003/02/13 05:37:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.30 2003/03/18 22:19:46 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -197,8 +197,7 @@ PostgreSQL documentation
     Most error messages are self-explanatory. If not, run
     <application>createlang</application> with the <option>--echo</option>
     option and see under the respective <acronym>SQL</acronym> command
-    for details. Check also under <xref linkend="APP-PSQL">
-    for more possibilities.
+    for details.
    </para>
  </refsect1>
 
@@ -208,13 +207,6 @@ PostgreSQL documentation
 
   <para>
    Use <xref linkend="app-droplang"> to remove a language.
-  </para>
-
-  <para>
-   <application>createlang</application> is a shell script that invokes
-   <application>psql</application> several times.  If you have things
-   arranged so that a password prompt is required to connect, you will be
-   prompted for a password several times.
   </para>
  </refsect1>
  
