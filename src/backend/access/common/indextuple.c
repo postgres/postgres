@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.47 2000/11/30 18:38:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.48 2000/12/07 02:00:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,8 +229,10 @@ nocache_index_getattr(IndexTuple tup,
 		 *		check to see if desired att is null
 		 * ----------------
 		 */
-		bp = (char *) tup + sizeof(*tup);		/* "knows" t_bits are
-												 * here! */
+
+		/* XXX "knows" t_bits are just after fixed tuple header! */
+		bp = (bits8 *) ((char *) tup + sizeof(*tup));
+
 #ifdef IN_MACRO
 /* This is handled in the macro */
 

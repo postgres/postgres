@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.153 2000/12/03 20:45:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.154 2000/12/07 02:04:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2206,7 +2206,9 @@ pqPacketSend(PGconn *conn, const char *buf, size_t len)
 
 #define MAXBUFSIZE 256
 
-int parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage) {
+static int
+parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
+{
   char *service = conninfo_getval(options, "service");
   char *serviceFile = SYSCONFDIR "/pg_service.conf";
   int  group_found = 0;
