@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgrtab.h,v 1.9 1999/02/13 23:22:21 momjian Exp $
+ * $Id: fmgrtab.h,v 1.10 1999/03/29 01:30:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,13 +17,13 @@
 typedef struct
 {
 	Oid			proid;
-	uint16		nargs;
+	int			nargs;
 	func_ptr	func;
-	char	   *funcName;
+	int			dummy;			/* pad struct to 4 words for fast indexing */
 } FmgrCall;
 
 extern FmgrCall *fmgr_isbuiltin(Oid id);
-extern func_ptr fmgr_lookupByName(char *name);
+
 extern void load_file(char *filename);
 
 #endif	 /* FMGRTAB_H */

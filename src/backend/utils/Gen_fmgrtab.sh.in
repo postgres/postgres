@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.13 1999/01/25 00:44:53 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.14 1999/03/29 01:30:35 tgl Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -83,7 +83,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh.in,v 1.13 1999/01/25 00:44:53 tgl Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.14 1999/03/29 01:30:35 tgl Exp $
  *
  * NOTES
  *	******************************
@@ -172,10 +172,19 @@ FmgrInfo        *fmgr_pl_finfo;
 #define	SEL_CONSTANT 	1	/* constant does not vary (not a parameter) */
 #define	SEL_RIGHT	2 	/* constant appears to right of operator */
 
+/*
+ *	Constant macros for the OIDs of entries in pg_proc.
+ *	NOTE: if the same "proname" is used for more than one
+ *	internal-function entry in pg_proc, the equivalent macro
+ *	will be defined with the lowest OID among those entries.
+ */
 FuNkYfMgRsTuFf
-awk '{ print $2, $1; }' $RAWFILE | \
-@TR@ @TRARGS@ | \
-sed -e 's/^/#define F_/' >> $HFILE
+
+@TR@ @TRARGS@ < $RAWFILE | \
+awk '
+BEGIN	{ OFS = ""; }
+	{ if (seenit[$2]++ == 0) print "#define F_", $2, " ", $1; }' >> $HFILE
+
 cat >> $HFILE <<FuNkYfMgRsTuFf
 
 #endif	/* FMGR_H */
@@ -197,7 +206,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.13 1999/01/25 00:44:53 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.14 1999/03/29 01:30:35 tgl Exp $
  *
  * NOTES
  *
@@ -235,12 +244,16 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
 #include "utils/fmgrtab.h"
 
 FuNkYfMgRtAbStUfF
-awk '{ print "extern char *" $2 "();"; }' $RAWFILE >> $TABCFILE
+
+awk '{ print "extern char *", $(NF-1), "();"; }' $RAWFILE >> $TABCFILE
+
 cat >> $TABCFILE <<FuNkYfMgRtAbStUfF
 
 static FmgrCall fmgr_builtins[] = {
 FuNkYfMgRtAbStUfF
-awk '{ printf ("  {%d , %d , %s, \"%s\" },\n"), $1, $8, $2, $2 }' $RAWFILE >> $TABCFILE
+
+awk '{ printf ("  {%d, %d, %s },\n"), $1, $8, $(NF-1) }' $RAWFILE >> $TABCFILE
+
 cat >> $TABCFILE <<FuNkYfMgRtAbStUfF
 	/* guardian value */
 #ifndef WIN32
@@ -274,16 +287,6 @@ FmgrCall *fmgr_isbuiltin(Oid id)
 			high = i - 1;
 	}
 	return (FmgrCall *) NULL;
-}
-
-func_ptr fmgr_lookupByName(char *name) 
-{
-    int i;
-    for (i=0; i<FMGR_NBUILTINS; i++) {
-		if (strcmp(name,fmgr_builtins[i].funcName) == 0)
-			return(fmgr_builtins[i].func);
-    }
-    return((func_ptr) NULL);
 }
 
 FuNkYfMgRtAbStUfF

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.22 1999/02/13 23:19:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.23 1999/03/29 01:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,14 +169,20 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 	finfo->fn_plhandler = NULL;
 	finfo->fn_oid = procedureId;
 
-	if (!(fcp = fmgr_isbuiltin(procedureId)))
+	if ((fcp = fmgr_isbuiltin(procedureId)) != NULL)
+	{
+		/* Fast path for builtin functions: don't bother consulting pg_proc */
+		finfo->fn_addr = fcp->func;
+		finfo->fn_nargs = fcp->nargs;
+	}
+	else
 	{
 		procedureTuple = SearchSysCacheTuple(PROOID,
-										   ObjectIdGetDatum(procedureId),
+											 ObjectIdGetDatum(procedureId),
 											 0, 0, 0);
 		if (!HeapTupleIsValid(procedureTuple))
 		{
-			elog(ERROR, "fmgr_info: function %d: cache lookup failed\n",
+			elog(ERROR, "fmgr_info: function %d: cache lookup failed",
 				 procedureId);
 		}
 		procedureStruct = (FormData_pg_proc *) GETSTRUCT(procedureTuple);
@@ -190,11 +196,12 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 		switch (language)
 		{
 			case INTERNALlanguageId:
-				finfo->fn_addr = fmgr_lookupByName(procedureStruct->proname.data);
-				if (!finfo->fn_addr)
-					elog(ERROR, "fmgr_info: function %s: not in internal table",
-						 procedureStruct->proname.data);
-				finfo->fn_nargs = procedureStruct->pronargs;
+				/*
+				 * Since we already tried to look up the OID as a builtin
+				 * function, we should never get here...
+				 */
+				elog(ERROR, "fmgr_info: function %d: not in internal table",
+					 procedureId);
 				break;
 			case ClanguageId:
 				finfo->fn_addr = fmgr_dynamic(procedureId, &(finfo->fn_nargs));
@@ -238,11 +245,6 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 				}
 				break;
 		}
-	}
-	else
-	{
-		finfo->fn_addr = fcp->func;
-		finfo->fn_nargs = fcp->nargs;
 	}
 }
 
