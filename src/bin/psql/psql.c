@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.141 1998/05/12 23:04:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.142 1998/05/12 23:05:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 #ifdef HAVE_READLINE_H
 #include <readline.h>
 #define USE_READLINE 1
-#if defined(HAVE_HISTORY)
+#if defined(HAVE_HISTORY_H)
 #include <history.h>
 #define USE_HISTORY 1
 #endif
@@ -52,6 +52,9 @@
 #define USE_HISTORY 1
 #endif
 #endif
+#endif
+#if defined(HAVE_HISTORY) && !defined(USE_HISTORY)
+#define USE_HISTORY 1
 #endif
 #endif
 

@@ -63,13 +63,16 @@
 #undef HAVE_READLINE_H
 
 /* Set to 1 if you have <history.h> */
-#undef HAVE_HISTORY
+#undef HAVE_HISTORY_H
 
 /* Set to 1 if you have <readline/history.h> */
 #undef HAVE_READLINE_HISTORY_H
 
 /* Set to 1 if you have <readline/readline.h> */
 #undef HAVE_READLINE_READLINE_H
+
+/* Set to 1 if you have libreadline and it includes history functions */
+#undef HAVE_HISTORY
 
 /* Set to 1 if you have <dld.h> */
 #undef HAVE_DLD_H
