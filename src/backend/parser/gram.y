@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.50 1999/02/02 03:44:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.51 1999/02/02 19:20:54 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5257,11 +5257,17 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 				least->val.val.str = match_least;
 				most->val.type = T_String;
 				most->val.val.str = match_most;
+#ifdef USE_LOCALE
+				result = makeA_Expr(AND, NULL,
+						makeA_Expr(OP, "~", lexpr, rexpr),
+						makeA_Expr(OP, ">=", lexpr, (Node *)least));
+#else
 				result = makeA_Expr(AND, NULL,
 						makeA_Expr(OP, "~", lexpr, rexpr),
 						makeA_Expr(AND, NULL,
 							makeA_Expr(OP, ">=", lexpr, (Node *)least),
 							makeA_Expr(OP, "<=", lexpr, (Node *)most)));
+#endif
 			}
 		}
 	}
@@ -5304,11 +5310,17 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 				least->val.val.str = match_least;
 				most->val.type = T_String;
 				most->val.val.str = match_most;
+#ifdef USE_LOCALE
+				result = makeA_Expr(AND, NULL,
+						makeA_Expr(OP, "~~", lexpr, rexpr),
+						makeA_Expr(OP, ">=", lexpr, (Node *)least));
+#else
 				result = makeA_Expr(AND, NULL,
 						makeA_Expr(OP, "~~", lexpr, rexpr),
 						makeA_Expr(AND, NULL,
 							makeA_Expr(OP, ">=", lexpr, (Node *)least),
 							makeA_Expr(OP, "<=", lexpr, (Node *)most)));
+#endif
 			}
 		}
 	}
