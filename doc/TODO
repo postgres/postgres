@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Apr 28 10:44:19 EDT 2000
+Last updated:		Fri May  5 00:05:54 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -180,7 +180,7 @@ MISC
 * Allow BLCKSZ <= 64k, not <= 32k
 * redesign UNION structures to have separarate target lists
 * Allow multi-level query trees for INSERT INTO ... SELECT
-
+* Use IPC_EXCL when creating shared memory and semaphores
 
 PERFORMANCE
 -----------
