@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.23 1997/09/18 20:20:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.24 1997/10/27 11:52:43 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1103,9 +1103,12 @@ index_create(char *heapRelationName,
 	/* ----------------
 	 * write lock heap to guarantee exclusive access
 	 * ----------------
+	RelationSetLockForWrite(heapRelation);
+	 *                ^^^^^
+	 * Does it have any sense ?		- vadim 10/27/97
 	 */
 
-	RelationSetLockForWrite(heapRelation);
+	RelationSetLockForRead(heapRelation);
 
 	/* ----------------
 	 *	  construct new tuple descriptor
