@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.3 1996/11/06 08:21:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.4 1997/01/10 20:17:17 momjian Exp $
  *
  * Note:
  *	XXX There are many instances of int32 instead of ...Time.  These
@@ -15,6 +15,8 @@
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
+
 #include <postgres.h>
 
 #include <access/heapam.h>

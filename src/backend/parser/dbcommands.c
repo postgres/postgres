@@ -7,11 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.2 1996/11/08 05:57:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.3 1997/01/10 20:18:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#include <string.h>
 #include <signal.h>
 
 #include "postgres.h"

@@ -9,11 +9,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.3 1996/11/08 05:59:49 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.4 1997/01/10 20:19:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>		/* for sprintf() */
+#include <string.h>
+
 #include "postgres.h"
 #include "access/heapam.h"
 #include "access/relscan.h"

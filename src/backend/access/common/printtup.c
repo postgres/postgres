@@ -8,11 +8,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.12 1996/11/10 02:57:00 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.13 1997/01/10 20:16:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include <string.h>
 #include <postgres.h>
 
 #include <fmgr.h> 

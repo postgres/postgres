@@ -7,10 +7,11 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.6 1996/11/08 05:57:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.7 1997/01/10 20:17:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
 #include <sys/types.h>
 
 #include "postgres.h"

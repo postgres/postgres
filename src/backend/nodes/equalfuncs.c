@@ -7,10 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.4 1996/11/10 03:00:34 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.5 1997/01/10 20:17:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
+
 #include "postgres.h"
 
 #include "nodes/nodes.h"

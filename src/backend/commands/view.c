@@ -7,11 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.6 1996/12/11 03:17:17 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.7 1997/01/10 20:17:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>	/* for sprintf() */
+#include <string.h>
 
 #include <postgres.h>
 

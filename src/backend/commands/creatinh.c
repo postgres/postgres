@@ -7,11 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.4 1996/11/06 08:21:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.5 1997/01/10 20:17:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#include <string.h>
 
 #include <postgres.h>
 

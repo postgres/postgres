@@ -7,10 +7,11 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.2 1996/10/31 10:59:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.3 1997/01/10 20:18:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
 #include <sys/types.h>
 
 #include "postgres.h"

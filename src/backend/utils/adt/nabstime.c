@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.11 1997/01/10 18:22:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.12 1997/01/10 20:19:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <sys/types.h>
+
 #include "postgres.h"
 #ifndef USE_POSIX_TIME
 #include <sys/timeb.h>
