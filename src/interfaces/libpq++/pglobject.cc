@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.6 2000/04/22 22:39:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.7 2001/05/09 17:29:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,10 @@
 extern "C" {
 #include "libpq/libpq-fs.h"
 }
+
+
+using namespace std;
+
 
 // ****************************************************************
 //
@@ -142,7 +146,7 @@ int PgLargeObject::LSeek(int offset, int whence)
 }
 
 
-int PgLargeObject::Tell()
+int PgLargeObject::Tell() const
 { 
   return lo_tell(pgConn, pgFd); 
 }
@@ -160,7 +164,7 @@ int PgLargeObject::Export(const char* filename)
 }
 
 
-string PgLargeObject::Status() 
+string PgLargeObject::Status() const
 { 
   return loStatus; 
 }

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.29 2001/05/09 17:29:09 momjian Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -227,9 +227,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        returns whether or not the connection to the backend server succeeded or
        failed.  
        <synopsis>
-	int PgConnection::ConnectionBad()
+	bool PgConnection::ConnectionBad() const
        </synopsis>
-       Returns TRUE if the connection failed.
+       Returns true if the connection failed.
       </para>
      </listitem>
      <listitem>
@@ -368,7 +368,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        <function>Tuples</function>
        Returns the number of tuples (rows) in the query result. 
        <synopsis>
-	int PgDatabase::Tuples()
+	int PgDatabase::Tuples() const
        </synopsis>
       </para>
      </listitem>
@@ -387,7 +387,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        Returns the field (attribute) name associated with the given field index. 
        Field indices start at 0. 
        <synopsis>
-	const char *PgDatabase::FieldName(int field_num)
+	const char *PgDatabase::FieldName(int field_num) const
        </synopsis>
       </para>
      </listitem>
@@ -397,7 +397,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        PQfnumber Returns the field (attribute) index associated with 
        the given field name. 
        <synopsis>
-	int PgDatabase::FieldNum(const char* field_name)
+	int PgDatabase::FieldNum(const char* field_name) const
        </synopsis>
        -1 is returned if the given name does not match any field.
       </para>
@@ -409,7 +409,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        integer returned is an internal coding of the type. Field indices
        start at 0. 
        <synopsis>
-	Oid PgDatabase::FieldType(int field_num)
+	Oid PgDatabase::FieldType(int field_num) const
        </synopsis>
       </para>
      </listitem>
@@ -420,7 +420,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        integer returned is an internal coding of the type. Field indices
        start at 0. 
        <synopsis>
-	Oid PgDatabase::FieldType(const char* field_name)
+	Oid PgDatabase::FieldType(const char* field_name) const
        </synopsis>
       </para>
      </listitem>
@@ -430,7 +430,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        Returns the size in bytes of the field associated with the given 
        field index. Field indices start at 0. 
        <synopsis>
-	short PgDatabase::FieldSize(int field_num)
+	short PgDatabase::FieldSize(int field_num) const
        </synopsis>
        Returns the space allocated for this field in a database tuple given
        the field number. In other words the size of the server's binary 
@@ -444,7 +444,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        Returns the size in bytes of the field associated with the given 
        field index. Field indices start at 0. 
        <synopsis>
-	short PgDatabase::FieldSize(const char *field_name)
+	short PgDatabase::FieldSize(const char *field_name) const
        </synopsis>
        Returns the space allocated for this field in a database tuple given
        the field name. In other words the size of the server's binary 
@@ -466,7 +466,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        Returns a single field (attribute) value of one tuple of a PGresult. 
        Tuple and field indices start at 0. 
        <synopsis>
-	const char *PgDatabase::GetValue(int tup_num, int field_num)
+	const char *PgDatabase::GetValue(int tup_num, int field_num) const
        </synopsis>
        For most queries, the value returned by GetValue is a null-terminated 
        ASCII string representation of the attribute value. But if BinaryTuples() 
@@ -486,7 +486,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        Returns a single field (attribute) value of one tuple of a PGresult. 
        Tuple and field indices start at 0. 
        <synopsis>
-	const char *PgDatabase::GetValue(int tup_num, const char *field_name)
+	const char *PgDatabase::GetValue(int tup_num, const char *field_name) const
        </synopsis>
        For most queries, the value returned by GetValue is a null-terminated 
        ASCII string representation of the attribute value. But if BinaryTuples() 
@@ -506,7 +506,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        Returns the length of a field (attribute) in bytes. Tuple and field 
        indices start at 0. 
        <synopsis>
-	int PgDatabase::GetLength(int tup_num, int field_num)
+	int PgDatabase::GetLength(int tup_num, int field_num) const
        </synopsis>
        This is the actual data length for the particular data value, that 
        is the size of the object pointed to by GetValue. Note that for
@@ -520,7 +520,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
        Returns the length of a field (attribute) in bytes. Tuple and field 
        indices start at 0. 
        <synopsis>
-	int PgDatabase::GetLength(int tup_num, const char* field_name)
+	int PgDatabase::GetLength(int tup_num, const char* field_name) const
        </synopsis>
        This is the actual data length for the particular data value, that 
        is the size of the object pointed to by GetValue. Note that for
@@ -530,23 +530,45 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
      </listitem>
      <listitem>
       <para>
+       <function>GetIsNull</function>
+       Returns whether a field has the null value.
+       <synopsis>
+        bool GetIsNull(int tup_num, int field_num) const
+       </synopsis>
+       Note that GetValue will return the empty string for null fields, not
+       the NULL pointer.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>GetIsNull</function>
+       Returns whether a field has the null value.
+       <synopsis>
+        bool GetIsNull(int tup_num, const char *field_name) const
+       </synopsis>
+       Note that GetValue will return the empty string for null fields, not
+       the NULL pointer.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
        <function>DisplayTuples</function>
-       Prints out all the tuples and, optionally, the attribute names to the 
+       OBSOLESCENT: Prints out all the tuples and, optionally, the attribute names to the 
        specified output stream. 
        <synopsis>
-	void PgDatabase::DisplayTuples(FILE *out = 0, int fillAlign = 1, 
-	const char* fieldSep = "|",int printHeader = 1, int quiet = 0)
+	void PgDatabase::DisplayTuples(FILE *out = 0, bool fillAlign = true, 
+	const char* fieldSep = "|",bool printHeader = true, bool quiet = false) const
        </synopsis>
       </para>
      </listitem>
      <listitem>
       <para>
        <function>PrintTuples</function>
-       Prints out all the tuples and, optionally, the attribute names to the 
+       OBSOLESCENT: Prints out all the tuples and, optionally, the attribute names to the 
        specified output stream. 
        <synopsis>
-	void PgDatabase::PrintTuples(FILE *out = 0, int printAttName = 1, 
-	int terseOutput = 0, int width = 0) 
+	void PgDatabase::PrintTuples(FILE *out = 0, bool printAttName = true, 
+	bool terseOutput = false, bool fillAlign = false) const
        </synopsis>
       </para>
      </listitem>
@@ -563,7 +585,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
               Returns the number of rows affected after an INSERT, UPDATE or DELETE. 
               If the command was anything else, it returns -1. 
        <synopsis>
-      int PgDatabase::CmdTuples()
+      int PgDatabase::CmdTuples() const
        </synopsis>
       </para>
      </listitem>
@@ -572,7 +594,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
       <para>
        <function>OidStatus</function>
        <synopsis>
-	const char *PgDatabase::OidStatus()
+	const char *PgDatabase::OidStatus() const
        </synopsis>
       </para>
      </listitem>
@@ -650,8 +672,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.28 2001/05/01 10:48:
     to see if any notification data is currently available from the backend. 
     <function>PgDatabase::Notifies</function>
     returns the notification from a list of unhandled notifications from the
-    backend. The function eturns NULL if there is no pending notifications from the
-    backend.   
+    backend. The function returns NULL if there are no pending notifications 
+    from the backend.   
     <function>PgDatabase::Notifies</function>
     behaves like the popping of a stack.  Once a notification is returned
     from <function>PgDatabase::Notifies</function>,

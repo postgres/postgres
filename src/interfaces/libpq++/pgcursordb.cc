@@ -10,13 +10,17 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.4 1999/06/01 02:43:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.5 2001/05/09 17:29:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
  
 #include "pgcursordb.h"
  
+
+using namespace std;
+
+
 // ****************************************************************
 //
 // PgCursor Implementation
@@ -48,7 +52,7 @@ PgCursor::~PgCursor()
 //
 // ****************************************************************
 // Declare a cursor: name has already been supplied in the constructor
-int PgCursor::Declare(const string& query, int binary)
+int PgCursor::Declare(string query, bool binary)
 {
 	string cmd = "DECLARE " + pgCursor;
 	if ( binary )
@@ -70,7 +74,7 @@ int PgCursor::Fetch(unsigned num, const char* dir)
 } // End Fetch()
 
 // Create and execute the actual fetch command with the given arguments
-int PgCursor::Fetch(const string& num, const string& dir)
+int PgCursor::Fetch(string num, string dir)
 {
 	string cmd = "FETCH " + dir + " " + num + " IN " + pgCursor;
 	return ExecTuplesOk( cmd.c_str() );

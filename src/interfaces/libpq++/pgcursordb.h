@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgcursordb.h,v 1.6 2001/01/24 19:43:32 momjian Exp $
+ *  $Id: pgcursordb.h,v 1.7 2001/05/09 17:29:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,12 @@
 
 #ifndef PGTRANSDB_H
 #include "pgtransdb.h"
+#endif
+
+#ifdef HAVE_NAMESPACE_STD
+#define PGSTD std::
+#else
+#define PGSTD
 #endif
 
 
@@ -44,20 +50,22 @@ public:
   ~PgCursor();	// close connection and clean up
   
   // Commands associated with cursor interface
-  int Declare(const string& query, int binary = 0);	// Declare a cursor with given name
+  int Declare(PGSTD string query, bool binary=false);	// Declare a cursor with given name
   int Fetch(const char* dir = "FORWARD");		// Fetch ALL tuples in given direction
   int Fetch(unsigned num, const char* dir = "FORWARD");	// Fetch specified amount of tuples
   int Close();	// Close the cursor
   
   // Accessors to the cursor name
   const char* Cursor() const { return pgCursor.c_str(); }
-  void Cursor(const string& cursor) { pgCursor = cursor; }
+  // TODO: Setter has same name as getter--ouch!
+  // OBSOLESCENT
+  void Cursor(PGSTD string cursor) { pgCursor = cursor; }
   
 protected:
-  int Fetch(const string& num, const string& dir);
+  int Fetch(PGSTD string num, PGSTD string dir);
   
 protected:
-  string pgCursor;
+  PGSTD string pgCursor;
   
 protected:
   PgCursor() : PgTransaction() {}	// Do not connect
@@ -69,4 +77,10 @@ private:
    PgCursor& operator= (const PgCursor&);
 }; // End PgCursor Class Declaration
 
+
+#ifdef HAVE_NAMESPACE_STD
+#undef PGSTD
+#endif
+
 #endif	// PGCURSORDB_H
+

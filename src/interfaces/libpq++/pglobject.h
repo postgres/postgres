@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pglobject.h,v 1.6 2001/01/24 19:43:32 momjian Exp $
+ *  $Id: pglobject.h,v 1.7 2001/05/09 17:29:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,12 @@
  
 #ifndef PGCONNECTION_H
 #include "pgconnection.h"
+#endif
+
+#ifdef HAVE_NAMESPACE_STD
+#define PGSTD std::
+#else
+#define PGSTD
 #endif
 
 
@@ -33,12 +39,12 @@ class PgLargeObject : public PgConnection {
 private:
   int pgFd;
   Oid pgObject;
-  string loStatus;
+  PGSTD string loStatus;
   void Init(Oid lobjId = 0);
 
 public:
-  PgLargeObject(const char* conninfo = 0);   // use reasonable defaults and create large object
-  PgLargeObject(Oid lobjId, const char* conninfo = 0); // use reasonable defaults and open large object
+  explicit PgLargeObject(const char* conninfo = 0);   // use reasonable defaults and create large object
+  explicit PgLargeObject(Oid lobjId, const char* conninfo = 0); // use reasonable defaults and open large object
   ~PgLargeObject(); // close connection and clean up
   
   void Create();
@@ -47,12 +53,12 @@ public:
   int Read(char* buf, int len);
   int Write(const char* buf, int len);
   int LSeek(int offset, int whence);
-  int Tell();
+  int Tell() const;
   int Unlink();
   Oid LOid();
   Oid Import(const char* filename);
   int Export(const char* filename); 
-  string Status();
+  PGSTD string Status() const;
 
 private:
 // We don't support copying of PgLargeObject objects,
@@ -60,5 +66,11 @@ private:
    PgLargeObject(const PgLargeObject&);
    PgLargeObject& operator= (const PgLargeObject&);
 };
+
+
+#ifdef HAVE_NAMESPACE_STD
+#undef PGSTD
+#endif
+
 
 #endif	// PGLOBJECT_H

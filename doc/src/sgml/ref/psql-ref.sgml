@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.50 2001/05/07 19:31:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.51 2001/05/09 17:29:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -489,6 +489,16 @@ testdb=>
         <para>
         Lists all data types or only those that match <replaceable class="parameter">pattern</replaceable>.
         The command form <literal>\dT+</literal> shows extra information.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\du [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+        Lists all configured users or only those that match <replaceable class="parameter">pattern</replaceable>.
         </para>
         </listitem>
       </varlistentry>

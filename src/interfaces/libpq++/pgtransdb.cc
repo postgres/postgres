@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgtransdb.cc,v 1.3 1999/05/30 15:17:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgtransdb.cc,v 1.4 2001/05/09 17:29:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,8 @@
 // Make a connection to the specified database with default environment
 // See PQconnectdb() for conninfo usage. 
 PgTransaction::PgTransaction(const char* conninfo)
-   : PgDatabase(conninfo)
+   : PgDatabase(conninfo),
+     pgCommitted(true)
 {
 	BeginTransaction();
 }
@@ -33,17 +34,20 @@ PgTransaction::PgTransaction(const char* conninfo)
 // Destructor: End the transaction block
 PgTransaction::~PgTransaction()
 {
-	EndTransaction();
+	if (!pgCommitted) Exec("ABORT");
 }
 
 // Begin the transaction block
 ExecStatusType PgTransaction::BeginTransaction()
 {
+	pgCommitted = false;
 	return Exec("BEGIN");
 } // End BeginTransaction()
 
 // Begin the transaction block
 ExecStatusType PgTransaction::EndTransaction()
 {
+	pgCommitted = true;
 	return Exec("END");
 } // End EndTransaction()
+

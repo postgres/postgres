@@ -10,12 +10,14 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.10 2000/07/27 19:44:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.11 2001/05/09 17:29:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "pgconnection.h"
+
+using namespace std;
 
 
 // ****************************************************************
@@ -25,14 +27,14 @@
 // ****************************************************************
 // default constructor -- initialize everything
 PgConnection::PgConnection()
-	: pgConn(NULL), pgResult(NULL), pgCloseConnection(0)
+	: pgConn(NULL), pgResult(NULL), pgCloseConnection(false)
 {}
 
 
 // constructor -- checks environment variable for database name
 // Now uses PQconnectdb
 PgConnection::PgConnection(const char* conninfo)
-	: pgConn(NULL), pgResult(NULL), pgCloseConnection(1)
+	: pgConn(NULL), pgResult(NULL), pgCloseConnection(true)
 {
     
   // Connect to the database
@@ -60,14 +62,14 @@ void PgConnection::CloseConnection()
        pgResult=NULL;
        if(pgConn) PQfinish(pgConn);
        pgConn=NULL;
-       pgCloseConnection=0;
+       pgCloseConnection=false;
   }
 }
 
 
 // PgConnection::connect
 // establish a connection to a backend
-ConnStatusType PgConnection::Connect(const char* conninfo)
+ConnStatusType PgConnection::Connect(const char conninfo[])
 {
   // if the connection is open, close it first
   CloseConnection();
@@ -76,14 +78,14 @@ ConnStatusType PgConnection::Connect(const char* conninfo)
   pgConn = PQconnectdb(conninfo);
 
   // Now we have a connection we must close (even if it's bad!)
-  pgCloseConnection = 1;
+  pgCloseConnection = true;
   
   // Status will return either CONNECTION_OK or CONNECTION_BAD
   return Status();
 }
 
 // PgConnection::status -- return connection or result status
-ConnStatusType PgConnection::Status()
+ConnStatusType PgConnection::Status() const
 {
   return PQstatus(pgConn);
 }
@@ -131,27 +133,26 @@ PGnotify* PgConnection::Notifies()
 // From Integer To String Conversion Function
 string PgConnection::IntToString(int n)
 {
-  char buffer [32];
-  memset(buffer, 0, sizeof(buffer));
+  char buffer [4*sizeof(n) + 2];
   sprintf(buffer, "%d", n);
   return buffer;
 }
 
 
 
-int PgConnection::ConnectionBad() 
+bool PgConnection::ConnectionBad() const
 { 
 return Status() == CONNECTION_BAD; 
 }
 
 
-const char* PgConnection::ErrorMessage() 
+const char* PgConnection::ErrorMessage() const
 { 
 return (const char *)PQerrorMessage(pgConn); 
 }
   
 
-const char* PgConnection::DBName()
+const char* PgConnection::DBName() const
 { 
 return (const char *)PQdb(pgConn); 
 }

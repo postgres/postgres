@@ -22,12 +22,12 @@ INSERT INTO TBL1 values (10);
 #include "libpq++.h"
 #include <stdlib.h>
 
-main()
+int main()
 {
   // Begin, by connecting to the backend using hardwired constants
   // and a test database created by the user prior to the invokation
   // of this test program.
-  char* dbName = "dbname=template1";
+  const char* dbName = "dbname=template1";
   PgDatabase data(dbName);
 
   // Check to see that the backend connection was successfully made

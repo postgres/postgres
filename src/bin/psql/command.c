@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.51 2001/05/07 19:31:33 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.52 2001/05/09 17:29:10 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -357,6 +357,9 @@ exec_command(const char *cmd,
 			case 'S':
 				success = listTables(&cmd[1], name, show_verbose);
 				break;
+			case 'u':
+				success = describeUsers(name);
+  				break;
 			default:
 				status = CMD_UNKNOWN;
 		}
