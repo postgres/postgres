@@ -35,7 +35,6 @@
 
 #port = 5432 
 #hostname_lookup = false
-#show_source_port = false
 
 #unix_socket_directory = ''
 #unix_socket_group = ''
@@ -122,6 +121,7 @@
 #silent_mode = false
 
 #log_connections = false
+#log_source_port = false
 #log_pid = false
 #log_statement = false
 #log_duration = false

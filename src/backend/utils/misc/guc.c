@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.103 2002/11/15 01:26:09 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.104 2002/11/15 01:40:19 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -480,7 +480,7 @@ static struct config_bool
 		false, NULL, NULL
 	},
 	{
-		{"show_source_port", PGC_SIGHUP}, &ShowPortNumber,
+		{"log_source_port", PGC_SIGHUP}, &LogSourcePort,
 		false, NULL, NULL
 	},
 

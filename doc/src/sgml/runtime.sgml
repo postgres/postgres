@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.152 2002/11/15 00:47:22 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.153 2002/11/15 01:40:15 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1124,7 +1124,7 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term><varname>SHOW_SOURCE_PORT</varname> (<type>boolean</type>)</term>
+      <term><varname>LOG_SOURCE_PORT</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Shows the outgoing port number of the connecting host in the

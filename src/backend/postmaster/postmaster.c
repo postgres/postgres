@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.294 2002/11/14 23:53:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.295 2002/11/15 01:40:18 momjian Exp $
  *
  * NOTES
  *
@@ -200,7 +200,7 @@ int			AuthenticationTimeout = 60;
 int			CheckPointTimeout = 300;
 
 bool		HostnameLookup;		/* for ps display */
-bool		ShowPortNumber;
+bool		LogSourcePort;
 bool		Log_connections = false;
 bool		Db_user_namespace = false;
 
@@ -2119,7 +2119,7 @@ DoBackend(Port *port)
 			elog(LOG, "connection received: host=%s port=%hu",
 				 remote_host, remote_port);
 
-		if (ShowPortNumber)
+		if (LogSourcePort)
 		{
 			/* modify remote_host for use in ps status */
 			int			slen = strlen(remote_host) + 10;
