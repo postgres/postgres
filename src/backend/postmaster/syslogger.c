@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.7 2004/08/29 05:06:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.8 2004/08/31 04:53:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,9 @@
 bool		Redirect_stderr = false;
 int			Log_RotationAge = 24 * 60;
 int			Log_RotationSize = 10 * 1024;
-char	   *Log_directory = "pg_log";
-char	   *Log_filename_prefix = "postgresql-";
+char	   *Log_directory = NULL;
+char	   *Log_filename = NULL;
+bool		Log_truncate_on_rotation = false;
 
 /*
  * Globally visible state (used by elog.c)
@@ -72,7 +73,7 @@ bool		am_syslogger = false;
 /*
  * Private state
  */
-static pg_time_t last_rotation_time = 0;
+static pg_time_t next_rotation_time;
 
 static bool redirection_done = false;
 
@@ -109,8 +110,9 @@ static void write_syslogger_file_binary(const char *buffer, int count);
 #ifdef WIN32
 static unsigned int __stdcall pipeThread(void *arg);
 #endif
-static void logfile_rotate(void);
+static void logfile_rotate(bool time_based_rotation);
 static char *logfile_getname(pg_time_t timestamp);
+static void set_next_rotation_time(void);
 static void sigHupHandler(SIGNAL_ARGS);
 
 
@@ -121,7 +123,9 @@ static void sigHupHandler(SIGNAL_ARGS);
 NON_EXEC_STATIC void
 SysLoggerMain(int argc, char *argv[])
 {
-	char		currentLogDir[MAXPGPATH];
+	char	   *currentLogDir;
+	char	   *currentLogFilename;
+	int			currentLogRotationAge;
 
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
@@ -218,15 +222,18 @@ SysLoggerMain(int argc, char *argv[])
 	}
 #endif   /* WIN32 */
 
-	/* remember age of initial logfile */
-	last_rotation_time = time(NULL);
-	/* remember active logfile directory */
-	strncpy(currentLogDir, Log_directory, MAXPGPATH);
+	/* remember active logfile parameters */
+	currentLogDir = pstrdup(Log_directory);
+	currentLogFilename = pstrdup(Log_filename);
+	currentLogRotationAge = Log_RotationAge;
+	/* set next planned rotation time */
+	set_next_rotation_time();
 
 	/* main worker loop */
 	for (;;)
 	{
 		bool		rotation_requested = false;
+		bool		time_based_rotation = false;
 
 #ifndef WIN32
 		char		logbuffer[1024];
@@ -242,46 +249,51 @@ SysLoggerMain(int argc, char *argv[])
 			ProcessConfigFile(PGC_SIGHUP);
 
 			/*
-			 * Check if the log directory changed in postgresql.conf. If
-			 * so, force rotation to make sure we're writing the logfiles
-			 * in the right place.
-			 *
-			 * XXX is it worth responding similarly to a change of
-			 * Log_filename_prefix?
+			 * Check if the log directory or filename pattern changed in 
+			 * postgresql.conf. If so, force rotation to make sure we're 
+			 * writing the logfiles in the right place.
 			 */
-			if (strncmp(Log_directory, currentLogDir, MAXPGPATH) != 0)
+			if (strcmp(Log_directory, currentLogDir) != 0)
 			{
-				strncpy(currentLogDir, Log_directory, MAXPGPATH);
+				pfree(currentLogDir);
+				currentLogDir = pstrdup(Log_directory);
 				rotation_requested = true;
+			}
+			if (strcmp(Log_filename, currentLogFilename) != 0)
+			{
+				pfree(currentLogFilename);
+				currentLogFilename = pstrdup(Log_filename);
+				rotation_requested = true;
+			}
+			/*
+			 * If rotation time parameter changed, reset next rotation time,
+			 * but don't immediately force a rotation.
+			 */
+			if (currentLogRotationAge != Log_RotationAge)
+			{
+				currentLogRotationAge = Log_RotationAge;
+				set_next_rotation_time();
 			}
 		}
 
-		if (!rotation_requested &&
-			last_rotation_time != 0 &&
-			Log_RotationAge > 0)
+		if (!rotation_requested && Log_RotationAge > 0)
 		{
-			/*
-			 * Do a logfile rotation if too much time has elapsed since
-			 * the last one.
-			 */
+			/* Do a logfile rotation if it's time */
 			pg_time_t	now = time(NULL);
-			int			elapsed_secs = now - last_rotation_time;
 
-			if (elapsed_secs >= Log_RotationAge * 60)
-				rotation_requested = true;
+			if (now >= next_rotation_time)
+				rotation_requested = time_based_rotation = true;
 		}
 
 		if (!rotation_requested && Log_RotationSize > 0)
 		{
-			/*
-			 * Do a rotation if file is too big
-			 */
+			/* Do a rotation if file is too big */
 			if (ftell(syslogFile) >= Log_RotationSize * 1024L)
 				rotation_requested = true;
 		}
 
 		if (rotation_requested)
-			logfile_rotate();
+			logfile_rotate(time_based_rotation);
 
 #ifndef WIN32
 
@@ -365,7 +377,6 @@ int
 SysLogger_Start(void)
 {
 	pid_t		sysloggerPid;
-	pg_time_t	now;
 	char	   *filename;
 
 	if (!Redirect_stderr)
@@ -424,8 +435,7 @@ SysLogger_Start(void)
 	 * The initial logfile is created right in the postmaster, to verify
 	 * that the Log_directory is writable.
 	 */
-	now = time(NULL);
-	filename = logfile_getname(now);
+	filename = logfile_getname(time(NULL));
 
 	syslogFile = fopen(filename, "a");
 
@@ -736,16 +746,26 @@ pipeThread(void *arg)
  * perform logfile rotation
  */
 static void
-logfile_rotate(void)
+logfile_rotate(bool time_based_rotation)
 {
 	char	   *filename;
-	pg_time_t	now;
 	FILE	   *fh;
 
-	now = time(NULL);
-	filename = logfile_getname(now);
+	/*
+	 * When doing a time-based rotation, invent the new logfile name based
+	 * on the planned rotation time, not current time, to avoid "slippage"
+	 * in the file name when we don't do the rotation immediately.
+	 */
+	if (time_based_rotation)
+		filename = logfile_getname(next_rotation_time);
+	else
+		filename = logfile_getname(time(NULL));
 
-	fh = fopen(filename, "a");
+	if (Log_truncate_on_rotation && time_based_rotation)
+		fh = fopen(filename, "w");
+	else
+		fh = fopen(filename, "a");
+
 	if (!fh)
 	{
 		int			saveerrno = errno;
@@ -784,7 +804,7 @@ logfile_rotate(void)
 	LeaveCriticalSection(&sysfileSection);
 #endif
 
-	last_rotation_time = now;
+	set_next_rotation_time();
 
 	pfree(filename);
 }
@@ -799,23 +819,58 @@ static char *
 logfile_getname(pg_time_t timestamp)
 {
 	char	   *filename;
-	char		stamptext[128];
-
-	pg_strftime(stamptext, sizeof(stamptext), "%Y-%m-%d_%H%M%S",
-				pg_localtime(&timestamp));
+	int			len;
+	struct pg_tm *tm;
 
 	filename = palloc(MAXPGPATH);
 
 	if (is_absolute_path(Log_directory))
-		snprintf(filename, MAXPGPATH, "%s/%s%05u_%s.log",
-				 Log_directory, Log_filename_prefix,
-				 (unsigned int) PostmasterPid, stamptext);
+		snprintf(filename, MAXPGPATH, "%s/", Log_directory);
 	else
-		snprintf(filename, MAXPGPATH, "%s/%s/%s%05u_%s.log",
-				 DataDir, Log_directory, Log_filename_prefix,
-				 (unsigned int) PostmasterPid, stamptext);
+		snprintf(filename, MAXPGPATH, "%s/%s/", DataDir, Log_directory);
+
+	len = strlen(filename);
+
+	if (strchr(Log_filename, '%'))
+	{
+		/* treat it as a strftime pattern */
+		tm = pg_localtime(&timestamp);
+		pg_strftime(filename + len, MAXPGPATH - len, Log_filename, tm);
+	}
+	else 
+	{
+		/* no strftime escapes, so append timestamp to new filename */
+		snprintf(filename + len, MAXPGPATH - len, "%s.%lu",
+				 Log_filename, (unsigned long) timestamp);
+	}
 
 	return filename;
+}
+
+/*
+ * Determine the next planned rotation time, and store in next_rotation_time.
+ */
+static void
+set_next_rotation_time(void)
+{
+	pg_time_t	now;
+	int			rotinterval;
+
+	/* nothing to do if time-based rotation is disabled */
+	if (Log_RotationAge <= 0)
+		return;
+
+	/*
+	 * The requirements here are to choose the next time > now that is a
+	 * "multiple" of the log rotation interval.  "Multiple" can be interpreted
+	 * fairly loosely --- in particular, for intervals larger than an hour,
+	 * it might be interesting to align to local time instead of GMT.
+	 */
+	rotinterval = Log_RotationAge * 60; /* convert to seconds */
+	now = time(NULL);
+	now -= now % rotinterval;
+	now += rotinterval;
+	next_rotation_time = now;
 }
 
 /* --------------------------------

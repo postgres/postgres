@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.235 2004/08/30 02:54:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.236 2004/08/31 04:53:44 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -810,6 +810,14 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&Redirect_stderr,
+		false, NULL, NULL
+	},
+	{
+		{"log_truncate_on_rotation", PGC_SIGHUP, LOGGING_WHERE,
+			gettext_noop("Truncate existing log files of same name during log rotation"),
+			NULL
+		},
+		&Log_truncate_on_rotation,
 		false, NULL, NULL
 	},
 
@@ -1665,7 +1673,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 	{
 		{"log_directory", PGC_SIGHUP, LOGGING_WHERE,
-			gettext_noop("Sets the destination directory for logfiles."),
+			gettext_noop("Sets the destination directory for log files."),
 			gettext_noop("May be specified as relative to the cluster directory "
 						 "or as absolute path.")
 		},
@@ -1673,12 +1681,12 @@ static struct config_string ConfigureNamesString[] =
 		"pg_log", NULL, NULL
 	},
 	{
-		{"log_filename_prefix", PGC_SIGHUP, LOGGING_WHERE,
-			gettext_noop("Prefix for file names created in the log_directory."),
+		{"log_filename", PGC_SIGHUP, LOGGING_WHERE,
+			gettext_noop("Sets the file name pattern for log files."),
 			NULL
 		},
-		&Log_filename_prefix,
-		"postgresql-", NULL, NULL
+		&Log_filename,
+		"postgresql-%Y-%m-%d_%H%M%S.log", NULL, NULL
 	},
 
 #ifdef HAVE_SYSLOG

@@ -171,9 +171,17 @@
 # This is relevant when logging to stderr:
 #redirect_stderr = false    # Enable capturing of stderr into log files.
 # These are only relevant if redirect_stderr is true:
-#log_directory = 'pg_log'   # Directory where logfiles are written.
+#log_directory = 'pg_log'   # Directory where log files are written.
                             # May be specified absolute or relative to PGDATA
-#log_filename_prefix = 'postgresql_' # Prefix for logfile names.
+#log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log' # Log file name pattern.
+                            # May include strftime() escapes
+#log_truncate_on_rotation = false  # If true, any existing log file of the 
+                            # same name as the new log file will be truncated
+                            # rather than appended to.  But such truncation
+                            # only occurs on time-driven rotation,
+                            # not on restarts or size-driven rotation.
+                            # Default is false, meaning append to existing 
+                            # files in all cases.
 #log_rotation_age = 1440    # Automatic rotation of logfiles will happen after
                             # so many minutes.  0 to disable.
 #log_rotation_size = 10240  # Automatic rotation of logfiles will happen after
