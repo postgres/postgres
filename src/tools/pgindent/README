@@ -35,4 +35,5 @@ directory.  Merge the output of these and remove duplicates.
 For java, we use astyle, http://astyle.sourceforge.net/, with the
 following options:
 
-	find . -name '*.java' -type f -print | xargs -n100 pgjindent
+	find . \( -name '*.java' -o -name '*.java.in' \) -print |
+		xargs -n100 pgjindent
