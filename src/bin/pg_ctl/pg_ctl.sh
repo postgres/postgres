@@ -2,26 +2,27 @@
 #-------------------------------------------------------------------------
 #
 # pg_ctl.sh--
-#    Start/Stop/Restart/Report status of postmaster
+#    Start/Stop/Restart/HUP/Report status of postmaster
 #
 # Copyright (c) 2001  PostgreSQL Global Development Group
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.23 2001/07/11 19:36:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.24 2001/09/21 21:10:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
 
 help="\
-$CMDNAME is a utility to start, stop, restart, and report the status
-of a PostgreSQL server.
+$CMDNAME is a utility to start, stop, restart, reload configuration files,
+or report the status of a PostgreSQL server.
 
 Usage:
   $CMDNAME start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]
   $CMDNAME stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]
   $CMDNAME restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]
+  $CMDNAME reload  [-D DATADIR] [-s]
   $CMDNAME status  [-D DATADIR]
 
 Common options:
@@ -174,6 +175,9 @@ do
 	restart)
 	    op="restart"
 	    ;;
+	reload)
+	    op="reload"
+	    ;;
 	status)
 	    op="status"
 	    ;;
@@ -224,6 +228,10 @@ case "$shutdown_mode" in
 	;;
 esac
 
+if [ "$op" = "reload" ];then
+	sig="-HUP"
+	wait=no
+fi
 
 DEFPOSTOPTS=$PGDATA/postmaster.opts.default
 POSTOPTSFILE=$PGDATA/postmaster.opts
@@ -247,7 +255,7 @@ if [ "$op" = "status" ];then
     fi
 fi
 
-if [ "$op" = "stop" -o "$op" = "restart" ];then
+if [ "$op" = "stop" -o "$op" = "restart" -o "$op" = "reload" ];then
     if [ -f $PIDFILE ];then
 	PID=`sed -n 1p $PIDFILE`
 	if [ $PID -lt 0 ];then
@@ -281,7 +289,12 @@ if [ "$op" = "stop" -o "$op" = "restart" ];then
 	    done
 	    $silence_echo echo "done"
 	fi
-	$silence_echo echo "postmaster successfully shut down"
+
+	if [ "$op" = "reload" ];then
+	    $silence_echo echo "postmaster successfully signaled"
+	else
+	    $silence_echo echo "postmaster successfully shut down"
+	fi
 
     else # ! -f $PIDFILE
 	echo "$CMDNAME: cannot find $PIDFILE" 1>&2
@@ -292,7 +305,7 @@ if [ "$op" = "stop" -o "$op" = "restart" ];then
 	    exit 1
 	fi
     fi
-fi # stop or restart
+fi # stop, restart, reload
 
 if [ "$op" = "start" -o "$op" = "restart" ];then
     oldpid=""

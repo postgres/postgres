@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.8 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.9 2001/09/21 21:10:56 tgl Exp $
 Postgres documentation
 -->
 
@@ -58,6 +58,11 @@ Postgres documentation
    <arg>-o <replaceable>options</replaceable></arg>
    <sbr>
    <command>pg_ctl</command>
+   <arg choice="plain">reload</arg>
+   <arg>-s</arg>
+   <arg>-D <replaceable>datadir</replaceable></arg>
+   <sbr>
+   <command>pg_ctl</command>
    <arg choice="plain">status</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
@@ -73,7 +78,7 @@ Postgres documentation
    the status of a running postmaster.  Although the postmaster can be
    started manually, <application>pg_ctl</application> encapulates
    tasks such as redirecting log output, properly detaching from the
-   terminal and process group, and additionally provides an option for
+   terminal and process group, and it provides convenient options for
    controlled shut down.
   </para>
 
@@ -93,7 +98,7 @@ Postgres documentation
   </para>
 
   <para>
-   In <option>stop</option> mode, the postmaster that is running on
+   In <option>stop</option> mode, the postmaster that is running in
    the specified data directory is shut down.  Three different
    shutdown methods can be selected with the <option>-m</option>
    option: <quote>Smart</quote> mode waits for all the clients to
@@ -101,13 +106,20 @@ Postgres documentation
    not wait for clients to disconnect.  All active transactions will
    be rolled back.  <quote>Immediate</quote> mode will abort without
    complete shutdown.  This will lead to a recovery run on restart.
-   By the default, stop mode waits for the shutdown to complete.
   </para>
 
   <para>
    <option>restart</option> mode effectively executes a stop followed
    by a start.  This allows the changing of postmaster command line
    options.
+  </para>
+
+  <para>
+   <option>reload</option> mode simply sends the postmaster a SIGHUP signal,
+   causing it to reread its configuration files
+   (<filename>postgresql.conf</filename>, <filename>pg_hba.conf</filename>,
+   etc).  This allows changing of configuration-file options that do not
+   require a complete restart to take effect.
   </para>
 
   <para>
@@ -188,7 +200,7 @@ Postgres documentation
       <term>-w</term>
       <listitem>
        <para>
-	Wait for the start or stutdown to complete.  Times out after
+	Wait for the start or shutdown to complete.  Times out after
 	60 seconds.  This is the default for shutdowns.
        </para>
       </listitem>

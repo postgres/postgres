@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.20 2001/09/21 20:31:41 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.21 2001/09/21 21:10:56 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -333,9 +333,10 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
 
   <para>
    The <filename>pg_hba.conf</filename> file is loaded only on startup
-   and when the <application>postmaster</> receives a <systemitem>SIGHUP</systemitem> signal. If
-   you edit the file on an active system, you will need to issue a
-   <systemitem>SIGHUP</systemitem> to the <application>postmaster</> using <application>kill</>
+   and when the <application>postmaster</> receives a
+   <systemitem>SIGHUP</systemitem> signal. If you edit the file on an
+   active system, you will need to signal the <application>postmaster</>
+   (using <application>pg_ctl reload</> or <application>kill -HUP</>)
    to make it re-read the file.
   </para>
 
