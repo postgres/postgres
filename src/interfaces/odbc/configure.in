@@ -37,8 +37,8 @@ AC_CANONICAL_HOST
 case "$host_os" in
  solaris*)
         case "$host_cpu" in
-          sparc) os=sparc_solaris ;;
-           i386) os=i386_solaris ;;
+          sparc) os=solaris_sparc ;;
+           i386) os=solaris_i386 ;;
         esac ;;
    sunos*) os=sunos4 ;;
      aux*) os=aux ;;

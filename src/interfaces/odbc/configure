@@ -6,7 +6,6 @@
 #
 # This configure script is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
-#
 
 # Defaults:
 ac_help=
@@ -604,8 +603,8 @@ echo "$ac_t""$host" 1>&6
 case "$host_os" in
  solaris*)
         case "$host_cpu" in
-          sparc) os=sparc_solaris ;;
-           i386) os=i386_solaris ;;
+          sparc) os=solaris_sparc ;;
+           i386) os=solaris_i386 ;;
         esac ;;
    sunos*) os=sunos4 ;;
      aux*) os=aux ;;
