@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.52 2000/04/12 17:14:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.52.2.1 2001/01/04 21:51:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,7 +321,7 @@ _bt_buildadd(Relation index, Size keysz, ScanKey scankey,
 			 btisz,
 			 (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) /3 - sizeof(ItemIdData));
 
-	if (pgspc < btisz)
+	while (pgspc < btisz)
 	{
 		Buffer		obuf = nbuf;
 		Page		opage = npage;
@@ -436,6 +436,13 @@ _bt_buildadd(Relation index, Size keysz, ScanKey scankey,
 		 * we aren't locking).
 		 */
 		_bt_wrtbuf(index, obuf);
+
+		/*
+		 * Recompute pgspc and loop back to check free space again.  If
+		 * we were forced to split at a bad split point, we might need
+		 * to split again.
+		 */
+		pgspc = PageGetFreeSpace(npage);
 	}
 
 	/*
