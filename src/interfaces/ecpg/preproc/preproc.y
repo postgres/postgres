@@ -3479,6 +3479,7 @@ extract_list:  extract_arg FROM a_expr
 		;
 
 extract_arg:  datetime		{ $$ = $1; }
+	| IDENT			{ $$ = $1; }
 	| TIMEZONE_HOUR 	{ $$ = make_str("timezone_hour"); }	
 	| TIMEZONE_MINUTE 	{ $$ = make_str("timezone_minute"); }	
 		;

@@ -1051,5 +1051,9 @@ Thu Jan 25 21:14:38 CET 2001
 Wed Jan 31 17:11:04 CET 2001
 
 	- Added two bug fixes by Christof Petig.
+
+Mon Feb 19 08:25:14 CET 2001
+
+	- Synced gram.y and preproc.y.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.
