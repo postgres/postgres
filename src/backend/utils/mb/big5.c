@@ -7,7 +7,7 @@
  *
  * 1999/1/15 Tatsuo Ishii
  *
- * $Id: big5.c,v 1.5 1999/05/26 15:19:54 momjian Exp $
+ * $Id: big5.c,v 1.5.4.1 2000/12/09 04:30:04 ishii Exp $
  */
 
 #include "mb/pg_wchar.h"
@@ -322,7 +322,7 @@ BIG5toCNS(unsigned short big5, unsigned char *lc)
 			if (b2c3[i][0] == big5)
 			{
 				*lc = LC_CNS11643_3;
-				return (b2c3[i][1]);
+				return (b2c3[i][1] | 0x8080U);
 			}
 		}
 
