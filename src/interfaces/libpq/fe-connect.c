@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.110 2000/01/15 05:37:21 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.111 2000/01/16 21:18:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -931,10 +931,16 @@ connect_errReturn:
 static int
 connectDBComplete(PGconn *conn)
 {
-	PostgresPollingStatusType flag;
+	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
+
+	if (conn == NULL || conn->status == CONNECTION_BAD)
+		return 0;
 
 	for (;;) {
-		flag = PQconnectPoll(conn);
+		/*
+		 * Wait, if necessary.  Note that the initial state (just after
+		 * PQconnectStart) is to wait for the socket to select for writing.
+		 */
 		switch (flag)
 		{
 			case PGRES_POLLING_ACTIVE:
@@ -964,6 +970,10 @@ connectDBComplete(PGconn *conn)
 				conn->status = CONNECTION_BAD;
 				return 0;
 		}
+		/*
+		 * Now try to advance the state machine.
+		 */
+		flag = PQconnectPoll(conn);
 	}
 }
 
@@ -1347,11 +1357,15 @@ error_return:
  * Starts the process of passing the values of a standard set of environment
  * variables to the backend.
  *
- * ---------------- */
+ * ----------------
+ */
 PGsetenvHandle
 PQsetenvStart(PGconn *conn)
 {
 	struct pg_setenv_state *handle;
+
+	if (conn == NULL || conn->status == CONNECTION_BAD)
+		return NULL;
 
 	if ((handle = malloc(sizeof(struct pg_setenv_state))) == NULL)
 	{
@@ -1621,13 +1635,16 @@ int
 PQsetenv(PGconn *conn)
 {
 	PGsetenvHandle handle;
-	PostgresPollingStatusType flag;
+	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
 
 	if ((handle = PQsetenvStart(conn)) == NULL)
 		return 0;
 
 	for (;;) {
-		flag = PQsetenvPoll(conn);
+		/*
+		 * Wait, if necessary.  Note that the initial state (just after
+		 * PQsetenvStart) is to wait for the socket to select for writing.
+		 */
 		switch (flag)
 		{
 			case PGRES_POLLING_ACTIVE:
@@ -1653,10 +1670,14 @@ PQsetenv(PGconn *conn)
 				break;
 
 			default:
-				/* Just in case we failed to set it in PQconnectPoll */
+				/* Just in case we failed to set it in PQsetenvPoll */
 				conn->status = CONNECTION_BAD;
 				return 0;
 		}
+		/*
+		 * Now try to advance the state machine.
+		 */
+		flag = PQsetenvPoll(conn);
 	}
 }
 
