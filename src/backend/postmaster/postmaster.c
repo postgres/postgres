@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.248 2001/10/19 18:19:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.249 2001/10/19 20:47:09 tgl Exp $
  *
  * NOTES
  *
@@ -228,6 +228,9 @@ extern int	optind,
 #ifdef HAVE_INT_OPTRESET
 extern int	optreset;
 #endif
+#ifdef HAVE_INT___GETOPT_INITIALIZED
+extern int	__getopt_initialized;
+#endif
 
 /*
  * postmaster.c - function prototypes
@@ -355,7 +358,6 @@ PostmasterMain(int argc, char *argv[])
 		}
 	}
 
-
 	/*
 	 * for security, no dir or file created can be group or other
 	 * accessible
@@ -422,12 +424,13 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 	/*
-	 * Non-option switch arguments don't exist.
+	 * Postmaster accepts no non-option switch arguments.
 	 */
 	if (optind < argc)
 	{
 		postmaster_error("invalid argument -- %s", argv[optind]);
-		fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
+		fprintf(stderr, gettext("Try '%s --help' for more information.\n"),
+				progname);
 		ExitPostmaster(1);
 	}
 
@@ -438,10 +441,15 @@ PostmasterMain(int argc, char *argv[])
 
 	IgnoreSystemIndexes(false);
 
-	optind = 1;					/* start over (should be redundant here) */
+	/* reset getopt(3) to rescan arguments */
+	optind = 1;
 #ifdef HAVE_INT_OPTRESET
-	optreset = 1;
+	optreset = 1;				/* some systems need this */
 #endif
+#ifdef HAVE_INT___GETOPT_INITIALIZED
+	__getopt_initialized = 0;	/* glibc needs this */
+#endif
+
 	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != EOF)
 	{
 		switch (opt)
@@ -584,6 +592,20 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 	}
 
+	/*
+	 * Now that we are done processing the postmaster arguments,
+	 * reset getopt(3) library so that it will work correctly in
+	 * subprocesses.
+	 */
+	optind = 1;
+#ifdef HAVE_INT_OPTRESET
+	optreset = 1;				/* some systems need this */
+#endif
+#ifdef HAVE_INT___GETOPT_INITIALIZED
+	__getopt_initialized = 0;	/* glibc needs this */
+#endif
+
+	/* For debugging: display postmaster environment */
 	if (DebugLvl > 2)
 	{
 		extern char **environ;
@@ -2179,11 +2201,6 @@ DoBackend(Port *port)
 
 	av[ac] = (char *) NULL;
 
-	optind = 1;					/* reset getopt(3) for subprocess */
-#ifdef HAVE_INT_OPTRESET
-	optreset = 1;
-#endif
-
 	/*
 	 * Release postmaster's working memory context so that backend can
 	 * recycle the space.  Note this does not trash *MyProcPort, because
@@ -2472,11 +2489,6 @@ SSDataBase(int xlop)
 		av[ac++] = dbbuf;
 
 		av[ac] = (char *) NULL;
-
-		optind = 1;				/* reset getopt(3) for subprocess */
-#ifdef HAVE_INT_OPTRESET
-		optreset = 1;
-#endif
 
 		BootstrapMain(ac, av);
 		ExitPostmaster(0);
