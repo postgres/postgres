@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.2 1999/05/30 15:17:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.3 1999/06/05 18:05:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,39 +18,39 @@
 #include "pgdatabase.h"
 
 
-void PgDatabase::DisplayTuples(FILE *out = 0, int fillAlign = 1, 
-	const char* fieldSep = "|",int printHeader = 1, int quiet = 0) 
+void PgDatabase::DisplayTuples(FILE *out, int fillAlign, 
+							   const char* fieldSep, int printHeader,
+							   int /* quiet */) 
 {
-PQprintOpt po;
+	PQprintOpt po;
 
- memset(&po,0,sizeof(po));
+	memset(&po,0,sizeof(po));
 
- po.align = (pqbool)fillAlign;
- po.fieldSep = (char *)fieldSep;
- po.header = (pqbool)printHeader;
- 
- PQprint(out,pgResult,&po);
+	po.align = (pqbool)fillAlign;
+	po.fieldSep = (char *)fieldSep;
+	po.header = (pqbool)printHeader;
 
+	PQprint(out,pgResult,&po);
 }
 
 
 
 
-void PgDatabase::PrintTuples(FILE *out = 0, int printAttName = 1, int terseOutput = 0, int width = 0)
+void PgDatabase::PrintTuples(FILE *out, int printAttName, int terseOutput,
+							 int width)
 {
-PQprintOpt po;
+	PQprintOpt po;
 
- memset(&po,0,sizeof(po));
+	memset(&po,0,sizeof(po));
 
- po.align = (pqbool)width;
+	po.align = (pqbool)width;
 
- if(terseOutput) po.fieldSep = strdup("|");
- else po.fieldSep = "";
+	if(terseOutput) po.fieldSep = strdup("|");
+	else po.fieldSep = "";
 
- po.header = (pqbool)printAttName;
- 
- PQprint(out,pgResult,&po);
+	po.header = (pqbool)printAttName;
 
+	PQprint(out,pgResult,&po);
 }
 
 
