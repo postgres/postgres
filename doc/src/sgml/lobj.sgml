@@ -25,7 +25,7 @@
      stored within the <ProductName>Postgres</ProductName> database. It causes  
      considerable confusion among users. As a result, we only 
      support large objects as data stored within  the  <ProductName>Postgres</ProductName>
-     database  in  <ProductName>PostgreSQL</ProductName>.  Even  though is is slower to
+     database  in  <ProductName>PostgreSQL</ProductName>.  Even  though it is slower to
      access, it provides stricter data  integrity.
      For historical reasons, this storage scheme is referred to as 
      Inversion large objects. (We will use  Inversion  and  large
