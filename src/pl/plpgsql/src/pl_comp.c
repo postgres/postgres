@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.44 2002/08/08 01:36:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.45 2002/08/12 14:25:07 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -83,6 +83,9 @@ char	   *plpgsql_error_funcname;
 int			plpgsql_DumpExecTree = 0;
 
 PLpgSQL_function *plpgsql_curr_compile;
+
+
+static PLpgSQL_row *build_rowtype(Oid classOid);
 
 
 /*
@@ -234,7 +237,9 @@ plpgsql_compile(Oid fn_oid, int functype)
 			 */
 			for (i = 0; i < procStruct->pronargs; i++)
 			{
-				char		buf[256];
+				char		buf[32];
+
+				sprintf(buf, "$%d", i + 1);	/* name for variable */
 
 				/*
 				 * Get the parameters type
@@ -258,13 +263,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 					 * For tuple type parameters, we set up a record of
 					 * that type
 					 */
-					sprintf(buf, "%s%%rowtype", NameStr(typeStruct->typname));
-					if (plpgsql_parse_wordrowtype(buf) != T_ROW)
-						elog(ERROR, "cannot get tuple struct of argument %d",
-							 i + 1);
-
-					row = plpgsql_yylval.row;
-					sprintf(buf, "$%d", i + 1);
+					row = build_rowtype(typeStruct->typrelid);
 
 					row->refname = strdup(buf);
 
@@ -284,7 +283,6 @@ plpgsql_compile(Oid fn_oid, int functype)
 					var->datatype = malloc(sizeof(PLpgSQL_type));
 					memset(var->datatype, 0, sizeof(PLpgSQL_type));
 
-					sprintf(buf, "$%d", i + 1);
 					var->dtype = PLPGSQL_DTYPE_VAR;
 					var->refname = strdup(buf);
 					var->lineno = 0;
@@ -1097,15 +1095,6 @@ int
 plpgsql_parse_wordrowtype(char *word)
 {
 	Oid			classOid;
-	HeapTuple	classtup;
-	Form_pg_class classStruct;
-	HeapTuple	typetup;
-	Form_pg_type typeStruct;
-	HeapTuple	attrtup;
-	Form_pg_attribute attrStruct;
-	PLpgSQL_row *row;
-	PLpgSQL_var *var;
-	char	   *attname;
 	char	   *cp[2];
 	int			i;
 
@@ -1116,25 +1105,51 @@ plpgsql_parse_wordrowtype(char *word)
 	word[i] = '.';
 	plpgsql_convert_ident(word, cp, 2);
 	word[i] = '%';
+
+	/* Lookup the relation */
+	classOid = RelnameGetRelid(cp[0]);
+	if (!OidIsValid(classOid))
+		elog(ERROR, "%s: no such class", cp[0]);
+
+	/*
+	 * Build and return the complete row definition
+	 */
+	plpgsql_yylval.row = build_rowtype(classOid);
+
+	pfree(cp[0]);
 	pfree(cp[1]);
+
+	return T_ROW;
+}
+
+/*
+ * Build a rowtype data structure given the pg_class OID.
+ */
+static PLpgSQL_row *
+build_rowtype(Oid classOid)
+{
+	PLpgSQL_row *row;
+	HeapTuple	classtup;
+	Form_pg_class classStruct;
+	const char  *relname;
+	int			i;
 
 	/*
 	 * Fetch the pg_class tuple.
 	 */
-	classOid = RelnameGetRelid(cp[0]);
-	if (!OidIsValid(classOid))
-		elog(ERROR, "%s: no such class", cp[0]);
 	classtup = SearchSysCache(RELOID,
 							  ObjectIdGetDatum(classOid),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(classtup))
-		elog(ERROR, "%s: no such class", cp[0]);
+		elog(ERROR, "cache lookup failed for relation %u", classOid);
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
+	relname = NameStr(classStruct->relname);
+
 	/* accept relation, sequence, or view pg_class entries */
 	if (classStruct->relkind != RELKIND_RELATION &&
 		classStruct->relkind != RELKIND_SEQUENCE &&
 		classStruct->relkind != RELKIND_VIEW)
-		elog(ERROR, "%s isn't a table", cp[0]);
+		elog(ERROR, "%s isn't a table", relname);
 
 	/*
 	 * Create a row datum entry and all the required variables that it
@@ -1151,6 +1166,13 @@ plpgsql_parse_wordrowtype(char *word)
 
 	for (i = 0; i < row->nfields; i++)
 	{
+		HeapTuple	attrtup;
+		Form_pg_attribute attrStruct;
+		HeapTuple	typetup;
+		Form_pg_type typeStruct;
+		const char	   *attname;
+		PLpgSQL_var *var;
+
 		/*
 		 * Get the attribute and it's type
 		 */
@@ -1160,17 +1182,17 @@ plpgsql_parse_wordrowtype(char *word)
 								 0, 0);
 		if (!HeapTupleIsValid(attrtup))
 			elog(ERROR, "cache lookup for attribute %d of class %s failed",
-				 i + 1, cp[0]);
+				 i + 1, relname);
 		attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
-		attname = pstrdup(NameStr(attrStruct->attname));
+		attname = NameStr(attrStruct->attname);
 
 		typetup = SearchSysCache(TYPEOID,
 								 ObjectIdGetDatum(attrStruct->atttypid),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typetup))
 			elog(ERROR, "cache lookup for type %u of %s.%s failed",
-				 attrStruct->atttypid, cp[0], attname);
+				 attrStruct->atttypid, relname, attname);
 		typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 		/*
@@ -1186,8 +1208,8 @@ plpgsql_parse_wordrowtype(char *word)
 		var = malloc(sizeof(PLpgSQL_var));
 		memset(var, 0, sizeof(PLpgSQL_var));
 		var->dtype = PLPGSQL_DTYPE_VAR;
-		var->refname = malloc(strlen(cp[0]) + strlen(attname) + 2);
-		strcpy(var->refname, cp[0]);
+		var->refname = malloc(strlen(relname) + strlen(attname) + 2);
+		strcpy(var->refname, relname);
 		strcat(var->refname, ".");
 		strcat(var->refname, attname);
 		var->datatype = malloc(sizeof(PLpgSQL_type));
@@ -1205,9 +1227,6 @@ plpgsql_parse_wordrowtype(char *word)
 		var->isnull = true;
 		var->freeval = false;
 
-		ReleaseSysCache(typetup);
-		ReleaseSysCache(attrtup);
-
 		plpgsql_adddatum((PLpgSQL_datum *) var);
 
 		/*
@@ -1215,16 +1234,14 @@ plpgsql_parse_wordrowtype(char *word)
 		 */
 		row->fieldnames[i] = strdup(attname);
 		row->varnos[i] = var->varno;
+
+		ReleaseSysCache(typetup);
+		ReleaseSysCache(attrtup);
 	}
 
 	ReleaseSysCache(classtup);
 
-	/*
-	 * Return the complete row definition
-	 */
-	plpgsql_yylval.row = row;
-
-	return T_ROW;
+	return row;
 }
 
 
