@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.8 1996/11/10 02:59:25 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.9 1996/12/31 06:58:27 vadim Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -1392,7 +1392,8 @@ AddToTempRelList(Relation r)
 
     if (tempRels->num == tempRels->size) {
 	tempRels->size += TEMP_REL_LIST_SIZE;
-	tempRels->rels = realloc(tempRels->rels, tempRels->size);
+	tempRels->rels = realloc(tempRels->rels, 
+					sizeof(Relation) * tempRels->size);
     }
     tempRels->rels[tempRels->num] = r;
     tempRels->num++;
