@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.60 2004/09/09 00:59:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.61 2004/09/09 14:18:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,6 +150,15 @@ extern int	pgkill(int pid, int sig);
 
 extern int	pclose_check(FILE *stream);
 
+/* Global variable holding time zone information. */
+#ifndef __CYGWIN__
+#define TIMEZONE_GLOBAL timezone
+#define TZNAME_GLOBAL tzname
+#else
+#define TIMEZONE_GLOBAL _timezone
+#define TZNAME_GLOBAL _tzname
+#endif
+
 #if defined(WIN32) || defined(__CYGWIN__)
 /*
  *	Win32 doesn't have reliable rename/unlink during concurrent access,
@@ -178,15 +187,6 @@ extern int	win32_open(const char *, int,...);
 #ifndef __BORLANDC__
 #define popen(a,b) _popen(a,b)
 #define pclose(a) _pclose(a)
-#endif
-
-/* Global variable holding time zone information. */
-#ifndef __CYGWIN__
-#define TIMEZONE_GLOBAL timezone
-#define TZNAME_GLOBAL tzname
-#else
-#define TIMEZONE_GLOBAL _timezone
-#define TZNAME_GLOBAL _tzname
 #endif
 
 extern int	copydir(char *fromdir, char *todir);
