@@ -35,29 +35,10 @@
 /* might be in either frontend or backend */
 #include "postgres_fe.h"
 
-#ifdef ENABLE_THREAD_SAFETY
-#error	The replacement snprintf() is not thread-safe.	\
-Your platform must have a thread-safe snprintf() to compile with threads.
-#endif
-
 #ifndef WIN32
 #include <sys/ioctl.h>
 #endif
 #include <sys/param.h>
-
-
-/*
- * We do all internal arithmetic in the widest available integer type,
- * here called long_long (or ulong_long for unsigned).
- */
-#ifdef HAVE_LONG_LONG_INT_64
-typedef long long long_long;
-typedef unsigned long long ulong_long;
-
-#else
-typedef long long_long;
-typedef unsigned long ulong_long;
-#endif
 
 #ifndef NL_ARGMAX
 #define NL_ARGMAX 4096
@@ -85,7 +66,7 @@ typedef unsigned long ulong_long;
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.8 2005/03/01 00:38:11 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.9 2005/03/01 05:47:28 momjian Exp $";*/
 
 int			snprintf(char *str, size_t count, const char *fmt,...);
 int			vsnprintf(char *str, size_t count, const char *fmt, va_list args);
@@ -139,7 +120,7 @@ vsnprintf(char *str, size_t count, const char *fmt, va_list args)
  */
 
 static void fmtstr(char *value, int ljust, int len, int zpad, int maxwidth, char *end);
-static void fmtnum(long_long value, int base, int dosign, int ljust, int len, int zpad, char *end);
+static void fmtnum(int64 value, int base, int dosign, int ljust, int len, int zpad, char *end);
 static void fmtfloat(double value, char type, int ljust, int len, int precision, int pointflag, char *end);
 static void dostr(char *str, int cut, char *end);
 static void dopr_outch(int c, char *end);
@@ -155,7 +136,7 @@ static void
 dopr(char *buffer, const char *format, va_list args, char *end)
 {
 	int			ch;
-	long_long	value;
+	int64		value;
 	double		fvalue;
 	int			longlongflag = 0;
 	int			longflag = 0;
@@ -175,7 +156,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 		const char*	fmtbegin;
 		const char*	fmtend;
 		void*	value;
-		long_long	numvalue;
+		int64	numvalue;
 		double	fvalue;
 		int	charvalue;
 		int	ljust;
@@ -258,7 +239,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						if (longflag)
 						{
 							if (longlongflag)
-								value = va_arg(args, ulong_long);
+								value = va_arg(args, uint64);
 							else
 								value = va_arg(args, unsigned long);
 						}
@@ -282,7 +263,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						if (longflag)
 						{
 							if (longlongflag)
-								value = va_arg(args, ulong_long);
+								value = va_arg(args, uint64);
 							else
 								value = va_arg(args, unsigned long);
 						}
@@ -305,7 +286,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						if (longflag)
 						{
 							if (longlongflag)
-								value = va_arg(args, long_long);
+								value = va_arg(args, int64);
 							else
 								value = va_arg(args, long);
 						}
@@ -327,7 +308,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						if (longflag)
 						{
 							if (longlongflag)
-								value = va_arg(args, ulong_long);
+								value = va_arg(args, uint64);
 							else
 								value = va_arg(args, unsigned long);
 						}
@@ -349,7 +330,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						if (longflag)
 						{
 							if (longlongflag)
-								value = va_arg(args, ulong_long);
+								value = va_arg(args, uint64);
 							else
 								value = va_arg(args, unsigned long);
 						}
@@ -505,10 +486,10 @@ fmtstr(char *value, int ljust, int len, int zpad, int maxwidth, char *end)
 }
 
 static void
-fmtnum(long_long value, int base, int dosign, int ljust, int len, int zpad, char *end)
+fmtnum(int64 value, int base, int dosign, int ljust, int len, int zpad, char *end)
 {
 	int			signvalue = 0;
-	ulong_long	uvalue;
+	uint64		uvalue;
 	char		convert[64];
 	int			place = 0;
 	int			padlen = 0;		/* amount to pad */
