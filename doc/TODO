@@ -286,7 +286,7 @@ Clients
 	o Improve error handling
 	o Add a semantic check level, e.g. check if a table really exists
 	o fix handling of DB attributes that are arrays
-	o Use backend prepare/execute facility for ecpg where possible
+	o Use backend PREPARE/EXECUTE facility for ecpg where possible
 	o Implement SQLDA
 	o Fix nested C comments
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
