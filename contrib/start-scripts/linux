@@ -20,7 +20,7 @@
 
 # Original author:  Ryan Kirkpatrick <pgsql@rkirkpat.net>
 
-# $Header: /cvsroot/pgsql/contrib/start-scripts/linux,v 1.1 2001/02/08 19:53:33 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/start-scripts/linux,v 1.2 2001/04/19 19:17:44 petere Exp $
 
 ## EDIT FROM HERE
 
@@ -37,8 +37,6 @@ PGUSER=postgres
 PGLOG="$PGDATA/serverlog"
 
 ## STOP EDITING HERE
-
-export PGDATA
 
 # Check for echo -n vs echo \c
 if echo '\c' | grep -s c >/dev/null 2>&1 ; then
@@ -64,21 +62,21 @@ test -f $DAEMON || exit 0
 case $1 in
   start)
 	$ECHO_N "Starting PostgreSQL: "$ECHO_C
-	su - $PGUSER -c "$DAEMON start -s -l $PGLOG" 
+	su - $PGUSER -c "$DAEMON start -D '$PGDATA' -s -l $PGLOG" 
 	echo "ok"
 	;;
   stop)
 	echo -n "Stopping PostgreSQL: "
-	su - $PGUSER -c "$DAEMON stop -s -m fast"
+	su - $PGUSER -c "$DAEMON stop -D '$PGDATA' -s -m fast"
 	echo "ok"
 	;;
   restart)
 	echo -n "Restarting PostgreSQL: "
-	su - $PGUSER -c "$DAEMON restart -s -m fast"
+	su - $PGUSER -c "$DAEMON restart -D '$PGDATA' -s -m fast"
 	echo "ok"
 	;;
   status)
-	su - $PGUSER -c "$DAEMON status"
+	su - $PGUSER -c "$DAEMON status -D '$PGDATA'"
 	;;
   *)
 	# Print help

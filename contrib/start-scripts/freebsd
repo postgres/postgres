@@ -6,7 +6,7 @@
 # Created through merger of the Linux start script by Ryan Kirkpatrick
 # and the script in the FreeBSD ports collection.
 
-# $Header: /cvsroot/pgsql/contrib/start-scripts/freebsd,v 1.1 2001/02/10 00:13:23 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/start-scripts/freebsd,v 1.2 2001/04/19 19:17:44 petere Exp $
 
 ## EDIT FROM HERE
 
@@ -24,8 +24,6 @@ PGLOG="$PGDATA/serverlog"
 
 ## STOP EDITING HERE
 
-export PGDATA
-
 # The path that is to be used for the script
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
@@ -36,17 +34,17 @@ test -x "$DAEMON" || exit 0
 
 case $1 in
     start)
-        su -l $PGUSER -c "$DAEMON start -s -l $PGLOG"
+        su -l $PGUSER -c "$DAEMON start -D '$PGDATA' -s -l $PGLOG"
 	echo -n ' postgresql'
 	;;
     stop)
-	su -l $PGUSER -c "$DAEMON stop -s -m fast"
+	su -l $PGUSER -c "$DAEMON stop -D '$PGDATA' -s -m fast"
 	;;
     restart)
-	su -l $PGUSER -c "$DAEMON restart -s -m fast"
+	su -l $PGUSER -c "$DAEMON restart -D '$PGDATA' -s -m fast"
 	;;
     status)
-	su -l $PGUSER -c "$DAEMON status"
+	su -l $PGUSER -c "$DAEMON status -D '$PGDATA'"
 	;;
     *)
 	# Print help
