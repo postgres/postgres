@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.4.2.2 1996/09/19 20:28:22 scrappy Exp $
+ * $Id: ipc.h,v 1.4.2.3 1996/10/02 20:43:25 scrappy Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -118,6 +118,7 @@ extern int S_LOCK_FREE(slock_t *lock);
 #if defined(sequent) || \
     defined(PORTNAME_aix) || \
     defined(PORTNAME_alpha) || \
+    defined(PORTNAME_dgux) || \
     defined(PORTNAME_hpux) || \
     defined(PORTNAME_i386_solaris) || \
     defined(PORTNAME_sparc_solaris) || \
