@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.1 1997/02/19 12:58:28 scrappy Exp $
+ * $Id: geqo.h,v 1.2 1997/06/01 02:56:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,8 @@
  */
 #define ERX
 
+/* GEQO switch according to number of relations in a query */
+#define GEQO_RELS 7
 
 /* genetic algorithm parameters */
 
