@@ -20,6 +20,11 @@
 
 #include <string>
 
+#ifdef __sun__
+#ifndef __GNUC__
+using namespace std;
+#endif
+#endif
 
 //
 // these are the environment variables used for getting defaults

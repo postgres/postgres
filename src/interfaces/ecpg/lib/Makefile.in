@@ -74,8 +74,8 @@ endif
 
 all: lib$(NAME).a $(shlib)
 
-$(shlib): ecpglib.sho typename.sho
-	$(LD) $(LDFLAGS_SL) -o $@ ecpglib.sho typename.sho
+$(shlib): ecpglib.sho.o typename.sho.o
+	$(LD) $(LDFLAGS_SL) -o $@ ecpglib.sho typename.sho.o
 
 clean:
 	rm -f *.o *.sho *.a core a.out *~ $(shlib) lib$(NAME)$(DLSUFFIX)
@@ -104,7 +104,7 @@ ecpglib.o : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
 typename.o : typename.c ../include/ecpgtype.h
 	$(CC) $(CFLAGS) -I../include $(PQ_INCLUDE) -c $< -o $@
 
-ecpglib.sho : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
+ecpglib.sho.o : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
 	$(CC) $(CFLAGS) $(CFLAGS_SL) -I../include $(PQ_INCLUDE) -c $< -o $@
-typename.sho : typename.c ../include/ecpgtype.h
+typename.sho.o : typename.c ../include/ecpgtype.h
 	$(CC) $(CFLAGS) $(CFLAGS_SL) -I../include $(PQ_INCLUDE) -c $< -o $@
