@@ -2014,3 +2014,395 @@ KwvG7YLsJ+xpsTUS67KD+4M=
 
 --HjNkcEWJ4DMx36DP--
 
+From pgsql-performance-owner+M1354=pgman=candle.pha.pa.us@postgresql.org Fri Mar  7 01:09:07 2003
+Return-path: <pgsql-performance-owner+M1354=pgman=candle.pha.pa.us@postgresql.org>
+Received: from relay2.pgsql.com (relay2.pgsql.com [64.49.215.143])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h27693604295
+	for <pgman@candle.pha.pa.us>; Fri, 7 Mar 2003 01:09:05 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by relay2.pgsql.com (Postfix) with ESMTP id 95CD2EDFD3B
+	for <pgman@candle.pha.pa.us>; Fri,  7 Mar 2003 01:09:03 -0500 (EST)
+X-Original-To: pgsql-performance@postgresql.org
+Received: from perrin.int.nxad.com (internal.ext.nxad.com [69.1.70.251])
+	by postgresql.org (Postfix) with ESMTP id F16034768E2
+	for <pgsql-performance@postgresql.org>; Fri,  7 Mar 2003 01:04:33 -0500 (EST)
+Received: by perrin.int.nxad.com (Postfix, from userid 1001)
+	id 7969A21065; Thu,  6 Mar 2003 22:04:12 -0800 (PST)
+Date: Thu, 6 Mar 2003 22:04:12 -0800
+From: Sean Chittenden <sean@chittenden.org>
+To: Neil Conway <neilc@samurai.com>
+cc: Tom Lane <tgl@sss.pgh.pa.us>,
+   Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   PostgreSQL Performance <pgsql-performance@postgresql.org>
+Subject: Re: [PERFORM] [COMMITTERS] pgsql-server/ /configure /configure.in rc/incl ...
+Message-ID: <20030307060412.GA19138@perrin.int.nxad.com>
+References: <20030306031656.1876F4762E0@postgresql.org> <032f01c2e390$b1842b20$6500a8c0@fhp.internal> <11077.1046921667@sss.pgh.pa.us> <033f01c2e392$71476570$6500a8c0@fhp.internal> <12228.1046922471@sss.pgh.pa.us> <20030306094117.GA79234@perrin.int.nxad.com> <15071.1046964336@sss.pgh.pa.us> <20030307003640.GF79234@perrin.int.nxad.com> <1046998072.10527.67.camel@tokyo>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="KsGdsel6WgEHnImy"
+Content-Disposition: inline
+In-Reply-To: <1046998072.10527.67.camel@tokyo>
+User-Agent: Mutt/1.4i
+X-PGP-Key: finger seanc@FreeBSD.org
+X-PGP-Fingerprint: 3849 3760 1AFE 7B17 11A0  83A6 DD99 E31F BC84 B341
+X-Web-Homepage: http://sean.chittenden.org/
+Precedence: bulk
+Sender: pgsql-performance-owner@postgresql.org
+Status: OR
+
+--KsGdsel6WgEHnImy
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+> > I don't have my copy of Steven's handy (it's some 700mi away atm
+> > otherwise I'd cite it), but if Tom or someone else has it handy, look
+> > up the example re: the performance gain from read()'ing an mmap()'ed
+> > file versus a non-mmap()'ed file.  The difference is non-trivial and
+> > _WELL_ worth the time given the speed increase.
+>=20
+> Can anyone confirm this? If so, one easy step we could take in this
+> direction would be adapting COPY FROM to use mmap().
+
+Weeee!  Alright, so I got to have some fun writing out some simple
+tests with mmap() and friends tonight.  Are the results interesting?
+Absolutely!  Is this a simple benchmark?  Yup.  Do I think it
+simulates PostgreSQL?  Eh, not particularly.  Does it demonstrate that
+mmap() is a win and something worth implementing?  I sure hope so.  Is
+this a test program to demonstrate the ideal use of mmap() in
+PostgreSQL?  No.  Is it a place to start a factual discussion?  I hope
+so.
+
+I have here four tests that are conditionalized by cpp.
+
+# The first one uses read() and write() but with the buffer size set
+# to the same size as the file.
+gcc -O3 -finline-functions -fkeep-inline-functions -funroll-loops  -o test-=
+mmap test-mmap.c
+/usr/bin/time ./test-mmap > /dev/null
+Beginning tests with file:              services
+
+Page size:                              4096
+File read size is the same as the file size
+Number of iterations:                   100000
+Start time:                             1047013002.412516
+Time:                                   82.88178
+
+Completed tests
+       82.09 real         2.13 user        68.98 sys
+
+# The second one uses read() and write() with the default buffer size:
+# 65536
+gcc -O3 -finline-functions -fkeep-inline-functions -funroll-loops  -DDEFAUL=
+T_READSIZE=3D1 -o test-mmap test-mmap.c
+/usr/bin/time ./test-mmap > /dev/null
+Beginning tests with file:              services
+
+Page size:                              4096
+File read size is default read size:    65536
+Number of iterations:                   100000
+Start time:                             1047013085.16204
+Time:                                   18.155511
+
+Completed tests
+       18.16 real         0.90 user        14.79 sys
+# Please note this is significantly faster, but that's expected
+
+# The third test uses mmap() + madvise() + write()
+gcc -O3 -finline-functions -fkeep-inline-functions -funroll-loops  -DDEFAUL=
+T_READSIZE=3D1 -DDO_MMAP=3D1 -o test-mmap test-mmap.c
+/usr/bin/time ./test-mmap > /dev/null
+Beginning tests with file:              services
+
+Page size:                              4096
+File read size is the same as the file size
+Number of iterations:                   100000
+Start time:                             1047013103.859818
+Time:                                   8.4294203644
+
+Completed tests
+        7.24 real         0.41 user         5.92 sys
+# Faster still, and twice as fast as the normal read() case
+
+# The last test only calls mmap()'s once when the file is opened and
+# only msync()'s, munmap()'s, close()'s the file once at exit.
+gcc -O3 -finline-functions -fkeep-inline-functions -funroll-loops  -DDEFAUL=
+T_READSIZE=3D1 -DDO_MMAP=3D1 -DDO_MMAP_ONCE=3D1 -o test-mmap test-mmap.c
+/usr/bin/time ./test-mmap > /dev/null
+Beginning tests with file:              services
+
+Page size:                              4096
+File read size is the same as the file size
+Number of iterations:                   100000
+Start time:                             1047013111.623712
+Time:                                   1.174076
+
+Completed tests
+        1.18 real         0.09 user         0.92 sys
+# Substantially faster
+
+
+Obviously this isn't perfect, but reading and writing data is faster
+(specifically moving pages through the VM/OS).  Doing partial writes
+from mmap()'ed data should be faster along with scanning through
+mmap()'ed portions of - or completely mmap()'ed - files because the
+pages are already loaded in the VM.  PostgreSQL's LRU file descriptor
+cache could easily be adjusted to add mmap()'ing of frequently
+accessed files (specifically, system catalogs come to mind).  It's not
+hard to figure out how often particular files are accessed and to
+either _avoid_ mmap()'ing a file that isn't accessed often, or to
+mmap() files that _are_ accessed often.  mmap() does have a cost, but
+I'd wager that mmap()'ing the same file a second or third time from a
+different process would be more efficient.  The speedup of searching
+through an mmap()'ed file may be worth it, however, to mmap() all
+files if the system is under a tunable resource limit
+(max_mmaped_bytes?).
+
+If someone is so inclined or there's enough interest, I can reverse
+this test case so that data is written to an mmap()'ed file, but the
+same performance difference should hold true (assuming this isn't a
+write to a tape drive ::grin::).
+
+The URL for the program used to generate the above tests is at:
+
+http://people.freebsd.org/~seanc/mmap_test/
+
+
+Please ask if you have questions.  -sc
+
+--=20
+Sean Chittenden
+
+--KsGdsel6WgEHnImy
+Content-Type: application/pgp-signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Comment: Sean Chittenden <sean@chittenden.org>
+
+iD8DBQE+aDZc3ZnjH7yEs0ERAid6AJ9/TAYMUx2+ZcD2680OlKJBj5FzrACgquIG
+PBNCzM0OegBXrPROJ/uIKDM=
+=y7O6
+-----END PGP SIGNATURE-----
+
+--KsGdsel6WgEHnImy--
+
+From pgsql-performance-owner+M1358=pgman=candle.pha.pa.us@postgresql.org Fri Mar  7 16:47:38 2003
+Return-path: <pgsql-performance-owner+M1358=pgman=candle.pha.pa.us@postgresql.org>
+Received: from relay2.pgsql.com (relay2.pgsql.com [64.49.215.143])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h27LlX429809
+	for <pgman@candle.pha.pa.us>; Fri, 7 Mar 2003 16:47:35 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by relay2.pgsql.com (Postfix) with ESMTP id D40CBEDFE05
+	for <pgman@candle.pha.pa.us>; Fri,  7 Mar 2003 16:47:32 -0500 (EST)
+X-Original-To: pgsql-performance@postgresql.org
+Received: from perrin.int.nxad.com (internal.ext.nxad.com [69.1.70.251])
+	by postgresql.org (Postfix) with ESMTP id 913B5474E44
+	for <pgsql-performance@postgresql.org>; Fri,  7 Mar 2003 16:46:50 -0500 (EST)
+Received: by perrin.int.nxad.com (Postfix, from userid 1001)
+	id A55392105B; Fri,  7 Mar 2003 13:46:30 -0800 (PST)
+Date: Fri, 7 Mar 2003 13:46:30 -0800
+From: Sean Chittenden <sean@chittenden.org>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Neil Conway <neilc@samurai.com>,
+   Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   PostgreSQL Performance <pgsql-performance@postgresql.org>
+Subject: Re: [PERFORM] [COMMITTERS] pgsql-server/ /configure /configure.in rc/incl ...
+Message-ID: <20030307214630.GI79234@perrin.int.nxad.com>
+References: <032f01c2e390$b1842b20$6500a8c0@fhp.internal> <11077.1046921667@sss.pgh.pa.us> <033f01c2e392$71476570$6500a8c0@fhp.internal> <12228.1046922471@sss.pgh.pa.us> <20030306094117.GA79234@perrin.int.nxad.com> <15071.1046964336@sss.pgh.pa.us> <20030307003640.GF79234@perrin.int.nxad.com> <1046998072.10527.67.camel@tokyo> <20030307060412.GA19138@perrin.int.nxad.com> <29933.1047047386@sss.pgh.pa.us>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="TALVG7vV++YnpwZG"
+Content-Disposition: inline
+In-Reply-To: <29933.1047047386@sss.pgh.pa.us>
+User-Agent: Mutt/1.4i
+X-PGP-Key: finger seanc@FreeBSD.org
+X-PGP-Fingerprint: 3849 3760 1AFE 7B17 11A0  83A6 DD99 E31F BC84 B341
+X-Web-Homepage: http://sean.chittenden.org/
+Precedence: bulk
+Sender: pgsql-performance-owner@postgresql.org
+Status: OR
+
+--TALVG7vV++YnpwZG
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+> > Absolutely!  Is this a simple benchmark?  Yup.  Do I think it
+> > simulates PostgreSQL?  Eh, not particularly.
+
+I think quite a few of these Q's would have been answered by reading
+the code/Makefile....
+
+> This would be on what OS?
+
+FreeBSD, but it shouldn't matter.  Any reasonably written VM should
+have similar numbers (though BSD is generally regarded as having the
+best VM, which, I think Linux poached not that long ago, iirc
+::grimace::).
+
+> What hardware?
+
+My ultra-pathetic laptop with some fine - overly-noisy and can hardly
+buildworld - IDE drives.
+
+> What size test file?
+
+In this case, only 72K.  I've just updated the test program to use an
+array of files though.
+
+> Do the "iterations" mean so many reads of the entire file, or so
+> many buffer-sized read requests?
+
+In some cases, yes.  With the file mmap()'ed, sorta.  One of the test
+cases (the one that did it in ~8s), mmap()'ed and munmap()'ed the file
+every iteration and was twice as fast as the vanilla read() call.
+
+> Did the mmap case actually *read* anything, or just map and unmap
+> the file?
+
+Nope, read it and wrote it out to stdout (which was redirected to
+/dev/null).
+
+> Also, what did you do to normalize for the effects of the test file
+> being already in kernel disk cache after the first test?
+
+That honestly doesn't matter too much since I wasn't testing the rate
+of reading in files from my hard drive, only the OS's ability to
+read/write pages of data around.  In any case, I've updated my test
+case to iterate through an array of files instead of just reading in a
+copy of /etc/services.  My laptop is generally a poor benchmark for
+disk read performance given it takes 8hrs to buildworld, over 12hrs to
+build mozilla, 18 for KDE, and about 48hrs for Open Office.  :)
+Someone with faster disks may want to try this and report back, but it
+doesn't matter much in terms of relevancy for considering the benefits
+of mmap().  The point is that there are calls that can be used that
+substantially speed up read()'s and write()'s by allowing the VM to
+align pages of data and give hints about its usage.  For the sake of
+argument re: the previously done tests, I'll reverse the order in
+which I ran them and I bet dime to dollar that the times will be
+identical.
+
+% make                                                                     =
+         ~/open_source/mmap_test
+cp -f /etc/services ./services
+gcc -O3 -finline-functions -fkeep-inline-functions -funroll-loops  -DDEFAUL=
+T_READSIZE=3D1 -DDO_MMAP=3D1 -DDO_MMAP_ONCE=3D1 -o mmap-test mmap-test.c
+/usr/bin/time ./mmap-test > /dev/null
+Beginning tests with file:              services
+
+Page size:                              4096
+File read size is the same as the file size
+Number of iterations:                   100000
+Start time:                             1047064672.276544
+Time:                                   1.281477
+
+Completed tests
+        1.29 real         0.10 user         0.92 sys
+gcc -O3 -finline-functions -fkeep-inline-functions -funroll-loops  -DDEFAUL=
+T_READSIZE=3D1 -DDO_MMAP=3D1 -o mmap-test mmap-test.c
+/usr/bin/time ./mmap-test > /dev/null
+Beginning tests with file:              services
+
+Page size:                              4096
+File read size is the same as the file size
+Number of iterations:                   100000
+Start time:                             1047064674.266191
+Time:                                   7.486622
+
+Completed tests
+        7.49 real         0.41 user         6.01 sys
+gcc -O3 -finline-functions -fkeep-inline-functions -funroll-loops  -DDEFAUL=
+T_READSIZE=3D1 -o mmap-test mmap-test.c
+/usr/bin/time ./mmap-test > /dev/null
+Beginning tests with file:              services
+
+Page size:                              4096
+File read size is default read size:    65536
+Number of iterations:                   100000
+Start time:                             1047064682.288637
+Time:                                   19.35214
+
+Completed tests
+       19.04 real         0.88 user        15.43 sys
+gcc -O3 -finline-functions -fkeep-inline-functions -funroll-loops  -o mmap-=
+test mmap-test.c
+/usr/bin/time ./mmap-test > /dev/null
+Beginning tests with file:              services
+
+Page size:                              4096
+File read size is the same as the file size
+Number of iterations:                   100000
+Start time:                             1047064701.867031
+Time:                                   82.4294540875
+
+Completed tests
+       81.57 real         2.10 user        69.55 sys
+
+
+Here's the updated test that iterates through.  Ooh!  One better, the
+files I've used are actual data files from ~pgsql.  The new benchmark
+iterates through the list of files and and calls bench() once for each
+file and restarts at the first file after reaching the end of its
+list (ARGV).
+
+Whoa, if these tests are even close to real world, then we at the very
+least should be mmap()'ing the file every time we read it (assuming
+we're reading more than just a handful of bytes):
+
+find /usr/local/pgsql/data -type f | /usr/bin/xargs /usr/bin/time ./mmap-te=
+st > /dev/null
+Page size:                              4096
+File read size is the same as the file size
+Number of iterations:                   100000
+Start time:                             1047071143.463360
+Time:                                   12.109530
+
+Completed tests
+       12.11 real         0.36 user         6.80 sys
+
+find /usr/local/pgsql/data -type f | /usr/bin/xargs /usr/bin/time ./mmap-te=
+st > /dev/null
+Page size:                              4096
+File read size is default read size:    65536
+Number of iterations:                   100000
+....  [been waiting here for >40min now....]
+
+
+Ah well, if these tests finish this century, I'll post the results in
+a bit, but it's pretty clearly a win.  In terms of the data that I'm
+copying, I'm copying ~700MB of data from my test DB on my laptop.  I
+only have 256MB of RAM so I can pretty much promise you that the data
+isn't in my system buffers.  If anyone else would like to run the
+tests or look at the results, please check it out:
+
+o1 and o2 should be the only targets used if FILES is bigger than the
+RAM on the system.  o3's by far and away the fastest, but only in rare
+cases will a DBA have more RAM than data.  But, as mentioned earlier,
+the LRU cache could easily be modified to munmap() infrequently
+accessed files to keep the size of mmap()'ed data down to a reasonable
+level.
+
+The updated test programs are at:
+
+http://people.FreeBSD.org/~seanc/mmap_test/
+
+-sc
+
+--=20
+Sean Chittenden
+
+--TALVG7vV++YnpwZG
+Content-Type: application/pgp-signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Comment: Sean Chittenden <sean@chittenden.org>
+
+iD8DBQE+aRM23ZnjH7yEs0ERAoqhAKCFgmhpvNMqe9tucoFvK1H6J50z2QCeIZEI
+mgBHwu/H1pe1sXIX9UG2V+I=
+=cFRQ
+-----END PGP SIGNATURE-----
+
+--TALVG7vV++YnpwZG--
+
