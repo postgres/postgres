@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.64 2003/04/14 15:24:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.65 2003/04/14 15:40:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -817,7 +817,7 @@ CREATE TABLE distributors (
   <title id="SQL-CREATETABLE-compatibility-title">Compatibility</title>
 
   <para>
-   The <command>CREATE TABLE</command> conforms to SQL92 Intermediate
+   The <command>CREATE TABLE</command> command conforms to SQL92
    and to a subset of SQL99, with exceptions listed below and in the
    descriptions above.
   </para>
@@ -834,6 +834,8 @@ CREATE TABLE distributors (
     <productname>PostgreSQL</productname> does not have modules, and
     requires each session to issue its own <literal>CREATE TEMPORARY
     TABLE</literal> command for each temporary table to be used.
+    The notion of <literal>GLOBAL</literal> temporary tables found in SQL92
+    is not in <productname>PostgreSQL</productname> at all.
    </para>
 
    <note>
@@ -845,7 +847,7 @@ CREATE TABLE distributors (
    </note>
 
    <para>
-    The optional <literal>ON COMMIT</literal> clause for temporary tables
+    The <literal>ON COMMIT</literal> clause for temporary tables
     also resembles SQL92, but has some differences.
     If the <literal>ON COMMIT</> clause is omitted, SQL92 specifies that the
     default behavior is <literal>ON COMMIT DELETE ROWS</>.  However, the
