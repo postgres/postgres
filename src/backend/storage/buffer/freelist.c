@@ -7,12 +7,12 @@
  * by the caller, so no synchronization is needed.
  *
  *
- * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.48 2004/09/16 16:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.49 2004/12/31 22:00:49 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

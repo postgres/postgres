@@ -2,10 +2,10 @@
 #
 # Makefile for src/bin/pg_ctl
 #
-# Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/pg_ctl/Makefile,v 1.18 2004/10/05 19:30:22 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_ctl/Makefile,v 1.19 2004/12/31 22:03:05 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

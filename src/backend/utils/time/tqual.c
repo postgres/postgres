@@ -12,11 +12,11 @@
  * has now committed or aborted.
  *
  *
- * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.80 2004/10/15 22:40:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.81 2004/12/31 22:02:56 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

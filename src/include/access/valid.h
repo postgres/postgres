@@ -4,10 +4,10 @@
  *	  POSTGRES tuple qualification validity definitions.
  *
  *
- * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/valid.h,v 1.35 2004/10/15 22:40:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/valid.h,v 1.36 2004/12/31 22:03:21 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,10 +3,10 @@
  * error.c
  *	  Map win32 error codes to errno values
  *
- * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/error.c,v 1.3 2004/08/29 05:06:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/error.c,v 1.4 2004/12/31 22:00:37 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,12 +4,12 @@
  *	  dynamic hash tables
  *
  *
- * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.57 2004/11/21 22:57:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.58 2004/12/31 22:01:37 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

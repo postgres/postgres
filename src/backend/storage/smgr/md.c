@@ -3,12 +3,12 @@
  * md.c
  *	  This code manages relations that reside on magnetic disk.
  *
- * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.113 2004/10/25 00:46:42 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.114 2004/12/31 22:01:13 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

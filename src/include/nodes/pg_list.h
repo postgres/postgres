@@ -27,10 +27,10 @@
  * always be so; try to be careful to maintain the distinction.)
  *
  *
- * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.50 2004/09/27 04:12:03 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.51 2004/12/31 22:03:34 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
