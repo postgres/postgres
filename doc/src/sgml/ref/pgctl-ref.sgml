@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.4 2000/07/21 00:42:34 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.5 2000/07/21 03:13:32 momjian Exp $
 Postgres documentation
 -->
 
@@ -102,7 +102,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
 	 </varlistentry>
 
 	 <varlistentry>
-	  <term>f[ast]</term>
+	  <term>fast</term>
 	  <term>f</term>
 	  <listitem>
 	   <para>
