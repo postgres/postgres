@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.29 2003/06/24 23:19:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.30 2003/06/25 02:07:33 momjian Exp $
 -->
 
  <chapter id="performance-tips">
@@ -66,7 +66,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.29 2003/06/24 23:19:10 mom
     estimates are converted into disk-page units using some
     fairly arbitrary fudge factors. If you want to experiment with these
     factors, see the list of run-time configuration parameters in
-    <xref linkend="runtime-config-optimizer">.)
+    <xref linkend="runtime-config-resource">.)
    </para>
 
    <para>
