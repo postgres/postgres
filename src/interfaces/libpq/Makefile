@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.110 2004/06/19 04:43:18 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.111 2004/06/19 15:14:17 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -72,7 +72,7 @@ encnames.c wchar.c : % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
 
 
-ifeq ($(PTHREAD_H_WIN32))
+ifneq ($(PTHREAD_H_WIN32), "")
 pthread.h : % : $(top_srcdir)/src/interfaces/libpq/pthread.h.win
 	rm -f $@ && $(LN_S) $< .
 endif
