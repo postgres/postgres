@@ -7,10 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.1.1.1 1996/07/09 06:21:37 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.2 1996/10/31 10:59:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <sys/types.h>
+
 #include "postgres.h"
 
 #include "nodes/pg_list.h"

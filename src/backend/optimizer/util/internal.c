@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/internal.c,v 1.1.1.1 1996/07/09 06:21:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/internal.c,v 1.2 1996/10/31 10:59:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,14 +20,15 @@
  *    	Shared with the executor.
  *    
  */
+#include <sys/types.h>
 
+#include "postgres.h"
 
 #include "optimizer/internal.h"
 
 #include "nodes/relation.h"
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 
 #if 0 
