@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.144 2001/03/22 06:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.145 2001/04/02 14:34:25 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -863,6 +863,10 @@ index_create(char *heapRelationName,
 	if (indexInfo->ii_NumIndexAttrs < 1 ||
 		indexInfo->ii_NumKeyAttrs < 1)
 		elog(ERROR, "must index at least one attribute");
+
+	if (heapRelationName && !allow_system_table_mods &&
+		IsSystemRelationName(heapRelationName) && IsNormalProcessingMode())
+		elog(ERROR, "User-defined indexes on system catalogs are not supported");
 
 	/*
 	 * get heap relation oid and open the heap relation
