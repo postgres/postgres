@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.81 2002/03/01 06:01:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.82 2002/03/01 20:50:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,10 +467,11 @@ cost_sort(Path *path, Query *root,
 	}
 
 	/*
-	 * Note: should we bother to assign a nonzero run_cost to reflect the
-	 * overhead of extracting tuples from the sort result?	Probably not
-	 * worth worrying about.
+	 * Also charge a small amount (arbitrarily set equal to operator cost)
+	 * per extracted tuple.
 	 */
+	run_cost += cpu_operator_cost * tuples;
+
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
 }
@@ -567,11 +568,12 @@ cost_mergejoin(Path *path, Query *root,
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
 	RestrictInfo *firstclause;
+	Var		   *leftvar;
 	double		outer_rows,
 				inner_rows;
 	double		ntuples;
-	Selectivity	leftscan,
-				rightscan;
+	Selectivity	outerscansel,
+				innerscansel;
 	Path		sort_path;		/* dummy for result of cost_sort */
 
 	if (!enable_mergejoin)
@@ -592,11 +594,24 @@ cost_mergejoin(Path *path, Query *root,
 		mergejoinscansel(root, (Node *) firstclause->clause,
 						 &firstclause->left_mergescansel,
 						 &firstclause->right_mergescansel);
-	leftscan = firstclause->left_mergescansel;
-	rightscan = firstclause->right_mergescansel;
 
-	outer_rows = outer_path->parent->rows * leftscan;
-	inner_rows = inner_path->parent->rows * rightscan;
+	leftvar = get_leftop(firstclause->clause);
+	Assert(IsA(leftvar, Var));
+	if (intMember(leftvar->varno, outer_path->parent->relids))
+	{
+		/* left side of clause is outer */
+		outerscansel = firstclause->left_mergescansel;
+		innerscansel = firstclause->right_mergescansel;
+	}
+	else
+	{
+		/* left side of clause is inner */
+		outerscansel = firstclause->right_mergescansel;
+		innerscansel = firstclause->left_mergescansel;
+	}
+
+	outer_rows = outer_path->parent->rows * outerscansel;
+	inner_rows = inner_path->parent->rows * innerscansel;
 
 	/* cost of source data */
 
@@ -616,13 +631,13 @@ cost_mergejoin(Path *path, Query *root,
 				  outer_path->parent->width);
 		startup_cost += sort_path.startup_cost;
 		run_cost += (sort_path.total_cost - sort_path.startup_cost)
-			* leftscan;
+			* outerscansel;
 	}
 	else
 	{
 		startup_cost += outer_path->startup_cost;
 		run_cost += (outer_path->total_cost - outer_path->startup_cost)
-			* leftscan;
+			* outerscansel;
 	}
 
 	if (innersortkeys)			/* do we need to sort inner? */
@@ -635,13 +650,13 @@ cost_mergejoin(Path *path, Query *root,
 				  inner_path->parent->width);
 		startup_cost += sort_path.startup_cost;
 		run_cost += (sort_path.total_cost - sort_path.startup_cost)
-			* rightscan;
+			* innerscansel;
 	}
 	else
 	{
 		startup_cost += inner_path->startup_cost;
 		run_cost += (inner_path->total_cost - inner_path->startup_cost)
-			* rightscan;
+			* innerscansel;
 	}
 
 	/*
