@@ -259,9 +259,13 @@ WHERE p1.oprnegate = p2.oid AND
      p1.oid = p2.oid);
 
 -- Look for mergejoin operators that don't match their links.
--- A mergejoin link leads from an '=' operator to the
+-- An lsortop/rsortop link leads from an '=' operator to the
 -- sort operator ('<' operator) that's appropriate for
 -- its left-side or right-side data type.
+-- An ltcmpop/gtcmpop link leads from an '=' operator to the
+-- '<' or '>' operator of the same input datatypes.
+-- (If the '=' operator has identical L and R input datatypes,
+-- then lsortop, rsortop, and ltcmpop are all the same operator.)
 
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
@@ -271,8 +275,7 @@ WHERE p1.oprlsortop = p2.oid AND
      p1.oprleft != p2.oprleft OR
      p1.oprleft != p2.oprright OR
      p1.oprresult != 'bool'::regtype OR
-     p2.oprresult != 'bool'::regtype OR
-     p1.oprrsortop = 0);
+     p2.oprresult != 'bool'::regtype);
 
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
@@ -282,34 +285,42 @@ WHERE p1.oprrsortop = p2.oid AND
      p1.oprright != p2.oprleft OR
      p1.oprright != p2.oprright OR
      p1.oprresult != 'bool'::regtype OR
-     p2.oprresult != 'bool'::regtype OR
-     p1.oprlsortop = 0);
+     p2.oprresult != 'bool'::regtype);
 
--- A mergejoinable = operator must have a commutator (usually itself)
--- as well as corresponding < and > operators.  Note that the "corresponding"
--- operators have the same L and R input datatypes as the = operator,
--- whereas the operators linked to by oprlsortop and oprrsortop have input
--- datatypes L,L and R,R respectively.
+SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
+FROM pg_operator AS p1, pg_operator AS p2
+WHERE p1.oprltcmpop = p2.oid AND
+    (p1.oprname != '=' OR p2.oprname != '<' OR
+     p1.oprkind != 'b' OR p2.oprkind != 'b' OR
+     p1.oprleft != p2.oprleft OR
+     p1.oprright != p2.oprright OR
+     p1.oprresult != 'bool'::regtype OR
+     p2.oprresult != 'bool'::regtype);
+
+SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
+FROM pg_operator AS p1, pg_operator AS p2
+WHERE p1.oprgtcmpop = p2.oid AND
+    (p1.oprname != '=' OR p2.oprname != '>' OR
+     p1.oprkind != 'b' OR p2.oprkind != 'b' OR
+     p1.oprleft != p2.oprleft OR
+     p1.oprright != p2.oprright OR
+     p1.oprresult != 'bool'::regtype OR
+     p2.oprresult != 'bool'::regtype);
+
+-- Make sure all four links are specified if any are.
+
+SELECT p1.oid, p1.oprcode
+FROM pg_operator AS p1
+WHERE NOT ((oprlsortop = 0 AND oprrsortop = 0 AND
+            oprltcmpop = 0 AND oprgtcmpop = 0) OR
+           (oprlsortop != 0 AND oprrsortop != 0 AND
+            oprltcmpop != 0 AND oprgtcmpop != 0));
+
+-- A mergejoinable = operator must have a commutator (usually itself).
 
 SELECT p1.oid, p1.oprname FROM pg_operator AS p1
 WHERE p1.oprlsortop != 0 AND
       p1.oprcom = 0;
-
-SELECT p1.oid, p1.oprname FROM pg_operator AS p1
-WHERE p1.oprlsortop != 0 AND NOT
-      EXISTS(SELECT 1 FROM pg_operator AS p2 WHERE
-        p2.oprname = '<' AND
-        p2.oprleft = p1.oprleft AND
-        p2.oprright = p1.oprright AND
-        p2.oprkind = 'b');
-
-SELECT p1.oid, p1.oprname FROM pg_operator AS p1
-WHERE p1.oprlsortop != 0 AND NOT
-      EXISTS(SELECT 1 FROM pg_operator AS p2 WHERE
-        p2.oprname = '>' AND
-        p2.oprleft = p1.oprleft AND
-        p2.oprright = p1.oprright AND
-        p2.oprkind = 'b');
 
 -- Mergejoinable operators across datatypes must come in closed sets, that
 -- is if you provide int2 = int4 and int4 = int8 then you must also provide
