@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.19 1997/08/22 03:35:44 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.20 1997/09/01 08:04:38 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,6 +262,9 @@ static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
 static void IndexedAccessMethodInitialize(Relation relation);
 static void AttrDefaultFetch (Relation relation);
 static void RelCheckFetch (Relation relation);
+
+extern void RelationBuildTriggers (Relation relation);
+extern void FreeTriggerDesc (Relation relation);
 
 /*
  * newlyCreatedRelns -
@@ -892,6 +895,12 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	relation->rd_rules = NULL;
     }
     
+    /* Triggers */
+    if ( relp->reltriggers > 0 )
+    	RelationBuildTriggers (relation);
+    else
+    	relation->trigdesc = NULL;
+    
     /* ----------------
      *	initialize index strategy and support information for this relation
      * ----------------
@@ -1290,6 +1299,8 @@ RelationFlushRelation(Relation *relationPtr,
 	RelationCacheDelete(relation);
 	
 	FreeTupleDesc (relation->rd_att);
+	
+	FreeTriggerDesc (relation);
 
 #if 0
 	if (relation->rd_rules) {
