@@ -103,6 +103,8 @@ char	   *mapFuncs[][2] = {
 	{"CURRENT_DATE", "current_date" },
 	{"CURRENT_TIME", "current_time" },
 	{"CURRENT_TIMESTAMP", "current_timestamp" },
+	{"LOCALTIME", "localtime" },
+	{"LOCALTIMESTAMP", "localtimestamp" },
 	{"CURRENT_USER", "cast(current_user as text)" },
 	{"SESSION_USER", "cast(session_user as text)" },
 	{"CURDATE",	 "current_date" },

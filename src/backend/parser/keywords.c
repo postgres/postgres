@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.113 2002/06/11 15:41:37 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.114 2002/06/15 03:00:03 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,8 @@ static const ScanKeyword ScanKeywords[] = {
 	{"listen", LISTEN},
 	{"load", LOAD},
 	{"local", LOCAL},
+	{"localtime", LOCALTIME},
+	{"localtimestamp", LOCALTIMESTAMP},
 	{"location", LOCATION},
 	{"lock", LOCK_P},
 	{"match", MATCH},

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.322 2002/06/13 14:16:43 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.323 2002/06/15 03:00:03 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -259,7 +259,6 @@ static void doNegateFloat(Value *v);
 %type <list>	row_descriptor, row_list, in_expr_nodes
 %type <node>	row_expr
 %type <node>	case_expr, case_arg, when_clause, case_default
-%type <boolean>	opt_empty_parentheses
 %type <list>	when_clause_list
 %type <ival>	sub_type
 %type <list>	OptCreateAs, CreateAsList
@@ -347,7 +346,7 @@ static void doNegateFloat(Value *v);
 	KEY,
 
 	LANCOMPILER, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LIMIT, LISTEN,
-	LOAD, LOCAL, LOCATION, LOCK_P,
+	LOAD, LOCAL, LOCALTIME, LOCALTIMESTAMP, LOCATION, LOCK_P,
 
 	MATCH, MAXVALUE, MINUTE_P, MINVALUE, MODE, MONTH_P, MOVE,
 
@@ -5461,7 +5460,7 @@ c_expr:  columnref
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-		| CURRENT_DATE opt_empty_parentheses
+		| CURRENT_DATE
 				{
 					/*
 					 * Translate as "'now'::text::date".
@@ -5487,7 +5486,7 @@ c_expr:  columnref
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
-		| CURRENT_TIME opt_empty_parentheses
+		| CURRENT_TIME
 				{
 					/*
 					 * Translate as "'now'::text::timetz".
@@ -5530,7 +5529,7 @@ c_expr:  columnref
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
-		| CURRENT_TIMESTAMP opt_empty_parentheses
+		| CURRENT_TIMESTAMP
 				{
 					/*
 					 * Translate as "'now'::text::timestamptz".
@@ -5574,7 +5573,94 @@ c_expr:  columnref
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
-		| CURRENT_USER opt_empty_parentheses
+		| LOCALTIME
+				{
+					/*
+					 * Translate as "'now'::text::time".
+					 * See comments for CURRENT_DATE.
+					 */
+					A_Const *s = makeNode(A_Const);
+					TypeName *d;
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = SystemTypeName("text");
+
+					d = SystemTypeName("time");
+					/* SQL99 mandates a default precision of zero for TIME
+					 * fields in schemas. However, for LOCALTIME
+					 * let's preserve the microsecond precision we
+					 * might see from the system clock. - thomas 2001-12-07
+					 */
+					d->typmod = 6;
+
+					$$ = (Node *)makeTypeCast((Node *)s, d);
+				}
+		| LOCALTIME '(' Iconst ')'
+				{
+					/*
+					 * Translate as "'now'::text::time(n)".
+					 * See comments for CURRENT_DATE.
+					 */
+					A_Const *s = makeNode(A_Const);
+					TypeName *d;
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = SystemTypeName("text");
+					d = SystemTypeName("time");
+					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
+						elog(ERROR, "LOCALTIME(%d) precision must be between %d and %d",
+							 $3, 0, MAX_TIME_PRECISION);
+					d->typmod = $3;
+
+					$$ = (Node *)makeTypeCast((Node *)s, d);
+				}
+		| LOCALTIMESTAMP
+				{
+					/*
+					 * Translate as "'now'::text::timestamp".
+					 * See comments for CURRENT_DATE.
+					 */
+					A_Const *s = makeNode(A_Const);
+					TypeName *d;
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = SystemTypeName("text");
+
+					d = SystemTypeName("timestamp");
+					/* SQL99 mandates a default precision of 6 for timestamp.
+					 * Also, that is about as precise as we will get since
+					 * we are using a microsecond time interface.
+					 * - thomas 2001-12-07
+					 */
+					d->typmod = 6;
+
+					$$ = (Node *)makeTypeCast((Node *)s, d);
+				}
+		| LOCALTIMESTAMP '(' Iconst ')'
+				{
+					/*
+					 * Translate as "'now'::text::timestamp(n)".
+					 * See comments for CURRENT_DATE.
+					 */
+					A_Const *s = makeNode(A_Const);
+					TypeName *d;
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = SystemTypeName("text");
+
+					d = SystemTypeName("timestamp");
+					if (($3 < 0) || ($3 > MAX_TIMESTAMP_PRECISION))
+						elog(ERROR, "LOCALTIMESTAMP(%d) precision must be between %d and %d",
+							 $3, 0, MAX_TIMESTAMP_PRECISION);
+					d->typmod = $3;
+
+					$$ = (Node *)makeTypeCast((Node *)s, d);
+				}
+		| CURRENT_USER
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("current_user");
@@ -5583,7 +5669,7 @@ c_expr:  columnref
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-		| SESSION_USER opt_empty_parentheses
+		| SESSION_USER
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("session_user");
@@ -5592,7 +5678,7 @@ c_expr:  columnref
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-		| USER opt_empty_parentheses
+		| USER
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("current_user");
@@ -5966,9 +6052,6 @@ attrs:  '.' attr_name
 				{ $$ = lcons(makeString($2), $3); }
 		;
 
-opt_empty_parentheses: '(' ')' { $$ = TRUE; }
-					| /*EMPTY*/ { $$ = TRUE; }
-		;
 
 /*****************************************************************************
  *
@@ -6572,6 +6655,8 @@ reserved_keyword:
 		| INTO
 		| LEADING
 		| LIMIT
+		| LOCALTIME
+		| LOCALTIMESTAMP
 		| NEW
 		| NOT
 		| NULL_P

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.101 2002/06/11 16:00:17 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.102 2002/06/15 02:59:55 thomas Exp $
 PostgreSQL documentation
 -->
 
@@ -2703,17 +2703,17 @@ PostgreSQL documentation
        </row>
 
        <row>
-	<entry><function>current_time</function></entry>
-	<entry><type>time</type></entry>
-	<entry>Time of day; see <link linkend="functions-datetime-current">below</link>
-	</entry>
-	<entry></entry>
-	<entry></entry>
+        <entry><function>current_time</function></entry>
+        <entry><type>time with time zone</type></entry>
+        <entry>Time of day; see <link linkend="functions-datetime-current">below</link>
+        </entry>
+        <entry></entry>
+        <entry></entry>
        </row>
 
        <row>
 	<entry><function>current_timestamp</function></entry>
-	<entry><type>timestamp</type></entry>
+	<entry><type>timestamp with time zone</type></entry>
 	<entry>Date and time; see <link linkend="functions-datetime-current">below</link>
 	</entry>
 	<entry></entry>
@@ -2788,6 +2788,24 @@ PostgreSQL documentation
 	<entry>Test for finite interval</entry>
 	<entry><literal>isfinite(interval '4 hours')</literal></entry>
 	<entry><literal>true</literal></entry>
+       </row>
+
+       <row>
+        <entry><function>localtime</function></entry>
+        <entry><type>time</type></entry>
+        <entry>Time of day; see <link linkend="functions-datetime-current">below</link>
+        </entry>
+        <entry></entry>
+        <entry></entry>
+       </row>
+
+       <row>
+        <entry><function>localtimestamp</function></entry>
+        <entry><type>timestamp</type></entry>
+        <entry>Date and time; see <link linkend="functions-datetime-current">below</link>
+        </entry>
+        <entry></entry>
+        <entry></entry>
        </row>
 
        <row>
@@ -3264,40 +3282,37 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
    <para>
     The following functions are available to obtain the current date and/or
     time:
-<synopsis>
+     <synopsis>
 CURRENT_DATE
 CURRENT_TIME
 CURRENT_TIMESTAMP
 CURRENT_TIME ( <replaceable>precision</replaceable> )
 CURRENT_TIMESTAMP ( <replaceable>precision</replaceable> )
-</synopsis>
-    <function>CURRENT_TIME</function> and
-    <function>CURRENT_TIMESTAMP</function> can optionally be given
-    a precision parameter, which causes the result to be rounded
-    to that many fractional digits.  Without a precision parameter,
-    the result is given to full available precision.
-   </para>
-
-   <note>
-    <para>
-     Prior to <productname>PostgreSQL</productname> 7.2, the precision parameters
-     were unimplemented, and the result was always given in integer
-     seconds.
+LOCALTIME
+LOCALTIMESTAMP
+LOCALTIME ( <replaceable>precision</replaceable> )
+LOCALTIMESTAMP ( <replaceable>precision</replaceable> )
+     </synopsis>
+     <function>CURRENT_TIME</function>,
+     <function>CURRENT_TIMESTAMP</function>,
+     <function>LOCALTIME</function>, and
+     <function>LOCALTIMESTAMP</function>
+     can optionally be given
+     a precision parameter, which causes the result to be rounded
+     to that many fractional digits.  Without a precision parameter,
+     the result is given to the full available precision.
     </para>
-   </note>
 
-   <note>
-    <para>
-     The <acronym>SQL99</acronym> standard requires these functions to
-     be written without any parentheses, unless a precision parameter
-     is given.  As of <productname>PostgreSQL</productname> 7.2, an empty pair of
-     parentheses can be written, but this is deprecated and may be
-     removed in a future release.
-    </para>
-   </note>
+    <note>
+     <para>
+      Prior to <productname>PostgreSQL</productname> 7.2, the precision
+      parameters were unimplemented, and the result was always given
+      in integer seconds.
+     </para>
+    </note>
 
-   <informalexample>
-<screen>
+    <informalexample>
+     <screen>
 SELECT CURRENT_TIME;
 <computeroutput>14:39:53.662522-05</computeroutput>
 
@@ -3309,6 +3324,9 @@ SELECT CURRENT_TIMESTAMP;
 
 SELECT CURRENT_TIMESTAMP(2);
 <computeroutput>2001-12-23 14:39:53.66-05</computeroutput>
+
+SELECT LOCALTIMESTAMP;
+<computeroutput>2001-12-23 14:39:53.662522</computeroutput>
 </screen>
    </informalexample>
 
