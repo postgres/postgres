@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.53 2000/12/22 18:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.54 2000/12/28 00:16:11 tgl Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -1153,12 +1153,16 @@ connection to the backend.
 <itemizedlist>
  <listitem>
    <para>
-    <function>PQsetnonblocking</function> Sets the state of the connection
-    to non-blocking.
+    <function>PQsetnonblocking</function> Sets the nonblocking status of the
+    connection.
 <synopsis>
-int PQsetnonblocking(PGconn *conn)
+int PQsetnonblocking(PGconn *conn, int arg)
 </synopsis>
-    this function will ensure that calls to 
+    Sets the state of the connection to nonblocking if arg is TRUE,
+    blocking if arg is FALSE.  Returns 0 if OK, -1 if error.
+   </para>
+   <para>
+    In the nonblocking state, calls to
     <function>PQputline</function>, <function>PQputnbytes</function>,
     <function>PQsendQuery</function> and <function>PQendcopy</function>
     will not block but instead return an error if they need to be called
