@@ -197,3 +197,96 @@ SELECT char(20) 'characters' || 'and text' AS "Concat char to unknown type";
 SELECT text 'text' || char(20) ' and characters' AS "Concat text to char";
 
 SELECT text 'text' || varchar ' and varchar' AS "Concat text to varchar";
+
+--
+-- test substr with toasted text values
+--
+CREATE TABLE toasttest(f1 text);
+
+insert into toasttest values(repeat('1234567890',10000));
+insert into toasttest values(repeat('1234567890',10000));
+
+-- If the starting position is zero or less, then return from the start of the string
+-- adjusting the length to be consistent with the "negative start" per SQL92.
+SELECT substr(f1, -1, 5) from toasttest;
+
+-- If the length is less than zero, an ERROR is thrown.
+SELECT substr(f1, 5, -1) from toasttest;
+
+-- If no third argument (length) is provided, the length to the end of the
+-- string is assumed.
+SELECT substr(f1, 99995) from toasttest;
+
+-- If start plus length is > string length, the result is truncated to
+-- string length
+SELECT substr(f1, 99995, 10) from toasttest;
+
+DROP TABLE toasttest;
+
+--
+-- test substr with toasted bytea values
+--
+CREATE TABLE toasttest(f1 bytea);
+
+insert into toasttest values(decode(repeat('1234567890',10000),'escape'));
+insert into toasttest values(decode(repeat('1234567890',10000),'escape'));
+
+-- If the starting position is zero or less, then return from the start of the string
+-- adjusting the length to be consistent with the "negative start" per SQL92.
+SELECT substr(f1, -1, 5) from toasttest;
+
+-- If the length is less than zero, an ERROR is thrown.
+SELECT substr(f1, 5, -1) from toasttest;
+
+-- If no third argument (length) is provided, the length to the end of the
+-- string is assumed.
+SELECT substr(f1, 99995) from toasttest;
+
+-- If start plus length is > string length, the result is truncated to
+-- string length
+SELECT substr(f1, 99995, 10) from toasttest;
+
+DROP TABLE toasttest;
+
+--
+-- test length
+--
+
+SELECT length('abcdef') AS "length_6";
+
+--
+-- test strpos
+--
+
+SELECT strpos('abcdef', 'cd') AS "pos_3";
+
+SELECT strpos('abcdef', 'xy') AS "pos_0";
+
+--
+-- test replace
+--
+SELECT replace('abcdef', 'de', '45') AS "abc45f";
+
+SELECT replace('yabadabadoo', 'ba', '123') AS "ya123da123doo";
+
+SELECT replace('yabadoo', 'bad', '') AS "yaoo";
+
+--
+-- test split
+--
+select split('joeuser@mydatabase','@',0) AS "an error";
+
+select split('joeuser@mydatabase','@',1) AS "joeuser";
+
+select split('joeuser@mydatabase','@',2) AS "mydatabase";
+
+select split('joeuser@mydatabase','@',3) AS "empty string";
+
+select split('@joeuser@mydatabase@','@',2) AS "joeuser";
+
+--
+-- test to_hex
+--
+select to_hex(256*256*256 - 1) AS "ffffff";
+
+select to_hex(256::bigint*256::bigint*256::bigint*256::bigint - 1) AS "ffffffff";

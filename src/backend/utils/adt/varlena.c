@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.87 2002/08/04 06:44:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.88 2002/08/22 03:24:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,8 @@
 
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "access/tuptoaster.h"
+#include "lib/stringinfo.h"
 #include "utils/builtins.h"
 #include "utils/pg_locale.h"
 
@@ -27,8 +29,34 @@ typedef struct varlena unknown;
 #define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
 #define PG_GETARG_UNKNOWN_P(n)		DatumGetUnknownP(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
+#define PG_TEXTARG_GET_STR(arg_) \
+    DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(arg_)))
+#define PG_TEXT_GET_STR(textp_) \
+    DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp_)))
+#define PG_STR_GET_TEXT(str_) \
+    DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(str_)))
+#define TEXTLEN(textp) \
+	text_length(PointerGetDatum(textp))
+#define TEXTPOS(buf_text, from_sub_text) \
+	text_position(PointerGetDatum(buf_text), PointerGetDatum(from_sub_text), 1)
+#define TEXTDUP(textp) \
+	DatumGetTextPCopy(PointerGetDatum(textp))
+#define LEFT(buf_text, from_sub_text) \
+	text_substring(PointerGetDatum(buf_text), \
+					1, \
+					TEXTPOS(buf_text, from_sub_text) - 1, false)
+#define RIGHT(buf_text, from_sub_text, from_sub_text_len) \
+	text_substring(PointerGetDatum(buf_text), \
+					TEXTPOS(buf_text, from_sub_text) + from_sub_text_len, \
+					-1, true)
 
 static int	text_cmp(text *arg1, text *arg2);
+static int32 text_length(Datum str);
+static int32 text_position(Datum str, Datum search_str, int matchnum);
+static text *text_substring(Datum str,
+							int32 start,
+							int32 length,
+							bool length_not_specified);
 
 
 /*****************************************************************************
@@ -285,19 +313,36 @@ unknownout(PG_FUNCTION_ARGS)
 Datum
 textlen(PG_FUNCTION_ARGS)
 {
-	text	   *t = PG_GETARG_TEXT_P(0);
+	PG_RETURN_INT32(text_length(PG_GETARG_DATUM(0)));
+}
 
-#ifdef MULTIBYTE
-	/* optimization for single byte encoding */
-	if (pg_database_encoding_max_length() <= 1)
-		PG_RETURN_INT32(VARSIZE(t) - VARHDRSZ);
+/*
+ * text_length -
+ *	Does the real work for textlen()
+ *	This is broken out so it can be called directly by other string processing
+ *	functions.
+ */
+static int32
+text_length(Datum str)
+{
+	/* fastpath when max encoding length is one */
+	if (pg_database_encoding_max_length() == 1)
+		PG_RETURN_INT32(toast_raw_datum_size(str) - VARHDRSZ);
 
-	PG_RETURN_INT32(
-		pg_mbstrlen_with_len(VARDATA(t), VARSIZE(t) - VARHDRSZ)
-		);
-#else
-	PG_RETURN_INT32(VARSIZE(t) - VARHDRSZ);
-#endif
+	if (pg_database_encoding_max_length() > 1)
+	{
+		text	   *t = DatumGetTextP(str);
+
+		PG_RETURN_INT32(pg_mbstrlen_with_len(VARDATA(t),
+									 VARSIZE(t) - VARHDRSZ));
+	}
+
+	/* should never get here */
+	elog(ERROR, "Invalid backend encoding; encoding max length "
+				"is less than one.");
+
+	/* not reached: suppress compiler warning */
+	return 0;
 }
 
 /*
@@ -308,9 +353,7 @@ textlen(PG_FUNCTION_ARGS)
 Datum
 textoctetlen(PG_FUNCTION_ARGS)
 {
-	text    *arg = PG_GETARG_TEXT_P(0);
-
-	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
+	PG_RETURN_INT32(toast_raw_datum_size(PG_GETARG_DATUM(0)) - VARHDRSZ);
 }
 
 /*
@@ -382,90 +425,201 @@ textcat(PG_FUNCTION_ARGS)
  * - Thomas Lockhart 1998-12-10
  * Now uses faster TOAST-slicing interface
  * - John Gray 2002-02-22
+ * Remove "#ifdef MULTIBYTE" and test for encoding_max_length instead. Change
+ * behaviors conflicting with SQL92 to meet SQL92 (if E = S + L < S throw
+ * error; if E < 1, return '', not entire string). Fixed MB related bug when
+ * S > LC and < LC + 4 sometimes garbage characters are returned.
+ * - Joe Conway 2002-08-10 
  */
 Datum
 text_substr(PG_FUNCTION_ARGS)
 {
-	text	   *string;
-	int32		m = PG_GETARG_INT32(1);
-	int32		n = PG_GETARG_INT32(2);
-	int32       sm;
-	int32       sn;
-	int         eml = 1;
-#ifdef MULTIBYTE
-	int			i;
-	int			len;
-	text	   *ret;
-	char	   *p;
-#endif 
+	PG_RETURN_TEXT_P(text_substring(PG_GETARG_DATUM(0),
+									PG_GETARG_INT32(1),
+									PG_GETARG_INT32(2),
+									false));
+}
 
-	/*
-	 * starting position before the start of the string? then offset into
-	 * the string per SQL92 spec...
-	 */
-	if (m < 1)
+/*
+ * text_substr_no_len -
+ *	  Wrapper to avoid opr_sanity failure due to
+ *	  one function accepting a different number of args.
+ */
+Datum
+text_substr_no_len(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TEXT_P(text_substring(PG_GETARG_DATUM(0),
+									PG_GETARG_INT32(1),
+									-1, true));
+}
+
+/*
+ * text_substring -
+ *	Does the real work for text_substr() and text_substr_no_len()
+ *	This is broken out so it can be called directly by other string processing
+ *	functions.
+ */
+static text*
+text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
+{
+	int32		eml = pg_database_encoding_max_length();
+	int32		S = start;				/* start position */
+	int32		S1;						/* adjusted start position */
+	int32		L1;						/* adjusted substring length */
+
+	/* life is easy if the encoding max length is 1 */
+	if (eml == 1)
 	{
-		n += (m - 1);
-		m = 1;
-	}
-	/* Check for m > octet length is made in TOAST access routine */
+		S1 = Max(S, 1);
 
-	/* m will now become a zero-based starting position */
-	sm = m - 1;
-	sn = n;
-
-#ifdef MULTIBYTE
-	eml = pg_database_encoding_max_length ();
-
-	if (eml > 1)
-	{
-		sm = 0;
-		if (n > -1)
-			sn = (m + n) * eml + 3; /* +3 to avoid mb characters overhanging slice end */
+		if (length_not_specified)	/* special case - get length to end of string */
+			L1 = -1;
 		else
-			sn = n;		/* n < 0 is special-cased by heap_tuple_untoast_attr_slice */
+		{
+			/* end position */
+			int	E = S + length;
+
+			/*
+			 * A negative value for L is the only way for the end position
+			 * to be before the start. SQL99 says to throw an error.
+			 */
+			if (E < S)
+				elog(ERROR, "negative substring length not allowed");
+
+			/* 
+			 * A zero or negative value for the end position can happen if the start
+			 * was negative or one. SQL99 says to return a zero-length string.
+			 */
+			if (E < 1)
+				return PG_STR_GET_TEXT("");
+
+			L1 = E - S1;
+		}
+
+		/* 
+		 * If the start position is past the end of the string,
+		 * SQL99 says to return a zero-length string -- 
+		 * PG_GETARG_TEXT_P_SLICE() will do that for us.
+		 * Convert to zero-based starting position
+		 */
+		return DatumGetTextPSlice(str, S1 - 1, L1);
 	}
-#endif 
-
-	string = PG_GETARG_TEXT_P_SLICE (0, sm, sn);
-
-	if (eml == 1) 
+	else if (eml > 1)
 	{
-		PG_RETURN_TEXT_P (string);
+		/*
+		 * When encoding max length is > 1, we can't get LC without
+		 * detoasting, so we'll grab a conservatively large slice
+		 * now and go back later to do the right thing
+		 */
+		int32		slice_start;
+		int32		slice_size;
+		int32		slice_strlen;
+		text		*slice;
+		int32		E1;
+		int32		i;
+		char	   *p;
+		char	   *s;
+		text	   *ret;
+
+		/*
+		 * if S is past the end of the string, the tuple toaster
+		 * will return a zero-length string to us
+		 */
+		S1 = Max(S, 1);
+
+		/*
+		 * We need to start at position zero because there is no
+		 * way to know in advance which byte offset corresponds to 
+		 * the supplied start position.
+		 */
+		slice_start = 0;
+
+		if (length_not_specified)	/* special case - get length to end of string */
+			slice_size = L1 = -1;
+		else
+		{
+			int	E = S + length;
+
+			/*
+			 * A negative value for L is the only way for the end position
+			 * to be before the start. SQL99 says to throw an error.
+			 */
+			if (E < S)
+				elog(ERROR, "negative substring length not allowed");
+
+			/* 
+			 * A zero or negative value for the end position can happen if the start
+			 * was negative or one. SQL99 says to return a zero-length string.
+			 */
+			if (E < 1)
+				return PG_STR_GET_TEXT("");
+
+			/*
+			 * if E is past the end of the string, the tuple toaster
+			 * will truncate the length for us
+			 */
+			L1 = E - S1;
+
+			/*
+			 * Total slice size in bytes can't be any longer than the start
+			 * position plus substring length times the encoding max length.
+			 */
+			slice_size = (S1 + L1) * eml;
+		}
+		slice = DatumGetTextPSlice(str, slice_start, slice_size);
+
+		/* see if we got back an empty string */
+		if ((VARSIZE(slice) - VARHDRSZ) == 0)
+			return PG_STR_GET_TEXT("");
+
+		/* Now we can get the actual length of the slice in MB characters */
+		slice_strlen = pg_mbstrlen_with_len (VARDATA(slice), VARSIZE(slice) - VARHDRSZ);
+
+		/* Check that the start position wasn't > slice_strlen. If so,
+		 * SQL99 says to return a zero-length string.
+		 */
+		if (S1 > slice_strlen)
+			return PG_STR_GET_TEXT("");
+
+		/*
+		 * Adjust L1 and E1 now that we know the slice string length.
+		 * Again remember that S1 is one based, and slice_start is zero based.
+		 */
+		if (L1 > -1)
+			E1 = Min(S1 + L1 , slice_start + 1 + slice_strlen);
+		else
+			E1 = slice_start + 1 + slice_strlen;
+
+		/*
+		 * Find the start position in the slice;
+		 * remember S1 is not zero based
+		 */
+		p = VARDATA(slice);
+		for (i = 0; i < S1 - 1; i++)
+			p += pg_mblen(p);
+
+		/* hang onto a pointer to our start position */
+		s = p;
+
+		/*
+		 * Count the actual bytes used by the substring of 
+		 * the requested length.
+		 */
+		for (i = S1; i < E1; i++)
+			p += pg_mblen(p);
+
+		ret = (text *) palloc(VARHDRSZ + (p - s));
+		VARATT_SIZEP(ret) = VARHDRSZ + (p - s);
+		memcpy(VARDATA(ret), s, (p - s));
+
+		return ret;
 	}
-#ifndef MULTIBYTE
-	PG_RETURN_NULL();   /* notreached: suppress compiler warning */
-#endif
-#ifdef MULTIBYTE
-	if (n > -1)
-		len = pg_mbstrlen_with_len (VARDATA (string), sn - 3);
-	else	/* n < 0 is special-cased; need full string length */
-		len = pg_mbstrlen_with_len (VARDATA (string), VARSIZE(string)-VARHDRSZ);
+	else
+		elog(ERROR, "Invalid backend encoding; encoding max length "
+					"is less than one.");
 
-	if (m > len)
-	{
-		m = 1;
-		n = 0;
-	}
-	m--;
-	if (((m + n) > len) || (n < 0))
-		n = (len - m);
-
-	p = VARDATA(string);
-	for (i = 0; i < m; i++)
-		p += pg_mblen(p);
-	m = p - VARDATA(string);
-	for (i = 0; i < n; i++)
-		p += pg_mblen(p);
-	n = p - (VARDATA(string) + m);
-
-	ret = (text *) palloc(VARHDRSZ + n);
-	VARATT_SIZEP(ret) = VARHDRSZ + n;
-
-	memcpy(VARDATA(ret), VARDATA(string) + m, n);
-
-	PG_RETURN_TEXT_P(ret);
-#endif
+	/* not reached: suppress compiler warning */
+	return PG_STR_GET_TEXT("");
 }
 
 /*
@@ -481,56 +635,95 @@ text_substr(PG_FUNCTION_ARGS)
 Datum
 textpos(PG_FUNCTION_ARGS)
 {
-	text	   *t1 = PG_GETARG_TEXT_P(0);
-	text	   *t2 = PG_GETARG_TEXT_P(1);
-	int			pos;
-	int			px,
-				p;
-	int			len1,
-				len2;
-	pg_wchar   *p1,
-			   *p2;
+	PG_RETURN_INT32(text_position(PG_GETARG_DATUM(0), PG_GETARG_DATUM(1), 1));
+}
 
-#ifdef MULTIBYTE
-	pg_wchar   *ps1,
-			   *ps2;
-#endif
+/*
+ * text_position -
+ *	Does the real work for textpos()
+ *	This is broken out so it can be called directly by other string processing
+ *	functions.
+ */
+static int32
+text_position(Datum str, Datum search_str, int matchnum)
+{
+	int			eml = pg_database_encoding_max_length();
+	text	   *t1 = DatumGetTextP(str);
+	text	   *t2 = DatumGetTextP(search_str);
+	int			match = 0,
+				pos = 0,
+				p = 0,
+				px,
+				len1,
+				len2;
+
+	if(matchnum == 0)
+		return 0;		/* result for 0th match */
 
 	if (VARSIZE(t2) <= VARHDRSZ)
 		PG_RETURN_INT32(1);		/* result for empty pattern */
 
 	len1 = (VARSIZE(t1) - VARHDRSZ);
 	len2 = (VARSIZE(t2) - VARHDRSZ);
-#ifdef MULTIBYTE
-	ps1 = p1 = (pg_wchar *) palloc((len1 + 1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(t1), p1, len1);
-	len1 = pg_wchar_strlen(p1);
-	ps2 = p2 = (pg_wchar *) palloc((len2 + 1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(t2), p2, len2);
-	len2 = pg_wchar_strlen(p2);
-#else
-	p1 = VARDATA(t1);
-	p2 = VARDATA(t2);
-#endif
-	pos = 0;
+
+	/* no use in searching str past point where search_str will fit */
 	px = (len1 - len2);
-	for (p = 0; p <= px; p++)
+
+	if (eml == 1)	/* simple case - single byte encoding */
 	{
-#ifdef MULTIBYTE
-		if ((*p2 == *p1) && (pg_wchar_strncmp(p1, p2, len2) == 0))
-#else
-		if ((*p2 == *p1) && (strncmp(p1, p2, len2) == 0))
-#endif
+		char   *p1,
+			   *p2;
+
+		p1 = VARDATA(t1);
+		p2 = VARDATA(t2);
+
+		for (p = 0; p <= px; p++)
 		{
-			pos = p + 1;
-			break;
-		};
-		p1++;
-	};
-#ifdef MULTIBYTE
-	pfree(ps1);
-	pfree(ps2);
-#endif
+			if ((*p2 == *p1) && (strncmp(p1, p2, len2) == 0))
+			{
+				if (++match == matchnum)
+				{
+					pos = p + 1;
+					break;
+				}
+			}
+			p1++;
+		}
+	}
+	else if (eml > 1)	/* not as simple - multibyte encoding */
+	{
+		pg_wchar   *p1,
+				   *p2,
+				   *ps1,
+				   *ps2;
+
+		ps1 = p1 = (pg_wchar *) palloc((len1 + 1) * sizeof(pg_wchar));
+		(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(t1), p1, len1);
+		len1 = pg_wchar_strlen(p1);
+		ps2 = p2 = (pg_wchar *) palloc((len2 + 1) * sizeof(pg_wchar));
+		(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(t2), p2, len2);
+		len2 = pg_wchar_strlen(p2);
+
+		for (p = 0; p <= px; p++)
+		{
+			if ((*p2 == *p1) && (pg_wchar_strncmp(p1, p2, len2) == 0))
+			{
+				if (++match == matchnum)
+				{
+					pos = p + 1;
+					break;
+				}
+			}
+			p1++;
+		}
+
+		pfree(ps1);
+		pfree(ps2);
+	}
+	else
+		elog(ERROR, "Invalid backend encoding; encoding max length "
+					"is less than one.");
+
 	PG_RETURN_INT32(pos);
 }
 
@@ -758,9 +951,7 @@ text_smaller(PG_FUNCTION_ARGS)
 Datum
 byteaoctetlen(PG_FUNCTION_ARGS)
 {
-	bytea	   *v = PG_GETARG_BYTEA_P(0);
-
-	PG_RETURN_INT32(VARSIZE(v) - VARHDRSZ);
+	PG_RETURN_INT32(toast_raw_datum_size(PG_GETARG_DATUM(0)) - VARHDRSZ);
 }
 
 /*
@@ -805,6 +996,8 @@ byteacat(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(result);
 }
 
+#define PG_STR_GET_BYTEA(str_) \
+    DatumGetByteaP(DirectFunctionCall1(byteain, CStringGetDatum(str_)))
 /*
  * bytea_substr()
  * Return a substring starting at the specified position.
@@ -813,33 +1006,71 @@ byteacat(PG_FUNCTION_ARGS)
  * Input:
  *	- string
  *	- starting position (is one-based)
- *	- string length
+ *	- string length (optional)
  *
  * If the starting position is zero or less, then return from the start of the string
  * adjusting the length to be consistent with the "negative start" per SQL92.
- * If the length is less than zero, return the remaining string.
- *
+ * If the length is less than zero, an ERROR is thrown. If no third argument
+ * (length) is provided, the length to the end of the string is assumed.
  */
 Datum
 bytea_substr(PG_FUNCTION_ARGS)
 {
-	int32		m = PG_GETARG_INT32(1);
-	int32		n = PG_GETARG_INT32(2);
+	int		S = PG_GETARG_INT32(1);	/* start position */
+	int		S1;						/* adjusted start position */
+	int		L1;						/* adjusted substring length */
 
-	/*
-	 * starting position before the start of the string? then offset into
-	 * the string per SQL92 spec...
-	 */
-	if (m < 1)
+	S1 = Max(S, 1);
+
+	if (fcinfo->nargs == 2)
 	{
-		n += (m - 1);
-		m = 1;
+		/*
+		 * Not passed a length - PG_GETARG_BYTEA_P_SLICE()
+		 * grabs everything to the end of the string if we pass it
+		 * a negative value for length.
+		 */
+		L1 = -1;
+	}
+	else
+	{
+		/* end position */
+		int	E = S + PG_GETARG_INT32(2);
+
+		/*
+		 * A negative value for L is the only way for the end position
+		 * to be before the start. SQL99 says to throw an error.
+		 */
+		if (E < S)
+			elog(ERROR, "negative substring length not allowed");
+
+		/* 
+		 * A zero or negative value for the end position can happen if the start
+		 * was negative or one. SQL99 says to return a zero-length string.
+		 */
+		if (E < 1)
+			PG_RETURN_BYTEA_P(PG_STR_GET_BYTEA(""));
+
+		L1 = E - S1;
 	}
 
-	/* m will now become a zero-based starting position */
-	m--;
+	/* 
+	 * If the start position is past the end of the string,
+	 * SQL99 says to return a zero-length string -- 
+	 * PG_GETARG_TEXT_P_SLICE() will do that for us.
+	 * Convert to zero-based starting position
+	 */
+	PG_RETURN_BYTEA_P(PG_GETARG_BYTEA_P_SLICE (0, S1 - 1, L1));
+}
 
-	PG_RETURN_BYTEA_P(PG_GETARG_BYTEA_P_SLICE (0, m, n));
+/*
+ * bytea_substr_no_len -
+ *	  Wrapper to avoid opr_sanity failure due to
+ *	  one function accepting a different number of args.
+ */
+Datum
+bytea_substr_no_len(PG_FUNCTION_ARGS)
+{
+	return bytea_substr(fcinfo);
 }
 
 /*
@@ -1422,3 +1653,182 @@ byteacmp(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(cmp);
 }
+
+/*
+ * replace_text
+ * replace all occurences of 'old_sub_str' in 'orig_str'
+ * with 'new_sub_str' to form 'new_str'
+ * 
+ * returns 'orig_str' if 'old_sub_str' == '' or 'orig_str' == ''
+ * otherwise returns 'new_str' 
+ */
+Datum
+replace_text(PG_FUNCTION_ARGS)
+{
+	text		*left_text;
+	text		*right_text;
+	text		*buf_text;
+	text		*ret_text;
+	int			curr_posn;
+	text		*src_text = PG_GETARG_TEXT_P(0);
+	int			src_text_len = TEXTLEN(src_text);
+	text		*from_sub_text = PG_GETARG_TEXT_P(1);
+	int			from_sub_text_len = TEXTLEN(from_sub_text);
+	text		*to_sub_text = PG_GETARG_TEXT_P(2);
+	char		*to_sub_str = PG_TEXT_GET_STR(to_sub_text);
+	StringInfo	str = makeStringInfo();
+
+	if (src_text_len == 0 || from_sub_text_len == 0)
+		PG_RETURN_TEXT_P(src_text);
+
+	buf_text = TEXTDUP(src_text);
+	curr_posn = TEXTPOS(buf_text, from_sub_text);
+
+	while (curr_posn > 0)
+	{
+		left_text = LEFT(buf_text, from_sub_text);
+		right_text = RIGHT(buf_text, from_sub_text, from_sub_text_len);
+
+		appendStringInfo(str, PG_TEXT_GET_STR(left_text));
+		appendStringInfo(str, to_sub_str);
+
+		pfree(buf_text);
+		pfree(left_text);
+		buf_text = right_text;
+		curr_posn = TEXTPOS(buf_text, from_sub_text);
+	}
+
+	appendStringInfo(str, PG_TEXT_GET_STR(buf_text));
+	pfree(buf_text);
+
+	ret_text = PG_STR_GET_TEXT(str->data);
+	pfree(str->data);
+	pfree(str);
+
+	PG_RETURN_TEXT_P(ret_text);
+}
+
+/*
+ * split_text
+ * parse input string
+ * return ord item (1 based)
+ * based on provided field separator
+ */
+Datum
+split_text(PG_FUNCTION_ARGS)
+{
+	text	   *inputstring = PG_GETARG_TEXT_P(0);
+	int			inputstring_len = TEXTLEN(inputstring);
+	text	   *fldsep = PG_GETARG_TEXT_P(1);
+	int			fldsep_len = TEXTLEN(fldsep);
+	int			fldnum = PG_GETARG_INT32(2);
+	int			start_posn = 0;
+	int			end_posn = 0;
+	text		*result_text;
+
+	/* return empty string for empty input string */
+	if (inputstring_len < 1)
+		PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
+
+	/* empty field separator */
+	if (fldsep_len < 1)
+	{
+		if (fldnum == 1)	/* first field - just return the input string */
+			PG_RETURN_TEXT_P(inputstring);
+		else				/* otherwise return an empty string */
+			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
+	}
+
+	/* field number is 1 based */
+	if (fldnum < 1)
+		elog(ERROR, "field position must be > 0");
+
+	start_posn = text_position(PointerGetDatum(inputstring),
+								PointerGetDatum(fldsep),
+								fldnum - 1);
+	end_posn = text_position(PointerGetDatum(inputstring),
+								PointerGetDatum(fldsep),
+								fldnum);
+
+	if ((start_posn == 0) && (end_posn == 0))	/* fldsep not found */
+	{
+		if (fldnum == 1)	/* first field - just return the input string */
+			PG_RETURN_TEXT_P(inputstring);
+		else				/* otherwise return an empty string */
+			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
+	}
+	else if ((start_posn != 0) && (end_posn == 0))
+	{
+		/* last field requested */
+		result_text = text_substring(PointerGetDatum(inputstring), start_posn + fldsep_len, -1, true);
+		PG_RETURN_TEXT_P(result_text);
+	}
+	else if ((start_posn == 0) && (end_posn != 0))
+	{
+		/* first field requested */
+		result_text = LEFT(inputstring, fldsep);
+		PG_RETURN_TEXT_P(result_text);
+	}
+	else
+	{
+		/* prior to last field requested */
+		result_text = text_substring(PointerGetDatum(inputstring), start_posn + fldsep_len, end_posn - start_posn - fldsep_len, false);
+		PG_RETURN_TEXT_P(result_text);
+	}
+}
+
+#define HEXBASE 16
+/*
+ * Convert a int32 to a string containing a base 16 (hex) representation of
+ * the number.
+ */
+Datum
+to_hex32(PG_FUNCTION_ARGS)
+{
+	static char		digits[] = "0123456789abcdef";
+	char			buf[32];	/* bigger than needed, but reasonable */
+	char		   *ptr,
+				   *end;
+	text		   *result_text;
+	int32			value = PG_GETARG_INT32(0);
+
+	end = ptr = buf + sizeof(buf) - 1;
+	*ptr = '\0';
+
+	do
+	{
+		*--ptr = digits[value % HEXBASE];
+		value /= HEXBASE;
+	} while (ptr > buf && value);
+
+	result_text = PG_STR_GET_TEXT(ptr);
+	PG_RETURN_TEXT_P(result_text);
+}
+
+/*
+ * Convert a int64 to a string containing a base 16 (hex) representation of
+ * the number.
+ */
+Datum
+to_hex64(PG_FUNCTION_ARGS)
+{
+	static char		digits[] = "0123456789abcdef";
+	char			buf[32];	/* bigger than needed, but reasonable */
+	char			*ptr,
+					*end;
+	text			*result_text;
+	int64			value = PG_GETARG_INT64(0);
+
+	end = ptr = buf + sizeof(buf) - 1;
+	*ptr = '\0';
+
+	do
+	{
+		*--ptr = digits[value % HEXBASE];
+		value /= HEXBASE;
+	} while (ptr > buf && value);
+
+	result_text = PG_STR_GET_TEXT(ptr);
+	PG_RETURN_TEXT_P(result_text);
+}
+

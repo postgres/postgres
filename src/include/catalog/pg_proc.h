@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.260 2002/08/22 00:01:47 tgl Exp $
+ * $Id: pg_proc.h,v 1.261 2002/08/22 03:24:00 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2120,7 +2120,7 @@ DATA(insert OID =  881 (  ltrim		   PGNSP PGUID 14 f f t f i 1 25 "25"  "select 
 DESCR("remove initial characters from string");
 DATA(insert OID =  882 (  rtrim		   PGNSP PGUID 14 f f t f i 1 25 "25"  "select rtrim($1, \' \')" - _null_ ));
 DESCR("remove trailing characters from string");
-DATA(insert OID =  883 (  substr	   PGNSP PGUID 14 f f t f i 2 25 "25 23"	"select substr($1, $2, -1)" - _null_ ));
+DATA(insert OID =  883 (  substr	   PGNSP PGUID 12 f f t f i 2 25 "25 23"	text_substr_no_len - _null_ ));
 DESCR("return portion of string");
 DATA(insert OID =  884 (  btrim		   PGNSP PGUID 12 f f t f i 2 25 "25 25"	btrim - _null_ ));
 DESCR("trim both ends of string");
@@ -2129,8 +2129,16 @@ DESCR("trim both ends of string");
 
 DATA(insert OID =  936 (  substring    PGNSP PGUID 12 f f t f i 3 25 "25 23 23"  text_substr - _null_ ));
 DESCR("return portion of string");
-DATA(insert OID =  937 (  substring    PGNSP PGUID 14 f f t f i 2 25 "25 23"	"select substring($1, $2, -1)" - _null_ ));
+DATA(insert OID =  937 (  substring    PGNSP PGUID 12 f f t f i 2 25 "25 23"	text_substr_no_len - _null_ ));
 DESCR("return portion of string");
+DATA(insert OID =  2087 ( replace      PGNSP PGUID 12 f f t f i 3 25 "25 25 25"  replace_text - _null_ ));
+DESCR("replace all occurrences of old_substr with new_substr in string");
+DATA(insert OID =  2088 ( split        PGNSP PGUID 12 f f t f i 3 25 "25 25 23"  split_text - _null_ ));
+DESCR("split string by field_sep and return field_num");
+DATA(insert OID =  2089 ( to_hex       PGNSP PGUID 12 f f t f i 1 25 "23"  to_hex32 - _null_ ));
+DESCR("convert int32 number to hex");
+DATA(insert OID =  2090 ( to_hex       PGNSP PGUID 12 f f t f i 1 25 "20"  to_hex64 - _null_ ));
+DESCR("convert int64 number to hex");
 
 /* for multi-byte support */
 
@@ -2781,7 +2789,11 @@ DATA(insert OID = 2011 (  byteacat		   PGNSP PGUID 12 f f t f i 2 17 "17 17"	byt
 DESCR("concatenate");
 DATA(insert OID = 2012 (  substring		   PGNSP PGUID 12 f f t f i 3 17 "17 23 23"  bytea_substr - _null_ ));
 DESCR("return portion of string");
-DATA(insert OID = 2013 (  substring		   PGNSP PGUID 14 f f t f i 2 17 "17 23"	"select substring($1, $2, -1)" - _null_ ));
+DATA(insert OID = 2013 (  substring		   PGNSP PGUID 12 f f t f i 2 17 "17 23"	bytea_substr_no_len - _null_ ));
+DESCR("return portion of string");
+DATA(insert OID = 2085 (  substr		   PGNSP PGUID 12 f f t f i 3 17 "17 23 23"  bytea_substr - _null_ ));
+DESCR("return portion of string");
+DATA(insert OID = 2086 (  substr		   PGNSP PGUID 12 f f t f i 2 17 "17 23"	bytea_substr_no_len - _null_ ));
 DESCR("return portion of string");
 DATA(insert OID = 2014 (  position		   PGNSP PGUID 12 f f t f i 2 23 "17 17"	byteapos - _null_ ));
 DESCR("return position of substring");
