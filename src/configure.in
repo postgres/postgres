@@ -140,8 +140,7 @@ else
 
 fi
 export CPPFLAGS
-echo setting CPPFLAGS=$CPPFLAGS
-echo ""
+echo "- setting CPPFLAGS=$CPPFLAGS"
 
 $ECHO_N "Additional directories to search for library files { $SRCH_LIB }: $ECHO_C"
 read a
@@ -158,61 +157,35 @@ else
 
 fi
 export LDFLAGS
-echo setting LDFLAGS=$LDFLAGS
-echo ""
-echo "**************************************************************"
+echo "- setting LDFLAGS=$LDFLAGS"
 
 dnl We have read the default value of USE_LOCALE from the template 
 dnl file.  We have a further option of using 
-dnl	--disable locale	to explicitly disable it 
-dnl	--enable locale		to explicitly enable it 
-dnl If you do not explicitly do it, it asks you here.
-dnl We need some explanatory text here.
+dnl	--disable-locale	to explicitly disable it 
+dnl	--enable-locale		to explicitly enable it 
+dnl It defaults to disabled
 if test "$enable_locale" = "yes" -o "$enable_locale" = "no"
 then
 	USE_LOCALE=$enable_locale
 else
-	echo "Do you wish to enable LOCALE to get PostgreSQL to work with"
-	$ECHO_N "national characters { $USE_LOCALE }: $ECHO_C"
-	read a
-	if test "$a" = "yes"
-	then
-		USE_LOCALE=yes
-	else
-		USE_LOCALE=no
-	fi
-	echo "**************************************************************"
+	USE_LOCALE=no
 fi
 export USE_LOCALE
 
 dnl We use the default value of 5432 for the DEF_PGPORT value.  If
-dnl we over-ride it with --with pgport=port then we bypass this piece
-dnl otherwise we ask.
+dnl we over-ride it with --with-pgport=port then we bypass this piece
 if test "X$with_pgport" != "X"
 then
 	DEF_PGPORT=$with_pgport
 else
-	echo "By default, the PostgreSQL postmaster listens on port 5432.  This"
-	echo "can be overriden by command options, environment variables and the"
-	echo "postconfig hook."
-	echo ""
-	$ECHO_N "Which port should the postmaster listen to by default { 5432 }: $ECHO_C"
-	read a
-	if test "X$a" != "X"
-	then
-		DEF_PGPORT=$a
-	else
-		DEF_PGPORT=5432
-	fi
-	echo "**************************************************************"
+	DEF_PGPORT=5432
 fi
 export DEF_PGPORT
 
 dnl Unless we specify the command line options
-dnl	--disable hba		to explicitly disable it 
-dnl	--enable hba		to explicitly enable it 
-dnl If you do not explicitly do it, it asks you here.
-dnl We need some explanatory text here.
+dnl	--disable-hba		to explicitly disable it 
+dnl	--enable-hba		to explicitly enable it 
+dnl The default is to enable it
 if test "$enable_hba" = "yes" 
 then
 	NOHBA=no
@@ -220,17 +193,7 @@ elif test "$enable_hba" = "no"
 then
 	NOHBA=yes
 else
-	echo "Host Based Authentication (HBA) allows you to limit access"
-	echo "to databases on a per-host basis."
-	$ECHO_N "Disable Host Based Authentication { no }: $ECHO_C"
-	read a
-	if test "$a" = "yes"
-	then
-		NOHBA=yes
-	else
-		NOHBA=no
-	fi
-	echo "**************************************************************"
+	NOHBA=no
 fi
 export NOHBA
 
