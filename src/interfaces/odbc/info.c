@@ -1104,7 +1104,7 @@ SQLTables(
 	HSTMT		htbl_stmt;
 	RETCODE		result;
 	char	   *tableType;
-	char		tables_query[STD_STATEMENT_LEN];
+	char		tables_query[INFO_INQUIRY_LEN];
 	char		table_name[MAX_INFO_STRING],
 				table_owner[MAX_INFO_STRING],
 				relkind_or_hasrules[MAX_INFO_STRING];
@@ -1422,7 +1422,7 @@ SQLColumns(
 	TupleNode  *row;
 	HSTMT		hcol_stmt;
 	StatementClass *col_stmt;
-	char		columns_query[STD_STATEMENT_LEN];
+	char		columns_query[INFO_INQUIRY_LEN];
 	RETCODE		result;
 	char		table_owner[MAX_INFO_STRING],
 				table_name[MAX_INFO_STRING],
@@ -1862,7 +1862,7 @@ SQLSpecialColumns(
 	ConnInfo   *ci;
 	HSTMT		hcol_stmt;
 	StatementClass *col_stmt;
-	char		columns_query[STD_STATEMENT_LEN];
+	char		columns_query[INFO_INQUIRY_LEN];
 	RETCODE		result;
 	char		relhasrules[MAX_INFO_STRING];
 
@@ -2003,7 +2003,7 @@ SQLStatistics(
 {
 	static char *func = "SQLStatistics";
 	StatementClass *stmt = (StatementClass *) hstmt;
-	char		index_query[STD_STATEMENT_LEN];
+	char		index_query[INFO_INQUIRY_LEN];
 	HSTMT		hindx_stmt;
 	RETCODE		result;
 	char	   *table_name;
@@ -2171,12 +2171,12 @@ SQLStatistics(
 	indx_stmt = (StatementClass *) hindx_stmt;
 
 	sprintf(index_query, "select c.relname, i.indkey, i.indisunique"
-			", x.indisclustered, a.amname, i.relhasrules"
-			" from pg_index x, pg_class i, pg_class c, pg_am a"
-			" where c.relname = '%s'"
-			" and c.oid = x.indrelid"
-			" and x.indexrelid = i.oid"
-			" and i.relam = a.oid"
+			", i.indisclustered, a.amname, c.relhasrules"
+			" from pg_index i, pg_class c, pg_class d, pg_am a"
+			" where d.relname = '%s'"
+			" and d.oid = i.indrelid"
+			" and i.indexrelid = c.oid"
+			" and c.relam = a.oid"
 			, table_name);
 
 	result = SQLExecDirect(hindx_stmt, index_query, strlen(index_query));
@@ -2455,7 +2455,7 @@ SQLPrimaryKeys(
 	int			seq = 0;
 	HSTMT		htbl_stmt;
 	StatementClass *tbl_stmt;
-	char		tables_query[STD_STATEMENT_LEN];
+	char		tables_query[INFO_INQUIRY_LEN];
 	char		attname[MAX_INFO_STRING];
 	SDWORD		attname_len;
 	char		pktab[MAX_TABLE_LEN + 1];
@@ -2641,7 +2641,7 @@ SQLForeignKeys(
 	StatementClass *tbl_stmt;
 	RETCODE		result,
 				keyresult;
-	char		tables_query[STD_STATEMENT_LEN];
+	char		tables_query[INFO_INQUIRY_LEN];
 	char		trig_deferrable[2];
 	char		trig_initdeferred[2];
 	char		trig_args[1024];

@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.42 2001/05/01 00:47:06 inoue Exp $
+ * $Id: psqlodbc.h,v 1.43 2001/05/17 02:56:37 inoue Exp $
  *
  */
 
@@ -190,6 +190,9 @@ typedef struct QueryInfo_
 
 #define PG_NUMERIC_MAX_PRECISION	1000
 #define PG_NUMERIC_MAX_SCALE		1000
+
+#define	INFO_INQUIRY_LEN		8192 /* this seems sufficiently big for
+queries used in info.c inoue 2001/05/17 */
 
 #include "misc.h"
 
