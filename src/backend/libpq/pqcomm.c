@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.90 2000/05/20 13:10:54 ishii Exp $
+ *	$Id: pqcomm.c,v 1.91 2000/05/21 21:19:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,19 +360,12 @@ StreamConnection(int server_fd, Port *port)
 		return STATUS_ERROR;
 	}
 
-	/* select TCP_NODELAY option if it's a TCP connection */
+	/* select NODELAY and KEEPALIVE options if it's a TCP connection */
 	if (port->laddr.sa.sa_family == AF_INET)
 	{
-		struct protoent *pe;
 		int			on = 1;
 
-		pe = getprotobyname("TCP");
-		if (pe == NULL)
-		{
-			perror("postmaster: StreamConnection: getprotobyname");
-			return STATUS_ERROR;
-		}
-		if (setsockopt(port->sock, pe->p_proto, TCP_NODELAY,
+		if (setsockopt(port->sock, IPPROTO_TCP, TCP_NODELAY,
 					   &on, sizeof(on)) < 0)
 		{
 			perror("postmaster: StreamConnection: setsockopt(TCP_NODELAY)");

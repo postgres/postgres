@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.126 2000/04/12 17:17:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.127 2000/05/21 21:19:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #endif
@@ -625,19 +626,9 @@ connectMakeNonblocking(PGconn *conn)
 static int
 connectNoDelay(PGconn *conn)
 {
-	struct protoent *pe;
 	int			on = 1;
 
-	pe = getprotobyname("TCP");
-	if (pe == NULL)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  "connectNoDelay() -- "
-						  "getprotobyname failed: errno=%d\n%s\n",
-						  errno, strerror(errno));
-		return 0;
-	}
-	if (setsockopt(conn->sock, pe->p_proto, TCP_NODELAY,
+	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_NODELAY,
 #ifdef WIN32
 				   (char *)
 #endif
