@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.138 1999/12/22 00:07:15 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.139 2000/01/09 12:17:33 ishii Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1356,6 +1356,19 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 					argv[0]);
 			proc_exit(1);
 		}
+
+		/*
+		 * Try to create pid file.
+		 */
+		SetPidFname(DataDir);
+		if (SetPidFile(-getpid())) {
+			proc_exit(0);
+		}
+		/*
+		 * Register clean up proc.
+		 */
+		on_proc_exit(UnlinkPidFile, NULL);
+
 		BaseInit();
 		snprintf(XLogDir, MAXPGPATH, "%s%cpg_xlog",
 				 DataDir, SEP_CHAR);
@@ -1499,7 +1512,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.138 $ $Date: 1999/12/22 00:07:15 $\n");
+		puts("$Revision: 1.139 $ $Date: 2000/01/09 12:17:33 $\n");
 	}
 
 	/*
