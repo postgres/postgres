@@ -4,7 +4,7 @@
 #
 # 'make install' installs whole contents of src/include.
 #
-# $PostgreSQL: pgsql/src/include/Makefile,v 1.13 2004/10/06 08:50:00 momjian Exp $
+# $PostgreSQL: pgsql/src/include/Makefile,v 1.14 2004/10/07 16:23:28 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,7 +60,7 @@ remove-old-headers:
 	for file in fmgr.h postgres.h access/attnum.h commands/trigger.h \
 		executor/spi.h utils/elog.h utils/geo_decls.h utils/mcxt.h \
 		utils/palloc.h; do \
-		if cmp -s $(srcdir)/$$file $(DESTDIR)$(includedir)/$$file; \
+		if cmp -s $(srcdir)/$$file $(DESTDIR)$(includedir)/$$file 2>/dev/null; \
 		then \
 			: ; \
 		else \
