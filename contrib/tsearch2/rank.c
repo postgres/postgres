@@ -43,6 +43,8 @@ static float weights[] = {0.1, 0.2, 0.4, 1.0};
 
 #define DEF_NORM_METHOD 0
 
+static float calc_rank_or(float *w, tsvector * t, QUERYTYPE * q);
+static float calc_rank_and(float *w, tsvector * t, QUERYTYPE * q);
 /*
  * Returns a weight of a word collocation
  */
@@ -112,6 +114,55 @@ find_wordentry(tsvector * t, QUERYTYPE * q, ITEM * item)
 	return NULL;
 }
 
+
+static char * SortAndUniqOperand=NULL;
+
+static int
+compareITEM( const void * a, const void * b ) {
+	if (  (*(ITEM**)a)->length == (*(ITEM**)b)->length )
+		return strncmp( SortAndUniqOperand + (*(ITEM**)a)->distance,
+				SortAndUniqOperand + (*(ITEM**)b)->distance,
+				(*(ITEM**)b)->length );
+
+	return ((*(ITEM**)a)->length > (*(ITEM**)b)->length) ? 1 : -1;
+}
+         
+static ITEM**
+SortAndUniqItems( char *operand, ITEM *item, int *size ) {
+	ITEM   **res, **ptr, **prevptr;
+
+	ptr = res = (ITEM**) palloc( sizeof(ITEM*) * *size );
+
+	while( (*size)-- ) {
+		if ( item->type == VAL ) {
+			*ptr = item;
+			ptr++;
+		}   
+		item++;
+	}
+
+	*size = ptr-res;
+	if ( *size < 2 )
+		return res;
+
+	SortAndUniqOperand=operand;
+	qsort( res, *size, sizeof(ITEM**), compareITEM );
+
+	ptr = res + 1;
+	prevptr = res;
+
+	while( ptr - res < *size ) {
+		if ( compareITEM( (void*) ptr, (void*) prevptr ) != 0 ) {
+			prevptr++;
+			*prevptr = *ptr;
+		}
+		ptr++;
+	}
+
+	*size = prevptr + 1 - res;
+	return res;
+}
+
 static WordEntryPos POSNULL[] = {
 	0,
 	0
@@ -120,7 +171,7 @@ static WordEntryPos POSNULL[] = {
 static float
 calc_rank_and(float *w, tsvector * t, QUERYTYPE * q)
 {
-	uint16	  **pos = (uint16 **) palloc(sizeof(uint16 *) * q->size);
+	uint16	  **pos;
 	int			i,
 				k,
 				l,
@@ -132,19 +183,22 @@ calc_rank_and(float *w, tsvector * t, QUERYTYPE * q)
 				lenct,
 				dist;
 	float		res = -1.0;
-	ITEM	   *item = GETQUERY(q);
+	ITEM	   **item;
+	int size = q->size;
 
-	memset(pos, 0, sizeof(uint16 **) * q->size);
+	item = SortAndUniqItems( GETOPERAND(q), GETQUERY(q), &size);
+	if ( size < 2 ) {
+		pfree(item);
+		return calc_rank_or(w, t, q);
+	} 
+	pos = (uint16 **) palloc(sizeof(uint16 *) * q->size);
+	memset(pos, 0, sizeof(uint16 *) * q->size);
 	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
-	WEP_SETPOS(POSNULL[1], MAXENTRYPOS-1); 
+	WEP_SETPOS(POSNULL[1], MAXENTRYPOS-1);
 
-	for (i = 0; i < q->size; i++)
+	for (i = 0; i < size; i++)
 	{
-
-		if (item[i].type != VAL)
-			continue;
-
-		entry = find_wordentry(t, q, &(item[i]));
+		entry = find_wordentry(t, q, item[i]);
 		if (!entry)
 			continue;
 
@@ -181,6 +235,7 @@ calc_rank_and(float *w, tsvector * t, QUERYTYPE * q)
 		}
 	}
 	pfree(pos);
+	pfree(item);
 	return res;
 }
 
@@ -193,16 +248,15 @@ calc_rank_or(float *w, tsvector * t, QUERYTYPE * q)
 				j,
 				i;
 	float		res = -1.0;
-	ITEM	   *item = GETQUERY(q);
+	ITEM	   **item;
+	int	size = q->size;
 
 	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
+	item = SortAndUniqItems( GETOPERAND(q), GETQUERY(q), &size);
 
-	for (i = 0; i < q->size; i++)
+	for (i = 0; i < size; i++)
 	{
-		if (item[i].type != VAL)
-			continue;
-
-		entry = find_wordentry(t, q, &(item[i]));
+		entry = find_wordentry(t, q, item[i]);
 		if (!entry)
 			continue;
 
@@ -225,6 +279,7 @@ calc_rank_or(float *w, tsvector * t, QUERYTYPE * q)
 				res = 1.0 - (1.0 - res) * (1.0 - wpos(post[j]));
 		}
 	}
+	pfree( item );
 	return res;
 }
 
@@ -349,7 +404,7 @@ checkcondition_DR(void *checkval, ITEM * val)
 
 	while (ptr - ((ChkDocR *) checkval)->doc < ((ChkDocR *) checkval)->len)
 	{
-		if (val == ptr->item)
+		if ( val == ptr->item || compareITEM( &val, &(ptr->item) ) == 0 )
 			return true;
 		ptr++;
 	}
@@ -439,6 +494,7 @@ Cover(DocRepresentation * doc, int len, QUERYTYPE * query, int *pos, int *p, int
 		ch.doc = f;
 		ch.len = (doc + lastpos) - f + 1;
 		*pos = f - doc + 1;
+		SortAndUniqOperand = GETOPERAND(query); 
 		if (TS_execute(GETQUERY(query), &ch, false, checkcondition_DR))
 		{
 			/*
