@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.163 2001/08/26 16:55:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.164 2001/09/26 21:09:27 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1789,19 +1789,27 @@ IndexBuildHeapScan(Relation heapRelation,
 					break;
 				case HEAPTUPLE_INSERT_IN_PROGRESS:
 					/*
-					 * This should not happen, if caller holds ShareLock on
-					 * the parent relation.
+					 * Since caller should hold ShareLock or better, we should
+					 * not see any tuples inserted by open transactions ---
+					 * unless it's our own transaction.  (Consider INSERT
+					 * followed by CREATE INDEX within a transaction.)
 					 */
-					elog(ERROR, "IndexBuildHeapScan: concurrent insert in progress");
-					indexIt = tupleIsAlive = false;	/* keep compiler quiet */
+					if (! TransactionIdIsCurrentTransactionId(heapTuple->t_data->t_xmin))
+						elog(ERROR, "IndexBuildHeapScan: concurrent insert in progress");
+					indexIt = true;
+					tupleIsAlive = true;
 					break;
 				case HEAPTUPLE_DELETE_IN_PROGRESS:
 					/*
-					 * This should not happen, if caller holds ShareLock on
-					 * the parent relation.
+					 * Since caller should hold ShareLock or better, we should
+					 * not see any tuples deleted by open transactions ---
+					 * unless it's our own transaction.  (Consider DELETE
+					 * followed by CREATE INDEX within a transaction.)
 					 */
-					elog(ERROR, "IndexBuildHeapScan: concurrent delete in progress");
-					indexIt = tupleIsAlive = false;	/* keep compiler quiet */
+					if (! TransactionIdIsCurrentTransactionId(heapTuple->t_data->t_xmax))
+						elog(ERROR, "IndexBuildHeapScan: concurrent delete in progress");
+					indexIt = true;
+					tupleIsAlive = false;
 					break;
 				default:
 					elog(ERROR, "Unexpected HeapTupleSatisfiesVacuum result");
