@@ -18,7 +18,7 @@
    <DATE>1998-09-11</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-CREATE [TEMP] TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> (
+CREATE [ TEMP ] TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> (
     <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>
     [ NULL | NOT NULL ] [ UNIQUE ] [ DEFAULT <REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE> ]
     [<REPLACEABLE>column_constraint_clause</REPLACEABLE> | PRIMARY KEY } [ ... ] ]
@@ -36,21 +36,24 @@ CREATE [TEMP] TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> (
    <TITLE>
     Inputs
    </TITLE>
+
    <PARA>
    
+   <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
      TEMP
      </TERM>
      <LISTITEM>
       <PARA>
-	The table is created unique to this session, and is
+	The table is created only for this session, and is
 	automatically dropped on session exit.
+	Existing permanent tables with the same name are not visible
+	while the temporary table exists.
       </PARA>
      </LISTITEM>
     </VARLISTENTRY>
 
-   <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
       <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
