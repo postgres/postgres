@@ -120,3 +120,11 @@ INSERT INTO func_index_heap VALUES('QWE','RTY');
 INSERT INTO func_index_heap VALUES('ABCD', 'EF');
 -- but this shouldn't:
 INSERT INTO func_index_heap VALUES('QWERTY');
+
+--
+-- Also try building functional, expressional, and partial indexes on
+-- tables that already contain data.
+--
+create unique index hash_f8_index_1 on hash_f8_heap(abs(random));
+create unique index hash_f8_index_2 on hash_f8_heap((seqno + 1), random);
+create unique index hash_f8_index_3 on hash_f8_heap(random) where seqno > 1000;
