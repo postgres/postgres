@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.60 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.61 2004/01/28 07:46:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ void
 parseCheckAggregates(ParseState *pstate, Query *qry)
 {
 	List	   *groupClauses = NIL;
-	bool		have_non_var_grouping = false;
+	bool		have_non_var_grouping;
 	List	   *lst;
 	bool		hasJoinRTEs;
 	Node	   *clause;
@@ -127,9 +127,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * No aggregates allowed in GROUP BY clauses, either.
 	 *
 	 * While we are at it, build a list of the acceptable GROUP BY
-	 * expressions for use by check_ungrouped_columns() (this avoids
-	 * repeated scans of the targetlist within the recursive routine...).
-	 * And detect whether any of the expressions aren't simple Vars.
+	 * expressions for use by check_ungrouped_columns().
 	 */
 	foreach(lst, qry->groupClause)
 	{
@@ -144,8 +142,6 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 					(errcode(ERRCODE_GROUPING_ERROR),
 				   errmsg("aggregates not allowed in GROUP BY clause")));
 		groupClauses = lcons(expr, groupClauses);
-		if (!IsA(expr, Var))
-			have_non_var_grouping = true;
 	}
 
 	/*
@@ -169,6 +165,21 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	if (hasJoinRTEs)
 		groupClauses = (List *) flatten_join_alias_vars(qry,
 												  (Node *) groupClauses);
+
+	/*
+	 * Detect whether any of the grouping expressions aren't simple Vars;
+	 * if they're all Vars then we don't have to work so hard in the
+	 * recursive scans.  (Note we have to flatten aliases before this.)
+	 */
+	have_non_var_grouping = false;
+	foreach(lst, groupClauses)
+	{
+		if (!IsA((Node *) lfirst(lst), Var))
+		{
+			have_non_var_grouping = true;
+			break;
+		}
+	}
 
 	/*
 	 * Check the targetlist and HAVING clause for ungrouped variables.
