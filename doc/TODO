@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Mar 20 02:00:49 EST 2003
+Last updated:		Thu Mar 20 22:47:34 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -65,7 +65,7 @@ Data Types
 * Add IPv6 capability to INET/CIDR types
 * Remove Money type, add money formatting for decimal type
 * Change factorial to return a numeric
-* Change NUMERIC data type to use base 10,000 internally
+* -Change NUMERIC data type to use base 10,000 internally
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values (Tom)
 * Allow INET subnet tests using non-constants
