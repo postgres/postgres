@@ -700,12 +700,12 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 		case PG_TYPE_BPCHAR:
 #ifdef MULTIBYTE
 			/* after 7.2 */
-			if (PG_VERSION_GE(SC_get_conn(stmt), 7.2)
+			if (PG_VERSION_GE(SC_get_conn(stmt), 7.2))
 				return 3 * pgtype_precision(stmt, type, col, handle_unknown_size_as);
 			else
 #else
 			/* CR -> CR/LF */
-			return 2 * pgtype_precision(stmt, type, col, handle_unknown_size_as);
+				return 2 * pgtype_precision(stmt, type, col, handle_unknown_size_as);
 #endif /* MULTIBYTE */
 		default:
 			return pgtype_precision(stmt, type, col, handle_unknown_size_as);
