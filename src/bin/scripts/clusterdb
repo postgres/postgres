@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.7 2002/10/18 22:05:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.8 2002/10/21 20:32:33 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -141,6 +141,7 @@ if [ "$alldb" ]; then
 		exit 1
 	fi
 	dbname=`${PATHNAME}psql $PSQLOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database WHERE datallowconn'`
+	[ "$?" -ne 0 ] && exit 1
 
 elif [ -z "$dbname" ]; then
 	if [ "$PGDATABASE" ]; then
@@ -159,6 +160,7 @@ do
 	query="SELECT nspname, pg_class.relname, pg_class_2.relname FROM pg_class, pg_class AS pg_class_2 JOIN pg_namespace ON (pg_namespace.oid=relnamespace), pg_index WHERE pg_class.oid=pg_index.indrelid AND pg_class_2.oid=pg_index.indexrelid AND pg_index.indisclustered AND pg_class.relowner=(SELECT usesysid FROM pg_user WHERE usename=current_user)"
 	if [ -z "$table" ]; then
 		tables=`${PATHNAME}psql $db $PSQLOPT -F: -P format=unaligned -t -c "$query"`
+		[ "$?" -ne 0 ] && exit 1
 	else
 		# if tablename has a dot, use it as namespace separator
 		if echo $table | grep -s '\.' 2>&1 >/dev/null
