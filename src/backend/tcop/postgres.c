@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.243 2001/12/04 19:40:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.244 2002/01/01 23:16:22 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1626,7 +1626,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.243 $ $Date: 2001/12/04 19:40:17 $\n");
+		puts("$Revision: 1.244 $ $Date: 2002/01/01 23:16:22 $\n");
 	}
 
 	/*
@@ -1703,7 +1703,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 		/*
 		 * Exit interrupt holdoff section we implicitly established above.
-		 * (This could result in accepting a cancel or die interrupt.)
 		 */
 		RESUME_INTERRUPTS();
 	}

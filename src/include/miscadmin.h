@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.97 2001/11/05 17:46:31 momjian Exp $
+ * $Id: miscadmin.h,v 1.98 2002/01/01 23:16:22 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -43,7 +43,8 @@
  * or die interrupt.  The HOLD_INTERRUPTS() and RESUME_INTERRUPTS() macros
  * allow code to ensure that no cancel or die interrupt will be accepted,
  * even if CHECK_FOR_INTERRUPTS() gets called in a subroutine.	The interrupt
- * will be held off until the last matching RESUME_INTERRUPTS() occurs.
+ * will be held off until CHECK_FOR_INTERRUPTS() is done outside any
+ * HOLD_INTERRUPTS() ... RESUME_INTERRUPTS() section.
  *
  * Special mechanisms are used to let an interrupt be accepted when we are
  * waiting for a lock or when we are waiting for command input (but, of
@@ -85,8 +86,6 @@ extern void ProcessInterrupts(void);
 	do { \
 		Assert(InterruptHoldoffCount > 0); \
 		InterruptHoldoffCount--; \
-		if (InterruptPending) \
-			ProcessInterrupts(); \
 	} while(0)
 
 #define START_CRIT_SECTION()  (CritSectionCount++)
@@ -95,8 +94,6 @@ extern void ProcessInterrupts(void);
 	do { \
 		Assert(CritSectionCount > 0); \
 		CritSectionCount--; \
-		if (InterruptPending) \
-			ProcessInterrupts(); \
 	} while(0)
 
 
