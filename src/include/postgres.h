@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.5 1997/07/01 00:31:10 thomas Exp $
+ * $Id: postgres.h,v 1.6 1997/07/11 14:09:00 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,11 +203,5 @@ typedef uint16			CommandId;
 #define STATUS_NOT_DONE		(-6)
 #define STATUS_BAD_PACKET	(-7)
 #define STATUS_FOUND            (1)
-
-#if !defined(HAVE_ENDIAN_H)
-#  define LITTLE_ENDIAN 1
-#  define BIG_ENDIAN 2
-#  define PDP_ENDIAN 3
-#endif
 
 #endif /* POSTGRES_H */
