@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.167 2004/05/06 14:01:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.168 2004/05/08 21:21:18 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -101,15 +101,15 @@
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	local_node->fldname = nodeRead(NULL, 0)
 
-/* Read an integer-list field */
+/* Read an integer-list field (XXX combine me with READ_NODE_FIELD) */
 #define READ_INTLIST_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = toIntList(nodeRead(NULL, 0))
+	local_node->fldname = nodeRead(NULL, 0)
 
-/* Read an OID-list field */
+/* Read an OID-list field (XXX combine me with READ_NODE_FIELD) */
 #define READ_OIDLIST_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = toOidList(nodeRead(NULL, 0))
+	local_node->fldname = nodeRead(NULL, 0)
 
 /* Routine exit */
 #define READ_DONE() \
@@ -134,56 +134,6 @@
 
 static Datum readDatum(bool typbyval);
 
-
-/* Convert Value list returned by nodeRead into list of integers */
-static List *
-toIntList(List *list)
-{
-	List	   *l;
-
-	foreach(l, list)
-	{
-		Value	   *v = (Value *) lfirst(l);
-
-		if (!IsA(v, Integer))
-			elog(ERROR, "unexpected node type: %d", (int) nodeTag(v));
-		lfirsti(l) = intVal(v);
-		pfree(v);
-	}
-	return list;
-}
-
-/* Convert Value list returned by nodeRead into list of OIDs */
-static List *
-toOidList(List *list)
-{
-	List	   *l;
-
-	foreach(l, list)
-	{
-		Value	   *v = (Value *) lfirst(l);
-
-		/*
-		 * This is a bit tricky because OID is unsigned, and so nodeRead
-		 * might have concluded the value doesn't fit in an integer. Must
-		 * cope with T_Float as well.
-		 */
-		if (IsA(v, Integer))
-		{
-			lfirsto(l) = (Oid) intVal(v);
-			pfree(v);
-		}
-		else if (IsA(v, Float))
-		{
-			lfirsto(l) = atooid(strVal(v));
-			pfree(strVal(v));
-			pfree(v);
-		}
-		else
-			elog(ERROR, "unexpected node type: %d", (int) nodeTag(v));
-	}
-	return list;
-}
 
 /*
  * _readQuery

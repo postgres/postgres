@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.65 2003/11/29 19:51:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.66 2004/05/08 21:21:18 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -194,12 +194,20 @@ pretty_format_node_dump(const char *dump)
 					}
 					j = indentDist - 1;
 					/* j will equal indentDist on next loop iteration */
+					/* suppress whitespace just after } */
+					while (dump[i+1] == ' ')
+						i++;
 					break;
 				case ')':
-					/* force line break after ')' */
-					line[j + 1] = '\0';
-					appendStringInfo(&str, "%s\n", line);
-					j = indentDist - 1;
+					/* force line break after ), unless another ) follows */
+					if (dump[i+1] != ')')
+					{
+						line[j + 1] = '\0';
+						appendStringInfo(&str, "%s\n", line);
+						j = indentDist - 1;
+						while (dump[i+1] == ' ')
+							i++;
+					}
 					break;
 				case '{':
 					/* force line break before { */

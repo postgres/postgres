@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.234 2004/05/06 14:01:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.235 2004/05/08 21:21:18 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -155,6 +155,7 @@ _outIntList(StringInfo str, List *list)
 	List	   *l;
 
 	appendStringInfoChar(str, '(');
+	appendStringInfoChar(str, 'i');
 	foreach(l, list)
 		appendStringInfo(str, " %d", lfirsti(l));
 	appendStringInfoChar(str, ')');
@@ -170,6 +171,7 @@ _outOidList(StringInfo str, List *list)
 	List	   *l;
 
 	appendStringInfoChar(str, '(');
+	appendStringInfoChar(str, 'o');
 	foreach(l, list)
 		appendStringInfo(str, " %u", lfirsto(l));
 	appendStringInfoChar(str, ')');
@@ -179,8 +181,9 @@ _outOidList(StringInfo str, List *list)
  * _outBitmapset -
  *	   converts a bitmap set of integers
  *
- * Note: for historical reasons, the output is formatted exactly like
- * an integer List would be.
+ * Note: the output format is "(b int int ...)", similar to an integer List.
+ * Currently bitmapsets do not appear in any node type that is stored in
+ * rules, so there is no support in readfuncs.c for reading this format.
  */
 static void
 _outBitmapset(StringInfo str, Bitmapset *bms)
@@ -189,6 +192,7 @@ _outBitmapset(StringInfo str, Bitmapset *bms)
 	int			x;
 
 	appendStringInfoChar(str, '(');
+	appendStringInfoChar(str, 'b');
 	tmpset = bms_copy(bms);
 	while ((x = bms_first_member(tmpset)) >= 0)
 		appendStringInfo(str, " %d", x);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.40 2004/05/06 14:01:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.41 2004/05/08 21:21:18 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -261,7 +261,8 @@ nodeTokenType(char *token, int length)
  * lexical tokenizer pg_strtok().	It can read
  *	* Value token nodes (integers, floats, or strings);
  *	* General nodes (via parseNodeString() from readfuncs.c);
- *	* Lists of the above.
+ *	* Lists of the above;
+ *	* Lists of integers or OIDs.
  * The return value is declared void *, not Node *, to avoid having to
  * cast it explicitly in callers that assign to fields of different types.
  *
@@ -300,14 +301,68 @@ nodeRead(char *token, int tok_len)
 			{
 				List	   *l = NIL;
 
-				for (;;)
+				/*----------
+				 * Could be an integer list:	(i int int ...)
+				 * or an OID list:				(o int int ...)
+				 * or a list of nodes/values:	(node node ...)
+				 *----------
+				 */
+				token = pg_strtok(&tok_len);
+				if (token == NULL)
+					elog(ERROR, "unterminated List structure");
+				if (tok_len == 1 && token[0] == 'i')
 				{
-					token = pg_strtok(&tok_len);
-					if (token == NULL)
-						elog(ERROR, "unterminated List structure");
-					if (token[0] == ')')
-						break;
-					l = lappend(l, nodeRead(token, tok_len));
+					/* List of integers */
+					for (;;)
+					{
+						int		val;
+						char   *endptr;
+
+						token = pg_strtok(&tok_len);
+						if (token == NULL)
+							elog(ERROR, "unterminated List structure");
+						if (token[0] == ')')
+							break;
+						val = (int) strtol(token, &endptr, 10);
+						if (endptr != token + tok_len)
+							elog(ERROR, "unrecognized integer: \"%.*s\"",
+								 tok_len, token);
+						l = lappendi(l, val);
+					}
+				}
+				else if (tok_len == 1 && token[0] == 'o')
+				{
+					/* List of OIDs */
+					for (;;)
+					{
+						Oid		val;
+						char   *endptr;
+
+						token = pg_strtok(&tok_len);
+						if (token == NULL)
+							elog(ERROR, "unterminated List structure");
+						if (token[0] == ')')
+							break;
+						val = (Oid) strtoul(token, &endptr, 10);
+						if (endptr != token + tok_len)
+							elog(ERROR, "unrecognized OID: \"%.*s\"",
+								 tok_len, token);
+						l = lappendo(l, val);
+					}
+				}
+				else
+				{
+					/* List of other node types */
+					for (;;)
+					{
+						/* We have already scanned next token... */
+						if (token[0] == ')')
+							break;
+						l = lappend(l, nodeRead(token, tok_len));
+						token = pg_strtok(&tok_len);
+						if (token == NULL)
+							elog(ERROR, "unterminated List structure");
+					}
 				}
 				result = (Node *) l;
 				break;
