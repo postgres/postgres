@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.25 2001/08/22 20:23:24 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.26 2001/09/04 03:20:29 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -386,7 +386,7 @@ usage(const char *progname)
 		"  -C, --create             issue commands to create the database\n"
 		"  -d, --dbname=NAME        specify database name\n"
 		"  -f, --file=FILENAME      TOC output file name (see -l)\n"
-		"  -F, --format={c|f}       specify backup file format\n"
+		"  -F, --format={c|t}       specify backup file format\n"
 		"  -h, --host=HOSTNAME      server host name\n"
 		"  -i, --index=NAME         restore named index\n"
 		"  -l, --list               dump summarized TOC for of the archive\n"
@@ -422,7 +422,7 @@ usage(const char *progname)
 		"  -C                       issue commands to create the database\n"
 		"  -d NAME                  specify database name\n"
 		"  -f FILENAME              TOC output file name (see -l)\n"
-		"  -F {c|f}                 specify backup file format\n"
+		"  -F {c|t}                 specify backup file format\n"
 		"  -h HOSTNAME              server host name\n"
 		"  -i NAME                  restore named index\n"
 		"  -l                       dump summarized TOC for this file\n"
