@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.7 1997/11/07 06:25:25 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.8 1998/01/29 02:26:21 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,6 +31,8 @@ fi
 
 dbname=$USER
 
+PASSWDOPT="";
+
 while test -n "$1"
 do
 	case $1 in
@@ -39,6 +41,7 @@ do
 		-a) AUTHSYS=$2; shift;;
 		-h) PGHOST=$2; shift;;
 		-p) PGPORT=$2; shift;;
+		-u) PASSWDOPT=$1;;
 		-D) dbpath=$2; shift;;
 		-*) echo "$CMDNAME: unrecognized parameter $1"; usage=1;;
 		 *) dbname=$1;;
@@ -80,7 +83,7 @@ else
 	location="with location = '$dbpath'"
 fi
 
-psql -tq $AUTHOPT $PGHOSTOPT $PGPORTOPT -c "create database $dbname $location" template1
+psql $PASSWDOPT -tq $AUTHOPT $PGHOSTOPT $PGPORTOPT -c "create database $dbname $location" template1
 
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: database creation failed on $dbname."

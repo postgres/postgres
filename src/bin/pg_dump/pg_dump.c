@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.60 1998/01/16 23:20:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.61 1998/01/29 02:26:25 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -44,6 +44,10 @@
  * - Added functions to free allocated memory used for retrieving
  *	 indices,tables,inheritance,types,functions and aggregates.
  *	 No more leaks reported by Purify.
+ *
+ *
+ * Modifications - 1/26/98 - pjlobo@euitt.upm.es
+ *       - Added support for password authentication
  *-------------------------------------------------------------------------
  */
 
@@ -65,6 +69,10 @@
 #include "libpq-fe.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"
+#endif
+
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
 #endif
 
 #include "pg_dump.h"
@@ -134,6 +142,8 @@ usage(const char *progname)
 			"\t -v          \t\t verbose\n");
 	fprintf(stderr,
 			"\t -z          \t\t dump ACLs (grant/revoke)\n");
+	fprintf(stderr,
+			"\t -u          \t\t use password authentication\n");
 	fprintf(stderr,
 			"\nIf dbname is not supplied, then the DATABASE environment "
 			"variable value is used.\n");
@@ -455,6 +465,62 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
 }
 
 
+static void
+prompt_for_password(char *username, char *password)
+{
+	int			length;
+
+#ifdef HAVE_TERMIOS_H
+	struct termios t_orig,
+				t;
+
+#endif
+
+	printf("Username: ");
+	fgets(username, 9, stdin);
+	length = strlen(username);
+	/* skip rest of the line */
+	if (length > 0 && username[length - 1] != '\n')
+	{
+		static char buf[512];
+
+		do
+		{
+			fgets(buf, 512, stdin);
+		} while (buf[strlen(buf) - 1] != '\n');
+	}
+	if (length > 0 && username[length - 1] == '\n')
+		username[length - 1] = '\0';
+
+	printf("Password: ");
+#ifdef HAVE_TERMIOS_H
+	tcgetattr(0, &t);
+	t_orig = t;
+	t.c_lflag &= ~ECHO;
+	tcsetattr(0, TCSADRAIN, &t);
+#endif
+	fgets(password, 9, stdin);
+#ifdef HAVE_TERMIOS_H
+	tcsetattr(0, TCSADRAIN, &t_orig);
+#endif
+
+	length = strlen(password);
+	/* skip rest of the line */
+	if (length > 0 && password[length - 1] != '\n')
+	{
+		static char buf[512];
+
+		do
+		{
+			fgets(buf, 512, stdin);
+		} while (buf[strlen(buf) - 1] != '\n');
+	}
+	if (length > 0 && password[length - 1] == '\n')
+		password[length - 1] = '\0';
+
+	printf("\n\n");
+}
+
 
 int
 main(int argc, char **argv)
@@ -470,6 +536,11 @@ main(int argc, char **argv)
 				acls = 0;
 	TableInfo  *tblinfo;
 	int			numTables;
+	char connect_string[512] = "";
+	char tmp_string[128];
+	char username[64];
+	char password[64];
+	int use_password = 0;
 
 	g_verbose = false;
 
@@ -481,7 +552,7 @@ main(int argc, char **argv)
 
 	progname = *argv;
 
-	while ((c = getopt(argc, argv, "adDf:h:op:st:vz")) != EOF)
+	while ((c = getopt(argc, argv, "adDf:h:op:st:vzu")) != EOF)
 	{
 		switch (c)
 		{
@@ -520,6 +591,9 @@ main(int argc, char **argv)
 			case 'z':			/* Dump oids */
 				acls = 1;
 				break;
+			case 'u':
+				use_password = 1;
+				break;
 			default:
 				usage(progname);
 				break;
@@ -551,7 +625,31 @@ main(int argc, char **argv)
 		exit(2);
 	}
 
-	g_conn = PQsetdb(pghost, pgport, NULL, NULL, dbname);
+	/*g_conn = PQsetdb(pghost, pgport, NULL, NULL, dbname);*/
+	if (pghost != NULL) {
+	  sprintf(tmp_string, "host=%s ", pghost);
+	  strcat(connect_string, tmp_string);
+	}
+	if (pgport != NULL) {
+	  sprintf(tmp_string, "port=%s ", pgport);
+	  strcat(connect_string, tmp_string);
+	}
+	if (dbname != NULL) {
+	  sprintf(tmp_string, "dbname=%s ", dbname);
+	  strcat(connect_string, tmp_string);
+	}
+	if (use_password) {
+	  prompt_for_password(username, password);
+	  strcat(connect_string, "authtype=password ");
+	  sprintf(tmp_string, "user=%s ", username);
+	  strcat(connect_string, tmp_string);
+	  sprintf(tmp_string, "password=%s ", password);
+	  strcat(connect_string, tmp_string);
+	  bzero(tmp_string, sizeof(tmp_string));
+	  bzero(password, sizeof(password));
+	}
+	g_conn = PQconnectdb(connect_string);
+	bzero(connect_string, sizeof(connect_string));
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(g_conn) == CONNECTION_BAD)
 	{

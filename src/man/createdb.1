@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/createdb.1,v 1.7 1998/01/26 01:42:42 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/createdb.1,v 1.8 1998/01/29 02:26:33 scrappy Exp $
 .TH CREATEDB UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 createdb - create a database
@@ -15,6 +15,8 @@ host]
 [\c
 .BR -p
 port]
+[\c
+.BR "-u"]
 [\c
 .BR -D
 location]
@@ -77,6 +79,9 @@ extension on which the
 is listening for connections.  Defaults to 5432, or the value of the
 .SM PGPORT
 environment variable (if set).
+.TP
+.BR "-u"
+Use password authentication. Prompts for username and password.
 .SH EXAMPLES
 .nf
 # create the demo database using the postmaster on the local host, port 5432.
