@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.84 1998/06/08 22:28:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.85 1998/06/09 04:06:12 momjian Exp $
  *
  * NOTES
  *
@@ -113,6 +113,7 @@
 typedef struct bkend
 {
 	int			pid;			/* process id of backend */
+	long		cancel_key;		/* cancel key for cancels for this backend */
 } Backend;
 
 /* list of active backends.  For garbage collection only now. */
@@ -198,7 +199,14 @@ static	sigset_t	oldsigmask,
 static	int			orgsigmask = sigblock(0);
 #endif
 
+/*
+ * State for assigning random salts and cancel keys.
+ * Also, the global MyCancelKey passes the cancel key assigned to a given
+ * backend from the postmaster to that backend (via fork).
+ */
+
 static unsigned int random_seed = 0;
+long MyCancelKey = 0;
 
 extern char *optarg;
 extern int	optind,
@@ -612,17 +620,22 @@ ServerLoop(void)
 			return (STATUS_ERROR);
 		}
 
-		if (random_seed == 0)
+		/*
+		 * Select a random seed at the time of first receiving a request.
+		 */
+		while (random_seed == 0)
 		{
 			gettimeofday(&later, &tz);
 	
 			/*
 			 *	We are not sure how much precision is in tv_usec, so we
-			 *	swap the nibbles of 'later' and XOR them with 'now'
+			 *	swap the nibbles of 'later' and XOR them with 'now'.
+			 *  On the off chance that the result is 0, we loop until
+			 *  it isn't.
 			 */
 			random_seed = now.tv_usec ^
 					((later.tv_usec << 16) |
-					((unsigned int)(later.tv_usec & 0xffff0000) >> 16));
+					((later.tv_usec >> 16) & 0xffff));
 		}
 				
 		/*
@@ -1085,6 +1098,14 @@ BackendStartup(Port *port)
 	}
 #endif
 
+	/*
+	 * Compute the cancel key that will be assigned to this backend.
+	 * The backend will have its own copy in the forked-off process'
+	 * value of MyCancelKey, so that it can transmit the key to the
+	 * frontend.
+	 */
+	MyCancelKey = PostmasterRandom();
+
 	if (DebugLvl > 2)
 	{
 		char	  **p;
@@ -1098,17 +1119,21 @@ BackendStartup(Port *port)
 		fprintf(stderr, "-----------------------------------------\n");
 	}
 
+	/* Flush all stdio channels just before fork,
+	 * to avoid double-output problems.
+	 */
+	fflush(NULL);
+
     if ((pid = fork()) == 0)
 	{  /* child */
         if (DoBackend(port))
 		{
             fprintf(stderr, "%s child[%d]: BackendStartup: backend startup failed\n",
-                    progname, pid);
-			/* use _exit to keep from double-flushing stdio */
-	 		_exit(1);
+                    progname, (int) getpid());
+	 		exit(1);
 		}
 		else
-	    	_exit(0);
+	    	exit(0);
 	}
 
 	/* in parent */
@@ -1140,6 +1165,7 @@ BackendStartup(Port *port)
 	}
 
 	bn->pid = pid;
+	bn->cancel_key = MyCancelKey;
 	DLAddHead(BackendList, DLNewElem(bn));
 
 	ActiveBackends = TRUE;
