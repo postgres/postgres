@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.97 1999/10/07 04:23:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.98 1999/10/30 23:13:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -529,7 +529,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	Relation	intoRelationDesc;
 	TupleDesc	tupType;
 	List	   *targetList;
-	int			len;
 
 	/*
 	 * get information from query descriptor
@@ -655,40 +654,43 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	 */
 	tupType = ExecGetTupType(plan);		/* tuple descriptor */
 	targetList = plan->targetlist;
-	len = ExecTargetListLength(targetList);		/* number of attributes */
 
 	/*
-	 * now that we have the target list, initialize the junk filter if
-	 * this is a REPLACE or a DELETE query. We also init the junk filter
-	 * if this is an append query (there might be some rule lock info
-	 * there...) NOTE: in the future we might want to initialize the junk
-	 * filter for all queries. SELECT added by daveh@insightdist.com
-	 * 5/20/98 to allow ORDER/GROUP BY have an identifier missing from the
-	 * target.
+	 * Now that we have the target list, initialize the junk filter if needed.
+	 * SELECT and INSERT queries need a filter if there are any junk attrs
+	 * in the tlist.  UPDATE and DELETE always need one, since there's always
+	 * a junk 'ctid' attribute present --- no need to look first.
 	 */
 	{
 		bool		junk_filter_needed = false;
 		List	   *tlist;
 
-		if (operation == CMD_SELECT)
+		switch (operation)
 		{
-			foreach(tlist, targetList)
-			{
-				TargetEntry *tle = lfirst(tlist);
-
-				if (tle->resdom->resjunk)
+			case CMD_SELECT:
+			case CMD_INSERT:
+				foreach(tlist, targetList)
 				{
-					junk_filter_needed = true;
-					break;
+					TargetEntry *tle = (TargetEntry *) lfirst(tlist);
+
+					if (tle->resdom->resjunk)
+					{
+						junk_filter_needed = true;
+						break;
+					}
 				}
-			}
+				break;
+			case CMD_UPDATE:
+			case CMD_DELETE:
+				junk_filter_needed = true;
+				break;
+			default:
+				break;
 		}
 
-		if (operation == CMD_UPDATE || operation == CMD_DELETE ||
-			operation == CMD_INSERT ||
-			(operation == CMD_SELECT && junk_filter_needed))
+		if (junk_filter_needed)
 		{
-			JunkFilter *j = (JunkFilter *) ExecInitJunkFilter(targetList);
+			JunkFilter *j = ExecInitJunkFilter(targetList, tupType);
 
 			estate->es_junkFilter = j;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.20 1999/07/17 20:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.21 1999/10/30 23:13:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,17 +55,18 @@
  * ExecInitJunkFilter
  *
  * Initialize the Junk filter.
+ *
+ * The initial targetlist and associated tuple descriptor are passed in.
  *-------------------------------------------------------------------------
  */
 JunkFilter *
-ExecInitJunkFilter(List *targetList)
+ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 {
 	JunkFilter *junkfilter;
 	List	   *cleanTargetList;
 	int			len,
 				cleanLength;
-	TupleDesc	tupType,
-				cleanTupType;
+	TupleDesc	cleanTupType;
 	List	   *t;
 	TargetEntry *tle;
 	Resdom	   *resdom,
@@ -154,15 +155,11 @@ ExecInitJunkFilter(List *targetList)
 	}
 
 	/* ---------------------
-	 * Now calculate the tuple types for the original and the clean tuple
-	 *
-	 * XXX ExecTypeFromTL should be used sparingly.  Don't we already
-	 *	   have the tupType corresponding to the targetlist we are passed?
-	 *	   -cim 5/31/91
+	 * Now calculate the tuple type for the cleaned tuple (we were already
+	 * given the type for the original targetlist).
 	 * ---------------------
 	 */
-	tupType = (TupleDesc) ExecTypeFromTL(targetList);
-	cleanTupType = (TupleDesc) ExecTypeFromTL(cleanTargetList);
+	cleanTupType = ExecTypeFromTL(cleanTargetList);
 
 	len = ExecTargetListLength(targetList);
 	cleanLength = ExecTargetListLength(cleanTargetList);

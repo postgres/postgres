@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.38 1999/09/24 00:25:10 tgl Exp $
+ * $Id: executor.h,v 1.39 1999/10/30 23:13:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ extern Relation ExecCreatR(TupleDesc tupType, Oid relationOid);
 /*
  * prototypes from functions in execJunk.c
  */
-extern JunkFilter *ExecInitJunkFilter(List *targetList);
+extern JunkFilter *ExecInitJunkFilter(List *targetList, TupleDesc tupType);
 extern bool ExecGetJunkAttribute(JunkFilter *junkfilter, TupleTableSlot *slot,
 					 char *attrName, Datum *value, bool *isNull);
 extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);

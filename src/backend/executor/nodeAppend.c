@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.26 1999/09/24 00:24:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.27 1999/10/30 23:13:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,9 +276,6 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 
 	for (i = 0; i < nplans; i++)
 	{
-		JunkFilter *j;
-		List	   *targetList;
-
 		/* ----------------
 		 *	NOTE: we first modify range table in
 		 *		  exec_append_initialize_next() and
@@ -302,9 +299,8 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 		if ((es_rri != (RelationInfo *) NULL) &&
 			(node->inheritrelid == es_rri->ri_RangeTableIndex))
 		{
-
-			targetList = initNode->targetlist;
-			j = (JunkFilter *) ExecInitJunkFilter(targetList);
+			JunkFilter *j = ExecInitJunkFilter(initNode->targetlist,
+											   ExecGetTupType(initNode));
 			junkList = lappend(junkList, j);
 		}
 
@@ -318,9 +314,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	 * ----------------
 	 */
 	initNode = (Plan *) nth(0, appendplans);
-	ExecAssignResultType(&appendstate->cstate,
-/*						 ExecGetExecTupDesc(initNode), */
-						 ExecGetTupType(initNode));
+	ExecAssignResultType(&appendstate->cstate, ExecGetTupType(initNode));
 	appendstate->cstate.cs_ProjInfo = NULL;
 
 	/* ----------------
@@ -329,9 +323,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	 */
 	appendstate->as_whichplan = 0;
 	exec_append_initialize_next(node);
-#ifdef NOT_USED
-	result = (List *) initialized[0];
-#endif
+
 	return TRUE;
 }
 
