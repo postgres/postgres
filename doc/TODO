@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 24 17:19:24 EST 2002
+Last updated:		Thu Jan 24 17:20:03 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -226,7 +226,7 @@ COMMANDS
 	o Change syntax to WITH DELIMITER, (keep old syntax around?)
 	o Allow COPY to report error lines and continue;  optionally
 	  allow error codes to be specified; requires savepoints or can
-	  not be run inside a transaction
+	  not be run in a multi-statement transaction
 
 * CURSOR
 	o Allow BINARY option to SELECT, just like DECLARE
