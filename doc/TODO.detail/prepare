@@ -171,3 +171,205 @@ advertising :-)
 
 
 
+From pgsql-hackers-owner+M312@postgresql.org Mon Nov  6 03:27:32 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA28404
+	for <pgman@candle.pha.pa.us>; Mon, 6 Nov 2000 03:27:32 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA68Pos51966;
+	Mon, 6 Nov 2000 03:25:50 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M312@postgresql.org)
+Received: from ara.zf.jcu.cz (ara.zf.jcu.cz [160.217.161.4])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA68Fes50414
+	for <pgsql-hackers@postgresql.org>; Mon, 6 Nov 2000 03:15:40 -0500 (EST)
+	(envelope-from zakkr@zf.jcu.cz)
+Received: from localhost (zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) with SMTP id JAA20862;
+	Mon, 6 Nov 2000 09:15:04 +0100
+Date: Mon, 6 Nov 2000 09:15:04 +0100 (CET)
+From: Karel Zak <zakkr@zf.jcu.cz>
+To: Christof Petig <christof.petig@wtal.de>
+cc: Zeugswetter Andreas SB <ZeugswetterA@wien.spardat.at>,
+        The Hermit Hacker <scrappy@hub.org>, pgsql-hackers@postgresql.org
+Subject: Re: AW: [HACKERS] Re: [GENERAL] Query caching
+In-Reply-To: <3A02DDFF.E8CBFCF3@wtal.de>
+Message-ID: <Pine.LNX.3.96.1001106090801.20612C-100000@ara.zf.jcu.cz>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+On Fri, 3 Nov 2000, Christof Petig wrote:
+
+> Karel Zak wrote:
+> 
+> > On Thu, 2 Nov 2000, Zeugswetter Andreas SB wrote:
+> >
+> > >
+> > > > Well I can re-write and resubmit this patch. Add it as a
+> > > > compile time option
+> > > > is not bad idea. Second possibility is distribute it as patch
+> > > > in the contrib
+> > > > tree. And if it until not good tested not dirty with this main tree...
+> > > >
+> > > >  Ok, I next week prepare it...
+> > >
+> > > One thing that worries me though is, that it extends the sql language,
+> > > and there has been no discussion about the chosen syntax.
+> > >
+> > > Imho the standard embedded SQL syntax (prepare ...) could be a
+> > > starting point.
+> >
+> >  Yes, you are right... my PREPARE/EXECUTE is not too much ready to SQL92,
+> > I some old letter I speculate about "SAVE/EXECUTE PLAN" instead
+> > PREPARE/EXECUTE. But don't forget, it will *experimental* patch... we can
+> > change it in future ..etc.
+> >
+> >                                         Karel
+> 
+> [Sorry, I didn't look into your patch, yet.]
+
+ Please, read my old query cache and PREPARE/EXECUTE description...
+
+> What about parameters? Normally you can prepare a statement and execute it
+
+ We have in PG parameters, see SPI, but now it's used inside backend only
+and not exist statement that allows to use this feature in be<->fe.
+
+> using different parameters. AFAIK postgres' frontend-backend protocol is not
+> designed to take parameters for statements (e.g. like result presents
+> results). A very long road to go.
+> By the way, I'm somewhat interested in getting this feature in. Perhaps it
+> should be part of a protocol redesign (e.g. binary parameters/results).
+> Handling endianness is one aspect, floats are harder (but float->ascii->float
+> sometimes fails as well).
+
+        PREPARE <name> AS <query>
+                [ USING type, ... typeN ]
+                [ NOSHARE | SHARE | GLOBAL ]
+
+        EXECUTE <name>
+                [ INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table ]
+                [ USING val, ... valN ]
+                       [ NOSHARE | SHARE | GLOBAL ]
+
+        DEALLOCATE PREPARE
+                [ <name> [ NOSHARE | SHARE | GLOBAL ]]
+                [ ALL | ALL INTERNAL ]
+
+
+An example:
+
+
+PREPARE chris_query AS SELECT * FROM pg_class WHERE relname = $1 USING text;
+
+EXECUTE chris_query USING 'pg_shadow';
+
+
+	Or mean you something other?
+					Karel
+
+
+
+
+
+
+From pgsql-hackers-owner+M444@postgresql.org Thu Nov  9 03:32:10 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA09953
+	for <pgman@candle.pha.pa.us>; Thu, 9 Nov 2000 03:32:09 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA98RSs11426;
+	Thu, 9 Nov 2000 03:27:28 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M444@postgresql.org)
+Received: from ara.zf.jcu.cz (ara.zf.jcu.cz [160.217.161.4])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA98OPs11045;
+	Thu, 9 Nov 2000 03:24:25 -0500 (EST)
+	(envelope-from zakkr@zf.jcu.cz)
+Received: from localhost (zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) with SMTP id JAA08951;
+	Thu, 9 Nov 2000 09:23:41 +0100
+Date: Thu, 9 Nov 2000 09:23:41 +0100 (CET)
+From: Karel Zak <zakkr@zf.jcu.cz>
+To: Christof Petig <christof.petig@wtal.de>
+cc: PostgreSQL Hackers <pgsql-hackers@postgresql.org>,
+        Michael Meskes <meskes@postgresql.org>,
+        Zeugswetter Andreas SB <ZeugswetterA@wien.spardat.at>,
+        The Hermit Hacker <scrappy@hub.org>
+Subject: Re: AW: [HACKERS] Re: [GENERAL] Query caching
+In-Reply-To: <3A096BCE.F9887955@wtal.de>
+Message-ID: <Pine.LNX.3.96.1001109090739.8052B-100000@ara.zf.jcu.cz>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+On Wed, 8 Nov 2000, Christof Petig wrote:
+
+> Karel Zak wrote:
+> 
+> > > What about parameters? Normally you can prepare a statement and execute it
+> >
+> >  We have in PG parameters, see SPI, but now it's used inside backend only
+> > and not exist statement that allows to use this feature in be<->fe.
+> 
+> Sad. Since ecpg would certainly benefit from this.
+> 
+> > > using different parameters. AFAIK postgres' frontend-backend protocol is not
+> > > designed to take parameters for statements (e.g. like result presents
+> > > results). A very long road to go.
+> > > By the way, I'm somewhat interested in getting this feature in. Perhaps it
+> > > should be part of a protocol redesign (e.g. binary parameters/results).
+> > > Handling endianness is one aspect, floats are harder (but float->ascii->float
+> > > sometimes fails as well).
+> >
+> >         PREPARE <name> AS <query>
+> >                 [ USING type, ... typeN ]
+> >                 [ NOSHARE | SHARE | GLOBAL ]
+> >
+> >         EXECUTE <name>
+> >                 [ INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table ]
+> >                 [ USING val, ... valN ]
+> >                        [ NOSHARE | SHARE | GLOBAL ]
+> >
+> >         DEALLOCATE PREPARE
+> >                 [ <name> [ NOSHARE | SHARE | GLOBAL ]]
+> >                 [ ALL | ALL INTERNAL ]
+> >
+> > An example:
+> >
+> > PREPARE chris_query AS SELECT * FROM pg_class WHERE relname = $1 USING text;
+> 
+> I would prefer '?' as a parameter name, since this is in the embedded sql standard
+> (do you have a copy of the 94 draft? I can mail mine to you?)
+
+ This not depend on query cache. The '$n' is PostgreSQL query parametr
+keyword and is defined in standard parser. The PREPARE statement not parsing
+query it's job for standard parser.
+
+> Also the standard says a whole lot about guessing the parameter's type.
+> 
+> Also I vote for  ?::type or type(?) or sql's cast(...) (don't know it's syntax)
+> instead of abusing the using keyword.
+
+The postgresql executor expect types of parametrs in separate input (array).
+I not sure how much expensive/executable is survey it from query.
+
+> > EXECUTE chris_query USING 'pg_shadow';
+> 
+> Great idea of yours to implement this! Since I was thinking about implementing a
+> more decent schema for ecpg but had no mind to touch the backend and be-fe
+> protocol (yet).
+> It would be desirable to do an 'execute immediate using', since using input
+> parameters would take a lot of code away from ecpg.
+
+By the way, PREPARE/EXECUTE is face only. More interesting in this period is
+query-cache-kernel. SQL92 is really a little unlike my PREPARE/EXECUTE.
+
+						Karel
+
+
