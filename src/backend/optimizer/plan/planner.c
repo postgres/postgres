@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.65 1999/08/22 23:56:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.66 1999/08/26 05:07:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,32 +296,36 @@ union_planner(Query *parse)
 
 	/*
 	 * If we have a HAVING clause, do the necessary things with it.
+	 * This code should parallel query_planner()'s initial processing
+	 * of the WHERE clause.
 	 */
 	if (parse->havingQual)
 	{
 		List	   *ql;
 
-		/* convert the havingQual to conjunctive normal form (cnf) */
-		parse->havingQual = (Node *) cnfify((Expr *) parse->havingQual, true);
+		/* Replace uplevel Vars with Params */
+		if (PlannerQueryLevel > 1)
+			parse->havingQual = SS_replace_correlation_vars(parse->havingQual);
 
 		if (parse->hasSubLinks)
 		{
-			/*
-			 * There may be a subselect in the havingQual, so we have to
-			 * process it using the same function as for a subselect in
-			 * 'where'
-			 */
+			/* Expand SubLinks to SubPlans */
 			parse->havingQual = SS_process_sublinks(parse->havingQual);
 
 			/*
 			 * Check for ungrouped variables passed to subplans. (Probably
-			 * this should be done for the targetlist as well???)
+			 * this should be done for the targetlist as well???  But we
+			 * should NOT do it for the WHERE qual, since WHERE is
+			 * evaluated pre-GROUP.)
 			 */
 			if (check_subplans_for_ungrouped_vars(parse->havingQual,
 												  parse->groupClause,
 												  parse->targetList))
 				elog(ERROR, "Sub-SELECT in HAVING clause must use only GROUPed attributes from outer SELECT");
 		}
+
+		/* convert the havingQual to conjunctive normal form (cnf) */
+		parse->havingQual = (Node *) cnfify((Expr *) parse->havingQual, true);
 
 		/*
 		 * Require an aggregate function to appear in each clause of the
@@ -428,10 +432,11 @@ make_subplanTargetList(Query *parse,
 
 	/*
 	 * Otherwise, start with a "flattened" tlist (having just the vars
-	 * mentioned in the targetlist and HAVING qual).
+	 * mentioned in the targetlist and HAVING qual --- but not upper-
+	 * level Vars; they will be replaced by Params later on).
 	 */
 	sub_tlist = flatten_tlist(tlist);
-	extravars = pull_var_clause(parse->havingQual);
+	extravars = pull_var_clause(parse->havingQual, false);
 	sub_tlist = add_to_flat_tlist(sub_tlist, extravars);
 	freeList(extravars);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.40 1999/08/22 20:14:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.41 1999/08/26 05:09:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,6 +147,10 @@ new_unsorted_tlist(List *targetlist)
  * flatten_tlist
  *	  Create a target list that only contains unique variables.
  *
+ * Note that Vars with varlevelsup > 0 are not included in the output
+ * tlist.  We expect that those will eventually be replaced with Params,
+ * but that probably has not happened at the time this routine is called.
+ *
  * 'tlist' is the current target list
  *
  * Returns the "flattened" new target list.
@@ -157,7 +161,7 @@ new_unsorted_tlist(List *targetlist)
 List *
 flatten_tlist(List *tlist)
 {
-	List	   *vlist = pull_var_clause((Node *) tlist);
+	List	   *vlist = pull_var_clause((Node *) tlist, false);
 	List	   *new_tlist;
 
 	new_tlist = add_to_flat_tlist(NIL, vlist);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.49 1999/08/25 23:21:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.50 1999/08/26 05:09:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -339,7 +339,7 @@ make_ands_implicit(Expr *clause)
 /*
  * pull_constant_clauses
  *	  Scans through a list of qualifications and find those that
- *	  contain no variables.
+ *	  contain no variables (of the current query level).
  *
  * Returns a list of the constant clauses in constantQual and the remaining
  * quals as the return value.
@@ -480,11 +480,14 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
  *		Var nodes are considered distinct if they have different varno
  *		or varattno values.  If there are several occurrences of the same
  *		varno/varattno, you get a randomly chosen one...
+ *
+ * Note that upper-level vars are ignored, since they normally will
+ * become Params with respect to this query level.
  */
 void
 clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 {
-	List	   *clvars = pull_var_clause(clause);
+	List	   *clvars = pull_var_clause(clause, false);
 	List	   *varno_list = NIL;
 	List	   *var_list = NIL;
 	List	   *i;
@@ -494,7 +497,6 @@ clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 		Var		   *var = (Var *) lfirst(i);
 		List	   *vi;
 
-		Assert(var->varlevelsup == 0);
 		if (!intMember(var->varno, varno_list))
 			varno_list = lconsi(var->varno, varno_list);
 		foreach(vi, var_list)

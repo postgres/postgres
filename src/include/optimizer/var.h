@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: var.h,v 1.9 1999/08/22 20:14:57 tgl Exp $
+ * $Id: var.h,v 1.10 1999/08/26 05:06:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,6 @@
 
 extern List *pull_varnos(Node *me);
 extern bool contain_var_clause(Node *clause);
-extern List *pull_var_clause(Node *clause);
+extern List *pull_var_clause(Node *clause, bool includeUpperVars);
 
 #endif	 /* VAR_H */
