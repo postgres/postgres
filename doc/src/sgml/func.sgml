@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.173 2003/09/12 22:17:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.174 2003/09/13 00:19:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1047,7 +1047,7 @@ PostgreSQL documentation
         in <parameter>characters</parameter> from the start and end of
         <parameter>string</parameter>.
        </entry>
-       <entry><literal>btrim('xyxtrimyyx','xy')</literal></entry>
+       <entry><literal>btrim('xyxtrimyyx', 'xy')</literal></entry>
        <entry><literal>trim</literal></entry>
       </row>
 
@@ -1074,7 +1074,7 @@ PostgreSQL documentation
         <parameter>src_encoding</parameter> is omitted, database
         encoding is assumed.
        </entry>
-       <entry><literal>convert('text_in_unicode', 'UNICODE', 'LATIN1')</literal></entry>
+       <entry><literal>convert( 'text_in_unicode', 'UNICODE', 'LATIN1')</literal></entry>
        <entry><literal>text_in_unicode</literal> represented in ISO 8859-1 encoding</entry>
       </row>
 
@@ -1102,7 +1102,7 @@ PostgreSQL documentation
         Encode binary data to <acronym>ASCII</acronym>-only representation.  Supported
         types are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
        </entry>
-       <entry><literal>encode('123\\000\\001', 'base64')</literal></entry>
+       <entry><literal>encode( '123\\000\\001', 'base64')</literal></entry>
        <entry><literal>MTIzAAE=</literal></entry>
       </row>       
 
@@ -1159,7 +1159,7 @@ PostgreSQL documentation
         Remove the longest string containing only characters from
         <parameter>characters</parameter> from the start of the string.
        </entry>
-       <entry><literal>ltrim('zzzytrim','xyz')</literal></entry>
+       <entry><literal>ltrim('zzzytrim', 'xyz')</literal></entry>
        <entry><literal>trim</literal></entry>
       </row>
 
@@ -1170,7 +1170,7 @@ PostgreSQL documentation
         Calculates the MD5 hash of given string, returning the result in hexadecimal.
        </entry>
        <entry><literal>md5('abc')</literal></entry>
-       <entry><literal>900150983cd24fb0d6963f7d28e17f72</literal></entry>
+       <entry><literal>900150983cd24fb0 d6963f7d28e17f72</literal></entry>
       </row>
 
       <row>
@@ -1205,7 +1205,7 @@ PostgreSQL documentation
 	in an <acronym>SQL</acronym> statement string.
 	Embedded quotes and backslashes are properly doubled.
        </entry>
-       <entry><literal>quote_literal('O\'Reilly')</literal></entry>
+       <entry><literal>quote_literal( 'O\'Reilly')</literal></entry>
        <entry><literal>'O''Reilly'</literal></entry>
       </row>
 
@@ -1225,7 +1225,7 @@ PostgreSQL documentation
        <entry>Replace all occurrences in <parameter>string</parameter> of substring
         <parameter>from</parameter> with substring <parameter>to</parameter>.
        </entry>
-       <entry><literal>replace('abcdefabcdef', 'cd', 'XX')</literal></entry>
+       <entry><literal>replace( 'abcdefabcdef', 'cd', 'XX')</literal></entry>
        <entry><literal>abXXefabXXef</literal></entry>
       </row>
 
@@ -1255,7 +1255,7 @@ PostgreSQL documentation
         Remove the longest string containing only characters from
         <parameter>characters</parameter> from the end of the string.
        </entry>
-       <entry><literal>rtrim('trimxxxx','x')</literal></entry>
+       <entry><literal>rtrim('trimxxxx', 'x')</literal></entry>
        <entry><literal>trim</literal></entry>
       </row>
 
@@ -1267,7 +1267,7 @@ PostgreSQL documentation
        <entry>Split <parameter>string</parameter> on <parameter>delimiter</parameter>
         and return the given field (counting from one)
        </entry>
-       <entry><literal>split_part('abc~@~def~@~ghi','~@~',2)</literal></entry>
+       <entry><literal>split_part( 'abc~@~def~@~ghi', '~@~', 2)</literal></entry>
        <entry><literal>def</literal></entry>
       </row>
 
@@ -1280,7 +1280,7 @@ PostgreSQL documentation
          <parameter>string</parameter>)</literal>, but note the reversed
         argument order)
        </entry>
-       <entry><literal>strpos('high','ig')</literal></entry>
+       <entry><literal>strpos('high', 'ig')</literal></entry>
        <entry><literal>2</literal></entry>
       </row>
 
@@ -1321,8 +1321,8 @@ PostgreSQL documentation
        <entry>Convert <parameter>number</parameter> to its equivalent hexadecimal
         representation
        </entry>
-       <entry><literal>to_hex(9223372036854775807)</literal></entry>
-       <entry><literal>7fffffffffffffff</literal></entry>
+       <entry><literal>to_hex(2147483647)</literal></entry>
+       <entry><literal>7fffffff</literal></entry>
       </row>
 
       <row>
@@ -2111,15 +2111,15 @@ PostgreSQL documentation
          <secondary>concatenation</secondary>
         </indexterm>
        </entry>
-       <entry><literal>'\\\\Post'::bytea || '\\047greSQL\\000'::bytea</literal></entry>
-       <entry><literal>\\Post'greSQL\000</literal></entry>
+       <entry><literal>'\\\\Post'::bytea || '\\047gres\\000'::bytea</literal></entry>
+       <entry><literal>\\Post'gres\000</literal></entry>
       </row>
 
       <row>
        <entry><literal><function>octet_length</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>integer</type></entry>
        <entry>Number of bytes in binary string</entry>
-       <entry><literal>octet_length('jo\\000se'::bytea)</literal></entry>
+       <entry><literal>octet_length( 'jo\\000se'::bytea)</literal></entry>
        <entry><literal>5</literal></entry>
       </row>
 
@@ -2248,7 +2248,7 @@ PostgreSQL documentation
         in <parameter>bytes</parameter> from the start and end of
         <parameter>string</parameter>.
       </entry>
-      <entry><literal>btrim('\\000trim\\000'::bytea,'\\000'::bytea)</literal></entry>
+      <entry><literal>btrim('\\000trim\\000'::bytea, '\\000'::bytea)</literal></entry>
       <entry><literal>trim</literal></entry>
      </row>
 
@@ -6027,10 +6027,10 @@ SELECT TIMESTAMP 'now';
 	<entry><literal>24</literal></entry>
        </row>
        <row>
-	<entry><literal><function>set_masklen</function>(<type>inet</type>,<type>integer</type>)</literal></entry>
+	<entry><literal><function>set_masklen</function>(<type>inet</type>, <type>integer</type>)</literal></entry>
 	<entry><type>inet</type></entry>
 	<entry>set netmask length for <type>inet</type> value</entry>
-	<entry><literal>set_masklen('192.168.1.5/24',16)</literal></entry>
+	<entry><literal>set_masklen('192.168.1.5/24', 16)</literal></entry>
 	<entry><literal>192.168.1.5/16</literal></entry>
        </row>
        <row>
