@@ -1,6 +1,6 @@
-TODO list for PostgreSQL
+ODO list for PostgreSQL
 ========================
-Last updated:		Sun Oct 15 14:52:50 EDT 2000
+Last updated:		Sun Oct 15 17:44:54 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -231,6 +231,8 @@ INDEXES
   float4, numeric/decimal too [optimizer]
 * Include heap CTID in btree index keys, remove equal-key cruft from btree
 * Use indexes with CIDR '<<' (contains) operator
+* Prevent index lookups (or index entries using partial index) on most
+  common values; instead use sequential scan
 
 CACHE
 
