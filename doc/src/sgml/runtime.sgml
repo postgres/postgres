@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.97 2001/11/21 06:09:45 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.98 2001/11/28 00:13:30 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -51,28 +51,28 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.97 2001/11/21 06:09:45 tho
 
   <para>
    Before you can do anything, you must initialize a database storage
-   area on disk. We call this a <firstterm>database
-   cluster</firstterm>. (<acronym>SQL</acronym> speaks of a catalog
-   cluster instead.) A database cluster is a collection of databases
-   that will be accessible through a single instance of a running
-   database server. After initialization, a database cluster will
-   contain one database named <literal>template1</literal>. As the
-   name suggests, this will be used as a template for any subsequently
-   created database; it should not be used for actual work.
+   area on disk. We call this a <firstterm>database cluster</firstterm>.
+   (<acronym>SQL</acronym> speaks of a catalog cluster instead.) A
+   database cluster is a collection of databases that will be accessible
+   through a single instance of a running database server. After
+   initialization, a database cluster will contain one database named
+   <literal>template1</literal>. As the name suggests, this will be used
+   as a template for any subsequently created database; it should not be
+   used for actual work.
   </para>
 
   <para>
    In file system terms, a database cluster will be a single directory
-   under which all data will be stored. We call this the
-   <firstterm>data directory</firstterm> or <firstterm>data
-   area</firstterm>. It is completely up to you where you choose to
-   store your data, there is no default, although locations such as
+   under which all data will be stored. We call this the <firstterm>data
+   directory</firstterm> or <firstterm>data area</firstterm>. It is
+   completely up to you where you choose to store your data, there is no
+   default, although locations such as
    <filename>/usr/local/pgsql/data</filename> or
-   <filename>/var/lib/pgsql/data</filename> are popular. To initialize
-   a database cluster, use the command <command>initdb</command>,
-   which is installed with <productname>PostgreSQL</productname>. The
-   desired file system location of your database system is indicated
-   by the <option>-D</option> option, for example
+   <filename>/var/lib/pgsql/data</filename> are popular. To initialize a
+   database cluster, use the command <command>initdb</command>, which is
+   installed with <productname>PostgreSQL</productname>. The desired
+   file system location of your database system is indicated by the
+   <option>-D</option> option, for example
 <screen>
 &gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
 </screen>
@@ -116,6 +116,19 @@ postgres&gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
    database it is essential that it be well secured from unauthorized
    access. <command>initdb</command> therefore revokes access
    permissions from everyone but the <productname>PostgreSQL</productname> user account.
+  </para>
+
+  <para>
+   However, while the directory contents are secure, the default
+   <filename>pg_hba.conf</filename> authentication of
+   <literal>trust</literal> allows any local user to become the
+   superuser and connect to the database. If you don't trust your local
+   users, we recommend you use the <command>initdb</command> option
+   <option>-W</option> or <option>--pwprompt</option> to assign a
+   password to the superuser and modify your
+   <filename>pg_hba.conf</filename> accordingly. (Another option:
+   Your operating system may support <literal>ident</literal> for
+   local connections.)
   </para>
 
   <para>
