@@ -1,6 +1,11 @@
-<refentry id="APP-PG-DUMPALL">
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.5 1999/07/22 15:09:13 thomas Exp $
+Postgres documentation
+-->
+
+<refentry id="APP-PGDUMPALL">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="APP-PGDUMPALL-TITLE">
    <application>pg_dumpall</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-10-04</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 pg_dumpall
@@ -256,7 +261,7 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
   </para>
   <para>
    Refer to 
-   <xref endterm="pg-dump" linkend="app-pg-dump">
+   <xref endterm="app-pgdump-title" linkend="app-pgdump-title">
    for more information on this capability.
   </para>
  </refsect1>

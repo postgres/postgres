@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.9 1999/07/22 15:09:07 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-CREATEINDEX">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-createindex-title">
    CREATE INDEX
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,15 +20,13 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-09</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
-    ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">acc_name</replaceable> ]
-    ( <replaceable class="parameter">column</replaceable> [ <replaceable class="parameter">ops_name</replaceable>] [, ...] )
-CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
-    ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">acc_name</replaceable> ]
-    ( <replaceable class="parameter">func_name</replaceable>( <replaceable class="parameter">r">col</replaceable>le> [, ... ]) <replaceable class="parameter">ops_name</replaceable> )
+CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable>
+    [ USING <replaceable class="parameter">acc_name</replaceable> ] ( <replaceable class="parameter">column</replaceable> [ <replaceable class="parameter">ops_name</replaceable>] [, ...] )
+CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable>
+    [ USING <replaceable class="parameter">acc_name</replaceable> ] ( <replaceable class="parameter">func_name</replaceable>( <replaceable class="parameter">r">col</replaceable>le> [, ... ]) <replaceable class="parameter">ops_name</replaceable> )
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEINDEX-1">
@@ -48,6 +51,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">index_name</replaceable></term>
       <listitem>
@@ -56,6 +60,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">table</replaceable></term>
       <listitem>
@@ -64,6 +69,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">acc_name</replaceable></term>
       <listitem>
@@ -71,6 +77,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
 	the name of the access method which is to be used for
 	the index. The default access method is BTREE.
 	Postgres provides three access methods for secondary indexes:
+
 	<variablelist>
 	 <varlistentry>
 	  <term>BTREE</term>
@@ -81,6 +88,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
 	   </para>
 	  </listitem>
 	 </varlistentry>
+
 	 <varlistentry>
 	  <term>RTREE</term>
 	  <listitem>
@@ -89,6 +97,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
 	   </para>
 	  </listitem>
 	 </varlistentry>
+
 	 <varlistentry>
 	  <term>HASH</term>
 	  <listitem>
@@ -98,7 +107,6 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
 	  </listitem>
 	 </varlistentry>
 	</variablelist>
-
        </para>
       </listitem>
      </varlistentry>
@@ -111,27 +119,16 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">ops_name</replaceable></term>
       <listitem>
        <para>
-	An associated operator class.
-	The following select list returns all ops_names:
-
-	<programlisting>
-SELECT am.amname AS acc_name,
-       opc.opcname AS ops_name,
-       opr.oprname AS ops_comp
-    FROM pg_am am, pg_amop amop,
-         pg_opclass opc, pg_operator opr
-    WHERE amop.amopid = am.oid AND
-          amop.amopclaid = opc.oid AND
-          amop.amopopr = opr.oid
-    ORDER BY acc_name, ops_name, ops_comp
-	</programlisting>
+	An associated operator class. See below for details.
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">func_name</replaceable></term>
       <listitem>
@@ -190,9 +187,8 @@ ERROR: Cannot create index: 'index_name' already exists.
   </title>
   <para>
    <command>CREATE INDEX</command> constructs an index 
-   <replaceable class="parameter">index_name</replaceable>.
-   on the specified
-   <replaceable class="parameter">table</replaceable>.
+   <replaceable class="parameter">index_name</replaceable>
+   on the specified <replaceable class="parameter">table</replaceable>.
 
    <tip>
     <para>
@@ -201,6 +197,7 @@ ERROR: Cannot create index: 'index_name' already exists.
     </para>
    </tip>
   </para>
+
   <para>
    In the first syntax shown above, the key fields for the
    index are specified as column names; a column may also have
@@ -213,14 +210,28 @@ ERROR: Cannot create index: 'index_name' already exists.
    operator class is the appropriate operator class for that
    field type.
   </para>
+
   <para>
-   In the second syntax, an index is defined
+   In the second syntax shown above, an index is defined
    on the result of a user-defined function
    <replaceable class="parameter">func_name</replaceable> applied
-   to one or more attributes of a single class. These functional
-   indexes can be used to obtain fast access to data
+   to one or more attributes of a single class.
+   These <firstterm>functional indices</firstterm>
+   can be used to obtain fast access to data
    based on operators that would normally require some
    transformation to apply them to the base data.
+  </para>
+
+  <para>
+   Postgres provides btree, rtree and hash access methods for
+   secondary indices.  The btree access method is an implementation of
+   the Lehman-Yao high-concurrency btrees.  The rtree access method
+   implements standard rtrees using Guttman's quadratic split algorithm.
+   The hash access method is an implementation of Litwin's linear
+   hashing.  We mention the algorithms used solely to indicate that all
+   of these access methods are fully dynamic and do not have to be
+   optimized periodically (as is the case with, for example, static hash
+   access methods).
   </para>
 
   <refsect2 id="R2-SQL-CREATEINDEX-3">
@@ -230,13 +241,89 @@ ERROR: Cannot create index: 'index_name' already exists.
    <title>
     Notes
    </title>
+
+   <para>
+    The Postgres query optimizer will consider using btree indices in a scan
+    whenever an indexed attribute is involved in a comparison using one of:
+
+    <simplelist type="inline">
+     <member>&lt;</member>
+     <member>&lt;=</member>
+     <member>=</member>
+     <member>&gt;=</member>
+     <member>&gt;</member>
+    </simplelist>
+   </para>
+
+   <para>
+    Both box classes support indices on the <literal>box</literal> data 
+    type in <productname>Postgres</productname>.
+    The difference between them is that <literal>bigbox_ops</literal>
+    scales box coordinates down, to avoid floating point exceptions from
+    doing multiplication, addition, and subtraction on very large
+    floating-point coordinates.  If the field on which your rectangles lie
+    is about 20,000 units square or larger, you should use
+    <literal>bigbox_ops</literal>.
+    The <literal>poly_ops</literal> operator class supports rtree
+    indices on <literal>polygon</literal> data.
+   </para>
+
+   <para>
+    The <productname>Postgres</productname>
+    query optimizer will consider using an rtree index whenever
+    an indexed attribute is involved in a comparison using one of:
+
+    <simplelist type="inline">
+     <member>&lt;&lt;</member>
+     <member>&amp;&lt;</member>
+     <member>&amp;&gt;</member>
+     <member>&gt;&gt;</member>
+     <member>@</member>
+     <member>~=</member>
+     <member>&amp;&amp;</member>
+    </simplelist>
+   </para>
+
+   <para>
+    The <productname>Postgres</productname>
+    query optimizer will consider using a hash index whenever
+    an indexed attribute is involved in a comparison using
+    the <literal>=</literal> operator.
+   </para>
+
    <para>
     Currently, only the BTREE access method supports multi-column
     indexes. Up to 7 keys may be specified.
    </para>
+
    <para>
-    Use <command>DROP INDEX</command>
+    Use <xref linkend="sql-dropindex-title" endterm="sql-dropindex-title">
     to remove an index.
+   </para>
+
+   <para>
+    The <literal>int24_ops</literal>
+    operator class is useful for constructing indices on int2 data, and
+    doing comparisons against int4 data in query qualifications.
+    Similarly, <literal>int42_ops</literal>
+    support indices on int4 data that is to be compared against int2 data
+    in queries.
+   </para>
+
+   <para>
+    The following select list returns all ops_names:
+
+    <programlisting>
+SELECT am.amname AS acc_name,
+       opc.opcname AS ops_name,
+       opr.oprname AS ops_comp
+    FROM pg_am am, pg_amop amop,
+         pg_opclass opc, pg_operator opr
+    WHERE amop.amopid = am.oid AND
+          amop.amopclaid = opc.oid AND
+          amop.amopopr = opr.oid
+    ORDER BY acc_name, ops_name, ops_comp
+    </programlisting>
    </para>
   </refsect2>
  </refsect1>
@@ -276,8 +363,6 @@ SELECT * FROM points
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
   
   <refsect2 id="R2-SQL-CREATEINDEX-4">
    <refsect2info>

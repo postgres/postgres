@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.8 1999/07/22 15:09:14 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-REVOKE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-REVOKE-TITLE">
    REVOKE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-24</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
@@ -84,7 +89,8 @@ REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
 	  <listitem>
 	   <para>
 	    Privilege to define rules on table/view.
-	    (See <command>CREATE RULE</command>).
+	    (See 
+	    <xref linkend="sql-createrule-title" endterm="sql-createrule-title">).
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -297,6 +303,7 @@ REVOKE ALL ON kinds FROM manuel;
    <title>
     SQL92
    </title>
+
    <para>
     The SQL92 syntax for <command>REVOKE</command>
     has additional capabilities for rescinding
@@ -316,7 +323,9 @@ REVOKE { INSERT | UPDATE | REFERENCES } [, ...] [ ( <replaceable class="paramete
       </term>
       <listitem>
        <para>
-	Refer to <command>GRANT</command> for details on individual fields.
+	Refer to
+	<xref linkend="sql-grant-title" endterm="sql-grant-title">
+	for details on individual fields.
        </para>
       </listitem>
      </varlistentry>
@@ -333,8 +342,9 @@ REVOKE GRANT OPTION FOR <replaceable class="parameter">privilege</replaceable> [
        <para>
 	Rescinds authority for a user to grant the specified privilege
 	to others.
-	Refer to the <command>GRANT</command> command for details
-	on individual fields.
+	Refer to
+	<xref linkend="sql-grant-title" endterm="sql-grant-title">
+	for details on individual fields.
        </para>
       </listitem>
      </varlistentry>

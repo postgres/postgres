@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.7 1999/07/22 15:09:12 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-FETCH">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-FETCH-TITLE">
    FETCH
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-01</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 FETCH [ <replaceable class="PARAMETER">selector</replaceable> ] [ <replaceable class="PARAMETER">count</replaceable> ] { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
@@ -212,8 +217,9 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
   <title>
    Description
   </title>
+
   <para>
-   FETCH allows a user to retrieve rows using a cursor.
+   <command>FETCH</command> allows a user to retrieve rows using a cursor.
    The number of rows retrieved is specified by
    <replaceable class="PARAMETER">#</replaceable>.
    If the number of rows remaining in the cursor is less
@@ -226,37 +232,12 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
 
    <tip>
     <para>
-     Negative numbers are now allowed to be specified for the
+     Negative numbers are allowed to be specified for the
      row count. A negative number is equivalent to reversing
      the sense of the FORWARD and BACKWARD keywords. For example,
      <command>FORWARD -1</command> is the same as <command>BACKWARD 1</command>.
     </para>
    </tip>
-  </para>
-  <para>
-   Note that the FORWARD and BACKWARD keywords are
-   <productname>Postgres</productname> extensions.
-   The <acronym>SQL92</acronym> syntax is also supported, specified
-   in the second form of the command. See below for details
-   on compatibility issues.
-  </para>
-  <para>
-   Once all rows are fetched, every other fetch access returns
-   no rows.
-  </para>
-
-  <para>
-   Updating data in a cursor is not supported by 
-   <productname>Postgres</productname>,
-   because mapping cursor updates back to base tables is
-   not generally possible, as is also the case with VIEW updates.
-   Consequently,
-   users must issue explicit UPDATE commands to replace data.
-</para>
-
-  <para>
-   Cursors may only be used inside of transactions because
-   the data that they store spans multiple user queries.
   </para>
 
   <refsect2 id="R2-SQL-FETCH-3">
@@ -266,11 +247,45 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
    <title>
     Notes
    </title>
+
    <para>
-    Use <command>MOVE</command> to change cursor position.
-    <command>DECLARE</command> will define a cursor.
-    Refer to <command>BEGIN</command>, <command>COMMIT</command>, and
-    <command>ROLLBACK</command>
+    Note that the FORWARD and BACKWARD keywords are
+    <productname>Postgres</productname> extensions.
+    The <acronym>SQL92</acronym> syntax is also supported, specified
+    in the second form of the command. See below for details
+    on compatibility issues.
+   </para>
+
+   <para>
+    Once all rows are fetched, every other fetch access returns
+    no rows.
+   </para>
+
+   <para>
+    Updating data in a cursor is not supported by 
+    <productname>Postgres</productname>,
+    because mapping cursor updates back to base tables is
+    not generally possible, as is also the case with VIEW updates.
+    Consequently,
+    users must issue explicit UPDATE commands to replace data.
+   </para>
+
+   <para>
+    Cursors may only be used inside of transactions because
+    the data that they store spans multiple user queries.
+   </para>
+
+   <para>
+    Use
+    <xref linkend="sql-move-title" endterm="sql-move-title">
+    to change cursor position.
+    <xref linkend="sql-declare-title" endterm="sql-declare-title">
+    will define a cursor.
+    Refer to
+    <xref linkend="sql-begin-title" endterm="sql-begin-title">,
+    <xref linkend="sql-commit-title" endterm="sql-commit-title">,
+    and
+    <xref linkend="sql-rollback-title" endterm="sql-rollback-title">
     for further information about transactions.
    </para>
   </refsect2>
@@ -280,7 +295,10 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
   <title>
    Usage
   </title>
+
   <para>
+   The following examples traverses a table using a cursor.
+
    <programlisting>
    --set up and use a cursor:
    --
@@ -292,6 +310,7 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
    --
      FETCH FORWARD 5 IN liahona;
 
+    <computeroutput>
      code |title                  |did| date_prod|kind      |len
      -----+-----------------------+---+----------+----------+------
      BL101|The Third Man          |101|1949-12-23|Drama     | 01:44
@@ -299,15 +318,17 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
      JL201|Une Femme est une Femme|102|1961-03-12|Romantic  | 01:25
      P_301|Vertigo                |103|1958-11-14|Action    | 02:08
      P_302|Becket                 |103|1964-02-03|Drama     | 02:28
- 
+    </computeroutput>
 
    --Fetch previous row:
    --
      FETCH BACKWARD 1 IN liahona;
 
+    <computeroutput>
      code |title                  |did| date_prod|kind      |len
      -----+-----------------------+---+----------+----------+------
      P_301|Vertigo                |103|1958-11-14|Action    | 02:08
+    </computeroutput>
 
    -- close the cursor and commit work:
    --
@@ -321,11 +342,6 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
   <title>
    Compatibility
   </title>
-  <para>
-   The non-embedded use of cursors is a <productname>Postgres</productname>
-   extension. The syntax and usage of cursors is being compared
-   against the embedded form of cursors defined in <acronym>SQL92</acronym>.
-  </para>
 
   <refsect2 id="R2-SQL-FETCH-4">
    <refsect2info>
@@ -334,6 +350,17 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
    <title>
     SQL92
    </title>
+
+   <para>
+    <note>
+     <para>
+      The non-embedded use of cursors is a <productname>Postgres</productname>
+      extension. The syntax and usage of cursors is being compared
+      against the embedded form of cursors defined in <acronym>SQL92</acronym>.
+     </para>
+    </note>
+   </para>
+
    <para>
     <acronym>SQL92</acronym> allows absolute positioning of the cursor for
     FETCH, and allows placing the results into explicit variables.

@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.5 1999/07/22 15:09:13 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="APP-PG-UPGRADE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="APP-PG-UPGRADE-TITLE">
    <application>pg_upgrade</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
@@ -12,9 +17,10 @@
   <refpurpose>
    Allows upgrade from a previous release without reloading data
   </refpurpose>
+ </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-10-04</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 pg_upgrade
@@ -29,10 +35,14 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
   <title>
    Description
   </title>
+
   <para>
    <application>pg_upgrade</application>
    is a utility for upgrading from a previous
    PostgreSQL release without reloading all the data.
+   Not all <productname>Postgres</productname> releases can be handled 
+   this way; check the release notes for details on your installation.
+  </para>
 
   <procedure>
    <title>Upgrading <productname>Postgres</productname></title>
@@ -107,6 +117,8 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
      You can delete the <filename>data.old/</filename> directory when you
      are finished.
     </para>
+   </step>
+  </procedure>
  </refsect1>
 </refentry>
 

@@ -1,8 +1,8 @@
-<!-- allfiles.sgml
--
-- Complete list of usable sgml source files in this directory.
--
-- -->
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.10 1999/07/22 15:09:06 thomas Exp $
+Postgres documentation
+Complete list of usable sgml source files in this directory.
+-->
 
 <!entity intro-ref          system "intro-ref.sgml">
 <!entity commands           system "commands.sgml">
@@ -37,22 +37,6 @@
 <!entity translate          system "translate.sgml">
 <!entity trim               system "trim.sgml">
 <!entity upper              system "upper.sgml">
-
-<!-- these are folded into create_table.sgml
-<!entity check              system "check.sgml">
-<!entity constraints        system "constraint.sgml">
-<!entity default            system "default.sgml">
-<!entity notNull            system "not_null.sgml">
-<!entity primaryKey         system "primary_key.sgml">
-<!entity unique             system "unique.sgml">
--->
-
-<!-- these are folded into select.sgml
-<!entity groupBy            system "group_by.sgml">
-<!entity having             system "having.sgml">
-<!entity orderBy            system "order_by.sgml">
-<!entity union              system "union.sgml">
--->
 
 <!-- these are in the "commands" reference chapter -->
 <!entity abort              system "abort.sgml">
@@ -92,6 +76,7 @@
 <!entity dropType           system "drop_type.sgml">
 <!entity dropUser           system "drop_user.sgml">
 <!entity dropView           system "drop_view.sgml">
+<!entity end                system "end.sgml">
 <!entity explain            system "explain.sgml">
 <!entity fetch              system "fetch.sgml">
 <!entity grant              system "grant.sgml">
@@ -117,12 +102,15 @@
 <!entity createuser         system "createuser.sgml">
 <!entity destroydb          system "destroydb.sgml">
 <!entity destroyuser        system "destroyuser.sgml">
+<!entity ecpgRef            system "ecpg-ref.sgml">
 <!entity initdb             system "initdb.sgml">
 <!entity initlocation       system "initlocation.sgml">
+<!entity ipcclean           system "ipcclean.sgml">
 <!entity pgAccess           system "pgaccess-ref.sgml">
 <!entity pgAdmin            system "pgadmin-ref.sgml">
 <!entity pgDump             system "pg_dump.sgml">
 <!entity pgDumpall          system "pg_dumpall.sgml">
+<!entity pgPasswd           system "pg_passwd.sgml">
 <!entity pgUpgrade          system "pg_upgrade.sgml">
 <!entity postgres           system "postgres-ref.sgml">
 <!entity postmaster         system "postmaster.sgml">

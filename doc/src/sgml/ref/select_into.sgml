@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.4 1999/07/22 15:09:14 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-SELECTINTO">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-SELECTINTO-TITLE">
    SELECT INTO
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -14,7 +19,7 @@
   </refpurpose></refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-22</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
@@ -70,7 +75,8 @@ SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable
 
    <note>
     <para>
-     CREATE TABLE AS is functionally equivalent to the SELECT INTO command.
+     <xref linkend="sql-createtableas-title" endterm="sql-createtableas-title">
+     is functionally equivalent to the <command>SELECT INTO</command> command.
     </para>
    </note>
   </para>

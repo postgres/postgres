@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.10 1999/07/22 15:09:08 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-CREATERULE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-createrule-title">
    CREATE RULE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-11</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable class="parameter">event</replaceable>
@@ -117,6 +122,15 @@ CREATE
   <title>
    Description
   </title>
+
+  <para>
+   The <productname>Postgres</productname> 
+   <firstterm>rule system</firstterm> allows one to define an
+   alternate action to be performed on updates, inserts, or deletions
+   from database tables or classes. Currently, rules are used to
+   implement table views.
+  </para>
+
   <para>
    The semantics of a rule is that at the time an individual instance is
    accessed, updated, inserted or deleted, there is a current instance (for
@@ -131,6 +145,7 @@ CREATE
    <literal>current.</literal><replaceable class="parameter">attribute-name</replaceable>
    and <literal>new.</literal><replaceable class="parameter">attribute-name</replaceable>.
   </para>
+
   <para>
    The <replaceable class="parameter">action</replaceable> part of the rule
    executes with the same command and transaction identifier as the user
@@ -209,12 +224,31 @@ CREATE RULE bad_rule_combination_2 AS
 SELECT * FROM emp;
       </programlisting></para>
     </example>
-
    </para>
+
    <para>
     You must have rule definition access to a class in order
     to define a rule on it. Use <command>GRANT</command>
     and <command>REVOKE</command> to change permissions.
+   </para>
+
+   <para>
+    The object in a <acronym>SQL</acronym> rule cannot be an array reference and
+    cannot have parameters.
+   </para>
+
+   <para>
+    Aside from the "oid" field, system attributes cannot be
+    referenced anywhere in a rule. Among other things, this
+    means that functions of instances (e.g., <literal>foo(emp)</literal> where
+    <literal>emp</literal> is a class) cannot be called anywhere in a rule.
+   </para>
+
+   <para>
+    The rule system stores the rule text and query plans as
+    text attributes. This implies that creation of rules may
+    fail if the rule plus its various internal representations
+    exceed some value that is on the order of one page (8KB).
    </para>
   </refsect2>
  </refsect1>
@@ -284,36 +318,10 @@ CREATE RULE example_5 AS
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-CREATERULE-3">
-  <title>
-   Bugs
-  </title>
-  <para>
-   The object in a <acronym>SQL</acronym> rule cannot be an array reference and
-   cannot have parameters.
-  </para>
-  <para>
-   Aside from the "oid" field, system attributes cannot be
-   referenced anywhere in a rule. Among other things, this
-   means that functions of instances (e.g., "<literal>foo(emp)</literal>" where
-   "<literal>emp</literal>" is a class) cannot be called anywhere in a rule.
-  </para>
-  <para>
-   The rule system stores the rule text and query plans as
-   text attributes. This implies that creation of rules may
-   fail if the rule plus its various internal representations
-   exceed some value that is on the order of one page (8KB).
-   </para>
- </refsect1>
-
  <refsect1 id="R1-SQL-CREATERULE-4">
   <title>
    Compatibility
   </title>
-  <para>
-   <command>CREATE RULE</command> statement is a <productname>Postgres</productname>
-   language extension.
-  </para>
 
   <refsect2 id="R2-SQL-CREATERULE-4">
    <refsect2info>
@@ -322,7 +330,10 @@ CREATE RULE example_5 AS
    <title>
     SQL92
    </title>
+
    <para>
+    <command>CREATE RULE</command> statement is a <productname>Postgres</productname>
+    language extension.
     There is no <command>CREATE RULE</command> statement in <acronym>SQL92</acronym>.
    </para>
   </refsect2>

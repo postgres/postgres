@@ -1,6 +1,11 @@
-<refentry id="SQL-BEGINWORK">
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.9 1999/07/22 15:09:06 thomas Exp $
+Postgres documentation
+-->
+
+<refentry id="SQL-BEGIN">
  <refmeta>
-  <refentrytitle id="SQL-BEGINWORK-TITLE">
+  <refentrytitle id="SQL-BEGIN-TITLE">
    BEGIN
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -16,13 +21,13 @@
   </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-06-11</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>  
 BEGIN [ WORK | TRANSACTION ]
   </synopsis>
   
-  <refsect2 id="R2-SQL-BEGINWORK-1">
+  <refsect2 id="R2-SQL-BEGIN-1">
    <refsect2info>
     <date>1999-06-11</date>
    </refsect2info>
@@ -30,11 +35,22 @@ BEGIN [ WORK | TRANSACTION ]
     Inputs
    </title>
    <para>
-    None.
+
+    <variablelist>
+     <varlistentry>
+      <term>WORK</term>
+      <term>TRANSACTION</term>
+      <listitem>
+       <para>
+	Optional keywords. They have no effect.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
   </refsect2>
   
-  <refsect2 id="R2-SQL-BEGINWORK-2">
+  <refsect2 id="R2-SQL-BEGIN-2">
    <refsect2info>
     <date>1999-06-11</date>
    </refsect2info>
@@ -70,7 +86,7 @@ NOTICE:  BeginTransactionBlock and not in default state
   </refsect2>
  </refsynopsisdiv>
  
- <refsect1 id="R1-SQL-BEGINWORK-1">
+ <refsect1 id="R1-SQL-BEGIN-1">
   <refsect1info>
    <date>1999-06-11</date>
   </refsect1info>
@@ -88,7 +104,9 @@ NOTICE:  BeginTransactionBlock and not in default state
    (if execution was successful, otherwise a rollback is done).
    <command>BEGIN</command> initiates a user transaction in chained mode,
    i.e. all user statements after <command>BEGIN</command> command will
-   be executed in a single transaction until an explicit COMMIT, ROLLBACK
+   be executed in a single transaction until an explicit 
+   <xref linkend="sql-commit-title" endterm="sql-commit-title">,
+   <xref linkend="sql-rollback-title" endterm="sql-rollback-title">,
    or execution abort. Statements in chained mode are executed much faster, 
    because transaction start/commit requires significant CPU and disk 
    activity. Execution of multiple statements inside a transaction
@@ -102,7 +120,7 @@ NOTICE:  BeginTransactionBlock and not in default state
    is READ COMMITTED, where queries inside the transaction see only changes
    committed before query execution. So, you have to use 
    <command>SET TRANSACTION ISOLATION LEVEL SERIALIZABLE</command>
-   just after BEGIN if you need more rigorous transaction isolation. 
+   just after <command>BEGIN</command> if you need more rigorous transaction isolation. 
    In SERIALIZABLE mode queries will see only changes committed before
    the entire
    transaction began (actually, before execution of the first DML statement
@@ -116,7 +134,7 @@ NOTICE:  BeginTransactionBlock and not in default state
    (atomic, consistent, isolatable, and durable) property.
   </para>
   
-  <refsect2 id="R2-SQL-BEGINWORK-3">
+  <refsect2 id="R2-SQL-BEGIN-3">
    <refsect2info>
     <date>1999-06-11</date>
    </refsect2info>
@@ -129,7 +147,8 @@ NOTICE:  BeginTransactionBlock and not in default state
    </para>
 
    <para>
-    Refer to the <command>LOCK</command> statement for further information
+    Refer to <xref linkend="sql-lock-title" endterm="sql-lock-title">
+    for further information
     about locking tables inside a transaction.
    </para>
    
@@ -142,7 +161,7 @@ NOTICE:  BeginTransactionBlock and not in default state
   </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-BEGINWORK-2">
+ <refsect1 id="R1-SQL-BEGIN-2">
   <title>
    Usage
   </title>
@@ -156,25 +175,26 @@ BEGIN WORK;
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-BEGINWORK-3">
+ <refsect1 id="R1-SQL-BEGIN-3">
   <title>
    Compatibility
   </title>
-  <para>
-    <command>BEGIN</command>
-    is a <productname>Postgres</productname> language extension.
-  </para>
-  <refsect2 id="R2-SQL-BEGINWORK-4">
+
+  <refsect2 id="R2-SQL-BEGIN-4">
      <refsect2info>
     <date>1999-06-11</date>
    </refsect2info>
    <title>
     SQL92
    </title>
-   <para> 
-    There is no explicit BEGIN WORK command in <acronym>SQL92</acronym>;
+
+   <para>
+    <command>BEGIN</command>
+    is a <productname>Postgres</productname> language extension.
+    There is no explicit <command>BEGIN</command>
+    command in <acronym>SQL92</acronym>;
     transaction initiation is always implicit and it terminates either 
-    with a COMMIT or with a ROLLBACK statement.
+    with a <command>COMMIT</command> or <command>ROLLBACK</command> statement.
 
     <note>
      <para>

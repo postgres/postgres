@@ -1,3 +1,8 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.10 1999/07/22 15:09:08 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-CREATETYPE">
  <refmeta>
   <refentrytitle>
@@ -15,21 +20,15 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-21</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE TYPE <replaceable class="parameter">typename</replaceable> (
-        INPUT          = <replaceable class="parameter">input_function</replaceable>
-      , OUTPUT         = <replaceable class="parameter">output_function</replaceable>
-      , INTERNALLENGTH = (<replaceable class="parameter">internallength</replaceable> | VARIABLE)
-    [ , EXTERNALLENGTH = (<replaceable class="parameter">externallength</replaceable> | VARIABLE) ]
-    [ , ELEMENT        = <replaceable class="parameter">element</replaceable> ]
-    [ , DELIMITER      = <replaceable class="parameter">delimiter</replaceable> ]
-    [ , DEFAULT        = "<replaceable class="parameter">default</replaceable>" ]
-    [ , SEND           = <replaceable class="parameter">send_function</replaceable> ]
-    [ , RECEIVE        = <replaceable class="parameter">receive_function</replaceable> ]
-    [ , PASSEDBYVALUE ]
-)
+CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <replaceable class="parameter">input_function</replaceable>, OUTPUT = <replaceable class="parameter">output_function</replaceable>
+      , INTERNALLENGTH = { <replaceable class="parameter">internallength</replaceable> | VARIABLE } [ , EXTERNALLENGTH = { <replaceable class="parameter">externallength</replaceable> | VARIABLE } ]
+    [ , DEFAULT = "<replaceable class="parameter">default</replaceable>" ]
+    [ , ELEMENT = <replaceable class="parameter">element</replaceable> ] [ , DELIMITER = <replaceable class="parameter">delimiter</replaceable> ]
+    [ , SEND = <replaceable class="parameter">send_function</replaceable> ] [ , RECEIVE = <replaceable class="parameter">receive_function</replaceable> ]
+    [ , PASSEDBYVALUE ] )
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATETYPE-1">
@@ -50,8 +49,9 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
-      <term>INTERNALLENGTH <replaceable class="parameter">internallength</replaceable></term>
+      <term><replaceable class="parameter">internallength</replaceable></term>
       <listitem>
        <para>
 	A literal value, which specifies the internal length of
@@ -59,8 +59,9 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
-      <term>EXTERNALLENGTH <replaceable class="parameter">externallength</replaceable></term>
+      <term><replaceable class="parameter">externallength</replaceable></term>
       <listitem>
        <para>
 	A literal value, which specifies the external length of
@@ -68,18 +69,21 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
-      <term>INPUT <replaceable class="parameter">input_function</replaceable></term>
+      <term><replaceable class="parameter">input_function</replaceable></term>
       <listitem>
        <para>
-	The name of a function, created by CREATE FUNCTION, which
+	The name of a function, created by
+	<command>CREATE FUNCTION</command>, which
 	converts data from its external form to the type's
 	internal form.
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
-      <term>OUTPUT <replaceable class="parameter">output_function</replaceable></term>
+      <term><replaceable class="parameter">output_function</replaceable></term>
       <listitem>
        <para>
 	The name of a function, created by CREATE FUNCTION, which
@@ -88,6 +92,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">element</replaceable></term>
       <listitem>
@@ -97,6 +102,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">delimiter</replaceable></term>
       <listitem>
@@ -105,6 +111,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">default</replaceable></term>
       <listitem>
@@ -118,10 +125,9 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
       <term><replaceable class="parameter">send_function</replaceable></term>
       <listitem>
        <para>
-	The name of a function, created by CREATE FUNCTION, which
+	The name of a function, created by <command>CREATE FUNCTION</command>, which
 	converts data of this type into a form suitable for
 	transmission to another machine.
-	<comment>Is this right?</comment>
        </para>
       </listitem>
      </varlistentry>
@@ -129,10 +135,9 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
       <term><replaceable class="parameter">receive_function</replaceable></term>
       <listitem>
        <para>
-	The name of a function, created by CREATE FUNCTION, which
+	The name of a function, created by <command>CREATE FUNCTION</command>, which
 	converts data of this type from a form suitable for
 	transmission from another machine to internal form.
-	<comment>Is this right?</comment>
        </para>
       </listitem>
      </varlistentry>
@@ -172,6 +177,7 @@ CREATE
   <title>
    Description
   </title>
+
   <para>
    <command>CREATE TYPE</command>  allows  the user to register a new user data
    type with Postgres for use in the current data base.   The
@@ -180,6 +186,7 @@ CREATE
    the name of the new type and must  be  unique  within  the
    types defined for this database.
   </para>
+
   <para>
    <command>CREATE TYPE</command>  requires  the  registration of two functions
    (using create function) before defining the type.   The
@@ -193,6 +200,7 @@ CREATE
    the input and output functions must be  declared  to  take
    one or two arguments of type "<literal>opaque</literal>".
   </para>
+
   <para>
    New  base  data  types  can be fixed length, in which case
    <replaceable class="parameter">internallength</replaceable> is a
@@ -207,6 +215,7 @@ CREATE
    <replaceable class="parameter">externallength</replaceable>
    keyword.
   </para>
+
   <para>
    To indicate that a type is an array and to indicate that a
    type has array elements, indicate the type  of  the  array
@@ -214,6 +223,7 @@ CREATE
    an array of 4 byte integers ("int4"), specify
    <programlisting>ELEMENT = int4</programlisting>
   </para>
+
   <para>
    To indicate the delimiter to be used  on  arrays  of  this
    type,  <replaceable class="parameter">delimiter</replaceable>
@@ -221,6 +231,7 @@ CREATE
    set to a specific character.  The default delimiter is the comma
    ("<literal>,</literal>").
   </para>
+
   <para>
    A default value is optionally available  in  case  a  user
    wants  some  specific  bit  pattern to mean "data not present."
@@ -228,8 +239,9 @@ CREATE
    <comment>How does the user specify that bit pattern and associate
     it with the fact that the data is not present></comment>
   </para>
+
   <para>
-   The optional functions
+   The optional arguments
    <replaceable class="parameter">send_function</replaceable> and
    <replaceable class="parameter">receive_function</replaceable>
    are  used when the application program requesting Postgres
@@ -246,6 +258,7 @@ CREATE
    characters do not have to be converted if passed  from
    a Sun-4 to a DECstation, but many other types do.
   </para>
+
   <para>
    The  optional flag,  <option>PASSEDBYVALUE</option>, indicates that operators
    and functions which use this data type should be passed an
@@ -253,6 +266,7 @@ CREATE
    may not pass by value types whose internal representation is 
    more than four bytes.
   </para>
+
   <para>
    For new base types, a user can define operators, functions
    and aggregates using the appropriate facilities  described
@@ -287,15 +301,16 @@ CREATE
   <para>
    This command creates the box data type and then uses the
    type in a class definition:
-  </para>
-  <programlisting>
+   <programlisting>
 CREATE TYPE box (INTERNALLENGTH = 8,
     INPUT = my_procedure_1, OUTPUT = my_procedure_2);
 CREATE TABLE myboxes (id INT4, description box);
-  </programlisting>
+   </programlisting>
+  </para>
+
   <para>
    This command creates a variable length array type with
-   integer elements.
+   integer elements:
 
    <programlisting>
 CREATE TYPE int4array (INPUT = array_in, OUTPUT = array_out,
@@ -303,6 +318,7 @@ CREATE TYPE int4array (INPUT = array_in, OUTPUT = array_out,
 CREATE TABLE myarrays (id int4, numbers int4array);
    </programlisting>
   </para>
+
   <para>
    This command creates a large object type and uses it in
    a class definition:
@@ -314,17 +330,6 @@ CREATE TABLE big_objs (id int4, obj bigobj);
    </programlisting>
   </para>
 
-  <refsect2>
-   <title>Restrictions</title>
-   <para>
-    Type  names  cannot  begin  with  the underscore character
-    ("_") and can only be 31 characters long.  This is because
-    Postgres silently creates an array type for each base type
-    with a name consisting of the base type's  name  prepended
-    with an underscore.
-   </para>
-  </refsect2>
-
   <refsect2 id="R2-SQL-CREATETYPE-3">
    <refsect2info>
     <date>1998-09-21</date>
@@ -332,6 +337,15 @@ CREATE TABLE big_objs (id int4, obj bigobj);
    <title>
     Notes
    </title>
+
+   <para>
+    Type  names  cannot  begin  with  the underscore character
+    ("_") and can only be 31 characters long.  This is because
+    Postgres silently creates an array type for each base type
+    with a name consisting of the base type's  name  prepended
+    with an underscore.
+   </para>
+
    <para>
     Refer to <command>DROP TYPE</command> to remove an existing type.
    </para>

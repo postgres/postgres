@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.7 1999/07/22 15:09:12 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-LISTEN">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-LISTEN-TITLE">
    LISTEN
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-10-07</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 LISTEN <replaceable class="PARAMETER">name</replaceable>
@@ -85,11 +90,14 @@ NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">
   <title>
    Description
   </title>
+
   <para>
-   <command>LISTEN</command> registers the current <productname>Postgres</productname> backend as a
+   <command>LISTEN</command> registers the current 
+   <productname>Postgres</productname> backend as a
    listener on the notify condition
    <replaceable class="PARAMETER">name</replaceable>.
   </para>
+
   <para>
    Whenever the command 
    <command>NOTIFY <replaceable class="PARAMETER">name</replaceable></command>
@@ -99,11 +107,13 @@ NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">
    frontend application.  See the discussion of <command>NOTIFY</command>
    for more information.
   </para>
+
   <para>
    A backend can be unregistered for a given notify condition with the
    <command>UNLISTEN</command> command.  Also, a backend's listen registrations
    are automatically cleared when the backend process exits.
   </para>
+
   <para>
    The method a frontend application must use to detect notify events depends on
    which <productname>Postgres</productname> application programming interface it
@@ -116,8 +126,10 @@ NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">
    <command>LISTEN</command> or <command>UNLISTEN</command> directly.  See the
    documentation for the library you are using for more details.
   </para>
+
   <para>
-   The reference page for <command>NOTIFY</command> contains a more extensive
+   <xref linkend="sql-notify-title" endterm="sql-notify-title">
+   contains a more extensive
    discussion of the use of <command>LISTEN</command> and
    <command>NOTIFY</command>.
   </para>
@@ -129,6 +141,7 @@ NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">
    <title>
     Notes
    </title>
+
    <para>
     <replaceable class="PARAMETER">name</replaceable>
     can be any string valid as a name;

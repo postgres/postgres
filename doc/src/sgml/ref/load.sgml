@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.7 1999/07/22 15:09:12 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-LOAD">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-LOAD-TITLE">
    LOAD
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-24</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 LOAD '<replaceable class="PARAMETER">filename</replaceable>'
@@ -86,12 +91,14 @@ ERROR:  LOAD: could not open file '<replaceable class="PARAMETER">filename</repl
   <title>
    Description
   </title>
+
   <para>
    Loads an object (or ".o") file into the 
    <productname>Postgres</productname> backend address space.  Once a
    file is loaded, all functions in that file can be accessed.  This
    function is used in support of user-defined types and functions.
   </para>
+
   <para>
    If a file is not loaded using
    <command>LOAD</command>, 
@@ -102,6 +109,7 @@ ERROR:  LOAD: could not open file '<replaceable class="PARAMETER">filename</repl
    recompiled.  Only objects created from C language files are supported
    at this time.
   </para>
+
   <refsect2 id="R2-SQL-LOAD-3">
    <refsect2info>
     <date>1998-09-24</date>
@@ -109,6 +117,7 @@ ERROR:  LOAD: could not open file '<replaceable class="PARAMETER">filename</repl
    <title>
     Notes
    </title>
+
    <para>
     Functions in loaded object files should not call functions in other
     object files loaded through the
@@ -157,8 +166,6 @@ LOAD '/usr/postgres/demo/circle.o'
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
 
   <refsect2 id="R2-SQL-LOAD-4">
    <refsect2info>

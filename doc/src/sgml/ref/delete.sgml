@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.7 1999/07/22 15:09:09 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-DELETE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-DELETE-TITLE">
    DELETE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -16,7 +21,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-04-15</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 DELETE FROM <replaceable class="PARAMETER">table</replaceable> [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
@@ -93,15 +98,18 @@ DELETE <replaceable class="parameter">count</replaceable>
   <title>
    Description
   </title>
+
   <para>
    <command>DELETE</command> removes rows which satisfy the WHERE
    clause from the specified table.
   </para>
+
   <para>
    If the <firstterm>condition</firstterm> (WHERE clause) is absent,
    the effect is to delete all rows in the table.
    The result is a valid, but empty table.
   </para>
+
   <para>
    You must have write access to the table in order to modify
    it, as well as read access to any table whose values are
@@ -119,12 +127,14 @@ DELETE <replaceable class="parameter">count</replaceable>
 DELETE FROM films WHERE kind &lt;&gt; 'Musical';
 SELECT * FROM films;
 
+    <computeroutput>
 code |title                    |did| date_prod|kind      |len
 -----+-------------------------+---+----------+----------+------
 UA501|West Side Story          |105|1961-01-03|Musical   | 02:32
 TC901|The King and I           |109|1956-08-11|Musical   | 02:13
 WD101|Bed Knobs and Broomsticks|111|          |Musical   | 01:57
 (3 rows)
+    </computeroutput>
    </programlisting>
   </para>
 
@@ -134,9 +144,11 @@ WD101|Bed Knobs and Broomsticks|111|          |Musical   | 01:57
 DELETE FROM films;
 SELECT * FROM films;
 
+    <computeroutput>
 code|title|did|date_prod|kind|len
 ----+-----+---+---------+----+---
 (0 rows)
+    </computeroutput>
    </programlisting>      
   </para>
  </refsect1>
@@ -145,8 +157,6 @@ code|title|did|date_prod|kind|len
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
 
   <refsect2 id="R2-SQL-DELETE-4">
    <refsect2info>

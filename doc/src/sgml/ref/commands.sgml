@@ -1,3 +1,8 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.17 1999/07/22 15:09:06 thomas Exp $
+Postgres documentation
+-->
+
  <chapter id="sql-commands">
   <Title>SQL Commands</Title>
 
@@ -45,6 +50,7 @@
    &dropType
    &dropUser;
    &dropView;
+   &end;
    &explain;
    &fetch;
    &grant;
@@ -88,7 +94,7 @@ functions supported by <productname>Postgres</productname>.
 
 -->
 
- <chapter Id="utilities">
+ <chapter Id="applications">
   <title>Applications</title>
 
   <abstract>
@@ -103,16 +109,34 @@ functions supported by <productname>Postgres</productname>.
    &createuser;
    &destroydb;
    &destroyuser;
-   &initdb;
-   &initlocation;
+   &ecpgRef;
    &pgAccess;
    &pgAdmin;
    &pgDump;
    &pgDumpall;
-   &postgres;
-   &postmaster;
    &psqlRef;
    &vacuumdb;
+
+ </chapter>
+
+ <chapter Id="utilities">
+  <title>System Applications</title>
+
+  <abstract>
+   <para>
+    This is reference information for
+    <productname>Postgres</productname>
+    servers and support utilities.
+   </para>
+  </abstract>
+
+   &initdb;
+   &initlocation;
+   &ipcclean;
+   &pgPasswd;
+   &pgUpgrade;
+   &postgres;
+   &postmaster;
 
  </chapter>
 

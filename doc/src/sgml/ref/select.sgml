@@ -1,3 +1,8 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.21 1999/07/22 15:09:14 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-SELECT">
  <refmeta>
   <refentrytitle id="sql-select-title">
@@ -14,7 +19,7 @@
   </refpurpose></refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-24</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 SELECT [ ALL | DISTINCT [ ON <replaceable class="PARAMETER">column</replaceable> ] ]
@@ -264,16 +269,31 @@ SELECT [ ALL | DISTINCT [ ON <replaceable class="PARAMETER">column</replaceable>
    <title id="where-title">
     WHERE Clause
    </title>
+
    <para>
     The optional WHERE condition has the general form:
     
     <synopsis>
-WHERE <replaceable class="PARAMETER">expr</replaceable> <replaceable class="PARAMETER">ETER">c</replaceable>e<replaceable class="PARAMETER">"PAR</replaceable>replaceable> [ <replaceable class="PARAMETER">log_op</replaceable> ... ]
+WHERE <replaceable class="PARAMETER">boolean_expr</replaceable>
     </synopsis>
     
-    where <replaceable class="PARAMETER">cond_op</replaceable> can be
-    one of: =, &lt;, &lt;=, &gt;, &gt;= or &lt;&gt;,
-    a conditional operator like ALL, ANY, IN, LIKE, et cetera or a
+    <replaceable class="PARAMETER">boolean_expr</replaceable>
+    can consist of any expression which evaluates to a boolean value.
+    In many cases, this expression will be
+
+    <synopsis>
+     <replaceable class="PARAMETER">expr</replaceable> <replaceable class="PARAMETER">cond_op</replaceable> <replaceable class="PARAMETER">expr</replaceable>
+    </synopsis>
+
+    or
+
+    <synopsis>
+     <replaceable class="PARAMETER">log_op</replaceable> <replaceable class="PARAMETER">expr</replaceable>
+    </synopsis>
+
+    where <replaceable class="PARAMETER">cond_op</replaceable>
+    can be one of: =, &lt;, &lt;=, &gt;, &gt;= or &lt;&gt;,
+    a conditional operator like ALL, ANY, IN, LIKE, or a
     locally-defined operator, 
     and <replaceable class="PARAMETER">log_op</replaceable> can be one 
     of: AND, OR, NOT.
@@ -624,8 +644,6 @@ Woody Allen
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
   
   <refsect2 id="R2-SQL-SELECT-4">
    <refsect2info>

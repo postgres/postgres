@@ -1,6 +1,11 @@
-<refentry id="SQL-VACUUM-1">
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.5 1999/07/22 15:09:15 thomas Exp $
+Postgres documentation
+-->
+
+<refentry id="SQL-VACUUM">
  <refmeta>
-  <refentrytitle id="vacuum">
+  <refentrytitle id="sql-vacuum-title">
    VACUUM
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-10-04</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 VACUUM [ VERBOSE ] [ ANALYZE ] [ <replaceable class="PARAMETER">table</replaceable> ]
@@ -225,6 +230,7 @@ VACUUM
   <title>
    Compatibility
   </title>
+
   <refsect2 id="R2-SQL-VACUUM-4">
    <refsect2info>
     <date>1998-10-04</date>
@@ -233,7 +239,7 @@ VACUUM
     SQL92
    </title>
    <para>
-    There is no <command>VACUUM</command> statement in SQL92.
+    There is no <command>VACUUM</command> statement in <acronym>SQL92</acronym>.
    </para>
   </refsect2>
  </refsect1>

@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.9 1999/07/22 15:09:07 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-COPY">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-copy-title">
    COPY
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,16 +20,14 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-08</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
-    FROM { '<replaceable class="parameter">filename</replaceable>' |
-   <filename>stdin</filename> }
+    FROM { '<replaceable class="parameter">filename</replaceable>' | <filename>stdin</filename> }
     [ USING DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
 COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
-    TO { '<replaceable class="parameter">filename</replaceable>' |
-   <filename>stdout</filename> }
+    TO { '<replaceable class="parameter">filename</replaceable>' | <filename>stdout</filename> }
     [ USING DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
   </synopsis>
   
@@ -47,6 +50,7 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">table</replaceable></term>
       <listitem>
@@ -55,6 +59,7 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term>WITH OIDS</term>
       <listitem>
@@ -63,6 +68,7 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">filename</replaceable></term>
       <listitem>
@@ -71,6 +77,7 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><filename>stdin</filename></term>
       <listitem>
@@ -79,6 +86,7 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><filename>stdout</filename></term>
       <listitem>
@@ -87,6 +95,7 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">delimiter</replaceable></term>
       <listitem>
@@ -121,7 +130,7 @@ COPY
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR: <replaceable>error message</replaceable>
+ERROR: <replaceable>reason</replaceable>
        </computeroutput></term>
       <listitem>
        <para>
@@ -144,7 +153,7 @@ ERROR: <replaceable>error message</replaceable>
   <para>
    <command>COPY</command> moves data between
    <productname>Postgres</productname> tables and
-   standard Unix files. 
+   standard file-system files.
 
    <command>COPY</command> instructs
    the <productname>Postgres</productname> backend
@@ -175,8 +184,10 @@ ERROR: <replaceable>error message</replaceable>
    </para>
    
    <para>
-    You must have select access on any table whose values are read by
-    <command>COPY</command>, and either insert or update access to a
+    You must have <firstterm>select access</firstterm> on any table
+    whose values are read by
+    <command>COPY</command>, and either
+    <firstterm>insert or update access</firstterm> to a
     table into which values are being inserted by <command>COPY</command>.
     The backend also needs appropriate Unix permissions for any file read
     or written by <command>COPY</command>.
@@ -194,6 +205,44 @@ ERROR: <replaceable>error message</replaceable>
       <application>psql</application> instruction <command>\copy</command>.
      </para>
     </tip>
+   </para>
+
+   <para>
+    <command>COPY</command> neither invokes rules nor acts on column defaults.
+    It does invoke triggers, however.
+   </para>
+   <para>
+    <command>COPY</command> stops operation at the first error.  This
+    should not lead to problems in the event of
+    a <command>COPY FROM</command>, but the
+    target relation will, of course, be partially modified in a
+    <command>COPY TO</command>.
+    <command>VACUUM</command> should be used to clean up
+    after a failed copy.
+   </para>
+   <para>
+    Because the Postgres backend's current working directory
+    is not usually the same as the user's
+    working directory, the result of copying to a file
+    "<filename>foo</filename>" (without
+    additional path information) may yield unexpected results for the
+    naive user.  In this case, <filename>foo</filename>
+    will wind up in <filename>$PGDATA/foo</filename>.  In
+    general, the full pathname as it would appear to the backend server machine
+    should be used when specifying files to
+    be copied.
+   </para>
+   <para>
+    Files used as arguments to <command>COPY</command>
+    must reside on or be
+    accessible to the database server machine by being either on
+    local disks or on a networked file system.
+   </para>
+   <para>
+    When a TCP/IP connection from one machine to another is used, and a
+    target file is specified, the target file will be written on the
+    machine where the backend is running rather than the user's
+    machine. 
    </para>
   </refsect2>
  </refsect1>
@@ -249,6 +298,7 @@ ERROR: <replaceable>error message</replaceable>
     properly.
    </para>
   </refsect2>
+
   <refsect2>
    <refsect2info>
     <date>1998-05-04</date>
@@ -385,53 +435,10 @@ has the termination sequence on the last line):
   </programlisting>
  </refsect1>
  
- <refsect1 id="R1-SQL-COPY-5">
-  <title>Bugs and features</title>
-  <para>
-   <command>COPY</command> neither invokes rules nor acts on column defaults.
-   It does invoke triggers, however.
-  </para>
-  <para>
-   <command>COPY</command> stops operation at the first error.  This
-   should not lead to problems in the event of
- a <command>COPY FROM</command>, but the
-   target relation will, of course, be partially modified in a
-<command>COPY TO</command>.
-  The <command>VACUUM</command> query should be used to clean up
-   after a failed copy.
-  </para>
-  <para>
-   Because the Postgres backend's current working directory
- is not usually the same as the user's
-   working directory, the result of copying to a file
- "<filename>foo</filename>" (without
-   additional path information) may yield unexpected results for the
-   naive user.  In this case, <filename>foo</filename>
- will wind up in <filename>$PGDATA/foo</filename>.  In
-   general, the full pathname as it would appear to the backend server machine
-should be used when specifying files to
-   be copied.
-  </para>
-  <para>
-   Files used as arguments to <command>COPY</command>
-must reside on or be
-   accessible to the database server machine by being either on
-   local disks or on a networked file system.
-  </para>
-  <para>
-   When a TCP/IP connection from one machine to another is used, and a
-   target file is specified, the target file will be written on the
-   machine where the backend is running rather than the user's
-   machine. 
-  </para>
- </refsect1>
- 
  <refsect1 id="R1-SQL-COPY-6">
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
   
   <refsect2 id="R2-SQL-COPY-4">
    <refsect2info>

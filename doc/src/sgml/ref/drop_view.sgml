@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.6 1999/07/22 15:09:11 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-DROPVIEW">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-DROPVIEW-TITLE">
    DROP VIEW
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-22</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 DROP VIEW <replaceable class="PARAMETER">name</replaceable>
@@ -126,8 +131,6 @@ DROP VIEW kinds;
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
   
   <refsect2 id="R2-SQL-DROPVIEW-4">
    <refsect2info>

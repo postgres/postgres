@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.7 1999/07/22 15:09:07 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-CREATEAGGREGATE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-createaggregate-title">
    CREATE AGGREGATE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -16,19 +21,15 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-09</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> [ AS ]
-    ( BASETYPE    = <replaceable class="PARAMETER">data_type</replaceable>
-    [ , SFUNC1    = <replaceable class="PARAMETER">sfunc1</replaceable>
-      , STYPE1    = <replaceable class="PARAMETER">sfunc1_return_type</replaceable> ]
-    [ , SFUNC2    = <replaceable class="PARAMETER">sfunc2</replaceable>
-      , STYPE2    = <replaceable class="PARAMETER">sfunc2_return_type</replaceable> ]
+CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> [ AS ] ( BASETYPE = <replaceable class="PARAMETER">data_type</replaceable>
+    [ , SFUNC1 = <replaceable class="PARAMETER">sfunc1</replaceable>, STYPE1 = <replaceable class="PARAMETER">sfunc1_return_type</replaceable> ]
+    [ , SFUNC2 = <replaceable class="PARAMETER">sfunc2</replaceable>, STYPE2 = <replaceable class="PARAMETER">sfunc2_return_type</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , INITCOND1 = <replaceable class="PARAMETER">initial_condition1</replaceable> ]
-    [ , INITCOND2 = <replaceable class="PARAMETER">initial_condition2</replaceable> ]
-    )
+    [ , INITCOND2 = <replaceable class="PARAMETER">initial_condition2</replaceable> ] )
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEAGGREGATE-1">
@@ -296,10 +297,9 @@ CREATE
   </title>
   <para>
    Refer to the chapter on aggregate functions
-   in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
-   on aggregate functions for
+   in the <citetitle>PostgreSQL Programmer's Guide</citetitle> for
    complete examples of usage.
-  </para>   
+  </para>
  </refsect1>
 
  <refsect1 id="R1-SQL-CREATEAGGREGATE-3">

@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.6 1999/07/22 15:09:12 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-GRANT">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-GRANT-TITLE">
    GRANT
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-23</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 GRANT <replaceable class="PARAMETER">privilege</replaceable> [, ...] ON <replaceable class="PARAMETER">object</replaceable> [, ...]
@@ -216,6 +221,7 @@ ERROR:  ChangeAcl: class "<replaceable class="PARAMETER">object</replaceable>" n
   <title>
    Description
   </title>
+
   <para>
    <command>GRANT</command> allows the creator of an object to give specific permissions to
    all users (PUBLIC) or to a certain user or group. 
@@ -274,6 +280,7 @@ ERROR:  ChangeAcl: class "<replaceable class="PARAMETER">object</replaceable>" n
      <para>
       Currently, to create a GROUP you have to insert 
       data manually into table pg_group as:
+
       <programlisting>
 INSERT INTO pg_group VALUES ('todos');
 CREATE USER miriam IN GROUP todos;
@@ -313,8 +320,6 @@ GRANT ALL ON kinds TO manuel;
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
     
   <refsect2 id="R2-SQL-GRANT-4">
    <refsect2info>

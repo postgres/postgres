@@ -1,3 +1,8 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.8 1999/07/22 15:09:15 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-UNLISTEN">
  <refmeta>
   <refentrytitle>
@@ -95,7 +100,7 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
   </para>
 
   <para>
-   <xref endterm="sql-notify-ref" linkend="sql-notify">
+   <xref endterm="sql-notify-title" linkend="sql-notify-title">
    contains a more extensive
    discussion of the use of <command>LISTEN</command> and
    <command>NOTIFY</command>.

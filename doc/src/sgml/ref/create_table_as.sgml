@@ -1,6 +1,11 @@
-<refentry id="CREATETABLEAS">
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.3 1999/07/22 15:09:08 thomas Exp $
+Postgres documentation
+-->
+
+<refentry id="SQL-CREATETABLEAS">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-CREATETABLEAS-TITLE">
    CREATE TABLE AS
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-22</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceable> [, ...] ) ]
@@ -87,8 +92,10 @@ CREATE TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceabl
    Description
   </title>
   <para>
-   <command>CREATE TABLE AS</command> enables a table to be created from the contents of
-   an existing table. It has functionality equivalent to <command>SELECT TABLE INTO</command>,
+   <command>CREATE TABLE AS</command> enables a table to be created
+   from the contents of an existing table.
+   It is functionality equivalent to
+   <xref linkend="sql-selectinto-title" endterm="sql-selectinto-title">,
    but with perhaps a more direct syntax.
   </para>
  </refsect1>

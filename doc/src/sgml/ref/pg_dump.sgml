@@ -1,6 +1,11 @@
-<refentry id="APP-PG-DUMP">
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.12 1999/07/22 15:09:13 thomas Exp $
+Postgres documentation
+-->
+
+<refentry id="APP-PGDUMP">
  <refmeta>
-  <refentrytitle id="pg-dump">
+  <refentrytitle id="app-pgdump-title">
    <application>pg_dump</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-11-05</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 pg_dump [ <replaceable class="parameter">dbname</replaceable> ]

@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.8 1999/07/22 15:09:07 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-CREATELANGUAGE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-createlanguage-title">
    CREATE LANGUAGE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-09</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable class="parameter">langname</replaceable>'
@@ -59,7 +64,8 @@ CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable class="parameter">langname<
 	<productname>Postgres</productname>.
        </para>
       </listitem>
-     </varlistentry> 
+     </varlistentry>
+
      <varlistentry>
       <term>HANDLER <replaceable class="parameter">call_handler</replaceable></term>
       <listitem>
@@ -71,6 +77,7 @@ CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable class="parameter">langname<
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">comment</replaceable></term>
       <listitem>
@@ -242,32 +249,22 @@ C       |/bin/cc
 sql     |postgres
      </computeroutput>
     </programlisting>
+   </para>
 
+   <para>
+    Since the call handler for a procedural language must be
+    registered with <productname>Postgres</productname> in the 'C' language,
+    it inherits
+    all the capabilities and restrictions of 'C' functions.
+   </para>
+
+   <para> 
+    At present, the definitions for a procedural language cannot be
+    changed once they have been created.
    </para>
   </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-CREATELANGUAGE-4">
-  <title>
-   Restrictions
-  </title>
-  <para>
-   Since the call handler for a procedural language must be
-   registered with <productname>Postgres</productname> in the 'C' language,
-   it inherits
-   all the capabilities and restrictions of 'C' functions.
-  </para>
- </refsect1>
- <refsect1 id="R1-SQL-CREATELANGUAGE-5">
-  <title>
-   Bugs
-  </title>
-  <para> 
-   At present, the definitions for a procedural language cannot be
-   changed once they have been created.
-  </para>
- </refsect1>
- 
  <refsect1 id="R1-SQL-CREATELANGUAGE-6">
   <title>
    Usage
@@ -340,9 +337,6 @@ CREATE PROCEDURAL LANGUAGE 'plsample'
   <title>
    Compatibility
   </title>
-  <para>
-   CREATE LANGUAGE is a <productname>Postgres</productname> extension.
-  </para>
 
   <refsect2 id="R2-SQL-CREATELANGUAGE-5">
    <refsect2info>
@@ -351,7 +345,10 @@ CREATE PROCEDURAL LANGUAGE 'plsample'
    <title>
     SQL92
    </title>
+
    <para>
+    <command>CREATE LANGUAGE</command>
+    is a <productname>Postgres</productname> extension.
     There is no <command>CREATE LANGUAGE</command> statement in
     <acronym>SQL92</acronym>.
    </para>

@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.17 1999/07/22 15:09:08 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-CREATETABLE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-createtable-title">
    CREATE TABLE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-11</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replaceable> (
@@ -56,7 +61,7 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
       <term><replaceable class="PARAMETER">table</replaceable></term>
       <listitem>
        <para>
-	The name of a new table to be created.
+	The name of a new class or table to be created.
        </para>
       </listitem>
      </varlistentry>
@@ -213,11 +218,49 @@ ERROR:  DEFAULT: type mismatched
   <title>
    Description
   </title>
+
   <para>
-   <command>CREATE TABLE</command> will enter a new table into the current data
-   base. The table will be "owned" by the user issuing the
+   <command>CREATE TABLE</command> will enter a new class or table
+   into the current data base. The table will be "owned" by the user issuing the
    command.
   </para>
+
+  <para>
+   Each <replaceable class="PARAMETER">type</replaceable>
+   may be a simple type, a complex type (set) or an array type.
+   Each attribute may be specified to be non-null and
+   each may have a default value, specified by the
+   <xref linkend="R1-SQL-DEFAULTCLAUSE-1-TITLE" endterm="R1-SQL-DEFAULTCLAUSE-1-TITLE">.
+  </para>
+
+  <para>
+   <note>
+    <para>
+     As of Postgres version 6.0, consistant array dimensions within an
+     attribute are not enforced. This will likely change in a future
+     release.
+    </para>
+   </note>
+  </para>
+
+  <para>
+   The optional INHERITS
+   clause specifies a collection of class names from which this class
+   automatically inherits all fields.  If any inherited field name
+   appears more than once, Postgres reports an error.  Postgres automatically
+   allows the created class to inherit functions on classes above it in
+   the inheritance hierarchy.  Inheritance of functions is done according
+   to the conventions of the Common Lisp Object System (CLOS).
+  </para>
+
+  <para>
+   Each new table or class <replaceable class="PARAMETER">table</replaceable>
+   is automatically created as a type.  Therefore, one or more instances
+   from the class are automatically a type and can be used in 
+   <xref linkend="sql-altertable-title" endterm="sql-altertable-title">
+   or other <command>CREATE TABLE</command> statements.
+  </para>
+
   <para>
    The new table is created as a heap with no initial data.
    A table can have no more than 1600 columns (realistically,
@@ -232,7 +275,7 @@ ERROR:  DEFAULT: type mismatched
   <refsect1info>
    <date>1998-09-11</date>
   </refsect1info>
-  <title>
+  <title id="R1-SQL-DEFAULTCLAUSE-1-TITLE">
    DEFAULT Clause
   </title>
   <para>
@@ -427,7 +470,7 @@ CREATE TABLE distributors (
   <refsect1info>
    <date>1998-09-11</date>
   </refsect1info>
-  <title>
+  <title id="R1-SQL-COLUMNCONSTRAINT-1-TITLE">
    Column CONSTRAINT Clause
   </title>
   <para>
@@ -446,6 +489,7 @@ CREATE TABLE distributors (
     Inputs
    </title>
    <para>
+
     <variablelist>
      <varlistentry>
       <term><replaceable class="parameter">name</replaceable></term>
@@ -523,20 +567,34 @@ CREATE TABLE distributors (
    <title>
     Description
    </title>
+
    <para>
-    A Constraint is a named rule: an SQL object which helps define
+    The optional constraint
+    clauses specify constraints or tests which new or updated entries
+    must satisfy for an insert or update operation to succeed. Each constraint
+    must evaluate to a boolean expression. Multiple attributes may be referenced within
+    a single constraint.  The use of PRIMARY KEY
+    as a table constraint
+    is mutually incompatible with PRIMARY KEY as a column constraint.
+   </para>
+
+   <para>
+    A constraint is a named rule: an SQL object which helps define
     valid sets of values by putting limits on the results of INSERT,
     UPDATE or DELETE operations performed on a Base Table. 
    </para>
+
    <para>
     There are two ways to define integrity constraints:
     table constraints, covered later, and column constraints, covered here.
    </para>
+
    <para>
     A column constraint is an integrity constraint defined as part
     of a column definition, and logically becomes a table
     constraint as soon as it is created. The column
     constraints available are:
+
     <simplelist columns="1">
      <member>PRIMARY KEY</member>
      <member>REFERENCES</member>

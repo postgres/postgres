@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.6 1999/07/22 15:09:15 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-UPDATE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-UPDATE-TITLE">
    UPDATE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-24</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 UPDATE <replaceable class="PARAMETER">table</replaceable> SET <replaceable class="PARAMETER">R">col</replaceable>le> = <replaceable class="PARAMETER">expression</replaceable> [, ...]
@@ -119,11 +124,12 @@ UPDATE <replaceable class="parameter">#</replaceable>
   <para>
    <command>UPDATE</command> changes the values of the columns specified for
    all rows which satisfy condition. Only the columns 
-   to be modified need appear as column.
+   to be modified need appear as columns in the statement.
   </para>
 
   <para>
-   Array references use the same syntax found in SELECT.
+   Array references use the same syntax found in
+   <xref linkend="sql-select-title" endterm="sql-select-title">.
    That is, either single array elements, a range of array
    elements or the entire array may be replaced with a single
    query.
@@ -165,8 +171,6 @@ SELECT * FROM films WHERE kind = 'Dramatic' OR kind = 'Drama';
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
 
   <refsect2 id="R2-SQL-UPDATE-4">
    <refsect2info>
@@ -176,7 +180,8 @@ SELECT * FROM films WHERE kind = 'Dramatic' OR kind = 'Drama';
     SQL92
    </title>
    <para>
-    SQL92 defines a different syntax for positioned UPDATE statement:
+    <acronym>SQL92</acronym> defines a different syntax for
+    the positioned UPDATE statement:
 
     <synopsis>
 UPDATE table SET column = expression [, ...]

@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.5 1999/07/22 15:09:15 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="APP-VACUUMDB">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="APP-VACUUMDB-TITLE">
    <application>vacuumdb</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
@@ -225,7 +230,7 @@ FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>
   </title>
 
   <para>
-   See <xref endterm="vacuum" linkend="vacuum"> for more details.
+   See <xref endterm="sql-vacuum-title" linkend="sql-vacuum-title"> for more details.
   </para>
  </refsect1>
  

@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.11 1999/07/22 15:09:08 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-CREATESEQUENCE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-createsequence-title">
    CREATE SEQUENCE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,16 +20,12 @@
  </refnamediv> 
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-04-15</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
-    [ INCREMENT <replaceable class="parameter">increment</replaceable> ]
-    [ MINVALUE  <replaceable class="parameter">minvalue</replaceable> ]
-    [ MAXVALUE  <replaceable class="parameter">maxvalue</replaceable> ]
-    [ START     <replaceable class="parameter">start</replaceable> ]
-    [ CACHE     <replaceable class="parameter">cache</replaceable> ]
-    [ CYCLE ]
+CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT <replaceable class="parameter">increment</replaceable> ]
+    [ MINVALUE <replaceable class="parameter">minvalue</replaceable> ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> ]
+    [ START <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ CYCLE ]
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATESEQUENCE-1">
@@ -45,6 +46,7 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">increment</replaceable></term>
       <listitem>
@@ -57,6 +59,7 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">minvalue</replaceable></term>
       <listitem>
@@ -69,6 +72,7 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">maxvalue</replaceable></term>
       <listitem>
@@ -81,6 +85,7 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">start</replaceable></term>
       <listitem>
@@ -96,6 +101,7 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">cache</replaceable></term>
       <listitem>
@@ -108,6 +114,7 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term>CYCLE</term>
       <listitem>
@@ -208,6 +215,7 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
    table with the name <replaceable class="parameter">seqname</replaceable>.
    The generator will be "owned" by the user issuing the command.
   </para>
+
   <para>
    After a sequence is created, you may use the function
    <function>nextval(<replaceable class="parameter">seqname</replaceable>)</function>
@@ -228,18 +236,24 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
 
   <para>
    Use a query like
+
    <programlisting>
 SELECT * FROM sequence_name;
    </programlisting>
+
    to get the parameters of a sequence.
+
    Aside from fetching the original
    parameters, you can use
+
    <programlisting>
 SELECT last_value FROM sequence_name;
    </programlisting>
+
    to obtain the last value allocated by any backend.
    parameters, you can use
   </para>
+
   <para>
    Low-level locking is used to enable multiple simultaneous
    calls to a generator.
@@ -332,10 +346,6 @@ END;
   <title>
    Compatibility
   </title>
-  <para>
-   <command>CREATE SEQUENCE</command> is a <productname>Postgres</productname>
-   language extension.
-  </para>
 
   <refsect2 id="R2-SQL-CREATESEQUENCE-4">
    <refsect2info>
@@ -344,7 +354,10 @@ END;
    <title>
     SQL92
    </title>
+
    <para>
+    <command>CREATE SEQUENCE</command> is a <productname>Postgres</productname>
+    language extension.
     There is no <command>CREATE SEQUENCE</command> statement
     in <acronym>SQL92</acronym>.
    </para>

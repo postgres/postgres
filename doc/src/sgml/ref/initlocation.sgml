@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.4 1999/07/22 15:09:12 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="APP-INITLOCATION">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="APP-INITLOCATION-TITLE">
    <application>initlocation</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-10-02</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 initlocation [ --location=<replaceable class="parameter">er">al</replaceable>ble> | -D <replaceable class="parameter">altdir</replaceable> ]

@@ -1,12 +1,17 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.28 1999/07/22 15:09:15 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-SET">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-SET-TITLE">
    SET
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
-  <refname id="SQL-SET-TITLE">
+  <refname>
    SET
   </refname>
   <refpurpose>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-24</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
@@ -662,8 +667,6 @@ SELECT CURRENT_TIMESTAMP AS today;
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
   
   <refsect2 id="R2-SQL-SET-4">
    <refsect2info>

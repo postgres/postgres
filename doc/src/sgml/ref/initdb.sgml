@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.5 1999/07/22 15:09:12 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="APP-INITDB">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="APP-INITDB-TITLE">
    <application>initdb</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-10-02</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 initdb [ --pgdata=<replaceable class="parameter">dbdir</replaceable> | -r <replaceable class="parameter">dbdir</replaceable> ]

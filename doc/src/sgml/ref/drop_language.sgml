@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.7 1999/07/22 15:09:10 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-DROPLANGUAGE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-DROPLANGUAGE-TITLE">
    DROP LANGUAGE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-04-15</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 DROP PROCEDURAL LANGUAGE '<replaceable class="PARAMETER">name</replaceable>'
@@ -104,18 +109,11 @@ ERROR: Language "<replaceable class="parameter">name</replaceable>" doesn't exis
     a <productname>Postgres</productname> language extension.
    </para>
    <para>
-    Refer to <command>CREATE PROCEDURAL LANGUAGE</command>
+    Refer to
+    <xref linkend="sql-createlanguage-title" endterm="sql-createlanguage-title">
     for information on how to create procedural languages.
    </para>
-  </refsect2>
-  
-  <refsect2 id="R2-SQL-DROPLANGUAGE-4">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Bugs
-   </title>
+
    <para>
     No checks are made if functions or trigger procedures registered
     in this language still exist. To re-enable them without having
@@ -143,8 +141,6 @@ DROP PROCEDURAL LANGUAGE 'plsample';
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
   
   <refsect2 id="R2-SQL-DROPLANGUAGE-5">
    <refsect2info>

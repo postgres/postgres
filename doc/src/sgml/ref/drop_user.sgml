@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.7 1999/07/22 15:09:11 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-DROPUSER">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-DROPUSER-TITLE">
    DROP USER
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-22</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 DROP USER <replaceable class="PARAMETER">name</replaceable>
@@ -129,8 +134,6 @@ DROP USER Jonathan;
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
   
   <refsect2 id="R2-SQL-DROPUSER-4">
    <refsect2info>

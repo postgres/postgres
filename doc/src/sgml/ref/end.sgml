@@ -1,18 +1,18 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/commit.sgml,v 1.8 1999/07/22 15:09:06 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.1 1999/07/22 15:09:11 thomas Exp $
 Postgres documentation
 -->
 
-<refentry id="SQL-COMMIT">
+<refentry id="SQL-END">
  <refmeta>
-  <refentrytitle id="SQL-COMMIT-TITLE">
-   COMMIT
+  <refentrytitle id="SQL-END-TITLE">
+   END
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
   <refname>
-   COMMIT
+   END
   </refname>
   <refpurpose>
    Commits the current transaction
@@ -24,10 +24,10 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-COMMIT [ WORK | TRANSACTION ]
+END [ WORK | TRANSACTION ]
   </synopsis>
   
-  <refsect2 id="R2-SQL-COMMIT-1">
+  <refsect2 id="R2-SQL-END-1">
    <refsect2info>
     <date>1998-09-08</date>
    </refsect2info>
@@ -50,7 +50,7 @@ COMMIT [ WORK | TRANSACTION ]
    </para>
   </refsect2>
    
-  <refsect2 id="R2-SQL-COMMIT-2">
+  <refsect2 id="R2-SQL-END-2">
    <refsect2info>
     <date>1998-09-08</date>
    </refsect2info>
@@ -85,20 +85,21 @@ NOTICE EndTransactionBlock and not inprogress/abort state
   </refsect2>
  </refsynopsisdiv>
   
- <refsect1 id="R1-SQL-COMMIT-1">
+ <refsect1 id="R1-SQL-END-1">
   <refsect1info>
    <date>1998-09-08</date>
   </refsect1info>
   <title>
    Description
   </title>
+
   <para>
-   <command>COMMIT</command> commits the current transaction. All
-   changes made by the transaction become visible to others
-   and are guaranteed to be durable if a crash occurs.
+   <command>END</command> is a <productname>Postgres</productname>
+   synonym for
+   <xref linkend="sql-commit-title" endterm="sql-commit-title">.
   </para>
   
-  <refsect2 id="R2-SQL-COMMIT-3">
+  <refsect2 id="R2-SQL-END-3">
    <refsect2info>
     <date>1998-09-08</date>
    </refsect2info>
@@ -116,32 +117,36 @@ NOTICE EndTransactionBlock and not inprogress/abort state
   </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-COMMIT-2">
+ <refsect1 id="R1-SQL-END-2">
   <title>
    Usage
   </title>
   <para>
    To make all changes permanent:
+
    <programlisting>
-COMMIT WORK;
+END WORK;
    </programlisting>
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-COMMIT-3">
+ <refsect1 id="R1-SQL-END-3">
   <title>
    Compatibility
   </title>
   
-  <refsect2 id="R2-SQL-COMMIT-4">
+  <refsect2 id="R2-SQL-END-4">
    <refsect2info>
     <date>1998-09-08</date>
    </refsect2info>
    <title>
     SQL92
    </title>
+
    <para>
-    Full compatibility.
+    <command>END</command> is a <productname>Postgres</productname>
+    extension which provides functionality equivalent to
+    <xref linkend="sql-commit-title" endterm="sql-commit-title">.
    </para>
   </refsect2>
  </refsect1>

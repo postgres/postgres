@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.7 1999/07/22 15:09:06 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-CLUSTER">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-cluster-title">
    CLUSTER
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -10,12 +15,12 @@
    CLUSTER
   </refname>
   <refpurpose>
-   Gives storage clustering advice to the backend
+   Gives storage clustering advice to the server
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-08</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable class="PARAMETER">table</replaceable>
@@ -72,7 +77,7 @@ CLUSTER
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR: relation &lt;<replaceable class="PARAMETER">tablerelation_number</replaceable>&gt; inherits "invoice"
+ERROR: relation &lt;<replaceable class="PARAMETER">tablerelation_number</replaceable>&gt; inherits "<replaceable class="PARAMETER">table</replaceable>"
        </computeroutput></term>
       <listitem>
        <para>
@@ -85,12 +90,12 @@ ERROR: relation &lt;<replaceable class="PARAMETER">tablerelation_number</replace
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR: Relation x does not exist!
+ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exist!
        </computeroutput></term>
       <listitem>
        <para>
 	<comment>
-	 The relation complained of was not shown in the error message,
+	 The specified relation was not shown in the error message,
 	 which contained a random string instead of the relation name.
 	</comment>
        </para>
@@ -111,12 +116,13 @@ ERROR: Relation x does not exist!
   <para>
    <command>CLUSTER</command> instructs <productname>Postgres</productname> 
    to cluster the class specified
-   by <replaceable class="parameter">classname</replaceable> approximately
+   by <replaceable class="parameter">table</replaceable> approximately
    based on the index specified by
    <replaceable class="parameter">indexname</replaceable>. The index must
    already have been defined on 
    <replaceable class="parameter">classname</replaceable>.
   </para>
+
   <para>
    When a class is clustered, it is physically reordered
    based on the index information. The clustering is static.
@@ -150,7 +156,8 @@ ERROR: Relation x does not exist!
    </para>
 
    <para> 
-    Another place <command>CLUSTER</command> is helpful is in cases where you use an
+    Another place where <command>CLUSTER</command> is helpful is in
+    cases where you use an
     index to pull out several rows from a table. If you are
     requesting a range of indexed values from a table, or a
     single indexed value that has multiple rows that match,
@@ -173,11 +180,14 @@ ERROR: Relation x does not exist!
 
    <para> 
     Another way to cluster data is to use
+
     <programlisting>
-SELECT ... INTO TABLE <replaceable class="parameter">temp</replaceable> FROM ... ORDER BY ...
+SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <replaceable class="parameter">newtable</replaceable>
+     FROM <replaceable class="parameter">table</replaceable> ORDER BY <replaceable class="parameter">columnlist</replaceable>
     </programlisting>
-    This uses the <productname>Postgres</productname> sorting code in
-    ORDER BY to match the index, and is much faster for
+
+    which uses the <productname>Postgres</productname> sorting code in 
+    the ORDER BY clause to match the index, and which is much faster for
     unordered data. You then drop the old table, use
     <command>ALTER TABLE/RENAME</command>
     to rename <replaceable class="parameter">temp</replaceable> to the old name, and
@@ -205,8 +215,6 @@ CLUSTER emp_ind ON emp;
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
 
   <refsect2 id="R2-SQL-CLUSTER-4">
    <refsect2info>

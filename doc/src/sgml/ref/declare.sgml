@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.7 1999/07/22 15:09:09 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-DECLARE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-DECLARE-TITLE">
    DECLARE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-04</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 DECLARE <replaceable class="parameter">cursor</replaceable> [ BINARY ] [ INSENSITIVE ] [ SCROLL ]
@@ -181,27 +186,25 @@ ERROR:  Named portals may only be used in begin/end transaction blocks
    Description
   </title>
   <para>
-   <command>DECLARE</command> allows a user to create cursors, which can be used to retrieve
-   a small number of rows at a time out of a larger query. Cursors can return
-   data either in text or in binary foramt.
+   <command>DECLARE</command> allows a user to create cursors, which
+   can be used to retrieve
+   a small number of rows at a time out of a larger query. Cursors can
+   return data either in text or in binary format using
+   <xref linkend="sql-fetch-title" endterm="sql-fetch-title">.
   </para>
 
   <para>
-   Normal cursors return data  in text format, either ASCII or another
+   Normal cursors return data in text format, either ASCII or another
    encoding scheme depending on how the <productname>Postgres</productname>
    backend was built. Since
    data is stored natively in binary format, the system must
    do a conversion to produce the text format. In addition,
    text formats are often larger in size than the corresponding binary format.
    Once the information comes back in text form,  the client
-   application may have to convert it to a binary format to
-   manipulate it anyway.
-  </para>
-
-  <para>
+   application may need to convert it to a binary format to
+   manipulate it.
    BINARY cursors give you back the data in the native binary
-   representation. So binary cursors will tend to be a
-   little faster since they suffer less conversion overhead.
+   representation.
   </para>
 
   <para>
@@ -209,23 +212,26 @@ ERROR:  Named portals may only be used in begin/end transaction blocks
    you would get a string of '1' with a default cursor
    whereas with a binary cursor you would get
    a 4-byte value equal to control-A ('^A').
-
-   <caution>
-    <para>
-     BINARY cursors should be used carefully. User applications such
-     as <application>psql</application> are not aware of binary cursors
-     and expect data to come back in a text format.
-    </para>
-   </caution>
   </para>
 
   <para>
-   However, string representation is architecture-neutral whereas binary
-   representation can differ between different machine architectures.
+   BINARY cursors should be used carefully. User applications such
+   as <application>psql</application> are not aware of binary cursors
+   and expect data to come back in a text format.
+  </para>
+
+  <para>
+   String representation is architecture-neutral whereas binary
+   representation can differ between different machine architectures
+   and <emphasis><productname>Postgres</productname> does not resolve
+    byte ordering or representation issues for binary cursors</emphasis>.
    Therefore, if your client machine and server machine use different
    representations (e.g. "big-endian" versus "little-endian"),
    you will probably not want your data returned in
    binary format.
+   However, binary cursors may be a
+   little more efficient since there is less conversion overhead in
+   the server to client data transfer.
 
    <tip>
     <para>
@@ -243,23 +249,26 @@ ERROR:  Named portals may only be used in begin/end transaction blocks
    <title>
     Notes
    </title>
-   <para>
-    Cursors are only available in transactions.
-   </para>
-   <para>
-    <productname>Postgres</productname>
-    does not have an explicit <command>OPEN cursor</command>
-    statement; a cursor is considered to be open when it is declared.
 
-    <note>
-     <para>
-      In <acronym>SQL92</acronym> cursors are only available in
-      embedded applications. <application>ecpg</application>, the
-      embedded SQL preprocessor for <productname>Postgres</productname>,
-      supports the <acronym>SQL92</acronym> conventions, including those
-      involving DECLARE and OPEN statements.
-     </para>
-    </note>
+   <para>
+    Cursors are only available in transactions. Use to
+    <xref linkend="sql-begin-title" endterm="sql-begin-title">,
+    <xref linkend="sql-commit-title" endterm="sql-commit-title">
+    and
+    <xref linkend="sql-rollback-title" endterm="sql-rollback-title">
+    to define a transaction block.
+   </para>
+
+   <para>
+    In <acronym>SQL92</acronym> cursors are only available in
+    embedded <acronym>SQL</acronym> (<acronym>ESQL</acronym>) applications. 
+    The <productname>Postgres</productname> backend
+    does not implement an explicit <command>OPEN cursor</command>
+    statement; a cursor is considered to be open when it is declared.
+    However, <application>ecpg</application>, the
+    embedded SQL preprocessor for <productname>Postgres</productname>,
+    supports the <acronym>SQL92</acronym> cursor conventions, including those
+    involving DECLARE and OPEN statements.
    </para>
   </refsect2>
  </refsect1>
@@ -282,8 +291,6 @@ DECLARE liahona CURSOR
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
 
   <refsect2 id="R2-SQL-DECLARESTATEMENT-4">
    <refsect2info>

@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.10 1999/07/22 15:09:14 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="APP-PSQL">
  <refmeta>
-  <refentrytitle id="psql-ref">
+  <refentrytitle id="app-psql-title">
    <application>psql</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-26</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 psql [ <replaceable class="parameter">dbname</replaceable> ]

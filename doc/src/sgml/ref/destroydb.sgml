@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/destroydb.sgml,v 1.5 1999/07/22 15:09:10 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="APP-DESTROYDB">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="APP-DESTROYDB-TITLE">
    <application>destroydb</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-10-02</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 destroydb [ <replaceable class="parameter">dbname</replaceable> ]
@@ -230,8 +235,7 @@ destroydb: database destroy failed on <replaceable class="parameter">dbname</rep
    <envar>PGREALM</envar>
    environment variables will be passed on to
    <application>psql</application>
-   and processed as described in <xref endterm="psql-ref"
-    linkend="app-psql">.
+   and processed as described in <xref endterm="app-psql-title" linkend="app-psql-title">.
   </para>
  </refsect1>
 

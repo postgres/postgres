@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.9 1999/07/22 15:09:07 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-CREATEFUNCTION">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-createfunction-title">
    CREATE FUNCTION
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-09</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
@@ -47,6 +52,10 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
       <listitem>
        <para>
 	The data type of function arguments.
+	The input types may be base or complex types, or
+	<firstterm>opaque</firstterm>.
+	<literal>opaque</literal> indicates that the function
+	accepts arguments of an invalid type such as <type>char *</type>.
        </para>
       </listitem>
      </varlistentry>
@@ -55,6 +64,12 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
       <listitem>
        <para>
 	The return data type.
+	The output type may be specified as a base type, complex type, 
+	<literal>setof <replaceable class="parameter">type</replaceable></literal>,
+	or <literal>opaque</literal>.
+	The <literal>setof</literal>
+	modifier indicates that the function will return a set of items,
+	rather than a single item.
        </para>
       </listitem>
      </varlistentry>
@@ -77,7 +92,9 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 	or '<replaceable class="parameter">plname</replaceable>',
 	where '<replaceable class="parameter">plname</replaceable>'
 	is the name of a created procedural
-	language. See <command>CREATE LANGUAGE</command> for details.
+	language. See
+	<xref linkend="sql-createlanguage-title" endterm="sql-createlanguage-title">
+	for details.
        </para>
       </listitem>
      </varlistentry>
@@ -133,43 +150,52 @@ CREATE
     Notes
    </title>
    <para>
-    Refer to the chapter on functions 
-in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
-    for further information.
+    Refer to the chapter in
+    the <citetitle>PostgreSQL Programmer's Guide</citetitle>
+    on extending
+    <productname>Postgres</productname> via functions 
+    for further information on writing external functions.
    </para>
+
    <para>
     Use <command>DROP FUNCTION</command>
     to drop user-defined functions.
    </para>
 
-  <para>
-   <productname>Postgres</productname> allows function "overloading";
-   that is, the same name can be used for several different functions
-   so long as they have distinct argument types.  This facility must be
-   used with caution for INTERNAL and C-language functions, however.
-  </para>
+   <para>
+    <productname>Postgres</productname> allows function "overloading";
+    that is, the same name can be used for several different functions
+    so long as they have distinct argument types.  This facility must be
+    used with caution for <literal>internal</literal>
+    and C-language functions, however.
+   </para>
 
-  <para>
-   Two INTERNAL functions cannot have the same C name without causing
-   errors at link time.  To get around that, give them different C names
-   (for example, use the argument types as part of the C names), then
-   specify those names in the AS clause of <command>CREATE FUNCTION</command>.
-   If the AS clause is left empty then <command>CREATE FUNCTION</command>
-   assumes the C name of the function is the same as the SQL name.
-  </para>
+   <para>
+    Two <literal>internal</literal>
+    functions cannot have the same C name without causing
+    errors at link time.  To get around that, give them different C names
+    (for example, use the argument types as part of the C names), then
+    specify those names in the AS clause of <command>CREATE FUNCTION</command>.
+    If the AS clause is left empty then <command>CREATE FUNCTION</command>
+    assumes the C name of the function is the same as the SQL name.
+   </para>
 
-  <para>
-   For dynamically-loaded C functions, the SQL name of the function must
-   be the same as the C function name, because the AS clause is used to
-   give the path name of the object file containing the C code.  In this
-   situation it is best not to try to overload SQL function names.  It
-   might work to load a C function that has the same C name as an internal
-   function or another dynamically-loaded function --- or it might not.
-   On some platforms the dynamic loader may botch the load in interesting
-   ways if there is a conflict of C function names.  So, even if it works
-   for you today, you might regret overloading names later when you try
-   to run the code somewhere else.
-  </para>
+   <para>
+    For dynamically-loaded C functions, the SQL name of the function must
+    be the same as the C function name, because the AS clause is used to
+    give the path name of the object file containing the C code.  In this
+    situation it is best not to try to overload SQL function names.  It
+    might work to load a C function that has the same C name as an internal
+    function or another dynamically-loaded function --- or it might not.
+    On some platforms the dynamic loader may botch the load in interesting
+    ways if there is a conflict of C function names.  So, even if it works
+    for you today, you might regret overloading names later when you try
+    to run the code somewhere else.
+   </para>
+
+   <para>
+    A C function cannot return a set of values.
+   </para>
   </refsect2>
  </refsect1>
   
@@ -195,7 +221,7 @@ SELECT one() AS answer;
   </para>
 
   <para>
-   To create a C function, calling a routine from a user-created
+   This example creates a C function by calling a routine from a user-created
    shared library.  This particular routine calculates a check
    digit and returns TRUE if the check digit in the function parameters
    is correct. It is intended for use in a CHECK contraint.
@@ -216,25 +242,26 @@ CREATE TABLE product (
   </programlisting>
  </refsect1>
  
- <refsect1 id="R1-SQL-CREATEFUNCTION-3">
-  <title>
-   Bugs
-  </title>
-  <para>
-   A C function cannot return a set of values.
-  </para>
- </refsect1>
-
  <refsect1 id="R1-SQL-CREATEFUNCTION-4">
   <title>
    Compatibility
   </title>
-  <para>
-   <command>CREATE FUNCTION</command> is
-   a <productname>Postgres</productname> language extension.
-   </para>
 
   <refsect2 id="R2-SQL-CREATEFUNCTION-4">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+
+   <para>
+    <command>CREATE FUNCTION</command> is
+    a <productname>Postgres</productname> language extension.
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-CREATEFUNCTION-5">
    <refsect2info>
     <date>1998-09-09</date>
    </refsect2info>

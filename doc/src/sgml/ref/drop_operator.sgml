@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.6 1999/07/22 15:09:10 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-DROPOPERATOR">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-DROPOPERATOR-TITLE">
    DROP OPERATOR
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -16,7 +21,7 @@
   
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-22</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable class="PARAMETER">type</replaceable> | NONE [,...] )
@@ -138,8 +143,9 @@ ERROR:  RemoveOperator: right unary operator '<replaceable class="PARAMETER">ope
     language extension.
    </para>
    <para>
-    Refer to <command>CREATE OPERATOR</command> for
-    information on how to create operators.
+    Refer to
+    <xref linkend="sql-createoperator-title" endterm="sql-createoperator-title">
+    for information on how to create operators.
    </para>
    <para>
     It is the user's responsibility to remove any access methods and
@@ -178,8 +184,6 @@ DROP OPERATOR ! (int4, none);
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
 
   <refsect2 id="R2-SQL-DROPOPERATOR-4">
    <refsect2info>

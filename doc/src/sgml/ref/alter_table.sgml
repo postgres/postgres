@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.8 1999/07/22 15:09:06 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-ALTERTABLE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-altertable-title">
    ALTER TABLE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-04-15</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
@@ -166,9 +171,37 @@ ERROR
    </para>
 
    <para>
-    <quote>[*]</quote> following a name of a table indicates that statement
+    <quote>*</quote> following a name of a table indicates that the statement
     should be run over that table and all tables below it in the
-    inheritance hierarchy.
+    inheritance hierarchy;
+    by default, the attribute will not be added to or renamed in any of the subclasses.
+
+    This should always be done when adding or modifying an attribute in a
+    superclass. If it is not, queries on  the  inheritance  hierarchy
+    such as
+
+    <programlisting>
+SELECT <replaceable>NewColumn</replaceable> FROM <replaceable>SuperClass</replaceable>*
+    </programlisting>
+
+    will not work because the subclasses will be missing an attribute
+    found in the superclass.
+   </para>
+
+   <para>
+    For efficiency reasons, default values for added attributes are
+    not placed in existing instances of a class.
+    That is, existing instances will have NULL values in the new
+    attributes. If non-NULL  values  are  desired,  a subsequent
+    <command>UPDATE</command> query 
+    (<xref linkend="sql-update-title" endterm="sql-update-title">)
+    should be run.
+   </para>
+
+   <para>
+    You must own the class in order to change its schema.
+    Renaming any  part  of  the schema of a system
+    catalog is not permitted.
     The <citetitle>PostgreSQL User's Guide</citetitle> has further
     information on inheritance.
    </para>

@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.6 1999/07/22 15:09:13 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-MOVE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-MOVE-TITLE">
    MOVE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>                
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-24</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 MOVE [ <replaceable class="PARAMETER">selector</replaceable> ] [ <replaceable class="PARAMETER">count</replaceable> ] 
@@ -39,7 +44,9 @@ MOVE [ <replaceable class="PARAMETER">selector</replaceable> ] [ <replaceable cl
    not return rows.
   </para>
   <para>
-   Refer to the <command>FETCH</command> command for details on syntax and usage.
+   Refer to 
+   <xref linkend="sql-fetch-title" endterm="sql-fetch-title">
+   for details on syntax and usage.
   </para>
 
   <refsect2 id="R2-SQL-MOVE-3">
@@ -49,16 +56,24 @@ MOVE [ <replaceable class="PARAMETER">selector</replaceable> ] [ <replaceable cl
    <title>
     Notes
    </title>
+
    <para>
     <command>MOVE</command> is a <productname>Postgres</productname>
     language extension.
    </para>
+
    <para>
-    Refer to <command>FETCH</command> for a description
-    of valid arguments.
-    Refer to <command>DECLARE</command> to declare a cursor.
-    Refer to <command>BEGIN WORK</command>, <command>COMMIT WORK</command>,
-    <command>ROLLBACK WORK</command> statements
+    Refer to
+    <xref linkend="sql-fetch-title" endterm="sql-fetch-title">
+    for a description of valid arguments.
+    Refer to 
+    <xref linkend="sql-declare-title" endterm="sql-declare-title">
+    to define a cursor.
+    Refer to 
+    <xref linkend="sql-begin-title" endterm="sql-begin-title">, 
+    <xref linkend="sql-commit-title" endterm="sql-commit-title">,
+    and
+    <xref linkend="sql-rollback-title" endterm="sql-rollback-title">
     for further information about transactions.
    </para>
   </refsect2>
@@ -100,8 +115,6 @@ COMMIT WORK;
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
 	
   <refsect2 id="R2-SQL-MOVE-4">
    <refsect2info>
@@ -111,10 +124,10 @@ COMMIT WORK;
     SQL92
    </title>
    <para>
-    There is no SQL92 <command>MOVE</command> statement. 
+    There is no <acronym>SQL92</acronym> <command>MOVE</command> statement. 
     Instead, <acronym>SQL92</acronym> allows
     one to <command>FETCH</command> rows from an absolute cursor position,
-    implicitly moving the cursor to the correct place.
+    implicitly moving the cursor to the correct position.
    </para>
   </refsect2>
  </refsect1>

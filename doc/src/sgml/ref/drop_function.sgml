@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.7 1999/07/22 15:09:10 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-DROPFUNCTION">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="SQL-DROPFUNCTION-TITLE">
    DROP FUNCTION
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-04-15</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">type</replaceable> [, ...] ] )
@@ -108,9 +113,16 @@ WARN RemoveFunction: Function "<replaceable class="parameter">name</replaceable>
    <title>
     Notes
    </title>
+
    <para>
-    Refer to <command>CREATE FUNCTION</command>
-    to create aggregate functions.
+    Refer to
+    <xref linkend="sql-createfunction-title" endterm="sql-createfunction-title">
+    for information on creating aggregate functions.
+   </para>
+
+   <para>
+    No checks are made to ensure that types, operators or access
+    methods that rely on the function have been removed first.
    </para>
   </refsect2>
  </refsect1>
@@ -119,6 +131,7 @@ WARN RemoveFunction: Function "<replaceable class="parameter">name</replaceable>
   <title>
    Usage
   </title>
+
   <para>
    This command removes the square root function:
 
@@ -128,25 +141,26 @@ DROP FUNCTION sqrt(int4);
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPFUNCTION-3">
-  <title>
-   Bugs
-  </title>
-  <para>
-   No checks are made to ensure that types, operators or access
-   methods that rely on the function have been removed first.
-  </para>
- </refsect1>
-
  <refsect1 id="R1-SQL-DROPFUNCTION-4">
   <title>
    Compatibility
   </title>
-  <para>
-   DROP FUNCTION is a <productname>Postgres</productname> language extension.
-  </para>
   
   <refsect2 id="R2-SQL-DROPFUNCTION-4">
+   <refsect2info>
+    <date>1999-07-20</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+
+   <para>
+    <command>DROP FUNCTION</command>
+    is a <productname>Postgres</productname> language extension.
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-DROPFUNCTION-5">
    <refsect2info>
     <date>1998-04-15</date>
    </refsect2info>
@@ -156,9 +170,10 @@ DROP FUNCTION sqrt(int4);
    <para>
     SQL/PSM is a proposed standard to enable function extensibility.
     The SQL/PSM DROP FUNCTION statement has the following syntax:
-    <programlisting>
+
+    <synopsis>
 DROP [ SPECIFIC ] FUNCTION <replaceable class="parameter">name</replaceable> { RESTRICT | CASCADE }
-    </programlisting>
+    </synopsis>
    </para>
   </refsect2>
  </refsect1>

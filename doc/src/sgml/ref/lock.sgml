@@ -1,6 +1,11 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.13 1999/07/22 15:09:12 thomas Exp $
+Postgres documentation
+-->
+
 <refentry id="SQL-LOCK">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-lock-title">
    LOCK
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -15,7 +20,7 @@
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-24</date>
+   <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
 LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable>
@@ -356,8 +361,6 @@ COMMIT WORK;
   <title>
    Compatibility
   </title>
-  <para>
-  </para>
 	  
   <refsect2 id="R2-SQL-LOCK-4">
    <refsect2info>
@@ -369,7 +372,7 @@ COMMIT WORK;
    <para>
     There is no <command>LOCK TABLE</command> in <acronym>SQL92</acronym>,
     which instead uses <command>SET TRANSACTION</command> to specify
-    concurrency level on transactions.  We support that too; see
+    concurrency levels on transactions.  We support that too; see
     <xref linkend="SQL-SET-TITLE" endterm="SQL-SET-TITLE"> for details.
    </para>
   </refsect2>
