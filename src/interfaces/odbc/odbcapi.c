@@ -31,8 +31,10 @@
 #endif
 
 #include "psqlodbc.h"
+#ifdef	WIN32
 #undef	ODBCVER
 #define	ODBCVER	0x3000
+#endif
 #include <stdio.h>
 #include <string.h>
 
@@ -47,29 +49,29 @@
 #include "connection.h"
 #include "statement.h"
 
-SQLRETURN  SQL_API SQLAllocConnect(SQLHENV EnvironmentHandle,
-           SQLHDBC *ConnectionHandle)
+RETCODE  SQL_API SQLAllocConnect(HENV EnvironmentHandle,
+           HDBC FAR *ConnectionHandle)
 {
 	mylog("[SQLAllocConnect]");
 	return PGAPI_AllocConnect(EnvironmentHandle, ConnectionHandle);
 }
 
-SQLRETURN  SQL_API SQLAllocEnv(SQLHENV *EnvironmentHandle)
+RETCODE  SQL_API SQLAllocEnv(HENV FAR *EnvironmentHandle)
 {
 	mylog("[SQLAllocEnv]");
 	return PGAPI_AllocEnv(EnvironmentHandle);
 }
 
-SQLRETURN  SQL_API SQLAllocStmt(SQLHDBC ConnectionHandle,
-           SQLHSTMT *StatementHandle)
+RETCODE  SQL_API SQLAllocStmt(HDBC ConnectionHandle,
+           HSTMT *StatementHandle)
 {
 	mylog("[SQLAllocStmt]");
 	return PGAPI_AllocStmt(ConnectionHandle, StatementHandle);
 }
 
-SQLRETURN  SQL_API SQLBindCol(SQLHSTMT StatementHandle, 
+RETCODE  SQL_API SQLBindCol(HSTMT StatementHandle, 
 		   SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType, 
-		   SQLPOINTER TargetValue, SQLINTEGER BufferLength, 
+		   PTR TargetValue, SQLINTEGER BufferLength, 
 	   	   SQLINTEGER *StrLen_or_Ind)
 {
 	mylog("[SQLBindCol]");
@@ -77,13 +79,13 @@ SQLRETURN  SQL_API SQLBindCol(SQLHSTMT StatementHandle,
 		  TargetType, TargetValue, BufferLength, StrLen_or_Ind);
 }
 
-SQLRETURN  SQL_API SQLCancel(SQLHSTMT StatementHandle)
+RETCODE  SQL_API SQLCancel(HSTMT StatementHandle)
 {
 	mylog("[SQLCancel]");
 	return PGAPI_Cancel(StatementHandle);
 }
 
-SQLRETURN  SQL_API SQLColumns(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLColumns(HSTMT StatementHandle,
            SQLCHAR *CatalogName, SQLSMALLINT NameLength1,
            SQLCHAR *SchemaName, SQLSMALLINT NameLength2,
            SQLCHAR *TableName, SQLSMALLINT NameLength3,
@@ -96,7 +98,7 @@ SQLRETURN  SQL_API SQLColumns(SQLHSTMT StatementHandle,
 }
 
 
-SQLRETURN  SQL_API SQLConnect(SQLHDBC ConnectionHandle,
+RETCODE  SQL_API SQLConnect(HDBC ConnectionHandle,
            SQLCHAR *ServerName, SQLSMALLINT NameLength1,
            SQLCHAR *UserName, SQLSMALLINT NameLength2,
            SQLCHAR *Authentication, SQLSMALLINT NameLength3)
@@ -106,7 +108,7 @@ SQLRETURN  SQL_API SQLConnect(SQLHDBC ConnectionHandle,
            	UserName, NameLength2, Authentication, NameLength3);
 }
 
-SQLRETURN SQL_API SQLDriverConnect(HDBC hdbc,
+RETCODE SQL_API SQLDriverConnect(HDBC hdbc,
                                  HWND hwnd,
                                  UCHAR FAR *szConnStrIn,
                                  SWORD cbConnStrIn,
@@ -119,8 +121,8 @@ SQLRETURN SQL_API SQLDriverConnect(HDBC hdbc,
 	return PGAPI_DriverConnect(hdbc, hwnd, szConnStrIn, cbConnStrIn,
 		szConnStrOut, cbConnStrOutMax, pcbConnStrOut, fDriverCompletion);
 }
-SQLRETURN SQL_API SQLBrowseConnect(
-    SQLHDBC            hdbc,
+RETCODE SQL_API SQLBrowseConnect(
+    HDBC            hdbc,
     SQLCHAR 		  *szConnStrIn,
     SQLSMALLINT        cbConnStrIn,
     SQLCHAR 		  *szConnStrOut,
@@ -132,7 +134,7 @@ SQLRETURN SQL_API SQLBrowseConnect(
 		szConnStrOut, cbConnStrOutMax, pcbConnStrOut);
 }
 
-SQLRETURN  SQL_API SQLDataSources(SQLHENV EnvironmentHandle,
+RETCODE  SQL_API SQLDataSources(HENV EnvironmentHandle,
            SQLUSMALLINT Direction, SQLCHAR *ServerName,
            SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1,
            SQLCHAR *Description, SQLSMALLINT BufferLength2,
@@ -147,7 +149,7 @@ SQLRETURN  SQL_API SQLDataSources(SQLHENV EnvironmentHandle,
 	return SQL_ERROR;
 }
 
-SQLRETURN  SQL_API SQLDescribeCol(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLDescribeCol(HSTMT StatementHandle,
            SQLUSMALLINT ColumnNumber, SQLCHAR *ColumnName,
            SQLSMALLINT BufferLength, SQLSMALLINT *NameLength,
            SQLSMALLINT *DataType, SQLUINTEGER *ColumnSize,
@@ -159,14 +161,14 @@ SQLRETURN  SQL_API SQLDescribeCol(SQLHSTMT StatementHandle,
            	DataType, ColumnSize, DecimalDigits, Nullable);
 }
 
-SQLRETURN  SQL_API SQLDisconnect(SQLHDBC ConnectionHandle)
+RETCODE  SQL_API SQLDisconnect(HDBC ConnectionHandle)
 {
 	mylog("[SQLDisconnect]");
 	return PGAPI_Disconnect(ConnectionHandle);
 }
 
-SQLRETURN  SQL_API SQLError(SQLHENV EnvironmentHandle,
-           SQLHDBC ConnectionHandle, SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLError(HENV EnvironmentHandle,
+           HDBC ConnectionHandle, HSTMT StatementHandle,
            SQLCHAR *Sqlstate, SQLINTEGER *NativeError,
            SQLCHAR *MessageText, SQLSMALLINT BufferLength,
            SQLSMALLINT *TextLength)
@@ -176,20 +178,20 @@ SQLRETURN  SQL_API SQLError(SQLHENV EnvironmentHandle,
            	Sqlstate, NativeError, MessageText, BufferLength, TextLength);
 }
 
-SQLRETURN  SQL_API SQLExecDirect(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLExecDirect(HSTMT StatementHandle,
            SQLCHAR *StatementText, SQLINTEGER TextLength)
 {
 	mylog("[SQLExecDirect]");
 	return PGAPI_ExecDirect(StatementHandle, StatementText, TextLength);
 }
 
-SQLRETURN  SQL_API SQLExecute(SQLHSTMT StatementHandle)
+RETCODE  SQL_API SQLExecute(HSTMT StatementHandle)
 {
 	mylog("[SQLExecute]");
 	return PGAPI_Execute(StatementHandle);
 }
 
-SQLRETURN  SQL_API SQLFetch(SQLHSTMT StatementHandle)
+RETCODE  SQL_API SQLFetch(HSTMT StatementHandle)
 {
         static char *func = "SQLFetch";
 #if (ODBCVER >= 0x3000)
@@ -209,32 +211,32 @@ SQLRETURN  SQL_API SQLFetch(SQLHSTMT StatementHandle)
 	return PGAPI_Fetch(StatementHandle);
 }
 
-SQLRETURN  SQL_API SQLFreeConnect(SQLHDBC ConnectionHandle)
+RETCODE  SQL_API SQLFreeConnect(HDBC ConnectionHandle)
 {
 	mylog("[SQLFreeStmt]");
 	return PGAPI_FreeConnect(ConnectionHandle);
 }
 
-SQLRETURN  SQL_API SQLFreeEnv(SQLHENV EnvironmentHandle)
+RETCODE  SQL_API SQLFreeEnv(HENV EnvironmentHandle)
 {
 	mylog("[SQLFreeEnv]");
 	return PGAPI_FreeEnv(EnvironmentHandle);
 }
 
-SQLRETURN  SQL_API SQLFreeStmt(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLFreeStmt(HSTMT StatementHandle,
            SQLUSMALLINT Option)
 {
 	mylog("[SQLFreeStmt]");
 	return PGAPI_FreeStmt(StatementHandle, Option);
 }
 
-SQLRETURN  SQL_API SQLGetConnectOption(SQLHDBC ConnectionHandle,
-           SQLUSMALLINT Option, SQLPOINTER Value)
+RETCODE  SQL_API SQLGetConnectOption(HDBC ConnectionHandle,
+           SQLUSMALLINT Option, PTR Value)
 {
 	mylog("[SQLGetConnectOption]");
 	return PGAPI_GetConnectOption(ConnectionHandle, Option, Value);
 } 
-SQLRETURN  SQL_API SQLGetCursorName(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLGetCursorName(HSTMT StatementHandle,
            SQLCHAR *CursorName, SQLSMALLINT BufferLength,
            SQLSMALLINT *NameLength)
 {
@@ -243,9 +245,9 @@ SQLRETURN  SQL_API SQLGetCursorName(SQLHSTMT StatementHandle,
            	NameLength);
 }
 
-SQLRETURN  SQL_API SQLGetData(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLGetData(HSTMT StatementHandle,
            SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType,
-           SQLPOINTER TargetValue, SQLINTEGER BufferLength,
+           PTR TargetValue, SQLINTEGER BufferLength,
            SQLINTEGER *StrLen_or_Ind)
 {
 	mylog("[SQLGetData]");
@@ -253,7 +255,7 @@ SQLRETURN  SQL_API SQLGetData(SQLHSTMT StatementHandle,
            	TargetValue, BufferLength, StrLen_or_Ind);
 }
 
-SQLRETURN  SQL_API SQLGetFunctions(SQLHDBC ConnectionHandle,
+RETCODE  SQL_API SQLGetFunctions(HDBC ConnectionHandle,
            SQLUSMALLINT FunctionId, SQLUSMALLINT *Supported)
 {
 	mylog("[SQLGetFunctions");
@@ -263,82 +265,93 @@ SQLRETURN  SQL_API SQLGetFunctions(SQLHDBC ConnectionHandle,
 #endif
 	return PGAPI_GetFunctions(ConnectionHandle, FunctionId, Supported);
 }
-SQLRETURN  SQL_API SQLGetInfo(SQLHDBC ConnectionHandle,
-           SQLUSMALLINT InfoType, SQLPOINTER InfoValue,
+RETCODE  SQL_API SQLGetInfo(HDBC ConnectionHandle,
+           SQLUSMALLINT InfoType, PTR InfoValue,
            SQLSMALLINT BufferLength, SQLSMALLINT *StringLength)
 {
+#if (ODBCVER >= 0x3000)
+	RETCODE	ret;
+	mylog("[SQLGetInfo(30)]");
+	if ((ret = PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,
+           	BufferLength, StringLength)) == SQL_ERROR)
+		return PGAPI_GetInfo30(ConnectionHandle, InfoType, InfoValue,
+           	BufferLength, StringLength);
+	else
+		return ret;
+#else
 	mylog("[SQLGetInfo]");
 	return PGAPI_GetInfo(ConnectionHandle, InfoType, InfoValue,
            	BufferLength, StringLength);
+#endif
 }
 
-SQLRETURN  SQL_API SQLGetStmtOption(SQLHSTMT StatementHandle,
-           SQLUSMALLINT Option, SQLPOINTER Value)
+RETCODE  SQL_API SQLGetStmtOption(HSTMT StatementHandle,
+           SQLUSMALLINT Option, PTR Value)
 {
 	mylog("[SQLGetStmtOption]");
 	return PGAPI_GetStmtOption(StatementHandle, Option, Value);
 }
 
-SQLRETURN  SQL_API SQLGetTypeInfo(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLGetTypeInfo(HSTMT StatementHandle,
            SQLSMALLINT DataType)
 {
 	mylog("[SQLGetTypeInfo]");
 	return PGAPI_GetTypeInfo(StatementHandle,DataType);
 }
 
-SQLRETURN  SQL_API SQLNumResultCols(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLNumResultCols(HSTMT StatementHandle,
            SQLSMALLINT *ColumnCount)
 {
 	mylog("[SQLNumResultCols]");
 	return PGAPI_NumResultCols(StatementHandle, ColumnCount);
 }
 
-SQLRETURN  SQL_API SQLParamData(SQLHSTMT StatementHandle,
-           SQLPOINTER *Value)
+RETCODE  SQL_API SQLParamData(HSTMT StatementHandle,
+           PTR *Value)
 {
 	mylog("[SQLParamData]");
 	return PGAPI_ParamData(StatementHandle, Value);
 }
 
-SQLRETURN  SQL_API SQLPrepare(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLPrepare(HSTMT StatementHandle,
            SQLCHAR *StatementText, SQLINTEGER TextLength)
 {
 	mylog("[SQLPrepare]");
 	return PGAPI_Prepare(StatementHandle, StatementText, TextLength);
 }
 
-SQLRETURN  SQL_API SQLPutData(SQLHSTMT StatementHandle,
-           SQLPOINTER Data, SQLINTEGER StrLen_or_Ind)
+RETCODE  SQL_API SQLPutData(HSTMT StatementHandle,
+           PTR Data, SQLINTEGER StrLen_or_Ind)
 {
 	mylog("[SQLPutData]");
 	return PGAPI_PutData(StatementHandle, Data, StrLen_or_Ind);
 }
 
-SQLRETURN  SQL_API SQLRowCount(SQLHSTMT StatementHandle, 
+RETCODE  SQL_API SQLRowCount(HSTMT StatementHandle, 
 	   SQLINTEGER *RowCount)
 {
 	mylog("[SQLRowCount]");
 	return PGAPI_RowCount(StatementHandle, RowCount);
 }
 
-SQLRETURN  SQL_API SQLSetConnectOption(SQLHDBC ConnectionHandle,
+RETCODE  SQL_API SQLSetConnectOption(HDBC ConnectionHandle,
            SQLUSMALLINT Option, SQLUINTEGER Value)
 {
 	mylog("[SQLSetConnectionOption]");
 	return PGAPI_SetConnectOption(ConnectionHandle, Option, Value);
 }
 
-SQLRETURN  SQL_API SQLSetCursorName(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLSetCursorName(HSTMT StatementHandle,
            SQLCHAR *CursorName, SQLSMALLINT NameLength)
 {
 	mylog("[SQLSetCursorName]");
 	return PGAPI_SetCursorName(StatementHandle, CursorName, NameLength);
 }
 
-SQLRETURN  SQL_API SQLSetParam(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLSetParam(HSTMT StatementHandle,
            SQLUSMALLINT ParameterNumber, SQLSMALLINT ValueType,
            SQLSMALLINT ParameterType, SQLUINTEGER LengthPrecision,
-           SQLSMALLINT ParameterScale, SQLPOINTER ParameterValue,
+           SQLSMALLINT ParameterScale, PTR ParameterValue,
            SQLINTEGER *StrLen_or_Ind)
 {
 	mylog("[SQLSetParam]");
@@ -350,14 +363,14 @@ SQLRETURN  SQL_API SQLSetParam(SQLHSTMT StatementHandle,
         return SQL_ERROR;
 }
 
-SQLRETURN  SQL_API SQLSetStmtOption(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLSetStmtOption(HSTMT StatementHandle,
            SQLUSMALLINT Option, SQLUINTEGER Value)
 {
 	mylog("[SQLSetStmtOption]");
 	return PGAPI_SetStmtOption(StatementHandle, Option, Value);
 }
 
-SQLRETURN  SQL_API SQLSpecialColumns(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLSpecialColumns(HSTMT StatementHandle,
            SQLUSMALLINT IdentifierType, SQLCHAR *CatalogName,
            SQLSMALLINT NameLength1, SQLCHAR *SchemaName,
            SQLSMALLINT NameLength2, SQLCHAR *TableName,
@@ -370,7 +383,7 @@ SQLRETURN  SQL_API SQLSpecialColumns(SQLHSTMT StatementHandle,
 		Scope, Nullable);
 }
 
-SQLRETURN  SQL_API SQLStatistics(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLStatistics(HSTMT StatementHandle,
            SQLCHAR *CatalogName, SQLSMALLINT NameLength1,
            SQLCHAR *SchemaName, SQLSMALLINT NameLength2,
            SQLCHAR *TableName, SQLSMALLINT NameLength3,
@@ -382,7 +395,7 @@ SQLRETURN  SQL_API SQLStatistics(SQLHSTMT StatementHandle,
 		Reserved);
 }
 
-SQLRETURN  SQL_API SQLTables(SQLHSTMT StatementHandle,
+RETCODE  SQL_API SQLTables(HSTMT StatementHandle,
            SQLCHAR *CatalogName, SQLSMALLINT NameLength1,
            SQLCHAR *SchemaName, SQLSMALLINT NameLength2,
            SQLCHAR *TableName, SQLSMALLINT NameLength3,
@@ -394,18 +407,18 @@ SQLRETURN  SQL_API SQLTables(SQLHSTMT StatementHandle,
            TableType, NameLength4);
 }
 
-SQLRETURN  SQL_API SQLTransact(SQLHENV EnvironmentHandle,
-           SQLHDBC ConnectionHandle, SQLUSMALLINT CompletionType)
+RETCODE  SQL_API SQLTransact(HENV EnvironmentHandle,
+           HDBC ConnectionHandle, SQLUSMALLINT CompletionType)
 {
 	mylog("[SQLTransact]");
 	return PGAPI_Transact(EnvironmentHandle, ConnectionHandle, CompletionType);
 }
 
-SQLRETURN SQL_API SQLColAttributes(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLColAttributes(
+    HSTMT           hstmt,
     SQLUSMALLINT       icol,
     SQLUSMALLINT       fDescType,
-    SQLPOINTER         rgbDesc,
+    PTR         rgbDesc,
     SQLSMALLINT        cbDescMax,
     SQLSMALLINT 	  *pcbDesc,
     SQLINTEGER 		  *pfDesc)
@@ -415,8 +428,8 @@ SQLRETURN SQL_API SQLColAttributes(
 		cbDescMax, pcbDesc, pfDesc);
 }
 
-SQLRETURN SQL_API SQLColumnPrivileges(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLColumnPrivileges(
+    HSTMT           hstmt,
     SQLCHAR 		  *szCatalogName,
     SQLSMALLINT        cbCatalogName,
     SQLCHAR 		  *szSchemaName,
@@ -432,8 +445,8 @@ SQLRETURN SQL_API SQLColumnPrivileges(
 		szColumnName, cbColumnName);
 }
 
-SQLRETURN SQL_API SQLDescribeParam(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLDescribeParam(
+    HSTMT           hstmt,
     SQLUSMALLINT       ipar,
     SQLSMALLINT 	  *pfSqlType,
     SQLUINTEGER 	  *pcbParamDef,
@@ -445,8 +458,8 @@ SQLRETURN SQL_API SQLDescribeParam(
 		pibScale, pfNullable);
 }
 
-SQLRETURN SQL_API SQLExtendedFetch(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLExtendedFetch(
+    HSTMT           hstmt,
     SQLUSMALLINT       fFetchType,
     SQLINTEGER         irow,
     SQLUINTEGER 	  *pcrow,
@@ -456,8 +469,8 @@ SQLRETURN SQL_API SQLExtendedFetch(
 	return PGAPI_ExtendedFetch(hstmt, fFetchType, irow, pcrow, rgfRowStatus);
 }
 
-SQLRETURN SQL_API SQLForeignKeys(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLForeignKeys(
+    HSTMT           hstmt,
     SQLCHAR 		  *szPkCatalogName,
     SQLSMALLINT        cbPkCatalogName,
     SQLCHAR 		  *szPkSchemaName,
@@ -478,14 +491,14 @@ SQLRETURN SQL_API SQLForeignKeys(
  		szFkSchemaName, cbFkSchemaName, szFkTableName, cbFkTableName);
 }
 
-SQLRETURN SQL_API SQLMoreResults(SQLHSTMT hstmt)
+RETCODE SQL_API SQLMoreResults(HSTMT hstmt)
 {
 	mylog("[SQLMoreResults]");
 	return PGAPI_MoreResults(hstmt);
 }
  
-SQLRETURN SQL_API SQLNativeSql(
-    SQLHDBC            hdbc,
+RETCODE SQL_API SQLNativeSql(
+    HDBC            hdbc,
     SQLCHAR 		  *szSqlStrIn,
     SQLINTEGER         cbSqlStrIn,
     SQLCHAR 		  *szSqlStr,
@@ -497,16 +510,16 @@ SQLRETURN SQL_API SQLNativeSql(
 		cbSqlStrMax, pcbSqlStr);
 }
 
-SQLRETURN SQL_API SQLNumParams(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLNumParams(
+    HSTMT           hstmt,
     SQLSMALLINT 	  *pcpar)
 {
 	mylog("[SQLNumParams]");
 	return PGAPI_NumParams(hstmt, pcpar);
 }
 
-SQLRETURN SQL_API SQLParamOptions(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLParamOptions(
+    HSTMT           hstmt,
     SQLUINTEGER        crow,
     SQLUINTEGER 	  *pirow)
 {
@@ -514,8 +527,8 @@ SQLRETURN SQL_API SQLParamOptions(
 	return PGAPI_ParamOptions(hstmt, crow, pirow);
 }
 
-SQLRETURN SQL_API SQLPrimaryKeys(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLPrimaryKeys(
+    HSTMT           hstmt,
     SQLCHAR 		  *szCatalogName,
     SQLSMALLINT        cbCatalogName,
     SQLCHAR 		  *szSchemaName,
@@ -528,8 +541,8 @@ SQLRETURN SQL_API SQLPrimaryKeys(
 		szSchemaName, cbSchemaName, szTableName, cbTableName);
 }
 
-SQLRETURN SQL_API SQLProcedureColumns(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLProcedureColumns(
+    HSTMT           hstmt,
     SQLCHAR 		  *szCatalogName,
     SQLSMALLINT        cbCatalogName,
     SQLCHAR 		  *szSchemaName,
@@ -545,8 +558,8 @@ SQLRETURN SQL_API SQLProcedureColumns(
 		szColumnName, cbColumnName);
 }
 
-SQLRETURN SQL_API SQLProcedures(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLProcedures(
+    HSTMT           hstmt,
     SQLCHAR 		  *szCatalogName,
     SQLSMALLINT        cbCatalogName,
     SQLCHAR 		  *szSchemaName,
@@ -559,8 +572,8 @@ SQLRETURN SQL_API SQLProcedures(
 		szSchemaName, cbSchemaName, szProcName, cbProcName);
 }
 
-SQLRETURN SQL_API SQLSetPos(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLSetPos(
+    HSTMT           hstmt,
     SQLUSMALLINT       irow,
     SQLUSMALLINT       fOption,
     SQLUSMALLINT       fLock)
@@ -569,8 +582,8 @@ SQLRETURN SQL_API SQLSetPos(
 	return PGAPI_SetPos(hstmt, irow, fOption, fLock);
 }
 
-SQLRETURN SQL_API SQLTablePrivileges(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLTablePrivileges(
+    HSTMT           hstmt,
     SQLCHAR 		  *szCatalogName,
     SQLSMALLINT        cbCatalogName,
     SQLCHAR 		  *szSchemaName,
@@ -583,15 +596,15 @@ SQLRETURN SQL_API SQLTablePrivileges(
 		szSchemaName, cbSchemaName, szTableName, cbTableName);
 }
 
-SQLRETURN SQL_API SQLBindParameter(
-    SQLHSTMT           hstmt,
+RETCODE SQL_API SQLBindParameter(
+    HSTMT           hstmt,
     SQLUSMALLINT       ipar,
     SQLSMALLINT        fParamType,
     SQLSMALLINT        fCType,
     SQLSMALLINT        fSqlType,
     SQLUINTEGER        cbColDef,
     SQLSMALLINT        ibScale,
-    SQLPOINTER         rgbValue,
+    PTR         rgbValue,
     SQLINTEGER         cbValueMax,
     SQLINTEGER 		  *pcbValue)
 {

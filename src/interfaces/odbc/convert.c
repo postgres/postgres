@@ -1969,8 +1969,16 @@ convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValue
 	{
 		if (value[i] == '\\')
 		{
-			rgbValue[o] = conv_from_octal(&value[i]);
-			i += 4;
+			if (value[i + 1] == '\\')
+			{
+				rgbValue[o] = value[i];
+				i += 2;
+			}
+			else
+			{
+				rgbValue[o] = conv_from_octal(&value[i]);
+				i += 4;
+			}
 		}
 		else
 			rgbValue[o] = value[i++];

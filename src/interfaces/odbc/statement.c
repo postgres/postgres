@@ -714,13 +714,15 @@ SC_fetch(StatementClass *self)
 	static char *func = "SC_fetch";
 	QResultClass *res = self->result;
 	int			retval,
-				result, updret;
+				result;
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+	int		updret;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 	Int2		num_cols,
 				lf;
 	Oid			type;
 	char	   *value;
 	ColumnInfoClass *ci;
-extern	WORD	addrow;
 	/* TupleField *tupleField; */
 
 	self->last_fetch_count = 0;

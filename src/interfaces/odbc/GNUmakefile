@@ -2,7 +2,7 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.16 2001/05/11 01:46:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.17 2001/08/21 05:21:09 inoue Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DHAVE_CONFIG_H -DODBCINSTDIR='"$(o
 OBJS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
         environ.o execute.o lobj.o misc.o options.o \
         pgtypes.o psqlodbc.o qresult.o results.o socket.o parse.o statement.o \
-        gpps.o tuple.o tuplelist.o dlg_specific.o $(OBJX)
+        gpps.o tuple.o tuplelist.o dlg_specific.o odbcapi.o $(OBJX)
 
 ifdef MULTIBYTE
 OBJS += multibyte.o

@@ -682,7 +682,6 @@ PGAPI_GetInfo(
 			break;
 
 		default:
-return PGAPI_GetInfo30(hdbc, fInfoType, rgbInfoValue, cbInfoValueMax,pcbInfoValue);
 			/* unrecognized key */
 			conn->errormsg = "Unrecognized key passed to PGAPI_GetInfo.";
 			conn->errornumber = CONN_NOT_IMPLEMENTED_ERROR;

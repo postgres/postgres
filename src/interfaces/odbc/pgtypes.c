@@ -697,6 +697,9 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 			return 16;
 
 			/* Character types (and NUMERIC) use the default precision */
+		case PG_TYPE_VARCHAR:
+		case PG_TYPE_BPCHAR:
+			return 2 * pgtype_precision(stmt, type, col, handle_unknown_size_as);
 		default:
 			return pgtype_precision(stmt, type, col, handle_unknown_size_as);
 	}
