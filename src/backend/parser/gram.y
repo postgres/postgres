@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.64 1999/03/18 22:01:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.65 1999/03/18 22:03:59 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5685,8 +5685,9 @@ Oid param_type(int t)
 }
 
 /*
- *	The optimizer doesn't like '-' 4, but wants an integer of -4, so we
- *  try to merge the minus into the constant.
+ *	The optimizer doesn't like '-' 4 for index use.  It only checks for
+ *	Var '=' Const.  It wants an integer of -4, so we try to merge the
+ *	minus into the constant.
  */
 static Node *doNegate(Node *n)
 {
