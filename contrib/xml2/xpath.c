@@ -40,6 +40,7 @@ static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar * xpath);
 
 
 Datum		xml_valid(PG_FUNCTION_ARGS);
+Datum		xml_encode_special_chars(PG_FUNCTION_ARGS);
 Datum		xpath_nodeset(PG_FUNCTION_ARGS);
 Datum		xpath_string(PG_FUNCTION_ARGS);
 Datum		xpath_number(PG_FUNCTION_ARGS);
@@ -185,6 +186,34 @@ xml_valid(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(true);
 }
 
+
+/* Encodes special characters (<, >, &, " and \r) as XML entities */
+
+PG_FUNCTION_INFO_V1(xml_encode_special_chars);
+
+Datum
+xml_encode_special_chars(PG_FUNCTION_ARGS)
+{
+	text *tin = PG_GETARG_TEXT_P(0);
+	text *tout;
+	int32 ressize;
+	xmlChar *ts, *tt;
+
+	ts = pgxml_texttoxmlchar(tin);
+
+	tt = xmlEncodeSpecialChars(NULL, ts);
+
+	pfree(ts);
+
+	ressize = strlen(tt);
+	tout = (text *) palloc(ressize + VARHDRSZ);
+	memcpy(VARDATA(tout), tt, ressize);
+	VARATT_SIZEP(tout) = ressize + VARHDRSZ;
+
+	xmlFree(tt);
+
+	PG_RETURN_TEXT_P(tout);
+}
 
 static xmlChar
 *

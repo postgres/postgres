@@ -3,6 +3,9 @@
 CREATE OR REPLACE FUNCTION xml_valid(text) RETURNS bool
 	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
 
+CREATE OR REPLACE FUNCTION xml_encode_special_chars(text) RETURNS text
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
+
 CREATE OR REPLACE FUNCTION xpath_string(text,text) RETURNS text
 	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
 
