@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.34 1999/01/20 16:26:45 thomas Exp $
+ * $Id: dt.h,v 1.35 1999/02/13 04:15:33 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,6 +261,29 @@ extern int	datetime_is_epoch(double j);
 #define TIME_PREC_INV 1000000.0
 #define JROUND(j) (rint(((double) (j))*TIME_PREC_INV)/TIME_PREC_INV)
 
+
+
+/*
+ * Date/time validation
+ * Include check for leap year.
+ */
+
+extern int day_tab[2][13];
+
+#define isleap(y) (((y % 4) == 0 && (y % 100) != 0) || (y % 400) == 0)
+
+/* Julian date support for date2j() and j2date()
+ * Set the minimum year to one greater than the year of the first valid day
+ *  to avoid having to check year and day both. - tgl 97/05/08
+ */
+
+#define JULIAN_MINYEAR (-4713)
+#define JULIAN_MINMONTH (11)
+#define JULIAN_MINDAY (23)
+
+#define IS_VALID_JULIAN(y,m,d) ((y > JULIAN_MINYEAR) \
+ || ((y == JULIAN_MINYEAR) && ((m > JULIAN_MINMONTH) \
+  || ((m == JULIAN_MINMONTH) && (d >= JULIAN_MINDAY)))))
 
 /*
  * Date/time validation

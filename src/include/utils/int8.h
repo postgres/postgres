@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.8 1998/09/11 17:16:11 momjian Exp $
+ * $Id: int8.h,v 1.9 1999/02/13 04:13:56 thomas Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -88,13 +88,16 @@ extern int64 *int48div(int32 val1, int64 * val2);
 extern int64 *int48(int32 val);
 extern int32 int84(int64 * val);
 
-#if FALSE
+#if NOT_USED
 extern int64 *int28 (int16 val);
 extern int16 int82(int64 * val);
-
 #endif
 
 extern float64 i8tod(int64 * val);
 extern int64 *dtoi8(float64 val);
 
+extern text *int8_text(int64 *val);
+extern int64 *text_int8(text *str);
+
 #endif	 /* INT8_H */
+
