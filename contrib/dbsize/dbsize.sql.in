@@ -1,7 +1,0 @@
-CREATE FUNCTION database_size (name) RETURNS bigint
-    AS 'MODULE_PATHNAME', 'database_size'
-    LANGUAGE C WITH (isstrict);
-
-CREATE FUNCTION relation_size (text) RETURNS bigint
-    AS 'MODULE_PATHNAME', 'relation_size'
-    LANGUAGE C WITH (isstrict);

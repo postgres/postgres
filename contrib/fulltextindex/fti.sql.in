@@ -1,3 +1,0 @@
-create function fti() returns opaque as
-	'MODULE_PATHNAME'
-	language 'C';

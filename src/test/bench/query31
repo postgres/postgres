@@ -1,2 +1,0 @@
-update tenk1 set unique2 = 10088 where tenk1.unique2 =187;
-update tenk1 set unique2 = 10003 where tenk1.unique2 =2000;

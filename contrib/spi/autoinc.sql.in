@@ -1,6 +1,0 @@
-DROP FUNCTION autoinc();
-
-CREATE FUNCTION autoinc() 
-	RETURNS opaque 
-	AS 'MODULE_PATHNAME'
-	LANGUAGE 'C';

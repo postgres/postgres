@@ -1,1 +1,0 @@
-SELECT * FROM usastates WHERE name_ru ~* '^Ï.*' ORDER BY name_ru;

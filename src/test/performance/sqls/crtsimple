@@ -1,5 +1,0 @@
-
-if ( $TestDBMS =~ /^pgsql/ )
-{
-	`echo "CREATE TABLE simple (justint int);" | time $FrontEnd`;
-}

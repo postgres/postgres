@@ -1,4 +1,0 @@
-select * into table temp_bench from onek;
-drop table temp_bench;
-select * into table temp_bench from onek;
-drop table temp_bench;

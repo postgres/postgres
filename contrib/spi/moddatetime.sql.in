@@ -1,6 +1,0 @@
-DROP FUNCTION moddatetime();
-
-CREATE FUNCTION moddatetime() 
-	RETURNS opaque 
-	AS 'MODULE_PATHNAME'
-	LANGUAGE 'C';

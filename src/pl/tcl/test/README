@@ -1,8 +1,0 @@
-
-    This is a small test suite for PL/Tcl.
-
-    Just run the script runtest and compare the files
-    test.expected against test.out after.
-
-
-    Jan

@@ -1,9 +1,0 @@
-AROPT = crs
-DLSUFFIX = .so
-CFLAGS_SL =
-rpath = -rpath $(libdir)
-
-%.so: %.o
-	$(LD) -shared -expect_unresolved '*' -o $@ $<
-
-sqlmansect = 5

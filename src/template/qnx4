@@ -1,2 +1,0 @@
-CFLAGS=-I/usr/local/include
-LIBS=-lunix

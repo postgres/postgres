@@ -1,9 +1,0 @@
-AROPT = crs
-export_dynamic = -Wl,-Bexport
-DLSUFFIX = .so
-CFLAGS_SL = -K PIC
-
-%.so: %.o
-	$(LD) -G -Bdynamic -o $@ $<
-
-sqlmansect = 5

@@ -1,2 +1,0 @@
-select * from tenk1 where unique2 = 2001;
-select * from tenk1 where unique2 = 2001;

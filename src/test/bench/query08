@@ -1,2 +1,0 @@
-select * from tenk1 where (unique2 > 301) and (unique2 < 402);
-select * from tenk1 where (unique2 > 301) and (unique2 < 402);

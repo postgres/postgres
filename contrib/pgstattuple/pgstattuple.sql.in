@@ -1,4 +1,0 @@
-DROP FUNCTION pgstattuple(text);
-CREATE FUNCTION pgstattuple(text) RETURNS float8
-AS 'MODULE_PATHNAME', 'pgstattuple'
-LANGUAGE 'c' WITH (isstrict);
