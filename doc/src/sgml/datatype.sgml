@@ -692,7 +692,7 @@ SET DateStyle <Acronym>SQL</Acronym> command.
 
 <Para>
 For <ProductName>Postgres</ProductName> v6.3 (and earlier) the default date/time style is
-"traditional Postgres". In future releases, the default may become ISO-8601, which alleviates
+"non-European traditional Postgres". In future releases, the default may become ISO-8601, which alleviates
 date specification ambiguities and Y2K collation problems.
 </Para>
 
@@ -1880,13 +1880,13 @@ At the moment, some functions are available only for the text type.
 <ENTRY> datetime(date,time) </ENTRY>
 <ENTRY> datetime </ENTRY>
 <ENTRY> convert to datetime </ENTRY>
-<ENTRY> datetime('1998-02-24':datetime, '23:07'::time);
+<ENTRY> datetime('1998-02-24'::datetime, '23:07'::time); </ENTRY>
   </ROW>
   <ROW>
 <ENTRY> age(datetime,datetime) </ENTRY>
 <ENTRY> timespan </ENTRY>
 <ENTRY> span preserving months and years </ENTRY>
-<ENTRY> age('now','1957-06-13':datetime) </ENTRY>
+<ENTRY> age('now','1957-06-13'::datetime) </ENTRY>
   </ROW>
   <ROW>
 <ENTRY> date_part(text,datetime) </ENTRY>
