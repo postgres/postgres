@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.140 2000/02/21 07:49:40 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.141 2000/02/24 04:34:38 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,9 @@ void CommonSpecialPortalOpen(void)
 {
 	char	   *pname;
 
+
+	if (CommonSpecialPortalInUse)
+		elog(ERROR, "CommonSpecialPortal is in use");
 	/*
 	 * Create a portal for safe memory across transactions. We need to
 	 * palloc the name space for it because our hash function expects the
