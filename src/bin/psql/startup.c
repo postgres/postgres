@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.104 2004/10/16 03:10:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.105 2004/11/01 19:21:50 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -121,6 +121,7 @@ main(int argc, char *argv[])
 
 #ifdef WIN32
 	setvbuf(stderr, NULL, _IONBF, 0);
+	setup_win32_locks();
 #endif
 	pset.cur_cmd_source = stdin;
 	pset.cur_cmd_interactive = false;
