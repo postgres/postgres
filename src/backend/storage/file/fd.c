@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.71 2001/01/24 19:43:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.72 2001/02/17 01:00:04 tgl Exp $
  *
  * NOTES:
  *
@@ -806,8 +806,9 @@ FileRead(File file, char *buffer, int amount)
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(DEBUG, "FileRead: %d (%s) %d %p",
-			   file, VfdCache[file].fileName, amount, buffer));
+	DO_DB(elog(DEBUG, "FileRead: %d (%s) %ld %d %p",
+			   file, VfdCache[file].fileName,
+			   VfdCache[file].seekPos, amount, buffer));
 
 	FileAccess(file);
 	returnCode = read(VfdCache[file].fd, buffer, amount);
@@ -826,8 +827,9 @@ FileWrite(File file, char *buffer, int amount)
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(DEBUG, "FileWrite: %d (%s) %d %p",
-			   file, VfdCache[file].fileName, amount, buffer));
+	DO_DB(elog(DEBUG, "FileWrite: %d (%s) %ld %d %p",
+			   file, VfdCache[file].fileName,
+			   VfdCache[file].seekPos, amount, buffer));
 
 	FileAccess(file);
 	returnCode = write(VfdCache[file].fd, buffer, amount);
@@ -844,8 +846,9 @@ FileSeek(File file, long offset, int whence)
 {
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(DEBUG, "FileSeek: %d (%s) %ld %d",
-			   file, VfdCache[file].fileName, offset, whence));
+	DO_DB(elog(DEBUG, "FileSeek: %d (%s) %ld %ld %d",
+			   file, VfdCache[file].fileName,
+			   VfdCache[file].seekPos, offset, whence));
 
 	if (FileIsNotOpen(file))
 	{
