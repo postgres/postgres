@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.6 1998/04/05 22:00:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.7 1998/04/06 00:29:08 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ install: pg_dump
 	$(INSTALL) $(INSTL_EXE_OPTS) pg_dumpall $(BINDIR)/pg_dumpall
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f pg_dump $(OBJS) 

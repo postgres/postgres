@@ -4,16 +4,14 @@
 #    Makefile for utils/init
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.6 1997/12/20 00:29:06 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.7 1998/04/06 00:27:07 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. 
-
-CFLAGS += $(INCLUDE_OPT)
+CFLAGS += -I../..
 
 OBJS = enbl.o findbe.o globals.o miscinit.o postinit.o
 
@@ -23,7 +21,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS)

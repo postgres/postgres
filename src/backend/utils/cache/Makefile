@@ -4,16 +4,14 @@
 #    Makefile for utils/cache
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.5 1997/12/20 00:28:29 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.6 1998/04/06 00:26:33 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. 
-
-CFLAGS+=$(INCLUDE_OPT)
+CFLAGS += -I../..
 
 OBJS = catcache.o inval.o rel.o relcache.o syscache.o lsyscache.o fcache.o
 
@@ -23,7 +21,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS)

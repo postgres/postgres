@@ -20,6 +20,9 @@ install: all
 uninstall:
 	rm -f $(BINDIR)/ecpg
 
+dep depend:
+	$(CC) -MM $(CFLAGS) *.c > depend
+
 # Rule that really do something.
 ecpg: y.tab.o pgc.o type.o ecpg.o ../lib/typename.o
 	$(CC) -o ecpg y.tab.o pgc.o type.o ecpg.o ../lib/typename.o $(LEXLIB)

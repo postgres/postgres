@@ -12,3 +12,5 @@ perftest.c: perftest.pgc
 
 clean:
 	/bin/rm test2 test2.c perftest perftest.c log
+
+dep depend:

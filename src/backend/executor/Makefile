@@ -4,16 +4,14 @@
 #    Makefile for executor
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.6 1998/02/13 03:26:35 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.7 1998/04/06 00:22:26 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I.. 
-
-CFLAGS+=$(INCLUDE_OPT)
+CFLAGS += -I..
 
 OBJS = execAmi.o execFlatten.o execJunk.o execMain.o \
        execProcnode.o execQual.o execScan.o execTuples.o \
@@ -28,7 +26,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) 

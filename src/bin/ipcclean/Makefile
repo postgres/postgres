@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.4 1998/04/05 22:00:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.5 1998/04/06 00:29:03 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,4 +28,4 @@ install: ipcclean
 clean:
 	rm -f ipcclean
 
-dep:
+dep depend:

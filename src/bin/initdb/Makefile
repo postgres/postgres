@@ -7,21 +7,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.5 1998/04/05 22:00:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.6 1998/04/06 00:28:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-SEDSCRIPT= \
-    -e "s^_fUnKy_NAMEDATALEN_sTuFf_^$(NAMEDATALEN)^g" \
-    -e "s^_fUnKy_OIDNAMELEN_sTuFf_^$(OIDNAMELEN)^g" 
-
 all: initdb
-
-initdb: initdb.sh
-	sed $(SEDSCRIPT) <initdb.sh >initdb
 
 install: initdb
 	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
@@ -29,4 +22,4 @@ install: initdb
 clean:
 	rm -f initdb
 
-dep:
+dep depend:

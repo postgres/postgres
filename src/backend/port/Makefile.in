@@ -13,16 +13,14 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.15 1998/02/24 06:04:30 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.16 1998/04/06 00:24:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR=../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I..
-
-CFLAGS+= ${INCLUDE_OPT}
+CFLAGS+= -I..
 
 OBJS = dynloader.o @INET_ATON@ @STRERROR@ @MISSING_RANDOM@ @SRANDOM@
 OBJS+= @GETHOSTNAME@ @GETRUSAGE@ @STRCASECMP@ @STRDUP@ @TAS@ @ISINF@
@@ -38,7 +36,7 @@ distclean clean:
 	rm -f SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 ifeq (depend,$(wildcard depend))
 include depend

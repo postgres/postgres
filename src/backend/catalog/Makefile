@@ -4,16 +4,14 @@
 #    Makefile for catalog
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.9 1998/02/25 13:05:55 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.10 1998/04/06 00:22:13 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I.. 
-
-CFLAGS+=$(INCLUDE_OPT)
+CFLAGS += -I..
 
 OBJS = catalog.o heap.o index.o indexing.o aclchk.o \
        pg_aggregate.o pg_operator.o pg_proc.o pg_type.o
@@ -47,7 +45,7 @@ local1_template1.bki.source: $(GENBKI) $(LOCALBKI_SRCS)
 	sh $(SHOPTS) $(GENBKI) $(BKIOPTS) $(LOCALBKI_SRCS) > $@ 2>local1_template1.description
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) global1.bki.source local1_template1.bki.source \

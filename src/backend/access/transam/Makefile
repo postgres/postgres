@@ -4,16 +4,14 @@
 #    Makefile for access/transam
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.5 1997/12/20 00:23:09 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.6 1998/04/06 00:21:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. 
-
-CFLAGS += $(INCLUDE_OPT)
+CFLAGS += -I../.. 
 
 OBJS = transam.o transsup.o varsup.o xact.o xid.o 
 
@@ -23,7 +21,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS)

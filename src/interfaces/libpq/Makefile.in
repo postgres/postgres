@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.10 1998/04/05 22:02:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.11 1998/04/06 00:30:58 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -178,7 +178,7 @@ install-shlib: $(shlib)
 	ln -s $(shlib) $(LIBDIR)/libpq.so
 
 depend dep:
-	$(CC) -MM *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 .PHONY: clean
 clean:

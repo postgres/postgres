@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.9 1997/11/13 03:22:20 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.10 1998/04/06 00:22:16 momjian Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -52,6 +52,10 @@ while test $x -le $numargs ; do
     shift
 done
 
+# Get NAMEDATALEN and OIDNAMELEN from postgres_ext.h
+NAMEDATALEN=`grep '#define.*NAMEDATALEN' ../../include/postgres_ext.h | awk '{ print $3 }'`
+OIDNAMELEN=`grep '#define.*OIDNAMELEN' ../../include/postgres_ext.h | awk '{ print $3 }'`
+
 # ----------------
 # 	strip comments and trash from .h before we generate
 #	the .bki file...
@@ -68,14 +72,16 @@ sed -e 's;/\*.*\*/;;g' \
     -e 's;\*/;\
 */\
 ;g' | # we must run a new sed here to see the newlines we added
-sed -e 's/;[ 	]*$//g' \
-    -e 's/^[ 	]*//' \
-    -e 's/[ 	]Oid/\ oid/g' \
-    -e 's/[ 	]NameData/\ name/g' \
-    -e 's/^Oid/oid/g' \
-    -e 's/^NameData/\name/g' \
-    -e 's/(NameData/(name/g' \
-    -e 's/(Oid/(oid/g' | \
+sed -e "s/;[ 	]*$//g" \
+    -e "s/^[ 	]*//" \
+    -e "s/[ 	]Oid/\ oid/g" \
+    -e "s/[ 	]NameData/\ name/g" \
+    -e "s/^Oid/oid/g" \
+    -e "s/^NameData/\name/g" \
+    -e "s/(NameData/(name/g" \
+    -e "s/(Oid/(oid/g" \
+	-e "s/NAMEDATALEN/$NAMEDATALEN/g" \
+	-e "s/OIDNAMELEN/$OIDNAMELEN/g" | \
 awk '
 # ----------------
 #	now use awk to process remaining .h file..

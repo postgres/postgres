@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/Makefile,v 1.5 1998/04/05 21:59:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/Makefile,v 1.6 1998/04/06 00:28:16 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,4 +29,4 @@ install: createuser
 clean:
 	rm -f createuser
 
-dep:
+dep depend:

@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.12 1997/12/20 00:23:19 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.13 1998/04/06 00:22:02 momjian Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -21,9 +21,7 @@
 SRCDIR= ../..
 include ../../Makefile.global
 
-INCLUDE_OPT= -I.. 
-
-CFLAGS+= $(INCLUDE_OPT)  
+CFLAGS += -I..
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
@@ -65,8 +63,8 @@ clean:
 
 # This is unusual:  We actually have to build some of the parts before
 # we know what the header file dependencies are.  
-dep: bootparse.c bootscanner.c bootstrap_tokens.h
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+dep depend: bootparse.c bootscanner.c bootstrap_tokens.h
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 ifeq (depend,$(wildcard depend))
 include depend

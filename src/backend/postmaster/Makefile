@@ -4,16 +4,14 @@
 #    Makefile for postmaster
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/postmaster/Makefile,v 1.7 1997/12/20 00:26:52 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/postmaster/Makefile,v 1.8 1998/04/06 00:24:26 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I.. 
-
-CFLAGS+=$(INCLUDE_OPT)
+CFLAGS += -I..
 
 OBJS = postmaster.o
 
@@ -23,7 +21,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) 

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.11 1998/04/05 22:02:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.12 1998/04/06 00:31:13 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -117,9 +117,9 @@ clean:
 	rm $(LIBNAME).a $(OBJS)
 	$(MAKE) -C examples clean
 
+dep depend:
+	$(CXX) -MM $(CXXFLAGS) *.cc > depend
 
-###########################################################################
-# Dependencies for the library
-###########################################################################
-include ./dependencies
-
+ifeq (depend,$(wildcard depend))
+include depend
+endif

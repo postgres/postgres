@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.6 1998/02/09 03:22:30 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.7 1998/04/06 00:30:36 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,6 +43,8 @@ all:	  postgresql.jar
 	@echo "  make examples"
 	@echo ------------------------------------------------------------
 	@echo
+
+dep depend:
 
 # This rule builds the javadoc documentation
 doc:

@@ -1,8 +1,8 @@
 AROPT:crs
-CFLAGS:-O2 
+CFLAGS:-O2 -g
 SHARED_LIB:-fpic
 ALL:
-SRCH_INC:/usr/include/ncurses /usr/include/readline
+SRCH_INC:
 SRCH_LIB:
 USE_LOCALE:no
 DLSUFFIX:.so

@@ -22,7 +22,7 @@ submake:
 	$(MAKE) -C $(LIBPQDIR) libpq.a
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean:
 	rm -f pg_passwd $(OBJS)

@@ -4,7 +4,7 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/utils/Attic/Makefile,v 1.4 1998/02/27 02:41:21 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/utils/Attic/Makefile,v 1.5 1998/04/06 00:32:26 momjian Exp $
 #
 # About strdup:  Some systems have strdup in their standard library, others
 # don't.  Ones that don't will use this make file to compile the strdup.c
@@ -23,7 +23,7 @@ all: version.o
 install:
 
 depend dep:
-	$(CC) -MM *.c >depend
+	$(CC) $(CFLAGS) -MM *.c >depend
 
 clean: 
 	rm -f version.o

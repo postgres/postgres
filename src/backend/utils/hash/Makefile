@@ -4,16 +4,14 @@
 #    Makefile for utils/hash
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/hash/Makefile,v 1.4 1997/12/20 00:28:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/hash/Makefile,v 1.5 1998/04/06 00:26:58 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. 
-
-CFLAGS+=$(INCLUDE_OPT)
+CFLAGS += -I../..
 
 OBJS = dynahash.o hashfn.o
 
@@ -23,7 +21,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS)

@@ -53,6 +53,8 @@ $(shlib): ecpglib.o typename.o
 clean:
 	rm -f *.o *.a core a.out *~ $(shlib) libecpg.so
 
+dep depend:
+
 install: libecpg.a $(shlib) $(install-shlib-dep)
 	$(INSTALL) $(INSTLOPTS) libecpg.a $(LIBDIR)
 

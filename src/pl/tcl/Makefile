@@ -4,7 +4,7 @@
 #    Makefile for the pltcl shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.2 1998/04/05 22:02:56 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.3 1998/04/06 00:31:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -89,3 +89,4 @@ clean:
 install: all
 	$(INSTALL) $(INSTL_LIB_OPTS) $(DLOBJS) $(LIBDIR)/$(DLOBJS)
 
+dep depend:

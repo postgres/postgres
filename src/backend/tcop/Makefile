@@ -4,16 +4,14 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.15 1998/01/05 18:42:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.16 1998/04/06 00:26:05 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-INCLUDE_OPT= -I.. 
-
-CFLAGS+= $(INCLUDE_OPT) 
+CFLAGS+= -I..
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
@@ -42,8 +40,8 @@ postgres.o: ../fmgr.h
 ../fmgr.h: 
 	$(MAKE) -C .. fmgr.h
 
-dep: ../parse.h ../fmgr.h
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+dep depend: ../parse.h ../fmgr.h
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) 

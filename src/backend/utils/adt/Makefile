@@ -4,16 +4,15 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.11 1998/03/15 07:38:42 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.12 1998/04/06 00:26:19 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. 
+CFLAGS += -I../..
 
-CFLAGS+=$(INCLUDE_OPT)
 ifdef MB
 CFLAGS+=-DMB=$(MB)
 endif
@@ -31,7 +30,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS)

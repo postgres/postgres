@@ -20,3 +20,5 @@ lextest: lextest.c scan.l
 
 clean:
 	rm -f lextest lex.yy.c lex.yy.o lextest.o
+
+dep:

@@ -14,3 +14,5 @@ uninstall::
 	rm -f $(HEADERDIR)/ecpglib.h
 	rm -f $(HEADERDIR)/ecpgtype.h
 	rm -f $(HEADERDIR)/sqlca.h
+
+dep depend:

@@ -5,21 +5,18 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Id: Makefile,v 1.9 1997/12/20 00:24:17 scrappy Exp $
+# $Id: Makefile,v 1.10 1998/04/06 00:23:07 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. 
-
-CFLAGS+=$(INCLUDE_OPT)
+CFLAGS += -I../..
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
 endif
-
 
 OBJS =	geqo_copy.o geqo_eval.o geqo_main.o geqo_misc.o \
 	geqo_params.o geqo_paths.o geqo_pool.o geqo_recombination.o \
@@ -34,7 +31,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS)

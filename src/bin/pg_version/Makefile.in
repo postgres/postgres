@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile.in,v 1.2 1998/04/05 22:01:30 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile.in,v 1.3 1998/04/06 00:29:36 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ install: pg_version
 	$(INSTALL) $(INSTL_EXE_OPTS) pg_version $(BINDIR)/pg_version
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f pg_version pg_version.o

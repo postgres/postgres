@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.37 1998/03/23 06:01:47 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.38 1998/04/06 00:20:33 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -43,11 +43,6 @@
 # Following are settings pertaining to the postgres build and 
 # installation.  
 # of the port.
-#
-# Ignore LINUX_ELF if you're not using Linux.  But if you are, and you're
-# compiling to a.out (which means you're using the dld dynamic loading 
-# library), set LINUX_ELF to null in Makefile.custom.
-LINUX_ELF= true
 #
 # Ignore BSD_SHLIB if you're not using one of the BSD ports.  But if you
 # are, and it's one that doesn't have shared libraries (NetBSD/vax is an
@@ -85,23 +80,6 @@ POSTDOCDIR= $(POSTGRESDIR)/doc
 # Where the header files necessary to build frontend programs get installed.
 HEADERDIR= $(POSTGRESDIR)/include
 
-# NAMEDATALEN is the max length for system identifiers (e.g. table names,
-# attribute names, function names, etc.)
-#
-# These MUST be set here.  DO NOT COMMENT THESE OUT
-# Setting these too high will result in excess space usage for system catalogs
-# Setting them too low will make the system unusable.
-# values between 16 and 64 that are multiples of four are recommended.
-# 
-# NOTE also that databases with different NAMEDATALEN's cannot interoperate!
-#
-# THERE ARE REDUNDANT DEFINITIONS OF THESE VALUES IN config.h.
-# Don't change anything here without changing it there too.
-
-NAMEDATALEN= 32
-# OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid)
-OIDNAMELEN= 36
- 
 ##############################################################################
 #
 # FEATURES 

@@ -7,35 +7,22 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.11 1997/11/07 06:24:33 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.12 1998/04/06 00:27:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ..
 include ../Makefile.global
 
-.DEFAULT all:
-#
-# C programs
-#
-	$(MAKE) -C pg_id $@
-	$(MAKE) -C pg_version $@
-	$(MAKE) -C psql $@
-	$(MAKE) -C pg_dump $@
-	$(MAKE) -C pg_passwd $@
-#
-# Shell scripts
-# 
-	$(MAKE) -C cleardbdir $@
-	$(MAKE) -C createdb $@
-	$(MAKE) -C createuser $@
-	$(MAKE) -C destroydb $@
-	$(MAKE) -C destroyuser $@
-	$(MAKE) -C initdb $@
-	$(MAKE) -C initlocation $@
+DIRS = pg_id pg_version psql pg_dump pg_passwd cleardbdir createuser \
+	destroydb initdb initlocation
+
 #
 # TCL/TK programs
 #
 ifeq ($(USE_TCL), true)
-	$(MAKE) -C pgtclsh $@
+	DIRS += pgtclsh
 endif
+
+.DEFAULT all:
+	for i in $(DIRS); do $(MAKE) -C $$i $@; done

@@ -4,17 +4,15 @@
 #    Makefile for regex
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.5 1998/03/15 07:38:14 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.6 1998/04/06 00:24:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I.. 
-
-CFLAGS+=$(INCLUDE_OPT)
-CFLAGS+=-DPOSIX_MISTAKE 
+CFLAGS += -I..
+CFLAGS += -DPOSIX_MISTAKE 
 
 OBJS = regcomp.o regerror.o regexec.o regfree.o
 ifdef MB
@@ -28,7 +26,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) 

@@ -4,16 +4,14 @@
 #    Makefile for optimizer/plan
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/Makefile,v 1.6 1998/02/13 03:36:51 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/Makefile,v 1.7 1998/04/06 00:23:31 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. 
-
-CFLAGS+=$(INCLUDE_OPT)
+CFLAGS += -I../..
 
 OBJS = createplan.o initsplan.o planmain.o planner.o setrefs.o subselect.o
 
@@ -25,7 +23,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS)

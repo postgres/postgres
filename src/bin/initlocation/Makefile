@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/Makefile,v 1.2 1998/04/05 22:00:40 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/Makefile,v 1.3 1998/04/06 00:29:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,4 +29,4 @@ install: initlocation
 clean:
 	rm -f initlocation
 
-dep:
+dep depend:

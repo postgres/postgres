@@ -4,16 +4,14 @@
 #    Makefile for storage/buffer
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/buffer/Makefile,v 1.6 1997/12/30 04:01:25 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/buffer/Makefile,v 1.7 1998/04/06 00:24:58 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. 
-
-CFLAGS+=$(INCLUDE_OPT)
+CFLAGS += -I../..
 
 OBJS = buf_table.o buf_init.o bufmgr.o freelist.o localbuf.o s_lock.o
 
@@ -23,7 +21,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS)

@@ -4,16 +4,14 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.14 1998/02/18 07:37:05 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.15 1998/04/06 00:24:02 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-INCLUDE_OPT= -I.. 
-
-CFLAGS+= $(INCLUDE_OPT)
+CFLAGS += -I..
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
@@ -47,8 +45,8 @@ analyze.o keywords.o scan.o: parse.h
 
 # This is unusual:  We actually have to build some of the parts before
 # we know what the header file dependencies are.  
-dep: gram.c scan.c
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+dep depend: gram.c scan.c
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 # Remove scan.c from the clean since we want to avoid rebuilding when using
 # the original source distribution. This should help Solaris machines whose

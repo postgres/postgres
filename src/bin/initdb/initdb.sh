@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.40 1998/03/22 19:35:30 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.41 1998/04/06 00:28:53 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -35,9 +35,6 @@
 #       from parameters set in the make file.
 #
 # ----------------
-
-NAMEDATALEN=_fUnKy_NAMEDATALEN_sTuFf_
-OIDNAMELEN=_fUnKy_OIDNAMELEN_sTuFf_
 
 CMDNAME=`basename $0`
 
@@ -266,8 +263,6 @@ echo "Running: postgres $BACKENDARGS template1"
 
 cat $TEMPLATE \
 | sed -e "s/postgres PGUID/$POSTGRES_SUPERUSERNAME $POSTGRES_SUPERUID/" \
-      -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
-      -e "s/OIDNAMELEN/$OIDNAMELEN/g" \
       -e "s/PGUID/$POSTGRES_SUPERUID/" \
 | postgres $BACKENDARGS template1
 
@@ -296,8 +291,6 @@ if [ $template_only -eq 0 ]; then
 
     cat $GLOBAL \
     | sed -e "s/postgres PGUID/$POSTGRES_SUPERUSERNAME $POSTGRES_SUPERUID/" \
-        -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
-        -e "s/OIDNAMELEN/$OIDNAMELEN/g" \
         -e "s/PGUID/$POSTGRES_SUPERUID/" \
     | postgres $BACKENDARGS template1
 

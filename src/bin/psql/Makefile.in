@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.8 1998/04/05 22:01:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.9 1998/04/06 00:29:56 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ install: psql
 	$(INSTALL) $(INSTL_EXE_OPTS) psql $(BINDIR)/psql
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f psql $(OBJS) 
