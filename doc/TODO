@@ -93,7 +93,6 @@ TYPES
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
 * Functions returning sets don't really work right[function]
-* Make type equivalency apply to aggregates(Peter E.)
 
 VIEWS
 
