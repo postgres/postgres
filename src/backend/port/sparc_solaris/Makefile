@@ -4,14 +4,15 @@
 #    Makefile for port/sparc_solaris
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/Makefile,v 1.2 1996/11/09 06:20:17 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/Makefile,v 1.3 1996/11/10 00:38:38 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
+INCLUDE_OPT = -I.. \
+              -I../.. \
               -I../../../include
 
 CFLAGS+=$(INCLUDE_OPT)
