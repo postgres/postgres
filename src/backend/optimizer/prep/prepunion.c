@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.61 2001/03/22 03:59:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.62 2001/03/27 18:02:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -679,7 +679,7 @@ adjust_inherited_attrs_mutator(Node *node,
 			adjust_inherited_attrs_mutator((Node *) oldinfo->clause, context);
 
 		newinfo->subclauseindices = NIL;
-		newinfo->eval_cost = -1;/* reset this too */
+		newinfo->eval_cost = -1;		/* reset this too */
 		newinfo->left_pathkey = NIL;	/* and these */
 		newinfo->right_pathkey = NIL;
 		newinfo->left_dispersion = -1;
@@ -692,6 +692,29 @@ adjust_inherited_attrs_mutator(Node *node,
 	 * NOTE: we do not need to recurse into sublinks, because they should
 	 * already have been converted to subplans before we see them.
 	 */
+
+	/*
+	 * BUT: although we don't need to recurse into subplans, we do need to
+	 * make sure that they are copied, not just referenced as
+	 * expression_tree_mutator will do by default.  Otherwise we'll have the
+	 * same subplan node referenced from each arm of the inheritance APPEND
+	 * plan, which will cause trouble in the executor.  This is a kluge
+	 * that should go away when we redesign querytrees.
+	 */
+	if (is_subplan(node))
+	{
+		SubPlan    *subplan;
+
+		/* Copy the node and process subplan args */
+		node = expression_tree_mutator(node, adjust_inherited_attrs_mutator,
+									   (void *) context);
+		/* Make sure we have separate copies of subplan and its rtable */
+		subplan = (SubPlan *) ((Expr *) node)->oper;
+		subplan->plan = copyObject(subplan->plan);
+		subplan->rtable = copyObject(subplan->rtable);
+		return node;
+	}
+
 	return expression_tree_mutator(node, adjust_inherited_attrs_mutator,
 								   (void *) context);
 }
