@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.2 1996/10/13 18:37:19 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.3 1996/10/28 09:03:50 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,11 +15,13 @@
 #include <string.h>
 #include <errno.h>
 #include <pwd.h>
-#include <ctype.h>		        /* isspace() declaration */
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#if PORTNAME == sparc_solaris
+#include <port/inet_aton.h>
+#endif
 
 #include <miscadmin.h>
 #include <libpq/libpq.h>
@@ -51,6 +53,14 @@
   /* Max size of username ident server can return */
 
 enum Userauth {Trust, Ident};
+
+/* Some standard C libraries, including GNU, have an isblank() function.
+   Others, including Solaris, do not.  So we have our own.
+*/
+bool
+isblank(const char c) {
+  return(c == ' ' || c == 9 /* tab */);
+}
 
 
 
