@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.405 2003/03/10 03:53:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.406 2003/03/11 19:40:23 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -191,7 +191,7 @@ static void doNegateFloat(Value *v);
 
 %type <range>	qualified_name OptConstrFromTable
 
-%type <str>		opt_id	all_Op MathOp opt_name SpecialRuleRelation
+%type <str>		all_Op MathOp opt_name SpecialRuleRelation
 
 %type <str>		iso_level opt_encoding
 %type <node>	grantee
@@ -248,12 +248,10 @@ static void doNegateFloat(Value *v);
 
 %type <boolean> copy_from
 
-%type <ival>	direction reindex_type drop_type
+%type <ival>	reindex_type drop_type fetch_count
 				opt_column event comment_type cursor_options
 
-%type <ival>	fetch_how_many
-
-%type <node>	select_limit_value select_offset_value
+%type <node>	fetch_direction select_limit_value select_offset_value
 
 %type <list>	OptSeqList
 %type <defelt>	OptSeqElem
@@ -345,7 +343,7 @@ static void doNegateFloat(Value *v);
 	EACH ELSE ENCODING ENCRYPTED END_P ESCAPE EXCEPT
 	EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
-	FALSE_P FETCH FLOAT_P FOR FORCE FOREIGN FORWARD
+	FALSE_P FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD
 	FREEZE FROM FULL FUNCTION
 
 	GLOBAL GRANT GROUP_P
@@ -361,7 +359,7 @@ static void doNegateFloat(Value *v);
 
 	KEY
 
-	LANCOMPILER LANGUAGE LEADING LEFT LEVEL LIKE LIMIT
+	LANCOMPILER LANGUAGE LAST_P LEADING LEFT LEVEL LIKE LIMIT
 	LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P
 
@@ -1239,25 +1237,20 @@ opt_drop_behavior:
 		;
 
 
-
 /*****************************************************************************
  *
  *		QUERY :
- *				close <optname>
+ *				close <portalname>
  *
  *****************************************************************************/
 
 ClosePortalStmt:
-			CLOSE opt_id
+			CLOSE name
 				{
 					ClosePortalStmt *n = makeNode(ClosePortalStmt);
 					n->portalname = $2;
 					$$ = (Node *)n;
 				}
-		;
-
-opt_id: 	ColId									{ $$ = $1; }
-			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 
@@ -2583,58 +2576,14 @@ comment_text:
 /*****************************************************************************
  *
  *		QUERY:
- *			fetch/move [forward | backward] [ # | all ] [ in <portalname> ]
- *			fetch [ forward | backward | absolute | relative ]
- *				  [ # | all | next | prior ] [ [ in | from ] <portalname> ]
+ *			fetch/move
  *
  *****************************************************************************/
 
-FetchStmt:	FETCH direction fetch_how_many from_in name
+FetchStmt:	FETCH fetch_direction from_in name
 				{
-					FetchStmt *n = makeNode(FetchStmt);
-					if ($3 < 0)
-					{
-						$3 = -$3;
-						$2 = (($2 == FETCH_FORWARD) ? FETCH_BACKWARD : FETCH_FORWARD);
-					}
-					n->direction = $2;
-					n->howMany = $3;
-					n->portalname = $5;
-					n->ismove = FALSE;
-					$$ = (Node *)n;
-				}
-			| FETCH fetch_how_many from_in name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-					if ($2 < 0)
-					{
-						n->howMany = -$2;
-						n->direction = FETCH_BACKWARD;
-					}
-					else
-					{
-						n->direction = FETCH_FORWARD;
-						n->howMany = $2;
-					}
+					FetchStmt *n = (FetchStmt *) $2;
 					n->portalname = $4;
-					n->ismove = FALSE;
-					$$ = (Node *)n;
-				}
-			| FETCH direction from_in name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-					n->direction = $2;
-					n->howMany = 1;
-					n->portalname = $4;
-					n->ismove = FALSE;
-					$$ = (Node *)n;
-				}
-			| FETCH from_in name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-					n->direction = FETCH_FORWARD;
-					n->howMany = 1;
-					n->portalname = $3;
 					n->ismove = FALSE;
 					$$ = (Node *)n;
 				}
@@ -2647,52 +2596,10 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 					n->ismove = FALSE;
 					$$ = (Node *)n;
 				}
-			| MOVE direction fetch_how_many from_in name
+			| MOVE fetch_direction from_in name
 				{
-					FetchStmt *n = makeNode(FetchStmt);
-					if ($3 < 0)
-					{
-						$3 = -$3;
-						$2 = (($2 == FETCH_FORWARD) ? FETCH_BACKWARD : FETCH_FORWARD);
-					}
-					n->direction = $2;
-					n->howMany = $3;
-					n->portalname = $5;
-					n->ismove = TRUE;
-					$$ = (Node *)n;
-				}
-			| MOVE fetch_how_many from_in name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-					if ($2 < 0)
-					{
-						n->howMany = -$2;
-						n->direction = FETCH_BACKWARD;
-					}
-					else
-					{
-						n->direction = FETCH_FORWARD;
-						n->howMany = $2;
-					}
+					FetchStmt *n = (FetchStmt *) $2;
 					n->portalname = $4;
-					n->ismove = TRUE;
-					$$ = (Node *)n;
-				}
-			| MOVE direction from_in name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-					n->direction = $2;
-					n->howMany = 1;
-					n->portalname = $4;
-					n->ismove = TRUE;
-					$$ = (Node *)n;
-				}
-			| MOVE from_in name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-					n->direction = FETCH_FORWARD;
-					n->howMany = 1;
-					n->portalname = $3;
 					n->ismove = TRUE;
 					$$ = (Node *)n;
 				}
@@ -2707,27 +2614,121 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 				}
 		;
 
-direction:	FORWARD									{ $$ = FETCH_FORWARD; }
-			| BACKWARD								{ $$ = FETCH_BACKWARD; }
-			| RELATIVE								{ $$ = FETCH_FORWARD; }
-			| ABSOLUTE
+fetch_direction:
+			/*EMPTY*/
 				{
-					elog(NOTICE,
-					"FETCH / ABSOLUTE not supported, using RELATIVE");
-					$$ = FETCH_FORWARD;
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_FORWARD;
+					n->howMany = 1;
+					$$ = (Node *)n;
+				}
+			| NEXT
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_FORWARD;
+					n->howMany = 1;
+					$$ = (Node *)n;
+				}
+			| PRIOR
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_BACKWARD;
+					n->howMany = 1;
+					$$ = (Node *)n;
+				}
+			| FIRST_P
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_ABSOLUTE;
+					n->howMany = 1;
+					$$ = (Node *)n;
+				}
+			| LAST_P
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_ABSOLUTE;
+					n->howMany = -1;
+					$$ = (Node *)n;
+				}
+			| ABSOLUTE fetch_count
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_ABSOLUTE;
+					n->howMany = $2;
+					$$ = (Node *)n;
+				}
+			| RELATIVE fetch_count
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_RELATIVE;
+					n->howMany = $2;
+					$$ = (Node *)n;
+				}
+			| fetch_count
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_FORWARD;
+					n->howMany = $1;
+					$$ = (Node *)n;
+				}
+			| ALL
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_FORWARD;
+					n->howMany = FETCH_ALL;
+					$$ = (Node *)n;
+				}
+			| FORWARD
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_FORWARD;
+					n->howMany = 1;
+					$$ = (Node *)n;
+				}
+			| FORWARD fetch_count
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_FORWARD;
+					n->howMany = $2;
+					$$ = (Node *)n;
+				}
+			| FORWARD ALL
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_FORWARD;
+					n->howMany = FETCH_ALL;
+					$$ = (Node *)n;
+				}
+			| BACKWARD
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_BACKWARD;
+					n->howMany = 1;
+					$$ = (Node *)n;
+				}
+			| BACKWARD fetch_count
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_BACKWARD;
+					n->howMany = $2;
+					$$ = (Node *)n;
+				}
+			| BACKWARD ALL
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FETCH_BACKWARD;
+					n->howMany = FETCH_ALL;
+					$$ = (Node *)n;
 				}
 		;
 
-fetch_how_many:
+fetch_count:
 			Iconst									{ $$ = $1; }
 			| '-' Iconst							{ $$ = - $2; }
-			| ALL									{ $$ = INT_MAX; }
-			| NEXT									{ $$ = 1; }
-			| PRIOR									{ $$ = -1; }
 		;
 
-from_in:	IN_P									{}
-			| FROM									{}
+from_in:	FROM									{}
+			| IN_P									{}
 		;
 
 
@@ -7093,6 +7094,7 @@ unreserved_keyword:
 			| EXPLAIN
 			| EXTERNAL
 			| FETCH
+			| FIRST_P
 			| FORCE
 			| FORWARD
 			| FUNCTION
@@ -7115,6 +7117,7 @@ unreserved_keyword:
 			| KEY
 			| LANCOMPILER
 			| LANGUAGE
+			| LAST_P
 			| LEVEL
 			| LISTEN
 			| LOAD
@@ -7170,9 +7173,9 @@ unreserved_keyword:
 			| SCROLL
 			| SECOND_P
 			| SECURITY
-			| SESSION
 			| SEQUENCE
 			| SERIALIZABLE
+			| SESSION
 			| SET
 			| SHARE
 			| SHOW
@@ -7211,8 +7214,8 @@ unreserved_keyword:
 			| VOLATILE
 			| WITH
 			| WITHOUT
-			| WRITE
 			| WORK
+			| WRITE
 			| YEAR_P
 			| ZONE
 		;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.232 2003/03/10 03:53:51 tgl Exp $
+ * $Id: parsenodes.h,v 1.233 2003/03/11 19:40:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1228,16 +1228,21 @@ typedef struct ClosePortalStmt
  */
 typedef enum FetchDirection
 {
+	/* for these, howMany is how many rows to fetch; FETCH_ALL means ALL */
 	FETCH_FORWARD,
-	FETCH_BACKWARD
-	/* ABSOLUTE someday? */
+	FETCH_BACKWARD,
+	/* for these, howMany indicates a position; only one row is fetched */
+	FETCH_ABSOLUTE,
+	FETCH_RELATIVE
 } FetchDirection;
+
+#define FETCH_ALL	LONG_MAX
 
 typedef struct FetchStmt
 {
 	NodeTag		type;
 	FetchDirection direction;	/* see above */
-	long		howMany;		/* number of rows */
+	long		howMany;		/* number of rows, or position argument */
 	char	   *portalname;		/* name of portal (cursor) */
 	bool		ismove;			/* TRUE if MOVE */
 } FetchStmt;

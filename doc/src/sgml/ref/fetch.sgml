@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.26 2003/03/10 03:53:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.27 2003/03/11 19:40:22 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -18,17 +18,32 @@ PostgreSQL documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2003-03-11</date>
   </refsynopsisdivinfo>
   <synopsis>
-FETCH [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable class="PARAMETER">count</replaceable> ] { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
-FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</replaceable> | ALL | NEXT | PRIOR ]
-    { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
+FETCH [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <replaceable class="PARAMETER">cursor</replaceable>
+
+where <replaceable class="PARAMETER">direction</replaceable> can be empty or one of:
+
+    NEXT
+    PRIOR
+    FIRST
+    LAST
+    ABSOLUTE <replaceable class="PARAMETER">count</replaceable>
+    RELATIVE <replaceable class="PARAMETER">count</replaceable>
+    <replaceable class="PARAMETER">count</replaceable>
+    ALL
+    FORWARD
+    FORWARD <replaceable class="PARAMETER">count</replaceable>
+    FORWARD ALL
+    BACKWARD
+    BACKWARD <replaceable class="PARAMETER">count</replaceable>
+    BACKWARD ALL
   </synopsis>
 
   <refsect2 id="R2-SQL-FETCH-1">
    <refsect2info>
-    <date>1998-09-01</date>
+    <date>2003-03-11</date>
    </refsect2info>
    <title>
     Inputs
@@ -41,35 +56,151 @@ FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</repl
       <listitem>
        <para>
 	<replaceable class="PARAMETER">direction</replaceable>
-	defines the fetch direction. It can be one of
-	the following:
+	defines the fetch direction and number of rows to fetch.
+	It can be one of the following:
 
 	<variablelist>
 	 <varlistentry>
-	  <term>FORWARD</term>
+	  <term>NEXT</term>
 	  <listitem>
 	   <para>
-	    fetch next row(s). This is the default
+	    fetch next row. This is the default
 	    if <replaceable class="PARAMETER">direction</replaceable> is omitted.
 	   </para>
 	  </listitem>
 	 </varlistentry>
+
+	 <varlistentry>
+	  <term>PRIOR</term>
+	  <listitem>
+	   <para>
+	    fetch prior row.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>FIRST</term>
+	  <listitem>
+	   <para>
+	    fetch first row of query (same as ABSOLUTE 1).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>LAST</term>
+	  <listitem>
+	   <para>
+	    fetch last row of query (same as ABSOLUTE -1).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>ABSOLUTE <replaceable class="PARAMETER">count</replaceable></term>
+	  <listitem>
+	   <para>
+	    fetch the <replaceable class="PARAMETER">count</replaceable>'th
+	    row of query, or the
+	    abs(<replaceable class="PARAMETER">count</replaceable>)'th row
+	    from the end if
+	    <replaceable class="PARAMETER">count</replaceable> &lt; 0.
+	    Position before first row or after last row
+	    if <replaceable class="PARAMETER">count</replaceable> is out of
+	    range; in particular, ABSOLUTE 0 positions before first row.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>RELATIVE <replaceable class="PARAMETER">count</replaceable></term>
+	  <listitem>
+	   <para>
+	    fetch the <replaceable class="PARAMETER">count</replaceable>'th
+	    succeeding row, or the
+	    abs(<replaceable class="PARAMETER">count</replaceable>)'th prior
+	    row if <replaceable class="PARAMETER">count</replaceable> &lt; 0.
+	    RELATIVE 0 re-fetches current row, if any.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term><replaceable class="PARAMETER">count</replaceable></term>
+	  <listitem>
+	   <para>
+	    fetch the next <replaceable class="PARAMETER">count</replaceable>
+	    rows (same as FORWARD <replaceable class="PARAMETER">count</replaceable>).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>ALL</term>
+	  <listitem>
+	   <para>
+	    fetch all remaining rows (same as FORWARD ALL).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>FORWARD</term>
+	  <listitem>
+	   <para>
+	    fetch next row (same as NEXT).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>FORWARD <replaceable class="PARAMETER">count</replaceable></term>
+	  <listitem>
+	   <para>
+	    fetch next <replaceable class="PARAMETER">count</replaceable>
+	    rows.  FORWARD 0 re-fetches current row.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>FORWARD ALL</term>
+	  <listitem>
+	   <para>
+	    fetch all remaining rows.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
 	 <varlistentry>
 	  <term>BACKWARD</term>
 	  <listitem>
 	   <para>
-	    fetch previous row(s).
+	    fetch prior row (same as PRIOR).
 	   </para>
 	  </listitem>
 	 </varlistentry>
+
 	 <varlistentry>
-	  <term>RELATIVE</term>
+	  <term>BACKWARD <replaceable class="PARAMETER">count</replaceable></term>
 	  <listitem>
 	   <para>
-	    Same as FORWARD; provided for SQL92 compatibility.
+	    fetch prior <replaceable class="PARAMETER">count</replaceable>
+	    rows (scanning backwards).  BACKWARD 0 re-fetches current row.
 	   </para>
 	  </listitem>
 	 </varlistentry>
+
+	 <varlistentry>
+	  <term>BACKWARD ALL</term>
+	  <listitem>
+	   <para>
+	    fetch all prior rows (scanning backwards).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
 	</variablelist>
        </para>
       </listitem>
@@ -80,53 +211,11 @@ FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</repl
       <listitem>
        <para>
 	<replaceable class="PARAMETER">count</replaceable>
-	determines how many rows to fetch. It can be one of the following:
-
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="PARAMETER">#</replaceable></term>
-	  <listitem>
-	   <para>
-	    A signed integer constant that specifies how many rows to fetch.
-	    Note that a negative integer is equivalent to changing the sense of
-	    FORWARD and BACKWARD. Zero re-fetches the current row, if any.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>
-	   ALL
-	  </term>
-	  <listitem>
-	   <para>
-	    Retrieve all remaining rows.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>
-	   NEXT
-	  </term>
-	  <listitem>
-	   <para>
-	    Equivalent to specifying a count of <command>1</command>.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>
-	   PRIOR
-	  </term>
-	  <listitem>
-	   <para>
-	    Equivalent to specifying a count of <command>-1</command>.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
+	is a possibly-signed integer constant, determining the location
+	or number of rows to fetch.  For FORWARD and BACKWARD cases,
+	specifying a negative <replaceable
+	class="PARAMETER">count</replaceable>
+	is equivalent to changing the sense of FORWARD and BACKWARD.
        </para>
       </listitem>
      </varlistentry>
@@ -145,7 +234,7 @@ FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</repl
 
   <refsect2 id="R2-SQL-FETCH-2">
    <refsect2info>
-    <date>1998-04-15</date>
+    <date>2003-03-11</date>
    </refsect2info>
    <title>
     Outputs
@@ -162,25 +251,11 @@ WARNING:  PerformPortalFetch: portal "<replaceable class="PARAMETER">cursor</rep
        </computeroutput></term>
       <listitem>
        <para>
-	If <replaceable class="PARAMETER">cursor</replaceable>
-	is not previously declared.
-	The cursor must be declared within a transaction block.
+	If <replaceable class="PARAMETER">cursor</replaceable> is not known.
+	The cursor must have been declared within the current transaction block.
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	<productname>PostgreSQL</productname> does not support absolute
-	positioning of cursors.
-       </para>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
    </para>
   </refsect2>
@@ -188,75 +263,79 @@ WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
 
  <refsect1 id="R1-SQL-FETCH-1">
   <refsect1info>
-   <date>1998-04-15</date>
+   <date>2003-03-11</date>
   </refsect1info>
   <title>
    Description
   </title>
 
   <para>
-   <command>FETCH</command> allows a user to retrieve rows using a cursor.
-   The number of rows retrieved is specified by
-   <replaceable class="PARAMETER">#</replaceable>.
-   If the number of rows remaining in the cursor is less
-   than <replaceable class="PARAMETER">#</replaceable>,
-   then only those available are fetched.
-   Substituting the keyword ALL in place of a number will
-   cause all remaining rows in the cursor to be retrieved.
-   Rows may be fetched in both FORWARD and BACKWARD
-   directions. The default direction is FORWARD.
+   <command>FETCH</command> retrieves rows using a cursor.
   </para>
 
   <para>
-   The cursor position can be before the first row of the query result, or on
-   any particular row of the result, or after the last row of the result.
-   When created, a cursor is positioned before the first row.  After fetching
-   some rows, the cursor is positioned on the last row retrieved.  A new
-   <command>FETCH</command> always steps one row in the specified direction
-   (if possible) before beginning to return rows.  If the
-   <command>FETCH</command> requests more rows than available, the cursor is
-   left positioned after the last row of the query result (or before the first
-   row, in the case of a backward fetch).  This will always be the case after
-   <command>FETCH ALL</>.
+   A cursor has an associated <firstterm>position</> that is used by
+   <command>FETCH</>.  The cursor position can be before the first row of the
+   query result, or on any particular row of the result, or after the last row
+   of the result.  When created, a cursor is positioned before the first row.
+   After fetching some rows, the cursor is positioned on the row most recently
+   retrieved.  If <command>FETCH</> runs off the end of the available rows
+   then the cursor is left positioned after the last row, or before the first
+   row if fetching backward.  <command>FETCH ALL</> or <command>FETCH BACKWARD
+   ALL</> will always leave the cursor positioned after the last row or before
+   the first row.
+  </para>
+
+  <para>
+   The SQL-compatible forms (NEXT, PRIOR, FIRST, LAST, ABSOLUTE, RELATIVE)
+   fetch a single row after moving the cursor appropriately.  If there is
+   no such row, an empty result is returned, and the cursor is left positioned
+   before the first row or after the last row as appropriate.
+  </para>
+
+  <para>
+   The forms using FORWARD and BACKWARD are not in the SQL standard, but
+   are <productname>PostgreSQL</productname> extensions.  These forms
+   retrieve the indicated number of rows moving in the forward or backward
+   direction, leaving the cursor positioned on the last-returned row
+   (or after/before all rows, if the <replaceable
+   class="PARAMETER">count</replaceable> exceeds the number of rows
+   available).
   </para>
 
    <tip>
     <para>
-     A zero row count requests fetching the current row without moving the
+     RELATIVE 0, FORWARD 0, and BACKWARD 0 all request
+     fetching the current row without moving the
      cursor --- that is, re-fetching the most recently fetched row.
      This will succeed unless the cursor is positioned before the
      first row or after the last row; in which case, no row is returned.
     </para>
    </tip>
 
-   <tip>
-    <para>
-     Negative numbers are allowed to be specified for the
-     row count. A negative number is equivalent to reversing
-     the sense of the FORWARD and BACKWARD keywords. For example,
-     <command>FORWARD -1</command> is the same as <command>BACKWARD 1</command>.
-    </para>
-   </tip>
-
   <refsect2 id="R2-SQL-FETCH-3">
    <refsect2info>
-    <date>1998-04-15</date>
+    <date>2003-03-11</date>
    </refsect2info>
    <title>
     Notes
    </title>
 
    <para>
-    A cursor to be used in backwards fetching should be declared with the
-    SCROLL option.  In simple cases, <productname>PostgreSQL</productname>
-    will allow backwards fetch from cursors not declared with SCROLL, but
-    this behavior is best not relied on.
+    The cursor should be declared with the SCROLL option if one intends to
+    use any variants of <command>FETCH</> other than <command>FETCH NEXT</>
+    or <command>FETCH FORWARD</> with a positive count.  For simple queries
+    <productname>PostgreSQL</productname> will allow backwards fetch from
+    cursors not declared with SCROLL, but this behavior is best not relied on.
    </para>
 
    <para>
-    The FORWARD, BACKWARD, and ALL keywords are
-    <productname>PostgreSQL</productname> extensions.
-    See below for details on compatibility issues.
+    ABSOLUTE fetches are not any faster than navigating to the desired row
+    with a relative move: the underlying implementation must traverse all
+    the intermediate rows anyway.  Negative absolute fetches are even worse:
+    the query must be read to the end to find the last row, and then
+    traversed backward from there.  However, rewinding to the start of the
+    query (as with FETCH ABSOLUTE 0) is fast.
    </para>
 
    <para>
@@ -316,7 +395,7 @@ FETCH FORWARD 5 IN liahona;
 </computeroutput>
 
 -- Fetch previous row:
-FETCH BACKWARD 1 IN liahona;
+FETCH PRIOR FROM liahona;
 
 <computeroutput>
  code  | title   | did | date_prod  | kind   | len
@@ -339,52 +418,39 @@ COMMIT WORK;
 
   <refsect2 id="R2-SQL-FETCH-4">
    <refsect2info>
-    <date>1998-09-01</date>
+    <date>2003-03-11</date>
    </refsect2info>
    <title>
     SQL92
    </title>
 
    <para>
-    <note>
-     <para>
-      The non-embedded use of cursors is a <productname>PostgreSQL</productname>
-      extension. The syntax and usage of cursors is being compared
-      against the embedded form of cursors defined in <acronym>SQL92</acronym>.
-     </para>
-    </note>
-   </para>
-
-   <para>
-    <acronym>SQL92</acronym> allows absolute positioning of the cursor for
-    FETCH, and allows placing the results into explicit variables:
+    <acronym>SQL92</acronym> defines FETCH for use in embedded contexts only.
+    Therefore, it describes placing the results into explicit variables using
+    an <literal>INTO</> clause, for example:
 
     <synopsis>
-FETCH ABSOLUTE <replaceable class="PARAMETER">#</replaceable>
+FETCH ABSOLUTE <replaceable class="PARAMETER">n</replaceable>
     FROM <replaceable class="PARAMETER">cursor</replaceable>
     INTO :<replaceable class="PARAMETER">variable</replaceable> [, ...]
     </synopsis>
 
-    <variablelist>
-     <varlistentry>
-      <term>ABSOLUTE</term>
-      <listitem>
-       <para>
-	The cursor should be positioned to the specified absolute
-	row number. All row numbers in <productname>PostgreSQL</productname>
-	are relative numbers so this capability is not supported.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>:<replaceable class="PARAMETER">variable</replaceable></term>
-      <listitem>
-       <para>
-	Target host variable(s).
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
+    <productname>PostgreSQL</productname>'s use of non-embedded cursors
+    is non-standard, and so is its practice of returning the result data
+    as if it were a SELECT result.  Other than this point, FETCH is fully
+    upward-compatible with <acronym>SQL92</acronym>.
+   </para>
+
+   <para>
+    The FETCH forms involving FORWARD and BACKWARD (including the forms
+    FETCH <replaceable class="PARAMETER">count</replaceable> and FETCH ALL,
+    in which FORWARD is implicit) are <productname>PostgreSQL</productname>
+    extensions.
+   </para>
+
+   <para>
+    <acronym>SQL92</acronym> allows only <literal>FROM</> preceding the
+    cursor name; the option to use <literal>IN</> is an extension.
    </para>
   </refsect2>
  </refsect1>

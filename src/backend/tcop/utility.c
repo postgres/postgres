@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.194 2003/03/10 03:53:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.195 2003/03/11 19:40:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,15 +321,8 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_FetchStmt:
-			{
-				FetchStmt  *stmt = (FetchStmt *) parsetree;
-
-				PerformPortalFetch(stmt->portalname,
-								   stmt->direction == FETCH_FORWARD,
-								   stmt->howMany,
-								   (stmt->ismove) ? None : dest,
-								   completionTag);
-			}
+			PerformPortalFetch((FetchStmt *) parsetree, dest,
+							   completionTag);
 			break;
 
 			/*

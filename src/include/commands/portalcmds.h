@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portalcmds.h,v 1.5 2003/03/10 03:53:51 tgl Exp $
+ * $Id: portalcmds.h,v 1.6 2003/03/11 19:40:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,12 @@
 
 extern void PerformCursorOpen(DeclareCursorStmt *stmt, CommandDest dest);
 
-extern void PerformPortalFetch(char *name, bool forward, long count,
-				   CommandDest dest, char *completionTag);
+extern void PerformPortalFetch(FetchStmt *stmt, CommandDest dest,
+							   char *completionTag);
 
-extern long DoPortalFetch(Portal portal, bool forward, long count,
+extern long DoPortalFetch(Portal portal,
+						  FetchDirection fdirection,
+						  long count,
 						  CommandDest dest);
 
 extern void PerformPortalClose(char *name);

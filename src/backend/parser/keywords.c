@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.134 2003/02/10 04:44:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.135 2003/03/11 19:40:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,6 +128,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"extract", EXTRACT},
 	{"false", FALSE_P},
 	{"fetch", FETCH},
+	{"first", FIRST_P},
 	{"float", FLOAT_P},
 	{"for", FOR},
 	{"force", FORCE},
@@ -171,6 +172,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"key", KEY},
 	{"lancompiler", LANCOMPILER},
 	{"language", LANGUAGE},
+	{"last", LAST_P},
 	{"leading", LEADING},
 	{"left", LEFT},
 	{"level", LEVEL},

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.19 2003/03/10 03:53:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.20 2003/03/11 19:40:22 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-MOVE [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable class="PARAMETER">count</replaceable> ] { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
+MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <replaceable class="PARAMETER">cursor</replaceable>
   </synopsis>
  </refsynopsisdiv>
 
@@ -33,9 +33,7 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable c
    Description
   </title>
   <para>
-   <command>MOVE</command> allows the user to move the cursor position a 
-   specified number of rows, or to the beginning or end of the cursor.
-   <command>MOVE ALL</command> moves to the end of the cursor.
+   <command>MOVE</command> repositions a cursor without retrieving any data.
    <command>MOVE</command> works exactly like the <command>FETCH</command>
    command, except it only repositions the cursor and does not return rows.
   </para>
@@ -54,8 +52,9 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable c
    </title>
 
    <para>
-    <command>MOVE</command> is a <productname>PostgreSQL</productname>
-    language extension.
+    The count returned in <command>MOVE</command>'s status string is the
+    count of the number of rows that would have been returned by the
+    equivalent <command>FETCH</command> command.
    </para>
 
    <para>
@@ -119,9 +118,6 @@ COMMIT WORK;
    </title>
    <para>
     There is no <acronym>SQL92</acronym> <command>MOVE</command> statement. 
-    Instead, <acronym>SQL92</acronym> allows
-    one to <command>FETCH</command> rows from an absolute cursor position,
-    implicitly moving the cursor to the correct position.
    </para>
   </refsect2>
  </refsect1>

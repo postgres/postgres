@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.52 2003/03/10 03:53:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.53 2003/03/11 19:40:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,10 +167,12 @@ PortalSetQuery(Portal portal,
 	AssertArg(PortalIsValid(portal));
 
 	portal->queryDesc = queryDesc;
-	portal->backwardOK = ExecSupportsBackwardScan(queryDesc->plantree);
-	portal->atStart = true;		/* Allow fetch forward only, to start */
-	portal->atEnd = false;
 	portal->cleanup = cleanup;
+	portal->backwardOK = ExecSupportsBackwardScan(queryDesc->plantree);
+	portal->atStart = true;
+	portal->atEnd = false;		/* allow fetches */
+	portal->portalPos = 0;
+	portal->posOverflow = false;
 }
 
 /*
@@ -211,10 +213,12 @@ CreatePortal(const char *name)
 
 	/* initialize portal query */
 	portal->queryDesc = NULL;
-	portal->backwardOK = false;
-	portal->atStart = true;		/* disallow fetches until query is set */
-	portal->atEnd = true;
 	portal->cleanup = NULL;
+	portal->backwardOK = false;
+	portal->atStart = true;
+	portal->atEnd = true;		/* disallow fetches until query is set */
+	portal->portalPos = 0;
+	portal->posOverflow = false;
 
 	/* put portal in table */
 	PortalHashTableInsert(portal);
