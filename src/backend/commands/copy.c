@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.28 1997/09/01 07:59:04 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.29 1997/09/04 13:18:59 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -608,7 +608,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     	skip_tuple = false;
     	/* BEFORE ROW INSERT Triggers */
     	if ( rel->trigdesc && 
-    		rel->trigdesc->n_before_row[TRIGGER_ACTION_INSERT] > 0 )
+    		rel->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0 )
     	{
     	    HeapTuple newtuple;
     	
@@ -677,7 +677,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
             }
     	    /* AFTER ROW INSERT Triggers */
     	    if ( rel->trigdesc && 
-    	    	    rel->trigdesc->n_after_row[TRIGGER_ACTION_INSERT] > 0 )
+    	    	    rel->trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0 )
     	    	ExecARInsertTriggers (rel, tuple);
         }
         
