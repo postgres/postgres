@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.123 1999/11/07 23:08:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.124 1999/11/14 17:27:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1976,7 +1976,7 @@ vc_scanoneind(Relation indrel, int num_tuples)
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
 	if (nitups != num_tuples)
-		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
+		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u).\nTry recreating the index.",
 			 RelationGetRelationName(indrel), nitups, num_tuples);
 
 }	/* vc_scanoneind */
@@ -2057,7 +2057,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples)
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
 	if (num_index_tuples != num_tuples + keep_tuples)
-		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
+		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u).\nTry recreating the index.",
 			 RelationGetRelationName(indrel), num_index_tuples, num_tuples);
 
 }	/* vc_vaconeind */
