@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.79 2003/12/07 03:14:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.80 2003/12/08 16:39:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "postgres_fe.h"
 #include "pg_dump.h"
 #include "pg_backup_archiver.h"
+
 #include "postgres.h"
 #include "catalog/pg_class.h"
 
