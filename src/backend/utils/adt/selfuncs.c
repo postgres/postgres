@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.38 1999/08/09 03:16:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.39 1999/08/21 00:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "utils/builtins.h"
+#include "utils/int8.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -460,22 +461,31 @@ convert_to_scale(Datum value, Oid typid,
 		case INT4OID:
 			*scaleval = (double) DatumGetInt32(value);
 			return true;
-//		case INT8OID:
-
-
+		case INT8OID:
+			*scaleval = (double) (* i8tod((int64 *) DatumGetPointer(value)));
+			return true;
 		case FLOAT4OID:
 			*scaleval = (double) (* DatumGetFloat32(value));
 			return true;
 		case FLOAT8OID:
 			*scaleval = (double) (* DatumGetFloat64(value));
 			return true;
-//		case NUMERICOID:
-
+		case NUMERICOID:
+			*scaleval = (double) (* numeric_float8((Numeric) DatumGetPointer(value)));
+			return true;
 		case OIDOID:
 		case REGPROCOID:
 			/* we can treat OIDs as integers... */
 			*scaleval = (double) DatumGetObjectId(value);
 			return true;
+		case TEXTOID:
+			/*
+			 * Eventually this should get handled by somehow scaling as a
+			 * string value.  For now, we need to call it out to avoid
+			 * falling into the default case, because there is a float8(text)
+			 * function declared in pg_proc that will do the wrong thing :-(
+			 */
+			break;
 		default:
 		{
 			/* See whether there is a registered type-conversion function,
