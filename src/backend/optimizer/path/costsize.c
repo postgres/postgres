@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.134 2004/08/29 05:06:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.135 2004/10/23 00:05:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,7 +566,7 @@ cost_sort(Path *path, Query *root,
 	if (nbytes > work_mem_bytes)
 	{
 		double		npages = ceil(nbytes / BLCKSZ);
-		double		nruns = nbytes / (work_mem_bytes * 2);
+		double		nruns = (nbytes / work_mem_bytes) * 0.5;
 		double		log_runs = ceil(LOG6(nruns));
 		double		npageaccesses;
 
