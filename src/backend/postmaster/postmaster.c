@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.127 1999/10/25 03:07:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.128 1999/12/03 06:26:34 ishii Exp $
  *
  * NOTES
  *
@@ -91,6 +91,23 @@
 #include "tcop/tcopprot.h"
 #include "utils/trace.h"
 #include "version.h"
+
+/* 
+ * "postmaster.pid" is a file containing postmaster's pid, being
+ * created uder $PGDATA upon postmaster's starting up. When postmaster
+ * shuts down, it will be unlinked. The purpose of the file includes:
+ *
+ * (1) supplying neccessary information to stop/restart postmaster
+ * (2) preventing another postmaster process starting while it has
+ *     already started
+*/
+#define PIDFNAME	"postmaster.pid"
+
+/*
+ * "postmaster.opts" is a file containing options for postmaser.
+ * pg_ctl will use it to restart postmaster.
+ */
+#define OPTSFNAME	"postmaster.opts"
 
 #if !defined(MAXINT)
 #define MAXINT		   INT_MAX
@@ -261,6 +278,15 @@ static void 	RandomSalt(char *salt);
 static void 	SignalChildren(SIGNAL_ARGS);
 static int		CountChildren(void);
 
+static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
+		      int assert, int nbuf, char *execfile,
+		      int debuglvl, int netserver,
+#ifdef USE_SSL
+		      int securenetserver,
+#endif
+		      int maxbackends, int reinit,
+		      int silent, int sendstop, char *extraoptions);
+
 extern int		BootstrapMain(int argc, char *argv[]);
 static pid_t	SSDataBase(bool startup);
 #define	StartupDataBase()	SSDataBase(true)
@@ -272,11 +298,11 @@ static void InitSSL(void);
 
 #ifdef CYR_RECODE
 void		GetCharSetByHost(char *, int, char *);
-
 #endif
 
 #ifdef USE_ASSERT_CHECKING
-int			assert_enabled = 1;
+
+int	assert_enabled = 1;
 
 #endif
 
@@ -351,6 +377,9 @@ PostmasterMain(int argc, char *argv[])
 	bool		DataDirOK;		/* We have a usable PGDATA value */
 	char		hostbuf[MAXHOSTNAMELEN];
 	int			nonblank_argc;
+	char original_extraoptions[MAXPGPATH];
+
+	*original_extraoptions = '\0';
 
 	/*
 	 * We need three params so we can display status.  If we don't get
@@ -509,6 +538,7 @@ PostmasterMain(int argc, char *argv[])
 				 */
 				strcat(ExtraOptions, " ");
 				strcat(ExtraOptions, optarg);
+				strcpy(original_extraoptions, optarg);
 				break;
 			case 'p':
 				/* Set PGPORT by hand. */
@@ -617,6 +647,33 @@ PostmasterMain(int argc, char *argv[])
 
 	if (silentflag)
 		pmdaemonize();
+
+	/*
+	 * create pid file. if the file has already existed, exits.
+	 */
+	if (SetPidFile(
+		       getpid(),	/* postmaster process id */
+		       progname,	/* postmaster executable file */
+		       PostPortName,	/* port number */
+		       DataDir,		/* PGDATA */
+		       assert_enabled,	/* whether -A is specified or not */
+		       NBuffers,	/* -B: number of shared buffers */
+		       Execfile,	/* -b: postgres executable file */
+		       DebugLvl,	/* -d: debug level */
+		       NetServer,	/* -i: accept connection from INET */
+#ifdef USE_SSL
+		       SecureNetServer,	/* -l: use SSL */
+#endif
+		       MaxBackends,	/* -N: max number of backends */
+		       Reinit,		/* -n: reinit shared mem after failure */
+		       silentflag,	/* -S: detach tty */
+		       SendStop,	/* -s: send SIGSTOP */
+		       original_extraoptions	/* options for backend */
+		       )
+	    ) {
+	  ExitPostmaster(1);
+	  return 0;
+	}
 
 	/*
 	 * Set up signal handlers for the postmaster process.
@@ -2067,4 +2124,116 @@ SSDataBase(bool startup)
 	NextBackendTag -= 1;
 
 	return(pid);
+}
+
+static char PidFile[MAXPGPATH];
+
+static void UnlinkPidFile(void)
+{
+	unlink(PidFile);
+}
+
+static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
+		      int assert, int nbuf, char *execfile,
+		      int debuglvl, int netserver,
+#ifdef USE_SSL
+		      int securenetserver,
+#endif
+		      int maxbackends, int reinit,
+		      int silent, int sendstop, char *extraoptions)
+{
+	int fd;
+	char optsfile[MAXPGPATH];
+	char pidstr[32];
+	char opts[1024];
+	char buf[1024];
+
+	/*
+	 * Creating pid file
+	 */
+	sprintf(PidFile,"%s/%s", datadir, PIDFNAME);
+	fd = open(PidFile, O_RDWR | O_CREAT | O_EXCL, 0600);
+	if (fd < 0) {
+		fprintf(stderr, "Can't create pidfile: %s\n", PidFile);
+		fprintf(stderr, "Is another postmaser running?\n");
+		return(-1);
+	}
+	sprintf(pidstr, "%d", pid);
+	if (write(fd, pidstr, strlen(pidstr)) != strlen(pidstr)) {
+		fprintf(stderr,"Write to pid file failed\n");
+		close(fd);
+		unlink(PidFile);
+		return(-1);
+	}
+	close(fd);
+
+	/*
+	 * Creating opts file
+	 */
+	sprintf(optsfile,"%s/%s", datadir, OPTSFNAME);
+	fd = open(optsfile, O_RDWR | O_TRUNC | O_CREAT, 0600);
+	if (fd < 0) {
+		fprintf(stderr, "Can't create optsfile:%s", optsfile);
+		unlink(PidFile);
+		return(-1);
+	}
+	sprintf(opts, "%s\n-p %d\n-D %s\n",progname, port, datadir);
+	if (assert) {
+		sprintf(buf, "-A %d\n", assert);
+		strcat(opts, buf);
+	}
+
+        sprintf(buf, "-B %d\n-b %s\n",nbuf, execfile);
+	strcat(opts, buf);
+
+	if (debuglvl) {
+		sprintf(buf, "-d %d\n", debuglvl);
+		strcat(opts, buf);
+	}
+
+	if (netserver) {
+		strcat(opts, "-i\n");
+	}
+
+#ifdef USE_SSL
+	if (securenetserver) {
+		strcat(opts, "-l\n");
+	}
+#endif
+
+	sprintf(buf, "-N %d\n", maxbackends);
+	strcat(opts, buf);
+
+	if (!reinit) {
+		strcat(opts, "-n\n");
+	}
+
+	if (silent) {
+		strcat(opts, "-S\n");
+	}
+
+	if (sendstop) {
+		strcat(opts, "-s\n");
+	}
+
+	if (strlen(extraoptions) > 0) {
+		strcat(opts, "-o '");
+		strcat(opts, extraoptions);
+		strcat(opts, "'");
+	}
+
+	if (write(fd, opts, strlen(opts)) != strlen(opts)) {
+		perror("Writing to opts file failed");
+		unlink(PidFile);
+		close(fd);
+		return(-1);
+	}
+	close(fd);
+
+	/*
+	 * register clean up proc
+	 */
+	on_proc_exit(UnlinkPidFile, NULL);
+
+	return(0);
 }
