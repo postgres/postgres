@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pglobject.h,v 1.2 1999/05/23 01:04:03 momjian Exp $
+ *  $Id: pglobject.h,v 1.3 1999/10/22 19:05:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@ private:
   int pgFd;
   Oid pgObject;
   string loStatus;
+  void Init(Oid lobjId = 0);
 
 public:
   PgLargeObject(const char* conninfo = 0);   // use reasonable defaults and create large object
@@ -52,9 +53,6 @@ public:
   Oid Import(const char* filename);
   int Export(const char* filename); 
   string Status();
-  
-private:
-   void Init(Oid lobjId = 0);
 };
 
 #endif	// PGLOBJ_H

@@ -30,7 +30,7 @@ extern "C" {
 #include "libpq-fe.h"
 }
 
-static char rcsid[] = "$Id: libpq++.H,v 1.6 1999/10/06 03:00:16 momjian Exp $";
+static char rcsid[] = "$Id: libpq++.H,v 1.7 1999/10/22 19:05:02 momjian Exp $";
 
 
 // ****************************************************************
@@ -123,7 +123,7 @@ public:
   void Close();
   int Read(char* buf, int len);
   int Write(const char* buf, int len);
-  int Lseek(int offset, int whence);
+  int LSeek(int offset, int whence);
   int Tell();
   int Unlink();
   Oid LOid();
