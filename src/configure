@@ -2349,7 +2349,7 @@ done
 
 ac_given_srcdir=$srcdir
 
-trap 'rm -fr `echo "GNUmakefile Makefile.global" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
+trap 'rm -fr `echo "GNUmakefile Makefile.global include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
 
@@ -2445,7 +2445,7 @@ EOF
 
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile Makefile.global"}
+CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile Makefile.global include/config.h"}
 EOF
 cat >> $CONFIG_STATUS <<\EOF
 for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
