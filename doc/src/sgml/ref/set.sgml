@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.55 2001/12/29 18:35:54 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.56 2001/12/29 20:29:49 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -285,6 +285,7 @@ SELECT setseed(<replaceable>value</replaceable>);
 	   </para>
 	  </listitem>
 	 </varlistentry>
+	 <varlistentry>
 	  <term>INTERVAL '08:00' HOUR TO MINUTE</term>
 	  <listitem>
 	   <para>
