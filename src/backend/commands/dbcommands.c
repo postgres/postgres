@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.92 2002/05/25 16:30:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.93 2002/06/18 17:27:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,9 +58,7 @@ static bool remove_dbdirs(const char *real_loc, const char *altloc);
  */
 
 void
-createdb(const char *dbname, const char *dbowner,
-		 const char *dbpath, const char *dbtemplate,
-		 int encoding)
+createdb(CreatedbStmt *stmt)
 {
 	char	   *nominal_loc;
 	char	   *alt_loc;
@@ -82,6 +80,59 @@ createdb(const char *dbname, const char *dbowner,
 	char		new_record_nulls[Natts_pg_database];
 	Oid			dboid;
 	int32		datdba;
+	List	   *option;
+	DefElem    *downer = NULL;
+	DefElem	   *dpath = NULL;
+	DefElem	   *dtemplate = NULL;
+	DefElem	   *dencoding = NULL;
+	char	   *dbname = stmt->dbname;
+	char	   *dbowner = NULL;
+	char	   *dbpath = NULL;
+	char	   *dbtemplate = NULL;
+	int		    encoding = -1;
+
+	/* Extract options from the statement node tree */
+	foreach(option, stmt->options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+
+		if (strcmp(defel->defname, "owner") == 0)
+		{
+			if (downer)
+				elog(ERROR, "CREATE DATABASE: conflicting options");
+			downer = defel;
+		}
+		else if (strcmp(defel->defname, "location") == 0)
+		{
+			if (dpath)
+				elog(ERROR, "CREATE DATABASE: conflicting options");
+			dpath = defel;
+		}
+		else if (strcmp(defel->defname, "template") == 0)
+		{
+			if (dtemplate)
+				elog(ERROR, "CREATE DATABASE: conflicting options");
+			dtemplate = defel;
+		}
+		else if (strcmp(defel->defname, "encoding") == 0)
+		{
+			if (dencoding)
+				elog(ERROR, "CREATE DATABASE: conflicting options");
+			dencoding = defel;
+		}
+		else
+			elog(ERROR, "CREATE DATABASE: option \"%s\" not recognized",
+				 defel->defname);
+	}
+
+	if (downer)
+		dbowner = strVal(downer->arg);
+	if (dpath)
+		dbpath = strVal(dpath->arg);
+	if (dtemplate)
+		dbtemplate = strVal(dtemplate->arg);
+	if (dencoding)
+		encoding = intVal(dencoding->arg);
 
 	/* obtain sysid of proposed owner */
 	if (dbowner)

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.328 2002/06/18 00:28:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.329 2002/06/18 17:27:57 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -154,7 +154,8 @@ static void doNegateFloat(Value *v);
 %type <node>	alter_column_default
 %type <ival>	add_drop, drop_behavior, opt_drop_behavior
 
-%type <list>	createdb_opt_list, createdb_opt_item
+%type <list>	createdb_opt_list
+%type <defelt>	createdb_opt_item
 %type <boolean> opt_equal
 
 %type <ival>	opt_lock, lock_type
@@ -3351,35 +3352,8 @@ CreatedbStmt:
 			CREATE DATABASE database_name opt_with createdb_opt_list
 				{
 					CreatedbStmt *n = makeNode(CreatedbStmt);
-					List   *l;
-
 					n->dbname = $3;
-					/* set default options */
-					n->dbowner = NULL;
-					n->dbpath = NULL;
-					n->dbtemplate = NULL;
-					n->encoding = -1;
-					/* process additional options */
-					foreach(l, $5)
-					{
-						List   *optitem = (List *) lfirst(l);
-
-						switch (lfirsti(optitem))
-						{
-							case 1:
-								n->dbpath = (char *) lsecond(optitem);
-								break;
-							case 2:
-								n->dbtemplate = (char *) lsecond(optitem);
-								break;
-							case 3:
-								n->encoding = lfirsti(lnext(optitem));
-								break;
-							case 4:
-								n->dbowner = (char *) lsecond(optitem);
-								break;
-						}
-					}
+					n->options = $5;
 					$$ = (Node *)n;
 				}
 		;
@@ -3396,19 +3370,27 @@ createdb_opt_list:
 createdb_opt_item:
 			LOCATION opt_equal Sconst
 				{
-					$$ = lconsi(1, makeList1($3));
+					$$ = makeNode(DefElem);
+					$$->defname = "location";
+					$$->arg = (Node *)makeString($3);
 				}
 			| LOCATION opt_equal DEFAULT
 				{
-					$$ = lconsi(1, makeList1(NULL));
+					$$ = makeNode(DefElem);
+					$$->defname = "location";
+					$$->arg = NULL;
 				}
 			| TEMPLATE opt_equal name
 				{
-					$$ = lconsi(2, makeList1($3));
+					$$ = makeNode(DefElem);
+					$$->defname = "template";
+					$$->arg = (Node *)makeString($3);
 				}
 			| TEMPLATE opt_equal DEFAULT
 				{
-					$$ = lconsi(2, makeList1(NULL));
+					$$ = makeNode(DefElem);
+					$$->defname = "template";
+					$$->arg = NULL;
 				}
 			| ENCODING opt_equal Sconst
 				{
@@ -3422,7 +3404,9 @@ createdb_opt_item:
 						elog(ERROR, "Multi-byte support is not enabled");
 					encoding = GetStandardEncoding();
 #endif
-					$$ = lconsi(3, makeListi1(encoding));
+					$$ = makeNode(DefElem);
+					$$->defname = "encoding";
+					$$->arg = (Node *)makeInteger(encoding);
 				}
 			| ENCODING opt_equal Iconst
 				{
@@ -3433,19 +3417,27 @@ createdb_opt_item:
 					if ($3 != GetStandardEncoding())
 						elog(ERROR, "Multi-byte support is not enabled");
 #endif
-					$$ = lconsi(3, makeListi1($3));
+					$$ = makeNode(DefElem);
+					$$->defname = "encoding";
+					$$->arg = (Node *)makeInteger($3);
 				}
 			| ENCODING opt_equal DEFAULT
 				{
-					$$ = lconsi(3, makeListi1(-1));
+					$$ = makeNode(DefElem);
+					$$->defname = "encoding";
+					$$->arg = (Node *)makeInteger(-1);
 				}
 			| OWNER opt_equal name
 				{
-					$$ = lconsi(4, makeList1($3));
+					$$ = makeNode(DefElem);
+					$$->defname = "owner";
+					$$->arg = (Node *)makeString($3);
 				}
 			| OWNER opt_equal DEFAULT
 				{
-					$$ = lconsi(4, makeList1(NULL));
+					$$ = makeNode(DefElem);
+					$$->defname = "owner";
+					$$->arg = NULL;
 				}
 		;
 
