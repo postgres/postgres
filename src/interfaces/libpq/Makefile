@@ -7,17 +7,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.9 1996/11/02 09:54:44 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.10 1996/11/03 07:14:29 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ..
 include ../Makefile.global
 
-INCLUDE_OPT= \
-             -I. \
-             -I../include \
-             -I../backend \
+INCLUDE_OPT= -I../include -I.
 
 CFLAGS+= $(INCLUDE_OPT) -DPOSTPORT='"$(POSTPORT)"'
 

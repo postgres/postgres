@@ -11,13 +11,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.2 1996/08/06 16:16:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.3 1996/11/03 07:14:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "postgres.h"
+
 #include "libpq-fe.h"
 
 /* pqGetc:

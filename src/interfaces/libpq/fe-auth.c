@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.5 1996/10/13 04:50:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.6 1996/11/03 07:14:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
+
+#include "postgres.h"
+
 #include "libpq/pqcomm.h"
 
 #include "libpq-fe.h"

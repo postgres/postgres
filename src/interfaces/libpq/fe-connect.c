@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.12 1996/10/29 21:53:48 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.13 1996/11/03 07:14:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,10 @@
 #include <netdb.h>
 #include <errno.h>
 #include <signal.h>
-#include <libpq/pqcomm.h> /* for decls of MsgType, PacketBuf, StartupInfo */
-#include <fe-auth.h>
+
+#include "postgres.h"
+#include "libpq/pqcomm.h" /* for decls of MsgType, PacketBuf, StartupInfo */
+#include "fe-auth.h"
 #include "libpq-fe.h"
 
 #if defined(PORTNAME_ultrix4) || defined(PORTNAME_next)
@@ -141,7 +143,7 @@ PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const cha
     } else
       conn->pgoptions = strdup(pgoptions);
 
-    if (tmp = getenv("PGUSER")) {
+    if ((tmp = getenv("PGUSER"))) {
       error = FALSE;
       conn->pguser = strdup(tmp);
     } else {
