@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.30 2001/01/19 20:39:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.31 2001/01/19 21:09:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,8 @@ _tas:							\n\
 			rts					\n\
 _success:						\n\
 			moveq 	#0,d0		\n\
-			rts");
+			rts					\n\
+");
 }
 
 #endif	 /* __m68k__ */
@@ -152,15 +153,15 @@ _success:						\n\
 #if defined(__APPLE__) && defined(__ppc__)
 /* used in darwin. */
 /* We key off __APPLE__ here because this function differs from
- * the LinuxPPC implementation only in compiler syntax. 
+ * the LinuxPPC implementation only in compiler syntax.
  */
 static void
 tas_dummy()
 {
-       __asm__ __volatile__(
+	   __asm__ __volatile__(
 "\
-			.globl tas			\n\
-			.globl _tas			\n\
+			.globl 	tas			\n\
+			.globl 	_tas		\n\
 _tas:							\n\
 tas:							\n\
 			lwarx	r5,0,r3		\n\
@@ -173,8 +174,8 @@ fail:		li 		r3,1		\n\
 			blr 				\n\
 success:						\n\
 			li 		r3,0		\n\
-			blr 				\n\
-	");
+			blr					\n\
+");
 }
 
 #endif  /* __APPLE__ && __ppc__ */
@@ -198,7 +199,8 @@ fail:		li		3,1 		\n\
 			blr 				\n\
 success:						\n\
 			li 		3,0			\n\
-			blr");
+			blr					\n\
+");
 }
 
 #endif	 /* __powerpc__ */
@@ -222,7 +224,8 @@ tas:							\n\
 			j		$31			\n\
 fail:							\n\
 			li		$2, 1		\n\
-			j   	$31");
+			j   	$31			\n\
+");
 }
 
 #endif	 /* __mips__ */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.83 2001/01/19 20:39:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.84 2001/01/19 21:09:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,12 +103,12 @@ extern void s_lock_sleep(unsigned spins, int microsec,
  * Standard _asm format:
  *
  *	__asm__ __volatile__(
- *			"command	\n"
- *			"command	\n"
- *			"command	\n"
- *		:	"=r"(_res)			return value, in register
- *		:	"r"(lock)			argument, 'lock pointer', in register
- *		:	"r0");				inline code uses this register
+			"command	\n"
+			"command	\n"
+			"command	\n"
+:			"=r"(_res)			return value, in register
+:			"r"(lock)			argument, 'lock pointer', in register
+:			"r0");				inline code uses this register
  */
 
 
@@ -121,10 +121,10 @@ tas(volatile slock_t *lock)
 	register slock_t _res = 1;
 
 	__asm__ __volatile__(
-						"lock			\n"
-						"xchgb	%0,%1	\n"
-			:			"=q"(_res), "=m"(*lock)
-			:			"0"(_res));
+			"lock			\n"
+			"xchgb	%0,%1	\n"
+:			"=q"(_res), "=m"(*lock)
+:			"0"(_res));
 	return (int) _res;
 }
 
@@ -140,10 +140,10 @@ tas(volatile slock_t *lock)
 	long int	ret;
 
 	__asm__ __volatile__(
-						"xchg4 	%0=%1,%2		\n"
-			 :			"=r"(ret), "=m"(*lock)
-			 :			"r"(1), "1"(*lock)
-			 :			"memory");
+			"xchg4 	%0=%1,%2	\n"
+:			"=r"(ret), "=m"(*lock)
+:			"r"(1), "1"(*lock)
+:			"memory");
 
 	return (int) ret;
 }
@@ -160,9 +160,9 @@ tas(volatile slock_t *lock)
 	register slock_t _res = 1;
 
 	__asm__ __volatile__(
-						"swpb 	%0, %0, [%3]	\n"
-			:			"=r"(_res), "=m"(*lock)
-			:			"0"(_res), "r"(lock));
+			"swpb 	%0, %0, [%3]	\n"
+:			"=r"(_res), "=m"(*lock)
+:			"0"(_res), "r"(lock));
 	return (int) _res;
 }
 
@@ -180,14 +180,14 @@ tas(volatile slock_t *lock)
 	int			_res;
 
 	__asm__	__volatile__(
-						"la	1,1			\n"
-						"l 	2,%2			\n"
-						"slr 0,0		\n"
-						"cs 0,1,0(2)	\n"
-						"lr %1,0		\n"
-		   :			"=m"(lock), "=d"(_res)
-		   :			"m"(lock)
-		   :			"0", "1", "2");
+			"la		1,1		\n"
+			"l 		2,%2	\n"
+			"slr 	0,0		\n"
+			"cs 	0,1,0(2)\n"
+			"lr 	%1,0	\n"
+:			"=m"(lock), "=d"(_res)
+:			"m"(lock)
+:			"0", "1", "2");
 
 	return (_res);
 }
@@ -204,9 +204,9 @@ tas(volatile slock_t *lock)
 	register slock_t _res = 1;
 
 	__asm__ __volatile__(
-						"ldstub	[%2], %0		\n"
-			:			"=r"(_res), "=m"(*lock)
-			:			"r"(lock));
+			"ldstub	[%2], %0	\n"
+:			"=r"(_res), "=m"(*lock)
+:			"r"(lock));
 	return (int) _res;
 }
 
@@ -222,11 +222,11 @@ tas(volatile slock_t *lock)
 	register int rv;
 
 	__asm__	__volatile__(
-						"tas %1		\n"
-						"sne %0		\n"
-			 :			"=d"(rv), "=m"(*lock)
-			 :			"1"(*lock)
-			 :			"cc");
+			"tas	%1		\n"
+			"sne	%0		\n"
+:			"=d"(rv), "=m"(*lock)
+:			"1"(*lock)
+:			"cc");
 
 	return rv;
 }
@@ -249,13 +249,13 @@ tas(volatile slock_t *lock)
 	register	_res;
 
 	__asm__ __volatile__(
-						"movl 	$1, r0			\n"
-						"bbssi 	$0, (%1), 1f	\n"
-						"clrl 	r0				\n"
-						"1: movl r0, %0			\n"
-			:			"=r"(_res)
-			:			"r"(lock)
-			:			"r0");
+			"movl 	$1, r0			\n"
+			"bbssi	$0, (%1), 1f	\n"
+			"clrl	r0				\n"
+			"1: movl r0, %0			\n"
+:			"=r"(_res)
+:			"r"(lock)
+:			"r0");
 	return (int) _res;
 }
 
@@ -271,9 +271,9 @@ tas(volatile slock_t *lock)
 	register	_res;
 
 	__asm__ __volatile__(
-						"sbitb 	0, %0	\n"
-						"sfsd 	%1		\n"
-			:			"=m"(*lock), "=r"(_res));
+			"sbitb	0, %0	\n"
+			"sfsd	%1		\n"
+:			"=m"(*lock), "=r"(_res));
 	return (int) _res;
 }
 
@@ -339,20 +339,20 @@ tas(volatile slock_t *lock)
 	register slock_t _res;
 
 	__asm__	__volatile__(
-						"ldq   $0, %0	\n"
-						"bne   $0, 2f	\n"
-						"ldq_l %1, %0	\n"
-						"bne   %1, 2f	\n"
-						"mov   1,  $0	\n"
-						"stq_c $0, %0	\n"
-						"beq   $0, 2f	\n"
-						"mb				\n"
-						"br 3f			\n"
-						"2: mov 1, %1	\n"
-						"3:"
-			 :			"=m"(*lock), "=r"(_res)
-			 :
-			 :			"0");
+			"ldq	$0, %0	\n"
+			"bne	$0, 2f	\n"
+			"ldq_l	%1, %0	\n"
+			"bne	%1, 2f	\n"
+			"mov	1,  $0	\n"
+			"stq_c	$0, %0	\n"
+			"beq	$0, 2f	\n"
+			"mb				\n"
+			"br		3f		\n"
+			"2: mov 1, %1	\n"
+			"3:				\n"
+:			"=m"(*lock), "=r"(_res)
+:
+:			"0");
 
 	return (int) _res;
 }
