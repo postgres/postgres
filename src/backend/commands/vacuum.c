@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.302 2005/02/26 18:43:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.303 2005/03/04 20:21:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@
 #include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
-#include "storage/buf_internals.h"
 #include "storage/freespace.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"

@@ -1,12 +1,12 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.7 2004/04/19 23:27:17 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.8 2005/03/04 20:21:06 tgl Exp $
 
 Notes about shared buffer access rules
 --------------------------------------
 
 There are two separate access control mechanisms for shared disk buffers:
-reference counts (a/k/a pin counts) and buffer locks.  (Actually, there's
-a third level of access control: one must hold the appropriate kind of
-lock on a relation before one can legally access any page belonging to
+reference counts (a/k/a pin counts) and buffer content locks.  (Actually,
+there's a third level of access control: one must hold the appropriate kind
+of lock on a relation before one can legally access any page belonging to
 the relation.  Relation-level locks are not discussed here.)
 
 Pins: one must "hold a pin on" a buffer (increment its reference count)
@@ -26,7 +26,7 @@ handled by waiting to obtain the relation-level lock, which is why you'd
 better hold one first.)  Pins may not be held across transaction
 boundaries, however.
 
-Buffer locks: there are two kinds of buffer locks, shared and exclusive,
+Buffer content locks: there are two kinds of buffer lock, shared and exclusive,
 which act just as you'd expect: multiple backends can hold shared locks on
 the same buffer, but an exclusive lock prevents anyone else from holding
 either shared or exclusive lock.  (These can alternatively be called READ
@@ -38,12 +38,12 @@ the same buffer.  One must pin a buffer before trying to lock it.
 Buffer access rules:
 
 1. To scan a page for tuples, one must hold a pin and either shared or
-exclusive lock.  To examine the commit status (XIDs and status bits) of
-a tuple in a shared buffer, one must likewise hold a pin and either shared
+exclusive content lock.  To examine the commit status (XIDs and status bits)
+of a tuple in a shared buffer, one must likewise hold a pin and either shared
 or exclusive lock.
 
 2. Once one has determined that a tuple is interesting (visible to the
-current transaction) one may drop the buffer lock, yet continue to access
+current transaction) one may drop the content lock, yet continue to access
 the tuple's data for as long as one holds the buffer pin.  This is what is
 typically done by heap scans, since the tuple returned by heap_fetch
 contains a pointer to tuple data in the shared buffer.  Therefore the
@@ -52,9 +52,9 @@ change, but that is assumed not to matter after the initial determination
 of visibility is made.
 
 3. To add a tuple or change the xmin/xmax fields of an existing tuple,
-one must hold a pin and an exclusive lock on the containing buffer.
+one must hold a pin and an exclusive content lock on the containing buffer.
 This ensures that no one else might see a partially-updated state of the
-tuple.
+tuple while they are doing visibility checks.
 
 4. It is considered OK to update tuple commit status bits (ie, OR the
 values HEAP_XMIN_COMMITTED, HEAP_XMIN_INVALID, HEAP_XMAX_COMMITTED, or
@@ -76,7 +76,7 @@ no other backend can be holding a reference to an existing tuple that it
 might expect to examine again.  Note that another backend might pin the
 buffer (increment the refcount) while one is performing the cleanup, but
 it won't be able to actually examine the page until it acquires shared
-or exclusive lock.
+or exclusive content lock.
 
 
 VACUUM FULL ignores rule #5, because it instead acquires exclusive lock at
@@ -97,149 +97,142 @@ for VACUUM's use, since we don't allow multiple VACUUMs concurrently on a
 single relation anyway.
 
 
-Buffer replacement strategy interface
--------------------------------------
+Buffer manager's internal locking
+---------------------------------
 
-The file freelist.c contains the buffer cache replacement strategy.
-The interface to the strategy is:
+Before PostgreSQL 8.1, all operations of the shared buffer manager itself
+were protected by a single system-wide lock, the BufMgrLock, which
+unsurprisingly proved to be a source of contention.  The new locking scheme
+avoids grabbing system-wide exclusive locks in common code paths.  It works
+like this:
 
-	BufferDesc *StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
-	                                 int *cdb_found_index)
+* There is a system-wide LWLock, the BufMappingLock, that notionally
+protects the mapping from buffer tags (page identifiers) to buffers.
+(Physically, it can be thought of as protecting the hash table maintained
+by buf_table.c.)  To look up whether a buffer exists for a tag, it is
+sufficient to obtain share lock on the BufMappingLock.  Note that one
+must pin the found buffer, if any, before releasing the BufMappingLock.
+To alter the page assignment of any buffer, one must hold exclusive lock
+on the BufMappingLock.  This lock must be held across adjusting the buffer's
+header fields and changing the buf_table hash table.  The only common
+operation that needs exclusive lock is reading in a page that was not
+in shared buffers already, which will require at least a kernel call
+and usually a wait for I/O, so it will be slow anyway.
 
-This is always the first call made by the buffer manager to check if a disk
-page is in memory. If so, the function returns the buffer descriptor and no
-further action is required. If the page is not in memory,
-StrategyBufferLookup() returns NULL.
+* A separate system-wide LWLock, the BufFreelistLock, provides mutual
+exclusion for operations that access the buffer free list or select
+buffers for replacement.  This is always taken in exclusive mode since
+there are no read-only operations on those data structures.  The buffer
+management policy is designed so that BufFreelistLock need not be taken
+except in paths that will require I/O, and thus will be slow anyway.
+(Details appear below.)  It is never necessary to hold the BufMappingLock
+and the BufFreelistLock at the same time.
 
-The flag recheck tells the strategy that this is a second lookup after
-flushing a dirty block. If the buffer manager has to evict another buffer,
-it will release the bufmgr lock while doing the write IO. During this time,
-another backend could possibly fault in the same page this backend is after,
-so we have to check again after the IO is done if the page is in memory now.
+* Each buffer header contains a spinlock that must be taken when examining
+or changing fields of that buffer header.  This allows operations such as
+ReleaseBuffer to make local state changes without taking any system-wide
+lock.  We use a spinlock, not an LWLock, since there are no cases where
+the lock needs to be held for more than a few instructions.
 
-*cdb_found_index is set to the index of the found CDB, or -1 if none.
-This is not intended to be used by the caller, except to pass to
-StrategyReplaceBuffer().
+Note that a buffer header's spinlock does not control access to the data
+held within the buffer.  Each buffer header also contains an LWLock, the
+"buffer content lock", that *does* represent the right to access the data
+in the buffer.  It is used per the rules above.
 
-	BufferDesc *StrategyGetBuffer(int *cdb_replace_index)
-
-The buffer manager calls this function to get an unpinned cache buffer whose
-content can be evicted. The returned buffer might be empty, clean or dirty.
-
-The returned buffer is only a candidate for replacement.  It is possible that
-while the buffer is being written, another backend finds and modifies it, so
-that it is dirty again.  The buffer manager will then have to call
-StrategyGetBuffer() again to ask for another candidate.
-
-*cdb_replace_index is set to the index of the candidate CDB, or -1 if none
-(meaning we are using a previously free buffer).  This is not intended to be
-used by the caller, except to pass to StrategyReplaceBuffer().
-
-	void StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
-	                           int cdb_found_index, int cdb_replace_index)
-
-Called by the buffer manager at the time it is about to change the association
-of a buffer with a disk page.
-
-Before this call, StrategyBufferLookup() still has to find the buffer under
-its old tag, even if it was returned by StrategyGetBuffer() as a candidate
-for replacement.
-
-After this call, this buffer must be returned for a lookup of the new page
-identified by *newTag.
-
-cdb_found_index and cdb_replace_index must be the auxiliary values
-returned by previous calls to StrategyBufferLookup and StrategyGetBuffer.
-
-	void StrategyInvalidateBuffer(BufferDesc *buf)
-
-Called by the buffer manager to inform the strategy that the content of this
-buffer is being thrown away. This happens for example in the case of dropping
-a relation.  The buffer must be clean and unpinned on call.
-
-If the buffer was associated with a disk page, StrategyBufferLookup()
-must not return it for this page after the call.
-
-	void StrategyHintVacuum(bool vacuum_active)
-
-Because VACUUM reads all relations of the entire database through the buffer
-manager, it can greatly disturb the buffer replacement strategy. This function
-is used by VACUUM to inform the strategy that subsequent buffer lookups are
-(or are not) caused by VACUUM scanning relations.
+There is yet another set of per-buffer LWLocks, the io_in_progress locks,
+that are used to wait for I/O on a buffer to complete.  The process doing
+a read or write takes exclusive lock for the duration, and processes that
+need to wait for completion try to take shared locks (which they release
+immediately upon obtaining).  XXX on systems where an LWLock represents
+nontrivial resources, it's fairly annoying to need so many locks.  Possibly
+we could use per-backend LWLocks instead (a buffer header would then contain
+a field to show which backend is doing its I/O).
 
 
 Buffer replacement strategy
 ---------------------------
 
-The buffer replacement strategy actually used in freelist.c is a version of
-the Adaptive Replacement Cache (ARC) specially tailored for PostgreSQL.
+There is a "free list" of buffers that are prime candidates for replacement.
+In particular, buffers that are completely free (contain no valid page) are
+always in this list.  We may also throw buffers into this list if we
+consider their pages unlikely to be needed soon.  The list is singly-linked
+using fields in the buffer headers; we maintain head and tail pointers in
+global variables.  (Note: although the list links are in the buffer headers,
+they are considered to be protected by the BufFreelistLock, not the
+buffer-header spinlocks.)  To choose a victim buffer to recycle when there
+are no free buffers available, we use a simple clock-sweep algorithm, which
+avoids the need to take system-wide locks during common operations.  It
+works like this:
 
-The algorithm works as follows:
+Each buffer header contains a usage counter, which is incremented (up to a
+small limit value) whenever the buffer is unpinned.  (This requires only the
+buffer header spinlock, which would have to be taken anyway to decrement the
+buffer reference count, so it's nearly free.)
 
-C is the size of the cache in number of pages (a/k/a shared_buffers or
-NBuffers).  ARC uses 2*C Cache Directory Blocks (CDB). A cache directory block
-is always associated with one unique file page.  It may point to one shared
-buffer, or may indicate that the file page is not in a buffer but has been
-accessed recently.
+The "clock hand" is a buffer index, NextVictimBuffer, that moves circularly
+through all the available buffers.  NextVictimBuffer is protected by the
+BufFreelistLock.
 
-All CDB entries are managed in 4 LRU lists named T1, T2, B1 and B2. The T1 and
-T2 lists are the "real" cache entries, linking a file page to a memory buffer
-where the page is currently cached. Consequently T1len+T2len <= C. B1 and B2
-are ghost cache directories that extend T1 and T2 so that the strategy
-remembers pages longer. The strategy tries to keep B1len+T1len and B2len+T2len
-both at C. T1len and T2len vary over the runtime depending on the lookup
-pattern and its resulting cache hits. The desired size of T1len is called
-T1target.
+The algorithm for a process that needs to obtain a victim buffer is:
 
-Assuming we have a full cache, one of 5 cases happens on a lookup:
+1. Obtain BufFreelistLock.
 
-MISS	On a cache miss, depending on T1target and the actual T1len
-	the LRU buffer of either T1 or T2 is evicted. Its CDB is removed
-	from the T list and added as MRU of the corresponding B list.
-	The now free buffer is replaced with the requested page
-	and added as MRU of T1.
+2. If buffer free list is nonempty, remove its head buffer.  If the buffer
+is pinned or has a nonzero usage count, it cannot be used; ignore it and
+return to the start of step 2.  Otherwise, pin the buffer, release
+BufFreelistLock, and return the buffer.
 
-T1 hit	The T1 CDB is moved to the MRU position of the T2 list.
+3. Otherwise, select the buffer pointed to by NextVictimBuffer, and
+circularly advance NextVictimBuffer for next time.
 
-T2 hit	The T2 CDB is moved to the MRU position of the T2 list.
+4. If the selected buffer is pinned or has a nonzero usage count, it cannot
+be used.  Decrement its usage count (if nonzero) and return to step 3 to
+examine the next buffer.
 
-B1 hit	This means that a buffer that was evicted from the T1
-	list is now requested again, indicating that T1target is
-	too small (otherwise it would still be in T1 and thus in
-	memory). The strategy raises T1target, evicts a buffer
-	depending on T1target and T1len and places the CDB at
-	MRU of T2.
+5. Pin the selected buffer, release BufFreelistLock, and return the buffer.
 
-B2 hit	This means the opposite of B1, the T2 list is probably too
-	small. So the strategy lowers T1target, evicts a buffer
-	and places the CDB at MRU of T2.
+(Note that if the selected buffer is dirty, we will have to write it out
+before we can recycle it; if someone else pins the buffer meanwhile we will
+have to give up and try another buffer.  This however is not a concern
+of the basic select-a-victim-buffer algorithm.)
 
-Thus, every page that is found on lookup in any of the four lists
-ends up as the MRU of the T2 list. The T2 list therefore is the
-"frequency" cache, holding frequently requested pages.
+A special provision is that while running VACUUM, a backend does not
+increment the usage count on buffers it accesses.  In fact, if ReleaseBuffer
+sees that it is dropping the pin count to zero and the usage count is zero,
+then it appends the buffer to the tail of the free list.  (This implies that
+VACUUM, but only VACUUM, must take the BufFreelistLock during ReleaseBuffer;
+this shouldn't create much of a contention problem.)  This provision
+encourages VACUUM to work in a relatively small number of buffers rather
+than blowing out the entire buffer cache.  It is reasonable since a page
+that has been touched only by VACUUM is unlikely to be needed again soon.
 
-Every page that is seen for the first time ends up as the MRU of the T1
-list. The T1 list is the "recency" cache, holding recent newcomers.
-
-The tailoring done for PostgreSQL has to do with the way the query executor
-works. A typical UPDATE or DELETE first scans the relation, searching for the
-tuples and then calls heap_update() or heap_delete(). This causes at least 2
-lookups for the block in the same statement. In the case of multiple matches
-in one block even more often. As a result, every block touched in an UPDATE or
-DELETE would directly jump into the T2 cache, which is wrong. To prevent this
-the strategy remembers which transaction added a buffer to the T1 list and
-will not promote it from there into the T2 cache during the same transaction.
-
-Another specialty is the change of the strategy during VACUUM.  Lookups during
-VACUUM do not represent application needs, and do not suggest that the page
-will be hit again soon, so it would be wrong to change the cache balance
-T1target due to that or to cause massive cache evictions. Therefore, a page
-read in to satisfy vacuum is placed at the LRU position of the T1 list, for
-immediate reuse.  Also, if we happen to get a hit on a CDB entry during
-VACUUM, we do not promote the page above its current position in the list.
 Since VACUUM usually requests many pages very fast, the effect of this is that
 it will get back the very buffers it filled and possibly modified on the next
 call and will therefore do its work in a few shared memory buffers, while
 being able to use whatever it finds in the cache already.  This also implies
 that most of the write traffic caused by a VACUUM will be done by the VACUUM
 itself and not pushed off onto other processes.
+
+
+Background writer's processing
+------------------------------
+
+The background writer is designed to write out pages that are likely to be
+recycled soon, thereby offloading the writing work from active backends.
+To do this, it scans forward circularly from the current position of
+NextVictimBuffer (which it does not change!), looking for buffers that are
+dirty and not pinned nor marked with a positive usage count.  It pins,
+writes, and releases any such buffer.
+
+If we can assume that reading NextVictimBuffer is an atomic action, then
+the writer doesn't even need to take the BufFreelistLock in order to look
+for buffers to write; it needs only to spinlock each buffer header for long
+enough to check the dirtybit.  Even without that assumption, the writer
+only needs to take the lock long enough to read the variable value, not
+while scanning the buffers.  (This is a very substantial improvement in
+the contention cost of the writer compared to PG 8.0.)
+
+During a checkpoint, the writer's strategy must be to write every dirty
+buffer (pinned or not!).  We may as well make it start this scan from 
+NextVictimBuffer, however, so that the first-to-be-written pages are the
+ones that backends might otherwise have to write for themselves soon.

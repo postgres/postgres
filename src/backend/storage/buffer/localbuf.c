@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.62 2005/01/10 20:02:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.63 2005/03/04 20:21:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,10 @@
 
 
 /*#define LBDEBUG*/
+
+/* Note: this macro only works on local buffers, not shared ones! */
+#define LocalBufHdrGetBlock(bufHdr)	\
+	LocalBufferBlockPointers[-((bufHdr)->buf_id + 2)]
 
 /* should be a GUC parameter some day */
 int			NLocBuffer = 64;
@@ -39,7 +43,7 @@ static int	nextFreeLocalBuf = 0;
  *	  allocate a local buffer. We do round robin allocation for now.
  *
  * API is similar to bufmgr.c's BufferAlloc, except that we do not need
- * to have the BufMgrLock since this is all local.	Also, IO_IN_PROGRESS
+ * to do any locking since this is all local.	Also, IO_IN_PROGRESS
  * does not get set.
  */
 BufferDesc *
@@ -47,11 +51,12 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 {
 	BufferTag	newTag;			/* identity of requested block */
 	int			i;
+	int			trycounter;
 	BufferDesc *bufHdr;
 
 	INIT_BUFFERTAG(newTag, reln, blockNum);
 
-	/* a low tech search for now -- not optimized for scans */
+	/* a low tech search for now -- should use a hashtable */
 	for (i = 0; i < NLocBuffer; i++)
 	{
 		bufHdr = &LocalBufferDescriptors[i];
@@ -81,32 +86,44 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 			RelationGetRelid(reln), blockNum, -nextFreeLocalBuf - 1);
 #endif
 
-	/* need to get a new buffer (round robin for now) */
-	bufHdr = NULL;
-	for (i = 0; i < NLocBuffer; i++)
+	/*
+	 * Need to get a new buffer.  We use a clock sweep algorithm
+	 * (essentially the same as what freelist.c does now...)
+	 */
+	trycounter = NLocBuffer;
+	for (;;)
 	{
-		int			b = (nextFreeLocalBuf + i) % NLocBuffer;
+		int			b = nextFreeLocalBuf;
 
-		if (LocalRefCount[b] == 0)
+		if (++nextFreeLocalBuf >= NLocBuffer)
+			nextFreeLocalBuf = 0;
+
+		bufHdr = &LocalBufferDescriptors[b];
+
+		if (LocalRefCount[b] == 0 && bufHdr->usage_count == 0)
 		{
-			bufHdr = &LocalBufferDescriptors[b];
 			LocalRefCount[b]++;
 			ResourceOwnerRememberBuffer(CurrentResourceOwner,
-									  BufferDescriptorGetBuffer(bufHdr));
-			nextFreeLocalBuf = (b + 1) % NLocBuffer;
+										BufferDescriptorGetBuffer(bufHdr));
 			break;
 		}
+
+		if (bufHdr->usage_count > 0)
+		{
+			bufHdr->usage_count--;
+			trycounter = NLocBuffer;
+		}
+		else if (--trycounter == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+					 errmsg("no empty local buffer available")));
 	}
-	if (bufHdr == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
-				 errmsg("no empty local buffer available")));
 
 	/*
 	 * this buffer is not referenced but it might still be dirty. if
 	 * that's the case, write it out before reusing it!
 	 */
-	if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
+	if (bufHdr->flags & BM_DIRTY)
 	{
 		SMgrRelation oreln;
 
@@ -116,7 +133,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		/* And write... */
 		smgrwrite(oreln,
 				  bufHdr->tag.blockNum,
-				  (char *) MAKE_PTR(bufHdr->data),
+				  (char *) LocalBufHdrGetBlock(bufHdr),
 				  true);
 
 		LocalBufferFlushCount++;
@@ -129,7 +146,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	 * use, so it's okay to do it (and possibly error out) before marking
 	 * the buffer as not dirty.
 	 */
-	if (bufHdr->data == (SHMEM_OFFSET) 0)
+	if (LocalBufHdrGetBlock(bufHdr) == NULL)
 	{
 		char	   *data = (char *) malloc(BLCKSZ);
 
@@ -139,16 +156,9 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 					 errmsg("out of memory")));
 
 		/*
-		 * This is a bit of a hack: bufHdr->data needs to be a shmem
-		 * offset for consistency with the shared-buffer case, so make it
-		 * one even though it's not really a valid shmem offset.
-		 */
-		bufHdr->data = MAKE_OFFSET(data);
-
-		/*
 		 * Set pointer for use by BufferGetBlock() macro.
 		 */
-		LocalBufferBlockPointers[-(bufHdr->buf_id + 2)] = (Block) data;
+		LocalBufHdrGetBlock(bufHdr) = (Block) data;
 	}
 
 	/*
@@ -156,7 +166,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	 */
 	bufHdr->tag = newTag;
 	bufHdr->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_IO_ERROR);
-	bufHdr->cntxDirty = false;
+	bufHdr->flags |= BM_TAG_VALID;
+	bufHdr->usage_count = 0;
 
 	*foundPtr = FALSE;
 	return bufHdr;
@@ -170,6 +181,7 @@ void
 WriteLocalBuffer(Buffer buffer, bool release)
 {
 	int			bufid;
+	BufferDesc *bufHdr;
 
 	Assert(BufferIsLocal(buffer));
 
@@ -178,12 +190,18 @@ WriteLocalBuffer(Buffer buffer, bool release)
 #endif
 
 	bufid = -(buffer + 1);
-	LocalBufferDescriptors[bufid].flags |= BM_DIRTY;
+
+	Assert(LocalRefCount[bufid] > 0);
+
+	bufHdr = &LocalBufferDescriptors[bufid];
+	bufHdr->flags |= BM_DIRTY;
 
 	if (release)
 	{
-		Assert(LocalRefCount[bufid] > 0);
 		LocalRefCount[bufid]--;
+		if (LocalRefCount[bufid] == 0 &&
+			bufHdr->usage_count < BM_MAX_USAGE_COUNT)
+			bufHdr->usage_count++;
 		ResourceOwnerForgetBuffer(CurrentResourceOwner, buffer);
 	}
 }

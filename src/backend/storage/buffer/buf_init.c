@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.71 2005/02/03 23:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.72 2005/03/04 20:21:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,8 @@
 BufferDesc *BufferDescriptors;
 Block	   *BufferBlockPointers;
 int32	   *PrivateRefCount;
+
+static char *BufferBlocks;
 
 /* statistics counters */
 long int	ReadBufferCount;
@@ -50,16 +52,11 @@ long int	LocalBufferFlushCount;
  *
  * Synchronization/Locking:
  *
- * BufMgrLock lock -- must be acquired before manipulating the
- *		buffer search datastructures (lookup/freelist, as well as the
- *		flag bits of any buffer).  Must be released
- *		before exit and before doing any IO.
- *
  * IO_IN_PROGRESS -- this is a flag in the buffer descriptor.
  *		It must be set when an IO is initiated and cleared at
  *		the end of the IO.	It is there to make sure that one
  *		process doesn't start to use a buffer while another is
- *		faulting it in.  see IOWait/IOSignal.
+ *		faulting it in.  see WaitIO and related routines.
  *
  * refcount --	Counts the number of processes holding pins on a buffer.
  *		A buffer is pinned during IO and immediately after a BufferAlloc().
@@ -85,10 +82,8 @@ long int	LocalBufferFlushCount;
 void
 InitBufferPool(void)
 {
-	char	   *BufferBlocks;
 	bool		foundBufs,
 				foundDescs;
-	int			i;
 
 	BufferDescriptors = (BufferDesc *)
 		ShmemInitStruct("Buffer Descriptors",
@@ -102,52 +97,42 @@ InitBufferPool(void)
 	{
 		/* both should be present or neither */
 		Assert(foundDescs && foundBufs);
+		/* note: this path is only taken in EXEC_BACKEND case */
 	}
 	else
 	{
 		BufferDesc *buf;
-		char	   *block;
-
-		/*
-		 * It's probably not really necessary to grab the lock --- if
-		 * there's anyone else attached to the shmem at this point, we've
-		 * got problems.
-		 */
-		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
+		int			i;
 
 		buf = BufferDescriptors;
-		block = BufferBlocks;
 
 		/*
 		 * Initialize all the buffer headers.
 		 */
-		for (i = 0; i < NBuffers; block += BLCKSZ, buf++, i++)
+		for (i = 0; i < NBuffers; buf++, i++)
 		{
-			Assert(ShmemIsValid((unsigned long) block));
-
-			/*
-			 * The bufNext fields link together all totally-unused buffers.
-			 * Subsequent management of this list is done by
-			 * StrategyGetBuffer().
-			 */
-			buf->bufNext = i + 1;
-
 			CLEAR_BUFFERTAG(buf->tag);
+			buf->flags = 0;
+			buf->usage_count = 0;
+			buf->refcount = 0;
+			buf->wait_backend_id = 0;
+
+			SpinLockInit(&buf->buf_hdr_lock);
+
 			buf->buf_id = i;
 
-			buf->data = MAKE_OFFSET(block);
-			buf->flags = 0;
-			buf->refcount = 0;
+			/*
+			 * Initially link all the buffers together as unused.
+			 * Subsequent management of this list is done by freelist.c.
+			 */
+			buf->freeNext = i + 1;
+
 			buf->io_in_progress_lock = LWLockAssign();
-			buf->cntx_lock = LWLockAssign();
-			buf->cntxDirty = false;
-			buf->wait_backend_id = 0;
+			buf->content_lock = LWLockAssign();
 		}
 
 		/* Correct last entry of linked list */
-		BufferDescriptors[NBuffers - 1].bufNext = -1;
-
-		LWLockRelease(BufMgrLock);
+		BufferDescriptors[NBuffers - 1].freeNext = FREENEXT_END_OF_LIST;
 	}
 
 	/* Init other shared buffer-management stuff */
@@ -162,12 +147,13 @@ InitBufferPool(void)
  * buffer pool.
  *
  * NB: this is called before InitProcess(), so we do not have a PGPROC and
- * cannot do LWLockAcquire; hence we can't actually access the bufmgr's
+ * cannot do LWLockAcquire; hence we can't actually access stuff in
  * shared memory yet.  We are only initializing local data here.
  */
 void
 InitBufferPoolAccess(void)
 {
+	char	   *block;
 	int			i;
 
 	/*
@@ -179,12 +165,18 @@ InitBufferPoolAccess(void)
 									   sizeof(*PrivateRefCount));
 
 	/*
-	 * Convert shmem offsets into addresses as seen by this process. This
-	 * is just to speed up the BufferGetBlock() macro.  It is OK to do this
-	 * without any lock since the data pointers never change.
+	 * Construct addresses for the individual buffer data blocks.  We do
+	 * this just to speed up the BufferGetBlock() macro.  (Since the
+	 * addresses should be the same in every backend, we could inherit
+	 * this data from the postmaster --- but in the EXEC_BACKEND case
+	 * that doesn't work.)
 	 */
+	block = BufferBlocks;
 	for (i = 0; i < NBuffers; i++)
-		BufferBlockPointers[i] = (Block) MAKE_PTR(BufferDescriptors[i].data);
+	{
+		BufferBlockPointers[i] = (Block) block;
+		block += BLCKSZ;
+	}
 }
 
 /*

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.76 2005/02/03 23:29:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.77 2005/03/04 20:21:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,23 +19,38 @@
 #include "storage/buf.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "storage/spin.h"
 #include "utils/rel.h"
 
 
 /*
  * Flags for buffer descriptors
+ *
+ * Note: TAG_VALID essentially means that there is a buffer hashtable
+ * entry associated with the buffer's tag.
  */
 #define BM_DIRTY				(1 << 0)		/* data needs writing */
 #define BM_VALID				(1 << 1)		/* data is valid */
-#define BM_IO_IN_PROGRESS		(1 << 2)		/* read or write in
+#define BM_TAG_VALID			(1 << 2)		/* tag is assigned */
+#define BM_IO_IN_PROGRESS		(1 << 3)		/* read or write in
 												 * progress */
-#define BM_IO_ERROR				(1 << 3)		/* previous I/O failed */
-#define BM_JUST_DIRTIED			(1 << 4)		/* dirtied since write
+#define BM_IO_ERROR				(1 << 4)		/* previous I/O failed */
+#define BM_JUST_DIRTIED			(1 << 5)		/* dirtied since write
 												 * started */
-#define BM_PIN_COUNT_WAITER		(1 << 5)		/* have waiter for sole
+#define BM_PIN_COUNT_WAITER		(1 << 6)		/* have waiter for sole
 												 * pin */
 
 typedef bits16 BufFlags;
+
+/*
+ * The maximum allowed value of usage_count represents a tradeoff between
+ * accuracy and speed of the clock-sweep buffer management algorithm.  A
+ * large value (comparable to NBuffers) would approximate LRU semantics.
+ * But it can take as many as BM_MAX_USAGE_COUNT+1 complete cycles of
+ * clock sweeps to find a free buffer, so in practice we don't want the
+ * value to be very large.
+ */
+#define BM_MAX_USAGE_COUNT	5
 
 /*
  * Buffer tag identifies which disk block the buffer contains.
@@ -77,45 +92,81 @@ typedef struct buftag
 
 /*
  *	BufferDesc -- shared descriptor/state data for a single shared buffer.
+ *
+ * Note: buf_hdr_lock must be held to examine or change the tag, flags,
+ * usage_count, refcount, or wait_backend_id fields.  buf_id field never
+ * changes after initialization, so does not need locking.  freeNext is
+ * protected by the BufFreelistLock not buf_hdr_lock.  The LWLocks can take
+ * care of themselves.  The buf_hdr_lock is *not* used to control access to
+ * the data in the buffer!
+ *
+ * An exception is that if we have the buffer pinned, its tag can't change
+ * underneath us, so we can examine the tag without locking the spinlock.
+ * Also, in places we do one-time reads of the flags without bothering to
+ * lock the spinlock; this is generally for situations where we don't expect
+ * the flag bit being tested to be changing.
+ *
+ * We can't physically remove items from a disk page if another backend has
+ * the buffer pinned.  Hence, a backend may need to wait for all other pins
+ * to go away.  This is signaled by storing its own backend ID into
+ * wait_backend_id and setting flag bit BM_PIN_COUNT_WAITER.  At present,
+ * there can be only one such waiter per buffer.
+ *
+ * We use this same struct for local buffer headers, but the lock fields
+ * are not used and not all of the flag bits are useful either.
  */
 typedef struct sbufdesc
 {
-	Buffer		bufNext;		/* link in freelist chain */
-	SHMEM_OFFSET data;			/* pointer to data in buf pool */
-
-	/* tag and id must be together for table lookup (still true?) */
-	BufferTag	tag;			/* file/block identifier */
-	int			buf_id;			/* buffer's index number (from 0) */
-
+	BufferTag	tag;			/* ID of page contained in buffer */
 	BufFlags	flags;			/* see bit definitions above */
+	uint16		usage_count;	/* usage counter for clock sweep code */
 	unsigned	refcount;		/* # of backends holding pins on buffer */
+	BackendId	wait_backend_id;	/* backend ID of pin-count waiter */
+
+	slock_t		buf_hdr_lock;	/* protects the above fields */
+
+	int			buf_id;			/* buffer's index number (from 0) */
+	int			freeNext;		/* link in freelist chain */
 
 	LWLockId	io_in_progress_lock;	/* to wait for I/O to complete */
-	LWLockId	cntx_lock;		/* to lock access to page context */
-
-	bool		cntxDirty;		/* new way to mark block as dirty */
-
-	/*
-	 * We can't physically remove items from a disk page if another
-	 * backend has the buffer pinned.  Hence, a backend may need to wait
-	 * for all other pins to go away.  This is signaled by storing its own
-	 * backend ID into wait_backend_id and setting flag bit
-	 * BM_PIN_COUNT_WAITER. At present, there can be only one such waiter
-	 * per buffer.
-	 */
-	BackendId	wait_backend_id;	/* backend ID of pin-count waiter */
+	LWLockId	content_lock;	/* to lock access to buffer contents */
 } BufferDesc;
 
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
 
+/*
+ * The freeNext field is either the index of the next freelist entry,
+ * or one of these special values:
+ */
+#define FREENEXT_END_OF_LIST	(-1)
+#define FREENEXT_NOT_IN_LIST	(-2)
 
-/* in bufmgr.c */
+/*
+ * Macros for acquiring/releasing a buffer header's spinlock.  The
+ * NoHoldoff cases may be used when we know that we hold some LWLock
+ * and therefore interrupts are already held off.  Do not apply these
+ * to local buffers!
+ */
+#define LockBufHdr(bufHdr)  \
+	SpinLockAcquire(&(bufHdr)->buf_hdr_lock)
+#define UnlockBufHdr(bufHdr)  \
+	SpinLockRelease(&(bufHdr)->buf_hdr_lock)
+#define LockBufHdr_NoHoldoff(bufHdr)  \
+	SpinLockAcquire_NoHoldoff(&(bufHdr)->buf_hdr_lock)
+#define UnlockBufHdr_NoHoldoff(bufHdr)  \
+	SpinLockRelease_NoHoldoff(&(bufHdr)->buf_hdr_lock)
+
+
+/* in buf_init.c */
 extern BufferDesc *BufferDescriptors;
 
 /* in localbuf.c */
 extern BufferDesc *LocalBufferDescriptors;
 
-/* counters in buf_init.c */
+/* in freelist.c */
+extern bool strategy_hint_vacuum;
+
+/* event counters in buf_init.c */
 extern long int ReadBufferCount;
 extern long int ReadLocalBufferCount;
 extern long int BufferHitCount;
@@ -129,15 +180,9 @@ extern long int LocalBufferFlushCount;
  */
 
 /* freelist.c */
-extern BufferDesc *StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
-					 int *cdb_found_index);
-extern BufferDesc *StrategyGetBuffer(int *cdb_replace_index);
-extern void StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
-					  int cdb_found_index, int cdb_replace_index);
-extern void StrategyInvalidateBuffer(BufferDesc *buf);
-extern void StrategyHintVacuum(bool vacuum_active);
-extern int StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
-						int max_buffers);
+extern BufferDesc *StrategyGetBuffer(void);
+extern void StrategyFreeBuffer(BufferDesc *buf, bool at_head);
+extern int	StrategySyncStart(void);
 extern int	StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);
 
@@ -145,7 +190,7 @@ extern void StrategyInitialize(bool init);
 extern int	BufTableShmemSize(int size);
 extern void InitBufTable(int size);
 extern int	BufTableLookup(BufferTag *tagPtr);
-extern void BufTableInsert(BufferTag *tagPtr, int buf_id);
+extern int	BufTableInsert(BufferTag *tagPtr, int buf_id);
 extern void BufTableDelete(BufferTag *tagPtr);
 
 /* localbuf.c */

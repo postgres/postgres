@@ -3,12 +3,9 @@
  * buf_table.c
  *	  routines for mapping BufferTags to buffer indexes.
  *
- * NOTE: this module is called only by freelist.c, and the "buffer IDs"
- * it deals with are whatever freelist.c needs them to be; they may not be
- * directly equivalent to Buffer numbers.
- *
- * Note: all routines in this file assume that the BufMgrLock is held
- * by the caller, so no synchronization is needed.
+ * Note: the routines in this file do no locking of their own.  The caller
+ * must hold a suitable lock on the BufMappingLock, as specified in the
+ * comments.
  *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
@@ -16,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.39 2005/02/03 23:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.40 2005/03/04 20:21:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,17 +71,17 @@ InitBufTable(int size)
 /*
  * BufTableLookup
  *		Lookup the given BufferTag; return buffer ID, or -1 if not found
+ *
+ * Caller must hold at least share lock on BufMappingLock
  */
 int
 BufTableLookup(BufferTag *tagPtr)
 {
 	BufferLookupEnt *result;
 
-	if (tagPtr->blockNum == P_NEW)
-		return -1;
-
 	result = (BufferLookupEnt *)
 		hash_search(SharedBufHash, (void *) tagPtr, HASH_FIND, NULL);
+
 	if (!result)
 		return -1;
 
@@ -93,13 +90,22 @@ BufTableLookup(BufferTag *tagPtr)
 
 /*
  * BufTableInsert
- *		Insert a hashtable entry for given tag and buffer ID
+ *		Insert a hashtable entry for given tag and buffer ID,
+ *		unless an entry already exists for that tag
+ *
+ * Returns -1 on successful insertion.  If a conflicting entry exists
+ * already, returns the buffer ID in that entry.
+ *
+ * Caller must hold write lock on BufMappingLock
  */
-void
+int
 BufTableInsert(BufferTag *tagPtr, int buf_id)
 {
 	BufferLookupEnt *result;
 	bool		found;
+
+	Assert(buf_id >= 0);		/* -1 is reserved for not-in-table */
+	Assert(tagPtr->blockNum != P_NEW); /* invalid tag */
 
 	result = (BufferLookupEnt *)
 		hash_search(SharedBufHash, (void *) tagPtr, HASH_ENTER, &found);
@@ -109,15 +115,19 @@ BufTableInsert(BufferTag *tagPtr, int buf_id)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
 
-	if (found)					/* found something already in the table? */
-		elog(ERROR, "shared buffer hash table corrupted");
+	if (found)					/* found something already in the table */
+		return result->id;
 
 	result->id = buf_id;
+
+	return -1;
 }
 
 /*
  * BufTableDelete
  *		Delete the hashtable entry for given tag (which must exist)
+ *
+ * Caller must hold write lock on BufMappingLock
  */
 void
 BufTableDelete(BufferTag *tagPtr)

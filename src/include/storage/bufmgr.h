@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.89 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.90 2005/03/04 20:21:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,21 +27,25 @@ extern DLLIMPORT int NBuffers;
 
 /* in bufmgr.c */
 extern bool zero_damaged_pages;
+extern double bgwriter_lru_percent;
+extern double bgwriter_all_percent;
+extern int	bgwriter_lru_maxpages;
+extern int	bgwriter_all_maxpages;
 
 /* in buf_init.c */
 extern DLLIMPORT Block *BufferBlockPointers;
-extern int32 *PrivateRefCount;
+extern DLLIMPORT int32 *PrivateRefCount;
 
 /* in localbuf.c */
 extern DLLIMPORT int NLocBuffer;
 extern DLLIMPORT Block *LocalBufferBlockPointers;
-extern int32 *LocalRefCount;
+extern DLLIMPORT int32 *LocalRefCount;
 
 /* special block number for ReadBuffer() */
 #define P_NEW	InvalidBlockNumber		/* grow the file to get a new page */
 
 /*
- * Buffer context lock modes
+ * Buffer content lock modes (mode argument for LockBuffer())
  */
 #define BUFFER_LOCK_UNLOCK		0
 #define BUFFER_LOCK_SHARE		1
@@ -150,8 +154,12 @@ extern void LockBufferForCleanup(Buffer buffer);
 extern void AbortBufferIO(void);
 
 extern void BufmgrCommit(void);
-extern int	BufferSync(int percent, int maxpages);
+extern void	BufferSync(void);
+extern void BgBufferSync(void);
 
 extern void InitLocalBuffer(void);
+
+/* in freelist.c */
+extern void StrategyHintVacuum(bool vacuum_active);
 
 #endif

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.306 2005/03/02 19:58:54 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.307 2005/03/04 20:21:05 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -1379,9 +1379,7 @@ SET ENABLE_SEQSCAN TO OFF;
          Specifies the delay between activity rounds for the
          background writer.  In each round the writer issues writes
          for some number of dirty buffers (controllable by the
-         following parameters).  The selected buffers will always be
-         the least recently used ones among the currently dirty
-         buffers.  It then sleeps for <varname>bgwriter_delay</>
+         following parameters).  It then sleeps for <varname>bgwriter_delay</>
          milliseconds, and repeats.  The default value is 200. Note
          that on many systems, the effective resolution of sleep
          delays is 10 milliseconds; setting <varname>bgwriter_delay</>
@@ -1393,32 +1391,77 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
       </varlistentry>
 
-      <varlistentry id="guc-bgwriter-percent" xreflabel="bgwriter_percent">
-       <term><varname>bgwriter_percent</varname> (<type>integer</type>)</term>
+      <varlistentry id="guc-bgwriter-lru-percent" xreflabel="bgwriter_lru_percent">
+       <term><varname>bgwriter_lru_percent</varname> (<type>floating point</type>)</term>
        <indexterm>
-        <primary><varname>bgwriter_percent</> configuration parameter</primary>
+        <primary><varname>bgwriter_lru_percent</> configuration parameter</primary>
        </indexterm>
        <listitem>
         <para>
-         In each round, no more than this percentage of the currently
-         dirty buffers will be written (rounding up any fraction to
-         the next whole number of buffers).  The default value is
-         1. This option can only be set at server start or in the
+         To reduce the probability that server processes will need to issue
+         their own writes, the background writer tries to write buffers that
+         are likely to be recycled soon.  In each round, it examines up to
+         <varname>bgwriter_lru_percent</> of the buffers that are nearest to
+         being recycled, and writes any that are dirty.
+         The default value is 1.0 (this is a percentage of the total number
+         of shared buffers).
+         This option can only be set at server start or in the
          <filename>postgresql.conf</filename> file.
         </para>
        </listitem>
       </varlistentry>
 
-      <varlistentry id="guc-bgwriter-maxpages" xreflabel="bgwriter_maxpages">
-       <term><varname>bgwriter_maxpages</varname> (<type>integer</type>)</term>
+      <varlistentry id="guc-bgwriter-lru-maxpages" xreflabel="bgwriter_lru_maxpages">
+       <term><varname>bgwriter_lru_maxpages</varname> (<type>integer</type>)</term>
        <indexterm>
-        <primary><varname>bgwriter_maxpages</> configuration parameter</primary>
+        <primary><varname>bgwriter_lru_maxpages</> configuration parameter</primary>
        </indexterm>
        <listitem>
         <para>
-         In each round, no more than this many dirty buffers will be
-         written. The default value is 100. This option can only be
-         set at server start or in the
+         In each round, no more than this many buffers will be written
+         as a result of scanning soon-to-be-recycled buffers.
+         The default value is 5.
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> file.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-bgwriter-all-percent" xreflabel="bgwriter_all_percent">
+       <term><varname>bgwriter_all_percent</varname> (<type>floating point</type>)</term>
+       <indexterm>
+        <primary><varname>bgwriter_all_percent</> configuration parameter</primary>
+       </indexterm>
+       <listitem>
+        <para>
+         To reduce the amount of work that will be needed at checkpoint time,
+         the background writer also does a circular scan through the entire
+         buffer pool, writing buffers that are found to be dirty.
+         In each round, it examines up to
+         <varname>bgwriter_all_percent</> of the buffers for this purpose.
+         The default value is 0.333 (this is a percentage of the total number
+         of shared buffers).  With the default <varname>bgwriter_delay</>
+         setting, this will allow the entire shared buffer pool to be scanned
+         about once per minute.
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> file.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-bgwriter-all-maxpages" xreflabel="bgwriter_all_maxpages">
+       <term><varname>bgwriter_all_maxpages</varname> (<type>integer</type>)</term>
+       <indexterm>
+        <primary><varname>bgwriter_all_maxpages</> configuration parameter</primary>
+       </indexterm>
+       <listitem>
+        <para>
+         In each round, no more than this many buffers will be written
+         as a result of the scan of the entire buffer pool.  (If this
+         limit is reached, the scan stops, and resumes at the next buffer
+         during the next round.)
+         The default value is 5.
+         This option can only be set at server start or in the
          <filename>postgresql.conf</filename> file.
         </para>
        </listitem>
@@ -1426,13 +1469,19 @@ SET ENABLE_SEQSCAN TO OFF;
      </variablelist>
 
      <para>
-      Smaller values of <varname>bgwriter_percent</varname> and
-      <varname>bgwriter_maxpages</varname> reduce the extra I/O load
+      Smaller values of <varname>bgwriter_all_percent</varname> and
+      <varname>bgwriter_all_maxpages</varname> reduce the extra I/O load
       caused by the background writer, but leave more work to be done
       at checkpoint time.  To reduce load spikes at checkpoints,
-      increase the values.  To disable background writing entirely,
-      set <varname>bgwriter_percent</varname> and/or
-      <varname>bgwriter_maxpages</varname> to zero.
+      increase these two values.
+      Similarly, smaller values of <varname>bgwriter_lru_percent</varname> and
+      <varname>bgwriter_lru_maxpages</varname> reduce the extra I/O load
+      caused by the background writer, but make it more likely that server
+      processes will have to issue writes for themselves, delaying interactive
+      queries.
+      To disable background writing entirely,
+      set both <varname>maxpages</varname> values and/or both
+      <varname>percent</varname> values to zero.
      </para>
     </sect3>
 
@@ -3862,20 +3911,6 @@ plruby.bar = true        # generates error, unknown class name
         <varname>debug_assertions</varname> defaults to on if
         <productname>PostgreSQL</productname> has been built with
         assertions enabled.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-debug-shared-buffers" xreflabel="debug_shared_buffers">
-      <term><varname>debug_shared_buffers</varname> (<type>integer</type>)</term>
-      <indexterm>
-       <primary><varname>debug_shared_buffers</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Number of seconds between ARC reports.
-        If set greater than zero, emit ARC statistics to the log every so many
-        seconds.  Zero (the default) disables reporting.
        </para>
       </listitem>
      </varlistentry>

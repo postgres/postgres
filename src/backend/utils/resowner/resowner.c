@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.9 2004/12/31 22:02:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.10 2005/03/04 20:21:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,12 +200,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		 * that would indicate failure to clean up the executor correctly ---
 		 * so issue warnings.  In the abort case, just clean up quietly.
 		 *
-		 * XXX this is fairly inefficient due to multiple BufMgrLock
-		 * grabs if there are lots of buffers to be released, but we
-		 * don't expect many (indeed none in the success case) so it's
-		 * probably not worth optimizing.
-		 *
-		 * We are however careful to release back-to-front, so as to
+		 * We are careful to do the releasing back-to-front, so as to
 		 * avoid O(N^2) behavior in ResourceOwnerForgetBuffer().
 		 */
 		while (owner->nbuffers > 0)

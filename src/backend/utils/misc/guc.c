@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.253 2005/03/01 20:23:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.254 2005/03/04 20:21:06 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -77,7 +77,6 @@ extern bool Log_disconnections;
 extern DLLIMPORT bool check_function_bodies;
 extern int	CommitDelay;
 extern int	CommitSiblings;
-extern int	DebugSharedBuffers;
 extern char *default_tablespace;
 
 static const char *assign_log_destination(const char *value,
@@ -1231,15 +1230,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"debug_shared_buffers", PGC_POSTMASTER, STATS_MONITORING,
-			gettext_noop("Interval to report shared buffer status in seconds"),
-			NULL
-		},
-		&DebugSharedBuffers,
-		0, 0, 600, NULL, NULL
-	},
-
-	{
 		{"bgwriter_delay", PGC_SIGHUP, RESOURCES,
 			gettext_noop("Background writer sleep time between rounds in milliseconds"),
 			NULL
@@ -1249,21 +1239,21 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"bgwriter_percent", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer percentage of dirty buffers to flush per round"),
+		{"bgwriter_lru_maxpages", PGC_SIGHUP, RESOURCES,
+			gettext_noop("Background writer maximum number of all pages to flush per round"),
 			NULL
 		},
-		&BgWriterPercent,
-		1, 0, 100, NULL, NULL
+		&bgwriter_lru_maxpages,
+		5, 0, 1000, NULL, NULL
 	},
 
 	{
-		{"bgwriter_maxpages", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer maximum number of pages to flush per round"),
+		{"bgwriter_all_maxpages", PGC_SIGHUP, RESOURCES,
+			gettext_noop("Background writer maximum number of LRU pages to flush per round"),
 			NULL
 		},
-		&BgWriterMaxPages,
-		100, 0, 1000, NULL, NULL
+		&bgwriter_all_maxpages,
+		5, 0, 1000, NULL, NULL
 	},
 
 	{
@@ -1392,6 +1382,24 @@ static struct config_real ConfigureNamesReal[] =
 		&Geqo_selection_bias,
 		DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
 		MAX_GEQO_SELECTION_BIAS, NULL, NULL
+	},
+
+	{
+		{"bgwriter_lru_percent", PGC_SIGHUP, RESOURCES,
+			gettext_noop("Background writer percentage of LRU buffers to flush per round"),
+			NULL
+		},
+		&bgwriter_lru_percent,
+		1.0, 0.0, 100.0, NULL, NULL
+	},
+
+	{
+		{"bgwriter_all_percent", PGC_SIGHUP, RESOURCES,
+			gettext_noop("Background writer percentage of all buffers to flush per round"),
+			NULL
+		},
+		&bgwriter_all_percent,
+		0.333, 0.0, 100.0, NULL, NULL
 	},
 
 	{

@@ -99,8 +99,10 @@
 # - Background writer -
 
 #bgwriter_delay = 200		# 10-10000 milliseconds between rounds
-#bgwriter_percent = 1		# 0-100% of dirty buffers in each round
-#bgwriter_maxpages = 100	# 0-1000 buffers max per round
+#bgwriter_lru_percent = 1.0	# 0-100% of LRU buffers scanned in each round
+#bgwriter_lru_maxpages = 5	# 0-1000 buffers max written per round
+#bgwriter_all_percent = 0.333	# 0-100% of all buffers scanned in each round
+#bgwriter_all_maxpages = 5	# 0-1000 buffers max written per round
 
 
 #---------------------------------------------------------------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.244 2005/01/10 20:02:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.245 2005/03/04 20:21:05 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1060,7 +1060,6 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 		/* Send out shared cache inval if necessary */
 		if (!IsBootstrapProcessingMode())
 			CacheInvalidateHeapTuple(pg_class, tuple);
-		BufferSync(-1, -1);
 	}
 	else if (dirty)
 	{

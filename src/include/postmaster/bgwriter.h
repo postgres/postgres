@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/postmaster/bgwriter.h,v 1.4 2004/12/31 22:03:39 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/bgwriter.h,v 1.5 2005/03/04 20:21:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,6 @@
 
 /* GUC options */
 extern int	BgWriterDelay;
-extern int	BgWriterPercent;
-extern int	BgWriterMaxPages;
 extern int	CheckPointTimeout;
 extern int	CheckPointWarning;
 

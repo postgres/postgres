@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.151 2005/02/26 18:43:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.152 2005/03/04 20:21:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,7 +339,7 @@ createdb(const CreatedbStmt *stmt)
 	 * up-to-date for the copy.  (We really only need to flush buffers for
 	 * the source database, but bufmgr.c provides no API for that.)
 	 */
-	BufferSync(-1, -1);
+	BufferSync();
 
 	/*
 	 * Close virtual file descriptors so the kernel has more available for
@@ -1201,7 +1201,7 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		 * up-to-date for the copy.  (We really only need to flush buffers for
 		 * the source database, but bufmgr.c provides no API for that.)
 		 */
-		BufferSync(-1, -1);
+		BufferSync();
 
 #ifndef WIN32
 

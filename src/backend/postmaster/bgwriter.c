@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.14 2005/02/19 23:16:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.15 2005/03/04 20:21:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,9 +116,6 @@ static BgWriterShmemStruct *BgWriterShmem;
  * GUC parameters
  */
 int			BgWriterDelay = 200;
-int			BgWriterPercent = 1;
-int			BgWriterMaxPages = 100;
-
 int			CheckPointTimeout = 300;
 int			CheckPointWarning = 30;
 
@@ -274,7 +271,6 @@ BackgroundWriterMain(void)
 		bool		force_checkpoint = false;
 		time_t		now;
 		int			elapsed_secs;
-		int			n;
 		long		udelay;
 
 		/*
@@ -365,16 +361,13 @@ BackgroundWriterMain(void)
 			 * checkpoints happen at a predictable spacing.
 			 */
 			last_checkpoint_time = now;
-
-			/* Nap for configured time before rechecking */
-			n = 1;
 		}
 		else
-			n = BufferSync(BgWriterPercent, BgWriterMaxPages);
+			BgBufferSync();
 
 		/*
-		 * Nap for the configured time or sleep for 10 seconds if there
-		 * was nothing to do at all.
+		 * Nap for the configured time, or sleep for 10 seconds if there
+		 * is no bgwriter activity configured.
 		 *
 		 * On some platforms, signals won't interrupt the sleep.  To ensure
 		 * we respond reasonably promptly when someone signals us, break
@@ -383,7 +376,11 @@ BackgroundWriterMain(void)
 		 *
 		 * We absorb pending requests after each short sleep.
 		 */
-		udelay = ((n > 0) ? BgWriterDelay : 10000) * 1000L;
+		if ((bgwriter_all_percent > 0.0 && bgwriter_all_maxpages > 0) ||
+			(bgwriter_lru_percent > 0.0 && bgwriter_lru_maxpages > 0))
+			udelay = BgWriterDelay * 1000L;
+		else
+			udelay = 10000000L;
 		while (udelay > 1000000L)
 		{
 			if (got_SIGHUP || checkpoint_requested || shutdown_requested)
