@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.213 2004/12/14 00:36:12 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.214 2004/12/14 10:24:27 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1509,7 +1509,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>3.1 (sarge), kernel 2.4</entry>
        </row>
        <row>
-        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>PA-RISC</></entry>
         <entry>8.0.0</entry>
         <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2004-12-07</entry>
@@ -1720,9 +1720,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">UnixWare</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>7.4</entry>
-        <entry>Larry Rosenman (<email>ler@lerctr.org</email>), 2003-11-03</entry>
-        <entry>7.1.3; join test may fail, see also <filename>doc/FAQ_SCO</filename></entry>
+        <entry>8.0.0</entry>
+        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2004-12-14</entry>
+        <entry><command>cc</command>, 7.1.4; see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Windows</></entry>
