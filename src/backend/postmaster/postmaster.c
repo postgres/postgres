@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.3.2.1 1996/08/26 20:35:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.3.2.2 1996/10/02 21:36:32 scrappy Exp $
  *
  * NOTES
  *
@@ -1004,7 +1004,7 @@ DoExec(StartupInfo *packet, int portFd)
     (void) strncpy(argbuf, packet->options, ARGV_SIZE);
     argbuf[ARGV_SIZE] = '\0';
     (void) strncat(argbuf, ExtraOptions, ARGV_SIZE);
-    argbuf[(2 * ARGV_SIZE) + 1] = '\0';
+    argbuf[(2 * ARGV_SIZE)] = '\0';
     split_opts(av, &ac, argbuf);
     
     if (packet->database[0])
