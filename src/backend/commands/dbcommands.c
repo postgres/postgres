@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.75 2001/06/12 05:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.76 2001/07/02 20:50:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,8 @@
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
-#include "storage/sinval.h"		/* for DatabaseHasActiveBackends */
+#include "storage/freespace.h"
+#include "storage/sinval.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
@@ -371,6 +372,11 @@ dropdb(const char *dbname)
 	 * write out a dirty buffer to the dead database later...
 	 */
 	DropBuffers(db_id);
+
+	/*
+	 * Also, clean out any entries in the shared free space map.
+	 */
+	FreeSpaceMapForgetDatabase(db_id);
 
 	/*
 	 * Remove the database's subdirectory and everything in it.

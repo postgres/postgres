@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.200 2001/06/29 20:14:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.201 2001/07/02 20:50:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
+#include "storage/freespace.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
@@ -146,6 +147,8 @@ static void vacuum_index(VacPageList vacpagelist, Relation indrel,
 						 double num_tuples, int keep_tuples);
 static void scan_index(Relation indrel, double num_tuples);
 static VacPage tid_reaped(ItemPointer itemptr, VacPageList vacpagelist);
+static void vac_update_fsm(Relation onerel, VacPageList fraged_pages,
+						   BlockNumber rel_pages);
 static VacPage copy_vac_page(VacPage vacpage);
 static void vpage_insert(VacPageList vacpagelist, VacPage vpnew);
 static void get_indices(Relation relation, int *nindices, Relation **Irel);
@@ -578,6 +581,9 @@ vacuum_rel(Oid relid)
 	if (reindex)
 		activate_indexes_of_a_table(relid, true);
 #endif	 /* NOT_USED */
+
+	/* update shared free space map with final free space info */
+	vac_update_fsm(onerel, &fraged_pages, vacrelstats->rel_pages);
 
 	/* all done with this class, but hold lock until commit */
 	heap_close(onerel, NoLock);
@@ -1157,6 +1163,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 * useful as move targets, since we only want to move down.  Note
 		 * that since we stop the outer loop at last_move_dest_block, pages
 		 * removed here cannot have had anything moved onto them already.
+		 *
+		 * Also note that we don't change the stored fraged_pages list,
+		 * only our local variable num_fraged_pages; so the forgotten pages
+		 * are still available to be loaded into the free space map later.
 		 */
 		while (num_fraged_pages > 0 &&
 			   fraged_pages->pagedesc[num_fraged_pages-1]->blkno >= blkno)
@@ -2080,6 +2090,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	if (blkno < nblocks)
 	{
 		blkno = smgrtruncate(DEFAULT_SMGR, onerel, blkno);
+		onerel->rd_nblocks = blkno;	/* update relcache immediately */
+		onerel->rd_targblock = InvalidBlockNumber;
 		vacrelstats->rel_pages = blkno; /* set new number of blocks */
 	}
 
@@ -2145,6 +2157,8 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 			 RelationGetRelationName(onerel),
 			 vacrelstats->rel_pages, relblocks);
 		relblocks = smgrtruncate(DEFAULT_SMGR, onerel, relblocks);
+		onerel->rd_nblocks = relblocks;	/* update relcache immediately */
+		onerel->rd_targblock = InvalidBlockNumber;
 		vacrelstats->rel_pages = relblocks;		/* set new number of
 												 * blocks */
 	}
@@ -2412,6 +2426,45 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	WriteBuffer(buffer);
 
 	heap_close(rd, RowExclusiveLock);
+}
+
+/*
+ * Update the shared Free Space Map with the info we now have about
+ * free space in the relation, discarding any old info the map may have.
+ */
+static void
+vac_update_fsm(Relation onerel, VacPageList fraged_pages,
+			   BlockNumber rel_pages)
+{
+	int			nPages = fraged_pages->num_pages;
+	int			i;
+	BlockNumber *pages;
+	Size	   *spaceAvail;
+
+	/* +1 to avoid palloc(0) */
+	pages = (BlockNumber *) palloc((nPages + 1) * sizeof(BlockNumber));
+	spaceAvail = (Size *) palloc((nPages + 1) * sizeof(Size));
+
+	for (i = 0; i < nPages; i++)
+	{
+		pages[i] = fraged_pages->pagedesc[i]->blkno;
+		spaceAvail[i] = fraged_pages->pagedesc[i]->free;
+		/*
+		 * fraged_pages may contain entries for pages that we later decided
+		 * to truncate from the relation; don't enter them into the map!
+		 */
+		if (pages[i] >= rel_pages)
+		{
+			nPages = i;
+			break;
+		}
+	}
+
+	MultiRecordFreeSpace(&onerel->rd_node,
+						 0, MaxBlockNumber,
+						 nPages, pages, spaceAvail);
+	pfree(pages);
+	pfree(spaceAvail);
 }
 
 /* Copy a VacPage structure */
