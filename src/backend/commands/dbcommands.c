@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.112 2003/04/04 20:42:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.113 2003/05/04 04:42:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,6 +174,11 @@ createdb(const CreatedbStmt *stmt)
 	/* don't call this in a transaction block */
 	PreventTransactionChain((void *) stmt, "CREATE DATABASE");
 
+#ifdef WIN32
+	if (dbpath != NULL)	/* platform has no symlinks */
+		elog(ERROR, "CREATE DATABASE: may not use an alternate location on this platform");
+#endif
+
 	/*
 	 * Check for db name conflict.	There is a race condition here, since
 	 * another backend could create the same DB name before we commit.
@@ -296,7 +301,9 @@ createdb(const CreatedbStmt *stmt)
 	/* Make the symlink, if needed */
 	if (alt_loc)
 	{
+#ifndef WIN32	/* already throws error on WIN32 above */
 		if (symlink(alt_loc, nominal_loc) != 0)
+#endif
 			elog(ERROR, "CREATE DATABASE: could not link '%s' to '%s': %m",
 				 nominal_loc, alt_loc);
 	}
