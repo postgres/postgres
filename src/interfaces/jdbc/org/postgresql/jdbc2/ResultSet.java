@@ -198,7 +198,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     if (s != null)
       {
 	int c = s.charAt(0);
-	return ((c == 't') || (c == 'T'));
+	return ((c == 't') || (c == 'T') || (c == '1'));
       }
     return false;		// SQL NULL
   }
