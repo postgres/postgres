@@ -1,7 +1,7 @@
 
                   Perguntas Frequentes (FAQ) sobre PostgreSQL
                                        
-   Última atualização: Sex Jun 4 00:09:16 EDT 2004
+   Última atualização: Ter Ago 31 23:28:02 EDT 2004
    
    Mantenedor atual: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -61,6 +61,7 @@
    3.9) O que está no diretório pgsql_tmp?
    3.10) O que eu preciso fazer para exportar e importar durante a
    atualização de versões do PostgreSQL?
+   3.11) Que tipo de hardware eu devo usar?
    
                            Perguntas Operacionais
                                       
@@ -201,27 +202,10 @@
    
     1.4) Quais portabilidades não-Unix estão disponíveis?
     
-   Cliente
-   
-   É possível compilar a biblioteca libpq, o psql e outras interfaces e
-   aplicações clientes para executar em plataformas MS Windows. Neste
-   caso, o cliente está sendo executado no MS Windows e comunica via
-   TCP/IP com um servidor executando em uma das plataformas Unix
-   suportadas. O arquivo win32.mak está presente na distribuição para que
-   seja possível compilar a biblioteca libpq e o psql para Win32. O
-   PostgreSQL também se comunica com clientes ODBC.
-   
-   Servidor
-   
-   O Servidor de banco de dados pode ser executado em Windows NT e Win2k
-   utilizando o Cygwin, uma biblioteca de portabilidade Unix/NT da
-   Cygnus. Veja pgsql/doc/FAQ_MSWIN na distribuição ou a FAQ do MS
-   Windows em http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN.
-   
-   Um porte nativo para MS Win NT/2000/XP está sendo desenvolvido. Para
-   maiores detalhes sobre o status do PostgreSQL no Windows veja
-   http://techdocs.postgresql.org/guides/Windows e
-   http://momjian.postgresql.org/main/writings/pgsql/win32.html.
+   Iniciando com a versão 8.0, o PostgreSQL agora pode ser executado
+   nativamente nos sistemas operacionais Microsoft Windows baseados no NT
+   tais como Win2000, WinXP e Win2003. Um instalador está disponível em
+   http://pgfoundry.org/projects/pginstaller.
    
    Há também um porte para Novell Netware 6 em http://forge.novell.com.
    
@@ -276,7 +260,7 @@
    
     1.7) Qual é a última versão?
     
-   A última versão do PostgreSQL é a versão 7.4.2.
+   A última versão do PostgreSQL é a versão 7.4.5.
    
    Nós planejamos lançar versões novas a cada seis ou oito meses.
    
@@ -541,10 +525,10 @@
     3.5) Como eu controlo conexões de outras máquinas?
     
    Por padrão, o PostgreSQL só permite conexões da máquina local
-   utilizando soquetes de domínio Unix. Outras máquinas não poderão
-   conectar-se a menos que você habilite tcpip_sockets no
-   postgresql.conf, e habilite a autenticação por máquina modificando o
-   arquivo $PGDATA/pg_hba.conf. Isso irá permitir conexões TCP/IP.
+   utilizando soquetes de domínio Unix ou conexões TCP/IP. Outras
+   máquinas não poderão conectar-se a menos que você modifique
+   listen_addresses no postgresql.conf, e habilite a autenticação por
+   máquina modificando o arquivo $PGDATA/pg_hba.conf.
    
     3.6) Como eu ajusto o servidor de banco de dados para obter uma performance
     melhor?
@@ -673,6 +657,17 @@
    Em versões onde o formato em disco não muda, o script pg_upgrade pode
    ser utilizado para atualizar sem precisar de um dump/restore. As notas
    da versão mencionam se pg_upgrade está disponível para a versão.
+   
+    3.11) Que tipo de hardware eu devo usar?
+    
+   Por causa do hardware de PC ser em sua maioria compatível, pessoas
+   tendem a acreditar que todos os hardwares de PC são de mesma
+   qualidade. Não é verdade. ECC RAM, SCSI e placas mãe de qualidade são
+   mais confiáveis e têm uma melhor performance do que hardwares mais
+   baratos. O PostgreSQL executará em quase todo hardware, mas se a
+   confiabilidade e a performance forem importantes é prudente pesquisar
+   sobre as opções de hardware. Nossas listas de discussão podem ser
+   usadas para discutir opções de hardware e dilemas.
      _________________________________________________________________
    
                            Perguntas Operacionais
@@ -772,26 +767,26 @@ Número máximo de índices em uma tabela?        ilimitado
    descrição é de vinte bytes. O arquivo terá 2.8 MB. O tamanho do
    arquivo do banco de dados PostgreSQL que contém esses dados pode ser
    estimado em 6.4 MB:
-    36 bytes: cada cabeçalho de registro (aproximadamente)
+    32 bytes: cada cabeçalho de registro (aproximadamente)
     24 bytes: um campo int e um campo texto
    + 4 bytes: ponteiro na página para a tupla
    -------------------------------------------
-    64 bytes por registro
+    60 bytes por registro
 
    O tamanho de uma página de dados no PostgreSQL é 8192 bytes (8 KB), então:
 
    8192 bytes por página
-   ------------------------   =  128 registros por página do banco de dados (ar
+   ------------------------   =  136 registros por página do banco de dados (ar
 redondado para baixo)
-     64 bytes por registro
+     60 bytes por registro
 
    100000 registros de dados
-   ----------------------------  =  782 páginas do banco de dados (arredondado
+   ----------------------------  =  735 páginas do banco de dados (arredondado
 para cima)
       128 registros por página
 
-782 páginas do banco de dados * 8192 bytes por página  =  6,406,144 bytes (6.4
-MB)
+735 páginas do banco de dados * 8192 bytes por página  =  6,021,120 bytes (6 MB
+)
 
    Índices não requerem muito espaço, mas contém dados que foram
    indexados, então eles podem ocupar algum espaço.
@@ -859,6 +854,11 @@ MB)
        funcionais, que são descritos na seção 4.12.
      * A localidade padrão C deve ser utilizada durante o initdb.
        
+   Em versões anteriores a 8.0, índices frequentemente não podiam ser
+   usados a menos que os tipos de dados correspodessem aos tipos da
+   coluna do índice. Isto é particularmente verdadeiro para índices de
+   coluna int2, int8 e numeric.
+   
     4.9) Como eu vejo como o otimizador de consulta está avaliando a minha
     consulta?
     

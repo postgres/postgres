@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Perguntas Frequentes (FAQ) sobre PostgreSQL</H1>
 
-    <P>&Uacute;ltima atualiza&ccedil;&atilde;o: Sex Jun  4 00:09:16 EDT 2004</P>
+    <P>&Uacute;ltima atualiza&ccedil;&atilde;o: Ter Ago 31 23:28:02 EDT 2004</P>
 
     <P>Mantenedor atual: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -65,6 +65,7 @@
      <A href="#3.8">3.8</A>) Por que eu recebo <I>"Sorry, too many clients"</I> quando eu tento conectar?<BR>
      <A href="#3.9">3.9</A>) O que est&aacute; no diret&oacute;rio <I>pgsql_tmp</I>?<BR>
      <A href="#3.10">3.10</A>) O que eu preciso fazer para exportar e importar durante a atualiza&ccedil;&atilde;o de vers&otilde;es do PostgreSQL?<BR>
+     <A href="#3.11">3.11</A>) Que tipo de hardware eu devo usar?<BR>
 
 
      <H2 align="center">Perguntas Operacionais</H2>
@@ -199,15 +200,12 @@
 
     <H4><A name="1.4">1.4</A>) Quais portabilidades n&atilde;o-Unix est&atilde;o dispon&iacute;veis?</H4>
 
-    <P><STRONG>Cliente</STRONG></P>
-
-    <P>&Eacute; poss&iacute;vel compilar a biblioteca <I>libpq</I>, o psql e outras interfaces e aplica&ccedil;&otilde;es clientes para executar em plataformas MS Windows. Neste caso, o cliente est&aacute; sendo executado no MS Windows e comunica via TCP/IP com um servidor executando em uma das plataformas Unix suportadas. O arquivo <I>win32.mak</I> est&aacute; presente na distribui&ccedil;&atilde;o para que seja poss&iacute;vel compilar a biblioteca <I>libpq</I> e o <I>psql</I> para Win32. O PostgreSQL tamb&eacute;m se comunica com clientes <SMALL>ODBC</SMALL>.</P>
-
-    <P><STRONG>Servidor</STRONG></P>
-
-    <P>O Servidor de banco de dados pode ser executado em Windows NT e Win2k utilizando o Cygwin, uma biblioteca de portabilidade Unix/NT da Cygnus. Veja <I>pgsql/doc/FAQ_MSWIN</I> na distribui&ccedil;&atilde;o ou a FAQ do MS Windows em <A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>.</P>
-
-    <P>Um porte nativo para MS Win NT/2000/XP est&aacute; sendo desenvolvido. Para maiores detalhes sobre o status do PostgreSQL no Windows veja <A href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</A> e <A href="http://momjian.postgresql.org/main/writings/pgsql/win32.html">http://momjian.postgresql.org/main/writings/pgsql/win32.html</A>.</P>
+    <P>Iniciando com a vers&atilde;o 8.0, o PostgreSQL agora pode ser
+    executado nativamente nos sistemas operacionais Microsoft Windows
+    baseados no NT tais como Win2000, WinXP e Win2003. Um instalador
+    est&aacute; dispon&iacute;vel em <a href=
+	    "http://pgfoundry.org/projects/pginstaller">
+	    http://pgfoundry.org/projects/pginstaller</a>.
 
     <P>H&aacute; tamb&eacute;m um porte para Novell Netware 6 em
     <A href="http://forge.novell.com">http://forge.novell.com</A>.</P>
@@ -264,7 +262,7 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
     <H4><A name="1.7">1.7</A>) Qual &eacute; a &uacute;ltima vers&atilde;o?</H4>
 
-    <P>A &uacute;ltima vers&atilde;o do PostgreSQL &eacute; a vers&atilde;o 7.4.2.</P>
+    <P>A &uacute;ltima vers&atilde;o do PostgreSQL &eacute; a vers&atilde;o 7.4.5.</P>
 
     <P>N&oacute;s planejamos lan&ccedil;ar vers&otilde;es novas a cada seis ou oito meses.</P>
 
@@ -466,7 +464,7 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
     <H4><A name="3.5">3.5</A>) Como eu controlo conex&otilde;es de outras m&aacute;quinas?</H4>
 
-    <P>Por padr&atilde;o, o PostgreSQL s&oacute; permite conex&otilde;es da m&aacute;quina local utilizando soquetes de dom&iacute;nio Unix. Outras m&aacute;quinas n&atilde;o poder&atilde;o conectar-se a menos que voc&ecirc; habilite tcpip_sockets no postgresql.conf, <B>e</B> habilite a autentica&ccedil;&atilde;o por m&aacute;quina modificando o arquivo <I>$PGDATA/pg_hba.conf</I>. Isso ir&aacute; permitir conex&otilde;es TCP/IP.</P>
+    <P>Por padr&atilde;o, o PostgreSQL s&oacute; permite conex&otilde;es da m&aacute;quina local utilizando soquetes de dom&iacute;nio Unix ou conex&otilde;es TCP/IP. Outras m&aacute;quinas n&atilde;o poder&atilde;o conectar-se a menos que voc&ecirc; modifique listen_addresses no postgresql.conf, <B>e</B> habilite a autentica&ccedil;&atilde;o por m&aacute;quina modificando o arquivo <I>$PGDATA/pg_hba.conf</I>.</P>
 
     <H4><A name="3.6">3.6</A>) Como eu ajusto o servidor de banco de dados para obter uma performance melhor?</H4>
 
@@ -521,6 +519,10 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
     <P>O time do PostgreSQL faz somente pequenas mudan&ccedil;as entre vers&otilde;es menores, ent&atilde;o atualizar da vers&atilde;o 7.2 para 7.2.1 n&atilde;o requer uma exporta&ccedil;&atilde;o e uma importa&ccedil;&atilde;o. Contudo, vers&otilde;es maiores (i.e. da 7.2 para 7.3) geralmente muda-se o formato interno das tabelas de sistema e dos arquivo de dados. Essas mudan&ccedil;as geralmente s&atilde;o complexas, ent&atilde;o n&oacute;s n&atilde;o mantemos compatibilidade para os arquivos de dados. Uma exporta&ccedil;&atilde;o em um formato gen&eacute;rico que pode ser importada utilizando o novo formato interno.</P>
 
     <P>Em vers&otilde;es onde o formato em disco n&atilde;o muda, o script <I>pg_upgrade</I> pode ser utilizado para atualizar sem precisar de um dump/restore. As notas da vers&atilde;o mencionam se <I>pg_upgrade</I> est&aacute; dispon&iacute;vel para a vers&atilde;o.</P>
+
+    <H4><A name="3.11">3.11</A>) Que tipo de hardware eu devo usar?</H4>
+
+    <P>Por causa do hardware de PC ser em sua maioria compat&iacute;vel, pessoas tendem a acreditar que todos os hardwares de PC são de mesma qualidade. Não &eacute; verdade. ECC RAM, SCSI e placas m&atilde;e de qualidade s&atilde;o mais confi&aacute;veis e t&ecirc;m uma melhor performance do que hardwares mais baratos. O PostgreSQL executar&aacute; em quase todo hardware, mas se a confiabilidade e a performance forem importantes &eacute; prudente pesquisar sobre as op&ccedil;&otilde;es de hardware. Nossas listas de discuss&atilde;o podem ser usadas para discutir op&ccedil;&otilde;es de hardware e dilemas.</P>
 
     <HR>
 
@@ -599,23 +601,23 @@ N&uacute;mero m&aacute;ximo de &iacute;ndices em uma tabela?        ilimitado
 
     <P>Como um exemplo, considere um arquivo com 100.000 linhas contendo um inteiro e uma descri&ccedil;&atilde;o em cada linha. Suponha que o tamanho m&eacute;dio da descri&ccedil;&atilde;o &eacute; de vinte bytes. O arquivo ter&aacute; 2.8 MB. O tamanho do arquivo do banco de dados PostgreSQL que cont&eacute;m esses dados pode ser estimado em 6.4 MB:</P>
 <PRE>
-    36 bytes: cada cabe&ccedil;alho de registro (aproximadamente)
+    32 bytes: cada cabe&ccedil;alho de registro (aproximadamente)
     24 bytes: um campo int e um campo texto
    + 4 bytes: ponteiro na p&aacute;gina para a tupla
    -------------------------------------------
-    64 bytes por registro
+    60 bytes por registro
 
    O tamanho de uma p&aacute;gina de dados no PostgreSQL &eacute; 8192 bytes (8 KB), ent&atilde;o:
 
    8192 bytes por p&aacute;gina
-   ------------------------   =  128 registros por p&aacute;gina do banco de dados (arredondado para baixo)
-     64 bytes por registro
+   ------------------------   =  136 registros por p&aacute;gina do banco de dados (arredondado para baixo)
+     60 bytes por registro
 
    100000 registros de dados
-   ----------------------------  =  782 p&aacute;ginas do banco de dados (arredondado para cima)
+   ----------------------------  =  735 p&aacute;ginas do banco de dados (arredondado para cima)
       128 registros por p&aacute;gina
 
-782 p&aacute;ginas do banco de dados * 8192 bytes por p&aacute;gina  =  6,406,144 bytes (6.4 MB)
+735 p&aacute;ginas do banco de dados * 8192 bytes por p&aacute;gina  =  6,021,120 bytes (6 MB)
 </PRE>
 <P>&Iacute;ndices n&atilde;o requerem muito espa&ccedil;o, mas cont&eacute;m dados que foram indexados, ent&atilde;o eles podem ocupar algum espa&ccedil;o.</P> 
 
@@ -680,6 +682,8 @@ N&uacute;mero m&aacute;ximo de &iacute;ndices em uma tabela?        ilimitado
     <I>initdb</I>.</LI>
     </UL>
     <P>
+
+    <P>Em vers&otilde;es anteriores a 8.0, &iacute;ndices frequentemente n&atilde;o podiam ser usados a menos que os tipos de dados correspodessem aos tipos da coluna do &iacute;ndice. Isto &eacute; particularmente verdadeiro para &iacute;ndices de coluna int2, int8 e numeric.</P>
 
     <H4><A name="4.9">4.9</A>) Como eu vejo como o otimizador de consulta est&aacute; avaliando a minha consulta?</H4>
 
