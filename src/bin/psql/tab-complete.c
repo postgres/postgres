@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.54 2002/08/02 18:15:09 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.55 2002/08/04 05:01:57 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -567,8 +567,10 @@ psql_completion(char *text, int start, int end)
 	 */
 	else if ((strcasecmp(prev3_wd, "GRANT") == 0 || strcasecmp(prev3_wd, "REVOKE") == 0) &&
 			 strcasecmp(prev_wd, "ON") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class WHERE relkind in ('r','i','S','v') AND substr(relname,1,%d)='%s' 
-UNION SELECT nspname FROM pg_catalog.pg_namespace;");
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class "
+							"WHERE relkind in ('r','i','S','v') AND "
+							"substr(relname,1,%d)='%s' UNION "
+							"SELECT nspname FROM pg_catalog.pg_namespace;");
 	/* Complete "GRANT * ON * " with "TO" */
 	else if (strcasecmp(prev4_wd, "GRANT") == 0 && strcasecmp(prev2_wd, "ON") == 0)
 		COMPLETE_WITH_CONST("TO");
