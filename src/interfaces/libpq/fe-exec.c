@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.47 1998/02/26 04:45:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.48 1998/03/15 08:11:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,8 @@ const char *pgresStatus[] = {
 	"PGRES_EMPTY_QUERY",
 	"PGRES_COMMAND_OK",
 	"PGRES_TUPLES_OK",
+	"PGRES_COPY_OUT", 
+	"PGRES_COPY_IN",
 	"PGRES_BAD_RESPONSE",
 	"PGRES_NONFATAL_ERROR",
 	"PGRES_FATAL_ERROR"
