@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: syscat.source,v 1.2 1998/02/28 23:37:10 scrappy Exp $
+-- $Id: syscat.source,v 1.3 1998/03/20 04:12:25 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -65,7 +65,7 @@ SELECT c.relname, a.attname, t.typname
 
 
 --
--- lists all user-defined base types (not includeing array types)
+-- lists all user-defined base types (not including array types)
 --
 SELECT u.usename, t.typname
   FROM pg_type t, pg_user u

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.5 1997/09/08 21:52:22 momjian Exp $
+ * $Id: stringinfo.h,v 1.6 1998/03/20 04:12:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
  *		'data' is the string.
  *		'len' is the current string length (as returned by 'strlen')
  *		'maxlen' is the size in bytes of 'data', i.e. the maximum string
- *				size (includeing the terminating '\0' char) that we can
+ *				size (including the terminating '\0' char) that we can
  *				currently store in 'data' without having to reallocate
  *				more space.
  */
