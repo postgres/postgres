@@ -520,7 +520,7 @@ From pgsql-general-owner+M2136@hub.org Sat Jun  3 23:31:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA28683
 	for <pgman@candle.pha.pa.us>; Sat, 3 Jun 2000 22:31:01 -0400 (EDT)
-Received: from news.tht.net (news.hub.org [216.126.91.242]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id WAA20977 for <pgman@candle.pha.pa.us>; Sat, 3 Jun 2000 22:05:07 -0400 (EDT)
+Received: from news.tht.net (news.hub.org [216.126.91.242]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id WAA20977 for <pgman@candle.pha.pa.us>; Sat, 3 Jun 2000 22:05:07 -0400 (EDT)
 Received: from hub.org (majordom@hub.org [216.126.84.1])
 	by news.tht.net (8.9.3/8.9.3) with ESMTP id VAD35811;
 	Sat, 3 Jun 2000 21:54:36 -0400 (EDT)
@@ -763,4 +763,349 @@ GPG: 1024D/3E1D0C1C: CA12 09E0 E8D5 8870 5839  932A 614D 4C34 3E1D 0C1C
                                     I John 3:17 
 
 
+
+From pgsql-hackers-owner+M9621@postgresql.org Mon Jun  4 21:53:36 2001
+Return-path: <pgsql-hackers-owner+M9621@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f551rac27536
+	for <pgman@candle.pha.pa.us>; Mon, 4 Jun 2001 21:53:36 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f551prE11747;
+	Mon, 4 Jun 2001 21:51:53 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9621@postgresql.org)
+Received: from mail-smtp01.one.net.au (mail-smtp01.one.net.au [61.12.0.171])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f551h5E09330
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Jun 2001 21:43:05 -0400 (EDT)
+	(envelope-from chriskl@familyhealth.com.au)
+Received: (qmail 20200 invoked from network); 5 Jun 2001 01:43:02 -0000
+Received: from unknown (HELO houston.familyhealth.com.au) (203.101.44.22)
+  by mail-smtp01.one.net.au with SMTP; 5 Jun 2001 01:43:02 -0000
+Received: from mariner (MARINER.internal [192.168.0.101])
+	by houston.familyhealth.com.au (8.11.2/8.11.2) with SMTP id f551cke95391
+	for <pgsql-hackers@postgresql.org>; Tue, 5 Jun 2001 09:38:47 +0800 (WST)
+	(envelope-from chriskl@familyhealth.com.au)
+From: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+To: "Hackers" <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Question about inheritance
+Date: Tue, 5 Jun 2001 09:42:38 +0800
+Message-ID: <ECEHIKNFIMMECLEBJFIGEENPCAAA.chriskl@familyhealth.com.au>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4522.1200
+Importance: Normal
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Hi guys,
+
+It's relatively straightforward to allow check constraints to be inherited -
+but is it really possible to ever do the same with primary, unique or even
+foreign constraints?
+
+ie. Say a table has a primary key and I inherit from this table.  Since the
+primary key is an index on the parent table, I could just create another
+index on the child table, on the same column.
+
+However - because we are dealing with two separate indices, it should still
+be possible to insert duplicate values into the parent table and the child
+table shouldn't it?  This means that when a query is run over the parent
+table that includes results from the child table then you will get duplicate
+results in a supposedly primary index.
+
+Similar arguments seem to apply to unique and foreign constraints.  If you
+could use aggregate functions in check constraints - you'd have another
+problem.  And if asserts were ever implemented - same thing...
+
+Am I misunderstanding how the mechanism works, or is this a big, not easily
+solved, problem?
+
+Chris
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M9623@postgresql.org Mon Jun  4 22:17:50 2001
+Return-path: <pgsql-hackers-owner+M9623@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f552Hnc29101
+	for <pgman@candle.pha.pa.us>; Mon, 4 Jun 2001 22:17:49 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f552GUE19667;
+	Mon, 4 Jun 2001 22:16:30 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9623@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f55281E16781
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Jun 2001 22:08:01 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.3/8.11.3) with ESMTP id f5527gR11252;
+	Mon, 4 Jun 2001 22:07:42 -0400 (EDT)
+To: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+cc: "Hackers" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Question about inheritance 
+In-Reply-To: <ECEHIKNFIMMECLEBJFIGEENPCAAA.chriskl@familyhealth.com.au> 
+References: <ECEHIKNFIMMECLEBJFIGEENPCAAA.chriskl@familyhealth.com.au>
+Comments: In-reply-to "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+	message dated "Tue, 05 Jun 2001 09:42:38 +0800"
+Date: Mon, 04 Jun 2001 22:07:42 -0400
+Message-ID: <11249.991706862@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+"Christopher Kings-Lynne" <chriskl@familyhealth.com.au> writes:
+> Am I misunderstanding how the mechanism works, or is this a big, not easily
+> solved, problem?
+
+The latter.  Check the list archives for previous debates about this.
+It's not real clear whether an inherited primary key should be expected
+to be unique across the whole inheritance tree, or only unique per-table
+(IIRC, plausible examples have been advanced for each case).  If we want
+uniqueness across multiple tables, it'll take considerable work to
+create an index mechanism that'd enforce it.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M9664@postgresql.org Tue Jun  5 17:56:17 2001
+Return-path: <pgsql-hackers-owner+M9664@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f55LuHc05888
+	for <pgman@candle.pha.pa.us>; Tue, 5 Jun 2001 17:56:17 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f55LsqE25492;
+	Tue, 5 Jun 2001 17:54:52 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9664@postgresql.org)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f55JA9E52724
+	for <pgsql-hackers@postgresql.org>; Tue, 5 Jun 2001 15:10:09 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner@postgresql.org)
+Received: from iolite.sge.net (iolite.sge.net [152.91.14.26])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5539fE34561
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Jun 2001 23:09:41 -0400 (EDT)
+	(envelope-from chris.bitmead@health.gov.au)
+Received: from cadmium.sge.net (cadmium.sge.net [152.91.9.5])
+	by iolite.sge.net (Postfix) with ESMTP id D8401BF05
+	for <pgsql-hackers@postgresql.org>; Tue,  5 Jun 2001 13:08:58 +1000 (EST)
+Received: from kryptonite2.sge.net (kryptonite2.sge.net [10.1.2.20])
+	by cadmium.sge.net (Postfix) with ESMTP id B0AD3C7902
+	for <pgsql-hackers@postgresql.org>; Tue,  5 Jun 2001 13:08:58 +1000 (EST)
+Received: from thorium2.sge.net (thorium2.sge.net [10.1.2.36])
+	by kryptonite2.sge.net (Postfix) with SMTP id 4945E3CF05
+	for <pgsql-hackers@postgresql.org>; Tue,  5 Jun 2001 13:08:58 +1000 (EST)
+Received: FROM emerald.sge.net BY thorium2.sge.net ; Tue Jun 05 13:00:12 2001 +1000
+Received: from voggite.sge.net (voggite [163.127.224.126])
+	by emerald.sge.net (Postfix) with ESMTP id 66A9AE3818
+	for <pgsql-hackers@postgresql.org>; Tue,  5 Jun 2001 13:09:52 +1000 (EST)
+Received: from mswcbr02.act.health.gov.au (mswcbr02.act.health.gov.au [163.127.224.137])
+	by voggite.sge.net (Postfix) with ESMTP id E863AD0484
+	for <pgsql-hackers@postgresql.org>; Tue,  5 Jun 2001 13:09:52 +1000 (EST)
+Received: from mtascbr01.notes.health.gov.au (unverified) by mswcbr02.act.health.gov.au
+	(Content Technologies SMTPRS 2.0.15) with SMTP id <B0010037764@mswcbr02.act.health.gov.au> for <pgsql-hackers@postgresql.org>;
+	Tue, 05 Jun 2001 13:18:48 +1000
+Received: by mtascbr01.notes.health.gov.au(Lotus SMTP MTA v4.6.6  (890.1 7-16-1999))  id CA256A62.0011CDDB ; Tue, 5 Jun 2001 13:14:28 +1000
+X-Lotus-FromDomain: HEALTH_GOV_AU
+From: chris.bitmead@health.gov.au
+Reply-To: chris.bitmead@health.gov.au
+To: pgsql-hackers@postgresql.org
+Message-ID: <CA256A62.0011CAAF.00@mtascbr01.notes.health.gov.au>
+Date: Tue, 5 Jun 2001 13:08:58 +1000
+Subject: Re: [HACKERS] Question about inheritance
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+
+
+>It's relatively straightforward to allow check constraints to be inherited -
+>but is it really possible to ever do the same with primary, unique or even
+>foreign constraints?
+
+You would either have to check each index in the hierarchy or else have
+a single index across the whole hierarchy and check that. Obviously the
+latter would be generally more useful.
+
+As with all things inheritance, it is usually the right thing, and a good
+default that things be inherited. So ideally, indexes should work across
+whole hierarchies as well as primary, unique and foreign constraints.
+It could be argued that not inheriting is of very limited usefulness.
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M9627@postgresql.org Mon Jun  4 23:58:36 2001
+Return-path: <pgsql-hackers-owner+M9627@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f553wac02588
+	for <pgman@candle.pha.pa.us>; Mon, 4 Jun 2001 23:58:36 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f553vAE48166;
+	Mon, 4 Jun 2001 23:57:10 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9627@postgresql.org)
+Received: from megazone23.bigpanda.com ([216.136.151.41])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f553ksE45147
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Jun 2001 23:46:54 -0400 (EDT)
+	(envelope-from sszabo@megazone23.bigpanda.com)
+Received: from localhost (sszabo@localhost)
+	by megazone23.bigpanda.com (8.11.2/8.11.2) with ESMTP id f553kYc07461;
+	Mon, 4 Jun 2001 20:46:38 -0700 (PDT)
+Date: Mon, 4 Jun 2001 20:46:34 -0700 (PDT)
+From: Stephan Szabo <sszabo@megazone23.bigpanda.com>
+To: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+cc: Hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Question about inheritance
+In-Reply-To: <ECEHIKNFIMMECLEBJFIGEENPCAAA.chriskl@familyhealth.com.au>
+Message-ID: <Pine.BSF.4.21.0106042039040.7433-100000@megazone23.bigpanda.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Tue, 5 Jun 2001, Christopher Kings-Lynne wrote:
+
+> Hi guys,
+> 
+> It's relatively straightforward to allow check constraints to be inherited -
+> but is it really possible to ever do the same with primary, unique or even
+> foreign constraints?
+> 
+> ie. Say a table has a primary key and I inherit from this table.  Since the
+> primary key is an index on the parent table, I could just create another
+> index on the child table, on the same column.
+> 
+> However - because we are dealing with two separate indices, it should still
+> be possible to insert duplicate values into the parent table and the child
+> table shouldn't it?  This means that when a query is run over the parent
+> table that includes results from the child table then you will get duplicate
+> results in a supposedly primary index.
+> 
+> Similar arguments seem to apply to unique and foreign constraints.  If you
+> could use aggregate functions in check constraints - you'd have another
+> problem.  And if asserts were ever implemented - same thing...
+> 
+> Am I misunderstanding how the mechanism works, or is this a big, not easily
+> solved, problem?
+
+It's a big deal.  Actually check constraints have a similar problem if you
+allow inherited constraints to be dropped.  "Why does 'select * from
+base;' give me rows where value<10 since there's a check value>=10 
+on the table?"
+
+As Tom said, the unique constraint thing is still questionable which is
+the more meaningful semantics.  If we ever want to allow foreign key
+constraints to inheritance trees, we need *some* way to guarantees
+uniqueness across the tree even if that isn't through the unique
+constraint.
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M9638@postgresql.org Tue Jun  5 06:30:37 2001
+Return-path: <pgsql-hackers-owner+M9638@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f55AUac21070
+	for <pgman@candle.pha.pa.us>; Tue, 5 Jun 2001 06:30:36 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f55AT9E31492;
+	Tue, 5 Jun 2001 06:29:09 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9638@postgresql.org)
+Received: from ajax2.sovam.com (ajax2.sovam.com [194.67.1.173])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f55AJXE27449
+	for <pgsql-hackers@postgresql.org>; Tue, 5 Jun 2001 06:19:33 -0400 (EDT)
+	(envelope-from dmitry@taurussoft.org)
+Received: from pm14-a43.dial.sovam.com ([195.218.132.43]:1047 "HELO
+	taurussoft.org" ident: "TIMEDOUT2" whoson: "tttt@online.ru" smtp-auth:
+	<none> TLS-CIPHER: <none> TLS-PEER: <none>) by ajax2.sovam.com
+	with SMTP id <S400880AbRFEKTP>; Tue, 5 Jun 2001 14:19:15 +0400
+Received: (qmail 610 invoked from network); 5 Jun 2001 10:16:54 -0000
+Received: from flame-in-night.taurussoft.org (HELO flameinnight) (192.168.107.1)
+  by kitezh.taurussoft.org with SMTP; 5 Jun 2001 10:16:54 -0000
+Message-ID: <008901c0eda8$bc6fb520$016ba8c0@taurussoft.org>
+From: "Dmitry G. Mastrukov" <dmitry@taurussoft.org>
+To: <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Question about inheritance 
+Date: Tue, 5 Jun 2001 14:17:33 +0400
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="koi8-r"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.00.2615.200
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2615.200
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+ > "Christopher Kings-Lynne" <chriskl@familyhealth.com.au> writes:
+ > > Am I misunderstanding how the mechanism works, or is this a big, not
+ easily
+ > > solved, problem?
+ >
+ > The latter.  Check the list archives for previous debates about this.
+ > It's not real clear whether an inherited primary key should be expected
+ > to be unique across the whole inheritance tree, or only unique per-table
+ > (IIRC, plausible examples have been advanced for each case).  If we want
+ > uniqueness across multiple tables, it'll take considerable work to
+ > create an index mechanism that'd enforce it.
+ >
+ IMHO current behaviour of PostgreSQL with inherited PK, FK, UNIQUE is
+simply
+ bug not only from object-oriented but even object-related point of view.
+Now
+ I can violate parent PK by inserting duplicate key in child!
+
+ Inherited tables should honours all constraints from parent. If I change
+ some constraint (seems only FK, but not PK or UNIQUE) I should be able to
+do
+ it in more restrictive manner. For example, two base table is connected via
+ FK. I can change such FK in childs from base1->base2 to child1->child2 (or
+ child3) but not to child1->not_inherited_from_base2. CHECK, DEFAULT, NOT
+ NULL are more free to changes, isn't it?
+
+ IMHO last message in doc/TODO.details/inheritance from Oliver Elphick is a
+ good direction for implementing with exception on more rectrictive child FK
+ constraint (p.3 of message).
+
+ As for me, I was pushed to rollback to scheme with no inheritance at all in
+ my project for now. So I'm very interesting in implementing of right
+ inheritance and I wanted to ask similar question in one of the lists in
+near
+ future.
+
+ Regards,
+ Dmitry
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
 
