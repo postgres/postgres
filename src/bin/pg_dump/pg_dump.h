@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.99 2002/09/04 20:31:35 momjian Exp $
+ * $Id: pg_dump.h,v 1.100 2002/10/09 16:20:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,6 +129,7 @@ typedef struct _tableInfo
 	int		   *atttypmod;		/* type-specific type modifiers */
 	int		   *attstattarget;	/* attribute statistics targets */
 	bool	   *attisdropped;	/* true if attr is dropped; don't dump it */
+	bool	   *attislocal;		/* true if attr has local definition */
 	bool	   *attisserial;	/* true if attr is serial or bigserial */
 
 	/*

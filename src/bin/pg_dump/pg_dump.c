@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.301 2002/09/24 23:14:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.302 2002/10/09 16:20:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2356,6 +2356,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	int			i_attnotnull;
 	int			i_atthasdef;
 	int			i_attisdropped;
+	int			i_attislocal;
 	PGresult   *res;
 	int			ntups;
 	bool		hasdefaults;
@@ -2397,7 +2398,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		if (g_fout->remoteVersion >= 70300)
 		{
 			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, attstattarget, "
-							  "attnotnull, atthasdef, attisdropped, "
+					  "attnotnull, atthasdef, attisdropped, attislocal, "
 			  "pg_catalog.format_type(atttypid,atttypmod) as atttypname "
 							  "from pg_catalog.pg_attribute a "
 							  "where attrelid = '%s'::pg_catalog.oid "
@@ -2413,7 +2414,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			 * been explicitly set or was just a default.
 			 */
 			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, "
-						 "attnotnull, atthasdef, false as attisdropped, "
+						 "attnotnull, atthasdef, false as attisdropped, null as attislocal, "
 						 "format_type(atttypid,atttypmod) as atttypname "
 							  "from pg_attribute a "
 							  "where attrelid = '%s'::oid "
@@ -2425,7 +2426,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		{
 			/* format_type not available before 7.1 */
 			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, "
-						 "attnotnull, atthasdef, false as attisdropped, "
+						 "attnotnull, atthasdef, false as attisdropped, null as attislocal, "
 							  "(select typname from pg_type where oid = atttypid) as atttypname "
 							  "from pg_attribute a "
 							  "where attrelid = '%s'::oid "
@@ -2451,6 +2452,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_attnotnull = PQfnumber(res, "attnotnull");
 		i_atthasdef = PQfnumber(res, "atthasdef");
 		i_attisdropped = PQfnumber(res, "attisdropped");
+		i_attislocal = PQfnumber(res, "attislocal");
 
 		tbinfo->numatts = ntups;
 		tbinfo->attnames = (char **) malloc(ntups * sizeof(char *));
@@ -2458,6 +2460,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		tbinfo->atttypmod = (int *) malloc(ntups * sizeof(int));
 		tbinfo->attstattarget = (int *) malloc(ntups * sizeof(int));
 		tbinfo->attisdropped = (bool *) malloc(ntups * sizeof(bool));
+		tbinfo->attislocal = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->attisserial = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->notnull = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->adef_expr = (char **) malloc(ntups * sizeof(char *));
@@ -2473,6 +2476,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tbinfo->atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
 			tbinfo->attstattarget[j] = atoi(PQgetvalue(res, j, i_attstattarget));
 			tbinfo->attisdropped[j] = (PQgetvalue(res, j, i_attisdropped)[0] == 't');
+			tbinfo->attislocal[j] = (PQgetvalue(res, j, i_attislocal)[0] == 't');
 			tbinfo->attisserial[j] = false;		/* fix below */
 			tbinfo->notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
 			tbinfo->adef_expr[j] = NULL;		/* fix below */

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.70 2002/09/04 20:31:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.71 2002/10/09 16:20:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,16 +284,18 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 		if (numParents == 0)
 			continue;			/* nothing to see here, move along */
 
-		/*
+		/*----------------------------------------------------------------
 		 * For each attr, check the parent info: if no parent has an attr
 		 * with the same name, then it's not inherited. If there *is* an
 		 * attr with the same name, then only dump it if:
 		 *
-		 * - it is NOT NULL and zero parents are NOT NULL OR - it has a
-		 * default value AND the default value does not match all parent
-		 * default values, or no parents specify a default.
+		 * - it is NOT NULL and zero parents are NOT NULL
+		 *   OR 
+		 * - it has a default value AND the default value does not match
+		 *   all parent default values, or no parents specify a default.
 		 *
 		 * See discussion on -hackers around 2-Apr-2001.
+		 *----------------------------------------------------------------
 		 */
 		for (j = 0; j < tblinfo[i].numatts; j++)
 		{
@@ -358,6 +360,12 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				{
 					tblinfo[i].inhAttrs[j] = false;
 					tblinfo[i].inhNotNull[j] = false;
+				}
+
+				/* Clear it if attr has local definition */
+				if (g_fout->remoteVersion >= 70300 && tblinfo[i].attislocal[j])
+				{
+					tblinfo[i].inhAttrs[j] = false;
 				}
 			}
 		}
