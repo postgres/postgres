@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.14 1997/12/26 06:02:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.15 1997/12/27 06:41:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "nodes/relation.h"
 
 #include "parser/parsetree.h"
+#include "parser/parse_clause.h"
 
 #include "utils/elog.h"
 #include "utils/lsyscache.h"
@@ -42,7 +43,7 @@ static Query *subst_rangetable(Query *root, Index index,
 				 RangeTblEntry *new_entry);
 static void fix_parsetree_attnums(Index rt_index, Oid old_relid,
 					  Oid new_relid, Query *parsetree);
-static Append *make_append(List *unionplans, Index rt_index,
+static Append *make_append(List *unionplans, List *unionrts, Index rt_index,
 			List *union_rt_entries, List *tlist);
 
 
@@ -136,73 +137,102 @@ plan_union_queries(Index rt_index,
 				   Query *parse,
 				   UnionFlag flag)
 {
-	List	   *rangetable = parse->rtable;
-	RangeTblEntry *rt_entry = rt_fetch(rt_index, rangetable);
-	List	   *union_relids = NIL;
 	List	   *union_plans = NIL;
-	List	   *union_rt_entries = NIL;
 
 	switch (flag)
 	{
 		case INHERITS_FLAG:
-			union_relids =
-				find_all_inheritors(lconsi(rt_entry->relid,
-										   NIL),
-									NIL);
-			/*
-			 * Remove the flag for this relation, since we're about to handle it
-			 * (do it before recursing!). XXX destructive parse tree change
-			 */
-			switch (flag)
 			{
-				case INHERITS_FLAG:
-					rt_fetch(rt_index, rangetable)->inh = false;
-					break;
-				default:
-					break;
-			}
-		
-			/*
-			 * XXX - can't find any reason to sort union-relids as paul did, so
-			 * we're leaving it out for now (maybe forever) - jeff & lp
-			 *
-			 * [maybe so. btw, jeff & lp did the lisp conversion, according to Paul.
-			 * -- ay 10/94.]
-			 */
-			union_plans = plan_union_query(union_relids, rt_index, rt_entry,
-										   parse, flag, &union_rt_entries);
-		
-			return (make_append(union_plans,
-								rt_index,
-								union_rt_entries,
-								((Plan *) lfirst(union_plans))->targetlist));
-			break;
+				List	   *rangetable = parse->rtable;
+				RangeTblEntry *rt_entry = rt_fetch(rt_index, rangetable);
+				List	   *union_rt_entries = NIL;
+				List	   *union_relids = NIL;
+	
+				union_relids =
+					find_all_inheritors(lconsi(rt_entry->relid,
+											   NIL),
+										NIL);
+				/*
+				 * Remove the flag for this relation, since we're about to handle it
+				 * (do it before recursing!). XXX destructive parse tree change
+				 */
+				switch (flag)
+				{
+					case INHERITS_FLAG:
+						rt_fetch(rt_index, rangetable)->inh = false;
+						break;
+					default:
+						break;
+				}
 			
+				/*
+				 * XXX - can't find any reason to sort union-relids as paul did, so
+				 * we're leaving it out for now (maybe forever) - jeff & lp
+				 *
+				 * [maybe so. btw, jeff & lp did the lisp conversion, according to Paul.
+				 * -- ay 10/94.]
+				 */
+				union_plans = plan_union_query(union_relids, rt_index, rt_entry,
+											   parse, flag, &union_rt_entries);
+	
+				return (make_append(union_plans,
+									NULL,
+									rt_index,
+									union_rt_entries,
+									((Plan *) lfirst(union_plans))->targetlist));
+				break;
+			}			
 		case UNION_FLAG:
 			{
-				List *ulist, *hold_union, *union_plans;
+				List *ulist, *hold_union, *union_plans, *union_rts;
 
 				hold_union = parse->unionClause;
 				parse->unionClause = NULL; /* prevent looping */
 
 				union_plans = lcons(planner(parse), NIL);
-				
+				union_rts = lcons(parse->rtable, NIL);
 				foreach(ulist, hold_union)
-					union_plans = lappend(union_plans, planner(lfirst(ulist)));
-				return (make_append(union_plans,
-									rt_index, rangetable,
+				{
+					Query *u = lfirst(ulist);
+
+					union_plans = lappend(union_plans, planner(u));
+					union_rts = lappend(union_rts, u->rtable);
+				}
+
+				/* We have already split UNION and UNION ALL */
+				if (!((Query *)lfirst(hold_union))->unionall)
+				{
+					parse->uniqueFlag = "*";
+					parse->sortClause = transformSortClause(NULL, NIL,
+						((Plan *)lfirst(union_plans))->targetlist, "*");
+				}
+				else
+				{
+				/* needed so we don't take the flag from the first query */
+					parse->uniqueFlag = NULL;
+					parse->sortClause = NIL;
+				}
+
+				parse->havingQual = NULL;
+				parse->qry_numAgg = 0;
+				parse->qry_aggs = NULL;
+
+				return (make_append(union_plans, union_rts,
+									rt_index /* is 0, none */, NULL,
 							((Plan *) lfirst(union_plans))->targetlist));
 			}
 			break;
 
+#ifdef NOT_USED
 		case VERSION_FLAG:
 			union_relids = VersionGetParents(rt_entry->relid);
 			break;
-
+#endif
 		default:
 			/* do nothing */
 			break;
 	}
+	return NULL;
 	
 	return ((Append*)NULL);		/* to make gcc happy */
 }
@@ -392,6 +422,7 @@ fix_parsetree_attnums(Index rt_index,
 
 static Append *
 make_append(List *unionplans,
+			List *unionrts,
 			Index rt_index,
 			List *union_rt_entries,
 			List *tlist)
@@ -399,6 +430,7 @@ make_append(List *unionplans,
 	Append	   *node = makeNode(Append);
 
 	node->unionplans = unionplans;
+	node->unionrts = unionrts;
 	node->unionrelid = rt_index;
 	node->unionrtentries = union_rt_entries;
 	node->plan.cost = 0.0;

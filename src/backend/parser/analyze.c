@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.56 1997/12/24 06:06:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.57 1997/12/27 06:41:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -839,16 +839,75 @@ transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt)
 	if (pstate->p_numAgg > 0)
 		finalizeAggregates(pstate, qry);
 
+	qry->unionall = stmt->unionall;	/* in child, so unionClause may be false */
+	
 	if (stmt->unionClause)
 	{
 		List *ulist = NIL;
 		QueryTreeList *qlist;
-		int i;
-		
+		int i, last_union = -1;
+		bool union_all_found = false, union_found = false;
+
 		qlist = parse_analyze(stmt->unionClause);
+
+		/*
+		 *	Do we need to split up our unions because we have UNION
+		 *	and UNION ALL?
+		 */
 		for (i=0; i < qlist->len; i++)
-			ulist = lappend(ulist, qlist->qtrees[i]);
-		qry->unionClause = ulist;
+		{
+			if (qlist->qtrees[i]->unionall)
+				union_all_found = true;
+			else
+			{
+				union_found = true;
+				last_union = i;
+			}
+		}
+
+		/*	A trailing UNION negates the affect of earlier UNION ALLs */
+		if (!union_all_found ||
+			!union_found ||
+			/* last entry is a UNION */
+			!qlist->qtrees[qlist->len-1]->unionall)
+		{
+			for (i=0; i < qlist->len; i++)
+				ulist = lappend(ulist, qlist->qtrees[i]);
+			qry->unionClause = ulist;
+		}
+		else
+		{
+			List *union_list = NIL;
+			Query *hold_qry;
+
+			/*
+			 *	We have mixed unions and non-unions, so we concentrate on
+			 *	the last UNION in the list.
+			 */
+			for (i=0; i <= last_union; i++)
+			{
+				qlist->qtrees[i]->unionall = false;	/*make queries consistent*/
+				union_list = lappend(union_list, qlist->qtrees[i]);
+			}
+
+			/*
+			 *	Make the first UNION ALL after the last UNION our new
+			 *	top query
+			 */
+			hold_qry = qry;
+			qry = qlist->qtrees[last_union + 1];
+			qry->unionClause = lcons(hold_qry, NIL); /* UNION queries */
+			hold_qry->unionall = true;  /* UNION ALL this into other queries */
+			hold_qry->unionClause = union_list;
+			
+			/*
+			 *	The first UNION ALL after the last UNION is our anchor,
+			 *	we skip it.
+			 */
+			for (i=last_union + 2; i < qlist->len; i++)
+				/* all queries are UNION ALL */
+				qry->unionClause = lappend(qry->unionClause, qlist->qtrees[i]);
+		}
 	}
 	else
 	    qry->unionClause = NULL;

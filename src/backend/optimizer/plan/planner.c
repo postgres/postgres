@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.16 1997/12/24 06:06:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.17 1997/12/27 06:41:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,8 +72,6 @@ planner(Query *parse)
 {
 	List	   *tlist = parse->targetList;
 	List	   *rangetable = parse->rtable;
-	char	   *uniqueflag = parse->uniqueFlag;
-	List	   *sortclause = parse->sortClause;
 
 	Plan	   *result_plan = (Plan *) NULL;
 
@@ -83,7 +81,7 @@ planner(Query *parse)
 
 	if (parse->unionClause)
 	{
-		result_plan = (Plan *) plan_union_queries(0, /* none */
+		result_plan = (Plan *) plan_union_queries(  0, /* none */
 													parse,
 													UNION_FLAG);
 		/* XXX do we need to do this? bjm 12/19/97 */
@@ -173,16 +171,16 @@ planner(Query *parse)
 	 * the optimization step later.
 	 */
 
-	if (uniqueflag)
+	if (parse->uniqueFlag)
 	{
-		Plan	   *sortplan = make_sortplan(tlist, sortclause, result_plan);
+		Plan	   *sortplan = make_sortplan(tlist, parse->sortClause, result_plan);
 
-		return ((Plan *) make_unique(tlist, sortplan, uniqueflag));
+		return ((Plan *) make_unique(tlist, sortplan, parse->uniqueFlag));
 	}
 	else
 	{
-		if (sortclause)
-			return (make_sortplan(tlist, sortclause, result_plan));
+		if (parse->sortClause)
+			return (make_sortplan(tlist, parse->sortClause, result_plan));
 		else
 			return ((Plan *) result_plan);
 	}

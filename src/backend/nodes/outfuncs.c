@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.13 1997/12/23 19:50:54 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.14 1997/12/27 06:40:54 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -194,7 +194,7 @@ _outQuery(StringInfo str, Query *node)
 	sprintf(buf, " :qual ");
 	appendStringInfo(str, buf);
 	_outNode(str, node->qual);
-
+	/* how are we handling aggregates, sort, and group by? bjm 1997/12/26 */
 }
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.11 1997/12/18 12:53:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.12 1997/12/27 06:40:59 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -119,6 +119,7 @@ _readQuery()
 
 	token = lsptok(NULL, &length);		/* skip :qual */
 	local_node->qual = nodeRead(true);
+	/* how are we handling aggregates, sort, and group by? bjm 1997/12/26 */
 
 	return (local_node);
 }

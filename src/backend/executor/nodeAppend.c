@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.9 1997/09/08 21:43:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.10 1997/12/27 06:40:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  *			  nil	nil		 ...	...    ...
  *								 subplans
  *
- *		Append nodes are currently used to support inheritance
+ *		Append nodes are currently used to unions, and to support inheritance
  *		queries, where several relations need to be scanned.
  *		For example, in our standard person/student/employee/student-emp
  *		example, where student and employee inherit from person
@@ -85,6 +85,7 @@ exec_append_initialize_next(Append *node)
 
 	int			whichplan;
 	int			nplans;
+	List	   *rts;
 	List	   *rtentries;
 	ResTarget  *rtentry;
 
@@ -101,6 +102,7 @@ exec_append_initialize_next(Append *node)
 
 	whichplan = unionstate->as_whichplan;
 	nplans = unionstate->as_nplans;
+	rts = node->unionrts;
 	rtentries = node->unionrtentries;
 
 	if (whichplan < 0)
@@ -140,27 +142,28 @@ exec_append_initialize_next(Append *node)
 		if (node->unionrelid > 0)
 		{
 			rtentry = nth(whichplan, rtentries);
-			if (rtentry == NULL)
-				elog(DEBUG, "exec_append_initialize_next: rtentry is nil");
+			Assert(rtentry != NULL);
 
 			unionrelid = node->unionrelid;
 
 			rt_store(unionrelid, rangeTable, rtentry);
-
-			if (unionstate->as_junkFilter_list)
-			{
-				estate->es_junkFilter =
-					(JunkFilter *) nth(whichplan,
-									   unionstate->as_junkFilter_list);
-			}
-			if (unionstate->as_result_relation_info_list)
-			{
-				estate->es_result_relation_info =
-					(RelationInfo *) nth(whichplan,
-							   unionstate->as_result_relation_info_list);
-			}
-			result_slot->ttc_whichplan = whichplan;
 		}
+		else
+			estate->es_range_table = nth(whichplan, rts);
+		
+		if (unionstate->as_junkFilter_list)
+		{
+			estate->es_junkFilter =
+				(JunkFilter *) nth(whichplan,
+								   unionstate->as_junkFilter_list);
+		}
+		if (unionstate->as_result_relation_info_list)
+		{
+			estate->es_result_relation_info =
+				(RelationInfo *) nth(whichplan,
+						   unionstate->as_result_relation_info_list);
+		}
+		result_slot->ttc_whichplan = whichplan;
 
 		return TRUE;
 	}
@@ -439,8 +442,7 @@ ExecProcAppend(Append *node)
 		if (exec_append_initialize_next(node))
 		{
 			ExecSetSlotDescriptorIsNew(result_slot, true);
-			return
-				ExecProcAppend(node);
+			return ExecProcAppend(node);
 		}
 		else
 			return ExecClearTuple(result_slot);

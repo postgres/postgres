@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.11 1997/12/18 12:54:37 momjian Exp $
+ * $Id: plannodes.h,v 1.12 1997/12/27 06:41:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,7 @@ typedef struct Append
 {
 	Plan		plan;
 	List	   *unionplans;
+	List	   *unionrts;
 	Index		unionrelid;
 	List	   *unionrtentries;
 	AppendState *unionstate;
