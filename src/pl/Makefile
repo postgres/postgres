@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.2 2000/01/20 22:31:22 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.3 2000/01/20 23:00:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ ifeq ($(USE_TCL), true)
 	$(MAKE) -C tcl $@
 endif
 ifeq ($(USE_PERL), true)
-	if [ "$@" = "install" ]; then \
+	-@if [ "$@" = "install" ]; then \
 		$(MAKE) $(MFLAGS) install-plperl; \
 	else \
 		$(MAKE) $(MFLAGS) plperl/Makefile; \

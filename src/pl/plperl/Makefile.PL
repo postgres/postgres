@@ -93,18 +93,20 @@ endif
 #
 # Build the shared lib
 #
-plperl : plperl.lo
-	libtool \$(CC) -o plperl.so plperl.lo \$(SHLIB_EXTRA_LIBS) \$(LDADD) \$(LDFLAGS)
+all:	 plperl
 
-%.lo : %.c
-	libtool \$(CC) -c \$(CFLAGS) \$<
+plperl : plperl.o
+	\$(CC) -o plperl.so plperl.o \$(SHLIB_EXTRA_LIBS) \$(LDADD) \$(LDFLAGS)
+
+%.o : %.c
+	\$(CC) -c \$(CFLAGS) \$<
 
 
 #
 # Clean 
 #
 clean:
-	rm -f \$(INFILES) *.o *.lo
+	rm -f \$(INFILES) *.o
 	rm -rf .libs
 	rm -f Makefile
 
