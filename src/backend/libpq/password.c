@@ -71,7 +71,7 @@ verify_password(char *user, char *password, Port *port,
 	p = pw_file_line;
 
 	test_user = strtok(p, ":");
-	test_pw = strtok(0, ":");
+	test_pw = strtok(NULL, ":");
 	if(!test_user || !test_pw ||
 	   test_user[0] == '\0' || test_pw[0] == '\0') {
 	    continue;
