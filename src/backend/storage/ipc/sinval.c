@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.14 1999/05/25 16:11:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.15 1999/05/28 17:03:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,12 +31,12 @@ extern BackendTag MyBackendTag;
 SPINLOCK	SInvalLock = (SPINLOCK) NULL;
 
 /****************************************************************************/
-/*	CreateSharedInvalidationState(key)	 Create a buffer segment			*/
+/*	CreateSharedInvalidationState()		 Create a buffer segment			*/
 /*																			*/
 /*	should be called only by the POSTMASTER									*/
 /****************************************************************************/
 void
-CreateSharedInvalidationState(IPCKey key)
+CreateSharedInvalidationState(IPCKey key, int maxBackends)
 {
 	int			status;
 
@@ -46,7 +46,8 @@ CreateSharedInvalidationState(IPCKey key)
 	 */
 
 	/* SInvalLock gets set in spin.c, during spinlock init */
-	status = SISegmentInit(true, IPCKeyGetSIBufferMemoryBlock(key));
+	status = SISegmentInit(true, IPCKeyGetSIBufferMemoryBlock(key),
+						   maxBackends);
 
 	if (status == -1)
 		elog(FATAL, "CreateSharedInvalidationState: failed segment init");
@@ -64,11 +65,11 @@ AttachSharedInvalidationState(IPCKey key)
 
 	if (key == PrivateIPCKey)
 	{
-		CreateSharedInvalidationState(key);
+		CreateSharedInvalidationState(key, 16);
 		return;
 	}
 	/* SInvalLock gets set in spin.c, during spinlock init */
-	status = SISegmentInit(false, IPCKeyGetSIBufferMemoryBlock(key));
+	status = SISegmentInit(false, IPCKeyGetSIBufferMemoryBlock(key), 0);
 
 	if (status == -1)
 		elog(FATAL, "AttachSharedInvalidationState: failed segment init");

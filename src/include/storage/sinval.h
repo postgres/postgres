@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.10 1999/02/13 23:22:10 momjian Exp $
+ * $Id: sinval.h,v 1.11 1999/05/28 17:03:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 extern SPINLOCK SInvalLock;
 
-extern void CreateSharedInvalidationState(IPCKey key);
+extern void CreateSharedInvalidationState(IPCKey key, int maxBackends);
 extern void AttachSharedInvalidationState(IPCKey key);
 extern void InitSharedInvalidationState(void);
 extern void RegisterSharedInvalid(int cacheId, Index hashIndex,

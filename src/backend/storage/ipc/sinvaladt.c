@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.19 1999/05/25 16:11:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.20 1999/05/28 17:03:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "storage/backendid.h"
 #include "storage/sinvaladt.h"
 #include "storage/lmgr.h"
+#include "utils/memutils.h"
 #include "utils/palloc.h"
 #include "utils/trace.h"
 
@@ -115,11 +116,9 @@ static BackendId
 SIAssignBackendId(SISeg *segInOutP, BackendTag backendTag)
 {
 	Index		index;
-	ProcState  *stateP;
+	ProcState  *stateP = NULL;
 
-	stateP = NULL;
-
-	for (index = 0; index < MAXBACKENDS; index++)
+	for (index = 0; index < segInOutP->maxBackends; index++)
 	{
 		if (segInOutP->procState[index].tag == InvalidBackendTag ||
 			segInOutP->procState[index].tag == backendTag)
@@ -141,7 +140,7 @@ SIAssignBackendId(SISeg *segInOutP, BackendTag backendTag)
 
 	/* verify that all "procState" entries checked for matching tags */
 
-	for (index++; index < MAXBACKENDS; index++)
+	for (index++; index < segInOutP->maxBackends; index++)
 	{
 		if (segInOutP->procState[index].tag == backendTag)
 			elog(FATAL, "SIAssignBackendId: tag %d found twice", backendTag);
@@ -201,30 +200,29 @@ CleanupInvalidationState(int status,	/* XXX */
 
 
 /************************************************************************/
-/* SIComputeSize()	- retuns the size of a buffer segment				*/
+/* SIComputeSize()	- compute size and offsets for SI segment			*/
 /************************************************************************/
-static SISegOffsets *
-SIComputeSize(int *segSize)
+static void
+SIComputeSize(SISegOffsets *oP, int maxBackends)
 {
 	int			A,
 				B,
 				a,
 				b,
 				totalSize;
-	SISegOffsets *oP;
 
 	A = 0;
-	a = SizeSISeg;				/* offset to first data entry */
-	b = SizeOfOneSISegEntry * MAXNUMMESSAGES;
+	/* sizeof(SISeg) includes the first ProcState entry */
+	a = sizeof(SISeg) + sizeof(ProcState) * (maxBackends - 1);
+	a = MAXALIGN(a);			/* offset to first data entry */
+	b = sizeof(SISegEntry) * MAXNUMMESSAGES;
 	B = A + a + b;
+	B = MAXALIGN(B);
 	totalSize = B - A;
-	*segSize = totalSize;
 
-	oP = (SISegOffsets *) palloc(sizeof(SISegOffsets));
 	oP->startSegment = A;
-	oP->offsetToFirstEntry = a; /* relatiove to A */
-	oP->offsetToEndOfSegemnt = totalSize;		/* relative to A */
-	return oP;
+	oP->offsetToFirstEntry = a; /* relative to A */
+	oP->offsetToEndOfSegment = totalSize;		/* relative to A */
 }
 
 
@@ -340,11 +338,9 @@ SISetMaxNumEntries(SISeg *segP, int num)
 /************************************************************************/
 /* SIGetProcStateLimit(segP, i) returns the limit of read messages		*/
 /************************************************************************/
-static int
-SIGetProcStateLimit(SISeg *segP, int i)
-{
-	return segP->procState[i].limit;
-}
+
+#define SIGetProcStateLimit(segP,i) \
+		((segP)->procState[i].limit)
 
 /************************************************************************/
 /* SIIncNumEntries(segP, num)	increments the current nuber of entries */
@@ -557,7 +553,7 @@ SIDecProcLimit(SISeg *segP, int num)
 {
 	int			i;
 
-	for (i = 0; i < MAXBACKENDS; i++)
+	for (i = 0; i < segP->maxBackends; i++)
 	{
 		/* decrement only, if there is a limit > 0	*/
 		if (segP->procState[i].limit > 0)
@@ -614,7 +610,7 @@ SISetProcStateInvalid(SISeg *segP)
 {
 	int			i;
 
-	for (i = 0; i < MAXBACKENDS; i++)
+	for (i = 0; i < segP->maxBackends; i++)
 	{
 		if (segP->procState[i].limit == 0)
 		{
@@ -688,7 +684,7 @@ SIDelExpiredDataEntries(SISeg *segP)
 				h;
 
 	min = 9999999;
-	for (i = 0; i < MAXBACKENDS; i++)
+	for (i = 0; i < segP->maxBackends; i++)
 	{
 		h = SIGetProcStateLimit(segP, i);
 		if (h >= 0)
@@ -715,24 +711,22 @@ SIDelExpiredDataEntries(SISeg *segP)
 /* SISegInit(segP)	- initializes the segment							*/
 /************************************************************************/
 static void
-SISegInit(SISeg *segP)
+SISegInit(SISeg *segP, SISegOffsets *oP, int maxBackends)
 {
-	SISegOffsets *oP;
-	int			segSize,
-				i;
+	int			i;
 	SISegEntry *eP;
 
-	oP = SIComputeSize(&segSize);
-	/* set sempahore ids in the segment */
+	/* set semaphore ids in the segment */
 	/* XXX */
 	SISetStartEntrySection(segP, oP->offsetToFirstEntry);
-	SISetEndEntrySection(segP, oP->offsetToEndOfSegemnt);
+	SISetEndEntrySection(segP, oP->offsetToEndOfSegment);
 	SISetStartFreeSpace(segP, 0);
 	SISetStartEntryChain(segP, InvalidOffset);
 	SISetEndEntryChain(segP, InvalidOffset);
 	SISetNumEntries(segP, 0);
 	SISetMaxNumEntries(segP, MAXNUMMESSAGES);
-	for (i = 0; i < MAXBACKENDS; i++)
+	segP->maxBackends = maxBackends;
+	for (i = 0; i < segP->maxBackends; i++)
 	{
 		segP->procState[i].limit = -1;	/* no backend active  !! */
 		segP->procState[i].resetState = false;
@@ -753,12 +747,6 @@ SISegInit(SISeg *segP)
 						 (MAXNUMMESSAGES - 1) * sizeof(SISegEntry));
 	eP->isfree = true;
 	eP->next = InvalidOffset;	/* it's the end of the chain !! */
-
-	/*
-	 * Be tidy
-	 */
-	pfree(oP);
-
 }
 
 
@@ -808,13 +796,14 @@ SISegmentAttach(IpcMemoryId shmid)
 
 
 /************************************************************************/
-/* SISegmentInit(killExistingSegment, key)	initialize segment			*/
+/* SISegmentInit()			initialize SI segment						*/
+/*																		*/
+/* NB: maxBackends param is only valid when killExistingSegment is true	*/
 /************************************************************************/
 int
-SISegmentInit(bool killExistingSegment, IPCKey key)
+SISegmentInit(bool killExistingSegment, IPCKey key, int maxBackends)
 {
-	SISegOffsets *oP;
-	int			segSize;
+	SISegOffsets offsets;
 	IpcMemoryId shmId;
 	bool		create;
 
@@ -825,16 +814,9 @@ SISegmentInit(bool killExistingSegment, IPCKey key)
 		SISegmentKill(key);
 
 		/* Get a shared segment */
-
-		oP = SIComputeSize(&segSize);
-
-		/*
-		 * Be tidy
-		 */
-		pfree(oP);
-
+		SIComputeSize(&offsets, maxBackends);
 		create = true;
-		shmId = SISegmentGet(key, segSize, create);
+		shmId = SISegmentGet(key, offsets.offsetToEndOfSegment, create);
 		if (shmId < 0)
 		{
 			perror("SISegmentGet: failed");
@@ -846,7 +828,7 @@ SISegmentInit(bool killExistingSegment, IPCKey key)
 		SISegmentAttach(shmId);
 
 		/* Init shared memory table */
-		SISegInit(shmInvalBuffer);
+		SISegInit(shmInvalBuffer, &offsets, maxBackends);
 	}
 	else
 	{

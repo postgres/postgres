@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.13 1999/05/25 16:14:46 momjian Exp $
+ * $Id: sinvaladt.h,v 1.14 1999/05/28 17:03:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,8 @@ A------------- Header info --------------
 	endEntryChain		(offset relative to B)
 	numEntries
 	maxNumEntries
-	procState[MAXBACKENDS] --> limit
+	maxBackends
+	procState[maxBackends] --> limit
 								resetState (bool)
 a								tag (POSTID)
 B------------- Start entry section -------
@@ -70,11 +71,17 @@ typedef struct SISeg
 	Offset		endEntryChain;	/* (offset relative to B)		*/
 	int			numEntries;
 	int			maxNumEntries;
-	ProcState	procState[MAXBACKENDS]; /* reflects the invalidation state */
-	/* here starts the entry section, controlled by offsets */
+	int			maxBackends;	/* size of procState array */
+	/*
+	 * We declare procState as 1 entry because C wants a fixed-size array,
+	 * but actually it is maxBackends entries long.
+	 */
+	ProcState	procState[1];	/* reflects the invalidation state */
+	/*
+	 * The entry section begins after the end of the procState array.
+	 * Everything there is controlled by offsets.
+	 */
 } SISeg;
-
-#define SizeSISeg	  sizeof(SISeg)
 
 typedef struct SharedInvalidData
 {
@@ -93,13 +100,11 @@ typedef struct SISegEntry
 	Offset		next;			/* offset to next entry */
 } SISegEntry;
 
-#define SizeOfOneSISegEntry   sizeof(SISegEntry)
-
 typedef struct SISegOffsets
 {
 	Offset		startSegment;	/* always 0 (for now) */
 	Offset		offsetToFirstEntry;		/* A + a = B */
-	Offset		offsetToEndOfSegemnt;	/* A + a + b */
+	Offset		offsetToEndOfSegment;	/* A + a + b */
 } SISegOffsets;
 
 
@@ -118,7 +123,8 @@ extern SISeg *shmInvalBuffer;
  * prototypes for functions in sinvaladt.c
  */
 extern int	SIBackendInit(SISeg *segInOutP);
-extern int	SISegmentInit(bool killExistingSegment, IPCKey key);
+extern int	SISegmentInit(bool killExistingSegment, IPCKey key,
+						  int maxBackends);
 
 extern bool SISetDataEntry(SISeg *segP, SharedInvalidData *data);
 extern void SISetProcStateInvalid(SISeg *segP);
