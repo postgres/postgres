@@ -350,8 +350,8 @@ make_name(void)
 %type  <str>    blockend variable_list variable c_thing c_term
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
 %type  <str>	stmt ECPGRelease execstring server_name
-%type  <str>	connection_object opt_server opt_port c_stuff opt_reference
-%type  <str>    user_name opt_user char_variable ora_user ident
+%type  <str>	connection_object opt_server opt_port c_stuff c_stuff_item
+%type  <str>    user_name opt_user char_variable ora_user ident opt_reference
 %type  <str>	quoted_ident_stringvar
 %type  <str>    db_prefix server opt_options opt_connection_name c_list
 %type  <str>	ECPGSetConnection cpp_line ECPGTypedef c_args ECPGKeywords
@@ -5376,26 +5376,18 @@ quoted_ident_stringvar: IDENT	{ $$ = make3_str(make_str("\""), $1, make_str("\""
 
 cpp_line: CPP_LINE	{ $$ = $1; };
 
-c_stuff: c_anything 	{ $$ = $1; }
-	| c_stuff c_anything
-			{
-				$$ = cat2_str($1, $2);
-			}
-	| c_stuff '(' c_stuff ')'
-			{
-				$$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
-			}
-	| c_stuff '(' ')'
-			{
-				$$ = cat_str(3, $1, make_str("("), make_str(")"));
-			}
+c_stuff_item: c_anything 	{ $$ = $1; }
+	| '(' ')'				{ $$ = make_str("()"); }
 	| '(' c_stuff ')'
 			{
 				$$ = cat_str(3, make_str("("), $2, make_str(")"));
 			}
-	| '(' c_stuff ')' c_stuff
+	;
+
+c_stuff: c_stuff_item 	{ $$ = $1; }
+	| c_stuff c_stuff_item
 			{
-				$$ = cat_str(4, make_str("("), $2, make_str(")"), $4);
+				$$ = cat2_str($1, $2);
 			}
 	;
 
