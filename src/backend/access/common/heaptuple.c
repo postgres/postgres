@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.32 1998/02/04 21:32:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.33 1998/02/05 03:47:08 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -400,7 +400,7 @@ nocachegetattr(HeapTuple tup,
 			bool *isnull)
 {
 	char	   *tp;				/* ptr to att in tuple */
-	bits8	   *bp = NULL;		/* ptr to att in tuple */
+	bits8	   *bp = tup->t_bits; /* ptr to att in tuple */
 	int			slow;			/* do we have to walk nulls? */
 	AttributeTupleForm *att = tupleDesc->attrs;
 
@@ -452,7 +452,6 @@ nocachegetattr(HeapTuple tup,
 		 * there's a null somewhere in the tuple
 		 */
 
-		bp = tup->t_bits;
 		tp = (char *) tup + tup->t_hoff;
 		slow = 0;
 		attnum--;
@@ -526,7 +525,11 @@ nocachegetattr(HeapTuple tup,
 		{
 			register int j = 0;
 
-			for (j = 0; j < attnum && !slow; j++)
+			/*
+			 *	In for(), we make this <= and not < because we want to
+			 *	test if we can go past it in initializing offsets.
+			 */
+			for (j = 0; j <= attnum && !slow; j++)
 				if (att[j]->attlen < 1 && !VARLENA_FIXED_SIZE(att[j]))
 					slow = 1;
 		}
@@ -556,7 +559,13 @@ nocachegetattr(HeapTuple tup,
 		else
 			off = att[j - 1]->attcacheoff + att[j - 1]->atttypmod;
 
-		for (; j < attnum + 1; j++)
+		for (; j <= attnum ||
+				/* Can we compute more?  We will probably need them */
+				(j < tup->t_natts &&
+				 att[j]->attcacheoff == -1 &&
+				 (HeapTupleNoNulls(tup) || !att_isnull(j, bp)) &&
+				 (HeapTupleAllFixed(tup)||
+					 att[j]->attlen > 0 || VARLENA_FIXED_SIZE(att[j]))); j++)
 		{
 			/*
 			 * Fix me when going to a machine with more than a four-byte
@@ -589,13 +598,25 @@ nocachegetattr(HeapTuple tup,
 
 			att[j]->attcacheoff = off;
 
-			/* The only varlena/-1 length value to get here is this */
-			if (!VARLENA_FIXED_SIZE(att[j]))
-				off += att[j]->attlen;
-			else
+			switch (att[j]->attlen)
 			{
-				Assert(att[j]->atttypmod == VARSIZE(tp + off));
-				off += att[j]->atttypmod;
+				case sizeof(char):
+					off++;
+					break;
+				case sizeof(short):
+					off += sizeof(short);
+					break;
+				case sizeof(int32):
+					off += sizeof(int32);
+					break;
+				case -1:
+					Assert(!VARLENA_FIXED_SIZE(att[j]) ||
+							att[j]->atttypmod == VARSIZE(tp + off));
+					off += VARSIZE(tp + off);
+					break;
+				default:
+					off += att[j]->attlen;
+					break;
 			}
 		}
 
