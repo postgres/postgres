@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.42 2005/01/08 01:44:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.43 2005/01/22 22:56:36 momjian Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -605,8 +605,8 @@ SELECT *
 SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
     W2.city, W2.temp_lo AS low, W2.temp_hi AS high
     FROM weather W1, weather W2
-    WHERE W1.temp_lo < W2.temp_lo
-    AND W1.temp_hi > W2.temp_hi;
+    WHERE W1.temp_lo &lt; W2.temp_lo
+    AND W1.temp_hi &gt; W2.temp_hi;
 
      city      | low | high |     city      | low | high
 ---------------+-----+------+---------------+-----+------
@@ -737,7 +737,7 @@ SELECT city, max(temp_lo)
 SELECT city, max(temp_lo)
     FROM weather
     GROUP BY city
-    HAVING max(temp_lo) < 40;
+    HAVING max(temp_lo) &lt; 40;
 </programlisting>
 
 <screen>
@@ -757,7 +757,7 @@ SELECT city, max(temp_lo)
     FROM weather
     WHERE city LIKE 'S%'<co id="co.tutorial-agg-like">
     GROUP BY city
-    HAVING max(temp_lo) < 40;
+    HAVING max(temp_lo) &lt; 40;
 </programlisting>
    <calloutlist>
     <callout arearefs="co.tutorial-agg-like">
@@ -814,7 +814,7 @@ SELECT city, max(temp_lo)
 <programlisting>
 UPDATE weather
     SET temp_hi = temp_hi - 2,  temp_lo = temp_lo - 2
-    WHERE date > '1994-11-28';
+    WHERE date &gt; '1994-11-28';
 </programlisting>
    </para>
 

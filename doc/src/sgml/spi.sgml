@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.38 2005/01/22 22:06:27 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.39 2005/01/22 22:56:36 momjian Exp $
 -->
 
 <chapter id="spi">
@@ -2929,18 +2929,18 @@ execq(text *sql, int cnt)
      * If this is a SELECT and some rows were fetched,
      * then the rows are printed via elog(INFO).
      */
-    if (ret == SPI_OK_SELECT && SPI_processed > 0)
+    if (ret == SPI_OK_SELECT && SPI_processed &gt; 0)
     {
         TupleDesc tupdesc = SPI_tuptable-&gt;tupdesc;
         SPITupleTable *tuptable = SPI_tuptable;
         char buf[8192];
         int i, j;
         
-        for (j = 0; j < proc; j++)
+        for (j = 0; j &lt; proc; j++)
         {
             HeapTuple tuple = tuptable-&gt;vals[j];
             
-            for (i = 1, buf[0] = 0; i <= tupdesc-&gt;natts; i++)
+            for (i = 1, buf[0] = 0; i &lt;= tupdesc-&gt;natts; i++)
                 snprintf(buf + strlen (buf), sizeof(buf) - strlen(buf), " %s%s",
                         SPI_getvalue(tuple, tupdesc, i),
                         (i == tupdesc-&gt;natts) ? " " : " |");
@@ -2976,15 +2976,15 @@ CREATE FUNCTION execq(text, integer) RETURNS integer
    Here is a sample session:
 
 <programlisting>
-=> SELECT execq('CREATE TABLE a (x integer)', 0);
+=&gt; SELECT execq('CREATE TABLE a (x integer)', 0);
  execq
 -------
      0
 (1 row)
 
-=> INSERT INTO a VALUES (execq('INSERT INTO a VALUES (0)', 0));
+=&gt; INSERT INTO a VALUES (execq('INSERT INTO a VALUES (0)', 0));
 INSERT 167631 1
-=> SELECT execq('SELECT * FROM a', 0);
+=&gt; SELECT execq('SELECT * FROM a', 0);
 INFO:  EXECQ:  0    -- inserted by execq
 INFO:  EXECQ:  1    -- returned by execq and inserted by upper INSERT
 
@@ -2993,13 +2993,13 @@ INFO:  EXECQ:  1    -- returned by execq and inserted by upper INSERT
      2
 (1 row)
 
-=> SELECT execq('INSERT INTO a SELECT x + 2 FROM a', 1);
+=&gt; SELECT execq('INSERT INTO a SELECT x + 2 FROM a', 1);
  execq
 -------
      1
 (1 row)
 
-=> SELECT execq('SELECT * FROM a', 10);
+=&gt; SELECT execq('SELECT * FROM a', 10);
 INFO:  EXECQ:  0
 INFO:  EXECQ:  1
 INFO:  EXECQ:  2    -- 0 + 2, only one row inserted - as specified
@@ -3009,20 +3009,20 @@ INFO:  EXECQ:  2    -- 0 + 2, only one row inserted - as specified
      3              -- 10 is the max value only, 3 is the real number of rows
 (1 row)
 
-=> DELETE FROM a;
+=&gt; DELETE FROM a;
 DELETE 3
-=> INSERT INTO a VALUES (execq('SELECT * FROM a', 0) + 1);
+=&gt; INSERT INTO a VALUES (execq('SELECT * FROM a', 0) + 1);
 INSERT 167712 1
-=> SELECT * FROM a;
+=&gt; SELECT * FROM a;
  x
 ---
  1                  -- no rows in a (0) + 1
 (1 row)
 
-=> INSERT INTO a VALUES (execq('SELECT * FROM a', 0) + 1);
+=&gt; INSERT INTO a VALUES (execq('SELECT * FROM a', 0) + 1);
 INFO:  EXECQ:  0
 INSERT 167713 1
-=> SELECT * FROM a;
+=&gt; SELECT * FROM a;
  x
 ---
  1
@@ -3031,14 +3031,14 @@ INSERT 167713 1
 
 -- This demonstrates the data changes visibility rule:
 
-=> INSERT INTO a SELECT execq('SELECT * FROM a', 0) * x FROM a;
+=&gt; INSERT INTO a SELECT execq('SELECT * FROM a', 0) * x FROM a;
 INFO:  EXECQ:  1
 INFO:  EXECQ:  2
 INFO:  EXECQ:  1
 INFO:  EXECQ:  2
 INFO:  EXECQ:  2
 INSERT 0 2
-=> SELECT * FROM a;
+=&gt; SELECT * FROM a;
  x
 ---
  1

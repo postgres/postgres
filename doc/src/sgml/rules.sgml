@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.38 2005/01/22 22:06:27 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.39 2005/01/22 22:56:36 momjian Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -344,7 +344,7 @@ returns the lower of 2 integer values. We create that as
 
 <ProgramListing>
 CREATE FUNCTION min(integer, integer) RETURNS integer AS $$
-    SELECT CASE WHEN $1 < $2 THEN $1 ELSE $2 END
+    SELECT CASE WHEN $1 &lt; $2 THEN $1 ELSE $2 END
 $$ LANGUAGE SQL STRICT;
 </ProgramListing>
 </Para>
@@ -414,8 +414,8 @@ CREATE VIEW shoe_ready AS
            min(rsh.sh_avail, rsl.sl_avail) AS total_avail
       FROM shoe rsh, shoelace rsl
      WHERE rsl.sl_color = rsh.slcolor
-       AND rsl.sl_len_cm >= rsh.slminlen_cm
-       AND rsl.sl_len_cm <= rsh.slmaxlen_cm;
+       AND rsl.sl_len_cm &gt;= rsh.slminlen_cm
+       AND rsl.sl_len_cm &lt;= rsh.slmaxlen_cm;
 </ProgramListing>
 
     The <command>CREATE VIEW</command> command for the
@@ -558,7 +558,7 @@ SELECT shoelace.sl_name, shoelace.sl_avail,
     total number of exactly matching pairs is greater or equal to two.
 
 <ProgramListing>
-SELECT * FROM shoe_ready WHERE total_avail >= 2;
+SELECT * FROM shoe_ready WHERE total_avail &gt;= 2;
 
  shoename | sh_avail | sl_name | sl_avail | total_avail
 ----------+----------+---------+----------+-------------
@@ -576,7 +576,7 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
        shoe_ready.sl_name, shoe_ready.sl_avail,
        shoe_ready.total_avail
   FROM shoe_ready shoe_ready
- WHERE shoe_ready.total_avail >= 2;
+ WHERE shoe_ready.total_avail &gt;= 2;
 </ProgramListing>
 
     The first rule applied will be the one for the 
@@ -594,9 +594,9 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
                min(rsh.sh_avail, rsl.sl_avail) AS total_avail
           FROM shoe rsh, shoelace rsl
          WHERE rsl.sl_color = rsh.slcolor
-           AND rsl.sl_len_cm >= rsh.slminlen_cm
-           AND rsl.sl_len_cm <= rsh.slmaxlen_cm) shoe_ready
- WHERE shoe_ready.total_avail >= 2;
+           AND rsl.sl_len_cm &gt;= rsh.slminlen_cm
+           AND rsl.sl_len_cm &lt;= rsh.slmaxlen_cm) shoe_ready
+ WHERE shoe_ready.total_avail &gt;= 2;
 </ProgramListing>
 
     Similarly, the rules for <literal>shoe</literal> and
@@ -631,9 +631,9 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
                   FROM shoelace_data s, unit u
                  WHERE s.sl_unit = u.un_name) rsl
          WHERE rsl.sl_color = rsh.slcolor
-           AND rsl.sl_len_cm >= rsh.slminlen_cm
-           AND rsl.sl_len_cm <= rsh.slmaxlen_cm) shoe_ready
- WHERE shoe_ready.total_avail > 2;
+           AND rsl.sl_len_cm &gt;= rsh.slminlen_cm
+           AND rsl.sl_len_cm &lt;= rsh.slmaxlen_cm) shoe_ready
+ WHERE shoe_ready.total_avail &gt; 2;
 </ProgramListing>
    </para>
 
@@ -1958,14 +1958,14 @@ Nestloop
     is
 
 <ProgramListing>
-DELETE FROM computer WHERE hostname >= 'old'
-                       AND hostname <  'ole'
+DELETE FROM computer WHERE hostname &gt;= 'old'
+                       AND hostname &lt;  'ole'
 </ProgramListing>
 
     The command added by the rule will be
 
 <ProgramListing>
-DELETE FROM software WHERE computer.hostname >= 'old' AND computer.hostname < 'ole'
+DELETE FROM software WHERE computer.hostname &gt;= 'old' AND computer.hostname &lt; 'ole'
                        AND software.hostname = computer.hostname;
 </ProgramListing>
 

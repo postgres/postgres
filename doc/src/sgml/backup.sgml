@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.54 2004/12/28 19:08:58 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.55 2005/01/22 22:56:35 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -256,7 +256,7 @@ cat <replaceable class="parameter">filename</replaceable>* | psql <replaceable c
      following command dumps a database using the custom dump format:
 
 <programlisting>
-pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable class="parameter">filename</replaceable>
+pg_dump -Fc <replaceable class="parameter">dbname</replaceable> &gt; <replaceable class="parameter">filename</replaceable>
 </programlisting>
 
      A custom-format dump is not a script for <application>psql</>, but
@@ -1203,14 +1203,14 @@ pg_dumpall -p 5432 | psql -d template1 -p 6543
    version, start the new server, restore the data. For example:
 
 <programlisting>
-pg_dumpall > backup
+pg_dumpall &gt; backup
 pg_ctl stop
 mv /usr/local/pgsql /usr/local/pgsql.old
 cd ~/postgresql-&version;
 gmake install
 initdb -D /usr/local/pgsql/data
 postmaster -D /usr/local/pgsql/data
-psql template1 < backup
+psql template1 &lt; backup
 </programlisting>
 
    See <xref linkend="runtime"> about ways to start and stop the

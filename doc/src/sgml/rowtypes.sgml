@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.4 2004/12/23 05:37:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.5 2005/01/22 22:56:36 momjian Exp $ -->
 
 <sect1 id="rowtypes">
  <title>Composite Types</title>
@@ -75,7 +75,7 @@ SELECT price_extension(item, 10) FROM on_hand;
 CREATE TABLE inventory_item (
     name            text,
     supplier_id     integer REFERENCES suppliers,
-    price           numeric CHECK (price > 0)
+    price           numeric CHECK (price &gt; 0)
 );
 </programlisting>
   then the same <literal>inventory_item</> composite type shown above would
@@ -165,21 +165,21 @@ ROW('', 42, NULL)
   like:
 
 <programlisting>
-SELECT item.name FROM on_hand WHERE item.price > 9.99;
+SELECT item.name FROM on_hand WHERE item.price &gt; 9.99;
 </programlisting>
 
   This will not work since the name <literal>item</> is taken to be a table
   name, not a field name, per SQL syntax rules.  You must write it like this:
 
 <programlisting>
-SELECT (item).name FROM on_hand WHERE (item).price > 9.99;
+SELECT (item).name FROM on_hand WHERE (item).price &gt; 9.99;
 </programlisting>
 
   or if you need to use the table name as well (for instance in a multi-table
   query), like this:
 
 <programlisting>
-SELECT (on_hand.item).name FROM on_hand WHERE (on_hand.item).price > 9.99;
+SELECT (on_hand.item).name FROM on_hand WHERE (on_hand.item).price &gt; 9.99;
 </programlisting>
 
   Now the parenthesized object is correctly interpreted as a reference to

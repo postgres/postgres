@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.28 2004/11/15 06:32:13 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.29 2005/01/22 22:56:35 momjian Exp $
 -->
 
 <sect2 id="dfunc">
@@ -307,7 +307,7 @@ cc <other flags> -c foo.c
 You must then create a symbol \*(lqexports\*(rq file for the object
 file:
 .nf
-mkldexport foo.o `pwd` > foo.exp
+mkldexport foo.o `pwd` &gt; foo.exp
 .fi
 Finally, you can create the shared library:
 .nf

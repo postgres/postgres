@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.38 2005/01/17 01:29:02 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.39 2005/01/22 22:56:35 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -275,7 +275,7 @@ CREATE TABLE products (
 CREATE TABLE products (
     product_no integer,
     name text,
-    price numeric <emphasis>CHECK (price > 0)</emphasis>
+    price numeric <emphasis>CHECK (price &gt; 0)</emphasis>
 );
 </programlisting>
    </para>
@@ -303,7 +303,7 @@ CREATE TABLE products (
 CREATE TABLE products (
     product_no integer,
     name text,
-    price numeric <emphasis>CONSTRAINT positive_price</emphasis> CHECK (price > 0)
+    price numeric <emphasis>CONSTRAINT positive_price</emphasis> CHECK (price &gt; 0)
 );
 </programlisting>
     So, to specify a named constraint, use the key word
@@ -320,9 +320,9 @@ CREATE TABLE products (
 CREATE TABLE products (
     product_no integer,
     name text,
-    price numeric CHECK (price > 0),
-    discounted_price numeric CHECK (discounted_price > 0),
-    <emphasis>CHECK (price > discounted_price)</emphasis>
+    price numeric CHECK (price &gt; 0),
+    discounted_price numeric CHECK (discounted_price &gt; 0),
+    <emphasis>CHECK (price &gt; discounted_price)</emphasis>
 );
 </programlisting>
    </para>
@@ -350,10 +350,10 @@ CREATE TABLE products (
     product_no integer,
     name text,
     price numeric,
-    CHECK (price > 0),
+    CHECK (price &gt; 0),
     discounted_price numeric,
-    CHECK (discounted_price > 0),
-    CHECK (price > discounted_price)
+    CHECK (discounted_price &gt; 0),
+    CHECK (price &gt; discounted_price)
 );
 </programlisting>
     or even
@@ -361,9 +361,9 @@ CREATE TABLE products (
 CREATE TABLE products (
     product_no integer,
     name text,
-    price numeric CHECK (price > 0),
+    price numeric CHECK (price &gt; 0),
     discounted_price numeric,
-    CHECK (discounted_price > 0 AND price > discounted_price)
+    CHECK (discounted_price &gt; 0 AND price &gt; discounted_price)
 );
 </programlisting>
     It's a matter of taste.
@@ -377,10 +377,10 @@ CREATE TABLE products (
     product_no integer,
     name text,
     price numeric,
-    CHECK (price > 0),
+    CHECK (price &gt; 0),
     discounted_price numeric,
-    CHECK (discounted_price > 0),
-    <emphasis>CONSTRAINT valid_discount</> CHECK (price > discounted_price)
+    CHECK (discounted_price &gt; 0),
+    <emphasis>CONSTRAINT valid_discount</> CHECK (price &gt; discounted_price)
 );
 </programlisting>
    </para>
@@ -442,7 +442,7 @@ CREATE TABLE products (
 CREATE TABLE products (
     product_no integer NOT NULL,
     name text NOT NULL,
-    price numeric NOT NULL CHECK (price > 0)
+    price numeric NOT NULL CHECK (price &gt; 0)
 );
 </programlisting>
     The order doesn't matter.  It does not necessarily determine in which

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.25 2004/11/15 06:32:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.26 2005/01/22 22:56:36 momjian Exp $
 -->
 
  <sect1 id="xaggr">
@@ -141,7 +141,7 @@ CREATE AGGREGATE array_accum (
 <programlisting>
 SELECT attrelid::regclass, array_accum(attname)
     FROM pg_attribute
-    WHERE attnum > 0 AND attrelid = 'pg_user'::regclass
+    WHERE attnum &gt; 0 AND attrelid = 'pg_user'::regclass
     GROUP BY attrelid;
 
  attrelid |                                 array_accum
@@ -151,7 +151,7 @@ SELECT attrelid::regclass, array_accum(attname)
 
 SELECT attrelid::regclass, array_accum(atttypid)
     FROM pg_attribute
-    WHERE attnum > 0 AND attrelid = 'pg_user'::regclass
+    WHERE attnum &gt; 0 AND attrelid = 'pg_user'::regclass
     GROUP BY attrelid;
 
  attrelid |         array_accum

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.49 2005/01/08 22:13:25 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.50 2005/01/22 22:56:36 momjian Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -563,7 +563,7 @@ CREATE TABLE access_log (
     such as this:
 <programlisting>
 CREATE INDEX access_log_client_ip_ix ON access_log (client_ip)
-    WHERE NOT (client_ip > inet '192.168.100.0' AND client_ip < inet '192.168.100.255');
+    WHERE NOT (client_ip &gt; inet '192.168.100.0' AND client_ip &lt; inet '192.168.100.255');
 </programlisting>
    </para>
 
@@ -617,12 +617,12 @@ CREATE INDEX orders_unbilled_index ON orders (order_nr)
    <para>
     A possible query to use this index would be
 <programlisting>
-SELECT * FROM orders WHERE billed is not true AND order_nr < 10000;
+SELECT * FROM orders WHERE billed is not true AND order_nr &lt; 10000;
 </programlisting>
     However, the index can also be used in queries that do not involve
     <structfield>order_nr</> at all, e.g.,
 <programlisting>
-SELECT * FROM orders WHERE billed is not true AND amount > 5000.00;
+SELECT * FROM orders WHERE billed is not true AND amount &gt; 5000.00;
 </programlisting>
     This is not as efficient as a partial index on the
     <structfield>amount</> column would be, since the system has to

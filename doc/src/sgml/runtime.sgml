@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.301 2005/01/08 22:13:35 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.302 2005/01/22 22:56:36 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -4420,8 +4420,8 @@ options         SEMMAP=256
         <filename>proc</filename> file system (without reboot).  For
         example, to allow 128 MB:
 <screen>
-<prompt>$</prompt> <userinput>echo 134217728 >/proc/sys/kernel/shmall</userinput>
-<prompt>$</prompt> <userinput>echo 134217728 >/proc/sys/kernel/shmmax</userinput>
+<prompt>$</prompt> <userinput>echo 134217728 &gt;/proc/sys/kernel/shmall</userinput>
+<prompt>$</prompt> <userinput>echo 134217728 &gt;/proc/sys/kernel/shmmax</userinput>
 </screen>
         You could put these commands into a script run at boot-time.
        </para>

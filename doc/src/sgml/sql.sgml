@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.33 2004/11/15 06:32:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.34 2005/01/22 22:56:36 momjian Exp $
 -->
 
  <chapter id="sql-intro">
@@ -891,7 +891,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
 
 	<programlisting>
 SELECT * FROM PART
-    WHERE PRICE > 10;
+    WHERE PRICE &gt; 10;
 	</programlisting>
 
 	and get the table:
@@ -913,7 +913,7 @@ SELECT * FROM PART
 	<programlisting>
 SELECT PNAME, PRICE 
     FROM PART
-    WHERE PRICE > 10;
+    WHERE PRICE &gt; 10;
 	</programlisting>
 
 	In this case the result is:
@@ -939,7 +939,7 @@ SELECT PNAME, PRICE
 SELECT PNAME, PRICE 
     FROM PART
     WHERE PNAME = 'Bolt' AND
-         (PRICE = 0 OR PRICE <= 15);
+         (PRICE = 0 OR PRICE &lt;= 15);
 	</programlisting>
 
 	will lead to the result:
@@ -959,7 +959,7 @@ SELECT PNAME, PRICE
 	<programlisting>
 SELECT PNAME, PRICE * 2 AS DOUBLE
     FROM PART
-    WHERE PRICE * 2 < 50;
+    WHERE PRICE * 2 &lt; 50;
 	</programlisting>
 
 	and we get:
@@ -1450,7 +1450,7 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
     FROM SUPPLIER S, SELLS SE
     WHERE S.SNO = SE.SNO
     GROUP BY S.SNO, S.SNAME
-    HAVING COUNT(SE.PNO) > 1;
+    HAVING COUNT(SE.PNO) &gt; 1;
 	</programlisting>
 
 	and get:
@@ -1487,7 +1487,7 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
 	<programlisting>
 SELECT * 
     FROM PART 
-    WHERE PRICE > (SELECT PRICE FROM PART
+    WHERE PRICE &gt; (SELECT PRICE FROM PART
                    WHERE PNAME='Screw');
 	</programlisting>
        </para>
@@ -1617,11 +1617,11 @@ gives the result:
 	<programlisting>
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
-    WHERE S.SNO > 1
+    WHERE S.SNO &gt; 1
 INTERSECT
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
-    WHERE S.SNO < 3;
+    WHERE S.SNO &lt; 3;
 	</programlisting>
 
 	gives the result:
@@ -1641,11 +1641,11 @@ INTERSECT
 	<programlisting>
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
-    WHERE S.SNO > 1
+    WHERE S.SNO &gt; 1
 EXCEPT
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
-    WHERE S.SNO > 3;
+    WHERE S.SNO &gt; 3;
 	</programlisting>
 
 	gives the result:

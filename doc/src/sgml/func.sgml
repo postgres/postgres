@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.234 2005/01/09 20:08:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.235 2005/01/22 22:56:35 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5890,7 +5890,7 @@ SELECT TIMESTAMP 'now';
        <row>
         <entry> <literal>&gt;^</literal> </entry>
         <entry>Is above?</entry>
-        <entry><literal>circle '((0,5),1)' >^ circle '((0,0),1)'</literal></entry>
+        <entry><literal>circle '((0,5),1)' &gt;^ circle '((0,0),1)'</literal></entry>
        </row>
        <row>
         <entry> <literal>?#</literal> </entry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.97 2005/01/22 22:06:27 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.98 2005/01/22 22:56:36 momjian Exp $
 -->
 
  <sect1 id="xfunc">
@@ -678,7 +678,7 @@ ERROR:  could not determine "anyarray"/"anyelement" type because input has type 
      return type, but the converse is not. For example:
 <screen>
 CREATE FUNCTION is_greater(anyelement, anyelement) RETURNS boolean AS $$
-    SELECT $1 > $2;
+    SELECT $1 &gt; $2;
 $$ LANGUAGE SQL;
 
 SELECT is_greater(1, 2);

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.32 2004/12/23 05:37:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.33 2005/01/22 22:56:36 momjian Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -374,7 +374,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 </programlisting>
      then we get the following results for the various joins:
 <screen>
-<prompt>=></> <userinput>SELECT * FROM t1 CROSS JOIN t2;</>
+<prompt>=&gt;</> <userinput>SELECT * FROM t1 CROSS JOIN t2;</>
  num | name | num | value
 -----+------+-----+-------
    1 | a    |   1 | xxx
@@ -388,28 +388,28 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
    3 | c    |   5 | zzz
 (9 rows)
 
-<prompt>=></> <userinput>SELECT * FROM t1 INNER JOIN t2 ON t1.num = t2.num;</>
+<prompt>=&gt;</> <userinput>SELECT * FROM t1 INNER JOIN t2 ON t1.num = t2.num;</>
  num | name | num | value
 -----+------+-----+-------
    1 | a    |   1 | xxx
    3 | c    |   3 | yyy
 (2 rows)
 
-<prompt>=></> <userinput>SELECT * FROM t1 INNER JOIN t2 USING (num);</>
+<prompt>=&gt;</> <userinput>SELECT * FROM t1 INNER JOIN t2 USING (num);</>
  num | name | value
 -----+------+-------
    1 | a    | xxx
    3 | c    | yyy
 (2 rows)
 
-<prompt>=></> <userinput>SELECT * FROM t1 NATURAL INNER JOIN t2;</>
+<prompt>=&gt;</> <userinput>SELECT * FROM t1 NATURAL INNER JOIN t2;</>
  num | name | value
 -----+------+-------
    1 | a    | xxx
    3 | c    | yyy
 (2 rows)
 
-<prompt>=></> <userinput>SELECT * FROM t1 LEFT JOIN t2 ON t1.num = t2.num;</>
+<prompt>=&gt;</> <userinput>SELECT * FROM t1 LEFT JOIN t2 ON t1.num = t2.num;</>
  num | name | num | value
 -----+------+-----+-------
    1 | a    |   1 | xxx
@@ -417,7 +417,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
    3 | c    |   3 | yyy
 (3 rows)
 
-<prompt>=></> <userinput>SELECT * FROM t1 LEFT JOIN t2 USING (num);</>
+<prompt>=&gt;</> <userinput>SELECT * FROM t1 LEFT JOIN t2 USING (num);</>
  num | name | value
 -----+------+-------
    1 | a    | xxx
@@ -425,7 +425,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
    3 | c    | yyy
 (3 rows)
 
-<prompt>=></> <userinput>SELECT * FROM t1 RIGHT JOIN t2 ON t1.num = t2.num;</>
+<prompt>=&gt;</> <userinput>SELECT * FROM t1 RIGHT JOIN t2 ON t1.num = t2.num;</>
  num | name | num | value
 -----+------+-----+-------
    1 | a    |   1 | xxx
@@ -433,7 +433,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
      |      |   5 | zzz
 (3 rows)
 
-<prompt>=></> <userinput>SELECT * FROM t1 FULL JOIN t2 ON t1.num = t2.num;</>
+<prompt>=&gt;</> <userinput>SELECT * FROM t1 FULL JOIN t2 ON t1.num = t2.num;</>
  num | name | num | value
 -----+------+-----+-------
    1 | a    |   1 | xxx
@@ -450,7 +450,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
      prove useful for some queries but needs to be thought out
      carefully.  For example:
 <screen>
-<prompt>=></> <userinput>SELECT * FROM t1 LEFT JOIN t2 ON t1.num = t2.num AND t2.value = 'xxx';</>
+<prompt>=&gt;</> <userinput>SELECT * FROM t1 LEFT JOIN t2 ON t1.num = t2.num AND t2.value = 'xxx';</>
  num | name | num | value
 -----+------+-----+-------
    1 | a    |   1 | xxx
@@ -508,7 +508,7 @@ SELECT * FROM some_very_long_table_name s JOIN another_fairly_long_name a ON s.i
      current query &mdash; it is no longer possible to refer to the table
      by the original name.  Thus
 <programlisting>
-SELECT * FROM my_table AS m WHERE my_table.a > 5;
+SELECT * FROM my_table AS m WHERE my_table.a &gt; 5;
 </programlisting>
      is not valid SQL syntax.  What will actually happen (this is a
      <productname>PostgreSQL</productname> extension to the standard)
@@ -516,7 +516,7 @@ SELECT * FROM my_table AS m WHERE my_table.a > 5;
      <literal>FROM</literal> clause, so the query is processed as if
      it were written as
 <programlisting>
-SELECT * FROM my_table AS m, my_table AS my_table WHERE my_table.a > 5;
+SELECT * FROM my_table AS m, my_table AS my_table WHERE my_table.a &gt; 5;
 </programlisting>
      which will result in a cross join, which is usually not what you
      want.
@@ -732,7 +732,7 @@ FROM a NATURAL JOIN b WHERE b.val &gt; 5
    <para>
     Here are some examples of <literal>WHERE</literal> clauses:
 <programlisting>
-SELECT ... FROM fdt WHERE c1 > 5
+SELECT ... FROM fdt WHERE c1 &gt; 5
 
 SELECT ... FROM fdt WHERE c1 IN (1, 2, 3)
 
@@ -742,7 +742,7 @@ SELECT ... FROM fdt WHERE c1 IN (SELECT c3 FROM t2 WHERE c2 = fdt.c1 + 10)
 
 SELECT ... FROM fdt WHERE c1 BETWEEN (SELECT c3 FROM t2 WHERE c2 = fdt.c1 + 10) AND 100
 
-SELECT ... FROM fdt WHERE EXISTS (SELECT c1 FROM t2 WHERE c2 > fdt.c1)
+SELECT ... FROM fdt WHERE EXISTS (SELECT c1 FROM t2 WHERE c2 &gt; fdt.c1)
 </programlisting>
     <literal>fdt</literal> is the table derived in the
     <literal>FROM</> clause. Rows that do not meet the search
@@ -795,7 +795,7 @@ SELECT <replaceable>select_list</replaceable>
     eliminate redundancy in the output and/or compute aggregates that
     apply to these groups.  For instance:
 <screen>
-<prompt>=></> <userinput>SELECT * FROM test1;</>
+<prompt>=&gt;</> <userinput>SELECT * FROM test1;</>
  x | y
 ---+---
  a | 3
@@ -804,7 +804,7 @@ SELECT <replaceable>select_list</replaceable>
  a | 1
 (4 rows)
 
-<prompt>=></> <userinput>SELECT x FROM test1 GROUP BY x;</>
+<prompt>=&gt;</> <userinput>SELECT x FROM test1 GROUP BY x;</>
  x
 ---
  a
@@ -827,7 +827,7 @@ SELECT <replaceable>select_list</replaceable>
     used in the grouping cannot be referenced except in aggregate
     expressions.  An example with aggregate expressions is:
 <screen>
-<prompt>=></> <userinput>SELECT x, sum(y) FROM test1 GROUP BY x;</>
+<prompt>=&gt;</> <userinput>SELECT x, sum(y) FROM test1 GROUP BY x;</>
  x | sum
 ---+-----
  a |   4
@@ -901,14 +901,14 @@ SELECT <replaceable>select_list</replaceable> FROM ... <optional>WHERE ...</opti
    <para>
     Example:
 <screen>
-<prompt>=></> <userinput>SELECT x, sum(y) FROM test1 GROUP BY x HAVING sum(y) > 3;</>
+<prompt>=&gt;</> <userinput>SELECT x, sum(y) FROM test1 GROUP BY x HAVING sum(y) &gt; 3;</>
  x | sum
 ---+-----
  a |   4
  b |   5
 (2 rows)
 
-<prompt>=></> <userinput>SELECT x, sum(y) FROM test1 GROUP BY x HAVING x < 'c';</>
+<prompt>=&gt;</> <userinput>SELECT x, sum(y) FROM test1 GROUP BY x HAVING x &lt; 'c';</>
  x | sum
 ---+-----
  a |   4
@@ -922,9 +922,9 @@ SELECT <replaceable>select_list</replaceable> FROM ... <optional>WHERE ...</opti
 <programlisting>
 SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
     FROM products p LEFT JOIN sales s USING (product_id)
-    WHERE s.date > CURRENT_DATE - INTERVAL '4 weeks'
+    WHERE s.date &gt; CURRENT_DATE - INTERVAL '4 weeks'
     GROUP BY product_id, p.name, p.price, p.cost
-    HAVING sum(p.price * s.units) > 5000;
+    HAVING sum(p.price * s.units) &gt; 5000;
 </programlisting>
     In the example above, the <literal>WHERE</> clause is selecting
     rows by a column that is not grouped (the expression is only true for

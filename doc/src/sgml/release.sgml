@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.322 2005/01/22 22:06:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.323 2005/01/22 22:56:36 momjian Exp $
 -->
 
 <appendix id="release">
@@ -945,7 +945,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.322 2005/01/22 22:06:17 momjian
      </para>
      <para>
       Fixes improper failure of cases such as <literal>SELECT SUM(win)/SUM(lose)
-      ... GROUP BY ... HAVING SUM(lose) > 0</>.  This should work but formerly
+      ... GROUP BY ... HAVING SUM(lose) &gt; 0</>.  This should work but formerly
       could fail with divide-by-zero.
      </para>
     </listitem>
@@ -2776,7 +2776,7 @@ DROP SCHEMA information_schema CASCADE;
 <listitem><para>Force zero_damaged_pages to be on during recovery from WAL</para></listitem>
 <listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</quote></para></listitem>
 <listitem><para>Make <function>PQescapeBytea</function> and <function>byteaout</function> consistent with each other (Joe)</para></listitem>
-<listitem><para>Escape <type>bytea</type> output for bytes > 0x7e(Joe)</para>
+<listitem><para>Escape <type>bytea</type> output for bytes &gt; 0x7e(Joe)</para>
 <para>
   If different client encodings are used for <type>bytea</type> output and input, it
   is possible for <type>bytea</type> values to be corrupted by the differing
@@ -4609,7 +4609,7 @@ DROP SCHEMA information_schema CASCADE;
     <listitem><para>Allow libpq to compile with Borland C++ compiler (Lester Godwin, Karl Waclawek)</para></listitem>
     <listitem><para>Use our own version of <function>getopt_long()</function> if needed (Peter)</para></listitem>
     <listitem><para>Convert administration scripts to C (Peter)</para></listitem>
-    <listitem><para> Bison >= 1.85 is now required to build the <productname>PostgreSQL</> grammar, if building from CVS</para></listitem>
+    <listitem><para> Bison &gt;= 1.85 is now required to build the <productname>PostgreSQL</> grammar, if building from CVS</para></listitem>
     <listitem><para>Merge documentation into one book (Peter)</para></listitem>
     <listitem><para>Add Windows compatibility functions (Bruce)</para></listitem>
     <listitem><para>Allow client interfaces to compile under MinGW (Bruce)</para></listitem>
@@ -5450,7 +5450,7 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>Make cursors insensitive, meaning their contents do not change (Tom)</para></listitem>
 <listitem><para>Disable LIMIT #,# syntax; now only LIMIT # OFFSET # supported (Bruce)</para></listitem>
 <listitem><para>Increase identifier length to 63 (Neil, Bruce)</para></listitem>
-<listitem><para>UNION fixes for merging >= 3 columns of different lengths (Tom)</para></listitem>
+<listitem><para>UNION fixes for merging &gt;= 3 columns of different lengths (Tom)</para></listitem>
 <listitem><para>Add DEFAULT key word to INSERT, e.g., INSERT ... (..., DEFAULT, ...) (Rod)</para></listitem>
 <listitem><para>Allow views to have default values using ALTER COLUMN ... SET DEFAULT (Neil)</para></listitem>
 <listitem><para>Fail on INSERTs with column lists that don't supply all column values, e.g., INSERT INTO tab (col1, col2) VALUES ('val1');  (Rod)</para></listitem>
@@ -5533,7 +5533,7 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>New pg_settings table to view/modify GUC settings (Joe)</para></listitem>
 <listitem><para>Add smart quoting, portability improvements to <application>pg_dump</> output (Peter)</para></listitem>
 <listitem><para>Dump serial columns out as SERIAL (Tom)</para></listitem>
-<listitem><para>Enable large file support, >2G for <application>pg_dump</> (Peter, Philip Warner, Bruce)</para></listitem>
+<listitem><para>Enable large file support, &gt;2G for <application>pg_dump</> (Peter, Philip Warner, Bruce)</para></listitem>
 <listitem><para>Disallow TRUNCATE on tables that are involved in referential constraints (Rod)</para></listitem>
 <listitem><para>Have TRUNCATE also auto-truncate the toast table of the relation (Tom)</para></listitem>
 <listitem><para>Add clusterdb utility that will auto-cluster an entire database based on previous CLUSTER operations (Alvaro Herrera)</para></listitem>
@@ -5597,7 +5597,7 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>Add additional encodings: Korean (JOHAB), Thai (WIN874), Vietnamese (TCVN), Arabic (WIN1256), Simplified Chinese (GBK), Korean (UHC) (Eiji Tokuya)</para></listitem>
 <listitem><para>Enable locale support by default (Peter)</para></listitem>
 <listitem><para>Add locale variables (Peter)</para></listitem>
-<listitem><para>Escape byes >= 0x7f for multibyte in PQescapeBytea/PQunescapeBytea (Tatsuo)</para></listitem>
+<listitem><para>Escape byes &gt;= 0x7f for multibyte in PQescapeBytea/PQunescapeBytea (Tatsuo)</para></listitem>
 <listitem><para>Add locale awareness to regular expression character classes</para></listitem>
 <listitem><para>Enable multibyte support by default (Tatsuo)</para></listitem>
 <listitem><para>Add GB18030 multibyte support (Bill Huang)</para></listitem>
@@ -5967,7 +5967,7 @@ since <productname>PostgreSQL</productname> 7.1.
 <itemizedlist>
 <listitem><para>Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/pgSQL (Tom)</para></listitem>
 <listitem><para>Fix for compressed transaction log id wraparound (Tom)</para></listitem>
-<listitem><para>Fix PQescapeBytea/PQunescapeBytea so that they handle bytes > 0x7f (Tatsuo)</para></listitem>
+<listitem><para>Fix PQescapeBytea/PQunescapeBytea so that they handle bytes &gt; 0x7f (Tatsuo)</para></listitem>
 <listitem><para>Fix for psql and <application>pg_dump</> crashing when invoked with non-existent long options (Tatsuo)</para></listitem>
 <listitem><para>Fix crash when invoking geometric operators (Tom)</para></listitem>
 <listitem><para>Allow OPEN cursor(args) (Tom)</para></listitem>
@@ -7386,7 +7386,7 @@ Fix mismatched types in CREATE TABLE ... DEFAULT
 Fix SELECT * FROM pg_class where oid in (0,-1)
 Fix SELECT COUNT('asdf') FROM pg_class WHERE oid=12
 Prevent user who can create databases can modifying pg_database table (Peter E)
-Fix btree to give a useful elog when key > 1/2 (page - overhead) (Tom)
+Fix btree to give a useful elog when key &gt; 1/2 (page - overhead) (Tom)
 Fix INSERT of 0.0 into DECIMAL(4,4) field (Tom)
 
 Enhancements
@@ -7595,7 +7595,7 @@ Fewer fsync writes when fsync is not disabled (Tom)
 Improved LIKE optimizer estimates (Tom)
 Prevent fsync in SELECT-only queries (Vadim)
 Make index creation use psort code, because it is now faster (Tom)
-Allow creation of sort temp tables > 1 Gig
+Allow creation of sort temp tables &gt; 1 Gig
 
 Source Tree Changes
 -------------------
@@ -9225,7 +9225,7 @@ Check explicitly for points and polygons contained within polygons
         using an axis-crossing algorithm(Thomas)
 Add routine to convert circle-box(Thomas)
 Merge conflicting operators for different geometric data types(Thomas)
-Replace distance operator "<===>" with "&lt;-&gt;"(Thomas)
+Replace distance operator "&lt;===&gt;" with "&lt;-&gt;"(Thomas)
 Replace "above" operator "!^" with "&gt;^" and "below" operator "!|" with "&lt;^"(Thomas)
 Add routines for text trimming on both ends, substring, and string position(Thomas)
 Added conversion routines circle(box) and poly(circle)(Thomas)

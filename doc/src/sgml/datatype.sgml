@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.154 2005/01/17 18:47:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.155 2005/01/22 22:56:35 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -1645,7 +1645,7 @@ SELECT b, char_length(b) FROM test2;
          </row>
          <row>
           <entry><literal>04:05 PM</literal></entry>
-          <entry>same as 16:05; input hour must be <= 12</entry>
+          <entry>same as 16:05; input hour must be &lt;= 12</entry>
          </row>
          <row>
           <entry><literal>04:05:06.789-8</literal></entry>
@@ -2367,7 +2367,7 @@ SELECT * FROM test1 WHERE a;
         <entry><type>circle</type></entry>
         <entry>24 bytes</entry>
         <entry>Circle</entry>
-        <entry><(x,y),r> (center and radius)</entry>
+        <entry>&lt;(x,y),r&gt; (center and radius)</entry>
        </row>
       </tbody>
      </tgroup>

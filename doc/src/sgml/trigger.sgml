@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.40 2005/01/22 22:06:27 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.41 2005/01/22 22:56:36 momjian Exp $
 -->
 
  <chapter id="triggers">
@@ -572,13 +572,13 @@ trigf(PG_FUNCTION_ARGS)
     tupdesc = trigdata-&gt;tg_relation-&gt;rd_att;
 
     /* connect to SPI manager */
-    if ((ret = SPI_connect()) < 0)
+    if ((ret = SPI_connect()) &lt; 0)
         elog(INFO, "trigf (fired %s): SPI_connect returned %d", when, ret);
 
     /* get number of rows in table */
     ret = SPI_exec("SELECT count(*) FROM ttest", 0);
 
-    if (ret < 0)
+    if (ret &lt; 0)
         elog(NOTICE, "trigf (fired %s): SPI_exec returned %d", when, ret);
 
     /* count(*) returns int8, so be careful to convert */
@@ -622,57 +622,57 @@ CREATE TRIGGER tafter AFTER INSERT OR UPDATE OR DELETE ON ttest
    <para>
     Now you can test the operation of the trigger:
 <screen>
-=> INSERT INTO ttest VALUES (NULL);
+=&gt; INSERT INTO ttest VALUES (NULL);
 INFO:  trigf (fired before): there are 0 rows in ttest
 INSERT 0 0
 
 -- Insertion skipped and AFTER trigger is not fired
 
-=> SELECT * FROM ttest;
+=&gt; SELECT * FROM ttest;
  x
 ---
 (0 rows)
 
-=> INSERT INTO ttest VALUES (1);
+=&gt; INSERT INTO ttest VALUES (1);
 INFO:  trigf (fired before): there are 0 rows in ttest
 INFO:  trigf (fired after ): there are 1 rows in ttest
                                        ^^^^^^^^
                              remember what we said about visibility.
 INSERT 167793 1
-vac=> SELECT * FROM ttest;
+vac=&gt; SELECT * FROM ttest;
  x
 ---
  1
 (1 row)
 
-=> INSERT INTO ttest SELECT x * 2 FROM ttest;
+=&gt; INSERT INTO ttest SELECT x * 2 FROM ttest;
 INFO:  trigf (fired before): there are 1 rows in ttest
 INFO:  trigf (fired after ): there are 2 rows in ttest
                                        ^^^^^^
                              remember what we said about visibility.
 INSERT 167794 1
-=> SELECT * FROM ttest;
+=&gt; SELECT * FROM ttest;
  x
 ---
  1
  2
 (2 rows)
 
-=> UPDATE ttest SET x = NULL WHERE x = 2;
+=&gt; UPDATE ttest SET x = NULL WHERE x = 2;
 INFO:  trigf (fired before): there are 2 rows in ttest
 UPDATE 0
-=> UPDATE ttest SET x = 4 WHERE x = 2;
+=&gt; UPDATE ttest SET x = 4 WHERE x = 2;
 INFO:  trigf (fired before): there are 2 rows in ttest
 INFO:  trigf (fired after ): there are 2 rows in ttest
 UPDATE 1
-vac=> SELECT * FROM ttest;
+vac=&gt; SELECT * FROM ttest;
  x
 ---
  1
  4
 (2 rows)
 
-=> DELETE FROM ttest;
+=&gt; DELETE FROM ttest;
 INFO:  trigf (fired before): there are 2 rows in ttest
 INFO:  trigf (fired after ): there are 1 rows in ttest
 INFO:  trigf (fired before): there are 1 rows in ttest
@@ -680,7 +680,7 @@ INFO:  trigf (fired after ): there are 0 rows in ttest
                                        ^^^^^^
                              remember what we said about visibility.
 DELETE 2
-=> SELECT * FROM ttest;
+=&gt; SELECT * FROM ttest;
  x
 ---
 (0 rows)

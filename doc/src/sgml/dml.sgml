@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.9 2004/12/23 05:37:39 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.10 2005/01/22 22:56:35 momjian Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -191,7 +191,7 @@ UPDATE products SET price = price * 1.10;
    <literal>UPDATE</literal> command by listing more than one
    assignment in the <literal>SET</literal> clause.  For example:
 <programlisting>
-UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a > 0;
+UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a &gt; 0;
 </programlisting>
   </para>
  </sect1>

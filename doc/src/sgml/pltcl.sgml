@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.33 2004/12/30 21:45:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.34 2005/01/22 22:56:36 momjian Exp $
 -->
 
  <chapter id="pltcl">
@@ -102,7 +102,7 @@ $$ LANGUAGE pltcl;
 
 <programlisting>
 CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS $$
-    if {$1 > $2} {return $1}
+    if {$1 &gt; $2} {return $1}
     return $2
 $$ LANGUAGE pltcl STRICT;
 </programlisting>
@@ -129,7 +129,7 @@ CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS $$
         return $2
     }
     if {[argisnull 2]} { return $1 }
-    if {$1 > $2} {return $1}
+    if {$1 &gt; $2} {return $1}
     return $2
 $$ LANGUAGE pltcl;
 </programlisting>
@@ -156,10 +156,10 @@ CREATE TABLE employee (
 );
 
 CREATE FUNCTION overpaid(employee) RETURNS boolean AS $$
-    if {200000.0 < $1(salary)} {
+    if {200000.0 &lt; $1(salary)} {
         return "t"
     }
-    if {$1(age) < 30 && 100000.0 < $1(salary)} {
+    if {$1(age) &lt; 30 && 100000.0 &lt; $1(salary)} {
         return "t"
     }
     return "f"
