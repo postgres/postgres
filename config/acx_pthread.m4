@@ -89,26 +89,29 @@ for flag in $acx_pthread_flags; do
 
                 -*)
                 AC_MSG_CHECKING([whether pthreads work with $flag])
-                PTHREAD_CFLAGS="$flag"
+                tryPTHREAD_CFLAGS="$flag"
                 ;;
 
                 pthread-config)
+                # skip this if we already have flags defined, for PostgreSQL
+                if test x"$PTHREAD_CFLAGS" != x -o x"$PTHREAD_LIBS" != x; then continue; fi
                 AC_CHECK_PROG(acx_pthread_config, pthread-config, yes, no)
                 if test x"$acx_pthread_config" = xno; then continue; fi
-                PTHREAD_CFLAGS="`pthread-config --cflags`"
-                PTHREAD_LIBS="`pthread-config --ldflags` `pthread-config --libs`"
+                tryPTHREAD_CFLAGS="`pthread-config --cflags`"
+                tryPTHREAD_LIBS="`pthread-config --ldflags` `pthread-config --libs`"
+                fi
                 ;;
 
                 *)
                 AC_MSG_CHECKING([for the pthreads library -l$flag])
-                PTHREAD_LIBS="-l$flag"
+                tryPTHREAD_LIBS="-l$flag"
                 ;;
         esac
 
         save_LIBS="$LIBS"
         save_CFLAGS="$CFLAGS"
-        LIBS="$PTHREAD_LIBS $LIBS"
-        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+        LIBS="$tryPTHREAD_LIBS $PTHREAD_LIBS $LIBS"
+        CFLAGS="$CFLAGS $PTHREAD_CFLAGS $tryPTHREAD_CFLAGS"
 
         # Check for various functions.  We must include pthread.h,
         # since some functions may be macros.  (On the Sequent, we
@@ -130,11 +133,13 @@ for flag in $acx_pthread_flags; do
 
         AC_MSG_RESULT($acx_pthread_ok)
         if test "x$acx_pthread_ok" = xyes; then
-                break;
+            # we continue with more flags because Linux needs -lpthread
+            # for libpq builds on PostgreSQL.  The test above only
+            # tests for building binaries, not shared libraries.
+            PTHREAD_LIBS=" $tryPTHREAD_LIBS $PTHREAD_LIBS"
+            PTHREAD_CFLAGS="$PTHREAD_CFLAGS $tryPTHREAD_CFLAGS"
         fi
 
-        PTHREAD_LIBS=""
-        PTHREAD_CFLAGS=""
 done
 fi
 
