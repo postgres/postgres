@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.31 1998/10/02 05:10:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.32 1998/10/02 05:31:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ regprocin(char *pro_name_or_oid)
 			if (HeapTupleIsValid(proctup))
 				result = (RegProcedure) proctup->t_oid;
 			else
-				elog(ERROR, "No such procedure with oid %s", pro_name_or_oid);
+				elog(ERROR, "No procedure with oid %s", pro_name_or_oid);
 		}
 		else
 		{
@@ -105,9 +105,9 @@ regprocin(char *pro_name_or_oid)
 			index_close(idesc);
 
 			if (matches > 1)
-				elog(ERROR, "There is more than one %s procedure, supply oid in quotes.", pro_name_or_oid);
+				elog(ERROR, "There is more than one procedure named %s.\n\tSupply the pg_proc oid inside single quotes.", pro_name_or_oid);
 			else if (matches == 0)
-				elog(ERROR, "No such procedure %s", pro_name_or_oid);
+				elog(ERROR, "No procedure with name %s", pro_name_or_oid);
 		}
 	}
 	else
