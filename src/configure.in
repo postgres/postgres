@@ -800,6 +800,7 @@ if test "$USE_TCL" = "true"; then
 		USE_TCL=
 	else
 		TCL_LIB=-l$TCL_LIB
+		AC_SUBST(TCL_LIB)
 	fi
 fi
 
@@ -883,6 +884,7 @@ then
 		USE_TCL=
 	else
 		TK_LIB=-l$TK_LIB
+		AC_SUBST(TK_LIB)
 	fi
 
 	LIBS="$ice_save_LIBS"
