@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.46 2003/06/11 05:13:11 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.47 2003/06/11 16:29:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,11 +72,8 @@ int optreset;
 
 /* Forward decls */
 static void usage(const char *progname);
-static char *_cleanupName(char *name);
-static char *_cleanupFuncName(char *name);
 
 typedef struct option optType;
-
 
 int
 main(int argc, char **argv)
@@ -220,17 +217,17 @@ main(int argc, char **argv)
 			case 'P':			/* Function */
 				opts->selTypes = 1;
 				opts->selFunction = 1;
-				opts->functionNames = _cleanupFuncName(optarg);
+				opts->functionNames = strdup(optarg);
 				break;
 			case 'I':			/* Index */
 				opts->selTypes = 1;
 				opts->selIndex = 1;
-				opts->indexNames = _cleanupName(optarg);
+				opts->indexNames = strdup(optarg);
 				break;
 			case 'T':			/* Trigger */
 				opts->selTypes = 1;
 				opts->selTrigger = 1;
-				opts->triggerNames = _cleanupName(optarg);
+				opts->triggerNames = strdup(optarg);
 				break;
 			case 's':			/* dump schema only */
 				opts->schemaOnly = 1;
@@ -242,7 +239,7 @@ main(int argc, char **argv)
 			case 't':			/* Dump data for this table only */
 				opts->selTypes = 1;
 				opts->selTable = 1;
-				opts->tableNames = _cleanupName(optarg);
+				opts->tableNames = strdup(optarg);
 				break;
 
 			case 'u':
@@ -416,78 +413,4 @@ usage(const char *progname)
 
 	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
-}
-
-
-static char *
-_cleanupName(char *name)
-{
-	int			i;
-
-	if (!name || !name[0])
-		return NULL;
-
-	name = strdup(name);
-
-	if (name[0] == '"')
-	{
-		strcpy(name, &name[1]);
-		if (name[0] && *(name + strlen(name) - 1) == '"')
-			*(name + strlen(name) - 1) = '\0';
-	}
-	/* otherwise, convert table name to lowercase... */
-	else
-	{
-		for (i = 0; name[i]; i++)
-			if (isupper((unsigned char) name[i]))
-				name[i] = tolower((unsigned char) name[i]);
-	}
-	return name;
-}
-
-
-static char *
-_cleanupFuncName(char *name)
-{
-	int			i;
-	char	   *ch;
-
-	if (!name || !name[0])
-		return NULL;
-
-	name = strdup(name);
-
-	if (name[0] == '"')
-	{
-		strcpy(name, &name[1]);
-		if (strchr(name, '"') != NULL)
-			strcpy(strchr(name, '"'), strchr(name, '"') + 1);
-	}
-	/* otherwise, convert function name to lowercase... */
-	else
-	{
-		for (i = 0; name[i]; i++)
-			if (isupper((unsigned char) name[i]))
-				name[i] = tolower((unsigned char) name[i]);
-	}
-
-	/* strip out any space before paren */
-	ch = strchr(name, '(');
-	while (ch && ch > name && *(ch - 1) == ' ')
-	{
-		strcpy(ch - 1, ch);
-		ch--;
-	}
-
-	/*
-	 * Strip out spaces after commas in parameter list. We can't remove
-	 * all spaces because some types, like 'double precision' have spaces.
-	 */
-	if ((ch = strchr(name, '(')) != NULL)
-	{
-		while ((ch = strstr(ch, ", ")) != NULL)
-			strcpy(ch + 1, ch + 2);
-	}
-
-	return name;
 }

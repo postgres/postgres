@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.332 2003/06/11 05:13:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.333 2003/06/11 16:29:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,6 @@ typedef struct _dumpContext
 } DumpContext;
 
 static void help(const char *progname);
-static void formatIdentifierArg(char *identifier);
 static NamespaceInfo *findNamespace(const char *nsoid, const char *objoid);
 static void dumpClasses(const TableInfo *tblinfo, const int numTables,
 			Archive *fout, const bool oids);
@@ -311,7 +310,6 @@ main(int argc, char **argv)
 
 			case 'n':			/* Dump data for this schema only */
 				selectSchemaName = strdup(optarg);
-				formatIdentifierArg(selectSchemaName);
 				break;
 
 			case 'o':			/* Dump oids */
@@ -341,17 +339,6 @@ main(int argc, char **argv)
 
 			case 't':			/* Dump data for this table only */
 				selectTableName = strdup(optarg);
-
-				/*
-				 * '*' is a special case meaning ALL tables, but
-				 * only if unquoted
-				 */
-				if (selectTableName[0] != '"' &&
-					strcmp(selectTableName, "*") == 0)
-					selectTableName[0] = '\0';
-				else
-					formatIdentifierArg(selectTableName);
-
 				break;
 
 			case 'u':
@@ -436,10 +423,10 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (outputBlobs && selectTableName != NULL && strlen(selectTableName) > 0)
+	if (outputBlobs && selectTableName != NULL)
 	{
 		write_msg(NULL, "Large object output is not supported for a single table.\n");
-		write_msg(NULL, "Use all tables or a full dump instead.\n");
+		write_msg(NULL, "Use a full dump instead.\n");
 		exit(1);
 	}
 
@@ -447,13 +434,6 @@ main(int argc, char **argv)
 	{
 		write_msg(NULL, "Large object output is not supported for a single schema.\n");
 		write_msg(NULL, "Use a full dump instead.\n");
-		exit(1);
-	}
-
-	if (selectTableName != NULL && selectSchemaName != NULL)
-	{
-		write_msg(NULL, "Single table and single schema dumps cannot be used simultaneously.\n");
-		write_msg(NULL, "Use one option or the other, not both.\n");
 		exit(1);
 	}
 
@@ -676,7 +656,7 @@ help(const char *progname)
 	printf(_("  -C, --create             include commands to create database in dump\n"));
 	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
-	printf(_("  -n, --schema=SCHEMA      dump this schema only\n"));
+	printf(_("  -n, --schema=SCHEMA      dump the named schema only\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
 	printf(_("  -O, --no-owner           do not output \\connect commands in plain\n"
 			 "                           text format\n"));
@@ -685,7 +665,7 @@ help(const char *progname)
 	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in\n"
 			 "                           plain text format\n"));
-	printf(_("  -t, --table=TABLE        dump this table only (* for all)\n"));
+	printf(_("  -t, --table=TABLE        dump the named table only\n"));
 	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
 	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
 			 "                           output SET SESSION AUTHORIZATION commands rather\n"
@@ -702,38 +682,6 @@ help(const char *progname)
 	printf(_("\nIf no database name is not supplied, then the PGDATABASE environment\n"
 			 "variable value is used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
-}
-
-/*
- * Accepts an identifier as specified as a command-line argument, and
- * converts it into a form acceptable to the PostgreSQL backend. The
- * input string is modified in-place.
- */
-static void
-formatIdentifierArg(char *identifier)
-{
-	/*
-	 * quoted string? Then strip quotes and preserve
-	 * case...
-	 */
-	if (identifier[0] == '"')
-	{
-		char	   *endptr;
-
-		endptr = identifier + strlen(identifier) - 1;
-		if (*endptr == '"')
-			*endptr = '\0';
-		strcpy(identifier, &identifier[1]);
-	}
-	else
-	{
-		int i;
-
-		/* otherwise, convert identifier name to lowercase... */
-		for (i = 0; identifier[i]; i++)
-			if (isupper((unsigned char) identifier[i]))
-				identifier[i] = tolower((unsigned char) identifier[i]);
-	}
 }
 
 void
@@ -785,12 +733,18 @@ selectDumpableTable(TableInfo *tbinfo)
 	 * tablename has been specified, dump matching table name; else, do
 	 * not dump.
 	 */
+	tbinfo->dump = false;
 	if (tbinfo->relnamespace->dump)
 		tbinfo->dump = true;
-	else if (selectTableName != NULL)
-		tbinfo->dump = (strcmp(tbinfo->relname, selectTableName) == 0);
-	else
-		tbinfo->dump = false;
+	else if (selectTableName != NULL &&
+			 strcmp(tbinfo->relname, selectTableName) == 0)
+	{
+		/* If both -s and -t specified, must match both to dump */
+		if (selectSchemaName == NULL)
+			tbinfo->dump = true;
+		else if (strcmp(tbinfo->relnamespace->nspname, selectSchemaName) == 0)
+			tbinfo->dump = true;
+	}
 }
 
 /*

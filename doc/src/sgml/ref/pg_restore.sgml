@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.38 2003/03/25 16:15:43 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.39 2003/06/11 16:29:42 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -269,7 +269,9 @@
       <term><option>--function=<replaceable class="parameter">function-name(argtype [, ...])</replaceable></option></term>
       <listitem>
        <para>
-        Restore the named function only.
+        Restore the named function only.  Be careful to spell the function
+	name and arguments exactly as they appear in the dump file's table
+	of contents.
        </para>
       </listitem>
      </varlistentry>
@@ -318,7 +320,7 @@
       <term><option>--schema-only</option></term>
       <listitem>
        <para>
-        Restore only the schema (data defintions), not the data.
+        Restore only the schema (data definitions), not the data.
         Sequence values will be reset.
        </para>
       </listitem>
@@ -557,7 +559,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
   <para>
    Once restored, it is wise to run <command>ANALYZE</> on each
-   restored object so the optimizer has useful statistics.
+   restored table so the optimizer has useful statistics.
   </para>
 
  </refsect1>

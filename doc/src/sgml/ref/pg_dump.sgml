@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.61 2003/04/17 15:34:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.62 2003/06/11 16:29:42 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -287,9 +287,9 @@ PostgreSQL documentation
        <note>
         <para>
          In this mode, <application>pg_dump</application> makes no
-         attempt to dump any other database objects that may depend
-         upon objects in the selected schema. Therefore, there is no
-         guarantee that the results of a single schema dump can be
+         attempt to dump any other database objects that objects in the
+	 selected schema may depend upon. Therefore, there is no
+         guarantee that the results of a single-schema dump can be
          successfully restored by themselves into a clean database.
         </para>
        </note>
@@ -394,18 +394,18 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Dump data for <replaceable class="parameter">table</replaceable>
-	only. If <literal>*</literal> is specified, all tables in the
-	specified database will be dumped. It is possible for there to be
+	only. It is possible for there to be
 	multiple tables with the same name in different schemas; if that
-	is the case, all matching tables will be dumped.
+	is the case, all matching tables will be dumped.  Specify both
+	<option>--schema</> and <option>--table</> to select just one table.
        </para>
 
        <note>
         <para>
          In this mode, <application>pg_dump</application> makes no
-         attempt to dump any other database objects that may depend
-         upon the selected table. Therefore, there is no guarantee
-         that the results of a single table dump can be successfully
+         attempt to dump any other database objects that the selected table
+	 may depend upon. Therefore, there is no guarantee
+         that the results of a single-table dump can be successfully
          restored by themselves into a clean database.
         </para>
        </note>
@@ -652,7 +652,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
   <para>
    Once restored, it is wise to run <command>ANALYZE</> on each
-   restored object so the optimizer has useful statistics.
+   restored table so the optimizer has useful statistics.
   </para>
 
  </refsect1>
