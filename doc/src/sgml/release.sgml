@@ -1,12 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.61 2000/10/05 19:48:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.62 2000/11/10 19:41:26 momjian Exp $
 -->
 
  <chapter id="release">
   <title>Release Notes</title>
 
-  <sect1 id="release-7-1">
-   <title>Release 7.1</title>
+  <sect1>
+   <title>Release 7.0.3</title>
    <!--
   <docinfo>
   <authorgroup>
@@ -15,33 +15,21 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.61 2000/10/05 19:48:16 mom
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>2000-07-13</date>
+  <date>2000-11-11</date>
   </docinfo>
    -->
 
    <para>
-    Release date 2000-09-01.
-    Major changes in this release:
-
-    <variablelist>
-     <varlistentry>
-      <term>
-       Nested block comments
-      </term>
-      <listitem>
-       <para>
-	SQL99 defines C-style block comments, and allows them to be nested.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
+    Release date 2000-11-04. This has a variety of fixes from 7.0.2.
    </para>
 
+
    <sect2>
-    <title>Migration to v7.1</title>
+    <title>Migration to v7.0.3</title>
 
     <para>
-     A dump/restore is required for those running any previous version.
+     A dump/restore is <emphasis>not</emphasis> required for those running
+     v7.0.*.
     </para>
    </sect2>
 
@@ -50,14 +38,49 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.61 2000/10/05 19:48:16 mom
 
     <para>
      <programlisting>
-Implement WITHOUT TIME ZONE date/time type qualifier per SQL99 (Thomas)
-Implement nested block comments per SQL99 (Thomas)
-Implement SET SESSION CHARACTERISTICS per SQL99 (Thomas)
-Set session-wide transaction mode READ COMMITTED or SERIALIZABLE (Thomas)
+Jdbc fixes (Peter)
+Large object fix (Tom)
+Fix lean in COPY WITH OIDS leak (Tom)
+Fix backwards-index-scan (Tom)
+Fix SELECT ... FOR UPDATE so it checks for duplicate keys (Hiroshi)
+Add --enable-syslog to configure (Marc)
+Fix abort transaction at backend exit in rare cases (Tom)
+Fix for psql \l+ when multi-byte enabled (Tatsuo)
+Allow PL/pgSQL to accept non ascii identifiers (Tatsuo)
+Make vacuum always flush buffers (Tom)
+Fix to allow cancel while waiting for a lock (Hiroshi)
+Fix for memory aloocation problem in user authentication code (Tom)
+Remove bogus use of int4out() (Tom)
+Fixes for multiple subqueries in COALESCE or BETWEEN (Tom)
+Fix for failure of triggers on heap open in certain cases (Jeroen van
+    Vianen)
+Fix for erroneous selectivity of not-equals (Tom)
+Fix for erroneous use of strcmp() (Tom)
+Fix for bug where storage manager accesses items beyond end of file
+    (Tom)
+Fix to include kernel errno message in all smgr elog messages (Tom)
+Fix for '.' not in PATH at build time (SL Baur)
+Fix for out-of-file-descriptors error (Tom)
+Fix to make pg_dump dump 'iscachable' flag for functions (Tom)
+Fix for subselect in targetlist of Append node (Tom)
+Fix for mergejoin plans (Tom)
+Fix TRUNCATE failure on relations with indexes (Tom)
+Avoid database-wide restart on write error (Hiroshi)
+Fix nodeMaterial to honor chgParam by recomputing its output (Tom)
+Fix VACUUM problem with moving chain of update tuples when source and
+    destination of a tuple lie on the same page (Tom)
+Fix user.c CommandCounterIncrement (Tom)
+Fix for AM/PM boundary problem in to_char() (Karel Zak)
+Fix TIME aggregate handling (Tom)
+Fix to_char() to avoid coredump on NULL input (Tom)
+Buffer fix (Tom)
+Fix for inserting/copying longer multibyte strings into char() data
+    types (Tatsuo)
      </programlisting>
     </para>
    </sect2>
   </sect1>
+
 
   <sect1 id="release-7-0-2">
    <title>Release 7.0.2</title>
