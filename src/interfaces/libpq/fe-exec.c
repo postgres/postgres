@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.153.2.1 2003/11/30 20:53:43 joe Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.153.2.2 2003/12/28 17:29:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1234,6 +1234,9 @@ PQexecStart(PGconn *conn)
 				return false;
 			}
 		}
+		/* check for loss of connection, too */
+		if (conn->status == CONNECTION_BAD)
+			return false;
 	}
 
 	/* OK to send a command */
@@ -1256,6 +1259,8 @@ PQexecFinish(PGconn *conn)
 	 *
 	 * We have to stop if we see copy in/out, however. We will resume parsing
 	 * after application performs the data transfer.
+	 *
+	 * Also stop if the connection is lost (else we'll loop infinitely).
 	 */
 	lastResult = NULL;
 	while ((result = PQgetResult(conn)) != NULL)
@@ -1281,7 +1286,8 @@ PQexecFinish(PGconn *conn)
 		}
 		lastResult = result;
 		if (result->resultStatus == PGRES_COPY_IN ||
-			result->resultStatus == PGRES_COPY_OUT)
+			result->resultStatus == PGRES_COPY_OUT ||
+			conn->status == CONNECTION_BAD)
 			break;
 	}
 
