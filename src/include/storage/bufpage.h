@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.50 2002/07/02 06:18:57 momjian Exp $
+ * $Id: bufpage.h,v 1.51 2002/08/06 19:37:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,11 +122,6 @@ typedef struct PageHeaderData
 
 typedef PageHeaderData *PageHeader;
 
-typedef enum
-{
-	ShufflePageManagerMode,
-	OverwritePageManagerMode
-} PageManagerMode;
 
 /* ----------------------------------------------------------------
  *						page support macros
