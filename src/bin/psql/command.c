@@ -117,6 +117,8 @@ HandleSlashCmds(PsqlSettings *pset,
 		my_line[blank_loc] = '\0';
 	}
 
+    options[0] = NULL;
+
 	if (options_string)
 	{
 		char		quote;
