@@ -38,6 +38,12 @@ exec sql end declare section;
 
 	exec sql create unique index number2 on perftest2(number);
 
+	exec sql commit;
+
+	exec sql set autocommit to on;
+
+	exec sql begin transaction;
+
 	gettimeofday(&tvs, NULL);
 
 	for (i = 0;i < 1407; i++)
@@ -49,13 +55,15 @@ exec sql end declare section;
 		sprintf(text, "%ld", i);
 		exec sql insert into perftest1(number, ascii) values (:i, :text);
 		exec sql insert into perftest2(number, next_number) values (:i, :i+1);
-
-		exec sql commit;
 	}
+
+	exec sql commit;
 
 	gettimeofday(&tve, NULL);
 
 	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "insert");
+
+	exec sql begin transaction;
 
 	gettimeofday(&tvs, NULL);
 
@@ -66,13 +74,15 @@ exec sql end declare section;
 		exec sql end declare section;
 
 		exec sql select ascii into :text from perftest1 where number = :i;
-
-		exec sql commit;
 	}
+
+	exec sql commit;
 
 	gettimeofday(&tve, NULL);
 
 	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "selection&projection");
+
+	exec sql begin transaction;
 
 	gettimeofday(&tvs, NULL);
 
@@ -83,13 +93,15 @@ exec sql end declare section;
 		exec sql end declare section;
 
 		exec sql select perftest1.ascii into :text from perftest1, perftest2 where perftest1.number = perftest2.number and perftest2.number = :i;
-
-		exec sql commit;
 	}
+
+	exec sql commit;
 
 	gettimeofday(&tve, NULL);
 
 	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "join");
+
+	exec sql begin transaction;
 
 	gettimeofday(&tvs, NULL);
 
@@ -101,6 +113,8 @@ exec sql end declare section;
 
 	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "update");
 
+	exec sql begin transaction;
+
 	gettimeofday(&tvs, NULL);
 
 	exec sql delete from perftest2;
@@ -110,6 +124,8 @@ exec sql end declare section;
 	gettimeofday(&tve, NULL);
 
 	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "delete");
+
+	exec sql set autocommit = off;
 
 	exec sql drop index number2;
 

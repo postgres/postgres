@@ -13,18 +13,16 @@ stderr. Instead it should be listed as a warning.
 The error handling has to be improved by adding additional error-rules to
 the parser.
 
-it would be nice to be able to use :var[:index] as cvariable
+it would be nice to be able to use :var[:index] as cvariable for an array var
+
+How can one insert arrays from c variables?
 
 support for dynamic SQL with unknown number of variables with DESCRIPTORS
-
-The line numbering is not exact.
 
 What happens to the output variable during read if there was an
 indicator-error? 
 
 Add a semantic check level, e.g. check if a table really exists.
-
-How can one insert arrays from c variables?
 
 Missing statements:
  - exec sql ifdef

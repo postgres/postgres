@@ -15,7 +15,6 @@
 #include "mb/pg_wchar.h"
 #endif
 
-#define STRUCT_DEPTH 128
 #define EMPTY make_str("")
 
 /*
@@ -27,6 +26,7 @@ static char	*connection = NULL;
 static int      QueryIsRule = 0, ForUpdateNotAllowed = 0, FoundInto = 0;
 static struct this_type actual_type[STRUCT_DEPTH];
 static char     *actual_storage[STRUCT_DEPTH];
+static char     *actual_startline[STRUCT_DEPTH];
 
 /* temporarily store struct members while creating the data structure */
 struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = { NULL };
@@ -69,7 +69,7 @@ void
 output_line_number()
 {
     if (input_filename)
-       fprintf(yyout, "\n#line %d \"%s\"\n", yylineno + 1, input_filename);
+       fprintf(yyout, "\n#line %d \"%s\"\n", yylineno, input_filename);
 }
 
 static void
@@ -83,7 +83,7 @@ output_simple_statement(char *cmd)
 /*
  * store the whenever action here
  */
-static struct when when_error, when_nf, when_warn;
+struct when when_error, when_nf, when_warn;
 
 static void
 print_action(struct when *w)
@@ -479,6 +479,20 @@ make_name(void)
 	return(name);
 }
 
+static char *
+hashline_number()
+{
+    if (input_filename)
+    {
+	char* line = mm_alloc(strlen("\n#line %d \"%s\"\n") + 21 + strlen(input_filename));
+	sprintf(line, "\n#line %d \"%s\"\n", yylineno, input_filename);
+
+	return line;
+    }
+
+    return EMPTY;
+}
+
 static void
 output_statement(char * stmt, int mode)
 {
@@ -742,8 +756,8 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    file_name AexprConst ParamNo TypeId com_expr
 %type  <str>	in_expr_nodes a_expr b_expr TruncateStmt CommentStmt
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
-%type  <str>	position_list substr_list substr_from
-%type  <str>	trim_list in_expr substr_for attr attrs
+%type  <str>	position_list substr_list substr_from alter_column_action
+%type  <str>	trim_list in_expr substr_for attr attrs drop_behavior
 %type  <str>	Typename SimpleTypename Generic Numeric generic opt_float opt_numeric
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
@@ -751,13 +765,13 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	SelectStmt SubSelect result OptTemp OptTempType OptTempScope
 %type  <str>	opt_table opt_all opt_unique sort_clause sortby_list
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
-%type  <str>	group_clause having_clause from_clause 
+%type  <str>	group_clause having_clause from_clause
 %type  <str>	table_list join_outer where_clause relation_expr sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
 %type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt copy_null
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
-%type  <str>    opt_with_copy FetchStmt opt_direction fetch_how_many opt_portal_name
+%type  <str>    opt_with_copy FetchStmt direction fetch_how_many from_in
 %type  <str>    ClosePortalStmt DropStmt VacuumStmt opt_verbose
 %type  <str>    opt_analyze opt_va_list va_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_type opt_class access_method_clause
@@ -771,16 +785,17 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt
 %type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
-%type  <str>    VariableResetStmt AddAttrStmt alter_clause DropUserStmt
+%type  <str>    VariableResetStmt AlterTableStmt DropUserStmt
 %type  <str>    user_passwd_clause user_createdb_clause opt_trans
-%type  <str>    user_createuser_clause user_group_list user_group_clause
+%type  <str>    user_createuser_clause user_list user_group_clause
 %type  <str>    CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>    OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
 %type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt PLangTrusted
 %type  <str>    CreatePLangStmt IntegerOnly TriggerFuncArgs TriggerFuncArg
-%type  <str>    ViewStmt LoadStmt CreatedbStmt opt_database1 opt_database2 location
-%type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt encoding
+%type  <str>    ViewStmt LoadStmt CreatedbStmt createdb_opt_encoding
+%type  <str>	createdb_opt_location opt_encoding AlterTableStmt
+%type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
@@ -808,7 +823,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	enum_type civariableonly ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar sql_variable_declarations
 %type  <str>	sql_declaration sql_variable_list sql_variable opt_at
-%type  <str>    struct_type s_struct declaration variable_declarations
+%type  <str>    struct_type s_struct declaration declarations variable_declarations
 %type  <str>    s_struct s_union union_type ECPGSetAutocommit on_off
 
 %type  <type_enum> simple_type varchar_type
@@ -836,7 +851,7 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 
 opt_at:	SQL_AT connection_target	{ connection = $2; }
 
-stmt:  AddAttrStmt			{ output_statement($1, 0); }
+stmt:  AlterTableStmt			{ output_statement($1, 0); }
 		| AlterGroupStmt	{ output_statement($1, 0); }
 		| AlterUserStmt		{ output_statement($1, 0); }
 		| ClosePortalStmt	{ output_statement($1, 0); }
@@ -1033,15 +1048,14 @@ CreateUserStmt: CREATE USER UserId
  *****************************************************************************/
 
 AlterUserStmt:  ALTER USER UserId user_createdb_clause
-		user_createuser_clause user_group_clause user_valid_clause
+		user_createuser_clause user_valid_clause
 				{
-					$$ = cat_str(6, make_str("alter user"), $3, $4, $5, $6, $7);
+					$$ = cat_str(5, make_str("alter user"), $3, $4, $5, $6);
 				}
-		|ALTER USER UserId WITH sysid_clause user_passwd_clause
-		user_createdb_clause user_createuser_clause user_group_clause
-		user_valid_clause
+		|ALTER USER UserId WITH PASSWORD Sconst
+		user_createdb_clause user_createuser_clause user_valid_clause
 				{
-					$$ = cat_str(9, make_str("alter user"), $3, make_str("with"), $5, $6, $7, $8, $9, $10);
+					$$ = cat_str(7, make_str("alter user"), $3, make_str("with password"), $6, $7, $8, $9);
 				}
 		;
 
@@ -1052,17 +1066,20 @@ AlterUserStmt:  ALTER USER UserId user_createdb_clause
  *
  *****************************************************************************/
 
-DropUserStmt:  DROP USER UserId
+DropUserStmt:  DROP USER user_list
 				{
 					$$ = cat2_str(make_str("drop user"), $3);
 				}
 		;
 
-user_passwd_clause:  PASSWORD UserId	{ $$ = cat2_str(make_str("password") , $2); }
+user_passwd_clause:  PASSWORD Sconst	{ $$ = cat2_str(make_str("password") , $2); }
 			| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
-sysid_clause:	SYSID Iconst		{ $$ = cat2_str(make_str("sysid"), $2); }
+sysid_clause:	SYSID Iconst		{ if (atoi($2) <= 0)
+						mmerror(ET_ERROR, "sysid must be positive");
+
+					  $$ = cat2_str(make_str("sysid"), $2); }
 			| /*EMPTY*/     { $$ = EMPTY; }
                 ;
 
@@ -1088,7 +1105,7 @@ user_createuser_clause:  CREATEUSER
 			| /*EMPTY*/		{ $$ = NULL; }
 		;
 
-user_group_list:  user_group_list ',' UserId
+user_list:  user_list ',' UserId
 				{
 					$$ = cat_str(3, $1, make_str(","), $3);
 				}
@@ -1098,7 +1115,7 @@ user_group_list:  user_group_list ',' UserId
 				}
 		;
 
-user_group_clause:  IN GROUP user_group_list
+user_group_clause:  IN GROUP user_list
 			{
 				$$ = cat2_str(make_str("in group"), $3); 
 			}
@@ -1126,7 +1143,7 @@ CreateGroupStmt: CREATE GROUP UserId
                  }
                 ;
 
-users_in_new_group_clause:  USER user_group_list   { $$ = cat2_str(make_str("user"), $2); }
+users_in_new_group_clause:  USER user_list   { $$ = cat2_str(make_str("user"), $2); }
                             | /* EMPTY */          { $$ = EMPTY; }
                ;
 
@@ -1137,17 +1154,12 @@ users_in_new_group_clause:  USER user_group_list   { $$ = cat2_str(make_str("use
  *
  *
  *****************************************************************************/
-AlterGroupStmt: ALTER GROUP UserId WITH SYSID Iconst
-                {
-			$$ = cat_str(4, make_str("alter group"), $3, make_str("with sysid"), $6);
-                }
-                |
-                ALTER GROUP UserId ADD USER user_group_list
+AlterGroupStmt: ALTER GROUP UserId ADD USER user_list
                 {
 			$$ = cat_str(4, make_str("alter group"), $3, make_str("add user"), $6);
                 }
                 |
-                ALTER GROUP UserId DROP USER user_group_list
+                ALTER GROUP UserId DROP USER user_list
                 {
 			$$ = cat_str(4, make_str("alter group"), $3, make_str("drop user"), $6);
                 }
@@ -1191,12 +1203,12 @@ VariableSetStmt:  SET ColId TO var_value
 				{
 					$$ = cat2_str(make_str("set transaction isolation level"), $5);
 				}
-		| SET NAMES encoding
+		| SET NAMES opt_encoding
                                 {
 #ifdef MULTIBYTE
 					$$ = cat2_str(make_str("set names"), $3);
 #else
-                                        mmerror(ET_ERROR, "SET NAMES is not supported");
+                                        mmerror(ET_ERROR, "SET NAMES is not supported.");
 #endif
                                 }
                 ;
@@ -1213,6 +1225,11 @@ var_value:  Sconst			{ $$ = $1; }
 zone_value:  Sconst			{ $$ = $1; }
 		| DEFAULT			{ $$ = make_str("default"); }
 		| LOCAL				{ $$ = make_str("local"); }
+		;
+
+opt_encoding:	Sconst	 	{ $$ = $1; }
+		| DEFAULT       { $$ = make_str("default"); }
+		| /*EMPTY*/     { $$ = EMPTY; }
 		;
 
 VariableShowStmt:  SHOW ColId
@@ -1283,33 +1300,50 @@ constraints_set_mode:  DEFERRED
 /*****************************************************************************
  *
  *		QUERY :
- *				addattr ( attr1 = type1 .. attrn = typen ) to <relname> [*]
+ *
+ *	ALTER TABLE variations
  *
  *****************************************************************************/
 
-AddAttrStmt:  ALTER TABLE relation_name opt_inh_star alter_clause
-				{
-					$$ = cat_str(4, make_str("alter table"), $3, $4, $5);
-				}
+AlterTableStmt:
+/* ALTER TABLE <name> ADD [COLUMN] <coldef> */
+        ALTER TABLE relation_name opt_inh_star ADD opt_column columnDef
+		{
+			$$ = cat_str(5, make_str("alter table"), $3, $4, make_str("add"), $6, $7);
+		}
+/* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP
+DEFAULT} */
+	| ALTER TABLE relation_name opt_inh_star ALTER opt_column ColId
+		alter_column_action
+		{
+			$$ = cat_str(6, make_str("alter table"), $3, $4, make_str("alter"), $6, $7, $8);
+		}
+/* ALTER TABLE <name> DROP [COLUMN] <name> {RESTRICT|CASCADE} */
+	| ALTER TABLE relation_name opt_inh_star DROP opt_column ColId
+		drop_behavior
+		{
+			$$ = cat_str(6, make_str("alter table"), $3, $4, make_str("drop"), $6, $7, $8);
+		}
+/* ALTER TABLE <name> ADD CONSTRAINT ... */
+	| ALTER TABLE relation_name opt_inh_star ADD TableConstraint
+		{
+			$$ = cat_str(4, make_str("alter table"), $3, $4, make_str("add"), $6);
+		}
+/* ALTER TABLE <name> DROP CONSTRAINT ... */
+	| ALTER TABLE relation_name opt_inh_star DROP CONSTRAINT name drop_behavior
+		{
+			$$ = cat_str(5, make_str("alter table"), $3, $4, make_str("drop constraint"), $7, $8);
+		}
 		;
 
-alter_clause:  ADD opt_column columnDef
-				{
-					$$ = cat_str(3, make_str("add"), $2, $3);
-				}
-			| ADD '(' OptTableElementList ')'
-				{
-					$$ = cat_str(2, make_str("add("), $3, make_str(")"));
-				}
-			| DROP opt_column ColId
-				{	mmerror(ET_ERROR, "ALTER TABLE/DROP COLUMN not yet implemented"); }
-			| ALTER opt_column ColId SET DEFAULT a_expr
-				{	mmerror(ET_ERROR, "ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented"); }
-			| ALTER opt_column ColId DROP DEFAULT
-				{	mmerror(ET_ERROR, "ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented"); }
-			| ADD ConstraintElem
-				{	mmerror(ET_ERROR, "ALTER TABLE/ADD CONSTRAINT not yet implemented"); }
-		;
+alter_column_action:
+        SET DEFAULT a_expr_or_null { $$ = cat2_str(make_str("set default"), $3); }
+        | DROP DEFAULT          { $$ = make_str("drop default"); }
+        ;
+
+drop_behavior: CASCADE { $$ = make_str("cascade"); }
+               | RESTRICT { $$ = make_str("restrict"); }
+        ;
 
 /*****************************************************************************
  *
@@ -1927,28 +1961,58 @@ TruncateStmt:  TRUNCATE TABLE relation_name
  *
  *****************************************************************************/
 
-FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name INTO into_list
+FetchStmt:	FETCH direction fetch_how_many from_in name INTO into_list
 				{
 					if (strcmp($2, "relative") == 0 && atol($3) == 0L)
 						mmerror(ET_ERROR, "FETCH/RELATIVE at current position is not supported");
 
+					$$ = cat_str(5, make_str("fetch"), $2, $3, $4, $5);
+				}
+		|	FETCH fetch_how_many from_in name INTO into_list
+  				{
 					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 				}
-		|	MOVE opt_direction fetch_how_many opt_portal_name
-				{
+		|	FETCH direction from_in name INTO into_list
+  				{
 					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
+				}
+		|	FETCH from_in name INTO into_list
+  				{
+					$$ = cat_str(3, make_str("fetch"), $2, $3);
+				}
+		|	FETCH name INTO into_list
+  				{
+					$$ = cat2_str(make_str("fetch"), $2);
+				}
+		|	MOVE direction fetch_how_many from_in name
+				{
+					$$ = cat_str(5, make_str("move"), $2, $3, $4, $5);
+				}
+		|	MOVE fetch_how_many from_in name
+				{
+					$$ = cat_str(4, make_str("move"), $2, $3, $4);
+				}
+		|	MOVE direction from_in name
+				{
+					$$ = cat_str(4, make_str("move"), $2, $3, $4);
+				}
+		|	MOVE from_in name
+				{
+					$$ = cat_str(3, make_str("move"), $2, $3);
+				}
+		|	MOVE name
+				{
+					$$ = cat2_str(make_str("move"), $2);
 				}
 		;
 
-opt_direction:	FORWARD		{ $$ = make_str("forward"); }
+direction:	FORWARD		{ $$ = make_str("forward"); }
 		| BACKWARD	{ $$ = make_str("backward"); }
 		| RELATIVE      { $$ = make_str("relative"); }
-                | ABSOLUTE
- 				{
+                | ABSOLUTE	{
 					mmerror(ET_WARN, "FETCH/ABSOLUTE not supported, backend will use RELATIVE");
 					$$ = make_str("absolute");
 				}
-		| /*EMPTY*/	{ $$ = EMPTY; /* default */ }
 		;
 
 fetch_how_many:   Iconst        { $$ = $1; }
@@ -1956,14 +2020,11 @@ fetch_how_many:   Iconst        { $$ = $1; }
 		| ALL		{ $$ = make_str("all"); }
 		| NEXT		{ $$ = make_str("next"); }
 		| PRIOR		{ $$ = make_str("prior"); }
-		| /*EMPTY*/	{ $$ = EMPTY; /*default*/ }
 		;
 
-opt_portal_name:  IN name		{ $$ = cat2_str(make_str("in"), $2); }
-		| FROM name		{ $$ = cat2_str(make_str("from"), $2); }
-/*		| name			{ $$ = cat2_str(make_str("in"), $1); }*/
-		| /*EMPTY*/		{ $$ = EMPTY; }
-		;
+from_in:   IN 	{ $$ = make_str("in"); }
+	| FROM	{ $$ = make_str("from"); }
+	;
 
 /*****************************************************************************
  *
@@ -2498,49 +2559,56 @@ LoadStmt:  LOAD file_name
 
 /*****************************************************************************
  *
- *		QUERY:
- *				createdb dbname
+ *		CREATE DATABASE
+ *
  *
  *****************************************************************************/
 
-CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
-				{
-					if (strlen($5) == 0 || strlen($6) == 0) 
-						mmerror(ET_ERROR, "CREATE DATABASE WITH requires at least an option");
-#ifndef MULTIBYTE
-					if (strlen($6) != 0)
-						mmerror(ET_ERROR, "WITH ENCODING is not supported");
-#endif
-					$$ = cat_str(5, make_str("create database"), $3, make_str("with"), $5, $6);
-				}
+CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb_opt_encoding
+			{
+				if (strlen($5) == 0 || strlen($6) == 0) 
+					mmerror(ET_ERROR, "CREATE DATABASE WITH requires at least an option");
+				$$ = cat_str(5, make_str("create database"), $3, make_str("with"), $5, $6);
+			}
 		| CREATE DATABASE database_name
-        			{
-					$$ = cat2_str(make_str("create database"), $3);
-				}
+       			{
+				$$ = cat2_str(make_str("create database"), $3);
+			}
 		;
 
-opt_database1:  LOCATION '=' location	{ $$ = cat2_str(make_str("location ="), $3); }
+createdb_opt_location:  LOCATION '=' Sconst	{ $$ = cat2_str(make_str("location ="), $3); }
+		| LOCATION '=' DEFAULT		{ $$ = make_str("location = default"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
-opt_database2:  ENCODING '=' encoding   { $$ = cat2_str(make_str("encoding ="), $3); }
+createdb_opt_encoding:  ENCODING '=' Sconst  
+			{
+#ifndef MULTIBYTE
+				mmerror(ET_ERROR, "WITH ENCODING is not supported.");
+#endif
+				$$ = cat2_str(make_str("encoding ="), $3);
+			}
+		| ENCODING '=' Iconst  
+			{
+#ifndef MULTIBYTE
+				mmerror(ET_ERROR, "WITH ENCODING is not supported.");
+#endif
+				$$ = cat2_str(make_str("encoding ="), $3);
+			}
+		| ENCODING '=' DEFAULT
+			{
+#ifndef MULTIBYTE
+				mmerror(ET_ERROR, "WITH ENCODING is not supported.");
+#endif
+				$$ = make_str("encoding = default");
+			}
                 | /*EMPTY*/	        { $$ = NULL; }
                 ;
 
-location:  Sconst				{ $$ = $1; }
-		| DEFAULT			{ $$ = make_str("default"); }
-		| /*EMPTY*/			{ $$ = EMPTY; }
-		;
-
-encoding:  Sconst		{ $$ = $1; }
-		| DEFAULT	{ $$ = make_str("default"); }
-		| /*EMPTY*/	{ $$ = EMPTY; }
-               ;
-
 /*****************************************************************************
  *
- *		QUERY:
- *				dropdb dbname
+ *		DROP DATABASE
+ *
  *
  *****************************************************************************/
 
@@ -4247,44 +4315,46 @@ ColId:  ident					{ $$ = $1; }
  *  rather than in ColId if there was a shift/reduce conflict
  *  when used as a full identifier. - thomas 1997-11-06
  */
-ColLabel:  ColId						{ $$ = $1; }
-		| ABORT_TRANS                                   { $$ = make_str("abort"); }
-		| ANALYZE                                       { $$ = make_str("analyze"); }
-		| BINARY                                        { $$ = make_str("binary"); }
-		| CASE                                        { $$ = make_str("case"); }
-		| CLUSTER						{ $$ = make_str("cluster"); }
-		| COALESCE                                        { $$ = make_str("coalesce"); }
-		| CONSTRAINT					{ $$ = make_str("constraint"); }
-		| COPY							{ $$ = make_str("copy"); }
-		| CURRENT							{ $$ = make_str("current"); }
-		| DO							{ $$ = make_str("do"); }
-		| ELSE                                        { $$ = make_str("else"); }
-		| END_TRANS                                        { $$ = make_str("end"); }
-		| EXPLAIN							{ $$ = make_str("explain"); }
-		| EXTEND							{ $$ = make_str("extend"); }
-		| FALSE_P							{ $$ = make_str("false"); }
-		| FOREIGN						{ $$ = make_str("foreign"); }
-		| GROUP							{ $$ = make_str("group"); }
-		| LISTEN							{ $$ = make_str("listen"); }
-		| LOAD							{ $$ = make_str("load"); }
-		| LOCK_P							{ $$ = make_str("lock"); }
-		| MOVE							{ $$ = make_str("move"); }
-		| NEW							{ $$ = make_str("new"); }
-		| NONE							{ $$ = make_str("none"); }
-		| NULLIF                                        { $$ = make_str("nullif"); }
-		| ORDER							{ $$ = make_str("order"); }
-		| POSITION						{ $$ = make_str("position"); }
-		| PRECISION						{ $$ = make_str("precision"); }
-		| RESET							{ $$ = make_str("reset"); }
-		| SETOF							{ $$ = make_str("setof"); }
-		| SHOW							{ $$ = make_str("show"); }
-		| TABLE							{ $$ = make_str("table"); }
-		| THEN                                        { $$ = make_str("then"); }
-		| TRANSACTION					{ $$ = make_str("transaction"); }
-		| TRUE_P						{ $$ = make_str("true"); }
-		| VACUUM					{ $$ = make_str("vacuum"); }
-		| VERBOSE						{ $$ = make_str("verbose"); }
-		| WHEN                                        { $$ = make_str("when"); }
+ColLabel:  ColId			{ $$ = $1; }
+		| ABORT_TRANS           { $$ = make_str("abort"); }
+		| ANALYZE               { $$ = make_str("analyze"); }
+		| BINARY                { $$ = make_str("binary"); }
+		| CASE                  { $$ = make_str("case"); }
+		| CLUSTER		{ $$ = make_str("cluster"); }
+		| COALESCE              { $$ = make_str("coalesce"); }
+		| CONSTRAINT		{ $$ = make_str("constraint"); }
+		| COPY			{ $$ = make_str("copy"); }
+		| CURRENT		{ $$ = make_str("current"); }
+		| DECIMAL		{ $$ = make_str("decimal"); }
+		| DO			{ $$ = make_str("do"); }
+		| ELSE                  { $$ = make_str("else"); }
+		| END_TRANS             { $$ = make_str("end"); }
+		| EXPLAIN		{ $$ = make_str("explain"); }
+		| EXTEND		{ $$ = make_str("extend"); }
+		| FALSE_P		{ $$ = make_str("false"); }
+		| FOREIGN		{ $$ = make_str("foreign"); }
+		| GROUP			{ $$ = make_str("group"); }
+		| LISTEN		{ $$ = make_str("listen"); }
+		| LOAD			{ $$ = make_str("load"); }
+		| LOCK_P		{ $$ = make_str("lock"); }
+		| MOVE			{ $$ = make_str("move"); }
+		| NEW			{ $$ = make_str("new"); }
+		| NONE			{ $$ = make_str("none"); }
+		| NULLIF                { $$ = make_str("nullif"); }
+		| NUMERIC               { $$ = make_str("numeric"); }
+		| ORDER			{ $$ = make_str("order"); }
+		| POSITION		{ $$ = make_str("position"); }
+		| PRECISION		{ $$ = make_str("precision"); }
+		| RESET			{ $$ = make_str("reset"); }
+		| SETOF			{ $$ = make_str("setof"); }
+		| SHOW			{ $$ = make_str("show"); }
+		| TABLE			{ $$ = make_str("table"); }
+		| THEN                  { $$ = make_str("then"); }
+		| TRANSACTION		{ $$ = make_str("transaction"); }
+		| TRUE_P		{ $$ = make_str("true"); }
+		| VACUUM		{ $$ = make_str("vacuum"); }
+		| VERBOSE		{ $$ = make_str("verbose"); }
+		| WHEN                  { $$ = make_str("when"); }
 		;
 
 SpecialRuleRelation:  CURRENT
@@ -4532,7 +4602,6 @@ ECPGDeallocate:	SQL_DEALLOCATE SQL_PREPARE ident	{ $$ = cat_str(3, make_str("ECP
 ECPGDeclaration: sql_startdeclare
 	{
 		fputs("/* exec sql begin declare section */", yyout);
-	        output_line_number();
 	}
 	variable_declarations sql_enddeclare
 	{
@@ -4545,18 +4614,16 @@ sql_startdeclare : ecpgstart BEGIN_TRANS DECLARE SQL_SECTION ';' {}
 
 sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION ';' {}
 
-variable_declarations: /* empty */
-	{
-		$$ = EMPTY;
-	}
-	| declaration variable_declarations
-	{
-		$$ = cat2_str($1, $2);
-	}
+variable_declarations:  /* empty */ { $$ = EMPTY; }
+			| declarations { $$ = $1; }
+
+declarations:  declaration { $$ = $1; }
+			| declarations declaration { $$ = cat2_str($1, $2); }
 
 declaration: storage_clause
 	{
 		actual_storage[struct_level] = mm_strdup($1);
+		actual_startline[struct_level] = hashline_number();
 	}
 	type
 	{
@@ -4566,7 +4633,7 @@ declaration: storage_clause
 	}
 	variable_list ';'
 	{
- 		$$ = cat_str(4, $1, $3.type_str, $5, make_str(";\n"));
+ 		$$ = cat_str(5, actual_startline[struct_level], $1, $3.type_str, $5, make_str(";\n"));
 	}
 
 storage_clause : S_EXTERN	{ $$ = make_str("extern"); }
@@ -4928,7 +4995,8 @@ ECPGTypedef: TYPE_P symbol IS ctype opt_type_array_bounds opt_reference
 		this->type->type_str = mm_strdup($2);
 		this->type->type_dimension = dimension; /* dimension of array */
 		this->type->type_index = length;    /* lenght of string */
-		this->struct_member_list = struct_member_list[struct_level];
+		this->struct_member_list = ($4.type_enum == ECPGt_struct || $4.type_enum == ECPGt_union) ?
+			struct_member_list[struct_level] : NULL;
 
 		if ($4.type_enum != ECPGt_varchar &&
 		    $4.type_enum != ECPGt_char &&
@@ -5473,7 +5541,7 @@ c_stuff: c_anything 	{ $$ = $1; }
 			}
 
 c_list: c_term			{ $$ = $1; }
-	| c_term ',' c_list	{ $$ = cat_str(3, $1, make_str(","), $3); }
+	| c_list ',' c_term	{ $$ = cat_str(3, $1, make_str(","), $3); }
 
 c_term:  c_stuff 		{ $$ = $1; }
 	| '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }

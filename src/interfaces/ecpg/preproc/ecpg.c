@@ -17,12 +17,11 @@ struct cursor *cur = NULL;
 struct typedefs *types = NULL;
 struct _defines *defines = NULL;
 
-
 static void
 usage(char *progname)
 {
 	fprintf(stderr, "ecpg - the postgresql preprocessor, version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
-	fprintf(stderr, "Usage: %s: [-v] [-t] [-I include path] [ -o output file name] file1 [file2] ...\n", progname);
+	fprintf(stderr, "Usage: %s: [-v] [-t] [-I include path] [ -o output file name] [-D define name] file1 [file2] ...\n", progname);
 }
 
 static void
@@ -33,6 +32,18 @@ add_include_path(char *path)
 	include_paths = mm_alloc(sizeof(struct _include_path));
 	include_paths->path = path;
 	include_paths->next = ip;
+}
+
+static void
+add_preprocessor_define(char *define)
+{
+	struct _defines *pd = defines;
+
+	defines = mm_alloc(sizeof(struct _defines));
+	defines->old = strdup(define);
+	defines->new = strdup("");
+	defines->pertinent = true;
+	defines->next = pd;
 }
 
 int
@@ -49,7 +60,7 @@ main(int argc, char *const argv[])
 	add_include_path("/usr/local/include");
 	add_include_path(".");
 
-	while ((c = getopt(argc, argv, "vo:I:t")) != EOF)
+	while ((c = getopt(argc, argv, "vo:I:tD:")) != EOF)
 	{
 		switch (c)
 		{
@@ -73,6 +84,9 @@ main(int argc, char *const argv[])
 			case 'v':
 				verbose = true;
 				break;
+			case 'D':
+                		add_preprocessor_define(optarg);
+		                break;
 			default:
 				usage(argv[0]);
 				return ILLEGAL_OPTION;
@@ -106,7 +120,10 @@ main(int argc, char *const argv[])
 
 			strcpy(input_filename, argv[fnr]);
 
-			ptr2ext = strrchr(input_filename, '.');
+			/* take care of relative paths */
+			ptr2ext = strrchr(input_filename, '/');
+			ptr2ext = (ptr2ext ? strrchr(ptr2ext, '.') : strrchr(input_filename, '.'));
+			
 			/* no extension? */
 			if (ptr2ext == NULL)
 			{
@@ -120,7 +137,7 @@ main(int argc, char *const argv[])
 				ptr2ext[4] = '\0';
 			}
 
-			if (out_option == 0)/* calculate the output name */
+			if (out_option == 0) /* calculate the output name */
 			{
 				output_filename = strdup(input_filename);
 
@@ -179,16 +196,29 @@ main(int argc, char *const argv[])
 					ptr = ptr->next;
 					free(this);
 				}
+				cur = NULL;
 
-				/* remove old defines as well */
-				for (defptr = defines; defptr != NULL;)
+				/* remove non-pertinent old defines as well */
+				while ( defines && !defines->pertinent ) {
+				    defptr = defines;
+				    defines = defines->next;
+
+				    free(defptr->new);
+				    free(defptr->old);
+				    free(defptr);
+				}
+
+				for (defptr = defines; defptr != NULL; defptr = defptr->next )
 				{
-					struct _defines *this = defptr;
+				    struct _defines *this = defptr->next;
+					
+				    if ( this && !this->pertinent ) {
+					defptr->next = this->next;
 
-					free(defptr->new);
-					free(defptr->old);
-					defptr = defptr->next;
+					free(this->new);
+					free(this->old);
 					free(this);
+				    }
 				}
 
 				/* and old typedefs */
@@ -197,17 +227,25 @@ main(int argc, char *const argv[])
 					struct typedefs *this = typeptr;
 
 					free(typeptr->name);
-					free(typeptr->type);
 					ECPGfree_struct_member(typeptr->struct_member_list);
+					free(typeptr->type);
 					typeptr = typeptr->next;
 					free(this);
 				}
-
+				types = NULL;
+				
+				/* initialize whenever structures */
+				memset(&when_error, 0, sizeof(struct when));
+				memset(&when_nf, 0, sizeof(struct when));
+				memset(&when_warn, 0, sizeof(struct when));
+				
+				/* and structure member lists */
+				memset(struct_member_list, 0, sizeof(struct_member_list));
 				/* initialize lex */
 				lex_init();
 
 				/* we need two includes */
-				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These two include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These two include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#line 1 \"%s\"\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, input_filename);
 
 				/* and parse the source */
 				yyparse();

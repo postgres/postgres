@@ -123,7 +123,7 @@ get_type(enum ECPGttype typ)
 {
 	switch (typ)
 	{
-			case ECPGt_char:
+		case ECPGt_char:
 			return ("ECPGt_char");
 			break;
 		case ECPGt_unsigned_char:
@@ -367,17 +367,17 @@ ECPGfree_type(struct ECPGtype * typ)
 	{
 		switch (typ->typ)
 		{
-				case ECPGt_array:
+			case ECPGt_array:
 				switch (typ->u.element->typ)
 				{
-						case ECPGt_array:
+					case ECPGt_array:
 						yyerror("internal error, found multi-dimensional array\n");
 						break;
 					case ECPGt_struct:
 					case ECPGt_union:
 						/* Array of structs. */
 						ECPGfree_struct_member(typ->u.element->u.members);
-						free(typ->u.members);
+						free(typ->u.element);
 						break;
 					default:
 						if (!IS_SIMPLE_TYPE(typ->u.element->typ))
@@ -389,7 +389,6 @@ ECPGfree_type(struct ECPGtype * typ)
 			case ECPGt_struct:
 			case ECPGt_union:
 				ECPGfree_struct_member(typ->u.members);
-				free(typ->u.members);
 				break;
 			default:
 				sprintf(errortext, "illegal variable type %d\n", typ->typ);

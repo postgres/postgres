@@ -2,6 +2,10 @@
 #include "type.h"
 #include <errno.h>
 
+/* defines */
+
+#define STRUCT_DEPTH 128
+
 /* variables */
 
 extern int	braces_open,
@@ -23,6 +27,8 @@ extern struct ECPGtype ecpg_no_indicator;
 extern struct variable no_indicator;
 extern struct arguments *argsinsert;
 extern struct arguments *argsresult;
+extern struct when when_error, when_nf, when_warn;
+extern struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH];
 
 /* functions */
 
@@ -39,9 +45,9 @@ extern void yyerror(char *);
 /* return codes */
 
 #define OK			 0
-#define PARSE_ERROR			-1
+#define PARSE_ERROR		-1
 #define ILLEGAL_OPTION		-2
-#define INDICATOR_NOT_ARRAY -3
+#define INDICATOR_NOT_ARRAY	-3
 
-#define NO_INCLUDE_FILE ENOENT
-#define OUT_OF_MEMORY	ENOMEM
+#define NO_INCLUDE_FILE		ENOENT
+#define OUT_OF_MEMORY		ENOMEM

@@ -62,7 +62,7 @@ exec sql end declare section;
 
 	while (1) {
 		strcpy(msg, "fetch");
-		exec sql fetch in cur into :personal:ind_personal, :married:ind_married, :children.integer:ind_children.smallint;
+		exec sql fetch from cur into :personal:ind_personal, :married:ind_married, :children.integer:ind_children.smallint;
 		printf("%8.8s", personal.name.arr);
 		if (ind_personal.ind_birth.born >= 0)
 			printf(", born %d", personal.birth.born);
@@ -81,7 +81,7 @@ exec sql end declare section;
 	strcpy(msg, "close");
 	exec sql close cur;
 
-	/* and now the same query with prepare */
+	/* and now a same query with prepare */
 	exec sql prepare MM from :query;
 	exec sql declare prep cursor for MM;
 

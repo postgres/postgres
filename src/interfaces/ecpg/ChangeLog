@@ -758,5 +758,22 @@ Thu Dec 23 13:25:05 CET 1999
 Thu Jan  6 09:52:27 CET 2000
 
 	- Synced preproc.y with gram.y.
-	- Made sure Bruce's additions also make it into my source tree.
 	- Set ecpg version to 2.6.14.
+
+Wed Jan 12 15:50:39 CET 2000
+
+	- Made sure Rene Hogendoorn's patches make it into ecpg completely
+	  except for the FETCH syntax change.
+
+Fri Jan 14 21:17:46 CET 2000
+
+	- Applied a minor patch to ecpglib.c.
+	- Fixed initialization bugs.
+
+Mon Jan 17 21:55:40 CET 2000
+
+	- Synced preproc.y with gram.y.
+	- Changed FETCH syntax using Rene's final patch. Made it more
+	  standard compliant.
+	- Set library version to 3.0.10.
+	- Set ecpg version to 2.7.0.
