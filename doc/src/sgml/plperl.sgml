@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.30 2004/11/06 14:32:10 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.31 2004/11/19 23:22:54 tgl Exp $
 -->
 
  <chapter id="plperl">
@@ -66,7 +66,7 @@ $$ LANGUAGE plperl;
 
   <para>
    Arguments and results are handled as in any other Perl subroutine:
-   Arguments are passed in <varname>@_</varname>, and a result value
+   arguments are passed in <varname>@_</varname>, and a result value
    is returned with <literal>return</> or as the last expression
    evaluated in the function.
   </para>
@@ -77,7 +77,7 @@ $$ LANGUAGE plperl;
 
 <programlisting>
 CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS $$
-    if ($_[0] > $_[1]) { return $_[0]; }
+    if ($_[0] &gt; $_[1]) { return $_[0]; }
     return $_[1];
 $$ LANGUAGE plperl;
 </programlisting>
@@ -106,7 +106,7 @@ CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS $$
         return $b;
     }
     if (! defined $b) { return $a; }
-    if ($a > $b) { return $a; }
+    if ($a &gt; $b) { return $a; }
     return $b;
 $$ LANGUAGE plperl;
 </programlisting>
@@ -129,7 +129,7 @@ CREATE TABLE employee (
 
 CREATE FUNCTION empcomp(employee) RETURNS integer AS $$
     my ($emp) = @_;
-    return $emp->{basesalary} + $emp->{bonus};
+    return $emp-&gt;{basesalary} + $emp-&gt;{bonus};
 $$ LANGUAGE plperl;
 
 SELECT name, empcomp(employee) FROM employee;
@@ -174,16 +174,17 @@ SELECT name, empcomp(employee) FROM employee;
 <programlisting>
 $rv = spi_exec_query('SELECT * FROM my_table', 5);
 </programlisting>
-       This returns up to 5 rows from the table
-       <literal>my_table</literal>.  If <literal>my_table</literal>
-       has a column <literal>my_column</literal>, it could be accessed
-       like this:
+        This returns up to 5 rows from the table
+        <literal>my_table</literal>.  If <literal>my_table</literal>
+        has a column <literal>my_column</literal>, you can get that
+        value from row <literal>$i</literal> of the result like this:
 <programlisting>
-$foo = $rv->{rows}[$i]->{my_column};
+$foo = $rv-&gt;{rows}[$i]-&gt;{my_column};
 </programlisting>
-       The total number of rows returned can be accessed like this:
+       The total number of rows returned from a <command>SELECT</command>
+       query can be accessed like this:
 <programlisting>
-$nrows = @{$rv->{rows}};
+$nrows = $rv-&gt;{processed}
 </programlisting>
       </para>
 
@@ -196,11 +197,11 @@ $rv = spi_exec_query($query);
        You can then access the command status (e.g.,
        <literal>SPI_OK_INSERT</literal>) like this:
 <programlisting>
-$res = $rv->{status};
+$res = $rv-&gt;{status};
 </programlisting>
        To get the number of rows affected, do:
 <programlisting>
-$nrows = $rv->{rows};
+$nrows = $rv-&gt;{processed};
 </programlisting>
       </para>
      </listitem>
@@ -260,13 +261,12 @@ INSERT INTO test (i, v) VALUES (4, 'immortal');
 CREATE FUNCTION test_munge() RETURNS SETOF test AS $$
     my $res = [];
     my $rv = spi_exec_query('select i, v from test;');
-    my $status = $rv->{status};
-    my $rows = @{$rv->{rows}};
-    my $processed = $rv->{processed};
-    foreach my $rn (0 .. $rows - 1) {
-        my $row = $rv->{rows}[$rn];
-        $row->{i} += 200 if defined($row->{i});
-        $row->{v} =~ tr/A-Za-z/a-zA-Z/ if (defined($row->{v}));
+    my $status = $rv-&gt;{status};
+    my $nrows = $rv-&gt;{processed};
+    foreach my $rn (0 .. $nrows - 1) {
+        my $row = $rv-&gt;{rows}[$rn];
+        $row-&gt;{i} += 200 if defined($row-&gt;{i});
+        $row-&gt;{v} =~ tr/A-Za-z/a-zA-Z/ if (defined($row-&gt;{v}));
         push @$res, $row;
     }
     return $res;
@@ -283,7 +283,7 @@ SELECT * FROM test_munge();
 CREATE TYPE testrowperl AS (f1 integer, f2 text, f3 text);
 
 CREATE OR REPLACE FUNCTION perl_row() RETURNS testrowperl AS $$
-    return {f2 => 'hello', f1 => 1, f3 => 'world'};
+    return {f2 =&gt; 'hello', f1 =&gt; 1, f3 =&gt; 'world'};
 $$ LANGUAGE plperl;
 </programlisting>
   </para>
@@ -298,12 +298,12 @@ CREATE TYPE testsetperl AS (f1 integer, f2 text, f3 text);
 
 CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testsetperl AS $$
     return [
-        { f1 => 1, f2 => 'Hello', f3 =>  'World' },
-        { f1 => 2, f2 => 'Hello', f3 =>  'PostgreSQL' },
-        { f1 => 3, f2 => 'Hello', f3 =>  'PL/Perl' }
+        { f1 =&gt; 1, f2 =&gt; 'Hello', f3 =&gt;  'World' },
+        { f1 =&gt; 2, f2 =&gt; 'Hello', f3 =&gt;  'PostgreSQL' },
+        { f1 =&gt; 3, f2 =&gt; 'Hello', f3 =&gt;  'PL/Perl' }
     ];
 $$  LANGUAGE plperl;
-  </programlisting>
+</programlisting>
   </para>
  </sect1>
 
@@ -359,7 +359,7 @@ SELECT get_var('sample');
    system operations are not allowed for security reasons:
 <programlisting>
 CREATE FUNCTION badfunc() RETURNS integer AS $$
-    open(TEMP, ">/tmp/badfile");
+    open(TEMP, "&gt;/tmp/badfile");
     print TEMP "Gotcha!\n";
     return 1;
 $$ LANGUAGE plperl;
@@ -397,14 +397,14 @@ $$ LANGUAGE plperl;
   <title>PL/Perl Triggers</title>
 
   <para>
-   PL/Perl can be used to write trigger functions.  The global hash
-   reference <varname>$_TD</varname> contains information about the
-   current trigger event.  The parts of <varname>$_TD</varname> hash
+   PL/Perl can be used to write trigger functions.  In a trigger function,
+   the hash reference <varname>$_TD</varname> contains information about the
+   current trigger event.  The fields of the <varname>$_TD</varname> hash
    reference are:
 
    <variablelist>
     <varlistentry>
-     <term><literal>$_TD->{new}{foo}</literal></term>
+     <term><literal>$_TD-&gt;{new}{foo}</literal></term>
      <listitem>
       <para>
        <literal>NEW</literal> value of column <literal>foo</literal>
@@ -413,7 +413,7 @@ $$ LANGUAGE plperl;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>$_TD->{old}{foo}</literal></term>
+     <term><literal>$_TD-&gt;{old}{foo}</literal></term>
      <listitem>
       <para>
        <literal>OLD</literal> value of column <literal>foo</literal>
@@ -488,7 +488,7 @@ $$ LANGUAGE plperl;
      <term><literal>$_TD{argc}</literal></term>
      <listitem>
       <para>
-       Number of arguments of the trigger functions
+       Number of arguments of the trigger function
       </para>
      </listitem>
     </varlistentry>
@@ -521,7 +521,7 @@ $$ LANGUAGE plperl;
      <term><literal>"MODIFY"</literal></term>
      <listitem>
       <para>
-       Indicates that the <literal>NEW</literal> rows was modified by
+       Indicates that the <literal>NEW</literal> row was modified by
        the trigger function
       </para>
      </listitem>
@@ -539,10 +539,10 @@ CREATE TABLE test (
 );
 
 CREATE OR REPLACE FUNCTION valid_id() RETURNS trigger AS $$
-    if (($_TD->{new}{i} &gt;= 100) || ($_TD->{new}{i} &lt;= 0)) {
+    if (($_TD-&gt;{new}{i} &gt;= 100) || ($_TD-&gt;{new}{i} &lt;= 0)) {
         return "SKIP";    # skip INSERT/UPDATE command
-    } elsif ($_TD->{new}{v} ne "immortal") {
-        $_TD->{new}{v} .= "(modified by trigger)";
+    } elsif ($_TD-&gt;{new}{v} ne "immortal") {
+        $_TD-&gt;{new}{v} .= "(modified by trigger)";
         return "MODIFY";  # modify row and execute INSERT/UPDATE command
     } else {
         return;           # execute INSERT/UPDATE command
