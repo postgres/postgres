@@ -4,7 +4,7 @@
 #    Makefile for executor
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.2 1996/11/06 06:47:24 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.3 1997/08/30 10:28:47 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ OBJS = execAmi.o execFlatten.o execJunk.o execMain.o \
        execUtils.o functions.o nodeAppend.o nodeAgg.o nodeHash.o \
        nodeHashjoin.o nodeIndexscan.o nodeMaterial.o nodeMergejoin.o \
        nodeNestloop.o nodeResult.o nodeSeqscan.o nodeSort.o \
-       nodeUnique.o nodeTee.o nodeGroup.o
+       nodeUnique.o nodeTee.o nodeGroup.o spi.o
 
 all: SUBSYS.o
 
