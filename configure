@@ -2502,7 +2502,7 @@ echo "$as_me: using CFLAGS=$CFLAGS" >&6;}
 
 # We already have this in Makefile.win32, but configure needs it too
 if test "$PORTNAME" = "win32"; then
-  CPPFLAGS="$CPPFLAGS -I$srcdir/src/include/port/win32"
+  CPPFLAGS="$CPPFLAGS -I$srcdir/src/include/port/win32 -DEXEC_BACKEND"
 fi
 
 # Check if the compiler still works with the template settings
@@ -12077,10 +12077,11 @@ esac
 
 # Win32 can't to rename or unlink on an open file
 case $host_os in mingw*)
-LIBOBJS="$LIBOBJS dirmod.$ac_objext"
 LIBOBJS="$LIBOBJS copydir.$ac_objext"
+LIBOBJS="$LIBOBJS dirmod.$ac_objext"
 LIBOBJS="$LIBOBJS gettimeofday.$ac_objext"
-LIBOBJS="$LIBOBJS pipe.$ac_objext" ;;
+LIBOBJS="$LIBOBJS pipe.$ac_objext"
+LIBOBJS="$LIBOBJS rand.$ac_objext" ;;
 esac
 
 if test "$with_readline" = yes; then
