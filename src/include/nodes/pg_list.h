@@ -3,22 +3,9 @@
  * pg_list.h
  *	  interface for PostgreSQL generic linked list package
  *
+ * This package implements singly-linked homogeneous lists.
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.46 2004/05/30 23:40:39 neilc Exp $
- *
- *-------------------------------------------------------------------------
- */
-#ifndef PG_LIST_H
-#define PG_LIST_H
-
-#include "nodes/nodes.h"
-
-/*
- * This package implements singly-linked homogeneous lists. It is
- * important to have constant-time length, append, and prepend
+ * It is important to have constant-time length, append, and prepend
  * operations. To achieve this, we deal with two distinct data
  * structures:
  *
@@ -38,7 +25,20 @@
  *
  * (At the moment, ints and Oids are the same size, but they may not
  * always be so; try to be careful to maintain the distinction.)
+ *
+ *
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.47 2004/06/01 06:02:13 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
  */
+#ifndef PG_LIST_H
+#define PG_LIST_H
+
+#include "nodes/nodes.h"
+
 
 typedef struct ListCell ListCell;
 
@@ -107,7 +107,7 @@ extern int list_length(List *l);
  * the List API: the macro lfirst() was used to mean "the data in this
  * cons cell". To avoid changing every usage of lfirst(), that meaning
  * has been kept. As a result, lfirst() takes a ListCell and returns
- * the data it contains; to get the data in the _first_ cell of a
+ * the data it contains; to get the data in the first cell of a
  * List, use linitial(). Worse, lsecond() is more closely related to
  * linitial() than lfirst(): given a List, lsecond() returns the data
  * in the second cons cell.
@@ -122,10 +122,6 @@ extern int list_length(List *l);
 #define linitial_int(l)			lfirst_int(list_head(l))
 #define linitial_oid(l)			lfirst_oid(list_head(l))
 
-#define llast(l)				lfirst(list_tail(l))
-#define llast_int(l)			lfirst_int(list_tail(l))
-#define llast_oid(l)			lfirst_oid(list_tail(l))
-
 #define lsecond(l)				lfirst(lnext(list_head(l)))
 #define lsecond_int(l)			lfirst_int(lnext(list_head(l)))
 #define lsecond_oid(l)			lfirst_oid(lnext(list_head(l)))
@@ -137,6 +133,10 @@ extern int list_length(List *l);
 #define lfourth(l)				lfirst(lnext(lnext(lnext(list_head(l)))))
 #define lfourth_int(l)			lfirst_int(lnext(lnext(lnext(list_head(l)))))
 #define lfourth_oid(l)			lfirst_oid(lnext(lnext(lnext(list_head(l)))))
+
+#define llast(l)				lfirst(list_tail(l))
+#define llast_int(l)			lfirst_int(list_tail(l))
+#define llast_oid(l)			lfirst_oid(list_tail(l))
 
 /*
  * Convenience macros for building fixed-length lists
@@ -300,20 +300,5 @@ extern List *list_copy_tail(List *list, int nskip);
 extern int length(List *list);
 
 #endif /* ENABLE_LIST_COMPAT */
-
-typedef struct FastList
-{
-	List		*list;
-} FastList;
-
-extern void FastListInit(FastList *fl);
-extern void FastListFromList(FastList *fl, List *list);
-extern List *FastListValue(FastList *fl);
-extern void makeFastList1(FastList *fl, void *elem);
-extern void FastAppend(FastList *fl, void *datum);
-extern void FastAppendi(FastList *fl, int datum);
-extern void FastAppendo(FastList *fl, Oid datum);
-extern void FastConc(FastList *fl, List *cells);
-extern void FastConcFast(FastList *fl1, FastList *fl2);
 
 #endif   /* PG_LIST_H */

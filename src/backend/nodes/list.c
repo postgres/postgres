@@ -9,12 +9,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.58 2004/05/30 23:40:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.59 2004/06/01 06:02:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
 #include "nodes/pg_list.h"
+
 
 /*
  * Routines to simplify writing assertions about the type of a list; a
@@ -1069,7 +1071,7 @@ list_length(List *l)
  *
  * In order to avoid warnings for these function definitions, we need
  * to include a prototype here as well as in pg_list.h. That's because
- * we explicitly disable list API compatibility in list.c, so we
+ * we don't enable list API compatibility in list.c, so we
  * don't see the prototypes for these functions.
  */
 
@@ -1086,81 +1088,4 @@ int
 length(List *list)
 {
 	return list_length(list);
-}
-
-/*
- * This code implements the old "Fast List" API, making use of the new
- * List code to do so. There's no need for FastList anymore, so this
- * code is a bit sloppy -- it will be removed soon.
- */
-void FastListInit(FastList *fl);
-
-void
-FastListInit(FastList *fl)
-{
-	fl->list = NIL;
-}
-
-void FastListFromList(FastList *fl, List *l);
-
-void
-FastListFromList(FastList *fl, List *list)
-{
-	fl->list = list;
-}
-
-List *FastListValue(FastList *fl);
-
-List *
-FastListValue(FastList *fl)
-{
-	return fl->list;
-}
-
-void makeFastList1(FastList *fl, void *elem);
-
-void
-makeFastList1(FastList *fl, void *elem)
-{
-	fl->list = list_make1(elem);
-}
-
-void FastAppend(FastList *fl, void *datum);
-
-void
-FastAppend(FastList *fl, void *datum)
-{
-	fl->list = lappend(fl->list, datum);
-}
-
-void FastAppendi(FastList *fl, int datum);
-
-void
-FastAppendi(FastList *fl, int datum)
-{
-	fl->list = lappend_int(fl->list, datum);
-}
-
-void FastAppendo(FastList *fl, Oid datum);
-
-void
-FastAppendo(FastList *fl, Oid datum)
-{
-	fl->list = lappend_oid(fl->list, datum);
-}
-
-void FastConc(FastList *fl, List *cells);
-
-void
-FastConc(FastList *fl, List *cells)
-{
-	fl->list = list_concat(fl->list, cells);
-}
-
-void FastConcFast(FastList *fl1, FastList *fl2);
-
-void
-FastConcFast(FastList *fl1, FastList *fl2)
-{
-	fl1->list = list_concat(fl1->list, fl2->list);
 }
