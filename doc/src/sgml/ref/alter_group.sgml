@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.2 2000/07/22 02:39:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.3 2000/07/24 13:17:44 momjian Exp $
 Postgres documentation
 -->
 
@@ -91,8 +91,8 @@ ALTER GROUP <replaceable class="PARAMETER">name</replaceable> DROP USER <replace
    Description
   </title>
   <para>
-   <command>ALTER GROUP</command> is used to change add users to a group or
-   remove them from a group. Only database superusers can use this command.
+   <command>ALTER GROUP</command> is used to add or remove users from a
+   group. Only database superusers can use this command.
    Adding a user to a group does not create the user. Similarly, removing
    a user from a group does not drop the user itself.
   </para>
