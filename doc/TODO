@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Sep  2 21:39:48 EDT 2002
+Last updated:		Tue Sep  3 13:09:39 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -86,7 +86,7 @@ Data Types
 * -Add GUC parameter for DATESTYLE
 * Allow INET subnet tests using non-constants
 * -Allow bytea to handle LIKE with non-TEXT patterns
-
+* to_char(0,'FM999.99') returns a period, to_char(1,'FM999.99') does not
 
 * CONVERSION
 	o -Store binary-compatible type information in the system
