@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.39 2004/06/18 21:24:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.40 2004/06/18 21:47:23 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -67,8 +67,8 @@ PostgreSQL documentation
       <term><replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the database to be created.  The name must be
-	unique among all <productname>PostgreSQL</productname> databases in this cluster.
+        Specifies the name of the database to be created.  The name must be
+        unique among all <productname>PostgreSQL</productname> databases in this cluster.
         The default is to create a database with the same name as the
         current system user.
        </para>
@@ -79,18 +79,18 @@ PostgreSQL documentation
       <term><replaceable class="parameter">description</replaceable></term>
       <listitem>
        <para>
-        This optionally specifies a comment to be associated with the newly created
-	database.
+        Specifies a comment to be associated with the newly created
+        database.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-D <replaceable class="parameter">location</replaceable></></term>
-      <term><option>--location <replaceable class="parameter">location</replaceable></></term>
+      <term><option>-D <replaceable class="parameter">tablespace</replaceable></></term>
+      <term><option>--tablespace <replaceable class="parameter">tablespace</replaceable></></term>
       <listitem>
        <para>
-	Specifies the alternative location for the database.
+        Specifies the default tablespace for the database.
        </para>
       </listitem>
      </varlistentry>
@@ -101,7 +101,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Echo the commands that <application>createdb</application> generates
-	and sends to the server.
+        and sends to the server.
        </para>
       </listitem>
      </varlistentry>
@@ -124,7 +124,7 @@ PostgreSQL documentation
       <term><option>--owner <replaceable class="parameter">owner</replaceable></></term>
       <listitem>
        <para>
-	Specifies the database user who will own the new database.
+        Specifies the database user who will own the new database.
        </para>
       </listitem>
      </varlistentry>
@@ -170,9 +170,9 @@ PostgreSQL documentation
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the 
-	server is running.  If the value begins with a slash, it is used 
-	as the directory for the Unix domain socket.
+        Specifies the host name of the machine on which the 
+        server is running.  If the value begins with a slash, it is used 
+        as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -182,8 +182,8 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the TCP port or the local Unix domain socket file 
-	extension on which the server is listening for connections.
+        Specifies the TCP port or the local Unix domain socket file 
+        extension on which the server is listening for connections.
        </para>
       </listitem>
      </varlistentry>

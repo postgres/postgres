@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.11 2004/06/03 00:07:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.12 2004/06/18 21:47:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ main(int argc, char *argv[])
 		{"echo", no_argument, NULL, 'e'},
 		{"quiet", no_argument, NULL, 'q'},
 		{"owner", required_argument, NULL, 'O'},
-		{"location", required_argument, NULL, 'D'},
+		{"tablespace", required_argument, NULL, 'D'},
 		{"template", required_argument, NULL, 'T'},
 		{"encoding", required_argument, NULL, 'E'},
 		{NULL, 0, NULL, 0}
@@ -50,7 +50,7 @@ main(int argc, char *argv[])
 	bool		echo = false;
 	bool		quiet = false;
 	char	   *owner = NULL;
-	char	   *location = NULL;
+	char	   *tablespace = NULL;
 	char	   *template = NULL;
 	char	   *encoding = NULL;
 
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 				owner = optarg;
 				break;
 			case 'D':
-				location = optarg;
+				tablespace = optarg;
 				break;
 			case 'T':
 				template = optarg;
@@ -149,11 +149,8 @@ main(int argc, char *argv[])
 
 	if (owner)
 		appendPQExpBuffer(&sql, " OWNER %s", fmtId(owner));
-	if (location)
-	{
-		appendPQExpBuffer(&sql, " LOCATION ");
-		appendStringLiteral(&sql, location, false);
-	}
+	if (tablespace)
+		appendPQExpBuffer(&sql, " TABLESPACE %s", fmtId(tablespace));
 	if (encoding)
 		appendPQExpBuffer(&sql, " ENCODING '%s'", encoding);
 	if (template)
@@ -221,19 +218,19 @@ help(const char *progname)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"), progname);
 	printf(_("\nOptions:\n"));
-	printf(_("  -D, --location=PATH       alternative place to store the database\n"));
-	printf(_("  -E, --encoding=ENCODING   encoding for the database\n"));
-	printf(_("  -O, --owner=OWNER         database user to own the new database\n"));
-	printf(_("  -T, --template=TEMPLATE   template database to copy\n"));
-	printf(_("  -e, --echo                show the commands being sent to the server\n"));
-	printf(_("  -q, --quiet               don't write any messages\n"));
-	printf(_("  --help                    show this help, then exit\n"));
-	printf(_("  --version                 output version information, then exit\n"));
+	printf(_("  -D, --tablespace=TABLESPACE  default tablespace for the database\n"));
+	printf(_("  -E, --encoding=ENCODING      encoding for the database\n"));
+	printf(_("  -O, --owner=OWNER            database user to own the new database\n"));
+	printf(_("  -T, --template=TEMPLATE      template database to copy\n"));
+	printf(_("  -e, --echo                   show the commands being sent to the server\n"));
+	printf(_("  -q, --quiet                  don't write any messages\n"));
+	printf(_("  --help                       show this help, then exit\n"));
+	printf(_("  --version                    output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
-	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
-	printf(_("  -p, --port=PORT           database server port\n"));
-	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
-	printf(_("  -W, --password            prompt for password\n"));
+	printf(_("  -h, --host=HOSTNAME          database server host or socket directory\n"));
+	printf(_("  -p, --port=PORT              database server port\n"));
+	printf(_("  -U, --username=USERNAME      user name to connect as\n"));
+	printf(_("  -W, --password               prompt for password\n"));
 	printf(_("\nBy default, a database with the same name as the current user is created.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
