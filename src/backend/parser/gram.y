@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.33 1997/05/22 00:14:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.34 1997/05/22 00:24:07 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -126,7 +126,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <list>	stmtblock, stmtmulti,
 	relation_name_list, OptTableElementList,
 	tableElementList, OptInherit, definition,
-	opt_with, def_args, def_name_list, func_argtypes
+	opt_with, def_args, def_name_list, func_argtypes,
 	oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
 	opt_column_list, columnList, opt_va_list, va_list,
 	sort_clause, sortby_list, index_params, index_list,
