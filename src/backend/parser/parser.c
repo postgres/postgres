@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.7 1996/11/08 20:45:42 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.8 1996/11/10 02:23:15 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,8 @@ List *parsetree = NIL;
 
 #ifdef SETS_FIXED
 static void fixupsets();
-#endif
 static void define_sets();
+#endif
 /*
  * parser-- returns a list of parse trees
  * 
@@ -120,6 +120,7 @@ fixupsets(Query *parse)
 }
 #endif
 
+#ifdef SETS_FIXED
 /* Recursively find all of the Consts in the parsetree.  Some of
  * these may represent a set.  The value of the Const will be the
  * query (a string) which defines the set.  Call SetDefine to define
@@ -128,7 +129,6 @@ fixupsets(Query *parse)
 static void
 define_sets(Node *clause)
 {
-#ifdef SETS_FIXED
     Oid setoid;
     Type t = type("oid");
     Oid typeoid = typeid(t);

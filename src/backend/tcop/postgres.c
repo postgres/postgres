@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.15 1996/11/08 05:59:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.16 1996/11/10 02:25:15 bryanh Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -1256,7 +1256,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.15 $ $Date: 1996/11/08 05:59:31 $");
+	puts("$Revision: 1.16 $ $Date: 1996/11/10 02:25:15 $");
     }
     
     /* ----------------
@@ -1509,42 +1509,45 @@ ShowUsage()
     
     fprintf(StatFp, "! system usage stats:\n");
     fprintf(StatFp, 
-	    "!\t%ld.%06ld elapsed %ld.%06ld user %ld.%06ld system sec\n",
-	    elapse_t.tv_sec - Save_t.tv_sec,
-	    elapse_t.tv_usec - Save_t.tv_usec,
-	    r.ru_utime.tv_sec - Save_r.ru_utime.tv_sec,
-	    r.ru_utime.tv_usec - Save_r.ru_utime.tv_usec,
-	    r.ru_stime.tv_sec - Save_r.ru_stime.tv_sec,
-	    r.ru_stime.tv_usec - Save_r.ru_stime.tv_usec);
+            "!\t%ld.%06ld elapsed %ld.%06ld user %ld.%06ld system sec\n",
+            (long int) elapse_t.tv_sec - Save_t.tv_sec,
+            (long int) elapse_t.tv_usec - Save_t.tv_usec,
+            (long int) r.ru_utime.tv_sec - Save_r.ru_utime.tv_sec,
+            (long int) r.ru_utime.tv_usec - Save_r.ru_utime.tv_usec,
+            (long int) r.ru_stime.tv_sec - Save_r.ru_stime.tv_sec,
+            (long int) r.ru_stime.tv_usec - Save_r.ru_stime.tv_usec);
     fprintf(StatFp,
-	    "!\t[%ld.%06ld user %ld.%06ld sys total]\n",
-	    user.tv_sec, user.tv_usec, sys.tv_sec, sys.tv_usec);
+            "!\t[%ld.%06ld user %ld.%06ld sys total]\n",
+            (long int) user.tv_sec, 
+            (long int) user.tv_usec, 
+            (long int) sys.tv_sec, 
+            (long int) sys.tv_usec);
 #ifndef NEED_RUSAGE
     fprintf(StatFp, 
-	    "!\t%ld/%ld [%ld/%ld] filesystem blocks in/out\n",
-	    r.ru_inblock - Save_r.ru_inblock,
-	    /* they only drink coffee at dec */
-	    r.ru_oublock - Save_r.ru_oublock,
-	    r.ru_inblock, r.ru_oublock);
+            "!\t%ld/%ld [%ld/%ld] filesystem blocks in/out\n",
+            r.ru_inblock - Save_r.ru_inblock,
+            /* they only drink coffee at dec */
+            r.ru_oublock - Save_r.ru_oublock,
+            r.ru_inblock, r.ru_oublock);
     fprintf(StatFp, 
-	    "!\t%ld/%ld [%ld/%ld] page faults/reclaims, %ld [%ld] swaps\n",
-	    r.ru_majflt - Save_r.ru_majflt,
-	    r.ru_minflt - Save_r.ru_minflt,
-	    r.ru_majflt, r.ru_minflt,
-	    r.ru_nswap - Save_r.ru_nswap,
-	    r.ru_nswap);
+            "!\t%ld/%ld [%ld/%ld] page faults/reclaims, %ld [%ld] swaps\n",
+            r.ru_majflt - Save_r.ru_majflt,
+            r.ru_minflt - Save_r.ru_minflt,
+            r.ru_majflt, r.ru_minflt,
+            r.ru_nswap - Save_r.ru_nswap,
+            r.ru_nswap);
     fprintf(StatFp, 
-	    "!\t%ld [%ld] signals rcvd, %ld/%ld [%ld/%ld] messages rcvd/sent\n",
-	    r.ru_nsignals - Save_r.ru_nsignals,
-	    r.ru_nsignals,
-	    r.ru_msgrcv - Save_r.ru_msgrcv,
-	    r.ru_msgsnd - Save_r.ru_msgsnd,
-	    r.ru_msgrcv, r.ru_msgsnd);
+            "!\t%ld [%ld] signals rcvd, %ld/%ld [%ld/%ld] messages rcvd/sent\n",
+            r.ru_nsignals - Save_r.ru_nsignals,
+            r.ru_nsignals,
+            r.ru_msgrcv - Save_r.ru_msgrcv,
+            r.ru_msgsnd - Save_r.ru_msgsnd,
+            r.ru_msgrcv, r.ru_msgsnd);
     fprintf(StatFp, 
-	    "!\t%ld/%ld [%ld/%ld] voluntary/involuntary context switches\n",
-	    r.ru_nvcsw - Save_r.ru_nvcsw,
-	    r.ru_nivcsw - Save_r.ru_nivcsw,
-	    r.ru_nvcsw, r.ru_nivcsw);
+            "!\t%ld/%ld [%ld/%ld] voluntary/involuntary context switches\n",
+            r.ru_nvcsw - Save_r.ru_nvcsw,
+            r.ru_nivcsw - Save_r.ru_nivcsw,
+            r.ru_nvcsw, r.ru_nivcsw);
 #endif /* NEED_RUSAGE */
     fprintf(StatFp, "! postgres usage stats:\n");
     PrintBufferUsage(StatFp);

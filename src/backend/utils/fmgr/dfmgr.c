@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.1.1.1 1996/07/09 06:22:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.2 1996/11/10 02:26:15 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ handle_load(char *filename, char *funcname)
 	
 	file_scanner->handle = pg_dlopen(filename);
         if (file_scanner->handle == (void *)NULL) {
-	    load_error = pg_dlerror();
+	    load_error = (char *) pg_dlerror();
             if (file_scanner == file_list) {
                 file_list = (DynamicFileList *) NULL;
             } else {

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.3 1996/11/06 07:50:12 scrappy Exp $
+ * $Id: defrem.h,v 1.4 1996/11/10 02:27:15 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ extern void RemoveIndex(char *name);
 /*
  * prototypes in define.c
  */
-extern void DefineFunction(ProcedureStmt *nameargsexe, CommandDest dest);
+extern void CreateFunction(ProcedureStmt *stmt, CommandDest dest);
 extern void DefineOperator(char *name, List *parameters);
 extern void DefineAggregate(char *name, List *parameters);
 extern void DefineType(char *name, List *parameters);
