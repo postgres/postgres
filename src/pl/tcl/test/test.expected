@@ -1,178 +1,174 @@
-QUERY: insert into T_pkey1 values (1, 'key1-1', 'test key');
-QUERY: insert into T_pkey1 values (1, 'key1-2', 'test key');
-QUERY: insert into T_pkey1 values (1, 'key1-3', 'test key');
-QUERY: insert into T_pkey1 values (2, 'key2-1', 'test key');
-QUERY: insert into T_pkey1 values (2, 'key2-2', 'test key');
-QUERY: insert into T_pkey1 values (2, 'key2-3', 'test key');
-QUERY: insert into T_pkey2 values (1, 'key1-1', 'test key');
-QUERY: insert into T_pkey2 values (1, 'key1-2', 'test key');
-QUERY: insert into T_pkey2 values (1, 'key1-3', 'test key');
-QUERY: insert into T_pkey2 values (2, 'key2-1', 'test key');
-QUERY: insert into T_pkey2 values (2, 'key2-2', 'test key');
-QUERY: insert into T_pkey2 values (2, 'key2-3', 'test key');
-QUERY: select * from T_pkey1;
-key1|key2                |txt                                     
-----+--------------------+----------------------------------------
-   1|key1-1              |test key                                
-   1|key1-2              |test key                                
-   1|key1-3              |test key                                
-   2|key2-1              |test key                                
-   2|key2-2              |test key                                
-   2|key2-3              |test key                                
+insert into T_pkey1 values (1, 'key1-1', 'test key');
+insert into T_pkey1 values (1, 'key1-2', 'test key');
+insert into T_pkey1 values (1, 'key1-3', 'test key');
+insert into T_pkey1 values (2, 'key2-1', 'test key');
+insert into T_pkey1 values (2, 'key2-2', 'test key');
+insert into T_pkey1 values (2, 'key2-3', 'test key');
+insert into T_pkey2 values (1, 'key1-1', 'test key');
+insert into T_pkey2 values (1, 'key1-2', 'test key');
+insert into T_pkey2 values (1, 'key1-3', 'test key');
+insert into T_pkey2 values (2, 'key2-1', 'test key');
+insert into T_pkey2 values (2, 'key2-2', 'test key');
+insert into T_pkey2 values (2, 'key2-3', 'test key');
+select * from T_pkey1;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | key1-1               | test key                                
+    1 | key1-2               | test key                                
+    1 | key1-3               | test key                                
+    2 | key2-1               | test key                                
+    2 | key2-2               | test key                                
+    2 | key2-3               | test key                                
 (6 rows)
 
-QUERY: select * from T_pkey2;
-key1|key2                |txt                                     
-----+--------------------+----------------------------------------
-   1|KEY1-1              |test key                                
-   1|KEY1-2              |test key                                
-   1|KEY1-3              |test key                                
-   2|KEY2-1              |test key                                
-   2|KEY2-2              |test key                                
-   2|KEY2-3              |test key                                
+select * from T_pkey2;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | KEY1-1               | test key                                
+    1 | KEY1-2               | test key                                
+    1 | KEY1-3               | test key                                
+    2 | KEY2-1               | test key                                
+    2 | KEY2-2               | test key                                
+    2 | KEY2-3               | test key                                
 (6 rows)
 
-QUERY: insert into T_pkey1 values (1, 'KEY1-3', 'should work');
-QUERY: insert into T_pkey2 values (1, 'KEY1-3', 'should fail');
+insert into T_pkey1 values (1, 'KEY1-3', 'should work');
+insert into T_pkey2 values (1, 'KEY1-3', 'should fail');
 ERROR:  duplicate key '1', 'KEY1-3' for T_pkey2
-QUERY: insert into T_dta1 values ('trec 1', 1, 'key1-1');
-QUERY: insert into T_dta1 values ('trec 2', 1, 'key1-2');
-QUERY: insert into T_dta1 values ('trec 3', 1, 'key1-3');
-QUERY: insert into T_dta1 values ('trec 4', 1, 'key1-4');
+insert into T_dta1 values ('trec 1', 1, 'key1-1');
+insert into T_dta1 values ('trec 2', 1, 'key1-2');
+insert into T_dta1 values ('trec 3', 1, 'key1-3');
+insert into T_dta1 values ('trec 4', 1, 'key1-4');
 ERROR:  key for t_dta1 not in t_pkey1
-QUERY: insert into T_dta2 values ('trec 1', 1, 'KEY1-1');
-QUERY: insert into T_dta2 values ('trec 2', 1, 'KEY1-2');
-QUERY: insert into T_dta2 values ('trec 3', 1, 'KEY1-3');
-QUERY: insert into T_dta2 values ('trec 4', 1, 'KEY1-4');
+insert into T_dta2 values ('trec 1', 1, 'KEY1-1');
+insert into T_dta2 values ('trec 2', 1, 'KEY1-2');
+insert into T_dta2 values ('trec 3', 1, 'KEY1-3');
+insert into T_dta2 values ('trec 4', 1, 'KEY1-4');
 ERROR:  key for t_dta2 not in t_pkey2
-QUERY: select * from T_dta1;
-tkey      |ref1|ref2                
-----------+----+--------------------
-trec 1    |   1|key1-1              
-trec 2    |   1|key1-2              
-trec 3    |   1|key1-3              
+select * from T_dta1;
+    tkey    | ref1 |         ref2         
+------------+------+----------------------
+ trec 1     |    1 | key1-1              
+ trec 2     |    1 | key1-2              
+ trec 3     |    1 | key1-3              
 (3 rows)
 
-QUERY: select * from T_dta2;
-tkey      |ref1|ref2                
-----------+----+--------------------
-trec 1    |   1|KEY1-1              
-trec 2    |   1|KEY1-2              
-trec 3    |   1|KEY1-3              
+select * from T_dta2;
+    tkey    | ref1 |         ref2         
+------------+------+----------------------
+ trec 1     |    1 | KEY1-1              
+ trec 2     |    1 | KEY1-2              
+ trec 3     |    1 | KEY1-3              
 (3 rows)
 
-QUERY: update T_pkey1 set key2 = 'key2-9' where key1 = 2 and key2 = 'key2-1';
-QUERY: update T_pkey1 set key2 = 'key1-9' where key1 = 1 and key2 = 'key1-1';
+update T_pkey1 set key2 = 'key2-9' where key1 = 2 and key2 = 'key2-1';
+update T_pkey1 set key2 = 'key1-9' where key1 = 1 and key2 = 'key1-1';
 ERROR:  key '1', 'key1-1              ' referenced by T_dta1
-QUERY: delete from T_pkey1 where key1 = 2 and key2 = 'key2-2';
-QUERY: delete from T_pkey1 where key1 = 1 and key2 = 'key1-2';
+delete from T_pkey1 where key1 = 2 and key2 = 'key2-2';
+delete from T_pkey1 where key1 = 1 and key2 = 'key1-2';
 ERROR:  key '1', 'key1-2              ' referenced by T_dta1
-QUERY: update T_pkey2 set key2 = 'KEY2-9' where key1 = 2 and key2 = 'KEY2-1';
-QUERY: update T_pkey2 set key2 = 'KEY1-9' where key1 = 1 and key2 = 'KEY1-1';
+update T_pkey2 set key2 = 'KEY2-9' where key1 = 2 and key2 = 'KEY2-1';
+update T_pkey2 set key2 = 'KEY1-9' where key1 = 1 and key2 = 'KEY1-1';
 NOTICE:  updated 1 entries in T_dta2 for new key in T_pkey2
-QUERY: delete from T_pkey2 where key1 = 2 and key2 = 'KEY2-2';
-QUERY: delete from T_pkey2 where key1 = 1 and key2 = 'KEY1-2';
+delete from T_pkey2 where key1 = 2 and key2 = 'KEY2-2';
+delete from T_pkey2 where key1 = 1 and key2 = 'KEY1-2';
 NOTICE:  deleted 1 entries from T_dta2
-QUERY: select * from T_pkey1;
-key1|key2                |txt                                     
-----+--------------------+----------------------------------------
-   1|key1-1              |test key                                
-   1|key1-2              |test key                                
-   1|key1-3              |test key                                
-   2|key2-3              |test key                                
-   1|KEY1-3              |should work                             
-   2|key2-9              |test key                                
+select * from T_pkey1;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | key1-1               | test key                                
+    1 | key1-2               | test key                                
+    1 | key1-3               | test key                                
+    2 | key2-3               | test key                                
+    1 | KEY1-3               | should work                             
+    2 | key2-9               | test key                                
 (6 rows)
 
-QUERY: select * from T_pkey2;
-key1|key2                |txt                                     
-----+--------------------+----------------------------------------
-   1|KEY1-3              |test key                                
-   2|KEY2-3              |test key                                
-   2|KEY2-9              |test key                                
-   1|KEY1-9              |test key                                
+select * from T_pkey2;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | KEY1-3               | test key                                
+    2 | KEY2-3               | test key                                
+    2 | KEY2-9               | test key                                
+    1 | KEY1-9               | test key                                
 (4 rows)
 
-QUERY: select * from T_dta1;
-tkey      |ref1|ref2                
-----------+----+--------------------
-trec 1    |   1|key1-1              
-trec 2    |   1|key1-2              
-trec 3    |   1|key1-3              
+select * from T_dta1;
+    tkey    | ref1 |         ref2         
+------------+------+----------------------
+ trec 1     |    1 | key1-1              
+ trec 2     |    1 | key1-2              
+ trec 3     |    1 | key1-3              
 (3 rows)
 
-QUERY: select * from T_dta2;
-tkey      |ref1|ref2                
-----------+----+--------------------
-trec 3    |   1|KEY1-3              
-trec 1    |   1|KEY1-9              
+select * from T_dta2;
+    tkey    | ref1 |         ref2         
+------------+------+----------------------
+ trec 3     |    1 | KEY1-3              
+ trec 1     |    1 | KEY1-9              
 (2 rows)
 
-QUERY: select tcl_avg(key1) from T_pkey1;
-tcl_avg
--------
-      1
+select tcl_avg(key1) from T_pkey1;
+ tcl_avg 
+---------
+       1
 (1 row)
 
-QUERY: select tcl_sum(key1) from T_pkey1;
-tcl_sum
--------
-      8
+select tcl_sum(key1) from T_pkey1;
+ tcl_sum 
+---------
+       8
 (1 row)
 
-QUERY: select tcl_avg(key1) from T_pkey2;
-tcl_avg
--------
-      1
+select tcl_avg(key1) from T_pkey2;
+ tcl_avg 
+---------
+       1
 (1 row)
 
-QUERY: select tcl_sum(key1) from T_pkey2;
-tcl_sum
--------
-      6
+select tcl_sum(key1) from T_pkey2;
+ tcl_sum 
+---------
+       6
 (1 row)
 
-QUERY: select tcl_avg(key1) from T_pkey1 where key1 = 99;
-tcl_avg
--------
-       
+select tcl_avg(key1) from T_pkey1 where key1 = 99;
+ERROR:  pltcl: divide by zero
+select tcl_sum(key1) from T_pkey1 where key1 = 99;
+ tcl_sum 
+---------
+       0
 (1 row)
 
-QUERY: select tcl_sum(key1) from T_pkey1 where key1 = 99;
-tcl_sum
--------
-      0
+select 1 @< 2;
+ ?column? 
+----------
+ t
 (1 row)
 
-QUERY: select 1 @< 2;
-?column?
---------
-t       
+select 100 @< 4;
+ ?column? 
+----------
+ f
 (1 row)
 
-QUERY: select 100 @< 4;
-?column?
---------
-f       
-(1 row)
-
-QUERY: select * from T_pkey1 order by key1 using @<;
-key1|key2                |txt                                     
-----+--------------------+----------------------------------------
-   1|key1-1              |test key                                
-   1|key1-2              |test key                                
-   1|key1-3              |test key                                
-   1|KEY1-3              |should work                             
-   2|key2-3              |test key                                
-   2|key2-9              |test key                                
+select * from T_pkey1 order by key1 using @<;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | key1-2               | test key                                
+    1 | key1-1               | test key                                
+    1 | key1-3               | test key                                
+    1 | KEY1-3               | should work                             
+    2 | key2-9               | test key                                
+    2 | key2-3               | test key                                
 (6 rows)
 
-QUERY: select * from T_pkey2 order by key1 using @<;
-key1|key2                |txt                                     
-----+--------------------+----------------------------------------
-   1|KEY1-3              |test key                                
-   1|KEY1-9              |test key                                
-   2|KEY2-3              |test key                                
-   2|KEY2-9              |test key                                
+select * from T_pkey2 order by key1 using @<;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | KEY1-3               | test key                                
+    1 | KEY1-9               | test key                                
+    2 | KEY2-9               | test key                                
+    2 | KEY2-3               | test key                                
 (4 rows)
 
