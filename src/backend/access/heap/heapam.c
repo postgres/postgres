@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.32 1998/08/19 02:01:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.33 1998/08/20 22:07:30 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1274,10 +1274,10 @@ heap_delete(Relation relation, ItemPointer tid)
  * ----------------
  */
 int
-heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
+heap_replace(Relation relation, ItemPointer otid, HeapTuple replace_tuple)
 {
 	ItemId		lp;
-	HeapTuple	tp;
+	HeapTuple	old_tuple;
 	Page		dp;
 	Buffer		buffer;
 	HeapTuple	tuple;
@@ -1319,8 +1319,8 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	 * ----------------
 	 */
 
-	tp = (HeapTuple) PageGetItem(dp, lp);
-	Assert(HeapTupleIsValid(tp));
+	old_tuple = (HeapTuple) PageGetItem(dp, lp);
+	Assert(HeapTupleIsValid(old_tuple));
 
 	/* -----------------
 	 *	the following test should be able to catch all non-functional
@@ -1333,7 +1333,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	 * -----------------
 	 */
 
-	if (TupleUpdatedByCurXactAndCmd(tp))
+	if (TupleUpdatedByCurXactAndCmd(old_tuple))
 	{
 		elog(NOTICE, "Non-functional update, only first update is performed");
 		if (IsSystemRelationName(RelationGetRelationName(relation)->data))
@@ -1367,19 +1367,19 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	}
 
 	/* XXX order problems if not atomic assignment ??? */
-	tup->t_oid = tp->t_oid;
-	TransactionIdStore(GetCurrentTransactionId(), &(tup->t_xmin));
-	tup->t_cmin = GetCurrentCommandId();
-	StoreInvalidTransactionId(&(tup->t_xmax));
-	tup->t_infomask &= ~(HEAP_XACT_MASK);
-	tup->t_infomask |= HEAP_XMAX_INVALID;
+	replace_tuple->t_oid = old_tuple->t_oid;
+	TransactionIdStore(GetCurrentTransactionId(), &(replace_tuple->t_xmin));
+	replace_tuple->t_cmin = GetCurrentCommandId();
+	StoreInvalidTransactionId(&(replace_tuple->t_xmax));
+	replace_tuple->t_infomask &= ~(HEAP_XACT_MASK);
+	replace_tuple->t_infomask |= HEAP_XMAX_INVALID;
 
 	/* ----------------
 	 *	insert new item
 	 * ----------------
 	 */
-	if ((unsigned) DOUBLEALIGN(tup->t_len) <= PageGetFreeSpace((Page) dp))
-		RelationPutHeapTuple(relation, BufferGetBlockNumber(buffer), tup);
+	if ((unsigned) DOUBLEALIGN(replace_tuple->t_len) <= PageGetFreeSpace((Page) dp))
+		RelationPutHeapTuple(relation, BufferGetBlockNumber(buffer), replace_tuple);
 	else
 	{
 		/* ----------------
@@ -1387,23 +1387,23 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 		 *	for a new place to put it.
 		 * ----------------
 		 */
-		doinsert(relation, tup);
+		doinsert(relation, replace_tuple);
 	}
 
 	/* ----------------
 	 *	new item in place, now record transaction information
 	 * ----------------
 	 */
-	TransactionIdStore(GetCurrentTransactionId(), &(tp->t_xmax));
-	tp->t_cmax = GetCurrentCommandId();
-	tp->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
+	TransactionIdStore(GetCurrentTransactionId(), &(old_tuple->t_xmax));
+	old_tuple->t_cmax = GetCurrentCommandId();
+	old_tuple->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
 
 	/* ----------------
 	 *	invalidate caches
 	 * ----------------
 	 */
 	SetRefreshWhenInvalidate(ImmediateInvalidation);
-	RelationInvalidateHeapTuple(relation, tp);
+	RelationInvalidateHeapTuple(relation, old_tuple);
 	SetRefreshWhenInvalidate((bool) !ImmediateInvalidation);
 
 	WriteBuffer(buffer);

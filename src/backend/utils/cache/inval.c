@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.13 1998/08/19 14:51:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.14 1998/08/20 22:07:43 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -643,6 +643,7 @@ RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 									RelationIdRegisterLocalInvalid);
 
 	if (RefreshWhenInvalidate)
+		/* what does this do?  bjm 1998/08/20 */
 		RelationInvalidateCatalogCacheTuple(relation,
 											tuple,
 											(void (*) ()) NULL);

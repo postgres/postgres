@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.58 1998/08/19 02:01:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.59 1998/08/20 22:07:32 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -1051,18 +1051,20 @@ DeletePgAttributeTuples(Relation rel)
 	 */
 	RelationSetLockForWrite(pg_attribute_desc);
 
-	attnum = FirstLowInvalidHeapAttributeNumber + 1; /* cmax */
-
-	while (HeapTupleIsValid(tup = SearchSysCacheTupleCopy(ATTNUM,
-									ObjectIdGetDatum(rel->rd_att->attrs[0]->attrelid),
-									Int16GetDatum(attnum),
-									0, 0)))
+	for (attnum = FirstLowInvalidHeapAttributeNumber + 1;
+			attnum <= rel->rd_att->natts;
+			attnum++)
 	{
-		heap_delete(pg_attribute_desc, &tup->t_ctid);
-		pfree(tup);
-		attnum++;
+		if (HeapTupleIsValid(tup = SearchSysCacheTupleCopy(ATTNUM,
+										ObjectIdGetDatum(RelationGetRelid(rel)),
+										Int16GetDatum(attnum),
+										0, 0)))
+		{
+			heap_delete(pg_attribute_desc, &tup->t_ctid);
+			pfree(tup);
+		}
 	}
-
+	
 	/* ----------------
 	 * Release the write lock
 	 * ----------------
@@ -1104,8 +1106,10 @@ DeletePgTypeTuple(Relation rel)
 	 *	to this relation.
 	 * ----------------
 	 */
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_type_typrelid, F_INT4EQ,
-						   rel->rd_att->attrs[0]->attrelid);
+	ScanKeyEntryInitialize(&key, 0,
+							Anum_pg_type_typrelid,
+							F_OIDEQ,
+							ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	pg_type_scan = heap_beginscan(pg_type_desc,
 								  0,
@@ -1140,7 +1144,9 @@ DeletePgTypeTuple(Relation rel)
 	pg_attribute_desc = heap_openr(AttributeRelationName);
 
 	ScanKeyEntryInitialize(&attkey,
-						   0, Anum_pg_attribute_atttypid, F_INT4EQ,
+						   0,
+						   Anum_pg_attribute_atttypid,
+						   F_OIDEQ,
 						   typoid);
 
 	pg_attribute_scan = heap_beginscan(pg_attribute_desc,
@@ -1151,13 +1157,13 @@ DeletePgTypeTuple(Relation rel)
 
 	/* ----------------
 	 *	try and get a pg_attribute tuple.  if we succeed it means
-	 *	we cant delete the relation because something depends on
+	 *	we can't delete the relation because something depends on
 	 *	the schema.
 	 * ----------------
 	 */
 	atttup = heap_getnext(pg_attribute_scan, 0);
 
-	if (PointerIsValid(atttup))
+	if (HeapTupleIsValid(atttup))
 	{
 		Oid			relid = ((AttributeTupleForm) GETSTRUCT(atttup))->attrelid;
 

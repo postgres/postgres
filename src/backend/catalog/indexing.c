@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.21 1998/08/20 15:16:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.22 1998/08/20 22:07:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ CatalogIndexInsert(Relation *idescs,
 		InsertIndexResult indexRes;
 
 		indexDescriptor = RelationGetTupleDescriptor(idescs[i]);
-		pgIndexTup = SearchSysCacheTuple(INDEXRELID,
+		pgIndexTup = SearchSysCacheTupleCopy(INDEXRELID,
 										 ObjectIdGetDatum(idescs[i]->rd_id),
 										 0, 0, 0);
 		Assert(pgIndexTup);
@@ -163,6 +163,7 @@ CatalogIndexInsert(Relation *idescs,
 								&heapTuple->t_ctid, heapRelation);
 		if (indexRes)
 			pfree(indexRes);
+		pfree(pgIndexTup);
 	}
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.75 1998/08/20 15:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.76 1998/08/20 22:07:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2217,7 +2217,7 @@ vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 		cachetuple = SearchSysCacheTupleCopy(INDEXRELID,
 										ObjectIdGetDatum(RelationGetRelid(Irel[i])),
 										0, 0, 0);
-		Assert(tuple);
+		Assert(cachetuple);
 
 		/* get the buffer cache tuple */
 		tuple = heap_fetch(onerel, SnapshotNow, &cachetuple->t_ctid, &buffer);

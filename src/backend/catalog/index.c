@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.49 1998/08/20 15:16:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.50 1998/08/20 22:07:34 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1173,6 +1173,7 @@ index_destroy(Oid indexId)
 {
 	Relation	indexRelation;
 	Relation	catalogRelation;
+	Relation	attributeRelation;
 	HeapTuple	tuple;
 	int16		attnum;
 	
@@ -1200,7 +1201,7 @@ index_destroy(Oid indexId)
 	 * fix ATTRIBUTE relation
 	 * ----------------
 	 */
-	catalogRelation = heap_openr(AttributeRelationName);
+	attributeRelation = heap_openr(AttributeRelationName);
 
 	attnum = 1; /* indexes start at 1 */
 
@@ -1209,29 +1210,28 @@ index_destroy(Oid indexId)
 									Int16GetDatum(attnum),
 									0, 0)))
 	{
-		heap_delete(catalogRelation, &tuple->t_ctid);
+		heap_delete(attributeRelation, &tuple->t_ctid);
 		pfree(tuple);
 		attnum++;
 	}
-
-	heap_close(catalogRelation);
+	heap_close(attributeRelation);
 
 	/* ----------------
 	 * fix INDEX relation
 	 * ----------------
 	 */
 	tuple = SearchSysCacheTupleCopy(INDEXRELID,
-								  ObjectIdGetDatum(indexId),
-								  0, 0, 0);
+									  ObjectIdGetDatum(indexId),
+									  0, 0, 0);
 
 	if (!HeapTupleIsValid(tuple))
-	{
 		elog(NOTICE, "IndexRelationDestroy: %s's INDEX tuple missing",
 			 RelationGetRelationName(indexRelation));
-	}
-	heap_delete(catalogRelation, &tuple->t_ctid);
+
+	Assert(ItemPointerIsValid(&tuple->t_ctid));
+			         
+	heap_delete(indexRelation, &tuple->t_ctid);
 	pfree(tuple);
-	heap_close(catalogRelation);
 
 	/*
 	 * flush cache and physically remove the file

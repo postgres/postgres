@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.27 1998/08/19 02:01:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.28 1998/08/20 22:07:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,12 +384,12 @@ TypeCreate(char *typeName,
 	values[i++] = (Datum) GetUserId();	/* 2 */
 	values[i++] = (Datum) internalSize; /* 3 */
 	values[i++] = (Datum) externalSize; /* 4 */
-	values[i++] = (Datum) passedByValue;		/* 5 */
+	values[i++] = (Datum) passedByValue;/* 5 */
 	values[i++] = (Datum) typeType;		/* 6 */
 	values[i++] = (Datum) (bool) 1;		/* 7 */
 	values[i++] = (Datum) typDelim;		/* 8 */
 	values[i++] = (Datum) (typeType == 'c' ? relationOid : InvalidOid); /* 9 */
-	values[i++] = (Datum) elementObjectId;		/* 10 */
+	values[i++] = (Datum) elementObjectId;/* 10 */
 
 	/*
 	 * arguments to type input and output functions must be 0
@@ -431,7 +431,7 @@ TypeCreate(char *typeName,
 				func_error("TypeCreate", procname, 1, argList, NULL);
 		}
 
-		values[i++] = (Datum) tup->t_oid;		/* 11 - 14 */
+		values[i++] = (Datum) tup->t_oid;	/* 11 - 14 */
 	}
 
 	/* ----------------

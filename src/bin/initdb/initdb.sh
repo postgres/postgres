@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.49 1998/08/20 15:16:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.50 1998/08/20 22:07:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -404,13 +404,13 @@ echo
 PGSQL_OPT="-o /dev/null -F -Q -D$PGDATA"
 
 # If the COPY is first, the VACUUM generates an error, so we vacuum first
-echo "vacuuming template1"
+echo "Vacuuming template1"
 echo "vacuum" | postgres $PGSQL_OPT template1 > /dev/null
 
 echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 
-echo "creating public pg_user view"
+echo "Creating public pg_user view"
 echo "CREATE TABLE xpg_user (		\
 	    usename	name,		\
 	    usesysid	int4,		\
@@ -436,7 +436,7 @@ echo "CREATE RULE _RETpg_user AS ON SELECT TO pg_user DO INSTEAD	\
 echo "REVOKE ALL on pg_shadow FROM public" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 
-echo "loading pg_description"
+echo "Loading pg_description"
 echo "copy pg_description from '$TEMPLATE_DESCR'" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 echo "copy pg_description from '$GLOBAL_DESCR'" | \

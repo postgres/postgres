@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.35 1998/08/19 02:02:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.36 1998/08/20 22:07:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -690,7 +690,7 @@ ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
  *		the IndexCatalogInformation function in plancat.c
  *		because IndexCatalogInformation is poorly written.
  *
- *		It would be much better the functionality provided
+ *		It would be much better if the functionality provided
  *		by this function and IndexCatalogInformation was
  *		in the form of a small set of orthogonal routines..
  *		If you are trying to understand this, I suggest you
