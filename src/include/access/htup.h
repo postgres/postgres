@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.55 2002/07/02 05:46:14 momjian Exp $
+ * $Id: htup.h,v 1.56 2002/07/08 01:52:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,7 +241,7 @@ do { \
 #define XLOG_HEAP_INIT_PAGE 0x80
 
 /*
- * All what we need to find changed tuple (18 bytes)
+ * All what we need to find changed tuple (14 bytes)
  *
  * NB: on most machines, sizeof(xl_heaptid) will include some trailing pad
  * bytes for alignment.  We don't want to store the pad space in the XLOG,
