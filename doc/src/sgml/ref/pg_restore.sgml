@@ -25,13 +25,14 @@ pg_restore [ <replaceable class="parameter">archive-file</replaceable>  ]
     [ -p  <replaceable class="parameter">port</replaceable>  ]
     [ -t  <replaceable class="parameter">table</replaceable>  ]
     [ -a  ] [ -c  ] [-C] [-d <replaceable class="parameter">name</replaceable>]
-    [-f <replaceable class="parameter">archive-file</replaceable>]
-    [-F <replaceable class="parameter">format</replaceable>]
+    [ -f <replaceable class="parameter">archive-file</replaceable>]
+    [ -F <replaceable class="parameter">format</replaceable>]
     [ -i  <replaceable class="parameter">index</replaceable>  ]
-    [ -l ] [ -N  ] [ -o  ] [ -O ]
+    [ -l ] [ -L <replaceable class="parameter">contents-file</replaceable> ]
+    [ -N  ] [ -o  ] [ -O ]
     [ -P <replaceable class="parameter">function-name</replaceable> ] [ -r ] [ -R ]
     [ -s  ] [ -S ] { -T  <replaceable class="parameter">trigger</replaceable> ] [ -u  ]
-    [-U <replaceable class="parameter">contents-file</replaceable> ] [ -v  ] [ -x ]
+    [ -v  ] [ -x ]
   </synopsis>
 
   <refsect2 id="R2-APP-PG-RESTORE-1">
@@ -160,6 +161,17 @@ pg_restore [ <replaceable class="parameter">archive-file</replaceable>  ]
      </varlistentry>
 
      <varlistentry>
+      <term>-L <replaceable class="parameter">list-file</replaceable></term>
+      <listitem>
+       <para>
+	    Restore elements in <REPLACEABLE CLASS="PARAMETER">list-file</REPLACEABLE> only, and in the
+        order they appear in the file. Lines can be moved and may also be commented out by placing 
+        a ';' at the start of the line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>-N</term>
       <listitem>
        <para>
@@ -262,17 +274,6 @@ pg_restore [ <replaceable class="parameter">archive-file</replaceable>  ]
       <listitem>
        <para>
 	Use password authentication. Prompts for username and password.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-U <replaceable class="parameter">list-file</replaceable></term>
-      <listitem>
-       <para>
-	  Restore elements in <REPLACEABLE CLASS="PARAMETER">list-file</REPLACEABLE> only, and in the
-        order they appear in the file. Lines can be moved and may also be commented out by placing a ';' at the
-        start of the line.
        </para>
       </listitem>
      </varlistentry>
