@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.28 2001/11/05 17:46:31 momjian Exp $
+ * $Id: xlog.h,v 1.28.2.1 2002/03/15 19:20:47 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -178,6 +178,8 @@ typedef struct XLogRecData
 extern StartUpID ThisStartUpID; /* current SUI */
 extern bool InRecovery;
 extern XLogRecPtr MyLastRecPtr;
+extern bool MyXactMadeXLogEntry;
+extern XLogRecPtr ProcLastRecEnd;
 
 /* these variables are GUC parameters related to XLOG */
 extern int	CheckPointSegments;
@@ -205,8 +207,9 @@ extern void ShutdownXLOG(void);
 extern void CreateCheckPoint(bool shutdown);
 extern void SetThisStartUpID(void);
 extern void XLogPutNextOid(Oid nextOid);
-extern void SetRedoRecPtr(void);
-extern void GetRedoRecPtr(void);
+extern void SetSavedRedoRecPtr(void);
+extern void GetSavedRedoRecPtr(void);
+extern XLogRecPtr GetRedoRecPtr(void);
 
 /* in storage/ipc/sinval.c, but don't want to declare in sinval.h because
  * we'd have to include xlog.h into that ...

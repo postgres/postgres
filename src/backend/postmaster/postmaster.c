@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.264 2002/01/10 01:11:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.264.2.1 2002/03/15 19:20:47 tgl Exp $
  *
  * NOTES
  *
@@ -1692,7 +1692,7 @@ CleanupProc(int pid,
 			{
 				checkpointed = time(NULL);
 				/* Update RedoRecPtr for future child backends */
-				GetRedoRecPtr();
+				GetSavedRedoRecPtr();
 			}
 		}
 		else

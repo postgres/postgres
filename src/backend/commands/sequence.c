@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.68 2002/01/11 18:16:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.68.2.1 2002/03/15 19:20:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,6 +286,7 @@ nextval(PG_FUNCTION_ARGS)
 	char	   *seqname = get_seq_name(seqin);
 	SeqTable	elm;
 	Buffer		buf;
+	Page		page;
 	Form_pg_sequence seq;
 	int64		incby,
 				maxv,
@@ -316,6 +317,7 @@ nextval(PG_FUNCTION_ARGS)
 
 	seq = read_info("nextval", elm, &buf);		/* lock page' buffer and
 												 * read tuple */
+	page = BufferGetPage(buf);
 
 	last = next = result = seq->last_value;
 	incby = seq->increment_by;
@@ -331,10 +333,32 @@ nextval(PG_FUNCTION_ARGS)
 		log--;
 	}
 
+	/*
+	 * Decide whether we should emit a WAL log record.  If so, force up
+	 * the fetch count to grab SEQ_LOG_VALS more values than we actually
+	 * need to cache.  (These will then be usable without logging.)
+	 *
+	 * If this is the first nextval after a checkpoint, we must force
+	 * a new WAL record to be written anyway, else replay starting from the
+	 * checkpoint would fail to advance the sequence past the logged
+	 * values.  In this case we may as well fetch extra values.
+	 */
 	if (log < fetch)
 	{
-		fetch = log = fetch - log + SEQ_LOG_VALS;
+		/* forced log to satisfy local demand for values */
+		fetch = log = fetch + SEQ_LOG_VALS;
 		logit = true;
+	}
+	else
+	{
+		XLogRecPtr	redoptr = GetRedoRecPtr();
+
+		if (XLByteLE(PageGetLSN(page), redoptr))
+		{
+			/* last update of seq was before checkpoint */
+			fetch = log = fetch + SEQ_LOG_VALS;
+			logit = true;
+		}
 	}
 
 	while (fetch)				/* try to fetch cache [+ log ] numbers */
@@ -386,6 +410,9 @@ nextval(PG_FUNCTION_ARGS)
 		}
 	}
 
+	log -= fetch;				/* adjust for any unfetched numbers */
+	Assert(log >= 0);
+
 	/* save info in local cache */
 	elm->last = result;			/* last returned number */
 	elm->cached = last;			/* last fetched number */
@@ -396,7 +423,6 @@ nextval(PG_FUNCTION_ARGS)
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
-		Page		page = BufferGetPage(buf);
 
 		xlrec.node = elm->rel->rd_node;
 		rdata[0].buffer = InvalidBuffer;
@@ -417,15 +443,11 @@ nextval(PG_FUNCTION_ARGS)
 
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
-
-		if (fetch)				/* not all numbers were fetched */
-			log -= fetch;
 	}
 
 	/* update on-disk data */
 	seq->last_value = last;		/* last fetched number */
 	seq->is_called = true;
-	Assert(log >= 0);
 	seq->log_cnt = log;			/* how much is logged */
 	END_CRIT_SECTION();
 
