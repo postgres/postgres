@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.7 1996/11/16 05:45:47 momjian Exp $
+ * $Id: psqlHelp.h,v 1.8 1996/12/29 00:53:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ static struct _helpStruct QL_HELP[] = {
       "end [transaction];"},
   { "explain",
       "explain the query execution plan",
-      "explain [with {cost|full_plan}] <query>"},
+      "explain [with {cost|full}] <query>"},
   { "fetch",
       "retrieve tuples from a cursor",
       "fetch [forward|backward] [<number>|all] [in <cursorname>];"},
