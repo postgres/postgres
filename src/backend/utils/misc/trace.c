@@ -24,6 +24,12 @@
 #include "miscadmin.h"
 #include "utils/trace.h"
 
+#include <ctype.h>
+
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
+
 /*
  * We could support trace messages of indefinite length, as elog() does,
  * but it's probably not worth the trouble.  Instead limit trace message
@@ -204,16 +210,90 @@ eprintf(const char *fmt,...)
 void
 write_syslog(int level, char *line)
 {
+#ifndef PG_SYSLOG_LIMIT
+#define PG_SYSLOG_LIMIT 128
+#endif /* PG_SYSLOG_LIMIT */
+
 	static int	openlog_done = 0;
+	static char	buf[PG_SYSLOG_LIMIT+1];
+	static int	logid = 0;
 
 	if (UseSyslog >= 1)
 	{
+		int len = strlen(line);
+		int buflen;
+		int seq = 0;
+		int l;
+		int i;
+
 		if (!openlog_done)
 		{
 			openlog_done = 1;
 			openlog(PG_LOG_IDENT, LOG_PID | LOG_NDELAY, PG_LOG_FACILITY);
 		}
-		syslog(level, "%s", line);
+
+		/* divide into multiple syslog() calls if message is
+                 * too long
+		 */
+		if (len > PG_SYSLOG_LIMIT)
+		{
+			logid++;
+
+			while (len > 0)
+			{
+				strncpy(buf, line, PG_SYSLOG_LIMIT);
+				buf[PG_SYSLOG_LIMIT] = '\0';
+
+				l = strlen(buf);
+#ifdef MULTIBYTE
+				/* trim to multibyte letter boundary */ 
+				buflen = pg_mbcliplen(buf, l, l);
+				buf[buflen] = '\0';
+				l = strlen(buf);
+#endif
+				/* already word boundary? */
+				if (isspace(line[l]) || line[l] == '\0')
+				{
+					buflen = l;
+				}
+				else
+				{
+					/* try to divide in word boundary */
+					i = l - 1;
+					while(i > 0 && !isspace(buf[i]))
+					{
+						i--;
+					}
+					if (i <= 0)	/* couldn't divide word boundary */
+					{
+						buflen = l;
+					}
+					else
+					{
+						buflen = i;
+						buf[i] = '\0';
+					}
+				}
+
+				seq++;
+				/*
+				 * Here we actually call syslog().
+				 * For segmented messages, we add logid
+				 * (incremented at each write_syslog call),
+				 * and seq (incremented at each syslog call
+				 * within a write_syslog call).
+				 * This will prevent syslog to surpress
+				 * "same" messages...
+				 */
+				syslog(level, "[%d-%d] %s", logid, seq, buf);
+				line += buflen;
+				len -= buflen;
+			}
+		}
+		else
+		{
+			syslog(level, "%s", line);
+		}
 	}
 }
 
