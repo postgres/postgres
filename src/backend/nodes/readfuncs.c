@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.127 2002/08/04 19:48:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.128 2002/08/10 20:44:48 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1465,6 +1465,80 @@ _readColumnRef(void)
 	return local_node;
 }
 
+static ColumnDef *
+_readColumnDef(void)
+{
+	ColumnDef  *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(ColumnDef);
+
+	token = pg_strtok(&length); /* eat :colname */
+	token = pg_strtok(&length); /* now read it */
+	local_node->colname = nullable_string(token, length);
+
+	token = pg_strtok(&length); /* eat :typename */
+	local_node->typename = nodeRead(true); /* now read it */
+
+	token = pg_strtok(&length); /* eat :is_not_null */
+	token = pg_strtok(&length); /* get :is_not_null */
+	local_node->is_not_null = strtobool(token);
+
+	token = pg_strtok(&length); /* eat :raw_default */
+	local_node->raw_default = nodeRead(true); /* now read it */
+
+	token = pg_strtok(&length); /* eat :cooked_default */
+	token = pg_strtok(&length); /* now read it */
+	local_node->cooked_default = nullable_string(token, length);
+
+	token = pg_strtok(&length); /* eat :constraints */
+	local_node->constraints = nodeRead(true);	/* now read it */
+
+	token = pg_strtok(&length); /* eat :support */
+	local_node->support = nodeRead(true); /* now read it */
+
+	return local_node;
+}
+
+static TypeName *
+_readTypeName(void)
+{
+	TypeName  *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(TypeName);
+
+	token = pg_strtok(&length); /* eat :names */
+	local_node->names = nodeRead(true); /* now read it */
+
+	token = pg_strtok(&length); /* eat :typeid */
+	token = pg_strtok(&length); /* get typeid */
+	local_node->typeid = atooid(token);
+
+	token = pg_strtok(&length); /* eat :timezone */
+	token = pg_strtok(&length); /* get timezone */
+	local_node->timezone = strtobool(token);
+
+	token = pg_strtok(&length); /* eat :setof */
+	token = pg_strtok(&length); /* get setof */
+	local_node->setof = strtobool(token);
+
+	token = pg_strtok(&length); /* eat :pct_type */
+	token = pg_strtok(&length); /* get pct_type */
+	local_node->pct_type = strtobool(token);
+
+	token = pg_strtok(&length); /* eat :typmod */
+	token = pg_strtok(&length); /* get typmod */
+	local_node->typmod = atoi(token);
+
+	token = pg_strtok(&length); /* eat :arrayBounds */
+	local_node->arrayBounds = nodeRead(true); /* now read it */
+
+	return local_node;
+}
+
 static ExprFieldSelect *
 _readExprFieldSelect(void)
 {
@@ -2092,6 +2166,10 @@ parsePlanString(void)
 		return_value = _readRangeVar();
 	else if (length == 9 && strncmp(token, "COLUMNREF", length) == 0)
 		return_value = _readColumnRef();
+	else if (length == 9 && strncmp(token, "COLUMNDEF", length) == 0)
+		return_value = _readColumnDef();
+	else if (length == 8 && strncmp(token, "TYPENAME", length) == 0)
+		return_value = _readTypeName();
 	else if (length == 15 && strncmp(token, "EXPRFIELDSELECT", length) == 0)
 		return_value = _readExprFieldSelect();
 	else if (length == 5 && strncmp(token, "ALIAS", length) == 0)
