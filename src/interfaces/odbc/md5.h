@@ -39,11 +39,12 @@ typedef char bool;
 #endif   /* not C++ */
 #endif   /* __BEOS__ */
 
-/* #if SIZEOF_UINT8 == 0  Can't get this from configure */
+/* Also defined in include/c.h */
+#if SIZEOF_UINT8 == 0
 typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
-/* #endif */
+#endif   /* SIZEOF_UINT8 == 0 */
 
 extern bool EncryptMD5(const char *passwd, const char *salt,
 		   size_t salt_len, char *buf);
