@@ -32,6 +32,16 @@
 #  define NO_VFORK
 #endif
 
+# The following is used as the arg list for signal handlers.  Any ports
+# that take something other than an int argument should change this in
+# the port specific makefile.  Note that variable names are required 
+# because it is used in both the prototypes as well as the definitions.  
+# Note also the long name.  We expect that this won't collide with
+# other names causing compiler warnings.
+#ifndef       SIGNAL_ARGS
+#define SIGNAL_ARGS int postgres_signal_arg
+#endif
+ 
 /*
  * On architectures for which we have not implemented spinlocks (or
  * cannot do so), we use System V semaphores.  We also use them for

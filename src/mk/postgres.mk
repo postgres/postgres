@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.mk,v 1.4 1996/10/04 20:17:11 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.mk,v 1.5 1996/10/04 20:20:51 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -88,18 +88,6 @@ endef
 # there)
 include $(MKDIR)/../Makefile.global
 -include $(MKDIR)/port/postgres.mk.$(PORTNAME)
-
-# The following is used as the arg list for signal handlers.  Any ports
-# that take something other than an int argument should change this in
-# the port specific makefile.  Note that variable names are required
-# because it is used in both the prototypes as well as the definitions.
-# Note also the long name.  We expect that this won't collide with
-# other names causing compiler warnings.
-#ifndef       SIGNAL_ARGS
-#define SIGNAL_ARGS int postgres_signal_arg
-#endif
-
-CFLAGS +=     -DSIGNAL_ARGS=$(SIGNAL_ARGS)
 
 CURDIR:= $(shell pwd)
 
