@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.61 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.62 2002/10/18 18:26:22 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -368,13 +368,14 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
   </para>
 
   <para>
-   The FOR UPDATE clause allows the SELECT statement to perform 
-   exclusive locking of selected rows.
+   The FOR UPDATE clause causes the SELECT statement to lock the selected
+   rows against concurrent updates.
   </para>
    
   <para>
    You must have SELECT privilege to a table to read its values
    (See the <command>GRANT</command>/<command>REVOKE</command> statements).
+   Use of FOR UPDATE requires UPDATE privilege as well.
   </para>
    
   <refsect2 id="SQL-FROM">
@@ -859,19 +860,32 @@ SELECT name FROM distributors ORDER BY code;
    <para>
     FOR UPDATE causes the rows retrieved by the query to be locked as though
     for update.  This prevents them from being modified or deleted by other
-    transactions until the current transaction ends.
+    transactions until the current transaction ends; that is, other
+    transactions that attempt UPDATE, DELETE, or SELECT FOR UPDATE of these
+    rows will be blocked until the current transaction ends.  Also, if an
+    UPDATE, DELETE, or SELECT FOR UPDATE from another transaction has already
+    locked a selected row or rows, SELECT FOR UPDATE will wait for the other
+    transaction to complete, and will then lock and return the updated row
+    (or no row, if the row was deleted).  For further discussion see the
+    concurrency chapter of the <citetitle>User's Guide</citetitle>.
    </para>
 
    <para>
     If specific tables are named in FOR UPDATE, then only rows coming from
-    those tables are locked.
+    those tables are locked; any other tables used in the SELECT are simply
+    read as usual.
    </para>
 
    <para>
     FOR UPDATE cannot be used in contexts where returned rows can't be clearly
     identified with individual table rows; for example it can't be used with
-    aggregation.  FOR UPDATE may also appear before LIMIT for portability with
-    pre-7.3 applications.
+    aggregation.
+   </para>
+
+   <para>
+    FOR UPDATE may appear before LIMIT for compatibility with
+    pre-7.3 applications.  However, it effectively executes after LIMIT,
+    and so that is the recommended place to write it.
    </para>
   </refsect2>
 
