@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.15 1997/08/26 23:31:22 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.16 1997/08/29 09:12:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ TupleUpdatedByCurXactAndCmd(HeapTuple t)
 {
     if (TransactionIdEquals(t->t_xmax,
 			    GetCurrentTransactionId()) &&
-	t->t_cmax == GetCurrentCommandId())
+	CommandIdGEScanCommandId (t->t_cmax))
 	return true;
     
     return false;
