@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.66 2003/07/23 08:47:39 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.67 2003/07/31 04:23:40 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -595,8 +595,11 @@ SendQuery(const char *query)
 				return false;
 	}
 	else if (VariableEquals(pset.vars, "ECHO", "queries"))
+	{
 		puts(query);
-
+		fflush(stdout);
+	}
+	
 	SetCancelConn();
 
 	if (PQtransactionStatus(pset.db) == PQTRANS_IDLE &&
