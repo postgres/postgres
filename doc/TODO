@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri May 23 21:27:42 EDT 2003
+Last updated:		Sat May 24 11:33:42 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -293,11 +293,6 @@ Dependency Checking
 * Use dependency information to dump data in proper order
 
 
-Transactions
-============
-
-
-
 Exotic Features
 ===============
 
@@ -381,6 +376,8 @@ Write-Ahead Log
 * Allow xlog directory location to be specified during initdb, perhaps
   using symlinks
 * Allow WAL information to recover corrupted pg_controldata
+* Find a way to reduce rotational delay when repeatedly writing
+  last WAL page
 
 
 Optimizer / Executor
