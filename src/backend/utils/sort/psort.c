@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.23 1997/09/18 05:37:31 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.24 1997/09/18 14:41:56 vadim Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -147,8 +147,6 @@ psort_begin(Sort * node, int nkeys, ScanKey key)
 	PS(node)->treeContext.sortMem = SortMem * 1024;
 
 	PS(node)->Tuples = NULL;
-	PS(node)->lasttuple = NULL;
-	PS(node)->lt_tupcount = 0;
 	PS(node)->tupcount = 0;
 
 	PS(node)->using_tape_files = false;
@@ -434,45 +432,14 @@ createfirstrun(Sort *node)
 	if ( LACKMEM (node) )	/* in-memory sort is impossible */
 	{
     	register int t;
-		register int f;
-		FILE *file;
 		
 		Assert (!foundeor);
 		inittapes(node);
-		file = PS(node)->Tape->tp_file;
-		
-		/* put extra tuples into tape file */
-		if ( t_last > SortTuplesInTree )
-		{
-			register HeapTuple lasttuple;
-			
-	    	t = t_last - SortTuplesInTree;
-			for (f = 0, lasttuple = NULL; f < t; f++)
-			{
-				if ( lasttuple )
-				{
-					FREEMEM(node, lasttuple->t_len);
-					FREE(lasttuple);
-					TRACEMEM(createfirstrun);
-				}
-				lasttuple = memtuples[f];
-				PUTTUP(node, lasttuple, file);
-				TRACEOUT(createfirstrun, lasttuple);
-			}
-			PS(node)->lasttuple = lasttuple;
-		}
-		else
-		{
-			PS(node)->lasttuple = NULL;
-			f = 0;
-		}
-		
-		/* put rest of tuples into leftist tree for createrun */
-		for (t = t_last - 1 ; t >= f; t--)
+		/* put tuples into leftist tree for createrun */
+		for (t = t_last - 1 ; t >= 0; t--)
 			puttuple(&PS(node)->Tuples, memtuples[t], 0, &PS(node)->treeContext);
-		PS(node)->lt_tupcount = t_last - f;
 		pfree (memtuples);
-		foundeor = !createrun (node, file);
+		foundeor = !createrun (node, PS(node)->Tape->tp_file);
 	}
 	else
 	{
@@ -497,48 +464,39 @@ createfirstrun(Sort *node)
 static bool
 createrun(Sort * node, FILE * file)
 {
-	register HeapTuple lasttuple;
-	register HeapTuple tup;
-	struct leftist *nextrun;
-	bool		foundeor;
-	short		junk;
-	int			curr_tupcount = (PS(node)->Tuples != NULL) ? PS(node)->lt_tupcount : 0;
-	int			next_tupcount = 0;
-
-	int			cr_tuples = 0;	/* Count tuples grabbed from plannode */
-	TupleTableSlot *cr_slot;
+	register HeapTuple	lasttuple;
+	register HeapTuple	tup;
+	TupleTableSlot	   *cr_slot;
+	HeapTuple		   *memtuples;
+	int					t_last = -1;
+	int					t_free = 1000;
+	bool				foundeor = false;
+	short				junk;
 
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
+	Assert (PS(node)->using_tape_files);
 
-	lasttuple = PS(node)->lasttuple;	/* !NULL if called from createfirstrun */
-	nextrun = NULL;
-	foundeor = false;
+	lasttuple = NULL;
+	memtuples = palloc(t_free * sizeof(HeapTuple));
+	
 	for (;;)
 	{
-		if ((LACKMEM(node) && PS(node)->Tuples != NULL) || curr_tupcount > SortTuplesInTree)
+		while (LACKMEM(node) && PS(node)->Tuples != NULL)
 		{
-			do
+			if (lasttuple != NULL)
 			{
-				if (lasttuple != NULL)
-				{
-					FREEMEM(node, lasttuple->t_len);
-					FREE(lasttuple);
-					TRACEMEM(createrun);
-				}
-				lasttuple = tup = gettuple(&PS(node)->Tuples, &junk,
+				FREEMEM(node, lasttuple->t_len);
+				FREE(lasttuple);
+				TRACEMEM(createrun);
+			}
+			lasttuple = gettuple(&PS(node)->Tuples, &junk,
 										   &PS(node)->treeContext);
-				Assert (PS(node)->using_tape_files);
-				PUTTUP(node, tup, file);
-				TRACEOUT(createrun, tup);
-				curr_tupcount--;
-			} while (LACKMEM(node) && PS(node)->Tuples != NULL);
+			PUTTUP(node, lasttuple, file);
+			TRACEOUT(createrun, lasttuple);
 		}
 		
 		if (LACKMEM(node))
-			break;
-		
-		if ( next_tupcount >= SortTuplesInTree )
 			break;
 		
 		/*
@@ -560,7 +518,6 @@ createrun(Sort * node, FILE * file)
 			tup = tuplecopy(cr_slot->val);
 			ExecClearTuple(cr_slot);
 			PS(node)->tupcount++;
-			cr_tuples++;
 		}
 
 		IncrProcessed();
@@ -569,14 +526,18 @@ createrun(Sort * node, FILE * file)
 		if (lasttuple != NULL && tuplecmp(tup, lasttuple,
 										  &PS(node)->treeContext))
 		{
-			puttuple(&nextrun, tup, 0, &PS(node)->treeContext);
-			next_tupcount++;
+			if ( t_free <= 0 )
+			{
+			    t_free = 1000;
+				memtuples = repalloc (memtuples, 
+		    				(t_last + t_free + 1) * sizeof (HeapTuple));
+			}
+			t_last++;
+			t_free--;
+			memtuples[t_last] = tup;
 		}
 		else
-		{
 			puttuple(&PS(node)->Tuples, tup, 0, &PS(node)->treeContext);
-			curr_tupcount++;
-		}
 	}
 	if (lasttuple != NULL)
 	{
@@ -585,13 +546,26 @@ createrun(Sort * node, FILE * file)
 		TRACEMEM(createrun);
 	}
 	dumptuples(file, node);
-	ENDRUN(file);
-	/* delimit the end of the run */
-	PS(node)->Tuples = nextrun;
-	PS(node)->lt_tupcount = next_tupcount;
-	PS(node)->lasttuple = NULL;
+	ENDRUN(file);				/* delimit the end of the run */
+	
+	t_last++;
+	/* put tuples for the next run into leftist tree */
+	if ( t_last >= 1 )
+	{
+		register int t;
+		
+		PsortTupDesc = PS(node)->treeContext.tupDesc;
+		PsortKeys = PS(node)->treeContext.scanKeys;
+		PsortNkeys = PS(node)->treeContext.nKeys;
+    	qsort (memtuples, t_last, sizeof (HeapTuple), 
+    		(int (*)(const void *,const void *))_psort_cmp);
+		for (t = t_last - 1 ; t >= 0; t--)
+			puttuple(&PS(node)->Tuples, memtuples[t], 0, &PS(node)->treeContext);
+	}
+	
+	pfree (memtuples);
 
-	return ((bool) ! foundeor); /* XXX - works iff bool is {0,1} */
+	return (!foundeor);
 }
 
 /*
@@ -774,8 +748,7 @@ dumptuples(FILE * file, Sort * node)
 			newp = tp->lt_left;
 		else
 			newp = lmerge(tp->lt_left, tp->lt_right, context);
-		FREEMEM(node, sizeof(struct leftist));
-		FREE(tp);
+		pfree(tp);
 		PUTTUP(node, tup, file);
 		FREEMEM(node, tup->t_len);
 		FREE(tup);
