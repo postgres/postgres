@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.11 1998/09/03 02:12:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.12 1999/11/18 21:47:37 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -111,7 +111,7 @@ else
 	fi
 fi
 
-psql $PASSWDOPT -tq $AUTHOPT $PGHOSTOPT $PGPORTOPT -c "create database $dbname $location $encoding" template1
+psql $PASSWDOPT -tq $AUTHOPT $PGHOSTOPT $PGPORTOPT -c "create database \"$dbname\" $location $encoding" template1
 
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: database creation failed on $dbname."

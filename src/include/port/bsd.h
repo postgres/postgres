@@ -24,7 +24,7 @@
 #define HAS_TEST_AND_SET
 #endif
 
-#if defined(__arm32__)
+#if defined(__arm__)
 #define HAS_TEST_AND_SET
 #endif
 

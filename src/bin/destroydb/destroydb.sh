@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroydb/Attic/destroydb.sh,v 1.8 1997/06/02 02:53:00 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroydb/Attic/destroydb.sh,v 1.9 1999/11/18 21:47:37 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ fi
 
 if [ "$answer" = y ]
 then
-  psql -tq $AUTHOPT $PGHOSTOPT $PGPORTOPT -c "drop database $dbname" template1
+  psql -tq $AUTHOPT $PGHOSTOPT $PGPORTOPT -c "drop database \"$dbname\"" template1
     if [ $? -ne 0 ]
        then echo "$CMDNAME: database destroy failed on $dbname."
        exit 1
