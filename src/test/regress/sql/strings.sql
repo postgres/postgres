@@ -62,19 +62,24 @@ SELECT SUBSTRING('1234567890' FROM 3) = '34567890' AS "34567890";
 
 SELECT SUBSTRING('1234567890' FROM 4 FOR 3) = '456' AS "456";
 
--- T581 regular expression substring
-SELECT SUBSTRING('abcdefg' FROM '(b|f).*(d)' FOR '#') AS "bcd";
+-- T581 regular expression substring (with SQL99's bizarre regexp syntax)
+SELECT SUBSTRING('abcdefg' FROM 'a#"(b_d)#"%' FOR '#') AS "bcd";
 
 -- No match should return NULL
-SELECT SUBSTRING('abcdefg' FROM '(1|2|3)' FOR '#') IS NULL AS "True";
+SELECT SUBSTRING('abcdefg' FROM '#"(b_d)#"%' FOR '#') IS NULL AS "True";
 
 -- Null inputs should return NULL
 SELECT SUBSTRING('abcdefg' FROM '(b|c)' FOR NULL) IS NULL AS "True";
 SELECT SUBSTRING(NULL FROM '(b|c)' FOR '#') IS NULL AS "True";
 SELECT SUBSTRING('abcdefg' FROM NULL FOR '#') IS NULL AS "True";
 
--- PostgreSQL extention to allow omitting the escape character
-SELECT SUBSTRING('abcdefg' FROM '(c|d).e') AS "cde";
+-- PostgreSQL extension to allow omitting the escape character;
+-- here the regexp is taken as Posix syntax
+SELECT SUBSTRING('abcdefg' FROM 'c.e') AS "cde";
+
+-- With a parenthesized subexpression, return only what matches the subexpr
+SELECT SUBSTRING('abcdefg' FROM 'b(.*)f') AS "cde";
+
 
 -- E021-11 position expression
 SELECT POSITION('4' IN '1234567890') = '4' AS "4";

@@ -142,15 +142,15 @@ SELECT SUBSTRING('1234567890' FROM 4 FOR 3) = '456' AS "456";
  t
 (1 row)
 
--- T581 regular expression substring
-SELECT SUBSTRING('abcdefg' FROM '(b|f).*(d)' FOR '#') AS "bcd";
+-- T581 regular expression substring (with SQL99's bizarre regexp syntax)
+SELECT SUBSTRING('abcdefg' FROM 'a#"(b_d)#"%' FOR '#') AS "bcd";
  bcd 
 -----
  bcd
 (1 row)
 
 -- No match should return NULL
-SELECT SUBSTRING('abcdefg' FROM '(1|2|3)' FOR '#') IS NULL AS "True";
+SELECT SUBSTRING('abcdefg' FROM '#"(b_d)#"%' FOR '#') IS NULL AS "True";
  True 
 ------
  t
@@ -175,8 +175,16 @@ SELECT SUBSTRING('abcdefg' FROM NULL FOR '#') IS NULL AS "True";
  t
 (1 row)
 
--- PostgreSQL extention to allow omitting the escape character
-SELECT SUBSTRING('abcdefg' FROM '(c|d).e') AS "cde";
+-- PostgreSQL extension to allow omitting the escape character;
+-- here the regexp is taken as Posix syntax
+SELECT SUBSTRING('abcdefg' FROM 'c.e') AS "cde";
+ cde 
+-----
+ cde
+(1 row)
+
+-- With a parenthesized subexpression, return only what matches the subexpr
+SELECT SUBSTRING('abcdefg' FROM 'b(.*)f') AS "cde";
  cde 
 -----
  cde

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.272 2002/09/18 21:35:23 tgl Exp $
+ * $Id: pg_proc.h,v 1.273 2002/09/22 17:27:23 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2076,6 +2076,9 @@ DESCR("convert int4 to char");
 DATA(insert OID = 1622 (  repeat			PGNSP PGUID 12 f f t f i 2 25 "25 23"  repeat - _null_ ));
 DESCR("replicate string int4 times");
 
+DATA(insert OID = 1623 (  similar_escape	PGNSP PGUID 12 f f f f i 2 25 "25 25" similar_escape - _null_ ));
+DESCR("convert SQL99 regexp pattern to POSIX style");
+
 DATA(insert OID = 1624 (  mul_d_interval	PGNSP PGUID 12 f f t f i 2 1186 "701 1186"	mul_d_interval - _null_ ));
 
 DATA(insert OID = 1633 (  texticlike		PGNSP PGUID 12 f f t f i 2 16 "25 25" texticlike - _null_ ));
@@ -2087,7 +2090,7 @@ DESCR("matches LIKE expression, case-insensitive");
 DATA(insert OID = 1636 (  nameicnlike		PGNSP PGUID 12 f f t f i 2 16 "19 25"  nameicnlike - _null_ ));
 DESCR("does not match LIKE expression, case-insensitive");
 DATA(insert OID = 1637 (  like_escape		PGNSP PGUID 12 f f t f i 2 25 "25 25" like_escape - _null_ ));
-DESCR("convert match pattern to use backslash escapes");
+DESCR("convert LIKE pattern to use backslash escapes");
 
 DATA(insert OID = 1689 (  update_pg_pwd_and_pg_group  PGNSP PGUID 12 f f t f v 0 2279  ""	update_pg_pwd_and_pg_group - _null_ ));
 DESCR("update pg_pwd and pg_group files");
@@ -2784,7 +2787,7 @@ DESCR("matches LIKE expression");
 DATA(insert OID = 2008 (  notlike		   PGNSP PGUID 12 f f t f i 2 16 "17 17"	byteanlike - _null_ ));
 DESCR("does not match LIKE expression");
 DATA(insert OID = 2009 (  like_escape	   PGNSP PGUID 12 f f t f i 2 17 "17 17" like_escape_bytea - _null_ ));
-DESCR("convert match pattern to use backslash escapes");
+DESCR("convert LIKE pattern to use backslash escapes");
 DATA(insert OID = 2010 (  length		   PGNSP PGUID 12 f f t f i 1 23 "17"  byteaoctetlen - _null_ ));
 DESCR("octet length");
 DATA(insert OID = 2011 (  byteacat		   PGNSP PGUID 12 f f t f i 2 17 "17 17"	byteacat - _null_ ));
@@ -2889,9 +2892,9 @@ DATA(insert OID = 2072 (  date_mi_interval	PGNSP PGUID 14 f f t f i 2 1114 "1082
 DESCR("subtract");
 
 DATA(insert OID = 2073 (  substring			PGNSP PGUID 12 f f t f i 2 25 "25 25"	textregexsubstr - _null_ ));
-DESCR("substitutes regular expression");
-DATA(insert OID = 2074 (  substring			PGNSP PGUID 14 f f t f i 3 25 "25 25 25"	"select substring($1, like_escape($2, $3))" - _null_ ));
-DESCR("substitutes regular expression with escape argument");
+DESCR("extracts text matching regular expression");
+DATA(insert OID = 2074 (  substring			PGNSP PGUID 14 f f t f i 3 25 "25 25 25"	"select substring($1, similar_escape($2, $3))" - _null_ ));
+DESCR("extracts text matching SQL99 regular expression");
 
 DATA(insert OID = 2075 (  bit				PGNSP PGUID 12 f f t f i 1 1560 "20"	bitfromint8 - _null_ ));
 DESCR("int8 to bitstring");

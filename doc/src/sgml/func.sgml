@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.124 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.125 2002/09/22 17:27:23 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -921,16 +921,29 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><function>substring</function>(<parameter>string</parameter> <optional>from <replaceable>pattern</replaceable></optional> <optional>for <replaceable>escape</replaceable></optional>)</entry>
+       <entry><function>substring</function>(<parameter>string</parameter> from <replaceable>pattern</replaceable>)</entry>
        <entry><type>text</type></entry>
        <entry>
-        extract regular expression
+        extract substring matching POSIX regular expression
         <indexterm>
          <primary>substring</primary>
         </indexterm>
        </entry>
-       <entry><literal>substring('Thomas' from 'mas$' for <optional>escape '\\'</optional>)</literal></entry>
+       <entry><literal>substring('Thomas' from '...$')</literal></entry>
        <entry><literal>mas</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>substring</function>(<parameter>string</parameter> from <replaceable>pattern</replaceable> for <replaceable>escape</replaceable>)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        extract substring matching SQL99 regular expression
+        <indexterm>
+         <primary>substring</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>substring('Thomas' from '%#"o_a#"_' for '#')</literal></entry>
+       <entry><literal>oma</literal></entry>
       </row>
 
       <row>
@@ -959,6 +972,328 @@ PostgreSQL documentation
      </tbody>
     </tgroup>
    </table>
+
+   <para>
+    Additional string manipulation functions are available and are
+    listed below.  Some of them are used internally to implement the
+    <acronym>SQL</acronym>-standard string functions listed above.
+   </para>
+
+   <table id="functions-string-other">
+    <title>Other String Functions</title>
+    <tgroup cols="5">
+     <thead>
+      <row>
+       <entry>Function</entry>
+       <entry>Return Type</entry>
+       <entry>Description</entry>
+       <entry>Example</entry>
+       <entry>Result</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry><function>ascii</function>(<type>text</type>)</entry>
+       <entry>integer</entry>
+       <entry>Returns the <acronym>ASCII</acronym> code of the first character of the argument.</entry>
+       <entry><literal>ascii('x')</literal></entry>
+       <entry><literal>120</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>btrim</function>(<parameter>string</parameter> <type>text</type>, <parameter>trim</parameter> <type>text</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Remove (trim) the longest string consisting only of characters
+        in <parameter>trim</parameter> from the start and end of
+        <parameter>string</parameter>.
+       </entry>
+       <entry><literal>btrim('xyxtrimyyx','xy')</literal></entry>
+       <entry><literal>trim</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>chr</function>(<type>integer</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Returns the character with the given <acronym>ASCII</acronym> code.</entry>
+       <entry><literal>chr(65)</literal></entry>
+       <entry><literal>A</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <function>convert</function>(<parameter>string</parameter>
+        <type>text</type>,
+        <optional><parameter>src_encoding</parameter> <type>name</type>,</optional>
+        <parameter>dest_encoding</parameter> <type>name</type>)
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Converts string using <parameter>dest_encoding</parameter>.
+        The original encoding is specified by
+        <parameter>src_encoding</parameter>.  If
+        <parameter>src_encoding</parameter> is omitted, database
+        encoding is assumed.
+       </entry>
+       <entry><literal>convert('text_in_unicode', 'UNICODE', 'LATIN1')</literal></entry>
+       <entry><literal>text_in_unicode</literal> represented in ISO 8859-1</entry>
+      </row>
+
+      <row>
+       <entry>
+        <function>decode</function>(<parameter>string</parameter> <type>text</type>,
+        <parameter>type</parameter> <type>text</type>)
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Decodes binary data from <parameter>string</parameter> previously 
+        encoded with encode().  Parameter type is same as in encode().
+       </entry>
+       <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
+       <entry><literal>123\000\001</literal></entry>
+      </row>       
+
+      <row>
+       <entry>
+        <function>encode</function>(<parameter>data</parameter> <type>bytea</type>,
+        <parameter>type</parameter> <type>text</type>)
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Encodes binary data to <acronym>ASCII</acronym>-only representation.  Supported
+        types are: 'base64', 'hex', 'escape'.
+       </entry>
+       <entry><literal>encode('123\\000\\001', 'base64')</literal></entry>
+       <entry><literal>MTIzAAE=</literal></entry>
+      </row>       
+
+      <row>
+       <entry><function>initcap</function>(<type>text</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Converts first letter of each word (whitespace separated) to upper case.</entry>
+       <entry><literal>initcap('hi thomas')</literal></entry>
+       <entry><literal>Hi Thomas</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>length</function>(<parameter>string</parameter>)</entry>
+       <entry><type>integer</type></entry>
+       <entry>
+        length of string
+        <indexterm>
+         <primary>character strings</primary>
+         <secondary>length</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>length</primary>
+         <secondary>character strings</secondary>
+         <see>character strings, length</see>
+        </indexterm>
+       </entry>
+       <entry><literal>length('jose')</literal></entry>
+       <entry><literal>4</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <function>lpad</function>(<parameter>string</parameter> <type>text</type>,
+        <parameter>length</parameter> <type>integer</type>
+        <optional>, <parameter>fill</parameter> <type>text</type></optional>)
+       </entry>
+       <entry>text</entry>
+       <entry>
+        Fills up the <parameter>string</parameter> to length
+        <parameter>length</parameter> by prepending the characters
+        <parameter>fill</parameter> (a space by default).  If the
+        <parameter>string</parameter> is already longer than
+        <parameter>length</parameter> then it is truncated (on the
+        right).
+       </entry>
+       <entry><literal>lpad('hi', 5, 'xy')</literal></entry>
+       <entry><literal>xyxhi</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>ltrim</function>(<parameter>string</parameter> <type>text</type>, <parameter>text</parameter> <type>text</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Removes the longest string containing only characters from
+        <parameter>trim</parameter> from the start of the string.
+       </entry>
+       <entry><literal>ltrim('zzzytrim','xyz')</literal></entry>
+       <entry><literal>trim</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>pg_client_encoding</function>()</entry>
+       <entry><type>name</type></entry>
+       <entry>
+        Returns current client encoding name.
+       </entry>
+       <entry><literal>pg_client_encoding()</literal></entry>
+       <entry><literal>SQL_ASCII</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>quote_ident</function>(<parameter>string</parameter> text)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Returns the given string suitably quoted to be used as an identifier
+	in an SQL query string.
+	Quotes are added only if necessary (i.e., if the string contains
+	non-identifier characters or would be case-folded).
+	Embedded quotes are properly doubled.
+       </entry>
+       <entry><literal>quote_ident('Foo')</literal></entry>
+       <entry><literal>"Foo"</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>quote_literal</function>(<parameter>string</parameter> text)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Returns the given string suitably quoted to be used as a literal
+	in an SQL query string.
+	Embedded quotes and backslashes are properly doubled.
+       </entry>
+       <entry><literal>quote_literal('O\'Reilly')</literal></entry>
+       <entry><literal>'O''Reilly'</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>repeat</function>(<type>text</type>, <type>integer</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Repeat text a number of times.</entry>
+       <entry><literal>repeat('Pg', 4)</literal></entry>
+       <entry><literal>PgPgPgPg</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>replace</function>(<parameter>string</parameter> <type>text</type>,
+       <parameter>from</parameter> <type>text</type>,
+       <parameter>to</parameter> <type>text</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Replace all occurrences in <parameter>string</parameter> of substring
+        <parameter>from</parameter> with substring <parameter>to</parameter>
+       </entry>
+       <entry><literal>replace('abcdefabcdef', 'cd', 'XX')</literal></entry>
+       <entry><literal>abXXefabXXef</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <function>rpad</function>(<parameter>string</parameter> <type>text</type>,
+        <parameter>length</parameter> <type>integer</type>
+        <optional>, <parameter>fill</parameter> <type>text</type></optional>)
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Fills up the <parameter>string</parameter> to length
+        <parameter>length</parameter> by appending the characters
+        <parameter>fill</parameter> (a space by default).  If the
+        <parameter>string</parameter> is already longer than
+        <parameter>length</parameter> then it is truncated.
+       </entry>
+       <entry><literal>rpad('hi', 5, 'xy')</literal></entry>
+       <entry><literal>hixyx</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>rtrim</function>(<parameter>string</parameter>
+        text, <parameter>trim</parameter> text)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Removes the longest string containing only characters from
+        <parameter>trim</parameter> from the end of the string.
+       </entry>
+       <entry><literal>rtrim('trimxxxx','x')</literal></entry>
+       <entry><literal>trim</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>split_part</function>(<parameter>string</parameter> <type>text</type>,
+       <parameter>delimiter</parameter> <type>text</type>,
+       <parameter>column</parameter> <type>integer</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Split <parameter>string</parameter> on <parameter>delimiter</parameter>
+        returning the resulting (one based) <parameter>column</parameter> number.
+       </entry>
+       <entry><literal>split_part('abc~@~def~@~ghi','~@~',2)</literal></entry>
+       <entry><literal>def</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>strpos</function>(<parameter>string</parameter>, <parameter>substring</parameter>)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Locates specified substring. (same as
+        <literal>position(<parameter>substring</parameter> in
+         <parameter>string</parameter>)</literal>, but note the reversed
+        argument order)
+       </entry>
+       <entry><literal>strpos('high','ig')</literal></entry>
+       <entry><literal>2</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>substr</function>(<parameter>string</parameter>, <parameter>from</parameter> <optional>, <parameter>count</parameter></optional>)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Extracts specified substring. (same as
+        <literal>substring(<parameter>string</parameter> from <parameter>from</parameter> for <parameter>count</parameter>)</literal>)
+       </entry>
+       <entry><literal>substr('alphabet', 3, 2)</literal></entry>
+       <entry><literal>ph</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>to_ascii</function>(<type>text</type>
+        <optional>, <parameter>encoding</parameter></optional>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Converts text from multibyte encoding to <acronym>ASCII</acronym>.</entry>
+       <entry><literal>to_ascii('Karel')</literal></entry>
+       <entry><literal>Karel</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>to_hex</function>(<parameter>number</parameter> <type>integer</type>
+       or <type>bigint</type>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Convert <parameter>number</parameter> to its equivalent hexadecimal
+        representation.
+       </entry>
+       <entry><literal>to_hex(9223372036854775807::bigint)</literal></entry>
+       <entry><literal>7fffffffffffffff</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <function>translate</function>(<parameter>string</parameter>
+        <type>text</type>,
+        <parameter>from</parameter> <type>text</type>,
+        <parameter>to</parameter> <type>text</type>)
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Any character in <parameter>string</parameter> that matches a
+        character in the <parameter>from</parameter> set is replaced by
+        the corresponding character in the <parameter>to</parameter>
+        set.
+       </entry>
+       <entry><literal>translate('12345', '14', 'ax')</literal></entry>
+       <entry><literal>a23x5</literal></entry>
+      </row>       
+      
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    The <function>to_ascii</function> function supports conversion from
+    LATIN1, LATIN2, WIN1250 (CP1250) only.
+   </para>
+
 
    <table id="conversion-names">
     <title>Available conversion names</title>
@@ -1660,326 +1995,6 @@ PostgreSQL documentation
     </tgroup>
    </table>
 
-   <para>
-    Additional string manipulation functions are available and are
-    listed below.  Some of them are used internally to implement the
-    <acronym>SQL</acronym>-standard string functions listed above.
-   </para>
-
-   <table id="functions-string-other">
-    <title>Other String Functions</title>
-    <tgroup cols="5">
-     <thead>
-      <row>
-       <entry>Function</entry>
-       <entry>Return Type</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Result</entry>
-      </row>
-     </thead>
-
-     <tbody>
-      <row>
-       <entry><function>ascii</function>(<type>text</type>)</entry>
-       <entry>integer</entry>
-       <entry>Returns the <acronym>ASCII</acronym> code of the first character of the argument.</entry>
-       <entry><literal>ascii('x')</literal></entry>
-       <entry><literal>120</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>btrim</function>(<parameter>string</parameter> <type>text</type>, <parameter>trim</parameter> <type>text</type>)</entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Remove (trim) the longest string consisting only of characters
-        in <parameter>trim</parameter> from the start and end of
-        <parameter>string</parameter>.
-       </entry>
-       <entry><literal>btrim('xyxtrimyyx','xy')</literal></entry>
-       <entry><literal>trim</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>chr</function>(<type>integer</type>)</entry>
-       <entry><type>text</type></entry>
-       <entry>Returns the character with the given <acronym>ASCII</acronym> code.</entry>
-       <entry><literal>chr(65)</literal></entry>
-       <entry><literal>A</literal></entry>
-      </row>
-
-      <row>
-       <entry>
-        <function>convert</function>(<parameter>string</parameter>
-        <type>text</type>,
-        <optional><parameter>src_encoding</parameter> <type>name</type>,</optional>
-        <parameter>dest_encoding</parameter> <type>name</type>)
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Converts string using <parameter>dest_encoding</parameter>.
-        The original encoding is specified by
-        <parameter>src_encoding</parameter>.  If
-        <parameter>src_encoding</parameter> is omitted, database
-        encoding is assumed.
-       </entry>
-       <entry><literal>convert('text_in_unicode', 'UNICODE', 'LATIN1')</literal></entry>
-       <entry><literal>text_in_unicode</literal> represented in ISO 8859-1</entry>
-      </row>
-
-      <row>
-       <entry>
-        <function>decode</function>(<parameter>string</parameter> <type>text</type>,
-        <parameter>type</parameter> <type>text</type>)
-       </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Decodes binary data from <parameter>string</parameter> previously 
-        encoded with encode().  Parameter type is same as in encode().
-       </entry>
-       <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
-       <entry><literal>123\000\001</literal></entry>
-      </row>       
-
-      <row>
-       <entry>
-        <function>encode</function>(<parameter>data</parameter> <type>bytea</type>,
-        <parameter>type</parameter> <type>text</type>)
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Encodes binary data to <acronym>ASCII</acronym>-only representation.  Supported
-        types are: 'base64', 'hex', 'escape'.
-       </entry>
-       <entry><literal>encode('123\\000\\001', 'base64')</literal></entry>
-       <entry><literal>MTIzAAE=</literal></entry>
-      </row>       
-
-      <row>
-       <entry><function>initcap</function>(<type>text</type>)</entry>
-       <entry><type>text</type></entry>
-       <entry>Converts first letter of each word (whitespace separated) to upper case.</entry>
-       <entry><literal>initcap('hi thomas')</literal></entry>
-       <entry><literal>Hi Thomas</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>length</function>(<parameter>string</parameter>)</entry>
-       <entry><type>integer</type></entry>
-       <entry>
-        length of string
-        <indexterm>
-         <primary>character strings</primary>
-         <secondary>length</secondary>
-        </indexterm>
-        <indexterm>
-         <primary>length</primary>
-         <secondary>character strings</secondary>
-         <see>character strings, length</see>
-        </indexterm>
-       </entry>
-       <entry><literal>length('jose')</literal></entry>
-       <entry><literal>4</literal></entry>
-      </row>
-
-      <row>
-       <entry>
-        <function>lpad</function>(<parameter>string</parameter> <type>text</type>,
-        <parameter>length</parameter> <type>integer</type>
-        <optional>, <parameter>fill</parameter> <type>text</type></optional>)
-       </entry>
-       <entry>text</entry>
-       <entry>
-        Fills up the <parameter>string</parameter> to length
-        <parameter>length</parameter> by prepending the characters
-        <parameter>fill</parameter> (a space by default).  If the
-        <parameter>string</parameter> is already longer than
-        <parameter>length</parameter> then it is truncated (on the
-        right).
-       </entry>
-       <entry><literal>lpad('hi', 5, 'xy')</literal></entry>
-       <entry><literal>xyxhi</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>ltrim</function>(<parameter>string</parameter> <type>text</type>, <parameter>text</parameter> <type>text</type>)</entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Removes the longest string containing only characters from
-        <parameter>trim</parameter> from the start of the string.
-       </entry>
-       <entry><literal>ltrim('zzzytrim','xyz')</literal></entry>
-       <entry><literal>trim</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>pg_client_encoding</function>()</entry>
-       <entry><type>name</type></entry>
-       <entry>
-        Returns current client encoding name.
-       </entry>
-       <entry><literal>pg_client_encoding()</literal></entry>
-       <entry><literal>SQL_ASCII</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>quote_ident</function>(<parameter>string</parameter> text)</entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Returns the given string suitably quoted to be used as an identifier
-	in an SQL query string.
-	Quotes are added only if necessary (i.e., if the string contains
-	non-identifier characters or would be case-folded).
-	Embedded quotes are properly doubled.
-       </entry>
-       <entry><literal>quote_ident('Foo')</literal></entry>
-       <entry><literal>"Foo"</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>quote_literal</function>(<parameter>string</parameter> text)</entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Returns the given string suitably quoted to be used as a literal
-	in an SQL query string.
-	Embedded quotes and backslashes are properly doubled.
-       </entry>
-       <entry><literal>quote_literal('O\'Reilly')</literal></entry>
-       <entry><literal>'O''Reilly'</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>repeat</function>(<type>text</type>, <type>integer</type>)</entry>
-       <entry><type>text</type></entry>
-       <entry>Repeat text a number of times.</entry>
-       <entry><literal>repeat('Pg', 4)</literal></entry>
-       <entry><literal>PgPgPgPg</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>replace</function>(<parameter>string</parameter> <type>text</type>,
-       <parameter>from</parameter> <type>text</type>,
-       <parameter>to</parameter> <type>text</type>)</entry>
-       <entry><type>text</type></entry>
-       <entry>Replace all occurrences in <parameter>string</parameter> of substring
-        <parameter>from</parameter> with substring <parameter>to</parameter>
-       </entry>
-       <entry><literal>replace('abcdefabcdef', 'cd', 'XX')</literal></entry>
-       <entry><literal>abXXefabXXef</literal></entry>
-      </row>
-
-      <row>
-       <entry>
-        <function>rpad</function>(<parameter>string</parameter> <type>text</type>,
-        <parameter>length</parameter> <type>integer</type>
-        <optional>, <parameter>fill</parameter> <type>text</type></optional>)
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Fills up the <parameter>string</parameter> to length
-        <parameter>length</parameter> by appending the characters
-        <parameter>fill</parameter> (a space by default).  If the
-        <parameter>string</parameter> is already longer than
-        <parameter>length</parameter> then it is truncated.
-       </entry>
-       <entry><literal>rpad('hi', 5, 'xy')</literal></entry>
-       <entry><literal>hixyx</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>rtrim</function>(<parameter>string</parameter>
-        text, <parameter>trim</parameter> text)</entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Removes the longest string containing only characters from
-        <parameter>trim</parameter> from the end of the string.
-       </entry>
-       <entry><literal>rtrim('trimxxxx','x')</literal></entry>
-       <entry><literal>trim</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>split_part</function>(<parameter>string</parameter> <type>text</type>,
-       <parameter>delimiter</parameter> <type>text</type>,
-       <parameter>column</parameter> <type>integer</type>)</entry>
-       <entry><type>text</type></entry>
-       <entry>Split <parameter>string</parameter> on <parameter>delimiter</parameter>
-        returning the resulting (one based) <parameter>column</parameter> number.
-       </entry>
-       <entry><literal>split_part('abc~@~def~@~ghi','~@~',2)</literal></entry>
-       <entry><literal>def</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>strpos</function>(<parameter>string</parameter>, <parameter>substring</parameter>)</entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Locates specified substring. (same as
-        <literal>position(<parameter>substring</parameter> in
-         <parameter>string</parameter>)</literal>, but note the reversed
-        argument order)
-       </entry>
-       <entry><literal>strpos('high','ig')</literal></entry>
-       <entry><literal>2</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>substr</function>(<parameter>string</parameter>, <parameter>from</parameter> <optional>, <parameter>count</parameter></optional>)</entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Extracts specified substring. (same as
-        <literal>substring(<parameter>string</parameter> from <parameter>from</parameter> for <parameter>count</parameter>)</literal>)
-       </entry>
-       <entry><literal>substr('alphabet', 3, 2)</literal></entry>
-       <entry><literal>ph</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>to_ascii</function>(<type>text</type>
-        <optional>, <parameter>encoding</parameter></optional>)</entry>
-       <entry><type>text</type></entry>
-       <entry>Converts text from multibyte encoding to <acronym>ASCII</acronym>.</entry>
-       <entry><literal>to_ascii('Karel')</literal></entry>
-       <entry><literal>Karel</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>to_hex</function>(<parameter>number</parameter> <type>integer</type>
-       or <type>bigint</type>)</entry>
-       <entry><type>text</type></entry>
-       <entry>Convert <parameter>number</parameter> to its equivalent hexadecimal
-        representation.
-       </entry>
-       <entry><literal>to_hex(9223372036854775807::bigint)</literal></entry>
-       <entry><literal>7fffffffffffffff</literal></entry>
-      </row>
-
-      <row>
-       <entry>
-        <function>translate</function>(<parameter>string</parameter>
-        <type>text</type>,
-        <parameter>from</parameter> <type>text</type>,
-        <parameter>to</parameter> <type>text</type>)
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Any character in <parameter>string</parameter> that matches a
-        character in the <parameter>from</parameter> set is replaced by
-        the corresponding character in the <parameter>to</parameter>
-        set.
-       </entry>
-       <entry><literal>translate('12345', '14', 'ax')</literal></entry>
-       <entry><literal>a23x5</literal></entry>
-      </row>       
-      
-     </tbody>
-    </tgroup>
-   </table>
-
-   <para>
-    The <function>to_ascii</function> function supports conversion from
-    LATIN1, LATIN2, WIN1250 (CP1250) only.
-   </para>
   </sect1>
 
 
@@ -2171,16 +2186,16 @@ PostgreSQL documentation
   <title>Pattern Matching</title>
 
    <para>
-    There are two separate approaches to pattern matching provided by
+    There are three separate approaches to pattern matching provided by
     <productname>PostgreSQL</productname>:  the traditional
     <acronym>SQL</acronym> 
-    <function>LIKE</function> operator and the more recent
+    <function>LIKE</function> operator, the more recent
     <acronym>SQL99</acronym> 
-    <function>SIMILAR TO</function> operator implementing
+    <function>SIMILAR TO</function> operator, and
     <acronym>POSIX</acronym>-style regular expressions.
     Additionally, a pattern matching function,
-    <function>SUBSTRING</function>, is available, as defined in
-    <acronym>SQL99</acronym>.
+    <function>SUBSTRING</function>, is available, using either
+    <acronym>SQL99</acronym>-style or POSIX-style regular expressions.
    </para>
 
    <tip>
@@ -2189,13 +2204,6 @@ PostgreSQL documentation
      consider writing a user-defined function in Perl or Tcl.
     </para>
    </tip>
-
-   <para>
-    Both <function>LIKE</function> and <function>SIMILAR TO</function>
-    are SQL-standard operators which are also available in alternate
-    forms as <productname>PostgreSQL</productname> operators; look at
-    <literal>~</literal> and <literal>~~</literal> for examples.
-   </para>
 
   <sect2 id="functions-like">
    <title><function>LIKE</function></title>
@@ -2296,11 +2304,142 @@ PostgreSQL documentation
   </sect2>
 
 
-  <sect2 id="functions-regexp">
-   <title><function>SIMILAR TO</function> and <acronym>POSIX</acronym>
+  <sect2 id="functions-sql99-regexp">
+   <title><function>SIMILAR TO</function> and <acronym>SQL99</acronym>
      Regular Expressions</title>
 
-   <indexterm zone="functions-regexp">
+   <indexterm zone="functions-sql99-regexp">
+    <primary>regular expressions</primary>
+    <seealso>pattern matching</seealso>
+   </indexterm>
+
+   <indexterm>
+    <primary>similar to</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>substring</primary>
+   </indexterm>
+
+    <synopsis>
+<replaceable>string</replaceable> SIMILAR TO <replaceable>pattern</replaceable> <optional>ESCAPE <replaceable>escape-character</replaceable></optional>
+<replaceable>string</replaceable> NOT SIMILAR TO <replaceable>pattern</replaceable> <optional>ESCAPE <replaceable>escape-character</replaceable></optional>
+    </synopsis>
+
+    <para>
+     The <function>SIMILAR TO</function> operator returns true or false
+     depending on whether its pattern matches the given string.  It is
+     much like <function>LIKE</function>, except that it interprets the
+     pattern using <acronym>SQL99</acronym>'s definition of a regular
+     expression.
+     <acronym>SQL99</acronym>'s regular expressions are a curious cross
+     between <function>LIKE</function> notation and common regular expression
+     notation.
+    </para>
+
+    <para>
+     Like <function>LIKE</function>, the  <function>SIMILAR TO</function>
+     operator succeeds only if its pattern matches the entire string;
+     this is unlike common regular expression practice, wherein the pattern
+     may match any part of the string.
+     Also like
+     <function>LIKE</function>, <function>SIMILAR TO</function> uses
+     <literal>%</> and <literal>_</> as wildcard characters denoting
+     any string and any single character, respectively (these are
+     comparable to <literal>.*</> and <literal>.</> in POSIX regular
+     expressions).
+    </para>
+
+    <para>
+     In addition to these facilities borrowed from <function>LIKE</function>,
+     <function>SIMILAR TO</function> supports these pattern-matching
+     metacharacters borrowed from POSIX regular expressions:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       <literal>|</literal> denotes alternation (either of two alternatives).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>*</literal> denotes repetition of the previous item zero
+       or more times.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>+</literal> denotes repetition of the previous item one
+       or more times.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Parentheses <literal>()</literal> may be used to group items into
+       a single logical item.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A bracket expression <literal>[...]</literal> specifies a character
+       class, just as in POSIX regular expressions.
+      </para>
+     </listitem>
+    </itemizedlist>
+
+     Notice that bounded repetition (<literal>?</> and <literal>{...}</>)
+     are not provided, though they exist in POSIX.  Also, dot (<literal>.</>)
+     is not a metacharacter.
+    </para>
+
+    <para>
+     As with <function>LIKE</>, a backslash disables the special meaning
+     of any of these metacharacters; or a different escape character can
+     be specified with <literal>ESCAPE</>.
+    </para>
+
+    <informalexample>
+     <para>
+      Some examples:
+      <programlisting>
+'abc' SIMILAR TO 'abc'      <lineannotation>true</lineannotation>
+'abc' SIMILAR TO 'a'        <lineannotation>false</lineannotation>
+'abc' SIMILAR TO '%(b|d)%'  <lineannotation>true</lineannotation>
+'abc' SIMILAR TO '(b|c)%'   <lineannotation>false</lineannotation>
+      </programlisting>
+     </para>
+    </informalexample>
+
+    <para>
+     The SUBSTRING function with three parameters,
+     <function>SUBSTRING</function>(<parameter>string</parameter> FROM
+     <replaceable>pattern</replaceable> FOR
+     <replaceable>escape</replaceable>), provides extraction of a substring
+     that matches a SQL99 regular expression pattern.  As with SIMILAR TO,
+     the specified pattern must match to the entire data string, else the
+     function fails and returns NULL.  To indicate the part of the pattern
+     that should be returned on success, SQL99 specifies that the pattern
+     must contain two occurrences of the escape character followed by
+     double quote (<literal>"</>).  The text matching the portion of the
+     pattern between these markers is returned.
+    </para>
+
+    <informalexample>
+     <para>
+      Some examples:
+      <programlisting>
+SUBSTRING('foobar' FROM '%#"o_b#"%' FOR '#')   <lineannotation>oob</lineannotation>
+SUBSTRING('foobar' FROM '#"o_b#"%' FOR '#')    <lineannotation>NULL</lineannotation>
+      </programlisting>
+     </para>
+    </informalexample>
+
+  </sect2>
+
+  <sect2 id="functions-posix-regexp">
+   <title><acronym>POSIX</acronym> Regular Expressions</title>
+
+   <indexterm zone="functions-posix-regexp">
     <primary>regular expressions</primary>
     <seealso>pattern matching</seealso>
    </indexterm>
@@ -2341,12 +2480,6 @@ PostgreSQL documentation
         <entry>Does not match regular expression, case insensitive</entry>
         <entry><literal>'thomas' !~* '.*vadim.*'</literal></entry>
        </row>
-
-       <row>
-        <entry> <literal>SIMILAR TO</literal> </entry>
-        <entry>Matches regular expression, case sensitive</entry>
-        <entry><literal>'thomas' SIMILAR TO '.*thomas.*'</literal></entry>
-       </row>
       </tbody>
      </tgroup>
     </table>
@@ -2354,7 +2487,8 @@ PostgreSQL documentation
     <para>
      <acronym>POSIX</acronym> regular expressions provide a more
      powerful means for 
-     pattern matching than the <function>LIKE</function> function.
+     pattern matching than the <function>LIKE</function> and
+     <function>SIMILAR TO</> operators.
      Many Unix tools such as <command>egrep</command>,
      <command>sed</command>, or <command>awk</command> use a pattern
      matching language that is similar to the one described here.
@@ -2379,10 +2513,34 @@ PostgreSQL documentation
      <para>
       Some examples:
       <programlisting>
-'abc' SIMILAR TO 'abc'    <lineannotation>true</lineannotation>
-'abc' SIMILAR TO '^a'     <lineannotation>true</lineannotation>
-'abc' SIMILAR TO '(b|d)'  <lineannotation>true</lineannotation>
-'abc' SIMILAR TO '^(b|c)' <lineannotation>false</lineannotation>
+'abc' ~ 'abc'    <lineannotation>true</lineannotation>
+'abc' ~ '^a'     <lineannotation>true</lineannotation>
+'abc' ~ '(b|d)'  <lineannotation>true</lineannotation>
+'abc' ~ '^(b|c)' <lineannotation>false</lineannotation>
+      </programlisting>
+     </para>
+    </informalexample>
+
+    <para>
+     The SUBSTRING function with two parameters,
+     <function>SUBSTRING</function>(<parameter>string</parameter> FROM
+     <replaceable>pattern</replaceable>), provides extraction of a substring
+     that matches a POSIX regular expression pattern.  It returns NULL if
+     there is no match, otherwise the portion of the text that matched the
+     pattern.  But if the pattern contains any parentheses, the portion
+     of the text that matched the first parenthesized subexpression (the
+     one whose left parenthesis comes first) is
+     returned.  You can always put parentheses around the whole expression
+     if you want to use parentheses within it without triggering this
+     exception.
+    </para>
+
+    <informalexample>
+     <para>
+      Some examples:
+      <programlisting>
+SUBSTRING('foobar' FROM 'o.b')     <lineannotation>oob</lineannotation>
+SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
       </programlisting>
      </para>
     </informalexample>

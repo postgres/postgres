@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.201 2002/09/19 22:48:34 tgl Exp $
+ * $Id: builtins.h,v 1.202 2002/09/22 17:27:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,6 +371,7 @@ extern Datum nameicregexne(PG_FUNCTION_ARGS);
 extern Datum texticregexeq(PG_FUNCTION_ARGS);
 extern Datum texticregexne(PG_FUNCTION_ARGS);
 extern Datum textregexsubstr(PG_FUNCTION_ARGS);
+extern Datum similar_escape(PG_FUNCTION_ARGS);
 
 /* regproc.c */
 extern Datum regprocin(PG_FUNCTION_ARGS);

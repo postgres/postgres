@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.42 2002/09/04 20:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.43 2002/09/22 17:27:23 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -317,8 +317,7 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	char	   *sterm;
 	int			len;
 	bool		match;
-	int			nmatch = 1;
-	regmatch_t	pmatch;
+	regmatch_t	pmatch[2];
 
 	/* be sure sterm is null-terminated */
 	len = VARSIZE(s) - VARHDRSZ;
@@ -327,21 +326,131 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	sterm[len] = '\0';
 
 	/*
-	 * We need the match info back from the pattern match to be able to
-	 * actually extract the substring. It seems to be adequate to pass in
-	 * a structure to return only one result.
+	 * We pass two regmatch_t structs to get info about the overall match
+	 * and the match for the first parenthesized subexpression (if any).
+	 * If there is a parenthesized subexpression, we return what it matched;
+	 * else return what the whole regexp matched.
 	 */
-	match = RE_compile_and_execute(p, sterm, REG_EXTENDED, nmatch, &pmatch);
+	match = RE_compile_and_execute(p, sterm, REG_EXTENDED, 2, pmatch);
+
 	pfree(sterm);
 
 	/* match? then return the substring matching the pattern */
 	if (match)
 	{
+		int		so,
+				eo;
+
+		so = pmatch[1].rm_so;
+		eo = pmatch[1].rm_eo;
+		if (so < 0 || eo < 0)
+		{
+			/* no parenthesized subexpression */
+			so = pmatch[0].rm_so;
+			eo = pmatch[0].rm_eo;
+		}
+
 		return (DirectFunctionCall3(text_substr,
 									PointerGetDatum(s),
-									Int32GetDatum(pmatch.rm_so + 1),
-							Int32GetDatum(pmatch.rm_eo - pmatch.rm_so)));
+									Int32GetDatum(so + 1),
+									Int32GetDatum(eo - so)));
 	}
 
 	PG_RETURN_NULL();
+}
+
+/* similar_escape()
+ * Convert a SQL99 regexp pattern to POSIX style, so it can be used by
+ * our regexp engine.
+ */
+Datum
+similar_escape(PG_FUNCTION_ARGS)
+{
+	text	   *pat_text;
+	text	   *esc_text;
+	text	   *result;
+	unsigned char *p,
+			   *e,
+			   *r;
+	int			plen,
+				elen;
+	bool		afterescape = false;
+	int			nquotes = 0;
+
+	/* This function is not strict, so must test explicitly */
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+	pat_text = PG_GETARG_TEXT_P(0);
+	p = VARDATA(pat_text);
+	plen = (VARSIZE(pat_text) - VARHDRSZ);
+	if (PG_ARGISNULL(1))
+	{
+		/* No ESCAPE clause provided; default to backslash as escape */
+		e = "\\";
+		elen = 1;
+	}
+	else
+	{
+		esc_text = PG_GETARG_TEXT_P(1);
+		e = VARDATA(esc_text);
+		elen = (VARSIZE(esc_text) - VARHDRSZ);
+		if (elen == 0)
+			e = NULL;			/* no escape character */
+		else if (elen != 1)
+			elog(ERROR, "ESCAPE string must be empty or one character");
+	}
+
+	/* We need room for ^, $, and up to 2 output bytes per input byte */
+	result = (text *) palloc(VARHDRSZ + 2 + 2 * plen);
+	r = VARDATA(result);
+
+	*r++ = '^';
+
+	while (plen > 0)
+	{
+		unsigned char pchar = *p;
+
+		if (afterescape)
+		{
+			if (pchar == '"')	/* for SUBSTRING patterns */
+				*r++ = ((nquotes++ % 2) == 0) ? '(' : ')';
+			else
+			{
+				*r++ = '\\';
+				*r++ = pchar;
+			}
+			afterescape = false;
+		}
+		else if (e && pchar == *e)
+		{
+			/* SQL99 escape character; do not send to output */
+			afterescape = true;
+		}
+		else if (pchar == '%')
+		{
+			*r++ = '.';
+			*r++ = '*';
+		}
+		else if (pchar == '_')
+		{
+			*r++ = '.';
+		}
+		else if (pchar == '\\' || pchar == '.' || pchar == '?' ||
+				 pchar == '{')
+		{
+			*r++ = '\\';
+			*r++ = pchar;
+		}
+		else
+		{
+			*r++ = pchar;
+		}
+		p++, plen--;
+	}
+
+	*r++ = '$';
+	
+	VARATT_SIZEP(result) = r - ((unsigned char *) result);
+
+	PG_RETURN_TEXT_P(result);
 }
