@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.73 2004/07/13 02:59:49 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.74 2004/10/21 22:48:54 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -175,9 +175,11 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Dump data as <command>INSERT</command> commands (rather
-	than <command>COPY</command>). This will make restoration very
-	slow, but it makes the archives more portable to other SQL database
-	management systems.
+	than <command>COPY</command>).  This will make restoration very slow;
+	it is mainly useful for making dumps that can be loaded into
+	non-<productname>PostgreSQL</productname> databases.  Note that
+	the restore may fail altogether if you have rearranged column order.
+	The <option>-D</option> option is safer, though even slower.
        </para>
       </listitem>
      </varlistentry>
@@ -192,8 +194,9 @@ PostgreSQL documentation
 	column names (<literal>INSERT INTO
 	<replaceable>table</replaceable>
 	(<replaceable>column</replaceable>, ...) VALUES
-	...</literal>).  This will make restoration very slow,
-	but it is necessary if you desire to rearrange the column ordering.
+	...</literal>).  This will make restoration very slow; it is mainly
+	useful for making dumps that can be loaded into
+	non-<productname>PostgreSQL</productname> databases.
        </para>
       </listitem>
      </varlistentry>
