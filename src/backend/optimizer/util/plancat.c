@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.76 2003/01/28 22:13:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.77 2003/02/03 15:07:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "catalog/pg_amop.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_index.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
 #include "parser/parsetree.h"
@@ -38,155 +39,160 @@
 /*
  * get_relation_info -
  *	  Retrieves catalog information for a given relation.
- *	  Given the Oid of the relation, return the following info:
- *				whether the relation has secondary indices
- *				number of pages
- *				number of tuples
+ *
+ * Given the Oid of the relation, return the following info into fields
+ * of the RelOptInfo struct:
+ *
+ *	varlist		list of physical columns (expressed as Vars)
+ *	indexlist	list of IndexOptInfos for relation's indexes
+ *	pages		number of pages
+ *	tuples		number of tuples
  */
 void
-get_relation_info(Oid relationObjectId,
-				  bool *hasindex, long *pages, double *tuples)
+get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 {
-	HeapTuple	relationTuple;
-	Form_pg_class relation;
-
-	relationTuple = SearchSysCache(RELOID,
-								   ObjectIdGetDatum(relationObjectId),
-								   0, 0, 0);
-	if (!HeapTupleIsValid(relationTuple))
-		elog(ERROR, "get_relation_info: Relation %u not found",
-			 relationObjectId);
-	relation = (Form_pg_class) GETSTRUCT(relationTuple);
-
-	if (IsIgnoringSystemIndexes() && IsSystemClass(relation))
-		*hasindex = false;
-	else
-		*hasindex = relation->relhasindex;
-
-	*pages = relation->relpages;
-	*tuples = relation->reltuples;
-
-	ReleaseSysCache(relationTuple);
-}
-
-/*
- * find_secondary_indexes
- *	  Creates a list of IndexOptInfo nodes containing information for each
- *	  secondary index defined on the specified relation.
- *
- * 'relationObjectId' is the OID of the relation for which indices are wanted
- *
- * Returns a list of new IndexOptInfo nodes.
- */
-List *
-find_secondary_indexes(Oid relationObjectId)
-{
-	List	   *indexinfos = NIL;
-	List	   *indexoidlist,
-			   *indexoidscan;
 	Relation	relation;
+	Index		varno = lfirsti(rel->relids);
+	bool		hasindex;
+	List	   *varlist = NIL;
+	List	   *indexinfos = NIL;
+	int			attrno,
+				numattrs;
+
+	relation = heap_open(relationObjectId, AccessShareLock);
 
 	/*
-	 * We used to scan pg_index directly, but now the relcache offers a
-	 * cached list of OID indexes for each relation.  So, get that list
-	 * and then use the syscache to obtain pg_index entries.
+	 * Make list of physical Vars.  Note we do NOT ignore dropped columns;
+	 * the intent is to model the physical tuples of the relation.
 	 */
-	relation = heap_open(relationObjectId, AccessShareLock);
-	indexoidlist = RelationGetIndexList(relation);
+	numattrs = RelationGetNumberOfAttributes(relation);
 
-	foreach(indexoidscan, indexoidlist)
+	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
-		Oid			indexoid = lfirsti(indexoidscan);
-		Relation	indexRelation;
-		Form_pg_index index;
-		IndexOptInfo *info;
-		int			i;
-		int16		amorderstrategy;
+		Form_pg_attribute att_tup = relation->rd_att->attrs[attrno - 1];
 
-		/* Extract info from the relation descriptor for the index */
-		indexRelation = index_open(indexoid);
-
-		info = makeNode(IndexOptInfo);
-
-		/*
-		 * Need to make these arrays large enough to be sure there is room
-		 * for a terminating 0 at the end of each one.
-		 */
-		info->classlist = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
-		info->indexkeys = (int *) palloc(sizeof(int) * (INDEX_MAX_KEYS + 1));
-		info->ordering = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
-
-		/* Extract info from the pg_index tuple */
-		index = indexRelation->rd_index;
-		info->indexoid = index->indexrelid;
-		info->indproc = index->indproc; /* functional index ?? */
-		if (VARSIZE(&index->indpred) > VARHDRSZ)		/* partial index ?? */
-		{
-			char	   *predString;
-
-			predString = DatumGetCString(DirectFunctionCall1(textout,
-									  PointerGetDatum(&index->indpred)));
-			info->indpred = (List *) stringToNode(predString);
-			pfree(predString);
-		}
-		else
-			info->indpred = NIL;
-		info->unique = index->indisunique;
-
-		for (i = 0; i < INDEX_MAX_KEYS; i++)
-		{
-			if (index->indclass[i] == (Oid) 0)
-				break;
-			info->classlist[i] = index->indclass[i];
-		}
-		info->classlist[i] = (Oid) 0;
-		info->ncolumns = i;
-
-		for (i = 0; i < INDEX_MAX_KEYS; i++)
-		{
-			if (index->indkey[i] == 0)
-				break;
-			info->indexkeys[i] = index->indkey[i];
-		}
-		info->indexkeys[i] = 0;
-		info->nkeys = i;
-
-		info->relam = indexRelation->rd_rel->relam;
-		info->pages = indexRelation->rd_rel->relpages;
-		info->tuples = indexRelation->rd_rel->reltuples;
-		info->amcostestimate = index_cost_estimator(indexRelation);
-		amorderstrategy = indexRelation->rd_am->amorderstrategy;
-
-		/*
-		 * Fetch the ordering operators associated with the index, if any.
-		 */
-		MemSet(info->ordering, 0, sizeof(Oid) * (INDEX_MAX_KEYS + 1));
-		if (amorderstrategy != 0)
-		{
-			int			oprindex = amorderstrategy - 1;
-
-			for (i = 0; i < info->ncolumns; i++)
-			{
-				info->ordering[i] = indexRelation->rd_operator[oprindex];
-				oprindex += indexRelation->rd_am->amstrategies;
-			}
-		}
-
-		/* initialize cached join info to empty */
-		info->outer_relids = NIL;
-		info->inner_paths = NIL;
-
-		index_close(indexRelation);
-
-		indexinfos = lcons(info, indexinfos);
+		varlist = lappend(varlist,
+						  makeVar(varno,
+								  attrno,
+								  att_tup->atttypid,
+								  att_tup->atttypmod,
+								  0));
 	}
 
-	freeList(indexoidlist);
+	rel->varlist = varlist;
+
+	/*
+	 * Make list of indexes.  Ignore indexes on system catalogs if told to.
+	 */
+	if (IsIgnoringSystemIndexes() && IsSystemClass(relation->rd_rel))
+		hasindex = false;
+	else
+		hasindex = relation->rd_rel->relhasindex;
+
+	if (hasindex)
+	{
+		List	   *indexoidlist,
+				   *indexoidscan;
+
+		indexoidlist = RelationGetIndexList(relation);
+
+		foreach(indexoidscan, indexoidlist)
+		{
+			Oid			indexoid = lfirsti(indexoidscan);
+			Relation	indexRelation;
+			Form_pg_index index;
+			IndexOptInfo *info;
+			int			i;
+			int16		amorderstrategy;
+
+			/* Extract info from the relation descriptor for the index */
+			indexRelation = index_open(indexoid);
+
+			info = makeNode(IndexOptInfo);
+
+			/*
+			 * Need to make these arrays large enough to be sure there is room
+			 * for a terminating 0 at the end of each one.
+			 */
+			info->classlist = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
+			info->indexkeys = (int *) palloc(sizeof(int) * (INDEX_MAX_KEYS + 1));
+			info->ordering = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
+
+			/* Extract info from the pg_index tuple */
+			index = indexRelation->rd_index;
+			info->indexoid = index->indexrelid;
+			info->indproc = index->indproc; /* functional index ?? */
+			if (VARSIZE(&index->indpred) > VARHDRSZ) /* partial index ?? */
+			{
+				char	   *predString;
+
+				predString = DatumGetCString(DirectFunctionCall1(textout,
+																 PointerGetDatum(&index->indpred)));
+				info->indpred = (List *) stringToNode(predString);
+				pfree(predString);
+			}
+			else
+				info->indpred = NIL;
+			info->unique = index->indisunique;
+
+			for (i = 0; i < INDEX_MAX_KEYS; i++)
+			{
+				if (index->indclass[i] == (Oid) 0)
+					break;
+				info->classlist[i] = index->indclass[i];
+			}
+			info->classlist[i] = (Oid) 0;
+			info->ncolumns = i;
+
+			for (i = 0; i < INDEX_MAX_KEYS; i++)
+			{
+				if (index->indkey[i] == 0)
+					break;
+				info->indexkeys[i] = index->indkey[i];
+			}
+			info->indexkeys[i] = 0;
+			info->nkeys = i;
+
+			info->relam = indexRelation->rd_rel->relam;
+			info->pages = indexRelation->rd_rel->relpages;
+			info->tuples = indexRelation->rd_rel->reltuples;
+			info->amcostestimate = index_cost_estimator(indexRelation);
+			amorderstrategy = indexRelation->rd_am->amorderstrategy;
+
+			/*
+			 * Fetch the ordering operators associated with the index, if any.
+			 */
+			MemSet(info->ordering, 0, sizeof(Oid) * (INDEX_MAX_KEYS + 1));
+			if (amorderstrategy != 0)
+			{
+				int			oprindex = amorderstrategy - 1;
+
+				for (i = 0; i < info->ncolumns; i++)
+				{
+					info->ordering[i] = indexRelation->rd_operator[oprindex];
+					oprindex += indexRelation->rd_am->amstrategies;
+				}
+			}
+
+			/* initialize cached join info to empty */
+			info->outer_relids = NIL;
+			info->inner_paths = NIL;
+
+			index_close(indexRelation);
+
+			indexinfos = lcons(info, indexinfos);
+		}
+
+		freeList(indexoidlist);
+	}
+
+	rel->indexlist = indexinfos;
+
+	rel->pages = relation->rd_rel->relpages;
+	rel->tuples = relation->rd_rel->reltuples;
 
 	/* XXX keep the lock here? */
 	heap_close(relation, AccessShareLock);
-
-	return indexinfos;
 }
 
 /*

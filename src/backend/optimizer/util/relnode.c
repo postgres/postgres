@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.45 2003/01/24 03:58:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.46 2003/02/03 15:07:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,6 +143,7 @@ make_base_rel(Query *root, int relid)
 	rel->cheapest_unique_path = NULL;
 	rel->pruneable = true;
 	rel->rtekind = rte->rtekind;
+	rel->varlist = NIL;
 	rel->indexlist = NIL;
 	rel->pages = 0;
 	rel->tuples = 0;
@@ -159,16 +160,9 @@ make_base_rel(Query *root, int relid)
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
-			{
-				/* Table --- retrieve statistics from the system catalogs */
-				bool		indexed;
-
-				get_relation_info(rte->relid,
-								  &indexed, &rel->pages, &rel->tuples);
-				if (indexed)
-					rel->indexlist = find_secondary_indexes(rte->relid);
-				break;
-			}
+			/* Table --- retrieve statistics from the system catalogs */
+			get_relation_info(rte->relid, rel);
+			break;
 		case RTE_SUBQUERY:
 		case RTE_FUNCTION:
 			/* Subquery or function --- nothing to do here */
@@ -304,6 +298,7 @@ build_join_rel(Query *root,
 	joinrel->cheapest_unique_path = NULL;
 	joinrel->pruneable = true;
 	joinrel->rtekind = RTE_JOIN;
+	joinrel->varlist = NIL;
 	joinrel->indexlist = NIL;
 	joinrel->pages = 0;
 	joinrel->tuples = 0;

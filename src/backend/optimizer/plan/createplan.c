@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.133 2003/01/22 00:07:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.134 2003/02/03 15:07:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 
 
 static Scan *create_scan_plan(Query *root, Path *best_path);
+static bool use_physical_tlist(RelOptInfo *rel);
 static Join *create_join_plan(Query *root, JoinPath *best_path);
 static Append *create_append_plan(Query *root, AppendPath *best_path);
 static Result *create_result_plan(Query *root, ResultPath *best_path);
@@ -185,15 +186,41 @@ create_plan(Query *root, Path *best_path)
 static Scan *
 create_scan_plan(Query *root, Path *best_path)
 {
-	Scan	   *plan;
-	List	   *tlist = best_path->parent->targetlist;
+	RelOptInfo *rel = best_path->parent;
+	List	   *tlist;
 	List	   *scan_clauses;
+	Scan	   *plan;
+
+	/*
+	 * For table scans, rather than using the relation targetlist (which is
+	 * only those Vars actually needed by the query), we prefer to generate a
+	 * tlist containing all Vars in order.  This will allow the executor to
+	 * optimize away projection of the table tuples, if possible.  (Note that
+	 * planner.c may replace the tlist we generate here, forcing projection to
+	 * occur.)
+	 */
+	if (use_physical_tlist(rel))
+	{
+		int		resdomno = 1;
+		List   *v;
+
+		tlist = NIL;
+		foreach(v, rel->varlist)
+		{
+			Var	   *var = (Var *) lfirst(v);
+
+			tlist = lappend(tlist, create_tl_element(var, resdomno));
+			resdomno++;
+		}
+	}
+	else
+		tlist = rel->targetlist;
 
 	/*
 	 * Extract the relevant restriction clauses from the parent relation;
 	 * the executor must apply all these restrictions during the scan.
 	 */
-	scan_clauses = get_actual_clauses(best_path->parent->baserestrictinfo);
+	scan_clauses = get_actual_clauses(rel->baserestrictinfo);
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -239,6 +266,47 @@ create_scan_plan(Query *root, Path *best_path)
 	}
 
 	return plan;
+}
+
+/*
+ * use_physical_tlist
+ *		Decide whether to use a tlist matching relation structure,
+ *		rather than only those Vars actually referenced.
+ */
+static bool
+use_physical_tlist(RelOptInfo *rel)
+{
+	List	   *t;
+
+	/*
+	 * Currently, can't do this for subquery or function scans.  (This
+	 * is mainly because we don't set up the necessary info when creating
+	 * their RelOptInfo nodes.)
+	 */
+	if (rel->rtekind != RTE_RELATION)
+		return false;
+	/*
+	 * Can't do it with inheritance cases either (mainly because Append
+	 * doesn't project).
+	 */
+	if (rel->reloptkind != RELOPT_BASEREL)
+		return false;
+	/*
+	 * Can't do it if any system columns are requested, either.  (This could
+	 * possibly be fixed but would take some fragile assumptions in setrefs.c,
+	 * I think.)
+	 */
+	foreach(t, rel->targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(t);
+		Var		   *var = (Var *) tle->expr;
+
+		if (!var || !IsA(var, Var))
+			return false;		/* probably can't happen */
+		if (var->varattno <= 0)
+			return false;		/* system column! */
+	}
+	return true;
 }
 
 /*
@@ -399,7 +467,7 @@ create_material_plan(Query *root, MaterialPath *best_path)
 
 	subplan = create_plan(root, best_path->subpath);
 
-	plan = make_material(best_path->path.parent->targetlist, subplan);
+	plan = make_material(subplan->targetlist, subplan);
 
 	copy_path_costsize(&plan->plan, (Path *) best_path);
 

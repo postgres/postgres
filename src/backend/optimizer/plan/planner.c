@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.142 2003/01/25 23:10:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.143 2003/02/03 15:07:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,11 @@ static Plan *inheritance_planner(Query *parse, List *inheritlist);
 static Plan *grouping_planner(Query *parse, double tuple_fraction);
 static bool hash_safe_grouping(Query *parse);
 static List *make_subplanTargetList(Query *parse, List *tlist,
-					   AttrNumber **groupColIdx);
+					   AttrNumber **groupColIdx, bool *need_tlist_eval);
+static void locate_grouping_columns(Query *parse,
+									List *tlist,
+									List *sub_tlist,
+									AttrNumber *groupColIdx);
 static Plan *make_groupsortplan(Query *parse,
 								List *groupClause,
 								AttrNumber *grpColIdx,
@@ -530,6 +534,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 		List	   *sub_tlist;
 		List	   *group_pathkeys;
 		AttrNumber *groupColIdx = NULL;
+		bool		need_tlist_eval = true;
 		QualCost	tlist_cost;
 		double		sub_tuple_fraction;
 		Path	   *cheapest_path;
@@ -602,7 +607,8 @@ grouping_planner(Query *parse, double tuple_fraction)
 		 * Generate appropriate target list for subplan; may be different
 		 * from tlist if grouping or aggregation is needed.
 		 */
-		sub_tlist = make_subplanTargetList(parse, tlist, &groupColIdx);
+		sub_tlist = make_subplanTargetList(parse, tlist,
+										   &groupColIdx, &need_tlist_eval);
 
 		/*
 		 * Calculate pathkeys that represent grouping/ordering
@@ -1003,45 +1009,65 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 		/*
 		 * create_plan() returns a plan with just a "flat" tlist of required
-		 * Vars.  We want to insert the sub_tlist as the tlist of the top
-		 * plan node.  If the top-level plan node is one that cannot do
-		 * expression evaluation, we must insert a Result node to project the
-		 * desired tlist.
-		 * Currently, the only plan node we might see here that falls into
-		 * that category is Append.
+		 * Vars.  Usually we need to insert the sub_tlist as the tlist of the
+		 * top plan node.  However, we can skip that if we determined that
+		 * whatever query_planner chose to return will be good enough.
 		 */
-		if (IsA(result_plan, Append))
+		if (need_tlist_eval)
 		{
-			result_plan = (Plan *) make_result(sub_tlist, NULL, result_plan);
+			/*
+			 * If the top-level plan node is one that cannot do expression
+			 * evaluation, we must insert a Result node to project the desired
+			 * tlist.
+			 * Currently, the only plan node we might see here that falls into
+			 * that category is Append.
+			 */
+			if (IsA(result_plan, Append))
+			{
+				result_plan = (Plan *) make_result(sub_tlist, NULL,
+												   result_plan);
+			}
+			else
+			{
+				/*
+				 * Otherwise, just replace the subplan's flat tlist with
+				 * the desired tlist.
+				 */
+				result_plan->targetlist = sub_tlist;
+			}
+			/*
+			 * Also, account for the cost of evaluation of the sub_tlist.
+			 *
+			 * Up to now, we have only been dealing with "flat" tlists,
+			 * containing just Vars.  So their evaluation cost is zero
+			 * according to the model used by cost_qual_eval() (or if you
+			 * prefer, the cost is factored into cpu_tuple_cost).  Thus we can
+			 * avoid accounting for tlist cost throughout query_planner() and
+			 * subroutines.  But now we've inserted a tlist that might contain
+			 * actual operators, sub-selects, etc --- so we'd better account
+			 * for its cost.
+			 *
+			 * Below this point, any tlist eval cost for added-on nodes should
+			 * be accounted for as we create those nodes.  Presently, of the
+			 * node types we can add on, only Agg and Group project new tlists
+			 * (the rest just copy their input tuples) --- so make_agg() and
+			 * make_group() are responsible for computing the added cost.
+			 */
+			cost_qual_eval(&tlist_cost, sub_tlist);
+			result_plan->startup_cost += tlist_cost.startup;
+			result_plan->total_cost += tlist_cost.startup +
+				tlist_cost.per_tuple * result_plan->plan_rows;
 		}
 		else
 		{
 			/*
-			 * Otherwise, just replace the flat tlist with the desired tlist.
+			 * Since we're using query_planner's tlist and not the one
+			 * make_subplanTargetList calculated, we have to refigure
+			 * any grouping-column indexes make_subplanTargetList computed.
 			 */
-			result_plan->targetlist = sub_tlist;
+			locate_grouping_columns(parse, tlist, result_plan->targetlist,
+									groupColIdx);
 		}
-		/*
-		 * Also, account for the cost of evaluation of the sub_tlist.
-		 *
-		 * Up to now, we have only been dealing with "flat" tlists, containing
-		 * just Vars.  So their evaluation cost is zero according to the
-		 * model used by cost_qual_eval() (or if you prefer, the cost is
-		 * factored into cpu_tuple_cost).  Thus we can avoid accounting for
-		 * tlist cost throughout query_planner() and subroutines.
-		 * But now we've inserted a tlist that might contain actual operators,
-		 * sub-selects, etc --- so we'd better account for its cost.
-		 *
-		 * Below this point, any tlist eval cost for added-on nodes should
-		 * be accounted for as we create those nodes.  Presently, of the
-		 * node types we can add on, only Agg and Group project new tlists
-		 * (the rest just copy their input tuples) --- so make_agg() and
-		 * make_group() are responsible for computing the added cost.
-		 */
-		cost_qual_eval(&tlist_cost, sub_tlist);
-		result_plan->startup_cost += tlist_cost.startup;
-		result_plan->total_cost += tlist_cost.startup +
-			tlist_cost.per_tuple * result_plan->plan_rows;
 
 		/*
 		 * Insert AGG or GROUP node if needed, plus an explicit sort step
@@ -1245,10 +1271,17 @@ hash_safe_grouping(Query *parse)
  * the extra computation to recompute a+b at the outer level; see
  * replace_vars_with_subplan_refs() in setrefs.c.)
  *
+ * If we are grouping or aggregating, *and* there are no non-Var grouping
+ * expressions, then the returned tlist is effectively dummy; we do not
+ * need to force it to be evaluated, because all the Vars it contains
+ * should be present in the output of query_planner anyway.
+ *
  * 'parse' is the query being processed.
  * 'tlist' is the query's target list.
  * 'groupColIdx' receives an array of column numbers for the GROUP BY
- * expressions (if there are any) in the subplan's target list.
+ *			expressions (if there are any) in the subplan's target list.
+ * 'need_tlist_eval' is set true if we really need to evaluate the
+ *			result tlist.
  *
  * The result is the targetlist to be passed to the subplan.
  *---------------
@@ -1256,7 +1289,8 @@ hash_safe_grouping(Query *parse)
 static List *
 make_subplanTargetList(Query *parse,
 					   List *tlist,
-					   AttrNumber **groupColIdx)
+					   AttrNumber **groupColIdx,
+					   bool *need_tlist_eval)
 {
 	List	   *sub_tlist;
 	List	   *extravars;
@@ -1269,7 +1303,10 @@ make_subplanTargetList(Query *parse,
 	 * query_planner should receive the unmodified target list.
 	 */
 	if (!parse->hasAggs && !parse->groupClause && !parse->havingQual)
+	{
+		*need_tlist_eval = true;
 		return tlist;
+	}
 
 	/*
 	 * Otherwise, start with a "flattened" tlist (having just the vars
@@ -1280,6 +1317,7 @@ make_subplanTargetList(Query *parse,
 	extravars = pull_var_clause(parse->havingQual, false);
 	sub_tlist = add_to_flat_tlist(sub_tlist, extravars);
 	freeList(extravars);
+	*need_tlist_eval = false;	/* only eval if not flat tlist */
 
 	/*
 	 * If grouping, create sub_tlist entries for all GROUP BY expressions
@@ -1320,6 +1358,7 @@ make_subplanTargetList(Query *parse,
 												false),
 									 (Expr *) groupexpr);
 				sub_tlist = lappend(sub_tlist, te);
+				*need_tlist_eval = true; /* it's not flat anymore */
 			}
 
 			/* and save its resno */
@@ -1328,6 +1367,53 @@ make_subplanTargetList(Query *parse,
 	}
 
 	return sub_tlist;
+}
+
+/*
+ * locate_grouping_columns
+ *		Locate grouping columns in the tlist chosen by query_planner.
+ *
+ * This is only needed if we don't use the sub_tlist chosen by
+ * make_subplanTargetList.  We have to forget the column indexes found
+ * by that routine and re-locate the grouping vars in the real sub_tlist.
+ */
+static void
+locate_grouping_columns(Query *parse,
+						List *tlist,
+						List *sub_tlist,
+						AttrNumber *groupColIdx)
+{
+	int			keyno = 0;
+	List	   *gl;
+
+	/*
+	 * No work unless grouping.
+	 */
+	if (!parse->groupClause)
+	{
+		Assert(groupColIdx == NULL);
+		return;
+	}
+	Assert(groupColIdx != NULL);
+
+	foreach(gl, parse->groupClause)
+	{
+		GroupClause *grpcl = (GroupClause *) lfirst(gl);
+		Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
+		TargetEntry *te = NULL;
+		List	   *sl;
+
+		foreach(sl, sub_tlist)
+		{
+			te = (TargetEntry *) lfirst(sl);
+			if (equal(groupexpr, te->expr))
+				break;
+		}
+		if (!sl)
+			elog(ERROR, "locate_grouping_columns: failed");
+
+		groupColIdx[keyno++] = te->resdom->resno;
+	}
 }
 
 /*

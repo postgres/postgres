@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.199 2003/01/23 05:10:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.200 2003/02/03 15:07:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,9 +612,11 @@ InitPlan(QueryDesc *queryDesc)
 	tupType = ExecGetTupType(planstate);
 
 	/*
-	 * Initialize the junk filter if needed. SELECT and INSERT queries
-	 * need a filter if there are any junk attrs in the tlist.	UPDATE and
-	 * DELETE always need one, since there's always a junk 'ctid'
+	 * Initialize the junk filter if needed.  SELECT and INSERT queries need a
+	 * filter if there are any junk attrs in the tlist.  INSERT and SELECT
+	 * INTO also need a filter if the top plan node is a scan node that's not
+	 * doing projection (else we'll be scribbling on the scan tuple!)  UPDATE
+	 * and DELETE always need a filter, since there's always a junk 'ctid'
 	 * attribute present --- no need to look first.
 	 */
 	{
@@ -633,6 +635,19 @@ InitPlan(QueryDesc *queryDesc)
 					{
 						junk_filter_needed = true;
 						break;
+					}
+				}
+				if (!junk_filter_needed &&
+					(operation == CMD_INSERT || do_select_into))
+				{
+					if (IsA(planstate, SeqScanState) ||
+						IsA(planstate, IndexScanState) ||
+						IsA(planstate, TidScanState) ||
+						IsA(planstate, SubqueryScanState) ||
+						IsA(planstate, FunctionScanState))
+					{
+						if (planstate->ps_ProjInfo == NULL)
+							junk_filter_needed = true;
 					}
 				}
 				break;

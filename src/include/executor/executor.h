@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.87 2003/01/12 04:03:34 tgl Exp $
+ * $Id: executor.h,v 1.88 2003/02/03 15:07:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,6 +137,7 @@ extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo,
 typedef TupleTableSlot *(*ExecScanAccessMtd) (ScanState *node);
 
 extern TupleTableSlot *ExecScan(ScanState *node, ExecScanAccessMtd accessMtd);
+extern void ExecAssignScanProjectionInfo(ScanState *node);
 
 /*
  * prototypes from functions in execTuples.c

@@ -12,17 +12,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.22 2002/12/05 15:50:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.23 2003/02/03 15:07:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <sys/file.h>
-
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"
+
+
+static bool tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc);
 
 
 /* ----------------------------------------------------------------
@@ -50,6 +51,7 @@ ExecScan(ScanState *node,
 	EState	   *estate;
 	ExprContext *econtext;
 	List	   *qual;
+	ProjectionInfo *projInfo;
 	ExprDoneCond isDone;
 	TupleTableSlot *resultSlot;
 
@@ -59,6 +61,7 @@ ExecScan(ScanState *node,
 	estate = node->ps.state;
 	econtext = node->ps.ps_ExprContext;
 	qual = node->ps.qual;
+	projInfo = node->ps.ps_ProjInfo;
 
 	/*
 	 * Check to see if we're still projecting out tuples from a previous
@@ -67,7 +70,8 @@ ExecScan(ScanState *node,
 	 */
 	if (node->ps.ps_TupFromTlist)
 	{
-		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
+		Assert(projInfo);		/* can't get here if not projecting */
+		resultSlot = ExecProject(projInfo, &isDone);
 		if (isDone == ExprMultipleResult)
 			return resultSlot;
 		/* Done with that source tuple... */
@@ -101,10 +105,13 @@ ExecScan(ScanState *node,
 		 */
 		if (TupIsNull(slot))
 		{
-			return ExecStoreTuple(NULL,
-								  node->ps.ps_ProjInfo->pi_slot,
-								  InvalidBuffer,
-								  true);
+			if (projInfo)
+				return ExecStoreTuple(NULL,
+									  projInfo->pi_slot,
+									  InvalidBuffer,
+									  true);
+			else
+				return slot;
 		}
 
 		/*
@@ -123,16 +130,27 @@ ExecScan(ScanState *node,
 		{
 			/*
 			 * Found a satisfactory scan tuple.
-			 *
-			 * Form a projection tuple, store it in the result tuple slot and
-			 * return it --- unless we find we can project no tuples from
-			 * this scan tuple, in which case continue scan.
 			 */
-			resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
-			if (isDone != ExprEndResult)
+			if (projInfo)
 			{
-				node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
-				return resultSlot;
+				/*
+				 * Form a projection tuple, store it in the result tuple slot
+				 * and return it --- unless we find we can project no tuples
+				 * from this scan tuple, in which case continue scan.
+				 */
+				resultSlot = ExecProject(projInfo, &isDone);
+				if (isDone != ExprEndResult)
+				{
+					node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
+					return resultSlot;
+				}
+			}
+			else
+			{
+				/*
+				 * Here, we aren't projecting, so just return scan tuple.
+				 */
+				return slot;
 			}
 		}
 
@@ -141,4 +159,62 @@ ExecScan(ScanState *node,
 		 */
 		ResetExprContext(econtext);
 	}
+}
+
+/*
+ * ExecAssignScanProjectionInfo
+ *		Set up projection info for a scan node, if necessary.
+ *
+ * We can avoid a projection step if the requested tlist exactly matches
+ * the underlying tuple type.  If so, we just set ps_ProjInfo to NULL.
+ * Note that this case occurs not only for simple "SELECT * FROM ...", but
+ * also in most cases where there are joins or other processing nodes above
+ * the scan node, because the planner will preferentially generate a matching
+ * tlist.
+ *
+ * ExecAssignScanType must have been called already.
+ */
+void
+ExecAssignScanProjectionInfo(ScanState *node)
+{
+	Scan   *scan = (Scan *) node->ps.plan;
+
+	if (tlist_matches_tupdesc(scan->plan.targetlist,
+							  scan->scanrelid,
+							  node->ss_ScanTupleSlot->ttc_tupleDescriptor))
+		node->ps.ps_ProjInfo = NULL;
+	else
+		ExecAssignProjectionInfo(&node->ps);
+}
+
+static bool
+tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc)
+{
+	int		numattrs = tupdesc->natts;
+	int		attrno;
+
+	for (attrno = 1; attrno <= numattrs; attrno++)
+	{
+		Form_pg_attribute att_tup = tupdesc->attrs[attrno - 1];
+		Var	   *var;
+
+		if (tlist == NIL)
+			return false;		/* tlist too short */
+		var = (Var *) ((TargetEntry *) lfirst(tlist))->expr;
+		if (!var || !IsA(var, Var))
+			return false;		/* tlist item not a Var */
+		Assert(var->varno == varno);
+		if (var->varattno != attrno)
+			return false;		/* out of order */
+		Assert(var->vartype == att_tup->atttypid);
+		Assert(var->vartypmod == att_tup->atttypmod);
+		Assert(var->varlevelsup == 0);
+
+		tlist = lnext(tlist);
+	}
+
+	if (tlist)
+		return false;			/* tlist too long */
+
+	return true;
 }

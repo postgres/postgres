@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.77 2003/01/20 18:55:04 tgl Exp $
+ * $Id: relation.h,v 1.78 2003/02/03 15:07:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,7 @@ typedef struct QualCost
  * If the relation is a base relation it will have these fields set:
  *
  *		rtekind - distinguishes plain relation, subquery, or function RTE
+ *		varlist - list of Vars for physical columns (only if table)
  *		indexlist - list of IndexOptInfo nodes for relation's indexes
  *					(always NIL if it's not a table)
  *		pages - number of disk pages in relation (zero if not a table)
@@ -190,6 +191,7 @@ typedef struct RelOptInfo
 
 	/* information about a base rel (not set for join rels!) */
 	RTEKind		rtekind;		/* RELATION, SUBQUERY, or FUNCTION */
+	List	   *varlist;
 	List	   *indexlist;
 	long		pages;
 	double		tuples;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.31 2003/01/12 22:01:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.32 2003/02/03 15:07:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,12 +384,6 @@ ExecInitTidScan(TidScan *node, EState *estate)
 	ExecInitScanTupleSlot(estate, &tidstate->ss);
 
 	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL(&tidstate->ss.ps);
-	ExecAssignProjectionInfo(&tidstate->ss.ps);
-
-	/*
 	 * get the tid node information
 	 */
 	tidList = (ItemPointerData *) palloc(length(node->tideval) * sizeof(ItemPointerData));
@@ -437,6 +431,12 @@ ExecInitTidScan(TidScan *node, EState *estate)
 	 * first scan.
 	 */
 	tidstate->ss.ps.chgParam = execParam;
+
+	/*
+	 * Initialize result tuple type and projection info.
+	 */
+	ExecAssignResultTypeFromTL(&tidstate->ss.ps);
+	ExecAssignScanProjectionInfo(&tidstate->ss);
 
 	/*
 	 * all done.
