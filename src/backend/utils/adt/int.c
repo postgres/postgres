@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.48 2002/02/23 01:01:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.49 2002/06/07 23:41:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -800,7 +800,9 @@ int2fac(PG_FUNCTION_ARGS)
 	int16		arg1 = PG_GETARG_INT16(0);
 	int32		result;
 
-	if (arg1 < 1)
+	if (arg1 == 0)
+		result = 1;
+	else if (arg1 < 1)
 		result = 0;
 	else
 		for (result = 1; arg1 > 0; --arg1)
