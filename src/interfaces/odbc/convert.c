@@ -17,8 +17,6 @@
  */
 /* Multibyte support  Eiji Tokuya	2001-03-15	*/
 
-#include "convert.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -37,6 +35,7 @@
 #include <sqlext.h>
 #endif
 
+#include "convert.h"
 #include <time.h>
 #include <math.h>
 #include <stdlib.h>
@@ -939,7 +938,7 @@ into_table_from(const char *stmt)
 /*
  *	This function inserts parameters into an SQL statements.
  *	It will also modify a SELECT statement for use with declare/fetch cursors.
- *	This function does a dynamic memory allocation to get rid of query siz elimit!
+ *	This function does a dynamic memory allocation to get rid of query size limit!
  */
 int
 copy_statement_with_parameters(StatementClass *stmt)
@@ -961,8 +960,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 	time_t		t = time(NULL);
 	struct tm  *tim;
 	SDWORD		used;
-	char	   *buffer,
-			   *buf;
+	char	   	*buffer, *buf;
 	BOOL		in_quote = FALSE, in_dquote = FALSE, in_escape = FALSE;
 	Oid			lobj_oid;
 	int			lobj_fd,
