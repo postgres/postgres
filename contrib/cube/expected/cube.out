@@ -1,0 +1,962 @@
+--
+--  Test cube datatype
+--
+--
+-- first, define the datatype.  Turn off echoing so that expected file
+-- does not depend on contents of cube.sql.
+--
+\set ECHO none
+--
+-- testing the input and output functions
+--
+-- Any number (a one-dimensional point)
+SELECT '1'::cube AS cube;
+ cube 
+------
+ (1)
+(1 row)
+
+SELECT '-1'::cube AS cube;
+ cube 
+------
+ (-1)
+(1 row)
+
+SELECT '1.'::cube AS cube;
+ cube 
+------
+ (1)
+(1 row)
+
+SELECT '-1.'::cube AS cube;
+ cube 
+------
+ (-1)
+(1 row)
+
+SELECT '.1'::cube AS cube;
+ cube  
+-------
+ (0.1)
+(1 row)
+
+SELECT '-.1'::cube AS cube;
+ERROR:  parse error, expecting `FLOAT' or `O_PAREN' or `O_BRACKET' at or before position 2, character ('.', \056), input: '-.1'
+
+SELECT '1.0'::cube AS cube;
+ cube 
+------
+ (1)
+(1 row)
+
+SELECT '-1.0'::cube AS cube;
+ cube 
+------
+ (-1)
+(1 row)
+
+SELECT '1e7'::cube AS cube;
+  cube   
+---------
+ (1e+07)
+(1 row)
+
+SELECT '-1e7'::cube AS cube;
+   cube   
+----------
+ (-1e+07)
+(1 row)
+
+SELECT '1.0e7'::cube AS cube;
+  cube   
+---------
+ (1e+07)
+(1 row)
+
+SELECT '-1.0e7'::cube AS cube;
+   cube   
+----------
+ (-1e+07)
+(1 row)
+
+SELECT '1e+7'::cube AS cube;
+  cube   
+---------
+ (1e+07)
+(1 row)
+
+SELECT '-1e+7'::cube AS cube;
+   cube   
+----------
+ (-1e+07)
+(1 row)
+
+SELECT '1.0e+7'::cube AS cube;
+  cube   
+---------
+ (1e+07)
+(1 row)
+
+SELECT '-1.0e+7'::cube AS cube;
+   cube   
+----------
+ (-1e+07)
+(1 row)
+
+SELECT '1e-7'::cube AS cube;
+  cube   
+---------
+ (1e-07)
+(1 row)
+
+SELECT '-1e-7'::cube AS cube;
+   cube   
+----------
+ (-1e-07)
+(1 row)
+
+SELECT '1.0e-7'::cube AS cube;
+  cube   
+---------
+ (1e-07)
+(1 row)
+
+SELECT '-1.0e-7'::cube AS cube;
+   cube   
+----------
+ (-1e-07)
+(1 row)
+
+SELECT '1e700'::cube AS cube;
+ cube  
+-------
+ (inf)
+(1 row)
+
+SELECT '-1e700'::cube AS cube;
+  cube  
+--------
+ (-inf)
+(1 row)
+
+SELECT '1e-700'::cube AS cube;
+ cube 
+------
+ (0)
+(1 row)
+
+SELECT '-1e-700'::cube AS cube;
+ cube 
+------
+ (0)
+(1 row)
+
+-- simple lists (points)
+SELECT '1,2'::cube AS cube;
+  cube  
+--------
+ (1, 2)
+(1 row)
+
+SELECT '(1,2)'::cube AS cube;
+  cube  
+--------
+ (1, 2)
+(1 row)
+
+SELECT '1,2,3,4,5'::cube AS cube;
+      cube       
+-----------------
+ (1, 2, 3, 4, 5)
+(1 row)
+
+SELECT '(1,2,3,4,5)'::cube AS cube;
+      cube       
+-----------------
+ (1, 2, 3, 4, 5)
+(1 row)
+
+-- double lists (cubes)
+SELECT '(0),(0)'::cube AS cube;
+ cube 
+------
+ (0)
+(1 row)
+
+SELECT '(0),(1)'::cube AS cube;
+  cube   
+---------
+ (0),(1)
+(1 row)
+
+SELECT '[(0),(0)]'::cube AS cube;
+ cube 
+------
+ (0)
+(1 row)
+
+SELECT '[(0),(1)]'::cube AS cube;
+  cube   
+---------
+ (0),(1)
+(1 row)
+
+SELECT '(0,0,0,0),(0,0,0,0)'::cube AS cube;
+     cube     
+--------------
+ (0, 0, 0, 0)
+(1 row)
+
+SELECT '(0,0,0,0),(1,0,0,0)'::cube AS cube;
+           cube            
+---------------------------
+ (0, 0, 0, 0),(1, 0, 0, 0)
+(1 row)
+
+SELECT '[(0,0,0,0),(0,0,0,0)]'::cube AS cube;
+     cube     
+--------------
+ (0, 0, 0, 0)
+(1 row)
+
+SELECT '[(0,0,0,0),(1,0,0,0)]'::cube AS cube;
+           cube            
+---------------------------
+ (0, 0, 0, 0),(1, 0, 0, 0)
+(1 row)
+
+-- invalid input: parse errors
+SELECT ''::cube AS cube;
+ERROR:  cube_in: can't parse an empty string
+SELECT 'ABC'::cube AS cube;
+ERROR:  parse error, expecting `FLOAT' or `O_PAREN' or `O_BRACKET' at or before position 1, character ('A', \101), input: 'ABC'
+
+SELECT '()'::cube AS cube;
+ERROR:  parse error, expecting `FLOAT' at or before position 2, character (')', \051), input: '()'
+
+SELECT '[]'::cube AS cube;
+ERROR:  parse error, expecting `O_PAREN' at or before position 2, character (']', \135), input: '[]'
+
+SELECT '[()]'::cube AS cube;
+ERROR:  parse error, expecting `FLOAT' at or before position 3, character (')', \051), input: '[()]'
+
+SELECT '[(1)]'::cube AS cube;
+ERROR:  parse error, expecting `COMMA' at or before position 5, character (']', \135), input: '[(1)]'
+
+SELECT '[(1),]'::cube AS cube;
+ERROR:  parse error, expecting `O_PAREN' at or before position 6, character (']', \135), input: '[(1),]'
+
+SELECT '[(1),2]'::cube AS cube;
+ERROR:  parse error, expecting `O_PAREN' at or before position 7, character (']', \135), input: '[(1),2]'
+
+SELECT '[(1),(2),(3)]'::cube AS cube;
+ERROR:  parse error, expecting `C_BRACKET' at or before position 9, character (',', \054), input: '[(1),(2),(3)]'
+
+SELECT '1,'::cube AS cube;
+ERROR:  parse error, expecting `FLOAT' at or before position 2, character (',', \054), input: '1,'
+
+SELECT '1,2,'::cube AS cube;
+ERROR:  parse error, expecting `FLOAT' at or before position 4, character (',', \054), input: '1,2,'
+
+SELECT '1,,2'::cube AS cube;
+ERROR:  parse error, expecting `FLOAT' at or before position 3, character (',', \054), input: '1,,2'
+
+SELECT '(1,)'::cube AS cube;
+ERROR:  parse error, expecting `FLOAT' at or before position 4, character (')', \051), input: '(1,)'
+
+SELECT '(1,2,)'::cube AS cube;
+ERROR:  parse error, expecting `FLOAT' at or before position 6, character (')', \051), input: '(1,2,)'
+
+SELECT '(1,,2)'::cube AS cube;
+ERROR:  parse error, expecting `FLOAT' at or before position 4, character (',', \054), input: '(1,,2)'
+
+-- invalid input: semantic errors and trailing garbage
+SELECT '[(1),(2)],'::cube AS cube; -- 0
+ERROR:  (0) bad cube representation; garbage at or before char 9, (',', \054)
+
+SELECT '[(1,2,3),(2,3)]'::cube AS cube; -- 1
+ERROR:  (1) bad cube representation; different point dimensions in (1,2,3) and (2,3)
+
+SELECT '[(1,2),(1,2,3)]'::cube AS cube; -- 1
+ERROR:  (1) bad cube representation; different point dimensions in (1,2) and (1,2,3)
+
+SELECT '(1),(2),'::cube AS cube; -- 2
+ERROR:  (2) bad cube representation; garbage at or before char 7, (',', \054)
+
+SELECT '(1,2,3),(2,3)'::cube AS cube; -- 3
+ERROR:  (3) bad cube representation; different point dimensions in (1,2,3) and (2,3)
+
+SELECT '(1,2),(1,2,3)'::cube AS cube; -- 3
+ERROR:  (3) bad cube representation; different point dimensions in (1,2) and (1,2,3)
+
+SELECT '(1,2,3)ab'::cube AS cube; -- 4
+ERROR:  (4) bad cube representation; garbage at or before char 8, ('b', \142)
+
+SELECT '(1,2,3)a'::cube AS cube; -- 5
+ERROR:  (5) bad cube representation; garbage at or before char 8, ('end of input', \000)
+
+SELECT '(1,2)('::cube AS cube; -- 5
+ERROR:  (5) bad cube representation; garbage at or before char 6, ('end of input', \000)
+
+SELECT '1,2ab'::cube AS cube; -- 6
+ERROR:  (6) bad cube representation; garbage at or before char 4, ('b', \142)
+
+SELECT '1 e7'::cube AS cube; -- 6
+ERROR:  (6) bad cube representation; garbage at or before char 3, ('7', \067)
+
+SELECT '1,2a'::cube AS cube; -- 7
+ERROR:  (7) bad cube representation; garbage at or before char 4, ('end of input', \000)
+
+SELECT '1..2'::cube AS cube; -- 7
+ERROR:  (7) bad cube representation; garbage at or before char 4, ('end of input', \000)
+
+--
+-- testing the  operators
+--
+-- equality/inequality:
+--
+SELECT '24, 33.20'::cube    =  '24, 33.20'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '24, 33.20'::cube    != '24, 33.20'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '24, 33.20'::cube    =  '24, 33.21'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '24, 33.20'::cube    != '24, 33.21'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube  =  '(2,0,0,0,0),(3,1,0,0,0)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube  =  '(2,0,0,0,0),(3,1,0,0,1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- "lower than" / "greater than"
+-- (these operators are not useful for anything but ordering)
+--
+SELECT '1'::cube   > '2'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1'::cube   < '2'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '1,1'::cube > '1,2'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1,1'::cube < '1,2'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             > '(2,0,0,0,0),(3,1,0,0,1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             < '(2,0,0,0,0),(3,1,0,0,1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             > '(2,0,0,0,1),(3,1,0,0,0)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             < '(2,0,0,0,1),(3,1,0,0,0)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             > '(2,0,0,0,0),(3,1,0,0,0)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0),(3,1)'::cube             < '(2,0,0,0,0),(3,1,0,0,0)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0,0,0,0),(3,1,0,0,1)'::cube > '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0,0,0,0),(3,1,0,0,1)'::cube < '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0,0,0,1),(3,1,0,0,0)'::cube > '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0,0,0,1),(3,1,0,0,0)'::cube < '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2,0,0,0,0),(3,1,0,0,0)'::cube > '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2,0,0,0,0),(3,1,0,0,0)'::cube < '(2,0),(3,1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- "overlap"
+--
+SELECT '1'::cube && '1'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '1'::cube && '2'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '0'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '1'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '1,1,1'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '[(1,1,1),(2,2,2)]'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '[(1,1),(2,2)]'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '[(2,1,1),(2,2,2)]'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- "overlap on the left" / "overlap on the right"
+-- (these operators are not useful at all but R-tree seems to be
+-- sensitive to their presence)
+--
+SELECT '1'::cube &< '0'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1'::cube &< '1'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '1'::cube &< '2'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(0),(1)'::cube &< '0'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(0),(1)'::cube &< '1'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(0),(1)'::cube &< '(0),(0.5)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(0),(1)'::cube &< '(0),(1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(0),(1)'::cube &< '(0),(2)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(0),(1)'::cube &< '(1),(2)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(0),(1)'::cube &< '(2),(3)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '0'::cube &> '1'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1'::cube &> '1'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '2'::cube &> '1'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '0'::cube        &> '(0),(1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '1'::cube        &> '(0),(1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(0),(0.5)'      &> '(0),(1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(0),(1)'::cube  &> '(0),(1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(0),(2)'::cube  &> '(0),(1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(1),(2)'::cube  &> '(0),(1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(2),(3)'::cube  &> '(0),(1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- "left" / "right"
+-- (these operators are not useful but for 1-D or 2-D cubes, but R-tree
+-- seems to want them defined)
+--
+SELECT '1'::cube << '0'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1'::cube << '1'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1'::cube << '2'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(0),(1)'::cube << '0'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(0),(1)'::cube << '1'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(0),(1)'::cube << '(0),(0.5)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(0),(1)'::cube << '(0),(1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(0),(1)'::cube << '(0),(2)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(0),(1)'::cube << '(1),(2)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(0),(1)'::cube << '(2),(3)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0'::cube >> '1'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1'::cube >> '1'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '2'::cube >> '1'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0'::cube        >> '(0),(1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1'::cube        >> '(0),(1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(0),(0.5)'      >> '(0),(1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(0),(1)'::cube  >> '(0),(1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(0),(2)'::cube  >> '(0),(1)'::cube AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(1),(2)'::cube  >> '(0),(1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(2),(3)'::cube  >> '(0),(1)'::cube AS bool;
+ bool 
+------
+ t
+(1 row)
+
+-- "contained in" (the left operand is the cube entirely enclosed by
+-- the right operand):
+--
+SELECT '0'::cube                 ~ '0'::cube                        AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0,0'::cube             ~ '0,0,0'::cube                    AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0'::cube               ~ '0,0,1'::cube                    AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0,0'::cube             ~ '0,0,1'::cube                    AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '1,0,0'::cube             ~ '0,0,1'::cube                    AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(1,0,0),(0,0,1)'::cube   ~ '(1,0,0),(0,0,1)'::cube          AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(1,0,0),(0,0,1)'::cube   ~ '(-1,-1,-1),(1,1,1)'::cube       AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(1,0,0),(0,0,1)'::cube   ~ '(-1,-1,-1,-1),(1,1,1,1)'::cube  AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0'::cube                 ~ '(-1),(1)'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '1'::cube                 ~ '(-1),(1)'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '-1'::cube                ~ '(-1),(1)'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube          ~ '(-1),(1)'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube          ~ '(-1,-1),(1,1)'::cube            AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-2),(1)'::cube          ~ '(-1),(1)'::cube                 AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(-2),(1)'::cube          ~ '(-1,-1),(1,1)'::cube            AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- "contains" (the left operand is the cube that entirely encloses the
+-- right operand)
+--
+SELECT '0'::cube                        @ '0'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0,0'::cube                    @ '0,0,0'::cube             AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0,1'::cube                    @ '0,0'::cube               AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '0,0,1'::cube                    @ '0,0,0'::cube             AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '0,0,1'::cube                    @ '1,0,0'::cube             AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(1,0,0),(0,0,1)'::cube          @ '(1,0,0),(0,0,1)'::cube   AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1,-1,-1),(1,1,1)'::cube       @ '(1,0,0),(0,0,1)'::cube   AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1,-1,-1,-1),(1,1,1,1)'::cube  @ '(1,0,0),(0,0,1)'::cube   AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube                 @ '0'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube                 @ '1'::cube                 AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube                 @ '-1'::cube                AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube                 @ '(-1),(1)'::cube          AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1,-1),(1,1)'::cube            @ '(-1),(1)'::cube          AS bool;
+ bool 
+------
+ t
+(1 row)
+
+SELECT '(-1),(1)'::cube                 @ '(-2),(1)'::cube          AS bool;
+ bool 
+------
+ f
+(1 row)
+
+SELECT '(-1,-1),(1,1)'::cube            @ '(-2),(1)'::cube          AS bool;
+ bool 
+------
+ f
+(1 row)
+
+-- Load some example data and build the index
+-- 
+CREATE TABLE test_cube (c cube);
+\copy test_cube from 'data/test_cube.data'
+CREATE INDEX test_cube_ix ON test_cube USING gist (c);
+SELECT * FROM test_cube	WHERE c && '(3000,1000),(0,0)';
+            c             
+--------------------------
+ (2424, 160),(2424, 81)
+ (759, 187),(662, 163)
+ (1444, 403),(1346, 344)
+ (337, 455),(240, 359)
+ (1594, 1043),(1517, 971)
+(5 rows)
+
+-- Test sorting 
+SELECT * FROM test_cube	WHERE c && '(3000,1000),(0,0)' GROUP BY c;
+            c             
+--------------------------
+ (337, 455),(240, 359)
+ (759, 187),(662, 163)
+ (1444, 403),(1346, 344)
+ (1594, 1043),(1517, 971)
+ (2424, 160),(2424, 81)
+(5 rows)
+

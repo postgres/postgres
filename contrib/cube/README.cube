@@ -1,0 +1,289 @@
+This directory contains the code for the user-defined type,
+CUBE, representing multidimensional cubes.
+
+
+FILES
+-----
+
+Makefile		building instructions for the shared library
+
+README.cube		the file you are now reading
+
+buffer.c		globals and buffer access utilities shared between 
+			the parser (cubeparse.y) and the scanner (cubescan.l)
+
+buffer.h		function prototypes for buffer.c
+
+cube.c			the implementation of this data type in c
+
+cube.sql.in		SQL code needed to register this type with postgres
+                        (transformed to cube.sql by make)
+               
+cubedata.h		the data structure used to store the cubes
+
+cubeparse.y		the grammar file for the parser (used by cube_in() in cube.c)
+ 
+cubescan.l		scanner rules (used by cube_yyparse() in cubeparse.y)
+
+
+INSTALLATION
+============
+
+To install the type, run
+
+	make
+	make install
+
+For this to work, make sure that:
+
+. the cube source directory is in the postgres contrib directory
+. the user running "make install" has postgres administrative authority
+. this user's environment defines the PGLIB and PGDATA variables and has
+  postgres binaries in the PATH.
+
+This only installs the type implementation and documentation.  To make the
+type available in any particular database, do
+
+	psql -d databasename < cube.sql
+
+If you install the type in the template1 database, all subsequently created
+databases will inherit it.
+
+To test the new type, after "make install" do
+
+	make installcheck
+
+If it fails, examine the file regression.diffs to find out the reason (the
+test code is a direct adaptation of the regression tests from the main
+source tree).
+
+
+SYNTAX
+======
+
+The following are valid external representations for the CUBE type:
+
+'x'			A floating point value representing
+			a one-dimensional point or one-dimensional
+			zero length cubement
+
+'(x)'			Same as above
+
+'x1,x2,x3,...,xn'	A point in n-dimensional space,
+			represented internally as a zero volume box
+
+'(x1,x2,x3,...,xn)'	Same as above
+
+'(x),(y)'		1-D cubement starting at x and ending at y
+			or vice versa; the order does not matter
+
+'(x1,...,xn),(y1,...,yn)'	n-dimensional box represented by 
+			a pair of its opposite corners, no matter which.
+			Functions take care of swapping to achieve
+			"lower left -- upper right" representation
+			before computing any values
+
+Grammar
+-------
+
+rule 1    box -> O_BRACKET paren_list COMMA paren_list C_BRACKET
+rule 2    box -> paren_list COMMA paren_list
+rule 3    box -> paren_list
+rule 4    box -> list
+rule 5    paren_list -> O_PAREN list C_PAREN
+rule 6    list -> FLOAT
+rule 7    list -> list COMMA FLOAT
+
+Tokens
+------
+
+n		[0-9]+
+integer		[+-]?{n}
+real		[+-]?({n}\.{n}?)|(\.{n})
+FLOAT		({integer}|{real})([eE]{integer})?
+O_BRACKET	\[
+C_BRACKET	\]
+O_PAREN		\(
+C_PAREN		\)
+COMMA		\,
+
+
+Examples of valid CUBE representations:
+--------------------------------------
+
+'x'				A floating point value representing
+				a one-dimensional point (or, zero-length
+				one-dimensional interval)
+
+'(x)'				Same as above
+
+'x1,x2,x3,...,xn'		A point in n-dimensional space,
+				represented internally as a zero volume cube
+
+'(x1,x2,x3,...,xn)'		Same as above
+
+'(x),(y)'			A 1-D interval starting at x and ending at y
+				or vice versa; the order does not matter
+
+'[(x),(y)]'			Same as above
+
+'(x1,...,xn),(y1,...,yn)'	An n-dimensional box represented by 
+				a pair of its diagonally opposite corners, 
+				regardless of order. Swapping is provided
+				by all comarison routines to ensure the 
+				"lower left -- upper right" representation
+				before actaul comparison takes place.
+
+'[(x1,...,xn),(y1,...,yn)]'	Same as above
+
+
+White space is ignored, so '[(x),(y)]' can be: '[ ( x ), ( y ) ]'
+
+
+DEFAULTS
+========
+
+I believe this union:
+
+select cube_union('(0,5,2),(2,3,1)','0'); 
+cube_union        
+-------------------
+(0, 0, 0),(2, 5, 2)
+(1 row)
+
+does not contradict to the common sense, neither does the intersection
+
+select cube_inter('(0,-1),(1,1)','(-2),(2)');
+cube_inter  
+-------------
+(0, 0),(1, 0)
+(1 row)
+
+In all binary operations on differently sized boxes, I assume the smaller
+one to be a cartesian projection, i. e., having zeroes in place of coordinates
+omitted in the string representation. The above examples are equivalent to:
+
+cube_union('(0,5,2),(2,3,1)','(0,0,0),(0,0,0)'); 
+cube_inter('(0,-1),(1,1)','(-2,0),(2,0)');
+
+
+The following containment predicate uses the point syntax,
+while in fact the second argument is internally represented by a box.
+This syntax makes it unnecessary to define the special Point type
+and functions for (box,point) predicates.
+
+select cube_contains('(0,0),(1,1)', '0.5,0.5');
+cube_contains
+--------------
+t             
+(1 row)
+
+
+PRECISION
+=========
+
+Values are stored internally as 32-bit floating point numbers. This means that
+numbers with more than 7 significant digits will be truncated.
+
+
+USAGE
+=====
+
+The access method for CUBE is a GiST (gist_cube_ops), which is a
+generalization of R-tree. GiSTs allow the postgres implementation of
+R-tree, originally encoded to support 2-D geometric types such as
+boxes and polygons, to be used with any data type whose data domain
+can be partitioned using the concepts of containment, intersection and
+equality. In other words, everything that can intersect or contain
+its own kind can be indexed with a GiST. That includes, among other
+things, all geometric data types, regardless of their dimensionality
+(see also contrib/seg).
+
+The operators supported by the GiST access method include:
+
+
+[a, b] << [c, d]	Is left of
+
+	The left operand, [a, b], occurs entirely to the left of the
+	right operand, [c, d], on the axis (-inf, inf). It means,
+	[a, b] << [c, d] is true if b < c and false otherwise
+
+[a, b] >> [c, d]	Is right of
+
+	[a, b] is occurs entirely to the right of [c, d]. 
+	[a, b] >> [c, d] is true if b > c and false otherwise
+
+[a, b] &< [c, d]	Over left
+
+	The cubement [a, b] overlaps the cubement [c, d] in such a way
+	that a <= c <= b and b <= d
+
+[a, b] &> [c, d]	Over right
+
+	The cubement [a, b] overlaps the cubement [c, d] in such a way
+	that a > c and b <= c <= d
+
+[a, b] = [c, d]		Same as
+
+	The cubements [a, b] and [c, d] are identical, that is, a == b
+	and c == d
+
+[a, b] @ [c, d]		Contains
+
+	The cubement [a, b] contains the cubement [c, d], that is, 
+	a <= c and b >= d
+
+[a, b] @ [c, d]		Contained in
+
+	The cubement [a, b] is contained in [c, d], that is, 
+	a >= c and b <= d
+
+Although the mnemonics of the following operators is questionable, I
+preserved them to maintain visual consistency with other geometric
+data types defined in Postgres.
+
+Other operators:
+
+[a, b] < [c, d]		Less than
+[a, b] > [c, d]		Greater than
+
+	These operators do not make a lot of sense for any practical
+	purpose but sorting. These operators first compare (a) to (c),
+	and if these are equal, compare (b) to (d). That accounts for
+	reasonably good sorting in most cases, which is useful if
+	you want to use ORDER BY with this type
+
+There are a few other potentially useful functions defined in cube.c 
+that vanished from the schema because I stopped using them. Some of 
+these were meant to support type casting. Let me know if I was wrong: 
+I will then add them back to the schema. I would also appreciate 
+other ideas that would enhance the type and make it more useful.
+
+For examples of usage, see sql/cube.sql
+
+
+CREDITS
+=======
+
+This code is essentially based on the example written for
+Illustra, http://garcia.me.berkeley.edu/~adong/rtree
+
+My thanks are primarily to Prof. Joe Hellerstein
+(http://db.cs.berkeley.edu/~jmh/) for elucidating the gist of the GiST
+(http://gist.cs.berkeley.edu/), and to his former student, Andy Dong
+(http://best.me.berkeley.edu/~adong/), for his exemplar.
+I am also grateful to all postgres developers, present and past, for enabling
+myself to create my own world and live undisturbed in it. And I would like to
+acknowledge my gratitude to Argonne Lab and to the U.S. Department of Energy
+for the years of faithful support of my database research.
+
+------------------------------------------------------------------------
+Gene Selkov, Jr.
+Computational Scientist
+Mathematics and Computer Science Division
+Argonne National Laboratory
+9700 S Cass Ave.
+Building 221
+Argonne, IL 60439-4844
+
+selkovjr@mcs.anl.gov

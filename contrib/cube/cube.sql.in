@@ -1,0 +1,337 @@
+-- Create the user-defined type for N-dimensional boxes
+-- 
+BEGIN TRANSACTION;
+
+CREATE FUNCTION cube_in(opaque)
+RETURNS opaque
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c';
+
+CREATE FUNCTION cube_out(opaque)
+RETURNS opaque
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c';
+
+CREATE TYPE cube (
+internallength = variable,
+input = cube_in,
+output = cube_out
+);
+
+COMMENT ON TYPE cube IS
+'multi-dimensional cube ''(FLOAT-1, FLOAT-2, ..., FLOAT-N), (FLOAT-1, FLOAT-2, ..., FLOAT-N)''';
+
+--
+-- External C-functions for R-tree methods
+--
+
+-- Left/Right methods
+
+CREATE FUNCTION cube_over_left(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_over_left(cube, cube) IS
+'is over and left of (NOT IMPLEMENTED)';
+
+CREATE FUNCTION cube_over_right(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_over_right(cube, cube) IS
+'is over and right of (NOT IMPLEMENTED)';
+
+CREATE FUNCTION cube_left(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_left(cube, cube) IS
+'is left of (NOT IMPLEMENTED)';
+
+CREATE FUNCTION cube_right(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_right(cube, cube) IS
+'is right of (NOT IMPLEMENTED)';
+
+
+-- Comparison methods
+
+CREATE FUNCTION cube_lt(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_lt(cube, cube) IS
+'lower than';
+
+CREATE FUNCTION cube_gt(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_gt(cube, cube) IS
+'greater than';
+
+CREATE FUNCTION cube_contains(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_contains(cube, cube) IS
+'contains';
+
+CREATE FUNCTION cube_contained(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_contained(cube, cube) IS
+'contained in';
+
+CREATE FUNCTION cube_overlap(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_overlap(cube, cube) IS
+'overlaps';
+
+CREATE FUNCTION cube_same(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_same(cube, cube) IS
+'same as';
+
+CREATE FUNCTION cube_different(cube, cube) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION cube_different(cube, cube) IS
+'different';
+
+-- support routines for indexing
+
+CREATE FUNCTION cube_union(cube, cube) RETURNS cube
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION cube_inter(cube, cube) RETURNS cube
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION cube_size(cube) RETURNS float4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+
+-- Misc N-dimensional functions
+
+-- proximity routines
+
+CREATE FUNCTION cube_distance(cube, cube) RETURNS float4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+
+--
+-- OPERATORS
+--
+
+CREATE OPERATOR < (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_lt,
+   COMMUTATOR = '>',
+   RESTRICT = scalarltsel, JOIN = scalarltjoinsel
+);
+
+CREATE OPERATOR > (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_gt,
+   COMMUTATOR = '<',
+   RESTRICT = scalargtsel, JOIN = scalargtjoinsel
+);
+
+CREATE OPERATOR << (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_left,
+   COMMUTATOR = '>>',
+   RESTRICT = positionsel, JOIN = positionjoinsel
+);
+
+CREATE OPERATOR &< (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_over_left,
+   COMMUTATOR = '&>',
+   RESTRICT = positionsel, JOIN = positionjoinsel
+);
+
+CREATE OPERATOR && (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_overlap,
+   COMMUTATOR = '&&',
+   RESTRICT = positionsel, JOIN = positionjoinsel
+);
+
+CREATE OPERATOR &> (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_over_right,
+   COMMUTATOR = '&<',
+   RESTRICT = positionsel, JOIN = positionjoinsel
+);
+
+CREATE OPERATOR >> (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_right,
+   COMMUTATOR = '<<',
+   RESTRICT = positionsel, JOIN = positionjoinsel
+);
+
+CREATE OPERATOR = (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_same,
+   COMMUTATOR = '=', NEGATOR = '<>',
+   RESTRICT = eqsel, JOIN = eqjoinsel,
+   SORT1 = '<', SORT2 = '<'
+);
+
+CREATE OPERATOR <> (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_different,
+   COMMUTATOR = '<>', NEGATOR = '=',
+   RESTRICT = neqsel, JOIN = neqjoinsel
+);
+
+CREATE OPERATOR @ (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_contains,
+   COMMUTATOR = '~',
+   RESTRICT = contsel, JOIN = contjoinsel
+);
+
+CREATE OPERATOR ~ (
+   LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_contained,
+   COMMUTATOR = '@',
+   RESTRICT = contsel, JOIN = contjoinsel
+);
+
+
+-- define the GiST support methods
+CREATE FUNCTION g_cube_consistent(opaque,cube,int4) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION g_cube_compress(opaque) RETURNS opaque 
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION g_cube_decompress(opaque) RETURNS opaque 
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION g_cube_penalty(opaque,opaque,opaque) RETURNS opaque
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION g_cube_picksplit(opaque, opaque) RETURNS opaque
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION g_cube_union(bytea, opaque) RETURNS cube 
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION g_cube_same(cube, cube, opaque) RETURNS opaque 
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+
+-- register the default opclass for indexing
+INSERT INTO pg_opclass (opcname, opcdeftype)
+   SELECT 'gist_cube_ops', oid
+   FROM pg_type
+   WHERE typname = 'cube';
+
+
+-- get the comparators for boxes and store them in a tmp table
+SELECT o.oid AS opoid, o.oprname
+INTO TABLE gist_cube_ops_tmp
+FROM pg_operator o, pg_type t
+WHERE o.oprleft = t.oid and o.oprright = t.oid
+   and t.typname = 'cube';
+
+-- make sure we have the right operators
+-- SELECT * from gist_cube_ops_tmp;
+
+-- using the tmp table, generate the amop entries 
+
+-- cube_left
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 1
+   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+      and c.oprname = '<<';
+
+-- cube_over_left
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 2
+   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+      and c.oprname = '&<';
+
+-- cube_overlap
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 3
+   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+      and c.oprname = '&&';
+
+-- cube_over_right
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 4
+   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+      and c.oprname = '&>';
+
+-- cube_right
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 5
+   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+      and c.oprname = '>>';
+
+-- cube_same
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 6
+   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+      and c.oprname = '=';
+
+-- cube_contains
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 7
+   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+      and c.oprname = '@';
+
+-- cube_contained
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 8
+   FROM pg_am am, pg_opclass opcl, gist_cube_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_cube_ops' 
+      and c.oprname = '~';
+
+DROP TABLE gist_cube_ops_tmp;
+
+
+-- add the entries to amproc for the support methods
+-- note the amprocnum numbers associated with each are specific!
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 1
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+      and proname = 'g_cube_consistent';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 2
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+      and proname = 'g_cube_union';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 3
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+      and proname = 'g_cube_compress';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 4
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+      and proname = 'g_cube_decompress';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 5
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+      and proname = 'g_cube_penalty';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 6
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+      and proname = 'g_cube_picksplit';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 7
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_cube_ops'
+      and proname = 'g_cube_same';
+
+END TRANSACTION;
