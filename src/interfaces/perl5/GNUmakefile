@@ -4,7 +4,7 @@
 # Makefile according to its own ideas and then invoke the rules from
 # that file.
 #
-# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.3 2000/10/24 16:59:59 tgl Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.4 2000/11/16 16:21:55 petere Exp $
 
 subdir = src/interfaces/perl5
 top_builddir = ../../..
@@ -39,7 +39,7 @@ install: Makefile
 	$(MAKE) -f Makefile all
 	-@if [ -w "`$(MAKE) --quiet -f Makefile echo-installdir`" ]; then \
 		$(MAKE) -f Makefile install; \
-		rm -f Makefile; \
+		$(MAKE) clean; \
 	else \
 		echo "*****" ;\
 		echo "* Skipping the installation of the Perl module for lack of permissions."; \
