@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.205 2002/12/13 20:29:07 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.206 2003/01/21 20:01:12 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -290,7 +290,7 @@ make_name(void)
 %type  <str>	comment_text ConstraintDeferrabilitySpec TableElementList
 %type  <str>	key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>	ColConstraint ColConstraintElem drop_type Bconst
-%type  <str>	TableConstraint OptTableElementList Xconst
+%type  <str>	TableConstraint OptTableElementList Xconst opt_transaction 
 %type  <str>	ConstraintElem key_actions ColQualList type_name
 %type  <str>	target_list target_el update_target_list alias_clause
 %type  <str>	update_target_el opt_id qualified_name database_name
@@ -303,7 +303,7 @@ make_name(void)
 %type  <str>	Typename SimpleTypename Numeric opt_float opt_numeric
 %type  <str>	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate opt_timezone opt_interval table_ref
-%type  <str>	row_descriptor ConstDatetime trans_options
+%type  <str>	row_descriptor ConstDatetime AlterDomainStmt
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
 %type  <str>	sortby OptUseOp qualified_name_list name_list ColId_or_Sconst
@@ -329,7 +329,7 @@ make_name(void)
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_Trusted opt_lancompiler
 %type  <str>	VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>	VariableResetStmt AlterTableStmt from_list overlay_list
-%type  <str>	opt_trans user_list OptUserList OptUserElem relation_name
+%type  <str>	user_list OptUserList OptUserElem relation_name
 %type  <str>	CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>	OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
@@ -339,6 +339,7 @@ make_name(void)
 %type  <str>	createdb_opt_list opt_encoding OptInherit opt_equal
 %type  <str>	AlterUserSetStmt privilege_list privilege privilege_target
 %type  <str>	opt_grant_grant_option opt_revoke_grant_option
+%type  <str>	transaction_mode_list_or_empty transaction_mode_list
 %type  <str>	function_with_argtypes_list function_with_argtypes
 %type  <str>	DropdbStmt ClusterStmt grantee RevokeStmt Bit DropOpClassStmt
 %type  <str>	GrantStmt privileges PosAllConst constraints_set_list
@@ -361,14 +362,14 @@ make_name(void)
 %type  <str>	insert_target_list insert_column_item DropRuleStmt
 %type  <str>	createfunc_opt_item set_rest var_list_or_default
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
-%type  <str>	DropUserStmt copy_from copy_opt_list opt_mode copy_opt_item
+%type  <str>	DropUserStmt copy_from copy_opt_list copy_opt_item
 %type  <str>	opt_oids TableLikeClause key_action opt_definition
 %type  <str>	cast_context row r_expr qual_Op qual_all_Op opt_default
 %type  <str>	CreateConversionStmt any_operator opclass_item_list
 %type  <str>	iso_level type_list CharacterWithLength ConstCharacter
 %type  <str>	CharacterWithoutLength BitWithLength BitWithoutLength
 %type  <str>	ConstBit GenericType TableFuncElementList
-%type  <str>	opt_sort_clause
+%type  <str>	opt_sort_clause transaction_access_mode
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare opt_ecpg_using ecpg_into
@@ -435,6 +436,7 @@ opt_at: AT connection_target
 		};
 
 stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
+		| AlterDomainStmt	{ output_statement($1, 0, connection); }
 		| AlterGroupStmt	{ output_statement($1, 0, connection); }
 		| AlterTableStmt	{ output_statement($1, 0, connection); }
 		| AlterUserStmt		{ output_statement($1, 0, connection); }
@@ -842,10 +844,10 @@ set_rest:	ColId TO var_list_or_default
                         { $$ = cat_str(3, $1, make_str("="), $3); }
 		| TIME ZONE zone_value
 			{ $$ = cat2_str(make_str("time zone"), $3); }
-		| TRANSACTION ISOLATION LEVEL iso_level opt_mode
-			{ $$ = cat_str(3, make_str("transaction isolation level"), $4, $5); }
-		| SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL iso_level
-			{ $$ = cat2_str(make_str("session characteristics as transaction isolation level"), $7); }
+		| TRANSACTION transaction_mode_list
+			{ $$ = cat2_str(make_str("transaction"), $2); }
+		| SESSION CHARACTERISTICS AS TRANSACTION transaction_mode_list
+			{ $$ = cat2_str(make_str("session characteristics as transaction"), $5); }
 		| NAMES opt_encoding
 			{ $$ = cat2_str(make_str("names"), $2); }
 		| SESSION AUTHORIZATION ColId_or_Sconst
@@ -869,12 +871,6 @@ var_list:  var_value
 iso_level:	READ COMMITTED	{ $$ = make_str("read committed"); }
 		| SERIALIZABLE		{ $$ = make_str("serializable"); }
 		;
-
-opt_mode:  READ WRITE	{ $$ = make_str("read write"); }
-	|  READ ONLY	{ mmerror(PARSE_ERROR, ET_ERROR, "SET TRANSACTION/READ ONLY is not yet supported");
-			  $$ = make_str("read only"); }
-	|  /* EMPTY */	{ $$ = EMPTY; }
-	;
 
 var_value:	opt_boolean		{ $$ = $1; }
 		| AllConst		{ $$ = $1; }
@@ -1657,12 +1653,7 @@ TruncateStmt:  TRUNCATE opt_table qualified_name
  *****************************************************************************/
 
 FetchStmt: FETCH direction fetch_how_many from_in name ecpg_into
-		{
-			if (strcmp($2, "relative") == 0 && atol($3) == 0L)
-				mmerror(PARSE_ERROR, ET_ERROR, "FETCH/RELATIVE at current position is not supported");
-
-			$$ = cat_str(5, make_str("fetch"), $2, $3, $4, $5);
-		}
+			{ $$ = cat_str(5, make_str("fetch"), $2, $3, $4, $5); }
 		| FETCH fetch_how_many from_in name ecpg_into
 			{ $$ = cat_str(4, make_str("fetch"), $2, $3, $4); }
 		| FETCH direction from_in name ecpg_into
@@ -1758,8 +1749,14 @@ GrantStmt:	GRANT privileges ON privilege_target TO grantee_list opt_grant_grant_
 			{ $$ = cat_str(7, make_str("grant"), $2, make_str("on"), $4, make_str("to"), $6, $7); }
 		;
 
-RevokeStmt:  REVOKE opt_revoke_grant_option privileges ON privilege_target FROM grantee_list
-			{ $$ = cat_str(8, make_str("revoke"), $2, $3, make_str("on"), $5, make_str("from"), $7); }
+RevokeStmt:  REVOKE opt_revoke_grant_option privileges ON privilege_target FROM grantee_list opt_drop_behavior
+			{
+			  if (strcmp($8, "drop cascade") == 0)
+				mmerror(PARSE_ERROR, ET_WARNING, "Not implemented REVOKE ... CASCADE will be send to backend");
+			
+			  $$ = cat_str(9, make_str("revoke"), $2, $3, make_str("on"), $5, make_str("from"), $7, $8);
+			}
+			  
 		;
 
 privileges:  ALL PRIVILEGES		{ $$ = make_str("all privileges"); }
@@ -2178,22 +2175,40 @@ UnlistenStmt:  UNLISTEN qualified_name
  *		(also older versions END / ABORT)
  *
  *****************************************************************************/
-TransactionStmt:  ABORT_TRANS opt_trans			{ $$ = make_str("rollback"); }
-		| BEGIN_TRANS opt_trans			{ $$ = make_str("begin transaction"); }
-		| START TRANSACTION trans_options	{ $$ = cat2_str(make_str("start transaction"), $3); }
-		| COMMIT opt_trans			{ $$ = make_str("commit"); }
-		| END_TRANS opt_trans			{ $$ = make_str("commit"); }
-		| ROLLBACK opt_trans			{ $$ = make_str("rollback"); }
+TransactionStmt:  ABORT_TRANS opt_transaction		{ $$ = make_str("rollback"); }
+		| BEGIN_TRANS opt_transaction		{ $$ = make_str("begin transaction"); }
+		| START TRANSACTION transaction_mode_list_or_empty	{ $$ = cat2_str(make_str("start transaction"), $3); }
+		| COMMIT opt_transaction		{ $$ = make_str("commit"); }
+		| END_TRANS opt_transaction		{ $$ = make_str("commit"); }
+		| ROLLBACK opt_transaction		{ $$ = make_str("rollback"); }
 		;
 
-trans_options: ISOLATION LEVEL iso_level	{ $$ = cat2_str(make_str("isolation level"), $3); }
-		;
-
-opt_trans: WORK			{ $$ = EMPTY; }
+opt_transaction: WORK			{ $$ = EMPTY; }
 		| TRANSACTION	{ $$ = EMPTY; }
 		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
+transaction_mode_list:
+	ISOLATION LEVEL iso_level
+	{ $$ = cat2_str(make_str("isolation level"), $3); }
+	| transaction_access_mode
+	{ $$ = $1; }
+	| ISOLATION LEVEL iso_level transaction_access_mode
+	{ $$ = cat_str(3, make_str("isolation level"), $3, $4); }
+	| transaction_access_mode ISOLATION LEVEL iso_level
+	{ $$ = cat_str(3, $1, make_str("isolation level"), $4); }
+	;
+	 
+transaction_mode_list_or_empty:
+	transaction_mode_list	{ $$ = $1; }
+	| /* EMPTY */		{ $$ = EMPTY; }
+	;
+
+transaction_access_mode:
+	READ ONLY	{ $$ = make_str("read only"); }
+	| READ WRITE 	{ $$ = make_str("read write"); }
+	;
+	
 /*****************************************************************************
  *
  *		QUERY:
@@ -2297,6 +2312,21 @@ CreateDomainStmt:  CREATE DOMAIN_P any_name opt_as Typename ColQualList opt_coll
  			}
 		;
 
+AlterDomainStmt:
+	ALTER DOMAIN_P any_name alter_column_default
+		{ $$ = cat_str(3, make_str("alter domain"), $3, $4); }
+	| ALTER DOMAIN_P any_name DROP NOT NULL_P
+		{ $$ = cat_str(3, make_str("alter domain"), $3, make_str("drop not null")); }
+	| ALTER DOMAIN_P any_name SET NOT NULL_P
+		{ $$ = cat_str(3, make_str("alter domain"), $3, make_str("set not null")); }
+	| ALTER DOMAIN_P any_name ADD TableConstraint
+		{ $$ = cat_str(4, make_str("alter domain"), $3, make_str("add"), $5); }
+	| ALTER DOMAIN_P any_name DROP CONSTRAINT name opt_drop_behavior
+		{ $$ = cat_str(5, make_str("alter domain"), $3, make_str("drop constraint"), $6, $7); }
+	| ALTER DOMAIN_P any_name OWNER TO UserId
+		{ $$ = cat_str(4, make_str("alter domain"), $3, make_str("owner to"), $6); }
+	;
+	
 opt_as:	AS	{$$ = make_str("as"); }
 	| /* EMPTY */	{$$ = EMPTY; }
 	;
@@ -5169,8 +5199,8 @@ unreserved_keyword:
 		| INSTEAD						{ $$ = make_str("instead"); }
 		| ISOLATION						{ $$ = make_str("isolation"); }
 		| KEY							{ $$ = make_str("key"); }
-		| LANGUAGE						{ $$ = make_str("language"); }
 		| LANCOMPILER						{ $$ = make_str("lancompiler"); }
+		| LANGUAGE						{ $$ = make_str("language"); }
 		| LAST							{ $$ = make_str("last"); }
 		| LEVEL							{ $$ = make_str("level"); }
 		| LISTEN						{ $$ = make_str("listen"); }
@@ -5422,7 +5452,6 @@ reserved_keyword:
 		| UNIQUE						{ $$ = make_str("unique"); }
 		| USER							{ $$ = make_str("user"); }
 		| USING							{ $$ = make_str("using"); }
-		| VALUE							{ $$ = make_str("value"); }
 		| WHEN							{ $$ = make_str("when"); }
 		| WHERE							{ $$ = make_str("where"); }
 		;
