@@ -1,5 +1,4 @@
 AROPT:cq
-CC:gcc2
 CFLAGS:-O2 -m486 -pipe -DPRE_BSDI_2_1
 SHARED_LIB:
 ALL:
@@ -9,3 +8,4 @@ USE_LOCALE:no
 DLSUFFIX:.o
 YFLAGS:-d
 YACC:
+CC:gcc2
