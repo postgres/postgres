@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.278 2002/06/14 04:09:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.279 2002/06/14 04:23:17 momjian Exp $
  *
  * NOTES
  *
@@ -165,10 +165,6 @@ static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
 static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
 #endif
 
-#ifdef USE_SSL
-static SSL_CTX *SSL_context = NULL;		/* Global SSL context */
-#endif
-
 /*
  * Set by the -o option
  */
@@ -245,7 +241,7 @@ static void CleanupProc(int pid, int exitstatus);
 static void LogChildExit(int lev, const char *procname,
 						 int pid, int exitstatus);
 static int	DoBackend(Port *port);
-static void ExitPostmaster(int status);
+       void ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
@@ -264,7 +260,7 @@ static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
 static pid_t SSDataBase(int xlop);
-static void
+       void
 postmaster_error(const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 1, 2)));
@@ -274,9 +270,11 @@ __attribute__((format(printf, 1, 2)));
 #define ShutdownDataBase()		SSDataBase(BS_XLOG_SHUTDOWN)
 
 #ifdef USE_SSL
-static void InitSSL(void);
-static const char *SSLerrmessage(void);
-#endif
+extern int secure_initialize(void);
+extern void secure_destroy(void);
+extern int secure_open_server(Port *);
+extern void secure_close(Port *);
+#endif /* USE_SSL */
 
 
 static void
@@ -609,7 +607,7 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 	}
 	if (EnableSSL)
-		InitSSL();
+		secure_initialize();
 #endif
 
 	/*
@@ -1113,17 +1111,8 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		}
 
 #ifdef USE_SSL
-		if (SSLok == 'S')
-		{
-			if (!(port->ssl = SSL_new(SSL_context)) ||
-				!SSL_set_fd(port->ssl, port->sock) ||
-				SSL_accept(port->ssl) <= 0)
-			{
-				elog(LOG, "failed to initialize SSL connection: %s (%m)",
-					 SSLerrmessage());
+		if (SSLok == 'S' && secure_open_server(port) == -1)
 				return STATUS_ERROR;
-			}
-		}
 #endif
 		/* regular startup packet, cancel, etc packet should follow... */
 		/* but not another SSL negotiation request */
@@ -1322,8 +1311,7 @@ static void
 ConnFree(Port *conn)
 {
 #ifdef USE_SSL
-	if (conn->ssl)
-		SSL_free(conn->ssl);
+	secure_close(conn);
 #endif
 	free(conn);
 }
@@ -2246,7 +2234,7 @@ DoBackend(Port *port)
  *
  * Do NOT call exit() directly --- always go through here!
  */
-static void
+void
 ExitPostmaster(int status)
 {
 	/* should cleanup shared memory and kill all backends */
@@ -2423,73 +2411,6 @@ CountChildren(void)
 		cnt--;
 	return cnt;
 }
-
-#ifdef USE_SSL
-
-/*
- * Initialize SSL library and structures
- */
-static void
-InitSSL(void)
-{
-	char		fnbuf[2048];
-
-	SSL_load_error_strings();
-	SSL_library_init();
-	SSL_context = SSL_CTX_new(SSLv23_method());
-	if (!SSL_context)
-	{
-		postmaster_error("failed to create SSL context: %s",
-						 SSLerrmessage());
-		ExitPostmaster(1);
-	}
-	snprintf(fnbuf, sizeof(fnbuf), "%s/server.crt", DataDir);
-	if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
-	{
-		postmaster_error("failed to load server certificate (%s): %s",
-						 fnbuf, SSLerrmessage());
-		ExitPostmaster(1);
-	}
-	snprintf(fnbuf, sizeof(fnbuf), "%s/server.key", DataDir);
-	if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
-	{
-		postmaster_error("failed to load private key file (%s): %s",
-						 fnbuf, SSLerrmessage());
-		ExitPostmaster(1);
-	}
-	if (!SSL_CTX_check_private_key(SSL_context))
-	{
-		postmaster_error("check of private key failed: %s",
-						 SSLerrmessage());
-		ExitPostmaster(1);
-	}
-}
-
-/*
- * Obtain reason string for last SSL error
- *
- * Some caution is needed here since ERR_reason_error_string will
- * return NULL if it doesn't recognize the error code.  We don't
- * want to return NULL ever.
- */
-static const char *
-SSLerrmessage(void)
-{
-	unsigned long	errcode;
-	const char	   *errreason;
-	static char		errbuf[32];
-
-	errcode = ERR_get_error();
-	if (errcode == 0)
-		return "No SSL error reported";
-	errreason = ERR_reason_error_string(errcode);
-	if (errreason != NULL)
-		return errreason;
-	snprintf(errbuf, sizeof(errbuf), "SSL error code %lu", errcode);
-	return errbuf;
-}
-
-#endif /* USE_SSL */
 
 /*
  * Fire off a subprocess for startup/shutdown/checkpoint.
@@ -2693,7 +2614,7 @@ CreateOptsFile(int argc, char *argv[])
  * This should be used only for reporting "interactive" errors (ie, errors
  * during startup.  Once the postmaster is launched, use elog.
  */
-static void
+void
 postmaster_error(const char *fmt,...)
 {
 	va_list		ap;

@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.135 2002/06/14 04:09:36 momjian Exp $
+ *	$Id: pqcomm.c,v 1.136 2002/06/14 04:23:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,9 @@
 #include "miscadmin.h"
 #include "storage/ipc.h"
 
+extern void secure_close(Port *);
+extern ssize_t secure_read(Port *, void *, size_t);
+extern ssize_t secure_write(Port *, const void *, size_t);
 
 static void pq_close(void);
 
@@ -138,6 +141,7 @@ pq_close(void)
 {
 	if (MyProcPort != NULL)
 	{
+		secure_close(MyProcPort);
 		close(MyProcPort->sock);
 		/* make sure any subsequent attempts to do I/O fail cleanly */
 		MyProcPort->sock = -1;
@@ -457,14 +461,8 @@ pq_recvbuf(void)
 	{
 		int			r;
 
-#ifdef USE_SSL
-		if (MyProcPort->ssl)
-			r = SSL_read(MyProcPort->ssl, PqRecvBuffer + PqRecvLength,
-						 PQ_BUFFER_SIZE - PqRecvLength);
-		else
-#endif
-			r = recv(MyProcPort->sock, PqRecvBuffer + PqRecvLength,
-					 PQ_BUFFER_SIZE - PqRecvLength, 0);
+		r = secure_read(MyProcPort, PqRecvBuffer + PqRecvLength,
+						PQ_BUFFER_SIZE - PqRecvLength);
 
 		if (r < 0)
 		{
@@ -651,12 +649,7 @@ pq_flush(void)
 	{
 		int			r;
 
-#ifdef USE_SSL
-		if (MyProcPort->ssl)
-			r = SSL_write(MyProcPort->ssl, bufptr, bufend - bufptr);
-		else
-#endif
-			r = send(MyProcPort->sock, bufptr, bufend - bufptr, 0);
+		r = secure_write(MyProcPort, bufptr, bufend - bufptr);
 
 		if (r <= 0)
 		{

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.48 2002/06/14 04:09:37 momjian Exp $
+ * $Id: libpq-int.h,v 1.49 2002/06/14 04:23:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,6 +270,9 @@ struct pg_conn
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
 	bool		require_ssl;	/* Require SSL to make connection */
 	SSL		   *ssl;			/* SSL status, if have SSL connection */
+	X509	   *peer;			/* X509 cert of server */
+	char		peer_dn[256+1]; /* peer distinguished name */
+	char		peer_cn[SM_USER+1]; /* peer common name */
 #endif
 
 	/* Buffer for current error message */
