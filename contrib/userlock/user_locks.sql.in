@@ -1,0 +1,69 @@
+-- SQL code to define the user locks functions
+
+-- select user_lock(group,id,type);
+--
+create function user_lock(int4,int4,int4) returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- select user_unlock(group,id,type);
+--
+create function user_unlock(int4,int4,int4) returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- select user_write_lock(group,id);
+--
+create function user_write_lock(int4,int4) returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- select user_write_unlock(group,id);
+--
+create function user_write_unlock(int4,int4) returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- select user_write_lock(group,oid);
+--
+create function user_write_lock(int4,oid) returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- select user_write_unlock(group,oid);
+--
+create function user_write_unlock(int4,oid) returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- select user_write_lock_oid(oid);
+--
+create function user_write_lock_oid(oid) returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- select user_write_unlock_oid(oid);
+--
+create function user_write_unlock_oid(oid) returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- select user_write_lock_oid(int4);
+--
+create function user_write_lock_oid(int4) returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- select user_write_unlock_oid(int4);
+--
+create function user_write_unlock_oid(int4) returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- select user_unlock_all();
+--
+create function user_unlock_all() returns int4
+  as 'MODULE_PATHNAME'
+  language 'c';
+
+-- end of file

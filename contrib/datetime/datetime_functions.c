@@ -6,113 +6,208 @@
  * Copyright (c) 1996, Massimo Dal Zotto <dz@cs.unitn.it>
  */
 
-#include <time.h>
+#include <stdio.h>		/* for sprintf() */
+#include <string.h>
+#include <limits.h>
+#ifdef HAVE_FLOAT_H
+#include <float.h>
+#endif
 
 #include "postgres.h"
-#include "utils/palloc.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
+#include "utils/nabstime.h"
 #include "utils/datetime.h"
+#include "access/xact.h"
 
+#include "datetime_functions.h"
 
-TimeADT    *
-time_difference(TimeADT *time1, TimeADT *time2)
+/* Constant to replace calls to date2j(2000,1,1) */
+#define JDATE_2000	2451545
+
+/*
+ * A modified version of time_in which allows the value 24:00:00 for
+ * time and converts it to TimeADT data type forcing seconds to 0.
+ * This can be Useful if you need to handle TimeADT values limited
+ * to hh:mm like in timetables.
+ */
+
+TimeADT *
+hhmm_in(char *str)
 {
-	TimeADT    *result = (TimeADT *) palloc(sizeof(TimeADT));
+    TimeADT *time;
 
-	*result = *time1 - *time2;
-	return (result);
+    double fsec;
+    struct tm tt, *tm = &tt;
+
+    int nf;
+    char lowstr[MAXDATELEN+1];
+    char *field[MAXDATEFIELDS];
+    int dtype;
+    int ftype[MAXDATEFIELDS];
+
+    if (!PointerIsValid(str))
+        elog(WARN,"Bad (null) time external representation",NULL);
+
+    if ((ParseDateTime( str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
+     || (DecodeTimeOnly( field, ftype, nf, &dtype, tm, &fsec) != 0))
+        elog(WARN,"Bad time external representation '%s'",str);
+
+    if (tm->tm_hour<0 || tm->tm_hour>24 || 
+	(tm->tm_hour==24 && (tm->tm_min!=0 || tm->tm_sec!=0 || fsec!= 0))) {
+        elog(WARN,
+	     "time_in: hour must be limited to values 0 through 24:00 "
+	     "in \"%s\"",
+	     str);
+    }
+    if ((tm->tm_min < 0) || (tm->tm_min > 59))
+	elog(WARN,"Minute must be limited to values 0 through 59 in '%s'",str);
+    if ((tm->tm_sec < 0) || ((tm->tm_sec + fsec) >= 60))
+	elog(WARN,"Second must be limited to values 0 through < 60 in '%s'",
+	     str);
+
+    time = PALLOCTYPE(TimeADT);
+
+    *time = ((((tm->tm_hour*60)+tm->tm_min)*60));
+
+    return(time);
 }
 
-TimeADT    *
+/*
+ * A modified version of time_out which converts from TimeADT data type
+ * omitting the seconds field when it is 0.
+ * Useful if you need to handle TimeADT values limited to hh:mm.
+ */
+
+char *
+hhmm_out(TimeADT *time)
+{
+    char *result;
+    struct tm tt, *tm = &tt;
+    char buf[MAXDATELEN+1];
+
+    if (!PointerIsValid(time))
+	return NULL;
+
+    tm->tm_hour = (*time / (60*60));
+    tm->tm_min = (((int) (*time / 60)) % 60);
+    tm->tm_sec = (((int) *time) % 60);
+
+    if (tm->tm_sec == 0) {
+	sprintf(buf, "%02d:%02d", tm->tm_hour, tm->tm_min);
+    } else {
+	sprintf(buf, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    }
+
+    result = PALLOC(strlen(buf)+1);
+
+    strcpy( result, buf);
+
+    return(result);
+}
+
+TimeADT *
+hhmm(TimeADT *time)
+{
+    TimeADT *result = PALLOCTYPE(TimeADT);
+
+    *result = (((int) *time) / 60 * 60);
+
+    return(result);
+}
+
+TimeADT *
+time_difference(TimeADT *time1, TimeADT *time2)
+{
+    TimeADT *time = PALLOCTYPE(TimeADT);
+
+    *time = (*time1 - *time2);
+    return(time);
+}
+
+int4
+time_hours(TimeADT *time)
+{
+    return (((int) *time) / 3600);
+}
+
+int4
+time_minutes(TimeADT *time)
+{
+    return ((((int) *time) / 60) % 60);
+}
+
+int4
+time_seconds(TimeADT *time)
+{
+    return (((int) *time) % 60);
+}
+
+int4
+as_minutes(TimeADT *time)
+{
+    return (((int) *time) / 60);
+}
+
+int4
+as_seconds(TimeADT *time)
+{
+    return ((int) *time);
+}
+
+int4
+date_day(DateADT val)
+{
+    int year, month, day;
+
+    j2date(val + JDATE_2000, &year, &month, &day);
+
+    return (day);
+}
+
+int4
+date_month(DateADT val)
+{
+    int year, month, day;
+
+    j2date(val + JDATE_2000, &year, &month, &day);
+
+    return (month);
+}
+
+int4
+date_year(DateADT val)
+{
+    int year, month, day;
+
+    j2date(val + JDATE_2000, &year, &month, &day);
+
+    return (year);
+}
+
+TimeADT *
 currenttime()
 {
-	time_t		current_time;
-	struct tm  *tm;
-	TimeADT    *result = (TimeADT *) palloc(sizeof(TimeADT));
+    TimeADT *result = PALLOCTYPE(TimeADT);
+    struct tm *tm;
+    time_t current_time;
 
-	current_time = time(NULL);
-	tm = localtime(&current_time);
-	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec);
-	return (result);
+    current_time = time(NULL);
+    tm = localtime(&current_time);
+    *result = ((((tm->tm_hour*60)+tm->tm_min)*60)+tm->tm_sec);
+
+    return (result);
 }
 
 DateADT
 currentdate()
 {
-	time_t		current_time;
-	struct tm  *tm;
-	DateADT		result;
+    DateADT date;
+    struct tm tt, *tm = &tt;
 
-	current_time = time(NULL);
-	tm = localtime(&current_time);
-
-	result = date2j(tm->tm_year, tm->tm_mon + 1, tm->tm_mday) -
-		date2j(100, 1, 1);
-	return (result);
+    GetCurrentTime(tm);
+    date = (date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - JDATE_2000);
+    return (date);
 }
 
-int4
-hours(TimeADT *time)
-{
-	return (*time / (60 * 60));
-}
-
-int4
-minutes(TimeADT *time)
-{
-	return (((int) (*time / 60)) % 60);
-}
-
-int4
-seconds(TimeADT *time)
-{
-	return (((int) *time) % 60);
-}
-
-int4
-day(DateADT *date)
-{
-	struct tm	tm;
-
-	j2date((*date + date2j(2000, 1, 1)),
-		   &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
-
-	return (tm.tm_mday);
-}
-
-int4
-month(DateADT *date)
-{
-	struct tm	tm;
-
-	j2date((*date + date2j(2000, 1, 1)),
-		   &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
-
-	return (tm.tm_mon);
-}
-
-int4
-year(DateADT *date)
-{
-	struct tm	tm;
-
-	j2date((*date + date2j(2000, 1, 1)),
-		   &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
-
-	return (tm.tm_year);
-}
-
-int4
-asminutes(TimeADT *time)
-{
-	int			seconds = (int) *time;
-
-	return (seconds / 60);
-}
-
-int4
-asseconds(TimeADT *time)
-{
-	int			seconds = (int) *time;
-
-	return (seconds);
-}
+/* end of file */

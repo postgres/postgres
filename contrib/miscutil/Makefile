@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for new date/time functions.
+#    Makefile for array iterator functions.
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ ifeq ($(PORTNAME), i386_solaris)
   CFLAGS+= -fPIC
 endif
 
-MODNAME =	datetime_functions
+MODNAME =	misc_utils
 
 MODULE =	$(MODNAME)$(DLSUFFIX)
 
@@ -55,7 +55,7 @@ depend dep:
 		$(CC) -MM $(INCLUDE_OPT) *.c >depend
 
 clean:
-		rm -f $(MODULE) $(MODNAME).sql
+		rm -f $(MODULE) $(MODNAME).sql assert_test.so
 
 ifeq (depend,$(wildcard depend))
 include depend

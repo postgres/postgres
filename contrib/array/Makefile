@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for new date/time functions.
+#    Makefile for array iterator functions.
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ ifeq ($(PORTNAME), i386_solaris)
   CFLAGS+= -fPIC
 endif
 
-MODNAME =	datetime_functions
+MODNAME =	array_iterator
 
 MODULE =	$(MODNAME)$(DLSUFFIX)
 

@@ -1,0 +1,30 @@
+User locks, by Massimo Dal Zotto <dz@cs.unitn.it>
+
+This loadable module, together with my user-lock.patch applied to the
+backend, provides support for user-level long-term cooperative locks.
+
+For example one can write (this example is written in TclX):
+
+  set rec [sql "select ...,user_write_lock_oid(oid) from table where id=$id"]
+  if {[keylget rec user_write_lock_oid] == 1} {
+      # the write lock has been acquired with the record, start
+      # a long editing session, then update the database and
+      # release the lock.
+      sql "update table set ... where id=$id"
+      sql "select user_write_unlock_oid([keylget rec oid])"
+  } else {
+      # the record has been read but the write lock couldn't be acquired,
+      # so it should not be modified by the application.
+      messageBox "This record is in use by another user, retry later"
+  }
+
+This could also be done by setting a flag in the record itself but in
+this case you have the overhead of the updates to the record and there
+may be some locks not released if the backend or the application crashes
+before resetting the flag.
+It could also be done with a begin/end block but in this case the entire
+table would be locked by postgres and it is not acceptable to do this for
+a long period because other transactions would block completely.
+Note that this type of locks are handled cooperatively by the application
+and do not interfere with the normal locks used by postgres.  So an user
+could still modify an user-locked record if he wanted to ignore the lock.

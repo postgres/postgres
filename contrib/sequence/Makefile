@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for new date/time functions.
+#    Makefile for new sequence functions.
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ ifeq ($(PORTNAME), i386_solaris)
   CFLAGS+= -fPIC
 endif
 
-MODNAME =	datetime_functions
+MODNAME =	set_sequence
 
 MODULE =	$(MODNAME)$(DLSUFFIX)
 

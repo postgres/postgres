@@ -1,0 +1,42 @@
+
+
+   			      Pginterface 2.0
+
+Attached is a copy of the Postgres support routines I wrote to allow me
+to more cleanly interface to the libpg library, more like a 4gl SQL
+interface.
+
+It has several features that may be useful for others:
+
+I have simplified the C code that calls libpq by wrapping all the
+functionality of libpq in calls to connectdb(), doquery(), fetch(),
+fetchwithnulls() and disconnectdb().  Each call returns a structure or
+value, so if you need to do more work with the result, you can.  Also, I
+have a global variable that allows you to disable the error checking I
+have added to the doquery() routine.
+
+I have added a function called fetch(), which allows you to pass
+pointers as parameters, and on return the variables are filled with the
+data from the binary cursor you opened.  These binary cursors are not
+useful if you are running the query engine on a system with a different
+architecture than the database server.  If you pass a NULL pointer, the
+column is skipped, and you can use libpq to handle it as you wish.
+
+I have used sigprocmask() to block the reception of certain signals
+while the program is executing SQL queries.  This prevents a user
+pressing Control-C from stopping all the back ends.  It blocks SIGHUP,
+SIGINT, and SIGTERM, but does not block SIGQUIT or obviously kill -9. 
+If your platform does not support sigprocmask(), you can remove those
+function calls.  ( Am I correct that abnormal termination can cause
+shared memory resynchronization?)
+
+There is a demo program called pginsert that demonstrates how the
+library can be used.
+
+You can create a library of pginterface.c and halt.c, and just include
+pginterface.h in your source code.
+
+I am willing to maintain this if people find problems or want additional
+functionality. 
+
+Bruce Momjian (root@candle.pha.pa.us)
