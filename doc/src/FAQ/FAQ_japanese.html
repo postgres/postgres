@@ -7,13 +7,14 @@
 <H1>
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</H1>
 <P>
-原文最終更新日:		Tue Jul 10 21:01:47 EDT 2001
+原文最終更新日:		Sat Sep 22 20:07:41 EDT 2001
 <P>
 現在の維持管理者:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 <P>
 この文書の最新版は
-<A HREF="http://www.PostgreSQL.org/">http://www.PostgreSQL.org/</A>
+<A HREF="http://www.PostgreSQL.org/docs/faq-english.html">
+http://www.PostgreSQL.org/docs/faq-english.html</A>
 で見ることができます。
 <P>
 
@@ -114,6 +115,8 @@ HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 <A HREF="#4.22">4.22</A>) 現在の時刻がデフォルトとなるような列はどのようにつくりますか？<BR>
 <A HREF="#4.23">4.23</A>) なぜ、<font size=-1>IN</font>を使う副問い合わせがとても遅いのですか？<BR>
 <A HREF="#4.24">4.24</A>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<BR>
+<A HREF="#4.25">4.25</A>) 複数のデータベースを使う問い合わせはどのようにすればできますか？
+
 
 <H2><CENTER>PostgreSQLの拡張についての質問</CENTER></H2>
 
@@ -159,6 +162,7 @@ agreement is hereby granted, provided that the above copyright notice
 and this paragraph and the following two paragraphs appear in all
 copies.
 <P>
+<STRONG>
 IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY
 FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
@@ -171,6 +175,7 @@ AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER
 IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO
 OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
 MODIFICATIONS.
+</STRONG>
 <P>
 
 <small><PRE>
@@ -298,8 +303,7 @@ HREF="mailto:bugs-request@PostgreSQL.org">bugs-request@PostgreSQL.org</A>
 <P>
 
  EFNet に <I>#PostgreSQL</I> という IRC チャンネルもあります。
-unix コマンドで<tt>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</tt>
-を使います。<P>
+unix コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net">irc.phoenix.net</A>/ を使います。<P>
 
 <small><PRE>
     [訳注:
@@ -331,7 +335,7 @@ unix コマンドで<tt>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</tt>
 
 <H4><A NAME="1.7">1.7</A>)	最新版はどれですか</H4>
 
-<P> PostgreSQL の最新版はバージョン 7.1.2 です。
+<P> PostgreSQL の最新版はバージョン 7.1.3 です。
 <P>
 我々は、4カ月毎にメジャーリリースを行なうことを計画しています。
 <P>
@@ -538,7 +542,7 @@ PostgreSQLの利用は、商用でも非商用でも、すべて無料です。上記に示してあ
     ]
 </PRE></small>
 
-<P> OpenLink <font size=-1>ODBC</font> は <A HREF="http://www.openlinksw.com/">http://www.openlinksw.com/</A>から入手できます。標準的な <font size=-1>ODBC</font> クライアント・ソフトウェアで使えますので、支援しているすべてのプラットホーム(Win, Mac, Unix, VMS)から PostgreSQL の <font size=-1>ODBC</font> が利用できます。
+<P> OpenLink <font size=-1>ODBC</font> は <A HREF="http://www.openlinksw.com/">http://www.openlinksw.com/</A>から入手できます。標準的な <font size=-1>ODBC</font> クライアント・ソフトウェアで使えますので、支援しているすべてのプラットホーム(Win, Mac, Unix, <STRONG>VMS</STRONG>)から PostgreSQL の <font size=-1>ODBC</font> が利用できます。
 
 <P> たぶん彼らは、商用品質のサポートの必要な人々に売っていると思いますが、フリーウェア版はいつでも入手可能のようです。質問は、<A HREF="mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>にお願いします。
 
@@ -720,7 +724,9 @@ PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があ
 </H4>
 
 <P> <I>postmasterが</I>同時始動できるバックエンドプロセスに対する制限数を増やす必要があります。
-<P>PostgreSQL 6.5以降では、既定の最大プロセスは32プロセスです。適切な<I>-N</I>の値で<I>postmaster</I>を再起動することにより増加させることができます。既定の構成では<I>-N</I>は最大1024まで設定できます。もし、もっと必要であれば<I>include/config.h</I>の中の<font size=-1>MAXBACKENDS</font>を増加させ、再構築します。もし、望むなら<I>configure</I>の <I>--with-maxbackends</I>切替を使って、<I>-N</I>の既定値を構成時に設定できます。
+<P>既定の最大プロセスは32プロセスです。<I>-N</I>に適切な値を引数にして<I>postmaster</I>を再起動するか、postgresql.conf を修正することによって、その値を増やすことができます。
+
+。既定の構成では<I>-N</I>は最大1024まで設定できます。もし、もっと必要であれば<I>include/config.h</I>の中の<font size=-1>MAXBACKENDS</font>を増加させ、再構築します。もし、望むなら<I>configure</I>の <I>--with-maxbackends</I>切替を使って、<I>-N</I>の既定値を構成時に設定できます。
 
 <P>もし、<I>-N</I> を 32よりも大きくするのであれば、<I>-B</I>も既定の64より大きい値に増加させなくてはならないし、<I>-B</I> は少なくとも <I>-N</I> の2倍はなくてはならず、おそらく最高性能を望むならばそれより大きい値が必要なはずです。バックエンドプロセスをたくさんにすると、いろいろなUnixカーネル構成パラメータも増やすことが必要になるかもしれません。
 共有メモリー・ブロックの最大値(<font size=-1>SHMMAX</font>)、
@@ -942,7 +948,7 @@ Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
 <P>大文字と小文字を区別しない等値比較次のように表現できる：
    
     <PRE>
-    SELECT *
+    <STRONG>SELECT *</STRONG>
     FROM tab
     WHERE lower(col) = 'abc'
     </PRE>
@@ -1141,7 +1147,7 @@ http://www.comptechnews.com/~reaster/dbdesign.html</a>
 <P>
 現在、外部問い合わせの各行について副問い合わせの結果を順番にスキャンすることにより、副問い合わせを外部問い合わせに結合しています。当面は<font size=-1>IN</font>を<font size=-1>EXIST</font>Sで置き換えることです：
 <PRE>
-	SELECT *
+	<STRONG>SELECT *</STRONG>
 	FROM tab
 	WHERE col1 IN (SELECT col2 FROM TAB2)
 </PRE>
@@ -1159,10 +1165,12 @@ http://www.comptechnews.com/~reaster/dbdesign.html</a>
 <P>
 PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージョイン)をサポートします。ここに、例題が2つあります。
 
-<pre> SELECT *
+<pre>
+<STRONG>SELECT *</STRONG>
  FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);</pre>
 あるいは
-<pre> SELECT *
+<pre>
+<STRONG>SELECT *</STRONG>
  FROM t1 LEFT OUTER JOIN t2 USING (col);</pre>
 
 これらの象徴的な問い合わせでは t1.col を t2.col と結合して、t1 の結合されなかった行(t2 と一致しなかった行)も返しています。<font size=-1>RIGHT</font> 結合は t2 の結合されなかった行を加えるでしょう。<font size=-1>FULL</font> 結合は、一致した行に t1 と t2 からは結合されなかった行を返すでしょう。<font size=-1>OUTER</font> という言葉はオプションで <font size=-1>LEFT</font>, <font size=-1>RIGHT</font>, または <font size=-1>FULL</font> などの結合を仮定されています。
@@ -1174,13 +1182,20 @@ PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージ
 	SELECT tab1.col1, tab2.col2
 	FROM tab1, tab2
 	WHERE tab1.col1 = tab2.col1
-	UNION ALL
+<STRONG>UNION ALL</STRONG>
 	SELECT tab1.col1, NULL
 	FROM tab1
 	WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
 	ORDER BY col1
 </PRE>
 
+<P>
+<H4><A NAME="4.25">4.25</A>)  複数のデータベースを使う問い合わせはどのようにすればできますか？<BR></H4>
+
+<P>
+現行(current)を除いて、データベースへの問い合わせ方法はありません。というのもPostgreSQLがデータベース仕様のシステムカタログを読み込むためで、そこには、たとえそのふりをするだけにしろ、データベースを越えて問い合わせをするすべがありません。
+<P>
+もちろん、クライアントは同時に異なる複数のデータベースへ接続してそこにある情報をマージすることはできます。
 
 <P>
 <HR>
@@ -1217,7 +1232,7 @@ PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージ
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2001年07月05日
+  最終更新日:	2001年11月17日
   翻訳者:	桑村 潤 (<A HREF="mailto:juk@jp.postgresql.org">Jun Kuwamura &lt;juk@jp.postgresql.org&gt;</A>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
