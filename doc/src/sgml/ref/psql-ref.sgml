@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.125 2004/12/27 20:13:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.126 2004/12/28 23:17:38 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -238,7 +238,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
       <para>
-      Specifies the TCP port or the local Unix domain
+      Specifies the TCP port or the local Unix-domain
       socket file extension on which the server is listening for
       connections. Defaults to the value of the <envar>PGPORT</envar>
       environment variable or, if not set, to the port specified at
@@ -489,19 +489,24 @@ PostgreSQL documentation
     <option>-d</option>, <option>-h</option>, <option>-p</option>, and
     <option>-U</option> respectively. If an argument is found that does
     not belong to any option it will be interpreted as the database name
-    (or the user name, if the database name is also given). Not all
-    these options are required, defaults do apply. If you omit the host
-    name, <application>psql</> will connect via a Unix domain socket
-    to a server on the local host, or via TCP/IP to <literal>localhost</> on machines
-    that don't have Unix domain sockets. The default port number is compile-time determined.
+    (or the user name, if the database name is already given). Not all
+    these options are required; there are useful defaults. If you omit the host
+    name, <application>psql</> will connect via a Unix-domain socket
+    to a server on the local host, or via TCP/IP to <literal>localhost</> on
+    machines that don't have Unix-domain sockets. The default port number is
+    determined at compile time.
     Since the database server uses the same default, you will not have
     to specify the port in most cases. The default user name is your
     Unix user name, as is the default database name. Note that you can't
     just connect to any database under any user name. Your database
-    administrator should have informed you about your access rights. To
-    save you some typing you can also set the environment variables
+    administrator should have informed you about your access rights.
+    </para>
+
+    <para>
+    When the defaults aren't quite right, you can save yourself
+    some typing by setting the environment variables
     <envar>PGDATABASE</envar>, <envar>PGHOST</envar>,
-    <envar>PGPORT</envar> and <envar>PGUSER</envar> to appropriate
+    <envar>PGPORT</envar> and/or <envar>PGUSER</envar> to appropriate
     values.
     </para>
 

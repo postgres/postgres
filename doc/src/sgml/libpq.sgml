@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.173 2004/12/28 22:47:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.174 2004/12/28 23:17:18 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -110,9 +110,12 @@ PGconn *PQconnectdb(const char *conninfo);
       If this begins with a slash, it specifies Unix-domain
       communication rather than TCP/IP communication; the value is the
       name of the directory in which the socket file is stored.  The
-      default is to connect to a Unix-domain socket in
-      <filename>/tmp</filename>.<indexterm><primary>Unix domain
-      socket</></>
+      default behavior when <literal>host</literal> is not specified
+      is to connect to a Unix-domain
+      socket<indexterm><primary>Unix domain socket</></> in
+      <filename>/tmp</filename> (or whatever socket directory was specified
+      when <productname>PostgreSQL</> was built). On machines without
+      Unix-domain sockets, the default is to connect to <literal>localhost</>.
      </para>
      </listitem>
     </varlistentry>
@@ -150,7 +153,8 @@ PGconn *PQconnectdb(const char *conninfo);
      <para>
       Without either a host name or host address,
       <application>libpq</application> will connect using a
-      local Unix domain socket.
+      local Unix-domain socket; or on machines without Unix-domain
+      sockets, it will attempt to connect to <literal>localhost</>.
      </para>
      </listitem>
     </varlistentry>
@@ -3643,6 +3647,12 @@ server.  This can be set instead of or in addition to <envar>PGHOST</envar>
 to avoid DNS lookup overhead. See the documentation of
 these parameters, under <function>PQconnectdb</function> above, for details
 on their interaction.
+</para>
+<para>
+When neither <envar>PGHOST</envar> nor <envar>PGHOSTADDR</envar> is set,
+the default behavior is to connect using a local Unix-domain socket; or on
+machines without Unix-domain sockets, <application>libpq</application> will
+attempt to connect to <literal>localhost</>.
 </para>
 </listitem>
 <listitem>

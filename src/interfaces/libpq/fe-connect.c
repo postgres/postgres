@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.292 2004/12/02 23:20:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.293 2004/12/28 23:17:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -868,7 +868,7 @@ connectDBStart(PGconn *conn)
 	char		portstr[128];
 	struct addrinfo *addrs = NULL;
 	struct addrinfo hint;
-	const char *node = NULL;
+	const char *node;
 	int			ret;
 
 	if (!conn)
@@ -907,15 +907,19 @@ connectDBStart(PGconn *conn)
 		node = conn->pghost;
 		hint.ai_family = AF_UNSPEC;
 	}
-#ifdef HAVE_UNIX_SOCKETS
 	else
 	{
+#ifdef HAVE_UNIX_SOCKETS
 		/* pghostaddr and pghost are NULL, so use Unix domain socket */
 		node = NULL;
 		hint.ai_family = AF_UNIX;
 		UNIXSOCK_PATH(portstr, portnum, conn->pgunixsocket);
-	}
+#else
+		/* Without Unix sockets, default to localhost instead */
+		node = "localhost";
+		hint.ai_family = AF_UNSPEC;
 #endif   /* HAVE_UNIX_SOCKETS */
+	}
 
 	/* Use getaddrinfo_all() to resolve the address */
 	ret = getaddrinfo_all(node, portstr, &hint, &addrs);
