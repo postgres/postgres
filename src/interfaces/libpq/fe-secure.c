@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.8 2002/06/23 14:56:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.9 2002/06/23 20:30:48 momjian Exp $
  *	  
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -370,7 +370,6 @@ verify_peer (PGconn *conn)
 	struct hostent *h = NULL;
 	struct sockaddr addr;
 	struct sockaddr_in *sin;
-	struct sockaddr_in6 *sin6;
 	socklen_t len;
 	char **s;
 	unsigned long l;
