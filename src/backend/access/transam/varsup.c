@@ -7,23 +7,44 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.3 1996/08/27 22:15:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.4 1996/10/21 07:15:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <math.h>
+
 #include "postgres.h"
 
+#include <stdio.h>
+#include "storage/ipc.h"
+#include "storage/block.h"
 #include "storage/buf.h"
-#include "storage/bufmgr.h"
-#include "storage/ipc.h"	/* for OIDGENLOCKID */
-
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h"
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"
+#include "storage/fd.h"   
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"  
+#include "rewrite/prs2lock.h"
+#include "access/skey.h" 
+#include "access/strat.h"
 #include "utils/rel.h"
-#include "utils/elog.h"
+#include "storage/bufmgr.h"
+#include <time.h>
+#include "utils/nabstime.h"
+#include "access/transam.h"
 
+#include "storage/spin.h"
+
+#include "access/xact.h"
+
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include "access/htup.h"
+#include "utils/tqual.h"
+#include "access/relscan.h"
 #include "access/heapam.h"
-#include "access/transam.h"	/* where the declarations go */
-#include "access/xact.h"	/* where the declarations go */
 
 #include "catalog/catname.h"
 
