@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jan 26 17:38:41 EST 2004
+Last updated:		Fri Jan 30 06:11:06 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -264,7 +264,7 @@ Clients
 * Prevent libpq's PQfnumber() from lowercasing the column name
 * -Allow pg_dump to dump CREATE CONVERSION (Christopher)
 * Allow fastpast to pass values in portable format
-
+* Allow libpq to return information about prepared queries
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
@@ -464,7 +464,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * -Add checks for fclose() failure (Tom)
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1193 2004/01/26 22:38:42 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1193 2004/01/26 22:38:42 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1194 2004/01/30 11:11:07 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1194 2004/01/30 11:11:07 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
