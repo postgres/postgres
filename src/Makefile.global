@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.9 1996/07/22 21:54:49 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.10 1996/07/23 03:05:23 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -154,7 +154,7 @@ CDEBUG= -g
 #    do not compile with them by default. However, there are hooks in the
 #    program which supports the use of GNU readline and history. Should you
 #    decide to use them, change USE_READLINE to true and change READLINE_INCDIR
-#    and READLINE_LIBDIR to reflect the location of the readline and histroy
+#    and READLINE_LIBDIR to reflect the location of the readline and history
 #    headers and libraries.
 #
 #USE_READLINE= true
