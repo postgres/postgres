@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.10 1999/02/13 23:19:28 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.11 1999/03/14 16:49:32 momjian Exp $
  *
  * ----------
  */
@@ -2370,8 +2370,8 @@ apply_typmod(NumericVar *var, int32 typmod)
 	if (var->weight >= maxweight)
 	{
 		free_allvars();
-		elog(ERROR, "overflow on numeric
-        ABS(value) >= 10^%d for field with precision %d scale %d",
+		elog(ERROR, "overflow on numeric "
+        "ABS(value) >= 10^%d for field with precision %d scale %d",
 							var->weight, precision, scale);
 	}
 
