@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.68 2002/12/30 22:10:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.69 2003/02/06 17:02:11 tgl Exp $
  *
  **********************************************************************/
 
@@ -1255,7 +1255,7 @@ static int
 pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[])
 {
-	int			level;
+	volatile int level;
 	sigjmp_buf	save_restart;
 
 	/************************************************************
@@ -1263,18 +1263,6 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	if (pltcl_restart_in_progress)
 		return TCL_ERROR;
-
-	/************************************************************
-	 * Catch the restart longjmp and begin a controlled
-	 * return though all interpreter levels if it happens
-	 ************************************************************/
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		pltcl_restart_in_progress = 1;
-		return TCL_ERROR;
-	}
 
 	if (argc != 3)
 	{
@@ -1301,17 +1289,29 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	{
 		Tcl_AppendResult(interp, "Unknown elog level '", argv[1],
 						 "'", NULL);
+		return TCL_ERROR;
+	}
+
+	/************************************************************
+	 * Catch the longjmp from elog() and begin a controlled
+	 * return though all interpreter levels if it happens
+	 ************************************************************/
+	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
+	if (sigsetjmp(Warn_restart, 1) != 0)
+	{
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+		pltcl_restart_in_progress = 1;
 		return TCL_ERROR;
 	}
 
 	/************************************************************
 	 * Call elog(), restore the original restart address
-	 * and return to the caller (if not catched)
+	 * and return to the caller (if no longjmp)
 	 ************************************************************/
 	UTF_BEGIN;
 	elog(level, "%s", UTF_U2E(argv[2]));
 	UTF_END;
+
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 	return TCL_OK;
 }
