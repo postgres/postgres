@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.60 2002/09/04 20:31:45 momjian Exp $
+ * $Id: proc.h,v 1.61 2002/10/21 18:57:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ struct PGPROC
 /* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */
 
 
-extern PGPROC *MyProc;
+extern DLLIMPORT PGPROC *MyProc;
 
 
 /*

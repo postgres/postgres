@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.50 2002/10/14 23:49:20 tgl Exp $
+ * $Id: tcopprot.h,v 1.51 2002/10/21 18:57:35 petere Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -32,6 +32,7 @@ extern bool InError;
 extern CommandDest whereToSendOutput;
 extern bool HostnameLookup;
 extern bool ShowPortNumber;
+extern DLLIMPORT char* debug_query_string;
 
 #ifndef BOOTSTRAP_INCLUDE
 
