@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.49 2002/01/30 21:54:17 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.49.2.1 2005/01/30 20:32:41 tgl Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -38,6 +38,10 @@ endif
 
 ifndef SGMLSPL
 SGMLSPL = sgmlspl
+endif
+
+ifndef LYNX
+LYNX = lynx
 endif
 
 CONVERT = convert
@@ -190,10 +194,7 @@ $(addsuffix .fot, $(ALLBOOKS)): %.fot: %.sgml $(ALLSGML) stylesheet.dsl
 JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -i output-text -t sgml
 
 INSTALL HISTORY regress_README: % : %.html
-	@echo "|";\
-	 echo "| You should now take '$<', save it as a text file in Netscape,";\
-	 echo "| and put it in place of the existing '$@' file.";\
-	 echo "|"
+	$(PERL) -p -e 's/<H(1|2)$$/<H\1 align=center/g' $< | $(LYNX) -force_html -dump -nolist -stdin >$@
 
 INSTALL.html: standalone-install.sgml installation.sgml
 	$(JADE.text) -V nochunks $+ >$@
