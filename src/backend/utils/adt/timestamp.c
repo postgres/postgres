@@ -103,22 +103,13 @@ timestampge(time_t t1, time_t t2)
 }
 
 DateTime *
-timestamp_datetime(time_t timestamp)
+stamp_datetime(time_t timestamp)
 {
-	DateTime   *result;
+	return(abstime_datetime((AbsoluteTime) timestamp));
+} /* stamp_datetime() */
 
-	double		fsec = 0;
-	struct tm  *tm;
-
-	if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
-		elog(WARN, "Memory allocation failed, can't convert timestamp to datetime", NULL);
-
-	tm = localtime((time_t *) &timestamp);
-	tm->tm_year += 1900;
-	tm->tm_mon += 1;
-
-	if (tm2datetime(tm, fsec, NULL, result) != 0)
-		elog(WARN, "Unable to convert timestamp to datetime", timestamp_out(timestamp));
-
-	return (result);
-} /* timestamp_datetime() */
+time_t
+datetime_stamp(DateTime *datetime)
+{
+	return((AbsoluteTime) datetime_abstime(datetime));
+} /* datetime_stamp() */
