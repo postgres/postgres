@@ -6,6 +6,8 @@ doc/bug.template
 update include/version.h.in after release, including subversion
 update pgaccess
 update odbc
+update src/interfaces/jdbc/postgresql/jdbc1/DatabaseMetaData.java
+update src/interfaces/jdbc/postgresql/jdbc2/DatabaseMetaData.java
 update pg_upgrade to handle new version, or disable
 update doc/src/sgml/release.sgml 
 update doc/src/sgml/install.sgml 
