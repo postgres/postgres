@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.38 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.39 2003/07/20 21:56:33 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -129,8 +129,10 @@ DefineType(List *names, List *parameters)
 	 * "_".
 	 */
 	if (strlen(typeName) > (NAMEDATALEN - 2))
-		elog(ERROR, "DefineType: type names must be %d characters or less",
-			 NAMEDATALEN - 2);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("type names must be %d characters or less",
+						NAMEDATALEN - 2)));
 
 	foreach(pl, parameters)
 	{
@@ -159,8 +161,10 @@ DefineType(List *names, List *parameters)
 			elemType = typenameTypeId(defGetTypeName(defel));
 			/* disallow arrays of pseudotypes */
 			if (get_typtype(elemType) == 'p')
-				elog(ERROR, "Array element type cannot be %s",
-					 format_type_be(elemType));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("array element type cannot be %s",
+								format_type_be(elemType))));
 		}
 		else if (strcasecmp(defel->defname, "default") == 0)
 			defaultValue = defGetString(defel);
@@ -190,8 +194,9 @@ DefineType(List *names, List *parameters)
 					 strcasecmp(a, "pg_catalog.bpchar") == 0)
 				alignment = 'c';
 			else
-				elog(ERROR, "DefineType: \"%s\" alignment not recognized",
-					 a);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("alignment \"%s\" not recognized", a)));
 		}
 		else if (strcasecmp(defel->defname, "storage") == 0)
 		{
@@ -206,23 +211,28 @@ DefineType(List *names, List *parameters)
 			else if (strcasecmp(a, "main") == 0)
 				storage = 'm';
 			else
-				elog(ERROR, "DefineType: \"%s\" storage not recognized",
-					 a);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("storage \"%s\" not recognized", a)));
 		}
 		else
-		{
-			elog(WARNING, "DefineType: attribute \"%s\" not recognized",
-				 defel->defname);
-		}
+			ereport(WARNING,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("type attribute \"%s\" not recognized",
+							defel->defname)));
 	}
 
 	/*
 	 * make sure we have our required definitions
 	 */
 	if (inputName == NIL)
-		elog(ERROR, "Define: \"input\" unspecified");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type input function must be specified")));
 	if (outputName == NIL)
-		elog(ERROR, "Define: \"output\" unspecified");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type output function must be specified")));
 
 	/*
 	 * Look to see if type already exists (presumably as a shell; if not,
@@ -259,40 +269,52 @@ DefineType(List *names, List *parameters)
 	{
 		if (resulttype == OPAQUEOID)
 		{
-			elog(NOTICE, "TypeCreate: changing return type of function %s from OPAQUE to %s",
-				 NameListToString(inputName), typeName);
+			/* backwards-compatibility hack */
+			ereport(NOTICE,
+					(errmsg("changing return type of function %s from OPAQUE to %s",
+							NameListToString(inputName), typeName)));
 			SetFunctionReturnType(inputOid, typoid);
 		}
 		else
-			elog(ERROR, "Type input function %s must return %s",
-				 NameListToString(inputName), typeName);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("type input function %s must return %s",
+							NameListToString(inputName), typeName)));
 	}
 	resulttype = get_func_rettype(outputOid);
 	if (resulttype != CSTRINGOID)
 	{
 		if (resulttype == OPAQUEOID)
 		{
-			elog(NOTICE, "TypeCreate: changing return type of function %s from OPAQUE to CSTRING",
-				 NameListToString(outputName));
+			/* backwards-compatibility hack */
+			ereport(NOTICE,
+					(errmsg("changing return type of function %s from OPAQUE to CSTRING",
+							NameListToString(outputName))));
 			SetFunctionReturnType(outputOid, CSTRINGOID);
 		}
 		else
-			elog(ERROR, "Type output function %s must return cstring",
-				 NameListToString(outputName));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("type output function %s must return cstring",
+							NameListToString(outputName))));
 	}
 	if (receiveOid)
 	{
 		resulttype = get_func_rettype(receiveOid);
 		if (resulttype != typoid)
-			elog(ERROR, "Type receive function %s must return %s",
-				 NameListToString(receiveName), typeName);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("type receive function %s must return %s",
+							NameListToString(receiveName), typeName)));
 	}
 	if (sendOid)
 	{
 		resulttype = get_func_rettype(sendOid);
 		if (resulttype != BYTEAOID)
-			elog(ERROR, "Type send function %s must return bytea",
-				 NameListToString(sendName));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("type send function %s must return bytea",
+							NameListToString(sendName))));
 	}
 
 	/*
@@ -379,15 +401,16 @@ RemoveType(List *names, DropBehavior behavior)
 	/* Use LookupTypeName here so that shell types can be removed. */
 	typeoid = LookupTypeName(typename);
 	if (!OidIsValid(typeoid))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
 
 	tup = SearchSysCache(TYPEOID,
 						 ObjectIdGetDatum(typeoid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		elog(ERROR, "cache lookup failed for type %u", typeoid);
 
 	/* Permission check: must own type or its namespace */
 	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
@@ -423,8 +446,7 @@ RemoveTypeById(Oid typeOid)
 						 ObjectIdGetDatum(typeOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "RemoveTypeById: type %u not found",
-			 typeOid);
+		elog(ERROR, "cache lookup failed for type %u", typeOid);
 
 	simple_heap_delete(relation, &tup->t_self);
 
@@ -483,11 +505,16 @@ DefineDomain(CreateDomainStmt *stmt)
 
 	/*
 	 * Domainnames, unlike typenames don't need to account for the '_'
-	 * prefix.	So they can be one character longer.
+	 * prefix.	So they can be one character longer.  (This test is presently
+	 * useless since the parser will have truncated the name to fit.  But
+	 * leave it here since we may someday support arrays of domains, in
+	 * which case we'll be back to needing to enforce NAMEDATALEN-2.)
 	 */
 	if (strlen(domainName) > (NAMEDATALEN - 1))
-		elog(ERROR, "CREATE DOMAIN: domain names must be %d characters or less",
-			 NAMEDATALEN - 1);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("domain names must be %d characters or less",
+						NAMEDATALEN - 1)));
 
 	/*
 	 * Look up the base type.
@@ -505,8 +532,10 @@ DefineDomain(CreateDomainStmt *stmt)
 	 */
 	typtype = baseType->typtype;
 	if (typtype != 'b')
-		elog(ERROR, "DefineDomain: %s is not a basetype",
-			 TypeNameToString(stmt->typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("\"%s\" is not a valid base type for a domain",
+						TypeNameToString(stmt->typename))));
 
 	/* passed by value */
 	byValue = baseType->typbyval;
@@ -555,20 +584,23 @@ DefineDomain(CreateDomainStmt *stmt)
 	foreach(listptr, schema)
 	{
 		Node	   *newConstraint = lfirst(listptr);
-		Constraint *colDef;
+		Constraint *constr;
 		ParseState *pstate;
 
 		/* Check for unsupported constraint types */
 		if (IsA(newConstraint, FkConstraint))
-			elog(ERROR, "CREATE DOMAIN / FOREIGN KEY constraints not supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("FOREIGN KEY constraints not supported for domains")));
 
-		/* this case should not happen */
+		/* otherwise it should be a plain Constraint */
 		if (!IsA(newConstraint, Constraint))
-			elog(ERROR, "DefineDomain: unexpected constraint node type");
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(newConstraint));
 
-		colDef = (Constraint *) newConstraint;
+		constr = (Constraint *) newConstraint;
 
-		switch (colDef->contype)
+		switch (constr->contype)
 		{
 			case CONSTR_DEFAULT:
 				/*
@@ -576,15 +608,18 @@ DefineDomain(CreateDomainStmt *stmt)
 				 * user with the DEFAULT <expr> statement.
 				 */
 				if (defaultExpr)
-					elog(ERROR, "CREATE DOMAIN has multiple DEFAULT expressions");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("multiple DEFAULT expressions")));
+
 				/* Create a dummy ParseState for transformExpr */
 				pstate = make_parsestate(NULL);
 
 				/*
-				 * Cook the colDef->raw_expr into an expression. Note:
+				 * Cook the constr->raw_expr into an expression. Note:
 				 * Name is strictly for error message
 				 */
-				defaultExpr = cookDefault(pstate, colDef->raw_expr,
+				defaultExpr = cookDefault(pstate, constr->raw_expr,
 										  basetypeoid,
 										  stmt->typename->typmod,
 										  domainName);
@@ -603,14 +638,18 @@ DefineDomain(CreateDomainStmt *stmt)
 
 			case CONSTR_NOTNULL:
 				if (nullDefined && !typNotNull)
-					elog(ERROR, "CREATE DOMAIN has conflicting NULL / NOT NULL constraint");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("conflicting NULL/NOT NULL constraints")));
 				typNotNull = true;
 				nullDefined = true;
 				break;
 
 			case CONSTR_NULL:
 				if (nullDefined && typNotNull)
-					elog(ERROR, "CREATE DOMAIN has conflicting NULL / NOT NULL constraint");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("conflicting NULL/NOT NULL constraints")));
 				typNotNull = false;
 				nullDefined = true;
 		  		break;
@@ -626,23 +665,29 @@ DefineDomain(CreateDomainStmt *stmt)
 				 * All else are error cases
 				 */
 		  	case CONSTR_UNIQUE:
-		  		elog(ERROR, "CREATE DOMAIN / UNIQUE not supported");
+		  		ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("UNIQUE constraints not supported for domains")));
 		  		break;
 
 		  	case CONSTR_PRIMARY:
-		  		elog(ERROR, "CREATE DOMAIN / PRIMARY KEY not supported");
+		  		ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("PRIMARY KEY constraints not supported for domains")));
 		  		break;
 
 		  	case CONSTR_ATTR_DEFERRABLE:
 		  	case CONSTR_ATTR_NOT_DEFERRABLE:
 		  	case CONSTR_ATTR_DEFERRED:
 		  	case CONSTR_ATTR_IMMEDIATE:
-		  		elog(ERROR, "CREATE DOMAIN: DEFERRABLE, NON DEFERRABLE, DEFERRED"
-							" and IMMEDIATE not supported");
+		  		ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("deferrability constraints not supported for domains")));
 		  		break;
 
 			default:
-				elog(ERROR, "DefineDomain: unrecognized constraint subtype");
+				elog(ERROR, "unrecognized constraint subtype: %d",
+					 (int) constr->contype);
 				break;
 		}
 	}
@@ -729,15 +774,16 @@ RemoveDomain(List *names, DropBehavior behavior)
 	/* Use LookupTypeName here so that shell types can be removed. */
 	typeoid = LookupTypeName(typename);
 	if (!OidIsValid(typeoid))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
 
 	tup = SearchSysCache(TYPEOID,
 						 ObjectIdGetDatum(typeoid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "RemoveDomain: type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		elog(ERROR, "cache lookup failed for type %u", typeoid);
 
 	/* Permission check: must own type or its namespace */
 	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
@@ -749,8 +795,10 @@ RemoveDomain(List *names, DropBehavior behavior)
 	typtype = ((Form_pg_type) GETSTRUCT(tup))->typtype;
 
 	if (typtype != 'd')
-		elog(ERROR, "%s is not a domain",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a domain",
+						TypeNameToString(typename))));
 
 	ReleaseSysCache(tup);
 
@@ -818,9 +866,9 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	if (OidIsValid(procOid))
 	{
 		/* Found, but must complain and fix the pg_proc entry */
-		elog(NOTICE, "TypeCreate: changing argument type of function %s "
-			 "from OPAQUE to CSTRING",
-			 NameListToString(procname));
+		ereport(NOTICE,
+				(errmsg("changing argument type of function %s from OPAQUE to CSTRING",
+						NameListToString(procname))));
 		SetFunctionArgType(procOid, 0, CSTRINGOID);
 		/*
 		 * Need CommandCounterIncrement since DefineType will likely
@@ -834,8 +882,10 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	/* Use CSTRING (preferred) in the error message */
 	argList[0] = CSTRINGOID;
 
-	elog(ERROR, "function %s does not exist",
-		 func_signature_string(procname, 1, argList));
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_FUNCTION),
+			 errmsg("function %s does not exist",
+					func_signature_string(procname, 1, argList))));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -885,8 +935,9 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	if (OidIsValid(procOid))
 	{
 		/* Found, but must complain and fix the pg_proc entry */
-		elog(NOTICE, "TypeCreate: changing argument type of function %s from OPAQUE to %s",
-			 NameListToString(procname), format_type_be(typeOid));
+		ereport(NOTICE,
+				(errmsg("changing argument type of function %s from OPAQUE to %s",
+						NameListToString(procname), format_type_be(typeOid))));
 		SetFunctionArgType(procOid, 0, typeOid);
 		/*
 		 * Need CommandCounterIncrement since DefineType will likely
@@ -900,8 +951,10 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	/* Use type name, not OPAQUE, in the failure message. */
 	argList[0] = typeOid;
 
-	elog(ERROR, "function %s does not exist",
-		 func_signature_string(procname, 1, argList));
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_FUNCTION),
+			 errmsg("function %s does not exist",
+					func_signature_string(procname, 1, argList))));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -930,8 +983,10 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 	if (OidIsValid(procOid))
 		return procOid;
 
-	elog(ERROR, "function %s does not exist",
-		 func_signature_string(procname, 1, argList));
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_FUNCTION),
+			 errmsg("function %s does not exist",
+					func_signature_string(procname, 1, argList))));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -960,8 +1015,10 @@ findTypeSendFunction(List *procname, Oid typeOid)
 	if (OidIsValid(procOid))
 		return procOid;
 
-	elog(ERROR, "function %s does not exist",
-		 func_signature_string(procname, 1, argList));
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_FUNCTION),
+			 errmsg("function %s does not exist",
+					func_signature_string(procname, 1, argList))));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -987,8 +1044,9 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	CreateStmt *createStmt = makeNode(CreateStmt);
 
 	if (coldeflist == NIL)
-		elog(ERROR, "attempted to define composite type relation with"
-			 " no attrs");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("composite type must have at least one attribute")));
 
 	/*
 	 * now create the parameters for keys/inheritance etc. All of them are
@@ -1040,16 +1098,16 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	/* Use LookupTypeName here so that shell types can be removed. */
 	domainoid = LookupTypeName(typename);
 	if (!OidIsValid(domainoid))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
 							 0, 0, 0);
-
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "AlterDomain: type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		elog(ERROR, "cache lookup failed for type %u", domainoid);
 
 	/* Doesn't return if user isn't allowed to alter the domain */ 
 	domainOwnerCheck(tup, typename);
@@ -1157,15 +1215,16 @@ AlterDomainNotNull(List *names, bool notNull)
 	/* Use LookupTypeName here so that shell types can be found (why?). */
 	domainoid = LookupTypeName(typename);
 	if (!OidIsValid(domainoid))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "AlterDomain: type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		elog(ERROR, "cache lookup failed for type %u", domainoid);
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Doesn't return if user isn't allowed to alter the domain */ 
@@ -1174,9 +1233,10 @@ AlterDomainNotNull(List *names, bool notNull)
 	/* Is the domain already set to the desired constraint? */
 	if (typTup->typnotnull == notNull)
 	{
-		elog(NOTICE, "AlterDomain: %s is already set to %s",
-			 TypeNameToString(typename),
-			 notNull ? "NOT NULL" : "NULL");
+		ereport(NOTICE,
+				(errmsg("\"%s\" is already set to %s",
+						TypeNameToString(typename),
+						notNull ? "NOT NULL" : "NULL")));
 		heap_close(typrel, RowExclusiveLock);
 		return;
 	}
@@ -1216,9 +1276,11 @@ AlterDomainNotNull(List *names, bool notNull)
 					d = heap_getattr(tuple, attnum, tupdesc, &isNull);
 
 					if (isNull)
-						elog(ERROR, "ALTER DOMAIN: Relation \"%s\" attribute \"%s\" contains NULL values",
-							 RelationGetRelationName(testrel),
-							 NameStr(tupdesc->attrs[attnum - 1]->attname));
+						ereport(ERROR,
+								(errcode(ERRCODE_NOT_NULL_VIOLATION),
+								 errmsg("relation \"%s\" attribute \"%s\" contains NULL values",
+										RelationGetRelationName(testrel),
+										NameStr(tupdesc->attrs[attnum - 1]->attname))));
 				}
 			}
 			heap_endscan(scan);
@@ -1273,16 +1335,16 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	/* Use LookupTypeName here so that shell types can be removed. */
 	domainoid = LookupTypeName(typename);
 	if (!OidIsValid(domainoid))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
 							 0, 0, 0);
-
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "AlterDomain: type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		elog(ERROR, "cache lookup failed for type %u", domainoid);
 
 	/* Doesn't return if user isn't allowed to alter the domain */ 
 	domainOwnerCheck(tup, typename);
@@ -1360,15 +1422,16 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	/* Use LookupTypeName here so that shell types can be found (why?). */
 	domainoid = LookupTypeName(typename);
 	if (!OidIsValid(domainoid))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "AlterDomain: type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		elog(ERROR, "cache lookup failed for type %u", domainoid);
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Doesn't return if user isn't allowed to alter the domain */ 
@@ -1376,23 +1439,30 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 
 	/* Check for unsupported constraint types */
 	if (IsA(newConstraint, FkConstraint))
-		elog(ERROR, "ALTER DOMAIN / FOREIGN KEY constraints not supported");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("FOREIGN KEY constraints not supported for domains")));
 
-	/* this case should not happen */
+	/* otherwise it should be a plain Constraint */
 	if (!IsA(newConstraint, Constraint))
-		elog(ERROR, "AlterDomainAddConstraint: unexpected constraint node type");
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(newConstraint));
 
 	constr = (Constraint *) newConstraint;
 
 	switch (constr->contype)
 	{
 		case CONSTR_DEFAULT:
-			elog(ERROR, "Use ALTER DOMAIN .. SET DEFAULT instead");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("use ALTER DOMAIN .. SET DEFAULT instead")));
 			break;
 
 		case CONSTR_NOTNULL:
 		case CONSTR_NULL:
-			elog(ERROR, "Use ALTER DOMAIN .. [ SET | DROP ] NOT NULL instead");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("use ALTER DOMAIN .. [ SET | DROP ] NOT NULL instead")));
 			break;
 
 	  	case CONSTR_CHECK:
@@ -1400,23 +1470,29 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	  		break;
 
 		case CONSTR_UNIQUE:
-			elog(ERROR, "ALTER DOMAIN / UNIQUE indexes not supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("UNIQUE constraints not supported for domains")));
 			break;
 
 		case CONSTR_PRIMARY:
-			elog(ERROR, "ALTER DOMAIN / PRIMARY KEY indexes not supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("PRIMARY KEY constraints not supported for domains")));
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:
 		case CONSTR_ATTR_NOT_DEFERRABLE:
 		case CONSTR_ATTR_DEFERRED:
 		case CONSTR_ATTR_IMMEDIATE:
-			elog(ERROR, "ALTER DOMAIN: DEFERRABLE, NON DEFERRABLE, DEFERRED"
-				 " and IMMEDIATE not supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("deferrability constraints not supported for domains")));
 			break;
 
 		default:
-			elog(ERROR, "AlterDomainAddConstraint: unrecognized constraint node type");
+			elog(ERROR, "unrecognized constraint subtype: %d",
+				 (int) constr->contype);
 			break;
 	}
 
@@ -1480,9 +1556,11 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 													  &isNull, NULL);
 
 				if (!isNull && !DatumGetBool(conResult))
-					elog(ERROR, "ALTER DOMAIN: Relation \"%s\" attribute \"%s\" contains values that fail the new constraint",
-						 RelationGetRelationName(testrel),
-						 NameStr(tupdesc->attrs[attnum - 1]->attname));
+					ereport(ERROR,
+							(errcode(ERRCODE_CHECK_VIOLATION),
+							 errmsg("relation \"%s\" attribute \"%s\" contains values that violate the new constraint",
+									RelationGetRelationName(testrel),
+									NameStr(tupdesc->attrs[attnum - 1]->attname))));
 			}
 
 			ResetExprContext(econtext);
@@ -1641,8 +1719,10 @@ domainOwnerCheck(HeapTuple tup, TypeName *typename)
 
 	/* Check that this is actually a domain */
 	if (typTup->typtype != 'd')
-		elog(ERROR, "%s is not a domain",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a domain",
+						TypeNameToString(typename))));
 
 	/* Permission check: must own type */
 	if (!pg_type_ownercheck(HeapTupleGetOid(tup), GetUserId()))
@@ -1672,9 +1752,10 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 								 domainOid,
 								 domainNamespace,
 								 constr->name))
-			elog(ERROR, "constraint \"%s\" already exists for domain \"%s\"",
-				 constr->name,
-				 domainName);
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("constraint \"%s\" for domain \"%s\" already exists",
+							constr->name, domainName)));
 	}
 	else
 		constr->name = GenerateConstraintName(CONSTRAINT_DOMAIN,
@@ -1708,26 +1789,33 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	expr = coerce_to_boolean(pstate, expr, "CHECK");
 
 	/*
-	 * Make sure no outside relations are
-	 * referred to.
+	 * Make sure no outside relations are referred to.
 	 */
 	if (length(pstate->p_rtable) != 0)
-		elog(ERROR, "Relations cannot be referenced in domain CHECK constraint");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot use table references in domain CHECK constraint")));
 
 	/*
 	 * Domains don't allow var clauses (this should be redundant with the
 	 * above check, but make it anyway)
 	 */
 	if (contain_var_clause(expr))
-		elog(ERROR, "cannot use column references in domain CHECK clause");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot use table references in domain CHECK constraint")));
 
 	/*
 	 * No subplans or aggregates, either...
 	 */
 	if (pstate->p_hasSubLinks)
-		elog(ERROR, "cannot use subselect in CHECK constraint expression");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot use sub-select in CHECK constraint")));
 	if (pstate->p_hasAggs)
-		elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("cannot use aggregate in CHECK constraint")));
 
 	/*
 	 * Convert to string form for storage.
@@ -1805,8 +1893,7 @@ GetDomainConstraints(Oid typeOid)
 							 ObjectIdGetDatum(typeOid),
 							 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "GetDomainConstraints: failed to lookup type %u",
-				 typeOid);
+			elog(ERROR, "cache lookup failed for type %u", typeOid);
 		typTup = (Form_pg_type) GETSTRUCT(tup);
 
 		/* Test for NOT NULL Constraint */
@@ -1837,7 +1924,7 @@ GetDomainConstraints(Oid typeOid)
 			val = fastgetattr(conTup, Anum_pg_constraint_conbin,
 							  conRel->rd_att, &isNull);
 			if (isNull)
-				elog(ERROR, "GetDomainConstraints: domain %s constraint %s has NULL conbin",
+				elog(ERROR, "domain \"%s\" constraint \"%s\" has NULL conbin",
 					 NameStr(typTup->typname), NameStr(c->conname));
 
 			check_expr = (Expr *)
@@ -1925,21 +2012,24 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 	/* Use LookupTypeName here so that shell types can be processed (why?) */
 	typeOid = LookupTypeName(typename);
 	if (!OidIsValid(typeOid))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(typeOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "AlterDomain: type \"%s\" does not exist",
-			 TypeNameToString(typename));
+		elog(ERROR, "cache lookup failed for type %u", typeOid);
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Check that this is actually a domain */
 	if (typTup->typtype != 'd')
-		elog(ERROR, "%s is not a domain",
-			 TypeNameToString(typename));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a domain",
+						TypeNameToString(typename))));
 
 	/* Modify the owner --- okay to scribble on typTup because it's a copy */
 	typTup->typowner = newOwnerSysId;

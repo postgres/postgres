@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.82 2003/07/17 00:55:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.83 2003/07/20 21:56:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,9 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 		pfree(rawstring);
 		freeList(elemlist);
 		if (interactive)
-			elog(ERROR, "SET DATESTYLE: invalid list syntax");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid list syntax for datestyle")));
 		return NULL;
 	}
 
@@ -149,7 +151,10 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 		else
 		{
 			if (interactive)
-				elog(ERROR, "SET DATESTYLE: unrecognized keyword %s", tok);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unrecognized datestyle keyword: \"%s\"",
+								tok)));
 			ok = false;
 			break;
 		}
@@ -164,7 +169,9 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 	if (!ok)
 	{
 		if (interactive)
-			elog(ERROR, "SET DATESTYLE: conflicting specifications");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("conflicting datestyle specifications")));
 		return NULL;
 	}
 
@@ -235,7 +242,7 @@ set_tz(const char *tz)
 	strcpy(tzbuf, "TZ=");
 	strncpy(tzbuf + 3, tz, sizeof(tzbuf) - 4);
 	if (putenv(tzbuf) != 0)		/* shouldn't happen? */
-		elog(LOG, "Unable to set TZ environment variable");
+		elog(LOG, "unable to set TZ environment variable");
 	tzset();
 }
 
@@ -261,7 +268,7 @@ clear_tz(void)
 	{
 		strcpy(tzbuf, "=");
 		if (putenv(tzbuf) != 0)
-			elog(LOG, "Unable to clear TZ environment variable");
+			elog(LOG, "unable to clear TZ environment variable");
 		tzset();
 	}
 }
@@ -293,7 +300,7 @@ clear_tz(void)
  * failure mode of adopting the system-wide default is much better than
  * a silent failure mode of adopting UTC.
  *
- * NB: this must NOT elog(ERROR).  The caller must get control back so that
+ * NB: this must NOT ereport(ERROR).  The caller must get control back so that
  * it can restore the old value of TZ if we don't like the new one.
  */
 static bool
@@ -334,7 +341,7 @@ tzset_succeeded(const char *tz)
  * We need to reject such TZ settings because they'll wreak havoc with our
  * date/time arithmetic.
  *
- * NB: this must NOT elog(ERROR).  The caller must get control back so that
+ * NB: this must NOT ereport(ERROR).  The caller must get control back so that
  * it can restore the old value of TZ if we don't like the new one.
  */
 static bool
@@ -411,7 +418,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 
 		/*
 		 * Try to parse it.  XXX an invalid interval format will result in
-		 * elog, which is not desirable for GUC.  We did what we could to
+		 * ereport, which is not desirable for GUC.  We did what we could to
 		 * guard against this in flatten_set_variable_args, but a string
 		 * coming in from postgresql.conf might contain anything.
 		 */
@@ -423,7 +430,9 @@ assign_timezone(const char *value, bool doit, bool interactive)
 		if (interval->month != 0)
 		{
 			if (interactive)
-				elog(ERROR, "SET TIME ZONE: illegal INTERVAL; month not allowed");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid INTERVAL for time zone: month not allowed")));
 			pfree(interval);
 			return NULL;
 		}
@@ -528,17 +537,19 @@ assign_timezone(const char *value, bool doit, bool interactive)
 				/* Complain if it was bad */
 				if (!known)
 				{
-					elog(interactive ? ERROR : LOG,
-						 "unrecognized timezone name \"%s\"",
-						 value);
+					ereport(interactive ? ERROR : LOG,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("unrecognized timezone name: \"%s\"",
+									value)));
 					return NULL;
 				}
 				if (!acceptable)
 				{
-					elog(interactive ? ERROR : LOG,
-						 "timezone \"%s\" appears to use leap seconds"
-						 "\n\tPostgreSQL does not support leap seconds",
-						 value);
+					ereport(interactive ? ERROR : LOG,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("timezone \"%s\" appears to use leap seconds",
+									value),
+							 errdetail("PostgreSQL does not support leap seconds")));
 					return NULL;
 				}
 			}
@@ -605,7 +616,9 @@ const char *
 assign_XactIsoLevel(const char *value, bool doit, bool interactive)
 {
 	if (doit && interactive && SerializableSnapshot != NULL)
-		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL must be called before any query");
+		ereport(ERROR,
+				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+				 errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query")));
 
 	if (strcmp(value, "serializable") == 0)
 	{
@@ -680,8 +693,10 @@ assign_client_encoding(const char *value, bool doit, bool interactive)
 	if (SetClientEncoding(encoding, doit) < 0)
 	{
 		if (interactive)
-			elog(ERROR, "Conversion between %s and %s is not supported",
-				 value, GetDatabaseEncodingName());
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("conversion between \"%s\" and \"%s\" is not supported",
+							value, GetDatabaseEncodingName())));
 		return NULL;
 	}
 	return value;
@@ -743,7 +758,9 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 		if (!HeapTupleIsValid(userTup))
 		{
 			if (interactive)
-				elog(ERROR, "user \"%s\" does not exist", value);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("user \"%s\" does not exist", value)));
 			return NULL;
 		}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.201 2003/05/16 02:40:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.202 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,9 @@ SendCopyBegin(bool binary, int natts)
 	{
 		/* old way */
 		if (binary)
-			elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("COPY BINARY is not supported to stdout or from stdin")));
 		pq_putemptymessage('H');
 		/* grottiness needed for old COPY OUT protocol */
 		pq_startcopyout();
@@ -181,7 +183,9 @@ SendCopyBegin(bool binary, int natts)
 	{
 		/* very old way */
 		if (binary)
-			elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("COPY BINARY is not supported to stdout or from stdin")));
 		pq_putemptymessage('B');
 		/* grottiness needed for old COPY OUT protocol */
 		pq_startcopyout();
@@ -212,7 +216,9 @@ ReceiveCopyBegin(bool binary, int natts)
 	{
 		/* old way */
 		if (binary)
-			elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("COPY BINARY is not supported to stdout or from stdin")));
 		pq_putemptymessage('G');
 		copy_dest = COPY_OLD_FE;
 	}
@@ -220,7 +226,9 @@ ReceiveCopyBegin(bool binary, int natts)
 	{
 		/* very old way */
 		if (binary)
-			elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("COPY BINARY is not supported to stdout or from stdin")));
 		pq_putemptymessage('D');
 		copy_dest = COPY_OLD_FE;
 	}
@@ -271,13 +279,17 @@ CopySendData(void *databuf, int datasize)
 		case COPY_FILE:
 			fwrite(databuf, datasize, 1, copy_file);
 			if (ferror(copy_file))
-				elog(ERROR, "CopySendData: %m");
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("failed to write COPY file: %m")));
 			break;
 		case COPY_OLD_FE:
 			if (pq_putbytes((char *) databuf, datasize))
 			{
 				/* no hope of recovering connection sync, so FATAL */
-				elog(FATAL, "CopySendData: connection lost");
+				ereport(FATAL,
+						(errcode(ERRCODE_CONNECTION_FAILURE),
+						 errmsg("connection lost during COPY to stdout")));
 			}
 			break;
 		case COPY_NEW_FE:
@@ -358,7 +370,9 @@ CopyGetData(void *databuf, int datasize)
 			if (pq_getbytes((char *) databuf, datasize))
 			{
 				/* Only a \. terminator is legal EOF in old protocol */
-				elog(ERROR, "unexpected EOF on client connection");
+				ereport(ERROR,
+						(errcode(ERRCODE_CONNECTION_FAILURE),
+						 errmsg("unexpected EOF on client connection")));
 			}
 			break;
 		case COPY_NEW_FE:
@@ -373,9 +387,13 @@ CopyGetData(void *databuf, int datasize)
 
 					mtype = pq_getbyte();
 					if (mtype == EOF)
-						elog(ERROR, "unexpected EOF on client connection");
+						ereport(ERROR,
+								(errcode(ERRCODE_CONNECTION_FAILURE),
+								 errmsg("unexpected EOF on client connection")));
 					if (pq_getmessage(copy_msgbuf, 0))
-						elog(ERROR, "unexpected EOF on client connection");
+						ereport(ERROR,
+								(errcode(ERRCODE_CONNECTION_FAILURE),
+								 errmsg("unexpected EOF on client connection")));
 					switch (mtype)
 					{
 						case 'd': /* CopyData */
@@ -385,12 +403,16 @@ CopyGetData(void *databuf, int datasize)
 							fe_eof = true;
 							return;
 						case 'f': /* CopyFail */
-							elog(ERROR, "COPY IN failed: %s",
-								 pq_getmsgstring(copy_msgbuf));
+							ereport(ERROR,
+									(errcode(ERRCODE_QUERY_CANCELED),
+									 errmsg("COPY from stdin failed: %s",
+											pq_getmsgstring(copy_msgbuf))));
 							break;
 						default:
-							elog(ERROR, "unexpected message type %c during COPY IN",
-								 mtype);
+							ereport(ERROR,
+									(errcode(ERRCODE_PROTOCOL_VIOLATION),
+									 errmsg("unexpected message type 0x%02X during COPY from stdin",
+											mtype)));
 							break;
 					}
 				}
@@ -420,7 +442,9 @@ CopyGetChar(void)
 			if (ch == EOF)
 			{
 				/* Only a \. terminator is legal EOF in old protocol */
-				elog(ERROR, "unexpected EOF on client connection");
+				ereport(ERROR,
+						(errcode(ERRCODE_CONNECTION_FAILURE),
+						 errmsg("unexpected EOF on client connection")));
 			}
 			break;
 		case COPY_NEW_FE:
@@ -467,7 +491,9 @@ CopyPeekChar(void)
 			if (ch == EOF)
 			{
 				/* Only a \. terminator is legal EOF in old protocol */
-				elog(ERROR, "unexpected EOF on client connection");
+				ereport(ERROR,
+						(errcode(ERRCODE_CONNECTION_FAILURE),
+						 errmsg("unexpected EOF on client connection")));
 			}
 			break;
 		case COPY_NEW_FE:
@@ -635,46 +661,52 @@ DoCopy(const CopyStmt *stmt)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		/* XXX: Should we bother checking for doubled options? */
-
 		if (strcmp(defel->defname, "binary") == 0)
 		{
 			if (binary)
-				elog(ERROR, "COPY: BINARY option appears more than once");
-
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			binary = intVal(defel->arg);
 		}
 		else if (strcmp(defel->defname, "oids") == 0)
 		{
 			if (oids)
-				elog(ERROR, "COPY: OIDS option appears more than once");
-
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			oids = intVal(defel->arg);
 		}
 		else if (strcmp(defel->defname, "delimiter") == 0)
 		{
 			if (delim)
-				elog(ERROR, "COPY: DELIMITER string may only be defined once in query");
-
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			delim = strVal(defel->arg);
 		}
 		else if (strcmp(defel->defname, "null") == 0)
 		{
 			if (null_print)
-				elog(ERROR, "COPY: NULL representation may only be defined once in query");
-
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			null_print = strVal(defel->arg);
 		}
 		else
-			elog(ERROR, "COPY: option \"%s\" not recognized",
+			elog(ERROR, "option \"%s\" not recognized",
 				 defel->defname);
 	}
 
 	if (binary && delim)
-		elog(ERROR, "You can not specify the DELIMITER in BINARY mode.");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("cannot specify DELIMITER in BINARY mode")));
 
 	if (binary && null_print)
-		elog(ERROR, "You can not specify NULL in BINARY mode.");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("cannot specify NULL in BINARY mode")));
 
 	/* Set defaults */
 	if (!delim)
@@ -690,7 +722,9 @@ DoCopy(const CopyStmt *stmt)
 
 	/* check read-only transaction */
 	if (XactReadOnly && !is_from && !isTempNamespace(RelationGetNamespace(rel)))
-		elog(ERROR, "transaction is read-only");
+		ereport(ERROR,
+				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+				 errmsg("transaction is read-only")));
 
 	/* Check permissions. */
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
@@ -698,22 +732,28 @@ DoCopy(const CopyStmt *stmt)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, RelationGetRelationName(rel));
 	if (!pipe && !superuser())
-		elog(ERROR, "You must have Postgres superuser privilege to do a COPY "
-			 "directly to or from a file.  Anyone can COPY to stdout or "
-			 "from stdin.  Psql's \\copy command also works for anyone.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to COPY to or from a file"),
+				 errhint("Anyone can COPY to stdout or from stdin. "
+						 "psql's \\copy command also works for anyone.")));
 
 	/*
 	 * Presently, only single-character delimiter strings are supported.
 	 */
 	if (strlen(delim) != 1)
-		elog(ERROR, "COPY delimiter must be a single character");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("COPY delimiter must be a single character")));
 
 	/*
 	 * Don't allow COPY w/ OIDs to or from a table without them
 	 */
 	if (oids && !rel->rd_rel->relhasoids)
-		elog(ERROR, "COPY: table \"%s\" does not have OIDs",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("table \"%s\" does not have OIDs",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Generate or convert list of attributes to process
@@ -738,14 +778,20 @@ DoCopy(const CopyStmt *stmt)
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
 		{
 			if (rel->rd_rel->relkind == RELKIND_VIEW)
-				elog(ERROR, "You cannot copy view %s",
-					 RelationGetRelationName(rel));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot copy to view \"%s\"",
+								RelationGetRelationName(rel))));
 			else if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-				elog(ERROR, "You cannot change sequence relation %s",
-					 RelationGetRelationName(rel));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot copy to sequence \"%s\"",
+								RelationGetRelationName(rel))));
 			else
-				elog(ERROR, "You cannot copy object %s",
-					 RelationGetRelationName(rel));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot copy to non-table relation \"%s\"",
+								RelationGetRelationName(rel))));
 		}
 		if (pipe)
 		{
@@ -761,23 +807,18 @@ DoCopy(const CopyStmt *stmt)
 			copy_file = AllocateFile(filename, PG_BINARY_R);
 
 			if (copy_file == NULL)
-#ifndef WIN32
-				elog(ERROR, "COPY command, running in backend with "
-					 "effective uid %d, could not open file '%s' for "
-					 "reading.  Errno = %s (%d).",
-					 (int) geteuid(), filename, strerror(errno), errno);
-#else
-				elog(ERROR, "COPY command, running in backend, "
-					 "could not open file '%s' for "
-					 "reading.  Errno = %s (%d).",
-					 filename, strerror(errno), errno);
-#endif
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not open file \"%s\" for reading: %m",
+								filename)));
 
 			fstat(fileno(copy_file), &st);
 			if (S_ISDIR(st.st_mode))
 			{
 				FreeFile(copy_file);
-				elog(ERROR, "COPY: %s is a directory", filename);
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is a directory", filename)));
 			}
 		}
 		CopyFrom(rel, attnumlist, binary, oids, delim, null_print);
@@ -787,14 +828,20 @@ DoCopy(const CopyStmt *stmt)
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
 		{
 			if (rel->rd_rel->relkind == RELKIND_VIEW)
-				elog(ERROR, "You cannot copy view %s",
-					 RelationGetRelationName(rel));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot copy from view \"%s\"",
+								RelationGetRelationName(rel))));
 			else if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-				elog(ERROR, "You cannot copy sequence %s",
-					 RelationGetRelationName(rel));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot copy from sequence \"%s\"",
+								RelationGetRelationName(rel))));
 			else
-				elog(ERROR, "You cannot copy object %s",
-					 RelationGetRelationName(rel));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot copy from non-table relation \"%s\"",
+								RelationGetRelationName(rel))));
 		}
 		if (pipe)
 		{
@@ -813,30 +860,27 @@ DoCopy(const CopyStmt *stmt)
 			 * oneself in the foot by overwriting a database file ...
 			 */
 			if (!is_absolute_path(filename))
-				elog(ERROR, "Relative path not allowed for server side"
-					 " COPY command");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_NAME),
+						 errmsg("relative path not allowed for COPY to file")));
 
 			oumask = umask((mode_t) 022);
 			copy_file = AllocateFile(filename, PG_BINARY_W);
 			umask(oumask);
 
 			if (copy_file == NULL)
-#ifndef WIN32
-				elog(ERROR, "COPY command, running in backend with "
-					 "effective uid %d, could not open file '%s' for "
-					 "writing.  Errno = %s (%d).",
-					 (int) geteuid(), filename, strerror(errno), errno);
-#else
-				elog(ERROR, "COPY command, running in backend, "
-					 "could not open file '%s' for "
-					 "writing.  Errno = %s (%d).",
-					 filename, strerror(errno), errno);
-#endif
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not open file \"%s\" for writing: %m",
+								filename)));
+
 			fstat(fileno(copy_file), &st);
 			if (S_ISDIR(st.st_mode))
 			{
 				FreeFile(copy_file);
-				elog(ERROR, "COPY: %s is a directory", filename);
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is a directory", filename)));
 			}
 		}
 		CopyTo(rel, attnumlist, binary, oids, delim, null_print);
@@ -1217,25 +1261,35 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		/* Signature */
 		CopyGetData(readSig, 11);
 		if (CopyGetEof() || memcmp(readSig, BinarySignature, 11) != 0)
-			elog(ERROR, "COPY BINARY: file signature not recognized");
+			ereport(ERROR,
+					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+					 errmsg("COPY file signature not recognized")));
 		/* Flags field */
 		tmp = CopyGetInt32();
 		if (CopyGetEof())
-			elog(ERROR, "COPY BINARY: bogus file header (missing flags)");
+			ereport(ERROR,
+					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+					 errmsg("invalid COPY file header (missing flags)")));
 		file_has_oids = (tmp & (1 << 16)) != 0;
 		tmp &= ~(1 << 16);
 		if ((tmp >> 16) != 0)
-			elog(ERROR, "COPY BINARY: unrecognized critical flags in header");
+			ereport(ERROR,
+					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+					 errmsg("unrecognized critical flags in COPY file header")));
 		/* Header extension length */
 		tmp = CopyGetInt32();
 		if (CopyGetEof() || tmp < 0)
-			elog(ERROR, "COPY BINARY: bogus file header (missing length)");
+			ereport(ERROR,
+					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+					 errmsg("invalid COPY file header (missing length)")));
 		/* Skip extension header, if present */
 		while (tmp-- > 0)
 		{
 			CopyGetData(readSig, 1);
 			if (CopyGetEof())
-				elog(ERROR, "COPY BINARY: bogus file header (wrong length)");
+				ereport(ERROR,
+						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+						 errmsg("invalid COPY file header (wrong length)")));
 		}
 	}
 
@@ -1301,13 +1355,17 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				}
 
 				if (strcmp(string, null_print) == 0)
-					elog(ERROR, "NULL Oid");
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("null OID in COPY data")));
 				else
 				{
 					loaded_oid = DatumGetObjectId(DirectFunctionCall1(oidin,
 											   CStringGetDatum(string)));
 					if (loaded_oid == InvalidOid)
-						elog(ERROR, "Invalid Oid");
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 errmsg("invalid OID in COPY data")));
 				}
 			}
 
@@ -1324,8 +1382,10 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				 * complain.
 				 */
 				if (result != NORMAL_ATTR)
-					elog(ERROR, "Missing data for column \"%s\"",
-						 NameStr(attr[m]->attname));
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("missing data for column \"%s\"",
+									NameStr(attr[m]->attname))));
 
 				string = CopyReadAttribute(delim, &result);
 
@@ -1368,7 +1428,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				{
 					string = CopyReadAttribute(delim, &result);
 					if (result == NORMAL_ATTR || *string != '\0')
-						elog(ERROR, "Extra data after last expected column");
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 errmsg("extra data after last expected column")));
 					if (result == END_OF_FILE)
 					{
 						/* EOF at start of line: all is well */
@@ -1377,7 +1439,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					}
 				}
 				else
-					elog(ERROR, "Extra data after last expected column");
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("extra data after last expected column")));
 			}
 
 			/*
@@ -1401,8 +1465,10 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			}
 
 			if (fld_count != attr_count)
-				elog(ERROR, "COPY BINARY: tuple field count is %d, expected %d",
-					 (int) fld_count, attr_count);
+				ereport(ERROR,
+						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+						 errmsg("row field count is %d, expected %d",
+								(int) fld_count, attr_count)));
 
 			if (file_has_oids)
 			{
@@ -1412,7 +1478,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 															 oid_in_element,
 															 &isnull));
 				if (isnull || loaded_oid == InvalidOid)
-					elog(ERROR, "COPY BINARY: Invalid Oid");
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("invalid OID in COPY data")));
 			}
 
 			i = 0;
@@ -1602,9 +1670,10 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 		if (c == '\r')
 		{
 			if (eol_type == EOL_NL)
-				elog(ERROR, "CopyReadAttribute: Literal carriage return data value\n"
-							"found in input that has newline termination; use \\r");
-
+				ereport(ERROR,
+						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+						 errmsg("literal carriage return found in data"),
+						 errhint("Use \"\\r\" to represent carriage return.")));
 			/*	Check for \r\n on first line, _and_ handle \r\n. */
 			if (copy_lineno == 1 || eol_type == EOL_CRNL)
 			{
@@ -1618,8 +1687,10 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 				{
 					/* found \r, but no \n */
 					if (eol_type == EOL_CRNL)
-						elog(ERROR, "CopyReadAttribute: Literal carriage return data value\n"
-									"found in input that has carriage return/newline termination; use \\r");
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 errmsg("literal carriage return found in data"),
+								 errhint("Use \"\\r\" to represent carriage return.")));
 					/* if we got here, it is the first line and we didn't get \n, so put it back */
 					CopyDonePeek(c2, false);
 					eol_type = EOL_CR;
@@ -1630,12 +1701,11 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 		}
 		if (c == '\n')
 		{
-			if (eol_type == EOL_CRNL)
-				elog(ERROR, "CopyReadAttribute: Literal newline data value found in input\n"
-							"that has carriage return/newline termination; use \\n");
-			if (eol_type == EOL_CR)
-				elog(ERROR, "CopyReadAttribute: Literal newline data value found in input\n"
-							"that has carriage return termination; use \\n");
+			if (eol_type == EOL_CR || eol_type == EOL_CRNL)
+				ereport(ERROR,
+						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+						 errmsg("literal newline found in data"),
+						 errhint("Use \"\\n\" to represent newline.")));
 			eol_type = EOL_NL;
 			*result = END_OF_LINE;
 			break;
@@ -1730,16 +1800,25 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 					{
 						c = CopyGetChar();
 						if (c == '\n')
-							elog(ERROR, "CopyReadAttribute: end-of-copy termination does not match previous input");
+							ereport(ERROR,
+									(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+									 errmsg("end-of-copy marker does not match previous newline style")));
 						if (c != '\r')
-							elog(ERROR, "CopyReadAttribute: end-of-copy marker corrupt");
+							ereport(ERROR,
+									(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+									 errmsg("end-of-copy marker corrupt")));
 					}
 					c = CopyGetChar();
 					if (c != '\r' && c != '\n')
-						elog(ERROR, "CopyReadAttribute: end-of-copy marker corrupt");
-					if (((eol_type == EOL_NL || eol_type == EOL_CRNL) && c != '\n') ||
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 errmsg("end-of-copy marker corrupt")));
+					if ((eol_type == EOL_NL && c != '\n') ||
+						(eol_type == EOL_CRNL && c != '\n') ||
 					    (eol_type == EOL_CR && c != '\r'))
-						elog(ERROR, "CopyReadAttribute: end-of-copy termination does not match previous input");
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 errmsg("end-of-copy marker does not match previous newline style")));
 					/*
 					 * In protocol version 3, we should ignore anything after
 					 * \. up to the protocol end of copy data.  (XXX maybe
@@ -1807,14 +1886,18 @@ CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typelem,
 
 	fld_size = CopyGetInt32();
 	if (CopyGetEof())
-		elog(ERROR, "COPY BINARY: unexpected EOF");
+		ereport(ERROR,
+				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+				 errmsg("unexpected EOF in COPY data")));
 	if (fld_size == -1)
 	{
 		*isnull = true;
 		return (Datum) 0;
 	}
 	if (fld_size < 0)
-		elog(ERROR, "COPY BINARY: bogus size for field %d", column_no);
+		ereport(ERROR,
+				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+				 errmsg("invalid size for field %d", column_no)));
 
 	/* reset attribute_buf to empty, and load raw data in it */
 	attribute_buf.len = 0;
@@ -1825,7 +1908,9 @@ CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typelem,
 
 	CopyGetData(attribute_buf.data, fld_size);
 	if (CopyGetEof())
-		elog(ERROR, "COPY BINARY: unexpected EOF");
+		ereport(ERROR,
+				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+				 errmsg("unexpected EOF in COPY data")));
 
 	attribute_buf.len = fld_size;
 	attribute_buf.data[fld_size] = '\0';
@@ -1837,7 +1922,10 @@ CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typelem,
 
 	/* Trouble if it didn't eat the whole buffer */
 	if (attribute_buf.cursor != attribute_buf.len)
-		elog(ERROR, "Improper binary format in field %d", column_no);
+		ereport(ERROR,
+				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+				 errmsg("incorrect binary data format in field %d",
+						column_no)));
 
 	*isnull = false;
 	return result;
@@ -1949,12 +2037,15 @@ CopyGetAttnums(Relation rel, List *attnamelist)
 			char	   *name = strVal(lfirst(l));
 			int			attnum;
 
-			/* Lookup column name, elog on failure */
+			/* Lookup column name, ereport on failure */
 			/* Note we disallow system columns here */
 			attnum = attnameAttNum(rel, name, false);
 			/* Check for duplicates */
 			if (intMember(attnum, attnums))
-				elog(ERROR, "Attribute \"%s\" specified more than once", name);
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_COLUMN),
+						 errmsg("attribute \"%s\" specified more than once",
+								name)));
 			attnums = lappendi(attnums, attnum);
 		}
 	}

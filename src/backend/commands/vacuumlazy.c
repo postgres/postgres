@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.28 2003/05/27 17:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.29 2003/07/20 21:56:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,8 +190,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				blkno;
 	HeapTupleData tuple;
 	char	   *relname;
-	BlockNumber empty_pages,
-				changed_pages;
+	BlockNumber empty_pages;
 	double		num_tuples,
 				tups_vacuumed,
 				nkeep,
@@ -202,11 +201,12 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	vac_init_rusage(&ru0);
 
 	relname = RelationGetRelationName(onerel);
-	elog(elevel, "--Relation %s.%s--",
-		 get_namespace_name(RelationGetNamespace(onerel)),
-		 relname);
+	ereport(elevel,
+			(errmsg("vacuuming \"%s.%s\"",
+					get_namespace_name(RelationGetNamespace(onerel)),
+					relname)));
 
-	empty_pages = changed_pages = 0;
+	empty_pages = 0;
 	num_tuples = tups_vacuumed = nkeep = nunused = 0;
 
 	nblocks = RelationGetNumberOfBlocks(onerel);
@@ -259,9 +259,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			if (PageIsNew(page))
 			{
-				elog(WARNING, "Rel %s: Uninitialized page %u - fixing",
-					 relname, blkno);
+				ereport(WARNING,
+						(errmsg("relation \"%s\" page %u is uninitialized --- fixing",
+								relname, blkno)));
 				PageInit(page, BufferGetPageSize(buf), 0);
+				empty_pages++;
 				lazy_record_free_space(vacrelstats, blkno,
 									   PageGetFreeSpace(page));
 			}
@@ -350,7 +352,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					/* This is an expected case during concurrent vacuum */
 					break;
 				default:
-					elog(ERROR, "Unexpected HeapTupleSatisfiesVacuum result");
+					elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
 					break;
 			}
 
@@ -363,8 +365,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 */
 			if (onerel->rd_rel->relhasoids &&
 				!OidIsValid(HeapTupleGetOid(&tuple)))
-				elog(WARNING, "Rel %s: TID %u/%u: OID IS INVALID. TUPGONE %d.",
-					 relname, blkno, offnum, (int) tupgone);
+				elog(WARNING, "relation \"%s\" TID %u/%u: OID is invalid",
+					 relname, blkno, offnum);
 
 			if (tupgone)
 			{
@@ -397,10 +399,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 		if (pgchanged)
-		{
 			SetBufferCommitInfoNeedsSave(buf);
-			changed_pages++;
-		}
 
 		ReleaseBuffer(buf);
 	}
@@ -425,10 +424,18 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			lazy_scan_index(Irel[i], vacrelstats);
 	}
 
-	elog(elevel, "Pages %u: Changed %u, Empty %u; Tup %.0f: Vac %.0f, Keep %.0f, UnUsed %.0f.\n\tTotal %s",
-		 nblocks, changed_pages, empty_pages,
-		 num_tuples, tups_vacuumed, nkeep, nunused,
-		 vac_show_rusage(&ru0));
+	ereport(elevel,
+			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable tuples in %u pages",
+					RelationGetRelationName(onerel),
+					tups_vacuumed, num_tuples, nblocks),
+			 errdetail("%.0f dead tuples cannot be removed yet.\n"
+					   "There were %.0f unused item pointers.\n"
+					   "%u pages are entirely empty.\n"
+					   "%s",
+					   nkeep,
+					   nunused,
+					   empty_pages,
+					   vac_show_rusage(&ru0))));
 }
 
 
@@ -475,8 +482,12 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 		npages++;
 	}
 
-	elog(elevel, "Removed %d tuples in %d pages.\n\t%s", tupindex, npages,
-		 vac_show_rusage(&ru0));
+	ereport(elevel,
+			(errmsg("\"%s\": removed %d tuples in %d pages",
+					RelationGetRelationName(onerel),
+					tupindex, npages),
+			 errdetail("%s",
+					   vac_show_rusage(&ru0))));
 }
 
 /*
@@ -582,11 +593,15 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(elevel, "Index %s: Pages %u, %u deleted, %u free; Tuples %.0f.\n\t%s",
-		 RelationGetRelationName(indrel),
-		 stats->num_pages, stats->pages_deleted, stats->pages_free,
-		 stats->num_index_tuples,
-		 vac_show_rusage(&ru0));
+	ereport(elevel,
+			(errmsg("index \"%s\" now contains %.0f tuples in %u pages",
+					RelationGetRelationName(indrel),
+					stats->num_index_tuples,
+					stats->num_pages),
+			 errdetail("%u index pages have been deleted, %u are currently reusable.\n"
+					   "%s",
+					   stats->pages_deleted, stats->pages_free,
+					   vac_show_rusage(&ru0))));
 
 	pfree(stats);
 }
@@ -638,11 +653,17 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(elevel, "Index %s: Pages %u, %u deleted, %u free; Tuples %.0f: Deleted %.0f.\n\t%s",
-		 RelationGetRelationName(indrel),
-		 stats->num_pages, stats->pages_deleted, stats->pages_free,
-		 stats->num_index_tuples, stats->tuples_removed,
-		 vac_show_rusage(&ru0));
+	ereport(elevel,
+			(errmsg("index \"%s\" now contains %.0f tuples in %u pages",
+					RelationGetRelationName(indrel),
+					stats->num_index_tuples,
+					stats->num_pages),
+			 errdetail("%.0f index tuples were removed.\n"
+					   "%u index pages have been deleted, %u are currently reusable.\n"
+					   "%s",
+					   stats->tuples_removed,
+					   stats->pages_deleted, stats->pages_free,
+					   vac_show_rusage(&ru0))));
 
 	pfree(stats);
 }
@@ -712,8 +733,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 */
 	i = FlushRelationBuffers(onerel, new_rel_pages);
 	if (i < 0)
-		elog(ERROR, "VACUUM (lazy_truncate_heap): FlushRelationBuffers returned %d",
-			 i);
+		elog(ERROR, "FlushRelationBuffers returned %d", i);
 
 	/*
 	 * Do the physical truncation.
@@ -747,8 +767,12 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 * We keep the exclusive lock until commit (perhaps not necessary)?
 	 */
 
-	elog(elevel, "Truncated %u --> %u pages.\n\t%s", old_rel_pages,
-		 new_rel_pages, vac_show_rusage(&ru0));
+	ereport(elevel,
+			(errmsg("\"%s\": truncated %u to %u pages",
+					RelationGetRelationName(onerel),
+					old_rel_pages, new_rel_pages),
+			 errdetail("%s",
+					   vac_show_rusage(&ru0))));
 }
 
 /*
@@ -838,7 +862,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 					/* This is an expected case during concurrent vacuum */
 					break;
 				default:
-					elog(ERROR, "Unexpected HeapTupleSatisfiesVacuum result");
+					elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
 					break;
 			}
 

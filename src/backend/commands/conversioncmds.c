@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.7 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.8 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,10 +40,10 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	Oid			namespaceId;
 	char	   *conversion_name;
 	AclResult	aclresult;
-	int			for_encoding;
+	int			from_encoding;
 	int			to_encoding;
 	Oid			funcoid;
-	const char *for_encoding_name = stmt->for_encoding_name;
+	const char *from_encoding_name = stmt->for_encoding_name;
 	const char *to_encoding_name = stmt->to_encoding_name;
 	List	   *func_name = stmt->func_name;
 	static Oid	funcargs[] = {INT4OID, INT4OID, CSTRINGOID, CSTRINGOID, INT4OID};
@@ -58,13 +58,19 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 		aclcheck_error(aclresult, get_namespace_name(namespaceId));
 
 	/* Check the encoding names */
-	for_encoding = pg_char_to_encoding(for_encoding_name);
-	if (for_encoding < 0)
-		elog(ERROR, "Invalid for encoding name: %s", for_encoding_name);
+	from_encoding = pg_char_to_encoding(from_encoding_name);
+	if (from_encoding < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("source encoding \"%s\" does not exist",
+						from_encoding_name)));
 
 	to_encoding = pg_char_to_encoding(to_encoding_name);
 	if (to_encoding < 0)
-		elog(ERROR, "Invalid to encoding name: %s", to_encoding_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("destination encoding \"%s\" does not exist",
+						to_encoding_name)));
 
 	/*
 	 * Check the existence of the conversion function. Function name could
@@ -83,7 +89,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	 * conversion name)
 	 */
 	ConversionCreate(conversion_name, namespaceId, GetUserId(),
-					 for_encoding, to_encoding, funcoid, stmt->def);
+					 from_encoding, to_encoding, funcoid, stmt->def);
 }
 
 /*
@@ -95,9 +101,11 @@ DropConversionCommand(List *name, DropBehavior behavior)
 	Oid			conversionOid;
 
 	conversionOid = FindConversionByName(name);
-
 	if (!OidIsValid(conversionOid))
-		elog(ERROR, "conversion %s not found", NameListToString(name));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("conversion \"%s\" does not exist",
+						NameListToString(name))));
 
 	ConversionDrop(conversionOid, behavior);
 }
@@ -118,14 +126,16 @@ RenameConversion(List *name, const char *newname)
 
 	conversionOid = FindConversionByName(name);
 	if (!OidIsValid(conversionOid))
-		elog(ERROR, "conversion %s not found", NameListToString(name));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("conversion \"%s\" does not exist",
+						NameListToString(name))));
 
 	tup = SearchSysCacheCopy(CONOID,
 							 ObjectIdGetDatum(conversionOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "couldn't find pg_conversion tuple for %s",
-			 NameListToString(name));
+		elog(ERROR, "cache lookup failed for conversion %u", conversionOid);
 
 	namespaceOid = ((Form_pg_conversion) GETSTRUCT(tup))->connamespace;
 
@@ -134,10 +144,10 @@ RenameConversion(List *name, const char *newname)
 							 CStringGetDatum(newname),
 							 ObjectIdGetDatum(namespaceOid),
 							 0, 0))
-	{
-		elog(ERROR, "conversion %s already exists in schema %s",
-			 newname, get_namespace_name(namespaceOid));
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("conversion \"%s\" already exists in schema \"%s\"",
+						newname, get_namespace_name(namespaceOid))));
 
 	/* must be owner */
     if (!superuser() && ((Form_pg_conversion) GETSTRUCT(tup))->conowner != GetUserId())

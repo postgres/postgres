@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.95 2003/05/27 17:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.96 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,7 +150,7 @@ void
 Async_Notify(char *relname)
 {
 	if (Trace_notify)
-		elog(DEBUG1, "Async_Notify: %s", relname);
+		elog(DEBUG1, "Async_Notify(%s)", relname);
 
 	/* no point in making duplicate entries in the list ... */
 	if (!AsyncExistsPendingNotify(relname))
@@ -198,7 +198,7 @@ Async_Listen(char *relname, int pid)
 	bool		alreadyListener = false;
 
 	if (Trace_notify)
-		elog(DEBUG1, "Async_Listen: %s", relname);
+		elog(DEBUG1, "Async_Listen(%s,%d)", relname, pid);
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 
@@ -221,7 +221,8 @@ Async_Listen(char *relname, int pid)
 	if (alreadyListener)
 	{
 		heap_close(lRel, AccessExclusiveLock);
-		elog(WARNING, "Async_Listen: We are already listening on %s", relname);
+		ereport(WARNING,
+				(errmsg("already listening on \"%s\"", relname)));
 		return;
 	}
 
@@ -293,7 +294,7 @@ Async_Unlisten(char *relname, int pid)
 	}
 
 	if (Trace_notify)
-		elog(DEBUG1, "Async_Unlisten %s", relname);
+		elog(DEBUG1, "Async_Unlisten(%s,%d)", relname, pid);
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.55 2003/06/27 14:45:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.56 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,8 +196,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
 		if (!vacstmt->vacuum)
-			elog(WARNING, "Skipping \"%s\" --- only table or database owner can ANALYZE it",
-				 RelationGetRelationName(onerel));
+			ereport(WARNING,
+					(errmsg("skipping \"%s\" --- only table or database owner can ANALYZE it",
+							RelationGetRelationName(onerel))));
 		relation_close(onerel, AccessShareLock);
 		return;
 	}
@@ -210,8 +211,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
 		if (!vacstmt->vacuum)
-			elog(WARNING, "Skipping \"%s\" --- can not process indexes, views or special system tables",
-				 RelationGetRelationName(onerel));
+			ereport(WARNING,
+					(errmsg("skipping \"%s\" --- cannot ANALYZE indexes, views or special system tables",
+							RelationGetRelationName(onerel))));
 		relation_close(onerel, AccessShareLock);
 		return;
 	}
@@ -239,9 +241,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		return;
 	}
 
-	elog(elevel, "Analyzing %s.%s",
-		 get_namespace_name(RelationGetNamespace(onerel)),
-		 RelationGetRelationName(onerel));
+	ereport(elevel,
+			(errmsg("analyzing \"%s.%s\"",
+					get_namespace_name(RelationGetNamespace(onerel)),
+					RelationGetRelationName(onerel))));
 
 	/*
 	 * Determine which columns to analyze
@@ -429,7 +432,7 @@ examine_attribute(Relation onerel, int attnum)
 							  ObjectIdGetDatum(attr->atttypid),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(typtuple))
-		elog(ERROR, "cache lookup of type %u failed", attr->atttypid);
+		elog(ERROR, "cache lookup failed for type %u", attr->atttypid);
 	stats->attrtype = (Form_pg_type) palloc(sizeof(FormData_pg_type));
 	memcpy(stats->attrtype, GETSTRUCT(typtuple), sizeof(FormData_pg_type));
 	ReleaseSysCache(typtuple);
@@ -636,8 +639,7 @@ pageloop:;
 		 */
 		targbuffer = ReadBuffer(onerel, targblock);
 		if (!BufferIsValid(targbuffer))
-			elog(ERROR, "acquire_sample_rows: ReadBuffer(%s,%u) failed",
-				 RelationGetRelationName(onerel), targblock);
+			elog(ERROR, "ReadBuffer failed");
 		LockBuffer(targbuffer, BUFFER_LOCK_SHARE);
 		targpage = BufferGetPage(targbuffer);
 		maxoffset = PageGetMaxOffsetNumber(targpage);

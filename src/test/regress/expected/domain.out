@@ -3,11 +3,11 @@ create domain domaindroptest int4;
 comment on domain domaindroptest is 'About to drop this..';
 -- currently this will be disallowed
 create domain basetypetest domaindroptest;
-ERROR:  DefineDomain: domaindroptest is not a basetype
+ERROR:  "domaindroptest" is not a valid base type for a domain
 drop domain domaindroptest;
 -- this should fail because already gone
 drop domain domaindroptest cascade;
-ERROR:  Type "domaindroptest" does not exist
+ERROR:  type "domaindroptest" does not exist
 -- TEST Domains.
 create domain domainvarchar varchar(5);
 create domain domainnumeric numeric(8,2);
@@ -199,19 +199,19 @@ create table domnotnull
 );
 insert into domnotnull default values;
 alter domain dnotnulltest set not null; -- fails
-ERROR:  ALTER DOMAIN: Relation "domnotnull" attribute "col1" contains NULL values
+ERROR:  relation "domnotnull" attribute "col1" contains NULL values
 update domnotnull set col1 = 5;
 alter domain dnotnulltest set not null; -- fails
-ERROR:  ALTER DOMAIN: Relation "domnotnull" attribute "col2" contains NULL values
+ERROR:  relation "domnotnull" attribute "col2" contains NULL values
 update domnotnull set col2 = 6;
 alter domain dnotnulltest set not null;
 alter domain dnotnulltest set not null; -- fails
-NOTICE:  AlterDomain: dnotnulltest is already set to NOT NULL
+NOTICE:  "dnotnulltest" is already set to NOT NULL
 update domnotnull set col1 = null; -- fails
 ERROR:  Domain dnotnulltest does not allow NULL values
 alter domain dnotnulltest drop not null;
 alter domain dnotnulltest drop not null; -- fails
-NOTICE:  AlterDomain: dnotnulltest is already set to NULL
+NOTICE:  "dnotnulltest" is already set to NULL
 update domnotnull set col1 = null;
 drop domain dnotnulltest cascade;
 NOTICE:  Drop cascades to table domnotnull column col2
@@ -251,7 +251,7 @@ create table domcontest (col1 con);
 insert into domcontest values (1);
 insert into domcontest values (2);
 alter domain con add constraint t check (VALUE < 1); -- fails
-ERROR:  ALTER DOMAIN: Relation "domcontest" attribute "col1" contains values that fail the new constraint
+ERROR:  relation "domcontest" attribute "col1" contains values that violate the new constraint
 alter domain con add constraint t check (VALUE < 34);
 alter domain con add check (VALUE > 0);
 insert into domcontest values (-5); -- fails

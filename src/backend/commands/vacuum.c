@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.256 2003/06/27 14:45:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.257 2003/07/20 21:56:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,7 +461,9 @@ vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
 	 */
 	if (TransactionIdFollows(limit, *oldestXmin))
 	{
-		elog(WARNING, "oldest Xmin is far in the past --- close open transactions soon to avoid wraparound problems");
+		ereport(WARNING,
+				(errmsg("oldest Xmin is far in the past"),
+				 errhint("Close open transactions soon to avoid wraparound problems.")));
 		limit = *oldestXmin;
 	}
 
@@ -583,7 +585,7 @@ vac_update_dbstats(Oid dbid,
 	tuple = heap_getnext(scan, ForwardScanDirection);
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "database %u does not exist", dbid);
+		elog(ERROR, "could not find tuple for database %u", dbid);
 
 	dbform = (Form_pg_database) GETSTRUCT(tuple);
 
@@ -667,8 +669,9 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 	 */
 	if (vacuumAlreadyWrapped)
 	{
-		elog(WARNING, "Some databases have not been vacuumed in over 2 billion transactions."
-			 "\n\tYou may have already suffered transaction-wraparound data loss.");
+		ereport(WARNING,
+				(errmsg("some databases have not been vacuumed in over 2 billion transactions"),
+				 errdetail("You may have already suffered transaction-wraparound data loss.")));
 		return;
 	}
 
@@ -678,17 +681,20 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 	/* Give warning about impending wraparound problems */
 	if (frozenAlreadyWrapped)
 	{
-		elog(WARNING, "Some databases have not been vacuumed in over 1 billion transactions."
-			 "\n\tBetter vacuum them soon, or you may have a wraparound failure.");
+		ereport(WARNING,
+				(errmsg("some databases have not been vacuumed in over 1 billion transactions"),
+				 errhint("Better vacuum them soon, or you may have a wraparound failure.")));
 	}
 	else
 	{
 		age = (int32) (myXID - frozenXID);
 		if (age > (int32) ((MaxTransactionId >> 3) * 3))
-			elog(WARNING, "Some databases have not been vacuumed in %d transactions."
-				 "\n\tBetter vacuum them within %d transactions,"
-				 "\n\tor you may have a wraparound failure.",
-				 age, (int32) (MaxTransactionId >> 1) - age);
+			ereport(WARNING,
+					(errmsg("some databases have not been vacuumed in %d transactions",
+							age),
+					 errhint("Better vacuum them within %d transactions, "
+							 "or you may have a wraparound failure.",
+							 (int32) (MaxTransactionId >> 1) - age)));
 	}
 }
 
@@ -773,8 +779,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	if (!(pg_class_ownercheck(RelationGetRelid(onerel), GetUserId()) ||
 		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
 	{
-		elog(WARNING, "Skipping \"%s\" --- only table or database owner can VACUUM it",
-			 RelationGetRelationName(onerel));
+		ereport(WARNING,
+				(errmsg("skipping \"%s\" --- only table or database owner can VACUUM it",
+						RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
 		CommitTransactionCommand();
 		return false;
@@ -786,8 +793,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	 */
 	if (onerel->rd_rel->relkind != expected_relkind)
 	{
-		elog(WARNING, "Skipping \"%s\" --- can not process indexes, views or special system tables",
-			 RelationGetRelationName(onerel));
+		ereport(WARNING,
+				(errmsg("skipping \"%s\" --- cannot VACUUM indexes, views or special system tables",
+						RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
 		CommitTransactionCommand();
 		return false;
@@ -979,8 +987,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 			 */
 			i = FlushRelationBuffers(onerel, vacrelstats->rel_pages);
 			if (i < 0)
-				elog(ERROR, "VACUUM (full_vacuum_rel): FlushRelationBuffers returned %d",
-					 i);
+				elog(ERROR, "FlushRelationBuffers returned %d", i);
 		}
 	}
 
@@ -1025,15 +1032,13 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	VacPage		vacpage,
 				vacpagecopy;
 	BlockNumber empty_pages,
-				new_pages,
-				changed_pages,
 				empty_end_pages;
 	double		num_tuples,
 				tups_vacuumed,
 				nkeep,
 				nunused;
-	double		free_size,
-				usable_free_size;
+	double		free_space,
+				usable_free_space;
 	Size		min_tlen = MaxTupleSize;
 	Size		max_tlen = 0;
 	int			i;
@@ -1046,13 +1051,14 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	vac_init_rusage(&ru0);
 
 	relname = RelationGetRelationName(onerel);
-	elog(elevel, "--Relation %s.%s--",
-		 get_namespace_name(RelationGetNamespace(onerel)),
-		 relname);
+	ereport(elevel,
+			(errmsg("vacuuming \"%s.%s\"",
+					get_namespace_name(RelationGetNamespace(onerel)),
+					relname)));
 
-	empty_pages = new_pages = changed_pages = empty_end_pages = 0;
+	empty_pages = empty_end_pages = 0;
 	num_tuples = tups_vacuumed = nkeep = nunused = 0;
-	free_size = 0;
+	free_space = 0;
 
 	nblocks = RelationGetNumberOfBlocks(onerel);
 
@@ -1080,12 +1086,13 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 		if (PageIsNew(page))
 		{
-			elog(WARNING, "Rel %s: Uninitialized page %u - fixing",
-				 relname, blkno);
+			ereport(WARNING,
+					(errmsg("relation \"%s\" page %u is uninitialized --- fixing",
+							relname, blkno)));
 			PageInit(page, BufferGetPageSize(buf), 0);
 			vacpage->free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
-			free_size += vacpage->free;
-			new_pages++;
+			free_space += vacpage->free;
+			empty_pages++;
 			empty_end_pages++;
 			vacpagecopy = copy_vac_page(vacpage);
 			vpage_insert(vacuum_pages, vacpagecopy);
@@ -1097,7 +1104,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		if (PageIsEmpty(page))
 		{
 			vacpage->free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
-			free_size += vacpage->free;
+			free_space += vacpage->free;
 			empty_pages++;
 			empty_end_pages++;
 			vacpagecopy = copy_vac_page(vacpage);
@@ -1193,9 +1200,12 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					/*
 					 * This should not happen, since we hold exclusive
 					 * lock on the relation; shouldn't we raise an error?
+					 * (Actually, it can happen in system catalogs, since
+					 * we tend to release write lock before commit there.)
 					 */
-					elog(WARNING, "Rel %s: TID %u/%u: InsertTransactionInProgress %u - can't shrink relation",
-						 relname, blkno, offnum, HeapTupleHeaderGetXmin(tuple.t_data));
+					ereport(NOTICE,
+							(errmsg("relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- can't shrink relation",
+									relname, blkno, offnum, HeapTupleHeaderGetXmin(tuple.t_data))));
 					do_shrinking = false;
 					break;
 				case HEAPTUPLE_DELETE_IN_PROGRESS:
@@ -1203,13 +1213,16 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					/*
 					 * This should not happen, since we hold exclusive
 					 * lock on the relation; shouldn't we raise an error?
+					 * (Actually, it can happen in system catalogs, since
+					 * we tend to release write lock before commit there.)
 					 */
-					elog(WARNING, "Rel %s: TID %u/%u: DeleteTransactionInProgress %u - can't shrink relation",
-						 relname, blkno, offnum, HeapTupleHeaderGetXmax(tuple.t_data));
+					ereport(NOTICE,
+							(errmsg("relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- can't shrink relation",
+									relname, blkno, offnum, HeapTupleHeaderGetXmax(tuple.t_data))));
 					do_shrinking = false;
 					break;
 				default:
-					elog(ERROR, "Unexpected HeapTupleSatisfiesVacuum result");
+					elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
 					break;
 			}
 
@@ -1222,8 +1235,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			 */
 			if (onerel->rd_rel->relhasoids &&
 				!OidIsValid(HeapTupleGetOid(&tuple)))
-				elog(WARNING, "Rel %s: TID %u/%u: OID IS INVALID. TUPGONE %d.",
-					 relname, blkno, offnum, (int) tupgone);
+				elog(WARNING, "relation \"%s\" TID %u/%u: OID is invalid",
+					 relname, blkno, offnum);
 
 			if (tupgone)
 			{
@@ -1280,7 +1293,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			do_reap = (vacpage->offsets_free > 0);
 		}
 
-		free_size += vacpage->free;
+		free_space += vacpage->free;
 
 		/*
 		 * Add the page to fraged_pages if it has a useful amount of free
@@ -1299,16 +1312,20 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				vpage_insert(fraged_pages, vacpagecopy);
 		}
 
+		/*
+		 * Include the page in empty_end_pages if it will be empty after
+		 * vacuuming; this is to keep us from using it as a move destination.
+		 */
 		if (notup)
+		{
+			empty_pages++;
 			empty_end_pages++;
+		}
 		else
 			empty_end_pages = 0;
 
 		if (pgchanged)
-		{
 			WriteBuffer(buf);
-			changed_pages++;
-		}
 		else
 			ReleaseBuffer(buf);
 	}
@@ -1335,14 +1352,14 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	{
 		Assert((BlockNumber) fraged_pages->num_pages >= empty_end_pages);
 		fraged_pages->num_pages -= empty_end_pages;
-		usable_free_size = 0;
+		usable_free_space = 0;
 		for (i = 0; i < fraged_pages->num_pages; i++)
-			usable_free_size += fraged_pages->pagedesc[i]->free;
+			usable_free_space += fraged_pages->pagedesc[i]->free;
 	}
 	else
 	{
 		fraged_pages->num_pages = 0;
-		usable_free_size = 0;
+		usable_free_space = 0;
 	}
 
 	/* don't bother to save vtlinks if we will not call repair_frag */
@@ -1360,17 +1377,24 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		pfree(vtlinks);
 	}
 
-	elog(elevel, "Pages %u: Changed %u, reaped %u, Empty %u, New %u; "
-		 "Tup %.0f: Vac %.0f, Keep/VTL %.0f/%u, UnUsed %.0f, MinLen %lu, "
-		 "MaxLen %lu; Re-using: Free/Avail. Space %.0f/%.0f; "
-		 "EndEmpty/Avail. Pages %u/%u.\n\t%s",
-		 nblocks, changed_pages, vacuum_pages->num_pages, empty_pages,
-		 new_pages, num_tuples, tups_vacuumed,
-		 nkeep, vacrelstats->num_vtlinks,
-		 nunused, (unsigned long) min_tlen, (unsigned long) max_tlen,
-		 free_size, usable_free_size,
-		 empty_end_pages, fraged_pages->num_pages,
-		 vac_show_rusage(&ru0));
+	ereport(elevel,
+			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable tuples in %u pages",
+					RelationGetRelationName(onerel),
+					tups_vacuumed, num_tuples, nblocks),
+			 errdetail("%.0f dead tuples cannot be removed yet.\n"
+					   "Nonremovable tuples range from %lu to %lu bytes long.\n"
+					   "There were %.0f unused item pointers.\n"
+					   "Total free space (including removable tuples) is %.0f bytes.\n"
+					   "%u pages are or will become empty, including %u at the end of the table.\n"
+					   "%u pages containing %.0f free bytes are potential move destinations.\n"
+					   "%s",
+					   nkeep,
+					   (unsigned long) min_tlen, (unsigned long) max_tlen,
+					   nunused,
+					   free_space,
+					   empty_pages, empty_end_pages,
+					   fraged_pages->num_pages, usable_free_space,
+					   vac_show_rusage(&ru0))));
 }
 
 
@@ -1594,7 +1618,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
 				{
 					if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
-						elog(ERROR, "Invalid XVAC in tuple header");
+						elog(ERROR, "invalid XVAC in tuple header");
 					if (keep_tuples == 0)
 						continue;
 					if (chain_tuple_moved)		/* some chains was moved
@@ -1673,7 +1697,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				/* Quick exit if we have no vtlinks to search in */
 				if (vacrelstats->vtlinks == NULL)
 				{
-					elog(DEBUG2, "Parent item in update-chain not found - can't continue repair_frag");
+					elog(DEBUG2, "parent item in update-chain not found --- can't continue repair_frag");
 					break;		/* out of walk-along-page loop */
 				}
 
@@ -1710,7 +1734,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						 * in scan_heap(), but it's not implemented at the
 						 * moment and so we just stop shrinking here.
 						 */
-						elog(DEBUG2, "Child itemid in update-chain marked as unused - can't continue repair_frag");
+						elog(DEBUG2, "child itemid in update-chain marked as unused --- can't continue repair_frag");
 						chain_move_failed = true;
 						break;	/* out of loop to move to chain end */
 					}
@@ -1795,7 +1819,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					if (vtlp == NULL)
 					{
 						/* see discussion above */
-						elog(DEBUG2, "Parent item in update-chain not found - can't continue repair_frag");
+						elog(DEBUG2, "parent item in update-chain not found --- can't continue repair_frag");
 						chain_move_failed = true;
 						break;	/* out of check-all-items loop */
 					}
@@ -1807,7 +1831,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 							   ItemPointerGetOffsetNumber(&(tp.t_self)));
 					/* this can't happen since we saw tuple earlier: */
 					if (!ItemIdIsUsed(Pitemid))
-						elog(ERROR, "Parent itemid marked as unused");
+						elog(ERROR, "parent itemid marked as unused");
 					Ptp.t_datamcxt = NULL;
 					Ptp.t_data = (HeapTupleHeader) PageGetItem(Ppage, Pitemid);
 
@@ -1831,7 +1855,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 									 HeapTupleHeaderGetXmin(tp.t_data))))
 					{
 						ReleaseBuffer(Pbuf);
-						elog(DEBUG2, "Too old parent tuple found - can't continue repair_frag");
+						elog(DEBUG2, "too old parent tuple found --- can't continue repair_frag");
 						chain_move_failed = true;
 						break;	/* out of check-all-items loop */
 					}
@@ -1904,7 +1928,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					 */
 					CacheInvalidateHeapTuple(onerel, &tuple);
 
-					/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
+					/* NO EREPORT(ERROR) TILL CHANGES ARE LOGGED */
 					START_CRIT_SECTION();
 
 					tuple.t_data->t_infomask &= ~(HEAP_XMIN_COMMITTED |
@@ -1960,7 +1984,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 										 LP_USED);
 					if (newoff == InvalidOffsetNumber)
 					{
-						elog(PANIC, "moving chain: failed to add item with len = %lu to page %u",
+						elog(PANIC, "failed to add item with len = %lu to page %u while moving tuple chain",
 						  (unsigned long) tuple_len, destvacpage->blkno);
 					}
 					newitemid = PageGetItemId(ToPage, newoff);
@@ -2087,7 +2111,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 */
 			CacheInvalidateHeapTuple(onerel, &tuple);
 
-			/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
+			/* NO EREPORT(ERROR) TILL CHANGES ARE LOGGED */
 			START_CRIT_SECTION();
 
 			/*
@@ -2193,11 +2217,11 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				if (tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED)
 					continue;
 				if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
-					elog(ERROR, "HEAP_MOVED_IN was not expected (2)");
+					elog(ERROR, "HEAP_MOVED_IN was not expected");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
 				{
 					if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
-						elog(ERROR, "Invalid XVAC in tuple header (4)");
+						elog(ERROR, "invalid XVAC in tuple header");
 					/* some chains was moved while */
 					if (chain_tuple_moved)
 					{			/* cleaning this page */
@@ -2222,7 +2246,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					}
 				}
 				else
-					elog(ERROR, "HEAP_MOVED_OFF was expected (2)");
+					elog(ERROR, "HEAP_MOVED_OFF was expected");
 			}
 		}
 
@@ -2335,7 +2359,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				if (!(tuple.t_data->t_infomask & HEAP_MOVED))
 					elog(ERROR, "HEAP_MOVED_OFF/HEAP_MOVED_IN was expected");
 				if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
-					elog(ERROR, "Invalid XVAC in tuple header (2)");
+					elog(ERROR, "invalid XVAC in tuple header");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
 				{
 					tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
@@ -2353,10 +2377,18 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	}
 	Assert(num_moved == checked_moved);
 
-	elog(elevel, "Rel %s: Pages: %u --> %u; Tuple(s) moved: %u.\n\t%s",
-		 RelationGetRelationName(onerel),
-		 nblocks, blkno, num_moved,
-		 vac_show_rusage(&ru0));
+	/*
+	 * It'd be cleaner to make this report at the bottom of this routine,
+	 * but then the rusage would double-count the second pass of index
+	 * vacuuming.  So do it here and ignore the relatively small amount
+	 * of processing that occurs below.
+	 */
+	ereport(elevel,
+			(errmsg("\"%s\": moved %u tuples, truncated %u to %u pages",
+					RelationGetRelationName(onerel),
+					num_moved, nblocks, blkno),
+			 errdetail("%s",
+					   vac_show_rusage(&ru0))));
 
 	/*
 	 * Reflect the motion of system tuples to catalog cache here.
@@ -2414,12 +2446,12 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
 					{
 						if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
-							elog(ERROR, "Invalid XVAC in tuple header (3)");
+							elog(ERROR, "invalid XVAC in tuple header");
 						itemid->lp_flags &= ~LP_USED;
 						num_tuples++;
 					}
 					else
-						elog(ERROR, "HEAP_MOVED_OFF was expected (3)");
+						elog(ERROR, "HEAP_MOVED_OFF was expected");
 				}
 
 			}
@@ -2468,8 +2500,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	 */
 	i = FlushRelationBuffers(onerel, blkno);
 	if (i < 0)
-		elog(ERROR, "VACUUM (repair_frag): FlushRelationBuffers returned %d",
-			 i);
+		elog(ERROR, "FlushRelationBuffers returned %d", i);
 
 	/* truncate relation, if needed */
 	if (blkno < nblocks)
@@ -2534,15 +2565,15 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 
 	i = FlushRelationBuffers(onerel, relblocks);
 	if (i < 0)
-		elog(ERROR, "VACUUM (vacuum_heap): FlushRelationBuffers returned %d",
-			 i);
+		elog(ERROR, "FlushRelationBuffers returned %d", i);
 
 	/* truncate relation if there are some empty end-pages */
 	if (vacuum_pages->empty_end_pages > 0)
 	{
-		elog(elevel, "Rel %s: Pages: %u --> %u.",
-			 RelationGetRelationName(onerel),
-			 vacrelstats->rel_pages, relblocks);
+		ereport(elevel,
+				(errmsg("\"%s\": truncated %u to %u pages",
+						RelationGetRelationName(onerel),
+						vacrelstats->rel_pages, relblocks)));
 		relblocks = smgrtruncate(DEFAULT_SMGR, onerel, relblocks);
 		onerel->rd_nblocks = relblocks; /* update relcache immediately */
 		onerel->rd_targblock = InvalidBlockNumber;
@@ -2631,11 +2662,15 @@ scan_index(Relation indrel, double num_tuples)
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(elevel, "Index %s: Pages %u, %u deleted, %u free; Tuples %.0f.\n\t%s",
-		 RelationGetRelationName(indrel),
-		 stats->num_pages, stats->pages_deleted, stats->pages_free,
-		 stats->num_index_tuples,
-		 vac_show_rusage(&ru0));
+	ereport(elevel,
+			(errmsg("index \"%s\" now contains %.0f tuples in %u pages",
+					RelationGetRelationName(indrel),
+					stats->num_index_tuples,
+					stats->num_pages),
+			 errdetail("%u index pages have been deleted, %u are currently reusable.\n"
+					   "%s",
+					   stats->pages_deleted, stats->pages_free,
+					   vac_show_rusage(&ru0))));
 
 	/*
 	 * Check for tuple count mismatch.	If the index is partial, then it's
@@ -2645,10 +2680,11 @@ scan_index(Relation indrel, double num_tuples)
 	{
 		if (stats->num_index_tuples > num_tuples ||
 			!vac_is_partial_index(indrel))
-			elog(WARNING, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f)."
-				 "\n\tRecreate the index.",
-				 RelationGetRelationName(indrel),
-				 stats->num_index_tuples, num_tuples);
+			ereport(WARNING,
+					(errmsg("index \"%s\" contains %.0f tuples, but table contains %.0f tuples",
+							RelationGetRelationName(indrel),
+							stats->num_index_tuples, num_tuples),
+					 errhint("Rebuild the index with REINDEX.")));
 	}
 
 	pfree(stats);
@@ -2693,11 +2729,17 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(elevel, "Index %s: Pages %u, %u deleted, %u free; Tuples %.0f: Deleted %.0f.\n\t%s",
-		 RelationGetRelationName(indrel),
-		 stats->num_pages, stats->pages_deleted, stats->pages_free,
-		 stats->num_index_tuples - keep_tuples, stats->tuples_removed,
-		 vac_show_rusage(&ru0));
+	ereport(elevel,
+			(errmsg("index \"%s\" now contains %.0f tuples in %u pages",
+					RelationGetRelationName(indrel),
+					stats->num_index_tuples,
+					stats->num_pages),
+			 errdetail("%.0f index tuples were removed.\n"
+					   "%u index pages have been deleted, %u are currently reusable.\n"
+					   "%s",
+					   stats->tuples_removed,
+					   stats->pages_deleted, stats->pages_free,
+					   vac_show_rusage(&ru0))));
 
 	/*
 	 * Check for tuple count mismatch.	If the index is partial, then it's
@@ -2707,10 +2749,11 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	{
 		if (stats->num_index_tuples > num_tuples + keep_tuples ||
 			!vac_is_partial_index(indrel))
-			elog(WARNING, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f)."
-				 "\n\tRecreate the index.",
-				 RelationGetRelationName(indrel),
-				 stats->num_index_tuples, num_tuples);
+			ereport(WARNING,
+					(errmsg("index \"%s\" contains %.0f tuples, but table contains %.0f tuples",
+							RelationGetRelationName(indrel),
+							stats->num_index_tuples, num_tuples + keep_tuples),
+					 errhint("Rebuild the index with REINDEX.")));
 	}
 
 	pfree(stats);

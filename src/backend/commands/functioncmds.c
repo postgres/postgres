@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.28 2003/07/18 23:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.29 2003/07/20 21:56:32 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -672,10 +672,11 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_FUNCTION),
-				 errmsg("function %s already exists",
-						func_signature_string(name,
-											  procForm->pronargs,
-											  procForm->proargtypes))));
+				 errmsg("function %s already exists in schema \"%s\"",
+						funcname_signature_string(newname,
+												  procForm->pronargs,
+												  procForm->proargtypes),
+						get_namespace_name(namespaceOid))));
 	}
 
 	/* must be owner */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.12 2003/07/18 23:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.13 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,7 +252,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("operator class \"%s\" already exists for access method \"%s\"",
+				 errmsg("operator class \"%s\" for access method \"%s\" already exists",
 						opcname, stmt->amname)));
 
 	/*

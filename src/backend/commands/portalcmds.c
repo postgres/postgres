@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.16 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.17 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,9 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 	 * unnamed portal).
 	 */
 	if (!stmt->portalname || stmt->portalname[0] == '\0')
-		elog(ERROR, "Invalid cursor name: must not be empty");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_NAME),
+				 errmsg("invalid cursor name: must not be empty")));
 
 	/*
 	 * If this is a non-holdable cursor, we require that this statement
@@ -66,16 +68,20 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 	 */
 	rewritten = QueryRewrite((Query *) stmt->query);
 	if (length(rewritten) != 1 || !IsA(lfirst(rewritten), Query))
-		elog(ERROR, "PerformCursorOpen: unexpected rewrite result");
+		elog(ERROR, "unexpected rewrite result");
 	query = (Query *) lfirst(rewritten);
 	if (query->commandType != CMD_SELECT)
-		elog(ERROR, "PerformCursorOpen: unexpected rewrite result");
+		elog(ERROR, "unexpected rewrite result");
 
 	if (query->into)
-		elog(ERROR, "DECLARE CURSOR may not specify INTO");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("DECLARE CURSOR may not specify INTO")));
 	if (query->rowMarks != NIL)
-		elog(ERROR, "DECLARE/UPDATE is not supported"
-			 "\n\tCursors must be READ ONLY");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("DECLARE CURSOR ... FOR UPDATE is not supported"),
+				 errdetail("Cursors must be READ ONLY.")));
 
 	plan = planner(query, true, stmt->options);
 
@@ -152,15 +158,19 @@ PerformPortalFetch(FetchStmt *stmt,
 	 * unnamed portal).
 	 */
 	if (!stmt->portalname || stmt->portalname[0] == '\0')
-		elog(ERROR, "Invalid cursor name: must not be empty");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_NAME),
+				 errmsg("invalid cursor name: must not be empty")));
 
 	/* get the portal from the portal name */
 	portal = GetPortalByName(stmt->portalname);
 	if (!PortalIsValid(portal))
 	{
 		/* FIXME: shouldn't this be an ERROR? */
-		elog(WARNING, "PerformPortalFetch: portal \"%s\" not found",
-			 stmt->portalname);
+		ereport(WARNING,
+				(errcode(ERRCODE_UNDEFINED_CURSOR),
+				 errmsg("portal \"%s\" does not exist", stmt->portalname),
+				 errfunction("PerformPortalFetch"))); /* for ecpg */
 		if (completionTag)
 			strcpy(completionTag, stmt->ismove ? "MOVE 0" : "FETCH 0");
 		return;
@@ -197,7 +207,9 @@ PerformPortalClose(const char *name)
 	 * unnamed portal).
 	 */
 	if (!name || name[0] == '\0')
-		elog(ERROR, "Invalid cursor name: must not be empty");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_NAME),
+				 errmsg("invalid cursor name: must not be empty")));
 
 	/*
 	 * get the portal from the portal name
@@ -205,8 +217,10 @@ PerformPortalClose(const char *name)
 	portal = GetPortalByName(name);
 	if (!PortalIsValid(portal))
 	{
-		elog(WARNING, "PerformPortalClose: portal \"%s\" not found",
-			 name);
+		ereport(WARNING,
+				(errcode(ERRCODE_UNDEFINED_CURSOR),
+				 errmsg("portal \"%s\" does not exist", name),
+				 errfunction("PerformPortalClose"))); /* for ecpg */
 		return;
 	}
 
@@ -292,7 +306,9 @@ PersistHoldablePortal(Portal portal)
 	 * Check for improper portal use, and mark portal active.
 	 */
 	if (portal->portalActive)
-		elog(ERROR, "Portal \"%s\" already active", portal->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("portal \"%s\" already active", portal->name)));
 	portal->portalActive = true;
 
 	/*
@@ -347,7 +363,9 @@ PersistHoldablePortal(Portal portal)
 		long	store_pos;
 
 		if (portal->posOverflow)		/* oops, cannot trust portalPos */
-			elog(ERROR, "Unable to reposition held cursor");
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("unable to reposition held cursor")));
 
 		tuplestore_rescan(portal->holdStore);
 
@@ -360,8 +378,7 @@ PersistHoldablePortal(Portal portal)
 									  &should_free);
 
 			if (tup == NULL)
-				elog(ERROR,
-					 "PersistHoldablePortal: unexpected end of tuple stream");
+				elog(ERROR, "unexpected end of tuple stream");
 
 			if (should_free)
 				pfree(tup);

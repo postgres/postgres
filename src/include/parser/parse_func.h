@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.47 2003/07/04 02:51:34 tgl Exp $
+ * $Id: parse_func.h,v 1.48 2003/07/20 21:56:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,8 @@ extern void make_fn_arguments(ParseState *pstate,
 							  Oid *actual_arg_types,
 							  Oid *declared_arg_types);
 
+extern const char *funcname_signature_string(const char *funcname,
+											 int nargs, const Oid *argtypes);
 extern const char *func_signature_string(List *funcname,
 										 int nargs, const Oid *argtypes);
 

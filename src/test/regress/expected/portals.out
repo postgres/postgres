@@ -737,4 +737,4 @@ DECLARE foo26 CURSOR WITH HOLD FOR SELECT * FROM tenk1;
 ROLLBACK;
 -- should fail
 FETCH FROM foo26;
-WARNING:  PerformPortalFetch: portal "foo26" not found
+WARNING:  portal "foo26" does not exist

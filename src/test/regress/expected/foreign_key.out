@@ -689,10 +689,10 @@ CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE_FAIL1 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest2) REFERENCES PKTABLE);
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  CREATE TABLE: column "ftest2" referenced in foreign key constraint does not exist
+ERROR:  column "ftest2" referenced in foreign key constraint does not exist
 CREATE TABLE FKTABLE_FAIL2 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest1) REFERENCES PKTABLE(ptest2));
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  CREATE TABLE: column "ptest2" referenced in foreign key constraint does not exist
+ERROR:  column "ptest2" referenced in foreign key constraint does not exist
 DROP TABLE FKTABLE_FAIL1;
 ERROR:  table "fktable_fail1" does not exist
 DROP TABLE FKTABLE_FAIL2;
@@ -703,7 +703,7 @@ CREATE TABLE PKTABLE (ptest1 int, ptest2 int, UNIQUE(ptest1, ptest2));
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_ptest1_key" for table "pktable"
 CREATE TABLE FKTABLE_FAIL1 (ftest1 int REFERENCES pktable(ptest1));
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  UNIQUE constraint matching given keys for referenced table "pktable" not found
+ERROR:  there is no UNIQUE constraint matching given keys for referenced table "pktable"
 DROP TABLE FKTABLE_FAIL1;
 ERROR:  table "fktable_fail1" does not exist
 DROP TABLE PKTABLE;

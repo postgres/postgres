@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/alter.c,v 1.1 2003/06/27 14:45:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/alter.c,v 1.2 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +44,8 @@ CheckOwnership(RangeVar *rel, bool noCatalogs)
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(relOid),
 						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Relation \"%s\" does not exist", rel->relname);
+	if (!HeapTupleIsValid(tuple)) /* should not happen */
+		elog(ERROR, "cache lookup failed for relation %u", relOid);
 
 	if (!pg_class_ownercheck(relOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, rel->relname);
@@ -54,8 +54,10 @@ CheckOwnership(RangeVar *rel, bool noCatalogs)
 	{
 		if (!allowSystemTableMods &&
 			IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
-			elog(ERROR, "relation \"%s\" is a system catalog",
-				 rel->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("relation \"%s\" is a system catalog",
+							rel->relname)));
 	}
 
 	ReleaseSysCache(tuple);
@@ -154,6 +156,7 @@ ExecRenameStmt(RenameStmt *stmt)
 		}
 
 		default:
-			elog(ERROR, "invalid object type for RenameStmt: %d", stmt->renameType);
+			elog(ERROR, "unrecognized rename stmt type: %d",
+				 (int) stmt->renameType);
 	}
 }

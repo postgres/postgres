@@ -28,23 +28,23 @@ COPY x (b, d) from stdin;
 COPY x (a, b, c, d, e) from stdin;
 -- non-existent column in column list: should fail
 COPY x (xyz) from stdin;
-ERROR:  relation "x" has no column "xyz"
+ERROR:  attribute "xyz" of relation "x" does not exist
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
-ERROR:  Attribute "d" specified more than once
+ERROR:  attribute "d" specified more than once
 -- missing data: should fail
 COPY x from stdin;
 ERROR:  pg_atoi: zero-length string
 CONTEXT:  COPY FROM, line 1
 COPY x from stdin;
-ERROR:  Missing data for column "e"
+ERROR:  missing data for column "e"
 CONTEXT:  COPY FROM, line 1
 COPY x from stdin;
-ERROR:  Missing data for column "e"
+ERROR:  missing data for column "e"
 CONTEXT:  COPY FROM, line 1
 -- extra data: should fail
 COPY x from stdin;
-ERROR:  Extra data after last expected column
+ERROR:  extra data after last expected column
 CONTEXT:  COPY FROM, line 1
 -- various COPY options: delimiters, oids, NULL string
 COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
@@ -75,9 +75,9 @@ INSERT INTO no_oids (a, b) VALUES (5, 10);
 INSERT INTO no_oids (a, b) VALUES (20, 30);
 -- should fail
 COPY no_oids FROM stdin WITH OIDS;
-ERROR:  COPY: table "no_oids" does not have OIDs
+ERROR:  table "no_oids" does not have OIDs
 COPY no_oids TO stdout WITH OIDS;
-ERROR:  COPY: table "no_oids" does not have OIDs
+ERROR:  table "no_oids" does not have OIDs
 -- check copy out
 COPY x TO stdout;
 10000	21	31	41	before trigger fired

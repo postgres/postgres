@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.8 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.9 2003/07/20 21:56:32 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -100,13 +100,17 @@ DefineOperator(List *names, List *parameters)
 		{
 			typeName1 = defGetTypeName(defel);
 			if (typeName1->setof)
-				elog(ERROR, "setof type not implemented for leftarg");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("setof type not allowed for operator argument")));
 		}
 		else if (strcasecmp(defel->defname, "rightarg") == 0)
 		{
 			typeName2 = defGetTypeName(defel);
 			if (typeName2->setof)
-				elog(ERROR, "setof type not implemented for rightarg");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("setof type not allowed for operator argument")));
 		}
 		else if (strcasecmp(defel->defname, "procedure") == 0)
 			functionName = defGetQualifiedName(defel);
@@ -131,17 +135,19 @@ DefineOperator(List *names, List *parameters)
 		else if (strcasecmp(defel->defname, "gtcmp") == 0)
 			gtCompareName = defGetQualifiedName(defel);
 		else
-		{
-			elog(WARNING, "DefineOperator: attribute \"%s\" not recognized",
-				 defel->defname);
-		}
+			ereport(WARNING,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("operator attribute \"%s\" not recognized",
+							defel->defname)));
 	}
 
 	/*
 	 * make sure we have our required definitions
 	 */
 	if (functionName == NIL)
-		elog(ERROR, "Define: \"procedure\" unspecified");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("operator procedure must be specified")));
 
 	/* Transform type names to type OIDs */
 	if (typeName1)
@@ -212,7 +218,7 @@ RemoveOperator(RemoveOperStmt *stmt)
 						 ObjectIdGetDatum(operOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup of operator %u failed", operOid);
+		elog(ERROR, "cache lookup failed for operator %u", operOid);
 
 	/* Permission check: must own operator or its namespace */
 	if (!pg_oper_ownercheck(operOid, GetUserId()) &&
@@ -247,8 +253,7 @@ RemoveOperatorById(Oid operOid)
 						 ObjectIdGetDatum(operOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "RemoveOperatorById: failed to find tuple for operator %u",
-			 operOid);
+		elog(ERROR, "cache lookup failed for operator %u", operOid);
 
 	simple_heap_delete(relation, &tup->t_self);
 

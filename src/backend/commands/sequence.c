@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.96 2003/06/12 07:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.97 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,11 +67,10 @@ typedef SeqTableData *SeqTable;
 static SeqTable seqtab = NULL;	/* Head of list of SeqTable items */
 
 
-static void init_sequence(const char *caller, RangeVar *relation,
-			  SeqTable *p_elm, Relation *p_rel);
-static Form_pg_sequence read_info(const char *caller, SeqTable elm,
-		  Relation rel, Buffer *buf);
-static void init_params(char *caller, List *options, Form_pg_sequence new);
+static void init_sequence(RangeVar *relation,
+						  SeqTable *p_elm, Relation *p_rel);
+static Form_pg_sequence read_info(SeqTable elm, Relation rel, Buffer *buf);
+static void init_params(List *options, Form_pg_sequence new);
 static void do_setval(RangeVar *sequence, int64 next, bool iscalled);
 
 /*
@@ -104,7 +103,7 @@ DefineSequence(CreateSeqStmt *seq)
 	new.is_cycled = false; 
 
 	/* Check and set values */
-	init_params("DefineSequence", seq->options, &new);
+	init_params(seq->options, &new);
 
 	/*
 	 * Create relation (and fill *null & *value)
@@ -200,7 +199,7 @@ DefineSequence(CreateSeqStmt *seq)
 	buf = ReadBuffer(rel, P_NEW);
 
 	if (!BufferIsValid(buf))
-		elog(ERROR, "DefineSequence: ReadBuffer failed");
+		elog(ERROR, "ReadBuffer failed");
 
 	Assert(BufferGetBlockNumber(buf) == 0);
 
@@ -313,14 +312,14 @@ AlterSequence(AlterSeqStmt *stmt)
 	FormData_pg_sequence new;
 
 	/* open and AccessShareLock sequence */
-	init_sequence("setval", stmt->sequence, &elm, &seqrel);
+	init_sequence(stmt->sequence, &elm, &seqrel);
 
 	/* Allow DROP to sequence owner only*/
 	if (!pg_class_ownercheck(elm->relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, stmt->sequence->relname);
 
 	/* lock page' buffer and read tuple into new sequence structure */
-	seq = read_info("nextval", elm, seqrel, &buf);
+	seq = read_info(elm, seqrel, &buf);
 	page = BufferGetPage(buf);
 
 	new.increment_by = seq->increment_by;
@@ -331,7 +330,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	new.last_value = seq->last_value;
 
 	/* Check and set values */
-	init_params("AlterSequence", stmt->options, &new);
+	init_params(stmt->options, &new);
 
 	seq->increment_by = new.increment_by;
 	seq->max_value = new.max_value;
@@ -413,11 +412,13 @@ nextval(PG_FUNCTION_ARGS)
 															 "nextval"));
 
 	/* open and AccessShareLock sequence */
-	init_sequence("nextval", sequence, &elm, &seqrel);
+	init_sequence(sequence, &elm, &seqrel);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
-		elog(ERROR, "%s.nextval: you don't have permissions to set sequence %s",
-			 sequence->relname, sequence->relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("%s.nextval: permission denied",
+						sequence->relname)));
 
 	if (elm->last != elm->cached)		/* some numbers were cached */
 	{
@@ -427,7 +428,7 @@ nextval(PG_FUNCTION_ARGS)
 	}
 
 	/* lock page' buffer and read tuple */
-	seq = read_info("nextval", elm, seqrel, &buf);
+	seq = read_info(elm, seqrel, &buf);
 	page = BufferGetPage(buf);
 
 	last = next = result = seq->last_value;
@@ -491,8 +492,10 @@ nextval(PG_FUNCTION_ARGS)
 					char		buf[100];
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, maxv);
-					elog(ERROR, "%s.nextval: reached MAXVALUE (%s)",
-						 sequence->relname, buf);
+					ereport(ERROR,
+							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+							 errmsg("%s.nextval: reached MAXVALUE (%s)",
+									sequence->relname, buf)));
 				}
 				next = minv;
 			}
@@ -512,8 +515,10 @@ nextval(PG_FUNCTION_ARGS)
 					char		buf[100];
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, minv);
-					elog(ERROR, "%s.nextval: reached MINVALUE (%s)",
-						 sequence->relname, buf);
+					ereport(ERROR,
+							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+							 errmsg("%s.nextval: reached MINVALUE (%s)",
+									sequence->relname, buf)));
 				}
 				next = maxv;
 			}
@@ -599,15 +604,19 @@ currval(PG_FUNCTION_ARGS)
 															 "currval"));
 
 	/* open and AccessShareLock sequence */
-	init_sequence("currval", sequence, &elm, &seqrel);
+	init_sequence(sequence, &elm, &seqrel);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_SELECT) != ACLCHECK_OK)
-		elog(ERROR, "%s.currval: you don't have permissions to read sequence %s",
-			 sequence->relname, sequence->relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("%s.currval: permission denied",
+						sequence->relname)));
 
 	if (elm->increment == 0)	/* nextval/read_info were not called */
-		elog(ERROR, "%s.currval is not yet defined in this session",
-			 sequence->relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("%s.currval is not yet defined in this session",
+						sequence->relname)));
 
 	result = elm->last;
 
@@ -638,14 +647,16 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 	Form_pg_sequence seq;
 
 	/* open and AccessShareLock sequence */
-	init_sequence("setval", sequence, &elm, &seqrel);
+	init_sequence(sequence, &elm, &seqrel);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
-		elog(ERROR, "%s.setval: you don't have permissions to set sequence %s",
-			 sequence->relname, sequence->relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("%s.setval: permission denied",
+						sequence->relname)));
 
 	/* lock page' buffer and read tuple */
-	seq = read_info("setval", elm, seqrel, &buf);
+	seq = read_info(elm, seqrel, &buf);
 
 	if ((next < seq->min_value) || (next > seq->max_value))
 	{
@@ -656,8 +667,10 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 		snprintf(bufv, sizeof(bufv), INT64_FORMAT, next);
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, seq->min_value);
 		snprintf(bufx, sizeof(bufx), INT64_FORMAT, seq->max_value);
-		elog(ERROR, "%s.setval: value %s is out of bounds (%s,%s)",
-			 sequence->relname, bufv, bufm, bufx);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("%s.setval: value %s is out of bounds (%s..%s)",
+						sequence->relname, bufv, bufm, bufx)));
 	}
 
 	/* save info in local cache */
@@ -757,8 +770,7 @@ setval_and_iscalled(PG_FUNCTION_ARGS)
  * output parameters.
  */
 static void
-init_sequence(const char *caller, RangeVar *relation,
-			  SeqTable *p_elm, Relation *p_rel)
+init_sequence(RangeVar *relation, SeqTable *p_elm, Relation *p_rel)
 {
 	Oid			relid = RangeVarGetRelid(relation, false);
 	TransactionId thisxid = GetCurrentTransactionId();
@@ -782,8 +794,10 @@ init_sequence(const char *caller, RangeVar *relation,
 		seqrel = relation_open(relid, NoLock);
 
 	if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
-		elog(ERROR, "%s.%s: %s is not a sequence",
-			 relation->relname, caller, relation->relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a sequence",
+						relation->relname)));
 
 	/*
 	 * Allocate new seqtable entry if we didn't find one.
@@ -800,7 +814,9 @@ init_sequence(const char *caller, RangeVar *relation,
 		 */
 		elm = (SeqTable) malloc(sizeof(SeqTableData));
 		if (elm == NULL)
-			elog(ERROR, "Memory exhausted in init_sequence");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		elm->relid = relid;
 		/* increment is set to 0 until we do read_info (see currval) */
 		elm->last = elm->cached = elm->increment = 0;
@@ -818,8 +834,7 @@ init_sequence(const char *caller, RangeVar *relation,
 
 /* Given an opened relation, lock the page buffer and find the tuple */
 static Form_pg_sequence
-read_info(const char *caller, SeqTable elm,
-		  Relation rel, Buffer *buf)
+read_info(SeqTable elm, Relation rel, Buffer *buf)
 {
 	PageHeader	page;
 	ItemId		lp;
@@ -828,13 +843,12 @@ read_info(const char *caller, SeqTable elm,
 	Form_pg_sequence seq;
 
 	if (rel->rd_nblocks > 1)
-		elog(ERROR, "%s.%s: invalid number of blocks in sequence",
-			 RelationGetRelationName(rel), caller);
+		elog(ERROR, "invalid number of blocks in sequence \"%s\"",
+			 RelationGetRelationName(rel));
 
 	*buf = ReadBuffer(rel, 0);
 	if (!BufferIsValid(*buf))
-		elog(ERROR, "%s.%s: ReadBuffer failed",
-			 RelationGetRelationName(rel), caller);
+		elog(ERROR, "ReadBuffer failed");
 
 	LockBuffer(*buf, BUFFER_LOCK_EXCLUSIVE);
 
@@ -842,8 +856,8 @@ read_info(const char *caller, SeqTable elm,
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 
 	if (sm->magic != SEQ_MAGIC)
-		elog(ERROR, "%s.%s: bad magic (%08X)",
-			 RelationGetRelationName(rel), caller, sm->magic);
+		elog(ERROR, "bad magic number (%08X) in sequence \"%s\"",
+			 sm->magic, RelationGetRelationName(rel));
 
 	lp = PageGetItemId(page, FirstOffsetNumber);
 	Assert(ItemIdIsUsed(lp));
@@ -858,7 +872,7 @@ read_info(const char *caller, SeqTable elm,
 
 
 static void
-init_params(char *caller, List *options, Form_pg_sequence new)
+init_params(List *options, Form_pg_sequence new)
 {
 	DefElem    *last_value = NULL;
 	DefElem    *increment_by = NULL;
@@ -875,49 +889,59 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 		if (strcmp(defel->defname, "increment") == 0)
 		{
 			if (increment_by)
-				elog(ERROR, "%s: INCREMENT BY defined twice", caller);
-
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			increment_by = defel;
-
 		}
 		/*
 		 * start is for a new sequence
 		 * restart is for alter
 		 */
-		else if ((new->last_value == 0L && strcmp(defel->defname, "start") == 0)
-			|| (new->last_value != 0 && strcmp(defel->defname, "restart") == 0))
+		else if (strcmp(defel->defname, "start") == 0 ||
+				 strcmp(defel->defname, "restart") == 0)
 		{
 			if (last_value)
-				elog(ERROR, "%s: LAST VALUE defined twice", caller);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			last_value = defel;
 		}
 		else if (strcmp(defel->defname, "maxvalue") == 0)
 		{
 			if (max_value)
-				elog(ERROR, "%s: MAX VALUE defined twice", caller);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			max_value = defel;
 		}
 		else if (strcmp(defel->defname, "minvalue") == 0)
 		{
 			if (min_value)
-				elog(ERROR, "%s: MIN VALUE defined twice", caller);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			min_value = defel;
 		}
 		else if (strcmp(defel->defname, "cache") == 0)
 		{
 			if (cache_value)
-				elog(ERROR, "%s: CACHE defined twice", caller);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			cache_value = defel;
 		}
 		else if (strcmp(defel->defname, "cycle") == 0)
 		{
 			if (is_cycled_set)
-				elog(ERROR, "%s: CYCLE defined twice", caller);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
 			is_cycled_set = true;
 			new->is_cycled = (defel->arg != NULL);
 		}
 		else
-			elog(ERROR, "%s: option \"%s\" not recognized", caller,
+			elog(ERROR, "option \"%s\" not recognized",
 				 defel->defname);
 	}
 
@@ -926,10 +950,11 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 		new->increment_by = 1;
 	else if (increment_by != (DefElem *) NULL)
 	{
-		if (defGetInt64(increment_by) == 0)
-			elog(ERROR, "%s: can't INCREMENT by 0", caller);
-
 		new->increment_by = defGetInt64(increment_by);
+		if (new->increment_by == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("can't INCREMENT by zero")));
 	}
 
 	/* MAXVALUE */
@@ -963,8 +988,10 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
 		snprintf(bufx, sizeof(bufx), INT64_FORMAT, new->max_value);
-		elog(ERROR, "%s: MINVALUE (%s) must be less than MAXVALUE (%s)",
-			 caller, bufm, bufx);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("MINVALUE (%s) must be less than MAXVALUE (%s)",
+						bufm, bufx)));
 	}
 
 	/* START WITH */
@@ -985,8 +1012,10 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 
 		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->last_value);
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
-		elog(ERROR, "%s: START value (%s) can't be less than MINVALUE (%s)",
-			 caller, bufs, bufm);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("START value (%s) can't be less than MINVALUE (%s)",
+						bufs, bufm)));
 	}
 	if (new->last_value > new->max_value)
 	{
@@ -995,8 +1024,10 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 
 		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->last_value);
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->max_value);
-		elog(ERROR, "%s: START value (%s) can't be greater than MAXVALUE (%s)",
-			 caller, bufs, bufm);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("START value (%s) can't be greater than MAXVALUE (%s)",
+						bufs, bufm)));
 	}
 
 	/* CACHE */
@@ -1007,8 +1038,9 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 		char		buf[100];
 
 		snprintf(buf, sizeof(buf), INT64_FORMAT, new->cache_value);
-		elog(ERROR, "%s: CACHE (%s) can't be <= 0",
-			 caller, buf);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("CACHE (%s) must be greater than zero", buf)));
 	}
 }
 

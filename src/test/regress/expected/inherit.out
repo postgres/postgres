@@ -5,8 +5,8 @@ CREATE TABLE a (aa TEXT);
 CREATE TABLE b (bb TEXT) INHERITS (a);
 CREATE TABLE c (cc TEXT) INHERITS (a);
 CREATE TABLE d (dd TEXT) INHERITS (b,c,a);
-NOTICE:  CREATE TABLE: merging multiple inherited definitions of attribute "aa"
-NOTICE:  CREATE TABLE: merging multiple inherited definitions of attribute "aa"
+NOTICE:  merging multiple inherited definitions of attribute "aa"
+NOTICE:  merging multiple inherited definitions of attribute "aa"
 INSERT INTO a(aa) VALUES('aaa');
 INSERT INTO a(aa) VALUES('aaaa');
 INSERT INTO a(aa) VALUES('aaaaa');
@@ -604,7 +604,7 @@ SELECT * FROM a; /* Has ee entry */
 (1 row)
 
 CREATE TABLE inhf (LIKE inhx, LIKE inhx); /* Throw error */
-ERROR:  CREATE TABLE: attribute "xx" duplicated
+ERROR:  attribute "xx" duplicated
 CREATE TABLE inhf (LIKE inhx INCLUDING DEFAULTS);
 INSERT INTO inhf DEFAULT VALUES;
 SELECT * FROM inhf; /* Single entry with value 'text' */

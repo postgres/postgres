@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.65 2003/07/17 20:13:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.66 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,8 +108,8 @@ CommentObject(CommentStmt *stmt)
 			CommentConstraint(stmt->objname, stmt->comment);
 			break;
 		default:
-			elog(ERROR, "An attempt was made to comment on a unknown type: %d",
-				 stmt->objtype);
+			elog(ERROR, "unrecognized object type: %d",
+				 (int) stmt->objtype);
 	}
 }
 
@@ -303,23 +303,31 @@ CommentRelation(int objtype, List *relname, char *comment)
 	{
 		case OBJECT_INDEX:
 			if (relation->rd_rel->relkind != RELKIND_INDEX)
-				elog(ERROR, "relation \"%s\" is not an index",
-					 RelationGetRelationName(relation));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("relation \"%s\" is not an index",
+								RelationGetRelationName(relation))));
 			break;
 		case OBJECT_SEQUENCE:
 			if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
-				elog(ERROR, "relation \"%s\" is not a sequence",
-					 RelationGetRelationName(relation));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("relation \"%s\" is not a sequence",
+								RelationGetRelationName(relation))));
 			break;
 		case OBJECT_TABLE:
 			if (relation->rd_rel->relkind != RELKIND_RELATION)
-				elog(ERROR, "relation \"%s\" is not a table",
-					 RelationGetRelationName(relation));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("relation \"%s\" is not a table",
+								RelationGetRelationName(relation))));
 			break;
 		case OBJECT_VIEW:
 			if (relation->rd_rel->relkind != RELKIND_VIEW)
-				elog(ERROR, "relation \"%s\" is not a view",
-					 RelationGetRelationName(relation));
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("relation \"%s\" is not a view",
+								RelationGetRelationName(relation))));
 			break;
 	}
 
@@ -338,8 +346,8 @@ CommentRelation(int objtype, List *relname, char *comment)
  * such as a table's column. The routine will check security
  * restrictions and then attempt to look up the specified
  * attribute. If successful, a comment is added/dropped, else an
- * elog() exception is thrown.	The parameters are the relation
- * and attribute names, and the comments
+ * ereport() exception is thrown.	The parameters are the relation
+ * and attribute names, and the comment
  */
 static void
 CommentAttribute(List *qualname, char *comment)
@@ -353,8 +361,8 @@ CommentAttribute(List *qualname, char *comment)
 
 	/* Separate relname and attr name */
 	nnames = length(qualname);
-	if (nnames < 2)
-		elog(ERROR, "CommentAttribute: must specify relation.attribute");
+	if (nnames < 2)				/* parser messed up */
+		elog(ERROR, "must specify relation and attribute");
 	relname = ltruncate(nnames - 1, listCopy(qualname));
 	attrname = strVal(nth(nnames - 1, qualname));
 
@@ -371,8 +379,10 @@ CommentAttribute(List *qualname, char *comment)
 
 	attnum = get_attnum(RelationGetRelid(relation), attrname);
 	if (attnum == InvalidAttrNumber)
-		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-			 RelationGetRelationName(relation), attrname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+						attrname, RelationGetRelationName(relation))));
 
 	/* Create the comment using the relation's oid */
 
@@ -400,7 +410,9 @@ CommentDatabase(List *qualname, char *comment)
 	Oid			oid;
 
 	if (length(qualname) != 1)
-		elog(ERROR, "CommentDatabase: database name may not be qualified");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("database name may not be qualified")));
 	database = strVal(lfirst(qualname));
 
 	/*
@@ -420,21 +432,24 @@ CommentDatabase(List *qualname, char *comment)
 	oid = get_database_oid(database);
 	if (!OidIsValid(oid))
 	{
-		elog(WARNING, "database \"%s\" does not exist", database);
+		ereport(WARNING,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", database)));
 		return;
 	}
 
 	/* Only allow comments on the current database */
 	if (oid != MyDatabaseId)
 	{
-		elog(WARNING, "database comments may only be applied to the current database");
+		ereport(WARNING,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("database comments may only be applied to the current database")));
 		return;
 	}
 
-	/* Allow if the user matches the database dba or is a superuser */
+	/* Check object security */
 	if (!pg_database_ownercheck(oid, GetUserId()))
-		elog(ERROR, "you are not permitted to comment on database \"%s\"",
-			 database);
+		aclcheck_error(ACLCHECK_NOT_OWNER, database);
 
 	/* Create the comment with the pg_database oid */
 	CreateComments(oid, RelOid_pg_database, 0, comment);
@@ -457,15 +472,18 @@ CommentNamespace(List *qualname, char *comment)
 	char	   *namespace;
 
 	if (length(qualname) != 1)
-		elog(ERROR, "CommentSchema: schema name may not be qualified");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("schema name may not be qualified")));
 	namespace = strVal(lfirst(qualname));
 
 	oid = GetSysCacheOid(NAMESPACENAME,
 						 CStringGetDatum(namespace),
 						 0, 0, 0);
 	if (!OidIsValid(oid))
-		elog(ERROR, "CommentSchema: Schema \"%s\" could not be found",
-			 namespace);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", namespace)));
 
 	/* Check object security */
 	if (!pg_namespace_ownercheck(oid, GetUserId()))
@@ -536,15 +554,18 @@ CommentRule(List *qualname, char *comment)
 		}
 		else
 		{
-			elog(ERROR, "rule \"%s\" does not exist", rulename);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("rule \"%s\" does not exist", rulename)));
 			reloid = ruleoid = 0;		/* keep compiler quiet */
 		}
 
 		if (HeapTupleIsValid(tuple = heap_getnext(scanDesc,
 												  ForwardScanDirection)))
-			elog(ERROR, "There are multiple rules \"%s\""
-			 "\n\tPlease specify a relation name as well as a rule name",
-				 rulename);
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("there are multiple rules \"%s\"", rulename),
+					 errhint("Specify a relation name as well as a rule name.")));
 
 		heap_endscan(scanDesc);
 		heap_close(RewriteRelation, AccessShareLock);
@@ -570,7 +591,7 @@ CommentRule(List *qualname, char *comment)
 							   PointerGetDatum(rulename),
 							   0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "rule \"%s\" does not exist", rulename);
+			elog(ERROR, "cache lookup failed for rule \"%s\"", rulename);
 		Assert(reloid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
 		ruleoid = HeapTupleGetOid(tuple);
 		ReleaseSysCache(tuple);
@@ -744,8 +765,8 @@ CommentTrigger(List *qualname, char *comment)
 
 	/* Separate relname and trig name */
 	nnames = length(qualname);
-	if (nnames < 2)
-		elog(ERROR, "CommentTrigger: must specify relation and trigger");
+	if (nnames < 2)				/* parser messed up */
+		elog(ERROR, "must specify relation and trigger");
 	relname = ltruncate(nnames - 1, listCopy(qualname));
 	trigname = strVal(nth(nnames - 1, qualname));
 
@@ -778,8 +799,10 @@ CommentTrigger(List *qualname, char *comment)
 	/* If no trigger exists for the relation specified, notify user */
 
 	if (!HeapTupleIsValid(triggertuple))
-		elog(ERROR, "trigger \"%s\" for relation \"%s\" does not exist",
-			 trigname, RelationGetRelationName(relation));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("trigger \"%s\" for relation \"%s\" does not exist",
+						trigname, RelationGetRelationName(relation))));
 
 	oid = HeapTupleGetOid(triggertuple);
 
@@ -819,8 +842,8 @@ CommentConstraint(List *qualname, char *comment)
 
 	/* Separate relname and constraint name */
 	nnames = length(qualname);
-	if (nnames < 2)
-		elog(ERROR, "CommentConstraint: must specify relation and constraint");
+	if (nnames < 2)				/* parser messed up */
+		elog(ERROR, "must specify relation and constraint");
 	relName = ltruncate(nnames - 1, listCopy(qualname));
 	conName = strVal(nth(nnames - 1, qualname));
 
@@ -854,8 +877,10 @@ CommentConstraint(List *qualname, char *comment)
 		if (strcmp(NameStr(con->conname), conName) == 0)
 		{
 			if (OidIsValid(conOid))
-				elog(ERROR, "Relation \"%s\" has multiple constraints named \"%s\"",
-					 RelationGetRelationName(relation), conName);
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("relation \"%s\" has multiple constraints named \"%s\"",
+								RelationGetRelationName(relation), conName)));
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}
@@ -864,8 +889,10 @@ CommentConstraint(List *qualname, char *comment)
 
 	/* If no constraint exists for the relation specified, notify user */
 	if (!OidIsValid(conOid))
-		elog(ERROR, "constraint \"%s\" for relation \"%s\" does not exist",
-			 conName, RelationGetRelationName(relation));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("constraint \"%s\" for relation \"%s\" does not exist",
+						conName, RelationGetRelationName(relation))));
 
 	/* Create the comment with the pg_constraint oid */
 	CreateComments(conOid, RelationGetRelid(pg_constraint), 0, comment);

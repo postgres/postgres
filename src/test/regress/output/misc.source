@@ -373,7 +373,7 @@ SELECT * FROM e_star*;
 (23 rows)
 
 ALTER TABLE a_star* ADD COLUMN a text;
-NOTICE:  ALTER TABLE: merging definition of column "a" for child d_star
+NOTICE:  merging definition of column "a" for child "d_star"
 --UPDATE b_star*
 --   SET a = text 'gazpacho'
 --   WHERE aa > 4;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.101 2003/06/27 14:45:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.102 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,10 +87,14 @@ DefineIndex(RangeVar *heapRelation,
 	 */
 	numberOfAttributes = length(attributeList);
 	if (numberOfAttributes <= 0)
-		elog(ERROR, "DefineIndex: must specify at least one attribute");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("must specify at least one attribute")));
 	if (numberOfAttributes > INDEX_MAX_KEYS)
-		elog(ERROR, "Cannot use more than %d attributes in an index",
-			 INDEX_MAX_KEYS);
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
+				 errmsg("cannot use more than %d attributes in an index",
+						INDEX_MAX_KEYS)));
 
 	/*
 	 * Open heap relation, acquire a suitable lock on it, remember its OID
@@ -100,8 +104,10 @@ DefineIndex(RangeVar *heapRelation,
 	/* Note: during bootstrap may see uncataloged relation */
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_UNCATALOGED)
-		elog(ERROR, "DefineIndex: relation \"%s\" is not a table",
-			 heapRelation->relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not a table",
+						heapRelation->relname)));
 
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
@@ -109,7 +115,10 @@ DefineIndex(RangeVar *heapRelation,
 	if (!IsBootstrapProcessingMode() &&
 		IsSystemRelation(rel) &&
 		!IndexesAreActive(rel))
-		elog(ERROR, "Existing indexes are inactive. REINDEX first");
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEXES_DEACTIVATED),
+				 errmsg("existing indexes are inactive"),
+				 errhint("REINDEX the table first.")));
 
 	heap_close(rel, NoLock);
 
@@ -137,17 +146,23 @@ DefineIndex(RangeVar *heapRelation,
 						   PointerGetDatum(accessMethodName),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "DefineIndex: access method \"%s\" not found",
-			 accessMethodName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("access method \"%s\" does not exist",
+						accessMethodName)));
 	accessMethodId = HeapTupleGetOid(tuple);
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
 
 	if (unique && !accessMethodForm->amcanunique)
-		elog(ERROR, "DefineIndex: access method \"%s\" does not support UNIQUE indexes",
-			 accessMethodName);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("access method \"%s\" does not support UNIQUE indexes",
+						accessMethodName)));
 	if (numberOfAttributes > 1 && !accessMethodForm->amcanmulticol)
-		elog(ERROR, "DefineIndex: access method \"%s\" does not support multi-column indexes",
-			 accessMethodName);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("access method \"%s\" does not support multi-column indexes",
+						accessMethodName)));
 
 	ReleaseSysCache(tuple);
 
@@ -158,7 +173,9 @@ DefineIndex(RangeVar *heapRelation,
 	if (rangetable != NIL)
 	{
 		if (length(rangetable) != 1 || getrelid(1, rangetable) != relationId)
-			elog(ERROR, "index expressions and predicates may refer only to the base relation");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("index expressions and predicates may refer only to the base relation")));
 	}
 
 	/*
@@ -187,7 +204,9 @@ DefineIndex(RangeVar *heapRelation,
 			HeapTuple	atttuple;
 
 			if (!key->name)
-				elog(ERROR, "primary keys cannot be expressions");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("primary keys cannot be expressions")));
 
 			/* System attributes are never null, so no problem */
 			if (SystemAttributeByName(key->name, rel->rd_rel->relhasoids))
@@ -214,8 +233,10 @@ DefineIndex(RangeVar *heapRelation,
 			else
 			{
 				/* This shouldn't happen if parser did its job ... */
-				elog(ERROR, "DefineIndex: column \"%s\" named in key does not exist",
-					 key->name);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" named in key does not exist",
+								key->name)));
 			}
 		}
 	}
@@ -271,16 +292,22 @@ CheckPredicate(List *predList)
 	 * restrictions.
 	 */
 	if (contain_subplans((Node *) predList))
-		elog(ERROR, "Cannot use subselect in index predicate");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot use sub-select in index predicate")));
 	if (contain_agg_clause((Node *) predList))
-		elog(ERROR, "Cannot use aggregate in index predicate");
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("cannot use aggregate in index predicate")));
 
 	/*
 	 * A predicate using mutable functions is probably wrong, for the same
 	 * reasons that we don't allow an index expression to use one.
 	 */
 	if (contain_mutable_functions((Node *) predList))
-		elog(ERROR, "Functions in index predicate must be marked IMMUTABLE");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("functions in index predicate must be marked IMMUTABLE")));
 }
 
 static void
@@ -311,8 +338,10 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			Assert(attribute->expr == NULL);
 			atttuple = SearchSysCacheAttName(relId, attribute->name);
 			if (!HeapTupleIsValid(atttuple))
-				elog(ERROR, "DefineIndex: attribute \"%s\" not found",
-					 attribute->name);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("attribute \"%s\" does not exist",
+								attribute->name)));
 			attform = (Form_pg_attribute) GETSTRUCT(atttuple);
 			indexInfo->ii_KeyAttrNumbers[attn] = attform->attnum;
 			atttype = attform->atttypid;
@@ -341,9 +370,13 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			 * hence these restrictions.
 			 */
 			if (contain_subplans(attribute->expr))
-				elog(ERROR, "Cannot use subselect in index expression");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot use sub-select in index expression")));
 			if (contain_agg_clause(attribute->expr))
-				elog(ERROR, "Cannot use aggregate in index expression");
+				ereport(ERROR,
+						(errcode(ERRCODE_GROUPING_ERROR),
+						 errmsg("cannot use aggregate in index expression")));
 
 			/*
 			 * A expression using mutable functions is probably wrong,
@@ -352,7 +385,9 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			 * all.
 			 */
 			if (contain_mutable_functions(attribute->expr))
-				elog(ERROR, "Functions in index expression must be marked IMMUTABLE");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("functions in index expression must be marked IMMUTABLE")));
 		}
 
 		classOidP[attn] = GetIndexOpClass(attribute->opclass,
@@ -406,10 +441,11 @@ GetIndexOpClass(List *opclass, Oid attrType,
 		/* no operator class specified, so find the default */
 		opClassId = GetDefaultOpClass(attrType, accessMethodId);
 		if (!OidIsValid(opClassId))
-			elog(ERROR, "data type %s has no default operator class for access method \"%s\""
-				 "\n\tYou must specify an operator class for the index or define a"
-				 "\n\tdefault operator class for the data type",
-				 format_type_be(attrType), accessMethodName);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("data type %s has no default operator class for access method \"%s\"",
+							format_type_be(attrType), accessMethodName),
+					 errhint("You must specify an operator class for the index or define a default operator class for the data type.")));
 		return opClassId;
 	}
 
@@ -437,16 +473,20 @@ GetIndexOpClass(List *opclass, Oid attrType,
 		/* Unqualified opclass name, so search the search path */
 		opClassId = OpclassnameGetOpcid(accessMethodId, opcname);
 		if (!OidIsValid(opClassId))
-			elog(ERROR, "DefineIndex: operator class \"%s\" not supported by access method \"%s\"",
-				 opcname, accessMethodName);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+							opcname, accessMethodName)));
 		tuple = SearchSysCache(CLAOID,
 							   ObjectIdGetDatum(opClassId),
 							   0, 0, 0);
 	}
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "DefineIndex: operator class \"%s\" not supported by access method \"%s\"",
-			 NameListToString(opclass), accessMethodName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+						NameListToString(opclass), accessMethodName)));
 
 	/*
 	 * Verify that the index operator class accepts this datatype.	Note
@@ -456,8 +496,10 @@ GetIndexOpClass(List *opclass, Oid attrType,
 	opInputType = ((Form_pg_opclass) GETSTRUCT(tuple))->opcintype;
 
 	if (!IsBinaryCoercible(attrType, opInputType))
-		elog(ERROR, "operator class \"%s\" does not accept data type %s",
-		 NameListToString(opclass), format_type_be(attrType));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("operator class \"%s\" does not accept data type %s",
+						NameListToString(opclass), format_type_be(attrType))));
 
 	ReleaseSysCache(tuple);
 
@@ -510,8 +552,10 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 	if (nexact == 1)
 		return exactOid;
 	if (nexact != 0)
-		elog(ERROR, "pg_opclass contains multiple default opclasses for data type %s",
-			 format_type_be(attrType));
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("there are multiple default operator classes for data type %s",
+						format_type_be(attrType))));
 	if (ncompatible == 1)
 		return compatibleOid;
 
@@ -532,8 +576,10 @@ RemoveIndex(RangeVar *relation, DropBehavior behavior)
 	indOid = RangeVarGetRelid(relation, false);
 	relkind = get_rel_relkind(indOid);
 	if (relkind != RELKIND_INDEX)
-		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 relation->relname, relkind);
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not an index",
+						relation->relname)));
 
 	object.classId = RelOid_pg_class;
 	object.objectId = indOid;
@@ -560,23 +606,30 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(indOid),
 						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "index \"%s\" does not exist", indexRelation->relname);
+	if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+		elog(ERROR, "cache lookup failed for relation %u", indOid);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
-		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 indexRelation->relname,
-			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not an index",
+						indexRelation->relname)));
 
 	if (IsSystemClass((Form_pg_class) GETSTRUCT(tuple)) &&
 		!IsToastClass((Form_pg_class) GETSTRUCT(tuple)))
 	{
 		if (!allowSystemTableMods)
-			elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -O -P options",
-				 indexRelation->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("\"%s\" is a system index",
+							indexRelation->relname),
+					 errhint("Do REINDEX in standalone postgres with -O -P options.")));
 		if (!IsIgnoringSystemIndexes())
-			elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -P -O options",
-				 indexRelation->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("\"%s\" is a system index",
+							indexRelation->relname),
+					 errhint("Do REINDEX in standalone postgres with -P -O options.")));
 	}
 
 	ReleaseSysCache(tuple);
@@ -590,7 +643,9 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 		PreventTransactionChain((void *) indexRelation, "REINDEX");
 
 	if (!reindex_index(indOid, force, overwrite))
-		elog(WARNING, "index \"%s\" wasn't reindexed", indexRelation->relname);
+		ereport(WARNING,
+				(errmsg("index \"%s\" wasn't reindexed",
+						indexRelation->relname)));
 }
 
 /*
@@ -607,8 +662,10 @@ ReindexTable(RangeVar *relation, bool force)
 	relkind = get_rel_relkind(heapOid);
 
 	if (relkind != RELKIND_RELATION && relkind != RELKIND_TOASTVALUE)
-		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 relation->relname, relkind);
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not a table",
+						relation->relname)));
 
 	/*
 	 * In-place REINDEX within a transaction block is dangerous, because
@@ -622,7 +679,9 @@ ReindexTable(RangeVar *relation, bool force)
 		PreventTransactionChain((void *) relation, "REINDEX");
 
 	if (!reindex_relation(heapOid, force))
-		elog(WARNING, "table \"%s\" wasn't reindexed", relation->relname);
+		ereport(WARNING,
+				(errmsg("table \"%s\" wasn't reindexed",
+						relation->relname)));
 }
 
 /*
@@ -646,15 +705,23 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	AssertArg(dbname);
 
 	if (strcmp(dbname, get_database_name(MyDatabaseId)) != 0)
-		elog(ERROR, "REINDEX DATABASE: Can be executed only on the currently open database.");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("can only reindex the currently open database")));
 
 	if (!pg_database_ownercheck(MyDatabaseId, GetUserId()))
-		elog(ERROR, "REINDEX DATABASE: Permission denied.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	if (!allowSystemTableMods)
-		elog(ERROR, "must be called under standalone postgres with -O -P options");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("REINDEX DATABASE must be done in standalone postgres with -O -P options")));
 	if (!IsIgnoringSystemIndexes())
-		elog(ERROR, "must be called under standalone postgres with -P -O options");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("REINDEX DATABASE must be done in standalone postgres with -P -O options")));
 
 	/*
 	 * We cannot run inside a user transaction block; if we were inside a
@@ -720,7 +787,8 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 		StartTransactionCommand();
 		SetQuerySnapshot();		/* might be needed for functions in indexes */
 		if (reindex_relation(relids[i], force))
-			elog(NOTICE, "relation %u was reindexed", relids[i]);
+			ereport(NOTICE,
+					(errmsg("relation %u was reindexed", relids[i])));
 		CommitTransactionCommand();
 	}
 	StartTransactionCommand();

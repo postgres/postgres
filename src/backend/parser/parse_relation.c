@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.84 2003/07/19 20:20:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.85 2003/07/20 21:56:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1587,9 +1587,9 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				if (att_tup->attisdropped)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("relation \"%s\" has no column \"%s\"",
-									get_rel_name(rte->relid),
-									NameStr(att_tup->attname))));
+							 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+									NameStr(att_tup->attname),
+									get_rel_name(rte->relid))));
 				*vartype = att_tup->atttypid;
 				*vartypmod = att_tup->atttypmod;
 				ReleaseSysCache(tp);
@@ -1652,9 +1652,9 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					if (att_tup->attisdropped)
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
-								 errmsg("relation \"%s\" has no column \"%s\"",
-										get_rel_name(funcrelid),
-										NameStr(att_tup->attname))));
+								 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+										NameStr(att_tup->attname),
+										get_rel_name(funcrelid))));
 					*vartype = att_tup->atttypid;
 					*vartypmod = att_tup->atttypmod;
 					ReleaseSysCache(tp);
@@ -1808,8 +1808,8 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 	/* on failure */
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("relation \"%s\" has no column \"%s\"",
-					RelationGetRelationName(rd), attname)));
+			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+					attname, RelationGetRelationName(rd))));
 	return InvalidAttrNumber;	/* keep compiler quiet */
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.246 2003/06/06 15:04:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.247 2003/07/20 21:56:32 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -350,8 +350,10 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
 
 	/* Sanity check on column count */
 	if (natts < 0 || natts > MaxHeapAttributeNumber)
-		elog(ERROR, "Number of columns is out of range (0 to %d)",
-			 MaxHeapAttributeNumber);
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
+				 errmsg("tables can have at most %d columns",
+						MaxHeapAttributeNumber)));
 
 	/*
 	 * first check for collision with system attribute names
@@ -874,8 +876,7 @@ DeleteRelationTuple(Oid relid)
 						 ObjectIdGetDatum(relid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "DeleteRelationTuple: cache lookup failed for relation %u",
-			 relid);
+		elog(ERROR, "cache lookup failed for relation %u", relid);
 
 	/* delete the relation tuple from pg_class, and finish up */
 	simple_heap_delete(pg_class_desc, &tup->t_self);
@@ -1082,8 +1083,7 @@ RemoveAttrDefaultById(Oid attrdefId)
 
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "RemoveAttrDefaultById: cache lookup failed for attrdef %u",
-			 attrdefId);
+		elog(ERROR, "could not find tuple for attrdef %u", attrdefId);
 
 	myrelid = ((Form_pg_attrdef) GETSTRUCT(tuple))->adrelid;
 	myattnum = ((Form_pg_attrdef) GETSTRUCT(tuple))->adnum;
@@ -1105,8 +1105,8 @@ RemoveAttrDefaultById(Oid attrdefId)
 							   Int16GetDatum(myattnum),
 							   0, 0);
 	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
-		elog(ERROR, "RemoveAttrDefaultById: cache lookup failed for rel %u attr %d",
-			 myrelid, myattnum);
+		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+			 myattnum, myrelid);
 
 	((Form_pg_attribute) GETSTRUCT(tuple))->atthasdef = false;
 
@@ -1281,7 +1281,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 								Int16GetDatum(attnum),
 								0, 0);
 	if (!HeapTupleIsValid(atttup))
-		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
+		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 			 attnum, RelationGetRelid(rel));
 	attStruct = (Form_pg_attribute) GETSTRUCT(atttup);
 	if (!attStruct->atthasdef)
@@ -1539,7 +1539,7 @@ AddRelationRawConstraints(Relation rel,
 									 RelationGetRelid(rel),
 									 RelationGetNamespace(rel),
 									 ccname))
-				elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
+				elog(ERROR, "constraint \"%s\" for relation \"%s\" already exists",
 					 ccname, RelationGetRelationName(rel));
 			/* Check against other new constraints */
 			/* Needed because we don't do CommandCounterIncrement in loop */
@@ -1672,7 +1672,7 @@ SetRelationNumChecks(Relation rel, int numchecks)
 								ObjectIdGetDatum(RelationGetRelid(rel)),
 								0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "cache lookup of relation %u failed",
+		elog(ERROR, "cache lookup failed for relation %u",
 			 RelationGetRelid(rel));
 	relStruct = (Form_pg_class) GETSTRUCT(reltup);
 

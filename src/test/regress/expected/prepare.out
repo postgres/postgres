@@ -8,7 +8,7 @@ EXECUTE q1;
 
 -- should fail
 PREPARE q1 AS SELECT 2;
-ERROR:  Prepared statement with name "q1" already exists
+ERROR:  prepared statement "q1" already exists
 -- should succeed
 DEALLOCATE q1;
 PREPARE q1 AS SELECT 2;

@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.19 2003/07/01 00:04:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.20 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,9 @@ PrepareQuery(PrepareStmt *stmt)
 	 * unnamed statement).
 	 */
 	if (!stmt->name || stmt->name[0] == '\0')
-		elog(ERROR, "Invalid statement name: must not be empty");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PSTATEMENT_DEFINITION),
+				 errmsg("invalid statement name: must not be empty")));
 
 	switch (stmt->query->commandType)
 	{
@@ -73,7 +75,9 @@ PrepareQuery(PrepareStmt *stmt)
 			commandTag = "DELETE";
 			break;
 		default:
-			elog(ERROR, "Utility statements cannot be prepared");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PSTATEMENT_DEFINITION),
+					 errmsg("utility statements cannot be prepared")));
 			commandTag = NULL;	/* keep compiler quiet */
 			break;
 	}
@@ -159,10 +163,14 @@ ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest)
 		qcontext = PortalGetHeapMemory(portal);
 
 		if (length(query_list) != 1)
-			elog(ERROR, "prepared statement is not a SELECT");
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("prepared statement is not a SELECT")));
 		query = (Query *) lfirst(query_list);
 		if (query->commandType != CMD_SELECT)
-			elog(ERROR, "prepared statement is not a SELECT");
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("prepared statement is not a SELECT")));
 		query->into = copyObject(stmt->into);
 
 		MemoryContextSwitchTo(oldContext);
@@ -206,9 +214,9 @@ EvaluateParams(EState *estate, List *params, List *argtypes)
 	List		   *l;
 	int				i = 0;
 
-	/* Parser should have caught this error, but check anyway */
+	/* Parser should have caught this error, but check for safety */
 	if (length(params) != nargs)
-		elog(ERROR, "EvaluateParams: wrong number of arguments");
+		elog(ERROR, "wrong number of arguments");
 
 	exprstates = (List *) ExecPrepareExpr((Expr *) params, estate);
 
@@ -256,7 +264,7 @@ InitQueryHashTable(void)
 								   HASH_ELEM);
 
 	if (!prepared_queries)
-		elog(ERROR, "InitQueryHashTable: unable to create hash table");
+		elog(ERROR, "unable to create hash table");
 }
 
 /*
@@ -295,8 +303,10 @@ StorePreparedStatement(const char *stmt_name,
 	hash_search(prepared_queries, key, HASH_FIND, &found);
 
 	if (found)
-		elog(ERROR, "Prepared statement with name \"%s\" already exists",
-			 stmt_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_PSTATEMENT),
+				 errmsg("prepared statement \"%s\" already exists",
+						stmt_name)));
 
 	/* Make a permanent memory context for the hashtable entry */
 	entrycxt = AllocSetContextCreate(TopMemoryContext,
@@ -326,7 +336,7 @@ StorePreparedStatement(const char *stmt_name,
 
 	/* Shouldn't get a failure, nor a duplicate entry */
 	if (!entry || found)
-		elog(ERROR, "Unable to store prepared statement \"%s\"!",
+		elog(ERROR, "unable to store prepared statement \"%s\"",
 			 stmt_name);
 
 	/* Fill in the hash table entry with copied data */
@@ -342,7 +352,7 @@ StorePreparedStatement(const char *stmt_name,
 
 /*
  * Lookup an existing query in the hash table. If the query does not
- * actually exist, throw elog(ERROR) or return NULL per second parameter.
+ * actually exist, throw ereport(ERROR) or return NULL per second parameter.
  */
 PreparedStatement *
 FetchPreparedStatement(const char *stmt_name, bool throwError)
@@ -373,8 +383,10 @@ FetchPreparedStatement(const char *stmt_name, bool throwError)
 		entry = NULL;
 
 	if (!entry && throwError)
-		elog(ERROR, "Prepared statement with name \"%s\" does not exist",
-			 stmt_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_PSTATEMENT),
+				 errmsg("prepared statement \"%s\" does not exist",
+						stmt_name)));
 
 	return entry;
 }
@@ -519,7 +531,9 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 			if (execstmt->into)
 			{
 				if (query->commandType != CMD_SELECT)
-					elog(ERROR, "prepared statement is not a SELECT");
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("prepared statement is not a SELECT")));
 
 				/* Copy the query so we can modify it */
 				query = copyObject(query);

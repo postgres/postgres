@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.119 2003/07/18 23:20:32 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.120 2003/07/20 21:56:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,8 @@ write_group_file(Relation grel)
 		i = strcspn(groname, "\n");
 		if (groname[i] != '\0')
 		{
-			elog(LOG, "invalid group name \"%s\"", groname);
+			ereport(LOG,
+					(errmsg("invalid group name \"%s\"", groname)));
 			continue;
 		}
 
@@ -210,7 +211,8 @@ write_group_file(Relation grel)
 				j = strcspn(usename, "\n");
 				if (usename[j] != '\0')
 				{
-					elog(LOG, "invalid user name \"%s\"", usename);
+					ereport(LOG,
+							(errmsg("invalid user name \"%s\"", usename)));
 					continue;
 				}
 
@@ -341,13 +343,15 @@ write_user_file(Relation urel)
 		i = strcspn(usename, "\n");
 		if (usename[i] != '\0')
 		{
-			elog(LOG, "invalid user name \"%s\"", usename);
+			ereport(LOG,
+					(errmsg("invalid user name \"%s\"", usename)));
 			continue;
 		}
 		i = strcspn(passwd, "\n");
 		if (passwd[i] != '\0')
 		{
-			elog(LOG, "invalid user password \"%s\"", passwd);
+			ereport(LOG,
+					(errmsg("invalid user password \"%s\"", passwd)));
 			continue;
 		}
 

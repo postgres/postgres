@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.110 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.111 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,8 +116,9 @@ cluster(ClusterStmt *stmt)
 
 		/* Check permissions */
 		if (!check_cluster_permitted(tableOid))
-			elog(ERROR, "CLUSTER: You do not own relation %s",
-				 stmt->relation->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied")));
 
 		if (stmt->indexname == NULL)
 		{
@@ -134,8 +135,7 @@ cluster(ClusterStmt *stmt)
 										  ObjectIdGetDatum(indexOid),
 										  0, 0, 0);
 				if (!HeapTupleIsValid(idxtuple))
-					elog(ERROR, "Cache lookup failed for index %u",
-						 indexOid);
+					elog(ERROR, "cache lookup failed for index %u", indexOid);
 				indexForm = (Form_pg_index) GETSTRUCT(idxtuple);
 				if (indexForm->indisclustered)
 				{
@@ -147,8 +147,10 @@ cluster(ClusterStmt *stmt)
 			}
 
 			if (!OidIsValid(indexOid))
-				elog(ERROR, "CLUSTER: No previously clustered index found on table \"%s\"",
-					 stmt->relation->relname);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("there is no previously clustered index for table \"%s\"",
+								stmt->relation->relname)));
 		}
 		else
 		{
@@ -156,8 +158,10 @@ cluster(ClusterStmt *stmt)
 			indexOid = get_relname_relid(stmt->indexname,
 										 rel->rd_rel->relnamespace);
 			if (!OidIsValid(indexOid))
-				elog(ERROR, "CLUSTER: cannot find index \"%s\" for table \"%s\"",
-					 stmt->indexname, stmt->relation->relname);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("index \"%s\" for table \"%s\" does not exist",
+								stmt->indexname, stmt->relation->relname)));
 		}
 
 		/* All other checks are done in cluster_rel() */
@@ -310,9 +314,11 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	 */
 	if (OldIndex->rd_index == NULL ||
 		OldIndex->rd_index->indrelid != rvtc->tableOid)
-		elog(ERROR, "CLUSTER: \"%s\" is not an index for table \"%s\"",
-			 RelationGetRelationName(OldIndex),
-			 RelationGetRelationName(OldHeap));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not an index for table \"%s\"",
+						RelationGetRelationName(OldIndex),
+						RelationGetRelationName(OldHeap))));
 
 	/*
 	 * Disallow clustering on incomplete indexes (those that might not index
@@ -321,7 +327,9 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	 * expensive and tedious.
 	 */
 	if (!heap_attisnull(OldIndex->rd_indextuple, Anum_pg_index_indpred))
-		elog(ERROR, "CLUSTER: cannot cluster on partial index");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot cluster on partial index")));
 	if (!OldIndex->rd_am->amindexnulls)
 	{
 		AttrNumber	colno;
@@ -337,9 +345,11 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 		{
 			/* ordinary user attribute */
 			if (!OldHeap->rd_att->attrs[colno - 1]->attnotnull)
-				elog(ERROR, "CLUSTER: cannot cluster when index access method does not handle nulls"
-					 "\n\tYou may be able to work around this by marking column \"%s\" NOT NULL",
-					 NameStr(OldHeap->rd_att->attrs[colno - 1]->attname));
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot cluster when index access method does not handle nulls"),
+						 errhint("You may be able to work around this by marking column \"%s\" NOT NULL.",
+								 NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))));
 		}
 		else if (colno < 0)
 		{
@@ -348,7 +358,9 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 		else
 		{
 			/* index expression, lose... */
-			elog(ERROR, "CLUSTER: cannot cluster on expressional index when index access method does not handle nulls");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot cluster on expressional index when index access method does not handle nulls")));
 		}
 	}
 
@@ -360,15 +372,19 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	 * might work for other system relations, but I ain't gonna risk it.
 	 */
 	if (IsSystemRelation(OldHeap))
-		elog(ERROR, "CLUSTER: cannot cluster system relation \"%s\"",
-			 RelationGetRelationName(OldHeap));
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(OldHeap))));
 
 	/*
 	 * Don't allow cluster on temp tables of other backends ... their
 	 * local buffer manager is not going to cope.
 	 */
 	if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
-		elog(ERROR, "CLUSTER cannot be used on temp tables of other processes");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot cluster temp tables of other processes")));
 
 	/* Drop relcache refcnt on OldIndex, but keep lock */
 	index_close(OldIndex);
@@ -697,14 +713,14 @@ swap_relfilenodes(Oid r1, Oid r2)
 								 ObjectIdGetDatum(r1),
 								 0, 0, 0);
 	if (!HeapTupleIsValid(reltup1))
-		elog(ERROR, "CLUSTER: Cannot find tuple for relation %u", r1);
+		elog(ERROR, "cache lookup failed for relation %u", r1);
 	relform1 = (Form_pg_class) GETSTRUCT(reltup1);
 
 	reltup2 = SearchSysCacheCopy(RELOID,
 								 ObjectIdGetDatum(r2),
 								 0, 0, 0);
 	if (!HeapTupleIsValid(reltup2))
-		elog(ERROR, "CLUSTER: Cannot find tuple for relation %u", r2);
+		elog(ERROR, "cache lookup failed for relation %u", r2);
 	relform2 = (Form_pg_class) GETSTRUCT(reltup2);
 
 	/*
@@ -716,13 +732,13 @@ swap_relfilenodes(Oid r1, Oid r2)
 	rel = relation_open(r1, NoLock);
 	i = FlushRelationBuffers(rel, 0);
 	if (i < 0)
-		elog(ERROR, "CLUSTER: FlushRelationBuffers returned %d", i);
+		elog(ERROR, "FlushRelationBuffers returned %d", i);
 	relation_close(rel, NoLock);
 
 	rel = relation_open(r2, NoLock);
 	i = FlushRelationBuffers(rel, 0);
 	if (i < 0)
-		elog(ERROR, "CLUSTER: FlushRelationBuffers returned %d", i);
+		elog(ERROR, "FlushRelationBuffers returned %d", i);
 	relation_close(rel, NoLock);
 
 	/*
@@ -784,18 +800,18 @@ swap_relfilenodes(Oid r1, Oid r2)
 		long		count;
 
 		if (!(relform1->reltoastrelid && relform2->reltoastrelid))
-			elog(ERROR, "CLUSTER: expected both swapped tables to have TOAST tables");
+			elog(ERROR, "expected both swapped tables to have TOAST tables");
 
 		/* Delete old dependencies */
 		count = deleteDependencyRecordsFor(RelOid_pg_class,
 										   relform1->reltoastrelid);
 		if (count != 1)
-			elog(ERROR, "CLUSTER: expected one dependency record for TOAST table, found %ld",
+			elog(ERROR, "expected one dependency record for TOAST table, found %ld",
 				 count);
 		count = deleteDependencyRecordsFor(RelOid_pg_class,
 										   relform2->reltoastrelid);
 		if (count != 1)
-			elog(ERROR, "CLUSTER: expected one dependency record for TOAST table, found %ld",
+			elog(ERROR, "expected one dependency record for TOAST table, found %ld",
 				 count);
 
 		/* Register new dependencies */

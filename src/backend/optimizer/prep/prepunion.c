@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.98 2003/07/16 17:25:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.99 2003/07/20 21:56:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -816,8 +816,8 @@ adjust_inherited_attrs_mutator(Node *node,
 
 				var->varattno = get_attnum(context->new_relid, attname);
 				if (var->varattno == InvalidAttrNumber)
-					elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-						 get_rel_name(context->new_relid), attname);
+					elog(ERROR, "attribute \"%s\" of relation \"%s\" does not exist",
+						 attname, get_rel_name(context->new_relid));
 				var->varoattno = var->varattno;
 				pfree(attname);
 			}
@@ -994,8 +994,8 @@ adjust_inherited_tlist(List *tlist, Oid new_relid)
 
 		attrno = get_attnum(new_relid, resdom->resname);
 		if (attrno == InvalidAttrNumber)
-			elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-				 get_rel_name(new_relid), resdom->resname);
+			elog(ERROR, "attribute \"%s\" of relation \"%s\" does not exist",
+				 resdom->resname, get_rel_name(new_relid));
 		if (resdom->resno != attrno)
 		{
 			resdom = (Resdom *) copyObject((Node *) resdom);

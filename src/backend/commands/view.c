@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.73 2002/11/11 22:19:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.74 2003/07/20 21:56:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,9 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 	}
 
 	if (attrList == NIL)
-		elog(ERROR, "attempted to define virtual relation with no attrs");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("view must have at least one attribute")));
 
 	/*
 	 * Check to see if we want to replace an existing view.
@@ -106,8 +108,10 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		 * Make sure it *is* a view, and do permissions checks.
 		 */
 		if (rel->rd_rel->relkind != RELKIND_VIEW)
-			elog(ERROR, "%s is not a view",
-				 RelationGetRelationName(rel));
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a view",
+							RelationGetRelationName(rel))));
 
 		if (!pg_class_ownercheck(viewOid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
@@ -159,7 +163,9 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 	int			i;
 
 	if (newdesc->natts != olddesc->natts)
-		elog(ERROR, "Cannot change number of columns in view");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot change number of columns in view")));
 	/* we can ignore tdhasoid */
 
 	for (i = 0; i < newdesc->natts; i++)
@@ -169,16 +175,22 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 
 		/* XXX not right, but we don't support DROP COL on view anyway */
 		if (newattr->attisdropped != oldattr->attisdropped)
-			elog(ERROR, "Cannot change number of columns in view");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("cannot change number of columns in view")));
 
 		if (strcmp(NameStr(newattr->attname), NameStr(oldattr->attname)) != 0)
-			elog(ERROR, "Cannot change name of view column \"%s\"",
-				 NameStr(oldattr->attname));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("cannot change name of view column \"%s\"",
+							NameStr(oldattr->attname))));
 		/* XXX would it be safe to allow atttypmod to change?  Not sure */
 		if (newattr->atttypid != oldattr->atttypid ||
 			newattr->atttypmod != oldattr->atttypmod)
-			elog(ERROR, "Cannot change datatype of view column \"%s\"",
-				 NameStr(oldattr->attname));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("cannot change datatype of view column \"%s\"",
+							NameStr(oldattr->attname))));
 		/* We can ignore the remaining attributes of an attribute... */
 	}
 

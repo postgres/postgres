@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.10 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.11 2003/07/20 21:56:32 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -91,19 +91,27 @@ DefineAggregate(List *names, List *parameters)
 		else if (strcasecmp(defel->defname, "initcond1") == 0)
 			initval = defGetString(defel);
 		else
-			elog(WARNING, "DefineAggregate: attribute \"%s\" not recognized",
-				 defel->defname);
+			ereport(WARNING,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("aggregate attribute \"%s\" not recognized",
+							defel->defname)));
 	}
 
 	/*
 	 * make sure we have our required definitions
 	 */
 	if (baseType == NULL)
-		elog(ERROR, "Define: \"basetype\" unspecified");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("aggregate basetype must be specified")));
 	if (transType == NULL)
-		elog(ERROR, "Define: \"stype\" unspecified");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("aggregate stype must be specified")));
 	if (transfuncName == NIL)
-		elog(ERROR, "Define: \"sfunc\" unspecified");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("aggregate sfunc must be specified")));
 
 	/*
 	 * look up the aggregate's base type (input datatype) and transtype.
@@ -112,7 +120,8 @@ DefineAggregate(List *names, List *parameters)
 	 * so we must do a case-insensitive comparison for the name ANY.  Ugh.
 	 *
 	 * basetype can be a pseudo-type, but transtype can't, since we need to
-	 * be able to store values of the transtype.
+	 * be able to store values of the transtype.  However, we can allow
+	 * polymorphic transtype in some cases (AggregateCreate will check).
 	 */
 	if (strcasecmp(TypeNameToString(baseType), "ANY") == 0)
 		baseTypeId = ANYOID;
@@ -123,8 +132,10 @@ DefineAggregate(List *names, List *parameters)
 	if (get_typtype(transTypeId) == 'p' &&
 		transTypeId != ANYARRAYOID &&
 		transTypeId != ANYELEMENTOID)
-		elog(ERROR, "Aggregate transition datatype cannot be %s",
-			 format_type_be(transTypeId));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("aggregate transition datatype cannot be %s",
+						format_type_be(transTypeId))));
 
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
@@ -174,8 +185,7 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 						 ObjectIdGetDatum(procOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "RemoveAggregate: couldn't find pg_proc tuple for %s",
-			 NameListToString(aggName));
+		elog(ERROR, "cache lookup failed for function %u", procOid);
 
 	/* Permission check: must own agg or its namespace */
 	if (!pg_proc_ownercheck(procOid, GetUserId()) &&
@@ -204,8 +214,8 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 	Oid			basetypeOid;
 	Oid			procOid;
 	Oid			namespaceOid;
-	Oid			oid_array[FUNC_MAX_ARGS];
 	HeapTuple	tup;
+	Form_pg_proc procForm;
 	Relation	rel;
 	AclResult	aclresult;
 
@@ -229,26 +239,32 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 							 ObjectIdGetDatum(procOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "RenameAggregate: couldn't find pg_proc tuple for %s",
-			 NameListToString(name));
+		elog(ERROR, "cache lookup failed for function %u", procOid);
+	procForm = (Form_pg_proc) GETSTRUCT(tup);
 
-	namespaceOid = ((Form_pg_proc) GETSTRUCT(tup))->pronamespace;
+	namespaceOid = procForm->pronamespace;
 
 	/* make sure the new name doesn't exist */
-	MemSet(oid_array, 0, sizeof(oid_array));
-	oid_array[0] = basetypeOid;
 	if (SearchSysCacheExists(PROCNAMENSP,
 							 CStringGetDatum(newname),
-							 Int16GetDatum(1),
-							 PointerGetDatum(oid_array),
+							 Int16GetDatum(procForm->pronargs),
+							 PointerGetDatum(procForm->proargtypes),
 							 ObjectIdGetDatum(namespaceOid)))
 	{
 		if (basetypeOid == ANYOID)
-			elog(ERROR, "function %s(*) already exists in schema %s",
-				 newname, get_namespace_name(namespaceOid));
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_FUNCTION),
+					 errmsg("function %s(*) already exists in schema \"%s\"",
+							newname,
+							get_namespace_name(namespaceOid))));
 		else
-			elog(ERROR, "function %s(%s) already exists in schema %s",
-				 newname, format_type_be(basetypeOid), get_namespace_name(namespaceOid));
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_FUNCTION),
+					 errmsg("function %s already exists in schema \"%s\"",
+							funcname_signature_string(newname,
+													  procForm->pronargs,
+													  procForm->proargtypes),
+							get_namespace_name(namespaceOid))));
 	}
 
 	/* must be owner */

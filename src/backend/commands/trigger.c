@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.150 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.151 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,17 +131,23 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 			constrrelid = RangeVarGetRelid(rel, true);
 		}
 		if (needconstrrelid && constrrelid == InvalidOid)
-			elog(NOTICE, "Unable to find table for constraint \"%s\"",
-				 stmt->trigname);
+			ereport(NOTICE,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("unable to determine referenced table for constraint \"%s\"",
+							stmt->trigname)));
 	}
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "CreateTrigger: relation \"%s\" is not a table",
-			 stmt->relation->relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
-		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s",
-			 stmt->relation->relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/* permission checks */
 
@@ -207,21 +213,28 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		{
 			case 'i':
 				if (TRIGGER_FOR_INSERT(tgtype))
-					elog(ERROR, "CreateTrigger: double INSERT event specified");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("double INSERT event specified")));
 				TRIGGER_SETT_INSERT(tgtype);
 				break;
 			case 'd':
 				if (TRIGGER_FOR_DELETE(tgtype))
-					elog(ERROR, "CreateTrigger: double DELETE event specified");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("double DELETE event specified")));
 				TRIGGER_SETT_DELETE(tgtype);
 				break;
 			case 'u':
 				if (TRIGGER_FOR_UPDATE(tgtype))
-					elog(ERROR, "CreateTrigger: double UPDATE event specified");
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("double UPDATE event specified")));
 				TRIGGER_SETT_UPDATE(tgtype);
 				break;
 			default:
-				elog(ERROR, "CreateTrigger: unknown event specified");
+				elog(ERROR, "unknown trigger event: %d",
+					 (int) stmt->actions[i]);
 				break;
 		}
 	}
@@ -247,8 +260,10 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 
 		if (namestrcmp(&(pg_trigger->tgname), trigname) == 0)
-			elog(ERROR, "CreateTrigger: trigger %s already defined on relation %s",
-				 trigname, stmt->relation->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("trigger \"%s\" for relation \"%s\" already exists",
+							trigname, stmt->relation->relname)));
 		found++;
 	}
 	systable_endscan(tgscan);
@@ -267,13 +282,16 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		 */
 		if (funcrettype == OPAQUEOID)
 		{
-			elog(NOTICE, "CreateTrigger: changing return type of function %s() from OPAQUE to TRIGGER",
-				 NameListToString(stmt->funcname));
+			ereport(NOTICE,
+					(errmsg("changing return type of function %s() from OPAQUE to TRIGGER",
+							NameListToString(stmt->funcname))));
 			SetFunctionReturnType(funcoid, TRIGGEROID);
 		}
 		else
-			elog(ERROR, "CreateTrigger: function %s() must return TRIGGER",
-				 NameListToString(stmt->funcname));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("function %s() must return TRIGGER",
+							NameListToString(stmt->funcname))));
 	}
 
 	/*
@@ -372,8 +390,8 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 							   ObjectIdGetDatum(RelationGetRelid(rel)),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "CreateTrigger: relation %s not found in pg_class",
-			 stmt->relation->relname);
+		elog(ERROR, "cache lookup failed for relation %u",
+			 RelationGetRelid(rel));
 
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
 
@@ -457,8 +475,10 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 	tup = systable_getnext(tgscan);
 
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "DropTrigger: there is no trigger %s on relation %s",
-			 trigname, get_rel_name(relid));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("trigger \"%s\" on relation \"%s\" does not exist",
+						trigname, get_rel_name(relid))));
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_rel_name(relid));
@@ -506,8 +526,7 @@ RemoveTriggerById(Oid trigOid)
 
 	tup = systable_getnext(tgscan);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "RemoveTriggerById: Trigger %u does not exist",
-			 trigOid);
+		elog(ERROR, "could not find tuple for trigger %u", trigOid);
 
 	/*
 	 * Open and exclusive-lock the relation the trigger belongs to.
@@ -517,12 +536,16 @@ RemoveTriggerById(Oid trigOid)
 	rel = heap_open(relid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "DropTrigger: relation \"%s\" is not a table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
-		elog(ERROR, "DropTrigger: can't drop trigger for system relation %s",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Delete the pg_trigger tuple.
@@ -546,12 +569,11 @@ RemoveTriggerById(Oid trigOid)
 							   ObjectIdGetDatum(relid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "DropTrigger: relation %s not found in pg_class",
-			 RelationGetRelationName(rel));
+		elog(ERROR, "cache lookup failed for relation %u", relid);
 	classForm = (Form_pg_class) GETSTRUCT(tuple);
 
-	if (classForm->reltriggers == 0)
-		elog(ERROR, "DropTrigger: relation %s has reltriggers = 0",
+	if (classForm->reltriggers == 0) /* should not happen */
+		elog(ERROR, "relation \"%s\" has reltriggers = 0",
 			 RelationGetRelationName(rel));
 	classForm->reltriggers--;
 
@@ -622,8 +644,10 @@ renametrig(Oid relid,
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
 								SnapshotNow, 2, key);
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
-		elog(ERROR, "renametrig: trigger %s already defined on relation %s",
-			 newname, RelationGetRelationName(targetrel));
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("trigger \"%s\" for relation \"%s\" already exists",
+						newname, RelationGetRelationName(targetrel))));
 	systable_endscan(tgscan);
 
 	/*
@@ -663,8 +687,10 @@ renametrig(Oid relid,
 	}
 	else
 	{
-		elog(ERROR, "renametrig: trigger %s not defined on relation %s",
-			 oldname, RelationGetRelationName(targetrel));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("trigger \"%s\" for relation \"%s\" does not exist",
+						oldname, RelationGetRelationName(targetrel))));
 	}
 
 	systable_endscan(tgscan);
@@ -726,7 +752,7 @@ RelationBuildTriggers(Relation relation)
 		Trigger    *build;
 
 		if (found >= ntrigs)
-			elog(ERROR, "RelationBuildTriggers: unexpected record found for rel %s",
+			elog(ERROR, "too many trigger records found for relation \"%s\"",
 				 RelationGetRelationName(relation));
 		build = &(triggers[found]);
 
@@ -754,7 +780,7 @@ RelationBuildTriggers(Relation relation)
 										Anum_pg_trigger_tgargs,
 										tgrel->rd_att, &isnull);
 			if (isnull)
-				elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %s",
+				elog(ERROR, "tgargs is null in trigger for relation \"%s\"",
 					 RelationGetRelationName(relation));
 			p = (char *) VARDATA(val);
 			build->tgargs = (char **) palloc(build->tgnargs * sizeof(char *));
@@ -774,7 +800,7 @@ RelationBuildTriggers(Relation relation)
 	heap_close(tgrel, AccessShareLock);
 
 	if (found != ntrigs)
-		elog(ERROR, "RelationBuildTriggers: %d record(s) not found for rel %s",
+		elog(ERROR, "%d trigger record(s) not found for relation \"%s\"",
 			 ntrigs - found,
 			 RelationGetRelationName(relation));
 
@@ -1125,8 +1151,10 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 	 * to set the isnull result flag.
 	 */
 	if (fcinfo.isnull)
-		elog(ERROR, "ExecCallTriggerFunc: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+				 errmsg("trigger function %u returned NULL",
+						fcinfo.flinfo->fn_oid)));
 
 	return (HeapTuple) DatumGetPointer(result);
 }
@@ -1175,7 +1203,9 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 									   GetPerTupleMemoryContext(estate));
 
 		if (newtuple)
-			elog(ERROR, "BEFORE STATEMENT trigger cannot return a value.");
+			ereport(ERROR,
+					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					 errmsg("BEFORE STATEMENT trigger cannot return a value")));
 	}
 }
 
@@ -1286,7 +1316,9 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 									   GetPerTupleMemoryContext(estate));
 
 		if (newtuple)
-			elog(ERROR, "BEFORE STATEMENT trigger cannot return a value.");
+			ereport(ERROR,
+					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					 errmsg("BEFORE STATEMENT trigger cannot return a value")));
 	}
 }
 
@@ -1413,7 +1445,9 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 									   GetPerTupleMemoryContext(estate));
 
 		if (newtuple)
-			elog(ERROR, "BEFORE STATEMENT trigger cannot return a value.");
+			ereport(ERROR,
+					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					 errmsg("BEFORE STATEMENT trigger cannot return a value")));
 	}
 }
 
@@ -1538,7 +1572,9 @@ ltrmark:;
 			case HeapTupleUpdated:
 				ReleaseBuffer(buffer);
 				if (XactIsoLevel == XACT_SERIALIZABLE)
-					elog(ERROR, "Can't serialize access due to concurrent update");
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("cannot serialize access due to concurrent update")));
 				else if (!(ItemPointerEquals(&(tuple.t_self), tid)))
 				{
 					TupleTableSlot *epqslot = EvalPlanQual(estate,
@@ -1561,8 +1597,9 @@ ltrmark:;
 
 			default:
 				ReleaseBuffer(buffer);
-				elog(ERROR, "Unknown status %u from heap_mark4update", test);
-				return NULL;
+				elog(ERROR, "unrecognized status %u from heap_mark4update",
+					 test);
+				return NULL;	/* keep compiler quiet */
 		}
 	}
 	else
@@ -1573,7 +1610,7 @@ ltrmark:;
 		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 		if (!BufferIsValid(buffer))
-			elog(ERROR, "GetTupleForTrigger: failed ReadBuffer");
+			elog(ERROR, "ReadBuffer failed");
 
 		dp = (PageHeader) BufferGetPage(buffer);
 		lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
@@ -1761,14 +1798,14 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	{
 		ItemPointerCopy(&(event->dte_oldctid), &(oldtuple.t_self));
 		if (!heap_fetch(rel, SnapshotAny, &oldtuple, &oldbuffer, false, NULL))
-			elog(ERROR, "DeferredTriggerExecute: failed to fetch old tuple");
+			elog(ERROR, "failed to fetch old tuple for deferred trigger");
 	}
 
 	if (ItemPointerIsValid(&(event->dte_newctid)))
 	{
 		ItemPointerCopy(&(event->dte_newctid), &(newtuple.t_self));
 		if (!heap_fetch(rel, SnapshotAny, &newtuple, &newbuffer, false, NULL))
-			elog(ERROR, "DeferredTriggerExecute: failed to fetch new tuple");
+			elog(ERROR, "failed to fetch new tuple for deferred trigger");
 	}
 
 	/*
@@ -1789,7 +1826,7 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 		}
 	}
 	if (LocTriggerData.tg_trigger == NULL)
-		elog(ERROR, "DeferredTriggerExecute: can't find trigger %u", tgoid);
+		elog(ERROR, "could not find trigger %u", tgoid);
 
 	switch (event->dte_event & TRIGGER_EVENT_OPMASK)
 	{
@@ -1948,8 +1985,8 @@ deferredTriggerInvokeEvents(bool immediate_only)
 					 */
 					trigdesc = CopyTriggerDesc(rel->trigdesc);
 
-					if (trigdesc == NULL)
-						elog(ERROR, "deferredTriggerInvokeEvents: relation %u has no triggers",
+					if (trigdesc == NULL) /* should not happen */
+						elog(ERROR, "relation %u has no triggers",
 							 event->dte_relid);
 
 					/*
@@ -2212,7 +2249,9 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			 * Check that only named constraints are set explicitly
 			 */
 			if (strlen(cname) == 0)
-				elog(ERROR, "unnamed constraints cannot be set explicitly");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_NAME),
+						 errmsg("unnamed constraints cannot be set explicitly")));
 
 			/*
 			 * Setup to scan pg_trigger by tgconstrname ...
@@ -2243,8 +2282,10 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 				if (stmt->deferred && !pg_trigger->tgdeferrable &&
 					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
 					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL)
-					elog(ERROR, "Constraint '%s' is not deferrable",
-						 cname);
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("constraint \"%s\" is not deferrable",
+									cname)));
 
 				constr_oid = HeapTupleGetOid(htup);
 				loid = lappendo(loid, constr_oid);
@@ -2257,7 +2298,9 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			 * Not found ?
 			 */
 			if (!found)
-				elog(ERROR, "Constraint '%s' does not exist", cname);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("constraint \"%s\" does not exist", cname)));
 		}
 		heap_close(tgrel, AccessShareLock);
 
@@ -2336,8 +2379,7 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 	ItemPointerData newctid;
 
 	if (deferredTriggers == NULL)
-		elog(ERROR,
-			 "DeferredTriggerSaveEvent() called outside of transaction");
+		elog(ERROR, "DeferredTriggerSaveEvent() called outside of transaction");
 
 	/*
 	 * Get the CTID's of OLD and NEW

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.74 2003/06/06 15:04:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.75 2003/07/20 21:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,13 +79,11 @@ static bool change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
-static void CheckTupleType(Form_pg_class tuple_class);
 static bool needs_toast_table(Relation rel);
 static void AlterTableAddCheckConstraint(Relation rel, Constraint *constr);
 static void AlterTableAddForeignKeyConstraint(Relation rel,
 											  FkConstraint *fkconstraint);
 static int transformColumnNameList(Oid relId, List *colList,
-								   const char *stmtname,
 								   int16 *attnums, Oid *atttypids);
 static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 									  List **attnamelist,
@@ -146,7 +144,9 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * Check consistency of arguments
 	 */
 	if (stmt->oncommit != ONCOMMIT_NOOP && !stmt->relation->istemp)
-		elog(ERROR, "ON COMMIT can only be used on TEMP tables");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("ON COMMIT can only be used on TEMP tables")));
 
 	/*
 	 * Look up the namespace in which we are supposed to create the
@@ -203,8 +203,10 @@ DefineRelation(CreateStmt *stmt, char relkind)
 				for (i = 0; i < ncheck; i++)
 				{
 					if (strcmp(check[i].ccname, cdef->name) == 0)
-						elog(ERROR, "Duplicate CHECK constraint name: '%s'",
-							 cdef->name);
+						ereport(ERROR,
+								(errcode(ERRCODE_DUPLICATE_OBJECT),
+								 errmsg("duplicate CHECK constraint name \"%s\"",
+										cdef->name)));
 				}
 				check[ncheck].ccname = cdef->name;
 			}
@@ -373,33 +375,29 @@ TruncateRelation(const RangeVar *relation)
 
 	/* Only allow truncate on regular tables */
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-	{
-		/* special errors for backwards compatibility */
-		if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-			elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence",
-				 RelationGetRelationName(rel));
-		if (rel->rd_rel->relkind == RELKIND_VIEW)
-			elog(ERROR, "TRUNCATE cannot be used on views. '%s' is a view",
-				 RelationGetRelationName(rel));
-		/* else a generic error message will do */
-		elog(ERROR, "TRUNCATE can only be used on tables. '%s' is not a table",
-			 RelationGetRelationName(rel));
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
 	/* Permissions checks */
-	if (!allowSystemTableMods && IsSystemRelation(rel))
-		elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
-			 RelationGetRelationName(rel));
-
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Don't allow truncate on temp tables of other backends ... their
 	 * local buffer manager is not going to cope.
 	 */
 	if (isOtherTempNamespace(RelationGetNamespace(rel)))
-		elog(ERROR, "TRUNCATE cannot be used on temp tables of other processes");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot truncate temp tables of other processes")));
 
 	/*
 	 * Don't allow truncate on tables which are referenced by foreign keys
@@ -423,9 +421,12 @@ TruncateRelation(const RangeVar *relation)
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 
 		if (con->contype == 'f' && con->conrelid != relid)
-			elog(ERROR, "TRUNCATE cannot be used as table %s references this one via foreign key constraint %s",
-				 get_rel_name(con->conrelid),
-				 NameStr(con->conname));
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot truncate a table referenced in a foreign key constraint"),
+					 errdetail("Table \"%s\" references this one via foreign key constraint \"%s\".",
+							   get_rel_name(con->conrelid),
+							   NameStr(con->conname))));
 	}
 
 	systable_endscan(fkeyScan);
@@ -534,8 +535,10 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			ColumnDef  *restdef = lfirst(rest);
 
 			if (strcmp(coldef->colname, restdef->colname) == 0)
-				elog(ERROR, "CREATE TABLE: attribute \"%s\" duplicated",
-					 coldef->colname);
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_COLUMN),
+						 errmsg("attribute \"%s\" duplicated",
+								coldef->colname)));
 		}
 	}
 
@@ -557,12 +560,16 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		relation = heap_openrv(parent, AccessShareLock);
 
 		if (relation->rd_rel->relkind != RELKIND_RELATION)
-			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table",
-				 parent->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("inherited relation \"%s\" is not a table",
+							parent->relname)));
 		/* Permanent rels cannot inherit from temporary ones */
 		if (!istemp && isTempNamespace(RelationGetNamespace(relation)))
-			elog(ERROR, "CREATE TABLE: cannot inherit from temp relation \"%s\"",
-				 parent->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot inherit from temporary relation \"%s\"",
+							parent->relname)));
 
 		/*
 		 * We should have an UNDER permission flag for this, but for now,
@@ -576,8 +583,10 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		 * Reject duplications in the list of parents.
 		 */
 		if (oidMember(RelationGetRelid(relation), parentOids))
-			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" duplicated",
-				 parent->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_TABLE),
+					 errmsg("inherited relation \"%s\" duplicated",
+							parent->relname)));
 
 		parentOids = lappendo(parentOids, RelationGetRelid(relation));
 		setRelhassubclassInRelation(RelationGetRelid(relation), true);
@@ -629,15 +638,19 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				 * Yes, try to merge the two column definitions. They must
 				 * have the same type and typmod.
 				 */
-				elog(NOTICE, "CREATE TABLE: merging multiple inherited definitions of attribute \"%s\"",
-					 attributeName);
+				ereport(NOTICE,
+						(errmsg("merging multiple inherited definitions of attribute \"%s\"",
+								attributeName)));
 				def = (ColumnDef *) nth(exist_attno - 1, inhSchema);
 				if (typenameTypeId(def->typename) != attribute->atttypid ||
 					def->typename->typmod != attribute->atttypmod)
-					elog(ERROR, "CREATE TABLE: inherited attribute \"%s\" type conflict (%s and %s)",
-						 attributeName,
-						 TypeNameToString(def->typename),
-						 format_type_be(attribute->atttypid));
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("inherited attribute \"%s\" has a type conflict",
+									attributeName),
+							 errdetail("%s versus %s",
+									   TypeNameToString(def->typename),
+									   format_type_be(attribute->atttypid))));
 				def->inhcount++;
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= attribute->attnotnull;
@@ -780,15 +793,19 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				 * Yes, try to merge the two column definitions. They must
 				 * have the same type and typmod.
 				 */
-				elog(NOTICE, "CREATE TABLE: merging attribute \"%s\" with inherited definition",
-					 attributeName);
+				ereport(NOTICE,
+						(errmsg("merging attribute \"%s\" with inherited definition",
+								attributeName)));
 				def = (ColumnDef *) nth(exist_attno - 1, inhSchema);
 				if (typenameTypeId(def->typename) != typenameTypeId(newdef->typename) ||
 					def->typename->typmod != newdef->typename->typmod)
-					elog(ERROR, "CREATE TABLE: attribute \"%s\" type conflict (%s and %s)",
-						 attributeName,
-						 TypeNameToString(def->typename),
-						 TypeNameToString(newdef->typename));
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("attribute \"%s\" has a type conflict",
+									attributeName),
+							 errdetail("%s versus %s",
+									   TypeNameToString(def->typename),
+									   TypeNameToString(newdef->typename))));
 				/* Mark the column as locally defined */
 				def->is_local = true;
 				/* Merge of NOT NULL constraints = OR 'em together */
@@ -823,9 +840,11 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			ColumnDef  *def = lfirst(entry);
 
 			if (def->cooked_default == bogus_marker)
-				elog(ERROR, "CREATE TABLE: attribute \"%s\" inherits conflicting default values"
-					 "\n\tTo resolve the conflict, specify a default explicitly",
-					 def->colname);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+						 errmsg("attribute \"%s\" inherits conflicting default values",
+								def->colname),
+						 errhint("To resolve the conflict, specify a default explicitly.")));
 		}
 	}
 
@@ -1065,7 +1084,7 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 							   ObjectIdGetDatum(relationId),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "setRelhassubclassInRelation: cache lookup failed for relation %u", relationId);
+		elog(ERROR, "cache lookup failed for relation %u", relationId);
 
 	((Form_pg_class) GETSTRUCT(tuple))->relhassubclass = relhassubclass;
 	simple_heap_update(relationRelation, &tuple->t_self, tuple);
@@ -1119,13 +1138,14 @@ renameatt(Oid myrelid,
 	 *
 	 * normally, only the owner of a class can change its schema.
 	 */
-	if (!allowSystemTableMods
-		&& IsSystemRelation(targetrelation))
-		elog(ERROR, "renameatt: class \"%s\" is a system catalog",
-			 RelationGetRelationName(targetrelation));
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER,
 					   RelationGetRelationName(targetrelation));
+	if (!allowSystemTableMods && IsSystemRelation(targetrelation))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(targetrelation))));
 
 	/*
 	 * if the 'recurse' flag is set then we are supposed to rename this
@@ -1167,30 +1187,38 @@ renameatt(Oid myrelid,
 		 */
 		if (!recursing &&
 			find_inheritance_children(myrelid) != NIL)
-			elog(ERROR, "Inherited attribute \"%s\" must be renamed in child tables too",
-				 oldattname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("inherited attribute \"%s\" must be renamed in child tables too",
+							oldattname)));
 	}
 
 	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
 
 	atttup = SearchSysCacheCopyAttName(myrelid, oldattname);
 	if (!HeapTupleIsValid(atttup))
-		elog(ERROR, "renameatt: attribute \"%s\" does not exist",
-			 oldattname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("attribute \"%s\" does not exist",
+						oldattname)));
 	attform = (Form_pg_attribute) GETSTRUCT(atttup);
 
 	attnum = attform->attnum;
 	if (attnum < 0)
-		elog(ERROR, "renameatt: system attribute \"%s\" may not be renamed",
-			 oldattname);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot rename system attribute \"%s\"",
+						oldattname)));
 
 	/*
 	 * if the attribute is inherited, forbid the renaming, unless we are
 	 * already inside a recursive rename.
 	 */
 	if (attform->attinhcount > 0 && !recursing)
-		elog(ERROR, "renameatt: inherited attribute \"%s\" may not be renamed",
-			 oldattname);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot rename inherited attribute \"%s\"",
+						oldattname)));
 
 	/* should not already exist */
 	/* this test is deliberately not attisdropped-aware */
@@ -1198,7 +1226,10 @@ renameatt(Oid myrelid,
 							 ObjectIdGetDatum(myrelid),
 							 PointerGetDatum(newattname),
 							 0, 0))
-		elog(ERROR, "renameatt: attribute \"%s\" exists", newattname);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_COLUMN),
+				 errmsg("attribute \"%s\" of relation \"%s\" already exists",
+						newattname, RelationGetRelationName(targetrelation))));
 
 	namestrcpy(&(attform->attname), newattname);
 
@@ -1230,7 +1261,7 @@ renameatt(Oid myrelid,
 								  ObjectIdGetDatum(indexoid),
 								  0, 0, 0);
 		if (!HeapTupleIsValid(indextup))
-			elog(ERROR, "renameatt: can't find index id %u", indexoid);
+			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		indexform = (Form_pg_index) GETSTRUCT(indextup);
 
 		for (i = 0; i < indexform->indnatts; i++)
@@ -1315,11 +1346,11 @@ renamerel(Oid myrelid, const char *newrelname)
 	oldrelname = pstrdup(RelationGetRelationName(targetrelation));
 	namespaceId = RelationGetNamespace(targetrelation);
 
-	/* Validity checks */
-	if (!allowSystemTableMods &&
-		IsSystemRelation(targetrelation))
-		elog(ERROR, "renamerel: system relation \"%s\" may not be renamed",
-			 oldrelname);
+	if (!allowSystemTableMods && IsSystemRelation(targetrelation))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(targetrelation))));
 
 	relkind = targetrelation->rd_rel->relkind;
 	relhastriggers = (targetrelation->rd_rel->reltriggers > 0);
@@ -1333,12 +1364,14 @@ renamerel(Oid myrelid, const char *newrelname)
 	reltup = SearchSysCacheCopy(RELOID,
 								PointerGetDatum(myrelid),
 								0, 0, 0);
-	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "renamerel: relation \"%s\" does not exist",
-			 oldrelname);
+	if (!HeapTupleIsValid(reltup)) /* shouldn't happen */
+		elog(ERROR, "cache lookup failed for relation %u", myrelid);
 
 	if (get_relname_relid(newrelname, namespaceId) != InvalidOid)
-		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_TABLE),
+				 errmsg("relation \"%s\" already exists",
+						newrelname)));
 
 	/*
 	 * Update pg_class tuple with new relname.	(Scribbling on reltup is
@@ -1351,8 +1384,8 @@ renamerel(Oid myrelid, const char *newrelname)
 	/* keep the system catalog indexes current */
 	CatalogUpdateIndexes(relrelation, reltup);
 
-	heap_close(relrelation, NoLock);
 	heap_freetuple(reltup);
+	heap_close(relrelation, RowExclusiveLock);
 
 	/*
 	 * Also rename the associated type, if any.
@@ -1636,8 +1669,10 @@ AlterTableAddColumn(Oid myrelid,
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -1645,12 +1680,14 @@ AlterTableAddColumn(Oid myrelid,
 	 *
 	 * normally, only the owner of a class can change its schema.
 	 */
-	if (!allowSystemTableMods
-		&& IsSystemRelation(rel))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 RelationGetRelationName(rel));
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Recurse to add the column to child classes, if requested.
@@ -1700,16 +1737,18 @@ AlterTableAddColumn(Oid myrelid,
 			/* Okay if child matches by type */
 			if (typenameTypeId(colDef->typename) != childatt->atttypid ||
 				colDef->typename->typmod != childatt->atttypmod)
-				elog(ERROR, "ALTER TABLE: child table \"%s\" has different type for column \"%s\"",
-					 get_rel_name(childrelid), colDef->colname);
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("child table \"%s\" has different type for column \"%s\"",
+								get_rel_name(childrelid), colDef->colname)));
 
 			/*
 			 * XXX if we supported NOT NULL or defaults, would need to do
 			 * more work here to verify child matches
 			 */
-
-			elog(NOTICE, "ALTER TABLE: merging definition of column \"%s\" for child %s",
-				 colDef->colname, get_rel_name(childrelid));
+			ereport(NOTICE,
+					(errmsg("merging definition of column \"%s\" for child \"%s\"",
+							colDef->colname, get_rel_name(childrelid))));
 
 			/* Bump the existing child att's inhcount */
 			childatt->attinhcount++;
@@ -1738,7 +1777,9 @@ AlterTableAddColumn(Oid myrelid,
 		 * child tables; else the addition would put them out of step.
 		 */
 		if (find_inheritance_children(myrelid) != NIL)
-			elog(ERROR, "Attribute must be added to child tables too");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("attribute must be added to child tables too")));
 	}
 
 	/*
@@ -1755,12 +1796,16 @@ AlterTableAddColumn(Oid myrelid,
 	 * fail for NULL rows (eg, CHECK (newcol IS NOT NULL)).
 	 */
 	if (colDef->raw_default || colDef->cooked_default)
-		elog(ERROR, "Adding columns with defaults is not implemented."
-			 "\n\tAdd the column, then use ALTER TABLE SET DEFAULT.");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("adding columns with defaults is not implemented"),
+				 errhint("Add the column, then use ALTER TABLE SET DEFAULT.")));
 
 	if (colDef->is_not_null)
-		elog(ERROR, "Adding NOT NULL columns is not implemented."
-		   "\n\tAdd the column, then use ALTER TABLE ... SET NOT NULL.");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("adding NOT NULL columns is not implemented"),
+				 errhint("Add the column, then use ALTER TABLE SET NOT NULL.")));
 
 	pgclass = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -1768,8 +1813,7 @@ AlterTableAddColumn(Oid myrelid,
 							ObjectIdGetDatum(myrelid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
-			 RelationGetRelationName(rel));
+		elog(ERROR, "cache lookup failed for relation %u", myrelid);
 
 	/*
 	 * this test is deliberately not attisdropped-aware, since if one
@@ -1780,14 +1824,18 @@ AlterTableAddColumn(Oid myrelid,
 							 ObjectIdGetDatum(myrelid),
 							 PointerGetDatum(colDef->colname),
 							 0, 0))
-		elog(ERROR, "ALTER TABLE: column name \"%s\" already exists in table \"%s\"",
-			 colDef->colname, RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_COLUMN),
+				 errmsg("attribute \"%s\" of relation \"%s\" already exists",
+						colDef->colname, RelationGetRelationName(rel))));
 
 	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
 	maxatts = minattnum + 1;
 	if (maxatts > MaxHeapAttributeNumber)
-		elog(ERROR, "ALTER TABLE: relations limited to %d columns",
-			 MaxHeapAttributeNumber);
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
+				 errmsg("tables can have at most %d columns",
+						MaxHeapAttributeNumber)));
 	i = minattnum + 1;
 
 	attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
@@ -1854,7 +1902,7 @@ AlterTableAddColumn(Oid myrelid,
 	heap_freetuple(newreltup);
 	ReleaseSysCache(reltup);
 
-	heap_close(pgclass, NoLock);
+	heap_close(pgclass, RowExclusiveLock);
 
 	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
@@ -1911,16 +1959,20 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
-	if (!allowSystemTableMods
-		&& IsSystemRelation(rel))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 RelationGetRelationName(rel));
-
+	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Propagate to children if desired
@@ -1956,13 +2008,17 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 	 */
 	attnum = get_attnum(myrelid, colName);
 	if (attnum == InvalidAttrNumber)
-		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-			 RelationGetRelationName(rel), colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
-		elog(ERROR, "ALTER TABLE: Cannot alter system attribute \"%s\"",
-			 colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter system attribute \"%s\"",
+						colName)));
 
 	/*
 	 * Check that the attribute is not in a primary key
@@ -1982,8 +2038,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 									ObjectIdGetDatum(indexoid),
 									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "ALTER TABLE: Index %u not found",
-				 indexoid);
+			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		/* If the index is not a primary key, skip the check */
@@ -1996,7 +2051,10 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 			for (i = 0; i < indexStruct->indnatts; i++)
 			{
 				if (indexStruct->indkey[i] == attnum)
-					elog(ERROR, "ALTER TABLE: Attribute \"%s\" is in a primary key", colName);
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+							 errmsg("attribute \"%s\" is in a primary key",
+									colName)));
 			}
 		}
 
@@ -2012,8 +2070,8 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 
 	tuple = SearchSysCacheCopyAttName(myrelid, colName);
 	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
-		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
-			 RelationGetRelationName(rel), colName);
+		elog(ERROR, "cache lookup failed for attribute \"%s\" of relation %u",
+			 colName, myrelid);
 
 	((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull = FALSE;
 
@@ -2044,16 +2102,20 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
-	if (!allowSystemTableMods
-		&& IsSystemRelation(rel))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 RelationGetRelationName(rel));
-
+	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Propagate to children if desired
@@ -2089,13 +2151,17 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 	 */
 	attnum = get_attnum(myrelid, colName);
 	if (attnum == InvalidAttrNumber)
-		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-			 RelationGetRelationName(rel), colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
-		elog(ERROR, "ALTER TABLE: Cannot alter system attribute \"%s\"",
-			 colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter system attribute \"%s\"",
+						colName)));
 
 	/*
 	 * Perform a scan to ensure that there are no NULL values already in
@@ -2113,8 +2179,10 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 		d = heap_getattr(tuple, attnum, tupdesc, &isnull);
 
 		if (isnull)
-			elog(ERROR, "ALTER TABLE: Attribute \"%s\" contains NULL values",
-				 colName);
+			ereport(ERROR,
+					(errcode(ERRCODE_NOT_NULL_VIOLATION),
+					 errmsg("attribute \"%s\" contains NULL values",
+							colName)));
 	}
 
 	heap_endscan(scan);
@@ -2126,8 +2194,8 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 
 	tuple = SearchSysCacheCopyAttName(myrelid, colName);
 	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
-		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
-			 RelationGetRelationName(rel), colName);
+		elog(ERROR, "cache lookup failed for attribute \"%s\" of relation %u",
+			 colName, myrelid);
 
 	((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull = TRUE;
 
@@ -2161,16 +2229,20 @@ AlterTableAlterColumnDefault(Oid myrelid, bool recurse,
 	 */
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_VIEW)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table or view",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table or view",
+						RelationGetRelationName(rel))));
 
-	if (!allowSystemTableMods
-		&& IsSystemRelation(rel))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 RelationGetRelationName(rel));
-
+	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Propagate to children if desired
@@ -2206,13 +2278,17 @@ AlterTableAlterColumnDefault(Oid myrelid, bool recurse,
 	 */
 	attnum = get_attnum(myrelid, colName);
 	if (attnum == InvalidAttrNumber)
-		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-			 RelationGetRelationName(rel), colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
-		elog(ERROR, "ALTER TABLE: Cannot alter system attribute \"%s\"",
-			 colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter system attribute \"%s\"",
+						colName)));
 
 	/*
 	 * Remove any old default for the column.  We use RESTRICT here for
@@ -2258,18 +2334,23 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
+
+	/* Permissions checks */
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
 	 * we allow statistics case for system tables
 	 */
 	if (*flagType != 'S' && !allowSystemTableMods && IsSystemRelation(rel))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 RelationGetRelationName(rel));
-
-	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Check the supplied parameters before anything else
@@ -2285,13 +2366,18 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 		 */
 		if (newtarget < -1)
 		{
-			elog(ERROR, "ALTER TABLE: statistics target %d is too low",
-				 newtarget);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("statistics target %d is too low",
+							newtarget)));
 		}
 		else if (newtarget > 1000)
 		{
-			elog(WARNING, "ALTER TABLE: lowering statistics target to 1000");
 			newtarget = 1000;
+			ereport(WARNING,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("lowering statistics target to %d",
+							newtarget)));
 		}
 	}
 	else if (*flagType == 'M')
@@ -2311,12 +2397,14 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 		else if (strcasecmp(storagemode, "main") == 0)
 			newstorage = 'm';
 		else
-			elog(ERROR, "ALTER TABLE: \"%s\" storage not recognized",
-				 storagemode);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid storage type \"%s\"",
+							storagemode)));
 	}
 	else
 	{
-		elog(ERROR, "ALTER TABLE: Invalid column flag: %c",
+		elog(ERROR, "unrecognized alter-column type flag: %c",
 			 (int) *flagType);
 	}
 
@@ -2353,13 +2441,17 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 
 	tuple = SearchSysCacheCopyAttName(myrelid, colName);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
-			 RelationGetRelationName(rel), colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
 	attrtuple = (Form_pg_attribute) GETSTRUCT(tuple);
 
 	if (attrtuple->attnum < 0)
-		elog(ERROR, "ALTER TABLE: cannot change system attribute \"%s\"",
-			 colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter system attribute \"%s\"",
+						colName)));
 
 	/*
 	 * Now change the appropriate field
@@ -2375,8 +2467,10 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 		if (newstorage == 'p' || TypeIsToastable(attrtuple->atttypid))
 			attrtuple->attstorage = newstorage;
 		else
-			elog(ERROR, "ALTER TABLE: Column datatype %s can only have storage \"plain\"",
-				 format_type_be(attrtuple->atttypid));
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("column datatype %s can only have storage \"plain\"",
+							format_type_be(attrtuple->atttypid))));
 	}
 
 	simple_heap_update(attrelation, &tuple->t_self, tuple);
@@ -2386,7 +2480,8 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 
 	heap_freetuple(tuple);
 
-	heap_close(attrelation, NoLock);
+	heap_close(attrelation, RowExclusiveLock);
+
 	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 }
 
@@ -2404,38 +2499,20 @@ AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
-	if (!allowSystemTableMods
-		&& IsSystemRelation(rel))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 RelationGetRelationName(rel));
-
+	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
-
-	/* Get its pg_class tuple, too */
-	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
-
-	tuple = SearchSysCacheCopy(RELOID,
-							   ObjectIdGetDatum(myrelid),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ALTER TABLE: relation %u not found", myrelid);
-	tuple_class = (Form_pg_class) GETSTRUCT(tuple);
-
-	/* Can we change the ownership of this tuple? */
-	CheckTupleType(tuple_class);
-
-	/*
-	 * Okay, this is a valid tuple: check it's hasoids flag
-	 * to see if we actually need to change anything
-	 */
-	if (tuple_class->relhasoids == setOid)
-		elog(ERROR, "ALTER TABLE: Table is already %s",
-			 setOid ? "WITH OIDS" : "WITHOUT OIDS");
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Propagate to children if desired
@@ -2464,6 +2541,33 @@ AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
 		}
 	}
 
+	/* Do the thing on this relation */
+	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy(RELOID,
+							   ObjectIdGetDatum(myrelid),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u", myrelid);
+	tuple_class = (Form_pg_class) GETSTRUCT(tuple);
+
+	/*
+	 * check to see if we actually need to change anything
+	 */
+	if (tuple_class->relhasoids == setOid)
+	{
+		if (setOid)
+			ereport(NOTICE,
+					(errmsg("table \"%s\" is already WITH OIDS",
+							RelationGetRelationName(rel))));
+		else
+			ereport(NOTICE,
+					(errmsg("table \"%s\" is already WITHOUT OIDS",
+							RelationGetRelationName(rel))));
+		heap_close(class_rel, RowExclusiveLock);
+		heap_close(rel, NoLock); /* close rel, but keep lock! */
+		return;
+	}
 
 	tuple_class->relhasoids = setOid;
 	simple_heap_update(class_rel, &tuple->t_self, tuple);
@@ -2471,13 +2575,15 @@ AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
 	/* Keep the catalog indexes up to date */
 	CatalogUpdateIndexes(class_rel, tuple);
 
-
-
 	if (setOid)
+	{
 		/*
 		 * TODO: Generate the now required OID pg_attribute entry
 		 */
-		elog(ERROR, "ALTER TABLE WITH OIDS is unsupported");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("ALTER TABLE WITH OIDS is not yet implemented")));
+	}
 	else
 	{
 		HeapTuple	atttup;
@@ -2492,19 +2598,22 @@ AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
 		 */
 		atttup = SearchSysCache(ATTNUM,
 								ObjectIdGetDatum(myrelid),
-								ObjectIdAttributeNumber, 0, 0);
+								Int16GetDatum(ObjectIdAttributeNumber),
+								0, 0);
 		if (!HeapTupleIsValid(atttup))
-			elog(ERROR, "ALTER TABLE: relation %u doesn't have an Oid column to remove", myrelid);
+			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+				 ObjectIdAttributeNumber, myrelid);
 
 		simple_heap_delete(attrel, &atttup->t_self);
 
 		ReleaseSysCache(atttup);
 
-		heap_close(attrel, NoLock);		/* close rel, but keep lock! */
+		heap_close(attrel, RowExclusiveLock);
 	}
 
+	heap_close(class_rel, RowExclusiveLock);
+
 	heap_close(rel, NoLock);		/* close rel, but keep lock! */
-	heap_close(class_rel, NoLock);	/* close rel, but keep lock! */
 }
 
 /*
@@ -2523,36 +2632,46 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
-	if (!allowSystemTableMods
-		&& IsSystemRelation(rel))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 RelationGetRelationName(rel));
-
+	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * get the number of the attribute
 	 */
 	attnum = get_attnum(myrelid, colName);
 	if (attnum == InvalidAttrNumber)
-		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-			 RelationGetRelationName(rel), colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
 
 	/* Can't drop a system attribute */
 	/* XXX perhaps someday allow dropping OID? */
 	if (attnum < 0)
-		elog(ERROR, "ALTER TABLE: Cannot drop system attribute \"%s\"",
-			 colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot drop system attribute \"%s\"",
+						colName)));
 
 	/* Don't drop inherited columns */
 	tupleDesc = RelationGetDescr(rel);
 	if (tupleDesc->attrs[attnum - 1]->attinhcount > 0 && !recursing)
-		elog(ERROR, "ALTER TABLE: Cannot drop inherited column \"%s\"",
-			 colName);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot drop inherited attribute \"%s\"",
+						colName)));
 
 	/*
 	 * If we are asked to drop ONLY in this table (no recursion), we need
@@ -2580,12 +2699,12 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 
 			tuple = SearchSysCacheCopyAttName(childrelid, colName);
 			if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
-				elog(ERROR, "ALTER TABLE: relation %u has no column \"%s\"",
-					 childrelid, colName);
+				elog(ERROR, "cache lookup failed for attribute \"%s\" of relation %u",
+					 colName, childrelid);
 			childatt = (Form_pg_attribute) GETSTRUCT(tuple);
 
-			if (childatt->attinhcount <= 0)
-				elog(ERROR, "ALTER TABLE: relation %u has non-inherited column \"%s\"",
+			if (childatt->attinhcount <= 0)	/* shouldn't happen */
+				elog(ERROR, "relation %u has non-inherited attribute \"%s\"",
 					 childrelid, colName);
 			childatt->attinhcount--;
 			childatt->attislocal = true;
@@ -2631,12 +2750,12 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 
 			tuple = SearchSysCacheCopyAttName(childrelid, colName);
 			if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
-				elog(ERROR, "ALTER TABLE: relation %u has no column \"%s\"",
-					 childrelid, colName);
+				elog(ERROR, "cache lookup failed for attribute \"%s\" of relation %u",
+					 colName, childrelid);
 			childatt = (Form_pg_attribute) GETSTRUCT(tuple);
 
-			if (childatt->attinhcount <= 0)
-				elog(ERROR, "ALTER TABLE: relation %u has non-inherited column \"%s\"",
+			if (childatt->attinhcount <= 0)	/* shouldn't happen */
+				elog(ERROR, "relation %u has non-inherited attribute \"%s\"",
 					 childrelid, colName);
 
 			if (childatt->attinhcount == 1 && !childatt->attislocal)
@@ -2693,16 +2812,20 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
-	if (!allowSystemTableMods
-		&& IsSystemRelation(rel))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 RelationGetRelationName(rel));
-
+	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	if (recurse)
 	{
@@ -2751,8 +2874,11 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 												 RelationGetRelid(rel),
 												 RelationGetNamespace(rel),
 												 constr->name))
-							elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
-								 constr->name, RelationGetRelationName(rel));
+							ereport(ERROR,
+									(errcode(ERRCODE_DUPLICATE_OBJECT),
+									 errmsg("constraint \"%s\" for relation \"%s\" already exists",
+											constr->name,
+											RelationGetRelationName(rel))));
 					}
 					else
 						constr->name = GenerateConstraintName(CONSTRAINT_RELATION,
@@ -2772,7 +2898,8 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 							AlterTableAddCheckConstraint(rel, constr);
 							break;
 						default:
-							elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented for that constraint type.");
+							elog(ERROR, "unrecognized constraint type: %d",
+								 (int) constr->contype);
 					}
 					break;
 				}
@@ -2789,9 +2916,11 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 												   RelationGetRelid(rel),
 											   RelationGetNamespace(rel),
 											  fkconstraint->constr_name))
-							elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
-								 fkconstraint->constr_name,
-								 RelationGetRelationName(rel));
+							ereport(ERROR,
+									(errcode(ERRCODE_DUPLICATE_OBJECT),
+									 errmsg("constraint \"%s\" for relation \"%s\" already exists",
+											fkconstraint->constr_name,
+											RelationGetRelationName(rel))));
 					}
 					else
 						fkconstraint->constr_name = GenerateConstraintName(CONSTRAINT_RELATION,
@@ -2804,7 +2933,8 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 					break;
 				}
 			default:
-				elog(ERROR, "ALTER TABLE / ADD CONSTRAINT unable to determine type of constraint passed");
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(newConstraint));
 		}
 
 		/* If we have multiple constraints to make, bump CC between 'em */
@@ -2864,16 +2994,22 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	 * Make sure no outside relations are referred to.
 	 */
 	if (length(pstate->p_rtable) != 1)
-		elog(ERROR, "Only relation '%s' can be referenced in CHECK",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("CHECK constraint may only reference relation \"%s\"",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * No subplans or aggregates, either...
 	 */
 	if (pstate->p_hasSubLinks)
-		elog(ERROR, "cannot use subselect in CHECK constraint expression");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot use sub-select in CHECK constraint")));
 	if (pstate->p_hasAggs)
-		elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("cannot use aggregate in CHECK constraint")));
 
 	/*
 	 * Might as well try to reduce any constant expressions, so as to
@@ -2922,8 +3058,10 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	FreeExecutorState(estate);
 
 	if (!successful)
-		elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s",
-			 constr->name);
+		ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+				 errmsg("CHECK constraint \"%s\" is violated at some row(s)",
+						constr->name)));
 
 	/*
 	 * Call AddRelationRawConstraints to do
@@ -2945,7 +3083,6 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 static void
 AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 {
-	const char *stmtname;
 	Relation	pkrel;
 	AclResult	aclresult;
 	int16		pkattnum[INDEX_MAX_KEYS];
@@ -2957,9 +3094,6 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 				numpks;
 	Oid			indexOid;
 	Oid			constrOid;
-
-	/* cheat a little to discover statement type for error messages */
-	stmtname = fkconstraint->skip_validation ? "CREATE TABLE" : "ALTER TABLE";
 
 	/*
 	 * Grab an exclusive lock on the pk table, so that
@@ -2978,18 +3112,21 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 	 * but we may as well error out sooner instead of later.
 	 */
 	if (pkrel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "referenced relation \"%s\" is not a table",
-			 RelationGetRelationName(pkrel));
-
-	if (!allowSystemTableMods
-		&& IsSystemRelation(pkrel))
-		elog(ERROR, "%s: relation \"%s\" is a system catalog",
-			 stmtname, RelationGetRelationName(pkrel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("referenced relation \"%s\" is not a table",
+						RelationGetRelationName(pkrel))));
 
 	aclresult = pg_class_aclcheck(RelationGetRelid(pkrel), GetUserId(),
 								  ACL_REFERENCES);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, RelationGetRelationName(pkrel));
+
+	if (!allowSystemTableMods && IsSystemRelation(pkrel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(pkrel))));
 
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  ACL_REFERENCES);
@@ -2998,8 +3135,9 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 
 	if (isTempNamespace(RelationGetNamespace(pkrel)) &&
 		!isTempNamespace(RelationGetNamespace(rel)))
-		elog(ERROR, "%s: Unable to reference temporary table from permanent table constraint",
-			 stmtname);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot reference temporary table from permanent table constraint")));
 
 	/*
 	 * Look up the referencing attributes to make sure they
@@ -3013,7 +3151,6 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 
 	numfks = transformColumnNameList(RelationGetRelid(rel),
 									 fkconstraint->fk_attrs,
-									 stmtname,
 									 fkattnum, fktypoid);
 
 	/*
@@ -3032,7 +3169,6 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 	{
 		numpks = transformColumnNameList(RelationGetRelid(pkrel),
 										 fkconstraint->pk_attrs,
-										 stmtname,
 										 pkattnum, pktypoid);
 		/* Look for an index matching the column list */
 		indexOid = transformFkeyCheckAttrs(pkrel, numpks, pkattnum);
@@ -3040,8 +3176,9 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 
 	/* Be sure referencing and referenced column types are comparable */
 	if (numfks != numpks)
-		elog(ERROR, "%s: number of referencing and referenced attributes for foreign key disagree",
-			 stmtname);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
+				 errmsg("number of referencing and referenced attributes for foreign key disagree")));
 
 	for (i = 0; i < numpks; i++)
 	{
@@ -3049,7 +3186,7 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 		 * fktypoid[i] is the foreign key table's i'th element's type
 		 * pktypoid[i] is the primary key table's i'th element's type
 		 *
-		 * We let oper() do our work for us, including elog(ERROR) if the
+		 * We let oper() do our work for us, including ereport(ERROR) if the
 		 * types don't compare with =
 		 */
 		Operator	o = oper(makeList1(makeString("=")),
@@ -3107,7 +3244,6 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
  */
 static int
 transformColumnNameList(Oid relId, List *colList,
-						const char *stmtname,
 						int16 *attnums, Oid *atttypids)
 {
 	List	   *l;
@@ -3121,11 +3257,15 @@ transformColumnNameList(Oid relId, List *colList,
 
 		atttuple = SearchSysCacheAttName(relId, attname);
 		if (!HeapTupleIsValid(atttuple))
-			elog(ERROR, "%s: column \"%s\" referenced in foreign key constraint does not exist",
-				 stmtname, attname);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" referenced in foreign key constraint does not exist",
+							attname)));
 		if (attnum >= INDEX_MAX_KEYS)
-			elog(ERROR, "Can only have %d keys in a foreign key",
-				 INDEX_MAX_KEYS);
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_COLUMNS),
+					 errmsg("cannot have more than %d keys in a foreign key",
+							INDEX_MAX_KEYS)));
 		attnums[attnum] = ((Form_pg_attribute) GETSTRUCT(atttuple))->attnum;
 		atttypids[attnum] = ((Form_pg_attribute) GETSTRUCT(atttuple))->atttypid;
 		ReleaseSysCache(atttuple);
@@ -3168,8 +3308,7 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 									ObjectIdGetDatum(indexoid),
 									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
-				 indexoid);
+			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 		if (indexStruct->indisprimary)
 		{
@@ -3186,8 +3325,10 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 	 * Check that we found it
 	 */
 	if (indexStruct == NULL)
-		elog(ERROR, "PRIMARY KEY for referenced table \"%s\" not found",
-			 RelationGetRelationName(pkrel));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("there is no PRIMARY KEY for referenced table \"%s\"",
+						RelationGetRelationName(pkrel))));
 
 	/*
 	 * Now build the list of PK attributes from the indkey definition
@@ -3243,8 +3384,7 @@ transformFkeyCheckAttrs(Relation pkrel,
 									ObjectIdGetDatum(indexoid),
 									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "transformFkeyCheckAttrs: index %u not found",
-				 indexoid);
+			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		/*
@@ -3298,8 +3438,10 @@ transformFkeyCheckAttrs(Relation pkrel,
 	}
 
 	if (!found)
-		elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
-			 RelationGetRelationName(pkrel));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
+				 errmsg("there is no UNIQUE constraint matching given keys for referenced table \"%s\"",
+			 RelationGetRelationName(pkrel))));
 
 	freeList(indexoidlist);
 
@@ -3326,7 +3468,7 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	/*
 	 * Scan through each tuple, calling RI_FKey_check_ins (insert trigger)
 	 * as if that tuple had just been inserted.  If any of those fail, it
-	 * should elog(ERROR) and that's that.
+	 * should ereport(ERROR) and that's that.
 	 */
 	MemSet(&trig, 0, sizeof(trig));
 	trig.tgoid = InvalidOid;
@@ -3461,9 +3603,9 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	fk_attr = fkconstraint->fk_attrs;
 	pk_attr = fkconstraint->pk_attrs;
 	if (length(fk_attr) != length(pk_attr))
-		elog(ERROR, "number of key attributes in referenced table must be equal to foreign key"
-			 "\n\tIllegal FOREIGN KEY definition references \"%s\"",
-			 fkconstraint->pktable->relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
+				 errmsg("number of referencing and referenced attributes for foreign key disagree")));
 
 	while (fk_attr != NIL)
 	{
@@ -3517,7 +3659,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 			fk_trigger->funcname = SystemFuncName("RI_FKey_setdefault_del");
 			break;
 		default:
-			elog(ERROR, "Unrecognized ON DELETE action for FOREIGN KEY constraint");
+			elog(ERROR, "unrecognized FK action type: %d",
+				 (int) fkconstraint->fk_del_action);
 			break;
 	}
 
@@ -3583,7 +3726,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 			fk_trigger->funcname = SystemFuncName("RI_FKey_setdefault_upd");
 			break;
 		default:
-			elog(ERROR, "Unrecognized ON UPDATE action for FOREIGN KEY constraint");
+			elog(ERROR, "unrecognized FK action type: %d",
+				 (int) fkconstraint->fk_upd_action);
 			break;
 	}
 
@@ -3628,8 +3772,8 @@ fkMatchTypeToString(char match_type)
 		case FKCONSTR_MATCH_UNSPECIFIED:
 			return pstrdup("UNSPECIFIED");
 		default:
-			elog(ERROR, "fkMatchTypeToString: Unknown MATCH TYPE '%c'",
-				 match_type);
+			elog(ERROR, "unrecognized match type: %d",
+				 (int) match_type);
 	}
 	return NULL;				/* can't get here */
 }
@@ -3653,16 +3797,20 @@ AlterTableDropConstraint(Oid myrelid, bool recurse,
 
 	/* Disallow DROP CONSTRAINT on views, indexes, sequences, etc */
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
-	if (!allowSystemTableMods
-		&& IsSystemRelation(rel))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 RelationGetRelationName(rel));
-
+	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Process child tables if requested.
@@ -3704,11 +3852,15 @@ AlterTableDropConstraint(Oid myrelid, bool recurse,
 
 	/* If zero constraints deleted, complain */
 	if (deleted == 0)
-		elog(ERROR, "ALTER TABLE / DROP CONSTRAINT: %s does not exist",
-			 constrName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("constraint \"%s\" does not exist",
+						constrName)));
 	/* Otherwise if more than one constraint deleted, notify */
 	else if (deleted > 1)
-		elog(NOTICE, "Multiple constraints dropped");
+		ereport(NOTICE,
+				(errmsg("multiple constraints named \"%s\" were dropped",
+						constrName)));
 }
 
 /*
@@ -3733,11 +3885,25 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 							   ObjectIdGetDatum(relationOid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ALTER TABLE: relation %u not found", relationOid);
+		elog(ERROR, "cache lookup failed for relation %u", relationOid);
 	tuple_class = (Form_pg_class) GETSTRUCT(tuple);
 
 	/* Can we change the ownership of this tuple? */
-	CheckTupleType(tuple_class);
+	switch (tuple_class->relkind)
+	{
+		case RELKIND_RELATION:
+		case RELKIND_INDEX:
+		case RELKIND_VIEW:
+		case RELKIND_SEQUENCE:
+		case RELKIND_TOASTVALUE:
+			/* ok to change owner */
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a table, TOAST table, index, view, or sequence",
+							NameStr(tuple_class->relname))));
+	}
 
 	/*
 	 * Okay, this is a valid tuple: change its ownership and write to the
@@ -3782,24 +3948,6 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 	relation_close(target_rel, NoLock);
 }
 
-static void
-CheckTupleType(Form_pg_class tuple_class)
-{
-	switch (tuple_class->relkind)
-	{
-		case RELKIND_RELATION:
-		case RELKIND_INDEX:
-		case RELKIND_VIEW:
-		case RELKIND_SEQUENCE:
-		case RELKIND_TOASTVALUE:
-			/* ok to change owner */
-			break;
-		default:
-			elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table, TOAST table, index, view, or sequence",
-				 NameStr(tuple_class->relname));
-	}
-}
-
 /*
  * ALTER TABLE CLUSTER ON
  *
@@ -3820,16 +3968,16 @@ AlterTableClusterOn(Oid relOid, const char *indexName)
 	indexOid = get_relname_relid(indexName, rel->rd_rel->relnamespace);
 	
 	if (!OidIsValid(indexOid))
-		elog(ERROR, "ALTER TABLE: cannot find index \"%s\" for table \"%s\"",
-				indexName, NameStr(rel->rd_rel->relname));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("index \"%s\" for table \"%s\" does not exist",
+						indexName, NameStr(rel->rd_rel->relname))));
 
 	indexTuple = SearchSysCache(INDEXRELID,
 								ObjectIdGetDatum(indexOid),
 								0, 0, 0);
-
 	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "Cache lookup failed for index %u",
-				indexOid);
+		elog(ERROR, "cache lookup failed for index %u", indexOid);
 	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
 	/*
@@ -3838,10 +3986,11 @@ AlterTableClusterOn(Oid relOid, const char *indexName)
 	 */
 	if (indexForm->indisclustered)
 	{
-		elog(NOTICE, "ALTER TABLE: table \"%s\" is already being clustered on index \"%s\"",
-				NameStr(rel->rd_rel->relname), indexName);
+		ereport(NOTICE,
+				(errmsg("table \"%s\" is already being clustered on index \"%s\"",
+						NameStr(rel->rd_rel->relname), indexName)));
 		ReleaseSysCache(indexTuple);
-		heap_close(rel, AccessExclusiveLock);
+		heap_close(rel, NoLock);
 		return;
 	}
 
@@ -3860,7 +4009,7 @@ AlterTableClusterOn(Oid relOid, const char *indexName)
 		  							  ObjectIdGetDatum(indexOid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(idxtuple))
-			elog(ERROR, "Cache lookup failed for index %u", indexOid);
+			elog(ERROR, "cache lookup failed for index %u", indexOid);
 		idxForm = (Form_pg_index) GETSTRUCT(idxtuple);
 		/*
 		 * Unset the bit if set.  We know it's wrong because we checked
@@ -3880,9 +4029,12 @@ AlterTableClusterOn(Oid relOid, const char *indexName)
 		}
 		heap_freetuple(idxtuple);
 	}
-	ReleaseSysCache(indexTuple);
-	heap_close(rel, AccessExclusiveLock);
+
 	heap_close(pg_index, RowExclusiveLock);
+
+	ReleaseSysCache(indexTuple);
+
+	heap_close(rel, NoLock);	/* close rel, but keep lock till commit */
 }
 
 /*
@@ -3911,11 +4063,13 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 */
 	rel = heap_open(relOid, AccessExclusiveLock);
 
-	/* Check permissions */
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
 
+	/* Permissions checks */
 	if (!pg_class_ownercheck(relOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
@@ -3930,7 +4084,9 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 */
 	shared_relation = rel->rd_rel->relisshared;
 	if (shared_relation && IsUnderPostmaster)
-		elog(ERROR, "Shared relations cannot be toasted after initdb");
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("shared relations cannot be toasted after initdb")));
 
 	/*
 	 * Is it already toasted?
@@ -3943,8 +4099,10 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 			return;
 		}
 
-		elog(ERROR, "ALTER TABLE: relation \"%s\" already has a toast table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("relation \"%s\" already has a toast table",
+						RelationGetRelationName(rel))));
 	}
 
 	/*
@@ -3958,15 +4116,19 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 			return;
 		}
 
-		elog(ERROR, "ALTER TABLE: relation \"%s\" does not need a toast table",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("relation \"%s\" does not need a toast table",
+						RelationGetRelationName(rel))));
 	}
 
 	/*
 	 * Create the toast table and its index
 	 */
-	snprintf(toast_relname, sizeof(toast_relname), "pg_toast_%u", relOid);
-	snprintf(toast_idxname, sizeof(toast_idxname), "pg_toast_%u_index", relOid);
+	snprintf(toast_relname, sizeof(toast_relname),
+			 "pg_toast_%u", relOid);
+	snprintf(toast_idxname, sizeof(toast_idxname),
+			 "pg_toast_%u_index", relOid);
 
 	/* this is pretty painful...  need a tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(3, false);
@@ -4055,8 +4217,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 								ObjectIdGetDatum(relOid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
-			 RelationGetRelationName(rel));
+		elog(ERROR, "cache lookup failed for relation %u", relOid);
 
 	((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid = toast_relid;
 

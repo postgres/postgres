@@ -308,11 +308,11 @@ INSERT INTO tmp3 values (5,50);
 -- Try (and fail) to add constraint due to invalid source columns
 ALTER TABLE tmp3 add constraint tmpconstr foreign key(c) references tmp2 match full;
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  ALTER TABLE: column "c" referenced in foreign key constraint does not exist
+ERROR:  column "c" referenced in foreign key constraint does not exist
 -- Try (and fail) to add constraint due to invalide destination columns explicitly given
 ALTER TABLE tmp3 add constraint tmpconstr foreign key(a) references tmp2(b) match full;
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  ALTER TABLE: column "b" referenced in foreign key constraint does not exist
+ERROR:  column "b" referenced in foreign key constraint does not exist
 -- Try (and fail) to add constraint due to invalid data
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
@@ -326,7 +326,7 @@ NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 -- tmp4 is a,b
 ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  UNIQUE constraint matching given keys for referenced table "tmp4" not found
+ERROR:  there is no UNIQUE constraint matching given keys for referenced table "tmp4"
 DROP TABLE tmp5;
 DROP TABLE tmp4;
 DROP TABLE tmp3;
@@ -409,7 +409,7 @@ create table atacc1 ( test int );
 insert into atacc1 (test) values (2);
 -- add a check constraint (fails)
 alter table atacc1 add constraint atacc_test1 check (test>3);
-ERROR:  AlterTableAddConstraint: rejected due to CHECK constraint atacc_test1
+ERROR:  CHECK constraint "atacc_test1" is violated at some row(s)
 insert into atacc1 (test) values (4);
 drop table atacc1;
 -- let's do one where the check fails because the column doesn't exist
@@ -567,7 +567,7 @@ insert into atacc1 (test) values (NULL);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
-ERROR:  ALTER TABLE: Attribute "test" contains NULL values
+ERROR:  attribute "test" contains NULL values
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do one where the primary key constraint fails
@@ -614,9 +614,9 @@ drop table atacc1;
 -- alter table / alter column [set/drop] not null tests
 -- try altering system catalogs, should fail
 alter table pg_class alter column relname drop not null;
-ERROR:  ALTER TABLE: relation "pg_class" is a system catalog
+ERROR:  "pg_class" is a system catalog
 alter table pg_class alter relname set not null;
-ERROR:  ALTER TABLE: relation "pg_class" is a system catalog
+ERROR:  "pg_class" is a system catalog
 -- try altering non-existent table, should fail
 alter table non_existent alter column bar set not null;
 ERROR:  Relation "non_existent" does not exist
@@ -628,30 +628,30 @@ create table atacc1 (test int not null);
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
 alter table atacc1 alter column test drop not null;
-ERROR:  ALTER TABLE: Attribute "test" is in a primary key
+ERROR:  attribute "test" is in a primary key
 alter table atacc1 drop constraint "atacc1_pkey";
 alter table atacc1 alter column test drop not null;
 insert into atacc1 values (null);
 alter table atacc1 alter test set not null;
-ERROR:  ALTER TABLE: Attribute "test" contains NULL values
+ERROR:  attribute "test" contains NULL values
 delete from atacc1;
 alter table atacc1 alter test set not null;
 -- try altering a non-existent column, should fail
 alter table atacc1 alter bar set not null;
-ERROR:  Relation "atacc1" has no column "bar"
+ERROR:  attribute "bar" of relation "atacc1" does not exist
 alter table atacc1 alter bar drop not null;
-ERROR:  Relation "atacc1" has no column "bar"
+ERROR:  attribute "bar" of relation "atacc1" does not exist
 -- try altering the oid column, should fail
 alter table atacc1 alter oid set not null;
-ERROR:  ALTER TABLE: Cannot alter system attribute "oid"
+ERROR:  cannot alter system attribute "oid"
 alter table atacc1 alter oid drop not null;
-ERROR:  ALTER TABLE: Cannot alter system attribute "oid"
+ERROR:  cannot alter system attribute "oid"
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
 alter table myview alter column test drop not null;
-ERROR:  ALTER TABLE: relation "myview" is not a table
+ERROR:  "myview" is not a table
 alter table myview alter column test set not null;
-ERROR:  ALTER TABLE: relation "myview" is not a table
+ERROR:  "myview" is not a table
 drop view myview;
 drop table atacc1;
 -- test inheritance
@@ -666,9 +666,9 @@ alter table parent alter a drop not null;
 insert into parent values (NULL);
 insert into child (a, b) values (NULL, 'foo');
 alter table only parent alter a set not null;
-ERROR:  ALTER TABLE: Attribute "a" contains NULL values
+ERROR:  attribute "a" contains NULL values
 alter table child alter a set not null;
-ERROR:  ALTER TABLE: Attribute "a" contains NULL values
+ERROR:  attribute "a" contains NULL values
 delete from parent;
 alter table only parent alter a set not null;
 insert into parent values (NULL);
@@ -710,7 +710,7 @@ ERROR:  pg_atoi: error in "wrong_datatype": can't parse "wrong_datatype"
 alter table def_test alter column c2 set default 20;
 -- set defaults on a non-existent column: this should fail
 alter table def_test alter column c3 set default 30;
-ERROR:  Relation "def_test" has no column "c3"
+ERROR:  attribute "c3" of relation "def_test" does not exist
 -- set defaults on views: we need to create a view, add a rule
 -- to allow insertions into it, and then alter the view to add
 -- a default
@@ -741,7 +741,7 @@ drop table def_test;
 -- alter table / drop column tests
 -- try altering system catalogs, should fail
 alter table pg_class drop column relname;
-ERROR:  ALTER TABLE: relation "pg_class" is a system catalog
+ERROR:  "pg_class" is a system catalog
 -- try altering non-existent table, should fail
 alter table foo drop column bar;
 ERROR:  Relation "foo" does not exist
@@ -750,7 +750,7 @@ create table atacc1 (a int4 not null, b int4, c int4 not null, d int4);
 insert into atacc1 values (1, 2, 3, 4);
 alter table atacc1 drop a;
 alter table atacc1 drop a;
-ERROR:  Relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 -- SELECTs
 select * from atacc1;
  b | c | d 
@@ -796,11 +796,11 @@ select * from atacc1 where "........pg.dropped.1........" = 1;
 ERROR:  attribute "........pg.dropped.1........" not found
 -- UPDATEs
 update atacc1 set a = 3;
-ERROR:  relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 update atacc1 set b = 2 where a = 3;
 ERROR:  attribute "a" not found
 update atacc1 set "........pg.dropped.1........" = 3;
-ERROR:  relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 update atacc1 set b = 2 where "........pg.dropped.1........" = 3;
 ERROR:  attribute "........pg.dropped.1........" not found
 -- INSERTs
@@ -810,22 +810,22 @@ insert into atacc1 values (default, 11, 12, 13);
 ERROR:  INSERT has more expressions than target columns
 insert into atacc1 values (11, 12, 13);
 insert into atacc1 (a) values (10);
-ERROR:  relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 insert into atacc1 (a) values (default);
-ERROR:  relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 insert into atacc1 (a,b,c,d) values (10,11,12,13);
-ERROR:  relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 insert into atacc1 (a,b,c,d) values (default,11,12,13);
-ERROR:  relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 insert into atacc1 (b,c,d) values (11,12,13);
 insert into atacc1 ("........pg.dropped.1........") values (10);
-ERROR:  relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 insert into atacc1 ("........pg.dropped.1........") values (default);
-ERROR:  relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 insert into atacc1 ("........pg.dropped.1........",b,c,d) values (10,11,12,13);
-ERROR:  relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 insert into atacc1 ("........pg.dropped.1........",b,c,d) values (default,11,12,13);
-ERROR:  relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 -- DELETEs
 delete from atacc1 where a = 3;
 ERROR:  attribute "a" not found
@@ -834,10 +834,10 @@ ERROR:  attribute "........pg.dropped.1........" not found
 delete from atacc1;
 -- try dropping a non-existent column, should fail
 alter table atacc1 drop bar;
-ERROR:  Relation "atacc1" has no column "bar"
+ERROR:  attribute "bar" of relation "atacc1" does not exist
 -- try dropping the oid column, should fail
 alter table atacc1 drop oid;
-ERROR:  ALTER TABLE: Cannot drop system attribute "oid"
+ERROR:  cannot drop system attribute "oid"
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
 select * from myview;
@@ -846,49 +846,49 @@ select * from myview;
 (0 rows)
 
 alter table myview drop d;
-ERROR:  ALTER TABLE: relation "myview" is not a table
+ERROR:  "myview" is not a table
 drop view myview;
 -- test some commands to make sure they fail on the dropped column
 analyze atacc1(a);
-ERROR:  relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 analyze atacc1("........pg.dropped.1........");
-ERROR:  relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 vacuum analyze atacc1(a);
-ERROR:  relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 vacuum analyze atacc1("........pg.dropped.1........");
-ERROR:  relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 comment on column atacc1.a is 'testing';
-ERROR:  Relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 comment on column atacc1."........pg.dropped.1........" is 'testing';
-ERROR:  Relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a set storage plain;
-ERROR:  ALTER TABLE: relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" set storage plain;
-ERROR:  ALTER TABLE: relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a set statistics 0;
-ERROR:  ALTER TABLE: relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" set statistics 0;
-ERROR:  ALTER TABLE: relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a set default 3;
-ERROR:  Relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" set default 3;
-ERROR:  Relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a drop default;
-ERROR:  Relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" drop default;
-ERROR:  Relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a set not null;
-ERROR:  Relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" set not null;
-ERROR:  Relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a drop not null;
-ERROR:  Relation "atacc1" has no column "a"
+ERROR:  attribute "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" drop not null;
-ERROR:  Relation "atacc1" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 rename a to x;
-ERROR:  renameatt: attribute "a" does not exist
+ERROR:  attribute "a" does not exist
 alter table atacc1 rename "........pg.dropped.1........" to x;
-ERROR:  renameatt: attribute "........pg.dropped.1........" does not exist
+ERROR:  attribute "........pg.dropped.1........" does not exist
 alter table atacc1 add primary key(a);
 ERROR:  column "a" named in key does not exist
 alter table atacc1 add primary key("........pg.dropped.1........");
@@ -905,21 +905,21 @@ create table atacc2 (id int4 unique);
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "atacc2_id_key" for table "atacc2"
 alter table atacc1 add foreign key (a) references atacc2(id);
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  ALTER TABLE: column "a" referenced in foreign key constraint does not exist
+ERROR:  column "a" referenced in foreign key constraint does not exist
 alter table atacc1 add foreign key ("........pg.dropped.1........") references atacc2(id);
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  ALTER TABLE: column "........pg.dropped.1........" referenced in foreign key constraint does not exist
+ERROR:  column "........pg.dropped.1........" referenced in foreign key constraint does not exist
 alter table atacc2 add foreign key (id) references atacc1(a);
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  ALTER TABLE: column "a" referenced in foreign key constraint does not exist
+ERROR:  column "a" referenced in foreign key constraint does not exist
 alter table atacc2 add foreign key (id) references atacc1("........pg.dropped.1........");
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  ALTER TABLE: column "........pg.dropped.1........" referenced in foreign key constraint does not exist
+ERROR:  column "........pg.dropped.1........" referenced in foreign key constraint does not exist
 drop table atacc2;
 create index "testing_idx" on atacc1(a);
-ERROR:  DefineIndex: attribute "a" not found
+ERROR:  attribute "a" does not exist
 create index "testing_idx" on atacc1("........pg.dropped.1........");
-ERROR:  DefineIndex: attribute "........pg.dropped.1........" not found
+ERROR:  attribute "........pg.dropped.1........" does not exist
 -- test create as and select into
 insert into atacc1 values (21, 22, 23);
 create table test1 as select * from atacc1;
@@ -990,11 +990,11 @@ alter table test drop a;
 copy test to stdout;
 2	3
 copy test(a) to stdout;
-ERROR:  relation "test" has no column "a"
+ERROR:  attribute "a" of relation "test" does not exist
 copy test("........pg.dropped.1........") to stdout;
-ERROR:  relation "test" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "test" does not exist
 copy test from stdin;
-ERROR:  Extra data after last expected column
+ERROR:  extra data after last expected column
 CONTEXT:  COPY FROM, line 1
 select * from test;
  b | c 
@@ -1011,9 +1011,9 @@ select * from test;
 (2 rows)
 
 copy test(a) from stdin;
-ERROR:  relation "test" has no column "a"
+ERROR:  attribute "a" of relation "test" does not exist
 copy test("........pg.dropped.1........") from stdin;
-ERROR:  relation "test" has no column "........pg.dropped.1........"
+ERROR:  attribute "........pg.dropped.1........" of relation "test" does not exist
 copy test(b,c) from stdin;
 select * from test;
  b  | c  
@@ -1030,9 +1030,9 @@ create table dropColumnChild (c int) inherits (dropColumn);
 create table dropColumnAnother (d int) inherits (dropColumnChild);
 -- these two should fail
 alter table dropColumnchild drop column a;
-ERROR:  ALTER TABLE: Cannot drop inherited column "a"
+ERROR:  cannot drop inherited attribute "a"
 alter table only dropColumnChild drop column b;
-ERROR:  ALTER TABLE: Cannot drop inherited column "b"
+ERROR:  cannot drop inherited attribute "b"
 -- these three should work
 alter table only dropColumn drop column e;
 alter table dropColumnChild drop column c;
@@ -1042,11 +1042,11 @@ create table renameColumnChild (b int) inherits (renameColumn);
 create table renameColumnAnother (c int) inherits (renameColumnChild);
 -- these three should fail
 alter table renameColumnChild rename column a to d;
-ERROR:  renameatt: inherited attribute "a" may not be renamed
+ERROR:  cannot rename inherited attribute "a"
 alter table only renameColumnChild rename column a to d;
-ERROR:  Inherited attribute "a" must be renamed in child tables too
+ERROR:  inherited attribute "a" must be renamed in child tables too
 alter table only renameColumn rename column a to d;
-ERROR:  Inherited attribute "a" must be renamed in child tables too
+ERROR:  inherited attribute "a" must be renamed in child tables too
 -- these should work
 alter table renameColumn rename column a to d;
 alter table renameColumnChild rename column b to a;
@@ -1054,14 +1054,14 @@ alter table renameColumnChild rename column b to a;
 alter table renameColumn add column w int;
 -- this should fail
 alter table only renameColumn add column x int;
-ERROR:  Attribute must be added to child tables too
+ERROR:  attribute must be added to child tables too
 -- Test corner cases in dropping of inherited columns
 create table p1 (f1 int, f2 int);
 create table c1 (f1 int not null) inherits(p1);
-NOTICE:  CREATE TABLE: merging attribute "f1" with inherited definition
+NOTICE:  merging attribute "f1" with inherited definition
 -- should be rejected since c1.f1 is inherited
 alter table c1 drop column f1;
-ERROR:  ALTER TABLE: Cannot drop inherited column "f1"
+ERROR:  cannot drop inherited attribute "f1"
 -- should work
 alter table p1 drop column f1;
 -- c1.f1 is still there, but no longer inherited
@@ -1079,7 +1079,7 @@ create table p1 (f1 int, f2 int);
 create table c1 () inherits(p1);
 -- should be rejected since c1.f1 is inherited
 alter table c1 drop column f1;
-ERROR:  ALTER TABLE: Cannot drop inherited column "f1"
+ERROR:  cannot drop inherited attribute "f1"
 alter table p1 drop column f1;
 -- c1.f1 is dropped now, since there is no local definition for it
 select f1 from c1;
@@ -1090,7 +1090,7 @@ create table p1 (f1 int, f2 int);
 create table c1 () inherits(p1);
 -- should be rejected since c1.f1 is inherited
 alter table c1 drop column f1;
-ERROR:  ALTER TABLE: Cannot drop inherited column "f1"
+ERROR:  cannot drop inherited attribute "f1"
 alter table only p1 drop column f1;
 -- c1.f1 is NOT dropped, but must now be considered non-inherited
 alter table c1 drop column f1;
@@ -1098,10 +1098,10 @@ drop table p1 cascade;
 NOTICE:  Drop cascades to table c1
 create table p1 (f1 int, f2 int);
 create table c1 (f1 int not null) inherits(p1);
-NOTICE:  CREATE TABLE: merging attribute "f1" with inherited definition
+NOTICE:  merging attribute "f1" with inherited definition
 -- should be rejected since c1.f1 is inherited
 alter table c1 drop column f1;
-ERROR:  ALTER TABLE: Cannot drop inherited column "f1"
+ERROR:  cannot drop inherited attribute "f1"
 alter table only p1 drop column f1;
 -- c1.f1 is still there, but no longer inherited
 alter table c1 drop column f1;
@@ -1110,7 +1110,7 @@ NOTICE:  Drop cascades to table c1
 create table p1(id int, name text);
 create table p2(id2 int, name text, height int);
 create table c1(age int) inherits(p1,p2);
-NOTICE:  CREATE TABLE: merging multiple inherited definitions of attribute "name"
+NOTICE:  merging multiple inherited definitions of attribute "name"
 create table gc1() inherits (c1);
 select relname, attname, attinhcount, attislocal
 from pg_class join pg_attribute on (pg_class.oid = pg_attribute.attrelid)
@@ -1141,12 +1141,12 @@ alter table only p1 drop column name;
 alter table p2 drop column name;
 -- should be rejected since its inherited
 alter table gc1 drop column name;
-ERROR:  ALTER TABLE: Cannot drop inherited column "name"
+ERROR:  cannot drop inherited attribute "name"
 -- should work, and drop gc1.name along
 alter table c1 drop column name;
 -- should fail: column does not exist
 alter table gc1 drop column name;
-ERROR:  Relation "gc1" has no column "name"
+ERROR:  attribute "name" of relation "gc1" does not exist
 -- should work and drop the attribute in all tables
 alter table p2 drop column height;
 select relname, attname, attinhcount, attislocal
@@ -1207,7 +1207,7 @@ select oid > 0, * from altinhoid;
 
 alter table altwithoid set without oids;
 alter table altinhoid set without oids; -- fails
-ERROR:  ALTER TABLE: Table is already WITHOUT OIDS
+NOTICE:  table "altinhoid" is already WITHOUT OIDS
 select oid > 0, * from altwithoid; -- fails
 ERROR:  attribute "oid" not found
 select oid > 0, * from altinhoid; -- fails
@@ -1229,7 +1229,7 @@ create table p1 (f1 int);
 create table c1 (f2 text, f3 int) inherits (p1);
 alter table p1 add column a1 int check (a1 > 0);
 alter table p1 add column f2 text;
-NOTICE:  ALTER TABLE: merging definition of column "f2" for child c1
+NOTICE:  merging definition of column "f2" for child "c1"
 insert into p1 values (1,2,'abc');
 insert into c1 values(11,'xyz',33,0); -- should fail
 ERROR:  ExecInsert: rejected due to CHECK constraint "p1_a1" on "c1"

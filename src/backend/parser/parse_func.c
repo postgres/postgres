@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.155 2003/07/19 20:20:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.156 2003/07/20 21:56:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1263,8 +1263,8 @@ setup_field_select(Node *input, char *attname, Oid relid)
 	if (attno == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("relation \"%s\" has no column \"%s\"",
-						get_rel_name(relid), attname)));
+				 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+						attname, get_rel_name(relid))));
 
 	fselect->arg = (Expr *) input;
 	fselect->fieldnum = attno;
@@ -1356,7 +1356,7 @@ unknown_attribute(const char *schemaname, const char *relname,
 }
 
 /*
- * func_signature_string
+ * funcname_signature_string
  *		Build a string representing a function name, including arg types.
  *		The result is something like "foo(integer)".
  *
@@ -1364,14 +1364,15 @@ unknown_attribute(const char *schemaname, const char *relname,
  * messages.
  */
 const char *
-func_signature_string(List *funcname, int nargs, const Oid *argtypes)
+funcname_signature_string(const char *funcname,
+						  int nargs, const Oid *argtypes)
 {
 	StringInfoData argbuf;
 	int			i;
 
 	initStringInfo(&argbuf);
 
-	appendStringInfo(&argbuf, "%s(", NameListToString(funcname));
+	appendStringInfo(&argbuf, "%s(", funcname);
 
 	for (i = 0; i < nargs; i++)
 	{
@@ -1383,6 +1384,17 @@ func_signature_string(List *funcname, int nargs, const Oid *argtypes)
 	appendStringInfoChar(&argbuf, ')');
 
 	return argbuf.data;			/* return palloc'd string buffer */
+}
+
+/*
+ * func_signature_string
+ *		As above, but function name is passed as a qualified name list.
+ */
+const char *
+func_signature_string(List *funcname, int nargs, const Oid *argtypes)
+{
+	return funcname_signature_string(NameListToString(funcname),
+									 nargs, argtypes);
 }
 
 /*

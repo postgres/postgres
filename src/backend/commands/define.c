@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.81 2002/09/21 18:39:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.82 2003/07/20 21:56:32 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -65,8 +65,10 @@ char *
 defGetString(DefElem *def)
 {
 	if (def->arg == NULL)
-		elog(ERROR, "Define: \"%s\" requires a parameter",
-			 def->defname);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires a parameter",
+						def->defname)));
 	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
@@ -90,8 +92,7 @@ defGetString(DefElem *def)
 		case T_List:
 			return NameListToString((List *) def->arg);
 		default:
-			elog(ERROR, "Define: cannot interpret argument of \"%s\"",
-				 def->defname);
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(def->arg));
 	}
 	return NULL;				/* keep compiler quiet */
 }
@@ -103,8 +104,10 @@ double
 defGetNumeric(DefElem *def)
 {
 	if (def->arg == NULL)
-		elog(ERROR, "Define: \"%s\" requires a numeric value",
-			 def->defname);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires a numeric value",
+						def->defname)));
 	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
@@ -112,8 +115,10 @@ defGetNumeric(DefElem *def)
 		case T_Float:
 			return floatVal(def->arg);
 		default:
-			elog(ERROR, "Define: \"%s\" requires a numeric value",
-				 def->defname);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("%s requires a numeric value",
+							def->defname)));
 	}
 	return 0;					/* keep compiler quiet */
 }
@@ -125,8 +130,10 @@ int64
 defGetInt64(DefElem *def)
 {
 	if (def->arg == NULL)
-		elog(ERROR, "Define: \"%s\" requires a numeric value",
-			 def->defname);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires a numeric value",
+						def->defname)));
 	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
@@ -141,8 +148,10 @@ defGetInt64(DefElem *def)
 			return DatumGetInt64(DirectFunctionCall1(int8in,
 									 CStringGetDatum(strVal(def->arg))));
 		default:
-			elog(ERROR, "Define: \"%s\" requires a numeric value",
-				 def->defname);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("%s requires a numeric value",
+							def->defname)));
 	}
 	return 0;					/* keep compiler quiet */
 }
@@ -154,8 +163,10 @@ List *
 defGetQualifiedName(DefElem *def)
 {
 	if (def->arg == NULL)
-		elog(ERROR, "Define: \"%s\" requires a parameter",
-			 def->defname);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires a parameter",
+						def->defname)));
 	switch (nodeTag(def->arg))
 	{
 		case T_TypeName:
@@ -166,8 +177,10 @@ defGetQualifiedName(DefElem *def)
 			/* Allow quoted name for backwards compatibility */
 			return makeList1(def->arg);
 		default:
-			elog(ERROR, "Define: argument of \"%s\" must be a name",
-				 def->defname);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("argument of %s must be a name",
+							def->defname)));
 	}
 	return NIL;					/* keep compiler quiet */
 }
@@ -182,8 +195,10 @@ TypeName *
 defGetTypeName(DefElem *def)
 {
 	if (def->arg == NULL)
-		elog(ERROR, "Define: \"%s\" requires a parameter",
-			 def->defname);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires a parameter",
+						def->defname)));
 	switch (nodeTag(def->arg))
 	{
 		case T_TypeName:
@@ -198,8 +213,10 @@ defGetTypeName(DefElem *def)
 				return n;
 			}
 		default:
-			elog(ERROR, "Define: argument of \"%s\" must be a type name",
-				 def->defname);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("argument of %s must be a type name",
+							def->defname)));
 	}
 	return NULL;				/* keep compiler quiet */
 }
@@ -212,15 +229,19 @@ int
 defGetTypeLength(DefElem *def)
 {
 	if (def->arg == NULL)
-		elog(ERROR, "Define: \"%s\" requires a parameter",
-			 def->defname);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires a parameter",
+						def->defname)));
 	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
 			return intVal(def->arg);
 		case T_Float:
-			elog(ERROR, "Define: \"%s\" requires an integral value",
-				 def->defname);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("%s requires an integer value",
+							def->defname)));
 			break;
 		case T_String:
 			if (strcasecmp(strVal(def->arg), "variable") == 0)
@@ -236,10 +257,11 @@ defGetTypeLength(DefElem *def)
 			/* must be an operator name */
 			break;
 		default:
-			elog(ERROR, "Define: cannot interpret argument of \"%s\"",
-				 def->defname);
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(def->arg));
 	}
-	elog(ERROR, "Define: invalid argument for \"%s\": \"%s\"",
-		 def->defname, defGetString(def));
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("invalid argument for %s: \"%s\"",
+					def->defname, defGetString(def))));
 	return 0;					/* keep compiler quiet */
 }
