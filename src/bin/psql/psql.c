@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.49 1997/01/13 02:35:32 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.50 1997/01/25 03:51:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,17 +30,16 @@
 #include "strdup.h"
 #endif
 
-#ifdef NOREADLINE
-#include "rlstubs.h"
+#ifndef HAVE_LIBREADLINE
+# include "rlstubs.h"
 #else
-/* from the GNU readline library */
-#ifdef OLD_READLINE
-#include "readline.h"
-#include "history.h"
-#else
-#include <readline/readline.h>
-#include <readline/history.h>
-#endif
+# ifdef HAVE_READLINE_H
+#  include <readline.h>
+#  include <history.h>
+# else
+#  include <readline/readline.h>
+#  include <readline/history.h>
+# endif
 #endif
 
 #define PROMPT "=> "

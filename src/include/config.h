@@ -8,6 +8,17 @@
 
 #define BLCKSZ	8192
 
+/* Define to enable readline/history support in psql */
+/* #undef HAVE_LIBREADLINE */
+
+/* These two defines are not used until HAVE_LIBREADLINE
+ * are also defined
+ *
+ * Define if <readline.h> vs <readline/readline.h> 
+ */
+/* #undef HAVE_READLINE_H */
+
+
 #define HAVE_SYS_SELECT_H
 #define HAVE_TERMIOS_H
 #define HAVE_VALUES_H
