@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.167 2004/02/13 22:26:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.168 2004/04/07 18:17:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,11 +572,23 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 	if (parse->setOperations)
 	{
+		List   *set_sortclauses;
+
 		/*
 		 * Construct the plan for set operations.  The result will not
 		 * need any work except perhaps a top-level sort and/or LIMIT.
 		 */
-		result_plan = plan_set_operations(parse);
+		result_plan = plan_set_operations(parse,
+										  &set_sortclauses);
+
+		/*
+		 * Calculate pathkeys representing the sort order (if any) of the
+		 * set operation's result.  We have to do this before overwriting
+		 * the sort key information...
+		 */
+		current_pathkeys = make_pathkeys_for_sortclauses(set_sortclauses,
+													result_plan->targetlist);
+		current_pathkeys = canonicalize_pathkeys(parse, current_pathkeys);
 
 		/*
 		 * We should not need to call preprocess_targetlist, since we must
@@ -599,16 +611,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 					 errmsg("SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT")));
 
 		/*
-		 * We set current_pathkeys NIL indicating we do not know sort
-		 * order.  This is correct when the top set operation is UNION
-		 * ALL, since the appended-together results are unsorted even if
-		 * the subplans were sorted.  For other set operations we could be
-		 * smarter --- room for future improvement!
-		 */
-		current_pathkeys = NIL;
-
-		/*
-		 * Calculate pathkeys that represent ordering requirements
+		 * Calculate pathkeys that represent result ordering requirements
 		 */
 		sort_pathkeys = make_pathkeys_for_sortclauses(parse->sortClause,
 													  tlist);

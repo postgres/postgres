@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.108 2004/01/18 00:50:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.109 2004/04/07 18:17:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +45,12 @@ typedef struct
 
 static Plan *recurse_set_operations(Node *setOp, Query *parse,
 					   List *colTypes, bool junkOK,
-					   int flag, List *refnames_tlist);
+					   int flag, List *refnames_tlist,
+					   List **sortClauses);
 static Plan *generate_union_plan(SetOperationStmt *op, Query *parse,
-					List *refnames_tlist);
+					List *refnames_tlist, List **sortClauses);
 static Plan *generate_nonunion_plan(SetOperationStmt *op, Query *parse,
-					   List *refnames_tlist);
+					   List *refnames_tlist, List **sortClauses);
 static List *recurse_union_children(Node *setOp, Query *parse,
 					   SetOperationStmt *top_union,
 					   List *refnames_tlist);
@@ -75,9 +76,12 @@ static List *adjust_inherited_tlist(List *tlist, Oid old_relid, Oid new_relid);
  * This routine only deals with the setOperations tree of the given query.
  * Any top-level ORDER BY requested in parse->sortClause will be added
  * when we return to grouping_planner.
+ *
+ * *sortClauses is an output argument: it is set to a list of SortClauses
+ * representing the result ordering of the topmost set operation.
  */
 Plan *
-plan_set_operations(Query *parse)
+plan_set_operations(Query *parse, List **sortClauses)
 {
 	SetOperationStmt *topop = (SetOperationStmt *) parse->setOperations;
 	Node	   *node;
@@ -113,7 +117,8 @@ plan_set_operations(Query *parse)
 	 */
 	return recurse_set_operations((Node *) topop, parse,
 								  topop->colTypes, true, -1,
-								  leftmostQuery->targetList);
+								  leftmostQuery->targetList,
+								  sortClauses);
 }
 
 /*
@@ -124,11 +129,13 @@ plan_set_operations(Query *parse)
  * junkOK: if true, child resjunk columns may be left in the result
  * flag: if >= 0, add a resjunk output column indicating value of flag
  * refnames_tlist: targetlist to take column names from
+ * *sortClauses: receives list of SortClauses for result plan, if any
  */
 static Plan *
 recurse_set_operations(Node *setOp, Query *parse,
 					   List *colTypes, bool junkOK,
-					   int flag, List *refnames_tlist)
+					   int flag, List *refnames_tlist,
+					   List **sortClauses)
 {
 	if (IsA(setOp, RangeTblRef))
 	{
@@ -155,6 +162,13 @@ recurse_set_operations(Node *setOp, Query *parse,
 							  NIL,
 							  rtr->rtindex,
 							  subplan);
+
+		/*
+		 * We don't bother to determine the subquery's output ordering
+		 * since it won't be reflected in the set-op result anyhow.
+		 */
+		*sortClauses = NIL;
+
 		return plan;
 	}
 	else if (IsA(setOp, SetOperationStmt))
@@ -164,9 +178,11 @@ recurse_set_operations(Node *setOp, Query *parse,
 
 		/* UNIONs are much different from INTERSECT/EXCEPT */
 		if (op->op == SETOP_UNION)
-			plan = generate_union_plan(op, parse, refnames_tlist);
+			plan = generate_union_plan(op, parse, refnames_tlist,
+									   sortClauses);
 		else
-			plan = generate_nonunion_plan(op, parse, refnames_tlist);
+			plan = generate_nonunion_plan(op, parse, refnames_tlist,
+										  sortClauses);
 
 		/*
 		 * If necessary, add a Result node to project the caller-requested
@@ -206,7 +222,8 @@ recurse_set_operations(Node *setOp, Query *parse,
  */
 static Plan *
 generate_union_plan(SetOperationStmt *op, Query *parse,
-					List *refnames_tlist)
+					List *refnames_tlist,
+					List **sortClauses)
 {
 	List	   *planlist;
 	List	   *tlist;
@@ -249,7 +266,11 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 		sortList = addAllTargetsToSortList(NULL, NIL, tlist, false);
 		plan = (Plan *) make_sort_from_sortclauses(parse, sortList, plan);
 		plan = (Plan *) make_unique(plan, sortList);
+		*sortClauses = sortList;
 	}
+	else
+		*sortClauses = NIL;
+
 	return plan;
 }
 
@@ -258,23 +279,27 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
  */
 static Plan *
 generate_nonunion_plan(SetOperationStmt *op, Query *parse,
-					   List *refnames_tlist)
+					   List *refnames_tlist,
+					   List **sortClauses)
 {
 	Plan	   *lplan,
 			   *rplan,
 			   *plan;
 	List	   *tlist,
 			   *sortList,
-			   *planlist;
+			   *planlist,
+			   *child_sortclauses;
 	SetOpCmd	cmd;
 
 	/* Recurse on children, ensuring their outputs are marked */
 	lplan = recurse_set_operations(op->larg, parse,
 								   op->colTypes, false, 0,
-								   refnames_tlist);
+								   refnames_tlist,
+								   &child_sortclauses);
 	rplan = recurse_set_operations(op->rarg, parse,
 								   op->colTypes, false, 1,
-								   refnames_tlist);
+								   refnames_tlist,
+								   &child_sortclauses);
 	planlist = makeList2(lplan, rplan);
 
 	/*
@@ -315,6 +340,9 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 			break;
 	}
 	plan = (Plan *) make_setop(cmd, plan, sortList, length(op->colTypes) + 1);
+
+	*sortClauses = sortList;
+
 	return plan;
 }
 
@@ -329,6 +357,8 @@ recurse_union_children(Node *setOp, Query *parse,
 					   SetOperationStmt *top_union,
 					   List *refnames_tlist)
 {
+	List   *child_sortclauses;
+
 	if (IsA(setOp, SetOperationStmt))
 	{
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
@@ -359,7 +389,8 @@ recurse_union_children(Node *setOp, Query *parse,
 	 */
 	return makeList1(recurse_set_operations(setOp, parse,
 											top_union->colTypes, false,
-											-1, refnames_tlist));
+											-1, refnames_tlist,
+											&child_sortclauses));
 }
 
 /*
