@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.65 1999/07/29 02:48:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.66 1999/07/30 00:44:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,10 +296,13 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
  *	  Returns a indexscan node for the base relation scanned by 'best_path'
  *	  with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  *
- * If an 'or' clause is to be used with this index, the indxqual field
- * will contain a list of the 'or' clause arguments, e.g., the
- * clause(OR a b c) will generate: ((a) (b) (c)).  Otherwise, the
- * indxqual will simply contain one conjunctive qualification: ((a)).
+ * The indexqual of the path contains a sublist of implicitly-ANDed qual
+ * conditions for each scan of the index(es); if there is more than one
+ * scan then the retrieved tuple sets are ORed together.  The indexqual
+ * and indexid lists must have the same length, ie, the number of scans
+ * that will occur.  Note it is possible for a qual condition sublist
+ * to be empty --- then no index restrictions will be applied during that
+ * scan.
  */
 static IndexScan *
 create_indexscan_node(IndexPath *best_path,
@@ -316,7 +319,7 @@ create_indexscan_node(IndexPath *best_path,
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
 
-	/* check and see if any indices are lossy */
+	/* check and see if any of the indices are lossy */
 	foreach(ixid, best_path->indexid)
 	{
 		HeapTuple	indexTuple;
