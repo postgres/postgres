@@ -102,6 +102,8 @@ Description
 <PARA>
    This command outputs details about the supplied query.
    The default output is the computed query cost. 
+   The cost value is only meaningful to the optimizer in comparing
+   various query plans.
    VERBOSE displays the full query plan and cost to your screen,
    and pretty-prints the plan to the postmaster log file.   
 </para>
@@ -135,7 +137,7 @@ To show a query plan for a simple query:
 postgres=> explain select * from foo;
 NOTICE:  QUERY PLAN:
 
-Seq Scan on foo  (cost=0.00 size=0 width=4)
+Seq Scan on foo  (cost=0.00 rows=0 width=4)
 
 EXPLAIN
 </ProgramListing>

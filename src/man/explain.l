@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/explain.l,v 1.10 1998/08/04 15:00:28 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/explain.l,v 1.11 1999/04/23 21:23:49 momjian Exp $
 .TH EXPLAIN SQL 06/12/97 PostgreSQL PostgreSQL
 .SH NAME
 explain - explains statement execution details
@@ -10,21 +10,22 @@ explain - explains statement execution details
 .fi
 .SH DESCRIPTION
 This command outputs details about the supplied query.  The default
-output is the computed query cost.  \f2verbose\f1 displays the full query
-plan and cost to your screen, and pretty-prints the plan to the postmaster
-log file.
+output is the computed query cost.  The cost value is only meaningful to
+the optimizer in comparing various query plans. \f2verbose\f1 displays
+the full query plan and cost to your screen, and pretty-prints the plan
+to the postmaster log file.
 
 .SH EXAMPLES
 In the examples, the table has a single column of float4.
 \fBcost\fR is the cost of scanning a base/join relation,
-\fBsize\fR is the expected number of tuples from a scan,
+\fBrows\fR is the expected number of rows from a scan,
 \fBwidth\fR is the length of a tuple.
 
 .nf
 tgl=> explain select a from test\g
 NOTICE:QUERY PLAN:
 
-Seq Scan on test  (cost=0.00 size=0 width=4)
+Seq Scan on test  (cost=0.00 rows=0 width=4)
 
 EXPLAIN
 tgl=> explain verbose select sum(a) from test;
@@ -41,8 +42,8 @@ NOTICE:QUERY PLAN:
   :expr {VAR :varno 1 :varattno 1 :vartype 700 :varnoold 1 :varoattno 1}})
  :qpqual <> :lefttree <> :righttree <> :scanrelid 1} :righttree <> :numagg 1 }
 
-Aggregate  (cost=0.00 size=0 width=0)
-  ->   Seq Scan on test  (cost=0.00 size=0 width=4)
+Aggregate  (cost=0.00 rows=0 width=0)
+  ->   Seq Scan on test  (cost=0.00 rows=0 width=4)
 .fi
 
 The Postgres optimizer has chosen to use a sequential scan to retrieve rows from
