@@ -4,14 +4,13 @@
  *    Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.1 1996/10/11 09:12:17 bryanh Exp $
+ * $Id: hba.h,v 1.2 1996/11/06 10:29:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HBA_H
 #define	HBA_H
 
-#include <libpq/pqcomm.h>
 
 extern int
 hba_recvauth(const Port *port, const char database[], const char user[],

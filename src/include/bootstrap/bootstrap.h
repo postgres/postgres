@@ -6,29 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.1 1996/08/28 07:21:31 scrappy Exp $
+ * $Id: bootstrap.h,v 1.2 1996/11/06 10:29:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BOOTSTRAP_H
 #define BOOTSTRAP_H
 
-#include <sys/file.h>
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
-#include <ctype.h>
 
-#include "access/htup.h"
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "access/skey.h"
-#include "utils/tqual.h"
-#include "storage/buf.h"
-#include "storage/bufmgr.h"	/* for BufferManagerFlush */
-#include "utils/portal.h"
-#include "utils/elog.h"
-#include "utils/rel.h"
 
 #define	MAXATTR 40		/* max. number of attributes in a relation */
 

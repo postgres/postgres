@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteSupport.h,v 1.1 1996/08/28 07:24:13 scrappy Exp $
+ * $Id: rewriteSupport.h,v 1.2 1996/11/06 10:31:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	REWRITESUPPORT_H
 #define	REWRITESUPPORT_H
 
-#include "nodes/pg_list.h"
 
 extern int IsDefinedRewriteRule(char *ruleName);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planner.h,v 1.1 1996/08/28 07:23:26 scrappy Exp $
+ * $Id: planner.h,v 1.2 1996/11/06 10:30:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,8 +14,6 @@
 #define PLANNER_H
 
 /*
-#include "optimizer/internal.h"
-#include "parser/parse_query.h"
 */
 
 extern Plan *planner(Query *parse);

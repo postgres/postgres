@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: auth.h,v 1.2 1996/10/31 09:48:57 scrappy Exp $
+ * $Id: auth.h,v 1.3 1996/11/06 10:29:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef AUTH_H
 #define	AUTH_H
 
-#include "libpq/pqcomm.h"
+#include <libpq/pqcomm.h>
 
 /*----------------------------------------------------------------
  * Common routines and definitions

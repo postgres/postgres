@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_version.h,v 1.2 1996/10/31 09:48:03 scrappy Exp $
+ * $Id: pg_version.h,v 1.3 1996/11/06 10:29:23 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -24,7 +24,6 @@
  *	can be read by both genbki.sh and the C compiler.
  * ----------------
  */
-#include "utils/nabstime.h"
 
 /* ----------------
  *	pg_version definition.  cpp turns this into

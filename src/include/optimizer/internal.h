@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.1 1996/08/28 07:23:12 scrappy Exp $
+ * $Id: internal.h,v 1.2 1996/11/06 10:30:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,6 @@
  *    
  */
 
-#include "nodes/nodes.h"
-#include "nodes/primnodes.h"
-#include "nodes/plannodes.h"
-#include "parser/parsetree.h"
-#include "nodes/relation.h"
-#include "catalog/pg_index.h"	/* for INDEX_MAX_KEYS */
-#include "utils/syscache.h"	/* for SearchSysCacheGetAttribute, etc. */
 
 /*
  *    	System-dependent tuning constants

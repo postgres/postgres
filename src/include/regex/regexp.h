@@ -57,9 +57,7 @@ typedef struct regexp {
 	char program[1];	/* Unwarranted chumminess with compiler. */
 } regexp;
 
-/* #include <sys/cdefs.h> */
 /* since not all systems have cdefs.h, we'll use our own here - jolly */
-#include "cdefs.h"
 
 __BEGIN_DECLS
 regexp *pg95_regcomp __P((const char *));

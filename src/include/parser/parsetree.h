@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.1 1996/08/28 07:23:57 scrappy Exp $
+ * $Id: parsetree.h,v 1.2 1996/11/06 10:30:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,6 @@
  *	need pg_list.h for definitions of CAR(), etc. macros
  * ----------------
  */
-#include "nodes/pg_list.h"
-#include "nodes/parsenodes.h"
 
 /* ----------------
  *	range table macros

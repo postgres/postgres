@@ -6,23 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fs.h,v 1.1 1996/08/28 07:23:00 scrappy Exp $
+ * $Id: libpq-fs.h,v 1.2 1996/11/06 10:30:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LIBPQ_FS_H
 #define LIBPQ_FS_H
 
-#include "lib/dllist.h"
-#include <sys/file.h>
-#include <sys/stat.h>
 
-#include <fcntl.h>		/* for O_ on some */
 #ifndef WIN32
-#include <unistd.h>		/* for SEEK_ on most */
 #endif /* WIN32 */
 #ifndef SEEK_SET
-#include <stdio.h>		/* for SEEK_ on others */
 #endif /* SEEK_SET */
 
 /* UNIX compatibility junk.  This should be in all systems' include files,
