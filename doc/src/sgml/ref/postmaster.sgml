@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.39 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.40 2003/09/18 20:30:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -473,10 +473,11 @@ PostgreSQL documentation
   <para>
    If at all possible, <emphasis>do not</emphasis> use
    <literal>SIGKILL</literal> to kill the
-   <command>postmaster</command>.  This will prevent
+   <command>postmaster</command>.  Doing so will prevent
    <command>postmaster</command> from freeing the system
    resources (e.g., shared memory and semaphores) that it holds before
-   terminating.
+   terminating.  This may cause problems for starting a fresh
+   <command>postmaster</command> run.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.35 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.36 2003/09/18 20:30:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -365,13 +365,29 @@ PostgreSQL documentation
   <title>Notes</title>
 
   <para>
-   To stop a running query use the <literal>SIGINT</literal> signal. To
-   tell <command>postgres</command> to reread the configuration file,
-   use a <literal>SIGHUP</literal> signal. The
-   <command>postmaster</command> uses <literal>SIGTERM</literal>
+   To cancel a running query, send the <literal>SIGINT</literal> signal
+   to the <command>postgres</command> process running that command.
+  </para>
+
+  <para>
+   To tell <command>postgres</command> to reread the configuration file,
+   send a <literal>SIGHUP</literal> signal.  Normally it's best to
+   <literal>SIGHUP</literal> the <command>postmaster</command> instead;
+   the <command>postmaster</command> will in turn <literal>SIGHUP</literal>
+   each of its children.  But in some cases it might be desirable to have only
+   one <command>postgres</command> process reread the configuration file.
+  </para>
+
+  <para>
+   The <command>postmaster</command> uses <literal>SIGTERM</literal>
    to tell a <command>postgres</command> process to quit normally and
    <literal>SIGQUIT</literal> to terminate without the normal cleanup.
-   These <emphasis>should not</emphasis> be used by users.
+   These signals <emphasis>should not</emphasis> be used by users.  It is also
+   unwise to send <literal>SIGKILL</literal> to a <command>postgres</command>
+   process --- the <command>postmaster</command> will interpret this as
+   a crash in <command>postgres</command>, and will force all the sibling
+   <command>postgres</command> processes to quit as part of its standard
+   crash-recovery procedure.
   </para>
 
  </refsect1>
