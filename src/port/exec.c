@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.17 2004/07/26 01:48:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.18 2004/08/08 02:22:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,8 +383,10 @@ static char *pipe_read_line(char *cmd, char *line, int maxsize)
 			/* So we read some data */
 			retval = line;
 
-			/* We emulate fgets() behaviour. So if there is no newline
-			 * at the end, we add one... */
+			/*
+			 *	We emulate fgets() behaviour. So if there is no newline
+			 *	at the end, we add one...
+			 */
 			if (line[strlen(line)-1] != '\n')
 				strcat(line,"\n");
 		}
