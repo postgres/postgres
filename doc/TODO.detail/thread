@@ -230,3 +230,50 @@ Myron
 
 
 
+From pgsql-hackers-owner+M2691@postgresql.org Tue Jan  2 00:30:20 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA08195
+	for <pgman@candle.pha.pa.us>; Tue, 2 Jan 2001 00:30:19 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f025UjL33335;
+	Tue, 2 Jan 2001 00:30:45 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M2691@postgresql.org)
+Received: from mailsys01.intnet.net (tmail.wwc.com [198.252.32.143] (may be forged))
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f025UTL33232
+	for <pgsql-hackers@postgresql.org>; Tue, 2 Jan 2001 00:30:32 -0500 (EST)
+	(envelope-from mscott@sacadia.com)
+Received: from [206.112.108.0] (HELO sacadia.com)
+  by mailsys01.intnet.net (CommuniGate Pro SMTP 3.3.2)
+  with ESMTP id 2214231; Tue, 02 Jan 2001 00:29:47 -0500
+Message-ID: <3A5167DB.3050807@sacadia.com>
+Date: Mon, 01 Jan 2001 21:32:11 -0800
+From: Myron Scott <mscott@sacadia.com>
+Reply-To: mscott@sacadia.com
+User-Agent: Mozilla/5.0 (Windows; U; Win98; en-US; m18) Gecko/20001108 Netscape6/6.0
+X-Accept-Language: en
+MIME-Version: 1.0
+To: "Ross J. Reedstrom" <reedstrm@rice.edu>
+CC: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Using Threads?
+References: <004401c058fd$fd498d40$f2356880@tracy> <Pine.GSO.4.10.10012032351040.28161-100000@goldengate.kojoworldwide.com.> <20001204113307.B5871@rice.edu>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+For anyone interested,
+
+I have posted my multi-threaded version of PostgreSQL here.
+
+http://www.sacadia.com/mtpg.html
+
+It is based on 7.0.2 and the TAO CORBA ORB which is here.
+
+http://www.cs.wustl.edu/~schmidt/TAO.html
+
+Myron Scott
+mkscott@sacadia.com
+
+
+
