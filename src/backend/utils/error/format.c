@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/format.c,v 1.1.1.1 1996/07/09 06:22:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/format.c,v 1.2 1997/05/17 16:23:06 mergl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ static	char	FormBuf[FormMaxSize];
  * ----------------
  */
 char *
-form(char *fmt, ... )
+form(const char *fmt, ... )
 {
     va_list	args;
 
