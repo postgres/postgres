@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.19 1997/09/08 02:31:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.20 1997/11/09 04:43:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,6 +161,12 @@ elog(int lev, const char *fmt,...)
 		/* pq_putint(-101, 4); *//* should be query id */
 		pq_putstr(line);
 		pq_flush();
+	}
+	if (Pfout == NULL) {
+	/* There is no socket.  One explanation for this is we are running
+	   as the Postmaster.  So we'll write the message to stderr.
+	 */
+		fputs(line, stderr);
 	}
 #endif							/* !PG_STANDALONE */
 
