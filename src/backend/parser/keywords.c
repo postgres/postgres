@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.7 1997/03/02 01:03:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.8 1997/04/02 04:49:13 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,6 +122,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "rollback",		ROLLBACK	},
 	{ "rule",		RULE		},
 	{ "select",		SELECT		},
+	{ "sequence",		SEQUENCE	},
 	{ "set",		SET		},
 	{ "setof",		SETOF		},
 	{ "stdin",		STDIN		},
