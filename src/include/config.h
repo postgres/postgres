@@ -15,11 +15,11 @@
 
 #define HAVE_MEMMOVE
 
-#if defined(PORTNAME_sequent) 
+#if defined(sequent) 
 #  define NEED_UNION_SEMUN 
 #endif
 
-#if defined(PORTNAME_alpha)
+#if defined(alpha)
 #  define USE_POSIX_TIME 
 #  define DISABLE_XOPEN_NLS 
 #  define NEED_ISINF 
@@ -27,25 +27,25 @@
 #  define NEED_UNION_SEMUN 
 #endif
 
-#if defined(PORTNAME_dgux)
+#if defined(dgux)
 #  define LINUX_ELF
 #  define NEED_UNION_SEMUN 
 #endif
 
-#if defined(PORTNAME_ultrix4)
+#if defined(ultrix4)
 #  define NEED_ISINF 
 #  define USE_POSIX_TIME
 #  define NEED_UNION_SEMUN 
 #endif
 
-#if defined(PORTNAME_linux)
+#if defined(linux)
 #  ifndef __USE_POSIX
 #    define __USE_POSIX
 #  endif
 #  define NEED_CBRT
 #endif
 
-#if defined(PORTNAME_hpux)
+#if defined(hpux)
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
 #  define NEED_CBRT
@@ -53,7 +53,7 @@
 #  define NEED_UNION_SEMUN 
 #endif
 
-#if defined(PORTNAME_i386_solaris) 
+#if defined(i386_solaris) 
 #  define USE_POSIX_TIME 
 #  define NEED_ISINF 
 #  define NEED_RUSAGE 
@@ -62,12 +62,12 @@
 #  define NEED_UNION_SEMUN 
 #endif
 
-#if defined(PORTNAME_sparc)
+#if defined(sparc)
 #  define USE_POSIX_TIME
 #  undef HAVE_MEMMOVE
 #endif
 
-#if defined(PORTNAME_sparc_solaris)
+#if defined(sparc_solaris)
 #  define USE_POSIX_TIME 
 #  define NEED_ISINF 
 #  define NEED_RUSAGE 
@@ -77,7 +77,7 @@
 #  define NEED_UNION_SEMUN 
 #endif
 
-#if defined(PORTNAME_svr4) 
+#if defined(svr4) 
 #  define USE_POSIX_TIME 
 #  define NEED_ISINF 
 #  define NEED_RUSAGE 
@@ -86,11 +86,11 @@
 #  define NEED_UNION_SEMUN 
 #endif
 
-#if defined(PORTNAME_next)
+#if defined(next)
 #  define NEED_SIG_JMP
 #endif
 
-#if defined(PORTNAME_win32)
+#if defined(win32)
 #  define NEED_SIG_JMP
 #  define NO_UNISTD_H
 #  define USES_WINSOCK 
@@ -101,21 +101,21 @@
 #  define NEED_ISINF
 #endif /* WIN32 */
 
-#if defined(PORTNAME_BSD44_derived) || \
-    defined(PORTNAME_bsdi_2_1)
+#if defined(BSD44_derived) || \
+    defined(bsdi_2_1)
 #  define USE_LIMITS_H
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
 #endif
 
-#if defined(PORTNAME_bsdi)
+#if defined(bsdi)
 #  define NEED_UNION_SEMUN 
 #  define USE_LIMITS_H
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
 #endif
 
-#if defined(PORTNAME_aix)
+#if defined(aix)
 #  define CLASS_CONFLICT 
 #  define DISABLE_XOPEN_NLS 
 #  define NEED_ISINF
@@ -124,7 +124,7 @@
 #  define HAVE_TZSET
 #endif
 
-#if defined(PORTNAME_irix5)
+#if defined(irix5)
 #  define USE_POSIX_TIME 
 #  define NEED_ISINF 
 #  define NO_EMPTY_STMTS
