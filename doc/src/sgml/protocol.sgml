@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.33 2003/04/28 05:17:31 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.34 2003/05/05 00:44:55 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -595,7 +595,11 @@
    <para>
     If successfully created, a named prepared-statement object lasts till
     the end of the current session, unless explicitly destroyed.  An unnamed
-    prepared statement lasts only until the next Parse message is issued.
+    prepared statement lasts only until the next Parse statement specifying
+    the unnamed statement as destination is issued.  (Note that a simple
+    Query message also destroys the unnamed statement.)  Named prepared
+    statements must be explicitly closed before they can be redefined by
+    a Parse message, but this is not required for the unnamed statement.
     Named prepared statements can also be created and accessed at the SQL
     command level, using <command>PREPARE</> and <command>EXECUTE</>.
    </para>
@@ -611,10 +615,13 @@
    </para>
 
    <para>
-    If successfully created, a named portal object lasts till
-    the end of the current transaction, unless explicitly destroyed.  An
-    unnamed portal is destroyed at the end of the transaction, or as soon
-    as the next Parse or Bind message is executed.
+    If successfully created, a named portal object lasts till the end of the
+    current transaction, unless explicitly destroyed.  An unnamed portal is
+    destroyed at the end of the transaction, or as soon as the next Bind
+    statement specifying the unnamed portal as destination is issued.  (Note
+    that a simple Query message also destroys the unnamed portal.)  Named
+    portals must be explicitly closed before they can be redefined by a Bind
+    message, but this is not required for the unnamed portal.
     Named portals can also be created and accessed at the SQL
     command level, using <command>DECLARE CURSOR</> and <command>FETCH</>.
    </para>
@@ -691,17 +698,19 @@
     The Describe message (statement variant) specifies the name of an existing
     prepared statement (or an empty string for the unnamed prepared
     statement).  The response is a ParameterDescription message describing the
-    parameters needed by the statement (if any), followed by a RowDescription
-    message describing the rows that will be returned when the statement is
-    eventually executed (or NoData if there is no SELECT-type query in the
-    prepared statement).  ErrorResponse is issued if there is no such prepared
-    statement.  This message may be useful if the client library is
-    uncertain about the parameters needed by a prepared statement.
+    parameters needed by the statement.  ErrorResponse is issued if there is
+    no such prepared statement.  This message may be useful if the client
+    library is uncertain about the parameters needed by a prepared statement.
    </para>
 
    <para>
     The Close message closes an existing prepared statement or portal
-    and releases resources.
+    and releases resources.  It is not an error to issue Close against
+    a nonexistent statement or portal name.  The response is normally
+    CloseComplete, but could be ErrorResponse if some difficulty is
+    encountered while releasing resources.  Note that closing a prepared
+    statement implicitly closes any open portals that were constructed
+    from that statement.
    </para>
 
    <para>
@@ -709,19 +718,20 @@
     but forces the backend to deliver any data pending in its output
     buffers.  A Flush must be sent after any extended-query command except
     Sync, if the frontend wishes to examine the results of that command before
-    issuing more commands.  Without Flush, returning data will be combined
-    into the minimum possible number of packets to minimize network overhead.
+    issuing more commands.  Without Flush, messages returned by the backend
+    will be combined into the minimum possible number of packets to minimize
+    network overhead.
    </para>
 
    <note>
     <para>
      The simple Query message is approximately equivalent to the series Parse,
-     Bind, portal Describe, Execute, Sync, using the unnamed prepared statement
-     and portal objects and no parameters.  One difference is that it
-     will accept multiple SQL statements in the query string, automatically
+     Bind, portal Describe, Execute, Close, Sync, using the unnamed prepared
+     statement and portal objects and no parameters.  One difference is that
+     it will accept multiple SQL statements in the query string, automatically
      performing the bind/describe/execute sequence for each one in succession.
-     Another is that it will not return ParseComplete, BindComplete, or
-     NoData messages.
+     Another difference is that it will not return ParseComplete, BindComplete,
+     CloseComplete, or NoData messages.
     </para>
    </note>
   </sect2>
@@ -1912,6 +1922,41 @@ Close (F)
 </ListItem>
 </VarListEntry>
 </VariableList>
+</Para>
+</ListItem>
+</VarListEntry>
+
+
+<VarListEntry>
+<Term>
+CloseComplete (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('3')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as a Close-complete indicator.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(4)
+</Term>
+<ListItem>
+<Para>
+                Length of message contents in bytes, including self.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
 </Para>
 </ListItem>
 </VarListEntry>
@@ -3873,6 +3918,15 @@ string sent in the older protocol always did.
 <para>
 The ReadyForQuery ('<literal>Z</>') message includes a transaction status
 indicator.
+</para>
+
+<para>
+There is a new <quote>extended query</> sub-protocol, which adds the frontend
+message types Parse, Bind, Execute, Describe, Close, Flush, and Sync, and the
+backend message types ParseComplete, BindComplete, PortalSuspended,
+ParameterDescription, NoData, and CloseComplete.  Existing clients do not
+have to concern themselves with this sub-protocol, but making use of it
+may allow improvements in performance or functionality.
 </para>
 
 <para>

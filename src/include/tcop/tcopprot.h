@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.56 2003/05/02 20:54:36 tgl Exp $
+ * $Id: tcopprot.h,v 1.57 2003/05/05 00:44:56 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -35,11 +35,12 @@ extern DLLIMPORT const char *debug_query_string;
 
 #ifndef BOOTSTRAP_INCLUDE
 
+extern List *pg_parse_and_rewrite(const char *query_string,
+					 Oid *paramTypes, int numParams);
 extern List *pg_parse_query(const char *query_string);
 extern List *pg_analyze_and_rewrite(Node *parsetree,
 									Oid *paramTypes, int numParams);
-extern List *pg_parse_and_rewrite(const char *query_string,
-					 Oid *paramTypes, int numParams);
+extern List *pg_rewrite_queries(List *querytree_list);
 extern Plan *pg_plan_query(Query *querytree);
 extern List *pg_plan_queries(List *querytrees, bool needSnapshot);
 

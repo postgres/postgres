@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.54 2003/04/26 20:22:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.55 2003/05/05 00:44:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,10 +91,20 @@ DestToFunction(CommandDest dest)
 	switch (dest)
 	{
 		case Remote:
-			return printtup_create_DR(false);
+			return printtup_create_DR(false, true);
 
 		case RemoteInternal:
-			return printtup_create_DR(true);
+			return printtup_create_DR(true, true);
+
+		case RemoteExecute:
+			/* like Remote, but suppress output of T message */
+			return printtup_create_DR(false, false);
+
+		case RemoteExecuteInternal:
+			return printtup_create_DR(true, false);
+
+		case None:
+			return &donothingDR;
 
 		case Debug:
 			return &debugtupDR;
@@ -104,9 +114,6 @@ DestToFunction(CommandDest dest)
 
 		case Tuplestore:
 			return tstoreReceiverCreateDR();
-
-		case None:
-			return &donothingDR;
 	}
 
 	/* should never get here */
@@ -124,13 +131,15 @@ EndCommand(const char *commandTag, CommandDest dest)
 	{
 		case Remote:
 		case RemoteInternal:
+		case RemoteExecute:
+		case RemoteExecuteInternal:
 			pq_puttextmessage('C', commandTag);
 			break;
 
 		case None:
 		case Debug:
-		case Tuplestore:
 		case SPI:
+		case Tuplestore:
 			break;
 	}
 }
@@ -152,8 +161,10 @@ NullCommand(CommandDest dest)
 {
 	switch (dest)
 	{
-		case RemoteInternal:
 		case Remote:
+		case RemoteInternal:
+		case RemoteExecute:
+		case RemoteExecuteInternal:
 
 			/*
 			 * tell the fe that we saw an empty query string.  In protocols
@@ -165,10 +176,10 @@ NullCommand(CommandDest dest)
 				pq_puttextmessage('I', "");
 			break;
 
-		case Debug:
-		case Tuplestore:
 		case None:
-		default:
+		case Debug:
+		case SPI:
+		case Tuplestore:
 			break;
 	}
 }
@@ -189,8 +200,10 @@ ReadyForQuery(CommandDest dest)
 {
 	switch (dest)
 	{
-		case RemoteInternal:
 		case Remote:
+		case RemoteInternal:
+		case RemoteExecute:
+		case RemoteExecuteInternal:
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 			{
 				StringInfoData buf;
@@ -205,10 +218,10 @@ ReadyForQuery(CommandDest dest)
 			pq_flush();
 			break;
 
-		case Debug:
-		case Tuplestore:
 		case None:
-		default:
+		case Debug:
+		case SPI:
+		case Tuplestore:
 			break;
 	}
 }

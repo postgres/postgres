@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.67 2003/04/26 20:22:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.68 2003/05/05 00:44:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ typedef struct
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
+	bool		sendDescrip;	/* send RowDescription at startup? */
 	TupleDesc	attrinfo;		/* The attr info we are set up for */
 	int			nattrs;
 	PrinttupAttrInfo *myinfo;	/* Cached info about each attr */
@@ -58,13 +59,15 @@ typedef struct
  * ----------------
  */
 DestReceiver *
-printtup_create_DR(bool isBinary)
+printtup_create_DR(bool isBinary, bool sendDescrip)
 {
 	DR_printtup *self = (DR_printtup *) palloc(sizeof(DR_printtup));
 
 	self->pub.receiveTuple = isBinary ? printtup_internal : printtup;
 	self->pub.setup = printtup_setup;
 	self->pub.cleanup = printtup_cleanup;
+
+	self->sendDescrip = sendDescrip;
 
 	self->attrinfo = NULL;
 	self->nattrs = 0;
@@ -77,6 +80,8 @@ static void
 printtup_setup(DestReceiver *self, int operation,
 			   const char *portalName, TupleDesc typeinfo)
 {
+	DR_printtup *myState = (DR_printtup *) self;
+
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
 	{
 		/*
@@ -91,41 +96,11 @@ printtup_setup(DestReceiver *self, int operation,
 	}
 
 	/*
-	 * if this is a retrieve, then we send back the tuple descriptor of
-	 * the tuples.
+	 * If this is a retrieve, and we are supposed to emit row descriptions,
+	 * then we send back the tuple descriptor of the tuples.  
 	 */
-	if (operation == CMD_SELECT)
-	{
-		Form_pg_attribute *attrs = typeinfo->attrs;
-		int			natts = typeinfo->natts;
-		int			proto = PG_PROTOCOL_MAJOR(FrontendProtocol);
-		int			i;
-		StringInfoData buf;
-
-		pq_beginmessage(&buf, 'T'); /* tuple descriptor message type */
-		pq_sendint(&buf, natts, 2);		/* # of attrs in tuples */
-
-		for (i = 0; i < natts; ++i)
-		{
-			pq_sendstring(&buf, NameStr(attrs[i]->attname));
-			/* column ID info appears in protocol 3.0 and up */
-			if (proto >= 3)
-			{
-				/* XXX not yet implemented, send zeroes */
-				pq_sendint(&buf, 0, 4);
-				pq_sendint(&buf, 0, 2);
-			}
-			pq_sendint(&buf, (int) attrs[i]->atttypid,
-					   sizeof(attrs[i]->atttypid));
-			pq_sendint(&buf, attrs[i]->attlen,
-					   sizeof(attrs[i]->attlen));
-			/* typmod appears in protocol 2.0 and up */
-			if (proto >= 2)
-				pq_sendint(&buf, attrs[i]->atttypmod,
-						   sizeof(attrs[i]->atttypmod));
-		}
-		pq_endmessage(&buf);
-	}
+	if (operation == CMD_SELECT && myState->sendDescrip)
+		SendRowDescriptionMessage(typeinfo);
 
 	/* ----------------
 	 * We could set up the derived attr info at this time, but we postpone it
@@ -137,6 +112,43 @@ printtup_setup(DestReceiver *self, int operation,
 	 *	  the current executor).
 	 * ----------------
 	 */
+}
+
+/*
+ * SendRowDescriptionMessage --- send a RowDescription message to the frontend
+ */
+void
+SendRowDescriptionMessage(TupleDesc typeinfo)
+{
+	Form_pg_attribute *attrs = typeinfo->attrs;
+	int			natts = typeinfo->natts;
+	int			proto = PG_PROTOCOL_MAJOR(FrontendProtocol);
+	int			i;
+	StringInfoData buf;
+
+	pq_beginmessage(&buf, 'T');		/* tuple descriptor message type */
+	pq_sendint(&buf, natts, 2);		/* # of attrs in tuples */
+
+	for (i = 0; i < natts; ++i)
+	{
+		pq_sendstring(&buf, NameStr(attrs[i]->attname));
+		/* column ID info appears in protocol 3.0 and up */
+		if (proto >= 3)
+		{
+			/* XXX not yet implemented, send zeroes */
+			pq_sendint(&buf, 0, 4);
+			pq_sendint(&buf, 0, 2);
+		}
+		pq_sendint(&buf, (int) attrs[i]->atttypid,
+				   sizeof(attrs[i]->atttypid));
+		pq_sendint(&buf, attrs[i]->attlen,
+				   sizeof(attrs[i]->attlen));
+		/* typmod appears in protocol 2.0 and up */
+		if (proto >= 2)
+			pq_sendint(&buf, attrs[i]->atttypmod,
+					   sizeof(attrs[i]->atttypmod));
+	}
+	pq_endmessage(&buf);
 }
 
 static void

@@ -44,7 +44,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.34 2003/04/19 00:02:30 tgl Exp $
+ * $Id: dest.h,v 1.35 2003/05/05 00:44:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,10 @@
 /* ----------------
  *		CommandDest is a simplistic means of identifying the desired
  *		destination.  Someday this will probably need to be improved.
+ *
+ * Note: only the values None, Debug, Remote are legal for the global
+ * variable whereToSendOutput.  The other values may be selected
+ * as the destination for individual commands.
  * ----------------
  */
 typedef enum
@@ -71,7 +75,9 @@ typedef enum
 	RemoteInternal,				/* results sent to frontend process in
 								 * internal (binary) form */
 	SPI,						/* results sent to SPI manager */
-	Tuplestore					/* results sent to Tuplestore */
+	Tuplestore,					/* results sent to Tuplestore */
+	RemoteExecute,				/* sent to frontend, in Execute command */
+	RemoteExecuteInternal		/* same, but binary format */
 } CommandDest;
 
 /* ----------------

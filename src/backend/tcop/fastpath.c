@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.60 2003/05/02 20:54:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.61 2003/05/05 00:44:56 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -310,6 +310,14 @@ HandleFunctionRequest(StringInfo msgBuf)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_func_name(fid));
 
+	/*
+	 * Set up a query snapshot in case function needs one.
+	 */
+	SetQuerySnapshot();
+
+	/*
+	 * Prepare function call info block.
+	 */
 	if (fip->flinfo.fn_nargs != nargs || nargs > FUNC_MAX_ARGS)
 		elog(ERROR, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
 			 nargs, fip->flinfo.fn_nargs);
@@ -359,12 +367,8 @@ HandleFunctionRequest(StringInfo msgBuf)
 		}
 	}
 
-	/*
-	 * Set up a query snapshot in case function needs one.  (It is not safe
-	 * to do this if we are in transaction-abort state, so we have to postpone
-	 * it till now.  Ugh.)
-	 */
-	SetQuerySnapshot();
+	/* Verify we reached the end of the message where expected. */
+	pq_getmsgend(msgBuf);
 
 #ifdef NO_FASTPATH
 	/* force a NULL return */

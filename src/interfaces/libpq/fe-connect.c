@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.239 2003/04/28 04:52:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.240 2003/05/05 00:44:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,6 +375,17 @@ connectOptions1(PGconn *conn, const char *conninfo)
 static bool
 connectOptions2(PGconn *conn)
 {
+	/*
+	 * If database name was not given, default it to equal user name
+	 */
+	if ((conn->dbName == NULL || conn->dbName[0] == '\0')
+		&& conn->pguser != NULL)
+	{
+		if (conn->dbName)
+			free(conn->dbName);
+		conn->dbName = strdup(conn->pguser);
+	}
+
 	/*
 	 * Supply default password if none given
 	 */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.269 2003/05/02 20:54:34 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.270 2003/05/05 00:44:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,12 @@ typedef struct
 	IndexStmt  *pkey;			/* PRIMARY KEY index, if any */
 } CreateStmtContext;
 
+typedef struct
+{
+	Oid		   *paramTypes;
+	int			numParams;
+} check_parameter_resolution_context;
+
 
 static List *do_parse_analyze(Node *parseTree, ParseState *pstate);
 static Query *transformStmt(ParseState *pstate, Node *stmt,
@@ -124,6 +130,8 @@ static void transformColumnType(ParseState *pstate, ColumnDef *column);
 static bool relationHasPrimaryKey(Oid relationOid);
 static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
+static bool check_parameter_resolution_walker(Node *node,
+					   check_parameter_resolution_context *context);
 
 
 /*
@@ -178,6 +186,16 @@ parse_analyze_varparams(Node *parseTree, Oid **paramTypes, int *numParams)
 	*numParams = pstate->p_numparams;
 
 	pfree(pstate);
+
+	/* make sure all is well with parameter types */
+	if (*numParams > 0)
+	{
+		check_parameter_resolution_context context;
+
+		context.paramTypes = *paramTypes;
+		context.numParams = *numParams;
+		check_parameter_resolution_walker((Node *) result, &context);
+	}
 
 	return result;
 }
@@ -2465,7 +2483,7 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
-	paramtypes = FetchQueryParams(stmt->name);
+	paramtypes = FetchPreparedStatementParams(stmt->name);
 
 	if (stmt->params || paramtypes)
 	{
@@ -2878,4 +2896,45 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 	result = nconc(result, cxt.grants);
 
 	return result;
+}
+
+/*
+ * Traverse a fully-analyzed tree to verify that parameter symbols
+ * match their types.  We need this because some Params might still
+ * be UNKNOWN, if there wasn't anything to force their coercion,
+ * and yet other instances seen later might have gotten coerced.
+ */
+static bool
+check_parameter_resolution_walker(Node *node,
+								  check_parameter_resolution_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Param))
+	{
+		Param	   *param = (Param *) node;
+
+		if (param->paramkind == PARAM_NUM)
+		{
+			int			paramno = param->paramid;
+
+			if (paramno <= 0 ||		/* shouldn't happen, but... */
+				paramno > context->numParams)
+				elog(ERROR, "Parameter '$%d' is out of range", paramno);
+
+			if (param->paramtype != context->paramTypes[paramno-1])
+				elog(ERROR, "Could not determine datatype of parameter $%d",
+					 paramno);
+		}
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		return query_tree_walker((Query *) node,
+								 check_parameter_resolution_walker,
+								 (void *) context, 0);
+	}
+	return expression_tree_walker(node, check_parameter_resolution_walker,
+								  (void *) context);
 }

@@ -3,10 +3,14 @@
  * prepare.c
  *	  Prepareable SQL statements via PREPARE, EXECUTE and DEALLOCATE
  *
- * Copyright (c) 2002, PostgreSQL Global Development Group
+ * This module also implements storage of prepared statements that are
+ * accessed via the extended FE/BE query protocol.
+ *
+ *
+ * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.14 2003/05/02 20:54:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.15 2003/05/05 00:44:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,31 +29,15 @@
 #include "utils/memutils.h"
 
 
-#define HASH_KEY_LEN NAMEDATALEN
-
-/* All the data we need to remember about a stored query */
-typedef struct
-{
-	/* dynahash.c requires key to be first field */
-	char		key[HASH_KEY_LEN];
-	List	   *query_list;		/* list of queries */
-	List	   *plan_list;		/* list of plans */
-	List	   *argtype_list;	/* list of parameter type OIDs */
-	MemoryContext context;		/* context containing this query */
-} QueryHashEntry;
-
 /*
  * The hash table in which prepared queries are stored. This is
  * per-backend: query plans are not shared between backends.
- * The keys for this hash table are the arguments to PREPARE
- * and EXECUTE ("plan names"); the entries are QueryHashEntry structs.
+ * The keys for this hash table are the arguments to PREPARE and EXECUTE
+ * (statement names); the entries are PreparedStatement structs.
  */
 static HTAB *prepared_queries = NULL;
 
 static void InitQueryHashTable(void);
-static void StoreQuery(const char *stmt_name, List *query_list,
-					   List *plan_list, List *argtype_list);
-static QueryHashEntry *FetchQuery(const char *plan_name);
 static ParamListInfo EvaluateParams(EState *estate,
 									List *params, List *argtypes);
 
@@ -59,14 +47,36 @@ static ParamListInfo EvaluateParams(EState *estate,
 void
 PrepareQuery(PrepareStmt *stmt)
 {
+	const char *commandTag;
 	List	   *query_list,
 			   *plan_list;
 
-	if (!stmt->name)
-		elog(ERROR, "No statement name given");
+	/*
+	 * Disallow empty-string statement name (conflicts with protocol-level
+	 * unnamed statement).
+	 */
+	if (!stmt->name || stmt->name[0] == '\0')
+		elog(ERROR, "Invalid statement name: must not be empty");
 
-	if (stmt->query->commandType == CMD_UTILITY)
-		elog(ERROR, "Utility statements cannot be prepared");
+	switch (stmt->query->commandType)
+	{
+		case CMD_SELECT:
+			commandTag = "SELECT";
+			break;
+		case CMD_INSERT:
+			commandTag = "INSERT";
+			break;
+		case CMD_UPDATE:
+			commandTag = "UPDATE";
+			break;
+		case CMD_DELETE:
+			commandTag = "DELETE";
+			break;
+		default:
+			elog(ERROR, "Utility statements cannot be prepared");
+			commandTag = NULL;	/* keep compiler quiet */
+			break;
+	}
 
 	/*
 	 * Parse analysis is already done, but we must still rewrite and plan
@@ -80,7 +90,12 @@ PrepareQuery(PrepareStmt *stmt)
 	plan_list = pg_plan_queries(query_list, false);
 
 	/* Save the results. */
-	StoreQuery(stmt->name, query_list, plan_list, stmt->argtype_oids);
+	StorePreparedStatement(stmt->name,
+						   NULL, /* text form not available */
+						   commandTag,
+						   query_list,
+						   plan_list,
+						   stmt->argtype_oids);
 }
 
 /*
@@ -89,7 +104,8 @@ PrepareQuery(PrepareStmt *stmt)
 void
 ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 {
-	QueryHashEntry *entry;
+	PreparedStatement *entry;
+	char	   *query_string;
 	List	   *query_list,
 			   *plan_list;
 	MemoryContext qcontext;
@@ -98,8 +114,9 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 	Portal		portal;
 
 	/* Look it up in the hash table */
-	entry = FetchQuery(stmt->name);
+	entry = FetchPreparedStatement(stmt->name, true);
 
+	query_string = entry->query_string;
 	query_list = entry->query_list;
 	plan_list = entry->plan_list;
 	qcontext = entry->context;
@@ -135,6 +152,8 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
+		if (query_string)
+			query_string = pstrdup(query_string);
 		query_list = copyObject(query_list);
 		plan_list = copyObject(plan_list);
 		qcontext = PortalGetHeapMemory(portal);
@@ -150,8 +169,8 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 	}
 
 	PortalDefineQuery(portal,
-					  NULL,		/* XXX fixme: can we save query text? */
-					  NULL,		/* no command tag known either */
+					  query_string,
+					  entry->commandTag,
 					  query_list,
 					  plan_list,
 					  qcontext);
@@ -228,8 +247,8 @@ InitQueryHashTable(void)
 
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 
-	hash_ctl.keysize = HASH_KEY_LEN;
-	hash_ctl.entrysize = sizeof(QueryHashEntry);
+	hash_ctl.keysize = NAMEDATALEN;
+	hash_ctl.entrysize = sizeof(PreparedStatement);
 
 	prepared_queries = hash_create("Prepared Queries",
 								   32,
@@ -244,15 +263,24 @@ InitQueryHashTable(void)
  * Store all the data pertaining to a query in the hash table using
  * the specified key. A copy of the data is made in a memory context belonging
  * to the hash entry, so the caller can dispose of their copy.
+ *
+ * Exception: commandTag is presumed to be a pointer to a constant string,
+ * or possibly NULL, so it need not be copied.  Note that commandTag should
+ * be NULL only if the original query (before rewriting) was empty.
  */
-static void
-StoreQuery(const char *stmt_name, List *query_list,
-		   List *plan_list, List *argtype_list)
+void
+StorePreparedStatement(const char *stmt_name,
+					   const char *query_string,
+					   const char *commandTag,
+					   List *query_list,
+					   List *plan_list,
+					   List *argtype_list)
 {
-	QueryHashEntry *entry;
+	PreparedStatement *entry;
 	MemoryContext oldcxt,
 				entrycxt;
-	char		key[HASH_KEY_LEN];
+	char	   *qstring;
+	char		key[NAMEDATALEN];
 	bool		found;
 
 	/* Initialize the hash table, if necessary */
@@ -260,7 +288,7 @@ StoreQuery(const char *stmt_name, List *query_list,
 		InitQueryHashTable();
 
 	/* Check for pre-existing entry of same name */
-	/* See notes in FetchQuery */
+	/* See notes in FetchPreparedStatement */
 	MemSet(key, 0, sizeof(key));
 	strncpy(key, stmt_name, sizeof(key));
 
@@ -285,15 +313,16 @@ StoreQuery(const char *stmt_name, List *query_list,
 	 * out-of-memory failure only wastes memory and doesn't leave us with
 	 * an incomplete (ie corrupt) hashtable entry.
 	 */
+	qstring = query_string ? pstrdup(query_string) : (char *) NULL;
 	query_list = (List *) copyObject(query_list);
 	plan_list = (List *) copyObject(plan_list);
 	argtype_list = listCopy(argtype_list);
 
 	/* Now we can add entry to hash table */
-	entry = (QueryHashEntry *) hash_search(prepared_queries,
-										   key,
-										   HASH_ENTER,
-										   &found);
+	entry = (PreparedStatement *) hash_search(prepared_queries,
+											  key,
+											  HASH_ENTER,
+											  &found);
 
 	/* Shouldn't get a failure, nor a duplicate entry */
 	if (!entry || found)
@@ -301,6 +330,8 @@ StoreQuery(const char *stmt_name, List *query_list,
 			 stmt_name);
 
 	/* Fill in the hash table entry with copied data */
+	entry->query_string = qstring;
+	entry->commandTag = commandTag;
 	entry->query_list = query_list;
 	entry->plan_list = plan_list;
 	entry->argtype_list = argtype_list;
@@ -311,52 +342,53 @@ StoreQuery(const char *stmt_name, List *query_list,
 
 /*
  * Lookup an existing query in the hash table. If the query does not
- * actually exist, an elog(ERROR) is thrown.
+ * actually exist, throw elog(ERROR) or return NULL per second parameter.
  */
-static QueryHashEntry *
-FetchQuery(const char *plan_name)
+PreparedStatement *
+FetchPreparedStatement(const char *stmt_name, bool throwError)
 {
-	char		key[HASH_KEY_LEN];
-	QueryHashEntry *entry;
+	char		key[NAMEDATALEN];
+	PreparedStatement *entry;
 
 	/*
 	 * If the hash table hasn't been initialized, it can't be storing
 	 * anything, therefore it couldn't possibly store our plan.
 	 */
-	if (!prepared_queries)
+	if (prepared_queries)
+	{
+		/*
+		 * We can't just use the statement name as supplied by the user: the
+		 * hash package is picky enough that it needs to be NULL-padded out to
+		 * the appropriate length to work correctly.
+		 */
+		MemSet(key, 0, sizeof(key));
+		strncpy(key, stmt_name, sizeof(key));
+
+		entry = (PreparedStatement *) hash_search(prepared_queries,
+												  key,
+												  HASH_FIND,
+												  NULL);
+	}
+	else
+		entry = NULL;
+
+	if (!entry && throwError)
 		elog(ERROR, "Prepared statement with name \"%s\" does not exist",
-			 plan_name);
-
-	/*
-	 * We can't just use the statement name as supplied by the user: the
-	 * hash package is picky enough that it needs to be NULL-padded out to
-	 * the appropriate length to work correctly.
-	 */
-	MemSet(key, 0, sizeof(key));
-	strncpy(key, plan_name, sizeof(key));
-
-	entry = (QueryHashEntry *) hash_search(prepared_queries,
-										   key,
-										   HASH_FIND,
-										   NULL);
-
-	if (!entry)
-		elog(ERROR, "Prepared statement with name \"%s\" does not exist",
-			 plan_name);
+			 stmt_name);
 
 	return entry;
 }
 
 /*
- * Given a plan name, look up the stored plan (giving error if not found).
+ * Look up a prepared statement given the name (giving error if not found).
  * If found, return the list of argument type OIDs.
  */
 List *
-FetchQueryParams(const char *plan_name)
+FetchPreparedStatementParams(const char *stmt_name)
 {
-	QueryHashEntry *entry;
+	PreparedStatement *entry;
 
-	entry = FetchQuery(plan_name);
+	entry = FetchPreparedStatement(stmt_name, true);
 
 	return entry->argtype_list;
 }
@@ -368,20 +400,34 @@ FetchQueryParams(const char *plan_name)
 void
 DeallocateQuery(DeallocateStmt *stmt)
 {
-	QueryHashEntry *entry;
+	DropPreparedStatement(stmt->name, true);
+}
 
-	/* Find the query's hash table entry */
-	entry = FetchQuery(stmt->name);
+/*
+ * Internal version of DEALLOCATE
+ *
+ * If showError is false, dropping a nonexistent statement is a no-op.
+ */
+void
+DropPreparedStatement(const char *stmt_name, bool showError)
+{
+	PreparedStatement *entry;
 
-	/* Drop any open portals that depend on this prepared statement */
-	Assert(MemoryContextIsValid(entry->context));
-	DropDependentPortals(entry->context);
+	/* Find the query's hash table entry; raise error if wanted */
+	entry = FetchPreparedStatement(stmt_name, showError);
 
-	/* Flush the context holding the subsidiary data */
-	MemoryContextDelete(entry->context);
+	if (entry)
+	{
+		/* Drop any open portals that depend on this prepared statement */
+		Assert(MemoryContextIsValid(entry->context));
+		DropDependentPortals(entry->context);
 
-	/* Now we can remove the hash table entry */
-	hash_search(prepared_queries, entry->key, HASH_REMOVE, NULL);
+		/* Flush the context holding the subsidiary data */
+		MemoryContextDelete(entry->context);
+
+		/* Now we can remove the hash table entry */
+		hash_search(prepared_queries, entry->stmt_name, HASH_REMOVE, NULL);
+	}
 }
 
 /*
@@ -391,7 +437,7 @@ void
 ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 {
 	ExecuteStmt	   *execstmt = (ExecuteStmt *) stmt->query->utilityStmt;
-	QueryHashEntry *entry;
+	PreparedStatement *entry;
 	List	   *l,
 			   *query_list,
 			   *plan_list;
@@ -402,7 +448,7 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 	Assert(execstmt && IsA(execstmt, ExecuteStmt));
 
 	/* Look it up in the hash table */
-	entry = FetchQuery(execstmt->name);
+	entry = FetchPreparedStatement(execstmt->name, true);
 
 	query_list = entry->query_list;
 	plan_list = entry->plan_list;

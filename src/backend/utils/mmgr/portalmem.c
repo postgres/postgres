@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.56 2003/05/02 20:54:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.57 2003/05/05 00:44:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,11 +222,12 @@ CreateNewPortal(void)
  * PortalDefineQuery
  *		A simple subroutine to establish a portal's query.
  *
- * Notes: the passed commandTag must be a pointer to a constant string,
- * since it is not copied.  The caller is responsible for ensuring that
- * the passed sourceText (if any), parse and plan trees have adequate
- * lifetime.  Also, queryContext must accurately describe the location
- * of the parse and plan trees.
+ * Notes: commandTag shall be NULL if and only if the original query string
+ * (before rewriting) was an empty string.  Also, the passed commandTag must
+ * be a pointer to a constant string, since it is not copied.  The caller is
+ * responsible for ensuring that the passed sourceText (if any), parse and
+ * plan trees have adequate lifetime.  Also, queryContext must accurately
+ * describe the location of the parse and plan trees.
  */
 void
 PortalDefineQuery(Portal portal,
@@ -240,6 +241,8 @@ PortalDefineQuery(Portal portal,
 	AssertState(portal->queryContext == NULL); /* else defined already */
 
 	Assert(length(parseTrees) == length(planTrees));
+
+	Assert(commandTag != NULL || parseTrees == NIL);
 
 	portal->sourceText = sourceText;
 	portal->commandTag = commandTag;

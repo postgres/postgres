@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.13 2003/05/02 20:54:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.14 2003/05/05 00:44:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ PerformCursorOpen(DeclareCursorStmt *stmt, CommandDest dest)
 	 * Disallow empty-string cursor name (conflicts with protocol-level
 	 * unnamed portal).
 	 */
-	if (strlen(stmt->portalname) == 0)
+	if (!stmt->portalname || stmt->portalname[0] == '\0')
 		elog(ERROR, "Invalid cursor name: must not be empty");
 
 	/*
@@ -148,6 +148,13 @@ PerformPortalFetch(FetchStmt *stmt,
 	Portal		portal;
 	long		nprocessed;
 
+	/*
+	 * Disallow empty-string cursor name (conflicts with protocol-level
+	 * unnamed portal).
+	 */
+	if (!stmt->portalname || stmt->portalname[0] == '\0')
+		elog(ERROR, "Invalid cursor name: must not be empty");
+
 	/* get the portal from the portal name */
 	portal = GetPortalByName(stmt->portalname);
 	if (!PortalIsValid(portal))
@@ -164,7 +171,9 @@ PerformPortalFetch(FetchStmt *stmt,
 	 * Adjust dest if needed.  MOVE wants dest = None.
 	 *
 	 * If fetching from a binary cursor and the requested destination is
-	 * Remote, change it to RemoteInternal.
+	 * Remote, change it to RemoteInternal.  Note we do NOT change if the
+	 * destination is RemoteExecute --- so the Execute message's format
+	 * specification wins out over the cursor's type.
 	 */
 	if (stmt->ismove)
 		dest = None;
@@ -189,9 +198,16 @@ PerformPortalFetch(FetchStmt *stmt,
  *		Close a cursor.
  */
 void
-PerformPortalClose(char *name)
+PerformPortalClose(const char *name)
 {
 	Portal		portal;
+
+	/*
+	 * Disallow empty-string cursor name (conflicts with protocol-level
+	 * unnamed portal).
+	 */
+	if (!name || name[0] == '\0')
+		elog(ERROR, "Invalid cursor name: must not be empty");
 
 	/*
 	 * get the portal from the portal name
