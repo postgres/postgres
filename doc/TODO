@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jun 22 01:01:16 EDT 2003
+Last updated:		Sun Jun 22 01:04:43 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -80,7 +80,7 @@ Data Types
 * Allow backend to output result sets in XML
 * Prevent whole-row references from leaking memory, e.g. SELECT COUNT(tab.*)
 * Allow current datestyle to restrict dates;  prevent month/day swapping
-  from making invalid dates valid
+  from making invalid dates valid?
 * Prevent month/day swapping of ISO dates to make invalid dates valid
 
 
