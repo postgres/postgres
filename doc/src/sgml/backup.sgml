@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.14 2001/09/10 07:11:28 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.15 2001/09/10 07:17:01 ishii Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -407,7 +407,7 @@ pg_dumpall -p 5432 | psql -d template1 -p 6543
 <informalexample>
 <programlisting>
 pg_dumpall > backup
-kill -INT `cat /usr/local/pgsql/postmaster.pid`
+pg_ctl stop
 mv /usr/local/pgsql /usr/local/pgsql.old
 cd /usr/src/postgresql-7.1
 gmake install
