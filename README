@@ -2,11 +2,11 @@
 PostgreSQL Data Base Management System (formerly known as Postgres, then
 as Postgres95).
   
-This directory contains the development version of 7.0 of the PostgreSQL
-database server.  The server is not ANSI SQL compliant, but it gets
-closer with every release.  After you unzip and untar the distribution
-file, look at file INSTALL for the installation notes and file HISTORY
-for the changes.
+This directory contains the development version of 7.0 of the
+PostgreSQL database server.  The server is not ANSI SQL compliant, but
+it gets closer with every release.  After you unzip and untar the
+distribution file, look at file INSTALL for the installation notes and
+file HISTORY for the changes.
 
 The latest version of this software may be obtained at
 ftp://ftp.postgresql.org/pub/.  For more information look at our WWW

@@ -18,11 +18,14 @@ Web site, <A HREF="http://www.Postgresql.org">http://www.PostgreSQL.org</A>.<P>
 Linux-specific questions are answered in <A
 HREF="http://www.PostgreSQL.org/docs/faq-linux.html">http://www.PostgreSQL.org/docs/faq-linux.html</A>.<P>
 
+HPUX-specific questions are answered in <A
+HREF="http://www.PostgreSQL.org/docs/faq-hpux.html">http://www.PostgreSQL.org/docs/faq-hpux.html</A>.<P>
+
+Solaris-specific questions are answered in <A
+HREF="http://www.postgresql.org/docs/faq-solaris.html">http://www.postgresql.org/docs/faq-solaris.html</A>.<P>
+
 Irix-specific questions are answered in <A
 HREF="http://www.PostgreSQL.org/docs/faq-irix.html">http://www.PostgreSQL.org/docs/faq-irix.html</A>.<P>
-
-HPUX-specific questions are answered in <A
-HREF="http://www.PostgreSQL.org/docs/faq-hpux.shtml">http://www.PostgreSQL.org/docs/faq-hpux.shtml</A>.<P>
 
 <HR><P>
 
@@ -42,7 +45,6 @@ HREF="http://www.PostgreSQL.org/docs/faq-hpux.shtml">http://www.PostgreSQL.org/d
 <A HREF="#1.12">1.12</A>) How do I join the development team?<BR>
 <A HREF="#1.13">1.13</A>) How do I submit a bug report?<BR>
 <A HREF="#1.14">1.14</A>) How does PostgreSQL compare to other DBMS's?<BR>
-<A HREF="#1.15">1.15</A>) What are the maximum size limits?
 
 
 <H2><CENTER>User Client Questions</CENTER></H2>
@@ -120,7 +122,8 @@ is NULL?<BR>
 various character types?<BR>
 <A HREF="#4.16.1">4.16.1</A>) How do I create a serial/auto-incrementing field?<BR>
 <A HREF="#4.16.2">4.16.2</A>) How do I get the value of a serial insert?<BR>
-<A HREF="#4.16.3">4.16.3</A>) Wouldn't use of currval() and nextval() lead to a race condition with other concurrent backend processes?<BR>
+<A HREF="#4.16.3">4.16.3</A>) Don't currval() and nextval() lead to a
+race condition with other concurrent backend processes?<BR>
 
 <A HREF="#4.17">4.17</A>) What is an oid?  What is a tid?<BR>
 <A HREF="#4.18">4.18</A>) What is the meaning of some of the terms
@@ -139,7 +142,7 @@ current time?<BR>
 <H2><CENTER>Extending PostgreSQL</CENTER></H2>
 
 <A HREF="#5.1">5.1</A>) I wrote a user-defined function.  When I run
-it in <I>psql,</I> why does it dumps core?<BR>
+it in <I>psql,</I> why does it dump core?<BR>
 <A HREF="#5.2">5.2</A>) What does the message:
 <I>NOTICE:PortalHeapMemoryFree: 0x402251d0 not in alloc set!</I> mean?<BR>
 <A HREF="#5.3">5.3</A>) How can I contribute some nifty new types and functions
@@ -353,6 +356,10 @@ http://www.postgresql.org/docs/postgres.</A>
 in the distribution.
 <P>
 
+There is a PostgreSQL book availiable at <A
+HREF="http://www.postgresql.org/docs/awbook.html">
+http://www.postgresql.org/docs/awbook.html</A><P>
+
 <I>psql</I> has some nice \d commands to show information about types,
 operators, functions, aggregates, etc.<P>
 
@@ -367,6 +374,10 @@ TODO</A> for a list of known bugs, missing features, and future plans.<P>
 
 <H4><A NAME="1.10">1.10</A>) How can I learn SQL?</H4><P>
 
+The PostgreSQL book at <A
+HREF="http://www.postgresql.org/docs/awbook.html">
+http://www.postgresql.org/docs/awbook.html</A> teaches SQL.
+
 There is a nice tutorial at <A
 HREF="http://w3.one.net/~jhoffman/sqltut.htm">
 http://w3.one.net/~jhoffman/sqltut.htm</A> and at <A
@@ -378,8 +389,8 @@ HREF="http://members.tripod.com/er4ebus/sql/index.htm">
 http://members.tripod.com/er4ebus/sql/index.htm </A><P>
 
 Many of our users like <I>The Practical SQL Handbook</I>, Bowman et al.,
-Addison Wesley.  Others like <I>Lan Times Guide to SQL</I>, Groff et al.,
-Osborne McGraw-Hill.<P>
+Addison Wesley.  Others like <I>The Complete Reference SQL</I>, Groff et al.,
+McGraw-Hill.<P>
 
 
 <H4><A NAME="1.11">1.11</A>) Is PostgreSQL Y2K compliant?</H4><P>
@@ -484,20 +495,6 @@ add our code to your product with no limitations, except those outlined
 in our BSD-style license stated above.<BR><BR>
 </DL>
 
-<H4><A NAME="1.15">1.15</A>) What are the maximum size limits?</H4><P>
-
-These are the limits:
-
-<PRE>
-Maximum size for a database? 	         unlimited (60GB databases exist)
-Maximum size for a table?                unlimited on all operating systems
-Maximum size for a row?                  8k, configurable to 32k
-Maximum number of rows in a table?	 unlimited
-Maximum number of columns table?         unlimited
-Maximun number of indexes on a table?	 unlimited
-</PRE>
-The row length limit will be removed in 7.1.<P>
-
 <HR>
 
 <H2><CENTER>User Client Questions</CENTER></H2>
@@ -580,9 +577,8 @@ We have:
 
 <UL>
 <LI> check that you don't have any of the previous version's binaries in
-your path   (If you see the message <CODE>WARN:heap_modifytuple: repl is
-\  9</CODE>, this is the problem.)
-<Li> check to see that you have the proper paths set
+your path   
+<LI> check to see that you have the proper paths set
 <LI> check that the <I>postgres</I> user owns the proper files
 </UL><P>
 
@@ -848,15 +844,23 @@ this:
 <H4><A NAME="4.6">4.6</A>) What is the maximum size for a
 row, table, database?</H4><P>
 
-Rows are limited to 8K bytes, but this can be changed by editing
-<I>include/config.h</I> and changing <SMALL>BLCKSZ.</SMALL> To use attributes
-larger than 8K, you can also use the large object interface.<P>
+These are the limits:
 
-Rows do not cross 8k boundaries so a 5k row will require 8k of
-storage.<P>
+<PRE>
+Maximum size for a database? 	         unlimited (60GB databases exist)
+Maximum size for a table?                unlimited on all operating systems
+Maximum size for a row?                  8k, configurable to 32k
+Maximum number of rows in a table?	 unlimited
+Maximum number of columns table?         unlimited
+Maximun number of indexes on a table?	 unlimited
+</PRE>
 
-Table and database sizes are unlimited.  There are many databases that
-are tens of gigabytes, and probably some that are hundreds.
+To change the maximum row size, edit <I>include/config.h</I> and change
+<SMALL>BLCKSZ.</SMALL> To use attributes larger than 8K, you can also
+use the large object interface.<P>
+
+Row length limit will be removed in 7.1.<P>
+
 
 <H4><A NAME="4.7">4.7</A>)How much database disk space is required to
 store data from a typical flat file?<BR></H4><P>
@@ -1056,7 +1060,8 @@ Similarly, you could retrieve the just-assigned SERIAL value with the <I>currval
 </PRE>
 Finally, you could use the <A HREF="#4.17">oid</A> returned from the INSERT statement to lookup the default value, though this is probably the least portable approach.  In perl, using DBI with Edmund Mergl's DBD::Pg module, the oid value is made available via $sth->{pg_oid_status} after $sth->execute().
 
-<H4><A NAME="4.16.3">4.16.3</A>) Wouldn't use of currval() and nextval() lead to a race condition with other concurrent backend processes?</H4><P>
+<H4><A NAME="4.16.3">4.16.3</A>) Don't currval() and nextval() lead to a race condition with other
+concurrent backend processes?</H4><P>
 
 No.  That has been handled by the backends.
 
@@ -1231,5 +1236,4 @@ have to do a <I>make clean</I> and then another <I>make.</I><P>
 
 </BODY>
 </HTML>
-
 
