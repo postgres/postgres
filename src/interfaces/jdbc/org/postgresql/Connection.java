@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.Encoding;
 
 /**
- * $Id: Connection.java,v 1.24 2001/08/07 17:45:29 momjian Exp $
+ * $Id: Connection.java,v 1.25 2001/08/10 14:42:07 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -37,7 +37,6 @@ public abstract class Connection
    */
   private Encoding encoding = Encoding.defaultEncoding();
 
-  private String dbVersionLong;
   private String dbVersionNumber;
 
   public boolean CONNECTION_OK = true;
@@ -257,8 +256,6 @@ public abstract class Connection
 
       firstWarning = null;
 
-      String dbEncoding;
-
       // "pg_encoding_to_char(1)" will return 'EUC_JP' for a backend compiled with multibyte,
       // otherwise it's hardcoded to 'SQL_ASCII'.
       // If the backend doesn't know about multibyte we can't assume anything about the encoding
@@ -276,8 +273,10 @@ public abstract class Connection
       if (! resultSet.next()) {
 	  throw new PSQLException("postgresql.con.failed", "failed getting backend encoding");
       }
-      dbVersionLong = resultSet.getString(1);
-      dbEncoding = resultSet.getString(2);
+      String version = resultSet.getString(1);
+      dbVersionNumber = extractVersionNumber(version);
+
+      String dbEncoding = resultSet.getString(2);
       encoding = Encoding.getEncoding(dbEncoding, info.getProperty("charSet"));
 
       // Initialise object handling
@@ -1002,25 +1001,22 @@ public abstract class Connection
         //this can be simplified
         isolationLevel = level;
         String isolationLevelSQL;
-	switch(isolationLevel) {
-	    case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-		if (haveMinimumServerVersion("7.1")) {
-		  isolationLevelSQL = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED";
-		} else {
-                  isolationLevelSQL = getIsolationLevelSQL();
-                }
-                break;
 
-	    case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-		if (haveMinimumServerVersion("7.1")) {
-		  isolationLevelSQL = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE";
-		} else {
-                  isolationLevelSQL = getIsolationLevelSQL();
-                }
-                break;
-
-	    default:
-		throw new PSQLException("postgresql.con.isolevel",new Integer(isolationLevel));
+	if (!haveMinimumServerVersion("7.1")) {
+	    isolationLevelSQL = getIsolationLevelSQL();
+	} else {
+	    isolationLevelSQL = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL ";
+	    switch(isolationLevel) {
+		case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+		    isolationLevelSQL += "READ COMMITTED";
+		    break;
+		case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+		    isolationLevelSQL += "SERIALIZABLE";
+		    break;
+		default:
+		    throw new PSQLException("postgresql.con.isolevel",
+					    new Integer(isolationLevel));
+	    }
 	}
 	ExecSQL(isolationLevelSQL);
     }
@@ -1094,59 +1090,23 @@ public abstract class Connection
 	close();
     }
 
-    /**
-     * This is an attempt to implement SQL Escape clauses
-     */
-    public String EscapeSQL(String sql) {
-      //if (DEBUG) { System.out.println ("parseSQLEscapes called"); }
-
-      // If we find a "{d", assume we have a date escape.
-      //
-      // Since the date escape syntax is very close to the
-      // native Postgres date format, we just remove the escape
-      // delimiters.
-      //
-      // This implementation could use some optimization, but it has
-      // worked in practice for two years of solid use.
-      int index = sql.indexOf("{d");
-      while (index != -1) {
-        //System.out.println ("escape found at index: " + index);
-        StringBuffer buf = new StringBuffer(sql);
-        buf.setCharAt(index, ' ');
-        buf.setCharAt(index + 1, ' ');
-        buf.setCharAt(sql.indexOf('}', index), ' ');
-        sql = new String(buf);
-        index = sql.indexOf("{d");
-      }
-      //System.out.println ("modified SQL: " + sql);
-      return sql;
-    }
-
-  /**
-   * What is the version of the server
-   *
-   * @return the database version
-   * @exception SQLException if a database access error occurs
-   */
-  public String getDBVersionNumber() throws SQLException
+  private static String extractVersionNumber(String fullVersionString)
   {
-    if(dbVersionNumber == null) {
-      StringTokenizer versionParts = new StringTokenizer(dbVersionLong);
+      StringTokenizer versionParts = new StringTokenizer(fullVersionString);
       versionParts.nextToken(); /* "PostgreSQL" */
-      dbVersionNumber = versionParts.nextToken(); /* "X.Y.Z" */
-    }
-    return dbVersionNumber;
+      return versionParts.nextToken(); /* "X.Y.Z" */
   }
+
+    /**
+     * Get server version number
+     */
+    public String getDBVersionNumber() {
+	return dbVersionNumber;
+    }
 
   public boolean haveMinimumServerVersion(String ver) throws SQLException
   {
-      if (getDBVersionNumber().compareTo(ver)>=0)
-	  return true;
-      else
-	  return false;
+      return (getDBVersionNumber().compareTo(ver) >= 0);
   }
-
-
-
 }
    
