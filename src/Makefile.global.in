@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.23 1997/04/26 05:04:13 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.24 1997/05/08 02:29:55 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -48,7 +48,7 @@
 #   aix            IBM on AIX 3.2.5
 #   alpha          DEC Alpha AXP on OSF/1 2.0
 #   BSD44_derived  OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
-#   bsdi           BSD/OS 2.0, 2.01, 2.1
+#   bsdi           BSD/OS 2.0, 2.01, 2.1, 3.0
 #   dgux           DG/UX 5.4R3.10
 #   hpux           HP PA-RISC on HP-UX 9.0
 #   i386_solaris   i386 Solaris
