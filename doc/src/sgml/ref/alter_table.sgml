@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.35 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.36 2002/02/16 23:45:48 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -34,13 +34,13 @@ ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable
     class="PARAMETER">newcolumn</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    RENAME TO <replaceable class="PARAMETER">newtable</replaceable>
+    RENAME TO <replaceable class="PARAMETER">new_table</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    ADD <replaceable class="PARAMETER">table constraint definition</replaceable>
+    ADD <replaceable class="PARAMETER">table_constraint_definition</replaceable>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> 
 	DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> { RESTRICT | CASCADE }
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-	OWNER TO <replaceable class="PARAMETER">new owner</replaceable> 
+	OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
   </synopsis>
 
   <refsect2 id="R2-SQL-ALTERTABLE-1">
@@ -89,7 +89,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER"> newtable </replaceable></term>
+      <term><replaceable class="PARAMETER"> new_table </replaceable></term>
       <listitem>
        <para>
 	New name for the table.
@@ -98,7 +98,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER"> table constraint definition </replaceable></term>
+      <term><replaceable class="PARAMETER"> table_constraint_definition </replaceable></term>
       <listitem>
        <para>
 	New table constraint for the table
@@ -107,7 +107,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">New user </replaceable></term>
+      <term><replaceable class="PARAMETER">new_owner </replaceable></term>
       <listitem>
        <para>
 	The user name of the new owner of the table.
@@ -173,7 +173,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    column, index, or sequence to change without changing any of the
    data. The data will remain of the same type and size after the
    command is executed.
-   The ADD <replaceable class="PARAMETER">table constraint definition</replaceable> clause 
+   The ADD <replaceable class="PARAMETER">table_constraint_definition</replaceable> clause 
    adds a new constraint to the table using the same syntax as <xref
    linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">. 
    The DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> clause 
