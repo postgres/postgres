@@ -1,15 +1,15 @@
 
 Introduction
 
-  The Postgres95 regression tests are a comprehensive set of tests for the
-  SQL implementation embeded in Postgres95 developed by Jolly Chen and
+  The PostgreSQL regression tests are a comprehensive set of tests for the
+  SQL implementation embeded in PostgreSQL developed by Jolly Chen and
   Andrew Yu. It tests standard SQL operations as well as the extensability
-  capabilities of Postgres95.
+  capabilities of PostgreSQL.
 
 Preparation
 
   The regression test is invoked thru by the 'make' command which compiles
-  a 'c' program with Postgres95 extension functions into a shared library
+  a 'c' program with PostgreSQL extension functions into a shared library
   in the current directory.  Localized shell scripts are also created in
   the current directory. The 'expected.input' file is massaged into the
   'expected.out' file.  The localization replaces macros in the source
@@ -57,9 +57,9 @@ Comparing expected/actual output
 
 OID differences
 
-  There are several places where Postgres95 OID (object identifiers) appear
+  There are several places where PostgreSQL OID (object identifiers) appear
   in 'regress.out'. OID's are unique 32-bit integers which are generated
-  by the Postgres95 backend whenever a table row is inserted or updated.
+  by the PostgreSQL backend whenever a table row is inserted or updated.
   If you run the regression test on a non-virgin database or run it multiple
   times, the OID's reported will have different values. 
 
