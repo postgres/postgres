@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.157 2001/01/22 23:28:52 tgl Exp $
+ * $Id: config.h.in,v 1.158 2001/02/18 04:39:42 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -548,6 +548,19 @@ extern void srandom(unsigned int seed);
  */
 #define MAX_RANDOM_VALUE  (0x7FFFFFFF)
 
+/* Define if you have dlopen() */
+#undef HAVE_DLOPEN
+
+/* Define if you have fdatasync() */
+#undef HAVE_FDATASYNC
+
+/* Define if the standard header unistd.h declares fdatasync() */
+#undef HAVE_FDATASYNC_DECL
+
+#if defined(HAVE_FDATASYNC) && !defined(HAVE_FDATASYNC_DECL)
+extern int fdatasync(int fildes);
+#endif
+
 /* Set to 1 if you have libz.a */
 #undef HAVE_LIBZ
 
@@ -610,9 +623,6 @@ extern void srandom(unsigned int seed);
 
 /* Define if C++ compiler accepts "#include <string>" */
 #undef HAVE_CXX_STRING_HEADER
-
-/* Define if you have dlopen() */
-#undef HAVE_DLOPEN
 
 /* Define if you have the optreset variable */
 #undef HAVE_INT_OPTRESET

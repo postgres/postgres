@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.53 2001/02/13 20:40:25 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.54 2001/02/18 04:39:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,13 @@
 #include "utils/relcache.h"
 
 #include "miscadmin.h"
+
+
+/* Max time to wait to acquire XLog activity locks */
+#define XLOG_LOCK_TIMEOUT			(5*60*1000000) /* 5 minutes */
+/* Max time to wait to acquire checkpoint lock */
+#define CHECKPOINT_LOCK_TIMEOUT		(10*60*1000000) /* 10 minutes */
+
 
 int			XLOGbuffers = 8;
 int			XLOGfiles = 0;	/* how many files to pre-allocate */
@@ -178,8 +185,8 @@ typedef struct BkpBlock
 /*
  * We break each log file in 16Mb segments
  */
-#define XLogSegSize		(16*1024*1024)
-#define XLogLastSeg		(0xffffffff / XLogSegSize)
+#define XLogSegSize		((uint32) (16*1024*1024))
+#define XLogLastSeg		(((uint32) 0xffffffff) / XLogSegSize)
 #define XLogFileSize	(XLogLastSeg * XLogSegSize)
 
 #define NextLogSeg(_logId, _logSeg)		\
@@ -423,7 +430,7 @@ begin:;
 					}
 				}
 			}
-			S_LOCK_SLEEP(&(XLogCtl->insert_lck), i++);
+			S_LOCK_SLEEP(&(XLogCtl->insert_lck), i++, XLOG_LOCK_TIMEOUT);
 			if (!TAS(&(XLogCtl->insert_lck)))
 				break;
 		}
@@ -721,7 +728,7 @@ XLogFlush(XLogRecPtr record)
 				break;
 			}
 		}
-		S_LOCK_SLEEP(&(XLogCtl->lgwr_lck), spins++);
+		S_LOCK_SLEEP(&(XLogCtl->lgwr_lck), spins++, XLOG_LOCK_TIMEOUT);
 	}
 
 	if (logFile >= 0 && (LgwrResult.Write.xlogid != logId ||
@@ -741,7 +748,7 @@ XLogFlush(XLogRecPtr record)
 		logFile = XLogFileOpen(logId, logSeg, false);
 	}
 
-	if (pg_fsync(logFile) != 0)
+	if (pg_fdatasync(logFile) != 0)
 		elog(STOP, "fsync(logfile %u seg %u) failed: %m",
 			 logId, logSeg);
 	LgwrResult.Flush = LgwrResult.Write;
@@ -826,7 +833,7 @@ GetFreeXLBuffer()
 			InitXLBuffer(curridx);
 			return;
 		}
-		S_LOCK_SLEEP(&(XLogCtl->lgwr_lck), spins++);
+		S_LOCK_SLEEP(&(XLogCtl->lgwr_lck), spins++, XLOG_LOCK_TIMEOUT);
 	}
 }
 
@@ -846,7 +853,7 @@ XLogWrite(char *buffer)
 		{
 			if (wcnt > 0)
 			{
-				if (pg_fsync(logFile) != 0)
+				if (pg_fdatasync(logFile) != 0)
 					elog(STOP, "fsync(logfile %u seg %u) failed: %m",
 						 logId, logSeg);
 				if (LgwrResult.Write.xlogid != logId)
@@ -928,7 +935,7 @@ XLogWrite(char *buffer)
 	if (XLByteLT(LgwrResult.Flush, LgwrRqst.Flush) &&
 		XLByteLE(LgwrRqst.Flush, LgwrResult.Write))
 	{
-		if (pg_fsync(logFile) != 0)
+		if (pg_fdatasync(logFile) != 0)
 			elog(STOP, "fsync(logfile %u seg %u) failed: %m",
 				 logId, logSeg);
 		LgwrResult.Flush = LgwrResult.Write;
@@ -948,13 +955,14 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 {
 	char		path[MAXPGPATH];
 	char		tpath[MAXPGPATH];
+	char		zbuffer[BLCKSZ];
 	int			fd;
+	int			nbytes;
 
 	XLogFileName(path, log, seg);
 
 	/*
-	 * Try to use existent file (checkpoint maker
-	 * creates it sometime).
+	 * Try to use existent file (checkpoint maker creates it sometimes).
 	 */
 	if (*usexistent)
 	{
@@ -963,7 +971,7 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 		{
 			if (errno != ENOENT)
 				elog(STOP, "InitOpen(logfile %u seg %u) failed: %m",
-					logId, logSeg);
+					 logId, logSeg);
 		}
 		else
 			return(fd);
@@ -979,33 +987,44 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 		elog(STOP, "InitCreate(logfile %u seg %u) failed: %m",
 			 logId, logSeg);
 
-	if (lseek(fd, XLogSegSize - 1, SEEK_SET) != (off_t) (XLogSegSize - 1))
-		elog(STOP, "lseek(logfile %u seg %u) failed: %m",
-			 logId, logSeg);
-
-	if (write(fd, "", 1) != 1)
-		elog(STOP, "write(logfile %u seg %u) failed: %m",
-			 logId, logSeg);
+	/*
+	 * Zero-fill the file.  We have to do this the hard way to ensure that
+	 * all the file space has really been allocated --- on platforms that
+	 * allow "holes" in files, just seeking to the end doesn't allocate
+	 * intermediate space.  This way, we know that we have all the space
+	 * and (after the fsync below) that all the indirect blocks are down
+	 * on disk.  Therefore, fdatasync(2) will be sufficient to sync future
+	 * writes to the log file.
+	 */
+	MemSet(zbuffer, 0, sizeof(zbuffer));
+	for (nbytes = 0; nbytes < XLogSegSize; nbytes += sizeof(zbuffer))
+	{
+		if ((int) write(fd, zbuffer, sizeof(zbuffer)) != (int) sizeof(zbuffer))
+			elog(STOP, "ZeroFill(logfile %u seg %u) failed: %m",
+				 logId, logSeg);
+	}
 
 	if (pg_fsync(fd) != 0)
 		elog(STOP, "fsync(logfile %u seg %u) failed: %m",
 			 logId, logSeg);
 
-	if (lseek(fd, 0, SEEK_SET) < 0)
-		elog(STOP, "lseek(logfile %u seg %u off %u) failed: %m",
-			 log, seg, 0);
-
 	close(fd);
 
+	/*
+	 * Prefer link() to rename() here just to be sure that we don't overwrite
+	 * an existing logfile.  However, there shouldn't be one, so rename()
+	 * is an acceptable substitute except for the truly paranoid.
+	 */
 #ifndef __BEOS__
 	if (link(tpath, path) < 0)
-#else
-	if (rename(tpath, path) < 0)
-#endif
 		elog(STOP, "InitRelink(logfile %u seg %u) failed: %m",
 			 logId, logSeg);
-
 	unlink(tpath);
+#else
+	if (rename(tpath, path) < 0)
+		elog(STOP, "InitRelink(logfile %u seg %u) failed: %m",
+			 logId, logSeg);
+#endif
 
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
@@ -2101,7 +2120,8 @@ CreateCheckPoint(bool shutdown)
 	/* Grab lock, using larger than normal sleep between tries (1 sec) */
 	while (TAS(&(XLogCtl->chkp_lck)))
 	{
-		S_LOCK_SLEEP_INTERVAL(&(XLogCtl->chkp_lck), spins++, 1000000);
+		S_LOCK_SLEEP_INTERVAL(&(XLogCtl->chkp_lck), spins++,
+							  CHECKPOINT_LOCK_TIMEOUT, 1000000);
 	}
 
 	memset(&checkPoint, 0, sizeof(checkPoint));

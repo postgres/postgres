@@ -772,7 +772,10 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
-AC_CHECK_FUNCS([fcvt getopt_long memmove pstat setproctitle setsid sigprocmask sysconf waitpid dlopen])
+AC_CHECK_FUNCS([fcvt getopt_long memmove pstat setproctitle setsid sigprocmask sysconf waitpid dlopen fdatasync])
+
+dnl Check whether <unistd.h> declares fdatasync().
+AC_EGREP_HEADER(fdatasync, unistd.h, AC_DEFINE(HAVE_FDATASYNC_DECL))
 
 AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
 [AC_TRY_LINK(

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.89 2001/02/16 23:50:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.90 2001/02/18 04:39:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,11 +48,12 @@
  *		unsigned	spins = 0;
  *
  *		while (TAS(lock))
- *			S_LOCK_SLEEP(lock, spins++);
+ *			S_LOCK_SLEEP(lock, spins++, timeout);
  *	}
  *
  *	where S_LOCK_SLEEP() checks for timeout and sleeps for a short
- *	interval.  Callers that want to perform useful work while waiting
+ *	interval.  (The timeout is expressed in microseconds, or can be 0 for
+ *	"infinity".)  Callers that want to perform useful work while waiting
  *	can write out this entire loop and insert the "useful work" inside
  *	the loop.
  *
@@ -86,7 +87,7 @@
 /* Platform-independent out-of-line support routines */
 extern void s_lock(volatile slock_t *lock,
 	   const char *file, const int line);
-extern void s_lock_sleep(unsigned spins, int microsec,
+extern void s_lock_sleep(unsigned spins, int timeout, int microsec,
 			 volatile slock_t *lock,
 			 const char *file, const int line);
 
@@ -518,13 +519,13 @@ extern int	tas_sema(volatile slock_t *lock);
 #endif	 /* S_LOCK */
 
 #if !defined(S_LOCK_SLEEP)
-#define S_LOCK_SLEEP(lock,spins) \
-	s_lock_sleep((spins), 0, (lock), __FILE__, __LINE__)
+#define S_LOCK_SLEEP(lock,spins,timeout) \
+	s_lock_sleep((spins), (timeout), 0, (lock), __FILE__, __LINE__)
 #endif	 /* S_LOCK_SLEEP */
 
 #if !defined(S_LOCK_SLEEP_INTERVAL)
-#define S_LOCK_SLEEP_INTERVAL(lock,spins,microsec) \
-	s_lock_sleep((spins), (microsec), (lock), __FILE__, __LINE__)
+#define S_LOCK_SLEEP_INTERVAL(lock,spins,timeout,microsec) \
+	s_lock_sleep((spins), (timeout), (microsec), (lock), __FILE__, __LINE__)
 #endif	 /* S_LOCK_SLEEP_INTERVAL */
 
 #if !defined(S_LOCK_FREE)

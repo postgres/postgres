@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.32 2001/01/24 19:43:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.33 2001/02/18 04:39:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,22 +21,38 @@
 #include "storage/s_lock.h"
 
 
-/*
+/*----------
  * Each time we busy spin we select the next element of this array as the
  * number of microseconds to wait. This accomplishes pseudo random back-off.
- * Values are not critical but 10 milliseconds is a common platform
- * granularity.
  *
- * Total time to cycle through all 20 entries might be about .07 sec,
- * so the given value of S_MAX_BUSY results in timeout after ~70 sec.
+ * Note that on most platforms, specified values will be rounded up to the
+ * next multiple of a clock tick, which is often ten milliseconds (10000).
+ * So, we are being way overoptimistic to assume that these different values
+ * are really different, other than the last.  But there are a few platforms
+ * with better-than-usual timekeeping, and on these we will get pretty good
+ * pseudo-random behavior.
+ *
+ * Total time to cycle through all 20 entries will be at least 100 msec,
+ * more commonly (10 msec resolution) 220 msec, and on some platforms
+ * as much as 420 msec (when the remainder of the current tick cycle is
+ * ignored in deciding when to time out, as on FreeBSD and older Linuxen).
+ * We use the 100msec figure to figure max_spins, so actual timeouts may
+ * be as much as four times the nominal value, but will never be less.
+ *----------
  */
 #define S_NSPINCYCLE	20
-#define S_MAX_BUSY		1000 * S_NSPINCYCLE
 
 int			s_spincycle[S_NSPINCYCLE] =
-{	0, 0, 0, 0, 10000, 0, 0, 0, 10000, 0,
-	0, 10000, 0, 0, 10000, 0, 10000, 0, 10000, 10000
+{	1,		10,		100,	1000,
+	10000,	1000,	1000,	1000,
+	10000,	1000,	1000,	10000,
+	1000,	1000,	10000,	1000,
+	10000,	1000,	10000,	30000
 };
+
+#define AVG_SPINCYCLE	5000	/* average entry in microsec: 100ms / 20 */
+
+#define DEFAULT_TIMEOUT	(100*1000000) /* default timeout: 100 sec */
 
 
 /*
@@ -58,34 +74,40 @@ s_lock_stuck(volatile slock_t *lock, const char *file, const int line)
 /*
  * s_lock_sleep() - sleep a pseudo-random amount of time, check for timeout
  *
- * Normally 'microsec' is 0, specifying to use the next s_spincycle[] value.
+ * The 'timeout' is given in microsec, or may be 0 for "infinity".  Note that
+ * this will be a lower bound (a fairly loose lower bound, on most platforms).
+ *
+ * 'microsec' is the number of microsec to delay per loop.  Normally
+ * 'microsec' is 0, specifying to use the next s_spincycle[] value.
  * Some callers may pass a nonzero interval, specifying to use exactly that
  * delay value rather than a pseudo-random delay.
  */
 void
-s_lock_sleep(unsigned spins, int microsec,
+s_lock_sleep(unsigned spins, int timeout, int microsec,
 			 volatile slock_t *lock,
 			 const char *file, const int line)
 {
 	struct timeval delay;
-	unsigned	max_spins;
 
 	if (microsec > 0)
 	{
 		delay.tv_sec = 0;
 		delay.tv_usec = microsec;
-		/* two-minute timeout in this case */
-		max_spins = 120000000 / microsec;
 	}
 	else
 	{
 		delay.tv_sec = 0;
 		delay.tv_usec = s_spincycle[spins % S_NSPINCYCLE];
-		max_spins = S_MAX_BUSY;
+		microsec = AVG_SPINCYCLE; /* use average to figure timeout */
 	}
 
-	if (spins > max_spins)
-		s_lock_stuck(lock, file, line);
+	if (timeout > 0)
+	{
+		unsigned	max_spins = timeout / microsec;
+
+		if (spins > max_spins)
+			s_lock_stuck(lock, file, line);
+	}
 
 	(void) select(0, NULL, NULL, NULL, &delay);
 }
@@ -110,7 +132,7 @@ s_lock(volatile slock_t *lock, const char *file, const int line)
 	 */
 	while (TAS(lock))
 	{
-		s_lock_sleep(spins++, 0, lock, file, line);
+		s_lock_sleep(spins++, DEFAULT_TIMEOUT, 0, lock, file, line);
 		CHECK_FOR_INTERRUPTS();
 	}
 }
