@@ -120,7 +120,7 @@ struct tm *tim;
 	st.d = tim->tm_mday;
 	st.y = tim->tm_year + 1900;
 
-	mylog("copy_and_convert: field_type = %d, fctype = %d, value = '%s', cbValueMax=%d\n", field_type, fCType, value, cbValueMax);
+	mylog("copy_and_convert: field_type = %d, fctype = %d, value = '%s', cbValueMax=%d\n", field_type, fCType, (value==NULL)?"<NULL>":value, cbValueMax);
 
 	if ( ! value) {
         /* handle a null just by returning SQL_NULL_DATA in pcbValue, */

@@ -23,6 +23,13 @@
 #include <arpa/inet.h>
 #define closesocket(xxx) close(xxx)
 #define SOCKETFD int
+#ifndef       INADDR_NONE
+#ifndef _IN_ADDR_T
+#define _IN_ADDR_T
+typedef unsigned int    in_addr_t;
+#endif
+#define INADDR_NONE ((in_addr_t)-1)
+#endif
 #else
 #include <winsock.h>
 #define SOCKETFD SOCKET

@@ -186,7 +186,8 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 	if (conn != NULL) {
 		self->conn = conn;
 
-		mylog("QR_fetch_tuples: cursor = '%s', self->cursor=%u\n", cursor, self->cursor);
+		mylog("QR_fetch_tuples: cursor = '%s', self->cursor=%u\n", 
+		(cursor==NULL)?"":cursor, self->cursor);
 
 		if (self->cursor)
 			free(self->cursor);
