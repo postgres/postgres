@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.109 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.110 2003/12/17 17:07:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -545,6 +545,8 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
 	/*
 	 * We should have a single rel at the final level.
 	 */
+	if (joinitems[levels_needed] == NIL)
+		elog(ERROR, "failed to build any %d-way joins", levels_needed);
 	Assert(length(joinitems[levels_needed]) == 1);
 
 	rel = (RelOptInfo *) lfirst(joinitems[levels_needed]);

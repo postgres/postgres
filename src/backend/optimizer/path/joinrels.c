@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.64 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.65 2003/12/17 17:07:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,24 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 			}
 		}
 
-		if (result_rels == NIL)
+		/*----------
+		 * When IN clauses are involved, there may be no legal way to make
+		 * an N-way join for some values of N.  For example consider
+		 *
+		 * SELECT ... FROM t1 WHERE
+		 *   x IN (SELECT ... FROM t2,t3 WHERE ...) AND
+		 *   y IN (SELECT ... FROM t4,t5 WHERE ...)
+		 *
+		 * We will flatten this query to a 5-way join problem, but there are
+		 * no 4-way joins that make_join_rel() will consider legal.  We have
+		 * to accept failure at level 4 and go on to discover a workable
+		 * bushy plan at level 5.
+		 *
+		 * However, if there are no IN clauses then make_join_rel() should
+		 * never fail, and so the following sanity check is useful.
+		 *----------
+		 */
+		if (result_rels == NIL && root->in_info_list == NIL)
 			elog(ERROR, "failed to build any %d-way joins", level);
 	}
 
