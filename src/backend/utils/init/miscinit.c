@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.45 2000/04/12 17:16:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.46 2000/05/02 08:13:08 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,21 +102,18 @@ SetDatabaseName(const char *name)
 const char *
 getdatabaseencoding()
 {
-	elog(ERROR, "MultiByte support must be enabled to use this function");
-	return ("");
+	return ("SQL_ASCII");
 }
 
 const char *
 pg_encoding_to_char(int encoding)
 {
-	elog(ERROR, "MultiByte support must be enabled to use this function");
-	return ("");
+	return ("SQL_ASCII");
 }
 
 int
 pg_char_to_encoding(const char *encoding_string)
 {
-	elog(ERROR, "MultiByte support must be enabled to use this function");
 	return (0);
 }
 
