@@ -9,3 +9,7 @@ case $host_os in
     CC=gcc2
     ;;
 esac
+
+SUPPORTS_THREADS=yes
+NEED_REENTRANT_FUNC_NAMES=no
+

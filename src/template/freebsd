@@ -3,3 +3,15 @@ CFLAGS='-pipe'
 case $host_cpu in
   alpha*)   CFLAGS="$CFLAGS -O" ;;
 esac
+
+SUPPORTS_THREADS=yes
+case $host_os in
+		freebsd2*|freebsd3*|freebsd4*)
+			THREAD_CFLAGS="-pthread"
+			NEED_REENTRANT_FUNC_NAMES=yes
+			;;
+		*)
+			THREAD_LIBS="-lc_r"
+			NEED_REENTRANT_FUNC_NAMES=yes
+			;;
+esac

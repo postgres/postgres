@@ -3903,41 +3903,24 @@ echo "$as_me: error: pthread.h not found, required for --with-threads" >&2;}
 fi
 
 
-case $host_os in
-		netbsd*|bsdi*)
-			# these require no special flags or libraries
-			NEED_REENTRANT_FUNC_NAMES=no
-			;;
-		freebsd2*|freebsd3*|freebsd4*)
-			THREAD_CFLAGS="-pthread"
-			NEED_REENTRANT_FUNC_NAMES=yes
-			;;
-		freebsd*)
-			THREAD_LIBS="-lc_r"
-			NEED_REENTRANT_FUNC_NAMES=yes
-			;;
-		linux*) THREAD_CFLAGS="-D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
-			THREAD_LIBS="-lpthread"
-			NEED_REENTRANT_FUNC_NAMES=yes
-			;;
-		*)
-			# other operating systems might fail because they have pthread.h but need
-			# special libs we don't know about yet.
-			{ { echo "$as_me:$LINENO: error:
+
+if test "$SUPPORTS_THREADS" != yes; then
+{ { echo "$as_me:$LINENO: error:
 Cannot enable threads on your platform.
 Please report your platform threading info to the PostgreSQL mailing lists
-so it can be added to the next release.  Report any compile or link flags,
-or libraries required for threading support.
+so it can be added to the next release.  Report any compile flags, link flags,
+functions, or libraries required for threading support.
 " >&5
 echo "$as_me: error:
 Cannot enable threads on your platform.
 Please report your platform threading info to the PostgreSQL mailing lists
-so it can be added to the next release.  Report any compile or link flags,
-or libraries required for threading support.
+so it can be added to the next release.  Report any compile flags, link flags,
+functions, or libraries required for threading support.
 " >&2;}
    { (exit 1); exit 1; }; }
-esac
 fi
+fi
+
 
 
 

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.263 2003/06/14 17:49:53 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.264 2003/06/14 19:21:42 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -560,36 +560,19 @@ AC_SUBST(ELF_SYS)
 NEED_REENTRANT_FUNC_NAMES=no
 if test "$with_threads" = yes; then
 AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([pthread.h not found, required for --with-threads])])
-case $host_os in
-		netbsd*|bsdi*)
-			# these require no special flags or libraries
-			NEED_REENTRANT_FUNC_NAMES=no
-			;;
-		freebsd2*|freebsd3*|freebsd4*)
-			THREAD_CFLAGS="-pthread"
-			NEED_REENTRANT_FUNC_NAMES=yes
-			;;
-		freebsd*)
-			THREAD_LIBS="-lc_r"
-			NEED_REENTRANT_FUNC_NAMES=yes
-			;;
-		linux*) THREAD_CFLAGS="-D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
-			THREAD_LIBS="-lpthread"
-			NEED_REENTRANT_FUNC_NAMES=yes
-			;;
-		*)
-			# other operating systems might fail because they have pthread.h but need
-			# special libs we don't know about yet.
-			AC_MSG_ERROR([
+
+if test "$SUPPORTS_THREADS" != yes; then
+AC_MSG_ERROR([
 Cannot enable threads on your platform.
 Please report your platform threading info to the PostgreSQL mailing lists
-so it can be added to the next release.  Report any compile or link flags,
-or libraries required for threading support.
+so it can be added to the next release.  Report any compile flags, link flags,
+functions, or libraries required for threading support.
 ])
-esac
+fi
 fi
 AC_SUBST(THREAD_CFLAGS)
 AC_SUBST(THREAD_LIBS)
+
 
 #
 # Assignments
