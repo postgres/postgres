@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.6 2000/07/03 23:09:52 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.7 2000/07/06 21:02:07 wieck Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -46,7 +46,7 @@
  *				The return value is the size of bytes written to buff.
  *					Obviously the same as PGLZ_RAW_SIZE() returns.
  *
- *		The compression algorithm and internal data format:
+ *		The decompression algorithm and internal data format:
  *
  *			PGLZ_Header is defined as
  *
@@ -57,8 +57,8 @@
  *
  *			The header is followed by the compressed data itself.
  *
- *			The algorithm is easiest explained by describing the process
- *			of decompression.
+ *			The data representation is easiest explained by describing
+ *			the process of decompression.
  *
  *			If varsize == rawsize + sizeof(PGLZ_Header), then the data
  *			is stored uncompressed as plain bytes. Thus, the decompressor
@@ -107,6 +107,60 @@
  *			original data size too, so we need another 4 bytes for it
  *			and end up with a total compression rate of 96%, what's still
  *			worth a Whow.
+ *
+ *		The compression algorithm
+ *
+ *			The following uses numbers used in the default strategy.
+ *
+ *			The compressor works best for attributes of a size between
+ *			1K and 1M. For smaller items there's not that much chance of
+ *			redundancy in the character sequence (except for large areas
+ *			of identical bytes like trailing spaces) and for bigger ones
+ *			the allocation of the history table is expensive (it needs
+ *			8 times the size of the input!).
+ *
+ *			The compressor creates a table for 8192 lists of positions.
+ *			For each input position (except the last 3), a hash key is 
+ *			built from the 4 next input bytes and the posiiton remembered
+ *			in the appropriate list. Thus, the table points to linked
+ *			lists of likely to be at least in the first 4 characters
+ *			matching strings. This is done on the fly while the input
+ *			is compressed into the output area.
+ *
+ *			For each byte in the input, it's hash key (built from this
+ *			byte and the next 3) is used to find the appropriate list
+ *			in the table. The lists remember the positions of all bytes
+ *			that had the same hash key in the past in increasing backward
+ *			offset order. Now for all entries in the used lists, the
+ *			match length is computed by comparing the characters from the
+ *			entries position with the characters from the actual input
+ *			position.
+ *
+ *			The compressor starts with a so called "good_match" of 128.
+ *			It is a "prefer speed against compression ratio" optimizer.
+ *			So if the first entry looked at already has 128 or more
+ *			matching characters, the lookup stops and that position is
+ *			used for the next tag in the output.
+ *
+ *			For each subsequent entry in the history list, the "good_match"
+ *			is lowered by 10%. So the compressor will be more happy with
+ *			short matches the farer it has to go back in the history.
+ *			Another "speed against ratio" preference characteristic of
+ *			the algorithm.
+ *
+ *			Thus there are 3 stop conditions for the lookup of matches:
+ *
+ *				- a match >= good_match is found
+ *				- there are no more history entries to look at
+ *              - the next history entry is already too far back
+ *				  to be coded into a tag.
+ *
+ *			Finally the match algorithm checks that at least a match
+ *			of 3 or more bytes has been found, because thats the smallest
+ *			amount of copy information to code into a tag. If so, a tag
+ *			is omitted and all the input bytes covered by that are just
+ *			scanned for the history add's, otherwise a literal character
+ *			is omitted and only his history entry added.
  *
  *		Acknowledgements:
  *
