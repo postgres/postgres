@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.221 2002/03/21 16:00:48 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.222 2002/03/22 02:56:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,7 +347,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->commandType = CMD_DELETE;
 
 	/* set up range table with just the result rel */
-	qry->resultRelation = setTargetTable(pstate, stmt->relation->relname,
+	qry->resultRelation = setTargetTable(pstate, stmt->relation,
 										 interpretInhOption(stmt->relation->inhOpt),
 										 true);
 
@@ -415,7 +415,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	 * table is also mentioned in the SELECT part.	Note that the target
 	 * table is not added to the joinlist or namespace.
 	 */
-	qry->resultRelation = setTargetTable(pstate, stmt->relation->relname,
+	qry->resultRelation = setTargetTable(pstate, stmt->relation,
 										 false, false);
 
 	/*
@@ -1684,7 +1684,7 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 		 * easily support predicates on indexes created implicitly by
 		 * CREATE TABLE. Fortunately, that's not necessary.
 		 */
-		rte = addRangeTableEntry(pstate, stmt->relation->relname, NULL, false, true);
+		rte = addRangeTableEntry(pstate, stmt->relation, NULL, false, true);
 
 		/* no to join list, yes to namespace */
 		addRTEtoQuery(pstate, rte, false, true);
@@ -1733,10 +1733,10 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	 * rule qualification.
 	 */
 	Assert(pstate->p_rtable == NIL);
-	oldrte = addRangeTableEntry(pstate, stmt->relation->relname,
+	oldrte = addRangeTableEntry(pstate, stmt->relation,
 								makeAlias("*OLD*", NIL),
 								false, true);
-	newrte = addRangeTableEntry(pstate, stmt->relation->relname,
+	newrte = addRangeTableEntry(pstate, stmt->relation,
 								makeAlias("*NEW*", NIL),
 								false, true);
 	/* Must override addRangeTableEntry's default access-check flags */
@@ -1824,10 +1824,10 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			 * or they won't be accessible at all.  We decide later
 			 * whether to put them in the joinlist.
 			 */
-			oldrte = addRangeTableEntry(sub_pstate, stmt->relation->relname,
+			oldrte = addRangeTableEntry(sub_pstate, stmt->relation,
 										makeAlias("*OLD*", NIL),
 										false, false);
-			newrte = addRangeTableEntry(sub_pstate, stmt->relation->relname,
+			newrte = addRangeTableEntry(sub_pstate, stmt->relation,
 										makeAlias("*NEW*", NIL),
 										false, false);
 			oldrte->checkForRead = false;
@@ -2474,7 +2474,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->commandType = CMD_UPDATE;
 	pstate->p_is_update = true;
 
-	qry->resultRelation = setTargetTable(pstate, stmt->relation->relname,
+	qry->resultRelation = setTargetTable(pstate, stmt->relation,
 										 interpretInhOption(stmt->relation->inhOpt),
 										 true);
 

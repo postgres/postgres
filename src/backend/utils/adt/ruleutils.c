@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.94 2002/03/21 16:01:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.95 2002/03/22 02:56:35 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -642,13 +642,13 @@ deparse_expression(Node *expr, List *dpcontext, bool forceprefix)
 /* ----------
  * deparse_context_for			- Build deparse context for a single relation
  *
- * Given the name and OID of a relation, build deparsing context for an
- * expression referencing only that relation (as varno 1, varlevelsup 0).
- * This is sufficient for many uses of deparse_expression.
+ * Given the reference name (alias) and OID of a relation, build deparsing
+ * context for an expression referencing only that relation (as varno 1,
+ * varlevelsup 0).  This is sufficient for many uses of deparse_expression.
  * ----------
  */
 List *
-deparse_context_for(char *relname, Oid relid)
+deparse_context_for(const char *aliasname, Oid relid)
 {
 	deparse_namespace *dpns;
 	RangeTblEntry *rte;
@@ -658,9 +658,8 @@ deparse_context_for(char *relname, Oid relid)
 	/* Build a minimal RTE for the rel */
 	rte = makeNode(RangeTblEntry);
 	rte->rtekind = RTE_RELATION;
-	rte->relname = relname;
 	rte->relid = relid;
-	rte->eref = makeAlias(relname, NIL);
+	rte->eref = makeAlias(aliasname, NIL);
 	rte->inh = false;
 	rte->inFromCl = true;
 
@@ -678,9 +677,9 @@ deparse_context_for(char *relname, Oid relid)
  *
  * We assume we are dealing with an upper-level plan node having either
  * one or two referenceable children (pass innercontext = NULL if only one).
- * The passed-in Nodes should be made using deparse_context_for_subplan.
- * The resulting context will work for deparsing quals, tlists, etc of the
- * plan node.
+ * The passed-in Nodes should be made using deparse_context_for_subplan
+ * and/or deparse_context_for_relation.  The resulting context will work
+ * for deparsing quals, tlists, etc of the plan node.
  */
 List *
 deparse_context_for_plan(int outer_varno, Node *outercontext,
@@ -698,6 +697,29 @@ deparse_context_for_plan(int outer_varno, Node *outercontext,
 
 	/* Return a one-deep namespace stack */
 	return makeList1(dpns);
+}
+
+/*
+ * deparse_context_for_relation		- Build deparse context for 1 relation
+ *
+ * Helper routine to build one of the inputs for deparse_context_for_plan.
+ * Pass the reference name (alias) and OID of a relation.
+ *
+ * The returned node is actually a RangeTblEntry, but we declare it as just
+ * Node to discourage callers from assuming anything.
+ */
+Node *
+deparse_context_for_relation(const char *aliasname, Oid relid)
+{
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
+
+	rte->rtekind = RTE_RELATION;
+	rte->relid = relid;
+	rte->eref = makeAlias(aliasname, NIL);
+	rte->inh = false;
+	rte->inFromCl = true;
+
+	return (Node *) rte;
 }
 
 /*
@@ -753,9 +775,8 @@ deparse_context_for_subplan(const char *name, List *tlist,
 	}
 
 	rte->rtekind = RTE_SPECIAL;	/* XXX */
-	rte->relname = pstrdup(name);
 	rte->relid = InvalidOid;
-	rte->eref = makeAlias(rte->relname, attrs);
+	rte->eref = makeAlias(name, attrs);
 	rte->inh = false;
 	rte->inFromCl = true;
 
@@ -1325,7 +1346,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	appendStringInfo(buf, "INSERT INTO %s",
-					 quote_identifier(rte->relname));
+					 quote_identifier(rte->eref->aliasname));
 
 	/* Add the insert-column-names list */
 	sep = " (";
@@ -1383,7 +1404,7 @@ get_update_query_def(Query *query, deparse_context *context)
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	appendStringInfo(buf, "UPDATE %s%s SET ",
 					 only_marker(rte),
-					 quote_identifier(rte->relname));
+					 quote_identifier(rte->eref->aliasname));
 
 	/* Add the comma separated list of 'attname = value' */
 	sep = "";
@@ -1436,7 +1457,7 @@ get_delete_query_def(Query *query, deparse_context *context)
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	appendStringInfo(buf, "DELETE FROM %s%s",
 					 only_marker(rte),
-					 quote_identifier(rte->relname));
+					 quote_identifier(rte->eref->aliasname));
 
 	/* Add a WHERE clause if given */
 	if (query->jointree->quals != NULL)
@@ -1460,7 +1481,8 @@ get_utility_query_def(Query *query, deparse_context *context)
 	{
 		NotifyStmt *stmt = (NotifyStmt *) query->utilityStmt;
 
-		appendStringInfo(buf, "NOTIFY %s", quote_identifier(stmt->relation->relname));
+		appendStringInfo(buf, "NOTIFY %s",
+						 quote_identifier(stmt->relation->relname));
 	}
 	else
 		elog(ERROR, "get_utility_query_def: unexpected statement type");
@@ -2321,20 +2343,23 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 		RangeTblEntry *rte = rt_fetch(varno, query->rtable);
 
-		if (rte->relname)
+		switch (rte->rtekind)
 		{
-			/* Normal relation RTE */
-			appendStringInfo(buf, "%s%s",
-							 only_marker(rte),
-							 quote_identifier(rte->relname));
-		}
-		else
-		{
-			/* Subquery RTE */
-			Assert(rte->subquery != NULL);
-			appendStringInfoChar(buf, '(');
-			get_query_def(rte->subquery, buf, context->namespaces);
-			appendStringInfoChar(buf, ')');
+			case RTE_RELATION:
+				/* Normal relation RTE */
+				appendStringInfo(buf, "%s%s",
+								 only_marker(rte),
+								 quote_identifier(get_rel_name(rte->relid)));
+				break;
+			case RTE_SUBQUERY:
+				/* Subquery RTE */
+				appendStringInfoChar(buf, '(');
+				get_query_def(rte->subquery, buf, context->namespaces);
+				appendStringInfoChar(buf, ')');
+				break;
+			default:
+				elog(ERROR, "unexpected rte kind %d", (int) rte->rtekind);
+				break;
 		}
 		if (rte->alias != NULL)
 		{

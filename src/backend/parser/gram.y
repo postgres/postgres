@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.295 2002/03/21 16:00:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.296 2002/03/22 02:56:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -122,7 +122,6 @@ static void doNegateFloat(Value *v);
 	ResTarget			*target;
 	PrivTarget			*privtarget;
 
-	VersionStmt			*vstmt;
 	DefineStmt			*dstmt;
 	RuleStmt			*rstmt;
 	InsertStmt			*istmt;

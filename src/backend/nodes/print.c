@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.52 2002/03/21 16:00:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.53 2002/03/22 02:56:32 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -146,17 +146,17 @@ print_rt(List *rtable)
 	List	   *l;
 	int			i = 1;
 
-	printf("resno\trelname(refname)\trelid\tinFromCl\n");
-	printf("-----\t----------------\t-----\t--------\n");
+	printf("resno\trefname  \trelid\tinFromCl\n");
+	printf("-----\t---------\t-----\t--------\n");
 	foreach(l, rtable)
 	{
 		RangeTblEntry *rte = lfirst(l);
 
-		if (rte->relname)
-			printf("%d\t%s (%s)\t%u",
-				   i, rte->relname, rte->eref->aliasname, rte->relid);
+		if (rte->rtekind == RTE_RELATION)
+			printf("%d\t%s\t%u",
+				   i, rte->eref->aliasname, rte->relid);
 		else
-			printf("%d\t[subquery] (%s)\t",
+			printf("%d\t%s\t[subquery]",
 				   i, rte->eref->aliasname);
 		printf("\t%s\t%s\n",
 			   (rte->inh ? "inh" : ""),
@@ -406,19 +406,20 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 	printf("%s%s :c=%.2f..%.2f :r=%.0f :w=%d ", label, plannode_type(p),
 		   p->startup_cost, p->total_cost,
 		   p->plan_rows, p->plan_width);
-	if (IsA(p, Scan) ||IsA(p, SeqScan))
+	if (IsA(p, Scan) ||
+		IsA(p, SeqScan))
 	{
 		RangeTblEntry *rte;
 
 		rte = rt_fetch(((Scan *) p)->scanrelid, parsetree->rtable);
-		StrNCpy(extraInfo, rte->relname, NAMEDATALEN);
+		StrNCpy(extraInfo, rte->eref->aliasname, NAMEDATALEN);
 	}
 	else if (IsA(p, IndexScan))
 	{
 		RangeTblEntry *rte;
 
 		rte = rt_fetch(((IndexScan *) p)->scan.scanrelid, parsetree->rtable);
-		StrNCpy(extraInfo, rte->relname, NAMEDATALEN);
+		StrNCpy(extraInfo, rte->eref->aliasname, NAMEDATALEN);
 	}
 	else
 		extraInfo[0] = '\0';

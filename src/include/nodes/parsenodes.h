@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.163 2002/03/21 16:01:46 tgl Exp $
+ * $Id: parsenodes.h,v 1.164 2002/03/22 02:56:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,7 +475,7 @@ typedef struct TargetEntry
  *	  eref is the table reference name and column reference names (either
  *	  real or aliases).  Note that system columns (OID etc) are not included
  *	  in the column list.
- *	  eref->relname is required to be present, and should generally be used
+ *	  eref->aliasname is required to be present, and should generally be used
  *	  to identify the RTE for error messages etc.
  *
  *	  inh is TRUE for relation references that should be expanded to include
@@ -521,9 +521,8 @@ typedef struct RangeTblEntry
 	 */
 
 	/*
-	 * Fields valid for a plain relation RTE (else NULL/zero):
+	 * Fields valid for a plain relation RTE (else zero):
 	 */
-	char	   *relname;		/* real name of the relation */
 	Oid			relid;			/* OID of the relation */
 
 	/*
@@ -532,7 +531,7 @@ typedef struct RangeTblEntry
 	Query	   *subquery;		/* the sub-query */
 
 	/*
-	 * Fields valid for a join RTE (else NULL):
+	 * Fields valid for a join RTE (else NULL/zero):
 	 *
 	 * joincoltypes/joincoltypmods identify the column datatypes of the
 	 * join result.  joinleftcols and joinrightcols identify the source
@@ -1056,19 +1055,6 @@ typedef struct CreateSeqStmt
 	RangeVar   *sequence;		/* the sequence to create */
 	List	   *options;
 } CreateSeqStmt;
-
-/* ----------------------
- *		Create Version Statement
- * ----------------------
- */
-typedef struct VersionStmt
-{
-	NodeTag		type;
-	char	   *relname;		/* the new relation */
-	int			direction;		/* FORWARD | BACKWARD */
-	char	   *fromRelname;	/* relation to create a version */
-	char	   *date;			/* date of the snapshot */
-} VersionStmt;
 
 /* ----------------------
  *		Create {Operator|Type|Aggregate} Statement

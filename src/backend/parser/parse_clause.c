@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.85 2002/03/21 16:00:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.86 2002/03/22 02:56:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ transformFromClause(ParseState *pstate, List *frmList)
  *	  Returns the rangetable index of the target relation.
  */
 int
-setTargetTable(ParseState *pstate, char *relname,
+setTargetTable(ParseState *pstate, RangeVar *relation,
 			   bool inh, bool alsoSource)
 {
 	RangeTblEntry *rte;
@@ -133,12 +133,12 @@ setTargetTable(ParseState *pstate, char *relname,
 	 * analyze.c will eventually do the corresponding heap_close(), but *not*
 	 * release the lock.
 	 */
-	pstate->p_target_relation = heap_openr(relname, RowExclusiveLock);
+	pstate->p_target_relation = heap_openr(relation->relname, RowExclusiveLock);
 
 	/*
 	 * Now build an RTE.
 	 */
-	rte = addRangeTableEntry(pstate, relname, NULL, inh, false);
+	rte = addRangeTableEntry(pstate, relation, NULL, inh, false);
 	pstate->p_target_rangetblentry = rte;
 
 	/* assume new rte is at end */
@@ -364,7 +364,6 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 static RangeTblRef *
 transformTableEntry(ParseState *pstate, RangeVar *r)
 {
-	char	   *relname = r->relname;
 	RangeTblEntry *rte;
 	RangeTblRef *rtr;
 
@@ -375,7 +374,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 	 * automatically generate the range variable if not specified. However
 	 * there are times we need to know whether the entries are legitimate.
 	 */
-	rte = addRangeTableEntry(pstate, relname, r->alias,
+	rte = addRangeTableEntry(pstate, r, r->alias,
 							 interpretInhOption(r->inhOpt), true);
 
 	/*

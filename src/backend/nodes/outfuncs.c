@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.150 2002/03/21 16:00:40 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.151 2002/03/22 02:56:32 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -968,25 +968,38 @@ _outAlias(StringInfo str, Alias *node)
 static void
 _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
-	appendStringInfo(str, " RTE :rtekind %d :relname ",
-					 (int) node->rtekind);
-	_outToken(str, node->relname);
-	appendStringInfo(str, " :relid %u :subquery ",
-					 node->relid);
-	_outNode(str, node->subquery);
-	appendStringInfo(str, " :jointype %d :joincoltypes ",
-					 (int) node->jointype);
-	_outOidList(str, node->joincoltypes);
-	appendStringInfo(str, " :joincoltypmods ");
-	_outIntList(str, node->joincoltypmods);
-	appendStringInfo(str, " :joinleftcols ");
-	_outIntList(str, node->joinleftcols);
-	appendStringInfo(str, " :joinrightcols ");
-	_outIntList(str, node->joinrightcols);
-	appendStringInfo(str, " :alias ");
+	/* put alias + eref first to make dump more legible */
+	appendStringInfo(str, " RTE :alias ");
 	_outNode(str, node->alias);
 	appendStringInfo(str, " :eref ");
 	_outNode(str, node->eref);
+	appendStringInfo(str, " :rtekind %d ",
+					 (int) node->rtekind);
+	switch (node->rtekind)
+	{
+		case RTE_RELATION:
+		case RTE_SPECIAL:
+			appendStringInfo(str, ":relid %u ", node->relid);
+			break;
+		case RTE_SUBQUERY:
+			appendStringInfo(str, ":subquery ");
+			_outNode(str, node->subquery);
+			break;
+		case RTE_JOIN:
+			appendStringInfo(str, ":jointype %d :joincoltypes ",
+							 (int) node->jointype);
+			_outOidList(str, node->joincoltypes);
+			appendStringInfo(str, " :joincoltypmods ");
+			_outIntList(str, node->joincoltypmods);
+			appendStringInfo(str, " :joinleftcols ");
+			_outIntList(str, node->joinleftcols);
+			appendStringInfo(str, " :joinrightcols ");
+			_outIntList(str, node->joinrightcols);
+			break;
+		default:
+			elog(ERROR, "bogus rte kind %d", (int) node->rtekind);
+			break;
+	}
 	appendStringInfo(str, " :inh %s :inFromCl %s :checkForRead %s"
 					 " :checkForWrite %s :checkAsUser %u",
 					 booltostr(node->inh),

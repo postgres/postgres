@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.72 2002/03/12 00:51:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.73 2002/03/22 02:56:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,7 +721,6 @@ expand_inherted_rtentry(Query *parse, Index rti, bool dup_parent)
 		 * this point.
 		 */
 		childrte = copyObject(rte);
-		childrte->relname = get_rel_name(childOID);
 		childrte->relid = childOID;
 		parse->rtable = lappend(parse->rtable, childrte);
 		childRTindex = length(parse->rtable);

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.120 2002/03/21 16:00:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.121 2002/03/22 02:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -826,21 +826,6 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	if (!equal(a->constraints, b->constraints))
 		return false;
 	if (a->hasoids != b->hasoids)
-		return false;
-
-	return true;
-}
-
-static bool
-_equalVersionStmt(VersionStmt *a, VersionStmt *b)
-{
-	if (!equalstr(a->relname, b->relname))
-		return false;
-	if (a->direction != b->direction)
-		return false;
-	if (!equalstr(a->fromRelname, b->fromRelname))
-		return false;
-	if (!equalstr(a->date, b->date))
 		return false;
 
 	return true;
@@ -1679,8 +1664,6 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 {
 	if (a->rtekind != b->rtekind)
 		return false;
-	if (!equalstr(a->relname, b->relname))
-		return false;
 	if (a->relid != b->relid)
 		return false;
 	if (!equal(a->subquery, b->subquery))
@@ -2003,9 +1986,6 @@ equal(void *a, void *b)
 			break;
 		case T_CreateStmt:
 			retval = _equalCreateStmt(a, b);
-			break;
-		case T_VersionStmt:
-			retval = _equalVersionStmt(a, b);
 			break;
 		case T_DefineStmt:
 			retval = _equalDefineStmt(a, b);

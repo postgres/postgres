@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.190 2002/03/21 16:00:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.191 2002/03/22 02:56:30 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -45,6 +45,7 @@
 #include "commands/comment.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
@@ -1612,7 +1613,11 @@ AddRelationRawConstraints(Relation rel,
 	 * sole rangetable entry.  We need a ParseState for transformExpr.
 	 */
 	pstate = make_parsestate(NULL);
-	rte = addRangeTableEntry(pstate, relname, NULL, false, true);
+	rte = addRangeTableEntryForRelation(pstate,
+										RelationGetRelid(rel),
+										makeAlias(relname, NIL),
+										false,
+										true);
 	addRTEtoQuery(pstate, rte, true, true);
 
 	/*

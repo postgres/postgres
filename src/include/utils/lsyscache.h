@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.44 2002/03/20 19:45:09 tgl Exp $
+ * $Id: lsyscache.h,v 1.45 2002/03/22 02:56:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@ extern RegProcedure get_oprjoin(Oid opno);
 extern Oid	get_func_rettype(Oid funcid);
 extern bool func_iscachable(Oid funcid);
 extern char *get_rel_name(Oid relid);
+extern Oid	get_rel_type_id(Oid relid);
 extern int16 get_typlen(Oid typid);
 extern bool get_typbyval(Oid typid);
 extern void get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval);

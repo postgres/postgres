@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.119 2002/03/21 16:01:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.120 2002/03/22 02:56:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,7 +252,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 									   &sublevels_up);
 
 			if (rte == NULL)
-				rte = addImplicitRTE(pstate, refname);
+				rte = addImplicitRTE(pstate, (RangeVar *) arg);
 
 			vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
@@ -281,7 +281,10 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				}
 			}
 
-			toid = typenameTypeId(rte->relname);
+			toid = get_rel_type_id(rte->relid);
+			if (!OidIsValid(toid))
+				elog(ERROR, "Cannot find type OID for relation %u",
+					 rte->relid);
 
 			/* replace RangeVar in the arg list */
 			lfirst(i) = makeVar(vnum,

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.72 2002/03/21 16:00:32 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.73 2002/03/22 02:56:31 tgl Exp $
  *
  */
 
@@ -17,10 +17,12 @@
 #include "nodes/print.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
+#include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/relcache.h"
 
 
@@ -34,9 +36,12 @@ typedef struct ExplainState
 } ExplainState;
 
 static StringInfo Explain_PlanToString(Plan *plan, ExplainState *es);
-static void ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest);
+static void ExplainOneQuery(Query *query, bool verbose, bool analyze,
+							CommandDest dest);
+static void explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
+							int indent, ExplainState *es);
 static void show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
-						   int scanrelid,
+						   int scanrelid, Plan *outer_plan,
 						   StringInfo str, int indent, ExplainState *es);
 static void show_upper_qual(List *qual, const char *qlabel,
 							const char *outer_name, int outer_varno, Plan *outer_plan,
@@ -188,10 +193,15 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 
 /*
  * explain_outNode -
- *	  converts a Node into ascii string and append it to 'str'
+ *	  converts a Plan node into ascii string and appends it to 'str'
+ *
+ * outer_plan, if not null, references another plan node that is the outer
+ * side of a join with the current node.  This is only interesting for
+ * deciphering runtime keys of an inner indexscan.
  */
 static void
-explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
+explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
+				int indent, ExplainState *es)
 {
 	List	   *l;
 	Relation	relation;
@@ -304,15 +314,19 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			{
 				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
 											  es->rtable);
+				char   *relname;
 
 				/* Assume it's on a real relation */
-				Assert(rte->relname);
+				Assert(rte->relid);
+
+				/* We only show the rel name, not schema name */
+				relname = get_rel_name(rte->relid);
 
 				appendStringInfo(str, " on %s",
-								 stringStringInfo(rte->relname));
-				if (strcmp(rte->eref->aliasname, rte->relname) != 0)
+								 stringStringInfo(relname));
+				if (strcmp(rte->eref->aliasname, relname) != 0)
 					appendStringInfo(str, " %s",
-								   stringStringInfo(rte->eref->aliasname));
+									 stringStringInfo(rte->eref->aliasname));
 			}
 			break;
 		case T_SubqueryScan:
@@ -352,77 +366,93 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	{
 		case T_IndexScan:
 			show_scan_qual(((IndexScan *) plan)->indxqualorig, true,
-						   "indxqual",
+						   "Index Filter",
 						   ((Scan *) plan)->scanrelid,
+						   outer_plan,
 						   str, indent, es);
-			show_scan_qual(plan->qual, false, "qual",
+			show_scan_qual(plan->qual, false,
+						   "Filter",
 						   ((Scan *) plan)->scanrelid,
+						   outer_plan,
 						   str, indent, es);
 			break;
 		case T_SeqScan:
 		case T_TidScan:
-			show_scan_qual(plan->qual, false, "qual",
+			show_scan_qual(plan->qual, false,
+						   "Filter",
 						   ((Scan *) plan)->scanrelid,
+						   outer_plan,
 						   str, indent, es);
 			break;
 		case T_NestLoop:
-			show_upper_qual(((NestLoop *) plan)->join.joinqual, "joinqual",
+			show_upper_qual(((NestLoop *) plan)->join.joinqual,
+							"Join Cond",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
-			show_upper_qual(plan->qual, "qual",
+			show_upper_qual(plan->qual,
+							"Filter",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
 			break;
 		case T_MergeJoin:
-			show_upper_qual(((MergeJoin *) plan)->mergeclauses, "merge",
+			show_upper_qual(((MergeJoin *) plan)->mergeclauses,
+							"Merge Cond",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
-			show_upper_qual(((MergeJoin *) plan)->join.joinqual, "joinqual",
+			show_upper_qual(((MergeJoin *) plan)->join.joinqual,
+							"Join Cond",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
-			show_upper_qual(plan->qual, "qual",
+			show_upper_qual(plan->qual,
+							"Filter",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
 			break;
 		case T_HashJoin:
-			show_upper_qual(((HashJoin *) plan)->hashclauses, "hash",
+			show_upper_qual(((HashJoin *) plan)->hashclauses,
+							"Hash Cond",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
-			show_upper_qual(((HashJoin *) plan)->join.joinqual, "joinqual",
+			show_upper_qual(((HashJoin *) plan)->join.joinqual,
+							"Join Cond",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
-			show_upper_qual(plan->qual, "qual",
+			show_upper_qual(plan->qual,
+							"Filter",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
 							str, indent, es);
 			break;
 		case T_SubqueryScan:
-			show_upper_qual(plan->qual, "qual",
+			show_upper_qual(plan->qual,
+							"Filter",
 							"subplan", 1, ((SubqueryScan *) plan)->subplan,
 							"", 0, NULL,
 							str, indent, es);
 			break;
 		case T_Agg:
 		case T_Group:
-			show_upper_qual(plan->qual, "qual",
+			show_upper_qual(plan->qual,
+							"Filter",
 							"subplan", 0, outerPlan(plan),
 							"", 0, NULL,
 							str, indent, es);
 			break;
 		case T_Result:
 			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
-							"constqual",
+							"One-Time Filter",
 							"subplan", OUTER, outerPlan(plan),
 							"", 0, NULL,
 							str, indent, es);
-			show_upper_qual(plan->qual, "qual",
+			show_upper_qual(plan->qual,
+							"Filter",
 							"subplan", OUTER, outerPlan(plan),
 							"", 0, NULL,
 							str, indent, es);
@@ -446,7 +476,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan,
+			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, NULL,
 							indent + 4, es);
 		}
 		es->rtable = saved_rtable;
@@ -458,7 +488,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
 		appendStringInfo(str, "  ->  ");
-		explain_outNode(str, outerPlan(plan), indent + 3, es);
+		explain_outNode(str, outerPlan(plan), NULL, indent + 3, es);
 	}
 
 	/* righttree */
@@ -467,7 +497,8 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
 		appendStringInfo(str, "  ->  ");
-		explain_outNode(str, innerPlan(plan), indent + 3, es);
+		explain_outNode(str, innerPlan(plan), outerPlan(plan),
+						indent + 3, es);
 	}
 
 	if (IsA(plan, Append))
@@ -483,7 +514,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "  ->  ");
 
-			explain_outNode(str, subnode, indent + 3, es);
+			explain_outNode(str, subnode, NULL, indent + 3, es);
 		}
 	}
 
@@ -502,7 +533,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			appendStringInfo(str, "  ");
 		appendStringInfo(str, "  ->  ");
 
-		explain_outNode(str, subnode, indent + 3, es);
+		explain_outNode(str, subnode, NULL, indent + 3, es);
 
 		es->rtable = saved_rtable;
 	}
@@ -522,7 +553,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan,
+			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, NULL,
 							indent + 4, es);
 		}
 		es->rtable = saved_rtable;
@@ -535,7 +566,7 @@ Explain_PlanToString(Plan *plan, ExplainState *es)
 	StringInfo	str = makeStringInfo();
 
 	if (plan != NULL)
-		explain_outNode(str, plan, 0, es);
+		explain_outNode(str, plan, NULL, 0, es);
 	return str;
 }
 
@@ -544,10 +575,12 @@ Explain_PlanToString(Plan *plan, ExplainState *es)
  */
 static void
 show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
-			   int scanrelid,
+			   int scanrelid, Plan *outer_plan,
 			   StringInfo str, int indent, ExplainState *es)
 {
 	RangeTblEntry *rte;
+	Node	   *scancontext;
+	Node	   *outercontext;
 	List	   *context;
 	Node	   *node;
 	char	   *exprstr;
@@ -562,23 +595,43 @@ show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
 			return;
 	}
 
-	/* Generate deparse context */
-	Assert(scanrelid > 0 && scanrelid <= length(es->rtable));
-	rte = rt_fetch(scanrelid, es->rtable);
-
-	/* Assume it's on a real relation */
-	Assert(rte->relname);
-
-	context = deparse_context_for(rte->relname, rte->relid);
-
 	/* Fix qual --- indexqual requires different processing */
 	if (is_or_qual)
 		node = make_ors_ands_explicit(qual);
 	else
 		node = (Node *) make_ands_explicit(qual);
 
+	/* Generate deparse context */
+	Assert(scanrelid > 0 && scanrelid <= length(es->rtable));
+	rte = rt_fetch(scanrelid, es->rtable);
+
+	/* Assume it's on a real relation */
+	Assert(rte->relid);
+	scancontext = deparse_context_for_relation(rte->eref->aliasname,
+											   rte->relid);
+
+	/*
+	 * If we have an outer plan that is referenced by the qual, add it to
+	 * the deparse context.  If not, don't (so that we don't force prefixes
+	 * unnecessarily).
+	 */
+	if (outer_plan)
+	{
+		if (intMember(OUTER, pull_varnos(node)))
+			outercontext = deparse_context_for_subplan("outer",
+													   outer_plan->targetlist,
+													   es->rtable);
+		else
+			outercontext = NULL;
+	}
+	else
+		outercontext = NULL;
+
+	context = deparse_context_for_plan(scanrelid, scancontext,
+									   OUTER, outercontext);
+
 	/* Deparse the expression */
-	exprstr = deparse_expression(node, context, false);
+	exprstr = deparse_expression(node, context, (outercontext != NULL));
 
 	/* And add to str */
 	for (i = 0; i < indent; i++)

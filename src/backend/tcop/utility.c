@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.137 2002/03/21 23:27:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.138 2002/03/22 02:56:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -576,10 +576,6 @@ ProcessUtility(Node *parsetree,
 
 				RemoveOperator(stmt->opname, typename1, typename2);
 			}
-			break;
-
-		case T_VersionStmt:
-			elog(ERROR, "CREATE VERSION is not currently implemented");
 			break;
 
 		case T_CreatedbStmt:

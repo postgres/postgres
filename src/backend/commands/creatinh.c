@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.90 2002/03/21 23:27:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.91 2002/03/22 02:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,11 @@ static List *MergeDomainAttributes(List *schema);
 /* ----------------------------------------------------------------
  *		DefineRelation
  *				Creates a new relation.
+ *
+ * If successful, returns the OID of the new relation.
  * ----------------------------------------------------------------
  */
-void
+Oid
 DefineRelation(CreateStmt *stmt, char relkind)
 {
 	char	   *relname = palloc(NAMEDATALEN);
@@ -165,7 +167,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * see the new rel anyway until we commit), but it keeps the lock
 	 * manager from complaining about deadlock risks.
 	 */
-	rel = heap_openr(relname, AccessExclusiveLock);
+	rel = heap_open(relationId, AccessExclusiveLock);
 
 	/*
 	 * Now add any newly specified column default values and CHECK
@@ -210,11 +212,13 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * visible to anyone else anyway, until commit).
 	 */
 	heap_close(rel, NoLock);
+
+	return relationId;
 }
 
 /*
  * RemoveRelation
- *		Deletes a new relation.
+ *		Deletes a relation.
  *
  * Exceptions:
  *		BadArg if name is invalid.

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.59 2002/03/21 16:00:36 tgl Exp $
+ *	$Id: view.c,v 1.60 2002/03/22 02:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
  * the xact...
  *---------------------------------------------------------------------
  */
-static void
+static Oid
 DefineVirtualRelation(char *relname, List *tlist)
 {
 	CreateStmt *createStmt = makeNode(CreateStmt);
@@ -96,7 +96,7 @@ DefineVirtualRelation(char *relname, List *tlist)
 	/*
 	 * finally create the relation...
 	 */
-	DefineRelation(createStmt, RELKIND_VIEW);
+	return DefineRelation(createStmt, RELKIND_VIEW);
 }
 
 static RuleStmt *
@@ -176,7 +176,7 @@ DefineViewRules(char *viewName, Query *viewParse)
  *---------------------------------------------------------------
  */
 static Query *
-UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
+UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 {
 	List	   *new_rt;
 	RangeTblEntry *rt_entry1,
@@ -196,12 +196,12 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 	 * Create the 2 new range table entries and form the new range
 	 * table... OLD first, then NEW....
 	 */
-	rt_entry1 = addRangeTableEntry(NULL, viewName,
-								   makeAlias("*OLD*", NIL),
-								   false, false);
-	rt_entry2 = addRangeTableEntry(NULL, viewName,
-								   makeAlias("*NEW*", NIL),
-								   false, false);
+	rt_entry1 = addRangeTableEntryForRelation(NULL, viewOid,
+											  makeAlias("*OLD*", NIL),
+											  false, false);
+	rt_entry2 = addRangeTableEntryForRelation(NULL, viewOid,
+											  makeAlias("*NEW*", NIL),
+											  false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
 	rt_entry1->checkForRead = false;
 	rt_entry2->checkForRead = false;
@@ -233,11 +233,14 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 void
 DefineView(char *viewName, Query *viewParse)
 {
+	Oid			viewOid;
+
 	/*
-	 * Create the "view" relation NOTE: if it already exists, the xact
-	 * will be aborted.
+	 * Create the view relation
+	 *
+	 * NOTE: if it already exists, the xact will be aborted.
 	 */
-	DefineVirtualRelation(viewName, viewParse->targetList);
+	viewOid = DefineVirtualRelation(viewName, viewParse->targetList);
 
 	/*
 	 * The relation we have just created is not visible to any other
@@ -250,7 +253,7 @@ DefineView(char *viewName, Query *viewParse)
 	 * The range table of 'viewParse' does not contain entries for the
 	 * "OLD" and "NEW" relations. So... add them!
 	 */
-	viewParse = UpdateRangeTableOfViewParse(viewName, viewParse);
+	viewParse = UpdateRangeTableOfViewParse(viewOid, viewParse);
 
 	/*
 	 * Now create the rules associated with the view.

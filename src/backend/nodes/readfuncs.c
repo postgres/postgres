@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.117 2002/03/21 16:00:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.118 2002/03/22 02:56:32 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1498,42 +1498,52 @@ _readRangeTblEntry(void)
 
 	local_node = makeNode(RangeTblEntry);
 
-	token = pg_strtok(&length); /* eat :rtekind */
-	token = pg_strtok(&length); /* get :rtekind */
-	local_node->rtekind = (RTEKind) atoi(token);
-
-	token = pg_strtok(&length); /* eat :relname */
-	token = pg_strtok(&length); /* get :relname */
-	local_node->relname = nullable_string(token, length);
-
-	token = pg_strtok(&length); /* eat :relid */
-	token = pg_strtok(&length); /* get :relid */
-	local_node->relid = atooid(token);
-
-	token = pg_strtok(&length); /* eat :subquery */
-	local_node->subquery = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* eat :jointype */
-	token = pg_strtok(&length); /* get jointype */
-	local_node->jointype = (JoinType) atoi(token);
-
-	token = pg_strtok(&length); /* eat :joincoltypes */
-	local_node->joincoltypes = toOidList(nodeRead(true));
-
-	token = pg_strtok(&length); /* eat :joincoltypmods */
-	local_node->joincoltypmods = toIntList(nodeRead(true));
-
-	token = pg_strtok(&length); /* eat :joinleftcols */
-	local_node->joinleftcols = toIntList(nodeRead(true));
-
-	token = pg_strtok(&length); /* eat :joinrightcols */
-	local_node->joinrightcols = toIntList(nodeRead(true));
-
 	token = pg_strtok(&length); /* eat :alias */
 	local_node->alias = nodeRead(true); /* now read it */
 
 	token = pg_strtok(&length); /* eat :eref */
 	local_node->eref = nodeRead(true);	/* now read it */
+
+	token = pg_strtok(&length); /* eat :rtekind */
+	token = pg_strtok(&length); /* get rtekind */
+	local_node->rtekind = (RTEKind) atoi(token);
+
+	switch (local_node->rtekind)
+	{
+		case RTE_RELATION:
+		case RTE_SPECIAL:
+			token = pg_strtok(&length); /* eat :relid */
+			token = pg_strtok(&length); /* get :relid */
+			local_node->relid = atooid(token);
+			break;
+
+		case RTE_SUBQUERY:
+			token = pg_strtok(&length); /* eat :subquery */
+			local_node->subquery = nodeRead(true);		/* now read it */
+			break;
+
+		case RTE_JOIN:
+			token = pg_strtok(&length); /* eat :jointype */
+			token = pg_strtok(&length); /* get jointype */
+			local_node->jointype = (JoinType) atoi(token);
+
+			token = pg_strtok(&length); /* eat :joincoltypes */
+			local_node->joincoltypes = toOidList(nodeRead(true));
+
+			token = pg_strtok(&length); /* eat :joincoltypmods */
+			local_node->joincoltypmods = toIntList(nodeRead(true));
+
+			token = pg_strtok(&length); /* eat :joinleftcols */
+			local_node->joinleftcols = toIntList(nodeRead(true));
+
+			token = pg_strtok(&length); /* eat :joinrightcols */
+			local_node->joinrightcols = toIntList(nodeRead(true));
+			break;
+
+		default:
+			elog(ERROR, "bogus rte kind %d", (int) local_node->rtekind);
+			break;
+	}
 
 	token = pg_strtok(&length); /* eat :inh */
 	token = pg_strtok(&length); /* get :inh */

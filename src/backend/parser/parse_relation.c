@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.64 2002/03/21 16:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.65 2002/03/22 02:56:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,9 @@ static Node *scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 						char *refname);
 static Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 				 char *colname);
-static bool isForUpdate(ParseState *pstate, char *relname);
+static bool isForUpdate(ParseState *pstate, char *refname);
 static int	specialAttNum(char *a);
-static void warnAutoRange(ParseState *pstate, char *refname);
+static void warnAutoRange(ParseState *pstate, RangeVar *relation);
 
 
 /*
@@ -402,7 +402,7 @@ qualifiedNameToVar(ParseState *pstate, char *refname, char *colname,
 	{
 		if (!implicitRTEOK)
 			return NULL;
-		rte = addImplicitRTE(pstate, refname);
+		rte = addImplicitRTE(pstate, makeRangeVar(NULL, refname));
 	}
 
 	return scanRTEForColumn(pstate, rte, colname);
@@ -419,13 +419,13 @@ qualifiedNameToVar(ParseState *pstate, char *refname, char *colname,
  */
 RangeTblEntry *
 addRangeTableEntry(ParseState *pstate,
-				   char *relname,
+				   RangeVar *relation,
 				   Alias *alias,
 				   bool inh,
 				   bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	char	   *refname = alias ? alias->aliasname : relname;
+	char	   *refname = alias ? alias->aliasname : relation->relname;
 	LOCKMODE	lockmode;
 	Relation	rel;
 	Alias	   *eref;
@@ -434,7 +434,6 @@ addRangeTableEntry(ParseState *pstate,
 	int			varattno;
 
 	rte->rtekind = RTE_RELATION;
-	rte->relname = relname;
 	rte->alias = alias;
 
 	/*
@@ -443,8 +442,8 @@ addRangeTableEntry(ParseState *pstate,
 	 * first access to a rel in a statement, be careful to get the right
 	 * access level depending on whether we're doing SELECT FOR UPDATE.
 	 */
-	lockmode = isForUpdate(pstate, relname) ? RowShareLock : AccessShareLock;
-	rel = heap_openr(relname, lockmode);
+	lockmode = isForUpdate(pstate, refname) ? RowShareLock : AccessShareLock;
+	rel = heap_openr(relation->relname, lockmode);
 	rte->relid = RelationGetRelid(rel);
 
 	eref = alias ? (Alias *) copyObject(alias) : makeAlias(refname, NIL);
@@ -457,7 +456,100 @@ addRangeTableEntry(ParseState *pstate,
 	maxattrs = RelationGetNumberOfAttributes(rel);
 	if (maxattrs < numaliases)
 		elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
-			 refname, maxattrs, numaliases);
+			 RelationGetRelationName(rel), maxattrs, numaliases);
+
+	/* fill in any unspecified alias columns using actual column names */
+	for (varattno = numaliases; varattno < maxattrs; varattno++)
+	{
+		char	   *attrname;
+
+		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
+		eref->colnames = lappend(eref->colnames, makeString(attrname));
+	}
+	rte->eref = eref;
+
+	/*
+	 * Drop the rel refcount, but keep the access lock till end of
+	 * transaction so that the table can't be deleted or have its schema
+	 * modified underneath us.
+	 */
+	heap_close(rel, NoLock);
+
+	/*----------
+	 * Flags:
+	 * - this RTE should be expanded to include descendant tables,
+	 * - this RTE is in the FROM clause,
+	 * - this RTE should be checked for read/write access rights.
+	 *
+	 * The initial default on access checks is always check-for-READ-access,
+	 * which is the right thing for all except target tables.
+	 *----------
+	 */
+	rte->inh = inh;
+	rte->inFromCl = inFromCl;
+	rte->checkForRead = true;
+	rte->checkForWrite = false;
+
+	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
+
+	/*
+	 * Add completed RTE to pstate's range table list, but not to join
+	 * list nor namespace --- caller must do that if appropriate.
+	 */
+	if (pstate != NULL)
+		pstate->p_rtable = lappend(pstate->p_rtable, rte);
+
+	return rte;
+}
+
+/*
+ * Add an entry for a relation to the pstate's range table (p_rtable).
+ *
+ * This is just like addRangeTableEntry() except that it makes an RTE
+ * given a relation OID instead of a RangeVar reference.
+ *
+ * Note that an alias clause *must* be supplied.
+ */
+RangeTblEntry *
+addRangeTableEntryForRelation(ParseState *pstate,
+							  Oid relid,
+							  Alias *alias,
+							  bool inh,
+							  bool inFromCl)
+{
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	char	   *refname = alias->aliasname;
+	LOCKMODE	lockmode;
+	Relation	rel;
+	Alias	   *eref;
+	int			maxattrs;
+	int			numaliases;
+	int			varattno;
+
+	rte->rtekind = RTE_RELATION;
+	rte->alias = alias;
+
+	/*
+	 * Get the rel's relcache entry.  This access ensures that we have an
+	 * up-to-date relcache entry for the rel.  Since this is typically the
+	 * first access to a rel in a statement, be careful to get the right
+	 * access level depending on whether we're doing SELECT FOR UPDATE.
+	 */
+	lockmode = isForUpdate(pstate, refname) ? RowShareLock : AccessShareLock;
+	rel = heap_open(relid, lockmode);
+	rte->relid = relid;
+
+	eref = (Alias *) copyObject(alias);
+	numaliases = length(eref->colnames);
+
+	/*
+	 * Since the rel is open anyway, let's check that the number of column
+	 * aliases is reasonable. - Thomas 2000-02-04
+	 */
+	maxattrs = RelationGetNumberOfAttributes(rel);
+	if (maxattrs < numaliases)
+		elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
+			 RelationGetRelationName(rel), maxattrs, numaliases);
 
 	/* fill in any unspecified alias columns using actual column names */
 	for (varattno = numaliases; varattno < maxattrs; varattno++)
@@ -523,7 +615,6 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	List	   *tlistitem;
 
 	rte->rtekind = RTE_SUBQUERY;
-	rte->relname = NULL;
 	rte->relid = InvalidOid;
 	rte->subquery = subquery;
 	rte->alias = alias;
@@ -602,7 +693,6 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	int			numaliases;
 
 	rte->rtekind = RTE_JOIN;
-	rte->relname = NULL;
 	rte->relid = InvalidOid;
 	rte->subquery = NULL;
 	rte->jointype = jointype;
@@ -652,10 +742,10 @@ addRangeTableEntryForJoin(ParseState *pstate,
 }
 
 /*
- * Has the specified relname been selected FOR UPDATE?
+ * Has the specified refname been selected FOR UPDATE?
  */
 static bool
-isForUpdate(ParseState *pstate, char *relname)
+isForUpdate(ParseState *pstate, char *refname)
 {
 	/* Outer loop to check parent query levels as well as this one */
 	while (pstate != NULL)
@@ -676,7 +766,7 @@ isForUpdate(ParseState *pstate, char *relname)
 				{
 					char	   *rname = strVal(lfirst(l));
 
-					if (strcmp(relname, rname) == 0)
+					if (strcmp(refname, rname) == 0)
 						return true;
 				}
 			}
@@ -713,13 +803,13 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
  * a conflicting name.
  */
 RangeTblEntry *
-addImplicitRTE(ParseState *pstate, char *relname)
+addImplicitRTE(ParseState *pstate, RangeVar *relation)
 {
 	RangeTblEntry *rte;
 
-	rte = addRangeTableEntry(pstate, relname, NULL, false, false);
+	rte = addRangeTableEntry(pstate, relation, NULL, false, false);
 	addRTEtoQuery(pstate, rte, true, true);
-	warnAutoRange(pstate, relname);
+	warnAutoRange(pstate, relation);
 
 	return rte;
 }
@@ -757,7 +847,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 		int			maxattrs;
 		int			numaliases;
 
-		rel = heap_openr(rte->relname, AccessShareLock);
+		rel = heap_open(rte->relid, AccessShareLock);
 		maxattrs = RelationGetNumberOfAttributes(rel);
 		numaliases = length(rte->eref->colnames);
 
@@ -979,7 +1069,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 		/* this shouldn't happen... */
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "Relation %s does not have attribute %d",
-				 rte->relname, attnum);
+				 get_rel_name(rte->relid), attnum);
 		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
 		*vartype = att_tup->atttypid;
 		*vartypmod = att_tup->atttypmod;
@@ -1116,7 +1206,7 @@ attnumTypeId(Relation rd, int attid)
  * but warn about a mixture of explicit and implicit RTEs.
  */
 static void
-warnAutoRange(ParseState *pstate, char *refname)
+warnAutoRange(ParseState *pstate, RangeVar *relation)
 {
 	bool		foundInFromCl = false;
 	List	   *temp;
@@ -1134,5 +1224,5 @@ warnAutoRange(ParseState *pstate, char *refname)
 	if (foundInFromCl)
 		elog(NOTICE, "Adding missing FROM-clause entry%s for table \"%s\"",
 			 pstate->parentParseState != NULL ? " in subquery" : "",
-			 refname);
+			 relation->relname);
 }

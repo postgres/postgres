@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.163 2002/03/21 23:27:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.164 2002/03/22 02:56:31 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -37,6 +37,7 @@
 #include "executor/execdefs.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
@@ -1262,8 +1263,11 @@ AlterTableAddConstraint(char *relationName,
 								 * expression we can pass to ExecQual
 								 */
 								pstate = make_parsestate(NULL);
-								rte = addRangeTableEntry(pstate, relationName, NULL,
-														 false, true);
+								rte = addRangeTableEntryForRelation(pstate,
+																	myrelid,
+																	makeAlias(relationName, NIL),
+																	false,
+																	true);
 								addRTEtoQuery(pstate, rte, true, true);
 
 								/*

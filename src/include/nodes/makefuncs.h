@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.32 2002/03/21 16:01:43 tgl Exp $
+ * $Id: makefuncs.h,v 1.33 2002/03/22 02:56:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,5 +47,7 @@ extern Const *makeNullConst(Oid consttype);
 extern Alias *makeAlias(const char *aliasname, List *colnames);
 
 extern RelabelType *makeRelabelType(Node *arg, Oid rtype, int32 rtypmod);
+
+extern RangeVar *makeRangeVar(char *schemaname, char *relname);
 
 #endif   /* MAKEFUNC_H */

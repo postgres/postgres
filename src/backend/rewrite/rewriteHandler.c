@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.99 2002/03/12 00:51:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.100 2002/03/22 02:56:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,6 @@ ApplyRetrieveRule(Query *parsetree,
 	rte = rt_fetch(rt_index, parsetree->rtable);
 
 	rte->rtekind = RTE_SUBQUERY;
-	rte->relname = NULL;
 	rte->relid = InvalidOid;
 	rte->subquery = rule_action;
 	rte->inh = false;			/* must not be set for a subquery */
@@ -485,17 +484,7 @@ fireRIRrules(Query *parsetree)
 		else
 			lockmode = AccessShareLock;
 
-		rel = heap_openr(rte->relname, lockmode);
-
-		/*
-		 * Check to see if relation's OID matches the RTE.  If not, the
-		 * RTE actually refers to an older relation that had the same
-		 * name. Eventually we might want to reparse the referencing rule,
-		 * but for now all we can do is punt.
-		 */
-		if (RelationGetRelid(rel) != rte->relid)
-			elog(ERROR, "Relation \"%s\" with OID %u no longer exists",
-				 rte->relname, rte->relid);
+		rel = heap_open(rte->relid, lockmode);
 
 		/*
 		 * Collect the RIR rules that we must apply
@@ -773,17 +762,7 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	 * release it until end of transaction.  This protects the rewriter
 	 * and planner against schema changes mid-query.
 	 */
-	rt_entry_relation = heap_openr(rt_entry->relname, RowExclusiveLock);
-
-	/*
-	 * Check to see if relation's OID matches the RTE.  If not, the RTE
-	 * actually refers to an older relation that had the same name.
-	 * Eventually we might want to reparse the referencing rule, but for
-	 * now all we can do is punt.
-	 */
-	if (RelationGetRelid(rt_entry_relation) != rt_entry->relid)
-		elog(ERROR, "Relation \"%s\" with OID %u no longer exists",
-			 rt_entry->relname, rt_entry->relid);
+	rt_entry_relation = heap_open(rt_entry->relid, RowExclusiveLock);
 
 	/*
 	 * Collect and apply the appropriate rules.
