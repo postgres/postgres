@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.86 2000/07/05 23:11:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.87 2000/07/13 05:47:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ create_index_paths(Query *root,
 			 useful_for_ordering(root, rel, index, ForwardScanDirection))
 				add_path(rel, (Path *)
 						 create_index_path(root, rel, index,
-										   NIL,
+										   restrictclauses,
 										   ForwardScanDirection));
 		}
 
@@ -207,7 +207,7 @@ create_index_paths(Query *root,
 		if (useful_for_ordering(root, rel, index, BackwardScanDirection))
 			add_path(rel, (Path *)
 					 create_index_path(root, rel, index,
-									   NIL,
+									   restrictclauses,
 									   BackwardScanDirection));
 
 		/*
