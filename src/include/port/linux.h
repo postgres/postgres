@@ -14,6 +14,9 @@ typedef unsigned int slock_t;
 #elif defined(__alpha)
 typedef long int slock_t;
 
+#elif defined(__mips)
+typedef unsigned int slock_t;
+
 #else							/* i386 probably */
 typedef unsigned char slock_t;
 
