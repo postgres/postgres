@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: locks.h,v 1.9 1998/09/01 04:37:57 momjian Exp $
+ * $Id: locks.h,v 1.10 1998/10/02 16:27:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,5 +19,6 @@
 
 extern List *matchLocks(CmdType event, RuleLock *rulelocks, int varno,
 		   Query *parsetree);
+extern void checkLockPerms(List *locks, Query *parsetree, int rt_index);
 
 #endif	 /* LOCKS_H */

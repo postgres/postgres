@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.13 1998/09/01 04:31:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.14 1998/10/02 16:27:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "utils/builtins.h"
 #include "catalog/pg_shadow.h"
 
-static void checkLockPerms(List *locks, Query *parsetree, int rt_index);
 
 /*
  * ThisLockWasTriggered
@@ -170,7 +169,7 @@ matchLocks(CmdType event,
 }
 
 
-static void
+void
 checkLockPerms(List *locks, Query *parsetree, int rt_index)
 {
 	Relation	ev_rel;

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.18 1998/09/11 16:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.19 1998/10/02 16:27:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,23 @@ OffsetVarNodes(Node *node, int offset)
 				Expr	   *expr = (Expr *) node;
 
 				OffsetVarNodes((Node *) expr->args, offset);
+			}
+			break;
+		case T_Iter:
+			{
+				Iter	   *iter = (Iter *) node;
+
+				OffsetVarNodes((Node *) iter->iterexpr, offset);
+			}
+			break;
+		case T_ArrayRef:
+			{
+				ArrayRef	   *ref = (ArrayRef *) node;
+
+				OffsetVarNodes((Node *) ref->refupperindexpr, offset);
+				OffsetVarNodes((Node *) ref->reflowerindexpr, offset);
+				OffsetVarNodes((Node *) ref->refexpr, offset);
+				OffsetVarNodes((Node *) ref->refassgnexpr, offset);
 			}
 			break;
 		case T_Var:
@@ -155,6 +172,23 @@ ChangeVarNodes(Node *node, int old_varno, int new_varno, int sublevels_up)
 				Expr	   *expr = (Expr *) node;
 
 				ChangeVarNodes((Node *) expr->args, old_varno, new_varno, sublevels_up);
+			}
+			break;
+		case T_Iter:
+			{
+				Iter	   *iter = (Iter *) node;
+
+				ChangeVarNodes((Node *) iter->iterexpr, old_varno, new_varno, sublevels_up);
+			}
+			break;
+		case T_ArrayRef:
+			{
+				ArrayRef	   *ref = (ArrayRef *) node;
+
+				ChangeVarNodes((Node *) ref->refupperindexpr, old_varno, new_varno, sublevels_up);
+				ChangeVarNodes((Node *) ref->reflowerindexpr, old_varno, new_varno, sublevels_up);
+				ChangeVarNodes((Node *) ref->refexpr, old_varno, new_varno, sublevels_up);
+				ChangeVarNodes((Node *) ref->refassgnexpr, old_varno, new_varno, sublevels_up);
 			}
 			break;
 		case T_Var:
@@ -353,6 +387,20 @@ ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
 			ResolveNew(info, targetlist, (Node **) (&(((Expr *) node)->args)),
 					   sublevels_up);
 			break;
+		case T_Iter:
+			ResolveNew(info, targetlist, (Node **) (&(((Iter *) node)->iterexpr)),
+					   sublevels_up);
+			break;
+		case T_ArrayRef:
+			ResolveNew(info, targetlist, (Node **) (&(((ArrayRef *) node)->refupperindexpr)),
+					   sublevels_up);
+			ResolveNew(info, targetlist, (Node **) (&(((ArrayRef *) node)->reflowerindexpr)),
+					   sublevels_up);
+			ResolveNew(info, targetlist, (Node **) (&(((ArrayRef *) node)->refexpr)),
+					   sublevels_up);
+			ResolveNew(info, targetlist, (Node **) (&(((ArrayRef *) node)->refassgnexpr)),
+					   sublevels_up);
+			break;
 		case T_Var:
 			{
 				int			this_varno = (int) ((Var *) node)->varno;
@@ -449,6 +497,38 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 				Expr	   *expr = (Expr *) node;
 
 				nodeHandleRIRAttributeRule((Node **) (&(expr->args)), rtable,
+										   targetlist, rt_index, attr_num,
+										   modified, badsql,
+										   sublevels_up);
+			}
+			break;
+		case T_Iter:
+			{
+				Iter	   *iter = (Iter *) node;
+
+				nodeHandleRIRAttributeRule((Node **) (&(iter->iterexpr)), rtable,
+										   targetlist, rt_index, attr_num,
+										   modified, badsql,
+										   sublevels_up);
+			}
+			break;
+		case T_ArrayRef:
+			{
+				ArrayRef	   *ref = (ArrayRef *) node;
+
+				nodeHandleRIRAttributeRule((Node **) (&(ref->refupperindexpr)), rtable,
+										   targetlist, rt_index, attr_num,
+										   modified, badsql,
+										   sublevels_up);
+				nodeHandleRIRAttributeRule((Node **) (&(ref->reflowerindexpr)), rtable,
+										   targetlist, rt_index, attr_num,
+										   modified, badsql,
+										   sublevels_up);
+				nodeHandleRIRAttributeRule((Node **) (&(ref->refexpr)), rtable,
+										   targetlist, rt_index, attr_num,
+										   modified, badsql,
+										   sublevels_up);
+				nodeHandleRIRAttributeRule((Node **) (&(ref->refassgnexpr)), rtable,
 										   targetlist, rt_index, attr_num,
 										   modified, badsql,
 										   sublevels_up);
@@ -594,6 +674,33 @@ nodeHandleViewRule(Node **nodePtr,
 				Expr	   *expr = (Expr *) node;
 
 				nodeHandleViewRule((Node **) (&(expr->args)),
+								   rtable, targetlist,
+								   rt_index, modified, sublevels_up);
+			}
+			break;
+		case T_Iter:
+			{
+				Iter	   *iter = (Iter *) node;
+
+				nodeHandleViewRule((Node **) (&(iter->iterexpr)),
+								   rtable, targetlist,
+								   rt_index, modified, sublevels_up);
+			}
+			break;
+		case T_ArrayRef:
+			{
+				ArrayRef	   *ref = (ArrayRef *) node;
+
+				nodeHandleViewRule((Node **) (&(ref->refupperindexpr)),
+								   rtable, targetlist,
+								   rt_index, modified, sublevels_up);
+				nodeHandleViewRule((Node **) (&(ref->reflowerindexpr)),
+								   rtable, targetlist,
+								   rt_index, modified, sublevels_up);
+				nodeHandleViewRule((Node **) (&(ref->refexpr)),
+								   rtable, targetlist,
+								   rt_index, modified, sublevels_up);
+				nodeHandleViewRule((Node **) (&(ref->refassgnexpr)),
 								   rtable, targetlist,
 								   rt_index, modified, sublevels_up);
 			}

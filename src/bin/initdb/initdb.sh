@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.55 1998/09/09 18:16:36 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.56 1998/10/02 16:27:53 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -435,6 +435,7 @@ echo "REVOKE ALL on pg_shadow FROM public" | \
 
 echo "Creating view pg_rules"
 echo "CREATE TABLE xpg_rules (		\
+	    tablename	name,		\
 	    rulename	name,		\
 	    definition	text);" | postgres $PGSQL_OPT template1 > /dev/null
 #move it into pg_rules
@@ -445,12 +446,18 @@ echo "UPDATE pg_type SET typname = 'pg_rules' WHERE typname = 'xpg_rules';" |\
 mv $PGDATA/base/template1/xpg_rules $PGDATA/base/template1/pg_rules
 
 echo "CREATE RULE \"_RETpg_rules\" AS ON SELECT TO pg_rules DO INSTEAD	\
-	    SELECT rulename, pg_get_ruledef(rulename) AS definition	\
-	      FROM pg_rewrite;" | postgres $PGSQL_OPT template1 > /dev/null
+	    SELECT C.relname AS tablename,				\
+	           R.rulename AS rulename,				\
+		   pg_get_ruledef(R.rulename) AS definition		\
+	      FROM pg_rewrite R, pg_class C 				\
+	           WHERE R.rulename !~ '^_RET'				\
+		   AND C.oid = R.ev_class;" | \
+	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "Creating view pg_views"
 echo "CREATE TABLE xpg_views (		\
 	    viewname	name,		\
+	    viewowner	name,		\
 	    definition	text);" | postgres $PGSQL_OPT template1 > /dev/null
 #move it into pg_views
 echo "UPDATE pg_class SET relname = 'pg_views' WHERE relname = 'xpg_views';" |\
@@ -461,9 +468,55 @@ mv $PGDATA/base/template1/xpg_views $PGDATA/base/template1/pg_views
 
 echo "CREATE RULE \"_RETpg_views\" AS ON SELECT TO pg_views DO INSTEAD	\
 	    SELECT relname AS viewname, 				\
+		   pg_get_userbyid(relowner) AS viewowner,		\
 	           pg_get_viewdef(relname) AS definition		\
 	      FROM pg_class WHERE relhasrules AND			\
 	           pg_get_viewdef(relname) != 'Not a view';" | \
+	postgres $PGSQL_OPT template1 > /dev/null
+
+echo "Creating view pg_tables"
+echo "CREATE TABLE xpg_tables (		\
+	    tablename	name,		\
+	    tableowner	name,		\
+	    hasindexes	bool,		\
+	    hasrules	bool,		\
+	    hastriggers	bool);" | postgres $PGSQL_OPT template1 > /dev/null
+#move it into pg_tables
+echo "UPDATE pg_class SET relname = 'pg_tables' WHERE relname = 'xpg_tables';" |\
+	postgres $PGSQL_OPT template1 > /dev/null
+echo "UPDATE pg_type SET typname = 'pg_tables' WHERE typname = 'xpg_tables';" |\
+	postgres $PGSQL_OPT template1 > /dev/null
+mv $PGDATA/base/template1/xpg_tables $PGDATA/base/template1/pg_tables
+
+echo "CREATE RULE \"_RETpg_tables\" AS ON SELECT TO pg_tables DO INSTEAD	\
+	    SELECT relname AS tablename, 				\
+		   pg_get_userbyid(relowner) AS tableowner,		\
+		   relhasindex AS hasindexes,				\
+		   relhasrules AS hasrules,				\
+		   (reltriggers > 0) AS hastriggers			\
+	      FROM pg_class WHERE relkind IN ('r', 's')			\
+	           AND pg_get_viewdef(relname) = 'Not a view';" | \
+	postgres $PGSQL_OPT template1 > /dev/null
+
+echo "Creating view pg_indexes"
+echo "CREATE TABLE xpg_indexes (	\
+	    tablename	name,		\
+	    indexname	name,		\
+	    indexdef	text);" | postgres $PGSQL_OPT template1 > /dev/null
+#move it into pg_indexes
+echo "UPDATE pg_class SET relname = 'pg_indexes' WHERE relname = 'xpg_indexes';" |\
+	postgres $PGSQL_OPT template1 > /dev/null
+echo "UPDATE pg_type SET typname = 'pg_indexes' WHERE typname = 'xpg_indexes';" |\
+	postgres $PGSQL_OPT template1 > /dev/null
+mv $PGDATA/base/template1/xpg_indexes $PGDATA/base/template1/pg_indexes
+
+echo "CREATE RULE \"_RETpg_indexes\" AS ON SELECT TO pg_indexes DO INSTEAD	\
+	    SELECT C.relname AS tablename, 				\
+		   I.relname AS indexname,				\
+		   pg_get_indexdef(X.indexrelid) AS indexdef		\
+	      FROM pg_index X, pg_class C, pg_class I			\
+	      	   WHERE C.oid = X.indrelid				\
+	           AND I.oid = X.indexrelid;" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "Loading pg_description"

@@ -671,3 +671,181 @@ QUERY: select * from rtest_nothn3;
 200|OK
 (2 rows)
 
+QUERY: create table rtest_view1 (a int4, b text, v bool);
+QUERY: create table rtest_view2 (a int4);
+QUERY: create table rtest_view3 (a int4, b text);
+QUERY: create table rtest_view4 (a int4, b text, c int4);
+QUERY: create view rtest_vview1 as select a, b from rtest_view1 X
+	where 0 < (select count(*) from rtest_view2 Y where Y.a = X.a);
+QUERY: create view rtest_vview2 as select a, b from rtest_view1 where v;
+QUERY: create view rtest_vview3 as select a, b from rtest_vview2 X
+	where 0 < (select count(*) from rtest_view2 Y where Y.a = X.a);
+QUERY: create view rtest_vview4 as select X.a, X.b, count(Y.a) as refcount
+	from rtest_view1 X, rtest_view2 Y
+	where X.a = Y.a
+	group by X.a, X.b;
+QUERY: create function rtest_viewfunc1(int4) returns int4 as
+	'select count(*) from rtest_view2 where a = $1'
+	language 'sql';
+QUERY: create view rtest_vview5 as select a, b, rtest_viewfunc1(a) as refcount
+	from rtest_view1;
+QUERY: insert into rtest_view1 values (1, 'item 1', 't');
+QUERY: insert into rtest_view1 values (2, 'item 2', 't');
+QUERY: insert into rtest_view1 values (3, 'item 3', 't');
+QUERY: insert into rtest_view1 values (4, 'item 4', 'f');
+QUERY: insert into rtest_view1 values (5, 'item 5', 't');
+QUERY: insert into rtest_view1 values (6, 'item 6', 'f');
+QUERY: insert into rtest_view1 values (7, 'item 7', 't');
+QUERY: insert into rtest_view1 values (8, 'item 8', 't');
+QUERY: insert into rtest_view2 values (2);
+QUERY: insert into rtest_view2 values (2);
+QUERY: insert into rtest_view2 values (4);
+QUERY: insert into rtest_view2 values (5);
+QUERY: insert into rtest_view2 values (7);
+QUERY: insert into rtest_view2 values (7);
+QUERY: insert into rtest_view2 values (7);
+QUERY: insert into rtest_view2 values (7);
+QUERY: select * from rtest_vview1;
+a|b     
+-+------
+2|item 2
+4|item 4
+5|item 5
+7|item 7
+(4 rows)
+
+QUERY: select * from rtest_vview2;
+a|b     
+-+------
+1|item 1
+2|item 2
+3|item 3
+5|item 5
+7|item 7
+8|item 8
+(6 rows)
+
+QUERY: select * from rtest_vview3;
+a|b     
+-+------
+2|item 2
+5|item 5
+7|item 7
+(3 rows)
+
+QUERY: select * from rtest_vview4;
+a|b     |refcount
+-+------+--------
+2|item 2|       2
+4|item 4|       1
+5|item 5|       1
+7|item 7|       4
+(4 rows)
+
+QUERY: select * from rtest_vview5;
+a|b     |refcount
+-+------+--------
+1|item 1|       0
+2|item 2|       2
+3|item 3|       0
+4|item 4|       1
+5|item 5|       1
+6|item 6|       0
+7|item 7|       4
+8|item 8|       0
+(8 rows)
+
+QUERY: insert into rtest_view3 select * from rtest_vview1 where a < 7;
+QUERY: select * from rtest_view3;
+a|b     
+-+------
+2|item 2
+4|item 4
+5|item 5
+(3 rows)
+
+QUERY: delete from rtest_view3;
+QUERY: insert into rtest_view3 select * from rtest_vview2 where a != 5 and b !~ '2';
+QUERY: select * from rtest_view3;
+a|b     
+-+------
+1|item 1
+3|item 3
+7|item 7
+8|item 8
+(4 rows)
+
+QUERY: delete from rtest_view3;
+QUERY: insert into rtest_view3 select * from rtest_vview3;
+QUERY: select * from rtest_view3;
+a|b     
+-+------
+2|item 2
+5|item 5
+7|item 7
+(3 rows)
+
+QUERY: delete from rtest_view3;
+QUERY: insert into rtest_view4 select * from rtest_vview4 where 3 > refcount;
+QUERY: select * from rtest_view4;
+a|b     |c
+-+------+-
+2|item 2|2
+4|item 4|1
+5|item 5|1
+(3 rows)
+
+QUERY: delete from rtest_view4;
+QUERY: insert into rtest_view4 select * from rtest_vview5 where a > 2 and refcount = 0;
+QUERY: select * from rtest_view4;
+a|b     |c
+-+------+-
+3|item 3|0
+6|item 6|0
+8|item 8|0
+(3 rows)
+
+QUERY: delete from rtest_view4;
+QUERY: create table rtest_comp (
+	part	text,
+	unit	char(4),
+	size	float
+);
+QUERY: create table rtest_unitfact (
+	unit	char(4),
+	factor	float
+);
+QUERY: create view rtest_vcomp as
+	select X.part, (X.size * Y.factor) as size_in_cm
+			from rtest_comp X, rtest_unitfact Y
+			where X.unit = Y.unit;
+QUERY: insert into rtest_unitfact values ('m', 100.0);
+QUERY: insert into rtest_unitfact values ('cm', 1.0);
+QUERY: insert into rtest_unitfact values ('inch', 2.54);
+QUERY: insert into rtest_comp values ('p1', 'm', 5.0);
+QUERY: insert into rtest_comp values ('p2', 'm', 3.0);
+QUERY: insert into rtest_comp values ('p3', 'cm', 5.0);
+QUERY: insert into rtest_comp values ('p4', 'cm', 15.0);
+QUERY: insert into rtest_comp values ('p5', 'inch', 7.0);
+QUERY: insert into rtest_comp values ('p6', 'inch', 4.4);
+QUERY: select * from rtest_vcomp order by part;
+part|size_in_cm
+----+----------
+p1  |       500
+p2  |       300
+p3  |         5
+p4  |        15
+p5  |     17.78
+p6  |    11.176
+(6 rows)
+
+QUERY: select * from rtest_vcomp where size_in_cm > 10.0 order by size_in_cm using >;
+part|size_in_cm
+----+----------
+p1  |       500
+p2  |       300
+p5  |     17.78
+p4  |        15
+p6  |    11.176
+(5 rows)
+

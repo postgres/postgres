@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.3 1998/09/01 04:32:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.4 1998/10/02 16:27:51 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -52,7 +52,20 @@
 #include "utils/lsyscache.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_shadow.h"
+#include "catalog/pg_index.h"
+#include "catalog/pg_opclass.h"
 #include "fmgr.h"
+
+
+/* ----------
+ * Local data types
+ * ----------
+ */
+typedef struct QryHier {
+	struct QryHier		*parent;
+	Query			*query;
+} QryHier;
 
 
 /* ----------
@@ -64,6 +77,10 @@ static void *plan_getrule = NULL;
 static char *query_getrule = "SELECT * FROM pg_rewrite WHERE rulename = $1";
 static void *plan_getview = NULL;
 static char *query_getview = "SELECT * FROM pg_rewrite WHERE rulename = $1 or rulename = $2";
+static void *plan_getam = NULL;
+static char *query_getam = "SELECT * FROM pg_am WHERE oid = $1";
+static void *plan_getopclass = NULL;
+static char *query_getopclass = "SELECT * FROM pg_opclass WHERE oid = $1";
 
 
 /* ----------
@@ -72,6 +89,8 @@ static char *query_getview = "SELECT * FROM pg_rewrite WHERE rulename = $1 or ru
  */
 text	   *pg_get_ruledef(NameData *rname);
 text	   *pg_get_viewdef(NameData *rname);
+text       *pg_get_indexdef(Oid indexrelid);
+NameData   *pg_get_userbyid(int4 uid);
 
 
 /* ----------
@@ -80,15 +99,16 @@ text	   *pg_get_viewdef(NameData *rname);
  */
 static char *make_ruledef(HeapTuple ruletup, TupleDesc rulettc);
 static char *make_viewdef(HeapTuple ruletup, TupleDesc rulettc);
-static char *get_query_def(Query *query);
-static char *get_select_query_def(Query *query);
-static char *get_insert_query_def(Query *query);
-static char *get_update_query_def(Query *query);
-static char *get_delete_query_def(Query *query);
-static char *get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix);
-static char *get_func_expr(List *rtable, int rt_index, Expr *expr, bool varprefix);
-static char *get_tle_expr(List *rtable, int rt_index, TargetEntry *tle, bool varprefix);
+static char *get_query_def(Query *query, QryHier *parentqh);
+static char *get_select_query_def(Query *query, QryHier *qh);
+static char *get_insert_query_def(Query *query, QryHier *qh);
+static char *get_update_query_def(Query *query, QryHier *qh);
+static char *get_delete_query_def(Query *query, QryHier *qh);
+static char *get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix);
+static char *get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix);
+static char *get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix);
 static char *get_const_expr(Const *constval);
+static char *get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix);
 static char *get_relation_name(Oid relid);
 static char *get_attribute_name(Oid relid, int2 attnum);
 static bool check_if_rte_used(int rt_index, Node *node, int sup);
@@ -289,6 +309,272 @@ pg_get_viewdef(NameData *rname)
 
 
 /* ----------
+ * get_viewdef			- Mainly the same thing, but we
+ *				  only return the SELECT part of a view
+ * ----------
+ */
+text       *
+pg_get_indexdef(Oid indexrelid)
+{
+	text		*indexdef;
+	HeapTuple	ht_idx;
+	HeapTuple	ht_idxrel;
+	HeapTuple	ht_indrel;
+	HeapTuple	spi_tup;
+	TupleDesc	spi_ttc;
+	int		spi_fno;
+	Form_pg_index	idxrec;
+	Form_pg_class	idxrelrec;
+	Form_pg_class	indrelrec;
+	Datum		spi_args[1];
+	char		spi_nulls[2];
+	int		spirc;
+	int		len;
+	int		keyno;
+	char		buf[8192];
+	char		keybuf[8192];
+	char		*sep;
+
+	/* ----------
+	 * Connect to SPI manager
+	 * ----------
+	 */
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "get_indexdef: cannot connect to SPI manager");
+
+	/* ----------
+	 * On the first call prepare the plans to lookup pg_am
+	 * and pg_opclass.
+	 * ----------
+	 */
+	if (plan_getam == NULL)
+	{
+		Oid			argtypes[1];
+		void	   *plan;
+
+		argtypes[0] = OIDOID;
+		plan = SPI_prepare(query_getam, 1, argtypes);
+		if (plan == NULL)
+			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getam);
+		plan_getam = SPI_saveplan(plan);
+
+		argtypes[0] = OIDOID;
+		plan = SPI_prepare(query_getopclass, 1, argtypes);
+		if (plan == NULL)
+			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getopclass);
+		plan_getopclass = SPI_saveplan(plan);
+	}
+
+	/* ----------
+	 * Fetch the pg_index tuple by the Oid of the index
+	 * ----------
+	 */
+	ht_idx = SearchSysCacheTuple(INDEXRELID,
+			ObjectIdGetDatum(indexrelid), 0, 0, 0);
+	if (!HeapTupleIsValid(ht_idx))
+		elog(ERROR, "syscache lookup for index %d failed", indexrelid);
+	idxrec = (Form_pg_index)GETSTRUCT(ht_idx);
+
+	/* ----------
+	 * Fetch the pg_class tuple of the index relation
+	 * ----------
+	 */
+	ht_idxrel = SearchSysCacheTuple(RELOID,
+			ObjectIdGetDatum(idxrec->indexrelid), 0, 0, 0);
+	if (!HeapTupleIsValid(ht_idxrel))
+		elog(ERROR, "syscache lookup for relid %d failed", idxrec->indexrelid);
+	idxrelrec = (Form_pg_class)GETSTRUCT(ht_idxrel);
+
+	/* ----------
+	 * Fetch the pg_class tuple of the indexed relation
+	 * ----------
+	 */
+	ht_indrel = SearchSysCacheTuple(RELOID,
+			ObjectIdGetDatum(idxrec->indrelid), 0, 0, 0);
+	if (!HeapTupleIsValid(ht_indrel))
+		elog(ERROR, "syscache lookup for relid %d failed", idxrec->indrelid);
+	indrelrec = (Form_pg_class)GETSTRUCT(ht_indrel);
+
+	/* ----------
+	 * Get the am name for the index relation
+	 * ----------
+	 */
+	spi_args[0] = ObjectIdGetDatum(idxrelrec->relam);
+	spi_nulls[0] = ' ';
+	spi_nulls[1] = '\0';
+	spirc = SPI_execp(plan_getam, spi_args, spi_nulls, 1);
+	if (spirc != SPI_OK_SELECT)
+		elog(ERROR, "failed to get pg_am tuple for index %s", nameout(&(idxrelrec->relname)));
+	if (SPI_processed != 1)
+		elog(ERROR, "failed to get pg_am tuple for index %s", nameout(&(idxrelrec->relname)));
+	spi_tup = SPI_tuptable->vals[0];
+	spi_ttc = SPI_tuptable->tupdesc;
+	spi_fno = SPI_fnumber(spi_ttc, "amname");
+
+	/* ----------
+	 * Start the index definition
+	 * ----------
+	 */
+	sprintf(buf, "CREATE %sINDEX %s ON %s USING %s (",
+		idxrec->indisunique ? "UNIQUE " : "",
+		nameout(&(idxrelrec->relname)),
+		nameout(&(indrelrec->relname)),
+		SPI_getvalue(spi_tup, spi_ttc, spi_fno));
+			
+	/* ----------
+	 * Collect the indexed attributes
+	 * ----------
+	 */
+	sep = "";
+	keybuf[0] = '\0';
+	for (keyno = 0; keyno < INDEX_MAX_KEYS; keyno++)
+	{
+		if (idxrec->indkey[keyno] == InvalidAttrNumber)
+			break;
+
+		strcat(keybuf, sep);
+		sep = ", ";
+
+		/* ----------
+		 * Add the indexed field name
+		 * ----------
+		 */
+		if (idxrec->indkey[keyno] == ObjectIdAttributeNumber - 1)
+			strcat(keybuf, "oid");
+		else
+			strcat(keybuf, get_attribute_name(idxrec->indrelid,
+						idxrec->indkey[keyno]));
+
+		/* ----------
+		 * If not a functional index, add the operator class name
+		 * ----------
+		 */
+		if (idxrec->indproc == InvalidOid)
+		{
+			spi_args[0] = ObjectIdGetDatum(idxrec->indclass[keyno]);
+			spi_nulls[0] = ' ';
+			spi_nulls[1] = '\0';
+			spirc = SPI_execp(plan_getopclass, spi_args, spi_nulls, 1);
+			if (spirc != SPI_OK_SELECT)
+				elog(ERROR, "failed to get pg_opclass tuple %d", idxrec->indclass[keyno]);
+			if (SPI_processed != 1)
+				elog(ERROR, "failed to get pg_opclass tuple %d", idxrec->indclass[keyno]);
+			spi_tup = SPI_tuptable->vals[0];
+			spi_ttc = SPI_tuptable->tupdesc;
+			spi_fno = SPI_fnumber(spi_ttc, "opcname");
+			strcat(keybuf, " ");
+			strcat(keybuf, SPI_getvalue(spi_tup, spi_ttc, spi_fno));
+		}
+	}
+
+	/* ----------
+	 * For functional index say 'func (attrs) opclass'
+	 * ----------
+	 */
+	if (idxrec->indproc != InvalidOid)
+	{
+		HeapTuple	proctup;
+		Form_pg_proc	procStruct;
+
+		proctup = SearchSysCacheTuple(PROOID,
+								ObjectIdGetDatum(idxrec->indproc), 0, 0, 0);
+		if (!HeapTupleIsValid(proctup))
+			elog(ERROR, "cache lookup for proc %d failed", idxrec->indproc);
+
+		procStruct = (Form_pg_proc) GETSTRUCT(proctup);
+		strcat(buf, nameout(&(procStruct->proname)));
+		strcat(buf, " (");
+		strcat(buf, keybuf);
+		strcat(buf, ") ");
+
+		spi_args[0] = ObjectIdGetDatum(idxrec->indclass[0]);
+		spi_nulls[0] = ' ';
+		spi_nulls[1] = '\0';
+		spirc = SPI_execp(plan_getopclass, spi_args, spi_nulls, 1);
+		if (spirc != SPI_OK_SELECT)
+			elog(ERROR, "failed to get pg_opclass tuple %d", idxrec->indclass[0]);
+		if (SPI_processed != 1)
+			elog(ERROR, "failed to get pg_opclass tuple %d", idxrec->indclass[0]);
+		spi_tup = SPI_tuptable->vals[0];
+		spi_ttc = SPI_tuptable->tupdesc;
+		spi_fno = SPI_fnumber(spi_ttc, "opcname");
+		strcat(buf, SPI_getvalue(spi_tup, spi_ttc, spi_fno));
+	}
+	else
+	/* ----------
+	 * For the others say 'attr opclass [, ...]'
+	 * ----------
+	 */
+	{
+		strcat(buf, keybuf);
+	}
+
+	/* ----------
+	 * Finish
+	 * ----------
+	 */
+	strcat(buf, ")");
+
+	/* ----------
+	 * Create the result in upper executor memory
+	 * ----------
+	 */
+	len = strlen(buf) + VARHDRSZ;
+	indexdef = SPI_palloc(len);
+	VARSIZE(indexdef) = len;
+	memcpy(VARDATA(indexdef), buf, len - VARHDRSZ);
+
+	/* ----------
+	 * Disconnect from SPI manager
+	 * ----------
+	 */
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "get_viewdef: SPI_finish() failed");
+
+	return indexdef;
+}
+
+
+/* ----------
+ * get_userbyid			- Get a user name by usesysid and
+ *				  fallback to 'unknown (UID=n)'
+ * ----------
+ */
+NameData   *
+pg_get_userbyid(int4 uid)
+{
+	HeapTuple	usertup;
+	Form_pg_shadow	user_rec;
+	NameData	*result;
+
+	/* ----------
+	 * Allocate space for the result
+	 * ----------
+	 */
+	result = (NameData *) palloc(NAMEDATALEN);
+	memset(result->data, 0, NAMEDATALEN);
+
+	/* ----------
+	 * Get the pg_shadow entry and print the result
+	 * ----------
+	 */
+	usertup = SearchSysCacheTuple(USESYSID,
+			ObjectIdGetDatum(uid), 0, 0, 0);
+	if (HeapTupleIsValid(usertup))
+	{
+		user_rec = (Form_pg_shadow)GETSTRUCT(usertup);
+		StrNCpy(result->data, (&(user_rec->usename))->data, NAMEDATALEN);
+	}
+	else
+	{
+		sprintf((char *)result, "unknown (UID=%d)", uid);
+	}
+
+	return result;
+}
+
+
+/* ----------
  * make_ruledef			- reconstruct the CREATE RULE command
  *				  for a given pg_rewrite tuple
  * ----------
@@ -331,15 +617,12 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 
 	fno = SPI_fnumber(rulettc, "ev_qual");
 	ev_qual = SPI_getvalue(ruletup, rulettc, fno);
-	if (isnull)
-		ev_qual = NULL;
 
 	fno = SPI_fnumber(rulettc, "ev_action");
 	ev_action = SPI_getvalue(ruletup, rulettc, fno);
-	if (isnull)
-		ev_action = NULL;
 	if (ev_action != NULL)
 		actions = (List *) stringToNode(ev_action);
+
 
 	/* ----------
 	 * Build the rules definition text
@@ -391,12 +674,15 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 	{
 		Node	   *qual;
 		Query	   *query;
+		QryHier    qh;
 
 		qual = stringToNode(ev_qual);
 		query = (Query *) lfirst(actions);
+		qh.parent = NULL;
+		qh.query  = query;
 
 		strcat(buf, " WHERE ");
-		strcat(buf, get_rule_expr(query->rtable, 0, qual, TRUE));
+		strcat(buf, get_rule_expr(&qh, 0, qual, TRUE));
 	}
 
 	strcat(buf, " DO ");
@@ -415,7 +701,7 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 		foreach(action, actions)
 		{
 			query = (Query *) lfirst(action);
-			strcat(buf, get_query_def(query));
+			strcat(buf, get_query_def(query, NULL));
 			strcat(buf, "; ");
 		}
 		strcat(buf, ");");
@@ -431,7 +717,7 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 			Query	   *query;
 
 			query = (Query *) lfirst(actions);
-			strcat(buf, get_query_def(query));
+			strcat(buf, get_query_def(query, NULL));
 			strcat(buf, ";");
 		}
 	}
@@ -482,13 +768,9 @@ make_viewdef(HeapTuple ruletup, TupleDesc rulettc)
 
 	fno = SPI_fnumber(rulettc, "ev_qual");
 	ev_qual = SPI_getvalue(ruletup, rulettc, fno);
-	if (isnull)
-		ev_qual = "";
 
 	fno = SPI_fnumber(rulettc, "ev_action");
 	ev_action = SPI_getvalue(ruletup, rulettc, fno);
-	if (isnull)
-		ev_action = NULL;
 	if (ev_action != NULL)
 		actions = (List *) stringToNode(ev_action);
 
@@ -500,7 +782,7 @@ make_viewdef(HeapTuple ruletup, TupleDesc rulettc)
 	if (ev_type != '1' || ev_attr >= 0 || !is_instead || strcmp(ev_qual, ""))
 		return "Not a view";
 
-	strcpy(buf, get_select_query_def(query));
+	strcpy(buf, get_query_def(query, NULL));
 	strcat(buf, ";");
 
 	/* ----------
@@ -518,24 +800,29 @@ make_viewdef(HeapTuple ruletup, TupleDesc rulettc)
  * ----------
  */
 static char *
-get_query_def(Query *query)
+get_query_def(Query *query, QryHier *parentqh)
 {
+	QryHier		qh;
+
+	qh.parent = parentqh;
+	qh.query  = query;
+
 	switch (query->commandType)
 	{
 			case CMD_SELECT:
-			return get_select_query_def(query);
+			return get_select_query_def(query, &qh);
 			break;
 
 		case CMD_UPDATE:
-			return get_update_query_def(query);
+			return get_update_query_def(query, &qh);
 			break;
 
 		case CMD_INSERT:
-			return get_insert_query_def(query);
+			return get_insert_query_def(query, &qh);
 			break;
 
 		case CMD_DELETE:
-			return get_delete_query_def(query);
+			return get_delete_query_def(query, &qh);
 			break;
 
 		case CMD_NOTHING:
@@ -557,7 +844,7 @@ get_query_def(Query *query)
  * ----------
  */
 static char *
-get_select_query_def(Query *query)
+get_select_query_def(Query *query, QryHier *qh)
 {
 	char		buf[8192];
 	char	   *sep;
@@ -635,7 +922,7 @@ get_select_query_def(Query *query)
 		strcat(buf, sep);
 		sep = ", ";
 
-		strcat(buf, get_tle_expr(query->rtable, 0, tle, (rt_numused > 1)));
+		strcat(buf, get_tle_expr(qh, 0, tle, (rt_numused > 1)));
 
 		/* Check if we must say AS ... */
 		if (nodeTag(tle->expr) != T_Var)
@@ -681,7 +968,7 @@ get_select_query_def(Query *query)
 				strcat(buf, sep);
 				sep = ", ";
 				strcat(buf, rte->relname);
-				if (rt_numused > 1)
+				if (strcmp(rte->relname, rte->refname) != 0)
 				{
 					strcat(buf, " ");
 					strcat(buf, rte->refname);
@@ -694,7 +981,7 @@ get_select_query_def(Query *query)
 	if (query->qual != NULL)
 	{
 		strcat(buf, " WHERE ");
-		strcat(buf, get_rule_expr(query->rtable, 0, query->qual, (rt_numused > 1)));
+		strcat(buf, get_rule_expr(qh, 0, query->qual, (rt_numused > 1)));
 	}
 
 	/* Add the GROUP BY CLAUSE */
@@ -706,7 +993,7 @@ get_select_query_def(Query *query)
 		{
 			strcat(buf, sep);
 			sep = ", ";
-			strcat(buf, get_rule_expr(query->rtable, 0, lfirst(l), (rt_numused > 1)));
+			strcat(buf, get_rule_expr(qh, 0, lfirst(l), (rt_numused > 1)));
 		}
 	}
 
@@ -723,7 +1010,7 @@ get_select_query_def(Query *query)
  * ----------
  */
 static char *
-get_insert_query_def(Query *query)
+get_insert_query_def(Query *query, QryHier *qh)
 {
 	char		buf[8192];
 	char	   *sep;
@@ -810,12 +1097,12 @@ get_insert_query_def(Query *query)
 
 			strcat(buf, sep);
 			sep = ", ";
-			strcat(buf, get_tle_expr(query->rtable, 0, tle, (rt_numused > 1)));
+			strcat(buf, get_tle_expr(qh, 0, tle, (rt_numused > 1)));
 		}
 		strcat(buf, ")");
 	}
 	else
-		strcat(buf, get_select_query_def(query));
+		strcat(buf, get_query_def(query, qh));
 
 	/* ----------
 	 * Copy the query string into allocated space and return it
@@ -830,7 +1117,7 @@ get_insert_query_def(Query *query)
  * ----------
  */
 static char *
-get_update_query_def(Query *query)
+get_update_query_def(Query *query, QryHier *qh)
 {
 	char		buf[8192];
 	char	   *sep;
@@ -857,7 +1144,7 @@ get_update_query_def(Query *query)
 		sep = ", ";
 		strcat(buf, tle->resdom->resname);
 		strcat(buf, " = ");
-		strcat(buf, get_tle_expr(query->rtable, query->resultRelation,
+		strcat(buf, get_tle_expr(qh, query->resultRelation,
 								 tle, TRUE));
 	}
 
@@ -865,7 +1152,7 @@ get_update_query_def(Query *query)
 	if (query->qual != NULL)
 	{
 		strcat(buf, " WHERE ");
-		strcat(buf, get_rule_expr(query->rtable, query->resultRelation,
+		strcat(buf, get_rule_expr(qh, query->resultRelation,
 								  query->qual, TRUE));
 	}
 
@@ -882,7 +1169,7 @@ get_update_query_def(Query *query)
  * ----------
  */
 static char *
-get_delete_query_def(Query *query)
+get_delete_query_def(Query *query, QryHier *qh)
 {
 	char		buf[8192];
 	RangeTblEntry *rte;
@@ -899,7 +1186,7 @@ get_delete_query_def(Query *query)
 	if (query->qual != NULL)
 	{
 		strcat(buf, " WHERE ");
-		strcat(buf, get_rule_expr(query->rtable, 0, query->qual, FALSE));
+		strcat(buf, get_rule_expr(qh, 0, query->qual, FALSE));
 	}
 
 	/* ----------
@@ -915,7 +1202,7 @@ get_delete_query_def(Query *query)
  * ----------
  */
 static char *
-get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
+get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 {
 	char		buf[8192];
 
@@ -936,7 +1223,7 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 			{
 				TargetEntry *tle = (TargetEntry *) node;
 
-				return get_rule_expr(rtable, rt_index,
+				return get_rule_expr(qh, rt_index,
 									 (Node *) (tle->expr), varprefix);
 			}
 			break;
@@ -947,7 +1234,7 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 
 				strcat(buf, agg->aggname);
 				strcat(buf, "(");
-				strcat(buf, get_rule_expr(rtable, rt_index,
+				strcat(buf, get_rule_expr(qh, rt_index,
 									 (Node *) (agg->target), varprefix));
 				strcat(buf, ")");
 				return pstrdup(buf);
@@ -958,7 +1245,7 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 			{
 				GroupClause *grp = (GroupClause *) node;
 
-				return get_rule_expr(rtable, rt_index,
+				return get_rule_expr(qh, rt_index,
 									 (Node *) (grp->entry), varprefix);
 			}
 			break;
@@ -974,13 +1261,13 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 				switch (expr->opType)
 				{
 					case OP_EXPR:
-						strcat(buf, get_rule_expr(rtable, rt_index,
+						strcat(buf, get_rule_expr(qh, rt_index,
 											   (Node *) get_leftop(expr),
 												  varprefix));
 						strcat(buf, " ");
 						strcat(buf, get_opname(((Oper *) expr->oper)->opno));
 						strcat(buf, " ");
-						strcat(buf, get_rule_expr(rtable, rt_index,
+						strcat(buf, get_rule_expr(qh, rt_index,
 											  (Node *) get_rightop(expr),
 												  varprefix));
 						return pstrdup(buf);
@@ -988,11 +1275,11 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 
 					case OR_EXPR:
 						strcat(buf, "(");
-						strcat(buf, get_rule_expr(rtable, rt_index,
+						strcat(buf, get_rule_expr(qh, rt_index,
 											   (Node *) get_leftop(expr),
 												  varprefix));
 						strcat(buf, ") OR (");
-						strcat(buf, get_rule_expr(rtable, rt_index,
+						strcat(buf, get_rule_expr(qh, rt_index,
 											  (Node *) get_rightop(expr),
 												  varprefix));
 						strcat(buf, ")");
@@ -1001,11 +1288,11 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 
 					case AND_EXPR:
 						strcat(buf, "(");
-						strcat(buf, get_rule_expr(rtable, rt_index,
+						strcat(buf, get_rule_expr(qh, rt_index,
 											   (Node *) get_leftop(expr),
 												  varprefix));
 						strcat(buf, ") AND (");
-						strcat(buf, get_rule_expr(rtable, rt_index,
+						strcat(buf, get_rule_expr(qh, rt_index,
 											  (Node *) get_rightop(expr),
 												  varprefix));
 						strcat(buf, ")");
@@ -1014,7 +1301,7 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 
 					case NOT_EXPR:
 						strcat(buf, "NOT (");
-						strcat(buf, get_rule_expr(rtable, rt_index,
+						strcat(buf, get_rule_expr(qh, rt_index,
 											   (Node *) get_leftop(expr),
 												  varprefix));
 						strcat(buf, ")");
@@ -1022,7 +1309,7 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 						break;
 
 					case FUNC_EXPR:
-						return get_func_expr(rtable, rt_index,
+						return get_func_expr(qh, rt_index,
 											 (Expr *) node,
 											 varprefix);
 						break;
@@ -1037,7 +1324,14 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 		case T_Var:
 			{
 				Var		   *var = (Var *) node;
-				RangeTblEntry *rte = (RangeTblEntry *) nth(var->varno - 1, rtable);
+				RangeTblEntry *rte;
+				int sup = var->varlevelsup;
+
+				while(sup-- > 0) qh = qh->parent;
+				rte = (RangeTblEntry *) nth(var->varno - 1, qh->query->rtable);
+
+				if (qh->parent == NULL && var->varlevelsup > 0)
+					rte = (RangeTblEntry *) nth(var->varno + 1, qh->query->rtable);
 
 				if (!strcmp(rte->refname, "*NEW*"))
 					strcat(buf, "new.");
@@ -1047,7 +1341,7 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 						strcat(buf, "current.");
 					else
 					{
-						if (varprefix && var->varno != rt_index)
+						if (strcmp(rte->relname, rte->refname) != 0)
 						{
 							strcat(buf, rte->refname);
 							strcat(buf, ".");
@@ -1069,30 +1363,7 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
 
 		case T_SubLink:
 			{
-				SubLink    *sublink = (SubLink *) node;
-				Query	   *query = (Query *) (sublink->subselect);
-				List	   *l;
-				char	   *sep;
-
-				if (sublink->lefthand != NULL)
-				{
-					strcat(buf, "(");
-					sep = "";
-					foreach(l, sublink->lefthand)
-					{
-						strcat(buf, sep);
-						sep = ", ";
-						strcat(buf, get_rule_expr(rtable, rt_index,
-												  lfirst(l), varprefix));
-					}
-					strcat(buf, ") IN ");
-				}
-
-				strcat(buf, "(");
-				strcat(buf, get_query_def(query));
-				strcat(buf, ")");
-
-				return pstrdup(buf);
+				return get_sublink_expr(qh, rt_index, node, varprefix);
 			}
 			break;
 
@@ -1116,7 +1387,7 @@ get_rule_expr(List *rtable, int rt_index, Node *node, bool varprefix)
  * ----------
  */
 static char *
-get_func_expr(List *rtable, int rt_index, Expr *expr, bool varprefix)
+get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
 {
 	char		buf[8192];
 	HeapTuple	proctup;
@@ -1143,7 +1414,7 @@ get_func_expr(List *rtable, int rt_index, Expr *expr, bool varprefix)
 		if (!strcmp(proname, "nullvalue"))
 		{
 			strcpy(buf, "(");
-			strcat(buf, get_rule_expr(rtable, rt_index, lfirst(expr->args),
+			strcat(buf, get_rule_expr(qh, rt_index, lfirst(expr->args),
 									  varprefix));
 			strcat(buf, ") ISNULL");
 			return pstrdup(buf);
@@ -1151,7 +1422,7 @@ get_func_expr(List *rtable, int rt_index, Expr *expr, bool varprefix)
 		if (!strcmp(proname, "nonnullvalue"))
 		{
 			strcpy(buf, "(");
-			strcat(buf, get_rule_expr(rtable, rt_index, lfirst(expr->args),
+			strcat(buf, get_rule_expr(qh, rt_index, lfirst(expr->args),
 									  varprefix));
 			strcat(buf, ") NOTNULL");
 			return pstrdup(buf);
@@ -1169,7 +1440,7 @@ get_func_expr(List *rtable, int rt_index, Expr *expr, bool varprefix)
 	{
 		strcat(buf, sep);
 		sep = ", ";
-		strcat(buf, get_rule_expr(rtable, rt_index, lfirst(l), varprefix));
+		strcat(buf, get_rule_expr(qh, rt_index, lfirst(l), varprefix));
 	}
 	strcat(buf, ")");
 
@@ -1194,7 +1465,7 @@ get_func_expr(List *rtable, int rt_index, Expr *expr, bool varprefix)
  * ----------
  */
 static char *
-get_tle_expr(List *rtable, int rt_index, TargetEntry *tle, bool varprefix)
+get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 {
 	HeapTuple	proctup;
 	Form_pg_proc procStruct;
@@ -1208,12 +1479,12 @@ get_tle_expr(List *rtable, int rt_index, TargetEntry *tle, bool varprefix)
 	 * ----------
 	 */
 	if (tle->resdom->restypmod < 0)
-		return get_rule_expr(rtable, rt_index, tle->expr, varprefix);
+		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 	if (nodeTag(tle->expr) != T_Expr)
-		return get_rule_expr(rtable, rt_index, tle->expr, varprefix);
+		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 	expr = (Expr *) (tle->expr);
 	if (expr->opType != FUNC_EXPR)
-		return get_rule_expr(rtable, rt_index, tle->expr, varprefix);
+		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 
 	func = (Func *) (expr->oper);
 
@@ -1235,11 +1506,11 @@ get_tle_expr(List *rtable, int rt_index, TargetEntry *tle, bool varprefix)
 	 * ----------
 	 */
 	if (procStruct->pronargs != 2)
-		return get_rule_expr(rtable, rt_index, tle->expr, varprefix);
+		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 	if (procStruct->prorettype != procStruct->proargtypes[0])
-		return get_rule_expr(rtable, rt_index, tle->expr, varprefix);
+		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 	if (procStruct->proargtypes[1] != INT4OID)
-		return get_rule_expr(rtable, rt_index, tle->expr, varprefix);
+		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 
 	/* ----------
 	 * Finally (to be totally safe) the second argument must be a
@@ -1248,15 +1519,15 @@ get_tle_expr(List *rtable, int rt_index, TargetEntry *tle, bool varprefix)
 	 */
 	second_arg = (Const *) nth(1, expr->args);
 	if (nodeTag((Node *) second_arg) != T_Const)
-		return get_rule_expr(rtable, rt_index, tle->expr, varprefix);
+		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 	if ((int4) (second_arg->constvalue) != tle->resdom->restypmod)
-		return get_rule_expr(rtable, rt_index, tle->expr, varprefix);
+		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
 
 	/* ----------
 	 * Whow - got it. Now get rid of the padding function
 	 * ----------
 	 */
-	return get_rule_expr(rtable, rt_index, lfirst(expr->args), varprefix);
+	return get_rule_expr(qh, rt_index, lfirst(expr->args), varprefix);
 }
 
 
@@ -1274,6 +1545,7 @@ get_const_expr(Const *constval)
 	char	   *extval;
 	bool		isnull = FALSE;
 	char		buf[8192];
+	char		namebuf[64];
 
 	if (constval->constisnull)
 		return "NULL";
@@ -1289,7 +1561,83 @@ get_const_expr(Const *constval)
 	extval = (char *) (*fmgr_faddr(&finfo_output)) (constval->constvalue,
 													&isnull, -1);
 
-	sprintf(buf, "'%s'::%s", extval, nameout(&(typeStruct->typname)));
+	sprintf(namebuf, "::%s", nameout(&(typeStruct->typname)));
+	if (strcmp(namebuf, "::unknown") == 0)
+		namebuf[0] = '\0';
+	sprintf(buf, "'%s'%s", extval, namebuf);
+	return pstrdup(buf);
+}
+
+
+/* ----------
+ * get_sublink_expr			- Parse back a sublink
+ * ----------
+ */
+static char *
+get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
+{
+	SubLink    *sublink = (SubLink *) node;
+	Query	   *query = (Query *) (sublink->subselect);
+	Expr       *expr;
+	List	   *l;
+	char	   *sep;
+	char       buf[8192];
+
+	buf[0] = '\0';
+
+	if (sublink->lefthand != NULL)
+	{
+		if (length(sublink->lefthand) > 1)
+			strcat(buf, "(");
+
+		sep = "";
+		foreach(l, sublink->lefthand)
+		{
+			strcat(buf, sep);
+			sep = ", ";
+			strcat(buf, get_rule_expr(qh, rt_index,
+									  lfirst(l), varprefix));
+		}
+
+		if (length(sublink->lefthand) > 1)
+			strcat(buf, ") ");
+		else
+			strcat(buf, " ");
+	}
+
+	switch (sublink->subLinkType) {
+		case EXISTS_SUBLINK:
+			strcat(buf, "EXISTS ");
+			break;
+
+		case ANY_SUBLINK:
+			expr = (Expr *)lfirst(sublink->oper);
+			strcat(buf, get_opname(((Oper *) (expr->oper))->opno));
+			strcat(buf, " ANY ");
+			break;
+
+		case ALL_SUBLINK:
+			expr = (Expr *)lfirst(sublink->oper);
+			strcat(buf, get_opname(((Oper *) (expr->oper))->opno));
+			strcat(buf, " ALL ");
+			break;
+
+		case EXPR_SUBLINK:
+			expr = (Expr *)lfirst(sublink->oper);
+			strcat(buf, get_opname(((Oper *) (expr->oper))->opno));
+			strcat(buf, " ");
+			break;
+
+		default:
+			elog(ERROR, "unupported sublink type %d",
+					sublink->subLinkType);
+			break;
+	}
+
+	strcat(buf, "(");
+	strcat(buf, get_query_def(query, qh));
+	strcat(buf, ")");
+
 	return pstrdup(buf);
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.21 1998/09/01 04:31:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.22 1998/10/02 16:27:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,11 +199,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 	/* ----------
 	 * The current rewrite handler is known to work on relation level
 	 * rules only. And for SELECT events, it expects one non-nothing
-	 * action that is instead. Since we now hand out views and rules
-	 * to regular users, we must deny anything else.
-	 *
-	 * I know that I must write a new rewrite handler from scratch
-	 * for 6.5 so we can remove these checks and allow all the rules.
+	 * action that is instead and returns exactly a tuple of the
+	 * rewritten relation. This restricts SELECT rules to views.
 	 *
 	 *	   Jan
 	 * ----------
@@ -217,6 +214,9 @@ DefineQueryRewrite(RuleStmt *stmt)
 	else
 		eslot_string = NULL;
 
+	/*
+	 * No rule actions that modify OLD or NEW
+	 */
 	if (action != NIL)
 		foreach(l, action)
 	{
@@ -233,23 +233,86 @@ DefineQueryRewrite(RuleStmt *stmt)
 		}
 	}
 
+	/*
+	 * Rules ON SELECT are restricted to view definitions
+	 */
 	if (event_type == CMD_SELECT)
 	{
+		TargetEntry		*tle;
+		Resdom			*resdom;
+		Form_pg_attribute	attr;
+		char			*attname;
+		int			i;
+
+		/*
+		 * So there cannot be INSTEAD NOTHING, ...
+		 */
 		if (length(action) == 0)
 		{
 			elog(NOTICE, "instead nothing rules on select currently not supported");
 			elog(ERROR, " use views instead");
 		}
+
+		/*
+		 * ... there cannot be multiple actions, ...
+		 */
 		if (length(action) > 1)
 			elog(ERROR, "multiple action rules on select currently not supported");
+		/*
+		 * ... the one action must be a SELECT, ...
+		 */
 		query = (Query *) lfirst(action);
 		if (!is_instead || query->commandType != CMD_SELECT)
 			elog(ERROR, "only instead-select rules currently supported on select");
+		if (event_qual != NULL)
+			elog(ERROR, "event qualifications not supported for rules on select");
+
+		/*
+		 * ... the targetlist of the SELECT action must
+		 * exactly match the event relation ...
+		 */
+		event_relation = heap_openr(event_obj->relname);
+		if (event_relation == NULL)
+			elog(ERROR, "virtual relations not supported yet");
+
+		if (event_relation->rd_att->natts != length(query->targetList))
+			elog(ERROR, "select rules target list must match event relations structure");
+
+		for (i = 1; i <= event_relation->rd_att->natts; i++) {
+			tle = (TargetEntry *)nth(i - 1, query->targetList);
+			resdom = tle->resdom;
+			attr = event_relation->rd_att->attrs[i - 1];
+			attname = nameout(&(attr->attname));
+
+			if (strcmp(resdom->resname, attname) != 0)
+				elog(ERROR, "select rules target entry %d has different column name from %s", i, attname);
+
+			if (attr->atttypid != resdom->restype)
+				elog(ERROR, "select rules target entry %d has different type from attribute %s", i,  attname);
+
+			if (attr->atttypmod != resdom->restypmod)
+				elog(ERROR, "select rules target entry %d has different size from attribute %s", i,  attname);
+		}
+
+		/*
+		 * ... and final there must not be another ON SELECT
+		 * rule already.
+		 */
+		if (event_relation->rd_rules != NULL) {
+			for (i = 0; i < event_relation->rd_rules->numLocks; i++) {
+				RewriteRule	*rule;
+
+				rule = event_relation->rd_rules->rules[i];
+				if (rule->event == CMD_SELECT)
+					elog(ERROR, "%s is already a view", nameout(&(event_relation->rd_rel->relname)));
+			}
+		}
+
+		heap_close(event_relation);
 	}
 
 	/*
-	 * This rule is currently allowed - too restricted I know - but women
-	 * and children first Jan
+	 * This rule is allowed - install it.
 	 */
 
 	event_relation = heap_openr(event_obj->relname);

@@ -404,3 +404,100 @@ insert into rtest_nothn2 select * from rtest_nothn4;
 select * from rtest_nothn2;
 select * from rtest_nothn3;
 
+create table rtest_view1 (a int4, b text, v bool);
+create table rtest_view2 (a int4);
+create table rtest_view3 (a int4, b text);
+create table rtest_view4 (a int4, b text, c int4);
+create view rtest_vview1 as select a, b from rtest_view1 X 
+	where 0 < (select count(*) from rtest_view2 Y where Y.a = X.a);
+create view rtest_vview2 as select a, b from rtest_view1 where v;
+create view rtest_vview3 as select a, b from rtest_vview2 X
+	where 0 < (select count(*) from rtest_view2 Y where Y.a = X.a);
+create view rtest_vview4 as select X.a, X.b, count(Y.a) as refcount
+	from rtest_view1 X, rtest_view2 Y
+	where X.a = Y.a
+	group by X.a, X.b;
+create function rtest_viewfunc1(int4) returns int4 as
+	'select count(*) from rtest_view2 where a = $1'
+	language 'sql';
+create view rtest_vview5 as select a, b, rtest_viewfunc1(a) as refcount
+	from rtest_view1;
+
+insert into rtest_view1 values (1, 'item 1', 't');
+insert into rtest_view1 values (2, 'item 2', 't');
+insert into rtest_view1 values (3, 'item 3', 't');
+insert into rtest_view1 values (4, 'item 4', 'f');
+insert into rtest_view1 values (5, 'item 5', 't');
+insert into rtest_view1 values (6, 'item 6', 'f');
+insert into rtest_view1 values (7, 'item 7', 't');
+insert into rtest_view1 values (8, 'item 8', 't');
+
+insert into rtest_view2 values (2);
+insert into rtest_view2 values (2);
+insert into rtest_view2 values (4);
+insert into rtest_view2 values (5);
+insert into rtest_view2 values (7);
+insert into rtest_view2 values (7);
+insert into rtest_view2 values (7);
+insert into rtest_view2 values (7);
+
+select * from rtest_vview1;
+select * from rtest_vview2;
+select * from rtest_vview3;
+select * from rtest_vview4;
+select * from rtest_vview5;
+
+insert into rtest_view3 select * from rtest_vview1 where a < 7;
+select * from rtest_view3;
+delete from rtest_view3;
+
+insert into rtest_view3 select * from rtest_vview2 where a != 5 and b !~ '2';
+select * from rtest_view3;
+delete from rtest_view3;
+
+insert into rtest_view3 select * from rtest_vview3;
+select * from rtest_view3;
+delete from rtest_view3;
+
+insert into rtest_view4 select * from rtest_vview4 where 3 > refcount;
+select * from rtest_view4;
+delete from rtest_view4;
+
+insert into rtest_view4 select * from rtest_vview5 where a > 2 and refcount = 0;
+select * from rtest_view4;
+delete from rtest_view4;
+--
+-- Test for computations in views
+--
+create table rtest_comp (
+	part	text,
+	unit	char(4),
+	size	float
+);
+
+
+create table rtest_unitfact (
+	unit	char(4),
+	factor	float
+);
+
+create view rtest_vcomp as 
+	select X.part, (X.size * Y.factor) as size_in_cm
+			from rtest_comp X, rtest_unitfact Y
+			where X.unit = Y.unit;
+
+
+insert into rtest_unitfact values ('m', 100.0);
+insert into rtest_unitfact values ('cm', 1.0);
+insert into rtest_unitfact values ('inch', 2.54);
+
+insert into rtest_comp values ('p1', 'm', 5.0);
+insert into rtest_comp values ('p2', 'm', 3.0);
+insert into rtest_comp values ('p3', 'cm', 5.0);
+insert into rtest_comp values ('p4', 'cm', 15.0);
+insert into rtest_comp values ('p5', 'inch', 7.0);
+insert into rtest_comp values ('p6', 'inch', 4.4);
+
+select * from rtest_vcomp order by part;
+
+select * from rtest_vcomp where size_in_cm > 10.0 order by size_in_cm using >;

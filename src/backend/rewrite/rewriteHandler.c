@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.21 1998/09/01 04:31:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.22 1998/10/02 16:27:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "utils/rel.h"
 #include "nodes/pg_list.h"
 #include "nodes/primnodes.h"
+#include "nodes/relation.h"
 
 #include "parser/parsetree.h"	/* for parsetree manipulation */
 #include "parser/parse_relation.h"
@@ -31,20 +32,44 @@
 #include "commands/creatinh.h"
 #include "access/heapam.h"
 
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/acl.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_type.h"
 
-static void ApplyRetrieveRule(Query *parsetree, RewriteRule *rule,
-				  int rt_index, int relation_level,
-				  Relation relation, int *modified);
-static List *fireRules(Query *parsetree, int rt_index, CmdType event,
-		  bool *instead_flag, List *locks, List **qual_products);
-static void QueryRewriteSubLink(Node *node);
-static List *QueryRewriteOne(Query *parsetree);
-static List *deepRewriteQuery(Query *parsetree);
-static void RewritePreprocessQuery(Query *parsetree);
-static Query *RewritePostprocessNonSelect(Query *parsetree);
+
+
+static RewriteInfo *gatherRewriteMeta(Query *parsetree,
+				  Query *rule_action,
+				  Node *rule_qual,
+				  int rt_index,
+				  CmdType event,
+				  bool *instead_flag);
+static bool rangeTableEntry_used(Node *node, int rt_index, int sublevels_up);
+static bool attribute_used(Node *node, int rt_index, int attno, int sublevels_up);
+static void offset_varnodes(Node *node, int offset, int sublevels_up);
+static void change_varnodes(Node *node, int rt_index, int new_index, int sublevels_up);
+static void modifyAggregUplevel(Node *node);
+static void modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int sublevels_up);
+static void modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr);
+static SubLink *modifyAggregMakeSublink(Expr *origexp, Query *parsetree);
+static void modifyAggregQual(Node **nodePtr, Query *parsetree);
+
+
+
+
+
+
+
+
+
+
+
+
+
+static Query *fireRIRrules(Query *parsetree);
+
 
 /*
  * gatherRewriteMeta -
@@ -118,24 +143,2050 @@ gatherRewriteMeta(Query *parsetree,
 	return info;
 }
 
-static List *
-OptimizeRIRRules(List *locks)
+
+/*
+ * rangeTableEntry_used -
+ *	we need to process a RTE for RIR rules only if it is
+ *	referenced somewhere in var nodes of the query.
+ */
+static bool
+rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 {
-	List	   *attr_level = NIL,
-			   *i;
-	List	   *relation_level = NIL;
+	if (node == NULL)
+		return FALSE;
 
-	foreach(i, locks)
-	{
-		RewriteRule *rule_lock = lfirst(i);
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
 
-		if (rule_lock->attrno == -1)
-			relation_level = lappend(relation_level, rule_lock);
-		else
-			attr_level = lappend(attr_level, rule_lock);
+				return rangeTableEntry_used(
+						(Node *)(tle->expr),
+						rt_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Aggreg:
+			{
+				Aggreg	*agg = (Aggreg *)node;
+
+				return rangeTableEntry_used(
+						(Node *)(agg->target),
+						rt_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_GroupClause:
+			{
+				GroupClause	*grp = (GroupClause *)node;
+
+				return rangeTableEntry_used(
+						(Node *)(grp->entry),
+						rt_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				return rangeTableEntry_used(
+						(Node *)(exp->args),
+						rt_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				return rangeTableEntry_used(
+						(Node *)(iter->iterexpr),
+						rt_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				if (rangeTableEntry_used(
+						(Node *)(ref->refupperindexpr),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+				
+				if (rangeTableEntry_used(
+						(Node *)(ref->reflowerindexpr),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+				
+				if (rangeTableEntry_used(
+						(Node *)(ref->refexpr),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+				
+				if (rangeTableEntry_used(
+						(Node *)(ref->refassgnexpr),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+				
+				return FALSE;
+			}
+			break;
+
+		case T_Var:
+			{
+				Var	*var = (Var *)node;
+
+				if (var->varlevelsup == sublevels_up)
+					return var->varno == rt_index;
+				else
+					return FALSE;
+			}
+			break;
+
+		case T_Param:
+			return FALSE;
+
+		case T_Const:
+			return FALSE;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node) {
+					if (rangeTableEntry_used(
+							(Node *)lfirst(l),
+							rt_index,
+							sublevels_up))
+						return TRUE;
+				}
+				return FALSE;
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+
+				if (rangeTableEntry_used(
+						(Node *)(sub->lefthand),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+
+				if (rangeTableEntry_used(
+						(Node *)(sub->subselect),
+						rt_index,
+						sublevels_up + 1))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				if (rangeTableEntry_used(
+						(Node *)(qry->targetList),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+
+				if (rangeTableEntry_used(
+						(Node *)(qry->qual),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+
+				if (rangeTableEntry_used(
+						(Node *)(qry->havingQual),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+
+				if (rangeTableEntry_used(
+						(Node *)(qry->groupClause),
+						rt_index,
+						sublevels_up))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in rangeTableEntry_used()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
 	}
-	return nconc(relation_level, attr_level);
+
+	return FALSE;
 }
+
+
+/*
+ * attribute_used -
+ *	Check if a specific attribute number of a RTE is used
+ *	somewhere in the query
+ */
+static bool
+attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
+{
+	if (node == NULL)
+		return FALSE;
+
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
+
+				return attribute_used(
+						(Node *)(tle->expr),
+						rt_index,
+						attno,
+						sublevels_up);
+			}
+			break;
+
+		case T_Aggreg:
+			{
+				Aggreg	*agg = (Aggreg *)node;
+
+				return attribute_used(
+						(Node *)(agg->target),
+						rt_index,
+						attno,
+						sublevels_up);
+			}
+			break;
+
+		case T_GroupClause:
+			{
+				GroupClause	*grp = (GroupClause *)node;
+
+				return attribute_used(
+						(Node *)(grp->entry),
+						rt_index,
+						attno,
+						sublevels_up);
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				return attribute_used(
+						(Node *)(exp->args),
+						rt_index,
+						attno,
+						sublevels_up);
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				return attribute_used(
+						(Node *)(iter->iterexpr),
+						rt_index,
+						attno,
+						sublevels_up);
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				if (attribute_used(
+						(Node *)(ref->refupperindexpr),
+						rt_index,
+						attno,
+						sublevels_up))
+					return TRUE;
+
+				if (attribute_used(
+						(Node *)(ref->reflowerindexpr),
+						rt_index,
+						attno,
+						sublevels_up))
+					return TRUE;
+
+				if (attribute_used(
+						(Node *)(ref->refexpr),
+						rt_index,
+						attno,
+						sublevels_up))
+					return TRUE;
+
+				if (attribute_used(
+						(Node *)(ref->refassgnexpr),
+						rt_index,
+						attno,
+						sublevels_up))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		case T_Var:
+			{
+				Var	*var = (Var *)node;
+
+				if (var->varlevelsup == sublevels_up)
+					return var->varno == rt_index;
+				else
+					return FALSE;
+			}
+			break;
+
+		case T_Param:
+			return FALSE;
+
+		case T_Const:
+			return FALSE;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node) {
+					if (attribute_used(
+							(Node *)lfirst(l),
+							rt_index,
+							attno,
+							sublevels_up))
+						return TRUE;
+				}
+				return FALSE;
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+
+				if (attribute_used(
+						(Node *)(sub->lefthand),
+						rt_index,
+						attno,
+						sublevels_up))
+					return TRUE;
+
+				if (attribute_used(
+						(Node *)(sub->subselect),
+						rt_index,
+						attno,
+						sublevels_up + 1))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				if (attribute_used(
+						(Node *)(qry->targetList),
+						rt_index,
+						attno,
+						sublevels_up))
+					return TRUE;
+
+				if (attribute_used(
+						(Node *)(qry->qual),
+						rt_index,
+						attno,
+						sublevels_up))
+					return TRUE;
+
+				if (attribute_used(
+						(Node *)(qry->havingQual),
+						rt_index,
+						attno,
+						sublevels_up))
+					return TRUE;
+
+				if (attribute_used(
+						(Node *)(qry->groupClause),
+						rt_index,
+						attno,
+						sublevels_up))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in attribute_used()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+
+	return FALSE;
+}
+
+
+/*
+ * offset_varnodes -
+ *	We need another version of OffsetVarNodes() when processing
+ *	RIR rules
+ */
+static void
+offset_varnodes(Node *node, int offset, int sublevels_up)
+{
+	if (node == NULL)
+		return;
+
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
+
+				offset_varnodes(
+						(Node *)(tle->expr),
+						offset,
+						sublevels_up);
+			}
+			break;
+
+		case T_Aggreg:
+			{
+				Aggreg	*agg = (Aggreg *)node;
+
+				offset_varnodes(
+						(Node *)(agg->target),
+						offset,
+						sublevels_up);
+			}
+			break;
+
+		case T_GroupClause:
+			{
+				GroupClause	*grp = (GroupClause *)node;
+
+				offset_varnodes(
+						(Node *)(grp->entry),
+						offset,
+						sublevels_up);
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				offset_varnodes(
+						(Node *)(exp->args),
+						offset,
+						sublevels_up);
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				offset_varnodes(
+						(Node *)(iter->iterexpr),
+						offset,
+						sublevels_up);
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				offset_varnodes(
+						(Node *)(ref->refupperindexpr),
+						offset,
+						sublevels_up);
+				offset_varnodes(
+						(Node *)(ref->reflowerindexpr),
+						offset,
+						sublevels_up);
+				offset_varnodes(
+						(Node *)(ref->refexpr),
+						offset,
+						sublevels_up);
+				offset_varnodes(
+						(Node *)(ref->refassgnexpr),
+						offset,
+						sublevels_up);
+			}
+			break;
+
+		case T_Var:
+			{
+				Var	*var = (Var *)node;
+
+				if (var->varlevelsup == sublevels_up) {
+					var->varno += offset;
+					var->varnoold += offset;
+				}
+			}
+			break;
+
+		case T_Param:
+			break;
+
+		case T_Const:
+			break;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node)
+					offset_varnodes(
+							(Node *)lfirst(l),
+							offset,
+							sublevels_up);
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+
+				offset_varnodes(
+						(Node *)(sub->lefthand),
+						offset,
+						sublevels_up);
+
+				offset_varnodes(
+						(Node *)(sub->subselect),
+						offset,
+						sublevels_up + 1);
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				offset_varnodes(
+						(Node *)(qry->targetList),
+						offset,
+						sublevels_up);
+
+				offset_varnodes(
+						(Node *)(qry->qual),
+						offset,
+						sublevels_up);
+
+				offset_varnodes(
+						(Node *)(qry->havingQual),
+						offset,
+						sublevels_up);
+
+				offset_varnodes(
+						(Node *)(qry->groupClause),
+						offset,
+						sublevels_up);
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in offset_varnodes()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+}
+
+
+/*
+ * change_varnodes -
+ *	and another ChangeVarNodes() too
+ */
+static void
+change_varnodes(Node *node, int rt_index, int new_index, int sublevels_up)
+{
+	if (node == NULL)
+		return;
+
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
+
+				change_varnodes(
+						(Node *)(tle->expr),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Aggreg:
+			{
+				Aggreg	*agg = (Aggreg *)node;
+
+				change_varnodes(
+						(Node *)(agg->target),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_GroupClause:
+			{
+				GroupClause	*grp = (GroupClause *)node;
+
+				change_varnodes(
+						(Node *)(grp->entry),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				change_varnodes(
+						(Node *)(exp->args),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				change_varnodes(
+						(Node *)(iter->iterexpr),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				change_varnodes(
+						(Node *)(ref->refupperindexpr),
+						rt_index,
+						new_index,
+						sublevels_up);
+				change_varnodes(
+						(Node *)(ref->reflowerindexpr),
+						rt_index,
+						new_index,
+						sublevels_up);
+				change_varnodes(
+						(Node *)(ref->refexpr),
+						rt_index,
+						new_index,
+						sublevels_up);
+				change_varnodes(
+						(Node *)(ref->refassgnexpr),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Var:
+			{
+				Var	*var = (Var *)node;
+
+				if (var->varlevelsup == sublevels_up &&
+						var->varno == rt_index) {
+					var->varno = new_index;
+					var->varnoold = new_index;
+				}
+			}
+			break;
+
+		case T_Param:
+			break;
+
+		case T_Const:
+			break;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node)
+					change_varnodes(
+							(Node *)lfirst(l),
+							rt_index,
+							new_index,
+							sublevels_up);
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+
+				change_varnodes(
+						(Node *)(sub->lefthand),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				change_varnodes(
+						(Node *)(sub->subselect),
+						rt_index,
+						new_index,
+						sublevels_up + 1);
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				change_varnodes(
+						(Node *)(qry->targetList),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				change_varnodes(
+						(Node *)(qry->qual),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				change_varnodes(
+						(Node *)(qry->havingQual),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				change_varnodes(
+						(Node *)(qry->groupClause),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in change_varnodes()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+}
+
+
+/*
+ * modifyAggregUplevel -
+ *	In the newly created sublink for an aggregate column used in
+ *	the qualification, we must adjust the varlevelsup in all the
+ *	var nodes.
+ */
+static void
+modifyAggregUplevel(Node *node)
+{
+	if (node == NULL)
+		return;
+
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
+
+				modifyAggregUplevel(
+						(Node *)(tle->expr));
+			}
+			break;
+
+		case T_Aggreg:
+			{
+				Aggreg	*agg = (Aggreg *)node;
+
+				modifyAggregUplevel(
+						(Node *)(agg->target));
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				modifyAggregUplevel(
+						(Node *)(exp->args));
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				modifyAggregUplevel(
+						(Node *)(iter->iterexpr));
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				modifyAggregUplevel(
+						(Node *)(ref->refupperindexpr));
+				modifyAggregUplevel(
+						(Node *)(ref->reflowerindexpr));
+				modifyAggregUplevel(
+						(Node *)(ref->refexpr));
+				modifyAggregUplevel(
+						(Node *)(ref->refassgnexpr));
+			}
+			break;
+
+		case T_Var:
+			{
+				Var	*var = (Var *)node;
+
+				var->varlevelsup++;
+			}
+			break;
+
+		case T_Param:
+			break;
+
+		case T_Const:
+			break;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node)
+					modifyAggregUplevel(
+							(Node *)lfirst(l));
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+
+				modifyAggregUplevel(
+						(Node *)(sub->lefthand));
+
+				modifyAggregUplevel(
+						(Node *)(sub->oper));
+
+				modifyAggregUplevel(
+						(Node *)(sub->subselect));
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				modifyAggregUplevel(
+						(Node *)(qry->targetList));
+
+				modifyAggregUplevel(
+						(Node *)(qry->qual));
+
+				modifyAggregUplevel(
+						(Node *)(qry->havingQual));
+
+				modifyAggregUplevel(
+						(Node *)(qry->groupClause));
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in modifyAggregUplevel()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+}
+
+
+/*
+ * modifyAggregChangeVarnodes -
+ *	Change the var nodes in a sublink created for an aggregate column
+ *	used in the qualification that is subject of the aggregate
+ *	function to point to the correct local RTE.
+ */
+static void
+modifyAggregChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int sublevels_up)
+{
+	Node	*node = *nodePtr;
+
+	if (node == NULL)
+		return;
+
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(tle->expr)),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Aggreg:
+			{
+				Aggreg	*agg = (Aggreg *)node;
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(agg->target)),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_GroupClause:
+			{
+				GroupClause	*grp = (GroupClause *)node;
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(grp->entry)),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(exp->args)),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(iter->iterexpr)),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(ref->refupperindexpr)),
+						rt_index,
+						new_index,
+						sublevels_up);
+				modifyAggregChangeVarnodes(
+						(Node **)(&(ref->reflowerindexpr)),
+						rt_index,
+						new_index,
+						sublevels_up);
+				modifyAggregChangeVarnodes(
+						(Node **)(&(ref->refexpr)),
+						rt_index,
+						new_index,
+						sublevels_up);
+				modifyAggregChangeVarnodes(
+						(Node **)(&(ref->refassgnexpr)),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Var:
+			{
+				Var	*var = (Var *)node;
+
+				if (var->varlevelsup == sublevels_up &&
+						var->varno == rt_index) {
+					var = copyObject(var);
+					var->varno = new_index;
+					var->varnoold = new_index;
+					var->varlevelsup = 0;
+
+					*nodePtr = (Node *)var;
+				}
+			}
+			break;
+
+		case T_Param:
+			break;
+
+		case T_Const:
+			break;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node)
+					modifyAggregChangeVarnodes(
+							(Node **)(&lfirst(l)),
+							rt_index,
+							new_index,
+							sublevels_up);
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(sub->lefthand)),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(sub->oper)),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(sub->subselect)),
+						rt_index,
+						new_index,
+						sublevels_up + 1);
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(qry->targetList)),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(qry->qual)),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(qry->havingQual)),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				modifyAggregChangeVarnodes(
+						(Node **)(&(qry->groupClause)),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in modifyAggregChangeVarnodes()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+}
+
+
+/*
+ * modifyAggregDropQual -
+ *	remove the pure aggreg clase from a qualification
+ */
+static void
+modifyAggregDropQual(Node **nodePtr, Node *orignode, Expr *expr)
+{
+	Node	*node = *nodePtr;
+
+	if (node == NULL)
+		return;
+
+	switch(nodeTag(node)) {
+		case T_Var:
+			break;
+
+		case T_Aggreg:
+			{
+				Aggreg	*agg = (Aggreg *)node;
+				Aggreg	*oagg = (Aggreg *)orignode;
+
+				modifyAggregDropQual(
+						(Node **)(&(agg->target)),
+						(Node *)(oagg->target),
+						expr);
+			}
+			break;
+
+		case T_Param:
+			break;
+
+		case T_Const:
+			break;
+
+		case T_GroupClause:
+			break;
+
+		case T_Expr:
+			{
+				Expr	*this_expr = (Expr *)node;
+				Expr	*orig_expr = (Expr *)orignode;
+
+				if (orig_expr == expr) {
+					Const	*ctrue;
+
+					if (expr->typeOid != BOOLOID)
+						elog(ERROR,
+							"aggregate expression in qualification isn't of type bool");
+					ctrue = makeNode(Const);
+					ctrue->consttype = BOOLOID;
+					ctrue->constlen = 1;
+					ctrue->constisnull = FALSE;
+					ctrue->constvalue = (Datum)TRUE;
+					ctrue->constbyval = TRUE;
+
+					*nodePtr = (Node *)ctrue;
+				}
+				else
+					modifyAggregDropQual(
+						(Node **)(&(this_expr->args)),
+						(Node *)(orig_expr->args),
+						expr);
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+				Iter	*oiter = (Iter *)orignode;
+
+				modifyAggregDropQual(
+						(Node **)(&(iter->iterexpr)),
+						(Node *)(oiter->iterexpr),
+						expr);
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+				ArrayRef	*oref = (ArrayRef *)orignode;
+
+				modifyAggregDropQual(
+						(Node **)(&(ref->refupperindexpr)),
+						(Node *)(oref->refupperindexpr),
+						expr);
+				modifyAggregDropQual(
+						(Node **)(&(ref->reflowerindexpr)),
+						(Node *)(oref->reflowerindexpr),
+						expr);
+				modifyAggregDropQual(
+						(Node **)(&(ref->refexpr)),
+						(Node *)(oref->refexpr),
+						expr);
+				modifyAggregDropQual(
+						(Node **)(&(ref->refassgnexpr)),
+						(Node *)(oref->refassgnexpr),
+						expr);
+			}
+			break;
+
+		case T_List:
+			{
+				List	*l;
+				List	*ol = (List *)orignode;
+				int	li = 0;
+
+				foreach (l, (List *)node) {
+					modifyAggregDropQual(
+							(Node **)(&(lfirst(l))),
+							(Node *)nth(li, ol),
+							expr);
+					li++;
+				}
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+				SubLink	*osub = (SubLink *)orignode;
+
+				modifyAggregDropQual(
+						(Node **)(&(sub->subselect)),
+						(Node *)(osub->subselect),
+						expr);
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+				Query	*oqry = (Query *)orignode;
+
+				modifyAggregDropQual(
+						(Node **)(&(qry->qual)),
+						(Node *)(oqry->qual),
+						expr);
+
+				modifyAggregDropQual(
+						(Node **)(&(qry->havingQual)),
+						(Node *)(oqry->havingQual),
+						expr);
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in modifyAggregDropQual()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+}
+
+
+/*
+ * modifyAggregMakeSublink -
+ *	Create a sublink node for a qualification expression that
+ *	uses an aggregate column of a view
+ */
+static SubLink *
+modifyAggregMakeSublink(Expr *origexp, Query *parsetree)
+{
+	SubLink		*sublink;
+	Query		*subquery;
+	Node		*subqual;
+	RangeTblEntry	*rte;
+	Aggreg		*aggreg;
+	Var		*target;
+	TargetEntry	*tle;
+	Resdom		*resdom;
+	Expr		*exp = copyObject(origexp);
+
+	if (nodeTag(nth(0, exp->args)) == T_Aggreg)
+		if (nodeTag(nth(1, exp->args)) == T_Aggreg)
+			elog(ERROR, "rewrite: comparision of 2 aggregate columns not supported");
+		else
+			elog(ERROR, "rewrite: aggregate column of view must be at rigth side in qual");
+
+	aggreg = (Aggreg *)nth(1, exp->args);
+	target	= (Var *)(aggreg->target);
+	rte	= (RangeTblEntry *)nth(target->varno - 1, parsetree->rtable);
+	tle	= makeNode(TargetEntry);
+	resdom	= makeNode(Resdom);
+
+	aggreg->usenulls = TRUE;
+
+	resdom->resno	= 1;
+	resdom->restype	= ((Oper *)(exp->oper))->opresulttype;
+	resdom->restypmod = -1;
+	resdom->resname = pstrdup("<noname>");
+	resdom->reskey	= 0;
+	resdom->reskeyop = 0;
+	resdom->resjunk	= 0;
+
+	tle->resdom	= resdom;
+	tle->expr	= (Node *)aggreg;
+
+	subqual = copyObject(parsetree->qual);
+	modifyAggregDropQual((Node **)&subqual, (Node *)parsetree->qual, origexp);
+
+	sublink = makeNode(SubLink);
+	sublink->subLinkType	= EXPR_SUBLINK;
+	sublink->useor		= FALSE;
+	sublink->lefthand	= lappend(NIL, copyObject(lfirst(exp->args)));
+	sublink->oper		= lappend(NIL, copyObject(exp));
+	sublink->subselect	= NULL;
+
+	subquery		= makeNode(Query);
+	sublink->subselect	= (Node *)subquery;
+
+	subquery->commandType		= CMD_SELECT;
+	subquery->utilityStmt		= NULL;
+	subquery->resultRelation	= 0;
+	subquery->into			= NULL;
+	subquery->isPortal		= FALSE;
+	subquery->isBinary		= FALSE;
+	subquery->unionall		= FALSE;
+	subquery->uniqueFlag		= NULL;
+	subquery->sortClause		= NULL;
+	subquery->rtable		= lappend(NIL, rte);
+	subquery->targetList		= lappend(NIL, tle);
+	subquery->qual			= subqual;
+	subquery->groupClause		= NIL;
+	subquery->havingQual		= NULL;
+	subquery->hasAggs		= TRUE;
+	subquery->hasSubLinks		= FALSE;
+	subquery->unionClause		= NULL;
+
+
+	modifyAggregUplevel((Node *)sublink);
+
+	modifyAggregChangeVarnodes((Node **)&(sublink->lefthand), target->varno,
+			1, target->varlevelsup);
+	modifyAggregChangeVarnodes((Node **)&(sublink->oper), target->varno,
+			1, target->varlevelsup);
+	modifyAggregChangeVarnodes((Node **)&(sublink->subselect), target->varno,
+			1, target->varlevelsup);
+
+	return sublink;
+}
+
+
+/*
+ * modifyAggregQual -
+ *	Search for qualification expressions that contain aggregate
+ *	functions and substiture them by sublinks. These expressions
+ *	originally come from qualifications that use aggregate columns
+ *	of a view.
+ */
+static void
+modifyAggregQual(Node **nodePtr, Query *parsetree)
+{
+	Node	*node = *nodePtr;
+
+	if (node == NULL)
+		return;
+
+	switch(nodeTag(node)) {
+		case T_Var:
+			break;
+
+		case T_Param:
+			break;
+
+		case T_Const:
+			break;
+
+		case T_GroupClause:
+			{
+				GroupClause	*grp = (GroupClause *)node;
+
+				modifyAggregQual(
+						(Node **)(&(grp->entry)),
+						parsetree);
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+				SubLink	*sub;
+
+
+				if (length(exp->args) != 2) {
+					modifyAggregQual(
+						(Node **)(&(exp->args)),
+						parsetree);
+					break;
+				}
+
+				if (nodeTag(nth(0, exp->args)) != T_Aggreg &&
+					nodeTag(nth(1, exp->args)) != T_Aggreg) {
+
+					modifyAggregQual(
+						(Node **)(&(exp->args)),
+						parsetree);
+					break;
+				}
+
+				sub = modifyAggregMakeSublink(exp,
+						parsetree);
+
+				*nodePtr = (Node *)sub;
+				parsetree->hasSubLinks = TRUE;
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				modifyAggregQual(
+						(Node **)(&(iter->iterexpr)),
+						parsetree);
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				modifyAggregQual(
+						(Node **)(&(ref->refupperindexpr)),
+						parsetree);
+				modifyAggregQual(
+						(Node **)(&(ref->reflowerindexpr)),
+						parsetree);
+				modifyAggregQual(
+						(Node **)(&(ref->refexpr)),
+						parsetree);
+				modifyAggregQual(
+						(Node **)(&(ref->refassgnexpr)),
+						parsetree);
+			}
+			break;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node)
+					modifyAggregQual(
+							(Node **)(&(lfirst(l))),
+							parsetree);
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+
+				modifyAggregQual(
+						(Node **)(&(sub->subselect)),
+						(Query *)(sub->subselect));
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				modifyAggregQual(
+						(Node **)(&(qry->qual)),
+						parsetree);
+
+				modifyAggregQual(
+						(Node **)(&(qry->havingQual)),
+						parsetree);
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in modifyAggregQual()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+}
+
+
+static Node *
+FindMatchingTLEntry(List *tlist, char *e_attname)
+{
+	List	   *i;
+
+	foreach(i, tlist)
+	{
+		TargetEntry *tle = lfirst(i);
+		char	   *resname;
+
+		resname = tle->resdom->resname;
+		if (!strcmp(e_attname, resname))
+			return (tle->expr);
+	}
+	return NULL;
+}
+
+
+static Node *
+make_null(Oid type)
+{
+	Const	   *c = makeNode(Const);
+
+	c->consttype = type;
+	c->constlen = get_typlen(type);
+	c->constvalue = PointerGetDatum(NULL);
+	c->constisnull = true;
+	c->constbyval = get_typbyval(type);
+	return (Node *) c;
+}
+
+
+static void
+apply_RIR_view(Node **nodePtr, int rt_index, RangeTblEntry *rte, List *tlist, int *modified, int sublevels_up)
+{
+	Node	*node = *nodePtr;
+
+	if (node == NULL)
+		return;
+
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
+
+				apply_RIR_view(
+						(Node **)(&(tle->expr)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+			}
+			break;
+
+		case T_Aggreg:
+			{
+				Aggreg	*agg = (Aggreg *)node;
+
+				apply_RIR_view(
+						(Node **)(&(agg->target)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+			}
+			break;
+
+		case T_GroupClause:
+			{
+				GroupClause	*grp = (GroupClause *)node;
+
+				apply_RIR_view(
+						(Node **)(&(grp->entry)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				apply_RIR_view(
+						(Node **)(&(exp->args)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				apply_RIR_view(
+						(Node **)(&(iter->iterexpr)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				apply_RIR_view(
+						(Node **)(&(ref->refupperindexpr)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+				apply_RIR_view(
+						(Node **)(&(ref->reflowerindexpr)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+				apply_RIR_view(
+						(Node **)(&(ref->refexpr)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+				apply_RIR_view(
+						(Node **)(&(ref->refassgnexpr)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+			}
+			break;
+
+		case T_Var:
+			{
+				Var	*var = (Var *)node;
+
+				if (var->varlevelsup == sublevels_up &&
+						var->varno == rt_index) {
+					Node		*exp;
+
+					exp = FindMatchingTLEntry(
+							tlist,
+							get_attname(rte->relid,
+								var->varattno));
+
+					if (exp == NULL) {
+						*nodePtr = make_null(var->vartype);
+						return;
+					}
+
+					if (var->varlevelsup > 0 &&
+							nodeTag(exp) == T_Var) {
+						exp = copyObject(exp);
+						((Var *)exp)->varlevelsup = var->varlevelsup;
+					}
+					*nodePtr = exp;
+					*modified = TRUE;
+				}
+			}
+			break;
+
+		case T_Param:
+			break;
+
+		case T_Const:
+			break;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node)
+					apply_RIR_view(
+							(Node **)(&(lfirst(l))),
+							rt_index,
+							rte,
+							tlist,
+							modified,
+							sublevels_up);
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+
+				apply_RIR_view(
+						(Node **)(&(sub->lefthand)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+
+				apply_RIR_view(
+						(Node **)(&(sub->subselect)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up + 1);
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				apply_RIR_view(
+						(Node **)(&(qry->targetList)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+
+				apply_RIR_view(
+						(Node **)(&(qry->qual)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+
+				apply_RIR_view(
+						(Node **)(&(qry->havingQual)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+
+				apply_RIR_view(
+						(Node **)(&(qry->groupClause)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in apply_RIR_view()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+}
+
+
+static void
+ApplyRetrieveRule(Query *parsetree,
+				  RewriteRule *rule,
+				  int rt_index,
+				  int relation_level,
+				  Relation relation,
+				  int *modified)
+{
+	Query	   *rule_action = NULL;
+	Node	   *rule_qual;
+	List	   *rtable,
+			   *rt;
+	int			nothing,
+				rt_length;
+	int			badsql = FALSE;
+
+	rule_qual = rule->qual;
+	if (rule->actions)
+	{
+		if (length(rule->actions) > 1)	/* ??? because we don't handle
+										 * rules with more than one
+										 * action? -ay */
+
+			return;
+		rule_action = copyObject(lfirst(rule->actions));
+		nothing = FALSE;
+	}
+	else
+		nothing = TRUE;
+
+	rtable = copyObject(parsetree->rtable);
+	foreach(rt, rtable)
+	{
+		RangeTblEntry *rte = lfirst(rt);
+
+		/*
+		 * this is to prevent add_missing_vars_to_base_rels() from adding
+		 * a bogus entry to the new target list.
+		 */
+		rte->inFromCl = false;
+	}
+	rt_length = length(rtable);
+
+	rtable = nconc(rtable, copyObject(rule_action->rtable));
+	parsetree->rtable = rtable;
+
+	rule_action->rtable = rtable;
+	offset_varnodes((Node *) rule_qual,   rt_length, 0);
+	offset_varnodes((Node *) rule_action, rt_length, 0);
+
+	change_varnodes((Node *) rule_qual, 
+				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+	change_varnodes((Node *) rule_action,
+				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+
+	if (relation_level)
+	{
+	  apply_RIR_view((Node **) &parsetree, rt_index, 
+	  		(RangeTblEntry *)nth(rt_index - 1, rtable),
+			rule_action->targetList, modified, 0);
+	  apply_RIR_view((Node **) &rule_action, rt_index, 
+	  		(RangeTblEntry *)nth(rt_index - 1, rtable),
+			rule_action->targetList, modified, 0);
+	}
+	else
+	{
+	  HandleRIRAttributeRule(parsetree, rtable, rule_action->targetList,
+				 rt_index, rule->attrno, modified, &badsql);
+	}
+	if (*modified && !badsql) {
+	  AddQual(parsetree, rule_action->qual);
+	  /* This will only work if the query made to the view defined by the following
+	   * groupClause groups by the same attributes or does not use group at all! */
+	  if (parsetree->groupClause == NULL)
+	    parsetree->groupClause=rule_action->groupClause;
+	  AddHavingQual(parsetree, rule_action->havingQual);
+	  parsetree->hasAggs = (rule_action->hasAggs || parsetree->hasAggs);
+	  parsetree->hasSubLinks = (rule_action->hasSubLinks ||  parsetree->hasSubLinks);
+	}	
+}
+
+
+static void
+fireRIRonSubselect(Node *node)
+{
+	if (node == NULL)
+		return;
+
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
+
+				fireRIRonSubselect(
+						(Node *)(tle->expr));
+			}
+			break;
+
+		case T_Aggreg:
+			{
+				Aggreg	*agg = (Aggreg *)node;
+
+				fireRIRonSubselect(
+						(Node *)(agg->target));
+			}
+			break;
+
+		case T_GroupClause:
+			{
+				GroupClause	*grp = (GroupClause *)node;
+
+				fireRIRonSubselect(
+						(Node *)(grp->entry));
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				fireRIRonSubselect(
+						(Node *)(exp->args));
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				fireRIRonSubselect(
+						(Node *)(iter->iterexpr));
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				fireRIRonSubselect(
+						(Node *)(ref->refupperindexpr));
+				fireRIRonSubselect(
+						(Node *)(ref->reflowerindexpr));
+				fireRIRonSubselect(
+						(Node *)(ref->refexpr));
+				fireRIRonSubselect(
+						(Node *)(ref->refassgnexpr));
+			}
+			break;
+
+		case T_Var:
+			break;
+
+		case T_Param:
+			break;
+
+		case T_Const:
+			break;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node)
+					fireRIRonSubselect(
+							(Node *)(lfirst(l)));
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+				Query	*qry;
+
+				fireRIRonSubselect(
+						(Node *)(sub->lefthand));
+
+				qry = fireRIRrules((Query *)(sub->subselect));
+
+				fireRIRonSubselect(
+						(Node *)qry);
+
+				sub->subselect = (Node *) qry;
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				fireRIRonSubselect(
+						(Node *)(qry->targetList));
+
+				fireRIRonSubselect(
+						(Node *)(qry->qual));
+
+				fireRIRonSubselect(
+						(Node *)(qry->havingQual));
+
+				fireRIRonSubselect(
+						(Node *)(qry->groupClause));
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in fireRIRonSubselect()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+}
+
+
+/*
+ * fireRIRrules -
+ *	Apply all RIR rules on each rangetable entry in a query
+ */
+static Query *
+fireRIRrules(Query *parsetree)
+{
+	int		rt_index;
+	RangeTblEntry	*rte;
+	Relation	rel;
+	List		*locks;
+	RuleLock	*rules;
+	RewriteRule	*rule;
+	RewriteRule	RIRonly;
+	int		modified;
+	int		i;
+	List		*l;
+
+	rt_index = 0;
+	while(rt_index < length(parsetree->rtable)) {
+		++rt_index;
+
+		if (!rangeTableEntry_used((Node *)parsetree, rt_index, 0))
+			continue;
+		
+		rte = nth(rt_index - 1, parsetree->rtable);
+		rel = heap_openr(rte->relname);
+		if (rel->rd_rules == NULL) {
+			heap_close(rel);
+			continue;
+		}
+
+		rules = rel->rd_rules;
+		locks = NIL;
+
+		/*
+		 * Collect the RIR rules that we must apply
+		 */
+		for (i = 0; i < rules->numLocks; i++) {
+			rule = rules->rules[i];
+			if (rule->event != CMD_SELECT)
+				continue;
+			
+			if (rule->attrno > 0 &&
+					!attribute_used((Node *)parsetree,
+							rt_index,
+							rule->attrno, 0))
+				continue;
+
+			locks = lappend(locks, rule);
+		}
+
+		/*
+		 * Check permissions
+		 */
+		checkLockPerms(locks, parsetree, rt_index);
+
+		/*
+		 * Now apply them
+		 */
+		foreach (l, locks) {
+			rule = lfirst(l);
+
+			RIRonly.event	= rule->event;
+			RIRonly.attrno	= rule->attrno;
+			RIRonly.qual	= rule->qual;
+			RIRonly.actions	= rule->actions;
+
+			ApplyRetrieveRule(parsetree,
+					&RIRonly,
+					rt_index,
+					RIRonly.attrno == -1,
+					rel,
+					&modified);
+		}
+
+		heap_close(rel);
+	}
+
+	fireRIRonSubselect((Node *) parsetree);
+	modifyAggregQual((Node **) &(parsetree->qual), parsetree);
+
+	return parsetree;
+}
+
 
 /*
  * idea is to fire regular rules first, then qualified instead
@@ -167,266 +2218,7 @@ orderRules(List *locks)
 	return nconc(regular, instead_rules);
 }
 
-static int
-AllRetrieve(List *actions)
-{
-	List	   *n;
 
-	foreach(n, actions)
-	{
-		Query	   *pt = lfirst(n);
-
-		/*
-		 * in the old postgres code, we check whether command_type is a
-		 * consp of '('*'.commandType). but we've never supported
-		 * transitive closures. Hence removed	 - ay 10/94.
-		 */
-		if (pt->commandType != CMD_SELECT)
-			return false;
-	}
-	return true;
-}
-
-static List *
-FireRetrieveRulesAtQuery(Query *parsetree,
-						 int rt_index,
-						 Relation relation,
-						 bool *instead_flag,
-						 int rule_flag)
-{
-	List	   *i,
-			   *locks;
-	RuleLock   *rt_entry_locks = NULL;
-	List	   *work = NIL;
-
-	if ((rt_entry_locks = relation->rd_rules) == NULL)
-		return NIL;
-
-	locks = matchLocks(CMD_SELECT, rt_entry_locks, rt_index, parsetree);
-
-	/* find all retrieve instead */
-	foreach(i, locks)
-	{
-		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
-
-		if (!rule_lock->isInstead)
-			continue;
-		work = lappend(work, rule_lock);
-	}
-	if (work != NIL)
-	{
-		work = OptimizeRIRRules(locks);
-		foreach(i, work)
-		{
-			RewriteRule *rule_lock = lfirst(i);
-			int			relation_level;
-			int			modified = FALSE;
-
-			relation_level = (rule_lock->attrno == -1);
-			if (rule_lock->actions == NIL)
-			{
-				*instead_flag = TRUE;
-				return NIL;
-			}
-			if (!rule_flag &&
-				length(rule_lock->actions) >= 2 &&
-				AllRetrieve(rule_lock->actions))
-			{
-				*instead_flag = TRUE;
-				return rule_lock->actions;
-			}
-			ApplyRetrieveRule(parsetree, rule_lock, rt_index, relation_level, relation,
-							  &modified);
-			if (modified)
-			{
-				*instead_flag = TRUE;
-				FixResdomTypes(parsetree->targetList);
-				return lcons(parsetree, NIL);
-			}
-		}
-	}
-	return NIL;
-}
-
-
-/* Idea is like this:
- *
- * retrieve-instead-retrieve rules have different semantics than update nodes
- * Separate RIR rules from others.	Pass others to FireRules.
- * Order RIR rules and process.
- *
- * side effect: parsetree's rtable field might be changed
- */
-static void
-ApplyRetrieveRule(Query *parsetree,
-				  RewriteRule *rule,
-				  int rt_index,
-				  int relation_level,
-				  Relation relation,
-				  int *modified)
-{
-	Query	   *rule_action = NULL;
-	Node	   *rule_qual;
-	List	   *rtable,
-			   *rt;
-	int			nothing,
-				rt_length;
-	int			badsql = FALSE;
-
-	rule_qual = rule->qual;
-	if (rule->actions)
-	{
-		if (length(rule->actions) > 1)	/* ??? because we don't handle
-										 * rules with more than one
-										 * action? -ay */
-
-			/*
-			 * WARNING!!! If we sometimes handle rules with more than one
-			 * action, the view acl checks might get broken.
-			 * viewAclOverride should only become true (below) if this is
-			 * a relation_level, instead, select query - Jan
-			 */
-			return;
-		rule_action = copyObject(lfirst(rule->actions));
-		nothing = FALSE;
-	}
-	else
-		nothing = TRUE;
-
-	rtable = copyObject(parsetree->rtable);
-	foreach(rt, rtable)
-	{
-		RangeTblEntry *rte = lfirst(rt);
-
-		/*
-		 * this is to prevent add_missing_vars_to_base_rels() from adding
-		 * a bogus entry to the new target list.
-		 */
-		rte->inFromCl = false;
-	}
-	rt_length = length(rtable);
-
-	rtable = nconc(rtable, copyObject(rule_action->rtable));
-	parsetree->rtable = rtable;
-
-	rule_action->rtable = rtable;
-	OffsetVarNodes(rule_action->qual, rt_length);
-	OffsetVarNodes((Node *) rule_action->targetList, rt_length);
-	OffsetVarNodes(rule_qual, rt_length);
-
-	OffsetVarNodes((Node *) rule_action->groupClause, rt_length);
-	OffsetVarNodes((Node *) rule_action->havingQual, rt_length);
-
-	ChangeVarNodes(rule_action->qual,
-				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
-	ChangeVarNodes((Node *) rule_action->targetList,
-				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
-	ChangeVarNodes(rule_qual, PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
-
-	ChangeVarNodes((Node *) rule_action->groupClause,
-				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
-	ChangeVarNodes((Node *) rule_action->havingQual,
-				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
-
-	if (relation_level)
-	{
-		HandleViewRule(parsetree, rtable, rule_action->targetList, rt_index,
-					   modified);
-	}
-	else
-	{
-		HandleRIRAttributeRule(parsetree, rtable, rule_action->targetList,
-							   rt_index, rule->attrno, modified, &badsql);
-	}
-	if (*modified && !badsql)
-	{
-		AddQual(parsetree, rule_action->qual);
-
-		/*
-		 * This will only work if the query made to the view defined by
-		 * the following groupClause groups by the same attributes or does
-		 * not use group at all!
-		 */
-		if (parsetree->groupClause == NULL)
-			parsetree->groupClause = rule_action->groupClause;
-		AddHavingQual(parsetree, rule_action->havingQual);
-		parsetree->hasAggs = (rule_action->hasAggs || parsetree->hasAggs);
-		parsetree->hasSubLinks = (rule_action->hasSubLinks || parsetree->hasSubLinks);
-	}
-}
-
-static List *
-ProcessRetrieveQuery(Query *parsetree,
-					 List *rtable,
-					 bool *instead_flag,
-					 bool rule)
-{
-	List	   *rt;
-	List	   *product_queries = NIL;
-	int			rt_index = 0;
-
-
-	foreach(rt, rtable)
-	{
-		RangeTblEntry *rt_entry = lfirst(rt);
-		Relation	rt_entry_relation = NULL;
-		List	   *result = NIL;
-
-		rt_index++;
-		rt_entry_relation = heap_openr(rt_entry->relname);
-
-
-
-		if (rt_entry_relation->rd_rules != NULL)
-		{
-			result =
-				FireRetrieveRulesAtQuery(parsetree,
-										 rt_index,
-										 rt_entry_relation,
-										 instead_flag,
-										 rule);
-		}
-		heap_close(rt_entry_relation);
-		if (*instead_flag)
-			return result;
-	}
-	if (rule)
-		return NIL;
-
-	rt_index = 0;
-
-	foreach(rt, rtable)
-	{
-		RangeTblEntry *rt_entry = lfirst(rt);
-		Relation	rt_entry_relation = NULL;
-		RuleLock   *rt_entry_locks = NULL;
-		List	   *result = NIL;
-		List	   *locks = NIL;
-		List	   *dummy_products;
-
-		rt_index++;
-		rt_entry_relation = heap_openr(rt_entry->relname);
-		rt_entry_locks = rt_entry_relation->rd_rules;
-		heap_close(rt_entry_relation);
-
-
-		if (rt_entry_locks)
-		{
-			locks =
-				matchLocks(CMD_SELECT, rt_entry_locks, rt_index, parsetree);
-		}
-		if (locks != NIL)
-		{
-			result = fireRules(parsetree, rt_index, CMD_SELECT,
-							   instead_flag, locks, &dummy_products);
-			if (*instead_flag)
-				return lappend(NIL, result);
-			if (result != NIL)
-				product_queries = nconc(product_queries, result);
-		}
-	}
-	return product_queries;
-}
 
 static Query *
 CopyAndAddQual(Query *parsetree,
@@ -462,6 +2254,7 @@ CopyAndAddQual(Query *parsetree,
 }
 
 
+
 /*
  *	fireRules -
  *	   Iterate through rule locks applying rules.
@@ -488,13 +2281,7 @@ fireRules(Query *parsetree,
 	/* choose rule to fire from list of rules */
 	if (locks == NIL)
 	{
-		ProcessRetrieveQuery(parsetree,
-							 parsetree->rtable,
-							 instead_flag, TRUE);
-		if (*instead_flag)
-			return lappend(NIL, parsetree);
-		else
-			return NIL;
+		return NIL;
 	}
 
 	locks = orderRules(locks);	/* real instead rules last */
@@ -505,7 +2292,6 @@ fireRules(Query *parsetree,
 				   *event_qual;
 		List	   *actions;
 		List	   *r;
-		bool		orig_instead_flag = *instead_flag;
 
 		/*
 		 * Instead rules change the resultRelation of the query. So the
@@ -645,8 +2431,10 @@ fireRules(Query *parsetree,
 			 *--------------------------------------------------
 			 */
 			info->rule_action->rtable = info->rt;
+			/*
 			ProcessRetrieveQuery(info->rule_action, info->rt,
 								 &orig_instead_flag, TRUE);
+			*/
 
 			/*--------------------------------------------------
 			 * Step 4
@@ -670,128 +2458,32 @@ fireRules(Query *parsetree,
 	return results;
 }
 
-/* ----------
- * RewritePreprocessQuery -
- *	adjust details in the parsetree, the rule system
- *	depends on
- * ----------
- */
-static void
-RewritePreprocessQuery(Query *parsetree)
-{
-	/* ----------
-	 * if the query has a resultRelation, reassign the
-	 * result domain numbers to the attribute numbers in the
-	 * target relation. FixNew() depends on it when replacing
-	 * *new* references in a rule action by the expressions
-	 * from the rewritten query.
-	 * ----------
-	 */
-	if (parsetree->resultRelation > 0)
-	{
-		RangeTblEntry *rte;
-		Relation	rd;
-		List	   *tl;
-		TargetEntry *tle;
-		int			resdomno;
 
-		rte = (RangeTblEntry *) nth(parsetree->resultRelation - 1,
-									parsetree->rtable);
-		rd = heap_openr(rte->relname);
-
-		foreach(tl, parsetree->targetList)
-		{
-			tle = (TargetEntry *) lfirst(tl);
-			resdomno = attnameAttNum(rd, tle->resdom->resname);
-			tle->resdom->resno = resdomno;
-		}
-
-		heap_close(rd);
-	}
-}
-
-
-/* ----------
- * RewritePostprocessNonSelect -
- *	apply instead select rules on a query fired in by
- *	the rewrite system
- * ----------
- */
-static Query *
-RewritePostprocessNonSelect(Query *parsetree)
-{
-	List	   *rt;
-	int			rt_index = 0;
-	Query	   *newtree = copyObject(parsetree);
-
-	foreach(rt, parsetree->rtable)
-	{
-		RangeTblEntry *rt_entry = lfirst(rt);
-		Relation	rt_entry_relation = NULL;
-		RuleLock   *rt_entry_locks = NULL;
-		List	   *locks = NIL;
-		List	   *instead_locks = NIL;
-		List	   *lock;
-		RewriteRule *rule;
-
-		rt_index++;
-		rt_entry_relation = heap_openr(rt_entry->relname);
-		rt_entry_locks = rt_entry_relation->rd_rules;
-
-		if (rt_entry_locks)
-		{
-			int			origcmdtype = newtree->commandType;
-
-			newtree->commandType = CMD_SELECT;
-			locks =
-				matchLocks(CMD_SELECT, rt_entry_locks, rt_index, newtree);
-			newtree->commandType = origcmdtype;
-		}
-		if (locks != NIL)
-		{
-			foreach(lock, locks)
-			{
-				rule = (RewriteRule *) lfirst(lock);
-				if (rule->isInstead)
-					instead_locks = nconc(instead_locks, lock);
-			}
-		}
-		if (instead_locks != NIL)
-		{
-			foreach(lock, instead_locks)
-			{
-				int			relation_level;
-				int			modified = 0;
-
-				rule = (RewriteRule *) lfirst(lock);
-				relation_level = (rule->attrno == -1);
-
-				ApplyRetrieveRule(newtree,
-								  rule,
-								  rt_index,
-								  relation_level,
-								  rt_entry_relation,
-								  &modified);
-			}
-		}
-
-		heap_close(rt_entry_relation);
-	}
-
-	return newtree;
-}
 
 static List *
 RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 {
 	CmdType		event;
-	List	   *product_queries = NIL;
-	int			result_relation = 0;
+	List	   	*product_queries = NIL;
+	int		result_relation = 0;
+	RangeTblEntry	*rt_entry;
+	Relation	rt_entry_relation = NULL;
+	RuleLock	*rt_entry_locks = NULL;
 
 	Assert(parsetree != NULL);
 
 	event = parsetree->commandType;
 
+	/*
+	 * SELECT rules are handled later when we have all the
+	 * queries that should get executed
+	 */
+	if (event == CMD_SELECT)
+		return NIL;
+
+	/*
+	 * Utilities aren't rewritten at all - why is this here?
+	 */
 	if (event == CMD_UTILITY)
 		return NIL;
 
@@ -803,78 +2495,33 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 
 	result_relation = parsetree->resultRelation;
 
-	if (event != CMD_SELECT)
+	/*
+	 * the statement is an update, insert or delete - fire rules
+	 * on it.
+	 */
+	rt_entry = rt_fetch(result_relation, parsetree->rtable);
+	rt_entry_relation = heap_openr(rt_entry->relname);
+	rt_entry_locks = rt_entry_relation->rd_rules;
+	heap_close(rt_entry_relation);
+
+	if (rt_entry_locks != NULL)
 	{
+		List	   *locks =
+		matchLocks(event, rt_entry_locks, result_relation, parsetree);
 
-		/*
-		 * the statement is an update, insert or delete
-		 */
-		RangeTblEntry *rt_entry;
-		Relation	rt_entry_relation = NULL;
-		RuleLock   *rt_entry_locks = NULL;
-
-		rt_entry = rt_fetch(result_relation, parsetree->rtable);
-		rt_entry_relation = heap_openr(rt_entry->relname);
-		rt_entry_locks = rt_entry_relation->rd_rules;
-		heap_close(rt_entry_relation);
-
-		if (rt_entry_locks != NULL)
-		{
-			List	   *locks =
-			matchLocks(event, rt_entry_locks, result_relation, parsetree);
-
-			product_queries =
-				fireRules(parsetree,
-						  result_relation,
-						  event,
-						  instead_flag,
-						  locks,
-						  qual_products);
-		}
-
-		/* ----------
-		 * deepRewriteQuery does not handle the situation
-		 * where a query fired by a rule uses relations that
-		 * have instead select rules defined (views and the like).
-		 * So we care for them here.
-		 * ----------
-		 */
-		if (product_queries != NIL)
-		{
-			List	   *pq;
-			Query	   *tmp;
-			List	   *new_products = NIL;
-
-			foreach(pq, product_queries)
-			{
-				tmp = (Query *) lfirst(pq);
-				tmp = RewritePostprocessNonSelect(tmp);
-				new_products = lappend(new_products, tmp);
-			}
-			product_queries = new_products;
-		}
-
-		return product_queries;
+		product_queries =
+			fireRules(parsetree,
+					  result_relation,
+					  event,
+					  instead_flag,
+					  locks,
+					  qual_products);
 	}
-	else
-	{
 
-		/*
-		 * the statement is a select
-		 */
-		Query	   *other;
+	return product_queries;
 
-		/*
-		 * ApplyRetrieveRule changes the range table XXX Unions are copied
-		 * again.
-		 */
-		other = copyObject(parsetree);
-
-		return
-			ProcessRetrieveQuery(other, parsetree->rtable,
-								 instead_flag, FALSE);
-	}
 }
+
 
 /*
  * to avoid infinite recursion, we restrict the number of times a query
@@ -885,103 +2532,6 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 #endif
 
 static int	numQueryRewriteInvoked = 0;
-
-/*
- * QueryRewrite -
- *	  rewrite one query via QueryRewrite system, possibly returning 0, or many
- *	  queries
- */
-List *
-QueryRewrite(Query *parsetree)
-{
-	RewritePreprocessQuery(parsetree);
-
-	QueryRewriteSubLink(parsetree->qual);
-	QueryRewriteSubLink(parsetree->havingQual);
-
-	return QueryRewriteOne(parsetree);
-}
-
-/*
- *	QueryRewriteSubLink
- *
- *	This rewrites the SubLink subqueries first, doing the lowest ones first.
- *	We already have code in the main rewrite loops to process correlated
- *	variables from upper queries that exist in subqueries.
- */
-static void
-QueryRewriteSubLink(Node *node)
-{
-	if (node == NULL)
-		return;
-
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			break;
-		case T_Aggreg:
-			break;
-		case T_Expr:
-			{
-				Expr	   *expr = (Expr *) node;
-
-				QueryRewriteSubLink((Node *) expr->args);
-			}
-			break;
-		case T_Var:
-			break;
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-					QueryRewriteSubLink(lfirst(l));
-			}
-			break;
-		case T_SubLink:
-			{
-				SubLink    *sublink = (SubLink *) node;
-				Query	   *query = (Query *) sublink->subselect;
-				List	   *ret;
-
-				/*
-				 * Nest down first.  We do this so if a rewrite adds a
-				 * SubLink we don't process it as part of this loop.
-				 */
-				QueryRewriteSubLink((Node *) query->qual);
-
-				QueryRewriteSubLink((Node *) query->havingQual);
-
-				ret = QueryRewriteOne(query);
-				if (!ret)
-					sublink->subselect = NULL;
-				else if (lnext(ret) == NIL)
-					sublink->subselect = lfirst(ret);
-				else
-					elog(ERROR, "Don't know how to process subquery that rewrites to multiple queries.");
-			}
-			break;
-		default:
-			/* ignore the others */
-			break;
-	}
-	return;
-}
-
-/*
- * QueryOneRewrite -
- *	  rewrite one query
- */
-static List *
-QueryRewriteOne(Query *parsetree)
-{
-	numQueryRewriteInvoked = 0;
-
-	/*
-	 * take a deep breath and apply all the rewrite rules - ay
-	 */
-	return deepRewriteQuery(parsetree);
-}
 
 /*
  * deepRewriteQuery -
@@ -1040,3 +2590,104 @@ deepRewriteQuery(Query *parsetree)
 
 	return rewritten;
 }
+
+
+/*
+ * QueryOneRewrite -
+ *	  rewrite one query
+ */
+static List *
+QueryRewriteOne(Query *parsetree)
+{
+	numQueryRewriteInvoked = 0;
+
+	/*
+	 * take a deep breath and apply all the rewrite rules - ay
+	 */
+	return deepRewriteQuery(parsetree);
+}
+
+
+/* ----------
+ * RewritePreprocessQuery -
+ *	adjust details in the parsetree, the rule system
+ *	depends on
+ * ----------
+ */
+static void
+RewritePreprocessQuery(Query *parsetree)
+{
+	/* ----------
+	 * if the query has a resultRelation, reassign the
+	 * result domain numbers to the attribute numbers in the
+	 * target relation. FixNew() depends on it when replacing
+	 * *new* references in a rule action by the expressions
+	 * from the rewritten query.
+	 * ----------
+	 */
+	if (parsetree->resultRelation > 0)
+	{
+		RangeTblEntry *rte;
+		Relation	rd;
+		List	   *tl;
+		TargetEntry *tle;
+		int			resdomno;
+
+		rte = (RangeTblEntry *) nth(parsetree->resultRelation - 1,
+									parsetree->rtable);
+		rd = heap_openr(rte->relname);
+
+		foreach(tl, parsetree->targetList)
+		{
+			tle = (TargetEntry *) lfirst(tl);
+			resdomno = attnameAttNum(rd, tle->resdom->resname);
+			tle->resdom->resno = resdomno;
+		}
+
+		heap_close(rd);
+	}
+}
+
+
+/*
+ * QueryRewrite -
+ *	  rewrite one query via query rewrite system, possibly returning 0
+ *	  or many queries
+ */
+List *
+QueryRewrite(Query *parsetree)
+{
+	List		*querylist;
+	List		*results = NIL;
+	List		*l;
+	Query		*query;
+
+	/*
+	 * Step 1
+	 *
+	 * There still seems something broken with the resdom numbers
+	 * so we reassign them first.
+	 */
+	RewritePreprocessQuery(parsetree);
+
+	/*
+	 * Step 2
+	 *
+	 * Apply all non-SELECT rules possibly getting 0 or many queries
+	 */
+	querylist = QueryRewriteOne(parsetree);
+
+	/*
+	 * Step 3
+	 *
+	 * Apply all the RIR rules on each query
+	 */
+	foreach (l, querylist) {
+		query = (Query *)lfirst(l);
+		results = lappend(results, fireRIRrules(query));
+	}
+
+	return results;
+}
+
+
