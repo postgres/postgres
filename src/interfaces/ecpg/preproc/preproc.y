@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.208 2003/02/14 13:17:13 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.209 2003/02/17 14:06:40 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -153,7 +153,7 @@ make_name(void)
 /* special embedded SQL token */
 %token	SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK
 		SQL_CALL SQL_CARDINALITY SQL_CONNECT SQL_CONNECTION
-		SQL_CONTINUE SQL_COUNT SQL_CURRENT SQL_DATA
+		SQL_CONTINUE SQL_COUNT SQL_CURRENT SQL_DATA 
 		SQL_DATETIME_INTERVAL_CODE
 		SQL_DATETIME_INTERVAL_PRECISION
 		SQL_DESCRIPTOR SQL_DISCONNECT SQL_ENUM SQL_FOUND
@@ -3889,6 +3889,8 @@ ECPGConnect: SQL_CONNECT TO connection_target opt_connection_name opt_user
 		  /* also allow ORACLE syntax */
 		| SQL_CONNECT ora_user
 			{ $$ = cat_str(3, make_str("NULL,"), $2, make_str(",NULL")); }
+		| DATABASE connection_target
+			{ $$ = cat2_str($2, make_str(",NULL,NULL,NULL")); }
 		;
 
 connection_target: database_name opt_server opt_port

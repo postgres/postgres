@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.105 2003/02/14 16:40:01 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.106 2003/02/17 14:06:39 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -969,7 +969,8 @@ cppline			{space}*#(.*\\{space})*.*
 						yyin = NULL;
 
 						/* If file name is enclosed in '"' remove these and look only in '.' */
-						if (yytext[0] == '"' && yytext[i] == '"') 
+						/* Informix does look into all include paths though, except filename starts with '/' */
+						if ((yytext[0] == '"' && yytext[i] == '"') && (compat != ECPG_COMPAT_INFORMIX || yytext[0] == '/'))
 						{
 							yytext[i] = '\0';
 							memmove(yytext, yytext+1, strlen(yytext));
@@ -988,6 +989,12 @@ cppline			{space}*#(.*\\{space})*.*
 						}
 						else
 						{
+							if (yytext[0] == '"' && yytext[i] == '"')
+							{
+								yytext[i] = '\0';
+								memmove(yytext, yytext+1, strlen(yytext));
+							}
+							
 						  	for (ip = include_paths; yyin == NULL && ip != NULL; ip = ip->next)
 						  	{
 								if (strlen(ip->path) + strlen(yytext) + 3 > MAXPGPATH)

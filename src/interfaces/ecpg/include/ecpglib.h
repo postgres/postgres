@@ -49,9 +49,10 @@ bool		ECPGdisconnect(int, const char *);
 bool		ECPGprepare(int, char *, char *);
 bool		ECPGdeallocate(int, char *);
 bool		ECPGdeallocate_all(int);
-char	   *ECPGprepared_statement(char *);
+char	       *ECPGprepared_statement(char *);
 
 void		ECPGlog(const char *format,...);
+char	       *ECPGerrmsg(void);
 
  /* print an error message */
 void		sqlprint(void);
