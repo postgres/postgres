@@ -5,7 +5,7 @@
 # It also dumps the pg_shadow and pg_group tables, which belong to the
 # whole installation rather than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall,v 1.26 2000/05/05 17:50:38 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall,v 1.27 2000/05/25 20:18:15 tgl Exp $
 #
 # to adapt to System V vs. BSD 'echo'
 if echo '\\' | grep '\\\\' >/dev/null 2>&1
@@ -65,9 +65,9 @@ echo "${BS}."
 #
 # For each database, run pg_dump to dump the contents of that database.
 #
-psql -A -q -t -c "select * from pg_database" template1 | grep '|' | tr '|' ' ' | \
+psql -A -q -t -c "select datname,datdba,encoding from pg_database" template1 | grep '|' | tr '|' ' ' | \
 grep -v '^template1 ' | \
-while read DATABASE DBUSERID ENCODING DATAPATH
+while read DATABASE DBUSERID ENCODING
 do
 	DBUSERNAME="`echo \" \
 		select usename \
@@ -79,13 +79,13 @@ do
 
 	if sh -c "pg_encoding $ENCODING" >/dev/null 2>&1
 	then
-		echo "create database $DATABASE with encoding='`pg_encoding $ENCODING`';"
+		echo "create database \"$DATABASE\" with encoding='`pg_encoding $ENCODING`';"
 	else
-		echo "create database $DATABASE;"
+		echo "create database \"$DATABASE\";"
 	fi
 
-	echo "${BS}connect $DATABASE $POSTGRES_USER"
-	pg_dump ${1+"$@"} $DATABASE
+	echo "${BS}connect $DATABASE $DBUSERNAME"
+	pg_dump ${1+"$@"} "$DATABASE"
 	if [ "$?" -ne 0 ]
 	then	echo "pg_dump failed on $DATABASE, exiting" 1>&2
 		exit 1
