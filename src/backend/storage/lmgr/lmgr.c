@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.42 2000/11/30 01:39:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.43 2000/12/22 00:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/transam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
@@ -72,16 +73,17 @@ LOCKMETHOD	LongTermTableId = (LOCKMETHOD) NULL;
  * Create the lock table described by LockConflicts and LockPrios.
  */
 LOCKMETHOD
-InitLockTable()
+InitLockTable(int maxBackends)
 {
 	int			lockmethod;
 
 	lockmethod = LockMethodTableInit("LockTable",
-							LockConflicts, LockPrios, MAX_LOCKMODES - 1);
+									 LockConflicts, LockPrios,
+									 MAX_LOCKMODES - 1, maxBackends);
 	LockTableId = lockmethod;
 
 	if (!(LockTableId))
-		elog(ERROR, "InitLockTable: couldnt initialize lock table");
+		elog(ERROR, "InitLockTable: couldn't initialize lock table");
 
 #ifdef USER_LOCKS
 
@@ -90,10 +92,7 @@ InitLockTable()
 	 */
 	LongTermTableId = LockMethodTableRename(LockTableId);
 	if (!(LongTermTableId))
-	{
-		elog(ERROR,
-			 "InitLockTable: couldn't rename long-term lock table");
-	}
+		elog(ERROR, "InitLockTable: couldn't rename long-term lock table");
 #endif
 
 	return LockTableId;
@@ -139,7 +138,7 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = InvalidBlockNumber;
 
-	if (!LockAcquire(LockTableId, &tag, lockmode))
+	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(), lockmode))
 		elog(ERROR, "LockRelation: LockAcquire failed");
 
 	/*
@@ -169,7 +168,55 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = InvalidBlockNumber;
 
-	LockRelease(LockTableId, &tag, lockmode);
+	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), lockmode);
+}
+
+/*
+ *		LockRelationForSession
+ *
+ * This routine grabs a session-level lock on the target relation.  The
+ * session lock persists across transaction boundaries.  It will be removed
+ * when UnlockRelationForSession() is called, or if an elog(ERROR) occurs,
+ * or if the backend exits.
+ *
+ * Note that one should also grab a transaction-level lock on the rel
+ * in any transaction that actually uses the rel, to ensure that the
+ * relcache entry is up to date.
+ */
+void
+LockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	if (LockingDisabled())
+		return;
+
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = relid->relId;
+	tag.dbId = relid->dbId;
+	tag.objId.blkno = InvalidBlockNumber;
+
+	if (!LockAcquire(LockTableId, &tag, InvalidTransactionId, lockmode))
+		elog(ERROR, "LockRelationForSession: LockAcquire failed");
+}
+
+/*
+ *		UnlockRelationForSession
+ */
+void
+UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	if (LockingDisabled())
+		return;
+
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = relid->relId;
+	tag.dbId = relid->dbId;
+	tag.objId.blkno = InvalidBlockNumber;
+
+	LockRelease(LockTableId, &tag, InvalidTransactionId, lockmode);
 }
 
 /*
@@ -188,7 +235,7 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = blkno;
 
-	if (!LockAcquire(LockTableId, &tag, lockmode))
+	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(), lockmode))
 		elog(ERROR, "LockPage: LockAcquire failed");
 }
 
@@ -208,7 +255,7 @@ UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = blkno;
 
-	LockRelease(LockTableId, &tag, lockmode);
+	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), lockmode);
 }
 
 void
@@ -221,10 +268,10 @@ XactLockTableInsert(TransactionId xid)
 
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = XactLockTableId;
-	tag.dbId = InvalidOid;
+	tag.dbId = InvalidOid;		/* xids are globally unique */
 	tag.objId.xid = xid;
 
-	if (!LockAcquire(LockTableId, &tag, ExclusiveLock))
+	if (!LockAcquire(LockTableId, &tag, xid, ExclusiveLock))
 		elog(ERROR, "XactLockTableInsert: LockAcquire failed");
 }
 
@@ -242,7 +289,7 @@ XactLockTableDelete(TransactionId xid)
 	tag.dbId = InvalidOid;
 	tag.objId.xid = xid;
 
-	LockRelease(LockTableId, &tag, ExclusiveLock);
+	LockRelease(LockTableId, &tag, xid, ExclusiveLock);
 }
 #endif
 
@@ -259,10 +306,10 @@ XactLockTableWait(TransactionId xid)
 	tag.dbId = InvalidOid;
 	tag.objId.xid = xid;
 
-	if (!LockAcquire(LockTableId, &tag, ShareLock))
+	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(), ShareLock))
 		elog(ERROR, "XactLockTableWait: LockAcquire failed");
 
-	LockRelease(LockTableId, &tag, ShareLock);
+	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), ShareLock);
 
 	/*
 	 * Transaction was committed/aborted/crashed - we have to update

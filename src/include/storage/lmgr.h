@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.26 2000/11/28 23:27:57 tgl Exp $
+ * $Id: lmgr.h,v 1.27 2000/12/22 00:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,17 +33,21 @@
 extern LOCKMETHOD LockTableId;
 
 
-extern LOCKMETHOD InitLockTable(void);
+extern LOCKMETHOD InitLockTable(int maxBackends);
 extern void RelationInitLockInfo(Relation relation);
 
+/* Lock a relation */
 extern void LockRelation(Relation relation, LOCKMODE lockmode);
 extern void UnlockRelation(Relation relation, LOCKMODE lockmode);
 
-/* this is for indices */
+extern void LockRelationForSession(LockRelId *relid, LOCKMODE lockmode);
+extern void UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode);
+
+/* Lock a page (mainly used for indices) */
 extern void LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 extern void UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 
-/* and this is for transactions */
+/* Lock an XID (used to wait for a transaction to finish) */
 extern void XactLockTableInsert(TransactionId xid);
 extern void XactLockTableWait(TransactionId xid);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.32 2000/11/28 23:27:57 tgl Exp $
+ * $Id: proc.h,v 1.33 2000/12/22 00:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ typedef struct
 /*
  * Each backend has:
  */
-typedef struct proc
+struct proc
 {
 	/* proc->links MUST BE THE FIRST ELEMENT OF STRUCT (see ProcWakeup()) */
 
@@ -50,16 +50,25 @@ typedef struct proc
 	TransactionId xmin;			/* minimal running XID as it was when we
 								 * were starting our xact: vacuum must not
 								 * remove tuples deleted by xid >= xmin ! */
+
 	XLogRecPtr	logRec;
-	LOCK	   *waitLock;		/* Lock we're sleeping on ... */
-	int			token;			/* type of lock we sleeping for */
-	int			holdLock;		/* while holding these locks */
+
+	/* Info about lock the process is currently waiting for, if any */
+	LOCK	   *waitLock;		/* Lock object we're sleeping on ... */
+	HOLDER	   *waitHolder;		/* Per-holder info for our lock */
+	LOCKMODE	waitLockMode;	/* type of lock we're waiting for */
+	LOCKMASK	holdLock;		/* bitmask for lock types already held */
+
 	int			pid;			/* This backend's process id */
 	Oid			databaseId;		/* OID of database this backend is using */
+
 	short		sLocks[MAX_SPINS];		/* Spin lock stats */
 	SHM_QUEUE	lockQueue;		/* locks associated with current
 								 * transaction */
-} PROC;
+};
+
+/* NOTE: "typedef struct proc PROC" appears in storage/lock.h. */
+
 
 extern PROC *MyProc;
 
@@ -122,15 +131,14 @@ typedef struct procglobal
  */
 extern void InitProcGlobal(int maxBackends);
 extern void InitProcess(void);
-extern void ProcReleaseLocks(void);
+extern void ProcReleaseLocks(bool isCommit);
 extern bool ProcRemove(int pid);
 
 extern void ProcQueueInit(PROC_QUEUE *queue);
-extern int ProcSleep(PROC_QUEUE *queue, LOCKMETHODCTL *lockctl, int token,
-		  LOCK *lock);
+extern int ProcSleep(LOCKMETHODCTL *lockctl, LOCKMODE lockmode,
+					 LOCK *lock, HOLDER *holder);
 extern PROC *ProcWakeup(PROC *proc, int errType);
-extern int ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod,
-			   LOCK *lock);
+extern int ProcLockWakeup(LOCKMETHOD lockmethod, LOCK *lock);
 extern void ProcAddLock(SHM_QUEUE *elem);
 extern void ProcReleaseSpins(PROC *proc);
 extern void LockWaitCancel(void);

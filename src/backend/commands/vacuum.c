@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.177 2000/12/08 06:43:44 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.178 2000/12/22 00:51:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ static void vacuum_init(void);
 static void vacuum_shutdown(void);
 static void vac_vacuum(NameData *VacRelP, bool analyze, List *anal_cols2);
 static VRelList getrels(NameData *VacRelP);
-static void vacuum_rel(Oid relid, bool is_toastrel);
+static void vacuum_rel(Oid relid);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages, VacPageList fraged_pages);
 static void repair_frag(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages, VacPageList fraged_pages, int nindices, Relation *Irel);
 static void vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacpagelist);
@@ -239,7 +239,7 @@ vac_vacuum(NameData *VacRelP, bool analyze, List *anal_cols2)
 	/* vacuum each heap relation */
 	for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
 	{
-		vacuum_rel(cur->vrl_relid, false);
+		vacuum_rel(cur->vrl_relid);
 		/* analyze separately so locking is minimized */
 		if (analyze)
 			analyze_rel(cur->vrl_relid, anal_cols2, MESSAGE_LEVEL);
@@ -308,7 +308,7 @@ getrels(NameData *VacRelP)
 
 		if (rkind != RELKIND_RELATION)
 		{
-			elog(NOTICE, "Vacuum: can not process indecies, views and certain system tables");
+			elog(NOTICE, "Vacuum: can not process indices, views and certain system tables");
 			continue;
 		}
 
@@ -342,23 +342,25 @@ getrels(NameData *VacRelP)
  *	vacuum_rel() -- vacuum one heap relation
  *
  *		This routine vacuums a single heap, cleans out its indices, and
- *		updates its statistics num_pages and num_tuples statistics.
+ *		updates its num_pages and num_tuples statistics.
  *
  *		Doing one heap at a time incurs extra overhead, since we need to
  *		check that the heap exists again just before we vacuum it.	The
  *		reason that we do this is so that vacuuming can be spread across
  *		many small transactions.  Otherwise, two-phase locking would require
  *		us to lock the entire database during one pass of the vacuum cleaner.
+ *
+ *		At entry and exit, we are not inside a transaction.
  */
 static void
-vacuum_rel(Oid relid, bool is_toastrel)
+vacuum_rel(Oid relid)
 {
 	Relation	onerel;
+	LockRelId	onerelid;
 	VacPageListData vacuum_pages; /* List of pages to vacuum and/or clean
-								 * indices */
+								   * indices */
 	VacPageListData fraged_pages; /* List of pages with space enough for
-								 * re-using */
-	VacPage    *vacpage;
+								   * re-using */
 	Relation   *Irel;
 	int32		nindices,
 				i;
@@ -366,8 +368,8 @@ vacuum_rel(Oid relid, bool is_toastrel)
 	bool		reindex = false;
 	Oid			toast_relid;
 
-	if (!is_toastrel)
-		StartTransactionCommand();
+	/* Begin a transaction for vacuuming this relation */
+	StartTransactionCommand();
 
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
@@ -384,8 +386,7 @@ vacuum_rel(Oid relid, bool is_toastrel)
 							  ObjectIdGetDatum(relid),
 							  0, 0, 0))
 	{
-		if (!is_toastrel)
-			CommitTransactionCommand();
+		CommitTransactionCommand();
 		return;
 	}
 
@@ -403,13 +404,25 @@ vacuum_rel(Oid relid, bool is_toastrel)
 		elog(NOTICE, "Skipping \"%s\" --- only table owner can VACUUM it",
 			 RelationGetRelationName(onerel));
 		heap_close(onerel, AccessExclusiveLock);
-		if (!is_toastrel)
-			CommitTransactionCommand();
+		CommitTransactionCommand();
 		return;
 	}
 
 	/*
-	 * Remember the relation'ss TOAST relation for later
+	 * Get a session-level exclusive lock too.  This will protect our
+	 * exclusive access to the relation across multiple transactions,
+	 * so that we can vacuum the relation's TOAST table (if any) secure
+	 * in the knowledge that no one is diddling the parent relation.
+	 *
+	 * NOTE: this cannot block, even if someone else is waiting for access,
+	 * because the lock manager knows that both lock requests are from the
+	 * same process.
+	 */
+	onerelid = onerel->rd_lockInfo.lockRelId;
+	LockRelationForSession(&onerelid, AccessExclusiveLock);
+
+	/*
+	 * Remember the relation's TOAST relation for later
 	 */
 	toast_relid = onerel->rd_rel->reltoastrelid;
 
@@ -500,21 +513,6 @@ vacuum_rel(Oid relid, bool is_toastrel)
 	if (reindex)
 		activate_indexes_of_a_table(relid, true);
 
-	/*
-	 * ok - free vacuum_pages list of reaped pages
-	 *
-	 * Isn't this a waste of code?  Upcoming commit should free memory, no?
-	 */
-	if (vacuum_pages.num_pages > 0)
-	{
-		vacpage = vacuum_pages.pagedesc;
-		for (i = 0; i < vacuum_pages.num_pages; i++, vacpage++)
-			pfree(*vacpage);
-		pfree(vacuum_pages.pagedesc);
-		if (fraged_pages.num_pages > 0)
-			pfree(fraged_pages.pagedesc);
-	}
-
 	/* all done with this class, but hold lock until commit */
 	heap_close(onerel, NoLock);
 
@@ -524,18 +522,24 @@ vacuum_rel(Oid relid, bool is_toastrel)
 					vacrelstats);
 
 	/*
+	 * Complete the transaction and free all temporary memory used.
+	 */
+	CommitTransactionCommand();
+
+	/*
 	 * If the relation has a secondary toast one, vacuum that too
-	 * while we still hold the lock on the master table. We don't
-	 * need to propagate "analyze" to it, because the toaster
+	 * while we still hold the session lock on the master table.
+	 * We don't need to propagate "analyze" to it, because the toaster
 	 * always uses hardcoded index access and statistics are
 	 * totally unimportant for toast relations
 	 */
 	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, true);
+		vacuum_rel(toast_relid);
 
-	/* next command frees attribute stats */
-	if (!is_toastrel)
-		CommitTransactionCommand();
+	/*
+	 * Now release the session-level lock on the master table.
+	 */
+	UnlockRelationForSession(&onerelid, AccessExclusiveLock);
 }
 
 /*
@@ -1786,9 +1790,13 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 	if (num_moved > 0)
 	{
 		/*
-		 * We have to commit our tuple' movings before we'll truncate
-		 * relation, but we shouldn't lose our locks. And so - quick hack:
-		 * record status of current transaction as committed, and continue.
+		 * We have to commit our tuple movings before we truncate the
+		 * relation.  Ideally we should do Commit/StartTransactionCommand
+		 * here, relying on the session-level table lock to protect our
+		 * exclusive access to the relation.  However, that would require
+		 * a lot of extra code to close and re-open the relation, indices,
+		 * etc.  For now, a quick hack: record status of current transaction
+		 * as committed, and continue.
 		 */
 		RecordTransactionCommit();
 	}
@@ -1852,7 +1860,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 	/* 
 	 * Reflect the motion of system tuples to catalog cache here.
 	 */
-        CommandCounterIncrement();
+	CommandCounterIncrement();
 
 	if (Nvacpagelist.num_pages > 0)
 	{

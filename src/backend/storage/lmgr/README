@@ -1,8 +1,15 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.3 1998/07/06 18:16:07 momjian Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.4 2000/12/22 00:51:54 tgl Exp $
 
-There are two fundemental lock structures.  Lock methods describe the
-locking behavior.  We currently only support multi-level locking.  Lock
-modes describe the mode of the lock(read/write or shared/exclusive). 
+There are two fundamental lock structures: the per-lockable-object LOCK
+struct, and the per-lock-holder HOLDER struct.  A LOCK object exists
+for each lockable object that currently has locks held or requested on it.
+A HOLDER struct exists for each transaction that is holding or requesting
+lock(s) on each LOCK object.
+
+Lock methods describe the overall locking behavior.  Currently there are
+two lock methods: DEFAULT and USER.  (USER locks are non-blocking.)
+
+Lock modes describe the type of the lock (read/write or shared/exclusive). 
 See src/tools/backend/index.html and src/include/storage/lock.h for more
 details.
 
@@ -12,10 +19,10 @@ The lock manager's LOCK:
 
 tag -
     The key fields that are used for hashing locks in the shared memory
-    lock hash table.  This is kept as a separate struct to ensure that we
-    always zero out the correct number of bytes.  This is a problem as
-    part of the tag is an itempointer which is 6 bytes and causes 2
-    additional bytes to be added as padding.
+    lock hash table.  This is declared as a separate struct to ensure that
+    we always zero out the correct number of bytes.  It is critical that
+    any alignment-padding bytes the compiler might insert in the struct
+    be zeroed out, else the hash computation will be random.
 
     tag.relId -
 	Uniquely identifies the relation that the lock corresponds to.
@@ -30,7 +37,7 @@ tag -
 	tuple within the block.  If we are setting a table level lock
 	both the blockId and tupleId (in an item pointer this is called
 	the position) are set to invalid, if it is a page level lock the
-	blockId is valid, while the tuleId is still invalid.  Finally if
+	blockId is valid, while the tupleId is still invalid.  Finally if
 	this is a tuple level lock (we currently never do this) then both
 	the blockId and tupleId are set to valid specifications.  This is
 	how we get the appearance of a multi-level lock table while using
@@ -38,9 +45,9 @@ tag -
 	you are puzzled about how multi-level lock tables work).
 
 mask -
-    This field indicates what types of locks are currently held in the
-    given lock.  It is used (against the lock table's conflict table)
-    to determine if the new lock request will conflict with existing
+    This field indicates what types of locks are currently held on the
+    given lockable object.  It is used (against the lock table's conflict
+    table) to determine if the new lock request will conflict with existing
     lock types held.  Conficts are determined by bitwise AND operations
     between the mask and the conflict table entry for the given lock type
     to be set.  The current representation is that each bit (1 through 5)
@@ -73,7 +80,7 @@ holders -
 
 nActive -
     Keeps a count of how many times this lock has been succesfully acquired.
-    This count does not include attempts that were rejected due to conflicts,
+    This count does not include attempts that are waiting due to conflicts,
     but can count the same backend twice (e.g. a read then a write -- since
     its the same transaction this won't cause a conflict)
 
@@ -85,3 +92,39 @@ activeHolders -
 
 ---------------------------------------------------------------------------
 
+The lock manager's HOLDER:
+
+tag -
+    The key fields that are used for hashing entries in the shared memory
+    holder hash table.  This is declared as a separate struct to ensure that
+    we always zero out the correct number of bytes.
+
+    tag.lock
+        SHMEM offset of the LOCK object this holder is for.
+
+    tag.pid
+        PID of backend process that owns this holder.
+
+    tag.xid
+        XID of transaction this holder is for, or InvalidTransactionId
+        if the holder is for session-level locking.
+
+    Note that this structure will support multiple transactions running
+    concurrently in one backend, which may be handy if we someday decide
+    to support nested transactions.  Currently, the XID field is only needed
+    to distinguish per-transaction locks from session locks.  User locks
+    are always session locks, and we also use session locks for multi-
+    transaction operations like VACUUM.
+
+holders -
+    The number of successfully acquired locks of each type for this holder.
+    (CAUTION: the semantics are not the same as the LOCK's holder[], which
+    counts both acquired and pending requests.  Probably a different name
+    should be used...)
+
+nHolding -
+    Sum of the holders[] array.
+
+queue -
+    List link for shared memory queue of all the HOLDER objects for the
+    same backend.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.89 2000/12/18 00:44:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.90 2000/12/22 00:51:53 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -741,7 +741,7 @@ AtCommit_Locks(void)
 	 *	Then you're up a creek! -mer 5/24/92
 	 * ----------------
 	 */
-	ProcReleaseLocks();
+	ProcReleaseLocks(true);
 }
 
 /* --------------------------------
@@ -828,7 +828,7 @@ AtAbort_Locks(void)
 	 *	Then you're up a creek without a paddle! -mer
 	 * ----------------
 	 */
-	ProcReleaseLocks();
+	ProcReleaseLocks(false);
 }
 
 

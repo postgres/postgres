@@ -33,7 +33,7 @@ user_lock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 	tag.objId.blkno = (BlockNumber) id2;
 	tag.offnum = (OffsetNumber) (id1 & 0xffff);
 
-	return LockAcquire(USER_LOCKMETHOD, &tag, lockmode);
+	return LockAcquire(USER_LOCKMETHOD, &tag, InvalidTransactionId, lockmode);
 }
 
 int
@@ -47,7 +47,7 @@ user_unlock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 	tag.objId.blkno = (BlockNumber) id2;
 	tag.offnum = (OffsetNumber) (id1 & 0xffff);
 
-	return LockRelease(USER_LOCKMETHOD, &tag, lockmode);
+	return LockRelease(USER_LOCKMETHOD, &tag, InvalidTransactionId, lockmode);
 }
 
 int
@@ -89,7 +89,7 @@ user_unlock_all()
 	}
 
 	proc = (PROC *) MAKE_PTR(location);
-	return LockReleaseAll(USER_LOCKMETHOD, &proc->lockQueue);
+	return LockReleaseAll(USER_LOCKMETHOD, proc, false, InvalidTransactionId);
 }
 
 /* end of file */

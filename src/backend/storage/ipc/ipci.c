@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.37 2000/12/03 17:18:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.38 2000/12/22 00:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int maxBackends)
 	 * Set up lock manager
 	 */
 	InitLocks();
-	if (InitLockTable() == INVALID_TABLEID)
+	if (InitLockTable(maxBackends) == INVALID_TABLEID)
 		elog(FATAL, "Couldn't create the lock table");
 
 	/*

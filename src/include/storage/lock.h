@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * lock.h
- *
+ *	  POSTGRES low-level lock mechanism
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.39 2000/07/17 03:05:30 tgl Exp $
+ * $Id: lock.h,v 1.40 2000/12/22 00:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,12 +18,19 @@
 #include "storage/itemptr.h"
 #include "storage/shmem.h"
 
+
+/* originally in procq.h */
+typedef struct PROC_QUEUE
+{
+	SHM_QUEUE	links;
+	int			size;
+} PROC_QUEUE;
+
+/* struct proc is declared in storage/proc.h, but must forward-reference it */
+typedef struct proc PROC;
+
+
 extern SPINLOCK LockMgrLock;
-typedef int LOCKMASK;
-
-#define INIT_TABLE_SIZE			100
-#define MAX_TABLE_SIZE			1000
-
 
 #ifdef LOCK_DEBUG
 extern int  Trace_lock_oidmin;
@@ -39,13 +46,15 @@ extern bool Debug_deadlocks;
  * memory the lock manager is going to require.
  * See LockShmemSize() in lock.c.
  *
- * NLOCKS_PER_XACT - The number of unique locks acquired in a transaction
- *					 (should be configurable!)
+ * NLOCKS_PER_XACT - The number of unique objects locked in a transaction
+ *					 (this should be configurable!)
  * NLOCKENTS - The maximum number of lock entries in the lock table.
  * ----------------------
  */
 #define NLOCKS_PER_XACT			64
 #define NLOCKENTS(maxBackends)	(NLOCKS_PER_XACT*(maxBackends))
+
+typedef int LOCKMASK;
 
 typedef int LOCKMODE;
 typedef int LOCKMETHOD;
@@ -68,29 +77,8 @@ typedef int LOCKMETHOD;
 #define MIN_LOCKMETHOD		DEFAULT_LOCKMETHOD
 
 
-typedef struct LTAG
-{
-	Oid			relId;
-	Oid			dbId;
-	union
-	{
-		BlockNumber blkno;
-		TransactionId xid;
-	}			objId;
-
-	/*
-	 * offnum should be part of objId.tupleId above, but would increase
-	 * sizeof(LOCKTAG) and so moved here; currently used by userlocks
-	 * only.
-	 */
-	OffsetNumber offnum;
-	uint16		lockmethod;		/* needed by userlocks */
-} LOCKTAG;
-
-#define TAGSIZE (sizeof(LOCKTAG))
-#define LOCKTAG_LOCKMETHOD(locktag) ((locktag).lockmethod)
-
-/* This is the control structure for a lock table.	It
+/*
+ * This is the control structure for a lock table.	It
  * lives in shared memory:
  *
  * lockmethod -- the handle used by the lock table's clients to
@@ -108,7 +96,6 @@ typedef struct LTAG
  *		starvation).
  *
  * masterlock -- synchronizes access to the table
- *
  */
 typedef struct LOCKMETHODCTL
 {
@@ -120,91 +107,47 @@ typedef struct LOCKMETHODCTL
 } LOCKMETHODCTL;
 
 /*
- * lockHash -- hash table on lock Ids,
- * xidHash -- hash on xid and lockId in case
- *		multiple processes are holding the lock
- * ctl - control structure described above.
+ * Non-shared header for a lock table.
+ *
+ * lockHash -- hash table holding per-locked-object lock information
+ * holderHash -- hash table holding per-lock-holder lock information
+ * ctl - shared control structure described above.
  */
 typedef struct LOCKMETHODTABLE
 {
 	HTAB	   *lockHash;
-	HTAB	   *xidHash;
+	HTAB	   *holderHash;
 	LOCKMETHODCTL *ctl;
 } LOCKMETHODTABLE;
 
-/* -----------------------
- * A transaction never conflicts with its own locks.  Hence, if
- * multiple transactions hold non-conflicting locks on the same
- * data, private per-transaction information must be stored in the
- * XID table.  The tag is XID + shared memory lock address so that
- * all locks can use the same XID table.  The private information
- * we store is the number of locks of each type (holders) and the
- * total number of locks (nHolding) held by the transaction.
- *
- * NOTE:
- * There were some problems with the fact that currently TransactionIdData
- * is a 5 byte entity and compilers long word aligning of structure fields.
- * If the 3 byte padding is put in front of the actual xid data then the
- * hash function (which uses XID_TAGSIZE when deciding how many bytes of a
- * struct to look at for the key) might only see the last two bytes of the xid.
- *
- * Clearly this is not good since its likely that these bytes will be the
- * same for many transactions and hence they will share the same entry in
- * hash table causing the entry to be corrupted.  For this long-winded
- * reason I have put the tag in a struct of its own to ensure that the
- * XID_TAGSIZE is computed correctly.  It used to be sizeof (SHMEM_OFFSET) +
- * sizeof(TransactionIdData) which != sizeof(XIDTAG).
- *
- * Finally since the hash function will now look at all 12 bytes of the tag
- * the padding bytes MUST be zero'd before use in hash_search() as they
- * will have random values otherwise.  Jeff 22 July 1991.
- * -----------------------
+
+/*
+ * LOCKTAG is the key information needed to look up a LOCK item in the
+ * lock hashtable.  A LOCKTAG value uniquely identifies a lockable object.
  */
-
-typedef struct XIDTAG
+typedef struct LOCKTAG
 {
-	SHMEM_OFFSET lock;
-	int			pid;
-	TransactionId xid;
-#ifdef USE_XIDTAG_LOCKMETHOD
-	uint16		lockmethod;		/* for debug or consistency checking */
-#endif
-} XIDTAG;
+	Oid			relId;
+	Oid			dbId;
+	union
+	{
+		BlockNumber blkno;
+		TransactionId xid;
+	}			objId;
 
-#ifdef USE_XIDTAG_LOCKMETHOD
-#define XIDTAG_LOCKMETHOD(xidtag) ((xidtag).lockmethod)
-#else
-#define XIDTAG_LOCKMETHOD(xidtag) \
-		(((LOCK*) MAKE_PTR((xidtag).lock))->tag.lockmethod)
-#endif
+	/*
+	 * offnum should be part of objId.tupleId above, but would increase
+	 * sizeof(LOCKTAG) and so moved here; currently used by userlocks
+	 * only.
+	 */
+	OffsetNumber offnum;
 
-typedef struct XIDLookupEnt
-{
-	/* tag */
-	XIDTAG		tag;
-
-	/* data */
-	int			holders[MAX_LOCKMODES];
-	int			nHolding;
-	SHM_QUEUE	queue;
-} XIDLookupEnt;
-
-#define SHMEM_XIDTAB_KEYSIZE  sizeof(XIDTAG)
-#define SHMEM_XIDTAB_DATASIZE (sizeof(XIDLookupEnt) - SHMEM_XIDTAB_KEYSIZE)
-
-#define XID_TAGSIZE (sizeof(XIDTAG))
-#define XIDENT_LOCKMETHOD(xident) (XIDTAG_LOCKMETHOD((xident).tag))
-
-/* originally in procq.h */
-typedef struct PROC_QUEUE
-{
-	SHM_QUEUE	links;
-	int			size;
-} PROC_QUEUE;
+	uint16		lockmethod;		/* needed by userlocks */
+} LOCKTAG;
 
 
 /*
- * lock information:
+ * Per-locked-object lock information:
  *
  * tag -- uniquely identifies the object being locked
  * mask -- union of the conflict masks of all lock types
@@ -232,40 +175,76 @@ typedef struct LOCK
 #define SHMEM_LOCKTAB_KEYSIZE  sizeof(LOCKTAG)
 #define SHMEM_LOCKTAB_DATASIZE (sizeof(LOCK) - SHMEM_LOCKTAB_KEYSIZE)
 
-#define LOCK_LOCKMETHOD(lock) (LOCKTAG_LOCKMETHOD((lock).tag))
+#define LOCK_LOCKMETHOD(lock) ((lock).tag.lockmethod)
 
-#define LockGetLock_nHolders(l) l->nHolders
-#ifdef NOT_USED
-#define LockDecrWaitHolders(lock, lockmode) \
-( \
-  lock->nHolding--, \
-  lock->holders[lockmode]-- \
-)
-#endif
-#define LockLockTable() SpinAcquire(LockMgrLock);
-#define UnlockLockTable() SpinRelease(LockMgrLock);
+
+/*
+ * We may have several different transactions holding or awaiting locks
+ * on the same lockable object.  We need to store some per-holder information
+ * for each such holder (or would-be holder).
+ *
+ * HOLDERTAG is the key information needed to look up a HOLDER item in the
+ * holder hashtable.  A HOLDERTAG value uniquely identifies a lock holder.
+ *
+ * There are two possible kinds of holder tags: a transaction (identified
+ * both by the PID of the backend running it, and the xact's own ID) and
+ * a session (identified by backend PID, with xid = InvalidTransactionId).
+ *
+ * Currently, session holders are used for user locks and for cross-xact
+ * locks obtained for VACUUM.  We assume that a session lock never conflicts
+ * with per-transaction locks obtained by the same backend.
+ */
+typedef struct HOLDERTAG
+{
+	SHMEM_OFFSET lock;			/* link to per-lockable-object information */
+	int			pid;			/* PID of backend */
+	TransactionId xid;			/* xact ID, or InvalidTransactionId */
+} HOLDERTAG;
+
+typedef struct HOLDER
+{
+	/* tag */
+	HOLDERTAG	tag;
+
+	/* data */
+	int			holders[MAX_LOCKMODES];
+	int			nHolding;
+	SHM_QUEUE	queue;
+} HOLDER;
+
+#define SHMEM_HOLDERTAB_KEYSIZE  sizeof(HOLDERTAG)
+#define SHMEM_HOLDERTAB_DATASIZE (sizeof(HOLDER) - SHMEM_HOLDERTAB_KEYSIZE)
+
+#define HOLDER_LOCKMETHOD(holder) \
+		(((LOCK *) MAKE_PTR((holder).tag.lock))->tag.lockmethod)
+
+
+
+#define LockLockTable() SpinAcquire(LockMgrLock)
+#define UnlockLockTable() SpinRelease(LockMgrLock)
 
 
 /*
  * function prototypes
  */
 extern void InitLocks(void);
-extern void LockDisable(int status);
+extern void LockDisable(bool status);
+extern bool LockingDisabled(void);
 extern LOCKMETHOD LockMethodTableInit(char *tabName, LOCKMASK *conflictsP,
-					int *prioP, int numModes);
+					int *prioP, int numModes, int maxBackends);
 extern LOCKMETHOD LockMethodTableRename(LOCKMETHOD lockmethod);
 extern bool LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
-			LOCKMODE lockmode);
-extern int LockResolveConflicts(LOCKMETHOD lockmethod, LOCK *lock,
-					 LOCKMODE lockmode, TransactionId xid,
-					 XIDLookupEnt *xidentP);
+						TransactionId xid, LOCKMODE lockmode);
 extern bool LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
-			LOCKMODE lockmode);
-extern void GrantLock(LOCK *lock, LOCKMODE lockmode);
-extern bool LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue);
+						TransactionId xid, LOCKMODE lockmode);
+extern bool LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
+						   bool allxids, TransactionId xid);
+extern int LockResolveConflicts(LOCKMETHOD lockmethod, LOCKMODE lockmode,
+								LOCK *lock, HOLDER *holder, PROC *proc,
+								int *myHolders);
+extern void GrantLock(LOCK *lock, HOLDER *holder, LOCKMODE lockmode);
 extern int	LockShmemSize(int maxBackends);
-extern bool LockingDisabled(void);
-extern bool DeadLockCheck(void *proc, LOCK *findlock);
+extern bool DeadLockCheck(PROC *thisProc, LOCK *findlock);
 
 #ifdef LOCK_DEBUG
 extern void DumpLocks(void);
