@@ -212,6 +212,7 @@ Add new DateStyle values MDY, DMY, and YMD, honor US and European for
   prepared statements) (Tom)
 Assume NaN value to be larger than any other value in MIN()/MAX() (Tom)
 Prevent interval from supressing ':00' seconds display
+New pg_get_triggerdef(prettyprint) and pg_constraint_is_visible() functions
 
      _________________________________________________________________
 
