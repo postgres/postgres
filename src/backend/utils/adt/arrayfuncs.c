@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.106 2004/08/05 03:29:37 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.107 2004/08/08 05:01:55 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,18 +351,32 @@ array_in(PG_FUNCTION_ARGS)
  *		 The syntax for array input is C-like nested curly braces
  *-----------------------------------------------------------------------------
  */
+typedef enum
+{
+	ARRAY_NO_LEVEL,
+	ARRAY_LEVEL_STARTED,
+	ARRAY_ELEM_STARTED,
+	ARRAY_ELEM_COMPLETED,
+	ARRAY_QUOTED_ELEM_STARTED,
+	ARRAY_QUOTED_ELEM_COMPLETED,
+	ARRAY_ELEM_DELIMITED,
+	ARRAY_LEVEL_COMPLETED,
+	ARRAY_LEVEL_DELIMITED
+} ArrayParseState;
+
 static int
 ArrayCount(char *str, int *dim, char typdelim)
 {
-	int			nest_level = 0,
-				i;
-	int			ndim = 1,
-				temp[MAXDIM],
-				nelems[MAXDIM],
-				nelems_last[MAXDIM];
-	bool		scanning_string = false;
-	bool		eoArray = false;
-	char	   *ptr;
+	int				nest_level = 0,
+					i;
+	int				ndim = 1,
+					temp[MAXDIM],
+					nelems[MAXDIM],
+					nelems_last[MAXDIM];
+	bool			scanning_string = false;
+	bool			eoArray = false;
+	char		   *ptr;
+	ArrayParseState	parse_state = ARRAY_NO_LEVEL;
 
 	for (i = 0; i < MAXDIM; ++i)
 	{
@@ -370,6 +384,7 @@ ArrayCount(char *str, int *dim, char typdelim)
 		nelems_last[i] = nelems[i] = 1;
 	}
 
+	/* special case for an empty array */
 	if (strncmp(str, "{}", 2) == 0)
 		return 0;
 
@@ -389,6 +404,20 @@ ArrayCount(char *str, int *dim, char typdelim)
 						errmsg("malformed array literal: \"%s\"", str)));
 					break;
 				case '\\':
+					/*
+					 * An escape must be after a level start, after an
+					 * element start, or after an element delimiter. In any
+					 * case we now must be past an element start.
+					 */
+					if (parse_state != ARRAY_LEVEL_STARTED &&
+						parse_state != ARRAY_ELEM_STARTED &&
+						parse_state != ARRAY_QUOTED_ELEM_STARTED &&
+						parse_state != ARRAY_ELEM_DELIMITED)
+						ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							errmsg("malformed array literal: \"%s\"", str)));
+					if (parse_state != ARRAY_QUOTED_ELEM_STARTED)
+						parse_state = ARRAY_ELEM_STARTED;
 					/* skip the escaped character */
 					if (*(ptr + 1))
 						ptr++;
@@ -398,11 +427,38 @@ ArrayCount(char *str, int *dim, char typdelim)
 						errmsg("malformed array literal: \"%s\"", str)));
 					break;
 				case '\"':
+					/*
+					 * A quote must be after a level start, after a quoted
+					 * element start, or after an element delimiter. In any
+					 * case we now must be past an element start.
+					 */
+					if (parse_state != ARRAY_LEVEL_STARTED &&
+						parse_state != ARRAY_QUOTED_ELEM_STARTED &&
+						parse_state != ARRAY_ELEM_DELIMITED)
+						ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							errmsg("malformed array literal: \"%s\"", str)));
 					scanning_string = !scanning_string;
+					if (scanning_string)
+						parse_state = ARRAY_QUOTED_ELEM_STARTED;
+					else
+						parse_state = ARRAY_QUOTED_ELEM_COMPLETED;
 					break;
 				case '{':
 					if (!scanning_string)
 					{
+						/*
+						 * A left brace can occur if no nesting has
+						 * occurred yet, after a level start, or
+						 * after a level delimiter.
+						 */
+						if (parse_state != ARRAY_NO_LEVEL &&
+							parse_state != ARRAY_LEVEL_STARTED &&
+							parse_state != ARRAY_LEVEL_DELIMITED)
+							ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								errmsg("malformed array literal: \"%s\"", str)));
+						parse_state = ARRAY_LEVEL_STARTED;
 						if (nest_level >= MAXDIM)
 							ereport(ERROR,
 								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
@@ -417,6 +473,19 @@ ArrayCount(char *str, int *dim, char typdelim)
 				case '}':
 					if (!scanning_string)
 					{
+						/*
+						 * A right brace can occur after an element start,
+						 * an element completion, a quoted element completion,
+						 * or a level completion.
+						 */
+						if (parse_state != ARRAY_ELEM_STARTED &&
+							parse_state != ARRAY_ELEM_COMPLETED &&
+							parse_state != ARRAY_QUOTED_ELEM_COMPLETED &&
+							parse_state != ARRAY_LEVEL_COMPLETED)
+							ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								errmsg("malformed array literal: \"%s\"", str)));
+						parse_state = ARRAY_LEVEL_COMPLETED;
 						if (nest_level == 0)
 							ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -445,10 +514,45 @@ ArrayCount(char *str, int *dim, char typdelim)
 					}
 					break;
 				default:
-					if (*ptr == typdelim && !scanning_string)
+					if (!scanning_string)
 					{
-						itemdone = true;
-						nelems[nest_level - 1]++;
+						if (*ptr == typdelim)
+						{
+							/*
+							* Delimiters can occur after an element start,
+							* an element completion, a quoted element
+							* completion, or a level completion.
+							*/
+							if (parse_state != ARRAY_ELEM_STARTED &&
+								parse_state != ARRAY_ELEM_COMPLETED &&
+								parse_state != ARRAY_QUOTED_ELEM_COMPLETED &&
+								parse_state != ARRAY_LEVEL_COMPLETED)
+								ereport(ERROR,
+									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+									errmsg("malformed array literal: \"%s\"", str)));
+							if (parse_state == ARRAY_LEVEL_COMPLETED)
+								parse_state = ARRAY_LEVEL_DELIMITED;
+							else
+								parse_state = ARRAY_ELEM_DELIMITED;
+							itemdone = true;
+							nelems[nest_level - 1]++;
+						}
+						else if (!isspace(*ptr))
+						{
+							/*
+							* Other non-space characters must be after a level
+							* start, after an element start, or after an element
+							* delimiter. In any case we now must be past an
+							* element start.
+							*/
+							if (parse_state != ARRAY_LEVEL_STARTED &&
+								parse_state != ARRAY_ELEM_STARTED &&
+								parse_state != ARRAY_ELEM_DELIMITED)
+								ereport(ERROR,
+									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+									errmsg("malformed array literal: \"%s\"", str)));
+							parse_state = ARRAY_ELEM_STARTED;
+						}
 					}
 					break;
 			}
@@ -511,12 +615,15 @@ ReadArrayStr(char *arrayStr,
 	while (!eoArray)
 	{
 		bool		itemdone = false;
+		bool		itemquoted = false;
 		int			i = -1;
 		char	   *itemstart;
+		char	   *eptr;
 
 		/* skip leading whitespace */
 		while (isspace((unsigned char) *ptr))
 			ptr++;
+
 		itemstart = ptr;
 
 		while (!itemdone)
@@ -547,11 +654,15 @@ ReadArrayStr(char *arrayStr,
 						char	   *cptr;
 
 						scanning_string = !scanning_string;
-						/* Crunch the string on top of the quote. */
-						for (cptr = ptr; *cptr != '\0'; cptr++)
-							*cptr = *(cptr + 1);
-						/* Back up to not miss following character. */
-						ptr--;
+						if (scanning_string)
+						{
+							itemquoted = true;
+							/* Crunch the string on top of the first quote. */
+							for (cptr = ptr; *cptr != '\0'; cptr++)
+								*cptr = *(cptr + 1);
+							/* Back up to not miss following character. */
+							ptr--;
+						}
 						break;
 					}
 				case '{':
@@ -614,6 +725,25 @@ ReadArrayStr(char *arrayStr,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				   errmsg("malformed array literal: \"%s\"", arrayStr)));
+
+		/*
+		 * skip trailing whitespace
+		 */
+		eptr = ptr - 1;
+		if (!itemquoted)
+		{
+			/* skip to last non-NULL, non-space, character */
+			while ((*eptr == '\0') || (isspace((unsigned char) *eptr)))
+				eptr--;
+			*(++eptr) = '\0';
+		}
+		else
+		{
+			/* skip to last quote character */
+			while (*eptr != '"')
+				eptr--;
+			*eptr = '\0';
+		}
 
 		values[i] = FunctionCall3(inputproc,
 								  CStringGetDatum(itemstart),

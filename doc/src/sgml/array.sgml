@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.36 2004/08/05 03:29:11 joe Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.37 2004/08/08 05:01:51 joe Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -95,10 +95,12 @@ CREATE TABLE tictactoe (
 </synopsis>
    where <replaceable>delim</replaceable> is the delimiter character
    for the type, as recorded in its <literal>pg_type</literal> entry.
-   (For all built-in types, this is the comma character
-   <quote><literal>,</literal></>.)  Each
-   <replaceable>val</replaceable> is either a constant of the array
-   element type, or a subarray.  An example of an array constant is
+   Among the standard data types provided in the
+   <productname>PostgreSQL</productname> distribution, type
+   <literal>box</> uses a semicolon (<literal>;</>) but all the others
+   use comma (<literal>,</>). Each <replaceable>val</replaceable> is
+   either a constant of the array element type, or a subarray. An example
+   of an array constant is
 <programlisting>
 '{{1,2,3},{4,5,6},{7,8,9}}'
 </programlisting>
@@ -161,7 +163,7 @@ SELECT * FROM sal_emp;
  </para>
 
  <para>
-  The <literal>ARRAY</literal> expression syntax may also be used:
+  The <literal>ARRAY</> constructor syntax may also be used:
 <programlisting>
 INSERT INTO sal_emp
     VALUES ('Bill',
@@ -176,8 +178,8 @@ INSERT INTO sal_emp
   Notice that the array elements are ordinary SQL constants or
   expressions; for instance, string literals are single quoted, instead of
   double quoted as they would be in an array literal.  The <literal>ARRAY</>
-  expression syntax is discussed in more detail in <xref
-  linkend="sql-syntax-array-constructors">.
+  constructor syntax is discussed in more detail in
+  <xref linkend="sql-syntax-array-constructors">.
  </para>
  </sect2>
 
@@ -524,10 +526,17 @@ SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
    use comma.)  In a multidimensional array, each dimension (row, plane,
    cube, etc.) gets its own level of curly braces, and delimiters
    must be written between adjacent curly-braced entities of the same level.
-   You may write whitespace before a left brace, after a right
-   brace, or before any individual item string.  Whitespace after an item
-   is not ignored, however: after skipping leading whitespace, everything
-   up to the next right brace or delimiter is taken as the item value.
+  </para>
+
+  <para>
+   The array output routine will put double quotes around element values
+   if they are empty strings or contain curly braces, delimiter characters,
+   double quotes, backslashes, or white space.  Double quotes and backslashes
+   embedded in element values will be backslash-escaped.  For numeric
+   data types it is safe to assume that double quotes will never appear, but
+   for textual data types one should be prepared to cope with either presence
+   or absence of quotes.  (This is a change in behavior from pre-7.2
+   <productname>PostgreSQL</productname> releases.)
   </para>
 
   <para>
@@ -573,26 +582,22 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
 
   <para>
    As shown previously, when writing an array value you may write double
-   quotes around any individual array
-   element.  You <emphasis>must</> do so if the element value would otherwise
-   confuse the array-value parser.  For example, elements containing curly
-   braces, commas (or whatever the delimiter character is), double quotes,
-   backslashes, or leading white space must be double-quoted.  To put a double
-   quote or backslash in a quoted array element value, precede it with a
-   backslash.
-   Alternatively, you can use backslash-escaping to protect all data characters
-   that would otherwise be taken as array syntax or ignorable white space.
+   quotes around any individual array element. You <emphasis>must</> do so
+   if the element value would otherwise confuse the array-value parser.
+   For example, elements containing curly braces, commas (or whatever the
+   delimiter character is), double quotes, backslashes, or leading white
+   space must be double-quoted.  To put a double quote or backslash in a
+   quoted array element value, precede it with a backslash. Alternatively,
+   you can use backslash-escaping to protect all data characters that would
+   otherwise be taken as array syntax.
   </para>
 
   <para>
-   The array output routine will put double quotes around element values
-   if they are empty strings or contain curly braces, delimiter characters,
-   double quotes, backslashes, or white space.  Double quotes and backslashes
-   embedded in element values will be backslash-escaped.  For numeric
-   data types it is safe to assume that double quotes will never appear, but
-   for textual data types one should be prepared to cope with either presence
-   or absence of quotes.  (This is a change in behavior from pre-7.2
-   <productname>PostgreSQL</productname> releases.)
+   You may write whitespace before a left brace or after a right
+   brace. You may also write whitespace before or after any individual item
+   string. In all of these cases the whitespace will be ignored. However,
+   whitespace within double quoted elements, or surrounded on both sides by
+   non-whitespace characters of an element, are not ignored.
   </para>
 
  <note>
@@ -616,10 +621,11 @@ INSERT ... VALUES ('{"\\\\","\\""}');
 
  <tip>
   <para>
-   The <literal>ARRAY</> constructor syntax is often easier to work with
-   than the array-literal syntax when writing array values in SQL commands.
-   In <literal>ARRAY</>, individual element values are written the same way
-   they would be written when not members of an array.
+   The <literal>ARRAY</> constructor syntax (see
+   <xref linkend="sql-syntax-array-constructors">) is often easier to work
+   with than the array-literal syntax when writing array values in SQL
+   commands. In <literal>ARRAY</>, individual element values are written the
+   same way they would be written when not members of an array.
   </para>
  </tip>
  </sect2>
