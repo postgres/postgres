@@ -681,3 +681,144 @@ Bruce Momjian wrote:
 > 
 > http://archives.postgresql.org
 
+From christoph.dalitz@hs-niederrhein.de Thu Nov 28 03:35:25 2002
+Return-path: <christoph.dalitz@hs-niederrhein.de>
+Received: from hera.hs-niederrhein.de (hera.hs-niederrhein.de [194.94.120.3])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id gAS8ZLP06871
+	for <pgman@candle.pha.pa.us>; Thu, 28 Nov 2002 03:35:23 -0500 (EST)
+Received: (from root@localhost)
+	by hera.hs-niederrhein.de (8.11.6+Sun/8.11.6) id gAS8ZGZ16207;
+	Thu, 28 Nov 2002 09:35:16 +0100 (CET)
+Received: from pc03230 (pc03230.kr.hs-niederrhein.de [194.94.121.230])
+	by hera.hs-niederrhein.de (8.11.6+Sun/8.11.6) with SMTP id gAS8ZDP16199;
+	Thu, 28 Nov 2002 09:35:13 +0100 (CET)
+Date: Thu, 28 Nov 2002 09:33:57 +0100
+From: Christoph Dalitz <christoph.dalitz@hs-niederrhein.de>
+To: Jean-Luc Lachance <jllachan@nsd.ca>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Tino Wildenhain <tino@wildenhain.de>, pgsql-general@postgresql.org
+Subject: Re: ALTER TRIGGER DISABLE/ENABLE
+Message-ID: <20021128093357.48c9d644.christoph.dalitz@hs-niederrhein.de>
+In-Reply-To: <3DE3CE7B.614EE99E@nsd.ca>
+References: <200211261853.gAQIrdE00304@candle.pha.pa.us>
+	<3DE3CE7B.614EE99E@nsd.ca>
+Organization: FH Niederrhein
+X-Mailer: Sylpheed version 0.7.4 (GTK+ 1.2.10; i386-debian-linux-gnu)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS perl-11
+Status: OR
+
+On Tue, 26 Nov 2002 14:41:47 -0500
+Jean-Luc Lachance <jllachan@nsd.ca> wrote:
+>
+> I think thte sintax should be:
+> 
+> ALTER TABLE DISABLE|ENABLE TRIGGER {trigger name}|ALL
+> 
+This would make no sense:
+
+It could be the syntax if the statement for creating a trigger
+where "ALTER TABLE ADD TRIGGER".
+
+The statement for creating a trigger is however "CREATE TRIGEER".
+
+Consequently the statement for changing a trigger must be "ALTER TRIGGER"
+and not "ALTER TABLE".
+
+Switching off all triggers for an individual table at once would be
+convenient of course and can be easily achieved with "ALTER TRIGGER" as well:
+just write a little PL/SQL procedure "disable_triggers()" that takes a
+tablename as input and disables all triggers on it.
+
+Christoph Dalitz
+
+From pgsql-general-owner+M33790@postgresql.org Thu Nov 28 11:04:17 2002
+Return-path: <pgsql-general-owner+M33790@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id gASG4EP11817
+	for <pgman@candle.pha.pa.us>; Thu, 28 Nov 2002 11:04:15 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 0E622476313; Thu, 28 Nov 2002 11:03:52 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 153FF476713; Thu, 28 Nov 2002 11:03:36 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 4A4AA475E41
+	for <pgsql-general@postgresql.org>; Thu, 28 Nov 2002 11:03:19 -0500 (EST)
+Received: from beamish.nsd.ca (unknown [205.150.156.194])
+	by postgresql.org (Postfix) with ESMTP id 30F56475AFF
+	for <pgsql-general@postgresql.org>; Thu, 28 Nov 2002 11:03:18 -0500 (EST)
+Received: (from smap@localhost)
+	by beamish.nsd.ca (8.9.3/8.9.3) id LAA12283;
+	Thu, 28 Nov 2002 11:02:54 -0500
+X-Authentication-Warning: beamish.nsd.ca: smap set sender to <jllachan@nsd.ca> using -f
+Received: from reddog.nsd.ca(192.168.101.30) by beamish.nsd.ca via smap (V2.1/2.1+anti-relay+anti-spam)
+	id xma012273; Thu, 28 Nov 02 11:02:35 -0500
+Received: from nsd.ca (jllachan-linux.nsd.ca [192.168.101.148])
+	by reddog.nsd.ca (8.8.7/8.8.7) with ESMTP id LAA00966;
+	Thu, 28 Nov 2002 11:01:23 -0500
+Message-ID: <3DE63E3D.5BC92720@nsd.ca>
+Date: Thu, 28 Nov 2002 11:03:09 -0500
+From: Jean-Luc Lachance <jllachan@nsd.ca>
+X-Mailer: Mozilla 4.77 [en] (X11; U; Linux 2.4.9-31 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Christoph Dalitz <christoph.dalitz@hs-niederrhein.de>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Tino Wildenhain <tino@wildenhain.de>, pgsql-general@postgresql.org
+Subject: Re: [GENERAL] ALTER TRIGGER DISABLE/ENABLE
+References: <200211261853.gAQIrdE00304@candle.pha.pa.us>
+		<3DE3CE7B.614EE99E@nsd.ca> <20021128093357.48c9d644.christoph.dalitz@hs-niederrhein.de>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+Sementics.
+
+The trigger belongs to the table. 
+The trigger is not modified. 
+The ability of the table being modified to call it is modified.  
+Plus, if you want all the triggers on a table to be disabled the ALTER
+TRIGGER is not enough.
+
+JLL
+
+
+Christoph Dalitz wrote:
+> 
+> On Tue, 26 Nov 2002 14:41:47 -0500
+> Jean-Luc Lachance <jllachan@nsd.ca> wrote:
+> >
+> > I think thte sintax should be:
+> >
+> > ALTER TABLE DISABLE|ENABLE TRIGGER {trigger name}|ALL
+> >
+> This would make no sense:
+> 
+> It could be the syntax if the statement for creating a trigger
+> where "ALTER TABLE ADD TRIGGER".
+> 
+> The statement for creating a trigger is however "CREATE TRIGEER".
+> 
+> Consequently the statement for changing a trigger must be "ALTER TRIGGER"
+> and not "ALTER TABLE".
+> 
+> Switching off all triggers for an individual table at once would be
+> convenient of course and can be easily achieved with "ALTER TRIGGER" as well:
+> just write a little PL/SQL procedure "disable_triggers()" that takes a
+> tablename as input and disables all triggers on it.
+> 
+> Christoph Dalitz
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
