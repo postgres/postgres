@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.19 1998/01/08 03:05:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.20 1998/01/08 03:15:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ varcharin(char *s, int dummy, int typlen)
 	if (s == NULL)
 		return ((char *) NULL);
 
-	if (typelen == -1)	/* we will remove this soon to make compact storage */
+	if (typlen == -1)	/* we will remove this soon to make compact storage */
 						/* change varcharlen at the same time to use VARSIZE */
 		len = strlen(s) + VARHDRSZ;
 /*	if (typlen != -1 && len > typlen) */
