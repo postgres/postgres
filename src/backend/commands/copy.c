@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.104 2000/04/12 17:14:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.105 2000/04/16 04:27:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ CopySendData(void *databuf, int datasize, FILE *fp)
 	{
 		fwrite(databuf, datasize, 1, fp);
 		if (ferror(fp))
-			elog(ERROR, "CopySendData: %s", strerror(errno));
+			elog(ERROR, "CopySendData: %m");
 	}
 }
 
@@ -350,11 +350,11 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		{
 			mode_t		oumask; /* Pre-existing umask value */
 
-			oumask = umask((mode_t) 022);
-
 			if (*filename != '/')
 				elog(ERROR, "Relative path not allowed for server side"
 					 " COPY command.");
+
+			oumask = umask((mode_t) 022);
 
 #ifndef __CYGWIN32__
 			fp = AllocateFile(filename, "w");
@@ -362,6 +362,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 			fp = AllocateFile(filename, "wb");
 #endif
 			umask(oumask);
+
 			if (fp == NULL)
 				elog(ERROR, "COPY command, running in backend with "
 					 "effective uid %d, could not open file '%s' for "
@@ -626,7 +627,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 	int			n_indices;
 	InsertIndexResult indexRes;
 	TupleDesc	tupDesc;
-	Oid			loaded_oid;
+	Oid			loaded_oid = InvalidOid;
 	bool		skip_tuple = false;
 
 	tupDesc = RelationGetDescr(rel);
@@ -775,11 +776,12 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 			CancelQuery();
 		}
 
+		lineno++;
+
 		if (!binary)
 		{
 			int			newline = 0;
 
-			lineno++;
 			if (oids)
 			{
 				string = CopyReadAttribute(fp, &isnull, delim, &newline, null_print);
@@ -788,8 +790,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 				else
 				{
 					loaded_oid = oidin(string);
-					if (loaded_oid < BootstrapObjectIdData)
-						elog(ERROR, "COPY TEXT: Invalid Oid. line: %d", lineno);
+					if (loaded_oid == InvalidOid)
+						elog(ERROR, "COPY TEXT: Invalid Oid");
 				}
 			}
 			for (i = 0; i < attr_count && !done; i++)
@@ -822,7 +824,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 					 */
 					if (!PointerIsValid(values[i]) &&
 						!(rel->rd_att->attrs[i]->attbyval))
-						elog(ERROR, "copy from line %d: Bad file format", lineno);
+						elog(ERROR, "COPY: Bad file format");
 				}
 			}
 			if (!done)
@@ -838,8 +840,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 				if (oids)
 				{
 					CopyGetData(&loaded_oid, sizeof(int32), fp);
-					if (loaded_oid < BootstrapObjectIdData)
-						elog(ERROR, "COPY BINARY: Invalid Oid line: %d", lineno);
+					if (loaded_oid == InvalidOid)
+						elog(ERROR, "COPY BINARY: Invalid Oid");
 				}
 				CopyGetData(&null_ct, sizeof(int32), fp);
 				if (null_ct > 0)
@@ -878,7 +880,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 								ptr += sizeof(int32);
 								break;
 							default:
-								elog(ERROR, "COPY BINARY: impossible size! line: %d", lineno);
+								elog(ERROR, "COPY BINARY: impossible size");
 								break;
 						}
 					}
@@ -1044,7 +1046,7 @@ GetTypeElement(Oid type)
 	if (HeapTupleIsValid(typeTuple))
 		return (int) ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
 
-	elog(ERROR, "GetOutputFunction: Cache lookup of type %d failed", type);
+	elog(ERROR, "GetOutputFunction: Cache lookup of type %u failed", type);
 	return InvalidOid;
 }
 
@@ -1172,7 +1174,7 @@ CopyReadNewline(FILE *fp, int *newline)
 {
 	if (!*newline)
 	{
-		elog(NOTICE, "CopyReadNewline: line %d - extra fields ignored", lineno);
+		elog(NOTICE, "CopyReadNewline: extra fields ignored");
 		while (!CopyGetEof(fp) && (CopyGetChar(fp) != '\n'));
 	}
 	*newline = 0;
@@ -1307,7 +1309,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 				case '.':
 					c = CopyGetChar(fp);
 					if (c != '\n')
-						elog(ERROR, "CopyReadAttribute - end of record marker corrupted. line: %d", lineno);
+						elog(ERROR, "CopyReadAttribute: end of record marker corrupted");
 					goto endOfFile;
 			}
 		}
