@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.33 2000/05/14 18:05:05 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.34 2000/07/02 15:21:17 petere Exp $
  */
 #include "postgres.h"
 
@@ -22,7 +22,6 @@
 #endif
 
 #include "libpq-fe.h"
-#include "version.h"
 
 #include "command.h"
 #include "common.h"
@@ -580,7 +579,7 @@ process_psqlrc(void)
 			exit(EXIT_FAILURE);
 		}
 
-		sprintf(psqlrc, "%s/.psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, home);
+		sprintf(psqlrc, "%s/.psqlrc-" PG_VERSION, home);
 		if (access(psqlrc, R_OK) == 0)
 			process_file(psqlrc);
 		else
@@ -602,7 +601,7 @@ process_psqlrc(void)
 static void
 showVersion(void)
 {
-	puts("psql (PostgreSQL) " PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
+	puts("psql (PostgreSQL) " PG_VERSION);
 
 #if defined(USE_READLINE) || defined (USE_HISTORY) || defined(MULTIBYTE)
 	fputs("contains ", stdout);

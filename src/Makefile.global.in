@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.84 2000/07/01 21:16:42 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.85 2000/07/02 15:20:41 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -34,6 +34,9 @@
 #    contains this file).
 #
 #-------------------------------------------------------------------------
+
+# PostgreSQL version number
+VERSION = @VERSION@
 
 ifndef SRCDIR
 # This should be changed once we have separate build dirs.

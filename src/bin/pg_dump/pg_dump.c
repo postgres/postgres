@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.152 2000/06/14 18:17:50 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.153 2000/07/02 15:21:05 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -70,7 +70,6 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
-#include "version.h"
 
 #include "libpq-fe.h"
 #ifndef HAVE_STRDUP
@@ -177,7 +176,7 @@ help(const char *progname)
 static void
 version(void)
 {
-	puts("pg_dump (PostgreSQL) " PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
+	puts("pg_dump (PostgreSQL) " PG_VERSION);
 	puts("Portions Copyright (c) 1996-2000, PostgreSQL, Inc");
 	puts("Portions Copyright (C) 1996 Regents of the University of California");
 	puts("Read the file COPYRIGHT to see the usage and distribution terms.");
@@ -541,10 +540,11 @@ static void
 check_database_version(bool ignoreVersion)
 {
 	PGresult   *res;
-	const char *dbversion;
-	const char *myversion = "PostgreSQL " PG_RELEASE "." PG_VERSION;
-	int			myversionlen = strlen(myversion);
+	double      myversion;
+	const char *remoteversion_str;
+	double      remoteversion;
 
+	myversion = strtod(PG_VERSION, NULL);
 	res = PQexec(g_conn, "SELECT version()");
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK ||
@@ -553,11 +553,13 @@ check_database_version(bool ignoreVersion)
 		fprintf(stderr, "check_database_version(): command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
-	dbversion = PQgetvalue(res, 0, 0);
-	if (strncmp(dbversion, myversion, myversionlen) != 0)
+
+	remoteversion_str = PQgetvalue(res, 0, 0);
+	remoteversion = strtod(remoteversion_str + 11, NULL);
+	if (myversion != remoteversion)
 	{
 		fprintf(stderr, "Database version: %s\npg_dump version: %s\n",
-				dbversion, PG_RELEASE "." PG_VERSION);
+				remoteversion_str, PG_VERSION);
 		if (ignoreVersion)
 			fprintf(stderr, "Proceeding despite version mismatch.\n");
 		else

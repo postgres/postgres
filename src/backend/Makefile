@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.56 2000/06/28 03:30:57 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.57 2000/07/02 15:20:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -57,10 +57,8 @@ ifeq ($(PORTNAME), qnx4)
 OBJS+= bootstrap/bootstrap.o
 endif
 
-VERSIONOBJ = $(SRCDIR)/utils/version.o
-
 ifeq ($(MAKE_DLL), true)
-DLLOBJS= $(OBJS) $(VERSIONOBJ)
+DLLOBJS= $(OBJS)
 DLLLIBS= -L/usr/local/lib -lcygipc -lcrypt -lcygwin -lkernel32
 
 postgres.def: $(DLLOBJS)
@@ -74,8 +72,8 @@ all: prebuildheaders postgres $(POSTGRES_IMP)
 
 ifneq ($(PORTNAME), win)
 
-postgres: $(OBJS) $(VERSIONOBJ)
-	$(CC) $(CFLAGS) -o postgres $(OBJS) $(VERSIONOBJ) $(LDFLAGS)
+postgres: $(OBJS)
+	$(CC) $(CFLAGS) -o postgres $(OBJS) $(LDFLAGS)
 
 else
 
@@ -92,9 +90,6 @@ $(OBJS): $(DIRS:%=%.dir)
 
 $(DIRS:%=%.dir):
 	$(MAKE) -C $(subst .dir,,$@) all 
-
-$(VERSIONOBJ): $(SRCDIR)/utils/version.c $(SRCDIR)/include/version.h
-	$(MAKE) -C $(SRCDIR)/utils version.o
 
 $(SRCDIR)/utils/dllinit.o: $(SRCDIR)/utils/dllinit.c
 	$(MAKE) -C $(SRCDIR)/utils dllinit.o

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.55 2000/07/01 21:16:42 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.56 2000/07/02 15:20:41 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,14 +24,12 @@ ETAGS = @etags@
 XARGS = @xargs@
 
 all:
-	$(MAKE) -C utils all
 	$(MAKE) -C backend all
 	$(MAKE) -C interfaces all
 	$(MAKE) -C bin all
 	$(MAKE) -C pl all
 
 install: installdirs
-	$(MAKE) -C utils install
 	$(MAKE) -C backend install
 	$(MAKE) -C interfaces install
 	$(MAKE) -C bin install

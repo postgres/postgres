@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.61 2000/06/28 03:32:56 tgl Exp $
+ * $Id: miscadmin.h,v 1.62 2000/07/02 15:21:18 petere Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -226,5 +226,8 @@ extern void SetWaitingForLock(bool);
 extern void SetPidFname(char *datadir);
 extern void UnlinkPidFile(void);
 extern int	SetPidFile(pid_t pid);
+
+
+extern void ValidatePgVersion(const char *path);
 
 #endif	 /* MISCADMIN_H */

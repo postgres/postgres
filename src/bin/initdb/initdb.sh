@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.97 2000/06/22 22:31:22 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.98 2000/07/02 15:21:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ else
 fi
 
 # Check if needed programs actually exist in path
-for prog in postgres pg_version pg_id
+for prog in postgres pg_id
 do
         if [ ! -x "$PGPATH/$prog" ]
 	then
@@ -117,6 +117,13 @@ then
     exit 1
 fi
 
+# Replaced at build time
+VERSION=__VERSION__
+short_version=`echo $VERSION | sed -e 's!^\([0-9][0-9]*\.[0-9][0-9]*\).*!\1!'`
+if [ x"$short_version" = x"" ] ; then
+  echo "$CMDNAME: bug: version number is out of format"
+  exit 1
+fi
 
 # 0 is the default (non-)encoding
 MULTIBYTEID=0
@@ -143,6 +150,10 @@ do
         --help|-\?)
                 usage=t
                 break
+                ;;
+        --version)
+                echo "initdb (PostgreSQL) $VERSION"
+                exit 0
                 ;;
         --debug|-d)
                 debug=1
@@ -439,7 +450,7 @@ cat "$TEMPLATE" \
 | "$PGPATH"/postgres $FIRSTRUN template1 \
 || exit_nicely
 
-"$PGPATH"/pg_version "$PGDATA"/base/template1 || exit_nicely
+echo $short_version > "$PGDATA"/base/template1/PG_VERSION || exit_nicely
 
 #----------------------------------------------------------------------------
 # Create the global classes, if requested.
@@ -456,7 +467,7 @@ then
     | "$PGPATH"/postgres $BACKENDARGS template1 \
     || exit_nicely
 
-    "$PGPATH"/pg_version "$PGDATA" || exit_nicely
+    echo $short_version > "$PGDATA/PG_VERSION" || exit_nicely
 
     cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf     || exit_nicely
     cp "$POSTGRESQL_CONF_SAMPLE" "$PGDATA"/postgresql.conf || exit_nicely

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.18 2000/06/27 00:30:53 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.19 2000/07/02 15:21:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,8 +14,8 @@ include ../../Makefile.global
 
 all: initdb
 
-initdb: initdb.sh
-	sed -e 's/__MULTIBYTE__/$(MULTIBYTE)/g' < $< > $@
+initdb: initdb.sh ../../Makefile.global
+	sed -e 's/__MULTIBYTE__/$(MULTIBYTE)/g' -e 's/__VERSION__/$(VERSION)/g' < $< > $@
 
 install: all installdirs
 	$(INSTALL_SCRIPT) initdb $(bindir)/initdb

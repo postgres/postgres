@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.50 2000/06/14 18:17:46 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.51 2000/07/02 15:20:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include <grp.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "catalog/catname.h"
 #include "catalog/pg_shadow.h"
@@ -519,4 +520,52 @@ SetPidFile(pid_t pid)
 	close(fd);
 
 	return (0);
+}
+
+
+
+/*
+ * Determine whether the PG_VERSION file in directory `path' indicates
+ * a data version compatible with the version of this program.
+ *
+ * If compatible, return. Otherwise, elog(FATAL).
+ */
+void
+ValidatePgVersion(const char *path)
+{
+	char		full_path[MAXPGPATH];
+	FILE       *file;
+	int			ret;
+	long        file_major, file_minor;
+	long        my_major = 0, my_minor = 0;
+	char       *endptr;
+	const char *version_string = PG_VERSION;
+
+	my_major = strtol(version_string, &endptr, 10);
+	if (*endptr == '.')
+		my_minor = strtol(endptr+1, NULL, 10);
+
+	snprintf(full_path, MAXPGPATH, "%s/PG_VERSION", path);
+
+	file = AllocateFile(full_path, "r");
+	if (!file)
+	{
+		if (errno == ENOENT)
+			elog(FATAL, "File %s is missing. This is not a valid data directory.", full_path);
+		else
+			elog(FATAL, "cannot open %s: %s", full_path, strerror(errno));
+	}
+
+	ret = fscanf(file, "%ld.%ld", &file_major, &file_minor);
+	if (ret == EOF)
+		elog(FATAL, "cannot read %s: %s", full_path, strerror(errno));
+	else if (ret != 2)
+		elog(FATAL, "`%s' does not have a valid format. You need to initdb.", full_path);
+
+	FreeFile(file);
+
+	if (my_major != file_major || my_minor != file_minor)
+		elog(FATAL, "The data directory was initalized by PostgreSQL version %ld.%ld, "
+			 "which is not compatible with this verion %s.",
+			 file_major, file_minor, version_string);
 }

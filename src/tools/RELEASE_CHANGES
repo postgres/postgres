@@ -1,9 +1,9 @@
+update version number in configure.in
 README
 HISTORY
 register.txt
 doc/Machine-specific FAQ's
 doc/bug.template
-update include/version.h.in after release, including subversion
 update pgaccess
 update src/interfaces/jdbc/postgresql/jdbc1/DatabaseMetaData.java
 update src/interfaces/jdbc/postgresql/jdbc2/DatabaseMetaData.java
@@ -13,7 +13,6 @@ update doc/src/sgml/install.sgml
 update interfaces/libpq/libpq.rc
 update documentation
 	command-line arg printout from inside the program
-	psql help in psqlHelp.c
 	man pages
 	sgml docs
 update VERSION numbers of interfaces

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.150 2000/06/28 03:31:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.151 2000/07/02 15:20:48 petere Exp $
  *
  * NOTES
  *
@@ -84,7 +84,6 @@
 #include "access/xlog.h"
 #include "tcop/tcopprot.h"
 #include "utils/guc.h"
-#include "version.h"
 
 /*
  * "postmaster.opts" is a file containing options for postmaser.
@@ -300,8 +299,11 @@ int			assert_enabled = 1;
 #endif
 
 static void
-checkDataDir(const char *DataDir, bool *DataDirOK)
+checkDataDir(const char *DataDir)
 {
+	char		path[MAXPGPATH];
+	FILE	   *fp;
+
 	if (DataDir == NULL)
 	{
 		fprintf(stderr, "%s does not know where to find the database system "
@@ -309,51 +311,28 @@ checkDataDir(const char *DataDir, bool *DataDirOK)
 				"database system either by specifying the -D invocation "
 			 "option or by setting the PGDATA environment variable.\n\n",
 				progname);
-		*DataDirOK = false;
+		exit(2);
 	}
-	else
+
+	snprintf(path, sizeof(path), "%s%cbase%ctemplate1%cpg_class",
+			 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
+
+	fp = AllocateFile(path, PG_BINARY_R);
+	if (fp == NULL)
 	{
-		char		path[MAXPGPATH];
-		FILE	   *fp;
-
-		snprintf(path, sizeof(path), "%s%cbase%ctemplate1%cpg_class",
-				 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
-		fp = AllocateFile(path, PG_BINARY_R);
-		if (fp == NULL)
-		{
-			fprintf(stderr, "%s does not find the database system.  "
-					"Expected to find it "
-			   "in the PGDATA directory \"%s\", but unable to open file "
-					"with pathname \"%s\".\n\n",
-					progname, DataDir, path);
-			*DataDirOK = false;
-		}
-		else
-		{
-			char	   *reason;
-
-			/* reason ValidatePgVersion failed.  NULL if didn't */
-
-			FreeFile(fp);
-
-			ValidatePgVersion(DataDir, &reason);
-			if (reason)
-			{
-				fprintf(stderr,
-						"Database system in directory %s "
-						"is not compatible with this version of "
-						"Postgres, or we are unable to read the "
-						"PG_VERSION file.  "
-						"Explanation from ValidatePgVersion: %s\n\n",
-						DataDir, reason);
-				free(reason);
-				*DataDirOK = false;
-			}
-			else
-				*DataDirOK = true;
-		}
+		fprintf(stderr, "%s does not find the database system.  "
+				"Expected to find it "
+				"in the PGDATA directory \"%s\", but unable to open file "
+				"with pathname \"%s\".\n\n",
+				progname, DataDir, path);
+		exit(2);
 	}
+
+	FreeFile(fp);
+
+	ValidatePgVersion(DataDir);
 }
+
 
 int
 PostmasterMain(int argc, char *argv[])
@@ -361,7 +340,6 @@ PostmasterMain(int argc, char *argv[])
 	int			opt;
 	int			status;
 	int			silentflag = 0;
-	bool		DataDirOK;		/* We have a usable PGDATA value */
 	char		original_extraoptions[MAXPGPATH];
 
 	IsUnderPostmaster = true;	/* so that backends know this */
@@ -435,12 +413,7 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 	optind = 1; /* start over */
-	checkDataDir(DataDir, &DataDirOK);	/* issues error messages */
-	if (!DataDirOK)
-	{
-		fprintf(stderr, "No data directory -- can't proceed.\n");
-		exit(2);
-	}
+	checkDataDir(DataDir);	/* issues error messages */
 
 	ProcessConfigFile(PGC_POSTMASTER);
 

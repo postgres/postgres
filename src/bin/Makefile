@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.27 2000/07/01 15:02:19 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.28 2000/07/02 15:20:56 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ top_builddir = ../..
 include ../Makefile.global
 
 DIRS := initdb initlocation ipcclean pg_ctl pg_dump pg_id \
-	pg_passwd pg_version psql scripts
+	pg_passwd psql scripts
 
 ifdef MULTIBYTE
 DIRS += pg_encoding

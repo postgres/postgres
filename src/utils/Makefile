@@ -1,10 +1,8 @@
 #-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for utils
+# Makefile for utils
 #
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/utils/Attic/Makefile,v 1.7 2000/02/27 01:18:46 tgl Exp $
+# $Header: /cvsroot/pgsql/src/utils/Attic/Makefile,v 1.8 2000/07/02 15:21:27 petere Exp $
 #
 # About strdup:  Some systems have strdup in their standard library, others
 # don't.  Ones that don't will use this make file to compile the strdup.c
@@ -19,24 +17,18 @@
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ..
-include $(SRCDIR)/Makefile.global
+subdir = src/utils
+top_builddir = ../..
+include ../Makefile.global
 
-all: version.o
+all:
 
-install:
+clean distclean maintainer-clean:
+	rm -f dllinit.o getopt.o strdup.o
 
 depend dep:
 	$(CC) $(CFLAGS) -MM *.c >depend
 
-clean: 
-	rm -f dllinit.o getopt.o strdup.o version.o
-
-# Make sure version.o has proper dependency on version.h,
-# even if we didn't do make depend.
-version.o: version.c $(SRCDIR)/include/version.h
-
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.60 2000/06/28 03:32:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.61 2000/07/02 15:20:56 petere Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -34,7 +34,6 @@
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "version.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -267,9 +266,7 @@ InitPostgres(const char *dbname)
 			elog(FATAL, "Database system not found. Data directory '%s' does not exist.",
 				 DataDir);
 
-		ValidatePgVersion(DataDir, &reason);
-		if (reason != NULL)
-			elog(FATAL, reason);
+		ValidatePgVersion(DataDir);
 
 		/*-----------------
 		 * Find oid and path of the database we're about to open. Since we're
@@ -300,9 +297,7 @@ InitPostgres(const char *dbname)
 			elog(FATAL, "Database \"%s\" does not exist. The data directory '%s' is missing.",
 				 dbname, fullpath);
 
-		ValidatePgVersion(fullpath, &reason);
-		if (reason != NULL)
-			elog(FATAL, "%s", reason);
+		ValidatePgVersion(fullpath);
 
 		if (chdir(fullpath) == -1)
 			elog(FATAL, "Unable to change directory to '%s': %s", fullpath, strerror(errno));

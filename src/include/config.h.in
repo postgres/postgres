@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.121 2000/06/29 05:50:29 tgl Exp $
+ * $Id: config.h.in,v 1.122 2000/07/02 15:21:18 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -27,6 +27,11 @@
  * or whatever.
  *------------------------------------------------------------------------
  */
+
+/* The version number is actually hard-coded into configure.in */
+#undef PG_VERSION
+/* A canonical string containing the version number, platform, and C compiler */
+#undef PG_VERSION_STR
 
 /* Set to 1 if you want LOCALE support (--enable-locale) */
 #undef USE_LOCALE
