@@ -80,5 +80,6 @@ userlock -
 	User locks
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
-
-
+vacuumlo -
+	Remove orphaned large objects
+	by Peter T Mount <peter@retep.org.uk>
