@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.132 2000/01/07 09:28:03 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.133 2000/01/09 12:13:24 ishii Exp $
  *
  * NOTES
  *
@@ -91,17 +91,6 @@
 #include "tcop/tcopprot.h"
 #include "utils/trace.h"
 #include "version.h"
-
-/* 
- * "postmaster.pid" is a file containing postmaster's pid, being
- * created uder $PGDATA upon postmaster's starting up. When postmaster
- * shuts down, it will be unlinked. The purpose of the file includes:
- *
- * (1) supplying neccessary information to stop/restart postmaster
- * (2) preventing another postmaster process starting while it has
- *     already started
-*/
-#define PIDFNAME	"postmaster.pid"
 
 /*
  * "postmaster.opts" is a file containing options for postmaser.
@@ -250,11 +239,6 @@ static bool		FatalError = false;
 
 static unsigned int random_seed = 0;
 
-/*
- * Path to pid file. Exitpostmaster() remember it to unlink the file.
- */
-static char PidFile[MAXPGPATH];
-
 extern char *optarg;
 extern int	optind,
 			opterr;
@@ -282,9 +266,7 @@ static long 	PostmasterRandom(void);
 static void 	RandomSalt(char *salt);
 static void 	SignalChildren(SIGNAL_ARGS);
 static int		CountChildren(void);
-static void	UnlinkPidFile(void);
-static void	SetPidFname(char *datadir);
-static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
+static int SetOptsFile(char *progname, int port, char *datadir,
 		      int assert, int nbuf, char *execfile,
 		      int debuglvl, int netserver,
 #ifdef USE_SSL
@@ -657,8 +639,9 @@ PostmasterMain(int argc, char *argv[])
 		/*
 		 * create pid file. if the file has already existed, exits.
 		 */
-		if (SetPidFile(
-		       getpid(),	/* postmaster process id */
+	  SetPidFname(DataDir);
+	  if (SetPidFile(getpid()) == 0) {
+	    if (SetOptsFile(
 		       progname,	/* postmaster executable file */
 		       PostPortName,	/* port number */
 		       DataDir,		/* PGDATA */
@@ -675,13 +658,22 @@ PostmasterMain(int argc, char *argv[])
 		       silentflag,	/* -S: detach tty */
 		       SendStop,	/* -s: send SIGSTOP */
 		       original_extraoptions	/* options for backend */
-		       )
-		  ) {
-			ExitPostmaster(1);
-			return 0;	/* not reached */
-		}
+		       ) != 0) {
+		    UnlinkPidFile();
+		    ExitPostmaster(1);
+		    return 0;	/* not reached */
+	    }
+	  }
+	  else {
+	    ExitPostmaster(1);
+	    return 0;	/* not reached */
+	  }
+	    
+	  /*
+	   * register clean up proc
+	   */
+	  on_proc_exit(UnlinkPidFile, NULL);
 	}
-
 	/*
 	 * Set up signal handlers for the postmaster process.
 	 */
@@ -715,17 +707,19 @@ pmdaemonize(char *extraoptions)
 	int			i;
 	pid_t	pid;
 
+	SetPidFname(DataDir);
+
 	pid = fork();
 	if (pid == -1) {
 		perror("Failed to fork postmaster");
 		ExitPostmaster(1);
 		return;	/* not reached */
 	} else if (pid) {	/* parent */
-		/*
-		 * create pid file. if the file has already existed, exits.
-		 */
-		if (SetPidFile(
-		       pid,		/* postmaster process id */
+	  /*
+	   * create pid file. if the file has already existed, exits.
+	   */
+	  if (SetPidFile(pid) == 0) {
+	    if (SetOptsFile(
 		       progname,	/* postmaster executable file */
 		       PostPortName,	/* port number */
 		       DataDir,		/* PGDATA */
@@ -742,17 +736,27 @@ pmdaemonize(char *extraoptions)
 		       1,		/* -S: detach tty */
 		       SendStop,	/* -s: send SIGSTOP */
 		       extraoptions	/* options for backend */
-		       )
-		) {
-			/*
-			 * Failed to create pid file. kill the child and
-			 * exit now.
-			 */
-			kill(pid, SIGTERM);
-			ExitPostmaster(1);
-			return;	/* not reached */
-		}
-		_exit(0);
+		       ) != 0) {
+	      /*
+	       * Failed to create opts file. kill the child and
+	       * exit now.
+	       */
+	      UnlinkPidFile();
+	      kill(pid, SIGTERM);
+	      ExitPostmaster(1);
+	      return;	/* not reached */
+	    }
+	    _exit(0);
+	  }
+	  else {
+	      /*
+	       * Failed to create pid file. kill the child and
+	       * exit now.
+	       */
+	      kill(pid, SIGTERM);
+	      ExitPostmaster(1);
+	      return;	/* not reached */
+	  }
 	}
 
 /* GH: If there's no setsid(), we hopefully don't need silent mode.
@@ -779,7 +783,6 @@ pmdaemonize(char *extraoptions)
 	/*
 	 * register clean up proc
 	 */
-	SetPidFname(DataDir);
 	on_proc_exit(UnlinkPidFile, NULL);
 }
 
@@ -2179,25 +2182,9 @@ SSDataBase(bool startup)
 }
 
 /*
- * Remove the pid file. This function is called from proc_exit.
+ * Create the opts file
  */
-static void UnlinkPidFile(void)
-{
-	unlink(PidFile);
-}
-
-/*
- * Set path to the pid file
- */
-static void SetPidFname(char * datadir)
-{
-	snprintf(PidFile, sizeof(PidFile), "%s/%s", datadir, PIDFNAME);
-}
-
-/*
- * Create the pid file
- */
-static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
+static int SetOptsFile(char *progname, int port, char *datadir,
 		      int assert, int nbuf, char *execfile,
 		      int debuglvl, int netserver,
 #ifdef USE_SSL
@@ -2208,80 +2195,8 @@ static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
 {
 	int fd;
 	char optsfile[MAXPGPATH];
-	char pidstr[32];
-	int len;
-	pid_t post_pid;
 	char opts[1024];
 	char buf[1024];
-
-	/*
-	 * Creating pid file
-	 */
-	SetPidFname(datadir);
-	fd = open(PidFile, O_RDWR | O_CREAT | O_EXCL, 0600);
-	if (fd < 0) {
-		/*
-		 * Couldn't create the pid file. Probably
-		 * it already exists. Read the file to see if the process
-		 * actually exists
-		 */
-		fd = open(PidFile, O_RDONLY, 0600);
-		if (fd < 0) {
-			fprintf(stderr, "Can't create/read pid file: %s\n", PidFile);
-			fprintf(stderr, "Please check the permission and try again.\n");
-			return(-1);
-		}
-
-		if ((len = read(fd, pidstr, sizeof(pidstr)-1)) < 0) {
-			fprintf(stderr, "Can't create/read pid file: %s\n", PidFile);
-			fprintf(stderr, "Please check the permission and try again.\n");
-			close(fd);
-			return(-1);
-		}
-		close(fd);
-
-		/*
-		 * Check to see if the process actually exists
-		 */
-		pidstr[len] = '\0';
-		post_pid = (pid_t)atoi(pidstr);
-
-		if (post_pid == 0 || (post_pid > 0 && kill(post_pid, 0) < 0)) {
-			/*
-			 * No, the process did not exist. Unlink
-			 * the file and try to create it
-			 */
-			if (unlink(PidFile) < 0) {
-				fprintf(stderr, "Can't remove pidfile: %s\n", PidFile);
-				fprintf(stderr, "The file seems accidently left, but I couldn't remove it.\n");
-				fprintf(stderr, "Please remove the file by hand and try again.\n");
-				return(-1);
-			}
-			fd = open(PidFile, O_RDWR | O_CREAT | O_EXCL, 0600);
-			if (fd < 0) {
-				fprintf(stderr, "Can't create pidfile: %s\n", PidFile);
-				fprintf(stderr, "Please check the permission and try again.\n");
-				return(-1);
-			}
-		} else {
-			/*
-			 * Another postmaster is running
-			 */
-			fprintf(stderr, "Can't create pidfile: %s\n", PidFile);
-			fprintf(stderr, "Is another postmaster (pid: %s) running?\n", pidstr);
-			return(-1);
-		}
-	}
-
-	sprintf(pidstr, "%d", pid);
-	if (write(fd, pidstr, strlen(pidstr)) != strlen(pidstr)) {
-		fprintf(stderr,"Write to pid file failed\n");
-		fprintf(stderr, "Please check the permission and try again.\n");
-		close(fd);
-		unlink(PidFile);
-		return(-1);
-	}
-	close(fd);
 
 	/*
 	 * Creating opts file
@@ -2290,7 +2205,6 @@ static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
 	fd = open(optsfile, O_RDWR | O_TRUNC | O_CREAT, 0600);
 	if (fd < 0) {
 		fprintf(stderr, "Can't create optsfile:%s", optsfile);
-		unlink(PidFile);
 		return(-1);
 	}
 	snprintf(opts, sizeof(opts), "%s\n-p %d\n-D %s\n",progname, port, datadir);
@@ -2340,16 +2254,10 @@ static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
 
 	if (write(fd, opts, strlen(opts)) != strlen(opts)) {
 		perror("Writing to opts file failed");
-		unlink(PidFile);
 		close(fd);
 		return(-1);
 	}
 	close(fd);
-
-	/*
-	 * register clean up proc
-	 */
-	on_proc_exit(UnlinkPidFile, NULL);
 
 	return(0);
 }
