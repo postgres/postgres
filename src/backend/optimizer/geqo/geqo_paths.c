@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.3 1997/06/10 07:53:55 vadim Exp $
+ * $Id: geqo_paths.c,v 1.4 1997/06/11 02:44:12 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,8 @@ geqo_rel_paths(Rel *rel)
     }
 
     cheapest = (JoinPath*)set_paths(rel, path);
-    rel->size = compute_joinrel_size(cheapest);
+    if ( IsA_JoinPath (cheapest) )
+    	rel->size = compute_joinrel_size(cheapest);
 }
 
 
