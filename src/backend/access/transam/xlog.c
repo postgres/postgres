@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.74 2001/08/23 23:06:37 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.75 2001/08/25 18:52:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,11 @@
 #include <locale.h>
 #endif
 
+#include "access/clog.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "access/xlog.h"
+#include "access/xlogutils.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 #include "storage/sinval.h"
@@ -35,8 +38,6 @@
 #include "storage/spin.h"
 #include "storage/s_lock.h"
 #include "storage/bufpage.h"
-#include "access/xlog.h"
-#include "access/xlogutils.h"
 #include "utils/builtins.h"
 #include "utils/relcache.h"
 #include "utils/selfuncs.h"
@@ -1580,7 +1581,7 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 			strspn(xlde->d_name, "0123456789ABCDEF") == 16 &&
 			strcmp(xlde->d_name, lastoff) <= 0)
 		{
-			sprintf(path, "%s/%s", XLogDir, xlde->d_name);
+			snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlde->d_name);
 			if (XLOG_archive_dir[0])
 			{
 				elog(LOG, "archiving transaction log file %s",
@@ -2409,6 +2410,9 @@ BootStrapXLOG(void)
 	/* some additional ControlFile fields are set in WriteControlFile() */
 
 	WriteControlFile();
+
+	/* Bootstrap the commit log, too */
+	BootStrapCLOG();
 }
 
 static char *
@@ -2543,7 +2547,6 @@ StartupXLOG(void)
 		ControlFile->time = time(NULL);
 		UpdateControlFile();
 
-		XLogOpenLogRelation();	/* open pg_log */
 		XLogInitRelationCache();
 
 		/* Is REDO required ? */
@@ -2724,6 +2727,9 @@ StartupXLOG(void)
 	ThisStartUpID++;
 	XLogCtl->ThisStartUpID = ThisStartUpID;
 
+	/* Start up the commit log, too */
+	StartupCLOG();
+
 	elog(LOG, "database system is ready");
 	CritSectionCount--;
 
@@ -2845,6 +2851,7 @@ ShutdownXLOG(void)
 	CritSectionCount++;
 	CreateDummyCaches();
 	CreateCheckPoint(true);
+	ShutdownCLOG();
 	CritSectionCount--;
 
 	elog(LOG, "database system is shut down");
@@ -2980,6 +2987,9 @@ CreateCheckPoint(bool shutdown)
 	 * buffers are flushed to disk.
 	 */
 	FlushBufferPool();
+
+	/* And commit-log buffers, too */
+	CheckPointCLOG();
 
 	/*
 	 * Now insert the checkpoint record into XLOG.

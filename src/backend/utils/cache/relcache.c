@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.142 2001/08/10 18:57:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.143 2001/08/25 18:52:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_index.h"
-#include "catalog/pg_log.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
 #include "catalog/pg_rewrite.h"
@@ -67,7 +66,6 @@ static FormData_pg_attribute Desc_pg_class[Natts_pg_class] = {Schema_pg_class};
 static FormData_pg_attribute Desc_pg_attribute[Natts_pg_attribute] = {Schema_pg_attribute};
 static FormData_pg_attribute Desc_pg_proc[Natts_pg_proc] = {Schema_pg_proc};
 static FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type};
-static FormData_pg_attribute Desc_pg_log[Natts_pg_log] = {Schema_pg_log};
 
 /*
  *		Hash tables that index the relation cache
@@ -2120,7 +2118,6 @@ RelationCacheInitialize(void)
 	formrdesc(AttributeRelationName, Natts_pg_attribute, Desc_pg_attribute);
 	formrdesc(ProcedureRelationName, Natts_pg_proc, Desc_pg_proc);
 	formrdesc(TypeRelationName, Natts_pg_type, Desc_pg_type);
-	formrdesc(LogRelationName, Natts_pg_log, Desc_pg_log);
 
 	/*
 	 * init_irels() used to be called here. It is changed to be called in
@@ -2167,10 +2164,6 @@ RelationCacheInitializePhase2(void)
 		fixrdesc(AttributeRelationName);
 		fixrdesc(ProcedureRelationName);
 		fixrdesc(TypeRelationName);
-
-		/*
-		 * We don't bother to update the entries for pg_log.
-		 */
 	}
 }
 

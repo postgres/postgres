@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.47 2001/05/30 20:52:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.48 2001/08/25 18:52:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,7 +193,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			 * happens right here.	We cannot really determine if the
 			 * tuple is valid without checking transaction commit status,
 			 * and the only way to do that at init time is to paw over
-			 * pg_log by hand, too.  Instead of checking, we assume that
+			 * pg_clog by hand, too.  Instead of checking, we assume that
 			 * the inserting transaction committed, and that any deleting
 			 * transaction did also, unless shown otherwise by on-row
 			 * commit status bits.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.58 2001/06/12 05:55:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.59 2001/08/25 18:52:42 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -102,7 +102,6 @@ char	   *SharedSystemRelationNames[] = {
 	GroupRelationName,
 	GroupNameIndex,
 	GroupSysidIndex,
-	LogRelationName,
 	ShadowRelationName,
 	ShadowNameIndex,
 	ShadowSysidIndex,

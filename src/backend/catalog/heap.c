@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.174 2001/08/10 18:57:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.175 2001/08/25 18:52:41 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -251,11 +251,6 @@ heap_create(char *relname,
 		{
 			tblNode = InvalidOid;
 			relid = RelOid_pg_database;
-		}
-		else if (strcmp(LogRelationName, relname) == 0)
-		{
-			tblNode = InvalidOid;
-			relid = RelOid_pg_log;
 		}
 		else
 		{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.38 2001/08/23 23:06:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.39 2001/08/25 18:52:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,7 +327,7 @@ GetSnapshotData(bool serializable)
 	 *--------------------
 	 */
 
-	ReadNewTransactionId(&(snapshot->xmax));
+	snapshot->xmax = ReadNewTransactionId();
 
 	for (index = 0; index < segP->lastBackend; index++)
 	{

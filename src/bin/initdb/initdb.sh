@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.133 2001/08/25 00:31:17 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.134 2001/08/25 18:52:42 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -438,6 +438,12 @@ else
     then
         $ECHO_N "creating directory $PGDATA/pg_xlog... "$ECHO_C
         mkdir "$PGDATA"/pg_xlog || exit_nicely
+	echo "ok"
+    fi
+    if [ ! -d "$PGDATA"/pg_clog ]
+    then
+        $ECHO_N "creating directory $PGDATA/pg_clog... "$ECHO_C
+        mkdir "$PGDATA"/pg_clog || exit_nicely
 	echo "ok"
     fi
 fi

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.87 2001/06/16 22:58:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.88 2001/08/25 18:52:42 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -285,26 +285,15 @@ InitPostgres(const char *dbname, const char *username)
 		elog(FATAL, "InitPostgres: bad backend id %d", MyBackendId);
 
 	/*
-	 * Initialize the transaction system and the relation descriptor
-	 * cache. Note we have to make certain the lock manager is off while
-	 * we do this.
+	 * Initialize the transaction system override state.
 	 */
-	AmiTransactionOverride(IsBootstrapProcessingMode());
-	LockDisable(true);
+	AmiTransactionOverride(bootstrap);
 
 	/*
-	 * Part of the initialization processing done here sets a read lock on
-	 * pg_log.	Since locking is disabled the set doesn't have intended
-	 * effect of locking out writers, but this is ok, since we only lock
-	 * it to examine AMI transaction status, and this is never written
-	 * after initdb is done. -mer 15 June 1992
+	 * Initialize the relation descriptor cache.
+	 * The pre-allocated reldescs are created here.
 	 */
-	RelationCacheInitialize();	/* pre-allocated reldescs created here */
-
-	InitializeTransactionSystem();		/* pg_log,etc init/crash recovery
-										 * here */
-
-	LockDisable(false);
+	RelationCacheInitialize();
 
 	/*
 	 * Initialize the access methods. Does not touch files (?) - thomas

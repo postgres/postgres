@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.40 2001/08/23 23:06:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.41 2001/08/25 18:52:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -611,12 +611,12 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId XmaxRecent)
 	 * If the inserting transaction aborted, then the tuple was never visible
 	 * to any other transaction, so we can delete it immediately.
 	 *
-	 * NOTE: must check TransactionIdIsInProgress (which looks in shared mem)
+	 * NOTE: must check TransactionIdIsInProgress (which looks in PROC array)
 	 * before TransactionIdDidCommit/TransactionIdDidAbort (which look in
-	 * pg_log).  Otherwise we have a race condition where we might decide
+	 * pg_clog).  Otherwise we have a race condition where we might decide
 	 * that a just-committed transaction crashed, because none of the tests
-	 * succeed.  xact.c is careful to record commit/abort in pg_log before
-	 * it unsets MyProc->xid in shared memory.
+	 * succeed.  xact.c is careful to record commit/abort in pg_clog before
+	 * it unsets MyProc->xid in PROC array.
 	 */
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{

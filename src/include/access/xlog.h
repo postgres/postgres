@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.24 2001/07/19 02:12:35 tgl Exp $
+ * $Id: xlog.h,v 1.25 2001/08/25 18:52:42 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -14,6 +14,7 @@
 #include "access/rmgr.h"
 #include "access/transam.h"
 #include "access/xlogdefs.h"
+#include "storage/bufmgr.h"
 #include "utils/pg_crc.h"
 
 

@@ -6,15 +6,15 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.44 2001/08/23 23:06:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.45 2001/08/25 18:52:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/clog.h"
 #include "access/transam.h"
-#include "access/xlog.h"
 #include "storage/proc.h"
 
 
@@ -32,24 +32,33 @@ VariableCache ShmemVariableCache = NULL;
 /*
  * Allocate the next XID for my new transaction.
  */
-void
-GetNewTransactionId(TransactionId *xid)
+TransactionId
+GetNewTransactionId(void)
 {
+	TransactionId	xid;
+
 	/*
 	 * During bootstrap initialization, we return the special bootstrap
 	 * transaction id.
 	 */
 	if (AMI_OVERRIDE)
-	{
-		*xid = BootstrapTransactionId;
-		return;
-	}
+		return BootstrapTransactionId;
 
 	SpinAcquire(XidGenLockId);
 
-	*xid = ShmemVariableCache->nextXid;
+	xid = ShmemVariableCache->nextXid;
 
 	TransactionIdAdvance(ShmemVariableCache->nextXid);
+
+	/*
+	 * If we have just allocated the first XID of a new page of the
+	 * commit log, zero out that commit-log page before returning.
+	 * We must do this while holding XidGenLock, else another xact could
+	 * acquire and commit a later XID before we zero the page.  Fortunately,
+	 * a page of the commit log holds 32K or more transactions, so we don't
+	 * have to do this very often.
+	 */
+	ExtendCLOG(xid);
 
 	/*
 	 * Must set MyProc->xid before releasing XidGenLock.  This ensures that
@@ -72,30 +81,33 @@ GetNewTransactionId(TransactionId *xid)
 	 * removed while holding the lock.)
 	 */
 	if (MyProc != (PROC *) NULL)
-		MyProc->xid = *xid;
+		MyProc->xid = xid;
 
 	SpinRelease(XidGenLockId);
+
+	return xid;
 }
 
 /*
  * Read nextXid but don't allocate it.
  */
-void
-ReadNewTransactionId(TransactionId *xid)
+TransactionId
+ReadNewTransactionId(void)
 {
+	TransactionId	xid;
+
 	/*
 	 * During bootstrap initialization, we return the special bootstrap
 	 * transaction id.
 	 */
 	if (AMI_OVERRIDE)
-	{
-		*xid = BootstrapTransactionId;
-		return;
-	}
+		return BootstrapTransactionId;
 
 	SpinAcquire(XidGenLockId);
-	*xid = ShmemVariableCache->nextXid;
+	xid = ShmemVariableCache->nextXid;
 	SpinRelease(XidGenLockId);
+
+	return xid;
 }
 
 /* ----------------------------------------------------------------

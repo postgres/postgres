@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/buffer/README,v 1.1 2001/07/06 21:04:25 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/buffer/README,v 1.2 2001/08/25 18:52:42 tgl Exp $
 
 Notes about shared buffer access rules
 --------------------------------------
@@ -66,7 +66,7 @@ at about the same time would OR the same bits into the field, so there
 is little or no risk of conflicting update; what's more, if there did
 manage to be a conflict it would merely mean that one bit-update would
 be lost and need to be done again later.  These four bits are only hints
-(they cache the results of transaction status lookups in pg_log), so no
+(they cache the results of transaction status lookups in pg_clog), so no
 great harm is done if they get reset to zero by conflicting updates.
 
 5. To physically remove a tuple or compact free space on a page, one

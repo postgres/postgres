@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.247 2001/08/21 16:36:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.248 2001/08/25 18:52:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -51,7 +51,6 @@
 #include <ctype.h>
 
 #include "access/htup.h"
-#include "catalog/catname.h"
 #include "catalog/pg_type.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
@@ -5423,11 +5422,7 @@ relation_name:	SpecialRuleRelation
 				}
 		| ColId
 				{
-					/* disallow refs to variable system tables */
-					if (strcmp(LogRelationName, $1) == 0)
-						elog(ERROR,"%s cannot be accessed by users",$1);
-					else
-						$$ = $1;
+					$$ = $1;
 				}
 		;
 

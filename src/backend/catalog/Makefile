@@ -2,7 +2,7 @@
 #
 # Makefile for catalog
 #
-# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.36 2001/08/24 14:07:48 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.37 2001/08/25 18:52:41 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_operator.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
 	pg_language.h pg_largeobject.h pg_aggregate.h pg_statistic.h \
 	pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h \
-	pg_database.h pg_shadow.h pg_group.h pg_log.h indexing.h \
+	pg_database.h pg_shadow.h pg_group.h indexing.h \
     )
 
 pg_includes := $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)

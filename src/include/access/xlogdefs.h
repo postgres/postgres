@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlogdefs.h,v 1.3 2001/03/22 04:00:32 momjian Exp $
+ * $Id: xlogdefs.h,v 1.4 2001/08/25 18:52:42 tgl Exp $
  */
 #ifndef XLOG_DEFS_H
 #define XLOG_DEFS_H
@@ -52,7 +52,7 @@ typedef struct XLogRecPtr
 
 /*
  * StartUpID (SUI) - system startups counter. It's to allow removing
- * pg_log after shutdown, in future.
+ * pg_clog after shutdown, in future.
  */
 typedef uint32 StartUpID;
 

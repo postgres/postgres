@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.108 2001/07/16 22:43:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.109 2001/08/25 18:52:41 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -229,22 +229,6 @@ static void (*_RollbackFunc) (void *) = NULL;
 static void *_RollbackData = NULL;
 
 /* ----------------
- *		info returned when the system is disabled
- *
- * Apparently a lot of this code is inherited from other prototype systems.
- *
- * For DisabledStartTime, use a symbolic value to make the relationships clearer.
- * The old value of 1073741823 corresponds to a date in y2004, which is coming closer
- *	every day. It appears that if we return a value guaranteed larger than
- *	any real time associated with a transaction then comparisons in other
- *	modules will still be correct. Let's use BIG_ABSTIME for this. tgl 2/14/97
- * ----------------
- */
-static CommandId	DisabledCommandId = (CommandId) -1;
-
-static AbsoluteTime DisabledStartTime = (AbsoluteTime) BIG_ABSTIME;
-
-/* ----------------
  *		catalog creation transaction bootstrapping flag.
  *		This should be eliminated and added to the transaction
  *		state stuff.  -cim 3/19/90
@@ -309,8 +293,6 @@ IsTransactionState(void)
 			return true;
 		case TRANS_ABORT:
 			return true;
-		case TRANS_DISABLED:
-			return false;
 	}
 
 	/*
@@ -339,44 +321,9 @@ IsAbortedTransactionBlockState(void)
 	return false;
 }
 
-/* --------------------------------
- *		OverrideTransactionSystem
- *
- *		This is used to temporarily disable the transaction
- *		processing system in order to do initialization of
- *		the transaction system data structures and relations
- *		themselves.
- * --------------------------------
- */
-static int		SavedTransactionState;
-
-void
-OverrideTransactionSystem(bool flag)
-{
-	TransactionState s = CurrentTransactionState;
-
-	if (flag == true)
-	{
-		if (s->state == TRANS_DISABLED)
-			return;
-
-		SavedTransactionState = s->state;
-		s->state = TRANS_DISABLED;
-	}
-	else
-	{
-		if (s->state != TRANS_DISABLED)
-			return;
-
-		s->state = SavedTransactionState;
-	}
-}
 
 /* --------------------------------
  *		GetCurrentTransactionId
- *
- *		This returns the id of the current transaction, or
- *		the id of the "disabled" transaction.
  * --------------------------------
  */
 TransactionId
@@ -384,16 +331,6 @@ GetCurrentTransactionId(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	/*
-	 * if the transaction system is disabled, we return the special
-	 * "disabled" transaction id.
-	 */
-	if (s->state == TRANS_DISABLED)
-		return DisabledTransactionId;
-
-	/*
-	 * otherwise return the current transaction id.
-	 */
 	return s->transactionIdData;
 }
 
@@ -407,13 +344,6 @@ GetCurrentCommandId(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	/*
-	 * if the transaction system is disabled, we return the special
-	 * "disabled" command id.
-	 */
-	if (s->state == TRANS_DISABLED)
-		return DisabledCommandId;
-
 	return s->commandId;
 }
 
@@ -421,13 +351,6 @@ CommandId
 GetScanCommandId(void)
 {
 	TransactionState s = CurrentTransactionState;
-
-	/*
-	 * if the transaction system is disabled, we return the special
-	 * "disabled" command id.
-	 */
-	if (s->state == TRANS_DISABLED)
-		return DisabledCommandId;
 
 	return s->scanCommandId;
 }
@@ -441,13 +364,6 @@ AbsoluteTime
 GetCurrentTransactionStartTime(void)
 {
 	TransactionState s = CurrentTransactionState;
-
-	/*
-	 * if the transaction system is disabled, we return the special
-	 * "disabled" starting time.
-	 */
-	if (s->state == TRANS_DISABLED)
-		return DisabledStartTime;
 
 	return s->startTime;
 }
@@ -521,16 +437,6 @@ void
 SetScanCommandId(CommandId savedId)
 {
 	CurrentTransactionStateData.scanCommandId = savedId;
-}
-
-/* ----------------------------------------------------------------
- *						initialization stuff
- * ----------------------------------------------------------------
- */
-void
-InitializeTransactionSystem(void)
-{
-	InitializeTransactionLog();
 }
 
 /* ----------------------------------------------------------------
@@ -617,15 +523,19 @@ AtStart_Memory(void)
  * --------------------------------
  */
 void
-RecordTransactionCommit()
+RecordTransactionCommit(void)
 {
 	TransactionId xid;
 	bool		leak;
 
-	xid = GetCurrentTransactionId();
-
 	leak = BufferPoolCheckLeak();
 
+	xid = GetCurrentTransactionId();
+
+	/*
+	 * We needn't write anything in xlog or clog if the transaction was
+	 * read-only, which we check by testing if it made any xlog entries.
+	 */
 	if (MyLastRecPtr.xrecoff != 0)
 	{
 		XLogRecData rdata;
@@ -673,6 +583,7 @@ RecordTransactionCommit()
 		/* Break the chain of back-links in the XLOG records I output */
 		MyLastRecPtr.xrecoff = 0;
 
+		/* Mark the transaction committed in clog */
 		TransactionIdCommit(xid);
 
 		END_CRIT_SECTION();
@@ -765,7 +676,10 @@ RecordTransactionAbort(void)
 	TransactionId xid = GetCurrentTransactionId();
 
 	/*
-	 * Double check here is to catch case that we aborted partway through
+	 * We needn't write anything in xlog or clog if the transaction was
+	 * read-only, which we check by testing if it made any xlog entries.
+	 *
+	 * Extra check here is to catch case that we aborted partway through
 	 * RecordTransactionCommit ...
 	 */
 	if (MyLastRecPtr.xrecoff != 0 && !TransactionIdDidCommit(xid))
@@ -782,8 +696,17 @@ RecordTransactionAbort(void)
 
 		START_CRIT_SECTION();
 
+		/*
+		 * SHOULD SAVE ARRAY OF RELFILENODE-s TO DROP
+		 */
 		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT, &rdata);
 
+		/*
+		 * There's no need for XLogFlush here, since the default assumption
+		 * would be that we aborted, anyway.
+		 */
+
+		/* Mark the transaction aborted in clog */
 		TransactionIdAbort(xid);
 
 		END_CRIT_SECTION();
@@ -913,7 +836,7 @@ StartTransaction(void)
 	 * fix to a communications problem, and we keep having to deal with it
 	 * here.  We should fix the comm channel code.	mao 080891
 	 */
-	if (s->state == TRANS_DISABLED || s->state == TRANS_INPROGRESS)
+	if (s->state == TRANS_INPROGRESS)
 		return;
 
 	/*
@@ -927,7 +850,7 @@ StartTransaction(void)
 	/*
 	 * generate a new transaction id
 	 */
-	GetNewTransactionId(&(s->transactionIdData));
+	s->transactionIdData = GetNewTransactionId();
 
 	XactLockTableInsert(s->transactionIdData);
 
@@ -984,11 +907,8 @@ CommitTransaction(void)
 	/*
 	 * check the current transaction state
 	 */
-	if (s->state == TRANS_DISABLED)
-		return;
-
 	if (s->state != TRANS_INPROGRESS)
-		elog(NOTICE, "CommitTransaction and not in in-progress state ");
+		elog(NOTICE, "CommitTransaction and not in in-progress state");
 
 	/*
 	 * Tell the trigger manager that this transaction is about to be
@@ -1109,12 +1029,6 @@ AbortTransaction(void)
 	/*
 	 * check the current transaction state
 	 */
-	if (s->state == TRANS_DISABLED)
-	{
-		RESUME_INTERRUPTS();
-		return;
-	}
-
 	if (s->state != TRANS_INPROGRESS)
 		elog(NOTICE, "AbortTransaction and not in in-progress state");
 
@@ -1138,7 +1052,7 @@ AbortTransaction(void)
 	CloseSequences();
 	AtEOXact_portals();
 
-	/* Advertise the fact that we aborted in pg_log. */
+	/* Advertise the fact that we aborted in pg_clog. */
 	RecordTransactionAbort();
 
 	/*
@@ -1190,9 +1104,6 @@ static void
 CleanupTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
-
-	if (s->state == TRANS_DISABLED)
-		return;
 
 	/*
 	 * State should still be TRANS_ABORT from AbortTransaction().
@@ -1464,9 +1375,6 @@ BeginTransactionBlock(void)
 	/*
 	 * check the current transaction state
 	 */
-	if (s->state == TRANS_DISABLED)
-		return;
-
 	if (s->blockState != TBLOCK_DEFAULT)
 		elog(NOTICE, "BEGIN: already a transaction in progress");
 
@@ -1498,9 +1406,6 @@ EndTransactionBlock(void)
 	/*
 	 * check the current transaction state
 	 */
-	if (s->state == TRANS_DISABLED)
-		return;
-
 	if (s->blockState == TBLOCK_INPROGRESS)
 	{
 
@@ -1552,9 +1457,6 @@ AbortTransactionBlock(void)
 	/*
 	 * check the current transaction state
 	 */
-	if (s->state == TRANS_DISABLED)
-		return;
-
 	if (s->blockState == TBLOCK_INPROGRESS)
 	{
 
@@ -1590,12 +1492,6 @@ void
 UserAbortTransactionBlock(void)
 {
 	TransactionState s = CurrentTransactionState;
-
-	/*
-	 * check the current transaction state
-	 */
-	if (s->state == TRANS_DISABLED)
-		return;
 
 	/*
 	 * if the transaction has already been automatically aborted with an
@@ -1665,7 +1561,6 @@ AbortOutOfAnyTransaction(void)
 			CleanupTransaction();
 			break;
 		case TRANS_DEFAULT:
-		case TRANS_DISABLED:
 			/* Not in a transaction, do nothing */
 			break;
 	}
@@ -1700,7 +1595,10 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 		/* SHOULD REMOVE FILES OF ALL DROPPED RELATIONS */
 	}
 	else if (info == XLOG_XACT_ABORT)
+	{
 		TransactionIdAbort(record->xl_xid);
+		/* SHOULD REMOVE FILES OF ALL FAILED-TO-BE-CREATED RELATIONS */
+	}
 	else
 		elog(STOP, "xact_redo: unknown op code %u", info);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.49 2001/07/09 22:18:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.50 2001/08/25 18:52:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,7 +373,7 @@ XactLockTableWait(TransactionId xid)
 
 	/*
 	 * Transaction was committed/aborted/crashed - we have to update
-	 * pg_log if transaction is still marked as running.
+	 * pg_clog if transaction is still marked as running.
 	 */
 	if (!TransactionIdDidCommit(xid) && !TransactionIdDidAbort(xid))
 		TransactionIdAbort(xid);

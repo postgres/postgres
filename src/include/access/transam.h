@@ -7,33 +7,30 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.38 2001/08/23 23:06:38 tgl Exp $
+ * $Id: transam.h,v 1.39 2001/08/25 18:52:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TRANSAM_H
 #define TRANSAM_H
 
-#include "storage/bufmgr.h"
+#include "storage/spin.h"
 
 
 /* ----------------
  *		Special transaction ID values
  *
- * We do not use any transaction IDs less than 512 --- this leaves the first
- * 128 bytes of pg_log available for special purposes such as version number
- * storage.  (Currently, we do not actually use them for anything.)
- *
- * BootstrapTransactionId is the XID for "bootstrap" operations.  It should
+ * BootstrapTransactionId is the XID for "bootstrap" operations, and
+ * FrozenTransactionId is used for very old tuples.  Both should
  * always be considered valid.
  *
  * FirstNormalTransactionId is the first "normal" transaction id.
  * ----------------
  */
 #define InvalidTransactionId		((TransactionId) 0)
-#define DisabledTransactionId		((TransactionId) 1)
-#define BootstrapTransactionId		((TransactionId) 512)
-#define FirstNormalTransactionId	((TransactionId) 514)
+#define BootstrapTransactionId		((TransactionId) 1)
+#define FrozenTransactionId			((TransactionId) 2)
+#define FirstNormalTransactionId	((TransactionId) 3)
 
 /* ----------------
  *		transaction ID manipulation macros
@@ -56,19 +53,6 @@
 			(dest) = FirstNormalTransactionId; \
 	} while(0)
 
-/* ----------------
- *		transaction status values
- *
- *		someday we will use "11" = 3 = XID_COMMIT_CHILD to mean the
- *		commiting of child xactions.
- * ----------------
- */
-#define XID_INPROGRESS		0	/* transaction in progress */
-#define XID_ABORT			1	/* transaction aborted */
-#define XID_COMMIT			2	/* transaction commited */
-#define XID_COMMIT_CHILD	3	/* child xact commited */
-
-typedef unsigned char XidStatus;	/* (2 bits) */
 
 /* ----------
  *		Object ID (OID) zero is InvalidOid.
@@ -116,25 +100,15 @@ typedef VariableCacheData *VariableCache;
 /*
  * prototypes for functions in transam/transam.c
  */
-extern void InitializeTransactionLog(void);
+extern void AmiTransactionOverride(bool flag);
 extern bool TransactionIdDidCommit(TransactionId transactionId);
 extern bool TransactionIdDidAbort(TransactionId transactionId);
 extern void TransactionIdCommit(TransactionId transactionId);
 extern void TransactionIdAbort(TransactionId transactionId);
 
-/* in transam/transsup.c */
-extern void AmiTransactionOverride(bool flag);
-extern void TransComputeBlockNumber(Relation relation,
-			  TransactionId transactionId, BlockNumber *blockNumberOutP);
-extern XidStatus TransBlockNumberGetXidStatus(Relation relation,
-				BlockNumber blockNumber, TransactionId xid, bool *failP);
-extern void TransBlockNumberSetXidStatus(Relation relation,
-		   BlockNumber blockNumber, TransactionId xid, XidStatus xstatus,
-							 bool *failP);
-
 /* in transam/varsup.c */
-extern void GetNewTransactionId(TransactionId *xid);
-extern void ReadNewTransactionId(TransactionId *xid);
+extern TransactionId GetNewTransactionId(void);
+extern TransactionId ReadNewTransactionId(void);
 extern Oid	GetNewObjectId(void);
 extern void CheckMaxObjectId(Oid assigned_oid);
 
@@ -142,9 +116,6 @@ extern void CheckMaxObjectId(Oid assigned_oid);
  *		global variable extern declarations
  * ----------------
  */
-
-/* in transam.c */
-extern Relation LogRelation;
 
 /* in xact.c */
 extern bool AMI_OVERRIDE;

@@ -6,23 +6,20 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.17 2001/08/23 23:06:37 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.18 2001/08/25 18:52:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/xlog.h"
-#include "access/transam.h"
-#include "access/xact.h"
-#include "storage/bufpage.h"
-#include "storage/bufmgr.h"
-#include "storage/smgr.h"
 #include "access/htup.h"
 #include "access/xlogutils.h"
 #include "catalog/pg_database.h"
 #include "lib/hasht.h"
+#include "storage/bufpage.h"
+#include "storage/smgr.h"
 #include "utils/relcache.h"
+
 
 /*
  * ---------------------------------------------------------------
@@ -150,33 +147,6 @@ XLogIsValidTuple(RelFileNode hnode, ItemPointer iptr)
 
 	UnlockAndReleaseBuffer(buffer);
 	return (true);
-}
-
-/*
- * Open pg_log in recovery
- */
-extern Relation LogRelation;	/* pg_log relation */
-
-void
-XLogOpenLogRelation(void)
-{
-	Relation	logRelation;
-
-	Assert(!LogRelation);
-	logRelation = (Relation) malloc(sizeof(RelationData));
-	memset(logRelation, 0, sizeof(RelationData));
-	logRelation->rd_rel = (Form_pg_class) malloc(sizeof(FormData_pg_class));
-	memset(logRelation->rd_rel, 0, sizeof(FormData_pg_class));
-
-	sprintf(RelationGetPhysicalRelationName(logRelation), "pg_log");
-	logRelation->rd_node.tblNode = InvalidOid;
-	logRelation->rd_node.relNode = RelOid_pg_log;
-	logRelation->rd_targblock = InvalidBlockNumber;
-	logRelation->rd_fd = -1;
-	logRelation->rd_fd = smgropen(DEFAULT_SMGR, logRelation, false);
-	if (logRelation->rd_fd < 0)
-		elog(STOP, "XLogOpenLogRelation: failed to open pg_log");
-	LogRelation = logRelation;
 }
 
 /*
