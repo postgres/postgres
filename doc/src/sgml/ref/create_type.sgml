@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.13 2000/08/24 23:36:29 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.14 2000/09/12 20:52:08 momjian Exp $
 Postgres documentation
 -->
 
@@ -122,7 +122,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <term><replaceable class="parameter">default</replaceable></term>
       <listitem>
        <para>
-	The default value for the datatype.  Usually this is omitted,
+	The default value for the data type.  Usually this is omitted,
 	so that the default is NULL.
        </para>
       </listitem>
@@ -152,7 +152,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <term><replaceable class="parameter">alignment</replaceable></term>
       <listitem>
        <para>
-        Storage alignment requirement of the datatype.  If specified, must
+        Storage alignment requirement of the data type.  If specified, must
 	be '<literal>int4</literal>' or '<literal>double</literal>';
 	the default is '<literal>int4</literal>'.
        </para>
@@ -163,7 +163,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <term><replaceable class="parameter">storage</replaceable></term>
       <listitem>
        <para>
-        Storage technique for the datatype.  If specified, must
+        Storage technique for the data type.  If specified, must
 	be '<literal>plain</literal>', '<literal>external</literal>',
 	'<literal>extended</literal>', or '<literal>main</literal>';
 	the default is '<literal>plain</literal>'.
@@ -298,9 +298,9 @@ CREATE
 
   <para>
    The <replaceable class="parameter">storage</replaceable> keyword
-   allows selection of TOAST storage method for variable-length datatypes
+   allows selection of TOAST storage method for variable-length data types
    (only <literal>plain</literal> is allowed for fixed-length types).
-   <literal>plain</literal> disables TOAST for the datatype: it will always
+   <literal>plain</literal> disables TOAST for the data type: it will always
    be stored in-line and not compressed.
    <literal>extended</literal> is full TOAST capability: the system will
    first try to compress a long data value, and will move the value out of

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.10 2000/07/17 03:04:41 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.11 2000/09/12 20:52:07 momjian Exp $
 Postgres documentation
 -->
 
@@ -98,7 +98,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( BASETYPE = 
 	result after all input data has been traversed.  The function
 	must take a single argument of type
 	<replaceable class="PARAMETER">state_type</replaceable>.
-	The output datatype of the aggregate is defined as the return
+	The output data type of the aggregate is defined as the return
 	type of this function.
 	If <replaceable class="PARAMETER">ffunc</replaceable>
 	is not specified, then the ending state value is used as the
@@ -113,7 +113,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( BASETYPE = 
       <listitem>
        <para>
 	The initial setting for the state value.  This must be a literal
-	constant in the form accepted for the datatype
+	constant in the form accepted for the data type
 	<replaceable class="PARAMETER">state_type</replaceable>.
 	If not specified, the state value starts out NULL.
        </para>
@@ -201,7 +201,7 @@ CREATE
    that is, an initial value for the internal state value.
    This is specified and stored in the database as a field of type
    <type>text</type>, but it must be a valid external representation
-   of a constant of the state value datatype.  If it is not supplied
+   of a constant of the state value data type.  If it is not supplied
    then the state value starts out NULL.
   </para>
   

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.14 2000/06/19 03:54:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.15 2000/09/12 20:52:08 momjian Exp $
 Postgres documentation
 -->
 
@@ -290,11 +290,11 @@ ERROR: Cannot create index: 'index_name' already exists.
    four-byte integers would use the <literal>int4_ops</literal> class;
    this operator class includes comparison functions for four-byte
    integers.  In practice the default operator class for the field's
-   datatype is usually sufficient.  The main point of having operator classes
-   is that for some datatypes, there could be more than one meaningful
-   ordering.  For example, we might want to sort a complex-number datatype
+   data type is usually sufficient.  The main point of having operator classes
+   is that for some data types, there could be more than one meaningful
+   ordering.  For example, we might want to sort a complex-number data type
    either by absolute value or by real part.  We could do this by defining
-   two operator classes for the datatype and then selecting the proper
+   two operator classes for the data type and then selecting the proper
    class when making an index.  There are also some operator classes with
    special purposes:
 
@@ -303,7 +303,7 @@ ERROR: Cannot create index: 'index_name' already exists.
      <para>
       The operator classes <literal>box_ops</literal> and
       <literal>bigbox_ops</literal> both support rtree indices on the
-      <literal>box</literal> datatype.
+      <literal>box</literal> data type.
       The difference between them is that <literal>bigbox_ops</literal>
       scales box coordinates down, to avoid floating point exceptions from
       doing multiplication, addition, and subtraction on very large

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.15 2000/08/12 05:15:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.16 2000/09/12 20:52:08 momjian Exp $
 Postgres documentation
 -->
 
@@ -303,8 +303,8 @@ MYBOXES.description !== box '((0,0),(1,1))'
    the lines of [SHAP86]; however, it must know whether  this
    strategy  is  applicable.   The current hash-join algorithm
    is only correct for operators that represent equality tests;
-   furthermore, equality of the datatype must mean bitwise equality
-   of the representation of the type.  (For example, a datatype that
+   furthermore, equality of the data type must mean bitwise equality
+   of the representation of the type.  (For example, a data type that
    contains unused bits that don't matter for equality tests could
    not be hashjoined.)
    The HASHES flag indicates to the query optimizer that a hash join
