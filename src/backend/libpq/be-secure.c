@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.7 2002/06/17 07:33:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.8 2002/06/17 15:19:28 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -396,7 +396,7 @@ load_dh_file (int keylength)
 	/* is the prime the correct size? */
 	if (dh != NULL && 8*DH_size(dh) < keylength)
 	{
-		elog(DEBUG1, "DH errors (%s): %d bits expected, %d bits found",
+		elog(LOG, "DH errors (%s): %d bits expected, %d bits found",
 			fnbuf, keylength, 8*DH_size(dh));
 		dh = NULL;
 	}
@@ -406,18 +406,18 @@ load_dh_file (int keylength)
 	{
 		if (DH_check(dh, &codes))
 		{
-			elog(DEBUG1, "DH_check error (%s): %s", fnbuf, SSLerrmessage());
+			elog(LOG, "DH_check error (%s): %s", fnbuf, SSLerrmessage());
 			return NULL;
 		}
 		if (codes & DH_CHECK_P_NOT_PRIME)
 		{
-			elog(DEBUG1, "DH error (%s): p is not prime", fnbuf);
+			elog(LOG, "DH error (%s): p is not prime", fnbuf);
 			return NULL;
 		}
 		if ((codes & DH_NOT_SUITABLE_GENERATOR) && 
 			(codes & DH_CHECK_P_NOT_SAFE_PRIME))
 		{
-			elog(DEBUG1,
+			elog(LOG,
 				"DH error (%s): neither suitable generator or safe prime",
 				fnbuf);
 			return NULL;
@@ -547,36 +547,32 @@ verify_cb (int ok, X509_STORE_CTX *ctx)
 static void
 info_cb (SSL *ssl, int type, int args)
 {
-	if (DebugLvl < 2)
-		return;
-
 	switch (type)
 	{
-	case SSL_CB_HANDSHAKE_START:
-		elog(DEBUG1, "SSL: handshake start");
-		break;
-	case SSL_CB_HANDSHAKE_DONE:
-		elog(DEBUG1, "SSL: handshake done");
-		break;
-	case SSL_CB_ACCEPT_LOOP:
-		if (DebugLvl >= 3)
-			elog(DEBUG1, "SSL: accept loop");
-		break;
-	case SSL_CB_ACCEPT_EXIT:
-		elog(DEBUG1, "SSL: accept exit (%d)", args);
-		break;
-	case SSL_CB_CONNECT_LOOP:
-		elog(DEBUG1, "SSL: connect loop");
-		break;
-	case SSL_CB_CONNECT_EXIT:
-		elog(DEBUG1, "SSL: connect exit (%d)", args);
-		break;
-	case SSL_CB_READ_ALERT:
-		elog(DEBUG1, "SSL: read alert (0x%04x)", args);
-		break;
-	case SSL_CB_WRITE_ALERT:
-		elog(DEBUG1, "SSL: write alert (0x%04x)", args);
-		break;
+		case SSL_CB_HANDSHAKE_START:
+			elog(DEBUG3, "SSL: handshake start");
+			break;
+		case SSL_CB_HANDSHAKE_DONE:
+			elog(DEBUG3, "SSL: handshake done");
+			break;
+		case SSL_CB_ACCEPT_LOOP:
+			elog(DEBUG3, "SSL: accept loop");
+			break;
+		case SSL_CB_ACCEPT_EXIT:
+			elog(DEBUG3, "SSL: accept exit (%d)", args);
+			break;
+		case SSL_CB_CONNECT_LOOP:
+			elog(DEBUG3, "SSL: connect loop");
+			break;
+		case SSL_CB_CONNECT_EXIT:
+			elog(DEBUG3, "SSL: connect exit (%d)", args);
+			break;
+		case SSL_CB_READ_ALERT:
+			elog(DEBUG3, "SSL: read alert (0x%04x)", args);
+			break;
+		case SSL_CB_WRITE_ALERT:
+			elog(DEBUG3, "SSL: write alert (0x%04x)", args);
+			break;
 	}
 }
 
