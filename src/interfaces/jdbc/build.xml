@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.32 2003/02/27 05:45:43 barry Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.33 2003/08/11 21:25:01 barry Exp $
 
 -->
 
@@ -22,7 +22,6 @@
   <property name="builddir" value="build" />
   <property name="package" value="org/postgresql" />
   <property name="debug" value="on" />
-  <property name="ssl" value="false" />
 
   <property file="build.properties"/>
 
@@ -167,13 +166,17 @@
         <equals arg1="${ssl}" arg2="true"/>
     </condition>
     <condition property="ssl_config" value="//">
-        <equals arg1="${ssl}" arg2="false"/>
+        <not>
+            <equals arg1="${ssl}" arg2="true"/>
+        </not>
     </condition>
     <condition property="ssl_edition" value="SSL">
         <equals arg1="${ssl}" arg2="true"/>
     </condition>
     <condition property="ssl_edition" value="NO SSL">
-        <equals arg1="${ssl}" arg2="false"/>
+        <not>
+            <equals arg1="${ssl}" arg2="true"/>
+        </not>
     </condition>
 
     <!-- Some defaults -->
