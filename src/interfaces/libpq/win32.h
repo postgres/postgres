@@ -10,10 +10,18 @@
 /*
  * Some other compat functions
  */
+#ifdef __BORLANDC__
+#define _timeb timeb
+#define _ftime(a) ftime(a)
+#define _strnicmp(a,b,c) strnicmp(a,b,c)
+#define _errno errno
+#else
 #define open(a,b,c) _open(a,b,c)
 #define close(a) _close(a)
 #define read(a,b,c) _read(a,b,c)
 #define write(a,b,c) _write(a,b,c)
+#endif
+
 #define popen(a,b) _popen(a,b)
 #define pclose(a) _pclose(a)
 #define vsnprintf(a,b,c,d) _vsnprintf(a,b,c,d)
