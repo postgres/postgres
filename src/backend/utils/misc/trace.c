@@ -190,6 +190,8 @@ eprintf(const char *fmt,...)
 void
 write_syslog(int level, char *line)
 {
+	static int openlog_done = 0;
+
 	if (UseSyslog >= 1)
 	{
 		if (!openlog_done)
