@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.5 1997/04/26 05:44:06 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.6 1997/04/26 06:31:55 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -55,3 +55,4 @@ clean:
 	rm -f $(INFILES)
 	$(MAKE) -C sql clean
 	$(MAKE) -C expected clean
+	$(MAKE) -C results clean
