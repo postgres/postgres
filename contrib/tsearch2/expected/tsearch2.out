@@ -458,20 +458,20 @@ select * from parse('default', '345 qwe@efd.r \' http://www.com/ http://aew.werc
     12 |  
      1 | asdf
     12 |  
-    13 |  
+    13 | <fr>
      1 | qwer
     12 |  
      1 | jf
     12 |  
      1 | sdjk
-    13 |  
+    13 | <we hjwer <werrwe>
     12 |  
      3 | ewr1
     12 | >
     12 |  
      3 | ewri2
     12 |  
-    13 |  
+    13 | <a href="qwe<qwe>">
     12 | 
 
     19 | /usr/local/fff
@@ -515,7 +515,7 @@ select * from parse('default', '345 qwe@efd.r \' http://www.com/ http://aew.werc
     22 | 234
     12 |  
 
-    13 |  
+    13 | <i <b>
     12 |  
      1 | wow
     12 |   
@@ -2128,6 +2128,35 @@ Upon a woman s face. E.  J.  Pratt  (1882 1964)
  <b>sea</b> a thousand years,
 A thousand years to trace
 The granite features of this cliff
+(1 row)
+
+select headline('
+<html>
+<!-- some comment -->
+<body>
+Sea view wow <u>foo bar</u> <i>qq</i>
+<a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>
+ff-bg
+<script>
+	document.write(15);
+</script>
+</body>
+</html>', 
+to_tsquery('sea&foo'), 'HighlightAll=true');
+                                                                                                              headline                                                                                                               
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+<html>
+<!-- some comment -->
+<body>
+<b>Sea</b> view wow <u><b>foo</b> bar</u> <i>qq</i>
+<a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>
+ ff-bg
+<script>
+	document.write(15);
+</script>
+</body>
+</html>
 (1 row)
 
 --check debug

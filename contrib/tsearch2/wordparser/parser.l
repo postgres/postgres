@@ -10,9 +10,47 @@
 
 char *token = NULL;  /* pointer to token */
 int tokenlen;
-char *s     = NULL;  /* to return WHOLE hyphenated-word */
+static char *s     = NULL;  /* to return WHOLE hyphenated-word */
 
 YY_BUFFER_STATE buf = NULL; /* buffer to parse; it need for parse from string */
+
+typedef struct {
+	int tlen;
+	int clen;
+	char *str;
+} TagStorage;
+
+static TagStorage ts={0,0,NULL};
+
+static void
+addTag() {
+	while( ts.clen+tsearch2_yyleng+1 > ts.tlen ) {
+		ts.tlen*=2;
+		ts.str=realloc(ts.str,ts.tlen);
+		if (!ts.str)
+                	ereport(ERROR,
+                               	(errcode(ERRCODE_OUT_OF_MEMORY),
+                               	 errmsg("out of memory")));
+        }
+        memcpy(ts.str+ts.clen,tsearch2_yytext,tsearch2_yyleng);
+        ts.clen+=tsearch2_yyleng;
+	ts.str[ts.clen]='\0';
+}
+
+static void
+startTag() {
+	if ( ts.str==NULL ) {
+		ts.tlen=tsearch2_yyleng+1;
+		ts.str=malloc(ts.tlen);
+		if (!ts.str)
+                	ereport(ERROR,
+                                (errcode(ERRCODE_OUT_OF_MEMORY),
+                                 errmsg("out of memory")));
+	}
+	ts.clen=0;
+	ts.str[0]='\0';
+	addTag();
+}
 
 %}
 
@@ -46,47 +84,46 @@ URI		[-_[:alnum:]/%,\.;=&?#]+
 
 %%
 
-"<"[Ss][Cc][Rr][Ii][Pp][Tt] { BEGIN INSCRIPT; }
+"<"[Ss][Cc][Rr][Ii][Pp][Tt] { BEGIN INSCRIPT; startTag(); }
 
 <INSCRIPT>"</"[Ss][Cc][Rr][Ii][Pp][Tt]">" {
 	BEGIN INITIAL; 
-	*tsearch2_yytext=' '; *(tsearch2_yytext+1) = '\0'; 
-	token = tsearch2_yytext;
-	tokenlen = tsearch2_yyleng;
-	return SPACE;
-}
-
-"<!--"	{ BEGIN INCOMMENT; }
-
-<INCOMMENT>"-->"	{ 
-	BEGIN INITIAL;
-	*tsearch2_yytext=' '; *(tsearch2_yytext+1) = '\0'; 
-	token = tsearch2_yytext;
-	tokenlen = tsearch2_yyleng;
-	return SPACE;
-}
-
-
-"<"[\![:alpha:]]	{ BEGIN INTAG; }
-
-"</"[[:alpha:]]	{ BEGIN INTAG; }
-
-<INTAG>"\""	{ BEGIN QINTAG; }
-
-<QINTAG>"\\\""	;
-
-<QINTAG>"\""	{ BEGIN INTAG; }
-
-<INTAG>">"	{ 
-	BEGIN INITIAL;
-	token = tsearch2_yytext;
-	*tsearch2_yytext=' '; 
-	token = tsearch2_yytext;
-	tokenlen = 1;
+	addTag();
+	token = ts.str;
+	tokenlen = ts.clen;
 	return TAG;
 }
 
-<QINTAG,INTAG,INCOMMENT,INSCRIPT>.|\n 	;
+"<!--"	{ BEGIN INCOMMENT; startTag(); }
+
+<INCOMMENT>"-->"	{ 
+	BEGIN INITIAL;
+	addTag();
+	token = ts.str;
+	tokenlen = ts.clen;
+	return TAG;
+}
+
+
+"<"[\![:alpha:]]	{ BEGIN INTAG; startTag(); }
+
+"</"[[:alpha:]]	{ BEGIN INTAG; startTag(); }
+
+<INTAG>"\""	{ BEGIN QINTAG; addTag(); }
+
+<QINTAG>"\\\""	{ addTag(); }
+
+<QINTAG>"\""	{ BEGIN INTAG; addTag(); }
+
+<INTAG>">"	{ 
+	BEGIN INITIAL;
+	addTag();
+	token = ts.str;
+	tokenlen = ts.clen;
+	return TAG;
+}
+
+<QINTAG,INTAG,INCOMMENT,INSCRIPT>.|\n { addTag(); }	
 
 \&(quot|amp|nbsp|lt|gt)\;   {
 	token = tsearch2_yytext;
@@ -295,3 +332,4 @@ void tsearch2_start_parse_str(char* str, int limit) {
 	tsearch2_yy_switch_to_buffer( buf );
 	BEGIN INITIAL;
 }
+

@@ -510,7 +510,7 @@ genhl(HLPRSTEXT * prs)
 			ptr = ((char *) out) + dist;
 		}
 
-		if (wrd->in && !wrd->skip && !wrd->repeated)
+		if (wrd->in && !wrd->repeated)
 		{
 			if (wrd->replace)
 			{
@@ -532,7 +532,7 @@ genhl(HLPRSTEXT * prs)
 					ptr += prs->stopsellen;
 				}
 			}
-		}
+		} else
 
 		if (!wrd->repeated)
 			pfree(wrd->word);

@@ -46,13 +46,13 @@ typedef struct
 
 typedef struct
 {
-	uint16		len;
-	uint8		selected:1,
+	uint32		selected:1,
 				in:1,
-				skip:1,
 				replace:1,
-				repeated:1;
-	uint8		type;
+				repeated:1,
+				unused:4,
+				type:8,
+				len:16;
 	char	   *word;
 	ITEM	   *item;
 }	HLWORD;

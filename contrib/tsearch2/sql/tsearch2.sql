@@ -253,6 +253,20 @@ The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('sea'));
 
+
+select headline('
+<html>
+<!-- some comment -->
+<body>
+Sea view wow <u>foo bar</u> <i>qq</i>
+<a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>
+ff-bg
+<script>
+	document.write(15);
+</script>
+</body>
+</html>', 
+to_tsquery('sea&foo'), 'HighlightAll=true');
 --check debug
 select * from ts_debug('Tsearch module for PostgreSQL 7.3.3');
 
