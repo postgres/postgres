@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.56 2003/08/04 02:40:13 momjian Exp $
+ * $Id: cost.h,v 1.57 2003/08/08 21:42:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ extern void cost_group(Path *path, Query *root,
 extern void cost_nestloop(NestPath *path, Query *root);
 extern void cost_mergejoin(MergePath *path, Query *root);
 extern void cost_hashjoin(HashPath *path, Query *root);
-extern void cost_qual_eval(QualCost * cost, List *quals);
+extern void cost_qual_eval(QualCost *cost, List *quals);
 extern void set_baserel_size_estimates(Query *root, RelOptInfo *rel);
 extern void set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 						   RelOptInfo *outer_rel,

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.70 2003/08/04 23:59:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.71 2003/08/08 21:42:24 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -487,8 +487,8 @@ PrintQueryTuples(const PGresult *results)
  */
 static bool
 PrintQueryResults(PGresult *results,
-				  const TimevalStruct * before,
-				  const TimevalStruct * after)
+				  const TimevalStruct *before,
+				  const TimevalStruct *after)
 {
 	bool		success = false;
 

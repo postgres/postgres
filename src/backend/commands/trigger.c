@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.155 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.156 2003/08/08 21:41:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1653,7 +1653,7 @@ typedef struct DeferredTriggersData
 	DeferredTriggerEvent deftrig_events;
 	DeferredTriggerEvent deftrig_events_imm;
 	DeferredTriggerEvent deftrig_event_tail;
-}	DeferredTriggersData;
+} DeferredTriggersData;
 
 /* ----------
  * deftrig_events, deftrig_event_tail:

@@ -23,7 +23,7 @@ struct SN_env
 	int			S_size;
 	int			I_size;
 	int			B_size;
-	symbol	   **S;
+	symbol	  **S;
 	int		   *I;
 	symbol	   *B;
 };

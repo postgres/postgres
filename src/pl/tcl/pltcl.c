@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.75 2003/08/04 18:40:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.76 2003/08/08 21:42:59 momjian Exp $
  *
  **********************************************************************/
 
@@ -720,8 +720,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 								   tupdesc, &tcl_trigtup);
 
 		/*
-		 * Now the command part of the event for TG_op and data for NEW and
-		 * OLD
+		 * Now the command part of the event for TG_op and data for NEW
+		 * and OLD
 		 */
 		if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		{

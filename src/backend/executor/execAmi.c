@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.74 2003/08/04 02:39:58 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.75 2003/08/08 21:41:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
  * ----------------------------------------------------------------
  */
 void
-ExecReScan(PlanState * node, ExprContext *exprCtxt)
+ExecReScan(PlanState *node, ExprContext *exprCtxt)
 {
 	/* If collecting timing stats, update them */
 	if (node->instrument)
@@ -177,7 +177,7 @@ ExecReScan(PlanState * node, ExprContext *exprCtxt)
  * Marks the current scan position.
  */
 void
-ExecMarkPos(PlanState * node)
+ExecMarkPos(PlanState *node)
 {
 	switch (nodeTag(node))
 	{
@@ -218,7 +218,7 @@ ExecMarkPos(PlanState * node)
  * restores the scan position previously saved with ExecMarkPos()
  */
 void
-ExecRestrPos(PlanState * node)
+ExecRestrPos(PlanState *node)
 {
 	switch (nodeTag(node))
 	{

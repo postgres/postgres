@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.68 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.69 2003/08/08 21:41:27 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -1110,11 +1110,10 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		_bt_wrtbuf(rel, lbuf);
 
 	/*
-	 * If parent became half dead, recurse to try to delete it.
-	 * Otherwise, if right sibling is empty and is now the last child of
-	 * the parent, recurse to try to delete it.  (These cases cannot apply
-	 * at the same time, though the second case might itself recurse to
-	 * the first.)
+	 * If parent became half dead, recurse to try to delete it. Otherwise,
+	 * if right sibling is empty and is now the last child of the parent,
+	 * recurse to try to delete it.  (These cases cannot apply at the same
+	 * time, though the second case might itself recurse to the first.)
 	 */
 	if (parent_half_dead)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.78 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.79 2003/08/08 21:41:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ typedef struct OnCommitItem
 	 */
 	bool		created_in_cur_xact;
 	bool		deleted_in_cur_xact;
-}	OnCommitItem;
+} OnCommitItem;
 
 static List *on_commits = NIL;
 

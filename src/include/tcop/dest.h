@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.41 2003/08/06 17:46:46 tgl Exp $
+ * $Id: dest.h,v 1.42 2003/08/08 21:42:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,8 +108,8 @@ struct _DestReceiver
 											 DestReceiver *self);
 	/* Per-executor-run initialization and shutdown: */
 	void		(*rStartup) (DestReceiver *self,
-										int operation,
-										TupleDesc typeinfo);
+										 int operation,
+										 TupleDesc typeinfo);
 	void		(*rShutdown) (DestReceiver *self);
 	/* Destroy the receiver object itself (if dynamically allocated) */
 	void		(*rDestroy) (DestReceiver *self);

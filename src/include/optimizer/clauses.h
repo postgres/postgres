@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.67 2003/08/04 02:40:13 momjian Exp $
+ * $Id: clauses.h,v 1.68 2003/08/08 21:42:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ extern bool has_distinct_on_clause(Query *query);
 
 extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);
-extern void CommuteClause(OpExpr * clause);
+extern void CommuteClause(OpExpr *clause);
 
 extern Node *eval_const_expressions(Node *node);
 

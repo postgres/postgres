@@ -19,7 +19,8 @@ create_s(void)
 	return p;
 }
 
-extern void lose_s(symbol * p)
+extern void
+lose_s(symbol * p)
 {
 	free((char *) p - HEAD);
 }

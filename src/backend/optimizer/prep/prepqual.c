@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.37 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.38 2003/08/08 21:41:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,12 +21,12 @@
 #include "utils/lsyscache.h"
 
 static Expr *flatten_andors(Expr *qual);
-static void flatten_andors_and_walker(FastList * out_list, List *andlist);
-static void flatten_andors_or_walker(FastList * out_list, List *orlist);
+static void flatten_andors_and_walker(FastList *out_list, List *andlist);
+static void flatten_andors_or_walker(FastList *out_list, List *orlist);
 static List *pull_ands(List *andlist);
-static void pull_ands_walker(FastList * out_list, List *andlist);
+static void pull_ands_walker(FastList *out_list, List *andlist);
 static List *pull_ors(List *orlist);
-static void pull_ors_walker(FastList * out_list, List *orlist);
+static void pull_ors_walker(FastList *out_list, List *orlist);
 static Expr *find_nots(Expr *qual);
 static Expr *push_nots(Expr *qual);
 static Expr *find_ors(Expr *qual);
@@ -328,7 +328,7 @@ flatten_andors(Expr *qual)
 }
 
 static void
-flatten_andors_and_walker(FastList * out_list, List *andlist)
+flatten_andors_and_walker(FastList *out_list, List *andlist)
 {
 	List	   *arg;
 
@@ -344,7 +344,7 @@ flatten_andors_and_walker(FastList * out_list, List *andlist)
 }
 
 static void
-flatten_andors_or_walker(FastList * out_list, List *orlist)
+flatten_andors_or_walker(FastList *out_list, List *orlist)
 {
 	List	   *arg;
 
@@ -377,7 +377,7 @@ pull_ands(List *andlist)
 }
 
 static void
-pull_ands_walker(FastList * out_list, List *andlist)
+pull_ands_walker(FastList *out_list, List *andlist)
 {
 	List	   *arg;
 
@@ -410,7 +410,7 @@ pull_ors(List *orlist)
 }
 
 static void
-pull_ors_walker(FastList * out_list, List *orlist)
+pull_ors_walker(FastList *out_list, List *orlist)
 {
 	List	   *arg;
 

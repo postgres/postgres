@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.118 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.119 2003/08/08 21:42:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ typedef struct ErrorData
 	char	   *context;		/* context message */
 	int			cursorpos;		/* cursor index into query string */
 	int			saved_errno;	/* errno at entry */
-}	ErrorData;
+} ErrorData;
 
 /* We provide a small stack of ErrorData records for re-entrant cases */
 #define ERRORDATA_STACK_SIZE  5
@@ -138,9 +138,9 @@ static int	recursion_depth = 0;	/* to detect actual recursion */
 	} while (0)
 
 
-static void send_message_to_server_log(ErrorData * edata);
-static void send_message_to_frontend(ErrorData * edata);
-static char *expand_fmt_string(const char *fmt, ErrorData * edata);
+static void send_message_to_server_log(ErrorData *edata);
+static void send_message_to_frontend(ErrorData *edata);
+static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
 static const char *print_timestamp(void);
@@ -1024,7 +1024,7 @@ write_syslog(int level, const char *line)
  * Write error report to server's log
  */
 static void
-send_message_to_server_log(ErrorData * edata)
+send_message_to_server_log(ErrorData *edata)
 {
 	StringInfoData buf;
 
@@ -1151,7 +1151,7 @@ send_message_to_server_log(ErrorData * edata)
  * Write error report to client
  */
 static void
-send_message_to_frontend(ErrorData * edata)
+send_message_to_frontend(ErrorData *edata)
 {
 	StringInfoData msgbuf;
 
@@ -1289,7 +1289,7 @@ send_message_to_frontend(ErrorData * edata)
  * The result is a palloc'd string.
  */
 static char *
-expand_fmt_string(const char *fmt, ErrorData * edata)
+expand_fmt_string(const char *fmt, ErrorData *edata)
 {
 	StringInfoData buf;
 	const char *cp;

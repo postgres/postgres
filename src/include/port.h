@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port.h,v 1.11 2003/08/08 04:52:22 momjian Exp $
+ * $Id: port.h,v 1.12 2003/08/08 21:42:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,16 +18,16 @@
 #endif
 
 /* Portable path handling for Unix/Win32 */
-extern bool		is_absolute_path(const char *filename);
-extern char	   *first_path_separator(const char *filename);
-extern char	   *last_path_separator(const char *filename);
-extern char	   *get_progname(char *argv0);
+extern bool is_absolute_path(const char *filename);
+extern char *first_path_separator(const char *filename);
+extern char *last_path_separator(const char *filename);
+extern char *get_progname(char *argv0);
 
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 #if defined(bsdi) || defined(netbsd)
-extern int			fseeko(FILE *stream, off_t offset, int whence);
-extern off_t		ftello(FILE *stream);
+extern int	fseeko(FILE *stream, off_t offset, int whence);
+extern off_t ftello(FILE *stream);
 #endif
 
 #ifdef WIN32
@@ -35,8 +35,8 @@ extern off_t		ftello(FILE *stream);
  * Win32 doesn't have reliable rename/unlink during concurrent access
  */
 #ifndef FRONTEND
-extern int			pgrename(const char *from, const char *to);
-extern int			pgunlink(const char *path);
+extern int	pgrename(const char *from, const char *to);
+extern int	pgunlink(const char *path);
 
 #define rename(from, to)	pgrename(from, to)
 #define unlink(path)		pgunlink(path)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.245 2003/08/04 02:40:13 momjian Exp $
+ * $Id: parsenodes.h,v 1.246 2003/08/08 21:42:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ typedef enum QuerySource
 	QSRC_INSTEAD_RULE,			/* added by unconditional INSTEAD rule */
 	QSRC_QUAL_INSTEAD_RULE,		/* added by conditional INSTEAD rule */
 	QSRC_NON_INSTEAD_RULE		/* added by non-INSTEAD rule */
-}	QuerySource;
+} QuerySource;
 
 
 /*****************************************************************************
@@ -175,7 +175,7 @@ typedef enum A_Expr_Kind
 	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
 	AEXPR_NULLIF,				/* NULLIF - name must be "=" */
 	AEXPR_OF					/* IS (not) OF - name must be "=" or "!=" */
-}	A_Expr_Kind;
+} A_Expr_Kind;
 
 typedef struct A_Expr
 {
@@ -352,7 +352,7 @@ typedef struct InhRelation
 	NodeTag		type;
 	RangeVar   *relation;
 	bool		including_defaults;
-}	InhRelation;
+} InhRelation;
 
 /*
  * IndexElem - index parameters (used in CREATE INDEX)
@@ -691,7 +691,7 @@ typedef enum ObjectType
 	OBJECT_TYPE,
 	OBJECT_USER,
 	OBJECT_VIEW
-}	ObjectType;
+} ObjectType;
 
 /* ----------------------
  *		Create Schema Statement
@@ -774,7 +774,7 @@ typedef struct AlterDomainStmt
 								 * new owner */
 	Node	   *def;			/* definition of default or constraint */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
-}	AlterDomainStmt;
+} AlterDomainStmt;
 
 
 /* ----------------------
@@ -879,7 +879,7 @@ typedef enum OnCommitAction
 	ONCOMMIT_PRESERVE_ROWS,		/* ON COMMIT PRESERVE ROWS (do nothing) */
 	ONCOMMIT_DELETE_ROWS,		/* ON COMMIT DELETE ROWS */
 	ONCOMMIT_DROP				/* ON COMMIT DROP */
-}	OnCommitAction;
+} OnCommitAction;
 
 typedef struct CreateStmt
 {
@@ -1096,7 +1096,7 @@ typedef struct AlterSeqStmt
 	NodeTag		type;
 	RangeVar   *sequence;		/* the sequence to alter */
 	List	   *options;
-}	AlterSeqStmt;
+} AlterSeqStmt;
 
 /* ----------------------
  *		Create {Aggregate|Operator|Type} Statement
@@ -1222,7 +1222,7 @@ typedef struct DeclareCursorStmt
 	char	   *portalname;		/* name of the portal (cursor) */
 	int			options;		/* bitmask of options (see above) */
 	Node	   *query;			/* the SELECT query */
-}	DeclareCursorStmt;
+} DeclareCursorStmt;
 
 /* ----------------------
  *		Close Portal Statement
@@ -1246,7 +1246,7 @@ typedef enum FetchDirection
 	/* for these, howMany indicates a position; only one row is fetched */
 	FETCH_ABSOLUTE,
 	FETCH_RELATIVE
-}	FetchDirection;
+} FetchDirection;
 
 #define FETCH_ALL	LONG_MAX
 
@@ -1414,7 +1414,7 @@ typedef enum TransactionStmtKind
 	TRANS_STMT_START,			/* semantically identical to BEGIN */
 	TRANS_STMT_COMMIT,
 	TRANS_STMT_ROLLBACK
-}	TransactionStmtKind;
+} TransactionStmtKind;
 
 typedef struct TransactionStmt
 {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.151 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.152 2003/08/08 21:41:28 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -954,9 +954,9 @@ CommitTransaction(void)
 	 *
 	 * The ordering of operations is not entirely random.  The idea is:
 	 * release resources visible to other backends (eg, files, buffer
-	 * pins); then release locks; then release backend-local resources.
-	 * We want to release locks at the point where any backend waiting for
-	 * us will see our transaction as being fully cleaned up.
+	 * pins); then release locks; then release backend-local resources. We
+	 * want to release locks at the point where any backend waiting for us
+	 * will see our transaction as being fully cleaned up.
 	 */
 
 	smgrDoPendingDeletes(true);

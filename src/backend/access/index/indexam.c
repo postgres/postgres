@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.69 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.70 2003/08/08 21:41:25 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -632,7 +632,7 @@ index_bulk_delete(Relation indexRelation,
  */
 IndexBulkDeleteResult *
 index_vacuum_cleanup(Relation indexRelation,
-					 IndexVacuumCleanupInfo * info,
+					 IndexVacuumCleanupInfo *info,
 					 IndexBulkDeleteResult *stats)
 {
 	RegProcedure procedure;

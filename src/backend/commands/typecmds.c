@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.42 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.43 2003/08/08 21:41:32 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -70,7 +70,7 @@ typedef struct
 	int			natts;			/* number of attributes of interest */
 	int		   *atts;			/* attribute numbers */
 	/* atts[] is of allocated length RelationGetNumberOfAttributes(rel) */
-}	RelToCheck;
+} RelToCheck;
 
 
 static Oid	findTypeInputFunction(List *procname, Oid typeOid);

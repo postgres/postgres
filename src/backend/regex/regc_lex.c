@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regc_lex.c,v 1.2 2003/08/04 00:43:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/regc_lex.c,v 1.3 2003/08/08 21:41:56 momjian Exp $
  *
  */
 
@@ -201,8 +201,8 @@ prefixes(struct vars * v)
  */
 static void
 lexnest(struct vars * v,
-		chr * beginp,			/* start of interpolation */
-		chr * endp)				/* one past end of interpolation */
+		chr *beginp,			/* start of interpolation */
+		chr *endp)				/* one past end of interpolation */
 {
 	assert(v->savenow == NULL); /* only one level of nesting */
 	v->savenow = v->now;
@@ -876,7 +876,7 @@ lexescape(struct vars * v)
 /*
  * lexdigits - slurp up digits and return chr value
  */
-static chr					/* chr value; errors signalled via ERR */
+static chr						/* chr value; errors signalled via ERR */
 lexdigits(struct vars * v,
 		  int base,
 		  int minlen,
@@ -1121,8 +1121,8 @@ newline(void)
  */
 static chr
 chrnamed(struct vars * v,
-		 chr * startp,			/* start of name */
-		 chr * endp,			/* just past end of name */
+		 chr *startp,			/* start of name */
+		 chr *endp,				/* just past end of name */
 		 chr lastresort)		/* what to return if name lookup fails */
 {
 	celt		c;

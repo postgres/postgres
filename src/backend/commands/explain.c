@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.113 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.114 2003/08/08 21:41:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
 				TupOutputState *tstate);
 static double elapsed_time(struct timeval * starttime);
 static void explain_outNode(StringInfo str,
-				Plan *plan, PlanState * planstate,
+				Plan *plan, PlanState *planstate,
 				Plan *outer_plan,
 				int indent, ExplainState *es);
 static void show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
@@ -313,7 +313,7 @@ elapsed_time(struct timeval * starttime)
  */
 static void
 explain_outNode(StringInfo str,
-				Plan *plan, PlanState * planstate,
+				Plan *plan, PlanState *planstate,
 				Plan *outer_plan,
 				int indent, ExplainState *es)
 {

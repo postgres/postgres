@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.26 2003/08/08 14:39:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.27 2003/08/08 21:41:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ static bool tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc);
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecScan(ScanState * node,
+ExecScan(ScanState *node,
 		 ExecScanAccessMtd accessMtd)	/* function returning a tuple */
 {
 	EState	   *estate;
@@ -176,7 +176,7 @@ ExecScan(ScanState * node,
  * ExecAssignScanType must have been called already.
  */
 void
-ExecAssignScanProjectionInfo(ScanState * node)
+ExecAssignScanProjectionInfo(ScanState *node)
 {
 	Scan	   *scan = (Scan *) node->ps.plan;
 

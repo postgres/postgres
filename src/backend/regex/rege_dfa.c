@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/rege_dfa.c,v 1.2 2003/08/04 00:43:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/rege_dfa.c,v 1.3 2003/08/08 21:41:56 momjian Exp $
  *
  */
 
@@ -38,8 +38,8 @@
 static chr *					/* endpoint, or NULL */
 longest(struct vars * v,		/* used only for debug and exec flags */
 		struct dfa * d,
-		chr * start,			/* where the match should start */
-		chr * stop,				/* match must end at or before here */
+		chr *start,				/* where the match should start */
+		chr *stop,				/* match must end at or before here */
 		int *hitstopp)			/* record whether hit v->stop, if non-NULL */
 {
 	chr		   *cp;
@@ -142,10 +142,10 @@ longest(struct vars * v,		/* used only for debug and exec flags */
 static chr *					/* endpoint, or NULL */
 shortest(struct vars * v,
 		 struct dfa * d,
-		 chr * start,			/* where the match should start */
-		 chr * min,				/* match must end at or after here */
-		 chr * max,				/* match must end at or before here */
-		 chr ** coldp,			/* store coldstart pointer here, if
+		 chr *start,			/* where the match should start */
+		 chr *min,				/* match must end at or after here */
+		 chr *max,				/* match must end at or before here */
+		 chr **coldp,			/* store coldstart pointer here, if
 								 * nonNULL */
 		 int *hitstopp)			/* record whether hit v->stop, if non-NULL */
 {
@@ -394,7 +394,7 @@ hash(unsigned *uv,
 static struct sset *
 initialize(struct vars * v,		/* used only for debug flags */
 		   struct dfa * d,
-		   chr * start)
+		   chr *start)
 {
 	struct sset *ss;
 	int			i;
@@ -430,8 +430,8 @@ miss(struct vars * v,			/* used only for debug flags */
 	 struct dfa * d,
 	 struct sset * css,
 	 pcolor co,
-	 chr * cp,					/* next chr */
-	 chr * start)				/* where the attempt got started */
+	 chr *cp,					/* next chr */
+	 chr *start)				/* where the attempt got started */
 {
 	struct cnfa *cnfa = d->cnfa;
 	int			i;
@@ -538,7 +538,7 @@ miss(struct vars * v,			/* used only for debug flags */
 static int						/* predicate:  constraint satisfied? */
 lacon(struct vars * v,
 	  struct cnfa * pcnfa,		/* parent cnfa */
-	  chr * cp,
+	  chr *cp,
 	  pcolor co)				/* "color" of the lookahead constraint */
 {
 	int			n;
@@ -571,8 +571,8 @@ lacon(struct vars * v,
 static struct sset *
 getvacant(struct vars * v,		/* used only for debug flags */
 		  struct dfa * d,
-		  chr * cp,
-		  chr * start)
+		  chr *cp,
+		  chr *start)
 {
 	int			i;
 	struct sset *ss;
@@ -639,8 +639,8 @@ getvacant(struct vars * v,		/* used only for debug flags */
 static struct sset *
 pickss(struct vars * v,			/* used only for debug flags */
 	   struct dfa * d,
-	   chr * cp,
-	   chr * start)
+	   chr *cp,
+	   chr *start)
 {
 	int			i;
 	struct sset *ss;

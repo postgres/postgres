@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.54 2003/08/04 02:40:10 momjian Exp $
+ * $Id: xact.h,v 1.55 2003/08/08 21:42:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ typedef enum TransState
 	TRANS_INPROGRESS,
 	TRANS_COMMIT,
 	TRANS_ABORT
-}	TransState;
+} TransState;
 
 /*
  *	transaction block states - transaction state of client queries
@@ -57,7 +57,7 @@ typedef enum TBlockState
 	TBLOCK_END,
 	TBLOCK_ABORT,
 	TBLOCK_ENDABORT
-}	TBlockState;
+} TBlockState;
 
 /* ----------------
  *		transaction state structure

@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.22 2003/08/04 00:43:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.23 2003/08/08 21:41:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,7 +412,7 @@ FetchPreparedStatementParams(const char *stmt_name)
  * Note: the result is created or copied into current memory context.
  */
 TupleDesc
-FetchPreparedStatementResultDesc(PreparedStatement * stmt)
+FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 {
 	Query	   *query;
 

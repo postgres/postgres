@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.101 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.102 2003/08/08 21:41:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,7 @@ DefineSequence(CreateSeqStmt *seq)
  * Modify the defition of a sequence relation
  */
 void
-AlterSequence(AlterSeqStmt * stmt)
+AlterSequence(AlterSeqStmt *stmt)
 {
 	SeqTable	elm;
 	Relation	seqrel;

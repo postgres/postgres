@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.206 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.207 2003/08/08 21:41:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,7 @@ _equalArrayRef(ArrayRef *a, ArrayRef *b)
 }
 
 static bool
-_equalFuncExpr(FuncExpr * a, FuncExpr * b)
+_equalFuncExpr(FuncExpr *a, FuncExpr *b)
 {
 	COMPARE_SCALAR_FIELD(funcid);
 	COMPARE_SCALAR_FIELD(funcresulttype);
@@ -245,7 +245,7 @@ _equalFuncExpr(FuncExpr * a, FuncExpr * b)
 }
 
 static bool
-_equalOpExpr(OpExpr * a, OpExpr * b)
+_equalOpExpr(OpExpr *a, OpExpr *b)
 {
 	COMPARE_SCALAR_FIELD(opno);
 
@@ -268,7 +268,7 @@ _equalOpExpr(OpExpr * a, OpExpr * b)
 }
 
 static bool
-_equalDistinctExpr(DistinctExpr * a, DistinctExpr * b)
+_equalDistinctExpr(DistinctExpr *a, DistinctExpr *b)
 {
 	COMPARE_SCALAR_FIELD(opno);
 
@@ -291,7 +291,7 @@ _equalDistinctExpr(DistinctExpr * a, DistinctExpr * b)
 }
 
 static bool
-_equalScalarArrayOpExpr(ScalarArrayOpExpr * a, ScalarArrayOpExpr * b)
+_equalScalarArrayOpExpr(ScalarArrayOpExpr *a, ScalarArrayOpExpr *b)
 {
 	COMPARE_SCALAR_FIELD(opno);
 
@@ -313,7 +313,7 @@ _equalScalarArrayOpExpr(ScalarArrayOpExpr * a, ScalarArrayOpExpr * b)
 }
 
 static bool
-_equalBoolExpr(BoolExpr * a, BoolExpr * b)
+_equalBoolExpr(BoolExpr *a, BoolExpr *b)
 {
 	COMPARE_SCALAR_FIELD(boolop);
 	COMPARE_NODE_FIELD(args);
@@ -404,7 +404,7 @@ _equalCaseWhen(CaseWhen *a, CaseWhen *b)
 }
 
 static bool
-_equalArrayExpr(ArrayExpr * a, ArrayExpr * b)
+_equalArrayExpr(ArrayExpr *a, ArrayExpr *b)
 {
 	COMPARE_SCALAR_FIELD(array_typeid);
 	COMPARE_SCALAR_FIELD(element_typeid);
@@ -415,7 +415,7 @@ _equalArrayExpr(ArrayExpr * a, ArrayExpr * b)
 }
 
 static bool
-_equalCoalesceExpr(CoalesceExpr * a, CoalesceExpr * b)
+_equalCoalesceExpr(CoalesceExpr *a, CoalesceExpr *b)
 {
 	COMPARE_SCALAR_FIELD(coalescetype);
 	COMPARE_NODE_FIELD(args);
@@ -424,7 +424,7 @@ _equalCoalesceExpr(CoalesceExpr * a, CoalesceExpr * b)
 }
 
 static bool
-_equalNullIfExpr(NullIfExpr * a, NullIfExpr * b)
+_equalNullIfExpr(NullIfExpr *a, NullIfExpr *b)
 {
 	COMPARE_SCALAR_FIELD(opno);
 
@@ -465,7 +465,7 @@ _equalBooleanTest(BooleanTest *a, BooleanTest *b)
 }
 
 static bool
-_equalCoerceToDomain(CoerceToDomain * a, CoerceToDomain * b)
+_equalCoerceToDomain(CoerceToDomain *a, CoerceToDomain *b)
 {
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_SCALAR_FIELD(resulttype);
@@ -484,7 +484,7 @@ _equalCoerceToDomain(CoerceToDomain * a, CoerceToDomain * b)
 }
 
 static bool
-_equalCoerceToDomainValue(CoerceToDomainValue * a, CoerceToDomainValue * b)
+_equalCoerceToDomainValue(CoerceToDomainValue *a, CoerceToDomainValue *b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
@@ -493,7 +493,7 @@ _equalCoerceToDomainValue(CoerceToDomainValue * a, CoerceToDomainValue * b)
 }
 
 static bool
-_equalSetToDefault(SetToDefault * a, SetToDefault * b)
+_equalSetToDefault(SetToDefault *a, SetToDefault *b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
@@ -587,7 +587,7 @@ _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 }
 
 static bool
-_equalInClauseInfo(InClauseInfo * a, InClauseInfo * b)
+_equalInClauseInfo(InClauseInfo *a, InClauseInfo *b)
 {
 	COMPARE_BITMAPSET_FIELD(lefthand);
 	COMPARE_BITMAPSET_FIELD(righthand);
@@ -715,7 +715,7 @@ _equalAlterTableStmt(AlterTableStmt *a, AlterTableStmt *b)
 }
 
 static bool
-_equalAlterDomainStmt(AlterDomainStmt * a, AlterDomainStmt * b)
+_equalAlterDomainStmt(AlterDomainStmt *a, AlterDomainStmt *b)
 {
 	COMPARE_SCALAR_FIELD(subtype);
 	COMPARE_NODE_FIELD(typename);
@@ -759,7 +759,7 @@ _equalFuncWithArgs(FuncWithArgs *a, FuncWithArgs *b)
 }
 
 static bool
-_equalDeclareCursorStmt(DeclareCursorStmt * a, DeclareCursorStmt * b)
+_equalDeclareCursorStmt(DeclareCursorStmt *a, DeclareCursorStmt *b)
 {
 	COMPARE_STRING_FIELD(portalname);
 	COMPARE_SCALAR_FIELD(options);
@@ -811,7 +811,7 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 }
 
 static bool
-_equalInhRelation(InhRelation * a, InhRelation * b)
+_equalInhRelation(InhRelation *a, InhRelation *b)
 {
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_SCALAR_FIELD(including_defaults);
@@ -1122,7 +1122,7 @@ _equalCreateSeqStmt(CreateSeqStmt *a, CreateSeqStmt *b)
 }
 
 static bool
-_equalAlterSeqStmt(AlterSeqStmt * a, AlterSeqStmt * b)
+_equalAlterSeqStmt(AlterSeqStmt *a, AlterSeqStmt *b)
 {
 	COMPARE_NODE_FIELD(sequence);
 	COMPARE_NODE_FIELD(options);

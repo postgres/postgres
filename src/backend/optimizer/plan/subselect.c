@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.81 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.82 2003/08/08 21:41:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,14 +71,14 @@ typedef struct PlannerParamItem
 {
 	Node	   *item;			/* the Var, Aggref, or Param */
 	Index		abslevel;		/* its absolute query level */
-}	PlannerParamItem;
+} PlannerParamItem;
 
 
 typedef struct finalize_primnode_context
 {
 	Bitmapset  *paramids;		/* Set of PARAM_EXEC paramids found */
 	Bitmapset  *outer_params;	/* Set of accessible outer paramids */
-}	finalize_primnode_context;
+} finalize_primnode_context;
 
 
 static List *convert_sublink_opers(List *lefthand, List *operOids,
@@ -88,9 +88,9 @@ static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
 static Node *replace_correlation_vars_mutator(Node *node, void *context);
 static Node *process_sublinks_mutator(Node *node, bool *isTopQual);
 static Bitmapset *finalize_plan(Plan *plan, List *rtable,
-			  Bitmapset * outer_params,
-			  Bitmapset * valid_params);
-static bool finalize_primnode(Node *node, finalize_primnode_context * context);
+			  Bitmapset *outer_params,
+			  Bitmapset *valid_params);
+static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 
 
 /*
@@ -909,7 +909,7 @@ SS_finalize_plan(Plan *plan, List *rtable)
  */
 static Bitmapset *
 finalize_plan(Plan *plan, List *rtable,
-			  Bitmapset * outer_params, Bitmapset * valid_params)
+			  Bitmapset *outer_params, Bitmapset *valid_params)
 {
 	finalize_primnode_context context;
 	List	   *lst;
@@ -1073,7 +1073,7 @@ finalize_plan(Plan *plan, List *rtable,
  * expression tree to the result set.
  */
 static bool
-finalize_primnode(Node *node, finalize_primnode_context * context)
+finalize_primnode(Node *node, finalize_primnode_context *context)
 {
 	if (node == NULL)
 		return false;

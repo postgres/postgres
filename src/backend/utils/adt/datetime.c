@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.112 2003/08/05 18:30:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.113 2003/08/08 21:42:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,7 +711,7 @@ TrimTrailingZeros(char *str)
  * *numfields - set to the actual number of fields detected
  *
  * The fields extracted from the input are stored as separate, null-terminated
- * strings in the workspace at lowstr.  Any text is converted to lower case.
+ * strings in the workspace at lowstr.	Any text is converted to lower case.
  *
  * Several field types are assigned:
  *	DTK_NUMBER - digits and (possibly) a decimal point
@@ -769,7 +769,7 @@ ParseDateTime(const char *timestr, char *lowstr,
 			else if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
 				/* save delimiting character to use later */
-				char	delim = *cp;
+				char		delim = *cp;
 
 				*lp++ = *cp++;
 				/* second field is all digits? then no embedded text month */
@@ -833,7 +833,7 @@ ParseDateTime(const char *timestr, char *lowstr,
 			 */
 			if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
-				char	delim = *cp;
+				char		delim = *cp;
 
 				ftype[nf] = DTK_DATE;
 				*lp++ = *cp++;
@@ -2415,7 +2415,7 @@ DecodeNumber(int flen, char *str, int fmask,
 
 	if (*cp == '.')
 	{
-		double	frac;
+		double		frac;
 
 		/*
 		 * More than two digits before decimal point? Then could be a date

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.16 2003/08/04 02:40:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.17 2003/08/08 21:41:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 
 static List *TidqualFromRestrictinfo(Relids relids, List *restrictinfo);
 static bool isEvaluable(int varno, Node *node);
-static Node *TidequalClause(int varno, OpExpr * node);
+static Node *TidequalClause(int varno, OpExpr *node);
 static List *TidqualFromExpr(int varno, Expr *expr);
 
 static bool
@@ -66,7 +66,7 @@ isEvaluable(int varno, Node *node)
  *	  or	the left  node if the opclause is ....=CTID
  */
 static Node *
-TidequalClause(int varno, OpExpr * node)
+TidequalClause(int varno, OpExpr *node)
 {
 	Node	   *rnode = NULL,
 			   *arg1,

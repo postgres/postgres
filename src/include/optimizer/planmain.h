@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.74 2003/08/04 02:40:14 momjian Exp $
+ * $Id: planmain.h,v 1.75 2003/08/08 21:42:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,6 @@ extern void process_implied_equality(Query *root,
  */
 extern void set_plan_references(Plan *plan, List *rtable);
 extern void fix_opfuncids(Node *node);
-extern void set_opfuncid(OpExpr * opexpr);
+extern void set_opfuncid(OpExpr *opexpr);
 
 #endif   /* PLANMAIN_H */

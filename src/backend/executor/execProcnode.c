@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.39 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.40 2003/08/08 21:41:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,7 +268,7 @@ ExecInitNode(Plan *node, EState *estate)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProcNode(PlanState * node)
+ExecProcNode(PlanState *node)
 {
 	TupleTableSlot *result;
 
@@ -484,7 +484,7 @@ ExecCountSlotsNode(Plan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndNode(PlanState * node)
+ExecEndNode(PlanState *node)
 {
 	List	   *subp;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.6 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.7 2003/08/08 21:41:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,7 +296,7 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	Assert(entrysize >= sizeof(TupleHashEntryData));
 
 	tabsize = sizeof(TupleHashTableData) +
-		(nbuckets - 1) * sizeof(TupleHashEntry);
+		(nbuckets - 1) *sizeof(TupleHashEntry);
 	hashtable = (TupleHashTable) MemoryContextAllocZero(tablecxt, tabsize);
 
 	hashtable->numCols = numCols;
@@ -411,7 +411,7 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
  * Iterator state must be initialized with ResetTupleHashIterator() macro.
  */
 TupleHashEntry
-ScanTupleHashTable(TupleHashTable hashtable, TupleHashIterator * state)
+ScanTupleHashTable(TupleHashTable hashtable, TupleHashIterator *state)
 {
 	TupleHashEntry entry;
 

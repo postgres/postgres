@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.113 2003/08/04 02:40:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.114 2003/08/08 21:41:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ bool		enable_hashjoin = true;
 
 static Selectivity estimate_hash_bucketsize(Query *root, Var *var,
 						 int nbuckets);
-static bool cost_qual_eval_walker(Node *node, QualCost * total);
+static bool cost_qual_eval_walker(Node *node, QualCost *total);
 static Selectivity approx_selectivity(Query *root, List *quals,
 				   JoinType jointype);
 static void set_rel_width(Query *root, RelOptInfo *rel);
@@ -1449,7 +1449,7 @@ estimate_hash_bucketsize(Query *root, Var *var, int nbuckets)
  *		and a per-evaluation component.
  */
 void
-cost_qual_eval(QualCost * cost, List *quals)
+cost_qual_eval(QualCost *cost, List *quals)
 {
 	List	   *l;
 
@@ -1491,7 +1491,7 @@ cost_qual_eval(QualCost * cost, List *quals)
 }
 
 static bool
-cost_qual_eval_walker(Node *node, QualCost * total)
+cost_qual_eval_walker(Node *node, QualCost *total)
 {
 	if (node == NULL)
 		return false;

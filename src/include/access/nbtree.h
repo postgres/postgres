@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.69 2003/08/04 02:40:10 momjian Exp $
+ * $Id: nbtree.h,v 1.70 2003/08/08 21:42:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,7 @@ typedef struct xl_btree_metadata
 	uint32		level;
 	BlockNumber fastroot;
 	uint32		fastlevel;
-}	xl_btree_metadata;
+} xl_btree_metadata;
 
 /*
  * This is what we need to know about simple (without split) insert.
@@ -291,7 +291,7 @@ typedef struct xl_btree_delete_page
 	BlockNumber leftblk;		/* child block's left sibling, if any */
 	BlockNumber rightblk;		/* child block's right sibling */
 	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_DELETE_PAGE_META */
-}	xl_btree_delete_page;
+} xl_btree_delete_page;
 
 #define SizeOfBtreeDeletePage	(offsetof(xl_btree_delete_page, rightblk) + sizeof(BlockNumber))
 
@@ -321,7 +321,7 @@ typedef struct xl_btree_newmeta
 {
 	RelFileNode node;
 	xl_btree_metadata meta;
-}	xl_btree_newmeta;
+} xl_btree_newmeta;
 
 #define SizeOfBtreeNewmeta	(sizeof(xl_btree_newmeta))
 
@@ -333,7 +333,7 @@ typedef struct xl_btree_newpage
 	RelFileNode node;
 	BlockNumber blkno;			/* location of new page */
 	/* entire page contents follow at end of record */
-}	xl_btree_newpage;
+} xl_btree_newpage;
 
 #define SizeOfBtreeNewpage	(offsetof(xl_btree_newpage, blkno) + sizeof(BlockNumber))
 

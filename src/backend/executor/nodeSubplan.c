@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.53 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.54 2003/08/08 21:41:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,13 +29,13 @@
 #include "utils/lsyscache.h"
 
 
-static Datum ExecHashSubPlan(SubPlanState * node,
+static Datum ExecHashSubPlan(SubPlanState *node,
 				ExprContext *econtext,
 				bool *isNull);
-static Datum ExecScanSubPlan(SubPlanState * node,
+static Datum ExecScanSubPlan(SubPlanState *node,
 				ExprContext *econtext,
 				bool *isNull);
-static void buildSubPlanHash(SubPlanState * node);
+static void buildSubPlanHash(SubPlanState *node);
 static bool findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot);
 static bool tupleAllNulls(HeapTuple tuple);
 
@@ -45,7 +45,7 @@ static bool tupleAllNulls(HeapTuple tuple);
  * ----------------------------------------------------------------
  */
 Datum
-ExecSubPlan(SubPlanState * node,
+ExecSubPlan(SubPlanState *node,
 			ExprContext *econtext,
 			bool *isNull)
 {
@@ -64,7 +64,7 @@ ExecSubPlan(SubPlanState * node,
  * ExecHashSubPlan: store subselect result in an in-memory hash table
  */
 static Datum
-ExecHashSubPlan(SubPlanState * node,
+ExecHashSubPlan(SubPlanState *node,
 				ExprContext *econtext,
 				bool *isNull)
 {
@@ -194,7 +194,7 @@ ExecHashSubPlan(SubPlanState * node,
  * ExecScanSubPlan: default case where we have to rescan subplan each time
  */
 static Datum
-ExecScanSubPlan(SubPlanState * node,
+ExecScanSubPlan(SubPlanState *node,
 				ExprContext *econtext,
 				bool *isNull)
 {
@@ -461,7 +461,7 @@ ExecScanSubPlan(SubPlanState * node,
  * buildSubPlanHash: load hash table by scanning subplan output.
  */
 static void
-buildSubPlanHash(SubPlanState * node)
+buildSubPlanHash(SubPlanState *node)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 	PlanState  *planstate = node->planstate;
@@ -663,7 +663,7 @@ tupleAllNulls(HeapTuple tuple)
  * ----------------------------------------------------------------
  */
 void
-ExecInitSubPlan(SubPlanState * node, EState *estate)
+ExecInitSubPlan(SubPlanState *node, EState *estate)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 	EState	   *sp_estate;
@@ -899,7 +899,7 @@ ExecInitSubPlan(SubPlanState * node, EState *estate)
  * ----------------------------------------------------------------
  */
 void
-ExecSetParamPlan(SubPlanState * node, ExprContext *econtext)
+ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 	PlanState  *planstate = node->planstate;
@@ -1041,7 +1041,7 @@ ExecSetParamPlan(SubPlanState * node, ExprContext *econtext)
  * ----------------------------------------------------------------
  */
 void
-ExecEndSubPlan(SubPlanState * node)
+ExecEndSubPlan(SubPlanState *node)
 {
 	if (node->needShutdown)
 	{
@@ -1061,7 +1061,7 @@ ExecEndSubPlan(SubPlanState * node)
  * Mark an initplan as needing recalculation
  */
 void
-ExecReScanSetParamPlan(SubPlanState * node, PlanState * parent)
+ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 {
 	PlanState  *planstate = node->planstate;
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;

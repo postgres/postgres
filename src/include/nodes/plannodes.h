@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.67 2003/08/04 02:40:13 momjian Exp $
+ * $Id: plannodes.h,v 1.68 2003/08/08 21:42:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,7 +315,7 @@ typedef enum AggStrategy
 	AGG_PLAIN,					/* simple agg across all input rows */
 	AGG_SORTED,					/* grouped agg, input must be sorted */
 	AGG_HASHED					/* grouped agg, use internal hashtable */
-}	AggStrategy;
+} AggStrategy;
 
 typedef struct Agg
 {

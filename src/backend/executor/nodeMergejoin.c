@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.60 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.61 2003/08/08 21:41:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
  */
 static void
 MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals,
-				PlanState * parent)
+				PlanState *parent)
 {
 	List	   *ltexprs,
 			   *gtexprs,

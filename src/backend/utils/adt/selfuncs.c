@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.144 2003/08/04 02:40:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.145 2003/08/08 21:42:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2030,7 +2030,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 	{							/* varinfos is a List of these */
 		Var		   *var;
 		double		ndistinct;
-	}			MyVarInfo;
+	} MyVarInfo;
 
 	/* We should not be called unless query has GROUP BY (or DISTINCT) */
 	Assert(groupExprs != NIL);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.76 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.77 2003/08/08 21:41:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,10 @@
 typedef struct
 {
 	int			sublevels_up;
-}	checkExprHasAggs_context;
+} checkExprHasAggs_context;
 
 static bool checkExprHasAggs_walker(Node *node,
-						checkExprHasAggs_context * context);
+						checkExprHasAggs_context *context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
@@ -63,7 +63,7 @@ checkExprHasAggs(Node *node)
 }
 
 static bool
-checkExprHasAggs_walker(Node *node, checkExprHasAggs_context * context)
+checkExprHasAggs_walker(Node *node, checkExprHasAggs_context *context)
 {
 	if (node == NULL)
 		return false;

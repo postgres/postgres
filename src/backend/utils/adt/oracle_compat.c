@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.47 2003/08/04 00:43:25 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.48 2003/08/08 21:42:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -872,7 +872,7 @@ ascii(PG_FUNCTION_ARGS)
  ********************************************************************/
 
 Datum
-chr(PG_FUNCTION_ARGS)
+chr			(PG_FUNCTION_ARGS)
 {
 	int32		cvalue = PG_GETARG_INT32(0);
 	text	   *result;

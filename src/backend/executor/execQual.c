@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.140 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.141 2003/08/08 21:41:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,53 +50,53 @@
 
 
 /* static function decls */
-static Datum ExecEvalAggref(AggrefExprState * aggref,
+static Datum ExecEvalAggref(AggrefExprState *aggref,
 			   ExprContext *econtext,
 			   bool *isNull);
-static Datum ExecEvalArrayRef(ArrayRefExprState * astate,
+static Datum ExecEvalArrayRef(ArrayRefExprState *astate,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalParam(Param *expression, ExprContext *econtext,
 			  bool *isNull);
-static Datum ExecEvalFunc(FuncExprState * fcache, ExprContext *econtext,
+static Datum ExecEvalFunc(FuncExprState *fcache, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalOper(FuncExprState * fcache, ExprContext *econtext,
+static Datum ExecEvalOper(FuncExprState *fcache, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalDistinct(FuncExprState * fcache, ExprContext *econtext,
+static Datum ExecEvalDistinct(FuncExprState *fcache, ExprContext *econtext,
 				 bool *isNull);
-static Datum ExecEvalScalarArrayOp(ScalarArrayOpExprState * sstate,
+static Datum ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 					  ExprContext *econtext, bool *isNull);
 static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList, ExprContext *econtext);
-static Datum ExecEvalNot(BoolExprState * notclause, ExprContext *econtext,
+static Datum ExecEvalNot(BoolExprState *notclause, ExprContext *econtext,
 			bool *isNull);
-static Datum ExecEvalOr(BoolExprState * orExpr, ExprContext *econtext,
+static Datum ExecEvalOr(BoolExprState *orExpr, ExprContext *econtext,
 		   bool *isNull);
-static Datum ExecEvalAnd(BoolExprState * andExpr, ExprContext *econtext,
+static Datum ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 			bool *isNull);
-static Datum ExecEvalCase(CaseExprState * caseExpr, ExprContext *econtext,
+static Datum ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalArray(ArrayExprState * astate,
+static Datum ExecEvalArray(ArrayExprState *astate,
 			  ExprContext *econtext,
 			  bool *isNull);
-static Datum ExecEvalCoalesce(CoalesceExprState * coalesceExpr,
+static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
 				 ExprContext *econtext,
 				 bool *isNull);
-static Datum ExecEvalNullIf(FuncExprState * nullIfExpr, ExprContext *econtext,
+static Datum ExecEvalNullIf(FuncExprState *nullIfExpr, ExprContext *econtext,
 			   bool *isNull);
-static Datum ExecEvalNullTest(GenericExprState * nstate,
+static Datum ExecEvalNullTest(GenericExprState *nstate,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalBooleanTest(GenericExprState * bstate,
+static Datum ExecEvalBooleanTest(GenericExprState *bstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalCoerceToDomain(CoerceToDomainState * cstate,
+static Datum ExecEvalCoerceToDomain(CoerceToDomainState *cstate,
 					   ExprContext *econtext,
 					   bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalCoerceToDomainValue(CoerceToDomainValue * conVal,
+static Datum ExecEvalCoerceToDomainValue(CoerceToDomainValue *conVal,
 							ExprContext *econtext, bool *isNull);
-static Datum ExecEvalFieldSelect(GenericExprState * fstate,
+static Datum ExecEvalFieldSelect(GenericExprState *fstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
 
@@ -127,7 +127,7 @@ static Datum ExecEvalFieldSelect(GenericExprState * fstate,
  *----------
  */
 static Datum
-ExecEvalArrayRef(ArrayRefExprState * astate,
+ExecEvalArrayRef(ArrayRefExprState *astate,
 				 ExprContext *econtext,
 				 bool *isNull,
 				 ExprDoneCond *isDone)
@@ -301,7 +301,7 @@ ExecEvalArrayRef(ArrayRefExprState * astate,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalAggref(AggrefExprState * aggref, ExprContext *econtext, bool *isNull)
+ExecEvalAggref(AggrefExprState *aggref, ExprContext *econtext, bool *isNull)
 {
 	if (econtext->ecxt_aggvalues == NULL)		/* safety check */
 		elog(ERROR, "no aggregates in this expression context");
@@ -606,7 +606,7 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
  * init_fcache - initialize a FuncExprState node during first use
  */
 void
-init_fcache(Oid foid, FuncExprState * fcache, MemoryContext fcacheCxt)
+init_fcache(Oid foid, FuncExprState *fcache, MemoryContext fcacheCxt)
 {
 	AclResult	aclresult;
 
@@ -679,7 +679,7 @@ ExecEvalFuncArgs(FunctionCallInfo fcinfo,
  * Evaluate the arguments to a function and then the function itself.
  */
 Datum
-ExecMakeFunctionResult(FuncExprState * fcache,
+ExecMakeFunctionResult(FuncExprState *fcache,
 					   ExprContext *econtext,
 					   bool *isNull,
 					   ExprDoneCond *isDone)
@@ -882,7 +882,7 @@ ExecMakeFunctionResult(FuncExprState * fcache,
  * object.	(If function returns an empty set, we just return NULL instead.)
  */
 Tuplestorestate *
-ExecMakeTableFunctionResult(ExprState * funcexpr,
+ExecMakeTableFunctionResult(ExprState *funcexpr,
 							ExprContext *econtext,
 							TupleDesc expectedDesc,
 							TupleDesc *returnDesc)
@@ -1159,7 +1159,7 @@ ExecMakeTableFunctionResult(ExprState * funcexpr,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalFunc(FuncExprState * fcache,
+ExecEvalFunc(FuncExprState *fcache,
 			 ExprContext *econtext,
 			 bool *isNull,
 			 ExprDoneCond *isDone)
@@ -1182,7 +1182,7 @@ ExecEvalFunc(FuncExprState * fcache,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalOper(FuncExprState * fcache,
+ExecEvalOper(FuncExprState *fcache,
 			 ExprContext *econtext,
 			 bool *isNull,
 			 ExprDoneCond *isDone)
@@ -1212,7 +1212,7 @@ ExecEvalOper(FuncExprState * fcache,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalDistinct(FuncExprState * fcache,
+ExecEvalDistinct(FuncExprState *fcache,
 				 ExprContext *econtext,
 				 bool *isNull)
 {
@@ -1278,7 +1278,7 @@ ExecEvalDistinct(FuncExprState * fcache,
  * the result is known.
  */
 static Datum
-ExecEvalScalarArrayOp(ScalarArrayOpExprState * sstate,
+ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 					  ExprContext *econtext, bool *isNull)
 {
 	ScalarArrayOpExpr *opexpr = (ScalarArrayOpExpr *) sstate->fxprstate.xprstate.expr;
@@ -1431,7 +1431,7 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState * sstate,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalNot(BoolExprState * notclause, ExprContext *econtext, bool *isNull)
+ExecEvalNot(BoolExprState *notclause, ExprContext *econtext, bool *isNull)
 {
 	ExprState  *clause;
 	Datum		expr_value;
@@ -1459,7 +1459,7 @@ ExecEvalNot(BoolExprState * notclause, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalOr(BoolExprState * orExpr, ExprContext *econtext, bool *isNull)
+ExecEvalOr(BoolExprState *orExpr, ExprContext *econtext, bool *isNull)
 {
 	List	   *clauses;
 	List	   *clause;
@@ -1507,7 +1507,7 @@ ExecEvalOr(BoolExprState * orExpr, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalAnd(BoolExprState * andExpr, ExprContext *econtext, bool *isNull)
+ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext, bool *isNull)
 {
 	List	   *clauses;
 	List	   *clause;
@@ -1555,7 +1555,7 @@ ExecEvalAnd(BoolExprState * andExpr, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalCase(CaseExprState * caseExpr, ExprContext *econtext,
+ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone)
 {
 	List	   *clauses;
@@ -1613,7 +1613,7 @@ ExecEvalCase(CaseExprState * caseExpr, ExprContext *econtext,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalArray(ArrayExprState * astate, ExprContext *econtext,
+ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			  bool *isNull)
 {
 	ArrayExpr  *arrayExpr = (ArrayExpr *) astate->xprstate.expr;
@@ -1770,7 +1770,7 @@ ExecEvalArray(ArrayExprState * astate, ExprContext *econtext,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalCoalesce(CoalesceExprState * coalesceExpr, ExprContext *econtext,
+ExecEvalCoalesce(CoalesceExprState *coalesceExpr, ExprContext *econtext,
 				 bool *isNull)
 {
 	List	   *arg;
@@ -1800,7 +1800,7 @@ ExecEvalCoalesce(CoalesceExprState * coalesceExpr, ExprContext *econtext,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalNullIf(FuncExprState * fcache, ExprContext *econtext,
+ExecEvalNullIf(FuncExprState *fcache, ExprContext *econtext,
 			   bool *isNull)
 {
 	Datum		result;
@@ -1859,7 +1859,7 @@ ExecEvalNullIf(FuncExprState * fcache, ExprContext *econtext,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalNullTest(GenericExprState * nstate,
+ExecEvalNullTest(GenericExprState *nstate,
 				 ExprContext *econtext,
 				 bool *isNull,
 				 ExprDoneCond *isDone)
@@ -1904,7 +1904,7 @@ ExecEvalNullTest(GenericExprState * nstate,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalBooleanTest(GenericExprState * bstate,
+ExecEvalBooleanTest(GenericExprState *bstate,
 					ExprContext *econtext,
 					bool *isNull,
 					ExprDoneCond *isDone)
@@ -1990,7 +1990,7 @@ ExecEvalBooleanTest(GenericExprState * bstate,
  * datum) otherwise throw an error.
  */
 static Datum
-ExecEvalCoerceToDomain(CoerceToDomainState * cstate, ExprContext *econtext,
+ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 					   bool *isNull, ExprDoneCond *isDone)
 {
 	CoerceToDomain *ctest = (CoerceToDomain *) cstate->xprstate.expr;
@@ -2067,7 +2067,7 @@ ExecEvalCoerceToDomain(CoerceToDomainState * cstate, ExprContext *econtext,
  * Return the value stored by CoerceToDomain.
  */
 static Datum
-ExecEvalCoerceToDomainValue(CoerceToDomainValue * conVal,
+ExecEvalCoerceToDomainValue(CoerceToDomainValue *conVal,
 							ExprContext *econtext, bool *isNull)
 {
 	*isNull = econtext->domainValue_isNull;
@@ -2081,7 +2081,7 @@ ExecEvalCoerceToDomainValue(CoerceToDomainValue * conVal,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalFieldSelect(GenericExprState * fstate,
+ExecEvalFieldSelect(GenericExprState *fstate,
 					ExprContext *econtext,
 					bool *isNull,
 					ExprDoneCond *isDone)
@@ -2145,7 +2145,7 @@ ExecEvalFieldSelect(GenericExprState * fstate,
  * ----------------------------------------------------------------
  */
 Datum
-ExecEvalExpr(ExprState * expression,
+ExecEvalExpr(ExprState *expression,
 			 ExprContext *econtext,
 			 bool *isNull,
 			 ExprDoneCond *isDone)
@@ -2312,7 +2312,7 @@ ExecEvalExpr(ExprState * expression,
  * Same as above, but get into the right allocation context explicitly.
  */
 Datum
-ExecEvalExprSwitchContext(ExprState * expression,
+ExecEvalExprSwitchContext(ExprState *expression,
 						  ExprContext *econtext,
 						  bool *isNull,
 						  ExprDoneCond *isDone)
@@ -2360,7 +2360,7 @@ ExecEvalExprSwitchContext(ExprState * expression,
  * This case should usually come through ExecPrepareExpr, not directly here.
  */
 ExprState *
-ExecInitExpr(Expr *node, PlanState * parent)
+ExecInitExpr(Expr *node, PlanState *parent)
 {
 	ExprState  *state;
 
@@ -2683,7 +2683,7 @@ ExecInitExpr(Expr *node, PlanState * parent)
  * subplan list.
  */
 SubPlanState *
-ExecInitExprInitPlan(SubPlan *node, PlanState * parent)
+ExecInitExprInitPlan(SubPlan *node, PlanState *parent)
 {
 	SubPlanState *sstate = makeNode(SubPlanState);
 

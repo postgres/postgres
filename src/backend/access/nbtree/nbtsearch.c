@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.79 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.80 2003/08/08 21:41:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -951,9 +951,9 @@ _bt_walk_left(Relation rel, Buffer buf)
 
 		/*
 		 * If this isn't the page we want, walk right till we find what we
-		 * want --- but go no more than four hops (an arbitrary limit).
-		 * If we don't find the correct page by then, the most likely bet
-		 * is that the original page got deleted and isn't in the sibling
+		 * want --- but go no more than four hops (an arbitrary limit). If
+		 * we don't find the correct page by then, the most likely bet is
+		 * that the original page got deleted and isn't in the sibling
 		 * chain at all anymore, not that its left sibling got split more
 		 * than four times.
 		 *

@@ -56,7 +56,7 @@ compareStatWord(StatEntry * a, WordEntry * b, tsstat * stat, tsvector * txt)
 					   STATSTRPTR(stat) + a->pos,
 					   STRPTR(txt) + b->pos,
 					   a->len
-		);
+			);
 	return (a->len > b->len) ? 1 : -1;
 }
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: freespace.h,v 1.12 2003/08/04 02:40:14 momjian Exp $
+ * $Id: freespace.h,v 1.13 2003/08/08 21:42:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ typedef struct PageFreeSpaceInfo
 {
 	BlockNumber blkno;			/* which page in relation */
 	Size		avail;			/* space available on this page */
-}	PageFreeSpaceInfo;
+} PageFreeSpaceInfo;
 
 
 /* GUC variables */
@@ -47,7 +47,7 @@ extern BlockNumber RecordAndGetPageWithFreeSpace(RelFileNode *rel,
 extern Size GetAvgFSMRequestSize(RelFileNode *rel);
 extern void RecordRelationFreeSpace(RelFileNode *rel,
 						int nPages,
-						PageFreeSpaceInfo * pageSpaces);
+						PageFreeSpaceInfo *pageSpaces);
 
 extern BlockNumber GetFreeIndexPage(RelFileNode *rel);
 extern void RecordIndexFreeSpace(RelFileNode *rel,

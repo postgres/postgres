@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regc_color.c,v 1.2 2003/08/04 00:43:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/regc_color.c,v 1.3 2003/08/08 21:41:56 momjian Exp $
  *
  *
  * Note that there are some incestuous relationships between this code and
@@ -144,7 +144,7 @@ cmtreefree(struct colormap * cm,
 /*
  * setcolor - set the color of a character in a colormap
  */
-static color				/* previous color */
+static color					/* previous color */
 setcolor(struct colormap * cm,
 		 chr c,
 		 pcolor co)
@@ -218,7 +218,7 @@ maxcolor(struct colormap * cm)
  * newcolor - find a new color (must be subject of setcolor at once)
  * Beware:	may relocate the colordescs.
  */
-static color				/* COLORLESS for error */
+static color					/* COLORLESS for error */
 newcolor(struct colormap * cm)
 {
 	struct colordesc *cd;
@@ -421,7 +421,7 @@ subrange(struct vars * v,
 
 	/* first, align "from" on a tree-block boundary */
 	uf = (uchr) from;
-	i = (int) (((uf + BYTTAB - 1) & (uchr) ~ BYTMASK) - uf);
+	i = (int) (((uf + BYTTAB - 1) & (uchr) ~BYTMASK) - uf);
 	for (; from <= to && i > 0; i--, from++)
 		newarc(v->nfa, PLAIN, subcolor(v->cm, from), lp, rp);
 	if (from > to)				/* didn't reach a boundary */

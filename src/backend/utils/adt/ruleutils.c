@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.149 2003/08/04 00:43:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.150 2003/08/08 21:42:09 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -181,15 +181,15 @@ static void get_names_for_var(Var *var, deparse_context *context,
 				  char **schemaname, char **refname, char **attname);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
-static const char *get_simple_binary_op_name(OpExpr * expr);
+static const char *get_simple_binary_op_name(OpExpr *expr);
 static bool isSimpleNode(Node *node, Node *parentNode, int prettyFlags);
 static void appendStringInfoSpaces(StringInfo buf, int count);
 static void appendContextKeyword(deparse_context *context, const char *str,
 					 int indentBefore, int indentAfter, int indentPlus);
 static void get_rule_expr(Node *node, deparse_context *context,
 			  bool showimplicit);
-static void get_oper_expr(OpExpr * expr, deparse_context *context);
-static void get_func_expr(FuncExpr * expr, deparse_context *context,
+static void get_oper_expr(OpExpr *expr, deparse_context *context);
+static void get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
 static Node *strip_type_coercion(Node *expr, Oid resultType);
@@ -2439,7 +2439,7 @@ find_rte_by_refname(const char *refname, deparse_context *context)
  * will return single char binary operator name, or NULL if it's not
  */
 static const char *
-get_simple_binary_op_name(OpExpr * expr)
+get_simple_binary_op_name(OpExpr *expr)
 {
 	List	   *args = expr->args;
 
@@ -3235,7 +3235,7 @@ get_rule_expr(Node *node, deparse_context *context,
  * get_oper_expr			- Parse back an OpExpr node
  */
 static void
-get_oper_expr(OpExpr * expr, deparse_context *context)
+get_oper_expr(OpExpr *expr, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	Oid			opno = expr->opno;
@@ -3298,7 +3298,7 @@ get_oper_expr(OpExpr * expr, deparse_context *context)
  * get_func_expr			- Parse back a FuncExpr node
  */
 static void
-get_func_expr(FuncExpr * expr, deparse_context *context,
+get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit)
 {
 	StringInfo	buf = context->buf;

@@ -25,7 +25,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.4 2003/08/04 00:43:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.5 2003/08/08 21:42:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,11 +117,11 @@ typedef union
 	struct config_real real;
 	struct config_int integer;
 	struct config_string string;
-}	mixedStruct;
+} mixedStruct;
 
 
 /* function prototypes */
-static bool varMatches(mixedStruct * structToTest);
+static bool varMatches(mixedStruct *structToTest);
 static int	compareMixedStructs(const void *, const void *);
 static mixedStruct **varsToDisplay(int *resultListSize);
 static const char *usageErrMsg(void);
@@ -129,8 +129,8 @@ static void helpMessage(void);
 static void listAllGroups(void);
 static void printGenericHead(struct config_generic structToPrint);
 static void printGenericFoot(struct config_generic structToPrint);
-static void printMixedStruct(mixedStruct * structToPrint);
-static bool displayStruct(mixedStruct * structToDisplay);
+static void printMixedStruct(mixedStruct *structToPrint);
+static bool displayStruct(mixedStruct *structToDisplay);
 
 
 /*
@@ -275,7 +275,7 @@ varsToDisplay(int *resultListSize)
  *	+ It's flag bits are set to GUC_DISALLOW_IN_FILE
  */
 static bool
-displayStruct(mixedStruct * structToDisplay)
+displayStruct(mixedStruct *structToDisplay)
 {
 	if (structToDisplay->generic.flags & (GUC_NO_SHOW_ALL |
 										  GUC_NOT_IN_SAMPLE |
@@ -292,7 +292,7 @@ displayStruct(mixedStruct * structToDisplay)
  * be returned to the user.
  */
 static bool
-varMatches(mixedStruct * structToTest)
+varMatches(mixedStruct *structToTest)
 {
 	bool		matches = false;
 	bool		specificSearch = false; /* This is true if the user
@@ -347,7 +347,7 @@ varMatches(mixedStruct * structToTest)
  * a different format, depending on what the user wants to see.
  */
 static void
-printMixedStruct(mixedStruct * structToPrint)
+printMixedStruct(mixedStruct *structToPrint)
 {
 	printGenericHead(structToPrint->generic);
 

@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.114 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.115 2003/08/08 21:41:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ typedef struct AggStatePerGroupData
 	 * later input value. Only the first non-NULL input will be
 	 * auto-substituted.
 	 */
-}	AggStatePerGroupData;
+} AggStatePerGroupData;
 
 /*
  * To implement hashed aggregation, we need a hashtable that stores a
@@ -188,7 +188,7 @@ typedef struct AggHashEntryData
 	TupleHashEntryData shared;	/* common header for hash table entries */
 	/* per-aggregate transition status array - must be last! */
 	AggStatePerGroupData pergroup[1];	/* VARIABLE LENGTH ARRAY */
-}	AggHashEntryData;	/* VARIABLE LENGTH STRUCT */
+} AggHashEntryData;				/* VARIABLE LENGTH STRUCT */
 
 
 static void initialize_aggregates(AggState *aggstate,
@@ -579,7 +579,7 @@ build_hash_table(AggState *aggstate)
 	Assert(node->numGroups > 0);
 
 	entrysize = sizeof(AggHashEntryData) +
-		(aggstate->numaggs - 1) * sizeof(AggStatePerGroupData);
+		(aggstate->numaggs - 1) *sizeof(AggStatePerGroupData);
 
 	aggstate->hashtable = BuildTupleHashTable(node->numCols,
 											  node->grpColIdx,

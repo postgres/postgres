@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.53 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.54 2003/08/08 21:41:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ typedef struct
 {
 	int			min_varlevel;
 	int			sublevels_up;
-}	find_minimum_var_level_context;
+} find_minimum_var_level_context;
 
 typedef struct
 {
@@ -61,7 +61,7 @@ static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
 static bool contain_vars_above_level_walker(Node *node, int *sublevels_up);
 static bool find_minimum_var_level_walker(Node *node,
-							  find_minimum_var_level_context * context);
+							  find_minimum_var_level_context *context);
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
@@ -364,7 +364,7 @@ find_minimum_var_level(Node *node)
 
 static bool
 find_minimum_var_level_walker(Node *node,
-							  find_minimum_var_level_context * context)
+							  find_minimum_var_level_context *context)
 {
 	if (node == NULL)
 		return false;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.55 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.56 2003/08/08 21:41:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include "utils/memutils.h"
 
 
-static TupleTableSlot *ExecHashJoinOuterGetTuple(PlanState * node,
+static TupleTableSlot *ExecHashJoinOuterGetTuple(PlanState *node,
 						  HashJoinState *hjstate);
 static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 						  BufFile *file,
@@ -499,7 +499,7 @@ ExecEndHashJoin(HashJoinState *node)
  */
 
 static TupleTableSlot *
-ExecHashJoinOuterGetTuple(PlanState * node, HashJoinState *hjstate)
+ExecHashJoinOuterGetTuple(PlanState *node, HashJoinState *hjstate)
 {
 	HashJoinTable hashtable = hjstate->hj_HashTable;
 	int			curbatch = hashtable->curbatch;

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.44 2003/08/04 02:40:15 momjian Exp $
+ * $Id: array.h,v 1.45 2003/08/08 21:42:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ typedef struct ArrayBuildState
 	int16		typlen;			/* needed info about datatype */
 	bool		typbyval;
 	char		typalign;
-}	ArrayBuildState;
+} ArrayBuildState;
 
 /*
  * structure to cache type metadata needed for array manipulation
@@ -62,7 +62,7 @@ typedef struct ArrayMetaState
 	Oid			typelem;
 	Oid			typiofunc;
 	FmgrInfo	proc;
-}	ArrayMetaState;
+} ArrayMetaState;
 
 /*
  * fmgr macros for array objects
@@ -160,13 +160,13 @@ extern void deconstruct_array(ArrayType *array,
 				  Oid elmtype,
 				  int elmlen, bool elmbyval, char elmalign,
 				  Datum **elemsp, int *nelemsp);
-extern ArrayBuildState *accumArrayResult(ArrayBuildState * astate,
+extern ArrayBuildState *accumArrayResult(ArrayBuildState *astate,
 				 Datum dvalue, bool disnull,
 				 Oid element_type,
 				 MemoryContext rcontext);
-extern Datum makeArrayResult(ArrayBuildState * astate,
+extern Datum makeArrayResult(ArrayBuildState *astate,
 				MemoryContext rcontext);
-extern Datum makeMdArrayResult(ArrayBuildState * astate, int ndims,
+extern Datum makeMdArrayResult(ArrayBuildState *astate, int ndims,
 				  int *dims, int *lbs, MemoryContext rcontext);
 
 /*

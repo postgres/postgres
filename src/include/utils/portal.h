@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.46 2003/08/04 02:40:15 momjian Exp $
+ * $Id: portal.h,v 1.47 2003/08/08 21:42:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ typedef enum PortalStrategy
 	PORTAL_ONE_SELECT,
 	PORTAL_UTIL_SELECT,
 	PORTAL_MULTI_QUERY
-}	PortalStrategy;
+} PortalStrategy;
 
 /*
  * Note: typedef Portal is declared in tcop/dest.h as

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: slru.h,v 1.2 2003/08/04 00:43:30 momjian Exp $
+ * $Id: slru.h,v 1.3 2003/08/08 21:42:32 momjian Exp $
  */
 #ifndef SLRU_H
 #define SLRU_H
@@ -25,7 +25,7 @@ typedef struct SlruLockData
  * doesn't need to be in shared memory.
  */
 	LWLockId	BufferLocks[NUM_CLOG_BUFFERS];	/* Per-buffer I/O locks */
-}	SlruLockData;
+} SlruLockData;
 typedef SlruLockData *SlruLock;
 
 typedef struct SlruCtlData
@@ -47,7 +47,7 @@ typedef struct SlruCtlData
  */
 	bool		(*PagePrecedes) (int, int);
 
-}	SlruCtlData;
+} SlruCtlData;
 typedef SlruCtlData *SlruCtl;
 
 extern int	SimpleLruShmemSize(void);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.102 2003/08/08 19:18:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.103 2003/08/08 21:41:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1263,7 +1263,7 @@ static void
 _SPI_cursor_operation(Portal portal, bool forward, int count,
 					  DestReceiver *dest)
 {
-	long	nfetched;
+	long		nfetched;
 
 	/* Check that the portal is valid */
 	if (!PortalIsValid(portal))
@@ -1288,9 +1288,10 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	 * Think not to combine this store with the preceding function call.
 	 * If the portal contains calls to functions that use SPI, then
 	 * SPI_stack is likely to move around while the portal runs.  When
-	 * control returns, _SPI_current will point to the correct stack entry...
-	 * but the pointer may be different than it was beforehand.  So we must
-	 * be sure to re-fetch the pointer after the function call completes.
+	 * control returns, _SPI_current will point to the correct stack
+	 * entry... but the pointer may be different than it was beforehand.
+	 * So we must be sure to re-fetch the pointer after the function call
+	 * completes.
 	 */
 	_SPI_current->processed = nfetched;
 

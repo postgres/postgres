@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regexec.c,v 1.22 2003/08/04 00:43:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/regexec.c,v 1.23 2003/08/08 21:41:56 momjian Exp $
  *
  */
 
@@ -166,9 +166,9 @@ static struct sset *pickss(struct vars *, struct dfa *, chr *, chr *);
  */
 int
 pg_regexec(regex_t *re,
-		   const chr * string,
+		   const chr *string,
 		   size_t len,
-		   rm_detail_t * details,
+		   rm_detail_t *details,
 		   size_t nmatch,
 		   regmatch_t pmatch[],
 		   int flags)
@@ -399,7 +399,7 @@ cfindloop(struct vars * v,
 		  struct colormap * cm,
 		  struct dfa * d,
 		  struct dfa * s,
-		  chr ** coldp)			/* where to put coldstart pointer */
+		  chr **coldp)			/* where to put coldstart pointer */
 {
 	chr		   *begin;
 	chr		   *end;
@@ -528,8 +528,8 @@ zapmem(struct vars * v,
 static void
 subset(struct vars * v,
 	   struct subre * sub,
-	   chr * begin,
-	   chr * end)
+	   chr *begin,
+	   chr *end)
 {
 	int			n = sub->subno;
 
@@ -548,8 +548,8 @@ subset(struct vars * v,
 static int						/* regexec return code */
 dissect(struct vars * v,
 		struct subre * t,
-		chr * begin,			/* beginning of relevant substring */
-		chr * end)				/* end of same */
+		chr *begin,				/* beginning of relevant substring */
+		chr *end)				/* end of same */
 {
 	assert(t != NULL);
 	MDEBUG(("dissect %ld-%ld\n", LOFF(begin), LOFF(end)));
@@ -589,8 +589,8 @@ dissect(struct vars * v,
 static int						/* regexec return code */
 condissect(struct vars * v,
 		   struct subre * t,
-		   chr * begin,			/* beginning of relevant substring */
-		   chr * end)			/* end of same */
+		   chr *begin,			/* beginning of relevant substring */
+		   chr *end)			/* end of same */
 {
 	struct dfa *d;
 	struct dfa *d2;
@@ -671,8 +671,8 @@ condissect(struct vars * v,
 static int						/* regexec return code */
 altdissect(struct vars * v,
 		   struct subre * t,
-		   chr * begin,			/* beginning of relevant substring */
-		   chr * end)			/* end of same */
+		   chr *begin,			/* beginning of relevant substring */
+		   chr *end)			/* end of same */
 {
 	struct dfa *d;
 	int			i;
@@ -706,8 +706,8 @@ altdissect(struct vars * v,
 static int						/* regexec return code */
 cdissect(struct vars * v,
 		 struct subre * t,
-		 chr * begin,			/* beginning of relevant substring */
-		 chr * end)				/* end of same */
+		 chr *begin,			/* beginning of relevant substring */
+		 chr *end)				/* end of same */
 {
 	int			er;
 
@@ -754,8 +754,8 @@ cdissect(struct vars * v,
 static int						/* regexec return code */
 ccondissect(struct vars * v,
 			struct subre * t,
-			chr * begin,		/* beginning of relevant substring */
-			chr * end)			/* end of same */
+			chr *begin,			/* beginning of relevant substring */
+			chr *end)			/* end of same */
 {
 	struct dfa *d;
 	struct dfa *d2;
@@ -855,8 +855,8 @@ ccondissect(struct vars * v,
 static int						/* regexec return code */
 crevdissect(struct vars * v,
 			struct subre * t,
-			chr * begin,		/* beginning of relevant substring */
-			chr * end)			/* end of same */
+			chr *begin,			/* beginning of relevant substring */
+			chr *end)			/* end of same */
 {
 	struct dfa *d;
 	struct dfa *d2;
@@ -953,8 +953,8 @@ crevdissect(struct vars * v,
 static int						/* regexec return code */
 cbrdissect(struct vars * v,
 		   struct subre * t,
-		   chr * begin,			/* beginning of relevant substring */
-		   chr * end)			/* end of same */
+		   chr *begin,			/* beginning of relevant substring */
+		   chr *end)			/* end of same */
 {
 	int			i;
 	int			n = t->subno;
@@ -1020,8 +1020,8 @@ cbrdissect(struct vars * v,
 static int						/* regexec return code */
 caltdissect(struct vars * v,
 			struct subre * t,
-			chr * begin,		/* beginning of relevant substring */
-			chr * end)			/* end of same */
+			chr *begin,			/* beginning of relevant substring */
+			chr *end)			/* end of same */
 {
 	struct dfa *d;
 	int			er;

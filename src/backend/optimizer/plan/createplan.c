@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.152 2003/08/07 19:20:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.153 2003/08/08 21:41:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,9 @@ static bool use_physical_tlist(RelOptInfo *rel);
 static void disuse_physical_tlist(Plan *plan, Path *path);
 static Join *create_join_plan(Query *root, JoinPath *best_path);
 static Append *create_append_plan(Query *root, AppendPath *best_path);
-static Result *create_result_plan(Query *root, ResultPath * best_path);
-static Material *create_material_plan(Query *root, MaterialPath * best_path);
-static Plan *create_unique_plan(Query *root, UniquePath * best_path);
+static Result *create_result_plan(Query *root, ResultPath *best_path);
+static Material *create_material_plan(Query *root, MaterialPath *best_path);
+static Plan *create_unique_plan(Query *root, UniquePath *best_path);
 static SeqScan *create_seqscan_plan(Path *best_path, List *tlist,
 					List *scan_clauses);
 static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
@@ -443,7 +443,7 @@ create_append_plan(Query *root, AppendPath *best_path)
  *	  Returns a Plan node.
  */
 static Result *
-create_result_plan(Query *root, ResultPath * best_path)
+create_result_plan(Query *root, ResultPath *best_path)
 {
 	Result	   *plan;
 	List	   *tlist;
@@ -475,7 +475,7 @@ create_result_plan(Query *root, ResultPath * best_path)
  *	  Returns a Plan node.
  */
 static Material *
-create_material_plan(Query *root, MaterialPath * best_path)
+create_material_plan(Query *root, MaterialPath *best_path)
 {
 	Material   *plan;
 	Plan	   *subplan;
@@ -500,7 +500,7 @@ create_material_plan(Query *root, MaterialPath * best_path)
  *	  Returns a Plan node.
  */
 static Plan *
-create_unique_plan(Query *root, UniquePath * best_path)
+create_unique_plan(Query *root, UniquePath *best_path)
 {
 	Plan	   *plan;
 	Plan	   *subplan;
@@ -522,17 +522,18 @@ create_unique_plan(Query *root, UniquePath * best_path)
 	 * to unique-ify may be expressions in these variables.  We have to
 	 * add any such expressions to the subplan's tlist.  We then build
 	 * control information showing which subplan output columns are to be
-	 * examined by the grouping step.  (Since we do not remove any existing
-	 * subplan outputs, not all the output columns may be used for grouping.)
+	 * examined by the grouping step.  (Since we do not remove any
+	 * existing subplan outputs, not all the output columns may be used
+	 * for grouping.)
 	 *
-	 * Note: the reason we don't remove any subplan outputs is that there
-	 * are scenarios where a Var is needed at higher levels even though it
-	 * is not one of the nominal outputs of an IN clause.  Consider
-	 *		WHERE x IN (SELECT y FROM t1,t2 WHERE y = z)
-	 * Implied equality deduction will generate an "x = z" clause, which may
-	 * get used instead of "x = y" in the upper join step.  Therefore the
-	 * sub-select had better deliver both y and z in its targetlist.  It is
-	 * sufficient to unique-ify on y, however.
+	 * Note: the reason we don't remove any subplan outputs is that there are
+	 * scenarios where a Var is needed at higher levels even though it is
+	 * not one of the nominal outputs of an IN clause.	Consider WHERE x
+	 * IN (SELECT y FROM t1,t2 WHERE y = z) Implied equality deduction
+	 * will generate an "x = z" clause, which may get used instead of "x =
+	 * y" in the upper join step.  Therefore the sub-select had better
+	 * deliver both y and z in its targetlist.	It is sufficient to
+	 * unique-ify on y, however.
 	 *
 	 * To find the correct list of values to unique-ify, we look in the
 	 * information saved for IN expressions.  If this code is ever used in
@@ -1208,7 +1209,7 @@ fix_indxqual_sublist(List *indexqual,
 		Relids		leftvarnos;
 		Oid			opclass;
 
-		if (!IsA(clause, OpExpr) || length(clause->args) != 2)
+		if (!IsA(clause, OpExpr) ||length(clause->args) != 2)
 			elog(ERROR, "indexqual clause is not binary opclause");
 
 		/*

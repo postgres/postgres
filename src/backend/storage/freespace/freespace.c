@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.20 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.21 2003/08/08 21:41:59 momjian Exp $
  *
  *
  * NOTES:
@@ -144,7 +144,7 @@ typedef struct FsmCacheFileHeader
 	uint32		endian;
 	uint32		version;
 	int32		numRels;
-}	FsmCacheFileHeader;
+} FsmCacheFileHeader;
 
 /* Per-relation header */
 typedef struct FsmCacheRelHeader
@@ -154,7 +154,7 @@ typedef struct FsmCacheRelHeader
 	uint32		avgRequest;		/* moving average of space requests */
 	int32		lastPageCount;	/* pages passed to RecordRelationFreeSpace */
 	int32		storedPages;	/* # of pages stored in arena */
-}	FsmCacheRelHeader;
+} FsmCacheRelHeader;
 
 
 /*
@@ -236,10 +236,10 @@ static bool lookup_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page,
 					  int *outPageIndex);
 static void compact_fsm_storage(void);
 static void push_fsm_rels_after(FSMRelation *afterRel);
-static void pack_incoming_pages(FSMPageData * newLocation, int newPages,
-					PageFreeSpaceInfo * pageSpaces, int nPages);
-static void pack_existing_pages(FSMPageData * newLocation, int newPages,
-					FSMPageData * oldLocation, int oldPages);
+static void pack_incoming_pages(FSMPageData *newLocation, int newPages,
+					PageFreeSpaceInfo *pageSpaces, int nPages);
+static void pack_existing_pages(FSMPageData *newLocation, int newPages,
+					FSMPageData *oldLocation, int oldPages);
 static int	fsm_calc_request(FSMRelation *fsmrel);
 static int	fsm_calc_target_allocation(int myRequest);
 static int	fsm_current_chunks(FSMRelation *fsmrel);
@@ -459,7 +459,7 @@ GetAvgFSMRequestSize(RelFileNode *rel)
 void
 RecordRelationFreeSpace(RelFileNode *rel,
 						int nPages,
-						PageFreeSpaceInfo * pageSpaces)
+						PageFreeSpaceInfo *pageSpaces)
 {
 	FSMRelation *fsmrel;
 
@@ -1560,8 +1560,8 @@ push_fsm_rels_after(FSMRelation *afterRel)
 #define HISTOGRAM_BINS	64
 
 static void
-pack_incoming_pages(FSMPageData * newLocation, int newPages,
-					PageFreeSpaceInfo * pageSpaces, int nPages)
+pack_incoming_pages(FSMPageData *newLocation, int newPages,
+					PageFreeSpaceInfo *pageSpaces, int nPages)
 {
 	int			histogram[HISTOGRAM_BINS];
 	int			above,
@@ -1630,8 +1630,8 @@ pack_incoming_pages(FSMPageData * newLocation, int newPages,
  * so that we can copy data moving forward in the arrays without problem.
  */
 static void
-pack_existing_pages(FSMPageData * newLocation, int newPages,
-					FSMPageData * oldLocation, int oldPages)
+pack_existing_pages(FSMPageData *newLocation, int newPages,
+					FSMPageData *oldLocation, int oldPages)
 {
 	int			histogram[HISTOGRAM_BINS];
 	int			above,

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.102 2003/08/04 02:40:13 momjian Exp $
+ * $Id: execnodes.h,v 1.103 2003/08/08 21:42:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,7 +348,7 @@ typedef struct TupleHashEntryData
 	uint32		hashkey;		/* exact hash key of this entry */
 	HeapTuple	firstTuple;		/* copy of first tuple in this group */
 	/* there may be additional data beyond the end of this struct */
-}	TupleHashEntryData; /* VARIABLE LENGTH STRUCT */
+} TupleHashEntryData;			/* VARIABLE LENGTH STRUCT */
 
 typedef struct TupleHashTableData
 {
@@ -361,13 +361,13 @@ typedef struct TupleHashTableData
 	Size		entrysize;		/* actual size to make each hash entry */
 	int			nbuckets;		/* number of buckets in hash table */
 	TupleHashEntry buckets[1];	/* VARIABLE LENGTH ARRAY */
-}	TupleHashTableData; /* VARIABLE LENGTH STRUCT */
+} TupleHashTableData;			/* VARIABLE LENGTH STRUCT */
 
 typedef struct
 {
 	TupleHashEntry next_entry;	/* next entry in current chain */
 	int			next_bucket;	/* next chain */
-}	TupleHashIterator;
+} TupleHashIterator;
 
 #define ResetTupleHashIterator(iter) \
 	((iter)->next_entry = NULL, \
@@ -399,7 +399,7 @@ typedef struct ExprState
 {
 	NodeTag		type;
 	Expr	   *expr;			/* associated Expr node */
-}	ExprState;
+} ExprState;
 
 /* ----------------
  *		GenericExprState node
@@ -412,7 +412,7 @@ typedef struct GenericExprState
 {
 	ExprState	xprstate;
 	ExprState  *arg;			/* state of my child node */
-}	GenericExprState;
+} GenericExprState;
 
 /* ----------------
  *		AggrefExprState node
@@ -423,7 +423,7 @@ typedef struct AggrefExprState
 	ExprState	xprstate;
 	ExprState  *target;			/* state of my child node */
 	int			aggno;			/* ID number for agg within its plan node */
-}	AggrefExprState;
+} AggrefExprState;
 
 /* ----------------
  *		ArrayRefExprState node
@@ -444,7 +444,7 @@ typedef struct ArrayRefExprState
 	int16		refelemlength;	/* typlen of the array element type */
 	bool		refelembyval;	/* is the element type pass-by-value? */
 	char		refelemalign;	/* typalign of the element type */
-}	ArrayRefExprState;
+} ArrayRefExprState;
 
 /* ----------------
  *		FuncExprState node
@@ -488,7 +488,7 @@ typedef struct FuncExprState
 	 * data only if setArgsValid is true.
 	 */
 	FunctionCallInfoData setArgs;
-}	FuncExprState;
+} FuncExprState;
 
 /* ----------------
  *		ScalarArrayOpExprState node
@@ -504,7 +504,7 @@ typedef struct ScalarArrayOpExprState
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
-}	ScalarArrayOpExprState;
+} ScalarArrayOpExprState;
 
 /* ----------------
  *		BoolExprState node
@@ -514,7 +514,7 @@ typedef struct BoolExprState
 {
 	ExprState	xprstate;
 	List	   *args;			/* states of argument expression(s) */
-}	BoolExprState;
+} BoolExprState;
 
 /* ----------------
  *		SubPlanState node
@@ -541,7 +541,7 @@ typedef struct SubPlanState
 	AttrNumber *keyColIdx;		/* control data for hash tables */
 	FmgrInfo   *eqfunctions;	/* comparison functions for hash tables */
 	FmgrInfo   *hashfunctions;	/* lookup data for hash functions */
-}	SubPlanState;
+} SubPlanState;
 
 /* ----------------
  *		CaseExprState node
@@ -552,7 +552,7 @@ typedef struct CaseExprState
 	ExprState	xprstate;
 	List	   *args;			/* the arguments (list of WHEN clauses) */
 	ExprState  *defresult;		/* the default result (ELSE clause) */
-}	CaseExprState;
+} CaseExprState;
 
 /* ----------------
  *		CaseWhenState node
@@ -563,7 +563,7 @@ typedef struct CaseWhenState
 	ExprState	xprstate;
 	ExprState  *expr;			/* condition expression */
 	ExprState  *result;			/* substitution result */
-}	CaseWhenState;
+} CaseWhenState;
 
 /* ----------------
  *		ArrayExprState node
@@ -579,7 +579,7 @@ typedef struct ArrayExprState
 	int16		elemlength;		/* typlen of the array element type */
 	bool		elembyval;		/* is the element type pass-by-value? */
 	char		elemalign;		/* typalign of the element type */
-}	ArrayExprState;
+} ArrayExprState;
 
 /* ----------------
  *		CoalesceExprState node
@@ -589,7 +589,7 @@ typedef struct CoalesceExprState
 {
 	ExprState	xprstate;
 	List	   *args;			/* the arguments */
-}	CoalesceExprState;
+} CoalesceExprState;
 
 /* ----------------
  *		CoerceToDomainState node
@@ -601,7 +601,7 @@ typedef struct CoerceToDomainState
 	ExprState  *arg;			/* input expression */
 	/* Cached list of constraints that need to be checked */
 	List	   *constraints;	/* list of DomainConstraintState nodes */
-}	CoerceToDomainState;
+} CoerceToDomainState;
 
 /*
  * DomainConstraintState - one item to check during CoerceToDomain
@@ -614,7 +614,7 @@ typedef enum DomainConstraintType
 {
 	DOM_CONSTRAINT_NOTNULL,
 	DOM_CONSTRAINT_CHECK
-}	DomainConstraintType;
+} DomainConstraintType;
 
 typedef struct DomainConstraintState
 {
@@ -622,7 +622,7 @@ typedef struct DomainConstraintState
 	DomainConstraintType constrainttype;		/* constraint type */
 	char	   *name;			/* name of constraint (for error msgs) */
 	ExprState  *check_expr;		/* for CHECK, a boolean expression */
-}	DomainConstraintState;
+} DomainConstraintState;
 
 
 /* ----------------------------------------------------------------
@@ -681,7 +681,7 @@ typedef struct PlanState
 	ProjectionInfo *ps_ProjInfo;	/* info for doing tuple projection */
 	bool		ps_TupFromTlist;/* state flag for processing set-valued
 								 * functions in targetlist */
-}	PlanState;
+} PlanState;
 
 /* ----------------
  *	these are are defined to avoid confusion problems with "left"
@@ -750,7 +750,7 @@ typedef struct ScanState
 	Relation	ss_currentRelation;
 	HeapScanDesc ss_currentScanDesc;
 	TupleTableSlot *ss_ScanTupleSlot;
-}	ScanState;
+} ScanState;
 
 /*
  * SeqScan uses a bare ScanState as its state node, since it needs
@@ -1100,7 +1100,7 @@ typedef enum
 	LIMIT_SUBPLANEOF,			/* at EOF of subplan (within window) */
 	LIMIT_WINDOWEND,			/* stepped off end of window */
 	LIMIT_WINDOWSTART			/* stepped off beginning of window */
-}	LimitStateCond;
+} LimitStateCond;
 
 typedef struct LimitState
 {

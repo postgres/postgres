@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regcomp.c,v 1.37 2003/08/04 00:43:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/regcomp.c,v 1.38 2003/08/08 21:41:56 momjian Exp $
  *
  */
 
@@ -293,7 +293,7 @@ static struct fns functions = {
  */
 int
 pg_regcomp(regex_t *re,
-		   const chr * string,
+		   const chr *string,
 		   size_t len,
 		   int flags)
 {
@@ -1052,8 +1052,8 @@ parseqatom(struct vars * v,
 	/*
 	 * prepare a general-purpose state skeleton
 	 *
-	 * ---> [s] ---prefix---> [begin] ---atom---> [end] ----rest---> [rp] /
-	 * / [lp] ----> [s2] ----bypass---------------------
+	 * ---> [s] ---prefix---> [begin] ---atom---> [end] ----rest---> [rp] / /
+	 * [lp] ----> [s2] ----bypass---------------------
 	 *
 	 * where bypass is an empty, and prefix is some repetitions of atom
 	 */
@@ -1758,7 +1758,7 @@ dovec(struct vars * v,
 /*
  * nextleader - find next MCCE leader within range
  */
-static celt				/* NOCELT means none */
+static celt						/* NOCELT means none */
 nextleader(struct vars * v,
 		   chr from,
 		   chr to)

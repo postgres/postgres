@@ -47,7 +47,7 @@
  * permission to use and distribute the software in accordance with the
  * terms specified in this license.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regc_locale.c,v 1.2 2003/08/04 00:43:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/regc_locale.c,v 1.3 2003/08/08 21:41:56 momjian Exp $
  */
 
 /* ASCII character-name table */
@@ -453,8 +453,8 @@ allmcces(struct vars * v,		/* context */
  */
 static celt
 element(struct vars * v,		/* context */
-		chr * startp,			/* points to start of name */
-		chr * endp)				/* points just past end of name */
+		chr *startp,			/* points to start of name */
+		chr *endp)				/* points just past end of name */
 {
 	struct cname *cn;
 	size_t		len;
@@ -593,8 +593,8 @@ eclass(struct vars * v,			/* context */
  */
 static struct cvec *
 cclass(struct vars * v,			/* context */
-	   chr * startp,			/* where the name starts */
-	   chr * endp,				/* just past the end of the name */
+	   chr *startp,				/* where the name starts */
+	   chr *endp,				/* just past the end of the name */
 	   int cases)				/* case-independent? */
 {
 	size_t		len;
@@ -804,7 +804,7 @@ allcases(struct vars * v,		/* context */
  * stop at embedded NULs!
  */
 static int						/* 0 for equal, nonzero for unequal */
-cmp(const chr * x, const chr * y,		/* strings to compare */
+cmp(const chr *x, const chr *y, /* strings to compare */
 	size_t len)					/* exact length of comparison */
 {
 	return memcmp(VS(x), VS(y), len * sizeof(chr));
@@ -819,7 +819,7 @@ cmp(const chr * x, const chr * y,		/* strings to compare */
  * stop at embedded NULs!
  */
 static int						/* 0 for equal, nonzero for unequal */
-casecmp(const chr * x, const chr * y,	/* strings to compare */
+casecmp(const chr *x, const chr *y,		/* strings to compare */
 		size_t len)				/* exact length of comparison */
 {
 	for (; len > 0; len--, x++, y++)

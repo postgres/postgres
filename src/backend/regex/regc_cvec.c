@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regc_cvec.c,v 1.2 2003/08/04 00:43:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/regc_cvec.c,v 1.3 2003/08/08 21:41:56 momjian Exp $
  *
  */
 
@@ -52,7 +52,7 @@ newcvec(int nchrs,				/* to hold this many chrs... */
 	if (cv == NULL)
 		return NULL;
 	cv->chrspace = nchrs;
-	cv->chrs = (chr *) & cv->mcces[nmcces];		/* chrs just after MCCE
+	cv->chrs = (chr *) &cv->mcces[nmcces];		/* chrs just after MCCE
 												 * ptrs */
 	cv->mccespace = nmcces;
 	cv->ranges = cv->chrs + nchrs + nmcces * (MAXMCCE + 1);
@@ -71,7 +71,7 @@ clearcvec(struct cvec * cv)
 
 	assert(cv != NULL);
 	cv->nchrs = 0;
-	assert(cv->chrs == (chr *) & cv->mcces[cv->mccespace]);
+	assert(cv->chrs == (chr *) &cv->mcces[cv->mccespace]);
 	cv->nmcces = 0;
 	cv->nmccechrs = 0;
 	cv->nranges = 0;
@@ -111,8 +111,8 @@ addrange(struct cvec * cv,		/* character vector */
  */
 static void
 addmcce(struct cvec * cv,		/* character vector */
-		chr * startp,			/* beginning of text */
-		chr * endp)				/* just past end of text */
+		chr *startp,			/* beginning of text */
+		chr *endp)				/* just past end of text */
 {
 	int			len;
 	int			i;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.96 2003/08/04 02:40:20 momjian Exp $
+ * $Id: libpq-fe.h,v 1.97 2003/08/08 21:42:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,14 +95,14 @@ typedef enum
 	PQTRANS_INTRANS,			/* idle, within transaction block */
 	PQTRANS_INERROR,			/* idle, within failed transaction */
 	PQTRANS_UNKNOWN				/* cannot determine status */
-}	PGTransactionStatusType;
+} PGTransactionStatusType;
 
 typedef enum
 {
 	PQERRORS_TERSE,				/* single-line error messages */
 	PQERRORS_DEFAULT,			/* recommended style */
 	PQERRORS_VERBOSE			/* all the facts, ma'am */
-}	PGVerbosity;
+} PGVerbosity;
 
 /* PGconn encapsulates a connection to the backend.
  * The contents of this struct are not supposed to be known to applications.

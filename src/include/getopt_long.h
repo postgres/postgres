@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/include/getopt_long.h,v 1.3 2003/08/07 21:11:58 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/include/getopt_long.h,v 1.4 2003/08/08 21:42:31 momjian Exp $
  */
 #ifndef GETOPT_LONG_H
 #define GETOPT_LONG_H
@@ -34,7 +34,6 @@ struct option
 
 #define no_argument 0
 #define required_argument 1
-
 #endif
 
 #ifndef HAVE_GETOPT_LONG
@@ -42,7 +41,6 @@ struct option
 extern int getopt_long(int argc, char *const argv[],
 			const char *optstring,
 			const struct option * longopts, int *longindex);
-
 #endif
 
-#endif /* GETOPT_LONG_H */
+#endif   /* GETOPT_LONG_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.48 2003/08/04 02:40:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.49 2003/08/08 21:42:07 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -73,7 +73,7 @@ typedef struct cached_re_str
 	text	   *cre_pat;		/* original RE (untoasted TEXT form) */
 	int			cre_flags;		/* compile flags: extended,icase etc */
 	regex_t		cre_re;			/* the compiled regular expression */
-}	cached_re_str;
+} cached_re_str;
 
 static int	num_res = 0;		/* # of cached re's */
 static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */

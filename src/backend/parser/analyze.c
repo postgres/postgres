@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.285 2003/08/04 02:40:01 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.286 2003/08/08 21:41:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ typedef struct
 {
 	Oid		   *paramTypes;
 	int			numParams;
-}	check_parameter_resolution_context;
+} check_parameter_resolution_context;
 
 
 static List *do_parse_analyze(Node *parseTree, ParseState *pstate);
@@ -106,7 +106,7 @@ static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
-						   DeclareCursorStmt * stmt);
+						   DeclareCursorStmt *stmt);
 static Query *transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt);
 static Query *transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
@@ -120,7 +120,7 @@ static void transformTableConstraint(ParseState *pstate,
 						 CreateStmtContext *cxt,
 						 Constraint *constraint);
 static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
-					 InhRelation * inhrelation);
+					 InhRelation *inhrelation);
 static void transformIndexConstraints(ParseState *pstate,
 						  CreateStmtContext *cxt);
 static void transformFKConstraints(ParseState *pstate,
@@ -135,7 +135,7 @@ static bool relationHasPrimaryKey(Oid relationOid);
 static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
 static bool check_parameter_resolution_walker(Node *node,
-						   check_parameter_resolution_context * context);
+							check_parameter_resolution_context *context);
 
 
 /*
@@ -1171,7 +1171,7 @@ transformTableConstraint(ParseState *pstate, CreateStmtContext *cxt,
  */
 static void
 transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
-					 InhRelation * inhRelation)
+					 InhRelation *inhRelation)
 {
 	AttrNumber	parent_attno;
 
@@ -1907,9 +1907,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			{
 				/*
 				 * If sub_qry is a setop, manipulating its jointree will
-				 * do no good at all, because the jointree is dummy.
-				 * (This should be a can't-happen case because of prior
-				 * tests.)
+				 * do no good at all, because the jointree is dummy. (This
+				 * should be a can't-happen case because of prior tests.)
 				 */
 				if (sub_qry->setOperations != NULL)
 					ereport(ERROR,
@@ -2643,7 +2642,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 }
 
 static Query *
-transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt * stmt)
+transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 {
 	Query	   *result = makeNode(Query);
 	List	   *extras_before = NIL,
@@ -3200,7 +3199,7 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
  */
 static bool
 check_parameter_resolution_walker(Node *node,
-							check_parameter_resolution_context * context)
+							 check_parameter_resolution_context *context)
 {
 	if (node == NULL)
 		return false;

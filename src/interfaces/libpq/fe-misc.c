@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.101 2003/08/04 17:25:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.102 2003/08/08 21:42:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -650,9 +650,9 @@ retry3:
 	 * read data unless the file selected for reading already.
 	 *
 	 * In SSL mode it's even worse: SSL_read() could say WANT_READ and then
-	 * data could arrive before we make the pqReadReady() test.  So we must
-	 * play dumb and assume there is more data, relying on the SSL layer to
-	 * detect true EOF.
+	 * data could arrive before we make the pqReadReady() test.  So we
+	 * must play dumb and assume there is more data, relying on the SSL
+	 * layer to detect true EOF.
 	 */
 
 #ifdef USE_SSL

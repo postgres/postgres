@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.216 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.217 2003/08/08 21:41:44 momjian Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -184,7 +184,7 @@ _outOidList(StringInfo str, List *list)
  * an integer List would be.
  */
 static void
-_outBitmapset(StringInfo str, Bitmapset * bms)
+_outBitmapset(StringInfo str, Bitmapset *bms)
 {
 	Bitmapset  *tmpset;
 	int			x;
@@ -631,7 +631,7 @@ _outArrayRef(StringInfo str, ArrayRef *node)
 }
 
 static void
-_outFuncExpr(StringInfo str, FuncExpr * node)
+_outFuncExpr(StringInfo str, FuncExpr *node)
 {
 	WRITE_NODE_TYPE("FUNCEXPR");
 
@@ -643,7 +643,7 @@ _outFuncExpr(StringInfo str, FuncExpr * node)
 }
 
 static void
-_outOpExpr(StringInfo str, OpExpr * node)
+_outOpExpr(StringInfo str, OpExpr *node)
 {
 	WRITE_NODE_TYPE("OPEXPR");
 
@@ -655,7 +655,7 @@ _outOpExpr(StringInfo str, OpExpr * node)
 }
 
 static void
-_outDistinctExpr(StringInfo str, DistinctExpr * node)
+_outDistinctExpr(StringInfo str, DistinctExpr *node)
 {
 	WRITE_NODE_TYPE("DISTINCTEXPR");
 
@@ -667,7 +667,7 @@ _outDistinctExpr(StringInfo str, DistinctExpr * node)
 }
 
 static void
-_outScalarArrayOpExpr(StringInfo str, ScalarArrayOpExpr * node)
+_outScalarArrayOpExpr(StringInfo str, ScalarArrayOpExpr *node)
 {
 	WRITE_NODE_TYPE("SCALARARRAYOPEXPR");
 
@@ -678,7 +678,7 @@ _outScalarArrayOpExpr(StringInfo str, ScalarArrayOpExpr * node)
 }
 
 static void
-_outBoolExpr(StringInfo str, BoolExpr * node)
+_outBoolExpr(StringInfo str, BoolExpr *node)
 {
 	char	   *opstr = NULL;
 
@@ -778,7 +778,7 @@ _outCaseWhen(StringInfo str, CaseWhen *node)
 }
 
 static void
-_outArrayExpr(StringInfo str, ArrayExpr * node)
+_outArrayExpr(StringInfo str, ArrayExpr *node)
 {
 	WRITE_NODE_TYPE("ARRAY");
 
@@ -789,7 +789,7 @@ _outArrayExpr(StringInfo str, ArrayExpr * node)
 }
 
 static void
-_outCoalesceExpr(StringInfo str, CoalesceExpr * node)
+_outCoalesceExpr(StringInfo str, CoalesceExpr *node)
 {
 	WRITE_NODE_TYPE("COALESCE");
 
@@ -798,7 +798,7 @@ _outCoalesceExpr(StringInfo str, CoalesceExpr * node)
 }
 
 static void
-_outNullIfExpr(StringInfo str, NullIfExpr * node)
+_outNullIfExpr(StringInfo str, NullIfExpr *node)
 {
 	WRITE_NODE_TYPE("NULLIFEXPR");
 
@@ -828,7 +828,7 @@ _outBooleanTest(StringInfo str, BooleanTest *node)
 }
 
 static void
-_outCoerceToDomain(StringInfo str, CoerceToDomain * node)
+_outCoerceToDomain(StringInfo str, CoerceToDomain *node)
 {
 	WRITE_NODE_TYPE("COERCETODOMAIN");
 
@@ -839,7 +839,7 @@ _outCoerceToDomain(StringInfo str, CoerceToDomain * node)
 }
 
 static void
-_outCoerceToDomainValue(StringInfo str, CoerceToDomainValue * node)
+_outCoerceToDomainValue(StringInfo str, CoerceToDomainValue *node)
 {
 	WRITE_NODE_TYPE("COERCETODOMAINVALUE");
 
@@ -848,7 +848,7 @@ _outCoerceToDomainValue(StringInfo str, CoerceToDomainValue * node)
 }
 
 static void
-_outSetToDefault(StringInfo str, SetToDefault * node)
+_outSetToDefault(StringInfo str, SetToDefault *node)
 {
 	WRITE_NODE_TYPE("SETTODEFAULT");
 
@@ -977,7 +977,7 @@ _outAppendPath(StringInfo str, AppendPath *node)
 }
 
 static void
-_outResultPath(StringInfo str, ResultPath * node)
+_outResultPath(StringInfo str, ResultPath *node)
 {
 	WRITE_NODE_TYPE("RESULTPATH");
 
@@ -988,7 +988,7 @@ _outResultPath(StringInfo str, ResultPath * node)
 }
 
 static void
-_outMaterialPath(StringInfo str, MaterialPath * node)
+_outMaterialPath(StringInfo str, MaterialPath *node)
 {
 	WRITE_NODE_TYPE("MATERIALPATH");
 
@@ -998,7 +998,7 @@ _outMaterialPath(StringInfo str, MaterialPath * node)
 }
 
 static void
-_outUniquePath(StringInfo str, UniquePath * node)
+_outUniquePath(StringInfo str, UniquePath *node)
 {
 	WRITE_NODE_TYPE("UNIQUEPATH");
 
@@ -1077,7 +1077,7 @@ _outJoinInfo(StringInfo str, JoinInfo *node)
 }
 
 static void
-_outInClauseInfo(StringInfo str, InClauseInfo * node)
+_outInClauseInfo(StringInfo str, InClauseInfo *node)
 {
 	WRITE_NODE_TYPE("INCLAUSEINFO");
 
@@ -1130,7 +1130,7 @@ _outNotifyStmt(StringInfo str, NotifyStmt *node)
 }
 
 static void
-_outDeclareCursorStmt(StringInfo str, DeclareCursorStmt * node)
+_outDeclareCursorStmt(StringInfo str, DeclareCursorStmt *node)
 {
 	WRITE_NODE_TYPE("DECLARECURSOR");
 

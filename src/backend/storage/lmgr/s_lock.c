@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.15 2003/08/06 16:43:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.16 2003/08/08 21:42:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,26 +54,27 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 	 * finish 100 iterations.  However, on a uniprocessor, the tight loop
 	 * is just a waste of cycles, so don't iterate thousands of times.
 	 *
-	 * Once we do decide to block, we use randomly increasing select() delays.
-	 * The first delay is 10 msec, then the delay randomly increases to about
-	 * one second, after which we reset to 10 msec and start again.  The idea
-	 * here is that in the presence of heavy contention we need to increase
-	 * the delay, else the spinlock holder may never get to run and release
-	 * the lock.  (Consider situation where spinlock holder has been nice'd
-	 * down in priority by the scheduler --- it will not get scheduled until
-	 * all would-be acquirers are sleeping, so if we always use a 10-msec
-	 * sleep, there is a real possibility of starvation.)  But we can't just
-	 * clamp the delay to an upper bound, else it would take a long time to
-	 * make a reasonable number of tries.
+	 * Once we do decide to block, we use randomly increasing select()
+	 * delays. The first delay is 10 msec, then the delay randomly
+	 * increases to about one second, after which we reset to 10 msec and
+	 * start again.  The idea here is that in the presence of heavy
+	 * contention we need to increase the delay, else the spinlock holder
+	 * may never get to run and release the lock.  (Consider situation
+	 * where spinlock holder has been nice'd down in priority by the
+	 * scheduler --- it will not get scheduled until all would-be
+	 * acquirers are sleeping, so if we always use a 10-msec sleep, there
+	 * is a real possibility of starvation.)  But we can't just clamp the
+	 * delay to an upper bound, else it would take a long time to make a
+	 * reasonable number of tries.
 	 *
 	 * We time out and declare error after NUM_DELAYS delays (thus, exactly
 	 * that many tries).  With the given settings, this will usually take
-	 * 3 or so minutes.  It seems better to fix the total number of tries (and
-	 * thus the probability of unintended failure) than to fix the total time
-	 * spent.
+	 * 3 or so minutes.  It seems better to fix the total number of tries
+	 * (and thus the probability of unintended failure) than to fix the
+	 * total time spent.
 	 *
-	 * The select() delays are measured in centiseconds (0.01 sec) because
-	 * 10 msec is a common resolution limit at the OS level.
+	 * The select() delays are measured in centiseconds (0.01 sec) because 10
+	 * msec is a common resolution limit at the OS level.
 	 */
 #define SPINS_PER_DELAY		100
 #define NUM_DELAYS			1000
@@ -97,12 +98,13 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 			(void) select(0, NULL, NULL, NULL, &delay);
 
 #if defined(S_LOCK_TEST)
-			fprintf(stdout, "*"); fflush(stdout);
+			fprintf(stdout, "*");
+			fflush(stdout);
 #endif
 
 			/* increase delay by a random fraction between 1X and 2X */
 			cur_delay += (int) (cur_delay *
-				(((double) random()) / ((double) MAX_RANDOM_VALUE)) + 0.5);
+			  (((double) random()) / ((double) MAX_RANDOM_VALUE)) + 0.5);
 			/* wrap back to minimum delay when max is exceeded */
 			if (cur_delay > MAX_DELAY_CSEC)
 				cur_delay = MIN_DELAY_CSEC;

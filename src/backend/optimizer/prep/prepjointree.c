@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.10 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.11 2003/08/08 21:41:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,14 +41,14 @@ typedef struct reduce_outer_joins_state
 	Relids		relids;			/* base relids within this subtree */
 	bool		contains_outer; /* does subtree contain outer join(s)? */
 	List	   *sub_states;		/* List of states for subtree components */
-}	reduce_outer_joins_state;
+} reduce_outer_joins_state;
 
 static bool is_simple_subquery(Query *subquery);
 static bool has_nullable_targetlist(Query *subquery);
 static void resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist);
 static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
 static void reduce_outer_joins_pass2(Node *jtnode,
-						 reduce_outer_joins_state * state,
+						 reduce_outer_joins_state *state,
 						 Query *parse,
 						 Relids nonnullable_rels);
 static Relids find_nonnullable_rels(Node *node, bool top_level);
@@ -609,7 +609,7 @@ reduce_outer_joins_pass1(Node *jtnode)
  */
 static void
 reduce_outer_joins_pass2(Node *jtnode,
-						 reduce_outer_joins_state * state,
+						 reduce_outer_joins_state *state,
 						 Query *parse,
 						 Relids nonnullable_rels)
 {

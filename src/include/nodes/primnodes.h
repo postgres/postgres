@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.89 2003/08/04 02:40:13 momjian Exp $
+ * $Id: primnodes.h,v 1.90 2003/08/08 21:42:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ typedef enum CoercionContext
 	COERCION_IMPLICIT,			/* coercion in context of expression */
 	COERCION_ASSIGNMENT,		/* coercion in context of assignment */
 	COERCION_EXPLICIT			/* explicit cast operation */
-}	CoercionContext;
+} CoercionContext;
 
 /*
  * CoercionForm - information showing how to display a function-call node
@@ -288,7 +288,7 @@ typedef enum CoercionForm
 	COERCE_EXPLICIT_CAST,		/* display as an explicit cast */
 	COERCE_IMPLICIT_CAST,		/* implicit cast, so hide it */
 	COERCE_DONTCARE				/* special case for pathkeys */
-}	CoercionForm;
+} CoercionForm;
 
 /*
  * FuncExpr - expression node for a function call
@@ -301,7 +301,7 @@ typedef struct FuncExpr
 	bool		funcretset;		/* true if function returns set */
 	CoercionForm funcformat;	/* how to display this function call */
 	List	   *args;			/* arguments to the function */
-}	FuncExpr;
+} FuncExpr;
 
 /*
  * OpExpr - expression node for an operator invocation
@@ -320,7 +320,7 @@ typedef struct OpExpr
 	Oid			opresulttype;	/* PG_TYPE OID of result value */
 	bool		opretset;		/* true if operator returns set */
 	List	   *args;			/* arguments to the operator (1 or 2) */
-}	OpExpr;
+} OpExpr;
 
 /*
  * DistinctExpr - expression node for "x IS DISTINCT FROM y"
@@ -351,7 +351,7 @@ typedef struct ScalarArrayOpExpr
 	Oid			opfuncid;		/* PG_PROC OID of underlying function */
 	bool		useOr;			/* true for ANY, false for ALL */
 	List	   *args;			/* the scalar and array operands */
-}	ScalarArrayOpExpr;
+} ScalarArrayOpExpr;
 
 /*
  * BoolExpr - expression node for the basic Boolean operators AND, OR, NOT
@@ -365,14 +365,14 @@ typedef struct ScalarArrayOpExpr
 typedef enum BoolExprType
 {
 	AND_EXPR, OR_EXPR, NOT_EXPR
-}	BoolExprType;
+} BoolExprType;
 
 typedef struct BoolExpr
 {
 	Expr		xpr;
 	BoolExprType boolop;
 	List	   *args;			/* arguments to this expression */
-}	BoolExpr;
+} BoolExpr;
 
 /* ----------------
  * SubLink
@@ -578,7 +578,7 @@ typedef struct ArrayExpr
 	Oid			element_typeid; /* common type of expression elements */
 	List	   *elements;		/* the array elements */
 	int			ndims;			/* number of array dimensions */
-}	ArrayExpr;
+} ArrayExpr;
 
 /*
  * CoalesceExpr - a COALESCE expression
@@ -588,7 +588,7 @@ typedef struct CoalesceExpr
 	Expr		xpr;
 	Oid			coalescetype;	/* type of expression result */
 	List	   *args;			/* the arguments */
-}	CoalesceExpr;
+} CoalesceExpr;
 
 /*
  * NullIfExpr - a NULLIF expression
@@ -657,7 +657,7 @@ typedef struct CoerceToDomain
 	Oid			resulttype;		/* domain type ID (result type) */
 	int32		resulttypmod;	/* output typmod (currently always -1) */
 	CoercionForm coercionformat;	/* how to display this node */
-}	CoerceToDomain;
+} CoerceToDomain;
 
 /*
  * Placeholder node for the value to be processed by a domain's check
@@ -673,7 +673,7 @@ typedef struct CoerceToDomainValue
 	Expr		xpr;
 	Oid			typeId;			/* type for substituted value */
 	int32		typeMod;		/* typemod for substituted value */
-}	CoerceToDomainValue;
+} CoerceToDomainValue;
 
 /*
  * Placeholder node for a DEFAULT marker in an INSERT or UPDATE command.
@@ -687,7 +687,7 @@ typedef struct SetToDefault
 	Expr		xpr;
 	Oid			typeId;			/* type for substituted value */
 	int32		typeMod;		/* typemod for substituted value */
-}	SetToDefault;
+} SetToDefault;
 
 /*
  * TargetEntry -

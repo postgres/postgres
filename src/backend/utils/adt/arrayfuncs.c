@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.96 2003/08/04 02:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.97 2003/08/08 21:42:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1194,7 +1194,7 @@ array_length_coerce(PG_FUNCTION_ARGS)
 	{
 		Oid			elemtype;
 		FmgrInfo	coerce_finfo;
-	}			alc_extra;
+	} alc_extra;
 	alc_extra  *my_extra;
 	FunctionCallInfoData locfcinfo;
 
@@ -2036,7 +2036,7 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 	{
 		ArrayMetaState inp_extra;
 		ArrayMetaState ret_extra;
-	}			am_extra;
+	} am_extra;
 	am_extra   *my_extra;
 	ArrayMetaState *inp_extra;
 	ArrayMetaState *ret_extra;
@@ -2531,7 +2531,7 @@ array_cmp(FunctionCallInfo fcinfo)
 		char		typalign;
 		FmgrInfo	eqproc;
 		FmgrInfo	ordproc;
-	}			ac_extra;
+	} ac_extra;
 	ac_extra   *my_extra;
 
 	element_type = ARR_ELEMTYPE(array1);
@@ -2896,7 +2896,7 @@ array_type_coerce(PG_FUNCTION_ARGS)
 		Oid			srctype;
 		Oid			desttype;
 		FmgrInfo	coerce_finfo;
-	}			atc_extra;
+	} atc_extra;
 	atc_extra  *my_extra;
 	FunctionCallInfoData locfcinfo;
 
@@ -2989,7 +2989,7 @@ array_type_coerce(PG_FUNCTION_ARGS)
  *	rcontext is where to keep working state
  */
 ArrayBuildState *
-accumArrayResult(ArrayBuildState * astate,
+accumArrayResult(ArrayBuildState *astate,
 				 Datum dvalue, bool disnull,
 				 Oid element_type,
 				 MemoryContext rcontext)
@@ -3051,7 +3051,7 @@ accumArrayResult(ArrayBuildState * astate,
  *	rcontext is where to construct result
  */
 Datum
-makeArrayResult(ArrayBuildState * astate,
+makeArrayResult(ArrayBuildState *astate,
 				MemoryContext rcontext)
 {
 	int			dims[1];
@@ -3073,7 +3073,7 @@ makeArrayResult(ArrayBuildState * astate,
  *	rcontext is where to construct result
  */
 Datum
-makeMdArrayResult(ArrayBuildState * astate,
+makeMdArrayResult(ArrayBuildState *astate,
 				  int ndims,
 				  int *dims,
 				  int *lbs,

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.23 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.24 2003/08/08 21:42:00 momjian Exp $
  *
  *	Interface:
  *
@@ -61,7 +61,7 @@ typedef struct
 	LOCKTAG		locktag;		/* ID of awaited lock object */
 	LOCKMODE	lockmode;		/* type of lock we're waiting for */
 	int			pid;			/* PID of blocked backend */
-}	DEADLOCK_INFO;
+} DEADLOCK_INFO;
 
 
 static bool DeadLockCheckRecurse(PGPROC *proc);

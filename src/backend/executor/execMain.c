@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.215 2003/08/06 17:46:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.216 2003/08/08 21:41:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ static void initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Index resultRelationIndex,
 				  List *rangeTable,
 				  CmdType operation);
-static TupleTableSlot *ExecutePlan(EState *estate, PlanState * planstate,
+static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
 			ScanDirection direction,
@@ -895,7 +895,7 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
  * ----------------------------------------------------------------
  */
 void
-ExecEndPlan(PlanState * planstate, EState *estate)
+ExecEndPlan(PlanState *planstate, EState *estate)
 {
 	ResultRelInfo *resultRelInfo;
 	int			i;
@@ -965,7 +965,7 @@ ExecEndPlan(PlanState * planstate, EState *estate)
  */
 static TupleTableSlot *
 ExecutePlan(EState *estate,
-			PlanState * planstate,
+			PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
 			ScanDirection direction,

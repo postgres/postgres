@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.102 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.103 2003/08/08 21:41:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,7 +385,7 @@ MakePerTupleExprContext(EState *estate)
  * ----------------
  */
 void
-ExecAssignExprContext(EState *estate, PlanState * planstate)
+ExecAssignExprContext(EState *estate, PlanState *planstate)
 {
 	planstate->ps_ExprContext = CreateExprContext(estate);
 }
@@ -395,7 +395,7 @@ ExecAssignExprContext(EState *estate, PlanState * planstate)
  * ----------------
  */
 void
-ExecAssignResultType(PlanState * planstate,
+ExecAssignResultType(PlanState *planstate,
 					 TupleDesc tupDesc, bool shouldFree)
 {
 	TupleTableSlot *slot = planstate->ps_ResultTupleSlot;
@@ -408,7 +408,7 @@ ExecAssignResultType(PlanState * planstate,
  * ----------------
  */
 void
-ExecAssignResultTypeFromOuterPlan(PlanState * planstate)
+ExecAssignResultTypeFromOuterPlan(PlanState *planstate)
 {
 	PlanState  *outerPlan;
 	TupleDesc	tupDesc;
@@ -424,7 +424,7 @@ ExecAssignResultTypeFromOuterPlan(PlanState * planstate)
  * ----------------
  */
 void
-ExecAssignResultTypeFromTL(PlanState * planstate)
+ExecAssignResultTypeFromTL(PlanState *planstate)
 {
 	bool		hasoid = false;
 	TupleDesc	tupDesc;
@@ -479,7 +479,7 @@ ExecAssignResultTypeFromTL(PlanState * planstate)
  * ----------------
  */
 TupleDesc
-ExecGetResultType(PlanState * planstate)
+ExecGetResultType(PlanState *planstate)
 {
 	TupleTableSlot *slot = planstate->ps_ResultTupleSlot;
 
@@ -525,7 +525,7 @@ ExecBuildProjectionInfo(List *targetList,
  * ----------------
  */
 void
-ExecAssignProjectionInfo(PlanState * planstate)
+ExecAssignProjectionInfo(PlanState *planstate)
 {
 	planstate->ps_ProjInfo =
 		ExecBuildProjectionInfo(planstate->targetlist,
@@ -544,7 +544,7 @@ ExecAssignProjectionInfo(PlanState * planstate)
  * ----------------
  */
 void
-ExecFreeExprContext(PlanState * planstate)
+ExecFreeExprContext(PlanState *planstate)
 {
 	ExprContext *econtext;
 
@@ -576,7 +576,7 @@ ExecFreeExprContext(PlanState * planstate)
  * ----------------
  */
 TupleDesc
-ExecGetScanType(ScanState * scanstate)
+ExecGetScanType(ScanState *scanstate)
 {
 	TupleTableSlot *slot = scanstate->ss_ScanTupleSlot;
 
@@ -588,7 +588,7 @@ ExecGetScanType(ScanState * scanstate)
  * ----------------
  */
 void
-ExecAssignScanType(ScanState * scanstate,
+ExecAssignScanType(ScanState *scanstate,
 				   TupleDesc tupDesc, bool shouldFree)
 {
 	TupleTableSlot *slot = scanstate->ss_ScanTupleSlot;
@@ -601,7 +601,7 @@ ExecAssignScanType(ScanState * scanstate,
  * ----------------
  */
 void
-ExecAssignScanTypeFromOuterPlan(ScanState * scanstate)
+ExecAssignScanTypeFromOuterPlan(ScanState *scanstate)
 {
 	PlanState  *outerPlan;
 	TupleDesc	tupDesc;
@@ -879,7 +879,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
  *		Add changed parameters to a plan node's chgParam set
  */
 void
-UpdateChangedParamSet(PlanState * node, Bitmapset * newchg)
+UpdateChangedParamSet(PlanState *node, Bitmapset *newchg)
 {
 	Bitmapset  *parmset;
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/slru.c,v 1.5 2003/08/08 14:39:45 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/slru.c,v 1.6 2003/08/08 21:41:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ typedef enum
 	SLRU_PAGE_CLEAN,			/* page is valid and not dirty */
 	SLRU_PAGE_DIRTY,			/* page is valid but needs write */
 	SLRU_PAGE_WRITE_IN_PROGRESS /* page is being written out */
-}	SlruPageStatus;
+} SlruPageStatus;
 
 /*
  * Shared-memory state
@@ -117,7 +117,7 @@ typedef struct SlruSharedData
 	 * swapping out the latest page.
 	 */
 	int			latest_page_number;
-}	SlruSharedData;
+} SlruSharedData;
 typedef SlruSharedData *SlruShared;
 
 
@@ -145,7 +145,7 @@ typedef enum
 	SLRU_SEEK_FAILED,
 	SLRU_READ_FAILED,
 	SLRU_WRITE_FAILED
-}	SlruErrorCause;
+} SlruErrorCause;
 static SlruErrorCause slru_errcause;
 static int	slru_errno;
 

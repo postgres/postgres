@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.127 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.128 2003/08/08 21:41:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ typedef struct rewrite_event
 {
 	Oid			relation;		/* OID of relation having rules */
 	CmdType		event;			/* type of rule being fired */
-}	rewrite_event;
+} rewrite_event;
 
 static Query *rewriteRuleAction(Query *parsetree,
 				  Query *rule_action,

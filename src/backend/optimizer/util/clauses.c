@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.151 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.152 2003/08/08 21:41:55 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -50,7 +50,7 @@ typedef struct
 	int			nargs;
 	List	   *args;
 	int		   *usecounts;
-}	substitute_actual_parameters_context;
+} substitute_actual_parameters_context;
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool contain_distinct_agg_clause_walker(Node *node, void *context);
@@ -70,7 +70,7 @@ static Expr *inline_function(Oid funcid, Oid result_type, List *args,
 static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 							 int *usecounts);
 static Node *substitute_actual_parameters_mutator(Node *node,
-						 substitute_actual_parameters_context * context);
+						  substitute_actual_parameters_context *context);
 static void sql_inline_error_callback(void *arg);
 static Expr *evaluate_expr(Expr *expr, Oid result_type);
 
@@ -981,7 +981,7 @@ NumRelids(Node *clause)
  * XXX the clause is destructively modified!
  */
 void
-CommuteClause(OpExpr * clause)
+CommuteClause(OpExpr *clause)
 {
 	Oid			opoid;
 	Node	   *temp;
@@ -2002,7 +2002,7 @@ substitute_actual_parameters(Node *expr, int nargs, List *args,
 
 static Node *
 substitute_actual_parameters_mutator(Node *node,
-						  substitute_actual_parameters_context * context)
+						   substitute_actual_parameters_context *context)
 {
 	if (node == NULL)
 		return NULL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.207 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.208 2003/08/08 21:41:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ typedef enum CopyDest
 	COPY_FILE,					/* to/from file */
 	COPY_OLD_FE,				/* to/from frontend (old protocol) */
 	COPY_NEW_FE					/* to/from frontend (new protocol) */
-}	CopyDest;
+} CopyDest;
 
 /*
  * Represents the type of data returned by CopyReadAttribute()
@@ -82,7 +82,7 @@ typedef enum EolType
 	EOL_NL,
 	EOL_CR,
 	EOL_CRNL
-}	EolType;
+} EolType;
 
 
 /* non-export function prototypes */

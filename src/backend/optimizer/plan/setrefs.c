@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.96 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.97 2003/08/08 21:41:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ static Node *replace_vars_with_subplan_refs(Node *node,
 static Node *replace_vars_with_subplan_refs_mutator(Node *node,
 						replace_vars_with_subplan_refs_context *context);
 static bool fix_opfuncids_walker(Node *node, void *context);
-static void set_sa_opfuncid(ScalarArrayOpExpr * opexpr);
+static void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 
 
 /*****************************************************************************
@@ -759,7 +759,7 @@ fix_opfuncids_walker(Node *node, void *context)
  * DistinctExpr and NullIfExpr nodes.
  */
 void
-set_opfuncid(OpExpr * opexpr)
+set_opfuncid(OpExpr *opexpr)
 {
 	if (opexpr->opfuncid == InvalidOid)
 		opexpr->opfuncid = get_opcode(opexpr->opno);
@@ -770,7 +770,7 @@ set_opfuncid(OpExpr * opexpr)
  *		As above, for ScalarArrayOpExpr nodes.
  */
 static void
-set_sa_opfuncid(ScalarArrayOpExpr * opexpr)
+set_sa_opfuncid(ScalarArrayOpExpr *opexpr)
 {
 	if (opexpr->opfuncid == InvalidOid)
 		opexpr->opfuncid = get_opcode(opexpr->opno);

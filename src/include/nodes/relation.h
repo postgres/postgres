@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.84 2003/08/04 02:40:13 momjian Exp $
+ * $Id: relation.h,v 1.85 2003/08/08 21:42:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ typedef struct QualCost
 {
 	Cost		startup;		/* one-time cost */
 	Cost		per_tuple;		/* per-evaluation cost */
-}	QualCost;
+} QualCost;
 
 /*----------
  * RelOptInfo
@@ -415,7 +415,7 @@ typedef struct ResultPath
 	Path		path;
 	Path	   *subpath;
 	List	   *constantqual;
-}	ResultPath;
+} ResultPath;
 
 /*
  * MaterialPath represents use of a Material plan node, i.e., caching of
@@ -427,7 +427,7 @@ typedef struct MaterialPath
 {
 	Path		path;
 	Path	   *subpath;
-}	MaterialPath;
+} MaterialPath;
 
 /*
  * UniquePath represents elimination of distinct rows from the output of
@@ -444,7 +444,7 @@ typedef struct UniquePath
 	Path	   *subpath;
 	bool		use_hash;
 	double		rows;			/* estimated number of result tuples */
-}	UniquePath;
+} UniquePath;
 
 /*
  * All join-type paths share these fields.
@@ -690,7 +690,7 @@ typedef struct InnerIndexscanInfo
 	bool		isouterjoin;	/* true if join is outer */
 	/* Best path for this lookup key: */
 	Path	   *best_innerpath; /* best inner indexscan, or NULL if none */
-}	InnerIndexscanInfo;
+} InnerIndexscanInfo;
 
 /*
  * IN clause info.
@@ -712,6 +712,6 @@ typedef struct InClauseInfo
 	 * Note: sub_targetlist is just a list of Vars or expressions; it does
 	 * not contain TargetEntry nodes.
 	 */
-}	InClauseInfo;
+} InClauseInfo;
 
 #endif   /* RELATION_H */

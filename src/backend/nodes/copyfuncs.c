@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.262 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.263 2003/08/08 21:41:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -755,7 +755,7 @@ _copyArrayRef(ArrayRef *from)
  * _copyFuncExpr
  */
 static FuncExpr *
-_copyFuncExpr(FuncExpr * from)
+_copyFuncExpr(FuncExpr *from)
 {
 	FuncExpr   *newnode = makeNode(FuncExpr);
 
@@ -772,7 +772,7 @@ _copyFuncExpr(FuncExpr * from)
  * _copyOpExpr
  */
 static OpExpr *
-_copyOpExpr(OpExpr * from)
+_copyOpExpr(OpExpr *from)
 {
 	OpExpr	   *newnode = makeNode(OpExpr);
 
@@ -789,7 +789,7 @@ _copyOpExpr(OpExpr * from)
  * _copyDistinctExpr (same as OpExpr)
  */
 static DistinctExpr *
-_copyDistinctExpr(DistinctExpr * from)
+_copyDistinctExpr(DistinctExpr *from)
 {
 	DistinctExpr *newnode = makeNode(DistinctExpr);
 
@@ -806,7 +806,7 @@ _copyDistinctExpr(DistinctExpr * from)
  * _copyScalarArrayOpExpr
  */
 static ScalarArrayOpExpr *
-_copyScalarArrayOpExpr(ScalarArrayOpExpr * from)
+_copyScalarArrayOpExpr(ScalarArrayOpExpr *from)
 {
 	ScalarArrayOpExpr *newnode = makeNode(ScalarArrayOpExpr);
 
@@ -822,7 +822,7 @@ _copyScalarArrayOpExpr(ScalarArrayOpExpr * from)
  * _copyBoolExpr
  */
 static BoolExpr *
-_copyBoolExpr(BoolExpr * from)
+_copyBoolExpr(BoolExpr *from)
 {
 	BoolExpr   *newnode = makeNode(BoolExpr);
 
@@ -940,7 +940,7 @@ _copyCaseWhen(CaseWhen *from)
  * _copyArrayExpr
  */
 static ArrayExpr *
-_copyArrayExpr(ArrayExpr * from)
+_copyArrayExpr(ArrayExpr *from)
 {
 	ArrayExpr  *newnode = makeNode(ArrayExpr);
 
@@ -956,7 +956,7 @@ _copyArrayExpr(ArrayExpr * from)
  * _copyCoalesceExpr
  */
 static CoalesceExpr *
-_copyCoalesceExpr(CoalesceExpr * from)
+_copyCoalesceExpr(CoalesceExpr *from)
 {
 	CoalesceExpr *newnode = makeNode(CoalesceExpr);
 
@@ -970,7 +970,7 @@ _copyCoalesceExpr(CoalesceExpr * from)
  * _copyNullIfExpr (same as OpExpr)
  */
 static NullIfExpr *
-_copyNullIfExpr(NullIfExpr * from)
+_copyNullIfExpr(NullIfExpr *from)
 {
 	NullIfExpr *newnode = makeNode(NullIfExpr);
 
@@ -1015,7 +1015,7 @@ _copyBooleanTest(BooleanTest *from)
  * _copyCoerceToDomain
  */
 static CoerceToDomain *
-_copyCoerceToDomain(CoerceToDomain * from)
+_copyCoerceToDomain(CoerceToDomain *from)
 {
 	CoerceToDomain *newnode = makeNode(CoerceToDomain);
 
@@ -1031,7 +1031,7 @@ _copyCoerceToDomain(CoerceToDomain * from)
  * _copyCoerceToDomainValue
  */
 static CoerceToDomainValue *
-_copyCoerceToDomainValue(CoerceToDomainValue * from)
+_copyCoerceToDomainValue(CoerceToDomainValue *from)
 {
 	CoerceToDomainValue *newnode = makeNode(CoerceToDomainValue);
 
@@ -1045,7 +1045,7 @@ _copyCoerceToDomainValue(CoerceToDomainValue * from)
  * _copySetToDefault
  */
 static SetToDefault *
-_copySetToDefault(SetToDefault * from)
+_copySetToDefault(SetToDefault *from)
 {
 	SetToDefault *newnode = makeNode(SetToDefault);
 
@@ -1191,7 +1191,7 @@ _copyJoinInfo(JoinInfo *from)
  * _copyInClauseInfo
  */
 static InClauseInfo *
-_copyInClauseInfo(InClauseInfo * from)
+_copyInClauseInfo(InClauseInfo *from)
 {
 	InClauseInfo *newnode = makeNode(InClauseInfo);
 
@@ -1633,7 +1633,7 @@ _copyAlterTableStmt(AlterTableStmt *from)
 }
 
 static AlterDomainStmt *
-_copyAlterDomainStmt(AlterDomainStmt * from)
+_copyAlterDomainStmt(AlterDomainStmt *from)
 {
 	AlterDomainStmt *newnode = makeNode(AlterDomainStmt);
 
@@ -1685,7 +1685,7 @@ _copyFuncWithArgs(FuncWithArgs *from)
 }
 
 static DeclareCursorStmt *
-_copyDeclareCursorStmt(DeclareCursorStmt * from)
+_copyDeclareCursorStmt(DeclareCursorStmt *from)
 {
 	DeclareCursorStmt *newnode = makeNode(DeclareCursorStmt);
 
@@ -1747,7 +1747,7 @@ _copyCreateStmt(CreateStmt *from)
 }
 
 static InhRelation *
-_copyInhRelation(InhRelation * from)
+_copyInhRelation(InhRelation *from)
 {
 	InhRelation *newnode = makeNode(InhRelation);
 
@@ -2118,7 +2118,7 @@ _copyCreateSeqStmt(CreateSeqStmt *from)
 }
 
 static AlterSeqStmt *
-_copyAlterSeqStmt(AlterSeqStmt * from)
+_copyAlterSeqStmt(AlterSeqStmt *from)
 {
 	AlterSeqStmt *newnode = makeNode(AlterSeqStmt);
 

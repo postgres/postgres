@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.98 2003/08/04 02:40:13 momjian Exp $
+ * $Id: executor.h,v 1.99 2003/08/08 21:42:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,9 @@
 /*
  * prototypes from functions in execAmi.c
  */
-extern void ExecReScan(PlanState * node, ExprContext *exprCtxt);
-extern void ExecMarkPos(PlanState * node);
-extern void ExecRestrPos(PlanState * node);
+extern void ExecReScan(PlanState *node, ExprContext *exprCtxt);
+extern void ExecMarkPos(PlanState *node);
+extern void ExecRestrPos(PlanState *node);
 extern bool ExecSupportsMarkRestore(NodeTag plantype);
 extern bool ExecSupportsBackwardScan(Plan *node);
 
@@ -72,7 +72,7 @@ extern TupleHashEntry LookupTupleHashEntry(TupleHashTable hashtable,
 					 TupleTableSlot *slot,
 					 bool *isnew);
 extern TupleHashEntry ScanTupleHashTable(TupleHashTable hashtable,
-				   TupleHashIterator * state);
+				   TupleHashIterator *state);
 
 /*
  * prototypes from functions in execJunk.c
@@ -93,7 +93,7 @@ extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc,
 extern void ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);
 extern void ExecCheckRTPerms(List *rangeTable, CmdType operation);
-extern void ExecEndPlan(PlanState * planstate, EState *estate);
+extern void ExecEndPlan(PlanState *planstate, EState *estate);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
@@ -103,9 +103,9 @@ extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
  * prototypes from functions in execProcnode.c
  */
 extern PlanState *ExecInitNode(Plan *node, EState *estate);
-extern TupleTableSlot *ExecProcNode(PlanState * node);
+extern TupleTableSlot *ExecProcNode(PlanState *node);
 extern int	ExecCountSlotsNode(Plan *node);
-extern void ExecEndNode(PlanState * node);
+extern void ExecEndNode(PlanState *node);
 
 /*
  * prototypes from functions in execQual.c
@@ -114,22 +114,22 @@ extern Datum GetAttributeByNum(TupleTableSlot *slot, AttrNumber attrno,
 				  bool *isNull);
 extern Datum GetAttributeByName(TupleTableSlot *slot, char *attname,
 				   bool *isNull);
-extern void init_fcache(Oid foid, FuncExprState * fcache,
+extern void init_fcache(Oid foid, FuncExprState *fcache,
 			MemoryContext fcacheCxt);
-extern Datum ExecMakeFunctionResult(FuncExprState * fcache,
+extern Datum ExecMakeFunctionResult(FuncExprState *fcache,
 					   ExprContext *econtext,
 					   bool *isNull,
 					   ExprDoneCond *isDone);
-extern Tuplestorestate *ExecMakeTableFunctionResult(ExprState * funcexpr,
+extern Tuplestorestate *ExecMakeTableFunctionResult(ExprState *funcexpr,
 							ExprContext *econtext,
 							TupleDesc expectedDesc,
 							TupleDesc *returnDesc);
-extern Datum ExecEvalExpr(ExprState * expression, ExprContext *econtext,
+extern Datum ExecEvalExpr(ExprState *expression, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
-extern Datum ExecEvalExprSwitchContext(ExprState * expression, ExprContext *econtext,
+extern Datum ExecEvalExprSwitchContext(ExprState *expression, ExprContext *econtext,
 						  bool *isNull, ExprDoneCond *isDone);
-extern ExprState *ExecInitExpr(Expr *node, PlanState * parent);
-extern SubPlanState *ExecInitExprInitPlan(SubPlan *node, PlanState * parent);
+extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);
+extern SubPlanState *ExecInitExprInitPlan(SubPlan *node, PlanState *parent);
 extern ExprState *ExecPrepareExpr(Expr *node, EState *estate);
 extern bool ExecQual(List *qual, ExprContext *econtext, bool resultForNull);
 extern int	ExecTargetListLength(List *targetlist);
@@ -140,10 +140,10 @@ extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo,
 /*
  * prototypes from functions in execScan.c
  */
-typedef TupleTableSlot *(*ExecScanAccessMtd) (ScanState * node);
+typedef TupleTableSlot *(*ExecScanAccessMtd) (ScanState *node);
 
-extern TupleTableSlot *ExecScan(ScanState * node, ExecScanAccessMtd accessMtd);
-extern void ExecAssignScanProjectionInfo(ScanState * node);
+extern TupleTableSlot *ExecScan(ScanState *node, ExecScanAccessMtd accessMtd);
+extern void ExecAssignScanProjectionInfo(ScanState *node);
 
 /*
  * prototypes from functions in execTuples.c
@@ -160,14 +160,14 @@ extern TupleTableSlot *ExecClearTuple(TupleTableSlot *slot);
 extern void ExecSetSlotDescriptor(TupleTableSlot *slot,
 					  TupleDesc tupdesc, bool shouldFree);
 extern void ExecSetSlotDescriptorIsNew(TupleTableSlot *slot, bool isNew);
-extern void ExecInitResultTupleSlot(EState *estate, PlanState * planstate);
-extern void ExecInitScanTupleSlot(EState *estate, ScanState * scanstate);
+extern void ExecInitResultTupleSlot(EState *estate, PlanState *planstate);
+extern void ExecInitScanTupleSlot(EState *estate, ScanState *scanstate);
 extern TupleTableSlot *ExecInitExtraTupleSlot(EState *estate);
 extern TupleTableSlot *ExecInitNullTupleSlot(EState *estate,
 					  TupleDesc tupType);
 extern TupleDesc ExecTypeFromTL(List *targetList, bool hasoid);
 extern TupleDesc ExecCleanTypeFromTL(List *targetList, bool hasoid);
-extern void UpdateChangedParamSet(PlanState * node, Bitmapset * newchg);
+extern void UpdateChangedParamSet(PlanState *node, Bitmapset *newchg);
 
 typedef struct TupOutputState
 {
@@ -224,21 +224,21 @@ extern ExprContext *MakePerTupleExprContext(EState *estate);
 			ResetExprContext((estate)->es_per_tuple_exprcontext); \
 	} while (0)
 
-extern void ExecAssignExprContext(EState *estate, PlanState * planstate);
-extern void ExecAssignResultType(PlanState * planstate,
+extern void ExecAssignExprContext(EState *estate, PlanState *planstate);
+extern void ExecAssignResultType(PlanState *planstate,
 					 TupleDesc tupDesc, bool shouldFree);
-extern void ExecAssignResultTypeFromOuterPlan(PlanState * planstate);
-extern void ExecAssignResultTypeFromTL(PlanState * planstate);
-extern TupleDesc ExecGetResultType(PlanState * planstate);
+extern void ExecAssignResultTypeFromOuterPlan(PlanState *planstate);
+extern void ExecAssignResultTypeFromTL(PlanState *planstate);
+extern TupleDesc ExecGetResultType(PlanState *planstate);
 extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
 						ExprContext *econtext,
 						TupleTableSlot *slot);
-extern void ExecAssignProjectionInfo(PlanState * planstate);
-extern void ExecFreeExprContext(PlanState * planstate);
-extern TupleDesc ExecGetScanType(ScanState * scanstate);
-extern void ExecAssignScanType(ScanState * scanstate,
+extern void ExecAssignProjectionInfo(PlanState *planstate);
+extern void ExecFreeExprContext(PlanState *planstate);
+extern TupleDesc ExecGetScanType(ScanState *scanstate);
+extern void ExecAssignScanType(ScanState *scanstate,
 				   TupleDesc tupDesc, bool shouldFree);
-extern void ExecAssignScanTypeFromOuterPlan(ScanState * scanstate);
+extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);
 
 extern void ExecOpenIndices(ResultRelInfo *resultRelInfo);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
