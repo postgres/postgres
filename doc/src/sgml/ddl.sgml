@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.28 2004/08/07 19:53:48 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.29 2004/08/07 20:44:49 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1378,29 +1378,22 @@ ALTER TABLE products RENAME TO items;
    When you create a database object, you become its owner.  By
    default, only the owner of an object can do anything with the
    object. In order to allow other users to use it,
-   <firstterm>privileges</firstterm> must be granted.  (There are also
-   users that have the superuser privilege.  Those users can always
+   <firstterm>privileges</firstterm> must be granted.  (However,
+   users that have the superuser attribute can always
    access any object.)
   </para>
-
-  <note>
-   <para>
-    To change the owner of a table, index, sequence, or view, use the
-    <xref linkend="sql-altertable" endterm="sql-altertable-title">
-    command.
-   </para>
-  </note>
 
   <para>
    There are several different privileges: <literal>SELECT</>,
    <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
    <literal>RULE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
    <literal>CREATE</>, <literal>TEMPORARY</>, <literal>EXECUTE</>,
-   <literal>USAGE</>, and <literal>ALL PRIVILEGES</>. For complete
+   and <literal>USAGE</>.  The privileges applicable to a particular
+   object vary depending on the object's type (table, function, etc).
+   For complete
    information on the different types of privileges supported by
    <productname>PostgreSQL</productname>, refer to the
-   <xref linkend="sql-grant" endterm="sql-grant-title">
-   reference page.  The following sections
+   <xref linkend="sql-grant"> reference page.  The following sections
    and chapters will also show you how those privileges are used.
   </para>
 
@@ -1409,23 +1402,30 @@ ALTER TABLE products RENAME TO items;
    the owner only.
   </para>
 
+  <note>
+   <para>
+    To change the owner of a table, index, sequence, or view, use the
+    <xref linkend="sql-altertable"> command.  There are corresponding
+    <literal>ALTER</> commands for other object types.
+   </para>
+  </note>
+
   <para>
    To assign privileges, the <command>GRANT</command> command is
-   used. So, if <literal>joe</literal> is an existing user, and
+   used. For example, if <literal>joe</literal> is an existing user, and
    <literal>accounts</literal> is an existing table, the privilege to
    update the table can be granted with
 <programlisting>
 GRANT UPDATE ON accounts TO joe;
 </programlisting>
-   The user executing this command must be the owner of the table. To
-   grant a privilege to a group, use
+   To grant a privilege to a group, use this syntax:
 <programlisting>
 GRANT SELECT ON accounts TO GROUP staff;
 </programlisting>
    The special <quote>user</quote> name <literal>PUBLIC</literal> can
    be used to grant a privilege to every user on the system. Writing
-   <literal>ALL</literal> in place of a specific privilege specifies that all
-   privileges will be granted.
+   <literal>ALL</literal> in place of a specific privilege grants all
+   privileges that are relevant for the object type.
   </para>
 
   <para>
@@ -1434,12 +1434,23 @@ GRANT SELECT ON accounts TO GROUP staff;
 <programlisting>
 REVOKE ALL ON accounts FROM PUBLIC;
 </programlisting>
-   The special privileges of the table owner (i.e., the right to do
+   The special privileges of the object owner (i.e., the right to do
    <command>DROP</>, <command>GRANT</>, <command>REVOKE</>, etc.)
    are always implicit in being the owner,
-   and cannot be granted or revoked.  But the table owner can choose
+   and cannot be granted or revoked.  But the object owner can choose
    to revoke his own ordinary privileges, for example to make a
    table read-only for himself as well as others.
+  </para>
+
+  <para>
+   Ordinarily, only the object's owner (or a superuser) can grant or revoke
+   privileges on an object.  However, it is possible to grant a privilege
+   <quote>with grant option</>, which gives the recipient the right to
+   grant it in turn to others.  If the grant option is subsequently revoked
+   then all who received the privilege from that recipient (directly or
+   through a chain of grants) will lose the privilege.  For details see
+   the <xref linkend="sql-grant"> and <xref linkend="sql-revoke"> reference
+   pages.
   </para>
  </sect1>
 
@@ -1544,12 +1555,17 @@ CREATE SCHEMA myschema;
 <synopsis>
 <replaceable>schema</><literal>.</><replaceable>table</>
 </synopsis>
+    (For brevity we will speak of tables only, but the same ideas apply
+    to other kinds of named objects, such as types and functions.)
+   </para>
+
+   <para>
     Actually, the even more general syntax
 <synopsis>
 <replaceable>database</><literal>.</><replaceable>schema</><literal>.</><replaceable>table</>
 </synopsis>
     can be used too, but at present this is just for pro-forma compliance
-    with the SQL standard; if you write a database name it must be the
+    with the SQL standard.  If you write a database name, it must be the
     same as the database you are connected to.
    </para>
 
@@ -1862,7 +1878,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
        privileges to allow the other users to access them.  Users can
        then refer to these additional objects by qualifying the names
        with a schema name, or they can put the additional schemas into
-       their path, as they choose.
+       their search path, as they choose.
       </para>
      </listitem>
     </itemizedlist>

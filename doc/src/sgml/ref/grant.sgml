@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.41 2004/06/18 06:13:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.42 2004/08/07 20:44:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -52,8 +52,8 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
 
   <para>
    The <command>GRANT</command> command gives specific privileges on
-   an object (table, view, sequence, database, function, procedural language,
-   or schema) to
+   an object (table, view, sequence, database, tablespace, function,
+   procedural language, or schema) to
    one or more users or groups of users.  These privileges are added
    to those already granted, if any.
   </para>
