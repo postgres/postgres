@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.13 1997/05/06 05:20:21 vadim Exp $
+ * $Id: pg_dump.h,v 1.14 1997/05/07 02:59:59 scrappy Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -15,6 +15,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include <catalog/pg_index.h>
 
 /* The *Info data structures run-time C structures used to store
    system catalog information */

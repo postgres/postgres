@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.7 1996/11/17 03:54:54 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.8 1997/05/07 02:59:46 scrappy Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -96,7 +96,7 @@ fi
 
 if [ -z "$NEWUSER" ]
 then
-    echo _fUnKy_DASH_N_sTuFf_ "Enter name of user to add ---> "_fUnKy_BACKSLASH_C_sTuFf_
+    echo _fUnKy_DASH_N_sTuFf_ "Enter name of user to add ---> _fUnKy_BACKSLASH_C_sTuFf_"
     read NEWUSER
 fi
 
@@ -134,7 +134,7 @@ do
     fi
     while  [ -z "$SYSID" ]
     do
-	echo _fUnKy_DASH_N_sTuFf_ "Enter user's postgres ID$DEFMSG -> "_fUnKy_BACKSLASH_C_sTuFf_
+	echo _fUnKy_DASH_N_sTuFf_ "Enter user's postgres ID$DEFMSG -> _fUnKy_BACKSLASH_C_sTuFf_"
 	read SYSID
 	[ -z "$SYSID" ] && SYSID=$DEFSYSID;
 	SYSIDISNUM=`echo $SYSID | egrep '^[0-9]+$'`
@@ -173,7 +173,7 @@ yn=f
 
 while [ "$yn" != y -a "$yn" != n ]
 do
-    echo _fUnKy_DASH_N_sTuFf_ "Is user \"$NEWUSER\" allowed to create databases (y/n) "_fUnKy_BACKSLASH_C_sTuFf_
+    echo _fUnKy_DASH_N_sTuFf_ "Is user \"$NEWUSER\" allowed to create databases (y/n) _fUnKy_BACKSLASH_C_sTuFf_"
     read yn
 done
 
@@ -192,7 +192,7 @@ yn=f
 
 while [ "$yn" != y -a "$yn" != n ]
 do
-    echo _fUnKy_DASH_N_sTuFf_ "Is user \"$NEWUSER\" allowed to add users? (y/n) "_fUnKy_BACKSLASH_C_sTuFf_
+    echo _fUnKy_DASH_N_sTuFf_ "Is user \"$NEWUSER\" allowed to add users? (y/n) _fUnKy_BACKSLASH_C_sTuFf_"
     read yn
 done
 
