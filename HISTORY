@@ -567,6 +567,36 @@ Contrib
    Improve /contrib/fulltextindex (Christopher)
      _________________________________________________________________
 
+                               Release 7.2.4
+
+     Release date: 2003-01-30
+
+   This  has  a  variety  of fixes from 7.2.3, including fixes to prevent
+   possible data loss.
+     _________________________________________________________________
+
+                         Migration to version 7.2.4
+
+   A dump/restore is *not* required for those running 7.2.X.
+     _________________________________________________________________
+
+                                  Changes
+
+   Fix some additional cases of VACUUM "No one parent tuple was found"
+	error
+   Prevent VACUUM from being called inside a function  (Bruce)
+   Ensure pg_clog updates are sync'd to disk before marking checkpoint
+	complete
+   Avoid integer overflow during large hash joins
+   Make GROUP commands work when pg_group.grolist is large enough
+	to be toasted
+   Fix errors in datetime tables; some timezone names weren't being
+	recognized
+   Fix integer overflows in circle_poly(), path_encode(), path_add()
+	(Neil)
+   Repair long-standing logic errors in lseg_eq(), lseg_ne(), lseg_center()
+     _________________________________________________________________
+
                                Release 7.2.3
 
      Release date: 2002-10-01

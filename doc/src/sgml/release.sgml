@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.8 2003/01/11 21:03:21 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.9 2003/01/29 22:13:56 tgl Exp $
 -->
 
 <appendix id="release">
@@ -770,6 +770,48 @@ Improve /contrib/fulltextindex (Christopher)
 
   </sect2>
  </sect1>
+
+
+  <sect1 id="release-7-2-4">
+   <title>Release 7.2.4</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2003-01-30</simpara>
+   </note>
+
+   <para>
+    This has a variety of fixes from 7.2.3, including fixes to prevent
+    possible data loss.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.2.4</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those running
+     7.2.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+<literallayout>
+Fix some additional cases of VACUUM "No one parent tuple was found" error
+Prevent VACUUM from being called inside a function  (Bruce)
+Ensure pg_clog updates are sync'd to disk before marking checkpoint complete
+Avoid integer overflow during large hash joins
+Make GROUP commands work when pg_group.grolist is large enough to be toasted
+Fix errors in datetime tables; some timezone names weren't being recognized
+Fix integer overflows in circle_poly(), path_encode(), path_add()  (Neil)
+Repair long-standing logic errors in lseg_eq(), lseg_ne(), lseg_center()
+</literallayout>
+    </para>
+   </sect2>
+  </sect1>
 
 
   <sect1 id="release-7-2-3">
