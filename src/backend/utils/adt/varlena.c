@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.9 1997/01/08 08:38:59 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.10 1997/01/16 03:53:51 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ textin(char *inputText)
     
     if (inputText == NULL)
 	return(NULL);
-    len = strlen(inputText) + VARHDRSZ + 1;		
+    len = strlen(inputText) + VARHDRSZ;		
     result = (struct varlena *) palloc(len);
     VARSIZE(result) = len;
     memmove(VARDATA(result), inputText, len - VARHDRSZ);	
