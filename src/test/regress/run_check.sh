@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.9 2000/02/19 22:13:36 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.10 2000/02/24 23:37:30 petere Exp $
 
 # ----------
 # Check call syntax
@@ -173,7 +173,7 @@ export PATH
 # Run initdb to initialize a database system in ./tmp_check
 # ----------
 echo "=============== Initializing check database instance   ================"
-initdb --pglib=$LIBDIR --pgdata=$PGDATA >$LOGDIR/initdb.log 2>&1
+initdb -L $LIBDIR -D $PGDATA >$LOGDIR/initdb.log 2>&1
 
 if [ $? -ne 0 ]
 then
@@ -239,7 +239,7 @@ fi
 # Install the PL/pgSQL language in it
 # ----------
 echo "=============== Installing PL/pgSQL...                 ================"
-createlang $HOSTLOC plpgsql regression
+createlang -L $LIBDIR $HOSTLOC plpgsql regression
 if [ $? -ne 0 -a $? -ne 2 ]; then
      echo createlang failed
 	 kill -15 $PMPID
