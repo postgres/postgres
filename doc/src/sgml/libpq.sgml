@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.83 2001/11/28 20:36:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.84 2001/11/29 16:01:15 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -2015,7 +2015,7 @@ sets the user name used to connect to the database and for authentication.
 <envar>PGPASSWORD</envar>
 sets the password used if the backend demands password
 authentication. This is not recommended because the password can
-be read by others using a <command>ps</command> environment flag
+be read by others using the <command>ps</command> command with special options
 on some platforms.
 </para>
 </listitem>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.38 2001/11/28 20:36:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.39 2001/11/29 16:01:15 petere Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -111,7 +111,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.38 2001/11/28 20:36:
 	<envar>PGPASSWORD</envar>
 	sets the password used if the backend demands password
 	authentication. This is not recommended because the password can
-	be read by others using a <command>ps</command> environment flag
+	be read by others using the <command>ps</command> command with special options
 	on some platforms.
        </para>
       </listitem>
