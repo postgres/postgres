@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.24 2003/01/08 23:34:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.25 2003/02/03 22:29:11 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -167,6 +167,8 @@ static SSL_CTX *SSL_context = NULL;
  *	Protocols" (http://www.skip-vpn.org/spec/numbers.html)
  *	for suggestions.
  */
+#ifdef USE_SSL
+
 static const char file_dh512[] =
 "-----BEGIN DH PARAMETERS-----\n\
 MEYCQQD1Kv884bEpQBgRjXyEpwpy1obEAxnIByl6ypUM2Zafq9AKUJsCRtMIPWak\n\
@@ -204,6 +206,8 @@ OvOzKGtwcTqO/1wV5gKkzu1ZVswVUQd5Gg8lJicwqRWyyNRczDDoG9jVDxmogKTH\n\
 AaqLulO7R8Ifa1SwF2DteSGVtgWEN8gDpN3RBmmPTDngyF2DHb5qmpnznwtFKdTL\n\
 KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
 -----END DH PARAMETERS-----\n";
+
+#endif
 
 /* ------------------------------------------------------------ */
 /*			 Procedures common to all secure sessions			*/
