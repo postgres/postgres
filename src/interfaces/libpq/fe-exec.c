@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.59 1998/07/13 16:35:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.60 1998/07/14 02:41:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1299,7 +1299,7 @@ PQfsize(PGresult *res, int field_num)
 		return 0;
 }
 
-short
+int
 PQfmod(PGresult *res, int field_num)
 {
 	if (!res)

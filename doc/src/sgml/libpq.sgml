@@ -442,8 +442,8 @@ short PQfsize(PGresult *res,
           associated with the given field index.
           Field indices start at 0.
 <ProgramListing>
-short PQfmod(PGresult *res,
-             int field_index);
+int PQfmod(PGresult *res,
+           int field_index);
 </ProgramListing>
 </Para>
 </ListItem>
