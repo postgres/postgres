@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.367 2003/09/29 00:05:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.368 2003/09/29 18:50:58 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -955,25 +955,17 @@ exec_simple_query(const char *query_string)
 		usecs = (long) (stop_t.tv_sec - start_t.tv_sec) * 1000000 + (long) (stop_t.tv_usec - start_t.tv_usec);
 
 		/*
-		 * Output a duration_query to the log if the query has exceeded
-		 * the min duration.
+		 * Output a duration_statement to the log if the query has exceeded
+		 * the min duration, or if we are to print all durations.
 		 */
-		if (usecs >= save_log_min_duration_statement * 1000)
+		if (save_log_duration ||
+			(save_log_min_duration_statement > 0 &&
+			 usecs >= save_log_min_duration_statement * 1000))
 			ereport(LOG,
-					(errmsg("duration_statement: %ld.%06ld %s",
+					(errmsg("duration: %ld.%06ld %s",
 							(long) (stop_t.tv_sec - start_t.tv_sec),
 							(long) (stop_t.tv_usec - start_t.tv_usec),
 							query_string)));
-
-		/*
-		 * If the user is requesting logging of all durations, then log
-		 * that as well.
-		 */
-		if (save_log_duration)
-			ereport(LOG,
-					(errmsg("duration: %ld.%06ld sec",
-							(long) (stop_t.tv_sec - start_t.tv_sec),
-							(long) (stop_t.tv_usec - start_t.tv_usec))));
 	}
 
 	if (save_log_statement_stats)
@@ -2662,7 +2654,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.367 $ $Date: 2003/09/29 00:05:25 $\n");
+		puts("$Revision: 1.368 $ $Date: 2003/09/29 18:50:58 $\n");
 	}
 
 	/*
