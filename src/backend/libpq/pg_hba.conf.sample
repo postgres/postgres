@@ -13,9 +13,6 @@
 # host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
 # hostssl    DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
 # hostnossl  DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
-# host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
-# hostssl    DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
-# hostnossl  DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
 #
 # (The uppercase quantities should be replaced by actual values.)
 # The first field is the connection type: "local" is a Unix-domain socket,
