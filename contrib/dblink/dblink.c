@@ -345,7 +345,6 @@ dblink_open(PG_FUNCTION_ARGS)
 		else
 		{
 			DBLINK_RES_ERROR_AS_NOTICE("sql error");
-			PQclear(res);
 			PG_RETURN_TEXT_P(GET_TEXT("ERROR"));
 		}
 	}
@@ -419,7 +418,6 @@ dblink_close(PG_FUNCTION_ARGS)
 		else
 		{
 			DBLINK_RES_ERROR_AS_NOTICE("sql error");
-			PQclear(res);
 			PG_RETURN_TEXT_P(GET_TEXT("ERROR"));
 		}
 	}
@@ -531,8 +529,6 @@ dblink_fetch(PG_FUNCTION_ARGS)
 				DBLINK_RES_ERROR("sql error");
 			else
 			{
-				if (res)
-					PQclear(res);
 				DBLINK_RES_ERROR_AS_NOTICE("sql error");
 				SRF_RETURN_DONE(funcctx);
 			}
@@ -720,11 +716,9 @@ dblink_record(PG_FUNCTION_ARGS)
 				DBLINK_RES_ERROR("sql error");
 			else
 			{
-				if (res)
-					PQclear(res);
+				DBLINK_RES_ERROR_AS_NOTICE("sql error");
 				if (freeconn)
 					PQfinish(conn);
-				DBLINK_RES_ERROR_AS_NOTICE("sql error");
 				SRF_RETURN_DONE(funcctx);
 			}
 		}
@@ -938,13 +932,15 @@ dblink_exec(PG_FUNCTION_ARGS)
 		 * result tuple
 		 */
 		sql_cmd_status = GET_TEXT(PQcmdStatus(res));
+		PQclear(res);
 	}
 	else
+	{
+		PQclear(res);
 		ereport(ERROR,
 			  (errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
 			   errmsg("statement returning results not allowed")));
-
-	PQclear(res);
+	}
 
 	/* if needed, close the connection to the database and cleanup */
 	if (freeconn)
