@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.54 2001/03/22 06:16:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.55 2001/05/18 21:24:18 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -384,15 +384,15 @@ DefineOperator(char *oprName,
 		if (strcasecmp(defel->defname, "leftarg") == 0)
 		{
 			typeName1 = defGetString(defel);
-			if (IsA(defel->arg, TypeName)
-				&&((TypeName *) defel->arg)->setof)
+			if (IsA(defel->arg, TypeName) &&
+				((TypeName *) defel->arg)->setof)
 				elog(ERROR, "setof type not implemented for leftarg");
 		}
 		else if (strcasecmp(defel->defname, "rightarg") == 0)
 		{
 			typeName2 = defGetString(defel);
-			if (IsA(defel->arg, TypeName)
-				&&((TypeName *) defel->arg)->setof)
+			if (IsA(defel->arg, TypeName) &&
+				((TypeName *) defel->arg)->setof)
 				elog(ERROR, "setof type not implemented for rightarg");
 		}
 		else if (strcasecmp(defel->defname, "procedure") == 0)

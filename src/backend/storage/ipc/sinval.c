@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.30 2001/05/07 17:20:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.31 2001/05/18 21:24:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,7 +235,7 @@ TransactionIdIsInProgress(TransactionId xid)
 
 /*
  * GetXmaxRecent -- returns oldest transaction that was running
- *					when all current transaction was started.
+ *					when all current transaction were started.
  *					It's used by vacuum to decide what deleted
  *					tuples must be preserved in a table.
  */

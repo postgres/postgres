@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.79 2001/03/22 06:16:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.80 2001/05/18 21:24:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -843,7 +843,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * an expression.
 	 *----------
 	 */
-	if (IsA(node, Ident) &&((Ident *) node)->indirection == NIL)
+	if (IsA(node, Ident) && ((Ident *) node)->indirection == NIL)
 	{
 		char	   *name = ((Ident *) node)->name;
 
