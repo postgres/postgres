@@ -52,8 +52,8 @@ extern GLOBAL_VALUES globals;
 #ifdef	WIN32
 static int driver_optionsDraw(HWND, const ConnInfo *, int src, BOOL enable);
 static int driver_options_update(HWND hdlg, ConnInfo *ci, BOOL);
-#endif
 static void updateCommons(const ConnInfo *ci);
+#endif
 
 #ifdef WIN32
 void
@@ -390,6 +390,110 @@ ds_optionsProc(HWND hdlg,
 	return FALSE;
 }
 
+/*
+ *	This function writes any global parameters (that can be manipulated)
+ *	to the ODBCINST.INI portion of the registry
+ */
+static void
+updateCommons(const ConnInfo *ci)
+{
+	const	char		*sectionName;
+	const	char		*fileName;
+	const	GLOBAL_VALUES	*comval;
+	char		tmp[128];
+
+	if (ci)
+		if (ci->dsn && ci->dsn[0])
+		{
+			mylog("DSN=%s updating\n", ci->dsn);
+			comval = &(ci->drivers);
+			sectionName = ci->dsn;
+			fileName = ODBC_INI;
+		}
+		else
+		{
+			mylog("ci but dsn==NULL\n");
+			return;
+		} 
+	else
+	{
+		mylog("drivers updating\n");
+		comval = &globals;
+		sectionName = DBMS_NAME;
+		fileName = ODBCINST_INI;
+	}
+	sprintf(tmp, "%d", comval->fetch_max);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_FETCH, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->commlog);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_COMMLOG, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->debug);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_DEBUG, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->disable_optimizer);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_OPTIMIZER, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->ksqo);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_KSQO, tmp, fileName);
+
+	/* Never update the onlyread, unique_index from this module 
+	sprintf(tmp, "%d", comval->unique_index);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_UNIQUEINDEX, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->onlyread);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_READONLY, tmp, fileName);*/
+
+	sprintf(tmp, "%d", comval->use_declarefetch);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_USEDECLAREFETCH, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->unknown_sizes);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_UNKNOWNSIZES, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->text_as_longvarchar);
+	SQLWritePrivateProfileString(sectionName,
+							   INI_TEXTASLONGVARCHAR, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->unknowns_as_longvarchar);
+	SQLWritePrivateProfileString(sectionName,
+						   INI_UNKNOWNSASLONGVARCHAR, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->bools_as_char);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_BOOLSASCHAR, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->parse);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_PARSE, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->cancel_as_freestmt);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_CANCELASFREESTMT, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->max_varchar_size);
+	SQLWritePrivateProfileString(sectionName,
+								 INI_MAXVARCHARSIZE, tmp, fileName);
+
+	sprintf(tmp, "%d", comval->max_longvarchar_size);
+	SQLWritePrivateProfileString(sectionName,
+							  INI_MAXLONGVARCHARSIZE, tmp, fileName);
+
+	SQLWritePrivateProfileString(sectionName,
+								 INI_EXTRASYSTABLEPREFIXES, comval->extra_systable_prefixes, fileName);
+
+	/* Never update the conn_setting from this module 
+	SQLWritePrivateProfileString(sectionName,
+				  INI_CONNSETTINGS, comval->conn_settings, fileName); */
+}
 #endif	 /* WIN32 */
 
 
@@ -996,109 +1100,4 @@ getCommonDefaults(const char *section, const char *filename, ConnInfo *ci)
 		else
 			strcpy(comval->protocol, DEFAULT_PROTOCOL);
 	}
-}
-
-/*
- *	This function writes any global parameters (that can be manipulated)
- *	to the ODBCINST.INI portion of the registry
- */
-static void
-updateCommons(const ConnInfo *ci)
-{
-	const	char		*sectionName;
-	const	char		*fileName;
-	const	GLOBAL_VALUES	*comval;
-	char		tmp[128];
-
-	if (ci)
-		if (ci->dsn && ci->dsn[0])
-		{
-			mylog("DSN=%s updating\n", ci->dsn);
-			comval = &(ci->drivers);
-			sectionName = ci->dsn;
-			fileName = ODBC_INI;
-		}
-		else
-		{
-			mylog("ci but dsn==NULL\n");
-			return;
-		} 
-	else
-	{
-		mylog("drivers updating\n");
-		comval = &globals;
-		sectionName = DBMS_NAME;
-		fileName = ODBCINST_INI;
-	}
-	sprintf(tmp, "%d", comval->fetch_max);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_FETCH, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->commlog);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_COMMLOG, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->debug);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_DEBUG, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->disable_optimizer);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_OPTIMIZER, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->ksqo);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_KSQO, tmp, fileName);
-
-	/* Never update the onlyread, unique_index from this module 
-	sprintf(tmp, "%d", comval->unique_index);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_UNIQUEINDEX, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->onlyread);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_READONLY, tmp, fileName);*/
-
-	sprintf(tmp, "%d", comval->use_declarefetch);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_USEDECLAREFETCH, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->unknown_sizes);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_UNKNOWNSIZES, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->text_as_longvarchar);
-	SQLWritePrivateProfileString(sectionName,
-							   INI_TEXTASLONGVARCHAR, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->unknowns_as_longvarchar);
-	SQLWritePrivateProfileString(sectionName,
-						   INI_UNKNOWNSASLONGVARCHAR, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->bools_as_char);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_BOOLSASCHAR, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->parse);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_PARSE, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->cancel_as_freestmt);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_CANCELASFREESTMT, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->max_varchar_size);
-	SQLWritePrivateProfileString(sectionName,
-								 INI_MAXVARCHARSIZE, tmp, fileName);
-
-	sprintf(tmp, "%d", comval->max_longvarchar_size);
-	SQLWritePrivateProfileString(sectionName,
-							  INI_MAXLONGVARCHARSIZE, tmp, fileName);
-
-	SQLWritePrivateProfileString(sectionName,
-								 INI_EXTRASYSTABLEPREFIXES, comval->extra_systable_prefixes, fileName);
-
-	/* Never update the conn_setting from this module 
-	SQLWritePrivateProfileString(sectionName,
-				  INI_CONNSETTINGS, comval->conn_settings, fileName); */
 }
