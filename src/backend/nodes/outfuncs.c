@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.3 1996/11/10 03:00:44 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.4 1996/12/11 03:17:42 bryanh Exp $
  *
  * NOTES
  *    Every (plan) node in POSTGRES has an associated "out" routine which
@@ -247,13 +247,13 @@ _outMergeJoin(StringInfo str, MergeJoin *node)
     appendStringInfo(str,buf);
     _outNode(str, node->mergeclauses);
     
-    sprintf(buf, " :mergesortop %d", node->mergesortop);
+    sprintf(buf, " :mergesortop %ud", node->mergesortop);
     appendStringInfo(str,buf);
     
-    sprintf(buf, " :mergerightorder %d", node->mergerightorder[0]);
+    sprintf(buf, " :mergerightorder %ud", node->mergerightorder[0]);
     appendStringInfo(str, buf);
 
-    sprintf(buf, " :mergeleftorder %d", node->mergeleftorder[0]);
+    sprintf(buf, " :mergeleftorder %ud", node->mergeleftorder[0]);
     appendStringInfo(str, buf);
 }
 
@@ -273,7 +273,7 @@ _outHashJoin(StringInfo str, HashJoin *node)
     appendStringInfo(str,buf);
     _outNode(str, node->hashclauses);
     
-    sprintf(buf, " :hashjoinop %d",node->hashjoinop);
+    sprintf(buf, " :hashjoinop %ud",node->hashjoinop);
     appendStringInfo(str,buf);
     sprintf(buf, " :hashjointable 0x%x", (int) node->hashjointable);
     appendStringInfo(str,buf);
@@ -357,7 +357,7 @@ _outTemp(StringInfo str, Temp *node)
     appendStringInfo(str,buf);
     _outPlanInfo(str, (Plan*) node);
     
-    sprintf(buf, " :tempid %d", node->tempid);
+    sprintf(buf, " :tempid %ud", node->tempid);
     appendStringInfo(str,buf);
     sprintf(buf, " :keycount %d", node->keycount);
     appendStringInfo(str,buf);
@@ -376,7 +376,7 @@ _outSort(StringInfo str, Sort *node)
     appendStringInfo(str,buf);
     _outPlanInfo(str, (Plan*) node);
     
-    sprintf(buf, " :tempid %d", node->tempid);
+    sprintf(buf, " :tempid %ud", node->tempid);
     appendStringInfo(str,buf);
     sprintf(buf, " :keycount %d", node->keycount);
     appendStringInfo(str,buf);
@@ -425,7 +425,7 @@ _outUnique(StringInfo str, Unique *node)
     appendStringInfo(str,buf);
     _outPlanInfo(str, (Plan*) node);
     
-    sprintf(buf, " :tempid %d", node->tempid);
+    sprintf(buf, " :tempid %ud", node->tempid);
     appendStringInfo(str,buf);
     sprintf(buf, " :keycount %d", node->keycount);
     appendStringInfo(str,buf);
@@ -497,7 +497,7 @@ _outResdom(StringInfo str, Resdom *node)
     appendStringInfo(str,buf);
     sprintf(buf, " :resno %hd", node->resno);
     appendStringInfo(str,buf);
-    sprintf(buf, " :restype %d", node->restype);
+    sprintf(buf, " :restype %ud", node->restype);
     appendStringInfo(str,buf);
     sprintf(buf, " :reslen %d", node->reslen);
     appendStringInfo(str,buf);
@@ -506,7 +506,7 @@ _outResdom(StringInfo str, Resdom *node)
     appendStringInfo(str,buf);
     sprintf(buf, " :reskey %d", node->reskey);
     appendStringInfo(str,buf);
-    sprintf(buf, " :reskeyop %ld", (long int) node->reskeyop);
+    sprintf(buf, " :reskeyop %ud", node->reskeyop);
     appendStringInfo(str,buf);
     sprintf(buf, " :resjunk %d", node->resjunk);
     appendStringInfo(str,buf);

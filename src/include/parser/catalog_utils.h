@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog_utils.h,v 1.5 1996/11/30 18:06:58 momjian Exp $
+ * $Id: catalog_utils.h,v 1.6 1996/12/11 03:18:12 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,9 @@
 typedef HeapTuple	Type;
 typedef HeapTuple	Operator;
 
-extern bool check_typeid(long id);
-extern Type get_id_type(long id);
-extern char *get_id_typname(long id);
+extern bool check_typeid(Oid id);
+extern Type get_id_type(Oid id);
+extern char *get_id_typname(Oid id);
 extern Type type(char *);
 extern Oid att_typeid(Relation rd, int attid);
 extern int att_attnelems(Relation rd, int attid);

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.12 1996/11/30 18:06:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.13 1996/12/11 03:17:49 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ static void make_lowercase(char *string);
  *  what's going on                 - jolly
  */
 bool
-check_typeid(long id)
+check_typeid(Oid id)
 {
     return (SearchSysCacheTuple(TYPOID, 
 				ObjectIdGetDatum(id),
@@ -130,13 +130,13 @@ check_typeid(long id)
 
 /* return a Type structure, given an typid */
 Type
-get_id_type(long id)
+get_id_type(Oid id)
 {
     HeapTuple tup;
     
     if (!(tup = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(id),
 				    0,0,0))) { 
-	elog ( WARN, "type id lookup of %d failed", id);
+	elog ( WARN, "type id lookup of %ud failed", id);
 	return(NULL);
     }
     return((Type) tup);
@@ -144,14 +144,14 @@ get_id_type(long id)
 
 /* return a type name, given a typeid */
 char*
-get_id_typname(long id)
+get_id_typname(Oid id)
 {
     HeapTuple tup;
     TypeTupleForm typetuple;
     
     if (!(tup = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(id),
 				    0,0,0))) {
-	elog ( WARN, "type id lookup of %d failed", id);
+	elog ( WARN, "type id lookup of %ud failed", id);
 	return(NULL);
     }
     typetuple = (TypeTupleForm)GETSTRUCT(tup);
@@ -1165,8 +1165,8 @@ func_get_detail(char *funcname,
     } else {
 	pform = (Form_pg_proc) GETSTRUCT(ftup);
 	*funcid = ftup->t_oid;
-	*rettype = (Oid) pform->prorettype;
-	*retset = (Oid) pform->proretset;
+	*rettype = pform->prorettype;
+	*retset = pform->proretset;
 	
 	return (true);
     }
