@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.45 2001/11/19 09:05:01 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.46 2001/12/05 02:06:19 ishii Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -4140,7 +4140,10 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
-						Np->inout_p += sprintf(Np->inout_p, "%15s", Np->number_p) - 1;
+					{
+						sprintf(Np->inout_p, "%15s", Np->number_p);
+						Np->inout_p += strlen(Np->inout_p) - 1;
+					}
 					break;
 
 				case NUM_rn:
@@ -4150,7 +4153,10 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
-						Np->inout_p += sprintf(Np->inout_p, "%15s", str_tolower(Np->number_p)) - 1;
+					{
+						sprintf(Np->inout_p, "%15s", str_tolower(Np->number_p));
+						Np->inout_p += strlen(Np->inout_p) - 1;
+					}
 					break;
 
 				case NUM_th:
@@ -4664,7 +4670,8 @@ float4_to_char(PG_FUNCTION_ARGS)
 		}
 
 		orgnum = (char *) palloc(MAXFLOATWIDTH + 1);
-		len = sprintf(orgnum, "%.0f", fabs(val));
+		sprintf(orgnum, "%.0f", fabs(val));
+		len = strlen(orgnum);
 		if (Num.pre > len)
 			plen = Num.pre - len;
 		if (len >= FLT_DIG)
