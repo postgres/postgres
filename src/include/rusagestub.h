@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rusagestub.h,v 1.2 1997/12/19 13:34:30 scrappy Exp $ 
+ * $Id: rusagestub.h,v 1.1 1998/02/20 13:10:03 scrappy Exp $ 
  *
  *-------------------------------------------------------------------------
  */
