@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.134 2001/01/18 04:01:42 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.135 2001/01/18 07:29:04 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1557,6 +1557,7 @@ setNewRelfilenode(Relation relation)
 	memcpy((char *) &workrel, relation, sizeof(RelationData));
 	workrel.rd_node.relNode = newrelfilenode;
 	heap_storage_create(&workrel);
+	smgrclose(DEFAULT_SMGR, &workrel);
 	/* update pg_class tuple with new relfilenode in place */
 	if (in_place_update)
 	{
@@ -1578,9 +1579,10 @@ setNewRelfilenode(Relation relation)
 							   idescs);
 		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, classTuple);
 		CatalogCloseIndices(Num_pg_class_indices, idescs);
-		heap_freetuple(classTuple);
 	}
 	heap_close(pg_class, NoLock);
+	if (!in_place_update)
+		heap_freetuple(classTuple);
 	/* Make sure the relfilenode change */
 	CommandCounterIncrement();
 }
