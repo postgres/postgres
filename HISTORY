@@ -22,9 +22,10 @@ Overview
 
    Table Functions
 
-           PL/PgSQL and C functions can now return sets, with multiple
-           rows and multiple columns. You specify these functions in the
-           SELECT FROM clause, similar to a table or view.
+           Functions returning multiple rows and/or multiple columns are
+           now much easier to use than before.  You can call such a
+           "table function" in the SELECT FROM clause, treating its output
+           like a table. Also, plpgsql functions can now return sets.
 
    Prepared Queries
 
