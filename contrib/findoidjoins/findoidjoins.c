@@ -26,7 +26,7 @@ main(int argc, char **argv)
 	if (argc != 2)
 		halt("Usage:  %s database\n", argv[0]);
 
-	connectdb(argv[1], NULL, NULL, NULL, NULL);
+	connectdb(NULL, NULL, NULL, NULL, argv[1]);
 	on_error_continue();
 	on_error_stop();
 

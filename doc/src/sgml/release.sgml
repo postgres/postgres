@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.44 2000/04/18 21:18:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.45 2000/04/28 15:03:39 momjian Exp $
 -->
 
  <chapter id="release">
@@ -213,6 +213,7 @@ Add FOREIGN KEY ... MATCH FULL ... ON DELETE CASCADE (Jan)
 Add FOREIGN KEY ... MATCH &lt;unspecified&gt; referential actions (Don Baccus)
 Allow WHERE restriction on ctid (physical heap location) (Hiroshi)
 Move pginterface from contrib to interface directory, rename to pgeasy (Bruce)
+Change pgeasy connectdb() parameter ordering (Bruce)
 Add DEC and SESSION_USER as reserved words (Thomas)
 Require SELECT DISTINCT target list to have all ORDER BY columns (Tom)
 Add Oracle's COMMENT ON command (<ulink url="mailto:mascarim@yahoo">Mike Mascari</ulink>)
