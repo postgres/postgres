@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.15 1998/08/07 05:02:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.16 1998/08/09 04:17:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,8 +207,7 @@ add_clause_to_rels(Query *root, List *clause)
 		else
 		{
 			clauseinfo->selectivity =
-				compute_clause_selec(root, (Node *) clause,
-									 NIL);
+				compute_clause_selec(root, (Node *) clause, NIL);
 		}
 		rel->clauseinfo = lcons(clauseinfo,
 								rel->clauseinfo);
