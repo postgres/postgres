@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.34 1998/02/20 01:44:18 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.35 1998/02/23 19:26:32 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -351,8 +351,19 @@ echo "vacuuming template1"
 echo "vacuum" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "^DEBUG:"
 
-echo "COPY pg_user TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-         grep -v "'DEBUG:"
+echo "COPY pg_user TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" |\
+	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+	grep -v "'DEBUG:"
+
+echo "GRANT SELECT ON pg_class TO PUBLIC" |\
+	 postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+
+echo "create view db_user as select usename,usesysid from pg_user;" |\
+	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+	grep -v "'DEBUG:"
+echo "grant select on db_user to public" |\
+	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+	grep -v "'DEBUG:"
 
 echo "loading pg_description"
 echo "copy pg_description from '$TEMPLATE_DESCR'" | postgres -F -Q -D$PGDATA template1 > /dev/null
