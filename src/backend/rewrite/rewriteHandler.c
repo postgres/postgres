@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.85 2000/12/06 23:55:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.86 2000/12/07 01:22:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ static RewriteInfo *gatherRewriteMeta(Query *parsetree,
 				  CmdType event,
 				  bool instead_flag);
 static List *adjustJoinTreeList(Query *parsetree, int rt_index, bool *found);
+static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 						int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree);
@@ -263,7 +264,6 @@ ApplyRetrieveRule(Query *parsetree,
 	Query	   *rule_action;
 	RangeTblEntry *rte,
 			   *subrte;
-	List	   *l;
 
 	if (length(rule->actions) != 1)
 		elog(ERROR, "ApplyRetrieveRule: expected just one rule action");
@@ -308,8 +308,6 @@ ApplyRetrieveRule(Query *parsetree,
 	 */
 	if (intMember(rt_index, parsetree->rowMarks))
 	{
-		Index		innerrti = 1;
-
 		/*
 		 * Remove the view from the list of rels that will actually be
 		 * marked FOR UPDATE by the executor.  It will still be access-
@@ -320,27 +318,49 @@ ApplyRetrieveRule(Query *parsetree,
 		/*
 		 * Set up the view's referenced tables as if FOR UPDATE.
 		 */
-		foreach(l, rule_action->rtable)
-		{
-			subrte = (RangeTblEntry *) lfirst(l);
-
-			/*
-			 * RTable of VIEW has two entries of VIEW itself - skip them!
-			 * Also keep hands off of sub-subqueries.
-			 */
-			if (innerrti != PRS2_OLD_VARNO && innerrti != PRS2_NEW_VARNO &&
-				subrte->relid != InvalidOid)
-			{
-				if (!intMember(innerrti, rule_action->rowMarks))
-					rule_action->rowMarks = lappendi(rule_action->rowMarks,
-													 innerrti);
-				subrte->checkForWrite = true;
-			}
-			innerrti++;
-		}
+		markQueryForUpdate(rule_action, true);
 	}
 
 	return parsetree;
+}
+
+/*
+ * Recursively mark all relations used by a view as FOR UPDATE.
+ *
+ * This may generate an invalid query, eg if some sub-query uses an
+ * aggregate.  We leave it to the planner to detect that.
+ *
+ * NB: this must agree with the parser's transformForUpdate() routine.
+ */
+static void
+markQueryForUpdate(Query *qry, bool skipOldNew)
+{
+	Index		rti = 0;
+	List	   *l;
+
+	foreach(l, qry->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+
+		rti++;
+
+		/* Ignore OLD and NEW entries if we are at top level of view */
+		if (skipOldNew &&
+			(rti == PRS2_OLD_VARNO || rti == PRS2_NEW_VARNO))
+			continue;
+
+		if (rte->subquery)
+		{
+			/* FOR UPDATE of subquery is propagated to subquery's rels */
+			markQueryForUpdate(rte->subquery, false);
+		}
+		else
+		{
+			if (!intMember(rti, qry->rowMarks))
+				qry->rowMarks = lappendi(qry->rowMarks, rti);
+			rte->checkForWrite = true;
+		}
+	}
 }
 
 
