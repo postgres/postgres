@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.65 2004/03/09 04:43:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.66 2004/03/15 15:56:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,8 +169,6 @@ typedef enum
 } PGErrorVerbosity;
 
 extern PGErrorVerbosity Log_error_verbosity;
-extern bool Log_timestamp;
-extern bool Log_pid;
 extern char *Log_line_prefix;
 
 #ifdef HAVE_SYSLOG

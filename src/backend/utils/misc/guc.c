@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.189 2004/03/09 04:43:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.190 2004/03/15 15:56:24 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -508,22 +508,6 @@ static struct config_bool ConfigureNamesBool[] =
 		&Log_disconnections,
 		false, NULL, NULL
 	},
-	{
-		{"log_timestamp", PGC_SIGHUP, LOGGING_WHAT,
-			gettext_noop("Prefixes server log messages with a time stamp."),
-			NULL
-		},
-		&Log_timestamp,
-		false, NULL, NULL
-	},
-	{
-		{"log_pid", PGC_SIGHUP, LOGGING_WHAT,
-			gettext_noop("Prefixes server log messages with the server PID."),
-			NULL
-		},
-		&Log_pid,
-		false, NULL, NULL
-	},
 
 #ifdef USE_ASSERT_CHECKING
 	{
@@ -750,15 +734,6 @@ static struct config_bool ConfigureNamesBool[] =
 		&log_hostname,
 		false, NULL, NULL
 	},
-	{
-		{"log_source_port", PGC_SIGHUP, LOGGING_WHAT,
-			gettext_noop("Logs the outgoing port number of the connecting host."),
-			NULL
-		},
-		&LogSourcePort,
-		false, NULL, NULL
-	},
-
 	{
 		{"sql_inheritance", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Causes subtables to be included by default in various commands."),

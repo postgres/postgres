@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.249 2004/03/12 00:56:00 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.250 2004/03/15 15:56:21 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1994,7 +1994,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Causes the duration of every completed statement to be logged.
         To use this option, it is recommended that you also enable
-        <varname>log_statement</> and <varname>log_pid</> so that you
+        <varname>log_statement</> and if not using <application>syslog</>
+	 log the PID using <varname>log_line_prefix</> so that you
         can link the statement to the duration using the process
         ID. The default is off.  Only superusers can turn off this
         option if it is enabled by the administrator.
@@ -2015,6 +2016,8 @@ SET ENABLE_SEQSCAN TO OFF;
 	 processes without controlling sessions. <application>Syslog</> produces its own
 	 timestamp and process ID information, so you probably do not want to
 	 use those escapes if you are using <application>syslog</>.
+	 This option can only be set at server start or in the
+        <filename>postgresql.conf</filename> configuration file.
 	 <informaltable>
 	  <tgroup cols="3">
 	   <thead>
@@ -2059,7 +2062,8 @@ SET ENABLE_SEQSCAN TO OFF;
 	    <row>
 	     <entry><literal>%c</literal></entry>
 	     <entry>Session ID. A unique identifier for each session.
-	     It is 2 4-byte hexadecimal numbers separated by a dot. The numbers
+	     It is 2 4-byte hexadecimal numbers (without leading zeros) 
+	      separated by a dot. The numbers
 	     are the Session Start Time and the Process ID, so this can also
 	     be used as a space saving way of printing these items.</entry>
 	     <entry>Yes</entry>
@@ -2094,19 +2098,6 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term><varname>log_pid</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        Prefixes each message in the server log file with the process ID of
-        the server process. This is useful to sort out which messages
-        pertain to which connection. The default is off.  This parameter
-        does not affect messages logged via <application>syslog</>, which 
-        always contain the process ID.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-log-statement" xreflabel="log_statement">
       <term><varname>log_statement</varname> (<type>boolean</type>)</term>
       <listitem>
@@ -2117,16 +2108,6 @@ SET ENABLE_SEQSCAN TO OFF;
         <application>PL/pgSQL</> that store functions in a cache only
         display their queries on first function call. Only superusers can
         turn off this option if it is enabled by the administrator.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-log-timestamp" xreflabel="log_timestamp">
-      <term><varname>log_timestamp</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        Prefixes each server log message with a time stamp. The default
-        is off.
        </para>
       </listitem>
      </varlistentry>
@@ -2144,19 +2125,6 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-log-source-port" xreflabel="log_source_port">
-      <term><varname>log_source_port</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        Shows the outgoing port number of the connecting host in the
-        connection log messages. You could trace back the port number
-        to find out what user initiated the connection. Other than
-        that, it's pretty useless and therefore off by default. This
-        option can only be set at server start.
-       </para>
-      </listitem>
-     </varlistentry>
-     
      </variablelist>
     </sect3>
    </sect2>

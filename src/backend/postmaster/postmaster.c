@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.373 2004/03/10 21:12:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.374 2004/03/15 15:56:21 momjian Exp $
  *
  * NOTES
  *
@@ -212,8 +212,7 @@ int			CheckPointTimeout = 300;
 int			CheckPointWarning = 30;
 time_t		LastSignalledCheckpoint = 0;
 
-bool		log_hostname;		/* for ps display */
-bool		LogSourcePort;
+bool		log_hostname;		/* for ps display and logging */
 bool		Log_connections = false;
 bool		Db_user_namespace = false;
 
@@ -2414,6 +2413,7 @@ BackendInit(Port *port)
 	struct timezone tz;
 	char		remote_host[NI_MAXHOST];
 	char		remote_port[NI_MAXSERV];
+	char		remote_ps_data[NI_MAXHOST];
 
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
@@ -2474,20 +2474,14 @@ BackendInit(Port *port)
 						remote_port, sizeof(remote_port),
 						NI_NUMERICHOST | NI_NUMERICSERV);
 	}
+	snprintf(remote_ps_data, sizeof(remote_ps_data),
+			 remote_port[0] == '\0' ? "%s" : "%s(%s)",
+			 remote_host, remote_port);
 
 	if (Log_connections)
 		ereport(LOG,
 				(errmsg("connection received: host=%s port=%s",
 						remote_host, remote_port)));
-
-	if (LogSourcePort)
-	{
-		/* modify remote_host for use in ps status */
-		char		tmphost[NI_MAXHOST];
-
-		snprintf(tmphost, sizeof(tmphost), "%s(%s)", remote_host, remote_port);
-		StrNCpy(remote_host, tmphost, sizeof(remote_host));
-	}
 
 	/*
 	 * save remote_host and remote_port in port stucture
@@ -2517,7 +2511,7 @@ BackendInit(Port *port)
 	 * title for ps.  It's good to do this as early as possible in
 	 * startup.
 	 */
-	init_ps_display(port->user_name, port->database_name, remote_host);
+	init_ps_display(port->user_name, port->database_name, remote_ps_data);
 	set_ps_display("authentication");
 
 	/*

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.127 2004/03/09 04:43:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.128 2004/03/15 15:56:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,9 +69,6 @@ ErrorContextCallback *error_context_stack = NULL;
 
 /* GUC parameters */
 PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
-bool		Log_timestamp = false;		/* show timestamps in stderr
-										 * output */
-bool		Log_pid = false;	/* show PIDs in stderr output */
 char       *Log_line_prefix = ""; /* format for extra log line info */
 
 #ifdef HAVE_SYSLOG
@@ -144,8 +141,6 @@ static void send_message_to_frontend(ErrorData *edata);
 static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
-static const char *print_timestamp(void);
-static const char *print_pid(void);
 static void append_with_tabs(StringInfo buf, const char *str);
 static const char *log_line_prefix(void);
 
@@ -1134,7 +1129,7 @@ log_line_prefix(void)
 				case 'r':
 					j += snprintf(result+j,result_len-j,"%s",
 								  MyProcPort->remote_host);
-					if (!LogSourcePort && strlen(MyProcPort->remote_port))
+					if (strlen(MyProcPort->remote_port) > 0)
 						j += snprintf(result+j,result_len-j,"(%s)",
 									  MyProcPort->remote_port);
 					break;
@@ -1293,10 +1288,7 @@ send_message_to_server_log(ErrorData *edata)
 		 * Timestamp and PID are only used for stderr output --- we assume
 		 * the syslog daemon will supply them for us in the other case.
 		 */
-		fprintf(stderr, "%s%s%s",
-				Log_timestamp ? print_timestamp() : "",
-				Log_pid ? print_pid() : "",
-				buf.data);
+		fprintf(stderr, "%s",buf.data);
 	}
 
 	pfree(buf.data);
@@ -1567,43 +1559,6 @@ error_severity(int elevel)
 	return prefix;
 }
 
-
-/*
- * Return a timestamp string like
- *
- *	 "2000-06-04 13:12:03 "
- */
-static const char *
-print_timestamp(void)
-{
-	time_t		curtime;
-	static char buf[21];		/* format `YYYY-MM-DD HH:MM:SS ' */
-
-	curtime = time(NULL);
-
-	strftime(buf, sizeof(buf),
-			 "%Y-%m-%d %H:%M:%S ",
-			 localtime(&curtime));
-
-	return buf;
-}
-
-
-/*
- * Return a string like
- *
- *	   "[123456] "
- *
- * with the current pid.
- */
-static const char *
-print_pid(void)
-{
-	static char buf[10];		/* allow `[123456] ' */
-
-	snprintf(buf, sizeof(buf), "[%d] ", (int) MyProcPid);
-	return buf;
-}
 
 /*
  *	append_with_tabs
