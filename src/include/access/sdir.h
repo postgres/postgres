@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sdir.h,v 1.7 2000/01/26 05:57:51 momjian Exp $
+ * $Id: sdir.h,v 1.8 2000/11/02 23:11:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,28 +31,28 @@ typedef enum ScanDirection
  *		True iff scan direction is valid.
  */
 #define ScanDirectionIsValid(direction) \
-	((bool) (BackwardScanDirection <= direction && \
-			 direction <= ForwardScanDirection))
+	((bool) (BackwardScanDirection <= (direction) && \
+			 (direction) <= ForwardScanDirection))
 
 /*
  * ScanDirectionIsBackward
  *		True iff scan direction is backward.
  */
 #define ScanDirectionIsBackward(direction) \
-	((bool) (direction == BackwardScanDirection))
+	((bool) ((direction) == BackwardScanDirection))
 
 /*
  * ScanDirectionIsNoMovement
  *		True iff scan direction indicates no movement.
  */
 #define ScanDirectionIsNoMovement(direction) \
-	((bool) (direction == NoMovementScanDirection))
+	((bool) ((direction) == NoMovementScanDirection))
 
 /*
  * ScanDirectionIsForward
  *		True iff scan direction is forward.
  */
 #define ScanDirectionIsForward(direction) \
-	((bool) (direction == ForwardScanDirection))
+	((bool) ((direction) == ForwardScanDirection))
 
 #endif	 /* SDIR_H */
