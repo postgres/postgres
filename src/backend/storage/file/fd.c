@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.68 2000/11/30 08:46:23 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.69 2000/12/08 22:21:32 tgl Exp $
  *
  * NOTES:
  *
@@ -191,6 +191,18 @@ static int	FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(char *filename);
 static long pg_nofile(void);
+
+/*
+ * pg_fsync --- same as fsync except does nothing if -F switch was given
+ */
+int
+pg_fsync(int fd)
+{
+	if (enableFsync)
+		return fsync(fd);
+	else
+		return 0;
+}
 
 /*
  * BasicOpenFile --- same as open(2) except can free other FDs if needed
