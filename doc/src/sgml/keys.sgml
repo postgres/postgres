@@ -1,8 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.3 1998/12/29 02:24:16 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.4 2000/08/23 05:59:02 thomas Exp $
 Indices and Keys
 
 $Log: keys.sgml,v $
+Revision 1.4  2000/08/23 05:59:02  thomas
+Fix several <ulink> tags which refer to e-mail addresses
+ but were missing the "mailto:" prefix.
+Fix typo.
+Thanks to Neil Conway <nconway@klamath.dyndns.org> for the heads-up.
+
 Revision 1.3  1998/12/29 02:24:16  thomas
 Clean up to ensure tag completion as required by the newest versions
  of Norm's Modular Style Sheets and jade/docbook.
@@ -18,37 +24,37 @@ Will go into the User's Guide.
 
 -->
 
-<chapter id="keys">
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Herouth</firstname>
-<surname>Maoz</surname>
-</author>
-</authorgroup>
-<date>1998-03-02</date>
-</docinfo>
+ <chapter>
+  <docinfo>
+   <authorgroup>
+    <author>
+     <firstname>Herouth</firstname>
+     <surname>Maoz</surname>
+    </author>
+   </authorgroup>
+   <date>1998-03-02</date>
+  </docinfo>
 
-<Title>Indices and Keys</Title>
+  <title>Indices and Keys</title>
 
-<Note>
-<Title>Author</Title>
-<Para>
-Written by 
-<ULink url="herouth@oumail.openu.ac.il">Herouth Maoz</ULink>
-</Para>
-</Note>
+  <note>
+   <title>Author</title>
+   <para>
+    Written by 
+    <ulink url="mailto:herouth@oumail.openu.ac.il">Herouth Maoz</ulink>
+   </para>
+  </note>
 
-<Note>
-<Title>Editor's Note</Title>
-<Para>
-This originally appeared on the mailing list
- in response to the question:
- "What is the difference between PRIMARY KEY and UNIQUE constraints?".
-</Para>
-</Note>
+  <note>
+   <title>Editor's Note</title>
+   <para>
+    This originally appeared on the mailing list
+    in response to the question:
+    "What is the difference between PRIMARY KEY and UNIQUE constraints?".
+   </para>
+  </note>
 
-<ProgramListing>
+  <programlisting>
 Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
 
         What's the difference between:
@@ -59,125 +65,143 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
        - Is this an alias?
        - If PRIMARY KEY is already unique, then why
          is there another kind of key named UNIQUE?
-</ProgramListing>
+  </programlisting>
 
-<Para>
-A primary key is the field(s) used to identify a specific row. For example,
-Social Security numbers identifying a person.
-</Para>
-<Para>
-A simply UNIQUE combination of fields has nothing to do with identifying
-the row. It's simply an integrity constraint. For example, I have
-collections of links. Each collection is identified by a unique number,
-which is the primary key. This key is used in relations.
-</Para>
-<Para>
-However, my application requires that each collection will also have a
-unique name. Why? So that a human being who wants to modify a collection
-will be able to identify it. It's much harder to know, if you have two
-collections named "Life Science", the the one tagged 24433 is the one you
-need, and the one tagged 29882 is not.
-</Para>
-<Para>
-So, the user selects the collection by its name. We therefore make sure,
-withing the database, that names are unique. However, no other table in the
-database relates to the collections table by the collection Name. That
-would be very inefficient.
-</Para>
-<Para>
-Moreover, despite being unique, the collection name does not actually
-define the collection! For example, if somebody decided to change the name
-of the collection from "Life Science" to "Biology", it will still be the
-same collection, only with a different name. As long as the name is unique,
-that's OK.
-</Para>
-<Para>
-So:
+  <para>
+   A primary key is the field(s) used to identify a specific row. For example,
+   Social Security numbers identifying a person.
+  </para>
+  <para>
+   A simply UNIQUE combination of fields has nothing to do with identifying
+   the row. It's simply an integrity constraint. For example, I have
+   collections of links. Each collection is identified by a unique number,
+   which is the primary key. This key is used in relations.
+  </para>
+  <para>
+   However, my application requires that each collection will also have a
+   unique name. Why? So that a human being who wants to modify a collection
+   will be able to identify it. It's much harder to know, if you have two
+   collections named "Life Science", the the one tagged 24433 is the one you
+   need, and the one tagged 29882 is not.
+  </para>
+  <para>
+   So, the user selects the collection by its name. We therefore make sure,
+   withing the database, that names are unique. However, no other table in the
+   database relates to the collections table by the collection Name. That
+   would be very inefficient.
+  </para>
+  <para>
+   Moreover, despite being unique, the collection name does not actually
+   define the collection! For example, if somebody decided to change the name
+   of the collection from "Life Science" to "Biology", it will still be the
+   same collection, only with a different name. As long as the name is unique,
+   that's OK.
+  </para>
+  <para>
+   So:
 
-<itemizedlist>
-<ListItem>
-<Para>
-Primary key:
-<itemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-Is used for identifying the row and relating to it.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-Is impossible (or hard) to update.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-Should not allow NULLs.
-</Para>
-</ListItem>
-</itemizedlist>
-</para>
-</listitem>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Primary key:
+      <itemizedlist>
+       <listitem>
+	<para>
+	 Is used for identifying the row and relating to it.
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Is impossible (or hard) to update.
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Should not allow NULLs.
+	</para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
 
-<ListItem>
-<Para>
-Unique field(s):
-<itemizedlist Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-Are used as an alternative access to the row.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-Are updateable, so long as they are kept unique.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-NULLs are acceptable.
-</Para>
-</ListItem>
-</itemizedlist>
-</para>
-</listitem>
-</itemizedlist>
-</para>
+    <listitem>
+     <para>
+      Unique field(s):
+      <itemizedlist>
+       <listitem>
+	<para>
+	 Are used as an alternative access to the row.
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Are updateable, so long as they are kept unique.
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 NULLs are acceptable.
+	</para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
 
-<Para>
-As for why no non-unique keys are defined explicitly in standard <acronym>SQL</acronym> syntax?
-Well, you
-must understand that indices are implementation-dependent. <acronym>SQL</acronym> does not
-define the implementation, merely the relations between data in the
-database. <productname>Postgres</productname> does allow non-unique indices, but indices
-used to enforce <acronym>SQL</acronym> keys are always unique.
-</Para>
-<Para>
-Thus, you may query a table by any combination of its columns, despite the
-fact that you don't have an index on these columns. The indexes are merely
-an implementational aid which each <acronym>RDBMS</acronym> offers you, in order to cause
-commonly used queries to be done more efficiently. Some <acronym>RDBMS</acronym> may give you
-additional measures, such as keeping a key stored in main memory. They will
-have a special command, for example
-<programlisting>
-CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
-</programlisting>
-(this is not an existing command, just an example).
-</Para>
-<Para>
-In fact, when you create a primary key or a unique combination of fields,
-nowhere in the <acronym>SQL</acronym> specification does it say that an index is created, nor that
-the retrieval of data by the key is going to be more efficient than a
-sequential scan!
-</Para>
-<Para>
-So, if you want to use a combination of fields which is not unique as a
-secondary key, you really don't have to specify anything - just start
-retrieving by that combination! However, if you want to make the retrieval
-efficient, you'll have to resort to the means your <acronym>RDBMS</acronym> provider gives you
-- be it an index, my imaginary MEMSTORE command, or an intelligent <acronym>RDBMS</acronym>
-which creates indices without your knowledge based on the fact that you have
-sent it many queries based on a specific combination of keys... (It learns
-from experience).
-</Para>
-</chapter>
+  <para>
+   As for why no non-unique keys are defined explicitly in standard
+   <acronym>SQL</acronym> syntax?
+   Well, you
+   must understand that indices are implementation-dependent. <acronym>SQL</acronym> does not
+   define the implementation, merely the relations between data in the
+   database. <productname>Postgres</productname> does allow non-unique indices, but indices
+   used to enforce <acronym>SQL</acronym> keys are always unique.
+  </para>
+  <para>
+   Thus, you may query a table by any combination of its columns, despite the
+   fact that you don't have an index on these columns. The indexes are merely
+   an implementational aid which each <acronym>RDBMS</acronym> offers you, in order to cause
+   commonly used queries to be done more efficiently. Some <acronym>RDBMS</acronym> may give you
+   additional measures, such as keeping a key stored in main memory. They will
+   have a special command, for example
+   <programlisting>
+    CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
+   </programlisting>
+   (this is not an existing command, just an example).
+  </para>
+  <para>
+   In fact, when you create a primary key or a unique combination of fields,
+   nowhere in the <acronym>SQL</acronym> specification does it say that an index is created, nor that
+   the retrieval of data by the key is going to be more efficient than a
+   sequential scan!
+  </para>
+  <para>
+   So, if you want to use a combination of fields which is not unique as a
+   secondary key, you really don't have to specify anything - just start
+   retrieving by that combination! However, if you want to make the retrieval
+   efficient, you'll have to resort to the means your <acronym>RDBMS</acronym> provider gives you
+   - be it an index, my imaginary MEMSTORE command, or an intelligent
+   <acronym>RDBMS</acronym>
+   which creates indices without your knowledge based on the fact that you have
+   sent it many queries based on a specific combination of keys... (It learns
+   from experience).
+  </para>
+ </chapter>
 
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-ecat-files:nil
+End:
+--></book>

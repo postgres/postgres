@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.7 2000/03/27 17:14:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.8 2000/08/23 05:59:11 thomas Exp $
 Postgres documentation
 -->
 
@@ -20,20 +20,20 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2000-08-08</date>
   </refsynopsisdivinfo>
   <synopsis>
 INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ]
-    { VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) | SELECT <replaceable class="PARAMETER">query</replaceable> }
+    { DEFAULT VALUES | VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) | SELECT <replaceable class="PARAMETER">query</replaceable> }
   </synopsis>
   
   <refsect2 id="R2-SQL-INSERT-1">
    <refsect2info>
-    <date>1998-09-23</date>
    </refsect2info>
    <title>
     Inputs
    </title>
+
    <para>
 
     <variablelist>
@@ -45,11 +45,22 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="PARAMETER">column</replaceable></term>
       <listitem>
        <para>
 	The name of a column in <replaceable class="PARAMETER">table</replaceable>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>DEFAULT VALUES</term>
+      <listitem>
+       <para>
+	All columns will be filled by NULLs or by values specified
+	when the table was created using DEFAULT clauses.
        </para>
       </listitem>
      </varlistentry>
@@ -79,7 +90,6 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
   
   <refsect2 id="R2-SQL-INSERT-2">
    <refsect2info>
-    <date>1998-09-23</date>
    </refsect2info>
    <title>
     Outputs
@@ -118,7 +128,6 @@ INSERT 0 <replaceable>#</replaceable>
 
  <refsect1 id="R1-SQL-INSERT-1">
   <refsect1info>
-   <date>1998-09-02</date>
   </refsect1info>
   <title>
    Description
@@ -217,7 +226,6 @@ INSERT INTO tictactoe (game, board)
 	
   <refsect2 id="R2-SQL-INSERT-4">
    <refsect2info>
-    <date>1998-09-23</date>
    </refsect2info>
    <title>
     SQL92

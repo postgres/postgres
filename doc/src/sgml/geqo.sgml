@@ -1,119 +1,125 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.10 2000/06/28 03:30:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.11 2000/08/23 05:59:02 thomas Exp $
 Genetic Optimizer
 -->
 
-<Chapter Id="geqo">
-<DocInfo>
-<Author>
-<FirstName>Martin</FirstName>
-<SurName>Utesch</SurName>
-<Affiliation>
-<Orgname>
-University of Mining and Technology
-</Orgname>
-<Orgdiv>
-Institute of Automatic Control
-</Orgdiv>
-<Address>
-<City>
-Freiberg
-</City>
-<Country>
-Germany
-</Country>
-</Address>
-</Affiliation>
-</Author>
-<Date>1997-10-02</Date>
-</DocInfo>
+ <chapter id="geqo">
+  <docinfo>
+   <author>
+    <firstname>Martin</firstname>
+    <surname>Utesch</surname>
+    <affiliation>
+     <orgname>
+      University of Mining and Technology
+     </orgname>
+     <orgdiv>
+      Institute of Automatic Control
+     </orgdiv>
+     <address>
+      <city>
+       Freiberg
+      </city>
+      <country>
+       Germany
+      </country>
+     </address>
+    </affiliation>
+   </author>
+   <date>1997-10-02</date>
+  </docinfo>
 
-<Title>Genetic Query Optimization in Database Systems</Title>
+  <title>Genetic Query Optimization in Database Systems</title>
 
-<Para>
-<Note>
-<Title>Author</Title>
-<Para>
-Written by <ULink url="utesch@aut.tu-freiberg.de">Martin Utesch</ULink>
-for the Institute of Automatic Control at the University of Mining and Technology in Freiberg, Germany.
-</Para>
-</Note>
-</para>
+  <para>
+   <note>
+    <title>Author</title>
+    <para>
+     Written by <ulink url="mailto:utesch@aut.tu-freiberg.de">Martin Utesch</ulink>
+     for the Institute of Automatic Control at the University of Mining and Technology in Freiberg, Germany.
+    </para>
+   </note>
+  </para>
 
-<Sect1>
-<Title>Query Handling as a Complex Optimization Problem</Title>
+  <sect1>
+   <title>Query Handling as a Complex Optimization Problem</title>
 
-<Para>
-   Among all relational operators the most difficult one to process and
-optimize is the <FirstTerm>join</FirstTerm>. The number of alternative plans to answer a query
-grows exponentially with the number of <Command>join</Command>s included in it. Further
-optimization effort is caused by the support of a variety of <FirstTerm>join methods</FirstTerm>
- (e.g., nested loop, index scan, merge join in <ProductName>Postgres</ProductName>) to
-process individual <Command>join</Command>s and a diversity of <FirstTerm>indices</FirstTerm> (e.g., r-tree,
-b-tree, hash in <ProductName>Postgres</ProductName>) as access paths for relations.
-</para>
+   <para>
+    Among all relational operators the most difficult one to process and
+    optimize is the <firstterm>join</firstterm>. The number of alternative plans to answer a query
+    grows exponentially with the number of <command>join</command>s included in it. Further
+    optimization effort is caused by the support of a variety of
+    <firstterm>join methods</firstterm>
+    (e.g., nested loop, index scan, merge join in <productname>Postgres</productname>) to
+    process individual <command>join</command>s and a diversity of
+    <firstterm>indices</firstterm> (e.g., r-tree,
+    b-tree, hash in <productname>Postgres</productname>) as access paths for relations.
+   </para>
 
-<Para>
-   The current <ProductName>Postgres</ProductName> optimizer implementation performs a <FirstTerm>near-
-exhaustive search</FirstTerm> over the space of alternative strategies. This query
-optimization technique is inadequate to support database application
-domains that involve the need for extensive queries, such as artificial
-intelligence.
-</para>
+   <para>
+    The current <productname>Postgres</productname> optimizer
+    implementation performs a <firstterm>near-
+     exhaustive search</firstterm> over the space of alternative strategies. This query
+    optimization technique is inadequate to support database application
+    domains that involve the need for extensive queries, such as artificial
+    intelligence.
+   </para>
 
-<Para>
-   The Institute of Automatic Control at the University of Mining and
-Technology, in Freiberg, Germany, encountered the described problems as its
-folks wanted to take the <ProductName>Postgres</ProductName> DBMS as the backend for a decision
-support knowledge based system for the maintenance of an electrical
-power grid. The DBMS needed to handle large <Command>join</Command> queries for the
-inference machine of the knowledge based system.
-</para>
+   <para>
+    The Institute of Automatic Control at the University of Mining and
+    Technology, in Freiberg, Germany, encountered the described problems as its
+    folks wanted to take the <productname>Postgres</productname> DBMS as the backend for a decision
+    support knowledge based system for the maintenance of an electrical
+    power grid. The DBMS needed to handle large <command>join</command> queries for the
+    inference machine of the knowledge based system.
+   </para>
 
-<Para>
-   Performance difficulties within exploring the space of possible query
-plans arose the demand for a new optimization technique being developed.
-</para>
+   <para>
+    Performance difficulties within exploring the space of possible query
+    plans arose the demand for a new optimization technique being developed.
+   </para>
 
-<Para>
-   In the following we propose the implementation of a <FirstTerm>Genetic Algorithm</FirstTerm>
- as an option for the database query optimization problem.
-</para>
-</sect1>
+   <para>
+    In the following we propose the implementation of a <firstterm>Genetic Algorithm</firstterm>
+    as an option for the database query optimization problem.
+   </para>
+  </sect1>
 
-<Sect1>
-<Title>Genetic Algorithms (<Acronym>GA</Acronym>)</Title>
+  <sect1>
+   <title>Genetic Algorithms (<acronym>GA</acronym>)</title>
 
-<Para>
-   The <Acronym>GA</Acronym> is a heuristic optimization method which operates through 
-determined, randomized search. The set of possible solutions for the
-optimization problem is considered as a <FirstTerm>population</FirstTerm> of <FirstTerm>individuals</FirstTerm>.
-The degree of adaption of an individual to its environment is specified
-by its <FirstTerm>fitness</FirstTerm>.
-</para>
+   <para>
+    The <acronym>GA</acronym> is a heuristic optimization method which operates through 
+    determined, randomized search. The set of possible solutions for the
+    optimization problem is considered as a
+    <firstterm>erm>popula</firstterm>erm> of <firstterm>individuals</firstterm>.
+    The degree of adaption of an individual to its environment is specified
+    by its <firstterm>fitness</firstterm>.
+   </para>
 
-<Para>
-   The coordinates of an individual in the search space are represented
-by <FirstTerm>chromosomes</FirstTerm>, in essence a set of character strings. A <FirstTerm>gene</FirstTerm> is a
-subsection of a chromosome which encodes the value of a single parameter
-being optimized. Typical encodings for a gene could be <FirstTerm>binary</FirstTerm> or
-<FirstTerm>integer</FirstTerm>.
-</para>
+   <para>
+    The coordinates of an individual in the search space are represented
+    by <firstterm>chromosomes</firstterm>, in essence a set of character
+    strings. A <firstterm>gene</firstterm> is a
+    subsection of a chromosome which encodes the value of a single parameter
+    being optimized. Typical encodings for a gene could be <firstterm>binary</firstterm> or
+    <firstterm>integer</firstterm>.
+   </para>
 
-<Para>
-   Through simulation of the evolutionary operations <FirstTerm>recombination</FirstTerm>,
-<FirstTerm>mutation</FirstTerm>, and <FirstTerm>selection</FirstTerm> new generations of search points are found
-that show a higher average fitness than their ancestors.
-</para>
+   <para>
+    Through simulation of the evolutionary operations <firstterm>recombination</firstterm>,
+    <firstterm>mutation</firstterm>, and
+    <firstterm>selection</firstterm> new generations of search points are found
+    that show a higher average fitness than their ancestors.
+   </para>
 
-<Para>
-   According to the "comp.ai.genetic" <Acronym>FAQ</Acronym> it cannot be stressed too
-strongly that a <Acronym>GA</Acronym> is not a pure random search for a solution to a
-problem. A <Acronym>GA</Acronym> uses stochastic processes, but the result is distinctly
-non-random (better than random). 
+   <para>
+    According to the "comp.ai.genetic" <acronym>FAQ</acronym> it cannot be stressed too
+    strongly that a <acronym>GA</acronym> is not a pure random search for a solution to a
+    problem. A <acronym>GA</acronym> uses stochastic processes, but the result is distinctly
+    non-random (better than random). 
 
-<ProgramListing>
-Structured Diagram of a <Acronym>GA</Acronym>:
+    <programlisting>
+Structured Diagram of a <acronym>GA</acronym>:
 ---------------------------
 
 P(t)    generation of ancestors at a time t
@@ -140,229 +146,235 @@ P''(t)  generation of descendants at a time t
 |   +-------------------------------------+
 |   | t := t + 1                          |
 +===+=====================================+
-</ProgramListing>
-</para>
-</sect1>
+    </programlisting>
+   </para>
+  </sect1>
 
-<Sect1>
-<Title>Genetic Query Optimization (<Acronym>GEQO</Acronym>) in Postgres</Title>
+  <sect1>
+   <title>Genetic Query Optimization (<acronym>GEQO</acronym>) in Postgres</title>
 
-<Para>
-   The <Acronym>GEQO</Acronym> module is intended for the solution of the query
-optimization problem similar to a traveling salesman problem (<Acronym>TSP</Acronym>).
-Possible query plans are encoded as integer strings. Each string
-represents the <Command>join</Command> order from one relation of the query to the next.
-E. g., the query tree
-<ProgramListing>
-       /\
-      /\ 2
-     /\ 3
-    4  1
-</ProgramListing>
-is encoded by the integer string '4-1-3-2',
-which means, first join relation '4' and '1', then '3', and
-then '2', where 1, 2, 3, 4 are relids in <ProductName>Postgres</ProductName>.
-</para>
+   <para>
+    The <acronym>GEQO</acronym> module is intended for the solution of the query
+    optimization problem similar to a traveling salesman problem (<acronym>TSP</acronym>).
+    Possible query plans are encoded as integer strings. Each string
+    represents the <command>join</command> order from one relation of the query to the next.
+    E. g., the query tree
+    <programlisting>
+   /\
+  /\ 2
+ /\ 3
+4  1
+    </programlisting>
+    is encoded by the integer string '4-1-3-2',
+    which means, first join relation '4' and '1', then '3', and
+    then '2', where 1, 2, 3, 4 are relids in <productname>Postgres</productname>.
+   </para>
 
-<Para>
-   Parts of the <Acronym>GEQO</Acronym> module are adapted from D. Whitley's Genitor
-algorithm.
-</para>
+   <para>
+    Parts of the <acronym>GEQO</acronym> module are adapted from D. Whitley's Genitor
+    algorithm.
+   </para>
 
-<Para>
-   Specific characteristics of the <Acronym>GEQO</Acronym> implementation in <ProductName>Postgres</ProductName>
-are:
+   <para>
+    Specific characteristics of the <acronym>GEQO</acronym>
+    implementation in <productname>Postgres</productname>
+    are:
 
-<ItemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-Usage of a <FirstTerm>steady state</FirstTerm> <Acronym>GA</Acronym> (replacement of the least fit
-   individuals in a population, not whole-generational replacement)
-   allows fast convergence towards improved query plans. This is
-   essential for query handling with reasonable time;
-</Para>
-</ListItem>
+    <itemizedlist spacing="compact" mark="bullet">
+     <listitem>
+      <para>
+       Usage of a <firstterm>steady state</firstterm> <acronym>GA</acronym> (replacement of the least fit
+       individuals in a population, not whole-generational replacement)
+       allows fast convergence towards improved query plans. This is
+       essential for query handling with reasonable time;
+      </para>
+     </listitem>
 
-<ListItem>
-<Para>
-Usage of <FirstTerm>edge recombination crossover</FirstTerm> which is especially suited
-   to keep edge losses low for the solution of the <Acronym>TSP</Acronym> by means of a <Acronym>GA</Acronym>;
-</Para>
-</ListItem>
+     <listitem>
+      <para>
+       Usage of <firstterm>edge recombination crossover</firstterm> which is especially suited
+       to keep edge losses low for the solution of the
+       <acronym>cro</acronym>cronym> by means of a <acronym>GA</acronym>;
+      </para>
+     </listitem>
 
-<ListItem>
-<Para>
-Mutation as genetic operator is deprecated so that no repair
-   mechanisms are needed to generate legal <Acronym>TSP</Acronym> tours.
-</Para>
-</ListItem>
-</ItemizedList>
-</para>
+     <listitem>
+      <para>
+       Mutation as genetic operator is deprecated so that no repair
+       mechanisms are needed to generate legal <acronym>TSP</acronym> tours.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
 
-<Para>
-   The <Acronym>GEQO</Acronym> module gives the following benefits to the <ProductName>Postgres</ProductName> DBMS
-compared to the <ProductName>Postgres</ProductName> query optimizer implementation:
+   <para>
+    The <acronym>GEQO</acronym> module gives the following benefits to
+    the <productname>Postgres</productname> DBMS
+    compared to the <productname>Postgres</productname> query optimizer implementation:
 
-<ItemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-Handling of large <Command>join</Command> queries through non-exhaustive search;
-</Para>
-</ListItem>
+    <itemizedlist spacing="compact" mark="bullet">
+     <listitem>
+      <para>
+       Handling of large <command>join</command> queries through non-exhaustive search;
+      </para>
+     </listitem>
 
-<ListItem>
-<Para>
-Improved cost size approximation of query plans since no longer
-   plan merging is needed (the <Acronym>GEQO</Acronym> module evaluates the cost for a
-   query plan as an individual).
-</Para>
-</ListItem>
-</ItemizedList>
-</para>
+     <listitem>
+      <para>
+       Improved cost size approximation of query plans since no longer
+       plan merging is needed (the <acronym>GEQO</acronym> module evaluates the cost for a
+       query plan as an individual).
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
 
-</Sect1>
+  </sect1>
 
-<Sect1>
-<Title>Future Implementation Tasks for <ProductName>Postgres</ProductName> <Acronym>GEQO</Acronym></Title>
+  <sect1>
+   <title>Future Implementation Tasks for
+    <productname>ame>Post</productname>ame> <acronym>GEQO</acronym></title>
 
-<Sect2>
-<Title>Basic Improvements</Title>
+   <sect2>
+    <title>Basic Improvements</title>
 
-<Sect3>
-<Title>Improve genetic algorithm parameter settings</Title>
+    <sect3>
+     <title>Improve genetic algorithm parameter settings</title>
 
-<Para>
-In file <FileName>backend/optimizer/geqo/geqo_params.c</FileName>, routines
-<Function>gimme_pool_size</Function> and <Function>gimme_number_generations</Function>,
-we have to find a compromise for the parameter settings
-to satisfy two competing demands:
-<ItemizedList Spacing="compact">
-<ListItem>
-<Para>
-Optimality of the query plan
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-Computing time
-</Para>
-</ListItem>
-</ItemizedList>
-</para>
-</sect3>
+     <para>
+      In file <filename>backend/optimizer/geqo/geqo_params.c</filename>, routines
+      <function>gimme_pool_size</function> and <function>gimme_number_generations</function>,
+      we have to find a compromise for the parameter settings
+      to satisfy two competing demands:
+      <itemizedlist spacing="compact">
+       <listitem>
+	<para>
+	 Optimality of the query plan
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Computing time
+	</para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </sect3>
 
-<Sect3>
-<Title>Find better solution for integer overflow</Title>
+    <sect3>
+     <title>Find better solution for integer overflow</title>
 
-<Para>
-In file <FileName>backend/optimizer/geqo/geqo_eval.c</FileName>, routine
-<Function>geqo_joinrel_size</Function>,
-the present hack for MAXINT overflow is to set the <ProductName>Postgres</ProductName> integer
-value of <StructField>rel->size</StructField> to its logarithm.
-Modifications of <StructName>Rel</StructName> in <FileName>backend/nodes/relation.h</FileName> will
-surely have severe impacts on the whole <ProductName>Postgres</ProductName> implementation.
-</para>
-</sect3>
+     <para>
+      In file <filename>backend/optimizer/geqo/geqo_eval.c</filename>, routine
+      <function>geqo_joinrel_size</function>,
+      the present hack for MAXINT overflow is to set the <productname>Postgres</productname> integer
+      value of <structfield>rel->size</structfield> to its logarithm.
+      Modifications of <structname>Rel</structname> in <filename>backend/nodes/relation.h</filename> will
+      surely have severe impacts on the whole <productname>Postgres</productname> implementation.
+     </para>
+    </sect3>
 
-<Sect3>
-<Title>Find solution for exhausted memory</Title>
+    <sect3>
+     <title>Find solution for exhausted memory</title>
 
-<Para>
-Memory exhaustion may occur with more than 10 relations involved in a query.
-In file <FileName>backend/optimizer/geqo/geqo_eval.c</FileName>, routine
-<Function>gimme_tree</Function> is recursively called.
-Maybe I forgot something to be freed correctly, but I dunno what.
-Of course the <StructName>rel</StructName> data structure of the <Command>join</Command> keeps growing and
-growing the more relations are packed into it.
-Suggestions are welcome :-(
-</para>
-</sect3>
-</sect2>
+     <para>
+      Memory exhaustion may occur with more than 10 relations involved in a query.
+      In file <filename>backend/optimizer/geqo/geqo_eval.c</filename>, routine
+      <function>gimme_tree</function> is recursively called.
+      Maybe I forgot something to be freed correctly, but I dunno what.
+      Of course the <structname>rel</structname> data structure of the
+      <command>join</command> keeps growing and
+      growing the more relations are packed into it.
+      Suggestions are welcome :-(
+     </para>
+    </sect3>
+   </sect2>
 
 
-<BIBLIOGRAPHY Id="geqo-biblio">
-<TITLE>
-References
-</TITLE>
-<PARA>Reference information for <Acronym>GEQ</Acronym> algorithms.
-</PARA>
-<BIBLIOENTRY>
+   <bibliography id="geqo-biblio">
+    <title>
+     References
+    </title>
+    <para>Reference information for <acronym>GEQ</acronym> algorithms.
+    </para>
+    <biblioentry>
 
-<BOOKBIBLIO>
-<TITLE>
-The Hitch-Hiker's Guide to Evolutionary Computation
-</TITLE>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>J&ouml;rg</FIRSTNAME>
-<SURNAME>Heitk&ouml;tter</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>David</FIRSTNAME>
-<SURNAME>Beasley</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<PUBLISHER>
-<PUBLISHERNAME>
-InterNet resource
-</PUBLISHERNAME>
-</PUBLISHER>
-<ABSTRACT>
-<Para>
-FAQ in <ULink url="news://comp.ai.genetic">comp.ai.genetic</ULink>
-is available at <ULink url="ftp://ftp.Germany.EU.net/pub/research/softcomp/EC/Welcome.html">Encore</ULink>.
-</Para>
-</ABSTRACT>
-</BOOKBIBLIO>
+     <bookbiblio>
+      <title>
+       The Hitch-Hiker's Guide to Evolutionary Computation
+      </title>
+      <authorgroup>
+       <author>
+	<firstname>J&ouml;rg</firstname>
+	<surname>Heitk&ouml;tter</surname>
+       </author>
+       <author>
+	<firstname>David</firstname>
+	<surname>Beasley</surname>
+       </author>
+      </authorgroup>
+      <publisher>
+       <publishername>
+	InterNet resource
+       </publishername>
+      </publisher>
+      <abstract>
+       <para>
+	FAQ in <ulink url="news://comp.ai.genetic">comp.ai.genetic</ulink>
+	is available at <ulink
+	 url="ftp://ftp.Germany.EU.net/pub/research/softcomp/EC/Welcome.html">Encore</ulink>.
+       </para>
+      </abstract>
+     </bookbiblio>
 
-<BOOKBIBLIO>
-<TITLE>
-The Design and Implementation of the Postgres Query Optimizer
-</TITLE>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>Z.</FIRSTNAME>
-<SURNAME>Fong</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<PUBLISHER>
-<PUBLISHERNAME>
-University of California, Berkeley Computer Science Department
-</PUBLISHERNAME>
-</PUBLISHER>
-<ABSTRACT>
-<Para>
-File <FileName>planner/Report.ps</FileName> in the 'postgres-papers' distribution.
-</Para>
-</ABSTRACT>
-</BOOKBIBLIO>
+     <bookbiblio>
+      <title>
+       The Design and Implementation of the Postgres Query Optimizer
+      </title>
+      <authorgroup>
+       <author>
+	<firstname>Z.</firstname>
+	<surname>Fong</surname>
+       </author>
+      </authorgroup>
+      <publisher>
+       <publishername>
+	University of California, Berkeley Computer Science Department
+       </publishername>
+      </publisher>
+      <abstract>
+       <para>
+	File <filename>planner/Report.ps</filename> in the 'postgres-papers' distribution.
+       </para>
+      </abstract>
+     </bookbiblio>
 
-<BOOKBIBLIO>
-<TITLE>
-Fundamentals of Database Systems
-</TITLE>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>R.</FIRSTNAME>
-<SURNAME>Elmasri</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>S.</FIRSTNAME>
-<SURNAME>Navathe</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<PUBLISHER>
-<PUBLISHERNAME>
-The Benjamin/Cummings Pub., Inc.
-</PUBLISHERNAME>
-</PUBLISHER>
-</BOOKBIBLIO>
+     <bookbiblio>
+      <title>
+       Fundamentals of Database Systems
+      </title>
+      <authorgroup>
+       <author>
+	<firstname>R.</firstname>
+	<surname>Elmasri</surname>
+       </author>
+       <author>
+	<firstname>S.</firstname>
+	<surname>Navathe</surname>
+       </author>
+      </authorgroup>
+      <publisher>
+       <publishername>
+	The Benjamin/Cummings Pub., Inc.
+       </publishername>
+      </publisher>
+     </bookbiblio>
 
-</BIBLIOENTRY>
-</BIBLIOGRAPHY>
+    </biblioentry>
+   </bibliography>
 
-</sect1>
-</Chapter>
+  </sect1>
+ </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

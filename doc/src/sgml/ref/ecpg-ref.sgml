@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.2 2000/03/31 06:17:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.3 2000/08/23 05:59:11 thomas Exp $
 Postgres documentation
 -->
 
@@ -135,11 +135,11 @@ ecpg [ -v ] [ -t ] [ -I include-path ] [ -o outfile ]  file1 [ file2 ] [ ... ]
   </para>
 
   <para>
-   <ulink url="linus@epact.se">Linus Tolke</ulink> was the
+   <ulink url="mailto:linus@epact.se">Linus Tolke</ulink> was the
    original author of <application>ecpg</application> (up to version 0.2).
-   <ulink url="meskes@debian.org">Michael Meskes</ulink>
+   <ulink url="mailto:meskes@debian.org">Michael Meskes</ulink>
    is the current author and maintainer of <application>ecpg</application>.
-   <ulink url="tomg@q8.nrnet.org">Thomas Good</ulink>
+   <ulink url="mailto:tomg@q8.nrnet.org">Thomas Good</ulink>
    is the author of the last revision of the ecpg man page, on which
    this document is based.
   </para>

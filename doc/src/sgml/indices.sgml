@@ -163,7 +163,7 @@ SELECT am.amname AS acc_name,
      <title>Author</title>
      <para>
       Written by 
-      <ulink url="herouth@oumail.openu.ac.il">Herouth Maoz</ulink>
+      <ulink url="mailto:herouth@oumail.openu.ac.il">Herouth Maoz</ulink>
       This originally appeared on the User's Mailing List on 1998-03-02
       in response to the question:
       "What is the difference between PRIMARY KEY and UNIQUE constraints?".
@@ -328,7 +328,7 @@ CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
     <title>Author</title>
     <para>
      This is from a reply to a question on the e-mail list
-     by <ulink url="aoki@CS.Berkeley.EDU">Paul M. Aoki</ulink>
+     by <ulink url="mailto:aoki@CS.Berkeley.EDU">Paul M. Aoki</ulink>
      on 1998-08-11.
 <!--
   Paul M. Aoki         | University of California at Berkeley

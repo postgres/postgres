@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.32 2000/07/29 18:45:51 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -594,7 +594,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
         <entry>12 bytes</entry>
         <entry>-178000000 years</entry>
         <entry>178000000 years</entry>
-        <entry>1 mircosecond</entry>
+        <entry>1 microsecond</entry>
        </row>
        <row>
         <entry><type>date</type></entry>
