@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.75 2002/09/04 20:31:37 momjian Exp $
+ * $Id: indexing.h,v 1.76 2002/10/18 20:33:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,8 +98,8 @@ extern void CatalogUpdateIndexes(Relation heapRel, HeapTuple heapTuple);
  * These macros are just to keep the C compiler from spitting up on the
  * upcoming commands for genbki.sh.
  */
-#define DECLARE_INDEX(x) extern int errno
-#define DECLARE_UNIQUE_INDEX(x) extern int errno
+#define DECLARE_INDEX(x) extern int no_such_variable
+#define DECLARE_UNIQUE_INDEX(x) extern int no_such_variable
 #define BUILD_INDICES
 
 

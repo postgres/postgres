@@ -177,11 +177,7 @@ __DATA__
 #endif
 
 #ifndef dTHR
-#ifdef WIN32
-#define dTHR extern int Perl___notused
-#else
-#define dTHR extern int errno
-#endif
+#define dTHR extern int no_such_variable
 #endif
 
 #ifndef boolSV

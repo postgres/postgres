@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.61 2002/09/04 20:31:36 momjian Exp $
+ * $Id: postgres.h,v 1.62 2002/10/18 20:33:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -539,8 +539,8 @@ extern int ExceptionalCondition(char *conditionName, char *errorType,
 #define BKI_WITHOUT_OIDS
 
 /* these need to expand into some harmless, repeatable declaration */
-#define DATA(x)   extern int errno
-#define DESCR(x)  extern int errno
+#define DATA(x)   extern int no_such_variable
+#define DESCR(x)  extern int no_such_variable
 
 #define BKI_BEGIN
 #define BKI_END
