@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.25 1997/08/21 23:56:51 momjian Exp $
+ * $Id: pg_proc.h,v 1.26 1997/09/01 05:46:09 thomas Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -1061,8 +1061,8 @@ DATA(insert OID = 1573 (  polygon           PGUID 14 f t f 1 f 604 "718" 100 0 0
 DATA(insert OID = 1574 (  points            PGUID 14 f t f 1 f  23 "604" 100 0 0 100  "select poly_npoints($1)" - ));
 DATA(insert OID = 1575 (  center            PGUID 14 f t f 1 f 600 "604" 100 0 0 100  "select poly_center($1)" - ));
 
-DATA(insert OID = 1579 (  circle            PGUID 14 f t f 1 f 701 "603" 100 0 0 100  "select box_circle($1)" - ));
-DATA(insert OID = 1580 (  circle            PGUID 14 f t f 1 f 701 "604" 100 0 0 100  "select poly_circle($1)" - ));
+DATA(insert OID = 1579 (  circle            PGUID 14 f t f 1 f 718 "603" 100 0 0 100  "select box_circle($1)" - ));
+DATA(insert OID = 1580 (  circle            PGUID 14 f t f 1 f 718 "604" 100 0 0 100  "select poly_circle($1)" - ));
 DATA(insert OID = 1581 (  center            PGUID 14 f t f 1 f 600 "718" 100 0 0 100  "select circle_center($1)" - ));
 DATA(insert OID = 1582 (  radius            PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_radius($1)" - ));
 DATA(insert OID = 1583 (  diameter          PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_diameter($1)" - ));
