@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.66 2001/07/16 05:06:59 tgl Exp $
+ * $Id: pg_dump.h,v 1.67 2001/07/17 00:30:35 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -134,10 +134,10 @@ typedef struct _inhInfo
 
 typedef struct _indInfo
 {
-	char	   *oid;			/* Oid of the pg_index entry */
-	char	   *indoid;			/* oid of the pg_class entry for the index */
-	char	   *indexrelname;	/* name of the secondary index class */
-	char	   *indrelname;		/* name of the indexed heap class */
+	char	   *indexreloid;	/* oid of the index itself */
+	char	   *indreloid;		/* oid of the table the index is on */
+	char	   *indexrelname;	/* name of the index itself */
+	char	   *indrelname;		/* name of the indexed table */
 	char	   *indamname;		/* name of the access method (e.g. btree,
 								 * rtree, etc.) */
 	char	   *indproc;		/* oid of the function to compute the
@@ -147,7 +147,7 @@ typedef struct _indInfo
 	char	   *indclass[INDEX_MAX_KEYS];		/* opclass of the keys */
 	char	   *indisunique;	/* is this index unique? */
 	char	   *indisprimary;	/* is this a PK index? */
-	char	   *indpred;		/* index predicate */
+	char	   *indhaspred;		/* does this index have a predicate? */
 } IndInfo;
 
 typedef struct _aggInfo

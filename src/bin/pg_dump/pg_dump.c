@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.214 2001/07/16 05:06:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.215 2001/07/17 00:30:35 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1744,8 +1744,10 @@ clearIndInfo(IndInfo *ind, int numIndexes)
 		return;
 	for (i = 0; i < numIndexes; ++i)
 	{
-		if (ind[i].indoid)
-			free(ind[i].indoid);
+		if (ind[i].indexreloid)
+			free(ind[i].indexreloid);
+		if (ind[i].indreloid)
+			free(ind[i].indreloid);
 		if (ind[i].indexrelname)
 			free(ind[i].indexrelname);
 		if (ind[i].indrelname)
@@ -1758,8 +1760,8 @@ clearIndInfo(IndInfo *ind, int numIndexes)
 			free(ind[i].indisunique);
 		if (ind[i].indisprimary)
 			free(ind[i].indisprimary);
-		if (ind[i].indpred)
-			free(ind[i].indpred);
+		if (ind[i].indhaspred)
+			free(ind[i].indhaspred);
 		for (a = 0; a < INDEX_MAX_KEYS; ++a)
 		{
 			if (ind[i].indkey[a])
@@ -2264,7 +2266,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query,
-							  "SELECT Oid FROM pg_index i WHERE i.indisprimary AND i.indrelid = %s ",
+							  "SELECT indexrelid FROM pg_index i WHERE i.indisprimary AND i.indrelid = %s ",
 							  tblinfo[i].oid);
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
@@ -2297,31 +2299,10 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			int			n;
 
 			resetPQExpBuffer(query);
-			if (g_fout->remoteVersion < 70100)
-			{
-				/* Fake the LOJ from below */
-				appendPQExpBuffer(query,
-							  "  SELECT c.relname "
-							  "    FROM pg_index i, pg_class c "
-							  "    WHERE     i.indrelid = %s"
-							  "        AND   i.indisprimary "
-							  "        AND   c.oid = i.indexrelid"
-							  " UNION ALL "
-							  "  SELECT NULL "
-							  "    FROM pg_index i "
-							  "    WHERE i.indrelid = %s"
-							  "    AND   i.indisprimary "
-							  "    And NOT Exists(Select * From pg_class c Where c.oid = i.indexrelid)",
-							  tblinfo[i].oid, tblinfo[i].oid);
-
-			} else {
-				appendPQExpBuffer(query,
-							  "SELECT c.relname "
-							  "FROM pg_index i LEFT OUTER JOIN pg_class c ON c.oid = i.indexrelid "
-							  "WHERE i.indrelid = %s"
-							  "AND   i.indisprimary ",
-							  tblinfo[i].oid);
-			}
+			appendPQExpBuffer(query,
+							  "SELECT relname FROM pg_class "
+							  "WHERE oid = %s",
+							  tblinfo[i].pkIndexOid);
 
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
@@ -2335,14 +2316,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			if (n != 1)
 			{
 				write_msg(NULL, "query to obtain name of primary key of table \"%s\" did not return exactly one result\n",
-						  tblinfo[i].relname);
-				exit_nicely();
-			}
-
-			/* Sanity check on LOJ */
-			if (PQgetisnull(res2, 0, 0))
-			{
-				write_msg(NULL, "name of primary key of table \"%s\" returned NULL value\n",
 						  tblinfo[i].relname);
 				exit_nicely();
 			}
@@ -2879,6 +2852,8 @@ getIndexes(int *numIndexes)
 	int			ntups;
 	IndInfo    *indinfo;
 
+	int			i_indexreloid;
+	int			i_indreloid;
 	int			i_indexrelname;
 	int			i_indrelname;
 	int			i_indamname;
@@ -2886,10 +2861,8 @@ getIndexes(int *numIndexes)
 	int			i_indkey;
 	int			i_indclass;
 	int			i_indisunique;
-	int			i_indoid;
-	int			i_oid;
 	int			i_indisprimary;
-	int			i_indpred;
+	int			i_indhaspred;
 
 	/*
 	 * find all the user-defined indexes.
@@ -2902,11 +2875,14 @@ getIndexes(int *numIndexes)
 	 */
 
 	appendPQExpBuffer(query,
-					  "SELECT i.oid, t1.oid as indoid, t1.relname as indexrelname, t2.relname as indrelname, "
+					  "SELECT i.indexrelid as indexreloid, "
+					  "i.indrelid as indreloid, "
+					  "t1.relname as indexrelname, t2.relname as indrelname, "
 					  "i.indproc, i.indkey, i.indclass, "
-				  "a.amname as indamname, i.indisunique, i.indisprimary, i.indpred "
-					"from pg_index i, pg_class t1, pg_class t2, pg_am a "
-				   "WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
+					  "a.amname as indamname, i.indisunique, i.indisprimary, "
+					  "length(i.indpred) > 0 as indhaspred "
+					  "from pg_index i, pg_class t1, pg_class t2, pg_am a "
+					  "WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
 					  "and t1.relam = a.oid and i.indexrelid > '%u'::oid "
 					  "and t2.relname !~ '^pg_' ",
 					  g_last_builtin_oid);
@@ -2930,8 +2906,8 @@ getIndexes(int *numIndexes)
 
 	memset((char *) indinfo, 0, ntups * sizeof(IndInfo));
 
-	i_oid = PQfnumber(res, "oid");
-	i_indoid = PQfnumber(res, "indoid");
+	i_indexreloid = PQfnumber(res, "indexreloid");
+	i_indreloid = PQfnumber(res, "indreloid");
 	i_indexrelname = PQfnumber(res, "indexrelname");
 	i_indrelname = PQfnumber(res, "indrelname");
 	i_indamname = PQfnumber(res, "indamname");
@@ -2940,12 +2916,12 @@ getIndexes(int *numIndexes)
 	i_indclass = PQfnumber(res, "indclass");
 	i_indisunique = PQfnumber(res, "indisunique");
 	i_indisprimary = PQfnumber(res, "indisprimary");
-	i_indpred = PQfnumber(res, "indpred");
+	i_indhaspred = PQfnumber(res, "indhaspred");
 
 	for (i = 0; i < ntups; i++)
 	{
-		indinfo[i].oid = strdup(PQgetvalue(res, i, i_oid));
-		indinfo[i].indoid = strdup(PQgetvalue(res, i, i_indoid));
+		indinfo[i].indexreloid = strdup(PQgetvalue(res, i, i_indexreloid));
+		indinfo[i].indreloid = strdup(PQgetvalue(res, i, i_indreloid));
 		indinfo[i].indexrelname = strdup(PQgetvalue(res, i, i_indexrelname));
 		indinfo[i].indrelname = strdup(PQgetvalue(res, i, i_indrelname));
 		indinfo[i].indamname = strdup(PQgetvalue(res, i, i_indamname));
@@ -2958,7 +2934,7 @@ getIndexes(int *numIndexes)
 						  INDEX_MAX_KEYS);
 		indinfo[i].indisunique = strdup(PQgetvalue(res, i, i_indisunique));
 		indinfo[i].indisprimary = strdup(PQgetvalue(res, i, i_indisprimary));
-		indinfo[i].indpred = strdup(PQgetvalue(res, i, i_indpred));
+		indinfo[i].indhaspred = strdup(PQgetvalue(res, i, i_indhaspred));
 	}
 	PQclear(res);
 	return indinfo;
@@ -4106,7 +4082,8 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 					/* Find the corresponding index */
 					for (k = 0; k < numIndexes; k++)
 					{
-						if (strcmp(indinfo[k].oid, tblinfo[i].pkIndexOid) == 0)
+						if (strcmp(indinfo[k].indexreloid,
+								   tblinfo[i].pkIndexOid) == 0)
 							break;
 					}
 
@@ -4244,7 +4221,7 @@ getAttrName(int attrnum, TableInfo *tblInfo)
 
 /*
  * dumpIndexes:
- *	  write out to fout all the user-define indexes
+ *	  write out to fout all the user-defined indexes
  */
 void
 dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
@@ -4447,13 +4424,14 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 			else
 				appendPQExpBuffer(q, " %s )", attlist->data);
 				
-			if (*indinfo[i].indpred) /* If there is an index predicate */
+			if (strcmp(indinfo[i].indhaspred, "t") == 0)
 			{
+				/* There is an index predicate, so fetch and dump it */
 				int numRows;
 				PQExpBuffer pred = createPQExpBuffer();
 				
-				appendPQExpBuffer(pred, "SELECT pg_get_expr(indpred,indrelid) as pred FROM pg_index WHERE oid = %s",
-								  indinfo[i].oid);
+				appendPQExpBuffer(pred, "SELECT pg_get_expr(indpred,indrelid) as pred FROM pg_index WHERE indexrelid = %s",
+								  indinfo[i].indexreloid);
 				res = PQexec(g_conn, pred->data);
 				if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 				{
@@ -4491,7 +4469,7 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 			/* Dump Index Comments */
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "INDEX %s", id1->data);
-			dumpComment(fout, q->data, indinfo[i].indoid);
+			dumpComment(fout, q->data, indinfo[i].indexreloid);
 
 		}
 	}
