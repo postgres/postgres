@@ -17,9 +17,9 @@ $(POSTGRES_IMP):
 	$(MKLDEXPORT) postgres $(bindir) > $@
 	$(CC) -Wl,-bE:$(top_builddir)/src/backend/$@ -o postgres $(OBJS) $(LDFLAGS)
 
-%$(EXPSUFF):
+%$(EXPSUFF): %.o
 	$(MKLDEXPORT) $*.o `pwd` > $*$(EXPSUFF)
 
 %$(DLSUFFIX): %.o %$(EXPSUFF)
-	@echo Making share library $@ from $*.o, $*$(EXPSUFF), and installed postgres.imp
+	@echo Making shared library $@ from $*.o, $*$(EXPSUFF), and installed postgres.imp
 	$(CC) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(libdir)/$(POSTGRES_IMP) -Wl,-bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(CFLAGS_SL)
