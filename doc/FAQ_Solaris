@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.2
 Sun Solaris specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:        $Date: 2001/12/10 13:02:20 $
+last updated:        $Date: 2002/01/18 20:56:17 $
 
 current maintainer:  Peter Eisentraut <peter_e@gmx.net>
 
@@ -13,6 +13,7 @@ Contents:
 1) What tools do I need to build and install PostgreSQL on Solaris?
 2) Why do I get problems when building with OpenSSL support?
 3) Why does configure complain about a failed test program?
+4) How do I ensure that pg_dump and pg_restore can handle files > 2 Gb?
 
 
 1) What tools do I need to build and install PostgreSQL on Solaris?
@@ -64,3 +65,14 @@ whenever you run any of the installed PostgreSQL programs.
 
 Alternatively, set the environment variable LD_RUN_PATH.  See the
 ld(1) man page for more information.
+
+
+4) How do I ensure that pg_dump and pg_restore can handle files > 2 Gb?
+
+By default, gcc will build programs that only handle 32-bit file offsets.
+This is not a real problem for the server but can easily be trouble for
+pg_dump and pg_restore.  Before running 'configure', set your CFLAGS variable
+to specify support for files with 64-bit offsets.  This has been verified
+to work on Solaris 7:
+
+     CFLAGS="`getconf LFS_CFLAGS`"; export CFLAGS
