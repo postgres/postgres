@@ -286,33 +286,23 @@ void
 print_copyright(void)
 {
 	puts(
-		 "
-		 PostgreSQL Data Base Management System
-
-		 Copyright(c) 1996 - 9 PostgreSQL Global Development Group
-
-		 This software is based on Postgres95, formerly known as Postgres, which
-		 contains the following notice:
-
-		 Copyright(c) 1994 - 7 Regents of the University of California
-
-	Permission to use, copy, modify, and distribute this software and its
-		 documentation for any purpose, without fee, and without a written agreement
-		 is hereby granted, provided that the above copyright notice and this paragraph
-		 and the following two paragraphs appear in all copies.
-
-		 IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
-		 DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST
-		 PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF
-		 THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
-		 DAMAGE.
-
-		 THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING,
-		 BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-		 PARTICULAR PURPOSE.THE SOFTWARE PROVIDED HEREUNDER IS ON AN \"AS IS\"  BASIS,
-		 AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,
-		 SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
-		 (end of terms) "
-	);
+		 "PostgreSQL Data Base Management System\n\n"
+		 "Copyright(c) 1996 - 9 PostgreSQL Global Development Group\n\n"
+		 "This software is based on Postgres95, formerly known as Postgres, which\n"
+		 "contains the following notice:\n\n"
+	  "Copyright(c) 1994 - 7 Regents of the University of California\n\n"
+		 "Permission to use, copy, modify, and distribute this software and its\n"
+		 "documentation for any purpose, without fee, and without a written agreement\n"
+		 "is hereby granted, provided that the above copyright notice and this paragraph\n"
+		 "and the following two paragraphs appear in all copies.\n\n"
+		 "IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR\n"
+		 "DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST\n"
+		 "PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF\n"
+		 "THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH\n"
+		 "DAMAGE.\n\n"
+		 "THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING,\n"
+		 "BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A\n"
+		 "PARTICULAR PURPOSE.THE SOFTWARE PROVIDED HEREUNDER IS ON AN \"AS IS\" BASIS,\n"
+		 "AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,\n"
+		 "SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.");
 }

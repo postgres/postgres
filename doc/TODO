@@ -278,7 +278,7 @@ MISC
 
 SOURCE CODE
 -----------
-* Add use of 'const' for varibles in source tree
+* Add use of 'const' for variables in source tree
 * Fix C optimizer problem where fmgr_ptr calls return different types [alpha]
 * -Add needed includes and removed unneeded include files(Bruce)
 * Make configure --enable-debug add -g on compile line
