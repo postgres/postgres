@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.27 2002/08/28 14:35:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.28 2003/01/15 18:01:05 momjian Exp $
 -->
 
  <chapter id="sql">
@@ -1749,19 +1749,20 @@ CREATE TABLE SELLS
 
        <listitem>
 	<para>
-	 CHAR(<replaceable class="parameter">n</replaceable>):
-	 fixed length character string of length
+	 VARCHAR(<replaceable class="parameter">n</replaceable>):
+	 varying length character string of maximum length
 	 <replaceable class="parameter">n</replaceable>.
 	</para>
        </listitem>
 
        <listitem>
 	<para>
-	 VARCHAR(<replaceable class="parameter">n</replaceable>):
-	 varying length character string of maximum length
+	 CHAR(<replaceable class="parameter">n</replaceable>):
+	 fixed length character string of length
 	 <replaceable class="parameter">n</replaceable>.
 	</para>
        </listitem>
+
       </itemizedlist>
      </para>
     </sect3>
