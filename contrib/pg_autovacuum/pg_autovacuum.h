@@ -34,10 +34,10 @@
 #define VACUUM_ANALYZE		0
 #define ANALYZE_ONLY		1
 
-#define TABLE_STATS_QUERY	"select a.relfilenode,a.relname,a.relnamespace,a.relpages,a.relisshared,a.reltuples,b.schemaname,b.n_tup_ins,b.n_tup_upd,b.n_tup_del from pg_class a, pg_stat_all_tables b where a.relfilenode=b.relid and a.relkind = 'r'"
+#define TABLE_STATS_QUERY	"select a.oid,a.relname,a.relnamespace,a.relpages,a.relisshared,a.reltuples,b.schemaname,b.n_tup_ins,b.n_tup_upd,b.n_tup_del from pg_class a, pg_stat_all_tables b where a.oid=b.relid and a.relkind = 'r'"
 
 #define FRONTEND
-#define PAGES_QUERY "select relfilenode,reltuples,relpages from pg_class where relfilenode=%i"
+#define PAGES_QUERY "select oid,reltuples,relpages from pg_class where oid=%i"
 #define FROZENOID_QUERY "select oid,age(datfrozenxid) from pg_database where datname = 'template1'"
 #define FROZENOID_QUERY2 "select oid,datname,age(datfrozenxid) from pg_database where datname!='template0'"
 
@@ -84,7 +84,7 @@ struct tableinfo
 {
 	char	   *schema_name,
 			   *table_name;
-	int			relfilenode,
+	int			relid,
 				reltuples,
 				relisshared,
 				relpages;
