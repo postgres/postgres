@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.34 2001/05/07 00:43:24 tgl Exp $
+ * $Id: index.h,v 1.35 2001/05/30 20:52:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,10 +50,8 @@ extern void UpdateStats(Oid relid, double reltuples);
 extern bool IndexesAreActive(Oid relid, bool comfirmCommitted);
 extern void setRelhasindex(Oid relid, bool hasindex);
 
-#ifndef OLD_FILE_NAMING
 extern void setNewRelfilenode(Relation relation);
 
-#endif	 /* OLD_FILE_NAMING */
 extern bool SetReindexProcessing(bool processing);
 extern bool IsReindexProcessing(void);
 

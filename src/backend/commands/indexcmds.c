@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.47 2001/03/22 06:16:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.48 2001/05/30 20:52:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,13 +654,9 @@ ReindexIndex(const char *name, bool force /* currently unused */ )
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
 			 name, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 
-#ifdef	OLD_FILE_NAMING
-	if (!reindex_index(tuple->t_data->t_oid, force, false))
-#else
 	if (IsIgnoringSystemIndexes())
 		overwrite = true;
 	if (!reindex_index(tuple->t_data->t_oid, force, overwrite))
-#endif	 /* OLD_FILE_NAMING */
 		elog(NOTICE, "index \"%s\" wasn't reindexed", name);
 
 	ReleaseSysCache(tuple);

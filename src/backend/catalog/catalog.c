@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.41 2001/05/30 14:15:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.42 2001/05/30 20:52:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,91 +21,6 @@
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
-
-#ifdef OLD_FILE_NAMING
-/*
- * relpath				- construct path to a relation's file
- *
- * Note that this only works with relations that are visible to the current
- * backend, ie, either in the current database or shared system relations.
- *
- * Result is a palloc'd string.
- */
-char *
-relpath(const char *relname)
-{
-	char	   *path;
-
-	if (IsSharedSystemRelationName(relname))
-	{
-		/* Shared system relations live in {datadir}/global */
-		size_t		bufsize = strlen(DataDir) + 8 + sizeof(NameData) + 1;
-
-		path = (char *) palloc(bufsize);
-		snprintf(path, bufsize, "%s/global/%s", DataDir, relname);
-		return path;
-	}
-
-	/*
-	 * If it is in the current database, assume it is in current working
-	 * directory.  NB: this does not work during bootstrap!
-	 */
-	return pstrdup(relname);
-}
-
-/*
- * relpath_blind			- construct path to a relation's file
- *
- * Construct the path using only the info available to smgrblindwrt,
- * namely the names and OIDs of the database and relation.	(Shared system
- * relations are identified with dbid = 0.)  Note that we may have to
- * access a relation belonging to a different database!
- *
- * Result is a palloc'd string.
- */
-
-char *
-relpath_blind(const char *dbname, const char *relname,
-			  Oid dbid, Oid relid)
-{
-	char	   *path;
-
-	if (dbid == (Oid) 0)
-	{
-		/* Shared system relations live in {datadir}/global */
-		path = (char *) palloc(strlen(DataDir) + 8 + sizeof(NameData) + 1);
-		sprintf(path, "%s/global/%s", DataDir, relname);
-	}
-	else if (dbid == MyDatabaseId)
-	{
-		/* XXX why is this inconsistent with relpath() ? */
-		path = (char *) palloc(strlen(DatabasePath) + sizeof(NameData) + 2);
-		sprintf(path, "%s/%s", DatabasePath, relname);
-	}
-	else
-	{
-		/* this is work around only !!! */
-		char		dbpathtmp[MAXPGPATH];
-		Oid			id;
-		char	   *dbpath;
-
-		GetRawDatabaseInfo(dbname, &id, dbpathtmp);
-
-		if (id != dbid)
-			elog(FATAL, "relpath_blind: oid of db %s is not %u",
-				 dbname, dbid);
-		dbpath = ExpandDatabasePath(dbpathtmp);
-		if (dbpath == NULL)
-			elog(FATAL, "relpath_blind: can't expand path for db %s",
-				 dbname);
-		path = (char *) palloc(strlen(dbpath) + sizeof(NameData) + 2);
-		sprintf(path, "%s/%s", dbpath, relname);
-		pfree(dbpath);
-	}
-	return path;
-}
-
-#else							/* ! OLD_FILE_NAMING */
 
 /*
  * relpath			- construct path to a relation's file
@@ -157,7 +72,6 @@ GetDatabasePath(Oid tblNode)
 	return path;
 }
 
-#endif	 /* OLD_FILE_NAMING */
 
 /*
  * IsSystemRelationName

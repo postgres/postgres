@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.151 2001/05/18 22:35:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.152 2001/05/30 20:52:32 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1350,11 +1350,7 @@ setRelhasindex(Oid relid, bool hasindex)
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
-#ifdef	OLD_FILE_NAMING
-	if (!IsIgnoringSystemIndexes())
-#else
 	if (!IsIgnoringSystemIndexes() && (!IsReindexProcessing() || pg_class->rd_rel->relhasindex))
-#endif	 /* OLD_FILE_NAMING */
 	{
 		tuple = SearchSysCacheCopy(RELOID,
 								   ObjectIdGetDatum(relid),
@@ -1424,7 +1420,6 @@ setRelhasindex(Oid relid, bool hasindex)
 	heap_close(pg_class, RowExclusiveLock);
 }
 
-#ifndef OLD_FILE_NAMING
 void
 setNewRelfilenode(Relation relation)
 {
@@ -1494,7 +1489,6 @@ setNewRelfilenode(Relation relation)
 	CommandCounterIncrement();
 }
 
-#endif	 /* OLD_FILE_NAMING */
 
 /* ----------------
  *		UpdateStats
@@ -1553,11 +1547,7 @@ UpdateStats(Oid relid, double reltuples)
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
-#ifdef	OLD_FILE_NAMING
-	in_place_upd = (IsReindexProcessing() || IsBootstrapProcessingMode());
-#else
 	in_place_upd = (IsIgnoringSystemIndexes() || IsReindexProcessing());
-#endif	 /* OLD_FILE_NAMING */
 
 	if (!in_place_upd)
 	{
@@ -2000,14 +1990,12 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	if (iRel == NULL)
 		elog(ERROR, "reindex_index: can't open index relation");
 
-#ifndef OLD_FILE_NAMING
 	if (!inplace)
 	{
 		inplace = IsSharedSystemRelationName(NameStr(iRel->rd_rel->relname));
 		if (!inplace)
 			setNewRelfilenode(iRel);
 	}
-#endif	 /* OLD_FILE_NAMING */
 	/* Obtain exclusive lock on it, just to be sure */
 	LockRelation(iRel, AccessExclusiveLock);
 
@@ -2084,9 +2072,6 @@ reindex_relation(Oid relid, bool force)
 				overwrite,
 				upd_pg_class_inplace;
 
-#ifdef OLD_FILE_NAMING
-	overwrite = upd_pg_class_inplace = deactivate_needed = true;
-#else
 	Relation	rel;
 
 	overwrite = upd_pg_class_inplace = deactivate_needed = false;
@@ -2138,7 +2123,7 @@ reindex_relation(Oid relid, bool force)
 			elog(ERROR, "the target relation %u is shared", relid);
 	}
 	RelationClose(rel);
-#endif	 /* OLD_FILE_NAMING */
+
 	old = SetReindexProcessing(true);
 	if (deactivate_needed)
 	{

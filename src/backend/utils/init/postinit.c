@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.85 2001/05/08 21:06:43 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.86 2001/05/30 20:52:32 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -21,10 +21,7 @@
 #include <math.h>
 #include <unistd.h>
 
-#ifndef OLD_FILE_NAMING
 #include "catalog/catalog.h"
-#endif
-
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"

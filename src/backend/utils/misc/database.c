@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.46 2001/05/30 14:15:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.47 2001/05/30 20:52:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,19 +140,11 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 	Page		pg;
 	char	   *dbfname;
 	Form_pg_database tup_db;
+	RelFileNode rnode;
 
-#ifdef OLD_FILE_NAMING
-	dbfname = (char *) palloc(strlen(DataDir) + 8 + strlen(DatabaseRelationName) + 2);
-	sprintf(dbfname, "%s/global/%s", DataDir, DatabaseRelationName);
-#else
-	{
-		RelFileNode rnode;
-
-		rnode.tblNode = 0;
-		rnode.relNode = RelOid_pg_database;
-		dbfname = relpath(rnode);
-	}
-#endif
+	rnode.tblNode = 0;
+	rnode.relNode = RelOid_pg_database;
+	dbfname = relpath(rnode);
 
 	if ((dbfd = open(dbfname, O_RDONLY | PG_BINARY, 0)) < 0)
 		elog(FATAL, "cannot open %s: %m", dbfname);
