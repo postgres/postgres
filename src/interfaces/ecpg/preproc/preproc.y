@@ -3577,6 +3577,8 @@ a_expr:  attr opt_indirection
 				{	$$ = cat3_str($1, make1_str("<"), $3); }
 		| a_expr '>' a_expr
 				{	$$ = cat3_str($1, make1_str(">"), $3); }
+		| a_expr '=' NULL_P
+                                {       $$ = cat2_str($1, make1_str("= NULL")); }
 		| a_expr '=' a_expr
 				{	$$ = cat3_str($1, make1_str("="), $3); }
 /* not possible in embedded sql		| ':' a_expr
