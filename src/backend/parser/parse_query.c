@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.13 1997/02/07 16:23:21 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.14 1997/02/14 23:02:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,7 @@ make_op(char *opname, Node *ltree, Node *rtree)
 
 	/* right operator */
 	ltypeId = (ltree==NULL) ? UNKNOWNOID : exprType(ltree);
- 	temp = oper(opname, ltypeId, rtypeId, false);
+ 	temp = right_oper(opname, ltypeId);
 	opform = (OperatorTupleForm) GETSTRUCT(temp);
 	left = make_operand(opname, ltree, ltypeId, opform->oprleft);
 	right = NULL;
