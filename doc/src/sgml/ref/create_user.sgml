@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.15 2000/07/14 15:27:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.16 2000/10/12 22:08:42 momjian Exp $
 Postgres documentation
 -->
 
@@ -165,7 +165,7 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable>
   </title>
   <para>
    CREATE USER will add a new user to an instance of 
-   <productname>Postgres</productname>. Refer to the adminstrator's
+   <productname>Postgres</productname>. Refer to the administrator's
    guide for information about managing users and authentication.
    You must be a database superuser to use this command.
   </para>
