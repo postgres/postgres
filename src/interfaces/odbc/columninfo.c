@@ -144,12 +144,12 @@ CI_set_field_info(ColumnInfoClass *self, int field_num, char *new_name,
                                       Oid new_adtid, Int2 new_adtsize, Int4 new_atttypmod)
 {
     
-	// check bounds
+	/* check bounds */
 	if((field_num < 0) || (field_num >= self->num_fields)) {
 		return;
 	}
 
-	// store the info
+	/* store the info */
 	self->name[field_num] = strdup(new_name);  
 	self->adtid[field_num] = new_adtid;
 	self->adtsize[field_num] = new_adtsize;

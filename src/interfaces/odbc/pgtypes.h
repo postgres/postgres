@@ -16,7 +16,9 @@
 /* in table pg_type */
 
 
-// #define PG_TYPE_LO			???? 	/* waiting for permanent type */
+#if 0
+#define PG_TYPE_LO			???? 	/* waiting for permanent type */
+#endif
 
 #define PG_TYPE_BOOL         16
 #define PG_TYPE_BYTEA        17

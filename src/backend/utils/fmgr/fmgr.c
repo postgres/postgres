@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.37 2000/01/26 05:57:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.38 2000/05/16 20:48:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,7 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[6], values->data[7],
 									  values->data[8]);
 			break;
+#if FUNC_MAX_ARGS >= 10
 		case 10:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -179,6 +180,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[6], values->data[7],
 									  values->data[8], values->data[9]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 11
 		case 11:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -187,6 +190,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[8], values->data[9],
 									  values->data[10]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 12
 		case 12:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -195,6 +200,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[8], values->data[9],
 									  values->data[10], values->data[11]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 13
 		case 13:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -204,6 +211,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[10], values->data[11],
 									  values->data[12]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 14
 		case 14:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -213,6 +222,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[10], values->data[11],
 									  values->data[12], values->data[13]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 15
 		case 15:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -223,6 +234,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[12], values->data[13],
 									  values->data[14]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 16
 		case 16:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -233,6 +246,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[12], values->data[13],
 									  values->data[14], values->data[15]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 17
 		case 17:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -244,6 +259,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[14], values->data[15],
 									  values->data[16]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 18
 		case 18:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -255,6 +272,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[14], values->data[15],
 									  values->data[16], values->data[17]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 19
 		case 19:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -267,6 +286,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[16], values->data[17],
 									  values->data[18]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 20
 		case 20:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -279,6 +300,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[16], values->data[17],
 									  values->data[18], values->data[19]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 21
 		case 21:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -292,6 +315,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[18], values->data[19],
 									  values->data[20]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 22
 		case 22:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -305,6 +330,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[18], values->data[19],
 									  values->data[20], values->data[21]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 23
 		case 23:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -319,6 +346,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[20], values->data[21],
 									  values->data[22]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 24
 		case 24:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -333,6 +362,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[20], values->data[21],
 									  values->data[22], values->data[23]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 25
 		case 25:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -348,6 +379,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[22], values->data[23],
 									  values->data[24]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 26
 		case 26:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -363,6 +396,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[22], values->data[23],
 									  values->data[24], values->data[25]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 27
 		case 27:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -379,6 +414,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[24], values->data[25],
 									  values->data[26]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 28
 		case 28:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -395,6 +432,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[24], values->data[25],
 									  values->data[26], values->data[27]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 29
 		case 29:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -412,6 +451,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[26], values->data[27],
 									  values->data[28]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 30
 		case 30:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -429,6 +470,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[26], values->data[27],
 									  values->data[28], values->data[29]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 31
 		case 31:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -447,6 +490,8 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[28], values->data[29],
 									  values->data[30]);
 			break;
+#endif
+#if FUNC_MAX_ARGS >= 32
 		case 32:
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
@@ -465,6 +510,7 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[28], values->data[29],
 									  values->data[30], values->data[31]);
 			break;
+#endif
 		default:
 			elog(ERROR, "fmgr_c: function %u: too many arguments (%d > %d)",
 				 finfo->fn_oid, n_arguments, FUNC_MAX_ARGS);

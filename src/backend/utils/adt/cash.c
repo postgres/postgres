@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.35 2000/04/12 17:15:48 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.36 2000/05/16 20:48:49 momjian Exp $
  */
 
 #include <limits.h>
@@ -74,7 +74,7 @@ cash_in(const char *str)
 
 	/* frac_digits in the C locale seems to return CHAR_MAX */
 	/* best guess is 2 in this case I think */
-	fpoint = ((lconvert->frac_digits != CHAR_MAX) ? lconvert->frac_digits : 2); /* int_frac_digits? */
+	fpoint = ((lconvert->frac_digits != (char)CHAR_MAX) ? lconvert->frac_digits : 2); /* int_frac_digits? */
 
 	dsymbol = ((*lconvert->mon_decimal_point != '\0') ? *lconvert->mon_decimal_point : '.');
 	ssymbol = ((*lconvert->mon_thousands_sep != '\0') ? *lconvert->mon_thousands_sep : ',');
@@ -225,7 +225,7 @@ cash_out(Cash *in_value)
 	comma = ((*lconvert->mon_thousands_sep != '\0') ? *lconvert->mon_thousands_sep : ',');
 	/* frac_digits in the C locale seems to return CHAR_MAX */
 	/* best guess is 2 in this case I think */
-	points = ((lconvert->frac_digits != CHAR_MAX) ? lconvert->frac_digits : 2); /* int_frac_digits? */
+	points = ((lconvert->frac_digits != (char)CHAR_MAX) ? lconvert->frac_digits : 2); /* int_frac_digits? */
 	convention = lconvert->n_sign_posn;
 	dsymbol = ((*lconvert->mon_decimal_point != '\0') ? *lconvert->mon_decimal_point : '.');
 	csymbol = ((*lconvert->currency_symbol != '\0') ? lconvert->currency_symbol : "$");
@@ -244,7 +244,7 @@ cash_out(Cash *in_value)
 
 	/* We're playing a little fast and loose with this.  Shoot me. */
 	/* Not me, that was the other guy. Haven't fixed it yet - thomas */
-	if (!mon_group || mon_group == CHAR_MAX)
+	if (!mon_group || mon_group == (char)CHAR_MAX)
 		mon_group = 3;
 
 	/* allow more than three decimal points and separate them */

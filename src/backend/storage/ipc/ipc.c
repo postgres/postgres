@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.46 2000/04/12 17:15:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.47 2000/05/16 20:48:48 momjian Exp $
  *
  * NOTES
  *
@@ -236,6 +236,7 @@ IPCPrivateSemaphoreKill(int status,
 						int semId)		/* caddr_t */
 {
 	union semun semun;
+	semun.val = 0;		/* unused */
 
 	semctl(semId, 0, IPC_RMID, semun);
 }
@@ -373,6 +374,7 @@ IpcSemaphoreKill(IpcSemaphoreKey key)
 {
 	int			semId;
 	union semun semun;
+	semun.val = 0;		/* unused */
 
 	/* kill semaphore if existent */
 
@@ -475,6 +477,7 @@ IpcSemaphoreGetCount(IpcSemaphoreId semId, int sem)
 {
 	int			semncnt;
 	union semun dummy;			/* for Solaris */
+	dummy.val = 0;		/* unused */
 
 	semncnt = semctl(semId, sem, GETNCNT, dummy);
 	return semncnt;
@@ -485,6 +488,7 @@ IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem)
 {
 	int			semval;
 	union semun dummy;			/* for Solaris */
+	dummy.val = 0;		/* unused */
 
 	semval = semctl(semId, sem, GETVAL, dummy);
 	return semval;

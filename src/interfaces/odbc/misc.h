@@ -50,7 +50,7 @@
   #ifndef WIN32
     #define mylog(args...)	/* GNU convention for variable arguments */
   #else
-    #define mylog    // mylog
+    #define mylog    /* mylog */
   #endif
 #endif
 
@@ -66,7 +66,7 @@
   #ifndef WIN32
     #define qlog(args...)	/* GNU convention for variable arguments */
   #else
-    #define qlog    // qlog
+    #define qlog    /* qlog */
   #endif
 #endif
 

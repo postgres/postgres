@@ -277,8 +277,8 @@ SOCK_get_next_byte(SocketClass *self)
 {
 
 	if (self->buffer_read_in >= self->buffer_filled_in) {
-	// there are no more bytes left in the buffer ->
-	// reload the buffer
+		/* there are no more bytes left in the buffer -> */
+	  	/* reload the buffer */
 
 		self->buffer_read_in = 0;
 		self->buffer_filled_in = recv(self->socket, (char *)self->buffer_in, globals.socket_buffersize, 0);
@@ -308,7 +308,7 @@ int bytes_sent;
 	self->buffer_out[self->buffer_filled_out++] = next_byte;
 
 	if (self->buffer_filled_out == globals.socket_buffersize) {
-		// buffer is full, so write it out
+		/* buffer is full, so write it out */
 		bytes_sent = send(self->socket, (char *)self->buffer_out, globals.socket_buffersize, 0);
 		if (bytes_sent != globals.socket_buffersize) {
 			self->errornumber = SOCKET_WRITE_ERROR;

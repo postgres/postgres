@@ -39,7 +39,7 @@
 extern GLOBAL_VALUES globals;
 
 
-//      Perform a Prepare on the SQL statement
+/*      Perform a Prepare on the SQL statement */
 RETCODE SQL_API SQLPrepare(HSTMT     hstmt,
                            UCHAR FAR *szSqlStr,
                            SDWORD    cbSqlStr)
@@ -108,7 +108,7 @@ StatementClass *self = (StatementClass *) hstmt;
 	self->prepare = TRUE;
 	self->statement_type = statement_type(self->statement);
 
-	//	Check if connection is onlyread (only selects are allowed)
+	/*	Check if connection is onlyread (only selects are allowed) */
 	if ( CC_is_onlyread(self->hdbc) && STMT_UPDATE(self)) {
 		self->errornumber = STMT_EXEC_ERROR;
 		self->errormsg = "Connection is readonly, only select statements are allowed.";
@@ -121,9 +121,9 @@ StatementClass *self = (StatementClass *) hstmt;
 
 }
 
-//      -       -       -       -       -       -       -       -       -
+/*      -       -       -       -       -       -       -       -       - */
 
-//      Performs the equivalent of SQLPrepare, followed by SQLExecute.
+/*      Performs the equivalent of SQLPrepare, followed by SQLExecute. */
 
 RETCODE SQL_API SQLExecDirect(
         HSTMT     hstmt,
@@ -144,8 +144,8 @@ static char *func = "SQLExecDirect";
 	if (stmt->statement)
 		free(stmt->statement);
 
-	// keep a copy of the un-parametrized statement, in case
-	// they try to execute this statement again
+	/* keep a copy of the un-parametrized statement, in case */
+	/* they try to execute this statement again */
 	stmt->statement = make_string(szSqlStr, cbSqlStr, NULL);
 	if ( ! stmt->statement) {
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
@@ -158,15 +158,15 @@ static char *func = "SQLExecDirect";
 
 	stmt->prepare = FALSE;
 
-	// If an SQLPrepare was performed prior to this, but was left in 
-	// the premature state because an error occurred prior to SQLExecute
-	// then set the statement to finished so it can be recycled.
+	/* If an SQLPrepare was performed prior to this, but was left in  */
+	/* the premature state because an error occurred prior to SQLExecute */
+	/* then set the statement to finished so it can be recycled. */
 	if ( stmt->status == STMT_PREMATURE )
 		stmt->status = STMT_FINISHED;
 
 	stmt->statement_type = statement_type(stmt->statement);
 
-	//	Check if connection is onlyread (only selects are allowed)
+	/*	Check if connection is onlyread (only selects are allowed) */
 	if ( CC_is_onlyread(stmt->hdbc) && STMT_UPDATE(stmt)) {
 		stmt->errornumber = STMT_EXEC_ERROR;
 		stmt->errormsg = "Connection is readonly, only select statements are allowed.";
@@ -182,7 +182,7 @@ static char *func = "SQLExecDirect";
 	return result;
 }
 
-//      Execute a prepared SQL statement
+/*      Execute a prepared SQL statement */
 RETCODE SQL_API SQLExecute(
         HSTMT   hstmt)
 {
@@ -272,15 +272,15 @@ int i, retval;
 				stmt->data_at_exec++;
 		}
 	}
-	//	If there are some data at execution parameters, return need data
-	//	SQLParamData and SQLPutData will be used to send params and execute the statement.
+	/*	If there are some data at execution parameters, return need data */
+	/*	SQLParamData and SQLPutData will be used to send params and execute the statement. */
 	if (stmt->data_at_exec > 0)
 		return SQL_NEED_DATA;
 
 
 	mylog("%s: copying statement params: trans_status=%d, len=%d, stmt='%s'\n", func, conn->transact_status, strlen(stmt->statement), stmt->statement);
 
-	//	Create the statement with parameters substituted.
+	/*	Create the statement with parameters substituted. */
 	retval = copy_statement_with_parameters(stmt);
 	if( retval != SQL_SUCCESS)
 		/* error msg passed from above */
@@ -296,7 +296,7 @@ int i, retval;
 
 
 
-//      -       -       -       -       -       -       -       -       -
+/*      -       -       -       -       -       -       -       -       - */
 RETCODE SQL_API SQLTransact(
         HENV    henv,
         HDBC    hdbc,
@@ -355,7 +355,7 @@ int lf;
 		CC_set_no_trans(conn);
 
 		if ( ! res) {
-			//	error msg will be in the connection
+			/*	error msg will be in the connection */
 			CC_log_error(func, "", conn);
 			return SQL_ERROR;
 		}
@@ -371,10 +371,10 @@ int lf;
 	return SQL_SUCCESS;
 }
 
-//      -       -       -       -       -       -       -       -       -
+/*      -       -       -       -       -       -       -       -       - */
 
 RETCODE SQL_API SQLCancel(
-        HSTMT   hstmt)  // Statement to cancel.
+        HSTMT   hstmt)  /* Statement to cancel. */
 {
 static char *func="SQLCancel";
 StatementClass *stmt = (StatementClass *) hstmt;
@@ -386,13 +386,13 @@ FARPROC addr;
 
 	mylog( "%s: entering...\n", func);
 
-	//	Check if this can handle canceling in the middle of a SQLPutData?
+	/*	Check if this can handle canceling in the middle of a SQLPutData? */
 	if ( ! stmt) {
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
 
-	//	Not in the middle of SQLParamData/SQLPutData so cancel like a close.
+	/*	Not in the middle of SQLParamData/SQLPutData so cancel like a close. */
 	if (stmt->data_at_exec < 0) {
 
 
@@ -423,9 +423,9 @@ FARPROC addr;
 		return SQL_SUCCESS;
 	}
 
-	//	In the middle of SQLParamData/SQLPutData, so cancel that.
-	//	Note, any previous data-at-exec buffers will be freed in the recycle
-	//	if they call SQLExecDirect or SQLExecute again.
+	/*	In the middle of SQLParamData/SQLPutData, so cancel that. */
+	/*	Note, any previous data-at-exec buffers will be freed in the recycle */
+	/*	if they call SQLExecDirect or SQLExecute again. */
 
 	stmt->data_at_exec = -1;
 	stmt->current_exec_param = -1;
@@ -435,11 +435,11 @@ FARPROC addr;
 
 }
 
-//      -       -       -       -       -       -       -       -       -
+/*      -       -       -       -       -       -       -       -       - */
 
-//      Returns the SQL string as modified by the driver.
-//		Currently, just copy the input string without modification
-//		observing buffer limits and truncation.
+/*      Returns the SQL string as modified by the driver. */
+/*		Currently, just copy the input string without modification */
+/*		observing buffer limits and truncation. */
 RETCODE SQL_API SQLNativeSql(
         HDBC      hdbc,
         UCHAR FAR *szSqlStrIn,
@@ -485,10 +485,10 @@ RETCODE result;
     return result;
 }
 
-//      -       -       -       -       -       -       -       -       -
+/*      -       -       -       -       -       -       -       -       - */
 
-//      Supplies parameter data at execution time.      Used in conjuction with
-//      SQLPutData.
+/*      Supplies parameter data at execution time.      Used in conjuction with */
+/*      SQLPutData. */
 
 RETCODE SQL_API SQLParamData(
         HSTMT   hstmt,
@@ -583,10 +583,10 @@ int i, retval;
 	return SQL_NEED_DATA;
 }
 
-//      -       -       -       -       -       -       -       -       -
+/*      -       -       -       -       -       -       -       -       - */
 
-//      Supplies parameter data at execution time.      Used in conjunction with
-//      SQLParamData.
+/*      Supplies parameter data at execution time.      Used in conjunction with */
+/*      SQLParamData. */
 
 RETCODE SQL_API SQLPutData(
         HSTMT   hstmt,

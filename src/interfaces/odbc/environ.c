@@ -57,7 +57,7 @@ mylog("**** in SQLFreeEnv: env = %u ** \n", env);
 	return SQL_ERROR;
 }
 
-//      Returns the next SQL error information.
+/*      Returns the next SQL error information. */
 
 RETCODE SQL_API SQLError(
         HENV       henv,
@@ -75,7 +75,7 @@ int status;
 	mylog("**** SQLError: henv=%u, hdbc=%u, hstmt=%u\n", henv, hdbc, hstmt);
 
     if (SQL_NULL_HSTMT != hstmt) {
-        // CC: return an error of a hstmt 
+	/* CC: return an error of a hstmt  */
         StatementClass *stmt = (StatementClass *) hstmt;
         
         if (SC_get_error(stmt, &status, &msg)) {
@@ -102,47 +102,47 @@ int status;
             if (NULL != szSqlState)    
                 
                 switch (status) {
-                    // now determine the SQLSTATE to be returned
+		/* now determine the SQLSTATE to be returned */
                 case STMT_TRUNCATED:
                     strcpy(szSqlState, "01004");
-                    // data truncated
+                    /* data truncated */
                     break;
                 case STMT_INFO_ONLY:
                     strcpy(szSqlState, "00000");
-                    // just information that is returned, no error
+                    /* just information that is returned, no error */
                     break;
                 case STMT_BAD_ERROR:
                     strcpy(szSqlState, "08S01");
-                    // communication link failure
+                    /* communication link failure */
                     break;
                 case STMT_CREATE_TABLE_ERROR:
                     strcpy(szSqlState, "S0001");
-                    // table already exists
+                    /* table already exists */
                     break;
                 case STMT_STATUS_ERROR:
                 case STMT_SEQUENCE_ERROR:
                     strcpy(szSqlState, "S1010");
-                    // Function sequence error
+                    /* Function sequence error */
                     break;
                 case STMT_NO_MEMORY_ERROR:
                     strcpy(szSqlState, "S1001");
-                    // memory allocation failure
+                    /* memory allocation failure */
                     break;
                 case STMT_COLNUM_ERROR:
                     strcpy(szSqlState, "S1002");
-                    // invalid column number
+                    /* invalid column number */
                     break;
                 case STMT_NO_STMTSTRING:
                     strcpy(szSqlState, "S1001");
-                    // having no stmtstring is also a malloc problem
+                    /* having no stmtstring is also a malloc problem */
                     break;
                 case STMT_ERROR_TAKEN_FROM_BACKEND:
                     strcpy(szSqlState, "S1000");
-                    // general error
+                    /* general error */
                     break;
                 case STMT_INTERNAL_ERROR:
                     strcpy(szSqlState, "S1000");
-                    // general error
+                    /* general error */
                     break;  
 				case STMT_ROW_OUT_OF_RANGE:
 					strcpy(szSqlState, "S1107");
@@ -153,7 +153,7 @@ int status;
 					break;
 
                 case STMT_NOT_IMPLEMENTED_ERROR:
-                    strcpy(szSqlState, "S1C00"); // == 'driver not capable'
+                    strcpy(szSqlState, "S1C00"); /* == 'driver not capable' */
                     break;
                 case STMT_OPTION_OUT_OF_RANGE_ERROR:
                     strcpy(szSqlState, "S1092");
@@ -181,7 +181,7 @@ int status;
                     break;
                 case STMT_INVALID_ARGUMENT_NO:
                     strcpy(szSqlState, "S1009");
-                    // invalid argument value
+                    /* invalid argument value */
                     break;
 				case STMT_INVALID_CURSOR_POSITION:
                     strcpy(szSqlState, "S1109");
@@ -198,7 +198,7 @@ int status;
 				case STMT_EXEC_ERROR:
 				default:
                     strcpy(szSqlState, "S1000");
-                    // also a general error
+                    /* also a general error */
                     break;
                 }         
 
@@ -250,15 +250,15 @@ int status;
                 case STMT_TRUNCATED:
 				case CONN_TRUNCATED:
                     strcpy(szSqlState, "01004");
-                    // data truncated
+                    /* data truncated */
                     break;
                 case CONN_INIREAD_ERROR:
                     strcpy(szSqlState, "IM002");
-                    // data source not found
+                    /* data source not found */
                     break;
                 case CONN_OPENDB_ERROR:
                     strcpy(szSqlState, "08001");
-                    // unable to connect to data source
+                    /* unable to connect to data source */
                     break;
 				case CONN_INVALID_AUTHENTICATION:
 				case CONN_AUTH_TYPE_UNSUPPORTED:
@@ -266,23 +266,23 @@ int status;
 					break;
                 case CONN_STMT_ALLOC_ERROR:
                     strcpy(szSqlState, "S1001");
-                    // memory allocation failure
+                    /* memory allocation failure */
                     break;
                 case CONN_IN_USE:
                     strcpy(szSqlState, "S1000");
-                    // general error
+                    /* general error */
                     break;
                 case CONN_UNSUPPORTED_OPTION:
                     strcpy(szSqlState, "IM001");
-                    // driver does not support this function
+                    /* driver does not support this function */
                 case CONN_INVALID_ARGUMENT_NO:
                     strcpy(szSqlState, "S1009");
-                    // invalid argument value
+                    /* invalid argument value */
                     break;
                 case CONN_TRANSACT_IN_PROGRES:
                     strcpy(szSqlState, "S1010");
-                    // when the user tries to switch commit mode in a transaction
-                    // -> function sequence error
+                    /* when the user tries to switch commit mode in a transaction */
+                    /* -> function sequence error */
                     break;
                 case CONN_NO_MEMORY_ERROR:
                     strcpy(szSqlState, "S1001");
@@ -299,7 +299,7 @@ int status;
 
                 default:
                     strcpy(szSqlState, "S1000");
-                    // general error
+                    /* general error */
                     break;
                 }
        
@@ -341,12 +341,12 @@ int status;
             if(szSqlState) {
                 switch(status) {
                 case ENV_ALLOC_ERROR:
-                    // memory allocation failure
+		    /* memory allocation failure */
                     strcpy(szSqlState, "S1001");
                     break;
                 default:
                     strcpy(szSqlState, "S1000");
-                    // general error
+                    /* general error */
                     break;
                 }
             }
@@ -405,8 +405,8 @@ char rv = 1;
 
 	mylog("in EN_Destructor, self=%u\n", self);
 
-    // the error messages are static strings distributed throughout
-    // the source--they should not be freed
+	/* the error messages are static strings distributed throughout */
+	/* the source--they should not be freed */
 
 	/* Free any connections belonging to this environment */
 	for (lf = 0; lf < MAX_CONNECTIONS; lf++) {

@@ -737,8 +737,8 @@ char *pgtype_create_params(StatementClass *stmt, Int4 type)
 
 Int2 sqltype_to_default_ctype(Int2 sqltype)
 {
-    // from the table on page 623 of ODBC 2.0 Programmer's Reference
-    // (Appendix D)
+    /* from the table on page 623 of ODBC 2.0 Programmer's Reference */
+    /* (Appendix D) */
     switch(sqltype) {
     case SQL_CHAR: 
     case SQL_VARCHAR:
