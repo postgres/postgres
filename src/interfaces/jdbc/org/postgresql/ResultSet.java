@@ -223,5 +223,37 @@ public abstract class ResultSet
 
 		return s;
 	}
+
+	/**
+	 * The first warning reported by calls on this ResultSet is
+	 * returned.  Subsequent ResultSet warnings will be chained
+	 * to this SQLWarning.
+	 *
+	 * <p>The warning chain is automatically cleared each time a new
+	 * row is read.
+	 *
+	 * <p><B>Note:</B> This warning chain only covers warnings caused by
+	 * ResultSet methods.  Any warnings caused by statement methods
+	 * (such as reading OUT parameters) will be chained on the
+	 * Statement object.
+	 *
+	 * @return the first SQLWarning or null;
+	 * @exception SQLException if a database access error occurs.
+	 */
+	public SQLWarning getWarnings() throws SQLException
+	{
+		return warnings;
+	}
+
+        /**
+	 * Add a warning chain to the current warning chain
+	 * @param warnings warnings to add
+	 */    
+        public void addWarnings(SQLWarning warnings) {
+	    if ( this.warnings != null )
+		this.warnings.setNextWarning(warnings);
+	    else
+		this.warnings = warnings;
+	}
 }
 

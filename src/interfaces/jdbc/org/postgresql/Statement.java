@@ -110,6 +110,18 @@ public abstract class Statement
 		timeout = seconds;
 	}
 
+	/**
+	 * This adds a warning to the warning chain.
+	 * @param msg message to add
+	 */
+	public void addWarning(String msg)
+        {
+	    if (warnings != null)
+		warnings.setNextWarning(new SQLWarning(msg));
+	    else
+		warnings = new SQLWarning(msg);
+	}
+
 	/*
 	 * The first warning reported by calls on this Statement is
 	 * returned.  A Statement's execute methods clear its SQLWarning
