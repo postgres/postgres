@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.194 2002/07/16 22:12:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.195 2002/07/18 04:41:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -995,6 +995,32 @@ _copyCaseExpr(CaseExpr *from)
 	Node_Copy(from, newnode, arg);
 	Node_Copy(from, newnode, args);
 	Node_Copy(from, newnode, defresult);
+
+	return newnode;
+}
+
+/* ----------------
+ * 		_copyBetweenExpr
+ * ----------------
+ */
+static BetweenExpr *
+_copyBetweenExpr(BetweenExpr *from)
+{
+	BetweenExpr *newnode = makeNode(BetweenExpr);
+
+	/*
+	 * copy remainder of node
+	 */
+	Node_Copy(from, newnode, expr);
+	Node_Copy(from, newnode, lexpr);
+	Node_Copy(from, newnode, rexpr);
+	Node_Copy(from, newnode, lthan);
+	Node_Copy(from, newnode, gthan);
+	newnode->symmetric = from->symmetric;
+	newnode->not = from->not;
+	newnode->typeId = from->typeId;
+	newnode->typeLen = from->typeLen;
+	newnode->typeByVal = from->typeByVal;
 
 	return newnode;
 }
@@ -3051,6 +3077,9 @@ copyObject(void *from)
 			break;
 		case T_CaseExpr:
 			retval = _copyCaseExpr(from);
+			break;
+		case T_BetweenExpr:
+			retval = _copyBetweenExpr(from);
 			break;
 		case T_CaseWhen:
 			retval = _copyCaseWhen(from);

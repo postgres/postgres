@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.121 2002/07/06 20:16:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.122 2002/07/18 04:41:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,11 +69,8 @@ parse_expr_init(void)
  *	  here.
  *
  * NOTE: there are various cases in which this routine will get applied to
- * an already-transformed expression.  Some examples:
- *	1. At least one construct (BETWEEN/AND) puts the same nodes
- *	into two branches of the parse tree; hence, some nodes
- *	are transformed twice.
- *	2. Another way it can happen is that coercion of an operator or
+ * an already-transformed expression. An examples:
+ *	- Another way it can happen is that coercion of an operator or
  *	function argument to the required type (via coerce_type())
  *	can apply transformExpr to an already-transformed subexpression.
  *	An example here is "SELECT count(*) + 1.0 FROM table".
@@ -588,6 +585,82 @@ transformExpr(ParseState *pstate, Node *expr)
 				result = expr;
 				break;
 			}
+		case T_BetweenExpr:
+			{
+				BetweenExpr	*b = (BetweenExpr *) expr;
+				List	   *typeIds = NIL;
+				HeapTuple	tup;
+				Form_pg_operator	opform;
+
+				/* Transform the expressions */
+				b->expr = transformExpr(pstate, b->expr);
+				b->lexpr = transformExpr(pstate, b->lexpr);
+				b->rexpr = transformExpr(pstate, b->rexpr);
+
+				/* Find coercion type for all 3 entities */
+				typeIds = lappendi(typeIds, exprType(b->expr));
+				typeIds = lappendi(typeIds, exprType(b->lexpr));
+				typeIds = lappendi(typeIds, exprType(b->rexpr));
+				b->typeId = select_common_type(typeIds, "TransformExpr");
+
+				/* Additional type information */
+				b->typeLen = get_typlen(b->typeId);
+				b->typeByVal = get_typbyval(b->typeId);
+
+				/* Coerce the three expressions to the type */
+				b->expr = coerce_to_common_type(pstate, b->expr,
+												b->typeId,
+												"TransformExpr");
+
+				b->lexpr = coerce_to_common_type(pstate, b->lexpr,
+												 b->typeId,
+												 "TransformExpr");
+
+				b->rexpr = coerce_to_common_type(pstate, b->rexpr, 
+												 b->typeId,
+												 "TransformExpr");
+
+				/* Build the >= operator */	
+				tup = oper(makeList1(makeString(">=")),
+						   b->typeId, b->typeId, false);
+				opform = (Form_pg_operator) GETSTRUCT(tup);
+
+				/* Triple check our types */
+				if (b->typeId != opform->oprright || b->typeId != opform->oprleft)
+					elog(ERROR, "transformExpr: Unable to find appropriate"
+								" operator for between operation");
+
+				b->gthan = makeNode(Expr);
+				b->gthan->typeOid = opform->oprresult;
+				b->gthan->opType = OP_EXPR;
+				b->gthan->oper = (Node *) makeOper(oprid(tup),			/* opno */
+								 		  		   oprfuncid(tup),		/* opid */
+										  		   opform->oprresult,	/* opresulttype */
+										  		   get_func_retset(opform->oprcode));/* opretset */
+				ReleaseSysCache(tup);
+
+				/* Build the equation for <= operator */
+				tup = oper(makeList1(makeString("<=")),
+						   b->typeId, b->typeId, false);
+				opform = (Form_pg_operator) GETSTRUCT(tup);
+
+				/* Triple check the types */
+				if (b->typeId != opform->oprright || b->typeId != opform->oprleft)
+					elog(ERROR, "transformExpr: Unable to find appropriate"
+								" operator for between operation");
+
+				b->lthan = makeNode(Expr);
+				b->lthan->typeOid = opform->oprresult;
+				b->lthan->opType = OP_EXPR;
+				b->lthan->oper = (Node *) makeOper(oprid(tup),			/* opno */
+								 		  		   oprfuncid(tup),		/* opid */
+												   opform->oprresult,	/* opresulttype */
+												   get_func_retset(opform->oprcode));/* opretset */
+				ReleaseSysCache(tup);
+
+				result = expr;
+				break;
+			}
 
 			/*
 			 * Quietly accept node types that may be presented when we are
@@ -609,7 +682,6 @@ transformExpr(ParseState *pstate, Node *expr)
 				result = (Node *) expr;
 				break;
 			}
-
 		default:
 			/* should not reach here */
 			elog(ERROR, "transformExpr: does not know how to transform node %d"
@@ -888,6 +960,9 @@ exprType(Node *expr)
 			type = BOOLOID;
 			break;
 		case T_BooleanTest:
+			type = BOOLOID;
+			break;
+		case T_BetweenExpr:
 			type = BOOLOID;
 			break;
 		default:

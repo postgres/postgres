@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.141 2002/07/16 22:12:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.142 2002/07/18 04:41:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1770,6 +1770,33 @@ _equalCaseExpr(CaseExpr *a, CaseExpr *b)
 }
 
 static bool
+_equalBetweenExpr(BetweenExpr *a, BetweenExpr *b)
+{
+	if (!equal(a->expr, b->expr))
+		return false;
+	if (!equal(a->lexpr, b->lexpr))
+		return false;
+	if (!equal(a->rexpr, b->rexpr))
+		return false;
+	if (!equal(a->lthan, b->lthan))
+		return false;
+	if (!equal(a->gthan, b->gthan))
+		return false;
+	if (a->symmetric != b->symmetric)
+		return false;
+	if (a->not != b->not)
+		return false;
+	if (a->typeId != b->typeId)
+		return false;
+	if (a->typeLen != b->typeLen)
+		return false;
+	if (a->typeByVal != b->typeByVal)
+		return false;
+
+	return true;
+}
+
+static bool
 _equalCaseWhen(CaseWhen *a, CaseWhen *b)
 {
 	if (!equal(a->expr, b->expr))
@@ -2216,6 +2243,9 @@ equal(void *a, void *b)
 			break;
 		case T_CaseExpr:
 			retval = _equalCaseExpr(a, b);
+			break;
+		case T_BetweenExpr:
+			retval = _equalBetweenExpr(a, b);
 			break;
 		case T_CaseWhen:
 			retval = _equalCaseWhen(a, b);

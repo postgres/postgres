@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.187 2002/07/16 22:12:20 tgl Exp $
+ * $Id: parsenodes.h,v 1.188 2002/07/18 04:41:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,25 @@ typedef struct A_Const
 	Value		val;			/* the value (with the tag) */
 	TypeName   *typename;		/* typecast */
 } A_Const;
+
+/*
+ * BetweenExpr - an SQL99 BETWEEN expression
+ */
+
+typedef struct BetweenExpr
+{
+	NodeTag		type;
+	Node	   *expr;			/* Expression to check */
+	Node	   *lexpr;			/* First bound */
+	Node	   *rexpr;			/* Second bound */
+	bool		not;			/* Do we want inverse? */
+	bool		symmetric;		/* True if SYMMETRIC, false if ASYMMETRIC */
+	Oid			typeId;			/* Information abotu common type */
+	int16		typeLen;
+	bool		typeByVal;
+	Expr	   *gthan;
+	Expr	   *lthan;
+} BetweenExpr;
 
 /*
  * TypeCast - a CAST expression

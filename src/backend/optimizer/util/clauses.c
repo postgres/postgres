@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.103 2002/07/06 20:16:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.104 2002/07/18 04:41:45 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1817,8 +1817,6 @@ expression_tree_walker(Node *node,
 		case T_Var:
 		case T_Param:
 		case T_RangeTblRef:
-			/* primitive node types with no subnodes */
-			break;
 		case T_Expr:
 			{
 				Expr	   *expr = (Expr *) node;
@@ -1962,6 +1960,18 @@ expression_tree_walker(Node *node,
 				if (walker(setop->larg, context))
 					return true;
 				if (walker(setop->rarg, context))
+					return true;
+			}
+			break;
+		case T_BetweenExpr:
+			{
+				BetweenExpr *betwn = (BetweenExpr *) node;
+
+				if (walker(betwn->expr, context))
+					return true;
+				if (walker(betwn->lexpr, context))
+					return true;
+				if (walker(betwn->rexpr, context))
 					return true;
 			}
 			break;
@@ -2123,8 +2133,6 @@ expression_tree_mutator(Node *node,
 		case T_Var:
 		case T_Param:
 		case T_RangeTblRef:
-			/* primitive node types with no subnodes */
-			return (Node *) copyObject(node);
 		case T_Expr:
 			{
 				Expr	   *expr = (Expr *) node;
@@ -2269,6 +2277,18 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, btest, BooleanTest);
 				MUTATE(newnode->arg, btest->arg, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_BetweenExpr:
+			{
+				BetweenExpr	   *bexpr = (BetweenExpr *) node;
+				BetweenExpr	   *newnode;
+
+				FLATCOPY(newnode, bexpr, BetweenExpr);	
+				MUTATE(newnode->expr, bexpr->expr, Node *);
+				MUTATE(newnode->lexpr, bexpr->lexpr, Node *);
+				MUTATE(newnode->rexpr, bexpr->rexpr, Node *);
 				return (Node *) newnode;
 			}
 			break;
