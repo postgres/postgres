@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.67 2004/12/03 01:23:38 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.68 2004/12/03 05:50:18 momjian Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
@@ -179,7 +179,7 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.67 2004/12/03 01:23:38 momjian
   &lobj;
   &ecpg;
   &infoschema;
-  &external_projects;
+  &external-projects;
 
  </part>
 
@@ -236,6 +236,7 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.67 2004/12/03 01:23:38 momjian
   &geqo;
   &indexcost;
   &gist;
+  &filelayout;
   &page;
   &bki;
 
