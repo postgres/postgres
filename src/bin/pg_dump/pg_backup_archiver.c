@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.91 2004/08/04 17:13:03 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.92 2004/08/13 21:37:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,7 @@ static char *modulename = gettext_noop("archiver");
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
 static char 	*_getObjectFromDropStmt(const char *dropStmt, const char *type);
-static void	_printTocHeader(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
-static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass);
+static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass);
 
 
 static void fixPriorBlobRefs(ArchiveHandle *AH, TocEntry *blobte,
@@ -379,14 +378,11 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		/* Work out what, if anything, we want from this entry */
 		reqs = _tocEntryRequired(te, ropt, true);
 
-		defnDumped = false;
-
 		if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
 		{
-			ahlog(AH, 1, "setting owner and acl for %s %s\n", te->desc, te->tag);
-
+			ahlog(AH, 1, "setting owner and acl for %s %s\n",
+				  te->desc, te->tag);
 			_printTocEntry(AH, te, ropt, false, true);
-			defnDumped = true;
 		}
 
 		te = te->next;
@@ -2304,10 +2300,40 @@ _getObjectFromDropStmt(const char *dropStmt, const char *type)
 }
 
 static void
-_printTocHeader(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData)
+_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass)
 {
 	const char	   *pfx;
 
+	/* ACLs are dumped only during acl pass */
+	if (acl_pass)
+	{
+		if (strcmp(te->desc, "ACL") != 0)
+			return;
+	}
+	else
+	{
+		if (strcmp(te->desc, "ACL") == 0)
+			return;
+	}
+
+	/*
+	 * Avoid dumping the public schema, as it will already be created ...
+	 * unless we are using --clean mode, in which case it's been deleted
+	 * and we'd better recreate it.
+	 */
+	if (!ropt->dropSchema &&
+		strcmp(te->desc, "SCHEMA") == 0 && strcmp(te->tag, "public") == 0)
+		return;
+
+	/* Select owner and schema as necessary */
+	_becomeOwner(AH, te);
+	_selectOutputSchema(AH, te->namespace);
+
+	/* Set up OID mode too */
+	if (strcmp(te->desc, "TABLE") == 0)
+		_setWithOids(AH, te);
+
+	/* Emit header comment for item */
 	if (isData)
 		pfx = "Data for ";
 	else
@@ -2335,64 +2361,48 @@ _printTocHeader(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDa
 	if (AH->PrintExtraTocPtr != NULL)
 		(*AH->PrintExtraTocPtr) (AH, te);
 	ahprintf(AH, "--\n\n");
-}
 
-static int
-_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass)
-{
-	/* Select schema as necessary */
-	_becomeOwner(AH, te);
-	_selectOutputSchema(AH, te->namespace);
-	if (strcmp(te->desc, "TABLE") == 0 && !acl_pass)
-		_setWithOids(AH, te);
-
-	if (acl_pass && strcmp(te->desc, "ACL") == 0)
+	/*
+	 * Actually print the definition.
+	 *
+	 * Really crude hack for suppressing AUTHORIZATION clause of CREATE SCHEMA
+	 * when --no-owner mode is selected.  This is ugly, but I see no other
+	 * good way ...
+	 */
+	if (AH->ropt && AH->ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
 	{
-		_printTocHeader(AH, te, ropt, isData);
-		ahprintf(AH, "%s\n\n", te->defn);
+		ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", te->tag);
 	}
-	else if (!acl_pass && strlen(te->defn) > 0)
+	else
 	{
-		_printTocHeader(AH, te, ropt, isData);
-
-		/*
-		 * Really crude hack for suppressing AUTHORIZATION clause of CREATE SCHEMA
-		 * when --no-owner mode is selected.  This is ugly, but I see no other
-		 * good way ...  Also, avoid dumping the public schema as it will already be
-		 * created.
-		 */
-		if (strcmp(te->tag, "public") != 0) {
-			if (AH->ropt && AH->ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
-			{
-				ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", te->tag);
-			}
-			else
-			{
-				ahprintf(AH, "%s\n\n", te->defn);
-
-				if (!ropt->noOwner && !ropt->use_setsessauth && strlen(te->owner) > 0 && strlen(te->dropStmt) > 0 && (
-										strcmp(te->desc, "AGGREGATE") == 0 ||
-										strcmp(te->desc, "CONVERSION") == 0 ||
-										strcmp(te->desc, "DOMAIN") == 0 ||
-										strcmp(te->desc, "FUNCTION") == 0 ||
-										strcmp(te->desc, "OPERATOR") == 0 ||
-										strcmp(te->desc, "OPERATOR CLASS") == 0 ||
-										strcmp(te->desc, "TABLE") == 0 ||
-										strcmp(te->desc, "TYPE") == 0 ||
-										strcmp(te->desc, "VIEW") == 0 ||
-										strcmp(te->desc, "SEQUENCE") == 0 ||
-										(strcmp(te->desc, "SCHEMA") == 0 && strcmp(te->tag, "public") == 0) /* Only public schema */
-										))
-				{
-					char *temp = _getObjectFromDropStmt(te->dropStmt, te->desc);
-					ahprintf(AH, "ALTER %s OWNER TO %s;\n\n", temp, fmtId(te->owner));
-					free (temp);
-				} 
-			}
-		}
+		if (strlen(te->defn) > 0)
+			ahprintf(AH, "%s\n\n", te->defn);
 	}
-	else if (isData) {
-		_printTocHeader(AH, te, ropt, isData);
+
+	/*
+	 * If we aren't using SET SESSION AUTH to determine ownership, we must
+	 * instead issue an ALTER OWNER command.  Ugly, since we have to
+	 * cons one up based on the dropStmt.  We don't need this for schemas
+	 * (since we use CREATE SCHEMA AUTHORIZATION instead), nor for some other
+	 * object types.
+	 */
+	if (!ropt->noOwner && !ropt->use_setsessauth &&
+		strlen(te->owner) > 0 && strlen(te->dropStmt) > 0 &&
+		(strcmp(te->desc, "AGGREGATE") == 0 ||
+		 strcmp(te->desc, "CONVERSION") == 0 ||
+		 strcmp(te->desc, "DOMAIN") == 0 ||
+		 strcmp(te->desc, "FUNCTION") == 0 ||
+		 strcmp(te->desc, "OPERATOR") == 0 ||
+		 strcmp(te->desc, "OPERATOR CLASS") == 0 ||
+		 strcmp(te->desc, "TABLE") == 0 ||
+		 strcmp(te->desc, "TYPE") == 0 ||
+		 strcmp(te->desc, "VIEW") == 0 ||
+		 strcmp(te->desc, "SEQUENCE") == 0))
+	{
+		char *temp = _getObjectFromDropStmt(te->dropStmt, te->desc);
+
+		ahprintf(AH, "ALTER %s OWNER TO %s;\n\n", temp, fmtId(te->owner));
+		free(temp);
 	}
 
 	/*
@@ -2405,8 +2415,6 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			free(AH->currUser);
 		AH->currUser = NULL;
 	}
-
-	return 1;
 }
 
 void
