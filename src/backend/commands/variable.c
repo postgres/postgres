@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.55 2001/10/25 05:49:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.56 2001/11/21 05:55:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,7 +213,7 @@ parse_datestyle_internal(char *value)
 			DateStyle = USE_SQL_DATES;
 			dcnt++;
 		}
-		else if (!strcasecmp(tok, "POSTGRES"))
+		else if (!strncasecmp(tok, "POSTGRESQL", 8))
 		{
 			DateStyle = USE_POSTGRES_DATES;
 			dcnt++;
