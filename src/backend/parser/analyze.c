@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.81 1998/08/25 15:08:12 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.82 1998/08/26 04:20:27 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,7 +518,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					}
 
 					sequence = makeNode(CreateSeqStmt);
-					sequence->seqname = constraint->name;
+					sequence->seqname = pstrdup(constraint->name);
 					sequence->options = NIL;
 
 					elog(NOTICE, "CREATE TABLE will create implicit sequence %s for SERIAL column %s.%s",
@@ -528,6 +528,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_UNIQUE;
+					constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
 
 					column->constraints = lappend(column->constraints, constraint);
 				}
