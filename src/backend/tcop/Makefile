@@ -4,7 +4,7 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.1 1996/10/27 09:52:53 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.2 1996/10/31 05:55:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ SUBSYS.o: $(OBJS)
 utility.o: ../parse.h
 
 ../parse.h: 
-	make -C .. parse.h
+	gmake -C .. parse.h
 
 dep: ../parse.h
 	$(CC) -MM $(INCLUDE_OPT) *.c >depend

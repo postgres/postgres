@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.1.1.1 1996/07/09 06:21:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.2 1996/10/31 05:55:24 momjian Exp $
  *
  * NOTES
  *    See acl.h.
@@ -26,6 +26,7 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/pg_group.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_user.h"
 #include "utils/syscache.h"
 #include "parser/catalog_utils.h"
