@@ -48,7 +48,6 @@
 #include "executor/spi.h"
 #include "commands/trigger.h"
 #include "utils/elog.h"
-#include "utils/builtins.h"
 #include "fmgr.h"
 #include "access/heapam.h"
 
@@ -354,7 +353,7 @@ extern void boot_DynaLoader _((CV* cv));
 extern void boot_Opcode _((CV* cv));
 extern void boot_SPI _((CV* cv));
 
-extern void
+static void
 plperl_init_shared_libs(void)
 {
 	char *file = __FILE__;
