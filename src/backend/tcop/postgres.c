@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.410 2004/05/19 18:58:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.411 2004/05/19 19:39:27 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2185,7 +2185,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	/* Set up reference point for stack depth checking */
 	stack_base_ptr = &stack_base;
 
-	if (find_my_exec(argv[0], my_exec_path) < 0)
+	if (my_exec_path[0] == '\0' && find_my_exec(argv[0], my_exec_path) < 0)
 		elog(FATAL,
 				gettext("%s: could not locate my own executable path"),
 						argv[0]);
