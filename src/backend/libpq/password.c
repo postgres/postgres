@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.26 1999/10/23 03:13:21 tgl Exp $
+ * $Id: password.c,v 1.27 1999/11/23 01:04:38 tgl Exp $
  *
  */
 
@@ -45,6 +45,8 @@ verify_password(char *auth_arg, char *user, char *password)
 		return STATUS_ERROR;
 	}
 
+	pfree(pw_file_fullname);
+
 	while (!feof(pw_file))
 	{
 		char		pw_file_line[255],
@@ -67,15 +69,12 @@ verify_password(char *auth_arg, char *user, char *password)
 
 		if (strcmp(user, test_user) == 0)
 		{
-			/* we're outta here one way or the other. */
+			/* we're outta here one way or the other, so close file */
 			FreeFile(pw_file);
 
 			if (strcmp(crypt(password, test_pw), test_pw) == 0)
 			{
 				/* it matched. */
-
-				pfree(pw_file_fullname);
-
 				return STATUS_OK;
 			}
 
@@ -85,19 +84,17 @@ verify_password(char *auth_arg, char *user, char *password)
 			fputs(PQerrormsg, stderr);
 			pqdebug("%s", PQerrormsg);
 
-			pfree(pw_file_fullname);
-
 			return STATUS_ERROR;
 		}
 	}
+
+	FreeFile(pw_file);
 
 	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 			 "verify_password: user '%s' not found in password file.\n",
 			 user);
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
-
-	pfree(pw_file_fullname);
 
 	return STATUS_ERROR;
 }
