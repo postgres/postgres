@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Dec 23 09:48:47 EST 2000
+Last updated:		Wed Dec 27 00:44:44 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -58,6 +58,16 @@ URGENT
 * -Add OUTER joins, left and right[outer](Tom, Thomas)
 * -Allow long tuples by chaining or auto-storing outside db (TOAST)(Jan)
 * Fix memory leak for expressions[memory](Tom?) 
+* Add replication of distributed databases [replication]
+	o automatic fallover
+	o load balancing
+	o master/slave replication
+	o multi-master replication
+	o partition data across servers
+	o sample implementation in contrib/rserv
+	o queries across databases or servers (two-phase commit)
+* Point-in-time data recovery using backup and write-ahead log
+* Allow row re-use without vacuum(Vadim)
 
 ADMIN
 
@@ -109,7 +119,7 @@ TYPES
 * Update macaddr manufacturer numbers, or remove the function macaddr_manuf()
 * Add btree index support for reltime, tinterval, regproc, bit, varbit
 * Add rtree index support for line, lseg, path, point
-* Make file in/out interface to TOAST columns
+* Make binary/file in/out interface for TOAST columns
 * SELECT cash_out(2) crashes because of opaque
 
 VIEWS
@@ -120,6 +130,7 @@ VIEWS
 * Create insert, update and delete rules for simple one table views
 * -Change elog for complex view ins|upd|del to "cannot {ins|upd|del}
 * Add the functionality for "with check option" clause of create view
+* Automatically create rules on views so they are updateable, per SQL92
 
 INDEXES
 
@@ -170,7 +181,7 @@ CLIENTS
 * add pg_dump option to dump type names as standard ANSI types
 * -make pg_dump dump in oid order, so dependencies are resolved (Philip)
 * allow psql \d to show primary and foreign keys
-* allow psql \d to show temporary table schema
+* allow psql \d to show temporary table structure
 * add XML interface capability
 * -Allow dumping of users/groups separately
 
@@ -192,17 +203,17 @@ EXOTIC FEATURES
 
 * Add sql3 recursive unions
 * Add the concept of dataspaces/tablespaces [tablespaces]
-* Add replication of distributed databases [replication]
 * Allow queries across multiple databases
 * Allow nested transactions (Vadim)
 * Allow INSERT/UPDATE to return new.col or old.col (Philip)
 * SQL*Net listener that makes PostgreSQL appear as an Oracle database 
   to clients
+* Incremental backups
+* Allow SQL92 schemas
 
 MISC
 
 * Increase identifier length(NAMEDATALEN) if small performance hit
-* Allow row re-use without vacuum(Vadim)
 * Create a background process for each database that runs while
   database is idle, finding superceeded rows, gathering stats and vacuuming
 * Add UNIQUE capability to non-btree indexes
@@ -227,6 +238,7 @@ MISC
 * have pg_upgrade use pg_ctl to stop/start postmaster
 * Encrpyt passwords in pg_shadow table using MD5(Vince)
 * Use flock() to prevent multiple postmasters on the same port [flock]
+* Allow Java server-side programming
 
 PERFORMANCE
 -----------
@@ -276,6 +288,7 @@ MISC
 * Make ANALYZE a separate command
 * Gather more accurate dispersion statistics using indexes
 * Keep statistics about clustering of table rows [optimizer]
+* Automatically keep clustering on a table
 * Improve statistics storage in pg_class [performance]
 * Improve VACUUM speed with indexes [vacuum]
 * Reduce VACUUM lock time by moving tuples with read lock, then write
@@ -326,4 +339,3 @@ Developers who have claimed items are:
 	* Thomas is Thomas Lockhart <lockhart@alumni.caltech.edu>
 	* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
 	* Vadim is Vadim B. Mikheev <vadim4o@email.com>  
-›5~
