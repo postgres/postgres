@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.11 1998/09/01 04:39:57 momjian Exp $
+ * $Id: pgtclCmds.h,v 1.12 1998/09/21 01:02:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,10 @@ typedef struct Pg_ConnectionId_s
 
 	Pg_TclNotifies *notify_list;/* head of list of notify info */
 	int			notifier_running;		/* notify event source is live */
-
+	int			notifier_socket; /* PQsocket on which notifier is listening */
 }			Pg_ConnectionId;
 
+/* Values of res_copyStatus */
 #define RES_COPY_NONE	0
 #define RES_COPY_INPROGRESS 1
 #define RES_COPY_FIN	2

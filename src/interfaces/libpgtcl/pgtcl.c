@@ -2,14 +2,14 @@
  *
  * pgtcl.c--
  *
- *	  libpgtcl is a tcl package for front-ends to interface with pglite
- *	 It's the tcl equivalent of the old libpq C interface.
+ *	libpgtcl is a tcl package for front-ends to interface with PostgreSQL.
+ *	It's a Tcl wrapper for libpq.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.12 1998/09/01 04:39:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.13 1998/09/21 01:02:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,14 +17,13 @@
 #include <stdlib.h>
 
 #include "postgres.h"
-#include "tcl.h"
 #include "libpgtcl.h"
 #include "pgtclCmds.h"
 #include "pgtclId.h"
 
 /*
  * Pgtcl_Init
- *	  initialization package for the PGLITE Tcl package
+ *	  initialization package for the PGTCL Tcl package
  *
  */
 
@@ -35,7 +34,7 @@ Pgtcl_Init(Tcl_Interp * interp)
 	/*
 	 * finish off the ChannelType struct.  Much easier to do it here then
 	 * to guess where it might be by position in the struct.  This is
-	 * needed for Tcl7.6 and beyond, which have the getfileproc.
+	 * needed for Tcl7.6 *only*, which has the getfileproc.
 	 */
 #if HAVE_TCL_GETFILEPROC
 	Pg_ConnType.getFileProc = PgGetFileProc;
@@ -127,7 +126,7 @@ Pgtcl_Init(Tcl_Interp * interp)
 					  Pg_listen,
 					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
-	Tcl_PkgProvide(interp, "Pgtcl", "1.2");
+	Tcl_PkgProvide(interp, "Pgtcl", "1.3");
 
 	return TCL_OK;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.34 1998/09/04 05:02:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.35 1998/09/21 01:02:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,16 +16,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <tcl.h>
 
 #include "postgres.h"
-#include "libpq/pqcomm.h"
-#include "libpq-fe.h"
-#include "libpq/libpq-fs.h"
 #include "pgtclCmds.h"
 #include "pgtclId.h"
+#include "libpq/libpq-fs.h"		/* large-object interface */
 
 #ifdef TCL_ARRAYS
+
 #define ISOCTAL(c)		(((c) >= '0') && ((c) <= '7'))
 #define DIGIT(c)		((c) - '0')
 
@@ -221,7 +219,8 @@ tcl_value(char *value)
 	return value;
 }
 
-#endif
+#endif						/* TCL_ARRAYS */
+
 
 /**********************************
  * pg_conndefaults
@@ -476,8 +475,16 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
  the options are:
  -status
  the status of the result
+ -error
+ the error message, if the status indicates error; otherwise an empty string
  -conn
  the connection that produced the result
+ -oid
+ if command was an INSERT, the OID of the inserted tuple
+ -numTuples
+ the number of tuples in the query
+ -numAttrs
+ returns the number of attributes returned by the query
  -assign arrayName
  assign the results to an array, using subscripts of the form
  (tupno,attributeName)
@@ -485,19 +492,15 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
  assign the results to an array using the first field's value as a key.
  All but the first field of each tuple are stored, using subscripts of the form
  (field0value,attributeNameappendstr)
- -numTuples
- the number of tuples in the query
- -attributes
- returns a list of the name/type pairs of the tuple attributes
- -lAttributes
- returns a list of the {name type len} entries of the tuple attributes
- -numAttrs
- returns the number of attributes returned by the query
  -getTuple tupleNumber
  returns the values of the tuple in a list
  -tupleArray tupleNumber arrayName
  stores the values of the tuple in array arrayName, indexed
  by the attributes returned
+ -attributes
+ returns a list of the name/type pairs of the tuple attributes
+ -lAttributes
+ returns a list of the {name type len} entries of the tuple attributes
  -clear
  clear the result buffer. Do not reuse after this
  **********************************/
@@ -505,6 +508,7 @@ int
 Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
 	PGresult   *result;
+	PGconn	   *conn;
 	char	   *opt;
 	int			i;
 	int			tupno;
@@ -515,13 +519,13 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	if (argc < 3 || argc > 5)
 	{
 		Tcl_AppendResult(interp, "Wrong # of arguments\n", 0);
-		goto Pg_result_errReturn;
+		goto Pg_result_errReturn; /* append help info */
 	}
 
 	result = PgGetResultId(interp, argv[1]);
 	if (result == (PGresult *) NULL)
 	{
-		Tcl_AppendResult(interp, "First argument is not a valid query result", 0);
+		Tcl_AppendResult(interp, argv[1], " is not a valid query result", 0);
 		return TCL_ERROR;
 	}
 
@@ -532,13 +536,35 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		Tcl_AppendResult(interp, pgresStatus[PQresultStatus(result)], 0);
 		return TCL_OK;
 	}
+	else if (strcmp(opt, "-error") == 0)
+	{
+		switch (PQresultStatus(result)) {
+			case PGRES_EMPTY_QUERY:
+			case PGRES_COMMAND_OK:
+			case PGRES_TUPLES_OK:
+			case PGRES_COPY_OUT:
+			case PGRES_COPY_IN:
+				Tcl_ResetResult(interp);
+				break;
+			default:
+				if (PgGetConnByResultId(interp, argv[1]) != TCL_OK)
+					return TCL_ERROR;
+				conn = PgGetConnectionId(interp, interp->result,
+										 (Pg_ConnectionId **) NULL);
+				if (conn == (PGconn *) NULL)
+					return TCL_ERROR;
+				Tcl_SetResult(interp, PQerrorMessage(conn), TCL_VOLATILE);
+				break;
+		}
+		return TCL_OK;
+	}
+	else if (strcmp(opt, "-conn") == 0)
+		return PgGetConnByResultId(interp, argv[1]);
 	else if (strcmp(opt, "-oid") == 0)
 	{
 		Tcl_AppendResult(interp, PQoidStatus(result), 0);
 		return TCL_OK;
 	}
-	else if (strcmp(opt, "-conn") == 0)
-		return PgGetConnByResultId(interp, argv[1]);
 	else if (strcmp(opt, "-clear") == 0)
 	{
 		PgDelResultId(interp, argv[1]);
@@ -696,26 +722,27 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	}
 	else
 	{
-		Tcl_AppendResult(interp, "Invalid option", 0);
-		goto Pg_result_errReturn;
+		Tcl_AppendResult(interp, "Invalid option\n", 0);
+		goto Pg_result_errReturn; /* append help info */
 	}
 
 
 Pg_result_errReturn:
 	Tcl_AppendResult(interp,
-					 "pg_result result ?option? where ?option is\n",
+					 "pg_result result ?option? where option is\n",
 					 "\t-status\n",
+					 "\t-error\n",
 					 "\t-conn\n",
-					 "\t-assign arrayVarName\n",
-					 "\t-assignbyidx arrayVarName ?appendstr?\n",
+					 "\t-oid\n",
 					 "\t-numTuples\n",
 					 "\t-numAttrs\n"
-					 "\t-attributes\n"
-					 "\t-lAttributes\n"
+					 "\t-assign arrayVarName\n",
+					 "\t-assignbyidx arrayVarName ?appendstr?\n",
 					 "\t-getTuple tupleNumber\n",
 					 "\t-tupleArray tupleNumber arrayVarName\n",
+					 "\t-attributes\n"
+					 "\t-lAttributes\n"
 					 "\t-clear\n",
-					 "\t-oid\n",
 					 (char *) 0);
 	return TCL_ERROR;
 
@@ -1244,7 +1271,7 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 	if ((result = PQexec(conn, argv[2])) == 0)
 	{
 		/* error occurred during the query */
-		Tcl_SetResult(interp, PQerrorMessage(conn), TCL_STATIC);
+		Tcl_SetResult(interp, PQerrorMessage(conn), TCL_VOLATILE);
 		return TCL_ERROR;
 	}
 
@@ -1305,6 +1332,36 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 	return TCL_OK;
 }
 
+/*
+ * Test whether any callbacks are registered on this connection for
+ * the given relation name.  NB: supplied name must be case-folded already.
+ */
+
+static int
+Pg_have_listener (Pg_ConnectionId *connid, const char * relname)
+{
+	Pg_TclNotifies *notifies;
+	Tcl_HashEntry *entry;
+
+	for (notifies = connid->notify_list;
+		 notifies != NULL;
+		 notifies = notifies->next)
+	{
+		Tcl_Interp *interp = notifies->interp;
+
+		if (interp == NULL)
+			continue;			/* ignore deleted interpreter */
+
+		entry = Tcl_FindHashEntry(&notifies->notify_hash, relname);
+		if (entry == NULL)
+			continue;			/* no pg_listen in this interpreter */
+
+		return TRUE;			/* OK, there is a listener */
+	}
+
+	return FALSE;				/* Found no listener */
+}
+
 /***********************************
 Pg_listen
 	create or remove a callback request for notifies on a given name
@@ -1342,7 +1399,7 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	/*
 	 * Get the command arguments. Note that the relation name will be
 	 * copied by Tcl_CreateHashEntry while the callback string must be
-	 * allocated.
+	 * allocated by us.
 	 */
 	conn = PgGetConnectionId(interp, argv[1], &connid);
 	if (conn == (PGconn *) NULL)
@@ -1396,17 +1453,30 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 							(ClientData) notifies);
 	}
 
-	/*
-	 * Set or update a callback for a relation
-	 */
 	if (callback)
 	{
-		entry = Tcl_CreateHashEntry(&notifies->notify_hash, caserelname, &new);
-		if (new)
-		{
-			/* New callback, execute a listen command on the relation */
-			char	   *cmd = (char *) ckalloc((unsigned) (strlen(origrelname) + 8));
+		/*
+		 * Create or update a callback for a relation
+		 */
+		int alreadyHadListener = Pg_have_listener(connid, caserelname);
 
+		entry = Tcl_CreateHashEntry(&notifies->notify_hash, caserelname, &new);
+		/* If update, free the old callback string */
+		if (! new)
+			ckfree((char *) Tcl_GetHashValue(entry));
+		/* Store the new callback string */
+		Tcl_SetHashValue(entry, callback);
+
+		/* Start the notify event source if it isn't already running */
+		PgStartNotifyEventSource(connid);
+
+		/*
+		 * Send a LISTEN command if this is the first listener.
+		 */
+		if (! alreadyHadListener)
+		{
+			char   *cmd = (char *)
+				ckalloc((unsigned) (strlen(origrelname) + 8));
 			sprintf(cmd, "LISTEN %s", origrelname);
 			result = PQexec(conn, cmd);
 			ckfree(cmd);
@@ -1416,32 +1486,20 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 			{
 				/* Error occurred during the execution of command */
 				PQclear(result);
+				Tcl_DeleteHashEntry(entry);
 				ckfree(callback);
 				ckfree(caserelname);
-				Tcl_DeleteHashEntry(entry);
 				Tcl_SetResult(interp, PQerrorMessage(conn), TCL_VOLATILE);
 				return TCL_ERROR;
 			}
 			PQclear(result);
 		}
-		else
-		{
-			/* Update, free the old callback string */
-			ckfree((char *) Tcl_GetHashValue(entry));
-		}
-		/* Store the new callback string */
-		Tcl_SetHashValue(entry, callback);
-		/* Start the notify event source if it isn't already running */
-		PgStartNotifyEventSource(connid);
 	}
-
-	/*
-	 * Remove a callback for a relation.  There is no way to un-listen a
-	 * relation, so we simply remove the callback from the notify hash
-	 * table.
-	 */
-	if (callback == NULL)
+	else
 	{
+		/*
+		 * Remove a callback for a relation
+		 */
 		entry = Tcl_FindHashEntry(&notifies->notify_hash, caserelname);
 		if (entry == NULL)
 		{
@@ -1451,6 +1509,30 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		}
 		ckfree((char *) Tcl_GetHashValue(entry));
 		Tcl_DeleteHashEntry(entry);
+		/*
+		 * Send an UNLISTEN command if that was the last listener.
+		 * Note: we don't attempt to turn off the notify mechanism
+		 * if no LISTENs remain active; not worth the trouble.
+		 */
+		if (! Pg_have_listener(connid, caserelname))
+		{
+			char   *cmd = (char *)
+				ckalloc((unsigned) (strlen(origrelname) + 10));
+			sprintf(cmd, "UNLISTEN %s", origrelname);
+			result = PQexec(conn, cmd);
+			ckfree(cmd);
+			/* Transfer any notify events from libpq to Tcl event queue. */
+			PgNotifyTransferEvents(connid);
+			if (PQresultStatus(result) != PGRES_COMMAND_OK)
+			{
+				/* Error occurred during the execution of command */
+				PQclear(result);
+				ckfree(caserelname);
+				Tcl_SetResult(interp, PQerrorMessage(conn), TCL_VOLATILE);
+				return TCL_ERROR;
+			}
+			PQclear(result);
+		}
 	}
 
 	ckfree(caserelname);

@@ -1,18 +1,18 @@
 /*-------------------------------------------------------------------------
  *
  * pgtclId.c--
- *	  useful routines to convert between strings and pointers
- *	Needed because everything in tcl is a string, but we want pointers
- *	to data structures
+ *
+ *	Contains Tcl "channel" interface routines, plus useful routines
+ *	to convert between strings and pointers.  These are needed because
+ *	everything in Tcl is a string, but in C, pointers to data structures
+ *	are needed.
  *
  *	ASSUMPTION:  sizeof(long) >= sizeof(void*)
  *
- *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.15 1998/09/03 02:10:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.16 1998/09/21 01:02:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <tcl.h>
 
 #include "postgres.h"
 #include "pgtclCmds.h"
@@ -174,6 +173,7 @@ PgSetConnectionId(Tcl_Interp * interp, PGconn *conn)
 		connid->results[i] = NULL;
 	connid->notify_list = NULL;
 	connid->notifier_running = 0;
+	connid->notifier_socket = -1;
 
 	sprintf(connid->id, "pgsql%d", PQsocket(conn));
 
@@ -433,7 +433,7 @@ error_out:
 
 
 
-/********************************************
+/*-------------------------------------------
   Notify event source
 
   These functions allow asynchronous notify messages arriving from
@@ -448,73 +448,37 @@ error_out:
   We also have to handle closure of the channel or deletion of the interpreter
   to be used for the callback (note that with multiple interpreters,
   the channel can outlive the interpreter it was created by!)
-  Upon closure of the channel, we immediately delete any pending events
-  that reference it.  But for interpreter deletion, we just set any
-  matching interp pointers in the Pg_TclNotifies list to NULL.	The
-  list item stays around until the connection is deleted.  (This avoids
+  Upon closure of the channel, we immediately delete the file event handler
+  for it, which has the effect of disabling any file-ready events that might
+  be hanging about in the Tcl event queue.  But for interpreter deletion,
+  we just set any matching interp pointers in the Pg_TclNotifies list to NULL.
+  The list item stays around until the connection is deleted.  (This avoids
   trouble with walking through a list whose members may get deleted under us.)
-  *******************************************/
+
+  Another headache is that Ousterhout keeps changing the Tcl I/O interfaces.
+  libpgtcl currently claims to work with Tcl 7.5, 7.6, and 8.0, and each of
+  'em is different.  Worse, the Tcl_File type went away in 8.0, which means
+  there is no longer any platform-independent way of waiting for file ready.
+  So we now have to use a Unix-specific interface.  Grumble.
+
+  In the current design, Pg_Notify_FileHandler is a file handler that
+  we establish by calling Tcl_CreateFileHandler().  It gets invoked from
+  the Tcl event loop whenever the underlying PGconn's socket is read-ready.
+  We suck up any available data (to clear the OS-level read-ready condition)
+  and then transfer any available PGnotify events into the Tcl event queue.
+  Eventually these events will be dispatched to Pg_Notify_EventProc.  When
+  we do an ordinary PQexec, we must also transfer PGnotify events into Tcl's
+  event queue, since libpq might have read them when we weren't looking.
+  ------------------------------------------*/
 
 typedef struct
 {
-	Tcl_Event	header;			/* Standard Tcl event info */
-	PGnotify	info;			/* Notify name from SQL server */
+	Tcl_Event		header;		/* Standard Tcl event info */
+	PGnotify		info;		/* Notify name from SQL server */
 	Pg_ConnectionId *connid;	/* Connection for server */
 }			NotifyEvent;
 
-/* Setup before waiting in event loop */
-
-static void
-Pg_Notify_SetupProc(ClientData clientData, int flags)
-{
-	Pg_ConnectionId *connid = (Pg_ConnectionId *) clientData;
-	Tcl_File	handle;
-	int			pqsock;
-
-	/* We classify SQL notifies as Tcl file events. */
-	if (!(flags & TCL_FILE_EVENTS))
-		return;
-
-	/* Set up to watch for asynchronous data arrival on backend channel */
-	pqsock = PQsocket(connid->conn);
-	if (pqsock < 0)
-		return;
-
-	handle = Tcl_GetFile((ClientData) pqsock, TCL_UNIX_FD);
-	Tcl_WatchFile(handle, TCL_READABLE);
-}
-
-/* Check to see if events have arrived in event loop */
-
-static void
-Pg_Notify_CheckProc(ClientData clientData, int flags)
-{
-	Pg_ConnectionId *connid = (Pg_ConnectionId *) clientData;
-	Tcl_File	handle;
-	int			pqsock;
-
-	/* We classify SQL notifies as Tcl file events. */
-	if (!(flags & TCL_FILE_EVENTS))
-		return;
-
-	/*
-	 * Consume any data available from the SQL server (this just buffers
-	 * it internally to libpq). We use Tcl_FileReady to avoid a useless
-	 * kernel call when no data is available.
-	 */
-	pqsock = PQsocket(connid->conn);
-	if (pqsock < 0)
-		return;
-
-	handle = Tcl_GetFile((ClientData) pqsock, TCL_UNIX_FD);
-	if (Tcl_FileReady(handle, TCL_READABLE) != 0)
-		PQconsumeInput(connid->conn);
-
-	/* Transfer notify events from libpq to Tcl event queue. */
-	PgNotifyTransferEvents(connid);
-}
-
-/* Dispatch an event that has reached the front of the event queue */
+/* Dispatch a NotifyEvent that has reached the front of the event queue */
 
 static int
 Pg_Notify_EventProc(Tcl_Event * evPtr, int flags)
@@ -528,6 +492,10 @@ Pg_Notify_EventProc(Tcl_Event * evPtr, int flags)
 	/* We classify SQL notifies as Tcl file events. */
 	if (!(flags & TCL_FILE_EVENTS))
 		return 0;
+
+	/* If connection's been closed, just forget the whole thing. */
+	if (event->connid == NULL)
+		return 1;
 
 	/*
 	 * Preserve/Release to ensure the connection struct doesn't disappear
@@ -595,7 +563,7 @@ Pg_Notify_EventProc(Tcl_Event * evPtr, int flags)
 /*
  * Transfer any notify events available from libpq into the Tcl event queue.
  * Note that this must be called after each PQexec (to capture notifies
- * that arrive during command execution) as well as in Pg_Notify_CheckProc
+ * that arrive during command execution) as well as in Pg_Notify_FileHandler
  * (to capture notifies that arrive when we're idle).
  */
 
@@ -621,8 +589,8 @@ PgNotifyTransferEvents(Pg_ConnectionId * connid)
  *
  * PgNotifyInterpDelete is registered as an interpreter deletion callback
  * for each extant Pg_TclNotifies structure.
- * NotifyEventDeleteProc is used by PgStopNotifyEventSource to get
- * rid of pending Tcl events that reference a dying connection.
+ * NotifyEventDeleteProc is used by PgStopNotifyEventSource to cancel
+ * pending Tcl NotifyEvents that reference a dying connection.
  */
 
 void
@@ -634,26 +602,67 @@ PgNotifyInterpDelete(ClientData clientData, Tcl_Interp * interp)
 	notifies->interp = NULL;
 }
 
-/* Comparison routine for detecting events to be removed by DeleteEvent */
+/*
+ * Comparison routine for detecting events to be removed by Tcl_DeleteEvents.
+ * NB: In (at least) Tcl versions 7.6 through 8.0.3, there is a serious
+ * bug in Tcl_DeleteEvents: if there are multiple events on the queue and
+ * you tell it to delete the last one, the event list pointers get corrupted,
+ * with the result that events queued immediately thereafter get lost.
+ * Therefore we daren't tell Tcl_DeleteEvents to actually delete anything!
+ * We simply use it as a way of scanning the event queue.  Events matching
+ * the about-to-be-deleted connid are marked dead by setting their connid
+ * fields to NULL.  Then Pg_Notify_EventProc will do nothing when those
+ * events are executed.
+ */
 static int
 NotifyEventDeleteProc(Tcl_Event * evPtr, ClientData clientData)
 {
-	NotifyEvent *event;
 	Pg_ConnectionId *connid = (Pg_ConnectionId *) clientData;
 
-	if (evPtr->proc != Pg_Notify_EventProc)
-		return 0;
-	event = (NotifyEvent *) evPtr;
-	if (event->connid != connid)
-		return 0;
-	return 1;
+	if (evPtr->proc == Pg_Notify_EventProc)
+	{
+		NotifyEvent *event = (NotifyEvent *) evPtr;
+		if (event->connid == connid)
+			event->connid = NULL;
+	}
+	return 0;
 }
 
-/* Start and stop the notify event source for a connection.
- * We do not bother to run the notifier unless at least one
- * pg_listen has been executed on the connection.  Currently,
- * once started the notifier is run until the connection is
- * closed.
+/*
+ * File handler callback: called when Tcl has detected read-ready on socket.
+ * The clientData is a pointer to the associated connection.
+ * We can ignore the condition mask since we only ever ask about read-ready.
+ */
+
+static void
+Pg_Notify_FileHandler (ClientData clientData, int mask)
+{
+	Pg_ConnectionId *connid = (Pg_ConnectionId *) clientData;
+
+	/*
+	 * Consume any data available from the SQL server (this just buffers
+	 * it internally to libpq; but it will clear the read-ready condition).
+	 */
+	PQconsumeInput(connid->conn);
+
+	/* Transfer notify events from libpq to Tcl event queue. */
+	PgNotifyTransferEvents(connid);
+}
+
+
+/*
+ * Start and stop the notify event source for a connection.
+ *
+ * We do not bother to run the notifier unless at least one pg_listen
+ * has been executed on the connection.  Currently, once started the
+ * notifier is run until the connection is closed.
+ *
+ * FIXME: if PQreset is executed on the underlying PGconn, the active
+ * socket number could change.  How and when should we test for this
+ * and update the Tcl file handler linkage?  (For that matter, we'd
+ * also have to reissue LISTEN commands for active LISTENs, since the
+ * new backend won't know about 'em.  I'm leaving this problem for
+ * another day.)
  */
 
 void
@@ -662,9 +671,22 @@ PgStartNotifyEventSource(Pg_ConnectionId * connid)
 	/* Start the notify event source if it isn't already running */
 	if (!connid->notifier_running)
 	{
-		Tcl_CreateEventSource(Pg_Notify_SetupProc, Pg_Notify_CheckProc,
-							  (ClientData) connid);
-		connid->notifier_running = 1;
+		int pqsock = PQsocket(connid->conn);
+		if (pqsock >= 0)
+		{
+#if TCL_MAJOR_VERSION >= 8
+			/* In Tcl 8, Tcl_CreateFileHandler takes a socket directly. */
+			Tcl_CreateFileHandler(pqsock, TCL_READABLE,
+								  Pg_Notify_FileHandler, (ClientData) connid);
+#else
+			/* In Tcl 7.5 and 7.6, we need to gin up a Tcl_File. */
+			Tcl_File tclfile = Tcl_GetFile((ClientData) pqsock, TCL_UNIX_FD);
+			Tcl_CreateFileHandler(tclfile, TCL_READABLE,
+								  Pg_Notify_FileHandler, (ClientData) connid);
+#endif
+			connid->notifier_running = 1;
+			connid->notifier_socket = pqsock;
+		}
 	}
 }
 
@@ -674,10 +696,18 @@ PgStopNotifyEventSource(Pg_ConnectionId * connid)
 	/* Remove the event source */
 	if (connid->notifier_running)
 	{
-		Tcl_DeleteEventSource(Pg_Notify_SetupProc, Pg_Notify_CheckProc,
-							  (ClientData) connid);
+#if TCL_MAJOR_VERSION >= 8
+		/* In Tcl 8, Tcl_DeleteFileHandler takes a socket directly. */
+		Tcl_DeleteFileHandler(connid->notifier_socket);
+#else
+		/* In Tcl 7.5 and 7.6, we need to gin up a Tcl_File. */
+		Tcl_File tclfile = Tcl_GetFile((ClientData) connid->notifier_socket,
+									   TCL_UNIX_FD);
+		Tcl_DeleteFileHandler(tclfile);
+#endif
 		connid->notifier_running = 0;
 	}
+
 	/* Kill any queued Tcl events that reference this channel */
 	Tcl_DeleteEvents(NotifyEventDeleteProc, (ClientData) connid);
 }
