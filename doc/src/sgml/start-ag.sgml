@@ -17,12 +17,12 @@
 shows how the <ProductName>Postgres</ProductName>  distribution  is  laid
      out  when installed in the default way. For simplicity,
      we will assume that <ProductName>Postgres</ProductName> has been installed in  the
-     directory  <FileName>/usr/local/pgsql</FileName>.   Therefore, wherever
-     you see the directory <FileName>/usr/local/pgsql</FileName> you  should
+     directory  <filename>/usr/local/pgsql</filename>.   Therefore, wherever
+     you see the directory <filename>/usr/local/pgsql</filename> you  should
      substitute  the name of the directory where <ProductName>Postgres</ProductName> is
      actually installed.
      All <ProductName>Postgres</ProductName> commands are installed  in  the  directory
-     <FileName>/usr/local/pgsql/bin</FileName>.   Therefore,  you should add
+     <filename>/usr/local/pgsql/bin</filename>.   Therefore,  you should add
      this directory to your shell command path.  If you  use
      a variant of the Berkeley C shell, such as csh or tcsh,
      you would add
@@ -115,6 +115,7 @@ incorporated into postgresql distribution.
      and this caused a lot of problems). Latest perl has also support of locale and if locale is broken perl -v will
      complain something like: 
 
+<programlisting>
      8:17[mira]:~/WWW/postgres>setenv LC_CTYPE not_exist
      8:18[mira]:~/WWW/postgres>perl -v
      perl: warning: Setting locale failed.
@@ -124,6 +125,7 @@ incorporated into postgresql distribution.
              LANG = (unset)
          are supported and installed on your system.
      perl: warning: Falling back to the standard locale ("C").
+</programlisting>
 
 </Para>
 </ListItem>
@@ -131,9 +133,10 @@ incorporated into postgresql distribution.
 <Para>
      Wrong location of locale files!
 
-     Possible location: <FileName>/usr/lib/locale</FileName> (Linux, Solaris), <FileName>/usr/share/locale</FileName> (Linux), <FileName>/usr/lib/nls/loc</FileName> (DUX 4.0)
-     Check man locale for right place. Under Linux I did a symbolical link between <FileName>/usr/lib/locale</FileName> and
-     <FileName>/usr/share/locale</FileName> to be sure next libc will not break my locale.
+     Possible locations include: <filename>/usr/lib/locale</filename> (Linux, Solaris), <filename>/usr/share/locale</filename> (Linux), <filename>/usr/lib/nls/loc</filename> (DUX 4.0)
+     Check <command>man locale</command> to find the correct location.
+Under Linux I did a symbolic link between <filename>/usr/lib/locale</filename> and
+     <filename>/usr/share/locale</filename> to be sure that the next libc will not break my locale.
 </Para>
 </ListItem>
 </ItemizedList>
@@ -143,13 +146,13 @@ incorporated into postgresql distribution.
 
 <Para>
 You can use ~* and order by operators for strings contain characters from national alphabets. Non-english users
-definitely need that. If you won't use locale stuff just undefine USE_LOCALE variable. 
+definitely need that. If you won't use locale stuff just undefine the USE_LOCALE variable. 
 
 <Sect2>
 <Title>What are the Drawbacks?</Title>
 
 <Para>
-There is one evident drawback of using locale - it's speed ! So, use locale only if you really need it. 
+There is one evident drawback of using locale - it's speed! So, use locale only if you really need it. 
 
 </Chapter>
 
@@ -233,21 +236,21 @@ managing disk storage.
 Remember that database creation is actually performed by the database backend.
 Therefore, any environment variable specifying an alternate location must have
 been defined before the backend was started. To define an alternate location
-PGDATA2 pointing to <FileName>/home/postgres/data</FileName>, type
+PGDATA2 pointing to <filename>/home/postgres/data</filename>, type
 <ProgramListing>
 % setenv PGDATA2 /home/postgres/data
 </ProgramListing>
 
 <Para>
 Usually, you will want to define this variable in the <ProductName>Postgres</ProductName> superuser's
-<FileName>.profile</FileName>
+<filename>.profile</filename>
 or
-<FileName>.cshrc</FileName>
+<filename>.cshrc</filename>
 initialization file to ensure that it is defined upon system startup.
 
 <Para>
-To create a data storage area in <FileName>/home/postgres/data</FileName>, ensure
-that <FileName>/home/postgres</FileName> already exists and is writable.
+To create a data storage area in <filename>/home/postgres/data</filename>, ensure
+that <filename>/home/postgres</filename> already exists and is writable.
 From the command line, type
 <ProgramListing>
 % initlocation $PGDATA2
@@ -274,7 +277,7 @@ To test the new location, create a database <Database>test</Database> by typing
      started  the  <Application>postmaster</Application>  process and authorized you to
      use the database, you (as a user) may begin to start up
      applications.   As previously mentioned, you should add
-     <FileName>/usr/local/pgsql/bin</FileName> to your  shell  search  path.
+     <filename>/usr/local/pgsql/bin</filename> to your  shell  search  path.
      In  most  cases,  this  is all you should have to do in
      terms of preparation.
 
