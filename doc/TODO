@@ -1,8 +1,8 @@
 TODO list for PostgreSQL
 ========================
-Last updated:           Fri Feb 27 13:32:53 EST 1998
+Last updated:		Sat Feb 28 10:00:29 EST 1998
 
-Current maintainer:     Bruce Momjian (maillist@candle.pha.pa.us)
+Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the PostgreSQL WWW site, http://www.postgreSQL.org.
@@ -13,50 +13,50 @@ A dash(-) marks changes to be in the next release.
 
 Developers who have claimed items are:
 -------------------------------------
-        * Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
-        * Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
-        * D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
-        * Dan is Dan McGuirk <mcguirk@indirect.com>
-        * Daniel is Daniel Kalchev <daniel@digsys.bg>
-        * Darren is Darren King <darrenk@insightdist.com>
-        * Edmund is Edmund Mergl <E.Mergl@bawue.de>
-        * Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
-        * Gerhard is Gerhard Reithofer <gerhardr@tech-edv.co.at>
-        * Goran is Goran Thyni <goran@bildbasen.se>
-        * Henry is Henry B. Hotz <hotz@jpl.nasa.gov>
-        * Igor is Igor <igor@sba.miami.edu>
-        * Jan is Jan Wieck <wieck@sapserv.debis.de>
-        * Jun is Jun Kuwamura <juk@rccm.co.jp>
-        * Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
-        * Marc is Marc Fournier <scrappy@hub.org>
-        * Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
-        * Michael is Michael Meskes <meskes@topsystem.de>
-        * Oleg is Oleg Bartunov <oleg@sai.msu.su>
-        * Paul is Paul M. Aoki <aoki@CS.Berkeley.EDU>
-        * Patrick is Patrick van Kleef <pvk@pobox.com>
-        * Peter is Peter T Mount <psqlhack@maidast.demon.co.uk>
-        * Phil is Phil Thompson <phil@river-bank.demon.co.uk>
-        * Raymond is Raymond Toy <toy@rtp.ericsson.se>
-        * Soo-Ho Ok <shok@detc.dongeui-tc.ac.kr>
-        * Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
-        * Sven is Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
-        * Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
-        * Thomas is Thomas Lockhart <tgl@mythos.jpl.nasa.gov>
-        * Todd is Todd Brandys is <brandys@eng3.hep.uiuc.edu>
-        * Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
-        * Vivek is Vivek Khera <khera@kci.kciLink.com>
+	* Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
+	* Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
+	* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
+	* Dan is Dan McGuirk <mcguirk@indirect.com>
+	* Daniel is Daniel Kalchev <daniel@digsys.bg>
+	* Darren is Darren King <darrenk@insightdist.com>
+	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
+	* Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
+	* Gerhard is Gerhard Reithofer <gerhardr@tech-edv.co.at>
+	* Goran is Goran Thyni <goran@bildbasen.se>
+	* Henry is Henry B. Hotz <hotz@jpl.nasa.gov>
+	* Igor is Igor <igor@sba.miami.edu>
+	* Jan is Jan Wieck <wieck@sapserv.debis.de>
+	* Jun is Jun Kuwamura <juk@rccm.co.jp>
+	* Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
+ 	* Marc is Marc Fournier <scrappy@hub.org>
+ 	* Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
+	* Michael is Michael Meskes <meskes@topsystem.de>
+	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
+	* Paul is Paul M. Aoki <aoki@CS.Berkeley.EDU>
+	* Patrick is Patrick van Kleef <pvk@pobox.com>
+	* Peter is Peter T Mount <psqlhack@maidast.demon.co.uk>
+	* Phil is Phil Thompson <phil@river-bank.demon.co.uk>
+	* Raymond is Raymond Toy <toy@rtp.ericsson.se>
+	* Soo-Ho Ok <shok@detc.dongeui-tc.ac.kr>
+	* Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
+	* Sven is Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
+	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
+	* Thomas is Thomas Lockhart <tgl@mythos.jpl.nasa.gov>
+	* Todd is Todd Brandys is <brandys@eng3.hep.uiuc.edu>
+	* Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+	* Vivek is Vivek Khera <khera@kci.kciLink.com>
 
 Additional 6.3 developers include:
 ---------------------------------
-        * Billy is Billy G. Allie <Bill.Allie@mug.org>
-        * Brook is Brook Milligan <brook@trillium.NMSU.Edu>
-        * James is James Hughes <jamesh@interpath.com>
-        * Jeroen is Jeroen van Vianen <jeroenv@design.nl>
-        * Matt is Matt Maycock <maycock@intelliquest.com>
-        * Ryan is Ryan Kirkpatrick <rkirkpat@nag.cs.colorado.edu>
-        * TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
-        * TomS is Tom Szybist
-        * Travis is Travis Melhiser <melhiser@viper.co.union.nc.us>
+	* Billy is Billy G. Allie <Bill.Allie@mug.org>
+	* Brook is Brook Milligan <brook@trillium.NMSU.Edu>
+	* James is James Hughes <jamesh@interpath.com>
+	* Jeroen is Jeroen van Vianen <jeroenv@design.nl>
+	* Matt is Matt Maycock <maycock@intelliquest.com>
+	* Ryan is Ryan Kirkpatrick <rkirkpat@nag.cs.colorado.edu>
+	* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
+	* TomS is Tom Szybist
+	* Travis is Travis Melhiser <melhiser@viper.co.union.nc.us>
 
 RELIABILITY
 -----------
@@ -64,8 +64,7 @@ RELIABILITY
 * Overhaul bufmgr/lockmgr/transaction manager
 * -Fix CLUSTER
 * Remove EXTEND?
-* -Aggregates on VIEW always returns zero (maybe because there is no oid for vi
-ews?)
+* -Aggregates on VIEW always returns zero (maybe because there is no oid for views?)
 * CREATE VIEW requires super-user priviledge
 * Can lo_export()/lo_import() read/write anywhere, causing a security problem?
 * Tables that start with xinv confused to be large objects
@@ -96,31 +95,31 @@ ENHANCEMENTS
 * Allow transaction commits with rollback with no-fsync performance
 * More access control over who can create tables and access the database
 * Add full ANSI SQL capabilities
-        * -add subselects(Vadim)
-        * Implement HAVING clause
-        * -Implement EXISTS qualifier
-        * -report "Not implemented" if valid syntax is supplied
-        * add OUTER joins, left and right (Thomas)
-        * make VIEWs updateable where possible
-        * -add UNIONS(Bruce)
-        * add INTERSECTS, SUBTRACTS
-        * add temporary tables(Bruce)
-        * add sql3 recursive unions
-        * add the concept of dataspaces
-        * add DECIMAL, NUMERIC, DOUBLE PRECISION, BIT, BIT VARYING
-        * NCHAR (as distinguished from ordinary varchar),
+	* -add subselects(Vadim)
+	* Implement HAVING clause
+	* -Implement EXISTS qualifier
+	* -report "Not implemented" if valid syntax is supplied
+	* add OUTER joins, left and right (Thomas)
+	* make VIEWs updateable where possible
+	* -add UNIONS(Bruce)
+	* add INTERSECTS, SUBTRACTS
+	* add temporary tables(Bruce)
+	* add sql3 recursive unions
+	* add the concept of dataspaces
+	* add DECIMAL, NUMERIC, DOUBLE PRECISION, BIT, BIT VARYING
+ 	* NCHAR (as distinguished from ordinary varchar),
 * Allow compression of large fields or a compressed field type
 * Fix the rules system(Jan?,Soo-Ho)
-        * robust
-        * making INSTEAD rules work
-        * add CONSTRAINT
+	* robust
+	* making INSTEAD rules work
+	* add CONSTRAINT
 * Full set of text operations and functions
-        * word searches, concat,max() on text, char
+	* word searches, concat,max() on text, char
 * Large objects
-        * -overwriting blocks has problems(Peter)
-        * -there are other problems, too.(Peter)
-        * Fix large object mapping scheme, own reltype
-        * not to stuff everything as files in a single directory
+	* -overwriting blocks has problems(Peter)
+	* -there are other problems, too.(Peter)
+	* Fix large object mapping scheme, own reltype
+	* not to stuff everything as files in a single directory
 * Better interface for adding to pg_group
 * Make MONEY/DECIMAL have a defined precision
 * Add support for tables >2G, or test current version
@@ -128,9 +127,9 @@ ENHANCEMENTS
 * Allow libpq to cancel query requests
 * Add REGEX internationalization
 * -Add other language types for built-in functions
-        * expand to allow tcl, perl, java
-        * generalize the function manager switch to pass
-                * function sources to interpreter engines.
+	* expand to allow tcl, perl, java
+	* generalize the function manager switch to pass 
+		* function sources to interpreter engines.
 * -remove time-travel feature(Vadim)
 * -reduce system column overhead(Vadmin)
 * -remove pg_time table(Vadim)
@@ -148,8 +147,7 @@ ENHANCEMENTS
 * add UNIQUE capability to non-btree indexes
 * make number of backends a config parameter, storage/sinvaladt.h:MaxBackendId
 * certain indexes will not shrink, i.e. oid indexes with many inserts
-* make NULL's come out at the beginning or end depending on the ORDER BY direct
-ion
+* make NULL's come out at the beginning or end depending on the ORDER BY direction
 * change the library/backend interface to use network byte order
 * -allow unix domain sockets for local connections for performance and security
 * -Add PAGER for psql's \dt, \d, \z tablename
@@ -182,8 +180,7 @@ ion
 PERFORMANCE
 -----------
 * Use indexes in ORDER BY, min(), max()(Costin Oproiu)
-* -Allow LIKE/wildcard matches to use indexes if the wildcard character is not
-first
+* -Allow LIKE/wildcard matches to use indexes if the wildcard character is not first
 * Optimizing disjunctive queries
 * Fix bushy-plans (Martin)
 * Other optimizer bugs
@@ -212,6 +209,59 @@ DOCUMENTATION
 CHANGES IN THE 6.3 RELEASE
 --------------------------
 
+There are some general 6.3 issues that I want to mention.  These are
+only the big items that can not be described in one sentence.
+
+First, we now have subselects.  Now that we have them, I would like to
+mention that without subselects, SQL is a very limited language.
+Subselects are a major feature, and you should review your code for
+places where subselects provide a better solution for your queries.  I
+think you will find that there are more uses for subselects than you may
+think.  Vadim has put us on the big SQL map with subselects, and fully
+functional ones too.  The only thing you can't do with subselects is to
+use them in the target list.
+
+Second, 6.3 uses unix domain sockets rather than TCP/IP by default.  To
+enable connections from other machines, you have to use the new
+postmaster -i option, and of course edit pg_hba.conf.  Also, for this
+reason, the format of pg_hba.conf has changed.
+
+Third, char() fields will now allow faster access than varchar() or
+text. Specifically, the text and varchar() have a penalty for access to
+any columns after the first column of this type.  char() used to also
+have this access penalty, but it no longer does.  This may suggest that
+you redesign some of your tables, especially if you have short character
+columns that you have defined as varchar() or text.  This and other
+changes make 6.3 even faster than earlier releases.
+
+We now have passwords definable independent of any Unix file.  There are
+new SQL USER commands.  See the pg_hba.conf manual page for more
+information.  There is a new table, pg_shadow, which is used to store
+user information and user passwords, and it by default only SELECT-able
+by the postgres super-user.  pg_user is now a view of pg_shadow, and is
+SELECT-able by PUBLIC.  You should keep using pg_user in your
+application without changes.
+
+User-created tables now no longer have SELECT permission to PUBLIC by
+default.  This was done because the ANSI standard requires it.  You can
+of course GRANT any permissions you want after the table is created. 
+System tables continue to be SELECT-able by PUBLIC.
+
+We also have real deadlock detection code.  No more sixty-second
+timeouts.  And the new locking code implements a FIFO better, so there
+should be less resource starvation during heavy use.  For performance
+reasons, time travel is gone, but can be implemented using triggers (see
+pgsql/contrib/spi/README).  Please check out the new \d command for
+types, operators, etc.  Also, views have their own permissions now, not
+based on the underlying tables, so permissions on them have to be set
+separately.  Check /pgsql/interfaces for some new ways to talk to
+PostgreSQL.
+
+This is the first release that really required an explaination for
+existing users.  In many ways, this was necessary because the new
+release removes many limitations, and the work-arounds people were using
+are no longer needed.
+
 Bug Fixes
 ---------
 Fix binary cursors broken by MOVE implementation(Vadim)
@@ -231,20 +281,22 @@ Fix for count(*), aggs with views and multiple tables and sum(3)(Bruce)
 Fix cluster(Bruce)
 Fix for PQtrace start/stop several times(Bruce)
 Fix a variety of locking problems like newer lock waiters getting
-        lock before older waiters, and having readlock people not share
-        locks if a writer is waiting for a lock, and waiting writers not
-        getting priority over waiting readers(Bruce)
+	lock before older waiters, and having readlock people not share
+	locks if a writer is waiting for a lock, and waiting writers not
+	getting priority over waiting readers(Bruce)
 Fix crashes in psql when executing queries from external files(James)
 Fix problem with multiple order by columns, with the first one having
-        NULL values(Jeroen)
+	NULL values(Jeroen)
 Use correct hash table support functions for float8 and int4(Thomas)
 Re-enable JOIN= option in CREATE OPERATOR statement (Thomas)
 Change precedence for boolean operators to match expected behavior(Thomas)
 Generate elog(ERROR) on over-large integer(Bruce)
 Allow multiple-argument functions in constraint clauses(Thomas)
 Check boolean input literals for 'true','false','yes','no','1','0'
-        and throw elog(ERROR) if unrecognized(Thomas)
+	and throw elog(ERROR) if unrecognized(Thomas)
 Major large objects fix
+Fix for GROUP BY showing duplicates(Vadim)
+Fix for index scans in MergeJion(Vadim)
 
 Enhancements
 ------------
@@ -252,26 +304,24 @@ Subselects with EXISTS, IN, ALL, ANY keywords (Vadim, Bruce, Thomas)
 New User Manual(Thomas, others)
 Speedup by inlining some frequently-called functions
 Real deadlock detection, no more timeouts(Bruce)
-Add SQL92 "constants" CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP,
-        CURRENT_USER(Thomas)
+Add SQL92 "constants" CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, 
+	CURRENT_USER(Thomas)
 Modify constraint syntax to be SQL92-compliant(Thomas)
 Implement SQL92 PRIMARY KEY and UNIQUE clauses using indices(Thomas)
 Recognize SQL92 syntax for FOREIGN KEY. Throw elog notice(Thomas)
-Allow NOT NULL UNIQUE constraint clause (each allowed separately before)(Thomas
-)
+Allow NOT NULL UNIQUE constraint clause (each allowed separately before)(Thomas)
 Allow Postgres-style casting ("::") of non-constants(Thomas)
 Add support for SQL3 TRUE and FALSE boolean constants(Thomas)
 Support SQL92 syntax for IS TRUE/IS FALSE/IS NOT TRUE/IS NOT FALSE(Thomas)
 Allow shorter strings for boolean literals (e.g. "t", "tr", "tru")(Thomas)
 Allow SQL92 delimited identifiers(Thomas)
-Implement SQL92 binary and hexadecimal string decoding (b'10' and x'1F')(Thomas
-)
+Implement SQL92 binary and hexadecimal string decoding (b'10' and x'1F')(Thomas)
 Support SQL92 syntax for type coercion of literal strings
-        (e.g. "DATETIME 'now'")(Thomas)
+	(e.g. "DATETIME 'now'")(Thomas)
 Add conversions for int2, int4, and OID types to and from text(Thomas)
 Use shared lock when building indices(Vadim)
 Free memory allocated for an user query inside transaction block after
-        this query is done, was turned off in <= 6.2.1(Vadim)
+	this query is done, was turned off in <= 6.2.1(Vadim)
 New SQL statement CREATE PROCEDURAL LANGUAGE(Jan)
 New PostgreSQL Procedural Language (PL) backend interface(Jan)
 Rename pg_dump -H option to -h(Bruce)
@@ -287,13 +337,12 @@ Augment support for SQL92 SET TIME ZONE...(Thomas)
 SET/SHOW/RESET TIME ZONE uses TZ backend environment variable(Thomas)
 Implement SET keyword = DEFAULT and SET TIME ZONE DEFAULT(Thomas)
 Enable SET TIME ZONE using TZ environment variable(Thomas)
-Add PGDATESTYLE environment variable to frontend and backend initialization(Tho
-mas)
+Add PGDATESTYLE environment variable to frontend and backend initialization(Thomas)
 Add PGTZ, PGCOSTHEAP, PGCOSTINDEX, PGRPLANS, PGGEQO
-        frontend library initialization environment variables(Thomas)
+	frontend library initialization environment variables(Thomas)
 Regression tests time zone automatically set with "setenv PGTZ PST8PDT"(Thomas)
 Add pg_description table for info on tables, columns, operators, types, and
-        aggregates(Bruce)
+	aggregates(Bruce)
 Increase 16 char limit on system table/index names to 32 characters(Bruce)
 Rename system indices(Bruce)
 Add 'GERMAN' option to SET DATESTYLE(Thomas)
@@ -304,7 +353,7 @@ Implement day of year as possible input to date_part()(Thomas)
 Define timespan_finite() and text_timespan() functions(Thomas)
 Remove archive stuff(Bruce)
 Allow for a pg_password authentication database that is separate from
-        the system password file(Todd)
+	the system password file(Todd)
 Dump ACLs, GRANT, REVOKE permissions(Matt)
 Define text, varchar, and bpchar string length functions(Thomas)
 Fix Query handling for inheritance, and cost computations(Bruce)
@@ -336,10 +385,10 @@ Reduce system column overhead(Vadmin)
 Remove pg_time table(Vadim)
 Add pg_type attribute to identify types that need length (bpchar, varchar)
 Add report of offending line when COPY command fails
-Allow VIEW permissions to be set separately from the underlying tables.
-        For security, use GRANT/REVOKE on views as appropriate(Jan)
+Allow VIEW permissions to be set separately from the underlying tables. 
+	For security, use GRANT/REVOKE on views as appropriate(Jan)
 Tables now have no default GRANT SELECT TO PUBLIC.  You must
-        explicitly grant such permissions.
+	explicitly grant such permissions.
 
 Source Tree Changes
 -------------------
@@ -351,7 +400,7 @@ Make configure more automated(Brook)
 Add script to check regression test results
 Break parser functions into smaller files, group together(Bruce)
 Rename heap_create to heap_create_and_catalog, rename heap_creatr
-        to heap_create()(Bruce)
+	to heap_create()(Bruce)
 Sparc/Linux patch for locking(TomS)
 Remove PORTNAME and reorganize port-specific stuff(Marc)
 Add optimizer README file(Bruce)
@@ -360,7 +409,7 @@ Fix for NetBSD locking(Henry)
 Fix for libptcl make(Tatsuo)
 AIX patch(Darren)
 Change IS TRUE, IS FALSE, ... to expressions using "=" rather than
-        function calls to istrue() or isfalse() to allow optimization(Thomas)
+	function calls to istrue() or isfalse() to allow optimization(Thomas)
 Various fixes NetBSD/Sparc related(TomH)
 Alpha linux locking(Travis,Ryan)
 Change elog(WARN) to elog(ERROR)(Bruce)
@@ -377,4 +426,3 @@ Start a Cygnus port
 Add string functions to regression suite(Thomas)
 Expand a few function names formerly truncated to 16 characters(Thomas)
 Remove un-needed malloc() calls and replace with palloc()(Bruce)
-

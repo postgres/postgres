@@ -7,9 +7,6 @@ previous releases of PostgreSQL.
 * The migration/6.2.1_to_6.3 file contains a detailed description 
 * of the feature changes in this release, and is recommended reading.
 
-CHANGES IN THE 6.3 RELEASE
---------------------------
-
 Bug Fixes
 ---------
 Fix binary cursors broken by MOVE implementation(Vadim)
@@ -43,6 +40,8 @@ Allow multiple-argument functions in constraint clauses(Thomas)
 Check boolean input literals for 'true','false','yes','no','1','0'
 	and throw elog(ERROR) if unrecognized(Thomas)
 Major large objects fix
+Fix for GROUP BY showing duplicates(Vadim)
+Fix for index scans in MergeJion(Vadim)
 
 Enhancements
 ------------
