@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.171 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.172 2002/09/20 03:52:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,13 @@
 #include "commands/copy.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
-#include "rewrite/rewriteHandler.h"
 #include "libpq/libpq.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
+#include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -39,7 +42,6 @@
 #include "utils/relcache.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "mb/pg_wchar.h"
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define OCTVALUE(c) ((c) - '0')
@@ -744,6 +746,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				num_defaults;
 	FmgrInfo   *in_functions;
 	Oid		   *elements;
+	bool	   *isDomain;
+	bool		hasDomain = false;
 	int			i;
 	List	   *cur;
 	Oid			in_func_oid;
@@ -796,6 +800,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	defexprs = (Node **) palloc(sizeof(Node *) * num_phys_attrs);
 	in_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
 	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
+	isDomain = (bool *) palloc(num_phys_attrs * sizeof(bool));
 
 	for (i = 0; i < num_phys_attrs; i++)
 	{
@@ -803,6 +808,16 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		if (attr[i]->attisdropped)
 			continue;
 
+		/* Test for the base type */
+		if (getBaseType(attr[i]->atttypid) != attr[i]->atttypid)
+		{
+			hasDomain = true;
+			isDomain[i] = true;
+		}
+		else
+			isDomain[i] = false;
+
+		/* Fetch the input function */
 		in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
 		fmgr_info(in_func_oid, &in_functions[i]);
 		elements[i] = GetTypeElement(attr[i]->atttypid);
@@ -1011,6 +1026,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			foreach(cur, attnumlist)
 			{
 				int			attnum = lfirsti(cur);
+				int			m = attnum - 1;
 
 				i++;
 
@@ -1019,9 +1035,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					elog(ERROR, "COPY BINARY: unexpected EOF");
 				if (fld_size == 0)
 					continue;	/* it's NULL; nulls[attnum-1] already set */
-				if (fld_size != attr[attnum - 1]->attlen)
+				if (fld_size != attr[m]->attlen)
 					elog(ERROR, "COPY BINARY: sizeof(field %d) is %d, expected %d",
-					  i, (int) fld_size, (int) attr[attnum - 1]->attlen);
+					  i, (int) fld_size, (int) attr[m]->attlen);
 				if (fld_size == -1)
 				{
 					/* varlena field */
@@ -1040,9 +1056,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 								fp);
 					if (CopyGetEof(fp))
 						elog(ERROR, "COPY BINARY: unexpected EOF");
-					values[attnum - 1] = PointerGetDatum(varlena_ptr);
+					values[m] = PointerGetDatum(varlena_ptr);
 				}
-				else if (!attr[attnum - 1]->attbyval)
+				else if (!attr[m]->attbyval)
 				{
 					/* fixed-length pass-by-reference */
 					Pointer		refval_ptr;
@@ -1052,7 +1068,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					CopyGetData(refval_ptr, fld_size, fp);
 					if (CopyGetEof(fp))
 						elog(ERROR, "COPY BINARY: unexpected EOF");
-					values[attnum - 1] = PointerGetDatum(refval_ptr);
+					values[m] = PointerGetDatum(refval_ptr);
 				}
 				else
 				{
@@ -1067,10 +1083,56 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					CopyGetData(&datumBuf, fld_size, fp);
 					if (CopyGetEof(fp))
 						elog(ERROR, "COPY BINARY: unexpected EOF");
-					values[attnum - 1] = fetch_att(&datumBuf, true, fld_size);
+					values[m] = fetch_att(&datumBuf, true, fld_size);
 				}
 
-				nulls[attnum - 1] = ' ';
+				nulls[m] = ' ';
+			}
+		}
+
+		/* Deal with domains */
+		if (hasDomain)
+		{
+			ParseState *pstate;
+			pstate = make_parsestate(NULL);
+
+			foreach(cur, attnumlist)
+			{
+				int			attnum = lfirsti(cur);
+				int			m = attnum - 1;
+
+				Const	   *con;
+				Node	   *node;
+				bool	   isNull = (nulls[m] == 'n');
+
+				/* This is not a domain, so lets skip it */
+				if (!isDomain[m])
+					continue;
+
+				/*
+				 * This is a domain.  As such, we must process it's input
+				 * function and coerce_type_constraints.  The simplest way
+				 * of doing that is to allow coerce_type to accomplish its
+				 * job from an unknown constant
+				 */
+
+				/* Create a constant */
+				con = makeConst(attr[m]->atttypid,
+								attr[m]->attlen,
+								values[m],
+								isNull,
+								attr[m]->attbyval,
+								false,		/* not a set */
+								false);		/* not coerced */
+
+				/* Process constraints */
+				node = coerce_type_constraints(pstate, (Node *) con,
+											   attr[m]->atttypid, true);
+
+				values[m] = ExecEvalExpr(node, econtext,
+										 &isNull, NULL);
+
+				nulls[m] = isNull ? 'n' : ' ';
 			}
 		}
 

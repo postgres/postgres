@@ -35,6 +35,16 @@ create table basictest
 INSERT INTO basictest values ('88', 'haha', 'short', '123.12');      -- Good
 INSERT INTO basictest values ('88', 'haha', 'short text', '123.12'); -- Bad varchar
 INSERT INTO basictest values ('88', 'haha', 'short', '123.1212');    -- Truncate numeric
+
+-- Test copy
+COPY basictest (testvarchar) FROM stdin; -- fail
+notsoshorttext
+\.
+
+COPY basictest (testvarchar) FROM stdin;
+short
+\.
+
 select * from basictest;
 
 -- check that domains inherit operations from base types
@@ -84,6 +94,16 @@ INSERT INTO nulltest values (NULL, 'b', 'c', 'd');
 INSERT INTO nulltest values ('a', NULL, 'c', 'd');
 INSERT INTO nulltest values ('a', 'b', NULL, 'd');
 INSERT INTO nulltest values ('a', 'b', 'c', NULL); -- Good
+
+-- Test copy
+COPY nulltest FROM stdin; --fail
+a	b	\N	d
+\.
+
+COPY nulltest FROM stdin;
+a	b	c	\N
+\.
+
 select * from nulltest;
 
 -- Test out coerced (casted) constraints
@@ -119,6 +139,12 @@ create table defaulttest
 insert into defaulttest default values;
 insert into defaulttest default values;
 insert into defaulttest default values;
+
+-- Test defaults with copy
+COPY defaulttest(col5) FROM stdin;
+42
+\.
+
 select * from defaulttest;
 
 drop sequence ddef4_seq;
