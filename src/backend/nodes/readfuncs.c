@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.30 1998/06/15 19:28:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.31 1998/07/14 01:45:24 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -716,7 +716,7 @@ _readResdom()
 	else
 	{
 		local_node->resname = (char *) palloc(length + 1);
-		StrNCpy(local_node->resname, token, length + 1);
+		StrNCpy(local_node->resname, token+1, length + 1 - 2);/* strip quotes */
 	}
 
 	token = lsptok(NULL, &length);		/* eat :reskey */

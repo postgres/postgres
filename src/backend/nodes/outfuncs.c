@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.38 1998/07/13 21:27:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.39 1998/07/14 01:45:24 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -660,10 +660,7 @@ _outResdom(StringInfo str, Resdom *node)
 	sprintf(buf, " :restypmod %d ", node->restypmod);
 	appendStringInfo(str, buf);
 	appendStringInfo(str, " :resname ");
-	if (*node->resname)
-		sprintf(buf,"\"%s\"", node->resname); /* fix for SELECT col AS "my name" */
-	else
-		buf[0] = '\0';
+	sprintf(buf,"\"%s\"", node->resname); /* fix for SELECT col AS "my name" */
 	appendStringInfo(str, buf);
 	sprintf(buf, " :reskey %d ", node->reskey);
 	appendStringInfo(str, buf);
@@ -1506,7 +1503,6 @@ _outDatum(StringInfo str, Datum value, Oid type)
 			appendStringInfo(str, buf);
 		}
 	}
-
 }
 
 static void
