@@ -8,14 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.35 2000/01/26 05:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.36 2000/02/05 18:26:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
-
-
-
 
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -33,7 +31,8 @@ static void best_or_subclause_indices(Query *root, RelOptInfo *rel,
 									  List **indexids,
 									  Cost *cost);
 static void best_or_subclause_index(Query *root, RelOptInfo *rel,
-									List *indexqual, List *indices,
+									Expr *subclause, List *indices,
+									List **retIndexQual,
 									Oid *retIndexid,
 									Cost *retCost);
 
@@ -43,7 +42,7 @@ static void best_or_subclause_index(Query *root, RelOptInfo *rel,
  *	  Creates index paths for indices that match 'or' clauses.
  *	  create_index_paths() must already have been called.
  *
- * 'rel' is the relation entry for which the paths are to be defined on
+ * 'rel' is the relation entry for which the paths are to be created
  * 'clauses' is the list of available restriction clause nodes
  *
  * Returns a list of index path nodes.
@@ -164,21 +163,16 @@ best_or_subclause_indices(Query *root,
 	foreach(slist, subclauses)
 	{
 		Expr	   *subclause = lfirst(slist);
-		List	   *indexqual;
+		List	   *best_indexqual;
 		Oid			best_indexid;
 		Cost		best_cost;
 
-		/* Convert this 'or' subclause to an indexqual list */
-		indexqual = make_ands_implicit(subclause);
-		/* expand special operators to indexquals the executor can handle */
-		indexqual = expand_indexqual_conditions(indexqual);
-
-		best_or_subclause_index(root, rel, indexqual, lfirst(indices),
-								&best_indexid, &best_cost);
+		best_or_subclause_index(root, rel, subclause, lfirst(indices),
+								&best_indexqual, &best_indexid, &best_cost);
 
 		Assert(best_indexid != InvalidOid);
 
-		*indexquals = lappend(*indexquals, indexqual);
+		*indexquals = lappend(*indexquals, best_indexqual);
 		*indexids = lappendi(*indexids, best_indexid);
 		*cost += best_cost;
 
@@ -193,41 +187,49 @@ best_or_subclause_indices(Query *root,
  *	  the least expensive.
  *
  * 'rel' is the node of the relation on which the index is defined
- * 'indexqual' is the indexqual list derived from the subclause
+ * 'subclause' is the OR subclause being considered
  * 'indices' is a list of IndexOptInfo nodes that match the subclause
+ * '*retIndexQual' gets a list of the indexqual conditions for the best index
  * '*retIndexid' gets the OID of the best index
  * '*retCost' gets the cost of a scan with that index
  */
 static void
 best_or_subclause_index(Query *root,
 						RelOptInfo *rel,
-						List *indexqual,
+						Expr *subclause,
 						List *indices,
+						List **retIndexQual,	/* return value */
 						Oid *retIndexid,		/* return value */
 						Cost *retCost)			/* return value */
 {
-	bool		first_run = true;
+	bool		first_time = true;
 	List	   *ilist;
 
 	/* if we don't match anything, return zeros */
+	*retIndexQual = NIL;
 	*retIndexid = InvalidOid;
 	*retCost = 0.0;
 
 	foreach(ilist, indices)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
+		List	   *indexqual;
 		Cost		subcost;
 
 		Assert(IsA(index, IndexOptInfo));
 
+		/* Convert this 'or' subclause to an indexqual list */
+		indexqual = extract_or_indexqual_conditions(rel, index, subclause);
+
 		subcost = cost_index(root, rel, index, indexqual,
 							 false);
 
-		if (first_run || subcost < *retCost)
+		if (first_time || subcost < *retCost)
 		{
+			*retIndexQual = indexqual;
 			*retIndexid = index->indexoid;
 			*retCost = subcost;
-			first_run = false;
+			first_time = false;
 		}
 	}
 }

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.39 2000/01/26 05:58:20 momjian Exp $
+ * $Id: paths.h,v 1.40 2000/02/05 18:26:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,17 @@ extern List *create_index_paths(Query *root, RelOptInfo *rel, List *indices,
 				   List *joininfo_list);
 extern Oid indexable_operator(Expr *clause, Oid opclass, Oid relam,
 							  bool indexkey_on_left);
+extern List *extract_or_indexqual_conditions(RelOptInfo *rel,
+											 IndexOptInfo *index,
+											 Expr *orsubclause);
 extern List *expand_indexqual_conditions(List *indexquals);
+
+/*
+ * orindxpath.c
+ *	  additional routines for indexable OR clauses
+ */
+extern List *create_or_index_paths(Query *root, RelOptInfo *rel,
+								   List *clauses);
 
 /*
  * tidpath.h
@@ -51,12 +61,6 @@ extern List *create_tidscan_paths(Query *root, RelOptInfo *rel);
  *	   routines to create join paths
  */
 extern void update_rels_pathlist_for_joins(Query *root, List *joinrels);
-
-
-/*
- * orindxpath.c
- */
-extern List *create_or_index_paths(Query *root, RelOptInfo *rel, List *clauses);
 
 /*
  * pathkeys.c
@@ -100,7 +104,7 @@ extern bool nonoverlap_sets(List *s1, List *s2);
 extern bool is_subset(List *s1, List *s2);
 
 /*
- * prototypes for path/prune.c
+ * prune.c
  */
 extern void merge_rels_with_same_relids(List *rel_list);
 extern void rels_set_cheapest(Query *root, List *rel_list);

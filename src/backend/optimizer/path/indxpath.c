@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.78 2000/01/26 05:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.79 2000/02/05 18:26:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,15 +51,12 @@ typedef enum {
 } Prefix_Status;
 
 static void match_index_orclauses(RelOptInfo *rel, IndexOptInfo *index,
-								  int indexkey, Oid opclass,
 								  List *restrictinfo_list);
 static List *match_index_orclause(RelOptInfo *rel, IndexOptInfo *index,
-								  int indexkey, Oid opclass,
 								  List *or_clauses,
 								  List *other_matching_indices);
 static bool match_or_subclause_to_indexkey(RelOptInfo *rel,
 										   IndexOptInfo *index,
-										   int indexkey, Oid opclass,
 										   Expr *clause);
 static List *group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index,
 									   int *indexkeys, Oid *classes,
@@ -174,20 +171,11 @@ create_index_paths(Query *root,
 		 * so we can't build a path for an 'or' clause until all indexes have
 		 * been matched against it.)
 		 *
-		 * We currently only look to match the first key of each index against
-		 * 'or' subclauses.  There are cases where a later key of a multi-key
-		 * index could be used (if other top-level clauses match earlier keys
-		 * of the index), but our poor brains are hurting already...
-		 *
 		 * We don't even think about special handling of 'or' clauses that
 		 * involve more than one relation (ie, are join clauses).
 		 * Can we do anything useful with those?
 		 */
-		match_index_orclauses(rel,
-							  index,
-							  index->indexkeys[0],
-							  index->classlist[0],
-							  restrictinfo_list);
+		match_index_orclauses(rel, index, restrictinfo_list);
 
 		/*
 		 * 2. If the keys of this index match any of the available non-'or'
@@ -267,15 +255,11 @@ create_index_paths(Query *root,
  *
  * 'rel' is the node of the relation on which the index is defined.
  * 'index' is the index node.
- * 'indexkey' is the (single) key of the index that we will consider.
- * 'class' is the class of the operator corresponding to 'indexkey'.
  * 'restrictinfo_list' is the list of available restriction clauses.
  */
 static void
 match_index_orclauses(RelOptInfo *rel,
 					  IndexOptInfo *index,
-					  int indexkey,
-					  Oid opclass,
 					  List *restrictinfo_list)
 {
 	List	   *i;
@@ -292,7 +276,6 @@ match_index_orclauses(RelOptInfo *rel,
 			 */
 			restrictinfo->subclauseindices =
 				match_index_orclause(rel, index,
-									 indexkey, opclass,
 									 restrictinfo->clause->args,
 									 restrictinfo->subclauseindices);
 		}
@@ -305,8 +288,11 @@ match_index_orclauses(RelOptInfo *rel,
  *
  *	  A match means that:
  *	  (1) the operator within the subclause can be used with the
- *				index's specified operator class, and
+ *		  index's specified operator class, and
  *	  (2) one operand of the subclause matches the index key.
+ *
+ *	  If a subclause is an 'and' clause, then it matches if any of its
+ *	  subclauses is an opclause that matches.
  *
  * 'or_clauses' is the list of subclauses within the 'or' clause
  * 'other_matching_indices' is the list of information on other indices
@@ -323,8 +309,6 @@ match_index_orclauses(RelOptInfo *rel,
 static List *
 match_index_orclause(RelOptInfo *rel,
 					 IndexOptInfo *index,
-					 int indexkey,
-					 Oid opclass,
 					 List *or_clauses,
 					 List *other_matching_indices)
 {
@@ -350,8 +334,7 @@ match_index_orclause(RelOptInfo *rel,
 	{
 		Expr	   *clause = lfirst(clist);
 
-		if (match_or_subclause_to_indexkey(rel, index, indexkey, opclass,
-										   clause))
+		if (match_or_subclause_to_indexkey(rel, index, clause))
 		{
 			/* OK to add this index to sublist for this subclause */
 			lfirst(matching_indices) = lcons(index,
@@ -368,31 +351,82 @@ match_index_orclause(RelOptInfo *rel,
  * See if a subclause of an OR clause matches an index.
  *
  * We accept the subclause if it is an operator clause that matches the
- * index, or if it is an AND clause all of whose members are operators
- * that match the index.  (XXX Would accepting a single match be useful?)
+ * index, or if it is an AND clause any of whose members is an opclause
+ * that matches the index.
+ *
+ * We currently only look to match the first key of an index against
+ * 'or' subclauses.  There are cases where a later key of a multi-key
+ * index could be used (if other top-level clauses match earlier keys
+ * of the index), but our poor brains are hurting already...
  */
 static bool
 match_or_subclause_to_indexkey(RelOptInfo *rel,
 							   IndexOptInfo *index,
-							   int indexkey,
-							   Oid opclass,
 							   Expr *clause)
 {
+	int		indexkey = index->indexkeys[0];
+	Oid		opclass = index->classlist[0];
+
 	if (and_clause((Node *) clause))
 	{
 		List	   *item;
 
 		foreach(item, clause->args)
 		{
-			if (! match_clause_to_indexkey(rel, index, indexkey, opclass,
-										   lfirst(item), false))
-				return false;
+			if (match_clause_to_indexkey(rel, index, indexkey, opclass,
+										 lfirst(item), false))
+				return true;
 		}
-		return true;
+		return false;
 	}
 	else
 		return match_clause_to_indexkey(rel, index, indexkey, opclass,
 										clause, false);
+}
+
+/*
+ * Given an OR subclause that has previously been determined to match
+ * the specified index, extract a list of specific opclauses that can be
+ * used as indexquals.
+ *
+ * In the simplest case this just means making a one-element list of the
+ * given opclause.  However, if the OR subclause is an AND, we have to
+ * scan it to find the opclause(s) that match the index.  (There should
+ * be at least one, if match_or_subclause_to_indexkey succeeded, but there
+ * could be more.)  Also, we apply expand_indexqual_conditions() to convert
+ * any special matching opclauses to indexable operators.
+ *
+ * The passed-in clause is not changed.
+ */
+List *
+extract_or_indexqual_conditions(RelOptInfo *rel,
+								IndexOptInfo *index,
+								Expr *orsubclause)
+{
+	List   *quals = NIL;
+	int		indexkey = index->indexkeys[0];
+	Oid		opclass = index->classlist[0];
+
+	if (and_clause((Node *) orsubclause))
+	{
+		List	   *item;
+
+		foreach(item, orsubclause->args)
+		{
+			if (match_clause_to_indexkey(rel, index, indexkey, opclass,
+										 lfirst(item), false))
+				quals = lappend(quals, lfirst(item));
+		}
+		if (quals == NIL)
+			elog(ERROR, "extract_or_indexqual_conditions: no matching clause");
+	}
+	else
+	{
+		/* we assume the caller passed a valid indexable qual */
+		quals = lcons(orsubclause, NIL);
+	}
+
+	return expand_indexqual_conditions(quals);
 }
 
 
@@ -614,8 +648,8 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
  *
  * Returns true if the clause can be used with this index key.
  *
- * NOTE:  returns false if clause is an OR or AND clause; to the extent
- * we cope with those at all, it is done by higher-level routines.
+ * NOTE:  returns false if clause is an OR or AND clause; it is the
+ * responsibility of higher-level routines to cope with those.
  */
 static bool
 match_clause_to_indexkey(RelOptInfo *rel,
