@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.6 1997/04/22 17:33:00 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.7 1997/07/29 16:21:12 thomas Exp $
  */
 
 #include <float.h>		/* faked on sunos */
@@ -128,7 +128,9 @@ interpt_pp(p1,p2)
     Point *retval;
     int i,j;
     LSEG seg1, seg2;
+#if FALSE
     LINE *ln;
+#endif
     bool found;  /* We've found the intersection */
 
     found = false;  /* Haven't found it yet */
@@ -141,8 +143,11 @@ interpt_pp(p1,p2)
            if (lseg_intersect(&seg1, &seg2)) found = true;
        }
 
+#if FALSE
     ln = line_construct_pp(&seg2.p[0], &seg2.p[1]);
     retval = interpt_sl(&seg1, ln);
+#endif
+    retval = lseg_interpt( &seg1, &seg2);
     
     return(retval);
 }
