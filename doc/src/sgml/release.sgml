@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.243 2003/11/16 03:23:48 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.244 2003/11/17 04:50:56 momjian Exp $
 -->
 
 <appendix id="release">
@@ -22,7 +22,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.243 2003/11/16 03:23:48 tg
     <variablelist>
      <varlistentry>
       <term>
-       <literal>IN</literal>/<literal>NOT IN</literal> subqueries are
+       <literal>IN</literal> / <literal>NOT IN</literal> subqueries are
        now much more efficient
       </term>
 
