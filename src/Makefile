@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/Makefile,v 1.24 2002/03/13 00:05:02 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile,v 1.25 2002/07/18 22:15:10 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,11 +29,9 @@ clean:
 	$(MAKE) -C interfaces $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
-	$(MAKE) -C utils $@
 	$(MAKE) -C test $@
 
 distclean maintainer-clean:
-	-$(MAKE) -C utils $@
 	-$(MAKE) -C backend $@
 	-$(MAKE) -C include $@
 	-$(MAKE) -C interfaces $@
