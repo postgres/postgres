@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.36 2002/09/23 01:43:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.37 2002/10/17 14:53:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,30 +340,34 @@ PgSetResultId(Tcl_Interp *interp, char *connid_c, PGresult *res)
 		return TCL_ERROR;
 	connid = (Pg_ConnectionId *) Tcl_GetChannelInstanceData(conn_chan);
 
-	for (resid = connid->res_last + 1; resid != connid->res_last; resid++)
+	/* search, starting at slot after the last one used */
+	resid = connid->res_last;
+	for (;;)
 	{
-		if (resid == connid->res_max)
-		{
+		/* advance, with wraparound */
+		if (++resid >= connid->res_max)
 			resid = 0;
-			break;
-		}
+		/* this slot empty? */
 		if (!connid->results[resid])
 		{
 			connid->res_last = resid;
-			break;
+			break;				/* success exit */
 		}
+		/* checked all slots? */
+		if (resid == connid->res_last)
+			break;				/* failure exit */
 	}
 
 	if (connid->results[resid])
 	{
-		if (connid->res_max == connid->res_hardmax)
+		/* no free slot found, so try to enlarge array */
+		if (connid->res_max >= connid->res_hardmax)
 		{
 			Tcl_SetResult(interp, "hard limit on result handles reached",
 						  TCL_STATIC);
 			return TCL_ERROR;
 		}
-		connid->res_last = connid->res_max;
-		resid = connid->res_max;
+		connid->res_last = resid = connid->res_max;
 		connid->res_max *= 2;
 		if (connid->res_max > connid->res_hardmax)
 			connid->res_max = connid->res_hardmax;
