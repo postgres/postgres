@@ -839,14 +839,14 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
 	//if index<0, count from the end of the result set, but check
 	//to be sure that it is not beyond the first index
-	if (index<0) 
+	if (index<0) {
 	    if (index>=-rows.size())
 		internalIndex=rows.size()+index;
 	    else {
 		beforeFirst();
 		return false;
 	    }
-		
+	} else {
 	//must be the case that index>0, 
 	//find the correct place, assuming that 
 	//the index is not too large
@@ -855,6 +855,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	else {
 	    afterLast();
 	    return false;
+	}
 	}
 
 	current_row=internalIndex;
