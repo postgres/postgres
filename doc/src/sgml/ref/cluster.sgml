@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.13 2001/12/08 03:24:34 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.14 2001/12/30 04:36:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -190,8 +190,8 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
     the ORDER BY clause to match the index, and which is much faster for
     unordered data. You then drop the old table, use
     <command>ALTER TABLE...RENAME</command>
-    to rename <replaceable class="parameter">temp</replaceable> to the old name, and
-    recreate any indexes. The only problem is that <acronym>OID</acronym>s
+    to rename <replaceable class="parameter">newtable</replaceable> to the old name, and
+    recreate the table's indexes. The only problem is that <acronym>OID</acronym>s
     will not be preserved. From then on, <command>CLUSTER</command> should be
     fast because most of the heap data has already been
     ordered, and the existing index is used.
