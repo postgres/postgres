@@ -54,11 +54,11 @@ select * from computer_terms where term ~* 'computer [DG]';
 (2 rows)
 
 select *,character_length(term) from computer_terms;
-        term         | category |     comments     | length 
----------------------+----------+------------------+--------
- computer display    | X-A01-Y  | a comment 1      |     16
- computer graphics   | T-B01-Y  | a comment 2      |     17
- computer programmer | S-Z01-Y  | a comment 3      |     19
+        term         | category |     comments     | char_length 
+---------------------+----------+------------------+-------------
+ computer display    | X-A01-Y  | a comment 1      |          16
+ computer graphics   | T-B01-Y  | a comment 2      |          17
+ computer programmer | S-Z01-Y  | a comment 3      |          19
 (3 rows)
 
 select *,octet_length(term) from computer_terms;
