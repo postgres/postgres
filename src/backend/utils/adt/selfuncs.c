@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.140 2003/07/17 20:52:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.141 2003/07/17 22:20:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2700,11 +2700,16 @@ convert_string_datum(Datum value, Oid typid)
 		 * However, it seems that some versions of Solaris have buggy
 		 * strxfrm that can write past the specified buffer length in that
 		 * scenario.  So, do it the dumb way for portability.
+		 *
+		 * Yet other systems (e.g., glibc) sometimes return a smaller value
+		 * from the second call than the first; thus the Assert must be <=
+		 * not == as you'd expect.  Can't any of these people program their
+		 * way out of a paper bag?
 		 */
 		xfrmlen = strxfrm(NULL, val, 0);
 		xfrmstr = (char *) palloc(xfrmlen + 1);
 		xfrmlen2 = strxfrm(xfrmstr, val, xfrmlen + 1);
-		Assert(xfrmlen2 == xfrmlen);
+		Assert(xfrmlen2 <= xfrmlen);
 		pfree(val);
 		val = xfrmstr;
 	}
