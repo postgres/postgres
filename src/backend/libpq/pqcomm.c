@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.68 1999/04/25 03:19:21 tgl Exp $
+ *  $Id: pqcomm.c,v 1.69 1999/05/04 23:39:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,8 +261,10 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 			   "\tIs another postmaster already running on that port?\n");
 		if (family == AF_UNIX)
 		{
-			snprintf(PQerrormsg + strlen(PQerrormsg), ERROR_MSG_LENGTH,
-					"\tIf not, remove socket node (%s) and retry.\n", sock_path);
+			snprintf(PQerrormsg + strlen(PQerrormsg),
+					 ERROR_MSG_LENGTH - strlen(PQerrormsg),
+					 "\tIf not, remove socket node (%s) and retry.\n",
+					 sock_path);
 		}
 		else
 		{
