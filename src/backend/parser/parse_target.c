@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.90 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.91 2002/09/28 20:00:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,6 +386,7 @@ static List *
 ExpandAllTables(ParseState *pstate)
 {
 	List	   *target = NIL;
+	bool		found_table = false;
 	List	   *ns;
 
 	foreach(ns, pstate->p_namespace)
@@ -413,11 +414,12 @@ ExpandAllTables(ParseState *pstate)
 		if (!rte->inFromCl)
 			continue;
 
+		found_table = true;
 		target = nconc(target, expandRelAttrs(pstate, rte));
 	}
 
 	/* Check for SELECT *; */
-	if (target == NIL)
+	if (!found_table)
 		elog(ERROR, "Wildcard with no tables specified not allowed");
 
 	return target;

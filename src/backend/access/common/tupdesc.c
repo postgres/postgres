@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.90 2002/09/22 19:42:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.91 2002/09/28 20:00:18 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -39,27 +39,33 @@
 TupleDesc
 CreateTemplateTupleDesc(int natts, bool hasoid)
 {
-	uint32		size;
 	TupleDesc	desc;
 
 	/*
 	 * sanity checks
 	 */
-	AssertArg(natts >= 1);
+	AssertArg(natts >= 0);
 
 	/*
 	 * allocate enough memory for the tuple descriptor and zero it as
 	 * TupleDescInitEntry assumes that the descriptor is filled with NULL
 	 * pointers.
 	 */
-	size = natts * sizeof(Form_pg_attribute);
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
-	desc->attrs = (Form_pg_attribute *) palloc(size);
-	desc->constr = NULL;
-	MemSet(desc->attrs, 0, size);
 
 	desc->natts = natts;
 	desc->tdhasoid = hasoid;
+
+	if (natts > 0)
+	{
+		uint32		size = natts * sizeof(Form_pg_attribute);
+
+		desc->attrs = (Form_pg_attribute *) palloc(size);
+		MemSet(desc->attrs, 0, size);
+	}
+	else
+		desc->attrs = NULL;
+	desc->constr = NULL;
 
 	return desc;
 }
@@ -79,7 +85,7 @@ CreateTupleDesc(int natts, bool hasoid, Form_pg_attribute *attrs)
 	/*
 	 * sanity checks
 	 */
-	AssertArg(natts >= 1);
+	AssertArg(natts >= 0);
 
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 	desc->attrs = attrs;
@@ -108,17 +114,20 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 	desc->natts = tupdesc->natts;
-	size = desc->natts * sizeof(Form_pg_attribute);
-	desc->attrs = (Form_pg_attribute *) palloc(size);
-	for (i = 0; i < desc->natts; i++)
+	if (desc->natts > 0)
 	{
-		desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-		memcpy(desc->attrs[i],
-			   tupdesc->attrs[i],
-			   ATTRIBUTE_TUPLE_SIZE);
-		desc->attrs[i]->attnotnull = false;
-		desc->attrs[i]->atthasdef = false;
+		size = desc->natts * sizeof(Form_pg_attribute);
+		desc->attrs = (Form_pg_attribute *) palloc(size);
+		for (i = 0; i < desc->natts; i++)
+		{
+			desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
+			memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_TUPLE_SIZE);
+			desc->attrs[i]->attnotnull = false;
+			desc->attrs[i]->atthasdef = false;
+		}
 	}
+	else
+		desc->attrs = NULL;
 	desc->constr = NULL;
 	desc->tdhasoid = tupdesc->tdhasoid;
 
@@ -142,15 +151,18 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 	desc->natts = tupdesc->natts;
-	size = desc->natts * sizeof(Form_pg_attribute);
-	desc->attrs = (Form_pg_attribute *) palloc(size);
-	for (i = 0; i < desc->natts; i++)
+	if (desc->natts > 0)
 	{
-		desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-		memcpy(desc->attrs[i],
-			   tupdesc->attrs[i],
-			   ATTRIBUTE_TUPLE_SIZE);
+		size = desc->natts * sizeof(Form_pg_attribute);
+		desc->attrs = (Form_pg_attribute *) palloc(size);
+		for (i = 0; i < desc->natts; i++)
+		{
+			desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
+			memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_TUPLE_SIZE);
+		}
 	}
+	else
+		desc->attrs = NULL;
 	if (constr)
 	{
 		TupleConstr *cpy = (TupleConstr *) palloc(sizeof(TupleConstr));
@@ -197,7 +209,8 @@ FreeTupleDesc(TupleDesc tupdesc)
 
 	for (i = 0; i < tupdesc->natts; i++)
 		pfree(tupdesc->attrs[i]);
-	pfree(tupdesc->attrs);
+	if (tupdesc->attrs)
+		pfree(tupdesc->attrs);
 	if (tupdesc->constr)
 	{
 		if (tupdesc->constr->num_defval > 0)
@@ -228,7 +241,6 @@ FreeTupleDesc(TupleDesc tupdesc)
 	}
 
 	pfree(tupdesc);
-
 }
 
 /*
@@ -361,6 +373,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 */
 	AssertArg(PointerIsValid(desc));
 	AssertArg(attributeNumber >= 1);
+	AssertArg(attributeNumber <= desc->natts);
 
 	/*
 	 * attributeName's are sometimes NULL, from resdom's.  I don't know

@@ -939,11 +939,9 @@ drop table test2;
 alter table atacc1 drop c;
 alter table atacc1 drop d;
 alter table atacc1 drop b;
-ERROR:  ALTER TABLE: Cannot drop last column from table "atacc1"
 select * from atacc1;
- b  
-----
- 21
+  
+--
 (1 row)
 
 drop table atacc1;

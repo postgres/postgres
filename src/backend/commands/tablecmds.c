@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.44 2002/09/23 20:43:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.45 2002/09/28 20:00:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2331,9 +2331,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 {
 	Relation	rel;
 	AttrNumber	attnum;
-	AttrNumber	n;
 	TupleDesc	tupleDesc;
-	bool		success;
 	ObjectAddress object;
 
 	rel = heap_open(myrelid, AccessExclusiveLock);
@@ -2359,34 +2357,13 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 			 RelationGetRelationName(rel), colName);
 
 	/* Can't drop a system attribute */
+	/* XXX perhaps someday allow dropping OID? */
 	if (attnum < 0)
 		elog(ERROR, "ALTER TABLE: Cannot drop system attribute \"%s\"",
 			 colName);
 
-	/*
-	 * Make sure there will be at least one user column left in the
-	 * relation after we drop this one.  Zero-length tuples tend to
-	 * confuse us.
-	 */
-	tupleDesc = RelationGetDescr(rel);
-
-	success = false;
-	for (n = 1; n <= tupleDesc->natts; n++)
-	{
-		Form_pg_attribute attribute = tupleDesc->attrs[n - 1];
-
-		if (!attribute->attisdropped && n != attnum)
-		{
-			success = true;
-			break;
-		}
-	}
-
-	if (!success)
-		elog(ERROR, "ALTER TABLE: Cannot drop last column from table \"%s\"",
-			 RelationGetRelationName(rel));
-
 	/* Don't drop inherited columns */
+	tupleDesc = RelationGetDescr(rel);
 	if (tupleDesc->attrs[attnum - 1]->attinhcount > 0 && !recursing)
 		elog(ERROR, "ALTER TABLE: Cannot drop inherited column \"%s\"",
 			 colName);
