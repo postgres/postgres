@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.40 2004/02/06 19:36:18 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.41 2004/02/12 15:06:56 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -662,9 +662,6 @@ void
 StrategyInvalidateBuffer(BufferDesc *buf)
 {
 	int					cdb_id;
-#ifdef USE_ASSERT_CHECKING
-	int					buf_id;
-#endif
 	BufferStrategyCDB  *cdb;
 
 	/* The buffer cannot be dirty or pinned */
@@ -672,41 +669,37 @@ StrategyInvalidateBuffer(BufferDesc *buf)
 	Assert(buf->refcount == 0);
 
 	/*
-	 * If we have the buffer somewhere in the directory, remove it,
-	 * add the CDB to the list of unused CDB's. and the buffer to
-	 * the list of free buffers
+	 * Lookup the cache directory block for this buffer
 	 */
 	cdb_id = BufTableLookup(&(buf->tag));
-	if (cdb_id >= 0)
-	{
-		cdb = &StrategyCDB[cdb_id];
-		BufTableDelete(&(cdb->buf_tag));
-		STRAT_LIST_REMOVE(cdb);
-		cdb->buf_id = -1;
-		cdb->next = StrategyControl->listUnusedCDB;
-		StrategyControl->listUnusedCDB = cdb_id;
-
-		buf->bufNext = StrategyControl->listFreeBuffers;
-		StrategyControl->listFreeBuffers = buf->buf_id;
-		return;
-	}
-
-#ifdef USE_ASSERT_CHECKING
-	/*
-	 * Check that we have this buffer in the freelist already.
-	 */
-	buf_id = StrategyControl->listFreeBuffers;
-	while (buf_id >= 0)
-	{
-		if (buf == &BufferDescriptors[buf_id])
-			return;
-
-		buf_id = BufferDescriptors[buf_id].bufNext;
-	}
-
-	elog(ERROR, "StrategyInvalidateBuffer() buffer %d not in directory or freelist",
+	if (cdb_id < 0)
+		elog(ERROR, "StrategyInvalidateBuffer() buffer %d not in directory",
 				buf->buf_id);
-#endif
+	cdb = &StrategyCDB[cdb_id];
+
+	/*
+	 * Remove the CDB from the hashtable and the ARC queue it is
+	 * currently on.
+	 */
+	BufTableDelete(&(cdb->buf_tag));
+	STRAT_LIST_REMOVE(cdb);
+
+	/*
+	 * Clear out the CDB's buffer tag and association with the buffer
+	 * and add it to the list of unused CDB's
+	 */
+	CLEAR_BUFFERTAG(&(cdb->buf_tag));
+	cdb->buf_id = -1;
+	cdb->next = StrategyControl->listUnusedCDB;
+	StrategyControl->listUnusedCDB = cdb_id;
+
+	/*
+	 * Clear out the buffers tag and add it to the list of
+	 * currently unused buffers.
+	 */
+	CLEAR_BUFFERTAG(&(buf->tag));
+	buf->bufNext = StrategyControl->listFreeBuffers;
+	StrategyControl->listFreeBuffers = buf->buf_id;
 }
 
 
@@ -869,12 +862,6 @@ PinBuffer(BufferDesc *buf)
 {
 	int			b = BufferDescriptorGetBuffer(buf) - 1;
 
-	if (buf->refcount == 0)
-	{
-		/* mark buffer as no longer free */
-		buf->flags &= ~BM_FREE;
-	}
-
 	if (PrivateRefCount[b] == 0)
 		buf->refcount++;
 	PrivateRefCount[b]++;
@@ -917,12 +904,7 @@ UnpinBuffer(BufferDesc *buf)
 	if (PrivateRefCount[b] == 0)
 		buf->refcount--;
 
-	if (buf->refcount == 0)
-	{
-		/* buffer is now unpinned */
-		buf->flags |= BM_FREE;
-	}
-	else if ((buf->flags & BM_PIN_COUNT_WAITER) != 0 &&
+	if ((buf->flags & BM_PIN_COUNT_WAITER) != 0 &&
 			 buf->refcount == 1)
 	{
 		/* we just released the last pin other than the waiter's */
@@ -953,70 +935,3 @@ refcount = %ld, file: %s, line: %d\n",
 #endif
 
 
-/*
- * print out the free list and check for breaks.
- */
-#ifdef NOT_USED
-void
-DBG_FreeListCheck(int nfree)
-{
-	int			i;
-	BufferDesc *buf;
-
-	buf = &(BufferDescriptors[SharedFreeList->freeNext]);
-	for (i = 0; i < nfree; i++, buf = &(BufferDescriptors[buf->freeNext]))
-	{
-		if (!(buf->flags & (BM_FREE)))
-		{
-			if (buf != SharedFreeList)
-				printf("\tfree list corrupted: %d flags %x\n",
-					   buf->buf_id, buf->flags);
-			else
-				printf("\tfree list corrupted: too short -- %d not %d\n",
-					   i, nfree);
-		}
-		if ((BufferDescriptors[buf->freeNext].freePrev != buf->buf_id) ||
-			(BufferDescriptors[buf->freePrev].freeNext != buf->buf_id))
-			printf("\tfree list links corrupted: %d %ld %ld\n",
-				   buf->buf_id, buf->freePrev, buf->freeNext);
-	}
-	if (buf != SharedFreeList)
-		printf("\tfree list corrupted: %d-th buffer is %d\n",
-			   nfree, buf->buf_id);
-}
-#endif
-
-#ifdef NOT_USED
-/*
- * PrintBufferFreeList -
- *	  prints the buffer free list, for debugging
- */
-static void
-PrintBufferFreeList()
-{
-	BufferDesc *buf;
-
-	if (SharedFreeList->freeNext == Free_List_Descriptor)
-	{
-		printf("free list is empty.\n");
-		return;
-	}
-
-	buf = &(BufferDescriptors[SharedFreeList->freeNext]);
-	for (;;)
-	{
-		int			i = (buf - BufferDescriptors);
-
-		printf("[%-2d] (%s, %d) flags=0x%x, refcnt=%d %ld, nxt=%ld prv=%ld)\n",
-			   i, buf->blind.relname, buf->tag.blockNum,
-			   buf->flags, buf->refcount, PrivateRefCount[i],
-			   buf->freeNext, buf->freePrev);
-
-		if (buf->freeNext == Free_List_Descriptor)
-			break;
-
-		buf = &(BufferDescriptors[buf->freeNext]);
-	}
-}
-
-#endif

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.67 2004/01/15 16:14:26 wieck Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.68 2004/02/12 15:06:56 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,11 +36,10 @@ extern int	ShowPinTrace;
 #define BM_DIRTY				(1 << 0)
 #define BM_VALID				(1 << 1)
 #define BM_DELETED				(1 << 2)
-#define BM_FREE					(1 << 3)
-#define BM_IO_IN_PROGRESS		(1 << 4)
-#define BM_IO_ERROR				(1 << 5)
-#define BM_JUST_DIRTIED			(1 << 6)
-#define BM_PIN_COUNT_WAITER		(1 << 7)
+#define BM_IO_IN_PROGRESS		(1 << 3)
+#define BM_IO_ERROR				(1 << 4)
+#define BM_JUST_DIRTIED			(1 << 5)
+#define BM_PIN_COUNT_WAITER		(1 << 6)
 
 typedef bits16 BufFlags;
 
