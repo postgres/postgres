@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.39 1998/03/22 18:28:39 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.40 1998/03/22 19:35:30 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -346,13 +346,14 @@ fi
 
 echo
 
+PGSQL_OPT="-o /dev/null -F -Q -D$PGDATA"
+
 # If the COPY is first, the VACUUM generates an error, so we vacuum first
 echo "vacuuming template1"
-echo "vacuum" | postgres -o /dev/null -F -Q -D$PGDATA template1 
+echo "vacuum" | postgres $PGSQL_OPT template1 > /dev/null
 
-echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" |\
-	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-	grep -v "'DEBUG:"
+echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" | \
+	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "creating public pg_user view"
 echo "CREATE TABLE xpg_user (		\
@@ -363,30 +364,27 @@ echo "CREATE TABLE xpg_user (		\
 	    usesuper	bool,		\
 	    usecatupd	bool,		\
 	    passwd		text,		\
-	    valuntil	abstime);" |\
-	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-	grep -v "'DEBUG:"
+	    valuntil	abstime);" | postgres $PGSQL_OPT template1 > /dev/null
 
 #move it into pg_user
 echo "UPDATE pg_class SET relname = 'pg_user' WHERE relname = 'xpg_user';" |\
-	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-	grep -v "'DEBUG:"
+	postgres $PGSQL_OPT template1 > /dev/null
 echo "UPDATE pg_type SET typname = 'pg_user' WHERE typname = 'xpg_user';" |\
-	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-	grep -v "'DEBUG:"
+	postgres $PGSQL_OPT template1 > /dev/null
 mv $PGDATA/base/template1/xpg_user $PGDATA/base/template1/pg_user
 
 echo "CREATE RULE _RETpg_user AS ON SELECT TO pg_user DO INSTEAD	\
 	    SELECT usename, usesysid, usecreatedb, usetrace,		\
 	           usesuper, usecatupd, '********'::text as passwd,	\
-		   valuntil FROM pg_shadow;" |\
-	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-	grep -v "'DEBUG:"
-echo "REVOKE ALL on pg_shadow FROM public" |\
-	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-	grep -v "'DEBUG:"
+		   valuntil FROM pg_shadow;" | \
+	postgres $PGSQL_OPT template1 > /dev/null
+echo "REVOKE ALL on pg_shadow FROM public" | \
+	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "loading pg_description"
-echo "copy pg_description from '$TEMPLATE_DESCR'" | postgres -F -Q -D$PGDATA template1 > /dev/null
-echo "copy pg_description from '$GLOBAL_DESCR'" | postgres -F -Q -D$PGDATA template1 > /dev/null
-echo "vacuum analyze" | postgres -o /dev/null -F -Q -D$PGDATA template1
+echo "copy pg_description from '$TEMPLATE_DESCR'" | \
+	postgres $PGSQL_OPT template1 > /dev/null
+echo "copy pg_description from '$GLOBAL_DESCR'" | \
+	postgres $PGSQL_OPT template1 > /dev/null
+echo "vacuum analyze" | \
+	postgres $PGSQL_OPT template1 > /dev/null
