@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.17 2003/12/17 18:44:08 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.18 2003/12/23 21:50:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2026,7 +2026,7 @@ usage(const char *progname)
 /*
  * Initialized NLS if enabled.
  */
-void
+static void
 init_nls(void)
 {
 #ifdef ENABLE_NLS
