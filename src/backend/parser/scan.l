@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.52 1999/07/17 20:17:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.53 1999/09/07 00:13:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -491,11 +491,8 @@ int
 input()
 {
 	if (parseCh == NULL)
-	{
 		parseCh = parseString;
-		return(*parseCh++);
-	}
-	else if (*parseCh == '\0')
+	if (*parseCh == '\0')
 		return(0);
 	else
 		return(*parseCh++);
@@ -520,20 +517,17 @@ myinput(char* buf, int max)
 	int len, copylen;
 
 	if (parseCh == NULL)
-	{
-		len = strlen(parseString);
-		if (len >= max)
-			copylen = max - 1;
-		else
-			copylen = len;
-		if (copylen > 0)
-			memcpy(buf, parseString, copylen);
-		buf[copylen] = '\0';
 		parseCh = parseString;
-		return copylen;
-	}
+	len = strlen(parseCh);		/* remaining data available */
+	if (len >= max)
+		copylen = max - 1;
 	else
-		return 0; /* end of string */
+		copylen = len;
+	if (copylen > 0)
+		memcpy(buf, parseCh, copylen);
+	buf[copylen] = '\0';
+	parseCh += copylen;
+	return copylen;
 }
 #endif /* FLEX_SCANNER */
 
