@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Mar 11 14:26:45 EST 2001
+Last updated:		Wed Mar 14 14:28:37 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -329,6 +329,7 @@ MISCELLANEOUS
   ANALYZE, and CLUSTER
 * Force transactions that commit at near the same time use a single fsync()
 * Make blind writes go through the file descriptor cache
+* Allow logging of query durations
 
 SOURCE CODE
 -----------
