@@ -4,7 +4,7 @@
     bump interface version numbers
     update src/interfaces/libpq/libpq.rc
     update src/interfaces/libpq++/libpq++dll.rc
-    update src/include/config.h.win32
+    update src/include/pg_config.h.win32
 
 * Release notes
     update doc/src/sgml/release.sgml 
@@ -20,8 +20,6 @@
     platform-specific FAQ's, if needed
 
 * Miscellaneous files
-    README
-    register.txt
     doc/bug.template
 
 * Update pg_upgrade to handle new version, or disable

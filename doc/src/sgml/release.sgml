@@ -1,9 +1,57 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.115 2002/01/31 21:20:03 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.115.2.1 2002/03/18 23:04:11 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-7-2-1">
+   <title>Release 7.2.1</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2002-03-21</simpara>
+   </note>
+
+   <para>
+    This has a variety of fixes from 7.2.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.2.1</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those running
+     7.2.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+     <programlisting>
+Properly set sequence values after backend crash (Tom)
+Fix pgaccess kanji-coversion key binding (Tatsuo)
+Optimizer improvements (Tom)
+cash I/O improvements (Tom)
+contrib/btree_gist improvements (Teodor Sigaev)
+New Russian FAQ
+Compile fix for missing AuthBlockSig (Heiko)
+Additional time zones and time zone fixes (Thomas)
+Allow psql \connect to handle mixed case database and user names (Tom)
+Return proper OID on command completion even with ON INSERT rules (Tom)
+Allow COPY FROM to use 8-bit DELIMITERS (Tatsuo)
+Fix bug in extract/date_part for milliseconds/microseconds (Tatsuo)
+Improve handling of multiple UNIONs with different lengths (Tom)
+contrib/tsearch dictionary improvements (Thomas T. Thai, Teodor Sigaev)
+Fix for array subscripts handling (Tom)
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
+
 
  <sect1 id="release-7-2">
   <title>Release 7.2</title>
