@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.8 1997/04/18 08:55:55 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.9 1997/06/11 01:05:48 scrappy Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -49,14 +49,16 @@ bootstrap.o: bootstrap_tokens.h
 
 bootstrap_tokens.h bootparse.c: bootparse.y
 	$(YACC) $(YFLAGS) $<
-	sed -f boot.sed < y.tab.c > bootparse.c
+	grep -v "^#" boot.sed > sedfile
+	sed -f sedfile < y.tab.c > bootparse.c
 	mv y.tab.h bootstrap_tokens.h
-	rm -f y.tab.c
+	rm -f y.tab.c sedfile
 
 bootscanner.c: bootscanner.l
 	$(LEX) $<
-	sed -f boot.sed < lex.yy.c > bootscanner.c
-	rm -f lex.yy.c
+	grep -v "^#" boot.sed > sedfile
+	sed -f sedfile < lex.yy.c > bootscanner.c
+	rm -f lex.yy.c sedfile
 
 clean:
 	rm -f SUBSYS.o $(OBJS) bootparse.c bootstrap_tokens.h bootscanner.c
