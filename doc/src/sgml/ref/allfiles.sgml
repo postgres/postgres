@@ -1,11 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.24 2000/10/16 03:34:47 pjw Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.25 2000/11/24 17:44:22 petere Exp $
 Postgres documentation
 Complete list of usable sgml source files in this directory.
 -->
-
-<!entity intro-ref          system "intro-ref.sgml">
-<!entity commands           system "commands.sgml">
 
 <!-- these will go into the "operators" reference chapter -->
 <!entity all                system "all.sgml">
@@ -38,7 +35,7 @@ Complete list of usable sgml source files in this directory.
 <!entity trim               system "trim.sgml">
 <!entity upper              system "upper.sgml">
 
-<!-- these are in the "commands" reference chapter -->
+<!-- SQL commands -->
 <!entity abort              system "abort.sgml">
 <!entity alterGroup         system "alter_group.sgml">
 <!entity alterTable         system "alter_table.sgml">
@@ -107,7 +104,7 @@ Complete list of usable sgml source files in this directory.
 <!entity update             system "update.sgml">
 <!entity vacuum             system "vacuum.sgml">
 
-<!-- these are in the "utilities" reference chapter -->
+<!-- applications and utilities -->
 <!entity createdb           system "createdb.sgml">
 <!entity createlang         system "createlang.sgml">
 <!entity createuser         system "createuser.sgml">

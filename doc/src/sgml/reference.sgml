@@ -1,65 +1,14 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.8 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.9 2000/11/24 17:44:22 petere Exp $
 
-Postgres User's Reference documentation.
-- thomas 1998-08-31
+PostgreSQL Reference Manual
 -->
-
-<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
-<!entity intro      SYSTEM "intro.sgml">
-
-<!entity % allfiles SYSTEM "ref/allfiles.sgml">
-%allfiles;
-
-<!entity biblio     SYSTEM "biblio.sgml">
-<!entity contacts   SYSTEM "contacts.sgml">
-]>
 
 <book id="reference">
 
- <!-- Title information -->
-
- <title>PostgreSQL Reference Manual</title>
+ <title><![%single-book;[PostgreSQL &version;]]> Reference Manual</title>
  <bookinfo>
-  <releaseinfo>Covering v6.5 for general release</releaseinfo>
-  <bookbiblio>
-   <authorgroup>
-    <author>
-     <firstname>Jose</firstname>
-     <surname>Soares Da Silva</surname>
-    </author>
-    <author>
-     <firstname>Oliver</firstname>
-     <surname>Elphick</surname>
-    </author>
-   </authorgroup>
-<!--
-    <AuthorGroup>
-      <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
-    </AuthorGroup>
--->
-<!-- editor in authorgroup is not supported
-    <AuthorGroup>
--->
-<!--
-      <Editor>
-        <FirstName>Thomas</FirstName>
-        <SurName>Lockhart</SurName>
-        <Affiliation>
-          <OrgName>Caltech/JPL</OrgName>
-        </Affiliation>
-      </Editor>
--->
-   <editor>
-    <firstname>Oliver</firstname>
-    <surname>Elphick</surname>
-   </editor>
-<!--
-    </AuthorGroup>
--->
- 
-   <date>(last updated 2000-05-01)</date>
-  </bookbiblio>
+  <corpauthor>The PostgreSQL Global Development Group</corpauthor>
 
   <legalnotice>
    <para>
@@ -67,53 +16,161 @@ Postgres User's Reference documentation.
     by PostgreSQL Inc.
    </para>
   </legalnotice>
-
  </bookinfo>
 
-<!--
-<TOC> </TOC>
-<LOT> </LOT>
--->
+ <reference id="sql-commands">
+  <title>SQL Commands</title>
+
+  <partintro>
+   <para>
+    This is reference information for the <acronym>SQL</acronym>
+    commands supported by <productname>Postgres</productname>.
+   </para>
+  </partintro>
+
+   &abort;
+   &alterGroup;
+   &alterTable;
+   &alterUser;
+   &begin;
+   &close;
+   &cluster;
+   &commentOn;
+   &commit;
+   &copyTable;
+   &createAggregate;
+   &createConstraint;
+   &createDatabase;
+   &createFunction;
+   &createGroup;
+   &createIndex;
+   &createLanguage;
+   &createOperator;
+   &createRule;
+   &createSequence;
+   &createTable;
+   &createTableAs;
+   &createTrigger;
+   &createType;
+   &createUser;
+   &createView;
+   &declare;
+   &delete;
+   &dropAggregate;
+   &dropDatabase;
+   &dropFunction;
+   &dropGroup;
+   &dropIndex;
+   &dropLanguage;
+   &dropOperator;
+   &dropRule;
+   &dropSequence;
+   &dropTable;
+   &dropTrigger;
+   &dropType
+   &dropUser;
+   &dropView;
+   &end;
+   &explain;
+   &fetch;
+   &grant;
+   &insert;
+   &listen;
+   &load;
+   &lock;
+   &move;
+   &notify;
+   &reindex;
+   &reset;
+   &revoke;
+   &rollback;
+   &select;
+   &selectInto;
+   &set;
+   &setConstraints;
+   &setSession;
+   &setTransaction;
+   &show;
+   &truncate;
+   &unlisten;
+   &update;
+   &vacuum;
+  
+ </reference>
 
 <!--
-<Dedication>
-<Para>
-Your name here...
-</Para>
-</Dedication>
+Disable this chapter until we have more functions documented.
+- thomas 1998-10-27
+
+ <reference id="sql-functions">
+  <title>SQL Functions</title>
+
+  <partintro>
+   <para>
+    This part provides reference information for the
+    <acronym>SQL</acronym> functions supported by
+    <productname>Postgres</productname>.
+   </para>
+
+   &currentDate;
+   &currentTime;
+   &currentTimestamp;
+   &currentUser;
+ </reference>
 -->
 
- <preface id="preface">
-  <title>Summary</title>
+ <reference id="reference-client">
+  <title>Client Applications</title>
 
-  <para>
-   <productname>Postgres</productname>, 
-   developed originally in the UC Berkeley Computer Science Department,
-   pioneered many of the object-relational concepts
-   now becoming available in some commercial databases.
-   It provides SQL92/SQL3 language support,
-   transaction integrity, and type extensibility.
-   <productname>PostgreSQL</productname> is a public-domain, open source descendant
-   of this original Berkeley code.
-  </para>
- </preface>
+  <partintro>
+   <para>
+    This is reference information for
+    <productname>Postgres</productname> client applications and
+    utilities.
+   </para>
+  </partintro>
 
-<!--
-&intro-ref;
--->
+   &createdb;
+   &createuser;
+   &dropdb;
+   &dropuser;
+   &ecpgRef;
+   &pgAccess;
+   &pgAdmin;
+   &pgConfig;
+   &pgDump;
+   &pgDumpall;
+   &pgRestore;
+   &psqlRef;
+   &pgTclSh;
+   &pgTkSh;
+   &vacuumdb;
 
- &commands;
+ </reference>
 
-<!--
-&contacts;
--->
+ <reference id="reference-server">
+  <title>Server Applications and Utilities</title>
 
- &biblio;
+  <partintro>
+   <para>
+    This is reference information for
+    <productname>Postgres</productname>
+    server applications and support utilities.
+   </para>
+  </partintro>
 
-<!--
-<index Id="index">
-</index>
--->
+   &createlang;
+   &droplang;
+   &initdb;
+   &initlocation;
+   &ipcclean;
+   &pgCtl;
+   &pgPasswd;
+   &pgUpgrade;
+   &postgres;
+   &postmaster;
+
+ </reference>
 
 </book>
 

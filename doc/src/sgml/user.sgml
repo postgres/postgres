@@ -1,75 +1,22 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.19 2000/05/02 20:01:53 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.20 2000/11/24 17:44:22 petere Exp $
 -->
-
-<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
-
-<!entity about      SYSTEM "about.sgml">
-<!entity history    SYSTEM "history.sgml">
-<!entity info       SYSTEM "info.sgml">
-<!entity legal      SYSTEM "legal.sgml">
-<!entity notation   SYSTEM "notation.sgml">
-<!entity problems   SYSTEM "problems.sgml">
-<!entity y2k        SYSTEM "y2k.sgml">
-
-<!entity advanced   SYSTEM "advanced.sgml">
-<!entity array      SYSTEM "array.sgml">
-<!entity biblio     SYSTEM "biblio.sgml">
-<!entity datatype   SYSTEM "datatype.sgml">
-<!entity datetime   SYSTEM "datetime.sgml">
-<!entity environ    SYSTEM "environ.sgml">
-<!entity func       SYSTEM "func.sgml">
-<!entity indices    SYSTEM "indices.sgml">
-<!entity inherit    SYSTEM "inherit.sgml">
-<!entity intro      SYSTEM "intro.sgml">
-<!entity manage     SYSTEM "manage.sgml">
-<!entity mvcc       SYSTEM "mvcc.sgml">
-<!entity oper       SYSTEM "oper.sgml">
-<!entity plan       SYSTEM "plan.sgml">
-<!entity plperl     SYSTEM "plperl.sgml">
-<!entity plsql      SYSTEM "plsql.sgml">
-<!entity pltcl      SYSTEM "pltcl.sgml">
-<!entity populate   SYSTEM "populate.sgml">
-<!entity storage    SYSTEM "storage.sgml">
-<!entity syntax     SYSTEM "syntax.sgml">
-<!entity typeconv   SYSTEM "typeconv.sgml">
-
-<!-- reference pages -->
-<!entity % allfiles SYSTEM "allfiles.sgml">
-%allfiles;
-]>
 
 <book id="user">
 
 <!-- Title information -->
 
- <title>PostgreSQL User's Guide</title>
+ <title><![%single-book;[PostgreSQL &version;]]> User's Guide</title>
  <bookinfo>
-  <releaseinfo>Covering v7.0 for general release</releaseinfo>
-  <bookbiblio>
-   <authorgroup>
-    <corpauthor>The PostgreSQL Development Team</corpauthor>
-   </authorgroup>
-<!-- editor in authorgroup is not supported
-  <AuthorGroup>
--->
-   <editor>
-    <firstname>Thomas</firstname>
-    <surname>Lockhart</surname>
-    <affiliation>
-     <orgname>Caltech/JPL</orgname>
-    </affiliation>
-   </editor>
-<!--
-  </AuthorGroup>
--->
- 
-<!--
-  <AuthorInitials>TGL</AuthorInitials>
--->
+  <corpauthor>The PostgreSQL Development Team</corpauthor>
 
-   <date>(last updated 2000-05-01)</date>
-  </bookbiblio>
+  <editor>
+   <firstname>Thomas</firstname>
+   <surname>Lockhart</surname>
+   <affiliation>
+    <orgname>Caltech/JPL</orgname>
+   </affiliation>
+  </editor>
 
   <legalnotice>
    <para>
@@ -80,20 +27,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.19 2000/05/02 20:01:53 
 
  </bookinfo>
 
-<!--
-<TOC> </TOC>
-<LOT> </LOT>
--->
-
-<!--
-<Dedication>
-<Para>
-Your name here...
-</Para>
-</Dedication>
--->
-
- <preface id="preface">
+ <preface id="ug-preface">
   <title>Summary</title>
 
   <para>
@@ -126,21 +60,12 @@ Your name here...
  &storage;
  &plan;
  &populate
- &commands;
 
  <!-- appendices -->
 
  &datetime;
- <!--
- &contacts;
- -->
 
  &biblio;
-
-<!--
-<index Id="index">
-</index>
--->
 
 </book>
 

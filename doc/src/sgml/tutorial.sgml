@@ -1,60 +1,20 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.10 2000/05/02 20:01:53 thomas Exp $
-
-Postgres tutorial. Derived from postgres.sgml.
-thomas 1998-02-23
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.11 2000/11/24 17:44:22 petere Exp $
 -->
-
-<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
-
-<!entity about    SYSTEM "about.sgml">
-<!entity history  SYSTEM "history.sgml">
-<!entity info     SYSTEM "info.sgml">
-<!entity legal    SYSTEM "legal.sgml">
-<!entity notation SYSTEM "notation.sgml">
-<!entity problems SYSTEM "problems.sgml">
-<!entity y2k      SYSTEM "y2k.sgml">
-
-<!entity advanced SYSTEM "advanced.sgml">
-<!entity arch     SYSTEM "arch.sgml">
-<!entity biblio   SYSTEM "biblio.sgml">
-<!entity intro    SYSTEM "intro.sgml">
-<!entity query    SYSTEM "query.sgml">
-<!entity sql      SYSTEM "sql.sgml">
-<!entity start    SYSTEM "start.sgml">
-]>
 
 <book id="tutorial">
 
-<!-- Title information -->
-
- <title>PostgreSQL Tutorial</title>
+ <title><![%single-book;[PostgreSQL &version;]]> Tutorial</title>
  <bookinfo>
-  <releaseinfo>Covering v7.0 for general release</releaseinfo>
-  <bookbiblio>
-   <authorgroup>
-    <corpauthor>The PostgreSQL Development Team</corpauthor>
-   </authorgroup>
-<!-- editor in authorgroup is not supported
-    <AuthorGroup>
--->
-   <editor>
-    <firstname>Thomas</firstname>
-    <surname>Lockhart</surname>
-    <affiliation>
-     <orgname>Caltech/JPL</orgname>
-    </affiliation>
-   </editor>
-<!--
-    </AuthorGroup>
--->
- 
-<!--
-    <AuthorInitials>TGL</AuthorInitials>
--->
+  <corpauthor>The PostgreSQL Global Development Group</corpauthor>
 
-   <date>(last updated 2000-05-01)</date>
-  </bookbiblio>
+  <editor>
+   <firstname>Thomas</firstname>
+   <surname>Lockhart</surname>
+   <affiliation>
+    <orgname>Caltech/JPL</orgname>
+   </affiliation>
+  </editor>
 
   <legalnotice>
    <para>
@@ -65,20 +25,7 @@ thomas 1998-02-23
 
  </bookinfo>
 
-<!--
-<TOC> </TOC>
-<LOT> </LOT>
--->
-
-<!--
-<Dedication>
-<Para>
-Your name here...
-</Para>
-</Dedication>
--->
-
- <preface>
+ <preface id="tutorial-preface">
   <title>Summary</title>
 
   <para>
@@ -93,18 +40,17 @@ Your name here...
   </para>
  </preface>
 
+<![%single-book;[
   &intro;
+]]>
   &sql;
   &arch;
   &start;
   &query;
   &advanced;
-
+<![%single-book;[
   &biblio;
-
-<!--
-<INDEX> </INDEX>
--->
+]]>
 
 </book>
 

@@ -3,7 +3,7 @@
 
  <para>
   <productname>PostgreSQL</productname>  is  available  without cost. This manual
-  describes version 7.0 of <productname>PostgreSQL</productname>.
+  describes version &version; of <productname>PostgreSQL</productname>.
  </para>
 
  <para>

@@ -1,0 +1,11 @@
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+
+<!entity % version SYSTEM "version.sgml">
+%version;
+<!entity % filelist SYSTEM "filelist.sgml">
+%filelist;
+
+<!entity % set-of-books "IGNORE">
+<!entity % single-book "INCLUDE">
+
+]>

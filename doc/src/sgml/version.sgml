@@ -1,0 +1,7 @@
+<!--
+Update this file to propagate correct current version numbers to the
+documentation.  In text, use for example &version; to refer to them.
+-->
+
+<!entity version "7.1devel">
+<!entity majorversion "7.1">

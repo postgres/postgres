@@ -150,9 +150,7 @@ SELECT am.amname AS acc_name,
   </para>
 
   <para>
-   Use <xref endterm="sql-dropindex-title"
-    linkend="sql-dropindex-title">
-   to remove an index.
+   Use <command>DROP INDEX</command> to remove an index.
   </para>
 
   <sect1 id="keys">

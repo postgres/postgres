@@ -1,282 +1,39 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.43 2000/10/08 13:24:09 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.44 2000/11/24 17:44:21 petere Exp $
 -->
 
 <!doctype set PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
-<!entity version "7.1">
-<!entity majorversion "7.1">
+<!entity % version SYSTEM "version.sgml">
+%version;
+<!entity % filelist SYSTEM "filelist.sgml">
+%filelist;
 
-<!entity about      SYSTEM "about.sgml">
-<!entity history    SYSTEM "history.sgml">
-<!entity info       SYSTEM "info.sgml">
-<!entity legal      SYSTEM "legal.sgml">
-<!entity notation   SYSTEM "notation.sgml">
-<!entity problems   SYSTEM "problems.sgml">
-<!entity y2k        SYSTEM "y2k.sgml">
+<!entity % set-of-books "INCLUDE">
+<!entity % single-book "IGNORE">
 
-<!-- tutorial -->
-<!entity arch       SYSTEM "arch.sgml">
-<!entity intro      SYSTEM "intro.sgml">
-<!entity query      SYSTEM "query.sgml">
-<!entity sql        SYSTEM "sql.sgml">
-<!entity start      SYSTEM "start.sgml">
-
-<!-- user's guide -->
-<!entity advanced   SYSTEM "advanced.sgml">
-<!entity array      SYSTEM "array.sgml">
-<!entity datatype   SYSTEM "datatype.sgml">
-<!entity datetime   SYSTEM "datetime.sgml">
-<!entity environ    SYSTEM "environ.sgml">
-<!entity func       SYSTEM "func.sgml">
-<!entity indices    SYSTEM "indices.sgml">
-<!entity inherit    SYSTEM "inherit.sgml">
-<!entity manage     SYSTEM "manage.sgml">
-<!entity mvcc       SYSTEM "mvcc.sgml">
-<!entity oper       SYSTEM "oper.sgml">
-<!entity plan       SYSTEM "plan.sgml">
-<!entity plperl     SYSTEM "plperl.sgml">
-<!entity plsql      SYSTEM "plsql.sgml">
-<!entity pltcl      SYSTEM "pltcl.sgml">
-<!entity populate   SYSTEM "populate.sgml">
-<!entity psql       SYSTEM "psql.sgml">
-<!entity query-ug   SYSTEM "query-ug.sgml">
-<!entity storage    SYSTEM "storage.sgml">
-<!entity syntax     SYSTEM "syntax.sgml">
-<!entity typeconv   SYSTEM "typeconv.sgml">
-
-<!-- reference pages -->
-<!entity % allfiles   SYSTEM "ref/allfiles.sgml">
-%allfiles;
-
-<!-- administrator's guide -->
-<!entity backup        SYSTEM "backup.sgml">
-<!entity charset       SYSTEM "charset.sgml">
-<!entity client-auth   SYSTEM "client-auth.sgml">
-<!entity intro-ag      SYSTEM "intro-ag.sgml">
-<!entity installation  SYSTEM "installation.sgml">
-<!entity installw      SYSTEM "install-win32.sgml">
-<!entity manage-ag     SYSTEM "manage-ag.sgml">
-<!entity recovery      SYSTEM "recovery.sgml">
-<!entity regress       SYSTEM "regress.sgml">
-<!entity release       SYSTEM "release.sgml">
-<!entity runtime       SYSTEM "runtime.sgml">
-<!entity user-manag    SYSTEM "user-manag.sgml">
-
-<!-- programmer's guide -->
-<!entity arch-pg    SYSTEM "arch-pg.sgml">
-<!entity dfunc      SYSTEM "dfunc.sgml">
-<!entity ecpg       SYSTEM "ecpg.sgml">
-<!entity extend     SYSTEM "extend.sgml">
-<!entity func-ref   SYSTEM "func-ref.sgml">
-<!entity gist       SYSTEM "gist.sgml">
-<!entity intro-pg   SYSTEM "intro-pg.sgml">
-<!entity indexcost  SYSTEM "indexcost.sgml">
-<!entity jdbc       SYSTEM "jdbc.sgml">
-<!entity libpgeasy  SYSTEM "libpgeasy.sgml">
-<!entity libpq      SYSTEM "libpq.sgml">
-<!entity libpqpp    SYSTEM "libpq++.sgml">
-<!entity libpgtcl   SYSTEM "libpgtcl.sgml">
-<!entity lisp       SYSTEM "lisp.sgml">
-<!entity lobj       SYSTEM "lobj.sgml">
-<!entity odbc       SYSTEM "odbc.sgml">
-<!entity rules      SYSTEM "rules.sgml">
-<!entity spi        SYSTEM "spi.sgml">
-<!entity trigger    SYSTEM "trigger.sgml">
-<!entity xaggr      SYSTEM "xaggr.sgml">
-<!entity xfunc      SYSTEM "xfunc.sgml">
-<!entity xindex     SYSTEM "xindex.sgml">
-<!entity xplang     SYSTEM "xplang.sgml">
-<!entity xoper      SYSTEM "xoper.sgml">
-<!entity xtypes     SYSTEM "xtypes.sgml">
-
-<!-- developer's guide -->
-<!entity arch-dev   SYSTEM "arch-dev.sgml">
-<!entity biblio     SYSTEM "biblio.sgml">
-<!entity bki        SYSTEM "bki.sgml">
-<!entity catalogs   SYSTEM "catalogs.sgml">
-<!entity compiler   SYSTEM "compiler.sgml">
-<!entity contacts   SYSTEM "contacts.sgml">
-<!entity cvs        SYSTEM "cvs.sgml">
-<!entity docguide   SYSTEM "docguide.sgml">
-<!entity geqo       SYSTEM "geqo.sgml">
-<!entity index      SYSTEM "index.sgml">
-<!entity page       SYSTEM "page.sgml">
-<!entity protocol   SYSTEM "protocol.sgml">
-<!entity sources    SYSTEM "sources.sgml">
-
-
-<!-- see standalone-install.sgml about these -->
-<!entity % flattext-install-ignore  "INCLUDE">
-<!entity % flattext-install-include "IGNORE">
+<!entity admin      SYSTEM "admin.sgml">
+<!entity developer  SYSTEM "developer.sgml">
+<!entity programmer SYSTEM "programmer.sgml">
+<!entity reference  SYSTEM "reference.sgml">
+<!entity tutorial   SYSTEM "tutorial.sgml">
+<!entity user       SYSTEM "user.sgml">
 
 ]>
-<!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
 
 <set id="postgres">
- <title>PostgreSQL Documentation</title>
+ <title>PostgreSQL &version; Documentation</title>
 
- <book id="user">
-  <title>User's Guide</title>
+ <setinfo>
+  <corpauthor>The PostgreSQL Global Development Group</corpauthor>
+ </setinfo>
 
-  <bookinfo>
-   <abstract>
-    <para>
-     Information for Users
-    </para>
-   </abstract>
-  </bookinfo>
-
-  &intro;
-  &syntax;
-  &datatype;
-  &oper;
-  &func;
-  &typeconv;
-  &indices;
-  &array;
-  &inherit;
-  &plsql;
-  &pltcl;
-  &plperl;
-  &mvcc;
-  &environ;
-  &manage;
-  &storage;
-  &plan;
-  &populate;
-  &commands;
-
-  &datetime;
-<!--
-  &contacts;
--->
-  &biblio;
- </book>
-
- <book id="admin">
-  <title>Administrator's Guide</title>
-
-  <bookinfo>
-   <abstract>
-    <para>
-     Information for Administrators
-    </para>
-   </abstract>
-  </bookinfo>
-
-<!--
-  Disable these extra intro chapters since some elements (e.g. y2k
-  statement) are included in the first intro.sgml and cause errors if
-  included twice.
-   &intro-ag;
--->
-  &installation;
-  &installw;
-  &runtime;
-  &client-auth;
-  &charset;
-  &manage-ag;
-  &user-manag;
-  &backup;
-  &recovery;
-  &regress;
-  &release;
- </book>
-
- <book id="programmer">
-  <title>Programmer's Guide</title>
-
-  <bookinfo>
-   <abstract>
-    <para>
-     Information on client and server programming
-    </para>
-   </abstract>
-  </bookinfo>
-
-<!--
-  Disable these extra intro chapters since some elements (e.g. y2k
-  statement) are included in the first intro.sgml and cause errors if
-  included twice.
-   &intro-pg;
--->
-  <part>
-   <title>Server Programming</title>
-  &arch-pg;
-  &extend;
-  &xfunc;
-  &xtypes;
-  &xoper;
-  &xaggr;
-  &rules;
-  &xindex;
-  &indexcost;
-  &gist;
-  &dfunc;
-  &trigger;
-  &spi;
-  &xplang;
-  </part>
-
-  <part>
-   <title>Client Interfaces</title>
-   &func-ref;
-   &lobj;
-   &ecpg;
-   &libpq;
-   &libpqpp;
-   &libpgtcl;
-   &libpgeasy;
-   &odbc;
-   &jdbc;
-   &lisp;
-  </part>
- </book>
- 
- <book id="developer">
-  <title>Developer's Guide</title>
-  <bookinfo>
-   <abstract>
-    <para>
-     Information for Postgres developers
-    </>
-   </>
-  </bookinfo>
-
-   &sources;
-   &arch-dev;
-   &geqo;
-<!--
- This listing of Postgres catalogs is currently just a copy of the old
- man page. It is not up to date and has not been marked up for SGML.
- - thomas 2000-04-20
- &catalogs;
--->
-   &protocol;
-   &compiler;
-   &bki;
-   &page;
-   &cvs;
-   &docguide;
- </book>
- 
- <book id="tutorial">
-  <title>Tutorial</title>
-   &sql;
-   &arch;
-   &start;
-   &query;
-   &advanced;
- </book>
-
-
-<!--
-Omit index until we have some index entries.
-- thomas 1998-10-26
-<index Id="part-index">
-</index>
--->
+ &tutorial;
+ &user;
+ &admin;
+ &programmer;
+ &reference;
+ &developer; 
 
 </set>
 

@@ -1,78 +1,22 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.28 2000/10/08 13:24:09 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.29 2000/11/24 17:44:21 petere Exp $
 
-Postgres Programmer's Guide.
+PostgreSQL Programmer's Guide.
 -->
-
-<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
-
-<!entity about      SYSTEM "about.sgml">
-<!entity history    SYSTEM "history.sgml">
-<!entity info       SYSTEM "info.sgml">
-<!entity legal      SYSTEM "legal.sgml">
-<!entity notation   SYSTEM "notation.sgml">
-<!entity problems   SYSTEM "problems.sgml">
-<!entity y2k        SYSTEM "y2k.sgml">
-
-<!entity arch-pg    SYSTEM "arch-pg.sgml">
-<!entity dfunc      SYSTEM "dfunc.sgml">
-<!entity ecpg       SYSTEM "ecpg.sgml">
-<!entity extend     SYSTEM "extend.sgml">
-<!entity func-ref   SYSTEM "func-ref.sgml">
-<!entity gist       SYSTEM "gist.sgml">
-<!entity intro-pg   SYSTEM "intro-pg.sgml">
-<!entity indexcost  SYSTEM "indexcost.sgml">
-<!entity jdbc       SYSTEM "jdbc.sgml">
-<!entity libpgeasy  SYSTEM "libpgeasy.sgml">
-<!entity libpq      SYSTEM "libpq.sgml">
-<!entity libpqpp    SYSTEM "libpq++.sgml">
-<!entity libpgtcl   SYSTEM "libpgtcl.sgml">
-<!entity lisp       SYSTEM "lisp.sgml">
-<!entity lobj       SYSTEM "lobj.sgml">
-<!entity odbc       SYSTEM "odbc.sgml">
-<!entity rules      SYSTEM "rules.sgml">
-<!entity spi        SYSTEM "spi.sgml">
-<!entity trigger    SYSTEM "trigger.sgml">
-<!entity xaggr      SYSTEM "xaggr.sgml">
-<!entity xfunc      SYSTEM "xfunc.sgml">
-<!entity xindex     SYSTEM "xindex.sgml">
-<!entity xplang     SYSTEM "xplang.sgml">
-<!entity xoper      SYSTEM "xoper.sgml">
-<!entity xtypes     SYSTEM "xtypes.sgml">
-<!entity biblio     SYSTEM "biblio.sgml">
-]>
 
 <book id="programmer">
 
-<!-- Title information -->
-
- <title>PostgreSQL Programmer's Guide</title>
+ <title><![%single-book;[PostgreSQL &version;]]> Programmer's Guide</title>
  <bookinfo>
-  <releaseinfo>Covering v7.0 for general release</releaseinfo>
-  <bookbiblio>
-   <authorgroup>
-    <corpauthor>The PostgreSQL Development Team</corpauthor>
-   </authorgroup>
-<!-- editor in authorgroup is not supported
-    <AuthorGroup>
--->
-   <editor>
-    <firstname>Thomas</firstname>
-    <surname>Lockhart</surname>
-    <affiliation>
-     <orgname>Caltech/JPL</orgname>
-    </affiliation>
-   </editor>
-<!--
-    </AuthorGroup>
--->
- 
-<!--
-    <AuthorInitials>TGL</AuthorInitials>
--->
+  <corpauthor>The PostgreSQL Global Development Group</corpauthor>
 
-   <date>(last updated 2000-05-01)</date>
-  </bookbiblio>
+  <editor>
+   <firstname>Thomas</firstname>
+   <surname>Lockhart</surname>
+   <affiliation>
+    <orgname>Caltech/JPL</orgname>
+   </affiliation>
+  </editor>
 
   <legalnotice>
    <para>
@@ -83,20 +27,7 @@ Postgres Programmer's Guide.
 
  </bookinfo>
 
-<!--
-<TOC> </TOC>
-<LOT> </LOT>
--->
-
-<!--
-<Dedication>
-<Para>
-Your name here...
-</Para>
-</Dedication>
--->
-
- <preface id="preface">
+ <preface id="pg-preface">
   <title>Summary</title>
 
   <para>
@@ -111,9 +42,25 @@ Your name here...
   </para>
  </preface>
 
+<![%single-book[
   &intro-pg;
- <part>
-  <title>Server Programming</>
+]]>
+
+ <part id="programmer-client">
+  <title>Client Interfaces</title>
+  &libpq;
+  &lobj;
+  &libpqpp;
+  &libpgtcl;
+  &libpgeasy;
+  &ecpg;
+  &odbc;
+  &jdbc;
+  &lisp;
+ </part>
+
+ <part id="programmer-server">
+  <title>Server Programming</title>
   &arch-pg;
   &extend;
   &xfunc;
@@ -139,27 +86,10 @@ Disable it until we put in some info.
  &trigger;
  &spi;
  </part>
- <part>
-  <title>Client Interfaces</>
- &lobj;
- &libpq;
- &libpqpp;
- &libpgtcl;
- &libpgeasy;
- &ecpg;
- &odbc;
- &jdbc;
- &lisp;
- </part>
-<!--
-&contacts;
--->
- &biblio;
 
-<!--
-<index id="index">
-</index>
--->
+<![%single-book;[
+ &biblio;
+]]>
 
 </book>
 

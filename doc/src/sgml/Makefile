@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.25 2000/11/05 21:04:06 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.26 2000/11/24 17:44:21 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ D2MSCRIPT= $(D2MDIR)/docbook2man-spec.pl
 
 vpath %.sgml ./ref
 
-ALLDOCUMENTS = admin user programmer developer tutorial postgres
+ALLBOOKS = admin developer programmer reference tutorial user
 
 ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml)
 
@@ -155,10 +155,18 @@ manl: $(SQLTARGETS) manpage.refs
 ## HTML
 ##
 
-%.html: %.sgml $(ALLSGML)
+JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(HDSL) -V %use-id-as-filename% -t sgml
+
+postgres.html: postgres.sgml $(ALLSGML)
 	@rm -f *.htm
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(HDSL) -V %use-id-as-filename% -t sgml $<
+	$(JADE.html) $<
 # Include some softlinks to the generic default file names
+	ln -sf postgres.htm index.html
+	ln -sf postgres.htm postgres.html
+
+$(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML)
+	@rm -f *.htm
+	$(JADE.html) book-decl.sgml $<
 	ln -sf $*.htm index.html
 	ln -sf $*.htm $*.html
 
@@ -168,12 +176,12 @@ manl: $(SQLTARGETS) manpage.refs
 ##
 
 # RTF to allow minor editing for hardcopy
-%.rtf: %.sgml
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t rtf $<
+$(addsuffix .rtf, $(ALLBOOKS)): %.rtf: %.sgml $(ALLSGML)
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t rtf book-decl.sgml $<
 
 # TeX and DVI
-%.tex: %.sgml
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t tex $<
+$(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML)
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(PDSL) -t tex book-decl.sgml $<
 
 %.dvi: %.tex
 	jadetex $<
@@ -222,10 +230,13 @@ tempfile_HISTORY.sgml: release.sgml
 ## Check
 ##
 
-check: $(addprefix check-, $(ALLDOCUMENTS))
+check: $(addprefix check-, $(ALLBOOKS)) check-postgres
 
 # Quick syntax check without style processing
-check-%: %.sgml
+$(addprefix check-, $(ALLBOOKS)): check-%: %.sgml
+	$(NSGMLS) $(SGMLINCLUDE) -s book-decl.sgml $<
+
+check-postgres: postgres.sgml
 	$(NSGMLS) $(SGMLINCLUDE) -s $<
 
 
