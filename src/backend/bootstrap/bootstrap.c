@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.165 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.166 2003/09/02 19:04:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,9 +368,15 @@ BootstrapMain(int argc, char *argv[])
 	Assert(DataDir);
 	ValidatePgVersion(DataDir);
 
+	/* Acquire configuration parameters */
+	if (IsUnderPostmaster)
+	{
 #ifdef EXEC_BACKEND
-	read_nondefault_variables();
+		read_nondefault_variables();
 #endif
+	}
+	else
+		ProcessConfigFile(PGC_POSTMASTER);
 
 	if (IsUnderPostmaster)
 	{
