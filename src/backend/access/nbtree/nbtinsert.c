@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.13 1997/05/30 18:35:31 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.14 1997/05/31 06:35:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,31 +287,22 @@ _bt_insertonpg(Relation rel,
 	
 	/* 
 	 * If we have to split leaf page in the chain of duplicates
-	 * then we try to move righter to avoid splitting.
+	 * then we try to look at our right sibling first.
 	 */
 	if ( ( lpageop->btpo_flags & BTP_CHAIN ) &&
 			( lpageop->btpo_flags & BTP_LEAF ) )
 	{
     	    bool use_left = true;
+    	    bool keys_equal = false;
     		
-    	    for ( ; ; )
-    	    {
-    		bool keys_equal = false;
-    		    
-	    	rbuf = _bt_getbuf(rel, lpageop->btpo_next, BT_WRITE);
-	    	rpage = BufferGetPage(rbuf);
-	    	rpageop = (BTPageOpaque) PageGetSpecialPointer(rpage);
-	    	if ( P_RIGHTMOST (rpageop) )
-	    	{
-	    	    Assert ( !( rpageop->btpo_flags & BTP_CHAIN ) );
-	    	    use_left = false;
-	    	    break;
-	    	}
-	    	/*
+	    rbuf = _bt_getbuf(rel, lpageop->btpo_next, BT_WRITE);
+	    rpage = BufferGetPage(rbuf);
+	    rpageop = (BTPageOpaque) PageGetSpecialPointer(rpage);
+	    if ( !P_RIGHTMOST (rpageop) )	/* non-rightmost page */
+	    {  	/*
 	    	 * If we have the same hikey here then it's
-	    	 * yet another page in chain and we may move
-	    	 * even righter.
-	    	 */
+	    	 * yet another page in chain.
+	     	 */
     	    	if ( _bt_skeycmp (rel, keysz, scankey, rpage, 
     	    				PageGetItemId(rpage, P_HIKEY), 
     	    				BTEqualStrategyNumber) )
@@ -321,12 +312,12 @@ _bt_insertonpg(Relation rel,
     	    	    keys_equal = true;
     	    	}
     	    	else if ( _bt_skeycmp (rel, keysz, scankey, rpage, 
-    	    				PageGetItemId(rpage, P_HIKEY), 
-    	    				BTGreaterStrategyNumber) )
-    	    	    elog (FATAL, "btree: hikey is out of order");
+    	    			PageGetItemId(rpage, P_HIKEY), 
+    	    			BTGreaterStrategyNumber) )
+    	            elog (FATAL, "btree: hikey is out of order");
 	    	/*
 	    	 * If hikey > scankey and BTP_CHAIN is ON 
-	    	 * then it's first page of the chain of higher keys:
+	   	 * then it's first page of the chain of higher keys:
 	    	 * our left sibling hikey was lying! We can't add new 
 	    	 * item here, but we can turn BTP_CHAIN off on our
 	    	 * left page and overwrite its hikey.
@@ -336,26 +327,19 @@ _bt_insertonpg(Relation rel,
     		    BTItem tmp;
     		    
 	    	    lpageop->btpo_flags &= ~BTP_CHAIN;
-	    	    tmp = (BTItem) PageGetItem(rpage, 
-	    	    			PageGetItemId(rpage, P_HIKEY));
+	    	    tmp = (BTItem) PageGetItem(rpage, PageGetItemId(rpage, P_HIKEY));
 	    	    hiRightItem = _bt_formitem(&(tmp->bti_itup));
-    	    	    break;
     	    	}
-	    	/* 
-	    	 * if there is room here or hikey > scankey (so it's our
-	    	 * last page in the chain and we can't move righter) 
-	    	 * we have to use this page .
-	    	 */
-	    	if ( PageGetFreeSpace (rpage) > itemsz || !keys_equal )
-	    	{
+    	    	/* if there is room here then we use this page. */
+    	    	else if ( PageGetFreeSpace (rpage) > itemsz )
 	    	    use_left = false;
-	    	    break;
-	    	}
-	    	/* try to move righter */
-	    	_bt_relbuf(rel, buf, BT_WRITE);
-	    	buf = rbuf;
-	    	page = rpage;
-	    	lpageop = rpageop;
+	    }
+	    else	/* rightmost page */
+	    {
+		Assert ( !( rpageop->btpo_flags & BTP_CHAIN ) );
+    	    	/* if there is room here then we use this page. */
+    	    	if ( PageGetFreeSpace (rpage) > itemsz )
+	    	    use_left = false;
 	    }
 	    if ( !use_left )	/* insert on the right page */
 	    {
@@ -364,7 +348,6 @@ _bt_insertonpg(Relation rel,
 		    			scankey, btitem, afteritem) );
 	    }
 	    _bt_relbuf(rel, rbuf, BT_WRITE);
-    	    bknum = BufferGetBlockNumber(buf);
 	}
 	
 	/* split the buffer into left and right halves */
