@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.117 2002/08/27 04:55:11 tgl Exp $
+ * $Id: nodes.h,v 1.118 2002/08/31 22:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,6 +229,7 @@ typedef enum NodeTag
 	T_GroupClause,
 	T_NullTest,
 	T_BooleanTest,
+	T_ConstraintTest,
 	T_CaseExpr,
 	T_CaseWhen,
 	T_FkConstraint,

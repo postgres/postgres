@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.156 2002/08/30 19:23:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.157 2002/08/31 22:10:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1924,6 +1924,20 @@ _equalBooleanTest(BooleanTest *a, BooleanTest *b)
 	return true;
 }
 
+static bool
+_equalConstraintTest(ConstraintTest *a, ConstraintTest *b)
+{
+	if (!equal(a->arg, b->arg))
+		return false;
+	if (a->testtype != b->testtype)
+		return false;
+	if (!equalstr(a->name, b->name))
+		return false;
+	if (!equal(a->check_expr, b->check_expr))
+		return false;
+	return true;
+}
+
 /*
  * Stuff from pg_list.h
  */
@@ -2379,6 +2393,9 @@ equal(void *a, void *b)
 			break;
 		case T_BooleanTest:
 			retval = _equalBooleanTest(a, b);
+			break;
+		case T_ConstraintTest:
+			retval = _equalConstraintTest(a, b);
 			break;
 		case T_FkConstraint:
 			retval = _equalFkConstraint(a, b);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.80 2002/08/22 00:01:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.81 2002/08/31 22:10:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ static Node *build_func_call(Oid funcid, Oid rettype, List *args);
 static Oid	find_coercion_function(Oid targetTypeId, Oid sourceTypeId,
 								   bool isExplicit);
 static Oid	find_typmod_coercion_function(Oid typeId);
-static Node	*TypeConstraints(Node *arg, Oid typeId);
+
 
 /* coerce_type()
  * Convert a function argument to a different type.
@@ -49,7 +49,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 	if (targetTypeId == inputTypeId ||
 		node == NULL)
 	{
-		/* no conversion needed, but constraints may need to be applied */
+		/* no conversion needed */
 		result = node;
 	}
 	else if (inputTypeId == UNKNOWNOID && IsA(node, Const))
@@ -69,11 +69,12 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 * postpone evaluation of the function call until runtime. But
 		 * there is no way to represent a typinput function call as an
 		 * expression tree, because C-string values are not Datums.
+		 * (XXX This *is* possible as of 7.3, do we want to do it?)
 		 */
 		Const	   *con = (Const *) node;
 		Const	   *newcon = makeNode(Const);
 		Type		targetType = typeidType(targetTypeId);
-		Oid			baseTypeId = getBaseType(targetTypeId);
+		char		targetTyptype = typeTypType(targetType);
 
 		newcon->consttype = targetTypeId;
 		newcon->constlen = typeLen(targetType);
@@ -85,16 +86,31 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		{
 			char	   *val = DatumGetCString(DirectFunctionCall1(unknownout,
 													   con->constvalue));
+
+			/*
+			 * If target is a domain, use the typmod it applies to the base
+			 * type.  Note that we call stringTypeDatum using the domain's
+			 * pg_type row, though.  This works because the domain row has
+			 * the same typinput and typelem as the base type --- ugly...
+			 */
+			if (targetTyptype == 'd')
+				atttypmod = getBaseTypeMod(targetTypeId, atttypmod);
+
 			newcon->constvalue = stringTypeDatum(targetType, val, atttypmod);
 			pfree(val);
 		}
 
-		ReleaseSysCache(targetType);
-
-		/* Test for domain, and apply appropriate constraints */
 		result = (Node *) newcon;
-		if (targetTypeId != baseTypeId)
-			result = (Node *) TypeConstraints(result, targetTypeId);
+
+		/*
+		 * If target is a domain, apply constraints (except for typmod,
+		 * which we assume the input routine took care of).
+		 */
+		if (targetTyptype == 'd')
+			result = coerce_type_constraints(pstate, result, targetTypeId,
+											 false);
+
+		ReleaseSysCache(targetType);
 	}
 	else if (targetTypeId == ANYOID ||
 			 targetTypeId == ANYARRAYOID)
@@ -109,21 +125,18 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 * attach a RelabelType node so that the expression will be seen
 		 * to have the intended type when inspected by higher-level code.
 		 *
+		 * Also, domains may have value restrictions beyond the base type
+		 * that must be accounted for.
+		 */
+		result = coerce_type_constraints(pstate, node, targetTypeId, true);
+		/*
 		 * XXX could we label result with exprTypmod(node) instead of
 		 * default -1 typmod, to save a possible length-coercion later?
 		 * Would work if both types have same interpretation of typmod,
-		 * which is likely but not certain.
-		 *
-		 * Domains may have value restrictions beyond the base type that
-		 * must be accounted for.
+		 * which is likely but not certain (wrong if target is a domain,
+		 * in any case).
 		 */
-		Oid			baseTypeId = getBaseType(targetTypeId);
-		result = node;
-		if (targetTypeId != baseTypeId)
-			result = (Node *) TypeConstraints(result, targetTypeId);
-
 		result = (Node *) makeRelabelType(result, targetTypeId, -1);
-
 	}
 	else if (typeInheritsFrom(inputTypeId, targetTypeId))
 	{
@@ -144,8 +157,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 *
 		 * For domains, we use the coercion function for the base type.
 		 */
-		Oid			funcId;
 		Oid			baseTypeId = getBaseType(targetTypeId);
+		Oid			funcId;
 
 		funcId = find_coercion_function(baseTypeId,
 										getBaseType(inputTypeId),
@@ -157,11 +170,15 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		result = build_func_call(funcId, baseTypeId, makeList1(node));
 
 		/*
-		 * If domain, relabel with domain type ID and test against domain
-		 * constraints
+		 * If domain, test against domain constraints and relabel with
+		 * domain type ID
 		 */
 		if (targetTypeId != baseTypeId)
-			result = (Node *) TypeConstraints(result, targetTypeId);
+		{
+			result = coerce_type_constraints(pstate, result, targetTypeId,
+											 true);
+			result = (Node *) makeRelabelType(result, targetTypeId, -1);
+		}
 
 		/*
 		 * If the input is a constant, apply the type conversion function
@@ -306,28 +323,21 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
  * function should be invoked to do that.
  *
  * "bpchar" (ie, char(N)) and "numeric" are examples of such types.
+ *
+ * This mechanism may seem pretty grotty and in need of replacement by
+ * something in pg_cast, but since typmod is only interesting for datatypes
+ * that have special handling in the grammar, there's not really much
+ * percentage in making it any easier to apply such coercions ...
+ *
+ * NOTE: this does not need to work on domain types, because any typmod
+ * coercion for a domain is considered to be part of the type coercion
+ * needed to produce the domain value in the first place.
  */
 Node *
 coerce_type_typmod(ParseState *pstate, Node *node,
 				   Oid targetTypeId, int32 atttypmod)
 {
-	Oid			baseTypeId;
 	Oid			funcId;
-	int32		domainTypMod;
-
-	/* If given type is a domain, use base type instead */
-	baseTypeId = getBaseTypeTypeMod(targetTypeId, &domainTypMod);
-
-
-	/*
-	 * Use the domain typmod rather than what was supplied if the
-	 * domain was empty.  atttypmod will always be -1 if domains are in use.
-	 */
-	if (baseTypeId != targetTypeId)
-	{
-		Assert(atttypmod < 0);
-		atttypmod = domainTypMod;
-	}
 
 	/*
 	 * A negative typmod is assumed to mean that no coercion is wanted.
@@ -335,7 +345,8 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 	if (atttypmod < 0 || atttypmod == exprTypmod(node))
 		return node;
 
-	funcId = find_typmod_coercion_function(baseTypeId);
+	funcId = find_typmod_coercion_function(targetTypeId);
+
 	if (OidIsValid(funcId))
 	{
 		Const	   *cons;
@@ -348,7 +359,7 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 						 false,
 						 false);
 
-		node = build_func_call(funcId, baseTypeId, makeList2(node, cons));
+		node = build_func_call(funcId, targetTypeId, makeList2(node, cons));
 	}
 
 	return node;
@@ -869,12 +880,15 @@ build_func_call(Oid funcid, Oid rettype, List *args)
 
 /*
  * Create an expression tree to enforce the constraints (if any)
- * which should be applied by the type.
+ * that should be applied by the type.  Currently this is only
+ * interesting for domain types.
  */
-static Node *
-TypeConstraints(Node *arg, Oid typeId)
+Node *
+coerce_type_constraints(ParseState *pstate, Node *arg,
+						Oid typeId, bool applyTypmod)
 {
 	char   *notNull = NULL;
+	int32	typmod = -1;
 
 	for (;;)
 	{
@@ -885,12 +899,13 @@ TypeConstraints(Node *arg, Oid typeId)
 							 ObjectIdGetDatum(typeId),
 							 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "getBaseType: failed to lookup type %u", typeId);
+			elog(ERROR, "coerce_type_constraints: failed to lookup type %u",
+				 typeId);
 		typTup = (Form_pg_type) GETSTRUCT(tup);
 
 		/* Test for NOT NULL Constraint */
 		if (typTup->typnotnull && notNull == NULL)
-			notNull = NameStr(typTup->typname);
+			notNull = pstrdup(NameStr(typTup->typname));
 
 		/* TODO: Add CHECK Constraints to domains */
 
@@ -901,20 +916,32 @@ TypeConstraints(Node *arg, Oid typeId)
 			break;
 		}
 
+		Assert(typmod < 0);
+
 		typeId = typTup->typbasetype;
+		typmod = typTup->typtypmod;
 		ReleaseSysCache(tup);
 	}
 
 	/*
-	 * Only need to add one NOT NULL check regardless of how many 
-	 * domains in the tree request it.
+	 * If domain applies a typmod to its base type, do length coercion.
 	 */
-	if (notNull != NULL) {
-		Constraint *r = makeNode(Constraint);
+	if (applyTypmod && typmod >= 0)
+		arg = coerce_type_typmod(pstate, arg, typeId, typmod);
 
-		r->raw_expr = arg;
-		r->contype = CONSTR_NOTNULL;
-		r->name	= notNull; 
+	/*
+	 * Only need to add one NOT NULL check regardless of how many 
+	 * domains in the stack request it.  The topmost domain that
+	 * requested it is used as the constraint name.
+	 */
+	if (notNull)
+	{
+		ConstraintTest *r = makeNode(ConstraintTest);
+
+		r->arg = arg;
+		r->testtype = CONSTR_TEST_NOTNULL;
+		r->name	= notNull;
+		r->check_expr = NULL;
 
 		arg = (Node *) r;
 	}	

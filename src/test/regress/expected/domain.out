@@ -41,8 +41,7 @@ select * from basictest;
 (2 rows)
 
 -- check that domains inherit operations from base types
--- XXX shouldn't have to quote the constant here
-select testtext || testvarchar as concat, testnumeric + '42' as sum
+select testtext || testvarchar as concat, testnumeric + 42 as sum
 from basictest;
   concat   |  sum   
 -----------+--------
@@ -99,7 +98,7 @@ create table nulltest
            , col4 dnull
            );
 INSERT INTO nulltest DEFAULT VALUES;
-ERROR:  ExecInsert: Fail to add null value in not null attribute col3
+ERROR:  Domain dnotnull does not allow NULL values
 INSERT INTO nulltest values ('a', 'b', 'c', 'd');  -- Good
 INSERT INTO nulltest values (NULL, 'b', 'c', 'd');
 ERROR:  Domain dnotnull does not allow NULL values
@@ -147,7 +146,7 @@ create table defaulttest
             , col5 ddef1 NOT NULL DEFAULT NULL
             , col6 ddef2 DEFAULT '88'
             , col7 ddef4 DEFAULT 8000
-		, col8 ddef5
+            , col8 ddef5
             );
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'defaulttest_pkey' for table 'defaulttest'
 insert into defaulttest default values;

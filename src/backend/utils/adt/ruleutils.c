@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.119 2002/08/29 01:19:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.120 2002/08/31 22:10:46 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2184,6 +2184,18 @@ get_rule_expr(Node *node, deparse_context *context)
 						elog(ERROR, "get_rule_expr: unexpected booltesttype %d",
 							 (int) btest->booltesttype);
 				}
+			}
+			break;
+
+		case T_ConstraintTest:
+			{
+				ConstraintTest *ctest = (ConstraintTest *) node;
+
+				/*
+				 * We assume that the operations of the constraint node
+				 * need not be explicitly represented in the output.
+				 */
+				get_rule_expr(ctest->arg, context);
 			}
 			break;
 

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.54 2002/08/02 18:15:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.55 2002/08/31 22:10:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/prep.h"
 #include "parser/parsetree.h"
+#include "parser/parse_coerce.h"
 
 
 static List *expand_targetlist(List *tlist, int command_type,
@@ -162,6 +163,8 @@ expand_targetlist(List *tlist, int command_type,
 			 *
 			 * For INSERT, generate a NULL constant.  (We assume the
 			 * rewriter would have inserted any available default value.)
+			 * Also, if the column isn't dropped, apply any domain constraints
+			 * that might exist --- this is to catch domain NOT NULL.
 			 *
 			 * For UPDATE, generate a Var reference to the existing value of
 			 * the attribute, so that it gets copied to the new tuple.
@@ -182,6 +185,9 @@ expand_targetlist(List *tlist, int command_type,
 												  att_tup->attbyval,
 												  false,	/* not a set */
 												  false);
+					if (!att_tup->attisdropped)
+						new_expr = coerce_type_constraints(NULL, new_expr,
+														   atttype, false);
 					break;
 				case CMD_UPDATE:
 					/* Insert NULLs for dropped columns */

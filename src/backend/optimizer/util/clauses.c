@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.106 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.107 2002/08/31 22:10:43 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1882,12 +1882,14 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
-		case T_Constraint:
-			return walker(((Constraint *) node)->raw_expr, context);
 		case T_NullTest:
 			return walker(((NullTest *) node)->arg, context);
 		case T_BooleanTest:
 			return walker(((BooleanTest *) node)->arg, context);
+		case T_ConstraintTest:
+			if (walker(((ConstraintTest *) node)->arg, context))
+				return true;
+			return walker(((ConstraintTest *) node)->check_expr, context);
 		case T_SubLink:
 			{
 				SubLink    *sublink = (SubLink *) node;
@@ -2238,20 +2240,6 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
-		case T_Constraint:
-			{
-				/*
-				 * Used for confirming domains.  Only needed fields
-				 * within the executor are the name, raw expression
-				 * and constraint type.
-				 */
-				Constraint *con = (Constraint *) node;
-				Constraint *newnode;
-
-				FLATCOPY(newnode, con, Constraint);
-				MUTATE(newnode->raw_expr, con->raw_expr, Node *);
-				return (Node *) newnode;
-			}
 		case T_NullTest:
 			{
 				NullTest   *ntest = (NullTest *) node;
@@ -2269,6 +2257,17 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, btest, BooleanTest);
 				MUTATE(newnode->arg, btest->arg, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_ConstraintTest:
+			{
+				ConstraintTest *ctest = (ConstraintTest *) node;
+				ConstraintTest *newnode;
+
+				FLATCOPY(newnode, ctest, ConstraintTest);
+				MUTATE(newnode->arg, ctest->arg, Node *);
+				MUTATE(newnode->check_expr, ctest->check_expr, Node *);
 				return (Node *) newnode;
 			}
 			break;

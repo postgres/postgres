@@ -38,8 +38,7 @@ INSERT INTO basictest values ('88', 'haha', 'short', '123.1212');    -- Truncate
 select * from basictest;
 
 -- check that domains inherit operations from base types
--- XXX shouldn't have to quote the constant here
-select testtext || testvarchar as concat, testnumeric + '42' as sum
+select testtext || testvarchar as concat, testnumeric + 42 as sum
 from basictest;
 
 drop table basictest;

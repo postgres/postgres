@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.81 2002/08/29 00:17:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.82 2002/08/31 22:10:47 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1074,12 +1074,12 @@ getBaseType(Oid typid)
 }
 
 /*
- * getBaseTypeTypeMod
- *		If the given type is a domain, return its base type;
- *		otherwise return the type's own OID.  Also return base typmod.
+ * getBaseTypeMod
+ *		If the given type is a domain, return the typmod it applies to
+ *		its base type; otherwise return the specified original typmod.
  */
-Oid
-getBaseTypeTypeMod(Oid typid, int32 *typmod)
+int32
+getBaseTypeMod(Oid typid, int32 typmod)
 {
 	/*
 	 * We loop to find the bottom base type in a stack of domains.
@@ -1093,7 +1093,7 @@ getBaseTypeTypeMod(Oid typid, int32 *typmod)
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "getBaseTypeTypeMod: failed to lookup type %u", typid);
+			elog(ERROR, "getBaseTypeMod: failed to lookup type %u", typid);
 		typTup = (Form_pg_type) GETSTRUCT(tup);
 		if (typTup->typtype != 'd')
 		{
@@ -1102,12 +1102,20 @@ getBaseTypeTypeMod(Oid typid, int32 *typmod)
 			break;
 		}
 
+		/*
+		 * The typmod applied to a domain should always be -1.
+		 *
+		 * We substitute the domain's typmod as we switch attention to
+		 * the base type.
+		 */
+		Assert(typmod < 0);
+
 		typid = typTup->typbasetype;
-		*typmod = typTup->typtypmod;
+		typmod = typTup->typtypmod;
 		ReleaseSysCache(tup);
 	}
 
-	return typid;
+	return typmod;
 }
 
 /*

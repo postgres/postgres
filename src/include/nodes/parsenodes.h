@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.203 2002/08/30 19:23:20 tgl Exp $
+ * $Id: parsenodes.h,v 1.204 2002/08/31 22:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,14 +233,13 @@ typedef struct NullTest
 	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
 } NullTest;
 
-/* ----------------
+/*
  * BooleanTest
  *
  * BooleanTest represents the operation of determining whether a boolean
  * is TRUE, FALSE, or UNKNOWN (ie, NULL).  All six meaningful combinations
  * are supported.  Note that a NULL input does *not* cause a NULL result.
  * The appropriate test is performed and returned as a boolean Datum.
- * ----------------
  */
 
 typedef enum BoolTestType
@@ -254,6 +253,29 @@ typedef struct BooleanTest
 	Node	   *arg;			/* input expression */
 	BoolTestType booltesttype;	/* test type */
 } BooleanTest;
+
+/*
+ * ConstraintTest
+ *
+ * ConstraintTest represents the operation of testing a value to see whether
+ * it meets a constraint.  If so, the input value is returned as the result;
+ * if not, an error is raised.
+ */
+
+typedef enum ConstraintTestType
+{
+	CONSTR_TEST_NOTNULL,
+	CONSTR_TEST_CHECK
+} ConstraintTestType;
+
+typedef struct ConstraintTest
+{
+	NodeTag		type;
+	Node	   *arg;			/* input expression */
+	ConstraintTestType testtype; /* test type */
+	char	   *name;			/* name of constraint (for error msgs) */
+	Node	   *check_expr;		/* for CHECK test, a boolean expression */
+} ConstraintTest;
 
 /*
  * ColumnDef - column definition (used in various creates)

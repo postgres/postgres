@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.171 2002/08/30 19:23:19 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.172 2002/08/31 22:10:43 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1471,7 +1471,6 @@ _outNullTest(StringInfo str, NullTest *node)
 {
 	appendStringInfo(str, " NULLTEST :arg ");
 	_outNode(str, node->arg);
-
 	appendStringInfo(str, " :nulltesttype %d ",
 					 (int) node->nulltesttype);
 }
@@ -1484,9 +1483,23 @@ _outBooleanTest(StringInfo str, BooleanTest *node)
 {
 	appendStringInfo(str, " BOOLEANTEST :arg ");
 	_outNode(str, node->arg);
-
 	appendStringInfo(str, " :booltesttype %d ",
 					 (int) node->booltesttype);
+}
+
+/*
+ *	ConstraintTest
+ */
+static void
+_outConstraintTest(StringInfo str, ConstraintTest *node)
+{
+	appendStringInfo(str, " CONSTRAINTTEST :arg ");
+	_outNode(str, node->arg);
+	appendStringInfo(str, " :testtype %d :name ",
+					 (int) node->testtype);
+	_outToken(str, node->name);
+	appendStringInfo(str, " :check_expr ");
+	_outNode(str, node->check_expr);
 }
 
 /*
@@ -1749,6 +1762,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_BooleanTest:
 				_outBooleanTest(str, obj);
+				break;
+			case T_ConstraintTest:
+				_outConstraintTest(str, obj);
 				break;
 			case T_FuncCall:
 				_outFuncCall(str, obj);

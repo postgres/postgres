@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.208 2002/08/30 19:23:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.209 2002/08/31 22:10:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -973,10 +973,6 @@ _copyJoinExpr(JoinExpr *from)
 	return newnode;
 }
 
-/* ----------------
- *		_copyCaseExpr
- * ----------------
- */
 static CaseExpr *
 _copyCaseExpr(CaseExpr *from)
 {
@@ -994,10 +990,6 @@ _copyCaseExpr(CaseExpr *from)
 	return newnode;
 }
 
-/* ----------------
- *		_copyCaseWhen
- * ----------------
- */
 static CaseWhen *
 _copyCaseWhen(CaseWhen *from)
 {
@@ -1012,10 +1004,6 @@ _copyCaseWhen(CaseWhen *from)
 	return newnode;
 }
 
-/* ----------------
- *		_copyNullTest
- * ----------------
- */
 static NullTest *
 _copyNullTest(NullTest *from)
 {
@@ -1030,10 +1018,6 @@ _copyNullTest(NullTest *from)
 	return newnode;
 }
 
-/* ----------------
- *		_copyBooleanTest
- * ----------------
- */
 static BooleanTest *
 _copyBooleanTest(BooleanTest *from)
 {
@@ -1044,6 +1028,23 @@ _copyBooleanTest(BooleanTest *from)
 	 */
 	Node_Copy(from, newnode, arg);
 	newnode->booltesttype = from->booltesttype;
+
+	return newnode;
+}
+
+static ConstraintTest *
+_copyConstraintTest(ConstraintTest *from)
+{
+	ConstraintTest *newnode = makeNode(ConstraintTest);
+
+	/*
+	 * copy remainder of node
+	 */
+	Node_Copy(from, newnode, arg);
+	newnode->testtype = from->testtype;
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+	Node_Copy(from, newnode, check_expr);
 
 	return newnode;
 }
@@ -3205,6 +3206,9 @@ copyObject(void *from)
 			break;
 		case T_BooleanTest:
 			retval = _copyBooleanTest(from);
+			break;
+		case T_ConstraintTest:
+			retval = _copyConstraintTest(from);
 			break;
 		case T_FkConstraint:
 			retval = _copyFkConstraint(from);

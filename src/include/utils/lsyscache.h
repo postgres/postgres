@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.60 2002/08/29 00:17:06 tgl Exp $
+ * $Id: lsyscache.h,v 1.61 2002/08/31 22:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ extern void getTypeInputInfo(Oid type, Oid *typInput, Oid *typElem);
 extern bool getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
 							  bool *typIsVarlena);
 extern Oid getBaseType(Oid typid);
-extern Oid getBaseTypeTypeMod(Oid typid, int32 *typmod);
+extern int32 getBaseTypeMod(Oid typid, int32 typmod);
 extern int32 get_typavgwidth(Oid typid, int32 typmod);
 extern int32 get_attavgwidth(Oid relid, AttrNumber attnum);
 extern bool get_attstatsslot(HeapTuple statstuple,

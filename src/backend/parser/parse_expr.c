@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.126 2002/08/26 17:53:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.127 2002/08/31 22:10:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -640,6 +640,7 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_ArrayRef:
 		case T_FieldSelect:
 		case T_RelabelType:
+		case T_ConstraintTest:
 			{
 				result = (Node *) expr;
 				break;
@@ -919,14 +920,14 @@ exprType(Node *expr)
 		case T_CaseWhen:
 			type = exprType(((CaseWhen *) expr)->result);
 			break;
-		case T_Constraint:
-			type = exprType(((Constraint *) expr)->raw_expr);
-			break;
 		case T_NullTest:
 			type = BOOLOID;
 			break;
 		case T_BooleanTest:
 			type = BOOLOID;
+			break;
+		case T_ConstraintTest:
+			type = exprType(((ConstraintTest *) expr)->arg);
 			break;
 		default:
 			elog(ERROR, "exprType: Do not know how to get type for %d node",
@@ -978,10 +979,8 @@ exprTypmod(Node *expr)
 			break;
 		case T_FieldSelect:
 			return ((FieldSelect *) expr)->resulttypmod;
-			break;
 		case T_RelabelType:
 			return ((RelabelType *) expr)->resulttypmod;
-			break;
 		case T_CaseExpr:
 			{
 				/*
@@ -1013,6 +1012,9 @@ exprTypmod(Node *expr)
 				return typmod;
 			}
 			break;
+		case T_ConstraintTest:
+			return exprTypmod(((ConstraintTest *) expr)->arg);
+
 		default:
 			break;
 	}

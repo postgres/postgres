@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.130 2002/08/30 19:23:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.131 2002/08/31 22:10:43 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -927,6 +927,38 @@ _readBooleanTest(void)
 	token = pg_strtok(&length); /* eat :booltesttype */
 	token = pg_strtok(&length); /* get booltesttype */
 	local_node->booltesttype = (BoolTestType) atoi(token);
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readConstraintTest
+ *
+ *	ConstraintTest is a subclass of Node
+ * ----------------
+ */
+static ConstraintTest *
+_readConstraintTest(void)
+{
+	ConstraintTest *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(ConstraintTest);
+
+	token = pg_strtok(&length); /* eat :arg */
+	local_node->arg = nodeRead(true);	/* now read it */
+
+	token = pg_strtok(&length); /* eat :testtype */
+	token = pg_strtok(&length); /* get testtype */
+	local_node->testtype = (ConstraintTestType) atoi(token);
+
+	token = pg_strtok(&length); /* get :name */
+	token = pg_strtok(&length); /* now read it */
+	local_node->name = nullable_string(token, length);
+
+	token = pg_strtok(&length); /* eat :check_expr */
+	local_node->check_expr = nodeRead(true);	/* now read it */
 
 	return local_node;
 }
@@ -2222,6 +2254,8 @@ parsePlanString(void)
 		return_value = _readNullTest();
 	else if (length == 11 && strncmp(token, "BOOLEANTEST", length) == 0)
 		return_value = _readBooleanTest();
+	else if (length == 14 && strncmp(token, "CONSTRAINTTEST", length) == 0)
+		return_value = _readConstraintTest();
 	else
 		elog(ERROR, "badly formatted planstring \"%.10s\"...", token);
 
