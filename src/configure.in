@@ -6,12 +6,15 @@ AC_CANONICAL_HOST
 case "$host_os" in
  solaris*)
         case "$host_cpu" in
-          sparc) os=sparc_solaris ;;
+          sparc) os=sparc_solaris 
+             AC_LINK_FILES(backend/port/tas/sparc_solaris.s, backend/port/tas.s)
+             TAS=tas.o
+             AC_SUBST(TAS) ;;
            i386) 
-              os=i386_solaris
-              AC_LINK_FILES(backend/port/tas/i386_solaris.s, backend/port/tas.s)
-              TAS=tas.o
-              AC_SUBST(TAS) ;;
+             os=i386_solaris
+             AC_LINK_FILES(backend/port/tas/i386_solaris.s, backend/port/tas.s)
+             TAS=tas.o
+             AC_SUBST(TAS) ;;
         esac ;;
    sunos*) os=sunos4 ;;
      aux*) os=aux ;;
