@@ -182,20 +182,6 @@
 
 
 #
-#	Lock Tracing
-#
-#trace_notify = false
-
-# requires LOCK_DEBUG
-#trace_locks = false
-#trace_userlocks = false
-#trace_lwlocks = false
-#debug_deadlocks = false
-#trace_lock_oidmin = 16384
-#trace_lock_table = 0
-
-
-#
 #	Misc
 #
 #dynamic_library_path = '$libdir'
