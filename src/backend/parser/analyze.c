@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.292 2003/11/29 19:51:51 pgsql Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.293 2004/01/05 20:58:58 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,8 @@ typedef struct
 static List *do_parse_analyze(Node *parseTree, ParseState *pstate);
 static Query *transformStmt(ParseState *pstate, Node *stmt,
 			  List **extras_before, List **extras_after);
+static Query *transformViewStmt(ParseState *pstate, ViewStmt *stmt,
+								List **extras_before, List **extras_after);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
 static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 					List **extras_before, List **extras_after);
@@ -322,51 +324,8 @@ transformStmt(ParseState *pstate, Node *parseTree,
 			break;
 
 		case T_ViewStmt:
-			{
-				ViewStmt   *n = (ViewStmt *) parseTree;
-
-				n->query = transformStmt(pstate, (Node *) n->query,
-										 extras_before, extras_after);
-
-				/*
-				 * If a list of column names was given, run through and
-				 * insert these into the actual query tree. - thomas
-				 * 2000-03-08
-				 *
-				 * Outer loop is over targetlist to make it easier to skip
-				 * junk targetlist entries.
-				 */
-				if (n->aliases != NIL)
-				{
-					List	   *aliaslist = n->aliases;
-					List	   *targetList;
-
-					foreach(targetList, n->query->targetList)
-					{
-						TargetEntry *te = (TargetEntry *) lfirst(targetList);
-						Resdom	   *rd;
-
-						Assert(IsA(te, TargetEntry));
-						rd = te->resdom;
-						Assert(IsA(rd, Resdom));
-						/* junk columns don't get aliases */
-						if (rd->resjunk)
-							continue;
-						rd->resname = pstrdup(strVal(lfirst(aliaslist)));
-						aliaslist = lnext(aliaslist);
-						if (aliaslist == NIL)
-							break;		/* done assigning aliases */
-					}
-
-					if (aliaslist != NIL)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("CREATE VIEW specifies more column names than columns")));
-				}
-				result = makeNode(Query);
-				result->commandType = CMD_UTILITY;
-				result->utilityStmt = (Node *) n;
-			}
+			result = transformViewStmt(pstate, (ViewStmt *) parseTree,
+									   extras_before, extras_after);
 			break;
 
 		case T_ExplainStmt:
@@ -439,6 +398,57 @@ transformStmt(ParseState *pstate, Node *parseTree,
 	/* Mark as original query until we learn differently */
 	result->querySource = QSRC_ORIGINAL;
 	result->canSetTag = true;
+
+	return result;
+}
+
+static Query *
+transformViewStmt(ParseState *pstate, ViewStmt *stmt,
+				  List **extras_before, List **extras_after)
+{
+	Query *result = makeNode(Query);
+
+	result->commandType = CMD_UTILITY;
+	result->utilityStmt = (Node *) stmt;
+
+	stmt->query = transformStmt(pstate, (Node *) stmt->query,
+								extras_before, extras_after);
+
+	/*
+	 * If a list of column names was given, run through and insert
+	 * these into the actual query tree. - thomas 2000-03-08
+	 *
+	 * Outer loop is over targetlist to make it easier to skip junk
+	 * targetlist entries.
+	 */
+	if (stmt->aliases != NIL)
+	{
+		List	   *aliaslist = stmt->aliases;
+		List	   *targetList;
+
+		foreach(targetList, stmt->query->targetList)
+		{
+			TargetEntry *te = (TargetEntry *) lfirst(targetList);
+			Resdom	   *rd;
+
+			Assert(IsA(te, TargetEntry));
+			rd = te->resdom;
+			Assert(IsA(rd, Resdom));
+			/* junk columns don't get aliases */
+			if (rd->resjunk)
+				continue;
+			rd->resname = pstrdup(strVal(lfirst(aliaslist)));
+			aliaslist = lnext(aliaslist);
+			if (aliaslist == NIL)
+				break;		/* done assigning aliases */
+		}
+
+		if (aliaslist != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("CREATE VIEW specifies more column "
+							"names than columns")));
+	}
 
 	return result;
 }
