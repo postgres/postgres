@@ -8,12 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.4 2002/10/24 03:11:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.5 2002/10/24 04:33:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #if defined(bsdi) || defined(netbsd)
+
+#include "c.h"
 
 #include <pthread.h>
 #include <stdio.h>
