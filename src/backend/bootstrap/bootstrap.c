@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.5 1996/08/13 01:28:28 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.6 1996/08/17 06:41:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -743,7 +743,7 @@ gettype(char *type)
         return(gettype(type));
     }
     elog(WARN, "Error: unknown type '%s'.\n", type);
-    err();
+    err_out();
     /* not reached, here to make compiler happy */
     return 0;
 }
