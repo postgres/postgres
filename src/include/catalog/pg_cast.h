@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.15 2004/08/29 05:06:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.16 2004/10/04 22:49:54 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -182,6 +182,9 @@ DATA(insert ( 1043	 18  944 a ));
 DATA(insert (	25	 19  407 i ));
 DATA(insert ( 1042	 19  409 i ));
 DATA(insert ( 1043	 19 1400 i ));
+/* Cross-category casts between int4 and "char" */
+DATA(insert (	18	 23   77 e ));
+DATA(insert (	23	 18   78 e ));
 
 /*
  * Datetime category

@@ -9,14 +9,24 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/char.c,v 1.40 2004/08/29 04:12:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/char.c,v 1.41 2004/10/04 22:49:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
+
+#ifndef SCHAR_MAX
+#define SCHAR_MAX (0x7F)
+#endif
+#ifndef SCHAR_MIN
+#define SCHAR_MIN (-SCHAR_MAX-1)
+#endif
+
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
@@ -88,7 +98,7 @@ charsend(PG_FUNCTION_ARGS)
 
 /*
  * NOTE: comparisons are done as though char is unsigned (uint8).
- * Arithmetic is done as though char is signed (int8).
+ * Conversions to and from integer are done as though char is signed (int8).
  *
  * You wanted consistency?
  */
@@ -147,45 +157,26 @@ charge(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL((uint8) arg1 >= (uint8) arg2);
 }
 
+
 Datum
-charpl(PG_FUNCTION_ARGS)
+chartoi4(PG_FUNCTION_ARGS)
 {
 	char		arg1 = PG_GETARG_CHAR(0);
-	char		arg2 = PG_GETARG_CHAR(1);
 
-	PG_RETURN_CHAR((int8) arg1 + (int8) arg2);
+	PG_RETURN_INT32((int32) ((int8) arg1));
 }
 
 Datum
-charmi(PG_FUNCTION_ARGS)
+i4tochar(PG_FUNCTION_ARGS)
 {
-	char		arg1 = PG_GETARG_CHAR(0);
-	char		arg2 = PG_GETARG_CHAR(1);
+	int32		arg1 = PG_GETARG_INT32(0);
 
-	PG_RETURN_CHAR((int8) arg1 - (int8) arg2);
-}
-
-Datum
-charmul(PG_FUNCTION_ARGS)
-{
-	char		arg1 = PG_GETARG_CHAR(0);
-	char		arg2 = PG_GETARG_CHAR(1);
-
-	PG_RETURN_CHAR((int8) arg1 * (int8) arg2);
-}
-
-Datum
-chardiv(PG_FUNCTION_ARGS)
-{
-	char		arg1 = PG_GETARG_CHAR(0);
-	char		arg2 = PG_GETARG_CHAR(1);
-
-	if (arg2 == 0)
+	if (arg1 < SCHAR_MIN || arg1 > SCHAR_MAX)
 		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("\"char\" out of range")));
 
-	PG_RETURN_CHAR((int8) arg1 / (int8) arg2);
+	PG_RETURN_CHAR((int8) arg1);
 }
 
 

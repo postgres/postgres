@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.250 2004/08/30 02:54:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.251 2004/10/04 22:49:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,10 +88,8 @@ extern Datum charlt(PG_FUNCTION_ARGS);
 extern Datum charle(PG_FUNCTION_ARGS);
 extern Datum chargt(PG_FUNCTION_ARGS);
 extern Datum charge(PG_FUNCTION_ARGS);
-extern Datum charpl(PG_FUNCTION_ARGS);
-extern Datum charmi(PG_FUNCTION_ARGS);
-extern Datum charmul(PG_FUNCTION_ARGS);
-extern Datum chardiv(PG_FUNCTION_ARGS);
+extern Datum chartoi4(PG_FUNCTION_ARGS);
+extern Datum i4tochar(PG_FUNCTION_ARGS);
 extern Datum text_char(PG_FUNCTION_ARGS);
 extern Datum char_text(PG_FUNCTION_ARGS);
 

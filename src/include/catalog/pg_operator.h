@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.128 2004/08/29 05:06:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.129 2004/10/04 22:49:54 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -298,11 +298,6 @@ DATA(insert OID = 631 (  "<"	   PGNSP PGUID b f	18	18	16 633 634	0 0 0 0 charlt 
 DATA(insert OID = 632 (  "<="	   PGNSP PGUID b f	18	18	16 634 633	0 0 0 0 charle scalarltsel scalarltjoinsel ));
 DATA(insert OID = 633 (  ">"	   PGNSP PGUID b f	18	18	16 631 632	0 0 0 0 chargt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 634 (  ">="	   PGNSP PGUID b f	18	18	16 632 631	0 0 0 0 charge scalargtsel scalargtjoinsel ));
-
-DATA(insert OID = 635 (  "+"	   PGNSP PGUID b f	18	18	18 0 0	0 0 0 0 charpl - - ));
-DATA(insert OID = 636 (  "-"	   PGNSP PGUID b f	18	18	18 0 0	0 0 0 0 charmi - - ));
-DATA(insert OID = 637 (  "*"	   PGNSP PGUID b f	18	18	18 0 0	0 0 0 0 charmul - - ));
-DATA(insert OID = 638 (  "/"	   PGNSP PGUID b f	18	18	18 0 0	0 0 0 0 chardiv - - ));
 
 DATA(insert OID = 639 (  "~"	   PGNSP PGUID b f	19	25	16 0 640	0 0   0   0 nameregexeq regexeqsel regexeqjoinsel ));
 #define OID_NAME_REGEXEQ_OP		639

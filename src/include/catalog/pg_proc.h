@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.346 2004/10/04 22:13:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.347 2004/10/04 22:49:55 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -181,14 +181,10 @@ DATA(insert OID =  73 (  chargt			   PGNSP PGUID 12 f f t f i 2 16 "18 18" _null
 DESCR("greater-than");
 DATA(insert OID =  74 (  charge			   PGNSP PGUID 12 f f t f i 2 16 "18 18" _null_ charge - _null_ ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 1248 (  charpl		   PGNSP PGUID 12 f f t f i 2 18 "18 18" _null_ charpl - _null_ ));
-DESCR("add");
-DATA(insert OID = 1250 (  charmi		   PGNSP PGUID 12 f f t f i 2 18 "18 18" _null_ charmi - _null_ ));
-DESCR("subtract");
-DATA(insert OID =  77 (  charmul		   PGNSP PGUID 12 f f t f i 2 18 "18 18" _null_ charmul - _null_ ));
-DESCR("multiply");
-DATA(insert OID =  78 (  chardiv		   PGNSP PGUID 12 f f t f i 2 18 "18 18" _null_ chardiv - _null_ ));
-DESCR("divide");
+DATA(insert OID =  77 (  int4			   PGNSP PGUID 12 f f t f i 1  23  "18" _null_	chartoi4 - _null_ ));
+DESCR("convert char to int4");
+DATA(insert OID =  78 (  char			   PGNSP PGUID 12 f f t f i 1  18  "23" _null_	i4tochar - _null_ ));
+DESCR("convert int4 to char");
 
 DATA(insert OID =  79 (  nameregexeq	   PGNSP PGUID 12 f f t f i 2 16 "19 25" _null_ nameregexeq - _null_ ));
 DESCR("matches regex., case-sensitive");
