@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.56 2004/04/19 17:22:30 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.57 2004/04/21 00:34:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -29,7 +29,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
           [ CSV [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
                 [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
-                [ LITERAL <replaceable class="parameter">column</replaceable> [, ...] ]
+                [ FORCE NOT NULL <replaceable class="parameter">column</replaceable> [, ...] ]
 
 COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
@@ -40,7 +40,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
           [ CSV [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
                 [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
-                [ FORCE <replaceable class="parameter">column</replaceable> [, ...] ]
+                [ FORCE QUOTE <replaceable class="parameter">column</replaceable> [, ...] ]
 </synopsis>
  </refsynopsisdiv>
  
@@ -185,10 +185,10 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     <term><literal>CSV</literal></term>
     <listitem>
      <para>
-      Enables Comma Separated Variable (<literal>CSV</>) mode.  (Also called
-      Comma Separated Value).  It sets the default <literal>DELIMITER</> to 
-      comma, and <literal>QUOTE</> and <literal>ESCAPE</> values to 
-      double-quote.
+      Enables Comma Separated Variable (<literal>CSV</>) mode. (Also
+      called Comma Separated Value). It sets the default
+      <literal>DELIMITER</> to comma, and <literal>QUOTE</> and
+      <literal>ESCAPE</> values to double-quote.
      </para>
     </listitem>
    </varlistentry>
@@ -207,38 +207,33 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     <term><replaceable class="parameter">escape</replaceable></term>
     <listitem>
      <para>
-      Specifies the character that should appear before a <literal>QUOTE</>
-      data character value in <literal>CSV</> mode.  The default is the
-      <literal>QUOTE</> value (usually double-quote).
+      Specifies the character that should appear before a
+      <literal>QUOTE</> data character value in <literal>CSV</> mode.
+      The default is the <literal>QUOTE</> value (usually double-quote).
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>FORCE</></term>
+    <term><literal>FORCE QUOTE</></term>
     <listitem>
      <para>
-      In <literal>CSV</> <command>COPY TO</> mode, forces quoting
-      to be used for all non-<literal>NULL</> values in each specified 
-      column.  <literal>NULL</> output is never quoted.
+      In <literal>CSV</> <command>COPY TO</> mode, forces quoting to be
+      used for all non-<literal>NULL</> values in each specified column.
+      <literal>NULL</> output is never quoted.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>LITERAL</></term>
+    <term><literal>FORCE NOT NULL</></term>
     <listitem>
      <para>
-      In <literal>CSV</> <command>COPY FROM</> mode, for each column specified,
-      do not do a <literal>null string</> comparison;  instead load the value 
-      literally.  <literal>QUOTE</> and <literal>ESCAPE</> processing are still
-      performed.
-     </para>
-     <para>
-      If the <literal>null string</> is <literal>''</> (the default 
-      in <literal>CSV</> mode), a missing input value (<literal>delimiter, 
-      delimiter</>), will load as a zero-length string.  <literal>Delimiter, quote, 
-      quote, delimiter</> is always treated as a zero-length string on input.
+      In <literal>CSV</> <command>COPY FROM</> mode, process each
+      specified column as though it were quoted and hance not a
+      <literal>NULL</> value. For the default <literal>null string</> in
+      <literal>CSV</> mode (<literal>''</>), this causes a missing
+      values to be input as a zero-length strings.
      </para>
     </listitem>
    </varlistentry>
@@ -483,7 +478,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     suffixed by the <literal>QUOTE</> character, and any occurrence
     within the value of a <literal>QUOTE</> character or the
     <literal>ESCAPE</> character is preceded by the escape character.
-    You can also use <literal>FORCE</> to force quotes when outputting
+    You can also use <literal>FORCE QUOTE</> to force quotes when outputting
     non-<literal>NULL</> values in specific columns.
    </para>
 
@@ -496,7 +491,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     is quoted. Therefore, using the default settings, a <literal>NULL</> is
     written as an unquoted empty string, while an empty string is
     written with double quotes (<literal>""</>). Reading values follows 
-    similar rules. You can use <literal>LITERAL</> to prevent <literal>NULL</>
+    similar rules. You can use <literal>FORCE NOT NULL</> to prevent <literal>NULL</>
     input comparisons for specific columns.
    </para>
 

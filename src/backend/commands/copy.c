@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.222 2004/04/19 21:58:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.223 2004/04/21 00:34:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,10 +132,10 @@ static bool line_buf_converted;
 /* non-export function prototypes */
 static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	   char *delim, char *null_print, bool csv_mode, char *quote, char *escape,
-	   List *force_atts);
+	   List *force_quote_atts);
 static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		 char *delim, char *null_print, bool csv_mode, char *quote, char *escape,
-		 List *literal_atts);
+		 List *force_notnull_atts);
 static bool CopyReadLine(void);
 static char *CopyReadAttribute(const char *delim, const char *null_print,
 							   CopyReadResult *result, bool *isnull);
@@ -695,10 +695,10 @@ DoCopy(const CopyStmt *stmt)
 	char	   *quote = NULL;
 	char	   *escape = NULL;
 	char	   *null_print = NULL;
-	List	   *force = NIL;
-	List	   *literal = NIL;
-	List	   *force_atts = NIL;
-	List	   *literal_atts = NIL;
+	List	   *force_quote = NIL;
+	List	   *force_notnull = NIL;
+	List	   *force_quote_atts = NIL;
+	List	   *force_notnull_atts = NIL;
 	Relation	rel;
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
 	AclResult	aclresult;
@@ -764,21 +764,21 @@ DoCopy(const CopyStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			escape = strVal(defel->arg);
 		}
-		else if (strcmp(defel->defname, "force") == 0)
+		else if (strcmp(defel->defname, "force_quote") == 0)
 		{
-			if (force)
+			if (force_quote)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			force = (List *)defel->arg;
+			force_quote = (List *)defel->arg;
 		}
-		else if (strcmp(defel->defname, "literal") == 0)
+		else if (strcmp(defel->defname, "force_notnull") == 0)
 		{
-			if (literal)
+			if (force_notnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			literal = (List *)defel->arg;
+			force_notnull = (List *)defel->arg;
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -850,28 +850,28 @@ DoCopy(const CopyStmt *stmt)
 				 errmsg("COPY escape must be a single character")));
 
 	/*
-	 * Check force
+	 * Check force_quote
 	 */
-	if (!csv_mode && force != NIL)
+	if (!csv_mode && force_quote != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force available only in CSV mode")));
-	if (force != NIL && is_from)
+				 errmsg("COPY force quote available only in CSV mode")));
+	if (force_quote != NIL && is_from)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force only available using COPY TO")));
+				 errmsg("COPY force quote only available using COPY TO")));
 
 	/*
-	 * Check literal
+	 * Check force_notnull
 	 */
-	if (!csv_mode && literal != NIL)
+	if (!csv_mode && force_notnull != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY literal available only in CSV mode")));
-	if (literal != NIL && !is_from)
+				 errmsg("COPY force not null available only in CSV mode")));
+	if (force_notnull != NIL && !is_from)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY literal only available using COPY FROM")));
+				 errmsg("COPY force not null only available using COPY FROM")));
 
 	/*
 	 * Don't allow the delimiter to appear in the null string.
@@ -928,47 +928,47 @@ DoCopy(const CopyStmt *stmt)
 	attnumlist = CopyGetAttnums(rel, attnamelist);
 
 	/*
-	 * Check that FORCE references valid COPY columns
+	 * Check that FORCE QUOTE references valid COPY columns
 	 */
-	if (force)
+	if (force_quote)
 	{
 		TupleDesc	tupDesc = RelationGetDescr(rel);
 		Form_pg_attribute *attr = tupDesc->attrs;
 		List	   *cur;
 
-		force_atts = CopyGetAttnums(rel, force);
+		force_quote_atts = CopyGetAttnums(rel, force_quote);
 
-		foreach(cur, force_atts)
+		foreach(cur, force_quote_atts)
 		{
 			int			attnum = lfirsti(cur);
 
 			if (!intMember(attnum, attnumlist))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("FORCE column \"%s\" not referenced by COPY",
+						 errmsg("FORCE QUOTE column \"%s\" not referenced by COPY",
 								NameStr(attr[attnum - 1]->attname))));
 		}
 	}
 	
 	/*
-	 * Check that LITERAL references valid COPY columns
+	 * Check that FORCE NOT NULL references valid COPY columns
 	 */
-	if (literal)
+	if (force_notnull)
 	{
 		List	   *cur;
 		TupleDesc	tupDesc = RelationGetDescr(rel);
 		Form_pg_attribute *attr = tupDesc->attrs;
 
-		literal_atts = CopyGetAttnums(rel, literal);
+		force_notnull_atts = CopyGetAttnums(rel, force_notnull);
 
-		foreach(cur, literal_atts)
+		foreach(cur, force_notnull_atts)
 		{
 			int			attnum = lfirsti(cur);
 
 			if (!intMember(attnum, attnumlist))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("LITERAL column \"%s\" not referenced by COPY",
+						 errmsg("FORCE NOT NULL column \"%s\" not referenced by COPY",
 								NameStr(attr[attnum - 1]->attname))));
 		}
 	}
@@ -1037,7 +1037,7 @@ DoCopy(const CopyStmt *stmt)
 			}
 		}
 		CopyFrom(rel, attnumlist, binary, oids, delim, null_print, csv_mode,
-				 quote, escape, literal_atts);
+				 quote, escape, force_notnull_atts);
 	}
 	else
 	{							/* copy from database to file */
@@ -1100,7 +1100,7 @@ DoCopy(const CopyStmt *stmt)
 			}
 		}
 		CopyTo(rel, attnumlist, binary, oids, delim, null_print, csv_mode,
-				quote, escape, force_atts);
+				quote, escape, force_quote_atts);
 	}
 
 	if (!pipe)
@@ -1133,7 +1133,7 @@ DoCopy(const CopyStmt *stmt)
 static void
 CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	   char *delim, char *null_print, bool csv_mode, char *quote,
-	   char *escape, List *force_atts)
+	   char *escape, List *force_quote_atts)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
@@ -1180,7 +1180,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 							  &isvarlena[attnum - 1]);
 		fmgr_info(out_func_oid, &out_functions[attnum - 1]);
 
-		if (intMember(attnum, force_atts))
+		if (intMember(attnum, force_quote_atts))
 			force_quote[attnum - 1] = true;
 		else
 			force_quote[attnum - 1] = false;
@@ -1434,7 +1434,7 @@ limit_printout_length(StringInfo buf)
 static void
 CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		 char *delim, char *null_print, bool csv_mode, char *quote,
-		 char *escape, List *literal_atts)
+		 char *escape, List *force_notnull_atts)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
@@ -1447,7 +1447,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	Oid		   *elements;
 	Oid			oid_in_element;
 	ExprState **constraintexprs;
-	bool	   *literal_nullstr;
+	bool	   *force_notnull;
 	bool		hasConstraints = false;
 	int			attnum;
 	int			i;
@@ -1509,7 +1509,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	defmap = (int *) palloc((num_phys_attrs + 1) * sizeof(int));
 	defexprs = (ExprState **) palloc((num_phys_attrs + 1) * sizeof(ExprState *));
 	constraintexprs = (ExprState **) palloc0((num_phys_attrs + 1) * sizeof(ExprState *));
-	literal_nullstr = (bool *) palloc((num_phys_attrs + 1) * sizeof(bool));
+	force_notnull = (bool *) palloc((num_phys_attrs + 1) * sizeof(bool));
 
 	for (attnum = 1; attnum <= num_phys_attrs; attnum++)
 	{
@@ -1526,10 +1526,10 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 							 &in_func_oid, &elements[attnum - 1]);
 		fmgr_info(in_func_oid, &in_functions[attnum - 1]);
 
-		if (intMember(attnum, literal_atts))
-			literal_nullstr[attnum - 1] = true;
+		if (intMember(attnum, force_notnull_atts))
+			force_notnull[attnum - 1] = true;
 		else
-			literal_nullstr[attnum - 1] = false;
+			force_notnull[attnum - 1] = false;
 		
 		/* Get default info if needed */
 		if (!intMember(attnum, attnumlist))
@@ -1748,7 +1748,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					string = CopyReadAttribute(delim, null_print, 
 											   &result, &isnull);
 
-				if (csv_mode && isnull && literal_nullstr[m])
+				if (csv_mode && isnull && force_notnull[m])
 				{
 					string = null_print;	/* set to NULL string */
 					isnull = false;
@@ -1947,7 +1947,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	pfree(defmap);
 	pfree(defexprs);
 	pfree(constraintexprs);
-	pfree(literal_nullstr);
+	pfree(force_notnull);
 
 	ExecDropTupleTable(tupleTable, true);
 
@@ -2558,14 +2558,13 @@ CopyAttributeOut(char *server_string, char *delim)
  */
 static void
 CopyAttributeOutCSV(char *server_string, char *delim, char *quote,
-					char *escape, bool force_quote)
+					char *escape, bool use_quote)
 {
 	char	   *string;
 	char		c;
 	char		delimc = delim[0];
 	char        quotec = quote[0];
  	char        escapec = escape[0];
-	bool        need_quote = force_quote;
 	char        *test_string;
 	bool		same_encoding;
 	int			mblen;
@@ -2583,23 +2582,23 @@ CopyAttributeOutCSV(char *server_string, char *delim, char *quote,
 	 */
 
 	for(test_string = string; 
-		!need_quote && (c = *test_string) != '\0'; 
+		!use_quote && (c = *test_string) != '\0'; 
 		test_string += mblen)
 	{
 		if (c == delimc || c == quotec || c == '\n' || c == '\r')
-			need_quote = true;
+			use_quote = true;
 		if (!same_encoding)
 			mblen = pg_encoding_mblen(client_encoding, test_string);
 		else
 			mblen = 1;
 	}
 
-	if (need_quote)
+	if (use_quote)
 		CopySendChar(quotec);
 
 	for (; (c = *string) != '\0'; string += mblen)
 	{
-		if (need_quote && (c == quotec || c == escapec))
+		if (use_quote && (c == quotec || c == escapec))
 			CopySendChar(escapec);
 
 		CopySendChar(c);
@@ -2615,7 +2614,7 @@ CopyAttributeOutCSV(char *server_string, char *delim, char *quote,
 			mblen = 1;
 	}
 
-	if (need_quote)
+	if (use_quote)
 		CopySendChar(quotec);
 }
 

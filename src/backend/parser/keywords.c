@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.148 2004/04/19 17:22:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.149 2004/04/21 00:34:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,6 @@ static const ScanKeyword ScanKeywords[] = {
 	{"like", LIKE},
 	{"limit", LIMIT},
 	{"listen", LISTEN},
-	{"literal", LITERAL},
 	{"load", LOAD},
 	{"local", LOCAL},
 	{"localtime", LOCALTIME},

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.451 2004/04/19 17:22:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.452 2004/04/21 00:34:18 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -370,7 +370,7 @@ static void doNegateFloat(Value *v);
 	KEY
 
 	LANCOMPILER LANGUAGE LARGE_P LAST_P LEADING LEFT LEVEL LIKE LIMIT
-	LISTEN LITERAL LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
+	LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P
 
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
@@ -1374,13 +1374,13 @@ copy_opt_item:
 				{
 					$$ = makeDefElem("escape", (Node *)makeString($3));
 				}
-			| FORCE columnList
+			| FORCE QUOTE columnList
 				{
-					$$ = makeDefElem("force", (Node *)$2);
+					$$ = makeDefElem("force_quote", (Node *)$3);
 				}
-			| LITERAL columnList
+			| FORCE NOT NULL_P columnList
 				{
-					$$ = makeDefElem("literal", (Node *)$2);
+					$$ = makeDefElem("force_notnull", (Node *)$4);
 				}
 		;
 
@@ -7496,7 +7496,6 @@ unreserved_keyword:
 			| LAST_P
 			| LEVEL
 			| LISTEN
-			| LITERAL
 			| LOAD
 			| LOCAL
 			| LOCATION

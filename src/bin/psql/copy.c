@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.45 2004/04/19 17:42:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.46 2004/04/21 00:34:18 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -71,8 +71,8 @@ struct copy_options
 	char	   *null;
 	char	   *quote;
 	char	   *escape;
-	char 	   *force_list;
-	char 	   *literal_list;
+	char 	   *force_quote_list;
+	char 	   *force_notnull_list;
 };
 
 
@@ -88,8 +88,8 @@ free_copy_options(struct copy_options * ptr)
 	free(ptr->null);
 	free(ptr->quote);
 	free(ptr->escape);
-	free(ptr->force_list);
-	free(ptr->literal_list);
+	free(ptr->force_quote_list);
+	free(ptr->force_notnull_list);
 	free(ptr);
 }
 
@@ -344,45 +344,56 @@ parse_slash_copy(const char *args)
 			}
 			else if (strcasecmp(token, "force") == 0)
 			{
-				/* handle column list */
-				fetch_next = false;
-				for (;;)
+				token = strtokx(NULL, whitespace, ",", "\"",
+								0, false, pset.encoding);
+				if (strcasecmp(token, "quote") == 0)
+				{
+					/* handle column list */
+					fetch_next = false;
+					for (;;)
+					{
+						token = strtokx(NULL, whitespace, ",", "\"",
+										0, false, pset.encoding);
+						if (!token || strchr(",", token[0]))
+							goto error;
+						if (!result->force_quote_list)
+							result->force_quote_list = pg_strdup(token);
+						else
+							xstrcat(&result->force_quote_list, token);
+						token = strtokx(NULL, whitespace, ",", "\"",
+										0, false, pset.encoding);
+						if (!token || token[0] != ',')
+							break;
+						xstrcat(&result->force_quote_list, token);
+					}
+				}
+				else if (strcasecmp(token, "not") == 0)
 				{
 					token = strtokx(NULL, whitespace, ",", "\"",
 									0, false, pset.encoding);
-					if (!token || strchr(",", token[0]))
+					if (strcasecmp(token, "null") != 0)
 						goto error;
-					if (!result->force_list)
-						result->force_list = pg_strdup(token);
-					else
-						xstrcat(&result->force_list, token);
-					token = strtokx(NULL, whitespace, ",", "\"",
-									0, false, pset.encoding);
-					if (!token || token[0] != ',')
-						break;
-					xstrcat(&result->force_list, token);
+					/* handle column list */
+					fetch_next = false;
+					for (;;)
+					{
+						token = strtokx(NULL, whitespace, ",", "\"",
+										0, false, pset.encoding);
+						if (!token || strchr(",", token[0]))
+							goto error;
+						if (!result->force_notnull_list)
+							result->force_notnull_list = pg_strdup(token);
+						else
+							xstrcat(&result->force_notnull_list, token);
+						token = strtokx(NULL, whitespace, ",", "\"",
+										0, false, pset.encoding);
+						if (!token || token[0] != ',')
+							break;
+						xstrcat(&result->force_notnull_list, token);
+					}
 				}
-			}
-			else if (strcasecmp(token, "literal") == 0)
-			{
-				/* handle column list */
-				fetch_next = false;
-				for (;;)
-				{
-					token = strtokx(NULL, whitespace, ",", "\"",
-									0, false, pset.encoding);
-					if (!token || strchr(",", token[0]))
-						goto error;
-					if (!result->literal_list)
-						result->literal_list = pg_strdup(token);
-					else
-						xstrcat(&result->literal_list, token);
-					token = strtokx(NULL, whitespace, ",", "\"",
-									0, false, pset.encoding);
-					if (!token || token[0] != ',')
-						break;
-					xstrcat(&result->literal_list, token);
-				}
+				else
+					goto error;
 			}
 			else
 				goto error;
@@ -493,14 +504,14 @@ do_copy(const char *args)
 			appendPQExpBuffer(&query, " ESCAPE AS '%s'", options->escape);
 	}
 
-	if (options->force_list)
+	if (options->force_quote_list)
 	{
-		appendPQExpBuffer(&query, " FORCE %s", options->force_list);
+		appendPQExpBuffer(&query, " FORCE QUOTE %s", options->force_quote_list);
 	}
 
-	if (options->literal_list)
+	if (options->force_notnull_list)
 	{
-		appendPQExpBuffer(&query, " LITERAL %s", options->literal_list);
+		appendPQExpBuffer(&query, " FORCE NOT NULL %s", options->force_notnull_list);
 	}
 
 	if (options->from)
