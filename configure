@@ -2909,7 +2909,7 @@ if test "${enable_thread_safety+set}" = set; then
     yes)
 
 cat >>confdefs.h <<\_ACEOF
-#define USE_THREADS 1
+#define ENABLE_THREAD_SAFETY 1
 _ACEOF
 
       ;;
