@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.27 1999/05/29 01:45:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.28 1999/07/07 16:09:33 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -436,7 +436,7 @@ InitCatalogCache()
 /*
  * SearchSysCacheTupleCopy
  *
- *	THis is like SearchSysCacheTuple, except it returns a copy of the tuple
+ *	This is like SearchSysCacheTuple, except it returns a copy of the tuple
  *	that the user is required to pfree().
  */
 HeapTuple
