@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.3 2003/06/15 04:07:58 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.4 2003/06/15 04:56:45 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -78,7 +78,8 @@ static pthread_mutex_t debug_mutex    = PTHREAD_MUTEX_INITIALIZER;
 static int simple_debug = 0;
 static FILE *debugstream = NULL;
 
-void ECPGinit_sqlca(struct sqlca_t *sqlca)
+void
+ECPGinit_sqlca(struct sqlca_t *sqlca)
 {
 	memcpy((char *)sqlca, (char *)&sqlca_init, sizeof(struct sqlca_t));
 }
@@ -98,25 +99,27 @@ ECPGinit(const struct connection * con, const char *connection_name, const int l
 }
 
 #ifdef USE_THREADS
-static void ecpg_sqlca_key_init(void)
+static void
+ecpg_sqlca_key_init(void)
 {
   pthread_key_create(&sqlca_key, NULL);
 }
 #endif
 
-struct sqlca_t *ECPGget_sqlca(void)
+struct sqlca_t *
+ECPGget_sqlca(void)
 {
 #ifdef USE_THREADS
   struct sqlca_t *sqlca;
 
   pthread_once(&sqlca_key_once, ecpg_sqlca_key_init);
 
-  sqlca = pthread_getspecific(&sqlca_key);
+  sqlca = pthread_getspecific(sqlca_key);
   if( sqlca == NULL )
     {
       sqlca = malloc(sizeof(struct sqlca_t));
       ECPGinit_sqlca(sqlca);
-      pthread_setspecific(&sqlca_key, sqlca);
+      pthread_setspecific(sqlca_key, sqlca);
     }
   return( sqlca );
 #else

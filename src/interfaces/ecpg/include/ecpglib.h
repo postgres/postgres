@@ -38,6 +38,9 @@ extern		"C"
 {
 #endif
 
+struct sqlca_t;
+
+void		ECPGinit_sqlca(struct sqlca_t *sqlca);
 void		ECPGdebug(int, FILE *);
 bool		ECPGstatus(int, const char *);
 bool		ECPGsetcommit(int, const char *, const char *);
@@ -49,10 +52,10 @@ bool		ECPGdisconnect(int, const char *);
 bool		ECPGprepare(int, char *, char *);
 bool		ECPGdeallocate(int, char *);
 bool		ECPGdeallocate_all(int);
-char	       *ECPGprepared_statement(char *);
+char	   *ECPGprepared_statement(char *);
 
 void		ECPGlog(const char *format,...);
-char	       *ECPGerrmsg(void);
+char       *ECPGerrmsg(void);
 
  /* print an error message */
 void		sqlprint(void);
