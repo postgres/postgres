@@ -3,16 +3,12 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.37 2004/08/29 05:06:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.38 2004/09/27 19:16:02 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
 
 #include <errno.h>
-
-#ifdef WIN32
-#include <windows.h>
-#endif
 
 #include "pqexpbuffer.h"
 #include "settings.h"

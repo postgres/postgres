@@ -52,9 +52,7 @@ __RCSID("$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $");
 #include <limits.h>
 #include <stdlib.h>
 
-#ifdef WIN32
-#include <windows.h>
-#else
+#ifndef WIN32
 #include <unistd.h>
 #endif
 

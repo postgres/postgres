@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.100 2004/09/13 23:07:12 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.101 2004/09/27 19:16:02 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -13,7 +13,6 @@
 #include <unistd.h>
 #else							/* WIN32 */
 #include <io.h>
-#include <windows.h>
 #include <win32.h>
 #endif   /* WIN32 */
 
