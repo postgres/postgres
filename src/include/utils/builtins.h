@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.90 1999/11/17 21:21:51 wieck Exp $
+ * $Id: builtins.h,v 1.91 1999/11/25 01:28:07 wieck Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -635,5 +635,12 @@ text	   *lztext_text(lztext *lz);
 lztext	   *text_lztext(text *txt);
 int32		lztextlen(lztext *lz);
 int32		lztextoctetlen(lztext *lz);
+int32		lztext_cmp(lztext *lz1, lztext *lz2);
+bool		lztext_eq(lztext *lz1, lztext *lz2);
+bool		lztext_ne(lztext *lz1, lztext *lz2);
+bool		lztext_gt(lztext *lz1, lztext *lz2);
+bool		lztext_ge(lztext *lz1, lztext *lz2);
+bool		lztext_lt(lztext *lz1, lztext *lz2);
+bool		lztext_le(lztext *lz1, lztext *lz2);
 
 #endif	 /* BUILTINS_H */

@@ -1,7 +1,7 @@
 /* ----------
  * lztext.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.3 1999/11/24 03:45:12 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.4 1999/11/25 01:28:04 wieck Exp $
  *
  *	Text type with internal LZ compressed representation. Uses the
  *	standard PostgreSQL compression method.
@@ -287,6 +287,149 @@ lztext_text(lztext *lz)
 	pglz_decompress(lz, VARDATA(result));
 
 	return result;
+}
+
+
+/* ----------
+ * lztext_cmp -
+ *
+ *		Comparision function for two lztext datum's.
+ *
+ *		Returns -1, 0 or 1.
+ * ----------
+ */
+int32
+lztext_cmp(lztext *lz1, lztext *lz2)
+{
+#ifdef USE_LOCALE
+
+	char   *cp1;
+	char   *cp2;
+	int		result;
+
+	if (lz1 == NULL || lz2 == NULL)
+		return (int32)0;
+
+	cp1 = lztextout(lz1);
+	cp2 = lztextout(lz2);
+
+	result = strcoll(cp1, cp2);
+
+	pfree(cp1);
+	pfree(cp2);
+
+	return result;
+
+#else /* !USE_LOCALE */
+
+	PGLZ_DecompState	ds1;
+	PGLZ_DecompState	ds2;
+	int					c1;
+	int					c2;
+	int32				result = (int32)0;
+
+	if (lz1 == NULL || lz2 == NULL)
+		return (int32)0;
+
+	pglz_decomp_init(&ds1, lz1);
+	pglz_decomp_init(&ds2, lz2);
+
+	for(;;)
+	{
+		c1 = pglz_decomp_getchar(&ds1);
+		c2 = pglz_decomp_getchar(&ds2);
+
+		if (c1 == EOF)
+		{
+			if (c2 != EOF)
+				result = (int32)-1;
+			break;
+		} else {
+			if (c2 == EOF)
+			{
+				result = (int32)1;
+			}
+		}
+		if (c1 != c2)
+		{
+			result = (int32)(c1 - c2);
+			break;
+		}
+	}
+
+	pglz_decomp_end(&ds1);
+	pglz_decomp_end(&ds2);
+
+	return result;
+
+#endif /* USE_LOCALE */
+}
+
+
+/* ----------
+ * lztext_eq ... -
+ *
+ *		=, !=, >, >=, < and <= operator functions for two
+ *		lztext datums.
+ * ----------
+ */
+bool
+lztext_eq(lztext *lz1, lztext *lz2)
+{
+	if (lz1 == NULL || lz2 == NULL)
+		return false;
+
+	return (bool)(lztext_cmp(lz1, lz2) == 0);
+}
+
+
+bool
+lztext_ne(lztext *lz1, lztext *lz2)
+{
+	if (lz1 == NULL || lz2 == NULL)
+		return false;
+
+	return (bool)(lztext_cmp(lz1, lz2) != 0);
+}
+
+
+bool
+lztext_gt(lztext *lz1, lztext *lz2)
+{
+	if (lz1 == NULL || lz2 == NULL)
+		return false;
+
+	return (bool)(lztext_cmp(lz1, lz2) > 0);
+}
+
+
+bool
+lztext_ge(lztext *lz1, lztext *lz2)
+{
+	if (lz1 == NULL || lz2 == NULL)
+		return false;
+
+	return (bool)(lztext_cmp(lz1, lz2) >= 0);
+}
+
+
+bool
+lztext_lt(lztext *lz1, lztext *lz2)
+{
+	if (lz1 == NULL || lz2 == NULL)
+		return false;
+
+	return (bool)(lztext_cmp(lz1, lz2) < 0);
+}
+
+
+bool
+lztext_le(lztext *lz1, lztext *lz2)
+{
+	if (lz1 == NULL || lz2 == NULL)
+		return false;
+
+	return (bool)(lztext_cmp(lz1, lz2) <= 0);
 }
 
 

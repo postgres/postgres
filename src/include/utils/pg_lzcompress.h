@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.h -
  *
- * $Header: /cvsroot/pgsql/src/include/utils/pg_lzcompress.h,v 1.2 1999/11/17 22:18:46 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/pg_lzcompress.h,v 1.3 1999/11/25 01:28:07 wieck Exp $
  *
  *	Definitions for the builtin LZ compressor
  * ----------
@@ -111,6 +111,26 @@ typedef struct PGLZ_Strategy {
 
 
 /* ----------
+ * PGLZ_DecompState -
+ *
+ *		Decompression state variable for byte-per-byte decompression
+ *		using pglz_decomp_getchar() macro.
+ * ----------
+ */
+typedef struct PGLZ_DecompState {
+	unsigned char	   *temp_buf;
+	unsigned char	   *cp_in;
+	unsigned char	   *cp_end;
+	unsigned char	   *cp_out;
+	unsigned char	   *cp_copy;
+	int					(*next_char)(struct PGLZ_DecompState *dstate);
+	int					tocopy;
+	int					ctrl_count;
+	unsigned char		ctrl;
+} PGLZ_DecompState;
+
+
+/* ----------
  * The standard strategies
  *
  *		PGLZ_strategy_default		Starts compression only if input is
@@ -140,6 +160,55 @@ extern PGLZ_Strategy	*PGLZ_strategy_never;
 
 
 /* ----------
+ * pglz_decomp_getchar -
+ *
+ *		Get next character (or EOF) from decompressor.
+ *		The status variable must be initialized before and deinitialized
+ *		after compression with the next two macros below.
+ * ----------
+ */
+#define pglz_decomp_getchar(_ds)											\
+	((*((_ds)->next_char))((_ds)))
+
+
+/* ----------
+ * pglz_decomp_init -
+ *
+ *		Initialize a decomp state from a compressed input.
+ * ----------
+ */
+#define pglz_decomp_init(_ds,_lz) {											\
+		(_ds)->cp_in		= ((unsigned char *)(_lz)) 						\
+											+ sizeof(PGLZ_Header);			\
+		(_ds)->cp_end		= (_ds)->cp_in + (_lz)->varsize 				\
+											- sizeof(PGLZ_Header);			\
+		if (PGLZ_IS_COMPRESSED((_lz))) {									\
+			(_ds)->temp_buf		= (unsigned char *)							\
+										palloc(PGLZ_RAW_SIZE((_lz)));		\
+			(_ds)->cp_out		= (_ds)->temp_buf;							\
+			(_ds)->next_char	= pglz_get_next_decomp_char_from_lzdata;	\
+			(_ds)->tocopy		= 0;										\
+			(_ds)->ctrl_count	= 0;										\
+		} else {															\
+			(_ds)->temp_buf		= NULL;										\
+			(_ds)->next_char	= pglz_get_next_decomp_char_from_plain;		\
+		}																	\
+	}
+
+
+/* ----------
+ * pglz_decomp_end -
+ *
+ *		Deallocate resources after decompression.
+ * ----------
+ */
+#define pglz_decomp_end(_ds) {												\
+		if ((_ds)->temp_buf != NULL)										\
+			pfree((void *)((_ds)->temp_buf));								\
+	}
+
+
+/* ----------
  * Global function declarations
  * ----------
  */
@@ -147,6 +216,14 @@ int	pglz_compress (char *source, int32 slen, PGLZ_Header *dest,
 									 PGLZ_Strategy *strategy);
 int pglz_decompress (PGLZ_Header *source, char *dest);
 
+
+/* ----------
+ * Functions used by pglz_decomp_getchar().
+ * Internal use only.
+ * ----------
+ */
+extern int pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate);
+extern int pglz_get_next_decomp_char_from_plain(PGLZ_DecompState *dstate);
 
 #endif /* _PG_LZCOMPRESS_H_ */
 

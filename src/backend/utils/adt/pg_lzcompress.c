@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.2 1999/11/17 22:18:45 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.3 1999/11/25 01:28:04 wieck Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -668,6 +668,170 @@ pglz_decompress (PGLZ_Header *source, char *dest)
 	 * ----------
 	 */
 	return (char *)bp - dest;
+}
+
+
+/* ----------
+ * pglz_get_next_decomp_char_from_lzdata -
+ *
+ *		Reads the next character from a decompression state if the
+ *		input data to pglz_decomp_init() was in compressed format.
+ * ----------
+ */
+int
+pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
+{
+	unsigned char		retval;
+
+	if (dstate->tocopy > 0)
+	{
+		/* ----------
+		 * Copy one byte from output to output until we did it
+		 * for the length specified by the last tag. Return that
+		 * byte.
+		 * ----------
+		 */
+		dstate->tocopy--;
+		return (*(dstate->cp_out++) = *(dstate->cp_copy++));
+	}
+
+	if (dstate->ctrl_count == 0)
+	{
+		/* ----------
+		 * Get the next control byte if we need to, but check
+		 * for EOF before.
+		 * ----------
+		 */
+		if (dstate->cp_in == dstate->cp_end)
+		{
+			return EOF;
+		}
+
+		/* ----------
+		 * This decompression method saves time only, if we stop near
+		 * the beginning of the data (maybe because we're called by a
+		 * comparision function and a difference occurs early). Otherwise,
+		 * all the checks, needed here, cause too much overhead.
+		 *
+		 * Thus we decompress the entire rest at once into the temporary
+		 * buffer and change the decomp state to return the prepared
+		 * data from the buffer by the more simple calls to
+		 * pglz_get_next_decomp_char_from_plain().
+		 * ----------
+		 */
+		if (dstate->cp_out - dstate->temp_buf >= 256)
+		{
+			unsigned char	   *cp_in		= dstate->cp_in;
+			unsigned char	   *cp_out		= dstate->cp_out;
+			unsigned char	   *cp_end		= dstate->cp_end;
+			unsigned char	   *cp_copy;
+			unsigned char		ctrl;
+			int					off;
+			int					len;
+			int					i;
+
+			while (cp_in < cp_end)
+			{
+				ctrl = *cp_in++;
+
+				for (i = 0; i < 8; i++)
+				{
+					if (cp_in == cp_end)
+						break;
+
+					if (ctrl & 0x01)
+					{
+						len = (cp_in[0] & 0x0f) + 3;
+						off = ((cp_in[0] & 0xf0) << 4) | cp_in[1];
+						cp_in += 2;
+						if (len == 18)
+							len += *cp_in++;
+
+						cp_copy = cp_out - off;
+						while(len--)
+							*cp_out++ = *cp_copy++;
+					} else {
+						*cp_out++ = *cp_in++;
+					}
+					ctrl >>= 1;
+				}
+			}
+
+			dstate->cp_in		= dstate->cp_out;
+			dstate->cp_end		= cp_out;
+			dstate->next_char	= pglz_get_next_decomp_char_from_plain;
+
+			return (int)(*(dstate->cp_in++));
+		}
+
+		/* ----------
+		 * Not yet, get next control byte into decomp state.
+		 * ----------
+		 */
+		dstate->ctrl = (unsigned char)(*(dstate->cp_in++));
+		dstate->ctrl_count = 8;
+	}
+
+	/* ----------
+	 * Check for EOF in tag/literal byte data.
+	 * ----------
+	 */
+	if (dstate->cp_in == dstate->cp_end)
+	{
+		return EOF;
+	}
+
+	/* ----------
+	 * Handle next control bit.
+	 * ----------
+	 */
+	dstate->ctrl_count--;
+	if (dstate->ctrl & 0x01)
+	{
+		/* ----------
+		 * Bit is set, so tag is following. Setup copy information
+		 * and do the copy for the first byte as above.
+		 * ----------
+		 */
+		int		off;
+
+		dstate->tocopy	= (dstate->cp_in[0] & 0x0f) + 3;
+		off				= ((dstate->cp_in[0] & 0xf0) << 4) | dstate->cp_in[1];
+		dstate->cp_in	+= 2;
+		if (dstate->tocopy == 18)
+			dstate->tocopy += *(dstate->cp_in++);
+		dstate->cp_copy = dstate->cp_out - off;
+
+		dstate->tocopy--;
+		retval = (*(dstate->cp_out++) = *(dstate->cp_copy++));
+	} else {
+		/* ----------
+		 * Bit is unset, so literal byte follows.
+		 * ----------
+		 */
+		retval = (int)(*(dstate->cp_out++) = *(dstate->cp_in++));
+	}
+	dstate->ctrl >>= 1;
+
+	return (int)retval;
+}
+
+
+/* ----------
+ * pglz_get_next_decomp_char_from_plain -
+ *
+ *		The input data to pglz_decomp_init() was stored in uncompressed
+ *		format. So we don't have a temporary output buffer and simply
+ *		return bytes from the input until EOF.
+ * ----------
+ */
+int
+pglz_get_next_decomp_char_from_plain(PGLZ_DecompState *dstate)
+{
+	if (dstate->cp_in >= dstate->cp_end)
+		return EOF;
+
+	return (int)(*(dstate->cp_in++));
 }
 
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.106 1999/11/17 21:21:50 wieck Exp $
+ * $Id: pg_proc.h,v 1.107 1999/11/25 01:28:05 wieck Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2359,6 +2359,20 @@ DATA(insert OID = 1634 ( lztextoctetlen	   		PGUID 11 f t t 1 f 23 "1625" 100 0 
 DESCR("octet length");
 DATA(insert OID = 1635 ( octet_length	   		PGUID 11 f t t 1 f 23 "1625" 100 0 1 0  lztextoctetlen - ));
 DESCR("octet length");
+DATA(insert OID = 1636 ( lztext_cmp	   			PGUID 11 f t t 2 f 23 "1625 1625" 100 0 1 0  lztext_cmp - ));
+DESCR("compare lztext vs. lztext");
+DATA(insert OID = 1637 ( lztext_eq	   			PGUID 11 f t t 2 f 16 "1625 1625" 100 0 1 0  lztext_eq - ));
+DESCR("equal");
+DATA(insert OID = 1638 ( lztext_ne	   			PGUID 11 f t t 2 f 16 "1625 1625" 100 0 1 0  lztext_ne - ));
+DESCR("not equal");
+DATA(insert OID = 1639 ( lztext_gt	   			PGUID 11 f t t 2 f 16 "1625 1625" 100 0 1 0  lztext_gt - ));
+DESCR("greater-than");
+DATA(insert OID = 1654 ( lztext_ge	   			PGUID 11 f t t 2 f 16 "1625 1625" 100 0 1 0  lztext_ge - ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 1655 ( lztext_lt	   			PGUID 11 f t t 2 f 16 "1625 1625" 100 0 1 0  lztext_lt - ));
+DESCR("lower-than");
+DATA(insert OID = 1656 ( lztext_le	   			PGUID 11 f t t 2 f 16 "1625 1625" 100 0 1 0  lztext_le - ));
+DESCR("lower-than-or-equal");
 
 
 /*
