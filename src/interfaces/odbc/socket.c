@@ -1,4 +1,3 @@
-
 /* Module:          socket.c
  *
  * Description:     This module contains functions for low level socket
@@ -78,7 +77,11 @@ SOCK_Destructor(SocketClass *self)
 {
 	if (self->socket != -1) {
 		if ( ! shutdown(self->socket, 2)) /* no sends or receives */
+		{
+			SOCK_put_char(self, 'X');
+			SOCK_flush_output(self);
 			closesocket(self->socket);
+		}
 	}
 
 	if (self->buffer_in)

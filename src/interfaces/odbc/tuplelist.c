@@ -1,4 +1,3 @@
-
 /* Module:          tuplelist.c
  *
  * Description:     This module contains functions for creating a manual result set

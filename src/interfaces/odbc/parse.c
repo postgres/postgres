@@ -1,4 +1,3 @@
-
 /* Module:          parse.c
  *
  * Description:     This module contains routines related to parsing SQL statements.

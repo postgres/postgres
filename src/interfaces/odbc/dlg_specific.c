@@ -1,4 +1,3 @@
-
 /* Module:          dlg_specific.c
  *
  * Description:     This module contains any specific code for handling

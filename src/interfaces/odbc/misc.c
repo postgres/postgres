@@ -1,4 +1,3 @@
-
 /* Module:          misc.c
  *
  * Description:     This module contains miscellaneous routines

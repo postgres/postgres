@@ -1,4 +1,3 @@
-
 /* Module:          psqlodbc.c
  *
  * Description:     This module contains the main entry point (DllMain) for the library.

@@ -1,4 +1,3 @@
-
 /* Module:          environ.c
  *
  * Description:     This module contains routines related to 

@@ -1,4 +1,3 @@
-
 /* Module:          setup.c
  *
  * Description:     This module contains the setup functions for 
