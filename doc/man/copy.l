@@ -1,14 +1,14 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/man/Attic/copy.l,v 1.2 1996/09/19 20:08:09 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/copy.l,v 1.3 1996/09/19 20:09:01 scrappy Exp $
 .TH COPY SQL 11/05/95 Postgres95 Postgres95
 .SH NAME
 copy \(em copy data to or from a class from or to a Unix file.
 .SH SYNOPSIS
 .nf
-\fBcopy\fP [\fBbinary\fP] classname 
+\fBcopy\fP [\fBbinary\fP] classname [\fBwith oids\fP]
 	\fBto\fP|\fBfrom\fP "filename"|\fBstdin\fR|\fBstdout\fR
-	[\fBUSING DELIMITERS\fP delim]
+	[\fBusing delimiters\fP delim]
 .fi
 .SH DESCRIPTION
 .BR Copy
@@ -16,6 +16,11 @@ moves data between Postgres classes and standard Unix files.  The
 keyword
 .BR binary
 changes the behavior of field formatting, as described below.
+.IR Classname
+is the name of an existing class.
+The keyword
+.BR "with oids"
+copies the internal unique object id (OID) for each row.
 .IR Classname
 is the name of an existing class.
 .IR Filename
@@ -26,7 +31,9 @@ can be used so that input to
 .BR copy
 can be written by a Libpq application and output from the
 .BR copy
-command can be read by a Libpq application.  The
+command can be read by a Libpq application.
+.PP
+The
 .BR binary
 keyword will force all data to be stored/read as binary objects rather
 than as ASCII text.  It is somewhat faster than the normal
@@ -34,16 +41,19 @@ than as ASCII text.  It is somewhat faster than the normal
 command, but is not generally portable, and the files generated are
 somewhat larger, although this factor is highly dependent on the data
 itself.
-.PP
-By default,
+When copying in, the
+.BR "with oids"
+keyword should only be used on an empty database because
+the loaded oids could conflict with existing oids.
+By default, a ASCII
 .BR copy
 uses a tab (\\t) character as a delimiter.  The delimiter may also be changed
 to any other single-character with the use of 
-.BR "USING DELIMITERS" .
+.BR "using delimiters" .
 Characters in data fields which happen to match the delimiter character
 will be quoted.
 .PP
-You must have read access on any class whose values are read by the 
+You must have read access on any class whose values are read by the
 .BR copy
 command, and either write or append access to a class to which values
 are being appended by the
@@ -69,6 +79,7 @@ The actual format for each instance is
 .nf
 <attr1><tab><attr2><tab>...<tab><attrn><newline>
 .fi
+The oid is placed on the beginning of the line if specified.
 .PP
 If 
 .BR copy
@@ -111,12 +122,16 @@ this format must be followed
 Unsigned four-byte integer quantities are called uint32 in the below
 description.
 .nf
-uint32 totallength (not including itself),
-uint32 number of null attributes
-[uint32 attribute number of first null attribute
- ...
- uint32 attribute number of nth null attribute],
-<data>
+The first value is:
+	uint32 number of tuples
+then for each tuple:
+	uint32 total length of data segment
+	uint32 oid (if specified)
+	uint32 number of null attributes
+	[uint32 attribute number of first null attribute
+	 ...
+	 uint32 attribute number of nth null attribute],
+	<data segment>
 .fi
 .bp
 .SS "ALIGNMENT OF BINARY DATA"

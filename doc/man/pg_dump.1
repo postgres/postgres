@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/man/Attic/pg_dump.1,v 1.1.1.1 1996/08/18 22:14:26 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/pg_dump.1,v 1.2 1996/09/19 20:09:02 scrappy Exp $
 .TH PG_DUMP UNIX 1/20/96 Postgres95 Postgres95
 .SH NAME
 pg_dump \(em dumps out a Postgres database into a script file
@@ -21,8 +21,20 @@ port]
 .BR "-v"
 ]
 [\c
+.BR "-d[a]"
+]
+[\c
 .BR "-S"
 help]
+[\c
+.BR "-a"
+]
+[\c
+.BR "-t"
+table]
+[\c
+.BR "-o"
+]
 dbname
 .in -5n
 .SH DESCRIPTION
