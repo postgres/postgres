@@ -1,12 +1,12 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.27 2001/11/03 21:42:47 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.28 2001/11/08 23:44:01 petere Exp $
  -->
 
 <chapter id="catalogs">
  <title>System Catalogs</title>
 
- <section id="catalogs-overview">
+ <sect1 id="catalogs-overview">
   <title>Overview</title>
 
   <para>
@@ -165,10 +165,10 @@
    <citetitle>Programmer's Guide</citetitle>.
   </para>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-aggregate">
+ <sect1 id="catalog-pg-aggregate">
   <title>pg_aggregate</title>
 
   <para>
@@ -264,10 +264,10 @@
    are the composite primary key.
   </para>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-attrdef">
+ <sect1 id="catalog-pg-attrdef">
   <title>pg_attrdef</title>
 
   <para>
@@ -323,10 +323,10 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-attribute">
+ <sect1 id="catalog-pg-attribute">
   <title>pg_attribute</title>
 
   <para>
@@ -526,10 +526,10 @@
     </tbody>
    </tgroup>
   </table>
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-class">
+ <sect1 id="catalog-pg-class">
   <title>pg_class</title>
 
   <para>
@@ -768,10 +768,10 @@
     </tbody>
    </tgroup>
   </table>
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-database">
+ <sect1 id="catalog-pg-database">
   <title>pg_database</title>
 
   <para>
@@ -892,10 +892,10 @@
     </tbody>
    </tgroup>
   </table>
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-description">
+ <sect1 id="catalog-pg-description">
   <title>pg_description</title>
 
   <para>
@@ -955,10 +955,10 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-group">
+ <sect1 id="catalog-pg-group">
   <title>pg_group</title>
 
   <para>
@@ -1014,10 +1014,10 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-index">
+ <sect1 id="catalog-pg-index">
   <title>pg_index</title>
 
   <para>
@@ -1125,10 +1125,10 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-inherits">
+ <sect1 id="catalog-pg-inherits">
   <title>pg_inherits</title>
 
   <para>
@@ -1185,10 +1185,10 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-language">
+ <sect1 id="catalog-pg-language">
   <title>pg_language</title>
 
   <para>
@@ -1265,10 +1265,10 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-largeobject">
+ <sect1 id="catalog-pg-largeobject">
   <title>pg_largeobject</title>
 
   <para>
@@ -1332,10 +1332,10 @@
    Missing regions within a large object read as zeroes.
   </para>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-listener">
+ <sect1 id="catalog-pg-listener">
   <title>pg_listener</title>
 
   <para>
@@ -1391,10 +1391,10 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-operator">
+ <sect1 id="catalog-pg-operator">
   <title>pg_operator</title>
 
   <para>
@@ -1541,10 +1541,10 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-proc">
+ <sect1 id="catalog-pg-proc">
   <title>pg_proc</title>
 
   <para>
@@ -1715,10 +1715,10 @@
   function.
   </para>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-relcheck">
+ <sect1 id="catalog-pg-relcheck">
   <title>pg_relcheck</title>
 
   <para>
@@ -1780,10 +1780,10 @@
    </para>
   </note>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-rewrite">
+ <sect1 id="catalog-pg-rewrite">
   <title>pg_rewrite</title>
 
   <para>
@@ -1867,10 +1867,10 @@
    </para>
   </note>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-shadow">
+ <sect1 id="catalog-pg-shadow">
   <title>pg_shadow</title>
 
   <para>
@@ -1970,10 +1970,10 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-statistic">
+ <sect1 id="catalog-pg-statistic">
   <title>pg_statistic</title>
 
   <para>
@@ -2108,10 +2108,10 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-trigger">
+ <sect1 id="catalog-pg-trigger">
   <title>pg_trigger</title>
 
   <para>
@@ -2236,10 +2236,10 @@
    </para>
   </note>
 
- </section>
+ </sect1>
 
 
- <section id="catalog-pg-type">
+ <sect1 id="catalog-pg-type">
   <title>pg_type</title>
 
   <para>
@@ -2494,6 +2494,6 @@
    </tgroup>
   </table>
 
- </section>
+ </sect1>
 
 </chapter>
