@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.36 2001/01/22 00:50:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.37 2001/02/09 00:14:26 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1993,7 +1993,6 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 	switch (exec_res)
 	{
 		case SPI_OK_SELECT:
-		case SPI_OK_SELINTO:
 		case SPI_OK_INSERT:
 		case SPI_OK_UPDATE:
 		case SPI_OK_DELETE:
@@ -2004,6 +2003,16 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 			/* Also allow a zero return, which implies the querystring
 			 * contained no commands.
 			 */
+			break;
+
+		case SPI_OK_SELINTO:
+			/*
+			 * Disallow this for now, because its behavior is not consistent
+			 * with SELECT INTO in a normal plpgsql context.  We need to
+			 * reimplement EXECUTE to parse the string as a plpgsql command,
+			 * not just feed it to SPI_exec.
+			 */
+			elog(ERROR, "EXECUTE of SELECT ... INTO is not implemented yet");
 			break;
 
 		default:
