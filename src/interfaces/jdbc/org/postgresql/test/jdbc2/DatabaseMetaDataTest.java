@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.5 2002/04/16 15:25:17 davec Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.6 2002/05/30 16:26:55 davec Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -32,7 +32,7 @@ public class DatabaseMetaDataTest extends TestCase
 	protected void tearDown() throws Exception
 	{
 		JDBC2Tests.dropTable( con, "testmetadata" );
-		
+
 		JDBC2Tests.closeDB( con );
 	}
 	/*
@@ -51,23 +51,23 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
 
 			rs.close();
-			
+
 			rs = dbmd.getColumns("", "", "test%", "%" );
 			assertTrue( rs.next() );
 			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
 			assertTrue( rs.getString("COLUMN_NAME").equals("id") );
 			assertTrue( rs.getInt("DATA_TYPE") == java.sql.Types.INTEGER );
-			
+
 			assertTrue( rs.next() );
 			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
 			assertTrue( rs.getString("COLUMN_NAME").equals("name") );
 			assertTrue( rs.getInt("DATA_TYPE") == java.sql.Types.VARCHAR );
-				
+
 			assertTrue( rs.next() );
 			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
 			assertTrue( rs.getString("COLUMN_NAME").equals("updated") );
 			assertTrue( rs.getInt("DATA_TYPE") == java.sql.Types.TIMESTAMP );
-			
+
 		}
 		catch (SQLException ex)
 		{
@@ -228,6 +228,75 @@ public class DatabaseMetaDataTest extends TestCase
 		}
 	}
 
+  public void testForeignKeys()
+  {
+		try
+		{
+		  Connection con1 = JDBC2Tests.openDB();
+		  JDBC2Tests.createTable( con1, "people", "id int4 primary key, name text" );
+		  JDBC2Tests.createTable( con1, "policy", "id int4 primary key, name text" );
+		  JDBC2Tests.createTable( con1, "users", "id int4 primary key, people_id int4, policy_id int4,"+
+                                    "CONSTRAINT people FOREIGN KEY (people_id) references people(id),"+
+                                    "constraint policy FOREIGN KEY (policy_id) references policy(id)" );
+
+
+			DatabaseMetaData dbmd = con.getMetaData();
+			assertNotNull(dbmd);
+
+      ResultSet rs = dbmd.getImportedKeys(null, "", "users" );
+      int j = 0;
+      for (; rs.next(); j++ )
+      {
+
+         String pkTableName = rs.getString( "PKTABLE_NAME" );
+         assertTrue (  pkTableName.equals("people") || pkTableName.equals("policy")  );
+
+         String pkColumnName = rs.getString( "PKCOLUMN_NAME" );
+         assertTrue( pkColumnName.equals("id") );
+
+         String fkTableName = rs.getString( "FKTABLE_NAME" );
+         assertTrue( fkTableName.equals( "users" ) );
+
+         String fkColumnName = rs.getString( "FKCOLUMN_NAME" );
+         assertTrue( fkColumnName.equals( "people_id" ) || fkColumnName.equals( "policy_id" ) ) ;
+
+         String fkName = rs.getString( "FK_NAME" );
+         assertTrue( fkName.equals( "people") || fkName.equals( "policy" ) );
+
+         String pkName = rs.getString( "PK_NAME" );
+
+      }
+
+      assertTrue ( j== 2 );
+
+      rs = dbmd.getExportedKeys( null, "", "people" );
+
+      // this is hacky, but it will serve the purpose
+      assertTrue ( rs.next() );
+
+      for (int i = 0; i < 14 ; i++ )
+      {
+        assertTrue( rs.getString( "PKTABLE_NAME" ).equals( "people" ) );
+        assertTrue( rs.getString( "PKCOLUMN_NAME" ).equals( "id" ) );
+
+        assertTrue( rs.getString( "FKTABLE_NAME" ).equals( "users" ) );
+        assertTrue( rs.getString( "FKCOLUMN_NAME" ).equals( "people_id" ) );
+
+        assertTrue( rs.getString( "FK_NAME" ).equals( "people" ) );
+
+      }
+
+
+      JDBC2Tests.dropTable( con1, "users" );
+      JDBC2Tests.dropTable( con1, "people" );
+      JDBC2Tests.dropTable( con1, "policy" );
+
+		}
+		catch (SQLException ex)
+		{
+			fail(ex.getMessage());
+		}
+  }
 	public void testTables()
 	{
 		try

@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: MiscTest.java,v 1.4 2001/11/19 22:33:39 momjian Exp $
+ * $Id: MiscTest.java,v 1.5 2002/05/30 16:26:55 davec Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -49,6 +49,31 @@ public class MiscTest extends TestCase
 		catch (Exception ex)
 		{
 			fail(ex.getMessage());
+		}
+	}
+
+	public void xtestLocking()
+	{
+
+		System.out.println("testing lock");
+		try
+		{
+			Connection con = JDBC2Tests.openDB();
+			Connection con2 = JDBC2Tests.openDB();
+
+			JDBC2Tests.createTable(con, "test_lock", "name text");
+			Statement st = con.createStatement();
+			Statement st2 = con2.createStatement();
+			con.setAutoCommit(false);
+			st.execute("lock table test_lock");
+			st2.executeUpdate( "insert into test_lock ( name ) values ('hello')" );
+ 			con.commit();
+			JDBC2Tests.dropTable(con, "test_lock");
+			con.close();
+		}
+		catch ( Exception ex )
+		{
+			fail( ex.getMessage() );
 		}
 	}
 }
