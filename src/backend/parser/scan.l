@@ -2,14 +2,14 @@
 /*-------------------------------------------------------------------------
  *
  * scan.l
- *	  lexical scanner for POSTGRES
+ *	  lexical scanner for PostgreSQL
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.86 2001/02/03 20:13:05 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.87 2001/02/21 18:53:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -477,12 +477,27 @@ other			.
 
 
 {identifier}	{
-					int i;
-					ScanKeyword		*keyword;
+					ScanKeyword	   *keyword;
+					int				i;
 
-					for(i = 0; yytext[i]; i++)
+					/* Is it a keyword? */
+					keyword = ScanKeywordLookup((char*) yytext);
+					if (keyword != NULL)
+						return keyword->value;
+
+					/*
+					 * No.  Convert the identifier to lower case, and truncate
+					 * if necessary.
+					 *
+					 * Note: here we use a locale-dependent case conversion,
+					 * which seems appropriate under SQL99 rules, whereas
+					 * the keyword comparison was NOT locale-dependent.
+					 */
+					for (i = 0; yytext[i]; i++)
+					{
 						if (isupper((unsigned char) yytext[i]))
 							yytext[i] = tolower((unsigned char) yytext[i]);
+					}
 					if (i >= NAMEDATALEN)
                     {
 #ifdef MULTIBYTE
@@ -497,15 +512,8 @@ other			.
 						yytext[NAMEDATALEN-1] = '\0';
 #endif
                     }
-					keyword = ScanKeywordLookup((char*)yytext);
-					if (keyword != NULL) {
-						return keyword->value;
-					}
-					else
-					{
-						yylval.str = pstrdup((char*)yytext);
-						return IDENT;
-					}
+					yylval.str = pstrdup((char*) yytext);
+					return IDENT;
 				}
 
 {other}			{ return yytext[0]; }

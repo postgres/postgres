@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * keywords.c
- *	  lexical token lookup for reserved words in postgres SQL
+ *	  lexical token lookup for reserved words in PostgreSQL
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.37 2001/02/10 02:31:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.38 2001/02/21 18:53:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "extern.h"
 #include "preproc.h"
+
 
 /*
  * List of (keyword-name, keyword-token-value) pairs.
@@ -36,7 +37,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"aggregate", AGGREGATE},
 	{"all", ALL},
 	{"alter", ALTER},
-	{"analyse", ANALYSE},
+	{"analyse", ANALYSE}, /* British spelling */
 	{"analyze", ANALYZE},
 	{"and", AND},
 	{"any", ANY},
@@ -58,7 +59,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"chain", CHAIN},
 	{"char", CHAR},
 	{"character", CHARACTER},
-	{"characteristics", CHARACTERISTICS},     
+	{"characteristics", CHARACTERISTICS},
 	{"check", CHECK},
 	{"checkpoint", CHECKPOINT},
 	{"close", CLOSE},
@@ -133,7 +134,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"inherits", INHERITS},
 	{"initially", INITIALLY},
 	{"inner", INNER_P},
-	{"inout", INOUT},    
+	{"inout", INOUT},
 	{"insensitive", INSENSITIVE},
 	{"insert", INSERT},
 	{"instead", INSTEAD},
@@ -182,7 +183,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"nullif", NULLIF},
 	{"numeric", NUMERIC},
 	{"of", OF},
-	{"off", OFF}, 
+	{"off", OFF},
 	{"offset", OFFSET},
 	{"oids", OIDS},
 	{"old", OLD},
@@ -192,13 +193,13 @@ static ScanKeyword ScanKeywords[] = {
 	{"option", OPTION},
 	{"or", OR},
 	{"order", ORDER},
-	{"out", OUT},   
+	{"out", OUT},
 	{"outer", OUTER_P},
 	{"overlaps", OVERLAPS},
 	{"owner", OWNER},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
-	{"path", PATH_P}, 
+	{"path", PATH_P},
 	{"pendant", PENDANT},
 	{"position", POSITION},
 	{"precision", PRECISION},
@@ -221,14 +222,14 @@ static ScanKeyword ScanKeywords[] = {
 	{"rollback", ROLLBACK},
 	{"row", ROW},
 	{"rule", RULE},
-	{"schema", SCHEMA},  
+	{"schema", SCHEMA},
 	{"scroll", SCROLL},
 	{"second", SECOND_P},
 	{"select", SELECT},
 	{"sequence", SEQUENCE},
 	{"serial", SERIAL},
 	{"serializable", SERIALIZABLE},
-	{"session", SESSION},   
+	{"session", SESSION},
 	{"session_user", SESSION_USER},
 	{"set", SET},
 	{"setof", SETOF},
@@ -251,7 +252,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"timezone_hour", TIMEZONE_HOUR},
 	{"timezone_minute", TIMEZONE_MINUTE},
 	{"to", TO},
-	{"toast", TOAST},    
+	{"toast", TOAST},
 	{"trailing", TRAILING},
 	{"transaction", TRANSACTION},
 	{"trigger", TRIGGER},
@@ -284,18 +285,62 @@ static ScanKeyword ScanKeywords[] = {
 	{"zone", ZONE},
 };
 
+/*
+ * ScanKeywordLookup - see if a given word is a keyword
+ *
+ * Returns a pointer to the ScanKeyword table entry, or NULL if no match.
+ *
+ * The match is done case-insensitively.  Note that we deliberately use a
+ * dumbed-down case conversion that will only translate 'A'-'Z' into 'a'-'z',
+ * even if we are in a locale where tolower() would produce more or different
+ * translations.  This is to conform to the SQL99 spec, which says that
+ * keywords are to be matched in this way even though non-keyword identifiers
+ * receive a different case-normalization mapping.
+ */
 ScanKeyword *
 ScanKeywordLookup(char *text)
 {
-	ScanKeyword *low = &ScanKeywords[0];
-	ScanKeyword *high = endof(ScanKeywords) - 1;
-	ScanKeyword *middle;
-	int			difference;
+	int			len,
+				i;
+	char		word[NAMEDATALEN];
+	ScanKeyword *low;
+	ScanKeyword *high;
 
+	len = strlen(text);
+	/* We assume all keywords are shorter than NAMEDATALEN. */
+	if (len >= NAMEDATALEN)
+		return NULL;
+
+	/*
+	 * Apply an ASCII-only downcasing.  We must not use tolower() since
+	 * it may produce the wrong translation in some locales (eg, Turkish),
+	 * and we don't trust isupper() very much either.  In an ASCII-based
+	 * encoding the tests against A and Z are sufficient, but we also check
+	 * isupper() so that we will work correctly under EBCDIC.  The actual
+	 * case conversion step should work for either ASCII or EBCDIC.
+	 */
+	for (i = 0; i < len; i++)
+	{
+		char	ch = text[i];
+
+		if (ch >= 'A' && ch <= 'Z' && isupper((unsigned char) ch))
+			ch += 'a' - 'A';
+		word[i] = ch;
+	}
+	word[len] = '\0';
+
+	/*
+	 * Now do a binary search using plain strcmp() comparison.
+	 */
+	low = &ScanKeywords[0];
+	high = endof(ScanKeywords) - 1;
 	while (low <= high)
 	{
+		ScanKeyword *middle;
+		int			difference;
+
 		middle = low + (high - low) / 2;
-		difference = strcmp(middle->name, text);
+		difference = strcmp(middle->name, word);
 		if (difference == 0)
 			return middle;
 		else if (difference < 0)

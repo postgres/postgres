@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.72 2001/02/14 21:35:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.73 2001/02/21 18:53:47 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2563,8 +2563,8 @@ quote_identifier(char *ident)
 		 * but the parser doesn't provide any easy way to test for whether
 		 * an identifier is safe or not... so be safe not sorry.
 		 *
-		 * Note: ScanKeywordLookup() expects an all-lower-case input, but
-		 * we've already checked we have that.
+		 * Note: ScanKeywordLookup() does case-insensitive comparison,
+		 * but that's fine, since we already know we have all-lower-case.
 		 */
 		if (ScanKeywordLookup(ident) != NULL)
 			safe = false;

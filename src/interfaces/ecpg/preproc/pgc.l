@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.76 2001/02/10 02:31:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.77 2001/02/21 18:53:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,73 +527,52 @@ cppline			{space}*#(.*\\{line_end})*.*
 					return(CVARIABLE);
 			}
 <SQL>{identifier}	{
-					int i;
-					ScanKeyword		*keyword;
-					char lower_text[NAMEDATALEN];
+					ScanKeyword	   *keyword;
+					struct _defines *ptr;
 
-					/* this should leave the last byte set to '\0' */
-					strncpy(lower_text, yytext, NAMEDATALEN-1);
-					for(i = 0; lower_text[i]; i++)
-						if (isupper((unsigned char) lower_text[i]))
-							lower_text[i] = tolower((unsigned char) lower_text[i]);
-
-					if (i >= NAMEDATALEN)
-					{
-#ifdef MULTIBYTE_NOTUSED
-                                                int len;
-
-	                                        len = pg_mbcliplen(lower_text,strlen(lower_text),NAMEDATALEN-1);
-						sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
-                                                        lower_text, len, lower_text);
-	                                        lower_text[len] = '\0';
-#else
-						sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
-                                                        lower_text, NAMEDATALEN-1, lower_text);
-                                                lower_text[NAMEDATALEN-1] = '\0';
-#endif
- 						mmerror(ET_NOTICE, errortext);
-                                                yytext[NAMEDATALEN-1] = '\0';
-					}
-
-					keyword = ScanKeywordLookup((char*)lower_text);
-					if (keyword != NULL) {
+					/* Is it an SQL keyword? */
+					keyword = ScanKeywordLookup((char*) yytext);
+					if (keyword != NULL)
 						return keyword->value;
-					}
-					else
+
+					/* Is it an ECPG keyword? */
+					keyword = ScanECPGKeywordLookup((char*) yytext);
+					if (keyword != NULL)
+						return keyword->value;
+
+					/* How about a DEFINE? */
+					for (ptr = defines; ptr; ptr = ptr->next)
 					{
-						keyword = ScanECPGKeywordLookup((char*)lower_text);
-						if (keyword != NULL) {
-							return keyword->value;
-						}
-						else
+						if (strcmp(yytext, ptr->old) == 0)
 						{
-							struct _defines *ptr;
+							struct _yy_buffer *yb;
 
-							for (ptr = defines; ptr; ptr = ptr->next)
-							{
-								if (strcmp(yytext, ptr->old) == 0)
-								{
-									struct _yy_buffer *yb;
+							yb = mm_alloc(sizeof(struct _yy_buffer));
 
-									yb = mm_alloc(sizeof(struct _yy_buffer));
+							yb->buffer =  YY_CURRENT_BUFFER;
+							yb->lineno = yylineno;
+							yb->filename = mm_strdup(input_filename);
+							yb->next = yy_buffer;
 
-						                        yb->buffer =  YY_CURRENT_BUFFER;
-						                        yb->lineno = yylineno;
-						                        yb->filename = mm_strdup(input_filename);
-						                        yb->next = yy_buffer;
+							yy_buffer = yb;
 
-						                        yy_buffer = yb;
-
- 									yy_scan_string(ptr->new);
-									break;
-								}
-							}
-							if (ptr == NULL) 
-							{
-								yylval.str = mm_strdup((char*)yytext);
-								return IDENT;
-							}
+							yy_scan_string(ptr->new);
+							break;
 						}
+					}
+
+					/*
+					 * None of the above.  Return it as an identifier.
+					 *
+					 * The backend would attempt to truncate and case-fold
+					 * the identifier, but I see no good reason for ecpg
+					 * to do so; that's just another way that ecpg could get
+					 * out of step with the backend.
+					 */
+					if (ptr == NULL) 
+					{
+						yylval.str = mm_strdup((char*) yytext);
+						return IDENT;
 					}
 				}
 <SQL>{other}			{ return yytext[0]; }
