@@ -1,734 +1,574 @@
-
-  PostgreSQL için Sýkça Sorulan Sorular (SSS)
-
-Son güncelleme : 26 Temmuz 2003 Cumartesi - 18:32:11
-
-Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us
-<mailto:pgman@candle.pha.pa.us>)
-
-Çevirenler : Devrim Gündüz (devrim@gunduz.org <mailto:devrim@gunduz.org>)
-Nicholas Morris Tufar (ntufar@yahoo.com <mailto:ntufar@yahoo.com>)
-Volkan Yazýcý (volkany@celiknet.com <mailto:volkany@celiknet.com>)
-
-Bu belgenin en güncel hali,
-http://www.PostgreSQL.org/docs/faqs/FAQ_turkish.html
-<http://www.postgresql.org/docs/faqs/FAQ_turkish.html> ve
-http://www.gunduz.org/seminer/pg/FAQ_turkish adreslerinde görülebilir.
-
-Platforma özel sorularýnýz, http://www.PostgreSQL.org/docs/index.html
-<http://www.postgresql.org/docs/index.html> adresinde yanýtlanýr.
-
-------------------------------------------------------------------------
-
-
-    Genel Sorular
-
-1.1 <#1.1>) PostgreSQL nedir? Nasýl okunur?
-1.2 <#1.2>) PostgreSQL' in haklarý nedir?
-1.3 <#1.3>) PostgreSQL, hangi Unix platformlarýnda çalýsýr?
-1.4 <#1.4>) Hangi Unix olmayan uyarlamalarý bulunmaktadýr?
-1.5 <#1.5>) PostgreSQL'i nereden indirebilirim?
-1.6 <#1.6>) Desteði nereden alabilirim?
-1.7 <#1.7>) En son sürümü nedir?
-1.8 <#1.8>) Hangi belgelere ulaþabilirim?
-1.9 <#1.9>) Bilinen hatalar ya da eksik özelliklere nereden ulasabilirim?
-1.10 <#1.10>) Nasýl SQL öðrenebilirim?
-1.11 <#1.11>) PostgreSQL 2000 yýlýna uyumlu mudur?
-1.12 <#1.12>) Geliþtirme takýmýna nasýl katýlabilirim??
-1.13 <#1.13>) Bir hata raporunu nasýl gönderebilirim?
-1.14 <#1.14>) PostgreSQL, diðer VTYS(DBMS) lerle nasýl karþýlaþtýrýlabilir?
-1.15 <#1.15>) PostgreSQL'e maddi açýdan nasýl destek olabilirim?
-
-
-    Kullanýcý/istemci Sorularý
-
-2.1 <#2.1>) PostgreSQL için ODBC sürücüleri var mý ?
-2.2 <#2.2>) PostgreSQL'i web sayfalarýnda kullanabilmek için hangi
-araçlar bulunmaktadýr ?
-2.3 <#2.3>) PostgreSQL'in grafik kullanýcý arabirimi var mýdýr?
-2.4 <#2.4>) PostgreSQL ile iletiþimi kurabilmek için hangi dilleri
-kullanabilirim?
-
-
-    Yönetimsel Sorular
-
-3.1 <#3.1>) PostgreSQL'i //usr/local/pgsql/ dizininden baþka dizinlere
-nasýl kurabilirim??
-3.2 <#3.2>) /Postmaster/'ý baþlattýðýmda /Bad System Call/ ya da core
-dumped mesajý alýyorum. Neden?
-3.3 <#3.3>) /Postmaster/'ý baþlattýðýmda, /IpcMemoryCreate/ hatasý
-alýyorum. Neden?
-3.4 <#3.4>) /Postmaster/, baþlattýðýmda, /IpcSemaphoreCreate hatasý/
-alýyorum. Neden?
-3.5 <#3.5>) Diðer bilgisayarlarýn benim PostgreSQL veritabaný sunucuma
-baðlantýlarýný nasýl kontrol edebilirim?
-3.6 <#3.6>) Veritabaný motorunu daha iyi baþarým icin nasýl ayarlayabilirim?
-3.7 <#3.7>) Hangi hata ayýklama özellikleri bulunmaktadýr?
-3.8 <#3.8>) Baðlanmaya çalýþýrken, neden "/Sorry, too many clients/"
-hatasýný alýyorum?
-3.9 <#3.9>) /pgsql_tmp/dizinin içindeki dosyalar nelerdir?
-3.10 <#3.10>) PostgreSQL sürümlerini yükselmek için neden bir
-dump/reload iþlemi gerçekleþtirmek zorundayým?
-
-
-    Ýþletimsel Sorular
-
-4.1 <#4.1>) Binary cursor ve normal cursor arasýndaki fark nedýr?
-4.2 <#4.2>)Sorgunun sadece ilk birkaç satýrýný nasýl SELECT edebilirim?
-4.3 <#4.3>) /psql/'in içinde gördügüm tablolarin ya da diðer þeylerin
-listesini nasýl alabilirim?
-4.4 <#4.4>)Bir tablodan bir kolonu nasýl kaldýrabilirim?
-4.5 <#4.5>)Bir satýr, tablo ve veritabaný icin en fazla büyüklük nedir?
-4.6 <#4.6>) Tipik bir metin dosyasýndaki veriyi saklamak için ne kadar
-disk alaný gereklidir?
-4.7 <#4.7>) Veritabanýnda hangi tablo ya da indexlerin tanýmlandýgýný
-nasil görebilirim?
-4.8 <#4.8>) Sorgularým cok yavas, ya da indexlerimi kullanmiyorlar. Neden?
-4.9 <#4.9>) Query-optimizer in sorgularýmý nasýl deðerlendirdigini,
-iþleme soktuðunu nasýl görebilirim?
-4.10 <#4.10>) R-tree index nedir?
-4.11 <#4.11>) Genetic Query Optimizer nedir?
-4.12 <#4.12>) Düzenli ifade (Regular Expression) aramalarýný ve
-büyük/küçük harfe duyarsýz aramalarý nasil yapabilirim? Bu büyük(küçük
-harfe duyarlý aramalar için indeksi nasil kullanabilirim?
-4.13 <#4.13>) Bir sorguda, bir alanýn NULL olduðunu nasýl ortaya
-çýkarabilirim?
-4.14 <#4.14>) Çesitli karakter tipleri arasýndaki farklar nelerdir?
-4.15.1 <#4.15.1>) Nasýl serial/otomatik artan(auto-incrementing) bir
-alan yaratabilirim?
-4.15.2 <#4.15.2>) Serial giriþinin deðerini nasýl alabilirim?
-4.15.3 <#4.15.3>) /currval()/ ve /nextval()/ diðer kullanýcýlara sorun
-yaratmaz mý?>
-4.15.4 <#4.15.4>) Neden sequence sayýlarýn transaction iþleminin
-iptalinden sonra yeniden kullanýlýyor? Neden sequence/SERIAL kolonumdaki
-sayýlarda atlamalar oluyor?
-4.16 <#4.16>) OID nedir? TID nedir?
-4.17 <#4.17>) PostgreSQL' de kullanýlan bazý terimlerin anlamlarý nelerdi?
-4.18 <#4.18>) Neden /"ERROR: Memory exhausted in AllocSetAlloc()"/
-hatasýný alýyorum?
-4.19 <#4.19>) Hangi PostgreSQL sürümünü çalýstýrdýðýmý nasýl görebilirim??
-4.20 <#4.20>) Neden large-object iþlemlerim, /"invalid large obj
-descriptor"/ hatasýný veriyor?
-4.21 <#4.21>) Þu andaki zamaný öntanýmlý deðer olarak kabul eden kolonu
-nasýl yaratýrým?
-4.22 <#4.22>) Neden |IN| kullanan subquerylerim çok yavaþ?
-4.23 <#4.23>) Outer join iþlemini nasýl yapabilirim?
-4.24 <#4.24>) Ayný anda birden fazla veritabanýnda nasýl iþlem yapabilirim?
-4.25 <#4.25>) Bir fonksiyondan nasýl çoklu satýr ya da kolon
-döndürebilirim??
-4.26 <#4.26>) Neden Pl/PgSQL fonksiyonlarý içinden güvenli bir þekilde
-tablo yaratma/kaldýrma iþlemlerini yapamýyoruz?
-4.27 <#4.27>) Hangi replikasyon seçenekleri bulunmaktadýr?
-4.28"D <#4.28>) Hangi þifreleme seçenekleri bulunmaktadýr?
-
-
-    PostgreSQL Özelliklerini Geniþletmek
-
-5.1 <#5.1>) Kullanýcý-tanýmlý bir fonksiyon yazdým. /psql/'de
-çalýþtýrdýðým zaman neden core dump ediyor?
-5.2 <#5.2>) PostgreSQL'e nasýl yeni veri tipleri/fonksiyonlar ekleyebilirim?
-5.3 <#5.3>) Bir tuple döndürmek için bir C fonksiyonunu nasýl yazarým?
-5.4 <#5.4>) Bir kaynak dosyasýnda deðisiklik yaptým. Yeniden derlememe
-raðmen deðiþiklik geçerli olmuyor. Neden??
-------------------------------------------------------------------------
-
-
-    Genel Sorular
-
-
-        1.1) PostgreSQL nedir? Nasýl okunur?
-
-PostgreSQL, /Post-Gres-Q-L/. olarak okunur
-
-PostgreSQL, yeni-nesil VTYS araþtýrma prototipi olan POSTGRES veritabaný
-yönetim sisteminin geliþtirilmesidir. POSTGRES' in zengin veri tiplerini
-ve güçlü veri modelini tutarken, SQL'in geliþtirilmis alt kümesi olan
-PostQuel dilini kullanýr. PostgreSQL ücretsizdir ve kaynak kodu açýk
-daðýtýlýr.
-
-PostgreSQL, PostgreSQL geliþtirme listesine üye olan bir Internet
-geliþtirici takýmý tarafýndan geliþtirilir. Þu andaki koordinatör, Marc
-G. Fournier (scrappy@PostgreSQL.org <mailto:scrappy@PostgreSQL.org>).
-(Bu takýma nasýl katýlacagýnýzý öðrenmek için 1.6 <#1.6> numaralý
-maddeyi okuyunuz.) Bu takým, tüm PostgreSQL geliþiminden sorumludur.
-
-PostgreSQL 1.01 sürümünün yazarlarý Andrew Yu ve Jolly Chen idi.
-Bunlarýn dýþýnda bir kaç kisi de uyarlama, hata ayýklama ve kodun
-geliþtirilmesi için çalýsmýþtý. PostgreSQL'in türedigi orijinal Postgres
-kodu, lisans, lisansüstü ve akademisyenler tarafýndan, Professor Michael
-Stonebraker ) University of California, Berkeley) koordinatörlügünde
-yazýlmýstýr.
-
-Berkley'deki yazýlýmýn adý Postgres idi. SQL uyumluluðu 1995'te
-eklenince, adý Postgres 95 oldu. 1996 yýlýnýn sonlarýnda adý PostgreSQL
-olarak deðiþtirildi.
-
-
-        1.2) PostgreSQL'in haklarý nedir?
-
-PostgreSQL Data Base Management System
-
-Portions copyright (c) 1996-2002, PostgreSQL Global Development Group
-Portions Copyright (c) 1994-6 Regents of the University of California
-
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose, without fee, and without a written
-agreement is hereby granted, provided that the above copyright notice
-and this paragraph and the following two paragraphs appear in all copies.
-
-IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY
-FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF
-THE POSSIBILITY OF SUCH DAMAGE.
-
-THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS
-TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
-Üstteki metin klasik açýk-kod lisansý olan BSD lisansýdýr. Kaynak kodun
-nasýl kullanýlabileceðine dair sýnýrlamalarý yoktur. Bu lisansý
-seviyoruz. Deðiþtirme niyetimiz bulunmamaktadýr.
-
-
-        1.3) PostgreSQL, hangi Unix platforlarýnda çalýsýr?
-
-Genel olarak, modern bir Unix-uyumlu platform PostgreSQL'i
-çalýþtýracaktýr. Ayrýntýlý bilgi için kurulum belgelerine bakabilirsiniz.
-
-
-        1.4) Hangi Unix olmayan uyarlamalarý bulunmaktadýr?
-
-*Ýstemci*
-
-libpq C kütüphanesini, psql ve diger arabirimleri ve binary dosyalarý,
-MS Windows ortamlarýnda çalýsmasý için derlemeniz mümkündür. Bu örnekte
-istemcide MS Windows çalýsýyor ve desteklenen Unix platformlarýndan
-birinde çalýsan PostgreSQL sunucuna TCP/IP ile baglanmaktadýr. Daðýtým
-içindeki win31.mak dosyasý ile, Win32 libpg kütüphanesi ve psql
-yaratabilirsiniz. PostgreSQL ayný zamanda ODBC istemcileri ile
-haberlesebilmektedir.
-
-*Sunucu*
-
-Veritabaný sunuucsu Cygwin kullanarak Windows NT, 2K ya da XP üzerinde
-calistirilabilir. Dagýtým içindeki pgsql/doc/FAQ_MSWýN dosyasýný ya da
-web sitemizdeki MS Windows FAQ'u inceleyebilirsiniz.
-
-Doðal Windows NT/2000/XP portu için þu anda çalýþmalar devam etmektedir.
-Windows sürümü hakkýnda güncel bilgi için,
-http://techdocs.postgresql.org/guides/Windows adresini ziyaret
-edebilirsiniz.
-
-Ayrýca, http://forge.novell.com adresinde Novell Netware 6 portu
-bulunmaktadýr.
-
-
-        1.5) PostgreSQL'i nereden indirebilirim?
-
-PostgreSQL için ana anonim ftp sitesi ftp://ftp.PostgreSQL.org/pub' dur.
-Yansýlar için, ana web sayfamýza bakabilirsiniz.
-
-
-        1.6) Nereden destek alabilirim?
-
-Ana e-posta listesi : pgsql-general@PostgreSQL.org. PostgreSQL
-konusundaki tartýsmalara açýktýr. Üye olmak için, asagýdaki satýrlarý
-e-postanizin body kýsmýna (konu kýsmýna degil) yazýp,
-pgsql-general-request@PostgreSQL.org adresine gönderin:
-
-subscribe
-end
-
-Ayný zamanda, bir digest listesi bulunmaktadýr. Bu listeye üye olmak
-için, pgsql-general-digest-request@PostgreSQL.org adresine, body kýsmýnda
-
-subscribe
-end
-
-yazan bir e-posta atmanýz yeterli olacaktýr.
-
-Digest postalar, ana liste 30k civarýnda e-postaya ulastiginda üyelere
-gönderilmektedir.
-
-Buglar için bir e-posta listesi bulunmaktadýr. Bu listeye üye olmak
-için, email to pgsql-bugs-request@PostgreSQL.org adresine, body kýsmýnda
-
-subscribe
-end
-
-yazan bir e-posta atmanýz yeterli olacaktýr.
-
-Ayný zamanda, gelistiriciler için tartýsma listesi bulunmaktadýr. Bu
-listeye üye olmak için, pgsql-hackers-request@PostgreSQL.org adresine,
-body kýsmýnda
-
-subscribe
-end
-
-yazan bir e-posta atmanýz yeterli olacaktýr.
-
-Bunun dýsýndaki e-posta listelerine ve PostgreSQL hakkýnda bilgiye,
-PostgreSQL WWW ana sayfasýndan ulasabilirsiniz:
-
-http://www.PostgreSQL.org
-
-Ayný zamanda, EFNet üzerinde, #PostgreSQL adlý bir ýRC kanalý
-bulunmaktadýr. Bunun için, irc -c '#PostgreSQL' "$USER" irc.phoenix.net
-Unix komutunu kullanabilirsiniz.
-
-Ticari destek veren firmalarýn listesine
-
-http://www.postgresql.org/users-lounge/commercial-support.html
-
-adresinden ulasabilirsiniz.
-
-
-        1.7) En son sürüm nedir?
-
-PostgreSQL'in son sürümü 7.3.3'tür.
-
-Her 4 ayda major release çýkarýlmasý planlanmaktadýr.
-
-
-        1.8) Hangi belgelere ulasabilirim?
-
-Daðýtýmýn icinde, kitapciklar, kitapcik sayfalari ve bazi küçük örnekler
-verilmektedir. /doc dizinine bakýnýz. Ayrica, bu el kitapçýklarýný
-online olarak http://www.PostgreSQL.org/docs/ adresinden inceleyebilirsiniz.
-
-http://www.PostgreSQL.org/docs/awbook.html ve
-http://www.commandprompt.com/ppbook adreslerinde PostgreSQL kitaplarý
-bulunmaktadýr. PostgreSQL kitablarýnýn listesine,
-http://www.ca.PostgreSQL.org/books/ adresinden ulaþaiblirsiniz. Ayrýca,
-PostgreSQL konusundaki teknik makalelere de
-http://techdocs.PostgreSQL.org/ adresinden ulaþabilirsiniz.
-
-psql'in, \d ile baslayan veri tipler, operatorler, fonksiyonlar,
-aggregateler, vb. ile ilgili güzel komutlarý vardýr.
-
-Web sitemiz daha fazla belgeyi içermektedir.
-
-
-        1.9) Bilinen hatalar ya da eksik özelliklere nereden ulasabilirim?
-
-PostgreSQL SQL-92 uyumlugugu icindedir, standartlardan fazla da
-özellikleri bulunmaktadýr. Bilinen hatalar, eksik özellikler ve gelecek
-ile ilgili planlar için TODO listesine bakýnýz.
-
-
-        1.10) Nasýl SQL öðrenebilirim?
-
-http:/www.PostgreSQL.org/docs/awbook.html adresindeki kitap SQL
-ögretecektir. http://www.commandprompt.com/ppbook adresinde de bir baska
-PostgreSQL kitabý bulunmaktadýr.
-
-http://www.intermedia.net/support/sql/sqltut.shtm,
-http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM
-http://sqlcourse.com ve http://sqlcourse2.com adreslerinde de güzel
-belgeler bulunmaktadýr.
-
-Bir baþkasý da, http://members.tripod.com/er4ebus/sql/index.htm
-adresinde bulunan "Teach Yourself SQL in 21 Days, Second Edition" kitabýdýr.
-
-Bazý kullanýcýlarýmýz da þu kitabý önermektedirler: The Practical SQL
-Handbook, Bowman, Judith S., et al.,Addison-Wesley. Others like The
-Complete Reference SQL, Groff et al., McGraw-Hill.
-
-
-        1.11) PostgreSQL 2000 yýlýna uyumlu mudur?
-
-Evet.
-
-
-        1.12) Gelistirme takýmýna nasýl katýlabilirim?
-
-Öncelikle, en son kaynak kodunu indirin ve web sitemizdeki ya da
-dagýtýmýn içindeki PostgreSQL Developer belgesini okuyun. Ardindan,
-pgsql-hackers ve pgsql-patches listelerine üye olun. Üçüncü olarak da,
-pgsql-pacthes listesine yüksek kalitede yamalar gönderin.
-
-PostgreSQL CVS arsivine erisim izni olan, 10 kadar gelistirici
-bulunmaktadir. Hepsi defalarca, diger kisilerin yaptigindan cok daha
-yüksek-kaliteli patchler gondermislerdir. Ayrica biz de bu
-gelistiricilerin ekledikleri yamalarin yüksek kalitede olduguna güveniyoruz.
-
-
-        1.13) Bir hata raporunu nasýl gönderebilirim?
-
-PostgreSQL BugTool sayfasina gidiniz. O sayfada bir bug bildirmek icin
-neleri yapmanýz gerektigi anlatilmistir.
-
-Ayrýca, ftp://ftp.PostgreSQL.org/pub ftp adresimizde, yeni bir
-PostgreSQL sürümü ya da yamasi olup olmadigini kontrol ediniz.
-
-
-        1.14) PostgreSQL, diger DBMS'lerle nasýl karsilastýrýlabilir?
-
-Bir yazilimin gücünü ölçmek için çesitli yollar vardir: Yazilimin
-özellikleri, basarýmý, güvenilirligi, destegi ve ücreti.
-
-Özellikler:
-
-PostgreSQL mevcut büyük ticari veritabanlarinin, transaction, subselect,
-trigger, view, foreign key referential integrity ve sophisticated
-locking gibi (user-defined types), rules, inheritance ve lock
-cakýsmalarini düsürmek icin multi-version uyumluluk özellikleri
-bulunmaktadir.
-
-Performans (Baþarým):
-
-PostgreSQL, diðer ticari ve açýk kaynak kodlu veritabanlarýyla yakýn
-baþarýmý saðlar. Bazý açýlardan daha hýzlýdýr, diðer açýlardan da
-yavaþtýr. MySQL ya da daha zayýf veritabanlarý ile
-karþýlaþtýrýldýðýnda,insert/update islemlerinde, transaction bazlý
-çalýstýðýmýz için daha yavaþýz. MySQL, yukarýdaki "Özellikler" kýsmýnda
-belirtilenlerden hiç birine sahip deðildir. Biz, baþarýmýmýzý her
-sürümde arttýrsak da, esneklik ve geliþmiþ özellikler için yapýlanmýs
-durumdayýz . PostgreSQL'i MySQL ile karþýlaþtýran þu web sitesine
-bakabilirsiniz: http://openacs.org/why-not-mysql.html
-
-Güvenilirlik:
-
-DBMSlerin güvenilir olmasý gerketigi, yoksa degerleri olmayacagini
-düsünüyoruz Çok iyi test edilmis, dengeli çalýsan minimum sayýda hata
-içeren kod sunmaya çalýsýyoruz. Her bir sürüm en az 1 aylýk beta
-testlerinden geçirilmektedir. Sürüm geçmiþine bakarsanýz, üretime hazýr,
-dengeli ve kararlý kodlar sundugumuzu görebilirsiniz. Bu alanda, diger
-veritabaný yaZýlýmlarýna üstünlügümüz olduguna inanmaktayýz
-
-Destek:
-
-E-posta listemiz, olusan herhangi bir sorunu çözebilecek büyük sayýda
-kullanýcý ve gelistirici grubunu içerir. Sorununuz için, en az bir
-ticari veritabaný kadar rahat çözüm bulabilirsiniz. Gelistiricilere,
-kullanýcý grubuna, belgelere ve kaynak koda direk olarak erisebilme,
-PostgreSQL destegini, diger DBMSlere göre daha önemli kýlar. Gereksinimi
-olanlara, ticari destek verilebilir. (Destek için 1.6 bölümüne bakýnýz.)
-
-Fiyat:
-
-Ticari ve ticari olmayan tüm kullanýmlarýnýz için PostgreSQL
-ücretsizdir. Kodumuzu, yukarýda belirtilen BSD-stili lisanstaki
-sýnýrlamalar hariç, ürününüzün içine ekleyebilirsiniz.
-
-
-        1.15) PostgreSQL'e maddi açýdan nasýl destek olabilirim?
-
-PostgreSQL, 1996 yýlýndan beri 1.sýnýf altyapýya ashiptir. Bunun için,
-yýllar boyu çalýsýp bu altyapýyý olusturup yöneten Marc Fournier'e
-tesekkürler.
-
-Bir açýk kaynak kodlu proje için, kaliteli altyapý çok önemlidir. Bu
-altyapý, projenin kesilmesini önler ve projenin ilerlemesini hýzlandýrýr.
-
-Tabii ki bu altyapý ucuz degildir. ýslerin yürümesi için çeþitli yýlýk
-ve anlýk harcamalarýmýz olmaktadýr. Eger siz ya da sirketinizin bu
-çabamýza bagýsta bulunabilecek parasý varsa, lütfen
-http://www.pgsql.com/pg_goodies adresine gidiniz ve bagýsta, hibede
-bulununuz.
-
-Web sayfasýnýn PostgreSQL, ýnc.' den bahsetmesine ragmen, "katkýda
-bulunanlar" (contributors) maddesi sadece PostgreSQL projesini
-desteklemek içindir ve belirli bir sirketin para kaynagý degildir.
-isterseniz, baglantý adresine bir çek gönderebilirsiniz.
-
-------------------------------------------------------------------------
-
-
-    Kullanýcý/istemci Sorularý
-
-
-        2.1) PostgreSQL icin ODBC sürücüleri var mý?
-
-iki tane ODBC sürücüsü bulunmaktadýr: PsqlODBC ve OpenLink ODBC.
-
-PsqlODBC'i http://gborg.postgresql.org/project/psqlodbc/projdisplay.php
-adresinden indirebilirsiniz.
-
-OpenLink ODBC http://www.openlinksw.com adresinden alýnabilir.Bu sürücü,
-kendi standart ODBC istemci yazýlýmý ile çalýstýðýndan, destekledikleri
-her platformda (Win, Mac, Unix, VMS) PostgreSQL ODBC bulunmalidir.
-
-Ücretsiz sürümü olmakla beraber, ticari kalitede destek almak
-isteyenlere satmak isteyeceklerdir. Sorularýnýzý lütfen
-postgres95@openlink.co.uk adresine gönderiniz.
-
-
-        2.2) PostgreSQL'i web sayfalarýnda kullanabilmek için hangi
-        araçlar bulunmaktadýr?
-
-http://www.webreview.com adresinde, arka planda veritabaný çalýstýran
-Web sayfalarý için giris seviyesinde bilgi bulunmaktadýr.
-
-Web ile bütünlesme için, PHP mükemmel bir arabirim sunar. http://www.php.net
-
-Karmaþýk sorunlar için, çoðu kisi Perl arabirimini ve CGI.pm ya da
-mod_perl kullanýr.
-
-
-        2.3) PostgreSQL'in grafik kullanýcý arabirimi var mýdýr?
-
-Çeþitli grafik arabirimlerimiz bulunmaktadýr. Bunlarýn arasýnda,
-PgAccess (http://www.pgaccess.org), PgAdmin II (http://www.pgadmin.org,
-sadece Win32 için), RHDB Admin (http://sources.redhat.com/rhdb/ ) ve
-Rekall (http://www.thekompany.com/products/rekall/) bulunmaktadýr.
-Ayrýca, PostgreSQL için web tabanlý bir arabirim olan PHPPgAdmin (
-http://phppgadmin.sourceforge.net/ ) bulunmaktadýr.
-
-Daha ayrýntýlý liste için http://techdocs.postgresql.org/guides/GUITools
-adresine bakabilirsiniz.
-
-
-        2.4) PostgreSQL ile iletiþimi kurabilmek için hangi dilleri
-        kullanabilirim?
-
-    * C (libpq)
-    * Embedded C (ecpg)
-    * Java (jdbc)
-    * Python (PyGreSQL)
-    * TCL (libpgtcl)
-
-Diðerleri için, http://gborg.postgresql.org adresindeki
-Drivers/Interfaces bölümüne bakabilirsiniz.
-
-------------------------------------------------------------------------
-
-
-    Yönetimsel Sorular
-
-
-        3.1) PostgreSQL'i, /usr/local/pgsql dizininden baska dizinlere
-        nasýl kurabilirim?
-
-configure betigini çalýstýrýrken, --prefix seçenegini veriniz.
-
-
-        3.2) postmaster'i baslattýgýmda, a Bad System Call ya da core
-        dumped mesajý alýyorum. Neden?
-
-Bunun birçok nedeni olabilir. Ancak ilk kontrol edilmesi gereken sey,
-çekirdeginize System V uzantýlarýnýn kurulu olup olmadýgýný kontrol
-etmek olabilir. PostgreSQL shared memory ve semaphores için çekirdek
-destegine gereksinim duyar.
-
-
-        3.3) postmaster'i baslattýgýmda, a ýpcMemoryCreate hatasý
-        alýyorum. Neden?
-
-Ya çekirdeginizde shared memory desteginiz düzgünce
-yapýlandýrýlmamýstýr, ya da çekirdeginizdeki mevcut shared memory
-miktarýný büyütmeniz gerekecektir. Gereksinim duyacagýnýz miktar,
-mimarinize ve postmaster için ayarladýgýnýz tampon ile backend islemi
-sayýsýna baglýdýr. Tüm sistemler için, tamponlar ve islemlerde öntanýmlý
-sayýlarla, ~ 1MB kadar yere gereksinmeniz olacaktir.PostgreSQL
-Administrator's Guide' a, shared memory ve semaphorelar hakkýndaki
-ayrýntýlý bilgi için bakabilirsiniz.
-
-
-        3.4) postmaster'i baslattýgýmda, a ýpcSemaphoreCreate hatasý
-        alýyorum. Neden?
-
-Eger hata, "ýpcSemaphoreCreate: semget failed (No space left on device)"
-ise, çekirdeginiz yeterli semaphore ile yapýlandýrýlmamýs demektir.
-Postgres, her bir potansiyel backend için bir semaphore gereksinmesi
-duyar. Geçici bir çözüm, postmasterý backend islemleri için daha az
-miktarda sýnýrla baslatmak olabilir. -N i varsaýlan deger olan 32'den
-küçük bir degerle baslatýnýz. Daha kalýcý bir çözüm, çekirdeðinizin
-SEMMNS ve SEMMNI parametrelerini yükseltmek olacaktýr.
-
-Çalýþmayan semaphorelar aðýr veritabaný islemlerinde çökme yaratabilirler.
-
-Eger hata mesajýnýz baska birsey ise, çekirdeginizde semaphore destegini
-yapýlandýrmamýs olabilirsiniz. Shared memory ve semaphorelar hakkýndaki
-daha ayrýntýlý bilgi için PostgreSQL Administrator's Guide'a bakabilirsiniz.
-
-
-        3.5) Diger bilgisayarlarýn benim PostgreSQL veritabaný sunucuma
-        baglantýlarýný nasýl kontrol edebilirim?
-
-Ön tanýmlý olarak, PostgreSQL sadece yerel makineden Unix domain sockets
-kullanarak baglanýlmasýna izin verir. Diger makineler, postmaster'a -i
-etiketini geçirmezseniz ve $PGDATA_pg_hba.conf dosyasýný düzenleyerek
-host-based authentication'a olanak vermezseniz, baglantý yapamayacaklardýr.
-
-
-        3.6) Veritabani motorunu daha iyi basarim icin nasil
-        ayarlayabilirim?
-
-Indexler sorgularý hýzlandýrabilir. EXPLAIN komutu, PostgreSQL'in
-sorgunuzu nasýl yorumladýðýný ve hangi indexleri kullandigini görmenize
-izin verir.
-
-Eðer cok fazla INSERT islemi yapiyorsaniz, bunlarý büyük bir toplu islem
-dosyasi kullanýp COPY komutu ile veritabanina girmeyi deneyiniz. Bu,
-tekil ýNSERTlerden daha hýzlýdýr. ikinci olarak, BEGýN WORK/COMMýT
-transaction blogu içinde olmayan ifadeler kendi transactionlarindaymis
-gibi düsünülür. Çoklu ifadeleri tek bir transaction bloðu içinde
-yapabilirsiniz. Bu, transaction overheadini düþürecektir. Tek bir
-transaction bloðu içinde birden çok ifadeyi çalýþtýrmayý
-deneyebilirsiniz. Bu, transaction overhead ini düþürür.
-
-Çeþitli ayarlama seçenekleri mevcuttur. fsync() iþlemini, postmaster'ý
--o -F seçeneði ile baþlatarak devre dýþý býrakabilirsiniz. Bu iþlem,
-fsync()'lerin her transactiondan sonra diske flush etmesini engelleyecektir.
-
-Ayný zamanda, postmaster'i -B seçeneði ile baþlatýp, backend iþlemleri
-tarafýndan kullanýlan shared memorf buffers sayýlarýný
-arttýrabilirsiniz. Eger bu parametreyi çok yüksek tutarsanýz,
-çekirdeðinizin shared memory bölgesindeki limiti aþma olasýlýðýnýz
-yüzünden postmaster baþlayamayabilir. Her bir tampon (buffer) 8K'dýr.
-Öntanýmlý sayý ise 64 tampondur.
-
-Ayný þekilde, backend'in -S seçeneðini geçici sýralamalar için backend
-süreçleri tarafýndan kullanýlacak hafýzayý arttýrmak amacýyla
-kullanabilirsiniz. -S seçeneði kilobayt cinsinden deðer alýr ve ön
-tanýmlý deðeri 512'dir (512 K)
-
-Tablolardaki veriyi bir indekse eþlemek amacýyla gruplama için CLUSTER
-komutunu kullanabilirsiniz. Ayrýntýlý bilgi için CLUSTER komutunun
-yardým sayfasýna bakabilirsiniz.
-
-
-        3.7) Hangi hata ayýklama özellikleri bulunmaktadýr?
-
-PostgreSQL, hata ayýklama amacýyla kullanýlabilecek durum bilgisi rapor
-eden çeþitli özeliklere sahiptir.
-
-Öncelikle, configure betiðini --enable-cassert seçeneðiyle
-çalýþtýrýrsanýz, bir çok assert() backend calýþmasýný gözlemler ve
-beklenmeyen bir durumda programý durdurur.
-
-Postmaster ve postgres çeþitli hata ayýklama seçeneklerine sahiptir.
-Öncelikle, postmaster'i baþlattýðýnýzda, standart çýktýyý ve hatalarý
-bir log dosyasýna yönlendirdiðinize emin olun:
-
-cd /usr/local/pgsql
-./bin/postmaster >server.log 2>&1 &
-
-Bu iþlem PostgreSQL ana dizinine server.log dosyasý yerleþtirecektir. Bu
-dosya sunucunun yaþadýðý sorunlar ya da hatalar hakkýnda yararlý
-bilgiler içerir. -d seçeneði, hata ayýklama seviyesini belirten bir
-rakam ile kullanýlýr. Yüksek hata ayýklama seviyelerinin büyük log
-dosyalarý oluþturacaðýný unutmayýnýz.
-
-Eðer postmaster çalýþmýyorsa, postgres backend'ini komut satýrýndan
-çalýþtýrabilir ve SQL ifadenizi direk olarak yazabilirsiniz. Bu sadece
-hata ayýklama amacýyla önerilir. Burada, noktalý virgülün deðil de yeni
-bir satýrýn sorguyu sonlandýrdýðýný unutmayýnýz. Eðer hata ayýklama
-sembolleri ile derlediyseniz, ne olduðunu görmek için bir hata
-ayýklayýcý kullanabilirsiniz. backend postmasterdan baþlatýlmadýðýndan,
-eþdeðer bir ortamda çalýþmamaktadýr ve locking/backend etkileþim
-sorunlarý artabilir.
-
-Eðer postmaster çalýþýyorsa, bir pencerede psql'i çalýþtýrýn ve psql
-tarafýndan kullanýlan postgres sürecinin süreç numarasýný (PID) bulun.
-Postgres süreci ile iliþkilendirmek için bir hata ayýklarýcý kullanýn.
-Sorgularý psql aracýlýðý ile çalýþtýrabilirsiniz. Eðer postgres
-baþlangýcýnda hata ayýklamak istiyorsanýz, PGOPTIONS="-W n" seçeneðini
-ayarlayabilir ve psql'i baþlatabilirsiniz. Bu iþlem, baþlangýcýn n
-saniye kadar gecikmesini saðlayacaktýr; böylece hata ayýklayýcýyý sürece
-iliþkilendirdikten sonra baþlangýç sürecinin devam etmesini
-saðlayabilirsiniz.
-
-postgres programý hata ayýklama ve baþarým ölçümleri için -s, -A ve -t
-seçeneklerine sahiptir.
-
-
-        3.8) Baglanmaya çalýsýken, neden "Sorry, too many clients"
-        hatasýný alýyorum?
-
-Postmaster'in eþzamanlý olarak baþlatabileceði backend süreçleri
-sýnýrlarýný arttýrmanýz gerekmektedir.
-
-Ön tanýmlý deðer 32 süreçtir. Bunu, postmaster'i uygun -N deðeri ile ya
-da postgresql.conf dosyasýný düzenleyerek yeniden baþlatmakla
-arttýrabilirsiniz.
-
-Eðer -N deðerini 32'den büyük yapacaksanýz, ayný zamanda -B deðerini de
-deðiþtirmeniz gerektiðini unutmayýn. -B -N'nin en az 2 katý kadar
-olmalýdýr; daha iyi baþarým için bu sayýyý daha da arttýrmalýsýnýz.
-Yüksek sayýdaki backend süreçleri için, çeþitli çekirdek yapýlandýrma
-parametrelerini arttýrmanýz gerekecektir. Yapýlmasý gerekenler, SHMMAX,
-SEMMNS, SEMMNI, NPROC, MAXUPRC ve açýlabilecek dosyalarýn maksimum
-sayýsý olan NFILE ve NINODE deðerlerini karýþtýrmaktýr. Bunun nedeni,
-PostgreSQL'in izin verilen backend süreçlerinin sayýsý üzerinde bir
-sýnýrý olmasýdýr. Böylelikle sistem kaynaklarýnýn dýþýna çýkýlmayacaktýr.
-
-PostgreSQL'in 6.5 sürümüne kadar, en fazla backend sayýsý 64 idi ve bunu
-deðiþtirmek için include/storage/sinvaladt.h dosyasý içindeki
-MaxBAckendid sabitini deðiþtirdek sonra yazýlýmý yeniden derlemek
-gerekiyordu.
-
-
-        3.9) pgsql_tmp dizinin içindeki dosyalar nelerdir?
-
-Sorgu çalýstýrýcý (query executer) tarafýndan yaratýlan geçici
-dosyalardýr. Örnegin, bir sýralama ORDER BY ile yapilacaksa ve sýralama
-backend'in -s parametresinin izin verdiginden daha fazla alana
-gereksinim duyuyorsa, ekstra veriyi tutmak için geçici dosyalar yaratýlýr.
-
-Geçici dosyalar, eger sýralama sýrasýnda backend göçmezse otomatik
-olarak silinecektir. Eger çalýsan durumda bir backendiniz yoksa,
-pg_tempNNN.NN dosyalarýný silmeniz güvenlidir..
-
-
-        3.10) PostgreSQL sürümlerini yükselmek için neden bir
-        dump/reload iþlemi gerçekleþtirmek zorundayým?
-
-PostgreSQL takýmý ara sürümlerde sadece küçük deðiþiklikler yapmaktadýr;
-bu yüzden 7.2 sürümünden 7.2.1'e yükseltmek dump/restore iþlemi
-gerekmemektedir. Ancak, esas sürümlerde (örnek: 7.2'den 7.3'e)
-çoðunlukla sistem tablolarýnýn ve veri dosyalarýnýn iç yapýsý
-deðiþtirilir. Bu deðiþiklikler çoðunlukla karmaþýktýr; dolayýsýyla veri
-dosyalarýnýn geriye dönük uyumluluðu iþlemlerini yapmýyoruz. Dump
-iþlemi, veriyi genel biçimde alacaðýndan yeniden yükleme esnasýnda veri,
-yeni iç biçime uygun þekilde yerleþtirilecektir.
-
-Disk biçiminin deðiþmediði sürümlerde, pg_upgrade betiði güncellemenin
-bir dump/restore gerektirmeden yapýlmasýný saðlayacaktýr. pg_upgrade
-betiðinin o sürüm için bulunup bulunmadýðýný sürüm notlarý içinde
-bulabilirsiniz.
-
-------------------------------------------------------------------------
-
-
-    Ýþletimsel Sorular
-
-
-        4.1) Binary cursor ve normal cursor arasindaki fark nedir?
-
-DECLARE yardým sayfasina bakiniz.
-
-
-        4.2) Sorgunun sadece ilk birkaç satýrýný nasil SELECT edebilirim?
-
-FETCH yardým sayfasina bakiniz, aya da SELECT ... LIMIT.... kullanýnýz.
-
-The entire query may have to be evaluated, even if you only want the
-first few rows. Consider a query that has an ORDER BY. ýf there is an
-index that matches the ORDER BY, PostgreSQL may be able to evaluate only
-the first few records requested, or the entire query may have to be
-evaluated until the desired rows have been generated.
-
-
-        4.3) psql'in içinde gördügüm tablolarin ya da diger seylerin
-        listesini nasil alabilirim?
-
-pgsql/src/bin/psql/describe.c içindeki psql kaynak kodunu
-okuyabilirsiniz. Bu kod, psql'in \ ile baslayan komutlarýnýn çýktýsýný
-olusturan SQL komutlarini içerir. Ayný zamanda, psql'i -E seçeneði ile
-baþlatýp, verdiðiniz komutlarý çalýþtýrmak için yaptýðý sorgularýn
-çýktýlarýný görebilirsiniz.
-
-
-        4.4) Bir tablodan bir kolonu nasýl kaldýrabilirim?
-
-Bu özellik (ALTER TABLE DROP COLUMN) 7.3 sürümü ile gelmiþtir. Eski
-sürümlerde aþaðýdakileri uygulamalýsýnýz:
-
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso8859-9">
+	<title>PostgreSQL Sýkça Sorulan Sorular - Türkçe</title>
+	<style type="text/css"><!--
+	body { background: #FFFFFF; }
+	a:link { color: #ff0000; }
+	a:active { color: #0000ff; }
+	a:visited { color: #a00000; }
+	i { font-style: oblique; }
+	body, h1, h2, h4, ul, p, a { font-family: helvetica, arial, sans-serif; font-size: medium; color: black; }
+	pre { color: #5C5C5C; padding-left: 30px; }
+	.fixme { color: cyan; }
+	--></style>
+</head>
+<body bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
+
+<h1>PostgreSQL için Sýkça Sorulan Sorular (SSS)</h1>
+<p>Son güncelleme : 23 Þubat 2004  Pazartesi - 13:34:26</p>
+<p>Current maintainer: Bruce Momjian
+(<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br></p>
+<p>Çevirenler : Devrim Gündüz (<a href="mailto:devrim@tdmsoft.com">devrim@tdmsoft.com</a>)<br>Nicholas Morris Tufar 
+(<a href="mailto:ntufar@tdmsoft.com">ntufar@tdmsoft.com</a>)<BR>Volkan YAZICI (<a href="mailto:volkany@phreaker.net">volkany@phreaker.net</a>)</p>
+<p>Bu belgenin en güncel hali, <a href="http://www.postgresql.org/docs/faqs/FAQ_turkish.html">http://www.PostgreSQL.org/docs/faqs/FAQ_turkish.html</a> 
+ve <a href="http://www.gunduz.org/seminer/pg/FAQ_turkish.html">http://www.gunduz.org/seminer/pg/FAQ_turkish.html</a> 
+adreslerinde görülebilir.</p>
+<p>Platforma özel sorularýnýz, <a href="http://www.postgresql.org/docs/index.html">http://www.PostgreSQL.org/docs/index.html</a> adresinde yanýtlanýr.</p>
+
+<hr>
+
+<h2 align="center">Genel Sorular</h2>
+	<a href="#1.1">1.1</a>) PostgreSQL nedir? Nasýl okunur?<br>
+	<a href="#1.2">1.2</a>) PostgreSQL'in haklarý nedir?<br>
+	<a href="#1.3">1.3</a>) PostgreSQL, hangi Unix platformlarýnda çalýþýr?<br>
+	<a href="#1.4">1.4</a>) Hangi Unix olmayan uyarlamalarý bulunmaktadýr?<br>
+	<a href="#1.5">1.5</a>) PostgreSQL'i nereden indirebilirim?<br>
+	<a href="#1.6">1.6</a>) Desteði nereden alabilirim?<br>
+	<a href="#1.7">1.7</a>) En son sürümü nedir?<br>
+	<a href="#1.8">1.8</a>) Hangi belgelere ulaþabilirim?<br>
+	<a href="#1.9">1.9</a>) Bilinen hatalar ya da eksik özelliklere nereden ulasabilirim?<br>
+	<a href="#1.10">1.10</a>) Nasýl <small>SQL</small> öðrenebilirim?<br>
+	<a href="#1.11">1.11</a>) PostgreSQL 2000 yýlýna uyumlu mudur?<br>
+	<a href="#1.12">1.12</a>) Geliþtirme takýmýna nasýl katýlabilirim??<br>
+	<a href="#1.13">1.13</a>) Bir hata raporunu nasýl gönderebilirim?<br>
+	<a href="#1.14">1.14</a>) PostgreSQL, diðer <small>VTYS(DBMS)</small> lerle nasýl
+	karþýlaþtýrýlabilir?<br>
+	<a href="#1.15">1.15</a>) PostgreSQL'e maddi açýdan nasýl destek olabilirim?<br>
+	
+<h2 align="center">Kullanýcý/istemci Sorularý</h2>
+	<a href="#2.1">2.1</a>) PostgreSQL için <i>ODBC</i> sürücüleri var mý?<br>
+	<a href="#2.2">2.2</a>) PostgreSQL'i web sayfalarýnda kullanabilmek için
+	hangi araçlar bulunmaktadýr?<br>
+	<a href="#2.3">2.3</a>) PostgreSQL'in grafik kullanýcý arabirimi var mýdýr?<br>
+	<a href="#2.4">2.4</a>) PostgreSQL ile iletiþimi kurabilmek için
+	hangi dilleri kullanabilirim? <br>
+	
+<h2 align="center">Yönetimsel Sorular</h2>
+	<a href="#3.1">3.1</a>) PostgreSQL'i <code>/usr/local/pgsql</code> dizininden
+	baþka dizinlere nasýl kurabilirim?<br>
+	<a href="#3.2">3.2</a>) <i>Postmaster</i>'ý baþlattýðýmda <code>Bad System Call</code>
+	ya da <code>core dumped</code> mesajý alýyorum. Neden?<br>
+	<a href="#3.3">3.3</a>) <i>Postmaster</i>'ý baþlattýðýmda, <code>IpcMemoryCreate</code>
+	hatasý alýyorum. Neden?<br>
+	<a href="#3.4">3.4</a>) <i>Postmaster</i>'ý, baþlattýðýmda, <code>IpcSemaphoreCreate</code>
+	hatasý alýyorum. Neden?<br>
+	<a href="#3.5">3.5</a>) Diðer bilgisayarlarýn benim PostgreSQL veritabaný
+	sunucuma baðlantýlarýný nasýl kontrol edebilirim?<br>
+	<a href="#3.6">3.6</a>) Veritabaný motorunu daha iyi baþarým icin nasýl ayarlayabilirim?<br>
+	<a href="#3.7">3.7</a>) Hangi hata ayýklama özellikleri bulunmaktadýr?<br>
+	<a href="#3.8">3.8</a>) Baðlanmaya çalýþýrken, neden "<code>Sorry, too many clients</code>"
+	hatasýný alýyorum. Neden?<br>
+	<a href="#3.9">3.9</a>) <code>pgsql_tmp</code>dizinin içindeki dosyalar nelerdir?<br>
+	<a href="#3.10">3.10</a>) PostgreSQL sürümlerini yükseltmek için neden bir
+	<code>dump/reload</code> iþlemi gerçekleþtirmek zorundayým?<br>
+	
+<h2 align="center">Ýþletimsel Sorular</h2>
+	<a href="#4.1">4.1</a>) <i>Binary cursor</i> ve <i>normal cursor</i> arasýndaki fark nedýr?<br>
+	<a href="#4.2">4.2</a>) Sorgunun sadece ilk birkaç satýrýný nasýl
+	<code>SELECT</code> edebilirim?<br>
+	<a href="#4.3">4.3</a>) <i>psql</i>'in içinde gördügüm tablolarýn ya da diðer
+	þeylerin listesini nasýl alabilirim?<br>
+	<a href="#4.4">4.4</a>) Bir tablodan bir kolonu nasýl kaldýrabilirim?<br>
+	<a href="#4.5">4.5</a>) Bir satýr, tablo ve veritabaný için en fazla büyüklük nedir?<br>
+	<a href="#4.6">4.6</a>) Tipik bir metin dosyasýndaki veriyi saklamak için ne
+	kadar disk alaný gereklidir?<br>
+	<a href="#4.7">4.7</a>) Veritabanýnda hangi tablo ya da <i>index</i>'lerin
+	tanýmlandýðýný nasýl görebilirim?<br>
+	<a href="#4.8">4.8</a>) Sorgularým cok yavaþ, ya da <i>index</i>'lerimi kullanmýyorlar. Neden?<br>
+	<a href="#4.9">4.9</a>) <i>Query-optimizer</i>'ýn sorgularýmý nasýl deðerlendirdiðini,
+	iþleme soktuðunu nasýl görebilirim?<br>
+	<a href="#4.10">4.10</a>) <i>R-tree index</i> nedir?<br>
+	<a href="#4.11">4.11</a>) <i>Genetic Query Optimizer</i> nedir?<br>
+	<a href="#4.12">4.12</a>) Düzenli ifade (<i>Regular Expression</i>) aramalarýný
+	ve büyük/küçük harfe duyarsýz aramalarý nasýl yapabilirim? Bu büyük/küçük harfe duyarlý
+	aramalar için <i>index</i>'i nasýl kullanabilirim?<br>
+	<a href="#4.13">4.13</a>) Bir sorguda, bir alanýn <code>NULL</code> olduðunu nasýl
+	ortaya çýkarabilirim?<br>
+	<a href="#4.14">4.14</a>) Çesitli karakter tipleri arasýndaki farklar nelerdir?<br>
+	<a href="#4.15.1">4.15.1</a>) Nasýl <code>serial</code>/otomatik artan
+	(<i>auto-incrementing</i>) bir alan yaratabilirim?<br>
+	<a href="#4.15.2">4.15.2</a>) <code>Serial</code> giriþinin deðerini nasýl alabilirim?<br>
+	<a href="#4.15.3">4.15.3</a>) <code>currval()</code> ve  <code>nextval()</code>
+	diðer kullanýcýlara sorun yaratmaz mý?<br>
+	<a href="#4.15.4">4.15.4</a>) Neden sequence sayýlarýn <i>transaction</i>
+	iþleminin iptalinden sonra yeniden kullanýlýyor? Neden <code>sequence/SERIAL</code>
+	kolonumdaki sayýlarda atlamalar oluyor?<br>
+	<a href="#4.16">4.16</a>) <code>OID</code> nedir? <code>TID</code> nedir?<br>
+	<a href="#4.17">4.17</a>) PostgreSQL' de kullanýlan bazý terimlerin anlamlarý nelerdir?<br>
+	<a href="#4.18">4.18</a>) Neden "<code>ERROR: Memory exhausted in AllocSetAlloc()</code>"
+	hatasýný alýyorum?<br>
+	<a href="#4.19">4.19</a>) Hangi PostgreSQL sürümünü çalýstýrdýðýmý nasýl görebilirim?<br>
+	<a href="#4.20">4.20</a>) Neden <i>large-object</i> iþlemlerim, "</code>invalid large
+	obj descriptor</code>" hatasýný veriyor?<br>
+	<a href="#4.21">4.21</a>) Þu andaki zamaný öntanýmlý deðer olarak kabul
+	eden kolonu nasýl yaratýrým?<br>
+	<a href="#4.22">4.22</a>) Neden <code>IN</code> kullanan <i>subquery</i>'lerim çok yavaþ?<br>
+	<a href="#4.23">4.23</a>) <i>Outer join</i> iþlemini nasýl yapabilirim?<br>
+	<a href="#4.24">4.24</a>) Ayný anda birden fazla veritabanýnda nasýl iþlem yapabilirim?<br>
+	<a href="#4.25">4.25</a>) Bir fonksiyondan nasýl çoklu satýr ya da kolon döndürebilirim?<br>
+	<a href="#4.26">4.26</a>) Neden Pl/PgSQL fonksiyonlarý içinden güvenli
+	bir þekilde tablo yaratma/kaldýrma iþlemlerini yapamýyoruz?<br>
+	<a href="#4.27">4.27</a>) Hangi replikasyon seçenekleri bulunmaktadýr?<br>
+	<a href="#4.28">4.28"D</a>) Hangi þifreleme seçenekleri bulunmaktadýr?<br>
+	
+
+<h2 align="center">PostgreSQL Özelliklerini Geniþletmek</h2>
+	<a href="#5.1">5.1</a>) Kullanýcý-tanýmlý bir fonksiyon yazdým. <i>psql</i>'de
+	çalýþtýrdýðým zaman neden <code>core dump</code> ediyor?<br>
+	<a href="#5.2">5.2</a>) PostgreSQL'e nasýl yeni veri tipleri/fonksiyonlar ekleyebilirim?<br>
+	<a href="#5.3">5.3</a>) Bir tuple döndürmek için bir C fonksiyonunu nasýl yazarým?<br>
+	<a href="#5.4">5.4</a>) Bir kaynak dosyasýnda deðiþiklik yaptým.
+	Yeniden derlememe raðmen deðiþiklik geçerli olmuyor. Neden?<br>
+	
+    <hr>
+
+	<h2 align="center">Genel Sorular</h2>
+
+		<h4><a name="1.1">1.1</a>) PostgreSQL nedir? Nasýl okunur?</h4>
+		<p>PostgreSQL, <i>Post-Gres-Q-L</i>. olarak okunur</p>
+		<p>PostgreSQL, yeni-nesil <small>VTYS</small> araþtýrma prototipi olan POSTGRES
+		veritabaný yönetim sisteminin geliþtirilmesidir. POSTGRES'in zengin veri tiplerini ve
+		güçlü veri modelini tutarken, <small>SQL</small>'in geliþtirilmiþ alt kümesi 
+		olan PostQuel dilini kullanýr. PostgreSQL ücretsizdir ve kaynak kodu açýk daðýtýlýr.</p>
+		<p>PostgreSQL, PostgreSQL geliþtirme listesine üye olan bir Internet geliþtirici
+		takýmý tarafýndan geliþtirilir. Þu andaki koordinatör, Marc G. Fournier 
+		(<a href="mailto:scrappy@PostgreSQL.org">scrappy@PostgreSQL.org</a>). 
+		(Bu takýma nasýl katýlacagýnýzý öðrenmek için <a href="#1.6">1.6</a> numaralý maddeyi
+		okuyunuz.) Bu takým, tüm PostgreSQL geliþiminden sorumludur.</p>
+		<p>PostgreSQL 1.01 sürümünün yazarlarý Andrew Yu ve Jolly Chen idi. Bunlarýn dýþýnda
+		bir kaç kisi de uyarlama, hata ayýklama ve kodun geliþtirilmesi için çalýsmýþtý.
+		PostgreSQL'in türediði orijinal Postgres kodu, lisans, lisansüstü ve akademisyenler
+		tarafýndan, Professor Michael Stonebraker (University of California, Berkeley)
+		koordinatörlügünde yazýlmýþtýr.</p>
+		<p>Berkley'deki yazýlýmýn adý Postgres idi. <small>SQL</small> uyumluluðu
+		1995'te eklenince, adý Postgres 95 oldu. 1996 yýlýnýn sonlarýnda adý
+		PostgreSQL olarak deðiþtirildi.</p>
+		
+		<h4><a name="1.2">1.2</a>) PostgreSQL'in haklarý nedir?</h4>
+		<p>PostgreSQL Data Base Management System</p>
+		<p>Portions copyright (c) 1996-2002, PostgreSQL Global Development
+		Group Portions Copyright (c) 1994-6 Regents of the University of
+		California</p>
+		<p>Permission to use, copy, modify, and distribute this software
+		and its documentation for any purpose, without fee, and without a
+		written agreement is hereby granted, provided that the above
+		copyright notice and this paragraph and the following two
+		paragraphs appear in all copies.</p>
+		<p>IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY
+		PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL
+		DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS
+		SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
+		CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+		<p>THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY
+		WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+		OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+		SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE
+		UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,
+		SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.</p>
+		<p>Üstteki metin klasik açýk-kod lisansý olan BSD lisansýdýr. Kaynak kodun nasýl 
+		kullanýlabileceðine dair sýnýrlamalarý yoktur. Bu lisansý seviyoruz. Deðiþtirme 
+		niyetimiz bulunmamaktadýr.</p>
+		
+		<h4><a name="1.3">1.3</a>) PostgreSQL, hangi Unix platforlarýnda çalýþýr?</h4>
+		<p>Genel olarak, modern bir Unix-uyumlu platform PostgreSQL'i çalýþtýracaktýr.
+		Ayrýntýlý bilgi için kurulum belgelerine bakabilirsiniz.</p>
+		
+		<h4><a name="1.4">1.4</a>) Hangi Unix olmayan uyarlamalarý bulunmaktadýr?</h4>
+		<p><strong>Ýstemci</strong></p>
+		<p><code>libpq C</code> kütüphanesini, psql ve diger arabirimleri ve binary dosyalarý,
+		MS Windows ortamlarýnda çalýsmasý için derlemeniz mümkündür. Bu örnekte  istemcide
+		MS Windows çalýþýyor ve desteklenen Unix platformlarýndan birinde çalýþan PostgreSQL
+		sunucuna TCP/IP ile baðlanmaktadýr. Daðýtým içindeki <code>win31.mak</code> dosyasý ile,
+		<code>Win32 libpg</code> kütüphanesi ve psql yaratabilirsiniz. PostgreSQL ayný
+		zamanda <i>ODBC</i> istemcileri ile haberleþebilmektedir.</p>
+		<p><strong>Sunucu</strong></p>
+		<p>Veritabaný sunuucsu <code>Cygwin</code> kullanarak Windows NT, 2K ya da
+		XP üzerinde çalýþtýrýlabilir. Dagýtým içindeki <code>pgsql/doc/FAQ_MSWIN</code>
+		dosyasýný ya da web sitemizdeki MS Windows FAQ'u inceleyebilirsiniz.</p>
+		<p>Doðal Windows NT/2000/XP portu için þu anda çalýþmalar devam etmektedir. Windows sürümü  
+		hakkýnda güncel bilgi için, http://techdocs.postgresql.org/guides/Windows adresini 
+		ziyaret edebilirsiniz.</p>
+		<p>Ayrýca, http://forge.novell.com adresinde Novell Netware 6 portu bulunmaktadýr.</p>
+		
+		<h4><a name="1.5">1.5</a>) PostgreSQL'i nereden indirebilirim?</h4>
+		<p>PostgreSQL için ana anonim ftp sitesi <i><a href="ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</a></i>
+		adresidir. Yansýlar için, ana web sayfamýza bakabilirsiniz.</p>
+		
+		<h4><a name="1.6">1.6</a>) Nereden destek alabilirim?</h4>
+		<p>Ana e-posta listesi : pgsql-general@PostgreSQL.org. PostgreSQL konusundaki tartýþmalara
+		açýktýr. Üye olmak için, aþaðýdaki satýrlarý e-postanýzýn <i>body</i> kýsmýna
+		(konu kýsmýna deðil) yazýp, pgsql-general-request@PostgreSQL.org adresine gönderin:</p>
+		<pre>subscribe<br>end</pre>
+		<p>Ayný zamanda, bir <i>digest</i> listesi bulunmaktadýr. Bu listeye üye olmak için, 
+		pgsql-general-digest-request@PostgreSQL.org adresine, body kýsmýnda</p>
+		<pre>subscribe<br>end</pre>
+		<p>yazan bir e-posta atmanýz yeterli olacaktýr.</p>
+		<p><i>Digest</i> postalar, ana liste 30k civarýnda e-postaya ulaþtýðýnda
+		üyelere gönderilmektedir.</p>
+		<p><i>Bug</i>'lar için bir e-posta listesi bulunmaktadýr. Bu listeye üye olmak için,
+		pgsql-bugs-request@PostgreSQL.org adresine, <i>body</i> kýsmýnda</p>
+		<pre>subscribe<br>end</pre>
+		<p>yazan bir e-posta atmanýz yeterli olacaktýr.</p>
+		<p>Ayný zamanda, geliþtiriciler için tartýþma listesi bulunmaktadýr. Bu listeye
+		üye olmak için, pgsql-hackers-request@PostgreSQL.org adresine, body kýsmýnda</p>
+		<pre>subscribe<br>end</pre>
+		<p>yazan bir e-posta atmanýz yeterli olacaktýr.</p>
+		<p>Bunun dýþýndaki e-posta listelerine ve PostgreSQL hakkýnda bilgiye, PostgreSQL WWW 
+		ana sayfasýndan ulasabilirsiniz: <i><a href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</a></i><p>
+		<p>Ayný zamanda, EFNet üzerinde, <code>#PostgreSQL</code> adlý bir IRC kanalý
+		bulunmaktadýr. Bunun için, <code>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</code>
+		Unix komutunu kullanabilirsiniz.</p>
+		<p>Ticari destek veren firmalarýn listesine</p>
+		<p><i><a href="http://www.postgresql.org/users-lounge/commercial-support.html">http://www.postgresql.org/users-lounge/commercial-support.html</a></i></p>
+		<p>adresinden ulaþbilirsiniz.</p>
+		
+		<h4><a name="1.7">1.7</a>) En son sürüm nedir?</h4>
+		<p>PostgreSQL'in son sürümü 7.3.3'tür.</p>
+		<p>Her 4 ayda <i>major release</i> çýkarýlmasý planlanmaktadýr.</p>
+
+		<h4><a name="1.8">1.8</a>) Hangi belgelere ulaþabilirim?</h4>
+		<p>Daðýtýmýn içinde, kitapçýklar, kitapçýk sayfalarý ve bazý küçük örnekler verilmektedir.
+		<code>/doc</code> dizinine bakýnýz. Ayrýca, bu el kitapçýklarýný online olarak
+		<i><a href="http://www.PostgreSQL.org/docs/">http://www.PostgreSQL.org/docs/</a></i> adresinden inceleyebilirsiniz.</p>
+		<p><i><a href="http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</a></i>
+		ve <i><a href="http://www.commandprompt.com/ppbook">http://www.commandprompt.com/ppbook<a></i>
+		adreslerinde PostgreSQL kitaplarý bulunmaktadýr. PostgreSQL kitablarýnýn listesine, 
+		<i><a href="http://www.ca.PostgreSQL.org/books/">http://www.ca.PostgreSQL.org/books/</a></i> adresinden ulaþaiblirsiniz.
+		Ayrýca, PostgreSQL konusundaki teknik makalelere de
+		<i><a href="http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</a></i> adresinden ulaþabilirsiniz.</p>
+		<p>psql'in, \d ile baslayan veri tipler, operatorler, fonksiyonlar,
+		<i>aggregate</i>'ler, vb. ile ilgili güzel komutlarý vardýr.</p>
+		<p>Web sitemiz daha fazla belgeyi içermektedir.</p>
+		
+		<h4><a name="1.9">1.9</a>) Bilinen hatalar ya da eksik
+		özelliklere nereden ulaþabilirim?</h4>
+		<p>PostgreSQL SQL-92 uyumluluðu içindedir, standartlardan fazla da özellikleri
+		bulunmaktadýr. Bilinen hatalar, eksik özellikler ve gelecek ile ilgili planlar için
+		TODO listesine bakýnýz.</p>
+		
+		<h4><a name="1.10">1.10</a>) Nasýl <small>SQL</small> öðrenebilirim?</h4>
+		<p><i><a href="http:/www.PostgreSQL.org/docs/awbook.html">http:/www.PostgreSQL.org/docs/awbook.html</a></i>
+		adresindeki kitap SQL ögretecektir.
+		<i><a href="http://www.commandprompt.com/ppbook">http://www.commandprompt.com/ppbook</a></i>
+		adresinde de bir baska PostgreSQL kitabý bulunmaktadýr.</p>
+		<p><i><a href="http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm</a></i>,
+		<i><a href="http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM</a></i>
+		<i><a href="http://sqlcourse.com">http://sqlcourse.com</a></i>
+		ve <i><a href="http://sqlcourse2.com">http://sqlcourse2.com</a></i>
+		adreslerinde de güzel belgeler bulunmaktadýr.</p>
+		<p>Bir baþkasý da, <i><a href="http://members.tripod.com/er4ebus/sql/index.htm">http://members.tripod.com/er4ebus/sql/index.htm</a></i>
+		adresinde bulunan "<i>Teach Yourself SQL in 21 Days, Second Edition</i>" kitabýdýr.</p>
+		<p>Bazý kullanýcýlarýmýz da þu kitabý önermektedirler: "<i>The Practical SQL Handbook,
+		Bowman, Judith S., et al.,Addison-Wesley</i>". Bazýlarý ise "<i>The Complete
+		Reference SQL, Groff et al., McGraw-Hill</i>" kitabýný önermektedirler.</p>
+		
+		<h4><a name="1.11">1.11</a>) PostgreSQL 2000 yýlýna uyumlu mudur?</h4>
+		<p>Evet.</p>
+		
+		<h4><a name="1.12">1.12</a>) Geliþtirme takýmýna nasýl katýlabilirim?</h4>
+		<p>Öncelikle, en son kaynak kodunu indirin ve web sitemizdeki ya da daðýtýmýn içindeki
+		PostgreSQL Developer belgesini okuyun. Ardýndan, pgsql-hackers ve pgsql-patches 
+		listelerine üye olun. Üçüncü olarak da, pgsql-pacthes listesine yüksek kalitede 
+		yamalar gönderin.</p>
+		<p>PostgreSQL CVS arþivine eriþim izni olan, 10 kadar geliþtirici bulunmaktadýr.
+		Hepsi defalarca, diðer kiþilerin yaptýðýndan çok daha yüksek-kaliteli yamalar 
+		göndermiþlerdir. Ayrýca biz de bu geliþtiricilerin ekledikleri yamalarýn yüksek
+		kalitede olduðuna güveniyoruz.</p>
+		
+		<h4><a name="1.13">1.13</a>) Bir hata raporunu nasýl gönderebilirim?</h4>
+		<p>PostgreSQL BugTool sayfasýna gidiniz. O sayfada bir <i>bug</i> bildirmek
+		için neleri yapmanýz gerektiði anlatýlmýþtýr.</p>
+		<p>Ayrýca, <i><a href="ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</a></i>
+		ftp adresimizde, yeni bir PostgreSQL sürümü ya da yamasý olup olmadýðýni kontrol ediniz.</p>
+		
+		<h4><a name="1.14">1.14</a>) PostgreSQL, diger DBMS'lerle nasýl karþýlastýrýlabilir?</h4>
+		<p>Bir yazýlýmýn gücünü ölçmek için çeþitli yollar vardýr: Yazýlýmýn özellikleri, 
+		baþarýmý, güvenilirliði, desteði ve ücreti.</p>
+		<p>Özellikler:<p>
+		<p>PostgreSQL mevcut büyük ticari veritabanlarýnýn, <i>transaction</i>,
+		<i>subselect</i>, <i>trigger</i>, <i>view</i>, <i>foreign key referential integrity</i>
+		ve <i>sophisticated locking</i> gibi (<i>user-defined types</i>), <i>rules</i>,
+		<i>inheritance</i> ve <i>lock</i> cakýþmalarýný düþürmek için <i>multi-version</i>
+		uyumluluk özellikleri bulunmaktadýr.</p>
+		<p>Performans (Baþarým):</p>
+		<p>PostgreSQL, diðer ticari ve açýk kaynak kodlu veritabanlarýyla yakýn baþarýmý saðlar.
+		Bazý açýlardan daha hýzlýdýr, diðer açýlardan da yavaþtýr. MySQL ya da daha zayýf 
+		veritabanlarý ile karþýlaþtýrýldýðýnda, <code>INSERT/UPDATE</code> iþlemlerinde,
+		<i>transaction</i> bazlý çalýstýðýmýz için daha yavaþýz. MySQL, yukarýdaki "özellikler"
+		kýsmýnda belirtilenlerden hiç birine sahip deðildir. Biz, baþarýmýmýzý her sürümde
+		arttýrsak da, esneklik ve geliþmiþ özellikler için yapýlanmýþ durumdayýz.
+		PostgreSQL'i MySQL ile karþýlaþtýran þu web sitesine bakabilirsiniz:
+		<i><a href="http://openacs.org/why-not-mysql.html">http://openacs.org/why-not-mysql.html</a></i></p>
+		<p>Güvenilirlik:</p>
+		<p><i>DBMS</i>'lerin güvenilir olmasý gerketiði, yoksa deðerleri olmayacaðýný düþünüyoruz.
+		Çok iyi test edilmiþ, dengeli çalýsan minimum sayýda hata içeren kod sunmaya çalýþýyoruz.
+		Her bir sürüm en az 1 aylýk beta testlerinden geçirilmektedir. Sürüm geçmiþine bakarsanýz,
+		üretime hazýr, dengeli ve kararlý kodlar sunduðumuzu görebilirsiniz. Bu alanda, diðer 
+		veritabaný yazýlýmlarýna üstünlüðümüz olduðuna inanmaktayýz.</p>
+		<p>Destek:</p>
+		<p>E-posta listemiz, oluþan herhangi bir sorunu çözebilecek büyük sayýda kullanýcý
+		ve geliþtirici grubunu içerir. Sorununuz için, en az bir ticari veritabaný kadar
+		rahat çözüm bulabilirsiniz. Gelistiricilere, kullanýcý grubuna, belgelere ve
+		kaynak koda direk olarak eriþebilme, PostgreSQL desteðini, diðer <i>DBMS</i>'lere
+		göre daha önemli kýlar. Gereksinimi olanlara, ticari destek verilebilir.
+		(Destek için 1.6 bölümüne bakýnýz.)</p>
+		<p>Fiyat:</p>
+		<p>Ticari ve ticari olmayan tüm kullanýmlarýnýz için PostgreSQL ücretsizdir. Kodumuzu,
+		yukarýda belirtilen BSD-stili lisanstaki sýnýrlamalar hariç, ürününüzün içine
+		ekleyebilirsiniz.</p>
+		
+		<h4><a name="1.15">1.15</a>) PostgreSQL'e maddi açýdan nasýl destek olabilirim?</h4>
+		<p>PostgreSQL, 1996 yýlýndan beri 1. sýnýf altyapýya sahiptir. Bunun için, yýllar
+		boyu çalýþýp bu altyapýyý oluþturup yöneten Marc Fournier'e teþekkürler.</p>
+		<p>Bir açýk kaynak kodlu proje için, kaliteli altyapý çok önemlidir. Bu altyapý,
+		projenin kesilmesini önler ve projenin ilerlemesini hýzlandýrýr.</p>
+		<p>Tabii ki bu altyapý ucuz deðildir. Ýþlerin yürümesi için çeþitli yýlýk ve anlýk 
+		harcamalarýmýz olmaktadýr. Eðer siz ya da þirketinizin bu çabamýza baðýþta
+		bulunabilecek parasý varsa, lütfen
+		<i><a href="http://www.pgsql.com/pg_goodies">http://www.pgsql.com/pg_goodies</a></i>
+		adresine gidiniz ve baðýþta, hibede bulununuz.</p>
+		<p>Web sayfasýnýn 'PostgreSQL Inc.' den bahsetmesine raðmen, "katkýda bulunanlar" 
+		(<i>contributors</i>) maddesi sadece PostgreSQL projesini desteklemek içindir ve
+		belirli bir þirketin para kaynaðý deðildir. isterseniz, baðlantý adresine bir
+		çek gönderebilirsiniz.</p>
+		
+		<hr>
+		
+	<h2 align="center">Kullanýcý/Ýstemci Sorularý</h2>
+		
+		<h4><a name="2.1">2.1</a>) PostgreSQL icin ODBC sürücüleri var mý?</h4>
+		<p>iki tane ODBC sürücüsü bulunmaktadýr:  PsqlODBC ve OpenLink ODBC.</p>
+		<p>PsqlODBC'i http://gborg.postgresql.org/project/psqlodbc/projdisplay.php adresinden 
+		indirebilirsiniz.</p>
+		<p>OpenLink ODBC http://www.openlinksw.com adresinden alýnabilir.Bu sürücü,
+		kendi standart ODBC istemci yazýlýmý ile çalýstýðýndan, destekledikleri 
+		her platformda (Win, Mac, Unix, VMS) PostgreSQL ODBC bulunmalidir.</p>
+		<p>Ücretsiz sürümü olmakla beraber, ticari kalitede destek almak isteyenlere satmak isteyeceklerdir. 
+		Sorularýnýzý lütfen postgres95@openlink.co.uk adresine gönderiniz.</p>
+		
+		<h4><a name="2.2">2.2</a>) PostgreSQL'i web sayfalarýnda kullanabilmek için hangi
+		araçlar bulunmaktadýr?</h4>
+		<p><i><a href="http://www.webreview.com/">http://www.webreview.com/</a></i> adresinde,
+		arka planda veritabaný çalýstýran Web sayfalarý için giriþ seviyesinde bilgi bulunmaktadýr.</p>
+		<p>Web ile bütünleþme için, PHP (<i><a href="http://www.php.net/"></a></i>)
+		mükemmel bir arabirim sunar.<p>
+		<p>Karmaþýk sorunlar için, çoðu kisi Perl arabirimini ve CGI.pm ya da mod_perl kullanýr.</p>
+		
+		<h4><a name="2.3">2.3</a>) PostgreSQL'in grafik kullanýcý arabirimi var mýdýr?</h4>
+		<p>Çeþitli grafik arabirimlerimiz bulunmaktadýr. Bunlarýn arasýnda,
+		PgAccess (<i><a href="http://www.pgaccess.org/">http://www.pgaccess.org/</a></i>),
+		PgAdmin II (<i><a href="http://www.pgadmin.org/">http://www.pgadmin.org/</a></i>, sadece Win32 için),
+		RHDB Admin (<i><a href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/</a></i>)
+		ve Rekall (<i><a href="http://www.thekompany.com/products/rekall/">http://www.thekompany.com/products/rekall/</a></i>)
+		bulunmaktadýr. Ayrýca, PostgreSQL için web tabanlý bir arabirim olan
+		PHPPgAdmin (<i><a href="http://phppgadmin.sourceforge.net/">http://phppgadmin.sourceforge.net/</a></i>) bulunmaktadýr.</p>
+		<p>Daha ayrýntýlý liste için
+		<i><a href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a></i>
+		adresine bakabilirsiniz.</p>
+		
+		<h4><a name="2.4">2.4</a>) PostgreSQL ile iletiþimi kurabilmek için hangi dilleri kullanabilirim?</h4>
+		<ul><li>C (libpq)</li>
+		<li>Embedded C (ecpg)</li>
+		<li>Java (jdbc)</li>
+		<li>Python (PyGreSQL)</li>
+		<li>TCL (libpgtcl)</li></ul>
+		<p>Diðerleri için, http://gborg.postgresql.org adresindeki Drivers/Interfaces bölümüne 
+  		bakabilirsiniz.</p>
+		
+		<hr>
+		
+	<h2 align="center">Yönetimsel Sorular</h2>
+		
+		<h4><a name="3.1">3.1</a>) PostgreSQL'i, <code>/usr/local/pgsql</code> dizininden
+		baþka dizinlere nasýl kurabilirim?</h4>
+		<p><i>configure</i> betiðini çalýstýrýrken, <code>--prefix</code> seçeneðini veriniz.</p>
+		
+		<h4><a name="3.2">3.2</a>) postmaster'i baslattýgýmda, a Bad System Call ya da core dumped mesajý alýyorum. Neden?</h4>
+		<p>Bunun birçok nedeni olabilir. Ancak ilk kontrol edilmesi gereken sey, çekirdeginize
+		System V uzantýlarýnýn kurulu olup olmadýgýný kontrol etmek olabilir. PostgreSQL 
+		shared memory ve semaphores için çekirdek destegine gereksinim duyar.</p>
+		
+		<h4><a name="3.3">3.3</a>) postmaster'i baþlattýðýmda, <code>ýpcMemoryCreate</code>
+		hatasý alýyorum. Neden?</h4>
+		<p>Ya çekirdeðinizde <i>shared memory</i> desteðiniz düzgünce yapýlandýrýlmamýþtýr,
+		ya da çekirdeðinizdeki mevcut <i>shared memory</i> miktarýný büyütmeniz gerekecektir.
+		Gereksinim duyacaðýnýz miktar, mimarinize ve postmaster için ayarladýgýnýz tampon
+		ile <i>backend</i> iþlemi sayýsýna baðlýdýr. Tüm sistemler için, tamponlar ve
+		iþlemlerde öntanýmlý sayýlarla, ~ 1MB kadar yere gereksinmeniz olacaktýr.
+		<i><a href="http://www.postgresql.com/docs/7.3/interactive/admin.html">PostgreSQL
+		7.3.2 Sistem Yöneticileri Rehberi</a></i>'ne, <i>shared memory</i> ve <i>semaphorelar</i>
+		hakkýndaki ayrýntýlý bilgi için bakabilirsiniz.</p>
+		
+		<h4><a name="3.3">3.4</a>) postmaster'ý baþlattýðýmda,
+		<code>ýpcSemaphoreCreate</code> hatasý alýyorum. Neden?</h4>
+		<p>Eðer hata, "<code>ýpcSemaphoreCreate: semget failed (No space left on device)</code>"
+		ise, çekirdeðiniz yeterli <i>semaphore</i> ile yapýlandýrýlmamýþ demektir. Postgres, her 
+		bir potansiyel <i>backend</i> için bir <i>semaphore</i> gereksinimi duyar. Geçici
+		bir çözüm, postmasterý <i>backend</i> iþlemleri için daha az miktarda sýnýrla
+		baþlatmak olabilir. <code>-N</code>'i varsayýlan deðer olan 32'den küçük bir
+		deðerle baþlatýnýz. Daha kalýcý bir çözüm, çekirdeðinizin <code>SEMMNS</code> ve
+		<code>SEMMNI</code> parametrelerini yükseltmek olacaktýr.</p>
+		<p>Çalýþmayan <i>semaphore</i>'lar aðýr veritabaný iþlemlerinde çökme yaratabilirler.</p>
+		<p>Eðer hata mesajýnýz baþka bir þey ise, çekirdeðinizde <i>semaphore</i> desteðini 
+		yapýlandýrmamýþ olabilirsiniz. <i>Shared memory</i> ve <i>semaphore</i>'lar hakkýndaki
+		daha ayrýntýlý bilgi için
+		<i><a href="http://www.postgresql.com/docs/7.3/interactive/admin.html">PostgreSQL
+		7.3.2 Sistem Yöneticileri Rehberi</a></i>'ne bakabilirsiniz.</p>
+		
+		
+		<h4><a name="3.5">3.5</a>) Diger bilgisayarlarýn benim PostgreSQL veritabaný
+		sunucuma baðlantýlarýný nasýl kontrol edebilirim?</h4>
+		<p>Ön tanýmlý olarak, PostgreSQL sadece yerel makineden <i>Unix domain sockets</i>
+		kullanarak baðlanýlmasýna izin verir. Diger makineler, postmaster'a <code>-i</code>
+		etiketini geçirmezseniz ve <code>$PGDATA/pg_hba.conf</code> dosyasýný düzenleyerek
+		<i>host-based authentication</i>'a  olanak vermezseniz, baðlantý yapamayacaklardýr.</p>
+		
+		<h4><a name="3.6">3.6</a>) Veritabani motorunu daha iyi
+		baþarým için nasýl ayarlayabilirim?</h4>
+		<p><i>Index</i>'ler sorgularý hýzlandýrabilir. <code>EXPLAIN</code> komutu,
+		PostgreSQL'in sorgunuzu nasýl yorumladýðýný ve hangi <i>index</i>'leri kullandýðýný
+		görmenize izin verir.</p>
+		<p>Eðer cok fazla <code>INSERT</code> iþlemi yapýyorsanýz, bunlarý büyük bir
+		toplu iþlem dosyasýkullanýp <code>COPY</code> komutu ile veritabanýna girmeyi
+		deneyiniz. Bu, tekil <code>INSERT</code>'lerden daha hýzlýdýr. Ýkinci olarak,
+		<code>BEGIN WORK/COMMIT</code> <i>transaction</i> bloðu içinde olmayan ifadeler kendi 
+		<i>transaction</i>'larýndaymýþ gibi düþünülür. Çoklu ifadeleri tek bir
+		<i>transaction</i> bloðu içinde yapabilirsiniz. Bu, <i>transaction overhead</i>'ini
+		düþürecektir. Tek bir <i>transaction</i> bloðu içinde birden çok ifadeyi çalýþtýrmayý 
+		deneyebilirsiniz. Bu da ayný þekilde, <i>transaction overhead</i>'ini düþürür.</p>
+		<p>Çeþitli ayarlama seçenekleri mevcuttur. <code>fsync()</code> iþlemini, postmaster'ý
+		<code>-o -F</code> seçeneði ile baþlatarak devre dýþý býrakabilirsiniz. Bu iþlem,
+		<code>fsync()</code>'lerin her <i>transactiondan</i> sonra diski <i>flush</i> etmesini
+		engelleyecektir.</p>
+		<p>Ayný zamanda, postmaster'i <code>-B</code> seçeneði ile baþlatýp, <i>backend</i>
+		iþlemleri tarafýndan kullanýlan <i>shared memory buffers</i> sayýlarýný arttýrabilirsiniz.
+		Eðer bu parametreyi çok yüksek tutarsanýz, çekirdeðinizin <i>shared memory</i>
+		bölgesindeki limiti aþma olasýlýðýnýz yüzünden postmaster baþlayamayabilir. Her bir
+		tampon (<i>buffer</i>) 8K'dýr. Öntanýmlý sayý ise 64 tampondur.</p>
+		<p>Ayný þekilde, backend'in <code>-S</code> seçeneðini geçici sýralamalar için
+		<i>backend</i> süreçleri tarafýndan kullanýlacak hafýzayý arttýrmak amacýyla
+		kullanabilirsiniz. <code>-S</code> seçeneði kilobayt cinsinden deðer alýr ve ön
+		tanýmlý deðeri 512'dir (512 K)</p>
+		<p>Tablolardaki veriyi bir <i>index</i>'e eþlemek amacýyla gruplama için
+		<code>CLUSTER</code> komutunu kullanabilirsiniz. Ayrýntýlý bilgi için
+		<code>CLUSTER</code> komutunun yardým sayfasýna bakabilirsiniz.</p>
+		
+		<h4><a name="3.7">3.7</a>) Hangi hata ayýklama özellikleri bulunmaktadýr?</h4>
+		<p>PostgreSQL, hata ayýklama amacýyla kullanýlabilecek durum bilgisi
+		rapor eden çeþitli özeliklere sahiptir.</p>
+		<p>Öncelikle, <i>configure</i> betiðini <code>--enable-cassert</code> seçeneðiyle
+		çalýþtýrýrsanýz, bir çok <code>assert() backend</code> calýþmasýný gözlemler ve
+		beklenmeyen bir durumda programý durdurur.</p>
+		<p>Postmaster ve postgres çeþitli hata ayýklama seçeneklerine sahiptir. Öncelikle,
+		postmaster'ý baþlattýðýnýzda, standart çýktýyý ve hatalarý bir log dosyasýna 
+		yönlendirdiðinize emin olun:</p>
+		<pre>cd /usr/local/pgsql<br>./bin/postmaster >server.log 2>&1 &</pre>
+		<p>Bu iþlem PostgreSQL ana dizinine <code>server.log</code> dosyasý yerleþtirecektir.
+		Bu dosya sunucunun yaþadýðý sorunlar ya da hatalar hakkýnda yararlý bilgiler içerir.
+		<code>-d</code> seçeneði, hata ayýklama seviyesini belirten bir rakam ile kullanýlýr.
+		Yüksek hata ayýklama seviyelerinin büyük log dosyalarý oluþturacaðýný unutmayýnýz.</p>
+		<p>Eðer postmaster çalýþmýyorsa, <code>postgres backend</code>'ini komut satýrýndan
+		çalýþtýrabilir ve SQL ifadenizi direk olarak yazabilirsiniz. Bu sadece hata ayýklama
+		amacýyla önerilir. Burada, noktalý virgülün deðil de yeni bir satýrýn sorguyu
+		sonlandýrdýðýný unutmayýnýz. Eðer hata ayýklama sembolleri ile derlediyseniz,
+		ne olduðunu görmek için bir hata ayýklayýcý kullanabilirsiniz. <i>backend</i>
+		postmaster'dan baþlatýlmadýðýndan, eþdeðer bir ortamda çalýþmamaktadýr ve
+		<i>locking/backend</i> etkileþim sorunlarý artabilir.</p>
+		<p>Eðer postmaster çalýþýyorsa, bir pencerede psql'i çalýþtýrýn ve psql tarafýndan
+		kullanýlan postgres sürecinin süreç numarasýný (<code>PID</code>) bulun. Postgres
+		süreci ile iliþkilendirmek için bir hata ayýklarýcý kullanýn. Sorgularý psql aracýlýðý
+		ile çalýþtýrabilirsiniz. Eðer postgres baþlangýcýnda hata ayýklamak istiyorsanýz,
+		<code>PGOPTIONS="-W n"</code> seçeneðini ayarlayabilir ve psql'i baþlatabilirsiniz.
+		Bu iþlem, baþlangýcýn <code>n</code> saniye kadar gecikmesini saðlayacaktýr; böylece
+		hata ayýklayýcýyý sürece iliþkilendirdikten sonra baþlangýç sürecinin devam etmesini 
+		saðlayabilirsiniz.</p>
+		<p>postgres programý hata ayýklama ve baþarým ölçümleri için <code>-s</code>,
+		<code>-A</code> ve <code>-t</code> seçeneklerine sahiptir.</p>
+		
+		<h4><a name="3.8">3.8</a>) Baðlanmaya çalýþýrken, neden "<i>Sorry, too many
+		clients</i>" hatasýný alýyorum?</h4>
+		<p>Postmaster'ýn  eþzamanlý olarak baþlatabileceði <i>backend</i> süreçleri
+		sýnýrlarýný arttýrmanýz gerekmektedir.</p>
+		<p>Ön tanýmlý deðer 32 süreçtir. Bunu, postmaster'ý uygun <code>-N</code>
+		deðeri ile ya da <code>postgresql.conf</code> dosyasýný düzenleyerek yeniden
+		baþlatmakla arttýrabilirsiniz.</p>
+		<p>Eðer <code>-N</code> deðerini 32'den büyük yapacaksanýz, ayný zamanda
+		<code>-B</code> deðerini de deðiþtirmeniz gerektiðini unutmayýn. </code>-B</code>,
+		<code>-N</code>'nin en az 2 katý kadar olmalýdýr; daha iyi baþarým için bu sayýyý daha
+		da arttýrmalýsýnýz. Yüksek sayýdaki <i>backend</i> süreçleri için, çeþitli çekirdek
+		yapýlandýrma parametrelerini arttýrmanýz gerekecektir. Yapýlmasý gerekenler,
+		<code>SHMMAX</code>, <code>SEMMNS</code>, <code>SEMMNI</code>, <code>NPROC</code>,
+		<code>MAXUPRC</code> ve açýlabilecek dosyalarýn maksimum sayýsý olan <code>NFILE</code>
+		ve <code>NINODE</code> deðerlerini karýþtýrmaktýr. Bunun nedeni, PostgreSQL'in izin
+		verilen <i>backend</i> süreçlerinin sayýsý üzerinde bir sýnýrý olmasýdýr. Böylelikle
+		sistem kaynaklarýnýn dýþýna çýkýlmayacaktýr.</p>
+		<p>PostgreSQL'in 6.5 sürümüne kadar, en fazla <i>backend</i> sayýsý 64 idi ve bunu
+		deðiþtirmek için <code>include/storage/sinvaladt.h</code> dosyasý içindeki
+		<code>MaxBAckendid</code> sabitini deðiþtirdek sonra yazýlýmý yeniden
+		derlemek gerekiyordu.</p>
+		
+		<h4><a name="3.9">3.9</a>) <code>pgsql_tmp</code> dizinin içindeki dosyalar nelerdir?</h4>
+		<p>Sorgu çalýstýrýcý (<i>query executer</i>) tarafýndan yaratýlan geçici dosyalardýr.
+		Örnegin, bir sýralama <code>ORDER BY</code> ile yapýlacaksa ve sýralama
+		<code>backend</code>'in <code>-s</code> parametresinin izin verdiðinden daha
+		fazla alana gereksinim duyuyorsa, ekstra veriyi tutmak için geçici dosyalar yaratýlýr.</p>
+		<p>Geçici dosyalar, eðer sýralama sýrasýnda <i>backend</i> göçmezse otomatik olarak
+		silinecektir. Eðer çalýþan durumda bir <i>backend</i>'iniz yoksa,
+		<code>pg_tempNNN.NN</code> dosyalarýný silmeniz güvenlidir.</p>
+		
+		<h4><a name="3.10">3.10</a>) PostgreSQL sürümlerini yükseltmek için neden bir
+		dump/reload iþlemi gerçekleþtirmek zorundayým?</h4>
+		<p>PostgreSQL takýmý ara sürümlerde sadece küçük deðiþiklikler yapmaktadýr;
+		bu yüzden 7.2 sürümünden 7.2.1'e yükseltmek <i>dump/restore</i> iþlemi
+		gerekmemektedir. Ancak, esas sürümlerde (örnek: 7.2'den 7.3'e) çoðunlukla sistem
+		tablolarýnýn ve veri dosyalarýnýn iç yapýsý deðiþtirilir. Bu deðiþiklikler çoðunlukla
+		karmaþýktýr; dolayýsýyla veri dosyalarýnýn geriye dönük uyumluluðu iþlemlerini
+		yapmýyoruz. <i>Dump</i> iþlemi, veriyi genel biçimde alacaðýndan yeniden yükleme
+		esnasýnda veri, yeni iç biçime uygun þekilde yerleþtirilecektir.</p>
+		<p>Disk biçiminin deðiþmediði sürümlerde, <code>pg_upgrade</code> betiði güncellemenin
+		bir <i>dump/restore</i> gerektirmeden yapýlmasýný saðlayacaktýr. <i>pg_upgrade</i>
+		betiðinin o sürüm için bulunup bulunmadýðýný sürüm notlarý içinde bulabilirsiniz.</p>
+		
+		<hr>
+		
+	<h2 align="center">Ýþletimsel Sorular</h2>
+	
+		<h4><a name="4.1">4.1</a>) <i>Binary cursor</i> ve <i>normal cursor</i>
+		arasýndaki fark nedir?</h4>
+		<p><code>DECLARE</code> yardým sayfasýna bakýnýz.</p>
+		
+		<h4><a name="4.2">4.2</a>) Sorgunun sadece ilk birkaç satýrýný
+		nasýl <code>SELECT</code> edebilirim?</h4>
+		<p><code>FETCH</code> yardým sayfasýna bakýnýz, ya da <code>SELECT</code> ...
+		<code>LIMIT</code> ... kullanýnýz.</p>
+		<p>Ýlk birkaç satýrý almak isteseniz bile, tüm sorgu deðerlendirilmek durumunda kalýnabilir. ORDER 
+ 		BY içeren bir sorgu düþünün. Eðer ORDER BY iþe eþleþen bir index varsa, PostgreSQL istenen ilk birkaç  
+		satýrý iþleyebilir, ya da tüm sorgu istenen satýrlar üretilene kadar iþlenebilir. </b></p>
+		
+		<h4><a name="4.3">4.3</a>) psql'in içinde gördügüm tablolarýn ya da diðer
+		þeylerin listesini nasýl alabilirim?</h4>
+		<p><code>pgsql/src/bin/psql/describe.c</code> içindeki psql kaynak kodunu
+		okuyabilirsiniz. Bu kod, psql'in <code>\</code> ile baþlayan komutlarýnýn
+		çýktýsýný olusturan SQL komutlarýný içerir. Ayný zamanda, psql'i <code>-E</code>
+		seçeneði ile baþlatýp, verdiðiniz komutlarý çalýþtýrmak için yaptýðý 
+		sorgularýn çýktýlarýný görebilirsiniz.</p>
+		
+		<h4><a name="4.4">4.4</a>) Bir tablodan bir kolonu nasýl kaldýrabilirim?</h4>
+		<p>Bu özellik (<code>ALTER TABLE DROP COLUMN</code>) 7.3 sürümü ile gelmiþtir.
+		Eski sürümlerde aþaðýdakileri uygulamalýsýnýz: </p>
+		<pre>
 BEGIN;
 LOCK TABLE old_table;
 SELECT ...  -- select all columns but the one you want to remove
@@ -737,553 +577,449 @@ FROM old_table;
 DROP TABLE old_table;
 ALTER TABLE new_table RENAME TO old_table;
 COMMIT;		
+		</pre>
+		
+		<h4><a name="4.5">4.5</a>) Bir satýr, tablo ve veritabaný için en
+		fazla büyüklük nedir?</h4>
+		<p>Sýnýrlar:</p>
+		<p>Veritabaný için en fazla büyüklük nedir?<br>Sýnýrsýz (32 TB'lýk veritabaný bulunmaktadýr)<br><br>
+		Bir tablo için en fazla büyüklük nedir?<br>32 TB<br><br>
+		Bir satýr için en fazla büyüklük nedir?<br>1.6 TB<br><br>
+		Bir alan için en fazla büyüklük nedir?<br>1 GB<br><br>
+		Tabloda en fazla satýr sayýsý kaçtýr?<br>Sýnýrsýz<br><br>
+		Bir tabloda olabilecek en fazla kolon sayýsý kaçtýr?<br>Kolon tiplerine baðlý olarak 250-1600<br><br>
+		Bir tabloda olabilecek en fazla <i>index</i> sayýsý kaçtýr?<br>Sýnýrsýz</p>
+		<p>Tabii ki bunlar aslýnda sýnýrsýz degildir. Burada belirtilen sýnýrlar, fiziksel
+		sýnýrlarýn haricindeki sýnýrlardýr. Boþ disk alaný, hafýza/takas alaný na baðlý 
+		sýnýrlamalar vardýr. Baþarým, sýnýr deðerlere yaklaþtýkça, ya da deðerler çok büyük 
+		olduðunda düþebilir.</p>
+		<p>Bir tablo için büyüklük sýnýrý olan 32 TB, iþletim sisteminin büyük dosya desteði olup
+		olmamasýndan baðýmsýzdýr. Büyük tablolar, 1 GB'lik dosyalarda saklandýðý için, dosya 
+		sistemi sýnýrlarýnin bir önemi yoktur.</p>
+		<p>Tablo ve kolon sayýsý büyüklükleri, ön tanýmlý blok büyüklüðü 32k ya çýkarýlarak 
+		arttýrýlabilir.</p>
+		
+		<h4><a name="4.6">4.6</a>) Tipik bir metin dosyasýndaki veriyi saklamak için ne
+		kadar disk alaný gereklidir?</h4>
+		<p>Bir PostgreSQL veritabaný, veriyi "<i>flat</i>" metin dosyasýnda saklamak için
+		gereken alanýn 5 kat fazla disk alanýna gereksinim duyabilir.</p>
+		<p>Her satýrýnda bir tamsayý ve metin (<i>text</i>) içeren, 100.000 satýrlýk bir
+		dosya düþünün.  Her satýrýn ortalama 20 byte olduðunu farzedelim. Metin dosyasý
+		2.8 MB olacaktýr. Bu veriyi tutan PostgreSQL veritabaný
+		yaklaþýk 6.4 MB yer kaplayacaktýr.</p>
+		<pre>
+  36 byte: Her bir satýr baþlýðý (yaklaþýk)
++ 24 byte: Bir tamsayý (int) alaný ve bir metin (text) alaný 
++  4 byte: Sayfada tuple a pointer
+----------------------------------------
+  64 byte -> kayýt baþýna</pre>
+		<p>PostgreSQL'de veri sayfasý (data page) büyüklüðü 8192 byte (8k)dýr, dolayýsýyla:</p>
+		<pre>
+8192 byte -> page baþýna
+-------------------------  =  Her bir veritabaný <i>page</i>'ý baþýna 128 satýr (yaklaþýk)
+  Satýr baþýna 64 byte
+  
+100000 veri satýrý
+--------------------  =  782 veritabaný sayfasý
+     128 satýr</pre>
+		<p>782 veritabaný sayfasý <code>*</code> sayfa baþýna <code>8192 byte =
+		6,406,144 bytes (6.4 MB)</code></p>
+		<p><i>Index</i>'ler çok fazla yere gereksinim duymazlar, ama <i>index</i>'lenmiþ
+		veriyi tutacaklarýndan büyük olabilirler.</p>
+		<p><code>NULL</code> deðerler bitmapler içinde tutulur; dolayýsýyla çok az yer kaplarlar.</p>
+		
+		<h4><a name="4.7">4.7</a>) Veritabanýnda hangi tablo ya da <i>index</i>'lerin
+		tanýmlandýðýný nasýl görebilirim?</h4>
+		<p>psql, bu tür bilgileri göstermek için, <code>\</code> ile baþlayan bir çok
+		komut sunmaktadýr. <code>\?</code> komutu ile bu komutlarý görebilirsiniz. Ayrýca,
+		bunlarý açýklayan ve <code>pg_</code> ile baþlayan çok sayýda sistem tablosu
+		bulunmaktadýr. Ayný zamanda, <code>psql -l</code> ile tüm veritabanlarýný
+		listeyelebirsiniz.</p>
+		<p>Ayrýca, <code>pgsql/src/tutorial/syscat.source</code> kodunu inceleyebilirsiniz.
+		Bu dosya, veritabaný sistem dosyalarýndan bilgiyi almak için gereksinim duyulan
+		bir çok <code>SELECT</code>'leri gösterir.</p>
+		
+		<h4><a name="4.8">4.8</a>) Sorgularým cok yavaþ, ya da <i>index</i>'lerimi
+		kullanmýyorlar. Neden?</h4>
+		<p>Indexler her sorgu tarafýndan otomatik olarak kullanýlmazlar. Indexler eðer bir 
+		tablonun büyüklüðü minimum bir büyüklükten fazla ise ve sorgu tablodaki satýrlarýn sadece küçük bir 
+		yüzdesini seçiyorsa kullanýlýr. Bunun nedeni, index eriþiminin neden olduðu raslansal disk eriþimi
+		nin diskin ya da tablonun sýralý okunmasýndan daha yavas olabilmesidir.</p>
+
+	 	<p>Bir index'in kullanýlýp kullanýlmayacaðýný belirlemek için, PostgreSQL tablo hakkýndaki 
+		istatistiklere gereksinmesi vardýr. Bu istatistikler, <small>VACUUM ANALYZE</small> kullanýlarak
+		toplanýrlar. Optimizer, istatistikleri kullanarak, tabloda kaç satýr olduðunu ve bilir ve indexin 
+		kullanýlýp kullanýlmayacaðýna daha iyi karar verir. Istatistikler, ayný zamanda en uygun join 
+		sýrasýný ve yöntemini belirlemekte çok önemlidir. Ýstatistik toplanmasý, tablo içerikleri 
+		deðiþtikçe periyodik olarak yapýlmalýdýr.</p>
 		
 
+    <p>Indexler normalde <small>ORDER BY</small> sorgularý ya da join iþlemlerini gerçekleþtirmek için
+    kullanýlmazlar. Açýk bir sýralamayý takip eden sýralý bir arama (sequential scan), büyük bir tabloda index
+    aramasý yapmaktan genelde daha hýzlýdýr.</p>
 
-        4.5) Bir satýr, tablo ve veritabaný icin en fazla büyüklük nedir?
-
-Sýnýrlar:
-
-Veritabani icin en fazla büyüklük nedir?
-Sýnýrsýz (4 TB'lýk veritabaný bulunmaktadýr)
-
-Bir tablo icin en fazla büyüklük nedir?
-16 TB
-
-Bir satýr için en fazla büyüklük nedir?
-1.6 TB
-
-Bir alan için en fazla büyüklük nedir?
-1 GB
-
-Tabloda en fazla satýr sayýsý kaçtýr?
-Sýnýrsýz
-
-Bir tabloda olabilecek en fazla kolon sayýsý kaçtýr?
-Kolon tiplerine baðlý olarak 250-1600
-
-Bir tabloda olabilecek en fazla index sayýsý kaçtýr?
-sýnýrsýz
-
-These are the limits:
-
-    Maximum size for a database?   		unlimited (4 TB databases exist)
-    Maximum size for a table? 			16 TB
-    Maximum size for a row?   			1.6TB
-    Maximum size for a field? 			1 GB
-    Maximum number of rows in a table?  	unlimited
-    Maximum number of columns in a table?    250-1600 depending on column types
-    Maximum number of indexes on a table?    unlimited
-
-Of course, these are not actually unlimited, but limited to available
-disk space and memory/swap space. Performance may suffer when these
-values get unusually large.
-
-The maximum table size of 16 TB does not require large file support from
-the operating system. Large tables are stored as multiple 1 GB files so
-file system size limits are not important.
-
-The maximum table size and maximum number of columns can be increased if
-the default block size is increased to 32k.
-
-
-        4.6) How much database disk space is required to store data from
-        a typical text file?
-
-A PostgreSQL database may require up to five times the disk space to
-store data from a text file.
-
-As an example, consider a file of 100,000 lines with an integer and text
-description on each line. Suppose the text string avergages twenty bytes
-in length. The flat file would be 2.8 MB. The size of the PostgreSQL
-database file containing this data can be estimated as 6.4 MB:
-
-    36 bytes: each row header (approximate)
-    24 bytes: one int field and one text field
-   + 4 bytes: pointer on page to tuple
-   ----------------------------------------
-    64 bytes per row
-
-   The data page size in PostgreSQL is 8192 bytes (8 KB), so:
-
-   8192 bytes per page
-   -------------------   =  128 rows per database page (rounded down)
-	64 bytes per row
-
-   100000 data rows
-   --------------------  =  782 database pages (rounded up)
- 	128 rows per page
-
-782 database pages * 8192 bytes per page  =  6,406,144 bytes (6.4 MB)
-
-Indexes do not require as much overhead, but do contain the data that is
-being indexed, so they can be large also.
-
-NULLs are stored in bitmaps, so they use very little space.
-
-
-        4.7) How do I find out what tables, indexes, databases, and
-        users are defined?
-
-/psql/ has a variety of backslash commands to show such information. Use
-\? to see them. There are also system tables beginning with /pg_/ that
-describe these too. Also, /psql -l/ will list all databases.
-
-Also try the file /pgsql/src/tutorial/syscat.source/. It illustrates
-many of the SELECTs needed to get information from the database system
-tables.
-
-
-        4.8) My queries are slow or don't make use of the indexes. Why?
-
-Indexes are not automatically used by every query. Indexes are only used
-if the table is larger than a minimum size, and the query selects only a
-small percentage of the rows in the table. This is because the random
-disk access caused by an index scan can be slower than a straight read
-through the table, or sequential scan.
-
-To determine if an index should be used, PostgreSQL must have statistics
-about the table. These statistics are collected using VACUUM ANALYZE, or
-simply ANALYZE. Using statistics, the optimizer knows how many rows are
-in the table, and can better determine if indexes should be used.
-Statistics are also valuable in determining optimal join order and join
-methods. Statistics collection should be performed periodically as the
-contents of the table change.
-
-Indexes are normally not used for ORDER BY or to perform joins. A
-sequential scan followed by an explicit sort is usually faster than an
-index scan of a large table.
-
-However, LIMIT combined with ORDER BY often will use an index because
-only a small portion of the table is returned. In fact, though MAX() and
-MIN() don't use indexes, it is possible to retrieve such values using an
-index with ORDER BY and LIMIT:
-
+    Ancak, <small>ORDER BY</small> ile birleþmiþ <small>LIMIT</small>
+    genellikle bir index kullanacaktýr; çünkü tablonun sadece belirli bir miktarý döndürülecektir.
+    Aslýnda, MAX() ve MIN() fonksiyonlarýnýn index kullanmamalarýndan dolayý, bu gibi deðerleri ORDER BY ve LIMIT 
+    kullanarak da almak olasýdýr:
+<pre>
     SELECT col
     FROM tab
     ORDER BY col [ DESC ]
     LIMIT 1;
+</pre>
 
-If you believe the optimizer is incorrect in choosing a sequential scan,
-use |SET enable_seqscan TO 'off'| and run tests to see if an index scan
-is indeed faster.
+    <p>Eðer optimizer'ýn sýralý arama yapmasýnýn yanlýþ olduðuna inanýyorsanýz, <code>SET enable_seqscan TO 
+'off'</code> kullanýn ve index kullanan aramalarýn hala daha hýzlý olup olmadýðýný görün.</p>
 
-When using wild-card operators such as LIKE or /~/, indexes can only be
-used in certain circumstances:
+		<p><code>LIKE</code> ya da <code>~</code> gibi operatörler kullanýyorsanýz,
+		<i>index</i>'ler sadece aþaðýdaki koþullarda kullanýlabilir:</p>
 
-    * The beginning of the search string must be anchored to the start
-      of the string, i.e.
-          o LIKE patterns must not start with /%/.
-          o /~/ (regular expression) patterns must start with /^/.
-    * The search string can not start with a character class, e.g. [a-e].
-    * Case-insensitive searches such as ILIKE and /~*/ do not utilise
-      indexes. Instead, use functional indexes, which are described in
-      section 4.12 <#4.12>.
-    * The default /C/ locale must be used during /initdb/.
+		<ul>
+		<li>Arama dizininin baþý, dizinin baþý ile baðlanmalýdýr. Yani,
+		<ul><li><code>LIKE</code> sorgularý <code>%</code> ile baþlamamalýdýr.</li>
+		<li>Düzenli ifade sorgularý <code>^</code> iþe baþlamamalýdýr.</li></ul></li>
+		<li>Arama metni bir karakter sýnýfý ile baþlayamaz. Örnek: <code>[a-e]</code></li>
+		<li><code>ILIKE</code> ve <code>~*</code> gibi  büyük/küçük harfe duyarsýz
+		aramalar <i>index</i>'lerden yararlanmazlar. Onun yerine, bölüm 4.12'de anlatýlan
+		fonksiyonel <i>index</i>'leri kullanabilirsiniz.</li>
+		<li><i>initdb</i> sýrasýnda öntanýmlý <i>C locale</i>'i kullanýlmalýdýr.</li>
+		</ul>
+		
+		<h4><a name="4.9">4.9</a>) <i>query-optimizer</i>'ýn sorgularýmý nasýl
+		deðerlendirdiðini, iþleme soktuðunu nasýl görebilirim?</h4>
+		<p><code>EXPLAIN</code> yardým sayfasýna bakýnýz.</p>
+		
+		<h4><a name="4.10">4.10</a>) <i>R-tree index</i> nedir?</h4>
+		<p>R-tree index, uzaysal (spatial) verileri indexlemek için kullanýlýr. Bir hash
+		index, dizi aramalarýnda (range search) kullanýlamaz. B-tree index dizi aramalarýnda sadece tek 
+		boyutlu çalýþmaktadýr. R-tree, çok boyutlu veriyi destekler. Örneðin, eðer bir R-tree index point 
+		veri tipi üzerinde inþa edililebilirse, sistem "select all points within a bounding rectangle"
+		gibi sorgulara daha verimli yanýtlar verecektir.</p>
+		<p>Orijinal R-tree tasarýmýný açýklayan belge:</p>
+		<p>Guttman, A. "R-trees: A Dynamic Index Structure for Spatial Searching."
+		Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.</p>
+		<p>Bu belgeyi, Stonebraker'ýn "Readings in Database Systems" kitabýnda bulabilirsiniz.</p>
+		<p>Gömülü R-tree indexleri poligon ve boxlarý kullanabilir. Teorik olarak,
+		R-tree indexlerin özelliklerini geniþletmek bir miktar çaba gerektirir ve bunun nasýl 
+		yapýlacaðýna dair bir belgemiz henüz bulunmamaktadýr.</p>
 
-
-        4.9) How do I see how the query optimizer is evaluating my query?
-
-See the EXPLAIN manual page.
-
-
-        4.10) What is an R-tree index?
-
-An R-tree index is used for indexing spatial data. A hash index can't
-handle range searches. A B-tree index only handles range searches in a
-single dimension. R-trees can handle multi-dimensional data. For
-example, if an R-tree index can be built on an attribute of type
-/point/, the system can more efficiently answer queries such as "select
-all points within a bounding rectangle."
-
-The canonical paper that describes the original R-tree design is:
-
-Guttman, A. "R-trees: A Dynamic Index Structure for Spatial Searching."
-Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
-
-You can also find this paper in Stonebraker's "Readings in Database
-Systems".
-
-Built-in R-trees can handle polygons and boxes. In theory, R-trees can
-be extended to handle higher number of dimensions. In practice,
-extending R-trees requires a bit of work and we don't currently have any
-documentation on how to do it.
-
-
-        4.11) What is the Genetic Query Optimizer?
-
-The GEQO module speeds query optimization when joining many tables by
-means of a Genetic Algorithm (GA). It allows the handling of large join
-queries through nonexhaustive search.
-
-
-        4.12) How do I perform regular expression searches and
-        case-insensitive regular expression searches? How do I use an
-        index for case-insensitive searches?
-
-The /~/ operator does regular expression matching, and /~*/ does
-case-insensitive regular expression matching. The case-insensitive
-variant of LIKE is called ILIKE.
-
-Case-insensitive equality comparisons are normally expressed as:
-
-    SELECT *
-    FROM tab
-    WHERE lower(col) = 'abc';
-
-This will not use an standard index. However, if you create a functional
-index, it will be used:
-
-    CREATE INDEX tabindex ON tab (lower(col));
-
-
-        4.13) In a query, how do I detect if a field is NULL?
-
-You test the column with IS NULL and IS NOT NULL.
-
-
-        4.14) What is the difference between the various character types?
-
-Type  		Internal Name   Notes
+		<h4><a name="4.11">4.11</a>) <i>Genetic Query Optimizer</i> nedir?</h4>
+		<p><i>GEQO</i> modülü, <i>Genetic Algorithm(GA)</i> kullanýlarak tablolar
+		birleþtirildiðinde sorgu optimizasyonunu hýzlandýrýr. </p>
+		
+		<h4><a name="4.12">4.12</a>) Düzenli ifade (<i>Regular Expression</i>) aramalarýný
+		ve büyük/küçük harfe duyarsýz aramalarý nasýl yapabilirim?
+		Bu büyük(küçük harfe duyarlý aramalar için <i>index</i>'i nasýl kullanabilirim?</h4>
+		<p><code>~</code> operatörü düzenli ifade eþleþmesi ve <code>~*</code>  büyük/küçük
+		harfe duyarsýz düzenli ifade eþleþmesi yapar. Büyük/küçük harfe duyarlý olan
+		<code>LIKE</code>'ýn  büyük/küçük harfe duyarsýz olan biçimi <code>ILIKE</code>'týr
+		ve PostgreSQL 7.1 sürümü ile birlikte gelmiþtir.</p>
+		<p>Büyük-küçük harfe duyarsýz eþitlik karþýlaþtýrmalarý aþaðýdaki gibi ifade edilir:</p>
+		<pre>
+SELECT *
+FROM tab
+WHERE lower(col) = 'abc'
+		</pre>
+		<p>Bu standart bir <i>index</i> yaratmayacaktýr. Ancak eðer fonksiyonel bir
+		<i>index</i> yaratýrsanýz; o kullanýlacaktýr:</p>
+		<pre>CREATE INDEX tabindex on tab (lower(col));</pre>
+		
+		<h4><a name="4.13">4.13</a>) Bir sorguda, bir alanin "<code>NULL</code>" olduðunu
+		nasýl ortaya çýkarabilirim?</h4>
+		<p>Kolonu, <code>IS NULL</code> ve <code>IS NOT NULL</code> ile test edebilirsiniz.</p>
+		
+		<h4><a name="4.14">4.14</a>) Çesitli karakter tipleri arasýndaki farklar nelerdir?</h4>
+		<pre>
+Veri Tipi	    Ýç Adý              Not
 --------------------------------------------------
-VARCHAR(n) 	varchar    	size specifies maximum length, no padding
-CHAR(n)    	bpchar		blank padded to the specified fixed length
-TEXT  		text  		no specific upper limit on length
-BYTEA 		bytea 		variable-length byte array (null-byte safe)
-"char"		char  		one character
+VARCHAR(n)      varchar         boyut en büyük uzunluðu verir; sadece verilen kadar veri tutulur.
+CHAR(n)         bpchar          belirtilen uzunluða kadar sonuna  boþluk eklenir.
+TEXT            text            uzunlukta herhangi bir üst sýnýr yoktur. 
+BYTEA           bytea           variable-length byte array (null-byte safe)
+"char"          char            bir karakter 
+		</pre>
+		<p>Ýç adlarý (<i>internal name</i>) sistem kataloglarýný ve
+		bazý hata mesajlarýný incelerken göreceksiniz.</p>
+		<p>Ýlk dört veri tipi "<i>varlena</i>" tipidir (yani, diskteki ilk 4 bayt uzunluktur;
+		devamý da veridir.) Dolayýsýyla, kullanýlan gerçek alan, belirtilen alandan biraz
+		daha büyüktür. Ancak, bu veri tipleri, sýkýþtýrýlmaya tabi tutulabilir; dolayýsýyla
+		disk alaný beklenilenden küçük olabilir. <code>VARCHAR(<i>n</i>)</code> büyüklüðü
+		artabilen ama en büyük uzunluðu sýnýrlý olan verileri saklamak için en uygun yöntemdir.
+		<code>TEXT</code>, 1 GB büyüklüðe kadar olan verileri tutmak için kullanýlýr.</p>
+		<p><code>CHAR(<i>n</i>)</code>, ayný uzunluktaki dizilerin saklanmasý için kullanýmýr.
+		<code>CHAR(<i>n</i>)</code> belirtilen uzunluða kadar boþluk ile doldurur; ancak
+		<code>VARCHAR(<i>n</i>)</code> sadece verilen karakterleri saklar. <code>BYTEA</code>
+		binary veri saklamak içindir; ayrýca "<code>NULL</code>" bayt içeren deðerleri de saklar.
+		Burada anlatýlan üç veri tipi de benzer baþarým karakteristiklere sahiptir.</p>
+		
+		<h4><a name="4.15.1">4.15.1</a>) Nasýl <i>serial</i>/otomatik artan
+		(<i>auto-incrementing</i>) bir alan yaratabilirim?</h4>
+		<p>PostgreSQL'de <code>SERIAL</code> veri tipi vardýr. Bu veri tipi bir
+		<i>sequence</i> ve kolon üzerinde bir <i>index</i> yaratýr.</p>
+		<p>Örnek, aþaðýdaki sorgu:</p>
+		<pre>
+CREATE TABLE person (
+    id   SERIAL,
+    name TEXT
+);		
+		</pre>
+		<p>buna çevrilir:</p>
+		<pre>
+CREATE SEQUENCE person_id_seq;
+CREATE TABLE person (
+    id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
+    name TEXT
+);
+CREATE UNIQUE INDEX person_id_key ON person ( id );		
+		</pre>
+		<p><i>Sequenceler</i> hakkýnda daha fazla bilgi için <i>create_sequence</i>
+		yardým sayfasýna bakabilirsiniz. Her satýrýn <code>OID<code> alanýný tekil bir sayý
+		olarak alabilirsiniz. Ancak, veritabanýnýzýn <i>dump</i>'ýný alýp yeniden yüklerseniz,
+		<code>OID</code> deðerlerini koruyabilmek için <code>pg_dump</code>'ýn <code>-o</code>
+		parametresini ya da "<code>COPY WITH OIDS</code>" seçeneðini kullanmanýz gerekecektir.</p>
 
-You will see the internal name when examining system catalogs and in
-some error messages.
+    	<h4><a name="4.15.2">4.15.2</a>) <code>SERIAL</code> giriþinin degerini nasýl alabilirim?</h4>
+		<p>Bir yaklaþým, sequence nesnesindeki SERIAL deðerini, veriyi girmeden önce nextval() ile alýp, 
+		aldýðýnýz deðeri kendinizin girmesidir. 4.15.1'deki örnek tabloyu kullanarak bir örnek verelim:</p>
 
-The first four types above are "varlena" types (i.e., the first four
-bytes on disk are the length, followed by the data). Thus the actual
-space used is slightly greater than the declared size. However, these
-data types are also subject to compression or being stored out-of-line
-by TOAST, so the space on disk might also be less than expected.
+		<pre>new_id = execute("SELECT nextval('person_id_seq')");<BR>
+    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");</pre>
 
-VARCHAR(n) is best when storing variable-length strings and it limits
-how long a string can be. TEXT is for strings of unlimited length, with
-a maximum of one gigabyte.
+	<P>Diðer sorgular için new_id'de yeni deðerin saklanmasý gerekir. Otomatik olarak yaratýlan SEQUENE nesnesinin adý,
+  <tablo adý>_<serial kolonu adý>_seq þeklinde olacaktýr (< > iþaretleri olmadan).</p>
 
-CHAR(n) is for storing strings that are all the same length. CHAR(n)
-pads with blanks to the specified length, while VARCHAR(n) only stores
-the characters supplied. BYTEA is for storing binary data, particularly
-values that include NULL bytes. All the types described here have
-similar performance characteristics.
+		<p>Alternatif olarak, atanmýþ SERIAL deðerini, deðer girildikten sonra currval()
+		fonksiyonu ile alabilirsiniz:</p>
+		<pre>
+		execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
+		new_id = execute("SELECT currval('person_id_seq')");	
+		</pre>
+		<p>Son olarak, ön tanýmlý deðeri bulmak için <code>INSERT</code> ifadesinden
+		dönen <code>OID</code> deðerini kullanabilirsiniz; ancak bu en az taþýnabilir
+		çözüm olacaktýr. Perl'de, Edmund Mergl'in <i>DBD:Pg</i> mödülü ile birlikte
+		<i>DBI</i> kullanarak, <code>OID</code> deðeri <code>$sth->execute()</code>
+		çalýþtýrýldýktan sonra <code>$sth->(pg_oid_status)</code> ile alýnabilir.</p>
+	
+		<h4><a name="4.15.3">4.15.3</a>) <code>currval()</code> ve <code>nextval()</code>
+		diðer kullanýcýlara sorun yaratmaz mý?</h4>
+		<p>Hayýr. <code>curval()</code>, tüm kullanýcýlar deðil, backend
+		tarafýndan atanan geçerli deðeri döndürür.</p>
+		
+		<h4><a name="4.15.4">4.15.4</a>) Neden <i>sequence</i> sayýlarý <i>transaction</i>
+		iþleminin iptalinden sonra yeniden kullanýlýyor? Neden <i>sequence/SERIAL</i>
+		kolonumdaki sayýlarda atlamalar oluyor?</h4>
+		<p>Uyumluluðu arttýrmak için, <i>sequence</i> deðerleri çalýþan
+		<i>transaction</i>'lara gerektiði þekilde aktarýlýr ve <i>transaction</i>
+		bitene kadar o deðer kilitlenmez. Bu, iptal edilen <i>transaction</i>
+		iþlemleri nedeniyle boþluklara neden olur.</p>
+		
+		<h4><a name="4.16">4.16</a>) OID nedir? TID nedir?</h4>
+		<p>OIDler, tekil satýr numaralarýna PostgreSQL'in yanýtýdýr. PostgreSQL'de yaratýlan
+		her sayý, tekil bir OID alýr. initdb iþlemi sýrasýnda yaratýlan tüm OID'ler 16384'ten küçüktür 
+		(backend/access/transam.h). Kullanýcýlar tarafýndan yaratýlan tüm OID'ler bu sayýya eþit ya da bu 
+		sayýdan büyüktür. Varsayýlan durumda, tüm bu OIDler sadece bir tablo ya da veritabanýnda deðil, tüm 
+		PostgreSQL kurulumunda tekildir.</p>
 
+		<p> PostgreSQL OIDleri, tablolar arasýnda satýrlarý iliþkilendirmek için kendi iç tablolarýnda 
+		kullanýr. Bu OIDler belirli kullanýcý satýrlarýný belirtmek için kullanabilir ve join iþlemlerinde 
+		kullanýlýr. OID deðerlerini saklamak için OID kolon tipini kullanmanýz önerinir. Daha hýzlý bir 
+		eriþim için, OID alanýnda bir index yaratabilirsiniz.</p>
 
-        4.15.1) How do I create a serial/auto-incrementing field?
+		<p>OID'ler yeni satýrlara, tüm veritabanlarý tarafýnda kullanýlan ortak bir alandan atanýrlar. Eðer 
+		 OID'i baþka bir deðere eþitlemek isterseniz ya da tablonun bir kopyasýný orijinal OIDler ile 
+		çýkarmak isterseniz, bu mümkündür:</p>
+		<pre>
+			CREATE TABLE new_table(old_oid oid, mycol int);
+			SELECT old_oid, mycol INTO new FROM old;
+			COPY new TO '/tmp/pgtable';
+			DELETE FROM new;
+			COPY new WITH OIDS FROM '/tmp/pgtable';		
+		</pre>
+		<p>OIDler 4-bit tamsayý olarak saklanýrlar ve 4 milyarda overflow olacaktýr. Kimse 
+		bu sayýya ulaþtýðýna dair bir bilgi iletmedi ve bu sýnýrý kimse bu sýnýra ulaþmadan kaldýracaðýz.</p>
 
-PostgreSQL supports a SERIAL data type. It auto-creates a sequence and
-index on the column. For example, this:
-
-    CREATE TABLE person ( 
-   	id   SERIAL, 
-   	name TEXT 
-    );
-
-is automatically translated into this:
-
-    CREATE SEQUENCE person_id_seq;
-    CREATE TABLE person ( 
-   	id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
-   	name TEXT 
-    );
-    CREATE UNIQUE INDEX person_id_key ON person ( id );
-
-See the /create_sequence/ manual page for more information about
-sequences. You can also use each row's /OID/ field as a unique value.
-However, if you need to dump and reload the database, you need to use
-/pg_dump/'s /-o/ option or COPY WITH OIDS option to preserve the OIDs.
-
-
-        4.15.2) How do I get the value of a SERIAL insert?
-
-One approach is to retrieve the next SERIAL value from the sequence
-object with the /nextval()/ function /before/ inserting and then insert
-it explicitly. Using the example table in 4.15.1 <#4.15.1>, an example
-in a pseudo-language would look like this:
-
-    new_id = execute("SELECT nextval('person_id_seq')");
-    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
-
-You would then also have the new value stored in |new_id| for use in
-other queries (e.g., as a foreign key to the |person| table). Note that
-the name of the automatically created SEQUENCE object will be named
-</table/>_</serialcolumn/>_/seq/, where /table/ and /serialcolumn/ are
-the names of your table and your SERIAL column, respectively.
-
-Alternatively, you could retrieve the assigned SERIAL value with the
-/currval()/ function /after/ it was inserted by default, e.g.,
-
-    execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
-    new_id = execute("SELECT currval('person_id_seq')");
-
-Finally, you could use the OID <#4.16> returned from the INSERT
-statement to look up the default value, though this is probably the
-least portable approach. In Perl, using DBI with Edmund Mergl's DBD::Pg
-module, the oid value is made available via /$sth->{pg_oid_status}/
-after /$sth->execute()/.
-
-
-        4.15.3) Don't /currval()/ and /nextval()/ lead to a race
-        condition with other users?
-
-No. /currval()/ returns the current value assigned by your backend, not
-by all users.
-
-
-        4.15.4) Why aren't my sequence numbers reused on transaction
-        abort? Why are there gaps in the numbering of my sequence/SERIAL
-        column?
-
-To improve concurrency, sequence values are given out to running
-transactions as needed and are not locked until the transaction
-completes. This causes gaps in numbering from aborted transactions.
-
-
-        4.16) What is an OID? What is a TID?
-
-OIDs are PostgreSQL's answer to unique row ids. Every row that is
-created in PostgreSQL gets a unique OID. All OIDs generated during
-/initdb/ are less than 16384 (from /include/access/transam.h/). All
-user-created OIDs are equal to or greater than this. By default, all
-these OIDs are unique not only within a table or database, but unique
-within the entire PostgreSQL installation.
-
-PostgreSQL uses OIDs in its internal system tables to link rows between
-tables. These OIDs can be used to identify specific user rows and used
-in joins. It is recommended you use column type OID to store OID values.
-You can create an index on the OID field for faster access.
-
-OIDs are assigned to all new rows from a central area that is used by
-all databases. If you want to change the OID to something else, or if
-you want to make a copy of the table, with the original OIDs, there is
-no reason you can't do it:
-
-   	CREATE TABLE new_table(old_oid oid, mycol int);
-   	SELECT old_oid, mycol INTO new FROM old;
-   	COPY new TO '/tmp/pgtable';
-   	DELETE FROM new;
-   	COPY new WITH OIDS FROM '/tmp/pgtable';
-
-OIDs are stored as 4-byte integers, and will overflow at 4 billion. No
-one has reported this ever happening, and we plan to have the limit
-removed before anyone does.
-
-TIDs are used to identify specific physical rows with block and offset
-values. TIDs change after rows are modified or reloaded. They are used
-by index entries to point to physical rows.
-
-
-        4.17) What is the meaning of some of the terms used in PostgreSQL?
-
-Some of the source code and older documentation use terms that have more
-common usage. Here are some:
-
-    * table, relation, class
-    * row, record, tuple
-    * column, field, attribute
-    * retrieve, select
-    * replace, update
-    * append, insert
-    * OID, serial value
-    * portal, cursor
-    * range variable, table name, table alias
-
-A list of general database terms can be found at:
-http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html
-
-
-        4.18) Why do I get the error /"ERROR: Memory exhausted in
-        AllocSetAlloc()"/?
-
-You probably have run out of virtual memory on your system, or your
-kernel has a low limit for certain resources. Try this before starting
-/postmaster/:
-
-    ulimit -d 262144
-    limit datasize 256m
-
-Depending on your shell, only one of these may succeed, but it will set
-your process data segment limit much higher and perhaps allow the query
-to complete. This command applies to the current process, and all
-subprocesses created after the command is run. If you are having a
-problem with the SQL client because the backend is returning too much
-data, try it before starting the client.
-
-
-        4.19) How do I tell what PostgreSQL version I am running?
-
-From /psql/, type |SELECT version();|
-
-
-        4.20) Why does my large-object operations get /"invalid large
-        obj descriptor"/?
-
-You need to put |BEGIN WORK| and |COMMIT| around any use of a large
-object handle, that is, surrounding |lo_open| ... |lo_close.|
-
-Currently PostgreSQL enforces the rule by closing large object handles
-at transaction commit. So the first attempt to do anything with the
-handle will draw /invalid large obj descriptor/. So code that used to
-work (at least most of the time) will now generate that error message if
-you fail to use a transaction.
-
-If you are using a client interface like ODBC you may need to set
-|auto-commit off.|
-
-
-        4.21) How do I create a column that will default to the current
-        time?
-
-Use /CURRENT_TIMESTAMP/:
-
-|CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
-|
-
-
-        4.22) Why are my subqueries using |IN| so slow?
-
-Currently, we join subqueries to outer queries by sequentially scanning
-the result of the subquery for each row of the outer query. If the
-subquery returns only a few rows and the outer query returns many rows,
-|IN| is fastest. To speed up other queries, replace |IN| with |EXISTS|:
-
-    SELECT *
+		<p>TIDler, belirli fiziksel satýrlar block ve offset deðerleri ile belirtmekte kullanýlýr. TIDler, 
+		satýrlar deðiþtiðinde ya da yeniden yüklendiðinde deðiþirler. Index girdileri tarafýndan fiziksel 
+		satýrlarý göstermek için kullanýlýrlar.</p>
+		
+		<h4><a name="4.17">4.17</a>) PostgreSQL'de kullanýlan bazý
+		terimlerin anlamlarý nelerdir?</h4>
+		<p>Kaynak kodun bir kýsmý ve eski belgeler, daha geniþ kullaným alaný olan terimleri
+		kullanýrlar. Bunlarýn bazýlarý:</p>
+		<ul><li>table, relation, class</li>
+		<li>row, record, tuple</li>
+		<li>column, field, attribute</li>
+		<li>retrieve, select</li>
+		<li>replace, update</li>
+		<li>append, insert</li>
+		<li>OID, serial value</li>
+		<li>portal, cursor</li>
+		<li>range variable, table name, table alias</li></ul>
+		<p>Genel veritabaný terimleri, 
+		<i><a href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</a></i>
+		adresinde bulunabilir.</p>
+		
+		<h4><a name="4.18">4.18</a>) Neden "<i>ERROR: Memory exhausted in AllocSetAlloc()</i>"
+		hatasýný alýyorum?</h4>
+		<p>Sisteminizde sanal belleðinizi tüketmiþ olabilirsiniz, ya da çekirdeðiniz
+		belli kaynaklar icin düþük bir sýnýra sahip olabilir. <i>postmaster</i>'ý
+		baþlatmadan önce aþaðýdakileri deneyebilirsiniz:</p>
+		<pre>
+ulimit -d 262144
+limit datasize 256m		
+		</pre>
+		<p>Kabuðunuza baðlý olarak, bunlardan sadece biri olumlu sonuç verecektir, ama
+		bu iþlem veri segment sýnýrýnýzý arttýracak, ve belki de sorgunuzun tamamlanmasýný
+		saðlayacaktýr. Bu komut, varolan iþleme (<i>current process</i>) ve komut çalýþtýrýldýktan
+		sonraki tüm alt iþlemlere uygulanýr. Eðer SQL istemcinizle, <i>backend</i>'in çok
+		fazla veri döndürmesi nedeniyle bir sorun yaþýyorsanýz, bunu istemciyi baþlatmadan
+		önce deneyiniz.</p>
+		
+		<h4><a name="4.19">4.19</a>) Hangi PostgreSQL sürümünü çalýþtýrdýðýmý nasýl görebilirim?</h4>
+		<p>psql arabiriminde, <code>select version();</code> yazýnýz.</p>
+		
+		<h4><a name="4.20">4.20</a>) Neden <i>large-object</i> iþlemlerim, "<i>invalid large obj
+		descriptor</i>" hatasýný veriyor?</h4>
+		<p><i>Large object</i> iþlemlerinizin uçlarýna, yani <code>lo_open</code> ...
+		<code>lo_close</code> komutlarýnýn çevresine, <code>BEGIN WORK</code> ve
+		<code>COMMIT</code> koymanýz gerekmektedir;</p>
+		<p>Eðer ODBC gibi bir istemci arabirimi kullanýyorsanýz, <i>auto-commit</i>'i
+		kapatmanýz gerekebilir.</p>
+		
+		<h4><a name="4.21">4.21</a>) Þu andaki zamaný öntanýmlý deðer olarak
+		kabul eden <b>How do I create a column that will default to the current time?</b></h4>
+		<p>Alttakini kullanabilirsiniz:</p>
+		<pre>
+CURRENT_TIMESTAMP:
+CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
+		</pre>
+		
+		<h4><a name="4.22">4.22</a>) Neden <code>IN</code> kullanan <i>subquery</i>'lerim
+		çok yavas?</h4>
+		<p>7.4 sürümünden önce, subqueryler. Eðer subquery sadece birkaç satýr ve outer query bol 
+		sayýda satýr döndürüyorsa, IN en hýzlýsýdýr. Sorgularý hýzlandýrmak için IN yerine EXISTS 
+		kullanýn:</p>
+		<pre>
+SELECT *
     FROM tab
-    WHERE col IN (SELECT subcol FROM subtab);
-
-to:
-
-    SELECT *
+    WHERE col1 IN (SELECT col2 FROM TAB2)
+		</pre>
+		<p>sorgusunu, aþaðýdaki ile deðiþtirin:</p>
+		<pre>
+SELECT *
     FROM tab
-    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
+    WHERE EXISTS (SELECT col2 FROM TAB2 WHERE col1 = col2)		
+		</pre>
+		<p>Bu iþlemin hýzlý olmasý için, subcol'un indexlenmiþ bir kolon olmasý gerekmektedir.</p>
+		<p>7.4 sürümü ve sonrasýnda, IN aslýnda normal sorgularla ayný karmaþýk join tekniklerini kullanýr ve 
+		EXISTS'e tercih edilir.</p>
 
-For this to be fast, |subcol| should be an indexed column. This
-preformance problem will be fixed in 7.4.
-
-
-        4.23) How do I perform an outer join?
-
-PostgreSQL supports outer joins using the SQL standard syntax. Here are
-two examples:
-
-    SELECT *
-    FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
-
-or
-
-    SELECT *
-    FROM t1 LEFT OUTER JOIN t2 USING (col);
-
-These identical queries join t1.col to t2.col, and also return any
-unjoined rows in t1 (those with no match in t2). A RIGHT join would add
-unjoined rows of t2. A FULL join would return the matched rows plus all
-unjoined rows from t1 and t2. The word OUTER is optional and is assumed
-in LEFT, RIGHT, and FULL joins. Ordinary joins are called INNER joins.
-
-In previous releases, outer joins can be simulated using UNION and NOT
-IN. For example, when joining /tab1/ and /tab2/, the following query
-does an /outer/ join of the two tables:
-
-    SELECT tab1.col1, tab2.col2
-    FROM tab1, tab2
-    WHERE tab1.col1 = tab2.col1
-    UNION ALL
-    SELECT tab1.col1, NULL
-    FROM tab1
-    WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
-    ORDER BY col1
-
-
-        4.24) How do I perform queries using multiple databases?
-
-There is no way to query a database other than the current one. Because
-PostgreSQL loads database-specific system catalogs, it is uncertain how
-a cross-database query should even behave.
-
-/contrib/dblink/ allows cross-database queries using function calls. Of
-course, a client can make simultaneous connections to different
-databases and merge the results on the client side.
-
-
-        4.25) How do I return multiple rows or columns from a function?
-
-In 7.3, you can easily return multiple rows or columns from a function,
-http://techdocs.postgresql.org/guides/SetReturningFunctions
-<http://techdocs.postgresql.org/guides/SetReturningFunctions>.
-
-
-        4.26) Why can't I reliably create/drop temporary tables in
-        PL/PgSQL functions?
-
-PL/PgSQL caches function contents, and an unfortunate side effect is
-that if a PL/PgSQL function accesses a temporary table, and that table
-is later dropped and recreated, and the function called again, the
-function will fail because the cached function contents still point to
-the old temporary table. The solution is to use EXECUTE for temporary
-table access in PL/PgSQL. This will cause the query to be reparsed every
-time.
-
-
-        4.27) What replication options are available?
-
-There are several master/slave replication options available. These
-allow only the master to make database changes and the slave can only do
-database reads. The bottom of
-http://gborg.PostgreSQL.org/genpage?replication_research
-<http://gborg.postgresql.org/genpage?replication_research> lists them. A
-multi-master replication solution is being worked on at
-http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php
-<http://gborg.postgresql.org/project/pgreplication/projdisplay.php>.
-
-
-        4.28) What encryption options are available?
-
-    * /contrib/pgcrypto/ contains many encryption functions for use in
-      SQL queries.
-    * The only way to encrypt transmission from the client to the server
-      is by using /hostssl/ in /pg_hba.conf/.
-    * Database user passwords are automatically encrypted when stored in
-      version 7.3. In previous versions, you must enable the option
-      /PASSWORD_ENCRYPTION/ in /postgresql.conf/.
-    * The server can run using an encrypted file system.
-
-------------------------------------------------------------------------
-
-
-    Extending PostgreSQL
-
-
-        5.1) I wrote a user-defined function. When I run it in /psql/,
-        why does it dump core?
-
-The problem could be a number of things. Try testing your user-defined
-function in a stand-alone test program first.
-
-
-        5.2) How can I contribute some nifty new types and functions to
-        PostgreSQL?
-
-Send your extensions to the /pgsql-hackers/ mailing list, and they will
-eventually end up in the /contrib// subdirectory.
-
-
-        5.3) Bir tuple döndürmek için bir C fonksiyonunu nasýl yazarým?
-
-PostgreSQL 7.3 sürümü ile birlikte, C, PL/PgSQL ve SQL kullanýlarak
-tablo-döndüren fonksiyonlar tamamen desteklenmektedir. Ayrýntýlý bilgi
-için "Programmer's Guide" a bakabilrisiniz. Bir örneði
-/contrib/tablefunc/ içinde bulabilirsiniz.
-
-
-        5.4) Bir kaynak dosyasýnda deðiþiklik yaptým. Yeniden derlememe
-        raðmen deðiþiklik geçerli olmuyor. Neden?
-
-/Makefile'lar/ include dosyalarý için tam bir baðýmlýlýk içermezler.
-Öncelikle /make clean/, ardýndan da baska bir /make/ iþlemi yapmanýz
-gerekir. GCC kullanýyorsaniz, /configure/ betiðinin /--enable-depend/
-seçeneðini, derleyicinin baðýmlýlýklarý otomatik olarak hesaplamasý için
-kullanabilirsiniz.
-
+		<h4><a name="4.23">4.23</a>) <i>Outer join</i> iþlemini nasýl yapabilirim?</h4>
+		<p>PostgreSQL outer joins islemlerini SQL standartlarýný kullanarak
+		gerçekleþtirmektedir. Aþaðýda 2 örnek bulunmaktadýr:</p>
+		<pre>
+SELECT *
+FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);		
+		</pre>
+		<p>ya da</p>
+		<pre>
+SELECT *
+FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);		
+		</pre>
+		<p>Bu özdeþ sorgular t1.col' i t2.col'ye <i>join</i> ederler ve ayný zamanda t1'deki
+		<i>unjoined</i> satýrlarý (t2'de eþlenmemiþ olanlarla) döndürürler. <code>RIGHT
+		JOIN t2</code>'nin <i>unjoined</i> satýrlarýný ekleyecektir. Bir FULL join, eþleþmiþ
+		bütün satýrlarý ve t1 ile t2'den tüm baðlanmamýþ (<i>unjoined</i>) satýrlarý alýr.
+		<code>OUTER</code> sözcüðü seçimseldir ve <code>LEFT</code>, <code>RIGHT</code> ve
+		<code>FULL</code> <i>join</i> iþlemlerinde olduðu kabul edilir. Sýradan <i>join</i>
+		iþlemleri <code>INNER JOIN</code> olarak adlandýrýlýr.</p>
+		<p>Önceki sürümlerde, <code>OUTER JOIN</code>ler <code>UNION</code> ve <code>NOT IN</code>
+		kullanýlarak simüle edilebiliyordu. Örneðin, tab1 ve tab2'yi birleþtirirken, aþaðýdaki
+		sorgu iki tablonun dýþtan baðlanmasýný saðlar:</p>
+		<pre>
+SELECT tab1.col1, tab2.col2
+FROM tab1, tab2
+WHERE tab1.col1 = tab2.col1
+UNION ALL
+SELECT tab1.col1, NULL
+FROM tab1
+WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
+ORDER BY col1		
+		</pre>
+		
+		<h4><a name="4.24">4.24</a>) Ayný andan birden fazla veritabanýnda nasýl
+		iþlem yapabilirim?</h4>
+		<p>Mevcut veritabanýnýz dýþýndaki baþka bir veritabanýnýzý sorgulamanýzýn
+		bir yolu bulunmamaktadýr. Bunun nedeni, PostgreSQL'in veritabanýna özel sistem
+		kataloglarý yüklemesidir. Bu nedenle, cross-database bir sorgunun nasýl
+		davranacaðýný kestirmek zordur.</p>
+		<p>contrib/dblink fonksiyon çaðrýlarýný kullanarak cross-database sorgulara
+		izin verir. Tabii ki, bir istemci deðiþik veritabanlarýna ayný anda eriþim
+		saðlayabilir ve bilgiyi bu þekilde birleþtirebilir.</p>
+		
+		<h4><a name="4.25">4.25</a>) Bir fonksiyondan nasýl çoklu satýr ya da 
+		kolon döndürebilirim?</h4>
+		<p>7.3 sürümünde, bir fonksiyondan kolaylýkla çoklu satýr ya da sütun
+		döndürebilirsiniz.
+		(<i><a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</a></i>)</p>
+		
+		<h4><a name="4.26">4.26</a>) Neden Pl/PgSQL fonksiyonlarý içinden
+		güvenli bir þekilde tablo yaratma/kaldýrma iþlemlerini yapamýyoruz?</h4>
+		<p>PL/PgSQL fonksiyon içerikleri <i>cache</i>'ler. Bunun istenmeyen bir tarafý,
+		eðer bir PL/PgSQL fonksiyonu geçici bir tabloya eriþiyorsa ve bu tablo ileride
+		kaldýrýlýp yeniden oluþturulduktan sonra fonksiyon yeniden çaðrýlýrsa, fonksiyon
+		çalýþmayacaktýr; çünkü <i>cache</i>'lenmiþ fonksiyon hala eski geçici tabloyu
+		gösteriyor olacaktýr. Çözüm, geçici tablo eriþimleri için PL/PgSQL'de
+		<code>EXECUTE</code> kullanmaktýr. Bu, sorgunun her seferinde yeniden iþlenmesini
+		saðlayacaktýr.</p>
+		
+		<h4><a name="4.27">4.27</a>) Hangi replikasyon seçenekleri bulunmaktadýr?</h4>
+		<p>Çeþitli master/slave replikasyon seçenekleri bulunmaktadýr. Bunlar master
+		veritabanýnýn veritabaný deðiþikliklerini yaparken, slave sunucunun sadece
+		veritabanýnda okuma yapmasýna izin verir. 
+		<i><a href="http://gborg.PostgreSQL.org/genpage?replication_research">http://gborg.PostgreSQL.org/genpage?replication_research</a></i>
+		sayfasýnýn altýnda bunlarýn listesini bulabilirsiniz.
+		<i><a href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a></i>
+		adresinde, çoklu-master replikasyon çözümü üzerinde çalýþýlýyor.</p>
+		
+		<h4><a name="4.28">4.28</a>) 4.28) Hangi þifreleme seçenekleri bulunmaktadýr?</h4>
+		<ul><li>contrib/pgcrypto SQL sorgularýnda kullanýlabilmesi için
+		þifreleme fonksiyonlarý içermektedir.</li>
+		<li> Ýstemciden sunucuya iletiþimi þifrelemek için, sunucuda ssl seçeneði postgresql.conf içinde 
+		açýk olmalýdýr. Ayrýca,pg_hba.conf dosyasý içinde host ya da hostssl kaydý mutlaka olmalýdýr ve 
+		istemci sslmode kapatýlmamalýdýr. (Ayný zamanda,PostgreSQL'in doðal SSL baðlantýlarý dýþýnda ssh ya 
+		da ssl gibi 3.parti þifrelenmiþ veri iletimi de mümkündür.)</li>
+		<li>Veritabaný kullanýcý adý ve þifreleri 7.3 sürümü ile birlikte
+		otomatik olarak þifrelenirler. Önceki sürümlerde, postgresql.conf
+		içindeki PASSWORD_ENCRYPTION seçeneðini aktif hale getirmeniz gerekmektedir.</li>
+		<li>Sunucunun kendisini þifreli dosya sistemi üzerinde çalýþtýrabilirsiniz.</li></ul>
+		
+		<hr>
+		
+	<h2 align="center">PostgreSQL Özelliklerini Geniþletmek</h2>
+		
+		<h4><a name="5.1">5.1</a>) Kullanýcý-tanýmlý bir fonksiyon yazdým.
+		psql'de çalýþtýrdýðým zaman neden core dump ediyor?</h4>
+		<p>Sorunun nedeni birden fazla þey olabilir. Kullanýcý-tanýmlý fonksiyonunuzu
+		stand-alone bir programda çalýþtýrmayý deneyiniz.</p>
+		
+		<h4><a name="5.2">5.2</a>) PostgreSQL'e nasýl yeni tipler/fonksiyonlar ekleyebilirim?</h4>
+		<p>Çalýþmalarýnýzý pgsql-hackers e-posta listesine gönderiniz. Kodunuz
+		incelendikten sonra /contrib dizinine konacaktýr.</p>
+		
+		<h4><a name="5.3">5.3</a>) Bir <i>tuple</i> dondürmek icin bir C fonksiyonunu nasil yazarým?</h4>
+		<p>PostgreSQL 7.3 sürümü ile birlikte, C, PL/PgSQL ve SQL kullanýlarak tablo-döndüren
+		fonksiyonlar tamamen desteklenmektedir. Ayrýntýlý bilgi için
+		<i><a href="http://www.postgresql.com/docs/7.3/interactive/user.html">PostgreSQL 7.3.2
+		Kullanýcý Rehberi</a></i>'ne bakabilrisiniz. Bir örneði contrib/tablefunc
+		içinde bulabilirsiniz.</p>
+		
+		<h4><a name="5.4">5.4</a>) Bir kaynak dosyasýnda deðiþiklik yaptým. Yeniden derlememe
+		raðmen deðiþiklik geçerli olmuyor. Neden?</h4>
+		<p>Makefile'lar include dosyalarý için tam bir baðýmlýlýk içermezler. 
+		Öncelikle make clean, ardýndan da baska bir make iþlemi yapmanýz gerekir.
+		GCC kullanýyorsanýz, configure betiðinin --enable-depend seçeneðini, derleyicinin
+		baðýmlýlýklarý otomatik olarak hesaplamasý için kullanabilirsiniz.</p>
+		
+</body></html>
