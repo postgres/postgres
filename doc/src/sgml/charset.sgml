@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.53 2005/03/13 02:02:44 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.54 2005/03/13 02:07:04 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -325,7 +325,7 @@ initdb --locale=sv_SE
         </row>
         <row>
          <entry><literal>EUC_JP</literal></entry>
-         <entry>Extended UNIX Code-JP (Japanese)</></entry>
+         <entry>Extended UNIX Code-JP (Japanese)</entry>
         </row>
         <row>
          <entry><literal>EUC_KR</literal></entry>
