@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.89 2000/07/19 16:29:42 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.90 2000/07/22 01:48:53 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -363,7 +363,7 @@ endif # GCC
 -include $(wildcard $(DEPDIR)/*.P) /dev/null
 
 # hook for clean-up
-clean: clean-deps
+clean distclean maintainer-clean: clean-deps
 
 .PHONY: clean-deps
 clean-deps:
