@@ -4,7 +4,7 @@
 #    Makefile for access/common
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.2 1996/10/31 07:04:50 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.3 1996/10/31 07:22:07 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 INCLUDE_OPT = -I../../port/$(PORTNAME) \
-              -I../../include \
               -I../../../include
 
 CFLAGS+=$(INCLUDE_OPT)
