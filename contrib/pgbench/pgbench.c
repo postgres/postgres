@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.16 2002/02/24 00:17:57 ishii Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.17 2002/07/20 03:02:01 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -39,7 +39,7 @@
 
 /* for getrlimit */
 #include <sys/resource.h>
-#endif   /* WIN32 */
+#endif   /* ! WIN32 */
 
 /********************************************************************
  * some configurable parameters */
@@ -64,10 +64,14 @@ int			tps = 1;
 #define ntellers	10
 #define naccounts	100000
 
-int			remains;			/* number of remained clients */
+FILE	   *LOGFILE = NULL;
+
+bool		use_log;			/* log transaction latencies to a file */
+
+int			remains;			/* number of remaining clients */
 
 int			is_connect;			/* establish connection  for each
-								 * transactoin */
+								 * transaction */
 
 char	   *pghost = "";
 char	   *pgport = NULL;
@@ -80,22 +84,24 @@ char	   *dbName;
 typedef struct
 {
 	PGconn	   *con;			/* connection handle to DB */
+	int			id;				/* client No. */
 	int			state;			/* state No. */
 	int			cnt;			/* xacts count */
 	int			ecnt;			/* error count */
-	int			listen;			/* none 0 indicates that an async query
+	int			listen;			/* 0 indicates that an async query
 								 * has been sent */
 	int			aid;			/* account id for this transaction */
 	int			bid;			/* branch id for this transaction */
 	int			tid;			/* teller id for this transaction */
 	int			delta;
 	int			abalance;
+	struct timeval txn_begin;	/* used for measuring latencies */
 }	CState;
 
 static void
 usage()
 {
-	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-n][-C][-v][-S][-N][-U login][-P password][-d][dbname]\n");
+	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-n][-C][-v][-S][-N][-l][-U login][-P password][-d][dbname]\n");
 	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor][-U login][-P password][-d][dbname]\n");
 }
 
@@ -235,6 +241,19 @@ doOne(CState * state, int n, int debug, int ttype)
 				discard_response(st);
 				break;
 			case 6:				/* response to "end" */
+				/* transaction finished: record the time it took in the log */
+				if (use_log)
+				{
+					long long diff;
+					struct timeval now;
+
+					gettimeofday(&now, 0);
+					diff = (now.tv_sec - st->txn_begin.tv_sec) * 1000000 +
+						   (now.tv_usec - st->txn_begin.tv_usec);
+
+					fprintf(LOGFILE, "%d %d %lld\n", st->id, st->cnt, diff);
+				}
+
 				res = PQgetResult(st->con);
 				if (check(state, res, n, PGRES_COMMAND_OK))
 					return;
@@ -249,7 +268,7 @@ doOne(CState * state, int n, int debug, int ttype)
 
 				if (++st->cnt >= nxacts)
 				{
-					remains--;	/* I've done */
+					remains--;	/* I'm done */
 					if (st->con != NULL)
 					{
 						PQfinish(st->con);
@@ -287,6 +306,8 @@ doOne(CState * state, int n, int debug, int ttype)
 			st->bid = getrand(1, nbranches * tps);
 			st->tid = getrand(1, ntellers * tps);
 			st->delta = getrand(1, 1000);
+			if (use_log)
+				gettimeofday(&(st->txn_begin), 0);
 			break;
 		case 1:
 			sprintf(sql, "update accounts set abalance = abalance + %d where aid = %d\n", st->delta, st->aid);
@@ -326,7 +347,7 @@ doOne(CState * state, int n, int debug, int ttype)
 	}
 	else
 	{
-		st->listen++;			/* flags that should be listned */
+		st->listen++;			/* flags that should be listened */
 	}
 }
 
@@ -420,7 +441,7 @@ doSelectOnly(CState * state, int n, int debug)
 	}
 	else
 	{
-		st->listen++;			/* flags that should be listned */
+		st->listen++;			/* flags that should be listened */
 	}
 }
 
@@ -439,7 +460,7 @@ disconnect_all(CState * state)
 
 /* create tables and setup data */
 static void
-init()
+init(void)
 {
 	PGconn	   *con;
 	PGresult   *res;
@@ -616,8 +637,8 @@ printResults(
 	printf("number of clients: %d\n", nclients);
 	printf("number of transactions per client: %d\n", nxacts);
 	printf("number of transactions actually processed: %d/%d\n", normal_xacts, nxacts * nclients);
-	printf("tps = %f(including connections establishing)\n", t1);
-	printf("tps = %f(excluding connections establishing)\n", t2);
+	printf("tps = %f (including connections establishing)\n", t1);
+	printf("tps = %f (excluding connections establishing)\n", t2);
 }
 
 
@@ -634,11 +655,10 @@ main(int argc, char **argv)
 										 * testing? */
 	int			is_full_vacuum = 0;		/* do full vacuum before testing? */
 	int			debug = 0;		/* debug flag */
-	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT
-								 * only 
-				 2: skip updation of branches and tellers */
+	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT only,
+								 * 2: skip update of branches and tellers */
 
-	static CState state[MAXCLIENTS];	/* clients status */
+	static CState *state;		/* status of clients */
 
 	struct timeval tv1;			/* start up time */
 	struct timeval tv2;			/* after establishing all connections to
@@ -658,7 +678,7 @@ main(int argc, char **argv)
 	PGconn	   *con;
 	PGresult   *res;
 
-	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CNS")) != -1)
+	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CNSl")) != -1)
 	{
 		switch (c)
 		{
@@ -690,7 +710,7 @@ main(int argc, char **argv)
 				nclients = atoi(optarg);
 				if (nclients <= 0 || nclients > MAXCLIENTS)
 				{
-					fprintf(stderr, "wrong number of clients: %d\n", nclients);
+					fprintf(stderr, "invalid number of clients: %d\n", nclients);
 					exit(1);
 				}
 #ifndef __CYGWIN__
@@ -719,7 +739,7 @@ main(int argc, char **argv)
 				tps = atoi(optarg);
 				if (tps <= 0)
 				{
-					fprintf(stderr, "wrong scaling factor: %d\n", tps);
+					fprintf(stderr, "invalid scaling factor: %d\n", tps);
 					exit(1);
 				}
 				break;
@@ -727,7 +747,7 @@ main(int argc, char **argv)
 				nxacts = atoi(optarg);
 				if (nxacts <= 0)
 				{
-					fprintf(stderr, "wrong number of transactions: %d\n", nxacts);
+					fprintf(stderr, "invalid number of transactions: %d\n", nxacts);
 					exit(1);
 				}
 				break;
@@ -736,6 +756,9 @@ main(int argc, char **argv)
 				break;
 			case 'P':
 				pwd = optarg;
+				break;
+			case 'l':
+				use_log = true;
 				break;
 			default:
 				usage();
@@ -760,6 +783,23 @@ main(int argc, char **argv)
 	}
 
 	remains = nclients;
+
+	state = (CState *) malloc(sizeof(*state) * nclients);
+	memset(state, 0, sizeof(*state));
+
+	if (use_log)
+	{
+		char logpath[64];
+
+		snprintf(logpath, 64, "pgbench_log.%d", getpid());
+		LOGFILE = fopen(logpath, "w");
+
+		if (LOGFILE == NULL)
+		{
+			fprintf(stderr, "Couldn't open logfile \"%s\": %s", logpath, strerror(errno));
+			exit(1);
+		}
+	}
 
 	if (debug)
 	{
@@ -860,6 +900,7 @@ main(int argc, char **argv)
 		/* make connections to the database */
 		for (i = 0; i < nclients; i++)
 		{
+			state[i].id = i;
 			if ((state[i].con = doConnect()) == NULL)
 				exit(1);
 		}
@@ -868,7 +909,7 @@ main(int argc, char **argv)
 	/* time after connections set up */
 	gettimeofday(&tv2, 0);
 
-	/* send start up quries in async manner */
+	/* send start up queries in async manner */
 	for (i = 0; i < nclients; i++)
 	{
 		if (ttype == 0 || ttype == 2)
@@ -885,6 +926,8 @@ main(int argc, char **argv)
 			/* get end time */
 			gettimeofday(&tv3, 0);
 			printResults(ttype, state, &tv1, &tv2, &tv3);
+			if (LOGFILE)
+				fclose(LOGFILE);
 			exit(0);
 		}
 
@@ -899,7 +942,7 @@ main(int argc, char **argv)
 
 				if (sock < 0)
 				{
-					fprintf(stderr, "Client %d: PQsock failed\n", i);
+					fprintf(stderr, "Client %d: PQsocket failed\n", i);
 					disconnect_all(state);
 					exit(1);
 				}

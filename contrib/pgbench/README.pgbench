@@ -1,4 +1,4 @@
-pgbench README		2001/10/24 Tatsuo Ishii (t-ishii@sra.co.jp)
+pgbench README		2002/07/20 Tatsuo Ishii (t-ishii@sra.co.jp)
 
 o What is pgbench?
 
@@ -101,7 +101,7 @@ o options
 		(10,000,000) tuples in the accounts table.
 		default is 1.
 
-        -U login
+	-U login
 		Specify db user's login name if it is different from
 		the Unix login name.
 
@@ -111,7 +111,7 @@ o options
 		show the password. Use this for TESTING PURPOSE ONLY.
 
 	-n
-		No vacuuming and cleaning the history table prior the
+		No vacuuming and cleaning the history table prior to the
 		test is performed.
 
 	-v
@@ -122,10 +122,19 @@ o options
 	-S
 		Perform select only transactions instead of TPC-B.
 
-        -C
+	-C
 		Establish connection for each transaction, rather than
-		doing it just once at begining of pgbench in the normal
-		mode. This is usefull to measure the connection overhead.
+		doing it just once at beginning of pgbench in the normal
+		mode. This is useful to measure the connection overhead.
+	
+	-l
+		Write the time taken by each transaction to a logfile,
+		with the name "pgbench_log.xxx", where xxx is the PID
+		of the pgbench process. The format of the log is:
+
+			client_id transaction_no time
+
+		where time is measured in microseconds.
 
 	-d
 		debug option.
@@ -152,6 +161,14 @@ o License?
 Basically it is same as BSD license. See pgbench.c for more details.
 
 o History
+
+2002/07/20
+	* patch contributed by Neil Conway.
+	* code/document clean up and add -l option.
+
+2002/02/24
+	* do not CHECKPOINT anymore while initializing benchmark
+	* database. Add -N option.
 
 2001/10/24
 	* "time"->"mtime"
