@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.86 2001/03/14 18:24:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.87 2001/03/18 20:13:13 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -934,11 +934,11 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	old_status = pstrdup(get_ps_display());
 	new_status = (char *) palloc(strlen(old_status) + 10);
 	strcpy(new_status, old_status);
-	strcat(new_status, "waiting");
+	strcat(new_status, " waiting");
 	set_ps_display(new_status);
 
 	/*
-	 * NOTE: Think not to put any lock state cleanup after the call to
+	 * NOTE: Think not to put any shared-state cleanup after the call to
 	 * ProcSleep, in either the normal or failure path.  The lock state
 	 * must be fully set by the lock grantor, or by HandleDeadLock if we
 	 * give up waiting for the lock.  This is necessary because of the
@@ -946,7 +946,9 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	 * after someone else grants us the lock, but before we've noticed it.
 	 * Hence, after granting, the locktable state must fully reflect the
 	 * fact that we own the lock; we can't do additional work on return.
-	 *
+	 * Contrariwise, if we fail, any cleanup must happen in xact abort
+	 * processing, not here, to ensure it will also happen in the cancel/die
+	 * case.
 	 */
 
 	if (ProcSleep(lockMethodTable,
@@ -958,7 +960,6 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 		 * We failed as a result of a deadlock, see HandleDeadLock().
 		 * Quit now.  Removal of the holder and lock objects, if no longer
 		 * needed, will happen in xact cleanup (see above for motivation).
-		 *
 		 */
 		LOCK_PRINT("WaitOnLock: aborting on lock", lock, lockmode);
 		SpinRelease(lockMethodTable->ctl->masterLock);
