@@ -150,7 +150,14 @@ void InitArchiveFmt_Custom(ArchiveHandle* AH)
     if (ctx->zp == NULL)
 	die_horribly(AH, "%s: unable to allocate zlib stream archive context",progname);
 
-    ctx->zlibOut = (char*)malloc(zlibOutSize);
+	/*
+	 * zlibOutSize is the buffer size we tell zlib it can output to.  We
+	 * actually allocate one extra byte because some routines want to append
+	 * a trailing zero byte to the zlib output.  The input buffer is expansible
+	 * and is always of size ctx->inSize; zlibInSize is just the initial
+	 * default size for it.
+	 */
+    ctx->zlibOut = (char*)malloc(zlibOutSize+1);
     ctx->zlibIn = (char*)malloc(zlibInSize);
     ctx->inSize = zlibInSize;
     ctx->filePos = 0;
@@ -518,14 +525,14 @@ static void	_PrintData(ArchiveHandle* AH)
 
     blkLen = ReadInt(AH);
     while (blkLen != 0) {
-		if (blkLen > (ctx->inSize - 1)) {
+		if (blkLen+1 > ctx->inSize) {
 			free(ctx->zlibIn);
 			ctx->zlibIn = NULL;
-			ctx->zlibIn = (char*)malloc(blkLen);
+			ctx->zlibIn = (char*)malloc(blkLen+1);
 			if (!ctx->zlibIn)
 				die_horribly(AH, "%s: failed to allocate decompression buffer\n", progname);
 
-			ctx->inSize = blkLen;
+			ctx->inSize = blkLen+1;
 			in = ctx->zlibIn;
 		}
 
@@ -848,7 +855,7 @@ static void	_StartDataCompressor(ArchiveHandle* AH, TocEntry* te)
 
 #endif
 
-    /* Just be paranoid - maye End is called after Start, with no Write */
+    /* Just be paranoid - maybe End is called after Start, with no Write */
     zp->next_out = ctx->zlibOut;
     zp->avail_out = zlibOutSize;
 }
@@ -887,7 +894,7 @@ static int	_DoDeflate(ArchiveHandle* AH, lclContext* ctx, int flush)
 				/* printf("Wrote %d byte deflated chunk\n", zlibOutSize - zp->avail_out); */
 				WriteInt(AH, zlibOutSize - zp->avail_out);
 				if (fwrite(out, 1, zlibOutSize - zp->avail_out, AH->FH) != (zlibOutSize - zp->avail_out))
-					die_horribly(AH, "%s: could write compressed chunk\n",progname);
+					die_horribly(AH, "%s: could not write compressed chunk\n",progname);
 				ctx->filePos += zlibOutSize - zp->avail_out;
 			}
 			zp->next_out = out;
@@ -899,7 +906,7 @@ static int	_DoDeflate(ArchiveHandle* AH, lclContext* ctx, int flush)
 		{
 			WriteInt(AH, zp->avail_in);
 			if (fwrite(zp->next_in, 1, zp->avail_in, AH->FH) != zp->avail_in)
-				die_horribly(AH, "%s: could write uncompressed chunk\n", progname);
+				die_horribly(AH, "%s: could not write uncompressed chunk\n", progname);
 			ctx->filePos += zp->avail_in;
 			zp->avail_in = 0;
 		} else {
