@@ -463,7 +463,7 @@ dblink_record(PG_FUNCTION_ARGS)
 				is_sql_cmd = true;
 
 				/* need a tuple descriptor representing one TEXT column */
-				tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
+				tupdesc = CreateTemplateTupleDesc(1, false);
 				TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
 								   TEXTOID, -1, 0, false);
 
@@ -628,7 +628,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 		if (PQresultStatus(res) == PGRES_COMMAND_OK)
 		{
 			/* need a tuple descriptor representing one TEXT column */
-			tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
+			tupdesc = CreateTemplateTupleDesc(1, false);
 			TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
 							   TEXTOID, -1, 0, false);
 
@@ -883,7 +883,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 			elog(ERROR, "dblink_get_pkey: relation does not exist");
 
 		/* need a tuple descriptor representing one INT and one TEXT column */
-		tupdesc = CreateTemplateTupleDesc(2, WITHOUTOID);
+		tupdesc = CreateTemplateTupleDesc(2, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "position",
 						   INT4OID, -1, 0, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "colname",
@@ -1936,7 +1936,7 @@ pgresultGetTupleDesc(PGresult *res)
 	if (natts < 1)
 		elog(ERROR, "cannot create a description for empty results");
 
-	desc = CreateTemplateTupleDesc(natts, WITHOUTOID);
+	desc = CreateTemplateTupleDesc(natts, false);
 
 	attnum = 0;
 
