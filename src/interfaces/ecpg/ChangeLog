@@ -1528,6 +1528,11 @@ Thu Jun 26 13:26:13 CEST 2003
 Sun Jun 29 11:22:48 CEST 2003
 
 	- Just another sync.
+	- Made sure Informix style decimal vars are initialized. They use a
+	  fixed amount of digits and not an allocated one. So we have to work
+	  around. PostgreSQL numeric type remains the same.
+	- In INFORMIX_SE mode with autcommit set, make all cursors be "with
+	  hold". Is this really they way SE behaves?
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

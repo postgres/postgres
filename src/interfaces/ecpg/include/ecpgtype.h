@@ -45,6 +45,7 @@ enum ECPGttype
 	ECPGt_float, ECPGt_double,
 	ECPGt_varchar, ECPGt_varchar2,
 	ECPGt_numeric,
+	ECPGt_decimal,			/* only used internally */
 	ECPGt_date,
 	ECPGt_timestamp,
 	ECPGt_interval,
