@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.62 2004/03/22 23:55:29 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.63 2004/03/27 17:32:42 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1681,10 +1681,7 @@ pgstat_mainChild(PGSTAT_FORK_ARGS)
 		FD_SET(readPipe, &rfds);
 		FD_SET(pmPipe, &rfds);
 
-		if (readPipe > pmPipe)
-			maxfd = readPipe;
-		else
-			maxfd = pmPipe;
+		maxfd = Max(readPipe, pmPipe);
 
 		/*
 		 * Now wait for something to do.
