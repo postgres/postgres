@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.11 1997/06/01 04:16:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.12 1997/06/03 14:01:22 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "utils/geo_decls.h"
 #include "utils/palloc.h"
 
-#define OLD_FORMAT_IN	1
+#define OLD_FORMAT_IN	0
 #define OLD_FORMAT_OUT	0
 
 /*
@@ -824,6 +824,8 @@ PATH *path_in(char *str)
 #if OLD_FORMAT_IN
     int oldstyle = FALSE;
     double x, y;
+#else
+    int depth = 0;
 #endif
 
     if (!PointerIsValid(str))
@@ -832,9 +834,10 @@ PATH *path_in(char *str)
     if ((npts = pair_count(str, ',')) <= 0)
 	elog(WARN, "Bad path external representation '%s'", str);
 
-#if OLD_FORMAT_IN
     s = str;
     while (isspace( *s)) s++;
+
+#if OLD_FORMAT_IN
     /* identify old style format as having only one left delimiter in string... */
     oldstyle = ((*s == LDELIM) && (strrchr( s, LDELIM) == s));
 
@@ -847,21 +850,30 @@ PATH *path_in(char *str)
 	isopen = (x == 0);
 	npts = y;
     };
+
+#else
+    /* skip single leading paren */
+    if ((*s == LDELIM) && (strrchr( s, LDELIM) == s)) {
+	s++;
+	depth++;
+    };
 #endif
 
     size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * npts);
     path = PALLOC(size);
 
     path->size = size;
-    path->npts =  npts;
-    if (oldstyle) path->closed = (! isopen);
+    path->npts = npts;
 
 #if OLD_FORMAT_IN
+    if (oldstyle) path->closed = (! isopen);
+
     if ((! path_decode(TRUE, npts, s, &isopen, &s, &(path->p[0])))
      || ! (oldstyle? (*s++ == RDELIM): (*s == '\0')))
+
 #else
-    if ((! path_decode(TRUE, npts, s, &isopen, &s, &(path->p[0])))
-     || (*s != '\0'))
+    if ((!path_decode(TRUE, npts, s, &isopen, &s, &(path->p[0])))
+     && (!((depth == 0) && (*s == '\0'))) && !((depth >= 1) && (*s == RDELIM)))
 #endif
 	elog (WARN, "Bad path external representation '%s'",str);
 
@@ -871,9 +883,12 @@ PATH *path_in(char *str)
 	if (*s != '\0')
 	    elog (WARN, "Bad path external representation '%s'",str);
     };
-#endif
 
     if (! oldstyle) path->closed = (! isopen);
+
+#else
+    path->closed = (! isopen);
+#endif
 
     return(path);
 }
@@ -986,9 +1001,11 @@ path_close(PATH *path)
 {
     PATH *result;
 
-   result = path_copy(path);
-    if (PointerIsValid((char *)result))
-	result->closed = TRUE;
+    if (!PointerIsValid(path))
+	return(NULL);
+
+    result = path_copy(path);
+    result->closed = TRUE;
 
     return(result);
 } /* path_close() */
@@ -998,9 +1015,11 @@ path_open(PATH *path)
 {
     PATH *result;
 
+    if (!PointerIsValid(path))
+	return(NULL);
+
     result = path_copy(path);
-    if (PointerIsValid((char *)result))
-	result->closed = FALSE;
+    result->closed = FALSE;
 
     return(result);
 } /* path_open() */
@@ -1011,9 +1030,6 @@ path_copy(PATH *path)
 {
     PATH *result;
     int size;
-
-    if (!PointerIsValid(path))
-	return NULL;
 
     size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * path->npts);
     result = PALLOC(size);
@@ -1996,9 +2012,8 @@ POLYGON *poly_in(char *str)
     int npts;
     int size;
     int isopen;
-
-#if OLD_FORMAT_IN
     char *s;
+#if OLD_FORMAT_IN
     int oldstyle;
     int oddcount;
     int i;
@@ -2431,7 +2446,7 @@ path_add_pt(PATH *path, Point *point)
     PATH *result;
     int i;
 
-    if (! (PointerIsValid(path) && PointerIsValid(point)))
+    if ((!PointerIsValid(path)) || (!PointerIsValid(point)))
 	return(NULL);
 
     result = path_copy(path);
@@ -2450,7 +2465,7 @@ path_sub_pt(PATH *path, Point *point)
     PATH *result;
     int i;
 
-    if (! (PointerIsValid(path) && PointerIsValid(point)))
+    if ((!PointerIsValid(path)) || (!PointerIsValid(point)))
 	return(NULL);
 
     result = path_copy(path);
@@ -2474,7 +2489,7 @@ path_mul_pt(PATH *path, Point *point)
     Point *p;
     int i;
 
-    if (! (PointerIsValid(path) && PointerIsValid(point)))
+    if ((!PointerIsValid(path)) || (!PointerIsValid(point)))
 	return(NULL);
 
     result = path_copy(path);
@@ -2496,7 +2511,7 @@ path_div_pt(PATH *path, Point *point)
     Point *p;
     int i;
 
-    if (! (PointerIsValid(path) && PointerIsValid(point)))
+    if ((!PointerIsValid(path)) || (!PointerIsValid(point)))
 	return(NULL);
 
     result = path_copy(path);
@@ -2539,6 +2554,53 @@ POLYGON *path_poly(PATH *path)
 
     return(poly);
 } /* path_polygon() */
+
+
+/* upgradepath()
+ * Convert path read from old-style string into correct representation.
+ *
+ * Old-style: '(closed,#pts,x1,y1,...)' where closed is a boolean flag
+ * New-style: '((x1,y1),...)' for closed path
+ *            '[(x1,y1),...]' for open path
+ */
+PATH
+*upgradepath(PATH *path)
+{
+    PATH *result;
+    int size, npts;
+    int i;
+
+    if (!PointerIsValid(path) || (path->npts < 2))
+	return(NULL);
+
+    if (! isoldpath(path))
+	elog(WARN,"upgradepath: path already upgraded?",NULL);
+
+    npts = (path->npts-1);
+    size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * npts);
+    result = PALLOC(size);
+    memset((char *) result, 0, size);
+
+    result->size = size;
+    result->npts = npts;
+    result->closed = (path->p[0].x != 0);
+
+    for (i=0; i<result->npts; i++) {
+	result->p[i].x = path->p[i+1].x;
+	result->p[i].y = path->p[i+1].y;
+    };
+
+    return(result);
+} /* upgradepath() */
+
+bool
+isoldpath(PATH *path)
+{
+    if (!PointerIsValid(path) || (path->npts < 2))
+	return(0);
+
+    return(path->npts == (path->p[0].y+1));
+} /* isoldpath() */
 
 
 /***********************************************************************
@@ -2628,6 +2690,89 @@ poly_path(POLYGON *poly)
 } /* poly_path() */
 
 
+/* upgradepoly()
+ * Convert polygon read as pre-v6.1 string to new interpretation.
+ * Old-style: '(x1,x2,...,y1,y2,...)'
+ * New-style: '(x1,y1,x2,y2,...)'
+ */
+POLYGON
+*upgradepoly(POLYGON *poly)
+{
+    POLYGON *result;
+    int size;
+    int n2, i, ii;
+
+    if (!PointerIsValid(poly) || (poly->npts < 1))
+	return(NULL);
+
+    size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * poly->npts);
+    result = PALLOC(size);
+    memset((char *) result, 0, size);
+
+    result->size = size;
+    result->npts = poly->npts;
+
+    n2 = poly->npts/2;
+
+    for (i=0; i<n2; i++) {
+	result->p[2*i].x = poly->p[i].x;   /* even indices */
+	result->p[2*i+1].x = poly->p[i].y; /* odd indices */
+    };
+
+    if ((ii = ((poly->npts % 2)? 1: 0))) {
+	result->p[poly->npts-1].x = poly->p[n2].x;
+	result->p[0].y = poly->p[n2].y;
+    };
+
+    for (i=0; i<n2; i++) {
+	result->p[2*i+ii].y = poly->p[i+n2+ii].x;   /* even (+offset) indices */
+	result->p[2*i+ii+1].y = poly->p[i+n2+ii].y; /* odd (+offset) indices */
+    };
+
+    return(result);
+} /* upgradepoly() */
+
+/* revertpoly()
+ * Reverse effect of upgradepoly().
+ */
+POLYGON
+*revertpoly(POLYGON *poly)
+{
+    POLYGON *result;
+    int size;
+    int n2, i, ii;
+
+    if (!PointerIsValid(poly) || (poly->npts < 1))
+	return(NULL);
+
+    size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * poly->npts);
+    result = PALLOC(size);
+    memset((char *) result, 0, size);
+
+    result->size = size;
+    result->npts = poly->npts;
+
+    n2 = poly->npts/2;
+
+    for (i=0; i<n2; i++) {
+	result->p[i].x = poly->p[2*i].x;   /* even indices */
+	result->p[i].y = poly->p[2*i+1].x; /* odd indices */
+    };
+
+    if ((ii = ((poly->npts % 2)? 1: 0))) {
+	result->p[n2].x = poly->p[poly->npts-1].x;
+	result->p[n2].y = poly->p[0].y;
+    };
+
+    for (i=0; i<n2; i++) {
+	result->p[i+n2+ii].x = poly->p[2*i+ii].y;   /* even (+offset) indices */
+	result->p[i+n2+ii].y = poly->p[2*i+ii+1].y; /* odd (+offset) indices */
+    };
+
+    return(result);
+} /* revertpoly() */
+
+
 /*-------------------------------------------------------------------------
  *
  * circle.c--
@@ -2637,7 +2782,7 @@ poly_path(POLYGON *poly)
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.11 1997/06/01 04:16:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.12 1997/06/03 14:01:22 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
