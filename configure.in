@@ -585,7 +585,7 @@ then
   LIBS="-L$unixODBC_libs $LIBS"
   
   AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
-    [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING)
+    [AC_DEFINE(HAVE_SQL_GET_PRIV_PROFILE)
     SHLIB_ODBC="$LDFLAGS_ODBC -L$unixODBC_libs -lodbcinst" ],
     [LIBS="$save_LIBS"] )
 fi
