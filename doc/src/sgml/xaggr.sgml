@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.14 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.15 2001/11/21 06:09:45 thomas Exp $
 -->
 
  <chapter id="xaggr">
@@ -11,7 +11,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.14 2001/09/13 15:55:23 peter
   </indexterm>
 
   <para>
-   Aggregate functions  in <productname>Postgres</productname> 
+   Aggregate functions  in <productname>PostgreSQL</productname> 
    are expressed as <firstterm>state values</firstterm>
    and <firstterm>state transition functions</firstterm>.
    That is,  an  aggregate  can  be
@@ -62,7 +62,7 @@ SELECT complex_sum(a) FROM test_complex;
    </programlisting>
 
    (In practice, we'd just name the aggregate <function>sum</function>, and rely on
-   <productname>Postgres</productname> to figure out which kind
+   <productname>PostgreSQL</productname> to figure out which kind
    of sum to apply to a complex column.)
   </para>
 
@@ -77,7 +77,7 @@ SELECT complex_sum(a) FROM test_complex;
    <function>Sum</function> and some other simple aggregates like <function>Max</> and <function>Min</>,
    it's sufficient to insert the first non-null input value into
    the state variable and then start applying the transition function
-   at the second non-null input value.  <productname>Postgres</productname>
+   at the second non-null input value.  <productname>PostgreSQL</productname>
    will do that automatically if the initial condition is NULL and
    the transition function is marked <quote>strict</> (i.e., not to be called
    for NULL inputs).

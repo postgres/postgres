@@ -1,12 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.15 2001/10/26 21:17:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.16 2001/11/21 06:09:45 thomas Exp $
 -->
 
  <Chapter Id="xoper">
   <Title>Extending <Acronym>SQL</Acronym>: Operators</Title>
 
   <Para>
-   <ProductName>Postgres</ProductName> supports left unary,
+   <ProductName>PostgreSQL</ProductName> supports left unary,
    right  unary  and  binary
    operators.   Operators  can  be  overloaded; that is,
    the same operator name can be used for different operators
@@ -87,7 +87,7 @@ SELECT (a + b) AS c FROM test_complex;
    </note>
 
    <para>
-    A <ProductName>Postgres</ProductName> operator definition can include
+    A <ProductName>PostgreSQL</ProductName> operator definition can include
     several optional clauses that tell the system useful things about how
     the operator behaves.  These clauses should be provided whenever
     appropriate, because they can make for considerable speedups in execution
@@ -101,7 +101,7 @@ SELECT (a + b) AS c FROM test_complex;
 
    <para>
     Additional optimization clauses might be added in future versions of
-    <ProductName>Postgres</ProductName>.  The ones described here are all
+    <ProductName>PostgreSQL</ProductName>.  The ones described here are all
     the ones that release 6.5 understands.
    </para>
 
@@ -121,7 +121,7 @@ SELECT (a + b) AS c FROM test_complex;
     <para>
      The left argument type of a commuted operator is the same as the
      right argument type of its commutator, and vice versa.  So the name of
-     the commutator operator is all that <ProductName>Postgres</ProductName>
+     the commutator operator is all that <ProductName>PostgreSQL</ProductName>
      needs to be given to look up the commutator, and that's all that need
      be provided in the COMMUTATOR clause.
     </para>
@@ -138,7 +138,7 @@ SELECT (a + b) AS c FROM test_complex;
        <para>
 	One way is to omit the COMMUTATOR clause in the first operator that
 	you define, and then provide one in the second operator's definition.
-	Since <ProductName>Postgres</ProductName> knows that commutative
+	Since <ProductName>PostgreSQL</ProductName> knows that commutative
 	operators come in pairs, when it sees the second definition it will
 	automatically go back and fill in the missing COMMUTATOR clause in
 	the first definition.
@@ -148,18 +148,18 @@ SELECT (a + b) AS c FROM test_complex;
       <listitem>
        <para>
 	The other, more straightforward way is just to include COMMUTATOR clauses
-	in both definitions.  When <ProductName>Postgres</ProductName> processes
+	in both definitions.  When <ProductName>PostgreSQL</ProductName> processes
 	the first definition and realizes that COMMUTATOR refers to a non-existent
 	operator, the system will make a dummy entry for that operator in the
 	system's pg_operator table.  This dummy entry will have valid data only
 	for the operator name, left and right argument types, and result type,
-	since that's all that <ProductName>Postgres</ProductName> can deduce
+	since that's all that <ProductName>PostgreSQL</ProductName> can deduce
 	at this point.  The first operator's catalog entry will link to this
 	dummy entry.  Later, when you define the second operator, the system
 	updates the dummy entry with the additional information from the second
 	definition.  If you try to use the dummy operator before it's been filled
 	in, you'll just get an error message.  (Note: this procedure did not work
-	reliably in <ProductName>Postgres</ProductName> versions before 6.5,
+	reliably in <ProductName>PostgreSQL</ProductName> versions before 6.5,
 	but it is now the recommended way to do things.)
        </para>
       </listitem>

@@ -2,7 +2,7 @@
   <title>Triggers</title>
 
   <para>
-   <productname>Postgres</productname> has various server-side function
+   <productname>PostgreSQL</productname> has various server-side function
    interfaces. Server-side functions can be written in SQL, PLPGSQL,
    TCL, or C. Trigger functions can be written in any of these
    languages except SQL. Note that STATEMENT-level trigger events are not
@@ -189,7 +189,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
     <note>
      <para>
       The interface described here applies for
-      <productname>Postgres</productname> 7.1 and later.
+      <productname>PostgreSQL</productname> 7.1 and later.
       Earlier versions passed the TriggerData pointer in a global
       variable CurrentTriggerData.
      </para>
@@ -392,7 +392,7 @@ typedef struct Trigger
    <title>Visibility of Data Changes</title>
 
    <para>
-    <productname>Postgres</productname> data changes visibility rule: during a query execution, data
+    <productname>PostgreSQL</productname> data changes visibility rule: during a query execution, data
     changes made by the query itself (via SQL-function, SPI-function, triggers)
     are invisible to the query scan.  For example, in query
 

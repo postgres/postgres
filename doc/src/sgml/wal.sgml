@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.12 2001/10/26 23:10:21 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.13 2001/11/21 06:09:45 thomas Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -339,7 +339,8 @@
 
   <para>
    The <varname>WAL_SYNC_METHOD</varname> parameter determines how
-   Postgres will ask the kernel to force WAL updates out to disk.
+   <productname>PostgreSQL</productname> will ask the kernel to force
+    WAL updates out to disk. 
    All the options should be the same as far as reliability goes,
    but it's quite platform-specific which one will be the fastest.
    Note that this parameter is irrelevant if <varname>FSYNC</varname>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.96 2001/11/20 04:27:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.97 2001/11/21 06:09:45 thomas Exp $
 -->
 
 <Chapter Id="runtime">
@@ -11,7 +11,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.96 2001/11/20 04:27:49 tgl
  </para>
 
  <sect1 id="postgres-user">
-  <title>The Postgres user account</title>
+  <title>The <productname>PostgreSQL</productname> user account</title>
 
   <indexterm>
    <primary>postgres user</primary>
@@ -19,7 +19,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.96 2001/11/20 04:27:49 tgl
 
   <para>
    As with any other server daemon that is connected to the world at
-   large, it is advisable to run Postgres under a separate user
+   large, it is advisable to run <productname>PostgreSQL</productname> under a separate user
    account. This user account should only own the data itself that is
    being managed by the server, and should not be shared with other
    daemons. (Thus, using the user <quote>nobody</quote> is a bad
@@ -77,7 +77,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.96 2001/11/20 04:27:49 tgl
 &gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
 </screen>
    Note that you must execute this command while being logged in to
-   the Postgres user account, which is described in the previous
+   the <productname>PostgreSQL</productname> user account, which is described in the previous
    section.
   </para>
 
@@ -97,7 +97,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.96 2001/11/20 04:27:49 tgl
    have the permission to do so (if you followed our advice and
    created an unprivileged account). In that case you should create the
    directory yourself (as root) and transfer ownership of it to the
-   Postgres user account. Here is how this might work:
+   <productname>PostgreSQL</productname> user account. Here is how this might work:
 <screen>
 root# <userinput>mkdir /usr/local/pgsql/data</userinput>
 root# <userinput>chown postgres /usr/local/pgsql/data</userinput>
@@ -115,7 +115,7 @@ postgres&gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
    Because the data directory contains all the data stored in the
    database it is essential that it be well secured from unauthorized
    access. <command>initdb</command> therefore revokes access
-   permissions from everyone but the Postgres user account.
+   permissions from everyone but the <productname>PostgreSQL</productname> user account.
   </para>
 
   <para>
@@ -159,7 +159,7 @@ NOTICE:  Initializing database with en_US collation order.
 &gt; <userinput>postmaster -D /usr/local/pgsql/data</userinput>
 </screen>
    which will leave the server running in the foreground. This must
-   again be done while logged in to the Postgres user account. Without
+   again be done while logged in to the <productname>PostgreSQL</productname> user account. Without
    a <option>-D</option>, the server will try to use the data
    directory in the environment variable <envar>PGDATA</envar>; if
    neither of these works it will fail.
@@ -221,7 +221,7 @@ pg_ctl start -l logfile
    <filename>/etc/rc.local</filename> or
    <filename>/etc/rc.d/rc.local</filename> which is almost certainly
    no bad place to put such a command. Whatever you do, the server
-   must be run by the <productname>Postgres</productname> user account
+   must be run by the <productname>PostgreSQL</productname> user account
    <emphasis>and not by root</emphasis> or any other user. Therefore
    you probably always want to form your command lines along the lines
    of <literal>su -c '...' postgres</literal>, for example:
@@ -347,7 +347,7 @@ IpcMemoryCreate: shmget(key=5440001, size=83918612, 01600) failed: Invalid argum
 FATAL 1:  ShmemCreate: cannot create region
 </screen>
      probably means that your kernel's limit on the size of shared
-     memory areas is smaller than the buffer area that Postgres is
+     memory areas is smaller than the buffer area that <productname>PostgreSQL</productname> is
      trying to create (83918612 bytes in this example). Or it could
      mean that you don't have System-V-style shared memory support
      configured into your kernel at all. As a temporary workaround,
@@ -367,7 +367,7 @@ IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on 
      does <emphasis>not</emphasis> mean that you've run out of disk
      space; it means that your kernel's limit on the number of System
      V semaphores is smaller than the number
-     <productname>Postgres</productname> wants to create. As above,
+     <productname>PostgreSQL</productname> wants to create. As above,
      you may be able to work around the problem by starting the
      postmaster with a reduced number of backend processes
      (<option>-N</option> switch), but you'll eventually want to
@@ -574,7 +574,7 @@ env PGOPTIONS='-c geqo=off' psql
         Sets the optimizer's assumption about the effective size of
 	the disk cache (that is, the portion of the kernel's disk
 	cache that will be used for
-	<productname>Postgres</productname> data files). This is
+	<productname>PostgreSQL</productname> data files). This is
 	measured in disk pages, which are normally 8 kB apiece.
        </para>
       </listitem>
@@ -756,7 +756,7 @@ env PGOPTIONS='-c geqo=off' psql
        <para>
         The <acronym>KSQO</acronym> algorithm used to be absolutely essential for queries
         with many OR'ed AND clauses, but in
-        <productname>Postgres</productname> 7.0 and later the standard
+        <productname>PostgreSQL</productname> 7.0 and later the standard
         planner handles these queries fairly successfully. Hence the
         default is OFF.
        </para>
@@ -800,9 +800,9 @@ env PGOPTIONS='-c geqo=off' psql
         you are experiencing strange problems or crashes you might
         want to turn this on, as it might expose programming mistakes.
         To use this option, the macro <literal>USE_ASSERT_CHECKING</literal>
-        must be defined when Postgres is built (see the configure option
+        must be defined when <productname>PostgreSQL</productname> is built (see the configure option
 	<literal>--enable-cassert</literal>).  Note that
-	<literal>DEBUG_ASSERTIONS</literal> defaults to ON if Postgres
+	<literal>DEBUG_ASSERTIONS</literal> defaults to ON if <productname>PostgreSQL</productname>
 	has been built this way.
        </para>
       </listitem>
@@ -957,7 +957,7 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>SYSLOG</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        <productname>Postgres</productname> allows the use of
+        <productname>PostgreSQL</productname> allows the use of
         <systemitem>syslog</systemitem> for logging. If this option
         is set to 1, messages go both to <systemitem>syslog</> and the standard
         output. A setting of 2 sends output only to <systemitem>syslog</>. (Some
@@ -967,7 +967,7 @@ env PGOPTIONS='-c geqo=off' psql
        </para>
        <para>
         To use <systemitem>syslog</>, the build of
-        <productname>Postgres</productname> must be configured with
+        <productname>PostgreSQL</productname> must be configured with
         the <option>--enable-syslog</option> option.
        </para>
       </listitem>
@@ -1121,8 +1121,8 @@ env PGOPTIONS='-c geqo=off' psql
         The value for dynamic_library_path has to be a colon-separated
         list of absolute directory names.  If a directory name starts
         with the special value <literal>$libdir</literal>, the
-        compiled-in PostgreSQL package library directory, which is where the
-        modules provided by the PostgreSQL distribution are installed,
+        compiled-in <productname>PostgreSQL</productname> package library directory, which is where the
+        modules provided by the <productname>PostgreSQL</productname> distribution are installed,
         is substituted.  (Use <literal>pg_config --pkglibdir</literal>
         to print the name of this directory.)  An example value:
         <informalexample>
@@ -1157,7 +1157,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <term><varname>FSYNC</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        If this option is on, the <productname>Postgres</> backend
+        If this option is on, the <productname>PostgreSQL</> backend
         will use the <function>fsync()</> system call in several
         places to make sure that updates are physically written to
         disk and do not hang around in the kernel buffer cache. This
@@ -1168,7 +1168,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        </para>
 
        <para>
-        However, this operation slows down <productname>Postgres</>,
+        However, this operation slows down <productname>PostgreSQL</>,
 	because at all those points it has
         to block and wait for the operating system to flush the
         buffers. Without <function>fsync</>, the operating system is
@@ -1181,7 +1181,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
        <para>
         This option is the subject of an eternal debate in the
-        <productname>Postgres</> user and developer communities. Some
+        <productname>PostgreSQL</> user and developer communities. Some
         always leave it off, some turn it off only for bulk loads,
         where there is a clear restart point if something goes wrong,
         some leave it on just to be on the safe side. Because it is
@@ -1192,7 +1192,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
        <para>
         It should be noted that the performance penalty from doing
-	fsyncs is considerably less in <productname>Postgres</> version
+	fsyncs is considerably less in <productname>PostgreSQL</> version
 	7.1 than it was in prior releases.  If you previously suppressed
 	fsyncs because of performance problems, you may wish to reconsider
 	your choice.
@@ -1766,7 +1766,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
   <title>Managing Kernel Resources</title>
 
   <para>
-   A large <productname>Postgres</> installation can quickly hit
+   A large <productname>PostgreSQL</> installation can quickly hit
    various operating system resource limits. (On some systems, the
    factory defaults are so low that you don't even need a really
    <quote>large</> installation.) If you have encountered this kind of
@@ -1787,11 +1787,11 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
    <para>
     Shared memory and semaphores are collectively referred to as
     <quote><systemitem class="osname">System V</> <acronym>IPC</></quote> (together with message queues, which are
-    not relevant for <productname>Postgres</>). Almost all modern
+    not relevant for <productname>PostgreSQL</>). Almost all modern
     operating systems provide these features, but not all of them have
     them turned on or sufficiently sized by default, especially
     systems with BSD heritage. (For the <systemitem class="osname">QNX</> and <systemitem class="osname">BeOS</> ports,
-    <productname>Postgres</> provides its own replacement
+    <productname>PostgreSQL</> provides its own replacement
     implementation of these facilities.)
    </para>
 
@@ -1799,11 +1799,11 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
     The complete lack of these facilities is usually manifested by an
     <errorname>Illegal system call</> error upon postmaster start. In
     that case there's nothing left to do but to reconfigure your
-    kernel -- <productname>Postgres</> won't work without them.
+    kernel -- <productname>PostgreSQL</> won't work without them.
    </para>
 
    <para>
-    When <productname>Postgres</> exceeds one of the various hard
+    When <productname>PostgreSQL</> exceeds one of the various hard
     limits of the <acronym>IPC</> resources then the postmaster will refuse to
     start up and should leave a marginally instructive error message
     about which problem was encountered and what needs to be done
@@ -1917,7 +1917,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
    <para>
     Less likely to cause problems is the minimum size for shared
     memory segments (<varname>SHMMIN</>), which should be at most
-    somewhere around 256 kB for <productname>Postgres</> (it is
+    somewhere around 256 kB for <productname>PostgreSQL</> (it is
     usually just 1). The maximum number of segments system-wide
     (<varname>SHMMNI</>) or per-process (<varname>SHMSEG</>) should
     not cause a problem unless your system has them set to zero. Some
@@ -1926,7 +1926,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
    </para>
 
    <para>
-    <productname>Postgres</> uses one semaphore per allowed connection
+    <productname>PostgreSQL</> uses one semaphore per allowed connection
     (<option>-N</> option), in sets of 16.  Each such set will also
     contain a 17th semaphore which contains a <quote>magic
     number</quote>, to detect collision with semaphore sets used by
@@ -1959,13 +1959,13 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
    <para>
     The <varname>SEMMSL</> parameter, which determines how many
     semaphores can be in a set, must be at least 17 for
-    <productname>Postgres</>.
+    <productname>PostgreSQL</>.
    </para>
 
    <para>
     Various other settings related to <quote>semaphore undo</>, such as
     <varname>SEMMNU</> and <varname>SEMUME</>, are not of concern
-    for <productname>Postgres</>.
+    for <productname>PostgreSQL</>.
    </para>
 
 
@@ -2018,7 +2018,7 @@ options "SYSPTSIZE=16"
         <title>Semaphores</>
         <para>
          You may need to increase the number of semaphores. By
-         default, <productname>Postgres</> allocates 34 semaphores,
+         default, <productname>PostgreSQL</> allocates 34 semaphores,
 	 which is over half the default system total of 60.
         </para>
        </formalpara>
@@ -2167,7 +2167,7 @@ kernel.shmmax = 134217728
       <listitem>
        <para>
         At least in version 2.6, the maximum size of a shared memory
-        segment is set too low for <productname>Postgres</>. The
+        segment is set too low for <productname>PostgreSQL</>. The
         relevant settings can be changed in <filename>/etc/system</>,
         for example:
 <programlisting>
@@ -2235,7 +2235,7 @@ set semsys:seminfo_semmsl=32
    <para>
     Unix-like operating systems enforce various kinds of resource
     limits that might interfere with the operation of your
-    <productname>Postgres</productname> server.  Of importance are
+    <productname>PostgreSQL</productname> server.  Of importance are
     especially the limits on the number of processes per user, the
     number of open files per process, and the amount of memory
     available to a process.  Each of these have a <quote>hard</quote>
@@ -2287,7 +2287,7 @@ default:\
    </para>
 
    <para>
-    The <productname>Postgres</productname> server uses one process
+    The <productname>PostgreSQL</productname> server uses one process
     per connection so you should provide for at least as many processes
     as allowed connections, in addition to what you need for the rest
     of your system.  This is usually not a problem but if you run
@@ -2465,14 +2465,14 @@ cp cert.cert <replaceable>$PGDATA</replaceable>/server.crt
   <para>
    One can use <productname>ssh</productname> to encrypt the network
    connection between clients and a
-   <productname>Postgres</productname> server. Done properly, this
+   <productname>PostgreSQL</productname> server. Done properly, this
    should lead to an adequately secure network connection.
   </para>
 
   <para>
    First make sure that an <application>ssh</application> server is
    running properly on the same machine as
-   <productname>Postgres</productname> and that you can log in using
+   <productname>PostgreSQL</productname> and that you can log in using
    <command>ssh</command> as some user. Then you can establish a secure tunnel with a
    command like this from the client machine:
 <programlisting>

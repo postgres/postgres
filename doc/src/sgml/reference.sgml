@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.18 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.19 2001/11/21 06:09:44 thomas Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -128,7 +128,7 @@ Disable this chapter until we have more functions documented.
    <para>
     This part provides reference information for the
     <acronym>SQL</acronym> functions supported by
-    <productname>Postgres</productname>.
+    <productname>PostgreSQL</productname>.
    </para>
 
    &currentDate;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.103 2001/11/08 23:42:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.104 2001/11/21 06:09:44 thomas Exp $
 -->
 
  <appendix id="release">
@@ -829,7 +829,7 @@ ecpg changes (Michael)
     <para>
      A dump/restore using <application>pg_dump</application>
      is required for those wishing to migrate data from any
-     previous release of <productname>Postgres</productname>.
+     previous release of <productname>PostgreSQL</productname>.
      For those upgrading from 6.5.*, you may instead use 
      <application>pg_upgrade</application> to upgrade to this
      release; however, a full dump/reload installation is always the
@@ -848,7 +848,7 @@ ecpg changes (Michael)
 	SQL92-defined types <type>timestamp</type> and
 	<type>interval</type>. Although there has been some effort to
 	ease the transition by allowing
-	<productname>Postgres</productname> to recognize
+	<productname>PostgreSQL</productname> to recognize
 	the deprecated type names and translate them to the new type
 	names, this mechanism may not be completely transparent to
 	your existing application.
@@ -1554,7 +1554,7 @@ Add Win1250 (Czech) support (Pavel Behal)
 	chapter on troubleshooting from Tom Lane.
 	And the <citetitle>Programmer's Guide</citetitle> has a
 	description of query processing, also from Stefan, and details 
-	on obtaining the <productname>Postgres</productname> source
+	on obtaining the <productname>PostgreSQL</productname> source
 	tree via anonymous <productname>CVS</productname> and
 	<productname>CVSup</productname>. 
        </para>
@@ -1569,7 +1569,7 @@ Add Win1250 (Czech) support (Pavel Behal)
     <para>
      A dump/restore using <application>pg_dump</application>
      is required for those wishing to migrate data from any
-     previous release of <productname>Postgres</productname>.
+     previous release of <productname>PostgreSQL</productname>.
      <application>pg_upgrade</application> can <emphasis>not</emphasis>
      be used to upgrade to this release because the on-disk structure
      of the tables has changed compared to previous releases.
@@ -1602,7 +1602,7 @@ Add Win1250 (Czech) support (Pavel Behal)
       concurrent updates one must use <command>SELECT FOR UPDATE</command> or
       an appropriate <command>LOCK TABLE</command> statement. This should be
       taken into account when porting applications from previous releases of
-      <productname>Postgres</productname> and other environments.
+      <productname>PostgreSQL</productname> and other environments.
      </para>
 
      <para>
@@ -1986,7 +1986,7 @@ asynchronous messages and interrupts thanks to Tom Lane.
 The parser will now perform automatic type coercion to match arguments
 to available operators and functions, and to match columns and expressions
 with target columns. This uses a generic mechanism which supports
-the type extensibility features of <productname>Postgres</productname>.
+the type extensibility features of <productname>PostgreSQL</productname>.
 There is a new chapter in the <citetitle>User's Guide</citetitle>
 which covers this topic.
 </para>
@@ -2029,7 +2029,7 @@ been.
 A dump/restore using <application>pg_dump</application> 
 or <application>pg_dumpall</application>
 is required for those wishing to migrate data from any
-previous release of <productname>Postgres</productname>.
+previous release of <productname>PostgreSQL</productname>.
 </para>
 </sect2>
 
@@ -2281,7 +2281,7 @@ Correctly handles function calls on the left side of BETWEEN and LIKE clauses.
 A dump/restore is NOT required for those running 6.3 or 6.3.1.  A 
 <literal>make distclean</>, <literal>make</>, and <literal>make install</> is all that is required.
 This last step should be performed while the postmaster is not running.
-You should re-link any custom applications that use <productname>Postgres</productname> libraries.
+You should re-link any custom applications that use <productname>PostgreSQL</productname> libraries.
 </para>
 <para>
 For upgrades from pre-6.3 installations,
@@ -2369,7 +2369,7 @@ Improvements to the configuration autodetection for installation.
 A dump/restore is NOT required for those running 6.3.  A 
 <literal>make distclean</>, <literal>make</>, and <literal>make install</> is all that is required.
 This last step should be performed while the postmaster is not running.
-You should re-link any custom applications that use <productname>Postgres</productname> libraries.
+You should re-link any custom applications that use <productname>PostgreSQL</productname> libraries.
 </para>
 <para>
 For upgrades from pre-6.3 installations,
@@ -2542,7 +2542,7 @@ Better identify tcl and tk libs and includes(Bruce)
     \d command for types, operators, etc.  Also, views have their own
     permissions now, not based on the underlying tables, so permissions on
     them have to be set separately.  Check <filename>/pgsql/interfaces</filename> for some new
-    ways to talk to <productname>Postgres</productname>.
+    ways to talk to <productname>PostgreSQL</productname>.
    </para>
    <para>
     This is the first release that really required an explanation for
@@ -2558,7 +2558,7 @@ Better identify tcl and tk libs and includes(Bruce)
      A dump/restore using <application>pg_dump</application> 
      or <application>pg_dumpall</application>
      is required for those wishing to migrate data from any
-     previous release of <productname>Postgres</productname>.
+     previous release of <productname>PostgreSQL</productname>.
     </para>
    </sect2>
 
@@ -2615,7 +2615,7 @@ Modify constraint syntax to be SQL92-compliant(Thomas)
 Implement SQL92 PRIMARY KEY and UNIQUE clauses using indexes(Thomas)
 Recognize SQL92 syntax for FOREIGN KEY. Throw elog notice(Thomas)
 Allow NOT NULL UNIQUE constraint clause (each allowed separately before)(Thomas)
-Allow Postgres-style casting ("::") of non-constants(Thomas)
+Allow PostgreSQL-style casting ("::") of non-constants(Thomas)
 Add support for SQL3 TRUE and FALSE boolean constants(Thomas)
 Support SQL92 syntax for IS TRUE/IS FALSE/IS NOT TRUE/IS NOT FALSE(Thomas)
 Allow shorter strings for boolean literals (e.g. "t", "tr", "tru")(Thomas)
@@ -2628,7 +2628,7 @@ Use shared lock when building indexes(Vadim)
 Free memory allocated for an user query inside transaction block after
 	this query is done, was turned off in <= 6.2.1(Vadim)
 New SQL statement CREATE PROCEDURAL LANGUAGE(Jan)
-New <productname>Postgres</productname> Procedural Language (PL) backend interface(Jan)
+New <productname>PostgreSQL</productname> Procedural Language (PL) backend interface(Jan)
 Rename pg_dump -H option to -h(Bruce)
 Add Java support for passwords, European dates(Peter)
 Use indexes for LIKE and ~, !~ operations(Bruce)
@@ -2637,7 +2637,7 @@ Time Travel removed(Vadim, Bruce)
 Add paging for \d and \z, and fix \i(Bruce)
 Add Unix domain socket support to backend and to frontend library(Goran)
 Implement CREATE DATABASE/WITH LOCATION and initlocation utility(Thomas)
-Allow more SQL92 and/or <productname>Postgres</productname> reserved words as column identifiers(Thomas)
+Allow more SQL92 and/or <productname>PostgreSQL</productname> reserved words as column identifiers(Thomas)
 Augment support for SQL92 SET TIME ZONE...(Thomas)
 SET/SHOW/RESET TIME ZONE uses TZ backend environment variable(Thomas)
 Implement SET keyword = DEFAULT and SET TIME ZONE DEFAULT(Thomas)
@@ -2850,7 +2850,7 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 
 <para>
 A dump/restore is required for those wishing to migrate data from
-previous releases of <productname>Postgres</productname>.
+previous releases of <productname>PostgreSQL</productname>.
 </para>
 
 <sect2>
@@ -3071,19 +3071,19 @@ pg_dumpall now returns proper status, portability fix(Bruce)
 
 <para>
   The regression tests have been adapted and extensively modified for the
-  6.1 release of <productname>Postgres</productname>.
+  6.1 release of <productname>PostgreSQL</productname>.
 </para>
 
 <para>
   Three new data types (<type>datetime</type>, <type>timespan</type>, and <type>circle</type>) have been added to
-  the native set of <productname>Postgres</productname> types. Points, boxes, paths, and polygons
+  the native set of <productname>PostgreSQL</productname> types. Points, boxes, paths, and polygons
   have had their output formats made consistent across the data types.
   The polygon output in misc.out has only been spot-checked for correctness
   relative to the original regression output.
 </para>
 
 <para>
-  <productname>Postgres</productname> 6.1 introduces a new, alternate
+  <productname>PostgreSQL</productname> 6.1 introduces a new, alternate
 optimizer which uses <firstterm>genetic</firstterm>
   algorithms. These algorithms introduce a random behavior in the ordering
   of query results when the query contains multiple qualifiers or multiple
@@ -3253,7 +3253,7 @@ DG-UX, Ultrix, Irix, AIX portability fixes
 
 <para>
 A dump/restore is required for those wishing to migrate data from
-previous releases of <productname>Postgres</productname>.
+previous releases of <productname>PostgreSQL</productname>.
 </para>
 
 <sect2>

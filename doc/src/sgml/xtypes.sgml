@@ -8,7 +8,7 @@
 
   <para>
    As previously mentioned, there are two kinds  of  types
-   in  <productname>Postgres</productname>: base types (defined in a programming language) 
+   in  <productname>PostgreSQL</productname>: base types (defined in a programming language) 
    and composite types.
    Examples in this section up to interfacing indexes  can
    be  found in <filename>complex.sql</filename> and <filename>complex.c</filename>.  Composite examples 
@@ -127,10 +127,10 @@ CREATE TYPE complex (
     </para>
 
     <para>
-     As discussed earlier, <productname>Postgres</productname> fully supports arrays of
-     base  types.  Additionally, <productname>Postgres</productname> supports arrays of
+     As discussed earlier, <productname>PostgreSQL</productname> fully supports arrays of
+     base  types.  Additionally, <productname>PostgreSQL</productname> supports arrays of
      user-defined types as well.  When you  define  a  type,
-     <productname>Postgres</productname>  automatically  provides support for arrays of
+     <productname>PostgreSQL</productname>  automatically  provides support for arrays of
      that type.  For historical reasons, the array type  has
      the  same name as the user-defined type with the 
      underscore character _ prepended.

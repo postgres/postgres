@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.12 2001/11/14 20:40:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.13 2001/11/21 06:09:45 thomas Exp $
 -->
 
 <sect1 id="y2k">
@@ -26,9 +26,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.12 2001/11/14 20:40:33 m
   <listitem>
    <para>
     The author of this statement, a volunteer on the
-    <productname>Postgres</productname>
+    <productname>PostgreSQL</productname>
     support team since November, 1996, is not aware of 
-    any problems in the <productname>Postgres</productname> code base related
+    any problems in the <productname>PostgreSQL</productname> code base related
     to time transitions around Jan 1, 2000 (Y2K).
    </para>
   </listitem>
@@ -38,7 +38,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.12 2001/11/14 20:40:33 m
     The author of this statement is not aware of any reports of Y2K problems 
     uncovered in regression testing
     or in other field use of recent or current versions
-    of <productname>Postgres</productname>. We might have expected
+    of <productname>PostgreSQL</productname>. We might have expected
     to hear about problems if they existed, given the installed base and
     the active participation of users on the support mailing lists.
    </para>
@@ -47,7 +47,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.12 2001/11/14 20:40:33 m
   <listitem>
    <para>
     To the best of the author's knowledge, the
-    assumptions Postgres makes about dates specified with a two-digit year
+    assumptions <productname>PostgreSQL</productname>
+    makes about dates specified with a two-digit year
     are documented in the current <citetitle>User's Guide</citetitle>
     in the chapter on data types.
     For two-digit years, the significant transition year is 1970, not 2000;
@@ -60,7 +61,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.12 2001/11/14 20:40:33 m
    <para>
     Any Y2K problems in the underlying OS related to obtaining the
     <quote>current time</quote> may propagate into apparent Y2K problems in
-    <productname>Postgres</productname>.
+    <productname>PostgreSQL</productname>.
    </para>
   </listitem>
  </itemizedlist>

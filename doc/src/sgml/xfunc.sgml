@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.44 2001/11/18 21:28:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.45 2001/11/21 06:09:45 thomas Exp $
 -->
 
  <chapter id="xfunc">
@@ -23,7 +23,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.44 2001/11/18 21:28:00 tgl E
    Consequently,  while  it  is  possible  to define a new
    function without defining a new type,  the  reverse  is
    not  true.   We therefore describe how to add new functions 
-   to <productname>Postgres</productname> before  describing  
+   to <productname>PostgreSQL</productname> before  describing  
    how  to  add  new types.
   </para>
 
@@ -575,7 +575,8 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
      <listitem>
       <para>
        If the name starts with the string <literal>$libdir</literal>,
-       that part is replaced by the PostgreSQL package library directory
+       that part is replaced by the <productname>PostgreSQL</> package
+	library directory
        name, which is determined at build time.<indexterm><primary>$libdir</></>
       </para>
      </listitem>
@@ -669,7 +670,8 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
     <para>
      <xref linkend="xfunc-c-type-table"> gives the C type required for
-     parameters in the C functions that will be loaded into Postgres.
+     parameters in the C functions that will be loaded into 
+     <productname>PostgreSQL</>
      The <quote>Defined In</quote> column gives the header file that
      needs to be included to get the type definition.  (The actual
      definition may be in a different file that is included by the
@@ -853,11 +855,11 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
      </table>
 
     <para>
-     Internally, <productname>Postgres</productname> regards a
+     Internally, <productname>PostgreSQL</productname> regards a
      base type as a <quote>blob  of memory</quote>.   The  user-defined  
      functions that you define over a type in turn define the 
-     way  that  <productname>Postgres</productname> can operate  
-     on  it.  That is, <productname>Postgres</productname> will 
+     way  that  <productname>PostgreSQL</productname> can operate  
+     on  it.  That is, <productname>PostgreSQL</productname> will 
      only store and retrieve the data from disk and use  your  
      user-defined functions to input, process, and output the data.
      Base types can have one of three internal formats:
@@ -920,7 +922,7 @@ typedef struct
 
     <para>
      Only  pointers  to  such types can be used when passing
-     them in and out of <productname>Postgres</productname> functions.
+     them in and out of <productname>PostgreSQL</productname> functions.
      To return a value of such a type, allocate the right amount of
      memory with <literal>palloc()</literal>, fill in the allocated memory,
      and return a pointer to it.  (Alternatively, you can return an input
@@ -955,7 +957,7 @@ typedef struct {
      if it were declared the right length.  (If this isn't a familiar trick to
      you, you may wish to spend some time with an introductory
      <acronym>C</acronym> programming textbook before delving deeper into
-     <productname>Postgres</productname> server programming.)
+     <productname>PostgreSQL</productname> server programming.)
      When manipulating 
      variable-length types, we must  be  careful  to  allocate  
      the  correct amount  of memory and set the length field correctly.
@@ -1071,7 +1073,7 @@ concat_text(text *arg1, text *arg2)
     <para>
      Supposing that the above code has been prepared in file
      <filename>funcs.c</filename> and compiled into a shared object,
-     we could define the functions to <productname>Postgres</productname>
+     we could define the functions to <productname>PostgreSQL</productname>
      with commands like this:
      
 <programlisting>
@@ -1101,7 +1103,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
 
     <para>
      Here <replaceable>PGROOT</replaceable> stands for the full path to
-     the <productname>Postgres</productname> source tree. (Better style would
+     the <productname>PostgreSQL</productname> source tree. (Better style would
      be to use just <literal>'funcs'</> in the <literal>AS</> clause,
      after having added <replaceable>PGROOT</replaceable><literal>/tutorial</>
      to the search path.  In any case, we may omit the system-specific
@@ -1146,7 +1148,8 @@ PG_FUNCTION_INFO_V1(funcname);
 </programlisting>
      must appear in the same source file (conventionally it's written
      just before the function itself).  This macro call is not needed
-     for <literal>internal</>-language functions, since Postgres currently
+     for <literal>internal</>-language functions, since
+     <productname>PostgreSQL</> currently
      assumes all internal functions are version-1.  However, it is
      <emphasis>required</emphasis> for dynamically-loaded functions.
     </para>
@@ -1307,9 +1310,9 @@ concat_text(PG_FUNCTION_ARGS)
      null fields.  In addition,  composite  types  that  are
      part  of  an  inheritance  hierarchy may have different
      fields than other members of the same inheritance hierarchy.    
-     Therefore,  <productname>Postgres</productname>  provides  
+     Therefore,  <productname>PostgreSQL</productname>  provides  
      a  procedural interface for accessing fields of composite types  
-     from C.  As <productname>Postgres</productname> processes 
+     from C.  As <productname>PostgreSQL</productname> processes 
      a set of rows, each row will be passed into your 
      function as an  opaque  structure of type <literal>TUPLE</literal>.
      Suppose we want to write a function to answer the query
@@ -1363,7 +1366,7 @@ c_overpaid(PG_FUNCTION_ARGS)
 
     <para>
      <function>GetAttributeByName</function> is the 
-     <productname>Postgres</productname> system function that
+     <productname>PostgreSQL</productname> system function that
      returns attributes out of the current row.  It has
      three arguments: the argument of type <type>TupleTableSlot*</type> passed into
      the  function, the name of the desired attribute, and a
@@ -1374,7 +1377,7 @@ c_overpaid(PG_FUNCTION_ARGS)
     </para>
 
     <para>
-     The  following  query  lets  <productname>Postgres</productname>  
+     The  following  query  lets  <productname>PostgreSQL</productname>  
      know  about  the <function>c_overpaid</function> function:
 
 <programlisting>
@@ -1403,9 +1406,9 @@ LANGUAGE C;
      have  a  good  understanding of <acronym>C</acronym>
      (including the use of pointers and the malloc memory manager)  
      before  trying to write <acronym>C</acronym> functions for 
-     use with <productname>Postgres</productname>. While  it may 
+     use with <productname>PostgreSQL</productname>. While  it may 
      be possible to load functions written in languages other 
-     than <acronym>C</acronym> into  <productname>Postgres</productname>,  
+     than <acronym>C</acronym> into  <productname>PostgreSQL</productname>,  
      this  is  often difficult  (when  it  is possible at all) 
      because other languages, such as <acronym>FORTRAN</acronym> 
      and <acronym>Pascal</acronym> often do not follow the same 
@@ -1425,9 +1428,10 @@ LANGUAGE C;
       <listitem>
        <para>
 	Use <literal>pg_config --includedir-server</literal><indexterm><primary>pg_config</></> to find
-	out where the PostgreSQL server header files are installed on
+	out where the <productname>PostgreSQL</> server header files are installed on
 	your system (or the system that your users will be running
-	on).  This option is new with PostgreSQL 7.2.  For PostgreSQL
+	on).  This option is new with <productname>PostgreSQL</> 7.2.
+	For <productname>PostgreSQL</>
 	7.1 you should use the option <option>--includedir</option>.
 	(<command>pg_config</command> will exit with a non-zero status
 	if it encounters an unknown option.)  For releases prior to
@@ -1440,7 +1444,7 @@ LANGUAGE C;
       <listitem>
        <para>
 	When allocating memory, use the
-	<productname>Postgres</productname> routines
+	<productname>PostgreSQL</productname> routines
 	<function>palloc</function> and <function>pfree</function>
 	instead of the corresponding <acronym>C</acronym> library
 	routines <function>malloc</function> and
@@ -1465,7 +1469,7 @@ LANGUAGE C;
 
       <listitem>
        <para>
-        Most of the internal <productname>Postgres</productname> types
+        Most of the internal <productname>PostgreSQL</productname> types
 	are declared in <filename>postgres.h</filename>, while the function
 	manager interfaces (<symbol>PG_FUNCTION_ARGS</symbol>, etc.)
 	are in <filename>fmgr.h</filename>, so you will need to
@@ -1492,7 +1496,7 @@ LANGUAGE C;
        <para>
 	Compiling and linking your object code  so  that
 	it  can  be  dynamically  loaded  into  
-	<productname>Postgres</productname>
+	<productname>PostgreSQL</productname>
 	always requires special flags.
 	See <xref linkend="dfunc">
 	for  a  detailed explanation of how to do it for

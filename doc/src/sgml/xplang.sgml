@@ -1,12 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.15 2001/09/10 21:58:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.16 2001/11/21 06:09:45 thomas Exp $
 -->
 
  <chapter id="xplang">
   <title id="xplang-title">Procedural Languages</title>
 
   <para>
-   <productname>Postgres</productname> allows users to add new
+   <productname>PostgreSQL</productname> allows users to add new
    programming languages to be available for writing functions and
    procedures.  These are called <firstterm>procedural
    languages</firstterm> (PL).  In the case of a function or trigger
@@ -16,7 +16,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.15 2001/09/10 21:58:47 pete
    the details of the language.  The handler could either do all the
    work of parsing, syntax analysis, execution, etc. itself, or it
    could serve as <quote>glue</quote> between
-   <productname>Postgres</productname> and an existing implementation
+   <productname>PostgreSQL</productname> and an existing implementation
    of a programming language.  The handler itself is a special
    programming language function compiled into a shared object and
    loaded on demand.
@@ -26,7 +26,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.15 2001/09/10 21:58:47 pete
    Writing a handler for a new procedural language is outside the
    scope of this manual, although some information is provided in
    the CREATE LANGUAGE reference page.  Several procedural languages are
-   available in the standard <productname>Postgres</productname> distribution.
+   available in the standard <productname>PostgreSQL</productname> distribution.
   </para>
 
   <sect1 id="xplang-install">
@@ -110,7 +110,7 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <re
    </procedure>
 
    <para>
-    In a default <productname>Postgres</productname> installation, the
+    In a default <productname>PostgreSQL</productname> installation, the
     handler for the <application>PL/pgSQL</application> language is built and installed into the
     <quote>library</quote> directory. If Tcl/Tk support is configured
     in, the handlers for PL/Tcl and PL/TclU are also built and installed in

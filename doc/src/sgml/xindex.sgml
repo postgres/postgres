@@ -1,6 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.20 2001/10/26 21:17:03 tgl Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.21 2001/11/21 06:09:45 thomas Exp $
+PostgreSQL documentation
 -->
 
  <chapter id="xindex">
@@ -17,7 +17,7 @@ Postgres documentation
    Look back at
    <xref linkend="EXTEND-CATALOGS">.
    The right half shows the  catalogs  that we must modify in order to tell
-   <productname>Postgres</productname> how to use a user-defined type and/or
+   <productname>PostgreSQL</productname> how to use a user-defined type and/or
    user-defined  operators with an index (i.e., <filename>pg_am, pg_amop,
     pg_amproc, pg_operator</filename> and <filename>pg_opclass</filename>).
    Unfortunately, there is no simple command to do this.  We will demonstrate
@@ -29,7 +29,7 @@ Postgres documentation
   <para>
    The <filename>pg_am</filename> table contains one row for every index
    access method.  Support for the heap access method is built into
-   <productname>Postgres</productname>, but every other access method is
+   <productname>PostgreSQL</productname>, but every other access method is
    described in <filename>pg_am</filename>.  The schema is
 
    <table tocentry="1">
@@ -121,18 +121,18 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    The <filename>amstrategies</filename> column exists to standardize
    comparisons across data types.  For example, <acronym>B-tree</acronym>s
    impose a strict ordering on keys, lesser to greater.  Since
-   <productname>Postgres</productname> allows the user to define operators,
-   <productname>Postgres</productname> cannot look at the name of an operator
+   <productname>PostgreSQL</productname> allows the user to define operators,
+   <productname>PostgreSQL</productname> cannot look at the name of an operator
    (e.g., <literal>&gt;</> or <literal>&lt;</>) and tell what kind of comparison it is.  In fact,
    some  access methods don't impose any ordering at all.  For example,
    <acronym>R-tree</acronym>s express a rectangle-containment relationship,
    whereas a hashed data structure expresses only bitwise similarity based
-   on the value of a hash function.  <productname>Postgres</productname>
+   on the value of a hash function.  <productname>PostgreSQL</productname>
    needs some consistent way of taking a qualification in your query,
    looking at the operator and then deciding if a usable index exists.  This
-   implies that <productname>Postgres</productname> needs to know, for
+   implies that <productname>PostgreSQL</productname> needs to know, for
    example, that the  <literal>&lt;=</>  and  <literal>&gt;</> operators partition a
-   <acronym>B-tree</acronym>.  <productname>Postgres</productname>
+   <acronym>B-tree</acronym>.  <productname>PostgreSQL</productname>
    uses strategies to express these relationships  between
    operators and the way they can be used to scan indexes.
   </para>
@@ -208,7 +208,7 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
 
   <para>
    In order to manage diverse support routines consistently across all
-   <productname>Postgres</productname> access methods,
+   <productname>PostgreSQL</productname> access methods,
    <filename>pg_am</filename> includes a column called
    <filename>amsupport</filename>.  This column records the number of
    support routines used by an access method.  For <acronym>B-tree</acronym>s,
@@ -337,7 +337,7 @@ SELECT oid, *
   </para>
 
   <para>
-   We make the function known to Postgres like this:
+   We make the function known to <productname>PostgreSQL</productname> like this:
    <programlisting>
 CREATE FUNCTION complex_abs_eq(complex, complex)
               RETURNS bool
@@ -362,7 +362,7 @@ CREATE FUNCTION complex_abs_eq(complex, complex)
   </para>
 
   <para>
-   Second, although Postgres can cope with operators having
+   Second, although <productname>PostgreSQL</productname> can cope with operators having
    the same name as long as they have different input data types, C can only
    cope with one global routine having a given name, period.  So we shouldn't
    name the C function something simple like <filename>abs_eq</filename>.
@@ -371,11 +371,11 @@ CREATE FUNCTION complex_abs_eq(complex, complex)
   </para>
 
   <para>
-   Third, we could have made the Postgres name of the function
-   <filename>abs_eq</filename>, relying on Postgres to distinguish it
-   by input data types from any other Postgres function of the same name.
+   Third, we could have made the <productname>PostgreSQL</productname> name of the function
+   <filename>abs_eq</filename>, relying on <productname>PostgreSQL</productname> to distinguish it
+   by input data types from any other <productname>PostgreSQL</productname> function of the same name.
    To keep the example simple, we make the function have the same names
-   at the C level and Postgres level.
+   at the C level and <productname>PostgreSQL</productname> level.
   </para>
 
   <para>
@@ -484,7 +484,7 @@ CREATE OPERATOR = (
    <filename>pg_amproc</filename> table, keyed by the operator class
    <filename>oid</filename> and the support routine number.
    First, we need to register the function in
-   <productname>Postgres</productname> (recall that we put the
+   <productname>PostgreSQL</productname> (recall that we put the
    <acronym>C</acronym> code that implements this routine in the bottom of
    the file in which we implemented the operator routines):
 

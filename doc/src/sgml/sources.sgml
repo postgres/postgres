@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.4 2001/10/09 18:46:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.5 2001/11/21 06:09:45 thomas Exp $
 -->
 
  <chapter id="source">
-  <title>Postgres Source Code</title>
+  <title>PostgreSQL Source Code</title>
 
   <sect1 id="source-format">
    <title>Formatting</title>
@@ -28,7 +28,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.4 2001/10/09 18:46:00 pete
         auto-mode-alist))
 
 (defun pgsql-c-mode ()
-  ;; sets up formatting for Postgres C code
+  ;; sets up formatting for PostgreSQL C code
   (interactive)
   (c-mode)
   (setq-default tab-width 4)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.18 2001/11/19 05:37:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.19 2001/11/21 06:09:45 thomas Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -169,7 +169,7 @@ CREATE DATABASE
 <screen>
 createdb: command not found
 </screen>
-    then PostgreSQL was not installed properly.  Either it was not
+    then <productname>PostgreSQL</> was not installed properly.  Either it was not
     installed at all or the search path was not set correctly.  Try
     calling the command with an absolute path instead:
 <screen>
@@ -392,7 +392,7 @@ mydb=#
     command shell. (For more internal commands, type
     <literal>\?</literal> at the <command>psql</command> prompt.)  The
     full capabilities of <command>psql</command> are documented in the
-    <citetitle>Reference Manual</citetitle>.  If PostgreSQL is
+    <citetitle>Reference Manual</citetitle>.  If <productname>PostgreSQL</> is
     installed correctly you can also type <literal>man psql</literal>
     at the operating system shell prompt to see the documentation.  In
     this tutorial we will not use these features explicitly, but you

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.18 2001/11/12 19:19:39 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.19 2001/11/21 06:09:45 thomas Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -18,7 +18,7 @@
      Production rule systems are conceptually simple, but
      there are many subtle points involved in actually using
      them. Some of these points and
-     the theoretical foundations of the <ProductName>Postgres</ProductName>
+     the theoretical foundations of the <ProductName>PostgreSQL</ProductName>
      rule system can be found in
 <XRef LinkEnd="STON90b">.
 </Para>
@@ -26,7 +26,7 @@
 <Para>
      Some other database systems define active database rules. These
      are usually stored procedures and triggers and are implemented
-     in <ProductName>Postgres</ProductName> as functions and triggers.
+     in <ProductName>PostgreSQL</ProductName> as functions and triggers.
 </Para>
 
 <Para>
@@ -64,7 +64,7 @@
     Now what is a query tree? It is an internal representation of an
     <Acronym>SQL</Acronym> statement where the single parts that built
     it are stored separately. These query trees are visible when starting
-    the <ProductName>Postgres</ProductName> backend with debug level 4
+    the <ProductName>PostgreSQL</ProductName> backend with debug level 4
     and typing queries into the interactive backend interface. The rule
     actions in the <FileName>pg_rewrite</FileName> system catalog are
     also stored as query trees. They are not formatted like the debug
@@ -268,10 +268,10 @@
 <indexterm zone="rules-views"><primary>rules</><secondary>and views</></>
 
 <Sect2>
-<Title>Implementation of Views in <ProductName>Postgres</ProductName></Title>
+<Title>Implementation of Views in <ProductName>PostgreSQL</ProductName></Title>
 
 <Para>
-    Views in <ProductName>Postgres</ProductName> are implemented
+    Views in <ProductName>PostgreSQL</ProductName> are implemented
     using the rule system. In fact there is absolutely no difference
     between a
 
@@ -289,7 +289,7 @@
     
     because this is exactly what the CREATE VIEW command does internally.
     This has some side effects. One of them is that
-    the information about a view in the <ProductName>Postgres</ProductName>
+    the information about a view in the <ProductName>PostgreSQL</ProductName>
     system catalogs is exactly the same as it is for a table. So for the
     query parser, there is absolutely no difference between
     a table and a view. They are the same thing - relations. That is the
@@ -785,7 +785,7 @@
     SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 </ProgramListing>
     
-    Now another detail of <ProductName>Postgres</ProductName> enters the
+    Now another detail of <ProductName>PostgreSQL</ProductName> enters the
     stage. At this moment, table rows aren't overwritten and this is why
     ABORT TRANSACTION is fast. In an UPDATE, the new result row is inserted
     into the table (after stripping ctid) and in the tuple header of the row 
@@ -802,7 +802,7 @@
 </Sect2>
 
 <Sect2>
-<Title>The Power of Views in <ProductName>Postgres</ProductName></Title>
+<Title>The Power of Views in <ProductName>PostgreSQL</ProductName></Title>
 
 <Para>
     The above demonstrates how the rule system incorporates
@@ -826,7 +826,7 @@
     Now the planner has to decide which is
     the best path to execute the query. The more information
     the planner has, the better this decision can be. And
-    the rule system as implemented in <ProductName>Postgres</ProductName>
+    the rule system as implemented in <ProductName>PostgreSQL</ProductName>
     ensures, that this is all information available about the query
     up to now.
 </Para>
@@ -1604,7 +1604,7 @@ Merge Join
 </Para>
 
 <Para>
-    A final demonstration of the <ProductName>Postgres</ProductName>
+    A final demonstration of the <ProductName>PostgreSQL</ProductName>
     rule system and its power. There is a cute blonde that
     sells shoelaces. And what Al could never realize, she's not
     only cute, she's smart too - a little too smart. Thus, it
@@ -1644,7 +1644,7 @@ Merge Join
 
     For the 1000 magenta shoelaces we must debt Al before we can
     throw 'em away, but that's another problem. The pink entry we delete.
-    To make it a little harder for <ProductName>Postgres</ProductName>,
+    To make it a little harder for <ProductName>PostgreSQL</ProductName>,
     we don't delete it directly. Instead we create one more view
 
 <ProgramListing>
@@ -1708,7 +1708,7 @@ Merge Join
 <Title>Rules and Permissions</Title>
 
 <Para>
-    Due to rewriting of queries by the <ProductName>Postgres</ProductName>
+    Due to rewriting of queries by the <ProductName>PostgreSQL</ProductName>
     rule system, other tables/views than those used in the original
     query get accessed. Using update rules, this can include write access
     to tables.
@@ -1718,7 +1718,7 @@ Merge Join
     Rewrite rules don't have a separate owner. The owner of
     a relation (table or view) is automatically the owner of the
     rewrite rules that are defined for it.
-    The <ProductName>Postgres</ProductName> rule system changes the
+    The <ProductName>PostgreSQL</ProductName> rule system changes the
     behavior of the default access control system. Relations that
     are used due to rules get checked against the
     permissions of the rule owner, not the user invoking the rule.
@@ -1798,7 +1798,7 @@ Merge Join
 
 <Para>
     Many things that can be done using triggers can also be
-    implemented using the <ProductName>Postgres</ProductName>
+    implemented using the <ProductName>PostgreSQL</ProductName>
     rule system. What currently cannot be implemented by
     rules are some kinds of constraints. It is possible,
     to place a qualified rule that rewrites a query to NOTHING
@@ -1971,7 +1971,7 @@ Merge Join
 <Para>
     Another situation is cases on UPDATE where it depends on the
     change of an attribute if an action should be performed or
-    not. In <ProductName>Postgres</ProductName> version 6.4, the
+    not. In <ProductName>PostgreSQL</ProductName> version 6.4, the
     attribute specification for rule events is disabled (it will have
     its comeback latest in 6.5, maybe earlier 
     - stay tuned). So for now the only way to

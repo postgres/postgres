@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.51 2001/11/19 09:05:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.52 2001/11/21 06:09:45 thomas Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -174,7 +174,7 @@ UPDATE "my_table" SET "a" = 5;
     unquoted names are always folded to lower case.  For example, the
     identifiers <literal>FOO</literal>, <literal>foo</literal> and
     <literal>"foo"</literal> are considered the same by
-    <productname>Postgres</productname>, but <literal>"Foo"</literal>
+    <productname>PostgreSQL</productname>, but <literal>"Foo"</literal>
     and <literal>"FOO"</literal> are different from these three and
     each other.
     <footnote>
@@ -201,7 +201,7 @@ UPDATE "my_table" SET "a" = 5;
 
    <para>
     There are four kinds of <firstterm>implicitly typed
-    constants</firstterm> in <productname>Postgres</productname>:
+    constants</firstterm> in <productname>PostgreSQL</productname>:
     strings, bit strings, integers, and floating point numbers.
     Constants can also be specified with explicit types, which can
     enable more accurate representation and more efficient handling by
@@ -227,7 +227,7 @@ UPDATE "my_table" SET "a" = 5;
      is a string'</literal>.  SQL allows single quotes to be embedded
      in strings by typing two adjacent single quotes (e.g.,
      <literal>'Dianne''s horse'</literal>).  In
-     <productname>Postgres</productname> single quotes may
+     <productname>PostgreSQL</productname> single quotes may
      alternatively be escaped with a backslash (<quote>\</quote>,
      e.g., <literal>'Dianne\'s horse'</literal>).
     </para>
@@ -342,7 +342,7 @@ SELECT 'foo'      'bar';
      Floating point constants are of type <type>DOUBLE
      PRECISION</type>. <type>REAL</type> can be specified explicitly
      by using <acronym>SQL</acronym> string notation or
-     <productname>Postgres</productname> type notation:
+     <productname>PostgreSQL</productname> type notation:
 
 <programlisting>
 REAL '1.23'  -- string style
@@ -483,7 +483,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 </literallayout>
        For example, <literal>@-</literal> is an allowed operator name,
        but <literal>*-</literal> is not.  This restriction allows
-       <productname>Postgres</productname> to parse SQL-compliant
+       <productname>PostgreSQL</productname> to parse SQL-compliant
        queries without requiring spaces between tokens.
       </para>
      </listitem>
@@ -496,7 +496,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     For example, if you have defined a left-unary operator named <literal>@</literal>,
     you cannot write <literal>X*@Y</literal>; you must write
     <literal>X* @Y</literal> to ensure that
-    <productname>Postgres</productname> reads it as two operator names
+    <productname>PostgreSQL</productname> reads it as two operator names
     not one.
    </para>
   </sect2>
@@ -641,7 +641,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 	  <primary>OID</primary>
 	 </indexterm>
 	 The object identifier (object ID) of a row.  This is a serial number
-	 that is automatically added by Postgres to all table rows (unless
+	 that is automatically added by <productname>PostgreSQL</productname> to all table rows (unless
 	 the table was created WITHOUT OIDS, in which case this column is
 	 not present).
 	</para>
@@ -734,7 +734,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      a unique index on the OID column of each table for which the OID will be
      used.  Never assume that OIDs are unique across tables; use the
      combination of <structfield>tableoid</> and row OID if you need a database-wide
-     identifier.  (Future releases of Postgres are likely to use a separate
+     identifier.  (Future releases of <productname>PostgreSQL</productname> are likely to use a separate
      OID counter for each table, so that <structfield>tableoid</> <emphasis>must</> be
      included to arrive at a globally unique identifier.)
     </para>
@@ -1052,7 +1052,7 @@ SELECT (5 !) - 6;
       <row>
        <entry><token>::</token></entry>
        <entry>left</entry>
-       <entry><productname>Postgres</productname>-style typecast</entry>
+       <entry><productname>PostgreSQL</productname>-style typecast</entry>
       </row>
 
       <row>

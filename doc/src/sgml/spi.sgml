@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.19 2001/11/14 22:26:02 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.20 2001/11/21 06:09:45 thomas Exp $
 -->
 
 <Chapter id="spi">
@@ -1589,7 +1589,7 @@ Execution plan location. NULL if unsuccessful.
    protected from freeing by <Function>SPI_finish</Function> or the transaction manager.
 </para>
 <Para>
-   In the current version of <ProductName>Postgres</ProductName> there is no ability to
+   In the current version of <ProductName>PostgreSQL</ProductName> there is no ability to
  store prepared plans in the system
    catalog and fetch them from there for execution. This will be implemented
    in future versions.
@@ -2557,7 +2557,7 @@ Returns a newly-allocated copy of the rel name.
 <Title>Memory Management</Title>
 
 <Para>
-<ProductName>Postgres</ProductName> allocates memory within memory
+<ProductName>PostgreSQL</ProductName> allocates memory within memory
 <firstterm>contexts</firstterm>, which provide a convenient method of
 managing allocations made in many different places that need to live
 for differing amounts of time.  Destroying a context releases all the
@@ -3745,7 +3745,7 @@ Passed plan
 <Title>Visibility of Data Changes</Title>
 
 <Para>
-<ProductName>Postgres</ProductName> data changes visibility rule: during a query execution, data
+<ProductName>PostgreSQL</ProductName> data changes visibility rule: during a query execution, data
 changes made by the query itself (via SQL-function, SPI-function, triggers)
 are invisible to the query scan.  For example, in query
 <programlisting>
