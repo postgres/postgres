@@ -25,6 +25,10 @@
  *
  *	Initial version. 
  *
+ * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
+ *
+ *    - Check results of IO routines more carefully.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -123,6 +127,10 @@ void InitArchiveFmt_Files(ArchiveHandle* AH)
 		} else {
 			AH->FH = stdout;
 		}
+
+		if (AH->FH == NULL)
+			die_horribly(NULL, "%s: Could not open output file\n", progname);
+
 		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
 
 		if (AH->compression < 0 || AH->compression > 9) {
@@ -137,6 +145,10 @@ void InitArchiveFmt_Files(ArchiveHandle* AH)
 		} else {
 			AH->FH = stdin;
 		}
+
+		if (AH->FH == NULL)
+			die_horribly(NULL, "%s: Could not open input file\n", progname);
+
 		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
 
 		ReadHead(AH);
@@ -221,6 +233,10 @@ static void	_StartData(ArchiveHandle* AH, TocEntry* te)
 #else
     tctx->FH = fopen(tctx->filename, PG_BINARY_W);
 #endif
+
+	if (tctx->FH == NULL)
+		die_horribly(AH, "%s: Could not open data file for output\n", progname);
+
 }
 
 static int	_WriteData(ArchiveHandle* AH, const void* data, int dLen)
@@ -257,6 +273,9 @@ static void	_PrintFileData(ArchiveHandle* AH, char *filename, RestoreOptions *ro
 #else
     AH->FH = fopen(filename,PG_BINARY_R);
 #endif
+
+	if (AH->FH == NULL)
+		die_horribly(AH, "%s: Could not open data file for input\n", progname);
 
     while ( (cnt = GZREAD(buf, 1, 4095, AH->FH)) > 0) {
 		buf[cnt] = '\0';
@@ -322,6 +341,9 @@ static void	_LoadBlobs(ArchiveHandle* AH, RestoreOptions *ropt)
 
 	ctx->blobToc = fopen("blobs.toc", PG_BINARY_R);
 
+	if (ctx->blobToc == NULL) 
+		die_horribly(AH, "%s: Could not open BLOB TOC for input\n", progname);
+
 	_getBlobTocEntry(AH, &oid, fname);
 
     while(oid != 0)
@@ -341,13 +363,13 @@ static void	_LoadBlobs(ArchiveHandle* AH, RestoreOptions *ropt)
 static int	_WriteByte(ArchiveHandle* AH, const int i)
 {
     lclContext*		ctx = (lclContext*)AH->formatData;
-    int			res;
 
-    res = fputc(i, AH->FH);
-    if (res != EOF) {
-		ctx->filePos += 1;
-    }
-    return res;
+    if (fputc(i, AH->FH) == EOF)
+		die_horribly(AH, "%s: could not write byte\n", progname);
+
+	ctx->filePos += 1;
+
+    return 1;
 }
 
 static int    	_ReadByte(ArchiveHandle* AH)
@@ -367,6 +389,9 @@ static int	_WriteBuf(ArchiveHandle* AH, const void* buf, int len)
     lclContext*		ctx = (lclContext*)AH->formatData;
     int			res;
     res = fwrite(buf, 1, len, AH->FH);
+	if (res != len)
+		die_horribly(AH, "%s: write error in _WriteBuf (%d != %d)\n", progname, res, len);
+
     ctx->filePos += res;
     return res;
 }
@@ -416,7 +441,10 @@ static void	_StartBlobs(ArchiveHandle* AH, TocEntry* te)
 
 	sprintf(fname, "blobs.toc");
 	ctx->blobToc = fopen(fname, PG_BINARY_W);
- 
+
+	if (ctx->blobToc == NULL)
+		die_horribly(AH, "%s: could not open BLOB TOC for output\n", progname);
+
 }
 
 /*
@@ -453,6 +481,8 @@ static void	_StartBlob(ArchiveHandle* AH, TocEntry* te, int oid)
     tctx->FH = fopen(fname, PG_BINARY_W);
 #endif
 
+	if (tctx->FH == NULL)
+		die_horribly(AH, "%s: Could not open BLOB file\n", progname);
 }
 
 /*

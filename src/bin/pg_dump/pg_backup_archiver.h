@@ -44,7 +44,7 @@
 #define GZREAD(p, s, n, fh) gzread(fh, p, n * s)
 #else
 #define GZCLOSE(fh) fclose(fh)
-#define GZWRITE(p, s, n, fh) fwrite(p, s, n, fh)
+#define GZWRITE(p, s, n, fh) (fwrite(p, s, n, fh) * s)
 #define GZREAD(p, s, n, fh) fread(p, s, n, fh)
 #define Z_DEFAULT_COMPRESSION -1
 
@@ -62,7 +62,7 @@ typedef z_stream *z_streamp;
 
 #define K_VERS_MAJOR 1
 #define K_VERS_MINOR 4 
-#define K_VERS_REV 22 
+#define K_VERS_REV 23 
 
 /* Data block types */
 #define BLK_DATA 1

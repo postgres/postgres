@@ -22,6 +22,11 @@
  *
  *	Initial version. 
  *
+ * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
+ *
+ *    - Check results of IO routines more carefully.
+ *
+ *
  *-------------------------------------------------------------------------
  */
 

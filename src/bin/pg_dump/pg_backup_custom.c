@@ -24,6 +24,10 @@
  *
  *	Initial version. 
  *
+ * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
+ *
+ *    - Check results of IO routines more carefully.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -164,7 +168,7 @@ void InitArchiveFmt_Custom(ArchiveHandle* AH)
 			AH->FH = stdout;
 		}
 
-		if (!AH)
+		if (!AH->FH)
 			die_horribly(AH, "%s: unable to open archive file %s",progname, AH->fSpec);
 
 		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
@@ -176,7 +180,7 @@ void InitArchiveFmt_Custom(ArchiveHandle* AH)
 		} else {
 			AH->FH = stdin;
 		}
-		if (!AH)
+		if (!AH->FH)
 			die_horribly(AH, "%s: unable to open archive file %s",progname, AH->fSpec);
 
 		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
@@ -666,6 +670,8 @@ static int	_WriteByte(ArchiveHandle* AH, const int i)
     res = fputc(i, AH->FH);
     if (res != EOF) {
 		ctx->filePos += 1;
+	} else {
+		die_horribly(AH, "%s: could not write byte./n",progname);
     }
     return res;
 }
@@ -705,6 +711,10 @@ static int	_WriteBuf(ArchiveHandle* AH, const void* buf, int len)
     lclContext*		ctx = (lclContext*)AH->formatData;
     int			res;
     res = fwrite(buf, 1, len, AH->FH);
+
+	if (res != len)
+		die_horribly(AH, "%s: write error in _WriteBuf (%d != %d)\n", progname, res, len);
+
     ctx->filePos += res;
     return res;
 }
@@ -764,7 +774,9 @@ static void	_CloseArchive(ArchiveHandle* AH)
 		}
     }
 
-    fclose(AH->FH);
+    if (fclose(AH->FH) != 0)
+		die_horribly(AH, "%s: could not close archive file\n",progname);
+
     AH->FH = NULL; 
 }
 
@@ -873,7 +885,8 @@ static int	_DoDeflate(ArchiveHandle* AH, lclContext* ctx, int flush)
 			if (zp->avail_out < zlibOutSize) {
 				/* printf("Wrote %d byte deflated chunk\n", zlibOutSize - zp->avail_out); */
 				WriteInt(AH, zlibOutSize - zp->avail_out);
-				fwrite(out, 1, zlibOutSize - zp->avail_out, AH->FH);
+				if (fwrite(out, 1, zlibOutSize - zp->avail_out, AH->FH) != (zlibOutSize - zp->avail_out))
+					die_horribly(AH, "%s: could write compressed chunk\n",progname);
 				ctx->filePos += zlibOutSize - zp->avail_out;
 			}
 			zp->next_out = out;
@@ -884,7 +897,8 @@ static int	_DoDeflate(ArchiveHandle* AH, lclContext* ctx, int flush)
 		if (zp->avail_in > 0)
 		{
 			WriteInt(AH, zp->avail_in);
-			fwrite(zp->next_in, 1, zp->avail_in, AH->FH);
+			if (fwrite(zp->next_in, 1, zp->avail_in, AH->FH) != zp->avail_in)
+				die_horribly(AH, "%s: could write uncompressed chunk\n", progname);
 			ctx->filePos += zp->avail_in;
 			zp->avail_in = 0;
 		} else {

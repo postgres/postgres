@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.185 2001/01/06 20:57:26 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.186 2001/01/12 04:32:07 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -95,6 +95,11 @@
  *	  - Disable --blobs and --table since (a) it's a pain to get ONLY the blobs for the 
  *		table with the currently implementation, and (b) it's not clear how to restore
  *		a partial BLOB backup (given the current OID-based BLOB implementation).
+ *
+ * Modifications - 04-Jan-2000 - pjw@rhyme.com.au
+ *
+ *	  - Check ntuples == 1 for various SELECT statements.
+ *	  - Fix handling of --tables=* (multiple tables never worked properly, AFAICT)
  *
  *-------------------------------------------------------------------------
  */
@@ -213,7 +218,7 @@ help(const char *progname)
 		"  -s, --schema-only        dump out only the schema, no data\n"
 		"  -S, --superuser=NAME     specify the superuser user name to use in plain\n"
 		"                           text format\n"
-		"  -t, --table=TABLE        dump for this table only\n"
+		"  -t, --table=TABLE        dump for this table only (* for all)\n"
 		"  -u, --password           use password authentication\n"
 		"  -v, --verbose            verbose\n"
 		"  -x, --no-acl             do not dump ACL's (grant/revoke)\n"
@@ -242,7 +247,7 @@ help(const char *progname)
 		"  -s                       dump out only the schema, no data\n"
 		"  -S NAME                  specify the superuser user name to use in plain\n"
 		"                           text format\n"
-		"  -t TABLE                 dump for this table only\n"
+		"  -t TABLE                 dump for this table only (* for all)\n"
 		"  -u                       use password authentication\n"
 		"  -v                       verbose\n"
 		"  -x                       do not dump ACL's (grant/revoke)\n"
@@ -562,7 +567,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 	char			copyBuf[512];
 	char			*copyStmt;
 
-	if (onlytable == NULL)
+	if (onlytable == NULL || (strlen(onlytable) == 0) )
 		all_only = "all";
 	else
 		all_only = "only";
@@ -576,8 +581,9 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 	if (g_verbose)
 		fprintf(stderr, "%s preparing to dump out the contents of %s %d table%s/sequence%s %s\n",
 				g_comment_start, all_only,
-				(onlytable == NULL) ? numTables : 1,
-		  (onlytable == NULL) ? "s" : "", (onlytable == NULL) ? "s" : "",
+				(onlytable == NULL || (strlen(onlytable) == 0)) ? numTables : 1,
+				(onlytable == NULL || (strlen(onlytable) == 0)) ? "s" : "", 
+				(onlytable == NULL || (strlen(onlytable) == 0)) ? "s" : "",
 				g_comment_end);
 
 	/* Dump SEQUENCEs first (if dataOnly) */
@@ -587,7 +593,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 		{
 			if (!(tblinfo[i].sequence))
 				continue;
-			if (!onlytable || (!strcmp(tblinfo[i].relname, onlytable)))
+			if (!onlytable || (strcmp(tblinfo[i].relname, onlytable) == 0) || (strlen(onlytable) == 0) )
 			{
 				if (g_verbose)
 					fprintf(stderr, "%s dumping out schema of sequence '%s' %s\n",
@@ -609,7 +615,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 		if (tblinfo[i].sequence)/* already dumped */
 			continue;
 
-		if (!onlytable || (!strcmp(classname, onlytable)))
+		if (!onlytable || (strcmp(classname, onlytable) == 0) || (strlen(onlytable) == 0))
 		{
 			if (g_verbose)
 				fprintf(stderr, "%s preparing to dump out the contents of Table '%s' %s\n",
@@ -847,6 +853,11 @@ main(int argc, char **argv)
 						for (i = 0; tablename[i]; i++)
 							if (isupper((unsigned char) tablename[i]))
 								tablename[i] = tolower((unsigned char) tablename[i]);
+
+						/* '*' is a special case meaning ALL tables, but only if unquoted */
+						if (strcmp(tablename,"*") == 0)
+							tablename[0] = '\0';
+
 					}
 				}
 				break;
@@ -901,10 +912,10 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (outputBlobs && (tablename != NULL) )
+	if (outputBlobs && tablename != NULL && strlen(tablename) > 0 )
 	{
 		fprintf(stderr,
-				"%s: BLOB output is not supported for a single table. Use a full dump instead.\n",
+				"%s: BLOB output is not supported for a single table. Use all tables or a full dump instead.\n",
 				progname);
 		exit(1);
 	}
@@ -2301,6 +2312,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				if (findx == numFuncs)
 				{
 					PGresult   *r;
+					int			numFuncs;
 
 					/*
 					 * the funcname is an oid which we use to find the
@@ -2318,9 +2330,19 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					r = PQexec(g_conn, query->data);
 					if (!r || PQresultStatus(r) != PGRES_TUPLES_OK)
 					{
-						fprintf(stderr, "getTables(): SELECT (funcname) failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+						fprintf(stderr, "getTables(): SELECT (funcname) failed for trigger %s.  Explanation from backend: '%s'.\n", 
+									PQgetvalue(res2, i2, i_tgname), PQerrorMessage(g_conn));
 						exit_nicely(g_conn);
 					}
+
+					/* Sanity: Check we got only one tuple */
+					numFuncs = PQntuples(r);
+					if (numFuncs != 1) {
+						fprintf(stderr, "getTables(): SELECT (funcname) for trigger %s returned %d tuples. Expected 1.\n", 
+									PQgetvalue(res2, i2, i_tgname), numFuncs);
+						exit_nicely(g_conn);
+					}
+
 					tgfunc = strdup(PQgetvalue(r, 0, PQfnumber(r, "proname")));
 					PQclear(r);
 				}
@@ -2607,6 +2629,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 			{
 				PGresult   *res2;
+				int			numAttr;
 
 				if (g_verbose)
 					fprintf(stderr, "%s finding DEFAULT expression for attr: '%s' %s\n",
@@ -2626,6 +2649,15 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 					exit_nicely(g_conn);
 				}
+
+				/* Sanity: Check we got only one tuple */
+				numAttr = PQntuples(res2);
+				if (numAttr != 1) {
+					fprintf(stderr, "getTableAttrs(): SELECT (for DEFAULT) for attr %s returned %d tuples. Expected 1.\n", 
+										tblinfo[i].attnames[j], numAttr);
+					exit_nicely(g_conn);
+				}
+
 				tblinfo[i].adef_expr[j] = strdup(PQgetvalue(res2, 0, PQfnumber(res2, "adsrc")));
 				PQclear(res2);
 			}
@@ -3539,7 +3571,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 	char	   *reltypename;
 
 	/* First - dump SEQUENCEs */
-	if (tablename)
+	if (tablename && strlen(tablename) > 0)
 	{
 		serialSeq = malloc(strlen(tablename) + strlen(serialSeqSuffix) + 1);
 		strcpy(serialSeq, tablename);
@@ -3566,7 +3598,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 		if (tblinfo[i].sequence)/* already dumped */
 			continue;
 
-		if (!tablename || (!strcmp(tblinfo[i].relname, tablename)))
+		if (!tablename || (!strcmp(tblinfo[i].relname, tablename)) || (strlen(tablename) == 0))
 		{
 
 			resetPQExpBuffer(delq);
@@ -3727,6 +3759,7 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 			funcname = NULL;
 		else
 		{
+			int		numFuncs;
 
 			/*
 			 * the funcname is an oid which we use to find the name of the
@@ -3746,6 +3779,15 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 						"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
+
+			/* Sanity: Check we got only one tuple */
+			numFuncs = PQntuples(res);
+			if (numFuncs != 1) {
+				fprintf(stderr, "dumpIndices(): SELECT (funcname) for index %s returned %d tuples. Expected 1.\n", 
+								indinfo[i].indrelname, numFuncs);
+				exit_nicely(g_conn);
+			}
+
 			funcname = strdup(PQgetvalue(res, 0, PQfnumber(res, "proname")));
 			PQclear(res);
 		}
@@ -3753,6 +3795,8 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 		/* convert opclass oid(s) into names */
 		for (nclass = 0; nclass < INDEX_MAX_KEYS; nclass++)
 		{
+			int		numRows;
+
 			indclass = atoi(indinfo[i].indclass[nclass]);
 			if (indclass == 0)
 				break;
@@ -3768,6 +3812,15 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 									"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
+
+			/* Sanity: Check we got only one tuple */
+			numRows = PQntuples(res);
+			if (numRows != 1) {
+				fprintf(stderr, "dumpIndices(): SELECT (classname) for index %s returned %d tuples. Expected 1.\n", 
+									indinfo[i].indrelname, numRows);
+				exit_nicely(g_conn);
+			}
+
 			classname[nclass] = strdup(PQgetvalue(res, 0, PQfnumber(res, "opcname")));
 			PQclear(res);
 		}
@@ -3815,7 +3868,7 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 			}
 		}
 
-		if (!tablename || (!strcmp(indinfo[i].indrelname, tablename)))
+		if (!tablename || (strcmp(indinfo[i].indrelname, tablename) == 0) || (strlen(tablename) == 0) )
 		{
 
 			/*
@@ -4140,8 +4193,9 @@ dumpTriggers(Archive *fout, const char *tablename,
 
 	for (i = 0; i < numTables; i++)
 	{
-		if (tablename && strcmp(tblinfo[i].relname, tablename))
+		if (tablename && (strcmp(tblinfo[i].relname, tablename) != 0) && (strlen(tablename) > 0) )
 			continue;
+
 		for (j = 0; j < tblinfo[i].ntrig; j++)
 		{
 			ArchiveEntry(fout, tblinfo[i].triggers[j].oid, tblinfo[i].triggers[j].tgname,
@@ -4177,7 +4231,7 @@ dumpRules(Archive *fout, const char *tablename,
 	 */
 	for (t = 0; t < numTables; t++)
 	{
-		if (tablename && strcmp(tblinfo[t].relname, tablename))
+		if (tablename && (strcmp(tblinfo[t].relname, tablename) != 0) && (strlen(tablename) > 0) )
 			continue;
 
 		/*

@@ -27,6 +27,13 @@
  * Modifications - 30-Oct-2000 - pjw@rhyme.com.au
  *		Added {Start,End}RestoreBlobs to allow extended TX during BLOB restore.
  *
+ * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
+ *	  -	strdup() the current user just in case it's deallocated from it's TOC
+ *      entry. Should *never* happen, but that's what they said about the 
+ *      Titanic...
+ *
+ *	  - Check results of IO routines more carefully.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -99,14 +106,18 @@ Archive* OpenArchive(const char* FileSpec, const ArchiveFormat fmt)
 /* Public */
 void	CloseArchive(Archive* AHX)
 {
+	int					res = 0;
     ArchiveHandle*      AH = (ArchiveHandle*)AHX;
     (*AH->ClosePtr)(AH);
 
     /* Close the output */
     if (AH->gzOut)
-		GZCLOSE(AH->OF);
+		res = GZCLOSE(AH->OF);
     else if (AH->OF != stdout)
-		fclose(AH->OF);
+		res = fclose(AH->OF);
+
+	if (res != 0)
+		die_horribly(AH, "%s: could not close the output file in CloseArchive\n", progname);
 }
 
 /* Public */
@@ -791,8 +802,8 @@ void SortTocFromFile(Archive* AHX, RestoreOptions *ropt)
 
     /* Setup the file */
     fh = fopen(ropt->tocFile, PG_BINARY_R);
-    if (!fh)
-	die_horribly(AH, "%s: could not open TOC file\n", progname);
+	if (!fh)
+		die_horribly(AH, "%s: could not open TOC file\n", progname);
 
     while (fgets(buf, 1024, fh) != NULL)
     {
@@ -828,7 +839,8 @@ void SortTocFromFile(Archive* AHX, RestoreOptions *ropt)
 	tePrev = te;
     }
 
-    fclose(fh);
+    if (fclose(fh) != 0)
+		die_horribly(AH, "%s: could not close TOC file\n", progname);
 }
 
 /**********************
@@ -906,34 +918,42 @@ OutputContext SetOutput(ArchiveHandle* AH, char *filename, int compression)
 #ifdef HAVE_LIBZ
     if (compression != 0)
     {
-	sprintf(fmode, "wb%d", compression);
-	if (fn) {
-	    AH->OF = gzdopen(dup(fn), fmode); /* Don't use PG_BINARY_x since this is zlib */
-	} else {
-	    AH->OF = gzopen(filename, fmode);
-	}
-	AH->gzOut = 1;
+		sprintf(fmode, "wb%d", compression);
+		if (fn) {
+			AH->OF = gzdopen(dup(fn), fmode); /* Don't use PG_BINARY_x since this is zlib */
+		} else {
+			AH->OF = gzopen(filename, fmode);
+		}
+		AH->gzOut = 1;
     } else { /* Use fopen */
 #endif
-	if (fn) {
-	    AH->OF = fdopen(dup(fn), PG_BINARY_W);
-	} else {
-	    AH->OF = fopen(filename, PG_BINARY_W);
-	}
-	AH->gzOut = 0;
+		if (fn) {
+			AH->OF = fdopen(dup(fn), PG_BINARY_W);
+		} else {
+			AH->OF = fopen(filename, PG_BINARY_W);
+		}
+		AH->gzOut = 0;
 #ifdef HAVE_LIBZ
     }
 #endif
+
+	if (!AH->OF)
+		die_horribly(AH, "%s: could not set output\n", progname);
 
     return sav;
 }
 
 void ResetOutput(ArchiveHandle* AH, OutputContext sav)
 {
+	int				res;
+
     if (AH->gzOut)
-	GZCLOSE(AH->OF);
+		res = GZCLOSE(AH->OF);
     else
-	fclose(AH->OF);
+		res = fclose(AH->OF);
+
+	if (res != 0)
+		die_horribly(AH, "%s: could not reset the output file\n", progname);
 
     AH->gzOut = sav.gzOut;
     AH->OF = sav.OF;
@@ -1012,9 +1032,19 @@ int ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle* AH)
 		return res;
 	}
     else if (AH->gzOut)
-		return GZWRITE((void*)ptr, size, nmemb, AH->OF);
+	{
+		res = GZWRITE((void*)ptr, size, nmemb, AH->OF);
+		if (res != (nmemb * size))
+			die_horribly(AH, "%s: could not write to archive\n", progname);
+		return res;
+	}
     else if (AH->CustomOutPtr)
-		return AH->CustomOutPtr(AH, ptr, size * nmemb);
+	{
+		res = AH->CustomOutPtr(AH, ptr, size * nmemb);
+		if (res != (nmemb * size))
+			die_horribly(AH, "%s: could not write to custom output routine\n", progname);
+		return res;
+	}
 	else
 	{
 		/*
@@ -1022,9 +1052,14 @@ int ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle* AH)
 	     * then send it to the DB.
 		 */	
 		if (RestoringToDB(AH))
-			return ExecuteSqlCommandBuf(AH, (void*)ptr, size*nmemb);
+			return ExecuteSqlCommandBuf(AH, (void*)ptr, size*nmemb); /* Always 1, currently */
 		else
-			return fwrite((void*)ptr, size, nmemb, AH->OF);
+		{
+			res = fwrite((void*)ptr, size, nmemb, AH->OF);
+			if (res != nmemb)
+				die_horribly(AH, "%s: could not write to output file (%d != %d)\n", progname, res, nmemb);
+			return res;
+		}
 	}
 }		
 
@@ -1299,7 +1334,8 @@ _discoverArchiveFormat(ArchiveHandle* AH)
 
     /* Close the file */
     if (wantClose)
-		fclose(fh);
+		if (fclose(fh) != 0)
+			die_horribly(AH, "%s: could not close the input file after reading header\n", progname);
 
     return AH->format;
 }
@@ -1342,7 +1378,7 @@ static ArchiveHandle* _allocAH(const char* FileSpec, const ArchiveFormat fmt,
 		AH->fSpec = NULL;
     } 
 
-    AH->currUser = "";
+    AH->currUser = strdup(""); /* So it's valid, but we can free() it later if necessary */ 
 
     AH->toc = (TocEntry*)calloc(1, sizeof(TocEntry));
     if (!AH->toc)
@@ -1455,7 +1491,7 @@ void WriteToc(ArchiveHandle* AH)
 	if (AH->WriteExtraTocPtr) {
 	    (*AH->WriteExtraTocPtr)(AH, te);
 	}
-	te = te->next;
+		te = te->next;
     }
 }
 
@@ -1585,7 +1621,12 @@ static void _reconnectAsUser(ArchiveHandle* AH, const char *dbname, char *user)
 		{
 			ahprintf(AH, "\\connect %s %s\n", dbname, user);
 		}
-		AH->currUser = user;
+		if (AH->currUser) 
+		{
+			free(AH->currUser);
+		}
+
+		AH->currUser = strdup(user);
     } 
 }
 

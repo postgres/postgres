@@ -1,5 +1,14 @@
 /*-------------------------------------------------------------------------
  *
+ * pg_backup_db.c
+ *
+ *  Implements the basic DB functions used by the archiver.
+ *
+ * IDENTIFICATION
+ *
+ * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
+ *
+ *    - Check results of PQ routines more carefully.
  *
  *-------------------------------------------------------------------------
  */
@@ -449,14 +458,17 @@ int ExecuteSqlCommandBuf(ArchiveHandle* AH, void *qryv, int bufLen)
 
 				/* fprintf(stderr, "Sending '%s' via COPY (at end = %d)\n\n", AH->pgCopyBuf->data, isEnd); */ 
 				
-				PQputline(AH->connection, AH->pgCopyBuf->data);
+				if (PQputline(AH->connection, AH->pgCopyBuf->data) != 0)
+					die_horribly(AH, "%s: error returned by PQputline\n", progname);
 
 				resetPQExpBuffer(AH->pgCopyBuf);
 
 				/* fprintf(stderr, "Buffer is '%s'\n", AH->pgCopyBuf->data); */
 
 				if(isEnd) {
-					PQendcopy(AH->connection);
+					if (PQendcopy(AH->connection) != 0)
+						die_horribly(AH, "%s: error returned by PQendcopy\n", progname);
+
 					AH->pgCopyIn = 0;
 					break;
 				}

@@ -21,6 +21,10 @@
  *
  *	Initial version. 
  *
+ * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
+ *
+ *    - Check results of IO routines more carefully.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -156,6 +160,10 @@ void InitArchiveFmt_Tar(ArchiveHandle* AH)
 		} else {
 			ctx->tarFH = stdout;
 		}
+
+		if (ctx->tarFH == NULL) 
+			die_horribly(NULL, "%s: Could not open TOC file for output.\n", progname);
+
 		ctx->tarFHpos = 0;
 
 		/* Make unbuffered since we will dup() it, and the buffers screw each other */
@@ -184,6 +192,9 @@ void InitArchiveFmt_Tar(ArchiveHandle* AH)
 		} else {
 			ctx->tarFH = stdin;
 		}
+
+		if (ctx->tarFH == NULL)
+			die_horribly(NULL, "%s: Could not open TOC file for input\n", progname);
 
 		/* Make unbuffered since we will dup() it, and the buffers screw each other */
 		/* setvbuf(ctx->tarFH, NULL, _IONBF, 0); */
@@ -311,12 +322,18 @@ static TAR_MEMBER* tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 
 		tm->tmpFH = tmpfile();
 
+		if (tm->tmpFH == NULL) 
+			die_horribly(AH, "%s: could not generate temp file name.\n", progname);
+
 #ifdef HAVE_LIBZ
 
 		if (AH->compression != 0)
 		{
 			sprintf(fmode, "wb%d", AH->compression);
 			tm->zFH = gzdopen(dup(fileno(tm->tmpFH)), fmode);
+			if (tm->zFH == NULL)
+				die_horribly(AH, "%s: could not gzdopen temp file.\n", progname);
+
 		} else 
 			tm->nFH = tm->tmpFH;
 
@@ -343,7 +360,8 @@ static void tarClose(ArchiveHandle *AH, TAR_MEMBER* th)
 	 * Close the GZ file since we dup'd. This will flush the buffers.
 	 */
 	if (AH->compression != 0)
-		GZCLOSE(th->zFH);
+		if (GZCLOSE(th->zFH) != 0)
+			die_horribly(AH, "%s: could not close tar member\n", progname);
 
 	if (th->mode == 'w')
 		_tarAddFile(AH, th); /* This will close the temp file */
@@ -477,6 +495,9 @@ static int tarWrite(const void *buf, int len, TAR_MEMBER *th)
 	else
 		res = fwrite(buf, 1, len, th->nFH);
 
+	if (res != len)
+		die_horribly(th->AH, "%s: could not write to tar member (%d != %d)\n", progname, res, len);
+
 	th->pos += res;
 	return res;
 }
@@ -485,9 +506,7 @@ static int	_WriteData(ArchiveHandle* AH, const void* data, int dLen)
 {
     lclTocEntry*	tctx = (lclTocEntry*)AH->currToc->formatData;
 
-	tarWrite((void*)data, dLen, tctx->TH);
-
-    /* GZWRITE((void*)data, 1, dLen, tctx->TH->FH); */
+	dLen = tarWrite((void*)data, dLen, tctx->TH);
 
     return dLen;
 }
@@ -767,7 +786,8 @@ static void	_CloseArchive(ArchiveHandle* AH)
 		/* Add a block of NULLs since it's de-rigeur. */
 		for(i=0; i<512; i++) 
 		{
-			fputc(0, ctx->tarFH);
+			if (fputc(0, ctx->tarFH) == EOF)
+				die_horribly(AH, "%s: could not write null block at end of TAR archive.\n", progname);
 		}
 
     }
@@ -928,6 +948,7 @@ static void _tarAddFile(ArchiveHandle *AH, TAR_MEMBER* th)
 	char		buf[32768];
 	int			cnt;
 	int			len = 0;
+	int			res;
 	int			i, pad;
 
 	/*
@@ -941,19 +962,25 @@ static void _tarAddFile(ArchiveHandle *AH, TAR_MEMBER* th)
 
 	while ( (cnt = fread(&buf[0], 1, 32767, tmp)) > 0)
 	{
-		fwrite(&buf[0], 1, cnt, th->tarFH);
-		len += cnt;
+		res = fwrite(&buf[0], 1, cnt, th->tarFH);
+		if (res != cnt) 
+			die_horribly(AH, "%s: write error appending to TAR archive (%d != %d).\n", progname, res, cnt);
+		len += res;
 	}
 
-	fclose(tmp); /* This *should* delete it... */
+	if (fclose(tmp) != 0) /* This *should* delete it... */
+		die_horribly(AH, "%s: Could not close tar member (fclose failed).\n", progname);
 
 	if (len != th->fileLen)
-		die_horribly(AH, "%s: Actual file length does not match expected (%d vs. %d)\n",
+		die_horribly(AH, "%s: Actual file length does not match expected (%d vs. %d).\n",
 						progname, len, th->pos);
 
 	pad = ((len + 511) & ~511) - len;
     for (i=0 ; i < pad ; i++)
-		fputc('\0',th->tarFH);	
+	{
+		if (fputc('\0',th->tarFH) == EOF) 
+			die_horribly(AH, "%s: Could not output padding at end of tar member.\n", progname);
+	}	
 
 	ctx->tarFHpos += len + pad;
 }
@@ -1131,5 +1158,8 @@ static void _tarWriteHeader(TAR_MEMBER* th)
 		lastSum = sum;
 	}
 
-	fwrite(h, 1, 512, th->tarFH);
+	if (fwrite(h, 1, 512, th->tarFH) != 512) {
+		die_horribly(th->AH, "%s: unable to write tar header\n", progname);
+	}
+
 }
