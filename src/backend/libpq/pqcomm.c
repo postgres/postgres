@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.66 1999/02/13 23:15:46 momjian Exp $
+ *  $Id: pqcomm.c,v 1.67 1999/02/18 01:13:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,7 +229,7 @@ pq_recvbuf()
 	{
 		int r = recv(MyProcPort->sock, PqRecvBuffer + PqRecvLength,
 					 PQ_BUFFER_SIZE - PqRecvLength, 0);
-		if (r <= 0)
+		if (r < 0)
 		{
 			if (errno == EINTR)
 				continue;		/* Ok if interrupted */
@@ -238,7 +238,13 @@ pq_recvbuf()
 			 * if we have a hard communications failure ...
 			 * So just write the message to the postmaster log.
 			 */
-			fprintf(stderr, "pq_recvbuf: recv() failed, errno %d\n", errno);
+			fprintf(stderr, "pq_recvbuf: recv() failed, errno=%d\n", errno);
+			return EOF;
+		}
+		if (r == 0)
+		{
+			/* as above, elog not safe */
+			fprintf(stderr, "pq_recvbuf: unexpected EOF on client connection\n");
 			return EOF;
 		}
 		/* r contains number of bytes read, so just incr length */
