@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.85 2003/01/22 00:07:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.86 2003/01/27 20:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -743,8 +743,7 @@ create_nestloop_path(Query *root,
 	pathnode->joinrestrictinfo = restrict_clauses;
 	pathnode->path.pathkeys = pathkeys;
 
-	cost_nestloop(&pathnode->path, root, outer_path, inner_path,
-				  restrict_clauses);
+	cost_nestloop(pathnode, root);
 
 	return pathnode;
 }
@@ -816,14 +815,7 @@ create_mergejoin_path(Query *root,
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
 
-	cost_mergejoin(&pathnode->jpath.path,
-				   root,
-				   outer_path,
-				   inner_path,
-				   restrict_clauses,
-				   mergeclauses,
-				   outersortkeys,
-				   innersortkeys);
+	cost_mergejoin(pathnode, root);
 
 	return pathnode;
 }
@@ -861,12 +853,7 @@ create_hashjoin_path(Query *root,
 	pathnode->jpath.path.pathkeys = NIL;
 	pathnode->path_hashclauses = hashclauses;
 
-	cost_hashjoin(&pathnode->jpath.path,
-				  root,
-				  outer_path,
-				  inner_path,
-				  restrict_clauses,
-				  hashclauses);
+	cost_hashjoin(pathnode, root);
 
 	return pathnode;
 }

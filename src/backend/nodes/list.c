@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.45 2003/01/24 03:58:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.46 2003/01/27 20:51:49 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -635,6 +635,28 @@ set_differencei(List *l1, List *l2)
 	{
 		if (!intMember(lfirsti(i), l2))
 			result = lappendi(result, lfirsti(i));
+	}
+	return result;
+}
+
+/*
+ *	set_ptrDifference
+ *
+ *	Same as set_difference, when pointer-equality comparison is sufficient
+ */
+List *
+set_ptrDifference(List *l1, List *l2)
+{
+	List	   *result = NIL;
+	List	   *i;
+
+	if (l2 == NIL)
+		return listCopy(l1);	/* slightly faster path for empty l2 */
+
+	foreach(i, l1)
+	{
+		if (!ptrMember(lfirst(i), l2))
+			result = lappend(result, lfirst(i));
 	}
 	return result;
 }

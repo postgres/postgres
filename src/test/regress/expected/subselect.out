@@ -58,10 +58,10 @@ SELECT '' AS six, f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
  six | Uncorrelated Field 
 -----+--------------------
      |                  1
-     |                  1
-     |                  2
      |                  2
      |                  3
+     |                  1
+     |                  2
      |                  3
 (6 rows)
 
@@ -71,10 +71,10 @@ SELECT '' AS six, f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
  six | Uncorrelated Field 
 -----+--------------------
      |                  1
-     |                  1
-     |                  2
      |                  2
      |                  3
+     |                  1
+     |                  2
      |                  3
 (6 rows)
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.47 2003/01/20 18:54:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.48 2003/01/27 20:51:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,6 +252,13 @@ ExecHashJoin(HashJoinState *node)
 							(isDone == ExprMultipleResult);
 						return result;
 					}
+				}
+
+				/* If we didn't return a tuple, may need to set NeedNewOuter */
+				if (node->js.jointype == JOIN_IN)
+				{
+					node->hj_NeedNewOuter = true;
+					break;		/* out of loop over hash bucket */
 				}
 			}
 		}

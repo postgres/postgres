@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.76 2003/01/20 18:54:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.77 2003/01/27 20:51:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -774,13 +774,6 @@ hash_inner_and_outer(Query *root,
  * We examine each restrictinfo clause known for the join to see
  * if it is mergejoinable and involves vars from the two sub-relations
  * currently of interest.
- *
- * Since we currently allow only plain Vars as the left and right sides
- * of mergejoin clauses, this test is relatively simple.  This routine
- * would need to be upgraded to support more-complex expressions
- * as sides of mergejoins.	In theory, we could allow arbitrarily complex
- * expressions in mergejoins, so long as one side uses only vars from one
- * sub-relation and the other side uses only vars from the other.
  */
 static List *
 select_mergejoin_clauses(RelOptInfo *joinrel,
@@ -835,7 +828,9 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			continue;			/* not mergejoinable */
 
 		/*
-		 * Check if clause is usable with these input rels.
+		 * Check if clause is usable with these input rels.  All the vars
+		 * needed on each side of the clause must be available from one or
+		 * the other of the input rels.
 		 */
 		if (is_subseti(restrictinfo->left_relids, outerrel->relids) &&
 			is_subseti(restrictinfo->right_relids, innerrel->relids))

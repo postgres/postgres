@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.129 2003/01/24 03:58:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.130 2003/01/27 20:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2042,6 +2042,8 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 
 		varinfos = newvarinfos;
 	} while (varinfos != NIL);
+
+	numdistinct = ceil(numdistinct);
 
 	/* Guard against out-of-range answers */
 	if (numdistinct > input_rows)

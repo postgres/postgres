@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.30 2003/01/20 18:54:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.31 2003/01/27 20:51:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,6 +254,10 @@ ExecNestLoop(NestLoopState *node)
 					return result;
 				}
 			}
+
+			/* If we didn't return a tuple, may need to set NeedNewOuter */
+			if (node->js.jointype == JOIN_IN)
+				node->nl_NeedNewOuter = true;
 		}
 
 		/*

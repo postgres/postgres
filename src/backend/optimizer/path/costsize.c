@@ -37,12 +37,19 @@
  * set the rows count to zero, so there will be no zero divide.)  The LIMIT is
  * applied as a top-level plan node.
  *
+ * For largely historical reasons, most of the routines in this module use
+ * the passed result Path only to store their startup_cost and total_cost
+ * results into.  All the input data they need is passed as separate
+ * parameters, even though much of it could be extracted from the Path.
+ * An exception is made for the cost_XXXjoin() routines, which expect all
+ * the non-cost fields of the passed XXXPath to be filled in.
+ *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.102 2003/01/22 20:16:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.103 2003/01/27 20:51:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +72,15 @@
 
 #define LOG2(x)  (log(x) / 0.693147180559945)
 #define LOG6(x)  (log(x) / 1.79175946922805)
+
+/*
+ * Some Paths return less than the nominal number of rows of their parent
+ * relations; join nodes need to do this to get the correct input count:
+ */
+#define PATH_ROWS(path) \
+	(IsA(path, UniquePath) ? \
+	 ((UniquePath *) (path))->rows : \
+	 (path)->parent->rows)
 
 
 double		effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
@@ -97,11 +113,6 @@ static double page_size(double tuples, int width);
 /*
  * cost_seqscan
  *	  Determines and returns the cost of scanning a relation sequentially.
- *
- * Note: for historical reasons, this routine and the others in this module
- * use the passed result Path only to store their startup_cost and total_cost
- * results into.  All the input data they need is passed as separate
- * parameters, even though much of it could be extracted from the Path.
  */
 void
 cost_seqscan(Path *path, Query *root,
@@ -654,24 +665,49 @@ cost_group(Path *path, Query *root,
  *	  Determines and returns the cost of joining two relations using the
  *	  nested loop algorithm.
  *
- * 'outer_path' is the path for the outer relation
- * 'inner_path' is the path for the inner relation
- * 'restrictlist' are the RestrictInfo nodes to be applied at the join
+ * 'path' is already filled in except for the cost fields
  */
 void
-cost_nestloop(Path *path, Query *root,
-			  Path *outer_path,
-			  Path *inner_path,
-			  List *restrictlist)
+cost_nestloop(NestPath *path, Query *root)
 {
+	Path	   *outer_path = path->outerjoinpath;
+	Path	   *inner_path = path->innerjoinpath;
+	List	   *restrictlist = path->joinrestrictinfo;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
 	QualCost	restrict_qual_cost;
+	double		outer_path_rows = PATH_ROWS(outer_path);
+	double		inner_path_rows = PATH_ROWS(inner_path);
 	double		ntuples;
+	Selectivity	joininfactor;
 
 	if (!enable_nestloop)
 		startup_cost += disable_cost;
+
+	/*
+	 * If we're doing JOIN_IN then we will stop scanning inner tuples for an
+	 * outer tuple as soon as we have one match.  Account for the effects of
+	 * this by scaling down the cost estimates in proportion to the expected
+	 * output size.  (This assumes that all the quals attached to the join are
+	 * IN quals, which should be true.)
+	 *
+	 * Note: it's probably bogus to use the normal selectivity calculation
+	 * here when either the outer or inner path is a UniquePath.
+	 */
+	if (path->jointype == JOIN_IN)
+	{
+		Selectivity	qual_selec = approx_selectivity(root, restrictlist);
+		double	qptuples;
+
+		qptuples = ceil(qual_selec * outer_path_rows * inner_path_rows);
+		if (qptuples > path->path.parent->rows)
+			joininfactor = path->path.parent->rows / qptuples;
+		else
+			joininfactor = 1.0;
+	}
+	else
+		joininfactor = 1.0;
 
 	/* cost of source data */
 
@@ -689,30 +725,32 @@ cost_nestloop(Path *path, Query *root,
 		IsA(inner_path, HashPath))
 	{
 		/* charge only run cost for each iteration of inner path */
-		run_cost += outer_path->parent->rows *
-			(inner_path->total_cost - inner_path->startup_cost);
 	}
 	else
 	{
 		/*
-		 * charge total cost for each iteration of inner path, except we
+		 * charge startup cost for each iteration of inner path, except we
 		 * already charged the first startup_cost in our own startup
 		 */
-		run_cost += outer_path->parent->rows * inner_path->total_cost
-			- inner_path->startup_cost;
+		run_cost += (outer_path_rows - 1) * inner_path->startup_cost;
 	}
+	run_cost += outer_path_rows *
+		(inner_path->total_cost - inner_path->startup_cost) * joininfactor;
 
 	/*
-	 * Number of tuples processed (not number emitted!).  If inner path is
-	 * an indexscan, be sure to use its estimated output row count, which
-	 * may be lower than the restriction-clause-only row count of its
-	 * parent.
+	 * Compute number of tuples processed (not number emitted!).
+	 * If inner path is an indexscan, be sure to use its estimated output row
+	 * count, which may be lower than the restriction-clause-only row count of
+	 * its parent.  (We don't include this case in the PATH_ROWS macro because
+	 * it applies *only* to a nestloop's inner relation.)  Note: it is correct
+	 * to use the unadjusted inner_path_rows in the above calculation for
+	 * joininfactor, since otherwise we'd be double-counting the selectivity
+	 * of the join clause being used for the index.
 	 */
 	if (IsA(inner_path, IndexPath))
-		ntuples = ((IndexPath *) inner_path)->rows;
-	else
-		ntuples = inner_path->parent->rows;
-	ntuples *= outer_path->parent->rows;
+		inner_path_rows = ((IndexPath *) inner_path)->rows;
+
+	ntuples = inner_path_rows * outer_path_rows;
 
 	/* CPU costs */
 	cost_qual_eval(&restrict_qual_cost, restrictlist);
@@ -720,8 +758,8 @@ cost_nestloop(Path *path, Query *root,
 	cpu_per_tuple = cpu_tuple_cost + restrict_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * ntuples;
 
-	path->startup_cost = startup_cost;
-	path->total_cost = startup_cost + run_cost;
+	path->path.startup_cost = startup_cost;
+	path->path.total_cost = startup_cost + run_cost;
 }
 
 /*
@@ -729,38 +767,104 @@ cost_nestloop(Path *path, Query *root,
  *	  Determines and returns the cost of joining two relations using the
  *	  merge join algorithm.
  *
- * 'outer_path' is the path for the outer relation
- * 'inner_path' is the path for the inner relation
- * 'restrictlist' are the RestrictInfo nodes to be applied at the join
- * 'mergeclauses' are the RestrictInfo nodes to use as merge clauses
- *		(this should be a subset of the restrictlist)
- * 'outersortkeys' and 'innersortkeys' are lists of the keys to be used
- *				to sort the outer and inner relations, or NIL if no explicit
- *				sort is needed because the source path is already ordered
+ * 'path' is already filled in except for the cost fields
+ *
+ * Notes: path's mergeclauses should be a subset of the joinrestrictinfo list;
+ * outersortkeys and innersortkeys are lists of the keys to be used
+ * to sort the outer and inner relations, or NIL if no explicit
+ * sort is needed because the source path is already ordered.
  */
 void
-cost_mergejoin(Path *path, Query *root,
-			   Path *outer_path,
-			   Path *inner_path,
-			   List *restrictlist,
-			   List *mergeclauses,
-			   List *outersortkeys,
-			   List *innersortkeys)
+cost_mergejoin(MergePath *path, Query *root)
 {
+	Path	   *outer_path = path->jpath.outerjoinpath;
+	Path	   *inner_path = path->jpath.innerjoinpath;
+	List	   *restrictlist = path->jpath.joinrestrictinfo;
+	List	   *mergeclauses = path->path_mergeclauses;
+	List	   *outersortkeys = path->outersortkeys;
+	List	   *innersortkeys = path->innersortkeys;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
-	QualCost	restrict_qual_cost;
+	Selectivity	merge_selec;
+	Selectivity	qp_selec;
+	QualCost	merge_qual_cost;
+	QualCost	qp_qual_cost;
 	RestrictInfo *firstclause;
+	List	   *qpquals;
+	double		outer_path_rows = PATH_ROWS(outer_path);
+	double		inner_path_rows = PATH_ROWS(inner_path);
 	double		outer_rows,
 				inner_rows;
-	double		ntuples;
+	double		mergejointuples,
+				rescannedtuples;
+	double		qptuples;
+	double		rescanratio;
 	Selectivity outerscansel,
 				innerscansel;
+	Selectivity	joininfactor;
 	Path		sort_path;		/* dummy for result of cost_sort */
 
 	if (!enable_mergejoin)
 		startup_cost += disable_cost;
+
+	/*
+	 * Compute cost and selectivity of the mergequals and qpquals (other
+	 * restriction clauses) separately.  We use approx_selectivity here
+	 * for speed --- in most cases, any errors won't affect the result much.
+	 *
+	 * Note: it's probably bogus to use the normal selectivity calculation
+	 * here when either the outer or inner path is a UniquePath.
+	 */
+	merge_selec = approx_selectivity(root, mergeclauses);
+	cost_qual_eval(&merge_qual_cost, mergeclauses);
+	qpquals = set_ptrDifference(restrictlist, mergeclauses);
+	qp_selec = approx_selectivity(root, qpquals);
+	cost_qual_eval(&qp_qual_cost, qpquals);
+	freeList(qpquals);
+
+	/* approx # tuples passing the merge quals */
+	mergejointuples = ceil(merge_selec * outer_path_rows * inner_path_rows);
+	/* approx # tuples passing qpquals as well */
+	qptuples = ceil(mergejointuples * qp_selec);
+
+	/*
+	 * When there are equal merge keys in the outer relation, the mergejoin
+	 * must rescan any matching tuples in the inner relation.  This means
+	 * re-fetching inner tuples.  Our cost model for this is that a re-fetch
+	 * costs the same as an original fetch, which is probably an overestimate;
+	 * but on the other hand we ignore the bookkeeping costs of mark/restore.
+	 * Not clear if it's worth developing a more refined model.
+	 *
+	 * The number of re-fetches can be estimated approximately as size of
+	 * merge join output minus size of inner relation.  Assume that the
+	 * distinct key values are 1, 2, ..., and denote the number of values of
+	 * each key in the outer relation as m1, m2, ...; in the inner relation,
+	 * n1, n2, ...  Then we have
+	 *
+	 *	size of join = m1 * n1 + m2 * n2 + ...
+	 *
+	 *	number of rescanned tuples = (m1 - 1) * n1 + (m2 - 1) * n2 + ...
+	 *		= m1 * n1 + m2 * n2 + ... - (n1 + n2 + ...)
+	 *		= size of join - size of inner relation
+	 *
+	 * This equation works correctly for outer tuples having no inner match
+	 * (nk = 0), but not for inner tuples having no outer match (mk = 0);
+	 * we are effectively subtracting those from the number of rescanned
+	 * tuples, when we should not.  Can we do better without expensive
+	 * selectivity computations?
+	 */
+	if (IsA(outer_path, UniquePath))
+		rescannedtuples = 0;
+	else
+	{
+		rescannedtuples = mergejointuples - inner_path_rows;
+		/* Must clamp because of possible underestimate */
+		if (rescannedtuples < 0)
+			rescannedtuples = 0;
+	}
+	/* We'll inflate inner run cost this much to account for rescanning */
+	rescanratio = 1.0 + (rescannedtuples / inner_path_rows);
 
 	/*
 	 * A merge join will stop as soon as it exhausts either input stream.
@@ -793,10 +897,10 @@ cost_mergejoin(Path *path, Query *root,
 
 	/* convert selectivity to row count; must scan at least one row */
 
-	outer_rows = ceil(outer_path->parent->rows * outerscansel);
+	outer_rows = ceil(outer_path_rows * outerscansel);
 	if (outer_rows < 1)
 		outer_rows = 1;
-	inner_rows = ceil(inner_path->parent->rows * innerscansel);
+	inner_rows = ceil(inner_path_rows * innerscansel);
 	if (inner_rows < 1)
 		inner_rows = 1;
 
@@ -805,24 +909,18 @@ cost_mergejoin(Path *path, Query *root,
 	 * normally an insignificant effect, but when there are only a few rows
 	 * in the inputs, failing to do this makes for a large percentage error.
 	 */
-	outerscansel = outer_rows / outer_path->parent->rows;
-	innerscansel = inner_rows / inner_path->parent->rows;
+	outerscansel = outer_rows / outer_path_rows;
+	innerscansel = inner_rows / inner_path_rows;
 
 	/* cost of source data */
 
-	/*
-	 * Note we are assuming that each source tuple is fetched just once,
-	 * which is not right in the presence of equal keys.  If we had a way
-	 * of estimating the proportion of equal keys, we could apply a
-	 * correction factor...
-	 */
 	if (outersortkeys)			/* do we need to sort outer? */
 	{
 		cost_sort(&sort_path,
 				  root,
 				  outersortkeys,
 				  outer_path->total_cost,
-				  outer_path->parent->rows,
+				  outer_path_rows,
 				  outer_path->parent->width);
 		startup_cost += sort_path.startup_cost;
 		run_cost += (sort_path.total_cost - sort_path.startup_cost)
@@ -841,48 +939,58 @@ cost_mergejoin(Path *path, Query *root,
 				  root,
 				  innersortkeys,
 				  inner_path->total_cost,
-				  inner_path->parent->rows,
+				  inner_path_rows,
 				  inner_path->parent->width);
 		startup_cost += sort_path.startup_cost;
 		run_cost += (sort_path.total_cost - sort_path.startup_cost)
-			* innerscansel;
+			* innerscansel * rescanratio;
 	}
 	else
 	{
 		startup_cost += inner_path->startup_cost;
 		run_cost += (inner_path->total_cost - inner_path->startup_cost)
-			* innerscansel;
+			* innerscansel * rescanratio;
 	}
 
+	/* CPU costs */
+
 	/*
-	 * The number of tuple comparisons needed depends drastically on the
-	 * number of equal keys in the two source relations, which we have no
-	 * good way of estimating.	(XXX could the MCV statistics help?)
-	 * Somewhat arbitrarily, we charge one tuple comparison (one
-	 * cpu_operator_cost) for each tuple in the two source relations.
-	 * This is probably a lower bound.
+	 * If we're doing JOIN_IN then we will stop outputting inner
+	 * tuples for an outer tuple as soon as we have one match.  Account for
+	 * the effects of this by scaling down the cost estimates in proportion
+	 * to the expected output size.  (This assumes that all the quals attached
+	 * to the join are IN quals, which should be true.)
 	 */
-	run_cost += cpu_operator_cost * (outer_rows + inner_rows);
+	if (path->jpath.jointype == JOIN_IN &&
+		qptuples > path->jpath.path.parent->rows)
+		joininfactor = path->jpath.path.parent->rows / qptuples;
+	else
+		joininfactor = 1.0;
+
+	/*
+	 * The number of tuple comparisons needed is approximately number of
+	 * outer rows plus number of inner rows plus number of rescanned
+	 * tuples (can we refine this?).  At each one, we need to evaluate
+	 * the mergejoin quals.  NOTE: JOIN_IN mode does not save any work
+	 * here, so do NOT include joininfactor.
+	 */
+	startup_cost += merge_qual_cost.startup;
+	run_cost += merge_qual_cost.per_tuple *
+		(outer_rows + inner_rows * rescanratio);
 
 	/*
 	 * For each tuple that gets through the mergejoin proper, we charge
 	 * cpu_tuple_cost plus the cost of evaluating additional restriction
-	 * clauses that are to be applied at the join.	It's OK to use an
-	 * approximate selectivity here, since in most cases this is a minor
-	 * component of the cost.  NOTE: it's correct to use the unscaled rows
-	 * counts here, not the scaled-down counts we obtained above.
+	 * clauses that are to be applied at the join.  (This is pessimistic
+	 * since not all of the quals may get evaluated at each tuple.)  This
+	 * work is skipped in JOIN_IN mode, so apply the factor.
 	 */
-	ntuples = approx_selectivity(root, mergeclauses) *
-		outer_path->parent->rows * inner_path->parent->rows;
+	startup_cost += qp_qual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qp_qual_cost.per_tuple;
+	run_cost += cpu_per_tuple * mergejointuples * joininfactor;
 
-	/* CPU costs */
-	cost_qual_eval(&restrict_qual_cost, restrictlist);
-	startup_cost += restrict_qual_cost.startup;
-	cpu_per_tuple = cpu_tuple_cost + restrict_qual_cost.per_tuple;
-	run_cost += cpu_per_tuple * ntuples;
-
-	path->startup_cost = startup_cost;
-	path->total_cost = startup_cost + run_cost;
+	path->jpath.path.startup_cost = startup_cost;
+	path->jpath.path.total_cost = startup_cost + run_cost;
 }
 
 /*
@@ -890,48 +998,83 @@ cost_mergejoin(Path *path, Query *root,
  *	  Determines and returns the cost of joining two relations using the
  *	  hash join algorithm.
  *
- * 'outer_path' is the path for the outer relation
- * 'inner_path' is the path for the inner relation
- * 'restrictlist' are the RestrictInfo nodes to be applied at the join
- * 'hashclauses' are the RestrictInfo nodes to use as hash clauses
- *		(this should be a subset of the restrictlist)
+ * 'path' is already filled in except for the cost fields
+ *
+ * Note: path's hashclauses should be a subset of the joinrestrictinfo list
  */
 void
-cost_hashjoin(Path *path, Query *root,
-			  Path *outer_path,
-			  Path *inner_path,
-			  List *restrictlist,
-			  List *hashclauses)
+cost_hashjoin(HashPath *path, Query *root)
 {
+	Path	   *outer_path = path->jpath.outerjoinpath;
+	Path	   *inner_path = path->jpath.innerjoinpath;
+	List	   *restrictlist = path->jpath.joinrestrictinfo;
+	List	   *hashclauses = path->path_hashclauses;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
-	QualCost	restrict_qual_cost;
-	double		ntuples;
-	double		outerbytes = relation_byte_size(outer_path->parent->rows,
+	Selectivity	hash_selec;
+	Selectivity	qp_selec;
+	QualCost	hash_qual_cost;
+	QualCost	qp_qual_cost;
+	double		hashjointuples;
+	double		qptuples;
+	double		outer_path_rows = PATH_ROWS(outer_path);
+	double		inner_path_rows = PATH_ROWS(inner_path);
+	double		outerbytes = relation_byte_size(outer_path_rows,
 											  outer_path->parent->width);
-	double		innerbytes = relation_byte_size(inner_path->parent->rows,
+	double		innerbytes = relation_byte_size(inner_path_rows,
 											  inner_path->parent->width);
+	int			num_hashclauses = length(hashclauses);
 	int			virtualbuckets;
 	int			physicalbuckets;
 	int			numbatches;
 	Selectivity innerbucketsize;
+	Selectivity	joininfactor;
 	List	   *hcl;
+	List	   *qpquals;
 
 	if (!enable_hashjoin)
 		startup_cost += disable_cost;
+
+	/*
+	 * Compute cost and selectivity of the hashquals and qpquals (other
+	 * restriction clauses) separately.  We use approx_selectivity here
+	 * for speed --- in most cases, any errors won't affect the result much.
+	 *
+	 * Note: it's probably bogus to use the normal selectivity calculation
+	 * here when either the outer or inner path is a UniquePath.
+	 */
+	hash_selec = approx_selectivity(root, hashclauses);
+	cost_qual_eval(&hash_qual_cost, hashclauses);
+	qpquals = set_ptrDifference(restrictlist, hashclauses);
+	qp_selec = approx_selectivity(root, qpquals);
+	cost_qual_eval(&qp_qual_cost, qpquals);
+	freeList(qpquals);
+
+	/* approx # tuples passing the hash quals */
+	hashjointuples = ceil(hash_selec * outer_path_rows * inner_path_rows);
+	/* approx # tuples passing qpquals as well */
+	qptuples = ceil(hashjointuples * qp_selec);
 
 	/* cost of source data */
 	startup_cost += outer_path->startup_cost;
 	run_cost += outer_path->total_cost - outer_path->startup_cost;
 	startup_cost += inner_path->total_cost;
 
-	/* cost of computing hash function: must do it once per input tuple */
-	startup_cost += cpu_operator_cost * inner_path->parent->rows;
-	run_cost += cpu_operator_cost * outer_path->parent->rows;
+	/*
+	 * Cost of computing hash function: must do it once per input tuple.
+	 * We charge one cpu_operator_cost for each column's hash function.
+	 *
+	 * XXX when a hashclause is more complex than a single operator,
+	 * we really should charge the extra eval costs of the left or right
+	 * side, as appropriate, here.  This seems more work than it's worth
+	 * at the moment.
+	 */
+	startup_cost += cpu_operator_cost * num_hashclauses * inner_path_rows;
+	run_cost += cpu_operator_cost * num_hashclauses * outer_path_rows;
 
 	/* Get hash table size that executor would use for inner relation */
-	ExecChooseHashTableSize(inner_path->parent->rows,
+	ExecChooseHashTableSize(inner_path_rows,
 							inner_path->parent->width,
 							&virtualbuckets,
 							&physicalbuckets,
@@ -992,31 +1135,6 @@ cost_hashjoin(Path *path, Query *root,
 	}
 
 	/*
-	 * The number of tuple comparisons needed is the number of outer
-	 * tuples times the typical number of tuples in a hash bucket, which
-	 * is the inner relation size times its bucketsize fraction. We charge
-	 * one cpu_operator_cost per tuple comparison.
-	 */
-	run_cost += cpu_operator_cost * outer_path->parent->rows *
-		ceil(inner_path->parent->rows * innerbucketsize);
-
-	/*
-	 * For each tuple that gets through the hashjoin proper, we charge
-	 * cpu_tuple_cost plus the cost of evaluating additional restriction
-	 * clauses that are to be applied at the join.	It's OK to use an
-	 * approximate selectivity here, since in most cases this is a minor
-	 * component of the cost.
-	 */
-	ntuples = approx_selectivity(root, hashclauses) *
-		outer_path->parent->rows * inner_path->parent->rows;
-
-	/* CPU costs */
-	cost_qual_eval(&restrict_qual_cost, restrictlist);
-	startup_cost += restrict_qual_cost.startup;
-	cpu_per_tuple = cpu_tuple_cost + restrict_qual_cost.per_tuple;
-	run_cost += cpu_per_tuple * ntuples;
-
-	/*
 	 * if inner relation is too big then we will need to "batch" the join,
 	 * which implies writing and reading most of the tuples to disk an
 	 * extra time.	Charge one cost unit per page of I/O (correct since it
@@ -1025,14 +1143,50 @@ cost_hashjoin(Path *path, Query *root,
 	 */
 	if (numbatches)
 	{
-		double		outerpages = page_size(outer_path->parent->rows,
+		double		outerpages = page_size(outer_path_rows,
 										   outer_path->parent->width);
-		double		innerpages = page_size(inner_path->parent->rows,
+		double		innerpages = page_size(inner_path_rows,
 										   inner_path->parent->width);
 
 		startup_cost += innerpages;
 		run_cost += innerpages + 2 * outerpages;
 	}
+
+	/* CPU costs */
+
+	/*
+	 * If we're doing JOIN_IN then we will stop comparing inner
+	 * tuples to an outer tuple as soon as we have one match.  Account for
+	 * the effects of this by scaling down the cost estimates in proportion
+	 * to the expected output size.  (This assumes that all the quals attached
+	 * to the join are IN quals, which should be true.)
+	 */
+	if (path->jpath.jointype == JOIN_IN &&
+		qptuples > path->jpath.path.parent->rows)
+		joininfactor = path->jpath.path.parent->rows / qptuples;
+	else
+		joininfactor = 1.0;
+
+	/*
+	 * The number of tuple comparisons needed is the number of outer
+	 * tuples times the typical number of tuples in a hash bucket, which
+	 * is the inner relation size times its bucketsize fraction.  At each
+	 * one, we need to evaluate the hashjoin quals.
+	 */
+	startup_cost += hash_qual_cost.startup;
+	run_cost += hash_qual_cost.per_tuple *
+		outer_path_rows * ceil(inner_path_rows * innerbucketsize) *
+		joininfactor;
+
+	/*
+	 * For each tuple that gets through the hashjoin proper, we charge
+	 * cpu_tuple_cost plus the cost of evaluating additional restriction
+	 * clauses that are to be applied at the join.  (This is pessimistic
+	 * since not all of the quals may get evaluated at each tuple.)
+	 */
+	startup_cost += qp_qual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qp_qual_cost.per_tuple;
+	run_cost += cpu_per_tuple * hashjointuples * joininfactor;
 
 	/*
 	 * Bias against putting larger relation on inside.	We don't want an
@@ -1050,8 +1204,8 @@ cost_hashjoin(Path *path, Query *root,
 	if (innerbytes > outerbytes && outerbytes > 0)
 		run_cost *= sqrt(innerbytes / outerbytes);
 
-	path->startup_cost = startup_cost;
-	path->total_cost = startup_cost + run_cost;
+	path->jpath.path.startup_cost = startup_cost;
+	path->jpath.path.total_cost = startup_cost + run_cost;
 }
 
 /*
@@ -1502,6 +1656,11 @@ set_baserel_size_estimates(Query *root, RelOptInfo *rel)
  * calculations for each pair of input rels that's encountered, and somehow
  * average the results?  Probably way more trouble than it's worth.)
  *
+ * It's important that the results for symmetric JoinTypes be symmetric,
+ * eg, (rel1, rel2, JOIN_LEFT) should produce the same result as (rel2,
+ * rel1, JOIN_RIGHT).  Also, JOIN_IN should produce the same result as
+ * JOIN_UNIQUE_INNER, likewise JOIN_REVERSE_IN == JOIN_UNIQUE_OUTER.
+ *
  * We set the same relnode fields as set_baserel_size_estimates() does.
  */
 void
@@ -1526,14 +1685,17 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 									 0);
 
 	/*
-	 * Normally, we multiply size of Cartesian product by selectivity.
-	 * But for JOIN_IN, we just multiply the lefthand size by the selectivity
-	 * (is that really right?).  For UNIQUE_OUTER or UNIQUE_INNER, use
-	 * the estimated number of distinct rows (again, is that right?)
+	 * Basically, we multiply size of Cartesian product by selectivity.
 	 *
 	 * If we are doing an outer join, take that into account: the output
 	 * must be at least as large as the non-nullable input.  (Is there any
 	 * chance of being even smarter?)
+	 *
+	 * For JOIN_IN and variants, the Cartesian product is figured with
+	 * respect to a unique-ified input, and then we can clamp to the size
+	 * of the other input.
+	 * XXX it's not at all clear that the ordinary selectivity calculation
+	 * is appropriate in this case.
 	 */
 	switch (jointype)
 	{
@@ -1558,20 +1720,20 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 				temp = inner_rel->rows;
 			break;
 		case JOIN_IN:
-			temp = outer_rel->rows * selec;
-			break;
-		case JOIN_REVERSE_IN:
-			temp = inner_rel->rows * selec;
-			break;
-		case JOIN_UNIQUE_OUTER:
-			upath = create_unique_path(root, outer_rel,
-									   outer_rel->cheapest_total_path);
-			temp = upath->rows * inner_rel->rows * selec;
-			break;
 		case JOIN_UNIQUE_INNER:
 			upath = create_unique_path(root, inner_rel,
 									   inner_rel->cheapest_total_path);
 			temp = outer_rel->rows * upath->rows * selec;
+			if (temp > outer_rel->rows)
+				temp = outer_rel->rows;
+			break;
+		case JOIN_REVERSE_IN:
+		case JOIN_UNIQUE_OUTER:
+			upath = create_unique_path(root, outer_rel,
+									   outer_rel->cheapest_total_path);
+			temp = upath->rows * inner_rel->rows * selec;
+			if (temp > inner_rel->rows)
+				temp = inner_rel->rows;
 			break;
 		default:
 			elog(ERROR, "set_joinrel_size_estimates: unsupported join type %d",
