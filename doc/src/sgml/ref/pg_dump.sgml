@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.57 2003/03/18 00:02:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.58 2003/03/18 17:05:01 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -649,11 +649,6 @@ connectDBStart() -- connect() failed: No such file or directory
 CREATE DATABASE foo WITH TEMPLATE template0;
 </programlisting>
   </para>
-
-   <para>
-    Once restored, it is wise to run <command>ANALYZE</> on each
-    restored object so the optimizer has useful statistics.
-   </para>
 
   <para>
    <application>pg_dump</application> has a few limitations:
