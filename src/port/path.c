@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.40 2004/11/01 04:46:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.41 2004/11/02 03:09:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,7 +204,7 @@ get_progname(const char *argv0)
 		if (progname == NULL)
 		{
 			fprintf(stderr, "%s: out of memory\n", nodir_name);
-			exit(1);
+			exit(1);	/* This could exit the postmaster */
 		}
 		progname[strlen(progname) - sizeof(EXE) - 1] = '\0';
 		nodir_name = progname; 
