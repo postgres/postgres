@@ -44,11 +44,13 @@ Migration to 7.2
    re-enabled using a postgresql.conf parameter. The SELECT ... LIMIT
    #,# syntax will be removed in 7.3. You should change your queries to
    use separate LIMIT and OFFSET clauses, e.g. LIMIT 10 OFFSET 20. Also,
-   pg_hba.conf now only loads on SIGHUP.
+   pg_hba.conf now only loads on SIGHUP.  Octet_length() now returns
+   uncompressed data length.  'current' no longer used; use
+   CURRENT_TIMESTAMP instead.
 
 
 
-AS OF 2001-11-19
+AS OF 2001-12-04
 
 Bug Fixes
 ---------
@@ -97,7 +99,7 @@ Native language support for error messages in psql, pg_dump, libpq, and
   postgres components; configure --enable-nls
   (Peter E [German, some French, some Swedish], Serguei A. Mokhov [Russian],
   Karel Zak [Czech], Weiping He [Simplified Chinese], Zhenbang Wei 
-  [Traditional Chinese])
+  [Traditional Chinese], Zoltan [Hungarian])
 Make NULL appear at beginning/end based on ORDER BY (Tom)
 Add %TYPE capability to CREATE TYPE (Ian Lance Taylor)
 Truncate extra-long sequence names to a reasonable value (Tom)
@@ -160,6 +162,7 @@ Remove 'triggered data change violation' error check (Tom)
 Optimize LIKE/ILIKE when using single-byte encodings (Tatsuo)
 New libpq function PQescapeBytea() escapes binary strings for use as
   SQL string literals
+Improve reporting of PL/PgSQL error location (Tom)
 
 Types
 -----
