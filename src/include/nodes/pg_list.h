@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.15 2000/02/06 03:27:35 tgl Exp $
+ * $Id: pg_list.h,v 1.16 2000/02/21 18:47:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,21 @@
 
 /*----------------------
  *		Value node
+ *
+ * The same Value struct is used for three node types: T_Integer,
+ * T_Float, and T_String.  Integral values are actually represented
+ * by a machine integer, but both floats and strings are represented
+ * as strings.  Using T_Float as the node type simply indicates that
+ * the contents of the string look like a valid numeric literal.
+ *
+ * (Before Postgres 7.0, we used a double to represent T_Float,
+ * but that creates loss-of-precision problems when the value is
+ * ultimately destined to be converted to NUMERIC.  Since Value nodes
+ * are only used in the parsing process, not for runtime data, it's
+ * better to use the more general representation.)
+ *
+ * Note that an integer-looking string will get lexed as T_Float if
+ * the value is too large to fit in a 'long'.
  *----------------------
  */
 typedef struct Value
@@ -30,14 +45,13 @@ typedef struct Value
 	NodeTag		type;			/* tag appropriately (eg. T_String) */
 	union ValUnion
 	{
+		long		ival;		/* machine integer */
 		char	   *str;		/* string */
-		long		ival;
-		double		dval;
 	}			val;
 } Value;
 
 #define intVal(v)		(((Value *)(v))->val.ival)
-#define floatVal(v)		(((Value *)(v))->val.dval)
+#define floatVal(v)		atof(((Value *)(v))->val.str)
 #define strVal(v)		(((Value *)(v))->val.str)
 
 
@@ -89,9 +103,9 @@ extern List *lconsi(int datum, List *list);
 extern bool member(void *datum, List *list);
 extern bool intMember(int datum, List *list);
 extern Value *makeInteger(long i);
-extern Value *makeFloat(double d);
+extern Value *makeFloat(char *numericStr);
 extern Value *makeString(char *str);
-extern List *makeList(void *elem,...);
+extern List *makeList(void *elem, ...);
 extern List *lappend(List *list, void *datum);
 extern List *lappendi(List *list, int datum);
 extern List *lremove(void *elem, List *list);

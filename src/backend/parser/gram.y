@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.147 2000/02/20 02:14:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.148 2000/02/21 18:47:02 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -78,6 +78,7 @@ static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 static void mapTargetColumns(List *source, List *target);
 static void param_type_init(Oid *typev, int nargs);
 static Node *doNegate(Node *n);
+static void doNegateFloat(Value *v);
 
 /* old versions of flex define this as a macro */
 #if defined(yywrap)
@@ -88,7 +89,6 @@ static Node *doNegate(Node *n);
 
 %union
 {
-	double				dval;
 	int					ival;
 	char				chr;
 	char				*str;
@@ -352,9 +352,8 @@ static Node *doNegate(Node *n);
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
-%token <str>	IDENT, SCONST, Op
+%token <str>	IDENT, FCONST, SCONST, Op
 %token <ival>	ICONST, PARAM
-%token <dval>	FCONST
 
 /* these are not real. they are here so that they get generated as #define's*/
 %token			OP
@@ -1567,7 +1566,7 @@ FloatOnly:  FCONST
 			| '-' FCONST
 				{
 					$$ = makeFloat($2);
-					$$->val.dval = - $$->val.dval;
+					doNegateFloat($$);
 				}
 		;
 
@@ -1722,16 +1721,11 @@ TriggerFuncArgs:  TriggerFuncArg
 
 TriggerFuncArg:  ICONST
 				{
-					char *s = (char *) palloc (256);
+					char *s = (char *) palloc(64);
 					sprintf (s, "%d", $1);
 					$$ = s;
 				}
-			| FCONST
-				{
-					char *s = (char *) palloc (256);
-					sprintf (s, "%g", $1);
-					$$ = s;
-				}
+			| FCONST						{  $$ = $1; }
 			| Sconst						{  $$ = $1; }
 			| IDENT							{  $$ = $1; }
 		;
@@ -5183,7 +5177,7 @@ AexprConst:  Iconst
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Float;
-					n->val.val.dval = $1;
+					n->val.val.str = $1;
 					$$ = (Node *)n;
 				}
 		| Sconst
@@ -5621,7 +5615,8 @@ Oid param_type(int t)
  *	a few cycles throughout the parse and rewrite stages if we collapse
  *	the minus into the constant sooner rather than later...
  */
-static Node *doNegate(Node *n)
+static Node *
+doNegate(Node *n)
 {
 	if (IsA(n, A_Const))
 	{
@@ -5634,10 +5629,30 @@ static Node *doNegate(Node *n)
 		}
 		if (con->val.type == T_Float)
 		{
-			con->val.val.dval = -con->val.val.dval;
+			doNegateFloat(&con->val);
 			return n;
 		}
 	}
 
 	return makeA_Expr(OP, "-", NULL, n);
+}
+
+static void
+doNegateFloat(Value *v)
+{
+	char   *oldval = v->val.str;
+
+	Assert(IsA(v, Float));
+	if (*oldval == '+')
+		oldval++;
+	if (*oldval == '-')
+		v->val.str = oldval;	/* just strip the '-' */
+	else
+	{
+		char   *newval = (char *) palloc(strlen(oldval) + 2);
+
+		*newval = '-';
+		strcpy(newval+1, oldval);
+		v->val.str = newval;
+	}
 }

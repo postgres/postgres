@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.37 2000/02/20 21:32:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.38 2000/02/21 18:47:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1130,7 +1130,8 @@ _freeValue(Value *node)
 {
 	switch (node->type)
 	{
-			case T_String:
+		case T_Float:
+		case T_String:
 			pfree(node->val.str);
 			break;
 		default:
@@ -1345,8 +1346,8 @@ freeObject(void *node)
 			 * VALUE NODES
 			 */
 		case T_Integer:
-		case T_String:
 		case T_Float:
+		case T_String:
 			_freeValue(node);
 			break;
 		case T_List:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.29 2000/02/06 03:27:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.30 2000/02/21 18:47:00 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -73,19 +73,23 @@ makeInteger(long i)
 
 /*
  *	makeFloat
+ *
+ * Caller is responsible for passing a palloc'd string.
  */
 Value *
-makeFloat(double d)
+makeFloat(char *numericStr)
 {
 	Value	   *v = makeNode(Value);
 
 	v->type = T_Float;
-	v->val.dval = d;
+	v->val.str = numericStr;
 	return v;
 }
 
 /*
  *	makeString
+ *
+ * Caller is responsible for passing a palloc'd string.
  */
 Value *
 makeString(char *str)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.64 2000/02/19 04:17:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.65 2000/02/21 18:47:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,7 +324,7 @@ other			.
 				}
 
 {param}			{
-					yylval.ival = atoi((char*)&yytext[1]);
+					yylval.ival = atol((char*)&yytext[1]);
 					return PARAM;
 				}
 
@@ -332,46 +332,21 @@ other			.
 					char* endptr;
 
 					errno = 0;
-					yylval.ival = strtol((char *)yytext,&endptr,10);
+					yylval.ival = strtol((char *)yytext, &endptr, 10);
 					if (*endptr != '\0' || errno == ERANGE)
 					{
-						errno = 0;
-#if 0
-						yylval.dval = strtod(((char *)yytext),&endptr);
-						if (*endptr != '\0' || errno == ERANGE)
-							elog(ERROR,"Bad integer input '%s'",yytext);
-						CheckFloat8Val(yylval.dval);
-						elog(NOTICE,"Integer input '%s' is out of range; promoted to float", yytext);
-						return FCONST;
-#endif
+						/* integer too large, treat it as a float */
 						yylval.str = pstrdup((char*)yytext);
-						return SCONST;
+						return FCONST;
 					}
 					return ICONST;
 				}
 {decimal}		{
-					char* endptr;
-
-					if (strlen((char *)yytext) <= 17)
-					{
-						errno = 0;
-						yylval.dval = strtod((char *)yytext,&endptr);
-						if (*endptr != '\0' || errno == ERANGE)
-							elog(ERROR,"Bad float input '%s'",yytext);
-						CheckFloat8Val(yylval.dval);
-						return FCONST;
-					}
 					yylval.str = pstrdup((char*)yytext);
-					return SCONST;
+					return FCONST;
 				}
 {real}			{
-					char* endptr;
-
-					errno = 0;
-					yylval.dval = strtod((char *)yytext,&endptr);
-					if (*endptr != '\0' || errno == ERANGE)
-						elog(ERROR,"Bad float input '%s'",yytext);
-					CheckFloat8Val(yylval.dval);
+					yylval.str = pstrdup((char*)yytext);
 					return FCONST;
 				}
 

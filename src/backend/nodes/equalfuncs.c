@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.62 2000/02/20 21:32:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.63 2000/02/21 18:47:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,12 +737,11 @@ _equalValue(Value *a, Value *b)
 
 	switch (a->type)
 	{
-		case T_String:
-			return strcmp(a->val.str, b->val.str);
 		case T_Integer:
 			return a->val.ival == b->val.ival;
 		case T_Float:
-			return a->val.dval == b->val.dval;
+		case T_String:
+			return strcmp(a->val.str, b->val.str) == 0;
 		default:
 			break;
 	}
@@ -870,8 +869,8 @@ equal(void *a, void *b)
 			retval = _equalEState(a, b);
 			break;
 		case T_Integer:
-		case T_String:
 		case T_Float:
+		case T_String:
 			retval = _equalValue(a, b);
 			break;
 		case T_List:

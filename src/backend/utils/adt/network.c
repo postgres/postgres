@@ -3,22 +3,23 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.16 1999/09/23 17:42:23 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.17 2000/02/21 18:47:07 tgl Exp $
+ *
  *	Jon Postel RIP 16 Oct 1998
  */
 
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <errno.h>
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "postgres.h"
 #include "utils/builtins.h"
 
-static int	v4bitncmp(unsigned int a1, unsigned int a2, int bits);
+
+static int	v4bitncmp(unsigned long a1, unsigned long a2, int bits);
 
 /*
  *	Access macros.	Add IPV6 support.
@@ -38,6 +39,7 @@ static int	v4bitncmp(unsigned int a1, unsigned int a2, int bits);
 
 #define ip_v4addr(inetptr) \
 	(((inet_struct *)VARDATA(inetptr))->addr.ipv4_addr)
+
 
 /* Common input routine */
 static inet *
@@ -127,7 +129,8 @@ cidr_out(inet *src)
 }
 
 /*
- *	Boolean tests for magnitude.  Add V4/V6 testing!
+ *	Boolean tests for ordering operators --- must agree with sorting
+ *	operator network_cmp().
  */
 
 bool
@@ -135,19 +138,7 @@ network_lt(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
 		return FALSE;
-	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
-	{
-		int			order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2));
-
-		return ((order < 0) || ((order == 0) && (ip_bits(a1) < ip_bits(a2))));
-	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		return FALSE;
-	}
+	return (bool) (network_cmp(a1, a2) < 0);
 }
 
 bool
@@ -155,7 +146,7 @@ network_le(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
 		return FALSE;
-	return (network_lt(a1, a2) || network_eq(a1, a2));
+	return (bool) (network_cmp(a1, a2) <= 0);
 }
 
 bool
@@ -163,18 +154,7 @@ network_eq(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
 		return FALSE;
-	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
-	{
-		return ((ip_bits(a1) == ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0));
-	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		return FALSE;
-	}
+	return (bool) (network_cmp(a1, a2) == 0);
 }
 
 bool
@@ -182,7 +162,7 @@ network_ge(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
 		return FALSE;
-	return (network_gt(a1, a2) || network_eq(a1, a2));
+	return (bool) (network_cmp(a1, a2) >= 0);
 }
 
 bool
@@ -190,19 +170,7 @@ network_gt(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
 		return FALSE;
-	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
-	{
-		int			order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2));
-
-		return ((order > 0) || ((order == 0) && (ip_bits(a1) > ip_bits(a2))));
-	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		return FALSE;
-	}
+	return (bool) (network_cmp(a1, a2) > 0);
 }
 
 bool
@@ -210,7 +178,34 @@ network_ne(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
 		return FALSE;
-	return (!network_eq(a1, a2));
+	return (bool) (network_cmp(a1, a2) != 0);
+}
+
+/*
+ *	Comparison function for sorting.  Add V4/V6 testing!
+ */
+
+int4
+network_cmp(inet *a1, inet *a2)
+{
+	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
+	{
+		int		order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2),
+								  (ip_bits(a1) < ip_bits(a2)) ?
+								  ip_bits(a1) : ip_bits(a2));
+
+		if (order)
+			return order;
+		/* They agree in the first N bits, so shorter one comes first */
+		return (int) ip_bits(a1) - (int) ip_bits(a2);
+	}
+	else
+	{
+		/* Go for an IPV6 address here, before faulting out: */
+		elog(ERROR, "cannot compare address families %d and %d",
+			 ip_family(a1), ip_family(a2));
+		return 0;
+	}
 }
 
 bool
@@ -291,28 +286,6 @@ network_supeq(inet *a1, inet *a2)
 			 ip_family(a1), ip_family(a2));
 		return FALSE;
 	}
-}
-
-/*
- *	Comparison function for sorting.  Add V4/V6 testing!
- */
-
-int4
-network_cmp(inet *a1, inet *a2)
-{
-	if (ntohl(ip_v4addr(a1)) < ntohl(ip_v4addr(a2)))
-		return (-1);
-
-	if (ntohl(ip_v4addr(a1)) > ntohl(ip_v4addr(a2)))
-		return (1);
-
-	if (ip_bits(a1) < ip_bits(a2))
-		return (-1);
-
-	if (ip_bits(a1) > ip_bits(a2))
-		return (1);
-
-	return 0;
 }
 
 text *
@@ -476,7 +449,7 @@ network_netmask(inet *ip)
  */
 
 static int
-v4bitncmp(unsigned int a1, unsigned int a2, int bits)
+v4bitncmp(unsigned long a1, unsigned long a2, int bits)
 {
 	unsigned long mask = 0;
 	int			i;
@@ -485,9 +458,11 @@ v4bitncmp(unsigned int a1, unsigned int a2, int bits)
 		mask = (mask >> 1) | 0x80000000;
 	a1 = ntohl(a1);
 	a2 = ntohl(a2);
-	if ((a1 & mask) < (a2 & mask))
+	a1 &= mask;
+	a2 &= mask;
+	if (a1 < a2)
 		return (-1);
-	else if ((a1 & mask) > (a2 & mask))
+	else if (a1 > a2)
 		return (1);
 	return (0);
 }

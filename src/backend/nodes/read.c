@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.20 2000/01/26 05:56:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.21 2000/02/21 18:47:00 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -18,6 +18,7 @@
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
+#include <errno.h>
 
 #include "postgres.h"
 
@@ -193,30 +194,32 @@ static NodeTag
 nodeTokenType(char *token, int length)
 {
 	NodeTag		retval;
+	char	   *numptr;
+	int			numlen;
+	char	   *endptr;
 
 	/*
-	 * Check if the token is a number (decimal or integer, positive or
-	 * negative)
+	 * Check if the token is a number
 	 */
-	if (isdigit(*token) ||
-		(length >= 2 && *token == '-' && isdigit(token[1])))
+	numptr = token;
+	numlen = length;
+	if (*numptr == '+' || *numptr == '-')
+		numptr++, numlen--;
+	if ((numlen > 0 && isdigit(*numptr)) ||
+		(numlen > 1 && *numptr == '.' && isdigit(numptr[1])))
 	{
 		/*
-		 * skip the optional '-' (i.e. negative number)
+		 * Yes.  Figure out whether it is integral or float;
+		 * this requires both a syntax check and a range check.
+		 * strtol() can do both for us.
+		 * We know the token will end at a character that strtol will
+		 * stop at, so we do not need to modify the string.
 		 */
-		if (*token == '-')
-			token++, length--;
-
-		/*
-		 * See if there is a decimal point
-		 */
-		while (length > 0 && *token != '.')
-			token++, length--;
-
-		/*
-		 * if there isn't, token's an int, otherwise it's a float.
-		 */
-		retval = (*token != '.') ? T_Integer : T_Float;
+		errno = 0;
+		(void) strtol(token, &endptr, 10);
+		if (endptr != token+length || errno == ERANGE)
+			return T_Float;
+		return T_Integer;
 	}
 	/*
 	 * these three cases do not need length checks, since lsptok()
@@ -317,17 +320,23 @@ nodeRead(bool read_car_only)
 				make_dotted_pair_cell = true;
 			}
 			break;
-		case T_Float:
-			/* we know that the token terminates on a char atof will stop at */
-			this_value = (Node *) makeFloat(atof(token));
+		case T_Integer:
+			/* we know that the token terminates on a char atol will stop at */
+			this_value = (Node *) makeInteger(atol(token));
 			make_dotted_pair_cell = true;
 			break;
-		case T_Integer:
-			/* we know that the token terminates on a char atoi will stop at */
-			this_value = (Node *) makeInteger(atoi(token));
-			make_dotted_pair_cell = true;
+		case T_Float:
+			{
+				char   *fval = (char *) palloc(tok_len + 1);
+
+				memcpy(fval, token, tok_len);
+				fval[tok_len] = '\0';
+				this_value = (Node *) makeFloat(fval);
+				make_dotted_pair_cell = true;
+			}
 			break;
 		case T_String:
+			/* need to remove leading and trailing quotes, and backslashes */
 			this_value = (Node *) makeString(debackslash(token+1, tok_len-2));
 			make_dotted_pair_cell = true;
 			break;
