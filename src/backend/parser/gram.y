@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.30 1998/09/13 04:19:29 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.31 1998/09/16 14:29:35 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -236,7 +236,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <node>	TableConstraint
 %type <list>	constraint_list, constraint_expr
 %type <list>	default_list, default_expr
-%type <list>	ColQualList, ColQualifier
+%type <list>	ColPrimaryKey, ColQualList, ColQualifier
 %type <node>	ColConstraint, ColConstraintElem
 %type <list>	key_actions, key_action
 %type <str>		key_match, key_reference
@@ -751,7 +751,7 @@ columnDef:  ColId Typename ColQualifier
 					n->constraints = $3;
 					$$ = (Node *)n;
 				}
-			| ColId SERIAL
+			| ColId SERIAL ColPrimaryKey
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
@@ -760,7 +760,7 @@ columnDef:  ColId Typename ColQualifier
 					n->defval = NULL;
 					n->is_not_null = TRUE;
 					n->is_sequence = TRUE;
-					n->constraints = NULL;
+					n->constraints = $3;
 
 					$$ = (Node *)n;
 				}
@@ -786,6 +786,18 @@ ColQualList:  ColQualList ColConstraint
 				}
 		;
 
+ColPrimaryKey:  PRIMARY KEY
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_PRIMARY;
+					n->name = NULL;
+					n->def = NULL;
+					n->keys = NULL;
+					$$ = lcons((Node *)n, NIL);
+				}
+			| /*EMPTY*/							{ $$ = NULL; }
+		;
+
 ColConstraint:
 		CONSTRAINT name ColConstraintElem
 				{
@@ -806,6 +818,11 @@ ColConstraint:
 					$$ = NULL;
 				}
  * - thomas 1998-09-12
+ *
+ * DEFAULT NULL is already the default for Postgres.
+ * Bue define it here and carry it forward into the system
+ * to make it explicit.
+ * - thomas 1998-09-13
  */
 ColConstraintElem:  CHECK '(' constraint_expr ')'
 				{
@@ -813,6 +830,15 @@ ColConstraintElem:  CHECK '(' constraint_expr ')'
 					n->contype = CONSTR_CHECK;
 					n->name = NULL;
 					n->def = FlattenStringList($3);
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| DEFAULT NULL_P
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_DEFAULT;
+					n->name = NULL;
+					n->def = NULL;
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
@@ -870,10 +896,15 @@ default_list:  default_list ',' default_expr
 				}
 		;
 
-default_expr:  AexprConst
-				{	$$ = makeConstantList((A_Const *) $1); }
+/* The Postgres default column value is NULL.
+ * Rather than carrying DEFAULT NULL forward as a clause,
+ * let's just have it be a no-op.
 			| NULL_P
 				{	$$ = lcons( makeString("NULL"), NIL); }
+ * - thomas 1998-09-13
+ */
+default_expr:  AexprConst
+				{	$$ = makeConstantList((A_Const *) $1); }
 			| '-' default_expr %prec UMINUS
 				{	$$ = lcons( makeString( "-"), $2); }
 			| default_expr '+' default_expr
