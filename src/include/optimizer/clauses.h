@@ -6,15 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.1 1996/08/28 07:23:11 scrappy Exp $
+ * $Id: clauses.h,v 1.2 1996/11/06 09:19:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef CLAUSES_H
 #define CLAUSES_H
 
-#include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
+#include <nodes/primnodes.h>
 
 extern Expr *make_clause(int type, Node *oper, List *args);
 extern bool is_opclause(Node *clause);
