@@ -3,14 +3,41 @@
  * inval.c
  *	  POSTGRES cache invalidation dispatcher code.
  *
+ *	This is subtle stuff, so pay attention:
+ *
+ *	When a tuple is updated or deleted, our time qualification rules consider
+ *	that it is *still valid* so long as we are in the same command, ie,
+ *	until the next CommandCounterIncrement() or transaction commit.
+ *	(See utils/time/tqual.c.)  At the command boundary, the old tuple stops
+ *	being valid and the new version, if any, becomes valid.  Therefore,
+ *	we cannot simply flush a tuple from the system caches during heap_update()
+ *	or heap_delete().  The tuple is still good at that point; what's more,
+ *	even if we did flush it, it might be reloaded into the caches by a later
+ *	request in the same command.  So the correct behavior is to keep a list
+ *	of outdated (updated/deleted) tuples and then do the required cache
+ *	flushes at the next command boundary.  Similarly, we need a list of
+ *	inserted tuples (including new versions of updated tuples), which we will
+ *	use to flush those tuples out of the caches if we abort the transaction.
+ *	Notice that the first list lives only till command boundary, whereas the
+ *	second lives till end of transaction.  Finally, we need a third list of
+ *	all tuples outdated in the current transaction; if we commit, we send
+ *	those invalidation events to all other backends (via the SI message queue)
+ *	so that they can flush obsolete entries from their caches.
+ *
+ *	We do not need to register EVERY tuple operation in this way, just those
+ *	on tuples in relations that have associated catcaches.  Also, whenever
+ *	we see an operation on a pg_class or pg_attribute tuple, we register
+ *	a relcache flush operation for the relation described by that tuple.
+ *
+ *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.38 2000/11/08 22:10:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.39 2001/01/05 22:54:37 tgl Exp $
  *
- * Note - this code is real crufty...
+ * Note - this code is real crufty... badly needs a rewrite to improve
+ * readability and portability.  (Shouldn't assume Oid == Index, for example)
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +109,8 @@ typedef InvalidationMessageData *InvalidationMessage;
  * ----------------
  *	Invalidation info is divided into three parts.
  *	1) shared invalidation to be registered for all backends
- *	2) local invalidation for the transaction itself
+ *	2) local invalidation for the transaction itself (actually, just
+ *	   for the current command within the transaction)
  *	3) rollback information for the transaction itself (in case we abort)
  * ----------------
  */
@@ -107,7 +135,9 @@ static LocalInvalid RollbackStack = EmptyLocalInvalid;
 
 
 static InvalidationEntry InvalidationEntryAllocate(uint16 size);
-static void LocalInvalidInvalidate(LocalInvalid invalid, void (*function) (), bool freemember);
+static void LocalInvalidInvalidate(LocalInvalid invalid,
+								   void (*function) (InvalidationMessage),
+								   bool freemember);
 static LocalInvalid LocalInvalidRegister(LocalInvalid invalid,
 					 InvalidationEntry entry);
 static void DiscardInvalidStack(LocalInvalid *invalid);
@@ -161,7 +191,7 @@ LocalInvalidRegister(LocalInvalid invalid,
  */
 static void
 LocalInvalidInvalidate(LocalInvalid invalid,
-					   void (*function) (),
+					   void (*function) (InvalidationMessage),
 					   bool freemember)
 {
 	InvalidationEntryData *entryDataP;
@@ -172,7 +202,7 @@ LocalInvalidInvalidate(LocalInvalid invalid,
 			&((InvalidationUserData *) invalid)->dataP[-1];
 
 		if (PointerIsValid(function))
-			(*function) ((Pointer) &entryDataP->userData);
+			(*function) ((InvalidationMessage) &entryDataP->userData);
 
 		invalid = (Pointer) entryDataP->nextP;
 
@@ -193,7 +223,9 @@ DiscardInvalidStack(LocalInvalid *invalid)
 	locinv = *invalid;
 	*invalid = EmptyLocalInvalid;
 	if (locinv)
-		LocalInvalidInvalidate(locinv, (void (*) ()) NULL, true);
+		LocalInvalidInvalidate(locinv,
+							   (void (*) (InvalidationMessage)) NULL,
+							   true);
 }
 
 /* ----------------------------------------------------------------
@@ -269,7 +301,7 @@ CacheIdRegisterSpecifiedLocalInvalid(LocalInvalid invalid,
  * --------------------------------
  */
 static void
-CacheIdRegisterLocalInvalid(Index cacheId,
+CacheIdRegisterLocalInvalid(int cacheId,
 							Index hashIndex,
 							ItemPointer pointer)
 {
@@ -298,7 +330,8 @@ CacheIdRegisterLocalInvalid(Index cacheId,
  * --------------------------------
  */
 static void
-CacheIdRegisterLocalRollback(Index cacheId, Index hashIndex,
+CacheIdRegisterLocalRollback(int cacheId,
+							 Index hashIndex,
 							 ItemPointer pointer)
 {
 
@@ -477,7 +510,7 @@ CacheIdInvalidate(Index cacheId,
  * --------------------------------
  */
 static void
-ResetSystemCaches()
+ResetSystemCaches(void)
 {
 	ResetSystemCache();
 	RelationCacheInvalidate();
@@ -585,13 +618,13 @@ InvalidationMessageCacheInvalidate(InvalidationMessage message)
 }
 
 /* --------------------------------
- *		RelationInvalidateRelationCache
+ *		PrepareToInvalidateRelationCache
  * --------------------------------
  */
 static void
-RelationInvalidateRelationCache(Relation relation,
-								HeapTuple tuple,
-								void (*function) ())
+PrepareToInvalidateRelationCache(Relation relation,
+								 HeapTuple tuple,
+								 void (*function) (Oid, Oid))
 {
 	Oid			relationId;
 	Oid			objectId;
@@ -614,7 +647,7 @@ RelationInvalidateRelationCache(Relation relation,
 		return;
 
 	/* ----------------
-	 *	  can't handle immediate relation descriptor invalidation
+	 *	register the relcache-invalidation action in the appropriate list
 	 * ----------------
 	 */
 	Assert(PointerIsValid(function));
@@ -629,11 +662,9 @@ RelationInvalidateRelationCache(Relation relation,
  *
  * Note:
  *		This should be called as the first step in processing a transaction.
- *		This should be called while waiting for a query from the front end
- *		when other backends are active.
  */
 void
-DiscardInvalid()
+DiscardInvalid(void)
 {
 	/* ----------------
 	 *	debugging stuff
@@ -694,7 +725,8 @@ RegisterInvalid(bool send)
  *		Causes invalidation immediately for the next command of the transaction.
  *
  * Note:
- *		This should be called in time of CommandCounterIncrement().
+ *		This should be called during CommandCounterIncrement(),
+ *		after we have advanced the command ID.
  */
 void
 ImmediateLocalInvalidation(bool send)
@@ -735,7 +767,7 @@ ImmediateLocalInvalidation(bool send)
 }
 
 /*
- * InvokeHeapTupleInvalidation
+ * PrepareForTupleInvalidation
  *		Invoke functions for the tuple which register invalidation
  *		of catalog/relation cache.
  *	Note:
@@ -743,20 +775,21 @@ ImmediateLocalInvalidation(bool send)
  *		Assumes tuple is valid.
  */
 #ifdef	INVALIDDEBUG
-#define InvokeHeapTupleInvalidation_DEBUG1 \
+#define PrepareForTupleInvalidation_DEBUG1 \
 elog(DEBUG, "%s(%s, [%d,%d])", \
 	 funcname,\
 	 RelationGetPhysicalRelationName(relation), \
 	 ItemPointerGetBlockNumber(&tuple->t_self), \
 	 ItemPointerGetOffsetNumber(&tuple->t_self))
 #else
-#define InvokeHeapTupleInvalidation_DEBUG1
+#define PrepareForTupleInvalidation_DEBUG1
 #endif	 /* defined(INVALIDDEBUG) */
 
 static void
-InvokeHeapTupleInvalidation(Relation relation, HeapTuple tuple,
-							void (*CacheIdRegisterFunc) (),
-							void (*RelationIdRegisterFunc) (),
+PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
+							void (*CacheIdRegisterFunc) (int, Index,
+														 ItemPointer),
+							void (*RelationIdRegisterFunc) (Oid, Oid),
 							const char *funcname)
 {
 	/* ----------------
@@ -768,8 +801,11 @@ InvokeHeapTupleInvalidation(Relation relation, HeapTuple tuple,
 
 	if (IsBootstrapProcessingMode())
 		return;
+
 	/* ----------------
-	 *	this only works for system relations now
+	 *	We only need to worry about invalidation for tuples that are in
+	 *	system relations; user-relation tuples are never in catcaches
+	 *	and can't affect the relcache either.
 	 * ----------------
 	 */
 	if (!IsSystemRelationName(NameStr(RelationGetForm(relation)->relname)))
@@ -779,23 +815,24 @@ InvokeHeapTupleInvalidation(Relation relation, HeapTuple tuple,
 	 *	debugging stuff
 	 * ----------------
 	 */
-	InvokeHeapTupleInvalidation_DEBUG1;
+	PrepareForTupleInvalidation_DEBUG1;
 
-	RelationInvalidateCatalogCacheTuple(relation, tuple,
-										CacheIdRegisterFunc);
+	PrepareToInvalidateCacheTuple(relation, tuple,
+								  CacheIdRegisterFunc);
 
-	RelationInvalidateRelationCache(relation, tuple,
-									RelationIdRegisterFunc);
+	PrepareToInvalidateRelationCache(relation, tuple,
+									 RelationIdRegisterFunc);
 }
 
 /*
  * RelationInvalidateHeapTuple
- *		Causes the given tuple in a relation to be invalidated.
+ *		Register the given tuple for invalidation at end of command
+ *		(ie, current command is outdating this tuple).
  */
 void
 RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 {
-	InvokeHeapTupleInvalidation(relation, tuple,
+	PrepareForTupleInvalidation(relation, tuple,
 								CacheIdRegisterLocalInvalid,
 								RelationIdRegisterLocalInvalid,
 								"RelationInvalidateHeapTuple");
@@ -803,13 +840,13 @@ RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 
 /*
  * RelationMark4RollbackHeapTuple
- *		keep the given tuple in a relation to be invalidated
- *		in case of abort.
+ *		Register the given tuple for invalidation in case of abort
+ *		(ie, current command is creating this tuple).
  */
 void
 RelationMark4RollbackHeapTuple(Relation relation, HeapTuple tuple)
 {
-	InvokeHeapTupleInvalidation(relation, tuple,
+	PrepareForTupleInvalidation(relation, tuple,
 								CacheIdRegisterLocalRollback,
 								RelationIdRegisterLocalRollback,
 								"RelationMark4RollbackHeapTuple");

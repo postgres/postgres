@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.73 2000/11/24 04:16:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.74 2001/01/05 22:54:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1047,17 +1047,36 @@ ReleaseCatCache(HeapTuple tuple)
 }
 
 /* --------------------------------
- *	RelationInvalidateCatalogCacheTuple()
+ *	PrepareToInvalidateCacheTuple()
  *
- *	Invalidate a tuple from a specific relation.  This call determines the
- *	cache in question and calls CatalogCacheIdInvalidate().  It is -ok-
- *	if the relation cannot be found, it simply means this backend has yet
- *	to open it.
+ *	This is part of a rather subtle chain of events, so pay attention:
+ *
+ *	When a tuple is updated or deleted, it cannot be flushed from the
+ *	catcaches immediately, for reasons explained at the top of inval.c.
+ *	Instead we have to add entry(s) for the tuple to a list of pending tuple
+ *	invalidations that will be done at the end of the command or transaction.
+ *
+ *	The lists of tuples that need to be flushed are kept by inval.c.  This
+ *	routine is a helper routine for inval.c.  Given a tuple belonging to
+ *	the specified relation, find all catcaches it could be in, compute the
+ *	correct hashindex for each such catcache, and call the specified function
+ *	to record the cache id, hashindex, and tuple ItemPointer in inval.c's
+ *	lists.  CatalogCacheIdInvalidate will be called later, if appropriate,
+ *	using the recorded information.
+ *
+ *	Note that it is irrelevant whether the given tuple is actually loaded
+ *	into the catcache at the moment.  Even if it's not there now, it might
+ *	be by the end of the command, so we have to be prepared to flush it.
+ *
+ *	Also note that it's not an error if there are no catcaches for the
+ *	specified relation.  inval.c doesn't know exactly which rels have
+ *	catcaches --- it will call this routine for any tuple that's in a
+ *	system relation.
  * --------------------------------
  */
 void
-RelationInvalidateCatalogCacheTuple(Relation relation,
-									HeapTuple tuple,
+PrepareToInvalidateCacheTuple(Relation relation,
+							  HeapTuple tuple,
 							  void (*function) (int, Index, ItemPointer))
 {
 	CatCache   *ccp;
@@ -1069,13 +1088,13 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 	Assert(RelationIsValid(relation));
 	Assert(HeapTupleIsValid(tuple));
 	Assert(PointerIsValid(function));
-	CACHE1_elog(DEBUG, "RelationInvalidateCatalogCacheTuple: called");
+	CACHE1_elog(DEBUG, "PrepareToInvalidateCacheTuple: called");
 
 	/* ----------------
 	 *	for each cache
 	 *	   if the cache contains tuples from the specified relation
-	 *		   call the invalidation function on the tuples
-	 *		   in the proper hash bucket
+	 *		   compute the tuple's hash index in this cache,
+	 *		   and call the passed function to register the information.
 	 * ----------------
 	 */
 

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.29 2000/11/24 04:16:11 tgl Exp $
+ * $Id: catcache.h,v 1.30 2001/01/05 22:54:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ extern void ResetSystemCache(void);
 extern void SystemCacheRelationFlushed(Oid relId);
 extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
 									 ItemPointer pointer);
-extern void RelationInvalidateCatalogCacheTuple(Relation relation,
+extern void PrepareToInvalidateCacheTuple(Relation relation,
 								HeapTuple tuple,
 								void (*function) (int, Index, ItemPointer));
 
