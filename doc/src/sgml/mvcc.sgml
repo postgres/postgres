@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.30 2002/11/15 03:11:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.31 2002/12/18 20:40:24 momjian Exp $
 -->
 
  <chapter id="mvcc">
@@ -57,11 +57,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.30 2002/11/15 03:11:17 momjia
    <title>Transaction Isolation</title>
 
    <para>
-    The <acronym>SQL</acronym>
-    standard defines four levels of transaction
-    isolation in terms of three phenomena that must be prevented 
-    between concurrent transactions.
-    These undesirable phenomena are:
+    The <acronym>SQL</acronym> standard defines four levels of
+    transaction isolation in terms of three phenomena that must be
+    prevented between concurrent transactions.  These undesirable
+    phenomena are:
 
     <variablelist>
      <varlistentry>
@@ -200,7 +199,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.30 2002/11/15 03:11:17 momjia
 
    <para>
     <productname>PostgreSQL</productname>
-    offers the read committed and serializable isolation levels.
+    offers the Read Committed and Serializable isolation levels.
    </para>
 
   <sect2 id="xact-read-committed">
@@ -635,7 +634,7 @@ ERROR:  Can't serialize access due to concurrent update
      In addition to table and row locks, page-level share/exclusive locks are
      used to control read/write access to table pages in the shared buffer
      pool.  These locks are released immediately after a tuple is fetched or
-     updated.  Application writers normally need not be concerned with
+     updated.  Application developers normally need not be concerned with
      page-level locks, but we mention them for completeness.
     </para>
 
@@ -645,25 +644,70 @@ ERROR:  Can't serialize access due to concurrent update
     <title>Deadlocks</title>
 
     <para>
-     Use of explicit locking can cause <firstterm>deadlocks</>, wherein
-     two (or more) transactions each hold locks that the other wants.
-     For example, if transaction 1 acquires an exclusive lock on table A
-     and then tries to acquire an exclusive lock on table B, while transaction
-     2 has already exclusive-locked table B and now wants an exclusive lock
-     on table A, then neither one can proceed.
-     <productname>PostgreSQL</productname> automatically detects deadlock
-     situations and resolves them by aborting one of the transactions
-     involved, allowing the other(s) to complete.  (Exactly which transaction
-     will be aborted is difficult to predict and should not be relied on.)
+     The use of explicit locking can increase the likelyhood of
+     <firstterm>deadlocks</>, wherein two (or more) transactions each
+     hold locks that the other wants.  For example, if transaction 1
+     acquires an exclusive lock on table A and then tries to acquire
+     an exclusive lock on table B, while transaction 2 has already
+     exclusive-locked table B and now wants an exclusive lock on table
+     A, then neither one can proceed.
+     <productname>PostgreSQL</productname> automatically detects
+     deadlock situations and resolves them by aborting one of the
+     transactions involved, allowing the other(s) to complete.
+     (Exactly which transaction will be aborted is difficult to
+     predict and should not be relied on.)
     </para>
 
     <para>
-     The best defense against deadlocks is generally to avoid them by being
-     certain that all applications using a database acquire locks on multiple
-     objects in a consistent order.  One should also ensure that the first
-     lock acquired on an object in a transaction is the highest mode that
-     will be needed for that object.  If it is not feasible to verify this
-     in advance, then deadlocks may be handled on-the-fly by retrying
+     Note that deadlocks can also occur as the result of row-level
+     locks (and thus, they can occur even if explicit locking is not
+     used). Consider the case in which there are two concurrent
+     transactions modifying a table. The first transaction executes:
+
+<screen>
+UPDATE accounts SET balance = balance + 100.00 WHERE acctnum = 11111;
+</screen>
+
+     This acquires a row-level lock on the row with the specified
+     account number. Then, the second transaction executes:
+
+<screen>
+UPDATE accounts SET balance = balance + 100.00 WHERE acctnum = 22222;
+UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 11111;
+</screen>
+
+     The first <command>UPDATE</command> statement successfully
+     acquires a row-level lock on the specified row, so it succeeds in
+     updating that row. However, the second <command>UPDATE</command>
+     statement finds that the row it is attempting to update has
+     already been locked, so it waits for the transaction that
+     acquired the lock to complete. Transaction two is now waiting on
+     transaction one to complete before it continues execution. Now,
+     transaction one executes:
+
+<screen>
+UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
+</screen>
+
+     Transaction one attempts to acquire a row-level lock on the
+     specified row, but it cannot: transaction two already holds such
+     a lock. So it waits for transaction two to complete. Thus,
+     transaction one is blocked on transaction two, and transaction
+     two is blocked on transaction one: a deadlock
+     condition. <productname>PostgreSQL</productname> will detect this
+     situation and abort one of the transactions.
+    </para>
+
+    <para>
+     The best defense against deadlocks is generally to avoid them by
+     being certain that all applications using a database acquire
+     locks on multiple objects in a consistent order. That was the
+     reason for the previous deadlock example: if both transactions
+     had updated the rows in the same order, no deadlock would have
+     occurred. One should also ensure that the first lock acquired on
+     an object in a transaction is the highest mode that will be
+     needed for that object.  If it is not feasible to verify this in
+     advance, then deadlocks may be handled on-the-fly by retrying
      transactions that are aborted due to deadlock.
     </para>
 
@@ -822,9 +866,14 @@ ERROR:  Can't serialize access due to concurrent update
    </para>
 
    <para>
-    In short, B-tree indexes are the recommended index type for concurrent
-    applications.
-   </para>
+    In short, B-tree indexes offer the best performance for concurrent
+    applications; since they also have more features than hash
+    indexes, they are the recommended index type for concurrent
+    applications that need to index scalar data. When dealing with
+    non-scalar data, B-trees obviously cannot be used; in that
+    situation, application developers should be aware of the
+    relatively poor concurrent performance of GiST and R-tree
+    indexes.
   </sect1>
  </chapter>
 
