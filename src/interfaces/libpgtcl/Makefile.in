@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.4 1998/03/15 08:02:55 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.5 1998/03/23 06:03:04 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,8 +17,7 @@ include $(SRCDIR)/Makefile.global
 INCLUDE_OPT= \
              -I$(SRCDIR)/backend \
              -I$(SRCDIR)/include \
-             -I$(LIBPQDIR) \
-             -I$(TCL_INCDIR)
+             -I$(LIBPQDIR)
 
 PORTNAME=@PORTNAME@
 

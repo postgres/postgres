@@ -563,12 +563,11 @@ dnl Check for tcl.h
 if test "$USE_TCL" = "true"
 then
 TCL_INCDIR=no
-AC_CHECK_HEADER(tcl.h, TCL_INCDIR=)
+AC_CHECK_HEADER(tcl.h, TCL_INCDIR=yes)
 if test "$TCL_INCDIR" = "no"; then
 AC_MSG_WARN(tcl support disabled; tcl.h missing)
 USE_TCL=
 fi
-AC_SUBST(TCL_INCDIR)
 fi
 
 dnl Check for Tcl archive
@@ -600,12 +599,11 @@ ice_save_LDFLAGS="$LDFLAGS"
 CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
 TK_INCDIR=no
-AC_CHECK_HEADER(tk.h, TK_INCDIR=)
+AC_CHECK_HEADER(tk.h, TK_INCDIR=yes)
 if test "$TK_INCDIR" = "no"; then
 AC_MSG_WARN(tcl support disabled; tk.h missing)
 USE_TCL=
 fi
-AC_SUBST(TK_INCDIR)
 
 LIBS="$ice_save_LIBS"
 CFLAGS="$ice_save_CFLAGS"

@@ -7,14 +7,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.12 1998/03/23 04:08:05 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.13 1998/03/23 06:02:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-CFLAGS+=  $(X_CFLAGS) -I$(TCL_INCDIR) -I$(TK_INCDIR) -I$(SRCDIR)/interfaces/libpgtcl
+CFLAGS+=  $(X_CFLAGS) -I$(SRCDIR)/interfaces/libpgtcl
 
 ifdef KRBVERS
 LDFLAGS+= $(KRBLIBS)

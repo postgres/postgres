@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.36 1998/03/23 04:07:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.37 1998/03/23 06:01:47 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -160,9 +160,7 @@ endif
 USE_TCL= @USE_TCL@
 # customize these to your site's needs
 #
-TCL_INCDIR= @TCL_INCDIR@
 TCL_LIB= @TCL_LIB@
-TK_INCDIR= @TK_INCDIR@
 TK_LIB= @TK_LIB@
 
 USE_PERL= @USE_PERL@
