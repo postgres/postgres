@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.2 1999/01/28 11:48:31 wieck Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.3 1999/05/26 20:55:06 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -41,6 +41,8 @@ static int	plpgsql_bytes_left;
 static int	scanner_functype;
 static int	scanner_typereported;
 int	plpgsql_SpaceScanned = 0;
+
+extern int yylineno;
 
 static void plpgsql_input(char *buf, int *result, int max);
 #define YY_INPUT(buf,res,max)	plpgsql_input(buf, &res, max)
