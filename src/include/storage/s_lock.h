@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.10 1997/10/03 15:27:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.11 1997/10/30 05:24:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,10 @@
  *			while (test_and_set(char_address))
  *				;
  *		}
+ *
+ *		In addition to modifying this file you will need to modify
+ *		the appropriate ...src/include/port/...h file to define
+ *		HAS_TEST_AND_SET for the appropriate circumstances.
  *
  *		If this is not done, POSTGRES will default to using System V
  *		semaphores (and take a large performance hit -- around 40% of
@@ -227,6 +231,31 @@ tas_dummy()
 }
 
 #endif							/* sun3 */
+
+/*
+ *	M68000 ports under NetBSD.
+ *
+ *	This version should also work on a sun3, but I can't test it.
+ *	Conversely the sun3 version should work under NetBSD/m68k, but
+ *	it doesn't.
+ */
+#if defined(__NetBSD__) && defined(__m68k__)
+
+static void S_LOCK(char *lock)
+{
+	asm("
+			movel	a6@(8),a0
+	LOOP:
+			tas		a0@
+			bmi		LOOP
+	");
+}
+
+#define S_UNLOCK(lock)		(*(lock) = 0)
+
+#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
+
+#endif	/* M68000 && NetBSD */
 
 /*
  * sparc machines
