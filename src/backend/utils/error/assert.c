@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.2 1996/11/11 11:29:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.3 1996/11/11 11:49:40 scrappy Exp $
  *
  * NOTE
  *    This should eventually work with elog(), dlog(), etc.
@@ -49,7 +49,10 @@ ExceptionalCondition(char* conditionName,
 		exceptionP->message, conditionName, detail,
 		fileName, lineNumber);
     }
-    
+
+#ifdef ABORT_ON_ASSERT
+    abort();
+#endif
     /*
      * XXX Depending on the Exception and tracing conditions, you will
      * XXX want to stop here immediately and maybe dump core.
