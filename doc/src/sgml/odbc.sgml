@@ -692,8 +692,8 @@ InstallDir = /opt/applix/axdata/axshlib
 	 Typically <productname>Applix</productname> is installed in
 	 <filename>/opt</filename> so the full path would be
 	 <filename>/opt/applix/axdata/axshlib/lib</filename>,
-	 but if you have installed applix somewhere else then
-	 change the path accordingly.
+	 but if you have installed <productname>Applix</productname>
+	 somewhere else then change the path accordingly.
 	</para>
        </step>
       </substeps>

@@ -1,8 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.6 2000/02/02 16:21:06 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.7 2000/03/29 03:57:10 thomas Exp $
 Date/time details
 
 $Log: datetime.sgml,v $
+Revision 2.7  2000/03/29 03:57:10  thomas
+Change rules for interpreting date/time input to disallow 1 and 3 character
+ years. Rejects dates like '0.085', which were accepted previously.
+Minor mods of ODBC markup.
+
 Revision 2.6  2000/02/02 16:21:06  thomas
 Add detailed information on Australian time zones.
 
@@ -578,7 +583,7 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
       
       <step>
        <para>
-	If longer than two digits, then interpret as a year.
+	If four or more digits, then interpret as a year.
        </para>
       </step>
 
@@ -605,7 +610,13 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
 
       <step>
        <para>
-	Otherwise, interpret as a year.
+	If two digits or four or more digits, then interpret as a year.
+       </para>
+      </step>
+
+      <step>
+       <para>
+	Otherwise, throw an error.
        </para>
       </step>
      </substeps>
@@ -629,10 +640,10 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
       <tip>
        <para>
 	Gregorian years 1-99AD may be entered by using 4 digits with leading
-	zeros (e.g. 0099 is 99AD). Three digits are also accepted as a
-	year under most circumstances, though depending on position the
-	numeric string may
-	be interpreted as doy instead.
+	zeros (e.g. 0099 is 99AD). Previous versions of
+	<productname>Postgres</productname> accepted years with three
+	digits and with single digits, but as of v7.0 the rules have
+	been tightened up to reduce the possibility of ambiguity.
        </para>
       </tip>
      </para>
