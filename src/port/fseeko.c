@@ -8,12 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.6 2002/10/24 04:48:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.7 2002/10/28 00:00:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#if defined(bsdi) || defined(netbsd)
+/*
+ * We have to use the native defines here because configure hasn't
+ * completed yet.
+ */
+#if defined(__bsdi__) || defined(__NetBSD__)
 
 #include "c.h"
 
