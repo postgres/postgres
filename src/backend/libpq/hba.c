@@ -5,9 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.36 1998/10/02 16:18:20 momjian Exp $
+ *  $Id: hba.c,v 1.37 1998/12/14 06:50:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +285,7 @@ process_hba_record(FILE *file, SockAddr *raddr, const char *user,
 	return;
 
 syntax:
-	sprintf(PQerrormsg,
+	snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 			"process_hba_record: invalid syntax in pg_hba.conf file\n");
 
 	fputs(PQerrormsg, stderr);
@@ -358,29 +356,29 @@ static void
 find_hba_entry(SockAddr *raddr, const char *user, const char *database,
 			   bool *host_ok_p, UserAuth *userauth_p, char *auth_arg)
 {
-/*--------------------------------------------------------------------------
-  Read the config file and find an entry that allows connection from
-  host "*raddr" to database "database".  If found, return *host_ok_p == true
-  and *userauth_p and *auth_arg representing the contents of that entry.
+/*
+ * Read the config file and find an entry that allows connection from
+ * host "*raddr" to database "database".  If found, return *host_ok_p == true
+ * and *userauth_p and *auth_arg representing the contents of that entry.
+ *
+ * When a record has invalid syntax, we either ignore it or reject the
+ * connection (depending on where it's invalid).  No message or anything.
+ * We need to fix that some day.
+ *
+ * If we don't find or can't access the config file, we issue an error
+ * message and deny the connection.
+ *
+ * If we find a file by the old name of the config file (pg_hba), we issue
+ * an error message because it probably needs to be converted.  He didn't
+ * follow directions and just installed his old hba file in the new database
+ * system.
+ *
+ */
 
-  When a record has invalid syntax, we either ignore it or reject the
-  connection (depending on where it's invalid).  No message or anything.
-  We need to fix that some day.
-
-  If we don't find or can't access the config file, we issue an error
-  message and deny the connection.
-
-  If we find a file by the old name of the config file (pg_hba), we issue
-  an error message because it probably needs to be converted.  He didn't
-  follow directions and just installed his old hba file in the new database
-  system.
-
----------------------------------------------------------------------------*/
-	int			fd;
-
-	FILE	   *file;			/* The config file we have to read */
-
-	char	   *old_conf_file;
+	int		fd,
+				bufsize;
+	FILE	*file;			/* The config file we have to read */
+	char	*old_conf_file;
 
 	/* The name of old config file that better not exist. */
 
@@ -388,15 +386,15 @@ find_hba_entry(SockAddr *raddr, const char *user, const char *database,
 
 
 	/* put together the full pathname to the old config file */
-	old_conf_file = (char *) palloc((strlen(DataDir) +
-							  strlen(OLD_CONF_FILE) + 2) * sizeof(char));
-	sprintf(old_conf_file, "%s/%s", DataDir, OLD_CONF_FILE);
+	bufsize = (strlen(DataDir) + strlen(OLD_CONF_FILE) + 2) * sizeof(char);
+	old_conf_file = (char *) palloc(bufsize);
+	snprintf(old_conf_file, bufsize, "%s/%s", DataDir, OLD_CONF_FILE);
 
 	if ((fd = open(old_conf_file, O_RDONLY, 0)) != -1)
 	{
 		/* Old config file exists.	Tell this guy he needs to upgrade. */
 		close(fd);
-		sprintf(PQerrormsg,
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 		  "A file exists by the name used for host-based authentication "
 		   "in prior releases of Postgres (%s).  The name and format of "
 		   "the configuration file have changed, so this file should be "
@@ -407,22 +405,21 @@ find_hba_entry(SockAddr *raddr, const char *user, const char *database,
 	}
 	else
 	{
-		char	   *conf_file;	/* The name of the config file we have to
-								 * read */
+		char	*conf_file;	/* The name of the config file we have to read */
 
 		/* put together the full pathname to the config file */
-		conf_file = (char *) palloc((strlen(DataDir) +
-								  strlen(CONF_FILE) + 2) * sizeof(char));
-		sprintf(conf_file, "%s/%s", DataDir, CONF_FILE);
+		bufsize = (strlen(DataDir) + strlen(CONF_FILE) + 2) * sizeof(char);
+		conf_file = (char *) palloc(bufsize);
+		snprintf(conf_file, bufsize, "%s/%s", DataDir, CONF_FILE);
 
 		file = AllocateFile(conf_file, "r");
 		if (file == NULL)
 		{
 			/* The open of the config file failed.	*/
 
-			sprintf(PQerrormsg,
-				 "find_hba_entry: Host-based authentication config file "
-				"does not exist or permissions are not setup correctly! "
+			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+					"find_hba_entry: Host-based authentication config file "
+					"does not exist or permissions are not setup correctly! "
 					"Unable to open file \"%s\".\n",
 					conf_file);
 			fputs(PQerrormsg, stderr);
@@ -430,8 +427,8 @@ find_hba_entry(SockAddr *raddr, const char *user, const char *database,
 		}
 		else
 		{
-			process_open_config_file(file, raddr, user, database, host_ok_p, userauth_p,
-									 auth_arg);
+			process_open_config_file(file, raddr, user, database, host_ok_p, 
+					userauth_p, auth_arg);
 			FreeFile(file);
 		}
 		pfree(conf_file);
@@ -545,18 +542,15 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
   *ident_failed == true (and *ident_username undefined).
 ----------------------------------------------------------------------------*/
 
-	int			sock_fd;
 
-	/* File descriptor for socket on which we talk to Ident */
-
-	int			rc;				/* Return code from a locally called
-								 * function */
+	int	sock_fd,	/* File descriptor for socket on which we talk to Ident */
+			rc;				/* Return code from a locally called function */
 
 	sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (sock_fd == -1)
 	{
-		sprintf(PQerrormsg,
-			 "Failed to create socket on which to talk to Ident server. "
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH, 
+				"Failed to create socket on which to talk to Ident server. "
 				"socket() returned errno = %s (%d)\n",
 				strerror(errno), errno);
 		fputs(PQerrormsg, stderr);
@@ -592,8 +586,8 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 		}
 		if (rc != 0)
 		{
-			sprintf(PQerrormsg,
-				"Unable to connect to Ident server on the host which is "
+			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+					"Unable to connect to Ident server on the host which is "
 					"trying to connect to Postgres "
 					"(IP address %s, Port %d). "
 					"errno = %s (%d)\n",
@@ -604,15 +598,15 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 		}
 		else
 		{
-			char		ident_query[80];
+			char	ident_query[80];
 
 			/* The query we send to the Ident server */
-			sprintf(ident_query, "%d,%d\n",
+			snprintf(ident_query, 80, "%d,%d\n",
 					ntohs(remote_port), ntohs(local_port));
 			rc = send(sock_fd, ident_query, strlen(ident_query), 0);
 			if (rc < 0)
 			{
-				sprintf(PQerrormsg,
+				snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 						"Unable to send query to Ident server on the host which is "
 					  "trying to connect to Postgres (Host %s, Port %d),"
 						"even though we successfully connected to it.  "
@@ -624,16 +618,16 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 			}
 			else
 			{
-				char		ident_response[80 + IDENT_USERNAME_MAX];
+				char	ident_response[80 + IDENT_USERNAME_MAX];
 
 				rc = recv(sock_fd, ident_response, sizeof(ident_response) - 1, 0);
 				if (rc < 0)
 				{
-					sprintf(PQerrormsg,
-						  "Unable to receive response from Ident server "
+					snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+							"Unable to receive response from Ident server "
 							"on the host which is "
-					  "trying to connect to Postgres (Host %s, Port %d),"
-					"even though we successfully sent our query to it.  "
+							"trying to connect to Postgres (Host %s, Port %d),"
+							"even though we successfully sent our query to it.  "
 							"errno = %s (%d)\n",
 							inet_ntoa(remote_ip_addr), IDENT_PORT,
 							strerror(errno), errno);
@@ -694,7 +688,8 @@ parse_map_record(FILE *file,
 				return;
 			}
 		}
-		sprintf(PQerrormsg, "Incomplete line in pg_ident: %s", file_map);
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH, 
+				"Incomplete line in pg_ident: %s", file_map);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 	}
@@ -776,10 +771,10 @@ verify_against_usermap(const char *pguser,
 	if (usermap_name[0] == '\0')
 	{
 		*checks_out_p = false;
-		sprintf(PQerrormsg,
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 				"verify_against_usermap: hba configuration file does not "
-		   "have the usermap field filled in in the entry that pertains "
-		  "to this connection.  That field is essential for Ident-based "
+				"have the usermap field filled in in the entry that pertains "
+				"to this connection.  That field is essential for Ident-based "
 				"authentication.\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -787,21 +782,24 @@ verify_against_usermap(const char *pguser,
 	else if (strcmp(usermap_name, "sameuser") == 0)
 	{
 		if (strcmp(ident_username, pguser) == 0)
+		{
 			*checks_out_p = true;
+		}
 		else
+		{
 			*checks_out_p = false;
+		}
 	}
 	else
 	{
-		FILE	   *file;		/* The map file we have to read */
-
-		char	   *map_file;	/* The name of the map file we have to
-								 * read */
+		FILE	*file;		/* The map file we have to read */
+		char	*map_file;	/* The name of the map file we have to read */
+		int		bufsize;
 
 		/* put together the full pathname to the map file */
-		map_file = (char *) palloc((strlen(DataDir) +
-									strlen(MAP_FILE) + 2) * sizeof(char));
-		sprintf(map_file, "%s/%s", DataDir, MAP_FILE);
+		bufsize = (strlen(DataDir) + strlen(MAP_FILE) + 2) * sizeof(char);
+		map_file = (char *) palloc(bufsize);
+		snprintf(map_file, bufsize, "%s/%s", DataDir, MAP_FILE);
 
 		file = AllocateFile(map_file, "r");
 		if (file == NULL)
@@ -810,10 +808,10 @@ verify_against_usermap(const char *pguser,
 
 			*checks_out_p = false;
 
-			sprintf(PQerrormsg,
-				  "verify_against_usermap: usermap file for Ident-based "
+			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+					"verify_against_usermap: usermap file for Ident-based "
 					"authentication "
-				"does not exist or permissions are not setup correctly! "
+					"does not exist or permissions are not setup correctly! "
 					"Unable to open file \"%s\".\n",
 					map_file);
 			fputs(PQerrormsg, stderr);
@@ -955,27 +953,31 @@ InRange(char *buf, int host)
 void
 GetCharSetByHost(char *TableName, int host, const char *DataDir)
 {
-	FILE	   *file;
-	char		buf[MAX_TOKEN],
+	FILE	*file;
+	char	buf[MAX_TOKEN],
 				BaseCharset[MAX_TOKEN],
 				OrigCharset[MAX_TOKEN],
 				DestCharset[MAX_TOKEN],
-				HostCharset[MAX_TOKEN];
-	char		c,
-				eof = false;
-	char	   *map_file;
-	int			key = 0,
-				i;
-	struct CharsetItem *ChArray[MAX_CHARSETS];
-	int			ChIndex = 0;
+				HostCharset[MAX_TOKEN],
+				c,
+				eof = false,
+				*map_file;
+	int		key = 0,
+				ChIndex = 0,
+				i,
+				bufsize;
+
+	struct CharsetItem	*ChArray[MAX_CHARSETS];
 
 	*TableName = '\0';
-	map_file = (char *) malloc((strlen(DataDir) +
-								strlen(CHARSET_FILE) + 2) * sizeof(char));
-	sprintf(map_file, "%s/%s", DataDir, CHARSET_FILE);
+	bufsize = (strlen(DataDir) + strlen(CHARSET_FILE) + 2) * sizeof(char);
+	map_file = (char *) palloc(bufsize);
+	snprintf(map_file, bufsize, "%s/%s", DataDir, CHARSET_FILE);
 	file = fopen(map_file, "r");
 	if (file == NULL)
+	{
 		return;
+	}
 	while (!eof)
 	{
 		c = getc(file);
@@ -1035,7 +1037,8 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 									next_token(file, buf, sizeof(buf));
 									if (buf[0] != '\0')
 									{
-										ChArray[ChIndex] = (struct CharsetItem *) malloc(sizeof(struct CharsetItem));
+										ChArray[ChIndex] = 
+												(struct CharsetItem *) palloc(sizeof(struct CharsetItem));
 										strcpy(ChArray[ChIndex]->Orig, OrigCharset);
 										strcpy(ChArray[ChIndex]->Dest, DestCharset);
 										strcpy(ChArray[ChIndex]->Table, buf);
@@ -1051,14 +1054,14 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 		}
 	}
 	fclose(file);
-	free(map_file);
+	pfree(map_file);
 
 	for (i = 0; i < ChIndex; i++)
 	{
 		if (!strcasecmp(BaseCharset, ChArray[i]->Orig) &&
 			!strcasecmp(HostCharset, ChArray[i]->Dest))
 			strncpy(TableName, ChArray[i]->Table, 79);
-		free((struct CharsetItem *) ChArray[i]);
+		pfree((struct CharsetItem *) ChArray[i]);
 	}
 }
 

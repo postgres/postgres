@@ -5,9 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.50 1998/12/14 00:01:47 thomas Exp $
+ *  $Id: outfuncs.c,v 1.51 1998/12/14 06:50:28 scrappy Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which

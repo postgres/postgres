@@ -6,16 +6,15 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *	 DESCRIPTION
- *		This code provides support for a tee node, which allows multiple
- *	  parent in a megaplan.
+ *		This code provides support for a tee node, which allows 
+ * 		multiple parent in a megaplan.
  *
  *	 INTERFACE ROUTINES
  *		ExecTee
  *		ExecInitTee
  *		ExecEndTee
  *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.26 1998/12/14 05:18:51 scrappy Exp $
+ *  $Id: nodeTee.c,v 1.27 1998/12/14 06:50:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -5,9 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/util.c,v 1.5 1997/09/08 02:23:21 momjian Exp $
+ *  $Id: util.c,v 1.6 1998/12/14 06:50:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */

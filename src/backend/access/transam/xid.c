@@ -5,9 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.19 1998/12/14 05:18:33 scrappy Exp $
+ *  $Id: xid.c,v 1.20 1998/12/14 06:50:17 scrappy Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -41,13 +39,10 @@ xidin(char *representation)
 char *
 xidout(TransactionId transactionId)
 {
-/*	  return(TransactionIdFormString(transactionId)); */
-	char	   *representation;
-
 	/* maximum 32 bit unsigned integer representation takes 10 chars */
-	representation = palloc(11);
+	char	   *representation = palloc(11);
 
-	sprintf(representation, "%u", transactionId);
+	snprintf(representation, 11, "%u", transactionId);
 
 	return representation;
 

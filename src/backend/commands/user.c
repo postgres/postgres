@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
+ * $Id: user.c,v 1.21 1998/12/14 06:50:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,8 @@
 
 static void CheckPgUserAclNotNull(void);
 
+#define	SQL_LENGTH	512
+
 /*---------------------------------------------------------------------
  * UpdatePgPwdFile
  *
@@ -47,8 +49,9 @@ void
 UpdatePgPwdFile(char *sql)
 {
 
-	char	   *filename;
-	char	   *tempname;
+	char	*filename,
+				*tempname;
+	int		bufsize;
 
 	/*
 	 * Create a temporary filename to be renamed later.  This prevents the
@@ -56,18 +59,21 @@ UpdatePgPwdFile(char *sql)
 	 * be reading from it.
 	 */
 	filename = crypt_getpwdfilename();
-	tempname = (char *) malloc(strlen(filename) + 12);
-	sprintf(tempname, "%s.%d", filename, MyProcPid);
+	bufsize = strlen(filename) + 12;
+	tempname = (char *) palloc(bufsize);
+	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
 
 	/*
 	 * Copy the contents of pg_shadow to the pg_pwd ASCII file using a the
 	 * SEPCHAR character as the delimiter between fields.  Then rename the
 	 * file to its final name.
 	 */
-	sprintf(sql, "copy %s to '%s' using delimiters %s", ShadowRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
+	snprintf(sql, QRY_LENGTH, 
+			"copy %s to '%s' using delimiters %s", 
+			ShadowRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
 	pg_exec_query(sql);
 	rename(tempname, filename);
-	free((void *) tempname);
+	pfree((void *) tempname);
 
 	/*
 	 * Create a flag file the postmaster will detect the next time it
@@ -89,18 +95,17 @@ void
 DefineUser(CreateUserStmt *stmt)
 {
 
-	char	   *pg_shadow;
-	Relation	pg_shadow_rel;
-	TupleDesc	pg_shadow_dsc;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
-	Datum		datum;
-	char		sql[512];
-	char	   *sql_end;
-	bool		exists = false,
-				n,
-				inblock;
-	int			max_id = -1;
+	char					*pg_shadow,
+								sql[SQL_LENGTH];
+	Relation			pg_shadow_rel;
+	TupleDesc			pg_shadow_dsc;
+	HeapScanDesc	scan;
+	HeapTuple			tuple;
+	Datum					datum;
+	bool					exists = false,
+								n,
+								inblock;
+	int						max_id = -1;
 
 	if (stmt->password)
 		CheckPgUserAclNotNull();
@@ -152,46 +157,23 @@ DefineUser(CreateUserStmt *stmt)
 		RelationUnsetLockForWrite(pg_shadow_rel);
 		heap_close(pg_shadow_rel);
 		UserAbortTransactionBlock();
-		elog(ERROR, "defineUser: user \"%s\" has already been created", stmt->user);
+		elog(ERROR, 
+				"defineUser: user \"%s\" has already been created", stmt->user);
 		return;
 	}
 
 	/*
 	 * Build the insert statment to be executed.
 	 */
-	sprintf(sql, "insert into %s(usename,usesysid,usecreatedb,usetrace,usesuper,usecatupd,passwd", ShadowRelationName);
-/*	if (stmt->password)
-	strcat(sql, ",passwd"); -- removed so that insert empty string when no password */
-	if (stmt->validUntil)
-		strcat(sql, ",valuntil");
-
-	sql_end = sql + strlen(sql);
-	sprintf(sql_end, ") values('%s',%d", stmt->user, max_id + 1);
-	if (stmt->createdb && *stmt->createdb)
-		strcat(sql_end, ",'t','t'");
-	else
-		strcat(sql_end, ",'f','t'");
-	if (stmt->createuser && *stmt->createuser)
-		strcat(sql_end, ",'t','t'");
-	else
-		strcat(sql_end, ",'f','t'");
-	sql_end += strlen(sql_end);
-	if (stmt->password)
-	{
-		sprintf(sql_end, ",'%s'", stmt->password);
-		sql_end += strlen(sql_end);
-	}
-	else
-	{
-		strcpy(sql_end, ",''");
-		sql_end += strlen(sql_end);
-	}
-	if (stmt->validUntil)
-	{
-		sprintf(sql_end, ",'%s'", stmt->validUntil);
-		sql_end += strlen(sql_end);
-	}
-	strcat(sql_end, ")");
+	snprintf(sql, SQL_LENGTH, 
+			"insert into %s(usename,usesysid,usecreatedb,usetrace,usesuper,"
+			"usecatupd,passwd,valuntil) values('%s',%d%s%s,'%s','%s')", 
+			ShadowRelationName, 
+			stmt->user, max_id + 1,
+			(stmt->createdb && *stmt->createdb) ? ",'t','t'" : ",'f','t'",
+			(stmt->createuser && *stmt->createuser) ? ",'t','t'" : ",'f','t'",
+			stmt->password ? stmt->password : "''",
+			stmt->validUntil ? stmt->valudUntil : "");
 
 	pg_exec_query(sql);
 
@@ -217,13 +199,12 @@ extern void
 AlterUser(AlterUserStmt *stmt)
 {
 
-	char	   *pg_shadow;
+	char			*pg_shadow,
+						sql[SQL_LENGTH];
 	Relation	pg_shadow_rel;
 	TupleDesc	pg_shadow_dsc;
 	HeapTuple	tuple;
-	char		sql[512];
-	char	   *sql_end;
-	bool		inblock;
+	bool			inblock;
 
 	if (stmt->password)
 		CheckPgUserAclNotNull();
@@ -271,46 +252,37 @@ AlterUser(AlterUserStmt *stmt)
 	/*
 	 * Create the update statement to modify the user.
 	 */
-	sprintf(sql, "update %s set", ShadowRelationName);
-	sql_end = sql;
+	snprintf(sql, SQL_LENGTH, "update %s set", ShadowRelationName);
+
 	if (stmt->password)
 	{
-		sql_end += strlen(sql_end);
-		sprintf(sql_end, " passwd = '%s'", stmt->password);
+		snprintf(sql, SQL_LENGTH, "%s passwd = '%s'", sql, stmt->password);
 	}
+
 	if (stmt->createdb)
 	{
-		if (sql_end != sql)
-			strcat(sql_end, ",");
-		sql_end += strlen(sql_end);
-		if (*stmt->createdb)
-			strcat(sql_end, " usecreatedb = 't'");
-		else
-			strcat(sql_end, " usecreatedb = 'f'");
+		snprintf(sql, SQL_LENGTH, "%s %susecreatedb='%s'",
+				stmt->password ? "," : "",
+				*stmt->createdb ? "t" : "f");
 	}
+
 	if (stmt->createuser)
 	{
-		if (sql_end != sql)
-			strcat(sql_end, ",");
-		sql_end += strlen(sql_end);
-		if (*stmt->createuser)
-			strcat(sql_end, " usesuper = 't'");
-		else
-			strcat(sql_end, " usesuper = 'f'");
+		snprintf(sql, SQL_LENGTH, "%s %susesuper='%s'",
+				(stmt->password || stmt->createdb) ? "," : "",
+				*stmt->createuser ? "t" : "f");
 	}
+
 	if (stmt->validUntil)
 	{
-		if (sql_end != sql)
-			strcat(sql_end, ",");
-		sql_end += strlen(sql_end);
-		sprintf(sql_end, " valuntil = '%s'", stmt->validUntil);
+		snprintf(sql, SQL_LENGTH, "%s %svaluntil='%s'",
+				(stmt->password || stmt->createdb || stmt->createuser) ? "," : "",
+				stmt->validUntil);
 	}
-	if (sql_end != sql)
-	{
-		sql_end += strlen(sql_end);
-		sprintf(sql_end, " where usename = '%s'", stmt->user);
-		pg_exec_query(sql);
-	}
+
+	snprintf(sql, SQL_LENGTH, "%s where usename = '%s'", sql, stmt->user);
+
+	pg_exec_query(sql);
 
 	/* do the pg_group stuff here */
 
@@ -402,8 +374,9 @@ RemoveUser(char *user)
 			datum = heap_getattr(tuple, Anum_pg_database_datname, pg_dsc, &n);
 			if (memcmp((void *) datum, "template1", 9))
 			{
-				dbase = (char **) realloc((void *) dbase, sizeof(char *) * (ndbase + 1));
-				dbase[ndbase] = (char *) malloc(NAMEDATALEN + 1);
+				dbase = 
+						(char **) repalloc((void *) dbase, sizeof(char *) * (ndbase + 1));
+				dbase[ndbase] = (char *) palloc(NAMEDATALEN + 1);
 				memcpy((void *) dbase[ndbase], (void *) datum, NAMEDATALEN);
 				dbase[ndbase++][NAMEDATALEN] = '\0';
 			}
@@ -415,12 +388,12 @@ RemoveUser(char *user)
 	while (ndbase--)
 	{
 		elog(NOTICE, "Dropping database %s", dbase[ndbase]);
-		sprintf(sql, "drop database %s", dbase[ndbase]);
-		free((void *) dbase[ndbase]);
+		snprintf(sql, SQL_LENGTH, "drop database %s", dbase[ndbase]);
+		pfree((void *) dbase[ndbase]);
 		pg_exec_query(sql);
 	}
 	if (dbase)
-		free((void *) dbase);
+		pfree((void *) dbase);
 
 	/*
 	 * Since pg_shadow is global over all databases, one of two things
@@ -443,7 +416,8 @@ RemoveUser(char *user)
 	/*
 	 * Remove the user from the pg_shadow table
 	 */
-	sprintf(sql, "delete from %s where usename = '%s'", ShadowRelationName, user);
+	snprintf(sql, SQL_LENGTH, 
+			"delete from %s where usename = '%s'", ShadowRelationName, user);
 	pg_exec_query(sql);
 
 	UpdatePgPwdFile(sql);

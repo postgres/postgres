@@ -5,9 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.58 1998/11/29 01:47:42 tgl Exp $
+ *  $Id: pqcomm.c,v 1.59 1998/12/14 06:50:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,9 +75,9 @@
  *		declarations
  * ----------------
  */
-FILE	   *Pfout,
-		   *Pfin;
-FILE	   *Pfdebug;			/* debugging libpq */
+FILE	*Pfout,
+			*Pfin,
+			*Pfdebug;			/* debugging libpq */
 
 /* --------------------------------
  *		pq_init - open portal file descriptors
@@ -315,7 +313,7 @@ pq_getint(int b)
 
 	if (status)
 	{
-		sprintf(PQerrormsg,
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 				"FATAL: pq_getint failed: errno=%d\n", errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -341,7 +339,7 @@ pq_putstr(char *s)
 	if			(pqPutString(s, Pfout))
 #endif
 	{
-		sprintf(PQerrormsg,
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 				"FATAL: pq_putstr: fputs() failed: errno=%d\n", errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -357,7 +355,7 @@ pq_putnchar(char *s, int n)
 {
 	if (pqPutNBytes(s, n, Pfout))
 	{
-		sprintf(PQerrormsg,
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 				"FATAL: pq_putnchar: fputc() failed: errno=%d\n",
 				errno);
 		fputs(PQerrormsg, stderr);
@@ -398,7 +396,7 @@ pq_putint(int i, int b)
 
 	if (status)
 	{
-		sprintf(PQerrormsg,
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 				"FATAL: pq_putint failed: errno=%d\n", errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -431,7 +429,7 @@ pq_getinaddr(struct sockaddr_in * sin,
 			}
 			if (hs->h_addrtype != AF_INET)
 			{
-				sprintf(PQerrormsg,
+				snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 						"FATAL: pq_getinaddr: %s not on Internet\n",
 						host);
 				fputs(PQerrormsg, stderr);
@@ -461,7 +459,7 @@ pq_getinserv(struct sockaddr_in * sin, char *host, char *serv)
 		return pq_getinaddr(sin, host, atoi(serv));
 	if (!(ss = getservbyname(serv, NULL)))
 	{
-		sprintf(PQerrormsg,
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 				"FATAL: pq_getinserv: unknown service: %s\n",
 				serv);
 		fputs(PQerrormsg, stderr);
@@ -521,7 +519,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 
 	if ((fd = socket(family, SOCK_STREAM, 0)) < 0)
 	{
-		sprintf(PQerrormsg,
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 				"FATAL: StreamServerPort: socket() failed: errno=%d\n",
 				errno);
 		fputs(PQerrormsg, stderr);
@@ -531,7 +529,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 					sizeof(one))) == -1)
 	{
-		sprintf(PQerrormsg,
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH, 
 				"FATAL: StreamServerPort: setsockopt (SO_REUSEADDR) failed: errno=%d\n",
 				errno);
 		fputs(PQerrormsg, stderr);
@@ -576,18 +574,20 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	err = bind(fd, &saddr.sa, len);
 	if (err < 0)
 	{
-		sprintf(PQerrormsg,
-				"FATAL: StreamServerPort: bind() failed: errno=%d\n",
-				errno);
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+				"FATAL: StreamServerPort: bind() failed: errno=%d\n", errno);
 		pqdebug("%s", PQerrormsg);
 		strcat(PQerrormsg,
 			   "\tIs another postmaster already running on that port?\n");
 		if (family == AF_UNIX)
-			sprintf(PQerrormsg + strlen(PQerrormsg),
-					"\tIf not, remove socket node (%s) and retry.\n",
-					sock_path);
+		{
+			snprintf(PQerrormsg + strlen(PQerrormsg), ERROR_MSG_LENGTH,
+					"\tIf not, remove socket node (%s) and retry.\n", sock_path);
+		}
 		else
+		{
 			strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
+		}
 		fputs(PQerrormsg, stderr);
 		return STATUS_ERROR;
 	}
@@ -723,9 +723,8 @@ StreamOpen(char *hostName, short portName, Port *port)
 	{
 		if (!(hp = gethostbyname(hostName)) || hp->h_addrtype != AF_INET)
 		{
-			sprintf(PQerrormsg,
-					"FATAL: StreamOpen: unknown hostname: %s\n",
-					hostName);
+			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+					"FATAL: StreamOpen: unknown hostname: %s\n", hostName);
 			fputs(PQerrormsg, stderr);
 			pqdebug("%s", PQerrormsg);
 			return STATUS_ERROR;
@@ -745,9 +744,8 @@ StreamOpen(char *hostName, short portName, Port *port)
 	/* connect to the server */
 	if ((port->sock = socket(port->raddr.sa.sa_family, SOCK_STREAM, 0)) < 0)
 	{
-		sprintf(PQerrormsg,
-				"FATAL: StreamOpen: socket() failed: errno=%d\n",
-				errno);
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+				"FATAL: StreamOpen: socket() failed: errno=%d\n", errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
@@ -755,9 +753,8 @@ StreamOpen(char *hostName, short portName, Port *port)
 	err = connect(port->sock, &port->raddr.sa, len);
 	if (err < 0)
 	{
-		sprintf(PQerrormsg,
-				"FATAL: StreamOpen: connect() failed: errno=%d\n",
-				errno);
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+				"FATAL: StreamOpen: connect() failed: errno=%d\n", errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
@@ -766,9 +763,8 @@ StreamOpen(char *hostName, short portName, Port *port)
 	/* fill in the client address */
 	if (getsockname(port->sock, &port->laddr.sa, &len) < 0)
 	{
-		sprintf(PQerrormsg,
-				"FATAL: StreamOpen: getsockname() failed: errno=%d\n",
-				errno);
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
+				"FATAL: StreamOpen: getsockname() failed: errno=%d\n", errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;

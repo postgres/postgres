@@ -1,14 +1,15 @@
 /*-------------------------------------------------------------------------
  *
  * crypt.c--
- *		  Look into pg_shadow and check the encrypted password with the one
- *		  passed in from the frontend.
+ *	Look into pg_shadow and check the encrypted password with 
+ *	the one passed in from the frontend.
  *
  * Modification History
  *
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
+ * $Id: crypt.c,v 1.13 1998/12/14 06:50:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,13 +38,12 @@ char *
 crypt_getpwdfilename()
 {
 
-	static char *pfnam = NULL;
+	static char	*pfnam = NULL;
+	int					bufsize;
 
-	if (!pfnam)
-	{
-		pfnam = (char *) malloc(strlen(DataDir) + strlen(CRYPT_PWD_FILE) + 2);
-		sprintf(pfnam, "%s/%s", DataDir, CRYPT_PWD_FILE);
-	}
+	bufsize = strlen(DataDir) + strlen(CRYPT_PWD_FILE) + 2;
+	pfnam = (char *) palloc(bufsize);
+	snprintf(pfnam, bufsize, "%s/%s", DataDir, CRYPT_PWD_FILE);
 
 	return pfnam;
 }
@@ -54,16 +54,14 @@ char *
 crypt_getpwdreloadfilename()
 {
 
-	static char *rpfnam = NULL;
+	static char	*rpfnam = NULL;
+	char				*pwdfilename;
+	int					bufsize;
 
-	if (!rpfnam)
-	{
-		char	   *pwdfilename;
-
-		pwdfilename = crypt_getpwdfilename();
-		rpfnam = (char *) malloc(strlen(pwdfilename) + strlen(CRYPT_PWD_RELOAD_SUFX) + 1);
-		sprintf(rpfnam, "%s%s", pwdfilename, CRYPT_PWD_RELOAD_SUFX);
-	}
+	pwdfilename = crypt_getpwdfilename();
+	bufsize = strlen(pwdfilename) + strlen(CRYPT_PWD_RELOAD_SUFX) + 1;
+	rpfnam = (char *) palloc(bufsize);
+	snprintf(rpfnam, bufsize, "%s%s", pwdfilename, CRYPT_PWD_RELOAD_SUFX);
 
 	return rpfnam;
 }
@@ -145,8 +143,10 @@ crypt_loadpwdfile()
 		{						/* free the old data only if this is a
 								 * reload */
 			while (pwd_cache_count--)
-				free((void *) pwd_cache[pwd_cache_count]);
-			free((void *) pwd_cache);
+			{
+				pfree((void *) pwd_cache[pwd_cache_count]);
+			}
+			pfree((void *) pwd_cache);
 			pwd_cache = NULL;
 			pwd_cache_count = 0;
 		}
@@ -168,7 +168,7 @@ crypt_loadpwdfile()
 				buffer[result] = '\0';
 
 			pwd_cache = (char **) realloc((void *) pwd_cache, sizeof(char *) * (pwd_cache_count + 1));
-			pwd_cache[pwd_cache_count++] = strdup(buffer);
+			pwd_cache[pwd_cache_count++] = pstrdup(buffer);
 		}
 		fclose(pwd_file);
 
@@ -200,7 +200,7 @@ crypt_parsepwdentry(char *buffer, char **pwd, char **valdate)
 	 * store a copy of user password to return
 	 */
 	count = strcspn(parse, CRYPT_PWD_FILE_SEPSTR);
-	*pwd = (char *) malloc(count + 1);
+	*pwd = (char *) palloc(count + 1);
 	strncpy(*pwd, parse, count);
 	(*pwd)[count] = '\0';
 	parse += (count + 1);
@@ -209,7 +209,7 @@ crypt_parsepwdentry(char *buffer, char **pwd, char **valdate)
 	 * store a copy of date login becomes invalid
 	 */
 	count = strcspn(parse, CRYPT_PWD_FILE_SEPSTR);
-	*valdate = (char *) malloc(count + 1);
+	*valdate = (char *) palloc(count + 1);
 	strncpy(*valdate, parse, count);
 	(*valdate)[count] = '\0';
 	parse += (count + 1);
@@ -222,9 +222,9 @@ int
 crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 {
 
-	char	   *pwd;
-	char	   *valdate;
-	void	   *fakeout;
+	char	*pwd,
+				*valdate;
+	void	*fakeout;
 
 	*passwd = NULL;
 	*valuntil = NULL;
@@ -232,10 +232,10 @@ crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 
 	if (pwd_cache)
 	{
-		char	  **pwd_entry;
-		char		user_search[NAMEDATALEN + 2];
+		char  **pwd_entry;
+		char	user_search[NAMEDATALEN + 2];
 
-		sprintf(user_search, "%s\t", user);
+		snprintf(user_search, NAMEDATALEN + 2, "%s\t", user);
 		fakeout = (void *) &user_search;
 		if ((pwd_entry = (char **) bsearch((void *) &fakeout, (void *) pwd_cache, pwd_cache_count, sizeof(char *), compar_user)))
 		{
@@ -253,56 +253,32 @@ crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 
 /*-------------------------------------------------------------------------*/
 
-#if 0
-MsgType
-crypt_salt(const char *user)
-{
-
-	char	   *passwd;
-	char	   *valuntil;
-
-	if (crypt_getloginfo(user, &passwd, &valuntil) == STATUS_ERROR)
-		return STARTUP_UNSALT_MSG;
-
-	if (passwd == NULL || *passwd == '\0' || !strcmp(passwd, "\\N"))
-	{
-		if (passwd)
-			free((void *) passwd);
-		if (valuntil)
-			free((void *) valuntil);
-		return STARTUP_UNSALT_MSG;
-	}
-
-	free((void *) passwd);
-	if (valuntil)
-		free((void *) valuntil);
-	return STARTUP_SALT_MSG;
-}
-
-#endif
-
-/*-------------------------------------------------------------------------*/
-
 int
 crypt_verify(Port *port, const char *user, const char *pgpass)
 {
 
-	char	   *passwd;
-	char	   *valuntil;
-	char	   *crypt_pwd;
-	int			retval = STATUS_ERROR;
-	AbsoluteTime vuntil,
-				current;
+	char					*passwd,
+								*valuntil,
+								*crypt_pwd;
+	int						retval = STATUS_ERROR;
+	AbsoluteTime	vuntil,
+								current;
 
 	if (crypt_getloginfo(user, &passwd, &valuntil) == STATUS_ERROR)
+	{
 		return STATUS_ERROR;
+	}
 
 	if (passwd == NULL || *passwd == '\0')
 	{
 		if (passwd)
-			free((void *) passwd);
+		{
+			pfree((void *) passwd);
+		}
 		if (valuntil)
-			free((void *) valuntil);
+		{
+			pfree((void *) valuntil);
+		}
 		return STATUS_ERROR;
 	}
 
@@ -311,28 +287,38 @@ crypt_verify(Port *port, const char *user, const char *pgpass)
 	 * authentication method being used for this connection.
 	 */
 
-	crypt_pwd = (port->auth_method == uaCrypt ? crypt(passwd, port->salt) : passwd);
+	crypt_pwd = 
+			(port->auth_method == uaCrypt ? crypt(passwd, port->salt) : passwd);
 
 	if (!strcmp(pgpass, crypt_pwd))
 	{
-
 		/*
 		 * check here to be sure we are not past valuntil
 		 */
 		if (!valuntil || strcmp(valuntil, "\\N") == 0)
+		{
 			vuntil = INVALID_ABSTIME;
+		}
 		else
+		{
 			vuntil = nabstimein(valuntil);
+		}
 		current = GetCurrentAbsoluteTime();
 		if (vuntil != INVALID_ABSTIME && vuntil < current)
+		{
 			retval = STATUS_ERROR;
+		}
 		else
+		{
 			retval = STATUS_OK;
+		}
 	}
 
-	free((void *) passwd);
+	pfree((void *) passwd);
 	if (valuntil)
-		free((void *) valuntil);
+	{
+		pfree((void *) valuntil);
+	}
 
 	return retval;
 }

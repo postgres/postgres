@@ -6,9 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.18 1998/11/27 19:52:05 vadim Exp $
+ *  $Id: be-dumpdata.c,v 1.19 1998/12/14 06:50:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,8 +130,8 @@ static u_int be_portalcnt = 0;
 PortalEntry *
 be_newportal(void)
 {
-	PortalEntry *entry;
-	char		buf[PortalNameLength];
+	PortalEntry	*entry;
+	char				buf[PortalNameLength];
 
 	/* ----------------
 	 *	generate a new name
@@ -142,7 +140,7 @@ be_newportal(void)
 	if (be_portalcnt == 0)
 		be_portaloid = newoid();
 	be_portalcnt++;
-	sprintf(buf, "be_%d_%d", be_portaloid, be_portalcnt);
+	snprintf(buf, PortalNameLength, "be_%d_%d", be_portaloid, be_portalcnt);
 
 	/* ----------------
 	 *	initialize the new portal entry and keep track

@@ -5,9 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.90 1998/12/04 15:34:28 thomas Exp $
+ *  $Id: analyze.c,v 1.91 1998/12/14 06:50:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */

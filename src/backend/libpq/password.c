@@ -1,3 +1,10 @@
+/* 
+ * Copyright (c) 1994, Regents of the University of California
+ *
+ * $Id: password.c,v 1.19 1998/12/14 06:50:26 scrappy Exp $ 
+ *
+ */
+
 #include <postgres.h>
 #include <miscadmin.h>
 #include <libpq/password.h>
@@ -23,7 +30,7 @@ verify_password(char *auth_arg, char *user, char *password)
 	pw_file = AllocateFile(pw_file_fullname, "r");
 	if (!pw_file)
 	{
-		sprintf(PQerrormsg,
+		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 				"verify_password: couldn't open password file '%s'\n",
 				pw_file_fullname);
 		fputs(PQerrormsg, stderr);
@@ -68,7 +75,7 @@ verify_password(char *auth_arg, char *user, char *password)
 				return STATUS_OK;
 			}
 
-			sprintf(PQerrormsg,
+			snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 					"verify_password: password mismatch for '%s'.\n",
 					user);
 			fputs(PQerrormsg, stderr);
@@ -80,7 +87,7 @@ verify_password(char *auth_arg, char *user, char *password)
 		}
 	}
 
-	sprintf(PQerrormsg,
+	snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 			"verify_password: user '%s' not found in password file.\n",
 			user);
 	fputs(PQerrormsg, stderr);

@@ -5,9 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.26 1998/12/14 05:18:49 scrappy Exp $
+ *  $Id: execAmi.c,v 1.27 1998/12/14 06:50:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */

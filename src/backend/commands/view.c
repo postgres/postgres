@@ -5,9 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.27 1998/12/14 05:18:44 scrappy Exp $
+ *  $Id: view.c,v 1.28 1998/12/14 06:50:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
