@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.3 2001/09/09 23:52:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.4 2001/09/23 04:06:24 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -33,9 +33,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.3 2001/09/09 23:52:12 
    <xref linkend="routine-vacuuming">.
   </para>
 
-<!-- probably ought to have something about log rotation here;
-     any other important maintenance tasks?
--->
+  <para>
+  It is also necessary to rotate the database server log file that is specified 
+  when the <application>postmaster</application> is started.  If you are using
+  <application>syslog</application>, you can send a <literal>SIGHUP</literal>
+  signal to the syslog daemon to force it to start writing a new log file.
+  </para>
 
   <para>
    <productname>PostgreSQL</productname> is low-maintenance compared to
