@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.78 2003/10/03 20:10:59 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.79 2003/10/20 21:05:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,7 +381,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	/*
 	 * Clean up & we're done.
 	 */
-	if (ropt->filename)
+	if (ropt->filename || ropt->compression)
 		ResetOutput(AH, sav);
 
 	if (ropt->useDB)
@@ -596,7 +596,7 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 	char	   *fmtName;
 
 	if (ropt->filename)
-		sav = SetOutput(AH, ropt->filename, ropt->compression);
+		sav = SetOutput(AH, ropt->filename, 0 /* no compression */);
 
 	ahprintf(AH, ";\n; Archive created at %s", ctime(&AH->createDate));
 	ahprintf(AH, ";     dbname: %s\n;     TOC Entries: %d\n;     Compression: %d\n",
@@ -1039,23 +1039,19 @@ OutputContext
 SetOutput(ArchiveHandle *AH, char *filename, int compression)
 {
 	OutputContext sav;
-
-#ifdef HAVE_LIBZ
-	char		fmode[10];
-#endif
-	int			fn = 0;
+	int			fn;
 
 	/* Replace the AH output file handle */
 	sav.OF = AH->OF;
 	sav.gzOut = AH->gzOut;
 
 	if (filename)
-		fn = 0;
+		fn = -1;
 	else if (AH->FH)
 		fn = fileno(AH->FH);
 	else if (AH->fSpec)
 	{
-		fn = 0;
+		fn = -1;
 		filename = AH->fSpec;
 	}
 	else
@@ -1065,27 +1061,25 @@ SetOutput(ArchiveHandle *AH, char *filename, int compression)
 #ifdef HAVE_LIBZ
 	if (compression != 0)
 	{
+		char		fmode[10];
+
+		/* Don't use PG_BINARY_x since this is zlib */
 		sprintf(fmode, "wb%d", compression);
-		if (fn)
-		{
-			AH->OF = gzdopen(dup(fn), fmode);	/* Don't use PG_BINARY_x
-												 * since this is zlib */
-		}
+		if (fn >= 0)
+			AH->OF = gzdopen(dup(fn), fmode);
 		else
 			AH->OF = gzopen(filename, fmode);
 		AH->gzOut = 1;
 	}
 	else
-	{							/* Use fopen */
 #endif
-		if (fn)
+	{							/* Use fopen */
+		if (fn >= 0)
 			AH->OF = fdopen(dup(fn), PG_BINARY_W);
 		else
 			AH->OF = fopen(filename, PG_BINARY_W);
 		AH->gzOut = 0;
-#ifdef HAVE_LIBZ
 	}
-#endif
 
 	if (!AH->OF)
 		die_horribly(AH, modulename, "could not open output file: %s\n", strerror(errno));
@@ -1104,7 +1098,8 @@ ResetOutput(ArchiveHandle *AH, OutputContext sav)
 		res = fclose(AH->OF);
 
 	if (res != 0)
-		die_horribly(AH, modulename, "could not close output file: %s\n", strerror(errno));
+		die_horribly(AH, modulename, "could not close output file: %s\n",
+					 strerror(errno));
 
 	AH->gzOut = sav.gzOut;
 	AH->OF = sav.OF;

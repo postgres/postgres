@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.52 2003/09/23 22:48:53 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.53 2003/10/20 21:05:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ main(int argc, char **argv)
 	RestoreOptions *opts;
 	int			c;
 	Archive    *AH;
-	char	   *fileSpec = NULL;
+	char	   *inputFileSpec;
 	extern int	optind;
 	extern char *optarg;
 	static int	use_setsessauth = 0;
@@ -163,11 +163,7 @@ main(int argc, char **argv)
 				opts->create = 1;
 				break;
 			case 'd':
-				if (strlen(optarg) != 0)
-				{
-					opts->dbname = strdup(optarg);
-					opts->useDB = 1;
-				}
+				opts->dbname = strdup(optarg);
 				break;
 			case 'f':			/* output file name */
 				opts->filename = strdup(optarg);
@@ -286,9 +282,23 @@ main(int argc, char **argv)
 	}
 
 	if (optind < argc)
-		fileSpec = argv[optind];
+		inputFileSpec = argv[optind];
 	else
-		fileSpec = NULL;
+		inputFileSpec = NULL;
+
+	/* Should get at most one of -d and -f, else user is confused */
+	if (opts->dbname)
+	{
+		if (opts->filename)
+		{
+			fprintf(stderr, _("%s: cannot specify both -d and -f output\n"),
+					progname);
+			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+					progname);
+			exit(1);
+		}
+		opts->useDB = 1;
+	}
 
 	opts->disable_triggers = disable_triggers;
 
@@ -320,7 +330,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	AH = OpenArchive(fileSpec, opts->format);
+	AH = OpenArchive(inputFileSpec, opts->format);
 
 	/* Let the archiver know how noisy to be */
 	AH->verbose = opts->verbose;
