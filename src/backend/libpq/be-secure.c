@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.43 2003/09/26 15:27:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.43.2.1 2003/12/18 22:49:34 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -714,6 +714,9 @@ destroy_SSL(void)
 static int
 open_server_SSL(Port *port)
 {
+	Assert(!port->ssl);
+	Assert(!port->peer);
+
 	if (!(port->ssl = SSL_new(SSL_context)) ||
 		!SSL_set_fd(port->ssl, port->sock) ||
 		SSL_accept(port->ssl) <= 0)
@@ -763,6 +766,12 @@ close_SSL(Port *port)
 		SSL_shutdown(port->ssl);
 		SSL_free(port->ssl);
 		port->ssl = NULL;
+	}
+
+	if (port->peer)
+	{
+		X509_free(port->peer);
+		port->peer = NULL;
 	}
 }
 
