@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.15 1996/11/17 04:56:01 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.16 1996/11/20 22:32:55 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1456,31 +1456,36 @@ dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, const char *onlytable
 		    fprintf(fout, "values (");
 		    field=0;
 		    do {
-		        switch(PQftype(res,field)) {
-			    case 21: case 22: case 23: /* int types */
-			    case 810: case 910: /* oldint types */
-			    case 1005: case 1006: case 1007: /* _int types */
-			    case 700: case 701: /* float types */
-			    case 1021: case 1022: /* _float types */
-			        fprintf(fout, "%s", PQgetvalue(res,tuple,field));
-			        break;
-		            default:  
+			if (PQgetisnull(res,tuple,field)) {
+                            fprintf(fout,"NULL");
+			}
+                    	else {
+			    switch(PQftype(res,field)) {
+			    	case 21: case 22: case 23: /* int types */
+			    	case 810: case 910: /* oldint types */
+			    	case 1005: case 1006: case 1007: /* _int types */
+			    	case 700: case 701: /* float types */
+			    	case 1021: case 1022: /* _float types */
+			   	     fprintf(fout, "%s", PQgetvalue(res,tuple,field));
+			             break;
+		            	default:  
 		            
-		                /* Before outputing string value, expand all
-		                   single quotes to twin single quotes -
-		                   dhb - 6/11/96 */
-		                expsrc=PQgetvalue(res,tuple,field);
-		                expdest=expandbuf;
-		                while (*expsrc) {
-		                    *expdest++=*expsrc;
-		                    if (*expsrc == (char)0x27) /*sing. quote*/
-		                        *expdest++ = *expsrc;
-		                    expsrc++;
-		                }
-		                *expdest=*expsrc; /* null term. */
+		                    /* Before outputing string value, expand all
+		                       single quotes to twin single quotes -
+		                       dhb - 6/11/96 */
+		                    expsrc=PQgetvalue(res,tuple,field);
+		                    expdest=expandbuf;
+		                    while (*expsrc) {
+		                    	*expdest++=*expsrc;
+		                    	if (*expsrc == (char)0x27) /*sing. quote*/
+		                            *expdest++ = *expsrc;
+		                    	expsrc++;
+		                    }
+		                    *expdest=*expsrc; /* null term. */
 		                
-			        fprintf(fout, "'%s'", expandbuf);
-			        break;
+			            fprintf(fout, "'%s'", expandbuf);
+			            break;
+		            }
 		        }
 		        field++;
 		        if(field != PQnfields(res))
