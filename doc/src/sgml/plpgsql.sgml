@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.1 2002/07/30 19:36:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.2 2002/08/20 05:28:23 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -126,7 +126,7 @@ END;
     them to define operators or use them in functional indexes.
    </para>
   <sect2 id="plpgsql-advantages">
-   <title>Advantages of Using PL/pgSQL</title>
+   <title>Advantages of Using <application>PL/pgSQL</application></title>
 
    <itemizedlist>
     <listitem>
@@ -852,10 +852,58 @@ SELECT INTO <replaceable>target</replaceable> <replaceable>expressions</replacea
     </para>
 
     <para>
-     There is a special variable named FOUND of type
-     <type>boolean</type> that can be used immediately after a SELECT
-     INTO to check if an assignment had success (that is, at least one
-     row was returned by the SELECT).  For example,
+	 There is a special variable named <literal>FOUND</literal> of
+     type <type>boolean</type>. The initial value of
+     <literal>FOUND</literal> is false; it is set to true when one of
+     the following events occurs:
+	 <itemizedlist>
+	  <listitem>
+	   <para>
+		A SELECT INTO statement is executed, and it returns one or
+		more rows.
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+		A UPDATE, INSERT, or DELETE statement is executed, and it
+		affects one or more rows.
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+		A PERFORM statement is executed, and it discards one or more
+		rows.
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+		A FETCH statement is executed, and it returns an additional
+		row.
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+		A FOR statement is executed, and it iterates one or more
+		times. This applies to all three variants of the FOR statement
+		(integer FOR loops, record-set FOR loops, and dynamic
+		record-set FOR loops). <literal>FOUND</literal> is only set
+		when the FOR loop exits: inside the execution of the loop,
+		<literal>FOUND</literal> is not modified, although it may be
+		set by the execution of other statements.
+	   </para>
+	  </listitem>
+	 </itemizedlist>
+	 If none of these events occur, <literal>FOUND</literal> is set to
+	 false. <literal>FOUND</literal> is a local variable; any changes
+	 to it effect only the current <application>PL/pgSQL</application>
+	 function.
+	</para>
+
+	<para>
+	 You can use <literal>FOUND</literal> immediately after a SELECT
+	 INTO statement to determine whether the assignment was successful
+	 (that is, at least one row was was returned by the SELECT
+	 statement). For example:
   
 <programlisting>
 SELECT INTO myrec * FROM EMP WHERE empname = myname;
@@ -902,10 +950,10 @@ PERFORM <replaceable>query</replaceable>;
 
      This executes a <literal>SELECT</literal>
      <replaceable>query</replaceable> and discards the
-     result. <application>PL/pgSQL</application> variables are substituted
-     in the query as usual.  Also, the special variable FOUND is set to
-     true if the query produced at least one row, or false if it produced
-     no rows.
+     result. <application>PL/pgSQL</application> variables are
+     substituted in the query as usual.  Also, the special variable
+     <literal>FOUND</literal> is set to true if the query produced at
+     least one row, or false if it produced no rows.
     </para>
 
     <note>
@@ -1638,8 +1686,8 @@ FETCH <replaceable>cursor</replaceable> INTO <replaceable>target</replaceable>;
         FETCH retrieves the next row from the cursor into a target,
 	which may be a row variable, a record variable, or a comma-separated
 	list of simple variables, just like SELECT INTO.  As with
-	SELECT INTO, the special variable FOUND may be checked to see
-	whether a row was obtained or not.
+	SELECT INTO, the special variable <literal>FOUND</literal> may be
+	checked to see whether a row was obtained or not.
 
 <programlisting>
 FETCH curs1 INTO rowvar;

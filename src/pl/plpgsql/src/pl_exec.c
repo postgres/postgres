@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.56 2002/06/24 23:12:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.57 2002/08/20 05:28:23 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1180,7 +1180,8 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 	Datum		value;
 	Oid			valtype;
 	bool		isnull = false;
-	int			rc;
+	bool		found = false;
+	int			rc = PLPGSQL_RC_OK;
 
 	var = (PLpgSQL_var *) (estate->datums[stmt->var->varno]);
 
@@ -1213,7 +1214,6 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 	/*
 	 * Now do the loop
 	 */
-	exec_set_found(estate, false);
 	for (;;)
 	{
 		/*
@@ -1229,36 +1229,36 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 			if ((int4) (var->value) > (int4) value)
 				break;
 		}
-		exec_set_found(estate, true);
+
+		found = true;	/* looped at least once */
 
 		/*
 		 * Execute the statements
 		 */
 		rc = exec_stmts(estate, stmt->body);
 
-		/*
-		 * Check returncode
-		 */
-		switch (rc)
+		if (rc == PLPGSQL_RC_RETURN)
+			break;						/* return from function */
+		else if (rc == PLPGSQL_RC_EXIT)
 		{
-			case PLPGSQL_RC_OK:
-				break;
-
-			case PLPGSQL_RC_EXIT:
-				if (estate->exitlabel == NULL)
-					return PLPGSQL_RC_OK;
-				if (stmt->label == NULL)
-					return PLPGSQL_RC_EXIT;
-				if (strcmp(stmt->label, estate->exitlabel))
-					return PLPGSQL_RC_EXIT;
+			if (estate->exitlabel == NULL)
+				/* unlabelled exit, finish the current loop */
+				rc = PLPGSQL_RC_OK;
+			else if (stmt->label != NULL &&
+					 strcmp(stmt->label, estate->exitlabel) == 0)
+			{
+				/* labelled exit, matches the current stmt's label */
 				estate->exitlabel = NULL;
-				return PLPGSQL_RC_OK;
+				rc = PLPGSQL_RC_OK;
+			}
 
-			case PLPGSQL_RC_RETURN:
-				return PLPGSQL_RC_RETURN;
+			/*
+			 * otherwise, we processed a labelled exit that does not
+			 * match the current statement's label, if any: return
+			 * RC_EXIT so that the EXIT continues to recurse upward.
+			 */
 
-			default:
-				elog(ERROR, "unknown rc %d from exec_stmts()", rc);
+			break;
 		}
 
 		/*
@@ -1270,7 +1270,15 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 			var->value++;
 	}
 
-	return PLPGSQL_RC_OK;
+	/*
+	 * Set the FOUND variable to indicate the result of executing the
+	 * loop (namely, whether we looped one or more times). This must be
+	 * set here so that it does not interfere with the value of the
+	 * FOUND variable inside the loop processing itself.
+	 */
+	exec_set_found(estate, found);
+
+	return rc;
 }
 
 
@@ -1288,14 +1296,10 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	PLpgSQL_row *row = NULL;
 	SPITupleTable *tuptab;
 	Portal		portal;
-	int			rc;
+	bool		found = false;
+	int			rc = PLPGSQL_RC_OK;
 	int			i;
 	int			n;
-
-	/*
-	 * Initialize the global found variable to false
-	 */
-	exec_set_found(estate, false);
 
 	/*
 	 * Determine if we assign to a record or a row
@@ -1321,25 +1325,18 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	tuptab = SPI_tuptable;
 
 	/*
-	 * If the query didn't return any row, set the target to NULL and
-	 * return.
+	 * If the query didn't return any rows, set the target to NULL and
+	 * return with FOUND = false.
 	 */
 	if (n == 0)
-	{
 		exec_move_row(estate, rec, row, NULL, NULL);
-		SPI_cursor_close(portal);
-		return PLPGSQL_RC_OK;
-	}
-
-	/*
-	 * There are tuples, so set found to true
-	 */
-	exec_set_found(estate, true);
+	else
+		found = true;	/* processed at least one tuple */
 
 	/*
 	 * Now do the loop
 	 */
-	for (;;)
+	while (n > 0)
 	{
 		for (i = 0; i < n; i++)
 		{
@@ -1353,35 +1350,36 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 			 */
 			rc = exec_stmts(estate, stmt->body);
 
-			/*
-			 * Check returncode
-			 */
-			switch (rc)
+			if (rc != PLPGSQL_RC_OK)
 			{
-				case PLPGSQL_RC_OK:
-					break;
+				/*
+				 * We're aborting the loop, so cleanup and set FOUND
+				 */
+				exec_set_found(estate, found);
+				SPI_freetuptable(tuptab);
+				SPI_cursor_close(portal);
 
-				case PLPGSQL_RC_EXIT:
-					SPI_freetuptable(tuptab);
-					SPI_cursor_close(portal);
-
+				if (rc == PLPGSQL_RC_EXIT)
+				{
 					if (estate->exitlabel == NULL)
-						return PLPGSQL_RC_OK;
-					if (stmt->label == NULL)
-						return PLPGSQL_RC_EXIT;
-					if (strcmp(stmt->label, estate->exitlabel))
-						return PLPGSQL_RC_EXIT;
-					estate->exitlabel = NULL;
-					return PLPGSQL_RC_OK;
+						/* unlabelled exit, finish the current loop */
+						rc = PLPGSQL_RC_OK;
+					else if (stmt->label != NULL &&
+							 strcmp(stmt->label, estate->exitlabel) == 0)
+					{
+						/* labelled exit, matches the current stmt's label */
+						estate->exitlabel = NULL;
+						rc = PLPGSQL_RC_OK;
+					}
 
-				case PLPGSQL_RC_RETURN:
-					SPI_freetuptable(tuptab);
-					SPI_cursor_close(portal);
+					/*
+					 * otherwise, we processed a labelled exit that does not
+					 * match the current statement's label, if any: return
+					 * RC_EXIT so that the EXIT continues to recurse upward.
+					 */
+				}
 
-					return PLPGSQL_RC_RETURN;
-
-				default:
-					elog(ERROR, "unknown rc %d from exec_stmts()", rc);
+				return rc;
 			}
 		}
 
@@ -1393,9 +1391,6 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 		SPI_cursor_fetch(portal, true, 50);
 		n = SPI_processed;
 		tuptab = SPI_tuptable;
-
-		if (n == 0)
-			break;
 	}
 
 	/*
@@ -1403,14 +1398,22 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	 */
 	SPI_cursor_close(portal);
 
-	return PLPGSQL_RC_OK;
+	/*
+	 * Set the FOUND variable to indicate the result of executing the
+	 * loop (namely, whether we looped one or more times). This must be
+	 * set here so that it does not interfere with the value of the
+	 * FOUND variable inside the loop processing itself.
+	 */
+	exec_set_found(estate, found);
+
+	return rc;
 }
 
 
 /* ----------
  * exec_stmt_select			Run a query and assign the first
  *					row to a record or rowtype.
- *					 ----------
+ * ----------
  */
 static int
 exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
@@ -1846,6 +1849,11 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 	bool		isnull;
 
 	/*
+	 * Set magic FOUND variable to false
+	 */
+	exec_set_found(estate, false);
+
+	/*
 	 * On the first call for this expression generate the plan
 	 */
 	if (expr->plan == NULL)
@@ -1921,9 +1929,18 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 	{
 		case SPI_OK_UTILITY:
 		case SPI_OK_SELINTO:
+			break;
+
+			/*
+			 * If the INSERT, DELETE, or UPDATE query affected at least
+			 * one tuple, set the magic 'FOUND' variable to true. This
+			 * conforms with the behavior of PL/SQL.
+			 */
 		case SPI_OK_INSERT:
 		case SPI_OK_DELETE:
 		case SPI_OK_UPDATE:
+			if (SPI_processed > 0)
+				exec_set_found(estate, true);
 			break;
 
 		case SPI_OK_SELECT:
@@ -1931,8 +1948,7 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 				 "\n\tIf you want to discard the results, use PERFORM instead.");
 
 		default:
-			elog(ERROR, "error executing query \"%s\"",
-				 expr->query);
+			elog(ERROR, "error executing query \"%s\"", expr->query);
 	}
 
 	/*
@@ -2078,7 +2094,7 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	PLpgSQL_rec *rec = NULL;
 	PLpgSQL_row *row = NULL;
 	SPITupleTable *tuptab;
-	int			rc;
+	int			rc = PLPGSQL_RC_OK;
 	int			i;
 	int			n;
 	HeapTuple	typetup;
@@ -2086,11 +2102,7 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	FmgrInfo	finfo_output;
 	void	   *plan;
 	Portal		portal;
-
-	/*
-	 * Initialize the global found variable to false
-	 */
-	exec_set_found(estate, false);
+	bool		found = false;
 
 	/*
 	 * Determine if we assign to a record or a row
@@ -2153,25 +2165,18 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	tuptab = SPI_tuptable;
 
 	/*
-	 * If the query didn't return any row, set the target to NULL and
-	 * return.
+	 * If the query didn't return any rows, set the target to NULL and
+	 * return with FOUND = false.
 	 */
 	if (n == 0)
-	{
 		exec_move_row(estate, rec, row, NULL, NULL);
-		SPI_cursor_close(portal);
-		return PLPGSQL_RC_OK;
-	}
-
-	/*
-	 * There are tuples, so set found to true
-	 */
-	exec_set_found(estate, true);
+	else
+		found = true;
 
 	/*
 	 * Now do the loop
 	 */
-	for (;;)
+	while (n > 0)
 	{
 		for (i = 0; i < n; i++)
 		{
@@ -2186,34 +2191,35 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 			rc = exec_stmts(estate, stmt->body);
 
 			/*
-			 * Check returncode
+			 * We're aborting the loop, so cleanup and set FOUND
 			 */
-			switch (rc)
+			if (rc != PLPGSQL_RC_OK)
 			{
-				case PLPGSQL_RC_OK:
-					break;
+				exec_set_found(estate, found);
+				SPI_freetuptable(tuptab);
+				SPI_cursor_close(portal);
 
-				case PLPGSQL_RC_EXIT:
-					SPI_freetuptable(tuptab);
-					SPI_cursor_close(portal);
-
+				if (rc == PLPGSQL_RC_EXIT)
+				{
 					if (estate->exitlabel == NULL)
-						return PLPGSQL_RC_OK;
-					if (stmt->label == NULL)
-						return PLPGSQL_RC_EXIT;
-					if (strcmp(stmt->label, estate->exitlabel))
-						return PLPGSQL_RC_EXIT;
-					estate->exitlabel = NULL;
-					return PLPGSQL_RC_OK;
+						/* unlabelled exit, finish the current loop */
+						rc = PLPGSQL_RC_OK;
+					else if (stmt->label != NULL &&
+							 strcmp(stmt->label, estate->exitlabel) == 0)
+					{
+						/* labelled exit, matches the current stmt's label */
+						estate->exitlabel = NULL;
+						rc = PLPGSQL_RC_OK;
+					}
 
-				case PLPGSQL_RC_RETURN:
-					SPI_freetuptable(tuptab);
-					SPI_cursor_close(portal);
+					/*
+					 * otherwise, we processed a labelled exit that does not
+					 * match the current statement's label, if any: return
+					 * RC_EXIT so that the EXIT continues to recurse upward.
+					 */
+				}
 
-					return PLPGSQL_RC_RETURN;
-
-				default:
-					elog(ERROR, "unknown rc %d from exec_stmts()", rc);
+				return rc;
 			}
 		}
 
@@ -2225,15 +2231,20 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 		SPI_cursor_fetch(portal, true, 50);
 		n = SPI_processed;
 		tuptab = SPI_tuptable;
-
-		if (n == 0)
-			break;
 	}
 
 	/*
 	 * Close the cursor
 	 */
 	SPI_cursor_close(portal);
+
+	/*
+	 * Set the FOUND variable to indicate the result of executing the
+	 * loop (namely, whether we looped one or more times). This must be
+	 * set here so that it does not interfere with the value of the
+	 * FOUND variable inside the loop processing itself.
+	 */
+	exec_set_found(estate, found);
 
 	return PLPGSQL_RC_OK;
 }
@@ -2615,7 +2626,7 @@ exec_stmt_close(PLpgSQL_execstate * estate, PLpgSQL_stmt_close * stmt)
 
 
 /* ----------
- * exec_assign_expr			Put an expressions result into
+ * exec_assign_expr			Put an expression's result into
  *					a variable.
  * ----------
  */
