@@ -37,7 +37,15 @@
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
- *	Initial version. Command processing taken from original pg_dump.
+ *		Initial version. Command processing taken from original pg_dump.
+ *
+ * Modifications - 28-Jul-2000 - pjw@rhyme.com.au (1.45)
+ *
+ * 		Added --create, --no-owner, --superuser, --no-reconnect (pg_dump & pg_restore)
+ *		Added code to dump 'Create Schema' statement (pg_dump)
+ *		Don't bother to disable/enable triggers if we don't have a superuser (pg_restore)
+ *		Cleaned up code for reconnecting to database.
+ *		Force a reconnect as superuser before enabling/disabling triggers.
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +91,7 @@ typedef struct option optType;
 #ifdef HAVE_GETOPT_H
 struct option cmdopts[] = {	
 				{ "clean", 0, NULL, 'c' },
+				{ "create", 0, NULL, 'C' },
 				{ "data-only", 0, NULL, 'a' },
 				{ "dbname", 1, NULL, 'd' },
 				{ "file", 1, NULL, 'f' },
@@ -93,12 +102,15 @@ struct option cmdopts[] = {
 				{ "index", 2, NULL, 'I'},
 				{ "list", 0, NULL, 'l'},
 				{ "no-acl", 0, NULL, 'x' },
+				{ "no-owner", 0, NULL, 'O'},
+				{ "no-reconnect", 0, NULL, 'R' },
 				{ "port", 1, NULL, 'p' },
 				{ "oid-order", 0, NULL, 'o'},
-				{ "orig-order", 0, NULL, 'O' },
+				{ "orig-order", 0, NULL, 'N'},
 				{ "password", 0, NULL, 'u' },
 				{ "rearrange", 0, NULL, 'r'},
 				{ "schema-only", 0, NULL, 's' },
+				{ "superuser", 1, NULL, 'S' },
 				{ "table", 2, NULL, 't'},
 				{ "trigger", 2, NULL, 'T' },
 				{ "use-list", 1, NULL, 'U'},
@@ -120,9 +132,9 @@ int main(int argc, char **argv)
 	progname = *argv;
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acd:f:F:h:i:loOp:st:T:u:U:vx", cmdopts, NULL)) != EOF)
+	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lNoOp:rRsSt:T:uU:vx", cmdopts, NULL)) != EOF)
 #else
-	while ((c = getopt(argc, argv, "acd:f:F:h:i:loOp:st:T:u:U:vx")) != -1)
+	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lNoOp:rRsSt:T:uU:vx")) != -1)
 #endif
 	{
 		switch (c)
@@ -133,6 +145,9 @@ int main(int argc, char **argv)
 			case 'c':			/* clean (i.e., drop) schema prior to
 								 * create */
 				opts->dropSchema = 1;
+				break;
+			case 'C':
+				opts->create = 1;
 				break;
 			case 'd':
 				if (strlen(optarg) != 0)
@@ -155,11 +170,14 @@ int main(int argc, char **argv)
 			case 'i':
 				opts->ignoreVersion = 1;
 				break;
+			case 'N':
+				opts->origOrder = 1;
+				break;
 			case 'o':
 				opts->oidOrder = 1;
 				break;
 			case 'O':
-				opts->origOrder = 1;
+				opts->noOwner = 1;
 				break;
 			case 'p':
 				if (strlen(optarg) != 0)
@@ -167,6 +185,9 @@ int main(int argc, char **argv)
 				break;
 			case 'r':
 				opts->rearrange = 1;
+				break;
+			case 'R':
+				opts->noReconnect = 1;
 				break;
 			case 'P': /* Function */
 				opts->selTypes = 1;
@@ -185,6 +206,10 @@ int main(int argc, char **argv)
 				break;
 			case 's':			/* dump schema only */
 				opts->schemaOnly = 1;
+				break;
+			case 'S':			/* Superuser username */
+				if (strlen(optarg) != 0)
+					opts->superuser = strdup(optarg);
 				break;
 			case 't':			/* Dump data for this table only */
 				opts->selTypes = 1;
@@ -270,6 +295,9 @@ int main(int argc, char **argv)
 		MoveToEnd(AH, "ACL");
     }
 
+	/* Database MUST be at start */
+	MoveToStart(AH, "DATABASE");
+
     if (opts->tocSummary) {
 		PrintTOCSummary(AH, opts);
     } else {
@@ -289,17 +317,21 @@ static void usage(const char *progname)
 	    "  -a, --data-only             \t dump out only the data, no schema\n"
 		"  -d, --dbname <name>         \t specify database name\n"
 	    "  -c, --clean                 \t clean(drop) schema prior to create\n"
+		"  -C, --create                \t output commands to create the database\n"
 	    "  -f filename                 \t script output filename\n"
 	    "  -F, --format {c|f}          \t specify backup file format\n"
 		"  -h, --host <hostname>       \t server host name\n"
 	    "  -i, --index[=name]          \t dump indexes or named index\n"
 	    "  -l, --list                  \t dump summarized TOC for this file\n"
+		"  -N, --orig-order            \t dump in original dump order\n"
 	    "  -o, --oid-order             \t dump in oid order\n"
-	    "  -O, --orig-order            \t dump in original dump order\n"
+		"  -O, --no-owner              \t don't output reconnect to database to match object owner\n"
 		"  -p, --port <port>           \t server port number\n"
 		"  -P, --function[=name]       \t dump functions or named function\n"
 	    "  -r, --rearrange             \t rearrange output to put indexes etc at end\n"
+		"  -R, --no-reconnect          \t disallow ALL reconnections to the database\n"
 	    "  -s, --schema-only           \t dump out only the schema, no data\n"
+		"  -S, --superuser <name>      \t specify the superuser username to use in disabling triggers\n"
 	    "  -t [table], --table[=table] \t dump for this table only\n"
 	    "  -T, --trigger[=name]        \t dump triggers or named trigger\n"
 		"  -u, --password              \t use password authentication\n"
@@ -312,19 +344,23 @@ static void usage(const char *progname)
 	fprintf(stderr,
 	"usage:  %s [options] [backup file]\n"
 	    "  -a                          \t dump out only the data, no schema\n"
-		"  -d,          <name>         \t specify database name\n"
+		"  -d <name>                   \t specify database name\n"
 	    "  -c                          \t clean(drop) schema prior to create\n"
-	    "  -f filename NOT IMPLEMENTED \t script output filename\n"
-	    "  -F           {c|f}          \t specify backup file format\n"
-		"  -h,        <hostname>       \t server host name\n"
+		"  -C                          \t output commands to create the database\n"
+	    "  -f filename                 \t script output filename\n"
+	    "  -F {c|f}                    \t specify backup file format\n"
+		"  -h <hostname>               \t server host name\n"
 	    "  -i name                     \t dump indexes or named index\n"
 	    "  -l                          \t dump summarized TOC for this file\n"
+		"  -N                          \t dump in original dump order\n"
 	    "  -o                          \t dump in oid order\n"
-	    "  -O                          \t dump in original dump order\n"
-		"  -p         <port>           \t server port number\n"
+		"  -O                          \t don't output reconnect to database to match object owner\n"
+		"  -p <port>                   \t server port number\n"
 		"  -P name                     \t dump functions or named function\n"
 	    "  -r                          \t rearrange output to put indexes etc at end\n"
+		"  -R                          \t disallow ALL reconnections to the database\n"
 	    "  -s                          \t dump out only the schema, no data\n"
+		"  -S <name>                   \t specify the superuser username to use in disabling triggers\n"
 	    "  -t name                     \t dump for this table only\n"
 	    "  -T name                     \t dump triggers or named trigger\n"
 		"  -u                          \t use password authentication\n"

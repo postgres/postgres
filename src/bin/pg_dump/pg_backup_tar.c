@@ -55,7 +55,7 @@ static void		_EndBlobs(ArchiveHandle* AH, TocEntry* te);
 
 
 #ifdef HAVE_LIBZ
-	//typedef gzFile	ThingFile;
+	/* typedef gzFile	ThingFile; */
 	typedef FILE    ThingFile;
 #else
 	typedef	FILE	ThingFile;
@@ -159,7 +159,7 @@ void InitArchiveFmt_Tar(ArchiveHandle* AH)
 		ctx->tarFHpos = 0;
 
 		/* Make unbuffered since we will dup() it, and the buffers screw each other */
-		//setvbuf(ctx->tarFH, NULL, _IONBF, 0);
+		/* setvbuf(ctx->tarFH, NULL, _IONBF, 0); */
 
 		ctx->hasSeek = (fseek(ctx->tarFH, 0, SEEK_CUR) == 0);
 
@@ -186,7 +186,7 @@ void InitArchiveFmt_Tar(ArchiveHandle* AH)
 		}
 
 		/* Make unbuffered since we will dup() it, and the buffers screw each other */
-		//setvbuf(ctx->tarFH, NULL, _IONBF, 0);
+		/* setvbuf(ctx->tarFH, NULL, _IONBF, 0); */
 
 		ctx->tarFHpos = 0;
 
@@ -487,7 +487,7 @@ static int	_WriteData(ArchiveHandle* AH, const void* data, int dLen)
 
 	tarWrite((void*)data, dLen, tctx->TH);
 
-    //GZWRITE((void*)data, 1, dLen, tctx->TH->FH);
+    /* GZWRITE((void*)data, 1, dLen, tctx->TH->FH); */
 
     return dLen;
 }
@@ -764,6 +764,7 @@ static void	_CloseArchive(ArchiveHandle* AH)
 		ropt = NewRestoreOptions();
 		ropt->dropSchema = 1;
 		ropt->compression = 0;
+		ropt->superuser = PQuser(AH->connection);
 
 		savVerbose = AH->public.verbose;
 		AH->public.verbose = 0;
@@ -1116,10 +1117,10 @@ static void _tarWriteHeader(TAR_MEMBER* th)
 	sprintf(&h[297], "%.31s", ""); /* How do I get group reliably? Do I need to? */
 
 	/* Maj Dev 8 */
-	// sprintf(&h[329], "%8o", 0);
+	/* sprintf(&h[329], "%8o", 0); */
 
 	/* Min Dev */
-	// sprintf(&h[337], "%8o", 0);
+	/* sprintf(&h[337], "%8o", 0); */
 
 
 	while ( (sum = _tarChecksum(h)) != lastSum)

@@ -59,7 +59,7 @@ typedef z_stream *z_streamp;
 
 #define K_VERS_MAJOR 1
 #define K_VERS_MINOR 4 
-#define K_VERS_REV 3 
+#define K_VERS_REV 8 
 
 /* Data block types */
 #define BLK_DATA 1
@@ -97,8 +97,7 @@ typedef void	(*SaveArchivePtr)	(struct _archiveHandle* AH);
 typedef void 	(*WriteExtraTocPtr)	(struct _archiveHandle* AH, struct _tocEntry* te);
 typedef void	(*ReadExtraTocPtr)	(struct _archiveHandle* AH, struct _tocEntry* te);
 typedef void	(*PrintExtraTocPtr)	(struct _archiveHandle* AH, struct _tocEntry* te);
-typedef void	(*PrintTocDataPtr)	(struct _archiveHandle* AH, struct _tocEntry* te, 
-						RestoreOptions *ropt);
+typedef void	(*PrintTocDataPtr)	(struct _archiveHandle* AH, struct _tocEntry* te, RestoreOptions *ropt);
 
 typedef int		(*CustomOutPtr)		(struct _archiveHandle* AH, const void* buf, int len);
 
@@ -134,7 +133,7 @@ typedef struct _archiveHandle {
 	char				vrev;
 	int					version;			/* Conveniently formatted version */
 
-	int					debugLevel;			/* Not used. Intended for logging */
+	int					debugLevel;			/* Used for logging (currently only by --verbose) */
 	int					intSize;			/* Size of an integer in the archive */
 	ArchiveFormat		format;				/* Archive format */
 
@@ -158,15 +157,15 @@ typedef struct _archiveHandle {
 	WriteDataPtr		WriteDataPtr; 		/* Called to send some table data to the archive */
 	EndDataPtr			EndDataPtr; 		/* Called when table data dump is finished */
 	WriteBytePtr		WriteBytePtr;		/* Write a byte to output */
-	ReadBytePtr			ReadBytePtr;		/* */
-	WriteBufPtr			WriteBufPtr;	
-	ReadBufPtr			ReadBufPtr;
+	ReadBytePtr			ReadBytePtr;		/* Read a byte from an archive */
+	WriteBufPtr			WriteBufPtr;		/* Write a buffer of output to the archive */
+	ReadBufPtr			ReadBufPtr;			/* Read a buffer of input from the archive */
 	ClosePtr			ClosePtr;			/* Close the archive */
 	WriteExtraTocPtr	WriteExtraTocPtr;	/* Write extra TOC entry data associated with */
 											/* the current archive format */
 	ReadExtraTocPtr		ReadExtraTocPtr;	/* Read extr info associated with archie format */
 	PrintExtraTocPtr	PrintExtraTocPtr;	/* Extra TOC info for format */
-	PrintTocDataPtr		PrintTocDataPtr;
+	PrintTocDataPtr		PrintTocDataPtr;	
 
 	StartBlobsPtr		StartBlobsPtr;
 	EndBlobsPtr			EndBlobsPtr;
@@ -182,6 +181,7 @@ typedef struct _archiveHandle {
 	char				*pghost;
 	char				*pgport;
 	PGconn				*connection;
+	PGconn				*blobConnection;	/* Connection for BLOB xref */
 	int					connectToDB;		/* Flag to indicate if direct DB connection is required */
 	int					pgCopyIn;			/* Currently in libpq 'COPY IN' mode. */
 	PQExpBuffer			pgCopyBuf;			/* Left-over data from incomplete lines in COPY IN */
@@ -265,7 +265,10 @@ extern int 				isValidTarHeader(char *header);
 extern OutputContext	SetOutput(ArchiveHandle* AH, char *filename, int compression);
 extern void 			ResetOutput(ArchiveHandle* AH, OutputContext savedContext);
 extern int 				RestoringToDB(ArchiveHandle* AH);
-extern int				ReconnectDatabase(ArchiveHandle *AH, char *newUser);
+extern int				ReconnectDatabase(ArchiveHandle *AH, const char* dbname, char *newUser);
+extern int				UserIsSuperuser(ArchiveHandle *AH, char* user);
+extern char*			ConnectedUser(ArchiveHandle *AH);
+extern int				ConnectedUserIsSuperuser(ArchiveHandle *AH);
 
 int ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle* AH);
 int ahprintf(ArchiveHandle* AH, const char *fmt, ...);

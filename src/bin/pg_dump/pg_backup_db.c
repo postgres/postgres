@@ -33,8 +33,10 @@
 
 static const char	*progname = "Archiver(db)";
 
-static void _prompt_for_password(char *username, char *password);
-static void _check_database_version(ArchiveHandle *AH, bool ignoreVersion);
+static void 	_prompt_for_password(char *username, char *password);
+static void 	_check_database_version(ArchiveHandle *AH, bool ignoreVersion);
+static PGconn*	_connectDB(ArchiveHandle *AH, const char* newdbname, char *newUser);
+static int		_executeSqlCommand(ArchiveHandle* AH, PGconn *conn, PQExpBuffer qry, char *desc);
 
 
 static void
@@ -131,7 +133,83 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 	PQclear(res);
 }
 
-int ReconnectDatabase(ArchiveHandle *AH, char *newUser)
+/* 
+ * Check if a given user is a superuser.
+ */
+int UserIsSuperuser(ArchiveHandle *AH, char* user)
+{
+	PQExpBuffer			qry = createPQExpBuffer();
+	PGresult			*res;
+	int					i_usesuper;
+	int					ntups;
+	int					isSuper;
+
+	/* Get the superuser setting */
+	appendPQExpBuffer(qry, "select usesuper from pg_user where usename = '%s'", user);
+	res = PQexec(AH->connection, qry->data);
+
+	if (!res)
+		die_horribly(AH, "%s: null result checking superuser status of %s.\n",
+					progname, user);
+
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		die_horribly(AH, "%s: Could not check superuser status of %s. Explanation from backend: %s\n",
+					progname, user, PQerrorMessage(AH->connection));
+
+	ntups = PQntuples(res);
+
+	if (ntups == 0)
+		isSuper = 0;
+	else
+	{
+		i_usesuper = PQfnumber(res, "usesuper");
+		isSuper = (strcmp(PQgetvalue(res, 0, i_usesuper), "t") == 0);
+	}
+	PQclear(res);
+
+	return isSuper;
+}
+
+int ConnectedUserIsSuperuser(ArchiveHandle *AH)
+{
+	return UserIsSuperuser(AH, PQuser(AH->connection));
+}
+
+char* ConnectedUser(ArchiveHandle *AH)
+{
+	return PQuser(AH->connection);
+}
+
+/*
+ * Reconnect the DB associated with the archive handle 
+ */
+int ReconnectDatabase(ArchiveHandle *AH, const char* newdbname, char *newUser)
+{
+	PGconn		*newConn;
+	char		*dbname;
+
+	if (!newdbname || (strcmp(newdbname, "-") == 0) )
+		dbname = PQdb(AH->connection);
+	else
+		dbname = (char*)newdbname;
+
+	/* Let's see if the request is already satisfied */
+	if (strcmp(PQuser(AH->connection), newUser) == 0 && strcmp(newdbname, PQdb(AH->connection)) == 0)
+		return 1;
+
+	newConn = _connectDB(AH, dbname, newUser);
+
+	PQfinish(AH->connection);
+	AH->connection = newConn;
+	strcpy(AH->username, newUser);
+
+	return 1;
+}
+
+/*
+ * Connect to the db again.
+ */
+static PGconn* _connectDB(ArchiveHandle *AH, const char* reqdb, char *requser)
 {
 	int			need_pass;
 	PGconn		*newConn;
@@ -139,47 +217,55 @@ int ReconnectDatabase(ArchiveHandle *AH, char *newUser)
 	char		*pwparam = NULL;
 	int			badPwd = 0;
 	int			noPwd = 0;
+	char		*newdb;
+	char		*newuser;
 
-	ahlog(AH, 1, "Connecting as %s\n", newUser);
+	if (!reqdb || (strcmp(reqdb, "-") == 0) )
+		newdb = PQdb(AH->connection);
+	else
+		newdb = (char*)reqdb;
+
+	if (!requser || (strlen(requser) == 0))
+		newuser = PQuser(AH->connection);
+	else
+		newuser = (char*)requser;
+
+	ahlog(AH, 1, "Connecting to %s as %s\n", newdb, newuser);
 
 	do
 	{
-			need_pass = false;
-			newConn = PQsetdbLogin(PQhost(AH->connection), PQport(AH->connection),
-									NULL, NULL, PQdb(AH->connection), 
-									newUser, pwparam);
-			if (!newConn)
-				die_horribly(AH, "%s: Failed to reconnect (PQsetdbLogin failed).\n", progname);
+		need_pass = false;
+		newConn = PQsetdbLogin(PQhost(AH->connection), PQport(AH->connection),
+								NULL, NULL, newdb, 
+								newuser, pwparam);
+		if (!newConn)
+			die_horribly(AH, "%s: Failed to reconnect (PQsetdbLogin failed).\n", progname);
 
-			if (PQstatus(newConn) == CONNECTION_BAD)
-		    {
-				noPwd = (strcmp(PQerrorMessage(newConn), "fe_sendauth: no password supplied\n") == 0);
-				badPwd = (strncmp(PQerrorMessage(newConn), "Password authentication failed for user", 39)
-							== 0);
+		if (PQstatus(newConn) == CONNECTION_BAD)
+		{
+			noPwd = (strcmp(PQerrorMessage(newConn), "fe_sendauth: no password supplied\n") == 0);
+			badPwd = (strncmp(PQerrorMessage(newConn), "Password authentication failed for user", 39)
+						== 0);
 
-				if (noPwd || badPwd) 
-				{
+			if (noPwd || badPwd) 
+			{
 
-					if (badPwd)
-						fprintf(stderr, "Password incorrect\n");
+				if (badPwd)
+					fprintf(stderr, "Password incorrect\n");
 
-					fprintf(stderr, "Connecting to %s as %s\n", PQdb(AH->connection), newUser);
+				fprintf(stderr, "Connecting to %s as %s\n", PQdb(AH->connection), newuser);
 
-					need_pass = true;
-					_prompt_for_password(newUser, password);
-					pwparam = password; 
-				}
-				else
-					die_horribly(AH, "%s: Could not reconnect. %s\n", progname, PQerrorMessage(newConn));
+				need_pass = true;
+				_prompt_for_password(newuser, password);
+				pwparam = password; 
 			}
+			else
+				die_horribly(AH, "%s: Could not reconnect. %s\n", progname, PQerrorMessage(newConn));
+		}
 
 	} while (need_pass);
 
-	PQfinish(AH->connection);
-	AH->connection = newConn;
-	strcpy(AH->username, newUser);
-
-	return 1;
+	return newConn;
 }
 
 
@@ -247,25 +333,46 @@ PGconn* ConnectDatabase(Archive *AHX,
 	/* check for version mismatch */
 	_check_database_version(AH, ignoreVersion);
 
-	AH->currUser = PQuser(AH->connection);
+	/*
+     * AH->currUser = PQuser(AH->connection);
+	 *	
+	 * Removed because it prevented an initial \connect
+	 * when dumping to SQL in pg_dump.
+	 */
 
 	return AH->connection;
 }
 
+/* Public interface */
 /* Convenience function to send a query. Monitors result to handle COPY statements */
 int ExecuteSqlCommand(ArchiveHandle* AH, PQExpBuffer qry, char *desc)
+{
+	return _executeSqlCommand(AH, AH->connection, qry, desc);
+}
+
+/* 
+ * Handle command execution. This is used to execute a command on more than one connection,
+ * but the 'pgCopyIn' setting assumes the COPY commands are ONLY executed on the primary
+ * setting...an error will be raised otherwise.
+ */
+static int _executeSqlCommand(ArchiveHandle* AH, PGconn *conn, PQExpBuffer qry, char *desc)
 {
 	PGresult		*res;
 
 	/* fprintf(stderr, "Executing: '%s'\n\n", qry->data); */
-	res = PQexec(AH->connection, qry->data);
+	res = PQexec(conn, qry->data);
 	if (!res)
 		die_horribly(AH, "%s: %s. No result from backend.\n", progname, desc);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		if (PQresultStatus(res) == PGRES_COPY_IN)
+		{
+			if (conn != AH->connection)
+				die_horribly(AH, "%s: COPY command execute in non-primary connection.\n", progname);
+
 			AH->pgCopyIn = 1;
+		}
 		else 
 			die_horribly(AH, "%s: %s. Code = %d. Explanation from backend: '%s'.\n",
 						progname, desc, PQresultStatus(res), PQerrorMessage(AH->connection));
@@ -467,7 +574,7 @@ void FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 								" WHERE a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid "
 								" AND t.typname = 'oid' AND c.relname = '%s';", tablename);
 
-	res = PQexec(AH->connection, tblQry->data);
+	res = PQexec(AH->blobConnection, tblQry->data);
 	if (!res)
 		die_horribly(AH, "%s: could not find OID attrs of %s. Explanation from backend '%s'\n",
 						progname, tablename, PQerrorMessage(AH->connection));
@@ -493,7 +600,7 @@ void FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 
 		ahlog(AH, 10, " - sql = %s\n", tblQry->data);
 
-		uRes = PQexec(AH->connection, tblQry->data);
+		uRes = PQexec(AH->blobConnection, tblQry->data);
 		if (!uRes)
 			die_horribly(AH, "%s: could not update attr %s of table %s. Explanation from backend '%s'\n",
 								progname, attr, tablename, PQerrorMessage(AH->connection));
@@ -516,16 +623,22 @@ void CreateBlobXrefTable(ArchiveHandle* AH)
 {
 	PQExpBuffer		qry = createPQExpBuffer();
 
+	/* IF we don't have a BLOB connection, then create one */
+	if (!AH->blobConnection)
+	{
+		AH->blobConnection = _connectDB(AH, NULL, NULL);
+	}
+
 	ahlog(AH, 1, "Creating table for BLOBS xrefs\n");
 
 	appendPQExpBuffer(qry, "Create Temporary Table %s(oldOid oid, newOid oid);", BLOB_XREF_TABLE);
 
-	ExecuteSqlCommand(AH, qry, "can not create BLOB xref table '" BLOB_XREF_TABLE "'");
+	_executeSqlCommand(AH, AH->blobConnection, qry, "can not create BLOB xref table '" BLOB_XREF_TABLE "'");
 
 	resetPQExpBuffer(qry);
 
 	appendPQExpBuffer(qry, "Create Unique Index %s_ix on %s(oldOid)", BLOB_XREF_TABLE, BLOB_XREF_TABLE);
-	ExecuteSqlCommand(AH, qry, "can not create index on BLOB xref table '" BLOB_XREF_TABLE "'");
+	_executeSqlCommand(AH, AH->blobConnection, qry, "can not create index on BLOB xref table '" BLOB_XREF_TABLE "'");
 }
 
 void InsertBlobXref(ArchiveHandle* AH, int old, int new)
@@ -534,7 +647,7 @@ void InsertBlobXref(ArchiveHandle* AH, int old, int new)
 
 	appendPQExpBuffer(qry, "Insert Into %s(oldOid, newOid) Values (%d, %d);", BLOB_XREF_TABLE, old, new);
 
-	ExecuteSqlCommand(AH, qry, "can not create BLOB xref entry");
+	_executeSqlCommand(AH, AH->blobConnection, qry, "can not create BLOB xref entry");
 }
 
 void StartTransaction(ArchiveHandle* AH)

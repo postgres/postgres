@@ -20,6 +20,22 @@
  *
  *	Initial version. 
  *
+ *
+ * Modifications - 28-Jul-2000 - pjw@rhyme.com.au (1.45)
+ *
+ * 		Added --create, --no-owner, --superuser, --no-reconnect (pg_dump & pg_restore)
+ *		Added code to dump 'Create Schema' statement (pg_dump)
+ *		Don't bother to disable/enable triggers if we don't have a superuser (pg_restore)
+ *		Cleaned up code for reconnecting to database.
+ *		Force a reconnect as superuser before enabling/disabling triggers.
+ *
+ * Modifications - 31-Jul-2000 - pjw@rhyme.com.au (1.46, 1.47)
+ *		Added & Removed --throttle (pg_dump)
+ *		Fixed minor bug in language dumping code: expbuffres were not being reset.
+ *		Fixed version number initialization in _allocAH (pg_backup_archiver.c)
+ *		Added second connection when restoring BLOBs to allow temp. table to survive
+ *		(db reconnection causes temp tables to be lost).
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -53,6 +69,10 @@ typedef struct _Archive {
 typedef int     (*DataDumperPtr)(Archive* AH, char* oid, void* userArg);
 
 typedef struct _restoreOptions {
+	int			create;			/* Issue commands to create the database */
+	int			noOwner;		/* Don't reconnect to database to match original object owner */
+	int			noReconnect;	/* Don't reconnect to database under any cirsumstances */
+	char		*superuser;		/* Username to use as superuser */
 	int			dataOnly;
 	int			dropSchema;
 	char		*filename;
@@ -84,9 +104,9 @@ typedef struct _restoreOptions {
 	int			ignoreVersion;
 	int			requirePassword;
 
-	int		*idWanted;
-	int		limitToList;
-	int		compression;
+	int			*idWanted;
+	int			limitToList;
+	int			compression;
 
 } RestoreOptions;
 

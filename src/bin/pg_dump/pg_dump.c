@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.161 2000/07/24 06:24:26 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.162 2000/08/01 15:51:44 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -65,6 +65,19 @@
  * Modifications - 17-Jul-2000 - Philip Warner pjw@rhyme.com.au
  *		 - Support for BLOB output.
  *		 - Sort archive by OID, put some items at end (out of OID order)
+ *
+ * Modifications - 28-Jul-2000 - pjw@rhyme.com.au (1.45)
+ *
+ * 		Added --create, --no-owner, --superuser, --no-reconnect (pg_dump & pg_restore)
+ *		Added code to dump 'Create Schema' statement (pg_dump)
+ *		Don't bother to disable/enable triggers if we don't have a superuser (pg_restore)
+ *		Cleaned up code for reconnecting to database.
+ *		Force a reconnect as superuser before enabling/disabling triggers.
+ *
+ * Modifications - 31-Jul-2000 - pjw@rhyme.com.au (1.46, 1.47)
+ *		Added & Removed --throttle (pg_dump)
+ *		Fixed minor bug in language dumping code: expbuffres were not being reset.
+ *		Fixed version number initialization in _allocAH (pg_backup_archiver.c)
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +131,7 @@ static void AddAcl(char *aclbuf, const char *keyword);
 static char *GetPrivileges(const char *s);
 
 static int dumpBlobs(Archive *AH, char*, void*);
-
+static int dumpDatabase(Archive *AH);
 
 extern char *optarg;
 extern int	optind,
@@ -163,6 +176,7 @@ help(const char *progname)
 	puts(
 		"  -a, --data-only          dump out only the data, not the schema\n"
 	   	"  -c, --clean              clean (drop) schema prior to create\n"
+		"  -C, --create             output commands to create database\n"
 		"  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
 		"  -D, --attribute-inserts  dump data as INSERT commands with attribute names\n"
 		"  -f, --file               specify output file name\n"
@@ -172,8 +186,11 @@ help(const char *progname)
 		"  -n, --no-quotes          suppress most quotes around identifiers\n"
 		"  -N, --quotes             enable most quotes around identifiers\n"
 		"  -o, --oids               dump object ids (oids)\n"
+		"  -O, --no-owner           don't output \\connect commands in plain text format\n"
 		"  -p, --port <port>        server port number\n"
+		"  -R, --no-reconnect       disable ALL reconnections to the database in plain text format\n"
 		"  -s, --schema-only        dump out only the schema, no data\n"
+		"  -S, --superuser <name>   specify the superuser username to use in plain text format\n"
 		"  -t, --table <table>      dump for this table only\n"
 		"  -u, --password           use password authentication\n"
 		"  -v, --verbose            verbose\n"
@@ -184,6 +201,7 @@ help(const char *progname)
 	puts(
 		"  -a                       dump out only the data, no schema\n"
 		"  -c                       clean (drop) schema prior to create\n"
+		"  -C                       output commands to create database\n"
 		"  -d                       dump data as INSERT, rather than COPY, commands\n"
 		"  -D                       dump data as INSERT commands with attribute names\n"
 		"  -f                       specify output file name\n"
@@ -193,8 +211,11 @@ help(const char *progname)
 		"  -n                       suppress most quotes around identifiers\n"
 		"  -N                       enable most quotes around identifiers\n"
 		"  -o                       dump object ids (oids)\n"
+		"  -O                       don't output \\connect commands in plain text format\n"
 		"  -p <port>                server port number\n"
+		"  -R                       disable ALL reconnections to the database in plain text format\n"
 		"  -s                       dump out only the schema, no data\n"
+		"  -S <name>                specify the superuser username to use in plain text format\n"
 		"  -t <table>               dump for this table only\n"
 		"  -u                       use password authentication\n"
 		"  -v                       verbose\n"
@@ -264,6 +285,7 @@ isViewRule(char *relname)
  *	- this routine is called by the Archiver when it wants the table
  *	  to be dumped.
  */
+
 static int 
 dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
 {
@@ -276,6 +298,9 @@ dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
 	int			ret;
 	bool		copydone;
 	char		copybuf[COPYBUFSIZ];
+
+    if (g_verbose)
+        fprintf(stderr, "%s dumping out the contents of table %s\n", g_comment_start, classname);
 
 	if (oids == true)
 	{
@@ -325,6 +350,7 @@ dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
 		else
 		{
 			copydone = false;
+
 			while (!copydone)
 			{
 				ret = PQgetline(g_conn, copybuf, COPYBUFSIZ);
@@ -350,6 +376,46 @@ dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
 							break;
 					}
 				}
+
+				/* 
+				 * THROTTLE:
+				 *
+				 * There was considerable discussion in late July, 2000 regarding slowing down
+				 * pg_dump when backing up large tables. Users with both slow & fast (muti-processor)
+				 * machines experienced performance degradation when doing a backup.
+				 *
+				 * Initial attempts based on sleeping for a number of ms for each ms of work were deemed
+				 * too complex, then a simple 'sleep in each loop' implementation was suggested. The latter
+				 * failed because the loop was too tight. Finally, the following was implemented:
+				 *
+				 * If throttle is non-zero, then
+				 * 		See how long since the last sleep.
+				 *		Work out how long to sleep (based on ratio).
+				 * 		If sleep is more than 100ms, then 
+			     *			sleep 
+				 *			reset timer
+				 *		EndIf
+				 * EndIf
+				 *
+				 * where the throttle value was the number of ms to sleep per ms of work. The calculation was 
+				 * done in each loop.
+				 *
+				 * Most of the hard work is done in the backend, and this solution still did not work 
+				 * particularly well: on slow machines, the ratio was 50:1, and on medium paced machines, 1:1,
+				 * and on fast multi-processor machines, it had little or no effect, for reasons that were unclear.
+				 *
+				 * Further discussion ensued, and the proposal was dropped.
+				 *
+				 * For those people who want this feature, it can be implemented using gettimeofday in each
+				 * loop, calculating the time since last sleep, multiplying that by the sleep ratio, then
+				 * if the result is more than a preset 'minimum sleep time' (say 100ms), call the 'select'
+				 * function to sleep for a subsecond period ie.
+				 *
+				 *        select(0, NULL, NULL, NULL, &tvi);
+				 *
+				 * This will return after the interval specified in the structure tvi. Fianally, call
+				 * gettimeofday again to save the 'last sleep time'.
+				 */	
 			}
 			archprintf(fout, "\\.\n");
 		}
@@ -366,10 +432,9 @@ dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
 			exit_nicely(g_conn);
 		}
 	}
+
 	return 1;
 }
-
-
 
 static int
 dumpClasses_dumpData(Archive *fout, char* oid, void *dctxv)
@@ -498,7 +563,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 
 
 	if (g_verbose)
-		fprintf(stderr, "%s dumping out the contents of %s %d table%s/sequence%s %s\n",
+		fprintf(stderr, "%s preparing to dump out the contents of %s %d table%s/sequence%s %s\n",
 				g_comment_start, all_only,
 				(onlytable == NULL) ? numTables : 1,
 		  (onlytable == NULL) ? "s" : "", (onlytable == NULL) ? "s" : "",
@@ -536,7 +601,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 		if (!onlytable || (!strcmp(classname, onlytable)))
 		{
 			if (g_verbose)
-				fprintf(stderr, "%s dumping out the contents of Table '%s' %s\n",
+				fprintf(stderr, "%s preparing to dump out the contents of Table '%s' %s\n",
 						g_comment_start, classname, g_comment_end);
 
 			/* becomeUser(fout, tblinfo[i].usename); */
@@ -587,7 +652,11 @@ main(int argc, char **argv)
 	bool		ignore_version = false;
 	int			plainText = 0;
 	int			outputClean = 0;
+	int			outputCreate = 0;
 	int			outputBlobs = 0;
+	int			outputNoOwner = 0;
+	int			outputNoReconnect = 0;
+	char		*outputSuperuser = NULL;
 
 	RestoreOptions	*ropt;
 
@@ -596,17 +665,21 @@ main(int argc, char **argv)
 		{"data-only", no_argument, NULL, 'a'},
 		{"blobs", no_argument, NULL, 'b' },
 		{"clean", no_argument, NULL, 'c'},
+		{"create", no_argument, NULL, 'C'},
 		{"file", required_argument, NULL, 'f'},
 		{"format", required_argument, NULL, 'F'},
 		{"inserts", no_argument, NULL, 'd'},
 		{"attribute-inserts", no_argument, NULL, 'D'},
 		{"host", required_argument, NULL, 'h'},
 		{"ignore-version", no_argument, NULL, 'i'},
+		{"no-reconnect", no_argument, NULL, 'R'},
 		{"no-quotes", no_argument, NULL, 'n'},
 		{"quotes", no_argument, NULL, 'N'},
 		{"oids", no_argument, NULL, 'o'},
+		{"no-owner", no_argument, NULL, 'O'},
 		{"port", required_argument, NULL, 'p'},
 		{"schema-only", no_argument, NULL, 's'},
+		{"superuser", required_argument, NULL, 'S'},
 		{"table", required_argument, NULL, 't'},
 		{"password", no_argument, NULL, 'u'},
 		{"verbose", no_argument, NULL, 'v'},
@@ -641,10 +714,11 @@ main(int argc, char **argv)
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acdDf:F:h:inNop:st:uvxzZ:V?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acCdDf:F:h:inNoOp:sS:t:uvxzZ:V?", long_options, &optindex)) != -1)
 #else
-	while ((c = getopt(argc, argv, "acdDf:F:h:inNop:st:uvxzZ:V?-")) != -1)
+	while ((c = getopt(argc, argv, "acCdDf:F:h:inNoOp:sS:t:uvxzZ:V?-")) != -1)
 #endif
+
 	{
 		switch (c)
 		{
@@ -660,6 +734,11 @@ main(int argc, char **argv)
 				outputClean = 1;
  				break;
  
+			case 'C':			/* Create DB */
+
+				outputCreate = 1;
+				break;
+
 			case 'd':			/* dump data as proper insert strings */
 				dumpData = true;
 				break;
@@ -690,11 +769,20 @@ main(int argc, char **argv)
 			case 'o':			/* Dump oids */
 				oids = true;
 				break;
+			case 'O':			/* Don't reconnect to match owner */
+				outputNoOwner = 1;
+				break;
 			case 'p':			/* server port */
 				pgport = optarg;
 				break;
+			case 'R':			/* No reconnect */
+				outputNoReconnect = 1;
+				break;
 			case 's':			/* dump schema only */
 				schemaOnly = true;
+				break;
+			case 'S':			/* Username for superuser in plain text output */
+				outputSuperuser = strdup(optarg);
 				break;
 			case 't':			/* Dump data for this table only */
 				{
@@ -852,6 +940,10 @@ main(int argc, char **argv)
 
 	g_last_builtin_oid = findLastBuiltinOid();
 
+	/* Dump the database definition */
+	if (!dataOnly)
+		dumpDatabase(g_fout);
+
 	if (oids == true)
 		setMaxOid(g_fout);
 
@@ -878,6 +970,7 @@ main(int argc, char **argv)
 
 	/* Now sort the output nicely */
 	SortTocByOID(g_fout);
+	MoveToStart(g_fout, "DATABASE");
 	MoveToEnd(g_fout, "TABLE DATA");
 	MoveToEnd(g_fout, "BLOBS");
 	MoveToEnd(g_fout, "INDEX");
@@ -890,6 +983,15 @@ main(int argc, char **argv)
 		ropt->filename = (char*)filename;
 		ropt->dropSchema = outputClean;
 		ropt->aclsSkip = aclsSkip;
+		ropt->superuser = outputSuperuser;
+		ropt->create = outputCreate;
+		ropt->noOwner = outputNoOwner;
+		ropt->noReconnect = outputNoReconnect;
+
+		if (outputSuperuser)
+			ropt->superuser = outputSuperuser;
+		else
+			ropt->superuser = PQuser(g_conn);
 
 		if (compressLevel == -1)
 		    ropt->compression = 0;
@@ -905,6 +1007,60 @@ main(int argc, char **argv)
 	PQfinish(g_conn);
 	exit(0);
 }
+
+/*
+ * dumpDatabase:
+ *	dump the database definition
+ *
+ */
+static int 
+dumpDatabase(Archive *AH)
+{
+	PQExpBuffer		dbQry = createPQExpBuffer();
+	PQExpBuffer		delQry = createPQExpBuffer();
+	PQExpBuffer		creaQry = createPQExpBuffer();
+	PGresult		*res;
+	int				ntups;
+	int				i_dba;
+
+	if (g_verbose)
+		fprintf(stderr, "%s saving database definition\n", g_comment_start);
+
+	/* Get the dba */
+	appendPQExpBuffer(dbQry, "select pg_get_userbyid(datdba) as dba from pg_database"
+							" where datname = '%s'", PQdb(g_conn));
+
+	res = PQexec(g_conn, dbQry->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		fprintf(stderr, "getDatabase(): SELECT failed.  Explanation from backend: '%s'.\n", 
+						PQerrorMessage(g_conn));
+		exit_nicely(g_conn);
+	}
+
+	ntups = PQntuples(res);
+
+	if (ntups != 1)
+	{
+		fprintf(stderr, "getDatabase(): SELECT returned %d databases.\n", ntups);
+		exit_nicely(g_conn);
+	}
+
+	appendPQExpBuffer(creaQry, "Create Database \"%s\";\n", PQdb(g_conn));
+	appendPQExpBuffer(delQry, "Drop Database \"%s\";\n", PQdb(g_conn));
+	i_dba = PQfnumber(res, "dba");
+
+	ArchiveEntry(AH, "0" /* OID */, PQdb(g_conn) /* Name */, "DATABASE", NULL, 
+						creaQry->data /* Create */, delQry->data /*Del*/,
+						"" /* Copy */, PQgetvalue(res, 0, i_dba) /*Owner*/, 
+						NULL /* Dumper */, NULL /* Dumper Arg */);	
+
+	PQclear(res);
+
+	return 1;
+}
+
 
 /*
  * dumpBlobs:
@@ -2652,6 +2808,9 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs,
 
 		free(lanname);
 		free(lancompiler);
+
+		resetPQExpBuffer(defqry);
+		resetPQExpBuffer(delqry);
 	}
 
 	PQclear(res);

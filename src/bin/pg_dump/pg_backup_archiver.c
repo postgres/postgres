@@ -18,7 +18,10 @@
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
- *	Initial version. 
+ *		Initial version. 
+ *
+ * Modifications - 31-Jul-2000 - pjw@rhyme.com.au (1.46, 1.47)
+ *		Fixed version number initialization in _allocAH (pg_backup_archiver.c)
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +46,9 @@ static int		_tocSortCompareByIDNum(const void *p1, const void *p2);
 static ArchiveHandle* 	_allocAH(const char* FileSpec, const ArchiveFormat fmt, 
 				int compression, ArchiveMode mode);
 static int 		_printTocEntry(ArchiveHandle* AH, TocEntry* te, RestoreOptions *ropt);
-static void		_reconnectAsOwner(ArchiveHandle* AH, TocEntry* te);
+
+static void		_reconnectAsOwner(ArchiveHandle* AH, const char *dbname, TocEntry* te);
+static void		_reconnectAsUser(ArchiveHandle* AH, const char *dbname, char *user);
 
 static int		_tocEntryRequired(TocEntry* te, RestoreOptions *ropt);
 static void		_disableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
@@ -58,7 +63,7 @@ static char	*progname = "Archiver";
 static void		_die_horribly(ArchiveHandle *AH, const char *fmt, va_list ap);
 
 static int 		_canRestoreBlobs(ArchiveHandle *AH);
-
+static int 		_restoringToDB(ArchiveHandle *AH);
 
 /*
  *  Wrapper functions.
@@ -110,6 +115,9 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 
 	AH->ropt = ropt;
 
+	if (ropt->create && ropt->noReconnect)
+		die_horribly(AH, "%s: --create and --no-reconnect are incompatible options\n",progname);
+
 	/*
 	 * If we're using a DB connection, then connect it.
 	 */
@@ -121,7 +129,24 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 
 		ConnectDatabase(AHX, ropt->dbname, ropt->pghost, ropt->pgport, 
 							ropt->requirePassword, ropt->ignoreVersion);
+
+		/*
+		 * If no superuser was specified then see if the current user will do...
+		 */
+		if (!ropt->superuser)
+		{
+			if (UserIsSuperuser(AH, ConnectedUser(AH)))
+				ropt->superuser = strdup(ConnectedUser(AH));
+		}
+
 	}
+
+	if (!ropt->superuser)
+		fprintf(stderr, "\n%s: ******** WARNING ******** \n"
+							"        Data restoration may fail since any defined triggers\n"
+							"        can not be disabled (no superuser username specified).\n"
+							"        This is only a problem for restoration into a database\n"
+							"        with triggers already defined.\n\n", progname);
 
 	/*
 	 *	Setup the output file if necessary.
@@ -155,16 +180,20 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 		/* Work out what, if anything, we want from this entry */
 		reqs = _tocEntryRequired(te, ropt);
 
-		/* Reconnect if necessary */
-		if (reqs != 0)
-		{
-			_reconnectAsOwner(AH, te); 
-		}
-
 		if ( (reqs & 1) != 0) /* We want the schema */
 		{
+			/* Reconnect if necessary */
+			_reconnectAsOwner(AH, "-", te);
+
 			ahlog(AH, 1, "Creating %s %s\n", te->desc, te->name);
 			_printTocEntry(AH, te, ropt);
+
+			/* If we created a DB, connect to it... */
+			if (strcmp(te->desc,"DATABASE") == 0)
+			{
+				ahlog(AH, 1, "Connecting to new DB '%s' as %s\n",te->name, te->owner);
+				_reconnectAsUser(AH, te->name, te->owner);
+			}
 		}
 
 		/* 
@@ -175,8 +204,6 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 			if (AH->compression != 0)
 				die_horribly(AH, "%s: Unable to restore data from a compressed archive\n", progname);
 #endif
-
-			ahlog(AH, 1, "Restoring data for %s \n", te->name);
 
 			ahprintf(AH, "--\n-- Data for TOC Entry ID %d (OID %s) %s %s\n--\n\n",
 						te->id, te->oid, te->desc, te->name);
@@ -197,6 +224,10 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 
 				_disableTriggers(AH, te, ropt);
 
+				/* Reconnect if necessary (_disableTriggers may have reconnected) */
+				_reconnectAsOwner(AH, "-", te);
+
+				ahlog(AH, 1, "Restoring data for %s \n", te->name);
 
 				/* If we have a copy statement, use it. As of V1.3, these are separate 
 				 * to allow easy import from withing a database connection. Pre 1.3 
@@ -256,6 +287,12 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 	{
 		PQfinish(AH->connection);
 		AH->connection = NULL;
+
+		if (AH->blobConnection)
+		{
+			PQfinish(AH->blobConnection);
+			AH->blobConnection = NULL;
+		}
 	}
 }
 
@@ -274,19 +311,89 @@ RestoreOptions*		NewRestoreOptions(void)
 	return opts;
 }
 
-static int _canRestoreBlobs(ArchiveHandle *AH)
+static int _restoringToDB(ArchiveHandle *AH)
 {
 	return (AH->ropt->useDB && AH->connection);
 }
 
+static int _canRestoreBlobs(ArchiveHandle *AH)
+{
+	return _restoringToDB(AH);
+}
+
 static void _disableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
+	char	*oldUser = NULL;
+
+	/* Can't do much if we're connected & don't have a superuser */
+	if (_restoringToDB(AH) && !ropt->superuser)
+		return;
+
+	/*
+     * Reconnect as superuser if possible, since they are the only ones
+	 * who can update pg_class...
+	 */
+	if (ropt->superuser)
+	{
+		/* If we're not allowing changes for ownership, then remember the user
+		 * so we can change it back here. Otherwise, let _reconnectAsOwner
+		 * do what it has to do.
+		 */
+		if (ropt->noOwner)
+			oldUser = strdup(ConnectedUser(AH));
+		_reconnectAsUser(AH, "-", ropt->superuser);
+	}
+
+	ahlog(AH, 1, "Disabling triggers\n");
+
+	/*
+     * Disable them. This is a hack. Needs to be done via an appropriate 'SET'
+	 * command when one is available.
+	 */
     ahprintf(AH, "-- Disable triggers\n");
     ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = 0 WHERE \"relname\" !~ '^pg_';\n\n");
+
+	/*
+	 * Restore the user connection from the start of this procedure
+	 * if _reconnectAsOwner is disabled.
+	 */
+	if (ropt->noOwner && oldUser)
+	{
+		_reconnectAsUser(AH, "-", oldUser);
+		free(oldUser);
+	}
 }
 
 static void _enableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
+	char		*oldUser = NULL;
+
+	/* Can't do much if we're connected & don't have a superuser */
+	if (_restoringToDB(AH) && !ropt->superuser)
+		return;
+
+	/*
+	 * Reconnect as superuser if possible, since they are the only ones
+	 * who can update pg_class...
+	 */
+	if (ropt->superuser)
+	{
+		/* If we're not allowing changes for ownership, then remember the user
+		 * so we can change it back here. Otherwise, let _reconnectAsOwner
+		 * do what it has to do
+		 */
+		if (ropt->noOwner)
+			oldUser = strdup(ConnectedUser(AH));
+
+		_reconnectAsUser(AH, "-", ropt->superuser);
+	}
+
+	ahlog(AH, 1, "Enabling triggers\n");
+
+	/*
+	 * Enable them. This is a hack. Needs to be done via an appropriate 'SET'
+	 * command when one is available.
+	 */
     ahprintf(AH, "-- Enable triggers\n");
     ahprintf(AH, "BEGIN TRANSACTION;\n");
     ahprintf(AH, "CREATE TEMP TABLE \"tr\" (\"tmp_relname\" name, \"tmp_reltriggers\" smallint);\n");
@@ -298,8 +405,17 @@ static void _enableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	    "\"pg_class\".\"relname\" = TMP.\"tmp_relname\";\n");
     ahprintf(AH, "DROP TABLE \"tr\";\n");
     ahprintf(AH, "COMMIT TRANSACTION;\n\n");
-}
 
+	/*
+	 * Restore the user connection from the start of this procedure
+	 * if _reconnectAsOwner is disabled.
+	 */
+	if (ropt->noOwner && oldUser)
+	{
+		_reconnectAsUser(AH, "-", oldUser);
+		free(oldUser);
+	}
+}
 
 /*
  * This is a routine that is part of the dumper interface, hence the 'Archive*' parameter.
@@ -394,6 +510,8 @@ void PrintTOCSummary(Archive* AHX, RestoreOptions *ropt)
 		default:
 			fmtName = "UNKNOWN";
 	}
+
+	ahprintf(AH, ";     Dump Version: %d.%d-%d\n", AH->vmaj, AH->vmin, AH->vrev);
 	ahprintf(AH, ";     Format: %s\n;\n", fmtName);
 
     ahprintf(AH, ";\n; Selected TOC Entries:\n;\n");
@@ -456,13 +574,13 @@ void StartRestoreBlob(ArchiveHandle* AH, int oid)
 		AH->createdBlobXref = 1;
 	}
 
+	StartTransaction(AH);
+
 	loOid = lo_creat(AH->connection, INV_READ | INV_WRITE);
 	if (loOid == 0)
 		die_horribly(AH, "%s: unable to create BLOB\n", progname);
 
 	ahlog(AH, 1, "Restoring BLOB oid %d as %d\n", oid, loOid);
-
-	StartTransaction(AH);
 
 	InsertBlobXref(AH, oid, loOid);
 
@@ -829,6 +947,8 @@ static void _die_horribly(ArchiveHandle *AH, const char *fmt, va_list ap)
     if (AH)
 	if (AH->connection)
 	    PQfinish(AH->connection);
+	if (AH->blobConnection)
+		PQfinish(AH->blobConnection);
 
     exit(1);
 }
@@ -1113,6 +1233,7 @@ static ArchiveHandle* _allocAH(const char* FileSpec, const ArchiveFormat fmt,
 
     AH->vmaj = K_VERS_MAJOR;
     AH->vmin = K_VERS_MINOR;
+	AH->vrev = K_VERS_REV;
 
 	AH->createDate = time(NULL);
 
@@ -1299,6 +1420,9 @@ static int _tocEntryRequired(TocEntry* te, RestoreOptions *ropt)
     if (ropt->aclsSkip && strcmp(te->desc,"ACL") == 0)
 		return 0;
 
+	if (!ropt->create && strcmp(te->desc,"DATABASE") == 0)
+		return 0;
+
     /* Check if tablename only is wanted */
     if (ropt->selTypes)
     {
@@ -1351,20 +1475,32 @@ static int _tocEntryRequired(TocEntry* te, RestoreOptions *ropt)
     return res;
 }
 
-static void _reconnectAsOwner(ArchiveHandle* AH, TocEntry* te) 
+static void _reconnectAsUser(ArchiveHandle* AH, const char *dbname, char *user)
 {
-    if (te->owner && strlen(te->owner) != 0 && strcmp(AH->currUser, te->owner) != 0) {
+	if (AH->ropt && AH->ropt->noReconnect)
+		return;
+
+	if (user && strlen(user) != 0
+			&& ( (strcmp(AH->currUser, user) != 0) || (strcmp(dbname,"-") != 0)))
+	{
 		if (RestoringToDB(AH))
 		{
-			ReconnectDatabase(AH, te->owner);
-			/* todo pjw - ???? fix for db connection... */
+			ReconnectDatabase(AH, dbname, user);
 		}
 		else
 		{
-			ahprintf(AH, "\\connect - %s\n", te->owner);
+			ahprintf(AH, "\\connect %s %s\n", dbname, user);
 		}
-		AH->currUser = te->owner;
-    }
+		AH->currUser = user;
+    } 
+}
+
+static void _reconnectAsOwner(ArchiveHandle* AH, const char *dbname, TocEntry* te) 
+{
+	if (AH->ropt && AH->ropt->noOwner)
+		return;
+
+	_reconnectAsUser(AH, dbname, te->owner);
 }
 
 static int _printTocEntry(ArchiveHandle* AH, TocEntry* te, RestoreOptions *ropt) 
