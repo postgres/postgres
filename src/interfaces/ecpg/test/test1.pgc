@@ -45,6 +45,7 @@ exec sql begin declare section;
         } ind[AMOUNT];
 	char command[128];
 	char *connection="pm";
+	int how_many;
 exec sql end declare section;
 	exec sql var name is string(AMOUNT);
 	char msg[128];
@@ -107,7 +108,7 @@ exec sql end declare section;
         exec sql select * into :name, :amount, :letter from "Test";
 
 	printf("Database: mm\n");
-        for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
+        for (i=0, how_many=j=sqlca.sqlerrd[2]; i<j; i++)
 	{
 	    exec sql begin declare section;
 	    char n[8], l = letter[i][0];
@@ -125,6 +126,31 @@ exec sql end declare section;
 	strcpy(msg, "commit");
 	exec sql at pm commit;
 
+	sprintf (command, "select * from \"Test\"");
+
+	exec sql prepare F from :command;
+	exec sql declare CUR cursor for F;
+
+	strcpy(msg, "open");
+	exec sql open CUR;
+
+	strcpy(msg, "fetch");
+        exec sql fetch :how_many in CUR into :name, :amount, :letter;
+
+	printf("Database: mm\n");
+        for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
+	{
+	    exec sql begin declare section;
+	    char n[8], l = letter[i][0];
+	    int a = amount[i];
+	    exec sql end declare section;
+
+	    strncpy(n, name[i], 8);
+            printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
+	}
+
+	exec sql close CUR;
+	
         strcpy(msg, "select");
         exec sql at :connection select name, amount, letter into :name, :amount, :letter from "Test";
 
