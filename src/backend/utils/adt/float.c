@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.50 1999/10/02 17:45:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.51 1999/12/20 02:15:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1157,16 +1157,17 @@ dpow(float64 arg1, float64 arg2)
 
 	tmp1 = *arg1;
 	tmp2 = *arg2;
-#ifndef HAVE_FINITE
+
+	/* We must check both for errno getting set and for a NaN result,
+	 * in order to deal with the vagaries of different platforms...
+	 */
 	errno = 0;
-#endif
 	*result = (float64data) pow(tmp1, tmp2);
-#ifndef HAVE_FINITE
-	if (errno != 0)				/* on some machines both EDOM & ERANGE can
-								 * occur */
-#else
-	if (!finite(*result))
+	if (errno != 0
+#ifdef HAVE_FINITE
+		|| !finite(*result)
 #endif
+		)
 		elog(ERROR, "pow() result is out of range");
 
 	CheckFloat8Val(*result);
@@ -1189,16 +1190,18 @@ dexp(float64 arg1)
 	result = (float64) palloc(sizeof(float64data));
 
 	tmp = *arg1;
-#ifndef HAVE_FINITE
+
+	/* We must check both for errno getting set and for a NaN result,
+	 * in order to deal with the vagaries of different platforms.
+	 * Also, a zero result implies unreported underflow.
+	 */
 	errno = 0;
-#endif
 	*result = (float64data) exp(tmp);
-#ifndef HAVE_FINITE
-	if (errno == ERANGE)
-#else
-	/* infinity implies overflow, zero implies underflow */
-	if (!finite(*result) || *result == 0.0)
+	if (errno != 0 || *result == 0.0
+#ifdef HAVE_FINITE
+		|| !finite(*result)
 #endif
+		)
 		elog(ERROR, "exp() result is out of range");
 
 	CheckFloat8Val(*result);
