@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Feb 24 19:45:40 EST 2005
+   Last updated: Thu Feb 24 23:18:31 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -77,8 +77,8 @@
    4.17) How do I perform an outer join?
    4.18) How do I perform queries using multiple databases?
    4.19) How do I return multiple rows or columns from a function?
-   4.20) Why do I get "missing oid" errors when accessing temporary
-   tables in PL/PgSQL functions?
+   4.20) Why do I get "relation with OID ##### does not exist" errors
+   when accessing temporary tables in PL/PgSQL functions?
    4.21) What encryption options are available?
    
                             Extending PostgreSQL
@@ -821,8 +821,8 @@
    It is easy using set-returning functions,
    http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
-    4.20) Why do I get "missing oid" errors when accessing temporary tables in
-    PL/PgSQL functions?
+    4.20) Why do I get "relation with OID ##### does not exist" errors when
+    accessing temporary tables in PL/PgSQL functions?
     
    PL/PgSQL caches function scripts, and an unfortunate side effect is
    that if a PL/PgSQL function accesses a temporary table, and that table

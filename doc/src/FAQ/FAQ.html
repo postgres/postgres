@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Thu Feb 24 19:45:40 EST 2005</P>
+    <P>Last updated: Thu Feb 24 23:18:31 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -113,8 +113,9 @@
     databases?<BR>
      <A href="#4.19">4.19</A>) How do I return multiple rows or columns
     from a function?<BR>
-     <A href="#4.20">4.20</A>) Why do I get "missing oid" errors when
-    accessing temporary tables in PL/PgSQL functions?<BR>
+     <A href="#4.20">4.20</A>) Why do I get "relation with OID #####
+    does not exist" errors when accessing temporary tables in PL/PgSQL
+    functions?<BR>
      <A href="#4.21">4.21</A>) What encryption options are available?<BR>
      
 
@@ -1058,8 +1059,9 @@ length</TD></TR>
     <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
     http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.
 
-    <H4><A name="4.20">4.20</A>) Why do I get "missing oid" errors when
-    accessing temporary tables in PL/PgSQL functions?</H4>
+    <H4><A name="4.20">4.20</A>) Why do I get "relation with OID #####
+    does not exist" errors when accessing temporary tables in PL/PgSQL
+    functions?</H4>
 
     <P>PL/PgSQL caches function scripts, and an unfortunate side effect
     is that if a PL/PgSQL function accesses a temporary table, and that
