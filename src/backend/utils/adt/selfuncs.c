@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.36 1999/08/01 04:54:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.37 1999/08/02 02:05:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,10 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
+#include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -36,6 +38,8 @@
 /* default selectivity estimate for inequalities such as "A < b" */
 #define DEFAULT_INEQ_SEL  (1.0 / 3.0)
 
+static bool convert_to_scale(Datum value, Oid typid,
+							 double *scaleval);
 static void getattproperties(Oid relid, AttrNumber attnum,
 							 Oid *typid,
 							 int *typlen,
@@ -53,6 +57,12 @@ static double getattdisbursion(Oid relid, AttrNumber attnum);
 
 /*
  *		eqsel			- Selectivity of "=" for any data types.
+ *
+ * Note: this routine is also used to estimate selectivity for some
+ * operators that are not "=" but have comparable selectivity behavior,
+ * such as "~~" (text LIKE).  Even for "=" we must keep in mind that
+ * the left and right datatypes may differ, so the type of the given
+ * constant "value" may be different from the type of the attribute.
  */
 float64
 eqsel(Oid opid,
@@ -81,45 +91,38 @@ eqsel(Oid opid,
 		getattproperties(relid, attno,
 						 &typid, &typlen, &typbyval, &typmod);
 
+		/* get stats for the attribute, if available */
 		if (getattstatistics(relid, attno, typid, typmod,
 							 &nullfrac, &commonfrac, &commonval,
 							 NULL, NULL))
 		{
 			if (flag & SEL_CONSTANT)
 			{
-				/* Is the constant the same as the most common value? */
-				HeapTuple	oprtuple;
-				Oid			ltype,
-							rtype;
-				Operator	func_operator;
-				bool		mostcommon = false;
-
-				/* get left and right datatypes of the operator */
-				oprtuple = get_operator_tuple(opid);
-				if (! HeapTupleIsValid(oprtuple))
-					elog(ERROR, "eqsel: no tuple for operator %u", opid);
-				ltype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprleft;
-				rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
-
-				/* and find appropriate equality operator (no, it ain't
-				 * necessarily opid itself...)
+				/* Is the constant "=" to the column's most common value?
+				 * (Although the operator may not really be "=",
+				 * we will assume that seeing whether it returns TRUE
+				 * for the most common value is useful information.
+				 * If you don't like it, maybe you shouldn't be using
+				 * eqsel for your operator...)
 				 */
-				func_operator = oper("=", ltype, rtype, true);
+				RegProcedure	eqproc = get_opcode(opid);
+				bool			mostcommon;
 
-				if (func_operator != NULL)
-				{
-					RegProcedure eqproc = ((Form_pg_operator) GETSTRUCT(func_operator))->oprcode;
-					if (flag & SEL_RIGHT) /* given value on the right? */
-						mostcommon = (bool)
-							DatumGetUInt8(fmgr(eqproc, commonval, value));
-					else
-						mostcommon = (bool)
-							DatumGetUInt8(fmgr(eqproc, value, commonval));
-				}
+				if (eqproc == (RegProcedure) NULL)
+					elog(ERROR, "eqsel: no procedure for operator %u",
+						 opid);
+
+				/* be careful to apply operator right way 'round */
+				if (flag & SEL_RIGHT)
+					mostcommon = (bool)
+						DatumGetUInt8(fmgr(eqproc, commonval, value));
+				else
+					mostcommon = (bool)
+						DatumGetUInt8(fmgr(eqproc, value, commonval));
 
 				if (mostcommon)
 				{
-					/* Search is for the most common value.  We know the
+					/* Constant is "=" to the most common value.  We know
 					 * selectivity exactly (or as exactly as VACUUM could
 					 * calculate it, anyway).
 					 */
@@ -179,6 +182,10 @@ eqsel(Oid opid,
 
 /*
  *		neqsel			- Selectivity of "!=" for any data types.
+ *
+ * This routine is also used for some operators that are not "!="
+ * but have comparable selectivity behavior.  See above comments
+ * for eqsel().
  */
 float64
 neqsel(Oid opid,
@@ -196,7 +203,11 @@ neqsel(Oid opid,
 
 /*
  *		intltsel		- Selectivity of "<" (also "<=") for integers.
- *						  Should work for both longs and shorts.
+ *
+ * Actually, this works and is used for all numeric types, so it should
+ * be renamed.  In fact, it is also currently called for all manner of
+ * non-numeric types, for which it is NOT very helpful.  That needs
+ * to be fixed.
  */
 float64
 intltsel(Oid opid,
@@ -221,53 +232,37 @@ intltsel(Oid opid,
 		int32		typmod;
 		Datum		hival,
 					loval;
-		long		val,
+		double		val,
 					high,
 					low,
 					numerator,
 					denominator;
 
-		/* get left and right datatypes of the operator */
+		/* Get left and right datatypes of the operator so we know
+		 * what type the constant is.
+		 */
 		oprtuple = get_operator_tuple(opid);
 		if (! HeapTupleIsValid(oprtuple))
 			elog(ERROR, "intltsel: no tuple for operator %u", opid);
 		ltype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprleft;
 		rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
 
-		/*
-		 * TEMPORARY HACK: this code is currently getting called for
-		 * a bunch of non-integral types.  Give a default estimate if
-		 * either side is not pass-by-val.  Need better solution.
-		 */
-		if (! get_typbyval(ltype) || ! get_typbyval(rtype))
+		/* Convert the constant to a uniform comparison scale. */
+		if (! convert_to_scale(value, 
+							   ((flag & SEL_RIGHT) ? rtype : ltype),
+							   &val))
 		{
+			/* Ideally we'd produce an error here, on the grounds that
+			 * the given operator shouldn't have intltsel registered as its
+			 * selectivity func unless we can deal with its operand types.
+			 * But currently, all manner of stuff is invoking intltsel,
+			 * so give a default estimate until that can be fixed.
+			 */
 			*result = DEFAULT_INEQ_SEL;
 			return result;
 		}
 
-		/* Deduce type of the constant, and convert to uniform "long" format.
-		 * Note that constant might well be a different type than attribute.
-		 * XXX this ought to use a type-specific "convert to double" op.
-		 */
-		typid = (flag & SEL_RIGHT) ? rtype : ltype;
-		switch (get_typlen(typid))
-		{
-			case 1:
-				val = (long) DatumGetUInt8(value);
-				break;
-			case 2:
-				val = (long) DatumGetInt16(value);
-				break;
-			case 4:
-				val = (long) DatumGetInt32(value);
-				break;
-			default:
-				elog(ERROR, "intltsel: unsupported type %u", typid);
-				*result = DEFAULT_INEQ_SEL;
-				return result;
-		}
-
-		/* Now get info about the attribute */
+		/* Now get info and stats about the attribute */
 		getattproperties(relid, attno,
 						 &typid, &typlen, &typbyval, &typmod);
 
@@ -275,60 +270,61 @@ intltsel(Oid opid,
 							   NULL, NULL, NULL,
 							   &loval, &hival))
 		{
+			/* no stats available, so default result */
 			*result = DEFAULT_INEQ_SEL;
 			return result;
 		}
-		/*
-		 * Convert loval/hival to common "long int" representation.
-		 */
-		switch (typlen)
+
+		/* Convert the attribute's loval/hival to common scale. */
+		if (! convert_to_scale(loval, typid, &low) ||
+			! convert_to_scale(hival, typid, &high))
 		{
-			case 1:
-				low = (long) DatumGetUInt8(loval);
-				high = (long) DatumGetUInt8(hival);
-				break;
-			case 2:
-				low = (long) DatumGetInt16(loval);
-				high = (long) DatumGetInt16(hival);
-				break;
-			case 4:
-				low = (long) DatumGetInt32(loval);
-				high = (long) DatumGetInt32(hival);
-				break;
-			default:
-				elog(ERROR, "intltsel: unsupported type %u", typid);
-				*result = DEFAULT_INEQ_SEL;
-				return result;
-		}
-		if (val < low || val > high)
-		{
-			/* If given value is outside the statistical range,
-			 * assume we have out-of-date stats and return a default guess.
-			 * We could return a small or large value if we trusted the stats
-			 * more.   XXX change this eventually.
-			 */
+			/* See above comments... */
+			if (! typbyval)
+			{
+				pfree(DatumGetPointer(hival));
+				pfree(DatumGetPointer(loval));
+			}
+
 			*result = DEFAULT_INEQ_SEL;
+			return result;
 		}
-		else
-		{
-			denominator = high - low;
-			if (denominator <= 0)
-				denominator = 1;
-			if (flag & SEL_RIGHT)
-				numerator = val - low;
-			else
-				numerator = high - val;
-			if (numerator <= 0)	/* never return a zero estimate! */
-				numerator = 1;
-			if (numerator >= denominator)
-				*result = 1.0;
-			else
-				*result = (double) numerator / (double) denominator;
-		}
+
+		/* release temp storage if needed */
 		if (! typbyval)
 		{
 			pfree(DatumGetPointer(hival));
 			pfree(DatumGetPointer(loval));
+		}
+
+		if (high <= low)
+		{
+			/* If we trusted the stats fully, we could return a small or
+			 * large selec depending on which side of the single data point
+			 * the constant is on.  But it seems better to assume that the
+			 * stats are out of date and return a default...
+			 */
+			*result = DEFAULT_INEQ_SEL;
+        }
+		else if (val <= low || val >= high)
+		{
+			/* If given value is outside the statistical range, return a
+			 * small or large value; but not 0.0/1.0 since there is a chance
+			 * the stats are out of date.
+			 */
+			if (flag & SEL_RIGHT)
+				*result = (val <= low) ? 0.01 : 0.99;
+			else
+				*result = (val <= low) ? 0.99 : 0.01;
+		}
+		else
+		{
+			denominator = high - low;
+			if (flag & SEL_RIGHT)
+				numerator = val - low;
+			else
+				numerator = high - val;
+			*result = numerator / denominator;
 		}
 	}
 	return result;
@@ -336,7 +332,8 @@ intltsel(Oid opid,
 
 /*
  *		intgtsel		- Selectivity of ">" (also ">=") for integers.
- *						  Should work for both longs and shorts.
+ *
+ * See above comments for intltsel.
  */
 float64
 intgtsel(Oid opid,
@@ -437,6 +434,77 @@ intgtjoinsel(Oid opid,
 	result = (float64) palloc(sizeof(float64data));
 	*result = DEFAULT_INEQ_SEL;
 	return result;
+}
+
+/*
+ * convert_to_scale
+ *	  Convert a given value of the indicated type to the comparison
+ *	  scale needed by intltsel().  Returns "true" if successful.
+ *
+ * All numeric datatypes are simply converted to their equivalent
+ * "double" values.
+ * Future extension: convert string-like types to some suitable scale.
+ */
+static bool
+convert_to_scale(Datum value, Oid typid,
+				 double *scaleval)
+{
+	/* Fast-path conversions for some built-in types */
+	switch (typid)
+	{
+		case BOOLOID:
+			*scaleval = (double) DatumGetUInt8(value);
+			return true;
+		case INT2OID:
+			*scaleval = (double) DatumGetInt16(value);
+			return true;
+		case INT4OID:
+			*scaleval = (double) DatumGetInt32(value);
+			return true;
+//		case INT8OID:
+
+
+		case FLOAT4OID:
+			*scaleval = (double) (* DatumGetFloat32(value));
+			return true;
+		case FLOAT8OID:
+			*scaleval = (double) (* DatumGetFloat64(value));
+			return true;
+//		case NUMERICOID:
+
+		case OIDOID:
+		case REGPROCOID:
+			/* we can treat OIDs as integers... */
+			*scaleval = (double) DatumGetObjectId(value);
+			return true;
+		default:
+		{
+			/* See whether there is a registered type-conversion function,
+			 * namely a procedure named "float8" with the right signature.
+			 */
+			Oid			oid_array[MAXFARGS];
+			HeapTuple	ftup;
+
+			MemSet(oid_array, 0, MAXFARGS * sizeof(Oid));
+			oid_array[0] = typid;
+			ftup = SearchSysCacheTuple(PRONAME,
+									   PointerGetDatum("float8"),
+									   Int32GetDatum(1),
+									   PointerGetDatum(oid_array),
+									   0);
+			if (HeapTupleIsValid(ftup) &&
+				((Form_pg_proc) GETSTRUCT(ftup))->prorettype == FLOAT8OID)
+			{
+				RegProcedure convertproc = (RegProcedure) ftup->t_data->t_oid;
+				Datum converted = (Datum) fmgr(convertproc, value);
+				*scaleval = (double) (* DatumGetFloat64(converted));
+				return true;
+			}
+			break;
+		}
+	}
+	/* Don't know how to convert */
+	return false;
 }
 
 /*
