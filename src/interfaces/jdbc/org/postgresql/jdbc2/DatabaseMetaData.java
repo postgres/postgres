@@ -7,13 +7,15 @@ package org.postgresql.jdbc2;
 
 import java.sql.*;
 import java.util.*;
+
+import org.postgresql.Driver;
 import org.postgresql.Field;
 import org.postgresql.util.PSQLException;
 
 /**
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.41 2001/10/30 05:09:51 barry Exp $
+ * $Id: DatabaseMetaData.java,v 1.42 2001/10/31 20:27:37 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -60,6 +62,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean allProceduresAreCallable() throws SQLException
 	{
+                Driver.debug("allProceduresAreCallable");
 		return true;		// For now...
 	}
 
@@ -72,6 +75,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean allTablesAreSelectable() throws SQLException
 	{
+                Driver.debug("allTablesAreSelectable");
 		return true;		// For now...
 	}
 
@@ -83,7 +87,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getURL() throws SQLException
 	{
-		return connection.getURL();
+              String url = connection.getURL();
+              Driver.debug("getURL "+url);
+              return url;
 	}
 
 	/**
@@ -94,7 +100,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getUserName() throws SQLException
 	{
-		return connection.getUserName();
+              String userName = connection.getUserName();
+              Driver.debug("getUserName "+ userName);
+              return userName;
 	}
 
 	/**
@@ -105,7 +113,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean isReadOnly() throws SQLException
 	{
-		return connection.isReadOnly();
+              boolean isReadOnly = connection.isReadOnly();
+              Driver.debug("isReadOnly " +isReadOnly);
+              return isReadOnly;
 	}
 
 	/**
@@ -116,7 +126,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean nullsAreSortedHigh() throws SQLException
 	{
-		return connection.haveMinimumServerVersion("7.2");
+              boolean nullSortedHigh = connection.haveMinimumServerVersion("7.2");
+              Driver.debug("nullsAreSortedHigh " + nullSortedHigh);
+              return nullSortedHigh;
 	}
 
 	/**
@@ -127,6 +139,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean nullsAreSortedLow() throws SQLException
 	{
+                Driver.debug("nullsAreSortedLow false");
 		return false;
 	}
 
@@ -138,6 +151,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean nullsAreSortedAtStart() throws SQLException
 	{
+                Driver.debug("nullsAreSortedAtStart false");
 		return false;
 	}
 
@@ -149,7 +163,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean nullsAreSortedAtEnd() throws SQLException
 	{
-		return ! connection.haveMinimumServerVersion("7.2");
+                boolean nullsAreSortedAtEnd = ! connection.haveMinimumServerVersion("7.2");
+                Driver.debug("nullsAreSortedAtEnd "+nullsAreSortedAtEnd);
+                return nullsAreSortedAtEnd;
 	}
 
 	/**
@@ -161,6 +177,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getDatabaseProductName() throws SQLException
 	{
+                Driver.debug("getDatabaseProductName PostgresSQL");
 		return "PostgreSQL";
 	}
 
@@ -172,7 +189,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getDatabaseProductVersion() throws SQLException
 	{
-		return connection.getDBVersionNumber();
+              String versionNumber = connection.getDBVersionNumber();
+              Driver.debug("getDatabaseProductVersion " + versionNumber);
+              return versionNumber;
 	}
 
 	/**
@@ -184,11 +203,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getDriverName() throws SQLException
 	{
-		return "PostgreSQL Native Driver";
-	}
+              String driverName = "PostgreSQL Native Driver";
+              Driver.debug("getDriverName" + driverName);
+              return driverName;
+      }
 
-	/**
-	 * What is the version string of this JDBC driver?	Again, this is
+  /**
+   * What is the version string of this JDBC driver?  Again, this is
 	 * static.
 	 *
 	 * @return the JDBC driver name.
@@ -196,7 +217,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getDriverVersion() throws SQLException
 	{
-		return connection.this_driver.getVersion();
+              String driverVersion = connection.this_driver.getVersion();
+              Driver.debug("getDriverVersion "+driverVersion);
+              return driverVersion;
 	}
 
 	/**
@@ -206,7 +229,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public int getDriverMajorVersion()
 	{
-		return connection.this_driver.getMajorVersion();
+              int majorVersion = connection.this_driver.getMajorVersion();
+              Driver.debug("getMajorVersion " +majorVersion);
+              return majorVersion;
 	}
 
 	/**
@@ -216,11 +241,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public int getDriverMinorVersion()
 	{
-		return connection.this_driver.getMinorVersion();
-	}
+              int minorVersion = connection.this_driver.getMinorVersion();
+              Driver.debug("getMinorVersion " +minorVersion);
+              return minorVersion;
+        }
 
-	/**
-	 * Does the database store tables in a local file?	No - it
+        /**
+         * Does the database store tables in a local file?  No - it
 	 * stores them in a file on the server.
 	 *
 	 * @return true if so
@@ -228,6 +255,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean usesLocalFiles() throws SQLException
 	{
+                Driver.debug("usesLocalFiles " + false);
 		return false;
 	}
 
@@ -240,6 +268,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean usesLocalFilePerTable() throws SQLException
 	{
+                Driver.debug("usesLocalFilePerTable " + false);
 		return false;
 	}
 
@@ -257,6 +286,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsMixedCaseIdentifiers() throws SQLException
 	{
+                Driver.debug("supportsMixedCaseIdentifiers " + false);
 		return false;
 	}
 
@@ -268,6 +298,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesUpperCaseIdentifiers() throws SQLException
 	{
+                Driver.debug("storesUpperCaseIdentifiers "+false);
 		return false;
 	}
 
@@ -279,6 +310,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesLowerCaseIdentifiers() throws SQLException
 	{
+                Driver.debug("storesLowerCaseIdentifiers " + true);
 		return true;
 	}
 
@@ -290,6 +322,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesMixedCaseIdentifiers() throws SQLException
 	{
+                Driver.debug("storesMixedCaseIdentifiers " + false);
 		return false;
 	}
 
@@ -303,6 +336,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException
 	{
+                Driver.debug("supportsMixedCaseQuotedIdentifiers " + true);
 		return true;
 	}
 
@@ -314,6 +348,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesUpperCaseQuotedIdentifiers() throws SQLException
 	{
+                Driver.debug("storesUpperCaseQuotedIdentifiers " + false);
 		return false;
 	}
 
@@ -325,6 +360,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesLowerCaseQuotedIdentifiers() throws SQLException
 	{
+                Driver.debug("storesLowerCaseQuotedIdentifiers " + false);
 		return false;
 	}
 
@@ -336,6 +372,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean storesMixedCaseQuotedIdentifiers() throws SQLException
 	{
+                Driver.debug("storesMixedCaseQuotedIdentifiers " + false);
 		return false;
 	}
 
@@ -349,6 +386,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getIdentifierQuoteString() throws SQLException
 	{
+                Driver.debug("getIdentifierQuoteString \"" );
 		return "\"";
 	}
 
@@ -370,30 +408,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getSQLKeywords() throws SQLException
 	{
+                Driver.debug("getSQLKeyWords");
 		return "abort,acl,add,aggregate,append,archive,arch_store,backward,binary,change,cluster,copy,database,delimiters,do,extend,explain,forward,heavy,index,inherits,isnull,light,listen,load,merge,nothing,notify,notnull,oids,purge,rename,replace,retrieve,returns,rule,recipe,setof,stdin,stdout,store,vacuum,verbose,version";
 	}
 
 	public String getNumericFunctions() throws SQLException
 	{
 		// XXX-Not Implemented
+                Driver.debug("getNumericFunctions");
 		return "";
 	}
 
 	public String getStringFunctions() throws SQLException
 	{
 		// XXX-Not Implemented
+                Driver.debug("getStringFunctions");
 		return "";
 	}
 
 	public String getSystemFunctions() throws SQLException
 	{
 		// XXX-Not Implemented
+                Driver.debug("getSystemFunctions");
 		return "";
 	}
 
 	public String getTimeDateFunctions() throws SQLException
 	{
 		// XXX-Not Implemented
+                Driver.debug("getTimeDateFunctions");
 		return "";
 	}
 
@@ -406,6 +449,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getSearchStringEscape() throws SQLException
 	{
+                Driver.debug("getSearchStringEscape");
 		return "\\";
 	}
 
@@ -422,6 +466,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getExtraNameCharacters() throws SQLException
 	{
+                Driver.debug("getExtraNameCharacters");
 		return "";
 	}
 
@@ -434,6 +479,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsAlterTableWithAddColumn() throws SQLException
 	{
+                Driver.debug("supportsAlterTableWithAddColumn " + true);
 		return true;
 	}
 
@@ -446,6 +492,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsAlterTableWithDropColumn() throws SQLException
 	{
+                Driver.debug("supportsAlterTableWithDropColumn " + false);
 		return false;
 	}
 
@@ -469,6 +516,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsColumnAliasing() throws SQLException
 	{
+                Driver.debug("supportsColumnAliasing " + true);
 		return true;
 	}
 
@@ -481,18 +529,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean nullPlusNonNullIsNull() throws SQLException
 	{
+                Driver.debug("nullPlusNonNullIsNull " + true);
 		return true;
 	}
 
 	public boolean supportsConvert() throws SQLException
 	{
 		// XXX-Not Implemented
+                Driver.debug("supportsConvert " + false);
 		return false;
 	}
 
 	public boolean supportsConvert(int fromType, int toType) throws SQLException
 	{
 		// XXX-Not Implemented
+                Driver.debug("supportsConvert " + false);
 		return false;
 	}
 
@@ -505,6 +556,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsTableCorrelationNames() throws SQLException
 	{
+                Driver.debug("supportsTableCorrelationNames " + true);
 		return true;
 	}
 
@@ -517,6 +569,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsDifferentTableCorrelationNames() throws SQLException
 	{
+                Driver.debug("supportsDifferentTableCorrelationNames " + false);
 		return false;
 	}
 
@@ -530,6 +583,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsExpressionsInOrderBy() throws SQLException
 	{
+                Driver.debug("supportsExpressionsInOrderBy " + true);
 		return true;
 	}
 
@@ -541,7 +595,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsOrderByUnrelated() throws SQLException
 	{
-		return connection.haveMinimumServerVersion("6.4");
+                boolean supportsOrderByUnrelated = connection.haveMinimumServerVersion("6.4");
+                Driver.debug("supportsOrderByUnrelated " + supportsOrderByUnrelated);
+                return supportsOrderByUnrelated;
 	}
 
 	/**
@@ -553,6 +609,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsGroupBy() throws SQLException
 	{
+                Driver.debug("supportsGroupBy " + true);
 		return true;
 	}
 
@@ -564,12 +621,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsGroupByUnrelated() throws SQLException
 	{
-		return connection.haveMinimumServerVersion("6.4");
+                boolean supportsGroupByUnrelated = connection.haveMinimumServerVersion("6.4");
+                Driver.debug("supportsGroupByUnrelated "+ supportsGroupByUnrelated);
+                return supportsGroupByUnrelated;
+
 	}
 
 	/**
 	 * Can a "GROUP BY" clause add columns not in the SELECT provided
-	 * it specifies all the columns in the SELECT?	Does anyone actually
+   * it specifies all the columns in the SELECT?  Does anyone actually
 	 * understand what they mean here?
 	 *
 	 * (I think this is a subset of the previous function. -- petere)
@@ -579,7 +639,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsGroupByBeyondSelect() throws SQLException
 	{
-		return supportsGroupByUnrelated();
+                boolean supportsGroupByBeyondSelect = connection.haveMinimumServerVersion("6.4");
+                Driver.debug("supportsGroupByUnrelated " + supportsGroupByBeyondSelect);
+                return supportsGroupByBeyondSelect;
 	}
 
 	/**
@@ -591,7 +653,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsLikeEscapeClause() throws SQLException
 	{
-		return connection.haveMinimumServerVersion("7.1");
+                boolean supportsLikeEscapeClause = connection.haveMinimumServerVersion("7.1");
+                Driver.debug("supportsLikeEscapeClause " + supportsLikeEscapeClause);
+                return supportsLikeEscapeClause;
 	}
 
 	/**
@@ -604,6 +668,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsMultipleResultSets() throws SQLException
 	{
+                Driver.debug("supportsMultipleResultSets " + false);
 		return false;
 	}
 
@@ -617,11 +682,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsMultipleTransactions() throws SQLException
 	{
-		return true;
-	}
+                Driver.debug("supportsMultipleTransactions " + true);
+                return true;
+        }
 
-	/**
-	 * Can columns be defined as non-nullable.	A JDBC Compliant driver
+        /**
+         * Can columns be defined as non-nullable.  A JDBC Compliant driver
 	 * always returns true.
 	 *
 	 * <p>This changed from false to true in v6.2 of the driver, as this
@@ -632,6 +698,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsNonNullableColumns() throws SQLException
 	{
+                Driver.debug("supportsNonNullableColumns true");
 		return true;
 	}
 
@@ -649,11 +716,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsMinimumSQLGrammar() throws SQLException
 	{
-		return true;
-	}
+                  Driver.debug("supportsMinimumSQLGrammar TRUE");
+                  return true;
+        }
 
-	/**
-	 * Does this driver support the Core ODBC SQL grammar.	We need
+        /**
+         * Does this driver support the Core ODBC SQL grammar.  We need
 	 * SQL-92 conformance for this.
 	 *
 	 * @return true if so
@@ -661,6 +729,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCoreSQLGrammar() throws SQLException
 	{
+                Driver.debug("supportsCoreSQLGrammar FALSE ");
 		return false;
 	}
 
@@ -674,6 +743,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsExtendedSQLGrammar() throws SQLException
 	{
+                Driver.debug("supportsExtendedSQLGrammar FALSE");
 		return false;
 	}
 
@@ -691,6 +761,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsANSI92EntryLevelSQL() throws SQLException
 	{
+                Driver.debug("supportsANSI92EntryLevelSQL false ");
 		return false;
 	}
 
@@ -703,6 +774,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsANSI92IntermediateSQL() throws SQLException
 	{
+                Driver.debug("supportsANSI92IntermediateSQL false ");
 		return false;
 	}
 
@@ -714,6 +786,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsANSI92FullSQL() throws SQLException
 	{
+                Driver.debug("supportsANSI92FullSQL false ");
 		return false;
 	}
 
@@ -726,6 +799,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsIntegrityEnhancementFacility() throws SQLException
 	{
+                Driver.debug("supportsIntegrityEnhancementFacility false ");
 		return false;
 	}
 
@@ -737,7 +811,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsOuterJoins() throws SQLException
 	{
-		return connection.haveMinimumServerVersion("7.1");
+                  boolean supportsOuterJoins = connection.haveMinimumServerVersion("7.1");
+                  Driver.debug("supportsOuterJoins " + supportsOuterJoins);
+                  return supportsOuterJoins;
 	}
 
 	/**
@@ -748,7 +824,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsFullOuterJoins() throws SQLException
 	{
-		return connection.haveMinimumServerVersion("7.1");
+                boolean supportsFullOuterJoins = connection.haveMinimumServerVersion("7.1");
+                Driver.debug("supportsFullOuterJoins " + supportsFullOuterJoins);
+                return supportsFullOuterJoins;
 	}
 
 	/**
@@ -759,7 +837,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsLimitedOuterJoins() throws SQLException
 	{
-		return supportsFullOuterJoins();
+                boolean supportsLimitedOuterJoins = connection.haveMinimumServerVersion("7.1");
+                Driver.debug("supportsFullOuterJoins " + supportsLimitedOuterJoins);
+                return supportsLimitedOuterJoins;
 	}
 
 	/**
@@ -772,6 +852,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getSchemaTerm() throws SQLException
 	{
+                Driver.debug("getSchemaTerm schema");
 		return "schema";
 	}
 
@@ -784,6 +865,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getProcedureTerm() throws SQLException
 	{
+                Driver.debug("getProcedureTerm function ");
 		return "function";
 	}
 
@@ -795,6 +877,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getCatalogTerm() throws SQLException
 	{
+                Driver.debug("getCatalogTerm database ");
 		return "database";
 	}
 
@@ -807,7 +890,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean isCatalogAtStart() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+              // return true here; we return false for every other catalog function
+              // so it won't matter what we return here D.C.
+              Driver.debug("isCatalogAtStart not implemented");
+              return true;
 	}
 
 	/**
@@ -818,17 +904,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public String getCatalogSeparator() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
-	}
+              // Give them something to work with here
+              // everything else returns false so it won't matter what we return here D.C.
+              Driver.debug("getCatalogSeparator not implemented ");
+              return ".";
+        }
 
-	/**
-	 * Can a schema name be used in a data manipulation statement?	Nope.
+        /**
+         * Can a schema name be used in a data manipulation statement?  Nope.
 	 *
 	 * @return true if so
 	 * @exception SQLException if a database access error occurs
 	 */
 	public boolean supportsSchemasInDataManipulation() throws SQLException
 	{
+                Driver.debug("supportsSchemasInDataManipulation false");
 		return false;
 	}
 
@@ -840,6 +930,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsSchemasInProcedureCalls() throws SQLException
 	{
+                Driver.debug("supportsSchemasInProcedureCalls false");
 		return false;
 	}
 
@@ -851,6 +942,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsSchemasInTableDefinitions() throws SQLException
 	{
+                Driver.debug("supportsSchemasInTableDefinitions false");
 		return false;
 	}
 
@@ -862,6 +954,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsSchemasInIndexDefinitions() throws SQLException
 	{
+                Driver.debug("supportsSchemasInIndexDefinitions false");
 		return false;
 	}
 
@@ -873,6 +966,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException
 	{
+                Driver.debug("supportsSchemasInPrivilegeDefinitions false");
 		return false;
 	}
 
@@ -884,6 +978,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInDataManipulation() throws SQLException
 	{
+                Driver.debug("supportsCatalogsInDataManipulation false");
 		return false;
 	}
 
@@ -895,6 +990,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInProcedureCalls() throws SQLException
 	{
+                Driver.debug("supportsCatalogsInDataManipulation false");
 		return false;
 	}
 
@@ -906,6 +1002,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInTableDefinitions() throws SQLException
 	{
+                Driver.debug("supportsCatalogsInTableDefinitions false");
 		return false;
 	}
 
@@ -917,6 +1014,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInIndexDefinitions() throws SQLException
 	{
+                Driver.debug("supportsCatalogsInIndexDefinitions false");
 		return false;
 	}
 
@@ -928,6 +1026,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException
 	{
+                Driver.debug("supportsCatalogsInPrivilegeDefinitions false");
 		return false;
 	}
 
@@ -940,6 +1039,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsPositionedDelete() throws SQLException
 	{
+                Driver.debug("supportsPositionedDelete false");
 		return false;			// For now...
 	}
 
@@ -951,6 +1051,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public boolean supportsPositionedUpdate() throws SQLException
 	{
+                Driver.debug("supportsPositionedUpdate false");
 		return false;			// For now...
 	}
 
@@ -2139,7 +2240,33 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public java.sql.ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+                Field f[] = new Field[8];
+                Vector v = new Vector();
+
+                if(tableNamePattern == null)
+                  tableNamePattern = "%";
+
+                f[0] = new Field(connection,"TABLE_CAT",iVarcharOid,32);
+                f[1] = new Field(connection,"TABLE_SCHEM",iVarcharOid,32);
+                f[2] = new Field(connection,"TABLE_NAME",iVarcharOid,32);
+                f[3] = new Field(connection,"COLUMN_NAME",iVarcharOid,32);
+                f[4] = new Field(connection,"GRANTOR",iVarcharOid,32);
+                f[5] = new Field(connection,"GRANTEE",iVarcharOid,32);
+                f[6] = new Field(connection,"PRIVILEGE",iVarcharOid,32);
+                f[7] = new Field(connection,"IS_GRANTABLE",iVarcharOid,32);
+
+                // This is taken direct from the psql source
+                java.sql.ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner and relname like '"+tableNamePattern.toLowerCase()+"' ORDER BY relname");
+                while(r.next()) {
+                  byte[][] tuple = new byte[8][0];
+                  tuple[0] = tuple[1]= "".getBytes();
+                  DriverManager.println("relname=\""+r.getString(1)+"\" relacl=\""+r.getString(2)+"\"");
+
+                  // For now, don't add to the result as relacl needs to be processed.
+                  //v.addElement(tuple);
+                }
+
+                return new ResultSet(connection,f,v,"OK",1);
 	}
 
 	/**
@@ -2273,88 +2400,71 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 														);
 	}
 
-	private Vector importLoop(java.sql.ResultSet keyRelation) throws SQLException
-	{
-		String s, s2;
-		String origTable = null, primTable = new String(""), schema;
-		int i;
-		Vector v;
+        private byte[][] parseConstraint(java.sql.ResultSet keyRelation) throws SQLException
+        {
+          byte tuple[][]=new byte[14][0];
+          for (int k = 0;k < 14;k++)
+            tuple[k] = null;
+          String s=keyRelation.getString(1);
+          int pos=s.indexOf("\\000");
+          if(pos>-1)
+          {
+            tuple[11]=s.substring(0,pos).getBytes();; // FK_NAME
+            int pos2=s.indexOf("\\000", pos+1);
+            if(pos2>-1)
+            {
+              tuple[2]=s.substring(pos+4, pos2).getBytes();; // PKTABLE_NAME
+              pos=s.indexOf("\\000", pos2+1);
+              if(pos>-1)
+              {
+                tuple[6]=s.substring(pos2+4, pos).getBytes();; // FKTABLE_NAME
+                pos=s.indexOf("\\000", pos+1); // Ignore MATCH type
+                if(pos>-1)
+                {
+                  pos2=s.indexOf("\\000",pos+1);
+                  if(pos2>-1)
+                  {
+                    tuple[3]=s.substring(pos+4, pos2).getBytes();; // PKCOLUMN_NAME
+                    pos=s.indexOf("\\000", pos2+1);
+                    if(pos>-1)
+                    {
+                      tuple[7]=s.substring(pos2+4, pos).getBytes(); //FKCOLUMN_NAME
+                    }
+                  }
+                }
+              }
+            }
+          }
 
-		s = keyRelation.getString(1);
-		s2 = s;
-		// System.out.println(s);
-		v = new Vector();
-		for (i = 0;;i++)
-		{
-			s = s.substring(s.indexOf("\\000") + 4);
-			if (s.compareTo("") == 0)
-			{
-				//System.out.println();
-				break;
-			}
-			s2 = s.substring(0, s.indexOf("\\000"));
-			switch (i)
-			{
-			case 0:
-				origTable = s2;
-				break;
-			case 1:
-				primTable = s2;
-				break;
-			case 2:
-				schema = s2;
-				break;
-			default:
-				v.add(s2);
-			}
-		}
+          // UPDATE_RULE
+          String rule=keyRelation.getString(2);
+          int action=importedKeyNoAction;
+          if("cascade".equals(rule)) action=importedKeyCascade;
+          else if("setnull".equals(rule)) action=importedKeySetNull;
+          else if("setdefault".equals(rule)) action=importedKeySetDefault;
+          tuple[9]=Integer.toString(action).getBytes();
 
-		java.sql.ResultSet rstmp = connection.ExecSQL("select * from " + origTable + " where 1=0");
-		java.sql.ResultSetMetaData origCols = rstmp.getMetaData();
+          // DELETE_RULE
+          rule=keyRelation.getString(3);
+          action=importedKeyNoAction;
+          if("cascade".equals(rule)) action=importedKeyCascade;
+          else if("setnull".equals(rule)) action=importedKeySetNull;
+          else if("setdefault".equals(rule)) action=importedKeySetDefault;
+          tuple[10]=Integer.toString(action).getBytes();
+          // DEFERRABILITY
+          int deferrability=importedKeyNotDeferrable;
+          boolean deferrable=keyRelation.getBoolean(4);
+          if(deferrable)
+          {
+            if(keyRelation.getBoolean(5))
+              deferrability=importedKeyInitiallyDeferred;
+            else
+              deferrability=importedKeyInitiallyImmediate;
+          }
+          tuple[13]=Integer.toString(deferrability).getBytes();
 
-		String stmp;
-		Vector tuples = new Vector();
-		byte tuple[][];
-
-		// the foreign keys are only on even positions in the Vector.
-		for (i = 0;i < v.size();i += 2)
-		{
-			stmp = (String)v.elementAt(i);
-
-			for (int j = 1;j <= origCols.getColumnCount();j++)
-			{
-				if (stmp.compareTo(origCols.getColumnName(j)) == 0)
-				{
-					tuple = new byte[14][0];
-
-					for (int k = 0;k < 14;k++)
-						tuple[k] = null;
-
-					//PKTABLE_NAME
-					tuple[2] = primTable.getBytes();
-					//PKTABLE_COLUMN
-					stmp = (String)v.elementAt(i + 1);
-					tuple[3] = stmp.getBytes();
-					//FKTABLE_NAME
-					tuple[6] = origTable.getBytes();
-					//FKCOLUMN_NAME
-					tuple[7] = origCols.getColumnName(j).getBytes();
-					//KEY_SEQ
-					tuple[8] = Integer.toString(j).getBytes();
-
-					tuples.add(tuple);
-					/*
-						System.out.println(origCols.getColumnName(j)+
-						": "+j+" -> "+primTable+": "+
-						(String)v.elementAt(i+1));
-					*/
-					break;
-				}
-			}
-		}
-
-		return tuples;
-	}
+          return tuple;
+        }
 
 	/**
 	 * Get a description of the primary key columns that are
@@ -2409,41 +2519,51 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public java.sql.ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException
 	{
-		// Added by Ola Sundell <ola@miranda.org>
-		// FIXME: error checking galore!
-		java.sql.ResultSet rsret;
-		Field f[] = new Field[14];
-		byte tuple[][];
+                Field f[]=new Field[14];
 
-		f[0] = new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
-		f[1] = new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
-		f[2] = new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
-		f[3] = new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
-		f[4] = new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
-		f[5] = new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
-		f[6] = new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
-		f[7] = new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
-		f[8] = new Field(connection, "KEY_SEQ", iInt2Oid, 2);
-		f[9] = new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
-		f[10] = new Field(connection, "DELETE_RULE", iInt2Oid, 2);
-		f[11] = new Field(connection, "FK_NAME", iVarcharOid, 32);
-		f[12] = new Field(connection, "PK_NAME", iVarcharOid, 32);
-		f[13] = new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
+                f[0]=new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
+                f[1]=new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
+                f[2]=new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
+                f[3]=new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
+                f[4]=new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
+                f[5]=new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
+                f[6]=new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
+                f[7]=new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
+                f[8]=new Field(connection, "KEY_SEQ", iInt2Oid, 2);
+                f[9]=new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
+                f[10]=new Field(connection, "DELETE_RULE", iInt2Oid, 2);
+                f[11]=new Field(connection, "FK_NAME", iVarcharOid, 32);
+                f[12]=new Field(connection, "PK_NAME", iVarcharOid, 32);
+                f[13]=new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
 
-		java.sql.ResultSet rs = connection.ExecSQL("select t.tgargs " +
-								"from pg_class as c, pg_trigger as t " +
-								"where c.relname like '" + table + "' and c.relfilenode=t.tgrelid");
-		Vector tuples = new Vector();
+                java.sql.ResultSet rs = connection.ExecSQL("SELECT a.tgargs,"
+                                                           + "substring(a.proname from 9 for (char_length(a.proname)-12)),"
+                                                           + "substring(b.proname from 9 for (char_length(b.proname)-12)),"
+                                                           + "a.tgdeferrable,"
+                                                           + "a.tginitdeferred "
+                                                           + "FROM "
+                                                           + "(SELECT t.tgargs, t.tgconstrname, p.proname, t.tgdeferrable,"
+                                                           + "t.tginitdeferred "
+                                                           + "FROM pg_class as c, pg_proc as p, pg_trigger as t "
+                                                           + "WHERE c.relfilenode=t.tgrelid AND t.tgfoid = p.oid "
+                                                           + "AND p.proname LIKE 'RI_FKey_%_upd') as a,"
+                                                           + "(SELECT t.tgconstrname, p.proname "
+                                                           + "FROM pg_class as c, pg_proc as p, pg_trigger as t "
+                                                           + "WHERE c.relfilenode=t.tgrelid AND t.tgfoid = p.oid "
+                                                           + "AND p.proname LIKE 'RI_FKey_%_del') as b,"
+                                                           + "(SELECT t.tgconstrname FROM pg_class as c, pg_trigger as t "
+                                                           + "WHERE c.relname like '"+table+"' AND c.relfilenode=t.tgrelid) as c "
+                                                           + "WHERE a.tgconstrname=b.tgconstrname AND a.tgconstrname=c.tgconstrname"
+                                                           );
+                Vector tuples = new Vector();
 
-		while (rs.next())
-		{
-			tuples.addAll(importLoop(rs));
-		}
+                while (rs.next())
+                {
+                  tuples.add(parseConstraint(rs));
+                }
 
-		rsret = new ResultSet(connection, f, tuples, "OK", 1);
-
-		return rsret;
-	}
+                return new ResultSet(connection, f, tuples, "OK", 1);
+        }
 
 	/**
 	 * Get a description of a foreign key columns that reference a
@@ -2500,7 +2620,50 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 */
 	public java.sql.ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+                Field f[] = new Field[14];
+
+                f[0] = new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
+                f[1] = new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
+                f[2] = new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
+                f[3] = new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
+                f[4] = new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
+                f[5] = new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
+                f[6] = new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
+                f[7] = new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
+                f[8] = new Field(connection, "KEY_SEQ", iInt2Oid, 2);
+                f[9] = new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
+                f[10] = new Field(connection, "DELETE_RULE", iInt2Oid, 2);
+                f[11] = new Field(connection, "FK_NAME", iVarcharOid, 32);
+                f[12] = new Field(connection, "PK_NAME", iVarcharOid, 32);
+                f[13] = new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
+
+                java.sql.ResultSet rs = connection.ExecSQL("SELECT a.tgargs,"
+                                                           + "substring(a.proname from 9 for (char_length(a.proname)-12)),"
+                                                           + "substring(b.proname from 9 for (char_length(b.proname)-12)),"
+                                                           + "a.tgdeferrable,"
+                                                           + "a.tginitdeferred "
+                                                           + "FROM "
+                                                           + "(SELECT t.tgargs, t.tgconstrname, p.proname, t.tgdeferrable,"
+                                                           + "t.tginitdeferred "
+                                                           + "FROM pg_class as c, pg_proc as p, pg_trigger as t "
+                                                           + "WHERE c.relfilenode=t.tgrelid AND t.tgfoid = p.oid "
+                                                           + "AND p.proname LIKE 'RI_FKey_%_upd') as a,"
+                                                           + "(SELECT t.tgconstrname, p.proname "
+                                                           + "FROM pg_class as c, pg_proc as p, pg_trigger as t "
+                                                           + "WHERE c.relfilenode=t.tgrelid AND t.tgfoid = p.oid "
+                                                           + "AND p.proname LIKE 'RI_FKey_%_del') as b,"
+                                                           + "(SELECT t.tgconstrname FROM pg_class as c, pg_trigger as t "
+                                                           + "WHERE c.relname like '"+table+"' AND c.relfilenode=t.tgrelid) as c "
+                                                           + "WHERE a.tgconstrname=b.tgconstrname AND a.tgconstrname=c.tgconstrname"
+                                                           );
+                Vector tuples = new Vector();
+
+                while (rs.next())
+                {
+                  tuples.add(parseConstraint(rs));
+                }
+
+                return new ResultSet(connection, f, tuples, "OK", 1);
 	}
 
 	/**
