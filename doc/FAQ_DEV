@@ -1,12 +1,12 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Nov 29 23:56:43 EST 2003
+   Last updated: Tue Feb 10 10:16:31 EST 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
-   The most recent version of this document can be viewed at the
-   postgreSQL Web site, http://www.PostgreSQL.org.
+   The most recent version of this document can be viewed at
+   http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html.
      _________________________________________________________________
    
                              General Questions
