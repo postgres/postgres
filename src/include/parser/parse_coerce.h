@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.2 1998/05/29 14:02:28 thomas Exp $
+ * $Id: parse_coerce.h,v 1.3 1998/07/08 14:18:45 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,9 @@ typedef enum CATEGORY {
 		|| ((t) == VARCHAROID) \
 		|| ((t) == TEXTOID) \
 		|| ((t) == INT4OID) \
-		|| ((t) == DATETIMEOID) \
+		|| ((t) == INT8OID) \
 		|| ((t) == FLOAT8OID) \
+		|| ((t) == DATETIMEOID) \
 		|| ((t) == TIMESTAMPOID) \
 		|| ((t) == ABSTIMEOID) \
 		|| ((t) == RELTIMEOID) \

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.7 1998/06/05 03:49:19 momjian Exp $
+ * $Id: parse_target.h,v 1.8 1998/07/08 14:18:45 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,16 @@
 
 extern List *transformTargetList(ParseState *pstate, List *targetlist);
 extern List *makeTargetNames(ParseState *pstate, List *cols);
-extern void transformTargetId(ParseState *pstate, Node *node,
-  	TargetEntry *tent, char *resname, int16 resjunk);
-extern Node *coerce_target_expr(ParseState *pstate, Node *expr,
-								Oid type_id, Oid attrtype);
+extern TargetEntry *
+transformTargetIdent(ParseState *pstate,
+					 Node *node,
+					 TargetEntry *tent,
+					 char **resname,
+					 char *refname,
+					 char *colname,
+					 int16 resjunk);
+extern Node *
+CoerceTargetExpr(ParseState *pstate, Node *expr,
+				 Oid type_id, Oid attrtype);
 
 #endif							/* PARSE_TARGET_H */
