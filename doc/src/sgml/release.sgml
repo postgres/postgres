@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.259 2004/05/03 08:47:54 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.260 2004/05/22 09:48:15 neilc Exp $
 -->
 
 <appendix id="release">
@@ -1807,7 +1807,7 @@ DROP SCHEMA information_schema CASCADE;
     <listitem>
      <para>
       <command>\encoding</> now changes based on the server parameter
-      <varname>client_encoding server</varname> (Tom)
+      <varname>client_encoding</varname> (Tom)
      </para>
      <para>
       In previous versions, <command>\encoding</command> was not aware
