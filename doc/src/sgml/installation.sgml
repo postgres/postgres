@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.54 2001/09/10 08:46:46 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.55 2001/09/12 20:57:28 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
@@ -12,18 +12,20 @@
   <title>Short Version</title>
 
   <para>
-   <synopsis>
+<synopsis>
 ./configure
 gmake
+su
 gmake install
 adduser postgres
-chown -R postgres /usr/local/pgsql
+mkdir /usr/local/pgsql/data
+chown postgres /usr/local/pgsql/data
 su - postgres
 /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
 /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;
 /usr/local/pgsql/bin/createdb test
 /usr/local/pgsql/bin/psql test
-   </synopsis>
+</synopsis>
    The long version is the rest of this
    <![%flattext-install-include;[document.]]>
    <![%flattext-install-ignore;[chapter.]]>
