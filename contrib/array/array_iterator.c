@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <string.h>
 
+#include "access/tupmacs.h"
 #include "access/xact.h"
 #include "fmgr.h"
 #include "miscadmin.h"
@@ -80,37 +81,17 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	p = ARR_DATA_PTR(array);
 	for (i = 0; i < nitems; i++)
 	{
-		if (typbyval)
-		{
-			switch (typlen)
-			{
-				case 1:
-					result = FunctionCall2(&finfo,
-										   CharGetDatum(*p),
-										   value);
-					break;
-				case 2:
-					result = FunctionCall2(&finfo,
-										   Int16GetDatum(*(int16 *) p),
-										   value);
-					break;
-				case 3:
-				case 4:
-					result = FunctionCall2(&finfo,
-										   Int32GetDatum(*(int32 *) p),
-										   value);
-					break;
-			}
+		Datum		itemvalue;
+
+		itemvalue = fetch_att(p, typbyval, typlen);
+
+		if (typlen > 0)
 			p += typlen;
-		}
 		else
-		{
-			result = FunctionCall2(&finfo, PointerGetDatum(p), value);
-			if (typlen > 0)
-				p += typlen;
-			else
-				p += INTALIGN(*(int32 *) p);
-		}
+			p += INTALIGN(*(int32 *) p);
+
+		result = FunctionCall2(&finfo, itemvalue, value);
+
 		if (DatumGetBool(result))
 		{
 			if (!and)

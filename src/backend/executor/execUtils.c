@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.69 2000/11/16 22:30:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.70 2000/12/27 23:59:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,16 +274,10 @@ ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
 {
 	List	   *targetList;
 	TupleDesc	tupDesc;
-	int			len;
 
 	targetList = node->targetlist;
 	tupDesc = ExecTypeFromTL(targetList);
-	len = ExecTargetListLength(targetList);
-
-	if (len > 0)
-		ExecAssignResultType(commonstate, tupDesc);
-	else
-		ExecAssignResultType(commonstate, (TupleDesc) NULL);
+	ExecAssignResultType(commonstate, tupDesc);
 }
 
 /* ----------------
@@ -582,8 +576,8 @@ ExecSetTypeInfo(int index,
 }
 
 /* ----------------
- *		ExecFreeTypeInfo frees the array of attrbutes
- *		created by ExecMakeTypeInfo and returned by ExecTypeFromTL...
+ *		ExecFreeTypeInfo frees the array of attributes
+ *		created by ExecMakeTypeInfo and returned by ExecTypeFromTL
  * ----------------
  */
 void

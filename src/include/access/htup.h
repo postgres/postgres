@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.41 2000/11/30 08:46:25 vadim Exp $
+ * $Id: htup.h,v 1.42 2000/12/27 23:59:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,6 +147,9 @@ typedef struct xl_heap_update
 #define MaxAttrSize		(10 * 1024 * 1024)
 
 
+/*
+ * Attribute numbers for the system-defined attributes
+ */
 #define SelfItemPointerAttributeNumber			(-1)
 #define ObjectIdAttributeNumber					(-2)
 #define MinTransactionIdAttributeNumber			(-3)
@@ -155,9 +158,6 @@ typedef struct xl_heap_update
 #define MaxCommandIdAttributeNumber				(-6)
 #define TableOidAttributeNumber			        (-7)
 #define FirstLowInvalidHeapAttributeNumber		(-8)
-
-/* If you make any changes above, the order of offsets in this must change */
-extern long heap_sysoffset[];
 
 /*
  * This new HeapTuple for version >= 6.5 and this is why it was changed:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.101 2000/12/11 09:14:03 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.102 2000/12/27 23:59:10 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -537,7 +537,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			 (
 			  (tupleDesc)->attrs[(attnum) - 1]->attcacheoff >= 0 ?
 			  (
-			   (Datum) fetchatt(&((tupleDesc)->attrs[(attnum) - 1]),
+				fetchatt((tupleDesc)->attrs[(attnum) - 1],
 						 (char *) (tup)->t_data + (tup)->t_data->t_hoff +
 							(tupleDesc)->attrs[(attnum) - 1]->attcacheoff)
 			   )

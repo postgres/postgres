@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.98 2000/11/30 18:38:47 tgl Exp $
+ * $Id: pg_type.h,v 1.99 2000/12/27 23:59:13 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -51,13 +51,11 @@ CATALOG(pg_type) BOOTSTRAP
 
 	/*
 	 * typbyval determines whether internal Postgres routines pass a value
-	 * of this type by value or by reference.  Only char, short, and int-
-	 * equivalent items can be passed by value, so if the type is not 1,
-	 * 2, or 4 bytes long, Postgres does not have the option of passing by
-	 * value and so typbyval had better be FALSE.  Variable-length types
-	 * are always passed by reference. Note that typbyval can be false
-	 * even if the length would allow pass-by-value; this is currently
-	 * true for type float4, for example.
+	 * of this type by value or by reference.  typbyval had better be FALSE
+	 * if the length is not 1, 2, or 4 (or 8 on 8-byte-Datum machines).
+	 * Variable-length types are always passed by reference. Note that
+	 * typbyval can be false even if the length would allow pass-by-value;
+	 * this is currently true for type float4, for example.
 	 */
 	bool		typbyval;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.95 2000/12/15 19:22:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.96 2000/12/27 23:59:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,10 +442,12 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 			/*
 			 * for func(relname), the param to the function is the tuple
-			 * under consideration.  we build a special VarNode to reflect
+			 * under consideration.  We build a special VarNode to reflect
 			 * this -- it has varno set to the correct range table entry,
 			 * but has varattno == 0 to signal that the whole tuple is the
-			 * argument.
+			 * argument.  Also, it has typmod set to sizeof(Pointer) to
+			 * signal that the runtime representation will be a pointer
+			 * not an Oid.
 			 */
 			if (rte->relname == NULL)
 				elog(ERROR,
@@ -453,7 +455,11 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			toid = typenameTypeId(rte->relname);
 
 			/* replace it in the arg list */
-			lfirst(i) = makeVar(vnum, 0, toid, -1, sublevels_up);
+			lfirst(i) = makeVar(vnum,
+								InvalidAttrNumber,
+								toid,
+								sizeof(Pointer),
+								sublevels_up);
 		}
 		else if (!attisset)
 			toid = exprType(arg);

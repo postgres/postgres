@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog.h,v 1.13 2000/10/16 14:52:26 vadim Exp $
+ * $Id: catalog.h,v 1.14 2000/12/27 23:59:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ extern char *GetDatabasePath(Oid tblNode);
 
 extern bool IsSystemRelationName(const char *relname);
 extern bool IsSharedSystemRelationName(const char *relname);
+
 extern Oid	newoid(void);
-extern void fillatt(TupleDesc att);
 
 #endif	 /* CATALOG_H */

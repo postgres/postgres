@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.37 2000/11/16 22:30:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.38 2000/12/27 23:59:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ IsSharedSystemRelationName(const char *relname)
  *		user programs to use them for temporary object identifiers.
  */
 Oid
-newoid()
+newoid(void)
 {
 	Oid			lastoid;
 
@@ -231,58 +231,4 @@ newoid()
 	if (!OidIsValid(lastoid))
 		elog(ERROR, "newoid: GetNewObjectId returns invalid oid");
 	return lastoid;
-}
-
-/*
- *		fillatt			- fills the ATTRIBUTE relation fields from the TYP
- *
- *		Expects that the atttypid domain is set for each att[].
- *		Returns with the attnum, and attlen domains set.
- *		attnum, attproc, atttyparg, ... should be set by the user.
- *
- *		In the future, attnum may not be set?!? or may be passed as an arg?!?
- *
- *		Current implementation is very inefficient--should cashe the
- *		information if this is at all possible.
- *
- *		Check to see if this is really needed, and especially in the case
- *		of index tuples.
- */
-void
-fillatt(TupleDesc tupleDesc)
-{
-	int			natts = tupleDesc->natts;
-	Form_pg_attribute *att = tupleDesc->attrs;
-	Form_pg_attribute *attributeP;
-	int			i;
-
-	if (natts < 0 || natts > MaxHeapAttributeNumber)
-		elog(ERROR, "fillatt: %d attributes is too large", natts);
-	if (natts == 0)
-	{
-		elog(DEBUG, "fillatt: called with natts == 0");
-		return;
-	}
-
-	attributeP = &att[0];
-
-	for (i = 1; i <= natts; i++)
-	{
-		(*attributeP)->attnum = (int16) i;
-
-		/*
-		 * Check if the attr is a set before messing with the length
-		 * and byval, since those were already set in
-		 * TupleDescInitEntry.	In fact, this seems redundant here,
-		 * but who knows what I'll break if I take it out...
-		 */
-		if (!(*attributeP)->attisset)
-		{
-			get_typlenbyval((*attributeP)->atttypid,
-							& (*attributeP)->attlen,
-							& (*attributeP)->attbyval);
-		}
-
-		attributeP++;
-	}
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.55 2000/12/01 22:10:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.56 2000/12/27 23:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,30 +436,17 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 			pq_sendint(&buf, len, sizeof(int32));
 			if (typeinfo->attrs[i]->attbyval)
 			{
-				int8		i8;
-				int16		i16;
-				int32		i32;
+				Datum		datumBuf;
 
-				switch (len)
-				{
-					case sizeof(int8):
-						i8 = DatumGetChar(attr);
-						pq_sendbytes(&buf, (char *) &i8, len);
-						break;
-					case sizeof(int16):
-						i16 = DatumGetInt16(attr);
-						pq_sendbytes(&buf, (char *) &i16, len);
-						break;
-					case sizeof(int32):
-						i32 = DatumGetInt32(attr);
-						pq_sendbytes(&buf, (char *) &i32, len);
-						break;
-					default:
-						elog(ERROR, "printtup_internal: unexpected typlen");
-						break;
-				}
+				/*
+				 * We need this horsing around because we don't know how
+				 * shorter data values are aligned within a Datum.
+				 */
+				store_att_byval(&datumBuf, attr, len);
+				pq_sendbytes(&buf, (char *) &datumBuf, len);
 #ifdef IPORTAL_DEBUG
-				fprintf(stderr, "byval length %d data %d\n", len, attr);
+				fprintf(stderr, "byval length %d data %ld\n", len,
+						(long) attr);
 #endif
 			}
 			else

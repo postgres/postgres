@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.48 2000/11/20 20:36:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.49 2000/12/27 23:59:12 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "access/tupmacs.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -807,28 +808,8 @@ get_typdefault(Oid typid)
 
 	if (typByVal)
 	{
-		int8		i8;
-		int16		i16;
-		int32		i32 = 0;
-
 		if (dataSize == typLen)
-		{
-			switch (typLen)
-			{
-				case sizeof(int8):
-					memcpy((char *) &i8, VARDATA(typDefault), sizeof(int8));
-					i32 = i8;
-					break;
-				case sizeof(int16):
-					memcpy((char *) &i16, VARDATA(typDefault), sizeof(int16));
-					i32 = i16;
-					break;
-				case sizeof(int32):
-					memcpy((char *) &i32, VARDATA(typDefault), sizeof(int32));
-					break;
-			}
-			returnValue = Int32GetDatum(i32);
-		}
+			returnValue = fetch_att(VARDATA(typDefault), typByVal, typLen);
 		else
 			returnValue = PointerGetDatum(NULL);
 	}

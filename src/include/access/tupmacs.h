@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.14 2000/03/17 02:36:37 tgl Exp $
+ * $Id: tupmacs.h,v 1.15 2000/12/27 23:59:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,50 +22,79 @@
 #define att_isnull(ATT, BITS) (!((BITS)[(ATT) >> 3] & (1 << ((ATT) & 0x07))))
 
 /*
- * given a Form_pg_attribute and a pointer into a tuple's data
- * area, return the correct value or pointer.
+ * Given a Form_pg_attribute and a pointer into a tuple's data area,
+ * return the correct value or pointer.
  *
- * We return a 4 byte (char *) value in all cases.	If the attribute has
- * "byval" false or has variable length, we return the same pointer
- * into the tuple data area that we're passed.  Otherwise, we return
- * the 1, 2, or 4 bytes pointed to by it, properly extended to 4
- * bytes, depending on the length of the attribute.
+ * We return a Datum value in all cases.  If the attribute has "byval" false,
+ * we return the same pointer into the tuple data area that we're passed.
+ * Otherwise, we return the correct number of bytes fetched from the data
+ * area and extended to Datum form.
  *
- * note that T must already be properly LONGALIGN/SHORTALIGN'd for
- * this to work correctly.
+ * On machines where Datum is 8 bytes, we support fetching 8-byte byval
+ * attributes; otherwise, only 1, 2, and 4-byte values are supported.
  *
- * the double-cast is to stop gcc from (correctly) complaining about
- * casting integer types with size < sizeof(char *) to (char *).
- * sign-extension may get weird if you use an integer type that
- * isn't the same size as (char *) for the first cast.  (on the other
- * hand, it's safe to use another type for the (foo *)(T).)
- *
- * attbyval seems to be fairly redundant.  We have to return a pointer if
- * the value is longer than 4 bytes or has variable length; returning the
- * value would be useless.	In fact, for at least the variable length case,
- * the caller assumes we return a pointer regardless of attbyval.
- * I would eliminate attbyval altogether, but I don't know how.  -BRYANH.
+ * Note that T must already be properly aligned for this to work correctly.
  */
-#define fetchatt(A, T) \
+#define fetchatt(A,T) fetch_att(T, (A)->attbyval, (A)->attlen)
+
+/*
+ * Same, but work from byval/len parameters rather than Form_pg_attribute.
+ */
+#if SIZEOF_DATUM == 8
+
+#define fetch_att(T,attbyval,attlen) \
 ( \
-	(*(A))->attbyval && (*(A))->attlen != -1 ? \
+	(attbyval) ? \
 	( \
-		(*(A))->attlen > (int) sizeof(int16) ? \
-		( \
-			(char *) (long) *((int32 *)(T)) \
-		) \
+		(attlen) == (int) sizeof(Datum) ? \
+			*((Datum *)(T)) \
+		: \
+	  ( \
+		(attlen) == (int) sizeof(int32) ? \
+			Int32GetDatum(*((int32 *)(T))) \
 		: \
 		( \
-			(*(A))->attlen < (int) sizeof(int16) ? \
-				(char *) (long) *((char *)(T)) \
+			(attlen) == (int) sizeof(int16) ? \
+				Int16GetDatum(*((int16 *)(T))) \
 			: \
-				(char *) (long) *((int16 *)(T))) \
+			( \
+				AssertMacro((attlen) == 1), \
+				CharGetDatum(*((char *)(T))) \
+			) \
 		) \
+	  ) \
+	) \
 	: \
-	(char *) (T) \
+	PointerGetDatum((char *) (T)) \
 )
 
-/* att_align aligns the given offset as needed for a datum of length attlen
+#else /* SIZEOF_DATUM != 8 */
+
+#define fetch_att(T,attbyval,attlen) \
+( \
+	(attbyval) ? \
+	( \
+		(attlen) == (int) sizeof(int32) ? \
+			Int32GetDatum(*((int32 *)(T))) \
+		: \
+		( \
+			(attlen) == (int) sizeof(int16) ? \
+				Int16GetDatum(*((int16 *)(T))) \
+			: \
+			( \
+				AssertMacro((attlen) == 1), \
+				CharGetDatum(*((char *)(T))) \
+			) \
+		) \
+	) \
+	: \
+	PointerGetDatum((char *) (T)) \
+)
+
+#endif /* SIZEOF_DATUM == 8 */
+
+/*
+ * att_align aligns the given offset as needed for a datum of length attlen
  * and alignment requirement attalign.	In practice we don't need the length.
  * The attalign cases are tested in what is hopefully something like their
  * frequency of occurrence.
@@ -81,6 +110,10 @@
 		))) \
 )
 
+/*
+ * att_addlength increments the given offset by the length of the attribute.
+ * attval is only accessed if we are dealing with a varlena attribute.
+ */
 #define att_addlength(cur_offset, attlen, attval) \
 ( \
 	((attlen) != -1) ? \
@@ -92,5 +125,61 @@
 		(cur_offset) + VARATT_SIZE(DatumGetPointer(attval)) \
 	) \
 )
+
+/*
+ * store_att_byval is a partial inverse of fetch_att: store a given Datum
+ * value into a tuple data area at the specified address.  However, it only
+ * handles the byval case, because in typical usage the caller needs to
+ * distinguish by-val and by-ref cases anyway, and so a do-it-all macro
+ * wouldn't be convenient.
+ */
+#if SIZEOF_DATUM == 8
+
+#define store_att_byval(T,newdatum,attlen) \
+	do { \
+		switch (attlen) \
+		{ \
+			case sizeof(char): \
+				*(char *) (T) = DatumGetChar(newdatum); \
+				break; \
+			case sizeof(int16): \
+				*(int16 *) (T) = DatumGetInt16(newdatum); \
+				break; \
+			case sizeof(int32): \
+				*(int32 *) (T) = DatumGetInt32(newdatum); \
+				break; \
+			case sizeof(Datum): \
+				*(Datum *) (T) = (newdatum); \
+				break; \
+			default: \
+				elog(ERROR, "store_att_byval: unsupported byval length %d", \
+					 (int) (attlen)); \
+				break; \
+		} \
+	} while (0)
+
+#else /* SIZEOF_DATUM != 8 */
+
+#define store_att_byval(T,newdatum,attlen) \
+	do { \
+		switch (attlen) \
+		{ \
+			case sizeof(char): \
+				*(char *) (T) = DatumGetChar(newdatum); \
+				break; \
+			case sizeof(int16): \
+				*(int16 *) (T) = DatumGetInt16(newdatum); \
+				break; \
+			case sizeof(int32): \
+				*(int32 *) (T) = DatumGetInt32(newdatum); \
+				break; \
+			default: \
+				elog(ERROR, "store_att_byval: unsupported byval length %d", \
+					 (int) (attlen)); \
+				break; \
+		} \
+	} while (0)
+
+#endif /* SIZEOF_DATUM == 8 */
 
 #endif

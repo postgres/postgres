@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.48 2000/12/07 02:00:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.49 2000/12/27 23:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,9 +217,9 @@ nocache_index_getattr(IndexTuple tup,
 /* This is handled in the macro */
 		if (att[attnum]->attcacheoff != -1)
 		{
-			return (Datum) fetchatt(&(att[attnum]),
-									(char *) tup + data_off +
-									att[attnum]->attcacheoff);
+			return fetchatt(att[attnum],
+							(char *) tup + data_off +
+							att[attnum]->attcacheoff);
 		}
 #endif
 	}
@@ -279,8 +279,8 @@ nocache_index_getattr(IndexTuple tup,
 	{
 		if (att[attnum]->attcacheoff != -1)
 		{
-			return (Datum) fetchatt(&(att[attnum]),
-									tp + att[attnum]->attcacheoff);
+			return fetchatt(att[attnum],
+							tp + att[attnum]->attcacheoff);
 		}
 		else if (!IndexTupleAllFixed(tup))
 		{
@@ -332,7 +332,7 @@ nocache_index_getattr(IndexTuple tup,
 			off += att[j]->attlen;
 		}
 
-		return (Datum) fetchatt(&(att[attnum]), tp + att[attnum]->attcacheoff);
+		return fetchatt(att[attnum], tp + att[attnum]->attcacheoff);
 	}
 	else
 	{
@@ -379,7 +379,7 @@ nocache_index_getattr(IndexTuple tup,
 
 		off = att_align(off, att[attnum]->attlen, att[attnum]->attalign);
 
-		return (Datum) fetchatt(&att[attnum], tp + off);
+		return fetchatt(att[attnum], tp + off);
 	}
 }
 

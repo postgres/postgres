@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.154 2000/12/22 23:12:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.155 2000/12/27 23:59:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -582,12 +582,6 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	hasindex = RelationGetForm(rel)->relhasindex;
 	if (hasindex)
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
-
-	/* ----------------
-	 *	initialize tuple descriptor.
-	 * ----------------
-	 */
-	fillatt(tupdesc);
 
 	/* ----------------
 	 *	first we add the user attributes..

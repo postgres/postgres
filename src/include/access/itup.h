@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.26 2000/11/30 18:38:46 tgl Exp $
+ * $Id: itup.h,v 1.27 2000/12/27 23:59:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ typedef RetrieveIndexResultData *RetrieveIndexResult;
 	( \
 		(tupleDesc)->attrs[(attnum)-1]->attcacheoff >= 0 ? \
 		( \
-			(Datum) fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
+			fetchatt((tupleDesc)->attrs[(attnum)-1], \
 			(char *) (tup) + \
 			( \
 				IndexTupleHasMinHeader(tup) ? \

@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.153 2000/12/02 18:16:40 tgl Exp $
+ * $Id: config.h.in,v 1.154 2000/12/27 23:59:14 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -580,6 +580,11 @@ extern void srandom(unsigned int seed);
 
 /* Define this as the appropriate snprintf format for 64-bit ints, if any */
 #undef INT64_FORMAT
+
+/*
+ * We need a #define symbol for sizeof(Datum) for use in some #if tests.
+ */
+#undef SIZEOF_DATUM
 
 /*
  * These must be defined as the alignment requirement (NOT the size) of

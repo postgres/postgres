@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.69 2000/11/16 22:30:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.70 2000/12/27 23:59:10 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -352,7 +352,6 @@ TupleDescInitEntry(TupleDesc desc,
 
 	AssertArg(!PointerIsValid(desc->attrs[attributeNumber - 1]));
 
-
 	/* ----------------
 	 *	allocate storage for this attribute
 	 * ----------------
@@ -362,7 +361,7 @@ TupleDescInitEntry(TupleDesc desc,
 	desc->attrs[attributeNumber - 1] = att;
 
 	/* ----------------
-	 *	initialize some of the attribute fields
+	 *	initialize the attribute fields
 	 * ----------------
 	 */
 	att->attrelid = 0;			/* dummy value */
@@ -371,7 +370,6 @@ TupleDescInitEntry(TupleDesc desc,
 		namestrcpy(&(att->attname), attributeName);
 	else
 		MemSet(NameStr(att->attname), 0, NAMEDATALEN);
-
 
 	att->attdispersion = 0;		/* dummy value */
 	att->attcacheoff = -1;
@@ -414,8 +412,8 @@ TupleDescInitEntry(TupleDesc desc,
 		att->atttypid = InvalidOid;
 		att->attlen = (int16) 0;
 		att->attbyval = (bool) 0;
-		att->attstorage = 'p';
 		att->attalign = 'i';
+		att->attstorage = 'p';
 		return false;
 	}
 
@@ -427,42 +425,63 @@ TupleDescInitEntry(TupleDesc desc,
 	typeForm = (Form_pg_type) GETSTRUCT(tuple);
 
 	att->atttypid = tuple->t_data->t_oid;
-	att->attalign = typeForm->typalign;
 
-	/* ------------------------
-	   If this attribute is a set, what is really stored in the
-	   attribute is the OID of a tuple in the pg_proc catalog.
-	   The pg_proc tuple contains the query string which defines
-	   this set - i.e., the query to run to get the set.
-	   So the atttypid (just assigned above) refers to the type returned
-	   by this query, but the actual length of this attribute is the
-	   length (size) of an OID.
-
-	   Why not just make the atttypid point to the OID type, instead
-	   of the type the query returns?  Because the executor uses the atttypid
-	   to tell the front end what type will be returned (in BeginCommand),
-	   and in the end the type returned will be the result of the query, not
-	   an OID.
-
-	   Why not wait until the return type of the set is known (i.e., the
-	   recursive call to the executor to execute the set has returned)
-	   before telling the front end what the return type will be?  Because
-	   the executor is a delicate thing, and making sure that the correct
-	   order of front-end commands is maintained is messy, especially
-	   considering that target lists may change as inherited attributes
-	   are considered, etc.  Ugh.
-	   -----------------------------------------
-	   */
+	/*------------------------
+	 * There are a couple of cases where we must override the information
+	 * stored in pg_type.
+	 *
+	 * First: if this attribute is a set, what is really stored in the
+	 * attribute is the OID of a tuple in the pg_proc catalog.
+	 * The pg_proc tuple contains the query string which defines
+	 * this set - i.e., the query to run to get the set.
+	 * So the atttypid (just assigned above) refers to the type returned
+	 * by this query, but the actual length of this attribute is the
+	 * length (size) of an OID.
+	 *
+	 * (Why not just make the atttypid point to the OID type, instead
+	 * of the type the query returns?  Because the executor uses the atttypid
+	 * to tell the front end what type will be returned (in BeginCommand),
+	 * and in the end the type returned will be the result of the query, not
+	 * an OID.)
+	 *
+	 * (Why not wait until the return type of the set is known (i.e., the
+	 * recursive call to the executor to execute the set has returned)
+	 * before telling the front end what the return type will be?  Because
+	 * the executor is a delicate thing, and making sure that the correct
+	 * order of front-end commands is maintained is messy, especially
+	 * considering that target lists may change as inherited attributes
+	 * are considered, etc.  Ugh.)
+	 *
+	 * Second: if we are dealing with a complex type (a tuple type), then
+	 * pg_type will say that the representation is the same as Oid.  But
+	 * if typmod is sizeof(Pointer) then the internal representation is
+	 * actually a pointer to a TupleTableSlot, and we have to substitute
+	 * that information.
+	 *
+	 * A set of complex type is first and foremost a set, so its
+	 * representation is Oid not pointer.  So, test that case first.
+	 *-----------------------------------------
+	 */
 	if (attisset)
 	{
 		att->attlen = sizeof(Oid);
 		att->attbyval = true;
+		att->attalign = 'i';
+		att->attstorage = 'p';
+	}
+	else if (typeForm->typtype == 'c' && typmod == sizeof(Pointer))
+	{
+		att->attlen = sizeof(Pointer);
+		att->attbyval = true;
+		att->attalign = 'd';	/* kluge to work with 8-byte pointers */
+		/* XXX ought to have a separate attalign value for pointers ... */
 		att->attstorage = 'p';
 	}
 	else
 	{
 		att->attlen = typeForm->typlen;
 		att->attbyval = typeForm->typbyval;
+		att->attalign = typeForm->typalign;
 		att->attstorage = typeForm->typstorage;
 	}
 
@@ -494,6 +513,7 @@ TupleDescMakeSelfReference(TupleDesc desc,
 	att->atttypid = TypeShellMake(relname);
 	att->attlen = sizeof(Oid);
 	att->attbyval = true;
+	att->attalign = 'i';
 	att->attstorage = 'p';
 	att->attnelems = 0;
 }
@@ -582,14 +602,12 @@ BuildDescForRelation(List *schema, char *relname)
 			 *	have a self reference, otherwise it's an error.
 			 * ----------------
 			 */
-			if (!strcmp(typename, relname))
+			if (strcmp(typename, relname) == 0)
 				TupleDescMakeSelfReference(desc, attnum, relname);
 			else
 				elog(ERROR, "DefineRelation: no such type %s",
 					 typename);
 		}
-
-		desc->attrs[attnum - 1]->atttypmod = entry->typename->typmod;
 
 		/* This is for constraints */
 		if (entry->is_not_null)

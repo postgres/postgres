@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.59 2000/11/30 18:38:46 tgl Exp $
+ * $Id: heapam.h,v 1.60 2000/12/27 23:59:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,9 +90,15 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 /* ----------------
  *		fastgetattr
  *
- *		This gets called many times, so we macro the cacheable and NULL
- *		lookups, and call noncachegetattr() for the rest.
+ *		Fetch a user attribute's value as a Datum (might be either a
+ *		value, or a pointer into the data area of the tuple).
  *
+ *		This must not be used when a system attribute might be requested.
+ *		Furthermore, the passed attnum MUST be valid.  Use heap_getattr()
+ *		instead, if in doubt.
+ *
+ *		This gets called many times, so we macro the cacheable and NULL
+ *		lookups, and call nocachegetattr() for the rest.
  * ----------------
  */
 
@@ -109,7 +115,7 @@ extern Datum nocachegetattr(HeapTuple tup, int attnum,
 	(																\
 		(tupleDesc)->attrs[(attnum)-1]->attcacheoff >= 0 ?			\
 		(															\
-			(Datum) fetchatt(&((tupleDesc)->attrs[(attnum)-1]),		\
+			fetchatt((tupleDesc)->attrs[(attnum)-1],				\
 				(char *) (tup)->t_data + (tup)->t_data->t_hoff +	\
 					(tupleDesc)->attrs[(attnum)-1]->attcacheoff)	\
 		)															\
@@ -132,9 +138,8 @@ extern Datum nocachegetattr(HeapTuple tup, int attnum,
 
 #else /* defined(DISABLE_COMPLEX_MACRO) */
 
-extern Datum
-fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
-			bool *isnull);
+extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
+						 bool *isnull);
 
 #endif /* defined(DISABLE_COMPLEX_MACRO) */
 
@@ -142,59 +147,38 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 /* ----------------
  *		heap_getattr
  *
- *		Find a particular field in a row represented as a heap tuple.
- *		We return a pointer into that heap tuple, which points to the
- *		first byte of the value of the field in question.
+ *		Extract an attribute of a heap tuple and return it as a Datum.
+ *		This works for either system or user attributes.  The given attnum
+ *		is properly range-checked.
  *
- *		If the field in question has a NULL value, we return a null
- *		pointer and return <*isnull> == true.  Otherwise, we return
- *		<*isnull> == false.
+ *		If the field in question has a NULL value, we return a zero Datum
+ *		and set *isnull == true.  Otherwise, we set *isnull == false.
  *
  *		<tup> is the pointer to the heap tuple.  <attnum> is the attribute
  *		number of the column (field) caller wants.	<tupleDesc> is a
  *		pointer to the structure describing the row and all its fields.
- *
- *		Because this macro is often called with constants, it generates
- *		compiler warnings about 'left-hand comma expression has no effect.
- *
  * ----------------
  */
 #define heap_getattr(tup, attnum, tupleDesc, isnull) \
 ( \
-	AssertMacro((tup) != NULL && \
-		(attnum) > FirstLowInvalidHeapAttributeNumber && \
-		(attnum) != 0), \
-	((attnum) > (int) (tup)->t_data->t_natts) ? \
-	( \
-		((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
-		(Datum)NULL \
-	) \
-	: \
+	AssertMacro((tup) != NULL), \
 	( \
 		((attnum) > 0) ? \
 		( \
-			fastgetattr((tup), (attnum), (tupleDesc), (isnull)) \
-		) \
-		: \
-		( \
-			((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
-			((attnum) == SelfItemPointerAttributeNumber) ? \
+			((attnum) > (int) (tup)->t_data->t_natts) ? \
 			( \
-				(Datum)((char *)&((tup)->t_self)) \
+				((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
+				(Datum)NULL \
 			) \
 			: \
-			(((attnum) == TableOidAttributeNumber) ? \
-			( \
-				(Datum)((tup)->t_tableOid) \
-			) \
-            : \
-			( \
-				(Datum)*(unsigned int *) \
-					((char *)(tup)->t_data + heap_sysoffset[-(attnum)-1]) \
-			)) \
+				fastgetattr((tup), (attnum), (tupleDesc), (isnull)) \
 		) \
+		: \
+			heap_getsysattr((tup), (attnum), (isnull)) \
 	) \
 )
+
+extern Datum heap_getsysattr(HeapTuple tup, int attnum, bool *isnull);
 
 extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
 
@@ -238,8 +222,6 @@ extern void DataFill(char *data, TupleDesc tupleDesc,
 		 Datum *value, char *nulls, uint16 *infomask,
 		 bits8 *bit);
 extern int	heap_attisnull(HeapTuple tup, int attnum);
-extern int	heap_sysattrlen(AttrNumber attno);
-extern bool heap_sysattrbyval(AttrNumber attno);
 extern Datum nocachegetattr(HeapTuple tup, int attnum,
 			   TupleDesc att, bool *isnull);
 extern HeapTuple heap_copytuple(HeapTuple tuple);

@@ -8,15 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.67 2000/12/03 20:45:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.68 2000/12/27 23:59:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
 
 #include <ctype.h>
 
-#include "postgres.h"
-
+#include "access/tupmacs.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
 #include "utils/array.h"
@@ -596,48 +596,24 @@ array_out(PG_FUNCTION_ARGS)
 	values = (char **) palloc(nitems * sizeof(char *));
 	for (i = 0; i < nitems; i++)
 	{
-		if (typbyval)
-		{
-			switch (typlen)
-			{
-				case 1:
-					values[i] = DatumGetCString(FunctionCall3(&outputproc,
-												CharGetDatum(*p),
-												ObjectIdGetDatum(typelem),
-												Int32GetDatum(-1)));
-					break;
-				case 2:
-					values[i] = DatumGetCString(FunctionCall3(&outputproc,
-												Int16GetDatum(*(int16 *) p),
-												ObjectIdGetDatum(typelem),
-												Int32GetDatum(-1)));
-					break;
-				case 3:
-				case 4:
-					values[i] = DatumGetCString(FunctionCall3(&outputproc,
-												Int32GetDatum(*(int32 *) p),
-												ObjectIdGetDatum(typelem),
-												Int32GetDatum(-1)));
-					break;
-			}
-			p += typlen;
-		}
-		else
-		{
-			values[i] = DatumGetCString(FunctionCall3(&outputproc,
-												PointerGetDatum(p),
-												ObjectIdGetDatum(typelem),
-												Int32GetDatum(-1)));
-			if (typlen > 0)
-				p += typlen;
-			else
-				p += INTALIGN(*(int32 *) p);
+		Datum		itemvalue;
 
-			/*
-			 * For the pair of double quotes
-			 */
+		itemvalue = fetch_att(p, typbyval, typlen);
+		values[i] = DatumGetCString(FunctionCall3(&outputproc,
+												  itemvalue,
+												  ObjectIdGetDatum(typelem),
+												  Int32GetDatum(-1)));
+		if (typlen > 0)
+			p += typlen;
+		else
+			p += INTALIGN(*(int32 *) p);
+
+		/*
+		 * For the pair of double quotes
+		 */
+		if (!typbyval)
 			overall_length += 2;
-		}
+
 		for (tmp = values[i]; *tmp; tmp++)
 		{
 			overall_length += 1;
@@ -1358,35 +1334,12 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 	for (i = 0; i < nitems; i++)
 	{
 		/* Get source element */
-		if (inp_typbyval)
-		{
-			switch (inp_typlen)
-			{
-				case 1:
-					elt = CharGetDatum(*s);
-					break;
-				case 2:
-					elt = Int16GetDatum(*(int16 *) s);
-					break;
-				case 4:
-					elt = Int32GetDatum(*(int32 *) s);
-					break;
-				default:
-					elog(ERROR, "array_map: unsupported byval length %d",
-						 inp_typlen);
-					elt = 0;	/* keep compiler quiet */
-					break;
-			}
+		elt = fetch_att(s, inp_typbyval, inp_typlen);
+
+		if (inp_typlen > 0)
 			s += inp_typlen;
-		}
 		else
-		{
-			elt = PointerGetDatum(s);
-			if (inp_typlen > 0)
-				s += inp_typlen;
-			else
-				s += INTALIGN(*(int32 *) s);
-		}
+			s += INTALIGN(*(int32 *) s);
 
 		/*
 		 * Apply the given function to source elt and extra args.
@@ -1516,30 +1469,11 @@ deconstruct_array(ArrayType *array,
 	p = ARR_DATA_PTR(array);
 	for (i = 0; i < nelems; i++)
 	{
-		if (elmbyval)
-		{
-			switch (elmlen)
-			{
-				case 1:
-					elems[i] = CharGetDatum(*p);
-					break;
-				case 2:
-					elems[i] = Int16GetDatum(*(int16 *) p);
-					break;
-				case 4:
-					elems[i] = Int32GetDatum(*(int32 *) p);
-					break;
-			}
+		elems[i] = fetch_att(p, elmbyval, elmlen);
+		if (elmlen > 0)
 			p += elmlen;
-		}
 		else
-		{
-			elems[i] = PointerGetDatum(p);
-			if (elmlen > 0)
-				p += elmlen;
-			else
-				p += INTALIGN(VARSIZE(p));
-		}
+			p += INTALIGN(VARSIZE(p));
 	}
 }
 
@@ -1616,22 +1550,7 @@ system_cache_lookup(Oid element_type,
 static Datum
 ArrayCast(char *value, bool byval, int len)
 {
-	if (! byval)
-		return PointerGetDatum(value);
-
-	switch (len)
-	{
-		case 1:
-			return CharGetDatum(*value);
-		case 2:
-			return Int16GetDatum(*(int16 *) value);
-		case 4:
-			return Int32GetDatum(*(int32 *) value);
-		default:
-			elog(ERROR, "ArrayCast: unsupported byval length %d", len);
-			break;
-	}
-	return 0;					/* keep compiler quiet */
+	return fetch_att(value, byval, len);
 }
 
 /*
@@ -1651,22 +1570,7 @@ ArrayCastAndSet(Datum src,
 	{
 		if (typbyval)
 		{
-			switch (typlen)
-			{
-				case 1:
-					*dest = DatumGetChar(src);
-					break;
-				case 2:
-					*(int16 *) dest = DatumGetInt16(src);
-					break;
-				case 4:
-					*(int32 *) dest = DatumGetInt32(src);
-					break;
-				default:
-					elog(ERROR, "ArrayCastAndSet: unsupported byval length %d",
-						 typlen);
-					break;
-			}
+			store_att_byval(dest, src, typlen);
 			/* For by-val types, assume no alignment padding is needed */
 			inc = typlen;
 		}

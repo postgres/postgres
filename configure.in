@@ -1059,6 +1059,11 @@ AC_CHECK_FUNCS([strtoll strtoq], [break])
 AC_CHECK_FUNCS([strtoull strtouq], [break])
 
 
+dnl Need a #define for the size of Datum (unsigned long)
+
+AC_CHECK_SIZEOF(unsigned long, 4)
+AC_DEFINE_UNQUOTED(SIZEOF_DATUM, $ac_cv_sizeof_unsigned_long)
+
 dnl Determine memory alignment requirements for the basic C datatypes.
 
 PGAC_CHECK_ALIGNOF(short)

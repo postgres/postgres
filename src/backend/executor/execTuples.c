@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.43 2000/11/12 00:36:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.44 2000/12/27 23:59:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -835,7 +835,7 @@ ExecGetTupType(Plan *node)
 	return tupType;
 }
 
-/*
+#ifdef NOT_USED
 TupleDesc
 ExecCopyTupType(TupleDesc td, int natts)
 {
@@ -852,30 +852,23 @@ ExecCopyTupType(TupleDesc td, int natts)
 		}
 	return newTd;
 }
-*/
+#endif
 
 /* ----------------------------------------------------------------
  *		ExecTypeFromTL
  *
+ *		Generate a tuple descriptor for the result tuple of a targetlist.
+ *		Note that resjunk columns, if any, are included in the result.
+ *
  *		Currently there are about 4 different places where we create
  *		TupleDescriptors.  They should all be merged, or perhaps
  *		be rewritten to call BuildDesc().
- *
- *	old comments
- *		Forms attribute type info from the target list in the node.
- *		It assumes all domains are individually specified in the target list.
- *		It fails if the target list contains something like Emp.all
- *		which represents all the attributes from EMP relation.
- *
- *		Conditions:
- *			The inner and outer subtrees should be initialized because it
- *			might be necessary to know the type infos of the subtrees.
  * ----------------------------------------------------------------
  */
 TupleDesc
 ExecTypeFromTL(List *targetList)
 {
-	List	   *tlcdr;
+	List	   *tlitem;
 	TupleDesc	typeInfo;
 	Resdom	   *resdom;
 	Oid			restype;
@@ -897,14 +890,12 @@ ExecTypeFromTL(List *targetList)
 	typeInfo = CreateTemplateTupleDesc(len);
 
 	/* ----------------
-	 * notes: get resdom from (resdom expr)
-	 *		  get_typbyval comes from src/lib/l-lisp/lsyscache.c
+	 * scan list, generate type info for each entry
 	 * ----------------
 	 */
-	tlcdr = targetList;
-	while (tlcdr != NIL)
+	foreach(tlitem, targetList)
 	{
-		TargetEntry *tle = lfirst(tlcdr);
+		TargetEntry *tle = lfirst(tlitem);
 
 		if (tle->resdom != NULL)
 		{
@@ -920,7 +911,7 @@ ExecTypeFromTL(List *targetList)
 							   0,
 							   false);
 
-/*
+#ifdef NOT_USED
 			ExecSetTypeInfo(resdom->resno - 1,
 							typeInfo,
 							(Oid) restype,
@@ -929,13 +920,14 @@ ExecTypeFromTL(List *targetList)
 							NameStr(*resdom->resname),
 							get_typbyval(restype),
 							get_typalign(restype));
-*/
+#endif
 		}
 		else
 		{
+			/* XXX this branch looks fairly broken ... tgl 12/2000 */
 			Resdom	   *fjRes;
 			List	   *fjTlistP;
-			List	   *fjList = lfirst(tlcdr);
+			List	   *fjList = lfirst(tlitem);
 
 #ifdef SETS_FIXED
 			TargetEntry *tle;
@@ -953,7 +945,7 @@ ExecTypeFromTL(List *targetList)
 							   fjRes->restypmod,
 							   0,
 							   false);
-/*
+#ifdef NOT_USED
 			ExecSetTypeInfo(fjRes->resno - 1,
 							typeInfo,
 							(Oid) restype,
@@ -962,7 +954,7 @@ ExecTypeFromTL(List *targetList)
 							(char *) fjRes->resname,
 							get_typbyval(restype),
 							get_typalign(restype));
-*/
+#endif
 
 			foreach(fjTlistP, lnext(fjList))
 			{
@@ -978,7 +970,7 @@ ExecTypeFromTL(List *targetList)
 								   0,
 								   false);
 
-/*
+#ifdef NOT_USED
 				ExecSetTypeInfo(fjRes->resno - 1,
 								typeInfo,
 								(Oid) fjRes->restype,
@@ -987,11 +979,9 @@ ExecTypeFromTL(List *targetList)
 								(char *) fjRes->resname,
 								get_typbyval(fjRes->restype),
 								get_typalign(fjRes->restype));
-*/
+#endif
 			}
 		}
-
-		tlcdr = lnext(tlcdr);
 	}
 
 	return typeInfo;

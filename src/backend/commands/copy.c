@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.125 2000/12/02 20:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.126 2000/12/27 23:59:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@ static void CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, 
 static void CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_print);
 static Oid	GetInputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
-static bool IsTypeByVal(Oid type);
 static void CopyReadNewline(FILE *fp, int *newline);
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_print);
 static void CopyAttributeOut(FILE *fp, char *string, char *delim);
@@ -586,7 +585,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 	Oid			in_func_oid;
 	Datum	   *values;
 	char	   *nulls;
-	bool	   *byval;
 	bool		isnull;
 	int			done = 0;
 	char	   *string = NULL,
@@ -653,13 +651,9 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 
 	values = (Datum *) palloc(attr_count * sizeof(Datum));
 	nulls = (char *) palloc(attr_count * sizeof(char));
-	byval = (bool *) palloc(attr_count * sizeof(bool));
 
 	for (i = 0; i < attr_count; i++)
-	{
 		nulls[i] = ' ';
-		byval[i] = IsTypeByVal(attr[i]->atttypid);
-	}
 
 	lineno = 0;
 	fe_eof = false;
@@ -742,36 +736,11 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 
 				for (i = 0; i < attr_count; i++)
 				{
-					if (byval[i] && nulls[i] != 'n')
-					{
-
-						switch (attr[i]->attlen)
-						{
-							case sizeof(char):
-								values[i] = (Datum) *(unsigned char *) ptr;
-								ptr += sizeof(char);
-								break;
-							case sizeof(short):
-								ptr = (char *) SHORTALIGN(ptr);
-								values[i] = (Datum) *(unsigned short *) ptr;
-								ptr += sizeof(short);
-								break;
-							case sizeof(int32):
-								ptr = (char *) INTALIGN(ptr);
-								values[i] = (Datum) *(uint32 *) ptr;
-								ptr += sizeof(int32);
-								break;
-							default:
-								elog(ERROR, "COPY BINARY: impossible size");
-								break;
-						}
-					}
-					else if (nulls[i] != 'n')
-					{
-						ptr = (char *) att_align(ptr, attr[i]->attlen, attr[i]->attalign);
-						values[i] = (Datum) ptr;
-						ptr = att_addlength(ptr, attr[i]->attlen, ptr);
-					}
+					if (nulls[i] == 'n')
+						continue;
+					ptr = (char *) att_align((long) ptr, attr[i]->attlen, attr[i]->attalign);
+					values[i] = fetchatt(attr[i], ptr);
+					ptr = att_addlength(ptr, attr[i]->attlen, ptr);
 				}
 			}
 		}
@@ -832,7 +801,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 
 		for (i = 0; i < attr_count; i++)
 		{
-			if (!byval[i] && nulls[i] != 'n')
+			if (!attr[i]->attbyval && nulls[i] != 'n')
 			{
 				if (!binary)
 					pfree((void *) values[i]);
@@ -855,7 +824,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 
 	pfree(values);
 	pfree(nulls);
-	pfree(byval);
 
 	if (!binary)
 	{
@@ -898,22 +866,6 @@ GetTypeElement(Oid type)
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "GetTypeElement: Cache lookup of type %u failed", type);
 	result = ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
-	ReleaseSysCache(typeTuple);
-	return result;
-}
-
-static bool
-IsTypeByVal(Oid type)
-{
-	HeapTuple	typeTuple;
-	bool		result;
-
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(type),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "IsTypeByVal: Cache lookup of type %u failed", type);
-	result = ((Form_pg_type) GETSTRUCT(typeTuple))->typbyval;
 	ReleaseSysCache(typeTuple);
 	return result;
 }

@@ -2,14 +2,14 @@
  *
  * heaptuple.c
  *	  This file contains heap tuple accessor and mutator routines, as well
- *	  as a few various tuple utilities.
+ *	  as various tuple utilities.
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.67 2000/11/30 18:38:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.68 2000/12/27 23:59:10 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -23,16 +23,6 @@
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 
-/* Used by heap_getattr() macro, for speed */
-long		heap_sysoffset[] = {
-/* Only the first one is pass-by-ref, and is handled specially in the macro */
-	offsetof(HeapTupleHeaderData, t_ctid),
-	offsetof(HeapTupleHeaderData, t_oid),
-	offsetof(HeapTupleHeaderData, t_xmin),
-	offsetof(HeapTupleHeaderData, t_cmin),
-	offsetof(HeapTupleHeaderData, t_xmax),
-	offsetof(HeapTupleHeaderData, t_cmax)
-};
 
 /* ----------------------------------------------------------------
  *						misc support routines
@@ -48,12 +38,12 @@ ComputeDataSize(TupleDesc tupleDesc,
 				Datum *value,
 				char *nulls)
 {
-	uint32		data_length;
+	uint32		data_length = 0;
 	int			i;
 	int			numberOfAttributes = tupleDesc->natts;
 	Form_pg_attribute *att = tupleDesc->attrs;
 
-	for (data_length = 0, i = 0; i < numberOfAttributes; i++)
+	for (i = 0; i < numberOfAttributes; i++)
 	{
 		if (nulls[i] != ' ')
 			continue;
@@ -114,38 +104,33 @@ DataFill(char *data,
 			*bitP |= bitmask;
 		}
 
+		/* XXX we are aligning the pointer itself, not the offset */
 		data = (char *) att_align((long) data, att[i]->attlen, att[i]->attalign);
-		switch (att[i]->attlen)
+
+		if (att[i]->attbyval)
 		{
-			case -1:
-				*infomask |= HEAP_HASVARLENA;
-				if (VARATT_IS_EXTERNAL(value[i]))
-					*infomask |= HEAP_HASEXTERNAL;
-				if (VARATT_IS_COMPRESSED(value[i]))
-					*infomask |= HEAP_HASCOMPRESSED;
-				data_length = VARATT_SIZE(DatumGetPointer(value[i]));
-				memmove(data, DatumGetPointer(value[i]), data_length);
-				break;
-			case sizeof(char):
-				*data = att[i]->attbyval ?
-					DatumGetChar(value[i]) : *((char *) value[i]);
-				break;
-			case sizeof(int16):
-				*(short *) data = (att[i]->attbyval ?
-								   DatumGetInt16(value[i]) :
-								   *((short *) value[i]));
-				break;
-			case sizeof(int32):
-				*(int32 *) data = (att[i]->attbyval ?
-								   DatumGetInt32(value[i]) :
-								   *((int32 *) value[i]));
-				break;
-			default:
-				Assert(att[i]->attlen >= 0);
-				memmove(data, DatumGetPointer(value[i]),
-						(size_t) (att[i]->attlen));
-				break;
+			/* pass-by-value */
+			store_att_byval(data, value[i], att[i]->attlen);
 		}
+		else if (att[i]->attlen == -1)
+		{
+			/* varlena */
+			*infomask |= HEAP_HASVARLENA;
+			if (VARATT_IS_EXTERNAL(value[i]))
+				*infomask |= HEAP_HASEXTERNAL;
+			if (VARATT_IS_COMPRESSED(value[i]))
+				*infomask |= HEAP_HASCOMPRESSED;
+			data_length = VARATT_SIZE(DatumGetPointer(value[i]));
+			memcpy(data, DatumGetPointer(value[i]), data_length);
+		}
+		else
+		{
+			/* fixed-length pass-by-reference */
+			Assert(att[i]->attlen >= 0);
+			memcpy(data, DatumGetPointer(value[i]),
+				   (size_t) (att[i]->attlen));
+		}
+
 		data = (char *) att_addlength((long) data, att[i]->attlen, value[i]);
 	}
 }
@@ -190,89 +175,6 @@ heap_attisnull(HeapTuple tup, int attnum)
 		}
 
 	return 0;
-}
-
-/* ----------------------------------------------------------------
- *				 system attribute heap tuple support
- * ----------------------------------------------------------------
- */
-
-/* ----------------
- *		heap_sysattrlen
- *
- *		This routine returns the length of a system attribute.
- * ----------------
- */
-int
-heap_sysattrlen(AttrNumber attno)
-{
-	HeapTupleHeader f = NULL;
-
-	switch (attno)
-	{
-		case TableOidAttributeNumber:
-			return sizeof f->t_oid;
-		case SelfItemPointerAttributeNumber:
-			return sizeof f->t_ctid;
-		case ObjectIdAttributeNumber:
-			return sizeof f->t_oid;
-		case MinTransactionIdAttributeNumber:
-			return sizeof f->t_xmin;
-		case MinCommandIdAttributeNumber:
-			return sizeof f->t_cmin;
-		case MaxTransactionIdAttributeNumber:
-			return sizeof f->t_xmax;
-		case MaxCommandIdAttributeNumber:
-			return sizeof f->t_cmax;
-
-		default:
-			elog(ERROR, "sysattrlen: System attribute number %d unknown.", attno);
-			return 0;
-	}
-}
-
-/* ----------------
- *		heap_sysattrbyval
- *
- *		This routine returns the "by-value" property of a system attribute.
- * ----------------
- */
-bool
-heap_sysattrbyval(AttrNumber attno)
-{
-	bool		byval;
-
-	switch (attno)
-	{
-		case TableOidAttributeNumber:
-			byval = true;
-			break;
-		case SelfItemPointerAttributeNumber:
-			byval = false;
-			break;
-		case ObjectIdAttributeNumber:
-			byval = true;
-			break;
-		case MinTransactionIdAttributeNumber:
-			byval = true;
-			break;
-		case MinCommandIdAttributeNumber:
-			byval = true;
-			break;
-		case MaxTransactionIdAttributeNumber:
-			byval = true;
-			break;
-		case MaxCommandIdAttributeNumber:
-			byval = true;
-			break;
-		default:
-			byval = true;
-			elog(ERROR, "sysattrbyval: System attribute number %d unknown.",
-				 attno);
-			break;
-	}
-
-	return byval;
 }
 
 /* ----------------
@@ -332,8 +234,7 @@ nocachegetattr(HeapTuple tuple,
 /* This is handled in the macro */
 		if (att[attnum]->attcacheoff != -1)
 		{
-			return (Datum)
-				fetchatt(&(att[attnum]),
+			return fetchatt(att[attnum],
 				  (char *) tup + tup->t_hoff + att[attnum]->attcacheoff);
 		}
 #endif
@@ -397,8 +298,8 @@ nocachegetattr(HeapTuple tuple,
 	{
 		if (att[attnum]->attcacheoff != -1)
 		{
-			return (Datum) fetchatt(&(att[attnum]),
-									tp + att[attnum]->attcacheoff);
+			return fetchatt(att[attnum],
+							tp + att[attnum]->attcacheoff);
 		}
 		else if (!HeapTupleAllFixed(tuple))
 		{
@@ -460,7 +361,7 @@ nocachegetattr(HeapTuple tuple,
 			off = att_addlength(off, att[j]->attlen, tp + off);
 		}
 
-		return (Datum) fetchatt(&(att[attnum]), tp + att[attnum]->attcacheoff);
+		return fetchatt(att[attnum], tp + att[attnum]->attcacheoff);
 	}
 	else
 	{
@@ -508,8 +409,64 @@ nocachegetattr(HeapTuple tuple,
 
 		off = att_align(off, att[attnum]->attlen, att[attnum]->attalign);
 
-		return (Datum) fetchatt(&(att[attnum]), tp + off);
+		return fetchatt(att[attnum], tp + off);
 	}
+}
+
+/* ----------------
+ *		heap_getsysattr
+ *
+ *		Fetch the value of a system attribute for a tuple.
+ *
+ * This is a support routine for the heap_getattr macro.  The macro
+ * has already determined that the attnum refers to a system attribute.
+ * ----------------
+ */
+Datum
+heap_getsysattr(HeapTuple tup, int attnum, bool *isnull)
+{
+	Datum		result;
+
+	Assert(tup);
+
+	/* Currently, no sys attribute ever reads as NULL. */
+	if (isnull)
+		*isnull = false;
+
+	switch (attnum)
+	{
+		case SelfItemPointerAttributeNumber:
+			/* pass-by-reference datatype */
+			result = PointerGetDatum(&(tup->t_self));
+			break;
+		case ObjectIdAttributeNumber:
+			result = ObjectIdGetDatum(tup->t_data->t_oid);
+			break;
+		case MinTransactionIdAttributeNumber:
+			/* XXX should have a TransactionIdGetDatum macro */
+			result = (Datum) (tup->t_data->t_xmin);
+			break;
+		case MinCommandIdAttributeNumber:
+			/* XXX should have a CommandIdGetDatum macro */
+			result = (Datum) (tup->t_data->t_cmin);
+			break;
+		case MaxTransactionIdAttributeNumber:
+			/* XXX should have a TransactionIdGetDatum macro */
+			result = (Datum) (tup->t_data->t_xmax);
+			break;
+		case MaxCommandIdAttributeNumber:
+			/* XXX should have a CommandIdGetDatum macro */
+			result = (Datum) (tup->t_data->t_cmax);
+			break;
+		case TableOidAttributeNumber:
+			result = ObjectIdGetDatum(tup->t_tableOid);
+			break;
+		default:
+			elog(ERROR, "heap_getsysattr: invalid attnum %d", attnum);
+			result = 0;			/* keep compiler quiet */
+			break;
+	}
+	return result;
 }
 
 /* ----------------
@@ -630,17 +587,20 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	int			i;
 	int			numberOfAttributes = tupleDescriptor->natts;
 
-	len = offsetof(HeapTupleHeaderData, t_bits);
-
-	for (i = 0; i < numberOfAttributes && !hasnull; i++)
-	{
-		if (nulls[i] != ' ')
-			hasnull = true;
-	}
-
 	if (numberOfAttributes > MaxHeapAttributeNumber)
 		elog(ERROR, "heap_formtuple: numberOfAttributes of %d > %d",
 			 numberOfAttributes, MaxHeapAttributeNumber);
+
+	len = offsetof(HeapTupleHeaderData, t_bits);
+
+	for (i = 0; i < numberOfAttributes; i++)
+	{
+		if (nulls[i] != ' ')
+		{
+			hasnull = true;
+			break;
+		}
+	}
 
 	if (hasnull)
 	{
