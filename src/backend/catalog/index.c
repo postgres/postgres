@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.243 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.244 2005/01/10 20:02:19 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -780,11 +780,9 @@ index_drop(Oid indexId)
 	 */
 	FlushRelationBuffers(userIndexRelation, (BlockNumber) 0);
 
-	if (userIndexRelation->rd_smgr == NULL)
-		userIndexRelation->rd_smgr = smgropen(userIndexRelation->rd_node);
+	RelationOpenSmgr(userIndexRelation);
 	smgrscheduleunlink(userIndexRelation->rd_smgr,
 					   userIndexRelation->rd_istemp);
-	userIndexRelation->rd_smgr = NULL;
 
 	/*
 	 * Close and flush the index's relcache entry, to ensure relcache
@@ -1133,10 +1131,8 @@ setNewRelfilenode(Relation relation)
 	smgrclose(srel);
 
 	/* schedule unlinking old relfilenode */
-	if (relation->rd_smgr == NULL)
-		relation->rd_smgr = smgropen(relation->rd_node);
+	RelationOpenSmgr(relation);
 	smgrscheduleunlink(relation->rd_smgr, relation->rd_istemp);
-	relation->rd_smgr = NULL;
 
 	/* update the pg_class row */
 	rd_rel->relfilenode = newrelfilenode;

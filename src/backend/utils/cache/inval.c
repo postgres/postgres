@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.68 2004/12/31 22:01:25 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.69 2005/01/10 20:02:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,17 +414,9 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 	}
 	else if (msg->id == SHAREDINVALRELCACHE_ID)
 	{
-		/*
-		 * If the message includes a valid relfilenode, we must ensure
-		 * that smgr cache entry gets zapped.  The relcache will handle
-		 * this if called, otherwise we must do it directly.
-		 */
 		if (msg->rc.dbId == MyDatabaseId || msg->rc.dbId == InvalidOid)
 		{
-			if (OidIsValid(msg->rc.physId.relNode))
-				RelationCacheInvalidateEntry(msg->rc.relId, &msg->rc.physId);
-			else
-				RelationCacheInvalidateEntry(msg->rc.relId, NULL);
+			RelationCacheInvalidateEntry(msg->rc.relId);
 
 			for (i = 0; i < cache_callback_count; i++)
 			{
@@ -434,12 +426,17 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 					(*ccitem->function) (ccitem->arg, msg->rc.relId);
 			}
 		}
-		else
-		{
-			/* might have smgr entry even if not in our database */
-			if (OidIsValid(msg->rc.physId.relNode))
-				smgrclosenode(msg->rc.physId);
-		}
+		/*
+		 * If the message includes a valid relfilenode, we must ensure
+		 * the smgr cache entry gets zapped.  This might not have happened
+		 * above since the relcache entry might not have existed or might
+		 * have been associated with a different relfilenode.
+		 *
+		 * XXX there is no real good reason for rnode inval to be in the
+		 * same message at all.  FIXME in 8.1.
+		 */
+		if (OidIsValid(msg->rc.physId.relNode))
+			smgrclosenode(msg->rc.physId);
 	}
 	else
 		elog(FATAL, "unrecognized SI message id: %d", msg->id);

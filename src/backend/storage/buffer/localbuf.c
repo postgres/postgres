@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.61 2004/12/31 22:00:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.62 2005/01/10 20:02:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,13 +108,13 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	 */
 	if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
 	{
-		SMgrRelation reln;
+		SMgrRelation oreln;
 
 		/* Find smgr relation for buffer */
-		reln = smgropen(bufHdr->tag.rnode);
+		oreln = smgropen(bufHdr->tag.rnode);
 
 		/* And write... */
-		smgrwrite(reln,
+		smgrwrite(oreln,
 				  bufHdr->tag.blockNum,
 				  (char *) MAKE_PTR(bufHdr->data),
 				  true);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.81 2004/12/31 22:03:46 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.82 2005/01/10 20:02:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,6 +232,31 @@ typedef Relation *RelationPtr;
  */
 #define RelationGetNamespace(relation) \
 	((relation)->rd_rel->relnamespace)
+
+/*
+ * RelationOpenSmgr
+ *		Open the relation at the smgr level, if not already done.
+ */
+#define RelationOpenSmgr(relation) \
+	do { \
+		if ((relation)->rd_smgr == NULL) \
+			smgrsetowner(&((relation)->rd_smgr), smgropen((relation)->rd_node)); \
+	} while (0)
+
+/*
+ * RelationCloseSmgr
+ *		Close the relation at the smgr level, if not already done.
+ *
+ * Note: smgrclose should unhook from owner pointer, hence the Assert.
+ */
+#define RelationCloseSmgr(relation) \
+	do { \
+		if ((relation)->rd_smgr != NULL) \
+		{ \
+			smgrclose((relation)->rd_smgr); \
+			Assert((relation)->rd_smgr == NULL); \
+		} \
+	} while (0)
 
 /*
  * RELATION_IS_LOCAL

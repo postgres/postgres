@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.84 2004/12/31 22:01:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.85 2005/01/10 20:02:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,6 +216,7 @@ smgropen(RelFileNode rnode)
 	if (!found)
 	{
 		/* hash_search already filled in the lookup key */
+		reln->smgr_owner = NULL;
 		reln->smgr_which = 0;	/* we only have md.c at present */
 		reln->md_fd = NULL;		/* mark it not open */
 	}
@@ -224,15 +225,36 @@ smgropen(RelFileNode rnode)
 }
 
 /*
- *	smgrclose() -- Close and delete an SMgrRelation object.
+ * smgrsetowner() -- Establish a long-lived reference to an SMgrRelation object
  *
- * It is the caller's responsibility not to leave any dangling references
- * to the object.  (Pointers should be cleared after successful return;
- * on the off chance of failure, the SMgrRelation object will still exist.)
+ * There can be only one owner at a time; this is sufficient since currently
+ * the only such owners exist in the relcache.
+ */
+void
+smgrsetowner(SMgrRelation *owner, SMgrRelation reln)
+{
+	/*
+	 * First, unhook any old owner.  (Normally there shouldn't be any, but
+	 * it seems possible that this can happen during swap_relation_files()
+	 * depending on the order of processing.  It's ok to close the old
+	 * relcache entry early in that case.)
+	 */
+	if (reln->smgr_owner)
+		*(reln->smgr_owner) = NULL;
+
+	/* Now establish the ownership relationship. */
+	reln->smgr_owner = owner;
+	*owner = reln;
+}
+
+/*
+ *	smgrclose() -- Close and delete an SMgrRelation object.
  */
 void
 smgrclose(SMgrRelation reln)
 {
+	SMgrRelation *owner;
+
 	if (!(*(smgrsw[reln->smgr_which].smgr_close)) (reln))
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -241,16 +263,24 @@ smgrclose(SMgrRelation reln)
 						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode)));
 
+	owner = reln->smgr_owner;
+
 	if (hash_search(SMgrRelationHash,
 					(void *) &(reln->smgr_rnode),
 					HASH_REMOVE, NULL) == NULL)
 		elog(ERROR, "SMgrRelation hashtable corrupted");
+
+	/*
+	 * Unhook the owner pointer, if any.  We do this last since in the
+	 * remote possibility of failure above, the SMgrRelation object will still
+	 * exist.
+	 */
+	if (owner)
+		*owner = NULL;
 }
 
 /*
  *	smgrcloseall() -- Close all existing SMgrRelation objects.
- *
- * It is the caller's responsibility not to leave any dangling references.
  */
 void
 smgrcloseall(void)
@@ -275,8 +305,6 @@ smgrcloseall(void)
  * This has the same effects as smgrclose(smgropen(rnode)), but it avoids
  * uselessly creating a hashtable entry only to drop it again when no
  * such entry exists already.
- *
- * It is the caller's responsibility not to leave any dangling references.
  */
 void
 smgrclosenode(RelFileNode rnode)

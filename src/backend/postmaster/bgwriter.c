@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.12 2004/12/31 22:00:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.13 2005/01/10 20:02:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,9 +349,7 @@ BackgroundWriterMain(void)
 			/*
 			 * After any checkpoint, close all smgr files.	This is so we
 			 * won't hang onto smgr references to deleted files
-			 * indefinitely. (It is safe to do this because this process
-			 * does not have a relcache, and so no dangling references
-			 * could remain.)
+			 * indefinitely.
 			 */
 			smgrcloseall();
 

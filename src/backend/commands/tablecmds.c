@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.141 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.142 2005/01/10 20:02:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5521,10 +5521,8 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	copy_relation_data(rel, dstrel);
 
 	/* schedule unlinking old physical file */
-	if (rel->rd_smgr == NULL)
-		rel->rd_smgr = smgropen(rel->rd_node);
+	RelationOpenSmgr(rel);
 	smgrscheduleunlink(rel->rd_smgr, rel->rd_istemp);
-	rel->rd_smgr = NULL;
 
 	/*
 	 * Now drop smgr references.  The source was already dropped by

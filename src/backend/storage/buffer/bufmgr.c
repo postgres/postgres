@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.184 2005/01/03 18:49:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.185 2005/01/10 20:02:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,8 +131,7 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	isLocalBuf = reln->rd_istemp;
 
 	/* Open it at the smgr level if not already done */
-	if (reln->rd_smgr == NULL)
-		reln->rd_smgr = smgropen(reln->rd_node);
+	RelationOpenSmgr(reln);
 
 	/* Substitute proper block number if caller asked for P_NEW */
 	if (isExtend)
@@ -1130,8 +1129,7 @@ BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
 {
 	/* Open it at the smgr level if not already done */
-	if (relation->rd_smgr == NULL)
-		relation->rd_smgr = smgropen(relation->rd_node);
+	RelationOpenSmgr(relation);
 
 	return smgrnblocks(relation->rd_smgr);
 }
@@ -1147,8 +1145,7 @@ void
 RelationTruncate(Relation rel, BlockNumber nblocks)
 {
 	/* Open it at the smgr level if not already done */
-	if (rel->rd_smgr == NULL)
-		rel->rd_smgr = smgropen(rel->rd_node);
+	RelationOpenSmgr(rel);
 
 	/* Make sure rd_targblock isn't pointing somewhere past end */
 	rel->rd_targblock = InvalidBlockNumber;
@@ -1445,8 +1442,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 	BufferDesc *bufHdr;
 
 	/* Open rel at the smgr level if not already done */
-	if (rel->rd_smgr == NULL)
-		rel->rd_smgr = smgropen(rel->rd_node);
+	RelationOpenSmgr(rel);
 
 	if (rel->rd_istemp)
 	{

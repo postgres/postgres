@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.35 2004/12/31 21:59:30 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.36 2005/01/10 20:02:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,8 +125,7 @@ _xl_remove_hash_entry(XLogRelDesc *rdesc)
 	if (hentry == NULL)
 		elog(PANIC, "_xl_remove_hash_entry: file was not found in cache");
 
-	if (rdesc->reldata.rd_smgr != NULL)
-		smgrclose(rdesc->reldata.rd_smgr);
+	RelationCloseSmgr(&(rdesc->reldata));
 
 	memset(rdesc, 0, sizeof(XLogRelDesc));
 	memset(tpgc, 0, sizeof(FormData_pg_class));
@@ -233,7 +232,8 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 		hentry->rdesc = res;
 
 		res->reldata.rd_targblock = InvalidBlockNumber;
-		res->reldata.rd_smgr = smgropen(res->reldata.rd_node);
+		res->reldata.rd_smgr = NULL;
+		RelationOpenSmgr(&(res->reldata));
 
 		/*
 		 * Create the target file if it doesn't already exist.  This lets
@@ -278,7 +278,5 @@ XLogCloseRelation(RelFileNode rnode)
 
 	rdesc = hentry->rdesc;
 
-	if (rdesc->reldata.rd_smgr != NULL)
-		smgrclose(rdesc->reldata.rd_smgr);
-	rdesc->reldata.rd_smgr = NULL;
+	RelationCloseSmgr(&(rdesc->reldata));
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.99 2004/12/31 22:00:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.100 2005/01/10 20:02:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,10 +484,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 */
 	if (RelisBecomingView)
 	{
-		if (event_relation->rd_smgr == NULL)
-			event_relation->rd_smgr = smgropen(event_relation->rd_node);
+		RelationOpenSmgr(event_relation);
 		smgrscheduleunlink(event_relation->rd_smgr, event_relation->rd_istemp);
-		event_relation->rd_smgr = NULL;
 	}
 
 	/* Close rel, but keep lock till commit... */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.214 2004/12/31 22:01:25 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.215 2005/01/10 20:02:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1659,11 +1659,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * ensures that the low-level file access state is updated after, say,
 	 * a vacuum truncation.
 	 */
-	if (relation->rd_smgr)
-	{
-		smgrclose(relation->rd_smgr);
-		relation->rd_smgr = NULL;
-	}
+	RelationCloseSmgr(relation);
 
 	/*
 	 * Never, never ever blow away a nailed-in system relation, because
@@ -1857,16 +1853,7 @@ RelationForgetRelation(Oid rid)
  *
  * Any relcache entry matching the relid must be flushed.  (Note: caller has
  * already determined that the relid belongs to our database or is a shared
- * relation.)  If rnode isn't NULL, we must also ensure that any smgr cache
- * entry matching that rnode is flushed.
- *
- * Ordinarily, if rnode is supplied then it will match the relfilenode of
- * the target relid.  However, it's possible for rnode to be different if
- * someone is engaged in a relfilenode change.	In that case we want to
- * make sure we clear the right cache entries.	This has to be done here
- * to keep things in sync between relcache and smgr cache --- we can't have
- * someone flushing an smgr cache entry that a relcache entry still points
- * to.
+ * relation.)
  *
  * We used to skip local relations, on the grounds that they could
  * not be targets of cross-backend SI update messages; but it seems
@@ -1875,7 +1862,7 @@ RelationForgetRelation(Oid rid)
  * local and nonlocal relations.
  */
 void
-RelationCacheInvalidateEntry(Oid relationId, RelFileNode *rnode)
+RelationCacheInvalidateEntry(Oid relationId)
 {
 	Relation	relation;
 
@@ -1884,19 +1871,7 @@ RelationCacheInvalidateEntry(Oid relationId, RelFileNode *rnode)
 	if (PointerIsValid(relation))
 	{
 		relcacheInvalsReceived++;
-		if (rnode)
-		{
-			/* Need to be sure smgr is flushed, but don't do it twice */
-			if (relation->rd_smgr == NULL ||
-				!RelFileNodeEquals(*rnode, relation->rd_node))
-				smgrclosenode(*rnode);
-		}
 		RelationFlushRelation(relation);
-	}
-	else
-	{
-		if (rnode)
-			smgrclosenode(*rnode);
 	}
 }
 
@@ -1946,11 +1921,7 @@ RelationCacheInvalidate(void)
 		relation = idhentry->reldesc;
 
 		/* Must close all smgr references to avoid leaving dangling ptrs */
-		if (relation->rd_smgr)
-		{
-			smgrclose(relation->rd_smgr);
-			relation->rd_smgr = NULL;
-		}
+		RelationCloseSmgr(relation);
 
 		/* Ignore new relations, since they are never SI targets */
 		if (relation->rd_createSubid != InvalidSubTransactionId)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.49 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.50 2005/01/10 20:02:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,21 @@
  * operations imply I/O, they just create or destroy a hashtable entry.
  * (But smgrclose() may release associated resources, such as OS-level file
  * descriptors.)
+ *
+ * An SMgrRelation may have an "owner", which is just a pointer to it from
+ * somewhere else; smgr.c will clear this pointer if the SMgrRelation is
+ * closed.  We use this to avoid dangling pointers from relcache to smgr
+ * without having to make the smgr explicitly aware of relcache.  There
+ * can't be more than one "owner" pointer per SMgrRelation, but that's
+ * all we need.
  */
 typedef struct SMgrRelationData
 {
 	/* rnode is the hashtable lookup key, so it must be first! */
 	RelFileNode smgr_rnode;		/* relation physical identifier */
+
+	/* pointer to owning pointer, or NULL if none */
+	struct SMgrRelationData **smgr_owner;
 
 	/* additional public fields may someday exist here */
 
@@ -49,6 +59,7 @@ typedef SMgrRelationData *SMgrRelation;
 
 extern void smgrinit(void);
 extern SMgrRelation smgropen(RelFileNode rnode);
+extern void smgrsetowner(SMgrRelation *owner, SMgrRelation reln);
 extern void smgrclose(SMgrRelation reln);
 extern void smgrcloseall(void);
 extern void smgrclosenode(RelFileNode rnode);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.278 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.279 2005/01/10 20:02:19 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -322,7 +322,7 @@ heap_create(const char *relname,
 	if (create_storage)
 	{
 		Assert(rel->rd_smgr == NULL);
-		rel->rd_smgr = smgropen(rel->rd_node);
+		RelationOpenSmgr(rel);
 		smgrcreate(rel->rd_smgr, rel->rd_istemp, false);
 	}
 
@@ -1186,10 +1186,8 @@ heap_drop_with_catalog(Oid relid)
 	if (rel->rd_rel->relkind != RELKIND_VIEW &&
 		rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
 	{
-		if (rel->rd_smgr == NULL)
-			rel->rd_smgr = smgropen(rel->rd_node);
+		RelationOpenSmgr(rel);
 		smgrscheduleunlink(rel->rd_smgr, rel->rd_istemp);
-		rel->rd_smgr = NULL;
 	}
 
 	/*
