@@ -16,11 +16,11 @@ public class ANTTest extends TestCase {
     String usr=System.getProperty("username");
     String psw=System.getProperty("password");
 
-    assert(url!=null);
-    assert(usr!=null);
-    assert(psw!=null);
+    assertNotNull(url);
+    assertNotNull(usr);
+    assertNotNull(psw);
 
-    assert(!url.equals(""));
-    assert(!usr.equals(""));
+    assertTrue(! url.equals(""));
+    assertTrue(! usr.equals(""));
   }
 }

@@ -8,7 +8,7 @@ import java.io.*;
 /**
  * Tests for the Encoding class.
  *
- * $Id: EncodingTest.java,v 1.1 2001/07/21 21:27:41 momjian Exp $
+ * $Id: EncodingTest.java,v 1.2 2001/09/23 04:11:14 momjian Exp $
  */
 
 
@@ -23,12 +23,12 @@ public class EncodingTest extends TestCase {
 	encoding = Encoding.getEncoding("UNICODE", null);
 	assertEquals("UTF", encoding.name().substring(0, 3).toUpperCase());
 	encoding = Encoding.getEncoding("SQL_ASCII", null);
-	assert(encoding.name().toUpperCase().indexOf("ASCII") != -1);
+	assertTrue(encoding.name().toUpperCase().indexOf("ASCII") != -1);
 	assertEquals("When encoding is unknown the default encoding should be used",
 		     Encoding.defaultEncoding(),
 		     Encoding.getEncoding("UNKNOWN", null));
 	encoding = Encoding.getEncoding("SQL_ASCII", "utf-8");
-	assert("Encoding passed in by the user should be preferred",
+	assertTrue("Encoding passed in by the user should be preferred",
 	       encoding.name().toUpperCase().indexOf("UTF") != -1);
     }
 

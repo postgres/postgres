@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /**
- * $Id: TimeTest.java,v 1.1 2001/02/13 16:39:05 peter Exp $
+ * $Id: TimeTest.java,v 1.2 2001/09/23 04:11:14 momjian Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -13,111 +13,96 @@ import java.sql.*;
  */
 public class TimeTest extends TestCase {
 
-  public TimeTest(String name) {
-    super(name);
-  }
-
-  /**
-   * Tests the time methods in ResultSet
-   */
-  public void testGetTime() {
-    try {
-      Connection con = JDBC2Tests.openDB();
-
-      Statement st=con.createStatement();
-
-      JDBC2Tests.createTable(con,"tm time");
-
-      st.executeUpdate(JDBC2Tests.insert("'01:02:03'"));
-      st.executeUpdate(JDBC2Tests.insert("'23:59:59'"));
-
-      // Fall through helper
-      checkTimeTest(con,st);
-
-      st.close();
-
-      JDBC2Tests.closeDB(con);
-    } catch(Exception ex) {
-      assert(ex.getMessage(),false);
+	private Connection con;
+    
+    public TimeTest(String name) {
+		super(name);
     }
-  }
 
-  /**
-   * Tests the time methods in PreparedStatement
-   */
-  public void testSetTime() {
-    try {
-      Connection con = JDBC2Tests.openDB();
-
-      Statement st=con.createStatement();
-
-      JDBC2Tests.createTable(con,"tm time");
-
-      PreparedStatement ps = con.prepareStatement(JDBC2Tests.insert("?"));
-
-      ps.setTime(1,getTime(1,2,3));
-      assert(!ps.execute()); // false as its an update!
-
-      ps.setTime(1,getTime(23,59,59));
-      assert(!ps.execute()); // false as its an update!
-
-      // Fall through helper
-      checkTimeTest(con,st);
-
-      ps.close();
-      st.close();
-
-      JDBC2Tests.closeDB(con);
-    } catch(Exception ex) {
-      assert(ex.getMessage(),false);
+    protected void setUp() throws Exception {
+		con = JDBC2Tests.openDB();
+		JDBC2Tests.createTable(con, "testtime", "tm time");
     }
-  }
 
-  /**
-   * Helper for the TimeTests. It tests what should be in the db
-   */
-  private void checkTimeTest(Connection con,Statement st) throws SQLException {
-    ResultSet rs=null;
-    Time t=null;
+    protected void tearDown() throws Exception {
+		JDBC2Tests.dropTable(con, "testtime");
+		JDBC2Tests.closeDB(con);
+    }
+    
+    /**
+     * Tests the time methods in ResultSet
+     */
+    public void testGetTime() {
+		try {
+			Statement stmt = con.createStatement();
+			
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtime", "'01:02:03'")));
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtime", "'23:59:59'")));
 
-    rs=st.executeQuery(JDBC2Tests.select("tm"));
-    assert(rs!=null);
+			// Fall through helper
+			timeTest();
 
-    assert(rs.next());
-    t = rs.getTime(1);
-    assert(t!=null);
-    assert(getHours(t)==1);
-    assert(getMinutes(t)==2);
-    assert(getSeconds(t)==3);
+			assertEquals(2, stmt.executeUpdate("DELETE FROM testtime"));
+			stmt.close();
+		} catch(Exception ex) {
+			fail(ex.getMessage());
+		}
+    }
 
-    assert(rs.next());
-    t = rs.getTime(1);
-    assert(t!=null);
-    assert(getHours(t)==23);
-    assert(getMinutes(t)==59);
-    assert(getSeconds(t)==59);
+    /**
+     * Tests the time methods in PreparedStatement
+     */
+    public void testSetTime() {
+		try {
+			PreparedStatement ps = con.prepareStatement(JDBC2Tests.insertSQL("testtime", "?"));
+			Statement stmt = con.createStatement();
 
-    assert(!rs.next());
+			ps.setTime(1, makeTime(1, 2, 3));
+			assertEquals(1, ps.executeUpdate());
 
-    rs.close();
-  }
+			ps.setTime(1, makeTime(23, 59, 59));
+			assertEquals(1, ps.executeUpdate());
 
-  /**
-   * These implement depreciated methods in java.sql.Time
-   */
-  private static long getHours(Time t) {
-    return (t.getTime() % JDBC2Tests.DAYMILLIS)/3600000;
-  }
+			// Fall through helper
+			timeTest();
 
-  private static long getMinutes(Time t) {
-    return ((t.getTime() % JDBC2Tests.DAYMILLIS)/60000)%60;
-  }
+			assertEquals(2, stmt.executeUpdate("DELETE FROM testtime"));
+			stmt.close();
+			ps.close();
+		} catch(Exception ex) {
+			fail(ex.getMessage());
+		}
+    }
 
-  private static long getSeconds(Time t) {
-    return ((t.getTime() % JDBC2Tests.DAYMILLIS)/1000)%60;
-  }
+    /**
+     * Helper for the TimeTests. It tests what should be in the db
+     */
+    private void timeTest() throws SQLException {
+		Statement st = con.createStatement();
+		ResultSet rs;
+		java.sql.Time t;
 
-  private Time getTime(int h,int m,int s) {
-    return new Time(1000*(s+(m*60)+(h*3600)));
-  }
+		rs = st.executeQuery(JDBC2Tests.selectSQL("testtime", "tm"));
+		assertNotNull(rs);
+
+		assertTrue(rs.next());
+		t = rs.getTime(1);
+		assertNotNull(t);
+		assertEquals(makeTime(1, 2, 3), t);
+
+		assertTrue(rs.next());
+		t = rs.getTime(1);
+		assertNotNull(t);
+		assertEquals(makeTime(23, 59, 59), t);
+
+		assertTrue(! rs.next());
+
+		rs.close();
+    }
+
+    private java.sql.Time makeTime(int h, int m, int s) {
+		return java.sql.Time.valueOf(JDBC2Tests.fix(h, 2) + ":" +
+									 JDBC2Tests.fix(m, 2) + ":" +
+									 JDBC2Tests.fix(s, 2));
+    }
 }

@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /**
- * $Id: DriverTest.java,v 1.1 2001/02/07 09:13:20 peter Exp $
+ * $Id: DriverTest.java,v 1.2 2001/09/23 04:11:14 momjian Exp $
  *
  * Tests the dynamically created class org.postgresql.Driver
  *
@@ -25,21 +25,21 @@ public class DriverTest extends TestCase {
 
       // Load the driver (note clients should never do it this way!)
       org.postgresql.Driver drv = new org.postgresql.Driver();
-      assert(drv!=null);
+      assertNotNull(drv);
 
       // These are always correct
-      assert(drv.acceptsURL("jdbc:postgresql:test"));
-      assert(drv.acceptsURL("jdbc:postgresql://localhost/test"));
-      assert(drv.acceptsURL("jdbc:postgresql://localhost:5432/test"));
-      assert(drv.acceptsURL("jdbc:postgresql://127.0.0.1/anydbname"));
-      assert(drv.acceptsURL("jdbc:postgresql://127.0.0.1:5433/hidden"));
+      assertTrue(drv.acceptsURL("jdbc:postgresql:test"));
+      assertTrue(drv.acceptsURL("jdbc:postgresql://localhost/test"));
+      assertTrue(drv.acceptsURL("jdbc:postgresql://localhost:5432/test"));
+      assertTrue(drv.acceptsURL("jdbc:postgresql://127.0.0.1/anydbname"));
+      assertTrue(drv.acceptsURL("jdbc:postgresql://127.0.0.1:5433/hidden"));
 
       // Badly formatted url's
-      assert(!drv.acceptsURL("jdbc:postgres:test"));
-      assert(!drv.acceptsURL("postgresql:test"));
+      assertTrue(!drv.acceptsURL("jdbc:postgres:test"));
+      assertTrue(!drv.acceptsURL("postgresql:test"));
 
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 
@@ -56,18 +56,17 @@ public class DriverTest extends TestCase {
 
       // Test with the url, username & password
       con = DriverManager.getConnection(JDBC2Tests.getURL(),JDBC2Tests.getUser(),JDBC2Tests.getPassword());
-      assert(con!=null);
+      assertNotNull(con);
       con.close();
 
       // Test with the username in the url
       con = DriverManager.getConnection(JDBC2Tests.getURL()+"?user="+JDBC2Tests.getUser()+"&password="+JDBC2Tests.getPassword());
-      assert(con!=null);
+      assertNotNull(con);
       con.close();
-
     } catch(ClassNotFoundException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 }

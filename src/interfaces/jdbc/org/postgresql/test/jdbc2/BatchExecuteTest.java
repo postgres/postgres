@@ -4,13 +4,17 @@ import org.postgresql.test.JDBC2Tests;
 import junit.framework.TestCase;
 import java.sql.*;
 
+/* TODO tests that can be added to this test case
+   - SQLExceptions chained to a BatchUpdateException
+   - test PreparedStatement as thoroughly as Statement
+ */
+
 /**
  * Test case for Statement.batchExecute()
  */
 public class BatchExecuteTest extends TestCase {
 
 	private Connection con;
-	private Statement stmt;
 
 	public BatchExecuteTest(String name) {
 		super(name);
@@ -20,20 +24,13 @@ public class BatchExecuteTest extends TestCase {
 	// a table for this test.
 	protected void setUp() throws Exception {
 		con = JDBC2Tests.openDB();
-		stmt = con.createStatement();
+		Statement stmt = con.createStatement();
 
 		// Drop the test table if it already exists for some reason. It is
 		// not an error if it doesn't exist.
-		try {
-			stmt.executeUpdate("DROP TABLE testbatch");
-		} catch (SQLException e) {
-			 // Intentionally ignore. We cannot distinguish "table does not
-			 // exist" from other errors, since PostgreSQL doesn't support
-			 // error codes yet.
-		}
-
-		stmt.executeUpdate("CREATE TABLE testbatch(pk INTEGER, col1 INTEGER)");
-		stmt.executeUpdate("INSERT INTO testbatch VALUES(1, 0)");
+		JDBC2Tests.createTable(con, "testbatch", "pk INTEGER, col1 INTEGER");
+		
+		stmt.executeUpdate("INSERT INTO testbatch VALUES (1, 0)");
 
 		// Generally recommended with batch updates. By default we run all
 		// tests in this test case with autoCommit disabled.
@@ -43,13 +40,9 @@ public class BatchExecuteTest extends TestCase {
 	// Tear down the fixture for this test case.
 	protected void tearDown() throws Exception {
 		con.setAutoCommit(true);
-		if (stmt != null) {
-			stmt.executeUpdate("DROP TABLE testbatch");
-			stmt.close();
-		}
-		if (con != null) {
-			  JDBC2Tests.closeDB(con);
-		}
+
+		JDBC2Tests.dropTable(con, "testbatch");
+		JDBC2Tests.closeDB(con);
 	}
 
 	public void testSupportsBatchUpdates() throws Exception {
@@ -75,6 +68,7 @@ public class BatchExecuteTest extends TestCase {
 	}
 
 	public void testExecuteEmptyBatch() throws Exception {
+		Statement stmt = con.createStatement();
 		int[] updateCount = stmt.executeBatch();
 		assertEquals(0,updateCount.length);
 
@@ -82,9 +76,12 @@ public class BatchExecuteTest extends TestCase {
 		stmt.clearBatch();
 		updateCount = stmt.executeBatch();
 		assertEquals(0,updateCount.length);
+		stmt.close();
 	}
 
 	public void testClearBatch() throws Exception {
+		Statement stmt = con.createStatement();
+		
 		stmt.addBatch("UPDATE testbatch SET col1 = col1 + 1 WHERE pk = 1");
 		assertCol1HasValue(0);
 		stmt.addBatch("UPDATE testbatch SET col1 = col1 + 2 WHERE pk = 1");
@@ -97,9 +94,13 @@ public class BatchExecuteTest extends TestCase {
 		assertCol1HasValue(4);
 		con.commit();
 		assertCol1HasValue(4);
+
+		stmt.close();
 	}
 
 	public void testSelectThrowsException() throws Exception {
+		Statement stmt = con.createStatement();
+		
 		stmt.addBatch("UPDATE testbatch SET col1 = col1 + 1 WHERE pk = 1");
 		stmt.addBatch("SELECT col1 FROM testbatch WHERE pk = 1");
 		stmt.addBatch("UPDATE testbatch SET col1 = col1 + 2 WHERE pk = 1");
@@ -115,6 +116,8 @@ public class BatchExecuteTest extends TestCase {
 			fail( "Should throw a BatchUpdateException instead of " +
 			      "a generic SQLException: " + e);
 		}
+
+		stmt.close();
 	}
 
 	public void testPreparedStatement() throws Exception {
@@ -151,6 +154,8 @@ public class BatchExecuteTest extends TestCase {
 	/**
 	*/
 	public void testTransactionalBehaviour() throws Exception {
+		Statement stmt = con.createStatement();
+		
 		stmt.addBatch("UPDATE testbatch SET col1 = col1 + 1 WHERE pk = 1");
 		stmt.addBatch("UPDATE testbatch SET col1 = col1 + 2 WHERE pk = 1");
 		stmt.executeBatch();
@@ -174,10 +179,7 @@ public class BatchExecuteTest extends TestCase {
 		assertCol1HasValue(12);
 		con.rollback();
 		assertCol1HasValue(12);
+
+		stmt.close();
 	}
 }
-
-/* TODO tests that can be added to this test case
-   - SQLExceptions chained to a BatchUpdateException
-   - test PreparedStatement as thoroughly as Statement
- */

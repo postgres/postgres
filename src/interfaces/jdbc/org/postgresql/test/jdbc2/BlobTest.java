@@ -8,7 +8,7 @@ import java.sql.*;
 import org.postgresql.largeobject.*;
 
 /**
- * $Id: BlobTest.java,v 1.1 2001/02/14 17:45:17 peter Exp $
+ * $Id: BlobTest.java,v 1.2 2001/09/23 04:11:14 momjian Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -16,169 +16,168 @@ import org.postgresql.largeobject.*;
  */
 public class BlobTest extends TestCase {
 
-  public BlobTest(String name) {
-    super(name);
-  }
+    private Connection con;
 
-  /**
-   * The table format used by this TestCase
-   */
-  private static final String BLOB_TABLE_FMT = "id name,lo oid";
+	private static final int LOOP          = 0; // LargeObject API using loop
+	private static final int NATIVE_STREAM = 1; // LargeObject API using OutputStream
+	private static final int JDBC_STREAM   = 2; // JDBC API using OutputStream
 
-  /**
-   * Tests one method of uploading a blob to the database
-   */
-  public void testUploadBlob_LOOP() {
-    try {
-      Connection con = JDBC2Tests.openDB();
-
-      JDBC2Tests.createTable(con,BLOB_TABLE_FMT);
-
-      con.setAutoCommit(false);
-      assert(!con.getAutoCommit());
-
-      assert(uploadFile(con,"build.xml",LOOP)>0);
-
-      // Now compare the blob & the file. Note this actually tests the
-      // InputStream implementation!
-      assert(compareBlobs(con));
-
-      JDBC2Tests.closeDB(con);
-    } catch(Exception ex) {
-      assert(ex.getMessage(),false);
+	public BlobTest(String name) {
+		super(name);
     }
-  }
 
-  /**
-   * Tests one method of uploading a blob to the database
-   */
-  public void testUploadBlob_NATIVE() {
-    try {
-      Connection con = JDBC2Tests.openDB();
+	protected void setUp() throws Exception {
+		con = JDBC2Tests.openDB();
+		JDBC2Tests.createTable(con, "testblob", "id name,lo oid");
+	}
 
-      JDBC2Tests.createTable(con,BLOB_TABLE_FMT);
+	protected void tearDown() throws Exception {
+		JDBC2Tests.dropTable(con, "testblob");
+		JDBC2Tests.closeDB(con);
+	}
+    
+	/**
+	 * Tests one method of uploading a blob to the database
+	 */
+	public void testUploadBlob_LOOP() {
+		try {
+			con.setAutoCommit(false);
+			assertTrue(!con.getAutoCommit());
 
-      con.setAutoCommit(false);
-      assert(!con.getAutoCommit());
+			assertTrue(uploadFile("build.xml", LOOP) > 0);
 
-      assert(uploadFile(con,"build.xml",NATIVE_STREAM)>0);
+			// Now compare the blob & the file. Note this actually tests the
+			// InputStream implementation!
+			assertTrue(compareBlobs());
 
-      // Now compare the blob & the file. Note this actually tests the
-      // InputStream implementation!
-      assert(compareBlobs(con));
+			con.setAutoCommit(true);
+		} catch(Exception ex) {
+			fail(ex.getMessage());
+		}
+	}
 
-      JDBC2Tests.closeDB(con);
-    } catch(Exception ex) {
-      assert(ex.getMessage(),false);
-    }
-  }
+	/**
+	 * Tests one method of uploading a blob to the database
+	 */
+	public void testUploadBlob_NATIVE() {
+		try {
+			con.setAutoCommit(false);
+			assertTrue(!con.getAutoCommit());
 
-  private static final int LOOP          = 0; // LargeObject API using loop
-  private static final int NATIVE_STREAM = 1; // LargeObject API using OutputStream
-  private static final int JDBC_STREAM   = 2; // JDBC API using OutputStream
+			assertTrue(uploadFile("build.xml", NATIVE_STREAM) > 0);
 
-  /**
-   * Helper - uploads a file into a blob using old style methods. We use this
-   * because it always works, and we can use it as a base to test the new
-   * methods.
-   */
-  private int uploadFile(Connection con,String file,int method) throws Exception {
-    LargeObjectManager lom = ((org.postgresql.Connection)con).getLargeObjectAPI();
+			// Now compare the blob & the file. Note this actually tests the
+			// InputStream implementation!
+			assertTrue(compareBlobs());
 
-    FileInputStream fis = new FileInputStream(file);
+			con.setAutoCommit(true);
+		} catch(Exception ex) {
+			fail(ex.getMessage());
+		}
+	}
 
-    int oid = lom.create(LargeObjectManager.READWRITE);
-    LargeObject blob = lom.open(oid);
+	/**
+	 * Helper - uploads a file into a blob using old style methods. We use this
+	 * because it always works, and we can use it as a base to test the new
+	 * methods.
+	 */
+	private int uploadFile(String file, int method) throws Exception {
+		LargeObjectManager lom = ((org.postgresql.Connection)con).getLargeObjectAPI();
 
-    int s,t;
-    byte buf[];
-    OutputStream os;
+		FileInputStream fis = new FileInputStream(file);
 
-    switch(method)
-      {
-        case LOOP:
-          buf = new byte[2048];
-          t=0;
-          while((s=fis.read(buf,0,buf.length))>0) {
-            t+=s;
-            blob.write(buf,0,s);
-          }
-          break;
+		int oid = lom.create(LargeObjectManager.READWRITE);
+		LargeObject blob = lom.open(oid);
 
-        case NATIVE_STREAM:
-          os = blob.getOutputStream();
-          s= fis.read();
-          while(s>-1) {
-            os.write(s);
-            s=fis.read();
-          }
-          os.close();
-          break;
+		int s,t;
+		byte buf[];
+		OutputStream os;
 
-        case JDBC_STREAM:
-          File f = new File(file);
-          PreparedStatement ps = con.prepareStatement(JDBC2Tests.insert("?"));
-          ps.setBinaryStream(1,fis,(int) f.length());
-          ps.execute();
-          break;
+		switch(method)
+		{
+			case LOOP:
+				buf = new byte[2048];
+				t=0;
+				while((s=fis.read(buf,0,buf.length))>0) {
+					t+=s;
+					blob.write(buf,0,s);
+				}
+				break;
 
-        default:
-          assert("Unknown method in uploadFile",false);
-      }
+			case NATIVE_STREAM:
+				os = blob.getOutputStream();
+				s= fis.read();
+				while(s>-1) {
+					os.write(s);
+					s=fis.read();
+				}
+				os.close();
+				break;
 
-    blob.close();
-    fis.close();
+			case JDBC_STREAM:
+				File f = new File(file);
+				PreparedStatement ps = con.prepareStatement(JDBC2Tests.insertSQL("testblob", "?"));
+				ps.setBinaryStream(1,fis,(int) f.length());
+				ps.execute();
+				break;
 
-    // Insert into the table
-    Statement st = con.createStatement();
-    st.executeUpdate(JDBC2Tests.insert("id,lo","'"+file+"',"+oid));
-    con.commit();
-    st.close();
+			default:
+				assertTrue("Unknown method in uploadFile",false);
+		}
 
-    return oid;
-  }
+		blob.close();
+		fis.close();
 
-  /**
-   * Helper - compares the blobs in a table with a local file. Note this alone
-   * tests the InputStream methods!
-   */
-  private boolean compareBlobs(Connection con) throws Exception {
-    boolean result=true;
+		// Insert into the table
+		Statement st = con.createStatement();
+		st.executeUpdate(JDBC2Tests.insertSQL("testblob", "id,lo","'"+file+"',"+oid));
+		con.commit();
+		st.close();
 
-    LargeObjectManager lom = ((org.postgresql.Connection)con).getLargeObjectAPI();
+		return oid;
+	}
 
-    Statement st = con.createStatement();
-    ResultSet rs = st.executeQuery(JDBC2Tests.select("id,lo"));
-    assert(rs!=null);
+	/**
+	 * Helper - compares the blobs in a table with a local file. Note this alone
+	 * tests the InputStream methods!
+	 */
+	private boolean compareBlobs() throws Exception {
+		boolean result=true;
 
-    while(rs.next()) {
-      String file = rs.getString(1);
-      int oid = rs.getInt(2);
+		LargeObjectManager lom = ((org.postgresql.Connection)con).getLargeObjectAPI();
 
-      FileInputStream fis = new FileInputStream(file);
-      LargeObject blob = lom.open(oid);
-      InputStream bis = blob.getInputStream();
+		Statement st = con.createStatement();
+		ResultSet rs = st.executeQuery(JDBC2Tests.selectSQL("testblob", "id,lo"));
+		assertNotNull(rs);
 
-      int f=fis.read();
-      int b=bis.read();
-      int c=0;
-      while(f>=0 && b>=0 & result) {
-        result=(f==b);
-        f=fis.read();
-        b=bis.read();
-        c++;
-      }
-      result=result && f==-1 && b==-1;
+		while(rs.next()) {
+			String file = rs.getString(1);
+			int oid = rs.getInt(2);
 
-      if(!result)
-        System.out.println("\nBlob compare failed at "+c+" of "+blob.size());
+			FileInputStream fis = new FileInputStream(file);
+			LargeObject blob = lom.open(oid);
+			InputStream bis = blob.getInputStream();
 
-      blob.close();
-      fis.close();
-    }
-    rs.close();
-    st.close();
+			int f=fis.read();
+			int b=bis.read();
+			int c=0;
+			while(f>=0 && b>=0 & result) {
+				result=(f==b);
+				f=fis.read();
+				b=bis.read();
+				c++;
+			}
+			result=result && f==-1 && b==-1;
 
-    return result;
-  }
+			if(!result)
+				System.out.println("\nBlob compare failed at "+c+" of "+blob.size());
+
+			blob.close();
+			fis.close();
+		}
+		rs.close();
+		st.close();
+
+		return result;
+	}
 }

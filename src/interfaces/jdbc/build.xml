@@ -4,7 +4,7 @@
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
   to build the PostgreSQL JDBC Driver
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.17 2001/07/06 23:07:20 petere Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.18 2001/09/23 04:11:14 momjian Exp $
 
 -->
 
@@ -182,7 +182,6 @@
   <property name="username" value="test" />
   <!-- Password must be something.  Doesn't matter if trust is used! -->
   <property name="password" value="password" />
-  <property name="tablename" value="jdbctest" />
   <!-- junit.ui is one of textui, awtui, or swingui -->
   <property name="junit.ui" value="textui" />
 

@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /**
- * $Id: DateTest.java,v 1.1 2001/02/13 16:39:05 peter Exp $
+ * $Id: DateTest.java,v 1.2 2001/09/23 04:11:14 momjian Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -13,114 +13,116 @@ import java.sql.*;
  */
 public class DateTest extends TestCase {
 
-  public DateTest(String name) {
-    super(name);
-  }
+	private Connection con;
+	
+	public DateTest(String name) {
+		super(name);
+	}
 
-  /**
-   * Tests the time methods in ResultSet
-   */
-  public void testGetDate() {
-    try {
-      Connection con = JDBC2Tests.openDB();
+	protected void setUp() throws Exception {
+		con = JDBC2Tests.openDB();
+		JDBC2Tests.createTable(con, "testdate", "dt date");
+	}
 
-      Statement st=con.createStatement();
+	protected void tearDown() throws Exception {
+		JDBC2Tests.dropTable(con, "testdate");
+		JDBC2Tests.closeDB(con);
+	}
+	
+	/**
+	 * Tests the time methods in ResultSet
+	 */
+	public void testGetDate() {
+		try {
+			Statement stmt = con.createStatement();
+			
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'1950-02-07'")));
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'1970-06-02'")));
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'1999-08-11'")));
+			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'2001-02-13'")));
 
-      JDBC2Tests.createTable(con,"dt date");
+			/* dateTest() contains all of the tests */
+			dateTest();
 
-      st.executeUpdate(JDBC2Tests.insert("'1950-02-07'"));
-      st.executeUpdate(JDBC2Tests.insert("'1970-06-02'"));
-      st.executeUpdate(JDBC2Tests.insert("'1999-08-11'"));
-      st.executeUpdate(JDBC2Tests.insert("'2001-02-13'"));
+			assertEquals(4, stmt.executeUpdate("DELETE FROM " + "testdate"));
+			stmt.close();
+		} catch(Exception ex) {
+			fail(ex.getMessage());
+		}
+	}
 
-      // Fall through helper
-      checkTimeTest(con,st);
+	/**
+	 * Tests the time methods in PreparedStatement
+	 */
+	public void testSetDate() {
+		try {
+			Statement stmt = con.createStatement();
+			PreparedStatement ps = con.prepareStatement(JDBC2Tests.insertSQL("testdate", "?"));
 
-      st.close();
+			ps.setDate(1, makeDate(1950, 2, 7));
+			assertEquals(1, ps.executeUpdate());
 
-      JDBC2Tests.closeDB(con);
-    } catch(Exception ex) {
-      assert(ex.getMessage(),false);
-    }
-  }
+			ps.setDate(1, makeDate(1970, 6, 2));
+			assertEquals(1, ps.executeUpdate());
 
-  /**
-   * Tests the time methods in PreparedStatement
-   */
-  public void testSetDate() {
-    try {
-      Connection con = JDBC2Tests.openDB();
+			ps.setDate(1, makeDate(1999, 8, 11));
+			assertEquals(1, ps.executeUpdate());
 
-      Statement st=con.createStatement();
+			ps.setDate(1, makeDate(2001, 2, 13));
+			assertEquals(1, ps.executeUpdate());
 
-      JDBC2Tests.createTable(con,"dt date");
+			ps.close();
 
-      PreparedStatement ps = con.prepareStatement(JDBC2Tests.insert("?"));
+			// Fall through helper
+			dateTest();
 
-      ps.setDate(1,getDate(1950,2,7));
-      assert(!ps.execute()); // false as its an update!
+			assertEquals(4, stmt.executeUpdate("DELETE FROM testdate"));
+			stmt.close();
+		} catch(Exception ex) {
+			fail(ex.getMessage());
+		}
+	}
 
-      ps.setDate(1,getDate(1970,6,2));
-      assert(!ps.execute()); // false as its an update!
+	/**
+	 * Helper for the date tests. It tests what should be in the db
+	 */
+	private void dateTest() throws SQLException {
+		Statement st = con.createStatement();
+		ResultSet rs;
+		java.sql.Date d;
 
-      ps.setDate(1,getDate(1999,8,11));
-      assert(!ps.execute()); // false as its an update!
+		rs = st.executeQuery(JDBC2Tests.selectSQL("testdate", "dt"));
+		assertNotNull(rs);
 
-      ps.setDate(1,getDate(2001,2,13));
-      assert(!ps.execute()); // false as its an update!
+		assertTrue(rs.next());
+		d = rs.getDate(1);
+		assertNotNull(d);
+ 		assertEquals(d, makeDate(1950, 2, 7));
 
-      // Fall through helper
-      checkTimeTest(con,st);
+		assertTrue(rs.next());
+		d = rs.getDate(1);
+		assertNotNull(d);
+		assertEquals(d, makeDate(1970, 6, 2));
 
-      ps.close();
-      st.close();
+		assertTrue(rs.next());
+		d = rs.getDate(1);
+		assertNotNull(d);
+		assertEquals(d, makeDate(1999, 8, 11));
+		
+		assertTrue(rs.next());
+		d = rs.getDate(1);
+		assertNotNull(d);
+		assertEquals(d, makeDate(2001, 2, 13));
 
-      JDBC2Tests.closeDB(con);
-    } catch(Exception ex) {
-      assert(ex.getMessage(),false);
-    }
-  }
+		assertTrue(!rs.next());
 
-  /**
-   * Helper for the TimeTests. It tests what should be in the db
-   */
-  private void checkTimeTest(Connection con,Statement st) throws SQLException {
-    ResultSet rs=null;
-    java.sql.Date t=null;
+		rs.close();
+		st.close();
+	}
 
-    rs=st.executeQuery(JDBC2Tests.select("dt"));
-    assert(rs!=null);
-
-    assert(rs.next());
-    t = rs.getDate(1);
-    assert(t!=null);
-    assert(t.equals(getDate(1950,2,7)));
-
-    assert(rs.next());
-    t = rs.getDate(1);
-    assert(t!=null);
-    assert(t.equals(getDate(1970,6,2)));
-
-    assert(rs.next());
-    t = rs.getDate(1);
-    assert(t!=null);
-    assert(t.equals(getDate(1999,8,11)));
-
-    assert(rs.next());
-    t = rs.getDate(1);
-    assert(t!=null);
-    assert(t.equals(getDate(2001,2,13)));
-
-    assert(!rs.next());
-
-    rs.close();
-  }
-
-  /**
-   * Yes this is ugly, but it gets the test done ;-)
-   */
-  private java.sql.Date getDate(int y,int m,int d) {
-    return java.sql.Date.valueOf(JDBC2Tests.fix(y,4)+"-"+JDBC2Tests.fix(m,2)+"-"+JDBC2Tests.fix(d,2));
-  }
-
+	private java.sql.Date makeDate(int y, int m, int d) {
+		return java.sql.Date.valueOf(JDBC2Tests.fix(y, 4) + "-" +
+									 JDBC2Tests.fix(m, 2) + "-" +
+									 JDBC2Tests.fix(d, 2));
+	}
 }

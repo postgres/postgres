@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /**
- * $Id: MiscTest.java,v 1.1 2001/02/13 16:39:05 peter Exp $
+ * $Id: MiscTest.java,v 1.2 2001/09/23 04:11:14 momjian Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -30,7 +30,7 @@ public class MiscTest extends TestCase {
 
       Statement st=con.createStatement();
       ResultSet rs=st.executeQuery("select datname from pg_database");
-      assert(rs!=null);
+      assertNotNull(rs);
 
       while(rs.next()){
 	String s = rs.getString(1);
@@ -41,7 +41,7 @@ public class MiscTest extends TestCase {
 
       JDBC2Tests.closeDB(con);
     } catch(Exception ex) {
-      assert(ex.getMessage(),false);
+      fail(ex.getMessage());
     }
   }
 }
