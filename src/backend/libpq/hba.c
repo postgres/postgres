@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.79.2.1 2003/04/12 22:28:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.79.2.2 2003/04/13 04:07:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,16 +56,11 @@ static List *ident_lines = NIL; /* pre-parsed contents of ident file */
 
 
 /*
- * Some standard C libraries, including GNU, have an isblank() function.
- * Others, including Solaris, do not.  So we have our own.  Watch out for
- * macro-ized versions, too.
+ * isblank() exists in the ISO C99 spec, but it's not very portable yet,
+ * so provide our own version.
  */
-#ifdef isblank
-#undef isblank
-#endif
-
 static bool
-isblank(const char c)
+pg_isblank(const char c)
 {
 	return c == ' ' || c == '\t';
 }
@@ -87,7 +82,7 @@ next_token(FILE *fp, char *buf, const int bufsz)
 	char	   *eb = buf + (bufsz - 1);
 
 	/* Move over initial token-delimiting blanks */
-	while ((c = getc(fp)) != EOF && isblank(c))
+	while ((c = getc(fp)) != EOF && pg_isblank(c))
 		;
 
 	if (c != EOF && c != '\n')
@@ -97,7 +92,7 @@ next_token(FILE *fp, char *buf, const int bufsz)
 		 * blank.  If the token gets too long, we still parse it
 		 * correctly, but the excess characters are not stored into *buf.
 		 */
-		while (c != EOF && c != '\n' && !isblank(c))
+		while (c != EOF && c != '\n' && !pg_isblank(c))
 		{
 			if (buf < eb)
 				*buf++ = c;
@@ -696,14 +691,14 @@ interpret_ident_response(char *ident_response,
 			int			i;		/* Index into *response_type */
 
 			cursor++;			/* Go over colon */
-			while (isblank(*cursor))
+			while (pg_isblank(*cursor))
 				cursor++;		/* skip blanks */
 			i = 0;
-			while (*cursor != ':' && *cursor != '\r' && !isblank(*cursor) &&
+			while (*cursor != ':' && *cursor != '\r' && !pg_isblank(*cursor) &&
 				   i < (int) (sizeof(response_type) - 1))
 				response_type[i++] = *cursor++;
 			response_type[i] = '\0';
-			while (isblank(*cursor))
+			while (pg_isblank(*cursor))
 				cursor++;		/* skip blanks */
 			if (strcmp(response_type, "USERID") != 0)
 				return false;
@@ -729,7 +724,7 @@ interpret_ident_response(char *ident_response,
 						int			i;	/* Index into *ident_user */
 
 						cursor++;		/* Go over colon */
-						while (isblank(*cursor))
+						while (pg_isblank(*cursor))
 							cursor++;	/* skip blanks */
 						/* Rest of line is username.  Copy it over. */
 						i = 0;
