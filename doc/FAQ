@@ -246,7 +246,7 @@
    Several manuals, manual pages, and some small test examples are
    included in the distribution. See the /doc directory. You can also
    browse the manual online at
-   http://www.PostgreSQL.org/users-lounge/docs/postgres.
+   http://www.PostgreSQL.org/users-lounge/docs/.
    
    There is a PostgreSQL book available at
    http://www.PostgreSQL.org/docs/awbook.html.
