@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.333 2003/05/06 00:20:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.334 2003/05/06 04:16:35 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1803,12 +1803,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 	Noversion = false;
 	EchoQuery = false;
 
-	if (!IsUnderPostmaster || ExecBackend)
+	if (!IsUnderPostmaster /* when exec || ExecBackend*/)
 	{
 		InitializeGUCOptions();
-#ifdef EXEC_BACKEND
-		read_nondefault_variables();
-#endif
 		potential_DataDir = getenv("PGDATA");
 	}
 
@@ -2182,6 +2179,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 	}
 	Assert(DataDir);
 
+#ifdef EXEC_BACKEND
+	read_nondefault_variables();
+#endif
+
 	/*
 	 * Set up signal handlers and masks.
 	 *
@@ -2343,7 +2344,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.333 $ $Date: 2003/05/06 00:20:33 $\n");
+		puts("$Revision: 1.334 $ $Date: 2003/05/06 04:16:35 $\n");
 	}
 
 	/*
