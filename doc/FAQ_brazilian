@@ -1,0 +1,1244 @@
+
+                  Perguntas Frequentes (FAQ) sobre PostgreSQL
+                                       
+   Última atualização: Sab Fev 7 22:16:21 EST 2004
+   
+   Mantenedor atual: Bruce Momjian (pgman@candle.pha.pa.us)
+   
+   Traduzido por: Euler Taveira de Oliveira (euler@ufgnet.ufg.br)
+   
+   A versão mais recente desse documento pode ser vista em
+   http://www.PostgreSQL.org/docs/faqs/FAQ.html (EN).
+   http://www.PostgreSQL.org/docs/faqs/FAQ_brazilian.html (pt_BR).
+   
+   Perguntas sobre plataformas específicas são respondidas em
+   http://www.PostgreSQL.org/docs/index.html.
+     _________________________________________________________________
+   
+                              Perguntas Gerais
+                                      
+   1.1) O que é PostgreSQL? Como ele é pronunciado?
+   1.2) Qual é a licença do PostgreSQL?
+   1.3) Quais plataformas Unix o PostgreSQL pode ser executado?
+   1.4) Quais portabilidades não-Unix estão disponíveis?
+   1.5) Onde eu posso conseguir o PostgreSQL?
+   1.6) Onde eu posso conseguir suporte?
+   1.7) Qual é a última versão?
+   1.8) Que documentação está disponível?
+   1.9) Como eu posso saber quais são os bugs conhecidos ou
+   características ausentes?
+   1.10) Como eu posso aprender SQL?
+   1.11) O PostgreSQL está livre do Bug do Milênio?
+   1.12) Como posso me juntar a equipe de desenvolvimento?
+   1.13) Como eu informo a existência de um bug?
+   1.14) Como é o PostgreSQL comparado a outros SGBDs?
+   1.15) Como eu posso ajudar financeiramente o projeto PostgreSQL?
+   
+                          Perguntas sobre Clientes
+                                      
+   2.1) Há drivers ODBC para PostgreSQL?
+   2.2) Quais ferramentas estão disponíveis para utilizar o PostgreSQL
+   com páginas Web?
+   2.3) O PostgreSQL tem interfaces gráficas para interagir com usuário?
+   2.4) Quais linguagens estão disponíveis para comunicar-se com o
+   PostgreSQL?
+   
+                         Perguntas Administrativas
+                                      
+   3.1) Como eu instalo o PostgreSQL em um local diferente de
+   /usr/local/pgsql?
+   3.2) Quando eu inicio o postmaster, eu recebo a mensagem Bad System
+   Call ou uma descarga de memória (core dump). Por que?
+   3.3) Quando eu tento iniciar o postmaster, eu recebo erros
+   IpcMemoryCreate. Por que? 3.4) Quando eu tento iniciar o postmaster,
+   eu recebo erros IpcSemaphoreCreate. Por que? 3.5) Como eu controlo
+   conexões de outras máquinas?
+   3.6) Como eu ajusto o servidor de banco de dados para obter uma
+   performance melhor?
+   3.7) Quais características de depuração estão disponíveis?
+   3.8) Por que eu recebo "Sorry, too many clients" quando eu tento
+   conectar?
+   3.9) O que está no diretório pgsql_tmp?
+   3.10) O que eu preciso fazer para exportar e importar durante a
+   atualização de versões do PostgreSQL?
+   
+                           Perguntas Operacionais
+                                      
+   4.1) Qual é a diferença entre cursores binários e normais?
+   4.2) Como eu faço um SELECT somente dos primeiros registros de uma
+   consulta? Um registro randômico?
+   4.3) Como eu obtenho a lista de tabelas ou outras coisas que eu posso
+   ver no psql?
+   4.4) Como eu removo uma coluna de uma tabela ou mudo o seu tipo de
+   dados?
+   4.5) Qual é o tamanho máximo de um registro, uma tabela e um banco de
+   dados?
+   4.6) Quanto espaço em disco é necessário para armazenar dados de um
+   arquivo texto?
+   4.7) Como eu descubro quais tabelas, índices, bancos de dados e
+   usuários estão definidos?
+   4.8) Minhas consultas estão lentas ou não estão utilizando índices.
+   Por que?
+   4.9) Como eu vejo como o otimizador de consultas está avaliando minha
+   consulta?
+   4.10) O que é um índice de árvore R (R-tree)?
+   4.11) O que é um Otimizador Genético de Consultas?
+   4.12) Como eu faço buscas com expressões regulares e buscas com
+   expressões regulares sem diferenciar maiúsculas de minúsculas? Como eu
+   utilizo um índice para buscas que não diferenciam maiúsculas de
+   minúsculas?
+   4.13) Em uma consulta, como eu detecto se um campo é NULL?
+   4.14) Qual é a diferença entre os vários tipos de dados de caracteres?
+   4.15.1) Como eu crio um campo serial/auto incremento?
+   4.15.2) Como eu consigo o valor de um campo SERIAL?
+   4.15.3) currval() e nextval() não lidam com condição de corrida com
+   outros usuários?
+   4.15.4) Por que os números da minha sequência não são reutilizados
+   quando uma transação é abortada? Por que há intervalos nos números da
+   minha sequência/coluna SERIAL?
+   4.16) O que é um OID? O que é um TID?
+   4.17) Qual é o significado de alguns termos utilizados no PostgreSQL?
+   4.18) Por que eu recebo o erro "ERROR: Memory exhausted in
+   AllocSetAlloc()"?
+   4.19) Como eu informo qual versão do PostgreSQL eu estou utilizando?
+   4.20) Por que minhas operações com objetos grandes retorna "invalid
+   large obj descriptor"?
+   4.21) Como eu crio uma coluna que conterá por padrão a hora atual?
+   4.22) Por que as minhas subconsultas que utilizam IN estão tão lentas?
+   4.23) Como eu faço uma junção externa (outer join)?
+   4.24) Como eu faço consultas utilizando múltiplos bancos de dados?
+   4.25) Como eu retorno múltiplos registros ou colunas de uma função?
+   4.26) Por que eu não posso confiar na criação/remoção de tabelas
+   temporárias em funções PL/PgSQL?
+   4.27) Que opções para replicação estão disponíveis?
+   4.28) Que opções para encriptação estão disponíveis?
+   
+                          Extendendo o PostgreSQL
+                                      
+   5.1) Eu escrevi uma função. Quando eu executo-a no psql, por que ela
+   finaliza o programa com descarga de memória (core dump)?
+   5.2) Como eu posso contribuir com alguns tipos e funções novas para o
+   PostgreSQL?
+   5.3) Como eu escrevo uma função em C que retorna uma tupla?
+   5.4) Eu alterei um arquivo do código-fonte. Por que a recompilação não
+   surtiu efeito?
+     _________________________________________________________________
+   
+                              Perguntas Gerais
+                                      
+    1.1) O que é PostgreSQL? Como ele é pronunciado?
+    
+   PostgreSQL é pronunciado Post-Gres-Qui-El. O nome "Postgres" é
+   utilizado frequentemente em conversações.
+   
+   PostgreSQL é um melhoramento do sistema de gerência de banco de dados
+   POSTGRES, um protótipo de pesquisa de um SGBD de última geração.
+   Enquanto o PostgreSQL retém a modelagem de dados poderosa e a grande
+   quantidade de tipos de dados do POSTGRES, ele substituiu a linguagem
+   de consulta PostQuel com um subconjunto extendido do SQL. PostgreSQL é
+   livre e o código-fonte completo está disponível.
+   
+   O desenvolvimento do PostgreSQL é feito por um grupo de
+   desenvolvedores que estão inscritos na lista de e-mails de
+   desenvolvimento do PostgreSQL. O coordenador atual é Marc G. Fournier
+   (scrappy@PostgreSQL.org). (Veja a seção 1.6 para saber como se juntar
+   ao grupo). O grupo é responsável por todo o desenvolvimento do
+   PostgreSQL. É um projeto da comunidade e não é controlado por nenhuma
+   empresa. Para se juntar ao grupo, veja a FAQ do desenvolvedor
+   http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html
+   
+   Os autores do PostgreSQL 1.01 foram Andrew Yu e Jolly Chen. Muitos
+   outros contribuiram para portar, testar, depurar e melhorar o código.
+   O código original do Postgres, do qual o PostgreSQL foi derivado, foi
+   um esforço de muitos estudantes de graduação e pós-graduação e uma
+   equipe de programadores trabalhando sobre a direção do Professor
+   Michael Stonebraker na Universidade da Califónia em Berkeley.
+   
+   O nome original do software em Berkeley era Postgres. Quando o SQL foi
+   adicionado em 1995, seu nome foi mudado para Postgres95. O nome foi
+   mudado no fim de 1996 para PostgreSQL.
+   
+    1.2) Qual é a licença do PostgreSQL?
+    
+   PostgreSQL está sujeito a seguinte licença:
+   
+   PostgreSQL Sistema de Gerência de Banco de Dados
+   
+   Portions copyright (c) 1996-2002, PostgreSQL Global Development Group
+   Portions Copyright (c) 1994-6 Regents of the University of California
+   
+   Permissão de uso, cópia, modificação e distribuição desse software e
+   sua documenta¸ão para qualquer propósito, sem taxa, e sem um acordo
+   escrito está concedida por esse meio, contanto que a nota da licença
+   acima, esse parágrafo e os dois parágrafos seguintes apareçam em todas
+   as cópias.
+   
+   EM NENHUM EVENTO A UNIVERSIDADE DA CALIFÓRNIA SERÁ RESPONSÁVEL POR
+   QUALQUER PARTIDO EM DANOS DIRETOS, INDIRETOS, ESPECIAIS, INCIDENTAIS
+   OU CONSEQUENTES, INCLUINDO PERDA DE LUCROS, SURGIDOS A PARTIR DO USO
+   DO SOFTWARE E DE SUA DOCUMENTAÇÃO, MESMO SE A UNIVERSIDADE DA
+   CALIFÓRNIA ESTIVER SIDO AVISADA DA POSSIBILIDADE DE TAL DANO.
+   
+   A UNIVERSIDADE DA CALIFÓRNIA ESPECIFICADAMENTE NÃO DÁ NENHUMA
+   GARANTIA, INCLUINDO, MAS NÃO LIMITADO A, GARANTIAS IMPLÍCITAS DE
+   COMERCIALIZAÇÃO E ATENDIMENTO DE PROPÓSITO PARTICULAR. O SOFTWARE É
+   FORNECIDO ABAIXO "COMO É", E A UNIVERSIDADE DA CALIFÓRNIA NÃO TEM
+   OBRIGAÇÃO DE FORNECER MANUTENÇÃO, SUPORTE, ATUALIZAÇÕES, MELHORIAS OU
+   MODIFICAÇÕES.
+   
+   O que está descrito acima é a licença BSD, uma licença de código
+   aberto clássica. Ela não tem restrições de como o código pode ser
+   utilizado. Nós gostamos dela e não temos intenções de mudá-la.
+   
+    1.3) Quais plataformas Unix o PostgreSQL pode ser executado?
+    
+   Em geral, uma plataforma moderna compatível com Unix deve ser capaz de
+   executar o PostgreSQL. As plataformas que foram testadas antes do
+   lançamento de uma versão são listadas nas instruções de instalação.
+   
+    1.4) Quais portabilidades não-Unix estão disponíveis?
+    
+   Cliente
+   
+   É possível compilar a biblioteca libpq, o psql e outras interfaces e
+   aplicações clientes para executar em plataformas MS Windows. Neste
+   caso, o cliente está sendo executado no MS Windows e comunica via
+   TCP/IP com um servidor executando em uma das plataformas Unix
+   suportadas. O arquivo win32.mak está presente na distribuição para que
+   seja possível compilar a biblioteca libpq e o psql para Win32. O
+   PostgreSQL também se comunica com clientes ODBC.
+   
+   Servidor
+   
+   O Servidor de banco de dados pode ser executado em Windows NT e Win2k
+   utilizando o Cygwin, uma biblioteca de portabilidade Unix/NT da
+   Cygnus. Veja pgsql/doc/FAQ_MSWIN na distribuição ou a FAQ do MS
+   Windows em http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN.
+   
+   Um porte nativo para MS Win NT/2000/XP está sendo desenvolvido. Para
+   maiores detalhes sobre o status do PostgreSQL no Windows veja
+   http://techdocs.postgresql.org/guides/Windows e
+   http://momjian.postgresql.org/main/writings/pgsql/win32.html.
+   
+   Há também um porte para Novell Netware 6 em http://forge.novell.com.
+   
+    1.5) Onde eu posso conseguir o PostgreSQL?
+    
+   O servidor ftp principal do PostgreSQL é ftp://ftp.PostgreSQL.org/pub.
+   Para relação de servidores espelhos (mirrors), consulte nosso website.
+   
+    1.6) Onde eu posso conseguir suporte?
+    
+   A lista de discussão principal é: pgsql-general@PostgreSQL.org. Ela
+   está disponível para discussões relacionadas ao PostgreSQL. Para se
+   inscrever, envie um e-mail com as seguintes linhas no corpo (não envie
+   no assunto):
+    subscribe
+    end
+
+   para pgsql-general-request@PostgreSQL.org.
+   
+   Há também uma lista síntese (digest) disponível. Para se inscrever,
+   envie um e-mail para: pgsql-general-digest-request@PostgreSQL.org com
+   o seguinte corpo:
+    subscribe
+    end
+
+   Sínteses (Digests) são enviadas aos membros dessa lista quando a lista
+   receber cerca de 30k em mensagens.
+   
+   A lista de discussão sobre bugs está disponível. Para se inscrever,
+   envie um e-mail para pgsql-bugs-request@PostgreSQL.org com o seguinte
+   corpo:
+    subscribe
+    end
+
+   Há também uma lista de discussão dos desenvolvedores disponível. Para
+   se inscrever, envie um e-mail para
+   pgsql-hackers-request@PostgreSQL.org com o seguinte corpo:
+    subscribe
+    end
+
+   Outras listas de discussões e informações sobre o PostgreSQL podem ser
+   encontradas na homepage do PostgreSQL em:
+   
+     http://www.PostgreSQL.org
+     
+   Há também um canal de IRC na Freenode e EFNet, canal PostgreSQL. Você
+   pode utilizar o comando Unix irc -c '#PostgreSQL' "$USER"
+   irc.phoenix.net. ou irc -c '#PostgreSQL' "$USER" irc.freenode.net.
+   
+   Uma lista de empresas que prestam suporte comercial está disponível em
+   http://techdocs.postgresql.org/companies.php.
+   
+    1.7) Qual é a última versão?
+    
+   A última versão do PostgreSQL é a versão 7.4.1.
+   
+   Nós planejamos lançar versões novas a cada seis ou oito meses.
+   
+    1.8) Que documentação está disponível?
+    
+   Vários manuais, páginas de manuais (man pages) e alguns exemplos para
+   teste estão incluídos na distribuição. Veja o diretório /doc. Você
+   pode acessar os manuais online em http://www.PostgreSQL.org/docs.
+   
+   Há dois livros sobre PostgreSQL disponíveis online em
+   http://www.PostgreSQL.org/docs/awbook.html e
+   http://www.commandprompt.com/ppbook/. Há uma lista de livros sobre
+   PostgreSQL disponíveis para compra em
+   http://techdocs.PostgreSQL.org/techdocs/bookreviews.php. Há também uma
+   coleção de artigos técnicos sobre PostgreSQL em
+   http://techdocs.PostgreSQL.org/.
+   
+   psql tem alguns comandos \d para mostrar informação sobre tipos,
+   operadores, funções, agregações, etc.
+   
+   Nosso web site contém ainda mais documentação.
+   
+    1.9) Como eu posso saber quais são os bugs conhecidos ou características
+    ausentes?
+    
+   PostgreSQL suporta um subconjunto extendido do SQL-92. Veja a nossa
+   lista de afazeres (TODO) para saber sobre bugs conhecidos,
+   características ausentes e planos futuros.
+   
+    1.10) Como eu posso aprender SQL?
+    
+   O livro "The PostgreSQL book" em
+   http://www.PostgreSQL.org/docs/awbook.html ensina SQL. Há outro livro
+   sobre PostgreSQL em http://www.commandprompt.com/ppbook. Há bons
+   tutoriais em http://www.intermedia.net/support/sql/sqltut.shtm, ,
+   http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
+   e em http://sqlcourse.com.
+   
+   Outro é o "Teach Yourself SQL in 21 Days, Second Edition" em
+   http://members.tripod.com/er4ebus/sql/index.htm
+   
+   Muitos dos nossos usuários gostam do The Practical SQL Handbook,
+   Bowman, Judith S., et al., Addison-Wesley. Outros gostam do The
+   Complete Reference SQL, Groff et al., McGraw-Hill.
+   
+    1.11) O PostgreSQL está livre do Bug do Milênio?
+    
+   Sim, nós podemos manipular datas após o ano 2000 AD e antes do ano
+   2000 BC.
+   
+    1.12) Como posso me juntar a equipe de desenvolvimento?
+    
+   Primeiramente, faça o download do código-fonte e leia a documentação
+   para Desenvolvedores do PostgreSQL no nosso website ou na
+   distribuição. Depois, se inscreva nas lista de discussão pgsql-hackers
+   e pgsql-patches. Então submeta patches de alta qualidade para
+   pgsql-patches.
+   
+   Há algumas pessoas que tem privilégios para fazer mudanças (commit) na
+   árvore CVS do PostgreSQL. Cada um deles submeteram tantos patches de
+   alta qualidade que foi impossível para os committers continuarem a
+   fazerem as mudanças, e então nós confiamos que os patches que eles
+   submetem são de alta qualidade.
+   
+    1.13) Como eu informo a existência de um bug?
+    
+   Por favor visite a página da ferramenta que reporta bugs em
+   http://www.PostgreSQL.org/bugs/bugs.php, que irá lher dar as
+   instruções e direções de como submeter um bug.
+   
+   Verifique também o nosso ftp ftp://ftp.PostgreSQL.org/pub para ver se
+   há uma versão mais recente do PostgreSQL ou patches.
+   
+    1.14) Como é o PostgreSQL comparado a outros SGBDs?
+    
+   Há várias maneiras de se medir um software: características,
+   performance, confiabilidade, suporte e preço.
+   
+   Características
+          PostgreSQL tem muitas características presentes em muitos SGBDs
+          comerciais como transações, subconsultas, gatilhos, visões,
+          integridade referencial de chave estrangeira e travamento
+          (lock) sofisticado. Nós temos algumas características que eles
+          não tem, como tipos definidos pelo usuário, herança, regras e
+          controle de concorrência de múltiplas versões para reduzir
+          travamentos (locks).
+          
+   Performance
+          PostgreSQL tem a performance similar a outros bancos de dados
+          comerciais e de código livre. Ele é mais rápido em algumas
+          coisas, mais lento em outras. Comparado ao MySQL ou sistemas de
+          bancos de dados "leves", nós somos mais rápidos com múltiplos
+          usuários, consultas complexas e carga de consultas de
+          leitura/escrita. MySQL é mais rápido para consultas simples com
+          SELECT feitas por poucos usuários. É claro que o MySQL não tem
+          muitas das características mencionadas na seção Características
+          acima. Nós desenvolvemos buscando confiabilidade e
+          características, e nós continuamos a melhorar a performance a
+          cada versão. Há uma página interessante comparando o PostgreSQL
+          com o MySQL em
+          http://openacs.org/philosophy/why-not-mysql.html. MySQL é uma
+          empresa que distribui seu produto via código livre, e requer
+          uma licença comercial para software de código fechado, e não
+          uma comunidade de desenvolvimento de código livre como o
+          PostgreSQL.
+          
+   Confiabilidade
+          Nós sabemos que um SGBD deve ser confiável ou ele é inútil. Nós
+          empenhamos em lançar versões bem testadas, de código estável e
+          que tenha o mínimo de bugs. Cada versão tem no mínimo um mês de
+          teste em versão beta, e nosso histórico de versões mostra que
+          nós podemos fornecer versões estáveis e sólidas que estão
+          prontas para uso em produção. Nós acreditamos que somos
+          comparados a nosso favor com outros sistemas de bancos de dados
+          nessa área.
+          
+   Suporte
+          Nossas listas de discussão fornecem contato com um grupo de
+          desenvolvedores e usuários para ajudar a resolver muitos
+          problemas encontrados. Enquanto nós não podemos garantir o
+          conserto, SGBDs comerciais nem sempre fornecem também. Com
+          acesso direto aos desenvolvedores, a comunidade de usuários,
+          manuais e o código fonte faz com que o suporte do PostgreSQL
+          seja superior ao de outros SGBDs. Há suporte comercial por
+          incidente disponíveis para aqueles que precisam de um. (Veja
+          seção 1.6 da FAQ.)
+          
+   Preço
+          Nós somos livres para uso dele tanto comercial quanto não
+          comercial. Você pode adicionar nosso código ao seu produto sem
+          limitações, exceto aquelas descritas na nossa licença
+          compatível com a licença BSD mencionada acima.
+          
+    1.15) Como eu posso ajudar financeiramente o projeto PostgreSQL?
+    
+   PostgreSQL teve sua primeira infra-estrutura em 1996 quando iniciamos.
+   Somos todos gratos ao Marc Fournier, que criou e gerenciou esta
+   infra-estrutura ao longo dos anos.
+   
+   Infra-estrutura de qualidade é muito importante em um projeto de
+   código aberto. Ela previne descontinuidades que podem facilmente
+   descontinuar o andamento do projeto.
+   
+   É claro, que a infra-estrutura não é barata. Há vários custos iniciais
+   e mensais que são necessários para manté-la. Se você ou sua empresa
+   tem dinheiro que pode ser doado para ajudar a financiar esse esforço,
+   acesse http://store.pgsql.com/shopping/ e faça uma doação.
+   
+   Embora a página mencione PostgreSQL, Inc, a "contribuição" é somente
+   para apoiar o projeto PostgreSQL e não financia nenhuma empresa
+   específica. Se você preferir, você pode enviar um cheque para o
+   endereço de contato.
+     _________________________________________________________________
+   
+   Se você tiver uma história de sucesso sobre o PostgreSQL, envie-a para
+   nosso website em http://advocacy.postgresql.org.
+   
+                          Perguntas sobre Clientes
+                                      
+    2.1) Há drivers ODBC para PostgreSQL?
+    
+   Há dois drivers ODBC disponíveis, PsqlODBC e o OpenLink ODBC.
+   
+   Você pode fazer o download do PsqlODBC em
+   http://gborg.postgresql.org/project/psqlodbc/projdisplay.php.
+   
+   OpenLink ODBC pode ser conseguido em http://www.openlinksw.com. Ele
+   trabalha com cliente ODBC padrão, então você poderá ter o ODBC para
+   PostgreSQL disponível em toda plataforma que eles suportam (Win, Mac,
+   Unix, VMS).
+   
+   Eles provavelmente venderão seu produto para pessoas que precisam de
+   um suporte de qualidade, mas uma versão gratuita estará sempre
+   disponível. Por favor envie perguntas para postgres95@openlink.co.uk.
+   
+    2.2) Quais ferramentas estão disponíveis para utilizar o PostgreSQL com
+    páginas Web?
+    
+   Uma boa introdução para páginas web que utilizam bancos de dados pode
+   ser vista em: http://www.webreview.com
+   
+   Para integração na Web, PHP é uma excelente interface. Ele está em
+   http://www.php.net.
+   
+   Para casos complexos, muitos usam a Interface Perl e CGI.pm ou
+   mod_perl.
+   
+    2.3) O PostgreSQL tem interfaces gráficas para iteragir com o usuário?
+    
+   Sim, há várias interfaces gráficas para PostgreSQL disponíveis. Entre
+   elas o PgAccess http://www.pgaccess.org), PgAdmin III
+   (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/ )
+   e o Rekall ( http://www.thekompany.com/products/rekall/,
+   proprietária). Há também o PHPPgAdmin (
+   http://phppgadmin.sourceforge.net/ ), uma interface web para
+   PostgreSQL.
+   
+   Veja http://techdocs.postgresql.org/guides/GUITools para uma lista
+   mais detalhada.
+   
+    2.4) Quais linguagens estão disponíveis para comunicar-se com PostgreSQL?
+    
+   Muitas linguagens de programação populares contém uma interface para
+   PostgreSQL. Verifique a lista de extensões (módulos) da sua linguagem
+   de programação.
+   
+   As seguintes interfaces estão incluídas na distribuição do PostgreSQL:
+     * C (libpq)
+     * Embedded C (ecpg)
+     * Java (jdbc)
+     * Python (PyGreSQL)
+     * TCL (libpgtcl)
+       
+   Interfaces adicionais estão disponíveis em http://gborg.postgresql.org
+   na seção de Drivers/Interfaces.
+     _________________________________________________________________
+   
+                         Perguntas Administrativas
+                                      
+    3.1) Como eu instalo o PostgreSQL em um local diferente de
+    /usr/local/pgsql?
+    
+   Especifique a opção --prefix quando executar o configure.
+   
+    3.2) Quando eu inicio o postmaster, eu recebo a mensagem Bad System Call ou
+    uma descarga de memória (core dump). Por que?
+    
+   Isto pode ser vários problemas, mas primeiro verifique se você tem
+   extensões do System V instaladas no seu kernel. PostgreSQL requer
+   suporte no kernel a memória compartilhada e semáforos.
+   
+    3.3) Quando eu tento iniciar o postmaster, eu recebo erros IpcMemoryCreate.
+    Por que?
+    
+   Você não configurou a memória compartilhada corretamente no seu kernel
+   ou você precisa aumentar a memória compartilhada disponível no seu
+   kernel. A quantidade exata que você precisa vai depender da
+   arquitetura e de quantos buffers e processos do servidor você
+   configurou para o postmaster. Muitos sistemas, com o número padrão de
+   buffers e processos, precisam de aproximadamente 1 MB. Veja o Guia do
+   Administrador do PostgreSQL para mais informação sobre memória
+   compartilhada e semáforos.
+   
+    3.4) Quando eu tento iniciar o postmaster, eu recebo erros
+    IpcSemaphoreCreate. Por que?
+    
+   Se a mensagem de erro é IpcSemaphoreCreate: semget failed (No space
+   left on device) então o seu kernel não está configurado com o número
+   de semáforos suficientes. O Postgres precisa de um semáforo por
+   processo do servidor. Uma solução temporária é iniciar o postmaster
+   com um limite pequeno de processos do servidor. Utilize -N com o
+   parâmetro menor do que o padrão (32). Uma solução permanente seria
+   aumentar os parâmetros do kernel SEMMNS e SEMMNI.
+   
+   Semáforos inoperantes podem também causar danos durante intenso acesso
+   ao banco de dados.
+   
+   Se a mensagem é outra coisa, você possivelmente não tem suporte a
+   semáforo configurado no seu kernel. Veja o Guia do Administrador para
+   mais informação sobre memória compartilhada e semáforos.
+   
+    3.5) Como eu controlo conexões de outras máquinas?
+    
+   Por padrão, o PostgreSQL só permite conexões da máquina local
+   utilizando soquetes de domínio Unix. Outras máquinas não poderão
+   conectar-se a menos que você adicione a opção -i no postmaster, e
+   habilite a autenticação por máquina modificando o arquivo
+   $PGDATA/pg_hba.conf. Isso irá permitir conexões TCP/IP.
+   
+    3.6) Como eu ajusto o servidor de banco de dados para obter uma performance
+    melhor?
+    
+   Certamente, índices podem acelerar consultas. O comando EXPLAIN
+   permite que você veja como o PostgreSQL está interpretando a consulta,
+   e quais os índices são utilizados.
+   
+   Se você está fazendo muitos INSERTs, considere fazê-los em lote
+   utilizando o comando COPY. Isso é mais rápido do que INSERTs
+   individuais. Segundo, sentenças que não estão em um bloco de transação
+   BEGIN WORK/COMMIT são consideradas com se estivessem em sua própria
+   transação. Considere executar várias sentenças em um mesmo bloco de
+   transação. Isso reduz a quantidade de transações. Também, considere
+   remover e criar índices novamente quando estiver fazendo muitas
+   mudanças nos dados.
+   
+   Há várias opções de ajuste. Você pode desabilitar o fsync() iniciando
+   o postmaster com a opção -o -F. Isso irá impedir que fsync()s enviem
+   os dados para disco após cada transação.
+   
+   Você também pode utilizar a opção -B do postmaster para aumentar o
+   número de buffers de memória compartilhada utilizados pelos processos
+   do servidor. Se você definiu este parâmetro com um valor muito alto, o
+   postmaster pode não iniciar porque você excedeu o limite de espaço de
+   memória compartilhada do kernel. Cada buffer é de 8K e o padrão é de
+   64 buffers.
+   
+   Você também pode utilizar a opção -S do backend para aumentar a máxima
+   quantidade de memória utilizada pelo processo servidor para ordenações
+   temporárias. O valor de -S é medido em kilobytes e o padrão é de 512
+   (ou seja 512K).
+   
+   Você também pode utilizar o comando CLUSTER para agrupar dados em
+   tabelas para combinar um índice. Veja o manual sobre CLUSTER para mais
+   informação.
+   
+    3.7) Quais características de depuração estão disponíveis?
+    
+   PostgreSQL tem várias características que relatam informações que
+   podem ser valiosas para fins de depuração.
+   
+   Primeiro, execute o configure com a opção --enable-cassert, muitos
+   assert()s monitoram o progresso do núcleo (backend) e finalizam o
+   programa quando alguma coisa inesperada acontece.
+   
+   O postmaster e o postgres tem várias opções de depuração disponíveis.
+   Primeiro, quando iniciar o postmaster, tenha certeza que você enviou a
+   saida padrão e a saída de erro padrão para um arquivo de log, como em:
+    cd /usr/local/pgsql
+    ./bin/postmaster >server.log 2>&1 &
+
+   Isso irá criar um arquivo server.log no diretório raiz do PostgreSQL.
+   Este arquivo conterá informações úteis sobre problemas ou erros
+   encontrados pelo servidor. O Postmaster tem uma opção -d que permite
+   que informações mais detalhadas sejam relatadas. A opção -d é
+   acompanhada por um número que indica o nível de depuração. Esteja
+   alerta de que alto nível de depuração gera grandes arquivos de log.
+   
+   Se o postmaster não está sendo executado, você pode executar o núcleo
+   do postgres a partir da linha de comando, e digitar a sua sentença SQL
+   diretamente. Isso é recomendado somente para fins de depuração. Note
+   que uma nova linha termina a consulta, e não um ponto-e-vírgula. Se
+   você compilou com símbolos de depuração, você pode utilizar um
+   depurador para ver o que está acontecendo. Como o núcleo (backend) não
+   foi iniciado a partir do postmaster, ele não está executando em um
+   ambiente idêntico e problemas de iteração com o núcleo/travamento não
+   podem ser reproduzidos.
+   
+   O programa postgres possue as opções -s, -A, e -t que podem ser muito
+   úteis para depuração e medidas de performance.
+   
+   Você também pode compilar com perfil para ver que funções estão
+   demandando tempo de execução. Os arquivo de perfil do núcleo (backend)
+   serão colocados no diretório pgsql/data/base/dbname. O arquivo de
+   perfil do cliente será colocado no diretório atual do cliente. O Linux
+   requer uma compilação com -DLINUX_PROFILE para criação dos perfis.
+   
+    3.8) Por que eu recebo "Sorry, too many clients" quando eu tento conectar?
+    
+   Você precisa aumentar o limite do postmaster de quantos processos do
+   servidor concorrentes ele pode iniciar.
+   
+   O limite padrão é de 32 processos. Você pode aumentá-lo reiniciando o
+   postmaster com o valor conveniente de -N ou modificar o
+   postgresql.conf.
+   
+   Note que se você definir o -N com um valor maior do que 32, você
+   também deve aumentar -B cujo padrão é 64; -B deve ser pelo menos duas
+   vezes -N, e provavelmente deve ser mais do que isso para uma melhor
+   performance. Para um grande número de processos do servidor, você
+   também precisa aumentar vários parâmetros de configuração do kernel do
+   Unix. Coisas para serem observadas incluem o tamanho máximo de blocos
+   de memória compartilhada, SHMMAX; o número máximo de semáforos, SEMMNS
+   e SEMMNI; o número máximo de processos, NPROC; o número máximo de
+   processos por usuário, MAXUPRC; e o número máximo de arquivos abertos,
+   NFILE e NINODE. A razão na qual o PostgreSQL tem um limite de número
+   de processos do servidor permitidos é para que o seu sistema não fique
+   sem recursos disponíveis.
+   
+    3.9) O que está no diretório pgsql_tmp?
+    
+   Este diretório contém arquivos temporários gerados pelo executor de
+   uma consulta. Por exemplo, se uma ordenação é necessária para
+   satisfazer um ORDER BY e a ordenação requer mais espaço do que o
+   parâmetro -S do servidor permite, então arquivos temporários são
+   criados para abrigar os dados extras.
+   
+   Os arquivos temporários geralmente são apagados automaticamente, mas
+   podem persistir caso o servidor termine anormalmente durante a
+   ordenação. Uma parada e um reinício do postmaster removerá os arquivos
+   destes diretórios.
+   
+    3.10) O que eu preciso fazer para exportar e importar durante a atualização
+    entre versões do PostgreSQL?
+    
+   O time do PostgreSQL faz somente pequenas mudanças entre versões
+   menores, então atualizar da versão 7.2 para 7.2.1 não requer uma
+   exportação e uma importação. Contudo, versões maiores (i.e. da 7.2
+   para 7.3) geralmente muda-se o formato interno das tabelas de sistema
+   e dos arquivo de dados. Essas mudanças geralmente são complexas, então
+   nós não mantemos compatibilidade para os arquivos de dados. Uma
+   exportação em um formato genérico que pode ser importada utilizando o
+   novo formato interno.
+   
+   Em versões onde o formato em disco não muda, o script pg_upgrade pode
+   ser utilizado para atualizar sem precisar de um dump/restore. As notas
+   da versão mencionam se pg_upgrade está disponível para a versão.
+     _________________________________________________________________
+   
+                           Perguntas Operacionais
+                                      
+    4.1) Qual é a diferença entre cursores binários e normais?
+    
+   Veja o comando DECLARE no manual para uma descrição.
+   
+    4.2) Como eu faço um SELECT somente dos primeiros registros de uma
+    consulta? Um registro randômico?
+    
+   Veja o manual do FETCH, ou utilize SELECT ... LIMIT....
+   
+   Toda a consulta tem que ser avaliada, mesmo se você só quer os
+   primeiros registros. Considere utilizar uma consulta que tenha um
+   ORDER BY. Se há um índice que combina com o ORDER BY, o PostgreSQL
+   pode ser capaz de avaliar somente os primeiros registros requisitados,
+   ou toda consulta tem que ser avaliada até que os registros desejados
+   tenham sido gerados.
+   
+   Para obter um registro randômico, utilize:
+    SELECT col
+    FROM tab
+    ORDER BY random()
+    LIMIT 1;
+
+    4.3) Como eu obtenho a lista de tabelas ou outras coisas que eu posso ver
+    no psql?
+    
+   Você pode ler o código-fonte do psql no arquivo
+   pgsql/src/bin/psql/describe.c. Ele contém comandos SQL que geram a
+   saída para os comandos do psql. Você também pode iniciar o psql com a
+   opção -E então serão mostradas as consultas utilizadas para executar
+   os comandos que você digitou.
+   
+    4.4) Como eu removo uma coluna de uma tabela ou mudo o seu tipo de dados?
+    
+   A funcionalidade DROP COLUMN foi adicionada a versão 7.3 com comando
+   ALTER TABLE DROP COLUMN. Em versões anteriores, você pode fazer isto:
+    BEGIN;
+    LOCK TABLE old_table;
+    SELECT ...  -- selecione todas colunas mas não aquela que você quer remover
+    INTO TABLE new_table
+    FROM old_table;
+    DROP TABLE old_table;
+    ALTER TABLE new_table RENAME TO old_table;
+    COMMIT;
+
+   Para alterar o tipo de dados de uma coluna, faça isto:
+    BEGIN;
+    ALTER TABLE tab ADD COLUMN new_col new_data_type;
+    UPDATE tab SET new_col = CAST(old_col AS new_data_type);
+    ALTER TABLE tab DROP COLUMN old_col;
+    COMMIT;
+
+   Você pode querer executar o comando VACUUM FULL tab para recuperar o
+   espaço em disco utilizado pelos registros expirados.
+   
+    4.5) Qual é o tamanho máximo de um registro, uma tabela e um banco de
+    dados?
+    
+   Estes são os limites:
+Tamanho máximo de um banco de dados?           ilimitado (existem bancos de dad
+os de 32 TB)
+Tamanho máximo de uma tabela?                  32 TB
+Tamanho máximo de um registro?                 1.6TB
+Tamanho máximo de um campo?                    1 GB
+Número máximo de registros em uma tabela?      ilimitado
+Número máximo de colunas em uma tabela?        250-1600 dependendo dos tipos da
+s colunas
+Número máximo de índices em uma tabela?        ilimitado
+
+   É claro, que eles não são ilimitados, mas limitados ao espaço em disco
+   disponível e espaço em memória/swap. A Performance será penalizada
+   quando estes valores se tornarem grandes.
+   
+   O tamanho máximo de uma tabela com 32 TB não requer suporte a arquivos
+   grandes do sistema operacional. Tabelas grandes são armazenadas como
+   múltiplos arquivos de 1 GB então o limite do sistema de arquivos não é
+   importante.
+   
+   O tamanho máximo de uma tabela e o número máximo de colunas pode ser
+   quadruplicadas aumentando-se o tamanho dos blocos para 32k.
+   
+    4.6) Quanto espaço em disco é necessário para armazenar dados de um arquivo
+    texto?
+    
+   Um banco de dados PostgreSQL irá requerer até cinco vezes a quantidade
+   de espaço requerida para armazenar dados em um arquivo texto.
+   
+   Como um exemplo, considere um arquivo com 100.000 linhas contendo um
+   inteiro e uma descrição em cada linha. Suponha que o tamanho médio da
+   descrição é de vinte bytes. O arquivo terá 2.8 MB. O tamanho do
+   arquivo do banco de dados PostgreSQL que contém esses dados pode ser
+   estimado em 6.4 MB:
+    36 bytes: cada cabeçalho de registro (aproximadamente)
+    24 bytes: um campo int e um campo texto
+   + 4 bytes: ponteiro na página para a tupla
+   -------------------------------------------
+    64 bytes por registro
+
+   O tamanho de uma página de dados no PostgreSQL é 8192 bytes (8 KB), então:
+
+   8192 bytes por página
+   ------------------------   =  128 registros por página do banco de dados (ar
+redondado para baixo)
+     64 bytes por registro
+
+   100000 registros de dados
+   ----------------------------  =  782 páginas do banco de dados (arredondado
+para cima)
+      128 registros por página
+
+782 páginas do banco de dados * 8192 bytes por página  =  6,406,144 bytes (6.4
+MB)
+
+   Índices não requerem muito espaço, mas contém dados que foram
+   indexados, então eles podem ocupar algum espaço.
+   
+   NULLs são armazenados como bitmaps, então eles utilizam muito pouco
+   espaço.
+   
+    4.7) Como eu descrubo quais tabelas, índices, bancos de dados e usuários
+    estão definidos?
+    
+   psql tem uma variadade de comandos com barra invertida que mostram
+   tais informações. Utilize \? para vê-los. Há também tabelas do sistema
+   que começam com pg_ e que os descrevem também. Também, psql -l listará
+   todos os bancos de dados.
+   
+   Veja também o arquivo pgsql/src/tutorial/syscat.source. Ele ilustra
+   muitos SELECTs necessários para obter informação das tabelas do
+   sistema de banco de dados.
+   
+    4.8) Minhas consultas estão lentas ou não estão utilizando índices. Por
+    que?
+    
+   Índices não são automaticamente utilizados por toda consulta. Índices
+   só são utilizados se uma tabela é maior do que o tamanho mínimo e uma
+   consulta seleciona somente uma porcentagem pequena de registros de uma
+   tabela. Isto porque o acesso randômico ao disco causado por uma busca
+   por índice pode ser mais lento do que uma leitura ao longo da tabela
+   ou uma busca sequencial.
+   
+   Para determinar se um índice pode ser utilizado, o PostgreSQL deve ter
+   estatísticas sobre a tabela. Estas estatísticas são coletadas
+   utilizando VACUUM ANALYZE ou simplesmente ANALYZE. Utilizando
+   estatísticas, o otimizador saber quantos registros há na tabela e pode
+   determinar melhor se um índice deve ser utilizado. Estatísticas também
+   são úteis para determinar a ordem de junção ótima e métodos de junção.
+   Coleção de estatísticas deve ser feita periodicamente a medida que o
+   conteúdo da tabela muda.
+   
+   Índices não são normalmente utilizados para ORDER BY ou para fazer
+   junções. Uma busca sequencial seguida por uma ordenação explícita é
+   usualmente mais rápida do que uma busca por índice em uma tabela
+   grande.
+   Contudo, LIMIT combinado com ORDER BY frequentemente utilizará um
+   índice porque somente uma pequena porção da tabela é retornada. De
+   fato, embora MAX() e MIN() não utilizem índices, é possível obter tais
+   valores utilizando um índice com ORDER BY e LIMIT:
+    SELECT col
+    FROM tab
+    ORDER BY col [ DESC ]
+    LIMIT 1;
+
+   Se você acredita que o otimizador está incorreto ao escolher uma busca
+   sequencial, utilize SET enable_seqscan TO 'off' e execute testes para
+   ver se uma busca por índice é de fato é mais rápida.
+   
+   Quando é utilizado operadores com curingas tais como LIKE ou ~,
+   índices só podem ser utilizados em certas circunstâncias:
+     * O ínício de uma string de busca deve ser o início da string, i.e.
+          + modelos no LIKE não devem começar com %.
+          + modelos no ~ (expressão regular) não devem começar com ^.
+     * A string de busca não pode iniciar com uma classe de caracteres,
+       i.e. [a-e].
+     * Buscas que não diferenciam maiúsculas de minúsculas tais como
+       ILIKE e ~* não utilizam índices. Ao invés, utilize índices
+       funcionais, que são descritos na seção 4.12.
+     * A localidade padrão C deve ser utilizada durante o initdb.
+       
+    4.9) Como eu vejo como o otimizador de consulta está avaliando a minha
+    consulta?
+    
+   Veja o comando EXPLAIN no manual.
+   
+    4.10) O que é um índice de árvore R?
+    
+   Um índice de árvore B é utilizado para indexação de dados espaciais.
+   Um índice do tipo hash não pode manipular buscas em intervalos. Um
+   índice de árvore B manipula somente buscas em intervalos em uma
+   dimensão. Um índice de árvore R pode manipular dados
+   multidimensionais. Por exemplo, se um índice de árvore R pode ser
+   contruido em um atributo do tipo point, o sistema pode responder mais
+   eficientemente consultas tais como "busque todos os pontos dentro dos
+   limites do retângulo."
+   
+   A pesquisa canônica que descreve o modelo original da árvore R está
+   em:
+   
+   Guttman, A. "R-trees: A Dynamic Index Structure for Spatial
+   Searching." Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of
+   Data, 45-57.
+   
+   Você também pode encontrar esse documento em "Readings in Database
+   Systems" do Stonebraker
+   
+   Árvores R podem manipular polígonos e caixas. Na teoria, árvores R
+   podem ser extendidos para manipular um grande número de dimensões. Na
+   prática, extendendo árvores R requer um pouco de trabalho e nós não
+   temos atualmente nenhuma documentação de como fazé-lo.
+   
+    4.11) O que é um Otimizador Genético de Consultas?
+    
+   O módulo GEQO acelera a otimização de consultas quando se faz uma
+   junção de várias tabelas utilizando o conceito de Algoritmo Genético
+   (AG). Isso permite a manipulação de consultas com muitas junções
+   utilizando buscas não exaustivas.
+   
+    4.12) Como eu faço buscas com expressões regulares e buscas com expressões
+    regulares sem diferenciar maiúsculas de minúsculas? Como eu utilizo um
+    índice para buscas que não diferenciam maiúsculas de minúsculas?
+    
+   O operador ~ faz avaliação de expressões regulares, e ~* faz avaliação
+   não sensível a maiúsculas de expressões regulares. A variante não
+   sensível a maiúsculas do LIKE é chamada de ILIKE.
+   
+   Comparações de igualdade não sensíveis a maiúsculas são normalmente
+   expressadas como:
+    SELECT *
+    FROM tab
+    WHERE lower(col) = 'abc';
+
+   Isso não irá utilizar o índice padrão. Contudo, se você criar um
+   índice funcional, ele será utilizado:
+    CREATE INDEX tabindex ON tab (lower(col));
+
+    4.13) Em uma consulta, como eu detecto se um campo é NULL?
+    
+   Você pode testar a coluna com IS NULL e IS NOT NULL.
+   
+    4.14) Qual é a difenrença entre os vários tipos de dados de caracteres?
+    
+Tipo            Nome Interno    Notas
+--------------------------------------------------
+VARCHAR(n)      varchar         tamanho especifica o comprimento máximo, sem pr
+eenchimento
+CHAR(n)         bpchar          preenchimento em branco para comprimento fixo e
+specífico
+TEXT            text            nenhum limite superior específico no compriment
+o
+BYTEA           bytea           vetor de bytes de comprimento variável (null-by
+te safe)
+"char"          char            um caracter
+
+   Você verá o nome interno quando examinar o catálogo do sistema e em
+   algumas mensagens de erro.
+   
+   Os primeiros quatro tipos acima são do tipo "varlena" (i.e., os
+   primeiros quatro bytes no disco são o comprimento seguido pelos
+   dados). Consequentemente o espaço atual utilizado é ligeiramente maior
+   do que o tamanho declarado. Contudo, esses tipos de dados também são
+   sujeitos a compressão ou a serem armazenados fora do padrão utilizando
+   o TOAST, então o espaço em disco pode também ser bem menor do que o
+   esperado.
+   VARCHAR(n) é melhor quando está armazenando cadeias de caracteres de
+   comprimento variável e há um limite de tamanho desta cadeia. TEXT é
+   para cadeias de caracteres de comprimento ilimitado, com o máximo de
+   um gigabyte.
+   
+   CHAR(n) preenche com espaços em branco até o tamanho especificado,
+   enquanto o VARCHAR(n) armazena somente os caracteres fornecidos. BYTEA
+   é para armazenar dados binários, particularmente valores que incluem
+   bytes NULL. Todos os tipos descritos aqui tem características de
+   performance similares.
+   
+    4.15.1) Como eu crio um campo serial/auto incremento?
+    
+   PostgreSQL suporta o tipo de dados SERIAL. Ele cria automaticamente
+   uma sequência. Por exemplo:
+    CREATE TABLE pessoa (
+        id   SERIAL,
+        nome TEXT
+    );
+
+   é automaticamente traduzido em:
+    CREATE SEQUENCE pessoa_id_seq;
+    CREATE TABLE pessoa (
+        id   INT4 NOT NULL DEFAULT nextval('pessoa_id_seq'),
+        nome TEXT
+    );
+
+   Veja a página sobre create_sequence no manual para mais informação
+   sobre sequências. Você também pode utilizar o campo OID para cada
+   registro como um valor único. Contudo, se você precisar exportar e
+   importar o banco de dados, você precisa utilizar a opção -o do pg_dump
+   ou a opção COPY WITH OIDS para preservar os OIDs.
+   
+    4.15.2) Como eu consigo o valor de um campo SERIAL?
+    
+   Uma abordagem é obter o próximo valor SERIAL de uma sequência com a
+   função nextval() antes de inserir e então inserir com o valor
+   explicitamente. Utilizando o exemplo da tabela em 4.15.1, um exemplo
+   em pseudo-linguagem se pareceria com isto:
+    novo_id = execute("SELECT nextval('pessoa_id_seq')");
+    execute("INSERT INTO pessoa (id, nome) VALUES (novo_id, 'Blaise Pascal')");
+
+   Você poderia então ter também o novo valor armazenado em novo_id para
+   utilizar em outras consultas (i.e., como uma chave estrangeira da
+   tabela pessoa). Note que o nome da SEQUENCE criada automaticamente
+   será <tabela>_<coluna>_seq, onde tabela e coluna são os nomes da
+   tabela e da coluna SERIAL, respectivamente.
+   
+   Alternativamente, você poderia obter o valor SERIAL atribuído com a
+   função currval() depois de tê-lo inserido por padrão, i.e.,
+    execute("INSERT INTO pessoa (nome) VALUES ('Blaise Pascal')");
+    novo_id = execute("SELECT currval('pessoa_id_seq')");
+
+   Finalmente, você poderia utilizar o OID retornado da sentença INSERT
+   para obter o valor padrão, embora este seja a abordagem menos
+   portável, pois o valor do oid não ultrapassa 4 bilhões. Em Perl,
+   utilizando DBI com o módulo DBD::Pg de Edmund Mergl, o valor do oid
+   está disponível via $sth->{pg_oid_status} depois de $sth->execute().
+   
+    4.15.3) currval() e nextval() não lidam com condição de corrida com outros
+    usuários?
+    
+   Não. currval() retorna o valor atual atribuido pelo seu núcleo
+   (backend), e não por todos os usuários.
+   
+    4.15.4) Por que os números da minha sequência não são reutilizados quando
+    uma transação é abortada? Por que há intervalos nos números da minha
+    sequência/coluna SERIAL?
+    
+   Para melhorar a concorrência, valores da sequência são atribuídos a
+   transações correntes e não são travados até que a transação seja
+   finalizada. Isso causa intervalos na numeração por causa de transações
+   abortadas.
+   
+    4.16) O que é um OID? O que é um TID?
+    
+   OIDs são a resposta do PostgreSQL a ids únicos de registros. Cada
+   registro que é criado no PostgreSQL recebe um OID único. Todos OIDs
+   produzidos durante o initdb são menores do que 16384 (de
+   include/access/transam.h). Todos os OIDs criados pelo usuário são
+   iguais ou maiores do que este valor. Por padrão, todos estes OIDs são
+   únicos não somente na tabela ou no banco de dados, mas na instalação
+   do PostgreSQL.
+   
+   PostgreSQL utiliza OIDs nas tabelas internas do sistema para ligar
+   registros entre tabelas. Estes OIDs podem ser utilizados para
+   identificar registros de usuários específicos e podem ser utilizados
+   em junções. É recomendado que você utilize o tipo de coluna OID para
+   armazenar valores OID. Você pode criar um índice no campo OID para
+   acesso rápido.
+   
+   OIDs são atribuídos para todas os registros novos de uma área central
+   que é utilizada por todos os bancos de dados. Se você quer mudar o OID
+   de alguma coisa, ou se você quer fazer uma cópia da tabela, com os
+   OIDs, não há razão para que você não possa fazê-la:
+        CREATE TABLE nova_tabela(oid_antigo oid, minha_coluna int);
+        SELECT oid_antigo, minha_coluna INTO novo FROM tabela_antiga;
+        COPY novo TO '/tmp/pgtable';
+        DELETE FROM novo;
+        COPY nova_tabela WITH OIDS FROM '/tmp/pgtable';
+
+   OIDs são armazenados como inteiros de 4 bytes, e não ultrapassam 4
+   bilhões. Ninguém nunca reportou que isso tenha ocorrido, e nós
+   planejamos remover o limite antes que algúem o alcançe.
+   
+   TIDs são utilizados para identificar registros físicos específicos com
+   valores de bloco e deslocamento. TIDs mudam após registros serem
+   modificados ou recarregados. Eles são utilizados por índices para
+   apontar para registros físicos.
+   
+    4.17) Qual é o significado de alguns termos utilizados no PostgreSQL?
+    
+   O código-fonte e documentação antiga utiliza termos de uso comum. Aqui
+   estão alguns deles:
+     * tabela, relação, classe
+     * linha, registro, tupla
+     * coluna, campo, atributo
+     * recupera, seleciona
+     * altera, atualiza
+     * incrementa, insere
+     * OID, valor serial
+     * portal, cursor
+     * intervalo variável, nome da tabela, alias de tabela
+       
+   Uma lista de termos gerais de bancos de dados pode ser encontrada em:
+   http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary
+   /glossary.html
+   
+    4.18) Por que eu recebo o erro "ERROR: Memory exhausted in
+    AllocSetAlloc()"?
+    
+   Você provavelmente está sem memória virtual no sistema, ou o seu
+   núcleo (kernel) tem um limite baixo para certos recursos. Tente isto
+   antes de iniciar o postmaster:
+            ulimit -d 262144
+            limit datasize 256m
+
+
+   Dependendo da sua shell, somente um desses comando terá sucesso, mas
+   ele definirá o segmento de dados do seu processo com um limite maior e
+   talvez permita que a consulta seja feita. Este comando é aplicado ao
+   processo atual e todos os subprocessos criados depois do comando ser
+   executado. Se você tiver problemas com o cliente SQL porque o núcleo
+   (backend) retornou muitos dados, tente-o antes de iniciar o cliente.
+   
+    4.19) Como eu informo qual versão do PostgreSQL eu estou utilizando?
+    
+   No psql, digite SELECT version();
+   
+    4.20) Por que minhas operações com objetos grandes retorna "invalid large
+    obj descriptor"?
+    
+   Você precisa colocar BEGIN WORK e COMMIT ao redor de qualquer uso de
+   operações com objetos grandes, isto é, ao redor de lo_open ...
+   lo_close.
+   
+   Atualmente PostgreSQL obriga o fechamento de manipulação de um objeto
+   grande quando uma transação é submetida (commit). Então a primeira
+   tentativa de fazer qualquer coisa com o manipulador irá retornar
+   invalid large obj descriptor. Então o código que funcionava (ao menos
+   a algum tempo atrás) agora irá retornar uma mensagem de erro se você
+   não utilizar uma transação.
+   
+    4.21) Como eu crio uma coluna que conterá por padrão a hora atual?
+    
+   Utilize CURRENT_TIMESTAMP:
+CREATE TABLE teste (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
+
+    4.22) Por que as minhas subconsultas que utilizam IN estão tão lentas?
+    
+   Em versões anteriores a 7.4, subconsultas eram agrupadas em consultas
+   externas utilizando uma busca sequencial no resultado da subconsulta
+   de cada registro da consulta externa. Se uma subconsulta retorna
+   somente alguns registros e a consulta externa retorna muitos
+   registros, IN é mais rápido. Para acelerar consultas externas,
+   substitua IN por EXISTS:
+    SELECT *
+    FROM tab
+    WHERE col IN (SELECT subcol FROM subtab);
+
+   por:
+    SELECT *
+    FROM tab
+    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
+
+   Para isto ser rápido, subcol deve ser uma coluna indexada.
+   
+   A partir da versão 7.4, IN utiliza a mesma técnica de agrupamento do
+   que consultas normais, e é recomendado utilizar EXISTS.
+   
+    4.23) Como eu faço uma junção externa (outer join)?
+    
+   PostgreSQL suporta junções externas utilizando a sintaxe padrão do
+   SQL. Aqui temos dois exemplos:
+    SELECT *
+    FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
+
+   or
+    SELECT *
+    FROM t1 LEFT OUTER JOIN t2 USING (col);
+
+   Essas duas consultas indênticas juntam t1.col com t2.col, e também
+   retornam qualquer registro que não foi juntado em t1 (aqueles que não
+   combinaram com t2). Uma junção a direita RIGHT adicionaria registros
+   que não foram juntados da tabela t2. Uma junção completa (FULL)
+   retornaria os registros combinados mais todos os registros não
+   combinados de t1 e t2. A palavra OUTER é opcional e é assumida nas
+   junções LEFT, RIGHT e FULL. Junções ordinárias são chamadas junções
+   naturais (INNER).
+   
+   Em versões anteriores, junções externas podiam ser simuladas
+   utilizando UNION e NOT IN. Por exemplo, quando juntar tab1 e tab2, a
+   consulta a seguir faz uma junção externa de duas tabelas:
+    SELECT tab1.col1, tab2.col2
+    FROM tab1, tab2
+    WHERE tab1.col1 = tab2.col1
+    UNION ALL
+    SELECT tab1.col1, NULL
+    FROM tab1
+    WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
+    ORDER BY col1
+
+    4.24) Como eu faço consultas utilizando múltiplos bancos de dados?
+    
+   Não há outra maneira de consultar um banco de dados caso ele não seja
+   o atual. Porque o PostgreSQL carrega catálogos do sistema específicos
+   do banco de dados, é incerto como uma consulta em banco de dados
+   distintos pode se comportar.
+   
+   contrib/dblink permite consultas em bancos de dados distintos
+   utilizando chamadas de funções. É claro, que um cliente pode fazer
+   conexões simultâneas em bancos de dados diferentes e juntar os
+   resultados no cliente.
+   
+    4.25) Como eu retorno múltiplos registros ou colunas de uma função?
+    
+   No 7.3, você pode facilmente retornar múltiplos registros ou colunas
+   de uma função,
+   http://techdocs.postgresql.org/guides/SetReturningFunctions.
+   
+    4.26) Por que eu não posso confiar na criação/remoção de tabelas
+    temporárias em funções PL/PgSQL?
+    
+   PL/PgSQL armazena o conteúdo da função, e o efeito indesejado é que se
+   uma função PL/PgSQL acessa uma tabela temporária, e aquela tabela é
+   removida e criada novamente, e a função é chamada novamente, a função
+   irá falhar porque o conteúdo armazenado da função ainda apontará para
+   a tabela temporária antiga. A solução é utilizar o EXECUTE para acesso
+   a tabelas temporárias no PL/PgSQL. Isto irá fazer com que a consulta
+   seja avaliada toda vez.
+   
+    4.27) Que opções para replicação estão disponíveis?
+    
+   Há várias opções de replicação mestre/escravo disponíveis. Isto
+   permite somente que o mestre faça mudanças no banco de dados e o
+   escravo só pode ler o banco de dados. Abaixo em
+   http://gborg.PostgreSQL.org/genpage?replication_research lista-os. Uma
+   solução de replicação de múltiplos mestres está sendo desenvolvida em
+   http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
+   
+    4.28) Que opções para encriptação estão disponíveis?
+    
+     * No contrib/pgcrypto contém muitas funções de encriptação para
+       serem utilizados em consultas SQL.
+     * Para encriptar a transmissão do cliente ao servidor, o servidor
+       deve ter a opção ssl definida como true no postgresql.conf, e um
+       registro host ou hostssl deve existir no pg_hba.conf, e o sslmode
+       no cliente não deve estar disable. (Note que também é possível
+       utilizar outros esquemas de transporte encriptado, tais como
+       stunnel ou ssh, ao invés da conexão SSL nativa do PostgreSQL.)
+     * Senhas dos usuários do banco de dados são automaticamente
+       encriptadas quando armazenadas na versão 7.3. Em versões
+       anteriores, você deve habilitar a opção PASSWORD_ENCRYPTION no
+       postgresql.conf.
+     * O servidor pode executar utilizando um sistema de arquivos
+       encriptado.
+     _________________________________________________________________
+   
+                          Extendendo o PostgreSQL
+                                      
+    5.1) Eu escrevi uma função. Quando eu executo-a no psql, por que ela
+    finaliza o programa com descarga de memória (core dump)?
+    
+   O problema pode ser várias coisas. Tente testar sua função em um
+   programa independente.
+   
+    5.2) Como eu posso contribuir com alguns tipos e funções novas para o
+    PostgreSQL?
+    
+   Envie as suas extensões para a lista de discussão pgsql-hackers, e
+   elas eventualmente serão colocadas no subdiretório contrib/.
+   
+    5.3) Como eu escrevo uma função em C que retorna uma tupla?
+    
+   Em versões do PostgreSQL a partir da 7.3, funções que retornam tuplas
+   são suportadas em C, PL/PgSQL e SQL. Veja o Guia do Programador para
+   mais informação. Um exemplo de uma função escrita em C e que retorna
+   tuplas pode ser encontrada em contrib/tablefunc.
+   
+    5.4) Eu alterei um arquivo do código-fonte. Por que a recompilação não
+    surtiu efeito?
+    
+   Os arquivos Makefiles não tem as dependências corretas para incluir
+   arquivos. Você deve executar um make clean e então o make. Se você
+   está utilizando o GCC você pode utilizar a opção --enable-depend do
+   configure para o compilador computar as dependências automaticamente.
