@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.138 2003/05/15 15:50:18 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.139 2003/05/15 19:34:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/lsyscache.h"
+#include "utils/pg_locale.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
 
