@@ -582,7 +582,14 @@ AC_CHECK_FUNC(cbrt,
 	      AC_CHECK_LIB(m, cbrt, AC_DEFINE(HAVE_CBRT)))
 AC_CHECK_FUNC(rint,
 	      AC_DEFINE(HAVE_RINT),
-	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT)))
+[
+# On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a
+SPECIALMATHLIB=""
+if [[ -r /lib/pa1.1/libm.a ]] ; then
+    SPECIALMATHLIB="-L /lib/pa1.1 -lm"
+fi
+	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $SPECIALMATHLIB)
+])
 
 dnl Check for X libraries
 
