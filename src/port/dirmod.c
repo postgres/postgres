@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.32 2004/10/28 22:09:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.33 2004/11/27 22:44:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,6 @@
 #include <w32api/winioctl.h>
 #endif
 #endif
-
-#define _(x) gettext((x))
 
 #ifndef FRONTEND
 
@@ -74,7 +72,7 @@ fe_palloc(Size size)
 
 	if ((res = malloc(size)) == NULL)
 	{
-		fprintf(stderr, _("out of memory\n"));
+		fprintf(stderr, gettext("out of memory\n"));
 		exit(1);
 	}
 	return res;
@@ -87,7 +85,7 @@ fe_pstrdup(const char *string)
 
 	if ((res = strdup(string)) == NULL)
 	{
-		fprintf(stderr, _("out of memory\n"));
+		fprintf(stderr, gettext("out of memory\n"));
 		exit(1);
 	}
 	return res;
@@ -100,7 +98,7 @@ fe_repalloc(void *pointer, Size size)
 
 	if ((res = realloc(pointer, size)) == NULL)
 	{
-		fprintf(stderr, _("out of memory\n"));
+		fprintf(stderr, gettext("out of memory\n"));
 		exit(1);
 	}
 	return res;

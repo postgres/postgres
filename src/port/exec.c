@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.32 2004/11/06 23:06:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.33 2004/11/27 22:44:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,6 @@
 #ifndef WIN32_CLIENT_ONLY
 #include <unistd.h>
 #endif
-
-#define _(x) gettext(x)
 
 #ifndef S_IRUSR					/* XXX [TRH] should be in a header */
 #define S_IRUSR		 S_IREAD
@@ -192,7 +190,7 @@ find_my_exec(const char *argv0, char *retpath)
 
 	if (!getcwd(cwd, MAXPGPATH))
 	{
-		log_error(_("could not identify current directory: %s"),
+		log_error(gettext("could not identify current directory: %s"),
 				  strerror(errno));
 		return -1;
 	}
@@ -306,7 +304,7 @@ resolve_symlinks(char *path)
 	 */
 	if (!getcwd(orig_wd, MAXPGPATH))
 	{
-		log_error(_("could not identify current directory: %s"),
+		log_error(gettext("could not identify current directory: %s"),
 				  strerror(errno));
 		return -1;
 	}
@@ -322,7 +320,7 @@ resolve_symlinks(char *path)
 			*lsep = '\0';
 			if (chdir(path) == -1)
 			{
-				log_error(_("could not change directory to \"%s\""), path);
+				log_error(gettext("could not change directory to \"%s\""), path);
 				return -1;
 			}
 			fname = lsep + 1;
@@ -337,7 +335,7 @@ resolve_symlinks(char *path)
 		rllen = readlink(fname, link_buf, sizeof(link_buf));
 		if (rllen < 0 || rllen >= sizeof(link_buf))
 		{
-			log_error(_("could not read symbolic link \"%s\""), fname);
+			log_error(gettext("could not read symbolic link \"%s\""), fname);
 			return -1;
 		}
 		link_buf[rllen] = '\0';
@@ -349,7 +347,7 @@ resolve_symlinks(char *path)
 
 	if (!getcwd(path, MAXPGPATH))
 	{
-		log_error(_("could not identify current directory: %s"),
+		log_error(gettext("could not identify current directory: %s"),
 				  strerror(errno));
 		return -1;
 	}
@@ -358,7 +356,7 @@ resolve_symlinks(char *path)
 
 	if (chdir(orig_wd) == -1)
 	{
-		log_error(_("could not change directory to \"%s\""), orig_wd);
+		log_error(gettext("could not change directory to \"%s\""), orig_wd);
 		return -1;
 	}
 
@@ -568,13 +566,13 @@ pclose_check(FILE *stream)
 		perror("pclose failed");
 	}
 	else if (WIFEXITED(exitstatus))
-		log_error(_("child process exited with exit code %d"),
+		log_error(gettext("child process exited with exit code %d"),
 				  WEXITSTATUS(exitstatus));
 	else if (WIFSIGNALED(exitstatus))
-		log_error(_("child process was terminated by signal %d"),
+		log_error(gettext("child process was terminated by signal %d"),
 				  WTERMSIG(exitstatus));
 	else
-		log_error(_("child process exited with unrecognized status %d"),
+		log_error(gettext("child process exited with unrecognized status %d"),
 				  exitstatus);
 
 	return -1;
