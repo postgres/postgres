@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.96 2003/09/29 00:05:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.96.2.1 2004/05/31 18:32:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -935,16 +935,14 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 int
-timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
+timestamp2tm(Timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int			date,
-				date0;
+	int			date;
 	int64		time;
 
 #else
-	double		date,
-				date0;
+	double		date;
 	double		time;
 #endif
 	time_t		utime;
@@ -952,8 +950,6 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	struct tm  *tx;
 #endif
-
-	date0 = POSTGRES_EPOCH_JDATE;
 
 	/*
 	 * If HasCTZSet is true then we have a brute force time zone
@@ -989,11 +985,11 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 #endif
 
 	/* Julian day routine does not work for negative Julian days */
-	if (date < -date0)
+	if (date < -POSTGRES_EPOCH_JDATE)
 		return -1;
 
 	/* add offset to go from J2000 back to standard Julian date */
-	date += date0;
+	date += POSTGRES_EPOCH_JDATE;
 
 	j2date((int) date, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
@@ -1022,11 +1018,19 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 		 */
 		else if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		{
+			/*
+			 * Convert to integer, avoiding platform-specific
+			 * roundoff-in-wrong-direction errors, and adjust to
+			 * Unix epoch.  Note we have to do this in one step
+			 * because the intermediate result before adjustment
+			 * won't necessarily fit in an int32.
+			 */
 #ifdef HAVE_INT64_TIMESTAMP
-			utime = ((dt / INT64CONST(1000000))
-					 + ((date0 - UNIX_EPOCH_JDATE) * INT64CONST(86400)));
+			utime = (dt - *fsec) / INT64CONST(1000000) +
+				(POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400;
 #else
-			utime = (dt + ((date0 - UNIX_EPOCH_JDATE) * 86400));
+			utime = rint(dt - *fsec +
+						 (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400);
 #endif
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
