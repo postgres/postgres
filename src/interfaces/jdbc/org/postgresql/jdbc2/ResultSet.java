@@ -798,8 +798,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public java.math.BigDecimal getBigDecimal(int columnIndex) throws SQLException
     {
-      // Now must call BigDecimal with a scale otherwise JBuilder barfs
-      return getBigDecimal(columnIndex,0);
+      return getBigDecimal(columnIndex,-1);
     }
 
     public java.math.BigDecimal getBigDecimal(String columnName) throws SQLException
