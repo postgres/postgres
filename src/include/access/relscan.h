@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.29 2002/09/04 20:31:37 momjian Exp $
+ * $Id: relscan.h,v 1.30 2003/01/08 19:41:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,15 @@ typedef struct IndexScanDescData
 	/* NB: if xs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
 
 	FmgrInfo	fn_getnext;		/* cached lookup info for AM's getnext fn */
+
+	/*
+	 * If keys_are_unique and got_tuple are both true, we stop calling the
+	 * index AM; it is then necessary for index_getnext to keep track of
+	 * the logical scan position for itself.  It does that using
+	 * unique_tuple_pos: -1 = before row, 0 = on row, +1 = after row.
+	 */
+	int			unique_tuple_pos; /* logical position */
+	int			unique_tuple_mark; /* logical marked position */
 
 	PgStat_Info xs_pgstat_info; /* statistics collector hook */
 } IndexScanDescData;
