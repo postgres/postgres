@@ -1087,11 +1087,11 @@ OptTemp:  	TEMPORARY		{ $$ = make_str("temporary"); }
 		| LOCAL TEMPORARY	{ $$ = make_str("local temporary"); }
 		| LOCAL TEMP		{ $$ = make_str("local temp"); }
 		| GLOBAL TEMPORARY	{
-					  mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE/GLOBAL TEMPORARY will be passed to backend");
+					  mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE / GLOBAL TEMPORARY will be passed to backend");
 					  $$ = make_str("global temporary");
 					}
 		| GLOBAL TEMP		{
-					  mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE/GLOBAL TEMP will be passed to backend");
+					  mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE / GLOBAL TEMP will be passed to backend");
 					  $$ = make_str("global temp");
 					}
 		| /*EMPTY*/		{ $$ = EMPTY; }
@@ -1116,7 +1116,7 @@ columnDef:  ColId Typename ColQualList opt_collate
 				{
 					if (strlen($4) > 0)
 					{
- 						sprintf(errortext, "Currently unsupported CREATE TABLE/COLLATE %s will be passed to backend", $4);
+ 						sprintf(errortext, "Currently unsupported CREATE TABLE / COLLATE %s will be passed to backend", $4);
  						mmerror(ET_NOTICE, errortext);
 					}
 					$$ = cat_str(4, $1, $2, $3, $4);
@@ -1278,7 +1278,7 @@ CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS
 		{ FoundInto = 0; } SelectStmt
 		{
 			if (FoundInto == 1)
-				mmerror(ET_ERROR, "CREATE TABLE/AS SELECT may not specify INTO");
+				mmerror(ET_ERROR, "CREATE TABLE / AS SELECT may not specify INTO");
 
 			$$ = cat_str(7, make_str("create"), $2, make_str("table"), $4, $5, make_str("as"), $8); 
 		}
@@ -2626,12 +2626,12 @@ OptTempTableName:  TEMPORARY opt_table relation_name
 			}
                        | GLOBAL TEMPORARY opt_table relation_name
                         {
-				mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE/GLOBAL TEMPORARY will be passed to backend");
+				mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE / GLOBAL TEMPORARY will be passed to backend");
 				$$ = cat_str(3, make_str("global temporary"), $3, $4);
                         }
                        | GLOBAL TEMP opt_table relation_name
                         {
-				mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE/GLOBAL TEMP will be passed to backend");
+				mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE / GLOBAL TEMP will be passed to backend");
 				$$ = cat_str(3, make_str("global temp"), $3, $4);
                         }
                        | TABLE relation_name

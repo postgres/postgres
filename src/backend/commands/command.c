@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.147 2001/10/28 06:25:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.148 2001/10/31 04:49:43 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1432,7 +1432,7 @@ AlterTableAddConstraint(char *relationName,
 																0, 0, 0);
 
 									if (!HeapTupleIsValid(indexTuple))
-										elog(ERROR, "ALTER TABLE/ADD CONSTRAINT: Index \"%u\" not found",
+										elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Index \"%u\" not found",
 											 indexoid);
 									indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
@@ -1510,7 +1510,7 @@ AlterTableAddConstraint(char *relationName,
 											NIL);
 
 								/* Issue notice */
-								elog(NOTICE, "ALTER TABLE/ADD UNIQUE will create implicit index '%s' for table '%s'",
+								elog(NOTICE, "ALTER TABLE / ADD UNIQUE will create implicit index '%s' for table '%s'",
 									 iname, relationName);
 								if (index_found)
 									elog(NOTICE, "Unique constraint supercedes existing index on relation \"%s\".  Drop the existing index to remove redundancy.", relationName);

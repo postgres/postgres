@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.270 2001/10/23 02:50:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.271 2001/10/31 04:49:43 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1300,7 +1300,7 @@ columnDef:  ColId Typename ColQualList opt_collate
 					n->constraints = $3;
 
 					if ($4 != NULL)
-						elog(NOTICE,"CREATE TABLE/COLLATE %s not yet implemented"
+						elog(NOTICE,"CREATE TABLE / COLLATE %s not yet implemented"
 							 "; clause ignored", $4);
 
 					$$ = (Node *)n;
@@ -1611,7 +1611,7 @@ CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SelectStmt
 					 */
 					SelectStmt *n = findLeftmostSelect((SelectStmt *) $7);
 					if (n->into != NULL)
-						elog(ERROR,"CREATE TABLE/AS SELECT may not specify INTO");
+						elog(ERROR,"CREATE TABLE / AS SELECT may not specify INTO");
 					n->istemp = $2;
 					n->into = $4;
 					if ($5 != NIL)
@@ -2171,7 +2171,7 @@ FetchStmt:  FETCH direction fetch_how_many from_in name
 					if ($2 == RELATIVE)
 					{
 						if ($3 == 0)
-							elog(ERROR,"FETCH/RELATIVE at current position is not supported");
+							elog(ERROR,"FETCH / RELATIVE at current position is not supported");
 						$2 = FORWARD;
 					}
 					if ($3 < 0)
@@ -2299,7 +2299,7 @@ direction:	FORWARD					{ $$ = FORWARD; }
 		| RELATIVE						{ $$ = RELATIVE; }
 		| ABSOLUTE
 			{
-				elog(NOTICE,"FETCH/ABSOLUTE not supported, using RELATIVE");
+				elog(NOTICE,"FETCH / ABSOLUTE not supported, using RELATIVE");
 				$$ = RELATIVE;
 			}
 		;
@@ -2605,12 +2605,12 @@ opt_arg:  IN
 				}
 		| OUT
 				{
-					elog(ERROR, "CREATE FUNCTION/OUT parameters are not supported");
+					elog(ERROR, "CREATE FUNCTION / OUT parameters are not supported");
 					$$ = TRUE;
 				}
 		| INOUT
 				{
-					elog(ERROR, "CREATE FUNCTION/INOUT parameters are not supported");
+					elog(ERROR, "CREATE FUNCTION / INOUT parameters are not supported");
 					$$ = FALSE;
 				}
 		;
@@ -2955,7 +2955,7 @@ opt_chain: AND NO CHAIN
 					 * if they don't support it. So we can't just ignore it.
 					 * - thomas 2000-08-06
 					 */
-					elog(ERROR, "COMMIT/CHAIN not yet supported");
+					elog(ERROR, "COMMIT / CHAIN not yet supported");
 					$$ = TRUE;
 				}
 		;
@@ -6113,7 +6113,7 @@ mapTargetColumns(List *src, List *dst)
 	ResTarget *d;
 
 	if (length(src) != length(dst))
-		elog(ERROR,"CREATE TABLE/AS SELECT has mismatched column count");
+		elog(ERROR,"CREATE TABLE / AS SELECT has mismatched column count");
 
 	while ((src != NIL) && (dst != NIL))
 	{

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.13 2001/10/25 05:50:11 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.14 2001/10/31 04:49:44 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -205,7 +205,7 @@ ECPGnoticeProcessor(void *arg, const char *message)
 	/* these are harmless - do nothing */
 
 	/*
-	 * NOTICE:	CREATE TABLE/PRIMARY KEY will create implicit index '*'
+	 * NOTICE:	CREATE TABLE / PRIMARY KEY will create implicit index '*'
 	 * for table '*'
 	 */
 

@@ -329,3 +329,56 @@ drop table atacc3;
 drop table atacc2;
 drop table atacc1;
 
+-- test unique constraint adding
+
+create table atacc1 ( test int );
+-- add a unique constraint
+alter table atacc1 add constraint atacc_test1 unique (test);
+-- insert first value
+insert into atacc1 (test) values (2);
+-- should fail
+insert into atacc1 (test) values (2);
+-- should succeed
+insert into atacc1 (test) values (4);
+-- try adding a unique oid constraint
+alter table atacc1 add constraint atacc_oid1 unique(oid);
+drop table atacc1;
+
+-- let's do one where the unique constraint fails when added
+create table atacc1 ( test int );
+-- insert soon to be failing rows
+insert into atacc1 (test) values (2);
+insert into atacc1 (test) values (2);
+-- add a unique constraint (fails)
+alter table atacc1 add constraint atacc_test1 unique (test);
+insert into atacc1 (test) values (3);
+drop table atacc1;
+
+-- let's do one where the unique contsraint fails
+-- because the column doesn't exist
+create table atacc1 ( test int );
+-- add a unique constraint (fails)
+alter table atacc1 add constraint atacc_test1 unique (test1);
+drop table atacc1;
+
+-- something a little more complicated
+create table atacc1 ( test int, test2 int);
+-- add a unique constraint
+alter table atacc1 add constraint atacc_test1 unique (test, test2);
+-- insert initial value
+insert into atacc1 (test,test2) values (4,4);
+-- should fail
+insert into atacc1 (test,test2) values (4,4);
+-- should all succeed
+insert into atacc1 (test,test2) values (4,5);
+insert into atacc1 (test,test2) values (5,4);
+insert into atacc1 (test,test2) values (5,5);
+drop table atacc1;
+
+-- lets do some naming tests
+create table atacc1 (test int, test2 int, unique(test));
+alter table atacc1 add unique (test2);
+-- should fail for @@ second one @@
+insert into atacc1 (test2, test) values (3, 3);
+insert into atacc1 (test2, test) values (2, 3);
+drop table atacc1;

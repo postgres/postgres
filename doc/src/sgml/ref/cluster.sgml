@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.11 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.12 2001/10/31 04:49:43 momjian Exp $
 Postgres documentation
 -->
 
@@ -189,7 +189,7 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
     which uses the <productname>Postgres</productname> sorting code in 
     the ORDER BY clause to match the index, and which is much faster for
     unordered data. You then drop the old table, use
-    <command>ALTER TABLE/RENAME</command>
+    <command>ALTER TABLE...RENAME</command>
     to rename <replaceable class="parameter">temp</replaceable> to the old name, and
     recreate any indexes. The only problem is that <acronym>OID</acronym>s
     will not be preserved. From then on, <command>CLUSTER</command> should be

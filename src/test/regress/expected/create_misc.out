@@ -137,7 +137,7 @@ INSERT INTO iportaltest (i, d, p)
 ---
 CREATE TABLE serialTest (f1 text, f2 serial);
 NOTICE:  CREATE TABLE will create implicit sequence 'serialtest_f2_seq' for SERIAL column 'serialtest.f2'
-NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'serialtest_f2_key' for table 'serialtest'
+NOTICE:  CREATE TABLE / ADD UNIQUE will create implicit index 'serialtest_f2_key' for table 'serialtest'
 INSERT INTO serialTest VALUES ('foo');
 INSERT INTO serialTest VALUES ('bar');
 INSERT INTO serialTest VALUES ('force', 100);
