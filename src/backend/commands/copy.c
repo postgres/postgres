@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.88 1999/09/18 19:06:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.89 1999/09/27 20:00:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "lib/stringinfo.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+#include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
@@ -414,6 +415,8 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scandesc, 0)))
 	{
+		if (QueryCancel)
+			CancelQuery();
 
 		if (oids && !binary)
 		{
@@ -686,6 +689,9 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 	while (!done)
 	{
+		if (QueryCancel)
+			CancelQuery();
+
 		if (!binary)
 		{
 			int			newline = 0;
