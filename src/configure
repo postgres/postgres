@@ -3766,7 +3766,7 @@ EOF
 
 else
   echo "$ac_t""no" 1>&6
-RANDOM='random.o'
+MISSING_RANDOM='random.o'
 fi
 
 echo $ac_n "checking for inet_aton""... $ac_c" 1>&6

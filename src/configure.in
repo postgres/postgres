@@ -470,7 +470,7 @@ AC_CHECK_FUNC(gethostname,
               GETHOSTNAME='gethostname.o')
 AC_CHECK_FUNC(random, 
               AC_DEFINE(HAVE_RANDOM), 
-              RANDOM='random.o')
+              MISSING_RANDOM='random.o')
 AC_CHECK_FUNC(inet_aton, 
               AC_DEFINE(HAVE_INET_ATON), 
               INET_ATON='inet_aton.o')
