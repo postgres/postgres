@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.13 1996/07/28 07:08:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.14 1996/07/29 20:58:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -557,7 +557,7 @@ toggle(PsqlSettings *settings, bool *sw, char *msg)
 	return *sw;
 }
 
-char *
+void
 decode(char *s)
 {
 	char *p, *d;
