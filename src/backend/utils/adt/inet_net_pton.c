@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_pton.c,v 1.3 1998/10/12 01:30:26 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_pton.c,v 1.4 1998/10/12 15:56:34 momjian Exp $";
 
 #endif
 
@@ -105,7 +105,8 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 		/* Hexadecimal: Eat nybble string. */
 		if (size <= 0)
 			goto emsgsize;
-		*dst = 0, dirty = 0;
+		tmp = 0;
+		dirty = 0;
 		src++;					/* skip x or X. */
 		while ((ch = *src++) != '\0' &&
 			   isascii(ch) && isxdigit(ch))
@@ -114,16 +115,20 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 				ch = tolower(ch);
 			n = strchr(xdigits, ch) - xdigits;
 			assert(n >= 0 && n <= 15);
-			*dst |= n;
-			if (!dirty++)
-				*dst <<= 4;
-			else if (--size > 0)
-				*++dst = 0, dirty = 0;
-			else
-				goto emsgsize;
+			tmp = (tmp << 4) | n;
+			if (++dirty == 2) {
+				if (size-- <= 0)
+					goto emsgsize;
+				*dst++ = (u_char) tmp;
+				tmp = 0, dirty = 0;
+			}
 		}
-		if (dirty)
-			size--;
+		if (dirty) {
+			if (size-- <= 0)
+				goto emsgsize;
+			tmp <<= 4;
+			*dst++ = (u_char) tmp;
+		}
 	}
 	else if (isascii(ch) && isdigit(ch))
 	{
