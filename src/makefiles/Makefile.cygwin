@@ -1,7 +1,11 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.5 2004/10/27 19:14:07 momjian Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.6 2004/12/17 03:52:48 tgl Exp $
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
+ifdef PGXS
+BE_DLLLIBS= -L$(DESTDIR)$(bindir) -lpostgres
+else
 BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
+endif
 DLLINIT = $(top_builddir)/src/utils/dllinit.o
 
 # linking with -lm or -lc causes program to crash

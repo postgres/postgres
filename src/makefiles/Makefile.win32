@@ -1,11 +1,15 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.6 2004/11/17 17:16:17 tgl Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.7 2004/12/17 03:52:49 tgl Exp $
 
 # Use replacement include files for those missing on Win32
 override CPPFLAGS+="-I$(top_srcdir)/src/include/port/win32"
 
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
+ifdef PGXS
+BE_DLLLIBS= -L$(DESTDIR)$(bindir) -lpostgres
+else
 BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
+endif
 DLLINIT = $(top_builddir)/src/utils/dllinit.o
 
 AROPT = crs

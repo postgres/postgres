@@ -9,7 +9,11 @@ DLSUFFIX = .so
 CFLAGS_SL = -fpic -DPIC
 
 %.so: %.o
-	ln -fs $(top_srcdir)/src/backend/postgres _APP_
+ifdef PGXS
+	ln -fs $(DESTDIR)$(bindir)/postgres _APP_
+else
+	ln -fs $(top_builddir)/src/backend/postgres _APP_
+endif
 	$(CC) -nostart -Xlinker -soname=$@ -o $@ _APP_ $<
 
 sqlmansect = 7
