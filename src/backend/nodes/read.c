@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.36 2003/11/29 19:51:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.37 2004/01/07 21:12:56 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -24,6 +24,7 @@
 
 #include "nodes/pg_list.h"
 #include "nodes/readfuncs.h"
+#include "nodes/value.h"
 
 
 /* Static state for pg_strtok */
