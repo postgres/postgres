@@ -37,19 +37,19 @@ AC_CANONICAL_HOST
 template=
 AC_MSG_CHECKING([which template to use])
 
-# check if --with-template was given
-if test x"${with_template+set}" = xset ; then
-  case $with_template in
-    yes|no) AC_MSG_ERROR([You must supply an argument to the --with-template option.]);;
+PGAC_ARG_REQ(with, template, [],
+[
+  case $withval in
     list)   echo; ls "$srcdir/src/template"; exit;;
     *)      if test -f "$srcdir/src/template/$with_template" ; then
-              template=$with_template
+              template=$withval
             else
-              AC_MSG_ERROR([\`$with_template' is not a valid template name. Use \`list' for a list.])
+              AC_MSG_ERROR([\`$withval' is not a valid template name. Use \`list' for a list.])
             fi;;
   esac
-
-else # --with-template not given
+],
+[
+  # --with-template not given
 
 case $host_os in
      aix*) template=aix ;;
@@ -95,7 +95,7 @@ line.
 ])
   fi
 
-fi # --with-template not given
+])
 
 AC_MSG_RESULT([$template])
 
@@ -136,57 +136,36 @@ AC_SUBST(TAS)
 #
 # Add non-standard directories to the include path
 #
-AC_ARG_WITH(includes, [  --with-includes=DIRS    look for additional header files in DIRS],
-[
-  case $withval in
-    yes | no) AC_MSG_ERROR([You must supply an argument to the --with-includes option.]);;
-  esac
-])
+PGAC_ARG_REQ(with, includes, [  --with-includes=DIRS    look for additional header files in DIRS])
 
 
 #
 # Add non-standard directories to the library search path
 #
-AC_ARG_WITH(libraries, [  --with-libraries=DIRS   look for additional libraries in DIRS],
-[
-  case $withval in
-    yes | no) AC_MSG_ERROR([You must supply an argument to the --with-libraries option.]);;
-  esac
-  LIBRARY_DIRS=$withval
-])
+PGAC_ARG_REQ(with, libraries, [  --with-libraries=DIRS   look for additional libraries in DIRS],
+             [LIBRARY_DIRS=$withval])
 
-AC_ARG_WITH(libs,      [  --with-libs=DIRS        alternative spelling of --with-libraries],
-[
-  case $withval in
-    yes | no) AC_MSG_ERROR([You must supply an argument to the --with-libs option.]);;
-  esac
-  LIBRARY_DIRS=$withval
-])
+PGAC_ARG_REQ(with, libs,      [  --with-libs=DIRS        alternative spelling of --with-libraries],
+             [LIBRARY_DIRS=$withval])
 
 
 #
 # Locale (--enable-locale)
 #
 AC_MSG_CHECKING([whether to build with locale support])
-AC_ARG_ENABLE(locale, [  --enable-locale         enable locale support],
-[if test x"$enable_locale" != x"no" ; then
-  enable_locale=yes
-  AC_DEFINE(USE_LOCALE, 1, [Set to 1 if you want LOCALE support (--enable-locale)])
-fi],
-[enable_locale=no])
+PGAC_ARG_BOOL(enable, locale, no, [  --enable-locale         enable locale support],
+              [AC_DEFINE([USE_LOCALE], 1,
+                         [Set to 1 if you want LOCALE support (--enable-locale)])])
 AC_MSG_RESULT([$enable_locale])
 
 
 #
-# Cyrillic recode (--enable-recode)
+# Character set recode (--enable-recode)
 #
-AC_MSG_CHECKING([whether to build with Cyrillic recode support])
-AC_ARG_ENABLE(recode, [  --enable-recode         enable cyrillic recode support],
-[if test x"$enable_recode" != x"no" ; then
-  enable_recode=yes
-  AC_DEFINE(CYR_RECODE, 1, [Set to 1 if you want cyrillic recode support (--enable-recode)])
-fi],
-[enable_recode=no])
+AC_MSG_CHECKING([whether to build with recode support])
+PGAC_ARG_BOOL(enable, recode, no, [  --enable-recode         enable character set recode support],
+              [AC_DEFINE([CYR_RECODE], 1,
+                         [Set to 1 if you want cyrillic recode support (--enable-recode)])])
 AC_MSG_RESULT([$enable_recode])
 
 
@@ -195,45 +174,39 @@ AC_MSG_RESULT([$enable_recode])
 #
 MULTIBYTE=
 AC_MSG_CHECKING([whether to build with multibyte character support])
-AC_ARG_ENABLE(multibyte, [  --enable-multibyte      enable multibyte character support],
+
+PGAC_ARG_OPTARG(enable, multibyte, [  --enable-multibyte      enable multibyte character support],
+[MULTIBYTE=SQL_ASCII],
 [
   case $enableval in
-    no)         enable_multibyte=no;;
-    yes)        enable_multibyte=yes; MULTIBYTE=SQL_ASCII;;
     SQL_ASCII|EUC_JP|EUC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5|KOI8|WIN|ALT)
-                enable_multibyte=yes; MULTIBYTE=$enableval;;
-    *)          AC_MSG_ERROR(
+      MULTIBYTE=$enableval;;
+    *)
+      AC_MSG_ERROR(
 [argument to --enable-multibyte must be one of:
   SQL_ASCII, EUC_JP, EUC_CN, EUC_KR, EUC_TW,
   UNICODE, MULE_INTERNAL,
   LATIN1, LATIN2, LATIN3, LATIN4, LATIN5,
   KOI8, WIN, ALT
-Or do not specify an argument to the option to use the default.]) ;;
+Or do not specify an argument to the option to use the default.]);;
   esac
 ],
-[enable_multibyte=no])
-
-AC_SUBST(MULTIBYTE)
-
-if test "$enable_multibyte" = yes ; then
+[
   AC_DEFINE(MULTIBYTE, 1, [Set to 1 if you want to use multibyte characters (--enable-multibyte)])
   AC_MSG_RESULT([yes, default $MULTIBYTE])
-else
-  AC_MSG_RESULT(no)
-fi
+],
+[AC_MSG_RESULT(no)])
+
+AC_SUBST(MULTIBYTE)
 
 
 #
 # Default port number (--with-pgport), default 5432
 #
 AC_MSG_CHECKING([for default port number])
-AC_ARG_WITH(pgport, [  --with-pgport=PORTNUM   change default port number [5432]],
-[case $withval in
-  yes|no)       AC_MSG_ERROR([You must supply an argument to the --with-pgport option]);;
-  *)            default_port=$withval;;
-esac
-],
-[default_port=5432])
+PGAC_ARG_REQ(with, pgport, [  --with-pgport=PORTNUM   change default port number [5432]],
+             [default_port=$withval],
+             [default_port=5432])
 # Need both of these because backend wants an integer and frontend a string
 AC_DEFINE_UNQUOTED(DEF_PGPORT, ${default_port})
 AC_DEFINE_UNQUOTED(DEF_PGPORT_STR, "${default_port}")
@@ -244,13 +217,12 @@ AC_MSG_RESULT([$default_port])
 # Maximum number of allowed connections (--with-maxbackends), default 32
 #
 AC_MSG_CHECKING([for default soft limit on number of connections])
-AC_ARG_WITH(maxbackends, [  --with-maxbackends=N    set default maximum number of connections [32]],
-[case $withval in
-  yes|no)       AC_MSG_ERROR([You must supply an argument to the --with-maxbackends option]);;
-esac],
-[with_maxbackends=32])
+PGAC_ARG_REQ(with, maxbackends, [  --with-maxbackends=N    set default maximum number of connections [32]],
+             [],
+             [with_maxbackends=32])
 AC_MSG_RESULT([$with_maxbackends])
-AC_DEFINE_UNQUOTED(DEF_MAXBACKENDS, [$with_maxbackends], [The default soft limit on the number of concurrent connections, i.e., the default for the postmaster -N switch (--with-maxbackends)])
+AC_DEFINE_UNQUOTED([DEF_MAXBACKENDS], [$with_maxbackends],
+                   [The default soft limit on the number of concurrent connections, i.e., the default for the postmaster -N switch (--with-maxbackends)])
 
 
 #
@@ -260,12 +232,7 @@ AC_DEFINE_UNQUOTED(DEF_MAXBACKENDS, [$with_maxbackends], [The default soft limit
 # For historical reasons you can also use --with-CC to specify the C compiler
 # to use, although the standard way to do this is to set the CC environment
 # variable.
-if test "${with_CC+set}" = set; then
-  case $with_CC in
-    yes | no)   AC_MSG_ERROR([You must supply an argument to the --with-CC option.]);;
-    *)          CC=$with_CC;;
-  esac
-fi
+PGAC_ARG_REQ(with, CC, [], [CC=$with_CC])
 
 # On AIX, default compiler to xlc.
 if test "$template" = aix && test -z "$CC" ; then CC=xlc; fi
@@ -297,30 +264,24 @@ AC_DEFINE_UNQUOTED(PG_VERSION_STR, ["PostgreSQL $VERSION on $host, compiled by $
 #
 # Automatic dependency tracking
 #
-AC_ARG_ENABLE(depend, [  --enable-depend         turn on automatic dependency tracking],
-[
-  if test x"$enableval" = x"yes" ; then
-    autodepend=yes
-  fi
-])
+PGAC_ARG_BOOL(enable, depend, no, [  --enable-depend         turn on automatic dependency tracking],
+              [autodepend=yes])
 AC_SUBST(autodepend)
 
 
+#
 # --enable-debug adds -g to compiler flags
-# --disable-debug will forcefully remove it
-AC_MSG_CHECKING(setting debug compiler flag)
-AC_ARG_ENABLE(debug, [  --enable-debug          build with debugging symbols (-g)],
-[
-  case $enableval in
-    yes)  CFLAGS="$CFLAGS -g"
-          AC_MSG_RESULT(yes)
-          ;;
-    *)    CFLAGS=`echo "$CFLAGS" | sed -e 's/ -g/ /g' -e 's/^-g//'`
-          AC_MSG_RESULT(no)
-          ;;
-  esac
-],
-[AC_MSG_RESULT(using default)])
+#
+PGAC_ARG_BOOL(enable, debug, no, [  --enable-debug          build with debugging symbols (-g)],
+              [CFLAGS="$CFLAGS -g"])
+
+
+#
+# Enable assert checks
+#
+PGAC_ARG_BOOL(enable, cassert, no, [  --enable-cassert        enable assertion checks (for debugging)],
+              [AC_DEFINE([USE_ASSERT_CHECKING], 1,
+                         [Define to 1 to build with assertion checks])])
 
 
 #
@@ -357,80 +318,46 @@ IFS=$ac_save_IFS
 
 
 
-dnl We exclude tcl support unless user says --with-tcl
+# We exclude tcl support unless user says --with-tcl
 AC_MSG_CHECKING(setting USE_TCL)
-AC_ARG_WITH(
-   tcl,
-   [  --with-tcl              build Tcl interfaces and pgtclsh ],
-   [
-	case "$withval" in
-	y | ye | yes)		USE_TCL=true; USE_TK=true; AC_MSG_RESULT(enabled) ;;
-	*)			USE_TCL=; USE_TK=; AC_MSG_RESULT(disabled) ;;
-	esac
-   ],
-   [ USE_TCL=; USE_TK=; AC_MSG_RESULT(disabled) ]
-)
+PGAC_ARG_BOOL(with, tcl, no, [  --with-tcl              build Tcl interfaces and pgtclsh],
+              [USE_TCL=true; USE_TK=true; AC_MSG_RESULT(enabled)],
+              [USE_TCL=; USE_TK=; AC_MSG_RESULT(disabled)])
 AC_SUBST(USE_TCL)
 AC_SUBST(USE_TK)
 
 
-dnl We see if the path to the TCL/TK configuration scripts is specified.
-dnl This will override the use of tclsh to find the paths to search.
+# We see if the path to the TCL/TK configuration scripts is specified.
+# This will override the use of tclsh to find the paths to search.
 
-AC_ARG_WITH(tclconfig,
-    [  --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR],
-    [
-	case "$withval" in
-	"" | y | ye | yes | n | no)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-tclconfig option.])
-	  ;;
-	esac
-	TCL_DIRS="$withval"
-    ]
-)
-
-dnl We see if the path to the TK configuration scripts is specified.
-dnl This will override the use of tclsh to find the paths to search.
-
-AC_ARG_WITH(tkconfig,
-    [  --with-tkconfig=DIR     tkConfig.sh is in DIR],
-    [
-	case "$withval" in
-	"" | y | ye | yes | n | no)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-tkconfig option.])
-	  ;;
-	esac
-	TK_DIRS="$withval"
-    ]
-)
+PGAC_ARG_REQ(with, tclconfig, [  --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR],
+             [TCL_DIRS=$withval])
 
 
-dnl
-dnl Optionally build Perl modules (Pg.pm and PL/Perl)
-dnl
-AC_MSG_CHECKING(whether to build Perl modules)
-AC_ARG_WITH(perl, [  --with-perl             build Perl interface and plperl],
-[if test x"${withval}" = x"yes" ; then
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi],
-[AC_MSG_RESULT(no)])
+# We see if the path to the TK configuration scripts is specified.
+# This will override the use of tclsh to find the paths to search.
+
+PGAC_ARG_REQ(with, tkconfig,  [  --with-tkconfig=DIR     tkConfig.sh is in DIR],
+             [TK_DIRS=$withval])
+
+
+#
+# Optionally build Perl modules (Pg.pm and PL/Perl)
+#
+AC_MSG_CHECKING([whether to build Perl modules])
+PGAC_ARG_BOOL(with, perl, no, [  --with-perl             build Perl interface and PL/Perl])
+AC_MSG_RESULT([$with_perl])
 AC_SUBST(with_perl)
 
 
-dnl
-dnl Optionally build Python interface module
-dnl
-AC_MSG_CHECKING(whether to build Python modules)
-AC_ARG_WITH(python, [  --with-python           build Python interface module],
-[if test x"${withval}" = x"yes" ; then
-  AC_MSG_RESULT(yes)
-  PGAC_PROG_PYTHON
-  PGAC_PATH_PYTHONDIR
-else
-  AC_MSG_RESULT(no)
-fi],
+#
+# Optionally build Python interface module
+#
+AC_MSG_CHECKING([whether to build Python modules])
+PGAC_ARG_BOOL(with, python, no, [  --with-python           build Python interface module],
+[AC_MSG_RESULT(yes)
+PGAC_PROG_PYTHON
+PGAC_PATH_PYTHONDIR],
 [AC_MSG_RESULT(no)])
 AC_SUBST(with_python)
 
@@ -448,23 +375,12 @@ dnl is non-standard.
 #
 # Kerberos 4
 #
-AC_ARG_WITH(krb4, [  --with-krb4[=DIR]       use Kerberos 4 [/usr/athena]],
-[if test x"$withval" != x"no"; then
-  if test x"$withval" != x"yes"; then
-    krb4_prefix=$withval
-  else
-    krb4_prefix=/usr/athena
-  fi
-  with_krb4=yes
-else
-  with_krb4=no
-fi],
-[with_krb4=no])
-
-AC_SUBST(with_krb4)
-if test "$with_krb4" = yes ; then
+PGAC_ARG_OPTARG(with, krb4, [  --with-krb4[=DIR]       build with Kerberos 4 support [/usr/athena]],
+                [krb4_prefix=/usr/athena],
+                [krb4_prefix=$withval],
+[
   AC_MSG_RESULT([building with Kerberos 4 support])
-  AC_DEFINE(KRB4, [], [Define if you are building with Kerberos 4 support.])
+  AC_DEFINE(KRB4, 1, [Define if you are building with Kerberos 4 support.])
 
   if test -d "$krb4_prefix"; then
     if test -d "$krb4_prefix/include"; then
@@ -475,35 +391,26 @@ if test "$with_krb4" = yes ; then
       LIBS="$krb_libdir $LIBS"
     fi
   fi
-  dnl Test for these libraries is below
+  # Test for these libraries is below
   KRB_LIBS="$krb_libdir -lkrb -ldes"
 
-  krb_srvtab='/etc/srvtab'
-fi
+  krb_srvtab="/etc/srvtab"
+])
+
+AC_SUBST(with_krb4)
 
 
 #
 # Kerberos 5
 #
-AC_ARG_WITH(krb5, [  --with-krb5[=DIR]       use Kerberos 5 [/usr/athena]],
-[if test x"$withval" != x"no"; then
-  if test x"$withval" != x"yes"; then
-    krb5_prefix=$withval
-  else
-    krb5_prefix=/usr/athena
-  fi
-  with_krb5=yes
-else
-  with_krb5=no
-fi],
-[with_krb5=no])
-
-AC_SUBST(with_krb5)
-if test "$with_krb5" = yes ; then
+PGAC_ARG_OPTARG(with, krb5, [  --with-krb5[=DIR]       build with Kerberos 5 support [/usr/athena]],
+              [krb5_prefix=/usr/athena],
+              [krb5_prefix=$withval],
+[
   AC_MSG_RESULT([building with Kerberos 5 support])
-  AC_DEFINE(KRB5,, [Define if you are building with Kerberos 5 support.])
+  AC_DEFINE(KRB5, 1, [Define if you are building with Kerberos 5 support.])
 
-  if test -d $krb5_prefix; then
+  if test -d "$krb5_prefix"; then
     if test -d "$krb5_prefix/include"; then
       INCLUDES="$INCLUDES -I$krb5_prefix/include"
     fi
@@ -513,18 +420,19 @@ if test "$with_krb5" = yes ; then
     fi
   fi
 
-  dnl Test for these libraries is below
+  # Test for these libraries is below
   KRB_LIBS="$krb_libdir -lkrb5 -lcrypto -lcom_err"
 
-  krb_srvtab='FILE:$(sysconfdir)/krb5.keytab'
-fi
+  krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
+])
+
+AC_SUBST(with_krb5)
 
 
 # Using both Kerberos 4 and Kerberos 5 at the same time isn't going to work.
 if test "$with_krb4" = yes && test "$with_krb5" = yes ; then
   AC_MSG_ERROR([Kerberos 4 and Kerberos 5 support cannot be combined])
 fi
-
 
 AC_SUBST(krb_srvtab)
 dnl Necessary for special libpq link
@@ -534,37 +442,25 @@ AC_SUBST(KRB_LIBS)
 #
 # Kerberos configuration parameters
 #
-AC_ARG_WITH(krb-srvnam, [  --with-krb-srvnam=NAME  name of the Postgres service principal in Kerberos],
-[if test x"$withval" = x"yes"; then
-  AC_MSG_ERROR([argument required for --with-krb-srvnam])
-else
-  krb_srvnam=$withval
-fi],
-[krb_srvnam="postgres"])
-AC_DEFINE_UNQUOTED(PG_KRB_SRVNAM, ["$krb_srvnam"], [The name of the Postgres service principal])
+PGAC_ARG_REQ(with, krb-srvnam,
+             [  --with-krb-srvnam=NAME  name of the PostgreSQL service principal in Kerberos],
+             [],
+             [with_krb_srvnam="postgres"])
+AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],
+                   [The name of the PostgreSQL service principal in Kerberos])
 
 
 
 #
 # OpenSSL
 #
-AC_ARG_WITH(openssl, [  --with-openssl[=DIR]    build with OpenSSL support [/usr/local/ssl]],
-[if test x"$withval" != x"no" ; then
-  if test x"$withval" != x"yes" ; then
-    openssl_prefix=$withval
-  else
-    openssl_prefix=/usr/local/ssl
-  fi
-  with_openssl=yes
-else
-  with_openssl=no
-fi],
-[with_openssl=no])
-
-AC_SUBST(with_openssl)
-if test "$with_openssl" = yes ; then
+PGAC_ARG_OPTARG(with, openssl,
+                [  --with-openssl[=DIR]    build with OpenSSL support [/usr/local/ssl]],
+                [openssl_prefix=/usr/local/ssl],
+                [openssl_prefix=$withval],
+[
   AC_MSG_RESULT([building with OpenSSL support])
-  AC_DEFINE([USE_SSL], [], [Define to build with (Open)SSL support])
+  AC_DEFINE([USE_SSL], 1, [Define to build with (Open)SSL support])
 
   if test -d "${openssl_prefix}/include" ; then
     INCLUDES="$INCLUDES -I${openssl_prefix}/include"
@@ -576,7 +472,9 @@ if test "$with_openssl" = yes ; then
     openssl_libdir="${openssl_prefix}"
     LIBS="$LIBS -L${openssl_prefix}"
   fi
-fi
+])
+
+AC_SUBST(with_openssl)
 
 
 # OpenSSL and Kerberos 5 both have a `crypto' library, so if you want to
@@ -586,52 +484,29 @@ if test "$with_openssl" = yes && test "$with_krb5" = yes ; then
 fi
 
 
-dnl
-dnl Optionally enable the building of the ODBC driver
-dnl
+#
+# Optionally enable the building of the ODBC driver
+#
  
-dnl Old option name
-if test "x${with_odbc+set}" = xset && test "x${enable_odbc+set}" != xset; then
+# Old option name
+if test "${with_odbc+set}" = set && test "${enable_odbc+set}" != set; then
   enable_odbc=$with_odbc
 fi
  
-AC_MSG_CHECKING(whether to build the ODBC driver)
-AC_ARG_ENABLE(odbc, [  --enable-odbc           build the ODBC driver package],
-[if test x"$enableval" = x"yes" ; then
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi],
-[AC_MSG_RESULT(no)])
-AC_SUBST(enable_odbc)
+AC_MSG_CHECKING([whether to build the ODBC driver])
+PGAC_ARG_BOOL(enable, odbc, no, [  --enable-odbc           build the ODBC driver package])
+AC_MSG_RESULT([$enable_odbc])
+AC_SUBST([enable_odbc])
 
 
-dnl Allow for overriding the default location of the odbcinst.ini
-dnl file which is normally ${datadir} (i.e., ${prefix}/share).
-if test x"$enable_odbc" = x"yes" ; then
-AC_ARG_WITH(odbcinst, [  --with-odbcinst=DIR     default directory for odbcinst.ini [sysconfdir]],
-[if test x"$with_odbcinst" = x"yes" || test x"$with_odbcinst" = x"no" ; then
-  AC_MSG_ERROR([You must supply an argument to the --with-odbcinst option.])
-fi
-odbcinst_ini_dir=$withval],
-[odbcinst_ini_dir='${sysconfdir}'])
-else
-  odbcinst_ini_dir='${sysconfdir}'
-fi
-AC_SUBST(odbcinst_ini_dir)
+# Allow for overriding the default location of the odbcinst.ini
+# file which is normally ${sysconfdir} (i.e., ${prefix}/etc).
+PGAC_ARG_REQ(with, odbcinst,
+             [  --with-odbcinst=DIR     default directory for odbcinst.ini [sysconfdir]],
+             [odbcinst_ini_dir=$withval],
+             [odbcinst_ini_dir="\${sysconfdir}"])
+AC_SUBST([odbcinst_ini_dir])
 
-
-
-dnl Unless we specify the command line options
-dnl	--enable cassert	to explicitly enable it
-dnl If you do not explicitly do it, it defaults to disabled
-AC_MSG_CHECKING(setting ASSERT CHECKING)
-AC_ARG_ENABLE(
-   cassert,
-   [  --enable-cassert        enable assertion checks (for debugging) ],
-   AC_DEFINE(USE_ASSERT_CHECKING) AC_MSG_RESULT(enabled),
-   AC_MSG_RESULT(disabled)
-)
 
 
 # Assume system is ELF if it predefines __ELF__ as 1,
@@ -655,28 +530,22 @@ AC_SUBST(ELF_SYS)
 
 
 
-dnl
-dnl Optionally build C++ code (i.e., libpq++)
-dnl
+#
+# Optionally build C++ code (i.e., libpq++)
+#
 AC_MSG_CHECKING([whether to build C++ modules])
-AC_ARG_WITH(CXX, [  --with-CXX              build C++ modules (libpq++)],
-[if test x"$withval" != x"no"; then
-  if test x"$withval" != x"yes" ; then
-    CXX=$withval
-  fi
-  with_CXX=yes
-fi],
-[with_CXX=no])
-
-AC_MSG_RESULT([$with_CXX])
-AC_SUBST(with_CXX)
-
-if test $with_CXX = yes; then
+PGAC_ARG_OPTARG(with, CXX, [  --with-CXX              build C++ modules (libpq++)],
+                [],
+                [CXX=$withval],
+[
+  AC_MSG_RESULT(yes)
   AC_PROG_CXX
   AC_PROG_CXXCPP
   PGAC_CLASS_STRING
   PGAC_CXX_NAMESPACE_STD
-fi
+],
+[AC_MSG_RESULT(no)])
+AC_SUBST(with_CXX)
 
 
 CPPFLAGS="$CPPFLAGS $INCLUDES"
@@ -987,12 +856,13 @@ AC_TRY_LINK([#include <setjmp.h>],
 	[AC_DEFINE(HAVE_SIGSETJMP) AC_MSG_RESULT(yes)],
 	AC_MSG_RESULT(no))
 
-AC_ARG_ENABLE(syslog, [  --enable-syslog         enable logging to syslog],
-    [case $enableval in y|ye|yes)
-	AC_CHECK_FUNC(syslog, [AC_DEFINE(ENABLE_SYSLOG)], [AC_MSG_ERROR([no syslog interface found])])
-        ;;
-     esac]
-)
+
+PGAC_ARG_BOOL(enable, syslog, no, [  --enable-syslog         enable logging to syslog],
+              [AC_CHECK_FUNC(syslog,
+                             [AC_DEFINE([ENABLE_SYSLOG], 1,
+                                        [Define to 1 if to enable the syslogging code])],
+                             [AC_MSG_ERROR([no syslog interface found])])])
+
 
 dnl Check to see if we have a working 64-bit integer type.
 dnl This breaks down into two steps:
@@ -1248,13 +1118,6 @@ See the file 'config.log' for further diagnostics.])
 	CFLAGS="$ice_save_CFLAGS"
 	CPPFLAGS="$ice_save_CPPFLAGS"
 	LDFLAGS="$ice_save_LDFLAGS"
-fi
-
-
-# Wait with these until we're done so no tests fail because of too
-# many warnings.
-if test x"$GCC" = x"yes" ; then
-  CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wmissing-declarations"
 fi
 
 dnl Finally ready to produce output files ...

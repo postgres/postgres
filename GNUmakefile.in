@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.11 2000/08/31 16:08:58 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.12 2000/09/21 20:17:41 petere Exp $
 #
 
 subdir =
@@ -32,25 +32,6 @@ distclean maintainer-clean:
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	CONFIG_FILES=$@ CONFIG_HEADERS= ./config.status
-
-
-# These dependencies are risky because both the target and the sources
-# are in CVS and CVS doesn't preserve timestamps, thus leading to
-# unnecessary reruns of these rules.
-
-AUTOCONF = autoconf
-
-# Only use this rule if you actually said `make configure'.
-ifeq ($(MAKECMDGOALS),configure)
-$(top_srcdir)/configure: $(top_srcdir)/configure.in $(top_srcdir)/aclocal.m4
-	cd $(top_srcdir) && $(AUTOCONF)
-endif
-
-# This one we can leave unprotected because by default nothing depends
-# on aclocal.m4. This rule is only invoked if you say `make
-# aclocal.m4' or `make configure'.
-$(top_srcdir)/aclocal.m4: $(wildcard $(top_srcdir)/config/*.m4)
-	cat $^ > $@
 
 
 ##########################################################################
