@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May  9 16:39:58 EDT 2001
+Last updated:		Wed May  9 19:11:18 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -49,12 +49,12 @@ URGENT
 ADMIN
 
 * More access control over who can create tables and use locks (Karel)
+* Allow better control over user privileges [privileges]
 * Allow elog() to return error codes, module name, file name, line
   number, not just messages [elog]
 * Allow international error message support and add error codes [elog]
 * Remove unused files during database vacuum or postmaster startup
 * Add table name mapping for numeric file names
-* Allow better control over user privileges [privileges]
 
 TYPES
 
@@ -119,7 +119,7 @@ COMMANDS
 * Automatically drop constraints/functions when object is dropped
 * CLUSTER
 	* cluster all tables at once
-	* prent lose of indexes, permissions, inheritance
+	* prevent lose of indexes, permissions, inheritance
 	* Automatically keep clustering on a table
 	* Keep statistics about clustering, perhaps during VACUUM ANALYZE
 	  [optimizer]
@@ -132,7 +132,6 @@ COMMANDS
 * Allow RULE recompilation
 * Allow BINARY option to SELECT, like we do with DECLARE
 * MOVE 0 should not move to end of cursor
-* Overhaul ACL (access control) code
 * Add SHOW command to display locks
 * Bring INSERT ... VALUES up to full SQL92 spec, disallow missing
   columns, allow DEFAULT
