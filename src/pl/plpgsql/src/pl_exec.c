@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.132 2005/02/24 01:11:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.133 2005/03/25 01:45:42 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -497,9 +497,6 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 */
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_op_varno]);
-	var->isnull = false;
-	var->freeval = false;
-
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("INSERT"));
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
@@ -508,48 +505,50 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("DELETE"));
 	else
 		elog(ERROR, "unrecognized trigger action: not INSERT, DELETE, or UPDATE");
+	var->isnull = false;
+	var->freeval = true;
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_name_varno]);
-	var->isnull = false;
-	var->freeval = true;
 	var->value = DirectFunctionCall1(namein,
 						  CStringGetDatum(trigdata->tg_trigger->tgname));
-
-	var = (PLpgSQL_var *) (estate.datums[func->tg_when_varno]);
 	var->isnull = false;
 	var->freeval = true;
+
+	var = (PLpgSQL_var *) (estate.datums[func->tg_when_varno]);
 	if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("BEFORE"));
 	else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("AFTER"));
 	else
 		elog(ERROR, "unrecognized trigger execution time: not BEFORE or AFTER");
-
-	var = (PLpgSQL_var *) (estate.datums[func->tg_level_varno]);
 	var->isnull = false;
 	var->freeval = true;
+
+	var = (PLpgSQL_var *) (estate.datums[func->tg_level_varno]);
 	if (TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("ROW"));
 	else if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("STATEMENT"));
 	else
 		elog(ERROR, "unrecognized trigger event type: not ROW or STATEMENT");
-
-	var = (PLpgSQL_var *) (estate.datums[func->tg_relid_varno]);
-	var->isnull = false;
-	var->freeval = false;
-	var->value = ObjectIdGetDatum(trigdata->tg_relation->rd_id);
-
-	var = (PLpgSQL_var *) (estate.datums[func->tg_relname_varno]);
 	var->isnull = false;
 	var->freeval = true;
-	var->value = DirectFunctionCall1(namein,
-		CStringGetDatum(RelationGetRelationName(trigdata->tg_relation)));
 
-	var = (PLpgSQL_var *) (estate.datums[func->tg_nargs_varno]);
+	var = (PLpgSQL_var *) (estate.datums[func->tg_relid_varno]);
+	var->value = ObjectIdGetDatum(trigdata->tg_relation->rd_id);
 	var->isnull = false;
 	var->freeval = false;
+
+	var = (PLpgSQL_var *) (estate.datums[func->tg_relname_varno]);
+	var->value = DirectFunctionCall1(namein,
+		CStringGetDatum(RelationGetRelationName(trigdata->tg_relation)));
+	var->isnull = false;
+	var->freeval = true;
+
+	var = (PLpgSQL_var *) (estate.datums[func->tg_nargs_varno]);
 	var->value = Int16GetDatum(trigdata->tg_trigger->tgnargs);
+	var->isnull = false;
+	var->freeval = false;
 
 	/*
 	 * Store the actual call argument values into the special execution
@@ -712,6 +711,9 @@ plpgsql_exec_error_callback(void *arg)
 
 /* ----------
  * Support functions for copying local execution variables
+ *
+ * NB: this is not a generic copy operation because it assumes that any
+ * pass-by-ref original values will live as long as the copy is needed.
  * ----------
  */
 static PLpgSQL_datum *
