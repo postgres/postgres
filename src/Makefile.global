@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.5 1996/07/19 05:32:22 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.6 1996/07/20 07:29:33 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -60,7 +60,7 @@
 PORTNAME=	BSD44_derived
 
 # SRCDIR specifies where the source files are.
-SRCDIR=		<SET THIS VALUE>
+SRCDIR=		/home/staff/scrappy/cvs/postgres95/src
 
 # FreeBSD 2.1R with new Flex v2.5.2 in /usr/local
 LEX = flex

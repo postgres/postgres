@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.2 1996/07/15 19:22:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.3 1996/07/20 07:33:36 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ export PATH
 
 # OPENLINK Added an fsync option to postmaster
 # REQUIRES: pg95 compiled with -DOPENLINK_PATCHES, see README_OPENLINK
-FSYNC=#-F
+# FSYNC=-F
 
 CMDNAME=`basename $0`
 
