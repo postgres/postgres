@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.77 1996/12/09 01:16:51 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.78 1996/12/26 17:39:58 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -133,6 +133,9 @@ OIDNAMELEN= 36
 # Compile libpq++
 #HAVE_Cplusplus= true
 
+# Uncomment out CUSTOM_COPT to generate a debug version
+# This overrides the compiler flags defined later in this file
+#CUSTOM_COPT=-g
 
 # Commenting out CASSERT will make things go a LOT faster, but you will
 # also loose a lot of useful error-checking.
