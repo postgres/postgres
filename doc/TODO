@@ -1,11 +1,11 @@
 TODO list for PostgreSQL
 ========================
-#A dash (-) marks changes that will appear in the upcoming 8.1 release.#
+#A hyphen (-) marks changes that will appear in the upcoming 8.1 release.#
 
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Nov  4 22:11:40 EST 2004
+Last updated:		Fri Nov  5 22:23:55 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
