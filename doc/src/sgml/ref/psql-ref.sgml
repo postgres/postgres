@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.83 2003/01/07 18:46:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.84 2003/01/07 20:56:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -798,6 +798,30 @@ testdb=>
         </listitem>
       </varlistentry>
 
+
+      <varlistentry>
+        <term><literal>\dc</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <listitem>
+        <para>
+        Lists all available conversions between character-set encodings.
+	If <replaceable class="parameter">pattern</replaceable>
+        is specified, only conversions whose name matches the pattern are
+	listed.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\dC</literal></term>
+        <listitem>
+        <para>
+        Lists all available type casts.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
       <varlistentry>
         <term><literal>\dd</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
         <listitem>
@@ -842,29 +866,6 @@ testdb=>
         Lists all available domains (derived types). If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only matching domains are shown.
-        </para>
-        </listitem>
-      </varlistentry>
-
-
-      <varlistentry>
-        <term><literal>\dc</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
-        <listitem>
-        <para>
-        Lists all available conversions (between encodings). If <replaceable
-        class="parameter">pattern</replaceable>
-        is specified, only matching conversions are shown.
-        </para>
-        </listitem>
-      </varlistentry>
-
-
-      <varlistentry>
-        <term><literal>\dC</literal></term>
-        <listitem>
-        <para>
-        Lists all available type casts.  Casts can be explicit, explicit and assignment
-	or implicit, and are used to change a variable from one type to another.
         </para>
         </listitem>
       </varlistentry>
@@ -926,6 +927,19 @@ testdb=>
 	list of large objects.
 	</para>
 	</listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\dn</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+
+        <listitem>
+        <para>
+        Lists all available schemas (namespaces). If <replaceable
+        class="parameter">pattern</replaceable> (a regular expression)
+        is specified, only schemas whose name matches the pattern are listed.
+        </para>
+        </listitem>
       </varlistentry>
 
 
@@ -1054,8 +1068,9 @@ Tue Oct 26 21:40:57 CEST 1999
         </para>
 	<note>
 	<para>
-	This command does not see changes made by <command>SET
-        CLIENT_ENCODING</>.
+	This command will not notice changes made directly by <command>SET
+        CLIENT_ENCODING</>.  If you use <literal>\encoding</literal>,
+	be sure to use it to set as well as examine the encoding.
 	</para>
 	</note>	
         </listitem>

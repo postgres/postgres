@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.68 2002/12/13 22:17:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.69 2003/01/07 20:56:07 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -211,6 +211,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dd [PATTERN]  show comment for object\n"));
 	fprintf(output, _("  \\dD [PATTERN]  list domains\n"));
 	fprintf(output, _("  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\dn [PATTERN]  list schemas\n"));
 	fprintf(output, _("  \\do [NAME]     list operators\n"));
 	fprintf(output, _("  \\dl            list large objects, same as \\lo_list\n"));
 	fprintf(output, _("  \\dp [PATTERN]  list table access privileges\n"));

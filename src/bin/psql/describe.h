@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.h,v 1.19 2002/12/12 21:02:24 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.h,v 1.20 2003/01/07 20:56:07 tgl Exp $
  */
 #ifndef DESCRIBE_H
 #define DESCRIBE_H
@@ -48,6 +48,9 @@ bool		listConversions(const char *pattern);
 
 /* \dC */
 bool		listCasts(const char *pattern);
+
+/* \dn */
+bool		listSchemas(const char *pattern);
 
 
 #endif   /* DESCRIBE_H */

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.42 2002/12/12 21:02:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.43 2003/01/07 20:56:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,7 @@ Datum		pg_function_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_operator_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_opclass_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_conversion_is_visible(PG_FUNCTION_ARGS);
+
 
 /*
  * RangeVarGetRelid
@@ -1084,7 +1085,7 @@ ConversionIsVisible(Oid conid)
 							ObjectIdGetDatum(conid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(contup))
-		elog(ERROR, "Cache lookup failed for converions %u", conid);
+		elog(ERROR, "Cache lookup failed for conversion %u", conid);
 	conform = (Form_pg_conversion) GETSTRUCT(contup);
 
 	recomputeNamespacePath();
@@ -1104,7 +1105,7 @@ ConversionIsVisible(Oid conid)
 		 * If it is in the path, it might still not be visible; it could
 		 * be hidden by another conversion of the same name earlier in the
 		 * path. So we must do a slow check to see if this conversion would
-		 * be found by ConvnameGetConid.
+		 * be found by ConversionGetConid.
 		 */
 		char	   *conname = NameStr(conform->conname);
 		
