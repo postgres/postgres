@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.129 2003/03/13 01:30:28 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.130 2003/03/25 14:58:15 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -299,7 +299,7 @@ JAVACMD=$JAVA_HOME/bin/java
       are needed to build a CVS checkout or if you changed the actual
       scanner and parser definition files. If you need them, be sure
       to get <application>Flex</> 2.5.4 or later and
-      <application>Bison</> 1.50 or later. Other <application>yacc</>
+      <application>Bison</> 1.85 or later. Other <application>yacc</>
       programs can sometimes be used, but doing so requires extra
       effort and is not recommended. Other <application>lex</>
       programs will definitely not work.
