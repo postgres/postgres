@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.68 2000/09/19 18:17:54 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.69 2000/10/19 03:55:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -600,6 +600,14 @@ DropUser(DropUserStmt *stmt)
 		}
 		heap_endscan(scan);
 		heap_close(pg_rel, AccessExclusiveLock);
+		/*
+		 * Advance command counter so that later iterations of this loop
+		 * will see the changes already made.  This is essential if, for
+		 * example, we are trying to drop two users who are members of the
+		 * same group --- the AlterGroup for the second user had better
+		 * see the tuple updated from the first one.
+		 */
+		CommandCounterIncrement();
 	}
 
 	/*
@@ -643,8 +651,6 @@ CheckPgUserAclNotNull()
 			 "Try 'REVOKE ALL ON \"%s\" FROM PUBLIC'.",
 			 ShadowRelationName, ShadowRelationName);
 	}
-
-	return;
 }
 
 
