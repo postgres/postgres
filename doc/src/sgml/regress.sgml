@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.38 2004/03/15 16:06:43 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.39 2004/03/15 16:11:42 momjian Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -332,15 +332,14 @@ exclusion of those that don't.
     <title>The <quote>random</quote> test</title>
       
     <para>
-     There is at least one case in the <literal>random</literal> test
-     script that is intended to produce random results. This causes
-     random to fail the regression test occasionally.  Typing
+     The <literal>random</literal> test script is intended to produce 
+     random results.   In rare cases, this causes the random regression
+     test to fail.  Typing
 <programlisting>
 diff results/random.out expected/random.out
 </programlisting>
      should produce only one or a few lines of differences.  You need
-     not worry unless the random test always fails in repeated
-     attempts.
+     not worry unless the random test repeatedly fails.
     </para>
    </sect2>
   </sect1>
