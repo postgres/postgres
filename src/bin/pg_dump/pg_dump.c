@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.224 2001/08/22 20:23:23 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.225 2001/08/27 00:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4370,8 +4370,9 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 			continue;
 		}
 
-
-		if (strcmp(indinfo[i].indproc, "0") == 0)
+		/* indproc is regproc in 7.2, oid previously, so check both */
+		if (strcmp(indinfo[i].indproc, "-") == 0 ||
+			strcmp(indinfo[i].indproc, "0") == 0)
 			funcname = NULL;
 		else
 		{
