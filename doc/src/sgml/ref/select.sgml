@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.79 2005/01/04 03:58:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.80 2005/01/04 08:59:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -695,6 +695,45 @@ SELECT name FROM distributors ORDER BY code;
     was initialized.
    </para>
   </refsect2>
+
+  <refsect2 id="sql-distinct">
+   <title id="sql-distinct-title"><literal>DISTINCT</literal> Clause</title>
+
+   <para>
+    If <literal>DISTINCT</> is specified, all duplicate rows are
+    removed from the result set (one row is kept from each group of
+    duplicates).  <literal>ALL</> specifies the opposite: all rows are
+    kept; that is the default.
+   </para>
+
+   <para>
+    <literal>DISTINCT ON ( <replaceable
+    class="parameter">expression</replaceable> [, ...] )</literal>
+    keeps only the first row of each set of rows where the given
+    expressions evaluate to equal.  The <literal>DISTINCT ON</literal>
+    expressions are interpreted using the same rules as for
+    <literal>ORDER BY</> (see above).  Note that the <quote>first
+    row</quote> of each set is unpredictable unless <literal>ORDER
+    BY</> is used to ensure that the desired row appears first.  For
+    example,
+<programlisting>
+SELECT DISTINCT ON (location) location, time, report
+    FROM weather_reports
+    ORDER BY location, time DESC;
+</programlisting>
+    retrieves the most recent weather report for each location.  But
+    if we had not used <literal>ORDER BY</> to force descending order
+    of time values for each location, we'd have gotten a report from
+    an unpredictable time for each location.
+   </para>
+
+   <para>
+    The <literal>DISTINCT ON</> expression(s) must match the leftmost
+    <literal>ORDER BY</> expression(s).  The <literal>ORDER BY</> clause
+    will normally contain additional expression(s) that determine the
+    desired precedence of rows within each <literal>DISTINCT ON</> group.
+   </para>
+  </refsect2>
   
   <refsect2 id="SQL-LIMIT">
    <title id="sql-limit-title"><literal>LIMIT</literal> Clause</title>
@@ -736,45 +775,6 @@ OFFSET <replaceable class="parameter">start</replaceable>
     is an inherent consequence of the fact that SQL does not promise
     to deliver the results of a query in any particular order unless
     <literal>ORDER BY</> is used to constrain the order.
-   </para>
-  </refsect2>
-
-  <refsect2 id="sql-distinct">
-   <title id="sql-distinct-title"><literal>DISTINCT</literal> Clause</title>
-
-   <para>
-    If <literal>DISTINCT</> is specified, all duplicate rows are
-    removed from the result set (one row is kept from each group of
-    duplicates).  <literal>ALL</> specifies the opposite: all rows are
-    kept; that is the default.
-   </para>
-
-   <para>
-    <literal>DISTINCT ON ( <replaceable
-    class="parameter">expression</replaceable> [, ...] )</literal>
-    keeps only the first row of each set of rows where the given
-    expressions evaluate to equal.  The <literal>DISTINCT ON</literal>
-    expressions are interpreted using the same rules as for
-    <literal>ORDER BY</> (see above).  Note that the <quote>first
-    row</quote> of each set is unpredictable unless <literal>ORDER
-    BY</> is used to ensure that the desired row appears first.  For
-    example,
-<programlisting>
-SELECT DISTINCT ON (location) location, time, report
-    FROM weather_reports
-    ORDER BY location, time DESC;
-</programlisting>
-    retrieves the most recent weather report for each location.  But
-    if we had not used <literal>ORDER BY</> to force descending order
-    of time values for each location, we'd have gotten a report from
-    an unpredictable time for each location.
-   </para>
-
-   <para>
-    The <literal>DISTINCT ON</> expression(s) must match the leftmost
-    <literal>ORDER BY</> expression(s).  The <literal>ORDER BY</> clause
-    will normally contain additional expression(s) that determine the
-    desired precedence of rows within each <literal>DISTINCT ON</> group.
    </para>
   </refsect2>
 
