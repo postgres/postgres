@@ -491,11 +491,7 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL); }
 						free($1);
 					} 
 		| ECPGExecute		{	output_statement($1, 0, NULL); }
-		| ECPGFetchDescStmt	{
-					 	output_statement($1.str, 1, $1.name);
-						free($1.str);
-						free($1.name);
-					}
+		| ECPGFetchDescStmt	{ 	output_statement($1.str, 1, $1.name); }
 		| ECPGFree		{
 						fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1);
 

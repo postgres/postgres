@@ -828,5 +828,9 @@ Tue Feb 22 13:48:18 CET 2000
 Wed Feb 23 17:08:28 CET 2000
 
 	- Even more clean ups.
+
+Fri Feb 25 16:13:11 CET 2000
+
+	- Fixed some bugs I created when I cleaned up, thanks Christof.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

@@ -47,7 +47,6 @@ ECPGDynamicType(Oid type)
 	}
 }
 
-#if 0
 static unsigned int
 ECPGDynamicType_DDT(Oid type)
 {
@@ -61,7 +60,7 @@ ECPGDynamicType_DDT(Oid type)
 			return SQL3_DDT_ILLEGAL;
 	}
 }
-#endif
+
 
 bool
 ECPGget_desc_header(int lineno, char * desc_name, int *count)
@@ -260,6 +259,12 @@ ECPGget_desc(int lineno, char *desc_name, int index, ...)
 	        		ECPGlog("ECPGget_desc: TYPE = %d\n", ECPGDynamicType(PQftype(ECPGresult, index)));
                         	break;
 
+                        case ECPGd_di_code:
+                        	if (!get_int_item(lineno, var, vartype, ECPGDynamicType_DDT(PQftype(ECPGresult, index))))
+	        			return (false);
+	        			
+	        		ECPGlog("ECPGget_desc: TYPE = %d\n", ECPGDynamicType_DDT(PQftype(ECPGresult, index)));
+                        	break;
 			case ECPGd_data:
 				if (!get_data(ECPGresult, 0, index, lineno, vartype, ECPGt_NO_INDICATOR, var, NULL, varcharsize, offset))
 					return (false);                        	

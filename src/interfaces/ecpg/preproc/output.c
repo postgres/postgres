@@ -120,6 +120,7 @@ output_statement(char * stmt, int mode, char *descriptor)
 	mode |= 2;
 	whenever_action(mode);
 	free(stmt);
+	free(descriptor);
 	if (connection != NULL)
 		free(connection);
 }
