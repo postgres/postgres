@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.51 2001/11/05 17:46:31 momjian Exp $
+ * $Id: htup.h,v 1.52 2002/05/27 19:53:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,25 +17,44 @@
 #include "storage/bufpage.h"
 #include "storage/relfilenode.h"
 
-#define MinHeapTupleBitmapSize	32		/* 8 * 4 */
 
 /*
- * MaxHeapAttributeNumber limits the number of (user) columns in a table.
+ * MaxTupleAttributeNumber limits the number of (user) columns in a tuple.
  * The key limit on this value is that the size of the fixed overhead for
  * a tuple, plus the size of the null-values bitmap (at 1 bit per column),
  * plus MAXALIGN alignment, must fit into t_hoff which is uint8.  On most
- * machines the absolute upper limit without making t_hoff wider would be
- * about 1700.	Note, however, that depending on column data types you will
- * likely also be running into the disk-block-based limit on overall tuple
- * size if you have more than a thousand or so columns.  TOAST won't help.
+ * machines the upper limit without making t_hoff wider would be a little
+ * over 1700.  We use round numbers here and for MaxHeapAttributeNumber
+ * so that alterations in HeapTupleHeaderData layout won't change the
+ * supported max number of columns.
+ */
+#define MaxTupleAttributeNumber	1664	/* 8 * 208 */
+
+/*----------
+ * MaxHeapAttributeNumber limits the number of (user) columns in a table.
+ * This should be somewhat less than MaxTupleAttributeNumber.  It must be
+ * at least one less, else we will fail to do UPDATEs on a maximal-width
+ * table (because UPDATE has to form working tuples that include CTID).
+ * In practice we want some additional daylight so that we can gracefully
+ * support operations that add hidden "resjunk" columns, for example
+ * SELECT * FROM wide_table ORDER BY foo, bar, baz.
+ * In any case, depending on column data types you will likely be running
+ * into the disk-block-based limit on overall tuple size if you have more
+ * than a thousand or so columns.  TOAST won't help.
+ *----------
  */
 #define MaxHeapAttributeNumber	1600	/* 8 * 200 */
 
 /*
- * This is the on-disk copy of the tuple.
+ * On-disk heap tuple header.  Currently this is also used as the header
+ * format for tuples formed in memory, although in principle they could
+ * be different.
  *
  * To avoid wasting space, the attributes should be layed out in such a
- * way to reduce structure padding.
+ * way to reduce structure padding.  Note that t_hoff is the offset to
+ * the start of the user data, and so must be a multiple of MAXALIGN.
+ * Also note that we omit the nulls bitmap if t_infomask shows that there
+ * are no nulls in the tuple.
  */
 typedef struct HeapTupleHeaderData
 {
@@ -51,14 +70,13 @@ typedef struct HeapTupleHeaderData
 
 	int16		t_natts;		/* number of attributes */
 
-	uint16		t_infomask;		/* various infos */
+	uint16		t_infomask;		/* various flag bits, see below */
 
-	uint8		t_hoff;			/* sizeof() tuple header */
+	uint8		t_hoff;			/* sizeof header incl. bitmap, padding */
 
 	/* ^ - 31 bytes - ^ */
 
-	bits8		t_bits[MinHeapTupleBitmapSize / 8];
-	/* bit map of NULLs */
+	bits8		t_bits[1];		/* bitmap of NULLs -- VARIABLE LENGTH */
 
 	/* MORE DATA FOLLOWS AT END OF STRUCT */
 } HeapTupleHeaderData;
@@ -183,7 +201,7 @@ typedef struct xl_heap_clean
 #define FirstLowInvalidHeapAttributeNumber		(-8)
 
 /*
- * This is the in-memory copy of the tuple.
+ * HeapTupleData is an in-memory data structure that points to a tuple.
  *
  * This new HeapTuple for version >= 6.5 and this is why it was changed:
  *
@@ -222,11 +240,9 @@ typedef HeapTupleData *HeapTuple;
 
 /*
  * BITMAPLEN(NATTS) -
- *		Computes minimum size of bitmap given number of domains.
+ *		Computes size of null bitmap given number of data columns.
  */
-#define BITMAPLEN(NATTS) \
-		((((((int)(NATTS) - 1) >> 3) + 4 - (MinHeapTupleBitmapSize >> 3)) \
-		  & ~03) + (MinHeapTupleBitmapSize >> 3))
+#define BITMAPLEN(NATTS)	(((int)(NATTS) + 7) / 8)
 
 /*
  * HeapTupleIsValid
@@ -240,26 +256,26 @@ typedef HeapTupleData *HeapTuple;
 #define HEAP_HASNULL			0x0001	/* has null attribute(s) */
 #define HEAP_HASVARLENA			0x0002	/* has variable length
 										 * attribute(s) */
-#define HEAP_HASEXTERNAL		0x0004	/* has external stored */
- /* attribute(s) */
-#define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored */
- /* attribute(s) */
+#define HEAP_HASEXTERNAL		0x0004	/* has external stored
+										 * attribute(s) */
+#define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored
+										 * attribute(s) */
 #define HEAP_HASEXTENDED		0x000C	/* the two above combined */
 
-#define HEAP_XMAX_UNLOGGED		0x0080	/* to lock tuple for update */
- /* without logging */
+#define HEAP_XMAX_UNLOGGED		0x0080	/* to lock tuple for update
+										 * without logging */
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
 #define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */
 #define HEAP_XMAX_COMMITTED		0x0400	/* t_xmax committed */
 #define HEAP_XMAX_INVALID		0x0800	/* t_xmax invalid/aborted */
 #define HEAP_MARKED_FOR_UPDATE	0x1000	/* marked for UPDATE */
 #define HEAP_UPDATED			0x2000	/* this is UPDATEd version of row */
-#define HEAP_MOVED_OFF			0x4000	/* removed or moved to another
-										 * place by vacuum */
+#define HEAP_MOVED_OFF			0x4000	/* moved to another place by
+										 * vacuum */
 #define HEAP_MOVED_IN			0x8000	/* moved from another place by
 										 * vacuum */
 
-#define HEAP_XACT_MASK			0xFFF0	/* */
+#define HEAP_XACT_MASK			0xFFF0	/* visibility-related bits */
 
 #define HeapTupleNoNulls(tuple) \
 		(!(((HeapTuple) (tuple))->t_data->t_infomask & HEAP_HASNULL))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.31 2002/05/24 18:57:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.32 2002/05/27 19:53:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -715,39 +715,34 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 */
 	if (need_change)
 	{
+		HeapTupleHeader olddata = newtup->t_data;
 		char	   *new_data;
 		int32		new_len;
-		MemoryContext oldcxt;
-		HeapTupleHeader olddata;
 
 		/*
-		 * Calculate the new size of the tuple
+		 * Calculate the new size of the tuple.  Header size should not
+		 * change, but data size might.
 		 */
 		new_len = offsetof(HeapTupleHeaderData, t_bits);
 		if (has_nulls)
 			new_len += BITMAPLEN(numAttrs);
 		new_len = MAXALIGN(new_len);
+		Assert(new_len == olddata->t_hoff);
 		new_len += ComputeDataSize(tupleDesc, toast_values, toast_nulls);
 
 		/*
-		 * Remember the old memory location of the tuple (for below),
-		 * switch to the memory context of the HeapTuple structure and
-		 * allocate the new tuple.
+		 * Allocate new tuple in same context as old one.
 		 */
-		olddata = newtup->t_data;
-		oldcxt = MemoryContextSwitchTo(newtup->t_datamcxt);
-		new_data = palloc(new_len);
+		new_data = (char *) MemoryContextAlloc(newtup->t_datamcxt, new_len);
+		newtup->t_data = (HeapTupleHeader) new_data;
+		newtup->t_len = new_len;
 
 		/*
 		 * Put the tuple header and the changed values into place
 		 */
-		memcpy(new_data, newtup->t_data, newtup->t_data->t_hoff);
-		newtup->t_data = (HeapTupleHeader) new_data;
-		newtup->t_len = new_len;
+		memcpy(new_data, olddata, olddata->t_hoff);
 
-		DataFill((char *) (MAXALIGN((long) new_data +
-								  offsetof(HeapTupleHeaderData, t_bits) +
-							   ((has_nulls) ? BITMAPLEN(numAttrs) : 0))),
+		DataFill((char *) new_data + olddata->t_hoff,
 				 tupleDesc,
 				 toast_values,
 				 toast_nulls,
@@ -760,11 +755,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		 */
 		if ((char *) olddata != ((char *) newtup + HEAPTUPLESIZE))
 			pfree(olddata);
-
-		/*
-		 * Switch back to the old memory context
-		 */
-		MemoryContextSwitchTo(oldcxt);
 	}
 
 	/*

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.74 2001/10/25 05:49:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.75 2002/05/27 19:53:33 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -571,18 +571,15 @@ heap_formtuple(TupleDesc tupleDescriptor,
 {
 	HeapTuple	tuple;			/* return tuple */
 	HeapTupleHeader td;			/* tuple data */
-	int			bitmaplen;
 	unsigned long len;
 	int			hoff;
 	bool		hasnull = false;
 	int			i;
 	int			numberOfAttributes = tupleDescriptor->natts;
 
-	if (numberOfAttributes > MaxHeapAttributeNumber)
-		elog(ERROR, "heap_formtuple: numberOfAttributes of %d > %d",
-			 numberOfAttributes, MaxHeapAttributeNumber);
-
-	len = offsetof(HeapTupleHeaderData, t_bits);
+	if (numberOfAttributes > MaxTupleAttributeNumber)
+		elog(ERROR, "heap_formtuple: numberOfAttributes %d exceeds limit %d",
+			 numberOfAttributes, MaxTupleAttributeNumber);
 
 	for (i = 0; i < numberOfAttributes; i++)
 	{
@@ -593,13 +590,12 @@ heap_formtuple(TupleDesc tupleDescriptor,
 		}
 	}
 
-	if (hasnull)
-	{
-		bitmaplen = BITMAPLEN(numberOfAttributes);
-		len += bitmaplen;
-	}
+	len = offsetof(HeapTupleHeaderData, t_bits);
 
-	hoff = len = MAXALIGN(len); /* be conservative here */
+	if (hasnull)
+		len += BITMAPLEN(numberOfAttributes);
+
+	hoff = len = MAXALIGN(len); /* align user data safely */
 
 	len += ComputeDataSize(tupleDescriptor, value, nulls);
 
@@ -615,7 +611,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	td->t_natts = numberOfAttributes;
 	td->t_hoff = hoff;
 
-	DataFill((char *) td + td->t_hoff,
+	DataFill((char *) td + hoff,
 			 tupleDescriptor,
 			 value,
 			 nulls,
