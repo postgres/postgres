@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.128 1999/12/27 15:45:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.129 1999/12/27 18:21:07 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1596,9 +1596,14 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				const char *expr = PQgetvalue(res2, i2, i_rcsrc);
 
 				resetPQExpBuffer(query);
-				if (name[0] != '$')
-					appendPQExpBuffer(query, "CONSTRAINT %s ", fmtId(name, force_quotes));
-				appendPQExpBuffer(query, "CHECK (%s)", expr);
+				if (name[0] != '$') {
+					appendPQExpBuffer(query, "CONSTRAINT ");
+					appendPQExpBuffer(query, fmtId(name, force_quotes));
+					appendPQExpBufferChar(query, ' ');
+				}
+				appendPQExpBuffer(query, "CHECK (");
+				appendPQExpBuffer(query, expr);
+				appendPQExpBuffer(query, ")");
 				tblinfo[i].check_expr[i2] = strdup(query->data);
 			}
 			PQclear(res2);
@@ -1614,7 +1619,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
             int j;
 
 			resetPQExpBuffer(query);
-            appendPQExpBuffer(query,
+			appendPQExpBuffer(query,
                     "SELECT a.attname "
                     "FROM pg_index i, pg_class c, pg_attribute a "
                     "WHERE i.indisprimary AND i.indrelid = %s "
@@ -1731,7 +1736,9 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 #endif
 
 				resetPQExpBuffer(query);
-				appendPQExpBuffer(query, "CREATE TRIGGER %s ", fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes));
+				appendPQExpBuffer(query, "CREATE TRIGGER ");
+				appendPQExpBuffer(query, fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes));
+				appendPQExpBufferChar(query, ' ');
 				/* Trigger type */
 				findx = 0;
 				if (TRIGGER_FOR_BEFORE(tgtype))
@@ -1792,8 +1799,10 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 							appendPQExpBufferChar(farg, '\\');
 						appendPQExpBufferChar(farg, *s++);
 					}
-					appendPQExpBuffer(query, "'%s'%s", farg->data,
-							(findx < tgnargs - 1) ? ", " : "");
+					appendPQExpBufferChar(query, '\'');
+					appendPQExpBuffer(query, farg->data);
+					appendPQExpBufferChar(query, '\'');
+					appendPQExpBuffer(query, (findx < tgnargs - 1) ? ", " : "");
 					tgargs = p + 4;
 				}
 				appendPQExpBuffer(query, ");\n");
