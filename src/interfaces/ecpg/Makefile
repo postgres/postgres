@@ -4,4 +4,4 @@ all install uninstall clean:
 	$(MAKE) -C include $@
 	$(MAKE) -C lib $@
 	$(MAKE) -C preproc $@
-	$(MAKE) -C doc $@
+#	$(MAKE) -C doc $@
