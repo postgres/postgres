@@ -1,9 +1,10 @@
+<PRE>
 =======================================================
 Frequently Asked Questions (FAQ) for PostgreSQL >= V6.1
 Linux Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           Wed Oct 01 11:45:00 BST 1997
+last updated:           Thu Dec 15 12:05:00 GMT 1997
 
 current maintainer:     Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 original author:        Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
@@ -11,7 +12,9 @@ original author:        Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 
 Changes in this version (* = modified, + = new, - = removed):
 
-+3.9)   Why does Query 32 in the regression tests take so long?
+*1.3)   [REDHAT] Why do I get problems with missing libdl and dlfcn.h?
+*1.4)   [SLACKWARE 3.1] Why do I get problems with missing libdl and dlfcn.h?
++1.19)  Why does make exit or crash?
 
 
 This file is divided approximately as follows:
@@ -51,6 +54,7 @@ Questions answered:
         make: *** [ipc.o] Error 1
 1.17)   When compiling postgres, gcc reports signal 11 and aborts.
 1.18)   Can I install 6.1.1 under MkLinux?
+1.19)   Why does make exit or crash?
 2.1)    The linker fails to find libX11 when compiling pgtclsh
 3.1)    I get an error reporting _fUnKy_POSTPORT_sTuFf_ undefined when 
         running scripts like createuser
@@ -151,6 +155,9 @@ Section 1:      Compiling PostgreSQL
 
         Install the RPM file in the usual way and off you go!
 
+        NOTE! You will have to re-run configure and do a make clean
+        after installing the library and before recompiling.
+
         There has been one report of a corrupted system resulting from
         programs accessing these libraries while updating them (not
         altogether surprising). Consequently it is a good idea to reboot 
@@ -191,7 +198,7 @@ Section 1:      Compiling PostgreSQL
         into single-user mode is probably a good idea!
 
         The easiest fix is to obtain the file ldso.tgz from the a4 disk of
-        a more recent Slackware 3.1 distribution and unpack this file
+        a more recent Slackware distribution and unpack this file
         from the root (/) directory, then do
 
                 sh install/doinst.sh
@@ -199,6 +206,9 @@ Section 1:      Compiling PostgreSQL
         to complete the installation. Follow this with
 
                 ldconfig
+
+        NOTE! You will have to re-run configure and do a make clean
+        after installing the library and before recompiling.
 
         If you want to install manually, you must first install the file
         dlfcn.h in /usr/include.
@@ -219,6 +229,9 @@ Section 1:      Compiling PostgreSQL
         Finally
 
                 ldconfig
+
+        NOTE! You will have to re-run configure and do a make clean
+        after installing the library and before recompiling.
 
 
 1.5)    My compile of the backend dies complaining about the include file 
@@ -280,10 +293,12 @@ Section 1:      Compiling PostgreSQL
         If this doesn't work (I don't have SuSE to verify that it does)
         then after running configure, you need to edit
         src/Makefile.global and add -ltermcap to the LDFLAGS line
-        (after -lreadline).
+        (after -lreadline). (Alternatively, you can modify 
+        src/Makefile.custom before running configure.)
 
-        You may also wish to force use of ncurses rather than curses by
-        changing -lcurses to -lncurses.
+        Some versions of SuSE provide only ncurses, so you may need
+        to force use of ncurses rather than curses by changing 
+        -lcurses to -lncurses.
 
 
 1.9)    Why do I get problems with ld.so?
@@ -405,6 +420,15 @@ Section 1:      Compiling PostgreSQL
         Tatsuo Ishii <t-ishii@sra.co.jp> has done this under 
         MkLinux DR2.1 update2 after a small patch available from:
         ftp://ftp.sra.co.jp/pub/cmd/postgres/6.1.1/mklinux.patch.gz
+
+1.19)   Why does make exit or crash?
+
+        There have been a couple of reports of gmake either just
+        exiting early or seg faulting. The latter problem was reported
+        with gmake 3.74 - upgrading to 3.76.1 solved the problem. 
+        However, 3.74 is known to work fine in other people's setups.
+        In short, try upgrading gmake to the latest version you can 
+        find before reporting this as a problem
 
 
 ----------------------------------------------------------------------
@@ -598,3 +622,4 @@ Dr. Andrew C.R. Martin                             University College London
 EMAIL: (Work) martin@biochem.ucl.ac.uk    (Home) andrew@stagleys.demon.co.uk
 URL:   http://www.biochem.ucl.ac.uk/~martin
 Tel:   (Work) +44(0)171 419 3890                    (Home) +44(0)1372 275775
+</PRE>
