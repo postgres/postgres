@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.80 1998/08/25 15:02:04 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.81 1998/08/29 18:06:57 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2435,7 +2435,9 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 	int			i,
 				j,
 				k;
-	char		q[MAXQUERYLEN];
+	char		q[MAXQUERYLEN],
+				id1[MAXQUERYLEN],
+				id2[MAXQUERYLEN];
 	char	  **parentRels;		/* list of names of parent relations */
 	int			numParents;
 	int			actual_atts;	/* number of attrs in this CREATE statment */
@@ -2506,11 +2508,13 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 					}
 					else
 					{
+ 						strcpy(id1, fmtId(tblinfo[i].attnames[j]));
+ 						strcpy(id2, fmtId(tblinfo[i].typnames[j]));
 						sprintf(q, "%s%s%s %s",
 								q,
 								(actual_atts > 0) ? ", " : "",
-								fmtId(tblinfo[i].attnames[j]),
-								fmtId(tblinfo[i].typnames[j]));
+							id1,
+							id2);
 						actual_atts++;
 					}
 					if (tblinfo[i].adef_expr[j] != NULL)
@@ -2572,13 +2576,15 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 				indclass;
 	int			nclass;
 
-	char		q[MAXQUERYLEN];
+	char		q[MAXQUERYLEN],
+				id1[MAXQUERYLEN],
+				id2[MAXQUERYLEN];
 	PGresult   *res;
 
 	for (i = 0; i < numIndices; i++)
 	{
 		tableInd = findTableByName(tblinfo, numTables,
-								   fmtId(indinfo[i].indrelname));
+					   (indinfo[i].indrelname));
 
 		if (strcmp(indinfo[i].indproc, "0") == 0)
 			funcname = NULL;
@@ -2659,8 +2665,10 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 							attname, indinfo[i].indexrelname);
 					exit_nicely(g_conn);
 				}
+				strcpy(id1, fmtId(attname));
+				strcpy(id2, fmtId(classname[k]));
 				sprintf(attlist + strlen(attlist), "%s%s %s",
-						(k == 0) ? "" : ", ", fmtId(attname), fmtId(classname[k]));
+						(k == 0) ? "" : ", ", id1, id2);
 				free(classname[k]);
 			}
 		}
@@ -2668,10 +2676,12 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 		if (!tablename || (!strcmp(indinfo[i].indrelname, tablename)))
 		{
 
+			strcpy(id1, fmtId(indinfo[i].indexrelname));
+			strcpy(id2, fmtId(indinfo[i].indrelname));
 			sprintf(q, "CREATE %s INDEX %s on %s using %s (",
 			  (strcmp(indinfo[i].indisunique, "t") == 0) ? "UNIQUE" : "",
-					fmtId(indinfo[i].indexrelname),
-					fmtId(indinfo[i].indrelname),
+					id1,
+					id2,
 					indinfo[i].indamname);
 			if (funcname)
 			{
