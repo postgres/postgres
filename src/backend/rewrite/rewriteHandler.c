@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * rewriteHandler.c
+ *		Primary module of query rewriter.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.94 2001/06/12 18:54:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.95 2001/06/13 18:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,16 +27,16 @@
 #include "parser/parse_target.h"
 #include "parser/parsetree.h"
 #include "parser/parse_type.h"
+#include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
 
-static RewriteInfo *gatherRewriteMeta(Query *parsetree,
-				  Query *rule_action,
-				  Node *rule_qual,
-				  int rt_index,
-				  CmdType event,
-				  bool instead_flag);
+static Query *rewriteRuleAction(Query *parsetree,
+								Query *rule_action,
+								Node *rule_qual,
+								int rt_index,
+								CmdType event);
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
@@ -45,40 +45,33 @@ static Query *fireRIRrules(Query *parsetree);
 
 
 /*
- * gatherRewriteMeta -
- *	  Gather meta information about parsetree, and rule. Fix rule body
- *	  and qualifier so that they can be mixed with the parsetree and
- *	  maintain semantic validity
+ * rewriteRuleAction -
+ *	  Rewrite the rule action with appropriate qualifiers (taken from
+ *	  the triggering query).
  */
-static RewriteInfo *
-gatherRewriteMeta(Query *parsetree,
+static Query *
+rewriteRuleAction(Query *parsetree,
 				  Query *rule_action,
 				  Node *rule_qual,
 				  int rt_index,
-				  CmdType event,
-				  bool instead_flag)
+				  CmdType event)
 {
-	RewriteInfo *info;
+	int			current_varno,
+				new_varno;
+	int			rt_length;
 	Query	   *sub_action;
 	Query	  **sub_action_ptr;
-	int			rt_length;
 
-	info = (RewriteInfo *) palloc(sizeof(RewriteInfo));
-	info->rt_index = rt_index;
-	info->event = event;
-	info->instead_flag = instead_flag;
-	info->rule_action = (Query *) copyObject(rule_action);
-	info->rule_qual = (Node *) copyObject(rule_qual);
-	if (info->rule_action == NULL)
-	{
-		info->nothing = TRUE;
-		return info;
-	}
-	info->nothing = FALSE;
-	info->action = info->rule_action->commandType;
-	info->current_varno = rt_index;
+	/*
+	 * Make modifiable copies of rule action and qual (what we're passed
+	 * are the stored versions in the relcache; don't touch 'em!).
+	 */
+	rule_action = (Query *) copyObject(rule_action);
+	rule_qual = (Node *) copyObject(rule_qual);
+
+	current_varno = rt_index;
 	rt_length = length(parsetree->rtable);
-	info->new_varno = PRS2_NEW_VARNO + rt_length;
+	new_varno = PRS2_NEW_VARNO + rt_length;
 
 	/*
 	 * Adjust rule action and qual to offset its varnos, so that we can
@@ -88,14 +81,14 @@ gatherRewriteMeta(Query *parsetree,
 	 * will be in the SELECT part, and we have to modify that rather than
 	 * the top-level INSERT (kluge!).
 	 */
-	sub_action = getInsertSelectQuery(info->rule_action, &sub_action_ptr);
+	sub_action = getInsertSelectQuery(rule_action, &sub_action_ptr);
 
 	OffsetVarNodes((Node *) sub_action, rt_length, 0);
-	OffsetVarNodes(info->rule_qual, rt_length, 0);
+	OffsetVarNodes(rule_qual, rt_length, 0);
 	/* but references to *OLD* should point at original rt_index */
 	ChangeVarNodes((Node *) sub_action,
 				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
-	ChangeVarNodes(info->rule_qual,
+	ChangeVarNodes(rule_qual,
 				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 
 	/*
@@ -135,8 +128,8 @@ gatherRewriteMeta(Query *parsetree,
 
 		keeporig = (!rangeTableEntry_used((Node *) sub_action->jointree,
 										  rt_index, 0)) &&
-			(rangeTableEntry_used(info->rule_qual, rt_index, 0) ||
-		  rangeTableEntry_used(parsetree->jointree->quals, rt_index, 0));
+			(rangeTableEntry_used(rule_qual, rt_index, 0) ||
+			 rangeTableEntry_used(parsetree->jointree->quals, rt_index, 0));
 		newjointree = adjustJoinTreeList(parsetree, !keeporig, rt_index);
 		sub_action->jointree->fromlist =
 			nconc(newjointree, sub_action->jointree->fromlist);
@@ -146,7 +139,8 @@ gatherRewriteMeta(Query *parsetree,
 	 * We copy the qualifications of the parsetree to the action and vice
 	 * versa. So force hasSubLinks if one of them has it. If this is not
 	 * right, the flag will get cleared later, but we mustn't risk having
-	 * it not set when it needs to be.
+	 * it not set when it needs to be.  (XXX this should probably be handled
+	 * by AddQual and friends, not here...)
 	 */
 	if (parsetree->hasSubLinks)
 		sub_action->hasSubLinks = TRUE;
@@ -158,7 +152,7 @@ gatherRewriteMeta(Query *parsetree,
 	 * two queries one w/rule_qual, one w/NOT rule_qual. Also add user
 	 * query qual onto rule action
 	 */
-	AddQual(sub_action, info->rule_qual);
+	AddQual(sub_action, rule_qual);
 
 	AddQual(sub_action, parsetree->jointree->quals);
 
@@ -168,23 +162,23 @@ gatherRewriteMeta(Query *parsetree,
 	 *
 	 * KLUGE ALERT: since ResolveNew returns a mutated copy, we can't just
 	 * apply it to sub_action; we have to remember to update the sublink
-	 * inside info->rule_action, too.
+	 * inside rule_action, too.
 	 */
-	if (info->event == CMD_INSERT || info->event == CMD_UPDATE)
+	if (event == CMD_INSERT || event == CMD_UPDATE)
 	{
 		sub_action = (Query *) ResolveNew((Node *) sub_action,
-										  info->new_varno,
+										  new_varno,
 										  0,
 										  parsetree->targetList,
-										  info->event,
-										  info->current_varno);
+										  event,
+										  current_varno);
 		if (sub_action_ptr)
 			*sub_action_ptr = sub_action;
 		else
-			info->rule_action = sub_action;
+			rule_action = sub_action;
 	}
 
-	return info;
+	return rule_action;
 }
 
 /*
@@ -708,26 +702,14 @@ fireRules(Query *parsetree,
 		foreach(r, actions)
 		{
 			Query	   *rule_action = lfirst(r);
-			RewriteInfo *info;
 
 			if (rule_action->commandType == CMD_NOTHING)
 				continue;
 
-			info = gatherRewriteMeta(parsetree, rule_action, event_qual,
-									 rt_index, event, *instead_flag);
+			rule_action = rewriteRuleAction(parsetree, rule_action,
+											event_qual, rt_index, event);
 
-			/* handle escapable cases, or those handled by other code */
-			if (info->nothing)
-			{
-				if (*instead_flag)
-					return NIL;
-				else
-					continue;
-			}
-
-			results = lappend(results, info->rule_action);
-
-			pfree(info);
+			results = lappend(results, rule_action);
 		}
 
 		/*

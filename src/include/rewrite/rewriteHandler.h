@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * rewriteHandler.h
- *
+ *		External interface to query rewriter.
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteHandler.h,v 1.14 2001/01/24 19:43:27 momjian Exp $
+ * $Id: rewriteHandler.h,v 1.15 2001/06/13 18:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,21 +16,7 @@
 
 #include "nodes/parsenodes.h"
 
-typedef struct RewriteInfo
-{
-	int			rt_index;
-	bool		instead_flag;
-	int			event;
-	CmdType		action;
-	int			current_varno;
-	int			new_varno;
-	Query	   *rule_action;
-	Node	   *rule_qual;
-	bool		nothing;
-} RewriteInfo;
-
 
 extern List *QueryRewrite(Query *parsetree);
-
 
 #endif	 /* REWRITEHANDLER_H */
