@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.214 2001/05/25 15:45:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.215 2001/05/30 14:15:26 momjian Exp $
  *
  * NOTES
  *
@@ -272,8 +272,7 @@ checkDataDir(const char *checkdir)
 		ExitPostmaster(2);
 	}
 
-	snprintf(path, sizeof(path), "%s%cglobal%cpg_control",
-			 checkdir, SEP_CHAR, SEP_CHAR);
+	snprintf(path, sizeof(path), "%s/global/pg_control", checkdir);
 
 	fp = AllocateFile(path, PG_BINARY_R);
 	if (fp == NULL)

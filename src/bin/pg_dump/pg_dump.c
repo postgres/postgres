@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.209 2001/05/22 16:37:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.210 2001/05/30 14:15:27 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -119,7 +119,7 @@
  *
  *	  - Dump dependency information in dumpType. This is necessary
  *		because placeholder types will have an OID less than the
- *		OID of the type functions, but type must be created after 
+ *		OID of the type functions, but type must be created after
  *		the functions.
  *
  * Modifications - 4-Apr-2001 - pjw@rhyme.com.au
@@ -773,10 +773,10 @@ main(int argc, char **argv)
 
 	dataOnly = schemaOnly = dumpData = attrNames = false;
 
-	if (!strrchr(argv[0], SEP_CHAR))
+	if (!strrchr(argv[0], '/'))
 		progname = argv[0];
 	else
-		progname = strrchr(argv[0], SEP_CHAR) + 1;
+		progname = strrchr(argv[0], '/') + 1;
 
 	/* Set defaulty options based on progname */
 	if (strcmp(progname, "pg_backup") == 0)
@@ -2078,7 +2078,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					  "order by oid",
 					  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 	} else {
-		/* 
+		/*
 		 * Before 7.1, view relkind was not set to 'v', so we must check
 		 * if we have a view by looking for a rule in pg_rewrite.
 		 */
@@ -2195,13 +2195,13 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		else
 			tblinfo[i].viewdef = NULL;
 
-		/* 
+		/*
 		 * Get non-inherited CHECK constraints, if any.
 		 *
 		 * Exclude inherited CHECKs from CHECK constraints total. If a
 		 * constraint matches by name and condition with a constraint
 		 * belonging to a parent class (OR conditions match and both
-	     * names start with '$', we assume it was inherited.
+		 * names start with '$', we assume it was inherited.
 		 */
 		if (tblinfo[i].ncheck > 0)
 		{
@@ -2313,7 +2313,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			int			n;
 
 			resetPQExpBuffer(query);
-			if (g_fout->remoteVersion < 70100) 
+			if (g_fout->remoteVersion < 70100)
 			{
 				/* Fake the LOJ from below */
 				appendPQExpBuffer(query,
@@ -2404,7 +2404,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						g_comment_end);
 
 			resetPQExpBuffer(query);
-			appendPQExpBuffer(query, 
+			appendPQExpBuffer(query,
 								"SELECT tgname, tgfoid, tgtype, tgnargs, tgargs, "
 								"tgisconstraint, tgconstrname, tgdeferrable, "
 								"tgconstrrelid, tginitdeferred, oid, "
@@ -2575,14 +2575,14 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					if (strcmp(tgconstrrelid, "0") != 0) {
 
 						if (PQgetisnull(res2, i2, i_tgconstrrelname))
-            			{
-                			fprintf(stderr, "getTables(): SELECT produced NULL referenced table name "
+						{
+							fprintf(stderr, "getTables(): SELECT produced NULL referenced table name "
 											"for trigger '%s' on relation '%s' (oid was %s).\n",
 											tgname, tblinfo[i].relname, tgconstrrelid);
-                			exit_nicely(g_conn);
-            			}
+							exit_nicely(g_conn);
+						}
 
-						appendPQExpBuffer(query, " FROM %s", 
+						appendPQExpBuffer(query, " FROM %s",
 										fmtId(PQgetvalue(res2, i2, i_tgconstrrelname), force_quotes));
 					}
 					if (!tgdeferrable)
@@ -2770,7 +2770,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		if (g_fout->remoteVersion < 70100)
 		{
 			/* Fake the LOJ below */
-			appendPQExpBuffer(q, 
+			appendPQExpBuffer(q,
 						"  SELECT a.oid as attoid, a.attnum, a.attname, t.typname, a.atttypmod, "
 						"        a.attnotnull, a.atthasdef, NULL as atttypedefn "
 						"    from pg_attribute a, pg_type t "
@@ -4649,7 +4649,7 @@ findLastBuiltinOid_V71(const char *dbname)
  * this is probably not foolproof but comes close
 */
 
-static Oid 
+static Oid
 findLastBuiltinOid_V70(void)
 {
 	PGresult   *res;

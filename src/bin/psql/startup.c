@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.48 2001/05/12 19:44:46 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.49 2001/05/30 14:15:27 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -102,10 +102,10 @@ main(int argc, char *argv[])
 	char	   *password = NULL;
 	bool		need_pass;
 
-	if (!strrchr(argv[0], SEP_CHAR))
+	if (!strrchr(argv[0], '/'))
 		pset.progname = argv[0];
 	else
-		pset.progname = strrchr(argv[0], SEP_CHAR) + 1;
+		pset.progname = strrchr(argv[0], '/') + 1;
 
 	if (argc > 1)
 	{

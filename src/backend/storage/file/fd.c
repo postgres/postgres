@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.78 2001/05/25 15:45:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.79 2001/05/30 14:15:26 momjian Exp $
  *
  * NOTES:
  *
@@ -580,11 +580,11 @@ filepath(char *filename)
 	int			len;
 
 	/* Not an absolute path name? Then fill in with database path... */
-	if (*filename != SEP_CHAR)
+	if (*filename != '/')
 	{
 		len = strlen(DatabasePath) + strlen(filename) + 2;
 		buf = (char *) palloc(len);
-		sprintf(buf, "%s%c%s", DatabasePath, SEP_CHAR, filename);
+		sprintf(buf, "%s/%s", DatabasePath, filename);
 	}
 	else
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.66 2001/05/22 16:52:49 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.67 2001/05/30 14:15:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,8 +336,8 @@ static ControlFileData *ControlFile = NULL;
 
 
 #define XLogFileName(path, log, seg)	\
-			snprintf(path, MAXPGPATH, "%s%c%08X%08X",	\
-					 XLogDir, SEP_CHAR, log, seg)
+			snprintf(path, MAXPGPATH, "%s/%08X%08X",	\
+					 XLogDir, log, seg)
 
 #define PrevBufIdx(idx)		\
 		(((idx) == 0) ? XLogCtl->XLogCacheBlck : ((idx) - 1))
@@ -1300,8 +1300,8 @@ XLogFileInit(uint32 log, uint32 seg,
 	 * up pre-creating an extra log segment.  That seems OK, and better
 	 * than holding the spinlock throughout this lengthy process.
 	 */
-	snprintf(tmppath, MAXPGPATH, "%s%cxlogtemp.%d",
-			 XLogDir, SEP_CHAR, (int) getpid());
+	snprintf(tmppath, MAXPGPATH, "%s/xlogtemp.%d",
+			 XLogDir, (int) getpid());
 
 	unlink(tmppath);
 
@@ -1495,7 +1495,7 @@ MoveOfflineLogs(uint32 log, uint32 seg)
 		{
 			elog(LOG, "MoveOfflineLogs: %s %s", (XLOG_archive_dir[0]) ?
 				 "archive" : "remove", xlde->d_name);
-			sprintf(path, "%s%c%s", XLogDir, SEP_CHAR, xlde->d_name);
+			sprintf(path, "%s/%s", XLogDir, xlde->d_name);
 			if (XLOG_archive_dir[0] == 0)
 				unlink(path);
 		}
@@ -1911,9 +1911,8 @@ void
 XLOGPathInit(void)
 {
 	/* Init XLOG file paths */
-	snprintf(XLogDir, MAXPGPATH, "%s%cpg_xlog", DataDir, SEP_CHAR);
-	snprintf(ControlFilePath, MAXPGPATH, "%s%cglobal%cpg_control",
-			 DataDir, SEP_CHAR, SEP_CHAR);
+	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
+	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 }
 
 static void

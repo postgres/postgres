@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.92 2001/03/22 04:00:24 momjian Exp $
+ * $Id: c.h,v 1.93 2001/05/30 14:15:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,7 +594,6 @@ typedef NameData *Name;
 
 /* These are for things that are one way on Unix and another on NT */
 #define NULL_DEV		"/dev/null"
-#define SEP_CHAR		'/'
 
 /* defines for dynamic linking on Win32 platform */
 #ifdef __CYGWIN__
