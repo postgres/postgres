@@ -51,7 +51,7 @@ Rule deparsing bugfixes(Tom)
 Fix quoting problems in mkMakefile.tcldefs.sh.in and mkMakefile.tkdefs.sh.in(Tom)
 Update frontend libpq to remove limits on query lengths,
  error/notice message lengths, and number of fields per tuple(Tom)
-This is to re-use space on index pages freed by vacuum(Tom)
+This is to re-use space on index pages freed by vacuum(Vadim)
 document -x for pg_dump(Bruce)
 Fix for unary operators in rule deparser(Tom)
 Comment out FileUnlink of excess segments during mdtruncate()(Tom)
