@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.187 2002/03/19 02:18:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.188 2002/03/19 02:58:19 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1057,7 +1057,7 @@ RelationTruncateIndexes(Oid heapId)
  */
 
 void
-heap_truncate(char *relname)
+heap_truncate(const char *relname)
 {
 	Relation	rel;
 	Oid			rid;

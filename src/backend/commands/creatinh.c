@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.86 2002/03/19 02:18:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.87 2002/03/19 02:58:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/heap.h"
@@ -221,7 +222,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
  * themselves will be destroyed, too.
  */
 void
-RemoveRelation(char *name)
+RemoveRelation(const char *name)
 {
 	AssertArg(name);
 	heap_drop_with_catalog(name, allowSystemTableMods);
@@ -238,10 +239,34 @@ RemoveRelation(char *name)
  *				  Rows are removed, indices are truncated and reconstructed.
  */
 void
-TruncateRelation(char *name)
+TruncateRelation(const char *relname)
 {
-	AssertArg(name);
-	heap_truncate(name);
+	Relation	rel;
+
+	AssertArg(relname);
+
+	if (!allowSystemTableMods && IsSystemRelationName(relname))
+		elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
+			 relname);
+
+	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
+		elog(ERROR, "you do not own relation \"%s\"", relname);
+
+	/* Grab exclusive lock in preparation for truncate */
+	rel = heap_openr(relname, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+		elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence",
+			 relname);
+
+	if (rel->rd_rel->relkind == RELKIND_VIEW)
+		elog(ERROR, "TRUNCATE cannot be used on views. '%s' is a view",
+			 relname);
+
+	/* Keep the lock until transaction commit */
+	heap_close(rel, NoLock);
+
+	heap_truncate(relname);
 }
 
 

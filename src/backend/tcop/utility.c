@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.133 2002/03/19 02:18:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.134 2002/03/19 02:58:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,9 +216,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 			/*
-			 * ******************************** relation and attribute
-			 * manipulation ********************************
-			 *
+			 * relation and attribute manipulation
 			 */
 		case T_CreateStmt:
 			DefineRelation((CreateStmt *) parsetree, RELKIND_RELATION);
@@ -301,26 +299,7 @@ ProcessUtility(Node *parsetree,
 
 		case T_TruncateStmt:
 			{
-				Relation	rel;
-
-				relname = ((TruncateStmt *) parsetree)->relName;
-				if (!allowSystemTableMods && IsSystemRelationName(relname))
-					elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
-						 relname);
-
-				/* Grab exclusive lock in preparation for truncate... */
-				rel = heap_openr(relname, AccessExclusiveLock);
-				if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-					elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence",
-						 relname);
-				if (rel->rd_rel->relkind == RELKIND_VIEW)
-					elog(ERROR, "TRUNCATE cannot be used on views. '%s' is a view",
-						 relname);
-				heap_close(rel, NoLock);
-
-				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-					elog(ERROR, "you do not own class \"%s\"", relname);
-				TruncateRelation(relname);
+				TruncateRelation(((TruncateStmt *) parsetree)->relName);
 			}
 			break;
 

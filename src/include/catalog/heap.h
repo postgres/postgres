@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.44 2002/03/19 02:18:22 momjian Exp $
+ * $Id: heap.h,v 1.45 2002/03/19 02:58:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ extern Oid heap_create_with_catalog(char *relname, TupleDesc tupdesc,
 extern void heap_drop_with_catalog(const char *relname,
 					   bool allow_system_table_mods);
 
-extern void heap_truncate(char *relname);
+extern void heap_truncate(const char *relname);
 
 extern void AddRelationRawConstraints(Relation rel,
 						  List *rawColDefaults,
