@@ -12,7 +12,7 @@ array -
 
 datetime -
 	Date & time functions
-	by Sergio Lenzi <lenzi@bsi.com.br>
+	by Massimo Dal Zotto <dz@cs.unitn.it>
 
 earthdistance -
 	Operator for computing earth distance for two points
@@ -66,10 +66,6 @@ pginterface -
 	A crude C/4GL
 	by Bruce Momjian <root@candle.pha.pa.us>
 
-sequence -
-	Set a new sequence value
-	by Massimo Dal Zotto <dz@cs.unitn.it>
-
 soundex -
 	Prototype for soundex function
 
@@ -77,7 +73,7 @@ spi -
 	A general trigger function autoinc() and so on.
 
 string -
-	New input/output conversion routines for strings
+	C-like input/output conversion routines for strings
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
 unixdate -

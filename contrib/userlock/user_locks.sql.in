@@ -1,12 +1,19 @@
--- SQL code to define the user locks functions
+-- user_locks.sql --
+--
+-- SQL code to define the user locks functions.
+--
+-- Copyright (c) 1998, Massimo Dal Zotto <dz@cs.unitn.it>
+--
+-- This file is distributed under the GNU General Public License
+-- either version 2, or (at your option) any later version.
 
--- select user_lock(group,id,type);
+-- select user_lock(group,id,mode);
 --
 create function user_lock(int4,int4,int4) returns int4
   as 'MODULE_PATHNAME'
   language 'c';
 
--- select user_unlock(group,id,type);
+-- select user_unlock(group,id,mode);
 --
 create function user_unlock(int4,int4,int4) returns int4
   as 'MODULE_PATHNAME'

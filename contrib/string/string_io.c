@@ -1,9 +1,12 @@
 /*
  * string_io.c --
  *
- * This file defines new input/output conversion routines for strings.
+ * This file defines C-like input/output conversion routines for strings.
  *
- * Copyright (c) 1996, Massimo Dal Zotto <dz@cs.unitn.it>
+ * Copyright (c) 1998, Massimo Dal Zotto <dz@cs.unitn.it>
+ *
+ * This file is distributed under the GNU General Public License
+ * either version 2, or (at your option) any later version.
  */
 
 #include <ctype.h>
@@ -33,14 +36,14 @@
  * string_output() --
  *
  * This function takes a pointer to a string data and an optional
- * data size and returns a printable representation of the data
+ * data size and returns a printable representation of the string
  * translating all escape sequences to C-like \nnn or \c escapes.
  * The function is used by output methods of various string types.
  *
  * Arguments:
  *	data -		input data (can be NULL)
  *	size -		optional size of data. A negative value indicates
- *			that data is a null terminated string.
+ *				that data is a null terminated string.
  *
  * Returns:
  *	a pointer to a new string containing the printable
@@ -165,13 +168,13 @@ string_output(char *data, int size)
  * Arguments:
  *	str -		input string possibly with escapes
  *	size -		the required size of new data. A value of 0
- *			indicates a variable size string, while a
- *			negative value indicates a variable size string
- *			of size not greater than this absolute value.
+ *				indicates a variable size string, while a
+ *				negative value indicates a variable size string
+ *				of size not greater than this absolute value.
  *	hdrsize -	size of an optional header to be allocated before
- *			the data. It must then be filled by the caller.
+ *				the data. It must then be filled by the caller.
  *	rtn_size -	an optional pointer to an int variable where the
- *			size of the new string is stored back.
+ *				size of the new string is stored back.
  *
  * Returns:
  *	a pointer to the new string or the header.
@@ -293,32 +296,8 @@ c_charout(int32 c)
 	return (string_output(str, 1));
 }
 
-char *
-c_char2out(uint16 s)
-{
-	return (string_output((char *) &s, 2));
-}
-
-char *
-c_char4out(uint32 s)
-{
-	return (string_output((char *) &s, 4));
-}
-
-char *
-c_char8out(char *s)
-{
-	return (string_output(s, 8));
-}
-
-char *
-c_char16out(char *s)
-{
-	return (string_output(s, 16));
-}
-
 /*
- * This can be used for text, bytea, SET and unknown data types
+ * This can be used for SET, bytea, text and unknown data types
  */
 
 char *
@@ -368,13 +347,19 @@ c_textin(char *str)
 	return (result);
 }
 
-char *
-c_char16in(char *str)
+int32 *
+c_charin(char *str)
 {
-	return (string_input(str, 16, 0, NULL));
+	return (string_input(str, 1, 0, NULL));
 }
-
 #endif
 
-
 /* end of file */
+
+/*
+ * Local variables:
+ *  tab-width: 4
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ */

@@ -1,16 +1,11 @@
-Date & time functions for use in Postgres version 6.1 & up
+I have written some new funtions for time and date data types which can
+be used to extract hour,minutes,seconds from time values, and year,
+month,day from a date. There is also a time_difference and functions
+to convert a time to minutes or seconds.
 
-This functions replaces the original ones from the postgresql.org
-because the date & time structures has changed.
+There are also new input/output functions for the time data type which
+allow the insertion of time attributes with value 24:00:00.
+This can be useful if your application needs to compute time difference
+from two time values representing an elapsed time of 24 hours.
 
-There is a Makefile that should be "ajusted" 
-for directories where postgres home after install.
-
-In this case: /usr/postgres.
-
-Hope this can help,
-
-
-Sergio Lenzi (lenzi@bsi.com.br)
-
-
+Massimo Dal Zotto <dz@cs.unitn.it>

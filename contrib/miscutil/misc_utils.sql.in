@@ -1,4 +1,35 @@
--- SQL code to define the new array iterator functions and operators
+-- misc_utils.sql --
+--
+-- SQL code to define misc functions.
+--
+-- Copyright (c) 1998, Massimo Dal Zotto <dz@cs.unitn.it>
+--
+-- This file is distributed under the GNU General Public License
+-- either version 2, or (at your option) any later version.
+
+-- Set the maximum number of tuples returned by a single query.
+--
+create function query_limit(int4) returns int4
+  as 'MODULE_PATHNAME'
+  language 'C';
+
+-- Return the pid of the backend.
+--
+create function backend_pid() returns int4
+  as 'MODULE_PATHNAME'
+  language 'C';
+
+-- Unlisten from a relation.
+--
+create function "unlisten"(name) returns int4
+  as 'MODULE_PATHNAME'
+  language 'C';
+
+-- Unlisten from all relations for this backend.
+--
+create function "unlisten"() returns int4
+  as 'select "unlisten"(''*'')'
+  language 'sql';
 
 -- min(x,y)
 --
@@ -12,29 +43,16 @@ create function max(int4,int4) returns int4
   as 'MODULE_PATHNAME'
   language 'C';
 
--- Set the maximum number of tuples returned by a single query
+-- Enable/disable Postgres assert checking.
 --
-create function query_limit(int4) returns int4
-  as 'MODULE_PATHNAME'
-  language 'C';
+create function assert_enable(int4) returns int4
+	as 'MODULE_PATHNAME'
+	language 'C';
 
--- Return the pid of the backend
+-- Test Postgres assert checking.
 --
-create function backend_pid() returns int4
-  as 'MODULE_PATHNAME'
-  language 'C';
-
--- Unlisten from a relation
---
-create function unlisten(name) returns int4
-  as 'MODULE_PATHNAME'
-  language 'C';
-
--- Unlisten from all relations for this backend
---
-create function unlisten() returns int4
-  as 'delete from pg_listener where listenerpid = backend_pid();
-      select 0'
-  language 'sql';
+-- create function assert_test(int4) returns int4
+--	as 'MODULE_PATHNAME'
+--	language 'C';
 
 -- end of file

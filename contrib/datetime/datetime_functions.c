@@ -3,10 +3,13 @@
  *
  * This file defines new functions for the time and date data types.
  *
- * Copyright (c) 1996, Massimo Dal Zotto <dz@cs.unitn.it>
+ * Copyright (c) 1998, Massimo Dal Zotto <dz@cs.unitn.it>
+ *
+ * This file is distributed under the GNU General Public License
+ * either version 2, or (at your option) any later version.
  */
 
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>
 #include <string.h>
 #include <limits.h>
 #ifdef HAVE_FLOAT_H
@@ -102,7 +105,6 @@ hhmm_out(TimeADT *time)
 		sprintf(buf, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
 
 	result = palloc(strlen(buf) + 1);
-
 	strcpy(result, buf);
 
 	return (result);
@@ -220,3 +222,11 @@ currentdate()
 }
 
 /* end of file */
+
+/*
+ * Local variables:
+ *  tab-width: 4
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ */

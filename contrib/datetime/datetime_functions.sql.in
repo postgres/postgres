@@ -1,6 +1,13 @@
+-- datetime_functions.sql --
+--
 -- SQL code to define the new date and time functions and operators
+--
+-- Copyright (c) 1998, Massimo Dal Zotto <dz@cs.unitn.it>
+--
+-- This file is distributed under the GNU General Public License
+-- either version 2, or (at your option) any later version.
 
--- Define the new functions
+-- Define the new time functions.
 --
 create function hhmm_in(opaque) returns time
   as 'MODULE_PATHNAME' 
@@ -58,16 +65,14 @@ create function currentdate() returns date
   as 'MODULE_PATHNAME' 
   language 'c';
 
-
--- Define a new operator - for time
+-- Define new operator - for time.
 --
 create operator - (
   leftarg=time, 
   rightarg=time, 
   procedure=time_difference);
 
-
--- Define functions to switch from time to hhmm representation
+-- Define functions to switch from time to hhmm representation.
 --
 --   select hhmm_mode();
 --   select time_mode();
@@ -83,7 +88,6 @@ create function time_mode() returns text
       update pg_type set typoutput=''time_out'' where typname=''time''
       select ''time_mode''::text'
   language 'sql';
-
 
 -- Use these to do the updates manually
 --

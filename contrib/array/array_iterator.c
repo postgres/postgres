@@ -6,7 +6,10 @@
  * elements of the array and the value and compute a result as
  * the logical OR or AND of the iteration results.
  *
- * Copyright (c) 1997, Massimo Dal Zotto <dz@cs.unitn.it>
+ * Copyright (c) 1998, Massimo Dal Zotto <dz@cs.unitn.it>
+ *
+ * This file is distributed under the GNU General Public License
+ * either version 2, or (at your option) any later version.
  */
 
 #include <ctype.h>
@@ -33,8 +36,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	TypeTupleForm typ_struct;
 	bool		typbyval;
 	int			typlen;
-	func_ptr	proc_fn;
-	int			pronargs;
+	FmgrInfo    finfo;
 	int			nitems,
 				i,
 				result;
@@ -70,9 +72,8 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	typbyval = typ_struct->typbyval;
 
 	/* Lookup the function entry point */
-	proc_fn = (func_ptr) NULL;
-	fmgr_info(proc, &pronargs);	/* (proc, &proc_fn, &pronargs);	*/
-	if ((proc_fn == NULL) || (pronargs != 2))
+	fmgr_info(proc, &finfo);
+	if ((finfo.fn_oid == 0) || (finfo.fn_nargs != 2))
 	{
 		elog(ERROR, "array_iterator: fmgr_info lookup failed for oid %d", proc);
 		return (0);
@@ -88,21 +89,21 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 			switch (typlen)
 			{
 				case 1:
-					result = (int) (*proc_fn) (*p, value);
+					result = (int) (*(finfo.fn_addr)) (*p, value);
 					break;
 				case 2:
-					result = (int) (*proc_fn) (*(int16 *) p, value);
+					result = (int) (*(finfo.fn_addr)) (*(int16 *) p, value);
 					break;
 				case 3:
 				case 4:
-					result = (int) (*proc_fn) (*(int32 *) p, value);
+					result = (int) (*(finfo.fn_addr)) (*(int32 *) p, value);
 					break;
 			}
 			p += typlen;
 		}
 		else
 		{
-			result = (int) (*proc_fn) (p, value);
+			result = (int) (*(finfo.fn_addr)) (p, value);
 			if (typlen > 0)
 				p += typlen;
 			else
@@ -162,47 +163,6 @@ array_all_textregexeq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 25,		/* text */
 						  (Oid) 1254,	/* textregexeq */
-						  1,	/* logical and */
-						  array, (Datum) value);
-}
-
-/*
- * Iterator functions for type _char16. Note that the regexp
- * operators take the second argument of type text.
- */
-
-int32
-array_char16eq(ArrayType *array, char *value)
-{
-	return array_iterator((Oid) 20,		/* char16 */
-						  (Oid) 1275,	/* char16eq */
-						  0,	/* logical or */
-						  array, (Datum) value);
-}
-
-int32
-array_all_char16eq(ArrayType *array, char *value)
-{
-	return array_iterator((Oid) 20,		/* char16 */
-						  (Oid) 1275,	/* char16eq */
-						  1,	/* logical and */
-						  array, (Datum) value);
-}
-
-int32
-array_char16regexeq(ArrayType *array, char *value)
-{
-	return array_iterator((Oid) 20,		/* char16 */
-						  (Oid) 1288,	/* char16regexeq */
-						  0,	/* logical or */
-						  array, (Datum) value);
-}
-
-int32
-array_all_char16regexeq(ArrayType *array, char *value)
-{
-	return array_iterator((Oid) 20,		/* char16 */
-						  (Oid) 1288,	/* char16regexeq */
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
@@ -320,3 +280,11 @@ array_all_int4le(ArrayType *array, int4 value)
 }
 
 /* end of file */
+
+/*
+ * Local variables:
+ *  tab-width: 4
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ */
