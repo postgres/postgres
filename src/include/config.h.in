@@ -118,6 +118,9 @@
 /* Set to 1 if you have snprintf() */
 #undef HAVE_SNPRINTF
 
+/* Set to 1 if you have vsnprintf() */
+#undef HAVE_VSNPRINTF
+
 /* Set to 1 if you have fp_class() */
 #undef HAVE_FP_CLASS
 

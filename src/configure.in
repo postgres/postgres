@@ -695,8 +695,13 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(tzset memmove sigsetjmp kill sysconf fpclass)
 AC_CHECK_FUNCS(fp_class fp_class_d class)
 AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
+dnl We use our snprintf.c emulation if either snprintf() or vsnprintf()
+dnl is missing.  Yes, there are machines that have only one.
 AC_CHECK_FUNC(snprintf,
 	      AC_DEFINE(HAVE_SNPRINTF),
+	      SNPRINTF='snprintf.o')
+AC_CHECK_FUNC(vsnprintf,
+	      AC_DEFINE(HAVE_VSNPRINTF),
 	      SNPRINTF='snprintf.o')
 AC_SUBST(SNPRINTF)
 AC_CHECK_FUNC(isinf,

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.47 1998/12/13 03:44:38 momjian Exp $
+ * $Id: c.h,v 1.48 1999/01/17 03:22:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,13 @@
 
 /* We have to include stdlib.h here because it defines many of these macros
    on some platforms, and we only want our definitions used if stdlib.h doesn't
-   have its own.
+   have its own.  The same goes for stddef and stdarg if present.
 */
 #include <stdlib.h>
+#ifdef STDC_HEADERS
+#include <stddef.h>
+#include <stdarg.h>
+#endif
 
 /* ----------------------------------------------------------------
  *				Section 1:	bool, true, false, TRUE, FALSE
@@ -819,6 +823,19 @@ extern char *form(const char *fmt,...);
 #define NULL_DEV		"/dev/null"
 #define COPY_CMD		"cp"
 #define SEP_CHAR		'/'
+
+/* Provide prototypes for routines not present in a particular machine's
+ * standard C library.  It'd be better to put these in config.h, but
+ * in config.h we haven't yet included anything that defines size_t...
+ */
+
+#ifndef HAVE_SNPRINTF
+extern int snprintf(char *str, size_t count, const char *fmt, ...);
+#endif
+
+#ifndef HAVE_VSNPRINTF
+extern int vsnprintf(char *str, size_t count, const char *fmt, va_list args);
+#endif
 
 /* ----------------
  *		end of c.h
