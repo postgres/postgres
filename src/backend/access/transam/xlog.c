@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.130 2004/01/06 17:26:23 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.131 2004/01/06 22:22:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -455,8 +455,10 @@ static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr,
 static void WriteControlFile(void);
 static void ReadControlFile(void);
 static char *str_time(time_t tnow);
-static void xlog_outrec(char *buf, XLogRecord *record);
 static void issue_xlog_fsync(void);
+#ifdef WAL_DEBUG
+static void xlog_outrec(char *buf, XLogRecord *record);
+#endif
 
 
 /*
@@ -3489,6 +3491,7 @@ xlog_desc(char *buf, uint8 xl_info, char *rec)
 		strcat(buf, "UNKNOWN");
 }
 
+#ifdef WAL_DEBUG
 static void
 xlog_outrec(char *buf, XLogRecord *record)
 {
@@ -3513,6 +3516,7 @@ xlog_outrec(char *buf, XLogRecord *record)
 	sprintf(buf + strlen(buf), ": %s",
 			RmgrTable[record->xl_rmid].rm_name);
 }
+#endif /* WAL_DEBUG */
 
 
 /*
