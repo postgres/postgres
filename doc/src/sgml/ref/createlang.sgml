@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.15 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.16 2001/05/09 22:08:18 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-CREATELANG">
  <docinfo>
-  <date>2000-11-11</date>
+  <date>2001-05-09</date>
  </docinfo>
 
  <refmeta>
@@ -62,11 +62,30 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
+      <term>-e, --echo</term>
+      <listitem>
+       <para>
+        Displays SQL commands as they are executed.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>-l, --list</term>
       <listitem>
        <para>
         Shows a list of already installed languages in the target database
         (which must be specified).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>--L <replaceable class="parameter">directory</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the directory in which the language interpreter is
+        to be found.  This is normally found automatically.
        </para>
       </listitem>
      </varlistentry>

@@ -1,15 +1,13 @@
-#!/bin/sh
+#! /bin/sh
 #-------------------------------------------------------------------------
 #
-# createlang.sh--
-#    Install a procedural language in a database
+# createlang --
+#   Install a procedural language in a database
 #
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.23 2001/02/18 18:34:01 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.24 2001/05/09 22:08:19 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,6 +18,7 @@ PSQLOPT=
 dbname=
 langname=
 list=
+showsql=
 
 # Check for echo -n vs echo \c
 
@@ -97,6 +96,9 @@ do
         --pglib=*)
                 PGLIB=`echo "$1" | sed 's/^--pglib=//'`
                 ;;
+	--echo|-e)
+		showsql=yes
+		;;
 
 	-*)
 		echo "$CMDNAME: invalid option: $1" 1>&2
@@ -146,7 +148,7 @@ fi
 # ----------
 if [ -z "$dbname" ]; then
 	echo "$CMDNAME: missing required argument database name" 1>&2
-        echo "Try '$CMDNAME -?' for help." 1>&2
+        echo "Try '$CMDNAME --help' for help." 1>&2
 	exit 1
 fi
 
@@ -155,7 +157,11 @@ fi
 # List option
 # ----------
 if [ "$list" ]; then
-        ${PATHNAME}psql $PSQLOPT -d "$dbname" -P 'title=Procedural languages' -c "SELECT lanname as \"Name\", lanpltrusted as \"Trusted?\", lancompiler as \"Compiler\" FROM pg_language WHERE lanispl = 't'"
+	sqlcmd="SELECT lanname as \"Name\", lanpltrusted as \"Trusted?\", lancompiler as \"Compiler\" FROM pg_language WHERE lanispl = 't';"
+	if [ "$showsql" = yes ]; then
+		echo "$sqlcmd"
+	fi
+        ${PATHNAME}psql $PSQLOPT -d "$dbname" -P 'title=Procedural languages' -c "$sqlcmd"
         exit $?
 fi
 
@@ -237,7 +243,11 @@ PSQL="${PATHNAME}psql -A -t -q $PSQLOPT -d $dbname -c"
 # ----------
 # Make sure the language isn't already installed
 # ----------
-res=`$PSQL "SELECT oid FROM pg_language WHERE lanname = '$langname'"`
+sqlcmd="SELECT oid FROM pg_language WHERE lanname = '$langname';"
+if [ "$showsql" = yes ]; then
+	echo "$sqlcmd"
+fi
+res=`$PSQL "$sqlcmd"`
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: external error" 1>&2
 	exit 1
@@ -251,7 +261,11 @@ fi
 # ----------
 # Check that there is no function named as the call handler
 # ----------
-res=`$PSQL "SELECT oid FROM pg_proc WHERE proname = '$handler'"`
+sqlcmd="SELECT oid FROM pg_proc WHERE proname = '$handler';"
+if [ "$showsql" = yes ]; then
+	echo "$sqlcmd"
+fi
+res=`$PSQL "$sqlcmd"`
 if [ ! -z "$res" ]; then
 	echo "$CMDNAME: A function named '$handler' already exists. Installation aborted." 1>&2
 	exit 1
@@ -260,13 +274,21 @@ fi
 # ----------
 # Create the call handler and the language
 # ----------
-$PSQL "CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${object}$DLSUFFIX' LANGUAGE 'C'"
+sqlcmd="CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${object}$DLSUFFIX' LANGUAGE 'C';"
+if [ "$showsql" = yes ]; then
+	echo "$sqlcmd"
+fi
+$PSQL "$sqlcmd"
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: language installation failed" 1>&2
 	exit 1
 fi
 
-$PSQL "CREATE ${trusted}PROCEDURAL LANGUAGE '$langname' HANDLER $handler LANCOMPILER '$lancomp'"
+sqlcmd="CREATE ${trusted}PROCEDURAL LANGUAGE '$langname' HANDLER $handler LANCOMPILER '$lancomp';"
+if [ "$showsql" = yes ]; then
+	echo "$sqlcmd"
+fi
+$PSQL "$sqlcmd"
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: language installation failed" 1>&2
 	exit 1
