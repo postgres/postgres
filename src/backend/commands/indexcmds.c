@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.24 2000/04/23 01:44:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.25 2000/04/25 02:45:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
@@ -32,6 +33,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "parser/parsetree.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
@@ -556,7 +558,9 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	HeapScanDesc scan;
 	ScanKeyData entry[2];
 	HeapTuple	tuple;
-	Oid			opClassId;
+	Oid			opClassId,
+				oprId;
+	bool		doTypeCheck = true;
 
 	if (attribute->class == NULL)
 	{
@@ -565,6 +569,8 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 		if (attribute->class == NULL)
 			elog(ERROR, "DefineIndex: type %s has no default operator class",
 				 typeidTypeName(attrType));
+		/* assume we need not check type compatibility */
+		doTypeCheck = false;
 	}
 
 	tuple = SearchSysCacheTuple(CLANAME,
@@ -597,8 +603,41 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 			 attribute->class, accessMethodName);
 	}
 
+	oprId = ((Form_pg_amop) GETSTRUCT(tuple))->amopopr;
+
 	heap_endscan(scan);
 	heap_close(relation, AccessShareLock);
+
+	/*
+	 * Make sure the operators associated with this opclass actually accept
+	 * the column data type.  This prevents possible coredumps caused by
+	 * user errors like applying text_ops to an int4 column.  We will accept
+	 * an opclass as OK if the operator's input datatype is binary-compatible
+	 * with the actual column datatype.  Note we assume that all the operators
+	 * associated with an opclass accept the same datatypes, so checking the
+	 * first one we happened to find in the table is sufficient.
+	 *
+	 * If the opclass was the default for the datatype, assume we can skip
+	 * this check --- that saves a few cycles in the most common case.
+	 * If pg_opclass is messed up then we're probably screwed anyway...
+	 */
+	if (doTypeCheck)
+	{
+		tuple = SearchSysCacheTuple(OPEROID,
+									ObjectIdGetDatum(oprId),
+									0, 0, 0);
+		if (HeapTupleIsValid(tuple))
+		{
+			Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tuple);
+			Oid		opInputType = (optup->oprkind == 'l') ?
+				optup->oprright : optup->oprleft;
+
+			if (attrType != opInputType &&
+				! IS_BINARY_COMPATIBLE(attrType, opInputType))
+				elog(ERROR, "DefineIndex: opclass \"%s\" does not accept datatype \"%s\"",
+					 attribute->class, typeidTypeName(attrType));
+		}
+	}
 
 	return opClassId;
 }
