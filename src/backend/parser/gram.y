@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.65 1997/11/14 05:57:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.66 1997/11/14 06:09:07 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3572,7 +3572,7 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 					n->val.val.str[pos] == '*' ||
 					n->val.val.str[pos] == '[' ||
 					n->val.val.str[pos] == '$' ||
-					(strcmp(opname,"~*") == 0 && isalpha(n->val.val.str[pos]))
+					(strcmp(opname,"~*") == 0 && isalpha(n->val.val.str[pos])))
 		     		break;
 		     	if (n->val.val.str[pos] == '\\')
 					pos++;
