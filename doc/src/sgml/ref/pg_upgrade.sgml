@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.19 2002/01/11 20:48:47 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.20 2002/01/13 01:13:59 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -23,9 +23,10 @@ PostgreSQL documentation
   <refsynopsisdivinfo>
    <date>1999-07-31</date>
   </refsynopsisdivinfo>
-  <synopsis>
-pg_upgrade -s <replaceable class="parameter">filename</replaceable> <replaceable class="parameter">old_data_dir</replaceable>
-  </synopsis>
+  <cmdsynopsis>
+   <command>pg_upgrade</command>
+    <group choice="plain"><arg>-1</arg><arg>-2</arg></group>
+  </cmdsynopsis>
  </refsynopsisdiv>
 
  <refsect1 id="R1-APP-PG-UPGRADE-1">
@@ -56,31 +57,20 @@ pg_upgrade -s <replaceable class="parameter">filename</replaceable> <replaceable
 
    <step performance="required">
     <para>
-     Then do:
+     Copy the program <filename>pgsql/src/bin/pg_dump/pg_upgrade</filename>
+     from the current PostgreSQL distribution into somewhere in your path.
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
+     Change your working directory to the 
+     pgsql main directory, and type:
      <programlisting>
-$ pg_dumpall -s > schema.out
+$ pg_upgrade -1
      </programlisting>
-     to dump out your old database's table definitions without any data.
-    </para>
-   </step>
-
-   <step performance="required">
-    <para>
-     <command>VACUUM</command> your entire database using
-     <command>vacuumdb -a</command.>
-    </para>
-   </step>
-
-   <step performance="required">
-    <para>
-     Stop the old postmaster and all backends.
-    </para>
-   </step>
-
-   <step performance="required">
-    <para>
-     Rename (using mv) your old pgsql <filename>data/</filename> directory to
-     <filename>data.old/</filename>.
+     to collect information about the old database needed for the
+     upgrade.
     </para>
    </step>
 
@@ -109,14 +99,15 @@ $ make install
    <step performance="required">
     <para>
      Run <application>initdb</application> to create a new template1 database
-     containing the system tables for the new release.
+     containing the system tables for the new release.  Make sure you use
+     settings similar to those used in your previous version.
     </para>
    </step>
 
    <step performance="required">
     <para>
      Start the new postmaster.  (Note: it is critical that no users connect
-     to the database until the upgrade is complete.  You may wish to start
+     to the server until the upgrade is complete.  You may wish to start
      the postmaster without -i and/or alter <filename>pg_hba.conf</filename>
      temporarily.)
     </para>
@@ -127,7 +118,7 @@ $ make install
      Change your working directory to the 
      pgsql main directory, and type:
      <programlisting>
-$ pg_upgrade -s schema.out data.old
+$ pg_upgrade -2
      </programlisting>
      The program will do some checking to make sure everything is properly
      configured, and will run your db.out script to recreate all the databases
@@ -149,7 +140,7 @@ $ pg_upgrade -s schema.out data.old
    <step performance="required">
     <para>
      <emphasis>Carefully</emphasis> examine the contents of the upgraded
-     database.  If you detect problems, you'll need to recover by restoring
+     databases.  If you detect problems, you'll need to recover by restoring
      from your full pg_dump backup.
      You can delete the <filename>data.old/</filename> directory when you
      are satisfied.
@@ -158,18 +149,11 @@ $ pg_upgrade -s schema.out data.old
 
    <step performance="required">
     <para>
-     The upgraded database will be in an un-vacuumed state.  You will probably
+     The upgraded databases will be in an un-vacuumed state.  You will probably
      want to run a <command>VACUUM ANALYZE</command> before beginning
      production work.
     </para>
    </step>
-
-   <note>
-    <para>
-     pg_upgrade does not handle custom tables/indexes/sequences in template1.
-     It does handle other template1 object customizations.
-    </para>
-   </note>
   </procedure>
  </refsect1>
 </refentry>
