@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.46 2000/11/22 01:41:14 momjian Exp $
+ * $Id: pqcomm.h,v 1.47 2000/11/22 02:38:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ typedef union SockAddr
 #endif
 
 #define UNIXSOCK_PATH(sun,port,defpath) \
-        (snprintf((sun).sun_path, UNIXSOCK_LEN(sun), "%s/.s.PGSQL.%d", (defpath && *(defpath) != '\0') ? (defpath) : "/tmp", (port)))
+        (snprintf((sun).sun_path, UNIXSOCK_LEN(sun), "/tmp/.s.PGSQL.%d", (port)))
 
 /*
  *		We do this because sun_len is in BSD's struct, while others don't.
