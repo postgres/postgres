@@ -2,7 +2,7 @@
 # if we defined .so in template/bsdi_4.0
 
 ifeq ($(DLSUFFIX), .so)
-LDFLAGS+= -export-dynamic
+export_dynamic = -export-dynamic
 endif
 
 %.so: %.o

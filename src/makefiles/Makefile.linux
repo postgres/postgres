@@ -1,4 +1,4 @@
-LDFLAGS+= -export-dynamic
+export_dynamic = -export-dynamic
 MK_NO_LORDER= true
 
 %.so: %.o

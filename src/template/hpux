@@ -7,7 +7,7 @@ if test "$GCC" = yes ; then
   DL_LIB=/usr/lib/libdld.sl
   CCC=g++
 else
-  CFLAGS='-Wl,-E -Ae'
+  CFLAGS=-Ae
   SHARED_LIB=+z
   CPP='cc -E -Ae'
   CCC=aCC

@@ -1,5 +1,5 @@
 ifdef ELF_SYSTEM
-LDFLAGS+=	-export-dynamic
+export_dynamic = -export-dynamic
 endif
 
 %.so: %.o

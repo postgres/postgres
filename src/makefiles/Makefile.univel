@@ -1,4 +1,5 @@
-LDFLAGS+= -lc89 -Wl,-Bexport
+LDFLAGS+= -lc89
+export_dynamic = -Wl,-Bexport
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<

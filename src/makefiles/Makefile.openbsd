@@ -1,5 +1,5 @@
 ifdef ELF_SYSTEM
-LDFLAGS += -Wl,-E
+export_dynamic = -Wl,-E
 endif
 %.so: %.o
 ifdef ELF_SYSTEM

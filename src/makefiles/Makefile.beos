@@ -1,6 +1,6 @@
 MK_NO_LORDER=true
 ifdef ELF_SYSTEM
-LDFLAGS += -Wl,-E
+export_dynamic = -Wl,-E
 CPPFLAGS+= -I$(top_srcdir)/src/backend/port/beos
 endif
 %.so: %.o
