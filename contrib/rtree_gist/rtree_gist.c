@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.8 2003/11/29 19:51:35 pgsql Exp $
+ *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.9 2004/03/30 15:45:33 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,21 +98,21 @@ gbox_consistent(PG_FUNCTION_ARGS)
 Datum
 gbox_union(PG_FUNCTION_ARGS)
 {
-	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
+	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *sizep = (int *) PG_GETARG_POINTER(1);
 	int			numranges,
 				i;
 	BOX		   *cur,
 			   *pageunion;
 
-	numranges = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
+	numranges = entryvec->n;
 	pageunion = (BOX *) palloc(sizeof(BOX));
-	cur = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[0].key);
+	cur = DatumGetBoxP(entryvec->vector[0].key);
 	memcpy((void *) pageunion, (void *) cur, sizeof(BOX));
 
 	for (i = 1; i < numranges; i++)
 	{
-		cur = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[i].key);
+		cur = DatumGetBoxP(entryvec->vector[i].key);
 		if (pageunion->high.x < cur->high.x)
 			pageunion->high.x = cur->high.x;
 		if (pageunion->low.x > cur->low.x)
@@ -186,7 +186,7 @@ compare_KB(const void *a, const void *b)
 Datum
 gbox_picksplit(PG_FUNCTION_ARGS)
 {
-	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
+	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber i;
 	OffsetNumber *listL,
@@ -209,15 +209,15 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 	int			nbytes;
 
 	posL = posR = posB = posT = 0;
-	maxoff = ((VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY)) - 1;
+	maxoff = entryvec->n - 1;
 
-	cur = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[FirstOffsetNumber].key);
+	cur = DatumGetBoxP(entryvec->vector[FirstOffsetNumber].key);
 	memcpy((void *) &pageunion, (void *) cur, sizeof(BOX));
 
 	/* find MBR */
 	for (i = OffsetNumberNext(FirstOffsetNumber); i <= maxoff; i = OffsetNumberNext(i))
 	{
-		cur = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[i].key);
+		cur = DatumGetBoxP(entryvec->vector[i].key);
 		if (allisequal == true && (
 								   pageunion.high.x != cur->high.x ||
 								   pageunion.high.y != cur->high.y ||
@@ -243,7 +243,7 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 	unionR = (BOX *) palloc(sizeof(BOX));
 	if (allisequal)
 	{
-		cur = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[OffsetNumberNext(FirstOffsetNumber)].key);
+		cur = DatumGetBoxP(entryvec->vector[OffsetNumberNext(FirstOffsetNumber)].key);
 		if (memcmp((void *) cur, (void *) &pageunion, sizeof(BOX)) == 0)
 		{
 			v->spl_left = listL;
@@ -292,7 +292,7 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
-		cur = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[i].key);
+		cur = DatumGetBoxP(entryvec->vector[i].key);
 		if (cur->low.x - pageunion.low.x < pageunion.high.x - cur->high.x)
 			ADDLIST(listL, unionL, posL, i);
 		else
@@ -311,7 +311,7 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 		posL = posR = posB = posT = 0;
 		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 		{
-			arr[i - 1].key = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[i].key);
+			arr[i - 1].key = DatumGetBoxP(entryvec->vector[i].key);
 			arr[i - 1].pos = i;
 		}
 		qsort(arr, maxoff, sizeof(KBsort), compare_KB);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.108 2004/02/10 03:42:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.109 2004/03/30 15:45:33 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,8 +667,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 	Datum		attr[INDEX_MAX_KEYS];
 	bool		whatfree[INDEX_MAX_KEYS];
 	char		isnull[INDEX_MAX_KEYS];
-	char	   *storage;
-	bytea	   *evec;
+	GistEntryVector	   *evec;
 	Datum		datum;
 	int			datumsize,
 				i,
@@ -680,9 +679,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 	int			reallen;
 
 	needfree = (bool *) palloc(((len == 1) ? 2 : len) * sizeof(bool));
-	/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
-	storage = (char *) palloc(((len == 1) ? 2 : len) * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
-	evec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
+	evec = (GistEntryVector *) palloc(((len == 1) ? 2 : len) * sizeof(GISTENTRY) + GEVHDRSZ);
 
 	for (j = 0; j < r->rd_att->natts; j++)
 	{
@@ -694,12 +691,12 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 				continue;
 
 			gistdentryinit(giststate, j,
-						   &((GISTENTRY *) VARDATA(evec))[reallen],
+						   &(evec->vector[reallen]),
 						   datum,
 						   NULL, NULL, (OffsetNumber) 0,
 						   ATTSIZE(datum, giststate->tupdesc, j + 1, IsNull), FALSE, IsNull);
 			if ((!isAttByVal(giststate, j)) &&
-				((GISTENTRY *) VARDATA(evec))[reallen].key != datum)
+				evec->vector[reallen].key != datum)
 				needfree[reallen] = TRUE;
 			else
 				needfree[reallen] = FALSE;
@@ -716,21 +713,21 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 		{
 			if (reallen == 1)
 			{
-				VARATT_SIZEP(evec) = 2 * sizeof(GISTENTRY) + VARHDRSZ;
-				gistentryinit(((GISTENTRY *) VARDATA(evec))[1],
-					((GISTENTRY *) VARDATA(evec))[0].key, r, NULL,
-							  (OffsetNumber) 0, ((GISTENTRY *) VARDATA(evec))[0].bytes, FALSE);
+				evec->n = 2;
+				gistentryinit(evec->vector[1],
+					evec->vector[0].key, r, NULL,
+							  (OffsetNumber) 0, evec->vector[0].bytes, FALSE);
 
 			}
 			else
-				VARATT_SIZEP(evec) = reallen * sizeof(GISTENTRY) + VARHDRSZ;
+				evec->n = reallen;
 			datum = FunctionCall2(&giststate->unionFn[j],
 								  PointerGetDatum(evec),
 								  PointerGetDatum(&datumsize));
 
 			for (i = 0; i < reallen; i++)
 				if (needfree[i])
-					pfree(DatumGetPointer(((GISTENTRY *) VARDATA(evec))[i].key));
+					pfree(DatumGetPointer(evec->vector[i].key));
 
 			gistcentryinit(giststate, j, &centry[j], datum,
 						   NULL, NULL, (OffsetNumber) 0,
@@ -748,7 +745,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 		}
 	}
 
-	pfree(storage);				/* pfree(evec); */
+	pfree(evec);
 	pfree(needfree);
 
 	newtup = (IndexTuple) index_formtuple(giststate->tupdesc, attr, isnull);
@@ -766,7 +763,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 static IndexTuple
 gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *giststate)
 {
-	bytea	   *evec;
+	GistEntryVector	   *evec;
 	Datum		datum;
 	int			datumsize;
 	bool		result,
@@ -784,15 +781,12 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	bool		oldisnull[INDEX_MAX_KEYS],
 				addisnull[INDEX_MAX_KEYS];
 	IndexTuple	newtup = NULL;
-	char	   *storage;
 	int			j;
 
-	/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
-	storage = (char *) palloc(2 * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
-	evec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
-	VARATT_SIZEP(evec) = 2 * sizeof(GISTENTRY) + VARHDRSZ;
-	ev0p = &((GISTENTRY *) VARDATA(evec))[0];
-	ev1p = &((GISTENTRY *) VARDATA(evec))[1];
+	evec = palloc(2 * sizeof(GISTENTRY) + GEVHDRSZ);
+	evec->n = 2;
+	ev0p = &(evec->vector[0]);
+	ev1p = &(evec->vector[1]);
 
 	gistDeCompressAtt(giststate, r, oldtup, NULL,
 					  (OffsetNumber) 0, oldatt, olddec, oldisnull);
@@ -857,7 +851,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 				whatfree[j] = FALSE;
 		}
 	}
-	pfree(storage);				/* pfree(evec); */
+	pfree(evec);
 
 	if (neednew)
 	{
@@ -885,8 +879,7 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 	int			len,
 			   *attrsize;
 	OffsetNumber *entries;
-	bytea	   *evec;
-	char	   *storage;
+	GistEntryVector	   *evec;
 	Datum		datum;
 	int			datumsize;
 	int			reallen;
@@ -912,9 +905,7 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 		}
 
 		needfree = (bool *) palloc(((len == 1) ? 2 : len) * sizeof(bool));
-		/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
-		storage = (char *) palloc(((len == 1) ? 2 : len) * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
-		evec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
+		evec = palloc(((len == 1) ? 2 : len) * sizeof(GISTENTRY) + GEVHDRSZ);
 
 		for (j = 1; j < r->rd_att->natts; j++)
 		{
@@ -928,12 +919,12 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 				if (IsNull)
 					continue;
 				gistdentryinit(giststate, j,
-							   &((GISTENTRY *) VARDATA(evec))[reallen],
+							   &(evec->vector[reallen]),
 							   datum,
 							   NULL, NULL, (OffsetNumber) 0,
 							   ATTSIZE(datum, giststate->tupdesc, j + 1, IsNull), FALSE, IsNull);
 				if ((!isAttByVal(giststate, j)) &&
-					((GISTENTRY *) VARDATA(evec))[reallen].key != datum)
+					evec->vector[reallen].key != datum)
 					needfree[reallen] = TRUE;
 				else
 					needfree[reallen] = FALSE;
@@ -949,18 +940,18 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 			else
 			{
 				/*
-				 * ((GISTENTRY *) VARDATA(evec))[0].bytes may be not
+				 * evec->vector[0].bytes may be not
 				 * defined, so form union with itself
 				 */
 				if (reallen == 1)
 				{
-					VARATT_SIZEP(evec) = 2 * sizeof(GISTENTRY) + VARHDRSZ;
-					memcpy((void *) &((GISTENTRY *) VARDATA(evec))[1],
-						   (void *) &((GISTENTRY *) VARDATA(evec))[0],
+					evec->n = 2;
+					memcpy((void *) &(evec->vector[1]),
+						   (void *) &(evec->vector[0]),
 						   sizeof(GISTENTRY));
 				}
 				else
-					VARATT_SIZEP(evec) = reallen * sizeof(GISTENTRY) + VARHDRSZ;
+					evec->n = reallen;
 				datum = FunctionCall2(&giststate->unionFn[j],
 									  PointerGetDatum(evec),
 									  PointerGetDatum(&datumsize));
@@ -969,12 +960,12 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 
 			for (i = 0; i < reallen; i++)
 				if (needfree[i])
-					pfree(DatumGetPointer(((GISTENTRY *) VARDATA(evec))[i].key));
+					pfree(DatumGetPointer(evec->vector[i].key));
 
 			attr[j] = datum;
 			attrsize[j] = datumsize;
 		}
-		pfree(storage);			/* pfree(evec); */
+		pfree(evec);
 		pfree(needfree);
 	}
 }
@@ -1065,8 +1056,7 @@ gistadjsubkey(Relation r,
 			   *ev1p;
 	float		lpenalty,
 				rpenalty;
-	bytea	   *evec;
-	char	   *storage;
+	GistEntryVector	   *evec;
 	int			datumsize;
 	bool		isnull[INDEX_MAX_KEYS];
 	int			i,
@@ -1098,12 +1088,10 @@ gistadjsubkey(Relation r,
 			curlen--;
 	v->spl_nright = curlen;
 
-	/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
-	storage = (char *) palloc(2 * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
-	evec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
-	VARATT_SIZEP(evec) = 2 * sizeof(GISTENTRY) + VARHDRSZ;
-	ev0p = &((GISTENTRY *) VARDATA(evec))[0];
-	ev1p = &((GISTENTRY *) VARDATA(evec))[1];
+	evec = palloc(2 * sizeof(GISTENTRY) + GEVHDRSZ);
+	evec->n = 2;
+	ev0p = &(evec->vector[0]);
+	ev1p = &(evec->vector[1]);
 
 	/* add equivalent tuple */
 	for (i = 0; i < *len; i++)
@@ -1208,7 +1196,7 @@ gistadjsubkey(Relation r,
 		}
 		gistFreeAtt(r, identry, decfree);
 	}
-	pfree(storage);				/* pfree(evec); */
+	pfree(evec);
 }
 
 /*
@@ -1234,8 +1222,7 @@ gistSplit(Relation r,
 				rbknum;
 	GISTPageOpaque opaque;
 	GIST_SPLITVEC v;
-	bytea	   *entryvec;
-	char	   *storage;
+	GistEntryVector	   *entryvec;
 	bool	   *decompvec;
 	int			i,
 				j,
@@ -1274,18 +1261,16 @@ gistSplit(Relation r,
 	right = (Page) BufferGetPage(rightbuf);
 
 	/* generate the item array */
-	/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
-	storage = palloc(MAXALIGN(VARHDRSZ) + (*len + 1) * sizeof(GISTENTRY));
-	entryvec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
+	entryvec = palloc(GEVHDRSZ + (*len + 1) * sizeof(GISTENTRY));
+	entryvec->n = *len + 1;
 	decompvec = (bool *) palloc((*len + 1) * sizeof(bool));
-	VARATT_SIZEP(entryvec) = (*len + 1) * sizeof(GISTENTRY) + VARHDRSZ;
 	for (i = 1; i <= *len; i++)
 	{
 		datum = index_getattr(itup[i - 1], 1, giststate->tupdesc, &IsNull);
-		gistdentryinit(giststate, 0, &((GISTENTRY *) VARDATA(entryvec))[i],
+		gistdentryinit(giststate, 0, &(entryvec->vector[i]),
 					   datum, r, p, i,
 		   ATTSIZE(datum, giststate->tupdesc, 1, IsNull), FALSE, IsNull);
-		if ((!isAttByVal(giststate, 0)) && ((GISTENTRY *) VARDATA(entryvec))[i].key != datum)
+		if ((!isAttByVal(giststate, 0)) && entryvec->vector[i].key != datum)
 			decompvec[i] = TRUE;
 		else
 			decompvec[i] = FALSE;
@@ -1320,7 +1305,7 @@ gistSplit(Relation r,
 		v.spl_grpflag = (char *) palloc0(sizeof(char) * (*len + 1));
 		v.spl_ngrp = (int *) palloc(sizeof(int) * (*len + 1));
 
-		MaxGrpId = gistfindgroup(giststate, (GISTENTRY *) VARDATA(entryvec), &v);
+		MaxGrpId = gistfindgroup(giststate, entryvec->vector, &v);
 
 		/* form union of sub keys for each page (l,p) */
 		gistunionsubkey(r, giststate, itup, &v);
@@ -1340,8 +1325,8 @@ gistSplit(Relation r,
 	/* clean up the entry vector: its keys need to be deleted, too */
 	for (i = 1; i <= *len; i++)
 		if (decompvec[i])
-			pfree(DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key));
-	pfree(storage);				/* pfree(entryvec); */
+			pfree(DatumGetPointer(entryvec->vector[i].key));
+	pfree(entryvec);
 	pfree(decompvec);
 
 	/* form left and right vector */

@@ -46,10 +46,10 @@ bool		g_cube_consistent(GISTENTRY *entry, NDBOX * query, StrategyNumber strategy
 GISTENTRY  *g_cube_compress(GISTENTRY *entry);
 GISTENTRY  *g_cube_decompress(GISTENTRY *entry);
 float	   *g_cube_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result);
-GIST_SPLITVEC *g_cube_picksplit(bytea *entryvec, GIST_SPLITVEC *v);
+GIST_SPLITVEC *g_cube_picksplit(GistEntryVector *entryvec, GIST_SPLITVEC *v);
 bool		g_cube_leaf_consistent(NDBOX * key, NDBOX * query, StrategyNumber strategy);
 bool		g_cube_internal_consistent(NDBOX * key, NDBOX * query, StrategyNumber strategy);
-NDBOX	   *g_cube_union(bytea *entryvec, int *sizep);
+NDBOX	   *g_cube_union(GistEntryVector *entryvec, int *sizep);
 NDBOX	   *g_cube_binary_union(NDBOX * r1, NDBOX * r2, int *sizep);
 bool	   *g_cube_same(NDBOX * b1, NDBOX * b2, bool *result);
 
@@ -211,28 +211,26 @@ g_cube_consistent(GISTENTRY *entry,
 ** returns the minimal bounding box that encloses all the entries in entryvec
 */
 NDBOX *
-g_cube_union(bytea *entryvec, int *sizep)
+g_cube_union(GistEntryVector *entryvec, int *sizep)
 {
-	int			numranges,
-				i;
+	int			i;
 	NDBOX	   *out = (NDBOX *) NULL;
 	NDBOX	   *tmp;
 
 	/*
 	 * fprintf(stderr, "union\n");
 	 */
-	numranges = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
-	tmp = (NDBOX *) DatumGetPointer((((GISTENTRY *) (VARDATA(entryvec)))[0]).key);
+	tmp = (NDBOX *) DatumGetPointer(entryvec->vector[0].key);
 
 	/*
 	 * sizep = sizeof(NDBOX); -- NDBOX has variable size
 	 */
 	*sizep = tmp->size;
 
-	for (i = 1; i < numranges; i++)
+	for (i = 1; i < entryvec->n; i++)
 	{
 		out = g_cube_binary_union(tmp, (NDBOX *)
-		   DatumGetPointer((((GISTENTRY *) (VARDATA(entryvec)))[i]).key),
+		   DatumGetPointer(entryvec->vector[i].key),
 								  sizep);
 		if (i > 1)
 			pfree(tmp);
@@ -289,7 +287,7 @@ g_cube_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
 ** We use Guttman's poly time split algorithm
 */
 GIST_SPLITVEC *
-g_cube_picksplit(bytea *entryvec,
+g_cube_picksplit(GistEntryVector *entryvec,
 				 GIST_SPLITVEC *v)
 {
 	OffsetNumber i,
@@ -321,7 +319,7 @@ g_cube_picksplit(bytea *entryvec,
 	/*
 	 * fprintf(stderr, "picksplit\n");
 	 */
-	maxoff = ((VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY)) - 2;
+	maxoff = entryvec->n - 2;
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
@@ -331,10 +329,10 @@ g_cube_picksplit(bytea *entryvec,
 
 	for (i = FirstOffsetNumber; i < maxoff; i = OffsetNumberNext(i))
 	{
-		datum_alpha = (NDBOX *) DatumGetPointer(((GISTENTRY *) (VARDATA(entryvec)))[i].key);
+		datum_alpha = (NDBOX *) DatumGetPointer(entryvec->vector[i].key);
 		for (j = OffsetNumberNext(i); j <= maxoff; j = OffsetNumberNext(j))
 		{
-			datum_beta = (NDBOX *) DatumGetPointer(((GISTENTRY *) (VARDATA(entryvec)))[j].key);
+			datum_beta = (NDBOX *) DatumGetPointer(entryvec->vector[j].key);
 
 			/* compute the wasted space by unioning these guys */
 			/* size_waste = size_union - size_inter; */
@@ -369,10 +367,10 @@ g_cube_picksplit(bytea *entryvec,
 	right = v->spl_right;
 	v->spl_nright = 0;
 
-	datum_alpha = (NDBOX *) DatumGetPointer(((GISTENTRY *) (VARDATA(entryvec)))[seed_1].key);
+	datum_alpha = (NDBOX *) DatumGetPointer(entryvec->vector[seed_1].key);
 	datum_l = cube_union(datum_alpha, datum_alpha);
 	rt_cube_size(datum_l, &size_l);
-	datum_beta = (NDBOX *) DatumGetPointer(((GISTENTRY *) (VARDATA(entryvec)))[seed_2].key);
+	datum_beta = (NDBOX *) DatumGetPointer(entryvec->vector[seed_2].key);
 	datum_r = cube_union(datum_beta, datum_beta);
 	rt_cube_size(datum_r, &size_r);
 
@@ -411,7 +409,7 @@ g_cube_picksplit(bytea *entryvec,
 		}
 
 		/* okay, which page needs least enlargement? */
-		datum_alpha = (NDBOX *) DatumGetPointer(((GISTENTRY *) (VARDATA(entryvec)))[i].key);
+		datum_alpha = (NDBOX *) DatumGetPointer(entryvec->vector[i].key);
 		union_dl = cube_union(datum_l, datum_alpha);
 		union_dr = cube_union(datum_r, datum_alpha);
 		rt_cube_size(union_dl, &size_alpha);

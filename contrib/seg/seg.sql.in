@@ -328,7 +328,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE FUNCTION gseg_union(bytea, internal)
+CREATE FUNCTION gseg_union(internal, internal)
 RETURNS seg 
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -362,7 +362,7 @@ AS
 	OPERATOR	7	@ ,
 	OPERATOR	8	~ ,
 	FUNCTION	1	gseg_consistent (internal, seg, int4),
-	FUNCTION	2	gseg_union (bytea, internal),
+	FUNCTION	2	gseg_union (internal, internal),
 	FUNCTION	3	gseg_compress (internal),
 	FUNCTION	4	gseg_decompress (internal),
 	FUNCTION	5	gseg_penalty (internal, internal, internal),

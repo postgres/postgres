@@ -1,6 +1,6 @@
 #include "_int.h"
 
-#define GETENTRY(vec,pos) ((ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(vec))[(pos)].key))
+#define GETENTRY(vec,pos) ((ArrayType *) DatumGetPointer((vec)->vector[(pos)].key))
 
 /*
 ** GiST support methods
@@ -87,21 +87,20 @@ g_int_consistent(PG_FUNCTION_ARGS)
 Datum
 g_int_union(PG_FUNCTION_ARGS)
 {
-	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
+	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
-	int4		i,
-				len = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
+	int4		i;
 	ArrayType  *res;
 	int			totlen = 0,
 			   *ptr;
 
-	for (i = 0; i < len; i++)
+	for (i = 0; i < entryvec->n; i++)
 		totlen += ARRNELEMS(GETENTRY(entryvec, i));
 
 	res = new_intArrayType(totlen);
 	ptr = ARRPTR(res);
 
-	for (i = 0; i < len; i++)
+	for (i = 0; i < entryvec->n; i++)
 	{
 		memcpy(ptr, ARRPTR(GETENTRY(entryvec, i)), ARRNELEMS(GETENTRY(entryvec, i)) * sizeof(int4));
 		ptr += ARRNELEMS(GETENTRY(entryvec, i));
@@ -318,7 +317,7 @@ comparecost(const void *a, const void *b)
 Datum
 g_int_picksplit(PG_FUNCTION_ARGS)
 {
-	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
+	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber i,
 				j;
@@ -348,10 +347,10 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 	SPLITCOST  *costvector;
 
 #ifdef GIST_DEBUG
-	elog(DEBUG3, "--------picksplit %d", (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY));
+	elog(DEBUG3, "--------picksplit %d", entryvec->n);
 #endif
 
-	maxoff = ((VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY)) - 2;
+	maxoff = entryvec->n - 2;
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
@@ -360,10 +359,10 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 	waste = 0.0;
 	for (i = FirstOffsetNumber; i < maxoff; i = OffsetNumberNext(i))
 	{
-		datum_alpha = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key);
+		datum_alpha = GETENTRY(entryvec,i);
 		for (j = OffsetNumberNext(i); j <= maxoff; j = OffsetNumberNext(j))
 		{
-			datum_beta = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[j].key);
+			datum_beta = GETENTRY(entryvec,j); 
 
 			/* compute the wasted space by unioning these guys */
 			/* size_waste = size_union - size_inter; */
@@ -403,10 +402,10 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 		seed_2 = 2;
 	}
 
-	datum_alpha = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[seed_1].key);
+	datum_alpha = GETENTRY(entryvec,seed_1);
 	datum_l = copy_intArrayType(datum_alpha);
 	rt__int_size(datum_l, &size_l);
-	datum_beta = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[seed_2].key);
+	datum_beta = GETENTRY(entryvec,seed_2);
 	datum_r = copy_intArrayType(datum_beta);
 	rt__int_size(datum_r, &size_r);
 
@@ -419,7 +418,7 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
 		costvector[i - 1].pos = i;
-		datum_alpha = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key);
+		datum_alpha = GETENTRY(entryvec,i);
 		union_d = inner_int_union(datum_l, datum_alpha);
 		rt__int_size(union_d, &size_alpha);
 		pfree(union_d);
@@ -467,7 +466,7 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 		}
 
 		/* okay, which page needs least enlargement? */
-		datum_alpha = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key);
+		datum_alpha = GETENTRY(entryvec,i);
 		union_dl = inner_int_union(datum_l, datum_alpha);
 		union_dr = inner_int_union(datum_r, datum_alpha);
 		rt__int_size(union_dl, &size_alpha);

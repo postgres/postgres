@@ -22,14 +22,14 @@ btree_decompress(PG_FUNCTION_ARGS)
 ** The GiST PickSplit method
 */
 extern GIST_SPLITVEC *
-btree_picksplit(bytea *entryvec, GIST_SPLITVEC *v, BINARY_UNION bu, CMPFUNC cmp)
+btree_picksplit(GistEntryVector *entryvec, GIST_SPLITVEC *v, BINARY_UNION bu, CMPFUNC cmp)
 {
 	OffsetNumber i;
 	RIX		   *array;
 	OffsetNumber maxoff;
 	int			nbytes;
 
-	maxoff = ((VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY)) - 1;
+	maxoff = entryvec->n - 1;
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
@@ -43,7 +43,7 @@ btree_picksplit(bytea *entryvec, GIST_SPLITVEC *v, BINARY_UNION bu, CMPFUNC cmp)
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
 		array[i].index = i;
-		array[i].r = (char *) DatumGetPointer((((GISTENTRY *) (VARDATA(entryvec)))[i].key));
+		array[i].r = (char *) DatumGetPointer((entryvec->vector[i].key));
 	}
 	qsort((void *) &array[FirstOffsetNumber], maxoff - FirstOffsetNumber + 1,
 		  sizeof(RIX), cmp);

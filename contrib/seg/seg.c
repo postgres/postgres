@@ -48,10 +48,10 @@ bool		gseg_consistent(GISTENTRY *entry, SEG * query, StrategyNumber strategy);
 GISTENTRY  *gseg_compress(GISTENTRY *entry);
 GISTENTRY  *gseg_decompress(GISTENTRY *entry);
 float	   *gseg_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result);
-GIST_SPLITVEC *gseg_picksplit(bytea *entryvec, GIST_SPLITVEC *v);
+GIST_SPLITVEC *gseg_picksplit(GistEntryVector *entryvec, GIST_SPLITVEC *v);
 bool		gseg_leaf_consistent(SEG * key, SEG * query, StrategyNumber strategy);
 bool		gseg_internal_consistent(SEG * key, SEG * query, StrategyNumber strategy);
-SEG		   *gseg_union(bytea *entryvec, int *sizep);
+SEG		   *gseg_union(GistEntryVector *entryvec, int *sizep);
 SEG		   *gseg_binary_union(SEG * r1, SEG * r2, int *sizep);
 bool	   *gseg_same(SEG * b1, SEG * b2, bool *result);
 
@@ -222,7 +222,7 @@ gseg_consistent(GISTENTRY *entry,
 ** returns the minimal bounding seg that encloses all the entries in entryvec
 */
 SEG *
-gseg_union(bytea *entryvec, int *sizep)
+gseg_union(GistEntryVector *entryvec, int *sizep)
 {
 	int			numranges,
 				i;
@@ -233,14 +233,14 @@ gseg_union(bytea *entryvec, int *sizep)
 	fprintf(stderr, "union\n");
 #endif
 
-	numranges = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
-	tmp = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[0].key);
+	numranges = entryvec->n;
+	tmp = (SEG *) DatumGetPointer(entryvec->vector[0].key);
 	*sizep = sizeof(SEG);
 
 	for (i = 1; i < numranges; i++)
 	{
 		out = gseg_binary_union(tmp, (SEG *)
-			   DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key),
+			   DatumGetPointer(entryvec->vector[i].key),
 								sizep);
 		if (i > 1)
 			pfree(tmp);
@@ -299,7 +299,7 @@ gseg_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
 ** We use Guttman's poly time split algorithm
 */
 GIST_SPLITVEC *
-gseg_picksplit(bytea *entryvec,
+gseg_picksplit(GistEntryVector *entryvec,
 			   GIST_SPLITVEC *v)
 {
 	OffsetNumber i,
@@ -332,7 +332,7 @@ gseg_picksplit(bytea *entryvec,
 	fprintf(stderr, "picksplit\n");
 #endif
 
-	maxoff = ((VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY)) - 2;
+	maxoff = entryvec->n - 2;
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
@@ -342,10 +342,10 @@ gseg_picksplit(bytea *entryvec,
 
 	for (i = FirstOffsetNumber; i < maxoff; i = OffsetNumberNext(i))
 	{
-		datum_alpha = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key);
+		datum_alpha = (SEG *) DatumGetPointer(entryvec->vector[i].key);
 		for (j = OffsetNumberNext(i); j <= maxoff; j = OffsetNumberNext(j))
 		{
-			datum_beta = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[j].key);
+			datum_beta = (SEG *) DatumGetPointer(entryvec->vector[j].key);
 
 			/* compute the wasted space by unioning these guys */
 			/* size_waste = size_union - size_inter; */
@@ -380,10 +380,10 @@ gseg_picksplit(bytea *entryvec,
 	right = v->spl_right;
 	v->spl_nright = 0;
 
-	datum_alpha = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[seed_1].key);
+	datum_alpha = (SEG *) DatumGetPointer(entryvec->vector[seed_1].key);
 	datum_l = seg_union(datum_alpha, datum_alpha);
 	rt_seg_size(datum_l, &size_l);
-	datum_beta = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[seed_2].key);
+	datum_beta = (SEG *) DatumGetPointer(entryvec->vector[seed_2].key);
 	datum_r = seg_union(datum_beta, datum_beta);
 	rt_seg_size(datum_r, &size_r);
 
@@ -422,7 +422,7 @@ gseg_picksplit(bytea *entryvec,
 		}
 
 		/* okay, which page needs least enlargement? */
-		datum_alpha = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key);
+		datum_alpha = (SEG *) DatumGetPointer(entryvec->vector[i].key);
 		union_dl = seg_union(datum_l, datum_alpha);
 		union_dr = seg_union(datum_r, datum_alpha);
 		rt_seg_size(union_dl, &size_alpha);

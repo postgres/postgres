@@ -120,7 +120,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE FUNCTION gint2_union(bytea, internal)
+CREATE FUNCTION gint2_union(internal, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -140,7 +140,7 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
 	FUNCTION	1	gint2_consistent (internal, int2, int2),
-	FUNCTION	2	gint2_union (bytea, internal),
+	FUNCTION	2	gint2_union (internal, internal),
 	FUNCTION	3	gint2_compress (internal),
 	FUNCTION	4	btree_decompress (internal),
 	FUNCTION	5	gint2_penalty (internal, internal, internal),
@@ -176,7 +176,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE FUNCTION gint4_union(bytea, internal)
+CREATE FUNCTION gint4_union(internal, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -196,7 +196,7 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
 	FUNCTION	1	gint4_consistent (internal, int4, int2),
-	FUNCTION	2	gint4_union (bytea, internal),
+	FUNCTION	2	gint4_union (internal, internal),
 	FUNCTION	3	gint4_compress (internal),
 	FUNCTION	4	btree_decompress (internal),
 	FUNCTION	5	gint4_penalty (internal, internal, internal),
@@ -232,7 +232,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE FUNCTION gint8_union(bytea, internal)
+CREATE FUNCTION gint8_union(internal, internal)
 RETURNS int8key
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -252,7 +252,7 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
 	FUNCTION	1	gint8_consistent (internal, int8, int2),
-	FUNCTION	2	gint8_union (bytea, internal),
+	FUNCTION	2	gint8_union (internal, internal),
 	FUNCTION	3	gint8_compress (internal),
 	FUNCTION	4	btree_decompress (internal),
 	FUNCTION	5	gint8_penalty (internal, internal, internal),
@@ -289,7 +289,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE FUNCTION gfloat4_union(bytea, internal)
+CREATE FUNCTION gfloat4_union(internal, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -309,7 +309,7 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
 	FUNCTION	1	gfloat4_consistent (internal, float4, int2),
-	FUNCTION	2	gfloat4_union (bytea, internal),
+	FUNCTION	2	gfloat4_union (internal, internal),
 	FUNCTION	3	gfloat4_compress (internal),
 	FUNCTION	4	btree_decompress (internal),
 	FUNCTION	5	gfloat4_penalty (internal, internal, internal),
@@ -348,7 +348,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE FUNCTION gfloat8_union(bytea, internal)
+CREATE FUNCTION gfloat8_union(internal, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -368,7 +368,7 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
 	FUNCTION	1	gfloat8_consistent (internal, float8, int2),
-	FUNCTION	2	gfloat8_union (bytea, internal),
+	FUNCTION	2	gfloat8_union (internal, internal),
 	FUNCTION	3	gfloat8_compress (internal),
 	FUNCTION	4	btree_decompress (internal),
 	FUNCTION	5	gfloat8_penalty (internal, internal, internal),
@@ -422,7 +422,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
       
-CREATE FUNCTION gts_union(bytea, internal)
+CREATE FUNCTION gts_union(internal, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -442,7 +442,7 @@ AS
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
 	FUNCTION	1	gts_consistent (internal, timestamp, int2),
-	FUNCTION	2	gts_union (bytea, internal),
+	FUNCTION	2	gts_union (internal, internal),
 	FUNCTION	3	gts_compress (internal),
 	FUNCTION	4	btree_decompress (internal),
 	FUNCTION	5	gts_penalty (internal, internal, internal),

@@ -499,7 +499,7 @@ CREATE FUNCTION ltree_penalty(internal,internal,internal)
 RETURNS internal as 'MODULE_PATHNAME' language 'C' with(isstrict);
 CREATE FUNCTION ltree_picksplit(internal, internal)
 RETURNS internal as 'MODULE_PATHNAME' language 'C';
-CREATE FUNCTION ltree_union(bytea, internal)
+CREATE FUNCTION ltree_union(internal, internal)
 RETURNS int4 as 'MODULE_PATHNAME' language 'C';
 CREATE FUNCTION ltree_same(internal, internal, internal)
 RETURNS internal as 'MODULE_PATHNAME' language 'C';
@@ -520,7 +520,7 @@ CREATE OPERATOR CLASS gist_ltree_ops
 	OPERATOR	16	? (ltree, _lquery) ,
 	OPERATOR	17	? (_lquery, ltree) ,
 	FUNCTION	1	ltree_consistent (internal, internal, int2),
-	FUNCTION	2	ltree_union (bytea, internal),
+	FUNCTION	2	ltree_union (internal, internal),
 	FUNCTION	3	ltree_compress (internal),
 	FUNCTION	4	ltree_decompress (internal),
 	FUNCTION	5	ltree_penalty (internal, internal, internal),
@@ -825,7 +825,7 @@ CREATE FUNCTION _ltree_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
-CREATE FUNCTION _ltree_union(bytea, internal)
+CREATE FUNCTION _ltree_union(internal, internal)
 RETURNS int4
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -845,7 +845,7 @@ CREATE OPERATOR CLASS gist__ltree_ops
 	OPERATOR	16	? (_ltree, _lquery)	RECHECK ,
 	OPERATOR	17	? (_lquery, _ltree)	RECHECK ,
 	FUNCTION	1	_ltree_consistent (internal, internal, int2),
-	FUNCTION	2	_ltree_union (bytea, internal),
+	FUNCTION	2	_ltree_union (internal, internal),
 	FUNCTION	3	_ltree_compress (internal),
 	FUNCTION	4	ltree_decompress (internal),
 	FUNCTION	5	_ltree_penalty (internal, internal, internal),

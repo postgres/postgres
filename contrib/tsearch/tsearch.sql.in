@@ -192,7 +192,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE FUNCTION gtxtidx_union(bytea, internal)
+CREATE FUNCTION gtxtidx_union(internal, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -209,7 +209,7 @@ AS
 	OPERATOR	1	@@ (txtidx, query_txt)	RECHECK ,
 	OPERATOR	2	## (txtidx, mquery_txt)	RECHECK ,
 	FUNCTION	1	gtxtidx_consistent (gtxtidx, internal, int4),
-	FUNCTION	2	gtxtidx_union (bytea, internal),
+	FUNCTION	2	gtxtidx_union (internal, internal),
 	FUNCTION	3	gtxtidx_compress (internal),
 	FUNCTION	4	gtxtidx_decompress (internal),
 	FUNCTION	5	gtxtidx_penalty (internal, internal, internal),

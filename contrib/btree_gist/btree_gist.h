@@ -21,5 +21,5 @@ typedef struct rix
 ** Common btree-function (for all ops)
 */
 
-extern GIST_SPLITVEC *btree_picksplit(bytea *entryvec, GIST_SPLITVEC *v,
+extern GIST_SPLITVEC *btree_picksplit(GistEntryVector *entryvec, GIST_SPLITVEC *v,
 				BINARY_UNION bu, CMPFUNC cmp);

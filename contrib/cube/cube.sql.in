@@ -324,7 +324,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE OR REPLACE FUNCTION g_cube_union(bytea, internal)
+CREATE OR REPLACE FUNCTION g_cube_union(internal, internal)
 RETURNS cube 
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -357,7 +357,7 @@ CREATE OPERATOR CLASS gist_cube_ops
 	OPERATOR	7	@ ,
 	OPERATOR	8	~ ,
 	FUNCTION	1	g_cube_consistent (internal, cube, int4),
-	FUNCTION	2	g_cube_union (bytea, internal),
+	FUNCTION	2	g_cube_union (internal, internal),
 	FUNCTION	3	g_cube_compress (internal),
 	FUNCTION	4	g_cube_decompress (internal),
 	FUNCTION	5	g_cube_penalty (internal, internal, internal),

@@ -58,7 +58,7 @@ PG_FUNCTION_INFO_V1(ltree_consistent);
 Datum		ltree_consistent(PG_FUNCTION_ARGS);
 
 #define ISEQ(a,b)	( (a)->numlevel == (b)->numlevel && ltree_compare(a,b)==0 )
-#define GETENTRY(vec,pos) ((ltree_gist *) DatumGetPointer(((GISTENTRY *) VARDATA(vec))[(pos)].key))
+#define GETENTRY(vec,pos) ((ltree_gist *) DatumGetPointer((vec)->vector[(pos)].key))
 
 Datum
 ltree_compress(PG_FUNCTION_ARGS)
@@ -166,10 +166,9 @@ hashing(BITVECP sign, ltree * t)
 Datum
 ltree_union(PG_FUNCTION_ARGS)
 {
-	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
+	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	BITVEC		base;
-	int4		len = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
 	int4		i,
 				j;
 	ltree_gist *result,
@@ -181,7 +180,7 @@ ltree_union(PG_FUNCTION_ARGS)
 	bool		isleqr;
 
 	MemSet((void *) base, 0, sizeof(BITVEC));
-	for (j = 0; j < len; j++)
+	for (j = 0; j < entryvec->n; j++)
 	{
 		cur = GETENTRY(entryvec, j);
 		if (LTG_ISONENODE(cur))
@@ -285,7 +284,7 @@ treekey_cmp(const void *a, const void *b)
 Datum
 ltree_picksplit(PG_FUNCTION_ARGS)
 {
-	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
+	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber j;
 	int4		i;
@@ -307,7 +306,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 
 	memset((void *) ls, 0, sizeof(BITVEC));
 	memset((void *) rs, 0, sizeof(BITVEC));
-	maxoff = ((VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY)) - 1;
+	maxoff = entryvec->n - 1;
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);

@@ -146,22 +146,22 @@ gts_consistent(PG_FUNCTION_ARGS)
 Datum
 gts_union(PG_FUNCTION_ARGS)
 {
-	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
+	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int			i,
 				numranges;
 	TSKEY	   *cur,
 			   *out = palloc(sizeof(TSKEY));
 
-	numranges = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
+	numranges = entryvec->n;
 	*(int *) PG_GETARG_POINTER(1) = sizeof(TSKEY);
 
-	cur = (TSKEY *) DatumGetPointer((((GISTENTRY *) (VARDATA(entryvec)))[0].key));
+	cur = (TSKEY *) DatumGetPointer((entryvec->vector[0].key));
 	out->lower = cur->lower;
 	out->upper = cur->upper;
 
 	for (i = 1; i < numranges; i++)
 	{
-		cur = (TSKEY *) DatumGetPointer((((GISTENTRY *) (VARDATA(entryvec)))[i].key));
+		cur = (TSKEY *) DatumGetPointer((entryvec->vector[i].key));
 		if (TSGT(&out->lower, &cur->lower))
 			out->lower = cur->lower;
 		if (TSLT(&out->upper, &cur->upper))
@@ -204,7 +204,7 @@ Datum
 gts_picksplit(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(btree_picksplit(
-									  (bytea *) PG_GETARG_POINTER(0),
+									  (GistEntryVector *) PG_GETARG_POINTER(0),
 								  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
 									  gts_binary_union,
 									  tskey_cmp

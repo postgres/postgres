@@ -42,7 +42,7 @@ Datum		gtsvector_penalty(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gtsvector_picksplit);
 Datum		gtsvector_picksplit(PG_FUNCTION_ARGS);
 
-#define GETENTRY(vec,pos) ((GISTTYPE *) DatumGetPointer(((GISTENTRY *) VARDATA(vec))[(pos)].key))
+#define GETENTRY(vec,pos) ((GISTTYPE *) DatumGetPointer((vec)->vector[(pos)].key))
 #define SUMBIT(val) (		 \
 	GETBITBYTE(val,0) + \
 	GETBITBYTE(val,1) + \
@@ -326,16 +326,15 @@ unionkey(BITVECP sbase, GISTTYPE * add)
 Datum
 gtsvector_union(PG_FUNCTION_ARGS)
 {
-	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
+	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	BITVEC		base;
-	int4		len = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
-	int4		i;
+	int4		i,len;
 	int4		flag = 0;
 	GISTTYPE   *result;
 
 	MemSet((void *) base, 0, sizeof(BITVEC));
-	for (i = 0; i < len; i++)
+	for (i = 0; i < entryvec->n; i++)
 	{
 		if (unionkey(base, GETENTRY(entryvec, i)))
 		{
@@ -526,7 +525,7 @@ hemdistcache(CACHESIGN   *a, CACHESIGN   *b) {
 Datum
 gtsvector_picksplit(PG_FUNCTION_ARGS)
 {
-	bytea	   *entryvec = (bytea *) PG_GETARG_POINTER(0);
+	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber k,
 				j;
@@ -549,7 +548,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 	CACHESIGN  *cache;
 	SPLITCOST  *costvector;
 
-	maxoff = ((VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY)) - 2;
+	maxoff = entryvec->n - 2;
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);

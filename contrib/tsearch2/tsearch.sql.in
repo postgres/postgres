@@ -581,7 +581,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE FUNCTION gtsvector_union(bytea, internal)
+CREATE FUNCTION gtsvector_union(internal, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -597,7 +597,7 @@ DEFAULT FOR TYPE tsvector USING gist
 AS
         OPERATOR        1       @@ (tsvector, tsquery)  RECHECK ,
         FUNCTION        1       gtsvector_consistent (gtsvector, internal, int4),
-        FUNCTION        2       gtsvector_union (bytea, internal),
+        FUNCTION        2       gtsvector_union (internal, internal),
         FUNCTION        3       gtsvector_compress (internal),
         FUNCTION        4       gtsvector_decompress (internal),
         FUNCTION        5       gtsvector_penalty (internal, internal, internal),

@@ -34,7 +34,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE FUNCTION gbox_union(bytea, internal)
+CREATE FUNCTION gbox_union(internal, internal)
 RETURNS box
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -57,7 +57,7 @@ AS
 	OPERATOR	7	~ ,
 	OPERATOR	8	@ ,
 	FUNCTION	1	gbox_consistent (internal, box, int4),
-	FUNCTION	2	gbox_union (bytea, internal),
+	FUNCTION	2	gbox_union (internal, internal),
 	FUNCTION	3	gbox_compress (internal),
 	FUNCTION	4	rtree_decompress (internal),
 	FUNCTION	5	gbox_penalty (internal, internal, internal),
@@ -96,7 +96,7 @@ AS
 	OPERATOR	7	~	RECHECK,
 	OPERATOR	8	@	RECHECK,
 	FUNCTION	1	gpoly_consistent (internal, polygon, int4),
-	FUNCTION	2	gbox_union (bytea, internal),
+	FUNCTION	2	gbox_union (internal, internal),
 	FUNCTION	3	gpoly_compress (internal),
 	FUNCTION	4	rtree_decompress (internal),
 	FUNCTION	5	gbox_penalty (internal, internal, internal),

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.39 2003/11/29 22:40:55 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.40 2004/03/30 15:45:33 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,19 @@ typedef struct GISTENTRY
 	int			bytes;
 	bool		leafkey;
 } GISTENTRY;
+
+
+/*
+ * Vector of GISTENTRY struct's, user-defined
+ * methods union andpick split takes it as one of args
+ */
+
+typedef struct {
+	int32		n; /* number of elements */
+	GISTENTRY	vector[1];
+} GistEntryVector;
+
+#define GEVHDRSZ	( offsetof(GistEntryVector, vector[0]) )
 
 /*
  * macro to initialize a GISTENTRY
