@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.22 2002/03/09 17:35:35 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.23 2002/06/15 19:39:33 momjian Exp $
  */
 
 #include "postgres.h"
@@ -46,6 +46,8 @@ macaddr_in(PG_FUNCTION_ARGS)
 		count = sscanf(str, "%2x%2x%2x-%2x%2x%2x", &a, &b, &c, &d, &e, &f);
 	if (count != 6)
 		count = sscanf(str, "%2x%2x.%2x%2x.%2x%2x", &a, &b, &c, &d, &e, &f);
+	if (count != 6)
+		count = sscanf(str, "%2x%2x%2x%2x%2x%2x", &a, &b, &c, &d, &e, &f);
 
 	if (count != 6)
 		elog(ERROR, "macaddr_in: error in parsing \"%s\"", str);
