@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.16 2002/07/12 18:43:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.17 2002/07/14 22:47:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -111,13 +111,11 @@ ERROR: table "<replaceable class="parameter">name</replaceable>" does not exist
    destroyed, by using <command>DELETE</command>.
   </para>
   <para>
-   If a table being destroyed has secondary indexes on it,
-   they will be removed first. The removal of just a
-   secondary index will not affect the contents of the underlying table.
-  </para>
-  <para>
-   <command>DROP TABLE</command> will also remove any rules or triggers
-   that exist for the target table.
+   <command>DROP TABLE</command> always removes any indexes, rules,
+   triggers, and constraints that exist for the target table.  However,
+   to drop a table that is referenced by a foreign-key constraint of another
+   table, CASCADE must be specified. (CASCADE will remove the foreign-key
+   constraint, not the other table itself.)
   </para>
 
   <refsect2 id="R2-SQL-DROPTABLE-3">

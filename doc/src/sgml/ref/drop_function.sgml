@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.21 2002/07/12 18:43:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.22 2002/07/14 22:47:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -130,11 +130,6 @@ WARNING:  RemoveFunction: Function "<replaceable class="parameter">name</replace
     Refer to
     <xref linkend="sql-createfunction">
     for information on creating functions.
-   </para>
-
-   <para>
-    No checks are made to ensure that types, operators, access
-    methods, or triggers that rely on the function have been removed first.
    </para>
  </refsect1>
 

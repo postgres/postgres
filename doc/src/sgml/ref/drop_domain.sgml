@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.7 2002/07/12 18:43:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.8 2002/07/14 22:47:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -115,20 +115,6 @@ ERROR:  RemoveDomain: type '<replaceable class="parameter">domainname</replaceab
   <para>
    Only the owner of a domain can remove it.
   </para>
- </refsect1>
-
- <refsect1 id="SQL-DROPDOMAIN-notes">
-  <title>Notes</title>
-
-  <itemizedlist>
-   <listitem>
-    <para>
-     It is the user's responsibility to remove any operators,
-     functions, aggregates, access methods, and tables that
-     use a deleted domain.
-    </para>
-   </listitem>
-  </itemizedlist>
  </refsect1>
 
  <refsect1 id="SQL-DROPDOMAIN-examples">

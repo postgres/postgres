@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.18 2002/07/12 18:43:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.19 2002/07/14 22:47:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -113,29 +113,6 @@ ERROR:  RemoveType: type '<replaceable class="parameter">typename</replaceable>'
   <para>
    Only the owner of a type can remove it.
   </para>
- </refsect1>
-
- <refsect1 id="SQL-DROPTYPE-notes">
-  <title>Notes</title>
-
-  <itemizedlist>
-   <listitem>
-    <para>
-     It is the user's responsibility to remove any operators,
-     functions, aggregates, access methods, subtypes, and tables that
-     use a deleted type.  However, the associated array data type
-     (which was automatically created by <command>CREATE TYPE</command>)
-     will be removed automatically.
-    </para>
-   </listitem>
-
-   <listitem>
-    <para>
-     If a built-in type is removed, the behavior of the server is
-     unpredictable.
-    </para>
-   </listitem>
-  </itemizedlist>
  </refsect1>
   
  <refsect1 id="SQL-DROPTYPE-examples">
