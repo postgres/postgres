@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.2 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.3 2001/10/16 01:13:44 tgl Exp $
 Postgres documentation
 -->
 
@@ -152,7 +152,9 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    distribution in each column.  One or both of these may be omitted if
    <command>ANALYZE</command> deems them uninteresting (for example, in
    a unique-key column, there are no common values) or if the column
-   datatype does not support the appropriate operators.
+   datatype does not support the appropriate operators.  There is more
+   information about the statistics in the <citetitle>User's
+   Guide</citetitle>.
   </para>
 
   <para>

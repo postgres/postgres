@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.12 2001/10/12 23:32:34 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.13 2001/10/16 01:13:44 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -314,6 +314,200 @@ Total runtime: 30.67 msec
     page reads to look at an index.
    </para>
   </sect1>
+
+ <sect1 id="planner-stats">
+  <title>Statistics used by the Planner</title>
+
+  <para>
+   As we saw in the previous section, the query planner needs to estimate
+   the number of rows retrieved by a query in order to make good choices
+   of query plans.  This section provides a quick look at the statistics
+   that the system uses for these estimates.
+  </para>
+
+  <para>
+   One component of the statistics is the total number of entries in each
+   table and index, as well as the number of disk blocks occupied by each
+   table and index.  This information is kept in
+   <structname>pg_class</structname>'s <structfield>reltuples</structfield>
+   and <structfield>relpages</structfield> columns.  We can look at it
+   with queries similar to this one:
+
+<screen>
+regression=# select relname, relkind, reltuples, relpages from pg_class
+regression-# where relname like 'tenk1%';
+    relname    | relkind | reltuples | relpages
+---------------+---------+-----------+----------
+ tenk1         | r       |     10000 |      233
+ tenk1_hundred | i       |     10000 |       30
+ tenk1_unique1 | i       |     10000 |       30
+ tenk1_unique2 | i       |     10000 |       30
+(4 rows)
+</screen>
+
+   Here we can see that <structname>tenk1</structname> contains 10000
+   rows, as do its indexes, but the indexes are (unsurprisingly) much
+   smaller than the table.
+  </para>
+
+  <para>
+   For efficiency reasons, <structfield>reltuples</structfield> 
+   and <structfield>relpages</structfield> are not updated on-the-fly,
+   and so they usually contain only approximate values (which is good
+   enough for the planner's purposes).  They are initialized with dummy
+   values (presently 1000 and 10 respectively) when a table is created.
+   They are updated by certain commands, presently <command>VACUUM</>,
+   <command>ANALYZE</>, and <command>CREATE INDEX</>.  A stand-alone
+   <command>ANALYZE</>, that is one not part of <command>VACUUM</>,
+   generates an approximate <structfield>reltuples</structfield> value
+   since it does not read every row of the table.
+  </para>
+
+  <para>
+   Most queries retrieve only a fraction of the rows in a table, due
+   to having WHERE clauses that restrict the rows to be examined.
+   The planner thus needs to make an estimate of the
+   <firstterm>selectivity</> of WHERE clauses, that is, the fraction of
+   rows that match each clause of the WHERE condition.  The information
+   used for this task is stored in the <structname>pg_statistic</structname>
+   system catalog.  Entries in <structname>pg_statistic</structname> are
+   updated by <command>ANALYZE</> and <command>VACUUM ANALYZE</> commands,
+   and are always approximate even when freshly updated.
+  </para>
+
+  <para>
+   Rather than look at <structname>pg_statistic</structname> directly,
+   it's better to look at its view <structname>pg_stats</structname>
+   when examining the statistics manually.  <structname>pg_stats</structname>
+   is designed to be more easily readable.  Furthermore,
+   <structname>pg_stats</structname> is readable by all, whereas
+   <structname>pg_statistic</structname> is only readable by the superuser.
+   (This prevents unprivileged users from learning something about
+   the contents of other people's tables from the statistics.  The
+   <structname>pg_stats</structname> view is restricted to show only
+   rows about tables that the current user can read.)
+   For example, we might do:
+
+<screen>
+regression=# select attname, n_distinct, most_common_vals from pg_stats where tablename = 'road';
+ attname | n_distinct |                                                                                                                                                                                  most_common_vals                                                                                                                                                                                   
+---------+------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ name    |  -0.467008 | {"I- 580                        Ramp","I- 880                        Ramp","Sp Railroad                       ","I- 580                            ","I- 680                        Ramp","I- 80                         Ramp","14th                          St  ","5th                           St  ","Mission                       Blvd","I- 880                            "}
+ thepath |         20 | {"[(-122.089,37.71),(-122.0886,37.711)]"}
+(2 rows)
+regression=#
+</screen>
+
+   As of <productname>Postgres</productname> 7.2 the following columns exist
+   in <structname>pg_stats</structname>:
+  </para>
+
+  <table>
+   <title>pg_stats Columns</title>
+
+   <tgroup cols=3>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>tablename</entry>
+      <entry><type>name</type></entry>
+      <entry>Name of table containing column</entry>
+     </row>
+
+     <row>
+      <entry>attname</entry>
+      <entry><type>name</type></entry>
+      <entry>Column described by this row</entry>
+     </row>
+
+     <row>
+      <entry>null_frac</entry>
+      <entry><type>real</type></entry>
+      <entry>Fraction of column's entries that are NULL</entry>
+     </row>
+
+     <row>
+      <entry>avg_width</entry>
+      <entry><type>integer</type></entry>
+      <entry>Average width in bytes of column's entries</entry>
+     </row>
+
+     <row>
+      <entry>n_distinct</entry>
+      <entry><type>real</type></entry>
+      <entry>If greater than zero, the estimated number of distinct values
+      in the column.  If less than zero, the negative of the number of
+      distinct values divided by the number of rows.  (The negated form
+      is used when ANALYZE believes that the number of distinct values
+      is likely to increase as the table grows; the positive form is used
+      when the column seems to have a fixed number of possible values.)
+      For example, -1 indicates a unique column in which the number of
+      distinct values is the same as the number of rows.
+      </entry>
+     </row>
+
+     <row>
+      <entry>most_common_vals</entry>
+      <entry><type>text[]</type></entry>
+      <entry>A list of the most common values in the column. (Omitted if
+      no values seem to be more common than any others.)</entry>
+     </row>
+
+     <row>
+      <entry>most_common_freqs</entry>
+      <entry><type>real[]</type></entry>
+      <entry>A list of the frequencies of the most common values,
+      ie, number of occurrences of each divided by total number of rows.
+     </entry>
+     </row>
+
+     <row>
+      <entry>histogram_bounds</entry>
+      <entry><type>text[]</type></entry>
+      <entry>A list of values that divide the column's values into
+      groups of approximately equal population.  The 
+      <structfield>most_common_vals</>, if present, are omitted from the
+      histogram calculation.  (Omitted if column datatype does not have a
+      <literal>&lt;</> operator, or if the <structfield>most_common_vals</>
+      list accounts for the entire population.)
+      </entry>
+     </row>
+
+     <row>
+      <entry>correlation</entry>
+      <entry><type>real</type></entry>
+      <entry>Statistical correlation between physical row ordering and
+      logical ordering of the column values.  This ranges from -1 to +1.
+      When the value is near -1 or +1, an indexscan on the column will
+      be estimated to be cheaper than when it is near zero, due to reduction
+      of random access to the disk.  (Omitted if column datatype does
+      not have a <literal>&lt;</> operator.)
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The maximum number of entries in the <structfield>most_common_vals</>
+   and <structfield>histogram_bounds</> arrays can be set on a
+   column-by-column basis using the <command>ALTER TABLE SET STATISTICS</>
+   command.  The default limit is presently 10 entries.  Raising the limit
+   may allow more accurate planner estimates to be made, particularly for
+   columns with irregular data distributions, at the price of consuming
+   more space in <structname>pg_statistic</structname> and slightly more
+   time to compute the estimates.  Conversely, a lower limit may be
+   appropriate for columns with simple data distributions.
+  </para>
+
+ </sect1>
 
  <sect1 id="explicit-joins">
   <title>Controlling the Planner with Explicit JOINs</title>
