@@ -63,6 +63,7 @@ available through operators and may be documented as operators only.
 </TGROUP>
 </TABLE>
 </Para>
+</sect1>
 
 <sect1>
 <title>String Functions</title>
@@ -230,6 +231,7 @@ Some are used internally to implement the SQL92 string functions listed above.
 <para>
 Most functions explicitly defined for text will work for char() and varchar() arguments.
 </para>
+</sect1>
 
 <sect1>
 <title>Date/Time Functions</title>
@@ -345,6 +347,7 @@ as well as the more specialized quantities
 to return day of week and `epoch' to return seconds since 1970 (for <Type>datetime</Type>)
 or 'epoch' to return total elapsed seconds (for <Type>timespan</Type>).
 </Para>
+</sect1>
 
 <sect1>
 <title>Geometric Functions</title>
@@ -623,6 +626,7 @@ support functions.
 </TGROUP>
 </TABLE>
 </Para>
+</sect1>
 
 <sect1>
 <title id="cidr-funcs">IP V4 Functions</title>

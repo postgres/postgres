@@ -12,7 +12,7 @@
   <REFPURPOSE>
    Commits the current transaction
   </REFPURPOSE>
-  
+ </refnamediv>  
   
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
@@ -30,8 +30,8 @@ COMMIT [ WORK | TRANSACTION ]
     Inputs
    </TITLE>
    <PARA>
-None
-   
+    None
+   </para>
   </REFSECT2>
    
   <REFSECT2 ID="R2-SQL-COMMIT-2">
@@ -57,12 +57,15 @@ Message returned if the transaction is successfully committed.
 	<VARLISTENTRY>
 	 <TERM>
 	  <returnvalue>NOTICE EndTransactionBlock and not inprogress/abort state</returnvalue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-If there is no transaction in progress.
-
-   </VARIABLELIST>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	If there is no transaction in progress.
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
   

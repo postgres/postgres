@@ -13,7 +13,7 @@
    Deletes rows from a table
   </REFPURPOSE>
   
-  
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-04-15</DATE>
@@ -82,10 +82,13 @@
 	  <PARA>
 	   If <replaceable class="parameter">count</replaceable> is 0,
 	   no rows were deleted.
-
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
-</REFSYNOPSISDIV>
+ </REFSYNOPSISDIV>
  
  <REFSECT1 ID="R1-SQL-DELETE-1">
   <REFSECT1INFO>
@@ -118,7 +121,7 @@
    Remove all films but musicals:
   </PARA>
   <ProgramListing>
-DELETE FROM films WHERE kind &lt;&gt; 'Musical';
+DETETE FROM films WHERE kind &lt;&gt; 'Musical';
 
 SELECT * FROM films;
 
@@ -165,7 +168,7 @@ DELETE FROM <replaceable class="parameter">table</replaceable> WHERE CURRENT OF 
    </synopsis>
    <para>
    where <replaceable class="parameter">cursor</replaceable> identifies an open cursor. Interactive cursors in <productname>Postgres</productname> are read-only.
-</para>
+   </para>
   </refsect2>
  </refsect1>
 </REFENTRY>

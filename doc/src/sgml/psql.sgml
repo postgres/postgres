@@ -26,6 +26,7 @@ To affect the paging behavior of your <Command>psql</Command> output,
 set or unset your PAGER environment variable.  I always have to set mine
 before it will pause.  And of course you have to do this before
 starting the program.
+</para>
 
 <Para>
 In csh/tcsh or other C shells:
@@ -39,5 +40,6 @@ while in sh/bash or other Bourne shells:
 <ProgramListing>
   unset PAGER
 </ProgramListing>
-
+</para>
+</sect1>
 </Chapter>

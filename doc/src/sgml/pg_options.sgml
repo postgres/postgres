@@ -17,7 +17,7 @@
 Contributed by <ULink url="mailto:dz@cs.unitn.it">Massimo Dal Zotto</ULink>
 </Para>
 </Note>
-
+</para>
 <Para>
 The optional file <filename>data/pg_options</filename> contains runtime
 options used by the backend to control trace messages and other backend
@@ -32,7 +32,7 @@ parameters which can be used by the backend to control its behaviour.
 New options and parameters must be defined in
 <filename>backend/utils/misc/trace.c</filename> and
 <filename>backend/include/utils/trace.h</filename>.
-
+</para>
 <Para>
 For example suppose we want to add conditional trace messages and a tunable
 numeric parameter to the code in file <filename>foo.c</filename>.
@@ -78,7 +78,7 @@ foo_function(int x, int y)
     }
 }
 </programlisting>
-
+</para>
 <para>
 Existing files using private trace flags can be changed by simply adding
 the following code:
@@ -88,7 +88,7 @@ the following code:
 /* int my_own_flag = 0; -- removed */
 #define my_own_flag pg_options[OPT_MY_OWN_FLAG]
 </programlisting>
-
+</para>
 <para>
 All pg_options are initialized to zero at backend startup. If we need a
 different default value we must add some initialization code at the beginning
@@ -103,14 +103,14 @@ Now we can set the foo_param and enable foo trace by writing values into the
 foo=1
 fooparam=17
 </programlisting>
-
+</para>
 <para>
 The new options will be read by all new backends when they are started.
 To make effective the changes for all running backends we need to send a
 SIGHUP to the postmaster. The signal will be automatically sent to all the
 backends. We can also activate the changes only for a specific backend by
 sending the SIGHUP directly to it.
-
+</para>
 <para>
 pg_options can also be specified with the <option>-T</option> switch of 
 <productname>Postgres</productname>:
@@ -118,7 +118,7 @@ pg_options can also be specified with the <option>-T</option> switch of
 <programlisting>
 postgres <replaceable>options</replaceable> -T "verbose=2,query,hostlookup-"
 </programlisting>
-
+</para>
 <Para>
 The functions used for printing errors and debug messages can now make use
 of the <citetitle>syslog(2)</citetitle> facility. Message printed to stdout
@@ -135,13 +135,13 @@ or stderr are prefixed by a timestamp containing also the backend pid:
 980127.19:52:14.413 [29286] Async_NotifyFrontEnd done
 980127.19:52:14.466 [29286] Async_NotifyHandler done
 </programlisting>
-
+</para>
 <para>
 This format improves readability of the logs and allows people to understand
 exactly which backend is doing what and at which time. It also makes
 easier to write simple awk or perl scripts which monitor the log to
 detect database errors or problem, or to compute transaction time statistics.
-
+</para>
 <para>
 Messages printed to syslog use the log facility LOG_LOCAL0.
 The use of syslog can be controlled with the syslog pg_option.
@@ -207,313 +207,421 @@ The options currently defined in
 <varlistentry>
 <term>
 all
-
+</term>
 <listitem>
 <para>
 Global trace flag. Allowed values are:
+</para>
 
 <variablelist>
 <varlistentry>
 <term>
 0
-
+</term>
 <listitem>
 <para>
 Trace messages enabled individually
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 1
-
+</term>
 <listitem>
 <para>
 Enable all trace messages
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 -1
-
+</term>
 <listitem>
 <para>
 Disable all trace messages
+</para>
+</listitem>
+</varlistentry>
 
 </variablelist>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 verbose
-
+</term>
 <listitem>
 <para>
 Verbosity flag. Allowed values are:
+</para>
 
 <variablelist>
 <varlistentry>
 <term>
 0
-
+</term>
 <listitem>
 <para>
 No messages. This is the default.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 1
-
+</term>
 <listitem>
 <para>
 Print information messages.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 2
-
+</term>
 <listitem>
 <para>
 Print more information messages.
+</para>
+</listitem>
+</varlistentry>
 
 </variablelist>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 query
-
+</term>
 <listitem>
 <para>
 Query trace flag. Allowed values are:
+</para>
 
 <variablelist>
 <varlistentry>
 <term>
 0
-
+</term>
 <listitem>
 <para>
 Don't print query.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 1
-
+</term>
 <listitem>
 <para>
 Print a condensed query in one line.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 4
-
+</term>
 <listitem>
 <para>
 Print the full query.
+</para>
+</listitem>
+</varlistentry>
 
 </variablelist>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 plan
-
+</term>
 <listitem>
 <para>
 Print query plan.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 parse
-
+</term>
 <listitem>
 <para>
 Print parser output.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 rewritten
-
+</term>
 <listitem>
 <para>
 Print rewritten query.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 parserstats
-
+</term>
 <listitem>
 <para>
 Print parser statistics.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 plannerstats
-
+</term>
 <listitem>
 <para>
 Print planner statistics.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 executorstats
-
+</term>
 <listitem>
 <para>
 Print executor statistics.
-
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 shortlocks
-
+</term>
 <listitem>
 <para>
 Currently unused but needed to enable features in the future.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 locks
-
+</term>
 <listitem>
 <para>
 Trace locks.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 userlocks
-
+</term>
 <listitem>
 <para>
 Trace user locks.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 spinlocks
-
+</term>
 <listitem>
 <para>
 Trace spin locks.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 notify
-
+</term>
 <listitem>
 <para>
 Trace notify functions.
-
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 malloc
-
+</term>
 <listitem>
 <para>
 Currently unused.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 palloc
-
+</term>
 <listitem>
 <para>
 Currently unused.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 lock_debug_oidmin
-
+</term>
 <listitem>
 <para>
 Minimum relation oid traced by locks.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 lock_debug_relid
-
+</term>
 <listitem>
 <para>
 oid, if not zero, of relation traced by locks.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 lock_read_priority
-
+</term>
 <listitem>
 <para>
 Currently unused.
-
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 deadlock_timeout
-
+</term>
 <listitem>
 <para>
 Deadlock check timer.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 syslog
-
+</term>
 <listitem>
 <para>
 syslog flag. Allowed values are:
+</para>
 
 <variablelist>
 <varlistentry>
 <term>
 0
-
+</term>
 <listitem>
 <para>
 Messages to stdout/stderr.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 1
-
+</term>
 <listitem>
 <para>
 Messages to stdout/stderr and syslog.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 2
-
+</term>
 <listitem>
 <para>
 Messages only to syslog.
+</para>
+</listitem>
+</varlistentry>
 
 </variablelist>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 hostlookup
-
+</term>
 <listitem>
 <para>
 Enable hostname lookup in ps_status.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 showportnumber
-
+</term>
 <listitem>
 <para>
 Show port number in ps_status.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 notifyunlock
-
+</term>
 <listitem>
 <para>
 Unlock of pg_listener after notify.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
 notifyhack
-
+</term>
 <listitem>
 <para>
 Remove duplicate tuples from pg_listener.
+</para>
+</listitem>
+</varlistentry>
 
 </variablelist>
 

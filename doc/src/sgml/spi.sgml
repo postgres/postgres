@@ -127,6 +127,7 @@ Return status
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
+</para>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
@@ -263,7 +264,7 @@ SPI_finish(void)
 <PARA>
 <FUNCTION>SPI_finish</FUNCTION> closes an existing connection to the <ProductName>Postgres</ProductName> backend.
    You should call this function after completing operations through the SPI manager.
-
+</para>
 <PARA>
    You may get the error return <ReturnValue>SPI_ERROR_UNCONNECTED</ReturnValue> if <Function>SPI_finish</Function> is
    called without having a current valid connection.
@@ -408,7 +409,7 @@ Maximum number of tuples to return
    <ReturnValue>SPI_ERROR_OPUNKNOWN</ReturnValue> if type of query is unknown (this shouldn't occur).
 </Member>
 </SimpleList>
-
+</para>
 <Para>
    If execution of your query was successful then one of the following
    (non-negative) values will be returned:
@@ -475,7 +476,7 @@ You may pass many queries in one string or query string may be
    executed.
 </Para>
 </Note>
-
+</para>
 <Para>
    The actual number of tuples for which the (last) query was executed is
    returned in the global variable SPI_processed (if not <ReturnValue>SPI_OK_UTILITY</ReturnValue>).
@@ -676,16 +677,16 @@ Pointer to an execution plan (parser+planner+optimizer)
 <PARA>
    nargs is number of parameters ($1 ... $nargs - as in SQL-functions),
    and nargs may be 0 only if there is not any $1 in query.
-
+</para>
 <Para>
    Execution of prepared execution plans is sometimes much faster so this
    feature may be useful if the same query will be executed many times.
-
+</para>
 <Para>
 The plan returned by <Function>SPI_prepare</Function> may be used only in current
    invocation of the procedure since <Function>SPI_finish</Function> frees memory allocated for a plan. 
    See <Function>SPI_saveplan</Function>.
-
+</para>
 <Para>
    If successful, a non-null pointer will be returned. Otherwise, you'll get
    a NULL plan.  In both cases SPI_result will be set like the value returned
@@ -818,7 +819,7 @@ Execution plan location. NULL if unsuccessful.
 <FUNCTION>SPI_saveplan</FUNCTION> 
    stores a plan prepared by <Function>SPI_prepare</Function> in safe memory
    protected from freeing by <Function>SPI_finish</Function> or the transaction manager.
-
+</para>
 <Para>
    In the current version of <ProductName>Postgres</ProductName> there is no ability to
  store prepared plans in the system
@@ -991,6 +992,7 @@ Number of tuples for which plan is to be executed
  was prepared with some parameters.
 </Member>
 </SimpleList>
+</para>
 </LISTITEM>
 </VARLISTENTRY>
 <VARLISTENTRY>
@@ -1010,6 +1012,8 @@ initialized as in
 <PARA>
 initialized as in
    <Function>SPI_exec</Function> if successful
+</para>
+</listitem>
 </VARLISTENTRY>
 </VARIABLELIST>
 </REFSECT2>
@@ -1025,7 +1029,7 @@ initialized as in
 <FUNCTION>SPI_execp</FUNCTION> 
    stores a plan prepared by <Function>SPI_prepare</Function> in safe memory
    protected from freeing by <Function>SPI_finish</Function> or the transaction manager.
-
+</para>
 <Para>
    In the current version of <ProductName>Postgres</ProductName> there is no ability to
  store prepared plans in the system
@@ -1169,6 +1173,7 @@ Copied tuple
  is NULL
 </Member>
 </SimpleList>
+</para>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
@@ -1333,6 +1338,7 @@ New tuple with modifications
  is NULL
 </Member>
 </SimpleList>
+</para>
 </LISTITEM>
 </VARLISTENTRY>
 <VARLISTENTRY>
@@ -1352,6 +1358,7 @@ SPI_result
    attributes in tuple)
 </Member>
 </SimpleList>
+</para>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
@@ -1474,6 +1481,7 @@ Valid one-based index number of attribute
 <ReturnValue>SPI_ERROR_NOATTRIBUTE</ReturnValue> if the named attribute is not found
 </Member>
 </SimpleList>
+</para>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
@@ -1595,6 +1603,7 @@ SPI_result set to
 <ReturnValue>SPI_ERROR_NOATTRIBUTE</ReturnValue> on error
 </Member>
 </SimpleList>
+</para>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
@@ -1731,6 +1740,7 @@ no output function available
 <ReturnValue>SPI_ERROR_NOOUTFUNC</ReturnValue>)
 </Member>
 </SimpleList>
+</para>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>

@@ -51,6 +51,7 @@ SELECT name, altitude
 |Mariposa  | 1953     |
 +----------+----------+
 </ProgramListing>         
+</para>
 
 <Para>
      On the other hand, to find the  names  of  all  cities,

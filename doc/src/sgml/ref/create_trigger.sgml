@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Creates a new trigger
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-21</DATE>
@@ -92,8 +93,11 @@ CREATE TRIGGER <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> { BEFORE | AFTE
 	 <LISTITEM>
 	  <PARA>
 	   This message is returned if the trigger is successfully created.
-
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -147,31 +151,31 @@ CREATE TRIGGER <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> { BEFORE | AFTE
    <PARA>
     Refer to <command>DROP TRIGGER</command> for information on how to 
     remove triggers.
-   </PARA>
-   
+   </PARA>   
   </REFSECT2>
-  
+ </refsect1>
+
  <REFSECT1 ID="R1-SQL-CREATETRIGGER-2">
   <TITLE>
    Usage
   </TITLE>
   <PARA>
-  Check if the specified distributor code exists in the distributors
-  table before appending or updating a row in the table films:
+   Check if the specified distributor code exists in the distributors
+   table before appending or updating a row in the table films:
   </PARA>
   <ProgramListing>
-CREATE TRIGGER if_dist_exists
-    BEFORE INSERT OR UPDATE ON films FOR EACH ROW
-    EXECUTE PROCEDURE check_primary_key ('did', 'distributors', 'did');
+   CREATE TRIGGER if_dist_exists
+   BEFORE INSERT OR UPDATE ON films FOR EACH ROW
+   EXECUTE PROCEDURE check_primary_key ('did', 'distributors', 'did');
   </ProgramListing>
   <PARA>
-    Before cancelling a distributor or updating its code, remove every
-    reference to the table films:
+   Before cancelling a distributor or updating its code, remove every
+   reference to the table films:
   </PARA>
   <ProgramListing>
-CREATE TRIGGER if_film_exists 
-    BEFORE DELETE OR UPDATE ON distributors FOR EACH ROW
-    EXECUTE PROCEDURE check_foreign_key (1, 'CASCADE', 'did', 'films', 'did');
+   CREATE TRIGGER if_film_exists 
+   BEFORE DELETE OR UPDATE ON distributors FOR EACH ROW
+   EXECUTE PROCEDURE check_foreign_key (1, 'CASCADE', 'did', 'films', 'did');
   </ProgramListing>
  </REFSECT1>
  
@@ -190,25 +194,27 @@ CREATE TRIGGER if_film_exists
     SQL92
    </TITLE>
    <PARA>
-   There is no <command>CREATE TRIGGER</command> in <acronym>SQL92</acronym>.
+    There is no <command>CREATE TRIGGER</command> in <acronym>SQL92</acronym>.
    </PARA>
    <PARA>
     The second example above may also be done by using a FOREIGN KEY
     constraint as in:
    </PARA>
   <ProgramListing>
-CREATE TABLE distributors (
+    CREATE TABLE distributors (
     did      DECIMAL(3),
     name     VARCHAR(40),
     CONSTRAINT if_film_exists
-        FOREIGN KEY(did) REFERENCES films
-            ON UPDATE CASCADE ON DELETE CASCADE  
-);
-  </ProgramListing>
+    FOREIGN KEY(did) REFERENCES films
+    ON UPDATE CASCADE ON DELETE CASCADE  
+    );
+   </ProgramListing>
    <PARA>
     However, foreign keys are not yet implemented (as of version 6.4) in
     <productname>Postgres</productname>.
    </PARA>
+  </refsect2>
+ </refsect1>
 </REFENTRY>
 
 <!-- Keep this comment at the end of the file

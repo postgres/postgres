@@ -12,6 +12,7 @@ ROLLBACK
 <REFPURPOSE>
 Aborts the current transaction
 </REFPURPOSE>
+  </refnamediv>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
 <DATE>1998-09-24</DATE>
@@ -20,105 +21,113 @@ Aborts the current transaction
 ROLLBACK [ WORK ]
 </SYNOPSIS>
 
-<REFSECT2 ID="R2-SQL-ROLLBACK-1">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-Inputs
-</TITLE>
-<PARA>
-None.
+	<REFSECT2 ID="R2-SQL-ROLLBACK-1">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		Inputs
+	  </TITLE>
+	  <PARA>
+		None.
+	  </para>
+	</REFSECT2>
 
-</REFSECT2>
+	<REFSECT2 ID="R2-SQL-ROLLBACK-2">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		Outputs
+	  </TITLE>
+	  <PARA>
+		
+		<VARIABLELIST>
+		  <VARLISTENTRY>
+			<TERM>
+			  ABORT
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Message returned if successful.
+			  </para>
+			</listitem>
+		  </VARLISTENTRY>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  NOTICE:  UserAbortTransactionBlock and not in in-progress state
+			  ABORT
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				If there is not any transaction currently in progress.
+			  </para>
+			</listitem>
+		  </VARLISTENTRY>
+		</VARIABLELIST>
+	  </para>
+	</REFSECT2>
+  </REFSYNOPSISDIV>
 
-<REFSECT2 ID="R2-SQL-ROLLBACK-2">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-Outputs
-</TITLE>
-<PARA>
+  <REFSECT1 ID="R1-SQL-ROLLBACK-1">
+	<REFSECT1INFO>
+	  <DATE>1998-09-24</DATE>
+	</REFSECT1INFO>
+	<TITLE>
+	  Description
+	</TITLE>
+	<PARA>
+	  <command>ROLLBACK</command> rolls back the current transaction and causes
+	  all the updates made by the transaction to be discarded.
+	</para>
+	<REFSECT2 ID="R2-SQL-ROLLBACK-3">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		Notes
+	  </TITLE>
+	  <PARA>
+		The keyword WORK is noise and can be omitted.
+	  </para>  
+	  <para>
+		Use the <command>COMMIT</command> statement to successfully
+		terminate a transaction.
+	  </para>
+	</refsect2>
+  </REFSECT1>
 
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-   ABORT
-</TERM>
-<LISTITEM>
-<PARA>
-          Message returned if successful.
-
-<VARLISTENTRY>
-<TERM>
-NOTICE:  UserAbortTransactionBlock and not in in-progress state
-ABORT
-</TERM>
-<LISTITEM>
-<PARA>
-          If there is not any transaction currently in progress.
-
-</VARLISTENTRY>
-</VARIABLELIST>
-
-</REFSECT2>
-</REFSYNOPSISDIV>
-
-<REFSECT1 ID="R1-SQL-ROLLBACK-1">
-<REFSECT1INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT1INFO>
-<TITLE>
-Description
-</TITLE>
-<PARA>
-   <command>ROLLBACK</command> rolls back the current transaction and causes
-   all the updates made by the transaction to be discarded.
-
-<REFSECT2 ID="R2-SQL-ROLLBACK-3">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-Notes
-</TITLE>
-<PARA>
-The keyword WORK is noise and can be omitted.
-
-<para>
-Use the <command>COMMIT</command> statement to successfully
- terminate a transaction.
-
-</REFSECT1>
-
-<REFSECT1 ID="R1-SQL-ROLLBACK-2">
-<TITLE>
-Usage
-</TITLE>
-<PARA>
-<ProgramListing>
---To abort all changes:
---
-ROLLBACK WORK;
-</ProgramListing>
-
-</REFSECT1>
-
-<REFSECT1 ID="R1-SQL-ROLLBACK-3">
-<TITLE>
-Compatibility
-</TITLE>
-<PARA>
-</PARA>
-
-<REFSECT2 ID="R2-SQL-ROLLBACK-4">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-SQL92
-</TITLE>
-<PARA>
-    Full compatibility.
+  <REFSECT1 ID="R1-SQL-ROLLBACK-2">
+	<TITLE>
+	  Usage
+	</TITLE>
+	<PARA>
+	  <ProgramListing>
+		--To abort all changes:
+		--
+		ROLLBACK WORK;
+	  </ProgramListing>
+	</para>
+  </REFSECT1>
+  
+  <REFSECT1 ID="R1-SQL-ROLLBACK-3">
+	<TITLE>
+	  Compatibility
+	</TITLE>
+	<PARA>
+	</PARA>
+	
+	<REFSECT2 ID="R2-SQL-ROLLBACK-4">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		SQL92
+	  </TITLE>
+	  <PARA>
+		Full compatibility.
+	  </para>
+	</refsect2>
+  </refsect1>
 </REFENTRY>

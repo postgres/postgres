@@ -89,7 +89,7 @@
 </Para>
 </ListItem>
 </ItemizedList>
-
+</para>
 <Para>
      To define the <Acronym>complex</Acronym> type, we need to create  the  two
      user-defined   functions   complex_in  and  complex_out
@@ -125,7 +125,7 @@
      them,  since  the  system already understands what they
      look like inside.
 </Para>
-
+</sect2>
 <Sect2>
 <Title>Large Objects</Title>
 
@@ -143,7 +143,7 @@ The actual value that fits depends on the machine  architecture.
      If you require a larger type for something like a document  
      retrieval system or for storing bitmaps, you will
      need to use the <ProductName>Postgres</ProductName> large object interface.
-
+</para>
 </Sect2>
 </Sect1>
 </Chapter>

@@ -156,29 +156,32 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
    <title>
     Outputs
    </title>
-<para>
-
-   <variablelist>
-    <varlistentry>
-     <term>
-      Rows
-     </term>
-     <listitem>
-      <para>
-       The complete set of rows resulting from the query specification.
-      </para>
-     </listitem>
-    </varlistentry>
-    
-    <varlistentry>
-     <term>
-      <returnvalue><replaceable>count</replaceable></returnvalue>
-     </term>
-     <listitem>
-      <para>
-       The count of rows returned by the query.
-   </variablelist>
-   
+   <para>
+	
+	<variablelist>
+	 <varlistentry>
+	  <term>
+	   Rows
+	  </term>
+	  <listitem>
+	   <para>
+		The complete set of rows resulting from the query specification.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 
+	 <varlistentry>
+	  <term>
+	   <returnvalue><replaceable>count</replaceable></returnvalue>
+	  </term>
+	  <listitem>
+	   <para>
+		The count of rows returned by the query.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+   </para>
   </refsect2>
  </refsynopsisdiv>
  
@@ -513,6 +516,7 @@ SELECT distributors.* WHERE name = 'Westwood';
     108|Westward
   </programlisting>
    </para>
+  </refsect2>
 
   <refsect2 id="R2-SQL-SELECT-5">
    <refsect2info>
@@ -613,6 +617,8 @@ SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable
    </title>
    <para>
 All input fields are described in detail for SELECT.
+   </para>
+  </refsect2>
 
   <refsect2 id="R2-SQL-SELECTINTO-2">
    <refsect2info>
@@ -623,22 +629,26 @@ All input fields are described in detail for SELECT.
    </title>
    <para>
 All output fields are described in detail for SELECT.
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
 
-  <refsect1 id="R1-SQL-SELECTINTO-1">
-   <refsect1info>
-    <date>1998-09-22</date>
-   </refsect1info>
-   <title>
-    Description
-   </title>
-   <para>
-SELECT INTO creates a new table from the results of a query. Typically, this
-query draws data from an existing table, but any SQL query is allowed.
-<note>
-<para>
-CREATE TABLE AS is functionally equivalent to the SELECT INTO command.
-</note>
-
+ <refsect1 id="R1-SQL-SELECTINTO-1">
+  <refsect1info>
+   <date>1998-09-22</date>
+  </refsect1info>
+  <title>
+   Description
+  </title>
+  <para>
+   SELECT INTO creates a new table from the results of a query. Typically, this
+   query draws data from an existing table, but any SQL query is allowed.
+   <note>
+	<para>
+	 CREATE TABLE AS is functionally equivalent to the SELECT INTO command.
+	</para>
+   </note>
+  </para>
  </refsect1>
 </refentry>
 

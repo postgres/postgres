@@ -12,7 +12,7 @@
   <REFPURPOSE>
    Defines a new user operator
   </REFPURPOSE>
-  
+  </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-09</DATE>
@@ -155,16 +155,19 @@ Operator to use for sorting.
     Outputs
    </TITLE>
    <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>CREATE</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Message returned if the operator is successfully created.
-
-   </VARIABLELIST>
+    <VARIABLELIST>
+     <VARLISTENTRY>
+      <TERM>
+       <ReturnValue>CREATE</ReturnValue>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	Message returned if the operator is successfully created.
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -176,25 +179,25 @@ Operator to use for sorting.
    Description
   </TITLE>
   <PARA>
-<command>CREATE OPERATOR</command>  defines a new operator,
- <replaceable class="parameter">name</replaceable>.
-    The user who defines an operator becomes its owner.
-   </para>
-   <para>
-    The operator <replaceable class="parameter">name</replaceable>
- is a sequence of up to thirty two (32) characters in any combination
-from the following:
-<literallayout>
-            + - * / &lt; &gt; = ~ ! @ # % ^ & | ` ? $ : 
-</literallayout>
-<note>
-<para>
-No  alphabetic characters are allowed in an operator name.
-This enables <productname>Postgres</productname> to parse SQL input
-into tokens without requiring spaces between each token.
-</note>
-
-   </para>
+   <command>CREATE OPERATOR</command>  defines a new operator,
+   <replaceable class="parameter">name</replaceable>.
+   The user who defines an operator becomes its owner.
+  </para>
+  <para>
+   The operator <replaceable class="parameter">name</replaceable>
+   is a sequence of up to thirty two (32) characters in any combination
+   from the following:
+   <literallayout>
+    + - * / &lt; &gt; = ~ ! @ # % ^ & | ` ? $ : 
+   </literallayout>
+   <note>
+    <para>
+     No  alphabetic characters are allowed in an operator name.
+     This enables <productname>Postgres</productname> to parse SQL input
+     into tokens without requiring spaces between each token.
+     </para>
+   </note>   
+  </para>
   <para>
    The operator "!=" is mapped to "&lt;&gt;" on input, so they are
    therefore equivalent.
@@ -206,26 +209,26 @@ into tokens without requiring spaces between each token.
    unary operators only RIGHTARG should be defined.
   </para>
   <para>
-Also, the
- <replaceable class="parameter">func_name</replaceable> procedure must have
+   Also, the
+   <replaceable class="parameter">func_name</replaceable> procedure must have
    been previously defined using <command>CREATE FUNCTION</command> and  must
    be defined to accept the correct number of arguments
- (either  one or two).
+   (either  one or two).
   </para>
   <para>
    The  commutator  operator  is present so that
- <productname>Postgres</productname> can
+   <productname>Postgres</productname> can
    reverse the order of the operands if it wishes.
-  For example, the operator area-less-than, &lt;&lt;&lt;,
- would have a commutator
- operator, area-greater-than, &gt;&gt;&gt;.
-  Hence, the query optimizer could freely  convert:
+   For example, the operator area-less-than, &lt;&lt;&lt;,
+   would have a commutator
+   operator, area-greater-than, &gt;&gt;&gt;.
+   Hence, the query optimizer could freely  convert:
    <programlisting>
-"0,0,1,1"::box  &gt;&gt;&gt; MYBOXES.description
+    "0,0,1,1"::box  &gt;&gt;&gt; MYBOXES.description
    </programlisting>
    to
    <programlisting>
-MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box</programlisting>
+    MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box</programlisting>
   </para>
   <para>
    This  allows  the  execution code to always use the latter
@@ -233,21 +236,21 @@ MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box</programlisting>
    what.
   </para>
   <para>
-  Suppose  that  an
+   Suppose  that  an
    operator,  area-equal, ===, exists, as well as an area not
    equal, !==.
    The negator operator allows the query optimizer to convert
    <programlisting>
-NOT MYBOXES.description === "0,0,1,1"::box
+    NOT MYBOXES.description === "0,0,1,1"::box
    </programlisting>
    to
    <programlisting>
-MYBOXES.description !== "0,0,1,1"::box
+    MYBOXES.description !== "0,0,1,1"::box
    </programlisting>
   </para>
   <para>
    If  a  commutator  operator  name  is  supplied,  
-<productname>Postgres</productname>
+   <productname>Postgres</productname>
    searches  for  it  in  the catalog.  If it is found and it
    does not yet have a commutator itself, then  the  commutator's
    entry is updated to have the current (new) operator
@@ -264,22 +267,22 @@ MYBOXES.description !== "0,0,1,1"::box
   <para>
    The next two specifications are  present  to  support  the
    query  optimizer in performing joins.  
-<productname>Postgres</productname> can always
+   <productname>Postgres</productname> can always
    evaluate a join (i.e., processing a clause with two  tuple
    variables separated by an operator that returns a boolean)
    by iterative substitution [WONG76].  
-In addition, <productname>Postgres</productname>
+   In addition, <productname>Postgres</productname>
    is  planning  on  implementing a hash-join algorithm along
    the lines of [SHAP86]; however, it must know whether  this
    strategy  is  applicable.   
-For example, a hash-join
+   For example, a hash-join
    algorithm is usable for a clause of the form:
    <programlisting>
-MYBOXES.description === MYBOXES2.description
+    MYBOXES.description === MYBOXES2.description
    </programlisting>
    but not for a clause of the form:
    <programlisting>
-MYBOXES.description &lt;&lt;&lt; MYBOXES2.description.
+    MYBOXES.description &lt;&lt;&lt; MYBOXES2.description.
    </programlisting>
    The HASHES flag gives the needed information to the  query
    optimizer  concerning  whether  a  hash  join  strategy is
@@ -292,13 +295,13 @@ MYBOXES.description &lt;&lt;&lt; MYBOXES2.description.
    sort both relations using the operator, &lt;&lt;&lt;.  On the other
    hand, merge-sort is not usable with the clause:
    <programlisting>
-MYBOXES.description &lt;&lt;&lt; MYBOXES2.description
+    MYBOXES.description &lt;&lt;&lt; MYBOXES2.description
    </programlisting>
   </para>
   <para>
    If  other join strategies are found to be practical,
-<productname>Postgres</productname>
- will change the optimizer and run-time system to  use
+   <productname>Postgres</productname>
+   will change the optimizer and run-time system to  use
    them  and  will  require  additional specification when an
    operator is defined.  Fortunately, the research  community
    invents  new  join  strategies infrequently, and the added
@@ -310,14 +313,14 @@ MYBOXES.description &lt;&lt;&lt; MYBOXES2.description
    the query optimizer  can  estimate  result  sizes.   If  a
    clause of the form:
    <programlisting>
-MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
+    MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
    </programlisting>
    is present in the qualification,
- then <productname>Postgres</productname> may have to
+   then <productname>Postgres</productname> may have to
    estimate the fraction of the  instances  in  MYBOXES  that
    satisfy  the clause.  The function
- <replaceable class="parameter">res_proc</replaceable>
- must be a registered function (meaning  it  is  already  defined  using
+   <replaceable class="parameter">res_proc</replaceable>
+   must be a registered function (meaning  it  is  already  defined  using
    define function(l)) which accepts one argument of the correct
    data type and returns a floating point  number.   The
    query  optimizer  simply  calls this function, passing the
@@ -335,14 +338,14 @@ MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
   <para>
    The difference between the function
    <programlisting>
-my_procedure_1 (MYBOXES.description, "0,0,1,1"::box)
+    my_procedure_1 (MYBOXES.description, "0,0,1,1"::box)
    </programlisting>
    and the operator
    <programlisting>
-MYBOXES.description === "0,0,1,1"::box
+    MYBOXES.description === "0,0,1,1"::box
    </programlisting>
    is  that  <productname>Postgres</productname>
-  attempts to optimize operators and can
+   attempts to optimize operators and can
    decide to use an index to restrict the search  space  when
    operators  are  involved.  However, there is no attempt to
    optimize functions, and they are performed by brute force.
@@ -359,12 +362,13 @@ MYBOXES.description === "0,0,1,1"::box
    </TITLE>
    <PARA>
     Refer to the chapter on operators in the
-<citetitle>PostgreSQL User's Guide</citetitle>
+    <citetitle>PostgreSQL User's Guide</citetitle>
     for further information.
     Refer to <command>DROP OPERATOR</command> to delete
-user-defined operators from a database.
-    
+    user-defined operators from a database.
+   </para>
   </REFSECT2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-CREATEOPERATOR-2">
   <TITLE>
@@ -374,19 +378,17 @@ user-defined operators from a database.
    area-equality, for the BOX data type.
   </PARA>
   <ProgramListing>
-CREATE OPERATOR === (
-    LEFTARG = box,
-    RIGHTARG = box,
-    PROCEDURE = area_equal_procedure,
-    COMMUTATOR = ===,
-    NEGATOR = !==,
-    RESTRICT = area_restriction_procedure,
-    HASHES,
-    JOIN = area-join-procedure,
-    SORT = <<<, <<<)
-  </ProgramListing>
-  
-  
+   CREATE OPERATOR === (
+   LEFTARG = box,
+   RIGHTARG = box,
+   PROCEDURE = area_equal_procedure,
+   COMMUTATOR = ===,
+   NEGATOR = !==,
+   RESTRICT = area_restriction_procedure,
+   HASHES,
+   JOIN = area-join-procedure,
+   SORT = <<<, <<<)
+  </ProgramListing>  
  </REFSECT1>
  
  <REFSECT1 ID="R1-SQL-CREATEOPERATOR-3">

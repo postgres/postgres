@@ -15,6 +15,7 @@ Written by <ULink url="mailto:phil@river-bank.demon.co.uk">Phil Thompson</ULink>
 Updates for protocol 2.0 by <ULink url="mailto:tgl@sss.pgh.pa.us">Tom Lane</ULink>.
 </Para>
 </Note>
+</para>
 
 <Para>
 <ProductName>Postgres</ProductName> uses a message-based protocol for communication between frontends
@@ -23,15 +24,18 @@ and backends.  The protocol is implemented over <Acronym>TCP/IP</Acronym> and al
 This was done in such
 a way as to still allow connections from earlier versions of frontends, but
 this document does not cover the protocol used by those earlier versions.
+</para>
 
 <Para>
 This document describes version 2.0 of the protocol, implemented in
 <ProductName>Postgres</ProductName> v6.4 and later.
+</para>
 
 <Para>
 Higher level features built on this protocol (for example, how <FileName>libpq</FileName> passes
 certain environment variables after the connection is established)
 are covered elsewhere.
+</para>
 
 <Sect1>
 <Title>Overview</Title>
@@ -40,6 +44,7 @@ are covered elsewhere.
 The three major components are the frontend (running on the client) and the
 postmaster and backend (running on the server).  The postmaster and backend
 have different roles but may be implemented by the same executable.
+</para>
 
 <Para>
 A frontend sends a startup packet to the postmaster.  This includes the names
@@ -47,6 +52,7 @@ of the user and the database the user wants to connect to.  The postmaster then
 uses this, and the information in the pg_hba.conf(5) file to determine what
 further authentication information it requires the frontend to send (if any)
 and responds to the frontend accordingly.
+</para>
 
 <Para>
 The frontend then sends any required authentication information.  Once the
@@ -54,6 +60,7 @@ postmaster validates this it responds to the frontend that it is authenticated
 and hands over the connection to a backend.  The backend then sends a message
 indicating successful startup (normal case) or failure (for example, an
 invalid database name).
+</para>
 
 <Para>
 Subsequent communications are query and result packets exchanged between the
@@ -61,16 +68,20 @@ frontend and the backend.  The postmaster takes no further part in ordinary
 query/result communication.  (However, the postmaster is involved when the
 frontend wishes to cancel a query currently being executed by its backend.
 Further details about that appear below.)
+</para>
 
 <Para>
 When the frontend wishes to disconnect it sends an appropriate packet and
 closes the connection without waiting for a response for the backend.
+</para>
 
 <Para>
 Packets are sent as a data stream.  The first byte determines what should be
 expected in the rest of the packet.  The exception is packets sent from a
 frontend to the postmaster, which comprise a packet length then the packet
 itself.  The difference is historical.
+</para>
+</sect1>
 
 <Sect1>
 <Title>Protocol</Title>
@@ -81,6 +92,7 @@ flows depending on the state of the connection:
 startup, query, function call, and termination.
 There are also special provisions for notification responses and command
 cancellation, which can occur at any time after the startup phase.
+</para>
 
 
 <Sect2>
@@ -88,12 +100,14 @@ cancellation, which can occur at any time after the startup phase.
 
 <Para>
 Startup is divided into an authentication phase and a backend startup phase.
+</para>
 
 <Para>
 Initially, the frontend sends a StartupPacket.  The postmaster uses this info
 and the contents of the pg_hba.conf(5) file to determine what authentication
 method the frontend must use.  The postmaster then responds with one of the
 following messages:
+</para>
 
 <Para>
 <VariableList>
@@ -176,6 +190,7 @@ following messages:
 <Para>
 If the frontend does not support the authentication method requested by the
 postmaster, then it should immediately close the connection.
+</para>
 
 <Para>
 After sending AuthenticationOk, the postmaster attempts to launch a backend
@@ -184,7 +199,6 @@ during startup, the frontend must wait for the backend to acknowledge
 successful startup.  The frontend should send no messages at this point.
 The possible messages from the backend during this phase are:
 
-<Para>
 <VariableList>
 <VarListEntry>
 <Term>
@@ -244,7 +258,8 @@ reasonable to consider ReadyForQuery as starting a query cycle (and then
 BackendKeyData indicates successful conclusion of the startup phase),
 or to consider ReadyForQuery as ending the startup phase and each subsequent
 query cycle.
-
+</para>
+</sect2>
 
 <Sect2>
 <Title>Query</Title>
@@ -255,11 +270,11 @@ backend.  The backend then sends one or more response messages depending
 on the contents of the query command string, and finally a ReadyForQuery
 response message.  ReadyForQuery informs the frontend that it may safely
 send a new query or function call.
+</para>
 
 <Para>
 The possible response messages from the backend are:
 
-<Para>
 <VariableList>
 <VarListEntry>
 <Term>
@@ -390,6 +405,7 @@ The possible response messages from the backend are:
 <Para>
 A frontend must be prepared to accept ErrorResponse and NoticeResponse
 messages whenever it is expecting any other type of message.
+</para>
 
 <Para>
 Actually, it is possible for NoticeResponse to arrive even when the frontend
@@ -398,11 +414,13 @@ is not expecting any kind of message, that is, the backend is nominally idle.
 In that case it will send a NoticeResponse before closing the connection.)
 It is recommended that the frontend check for such asynchronous notices just
 before issuing any new command.
+</para>
 
 <Para>
 Also, if the frontend issues any listen(l) commands then it must be prepared
 to accept NotificationResponse messages at any time; see below.
-
+</para>
+</sect2>
 
 <Sect2>
 <Title>Function Call</Title>
@@ -413,11 +431,11 @@ message to the backend.  The backend then sends one or more response messages
 depending on the results of the function call, and finally a ReadyForQuery
 response message.  ReadyForQuery informs the frontend that it may safely send
 a new query or function call.
+</para>
 
 <Para>
 The possible response messages from the backend are:
 
-<Para>
 <VariableList>
 <VarListEntry>
 <Term>
@@ -482,7 +500,8 @@ A frontend must be prepared to accept ErrorResponse and NoticeResponse
 messages whenever it is expecting any other type of message.  Also,
 if it issues any listen(l) commands then it must be prepared to accept
 NotificationResponse messages at any time; see below.
-
+</para>
+</sect2>
 
 <Sect2>
 <Title>Notification Responses</Title>
@@ -491,6 +510,7 @@ NotificationResponse messages at any time; see below.
 If a frontend issues a listen(l) command, then the backend will send a
 NotificationResponse message (not to be confused with NoticeResponse!)
 whenever a notify(l) command is executed for the same notification name.
+</para>
 
 <Para>
 Notification responses are permitted at any point in the protocol (after
@@ -499,7 +519,6 @@ must be prepared to recognize a NotificationResponse message whenever it is
 expecting any message.  Indeed, it should be able to handle
 NotificationResponse messages even when it is not engaged in a query.
 
-<Para>
 <VariableList>
 <VarListEntry>
 <Term>
@@ -521,7 +540,8 @@ It may be worth pointing out that the names used in listen and notify
 commands need not have anything to do with names of relations (tables)
 in the SQL database.  Notification names are simply arbitrarily chosen
 condition names.
-
+</para>
+</sect2>
 
 <Sect2>
 <Title>Cancelling Requests in Progress</Title>
@@ -534,6 +554,7 @@ we don't want to have the backend constantly checking for new input from
 the frontend during query processing.  Cancel requests should be relatively
 infrequent, so we make them slightly cumbersome in order to avoid a penalty
 in the normal case.
+</para>
 
 <Para>
 To issue a cancel request, the frontend opens a new connection to the
@@ -541,18 +562,21 @@ postmaster and sends a CancelRequest message, rather than the StartupPacket
 message that would ordinarily be sent across a new connection.  The postmaster
 will process this request and then close the connection.  For security
 reasons, no direct reply is made to the cancel request message.
+</para>
 
 <Para>
 A CancelRequest message will be ignored unless it contains the same key data
 (PID and secret key) passed to the frontend during connection startup.  If the
 request matches the PID and secret key for a currently executing backend, the
 postmaster signals the backend to abort processing of the current query.
+</para>
 
 <Para>
 The cancellation signal may or may not have any effect --- for example, if it
 arrives after the backend has finished processing the query, then it will have
 no effect.  If the cancellation is effective, it results in the current
 command being terminated early with an error message.
+</para>
 
 <Para>
 The upshot of all this is that for reasons of both security and efficiency,
@@ -561,6 +585,7 @@ It must continue to wait for the backend to respond to the query.  Issuing a
 cancel simply improves the odds that the current query will finish soon,
 and improves the odds that it will fail with an error message instead of
 succeeding.
+</para>
 
 <Para>
 Since the cancel request is sent to the postmaster and not across the
@@ -571,7 +596,8 @@ multiple-process applications.  It also introduces a security risk, in that
 unauthorized persons might try to cancel queries.  The security risk is
 addressed by requiring a dynamically generated secret key to be supplied
 in cancel requests.
-
+</para>
+</sect2>
 
 <Sect2>
 <Title>Termination</Title>
@@ -580,6 +606,7 @@ in cancel requests.
 The normal, graceful termination procedure is that the frontend sends a
 Terminate message and immediately closes the connection.  On receipt of the
 message, the backend immediately closes the connection and terminates.
+</para>
 
 <Para>
 An ungraceful termination may occur due to software failure (i.e., core dump)
@@ -587,7 +614,9 @@ at either end.  If either frontend or backend sees an unexpected closure of
 the connection, it should clean up and terminate.  The frontend has the option
 of launching a new backend by recontacting the postmaster, if it doesn't want
 to terminate itself.
-
+</para>
+</sect2>
+</sect1>
 
 <Sect1>
 <Title>Message Data Types</Title>
@@ -595,7 +624,6 @@ to terminate itself.
 <Para>
 This section describes the base data types used in messages.
 
-<Para>
 <VariableList>
 <VarListEntry>
 <Term>
@@ -655,6 +683,7 @@ Is 8193 bytes the largest allowed size?
 </VarListEntry>
 </VariableList>
 </Para>
+</sect1>
 
 <Sect1>
 <Title>Message Formats</Title>
@@ -662,8 +691,7 @@ Is 8193 bytes the largest allowed size?
 <Para>
 This section describes the detailed format of each message.  Each can be sent
 by either a frontend (F), a postmaster/backend (B), or both (F & B).
-
-<Para>
+</para>
 
 <VariableList>
 <VarListEntry>
@@ -1402,9 +1430,8 @@ FunctionCall (F)
 </VarListEntry>
 </VariableList>
 
-<Para>
-
 </Para>
+
 </ListItem>
 </VarListEntry>
 <VarListEntry>
@@ -1871,6 +1898,6 @@ UnencryptedPasswordPacket (F)
 </ListItem>
 </VarListEntry>
 </VariableList>
-</Para>
 
+</sect1>
 </Chapter>

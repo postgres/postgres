@@ -1,7 +1,6 @@
 <sect1>
 <title>Y2K Statement</title>
 
-<para>
 <note>
 <title>Author</title>
 
@@ -9,6 +8,7 @@
 Written by 
 <ulink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ulink>
 on 1998-10-22.
+</para>
 </note>
 
 <para>
@@ -16,6 +16,7 @@ The <productname>PostgreSQL</productname> Global Development Team provides
 the <productname>Postgres</productname> software code tree as a public service,
 without warranty and without liability for it's behavior or performance.
 However, at the time of writing:
+</para>
 
 <itemizedlist>
 <listitem>
@@ -24,6 +25,8 @@ The author of this statement, a volunteer on the <productname>Postgres</productn
  support team since November, 1996, is not aware of 
 any problems in the <productname>Postgres</productname> code base related
 to time transitions around Jan 1, 2000 (Y2K).
+</para>
+</listitem>
 
 <listitem>
 <para>
@@ -33,6 +36,8 @@ or in other field use of recent or current versions
 of <productname>Postgres</productname>. We might have expected
 to hear about problems if they existed, given the installed base and
 the active participation of users on the support mailing lists.
+</para>
+</listitem>
 
 <listitem>
 <para>
@@ -44,12 +49,16 @@ are documented in the current
 For two-digit years, the significant transition year is 1970, not 2000;
 e.g. <quote>70-01-01</quote> is interpreted as <quote>1970-01-01</quote>,
 whereas <quote>69-01-01</quote> is interpreted as <quote>2069-01-01</quote>.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Any Y2K problems in the underlying OS related to obtaining "the
 current time" may propagate into apparent Y2K problems in
 <productname>Postgres</productname>.
+</para>
+</listitem>
 
 </itemizedlist>
 
@@ -60,5 +69,6 @@ and
 <ulink url="http://language.perl.com/news/y2k.html">The Perl Institute</ulink>
 for further discussion of Y2K issues, particularly
  as it relates to open source, no fee software.
+</para>
 
 </sect1>

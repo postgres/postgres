@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Defines a new base data type
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-21</DATE>
@@ -175,9 +176,11 @@ EXTERNALLENGTH <replaceable class="parameter">externallength</replaceable>
 	 <LISTITEM>
 	  <PARA>
 	   Message returned if the type is successfully created.
-
+       </para>
+      </listitem>
+     </varlistentry>
    </VARIABLELIST>
-   
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -290,11 +293,13 @@ it with the fact that the data is not present></comment>
     length.  If you need a larger type you must create a Large
     Object type.  The interface for these types  is  discussed
     at  length  in
-<comment>This section reference needs replacing</comment>
+    <comment>This section reference needs replacing</comment>
     Section 7, the large object interface.  The
     length of all large object types is always VARIABLE.
+   </para>
   </refsect2>
  </refsect1>
+
  <refsect1>
   <title>Examples</title>
   <para>
@@ -302,10 +307,10 @@ it with the fact that the data is not present></comment>
    type in a class definition:
   </para>
   <programlisting>
-       CREATE TYPE box (INTERNALLENGTH = 8,
-            INPUT = my_procedure_1, OUTPUT = my_procedure_2)
-
-       CREATE TABLE myboxes (id INT4, description box)
+   CREATE TYPE box (INTERNALLENGTH = 8,
+   INPUT = my_procedure_1, OUTPUT = my_procedure_2)
+   
+   CREATE TABLE myboxes (id INT4, description box)
   </programlisting>
   <para>
    This command creates a variable length array type with
@@ -339,6 +344,7 @@ it with the fact that the data is not present></comment>
     with an underscore.
    </para>
   </refsect2>
+
   <REFSECT2 ID="R2-SQL-CREATETYPE-3">
    <REFSECT2INFO>
     <DATE>1998-09-21</DATE>
@@ -351,9 +357,9 @@ it with the fact that the data is not present></comment>
    </PARA>
    <PARA>
     See also <command>CREATE  FUNCTION</command>,
-  <command>CREATE  OPERATOR</command> and the chapter on Large Objects
-in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
-</para>
+    <command>CREATE  OPERATOR</command> and the chapter on Large Objects
+    in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
+   </para>
   </REFSECT2>
  </refsect1>
  
@@ -362,7 +368,6 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
   <TITLE>
    Compatibility
   </TITLE>
-  <PARA>
 
   <REFSECT2 ID="R2-SQL-CREATETYPE-4">
    <REFSECT2INFO>
@@ -375,7 +380,8 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
    <command>CREATE TYPE</command> is an <acronym>SQL3</acronym> statement.
    </PARA>
   
- </REFSECT2>
+  </REFSECT2>
+ </refsect1>
 </REFENTRY>
 
 

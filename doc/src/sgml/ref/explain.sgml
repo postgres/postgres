@@ -12,6 +12,7 @@ EXPLAIN
 <REFPURPOSE>
 Shows statement execution details
 </REFPURPOSE>
+</refnamediv>
 
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
@@ -38,7 +39,9 @@ VERBOSE
 <LISTITEM>
 <PARA>
 Flag to show detailed query plan.
-
+</para>
+</listitem>
+</varlistentry>
 <VARLISTENTRY>
 <TERM>
 <REPLACEABLE CLASS="PARAMETER">query</REPLACEABLE>
@@ -46,9 +49,11 @@ Flag to show detailed query plan.
 <LISTITEM>
 <PARA>
 Any <REPLACEABLE CLASS="PARAMETER">query</REPLACEABLE>.
-
+</para>
+</listitem>
+</varlistentry>
 </VARIABLELIST>
-
+</para>
 </REFSECT2>
 
 <REFSECT2 ID="R2-SQL-EXPLAIN-2">
@@ -69,7 +74,9 @@ NOTICE:  QUERY PLAN:
 <LISTITEM>
 <PARA>
 Explicit query plan from the <productname>Postgres</productname> backend.
-
+</para>
+</listitem>
+</varlistentry>
 <VARLISTENTRY>
 <TERM>
 EXPLAIN
@@ -77,9 +84,11 @@ EXPLAIN
 <LISTITEM>
 <PARA>
 Flag sent after query plan is shown.
-
+</para>
+</listitem>
+</varlistentry>
 </VARIABLELIST>
-
+</para>
 </REFSECT2>
 </REFSYNOPSISDIV>
 
@@ -95,7 +104,7 @@ Description
    The default output is the computed query cost. 
    VERBOSE displays the full query plan and cost to your screen,
    and pretty-prints the plan to the postmaster log file.   
-
+</para>
 <REFSECT2 ID="R2-SQL-EXPLAIN-3">
 <REFSECT2INFO>
 <DATE>1998-04-15</DATE>
@@ -111,8 +120,9 @@ can be found in database textbooks.
 Refer to the <citetitle>Programmer's Guide</citetitle>
 in the chapters on indexes and the genetic query optimizer for
 more information.
-
+</para>
 </REFSECT2>
+</refsect1>
 
 <REFSECT1 ID="R1-SQL-EXPLAIN-2">
 <TITLE>
@@ -129,7 +139,7 @@ Seq Scan on foo  (cost=0.00 size=0 width=4)
 
 EXPLAIN
 </ProgramListing>
-
+</para>
 </REFSECT1>
 
 <REFSECT1 ID="R1-SQL-EXPLAIN-3">
@@ -148,6 +158,9 @@ SQL92
 </TITLE>
 <PARA>
    There is no EXPLAIN statement defined in SQL92.
+</para>
+</refsect2>
+</refsect1>
 </REFENTRY>
 
 <!--

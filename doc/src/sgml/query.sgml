@@ -60,6 +60,7 @@ has a variety of <Literal>\d</Literal> commands for showing system information.
 Consult these commands for more details;
 for a listing, type <Literal>\?</Literal> at the <Application>psql</Application> prompt.
 </Para>
+</sect1>
 
 <Sect1>
 <Title>Concepts</Title>
@@ -81,6 +82,7 @@ for a listing, type <Literal>\?</Literal> at the <Application>psql</Application>
      single <Application>postmaster</Application> process constitutes  an  installation
      or site.
 </Para>
+</sect1>
 
 <Sect1>
 <Title>Creating a New Class</Title>
@@ -98,6 +100,7 @@ CREATE TABLE weather (
     date            date
 );
 </ProgramListing>
+</para>
 
 <Para>
      Note that both keywords and identifiers are case-insensitive; identifiers can become
@@ -118,6 +121,7 @@ a rich set of geometric types.  As we will
      classes  have  properties  that  are  extensions of the
      relational model.
 </Para>
+</sect1>
 
 <Sect1>
 <Title>Populating a Class with Instances</Title>
@@ -130,11 +134,13 @@ a rich set of geometric types.  As we will
 INSERT INTO weather
     VALUES ('San Francisco', 46, 50, 0.25, '11/27/1994')
 </ProgramListing>
+</Para>
 
 <Para>
      You can also use the <Command>copy</Command> command to perform load large
      amounts of data from flat (<Acronym>ASCII</Acronym>) files.
 </Para>
+</sect1>
 
 <Sect1>
 <Title>Querying a Class</Title>
@@ -167,6 +173,7 @@ SELECT * FROM WEATHER;
 <ProgramListing>
 SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
 </ProgramListing>
+</Para>
 
 <Para>
      Arbitrary  Boolean  operators
@@ -197,6 +204,7 @@ SELECT DISTINCT city
     ORDER BY city;
 </ProgramListing>
 </Para>
+</sect1>
 
 <Sect1>
 <Title>Redirecting SELECT Queries</Title>
@@ -206,6 +214,7 @@ SELECT DISTINCT city
 <ProgramListing>
 SELECT * INTO TABLE temp FROM weather;
 </ProgramListing>
+</Para>
 
 <Para>
      This forms an implicit <Command>create</Command> command, creating a new
@@ -214,6 +223,7 @@ SELECT * INTO TABLE temp FROM weather;
      then, of course, perform any operations on the  resulting 
      class that we can perform on other classes.
 </Para>
+</sect1>
 
 <Sect1>
 <Title>Joins Between Classes</Title>
@@ -272,6 +282,7 @@ The semantics of such a join are
    the <Command>select distinct</Command> statement.
 </Para>
 </Note>
+</para>
 
 <Para>
      In this case, both W1 and  W2  are  surrogates for  an
@@ -281,6 +292,7 @@ The semantics of such a join are
      A query can contain an  arbitrary  number  of
      class names and surrogates.
 </Para>
+</sect1>
 
 <Sect1>
 <Title>Updates</Title>
@@ -297,6 +309,7 @@ UPDATE weather
     WHERE date > '11/28/1994';
 </ProgramListing>
 </Para>
+</sect1>
 
 <Sect1>
 <Title>Deletions</Title>
@@ -318,6 +331,7 @@ DELETE FROM classname;
      empty.  The system will not request confirmation before
      doing this.
 </Para>
+</sect1>
 
 <Sect1>
 <Title>Using Aggregate Functions</Title>
@@ -358,5 +372,5 @@ SELECT city, max(temp_lo)
     GROUP BY city;
 </ProgramListing>
 </Para>
-
+</sect1>
 </Chapter>

@@ -12,6 +12,7 @@
   <REFPURPOSE>
 Constructs a virtual table
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-21</DATE>
@@ -55,6 +56,7 @@ An SQL query which will provide the columns and rows of the view.
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
+   </para>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATEVIEW-2">
@@ -104,8 +106,11 @@ An SQL query which will provide the columns and rows of the view.
 	   <programlisting>
 	    CREATE VIEW vista AS SELECT 'Hello World'::text
 	   </programlisting>
-
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -146,7 +151,8 @@ An SQL query which will provide the columns and rows of the view.
    Currently, views are read only.
    </para>
   </REFSECT2>
-  
+ </refsect1>
+
  <REFSECT1 ID="R1-SQL-CREATEVIEW-2">
   <TITLE>
    Usage

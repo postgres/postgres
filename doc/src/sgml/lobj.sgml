@@ -200,6 +200,7 @@ int lo_close(PGconn *conn, int fd)
      lo_open.  On success, <Acronym>lo_close</Acronym> returns zero.  On error,
      the return value is negative.
 </Para>
+</sect2>
 </Sect1>
 
 <Sect1>

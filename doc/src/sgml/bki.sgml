@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.1 1998/08/15 06:49:33 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.2 1998/12/29 02:24:13 thomas Exp $
 
 Transcribed from the original bki.man.5 documentation
 - Thomas Lockhart 1998-08-03
@@ -28,12 +28,14 @@ takes as input <productname>Postgres</productname> source files that double as
   <application>genbki</application>
 input that builds tables and C header files that describe those
 tables.
+</para>
 
 <para>
 Related information may be found in documentation for 
 <application>initdb</application>,
 <application>createdb</application>,
 and the <acronym>SQL</acronym> command <command>CREATE DATABASE</command>.
+</para>
 
 <sect1>
 <title><acronym>BKI</acronym> File Format</title>
@@ -44,6 +46,7 @@ description will be easier to understand if the <filename>global1.bki.source</fi
 at hand as an example.  (As explained above, this .source file isn't quite
 a <acronym>BKI</acronym> file, but you'll be able to guess what the resulting <acronym>BKI</acronym> file would be
 anyway).
+</para>
 
 <para>
 Commands are composed of a command name followed by space separated
@@ -56,6 +59,7 @@ value.  Otherwise, the characters following the <quote>$</quote> are
 interpreted as the name of a macro causing the argument to be replaced
 with the macro's value.  It is an error for this macro to be
 undefined.
+</para>
 
 <para>
 Macros are defined using
@@ -67,10 +71,13 @@ and are undefined using
 undefine macro macro_name
 </programlisting>
 and redefined using the same syntax as define.
+</para>
 
 <para>
 Lists of general commands and macro commands
 follow.
+</para>
+</sect1>
 
 <sect1>
 <title>General Commands</title>
@@ -85,6 +92,9 @@ OPEN <replaceable class="parameter">classname</replaceable>
 Open the class called
 <replaceable class="parameter">classname</replaceable>
 for further manipulation.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -99,6 +109,9 @@ It is an error if
 is not already opened.   If no
 <replaceable class="parameter">classname</replaceable>
 is given, then the currently open class is closed.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -107,6 +120,9 @@ PRINT
 <listitem>
 <para>
 Print the currently open class.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -123,6 +139,9 @@ for its OID.  If
 <replaceable class="parameter">oid_value</replaceable>
 is not <quote>0</quote>, then this value will be used as the instance's
 object identifier.  Otherwise, it is an error.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -131,6 +150,9 @@ INSERT (<replaceable class="parameter">value1</replaceable> <replaceable class="
 <listitem>
 <para>
 As above, but the system generates a unique object identifier.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -141,6 +163,9 @@ CREATE <replaceable class="parameter">classname</replaceable> (<replaceable clas
 Create a class named
 <replaceable class="parameter">classname</replaceable>
 with the attributes given in parentheses.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -152,6 +177,9 @@ Open a class named
 <replaceable class="parameter">classname</replaceable>
 for writing but do not record its existence in the system catalogs.
 (This is primarily to aid in bootstrapping.)
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -161,6 +189,9 @@ DESTROY <replaceable class="parameter">classname</replaceable>
 <para>
 Destroy the class named
 <replaceable class="parameter">classname</replaceable>.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -182,14 +213,18 @@ etc., and the operator collections to use are
 <replaceable class="parameter">collection_1</replaceable>,
 <replaceable class="parameter">collection_2</replaceable>
 etc., respectively.
-
+</para>
+</listitem>
 </varlistentry>
+
 </variablelist>
 
 <note>
 <para>
 This last sentence doesn't reference anything in the example. Should be changed to make sense. - Thomas 1998-08-04
+</para>
 </note>
+</sect1>
 
 <sect1>
 <title>Macro Commands</title>
@@ -211,6 +246,9 @@ computed from the execution
 with the arguments
 <replaceable class="parameter">args</replaceable>
 declared in a C-like manner.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -223,9 +261,13 @@ Define a macro named
 which has its value 
 read from the file called
 <replaceable class="parameter">filename</replaceable>.
-
+</para>
+</listitem>
 </varlistentry>
+
 </variablelist>
+</para>
+</sect1>
 
 <sect1>
 <title>Debugging Commands</title>
@@ -234,6 +276,7 @@ read from the file called
 <note>
 <para>
 This section on debugging commands was commented-out in the original documentation. Thomas 1998-08-05
+</para>
 </note>
 
 <variablelist>
@@ -244,6 +287,9 @@ r
 <listitem>
 <para>
 Randomly print the open class.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -252,6 +298,9 @@ m -1
 <listitem>
 <para>
 Toggle display of time information.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -260,6 +309,9 @@ m 0
 <listitem>
 <para>
 Set retrievals to now.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -268,6 +320,9 @@ m 1 Jan 1 01:00:00 1988
 <listitem>
 <para>
 Set retrievals to snapshots of the specfied time.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -278,6 +333,9 @@ m 2 Jan 1 01:00:00 1988, Feb 1 01:00:00 1988
 Set retrievals to ranges of the specified times.
 Either time may be replaced with space
 if an unbounded time range is desired.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -296,6 +354,9 @@ types
 <replaceable class="parameter">type2</replaceable>,
 etc. to the class
 <replaceable class="parameter">classname</replaceable>.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -307,6 +368,9 @@ Rename the
 <replaceable class="parameter">oldclassname</replaceable>
 class to
 <replaceable class="parameter">newclassname</replaceable>.
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -323,9 +387,12 @@ attribute in the class named
 <replaceable class="parameter">classname</replaceable>
 to
 <replaceable class="parameter">newattname</replaceable>.
-
+</para>
+</listitem>
 </varlistentry>
 </variablelist>
+</para>
+</sect1>
 
 <sect1>
 <title>Example</title>
@@ -344,5 +411,6 @@ insert oid=421 (int_ops)
 print
 close pg_opclass
 </programlisting>
-
+</para>
+</sect1>
 </chapter>

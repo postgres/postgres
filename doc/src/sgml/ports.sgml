@@ -8,6 +8,7 @@ compiled  and  tested <ProductName>Postgres</ProductName> on a
 number of platforms. Check
 <ulink url="http://www.postgresql.org/docs/admin/ports.htm">the web site</ulink>
 for the latest information.
+</para>
 
 <Sect1>
 <Title>Currently Supported Platforms</Title>
@@ -226,11 +227,11 @@ At the time of publication, the following platforms have been tested:
 </TBODY>
 </TGROUP>
 </TABLE>
-
+</para>
 <para>
 Platforms listed for v6.3.x should also work with v6.4, but we did not receive
 confirmation of such at the time this list was compiled.
-
+</para>
 <note>
 <para>
 For <productname>Windows NT</productname>, 
@@ -240,7 +241,9 @@ accomplished. Check
 for up to date information. You may also want to
 look for possible patches on the
 <ulink url="http://postgresql.org">Postgres web site</ulink>.
+</para>
 </note>
+</sect1>
 
 <Sect1>
 <Title>Unsupported Platforms</Title>
@@ -309,6 +312,7 @@ Others listed here do not provide sufficient library support for an attempt.
 </TBODY>
 </TGROUP>
 </TABLE>
+</para>
 
 <Para>
 Note that Windows ports of the frontend are apparently possible

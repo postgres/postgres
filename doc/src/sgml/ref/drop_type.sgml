@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Removes a user-defined type from the system catalogs
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-22</DATE>
@@ -69,8 +70,11 @@ DROP TYPE <REPLACEABLE CLASS="PARAMETER">typename</REPLACEABLE>
 	 <LISTITEM>
 	  <PARA>
            This message occurs if the specified type is not found.
-
-   </VARIABLELIST>
+	</para>
+       </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -123,6 +127,7 @@ DROP TYPE <REPLACEABLE CLASS="PARAMETER">typename</REPLACEABLE>
     is unpredictable.
    </PARA>
   </refsect2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-DROPTYPE-2">
   <TITLE>

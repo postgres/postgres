@@ -24,6 +24,7 @@ following directories:
     ../src/test/examples
     ../src/bin/psql
 </ProgramListing>
+</Para>
 
 <Para>
 Frontend programs which use <FileName>libpq</FileName> must include the
@@ -317,6 +318,7 @@ char *PQoptions(PGconn *conn)
 <synopsis>
 ConnStatusType *PQstatus(PGconn *conn)
 </synopsis>
+</Para>
 
 <Para>
 A failed connection attempt is signaled by status CONNECTION_BAD.
@@ -324,6 +326,7 @@ Ordinarily, an OK status will remain so until PQfinish, but a
 communications failure might result in the status changing to
 CONNECTION_BAD prematurely.  In that case the application could
 try to recover by calling PQreset.
+</Para>
 </ListItem>
 
 <ListItem>
@@ -334,11 +337,13 @@ try to recover by calling PQreset.
 <synopsis>
 char *PQerrorMessage(PGconn* conn);
 </synopsis>
+</Para>
 
 <Para>
 Nearly all libpq functions will set PQerrorMessage if they fail.
 Note that by libpq convention, a non-empty PQerrorMessage will
 include a trailing newline.
+</Para>
 </ListItem>
 
 <ListItem>
@@ -499,9 +504,11 @@ char *PQfname(PGresult *res,
 int PQfnumber(PGresult *res,
               char* field_name);
 </synopsis>
+</Para>
 
 <Para>
         -1 is returned if the given name does not match any field.
+</Para>
 </ListItem>
 
 <ListItem>
@@ -752,7 +759,6 @@ as with a PGresult returned by libpq itself.
 The PQexec function is adequate for submitting queries in simple synchronous
 applications.  It has a couple of major deficiencies however:
 
-<Para>
 <ItemizedList>
 <ListItem>
 <Para>
@@ -783,7 +789,6 @@ Applications that do not like these limitations can instead use the
 underlying functions that PQexec is built from: PQsendQuery and
 PQgetResult.
 
-<Para>
 <ItemizedList>
 <ListItem>
 <Para>
@@ -837,7 +842,6 @@ still cause the frontend to block until the backend completes the
 next SQL command.  This can be avoided by proper use of three more
 functions:
 
-<Para>
 <ItemizedList>
 <ListItem>
 <Para>
@@ -908,10 +912,12 @@ to read the input.  It can then call PQisBusy, followed by PQgetResult
 if PQisBusy returns FALSE.  It can also call PQnotifies to detect NOTIFY
 messages (see "Asynchronous Notification", below).  An example is given
 in the sample programs section.
+</Para>
 
 <Para>
 A frontend that uses PQsendQuery/PQgetResult can also attempt to cancel
 a query that is still being processed by the backend.
+</Para>
 
 <Para>
 <ItemizedList>
@@ -941,6 +947,7 @@ int PQrequestCancel(PGconn *conn);
 <Para>
 Note that if the current query is part of a transaction, cancellation
 will abort the whole transaction.
+</Para>
 
 <Para>
 PQrequestCancel can safely be invoked from a signal handler.  So, it is
@@ -950,6 +957,7 @@ PQrequestCancel from a SIGINT signal handler, thus allowing interactive
 cancellation of queries that it issues through PQexec.  Note that
 PQrequestCancel will have no effect if the connection is not currently open
 or the backend is not currently processing a query.
+</Para>
 
 </Sect1>
 
@@ -961,7 +969,6 @@ or the backend is not currently processing a query.
 function calls to the backend.  This is a trapdoor into system internals and
 can be a potential security hole.  Most users will not need this feature.
 
-<Para>
 <ItemizedList>
 <ListItem>
 <Para>
@@ -1023,13 +1030,13 @@ passed from the notifier to the listener.  Thus, typically, any actual data
 that needs to be communicated is transferred through a database relation.
 Commonly the condition name is the same as the associated relation, but it is
 not necessary for there to be any associated relation.
+</Para>
 
 <Para>
 <FileName>libpq</FileName> applications submit LISTEN and UNLISTEN
 commands as ordinary SQL queries.  Subsequently, arrival of NOTIFY
 messages can be detected by calling PQnotifies().
 
-<Para>
 <ItemizedList>
 <ListItem>
 <Para>
@@ -1062,6 +1069,7 @@ typedef struct pgNotify
 <Para>
 The  second  sample program gives an example of the use
 of asynchronous notification.
+</Para>
 
 <Para>
 PQnotifies() does not actually read backend data; it just returns messages
@@ -1216,6 +1224,7 @@ specified directly.
 <synopsis>
 int PQendcopy(PGconn *conn);
 </synopsis>
+</Para>
 
 <Para>
 As an example:
@@ -1318,10 +1327,12 @@ defaultNoticeProcessor(void * arg, const char * message)
     fprintf(stderr, "%s", message);
 }
 </ProgramListing>
+</Para>
 
 <Para>
 To use a special notice processor, call <function>PQsetNoticeProcessor</function> just after
 creation of a new PGconn object.
+</Para>
 
 </Sect1>
 
@@ -1951,7 +1962,7 @@ main()
 
 }
 </ProgramListing>
-<Para>
+</Para>
 
 </Sect2>
 </Sect1>

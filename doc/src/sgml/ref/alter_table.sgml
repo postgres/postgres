@@ -12,6 +12,7 @@ ALTER TABLE
 <REFPURPOSE>
 Modifies table properties
 </REFPURPOSE>
+</refnamediv>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
 <DATE>1998-04-15</DATE>
@@ -89,7 +90,7 @@ Inputs
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
-
+</para>
 </REFSECT2>
 
 <REFSECT2 ID="R2-SQL-ALTERTABLE-2">
@@ -131,9 +132,11 @@ Outputs
 <LISTITEM>
 <PARA>
           Message returned if table or column is not available.
-
+</para>
+</listitem>
+</VARLISTENTRY>
 </VARIABLELIST>
-
+</para>
 </REFSECT2>
 </REFSYNOPSISDIV>
 
@@ -153,6 +156,7 @@ Description
    the affected table. Thus, the table or column will
    remain of the same type and size after this command is
    executed.
+</para>
 <PARA>
    You must own the table in order to change its schema.
 </PARA>
@@ -166,18 +170,19 @@ Notes
 </TITLE>
 <PARA>
 The keyword COLUMN is noise and can be omitted.
-
+</para>
 <PARA>
 <Quote>[*]</Quote> following a name of a table indicates that statement
      should be run over that table and all tables below it in the
      inheritance hierarchy.
     The <citetitle>PostgreSQL User's Guide</citetitle> has further
      information on inheritance.
+</para>
 
 <PARA>
    Refer to CREATE TABLE for a further description
      of valid arguments.
-
+</para>
 </REFSECT2>
 </REFSECT1>
 
@@ -190,18 +195,21 @@ Usage
 <ProgramListing>
     ALTER TABLE distributors ADD COLUMN address VARCHAR(30);
 </ProgramListing>
+</para>
 
 <PARA>
    To rename an existing column:
 <ProgramListing>
     ALTER TABLE distributors RENAME COLUMN address TO city;
 </ProgramListing>
+</para>
 
 <PARA>
    To rename an existing table:
 <ProgramListing>
     ALTER TABLE distributors RENAME TO suppliers;
 </ProgramListing>
+</para>
 
 </REFSECT1>
 
@@ -220,11 +228,13 @@ SQL92
 <PARA>
 <command>ALTER TABLE/RENAME</command>
  is a <productname>Postgres</productname> language extension.
+</para>
 
 <PARA>
    SQL92 specifies some additional capabilities for <command>ALTER TABLE</command>
    statement which are not yet directly supported by
  <ProductName>Postgres</ProductName>:
+</para>
 
 <VARIABLELIST>
 <VARLISTENTRY>
@@ -247,6 +257,7 @@ ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> ALTER [ COLUMN ] 
           the new definition. If any constraints on this column already
           exist, they will be retained using a boolean AND with the new
           constraint.
+</para>
 
 <PARA>
 Currently, to set new default constraints on an existing column
@@ -284,6 +295,7 @@ ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
           constraints can be destroyed.
           If CASCADE is specified, Any constraints that are dependent on
           this constraint are also dropped.
+</para>
 
 <PARA>
 Currently, to remove a default value or constraints on an
@@ -295,7 +307,10 @@ DROP TABLE distributors;
 CREATE TABLE distributors AS SELECT * FROM temp;
 DROP TABLE temp;
 </ProgramListing>
-   
+</para>
+</listitem>
+</varlistentry> 
+  
 <VARLISTENTRY>
 <TERM>
 <Synopsis>
@@ -310,6 +325,7 @@ ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
           objects can be destroyed.
           If CASCADE is specified, all objects that are dependent on
           this column are also dropped.
+</para>
 
 <PARA>
 Currently, to remove an existing column the table must be
@@ -326,5 +342,9 @@ INSERT INTO distributors SELECT * FROM temp;
 DROP TABLE temp;
 </ProgramListing>
 </PARA>
+</listitem>
+</varlistentry>
 </VARIABLELIST>
+</refsect2>
+</refsect1>
 </REFENTRY>

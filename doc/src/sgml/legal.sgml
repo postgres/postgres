@@ -5,6 +5,7 @@
 <ProductName>PostgreSQL</ProductName> is copyright (C) 1996-8 
 by the PostgreSQL Global Development Group,
 and is distributed under the terms of the Berkeley license.
+</Para>
 
 <Para>
 <ProductName>Postgres95</ProductName> is copyright (C) 1994-5 
@@ -38,3 +39,5 @@ Equipment   Corp.   PA-RISC  and  HP-UX  are  trademarks  of
 Hewlett-Packard Co.  OSF/1 is a trademark of the Open  
 Software Foundation.
 </Para>
+</Sect1>
+

@@ -12,7 +12,7 @@
   <REFPURPOSE>
    Defines a new function
   </REFPURPOSE>
-  
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-09</DATE>
@@ -66,30 +66,31 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 	<VARLISTENTRY>
 	 <TERM>
 	  <replaceable class="parameter">path</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   May be either an SQL-query or an absolute path to an
-           object file.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">langname</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-           may be '<literal>C</literal>', '<literal>sql</literal>',
- '<literal>internal</literal>'
- or '<replaceable class="parameter">plname</replaceable>',
- where '<replaceable class="parameter">plname</replaceable>'
- is the name of a created procedural
-           language. See <command>CREATE LANGUAGE</command> for details.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	May be either an SQL-query or an absolute path to an
+	object file.
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>
+     <VARLISTENTRY>
+      <TERM>
+       <replaceable class="parameter">langname</replaceable>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	may be '<literal>C</literal>', '<literal>sql</literal>',
+	'<literal>internal</literal>'
+	or '<replaceable class="parameter">plname</replaceable>',
+	where '<replaceable class="parameter">plname</replaceable>'
+	is the name of a created procedural
+	language. See <command>CREATE LANGUAGE</command> for details.
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>
+    </variablelist>
+   </para>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATEFUNCTION-2">
@@ -100,16 +101,20 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
     Outputs
    </TITLE>
    <PARA>
-
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>CREATE</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This is returned if the command completes successfully.
-   </VARIABLELIST>
+    
+    <VARIABLELIST>
+     <VARLISTENTRY>
+      <TERM>
+       <ReturnValue>CREATE</ReturnValue>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	This is returned if the command completes successfully.
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -122,8 +127,8 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
   </TITLE>
   <PARA>
    <command>CREATE FUNCTION</command> allows a
-<productname>Postgres</productname> user
-to register a function
+   <productname>Postgres</productname> user
+   to register a function
    with a database. Subsequently, this user is treated as the
    owner of the function.
   </PARA>
@@ -138,13 +143,14 @@ to register a function
    <PARA>
     Refer to the chapter on functions 
 in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
- for further information.
+    for further information.
    </PARA>
    <PARA>
     Use <command>DROP FUNCTION</command>
     to drop user-defined functions.
    </PARA>
   </REFSECT2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-CREATEFUNCTION-2">
   <TITLE>
@@ -154,17 +160,17 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
    To create a simple SQL function:
   </PARA>
   <ProgramListing>
-CREATE FUNCTION one() RETURNS int4
-    AS 'SELECT 1 AS RESULT'
-    LANGUAGE 'sql';
-
-SELECT one() AS answer;
-
-<computeroutput>
-answer 
-------
-1
-</computeroutput>
+   CREATE FUNCTION one() RETURNS int4
+   AS 'SELECT 1 AS RESULT'
+   LANGUAGE 'sql';
+   
+   SELECT one() AS answer;
+   
+   <computeroutput>
+    answer 
+    ------
+    1
+   </computeroutput>
   </ProgramListing>
   <para>
    To create a C function, calling a routine from a user-created
@@ -173,18 +179,18 @@ answer
    is correct. It is intended for use in a CHECK contraint.
   </para>
   <programlisting>
-<userinput>
-CREATE FUNCTION ean_checkdigit(bpchar, bpchar) RETURNS bool
+   <userinput>
+    CREATE FUNCTION ean_checkdigit(bpchar, bpchar) RETURNS bool
     AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE 'c';
-
-CREATE TABLE product
-(
-     id              char(8)         PRIMARY KEY,
-     eanprefix       char(8)         CHECK (eanprefix ~ '[0-9]{2}-[0-9]{5}')
-                                     REFERENCES brandname(ean_prefix),
-     eancode         char(6)         CHECK (eancode ~ '[0-9]{6}'),
-     CONSTRAINT ean CHECK (ean_checkdigit(eanprefix, eancode))
-);</userinput>
+    
+    CREATE TABLE product
+    (
+    id              char(8)         PRIMARY KEY,
+    eanprefix       char(8)         CHECK (eanprefix ~ '[0-9]{2}-[0-9]{5}')
+    REFERENCES brandname(ean_prefix),
+    eancode         char(6)         CHECK (eancode ~ '[0-9]{6}'),
+    CONSTRAINT ean CHECK (ean_checkdigit(eanprefix, eancode))
+    );</userinput>
   </programlisting>
  </REFSECT1>
  

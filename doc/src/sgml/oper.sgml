@@ -15,6 +15,7 @@ These operators are declared in the system catalog
 pg_operator.  Every entry in pg_operator includes
 the name of the procedure that implements the operator and the
 class <Acronym>OIDs</Acronym> of the input and output types.
+</Para>
 
 <Para>
 To view all variations of the <Quote>||</Quote> string concatenation operator, 
@@ -45,11 +46,12 @@ as:
 <ProgramListing>
 select * from emp where int4lt(salary, 40000);
 </ProgramListing>
+</Para>
 
 <Para>
 <Application>psql</Application>
 has a command (<Command>\dd</Command>) to show these operators.
-
+</Para>
 
 <sect1>
 <title>Lexical Precedence</title>
@@ -70,180 +72,255 @@ Operator Ordering (decreasing precedence)
 <row>
 <entry>
 Element
+</entry>
 <entry>
 Precedence
+</entry>
 <entry>
 Description
+</entry>
+</row>
 </thead>
 
 <tbody>
 <row>
 <entry>
 UNION
+</entry>
 <entry>
 left
+</entry>
 <entry>
 SQL select construct
+</entry>
+</row>
 <row>
 <entry>
 ::
+</entry>
 <entry>
+</entry>
 <entry>
 <productname>Postgres</productname> typecasting
-
+</entry>
+</row>
 <row>
 <entry>
 [ ]
+</entry>
 <entry>
 left
+</entry>
 <entry>
 array delimiters
-
+</entry>
+</row>
 <row>
 <entry>
 .
+</entry>
 <entry>
 left
+</entry>
 <entry>
 table/column delimiter
-
+</entry>
+</row>
 <row>
 <entry>
 -
+</entry>
 <entry>
 right
+</entry>
 <entry>
 unary minus
-
+</entry>
+</row>
 <row>
 <entry>
 ;
+</entry>
 <entry>
 left
+</entry>
 <entry>
 statement termination, logarithm
-
+</entry>
+</row>
 <row>
 <entry>
 :
+</entry>
 <entry>
 right
+</entry>
 <entry>
 exponentiation
-
+</entry>
+</row>
 <row>
 <entry>
 |
+</entry>
 <entry>
 left
+</entry>
 <entry>
 start of interval
-
+</entry>
+</row>
 <row>
 <entry>
 * /
+</entry>
 <entry>
 left
+</entry>
 <entry>
 multiplication, division
-
+</entry>
+</row>
 <row>
 <entry>
 + -
+</entry>
 <entry>
 left
+</entry>
 <entry>
 addition, subtraction
-
+</entry>
+</row>
 <row>
 <entry>
 IS
+</entry>
 <entry>
+</entry>
 <entry>
 test for TRUE, FALSE, NULL
+</entry>
+</row>
 <row>
 <entry>
 ISNULL
+</entry>
 <entry>
+</entry>
 <entry>
 test for NULL
-
+</entry>
+</row>
 <row>
 <entry>
 NOTNULL
+</entry>
 <entry>
+</entry>
 <entry>
 test for NOT NULL
-
+</entry>
+</row>
 <row>
 <entry>
 (all other operators)
+</entry>
 <entry>
+</entry>
 <entry>
 native and user-defined
-
+</entry>
+</row>
 <row>
 <entry>
 IN
+</entry>
 <entry>
+</entry>
 <entry>
 set membership
-
+</entry>
+</row>
 <row>
 <entry>
 BETWEEN
+</entry>
 <entry>
+</entry>
 <entry>
 containment
-
+</entry>
+</row>
 <row>
 <entry>
 LIKE
+</entry>
 <entry>
+</entry>
 <entry>
 string pattern matching
-
+</entry>
+</row>
 <row>
 <entry>
 &lt; &gt;
+</entry>
 <entry>
+</entry>
 <entry>
 boolean inequality
-
+</entry>
+</row>
 <row>
 <entry>
 =
+</entry>
 <entry>
 right
+</entry>
 <entry>
 equality
-
+</entry>
+</row>
 <row>
 <entry>
 NOT
+</entry>
 <entry>
 right
+</entry>
 <entry>
 negation
-
+</entry>
+</row>
 <row>
 <entry>
 AND
+</entry>
 <entry>
 left
+</entry>
 <entry>
 logical intersection
-
+</entry>
+</row>
 <row>
 <entry>
 OR
+</entry>
 <entry>
 left
+</entry>
 <entry>
 logical union
-
+</entry>
+</row>
 </tbody>
+</tgroup>
 </table>
+</para>
+</sect1>
 
 <sect1>
 <title>General Operators</title>
@@ -251,7 +328,7 @@ logical union
 <para>
 The operators listed here are defined for a number of native data types, 
 ranging from numeric types to data/time types.
-
+</para>
 <Para>
 <TABLE TOCENTRY="1">
 <TITLE><ProductName>Postgres</ProductName> Operators</TITLE>
@@ -339,6 +416,7 @@ ranging from numeric types to data/time types.
 </TGROUP>
 </TABLE>
 </Para>
+</sect1>
 
 <sect1>
 <title id="math-opers">Numerical Operators</title>
@@ -430,6 +508,7 @@ ranging from numeric types to data/time types.
 </TGROUP>
 </TABLE>
 </Para>
+</sect1>
 
 <sect1>
 <title>Geometric Operators</title>
@@ -571,6 +650,7 @@ ranging from numeric types to data/time types.
 </TGROUP>
 </TABLE>
 </Para>
+</sect1>
 
 <sect1>
 <title>Time Interval Operators</title>
@@ -651,6 +731,7 @@ are several operators for this type.
 </TGROUP>
 </TABLE>
 </Para>
+</sect1>
 
 <Sect1>
 <title id="cidr-opers">IP V4 Operators</title>

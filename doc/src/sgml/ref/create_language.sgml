@@ -12,7 +12,7 @@
   <REFPURPOSE>
    Defines a new language for functions
   </REFPURPOSE>
-  
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-09</DATE>
@@ -75,25 +75,26 @@ superuser privilege can use
 	   procedures.
 	  </PARA>
 	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">comment</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The <function>LANCOMPILER</function> argument is the
-	   string that will be
-	   inserted in the <literal>LANCOMPILER</literal> attribute
-	   of the new
-	   <filename>pg_language</filename> entry. At present,
-	   <productname>Postgres</productname> does not use
-	   this attribute in any way.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-
+     </VARLISTENTRY>
+     <VARLISTENTRY>
+      <TERM>
+       <replaceable class="parameter">comment</replaceable>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	The <function>LANCOMPILER</function> argument is the
+	string that will be
+	inserted in the <literal>LANCOMPILER</literal> attribute
+	of the new
+	<filename>pg_language</filename> entry. At present,
+	<productname>Postgres</productname> does not use
+	this attribute in any way.
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>
+    </variablelist>
+   </para>
+   
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATELANGUAGE-2">
@@ -117,15 +118,19 @@ superuser privilege can use
 	 </LISTITEM>
 	</VARLISTENTRY>
 	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable>() doesn't exist</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-           This error is returned if the function
-	   <replaceable class="parameter">funcname</replaceable>()
-	   is not found.
-   </VARIABLELIST>
+      <TERM>
+       <ReturnValue>ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable>() doesn't exist</ReturnValue>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	This error is returned if the function
+	<replaceable class="parameter">funcname</replaceable>()
+	is not found.
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -206,6 +211,7 @@ Subsequently, functions and
     file or anything else that tells the call handler what to
     do in detail.
    </para>
+  </refsect2>
    
   <REFSECT2 ID="R2-SQL-CREATELANGUAGE-4">
    <REFSECT2INFO>
@@ -320,19 +326,20 @@ sql     |postgres
    of the dots to complete the PL call handler. 
 See <command>CREATE FUNCTION</command> for information on how to compile
    it into a loadable module
-.</para>
+   .</para>
   <para>
    The following commands then register the sample procedural
    language:
-  <programlisting>
-CREATE FUNCTION plsample_call_handler () RETURNS opaque
+   <programlisting>
+    CREATE FUNCTION plsample_call_handler () RETURNS opaque
     AS '/usr/local/pgsql/lib/plsample.so'
     LANGUAGE 'C';
-        
-CREATE PROCEDURAL LANGUAGE 'plsample'
+    
+    CREATE PROCEDURAL LANGUAGE 'plsample'
     HANDLER plsample_call_handler
     LANCOMPILER 'PL/Sample';
-  </programlisting>
+   </programlisting>
+  </para>
  </REFSECT1>
  
  <REFSECT1 ID="R1-SQL-CREATELANGUAGE-7">

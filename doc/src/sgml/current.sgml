@@ -24,21 +24,28 @@ Here is a brief, incomplete summary:
 Views and rules are now functional thanks to extensive new code in the 
 rewrite rules system from Jan Wieck. He also wrote a chapter on it
 for the <citetitle>Programmer's Guide</citetitle>.
-
+</para>
+</listitem>
 <listitem>
 <para>
 Jan also contributed a second procedural language, PL/pgSQL, to go with the
 original PL/pgTCL procedural language he contributed last release.
+</para>
+</listitem>
 
 <listitem>
 <para>
 We have optional multiple-byte character set support from Tatsuo Iishi
 to complement our existing locale support.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Client/server communications has been cleaned up, with better support for
 asynchronous messages and interrupts thanks to Tom Lane.
+</para>
+</listitem>
 
 <listitem>
 <para>
@@ -48,6 +55,8 @@ with target columns. This uses a generic mechanism which supports
 the type extensibility features of <productname>Postgres</productname>.
 There is a new chapter in the <citetitle>User's Guide</citetitle>
 which covers this topic.
+</para>
+</listitem>
 
 <listitem>
 <para>
@@ -58,20 +67,26 @@ type available on some platforms. See the chapter on data types
 in the <citetitle>User's Guide</citetitle> for details.
 A fourth type, <type>serial</type>, is now supported by the parser as an
 amalgam of the <type>int4</type> type, a sequence, and a unique index.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Several more <acronym>SQL92</acronym>-compatible syntax features have been
 added, including <command>INSERT DEFAULT VALUES</command>
+</para>
+</listitem>
 
 <listitem>
 <para>
 The automatic configuration and installation system has received some
 attention, and should be more robust for more platforms than it has ever
 been.
+</para>
+</listitem>
 
 </itemizedlist>
-
+</para>
 
 <sect2>
 <title>Migration to v6.4</title>
@@ -81,8 +96,8 @@ A dump/restore using <application>pg_dump</application>
 or <application>pg_dumpall</application>
 is required for those wishing to migrate data from any
 previous release of <productname>Postgres</productname>.
-
-
+</para>
+</sect2>
 <sect2>
 <title>Detailed Change List</title>
 
@@ -282,6 +297,6 @@ configure uses supplied install-sh if no install script found(Tom)
 new Makefile.shlib for shared library configuration(Tom)
 </programlisting>
 </Para>
-
+</sect2>
 </Sect1>
 

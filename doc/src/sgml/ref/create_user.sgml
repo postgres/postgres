@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Creates account information for a new user
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-21</DATE>
@@ -126,10 +127,11 @@ CREATE USER<REPLACEABLE CLASS="PARAMETER"> username</REPLACEABLE>
 	   a NULL value is stored in "<filename>pg_shadow</filename>" 
 	   for this attribute,
 	   and the login will be valid for all time.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>
+    </variablelist>
+   </para>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATEUSER-2">
@@ -151,17 +153,19 @@ CREATE USER<REPLACEABLE CLASS="PARAMETER"> username</REPLACEABLE>
 	   Message returned if the command completes successfully.
 	  </PARA>
 	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>ERROR:  removeUser: user "<replaceable class="parameter">username</replaceable>" does not exist</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-           if "<replaceable class="parameter">username</replaceable>" not found.
-	  </PARA>
-	  <comment>I don't understand this and I don't know how to get
-this error message.</comment>
+    </VARLISTENTRY>
+    <VARLISTENTRY>
+     <TERM>
+      <ReturnValue>ERROR:  removeUser: user "<replaceable class="parameter">username</replaceable>" does not exist</ReturnValue>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       if "<replaceable class="parameter">username</replaceable>" not found.
+      </PARA>
+      <comment>I don't understand this and I don't know how to get
+       this error message.</comment>
+     </listitem>
+    </varlistentry>
    </VARIABLELIST>
   </REFSECT2>
  </REFSYNOPSISDIV>
@@ -226,6 +230,7 @@ this error message.</comment>
    +--------------------------+--------------------------+-------+
    </programlisting>
   </REFSECT2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-CREATEUSER-2">
   <TITLE>
@@ -275,8 +280,10 @@ this error message.</comment>
     SQL92
    </TITLE>
    <PARA>
-   There is no CREATE USER statement in SQL92.
+    There is no CREATE USER statement in SQL92.
    </PARA>
+  </refsect2>
+ </refsect1>
 </REFENTRY>
 
 

@@ -12,7 +12,7 @@
   <REFPURPOSE>
    Creates a new sequence number generator
   </REFPURPOSE>
-  
+ </refnamediv> 
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-04-15</DATE>
@@ -197,8 +197,11 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
 	 <LISTITEM>
 	  <PARA>
 	   If the minimum and maximum values are inconsistant.
-
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -254,27 +257,28 @@ SELECT last_value FROM sequence_name;
   </para>
 
 <caution>
-<para>
-  Unexpected results may be obtained if a cache setting greater than one
-  is used for a sequence object that will be used concurrently by multiple
-  backends.  Each backend will allocate "cache" successive sequence values
-  during one access to the sequence object and increase the sequence
-  object's last_value accordingly.  Then, the next cache-1 uses of nextval
-  within that backend simply return the preallocated values without touching
-  the shared object.  So, numbers allocated but not used in the current session
-  will be lost.  Furthermore, although multiple backends are guaranteed to
-  allocate distinct sequence values, the values may be generated out of
-  sequence when all the backends are considered.  (For example, with a cache
-  setting of 10, backend A might reserve values 1..10 and return nextval=1, 
-then
-  backend B might reserve values 11..20 and return nextval=11 before backend
-  A has generated nextval=2.)  Thus, with a cache setting of one it is safe
-  to assume that nextval values are generated sequentially; with a cache
-  setting greater than one you should only assume that the nextval values
-  are all distinct, not that they are generated purely sequentially.
-  Also, last_value will reflect the latest value reserved by any backend,
-  whether or not it has yet been returned by nextval.
-</caution>
+   <para>
+    Unexpected results may be obtained if a cache setting greater than one
+    is used for a sequence object that will be used concurrently by multiple
+    backends.  Each backend will allocate "cache" successive sequence values
+    during one access to the sequence object and increase the sequence
+    object's last_value accordingly.  Then, the next cache-1 uses of nextval
+    within that backend simply return the preallocated values without touching
+    the shared object.  So, numbers allocated but not used in the current session
+    will be lost.  Furthermore, although multiple backends are guaranteed to
+    allocate distinct sequence values, the values may be generated out of
+    sequence when all the backends are considered.  (For example, with a cache
+    setting of 10, backend A might reserve values 1..10 and return nextval=1, 
+    then
+    backend B might reserve values 11..20 and return nextval=11 before backend
+    A has generated nextval=2.)  Thus, with a cache setting of one it is safe
+    to assume that nextval values are generated sequentially; with a cache
+    setting greater than one you should only assume that the nextval values
+    are all distinct, not that they are generated purely sequentially.
+    Also, last_value will reflect the latest value reserved by any backend,
+    whether or not it has yet been returned by nextval.
+   </para>
+  </caution>
   
   <REFSECT2 ID="R2-SQL-CREATESEQUENCE-3">
    <REFSECT2INFO>
@@ -324,16 +328,16 @@ INSERT INTO distributors VALUES (NEXTVAL('serial'),'nothing');
   <para>
    Set the sequence value after a COPY FROM:
    <programlisting>
-CREATE FUNCTION distributors_id_max() RETURNS INT4
-       AS 'SELECT max(id) FROM distributors' 
-       LANGUAGE 'sql';
-BEGIN;
-COPY distributors FROM 'input_file';
-SELECT setval('serial', distributors_id_max());
-END;
+    CREATE FUNCTION distributors_id_max() RETURNS INT4
+    AS 'SELECT max(id) FROM distributors' 
+    LANGUAGE 'sql';
+    BEGIN;
+    COPY distributors FROM 'input_file';
+    SELECT setval('serial', distributors_id_max());
+    END;
    </programlisting>
   </para>
-
+  
  </REFSECT1>
  
  <REFSECT1 ID="R1-SQL-CREATESEQUENCE-3">
@@ -342,7 +346,7 @@ END;
   </TITLE>
   <PARA>
    <command>CREATE SEQUENCE</command> is a <productname>Postgres</productname>
- language extension.
+   language extension.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-CREATESEQUENCE-4">

@@ -17,6 +17,7 @@
 Contributed by <ULink url="mailto:geek+@cmu.edu">Brian Gallew</ULink>
 </Para>
 </Note>
+</para>
 
 <Para>
 Configuring gcc to use certain flags by default is a simple matter of
@@ -28,6 +29,7 @@ sections, each of which is three lines long.  The first line is
 "*<Replaceable>section_name</Replaceable>:" (e.g. "*asm:").
 The second line is a list of flags,
 and the third line is blank.
+</para>
 
 <Para>
 The easiest change to make is to append
@@ -64,10 +66,12 @@ box lying around, I'd have to make it look like this:
 </ProgramListing>
 This will always omit frame pointers, any will build 486-optimized
 code unless -m386 is specified on the command line.
+</para>
 
 <Para>
 You can actually do quite a lot of customization with the specs file.
 Always remember, however, that these changes are global, and affect
 all users of the system.
+</para>
 
 </Chapter>

@@ -19,7 +19,7 @@ with more on different indexing and sorting schemes at
 
 And there is more interesting reading at the Berkely database site at 
 <ULink url="http://epoch.cs.berkeley.edu:8000/">http://epoch.cs.berkeley.edu:8000/</ULink>.
-
+</para>
 
 <Para>
 <Note>
@@ -32,12 +32,12 @@ on GiST. Hopefully we will learn more in the future and update this information.
 - thomas 1998-03-01
 </Para>
 </Note>
-
+</para>
 <Para>
 Well, I can't say I quite understand what's going on, but at least
 I (almost) succeeded in porting GiST examples to linux. The GiST access
 method is already in the postgres tree (<FileName>src/backend/access/gist</FileName>).
-
+</para>
 <Para>
 <ULink url="ftp://s2k-ftp.cs.berkeley.edu/pub/gist/pggist/pggist.tgz">Examples at Berkeley</ULink>
 come with an overview of the methods and demonstrate spatial index 
@@ -56,7 +56,7 @@ ERROR:  cannot open pix
 
 (PostgreSQL 6.3               Sun Feb  1 14:57:30 EST 1998)
 </ProgramListing>
-
+</para>
 <Para>
 I could not get sense of this error message; it appears to be something
 we'd rather ask the developers about (see also Note 4 below). What I
@@ -64,28 +64,28 @@ would suggest here is that someone of you linux guys (linux==gcc?) fetch the
 original sources quoted above and apply my patch (see attachment) and 
 tell us what you feel about it. Looks cool to me, but I would not like 
 to hold it up while there are so many competent people around.
-
+</para>
 <Para>
 A few notes on the sources:
-
+</para>
 <Para>
 1. I failed to make use of the original (HPUX) Makefile and rearranged
    the Makefile from the ancient postgres95 tutorial to do the job. I tried
    to keep it generic, but I am a very poor makefile writer -- just did
    some monkey work. Sorry about that, but I guess it is now a little
    more portable that the original makefile.
-
+</para>
 <Para>
 2. I built the example sources right under pgsql/src (just extracted the
    tar file there). The aforementioned Makefile assumes it is one level
    below pgsql/src (in our case, in pgsql/src/pggist).
-
+</para>
 <Para>
 3. The changes I made to the *.c files were all about #include's,
    function prototypes and typecasting. Other than that, I just threw 
    away a bunch of unused vars and added a couple parentheses to please
    gcc. I hope I did not screw up too much :)
-
+</para>
 <Para>
 4. There is a comment in polyproc.sql:
 
@@ -98,11 +98,11 @@ A few notes on the sources:
    <ProductName>Postgres</ProductName> versions
    back and tried the query. My system went nuts and I had to shoot down
    the postmaster in about ten minutes.
-
+</para>
 
 <Para>
 I will continue to look into GiST for a while, but I would also
 appreciate
 more examples of R-tree usage.
-
+</para>
 </Chapter>

@@ -73,7 +73,7 @@ It is possible to create a database in a location other than the default
 location for the installation. Remember that all database access actually
 occurs through the database backend, so that any location specified must
 be accessible by the backend.
-
+</para>
 <Para>
  Alternate database locations are created and referenced by an environment variable
  which gives the absolute path to the intended storage location.
@@ -82,7 +82,7 @@ and must be writable by the postgres administrator account.
 Any valid environment variable name may be used to reference an alternate 
 location, although using variable name with a prefix of PGDATA is recommended
 to avoid confusion and conflict with other variables.
-
+</para>
 <Note>
 <Para>
  In previous versions of <ProductName>Postgres</ProductName>, 
@@ -123,7 +123,7 @@ Any environment variable can be used to reference alternate location,
 although it is preferred that the variables be prefixed with "PGDATA" 
 to eliminate confusion and the possibility of conflicting with or 
 overwriting other variables.
-
+</para>
 <Para>
 To create a data storage area in PGDATA2, ensure
 that <filename>/home/postgres</filename> already exists and is writable 
@@ -137,13 +137,14 @@ Creating Postgres database system directory /home/postgres/data
 Creating Postgres database system directory /home/postgres/data/base
 
 </ProgramListing>
-
+</para>
 <Para>
 To test the new location, create a database <Database>test</Database> by typing
 <ProgramListing>
 % createdb -D PGDATA2 test
 % destroydb test
 </ProgramListing>
+</para>
 </Sect1>
 </Chapter>
 
@@ -158,7 +159,7 @@ and authorized you to use the database, you (as a user) may begin to start up
      <filename>/usr/local/pgsql/bin</filename> to your  shell  search  path.
      In  most  cases,  this  is all you should have to do in
      terms of preparation.
-
+</para>
 <Para>
      If  you get the following error message from a 
 <ProductName>Postgres</ProductName>

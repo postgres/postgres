@@ -28,15 +28,14 @@
 <Sect1>
 <Title>Installing Procedural Languages</Title>
 
-<Para>
-    <Procedure>
+<Procedure>
     <Title>
     Procedural Language Installation
     </Title>
 
     <para>
     A procedural language is installed in the database in three steps.
-
+    </para>
 	<Step Performance="Required">
 	    <Para>
 	        The shared object for the language handler
@@ -82,9 +81,9 @@
 		PL/Tcl are known to be trusted.
 	    </Para>
 	</Step>
-    </Procedure>
-<Para>
-    <Procedure>
+</Procedure>
+
+<Procedure>
     <Title>Example</Title>
     <Step Performance="Required">
     <Para>
@@ -132,7 +131,7 @@
 	languages are available by default.
     </Para>
     </Step>
-    </Procedure>
+</Procedure>
 </Sect1> <!-- **** End of PL installation **** -->
 
 <!-- **********
@@ -368,7 +367,6 @@
 </Term>
 <ListItem>
 <Para>
-<Para>
     For better readability of the code it is possible to define an alias
     for a positional parameter to a function.
 </Para>
@@ -385,7 +383,6 @@
 RENAME <Replaceable>oldname</Replaceable> TO <Replaceable>newname</Replaceable>;
 </Term>
 <ListItem>
-<Para>
 <Para>
     Change the name of a variable, record or row. This is useful
     if NEW or OLD should be referenced by another name inside a 

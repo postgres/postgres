@@ -1,21 +1,21 @@
 <chapter id="config">
 <title id="install-config">Configuration Options</title>
 
-<sect1>
-<title>Parameters for Configuration (<application>configure</application>)</title>
+ <sect1>
+  <title>Parameters for Configuration (<application>configure</application>)</title>
 
-<para>
-The full set of parameters available in <application>configure</application>
-can be obtained by typing
-
-<programlisting>
-$ ./configure --help
-</programlisting>
-
-<para>
-The following parameters may be of interest to installers:
-
-<programlisting>
+  <para>
+   The full set of parameters available in <application>configure</application>
+   can be obtained by typing
+   
+   <programlisting>
+    $ ./configure --help
+   </programlisting>
+  </para>
+  <para>
+   The following parameters may be of interest to installers:
+   
+   <programlisting>
 Directory and file names:
   --prefix=PREFIX         install architecture-independent files in PREFIX
                           [/usr/local/pgsql]
@@ -47,143 +47,174 @@ Features and packages:
   --enable-cassert        enable assertion checks (debugging)
   --with-CC=<replaceable>compiler</replaceable>      use specific C compiler
   --with-CXX=<replaceable>compiler</replaceable>     use specific C++ compiler
-</programlisting>
-
-<para>
-Some systems may have trouble building a specific feature of
-<productname>Postgres</productname>. For example, systems with a damaged
-C++ compiler may need to specify <option>--without-CXX</option> to encourage
-the build procedure to ignore the <filename>libpq++</filename> construction.
-
-<sect1>
-<title>Parameters for Building (<application>make</application>)</title>
-
-<para>
-Many installation-related parameters can be set in the building
-stage of <productname>Postgres</productname> installation.
-
-<para>
-In most cases, these parameters should be place in a file,
-<filename>Makefile.custom</filename>, intended just for that purpose.
-The default distribution does not contain this optional file, so you
-will create it using a text editor of your choice. When upgrading installations,
-you can simply copy your old Makefile.custom to the new installation before
-doing the build.
-
-<synopsis>
-make [ <replaceable>variable</replaceable>=<replaceable class="parameter">value</replaceable> [,...] ]
-</synopsis>
-
-<para>
-A few of the many variables which can be specified are:
-
-<variablelist>
-<varlistentry>
-<term>
-<envar>POSTGRESDIR</envar>
-
-<listitem>
-<para>
-Top of the installation tree.
-
-<varlistentry>
-<term>
-<envar>BINDIR</envar>
-
-<listitem>
-<para>
-Location of applications and utilities.
-
-<varlistentry>
-<term>
-<envar>LIBDIR</envar>
-
-<listitem>
-<para>
-Location of object libraries, including shared libraries.
-
-<varlistentry>
-<term>
-<envar>HEADERDIR</envar>
-
-<listitem>
-<para>
-Location of include files.
-
-<varlistentry>
-<term>
-<envar>ODBCINST</envar>
-
-<listitem>
-<para>
-Location of installation-wide <application>psqlODBC</application>
-(<acronym>ODBC</acronym>) configuration file.
-
-</variablelist>
-
-<para>
-There are other optional parameters which are not as commonly used.
-Many of those listed below are appropriate when doing 
-<application>Postgres</application> server code development.
-
-<variablelist>
-<varlistentry>
-<term>
-<envar>CFLAGS</envar>
-
-<listitem>
-<para>
-Set flags for the C compiler. 
-Should be assigned with "+=" to retain relevant default parameters.
-
-<varlistentry>
-<term>
-YFLAGS
-
-<listitem>
-<para>
-Set flags for the yacc/bison parser. <option>-v</option> might be
-used to help diagnose problems building a new parser.
-Should be assigned with "+=" to retain relevant default parameters.
-
-<varlistentry>
-<term>
-<envar>USE_TCL</envar>
-
-<listitem>
-<para>
-Enable Tcl interface building.
-
-<varlistentry>
-<term>
-<envar>HSTYLE</envar>
-
-<listitem>
-<para>
-DocBook <acronym>HTML</acronym> style sheets for building the 
-documentation from scratch.
-Not used unless you are developing new documentation from the
-DocBook-compatible <acronym>SGML</acronym> source documents in
-<filename>doc/src/sgml/</filename>.
-
-<varlistentry>
-<term>
-<envar>PSTYLE</envar>
-
-<listitem>
-<para>
-DocBook style sheets for building printed documentation from scratch.
-Not used unless you are developing new documentation from the
-DocBook-compatible <acronym>SGML</acronym> source documents in
-<filename>doc/src/sgml/</filename>.
-
-</variablelist>
-
-<para>
-Here is an example <filename>Makefile.custom</filename> for a
-PentiumPro Linux system:
-
-<programlisting>
+   </programlisting>
+  </para>
+  <para>
+   Some systems may have trouble building a specific feature of
+   <productname>Postgres</productname>. For example, systems with a damaged
+   C++ compiler may need to specify <option>--without-CXX</option> to encourage
+   the build procedure to ignore the <filename>libpq++</filename> construction.
+  </para>
+ </sect1>
+ <sect1>
+  <title>Parameters for Building (<application>make</application>)</title>
+  
+  <para>
+   Many installation-related parameters can be set in the building
+   stage of <productname>Postgres</productname> installation.
+  </para>
+  <para>
+   In most cases, these parameters should be place in a file,
+   <filename>Makefile.custom</filename>, intended just for that purpose.
+   The default distribution does not contain this optional file, so you
+   will create it using a text editor of your choice. When upgrading installations,
+   you can simply copy your old Makefile.custom to the new installation before
+   doing the build.
+   
+   <synopsis>
+    make [ <replaceable>variable</replaceable>=<replaceable class="parameter">value</replaceable> [,...] ]
+   </synopsis>
+  </para>
+  <para>
+   A few of the many variables which can be specified are:
+   
+   <variablelist>
+    <varlistentry>
+     <term>
+      <envar>POSTGRESDIR</envar>
+     </term>
+     <listitem>
+      <para>
+       Top of the installation tree.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+     <term>
+      <envar>BINDIR</envar>
+     </term>
+     <listitem>
+      <para>
+       Location of applications and utilities.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+     <term>
+      <envar>LIBDIR</envar>
+     </term>
+     <listitem>
+      <para>
+       Location of object libraries, including shared libraries.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+     <term>
+      <envar>HEADERDIR</envar>
+     </term>
+     <listitem>
+      <para>
+       Location of include files.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+     <term>
+      <envar>ODBCINST</envar>
+     </term>
+     <listitem>
+      <para>
+       Location of installation-wide <application>psqlODBC</application>
+       (<acronym>ODBC</acronym>) configuration file.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+   </variablelist>
+  </para>
+  <para>
+   There are other optional parameters which are not as commonly used.
+   Many of those listed below are appropriate when doing 
+   <application>Postgres</application> server code development.
+   
+   <variablelist>
+    <varlistentry>
+     <term>
+      <envar>CFLAGS</envar>
+     </term>
+     <listitem>
+      <para>
+       Set flags for the C compiler. 
+       Should be assigned with "+=" to retain relevant default parameters.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+     <term>
+      YFLAGS
+     </term>
+     <listitem>
+      <para>
+       Set flags for the yacc/bison parser. <option>-v</option> might be
+       used to help diagnose problems building a new parser.
+       Should be assigned with "+=" to retain relevant default parameters.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+     <term>
+      <envar>USE_TCL</envar>
+     </term>
+     <listitem>
+      <para>
+       Enable Tcl interface building.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+     <term>
+      <envar>HSTYLE</envar>
+     </term>
+     <listitem>
+      <para>
+       DocBook <acronym>HTML</acronym> style sheets for building the 
+       documentation from scratch.
+       Not used unless you are developing new documentation from the
+       DocBook-compatible <acronym>SGML</acronym> source documents in
+       <filename>doc/src/sgml/</filename>.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+     <term>
+      <envar>PSTYLE</envar>
+     </term>
+     <listitem>
+      <para>
+       DocBook style sheets for building printed documentation from scratch.
+       Not used unless you are developing new documentation from the
+       DocBook-compatible <acronym>SGML</acronym> source documents in
+       <filename>doc/src/sgml/</filename>.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+   </variablelist>
+  </para>
+  <para>
+   Here is an example <filename>Makefile.custom</filename> for a
+   PentiumPro Linux system:
+   
+   <programlisting>
 # Makefile.custom
 # Thomas Lockhart 1998-03-01
 
@@ -198,275 +229,297 @@ TK_LIB= -ltk
 
 HSTYLE= /home/tgl/SGML/db118.d/docbook/html
 PSTYLE= /home/tgl/SGML/db118.d/docbook/print
-</programlisting>
+   </programlisting>
+  </para>
+ </sect1> 
+ <Sect1>
+  <Title>Locale Support</Title>
+  
+  <Para>
+   <Note>
+    <Para>
+     Written by Oleg Bartunov.
+     See <ULink url="http://www.sai.msu.su/~megera/postgres/">Oleg's web page</ULink>
+     for additional information on locale and Russian language support.
+     
+    </Para>
+   </Note>
+   While doing a project for a company in Moscow, Russia, 
+   I encountered the problem that postgresql had no
+   support of national alphabets. After looking for possible workarounds 
+   I decided to develop support of locale myself.
+   I'm not a C-programer but already had some experience with locale programming 
+   when I work with perl
+   (debugging) and glimpse. After several days of digging through
+   the <ProductName>Postgres</ProductName> source tree I made very minor corections to
+   src/backend/utils/adt/varlena.c and src/backend/main/main.c and got what I needed! 
+   I did support only for
+   <envar>LC_CTYPE</envar> and <envar>LC_COLLATE</envar>, 
+   but later <envar>LC_MONETARY</envar> was added by others. I got many
+   messages from people about this patch so I decided to send it to developers 
+   and (to my surprise) it was
+   incorporated into the <productname>Postgres</productname> distribution.
+  </para>
+  <Para>
+   People often complain that locale doesn't work for them. 
+   There are several common mistakes: 
+   
+   <ItemizedList>
+    <ListItem>
+     <Para>
+      Didn't properly configure postgresql before compilation. 
+      You must run configure with --enable-locale option to enable locale support. 
+      Didn't setup environment correctly when starting postmaster. 
+      You must define environment variables 
+      <envar>LC_CTYPE</envar> and <envar>LC_COLLATE</envar> 
+      before running postmaster
+      because backend gets information about locale from environment. 
+      I use following shell script
+      (runpostgres): 
+      
+      <ProgramListing>
+       #!/bin/sh
+       
+       export LC_CTYPE=koi8-r
+       export LC_COLLATE=koi8-r
+       postmaster -B 1024 -S -D/usr/local/pgsql/data/ -o '-Fe'
+      </ProgramListing>
 
-<Sect1>
-<Title>Locale Support</Title>
+      and run it from rc.local as 
 
-<Para>
-<Note>
-<Para>
-Written by Oleg Bartunov.
-See <ULink url="http://www.sai.msu.su/~megera/postgres/">Oleg's web page</ULink>
- for additional information on locale and Russian language support.
+      <ProgramListing>
+       /bin/su - postgres -c "/home/postgres/runpostgres"
+      </ProgramListing>
 
-</Para>
-</Note>
-While doing a project for a company in Moscow, Russia, 
-I encountered the problem that postgresql had no
-support of national alphabets. After looking for possible workarounds 
-I decided to develop support of locale myself.
-I'm not a C-programer but already had some experience with locale programming 
-when I work with perl
-(debugging) and glimpse. After several days of digging through
- the <ProductName>Postgres</ProductName> source tree I made very minor corections to
-src/backend/utils/adt/varlena.c and src/backend/main/main.c and got what I needed! 
-I did support only for
-<envar>LC_CTYPE</envar> and <envar>LC_COLLATE</envar>, 
-but later <envar>LC_MONETARY</envar> was added by others. I got many
-messages from people about this patch so I decided to send it to developers 
-and (to my surprise) it was
-incorporated into the <productname>Postgres</productname> distribution.
+     </Para>
+    </ListItem>
+    <ListItem>
+     <Para>
+      Broken locale support in OS (for example, locale support in libc 
+      under Linux several times has changed
+      and this caused a lot of problems). Latest perl has also support of 
+      locale and if locale is broken <command>perl -v</command> will
+      complain something like: 
+      
+      <programlisting>
+       8:17[mira]:~/WWW/postgres>setenv LC_CTYPE not_exist
+       8:18[mira]:~/WWW/postgres>perl -v
+       perl: warning: Setting locale failed.
+       perl: warning: Please check that your locale settings:
+       LC_ALL = (unset),
+           LC_CTYPE = "not_exist",
+           LANG = (unset)
+       are supported and installed on your system.
+       perl: warning: Falling back to the standard locale ("C").
+      </programlisting>
 
-<Para>
- People often complain that locale doesn't work for them. 
-There are several common mistakes: 
+     </Para>
+    </ListItem>
+    <ListItem>
+     <Para>
+      Wrong location of locale files!
+      
+      Possible locations include: 
+      <filename>/usr/lib/locale</filename> 
+      (Linux, Solaris), <filename>/usr/share/locale</filename> (Linux), 
+      <filename>/usr/lib/nls/loc</filename> (DUX 4.0).
+      
+      Check <command>man locale</command> to find the correct location.
+      Under Linux I did a symbolic link between <filename>/usr/lib/locale</filename> and
+      <filename>/usr/share/locale</filename> to be sure that 
+      the next libc will not break my locale.
+     </Para>
+    </ListItem>
+   </ItemizedList>
+  </para>
 
-<ItemizedList>
-<ListItem>
-<Para>
-     Didn't properly configure postgresql before compilation. 
-     You must run configure with --enable-locale option to enable locale support. 
-     Didn't setup environment correctly when starting postmaster. 
-     You must define environment variables 
-<envar>LC_CTYPE</envar> and <envar>LC_COLLATE</envar> 
-before running postmaster
-     because backend gets information about locale from environment. 
-I use following shell script
-     (runpostgres): 
+  <Sect2>
+   <Title>What are the Benefits?</Title> 
 
-<ProgramListing>
-     #!/bin/sh
+   <Para>
+    You can use ~* and order by operators for strings contain characters 
+    from national alphabets. Non-english users
+    definitely need that. If you won't use locale stuff just undefine 
+    the USE_LOCALE variable. 
+   </para>
+  </sect2>
 
-     export LC_CTYPE=koi8-r
-     export LC_COLLATE=koi8-r
-     postmaster -B 1024 -S -D/usr/local/pgsql/data/ -o '-Fe'
-</ProgramListing>
+  <Sect2>
+   <Title>What are the Drawbacks?</Title>
+   
+   <Para>
+    There is one evident drawback of using locale - it's speed! 
+    So, use locale only if you really need it. 
+   </para>
+  </sect2>
+ </sect1>
+ 
+ <Sect1>
+  <Title>Kerberos Authentication</Title>
+  
+  <Para>
+   <productname>Kerberos</productname> is an industry-standard secure authentication
+   system suitable for distributed computing over a public network.
+  </para>
 
-     and run it from rc.local as 
+  <sect2>
+   <title>Availability</title>
+   
+   <para>
+    The
+    <productname>Kerberos</productname>
+    authentication system is not distributed with <Productname>Postgres</Productname>.  Versions of
+    <productname>Kerberos</productname>
+    are typically available as optional software from operating system
+    vendors.  In addition, a source code distribution may be obtained through
+    <ulink url="ftp://athena-dist.mit.edu">MIT Project Athena</ulink>.
+   </para>
+   <note>
+    <para>
+     You may wish to obtain the MIT version even if your
+     vendor provides a version, since some vendor ports have been
+     deliberately crippled or rendered non-interoperable with the MIT
+     version.
+    </para>
+   </note>
+   <para>
+    Users located outside the United States of America and
+    Canada are warned that distribution of the actual encryption code in
+    <productname>Kerberos</productname>
+    is restricted by U. S. Government export regulations.
+   </para>
+   <para>
+    Inquiries regarding your <productname>Kerberos</productname> 
+    should be directed to your vendor or
+    <ulink url="info-kerberos@athena.mit.edu">MIT Project Athena</ulink>.
+    Note that <acronym>FAQL</acronym>s
+    (Frequently-Asked Questions Lists) are periodically posted to the
+    <ulink url="mailto:kerberos@ATHENA.MIT.EDU"><productname>Kerberos</productname> mailing list</ulink>
+    (send
+    <ulink url="mailto:kerberos-request@ATHENA.MIT.EDU">mail to subscribe</ulink>),
+    and 
+    <ulink url="news:comp.protocols.kerberos">USENET news group</ulink>.
+   </para>
+  </sect2>
+  
+  <sect2>
+   <title>Installation</title>
+   
+   <para>
+    Installation of 
+    <productname>Kerberos</productname>
+    itself is covered in detail in the 
+    <citetitle>Kerberos Installation Notes</citetitle> .
+    Make sure that the server key file (the <filename>srvtab</filename>
+    or <filename>keytab</filename>)
+    is somehow readable by the <productname>Postgres</productname> account.
+   </para>
+   <para>
+    <Productname>Postgres</Productname> and its clients can be compiled to use 
+    either Version 4 or Version 5 of the MIT
+    <productname>Kerberos</productname>
+    protocols by setting the 
+    <envar>KRBVERS</envar>
+    variable in the file <filename>src/Makefile.global</filename> to the
+    appropriate value.  You can also change the location where
+    <Productname>Postgres</Productname>
+    expects to find the associated libraries, header files and its own
+    server key file.
+   </para>
+   <para>
+    After compilation is complete, <Productname>Postgres</Productname>
+    must be registered as a <productname>Kerberos</productname>
+    service.  See the
+    <citetitle>Kerberos Operations Notes</citetitle>
+    and related manual pages for more details on registering services.
+   </para>
+  </sect2>
 
-<ProgramListing>
-     /bin/su - postgres -c "/home/postgres/runpostgres"
-</ProgramListing>
+  <sect2>
+   <title>Operation</title>
+   
+   <para>
+    After initial installation, <Productname>Postgres</Productname> 
+    should operate in all ways as a normal
+    <productname>Kerberos</productname>
+    service.  For details on the use of authentication, see the
+    <citetitle>PostgreSQL User's Guide</citetitle> reference sections
+    for <application>postmaster</application>
+    and <application>psql</application>.
+   </para>
+   <para>
+    In the 
+    <productname>Kerberos</productname>
+    Version 5 hooks, the following assumptions are made about user
+    and service naming:
 
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-     Broken locale support in OS (for example, locale support in libc 
-under Linux several times has changed
-     and this caused a lot of problems). Latest perl has also support of 
-locale and if locale is broken <command>perl -v</command> will
-     complain something like: 
+    <itemizedlist>
+     <listitem>
+      <para>
+       User principal names (anames) are assumed to
+       contain the actual Unix/<Productname>Postgres</Productname> user name
+       in the first component.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The <Productname>Postgres</Productname> service is assumed to be have two components,
+       the service name and a hostname, canonicalized as in Version 4 (i.e., with all domain
+       suffixes removed).
+      </para>
+     </listitem>
+     
+    </itemizedlist>
+   </para>
+   <para>
+    <table tocentry="1">
+     <title>Kerberos Parameter Examples</title>
+     <titleabbrev>Kerberos</titleabbrev>
 
-<programlisting>
-     8:17[mira]:~/WWW/postgres>setenv LC_CTYPE not_exist
-     8:18[mira]:~/WWW/postgres>perl -v
-     perl: warning: Setting locale failed.
-     perl: warning: Please check that your locale settings:
-             LC_ALL = (unset),
-             LC_CTYPE = "not_exist",
-             LANG = (unset)
-         are supported and installed on your system.
-     perl: warning: Falling back to the standard locale ("C").
-</programlisting>
-
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-     Wrong location of locale files!
-
-     Possible locations include: 
-<filename>/usr/lib/locale</filename> 
-(Linux, Solaris), <filename>/usr/share/locale</filename> (Linux), 
-<filename>/usr/lib/nls/loc</filename> (DUX 4.0).
-
-     Check <command>man locale</command> to find the correct location.
-Under Linux I did a symbolic link between <filename>/usr/lib/locale</filename> and
-     <filename>/usr/share/locale</filename> to be sure that 
-the next libc will not break my locale.
-</Para>
-</ListItem>
-</ItemizedList>
-
-<Sect2>
-<Title>What are the Benefits?</Title> 
-
-<Para>
-You can use ~* and order by operators for strings contain characters 
-from national alphabets. Non-english users
-definitely need that. If you won't use locale stuff just undefine 
-the USE_LOCALE variable. 
-
-<Sect2>
-<Title>What are the Drawbacks?</Title>
-
-<Para>
-There is one evident drawback of using locale - it's speed! 
-So, use locale only if you really need it. 
-
-
-<Sect1>
-<Title>Kerberos Authentication</Title>
-
-<Para>
-<productname>Kerberos</productname> is an industry-standard secure authentication
-system suitable for distributed computing over a public network.
-
-<sect2>
-<title>Availability</title>
-
-<para>
-The
-<productname>Kerberos</productname>
-authentication system is not distributed with <Productname>Postgres</Productname>.  Versions of
-<productname>Kerberos</productname>
-are typically available as optional software from operating system
-vendors.  In addition, a source code distribution may be obtained through
-<ulink url="ftp://athena-dist.mit.edu">MIT Project Athena</ulink>.
-
-<note>
-<para>
-You may wish to obtain the MIT version even if your
-vendor provides a version, since some vendor ports have been
-deliberately crippled or rendered non-interoperable with the MIT
-version.
-</note>
-Users located outside the United States of America and
-Canada are warned that distribution of the actual encryption code in
-<productname>Kerberos</productname>
-is restricted by U. S. Government export regulations.
-
-<para>
-Inquiries regarding your <productname>Kerberos</productname> 
-should be directed to your vendor or
-<ulink url="info-kerberos@athena.mit.edu">MIT Project Athena</ulink>.
-Note that <acronym>FAQL</acronym>s
-(Frequently-Asked Questions Lists) are periodically posted to the
-<ulink url="mailto:kerberos@ATHENA.MIT.EDU"><productname>Kerberos</productname> mailing list</ulink>
-(send
-<ulink url="mailto:kerberos-request@ATHENA.MIT.EDU">mail to subscribe</ulink>),
-and 
-<ulink url="news:comp.protocols.kerberos">USENET news group</ulink>.
-
-<sect2>
-<title>Installation</title>
-
-<para>
-Installation of 
-<productname>Kerberos</productname>
-itself is covered in detail in the 
-<citetitle>Kerberos Installation Notes</citetitle> .
-Make sure that the server key file (the <filename>srvtab</filename>
-or <filename>keytab</filename>)
-is somehow readable by the <productname>Postgres</productname> account.
-
-<para>
-<Productname>Postgres</Productname> and its clients can be compiled to use 
-either Version 4 or Version 5 of the MIT
-<productname>Kerberos</productname>
-protocols by setting the 
-<envar>KRBVERS</envar>
-variable in the file <filename>src/Makefile.global</filename> to the
-appropriate value.  You can also change the location where
- <Productname>Postgres</Productname>
-expects to find the associated libraries, header files and its own
-server key file.
-
-<para>
-After compilation is complete, <Productname>Postgres</Productname>
- must be registered as a <productname>Kerberos</productname>
-service.  See the
-<citetitle>Kerberos Operations Notes</citetitle>
-and related manual pages for more details on registering services.
-
-<sect2>
-<title>Operation</title>
-
-<para>
-After initial installation, <Productname>Postgres</Productname> 
-should operate in all ways as a normal
-<productname>Kerberos</productname>
-service.  For details on the use of authentication, see the
-<citetitle>PostgreSQL User's Guide</citetitle> reference sections
-for <application>postmaster</application>
-and <application>psql</application>.
-
-<para>
-In the 
-<productname>Kerberos</productname>
-Version 5 hooks, the following assumptions are made about user
-and service naming:
-
-<itemizedlist>
-<listitem>
-<para>
-User principal names (anames) are assumed to
-contain the actual Unix/<Productname>Postgres</Productname> user name
- in the first component.
-
-<listitem>
-<para>
-The <Productname>Postgres</Productname> service is assumed to be have two components,
- the service name and a hostname, canonicalized as in Version 4 (i.e., with all domain
-suffixes removed).
-
-</itemizedlist>
-
-<para>
-<table tocentry="1">
-<title>Kerberos Parameter Examples</title>
-<titleabbrev>Kerberos</titleabbrev>
-
-<tgroup cols="2">
-<thead>
-<row>
-<entry>
-Parameter
-</entry>
-<entry>
-Example
-</entry>
-
-<tbody>
-<row>
-<entry>
-user
-</entry>
-<entry>
-frew@S2K.ORG
-</entry>
-
-<row>
-<entry>
-user
-</entry>
-<entry>
-aoki/HOST=miyu.S2K.Berkeley.EDU@S2K.ORG
-</entry>
-
-<row>
-<entry>
-host
-</entry>
-<entry>
-postgres_dbms/ucbvax@S2K.ORG
-</entry>
-</tbody>
-</tgroup>
-</table>
-
-<para>
-Support for Version 4 will disappear sometime after the production
-release of Version 5 by MIT.
+     <tgroup cols="2">
+      <thead>
+       <row>
+	<entry>
+	 Parameter
+	</entry>
+	<entry>
+	 Example
+	</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>
+	 user
+	</entry>
+	<entry>
+	 frew@S2K.ORG
+	</entry>
+       </row>
+       <row>
+	<entry>
+	 user
+	</entry>
+	<entry>
+	 aoki/HOST=miyu.S2K.Berkeley.EDU@S2K.ORG
+	</entry>
+       </row>	   
+       <row>
+	<entry>
+	 host
+	</entry>
+	<entry>
+	 postgres_dbms/ucbvax@S2K.ORG
+	</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+   <para>
+    Support for Version 4 will disappear sometime after the production
+    release of Version 5 by MIT.
+   </para>
+  </sect2>
+ </sect1>
+</chapter>

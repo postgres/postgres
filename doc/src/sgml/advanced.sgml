@@ -66,6 +66,7 @@ SELECT name, altitude
 |Mariposa  | 1953     |
 +----------+----------+
 </ProgramListing>         
+</Para>
 
 <Para>
      On the other hand, to find the  names  of  all  cities,
@@ -111,6 +112,7 @@ SELECT c.name, c.altitude
      sub-values that can be  accessed  from  the  query
      language.   For example, you can create attributes that
      are arrays of base types.
+</Para>
 
 <Sect2>
 <Title>Arrays</Title>
@@ -210,7 +212,7 @@ SELECT SAL_EMP.schedule[1:2][1:1]
 +-------------------+
 </ProgramListing>
 </Para>
-
+</sect2>
 </Sect1>
 
 <Sect1>
@@ -286,6 +288,7 @@ On UNIX systems, this is always  midnight,  January  1, 1970 GMT.
 |Mariposa | 1320       |
 +---------+------------+
 </ProgramListing>
+</Para>
 
 <Para>
      The default beginning of a time range is  the  earliest
@@ -293,6 +296,7 @@ On UNIX systems, this is always  midnight,  January  1, 1970 GMT.
      the current time; thus, the above  time  range  can  be
      abbreviated as ``[,].''
 </Para>
+</sect1>
 
 <Sect1>
 <Title>More Advanced Features</Title>
@@ -301,5 +305,7 @@ On UNIX systems, this is always  midnight,  January  1, 1970 GMT.
 <ProductName>Postgres</ProductName> has many features not touched upon in this
 tutorial introduction, which has been oriented toward newer users of <Acronym>SQL</Acronym>.
 These are discussed in more detail in both the User's and Programmer's Guides.
+</Para>
 
+</sect1>
 </Chapter>

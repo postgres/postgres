@@ -6,6 +6,7 @@
 mixing of different data types in the same expression. 
 <productname>Postgres</productname> has extensive facilities for
 evaluating mixed-type expressions.
+</para>
 
 <para>
 In many cases a user will not need
@@ -14,16 +15,19 @@ However, the implicit conversions done by <productname>Postgres</productname>
 can affect the apparent results of a query, and these results
 can be tailored by a user or programmer
 using <emphasis>explicit</emphasis> type coersion.
+</para>
 
 <para>
 This chapter introduces the <productname>Postgres</productname>
  type conversion mechanisms and conventions.
 Refer to the relevant sections in the User's Guide and Programmer's Guide
 for more information on specific data types and allowed functions and operators.
+</para>
 
 <para>
 The Programmer's Guide has more details on the exact algorithms used for
 implicit type conversion and coersion.
+</para>
 
 <sect1>
 <title>Overview</title>
@@ -36,6 +40,7 @@ much more general and flexible than other <acronym>RDBMS</acronym> implementatio
 Hence, most type conversion behavior in <productname>Postgres</productname>
 should be governed by general rules rather than by ad-hoc heuristics to allow
 mixed-type expressions to be meaningful, even with user-defined types.
+</para>
 
 <para>
 The <productname>Postgres</productname> scanner/parser decodes lexical elements
@@ -56,11 +61,13 @@ Origin|(0,0)
 has two strings, of type <type>text</type> and <type>point</type>.
 If a type is not specified, then the placeholder type <type>unknown</type>
 is assigned initially, to be resolved in later stages as described below.
+</para>
 
 <para>
 There are four fundamental <acronym>SQL</acronym> constructs requiring
 distinct type conversion rules in the <productname>Postgres</productname>
 parser:
+</para>
 
 <variablelist>
 <varlistentry>
@@ -72,6 +79,7 @@ Operators
 <productname>Postgres</productname> allows expressions with
 left- and right-unary (one argument) operators,
 as well as binary (two argument) operators.
+</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -83,6 +91,7 @@ Function calls
 Much of the <productname>Postgres</productname> type system is built around a rich set of
 functions. Function calls have one or more arguments which, for any specific query,
 must be matched to the functions available in the system catalog.
+</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -93,6 +102,7 @@ Query targets
 <para>
 <acronym>SQL</acronym> INSERT statements place the results of query into a table. The expressions
 in the query must be matched up with, and perhaps converted to, the target columns of the insert.
+</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -103,6 +113,7 @@ UNION queries
 <para>
 Since all select results from a UNION SELECT statement must appear in a single set of columns, the types
 of each SELECT clause must be matched up and converted to a uniform set.
+</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -113,6 +124,7 @@ the <productname>Postgres</productname> function and operator system tables.
 There are some heuristics included in the conversion rules to better support
 conventions for the <acronym>SQL92</acronym> standard native types such as
 <type>smallint</type>, <type>integer</type>, and <type>float</type>.
+</para>
 
 <para>
 The <productname>Postgres</productname> parser uses the convention that all
@@ -122,6 +134,7 @@ criteria is considered to be a valid conversion function, and may be used
 by the parser as such. This simple assumption gives the parser the power
 to explore type conversion possibilities without hardcoding, allowing
 extended user-defined types to use these same features transparently.
+</para>
 
 <para>
 An additional heuristic is provided in the parser to allow better guesses
@@ -133,11 +146,13 @@ Each "user-defined" type is its own "preferred type", so ambiguous
 expressions (those with multiple candidate parsing solutions)
 with only one user-defined type can resolve to a single best choice, while those with
 multiple user-defined types will remain ambiguous and throw an error.
+</para>
 
 <para>
 Ambiguous expressions which have candidate solutions within only one type category are
 likely to resolve, while ambiguous expressions with candidates spanning multiple
 categories are likely to throw an error and ask for clarification from the user.
+</para>
 
 <sect2>
 <title>Guidelines</title>
@@ -149,12 +164,16 @@ All type conversion rules are designed with several principles in mind:
 <listitem>
 <para>
 Implicit conversions should never have suprising or unpredictable outcomes.
+</para>
+</listitem>
 
 <listitem>
 <para>
 User-defined types, of which the parser has no apriori knowledge, should be
 "higher" in the type heirarchy. In mixed-type expressions, native types shall always
 be converted to a user-defined type (of course, only if conversion is necessary).
+</para>
+</listitem>
 
 <listitem>
 <para>
@@ -162,6 +181,8 @@ User-defined types are not related. Currently, <productname>Postgres</productnam
 does not have information available to it on relationships between types, other than
 hardcoded heuristics for built-in types and implicit relationships based on available functions
 in the catalog.
+</para>
+</listitem>
 
 <listitem>
 <para>
@@ -170,12 +191,18 @@ if a query does not need implicit type conversion.
 That is, if a query is well formulated and the types already match up, then the query should proceed
 without spending extra time in the parser and without introducing unnecessary implicit conversion
 functions into the query.
+</para>
 
 <para>
 Additionally, if a query usually requires an implicit conversion for a function, and
 if then the user defines an explicit function with the correct argument types, the parser
 should use this new function and will no longer do the implicit conversion using the old function.
+</para>
+</listitem>
 </itemizedlist>
+</para>
+</sect2>
+</sect1>
 
 <sect1>
 <title>Operators</title>
@@ -183,50 +210,55 @@ should use this new function and will no longer do the implicit conversion using
 <sect2>
 <title>Conversion Procedure</title>
 
-<para>
 <procedure>
 <title>Operator Evaluation</title>
 
-<para>
 
 <step performance="required">
 <para>
 Check for an exact match in the pg_operator system catalog.
+</para>
 
 <substeps>
 <step performance="optional">
 <para>
 If one argument of a binary operator is <type>unknown</type>,
 then assume it is the same type as the other argument.
-
+</para>
+</step>
 <step performance="required">
 <para>
 Reverse the arguments, and look for an exact match with an operator which
 points to itself as being commutative.
 If found, then reverse the arguments in the parse tree and use this operator.
-
+</para>
+</step>
 </substeps>
+</step>
 
 <step performance="required">
 <para>
 Look for the best match.
-
+</para>
 <substeps>
 <step performance="optional">
 <para>
 Make a list of all operators of the same name.
-
+</para>
+</step>
 <step performance="required">
 <para>
 If only one operator is in the list, use it if the input type can be coerced,
 and throw an error if the type cannot be coerced.
-
+</para>
+</step>
 <step performance="required">
 <para>
 Keep all operators with the most explicit matches for types. Keep all if there
 are no explicit matches and move to the next step.
 If only one candidate remains, use it if the type can be coerced.
-
+</para>
+</step>
 <step performance="required">
 <para>
 If any input arguments are "unknown", categorize the input candidates as
@@ -235,16 +267,20 @@ categories, or more than one user-defined type, throw an error because
 the correct choice cannot be deduced without more clues.
 If only one category is present, then assign the "preferred type"
 to the input column which had been previously "unknown".
-
+</para>
+</step>
 <step performance="required">
 <para>
 Choose the candidate with the most exact type matches, and which matches
 the "preferred type" for each column category from the previous step.
 If there is still more than one candidate, or if there are none,
 then throw an error.
+</para>
+</step>
 </substeps>
-
+</step>
 </procedure>
+</sect2>
 
 <sect2>
 <title>Examples</title>
@@ -291,7 +327,10 @@ Exp
 This last form has the least overhead, since no functions are called to do
 implicit type conversion. This is not an issue for small queries, but may
 have an impact on the performance of queries involving large tables.
+</para>
 </note>
+</para>
+</sect3>
 
 <sect3>
 <title>String Concatenation</title>
@@ -300,6 +339,7 @@ have an impact on the performance of queries involving large tables.
 A string-like syntax is used for working with string types as well as for
 working with complex extended types.
 Strings with unspecified type are matched with likely operator candidates.
+</para>
 
 <para>
 One unspecified argument:
@@ -310,11 +350,13 @@ Text and Unknown
 abcdef
 (1 row)
 </programlisting>
+</para>
 
 <para>
 In this case the parser looks to see if there is an operator taking <type>text</type>
 for both arguments. Since there is, it assumes that the second argument should
 be interpreted as of type <type>text</type>.
+</para>
 
 <para>
 Concatenation on unspecified types:
@@ -325,19 +367,23 @@ Unspecified
 abcdef
 (1 row)
 </programlisting>
+</para>
 
 <para>
 In this case there is no initial hint for which type to use, since no types
 are specified in the query. So, the parser looks for all candidate operators
 and finds that all arguments for all the candidates are string types. It chooses
 the "preferred type" for strings, <type>text</type>, for this query.
+</para>
 
 <note>
 <para>
 If a user defines a new type and defines an operator <quote>||</quote> to work
 with it, then this query would no longer succeed as written. The parser would
 now have candidate types from two categories, and could not decide which to use.
+</para>
 </note>
+</sect3>
 
 <sect3>
 <title>Factorial</title>
@@ -366,12 +412,15 @@ However, the role of a database is not to teach mathematics, but
 to be a tool for data manipulation. If a user chooses to take the
 factorial of a floating point number, <productname>Postgres</productname>
 will try to oblige.
+</para>
 </note>
+</para>
+</sect3>
+</sect2>
+</sect1>
 
 <sect1>
 <title>Functions</title>
-
-<para>
 
 <procedure>
 <title>Function Evaluation</title>
@@ -379,27 +428,27 @@ will try to oblige.
 <step performance="required">
 <para>
 Check for an exact match in the pg_proc system catalog.
-
+</para></step>
 <step performance="required">
 <para>
 Look for the best match.
-
+</para>
 <substeps>
 <step performance="required">
 <para>
 Make a list of all functions of the same name with the same number of arguments.
-
+</para></step>
 <step performance="required">
 <para>
 If only one function is in the list, use it if the input types can be coerced,
 and throw an error if the types cannot be coerced.
-
+</para></step>
 <step performance="required">
 <para>
 Keep all functions with the most explicit matches for types. Keep all if there
 are no explicit matches and move to the next step.
 If only one candidate remains, use it if the type can be coerced.
-
+</para></step>
 <step performance="required">
 <para>
 If any input arguments are "unknown", categorize the input candidate arguments as
@@ -408,17 +457,17 @@ categories, or more than one user-defined type, throw an error because
 the correct choice cannot be deduced without more clues.
 If only one category is present, then assign the "preferred type"
 to the input column which had been previously "unknown".
-
+</para></step>
 <step performance="required">
 <para>
 Choose the candidate with the most exact type matches, and which matches
 the "preferred type" for each column category from the previous step.
 If there is still more than one candidate, or if there are none,
 then throw an error.
+</para></step>
 </substeps>
-
+</step>
 </procedure>
-
 <sect2>
 <title>Examples</title>
 
@@ -446,6 +495,8 @@ int4fac
      24
 (1 row)
 </programlisting>
+</para>
+</sect3>
 
 <sect3>
 <title>Substring Function</title>
@@ -453,6 +504,7 @@ int4fac
 <para>
 There are two <function>substr</function> functions declared in pg_proc. However,
 only one takes two arguments, of types <type>text</type> and <type>int4</type>.
+</para>
 
 <para>
 If called with a string constant of unspecified type, the type is matched up
@@ -464,6 +516,7 @@ substr
     34
 (1 row)
 </programlisting>
+</para>
 
 <para>
 If the string is declared to be of type <type>varchar</type>, as might be the case
@@ -483,12 +536,14 @@ substr
     34
 (1 row)
 </programlisting>
+</para>
 <note>
 <para>
 There are some heuristics in the parser to optimize the relationship between the
 <type>char</type>, <type>varchar</type>, and <type>text</type> types.
 For this case, <function>substr</function> is called directly with the <type>varchar</type> string
 rather than inserting an explicit conversion call.
+</para>
 </note>
 
 <para>
@@ -509,11 +564,13 @@ substr
     34
 (1 row)
 </programlisting>
+</para>
+</sect3>
+</sect2>
+</sect1>
 
 <sect1>
 <title>Query Targets</title>
-
-<para>
 
 <procedure>
 <title>Target Evaluation</title>
@@ -521,10 +578,11 @@ substr
 <step performance="required">
 <para>
 Check for an exact match with the target.
-
+</para></step>
 <step performance="required">
 <para>
 Try to coerce the expression directly to the target type if necessary.
+</para></step>
 
 <step performance="required">
 <para>
@@ -532,6 +590,7 @@ If the target is a fixed-length type (e.g. <type>char</type> or <type>varchar</t
 declared with a length) then try to find a sizing function of the same name
 as the type taking two arguments, the first the type name and the second an
 integer length.
+</para></step>
 
 </procedure>
 
@@ -556,7 +615,10 @@ v
 abcd
 (1 row)
 </programlisting>
-
+</para>
+</sect3>
+</sect2>
+</sect1>
 
 <sect1>
 <title>UNION Queries</title>
@@ -564,19 +626,20 @@ abcd
 <para>
 The UNION construct is somewhat different in that it must match up
 possibly dissimilar types to become a single result set.
-
+</para>
 <procedure>
 <title>UNION Evaluation</title>
 
 <step performance="required">
 <para>
 Check for identical types for all results.
+</para></step>
 
 <step performance="required">
 <para>
 Coerce each result from the UNION clauses to match the type of the
 first SELECT clause or the target column.
-
+</para></step>
 </procedure>
 
 <sect2>
@@ -594,6 +657,8 @@ a
 b
 (2 rows)
 </programlisting>
+</para>
+</sect3>
 
 <sect3>
 <title>Simple UNION</title>
@@ -607,6 +672,8 @@ Float8
    1.2
 (2 rows)
 </programlisting>
+</para>
+</sect3>
 
 <sect3>
 <title>Transposed UNION</title>
@@ -626,7 +693,7 @@ All integers
            3
 (3 rows)
 </programlisting>
-
+</para>
 <para>
 An alternate parser strategy could be to choose the "best" type of the bunch, but
 this is more difficult because of the nice recursion technique used in the
@@ -649,5 +716,8 @@ tgl=> SELECT f AS "Floating point" from ff;
              3.3
 (3 rows)
 </programlisting>
-
+</para>
+</sect3>
+</sect2>
+</sect1>
 </chapter>

@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Removes an existing sequence
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-22</DATE>
@@ -70,7 +71,11 @@ DROP SEQUENCE <REPLACEABLE CLASS="PARAMETER">seqname</REPLACEABLE> [, ...]
 	 <LISTITEM>
 	  <PARA>
 	   This message occurs if the specified sequence does not exist.
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -105,6 +110,7 @@ DROP SEQUENCE <REPLACEABLE CLASS="PARAMETER">seqname</REPLACEABLE> [, ...]
     information on how to create a sequence.
    </PARA>
   </REFSECT2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-DROPSEQUENCE-2">
   <TITLE>

@@ -17,10 +17,12 @@
 Contributed by <ULink url="mailto:dz@cs.unitn.it">Massimo Dal Zotto</ULink>
 </Para>
 </Note>
+</para>
 
 <para>
 <productname>Postgres</productname> uses the following signals for
  communication between the postmaster and backends:
+</para>
 
 <para>
 <table tocentry="1">
@@ -32,103 +34,156 @@ Contributed by <ULink url="mailto:dz@cs.unitn.it">Massimo Dal Zotto</ULink>
 <row>
 <entry>
 Signal
+</entry>
 <entry>
 <application>postmaster</application> Action
+</entry>
 <entry>
 Server Action
+</entry>
+</row>
+</thead>
 
 <tbody>
 <row>
 <entry>
 SIGHUP
+</entry>
 <entry>
 kill(*,sighup)
+</entry>
 <entry>
 read_pg_options
+</entry>
+</row>
 
 <row>
 <entry>
 SIGINT
+</entry>
 <entry>
 die
+</entry>
 <entry>
 cancel query
+</entry>
+</row>
 
 <row>
 <entry>
 SIGQUIT
+</entry>
 <entry>
 kill(*,sigterm)
+</entry>
 <entry>
 handle_warn
+</entry>
+</row>
 
 <row>
 <entry>
 SIGTERM
+</entry>
 <entry>
 kill(*,sigterm), kill(*,9), die
+</entry>
 <entry>
 die
+</entry>
+</row>
 
 <row>
 <entry>
 SIGPIPE
+</entry>
 <entry>
 ignored
+</entry>
 <entry>
 die
+</entry>
+</row>
 
 <row>
 <entry>
 SIGUSR1
+</entry>
 <entry>
 kill(*,sigusr1), die
+</entry>
 <entry>
 quickdie
+</entry>
+</row>
 
 <row>
 <entry>
 SIGUSR2
+</entry>
 <entry>
 kill(*,sigusr2)
+</entry>
 <entry>
 async notify (SI flush)
+</entry>
+</row>
 
 <row>
 <entry>
 SIGCHLD
+</entry>
 <entry>
 reaper
+</entry>
 <entry>
 ignored (alive test)
+</entry>
+</row>
 
 <row>
 <entry>
 SIGTTIN
+</entry>
 <entry>
 ignored
+</entry>
 <entry>
+</entry>
+</row>
 
 <row>
 <entry>
 SIGTTOU
+</entry>
 <entry>
 ignored
+</entry>
 <entry>
+</entry>
+</row>
 
 <row>
 <entry>
 SIGCONT
+</entry>
 <entry>
 dumpstatus
+</entry>
 <entry>
+</entry>
+</row>
 
 <row>
 <entry>
 SIGFPE
+</entry>
 <entry>
+</entry>
 <entry>
 FloatExceptionHandler
+</entry>
+</row>
 
 </tbody>
 </tgroup>
@@ -137,7 +192,9 @@ FloatExceptionHandler
 <note>
 <para>
 <quote>kill(*,signal)</quote> means sending a signal to all backends.
+</para>
 </note>
+</para>
 
 <para>
 The main changes to the old signal handling are the use of SIGQUIT instead
@@ -148,6 +205,7 @@ In this way these signals sent to the postmaster can be sent
 automatically to all the backends without need to know their pids.
 To shut down postgres one needs only to send a SIGTERM to postmaster
 and it will stop automatically all the backends.
+</para>
 
 <para>
 The SIGUSR2 signal is also used to prevent SI cache table overflow
@@ -155,6 +213,7 @@ which happens when some backend doesn't process SI cache for a long period.
 When a backend detects the SI table full at 70% it simply sends a signal
 to the postmaster which will wake up all idle backends and make them flush
 the cache.
+</para>
 
 <para>
 The typical use of signals by programmers could be the following:
@@ -186,5 +245,5 @@ cat new_pg_options > $DATA_DIR/pg_options
 kill -HUP $backend_pid
 cat old_pg_options > $DATA_DIR/pg_options
 </programlisting>
-
+</para>
 </chapter>

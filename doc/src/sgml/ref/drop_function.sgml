@@ -12,7 +12,7 @@
   <REFPURPOSE>
    Removes a user-defined C function
   </REFPURPOSE>
-  
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-04-15</DATE>
@@ -82,8 +82,11 @@ DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable
 	  <PARA>
 	   This message is given if the function specified does not
 exist in the current database.
-
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -118,6 +121,7 @@ CREATE FUNCTION
  to create aggregate functions.
    </PARA>
   </REFSECT2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-DROPFUNCTION-2">
   <TITLE>
@@ -130,6 +134,7 @@ CREATE FUNCTION
 DROP FUNCTION sqrt(int4);
   </ProgramListing>
  </REFSECT1>
+
  <REFSECT1 ID="R1-SQL-DROPFUNCTION-3">
   <TITLE>
    Bugs

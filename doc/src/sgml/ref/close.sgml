@@ -12,7 +12,7 @@
   <REFPURPOSE>
    Close a cursor
   </REFPURPOSE>
-
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-08</DATE>
@@ -41,6 +41,7 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
+   </para>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CLOSE-2">
@@ -71,9 +72,11 @@ CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
 	   This warning is given if
 	   <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE> is not
 	   declared or has already been closed.
-
-   </VARIABLELIST>
-   
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  

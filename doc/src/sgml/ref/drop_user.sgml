@@ -12,7 +12,7 @@
   <REFPURPOSE>
    Removes an user account information
   </REFPURPOSE>
-  
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-22</DATE>
@@ -70,10 +70,11 @@ DROP USER <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE>
 	 <LISTITEM>
 	  <PARA>
 	   This message occurs if the username is not found.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-      </VARIABLELIST>
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -111,6 +112,7 @@ DROP USER <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE>
     how to create or modify user accounts.
    </PARA>
   </REFSECT2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-DROPUSER-2">
   <TITLE>

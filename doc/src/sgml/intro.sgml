@@ -65,6 +65,7 @@ are not as well suited to supporting the traditional relational database languag
 So, although <ProductName>Postgres</ProductName> has some object-oriented features,
 it is firmly in the relational database world. In fact, some commercial databases
 have recently incorporated features pioneered by <ProductName>Postgres</ProductName>.
+</Para>
 
 </Sect1>
 

@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Removes an index from a database
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-04-15</DATE>
@@ -70,8 +71,11 @@ DROP INDEX <REPLACEABLE CLASS="PARAMETER">index_name</REPLACEABLE>
 	  <PARA>
 	   This message occurs if <REPLACEABLE CLASS="PARAMETER">index_name</REPLACEABLE>
  is not an index in the database.
-
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
 
@@ -104,6 +108,7 @@ DROP INDEX <REPLACEABLE CLASS="PARAMETER">index_name</REPLACEABLE>
     information on how to create indexes.
    </PARA>
   </REFSECT2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-DROPINDEX-2">
   <TITLE>

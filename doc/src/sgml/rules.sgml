@@ -28,7 +28,7 @@
 [<XRef LinkEnd="ONG90" EndTerm="ONG90">]
  as well as
 [<XRef LinkEnd="STON90b" EndTerm="STON90b">].
-
+</para>
 <Sect1>
 <Title>What is a Querytree?</Title>
 
@@ -224,6 +224,7 @@
     </VarListEntry>
 
 </VariableList>
+</para>
 </Sect2>
 </Sect1>
 
@@ -1020,7 +1021,7 @@
     create zero or many new parsetrees and can throw away the
     original one.
 </Para>
-
+</sect2>
 <Sect2>
 <Title>How These Rules Work</Title>
 
@@ -1128,7 +1129,7 @@
     </Para>
     </ListItem>
     </ItemizedList>
-
+</para>
 <Para>
     Finally, if the rule is not INSTEAD, the unchanged original parsetree is
     added to the list. Since only qualified INSTEAD rules already add the

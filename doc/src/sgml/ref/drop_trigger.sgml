@@ -11,7 +11,8 @@
   </REFNAME>
   <REFPURPOSE>
    Removes the definition of a trigger
-  </REFPURPOSE>             
+  </REFPURPOSE> 
+ </refnamediv>            
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-22</DATE>
@@ -80,9 +81,11 @@ DROP TRIGGER <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> ON <REPLACEABLE C
 	 <LISTITEM>
 	  <PARA>
           This message occurs if the trigger specified does not exist.
-
-</VARIABLELIST>
-   
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -115,6 +118,7 @@ DROP TRIGGER <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> ON <REPLACEABLE C
     information on how to create triggers.
    </PARA>
   </REFSECT2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-DROPTRIGGER-2">
   <TITLE>

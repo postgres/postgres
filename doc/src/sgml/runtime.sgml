@@ -4,7 +4,7 @@
 <Para>
 This chapter outlines the interaction between <Productname>Postgres</Productname> and
 the operating system.
-
+</para>
 <sect1>
 <title>Using <Productname>Postgres</Productname> from Unix</title>
 
@@ -13,7 +13,7 @@ All <Productname>Postgres</Productname> commands that are executed
 directly from a Unix shell are
 found in the directory <quote>.../bin</quote>.  Including this directory in
 your search path will make executing the commands easier.
-
+</para>
 <para>
 A collection of system catalogs exist at each site.  These include a
 class (<literal>pg_user</literal>) that contains an instance for each valid
@@ -26,6 +26,9 @@ user cannot do anything with <Productname>Postgres</Productname>
 until an appropriate instance is
 installed in this class.  Further information on the system catalogs
 is available by running queries on the appropriate classes.
+</para>
+</sect1>
+</chapter>
 
 <chapter id="layout">
 <Title>System Layout</Title>

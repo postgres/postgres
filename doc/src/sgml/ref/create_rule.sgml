@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Defines a new rule
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-11</DATE>
@@ -110,10 +111,11 @@ CREATE RULE <replaceable class="parameter">name</replaceable>
 	 <LISTITEM>
 	  <PARA>
 	   Message returned if the rule is successfully created.
-
-    </VARLISTENTRY>
-   </VARIABLELIST>
-   
+	</para>
+      </listitem>
+     </VARLISTENTRY>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -216,8 +218,8 @@ select * from EMP
    <para>
     You must have rule definition access to a class in order
     to define a rule on it. Use <command>GRANT</command>
-and <command>REVOKE</command> to change permissions.
-
+    and <command>REVOKE</command> to change permissions.
+    
    </PARA>
   </REFSECT2>
  </refsect1>
@@ -307,6 +309,7 @@ create rule example_5 is
    fail if the rule plus its various internal representations
    exceed some value that is on the order of one page (8KB).
    </PARA>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-CREATERULE-4">
   <TITLE>

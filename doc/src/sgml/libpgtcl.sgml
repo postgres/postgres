@@ -281,6 +281,7 @@ Handles start with the prefix "pgsql".
 </TITLE>
 <PARA><FUNCTION>pg_connect</FUNCTION> opens a connection to the
 <ProductName>Postgres</ProductName> backend.
+</Para>
 
 <para>
 Two syntaxes are available.  In the older one, each possible option
@@ -421,8 +422,10 @@ None.
 The result is a list describing the possible connection options and their
 current default values.
 Each entry in the list is a sublist of the format:
+</Para>
 <para>
 	 {optname label dispchar dispsize value}
+</Para>
 <Para>
 where the optname is usable as an option in
 <FUNCTION>pg_connect -conninfo</FUNCTION>.
@@ -540,6 +543,7 @@ to obtain the results of the query.
 
 Query result handles start with the connection handle and add a period
 and a result number.
+</Para>
 
 <PARA>
 Note that lack of a Tcl error is not proof that the query succeeded!
@@ -548,6 +552,7 @@ as a query result with failure status, not by generating a Tcl error
 in pg_exec.
 </PARA>
 </REFSECT1>
+</refentry>
 
 <REFENTRY ID="PGTCL-PGRESULT">
 <REFMETA>
@@ -765,6 +770,7 @@ The result depends on the selected option, as described above.
 <PARA>
 <FUNCTION>pg_result</FUNCTION> returns information about a query result
 created by a prior <FUNCTION>pg_exec</FUNCTION>.
+</Para>
 
 <para>
 You can keep a query result around for as long as you need it, but when
@@ -1012,6 +1018,7 @@ The command string is executed from the Tcl idle loop.  That is the normal
 idle state of an application written with Tk.  In non-Tk Tcl shells, you can
 execute <FUNCTION>update</FUNCTION> or <FUNCTION>vwait</FUNCTION> to cause
 the idle loop to be entered.
+</Para>
 
 <para>
 You should not invoke the SQL statements LISTEN or UNLISTEN directly when

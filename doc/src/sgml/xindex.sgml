@@ -196,7 +196,7 @@ Strictly  speaking, this routine can return a negative
 number (< 0), 0, or a non-zero positive number (> 0).
 </Para>
 </Note>
-
+</para>
 <Para>
      The <FileName>amstrategies</FileName> entry in pg_am is just the  number  of
      strategies  defined  for the access method in question.

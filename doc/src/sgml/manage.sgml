@@ -82,6 +82,7 @@ It is possible to create a database in a location other than the default
 location for the installation. Remember that all database access actually
 occurs through the database backend, so that any location specified must
 be accessible by the backend.
+</Para>
 
 <Para>
  Alternate database locations are created and referenced by an environment variable 
@@ -94,6 +95,7 @@ Any valid environment variable name may be used to reference an alternate locati
 although using variable names with a prefix of <quote>PGDATA</quote> is recommended 
 to avoid confusion 
 and conflict with other variables.
+</Para>
 
 <Note>
 <Para>
@@ -112,10 +114,12 @@ The administrator's guide discusses how to enable this feature.
 For security and integrity reasons,
 any path or environment variable specified has some
 additional path fields appended.
+</Para>
 
 <Para>
 Alternate database locations must be prepared by running 
 <Application>initlocation</Application>.
+</Para>
 
 <Para>
 To create a data storage area using the environment variable 
@@ -128,9 +132,10 @@ Then, from the command line, type
 Creating Postgres database system directory /alt/postgres/data
 Creating Postgres database system directory /alt/postgres/data/base
 </ProgramListing>
+</Para>
 
 <Para>
-To create a database in the alternate storage area <envar>PGDATA2<envar>
+To create a database in the alternate storage area <envar>PGDATA2</envar>
 from the command line, use the following command: 
 <ProgramListing>
 % createdb -D PGDATA2 mydb
@@ -161,6 +166,7 @@ the following:
 ERROR:  Unable to create database directory /alt/postgres/data/base/mydb
 createdb: database creation failed on mydb.
 </ProgramListing>
+</Para>
 
 </Sect1>
 
@@ -260,6 +266,7 @@ mydb=> \q
 <Title>Database Privileges</Title>
 
 <Para>
+</para>
 </Sect2>
 
 <Sect2>

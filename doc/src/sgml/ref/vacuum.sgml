@@ -12,6 +12,7 @@ VACUUM
 <REFPURPOSE>
 Clean and analyze a <productname>Postgres</productname> database
 </REFPURPOSE>
+  </refnamediv>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
 <DATE>1998-10-04</DATE>
@@ -21,163 +22,191 @@ VACUUM [ VERBOSE ] [ ANALYZE ] [ <REPLACEABLE CLASS="PARAMETER">table</REPLACEAB
 VACUUM [ VERBOSE ] ANALYZE [ <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> [ (<REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [, ...] ) ] ]
 </SYNOPSIS>
 
-<REFSECT2 ID="R2-SQL-VACUUM-1">
-<REFSECT2INFO>
-<DATE>1998-10-04</DATE>
-</REFSECT2INFO>
-<TITLE>
-Inputs
-</TITLE>
-<PARA>
+    <REFSECT2 ID="R2-SQL-VACUUM-1">
+      <REFSECT2INFO>
+	<DATE>1998-10-04</DATE>
+      </REFSECT2INFO>
+      <TITLE>
+	Inputs
+      </TITLE>
+      <PARA>
+	
+	<VARIABLELIST>
+	  <VARLISTENTRY>
+	    <TERM>
+	      VERBOSE
+	    </term>
+	    <LISTITEM>
+	      <PARA>
+		Prints a detailed vacuum activity report for each table.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <VARLISTENTRY>
+	    <TERM>
+	      ANALYZE
+	    </term>
+	    <LISTITEM>
+	      <PARA>
+		Updates column statistics used by the optimizer to
+		determine the most efficient way to execute a query.
+		The statistics represent the disbursion of the data in each column.
+		This information is valuable when several execution paths are possible.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <VARLISTENTRY>
+	    <TERM>
+	      <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+	    </term>
+	    <LISTITEM>
+	      <PARA>
+		The name of a specific table to vacuum. Defaults to all tables.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <VARLISTENTRY>
+	    <TERM>
+	      <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
+	    </term>
+	    <LISTITEM>
+	      <PARA>
+		The name of a specific column to analyze. Defaults to all columns.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	</VARIABLELIST>
+      </para>
+    </REFSECT2>
 
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-VERBOSE
-<LISTITEM>
-<PARA>
-Prints a detailed vacuum activity report for each table.
+    <REFSECT2 ID="R2-SQL-VACUUM-2">
+      <REFSECT2INFO>
+	<DATE>1998-10-04</DATE>
+      </REFSECT2INFO>
+      <TITLE>
+	Outputs
+      </TITLE>
+      <PARA>
 
-<VARLISTENTRY>
-<TERM>
-ANALYZE
-<LISTITEM>
-<PARA>
-Updates column statistics used by the optimizer to
-determine the most efficient way to execute a query.
-The statistics represent the disbursion of the data in each column.
-This information is valuable when several execution paths are possible.
+	<VARIABLELIST>
+	  <VARLISTENTRY>
+	    <TERM>
+	      <ReturnValue>VACUUM</ReturnValue>
+	    </TERM>
+	    <LISTITEM>
+	      <PARA>
+		The command has been accepted and the database is being cleaned.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <VARLISTENTRY>
+	    <TERM>
+	      NOTICE:  --Relation <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>--
+	    </term>
+	    <LISTITEM>
+	      <PARA>
+		The report header for <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>.
+	      </para>
+	    </listitem>
+	  </varlistentry>
 
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-<LISTITEM>
-<PARA>
-The name of a specific table to vacuum. Defaults to all tables.
+	  <VARLISTENTRY>
+	    <TERM>
+	      NOTICE:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
+	      Tup 1000: Vac 3000, Crash 0, UnUsed 0, MinLen 188, MaxLen 188;
+	      Re-using: Free/Avail. Space 586952/586952; EndEmpty/Avail. Pages 0/74.
+	      Elapsed 0/0 sec.
+	    </term>
+	    <LISTITEM>
+	      <PARA>
+		The analysis for <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> itself.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <VARLISTENTRY>
+	    <TERM>
+	      NOTICE:  Index <REPLACEABLE CLASS="PARAMETER">index</REPLACEABLE>: Pages 28;
+	      Tuples 1000: Deleted 3000. Elapsed 0/0 sec.
+	    </term>
+	    <LISTITEM>
+	      <PARA>
+		The analysis for an index on the target table.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	</VARIABLELIST>
+      </para>
+    </REFSECT2>
+  </REFSYNOPSISDIV>
 
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
-<LISTITEM>
-<PARA>
-The name of a specific column to analyze. Defaults to all columns.
+  <REFSECT1 ID="R1-SQL-VACUUM-1">
+    <REFSECT1INFO>
+      <DATE>1998-10-04</DATE>
+    </REFSECT1INFO>
+    <TITLE>
+      Description
+    </TITLE>
+    <PARA>
+      <command>VACUUM</command> serves two purposes in 
+      <productname>Postgres</productname> as both a means to reclaim storage and
+      also a means to collect information for the optimizer.
+    </para>
+    <para>
+      <command>VACUUM</command> opens every class in the database,
+      cleans out records from rolled back transactions, and updates statistics in the
+      system catalogs.  The statistics maintained include the number of
+      tuples and number of pages stored in all classes.
 
-</VARIABLELIST>
+      Running <command>VACUUM</command>
+      periodically will increase the speed of the database in processing user queries.
+    </para>
 
-</REFSECT2>
+    <REFSECT2 ID="R2-SQL-VACUUM-3">
+      <REFSECT2INFO>
+	<DATE>1998-10-04</DATE>
+      </REFSECT2INFO>
+      <TITLE>
+	Notes
+      </TITLE>
+      <PARA>
+	The open database is target for <command>VACUUM</command>.
+      </para>
+      <para>
+	We recommend that active production databases be cleaned nightly, in order
+	to keep statistics relatively current.  The <command>VACUUM</command>
+	query may be executed at any time, however.  In particular, after
+	copying a large class into <productname>Postgres</productname> 
+	or after deleting a large number of
+	records, it may be a good idea to issue a <command>VACUUM</command>
+	query.  This will update the system catalogs with the results of all
+	recent changes, and allow the <productname>Postgres</productname> 
+	query optimizer to make better choices in planning user queries.
+      </para>
+      <para>
+	If the server crashes during a <command>VACUUM</command> command, 
+	chances are it will leave a lock file hanging around.  
+	Attempts to re-run the <command>VACUUM</command> command
+	result in an error message about the creation of a lock file.  If you
+	are sure <command>VACUUM</command> is not running, 
+	remove the <filename>pg_vlock</filename> file in your
+	database directory 
+	(i.e. <filename><envar>PGDATA</envar>/base/dbname/pg_vlock</filename>).
+      </PARA>
+      
+    </REFSECT2>
+  </refsect1>
 
-<REFSECT2 ID="R2-SQL-VACUUM-2">
-<REFSECT2INFO>
-<DATE>1998-10-04</DATE>
-</REFSECT2INFO>
-<TITLE>
-Outputs
-</TITLE>
-<PARA>
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-<ReturnValue>VACUUM</ReturnValue>
-</TERM>
-<LISTITEM>
-<PARA>
-The command has been accepted and the database is being cleaned.
-
-<VARLISTENTRY>
-<TERM>
-NOTICE:  --Relation <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>--
-<LISTITEM>
-<PARA>
-The report header for <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>.
-
-<VARLISTENTRY>
-<TERM>
-NOTICE:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
-         Tup 1000: Vac 3000, Crash 0, UnUsed 0, MinLen 188, MaxLen 188;
-         Re-using: Free/Avail. Space 586952/586952; EndEmpty/Avail. Pages 0/74.
-         Elapsed 0/0 sec.
-<LISTITEM>
-<PARA>
-The analysis for <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> itself.
-
-<VARLISTENTRY>
-<TERM>
-NOTICE:  Index <REPLACEABLE CLASS="PARAMETER">index</REPLACEABLE>: Pages 28;
-         Tuples 1000: Deleted 3000. Elapsed 0/0 sec.
-<LISTITEM>
-<PARA>
-The analysis for an index on the target table.
-
-</VARIABLELIST>
-
-</REFSECT2>
-</REFSYNOPSISDIV>
-
-<REFSECT1 ID="R1-SQL-VACUUM-1">
-<REFSECT1INFO>
-<DATE>1998-10-04</DATE>
-</REFSECT1INFO>
-<TITLE>
-Description
-</TITLE>
-<PARA>
-<command>VACUUM</command> serves two purposes in 
-<productname>Postgres</productname> as both a means to reclaim storage and
-also a means to collect information for the optimizer.
-
-<para>
-<command>VACUUM</command> opens every class in the database,
-cleans out records from rolled back transactions, and updates statistics in the
-system catalogs.  The statistics maintained include the number of
-tuples and number of pages stored in all classes.
-
-Running <command>VACUUM</command>
-periodically will increase the speed of the database in processing user queries.
-
-<REFSECT2 ID="R2-SQL-VACUUM-3">
-<REFSECT2INFO>
-<DATE>1998-10-04</DATE>
-</REFSECT2INFO>
-<TITLE>
-Notes
-</TITLE>
-<PARA>
-The open database is target for <command>VACUUM</command>.
-
-<para>
-We recommend that active production databases be cleaned nightly, in order
-to keep statistics relatively current.  The <command>VACUUM</command>
-query may be executed at any time, however.  In particular, after
-copying a large class into <productname>Postgres</productname> 
-or after deleting a large number of
-records, it may be a good idea to issue a <command>VACUUM</command>
-query.  This will update the system catalogs with the results of all
-recent changes, and allow the <productname>Postgres</productname> 
-query optimizer to make better choices in planning user queries.
-
-<para>
-If the server crashes during a <command>VACUUM</command> command, 
-chances are it will leave a lock file hanging around.  
-Attempts to re-run the <command>VACUUM</command> command
-result in an error message about the creation of a lock file.  If you
-are sure <command>VACUUM</command> is not running, 
-remove the <filename>pg_vlock</filename> file in your
-database directory 
-(i.e. <filename><envar>PGDATA</envar>/base/dbname/pg_vlock</filename>).
-</PARA>
-
-</REFSECT2>
-
-<REFSECT1 ID="R1-SQL-VACUUM-2">
-<TITLE>
-Usage
-</TITLE>
-<PARA>
-The following is an example from running <command>VACUUM</command> on a table
-in the regression database:
-
-<ProgramListing>
+  <REFSECT1 ID="R1-SQL-VACUUM-2">
+    <TITLE>
+      Usage
+    </TITLE>
+    <PARA>
+      The following is an example from running <command>VACUUM</command> on a table
+      in the regression database:
+      
+      <ProgramListing>
 regression=> vacuum verbose analyze onek;
 NOTICE:  --Relation onek--
 NOTICE:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
@@ -194,24 +223,24 @@ NOTICE:  Index onek_hundred: Pages 12; Tuples 1000: Deleted 1000. Elapsed 0/0 se
 NOTICE:  Index onek_unique2: Pages 19; Tuples 1000: Deleted 1000. Elapsed 0/0 sec.
 NOTICE:  Index onek_unique1: Pages 17; Tuples 1000: Deleted 1000. Elapsed 0/0 sec.
 VACUUM
-</ProgramListing>
+      </ProgramListing>
+    </para>
+  </REFSECT1>
 
-</REFSECT1>
-
-<REFSECT1 ID="R1-SQL-VACUUM-3">
-<TITLE>
-Compatibility
-</TITLE>
-<PARA>
-
-<REFSECT2 ID="R2-SQL-VACUUM-4">
-<REFSECT2INFO>
-<DATE>1998-10-04</DATE>
-</REFSECT2INFO>
-<TITLE>
-SQL92
-</TITLE>
-<PARA>
-There is no <COMMAND>VACUUM</COMMAND> statement in SQL92.
-
+  <REFSECT1 ID="R1-SQL-VACUUM-3">
+    <TITLE>
+      Compatibility
+    </TITLE>
+    <REFSECT2 ID="R2-SQL-VACUUM-4">
+      <REFSECT2INFO>
+	<DATE>1998-10-04</DATE>
+      </REFSECT2INFO>
+      <TITLE>
+	SQL92
+      </TITLE>
+      <PARA>
+	There is no <COMMAND>VACUUM</COMMAND> statement in SQL92.
+      </para>
+    </refsect2>
+  </refsect1>
 </REFENTRY>

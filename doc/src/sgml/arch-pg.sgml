@@ -30,7 +30,7 @@
 </Para>
 </ListItem>
 </ItemizedList>
-
+</para>
 <Para>
      A single  <Application>postmaster</Application>  manages  a  given  collection  of
      databases  on  a  single  host.   Such  a collection of
@@ -79,5 +79,5 @@ Furthermore,  the  <ProductName>Postgres</ProductName>  superuser should
      case, all files relating to a database should belong to
      this <ProductName>Postgres</ProductName> superuser.
 </Para>
-
+</sect1>
 </Chapter>

@@ -13,6 +13,7 @@
   <REFPURPOSE>
    Defines a new aggregate function
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-09</DATE>
@@ -150,11 +151,11 @@ The initial value for the first transition function argument.
 The initial value for the second transition function argument.
       </para>
      </listitem>
-    </varlistentry>
-   </variablelist>
-
+     </varlistentry>
+    </variablelist>
+   </para>
   </REFSECT2>
-
+  
   <REFSECT2 ID="R2-SQL-CREATEAGGREGATE-2">
    <REFSECT2INFO>
     <DATE>1998-09-09</DATE>
@@ -163,20 +164,23 @@ The initial value for the second transition function argument.
     Outputs
    </TITLE>
    <PARA>
-
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>CREATE</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          Message returned if the command completes successfully.
-   </VARIABLELIST>
-
+    
+    <VARIABLELIST>
+     <VARLISTENTRY>
+      <TERM>
+       <ReturnValue>CREATE</ReturnValue>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	Message returned if the command completes successfully.
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
-
+ 
  <REFSECT1 ID="R1-SQL-CREATEAGGREGATE-1">
   <REFSECT1INFO>
    <DATE>1998-09-09</DATE>
@@ -184,80 +188,80 @@ The initial value for the second transition function argument.
   <TITLE>
    Description
   </TITLE>
-<para>
-    <command>CREATE AGGREGATE</command> 
-allows a user or programmer to extend <productname>Postgres</productname>
-functionality by defining new aggregate functions. Some aggregate functions
-for base types such as <function>min(int4)</function>
- and <function>avg(float8)</function> are already provided in the base
-distribution. If one defines new types or needs an aggregate function not
-already provided then <command>CREATE AGGREGATE</command>
-can be used to provide the desired features.
-
+  <para>
+   <command>CREATE AGGREGATE</command> 
+   allows a user or programmer to extend <productname>Postgres</productname>
+   functionality by defining new aggregate functions. Some aggregate functions
+   for base types such as <function>min(int4)</function>
+   and <function>avg(float8)</function> are already provided in the base
+   distribution. If one defines new types or needs an aggregate function not
+   already provided then <command>CREATE AGGREGATE</command>
+   can be used to provide the desired features.
+  </para>
   <PARA>
    An  aggregate  function can require up to three functions, two
    state transition functions, 
-<REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>
- and <REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>:
-<programlisting>
-<REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>( internal-state1, next-data_item ) ---> next-internal-state1
-<REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>( internal-state2 ) ---> next-internal-state2
-</programlisting>
+   <REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>
+   and <REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>:
+   <programlisting>
+    <REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>( internal-state1, next-data_item ) ---> next-internal-state1
+    <REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>( internal-state2 ) ---> next-internal-state2
+   </programlisting>
    and a final calculation function,
- <REPLACEABLE CLASS="PARAMETER">ffunc</REPLACEABLE>:
-<programlisting>
-<REPLACEABLE CLASS="PARAMETER">ffunc</REPLACEABLE>(internal-state1, internal-state2) ---> aggregate-value
-</programlisting>
-
-<para>
-<productname>Postgres</productname> creates up to two temporary variables
-(referred to here as <REPLACEABLE CLASS="PARAMETER">temp1</REPLACEABLE>
-and <REPLACEABLE CLASS="PARAMETER">temp2</REPLACEABLE>)
-to hold intermediate results used as arguments to the transition functions.
-
-<para>
+   <REPLACEABLE CLASS="PARAMETER">ffunc</REPLACEABLE>:
+   <programlisting>
+    <REPLACEABLE CLASS="PARAMETER">ffunc</REPLACEABLE>(internal-state1, internal-state2) ---> aggregate-value
+   </programlisting>
+  </para>
+  <para>
+   <productname>Postgres</productname> creates up to two temporary variables
+   (referred to here as <REPLACEABLE CLASS="PARAMETER">temp1</REPLACEABLE>
+   and <REPLACEABLE CLASS="PARAMETER">temp2</REPLACEABLE>)
+   to hold intermediate results used as arguments to the transition functions.
+  </para>
+  <para>
    These transition functions are required to have the following properties:
    <itemizedlist>
     <listitem>
      <para>
       The  arguments  to 
-<REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>
- must be
-<REPLACEABLE CLASS="PARAMETER">temp1</REPLACEABLE>
-of type
-<REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE>
-and
-<REPLACEABLE CLASS="PARAMETER">column_value</REPLACEABLE>
-of type <REPLACEABLE CLASS="PARAMETER">data_type</REPLACEABLE>.
-The return value must  be of type
-<REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE>
-and will be used as the first argument in the next call to 
-<REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>.
+      <REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>
+      must be
+      <REPLACEABLE CLASS="PARAMETER">temp1</REPLACEABLE>
+      of type
+      <REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE>
+      and
+      <REPLACEABLE CLASS="PARAMETER">column_value</REPLACEABLE>
+      of type <REPLACEABLE CLASS="PARAMETER">data_type</REPLACEABLE>.
+      The return value must  be of type
+      <REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE>
+      and will be used as the first argument in the next call to 
+      <REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>.
      </para>
     </listitem>
-
+    
     <listitem>
      <para>
       The  argument and return value of 
-<REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>
-must be
-<REPLACEABLE CLASS="PARAMETER">temp2</REPLACEABLE>
-of type
-<REPLACEABLE CLASS="PARAMETER">sfunc2_return_type</REPLACEABLE>.
+      <REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>
+      must be
+      <REPLACEABLE CLASS="PARAMETER">temp2</REPLACEABLE>
+      of type
+      <REPLACEABLE CLASS="PARAMETER">sfunc2_return_type</REPLACEABLE>.
      </para>
     </listitem>
     <listitem>     
      <para>
       The  arguments  to  the  final-calculation-function
       must  be
-<REPLACEABLE CLASS="PARAMETER">temp1</REPLACEABLE>
-and
-<REPLACEABLE CLASS="PARAMETER">temp2</REPLACEABLE>
-and its return value must
+      <REPLACEABLE CLASS="PARAMETER">temp1</REPLACEABLE>
+      and
+      <REPLACEABLE CLASS="PARAMETER">temp2</REPLACEABLE>
+      and its return value must
       be a <productname>Postgres</productname>
- base type (not necessarily
- <REPLACEABLE CLASS="PARAMETER">data_type</REPLACEABLE> 
-which had been specified for BASETYPE).
+      base type (not necessarily
+      <REPLACEABLE CLASS="PARAMETER">data_type</REPLACEABLE> 
+      which had been specified for BASETYPE).
      </para>
     </listitem>
     <listitem>
@@ -269,7 +273,7 @@ which had been specified for BASETYPE).
     </listitem>
    </itemizedlist>
   </PARA>  
-
+  
   <para>	
    An aggregate function may also  require  one or two initial conditions,
  one for
@@ -301,41 +305,42 @@ which had been specified for BASETYPE).
    well as a FINALFUNC (a division function) to  produce  its
    answer.   In any case, at least one state function must be
    defined, and any SFUNC2 must have  a  corresponding  INITCOND2.
-  </para>
-
+   </para>
+   
   </REFSECT2>
-  
+ </refsect1>
+
  <REFSECT1 ID="R1-SQL-CREATEAGGREGATE-2">
   <TITLE>
    Usage
   </TITLE>
   <PARA>
-Refer to the chapter on aggregate functions
- in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
- on aggregate functions for
-complete examples of usage.
-  
+   Refer to the chapter on aggregate functions
+   in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
+   on aggregate functions for
+   complete examples of usage.
+  </para>   
  </REFSECT1>
  
  <REFSECT1 ID="R1-SQL-CREATEAGGREGATE-3">
   <TITLE>
    Compatibility
   </TITLE>
-  <PARA>
-
+  
   <REFSECT2 ID="R2-SQL-CREATEAGGREGATE-4">
    <REFSECT2INFO>
-<DATE>1998-09-09</DATE>
+    <DATE>1998-09-09</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
     <command>CREATE AGGREGATE</command> 
-is a <productname>Postgres</productname> language extension.
+    is a <productname>Postgres</productname> language extension.
     There is no <command>CREATE AGGREGATE</command> in SQL92.
    </PARA>
-   
+  </refsect2>
+ </refsect1>
 </REFENTRY>
 
 <!-- Keep this comment at the end of the file

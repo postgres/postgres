@@ -72,6 +72,7 @@
          +-------+
 </ProgramListing>
 </Para>
+</sect2>
 
 <Sect2>
 <Title><Acronym>SQL</Acronym> Functions on Composite Types</Title>
@@ -98,7 +99,7 @@
          |Sam  | 2400  |
          +-----+-------+
 </ProgramListing>
-
+</para>
 <Para>
      Notice the use of the syntax $1.salary.
      Before launching into the  subject  of  functions  that
@@ -122,7 +123,7 @@
          |Sam       |
          +----------+
 </ProgramListing>
-
+</para>
 <Para>
      As  we shall see, however, this is not always the case.
      This function notation is important when we want to use
@@ -156,6 +157,7 @@ The  target  list  order must be exactly the same as
         that in which the attributes appear  in  the  CREATE
         TABLE statement (or when you execute a .*  query).
 </Para>
+      </ListItem>
       <ListItem>
 <Para>
 You  must  typecast the expressions
@@ -165,6 +167,7 @@ You  must  typecast the expressions
             WARN::function declared to return type EMP does not retrieve (EMP.*)
 </ProgramListing>
 </Para>
+      </ListItem>
 <ListItem>
 <Para>
 When calling a function that returns an instance, we
@@ -181,6 +184,7 @@ When calling a function that returns an instance, we
             +-------+
 </ProgramListing>
 </Para>
+      </ListItem>
 <ListItem>
 <Para>
 The reason why, in general, we must use the function
@@ -194,8 +198,9 @@ The reason why, in general, we must use the function
             WARN:parser: syntax error at or near "."
 </ProgramListing>
 </Para>
+      </ListItem>
 </ItemizedList>
-     
+</para>     
 <Para>
      Any collection of commands in the  <Acronym>SQL</Acronym>  query  language
      can  be  packaged  together  and defined as a function.
@@ -219,6 +224,8 @@ The reason why, in general, we must use the function
          +--+
 </ProgramListing>
 </Para>
+</sect2>
+</sect1>
 
 <Sect1>
 <Title>Programming Language Functions</Title>
@@ -236,8 +243,11 @@ The reason why, in general, we must use the function
      Base types can have one of three internal formats:
 <ItemizedList>
 <ListItem><Para>pass by value, fixed-length</Para>
+      </ListItem>
 <ListItem><Para>pass by reference, fixed-length</Para>
+      </ListItem>
 <ListItem><Para>pass by reference, variable-length</Para>
+      </ListItem>
 </ItemizedList>
 </Para>
 
@@ -498,6 +508,7 @@ Most of the header (include) files for  <ProductName>Postgres</ProductName>
 </ProgramListing>
             (where &lt;PORTNAME&gt; is the name of the port, e.g.,
             alpha or sparc).
+</para>
 </ListItem>
 <ListItem>
 <Para>   When allocating memory, use  the  <ProductName>Postgres</ProductName>  
@@ -507,6 +518,7 @@ Most of the header (include) files for  <ProductName>Postgres</ProductName>
             automatically at the end  of  each  transaction,
             preventing memory leaks.
 </Para>
+      </ListItem>
       <ListItem>
 <Para>   Always  zero  the bytes of your structures using
             memset or bzero.  Several routines (such as  the
@@ -517,12 +529,14 @@ Most of the header (include) files for  <ProductName>Postgres</ProductName>
             several bytes of alignment padding (holes in the
             structure) that may contain garbage values.
 </Para>
+      </ListItem>
       <ListItem>
 <Para>   Most of the internal <ProductName>Postgres</ProductName> types are declared
             in  postgres.h,  so  it's a good idea to always
             include that file as well.  Including postgres.h
             will also include elog.h and palloc.h for you.
 </Para>
+      </ListItem>
       <ListItem>
 <Para>   Compiling and loading your object code  so  that
             it  can  be  dynamically  loaded  into  <ProductName>Postgres</ProductName>
@@ -534,3 +548,6 @@ Most of the header (include) files for  <ProductName>Postgres</ProductName>
 </ItemizedList>
 </Para>
 </Sect2>
+</sect1>
+</chapter>
+

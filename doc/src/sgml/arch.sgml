@@ -12,6 +12,7 @@
      In  database  jargon,  <ProductName>Postgres</ProductName> uses a simple "process  
      per-user" client/server model.  A <ProductName>Postgres</ProductName> session 
      consists of the following cooperating UNIX processes (programs):
+</Para>
 
 <ItemizedList>
 <ListItem>
@@ -53,6 +54,7 @@
      <Application>postmaster</Application>.   Hence, the <Application>postmaster</Application> is always running, waiting
      for requests, whereas frontend  and  backend  processes
      come  and  go.
+</Para>
 
 <Para>
   The <FileName>libpq</FileName> library allows a single 
@@ -69,6 +71,7 @@
      machine may not be accessible (or may only be  accessed
      using  a  different  filename)  on  the database server
      machine.
+</Para>
 
 <Para>
      You should also be aware that the <Application>postmaster</Application> and  
@@ -81,5 +84,5 @@
      case, all files relating to a database should belong to
      this <ProductName>Postgres</ProductName> superuser.
 </Para>
-
+</sect1>
 </Chapter>

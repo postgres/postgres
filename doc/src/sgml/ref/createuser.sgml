@@ -12,6 +12,7 @@
 <REFPURPOSE>
 Create a new <productname>Postgres</productname> user
 </REFPURPOSE>
+  </refnamediv>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
 <DATE>1998-10-02</DATE>
@@ -23,215 +24,267 @@ createuser [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replac
     [ -d | -D ] [ -u | -U ] [ <replaceable class="parameter">username</replaceable> ]
 </SYNOPSIS>
 
-<REFSECT2 ID="R2-APP-CREATEUSER-1">
-<REFSECT2INFO>
-<DATE>1998-10-02</DATE>
-</REFSECT2INFO>
-<TITLE>
-Inputs
-</TITLE>
-<PARA>
+    <REFSECT2 ID="R2-APP-CREATEUSER-1">
+      <REFSECT2INFO>
+	<DATE>1998-10-02</DATE>
+      </REFSECT2INFO>
+      <TITLE>
+	Inputs
+      </TITLE>
+      <PARA>
+	
+	<variablelist>
+	  <varlistentry>
+	    <term>
+	      -h <replaceable class="parameter">host</replaceable>
+	    </term>
+	    <listitem>
+	      <para>
+		Specifies the hostname of the machine on which the 
+		<application>postmaster</application>
+		is running.  Defaults to using a local Unix domain socket
+		rather than an IP connection..
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      -p <replaceable class="parameter">port</replaceable>
+	    </term>
+	    <listitem>
+	      <para>
+		Specifies the Internet TCP/IP port or local Unix domain socket file 
+		extension on which the <application>postmaster</application>
+		is listening for connections.  The port number defaults to 5432,
+		or the value of the <envar>PGPORT</envar>
+		environment variable (if set).
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      -d
+	    </term>
+	    <listitem>
+	      <para>
+		Allows the user to create databases.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      -D
+	    </term>
+	    <listitem>
+	      <para>
+		Forbids the user to create databases.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      -i <replaceable class="parameter">userid</replaceable>
+	    </term>
+	    <listitem>
+	      <para>
+		Specifies the numeric identifier to be associated with this user.
+		This identifier must be unique among all <productname>Postgres</productname> users, and is not required
+		to match the operating system UID.
+		You will be prompted for an identifier if none is specified on the command line,
+		and it will suggest an identifier matching the UID.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      -u
+	    </term>
+	    <listitem>
+	      <para>
+		Allows the user to create other users.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      -U
+	    </term>
+	    <listitem>
+	      <para>
+		Forbids the user to create other users.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      <replaceable class="parameter">username</replaceable>
+	    </term>
+	    <listitem>
+	      <para>
+		Specifies the name of the <productname>Postgres</productname> user to be created. 
+		This name must be unique among all <productname>Postgres</productname> users.
+		You will be prompted for a name if none is specified on the command line.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	</variablelist>
+      </para>
+    </refsect2>
 
-<variablelist>
-<varlistentry>
-<term>
--h <replaceable class="parameter">host</replaceable>
-</term>
-<listitem>
-<para>
-Specifies the hostname of the machine on which the 
-<application>postmaster</application>
-is running.  Defaults to using a local Unix domain socket
- rather than an IP connection..
-
-<varlistentry>
-<term>
--p <replaceable class="parameter">port</replaceable>
-</term>
-<listitem>
-<para>
-Specifies the Internet TCP/IP port or local Unix domain socket file 
-extension on which the <application>postmaster</application>
-is listening for connections.  The port number defaults to 5432,
- or the value of the <envar>PGPORT</envar>
-environment variable (if set).
-
-<varlistentry>
-<term>
--d
-</term>
-<listitem>
-<para>
-Allows the user to create databases.
-
-<varlistentry>
-<term>
--D
-</term>
-<listitem>
-<para>
-Forbids the user to create databases.
-
-<varlistentry>
-<term>
--i <replaceable class="parameter">userid</replaceable>
-</term>
-<listitem>
-<para>
-Specifies the numeric identifier to be associated with this user.
-This identifier must be unique among all <productname>Postgres</productname> users, and is not required
-to match the operating system UID.
-You will be prompted for an identifier if none is specified on the command line,
-and it will suggest an identifier matching the UID.
-
-<varlistentry>
-<term>
--u
-</term>
-<listitem>
-<para>
-Allows the user to create other users.
-
-<varlistentry>
-<term>
--U
-</term>
-<listitem>
-<para>
-Forbids the user to create other users.
-
-<varlistentry>
-<term>
-<replaceable class="parameter">username</replaceable>
-</term>
-<listitem>
-<para>
-Specifies the name of the <productname>Postgres</productname> user to be created. 
-This name must be unique among all <productname>Postgres</productname> users.
-You will be prompted for a name if none is specified on the command line.
-
-</variablelist>
-
-<REFSECT2 ID="R2-APP-CREATEUSER-2">
-<REFSECT2INFO>
-<DATE>1998-10-02</DATE>
-</REFSECT2INFO>
-<TITLE>
-Outputs
-</TITLE>
-<PARA>
-<application>createuser</application> will add an entry in the
-<literal>pg_user</literal> or <literal>pg_shadow</literal> system table.
-
-<variablelist>
-<varlistentry>
-<term>
-Connection to database 'template1' failed.
-connectDB() failed: Is the postmaster running and accepting connections
- at 'UNIX Socket' on port '<replaceable class="parameter">port</replaceable>'?
-createuser: database access failed.
-<listitem>
-<para>
-<application>createuser</application> could not attach to the 
-<application>postmaster</application> 
-process on the specified host and port.  If you see this message,
-ensure that the <application>postmaster</application> 
-is running on the proper host and that you have specified the proper
-port.  If your site uses an authentication system, ensure that you
-have obtained the required authentication credentials.
-
-<varlistentry>
-<term>
-Connection to database 'template1' failed.
-FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>' is not in 'pg_shadow'
-createuser: database access failed.
-<listitem>
-<para>
-You do not have a valid entry in the relation <literal>pg_shadow</literal>
-and and will not be allowed to access <productname>Postgres</productname>. Contact your
-<productname>Postgres</productname> administrator.
-
-<varlistentry>
-<term>
-createuser: <replaceable class="parameter">username</replaceable> cannot create users.
-<listitem>
-<para>
-You do not have permission to create new users; contact your
-<productname>Postgres</productname> site administrator.
-
-<varlistentry>
-<term>
-createuser: user "<replaceable class="parameter">username</replaceable>" already exists
-<listitem>
-<para>
-The user to be added already has an entry in the <literal>pg_shadow</literal>
-class.
-
-<varlistentry>
-<term>
-database access failed
-<listitem>
-<para>
-An internal error occurred in <application>psql</application>
-or in the backend server.  Ensure that your site administrator has
-properly installed <productname>Postgres</productname>and initialized the site with 
-<application>initdb</application>.
-
-</variablelist>
-
-<note>
-<para>
-<application>createuser</application> internally runs
-CREATE USER from <application>psql</application>
-while connected to the <literal>template1</literal> database.
-</note>
-
-<REFSECT1 ID="R1-APP-CREATEUSER-1">
-<REFSECT1INFO>
-<DATE>1998-10-02</DATE>
-</REFSECT1INFO>
-<TITLE>
-Description
-</TITLE>
-<PARA>
-<application>createuser</application> creates a 
-new <productname>Postgres</productname> user.  
-Only users with <literal>usesuper</literal> set in
-the <literal>pg_shadow</literal> class can create 
-new <productname>Postgres</productname> users.  As shipped,
-the user <literal>postgres</literal> can create users.
-
-<para>
-<application>createuser</application> is a shell script that invokes
-<application>psql</application>.
-Hence, a <application>postmaster</application>
-process must be running on the database server host before
-<application>createuser</application> is executed.
- The 
-<envar>PGOPTION</envar>
-and
-<envar>PGREALM</envar>
-environment variables will be passed on to
-<application>psql</application>
-and processed as described in <xref linkend="app-psql" endterm="psql-ref">.
-
-Once invoked, <application>createuser</application>
-will ask a series of questions to obtain parameters not specified on
-the command line.  The new user's database login name and a numeric 
-user identifier must be specified.
-
-<note>
-<para>
-The <productname>Postgres</productname> user identifier
-does not need to be the same as the user's Unix UID. However, typically
-they are assigned to be the same.
-</note>
-
-<para>
-You must also describe the privileges of the new user for security purposes.
-Specifically, you will be asked whether the new user should be able to
-act as <productname>Postgres</productname> super-user,
-whether the new user may create new databases and whether the new user
-is allowed to create other new users.
-
+    <REFSECT2 ID="R2-APP-CREATEUSER-2">
+      <REFSECT2INFO>
+	<DATE>1998-10-02</DATE>
+      </REFSECT2INFO>
+      <TITLE>
+	Outputs
+      </TITLE>
+      <PARA>
+	<application>createuser</application> will add an entry in the
+	<literal>pg_user</literal> or <literal>pg_shadow</literal> system table.
+	
+	<variablelist>
+	  <varlistentry>
+	    <term>
+	      Connection to database 'template1' failed.
+	      connectDB() failed: Is the postmaster running and accepting connections
+	      at 'UNIX Socket' on port '<replaceable class="parameter">port</replaceable>'?
+	      createuser: database access failed.
+	    </term>
+	    <listitem>
+	      <para>
+		<application>createuser</application> could not attach to the 
+		<application>postmaster</application> 
+		process on the specified host and port.  If you see this message,
+		ensure that the <application>postmaster</application> 
+		is running on the proper host and that you have specified the proper
+		port.  If your site uses an authentication system, ensure that you
+		have obtained the required authentication credentials.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      Connection to database 'template1' failed.
+	      FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>' is not in 'pg_shadow'
+	      createuser: database access failed.
+	    </term>
+	    <listitem>
+	      <para>
+		You do not have a valid entry in the relation <literal>pg_shadow</literal>
+		and and will not be allowed to access <productname>Postgres</productname>. Contact your
+		<productname>Postgres</productname> administrator.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      createuser: <replaceable class="parameter">username</replaceable> cannot create users.
+	    </term>
+	    <listitem>
+	      <para>
+		You do not have permission to create new users; contact your
+		<productname>Postgres</productname> site administrator.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      createuser: user "<replaceable class="parameter">username</replaceable>" already exists
+	    </term>
+	    <listitem>
+	      <para>
+		The user to be added already has an entry in the <literal>pg_shadow</literal>
+		class.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      database access failed
+	    </term>
+	    <listitem>
+	      <para>
+		An internal error occurred in <application>psql</application>
+		or in the backend server.  Ensure that your site administrator has
+		properly installed <productname>Postgres</productname>and initialized the site with 
+		<application>initdb</application>.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	</variablelist>
+      </para>
+      
+      <note>
+	<para>
+	  <application>createuser</application> internally runs
+	  CREATE USER from <application>psql</application>
+	  while connected to the <literal>template1</literal> database.
+	</para>
+      </note>
+    </refsect2>
+  </refsynopsisdiv>
+  
+  <REFSECT1 ID="R1-APP-CREATEUSER-1">
+    <REFSECT1INFO>
+      <DATE>1998-10-02</DATE>
+    </REFSECT1INFO>
+    <TITLE>
+      Description
+    </TITLE>
+    <PARA>
+      <application>createuser</application> creates a 
+      new <productname>Postgres</productname> user.  
+      Only users with <literal>usesuper</literal> set in
+      the <literal>pg_shadow</literal> class can create 
+      new <productname>Postgres</productname> users.  As shipped,
+      the user <literal>postgres</literal> can create users.
+    </para>
+    <para>
+      <application>createuser</application> is a shell script that invokes
+      <application>psql</application>.
+      Hence, a <application>postmaster</application>
+      process must be running on the database server host before
+      <application>createuser</application> is executed.
+      The 
+      <envar>PGOPTION</envar>
+      and
+      <envar>PGREALM</envar>
+      environment variables will be passed on to
+      <application>psql</application>
+      and processed as described in <xref linkend="app-psql" endterm="psql-ref">.
+      
+      Once invoked, <application>createuser</application>
+      will ask a series of questions to obtain parameters not specified on
+      the command line.  The new user's database login name and a numeric 
+      user identifier must be specified.
+    </para>
+    <note>
+      <para>
+	The <productname>Postgres</productname> user identifier
+	does not need to be the same as the user's Unix UID. However, typically
+	they are assigned to be the same.
+      </para>
+    </note>
+    
+    <para>
+      You must also describe the privileges of the new user for security purposes.
+      Specifically, you will be asked whether the new user should be able to
+      act as <productname>Postgres</productname> super-user,
+      whether the new user may create new databases and whether the new user
+      is allowed to create other new users.
+    </para>
+  </refsect1>
 </REFENTRY>

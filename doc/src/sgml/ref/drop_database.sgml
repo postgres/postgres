@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Destroys an existing database
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-04-15</DATE>
@@ -80,8 +81,11 @@ DROP DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
 	 <LISTITEM>
 	  <PARA>
 	   This message occurs if the specified database does not exist.
-
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  

@@ -12,7 +12,7 @@ REVOKE
 <REFPURPOSE>
 Revokes access privilege from a user, a group or all users.
 </REFPURPOSE>
-
+  </refnamediv>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
 <DATE>1998-09-24</DATE>
@@ -25,312 +25,360 @@ REVOKE <REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE> [, ...]
     FROM { PUBLIC | GROUP <REPLACEABLE CLASS="PARAMETER">group</REPLACEABLE> | <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE> }
 </SYNOPSIS>
 
-<REFSECT2 ID="R2-SQL-REVOKE-1">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-Inputs
-</TITLE>
-<PARA>
+	<REFSECT2 ID="R2-SQL-REVOKE-1">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		Inputs
+	  </TITLE>
+	  <PARA>
+		
+		<VARIABLELIST>
+		  <VARLISTENTRY>
+			<TERM>
+			  <REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE>
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				The possible privileges are:
+			  </para>
+			</listitem>
+		  </varlistentry>
 
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-         The possible privileges are:
+		  <VARLISTENTRY>
+			<TERM>
+			  SELECT
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Privilege to access all of the columns of a specific
+				table/view.
+			  </PARA>
+			</LISTITEM>
+		  </VARLISTENTRY>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  INSERT
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Privilege to insert data into all columns of a
+				specific table.
+			  </para>
+			</listitem>
+		  </varlistentry>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  UPDATE
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Privilege to update all columns of a specific
+				table.
+			  </para>
+			</listitem>
+		  </varlistentry>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  DELETE
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Privilege to delete rows from a specific table.
+			  </para>
+			</listitem>
+		  </varlistentry>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  RULE
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Privilege to define rules on table/view.
+				(See <command>CREATE RULE</command>).
+			  </para>
+			</listitem>
+		  </varlistentry>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  ALL
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Rescind all privileges.
+			  </para>
+			</listitem>
+		  </varlistentry>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  <REPLACEABLE CLASS="PARAMETER">object</REPLACEABLE>
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				The name of an object from which to revoke access.
+				The possible objects are:
+				<itemizedlist mark="bullet" spacing="compact">
+				  <listitem>
+					<para>
+					  table 
+					</para>
+				  </listitem>
+				  
+				  <listitem>
+					<para>
+					  view 
+					</para>
+				  </listitem>
+				  
+				  <listitem>
+					<para>
+					  sequence
+					</para>
+				  </listitem>
+				  
+				  <listitem>
+					<para>
+					  index
+					</para>
+				  </listitem>
+				</itemizedlist>
+			  </para>
+			</listitem>
+		  </varlistentry>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  <REPLACEABLE CLASS="PARAMETER">group</REPLACEABLE>
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				The name of a group from whom to revoke privileges.
+			  </PARA>
+			</LISTITEM>
+		  </VARLISTENTRY>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE>
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				The name of a user from whom revoke privileges. Use the PUBLIC keyword
+				to specify all users.
+			  </PARA>
+			</LISTITEM>
+		  </VARLISTENTRY>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  PUBLIC
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Rescind the specified privilege(s) for all users.
+			  </para>
+			</LISTITEM>
+		  </VARLISTENTRY>
+		</VARIABLELIST>
+	  </para>
+	</REFSECT2>
 
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-SELECT
-</TERM>
-<LISTITEM>
-<PARA>
-Privilege to access all of the columns of a specific
-                        table/view.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
+	<REFSECT2 ID="R2-SQL-REVOKE-2">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		Outputs
+	  </TITLE>
+	  <PARA>
+		
+		<VARIABLELIST>
+		  <VARLISTENTRY>
+			<TERM>
+			  CHANGE
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Message returned if successfully.
+			  </para>
+			</listitem>
+		  </varlistentry>
+		  
+		  <VARLISTENTRY>
+			<TERM>
+			  ERROR
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Message returned if object is not available or impossible
+				to revoke privileges from a group or users.
+			  </para>
+			</listitem>
+		  </varlistentry>		  
+		</VARIABLELIST>
+	  </para>
+	</REFSECT2>
+  </REFSYNOPSISDIV>
+  
+  <REFSECT1 ID="R1-SQL-REVOKE-1">
+	<REFSECT1INFO>
+	  <DATE>1998-09-24</DATE>
+	</REFSECT1INFO>
+	<TITLE>
+	  Description
+	</TITLE>
+	<PARA>
+	  REVOKE allows creator of an object to revoke permissions granted
+	  before, from all users (via PUBLIC) or a certain user or group.
+	</para>
 
-<VARLISTENTRY>
-<TERM>
-INSERT
-</TERM>
-<LISTITEM>
-<PARA>
-Privilege to insert data into all columns of a
-                        specific table.
-
-<VARLISTENTRY>
-<TERM>
-UPDATE
-</TERM>
-<LISTITEM>
-<PARA>
-Privilege to update all columns of a specific
-                        table.
-
-<VARLISTENTRY>
-<TERM>
-DELETE
-</TERM>
-<LISTITEM>
-<PARA>
-Privilege to delete rows from a specific table.
-
-<VARLISTENTRY>
-<TERM>
-RULE
-</TERM>
-<LISTITEM>
-<PARA>
-Privilege to define rules on table/view.
-(See <command>CREATE RULE</command>).
-
-<VARLISTENTRY>
-<TERM>
-ALL
-</TERM>
-<LISTITEM>
-<PARA>
-Rescind all privileges.
-
-</VARIABLELIST>
-
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">object</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-The name of an object from which to revoke access.
-          The possible objects are:
-<itemizedlist mark="bullet" spacing="compact">
-<listitem>
-<para>
-table 
-
-<listitem>
-<para>
-view 
-
-<listitem>
-<para>
-sequence
-
-<listitem>
-<para>
-index
-</itemizedlist>
-
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">group</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-          The name of a group from whom to revoke privileges.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-The name of a user from whom revoke privileges. Use the PUBLIC keyword
-to specify all users.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-
-<VARLISTENTRY>
-<TERM>
-PUBLIC
-</TERM>
-<LISTITEM>
-<PARA>
-Rescind the specified privilege(s) for all users.
-
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-
-</REFSECT2>
-
-<REFSECT2 ID="R2-SQL-REVOKE-2">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-Outputs
-</TITLE>
-<PARA>
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-CHANGE
-</TERM>
-<LISTITEM>
-<PARA>
-          Message returned if successfully.
-
-<VARLISTENTRY>
-<TERM>
-ERROR
-</TERM>
-<LISTITEM>
-<PARA>
-          Message returned if object is not available or impossible
-          to revoke privileges from a group or users.
-
-</VARIABLELIST>
-
-</REFSECT2>
-</REFSYNOPSISDIV>
-
-<REFSECT1 ID="R1-SQL-REVOKE-1">
-<REFSECT1INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT1INFO>
-<TITLE>
-Description
-</TITLE>
-<PARA>
-   REVOKE allows creator of an object to revoke permissions granted
-   before, from all users (via PUBLIC) or a certain user or group.
-
-<REFSECT2 ID="R2-SQL-REVOKE-3">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-Notes
-</TITLE>
-<PARA>
-   Refer to psql \z command for further information about permissions 
-         on existing objects:
-
-<programlisting>
-   Database    = lusitania
-   +------------------+---------------------------------------------+
-   |  Relation        |        Grant/Revoke Permissions             |
-   +------------------+---------------------------------------------+
-   | mytable          | {"=rw","miriam=arwR","group todos=rw"}      |
-   +------------------+---------------------------------------------+
-   Legend:
-         uname=arwR -- privileges granted to a user
-   group gname=arwR -- privileges granted to a GROUP
-              =arwR -- privileges granted to PUBLIC
-
-                  r -- SELECT
-                  w -- UPDATE/DELETE
-                  a -- INSERT
-                  R -- RULE
-               arwR -- ALL
-</programlisting>
-
-<tip>
-<para>
-Currently, to create a GROUP you have to insert 
+	<REFSECT2 ID="R2-SQL-REVOKE-3">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		Notes
+	  </TITLE>
+	  <PARA>
+		Refer to psql \z command for further information about permissions 
+		on existing objects:
+		
+		<programlisting>
+		  Database    = lusitania
+		  +------------------+---------------------------------------------+
+		  |  Relation        |        Grant/Revoke Permissions             |
+		  +------------------+---------------------------------------------+
+		  | mytable          | {"=rw","miriam=arwR","group todos=rw"}      |
+		  +------------------+---------------------------------------------+
+		  Legend:
+		  uname=arwR -- privileges granted to a user
+		  group gname=arwR -- privileges granted to a GROUP
+		  =arwR -- privileges granted to PUBLIC
+		  
+		  r -- SELECT
+		  w -- UPDATE/DELETE
+		  a -- INSERT
+		  R -- RULE
+		  arwR -- ALL
+		</programlisting>
+	  </para>
+	  <tip>
+		<para>
+		  Currently, to create a GROUP you have to insert 
           data manually into table pg_group as:
-<programlisting>          
-          INSERT INTO pg_group VALUES ('todos');
-          CREATE USER miriam IN GROUP todos;
-</programlisting>
-</tip>
+		  <programlisting>          
+			INSERT INTO pg_group VALUES ('todos');
+			CREATE USER miriam IN GROUP todos;
+		  </programlisting>
+		</para>
+	  </tip>
 
-</REFSECT2>
+	</REFSECT2>
+  </refsect1>
 
-<REFSECT1 ID="R1-SQL-REVOKE-2">
-<TITLE>
-Usage
-</TITLE>
-<PARA>
-<ProgramListing>
--- revoke insert privilege from all users on table films:
---
-REVOKE INSERT ON films FROM PUBLIC;
+  <REFSECT1 ID="R1-SQL-REVOKE-2">
+	<TITLE>
+	  Usage
+	</TITLE>
+	<PARA>
+	  <ProgramListing>
+		-- revoke insert privilege from all users on table films:
+		--
+		REVOKE INSERT ON films FROM PUBLIC;
+		
+		-- revoke all privileges from user manuel on view kinds:
+		--
+		REVOKE ALL ON kinds FROM manuel;
+	  </ProgramListing>
+	</para>
+  </REFSECT1>
+  
+  <REFSECT1 ID="R1-SQL-REVOKE-3">
+	<TITLE>
+	  Compatibility
+	</TITLE>
+	
+	<REFSECT2 ID="R2-SQL-REVOKE-4">
+	  <REFSECT2INFO>
+		<DATE>1998-09-01</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		SQL92
+	  </TITLE>
+	  <PARA>
+		The SQL92 syntax for <command>REVOKE</command>
+		has additional capabilities for rescinding
+		privileges, including those on individual columns in tables:
 
--- revoke all privileges from user manuel on view kinds:
---
-REVOKE ALL ON kinds FROM manuel;
-</ProgramListing>
-
-</REFSECT1>
-
-<REFSECT1 ID="R1-SQL-REVOKE-3">
-<TITLE>
-Compatibility
-</TITLE>
-<PARA>
-
-<REFSECT2 ID="R2-SQL-REVOKE-4">
-<REFSECT2INFO>
-<DATE>1998-09-01</DATE>
-</REFSECT2INFO>
-<TITLE>
-SQL92
-</TITLE>
-<PARA>
-   The SQL92 syntax for <command>REVOKE</command>
- has additional capabilities for rescinding
-privileges, including those on individual columns in tables:
-
-<variablelist>
-<varlistentry>
-<term>
-<synopsis>
-REVOKE { SELECT | DELETE | USAGE | ALL PRIVILEGES } [, ...]
-    ON <replaceable class="parameter">object</replaceable>
-    FROM { PUBLIC | <replaceable class="parameter">username</replaceable> [, ...] } { RESTRICT | CASCADE }
-REVOKE { INSERT | UPDATE | REFERENCES } [, ...] [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
-    ON <replaceable class="parameter">object</replaceable>
-    FROM { PUBLIC | <replaceable class="parameter">username</replaceable> [, ...] } { RESTRICT | CASCADE }
-</synopsis>
-<listitem>
-<para>
-Refer to the <command>GRANT</command> command for details on individual fields.
-
-<varlistentry>
-<term>
-<synopsis>
-REVOKE GRANT OPTION FOR <replaceable class="parameter">privilege</replaceable> [, ...]
-    ON <replaceable class="parameter">object</replaceable>
-    FROM { PUBLIC | <replaceable class="parameter">username</replaceable> [, ...] } { RESTRICT | CASCADE }
-</synopsis>
-<listitem>
-<para>
-Rescinds authority for a user to grant the specified privilege to others.
-Refer to the <command>GRANT</command> command for details on individual fields.
-
-</variablelist>
-
-<para>
-      The possible objects are:
-<simplelist>
-<member>          [ TABLE ] table/view
-<member>          CHARACTER SET character-set
-<member>          COLLATION collation
-<member>          TRANSLATION translation
-<member>          DOMAIN domain
-</simplelist>
-
-<para> 
-If user1 gives a privilege WITH GRANT OPTION to user2,
-                    and user2 gives it to user3 then user1 can revoke
-                    this privilege in cascade using the CASCADE keyword.
-
-<para>
-If user1 gives a privilege WITH GRANT OPTION to user2,
-                    and user2 gives it to user3 then if user1 try revoke
-                    this privilege it fails if he/she specify the RESTRICT
-                    keyword.
+		<variablelist>
+		  <varlistentry>
+			<term>
+			  <synopsis>
+				REVOKE { SELECT | DELETE | USAGE | ALL PRIVILEGES } [, ...]
+				ON <replaceable class="parameter">object</replaceable>
+				FROM { PUBLIC | <replaceable class="parameter">username</replaceable> [, ...] } { RESTRICT | CASCADE }
+				REVOKE { INSERT | UPDATE | REFERENCES } [, ...] [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
+				ON <replaceable class="parameter">object</replaceable>
+				FROM { PUBLIC | <replaceable class="parameter">username</replaceable> [, ...] } { RESTRICT | CASCADE }
+			  </synopsis>
+			</term>
+			<listitem>
+			  <para>
+				Refer to the <command>GRANT</command> command for details on individual fields.
+			  </para>
+			</listitem>
+		  </varlistentry>
+		  
+		  <varlistentry>
+			<term>
+			  <synopsis>
+				REVOKE GRANT OPTION FOR <replaceable class="parameter">privilege</replaceable> [, ...]
+				ON <replaceable class="parameter">object</replaceable>
+				FROM { PUBLIC | <replaceable class="parameter">username</replaceable> [, ...] } { RESTRICT | CASCADE }
+			  </synopsis>
+			</term>
+			<listitem>
+			  <para>
+				Rescinds authority for a user to grant the specified privilege to others.
+				Refer to the <command>GRANT</command> command for details on individual fields.
+			  </para>
+			</listitem>
+		  </varlistentry>
+		</variablelist>
+	  </para>
+	  <para>
+		The possible objects are:
+		<simplelist>
+		  <member>          [ TABLE ] table/view
+		  </member>
+		  <member>          CHARACTER SET character-set
+		  </member>
+		  <member>          COLLATION collation
+		  </member>
+		  <member>          TRANSLATION translation
+		  </member>
+		  <member>          DOMAIN domain
+		  </member>
+		</simplelist>
+	  </para>
+	  <para> 
+		If user1 gives a privilege WITH GRANT OPTION to user2,
+		and user2 gives it to user3 then user1 can revoke
+		this privilege in cascade using the CASCADE keyword.
+	  </para>
+	  <para>
+		If user1 gives a privilege WITH GRANT OPTION to user2,
+		and user2 gives it to user3 then if user1 try revoke
+		this privilege it fails if he/she specify the RESTRICT
+		keyword.
+	  </para>
+	</refsect2>
+  </refsect1>
 </REFENTRY>

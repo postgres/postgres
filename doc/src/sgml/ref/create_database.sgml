@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Creates a new database
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-04-15</DATE>
@@ -51,12 +52,13 @@ CREATE DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> [ WITH LOCATIO
 	   (e.g. '<filename>/usr/local/pgsql/data</filename>').
 	   In either case, the location must be pre-configured
 	   by <command>initlocation</command>.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </VARIABLELIST>
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
-
+  
   <REFSECT2 ID="R2-SQL-CREATEDATABASE-2">
    <REFSECT2INFO>
     <DATE>1998-04-15</DATE>
@@ -90,14 +92,17 @@ CREATE DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> [ WITH LOCATIO
 	<VARLISTENTRY>
 	 <TERM>
 	  <ReturnValue>ERROR:  Unable to create database directory <replaceable class="parameter">directory</replaceable>
-</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-There was a problem with creating the required directory; this operation will
-need permissions for the <literal>postgres</literal> user on the specified location.
-
-   </VARIABLELIST>
+       </ReturnValue>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	There was a problem with creating the required directory; this operation will
+	need permissions for the <literal>postgres</literal> user on the specified location.
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -128,7 +133,8 @@ need permissions for the <literal>postgres</literal> user on the specified locat
     Use <command>DROP DATABASE</command> to remove a database.
    </para>
   </REFSECT2>
-  
+ </refsect1>
+ 
  <REFSECT1 ID="R1-SQL-CREATEDATABASE-2">
   <TITLE>
    Usage
@@ -137,27 +143,27 @@ need permissions for the <literal>postgres</literal> user on the specified locat
    To create a new database:
   </PARA>
   <ProgramListing>
-<prompt>olly=></prompt> <userinput>create database lusiadas;</userinput>
+   <prompt>olly=></prompt> <userinput>create database lusiadas;</userinput>
   </ProgramListing>
   <PARA>
    To create a new database in an alternate area <filename>~/private_db</filename>:
   </PARA>
   <ProgramListing>
-<prompt>$</prompt> <userinput>mkdir private_db</userinput>
-<prompt>$</prompt> <userinput>initlocation ~/private_db</userinput>
-<computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
-
-<prompt>$</prompt> <userinput>psql olly</userinput>
-<computeroutput>Welcome to the POSTGRESQL interactive sql monitor:
-  Please read the file COPYRIGHT for copyright terms of POSTGRESQL
-
-   type \? for help on slash commands
-   type \q to quit
-   type \g or terminate with semicolon to execute query
- You are currently connected to the database: template1
-
-<prompt>olly=></prompt></computeroutput> <userinput>create database elsewhere with location = '/home/olly/private_db';</userinput>
-    <computeroutput>CREATEDB</computeroutput>
+   <prompt>$</prompt> <userinput>mkdir private_db</userinput>
+   <prompt>$</prompt> <userinput>initlocation ~/private_db</userinput>
+   <computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
+   
+   <prompt>$</prompt> <userinput>psql olly</userinput>
+   <computeroutput>Welcome to the POSTGRESQL interactive sql monitor:
+    Please read the file COPYRIGHT for copyright terms of POSTGRESQL
+    
+    type \? for help on slash commands
+    type \q to quit
+    type \g or terminate with semicolon to execute query
+    You are currently connected to the database: template1
+    
+    <prompt>olly=></prompt></computeroutput> <userinput>create database elsewhere with location = '/home/olly/private_db';</userinput>
+   <computeroutput>CREATEDB</computeroutput>
   </ProgramListing>
  </REFSECT1>
  
@@ -190,7 +196,6 @@ Not sure if the dump/reload would guarantee that the alternate data area gets re
   <TITLE>
    Compatibility
   </TITLE>
-  <PARA>
   
   <REFSECT2 ID="R2-SQL-CREATEDATABASE-4">
    <REFSECT2INFO>

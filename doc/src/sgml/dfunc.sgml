@@ -33,9 +33,11 @@ mechanism.   On  the  other  hand, the object file must be
 postprocessed a bit before it can be loaded into  <ProductName>Postgres</ProductName>.   We
 hope  that  the large increase in speed and reliability will
 make up for the slight decrease in convenience.
-<Para>
+</para>
 </Tip>
-  You should  expect  to read (and reread, and re-reread) the
+</para>
+<para>
+     You should  expect  to read (and reread, and re-reread) the
      manual pages for the C compiler, cc(1),  and  the  link
      editor,  ld(1),  if  you  have  specific questions.  In
      addition, the regression test suites in  the  directory
@@ -120,6 +122,7 @@ The GNU C compiler usually does not provide the special
 </Para>
 </ListItem>
 </ItemizedList>
+</para>
 
 <Sect1>
 <Title><Acronym>ULTRIX</Acronym></Title>

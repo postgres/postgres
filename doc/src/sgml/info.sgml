@@ -3,6 +3,7 @@
 
 <Para>
 This manual set is organized into several parts:
+</Para>
 
 <VariableList>
 <VarListEntry>
@@ -69,6 +70,7 @@ Currently included in the <citetitle>User's Guide</citetitle>.
 <Para>
 In addition to this manual set, there are other resources to help you with
 <ProductName>Postgres</ProductName> installation and use:
+</Para>
 
 <VariableList>
 <VarListEntry>

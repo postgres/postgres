@@ -30,6 +30,7 @@
 </Para>
 </ListItem>
 </ItemizedList>
+</Para>
 
 <Para>
      A single  <Application>postmaster</Application>  manages  a  given  collection  of
@@ -76,5 +77,5 @@
      case, all files relating to a database should belong to
      this <ProductName>Postgres</ProductName> superuser.
 </Para>
-
+</sect1>
 </Chapter>

@@ -1,8 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.2 1998/08/17 16:18:13 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.3 1998/12/29 02:24:16 thomas Exp $
 Indices and Keys
 
 $Log: keys.sgml,v $
+Revision 1.3  1998/12/29 02:24:16  thomas
+Clean up to ensure tag completion as required by the newest versions
+ of Norm's Modular Style Sheets and jade/docbook.
+From Vince Vielhaber <vev@michvhf.com>.
+
 Revision 1.2  1998/08/17 16:18:13  thomas
 Small sentence cleanups. Add tags for acronyms and products.
 
@@ -110,6 +115,8 @@ Should not allow NULLs.
 </Para>
 </ListItem>
 </itemizedlist>
+</para>
+</listitem>
 
 <ListItem>
 <Para>
@@ -131,7 +138,10 @@ NULLs are acceptable.
 </Para>
 </ListItem>
 </itemizedlist>
+</para>
+</listitem>
 </itemizedlist>
+</para>
 
 <Para>
 As for why no non-unique keys are defined explicitly in standard <acronym>SQL</acronym> syntax?

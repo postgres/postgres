@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Constructs a secondary index
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-09</DATE>
@@ -139,21 +140,21 @@ SELECT am.amname AS acc_name,
 </programlisting>
 
 	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">func_name</replaceable> 
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   A user-defined function, which returns a value that can
-	   be indexed.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-
+      </LISTITEM>
+     </VARLISTENTRY>
+     <VARLISTENTRY>
+      <TERM>
+       <replaceable class="parameter">func_name</replaceable> 
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	A user-defined function, which returns a value that can
+	be indexed.
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>
+    </variablelist>
+   </para>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATEINDEX-2">
@@ -178,15 +179,17 @@ SELECT am.amname AS acc_name,
 	</VARLISTENTRY>
 
 	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>ERROR: Cannot create index: 'index_name' already exists.</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This error occurs if it is impossible to create the index.
-
-   </VARIABLELIST>
-
+      <TERM>
+       <ReturnValue>ERROR: Cannot create index: 'index_name' already exists.</ReturnValue>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	This error occurs if it is impossible to create the index.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -198,17 +201,18 @@ SELECT am.amname AS acc_name,
    Description
   </TITLE>
   <PARA>
-  <command>CREATE INDEX</command> constructs an index 
- <replaceable class="parameter">index_name</replaceable>.
-on the specified
-<replaceable class="parameter">table</replaceable>.
-
-<tip>
-<para>
-Indexes are primarily used to enhance database performance.
-But inappropriate use will result in slower performance.
-</tip>
-
+   <command>CREATE INDEX</command> constructs an index 
+   <replaceable class="parameter">index_name</replaceable>.
+   on the specified
+   <replaceable class="parameter">table</replaceable>.
+   
+   <tip>
+    <para>
+     Indexes are primarily used to enhance database performance.
+     But inappropriate use will result in slower performance.
+    </para>
+   </tip>
+  </para>
   <para>
    In the first syntax shown above, the key fields for the
    index are specified as column names; a column may also have
@@ -247,7 +251,8 @@ But inappropriate use will result in slower performance.
     to remove an index.
    </para>
   </REFSECT2>
-  
+ </refsect1>
+
  <REFSECT1 ID="R1-SQL-CREATEINDEX-2">
   <TITLE>
    Usage

@@ -12,7 +12,7 @@ UNLISTEN
 <REFPURPOSE>
 Stop listening for notification
 </REFPURPOSE>
-
+</refnamediv>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
 <DATE>1998-10-19</DATE>
@@ -38,7 +38,9 @@ Inputs
 <LISTITEM>
 <PARA>
 Name of previously registered notify condition.
-
+</para>
+</listitem>
+</varlistentry>
 <VARLISTENTRY>
 <TERM>
 <literal>*</literal>
@@ -46,6 +48,9 @@ Name of previously registered notify condition.
 <LISTITEM>
 <PARA>
 All current listen registrations for this backend are cleared.
+</para>
+</listitem>
+</varlistentry>
 
 </VARIABLELIST>
 
@@ -68,8 +73,12 @@ Outputs
 <LISTITEM>
 <PARA>
 Acknowledgement that statement has executed.
+</para>
+</listitem>
+</varlistentry>
 
 </VARIABLELIST>
+</para>
 </REFSECT2>
 </REFSYNOPSISDIV>
 
@@ -88,12 +97,13 @@ UNLISTEN cancels any existing registration of the current
 condition <REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>.
 The special condition wildcard "*" cancels all listener registrations
 for the current session.
-
+</para>
 <para>
 <xref linkend="sql-notify" endterm="sql-notify-ref">
 contains a more extensive
 discussion of the use of <command>LISTEN</command> and
 <command>NOTIFY</command>.
+</para>
 
 <REFSECT2 ID="R2-SQL-UNLISTEN-3">
 <REFSECT2INFO>
@@ -106,21 +116,22 @@ Notes
 <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
 needs not to be a valid class name but can be any string valid
 as a name up to 32 characters long.
-
+</para>
 <para>
 The backend does not complain if you UNLISTEN something you were not
 listening for.
 Each backend will automatically execute <command>UNLISTEN *</command> when
 exiting.
-
+</para>
 <para>
 A restriction in some previous releases of
  <productname>Postgres</productname> that a
 <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
 which does not correspond to an actual table must be enclosed in double-quotes
 is no longer present.
-
+</para>
 </REFSECT2>
+</refsect1>
 
 <REFSECT1 ID="R1-SQL-UNLISTEN-2">
 <TITLE>
@@ -144,14 +155,13 @@ NOTIFY
 -- notice no NOTIFY event is received
 postgres=>
 </programlisting>
-
+</para>
 </REFSECT1>
 
 <REFSECT1 ID="R1-SQL-UNLISTEN-3">
 <TITLE>
 Compatibility
 </TITLE>
-<PARA>
 
 <REFSECT2 ID="R2-SQL-UNLISTEN-4">
 <REFSECT2INFO>
@@ -162,5 +172,7 @@ SQL92
 </TITLE>
 <PARA>
    There is no <command>UNLISTEN</command> in <acronym>SQL92</acronym>.
-
+</para>
+</refsect2>
+</refsect1>
 </REFENTRY>

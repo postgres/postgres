@@ -12,7 +12,7 @@
   <REFPURPOSE>
    Removes existing tables from a database
   </REFPURPOSE>
-  
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-22</DATE>
@@ -70,7 +70,11 @@ DROP TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> [, ...]
 	 <LISTITEM>
 	  <PARA>
 	   If the specified table or view does not exist in the database.
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  

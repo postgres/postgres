@@ -12,6 +12,7 @@ ABORT
 <REFPURPOSE>
 Aborts the current transaction
 </REFPURPOSE>
+</REFNAMEDIV>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
 <DATE>1998-09-27</DATE>
@@ -29,6 +30,7 @@ Inputs
 </TITLE>
 <PARA>
 None.
+</para>
 
 </REFSECT2>
 
@@ -49,7 +51,9 @@ Outputs
 <LISTITEM>
 <PARA>
           Message returned if successful.
-
+</para>
+</listitem>
+</VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
 NOTICE:  UserAbortTransactionBlock and not in in-progress state
@@ -58,10 +62,11 @@ ABORT
 <LISTITEM>
 <PARA>
           If there is not any transaction currently in progress.
-
+</para>
+</listitem>
 </VARLISTENTRY>
 </VARIABLELIST>
-
+</para>
 </REFSECT2>
 </REFSYNOPSISDIV>
 
@@ -78,7 +83,7 @@ Description
 This command is identical
 in behavior to the <acronym>SQL92</acronym> command <command>ROLLBACK</command>,
 and is present only for historical reasons.
-
+</para>
 <REFSECT2 ID="R2-SQL-ABORT-3">
 <REFSECT2INFO>
 <DATE>1998-09-27</DATE>
@@ -89,7 +94,8 @@ Notes
 <para>
 Use the <command>COMMIT</command> statement to successfully
  terminate a transaction.
-
+</para>
+</refsect2>
 </REFSECT1>
 
 <REFSECT1 ID="R1-SQL-ABORT-2">
@@ -102,6 +108,7 @@ Usage
 --
 ABORT WORK;
 </ProgramListing>
+</para>
 
 </REFSECT1>
 
@@ -109,7 +116,6 @@ ABORT WORK;
 <TITLE>
 Compatibility
 </TITLE>
-<PARA>
 
 <REFSECT2 ID="R2-SQL-ABORT-4">
 <REFSECT2INFO>
@@ -123,5 +129,7 @@ This command is a <productname>Postgres</productname> extension present
 for historical reasons. <command>ROLLBACK</command> is the <acronym>SQL92</acronym>
 equivalent command.
 </PARA>
+</refsect2>
+</refsect1>
 
 </REFENTRY>

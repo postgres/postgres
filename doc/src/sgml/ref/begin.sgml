@@ -13,7 +13,7 @@
    Begins a transaction
   </REFPURPOSE>
   
-  
+  </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-08</DATE>
@@ -30,7 +30,8 @@ BEGIN [ WORK | TRANSACTION ]
     Inputs
    </TITLE>
    <PARA>
-       None
+    None
+   </para>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-BEGINWORK-2">
@@ -58,11 +59,14 @@ BEGIN [ WORK | TRANSACTION ]
 	   <returnvalue>NOTICE:  BeginTransactionBlock and not in default state</returnvalue>
 	 </TERM>
 	 <LISTITEM>
-	  <PARA>
-	   This indicates that a transaction was already in progress.
-The current transaction is not affected.
-
-   </VARIABLELIST>
+       <PARA>
+	This indicates that a transaction was already in progress.
+	The current transaction is not affected.
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -109,6 +113,7 @@ The current transaction is not affected.
  to terminate a transaction.
    </PARA>
   </REFSECT2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-BEGINWORK-2">
   <TITLE>
@@ -119,6 +124,7 @@ The current transaction is not affected.
   <ProgramListing>
 BEGIN WORK;
   </ProgramListing>
+  </para>
  </REFSECT1>
  
  <REFSECT1 ID="R1-SQL-BEGINWORK-3">
@@ -128,7 +134,7 @@ BEGIN WORK;
   <PARA>
     <command>BEGIN</command>
  is a <productname>Postgres</productname> language extension.
-  
+  </para>
   <REFSECT2 ID="R2-SQL-BEGINWORK-4">
      <REFSECT2INFO>
     <DATE>1998-09-08</DATE>

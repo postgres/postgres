@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Removes a user-defined procedural language
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-04-15</DATE>
@@ -72,8 +73,11 @@ DROP PROCEDURAL LANGUAGE '<REPLACEABLE CLASS="PARAMETER">langname</REPLACEABLE>'
 	   This message occurs if the language
 	   "<replaceable class="parameter">langname</replaceable>" is
 	   not found.
-
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  

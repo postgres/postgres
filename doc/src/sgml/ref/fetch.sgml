@@ -12,6 +12,7 @@ FETCH
 <REFPURPOSE>
 Gets rows using a cursor
 </REFPURPOSE>
+</refnamediv>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
 <DATE>1998-09-01</DATE>
@@ -42,7 +43,10 @@ Inputs
 <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE>
 defines the fetch direction. It can be one
          the following:
-
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
@@ -52,7 +56,9 @@ FORWARD
 <PARA>
 fetch next row(s). This is the default
  if <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> is omitted.
-
+</para>
+</listitem>
+</varlistentry>
 <VARLISTENTRY>
 <TERM>
 BACKWARD
@@ -60,7 +66,9 @@ BACKWARD
 <LISTITEM>
 <PARA>
 fetch previous row(s).
-
+</para>
+</listitem>
+</varlistentry>
 <VARLISTENTRY>
 <TERM>
 RELATIVE
@@ -68,8 +76,10 @@ RELATIVE
 <LISTITEM>
 <PARA>
 Noise word for SQL92 compatibility.
+</para>
+</listitem>
+</varlistentry>
 
-</VARIABLELIST>
 
 <VARLISTENTRY>
 <TERM>
@@ -79,8 +89,11 @@ Noise word for SQL92 compatibility.
 <PARA>
 <REPLACEABLE CLASS="PARAMETER">count</REPLACEABLE>
 determines how many rows to fetch. It can be one of the following:
+</para>
+</listitem>
+</varlistentry>
 
-<VARIABLELIST>
+
 <VARLISTENTRY>
 <TERM>
 <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>
@@ -90,6 +103,9 @@ determines how many rows to fetch. It can be one of the following:
 A signed integer that specify how many rows to fetch.
 Note that a negative integer is equivalent to changing the sense of
 FORWARD and BACKWARD.
+</para>
+</listitem>
+</varlistentry>
 
 <VARLISTENTRY>
 <TERM>
@@ -98,6 +114,9 @@ ALL
 <LISTITEM>
 <PARA>
 Retrieve all remaining rows.
+</para>
+</listitem>
+</varlistentry>
 
 <VARLISTENTRY>
 <TERM>
@@ -106,6 +125,9 @@ NEXT
 <LISTITEM>
 <PARA>
 Equivalent to specifying a count of <command>1</command>.
+</para>
+</listitem>
+</varlistentry>
 
 <VARLISTENTRY>
 <TERM>
@@ -114,8 +136,9 @@ PRIOR
 <LISTITEM>
 <PARA>
 Equivalent to specifying a count of <command>-1</command>.
-
-</VARIABLELIST>
+</para>
+</listitem>
+</varlistentry>
 
 <VARLISTENTRY>
 <TERM>
@@ -124,9 +147,11 @@ Equivalent to specifying a count of <command>-1</command>.
 <LISTITEM>
 <PARA>
 An open cursor's name.
-
+</para>
+</listitem>
+</varlistentry>
 </variablelist>
-
+</para>
 </REFSECT2>
 
 <REFSECT2 ID="R2-SQL-FETCH-2">
@@ -139,6 +164,7 @@ Outputs
 <PARA>
 FETCH returns the results of the query defined by the specified cursor.
 The following messages will be returned if the query fails:
+</para>
 
 <VARIABLELIST>
 <VARLISTENTRY>
@@ -150,6 +176,9 @@ NOTICE:  PerformPortalFetch: portal "<REPLACEABLE CLASS="PARAMETER">cursor</REPL
 If <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
  is not previously declared.
 The cursor must be declared within a transaction block.
+</para>
+</listitem>
+</varlistentry>
 
 <VARLISTENTRY>
 <TERM>
@@ -159,6 +188,9 @@ NOTICE:  FETCH/ABSOLUTE not supported, using RELATIVE
 <PARA>
 <productname>Postgres</productname> does not support absolute
 positioning of cursors.
+</para>
+</listitem>
+</varlistentry>
 
 <VARLISTENTRY>
 <TERM>
@@ -178,6 +210,9 @@ all rows should be retrieved and is equivalent to specifying the ALL keyword.
 If the RELATIVE keyword has been used, the <productname>Postgres</productname> 
 assumes that the user intended <acronym>SQL92</acronym> behavior
 and returns this error message.
+</para>
+</listitem>
+</varlistentry>
 
 </variablelist>
 
@@ -209,18 +244,20 @@ Negative numbers are now allowed to be specified for the
 row count. A negative number is equivalent to reversing
 the sense of the FORWARD and BACKWARD keywords. For example,
 <command>FORWARD -1</command> is the same as <command>BACKWARD 1</command>.
+</para>
 </tip>
-
+</para>
 <para>
 Note that the FORWARD and BACKWARD keywords are
  <productname>Postgres</productname> extensions.
 The <acronym>SQL92</acronym> syntax is also supported, specified
 in the second form of the command. See below for details
 on compatibility issues.
-
+</para>
 <para>
    Once all rows are fetched, every other fetch access returns
    no rows.
+</para>
 
 <para>
    Updating data in a cursor is not supported by 
@@ -229,10 +266,12 @@ on compatibility issues.
 not generally possible, as is also the case with VIEW updates.
  Consequently,
    users must issue explicit UPDATE commands to replace data.
+</para>
 
 <para>
    Cursors may only be used inside of transactions because
    the data that they store spans multiple user queries.
+</para>
 
 <REFSECT2 ID="R2-SQL-FETCH-3">
 <REFSECT2INFO>
@@ -246,8 +285,9 @@ Notes
    Refer to DECLARE statements to declare a cursor.
    Refer to BEGIN WORK, COMMIT WORK, ROLLBACK WORK statements
      for further information about transactions.
-
+</para>
 </REFSECT2>
+</refsect1>
 
 <REFSECT1 ID="R1-SQL-FETCH-2">
 <TITLE>
@@ -287,7 +327,7 @@ Usage
      CLOSE liahona;
    COMMIT WORK;
 </ProgramListing>
-        
+</para>        
 </REFSECT1>
 
 <REFSECT1 ID="R1-SQL-FETCH-3">
@@ -327,7 +367,9 @@ ABSOLUTE
 The cursor should be positioned to the specified absolute
 row number. All row numbers in <productname>Postgres</productname>
 are relative numbers so this capability is not supported.
-
+</para>
+</listitem>
+</varlistentry>
 <VARLISTENTRY>
 <TERM>
 :<REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
@@ -335,9 +377,13 @@ are relative numbers so this capability is not supported.
 <LISTITEM>
 <PARA>
 Target host variable(s).
-
+</para>
+</listitem>
+</varlistentry>
 </variablelist>
-
+</para>
+</refsect2>
+</refsect1>
 </REFENTRY>
 
 <!--

@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Removes an existing rule from the database
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-22</DATE>
@@ -69,7 +70,11 @@ DROP RULE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
 	 <LISTITEM>
 	  <PARA>
 	   This message occurs if the specified rule does not exist.
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  

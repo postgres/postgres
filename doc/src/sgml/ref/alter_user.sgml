@@ -12,6 +12,7 @@
     <REFPURPOSE>
      Modifies user account information
     </REFPURPOSE>
+ </refnamediv>
    <REFSYNOPSISDIV>
     <REFSYNOPSISDIVINFO>
      <DATE>1998-09-08</DATE>
@@ -91,32 +92,35 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable>
      <TITLE>
       Outputs
      </TITLE>
-     <PARA>
-	 <VARIABLELIST>
-	  <VARLISTENTRY>
-	   <TERM>
-	    <returnvalue>ALTER USER</returnvalue>
-	   </TERM>
-	   <LISTITEM>
-	    <PARA>
-	     Message returned if the alteration was successful.
-	    </PARA>
-	   </LISTITEM>
-	  </VARLISTENTRY>
-	  
-	  <VARLISTENTRY>
-	   <TERM>
-	    <returnvalue>ERROR: alterUser: user "username" does not exist</returnvalue>
-	   </TERM>
-	   <LISTITEM>
-	    <PARA>
-	     Error message returned if the user specified doesn't
-	     exist.
-
-     </variablelist>
-    </REFSECT2>
-   </REFSYNOPSISDIV>
-   
+   <PARA>
+    <VARIABLELIST>
+     <VARLISTENTRY>
+      <TERM>
+       <returnvalue>ALTER USER</returnvalue>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	Message returned if the alteration was successful.
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>
+     
+     <VARLISTENTRY>
+      <TERM>
+       <returnvalue>ERROR: alterUser: user "username" does not exist</returnvalue>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	Error message returned if the user specified doesn't
+	exist.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </REFSECT2>
+ </REFSYNOPSISDIV>
+ 
    <REFSECT1 ID="R1-SQL-ALTERUSER-1">
     <REFSECT1INFO>
      <DATE>1998-09-08</DATE>
@@ -223,6 +227,7 @@ ALTER USER miriam IN GROUP sales, payroll;
   The standard leaves
       the definition of users to the implementation.
      </PARA>
+   </refsect2>
    </refsect1>
   </REFENTRY>
 

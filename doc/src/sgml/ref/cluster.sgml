@@ -12,14 +12,14 @@
  <REFPURPOSE>
   Gives storage clustering advice to the backend
  </REFPURPOSE>
- 
+ </refnamediv>
  <REFSYNOPSISDIV>
- <REFSYNOPSISDIVINFO>
-  <DATE>1998-09-08</DATE>
- </REFSYNOPSISDIVINFO>
- <SYNOPSIS>
-CLUSTER <REPLACEABLE CLASS="PARAMETER">indexname</REPLACEABLE> ON <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
- </SYNOPSIS>
+  <REFSYNOPSISDIVINFO>
+   <DATE>1998-09-08</DATE>
+  </REFSYNOPSISDIVINFO>
+  <SYNOPSIS>
+   CLUSTER <REPLACEABLE CLASS="PARAMETER">indexname</REPLACEABLE> ON <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+  </SYNOPSIS>
  
  <REFSECT2 ID="R2-SQL-CLUSTER-1">
   <REFSECT2INFO>
@@ -102,9 +102,9 @@ CLUSTER <REPLACEABLE CLASS="PARAMETER">indexname</REPLACEABLE> ON <REPLACEABLE C
 	 </LISTITEM>
 	</VARLISTENTRY>
 
-  </VARIABLELIST>
-  
- </REFSECT2>
+    </VARIABLELIST>
+   </para>
+  </REFSECT2>
  </REFSYNOPSISDIV>
  
  <REFSECT1 ID="R1-SQL-CLUSTER-1">
@@ -139,7 +139,7 @@ to cluster the class specified
   <TITLE>
   Notes
   </TITLE>
-  <PARA>
+ 
  <para>
   The table is actually copied to a temporary table in index
   order, then renamed back to the original name.  For this
@@ -191,39 +191,40 @@ SELECT ... INTO TABLE <replaceable class="parameter">temp</replaceable> FROM ...
   will not be preserved. From then on, <command>CLUSTER</command> should be
   fast because most of the heap data has already been
   ordered, and the existing index is used.
- </para>
- 
- 
+   </para>
+  </refsect2>
+ </refsect1>
+   
  <REFSECT1 ID="R1-SQL-CLUSTER-2">
- <TITLE>
-  Usage
- </TITLE>
- <PARA>
-  Cluster the employees relation on the basis of its salary attribute
- </PARA>
- <ProgramListing>
-CLUSTER emp_ind ON emp
- </ProgramListing>
+  <TITLE>
+   Usage
+  </TITLE>
+  <PARA>
+   Cluster the employees relation on the basis of its salary attribute
+  </PARA>
+  <ProgramListing>
+   CLUSTER emp_ind ON emp
+  </ProgramListing>
  </REFSECT1>
  
  <REFSECT1 ID="R1-SQL-CLUSTER-3">
- <TITLE>
-  Compatibility
- </TITLE>
- <PARA>
- </PARA>
- 
- <REFSECT2 ID="R2-SQL-CLUSTER-4">
-  <REFSECT2INFO>
-  <DATE>1998-09-08</DATE>
-  </REFSECT2INFO>
   <TITLE>
-  SQL92
+   Compatibility
   </TITLE>
   <PARA>
-  There is no <command>CLUSTER</command> statement in SQL92.
   </PARA>
- </refsect2>
+  
+  <REFSECT2 ID="R2-SQL-CLUSTER-4">
+   <REFSECT2INFO>
+    <DATE>1998-09-08</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    SQL92
+   </TITLE>
+   <PARA>
+    There is no <command>CLUSTER</command> statement in SQL92.
+   </PARA>
+  </refsect2>
  </refsect1>
 </REFENTRY>
 

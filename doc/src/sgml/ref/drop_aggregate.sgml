@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Removes the definition of an aggregate function
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-04-15</DATE>
@@ -84,8 +85,11 @@ DROP AGGREGATE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> <REPLACEABLE CL
 	  <PARA>
           This message occurs if the aggregate function specified does not
 	   exist in the database.
-
-   </VARIABLELIST>
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  

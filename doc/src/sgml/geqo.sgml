@@ -1,8 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.4 1998/08/15 06:55:05 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.5 1998/12/29 02:24:15 thomas Exp $
 Genetic Optimizer
 
 $Log: geqo.sgml,v $
+Revision 1.5  1998/12/29 02:24:15  thomas
+Clean up to ensure tag completion as required by the newest versions
+ of Norm's Modular Style Sheets and jade/docbook.
+From Vince Vielhaber <vev@michvhf.com>.
+
 Revision 1.4  1998/08/15 06:55:05  thomas
 Change Id field in chapter tag to change html output file name.
 
@@ -43,6 +48,7 @@ Written by <ULink url="utesch@aut.tu-freiberg.de">Martin Utesch</ULink>
 for the Institute of Automatic Control at the University of Mining and Technology in Freiberg, Germany.
 </Para>
 </Note>
+</para>
 
 <Sect1>
 <Title>Query Handling as a Complex Optimization Problem</Title>
@@ -55,6 +61,7 @@ optimization effort is caused by the support of a variety of <FirstTerm>join met
  (e.g., nested loop, index scan, merge join in <ProductName>Postgres</ProductName>) to
 process individual <Command>join</Command>s and a diversity of <FirstTerm>indices</FirstTerm> (e.g., r-tree,
 b-tree, hash in <ProductName>Postgres</ProductName>) as access paths for relations.
+</para>
 
 <Para>
    The current <ProductName>Postgres</ProductName> optimizer implementation performs a <FirstTerm>near-
@@ -62,6 +69,7 @@ exhaustive search</FirstTerm> over the space of alternative strategies. This que
 optimization technique is inadequate to support database application
 domains that involve the need for extensive queries, such as artificial
 intelligence.
+</para>
 
 <Para>
    The Institute of Automatic Control at the University of Mining and
@@ -70,15 +78,18 @@ folks wanted to take the <ProductName>Postgres</ProductName> DBMS as the backend
 support knowledge based system for the maintenance of an electrical
 power grid. The DBMS needed to handle large <Command>join</Command> queries for the
 inference machine of the knowledge based system.
+</para>
 
 <Para>
    Performance difficulties within exploring the space of possible query
 plans arose the demand for a new optimization technique being developed.
+</para>
 
 <Para>
    In the following we propose the implementation of a <FirstTerm>Genetic Algorithm</FirstTerm>
  as an option for the database query optimization problem.
-
+</para>
+</sect1>
 
 <Sect1>
 <Title>Genetic Algorithms (<Acronym>GA</Acronym>)</Title>
@@ -89,6 +100,7 @@ determined, randomized search. The set of possible solutions for the
 optimization problem is considered as a <FirstTerm>population</FirstTerm> of <FirstTerm>individuals</FirstTerm>.
 The degree of adaption of an individual to its environment is specified
 by its <FirstTerm>fitness</FirstTerm>.
+</para>
 
 <Para>
    The coordinates of an individual in the search space are represented
@@ -96,11 +108,13 @@ by <FirstTerm>chromosomes</FirstTerm>, in essence a set of character strings. A 
 subsection of a chromosome which encodes the value of a single parameter
 being optimized. Typical encodings for a gene could be <FirstTerm>binary</FirstTerm> or
 <FirstTerm>integer</FirstTerm>.
+</para>
 
 <Para>
    Through simulation of the evolutionary operations <FirstTerm>recombination</FirstTerm>,
 <FirstTerm>mutation</FirstTerm>, and <FirstTerm>selection</FirstTerm> new generations of search points are found
 that show a higher average fitness than their ancestors.
+</para>
 
 <Para>
    According to the "comp.ai.genetic" <Acronym>FAQ</Acronym> it cannot be stressed too
@@ -137,6 +151,8 @@ P''(t)  generation of descendants at a time t
 |   | t := t + 1                          |
 +===+=====================================+
 </ProgramListing>
+</para>
+</sect1>
 
 <Sect1>
 <Title>Genetic Query Optimization (<Acronym>GEQO</Acronym>) in Postgres</Title>
@@ -156,10 +172,12 @@ E. g., the query tree
 is encoded by the integer string '4-1-3-2',
 which means, first join relation '4' and '1', then '3', and
 then '2', where 1, 2, 3, 4 are relids in <ProductName>Postgres</ProductName>.
+</para>
 
 <Para>
    Parts of the <Acronym>GEQO</Acronym> module are adapted from D. Whitley's Genitor
 algorithm.
+</para>
 
 <Para>
    Specific characteristics of the <Acronym>GEQO</Acronym> implementation in <ProductName>Postgres</ProductName>
@@ -189,6 +207,7 @@ Mutation as genetic operator is deprecated so that no repair
 </Para>
 </ListItem>
 </ItemizedList>
+</para>
 
 <Para>
    The <Acronym>GEQO</Acronym> module gives the following benefits to the <ProductName>Postgres</ProductName> DBMS
@@ -209,6 +228,7 @@ Improved cost size approximation of query plans since no longer
 </Para>
 </ListItem>
 </ItemizedList>
+</para>
 
 </Sect1>
 
@@ -231,6 +251,8 @@ Debugging showed that it get stucked in a loop of routine
 <Function>OrderedElemPop</Function>, file <FileName>backend/utils/mmgr/oset.c</FileName>.
 The same problems arise with long queries when using the normal
 <ProductName>Postgres</ProductName> query optimization algorithm.
+</para>
+</sect3>
 
 <Sect3>
 <Title>Improve genetic algorithm parameter settings</Title>
@@ -252,6 +274,8 @@ Computing time
 </Para>
 </ListItem>
 </ItemizedList>
+</para>
+</sect3>
 
 <Sect3>
 <Title>Find better solution for integer overflow</Title>
@@ -263,6 +287,8 @@ the present hack for MAXINT overflow is to set the <ProductName>Postgres</Produc
 value of <StructField>rel->size</StructField> to its logarithm.
 Modifications of <StructName>Rel</StructName> in <FileName>backend/nodes/relation.h</FileName> will
 surely have severe impacts on the whole <ProductName>Postgres</ProductName> implementation.
+</para>
+</sect3>
 
 <Sect3>
 <Title>Find solution for exhausted memory</Title>
@@ -275,7 +301,9 @@ Maybe I forgot something to be freed correctly, but I dunno what.
 Of course the <StructName>rel</StructName> data structure of the <Command>join</Command> keeps growing and
 growing the more relations are packed into it.
 Suggestions are welcome :-(
-
+</para>
+</sect3>
+</sect2>
 
 <Sect2>
 <Title>Further Improvements</Title>
@@ -283,6 +311,7 @@ Suggestions are welcome :-(
 <Para>
 Enable bushy query tree processing within <ProductName>Postgres</ProductName>;
 that may improve the quality of query plans.
+</para>
 
 <BIBLIOGRAPHY Id="geqo-biblio">
 <TITLE>
@@ -365,4 +394,6 @@ The Benjamin/Cummings Pub., Inc.
 </BIBLIOENTRY>
 </BIBLIOGRAPHY>
 
+</sect2>
+</sect1>
 </Chapter>

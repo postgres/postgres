@@ -170,6 +170,7 @@ At the same time, the version numbering
 was reset to start at 6.0, 
 putting the numbers back into the sequence originally begun by
 the <ProductName>Postgres</ProductName> Project.
+</Para>
 
 <Para>
 The emphasis on development for the v1.0.x releases of 
@@ -180,9 +181,11 @@ the emphasis has shifted from
 identifying and understanding existing problems in the backend 
 to augmenting features and capabilities, although
 work continues in all areas.
+</Para>
 
 <Para>
 Major enhancements include:
+</Para>
 
 <ItemizedList>
 <ListItem>
@@ -203,6 +206,7 @@ type casting, and binary and hexadecimal integer input.
 Built-in types have been improved, including new wide-range date/time types 
 and additional geometric type support.
 </Para>
+
 </ListItem>
 <ListItem>
 <Para>
@@ -211,7 +215,6 @@ and backend startup time has decreased 80% since v6.0 was released.
 </Para>
 </ListItem>
 </ItemizedList>
-</Para>
 </Sect2>
 
 </sect1>

@@ -12,7 +12,7 @@ RESET
 <REFPURPOSE>
 Restores run-time parameters for session to default values
 </REFPURPOSE>
-
+  </refnamediv>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
 <DATE>1998-09-24</DATE>
@@ -21,115 +21,122 @@ Restores run-time parameters for session to default values
 RESET <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
 </SYNOPSIS>
 
-<REFSECT2 ID="R2-SQL-RESET-1">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-Inputs
-</TITLE>
-<PARA>
+	<REFSECT2 ID="R2-SQL-RESET-1">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		Inputs
+	  </TITLE>
+	  <PARA>		
+		<VARIABLELIST>
+		  <VARLISTENTRY>
+			<TERM>
+			  <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Refer to the SET statement for more information on available
+				variables.
+			  </para>
+			</listitem>
+		  </varlistentry>
+		</variablelist>
+	  </para>
+	</REFSECT2>
 
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-          Refer to the SET statement for more information on available
-          variables.
-</variablelist>
+	<REFSECT2 ID="R2-SQL-RESET-2">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		Outputs
+	  </TITLE>
+	  <PARA>
+		
+		<VARIABLELIST>
+		  <VARLISTENTRY>
+			<TERM>
+			  RESET VARIABLE
+			</TERM>
+			<LISTITEM>
+			  <PARA>
+				Message returned if 
+				<REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> is successfully reset
+				to its default value..
+			  </para>
+			</listitem>
+		  </varlistentry>
+		</VARIABLELIST>
+	  </para>
+	</REFSECT2>
+  </REFSYNOPSISDIV>
+  
+  <REFSECT1 ID="R1-SQL-RESET-1">
+	<REFSECT1INFO>
+	  <DATE>1998-09-24</DATE>
+	</REFSECT1INFO>
+	<TITLE>
+	  Description
+	</TITLE>
+	<PARA>
+	  <command>RESET</command> restores variables to the
+	  default values.
+	  Refer to the <command>SET</command> command for details on
+	  allowed values and defaults.
+	  <command>RESET</command> is an alternate form for
+	  <synopsis>
+		<command>SET <replaceable class="parameter">variable</replaceable> = DEFAULT</command>
+	  </synopsis>
+	</para>
 
-</REFSECT2>
+	<REFSECT2 ID="R2-SQL-RESET-3">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		Notes
+	  </TITLE>
+	  <PARA>
+		The RESET statement is a <productname>Postgres</productname> language extension.
+	  </para>
+	  <para>
+		  Refer to SET/SHOW statements to set/show variable values.
+	  </para>
+	</REFSECT2>
+  </refsect1>
+  
+  <REFSECT1 ID="R1-SQL-RESET-2">
+	<TITLE>
+	  Usage
+	</TITLE>
+	<PARA>
+	  <ProgramListing>
+		-- reset DateStyle to its default;
+		RESET DateStyle;
+	  </programlisting>
+	  <programlisting>   
+		-- reset Geqo to its default;
+		RESET GEQO;
+	  </ProgramListing>
+	</para>
+  </REFSECT1>
 
-<REFSECT2 ID="R2-SQL-RESET-2">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-Outputs
-</TITLE>
-<PARA>
+  <REFSECT1 ID="R1-SQL-RESET-3">
+	<TITLE>
+	  Compatibility
+	</TITLE>
 
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-RESET VARIABLE
-</TERM>
-<LISTITEM>
-<PARA>
-          Message returned if 
-<REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> is successfully reset
-to its default value..
-
-</VARIABLELIST>
-
-</REFSECT2>
-</REFSYNOPSISDIV>
-
-<REFSECT1 ID="R1-SQL-RESET-1">
-<REFSECT1INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT1INFO>
-<TITLE>
-Description
-</TITLE>
-<PARA>
- <command>RESET</command> restores variables to the
- default values.
-Refer to the <command>SET</command> command for details on
- allowed values and defaults.
-<command>RESET</command> is an alternate form for
-<synopsis>
-<command>SET <replaceable class="parameter">variable</replaceable> = DEFAULT</command>
-</synopsis>
-
-<REFSECT2 ID="R2-SQL-RESET-3">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-Notes
-</TITLE>
-<PARA>
-The RESET statement is a <productname>Postgres</productname> language extension.
-<para>
-   Refer to SET/SHOW statements to set/show variable values.
-
-</REFSECT2>
-</refsect1>
-
-<REFSECT1 ID="R1-SQL-RESET-2">
-<TITLE>
-Usage
-</TITLE>
-<PARA>
-<ProgramListing>
--- reset DateStyle to its default;
-RESET DateStyle;
-</programlisting>
-<programlisting>   
--- reset Geqo to its default;
-RESET GEQO;
-</ProgramListing>
-
-</REFSECT1>
-
-<REFSECT1 ID="R1-SQL-RESET-3">
-<TITLE>
-Compatibility
-</TITLE>
-<PARA>
-
-<REFSECT2 ID="R2-SQL-RESET-4">
-<REFSECT2INFO>
-<DATE>1998-09-24</DATE>
-</REFSECT2INFO>
-<TITLE>
-SQL92
-</TITLE>
-<PARA>
-   There is no <command>RESET</command> in <acronym>SQL92</acronym>.
-
+	<REFSECT2 ID="R2-SQL-RESET-4">
+	  <REFSECT2INFO>
+		<DATE>1998-09-24</DATE>
+	  </REFSECT2INFO>
+	  <TITLE>
+		SQL92
+	  </TITLE>
+	  <PARA>
+		There is no <command>RESET</command> in <acronym>SQL92</acronym>.
+	  </para>
+	</refsect2>
+  </refsect1>
 </REFENTRY>

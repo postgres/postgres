@@ -11,6 +11,7 @@ Since it is possible to install more than one set of
 databases on a single host, this term more precisely denotes any
 particular set of installed 
 <Productname>Postgres</Productname> binaries and databases.
+</para>
 
 <para>
 The 
@@ -27,6 +28,7 @@ Note that the <Productname>Postgres</Productname> superuser is
 the same as the Unix superuser (which will be referred to as <firstterm>root</firstterm>).
 The superuser should have a non-zero user identifier (<firstterm>UID</firstterm>)
 for security reasons.
+</para>
 
 <para>
 The
@@ -37,6 +39,7 @@ enforce a security policy for a site.  The DBA can add new users by
 the method described below 
 and maintain a set of template databases for use by
 <application>createdb</application>.
+</para>
 
 <para>
 The <application>postmaster</application>
@@ -48,6 +51,7 @@ backend processes.  The <application>postmaster</application>
 can take several command-line arguments to tune its behavior.
 However, supplying arguments is necessary only if you intend to run multiple
 sites or a non-default site.
+</para>
 
 <para>
 The <Productname>Postgres</Productname> backend
@@ -58,6 +62,8 @@ directly from the user shell by the
 doing this bypasses the shared buffer pool and lock table associated
 with a postmaster/site, therefore this is not recommended in a multiuser
 site.
+</para>
+</sect1>
 
 <sect1>
 <title>Notation</title>
@@ -66,6 +72,7 @@ site.
 <quote>...</quote> or <filename>/usr/local/pgsql/</filename> 
 at the front of a file name is used to represent the
 path to the <Productname>Postgres</Productname> superuser's home directory.
+</para>
 
 <para>
 In a command synopsis, brackets
@@ -73,10 +80,12 @@ In a command synopsis, brackets
 Anything in braces
 (<quote>{</quote> and <quote>}</quote>) and containing vertical bars (<quote>|</quote>)
  indicates that you must choose one.
+</para>
 
 <para>
 In examples, parentheses (<quote>(</quote> and <quote>)</quote>) are used to group boolean
 expressions.  <quote>|</quote> is the boolean operator OR.
+</para>
 
 <para>
 Examples will show commands executed from various accounts and programs.
@@ -87,6 +96,7 @@ executed from an unprivileged user's account will be preceeded with
 <quote>$</quote>.
 <acronym>SQL</acronym> commands will be preceeded with <quote>=&gt;</quote>
 or will have no leading prompt, depending on the context.
+</para>
 
 <note>
 <para>
@@ -94,6 +104,7 @@ At the time of writing (<Productname>Postgres</Productname> v6.4) the notation f
 flagging commands is not universally consistant throughout the documentation set.
 Please report problems to
 <ulink url="mailto:docs@postgresql.org">the Documentation Mailing List</ulink>.
+</para>
 </note>
 
 </sect1>

@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Copies data between files and tables
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-08</DATE>
@@ -92,20 +93,21 @@ Specifies that input comes from a pipe or terminal.
 	 <LISTITEM>
 	  <PARA>
 Specifies that output goes to a pipe or terminal.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">delimiter</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   A character that delimits the input or output fields.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>
+     <VARLISTENTRY>
+      <TERM>
+       <replaceable class="parameter">delimiter</replaceable>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	A character that delimits the input or output fields.
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>
+    </variablelist>
+   </para>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-COPY-2">
@@ -131,12 +133,15 @@ Specifies that output goes to a pipe or terminal.
 	<VARLISTENTRY>
 	 <TERM>
 	  <ReturnValue>ERROR: <replaceable>error message</replaceable></ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The copy failed for the reason stated in the error message.
-
-   </VARIABLELIST>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	The copy failed for the reason stated in the error message.
+       </para>
+      </listitem>
+     </varlistentry>
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -147,19 +152,18 @@ Specifies that output goes to a pipe or terminal.
   <TITLE>
    Description
   </TITLE>
-  <PARA>
+  <para>
    <command>COPY</command> moves data between
  <productname>Postgres</productname> tables and
    standard Unix files. 
 
-<para>
-<command>COPY</command> instructs
- the <productname>Postgres</productname> backend
-to directly read from or write to a file. The file must be directly visible to
-the backend and the name must be specified from the viewpoint of the backend.
-If <filename>stdin</filename> or <filename>stdout</filename> are specified, data flows through the client frontend to 
-the backend.
-
+   <command>COPY</command> instructs
+   the <productname>Postgres</productname> backend
+   to directly read from or write to a file. The file must be directly visible to
+   the backend and the name must be specified from the viewpoint of the backend.
+   If <filename>stdin</filename> or <filename>stdout</filename> are specified, data flows through the client frontend to 
+   the backend.
+   </para>
   <REFSECT2 ID="R2-SQL-COPY-3">
    <REFSECT2INFO>
     <DATE>1998-09-08</DATE>
@@ -167,41 +171,42 @@ the backend.
    <TITLE>
     Notes
    </TITLE>
-  <para>
-   The BINARY keyword will force all data to be
-   stored/read as binary objects rather than as text.  It is
-   somewhat faster than the normal copy command, but is not
-   generally portable, and the files generated are somewhat larger,
-   although this factor is highly dependent on the data itself.  By
-   default, a text copy uses a tab ("\t") character as a delimiter.
-   The delimiter may also be changed to any other single character
-   with the keyword phrase USING DELIMITERS.  Characters
-   in data fields which happen to match the delimiter character will
-   be quoted.
-  </para>
-
-  <para>
+   <para>
+    The BINARY keyword will force all data to be
+    stored/read as binary objects rather than as text.  It is
+    somewhat faster than the normal copy command, but is not
+    generally portable, and the files generated are somewhat larger,
+    although this factor is highly dependent on the data itself.  By
+    default, a text copy uses a tab ("\t") character as a delimiter.
+    The delimiter may also be changed to any other single character
+    with the keyword phrase USING DELIMITERS.  Characters
+    in data fields which happen to match the delimiter character will
+    be quoted.
+   </para>
+   
+   <para>
     You must have select access on any table whose values are read by
     <command>COPY</command>, and either insert or update access to a
     table into which values are being inserted by <command>COPY</command>.
     The backend also needs appropriate Unix permissions for any file read
     or written by <command>COPY</command>.
-  </para>
-  <para>
+   </para>
+   <para>
     The keyword phrase USING DELIMITERS specifies a single character
-to be used for all delimiters between columns. If multiple characters
-are specified in the delimiter string,  only the first character is
+    to be used for all delimiters between columns. If multiple characters
+    are specified in the delimiter string,  only the first character is
     used.
-
-   <tip>
-<para>
-    Do not confuse <command>COPY</command> with the
-    <application>psql</application> instruction <command>\copy</command>.
-</tip>
-
+    
+    <tip>
+     <para>
+      Do not confuse <command>COPY</command> with the
+      <application>psql</application> instruction <command>\copy</command>.
+     </para>
+    </tip>
+   </para>
   </REFSECT2>
  </refsect1>
-
+ 
  <refsect1 ID="R1-SQL-COPY-2">
   <refsect1info>
    <date>1998-05-04</date>

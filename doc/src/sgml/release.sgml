@@ -20,7 +20,7 @@
 <para>
 This is a bugfix release for 6.3.x.
 Refer to the release notes for v6.3 for a more complete summary of new features.
-
+</para>
 <para>
 Summary:
 
@@ -29,22 +29,27 @@ Summary:
 <para>
 Repairs automatic configuration support for some platforms, including Linux,
 from breakage inadvertently introduced in v6.3.1.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Correctly handles function calls on the left side of BETWEEN and LIKE clauses.
+</para>
+</listitem>
 
 </itemizedlist>
-
+</para>
 <Para>
 A dump/restore is NOT required for those running 6.3 or 6.3.1.  A 
 'make distclean', 'make', and 'make install' is all that is required.
 This last step should be performed while the postmaster is not running.
 You should re-link any custom applications that use <productname>Postgres</productname> libraries.
-
+</para>
 <para>
 For upgrades from pre-v6.3 installations,
 refer to the installation and migration instructions for v6.3.
+</para>
 
 <sect2>
 <title>Detailed Change List</title>
@@ -72,8 +77,9 @@ Remove DISTDIR(Bruce)
 Makefile dependency cleanup(Jeroen van Vianen)
 ASSERT fixes(Bruce)
 </programlisting>
-
-
+</para>
+</sect2>
+</sect1>
 <Sect1>
 <Title>Release 6.3.1</Title>
 <!--
@@ -97,33 +103,39 @@ Summary:
 <listitem>
 <para>
 Additional support for multi-byte character sets.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Repair byte ordering for mixed-endian clients and servers.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Minor updates to allowed SQL syntax.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Improvements to the configuration autodetection for installation.
-
-<listitem>
-<para>
+</para>
+</listitem>
 
 </itemizedlist>
-
+</para>
 <Para>
 A dump/restore is NOT required for those running 6.3.  A 
 'make distclean', 'make', and 'make install' is all that is required.
 This last step should be performed while the postmaster is not running.
 You should re-link any custom applications that use <productname>Postgres</productname> libraries.
-
+</para>
 <para>
 For upgrades from pre-v6.3 installations,
 refer to the installation and migration instructions for v6.3.
+</para>
 
 <sect2>
 <title>Detailed Change List</title>
@@ -160,8 +172,9 @@ Fix for text arrays containing quotes(Doug Gibson)
 Solaris compile fix(Albert Chin-A-Young)
 Better identify tcl and tk libs and includes(Bruce)
 </programlisting>
-
-
+</para>
+</sect2>
+</sect1>
 <Sect1>
 <Title>Release 6.3</Title>
 <!--
@@ -188,37 +201,49 @@ Here is a brief, incomplete summary:
 Many new SQL features, including
 full <acronym>SQL92</acronym> subselect capability
 (everything is here but target-list subselects).
+</para>
+</listitem>
 
 <listitem>
 <para>
 Support for client-side environment variables to specify time zone and date style.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Socket interface for client/server connection. This is the default now
 so you may need to start <application>postmaster</application> with the
 <quote>-i</quote> flag.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Better password authorization mechanisms. Default table permissions have changed.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Old-style <quote>time travel</quote> has been removed. Performance has been improved.
+</para>
+</listitem>
 
 </itemizedlist>
+</para>
 
 <note>
 <para>
 Bruce Momjian wrote the following notes to introduce the new release.
+</para>
 </note>
 
 <para>
 There are some general 6.3 issues that I want to mention.  These are
 only the big items that can not be described in one sentence.  A review
 of the detailed changes list is still needed.
-
+</para>
 <para>
 First, we now have subselects.  Now that we have them, I would like to
 mention that without subselects, SQL is a very limited language.
@@ -228,13 +253,13 @@ think you will find that there are more uses for subselects than you may
 think.  Vadim has put us on the big SQL map with subselects, and fully
 functional ones too.  The only thing you can't do with subselects is to
 use them in the target list.
-
+</para>
 <para>
 Second, 6.3 uses unix domain sockets rather than TCP/IP by default.  To
 enable connections from other machines, you have to use the new
 postmaster -i option, and of course edit pg_hba.conf.  Also, for this
 reason, the format of pg_hba.conf has changed.
-
+</para>
 <para>
 Third, char() fields will now allow faster access than varchar() or
 text. Specifically, the text and varchar() have a penalty for access to
@@ -243,7 +268,7 @@ have this access penalty, but it no longer does.  This may suggest that
 you redesign some of your tables, especially if you have short character
 columns that you have defined as varchar() or text.  This and other
 changes make 6.3 even faster than earlier releases.
-
+</para>
 <para>
 We now have passwords definable independent of any Unix file.  There are
 new SQL USER commands.  See the pg_hba.conf manual page for more
@@ -252,23 +277,23 @@ user information and user passwords, and it by default only SELECT-able
 by the postgres super-user.  pg_user is now a view of pg_shadow, and is
 SELECT-able by PUBLIC.  You should keep using pg_user in your
 application without changes.
-
+</para>
 <para>
 User-created tables now no longer have SELECT permission to PUBLIC by
 default.  This was done because the ANSI standard requires it.  You can
 of course GRANT any permissions you want after the table is created. 
 System tables continue to be SELECT-able by PUBLIC.
-
+</para>
 <para>
 We also have real deadlock detection code.  No more sixty-second
 timeouts.  And the new locking code implements a FIFO better, so there
 should be less resource starvation during heavy use.
-
+</para>
 <para>
 Many complaints have been made about inadequate documenation in previous
 releases.  Thomas has put much effort into many new manuals for this
 release.  Check out the doc/ directory.
-
+</para>
 <para>
 For performance reasons, time travel is gone, but can be implemented
 using triggers (see pgsql/contrib/spi/README).  Please check out the new
@@ -276,13 +301,13 @@ using triggers (see pgsql/contrib/spi/README).  Please check out the new
 permissions now, not based on the underlying tables, so permissions on
 them have to be set separately.  Check /pgsql/interfaces for some new
 ways to talk to <productname>Postgres</productname>.
-
+</para>
 <para>
 This is the first release that really required an explanation for
 existing users.  In many ways, this was necessary because the new
 release removes many limitations, and the work-arounds people were using
 are no longer needed.
-
+</para>
 
 <sect2>
 <title>Migration to v6.3</title>
@@ -292,7 +317,8 @@ A dump/restore using <application>pg_dump</application>
 or <application>pg_dumpall</application>
 is required for those wishing to migrate data from any
 previous release of <productname>Postgres</productname>.
-
+</para>
+</sect2>
 
 <sect2>
 <title>Detailed Change List</title>
@@ -465,7 +491,7 @@ Expand a few function names formerly truncated to 16 characters(Thomas)
 Remove un-needed malloc() calls and replace with palloc()(Bruce)
 </programlisting>
 </Para>
-
+</sect2>
 </Sect1>
 
 <Sect1>
@@ -486,7 +512,7 @@ Fri Oct 17 00:01:27 EDT 1997
 
 <para>
 v6.2.1 is a bug-fix and usability release on v6.2.
-
+</para>
 <para>
 Summary:
 
@@ -494,17 +520,22 @@ Summary:
 <listitem>
 <para>
 Allow strings to span lines, per <acronym>SQL92</acronym>.
+</para>
+</listitem>
 
 <listitem>
 <para>
 Include example trigger function for inserting user names on table updates.
+</para>
+</listitem>
 
 </itemizedlist>
-
+</para>
 <para>
 This is a minor bug-fix release on v6.2. 
 For upgrades from pre-v6.2 systems, a full dump/reload is required. 
 Refer to the v6.2 release notes for instructions.
+</para>
 
 <sect2>
 <title>Migration from v6.2 to v6.2.1</title>
@@ -512,12 +543,12 @@ Refer to the v6.2 release notes for instructions.
 <para>
 This is a minor bug-fix release. A dump/reload is not required from v6.2,
 but is required from any release prior to v6.2.
-
+</para>
 <para>
 In upgrading from v6.2, if you choose to dump/reload you will find that
 avg(money) is now calculated correctly. All other bug fixes take effect
 upon updating the executables.
-
+</para>
 <para>
 Another way to avoid dump/reload is to use the following SQL command
 from psql to update the existing system table:
@@ -526,10 +557,11 @@ from psql to update the existing system table:
   update pg_aggregate set aggfinalfn = 'cash_div_flt8'
    where aggname = 'avg' and aggbasetype = 790;
 </programlisting>
-
+</para>
 <para>
 This will need to be done to every existing database, including template1.
-
+</para>
+</sect2>
 <sect2>
 <title>Detailed Change List</title>
 
@@ -549,6 +581,8 @@ Fix for specifying a column twice in ORDER/GROUP BY(Vadim)
 Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
 Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 </programlisting>
+</para>
+</sect2>
 </Sect1>
 
 <Sect1>
@@ -570,6 +604,7 @@ Thu Oct 02 12:53:46 EDT 1997
 <para>
 A dump/restore is required for those wishing to migrate data from
 previous releases of <productname>Postgres</productname>.
+</para>
 
 <sect2>
 <title>Migration from v6.1 to v6.2</title>
@@ -577,10 +612,12 @@ previous releases of <productname>Postgres</productname>.
 <para>
 This migration requires a complete dump of the 6.1 database and a
 restore of the database in 6.2.
-
+</para>
 <para>
 Note that the pg_dump and pg_dumpall utility from 6.2 should be used
 to dump the 6.1 database.
+</para>
+</sect2>
 
 <sect2>
 <title>Migration from v1.x to v6.2</title>
@@ -588,6 +625,8 @@ to dump the 6.1 database.
 <para>
 Those migrating from earlier 1.* releases should first upgrade to 1.09
 because the COPY output format was improved from the 1.02 release.
+</para>
+</sect2>
 
 <sect2>
 <title>Detailed Change List</title>
@@ -703,7 +742,9 @@ Massive commit to run PGINDENT on all *.c and *.h files(Bruce)
 Files moved to /src/tools directory(Bruce)
 SPI and Trigger programming guides (Vadim & D'Arcy)
 </programlisting>
-
+</para>
+</sect2>
+</sect1>
 
 <Sect1>
 <Title>Release 6.1.1</Title>
@@ -729,6 +770,8 @@ Mon Jul 22 18:04:49 EDT 1997
 This is a minor bug-fix release. A dump/reload is not required from v6.1,
 but is required from any release prior to v6.1.
 Refer to the release notes for v6.1 for more details.
+</para>
+</sect2>
 
 <sect2>
 <title>Detailed Change List</title>
@@ -755,8 +798,9 @@ Fix for Solaris assembler and include files(Yoshihiko Ichikawa)
 allow underscores in usernames(Bruce)
 pg_dumpall now returns proper status, portability fix(Bruce)
 </programlisting>
-
-
+</para>
+</sect2>
+</sect1>
 
 <Sect1>
 <Title>Release 6.1</Title>
@@ -825,10 +869,12 @@ Sun Jun  8 14:41:13 EDT 1997
 <para>
 This migration requires a complete dump of the 6.0 database and a
 restore of the database in 6.1.
-
+</para>
 <para>
 Those migrating from earlier 1.* releases should first upgrade to 1.09
 because the COPY output format was improved from the 1.02 release.
+</para>
+</sect2>
 
 <sect2>
 <title>Detailed Change List</title>
@@ -930,7 +976,9 @@ c++ include file cleanup(Bruce)
 warn about buggy flex(Bruce)
 DG-UX, Ultrix, Irix, AIX portability fixes
 </programlisting>
-
+</para>
+</sect2>
+</sect1>
 
 <sect1>
 <title>Release v6.0</title>
@@ -951,6 +999,7 @@ Wed Jan 29 00:19:54 EST 1997
 <para>
 A dump/restore is required for those wishing to migrate data from
 previous releases of <productname>Postgres</productname>.
+</para>
 
 <sect2>
 <title>Migration from v1.09 to v6.0</title>
@@ -958,6 +1007,8 @@ previous releases of <productname>Postgres</productname>.
 <para>
 This migration requires a complete dump of the 1.09 database and a
 restore of the database in 6.0.
+</para>
+</sect2>
 
 <sect2>
 <title>Migration from pre-v1.09 to v6.0</title>
@@ -965,6 +1016,8 @@ restore of the database in 6.0.
 <para>
 Those migrating from earlier 1.* releases should first upgrade to 1.09
 because the COPY output format was improved from the 1.02 release.
+</para>
+</sect2>
 
 <sect2>
 <title>Detailed Change List</title>
@@ -1075,7 +1128,9 @@ Restructured object file generation/location(Bryan, Marc)
 Restructured port-specific file locations(Bryan, Marc)
 Unused/uninialized variables corrected
 </programlisting>
-
+</para>
+</sect2>
+</sect1>
 
 <sect1>
 <title>Release v1.09</title>
@@ -1097,7 +1152,8 @@ Unknown
 Sorry, we stopped keeping track of changes from 1.02 to 1.09.  Some of
 the changes listed in 6.0 were actually included in the 1.02.1 to 1.09
 releases.
-
+</para>
+</sect1>
 
 <sect1>
 <title>Release v1.02</title>
@@ -1121,26 +1177,28 @@ Thu Aug  1 18:00:00 EDT 1996
 <para>
 Here is a new migration file for 1.02.1.  It includes the 'copy' change
 and a script to convert old ascii files.
-
+</para>
 <note>
 <para>
 The following notes are for the benefit of users who want to migrate
 databases from postgres95 1.01 and 1.02 to postgres95 1.02.1.
-
+</para>
 <para>
 If you are starting afresh with postgres95 1.02.1 and do not need
 to migrate old databases, you do not need to read any further.
+</para>
 </note>
 
 <para>
 In order to upgrade older postgres95 version 1.01 or 1.02 databases to
 version 1.02.1, the following steps are required:
-
+</para>
 <procedure>
 <step>
 <para>
 Start up a new 1.02.1 postmaster
-
+</para>
+</step>
 <step>
 <para>
 Add the new built-in functions and operators of 1.02.1 to 1.01 or 1.02
@@ -1156,7 +1214,10 @@ Add the new built-in functions and operators of 1.02.1 to 1.01 or 1.02
 Those upgrading 1.02 databases will get a warning when executing the
 last two statements in the file because they are already present in 1.02.  This is
 not a cause for concern.
+</para>
+</step>
 </procedure>
+</sect2>
 
 <sect2>
 <title>Dump/Reload Procedure</title>
@@ -1172,7 +1233,7 @@ than NULL. See the copy manual page for full details.
 <programlisting>
 	sed 's/^\.$/\\./g' &lt;in_file &gt;out_file
 </programlisting>
-
+</para>
 <para>
 If you are loading an older binary copy or non-stdout copy, there is no
 end-of-data character, and hence no conversion necessary.
@@ -1185,7 +1246,8 @@ create operator !~* (leftarg = bpchar, rightarg = text, procedure = texticregexn
 create operator ~* (leftarg = varchar, rightarg = text, procedure = texticregexeq);
 create operator !~* (leftarg = varchar, rightarg = text, procedure = texticregexne);
 </programlisting>
-
+</para>
+</sect2>
 
 <sect2>
 <title>Detailed Change List</title>
@@ -1218,7 +1280,7 @@ New Ports
  * added BSDI 2.1 port
  * added DGUX port
 </programlisting>
-
+</para>
 <!--
 Contributors (appologies to any missed)
  * Kurt J. Lidl <lidl@va.pubnix.com> 
@@ -1247,6 +1309,8 @@ Contributors (appologies to any missed)
  * Paul "Shag" Walmsley <ccshag@cclabs.missouri.edu>
  * "Alistair G. Crooks" <azcb0@sde.uts.amdahl.com>
 -->
+</sect2>
+</sect1>
 
 <sect1>
 <title>Release v1.01</title>
@@ -1270,32 +1334,34 @@ Fri Feb 23 18:20:36 PST 1996
 <para>
 The following notes are for the benefit of users who want to migrate
 databases from postgres95 1.0 to postgres95 1.01.  
-
+</para>
 <para>
 If you are starting afresh with postgres95 1.01 and do not need
 to migrate old databases, you do not need to read any further.
-
+</para>
 <para>
 In order to postgres95 version 1.01 with databases created with
 postgres95 version 1.0, the following steps are required:  
-
+</para>
 <procedure>
 <step>
 <para>
 Set the definition of NAMEDATALEN in src/Makefile.global to 16
    and OIDNAMELEN to 20.
-
+</para>
+</step>
 <step>
 <para>
 Decide whether you want to use Host based authentication.  
-
+</para>
 <substeps>
 <step>
 <para>
 If you do, you must create a file name "pg_hba" in your top-level data
    directory (typically the value of your $PGDATA).  src/libpq/pg_hba
    shows an example syntax.
-
+</para>
+</step>
 <step>
 <para>
 If you do not want host-based authentication, you can comment out
@@ -1304,35 +1370,43 @@ If you do not want host-based authentication, you can comment out
 	HBA = 1
 </programlisting>
    in src/Makefile.global
-
+</para>
 <para>
    Note that host-based authentication is turned on by default, and if
    you do not take steps A or B above, the out-of-the-box 1.01 will
    not allow you to connect to 1.0 databases.
+</para>
+</step>
 </substeps>
+</step>
 
 <step>
 <para>
 Compile and install 1.01, but DO NOT do the initdb step.
-
+</para>
+</step>
 <step>
 <para>
 Before doing anything else, terminate your 1.0 postmaster, and
    backup your existing $PGDATA directory.   
-
+</para>
+</step>
 <step>
 <para>
 Set your PGDATA environment variable to your 1.0 databases, but set up
    path up so that 1.01 binaries are being used.
-
+</para>
+</step>
 <step>
 <para>
 Modify the file $PGDATA/PG_VERSION from 5.0 to 5.1
-
+</para>
+</step>
 <step>
 <para>
 Start up a new 1.01 postmaster
-
+</para>
+</step>
 <step>
 <para>
 Add the new built-in functions and operators of 1.01 to 1.0
@@ -1390,8 +1464,10 @@ create operator !~* (leftarg = char16, rightarg = text, procedure = char16icrege
 create operator ~* (leftarg = text, rightarg = text, procedure = texticregexeq);
 create operator !~* (leftarg = text, rightarg = text, procedure = texticregexne);
 </programlisting>
-
+</para>
+</step>
 </procedure>
+</sect2>
 
 <sect2>
 <title>Detailed Change List</title>
@@ -1431,6 +1507,9 @@ Bug fixes:
  * psql now returns non-zero status on errors when using -c
  * applied public patches 1-14
 </programlisting>
+</para>
+</sect2>
+</sect1>
 
 <sect1>
 <title>Release v1.0</title>
@@ -1493,6 +1572,9 @@ Bug fixes:
  *  btrees with multiple index never worked, now we tell you they don't
    work when you try to use them
 </programlisting>
+</para>
+</sect2>
+</sect1>
 
 <sect1>
 <title><productname>Postgres95</productname> Beta 0.03</title>
@@ -1621,7 +1703,9 @@ New utilities:
 New documentation:
  * the user manual has been revised and libpq documentation added.
 </programlisting>
-
+</para>
+</sect2>
+</sect1>
 
 <sect1>
 <title><productname>Postgres95</productname> Beta 0.02</title>
@@ -1678,7 +1762,9 @@ The following bugs have been fixed in postgres95-beta-0.02:
  * CREATE TYPE doesn't accept 'variable' as the internallength
  * wrong result using more than 1 aggregate in a SELECT
 </programlisting>
-
+</para>
+</sect2>
+</sect1>
 
 <sect1>
 <title><productname>Postgres95</productname> Beta 0.01</title>
@@ -1698,7 +1784,8 @@ Mon May 1 19:03:10 PDT 1995
 
 <para>
 Initial release.
-
+</para>
+</sect1>
 
 <Sect1>
 <Title>Timing Results</Title>
@@ -1711,11 +1798,11 @@ These timing results are from running the regression test with the commands
 % make all
 % time make runtest
 </ProgramListing>
-
+</para>
 <Para>
   Timing under Linux 2.0.27 seems to have a roughly 5% variation from run
   to run, presumably due to the scheduling vagaries of multitasking systems.
-
+</para>
 <Sect2>
 <Title>v6.4beta</Title>
 
@@ -1723,12 +1810,14 @@ These timing results are from running the regression test with the commands
 The times for this release are not directly comparable to those for previous releases
 since some additional regression tests have been included.
 In general, however, v6.4 should be slightly faster than the previous release (thanks, Bruce!).
-
+</para>
 <Para>
 <ProgramListing>
   Time   System
   02:26  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
 </ProgramListing>
+</para>
+</sect2>
 
 <Sect2>
 <Title>v6.3</Title>
@@ -1738,13 +1827,15 @@ The times for this release are not directly comparable to those for previous rel
 since some additional regression tests have been included and some obsolete tests involving
 time travel have been removed.
 In general, however, v6.3 is substantially faster than previous releases (thanks, Bruce!).
-
+</para>
 <Para>
 <ProgramListing>
   Time   System
   02:30  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
   04:12  Dual Pentium Pro 180, 96MB, EIDE, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
 </ProgramListing>
+</para>
+</sect2>
 
 <Sect2>
 <Title>v6.1</Title>
@@ -1756,5 +1847,7 @@ In general, however, v6.3 is substantially faster than previous releases (thanks
   12:06  P-100, 48MB, Linux 2.0.29, gcc
   39:58  Sparc IPC 32MB, Solaris 2.5, gcc 2.7.2.1 -O -g
 </ProgramListing>
-
+</para>
+</sect2>
+</sect1>
 </Chapter>

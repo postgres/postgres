@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Defines a cursor for table access
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-04</DATE>
@@ -180,11 +181,11 @@ ERROR:  Named portals may only be used in begin/end transaction blocks
 	 <LISTITEM>
 	  <PARA>
 This error occurs if the cursor is not declared within a transaction block.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-
-   </VARIABLELIST>
+       </PARA>
+      </LISTITEM>
+     </VARLISTENTRY>     
+    </VARIABLELIST>
+   </para>
   </REFSECT2>
  </REFSYNOPSISDIV>
  
@@ -215,19 +216,20 @@ backend was built. Since
    BINARY cursors give you back the data in the native binary
    representation. So binary cursors will tend to be a
    little faster since they suffer less conversion overhead.
-<para>
+  </para>
+  <para>
    As an example, if a query returns a value of one from an integer column,
 you would get a string of '1' with a default cursor
 whereas with a binary cursor you would get
  a 4-byte value equal to control-A ('^A').
-
-<caution>
-<para>
-BINARY cursors should be used carefully. User applications such
-as <application>psql</application> are not aware of binary cursors
-and expect data to come back in a text format.
-</caution>
-
+   <caution>
+    <para>
+     BINARY cursors should be used carefully. User applications such
+     as <application>psql</application> are not aware of binary cursors
+     and expect data to come back in a text format.
+    </para>
+   </caution>
+  </para>
   <PARA>
    However, string representation is architecture-neutral whereas binary
    representation can differ between different machine architectures.
@@ -235,13 +237,14 @@ and expect data to come back in a text format.
    representations (e.g. "big-endian" versus "little-endian"),
  you will probably not want your data returned in
    binary format.
-
-<tip>
-<para>
-   If you intend to display the data in
-   ASCII,  getting it back in ASCII will save you some
-   effort on the client side.
-</tip>
+   
+   <tip>
+    <para>
+     If you intend to display the data in
+     ASCII,  getting it back in ASCII will save you some
+     effort on the client side.
+    </para>
+   </tip>
   </PARA>
   
   <REFSECT2 ID="R2-SQL-DECLARE-3">
@@ -256,18 +259,19 @@ and expect data to come back in a text format.
    </PARA>
    <PARA>
     <productname>Postgres</productname>
- does not have an explicit <command>OPEN cursor</command>
+    does not have an explicit <command>OPEN cursor</command>
     statement; a cursor is considered to be open when it is declared.
-
-<note>
-<para>
-In <acronym>SQL92</acronym> cursors are only available in
-embedded applications. <application>ecpg</application>, the
-embedded SQL preprocessor for <productname>Postgres</productname>,
-supports the <acronym>SQL92</acronym> conventions, including those
-involving DECLARE and OPEN statements.
-</note>
-
+    
+    <note>
+     <para>
+      In <acronym>SQL92</acronym> cursors are only available in
+      embedded applications. <application>ecpg</application>, the
+      embedded SQL preprocessor for <productname>Postgres</productname>,
+      supports the <acronym>SQL92</acronym> conventions, including those
+      involving DECLARE and OPEN statements.
+     </para>
+    </note>
+    
    </PARA>
   </REFSECT2>
  </refsect1>
@@ -300,14 +304,16 @@ DECLARE liahona CURSOR
     SQL92
    </TITLE>
    <PARA>
-<acronym>SQL92</acronym> allows cursors only in embedded <acronym>SQL</acronym>
-and in modules. <productname>Postgres</productname> permits cursors to be used
-interactively.
-<acronym>SQL92</acronym> allows embedded or modular cursors to
-update database information.
-All <productname>Postgres</productname> cursors are readonly.
-The BINARY keyword is a <productname>Postgres</productname> extension.
-
+    <acronym>SQL92</acronym> allows cursors only in embedded <acronym>SQL</acronym>
+    and in modules. <productname>Postgres</productname> permits cursors to be used
+    interactively.
+    <acronym>SQL92</acronym> allows embedded or modular cursors to
+    update database information.
+    All <productname>Postgres</productname> cursors are readonly.
+    The BINARY keyword is a <productname>Postgres</productname> extension.
+   </para>
+  </refsect2>
+ </refsect1>
 </REFENTRY>
 
 <!-- Keep this comment at the end of the file

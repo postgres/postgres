@@ -12,6 +12,7 @@
   <REFPURPOSE>
    Removes an existing view from a database
   </REFPURPOSE>
+ </refnamediv>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
    <DATE>1998-09-22</DATE>
@@ -60,19 +61,24 @@ DROP VIEW <REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>
 <LISTITEM>
 	  <PARA>
 	   The message returned if the command is successful.
-
-<VARLISTENTRY>
-<TERM>
-<ReturnValue>
-ERROR: RewriteGetRuleEventRel: rule "_RET<REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>" not found</ReturnValue>
-</TERM>
-<LISTITEM>
-<PARA>
-This message occurs if the specified view does not exist in
-the database.
-</variablelist>
-
-</REFSECT2>
+       </para>
+      </listitem>
+     </varlistentry>
+     <VARLISTENTRY>
+      <TERM>
+       <ReturnValue>
+	ERROR: RewriteGetRuleEventRel: rule "_RET<REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>" not found</ReturnValue>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	This message occurs if the specified view does not exist in
+	the database.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </REFSECT2>
  </REFSYNOPSISDIV>
  
  <REFSECT1 ID="R1-SQL-DROPVIEW-1">
@@ -104,6 +110,7 @@ the database.
  for information on how to create views.
    </PARA>
   </REFSECT2>
+ </refsect1>
   
  <REFSECT1 ID="R1-SQL-DROPVIEW-2">
   <TITLE>
@@ -164,11 +171,12 @@ DROP VIEW <replaceable class="parameter">view</replaceable> { RESTRICT | CASCADE
       <para>
        Any referencing views and integrity constraints
        will be dropped as well.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-</refsect3>
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+   </refsect3>
 
   <REFSECT3 ID="R3-SQL-DROPVIEW-2">
    <REFSECT3INFO>
@@ -176,15 +184,17 @@ DROP VIEW <replaceable class="parameter">view</replaceable> { RESTRICT | CASCADE
    </REFSECT3INFO>
    <TITLE>
     Notes
-   </TITLE>
-<para>
-   <tip>
+    </TITLE>
     <para>
-     At present, to remove a referenced view from a
- <productname>Postgres</productname> database, 
-     you must drop it explicitly.
+     <tip>
+      <para>
+       At present, to remove a referenced view from a
+       <productname>Postgres</productname> database, 
+       you must drop it explicitly.
+      </para>
+     </tip>
     </para>
-   </tip>
+   </refsect3>
   </refsect2>
  </refsect1>
 </REFENTRY>
