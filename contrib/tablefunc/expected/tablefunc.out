@@ -1,0 +1,179 @@
+--
+-- first, define the functions.  Turn off echoing so that expected file
+-- does not depend on contents of seg.sql.
+--
+\set ECHO none
+--
+-- normal_rand()
+-- no easy way to do this for regression testing
+--
+SELECT avg(normal_rand)::int FROM normal_rand(100, 250, 0.2, EXTRACT(SECONDS FROM CURRENT_TIME(0))::int);
+ avg 
+-----
+ 250
+(1 row)
+
+--
+-- crosstab()
+--
+create table ct(id int, rowclass text, rowid text, attribute text, value text);
+\copy ct from 'data/ct.data'
+select * from crosstab2('select rowid, attribute, value from ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') order by 1,2;');
+ row_name | category_1 | category_2 
+----------+------------+------------
+ test1    | val2       | val3
+ test2    | val6       | val7
+(2 rows)
+
+select * from crosstab3('select rowid, attribute, value from ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') order by 1,2;');
+ row_name | category_1 | category_2 | category_3 
+----------+------------+------------+------------
+ test1    | val2       | val3       | 
+ test2    | val6       | val7       | 
+(2 rows)
+
+select * from crosstab4('select rowid, attribute, value from ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') order by 1,2;');
+ row_name | category_1 | category_2 | category_3 | category_4 
+----------+------------+------------+------------+------------
+ test1    | val2       | val3       |            | 
+ test2    | val6       | val7       |            | 
+(2 rows)
+
+select * from crosstab2('select rowid, attribute, value from ct where rowclass = ''group1'' order by 1,2;');
+ row_name | category_1 | category_2 
+----------+------------+------------
+ test1    | val1       | val2
+ test2    | val5       | val6
+(2 rows)
+
+select * from crosstab3('select rowid, attribute, value from ct where rowclass = ''group1'' order by 1,2;');
+ row_name | category_1 | category_2 | category_3 
+----------+------------+------------+------------
+ test1    | val1       | val2       | val3
+ test2    | val5       | val6       | val7
+(2 rows)
+
+select * from crosstab4('select rowid, attribute, value from ct where rowclass = ''group1'' order by 1,2;');
+ row_name | category_1 | category_2 | category_3 | category_4 
+----------+------------+------------+------------+------------
+ test1    | val1       | val2       | val3       | val4
+ test2    | val5       | val6       | val7       | val8
+(2 rows)
+
+select * from crosstab2('select rowid, attribute, value from ct where rowclass = ''group2'' and (attribute = ''att1'' or attribute = ''att2'') order by 1,2;');
+ row_name | category_1 | category_2 
+----------+------------+------------
+ test3    | val1       | val2
+ test4    | val4       | val5
+(2 rows)
+
+select * from crosstab3('select rowid, attribute, value from ct where rowclass = ''group2'' and (attribute = ''att1'' or attribute = ''att2'') order by 1,2;');
+ row_name | category_1 | category_2 | category_3 
+----------+------------+------------+------------
+ test3    | val1       | val2       | 
+ test4    | val4       | val5       | 
+(2 rows)
+
+select * from crosstab4('select rowid, attribute, value from ct where rowclass = ''group2'' and (attribute = ''att1'' or attribute = ''att2'') order by 1,2;');
+ row_name | category_1 | category_2 | category_3 | category_4 
+----------+------------+------------+------------+------------
+ test3    | val1       | val2       |            | 
+ test4    | val4       | val5       |            | 
+(2 rows)
+
+select * from crosstab2('select rowid, attribute, value from ct where rowclass = ''group2'' order by 1,2;');
+ row_name | category_1 | category_2 
+----------+------------+------------
+ test3    | val1       | val2
+ test4    | val4       | val5
+(2 rows)
+
+select * from crosstab3('select rowid, attribute, value from ct where rowclass = ''group2'' order by 1,2;');
+ row_name | category_1 | category_2 | category_3 
+----------+------------+------------+------------
+ test3    | val1       | val2       | val3
+ test4    | val4       | val5       | val6
+(2 rows)
+
+select * from crosstab4('select rowid, attribute, value from ct where rowclass = ''group2'' order by 1,2;');
+ row_name | category_1 | category_2 | category_3 | category_4 
+----------+------------+------------+------------+------------
+ test3    | val1       | val2       | val3       | 
+ test4    | val4       | val5       | val6       | 
+(2 rows)
+
+select * from crosstab('select rowid, attribute, value from ct where rowclass = ''group1'' order by 1,2;', 2) as c(rowid text, att1 text, att2 text);
+ rowid | att1 | att2 
+-------+------+------
+ test1 | val1 | val2
+ test2 | val5 | val6
+(2 rows)
+
+select * from crosstab('select rowid, attribute, value from ct where rowclass = ''group1'' order by 1,2;', 3) as c(rowid text, att1 text, att2 text, att3 text);
+ rowid | att1 | att2 | att3 
+-------+------+------+------
+ test1 | val1 | val2 | val3
+ test2 | val5 | val6 | val7
+(2 rows)
+
+select * from crosstab('select rowid, attribute, value from ct where rowclass = ''group1'' order by 1,2;', 4) as c(rowid text, att1 text, att2 text, att3 text, att4 text);
+ rowid | att1 | att2 | att3 | att4 
+-------+------+------+------+------
+ test1 | val1 | val2 | val3 | val4
+ test2 | val5 | val6 | val7 | val8
+(2 rows)
+
+-- test connectby with text based hierarchy
+CREATE TABLE connectby_text(keyid text, parent_keyid text);
+\copy connectby_text from 'data/connectby_text.data'
+-- with branch
+SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'row2', 0, '~') AS t(keyid text, parent_keyid text, level int, branch text);
+ keyid | parent_keyid | level |       branch        
+-------+--------------+-------+---------------------
+ row2  |              |     0 | row2
+ row4  | row2         |     1 | row2~row4
+ row6  | row4         |     2 | row2~row4~row6
+ row8  | row6         |     3 | row2~row4~row6~row8
+ row5  | row2         |     1 | row2~row5
+ row9  | row5         |     2 | row2~row5~row9
+(6 rows)
+
+-- without branch
+SELECT * FROM connectby('connectby_text', 'keyid', 'parent_keyid', 'row2', 0) AS t(keyid text, parent_keyid text, level int);
+ keyid | parent_keyid | level 
+-------+--------------+-------
+ row2  |              |     0
+ row4  | row2         |     1
+ row6  | row4         |     2
+ row8  | row6         |     3
+ row5  | row2         |     1
+ row9  | row5         |     2
+(6 rows)
+
+-- test connectby with int based hierarchy
+CREATE TABLE connectby_int(keyid int, parent_keyid int);
+\copy connectby_int from 'data/connectby_int.data'
+-- with branch
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0, '~') AS t(keyid int, parent_keyid int, level int, branch text);
+ keyid | parent_keyid | level | branch  
+-------+--------------+-------+---------
+     2 |              |     0 | 2
+     4 |            2 |     1 | 2~4
+     6 |            4 |     2 | 2~4~6
+     8 |            6 |     3 | 2~4~6~8
+     5 |            2 |     1 | 2~5
+     9 |            5 |     2 | 2~5~9
+(6 rows)
+
+-- without branch
+SELECT * FROM connectby('connectby_int', 'keyid', 'parent_keyid', '2', 0) AS t(keyid int, parent_keyid int, level int);
+ keyid | parent_keyid | level 
+-------+--------------+-------
+     2 |              |     0
+     4 |            2 |     1
+     6 |            4 |     2
+     8 |            6 |     3
+     5 |            2 |     1
+     9 |            5 |     2
+(6 rows)
+

@@ -1,0 +1,14 @@
+1	group1	test1	att1	val1
+2	group1	test1	att2	val2
+3	group1	test1	att3	val3
+4	group1	test1	att4	val4
+5	group1	test2	att1	val5
+6	group1	test2	att2	val6
+7	group1	test2	att3	val7
+8	group1	test2	att4	val8
+9	group2	test3	att1	val1
+10	group2	test3	att2	val2
+11	group2	test3	att3	val3
+12	group2	test4	att1	val4
+13	group2	test4	att2	val5
+14	group2	test4	att3	val6
