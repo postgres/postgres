@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.9 2000/11/11 22:59:46 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.10 2000/11/25 19:05:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ do
 
 	-*)
             echo "$CMDNAME: invalid option: $1" 1>&2
-            echo "Try '$CMDNAME -?' for help." 1>&2
+            echo "Try '$CMDNAME --help' for more information." 1>&2
             exit 1
             ;;
 	*)

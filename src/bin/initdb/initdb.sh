@@ -24,7 +24,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.116 2000/11/21 20:55:57 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.117 2000/11/25 19:05:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -253,7 +253,7 @@ do
                 ;;
 	-*)
 		echo "$CMDNAME: invalid option: $1"
-		echo "Try '$CMDNAME -?' for help."
+		echo "Try '$CMDNAME --help' for more information."
 		exit 1
 		;;
         *)

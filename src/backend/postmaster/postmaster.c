@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.190 2000/11/25 04:13:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.191 2000/11/25 19:05:42 petere Exp $
  *
  * NOTES
  *
@@ -311,6 +311,25 @@ PostmasterMain(int argc, char *argv[])
 	real_argc = argc;
 
 	/*
+	 * Catch standard options before doing much else.  This even works
+	 * on systems without getopt_long.
+	 */
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0)
+		{
+			usage(progname);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version")==0 || strcmp(argv[1], "-V")==0)
+		{
+			puts("postmaster (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}		
+
+
+	/*
 	 * for security, no dir or file created can be group or other
 	 * accessible
 	 */
@@ -358,7 +377,7 @@ PostmasterMain(int argc, char *argv[])
 	 * will occur.
 	 */
 	opterr = 1;
-	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:SsV-:?")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != EOF)
 	{
 		switch(opt)
 		{
@@ -366,41 +385,20 @@ PostmasterMain(int argc, char *argv[])
 				potential_DataDir = optarg;
 				break;
 
-			case 'V':
-				puts("postmaster (PostgreSQL) " PG_VERSION);
-				exit(0);
-
-			case '-':
-			{
-				char *name, *value;
-			
-				ParseLongOption(optarg, &name, &value);
-				if (strcmp(name, "help")==0)
-				{
-					usage(progname);
-					exit(0);
-				}
-				else if (strcmp(name, "version")==0)
-				{
-					puts("postmaster (PostgreSQL) " PG_VERSION);
-					exit(0);
-				}
-				break;
-			}
-
 			case '?':
-				if (strcmp(argv[optind - 1], "-?") == 0)
-				{
-					usage(progname);
-					exit(0);
-				}
-				else
-				{
-					fprintf(stderr, "Try -? for help.\n");
-					exit(1);
-				}
-				break;
+				fprintf(stderr, "Try '%s --help' for more information.\n", progname);
+				exit(1);
 		}
+	}
+
+	/*
+	 * Non-option switch arguments don't exist.
+	 */
+	if (optind < argc)
+	{
+		fprintf(stderr, "%s: invalid argument -- %s\n", progname, argv[optind]);
+		fprintf(stderr, "Try '%s --help' for more information.\n", progname);
+		exit(1);
 	}
 
 	checkDataDir(potential_DataDir);	/* issues error messages */
@@ -414,7 +412,7 @@ PostmasterMain(int argc, char *argv[])
 #ifdef HAVE_INT_OPTRESET
 	optreset = 1;
 #endif
-	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:SsV-:?")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != EOF)
 	{
 		switch (opt)
 		{
@@ -546,18 +544,9 @@ PostmasterMain(int argc, char *argv[])
 
 			default:
 				/* shouldn't get here */
-				fprintf(stderr, "Try -? for help.\n");
+				fprintf(stderr, "Try '%s --help' for more information.\n", progname);
 				exit(1);
 		}
-	}
-
-	/*
-	 * Non-option switch arguments don't exist.
-	 */
-	if (optind < argc)
-	{
-		fprintf(stderr, "%s: invalid argument -- %s\n", progname, argv[optind]);
-		exit(1);
 	}
 
 	/*

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.20 2000/11/20 20:36:50 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.21 2000/11/25 19:05:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -99,7 +99,7 @@ do
 
 	-*)
 		echo "$CMDNAME: invalid option: $1" 1>&2
-                echo "Try '$CMDNAME -?' for help." 1>&2
+                echo "Try '$CMDNAME --help' for more information." 1>&2
 		exit 1
 		;;
 	 *)

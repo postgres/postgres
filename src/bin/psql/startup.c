@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.39 2000/11/13 23:37:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.40 2000/11/25 19:05:44 petere Exp $
  */
 #include "postgres.h"
 
@@ -106,6 +106,20 @@ main(int argc, char *argv[])
 		pset.progname = argv[0];
 	else
 		pset.progname = strrchr(argv[0], SEP_CHAR) + 1;
+
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0)
+		{
+			usage();
+			exit(EXIT_SUCCESS);
+		}
+		if (strcmp(argv[1], "--version")==0 || strcmp(argv[1], "-V")==0)
+		{
+			showVersion();
+			exit(EXIT_SUCCESS);
+		}
+	}		
 
 	pset.cur_cmd_source = stdin;
 	pset.cur_cmd_interactive = false;
@@ -520,19 +534,21 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				/* unknown option reported by getopt */
 				else
 				{
-					fputs("Try -? for help.\n", stderr);
+					fprintf(stderr, "Try '%s --help' for more information.\n",
+							pset.progname);
 					exit(EXIT_FAILURE);
 				}
 				break;
 #ifndef HAVE_GETOPT_LONG
 			case '-':
 				fprintf(stderr, "%s was compiled without support for long options.\n"
-						"Use -? for help on invocation options.\n", pset.progname);
+						"Use --help for help on invocation options.\n", pset.progname);
 				exit(EXIT_FAILURE);
 				break;
 #endif
 			default:
-				fputs("Try -? for help.\n", stderr);
+				fprintf(stderr, "Try '%s --help' for more information.\n",
+						pset.progname);
 				exit(EXIT_FAILURE);
 				break;
 		}

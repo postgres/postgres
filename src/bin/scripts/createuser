@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.14 2000/11/13 23:37:53 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.15 2000/11/25 19:05:44 petere Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -110,7 +110,7 @@ do
 		;;
 	-*)
 		echo "$CMDNAME: invalid option: $1" 1>&2
-                echo "Try '$CMDNAME -?' for help." 1>&2
+                echo "Try '$CMDNAME --help' for more information." 1>&2
 		exit 1
 		;;
          *)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.189 2000/11/21 21:16:02 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.190 2000/11/25 19:05:42 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1063,6 +1063,24 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	char       *potential_DataDir = NULL;
 
 	/*
+	 * Catch standard options before doing much else.  This even works
+	 * on systems without getopt_long.
+	 */
+	if (!IsUnderPostmaster && argc > 1)
+	{
+		if (strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0)
+		{
+			usage(argv[0]);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version")==0 || strcmp(argv[1], "-V")==0)
+		{
+			puts("postgres (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}		
+
+	/*
 	 * Fire up essential subsystems: error and memory management
 	 *
 	 * If we are running under the postmaster, this is done already.
@@ -1110,7 +1128,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 	optind = 1;					/* reset after postmaster's usage */
 
-	while ((flag = getopt(argc, argv,  "A:B:c:CD:d:Eef:FiLNOPo:p:S:st:v:VW:x:-:?")) != EOF)
+	while ((flag = getopt(argc, argv,  "A:B:c:CD:d:Eef:FiLNOPo:p:S:st:v:W:x:-:")) != EOF)
 		switch (flag)
 		{
 			case 'A':
@@ -1336,10 +1354,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 					FrontendProtocol = (ProtocolVersion) atoi(optarg);
 				break;
 
-			case 'V':
-				puts("postgres (PostgreSQL) " PG_VERSION);
-				exit(0);
-
 			case 'W':
 				/* ----------------
 				 *	wait N seconds to allow attach from a debugger
@@ -1387,16 +1401,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				char *name, *value;
 
 				ParseLongOption(optarg, &name, &value);
-				if (strcmp(name, "help")==0)
-				{
-					usage(argv[0]);
-					exit(0);
-				}
-				else if (strcmp(name, "version")==0)
-				{
-					puts("postgres (PostgreSQL) " PG_VERSION);
-					exit(0);
-				}
 				if (!value)
 				{
 					if (flag == '-')
@@ -1412,18 +1416,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 			}
 
-			case '?':
-				if (strcmp(argv[optind - 1], "-?") == 0)
-				{
-					usage(argv[0]);
-					exit(0);
-				}
-				else
-					errs++;
-				break;
-
 			default:
-				/* shouldn't get here */
 				errs++;
 				break;
 		}
@@ -1643,7 +1636,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.189 $ $Date: 2000/11/21 21:16:02 $\n");
+		puts("$Revision: 1.190 $ $Date: 2000/11/25 19:05:42 $\n");
 	}
 
 	/*

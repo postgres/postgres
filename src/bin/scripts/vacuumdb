@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.12 2000/11/13 23:37:53 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.13 2000/11/25 19:05:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -102,7 +102,7 @@ do
 
 	-*)
 		echo "$CMDNAME: invalid option: $1" 1>&2
-                echo "Try '$CMDNAME -?' for help." 1>&2
+                echo "Try '$CMDNAME --help' for more information." 1>&2
 		exit 1
 		;;
 	*)

@@ -333,7 +333,7 @@ main(int argc, char *argv[])
 
 	if (argc != 2)
 	{
-		fprintf(stderr, "%s: too %s arguments\nTry '%s -?' for help.\n",
+		fprintf(stderr, "%s: too %s arguments\nTry '%s --help' for more information.\n",
 				progname, argc > 2 ? "many" : "few", progname);
 		exit(1);
 	}
@@ -350,7 +350,7 @@ main(int argc, char *argv[])
 	}
 	if (argv[1][0] == '-')
 	{
-		fprintf(stderr, "%s: invalid option: %s\nTry '%s -?' for help.\n",
+		fprintf(stderr, "%s: invalid option: %s\nTry '%s --help' for more information.\n",
 				progname, argv[1], progname);
 		exit(1);
 	}
