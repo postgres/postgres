@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 12 11:43:40 EDT 2000
+Last updated:		Thu Oct 12 13:32:28 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -141,7 +141,8 @@ COMMANDS
 * Allow BINARY option to SELECT, like we do with DECLARE
 * MOVE 0 should not move to end of cursor
 * Overhaul ACL (access control) code
-  
+* Allow ORDER BY...LIMIT in INSERT INTO ... SELECT
+
 CLIENTS
 
 * Make NULL's come out at the beginning or end depending on the 
