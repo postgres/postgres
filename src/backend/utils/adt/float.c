@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.71 2001/05/03 19:00:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.72 2001/06/02 17:12:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,10 +566,10 @@ float4_cmp_internal(float4 a, float4 b)
 	{
 		if (a > b)
 			return 1;
-		else if (a == b)
-			return 0;
-		else
+		else if (a < b)
 			return -1;
+		else
+			return 0;
 	}
 }
 
@@ -662,10 +662,10 @@ float8_cmp_internal(float8 a, float8 b)
 	{
 		if (a > b)
 			return 1;
-		else if (a == b)
-			return 0;
-		else
+		else if (a < b)
 			return -1;
+		else
+			return 0;
 	}
 }
 
