@@ -6,7 +6,7 @@ SET australian_timezones = 'off';
 CREATE TABLE TIMESTAMPTZ_TBL ( d1 timestamp(2) with time zone);
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('now');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('current');
-ERROR:  Bad timestamp external representation 'current'
+ERROR:  'CURRENT' is no longer supported
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('today');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('yesterday');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('tomorrow');
@@ -59,9 +59,9 @@ ERROR:  TIMESTAMP WITH TIME ZONE 'invalid' no longer supported
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Invalid Abstime');
-ERROR:  Bad timestamp external representation 'Invalid Abstime'
+ERROR:  TIMESTAMP WITH TIME ZONE 'Invalid Abstime' no longer supported
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Undefined Abstime');
-ERROR:  Bad timestamp external representation 'Undefined Abstime'
+ERROR:  TIMESTAMP WITH TIME ZONE 'Undefined Abstime' no longer supported
 -- Variations on Postgres v6.1 standard output format
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Mon Feb 10 17:32:01.000001 1997 PST');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Mon Feb 10 17:32:01.999999 1997 PST');

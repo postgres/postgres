@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.87.2.2 2002/09/30 20:57:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.87.2.3 2003/01/26 22:33:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,11 +79,11 @@ char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 static datetkn datetktbl[] = {
 /*	text, token, lexval */
 	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
+	{"abstime", IGNORE, 0},		/* for pre-v6.1 "Invalid Abstime" */
 	{"acsst", DTZ, 63},			/* Cent. Australia */
 	{"acst", DTZ, NEG(24)},		/* Atlantic/Porto Acre */
 	{"act", TZ, NEG(30)},		/* Atlantic/Porto Acre */
 	{DA_D, ADBC, AD},			/* "ad" for years >= 0 */
-	{"abstime", IGNORE, 0},		/* for pre-v6.1 "Invalid Abstime" */
 	{"adt", DTZ, NEG(18)},		/* Atlantic Daylight Time */
 	{"aesst", DTZ, 66},			/* E. Australia */
 	{"aest", TZ, 60},			/* Australia Eastern Std Time */
@@ -92,8 +92,8 @@ static datetkn datetktbl[] = {
 	{"akdt", DTZ, NEG(48)},		/* Alaska Daylight Time */
 	{"akst", DTZ, NEG(54)},		/* Alaska Standard Time */
 	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
-	{"almt", TZ, 36},			/* Almaty Time */
 	{"almst", TZ, 42},			/* Almaty Savings Time */
+	{"almt", TZ, 36},			/* Almaty Time */
 	{"am", AMPM, AM},
 	{"amst", DTZ, 30},			/* Armenia Summer Time (Yerevan) */
 	{"amt", TZ, 24},			/* Armenia Time (Yerevan) */
@@ -102,6 +102,8 @@ static datetkn datetktbl[] = {
 #endif
 	{"anast", DTZ, 78},			/* Anadyr Summer Time (Russia) */
 	{"anat", TZ, 72},			/* Anadyr Time (Russia) */
+	{"apr", MONTH, 4},
+	{"april", MONTH, 4},
 #if 0
 aqtst
 aqtt
@@ -112,8 +114,6 @@ arst
 ashst
 ast /* Atlantic Standard Time, Arabia Standard Time, Acre Standard Time */
 #endif
-	{"apr", MONTH, 4},
-	{"april", MONTH, 4},
 	{"ast", TZ, NEG(24)},		/* Atlantic Std Time (Canada) */
 	{"at", IGNORE, 0},			/* "at" (throwaway) */
 	{"aug", MONTH, 8},
@@ -171,12 +171,12 @@ cost
 #endif
 	{"cot", TZ, NEG(30)},		/* Columbia Time */
 	{"cst", TZ, NEG(36)},		/* Central Standard Time */
+	{DCURRENT, RESERV, DTK_CURRENT},	/* "current" is always now */
 #if 0
 cvst
 #endif
 	{"cvt", TZ, 42},			/* Christmas Island Time (Indian Ocean) */
 	{"cxt", TZ, 42},			/* Christmas Island Time (Indian Ocean) */
-	{DCURRENT, RESERV, DTK_CURRENT},	/* "current" is always now */
 	{"d", UNITS, DTK_DAY},		/* "day of month" for ISO input */
 	{"davt", TZ, 42},			/* Davis Time (Antarctica) */
 	{"ddut", TZ, 60},			/* Dumont-d'Urville Time (Antarctica) */
@@ -402,8 +402,8 @@ sgt
 syot
 #endif
 	{"t", ISOTIME, DTK_TIME},	/* Filler for ISO time fields */
-	{"that", TZ, NEG(60)},		/* Tahiti Time */
 	{"tft", TZ, 30},			/* Kerguelen Time */
+	{"that", TZ, NEG(60)},		/* Tahiti Time */
 	{"thu", DOW, 4},
 	{"thur", DOW, 4},
 	{"thurs", DOW, 4},
@@ -504,9 +504,9 @@ static datetkn deltatktbl[] = {
 	{DDAY, UNITS, DTK_DAY},		/* "day" relative */
 	{"days", UNITS, DTK_DAY},	/* "days" relative */
 	{"dec", UNITS, DTK_DECADE}, /* "decade" relative */
-	{"decs", UNITS, DTK_DECADE},	/* "decades" relative */
 	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative */
 	{"decades", UNITS, DTK_DECADE},		/* "decades" relative */
+	{"decs", UNITS, DTK_DECADE},	/* "decades" relative */
 	{"h", UNITS, DTK_HOUR},		/* "hour" relative */
 	{DHOUR, UNITS, DTK_HOUR},	/* "hour" relative */
 	{"hours", UNITS, DTK_HOUR}, /* "hours" relative */
@@ -521,7 +521,6 @@ static datetkn deltatktbl[] = {
 	{"millisecon", UNITS, DTK_MILLISEC},		/* relative */
 	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
 	{"min", UNITS, DTK_MINUTE}, /* "minute" relative */
-	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
 	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
 	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative */
 	{"minutes", UNITS, DTK_MINUTE},		/* "minutes" relative */
@@ -543,7 +542,6 @@ static datetkn deltatktbl[] = {
 	{"seconds", UNITS, DTK_SECOND},
 	{"secs", UNITS, DTK_SECOND},
 	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
-	{"timezone", UNITS, DTK_TZ},	/* "timezone" time offset */
 	{"timezone_h", UNITS, DTK_TZ_HOUR}, /* timezone hour units */
 	{"timezone_m", UNITS, DTK_TZ_MINUTE},		/* timezone minutes units */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
