@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.15 1999/02/10 17:14:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.16 1999/02/10 21:02:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ match_pathkey_joinkeys(List *pathkey,
 		{
 			jk = (JoinKey *) lfirst(x);
 			if (var_equal(path_subkey,
-						  extract_subkey(jk, which_subkey)))
+						  extract_join_subkey(jk, which_subkey)))
 				return pos;
 			pos++;
 		}
@@ -183,7 +183,7 @@ every_func(List *joinkeys, List *pathkey, int which_subkey)
 			temp = (Var *) lfirst((List *) lfirst(j));
 			if (temp == NULL)
 				continue;
-			tempkey = extract_subkey(xjoinkey, which_subkey);
+			tempkey = extract_join_subkey(xjoinkey, which_subkey);
 			if (var_equal(tempkey, temp))
 			{
 				found = true;
@@ -267,7 +267,7 @@ extract_path_keys(List *joinkeys,
 		/*
 		 * find the right Var in the target list for this key
 		 */
-		var = (Var *) extract_subkey(jkey, which_subkey);
+		var = (Var *) extract_join_subkey(jkey, which_subkey);
 		key = (Var *) matching_tlvar(var, tlist);
 
 		/*

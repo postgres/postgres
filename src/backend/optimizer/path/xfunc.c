@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.24 1999/02/03 21:16:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.25 1999/02/10 21:02:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1423,7 +1423,7 @@ do { \
  **   Just like _copyRel, but doesn't copy the paths
  */
 bool
-xfunc_copyrel(RelOptInfo from, RelOptInfo * to)
+xfunc_copyrel(RelOptInfo from, RelOptInfo *to)
 {
 	RelOptInfo	newnode;
 

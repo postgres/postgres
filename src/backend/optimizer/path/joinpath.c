@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.18 1999/02/10 17:14:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.19 1999/02/10 21:02:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,15 +30,15 @@
 								 * _enable_mergejoin} */
 
 static Path *best_innerjoin(List *join_paths, List *outer_relid);
-static List *sort_inner_and_outer(RelOptInfo * joinrel, RelOptInfo * outerrel, RelOptInfo * innerrel,
+static List *sort_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *mergeinfo_list);
-static List *match_unsorted_outer(RelOptInfo * joinrel, RelOptInfo * outerrel, RelOptInfo * innerrel,
+static List *match_unsorted_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 		List *outerpath_list, Path *cheapest_inner, Path *best_innerjoin,
 					 List *mergeinfo_list);
-static List *match_unsorted_inner(RelOptInfo * joinrel, RelOptInfo * outerrel, RelOptInfo * innerrel,
+static List *match_unsorted_inner(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *innerpath_list, List *mergeinfo_list);
-static bool EnoughMemoryForHashjoin(RelOptInfo * hashrel);
-static List *hash_inner_and_outer(RelOptInfo * joinrel, RelOptInfo * outerrel, RelOptInfo * innerrel,
+static bool EnoughMemoryForHashjoin(RelOptInfo *hashrel);
+static List *hash_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *hashinfo_list);
 
 /*
@@ -59,7 +59,6 @@ static List *hash_inner_and_outer(RelOptInfo * joinrel, RelOptInfo * outerrel, R
  * If bushy trees are considered, may modify the relid field of the
  * join rel nodes to flatten the lists.
  *
- * Returns nothing of interest. (?)
  * It does a destructive modification.
  */
 void
@@ -228,9 +227,9 @@ best_innerjoin(List *join_paths, List *outer_relids)
  * Returns a list of mergejoin paths.
  */
 static List *
-sort_inner_and_outer(RelOptInfo * joinrel,
-					 RelOptInfo * outerrel,
-					 RelOptInfo * innerrel,
+sort_inner_and_outer(RelOptInfo *joinrel,
+					 RelOptInfo *outerrel,
+					 RelOptInfo *innerrel,
 					 List *mergeinfo_list)
 {
 	List	   *ms_list = NIL;
@@ -302,9 +301,9 @@ sort_inner_and_outer(RelOptInfo * joinrel,
  * Returns a list of possible join path nodes.
  */
 static List *
-match_unsorted_outer(RelOptInfo * joinrel,
-					 RelOptInfo * outerrel,
-					 RelOptInfo * innerrel,
+match_unsorted_outer(RelOptInfo *joinrel,
+					 RelOptInfo *outerrel,
+					 RelOptInfo *innerrel,
 					 List *outerpath_list,
 					 Path *cheapest_inner,
 					 Path *best_innerjoin,
@@ -448,9 +447,9 @@ match_unsorted_outer(RelOptInfo * joinrel,
  * Returns a list of possible merge paths.
  */
 static List *
-match_unsorted_inner(RelOptInfo * joinrel,
-					 RelOptInfo * outerrel,
-					 RelOptInfo * innerrel,
+match_unsorted_inner(RelOptInfo *joinrel,
+					 RelOptInfo *outerrel,
+					 RelOptInfo *innerrel,
 					 List *innerpath_list,
 					 List *mergeinfo_list)
 {
@@ -539,7 +538,7 @@ match_unsorted_inner(RelOptInfo * joinrel,
 }
 
 static bool
-EnoughMemoryForHashjoin(RelOptInfo * hashrel)
+EnoughMemoryForHashjoin(RelOptInfo *hashrel)
 {
 	int			ntuples;
 	int			tupsize;
@@ -573,9 +572,9 @@ EnoughMemoryForHashjoin(RelOptInfo * hashrel)
  * Returns a list of hashjoin paths.
  */
 static List *
-hash_inner_and_outer(RelOptInfo * joinrel,
-					 RelOptInfo * outerrel,
-					 RelOptInfo * innerrel,
+hash_inner_and_outer(RelOptInfo *joinrel,
+					 RelOptInfo *outerrel,
+					 RelOptInfo *innerrel,
 					 List *hashinfo_list)
 {
 	HashInfo   *xhashinfo = (HashInfo *) NULL;

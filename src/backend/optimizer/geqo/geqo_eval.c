@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.26 1999/02/03 21:16:19 momjian Exp $
+ * $Id: geqo_eval.c,v 1.27 1999/02/10 21:02:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,12 +50,12 @@
 #include "optimizer/geqo_paths.h"
 
 
-static List *gimme_clause_joins(Query *root, RelOptInfo * outer_rel, RelOptInfo * inner_rel);
-static RelOptInfo *gimme_clauseless_join(RelOptInfo * outer_rel, RelOptInfo * inner_rel);
-static RelOptInfo *init_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininfo);
+static List *gimme_clause_joins(Query *root, RelOptInfo *outer_rel, RelOptInfo *inner_rel);
+static RelOptInfo *gimme_clauseless_join(RelOptInfo *outer_rel, RelOptInfo *inner_rel);
+static RelOptInfo *init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo);
 static List *new_join_tlist(List *tlist, List *other_relids, int first_resdomno);
 static List *new_joininfo_list(List *joininfo_list, List *join_relids);
-static void geqo_joinrel_size(RelOptInfo * joinrel, RelOptInfo * outer_rel, RelOptInfo * inner_rel);
+static void geqo_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel);
 static RelOptInfo *geqo_nth(int stop, List *rels);
 
 /*
@@ -99,7 +99,7 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
  * Returns a new join relation incorporating all joins in a left-sided tree.
  */
 RelOptInfo *
-gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo * outer_rel)
+gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *outer_rel)
 {
 	RelOptInfo *inner_rel;		/* current relation */
 	int			base_rel_index;
@@ -189,7 +189,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo * ou
  */
 
 static List *
-gimme_clause_joins(Query *root, RelOptInfo * outer_rel, RelOptInfo * inner_rel)
+gimme_clause_joins(Query *root, RelOptInfo *outer_rel, RelOptInfo *inner_rel)
 {
 	List	   *join_list = NIL;
 	List	   *i = NIL;
@@ -240,7 +240,7 @@ gimme_clause_joins(Query *root, RelOptInfo * outer_rel, RelOptInfo * inner_rel)
  */
 
 static RelOptInfo *
-gimme_clauseless_join(RelOptInfo * outer_rel, RelOptInfo * inner_rel)
+gimme_clauseless_join(RelOptInfo *outer_rel, RelOptInfo *inner_rel)
 {
 	return init_join_rel(outer_rel, inner_rel, (JoinInfo *) NULL);
 }
@@ -257,7 +257,7 @@ gimme_clauseless_join(RelOptInfo * outer_rel, RelOptInfo * inner_rel)
  * Returns the new join relation node.
  */
 static RelOptInfo *
-init_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininfo)
+init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo)
 {
 	RelOptInfo *joinrel = makeNode(RelOptInfo);
 	List	   *joinrel_joininfo_list = NIL;
@@ -635,7 +635,7 @@ geqo_final_join_rels(List *join_rel_list)
  * Modifies the superrels field of rel
  */
 static void
-add_superrels(RelOptInfo * rel, RelOptInfo * super_rel)
+add_superrels(RelOptInfo *rel, RelOptInfo *super_rel)
 {
 	rel->superrels = lappend(rel->superrels, super_rel);
 }
@@ -650,7 +650,7 @@ add_superrels(RelOptInfo * rel, RelOptInfo * super_rel)
  * Returns non-nil if rel1 and rel2 do not overlap.
  */
 static bool
-nonoverlap_rels(RelOptInfo * rel1, RelOptInfo * rel2)
+nonoverlap_rels(RelOptInfo *rel1, RelOptInfo *rel2)
 {
 	return nonoverlap_sets(rel1->relids, rel2->relids);
 }
@@ -678,7 +678,7 @@ nonoverlap_sets(List *s1, List *s2)
  *	  long join queries; so get logarithm of size when MAXINT overflow;
  */
 static void
-geqo_joinrel_size(RelOptInfo * joinrel, RelOptInfo * outer_rel, RelOptInfo * inner_rel)
+geqo_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel)
 {
 	Cost		temp;
 	int			ntuples;

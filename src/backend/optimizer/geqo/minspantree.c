@@ -7,7 +7,7 @@
 *
 *
 * IDENTIFICATION
-*	 $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/Attic/minspantree.c,v 1.8 1998/09/01 04:29:24 momjian Exp $
+*	 $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/Attic/minspantree.c,v 1.9 1999/02/10 21:02:35 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -41,7 +41,7 @@
 */
 
 void
-minspantree(Query *root, List *join_rels, RelOptInfo * garel)
+minspantree(Query *root, List *join_rels, RelOptInfo *garel)
 {
 	int			number_of_rels = length(root->base_rel_list);
 	int			number_of_joins = length(join_rels);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.17 1999/02/03 21:16:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.18 1999/02/10 21:02:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,16 +31,16 @@ bool		_use_right_sided_plans_ = false;
 
 #endif
 
-static List *find_clause_joins(Query *root, RelOptInfo * outer_rel, List *joininfo_list);
-static List *find_clauseless_joins(RelOptInfo * outer_rel, List *inner_rels);
-static RelOptInfo *init_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininfo);
+static List *find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list);
+static List *find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels);
+static RelOptInfo *init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo);
 static List *new_join_tlist(List *tlist, List *other_relids,
 			   int first_resdomno);
 static List *new_joininfo_list(List *joininfo_list, List *join_relids);
-static void add_superrels(RelOptInfo * rel, RelOptInfo * super_rel);
-static bool nonoverlap_rels(RelOptInfo * rel1, RelOptInfo * rel2);
+static void add_superrels(RelOptInfo *rel, RelOptInfo *super_rel);
+static bool nonoverlap_rels(RelOptInfo *rel1, RelOptInfo *rel2);
 static bool nonoverlap_sets(List *s1, List *s2);
-static void set_joinrel_size(RelOptInfo * joinrel, RelOptInfo * outer_rel, RelOptInfo * inner_rel,
+static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel,
 				 JoinInfo * jinfo);
 
 /*
@@ -97,7 +97,7 @@ find_join_rels(Query *root, List *outer_rels)
  * Returns a list of new join relations.
  */
 static List *
-find_clause_joins(Query *root, RelOptInfo * outer_rel, List *joininfo_list)
+find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list)
 {
 	List	   *join_list = NIL;
 	List	   *i = NIL;
@@ -156,7 +156,7 @@ find_clause_joins(Query *root, RelOptInfo * outer_rel, List *joininfo_list)
  * Returns a list of new join relations.
  */
 static List *
-find_clauseless_joins(RelOptInfo * outer_rel, List *inner_rels)
+find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
 {
 	RelOptInfo *inner_rel;
 	List	   *t_list = NIL;
@@ -191,7 +191,7 @@ find_clauseless_joins(RelOptInfo * outer_rel, List *inner_rels)
  * Returns the new join relation node.
  */
 static RelOptInfo *
-init_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininfo)
+init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo)
 {
 	RelOptInfo *joinrel = makeNode(RelOptInfo);
 	List	   *joinrel_joininfo_list = NIL;
@@ -518,7 +518,7 @@ final_join_rels(List *join_rel_list)
  * Modifies the superrels field of rel
  */
 static void
-add_superrels(RelOptInfo * rel, RelOptInfo * super_rel)
+add_superrels(RelOptInfo *rel, RelOptInfo *super_rel)
 {
 	rel->superrels = lappend(rel->superrels, super_rel);
 }
@@ -533,7 +533,7 @@ add_superrels(RelOptInfo * rel, RelOptInfo * super_rel)
  * Returns non-nil if rel1 and rel2 do not overlap.
  */
 static bool
-nonoverlap_rels(RelOptInfo * rel1, RelOptInfo * rel2)
+nonoverlap_rels(RelOptInfo *rel1, RelOptInfo *rel2)
 {
 	return nonoverlap_sets(rel1->relids, rel2->relids);
 }
@@ -554,7 +554,7 @@ nonoverlap_sets(List *s1, List *s2)
 }
 
 static void
-set_joinrel_size(RelOptInfo * joinrel, RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * jinfo)
+set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * jinfo)
 {
 	int			ntuples;
 	float		selec;

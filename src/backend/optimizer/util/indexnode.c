@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.11 1999/02/03 20:15:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.12 1999/02/10 21:02:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ static List *find_secondary_index(Query *root, Oid relid);
  *
  */
 List *
-find_relation_indices(Query *root, RelOptInfo * rel)
+find_relation_indices(Query *root, RelOptInfo *rel)
 {
 	if (rel->indexed)
 		return find_secondary_index(root, lfirsti(rel->relids));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.25 1999/02/09 03:51:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.26 1999/02/10 21:02:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "utils/elog.h"
 
 
-static List *prune_joinrel(RelOptInfo * rel, List *other_rels);
+static List *prune_joinrel(RelOptInfo *rel, List *other_rels);
 
 /*
  * prune-joinrels--
@@ -132,7 +132,7 @@ prune_rel_paths(List *rel_list)
  *
  */
 Path *
-prune_rel_path(RelOptInfo * rel, Path *unorderedpath)
+prune_rel_path(RelOptInfo *rel, Path *unorderedpath)
 {
 	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
 

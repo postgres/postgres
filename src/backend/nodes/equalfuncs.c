@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.28 1999/02/10 03:52:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.29 1999/02/10 21:02:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,7 +305,7 @@ _equalRestrictInfo(RestrictInfo * a, RestrictInfo * b)
  * RelOptInfo is a subclass of Node.
  */
 static bool
-_equalRelOptInfo(RelOptInfo * a, RelOptInfo * b)
+_equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 {
 	Assert(IsA(a, RelOptInfo));
 	Assert(IsA(b, RelOptInfo));
