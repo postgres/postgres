@@ -1,11 +1,12 @@
+# translation of pg_resetxlog-tr1.po to Turkish
 # translation of pg_resetxlog-tr.po to Turkish
 # Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_resetxlog-tr\n"
-"POT-Creation-Date: 2004-09-13 07:42+0100\n"
-"PO-Revision-Date: 2004-10-09 12:39+0300\n"
+"Project-Id-Version: pg_resetxlog-tr1\n"
+"POT-Creation-Date: 2004-11-08 07:13+0000\n"
+"PO-Revision-Date: 2004-11-08 20:07+0200\n"
 "Last-Translator: Devrim GUNDUZ <devrim@PostgreSQL.org>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
@@ -61,7 +62,8 @@ msgid ""
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
 "%s: \"%s\" lock dosyası mevcut\n"
-"Bir sunucu çalışıyor mu? Eğer çalışmıyorsa, lock dosyasını silin ve yeniden deneyin.\n"
+"Bir sunucu çalışıyor mu? Eğer çalışmıyorsa, lock dosyasını silin ve yeniden "
+"deneyin.\n"
 
 #: pg_resetxlog.c:236
 msgid ""
@@ -69,7 +71,7 @@ msgid ""
 "If these values seem acceptable, use -f to force reset.\n"
 msgstr ""
 "\n"
-"Eğer bu değerler kabul edilebilir görünüyorsa, reset işlemini zrlamak için -f yi kullanınız.\n"
+"Eğer bu değerler kabul edilebilir görünüyorsa, reset işlemini zorlamak için -f yi kullanınız.\n"
 
 #: pg_resetxlog.c:248
 msgid ""
@@ -79,7 +81,8 @@ msgid ""
 msgstr ""
 "Veritabanı sunucusu düzgün olarak kapatılmadı.\n"
 "Transaction kayıt dosyasını sıfırlamak veri kaybına neden olabilir.\n"
-"Yine de devam etmek istiyorsanız, sıfırlama işlemini zorlamak için -f parametresini kullanınız.\n"
+"Yine de devam etmek istiyorsanız, sıfırlama işlemini zorlamak için -f "
+"parametresini kullanınız.\n"
 
 #: pg_resetxlog.c:261
 msgid "Transaction log reset\n"
@@ -104,12 +107,16 @@ msgstr "%s: \"%s\" dosyası okunamadı: %s\n"
 #: pg_resetxlog.c:326
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
-msgstr "%s: pg_control mevcut ancak geçersiz CRC'ye sahip, dikkat ederek devam ediniz\n"
+msgstr ""
+"%s: pg_control mevcut ancak geçersiz CRC'ye sahip, dikkat ederek devam "
+"ediniz\n"
 
 #: pg_resetxlog.c:335
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr "%s: pg_control mevcut ama bozuk ya da bilinmeyen bir sürüme sahip; gözardı ediliyor\n"
+msgstr ""
+"%s: pg_control mevcut ama bozuk ya da bilinmeyen bir sürüme sahip; gözardı "
+"ediliyor\n"
 
 #: pg_resetxlog.c:399
 #, c-format
@@ -185,7 +192,7 @@ msgstr "Veritabanı blok büyüklüğü:                  %u\n"
 #: pg_resetxlog.c:450
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "Blocks per segment of large relation: %u\n"
+msgstr "büyük nesnenin bölümü başına blok sayısı: %u\n"
 
 #: pg_resetxlog.c:451
 #, c-format
@@ -213,7 +220,7 @@ msgstr "kayan nokta sayılar"
 #: pg_resetxlog.c:455
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
-msgstr "Yerel adının en yüksek uzunluğu:        %u\n"
+msgstr "Yerel adının en büyük uzunluğu:        %u\n"
 
 #: pg_resetxlog.c:456
 #, c-format
@@ -296,19 +303,23 @@ msgstr "Seçenekler:\n"
 
 #: pg_resetxlog.c:719
 msgid "  -f              force update to be done\n"
-msgstr "  -f              güncellemesinin yapılmasını sağla\n"
+msgstr "  -f              güncellemenin yapılmasını sağla\n"
 
 #: pg_resetxlog.c:720
 msgid ""
 "  -l FILEID,SEG   force minimum WAL starting location for new transaction "
 "log\n"
-msgstr "  -l FILEID,SEG   Yeni transaction kayıt dosyası için en düşük WAL başlama yerini belirt\n"
+msgstr ""
+"  -l FILEID,SEG   Yeni transaction kayıt dosyası için en düşük WAL başlama "
+"yerini belirt\n"
 
 #: pg_resetxlog.c:721
 msgid ""
 "  -n              no update, just show extracted control values (for "
 "testing)\n"
-msgstr "  -n              güncelleme yapma, sadece extract edilmiş kontrol değerlerini göster (denemek için)\n"
+msgstr ""
+"  -n              güncelleme yapma, sadece extract edilmiş kontrol "
+"değerlerini göster (denemek için)\n"
 
 #: pg_resetxlog.c:722
 msgid "  -o OID          set next OID\n"

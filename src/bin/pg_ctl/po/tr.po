@@ -5,9 +5,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl-tr\n"
 "POT-Creation-Date: 2004-10-27 13:06+0100\n"
-"PO-Revision-Date: 2004-10-27 15:14+0300\n"
+"PO-Revision-Date: 2004-11-08 21:25+0200\n"
 "Last-Translator: Devrim GUNDUZ <devrim@PostgreSQL.org>\n"
-"Language-Team: Turkish <http://developer.postgresql.org/~petere/nlsstatus/po-current/libpq-tr.po>\n"
+"Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -26,9 +26,7 @@ msgstr "%s: \"%s\" PID dosyası açılamadı: %s"
 #: pg_ctl.c:468
 #, c-format
 msgid "%s: another postmaster may be running; trying to start postmaster anyway\n"
-msgstr ""
-"%s: Başka bir postmaster çalışıyor olabilir; yine de postmaster başlatılmaya "
-"çalışılıyor..\n"
+msgstr "%s: Başka bir postmaster çalışıyor olabilir; postmaster yine de başlatılmaya çalışılıyor..\n"
 
 #: pg_ctl.c:486
 #, c-format
@@ -113,7 +111,7 @@ msgstr "%s: postmaster durdurulamadı; postgres çalışıyor (PID: %ld)\n"
 #: pg_ctl.c:621 pg_ctl.c:692
 #, c-format
 msgid "%s: could not send stop signal (PID: %ld): %s\n"
-msgstr "%s:stop sinyali başarısız oldu (PID: %ld): %s\n"
+msgstr "%s:durdurma sinyali başarısız oldu (PID: %ld): %s\n"
 
 #: pg_ctl.c:628
 msgid "postmaster shutting down\n"
@@ -152,7 +150,7 @@ msgstr "Lütfen postgres'i durdurun ve yeniden deneyin.\n"
 #: pg_ctl.c:741
 #, c-format
 msgid "%s: cannot reload postmaster; postgres is running (PID: %ld)\n"
-msgstr "%s: postmasteri yeniden yükleyemedi, postgres çalışıyor (PID: %ld)\n"
+msgstr "%s: postmaster yeniden yüklenemedi, postgres çalışıyor (PID: %ld)\n"
 
 #: pg_ctl.c:750
 #, c-format
@@ -328,7 +326,7 @@ msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
 msgstr ""
-"(Ön tanımlı işlem kapanmak için beklemekti; ancak başlamak ya da yeniden "
+"(Ön tanımlı işlem kapanmak için beklemektir; ancak başlamak ya da yeniden "
 "başlamak değildir.)\n"
 "\n"
 

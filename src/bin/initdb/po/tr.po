@@ -6,9 +6,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb-tr\n"
 "POT-Creation-Date: 2004-10-18 07:07+0100\n"
-"PO-Revision-Date: 2004-10-18 10:27+0300\n"
+"PO-Revision-Date: 2004-11-05 20:49+0200\n"
 "Last-Translator: Devrim GUNDUZ <devrim@PostgreSQL.org>\n"
-"Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
+"Language-Team: Turkish <http://developer.postgresql.org/~petere/nlsstatus/po-current/libpq-tr.po>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -22,12 +22,12 @@ msgstr "%s: yetersiz bellek\n"
 #: initdb.c:361 initdb.c:1339
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: \"%s\"  dosyası, okumak için açılamadı: %s\n"
+msgstr "%s: \"%s\"  dosyası, okunmak için açılamadı: %s\n"
 
 #: initdb.c:419
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
-msgstr "%s: \"%s\" dosyası, yazmak için açılamadı: %s\n"
+msgstr "%s: \"%s\" dosyası, yazılmak için açılamadı: %s\n"
 
 #: initdb.c:547 initdb.c:556 initdb.c:564
 #, c-format
@@ -63,12 +63,12 @@ msgstr ""
 #: initdb.c:647
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
-msgstr "%s: \"%s\" geçerli bir kodlama adı değil\n"
+msgstr "%s: \"%s\" geçerli bir dil kodlaması adı değil\n"
 
 #: initdb.c:802
 #, c-format
 msgid "%s: warning: encoding mismatch\n"
-msgstr "%s: uyarı: kodlama uyuşmazlığı\n"
+msgstr "%s: uyarı: dil kodlaması uyuşmazlığı\n"
 
 #: initdb.c:804
 #, c-format
@@ -79,8 +79,8 @@ msgid ""
 "this situation, rerun %s and either do not specify an encoding\n"
 "explicitly, or choose a matching combination.\n"
 msgstr ""
-"Seçtiğiniz (%s) kodlama ve seçilen yerelin kullandığı yerel\n"
-"(%s) auyuşmuyor.  Bu, çeşitli metin işleme fonksiyonlarının\n"
+"Seçtiğiniz (%s) dil kodlaması ve seçilen yerelin kullandığı dil kodlaması\n"
+"(%s) uyuşmuyor.  Bu, çeşitli metin işleme fonksiyonlarının\n"
 "yanlış çalışmasına neden olabilir. Bu durumu düzeltebilmek için\n"
 "%s komutunu yeniden çalıştırın ve de ya kodlama belirtmeyin\n"
 "ya da eşleştirilebilir bir kodlama seçin.\n"

@@ -477,7 +477,7 @@ msgstr "\"D\" iletisinde beklenmeyen alan sayısı\n"
 #: fe-protocol3.c:651 fe-protocol3.c:659
 #, c-format
 msgid " at character %s"
-msgstr " at karakteri %s"
+msgstr "at character %s"
 
 #: fe-protocol3.c:668
 #, c-format

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts-tr\n"
 "POT-Creation-Date: 2004-09-13 07:47+0100\n"
-"PO-Revision-Date: 2004-10-18 17:40+0300\n"
+"PO-Revision-Date: 2004-11-08 21:58+0200\n"
 "Last-Translator: Devrim GUNDUZ <devrim@PostgreSQL.org>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
@@ -41,7 +41,7 @@ msgstr "%s: veritabanı yaratma başarısız oldu: %s"
 #: createdb.c:196
 #, c-format
 msgid "%s: comment creation failed (database was created): %s"
-msgstr "%s: comment yaratma işlemi başarısız oldu (veritabanı yaratıldı): %s"
+msgstr "%s: yorum yaratma işlemi başarısız oldu (veritabanı yaratıldı): %s"
 
 #: createdb.c:217
 #, c-format
@@ -60,7 +60,7 @@ msgstr "Kullanımı:\n"
 #: createdb.c:219
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
-msgstr "  %s [OPTION]... [VERİTABANI_ADI] [TANIM]\n"
+msgstr "  %s [SEÇENEK]... [VERİTABANI_ADI] [TANIM]\n"
 
 #: clusterdb.c:236 createdb.c:220 createlang.c:301 createuser.c:242
 #: dropdb.c:149 droplang.c:282 dropuser.c:149 vacuumdb.c:262
@@ -77,11 +77,11 @@ msgstr "  -D, --tablespace=TABLESPACE  veritabanı için ön tanımlı tablespac
 
 #: createdb.c:222
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
-msgstr "  -E, --encoding=ENCODING      Veritabanı için dil kodlaması\n"
+msgstr "  -E, --encoding=ENCODING      veritabanı için dil kodlaması\n"
 
 #: createdb.c:223
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
-msgstr "  -O, --owner=OWNER            Yeni veritabanıın sahibi olacak veritabanı kullanıcısı\n"
+msgstr "  -O, --owner=OWNER            Yeni veritabanının sahibi olacak veritabanı kullanıcısı\n"
 
 #: createdb.c:224
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
@@ -204,11 +204,11 @@ msgstr ""
 #: createlang.c:300 droplang.c:281
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
-msgstr "  %s [OPTION]... LANGNAME [DBNAME]\n"
+msgstr "  %s [SEÇENEK]... DİL_ADI [VERİTABANI_ADI]\n"
 
 #: createlang.c:302
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
-msgstr "  -d, --dbname=VERİTABANI_ADI       dilin kurulacağı veritabanı adı\n"
+msgstr "  -d, --dbname=VERİTABANI_ADI       dilin kurulacağı veritabanının adı\n"
 
 #: clusterdb.c:240 createlang.c:303 createuser.c:251 dropdb.c:150
 #: droplang.c:284 dropuser.c:150
@@ -313,7 +313,7 @@ msgstr "  -d, --createdb            kullanıcı yeni veritabanları ekleyebilir\
 
 #: createuser.c:246
 msgid "  -D, --no-createdb         user cannot create databases\n"
-msgstr "  -D, --no-createdb         kullanıcı veritabanı yaratamaz\n"
+msgstr "  -D, --no-createdb         eklenecek kullanıcı veritabanı yaratamaz\n"
 
 #: createuser.c:247
 msgid "  -P, --pwprompt            assign a password to new user\n"
@@ -370,7 +370,7 @@ msgstr "Emin misiniz? (y/n)"
 #: dropdb.c:127
 #, c-format
 msgid "%s: database removal failed: %s"
-msgstr "%s: veritabanı silme işlemi başarısız olduı: %s"
+msgstr "%s: veritabanı silme işlemi başarısız oldu: %s"
 
 #: dropdb.c:146
 #, c-format
@@ -388,17 +388,17 @@ msgstr "  %s [SEÇENEK]... VERİTABANI_ADI\n"
 
 #: dropdb.c:151 dropuser.c:151
 msgid "  -i, --interactive         prompt before deleting anything\n"
-msgstr "  -i, --interactive         birşeyi silmeden önce uyarı verir\n"
+msgstr "  -i, --interactive         herhangi birşeyi silmeden önce uyarı verir\n"
 
 #: droplang.c:176
 #, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
-msgstr "%s: \"%s\" dili veritabanıda kurulu değil \"%s\"\n"
+msgstr "%s: \"%s\" dili \"%s\" veritabanında kurulu değil \n"
 
 #: droplang.c:193
 #, c-format
 msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
-msgstr "%s: Bu dilde halen %s fonksiyon tanımlanmış durumda;  \"%s\"dili kaldırılamadı\n"
+msgstr "%s: %s fonksiyon, \"%s\" dilinde tanımlanmış durumda;  dil kaldırılamadı\n"
 
 #: droplang.c:265
 #, c-format
@@ -411,7 +411,7 @@ msgid ""
 "%s removes a procedural language from a database.\n"
 "\n"
 msgstr ""
-"%s veritabanından yordamsan bir dili siler.\n"
+"%s veritabanından yordamsal bir dili siler.\n"
 "\n"
 
 #: droplang.c:283
