@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.203 2001/01/24 19:43:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.204 2001/01/27 00:05:31 tgl Exp $
  *
  * NOTES
  *
@@ -788,7 +788,15 @@ ServerLoop(void)
 				timeout = &timeout_tv;
 			}
 			else
+			{
 				CheckPointPID = CheckPointDataBase();
+				/*
+				 * Since this code is executed periodically, it's a fine
+				 * place to do other actions that should happen every now
+				 * and then on no particular schedule.  Such as...
+				 */
+				TouchSocketLockFile();
+			}
 		}
 
 #ifdef USE_SSL

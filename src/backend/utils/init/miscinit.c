@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.60 2001/01/24 19:43:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.61 2001/01/27 00:05:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,9 @@ unsigned char RecodeBackTable[128];
 #endif
 
 ProcessingMode Mode = InitProcessing;
+
+/* Note: we rely on this to initialize as zeroes */
+static char socketLockFile[MAXPGPATH];
 
 
 /* ----------------------------------------------------------------
@@ -617,8 +620,36 @@ CreateSocketLockFile(const char *socketfile, bool amPostmaster)
 					encoded_pid, socketfile);
 		return false;
 	}
+	/* Save name of lockfile for TouchSocketLockFile */
+	strcpy(socketLockFile, lockfile);
 	return true;
 }
+
+/*
+ * Re-read the socket lock file.  This should be called every so often
+ * to ensure that the lock file has a recent access date.  That saves it
+ * from being removed by overenthusiastic /tmp-directory-cleaner daemons.
+ * (Another reason we should never have put the socket file in /tmp...)
+ */
+void
+TouchSocketLockFile(void)
+{
+	int			fd;
+	char		buffer[1];
+
+	/* Do nothing if we did not create a socket... */
+	if (socketLockFile[0] != '\0')
+	{
+		/* XXX any need to complain about errors here? */
+		fd = open(socketLockFile, O_RDONLY | PG_BINARY, 0);
+		if (fd >= 0)
+		{
+			read(fd, buffer, sizeof(buffer));
+			close(fd);
+		}
+	}
+}
+
 
 /*-------------------------------------------------------------------------
  *				Version checking support
