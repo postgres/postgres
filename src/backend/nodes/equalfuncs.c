@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.228 2004/08/02 04:26:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.229 2004/08/22 00:08:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,6 +727,7 @@ _equalAlterTableStmt(AlterTableStmt *a, AlterTableStmt *b)
 {
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(cmds);
+	COMPARE_SCALAR_FIELD(relkind);
 
 	return true;
 }
