@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.47 2001/03/22 04:01:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.48 2001/03/31 23:13:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -712,12 +712,17 @@ pqFlush(PGconn *conn)
 
 /* --------------------------------------------------------------------- */
 /* pqWait: wait until we can read or write the connection socket
+ *
+ * We also stop waiting and return if the kernel flags an exception condition
+ * on the socket.  The actual error condition will be detected and reported
+ * when the caller tries to read or write the socket.
  */
 int
 pqWait(int forRead, int forWrite, PGconn *conn)
 {
 	fd_set		input_mask;
 	fd_set		output_mask;
+	fd_set		except_mask;
 
 	if (conn->sock < 0)
 	{
@@ -731,17 +736,19 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 retry:
 		FD_ZERO(&input_mask);
 		FD_ZERO(&output_mask);
+		FD_ZERO(&except_mask);
 		if (forRead)
 			FD_SET(conn->sock, &input_mask);
 		if (forWrite)
 			FD_SET(conn->sock, &output_mask);
-		if (select(conn->sock + 1, &input_mask, &output_mask, (fd_set *) NULL,
+		FD_SET(conn->sock, &except_mask);
+		if (select(conn->sock + 1, &input_mask, &output_mask, &except_mask,
 				   (struct timeval *) NULL) < 0)
 		{
 			if (errno == EINTR)
 				goto retry;
 			printfPQExpBuffer(&conn->errorMessage,
-						   "pqWait() -- select() failed: errno=%d\n%s\n",
+							  "pqWait() -- select() failed: errno=%d\n%s\n",
 							  errno, strerror(errno));
 			return EOF;
 		}
