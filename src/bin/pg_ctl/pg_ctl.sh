@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.31 2003/02/14 22:18:25 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.32 2003/03/20 05:00:14 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,6 +60,7 @@ Try '$CMDNAME --help' for more information."
 # Placed here during build
 bindir='@bindir@'
 VERSION='@VERSION@'
+DEF_PGPORT='@DEF_PGPORT@'
 
 # protect the log file
 umask 077
@@ -240,6 +241,7 @@ fi
 DEFPOSTOPTS=$PGDATA/postmaster.opts.default
 POSTOPTSFILE=$PGDATA/postmaster.opts
 PIDFILE=$PGDATA/postmaster.pid
+CONFFILE=$PGDATA/postgresql.conf
 
 if [ "$op" = "status" ];then
     if [ -f "$PIDFILE" ];then
@@ -356,12 +358,6 @@ if [ "$op" = "start" -o "$op" = "restart" ];then
         fi
     fi
 
-    # wait for postmaster to start
-    if [ "$wait" = yes ];then
-	cnt=0
-	$silence_echo $ECHO_N "waiting for postmaster to start..."$ECHO_C
-	while :
-	do
 # FIXME:  This is horribly misconceived.
 # 1) If password authentication is set up, the connection will fail.
 # 2) If a virtual host is set up, the connection may fail.
@@ -369,12 +365,26 @@ if [ "$op" = "start" -o "$op" = "restart" ];then
 #    may fail.
 # 4) When no Unix domain sockets are available, the connection will
 #    fail.  (Using TCP/IP by default ain't better.)
-# 5) When a different port is configured, the connection will fail
-#    or go to the wrong server.
-# 6) If the dynamic loader is not set up correctly (for this user/at
+# 5) If the dynamic loader is not set up correctly (for this user/at
 #    this time), psql will fail (to find libpq).
-# 7) If psql is misconfigured, this may fail.
-	    if "$PGPATH/psql" -l >/dev/null 2>&1
+# 6) If psql is misconfigured, this may fail.
+
+    # Attempt to use the right port
+    # Use PGPORT if set, otherwise look in the configuration file
+    if [ -z $PGPORT ];then
+        PGPORT=`sed -ne 's/^[ 	]*port[^=]*=[ 	]\+\([0-9]\+\).*/\1/p' $CONFFILE 2>/dev/null`
+        if [ -z $PGPORT ];then
+            PGPORT=$DEF_PGPORT
+        fi
+    fi
+
+    # wait for postmaster to start
+    if [ "$wait" = yes ];then
+	cnt=0
+	$silence_echo $ECHO_N "waiting for postmaster to start..."$ECHO_C
+	while :
+	do
+	    if "$PGPATH/psql" -p $PGPORT -l >/dev/null 2>&1
 	    then
 		break;
 	    else

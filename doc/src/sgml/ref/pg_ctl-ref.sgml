@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.18 2003/01/19 00:13:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.19 2003/03/20 05:00:14 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -73,22 +73,21 @@ PostgreSQL documentation
    <productname>PostgreSQL</productname> backend server, or displaying
    the status of a running postmaster.  Although the postmaster can be
    started manually, <application>pg_ctl</application> encapsulates
-   tasks such as redirecting log output, properly detaching from the
-   terminal and process group, and it provides convenient options for
+   tasks such as redirecting log output and properly detaching from the
+   terminal and process group. It also provides convenient options for
    controlled shutdown.
   </para>
 
   <para>
    In <option>start</option> mode, a new postmaster is launched.  The
-   server is started in the background, the standard input attached to
+   server is started in the background, and standard input is attached to
    <filename>/dev/null</filename>.  The standard output and standard
-   error are either appended to a log file, if the <option>-l</option>
-   option is used, or are redirected to
-   <application>pg_ctl</application>'s standard output (not standard
-   error).  If no log file is chosen, the standard output of
-   <application>pg_ctl</application> should be redirected to a file or
-   piped to another process, for example a log rotating program,
-   otherwise the postmaster will write its output the the controlling
+   error are either appended to a log file (if the <option>-l</option>
+   option is used), or redirected to  <application>pg_ctl</application>'s 
+   standard output (not standard error).  If no log file is chosen, the 
+   standard output of <application>pg_ctl</application> should be redirected 
+   to a file or piped to another process, for example a log rotating program,
+   otherwise the postmaster will write its output to the controlling
    terminal (from the background) and will not leave the shell's
    process group.
   </para>
@@ -102,8 +101,8 @@ PostgreSQL documentation
    not wait for clients to disconnect.  All active transactions are
    rolled back and clients are forcibly disconnected, then the
    database is shut down.  <quote>Immediate</quote> mode will abort
-   all server processes without clean shutdown.  This will lead to a recovery
-   run on restart.
+   all server processes without a clean shutdown.  This will lead to 
+   a recovery run on restart.
   </para>
 
   <para>
@@ -121,9 +120,9 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <option>status</option> mode checks whether a postmaster is running
-   and if so displays the <acronym>PID</acronym> and the command line
-   options that were used to invoke it.
+   <option>status</option> mode checks whether a postmaster is running. 
+   If it is, the <acronym>PID</acronym> and the command line
+   options that were used to invoke it are displayed.
   </para>
  </refsect1>
 
@@ -188,7 +187,7 @@ PostgreSQL documentation
        <para>
 	Specifies the location of the <filename>postmaster</filename>
 	executable.  By default the postmaster is taken from the same
-	directory as <command>pg_ctl</>, or failing that, the hard-wired
+	directory as <command>pg_ctl</command>, or failing that, the hard-wired
 	installation directory.  It is not necessary to use this
 	option unless you are doing something unusual and get errors
 	that the postmaster was not found.
@@ -210,7 +209,16 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Wait for the start or shutdown to complete.  Times out after
-	60 seconds.  This is the default for shutdowns.
+	60 seconds.  This is the default for shutdowns. A successful 
+        shutdown is indicated by removal of the <acronym>PID</scronym> 
+        file. For starting up, a successful <command>psql -l</command> 
+        indicates success. <command>pg_ctl</command> will attempt to 
+        use the proper port for psql. If the environment variable 
+        PGPORT exists, that is used. Otherwise, it will see if a port 
+        has been set in the <filename>postgresql.conf</filename> file. 
+        If neither of those is used, it will use the default port that 
+        <productname>PostgreSQL</productname> was compiled with 
+        (5432 by default).
        </para>
       </listitem>
      </varlistentry>
@@ -238,7 +246,17 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default data direction location
+      Default data directory location.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>PGPORT</envar></term>
+
+    <listitem>
+     <para>
+      Default port for <xref linkend="app-psql"> (used by the -w option).
      </para>
     </listitem>
    </varlistentry>
@@ -253,12 +271,58 @@ PostgreSQL documentation
  <refsect1>
   <title>Files</title>
 
-   <para>
-    If the file <filename>postmaster.opts.default</filename> exists in
-    the data directory, the contents of the file will be passed as
-    options to the <application>postmaster</application>, unless
-    overridden by the <option>-o</option> option.
-   </para>
+  <variablelist>
+   <varlistentry>
+    <term><filename>postmaster.pid</filename></term>
+
+    <listitem>
+     <para>The existence of this file in the data directory is used to help 
+           <application>pg_ctl</application> determine if the server is 
+           currently running or not.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><filename>postmaster.opts.default</filename></term>
+
+    <listitem>
+     <para>If this file exists in the data directory, 
+      <application>pg_ctl</application> (in <option>start</option> mode) 
+      will pass the contents of the file as options to the 
+      <application>postmaster</application>, unless overridden 
+      by the <option>-o</option> option.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><filename>postmaster.opts</filename></term>
+
+    <listitem>
+     <para>If this file exists in the data directory,
+      <application>pg_ctl</application> (in <option>restart</option> mode) 
+      will pass the contents of the file as options to the 
+      <application>postmaster</application>, unless overridden 
+      by the <option>-o</option> option. The contents of this file 
+      are also displayed in <option>status</option> mode.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><filename>postgresql.conf</filename></term>
+
+    <listitem>
+     <para>This file, located in the data directory, is parsed to 
+      find the proper port to send to the 
+      <application>psql</application> when the <option>-w</option> 
+      is given in <option>start</option> mode.      
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
  </refsect1>
 
 
@@ -268,7 +332,7 @@ PostgreSQL documentation
   <para>
    Waiting for complete start is not a well-defined operation and may
    fail if access control is set up so that a local client cannot
-   connect without manual interaction.  It should be avoided.
+   connect without manual interaction (e.g. password authentication).
   </para>
  </refsect1>
 
