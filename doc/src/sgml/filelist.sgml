@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.17 2001/10/16 23:57:06 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.18 2002/06/13 05:54:00 momjian Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -42,6 +42,7 @@
 <!entity backup        SYSTEM "backup.sgml">
 <!entity charset       SYSTEM "charset.sgml">
 <!entity client-auth   SYSTEM "client-auth.sgml">
+<!entity diskusage     SYSTEM "diskusage.sgml">
 <!entity installation  SYSTEM "installation.sgml">
 <!entity installw      SYSTEM "install-win32.sgml">
 <!entity maintenance   SYSTEM "maintenance.sgml">
@@ -51,7 +52,6 @@
 <!entity regress       SYSTEM "regress.sgml">
 <!entity release       SYSTEM "release.sgml">
 <!entity runtime       SYSTEM "runtime.sgml">
-<!entity storage       SYSTEM "storage.sgml">
 <!entity user-manag    SYSTEM "user-manag.sgml">
 <!entity wal           SYSTEM "wal.sgml">
 
