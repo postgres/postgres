@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.20 1997/03/12 20:44:57 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.21 1997/03/25 08:14:25 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,7 +60,7 @@ endif
 all: postgres $(EXP) global1.bki.source local1_template1.bki.source
 
 postgres: $(OBJS) ../utils/version.o
-	gcc -o postgres $(LDFLAGS) $(OBJS) ../utils/version.o $(LDADD) -lm -ldl
+	gcc -o postgres $(LDFLAGS) $(OBJS) ../utils/version.o $(LD_ADD) 
 
 $(OBJS): $(DIRS:%=%.dir)
 
