@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.157 2004/03/07 05:43:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.158 2004/03/27 00:24:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "nodes/makefuncs.h"
@@ -990,9 +991,10 @@ static const StrategyNumber
  * and constants can be different but the operators must be in the same btree
  * operator class.  We use the above operator implication table to be able to
  * derive implications between nonidentical clauses.  (Note: "foo" is known
- * immutable, and constants are surely immutable, and we assume that operators
- * that are in btree opclasses are immutable, so there's no need to do extra
- * mutability checks in this case either.)
+ * immutable, and constants are surely immutable, but we have to check that
+ * the operators are too.  As of 7.5 it's possible for opclasses to contain
+ * operators that are merely stable, and we dare not make deductions with
+ * these.)
  *
  * Eventually, rtree operators could also be handled by defining an
  * appropriate "RT_implic_table" array.
@@ -1279,8 +1281,20 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		}
 		if (OidIsValid(test_op))
 		{
-			found = true;
-			break;
+			/*
+			 * Last check: test_op must be immutable.
+			 *
+			 * Note that we require only the test_op to be immutable, not
+			 * the original clause_op.  (pred_op must be immutable, else it
+			 * would not be allowed in an index predicate.)  Essentially
+			 * we are assuming that the opclass is consistent even if it
+			 * contains operators that are merely stable.
+			 */
+			if (op_volatile(test_op) == PROVOLATILE_IMMUTABLE)
+			{
+				found = true;
+				break;
+			}
 		}
 	}
 
