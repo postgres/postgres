@@ -9,7 +9,7 @@ public class ANTTest extends TestCase
 		super(name);
 	}
 
-	/**
+	/*
 	 * This tests the acceptsURL() method with a couple of good and badly formed
 	 * jdbc urls
 	 */

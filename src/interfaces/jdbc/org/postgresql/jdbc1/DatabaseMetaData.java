@@ -10,10 +10,10 @@ import java.util.*;
 import org.postgresql.Field;
 import org.postgresql.util.PSQLException;
 
-/**
+/*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.38 2001/11/09 02:57:25 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.39 2001/11/19 22:33:38 momjian Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -51,7 +51,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		this.connection = conn;
 	}
 
-	/**
+	/*
 	 * Can all the procedures returned by getProcedures be called
 	 * by the current user?
 	 *
@@ -63,7 +63,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;		// For now...
 	}
 
-	/**
+	/*
 	 * Can all the tables returned by getTable be SELECTed by
 	 * the current user?
 	 *
@@ -75,7 +75,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;		// For now...
 	}
 
-	/**
+	/*
 	 * What is the URL for this database?
 	 *
 	 * @return the url or null if it cannott be generated
@@ -86,7 +86,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.getURL();
 	}
 
-	/**
+	/*
 	 * What is our user name as known to the database?
 	 *
 	 * @return our database user name
@@ -97,7 +97,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.getUserName();
 	}
 
-	/**
+	/*
 	 * Is the database in read-only mode?
 	 *
 	 * @return true if so
@@ -108,7 +108,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.isReadOnly();
 	}
 
-	/**
+	/*
 	 * Are NULL values sorted high?
 	 *
 	 * @return true if so
@@ -119,7 +119,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.haveMinimumServerVersion("7.2");
 	}
 
-	/**
+	/*
 	 * Are NULL values sorted low?
 	 *
 	 * @return true if so
@@ -130,7 +130,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Are NULL values sorted at the start regardless of sort order?
 	 *
 	 * @return true if so
@@ -141,7 +141,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Are NULL values sorted at the end regardless of sort order?
 	 *
 	 * @return true if so
@@ -152,7 +152,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return ! connection.haveMinimumServerVersion("7.2");
 	}
 
-	/**
+	/*
 	 * What is the name of this database product - we hope that it is
 	 * PostgreSQL, so we return that explicitly.
 	 *
@@ -164,7 +164,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return "PostgreSQL";
 	}
 
-	/**
+	/*
 	 * What is the version of this database product.
 	 *
 	 * @return the database version
@@ -175,7 +175,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.getDBVersionNumber();
 	}
 
-	/**
+	/*
 	 * What is the name of this JDBC driver?  If we don't know this
 	 * we are doing something wrong!
 	 *
@@ -187,7 +187,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return "PostgreSQL Native Driver";
 	}
 
-	/**
+	/*
 	 * What is the version string of this JDBC driver?	Again, this is
 	 * static.
 	 *
@@ -199,7 +199,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.this_driver.getVersion();
 	}
 
-	/**
+	/*
 	 * What is this JDBC driver's major version number?
 	 *
 	 * @return the JDBC driver major version
@@ -209,7 +209,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.this_driver.getMajorVersion();
 	}
 
-	/**
+	/*
 	 * What is this JDBC driver's minor version number?
 	 *
 	 * @return the JDBC driver minor version
@@ -219,7 +219,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.this_driver.getMinorVersion();
 	}
 
-	/**
+	/*
 	 * Does the database store tables in a local file?	No - it
 	 * stores them in a file on the server.
 	 *
@@ -231,7 +231,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does the database use a file for each table?  Well, not really,
 	 * since it doesnt use local files.
 	 *
@@ -243,7 +243,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does the database treat mixed case unquoted SQL identifiers
 	 * as case sensitive and as a result store them in mixed case?
 	 * A JDBC-Compliant driver will always return false.
@@ -260,7 +260,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does the database treat mixed case unquoted SQL identifiers as
 	 * case insensitive and store them in upper case?
 	 *
@@ -271,7 +271,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does the database treat mixed case unquoted SQL identifiers as
 	 * case insensitive and store them in lower case?
 	 *
@@ -282,7 +282,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Does the database treat mixed case unquoted SQL identifiers as
 	 * case insensitive and store them in mixed case?
 	 *
@@ -293,7 +293,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does the database treat mixed case quoted SQL identifiers as
 	 * case sensitive and as a result store them in mixed case?  A
 	 * JDBC compliant driver will always return true.
@@ -306,7 +306,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Does the database treat mixed case quoted SQL identifiers as
 	 * case insensitive and store them in upper case?
 	 *
@@ -317,7 +317,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does the database treat mixed case quoted SQL identifiers as case
 	 * insensitive and store them in lower case?
 	 *
@@ -328,7 +328,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does the database treat mixed case quoted SQL identifiers as case
 	 * insensitive and store them in mixed case?
 	 *
@@ -339,7 +339,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * What is the string used to quote SQL identifiers?  This returns
 	 * a space if identifier quoting isn't supported.  A JDBC Compliant
 	 * driver will always use a double quote character.
@@ -352,7 +352,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return "\"";
 	}
 
-	/**
+	/*
 	 * Get a comma separated list of all a database's SQL keywords that
 	 * are NOT also SQL92 keywords.
 	 *
@@ -397,7 +397,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return "";
 	}
 
-	/**
+	/*
 	 * This is the string that can be used to escape '_' and '%' in
 	 * a search string pattern style catalog search parameters
 	 *
@@ -409,7 +409,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return "\\";
 	}
 
-	/**
+	/*
 	 * Get all the "extra" characters that can be used in unquoted
 	 * identifier names (those beyond a-zA-Z0-9 and _)
 	 *
@@ -425,7 +425,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return "";
 	}
 
-	/**
+	/*
 	 * Is "ALTER TABLE" with an add column supported?
 	 * Yes for PostgreSQL 6.1
 	 *
@@ -437,7 +437,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Is "ALTER TABLE" with a drop column supported?
 	 * Peter 10/10/2000 This was set to true, but 7.1devel doesn't support it!
 	 *
@@ -449,7 +449,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Is column aliasing supported?
 	 *
 	 * <p>If so, the SQL AS clause can be used to provide names for
@@ -472,7 +472,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Are concatenations between NULL and non-NULL values NULL?  A
 	 * JDBC Compliant driver always returns true
 	 *
@@ -496,7 +496,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Are table correlation names supported? A JDBC Compliant
 	 * driver always returns true.
 	 *
@@ -508,7 +508,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * If table correlation names are supported, are they restricted to
 	 * be different from the names of the tables?
 	 *
@@ -520,7 +520,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Are expressions in "ORDER BY" lists supported?
 	 *
 	 * <br>e.g. select * from t order by a + b;
@@ -533,7 +533,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Can an "ORDER BY" clause use columns not in the SELECT?
 	 *
 	 * @return true if so
@@ -544,7 +544,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.haveMinimumServerVersion("6.4");
 	}
 
-	/**
+	/*
 	 * Is some form of "GROUP BY" clause supported?
 	 * I checked it, and yes it is.
 	 *
@@ -556,7 +556,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Can a "GROUP BY" clause use columns not in the SELECT?
 	 *
 	 * @return true if so
@@ -567,7 +567,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.haveMinimumServerVersion("6.4");
 	}
 
-	/**
+	/*
 	 * Can a "GROUP BY" clause add columns not in the SELECT provided
 	 * it specifies all the columns in the SELECT?	Does anyone actually
 	 * understand what they mean here?
@@ -582,7 +582,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return supportsGroupByUnrelated();
 	}
 
-	/**
+	/*
 	 * Is the escape character in "LIKE" clauses supported?  A
 	 * JDBC compliant driver always returns true.
 	 *
@@ -594,7 +594,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.haveMinimumServerVersion("7.1");
 	}
 
-	/**
+	/*
 	 * Are multiple ResultSets from a single execute supported?
 	 * Well, I implemented it, but I dont think this is possible from
 	 * the back ends point of view.
@@ -607,7 +607,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can we have multiple transactions open at once (on different
 	 * connections?)
 	 * I guess we can have, since Im relying on it.
@@ -620,7 +620,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Can columns be defined as non-nullable.	A JDBC Compliant driver
 	 * always returns true.
 	 *
@@ -635,7 +635,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Does this driver support the minimum ODBC SQL grammar.  This
 	 * grammar is defined at:
 	 *
@@ -652,7 +652,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Does this driver support the Core ODBC SQL grammar.	We need
 	 * SQL-92 conformance for this.
 	 *
@@ -664,7 +664,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does this driver support the Extended (Level 2) ODBC SQL
 	 * grammar.  We don't conform to the Core (Level 1), so we can't
 	 * conform to the Extended SQL Grammar.
@@ -677,7 +677,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does this driver support the ANSI-92 entry level SQL grammar?
 	 * All JDBC Compliant drivers must return true. We currently
 	 * report false until 'schema' support is added.  Then this
@@ -694,7 +694,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does this driver support the ANSI-92 intermediate level SQL
 	 * grammar?
 	 *
@@ -706,7 +706,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does this driver support the ANSI-92 full SQL grammar?
 	 *
 	 * @return true if so
@@ -717,7 +717,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Is the SQL Integrity Enhancement Facility supported?
 	 * I haven't seen this mentioned anywhere, so I guess not
 	 *
@@ -729,7 +729,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Is some form of outer join supported?
 	 *
 	 * @return true if so
@@ -740,7 +740,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.haveMinimumServerVersion("7.1");
 	}
 
-	/**
+	/*
 	 * Are full nexted outer joins supported?
 	 *
 	 * @return true if so
@@ -751,7 +751,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.haveMinimumServerVersion("7.1");
 	}
 
-	/**
+	/*
 	 * Is there limited support for outer joins?
 	 *
 	 * @return true if so
@@ -762,7 +762,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return supportsFullOuterJoins();
 	}
 
-	/**
+	/*
 	 * What is the database vendor's preferred term for "schema"?
 	 * PostgreSQL doesn't have schemas, but when it does, we'll use the
 	 * term "schema".
@@ -775,7 +775,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return "schema";
 	}
 
-	/**
+	/*
 	 * What is the database vendor's preferred term for "procedure"?
 	 * Traditionally, "function" has been used.
 	 *
@@ -787,7 +787,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return "function";
 	}
 
-	/**
+	/*
 	 * What is the database vendor's preferred term for "catalog"?
 	 *
 	 * @return the vendor term
@@ -798,7 +798,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return "database";
 	}
 
-	/**
+	/*
 	 * Does a catalog appear at the start of a qualified table name?
 	 * (Otherwise it appears at the end).
 	 *
@@ -810,7 +810,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		throw org.postgresql.Driver.notImplemented();
 	}
 
-	/**
+	/*
 	 * What is the Catalog separator.
 	 *
 	 * @return the catalog separator string
@@ -821,7 +821,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		throw org.postgresql.Driver.notImplemented();
 	}
 
-	/**
+	/*
 	 * Can a schema name be used in a data manipulation statement?	Nope.
 	 *
 	 * @return true if so
@@ -832,7 +832,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can a schema name be used in a procedure call statement?  Nope.
 	 *
 	 * @return true if so
@@ -843,7 +843,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can a schema be used in a table definition statement?  Nope.
 	 *
 	 * @return true if so
@@ -854,7 +854,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can a schema name be used in an index definition statement?
 	 *
 	 * @return true if so
@@ -865,7 +865,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can a schema name be used in a privilege definition statement?
 	 *
 	 * @return true if so
@@ -876,7 +876,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can a catalog name be used in a data manipulation statement?
 	 *
 	 * @return true if so
@@ -887,7 +887,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can a catalog name be used in a procedure call statement?
 	 *
 	 * @return true if so
@@ -898,7 +898,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can a catalog name be used in a table definition statement?
 	 *
 	 * @return true if so
@@ -909,7 +909,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can a catalog name be used in an index definition?
 	 *
 	 * @return true if so
@@ -920,7 +920,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can a catalog name be used in a privilege definition statement?
 	 *
 	 * @return true if so
@@ -931,7 +931,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * We support cursors for gets only it seems.  I dont see a method
 	 * to get a positioned delete.
 	 *
@@ -943,7 +943,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;			// For now...
 	}
 
-	/**
+	/*
 	 * Is positioned UPDATE supported?
 	 *
 	 * @return true if so
@@ -954,7 +954,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;			// For now...
 	}
 
-	/**
+	/*
 	 * Is SELECT for UPDATE supported?
 	 *
 	 * @return true if so; false otherwise
@@ -965,7 +965,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.haveMinimumServerVersion("6.5");
 	}
 
-	/**
+	/*
 	 * Are stored procedure calls using the stored procedure escape
 	 * syntax supported?
 	 *
@@ -977,7 +977,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Are subqueries in comparison expressions supported? A JDBC
 	 * Compliant driver always returns true.
 	 *
@@ -989,7 +989,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Are subqueries in 'exists' expressions supported? A JDBC
 	 * Compliant driver always returns true.
 	 *
@@ -1001,7 +1001,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Are subqueries in 'in' statements supported? A JDBC
 	 * Compliant driver always returns true.
 	 *
@@ -1013,7 +1013,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Are subqueries in quantified expressions supported? A JDBC
 	 * Compliant driver always returns true.
 	 *
@@ -1028,7 +1028,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Are correlated subqueries supported? A JDBC Compliant driver
 	 * always returns true.
 	 *
@@ -1042,7 +1042,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.haveMinimumServerVersion("7.1");
 	}
 
-	/**
+	/*
 	 * Is SQL UNION supported?
 	 *
 	 * @return true if so
@@ -1053,7 +1053,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true; // since 6.3
 	}
 
-	/**
+	/*
 	 * Is SQL UNION ALL supported?
 	 *
 	 * @return true if so
@@ -1064,7 +1064,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.haveMinimumServerVersion("7.1");
 	}
 
-	/**
+	/*
 	 * In PostgreSQL, Cursors are only open within transactions.
 	 *
 	 * @return true if so
@@ -1075,7 +1075,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Do we support open cursors across multiple transactions?
 	 *
 	 * @return true if so
@@ -1086,7 +1086,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Can statements remain open across commits?  They may, but
 	 * this driver cannot guarentee that.  In further reflection.
 	 * we are talking a Statement object here, so the answer is
@@ -1100,7 +1100,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Can statements remain open across rollbacks?  They may, but
 	 * this driver cannot guarentee that.  In further contemplation,
 	 * we are talking a Statement object here, so the answer is yes,
@@ -1114,7 +1114,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * How many hex characters can you have in an inline binary literal
 	 *
 	 * @return the max literal length
@@ -1125,7 +1125,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 0; // no limit
 	}
 
-	/**
+	/*
 	 * What is the maximum length for a character literal
 	 * I suppose it is 8190 (8192 - 2 for the quotes)
 	 *
@@ -1137,7 +1137,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 0; // no limit
 	}
 
-	/**
+	/*
 	 * Whats the limit on column name length.  The description of
 	 * pg_class would say '32' (length of pg_class.relname) - we
 	 * should probably do a query for this....but....
@@ -1150,7 +1150,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 32;
 	}
 
-	/**
+	/*
 	 * What is the maximum number of columns in a "GROUP BY" clause?
 	 *
 	 * @return the max number of columns
@@ -1161,7 +1161,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 0; // no limit
 	}
 
-	/**
+	/*
 	 * What's the maximum number of columns allowed in an index?
 	 * 6.0 only allowed one column, but 6.1 introduced multi-column
 	 * indices, so, theoretically, its all of them.
@@ -1174,7 +1174,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return getMaxColumnsInTable();
 	}
 
-	/**
+	/*
 	 * What's the maximum number of columns in an "ORDER BY clause?
 	 *
 	 * @return the max columns
@@ -1185,7 +1185,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 0; // no limit
 	}
 
-	/**
+	/*
 	 * What is the maximum number of columns in a "SELECT" list?
 	 *
 	 * @return the max columns
@@ -1196,7 +1196,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 0; // no limit
 	}
 
-	/**
+	/*
 	 * What is the maximum number of columns in a table? From the
 	 * CREATE TABLE reference page...
 	 *
@@ -1213,7 +1213,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 1600;
 	}
 
-	/**
+	/*
 	 * How many active connection can we have at a time to this
 	 * database?  Well, since it depends on postmaster, which just
 	 * does a listen() followed by an accept() and fork(), its
@@ -1230,7 +1230,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 8192;
 	}
 
-	/**
+	/*
 	 * What is the maximum cursor name length (the same as all
 	 * the other F***** identifiers!)
 	 *
@@ -1242,7 +1242,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 32;
 	}
 
-	/**
+	/*
 	 * Retrieves the maximum number of bytes for an index, including all
 	 * of the parts of the index.
 	 *
@@ -1262,7 +1262,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 0;
 	}
 
-	/**
+	/*
 	 * What is the maximum length of a procedure name?
 	 * (length of pg_proc.proname used) - again, I really
 	 * should do a query here to get it.
@@ -1281,7 +1281,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 0;
 	}
 
-	/**
+	/*
 	 * What is the maximum length of a single row?
 	 *
 	 * @return max row size in bytes
@@ -1295,7 +1295,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			return 8192;		// XXX could be altered
 	}
 
-	/**
+	/*
 	 * Did getMaxRowSize() include LONGVARCHAR and LONGVARBINARY
 	 * blobs?  We don't handle blobs yet
 	 *
@@ -1307,7 +1307,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * What is the maximum length of a SQL statement?
 	 *
 	 * @return max length in bytes
@@ -1321,7 +1321,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			return 16384;
 	}
 
-	/**
+	/*
 	 * How many active statements can we have open at one time to
 	 * this database?  Basically, since each Statement downloads
 	 * the results as the query is executed, we can have many.	However,
@@ -1337,7 +1337,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 1;
 	}
 
-	/**
+	/*
 	 * What is the maximum length of a table name?	This was found
 	 * from pg_class.relname length
 	 *
@@ -1349,7 +1349,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 32;
 	}
 
-	/**
+	/*
 	 * What is the maximum number of tables that can be specified
 	 * in a SELECT?
 	 *
@@ -1361,7 +1361,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return 0; // no limit
 	}
 
-	/**
+	/*
 	 * What is the maximum length of a user name?  Well, we generally
 	 * use UNIX like user names in PostgreSQL, so I think this would
 	 * be 8.  However, showing the schema for pg_user shows a length
@@ -1376,7 +1376,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	}
 
 
-	/**
+	/*
 	 * What is the database's default transaction isolation level?  We
 	 * do not support this, so all transactions are SERIALIZABLE.
 	 *
@@ -1389,7 +1389,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return Connection.TRANSACTION_READ_COMMITTED;
 	}
 
-	/**
+	/*
 	 * Are transactions supported?	If not, commit and rollback are noops
 	 * and the isolation level is TRANSACTION_NONE.  We do support
 	 * transactions.
@@ -1402,7 +1402,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Does the database support the given transaction isolation level?
 	 * We only support TRANSACTION_SERIALIZABLE and TRANSACTION_READ_COMMITTED
 	 *
@@ -1420,7 +1420,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			return false;
 	}
 
-	/**
+	/*
 	 * Are both data definition and data manipulation transactions
 	 * supported?
 	 *
@@ -1432,7 +1432,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Are only data manipulation statements withing a transaction
 	 * supported?
 	 *
@@ -1444,7 +1444,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does a data definition statement within a transaction force
 	 * the transaction to commit?  I think this means something like:
 	 *
@@ -1468,7 +1468,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Is a data definition statement within a transaction ignored?
 	 * It seems to be (from experiment in previous method)
 	 *
@@ -1480,7 +1480,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return true;
 	}
 
-	/**
+	/*
 	 * Get a description of stored procedures available in a catalog
 	 *
 	 * <p>Only procedure descriptions matching the schema and procedure
@@ -1552,7 +1552,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return new ResultSet(connection, f, v, "OK", 1);
 	}
 
-	/**
+	/*
 	 * Get a description of a catalog's stored procedure parameters
 	 * and result columns.
 	 *
@@ -1630,7 +1630,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return new ResultSet(connection, f, v, "OK", 1);
 	}
 
-	/**
+	/*
 	 * Get a description of tables available in a catalog.
 	 *
 	 * <p>Only table descriptions matching the catalog, schema, table
@@ -1780,7 +1780,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 				"TABLE", "VIEW", "INDEX", "SEQUENCE"
 			};
 
-	/**
+	/*
 	 * Get the schema names available in this database.  The results
 	 * are ordered by schema name.
 	 *
@@ -1805,7 +1805,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return new ResultSet(connection, f, v, "OK", 1);
 	}
 
-	/**
+	/*
 	 * Get the catalog names available in this database.  The results
 	 * are ordered by catalog name.
 	 *
@@ -1822,7 +1822,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return connection.createStatement().executeQuery("select datname as TABLE_CAT from pg_database;");
 	}
 
-	/**
+	/*
 	 * Get the table types available in this database.	The results
 	 * are ordered by table type.
 	 *
@@ -1850,7 +1850,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return new ResultSet(connection, f, v, "OK", 1);
 	}
 
-	/**
+	/*
 	 * Get a description of table columns available in a catalog.
 	 *
 	 * <P>Only column descriptions matching the catalog, schema, table
@@ -2043,7 +2043,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return new ResultSet(connection, f, v, "OK", 1);
 	}
 
-	/**
+	/*
 	 * Get a description of the access rights for a table's columns.
 	 *
 	 * <P>Only privileges matching the column name criteria are
@@ -2107,7 +2107,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return new ResultSet(connection, f, v, "OK", 1);
 	}
 
-	/**
+	/*
 	 * Get a description of the access rights for each table available
 	 * in a catalog.
 	 *
@@ -2143,7 +2143,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		throw org.postgresql.Driver.notImplemented();
 	}
 
-	/**
+	/*
 	 * Get a description of a table's optimal set of columns that
 	 * uniquely identifies a row. They are ordered by SCOPE.
 	 *
@@ -2197,7 +2197,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		return new ResultSet(connection, f, v, "OK", 1);
 	}
 
-	/**
+	/*
 	 * Get a description of a table's columns that are automatically
 	 * updated when any value in a row is updated.	They are
 	 * unordered.
@@ -2232,7 +2232,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		throw org.postgresql.Driver.notImplemented();
 	}
 
-	/**
+	/*
 	 * Get a description of a table's primary key columns.  They
 	 * are ordered by COLUMN_NAME.
 	 *
@@ -2272,69 +2272,69 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 														);
 	}
 
-        private java.sql.ResultSet getImportedExportedKeys(String catalog, String schema, String primaryTable, String foreignTable) throws SQLException
-        {
-	    Field f[]=new Field[14];
+	private java.sql.ResultSet getImportedExportedKeys(String catalog, String schema, String primaryTable, String foreignTable) throws SQLException
+	{
+		Field f[]=new Field[14];
 
-	    f[0]=new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
-	    f[1]=new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
-	    f[2]=new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
-	    f[3]=new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
-	    f[4]=new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
-	    f[5]=new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
-	    f[6]=new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
-	    f[7]=new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
-	    f[8]=new Field(connection, "KEY_SEQ", iInt2Oid, 2);
-	    f[9]=new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
-	    f[10]=new Field(connection, "DELETE_RULE", iInt2Oid, 2);
-	    f[11]=new Field(connection, "FK_NAME", iVarcharOid, 32);
-	    f[12]=new Field(connection, "PK_NAME", iVarcharOid, 32);
-	    f[13]=new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
+		f[0]=new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
+		f[1]=new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
+		f[2]=new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
+		f[3]=new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
+		f[4]=new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
+		f[5]=new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
+		f[6]=new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
+		f[7]=new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
+		f[8]=new Field(connection, "KEY_SEQ", iInt2Oid, 2);
+		f[9]=new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
+		f[10]=new Field(connection, "DELETE_RULE", iInt2Oid, 2);
+		f[11]=new Field(connection, "FK_NAME", iVarcharOid, 32);
+		f[12]=new Field(connection, "PK_NAME", iVarcharOid, 32);
+		f[13]=new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
 
-	    java.sql.ResultSet rs = connection.ExecSQL("SELECT c.relname,c2.relname,"
-						       + "t.tgconstrname,ic.relname,"
-						       + "t.tgdeferrable,t.tginitdeferred,"
-						       + "t.tgnargs,t.tgargs,p.proname "
-						       + "FROM pg_trigger t,pg_class c,pg_class c2,"
-						       + "pg_class ic,pg_proc p, pg_index i "
-						       + "WHERE t.tgrelid=c.oid AND t.tgconstrrelid=c2.oid "
-						       + "AND t.tgfoid=p.oid AND tgisconstraint "
-						       + ((primaryTable!=null) ? "AND c2.relname='"+primaryTable+"' " : "")
-						       + ((foreignTable!=null) ? "AND c.relname='"+foreignTable+"' " : "")
-						       + "AND i.indrelid=c.oid "
-						       + "AND i.indexrelid=ic.oid AND i.indisprimary "
-						       + "ORDER BY c.relname,c2.relname"
-						       );
-	    Vector tuples = new Vector();
-	    short seq=0;
-	    if(rs.next()) {
+		java.sql.ResultSet rs = connection.ExecSQL("SELECT c.relname,c2.relname,"
+							   + "t.tgconstrname,ic.relname,"
+							   + "t.tgdeferrable,t.tginitdeferred,"
+							   + "t.tgnargs,t.tgargs,p.proname "
+							   + "FROM pg_trigger t,pg_class c,pg_class c2,"
+							   + "pg_class ic,pg_proc p, pg_index i "
+							   + "WHERE t.tgrelid=c.oid AND t.tgconstrrelid=c2.oid "
+							   + "AND t.tgfoid=p.oid AND tgisconstraint "
+							   + ((primaryTable!=null) ? "AND c2.relname='"+primaryTable+"' " : "")
+							   + ((foreignTable!=null) ? "AND c.relname='"+foreignTable+"' " : "")
+							   + "AND i.indrelid=c.oid "
+							   + "AND i.indexrelid=ic.oid AND i.indisprimary "
+							   + "ORDER BY c.relname,c2.relname"
+							   );
+		Vector tuples = new Vector();
+		short seq=0;
+		if (rs.next()) {
 		boolean hasMore;
 		do {
-		    byte tuple[][]=new byte[14][0];
-		    for (int k = 0;k < 14;k++)
+			byte tuple[][]=new byte[14][0];
+			for (int k = 0;k < 14;k++)
 			tuple[k] = null;
 
-		    String fKeyName=rs.getString(3);
-		    boolean foundRule=false;
-		    do {
-			String proname=rs.getString(9);
-			if(proname!=null && proname.startsWith("RI_FKey_")) {
-			    int col=-1;
-			    if(proname.endsWith("_upd")) col=9; // UPDATE_RULE
-			    else if(proname.endsWith("_del")) col=10; // DELETE_RULE
-			    if(col>-1) {
-				String rule=proname.substring(8, proname.length()-4);
-				int action=importedKeyNoAction;
-				if("cascade".equals(rule)) action=importedKeyCascade;
-				else if("setnull".equals(rule)) action=importedKeySetNull;
-				else if("setdefault".equals(rule)) action=importedKeySetDefault;
-				tuple[col]=Integer.toString(action).getBytes();
-				foundRule=true;
-			    }
-			}
-		    } while((hasMore=rs.next()) && fKeyName.equals(rs.getString(3)));
+			String fKeyName=rs.getString(3);
+			boolean foundRule=false;
+			do {
+				String proname=rs.getString(9);
+				if (proname!=null && proname.startsWith("RI_FKey_")) {
+					int col=-1;
+					if (proname.endsWith("_upd")) col=9; // UPDATE_RULE
+					else if (proname.endsWith("_del")) col=10; // DELETE_RULE
+					if (col>-1) {
+					String rule=proname.substring(8, proname.length()-4);
+					int action=importedKeyNoAction;
+					if ("cascade".equals(rule)) action=importedKeyCascade;
+					else if ("setnull".equals(rule)) action=importedKeySetNull;
+					else if ("setdefault".equals(rule)) action=importedKeySetDefault;
+					tuple[col]=Integer.toString(action).getBytes();
+					foundRule=true;
+					}
+				}
+			} while ((hasMore=rs.next()) && fKeyName.equals(rs.getString(3)));
 
-		    if(foundRule) {
+			if (foundRule) {
 			tuple[2]=rs.getBytes(2); //PKTABLE_NAME
 			tuple[6]=rs.getBytes(1); //FKTABLE_NAME
 
@@ -2345,18 +2345,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			String s=rs.getString(8);
 			int pos=s.lastIndexOf("\\000");
 			for(int c=0;c<numColumns;c++) {
-			    if(pos>-1) {
+				if (pos>-1) {
 				int pos2=s.lastIndexOf("\\000", pos-1);
-				if(pos2>-1) {
-				    if(fkeyColumns.length()>0) fkeyColumns.insert(0, ',');
-				    fkeyColumns.insert(0, s.substring(pos2+4, pos)); //FKCOLUMN_NAME
-				    pos=s.lastIndexOf("\\000", pos2-1);
-				    if(pos>-1) {
-					if(pkeyColumns.length()>0) pkeyColumns.insert(0, ',');
+				if (pos2>-1) {
+					if (fkeyColumns.length()>0) fkeyColumns.insert(0, ',');
+					fkeyColumns.insert(0, s.substring(pos2+4, pos)); //FKCOLUMN_NAME
+					pos=s.lastIndexOf("\\000", pos2-1);
+					if (pos>-1) {
+					if (pkeyColumns.length()>0) pkeyColumns.insert(0, ',');
 					pkeyColumns.insert(0, s.substring(pos+4, pos2)); //PKCOLUMN_NAME
-				    }
+					}
 				}
-			    }
+				}
 			}
 			tuple[7]=fkeyColumns.toString().getBytes(); //FKCOLUMN_NAME
 			tuple[3]=pkeyColumns.toString().getBytes(); //PKCOLUMN_NAME
@@ -2369,8 +2369,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			int deferrability=importedKeyNotDeferrable;
 			boolean deferrable=rs.getBoolean(5);
 			boolean initiallyDeferred=rs.getBoolean(6);
-			if(deferrable) {
-			    if(initiallyDeferred)
+			if (deferrable) {
+			    if (initiallyDeferred)
 				deferrability=importedKeyInitiallyDeferred;
 			    else
 				deferrability=importedKeyInitiallyImmediate;
@@ -2379,13 +2379,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
 			tuples.addElement(tuple);
 		    }
-		} while(hasMore);
+		} while (hasMore);
 	    }
 
 	    return new ResultSet(connection, f, tuples, "OK", 1);
 	}
 
-	/**
+	/*
 	 * Get a description of the primary key columns that are
 	 * referenced by a table's foreign key columns (the primary keys
 	 * imported by a table).  They are ordered by PKTABLE_CAT,
@@ -2436,12 +2436,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	 * @return ResultSet each row is a primary key column description
 	 * @see #getExportedKeys
 	 */
-        public java.sql.ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException
-        {
-	    return getImportedExportedKeys(catalog, schema, null, table);
-        }
+	public java.sql.ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException
+	{
+		return getImportedExportedKeys(catalog, schema, null, table);
+	}
 
-	/**
+	/*
 	 * Get a description of a foreign key columns that reference a
 	 * table's primary key columns (the foreign keys exported by a
 	 * table).	They are ordered by FKTABLE_CAT, FKTABLE_SCHEM,
@@ -2499,7 +2499,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	    return getImportedExportedKeys(catalog, schema, table, null);
 	}
 
-	/**
+	/*
 	 * Get a description of the foreign key columns in the foreign key
 	 * table that reference the primary key columns of the primary key
 	 * table (describe how one table imports another's key.) This
@@ -2560,7 +2560,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	    return getImportedExportedKeys(primaryCatalog, primarySchema, primaryTable, foreignTable);
 	}
 
-	/**
+	/*
 	 * Get a description of all the standard SQL types supported by
 	 * this database. They are ordered by DATA_TYPE and then by how
 	 * closely the data type maps to the corresponding JDBC SQL type.
@@ -2667,7 +2667,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		throw new PSQLException("postgresql.metadata.unavailable");
 	}
 
-	/**
+	/*
 	 * Get a description of a table's indices and statistics. They are
 	 * ordered by NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
 	 *

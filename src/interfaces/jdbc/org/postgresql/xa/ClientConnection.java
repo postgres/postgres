@@ -1,4 +1,4 @@
-/**
+/*
 * Redistribution and use of this software and associated documentation
 * ("Software"), with or without modification, are permitted provided
 * that the following conditions are met:
@@ -40,7 +40,7 @@
 *
 * Copyright 1999 (C) Exoffice Technologies Inc. All Rights Reserved.
 *
-* $Id: ClientConnection.java,v 1.2 2001/10/25 06:00:05 momjian Exp $
+* $Id: ClientConnection.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
 */
 
 
@@ -51,7 +51,7 @@ import java.util.*;
 import java.sql.*;
 
 
-/**
+/*
  * Encapsulates an application's view of an XA/pooled connection.
  * The XA connection is managed by the application server through it's
  * {@link javax.sql.XAConnection} interface. The underlying JDBC
@@ -72,14 +72,14 @@ final class ClientConnection
 {
 
 
-	/**
+	/*
 	 * The pooled XA connection that created this client connection
 	 * and should be used to report closure and fatal errors.
 	 */
 	private XAConnectionImpl _xaConn;
 
 
-	/**
+	/*
 	 * This identifier was handed on to use when we were created by
 	 * {@link XAConnection}. If since then the XA connection was asked
 	 * to create another connection or was closed, our identifier will
@@ -94,7 +94,7 @@ final class ClientConnection
 
 
 
-	/**
+	/*
 	 * Construct a new client connection to provide access to the
 	 * underlying JDBC connection (<tt>underlying</tt>) on behalf of
 	 * an XA/pooled connection (<tt>xaConn<tt/>). The pooled connection
@@ -483,7 +483,7 @@ final class ClientConnection
 	}
 
 
-	/**
+	/*
 	 * Called by {@link XAConnectionImpl} to terminate this connection
 	 * by dissociating it from the underlying JDBC connection.
 	 * The application would call {@link #close} but {@link
@@ -520,7 +520,7 @@ final class ClientConnection
 	}
 
 
-	/**
+	/*
 	 * Called when an exception is thrown by the underlying connection
 	 * to determine whether the exception is critical or not. If the
 	 * exception is critical, notifies the XA connection to forget
@@ -536,7 +536,7 @@ final class ClientConnection
 	}
 
 
-	/**
+	/*
 	 * Called to retrieve the underlying JDBC connection. Actual JDBC
 	 * operations are performed against it. Throws an SQLException if
 	 * this connection has been closed.

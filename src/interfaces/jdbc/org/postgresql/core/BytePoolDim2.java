@@ -20,7 +20,7 @@ public class BytePoolDim2
 		// For now until the bug can be removed
 		return new byte[size][0];
 		/*
-		if(size > maxsize){
+		if (size > maxsize){
 		return new byte[size][0];
 	}
 		ObjectPool not_usel = notusemap[size];
@@ -28,7 +28,7 @@ public class BytePoolDim2
 
 		byte b[][] = null;
 
-		if(!not_usel.isEmpty()) {
+		if (!not_usel.isEmpty()) {
 		Object o = not_usel.remove();
 		b = (byte[][]) o;
 	} else
@@ -51,7 +51,7 @@ public class BytePoolDim2
 		not_usel.add(b);
 	}
 
-	/**
+	/*
 	 * Deallocate the object cache.
 	 * PM 17/01/01: Commented out this code as it blows away any hope of
 	 * multiple queries on the same connection. I'll redesign the allocation

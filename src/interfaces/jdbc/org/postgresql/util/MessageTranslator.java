@@ -3,7 +3,7 @@ package org.postgresql.util;
 import java.util.*;
 import java.text.*;
 
-/**
+/*
  * A singleton class to translate JDBC driver messages in SQLException's.
  */
 public class MessageTranslator

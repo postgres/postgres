@@ -1,4 +1,4 @@
-/**
+/*
 * Redistribution and use of this software and associated documentation
 * ("Software"), with or without modification, are permitted provided
 * that the following conditions are met:
@@ -40,7 +40,7 @@
 *
 * Copyright 1999 (C) Exoffice Technologies Inc. All Rights Reserved.
 *
-* $Id: XADataSourceImpl.java,v 1.2 2001/10/25 06:00:05 momjian Exp $
+* $Id: XADataSourceImpl.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
 */
 
 
@@ -65,7 +65,7 @@ import javax.transaction.xa.Xid;
 
 
 
-/**
+/*
  * Implements a JDBC 2.0 {@link XADataSource} for any JDBC driver
  * with JNDI persistance support. The base implementation is actually
  * provided by a different {@link DataSource} class; although this is
@@ -82,13 +82,13 @@ public abstract class XADataSourceImpl
 {
 
 
-	/**
+	/*
 	 * Maps underlying JDBC connections into global transaction Xids.
 	 */
 	private transient Hashtable _txConnections = new Hashtable();
 
 
-	/**
+	/*
 	 * This is a pool of free underlying JDBC connections. If two
 	 * XA connections are used in the same transaction, the second
 	 * one will make its underlying JDBC connection available to
@@ -98,20 +98,20 @@ public abstract class XADataSourceImpl
 	private transient Stack _pool = new Stack();
 
 
-	/**
+	/*
 	 * A background deamon thread terminating connections that have
 	 * timed out.
 	 */
 	private transient Thread _background;
 
 
-	/**
+	/*
 	 * The default timeout for all new transactions.
 	 */
 	private int _txTimeout = DEFAULT_TX_TIMEOUT;
 
 
-	/**
+	/*
 	 * The default timeout for all new transactions is 10 seconds.
 	 */
 	public final static int DEFAULT_TX_TIMEOUT = 10;
@@ -119,7 +119,7 @@ public abstract class XADataSourceImpl
 
 
 
-	/**
+	/*
 	 * Implementation details:
 	 *	 If two XAConnections are associated with the same transaction
 	 *	 (one with a start the other with a join) they must use the
@@ -192,7 +192,7 @@ public abstract class XADataSourceImpl
 	}
 
 
-	/**
+	/*
 	 * Returns the default timeout for all transactions.
 	 */
 	public int getTransactionTimeout()
@@ -201,7 +201,7 @@ public abstract class XADataSourceImpl
 	}
 
 
-	/**
+	/*
 	 * This method is defined in the interface and implemented in the
 	 * derived class, we re-define it just to make sure it does not
 	 * throw an {@link SQLException} and that we do not need to
@@ -210,7 +210,7 @@ public abstract class XADataSourceImpl
 	public abstract java.io.PrintWriter getLogWriter();
 
 
-	/**
+	/*
 	 * Sets the default timeout for all transactions. The timeout is
 	 * specified in seconds. Use zero for the default timeout. Calling
 	 * this method does not affect transactions in progress.
@@ -227,7 +227,7 @@ public abstract class XADataSourceImpl
 	}
 
 
-	/**
+	/*
 	 * Returns an underlying connection for the global transaction,
 	 * if one has been associated before.
 	 *
@@ -240,7 +240,7 @@ public abstract class XADataSourceImpl
 	}
 
 
-	/**
+	/*
 	 * Associates the global transaction with an underlying connection,
 	 * or dissociate it when null is passed.
 	 *
@@ -256,7 +256,7 @@ public abstract class XADataSourceImpl
 	}
 
 
-	/**
+	/*
 	 * Release an unused connection back to the pool. If an XA
 	 * connection has been asked to join an existing transaction,
 	 * it will no longer use it's own connection and make it available
@@ -270,7 +270,7 @@ public abstract class XADataSourceImpl
 	}
 
 
-	/**
+	/*
 	 * Creates a new underlying connection. Used by XA connection
 	 * that lost it's underlying connection when joining a
 	 * transaction and is now asked to produce a new connection.
@@ -294,7 +294,7 @@ public abstract class XADataSourceImpl
 	}
 
 
-	/**
+	/*
 	 * XXX Not fully implemented yet and no code to really
 	 *	   test it.
 	 */
@@ -316,7 +316,7 @@ public abstract class XADataSourceImpl
 	}
 
 
-	/**
+	/*
 	 * Returns the transaction isolation level to use with all newly
 	 * created transactions, or {@link Connection#TRANSACTION_NONE}
 	 * if using the driver's default isolation level.

@@ -4,19 +4,19 @@ import org.postgresql.test.JDBC2Tests;
 import junit.framework.TestCase;
 import java.sql.*;
 
-/**
+/*
  * TestCase to test the internal functionality of org.postgresql.jdbc2.Connection
  * and it's superclass.
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: ConnectionTest.java,v 1.6 2001/10/25 05:59:59 momjian Exp $
+ * $Id: ConnectionTest.java,v 1.7 2001/11/19 22:33:39 momjian Exp $
  */
 
 public class ConnectionTest extends TestCase
 {
 
-	/**
+	/*
 	 * Constructor
 	 */
 	public ConnectionTest(String name)
@@ -46,7 +46,7 @@ public class ConnectionTest extends TestCase
 		JDBC2Tests.closeDB(con);
 	}
 
-	/**
+	/*
 	 * Tests the two forms of createStatement()
 	 */
 	public void testCreateStatement()
@@ -72,7 +72,7 @@ public class ConnectionTest extends TestCase
 		}
 	}
 
-	/**
+	/*
 	 * Tests the two forms of prepareStatement()
 	 */
 	public void testPrepareStatement()
@@ -100,13 +100,13 @@ public class ConnectionTest extends TestCase
 		}
 	}
 
-	/**
+	/*
 	 * Put the test for createPrepareCall here
 	 */
 	public void testPrepareCall()
 	{}
 
-	/**
+	/*
 	 * Test nativeSQL
 	 */
 	public void testNativeSQL()
@@ -114,7 +114,7 @@ public class ConnectionTest extends TestCase
 		// For now do nothing as it returns itself
 	}
 
-	/**
+	/*
 	 * Test autoCommit (both get & set)
 	 */
 	public void testTransactions()
@@ -163,7 +163,7 @@ public class ConnectionTest extends TestCase
 		}
 	}
 
-	/**
+	/*
 	 * Simple test to see if isClosed works.
 	 */
 	public void testIsClosed()
@@ -187,7 +187,7 @@ public class ConnectionTest extends TestCase
 		}
 	}
 
-	/**
+	/*
 	 * Test the warnings system
 	 */
 	public void testWarnings()
@@ -224,7 +224,7 @@ public class ConnectionTest extends TestCase
 		}
 	}
 
-	/**
+	/*
 	 * Transaction Isolation Levels
 	 */
 	public void testTransactionIsolation()
@@ -309,7 +309,7 @@ public class ConnectionTest extends TestCase
 		}
 	}
 
-	/**
+	/*
 	 * JDBC2 Type mappings
 	 */
 	public void testTypeMaps()

@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.io.*;
 import java.sql.*;
 
-/**
+/*
  * ResultSet tests.
  */
 public class ResultSetTest extends TestCase

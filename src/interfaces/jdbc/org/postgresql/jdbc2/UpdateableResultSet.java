@@ -21,7 +21,7 @@ import org.postgresql.Field;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/**
+/*
  * @see ResultSet
  * @see ResultSetMetaData
  * @see java.sql.ResultSet
@@ -29,7 +29,7 @@ import org.postgresql.util.*;
 public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
 {
 
-	/**
+	/*
 	 * Create a new ResultSet - Note that we create ResultSets to
 	 * represent the results of everything.
 	 *
@@ -45,7 +45,7 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
 		super(conn, fields, tuples, status, updateCount, insertOID, binaryCursor);
 	}
 
-	/**
+	/*
 	 * Create a new ResultSet - Note that we create ResultSets to
 	 * represent the results of everything.
 	 *

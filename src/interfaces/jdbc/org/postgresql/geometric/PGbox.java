@@ -4,17 +4,17 @@ import java.io.*;
 import java.sql.*;
 import org.postgresql.util.*;
 
-/**
+/*
  * This  represents the box datatype within org.postgresql.
  */
 public class PGbox extends PGobject implements Serializable, Cloneable
 {
-	/**
+	/*
 	 * These are the two points.
 	 */
 	public PGpoint point[] = new PGpoint[2];
 
-	/**
+	/*
 	 * @param x1 first x coordinate
 	 * @param y1 first y coordinate
 	 * @param x2 second x coordinate
@@ -27,7 +27,7 @@ public class PGbox extends PGobject implements Serializable, Cloneable
 		this.point[1] = new PGpoint(x2, y2);
 	}
 
-	/**
+	/*
 	 * @param p1 first point
 	 * @param p2 second point
 	 */
@@ -38,7 +38,7 @@ public class PGbox extends PGobject implements Serializable, Cloneable
 		this.point[1] = p2;
 	}
 
-	/**
+	/*
 	 * @param s Box definition in PostgreSQL syntax
 	 * @exception SQLException if definition is invalid
 	 */
@@ -48,7 +48,7 @@ public class PGbox extends PGobject implements Serializable, Cloneable
 		setValue(s);
 	}
 
-	/**
+	/*
 	 * Required constructor
 	 */
 	public PGbox()
@@ -56,7 +56,7 @@ public class PGbox extends PGobject implements Serializable, Cloneable
 		setType("box");
 	}
 
-	/**
+	/*
 	 * This method sets the value of this object. It should be overidden,
 	 * but still called by subclasses.
 	 *
@@ -73,7 +73,7 @@ public class PGbox extends PGobject implements Serializable, Cloneable
 		point[1] = new PGpoint(t.getToken(1));
 	}
 
-	/**
+	/*
 	 * @param obj Object to compare with
 	 * @return true if the two boxes are identical
 	 */
@@ -88,7 +88,7 @@ public class PGbox extends PGobject implements Serializable, Cloneable
 		return false;
 	}
 
-	/**
+	/*
 	 * This must be overidden to allow the object to be cloned
 	 */
 	public Object clone()
@@ -96,7 +96,7 @@ public class PGbox extends PGobject implements Serializable, Cloneable
 		return new PGbox((PGpoint)point[0].clone(), (PGpoint)point[1].clone());
 	}
 
-	/**
+	/*
 	 * @return the PGbox in the syntax expected by org.postgresql
 	 */
 	public String getValue()

@@ -7,13 +7,13 @@ import java.sql.*;
 import org.postgresql.*;
 import org.postgresql.util.PSQLException;
 
-/**
+/*
  * Executes a query on the backend.
  *
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.3 2001/10/25 05:59:59 momjian Exp $
+ * $Id: QueryExecutor.java,v 1.4 2001/11/19 22:33:37 momjian Exp $
  */
 
 public class QueryExecutor
@@ -49,7 +49,7 @@ public class QueryExecutor
 	private int insert_oid = 0;
 	private int maxRows;
 
-	/**
+	/*
 	 * Execute a query on the backend.
 	 */
 	public java.sql.ResultSet execute() throws SQLException
@@ -122,7 +122,7 @@ public class QueryExecutor
 		}
 	}
 
-	/**
+	/*
 	 * Send a query to the backend.
 	 */
 	private void sendQuery(String query) throws SQLException
@@ -141,7 +141,7 @@ public class QueryExecutor
 		}
 	}
 
-	/**
+	/*
 	 * Receive a tuple from the backend.
 	 *
 	 * @param isBinary set if the tuple should be treated as binary data
@@ -157,7 +157,7 @@ public class QueryExecutor
 			tuples.addElement(tuple);
 	}
 
-	/**
+	/*
 	 * Receive command status from the backend.
 	 */
 	private void receiveCommandStatus() throws SQLException
@@ -184,7 +184,7 @@ public class QueryExecutor
 		}
 	}
 
-	/**
+	/*
 	 * Receive the field descriptions from the back end.
 	 */
 	private void receiveFields() throws SQLException

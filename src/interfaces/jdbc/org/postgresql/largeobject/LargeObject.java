@@ -8,7 +8,7 @@ import java.sql.*;
 
 import org.postgresql.fastpath.*;
 
-/**
+/*
  * This class implements the large object interface to org.postgresql.
  *
  * <p>It provides the basic methods required to run the interface, plus
@@ -43,17 +43,17 @@ import org.postgresql.fastpath.*;
  */
 public class LargeObject
 {
-	/**
+	/*
 	 * Indicates a seek from the begining of a file
 	 */
 	public static final int SEEK_SET = 0;
 
-	/**
+	/*
 	 * Indicates a seek from the current position
 	 */
 	public static final int SEEK_CUR = 1;
 
-	/**
+	/*
 	 * Indicates a seek from the end of a file
 	 */
 	public static final int SEEK_END = 2;
@@ -66,7 +66,7 @@ public class LargeObject
 
 	private boolean closed = false; // true when we are closed
 
-	/**
+	/*
 	 * This opens a large object.
 	 *
 	 * <p>If the object does not exist, then an SQLException is thrown.
@@ -95,7 +95,7 @@ public class LargeObject
 		close();
 	}
 
-	/**
+	/*
 	 * @return the OID of this LargeObject
 	 */
 	public int getOID()
@@ -103,7 +103,7 @@ public class LargeObject
 		return oid;
 	}
 
-	/**
+	/*
 	 * This method closes the object. You must not call methods in this
 	 * object after this is called.
 	 * @exception SQLException if a database-access error occurs.
@@ -138,7 +138,7 @@ public class LargeObject
 		}
 	}
 
-	/**
+	/*
 	 * Reads some data from the object, and return as a byte[] array
 	 *
 	 * @param len number of bytes to read
@@ -155,7 +155,7 @@ public class LargeObject
 		return fp.getData("loread", args);
 
 		// This version allows us to break this down into 4k blocks
-		//if(len<=4048) {
+		//if (len<=4048) {
 		//// handle as before, return the whole block in one go
 		//FastpathArg args[] = new FastpathArg[2];
 		//args[0] = new FastpathArg(fd);
@@ -165,10 +165,10 @@ public class LargeObject
 		//// return in 4k blocks
 		//byte[] buf=new byte[len];
 		//int off=0;
-		//while(len>0) {
+		//while (len>0) {
 		//int bs=4048;
 		//len-=bs;
-		//if(len<0) {
+		//if (len<0) {
 		//bs+=len;
 		//len=0;
 		//}
@@ -179,7 +179,7 @@ public class LargeObject
 		//}
 	}
 
-	/**
+	/*
 	 * Reads some data from the object into an existing array
 	 *
 	 * @param buf destination array
@@ -197,7 +197,7 @@ public class LargeObject
 		return len;
 	}
 
-	/**
+	/*
 	 * Writes an array to the object
 	 *
 	 * @param buf array to write
@@ -211,7 +211,7 @@ public class LargeObject
 		fp.fastpath("lowrite", false, args);
 	}
 
-	/**
+	/*
 	 * Writes some data from an array to the object
 	 *
 	 * @param buf destination array
@@ -226,7 +226,7 @@ public class LargeObject
 		write(data);
 	}
 
-	/**
+	/*
 	 * Sets the current position within the object.
 	 *
 	 * <p>This is similar to the fseek() call in the standard C library. It
@@ -245,7 +245,7 @@ public class LargeObject
 		fp.fastpath("lo_lseek", false, args);
 	}
 
-	/**
+	/*
 	 * Sets the current position within the object.
 	 *
 	 * <p>This is similar to the fseek() call in the standard C library. It
@@ -259,7 +259,7 @@ public class LargeObject
 		seek(pos, SEEK_SET);
 	}
 
-	/**
+	/*
 	 * @return the current position within the object
 	 * @exception SQLException if a database-access error occurs.
 	 */
@@ -270,7 +270,7 @@ public class LargeObject
 		return fp.getInteger("lo_tell", args);
 	}
 
-	/**
+	/*
 	 * This method is inefficient, as the only way to find out the size of
 	 * the object is to seek to the end, record the current position, then
 	 * return to the original position.
@@ -289,7 +289,7 @@ public class LargeObject
 		return sz;
 	}
 
-	/**
+	/*
 	 * Returns an InputStream from this object.
 	 *
 	 * <p>This InputStream can then be used in any method that requires an
@@ -302,7 +302,7 @@ public class LargeObject
 		return new BlobInputStream(this);
 	}
 
-	/**
+	/*
 	 * Returns an OutputStream to this object
 	 *
 	 * <p>This OutputStream can then be used in any method that requires an

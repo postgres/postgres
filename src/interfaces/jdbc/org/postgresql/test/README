@@ -172,7 +172,7 @@ import org.postgresql.test.JDBC2Tests;
 import junit.framework.TestCase;
 import java.sql.*;
 
-/**
+/*
  * Test case for ...
  */
 public class FooTest extends TestCase {

@@ -4,8 +4,8 @@ import org.postgresql.test.JDBC2Tests;
 import junit.framework.TestCase;
 import java.sql.*;
 
-/**
- * $Id: DateTest.java,v 1.3 2001/10/25 05:59:59 momjian Exp $
+/*
+ * $Id: DateTest.java,v 1.4 2001/11/19 22:33:39 momjian Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -33,7 +33,7 @@ public class DateTest extends TestCase
 		JDBC2Tests.closeDB(con);
 	}
 
-	/**
+	/*
 	 * Tests the time methods in ResultSet
 	 */
 	public void testGetDate()
@@ -59,7 +59,7 @@ public class DateTest extends TestCase
 		}
 	}
 
-	/**
+	/*
 	 * Tests the time methods in PreparedStatement
 	 */
 	public void testSetDate()
@@ -95,7 +95,7 @@ public class DateTest extends TestCase
 		}
 	}
 
-	/**
+	/*
 	 * Helper for the date tests. It tests what should be in the db
 	 */
 	private void dateTest() throws SQLException

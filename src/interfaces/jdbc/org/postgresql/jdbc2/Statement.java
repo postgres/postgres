@@ -9,7 +9,7 @@ import java.sql.*;
 import java.util.Vector;
 import org.postgresql.util.*;
 
-/**
+/*
  * A Statement object is used for executing a static SQL statement and
  * obtaining the results produced by it.
  *
@@ -29,7 +29,7 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 	private int resultsettype;				  // the resultset type to return
 	private int concurrency;		 // is it updateable or not?
 
-	/**
+	/*
 	 * Constructor for a Statement.  It simply sets the connection
 	 * that created us.
 	 *
@@ -42,7 +42,7 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 		concurrency = java.sql.ResultSet.CONCUR_READ_ONLY;
 	}
 
-	/**
+	/*
 	 * Execute a SQL statement that retruns a single ResultSet
 	 *
 	 * @param sql typically a static SQL SELECT statement
@@ -59,7 +59,7 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 		return result;
 	}
 
-	/**
+	/*
 	 * Execute a SQL INSERT, UPDATE or DELETE statement.  In addition
 	 * SQL statements that return nothing such as SQL DDL statements
 	 * can be executed
@@ -76,7 +76,7 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 		return this.getUpdateCount();
 	}
 
-	/**
+	/*
 	 * setCursorName defines the SQL cursor name that will be used by
 	 * subsequent execute methods.	This name can then be used in SQL
 	 * positioned update/delete statements to identify the current row
@@ -100,7 +100,7 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 		connection.setCursorName(name);
 	}
 
-	/**
+	/*
 	 * Execute a SQL statement that may return multiple results. We
 	 * don't have to worry about this since we do not support multiple
 	 * ResultSets.	 You can use getResultSet or getUpdateCount to
@@ -135,7 +135,7 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 		return (result != null && ((org.postgresql.ResultSet)result).reallyResultSet());
 	}
 
-	/**
+	/*
 	 * getUpdateCount returns the current result as an update count,
 	 * if the result is a ResultSet or there are no more results, -1
 	 * is returned.  It should only be called once per result.
@@ -152,7 +152,7 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 		return ((org.postgresql.ResultSet)result).getResultCount();
 	}
 
-	/**
+	/*
 	 * getMoreResults moves to a Statement's next result.  If it returns
 	 * true, this result is a ResulSet.
 	 *
@@ -249,7 +249,7 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 		throw org.postgresql.Driver.notImplemented();
 	}
 
-	/**
+	/*
 	 * New in 7.1
 	 */
 	public void setResultSetConcurrency(int value) throws SQLException
@@ -257,7 +257,7 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 		concurrency = value;
 	}
 
-	/**
+	/*
 	 * New in 7.1
 	 */
 	public void setResultSetType(int value) throws SQLException

@@ -1,30 +1,30 @@
 package org.postgresql.core;
 
-/**
+/*
  * A simple and efficient class to pool one dimensional byte arrays
  * of different sizes.
  */
 public class BytePoolDim1
 {
 
-	/**
+	/*
 	 * The maximum size of the array we manage.
 	 */
 	int maxsize = 256;
-	/**
+	/*
 	 * The pools not currently in use
 	 */
 	ObjectPool notusemap[] = new ObjectPool[maxsize + 1];
-	/**
+	/*
 	 * The pools currently in use
 	 */
 	ObjectPool inusemap[] = new ObjectPool[maxsize + 1];
-	/**
+	/*
 	 *
 	 */
 	byte binit[][] = new byte[maxsize + 1][0];
 
-	/**
+	/*
 	 * Construct a new pool
 	 */
 	public BytePoolDim1()
@@ -37,7 +37,7 @@ public class BytePoolDim1
 		}
 	}
 
-	/**
+	/*
 	 * Allocate a byte[] of a specified size and put it in the pool. If it's
 	 * larger than maxsize then it is not pooled.
 	 * @return the byte[] allocated
@@ -48,7 +48,7 @@ public class BytePoolDim1
 		return new byte[size];
 		/*
 		  // Don't pool if >maxsize
-		if(size > maxsize){
+		if (size > maxsize){
 		return new byte[size];
 	}
 
@@ -58,7 +58,7 @@ public class BytePoolDim1
 
 		  // Fetch from the unused pool if available otherwise allocate a new
 		  // now array
-		if(!not_usel.isEmpty()) {
+		if (!not_usel.isEmpty()) {
 		Object o = not_usel.remove();
 		b = (byte[]) o;
 	} else
@@ -69,7 +69,7 @@ public class BytePoolDim1
 		  */
 	}
 
-	/**
+	/*
 	 * Release an array
 	 * @param b byte[] to release
 	 */
@@ -86,7 +86,7 @@ public class BytePoolDim1
 		not_usel.add(b);
 	}
 
-	/**
+	/*
 	 * Deallocate all
 	 * @deprecated Real bad things happen if this is called!
 	 */

@@ -4,22 +4,22 @@ import java.io.*;
 import java.sql.*;
 import org.postgresql.util.*;
 
-/**
+/*
  * This implements a path (a multiple segmented line, which may be closed)
  */
 public class PGpath extends PGobject implements Serializable, Cloneable
 {
-	/**
+	/*
 	 * True if the path is open, false if closed
 	 */
 	public boolean open;
 
-	/**
+	/*
 	 * The points defining this path
 	 */
 	public PGpoint points[];
 
-	/**
+	/*
 	 * @param points the PGpoints that define the path
 	 * @param open True if the path is open, false if closed
 	 */
@@ -30,7 +30,7 @@ public class PGpath extends PGobject implements Serializable, Cloneable
 		this.open = open;
 	}
 
-	/**
+	/*
 	 * Required by the driver
 	 */
 	public PGpath()
@@ -38,7 +38,7 @@ public class PGpath extends PGobject implements Serializable, Cloneable
 		setType("path");
 	}
 
-	/**
+	/*
 	 * @param s definition of the circle in PostgreSQL's syntax.
 	 * @exception SQLException on conversion failure
 	 */
@@ -48,7 +48,7 @@ public class PGpath extends PGobject implements Serializable, Cloneable
 		setValue(s);
 	}
 
-	/**
+	/*
 	 * @param s Definition of the path in PostgreSQL's syntax
 	 * @exception SQLException on conversion failure
 	 */
@@ -75,7 +75,7 @@ public class PGpath extends PGobject implements Serializable, Cloneable
 			points[p] = new PGpoint(t.getToken(p));
 	}
 
-	/**
+	/*
 	 * @param obj Object to compare with
 	 * @return true if the two boxes are identical
 	 */
@@ -100,7 +100,7 @@ public class PGpath extends PGobject implements Serializable, Cloneable
 		return false;
 	}
 
-	/**
+	/*
 	 * This must be overidden to allow the object to be cloned
 	 */
 	public Object clone()
@@ -111,7 +111,7 @@ public class PGpath extends PGobject implements Serializable, Cloneable
 		return new PGpath(ary, open);
 	}
 
-	/**
+	/*
 	 * This returns the polygon in the syntax expected by org.postgresql
 	 */
 	public String getValue()

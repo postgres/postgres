@@ -11,7 +11,7 @@ import java.util.*;
 import org.postgresql.*;
 import org.postgresql.util.*;
 
-/**
+/*
  * A ResultSetMetaData object can be used to find out about the types and
  * properties of the columns in a ResultSet
  *
@@ -22,7 +22,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 	Vector rows;
 	Field[] fields;
 
-	/**
+	/*
 	 *	Initialise for a result with a tuple set and
 	 *	a field descriptor set
 	 *
@@ -35,7 +35,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		this.fields = fields;
 	}
 
-	/**
+	/*
 	 * Whats the number of columns in the ResultSet?
 	 *
 	 * @return the number
@@ -46,7 +46,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return fields.length;
 	}
 
-	/**
+	/*
 	 * Is the column automatically numbered (and thus read-only)
 	 * I believe that PostgreSQL does not support this feature.
 	 *
@@ -59,7 +59,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Does a column's case matter? ASSUMPTION: Any field that is
 	 * not obviously case insensitive is assumed to be case sensitive
 	 *
@@ -87,7 +87,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		}
 	}
 
-	/**
+	/*
 	 * Can the column be used in a WHERE clause?  Basically for
 	 * this, I split the functions into two types: recognised
 	 * types (which are always useable), and OTHER types (which
@@ -114,7 +114,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		}
 	}
 
-	/**
+	/*
 	 * Is the column a cash value?	6.1 introduced the cash/money
 	 * type, which haven't been incorporated as of 970414, so I
 	 * just check the type name for both 'cash' and 'money'
@@ -130,7 +130,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return type_name.equals("cash") || type_name.equals("money");
 	}
 
-	/**
+	/*
 	 * Indicates the nullability of values in the designated column.
 	 *
 	 * @param column the first column is 1, the second is 2...
@@ -147,7 +147,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return columnNullableUnknown;
 	}
 
-	/**
+	/*
 	 * Is the column a signed number? In PostgreSQL, all numbers
 	 * are signed, so this is trivial.	However, strings are not
 	 * signed (duh!)
@@ -177,7 +177,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		}
 	}
 
-	/**
+	/*
 	 * What is the column's normal maximum width in characters?
 	 *
 	 * @param column the first column is 1, the second is 2, etc.
@@ -233,7 +233,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return f.getLength();
 	}
 
-	/**
+	/*
 	 * What is the suggested column title for use in printouts and
 	 * displays?  We suggest the ColumnName!
 	 *
@@ -246,7 +246,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return getColumnName(column);
 	}
 
-	/**
+	/*
 	 * What's a column's name?
 	 *
 	 * @param column the first column is 1, the second is 2, etc.
@@ -261,7 +261,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return "field" + column;
 	}
 
-	/**
+	/*
 	 * What is a column's table's schema?  This relies on us knowing
 	 * the table name....which I don't know how to do as yet.  The 
 	 * JDBC specification allows us to return "" if this is not
@@ -276,7 +276,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return "";
 	}
 
-	/**
+	/*
 	 * What is a column's number of decimal digits.
 	 *
 	 * @param column the first column is 1, the second is 2...
@@ -312,7 +312,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		}
 	}
 
-	/**
+	/*
 	 * What is a column's number of digits to the right of the
 	 * decimal point?
 	 *
@@ -349,7 +349,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		}
 	}
 
-	/**
+	/*
 	 * Whats a column's table's name?  How do I find this out?	Both
 	 * getSchemaName() and getCatalogName() rely on knowing the table
 	 * Name, so we need this before we can work on them.
@@ -363,7 +363,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return "";
 	}
 
-	/**
+	/*
 	 * What's a column's table's catalog name?  As with getSchemaName(),
 	 * we can say that if getTableName() returns n/a, then we can too -
 	 * otherwise, we need to work on it.
@@ -377,7 +377,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return "";
 	}
 
-	/**
+	/*
 	 * What is a column's SQL Type? (java.sql.Type int)
 	 *
 	 * @param column the first column is 1, the second is 2, etc.
@@ -391,7 +391,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return getField(column).getSQLType();
 	}
 
-	/**
+	/*
 	 * Whats is the column's data source specific type name?
 	 *
 	 * @param column the first column is 1, the second is 2, etc.
@@ -403,7 +403,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return getField(column).getPGType();
 	}
 
-	/**
+	/*
 	 * Is the column definitely not writable?  In reality, we would
 	 * have to check the GRANT/REVOKE stuff for this to be effective,
 	 * and I haven't really looked into that yet, so this will get
@@ -418,7 +418,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return false;
 	}
 
-	/**
+	/*
 	 * Is it possible for a write on the column to succeed?  Again, we
 	 * would in reality have to check the GRANT/REVOKE stuff, which
 	 * I haven't worked with as yet.  However, if it isn't ReadOnly, then
@@ -433,7 +433,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return !isReadOnly(column);
 	}
 
-	/**
+	/*
 	 * Will a write on this column definately succeed?	Hmmm...this
 	 * is a bad one, since the two preceding functions have not been
 	 * really defined.	I cannot tell is the short answer.	I thus
@@ -452,7 +452,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 	//	END OF PUBLIC INTERFACE
 	// ********************************************************
 
-	/**
+	/*
 	 * For several routines in this package, we need to convert
 	 * a columnIndex into a Field[] descriptor.  Rather than do
 	 * the same code several times, here it is.

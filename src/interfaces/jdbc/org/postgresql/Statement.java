@@ -3,7 +3,7 @@ package org.postgresql;
 import java.sql.*;
 import org.postgresql.util.PSQLException;
 
-/**
+/*
  * This class defines methods implemented by the two subclasses
  * org.postgresql.jdbc1.Statement and org.postgresql.jdbc2.Statement that are
  * unique to PostgreSQL's JDBC driver.
@@ -49,7 +49,7 @@ public abstract class Statement
 	public Statement()
 	{}
 
-	/**
+	/*
 	 * Returns the status message from the current Result.<p>
 	 * This is used internally by the driver.
 	 *
@@ -62,7 +62,7 @@ public abstract class Statement
 		return ((org.postgresql.ResultSet) result).getStatusString();
 	}
 
-	/**
+	/*
 	 * The maxRows limit is set to limit the number of rows that
 	 * any ResultSet can contain.  If the limit is exceeded, the
 	 * excess rows are silently dropped.
@@ -75,7 +75,7 @@ public abstract class Statement
 		return maxrows;
 	}
 
-	/**
+	/*
 	 * Set the maximum number of rows
 	 *
 	 * @param max the new max rows limit; zero means unlimited
@@ -87,7 +87,7 @@ public abstract class Statement
 		maxrows = max;
 	}
 
-	/**
+	/*
 	 * If escape scanning is on (the default), the driver will do escape
 	 * substitution before sending the SQL to the database.
 	 *
@@ -99,7 +99,7 @@ public abstract class Statement
 		escapeProcessing = enable;
 	}
 
-	/**
+	/*
 	 * The queryTimeout limit is the number of seconds the driver
 	 * will wait for a Statement to execute.  If the limit is
 	 * exceeded, a SQLException is thrown.
@@ -112,7 +112,7 @@ public abstract class Statement
 		return timeout;
 	}
 
-	/**
+	/*
 	 * Sets the queryTimeout limit
 	 *
 	 * @param seconds - the new query timeout limit in seconds
@@ -123,7 +123,7 @@ public abstract class Statement
 		timeout = seconds;
 	}
 
-	/**
+	/*
 	 * The first warning reported by calls on this Statement is
 	 * returned.  A Statement's execute methods clear its SQLWarning
 	 * chain.  Subsequent Statement warnings will be chained to this
@@ -144,7 +144,7 @@ public abstract class Statement
 		return warnings;
 	}
 
-	/**
+	/*
 	 * The maxFieldSize limit (in bytes) is the maximum amount of
 	 * data returned for any column value; it only applies to
 	 * BINARY, VARBINARY, LONGVARBINARY, CHAR, VARCHAR and LONGVARCHAR
@@ -159,7 +159,7 @@ public abstract class Statement
 		return 8192;		// We cannot change this
 	}
 
-	/**
+	/*
 	 * Sets the maxFieldSize - NOT! - We throw an SQLException just
 	 * to inform them to stop doing this.
 	 *
@@ -171,7 +171,7 @@ public abstract class Statement
 		throw new PSQLException("postgresql.stat.maxfieldsize");
 	}
 
-	/**
+	/*
 	 * After this call, getWarnings returns null until a new warning
 	 * is reported for this Statement.
 	 *
@@ -182,7 +182,7 @@ public abstract class Statement
 		warnings = null;
 	}
 
-	/**
+	/*
 	 * Cancel can be used by one thread to cancel a statement that
 	 * is being executed by another thread.
 	 * <p>
@@ -195,7 +195,7 @@ public abstract class Statement
 		// FIXME: Cancel feature has been available since 6.4. Implement it here!
 	}
 
-	/**
+	/*
 	 * New in 7.1: Returns the Last inserted oid. This should be used, rather
 	 * than the old method using getResultSet, which for executeUpdate returns
 	 * null.
@@ -208,7 +208,7 @@ public abstract class Statement
 		return ((org.postgresql.ResultSet) result).getInsertedOID();
 	}
 
-	/**
+	/*
 	 * getResultSet returns the current result as a ResultSet.	It
 	 * should only be called once per result.
 	 *
@@ -222,7 +222,7 @@ public abstract class Statement
 		return null;
 	}
 
-	/**
+	/*
 	 * In many cases, it is desirable to immediately release a
 	 * Statement's database and JDBC resources instead of waiting
 	 * for this to happen when it is automatically closed.	The
@@ -245,7 +245,7 @@ public abstract class Statement
 		result = null;
 	}
 
-	/**
+	/*
 	 * Filter the SQL string of Java SQL Escape clauses.
 	 *
 	 * Currently implemented Escape clauses are those mentioned in 11.3

@@ -1,4 +1,4 @@
-/**
+/*
 * Redistribution and use of this software and associated documentation
 * ("Software"), with or without modification, are permitted provided
 * that the following conditions are met:
@@ -40,7 +40,7 @@
 *
 * Copyright 1999 (C) Exoffice Technologies Inc. All Rights Reserved.
 *
-* $Id: TxConnection.java,v 1.2 2001/10/25 06:00:05 momjian Exp $
+* $Id: TxConnection.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
 */
 
 
@@ -51,7 +51,7 @@ import java.sql.Connection;
 import javax.transaction.xa.Xid;
 
 
-/**
+/*
  * Describes an open connection associated with a transaction. When a
  * transaction is opened for a connection, this record is created for
  * the connection. It indicates the underlying JDBC connection and
@@ -68,14 +68,14 @@ final class TxConnection
 {
 
 
-	/**
+	/*
 	 * The Xid of the transactions. Connections that are not
 	 * associated with a transaction are not represented here.
 	 */
 	Xid xid;
 
 
-	/**
+	/*
 	 * Holds the underlying JDBC connection for as long as this
 	 * connection is useable. If the connection has been rolled back,
 	 * timed out or had any other error, this variable will null
@@ -85,7 +85,7 @@ final class TxConnection
 
 
 
-	/**
+	/*
 	 * Indicates the clock time (in ms) when the transaction should
 	 * time out. The transaction times out when
 	 * <tt>System.currentTimeMillis() > timeout</tt>.
@@ -93,32 +93,32 @@ final class TxConnection
 	long timeout;
 
 
-	/**
+	/*
 	 * Indicates the clock time (in ms) when the transaction started.
 	 */
 	long started;
 
 
-	/**
+	/*
 	 * Reference counter indicates how many XA connections share this
 	 * underlying connection and transaction. Always one or more.
 	 */
 	int count;
 
 
-	/**
+	/*
 	 * True if the transaction has failed due to time out.
 	 */
 	boolean timedOut;
 
 
-	/**
+	/*
 	 * True if the transaction has already been prepared.
 	 */
 	boolean prepared;
 
 
-	/**
+	/*
 	 * True if the transaction has been prepared and found out to be
 	 * read-only. Read-only transactions do not require commit/rollback.
 	 */

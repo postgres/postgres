@@ -7,7 +7,7 @@ import java.net.*;
 import java.util.*;
 import java.sql.*;
 
-/**
+/*
  * This class uses PostgreSQL's object oriented features to store Java Objects.<p>
  *
  * It does this by mapping a Java Class name to a table in the database. Each
@@ -119,7 +119,7 @@ public class Serialize
 	// This is the Class for this serialzed object
 	protected Class ourClass;
 
-	/**
+	/*
 	 * This creates an instance that can be used to serialize or deserialize
 	 * a Java object from a PostgreSQL table.
 	 */
@@ -160,7 +160,7 @@ public class Serialize
 		// Finally cache the fields within the table
 	}
 
-	/**
+	/*
 	 * Constructor when Object is passed in
 	 */
 	public Serialize(org.postgresql.Connection c, Object o) throws SQLException
@@ -168,7 +168,7 @@ public class Serialize
 		this(c, o.getClass().getName());
 	}
 
-	/**
+	/*
 	 * Constructor when Class is passed in
 	 */
 	public Serialize(org.postgresql.Connection c, Class cls) throws SQLException
@@ -176,7 +176,7 @@ public class Serialize
 		this(c, cls.getName());
 	}
 
-	/**
+	/*
 	 * This fetches an object from a table, given it's OID
 	 * @param oid The oid of the object
 	 * @return Object relating to oid
@@ -267,7 +267,7 @@ public class Serialize
 		}
 	}
 
-	/**
+	/*
 	 * This stores an object into a table, returning it's OID.<p>
 	 *
 	 * If the object has an int called OID, and it is > 0, then
@@ -406,7 +406,7 @@ public class Serialize
 		}
 	}
 
-	/**
+	/*
 	* Escape literal single quote and backslashes embedded in strings/chars.
 	* Otherwise, postgres will bomb on the single quote and remove the
 	* the backslashes.
@@ -451,7 +451,7 @@ public class Serialize
 		return s;
 	}
 
-	/**
+	/*
 	 * This method is not used by the driver, but it creates a table, given
 	 * a Serializable Java Object. It should be used before serializing any
 	 * objects.
@@ -464,7 +464,7 @@ public class Serialize
 		create(con, o.getClass());
 	}
 
-	/**
+	/*
 	 * This method is not used by the driver, but it creates a table, given
 	 * a Serializable Java Object. It should be used before serializing any
 	 * objects.
@@ -558,7 +558,7 @@ public class Serialize
 											 {"byte", "int2"}
 										 };
 
-	/**
+	/*
 	 * This converts a Java Class name to a org.postgresql table, by replacing . with
 	 * _<p>
 	 *
@@ -593,7 +593,7 @@ public class Serialize
 	}
 
 
-	/**
+	/*
 	 * This converts a org.postgresql table to a Java Class name, by replacing _ with
 	 * .<p>
 	 *

@@ -3,14 +3,14 @@ package org.postgresql.util;
 import java.io.*;
 import java.sql.*;
 
-/**
+/*
  * This class extends SQLException, and provides our internationalisation handling
  */
 public class PSQLException extends SQLException
 {
 	private String message;
 
-	/**
+	/*
 	 * This provides the same functionality to SQLException
 	 * @param error Error string
 	 */
@@ -20,7 +20,7 @@ public class PSQLException extends SQLException
 		translate(error, null);
 	}
 
-	/**
+	/*
 	 * A more generic entry point.
 	 * @param error Error string or standard message id
 	 * @param args Array of arguments
@@ -31,7 +31,7 @@ public class PSQLException extends SQLException
 		translate(error, args);
 	}
 
-	/**
+	/*
 	 * Helper version for 1 arg
 	 */
 	public PSQLException(String error, Object arg)
@@ -42,7 +42,7 @@ public class PSQLException extends SQLException
 		translate(error, argv);
 	}
 
-	/**
+	/*
 	 * Helper version for 1 arg. This is used for debug purposes only with
 	 * some unusual Exception's. It allows the originiating Exceptions stack
 	 * trace to be returned.
@@ -73,7 +73,7 @@ public class PSQLException extends SQLException
 		translate(error, argv);
 	}
 
-	/**
+	/*
 	 * Helper version for 2 args
 	 */
 	public PSQLException(String error, Object arg1, Object arg2)
@@ -90,7 +90,7 @@ public class PSQLException extends SQLException
 		message = MessageTranslator.translate(error, args);
 	}
 
-	/**
+	/*
 	 * Overides Throwable
 	 */
 	public String getLocalizedMessage()
@@ -98,7 +98,7 @@ public class PSQLException extends SQLException
 		return message;
 	}
 
-	/**
+	/*
 	 * Overides Throwable
 	 */
 	public String getMessage()
@@ -106,7 +106,7 @@ public class PSQLException extends SQLException
 		return message;
 	}
 
-	/**
+	/*
 	 * Overides Object
 	 */
 	public String toString()

@@ -3,17 +3,17 @@ package org.postgresql.util;
 import java.io.*;
 import java.sql.*;
 
-/**
+/*
  * This implements a class that handles the PostgreSQL money and cash types
  */
 public class PGmoney extends PGobject implements Serializable, Cloneable
 {
-	/**
+	/*
 	 * The value of the field
 	 */
 	public double val;
 
-	/**
+	/*
 	 * @param value of field
 	 */
 	public PGmoney(double value)
@@ -22,7 +22,7 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		val = value;
 	}
 
-	/**
+	/*
 	 * This is called mainly from the other geometric types, when a
 	 * point is imbeded within their definition.
 	 *
@@ -34,7 +34,7 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		setValue(value);
 	}
 
-	/**
+	/*
 	 * Required by the driver
 	 */
 	public PGmoney()
@@ -42,7 +42,7 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		setType("money");
 	}
 
-	/**
+	/*
 	 * @param s Definition of this point in PostgreSQL's syntax
 	 * @exception SQLException on conversion failure
 	 */
@@ -76,7 +76,7 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		}
 	}
 
-	/**
+	/*
 	 * @param obj Object to compare with
 	 * @return true if the two boxes are identical
 	 */
@@ -90,7 +90,7 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		return false;
 	}
 
-	/**
+	/*
 	 * This must be overidden to allow the object to be cloned
 	 */
 	public Object clone()
@@ -98,7 +98,7 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		return new PGmoney(val);
 	}
 
-	/**
+	/*
 	 * @return the PGpoint in the syntax expected by org.postgresql
 	 */
 	public String getValue()

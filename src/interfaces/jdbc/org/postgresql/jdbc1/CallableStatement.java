@@ -8,7 +8,7 @@ package org.postgresql.jdbc1;
 import java.sql.*;
 import java.math.*;
 
-/**
+/*
  * CallableStatement is used to execute SQL stored procedures.
  *
  * <p>JDBC provides a stored procedure SQL escape that allows stored
@@ -41,7 +41,7 @@ import java.math.*;
 
 public class CallableStatement extends PreparedStatement implements java.sql.CallableStatement
 {
-	/**
+	/*
 	 * @exception SQLException on failure
 	 */
 	CallableStatement(Connection c, String q) throws SQLException
@@ -49,7 +49,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		super(c, q);
 	}
 
-	/**
+	/*
 	 * Before executing a stored procedure call you must explicitly
 	 * call registerOutParameter to register the java.sql.Type of each
 	 * out parameter.
@@ -67,7 +67,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 	public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException
 		{}
 
-	/**
+	/*
 	 * You must also specify the scale for numeric/decimal types:
 	 *
 	 * <p>Note: When reading the value of an out parameter, you must use
@@ -89,7 +89,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 	//return true;
 	//}
 
-	/**
+	/*
 	 * An OUT parameter may have the value of SQL NULL; wasNull
 	 * reports whether the last value read has this special value.
 	 *
@@ -109,7 +109,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 	//return null;
 	//}
 
-	/**
+	/*
 	 * Get the value of a CHAR, VARCHAR, or LONGVARCHAR parameter as a
 	 * Java String.
 	 *
@@ -129,7 +129,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 	//return null;
 	//}
 
-	/**
+	/*
 	 * Get the value of a BIT parameter as a Java boolean.
 	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -141,7 +141,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		return false;
 	}
 
-	/**
+	/*
 	 * Get the value of a TINYINT parameter as a Java byte.
 	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -153,7 +153,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		return 0;
 	}
 
-	/**
+	/*
 	 * Get the value of a SMALLINT parameter as a Java short.
 	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -165,7 +165,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		return 0;
 	}
 
-	/**
+	/*
 	 * Get the value of an INTEGER parameter as a Java int.
 	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -177,7 +177,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		return 0;
 	}
 
-	/**
+	/*
 	 * Get the value of a BIGINT parameter as a Java long.
 	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -189,7 +189,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		return 0;
 	}
 
-	/**
+	/*
 	 * Get the value of a FLOAT parameter as a Java float.
 	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -201,7 +201,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		return (float) 0.0;
 	}
 
-	/**
+	/*
 	 * Get the value of a DOUBLE parameter as a Java double.
 	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -213,7 +213,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		return 0.0;
 	}
 
-	/**
+	/*
 	 * Get the value of a NUMERIC parameter as a java.math.BigDecimal
 	 * object.
 	 *
@@ -229,7 +229,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		return null;
 	}
 
-	/**
+	/*
 	 * Get the value of a SQL BINARY or VARBINARY parameter as a Java
 	 * byte[]
 	 *
@@ -247,7 +247,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 	//return null;
 	//}
 
-	/**
+	/*
 	 * Get the value of a SQL DATE parameter as a java.sql.Date object
 	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -259,7 +259,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		return null;
 	}
 
-	/**
+	/*
 	 * Get the value of a SQL TIME parameter as a java.sql.Time object.
 	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -271,7 +271,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 		return null;
 	}
 
-	/**
+	/*
 	 * Get the value of a SQL TIMESTAMP parameter as a java.sql.Timestamp object.
 	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
@@ -295,7 +295,7 @@ public class CallableStatement extends PreparedStatement implements java.sql.Cal
 
 	// getObject returns a Java object for the parameter.
 	// See the JDBC spec's "Dynamic Programming" chapter for details.
-	/**
+	/*
 	 * Get the value of a parameter as a Java object.
 	 *
 	 * <p>This method returns a Java object whose type coresponds to the

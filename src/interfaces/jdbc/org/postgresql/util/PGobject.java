@@ -5,7 +5,7 @@ import java.lang.*;
 import java.sql.*;
 import java.util.*;
 
-/**
+/*
  * org.postgresql.PG_Object is a class used to describe unknown types
  * An unknown type is any type that is unknown by JDBC Standards
  *
@@ -18,14 +18,14 @@ public class PGobject implements Serializable, Cloneable
 	protected String	type;
 	protected String	value;
 
-	/**
+	/*
 	 * This is called by org.postgresql.Connection.getObject() to create the
 	 * object.
 	 */
 	public PGobject()
 	{}
 
-	/**
+	/*
 	 * This method sets the type of this object.
 	 *
 	 * <p>It should not be extended by subclasses, hence its final
@@ -37,7 +37,7 @@ public class PGobject implements Serializable, Cloneable
 		this.type = type;
 	}
 
-	/**
+	/*
 	 * This method sets the value of this object. It must be overidden.
 	 *
 	 * @param value a string representation of the value of the object
@@ -48,7 +48,7 @@ public class PGobject implements Serializable, Cloneable
 		this.value = value;
 	}
 
-	/**
+	/*
 	 * As this cannot change during the life of the object, it's final.
 	 * @return the type name of this object
 	 */
@@ -57,7 +57,7 @@ public class PGobject implements Serializable, Cloneable
 		return type;
 	}
 
-	/**
+	/*
 	 * This must be overidden, to return the value of the object, in the
 	 * form required by org.postgresql.
 	 * @return the value of this object
@@ -67,7 +67,7 @@ public class PGobject implements Serializable, Cloneable
 		return value;
 	}
 
-	/**
+	/*
 	 * This must be overidden to allow comparisons of objects
 	 * @param obj Object to compare with
 	 * @return true if the two boxes are identical
@@ -79,7 +79,7 @@ public class PGobject implements Serializable, Cloneable
 		return false;
 	}
 
-	/**
+	/*
 	 * This must be overidden to allow the object to be cloned
 	 */
 	public Object clone()
@@ -90,7 +90,7 @@ public class PGobject implements Serializable, Cloneable
 		return obj;
 	}
 
-	/**
+	/*
 	 * This is defined here, so user code need not overide it.
 	 * @return the value of this object, in the syntax expected by org.postgresql
 	 */

@@ -5,10 +5,10 @@ import junit.framework.*;
 import org.postgresql.core.Encoding;
 import java.io.*;
 
-/**
+/*
  * Tests for the Encoding class.
  *
- * $Id: EncodingTest.java,v 1.3 2001/10/25 05:59:59 momjian Exp $
+ * $Id: EncodingTest.java,v 1.4 2001/11/19 22:33:39 momjian Exp $
  */
 
 

@@ -6,7 +6,7 @@ import java.util.*;
 import org.postgresql.*;
 import org.postgresql.util.*;
 
-/**
+/*
  * org.postgresql.Field is a class used to describe fields in a PostgreSQL
  * ResultSet
  */
@@ -20,7 +20,7 @@ public class Field
 	private Connection conn;	// Connection Instantation
 
 
-	/**
+	/*
 	 * Construct a field based on the information fed to it.
 	 *
 	 * @param conn the connection this field came from
@@ -37,7 +37,7 @@ public class Field
 		this.mod = mod;
 	}
 
-	/**
+	/*
 	 * Constructor without mod parameter.
 	 *
 	 * @param conn the connection this field came from
@@ -50,7 +50,7 @@ public class Field
 		this(conn, name, oid, length, 0);
 	}
 
-	/**
+	/*
 	 * @return the oid of this Field's data type
 	 */
 	public int getOID()
@@ -58,7 +58,7 @@ public class Field
 		return oid;
 	}
 
-	/**
+	/*
 	 * @return the mod of this Field's data type
 	 */
 	public int getMod()
@@ -66,7 +66,7 @@ public class Field
 		return mod;
 	}
 
-	/**
+	/*
 	 * @return the name of this Field's data type
 	 */
 	public String getName()
@@ -74,7 +74,7 @@ public class Field
 		return name;
 	}
 
-	/**
+	/*
 	 * @return the length of this Field's data type
 	 */
 	public int getLength()
@@ -82,7 +82,7 @@ public class Field
 		return length;
 	}
 
-	/**
+	/*
 	 * We also need to get the PG type name as returned by the back end.
 	 *
 	 * @return the String representation of the PG type of this field
@@ -93,7 +93,7 @@ public class Field
 		return conn.getPGType(oid);
 	}
 
-	/**
+	/*
 	 * We also need to get the java.sql.types type.
 	 *
 	 * @return the int representation of the java.sql.types type of this field

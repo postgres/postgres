@@ -6,12 +6,12 @@ import junit.framework.TestCase;
 import org.postgresql.test.jdbc2.*;
 import java.sql.*;
 
-/**
+/*
  * Executes all known tests for JDBC2 and includes some utility methods.
  */
 public class JDBC2Tests extends TestSuite
 {
-	/**
+	/*
 	 * Returns the Test database JDBC URL
 	 */
 	public static String getURL()
@@ -19,7 +19,7 @@ public class JDBC2Tests extends TestSuite
 		return System.getProperty("database");
 	}
 
-	/**
+	/*
 	 * Returns the Postgresql username
 	 */
 	public static String getUser()
@@ -27,7 +27,7 @@ public class JDBC2Tests extends TestSuite
 		return System.getProperty("username");
 	}
 
-	/**
+	/*
 	 * Returns the user's password
 	 */
 	public static String getPassword()
@@ -35,7 +35,7 @@ public class JDBC2Tests extends TestSuite
 		return System.getProperty("password");
 	}
 
-	/**
+	/*
 	 * Helper - opens a connection.
 	 */
 	public static java.sql.Connection openDB()
@@ -56,7 +56,7 @@ public class JDBC2Tests extends TestSuite
 		return null;
 	}
 
-	/**
+	/*
 	 * Helper - closes an open connection. This rewrites SQLException to a failed
 	 * assertion. It's static so other classes can use it.
 	 */
@@ -73,7 +73,7 @@ public class JDBC2Tests extends TestSuite
 		}
 	}
 
-	/**
+	/*
 	 * Helper - creates a test table for use by a test
 	 */
 	public static void createTable(Connection con,
@@ -102,7 +102,7 @@ public class JDBC2Tests extends TestSuite
 		}
 	}
 
-	/**
+	/*
 	 * Helper - drops a table
 	 */
 	public static void dropTable(Connection con, String table)
@@ -125,7 +125,7 @@ public class JDBC2Tests extends TestSuite
 		}
 	}
 
-	/**
+	/*
 	 * Helper - generates INSERT SQL - very simple
 	 */
 	public static String insertSQL(String table, String values)
@@ -143,7 +143,7 @@ public class JDBC2Tests extends TestSuite
 		return s + " VALUES (" + values + ")";
 	}
 
-	/**
+	/*
 	 * Helper - generates SELECT SQL - very simple
 	 */
 	public static String selectSQL(String table, String columns)
@@ -168,7 +168,7 @@ public class JDBC2Tests extends TestSuite
 		return s;
 	}
 
-	/**
+	/*
 	 * Helper to prefix a number with leading zeros - ugly but it works...
 	 * @param v value to prefix
 	 * @param l number of digits (0-10)
@@ -179,7 +179,7 @@ public class JDBC2Tests extends TestSuite
 		return s.substring(s.length() - l);
 	}
 
-	/**
+	/*
 	 * The main entry point for JUnit
 	 */
 	public static TestSuite suite()

@@ -9,7 +9,7 @@ import java.sql.*;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/**
+/*
  * This class implements the common internal methods used by both JDBC 1 and
  * JDBC 2 specifications.
  */
@@ -31,7 +31,7 @@ public abstract class ResultSet
 	// next resultSet in the chain.
 	protected ResultSet next = null;
 
-	/**
+	/*
 	 * Create a new ResultSet - Note that we create ResultSets to
 	 * represent the results of everything.
 	 *
@@ -56,7 +56,7 @@ public abstract class ResultSet
 	}
 
 
-	/**
+	/*
 	 * Create a new ResultSet - Note that we create ResultSets to
 	 * represent the results of everything.
 	 *
@@ -72,7 +72,7 @@ public abstract class ResultSet
 		this(conn, fields, tuples, status, updateCount, 0, false);
 	}
 
-	/**
+	/*
 	 * We at times need to know if the resultSet we are working
 	 * with is the result of an UPDATE, DELETE or INSERT (in which
 	 * case, we only have a row count), or of a SELECT operation
@@ -86,7 +86,7 @@ public abstract class ResultSet
 		return (fields != null);
 	}
 
-	/**
+	/*
 	 * Since ResultSets can be chained, we need some method of
 	 * finding the next one in the chain.  The method getNext()
 	 * returns the next one in the chain.
@@ -98,7 +98,7 @@ public abstract class ResultSet
 		return (java.sql.ResultSet)next;
 	}
 
-	/**
+	/*
 	 * This following method allows us to add a ResultSet object
 	 * to the end of the current chain.
 	 *
@@ -112,7 +112,7 @@ public abstract class ResultSet
 			next.append(r);
 	}
 
-	/**
+	/*
 	 * If we are just a place holder for results, we still need
 	 * to get an updateCount.  This method returns it.
 	 *
@@ -123,7 +123,7 @@ public abstract class ResultSet
 		return updateCount;
 	}
 
-	/**
+	/*
 	 * We also need to provide a couple of auxiliary functions for
 	 * the implementation of the ResultMetaData functions.	In
 	 * particular, we need to know the number of rows and the
@@ -136,7 +136,7 @@ public abstract class ResultSet
 		return rows.size();
 	}
 
-	/**
+	/*
 	 * getColumnCount returns the number of columns
 	 *
 	 * @return the number of columns
@@ -146,7 +146,7 @@ public abstract class ResultSet
 		return fields.length;
 	}
 
-	/**
+	/*
 	 * Returns the status message from the backend.<p>
 	 * It is used internally by the driver.
 	 *
@@ -157,7 +157,7 @@ public abstract class ResultSet
 		return status;
 	}
 
-	/**
+	/*
 	 * returns the OID of a field.<p>
 	 * It is used internally by the driver.
 	 *
@@ -169,7 +169,7 @@ public abstract class ResultSet
 		return fields[field -1].getOID();
 	}
 
-	/**
+	/*
 	 * returns the OID of the last inserted row
 	 */
 	public int getInsertedOID()
@@ -177,14 +177,14 @@ public abstract class ResultSet
 		return insertOID;
 	}
 
-	/**
+	/*
 	 * This is part of the JDBC API, but is required by org.postgresql.Field
 	 */
 	public abstract void close() throws SQLException;
 	public abstract boolean next() throws SQLException;
 	public abstract String getString(int i) throws SQLException;
 
-	/**
+	/*
 	 * This is used to fix get*() methods on Money fields. It should only be
 	 * used by those methods!
 	 *

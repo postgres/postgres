@@ -9,8 +9,8 @@ import org.postgresql.*;
 import org.postgresql.core.*;
 import org.postgresql.util.*;
 
-/**
- * $Id: PG_Stream.java,v 1.14 2001/10/25 05:59:59 momjian Exp $
+/*
+ * $Id: PG_Stream.java,v 1.15 2001/11/19 22:33:37 momjian Exp $
  *
  * This class is used by Connection & PGlobj for communicating with the
  * backend.
@@ -28,7 +28,7 @@ public class PG_Stream
 	BytePoolDim1 bytePoolDim1 = new BytePoolDim1();
 	BytePoolDim2 bytePoolDim2 = new BytePoolDim2();
 
-	/**
+	/*
 	 * Constructor:  Connect to the PostgreSQL back end and return
 	 * a stream connection.
 	 *
@@ -49,7 +49,7 @@ public class PG_Stream
 		pg_output = new BufferedOutputStream(connection.getOutputStream(), 8192);
 	}
 
-	/**
+	/*
 	 * Sends a single character to the back end
 	 *
 	 * @param val the character to be sent
@@ -60,7 +60,7 @@ public class PG_Stream
 		pg_output.write((byte)val);
 	}
 
-	/**
+	/*
 	 * Sends an integer to the back end
 	 *
 	 * @param val the integer to be sent
@@ -79,7 +79,7 @@ public class PG_Stream
 		Send(buf);
 	}
 
-	/**
+	/*
 	 * Send an array of bytes to the backend
 	 *
 	 * @param buf The array of bytes to be sent
@@ -90,7 +90,7 @@ public class PG_Stream
 		pg_output.write(buf);
 	}
 
-	/**
+	/*
 	 * Send an exact array of bytes to the backend - if the length
 	 * has not been reached, send nulls until it has.
 	 *
@@ -103,7 +103,7 @@ public class PG_Stream
 		Send(buf, 0, siz);
 	}
 
-	/**
+	/*
 	 * Send an exact array of bytes to the backend - if the length
 	 * has not been reached, send nulls until it has.
 	 *
@@ -126,7 +126,7 @@ public class PG_Stream
 		}
 	}
 
-	/**
+	/*
 	 * Receives a single character from the backend
 	 *
 	 * @return the character received
@@ -149,7 +149,7 @@ public class PG_Stream
 		return c;
 	}
 
-	/**
+	/*
 	 * Receives an integer from the backend
 	 *
 	 * @param siz length of the integer in bytes
@@ -178,7 +178,7 @@ public class PG_Stream
 		return n;
 	}
 
-	/**
+	/*
 	 * Receives an integer from the backend
 	 *
 	 * @param siz length of the integer in bytes
@@ -207,7 +207,7 @@ public class PG_Stream
 		return n;
 	}
 
-	/**
+	/*
 	 * Receives a null-terminated string from the backend.	If we don't see a
 	 * null, then we assume something has gone wrong.
 	 *
@@ -258,7 +258,7 @@ public class PG_Stream
 		return encoding.decode(rst, 0, s);
 	}
 
-	/**
+	/*
 	 * Read a tuple from the back end.	A tuple is a two dimensional
 	 * array of bytes
 	 *
@@ -301,7 +301,7 @@ public class PG_Stream
 		return answer;
 	}
 
-	/**
+	/*
 	 * Reads in a given number of bytes from the backend
 	 *
 	 * @param siz number of bytes to read
@@ -315,7 +315,7 @@ public class PG_Stream
 		return answer;
 	}
 
-	/**
+	/*
 	 * Reads in a given number of bytes from the backend
 	 *
 	 * @param buf buffer to store result
@@ -343,7 +343,7 @@ public class PG_Stream
 		}
 	}
 
-	/**
+	/*
 	 * This flushes any pending output to the backend. It is used primarily
 	 * by the Fastpath code.
 	 * @exception SQLException if an I/O error occurs
@@ -360,7 +360,7 @@ public class PG_Stream
 		}
 	}
 
-	/**
+	/*
 	 * Closes the connection
 	 *
 	 * @exception IOException if a IO Error occurs

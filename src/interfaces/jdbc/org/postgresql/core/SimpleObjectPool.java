@@ -1,6 +1,6 @@
 package org.postgresql.core;
 
-/**
+/*
  * A simple and fast object pool implementation that can pool objects
  * of any type. This implementation is not thread safe, it is up to the users
  * of this class to assure thread safety.
@@ -15,7 +15,7 @@ public class SimpleObjectPool implements ObjectPool
 	int maxsize = 16;
 	Object arr[] = new Object[maxsize];
 
-	/**
+	/*
 	 * Adds an object to the pool
 	 * @param o Object to add
 	 */
@@ -31,7 +31,7 @@ public class SimpleObjectPool implements ObjectPool
 		arr[cursize++] = o;
 	}
 
-	/**
+	/*
 	 * Removes the top object from the pool
 	 * @return Object from the top.
 	 */
@@ -40,7 +40,7 @@ public class SimpleObjectPool implements ObjectPool
 		return arr[--cursize];
 	}
 
-	/**
+	/*
 	 * Removes the given object from the pool
 	 * @param o Object to remove
 	 */
@@ -57,7 +57,7 @@ public class SimpleObjectPool implements ObjectPool
 		}
 	}
 
-	/**
+	/*
 	 * @return true if the pool is empty
 	 */
 	public boolean isEmpty()
@@ -65,7 +65,7 @@ public class SimpleObjectPool implements ObjectPool
 		return cursize == 0;
 	}
 
-	/**
+	/*
 	 * @return the number of objects in the pool
 	 */
 	public int size()
@@ -73,7 +73,7 @@ public class SimpleObjectPool implements ObjectPool
 		return cursize;
 	}
 
-	/**
+	/*
 	 * Adds all objects in one pool to this one
 	 * @param pool The pool to take the objects from
 	 */
@@ -96,7 +96,7 @@ public class SimpleObjectPool implements ObjectPool
 		cursize = totalsize;
 	}
 
-	/**
+	/*
 	 * Clears the pool of all objects
 	 */
 	public void clear()

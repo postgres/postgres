@@ -16,11 +16,11 @@ import org.postgresql.Field;
 import org.postgresql.largeobject.*;
 import org.postgresql.largeobject.*;
 
-/**
+/*
  * This implements the Blob interface, which is basically another way to
  * access a LargeObject.
  *
- * $Id: PGblob.java,v 1.2 2001/10/25 05:59:59 momjian Exp $
+ * $Id: PGblob.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
  *
  */
 public class PGblob implements java.sql.Blob

@@ -1,4 +1,4 @@
-/**
+/*
 * Redistribution and use of this software and associated documentation
 * ("Software"), with or without modification, are permitted provided
 * that the following conditions are met:
@@ -40,7 +40,7 @@
 *
 * Copyright 1999 (C) Exoffice Technologies Inc. All Rights Reserved.
 *
-* $Id: PostgresqlDataSource.java,v 1.3 2001/10/25 05:59:59 momjian Exp $
+* $Id: PostgresqlDataSource.java,v 1.4 2001/11/19 22:33:37 momjian Exp $
 */
 
 
@@ -71,7 +71,7 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.xa.XADataSourceImpl;
 //---------
 
-/**
+/*
  * Implements a JDBC 2.0 {@link javax.sql.DataSource} for the
  * PostgreSQL driver with JNDI persistance support. XA and pooled
  * connection support is also available, but the application must
@@ -127,45 +127,45 @@ public class PostgresqlDataSource
 {
 
 
-	/**
+	/*
 	 * Holds the timeout for opening a new connection, specified
 	 * in seconds. The default is obtained from the JDBC driver.
 	 */
 	private int _loginTimeout;
 
 
-	/**
+	/*
 	 * Holds the user's account name.
 	 */
 	private String _user;
 
 
-	/**
+	/*
 	 * Holds the database password.
 	 */
 	private String _password;
 
 
-	/**
+	/*
 	 * Holds the name of the particular database on the server.
 	 */
 	private String _databaseName;
 
 
-	/**
+	/*
 	 * Description of this datasource.
 	 */
 	private String _description = "PostgreSQL DataSource";
 
 
-	/**
+	/*
 	 * Holds the database server name. If null, this is
 	 * assumed to be the localhost.
 	 */
 	private String _serverName;
 
 
-	/**
+	/*
 	 * Holds the port number where a server is listening.
 	 * The default value will open a connection with an
 	 * unspecified port.
@@ -173,7 +173,7 @@ public class PostgresqlDataSource
 	private int _portNumber = DEFAULT_PORT;
 
 
-	/**
+	/*
 	 * The default port number. Since we open the connection
 	 * without specifying the port if it's the default one,
 	 * this value can be meaningless.
@@ -181,7 +181,7 @@ public class PostgresqlDataSource
 	private static final int DEFAULT_PORT = 0;
 
 
-	/**
+	/*
 	 * Holds the log writer to which all messages should be
 	 * printed. The default writer is obtained from the driver
 	 * manager, but it can be specified at the datasource level
@@ -190,7 +190,7 @@ public class PostgresqlDataSource
 	private transient PrintWriter _logWriter;
 
 
-	/**
+	/*
 	 * Each datasource maintains it's own driver, in case of
 	 * driver-specific setup (e.g. pools, log writer).
 	 */
@@ -335,7 +335,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Sets the name of the particular database on the server.
 	 * The standard name for this property is <tt>databaseName</tt>.
 	 *
@@ -349,7 +349,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Returns the name of the particular database on the server.
 	 * The standard name for this property is <tt>databaseName</tt>.
 	 *
@@ -361,7 +361,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Sets the description of this datasource.
 	 * The standard name for this property is <tt>description</tt>.
 	 *
@@ -375,7 +375,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Returns the description of this datasource.
 	 * The standard name for this property is <tt>description</tt>.
 	 *
@@ -387,7 +387,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Sets the database password.
 	 * The standard name for this property is <tt>password</tt>.
 	 *
@@ -399,7 +399,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Returns the database password.
 	 * The standard name for this property is <tt>password</tt>.
 	 *
@@ -411,7 +411,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Sets the port number where a server is listening.
 	 * The standard name for this property is <tt>portNumber</tt>.
 	 *
@@ -423,7 +423,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Returns the port number where a server is listening.
 	 * The standard name for this property is <tt>portNumber</tt>.
 	 *
@@ -435,7 +435,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Sets the database server name.
 
 	 * The standard name for this property is <tt>serverName</tt>.
@@ -448,7 +448,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Returns the database server name.
 	 * The standard name for this property is <tt>serverName</tt>.
 	 *
@@ -460,7 +460,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Sets the user's account name.
 	 * The standard name for this property is <tt>user</tt>.
 	 *
@@ -472,7 +472,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Returns the user's account name.
 	 * The standard name for this property is <tt>user</tt>.
 	 *
@@ -484,7 +484,7 @@ public class PostgresqlDataSource
 	}
 
 
-	/**
+	/*
 	 * Returns true if this datasource and the other are equal.
 	 * The two datasources are equal if and only if they will produce
 	 * the exact same connections. Connection properties like database

@@ -1,4 +1,4 @@
-/**
+/*
 * Redistribution and use of this software and associated documentation
 * ("Software"), with or without modification, are permitted provided
 * that the following conditions are met:
@@ -40,7 +40,7 @@
 *
 * Copyright 1999 (C) Exoffice Technologies Inc. All Rights Reserved.
 *
-* $Id: XAConnectionImpl.java,v 1.2 2001/10/25 06:00:05 momjian Exp $
+* $Id: XAConnectionImpl.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
 */
 
 
@@ -60,7 +60,7 @@ import javax.transaction.xa.Xid;
 import javax.transaction.xa.XAException;
 
 
-/**
+/*
  * Implements an X/A connection that can be pooled and managed from
  * inside a transaction monitor. This is the XA connection returned
  * to the application server from the {@link XADataSourceImpl} and
@@ -87,7 +87,7 @@ public final class XAConnectionImpl
 {
 
 
-	/**
+	/*
 	 * This is the underlying JDBC connection represented
 	 * by this pooled connection. This variable may initially be null,
 	 * in which case {@link #getUnderlying} will return a new
@@ -98,7 +98,7 @@ public final class XAConnectionImpl
 	Connection _underlying;
 
 
-	/**
+	/*
 	 * If this connection is part of a global transaction, this
 	 * object identifies the transaction. The transaction's
 	 * underlying JDBC connection is exposed through this object and
@@ -109,7 +109,7 @@ public final class XAConnectionImpl
 	private TxConnection _txConn;
 
 
-	/**
+	/*
 	 * The client connection last handed to the application. If the
 	 * application calls {@link #getConnection} again, we should hand
 	 * out a new client connection and render the previous one closed.
@@ -118,7 +118,7 @@ public final class XAConnectionImpl
 	//private ClientConnection			  _clientConn;
 
 
-	/**
+	/*
 	 * An event listener can be registered and notified when the
 	 * client connection has been closed by the application or a
 	 * fatal error rendered it unuseable.
@@ -126,14 +126,14 @@ public final class XAConnectionImpl
 	private ConnectionEventListener _listener;
 
 
-	/**
+	/*
 	 * The resource manager is used to share connections within the
 	 * same transaction.
 	 */
 	private XADataSourceImpl _resManager;
 
 
-	/**
+	/*
 	 * This is an identifier we hand to the client connection when we
 	 * create it. When the client connection asks for the underlying
 	 * connection, we compare the identifiers. If since that point we
@@ -149,7 +149,7 @@ public final class XAConnectionImpl
 	private int _clientId = 1;
 
 
-	/**
+	/*
 	 * Construct a new XA/pooled connection with the underlying JDBC
 	 * connection suitable for this driver only. This is a one to one
 	 * mapping between this connection and the underlying connection.
@@ -288,7 +288,7 @@ public final class XAConnectionImpl
 	}
 
 
-	/**
+	/*
 	 * Called by {@link ClientConnection} to notify that the application
 	 * has attempted to close the connection. After this call, the client
 	 * connection is no longer useable and this pooled connection can be
@@ -341,7 +341,7 @@ public final class XAConnectionImpl
 	}
 
 
-	/**
+	/*
 	 * Called by {@link ClientConnection} to notify that an error
 	 * occured with the underlying connection. If the error is
 	 * critical, the underlying connection is closed and the listener
@@ -903,7 +903,7 @@ public final class XAConnectionImpl
 	}
 
 
-	/**
+	/*
 	 * Returns true if this connection is inside a global transaction.
 	 * If the connection is inside a global transaction it will not
 	 * allow commit/rollback directly from the {@link
@@ -914,8 +914,7 @@ public final class XAConnectionImpl
 		return ( _txConn != null );
 	}
 
-
-	/**
+	/*
 	 * Called to obtain the underlying connections. If this connection
 	 * is part of a transaction, the transction's underlying connection
 	 * is returned, or an exception is thrown if the connection was

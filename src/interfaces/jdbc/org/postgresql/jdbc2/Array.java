@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import org.postgresql.Field;
 import org.postgresql.util.*;
 
-/**
+/*
  * Array is used collect one column of query result data.
  *
  * <p>Read a field of type Array into either a natively-typed
@@ -31,7 +31,7 @@ public class Array implements java.sql.Array
 	private int idx = 0;
 	private String rawString = null;
 
-	/**
+	/*
 	 * Create a new Array
 	 *
 	 * @param conn a database connection

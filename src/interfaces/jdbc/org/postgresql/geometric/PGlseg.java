@@ -4,17 +4,17 @@ import java.io.*;
 import java.sql.*;
 import org.postgresql.util.*;
 
-/**
+/*
  * This implements a lseg (line segment) consisting of two points
  */
 public class PGlseg extends PGobject implements Serializable, Cloneable
 {
-	/**
+	/*
 	 * These are the two points.
 	 */
 	public PGpoint point[] = new PGpoint[2];
 
-	/**
+	/*
 	 * @param x1 coordinate for first point
 	 * @param y1 coordinate for first point
 	 * @param x2 coordinate for second point
@@ -25,7 +25,7 @@ public class PGlseg extends PGobject implements Serializable, Cloneable
 		this(new PGpoint(x1, y1), new PGpoint(x2, y2));
 	}
 
-	/**
+	/*
 	 * @param p1 first point
 	 * @param p2 second point
 	 */
@@ -36,7 +36,7 @@ public class PGlseg extends PGobject implements Serializable, Cloneable
 		this.point[1] = p2;
 	}
 
-	/**
+	/*
 	 * @param s definition of the circle in PostgreSQL's syntax.
 	 * @exception SQLException on conversion failure
 	 */
@@ -46,7 +46,7 @@ public class PGlseg extends PGobject implements Serializable, Cloneable
 		setValue(s);
 	}
 
-	/**
+	/*
 	 * reuired by the driver
 	 */
 	public PGlseg()
@@ -54,7 +54,7 @@ public class PGlseg extends PGobject implements Serializable, Cloneable
 		setType("lseg");
 	}
 
-	/**
+	/*
 	 * @param s Definition of the line segment in PostgreSQL's syntax
 	 * @exception SQLException on conversion failure
 	 */
@@ -68,7 +68,7 @@ public class PGlseg extends PGobject implements Serializable, Cloneable
 		point[1] = new PGpoint(t.getToken(1));
 	}
 
-	/**
+	/*
 	 * @param obj Object to compare with
 	 * @return true if the two boxes are identical
 	 */
@@ -83,7 +83,7 @@ public class PGlseg extends PGobject implements Serializable, Cloneable
 		return false;
 	}
 
-	/**
+	/*
 	 * This must be overidden to allow the object to be cloned
 	 */
 	public Object clone()
@@ -91,7 +91,7 @@ public class PGlseg extends PGobject implements Serializable, Cloneable
 		return new PGlseg((PGpoint)point[0].clone(), (PGpoint)point[1].clone());
 	}
 
-	/**
+	/*
 	 * @return the PGlseg in the syntax expected by org.postgresql
 	 */
 	public String getValue()

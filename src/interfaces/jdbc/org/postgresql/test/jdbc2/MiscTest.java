@@ -4,8 +4,8 @@ import org.postgresql.test.JDBC2Tests;
 import junit.framework.TestCase;
 import java.sql.*;
 
-/**
- * $Id: MiscTest.java,v 1.3 2001/10/25 05:59:59 momjian Exp $
+/*
+ * $Id: MiscTest.java,v 1.4 2001/11/19 22:33:39 momjian Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -19,7 +19,7 @@ public class MiscTest extends TestCase
 		super(name);
 	}
 
-	/**
+	/*
 	 * Some versions of the driver would return rs as a null?
 	 *
 	 * Sasha <ber0806@iperbole.bologna.it> was having this problem.

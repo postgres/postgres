@@ -2,16 +2,16 @@ package org.postgresql.util;
 
 import java.sql.*;
 
-/**
+/*
  * Converts to and from the postgresql bytea datatype used by the backend.
  *
- * $Id: PGbytea.java,v 1.2 2001/10/25 06:00:00 momjian Exp $
+ * $Id: PGbytea.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
  */
 
 public class PGbytea
 {
 
-	/**
+	/*
 	 * Converts a PG bytea string (i.e. the text representation
 	 * of the bytea data type) into a java byte[]
 	 */
@@ -54,7 +54,7 @@ public class PGbytea
 		return l_return;
 	}
 
-	/**
+	/*
 	 * Converts a java byte[] into a PG bytea string (i.e. the text
 	 * representation of the bytea data type)
 	 */

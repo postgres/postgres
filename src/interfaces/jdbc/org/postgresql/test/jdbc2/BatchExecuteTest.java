@@ -5,11 +5,11 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /* TODO tests that can be added to this test case
-   - SQLExceptions chained to a BatchUpdateException
-   - test PreparedStatement as thoroughly as Statement
+ * - SQLExceptions chained to a BatchUpdateException
+ * - test PreparedStatement as thoroughly as Statement
  */
 
-/**
+/*
  * Test case for Statement.batchExecute()
  */
 public class BatchExecuteTest extends TestCase
@@ -166,8 +166,6 @@ public class BatchExecuteTest extends TestCase
 		pstmt.close();
 	}
 
-	/**
-	*/
 	public void testTransactionalBehaviour() throws Exception
 	{
 		Statement stmt = con.createStatement();

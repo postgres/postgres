@@ -16,8 +16,8 @@ import org.postgresql.fastpath.*;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/**
- * $Id: Connection.java,v 1.14 2001/10/25 05:59:59 momjian Exp $
+/*
+ * $Id: Connection.java,v 1.15 2001/11/19 22:33:38 momjian Exp $
  *
  * A Connection represents a session with a specific database.	Within the
  * context of a Connection, SQL statements are executed and results are
@@ -39,12 +39,12 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 	// This is a cache of the DatabaseMetaData instance for this connection
 	protected DatabaseMetaData metadata;
 
-	/**
+	/*
 	 * The current type mappings
 	 */
 	protected java.util.Map typemap;
 
-	/**
+	/*
 	 * SQL statements without parameters are normally executed using
 	 * Statement objects.  If the same SQL statement is executed many
 	 * times, it is more efficient to use a PreparedStatement
@@ -59,7 +59,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 		return createStatement(java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE, java.sql.ResultSet.CONCUR_READ_ONLY);
 	}
 
-	/**
+	/*
 	 * SQL statements without parameters are normally executed using
 	 * Statement objects.  If the same SQL statement is executed many
 	 * times, it is more efficient to use a PreparedStatement
@@ -78,7 +78,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 	}
 
 
-	/**
+	/*
 	 * A SQL statement with or without IN parameters can be pre-compiled
 	 * and stored in a PreparedStatement object.  This object can then
 	 * be used to efficiently execute this statement multiple times.
@@ -109,7 +109,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 		return s;
 	}
 
-	/**
+	/*
 	 * A SQL stored procedure call statement is handled by creating a
 	 * CallableStatement for it.  The CallableStatement provides methods
 	 * for setting up its IN and OUT parameters and methods for executing
@@ -142,7 +142,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 		//return s;
 	}
 
-	/**
+	/*
 	 * Tests to see if a Connection is closed.
 	 *
 	 * Peter Feb 7 2000: Now I've discovered that this doesn't actually obey the
@@ -187,7 +187,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 		}
 	}
 
-	/**
+	/*
 	 * A connection's database is able to provide information describing
 	 * its tables, its supported SQL grammar, its stored procedures, the
 	 * capabilities of this connection, etc.  This information is made
@@ -203,7 +203,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 		return metadata;
 	}
 
-	/**
+	/*
 	 * This overides the method in org.postgresql.Connection and returns a
 	 * ResultSet.
 	 */
@@ -237,7 +237,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 		typemap = map;
 	}
 
-	/**
+	/*
 	 * This overides the standard internal getObject method so that we can
 	 * check the jdbc2 type map first
 	 *
@@ -280,7 +280,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 		return sqlType;
 	}
 
-	/**
+	/*
 	 * This table holds the org.postgresql names for the types supported.
 	 * Any types that map to Types.OTHER (eg POINT) don't go into this table.
 	 * They default automatically to Types.OTHER
@@ -310,7 +310,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 				"_bytea"
 			};
 
-	/**
+	/*
 	 * This table holds the JDBC type for each entry above.
 	 *
 	 * Note: This must be in the same order as above

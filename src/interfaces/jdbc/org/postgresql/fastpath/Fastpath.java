@@ -10,7 +10,7 @@ import org.postgresql.util.*;
 // Important: There are a lot of debug code commented out. Please do not
 // delete these.
 
-/**
+/*
  * This class implements the Fastpath api.
  *
  * <p>This is a means of executing functions imbeded in the org.postgresql backend
@@ -30,7 +30,7 @@ public class Fastpath
 	protected org.postgresql.Connection conn;		// our connection
 	protected org.postgresql.PG_Stream stream;	// the network stream
 
-	/**
+	/*
 	 * Initialises the fastpath system
 	 *
 	 * <p><b>Important Notice</b>
@@ -47,7 +47,7 @@ public class Fastpath
 		//DriverManager.println("Fastpath initialised");
 	}
 
-	/**
+	/*
 	 * Send a function call to the PostgreSQL backend
 	 *
 	 * @param fnid Function id
@@ -91,8 +91,8 @@ public class Fastpath
 			// as an error.
 			//int in = stream.ReceiveChar();
 			//DriverManager.println("ReceiveChar() = "+in+" '"+((char)in)+"'");
-			//if(in!='V') {
-			//if(in=='E')
+			//if (in!='V') {
+			//if (in=='E')
 			//throw new SQLException(stream.ReceiveString(conn.getEncoding()));
 			//throw new SQLException("Fastpath: expected 'V' from backend, got "+((char)in));
 			//}
@@ -156,7 +156,7 @@ public class Fastpath
 		}
 	}
 
-	/**
+	/*
 	 * Send a function call to the PostgreSQL backend by name.
 	 *
 	 * Note: the mapping for the procedure name to function id needs to exist,
@@ -182,7 +182,7 @@ public class Fastpath
 		return fastpath(getID(name), resulttype, args);
 	}
 
-	/**
+	/*
 	 * This convenience method assumes that the return value is an Integer
 	 * @param name Function name
 	 * @param args Function arguments
@@ -197,7 +197,7 @@ public class Fastpath
 		return i.intValue();
 	}
 
-	/**
+	/*
 	 * This convenience method assumes that the return value is an Integer
 	 * @param name Function name
 	 * @param args Function arguments
@@ -209,7 +209,7 @@ public class Fastpath
 		return (byte[])fastpath(name, false, args);
 	}
 
-	/**
+	/*
 	 * This adds a function to our lookup table.
 	 *
 	 * <p>User code should use the addFunctions method, which is based upon a
@@ -225,7 +225,7 @@ public class Fastpath
 		func.put(name, new Integer(fnid));
 	}
 
-	/**
+	/*
 	 * This takes a ResultSet containing two columns. Column 1 contains the
 	 * function name, Column 2 the oid.
 	 *
@@ -265,7 +265,7 @@ public class Fastpath
 		}
 	}
 
-	/**
+	/*
 	 * This returns the function id associated by its name
 	 *
 	 * <p>If addFunction() or addFunctions() have not been called for this name,

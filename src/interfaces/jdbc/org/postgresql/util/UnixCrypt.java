@@ -1,6 +1,6 @@
 package org.postgresql.util;
 
-/**
+/*
  * This class provides us with the ability to encrypt passwords when sent
  * over the network stream
  *
@@ -576,7 +576,7 @@ public class UnixCrypt extends Object
 		return (out);
 	}
 
-	/**
+	/*
 	 * <P>Encrypt a password given the cleartext password and a "salt".</P>
 	 * @param salt A two-character string representing the salt used to
 	 * iterate the encryption engine in lots of different ways. If you
@@ -645,7 +645,7 @@ public class UnixCrypt extends Object
 		return (buffer.toString());
 	}
 
-	/**
+	/*
 	 * <P>Encrypt a password given the cleartext password. This method
 	 * generates a random salt using the 'java.util.Random' class.</P>
 	 * @param original The password to be encrypted.
@@ -663,7 +663,7 @@ public class UnixCrypt extends Object
 		return crypt(salt, original);
 	}
 
-	/**
+	/*
 	 * <P>Check that <I>enteredPassword</I> encrypts to
 	 * <I>encryptedPassword</I>.</P>
 	 * @param encryptedPassword The <I>encryptedPassword</I>. The first

@@ -13,7 +13,7 @@ import java.util.*;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/**
+/*
  * A SQL Statement is pre-compiled and stored in a PreparedStatement object.
  * This object can then be used to efficiently execute this statement multiple
  * times.
@@ -36,7 +36,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	String[] inStrings;
 	Connection connection;
 
-	/**
+	/*
 	 * Constructor for the PreparedStatement class.
 	 * Split the SQL statement into segments - separated by the arguments.
 	 * When we rebuild the thing with the arguments, we can substitute the
@@ -78,7 +78,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			templateStrings[i] = (String)v.elementAt(i);
 	}
 
-	/**
+	/*
 	 * A Prepared SQL query is executed and its ResultSet is returned
 	 *
 	 * @return a ResultSet that contains the data produced by the
@@ -101,7 +101,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		return super.executeQuery(s.toString());	// in Statement class
 	}
 
-	/**
+	/*
 	 * Execute a SQL INSERT, UPDATE or DELETE statement.  In addition,
 	 * SQL statements that return nothing such as SQL DDL statements can
 	 * be executed.
@@ -126,7 +126,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		return super.executeUpdate(s.toString());	// in Statement class
 	}
 
-	/**
+	/*
 	 * Set a parameter to SQL NULL
 	 *
 	 * <p><B>Note:</B> You must specify the parameters SQL type (although
@@ -141,7 +141,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		set(parameterIndex, "null");
 	}
 
-	/**
+	/*
 	 * Set a parameter to a Java boolean value.  The driver converts this
 	 * to a SQL BIT value when it sends it to the database.
 	 *
@@ -154,7 +154,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		set(parameterIndex, x ? "'t'" : "'f'");
 	}
 
-	/**
+	/*
 	 * Set a parameter to a Java byte value.  The driver converts this to
 	 * a SQL TINYINT value when it sends it to the database.
 	 *
@@ -167,7 +167,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		set(parameterIndex, Integer.toString(x));
 	}
 
-	/**
+	/*
 	 * Set a parameter to a Java short value.  The driver converts this
 	 * to a SQL SMALLINT value when it sends it to the database.
 	 *
@@ -180,7 +180,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		set(parameterIndex, Integer.toString(x));
 	}
 
-	/**
+	/*
 	 * Set a parameter to a Java int value.  The driver converts this to
 	 * a SQL INTEGER value when it sends it to the database.
 	 *
@@ -193,7 +193,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		set(parameterIndex, Integer.toString(x));
 	}
 
-	/**
+	/*
 	 * Set a parameter to a Java long value.  The driver converts this to
 	 * a SQL BIGINT value when it sends it to the database.
 	 *
@@ -206,7 +206,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		set(parameterIndex, Long.toString(x));
 	}
 
-	/**
+	/*
 	 * Set a parameter to a Java float value.  The driver converts this
 	 * to a SQL FLOAT value when it sends it to the database.
 	 *
@@ -219,7 +219,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		set(parameterIndex, Float.toString(x));
 	}
 
-	/**
+	/*
 	 * Set a parameter to a Java double value.	The driver converts this
 	 * to a SQL DOUBLE value when it sends it to the database
 	 *
@@ -232,7 +232,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		set(parameterIndex, Double.toString(x));
 	}
 
-	/**
+	/*
 	 * Set a parameter to a java.lang.BigDecimal value.  The driver
 	 * converts this to a SQL NUMERIC value when it sends it to the
 	 * database.
@@ -246,7 +246,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		set(parameterIndex, x.toString());
 	}
 
-	/**
+	/*
 	 * Set a parameter to a Java String value.	The driver converts this
 	 * to a SQL VARCHAR or LONGVARCHAR value (depending on the arguments
 	 * size relative to the driver's limits on VARCHARs) when it sends it
@@ -279,7 +279,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		}
 	}
 
-	/**
+	/*
 	 * Set a parameter to a Java array of bytes.  The driver converts this
 	 * to a SQL VARBINARY or LONGVARBINARY (depending on the argument's
 	 * size relative to the driver's limits on VARBINARYs) when it sends
@@ -319,7 +319,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		}
 	}
 
-	/**
+	/*
 	 * Set a parameter to a java.sql.Date value.  The driver converts this
 	 * to a SQL DATE value when it sends it to the database.
 	 *
@@ -350,7 +350,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		//set(parameterIndex, df.format(new java.util.Date(x.getTime()+86400000)));
 	}
 
-	/**
+	/*
 	 * Set a parameter to a java.sql.Time value.  The driver converts
 	 * this to a SQL TIME value when it sends it to the database.
 	 *
@@ -370,7 +370,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		}
 	}
 
-	/**
+	/*
 	 * Set a parameter to a java.sql.Timestamp value.  The driver converts
 	 * this to a SQL TIMESTAMP value when it sends it to the database.
 	 *
@@ -394,7 +394,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		}
 	}
 
-	/**
+	/*
 	 * When a very large ASCII value is input to a LONGVARCHAR parameter,
 	 * it may be more practical to send it via a java.io.InputStream.
 	 * JDBC will read the data from the stream as needed, until it reaches
@@ -444,7 +444,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		}
 	}
 
-	/**
+	/*
 	 * When a very large Unicode value is input to a LONGVARCHAR parameter,
 	 * it may be more practical to send it via a java.io.InputStream.
 	 * JDBC will read the data from the stream as needed, until it reaches
@@ -493,7 +493,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		}
 	}
 
-	/**
+	/*
 	 * When a very large binary value is input to a LONGVARBINARY parameter,
 	 * it may be more practical to send it via a java.io.InputStream.
 	 * JDBC will read the data from the stream as needed, until it reaches
@@ -572,7 +572,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		}
 	}
 
-	/**
+	/*
 	 * In general, parameter values remain in force for repeated used of a
 	 * Statement.  Setting a parameter value automatically clears its
 	 * previous value.	However, in coms cases, it is useful to immediately
@@ -589,7 +589,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			inStrings[i] = null;
 	}
 
-	/**
+	/*
 	 * Set the value of a parameter using an object; use the java.lang
 	 * equivalent objects for integral values.
 	 *
@@ -672,7 +672,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		setObject(parameterIndex, x, targetSqlType, 0);
 	}
 
-	/**
+	/*
 	 * This stores an Object into a parameter.
 	 * <p>New for 6.4, if the object is not recognised, but it is
 	 * Serializable, then the object is serialised using the
@@ -715,7 +715,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			setLong(parameterIndex, connection.putObject(x));
 	}
 
-	/**
+	/*
 	 * Some prepared statements return multiple results; the execute method
 	 * handles these complex statements as well as the simpler form of
 	 * statements handled by executeQuery and executeUpdate
@@ -740,7 +740,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		return super.execute(s.toString());		// in Statement class
 	}
 
-	/**
+	/*
 	 * Returns the SQL statement with the current template values
 	 * substituted.
 	 */
@@ -765,7 +765,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	//	END OF PUBLIC INTERFACE
 	// **************************************************************
 
-	/**
+	/*
 	 * There are a lot of setXXX classes which all basically do
 	 * the same thing.	We need a method which actually does the
 	 * set for us.

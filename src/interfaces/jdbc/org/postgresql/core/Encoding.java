@@ -5,10 +5,10 @@ import java.util.*;
 import java.sql.SQLException;
 import org.postgresql.util.*;
 
-/**
+/*
  * Converts to and from the character encoding used by the backend.
  *
- * $Id: Encoding.java,v 1.3 2001/10/25 05:59:59 momjian Exp $
+ * $Id: Encoding.java,v 1.4 2001/11/19 22:33:37 momjian Exp $
  */
 
 public class Encoding
@@ -16,7 +16,7 @@ public class Encoding
 
 	private static final Encoding DEFAULT_ENCODING = new Encoding(null);
 
-	/**
+	/*
 	 * Preferred JVM encodings for backend encodings.
 	 */
 	private static final Hashtable encodings = new Hashtable();
@@ -65,7 +65,7 @@ public class Encoding
 		this.encoding = encoding;
 	}
 
-	/**
+	/*
 	 * Get an Encoding for from the given database encoding and
 	 * the encoding passed in by the user.
 	 */
@@ -89,7 +89,7 @@ public class Encoding
 		}
 	}
 
-	/**
+	/*
 	 * Get an Encoding matching the given database encoding.
 	 */
 	private static Encoding encodingForDatabaseEncoding(String databaseEncoding)
@@ -112,7 +112,7 @@ public class Encoding
 		return defaultEncoding();
 	}
 
-	/**
+	/*
 	 * Name of the (JVM) encoding used.
 	 */
 	public String name()
@@ -120,7 +120,7 @@ public class Encoding
 		return encoding;
 	}
 
-	/**
+	/*
 	 * Encode a string to an array of bytes.
 	 */
 	public byte[] encode(String s) throws SQLException
@@ -142,7 +142,7 @@ public class Encoding
 		}
 	}
 
-	/**
+	/*
 	 * Decode an array of bytes into a string.
 	 */
 	public String decode(byte[] encodedString, int offset, int length) throws SQLException
@@ -164,7 +164,7 @@ public class Encoding
 		}
 	}
 
-	/**
+	/*
 	 * Decode an array of bytes into a string.
 	 */
 	public String decode(byte[] encodedString) throws SQLException
@@ -172,7 +172,7 @@ public class Encoding
 		return decode(encodedString, 0, encodedString.length);
 	}
 
-	/**
+	/*
 	 * Get a Reader that decodes the given InputStream.
 	 */
 	public Reader getDecodingReader(InputStream in) throws SQLException
@@ -194,7 +194,7 @@ public class Encoding
 		}
 	}
 
-	/**
+	/*
 	 * Get an Encoding using the default encoding for the JVM.
 	 */
 	public static Encoding defaultEncoding()
@@ -202,7 +202,7 @@ public class Encoding
 		return DEFAULT_ENCODING;
 	}
 
-	/**
+	/*
 	 * Test if an encoding is available in the JVM.
 	 */
 	private static boolean isAvailable(String encodingName)
