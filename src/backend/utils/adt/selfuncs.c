@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.78 2000/08/03 16:34:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.79 2000/09/15 18:45:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -571,6 +571,15 @@ likesel(PG_FUNCTION_ARGS)
 }
 
 /*
+ *		iclikesel			- Selectivity of ILIKE pattern match.
+ */
+Datum
+iclikesel(PG_FUNCTION_ARGS)
+{
+	return patternsel(fcinfo, Pattern_Type_Like_IC);
+}
+
+/*
  *		regexnesel		- Selectivity of regular-expression pattern non-match.
  */
 Datum
@@ -605,6 +614,19 @@ nlikesel(PG_FUNCTION_ARGS)
 	float8		result;
 
 	result = DatumGetFloat8(patternsel(fcinfo, Pattern_Type_Like));
+	result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
+}
+
+/*
+ *		icnlikesel		- Selectivity of ILIKE pattern non-match.
+ */
+Datum
+icnlikesel(PG_FUNCTION_ARGS)
+{
+	float8		result;
+
+	result = DatumGetFloat8(patternsel(fcinfo, Pattern_Type_Like_IC));
 	result = 1.0 - result;
 	PG_RETURN_FLOAT8(result);
 }
@@ -724,6 +746,15 @@ likejoinsel(PG_FUNCTION_ARGS)
 }
 
 /*
+ *		iclikejoinsel			- Join selectivity of ILIKE pattern match.
+ */
+Datum
+iclikejoinsel(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_FLOAT8(DEFAULT_MATCH_SEL);
+}
+
+/*
  *		regexnejoinsel	- Join selectivity of regex non-match.
  */
 Datum
@@ -758,6 +789,19 @@ nlikejoinsel(PG_FUNCTION_ARGS)
 	float8		result;
 
 	result = DatumGetFloat8(likejoinsel(fcinfo));
+	result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
+}
+
+/*
+ *		icnlikejoinsel		- Join selectivity of ILIKE pattern non-match.
+ */
+Datum
+icnlikejoinsel(PG_FUNCTION_ARGS)
+{
+	float8		result;
+
+	result = DatumGetFloat8(iclikejoinsel(fcinfo));
 	result = 1.0 - result;
 	PG_RETURN_FLOAT8(result);
 }
@@ -1337,7 +1381,8 @@ getattstatistics(Oid relid,
  */
 
 static Pattern_Prefix_Status
-like_fixed_prefix(char *patt, char **prefix, char **rest)
+like_fixed_prefix(char *patt, bool case_insensitive,
+				  char **prefix, char **rest)
 {
 	char	   *match;
 	int			pos,
@@ -1359,7 +1404,12 @@ like_fixed_prefix(char *patt, char **prefix, char **rest)
 			if (patt[pos] == '\0')
 				break;
 		}
-
+		/*
+		 * XXX I suspect isalpha() is not an adequately locale-sensitive
+		 * test for characters that can vary under case folding?
+		 */
+		if (case_insensitive && isalpha((int) patt[pos]))
+			break;
 		/*
 		 * NOTE: this code used to think that %% meant a literal %, but
 		 * textlike() itself does not think that, and the SQL92 spec
@@ -1497,7 +1547,10 @@ pattern_fixed_prefix(char *patt, Pattern_Type ptype,
 	switch (ptype)
 	{
 		case Pattern_Type_Like:
-			result = like_fixed_prefix(patt, prefix, rest);
+			result = like_fixed_prefix(patt, false, prefix, rest);
+			break;
+		case Pattern_Type_Like_IC:
+			result = like_fixed_prefix(patt, true, prefix, rest);
 			break;
 		case Pattern_Type_Regex:
 			result = regex_fixed_prefix(patt, false, prefix, rest);
@@ -1625,7 +1678,7 @@ prefix_selectivity(char *prefix,
 #define PARTIAL_WILDCARD_SEL 2.0
 
 static Selectivity
-like_selectivity(char *patt)
+like_selectivity(char *patt, bool case_insensitive)
 {
 	Selectivity		sel = 1.0;
 	int				pos;
@@ -1780,7 +1833,10 @@ pattern_selectivity(char *patt, Pattern_Type ptype)
 	switch (ptype)
 	{
 		case Pattern_Type_Like:
-			result = like_selectivity(patt);
+			result = like_selectivity(patt, false);
+			break;
+		case Pattern_Type_Like_IC:
+			result = like_selectivity(patt, true);
 			break;
 		case Pattern_Type_Regex:
 			result = regex_selectivity(patt, false);

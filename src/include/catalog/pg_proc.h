@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.165 2000/09/05 20:25:13 wieck Exp $
+ * $Id: pg_proc.h,v 1.166 2000/09/15 18:45:27 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2039,30 +2039,16 @@ DATA(insert OID = 1623 (  varchar			PGUID 12 f t t t 1 f 1043 "20" 100 0 0 100  
 DESCR("convert int8 to varchar");
 DATA(insert OID = 1624 (  mul_d_interval	PGUID 12 f t t t 2 f 1186 "701 1186" 100 0 0 100	mul_d_interval - ));
 
-DATA(insert OID = 1625 (  like				PGUID 12 f t t t 3 f 16 "19 25 25" 100 0 0 100  namelike_escape - ));
-DESCR("matches LIKE expression");
-DATA(insert OID = 1626 (  notlike			PGUID 12 f t t t 3 f 16 "19 25 25" 100 0 0 100  namenlike_escape - ));
-DESCR("does not match LIKE expression");
-DATA(insert OID = 1627 (  ilike				PGUID 12 f t t t 3 f 16 "19 25 25" 100 0 0 100  inamelike_escape - ));
-DESCR("matches case-insensitive LIKE expression");
-DATA(insert OID = 1628 (  inotlike			PGUID 12 f t t t 3 f 16 "19 25 25" 100 0 0 100  inamenlike_escape - ));
-DESCR("does not match case-insensitive LIKE expression");
-DATA(insert OID = 1629 (  like				PGUID 12 f t t t 3 f 16 "25 25 25" 100 0 0 100  textlike_escape - ));
-DESCR("matches LIKE expression");
-DATA(insert OID = 1630 (  notlike			PGUID 12 f t t t 3 f 16 "25 25 25" 100 0 0 100  textnlike_escape - ));
-DESCR("does not match LIKE expression");
-DATA(insert OID = 1631 (  ilike				PGUID 12 f t t t 3 f 16 "25 25 25" 100 0 0 100  itextlike_escape - ));
-DESCR("matches case-insensitive LIKE expression");
-DATA(insert OID = 1632 (  inotlike			PGUID 12 f t t t 3 f 16 "25 25 25" 100 0 0 100  itextnlike_escape - ));
-DESCR("does not match case-insensitive LIKE expression");
-DATA(insert OID = 1633 (  ilike				PGUID 12 f t t t 2 f 16 "25 25" 100 0 0 100  itextlike - ));
-DESCR("matches case-insensitive LIKE expression");
-DATA(insert OID = 1634 (  inotlike			PGUID 12 f t t t 2 f 16 "25 25" 100 0 0 100  itextnlike - ));
-DESCR("does not match case-insensitive LIKE expression");
-DATA(insert OID = 1635 (  ilike				PGUID 12 f t t t 2 f 16 "19 25" 100 0 0 100  inamelike - ));
-DESCR("matches case-insensitive LIKE expression");
-DATA(insert OID = 1636 (  inotlike			PGUID 12 f t t t 2 f 16 "19 25" 100 0 0 100  inamenlike - ));
-DESCR("does not match case-insensitive LIKE expression");
+DATA(insert OID = 1633 (  texticlike		PGUID 12 f t t t 2 f 16 "25 25" 100 0 0 100 texticlike - ));
+DESCR("matches LIKE expression, case-insensitive");
+DATA(insert OID = 1634 (  texticnlike		PGUID 12 f t t t 2 f 16 "25 25" 100 0 0 100 texticnlike - ));
+DESCR("does not match LIKE expression, case-insensitive");
+DATA(insert OID = 1635 (  nameiclike		PGUID 12 f t t t 2 f 16 "19 25" 100 0 0 100  nameiclike - ));
+DESCR("matches LIKE expression, case-insensitive");
+DATA(insert OID = 1636 (  nameicnlike		PGUID 12 f t t t 2 f 16 "19 25" 100 0 0 100  nameicnlike - ));
+DESCR("does not match LIKE expression, case-insensitive");
+DATA(insert OID = 1637 (  like_escape		PGUID 12 f t t t 2 f 25 "25 25" 100 0 0 100 like_escape - ));
+DESCR("convert match pattern to use backslash escapes");
 
 DATA(insert OID = 1689 (  update_pg_pwd       PGUID 12 f t f t 0 f 0  ""  100 0 0 100  update_pg_pwd - ));
 DESCR("update pg_pwd file");
@@ -2420,6 +2406,14 @@ DATA(insert OID = 1799 (  oidout		   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  oi
 DESCR("(internal)");
 
 /* Selectivity estimators for LIKE and related operators */
+DATA(insert OID = 1814 ( iclikesel			PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  iclikesel - ));
+DESCR("restriction selectivity of ILIKE");
+DATA(insert OID = 1815 ( icnlikesel			PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  icnlikesel - ));
+DESCR("restriction selectivity of NOT ILIKE");
+DATA(insert OID = 1816 ( iclikejoinsel		PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	iclikejoinsel - ));
+DESCR("join selectivity of ILIKE");
+DATA(insert OID = 1817 ( icnlikejoinsel		PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	icnlikejoinsel - ));
+DESCR("join selectivity of NOT ILIKE");
 DATA(insert OID = 1818 ( regexeqsel			PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  regexeqsel - ));
 DESCR("restriction selectivity of regex match");
 DATA(insert OID = 1819 ( likesel			PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  likesel - ));

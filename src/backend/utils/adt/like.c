@@ -11,12 +11,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.41 2000/08/22 06:33:57 ishii Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.42 2000/09/15 18:45:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
 #include <ctype.h>
+
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
@@ -28,390 +30,11 @@
 #define LIKE_ABORT						(-1)
 
 
-static int MatchText(unsigned char * t, int tlen, unsigned char * p, int plen, char *e);
-static int MatchTextLower(unsigned char * t, int tlen, unsigned char * p, int plen, char *e);
+static int MatchText(unsigned char * t, int tlen,
+					 unsigned char * p, int plen);
+static int MatchTextIC(unsigned char * t, int tlen,
+					   unsigned char * p, int plen);
 
-
-/*
- *	interface routines called by the function manager
- */
-
-Datum
-namelike(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	unsigned char   *s, *p;
-	int			slen, plen;
-
-	s = NameStr(*str);
-	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-
-	result = (MatchText(s, slen, p, plen, "\\") == LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-namenlike(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	unsigned char   *s, *p;
-	int			slen, plen;
-
-	s = NameStr(*str);
-	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-
-	result = (MatchText(s, slen, p, plen, "\\") != LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-namelike_escape(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	text	   *esc = PG_GETARG_TEXT_P(2);
-	unsigned char   *s, *p;
-	int			slen, plen;
-	char	   *e;
-
-	s = NameStr(*str);
-	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
-
-	result = (MatchText(s, slen, p, plen, e) == LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-namenlike_escape(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	text	   *esc = PG_GETARG_TEXT_P(2);
-	unsigned char   *s, *p;
-	int			slen, plen;
-	char	   *e;
-
-	s = NameStr(*str);
-	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
-
-	result = (MatchText(s, slen, p, plen, e) != LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-textlike(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	unsigned char   *s, *p;
-	int			slen, plen;
-
-	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-
-	result = (MatchText(s, slen, p, plen, NULL) == LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-textnlike(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	unsigned char   *s, *p;
-	int			slen, plen;
-
-	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-
-	result = (MatchText(s, slen, p, plen, "\\") != LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-textlike_escape(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	text	   *esc = PG_GETARG_TEXT_P(2);
-	unsigned char   *s, *p;
-	int			slen, plen;
-	char	   *e;
-
-	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
-
-	result = (MatchText(s, slen, p, plen, e) == LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-textnlike_escape(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	text	   *esc = PG_GETARG_TEXT_P(2);
-	unsigned char   *s, *p;
-	int			slen, plen;
-	char	   *e;
-
-	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
-
-	result = (MatchText(s, slen, p, plen, e) != LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-/*
- * Case-insensitive versions
- */
-
-Datum
-inamelike(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	unsigned char   *s, *p;
-	int			slen, plen;
-
-	s = NameStr(*str);
-	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-
-	result = (MatchTextLower(s, slen, p, plen, "\\") == LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-inamenlike(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	unsigned char   *s, *p;
-	int			slen, plen;
-
-	s = NameStr(*str);
-	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-
-	result = (MatchTextLower(s, slen, p, plen, "\\") != LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-inamelike_escape(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	text	   *esc = PG_GETARG_TEXT_P(2);
-	unsigned char   *s, *p;
-	int			slen, plen;
-	char	   *e;
-
-	s = NameStr(*str);
-	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
-
-	result = (MatchTextLower(s, slen, p, plen, e) == LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-inamenlike_escape(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	text	   *esc = PG_GETARG_TEXT_P(2);
-	unsigned char   *s, *p;
-	int			slen, plen;
-	char	   *e;
-
-	s = NameStr(*str);
-	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
-
-	result = (MatchTextLower(s, slen, p, plen, e) != LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-itextlike(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	unsigned char   *s, *p;
-	int			slen, plen;
-
-	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-
-	result = (MatchTextLower(s, slen, p, plen, "\\") == LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-itextnlike(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	unsigned char   *s, *p;
-	int			slen, plen;
-
-	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-
-	result = (MatchTextLower(s, slen, p, plen, "\\") != LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-itextlike_escape(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	text	   *esc = PG_GETARG_TEXT_P(2);
-	unsigned char   *s, *p;
-	int			slen, plen;
-	char	   *e;
-
-	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
-
-	result = (MatchTextLower(s, slen, p, plen, e) == LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-itextnlike_escape(PG_FUNCTION_ARGS)
-{
-	bool		result;
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
-	text	   *esc = PG_GETARG_TEXT_P(2);
-	unsigned char   *s, *p;
-	int			slen, plen;
-	char	   *e;
-
-	s = VARDATA(str);
-	slen = (VARSIZE(str)-VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
-
-	result = (MatchTextLower(s, slen, p, plen, e) != LIKE_TRUE);
-
-	PG_RETURN_BOOL(result);
-}
-
-
-/*
-**	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
-**	Rich $alz is now <rsalz@bbn.com>.
-**	Special thanks to Lars Mathiesen <thorinn@diku.dk> for the LABORT code.
-**
-**	This code was shamelessly stolen from the "pql" code by myself and
-**	slightly modified :)
-**
-**	All references to the word "star" were replaced by "percent"
-**	All references to the word "wild" were replaced by "like"
-**
-**	All the nice shell RE matching stuff was replaced by just "_" and "%"
-**
-**	As I don't have a copy of the SQL standard handy I wasn't sure whether
-**	to leave in the '\' escape character handling.
-**
-**	Keith Parks. <keith@mtcc.demon.co.uk>
-**
-**	[SQL92 lets you specify the escape character by saying
-**	 LIKE <pattern> ESCAPE <escape character>. We are a small operation
-**	 so we force you to use '\'. - ay 7/95]
-**
-** OK, we now support the SQL9x LIKE <pattern> ESCAPE <char> syntax.
-** We should kill the backslash escaping mechanism since it is non-standard
-** and undocumented afaik.
-** The code is rewritten to avoid requiring null-terminated strings,
-** which in turn allows us to leave out some memcpy() operations.
-** This code should be faster and take less memory, but no promises...
-** - thomas 2000-08-06
-**
-*/
-
-/*--------------------
- *	Match text and p, return LIKE_TRUE, LIKE_FALSE, or LIKE_ABORT.
- *
- *	LIKE_TRUE: they match
- *	LIKE_FALSE: they don't match
- *	LIKE_ABORT: not only don't they match, but the text is too short.
- *
- * If LIKE_ABORT is returned, then no suffix of the text can match the
- * pattern either, so an upper-level % scan can stop scanning now.
- *--------------------
- */
 
 #ifdef MULTIBYTE
 /*--------------------
@@ -435,7 +58,7 @@ static int wchareq(unsigned char *p1, unsigned char *p2)
 }
 
 /*--------------------
- * Support routine for MatchTextLower. Compares given multibyte streams
+ * Support routine for MatchTextIC. Compares given multibyte streams
  * as wide characters ignoring case.
  * If they match, returns 1 otherwise returns 0.
  *--------------------
@@ -470,36 +93,338 @@ static int iwchareq(unsigned char *p1, unsigned char *p2)
 	}
 	return(c1 == c2);
 }
+
 #endif
 
 #ifdef MULTIBYTE
 #define CHAREQ(p1, p2) wchareq(p1, p2)
 #define ICHAREQ(p1, p2) iwchareq(p1, p2)
-#define NextChar(p, plen) {int __l = pg_mblen(p); (p) +=__l; (plen) -=__l;}
+#define NextChar(p, plen) \
+	do { int __l = pg_mblen(p); (p) +=__l; (plen) -=__l; } while (0)
+#define CopyAdvChar(dst, src, srclen) \
+	do { int __l = pg_mblen(src); \
+		 (srclen) -= __l; \
+		 while (__l-- > 0) \
+			 *(dst)++ = *(src)++; \
+	   } while (0)
 #else
 #define CHAREQ(p1, p2) (*(p1) == *(p2))
 #define ICHAREQ(p1, p2) (tolower(*(p1)) == tolower(*(p2)))
-#define NextChar(p, plen) (p)++, (plen)--
+#define NextChar(p, plen) ((p)++, (plen)--)
+#define CopyAdvChar(dst, src, srclen) (*(dst)++ = *(src)++, (srclen)--)
 #endif
 
-static int
-MatchText(unsigned char * t, int tlen, unsigned char * p, int plen, char *e)
+
+/*
+ *	interface routines called by the function manager
+ */
+
+Datum
+namelike(PG_FUNCTION_ARGS)
 {
-	/* Fast path for match-everything pattern
-	 * Include weird case of escape character as a percent sign or underscore,
-	 * when presumably that wildcard character becomes a literal.
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	bool		result;
+	unsigned char   *s, *p;
+	int			slen, plen;
+
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+
+	result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+namenlike(PG_FUNCTION_ARGS)
+{
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	bool		result;
+	unsigned char   *s, *p;
+	int			slen, plen;
+
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+
+	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+textlike(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	bool		result;
+	unsigned char   *s, *p;
+	int			slen, plen;
+
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+
+	result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+textnlike(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	bool		result;
+	unsigned char   *s, *p;
+	int			slen, plen;
+
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+
+	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
+}
+
+/*
+ * Case-insensitive versions
+ */
+
+Datum
+nameiclike(PG_FUNCTION_ARGS)
+{
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	bool		result;
+	unsigned char   *s, *p;
+	int			slen, plen;
+
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+
+	result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+nameicnlike(PG_FUNCTION_ARGS)
+{
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	bool		result;
+	unsigned char   *s, *p;
+	int			slen, plen;
+
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+
+	result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+texticlike(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	bool		result;
+	unsigned char   *s, *p;
+	int			slen, plen;
+
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+
+	result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+texticnlike(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	bool		result;
+	unsigned char   *s, *p;
+	int			slen, plen;
+
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+
+	result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
+}
+
+/*
+ * like_escape() --- given a pattern and an ESCAPE string,
+ * convert the pattern to use Postgres' standard backslash escape convention.
+ */
+Datum
+like_escape(PG_FUNCTION_ARGS)
+{
+	text	   *pat = PG_GETARG_TEXT_P(0);
+	text	   *esc = PG_GETARG_TEXT_P(1);
+	text	   *result;
+	unsigned char   *p, *e, *r;
+	int			plen, elen;
+	bool		afterescape;
+
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+	e = VARDATA(esc);
+	elen = (VARSIZE(esc)-VARHDRSZ);
+
+	/*
+	 * Worst-case pattern growth is 2x --- unlikely, but it's hardly worth
+	 * trying to calculate the size more accurately than that.
 	 */
-	if ((plen == 1) && (*p == '%')
-		&& ! ((e != NULL) && (*e == '%')))
+	result = (text *) palloc(plen * 2 + VARHDRSZ);
+	r = VARDATA(result);
+
+	if (elen == 0)
+	{
+		/*
+		 * No escape character is wanted.  Double any backslashes in the
+		 * pattern to make them act like ordinary characters.
+		 */
+		while (plen > 0)
+		{
+			if (*p == '\\')
+				*r++ = '\\';
+			CopyAdvChar(r, p, plen);
+		}
+	}
+	else
+	{
+		/*
+		 * The specified escape must be only a single character.
+		 */
+		NextChar(e, elen);
+		if (elen != 0)
+			elog(ERROR, "ESCAPE string must be empty or one character");
+		e = VARDATA(esc);
+		/*
+		 * If specified escape is '\', just copy the pattern as-is.
+		 */
+		if (*e == '\\')
+		{
+			memcpy(result, pat, VARSIZE(pat));
+			PG_RETURN_TEXT_P(result);
+		}
+		/*
+		 * Otherwise, convert occurrences of the specified escape character
+		 * to '\', and double occurrences of '\' --- unless they immediately
+		 * follow an escape character!
+		 */
+		afterescape = false;
+		while (plen > 0)
+		{
+			if (CHAREQ(p,e) && !afterescape)
+			{
+				*r++ = '\\';
+				NextChar(p, plen);
+				afterescape = true;
+			}
+			else if (*p == '\\')
+			{
+				*r++ = '\\';
+				if (! afterescape)
+					*r++ = '\\';
+				NextChar(p, plen);
+				afterescape = false;
+			}
+			else
+			{
+				CopyAdvChar(r, p, plen);
+				afterescape = false;
+			}
+		}
+	}
+
+	VARATT_SIZEP(result) = r - ((unsigned char *) result);
+
+	PG_RETURN_TEXT_P(result);
+}
+
+
+/*
+**	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
+**	Rich $alz is now <rsalz@bbn.com>.
+**	Special thanks to Lars Mathiesen <thorinn@diku.dk> for the LABORT code.
+**
+**	This code was shamelessly stolen from the "pql" code by myself and
+**	slightly modified :)
+**
+**	All references to the word "star" were replaced by "percent"
+**	All references to the word "wild" were replaced by "like"
+**
+**	All the nice shell RE matching stuff was replaced by just "_" and "%"
+**
+**	As I don't have a copy of the SQL standard handy I wasn't sure whether
+**	to leave in the '\' escape character handling.
+**
+**	Keith Parks. <keith@mtcc.demon.co.uk>
+**
+**	SQL92 lets you specify the escape character by saying
+**	LIKE <pattern> ESCAPE <escape character>. We are a small operation
+**	so we force you to use '\'. - ay 7/95
+**
+**	Now we have the like_escape() function that converts patterns with
+**	any specified escape character (or none at all) to the internal
+**	default escape character, which is still '\'. - tgl 9/2000
+**
+** The code is rewritten to avoid requiring null-terminated strings,
+** which in turn allows us to leave out some memcpy() operations.
+** This code should be faster and take less memory, but no promises...
+** - thomas 2000-08-06
+**
+*/
+
+
+/*--------------------
+ *	Match text and p, return LIKE_TRUE, LIKE_FALSE, or LIKE_ABORT.
+ *
+ *	LIKE_TRUE: they match
+ *	LIKE_FALSE: they don't match
+ *	LIKE_ABORT: not only don't they match, but the text is too short.
+ *
+ * If LIKE_ABORT is returned, then no suffix of the text can match the
+ * pattern either, so an upper-level % scan can stop scanning now.
+ *--------------------
+ */
+
+static int
+MatchText(unsigned char * t, int tlen, unsigned char * p, int plen)
+{
+	/* Fast path for match-everything pattern */
+	if ((plen == 1) && (*p == '%'))
 		return LIKE_TRUE;
 
 	while ((tlen > 0) && (plen > 0))
 	{
-		/* If an escape character was specified and we find it here in the pattern,
-		 * then we'd better have an exact match for the next character.
-		 */
-		if ((e != NULL) && CHAREQ(p,e))
+		if (*p == '\\')
 		{
+			/* Next pattern char must match literally, whatever it is */
 			NextChar(p, plen);
 			if ((plen <= 0) || !CHAREQ(t,p))
 				return LIKE_FALSE;
@@ -525,10 +450,9 @@ MatchText(unsigned char * t, int tlen, unsigned char * p, int plen, char *e)
 				 * recurse unless first pattern char might match this
 				 * text char.
 				 */
-				if (CHAREQ(t,p) || (*p == '_')
-					|| ((e != NULL) && CHAREQ(p,e)))
+				if (CHAREQ(t,p) || (*p == '\\')  || (*p == '_'))
 				{
-					int matched = MatchText(t, tlen, p, plen, e);
+					int matched = MatchText(t, tlen, p, plen);
 
 					if (matched != LIKE_FALSE)
 						return matched;		/* TRUE or ABORT */
@@ -571,24 +495,21 @@ MatchText(unsigned char * t, int tlen, unsigned char * p, int plen, char *e)
 	return LIKE_ABORT;
 } /* MatchText() */
 
+/*
+ * Same as above, but ignore case
+ */
 static int
-MatchTextLower(unsigned char * t, int tlen, unsigned char * p, int plen, char *e)
+MatchTextIC(unsigned char * t, int tlen, unsigned char * p, int plen)
 {
-	/* Fast path for match-everything pattern
-	 * Include weird case of escape character as a percent sign or underscore,
-	 * when presumably that wildcard character becomes a literal.
-	 */
-	if ((plen == 1) && (*p == '%')
-		&& ! ((e != NULL) && (*e == '%')))
+	/* Fast path for match-everything pattern */
+	if ((plen == 1) && (*p == '%'))
 		return LIKE_TRUE;
 
 	while ((tlen > 0) && (plen > 0))
 	{
-		/* If an escape character was specified and we find it here in the pattern,
-		 * then we'd better have an exact match for the next character.
-		 */
-		if ((e != NULL) && ICHAREQ(p,e))
+		if (*p == '\\')
 		{
+			/* Next pattern char must match literally, whatever it is */
 			NextChar(p, plen);
 			if ((plen <= 0) || !ICHAREQ(t,p))
 				return LIKE_FALSE;
@@ -614,10 +535,9 @@ MatchTextLower(unsigned char * t, int tlen, unsigned char * p, int plen, char *e
 				 * recurse unless first pattern char might match this
 				 * text char.
 				 */
-				if (ICHAREQ(t,p) || (*p == '_')
-					|| ((e != NULL) && ICHAREQ(p,e)))
+				if (ICHAREQ(t,p) || (*p == '\\')  || (*p == '_'))
 				{
-					int matched = MatchText(t, tlen, p, plen, e);
+					int matched = MatchTextIC(t, tlen, p, plen);
 
 					if (matched != LIKE_FALSE)
 						return matched;		/* TRUE or ABORT */
@@ -634,6 +554,9 @@ MatchTextLower(unsigned char * t, int tlen, unsigned char * p, int plen, char *e
 		}
 		else if ((*p != '_') && !ICHAREQ(t,p))
 		{
+			/* Not the single-character wildcard and no explicit match?
+			 * Then time to quit...
+			 */
 			return LIKE_FALSE;
 		}
 
@@ -655,4 +578,4 @@ MatchTextLower(unsigned char * t, int tlen, unsigned char * p, int plen, char *e
 	 * start matching this pattern.
 	 */
 	return LIKE_ABORT;
-} /* MatchTextLower() */
+} /* MatchTextIC() */

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.189 2000/09/12 21:07:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.190 2000/09/15 18:45:30 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -365,6 +365,7 @@ static void doNegateFloat(Value *v);
 %right		'='
 %nonassoc	'<' '>'
 %nonassoc	LIKE ILIKE
+%nonassoc	ESCAPE
 %nonassoc	OVERLAPS
 %nonassoc	BETWEEN
 %nonassoc	IN
@@ -382,7 +383,6 @@ static void doNegateFloat(Value *v);
 %left		'.'
 %left		'[' ']'
 %left		TYPECAST
-%left		ESCAPE
 %%
 
 /*
@@ -4522,76 +4522,48 @@ a_expr:  c_expr
 				{	$$ = makeA_Expr(NOT, NULL, NULL, $2); }
 
 		| a_expr LIKE a_expr
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "like";
-					n->args = makeList($1, $3, -1);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
-				}
+				{	$$ = makeA_Expr(OP, "~~", $1, $3); }
 		| a_expr LIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "like";
-					n->args = makeList($1, $3, $5, -1);
+					n->funcname = "like_escape";
+					n->args = makeList($3, $5, -1);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
+					$$ = makeA_Expr(OP, "~~", $1, (Node *) n);
 				}
 		| a_expr NOT LIKE a_expr
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "notlike";
-					n->args = makeList($1, $4, -1);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
-				}
+				{	$$ = makeA_Expr(OP, "!~~", $1, $4); }
 		| a_expr NOT LIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "notlike";
-					n->args = makeList($1, $4, $6, -1);
+					n->funcname = "like_escape";
+					n->args = makeList($4, $6, -1);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
+					$$ = makeA_Expr(OP, "!~~", $1, (Node *) n);
 				}
 		| a_expr ILIKE a_expr
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "ilike";
-					n->args = makeList($1, $3, -1);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
-				}
+				{	$$ = makeA_Expr(OP, "~~*", $1, $3); }
 		| a_expr ILIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "ilike";
-					n->args = makeList($1, $3, $5, -1);
+					n->funcname = "like_escape";
+					n->args = makeList($3, $5, -1);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
+					$$ = makeA_Expr(OP, "~~*", $1, (Node *) n);
 				}
 		| a_expr NOT ILIKE a_expr
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "inotlike";
-					n->args = makeList($1, $4, -1);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
-				}
+				{	$$ = makeA_Expr(OP, "!~~*", $1, $4); }
 		| a_expr NOT ILIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "inotlike";
-					n->args = makeList($1, $4, $6, -1);
+					n->funcname = "like_escape";
+					n->args = makeList($4, $6, -1);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
+					$$ = makeA_Expr(OP, "!~~*", $1, (Node *) n);
 				}
 
 		| a_expr ISNULL

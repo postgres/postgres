@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.81 2000/08/21 04:48:51 tgl Exp $
+ * $Id: pg_operator.h,v 1.82 2000/09/15 18:45:27 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -537,7 +537,7 @@ DATA(insert OID = 1213 (  "~~"	  PGUID 0 b t f  1043 25  16 0 1214 0 0 textlike 
 #define OID_VARCHAR_LIKE_OP		1213
 DATA(insert OID = 1214 (  "!~~"   PGUID 0 b t f  1043 25  16 0 1213 0 0 textnlike nlikesel nlikejoinsel ));
 
-/* case-insensitive LIKE hacks */
+/* case-insensitive regex hacks */
 DATA(insert OID = 1226 (  "~*"		 PGUID 0 b t f	19	25	16 0 1227  0 0 nameicregexeq icregexeqsel icregexeqjoinsel ));
 #define OID_NAME_ICREGEXEQ_OP		1226
 DATA(insert OID = 1227 (  "!~*"		 PGUID 0 b t f	19	25	16 0 1226  0 0 nameicregexne icregexnesel icregexnejoinsel ));
@@ -689,6 +689,20 @@ DATA(insert OID = 826 (  "<<"	   PGUID 0 b t f 650 650	 16 828   0 0 0 network_s
 DATA(insert OID = 827 (  "<<="	   PGUID 0 b t f 650 650	 16 1004  0 0 0 network_subeq - - ));
 DATA(insert OID = 828 (  ">>"	   PGUID 0 b t f 650 650	 16 826   0 0 0 network_sup - - ));
 DATA(insert OID = 1004 ( ">>="	   PGUID 0 b t f 650 650	 16 827   0 0 0 network_supeq - - ));
+
+/* case-insensitive LIKE hacks */
+DATA(insert OID = 1625 (  "~~*"	  PGUID 0 b t f  19   25  16 0 1626 0 0 nameiclike iclikesel iclikejoinsel ));
+#define OID_NAME_ICLIKE_OP		1625
+DATA(insert OID = 1626 (  "!~~*"  PGUID 0 b t f  19   25  16 0 1625 0 0 nameicnlike icnlikesel icnlikejoinsel ));
+DATA(insert OID = 1627 (  "~~*"	  PGUID 0 b t f  25   25  16 0 1628 0 0 texticlike iclikesel iclikejoinsel ));
+#define OID_TEXT_ICLIKE_OP		1627
+DATA(insert OID = 1628 (  "!~~*"  PGUID 0 b t f  25   25  16 0 1627 0 0 texticnlike icnlikesel icnlikejoinsel ));
+DATA(insert OID = 1629 (  "~~*"	  PGUID 0 b t f  1042 25  16 0 1630 0 0 texticlike iclikesel iclikejoinsel ));
+#define OID_BPCHAR_ICLIKE_OP	1629
+DATA(insert OID = 1630 (  "!~~*"  PGUID 0 b t f  1042 25  16 0 1629 0 0 texticnlike icnlikesel icnlikejoinsel ));
+DATA(insert OID = 1631 (  "~~*"	  PGUID 0 b t f  1043 25  16 0 1632 0 0 texticlike iclikesel iclikejoinsel ));
+#define OID_VARCHAR_ICLIKE_OP	1631
+DATA(insert OID = 1632 (  "!~~*"  PGUID 0 b t f  1043 25  16 0 1631 0 0 texticnlike icnlikesel icnlikejoinsel ));
 
 /* NUMERIC type - OID's 1700-1799 */
 DATA(insert OID = 1751 (  "-"	   PGUID 0 l t f	0 1700 1700    0	0 0 0 numeric_uminus - - ));

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.136 2000/09/05 20:25:14 wieck Exp $
+ * $Id: builtins.h,v 1.137 2000/09/15 18:45:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -320,9 +320,11 @@ extern Datum scalargtsel(PG_FUNCTION_ARGS);
 extern Datum regexeqsel(PG_FUNCTION_ARGS);
 extern Datum icregexeqsel(PG_FUNCTION_ARGS);
 extern Datum likesel(PG_FUNCTION_ARGS);
+extern Datum iclikesel(PG_FUNCTION_ARGS);
 extern Datum regexnesel(PG_FUNCTION_ARGS);
 extern Datum icregexnesel(PG_FUNCTION_ARGS);
 extern Datum nlikesel(PG_FUNCTION_ARGS);
+extern Datum icnlikesel(PG_FUNCTION_ARGS);
 
 extern Datum eqjoinsel(PG_FUNCTION_ARGS);
 extern Datum neqjoinsel(PG_FUNCTION_ARGS);
@@ -331,9 +333,11 @@ extern Datum scalargtjoinsel(PG_FUNCTION_ARGS);
 extern Datum regexeqjoinsel(PG_FUNCTION_ARGS);
 extern Datum icregexeqjoinsel(PG_FUNCTION_ARGS);
 extern Datum likejoinsel(PG_FUNCTION_ARGS);
+extern Datum iclikejoinsel(PG_FUNCTION_ARGS);
 extern Datum regexnejoinsel(PG_FUNCTION_ARGS);
 extern Datum icregexnejoinsel(PG_FUNCTION_ARGS);
 extern Datum nlikejoinsel(PG_FUNCTION_ARGS);
+extern Datum icnlikejoinsel(PG_FUNCTION_ARGS);
 
 extern Datum btcostestimate(PG_FUNCTION_ARGS);
 extern Datum rtcostestimate(PG_FUNCTION_ARGS);
@@ -343,7 +347,8 @@ extern Datum gistcostestimate(PG_FUNCTION_ARGS);
 /* selfuncs.c supporting routines that are also used by optimizer code */
 typedef enum
 {
-	Pattern_Type_Like, Pattern_Type_Regex, Pattern_Type_Regex_IC
+	Pattern_Type_Like, Pattern_Type_Like_IC,
+	Pattern_Type_Regex, Pattern_Type_Regex_IC
 } Pattern_Type;
 
 typedef enum
@@ -432,20 +437,13 @@ extern Datum pgsql_version(PG_FUNCTION_ARGS);
 /* like.c */
 extern Datum namelike(PG_FUNCTION_ARGS);
 extern Datum namenlike(PG_FUNCTION_ARGS);
-extern Datum namelike_escape(PG_FUNCTION_ARGS);
-extern Datum namenlike_escape(PG_FUNCTION_ARGS);
-extern Datum inamelike(PG_FUNCTION_ARGS);
-extern Datum inamenlike(PG_FUNCTION_ARGS);
-extern Datum inamelike_escape(PG_FUNCTION_ARGS);
-extern Datum inamenlike_escape(PG_FUNCTION_ARGS);
+extern Datum nameiclike(PG_FUNCTION_ARGS);
+extern Datum nameicnlike(PG_FUNCTION_ARGS);
 extern Datum textlike(PG_FUNCTION_ARGS);
 extern Datum textnlike(PG_FUNCTION_ARGS);
-extern Datum textlike_escape(PG_FUNCTION_ARGS);
-extern Datum textnlike_escape(PG_FUNCTION_ARGS);
-extern Datum itextlike(PG_FUNCTION_ARGS);
-extern Datum itextnlike(PG_FUNCTION_ARGS);
-extern Datum itextlike_escape(PG_FUNCTION_ARGS);
-extern Datum itextnlike_escape(PG_FUNCTION_ARGS);
+extern Datum texticlike(PG_FUNCTION_ARGS);
+extern Datum texticnlike(PG_FUNCTION_ARGS);
+extern Datum like_escape(PG_FUNCTION_ARGS);
 
 /* oracle_compat.c */
 extern Datum lower(PG_FUNCTION_ARGS);

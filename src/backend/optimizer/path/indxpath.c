@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.95 2000/09/12 21:06:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.96 2000/09/15 18:45:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1755,6 +1755,20 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 			pfree(patt);
 			break;
 
+		case OID_TEXT_ICLIKE_OP:
+		case OID_BPCHAR_ICLIKE_OP:
+		case OID_VARCHAR_ICLIKE_OP:
+		case OID_NAME_ICLIKE_OP:
+			/* the right-hand const is type text for all of these */
+			patt = DatumGetCString(DirectFunctionCall1(textout,
+													   constvalue));
+			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
+											   &prefix, &rest) != Pattern_Prefix_None;
+			if (prefix)
+				pfree(prefix);
+			pfree(patt);
+			break;
+
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_VARCHAR_REGEXEQ_OP:
@@ -1797,6 +1811,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 	switch (expr_op)
 	{
 		case OID_TEXT_LIKE_OP:
+		case OID_TEXT_ICLIKE_OP:
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_TEXT_ICREGEXEQ_OP:
 			if (!op_class(find_operator(">=", TEXTOID), opclass, relam) ||
@@ -1805,6 +1820,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 			break;
 
 		case OID_BPCHAR_LIKE_OP:
+		case OID_BPCHAR_ICLIKE_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
 			if (!op_class(find_operator(">=", BPCHAROID), opclass, relam) ||
@@ -1813,6 +1829,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 			break;
 
 		case OID_VARCHAR_LIKE_OP:
+		case OID_VARCHAR_ICLIKE_OP:
 		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_VARCHAR_ICREGEXEQ_OP:
 			if (!op_class(find_operator(">=", VARCHAROID), opclass, relam) ||
@@ -1821,6 +1838,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 			break;
 
 		case OID_NAME_LIKE_OP:
+		case OID_NAME_ICLIKE_OP:
 		case OID_NAME_REGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
 			if (!op_class(find_operator(">=", NAMEOID), opclass, relam) ||
@@ -1878,6 +1896,24 @@ expand_indexqual_conditions(List *indexquals)
 				patt = DatumGetCString(DirectFunctionCall1(textout,
 														   constvalue));
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
+											   &prefix, &rest);
+				resultquals = nconc(resultquals,
+									prefix_quals(leftop, expr_op,
+												 prefix, pstatus));
+				if (prefix)
+					pfree(prefix);
+				pfree(patt);
+				break;
+
+			case OID_TEXT_ICLIKE_OP:
+			case OID_BPCHAR_ICLIKE_OP:
+			case OID_VARCHAR_ICLIKE_OP:
+			case OID_NAME_ICLIKE_OP:
+				/* the right-hand const is type text for all of these */
+				constvalue = ((Const *) rightop)->constvalue;
+				patt = DatumGetCString(DirectFunctionCall1(textout,
+														   constvalue));
+				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
 											   &prefix, &rest);
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
@@ -1955,24 +1991,28 @@ prefix_quals(Var *leftop, Oid expr_op,
 	switch (expr_op)
 	{
 		case OID_TEXT_LIKE_OP:
+		case OID_TEXT_ICLIKE_OP:
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_TEXT_ICREGEXEQ_OP:
 			datatype = TEXTOID;
 			break;
 
 		case OID_BPCHAR_LIKE_OP:
+		case OID_BPCHAR_ICLIKE_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
 			datatype = BPCHAROID;
 			break;
 
 		case OID_VARCHAR_LIKE_OP:
+		case OID_VARCHAR_ICLIKE_OP:
 		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_VARCHAR_ICREGEXEQ_OP:
 			datatype = VARCHAROID;
 			break;
 
 		case OID_NAME_LIKE_OP:
+		case OID_NAME_ICLIKE_OP:
 		case OID_NAME_REGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
 			datatype = NAMEOID;

@@ -443,13 +443,13 @@ SELECT 'hawkeye' NOT ILIKE 'H%' AS "false";
 SELECT 'hawkeye' ILIKE 'H%Eye' AS "true";
  true 
 ------
- f
+ t
 (1 row)
 
 SELECT 'hawkeye' NOT ILIKE 'H%Eye' AS "false";
  false 
 -------
- t
+ f
 (1 row)
 
 SELECT 'Hawkeye' ILIKE 'h%' AS "true";
