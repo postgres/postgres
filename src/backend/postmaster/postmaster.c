@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.129 1999/12/04 08:23:43 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.130 1999/12/06 07:21:12 ishii Exp $
  *
  * NOTES
  *
@@ -250,6 +250,11 @@ static bool		FatalError = false;
 
 static unsigned int random_seed = 0;
 
+/*
+ * Path to pid file. Exitpostmaster() remember it to unlink the file.
+ */
+static char PidFile[MAXPGPATH];
+
 extern char *optarg;
 extern int	optind,
 			opterr;
@@ -277,7 +282,8 @@ static long 	PostmasterRandom(void);
 static void 	RandomSalt(char *salt);
 static void 	SignalChildren(SIGNAL_ARGS);
 static int		CountChildren(void);
-
+static void	UnlinkPidFile(void);
+static void	SetPidFname(char *datadir);
 static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
 		      int assert, int nbuf, char *execfile,
 		      int debuglvl, int netserver,
@@ -748,6 +754,7 @@ pmdaemonize(char *extraoptions)
 		}
 		_exit(0);
 	}
+
 /* GH: If there's no setsid(), we hopefully don't need silent mode.
  * Until there's a better solution.
  */
@@ -768,6 +775,12 @@ pmdaemonize(char *extraoptions)
 	dup2(i, 1);
 	dup2(i, 2);
 	close(i);
+
+	/*
+	 * register clean up proc
+	 */
+	SetPidFname(DataDir);
+	on_proc_exit(UnlinkPidFile, NULL);
 }
 
 static void
@@ -2165,13 +2178,25 @@ SSDataBase(bool startup)
 	return(pid);
 }
 
-static char PidFile[MAXPGPATH];
-
+/*
+ * Remove the pid file. This function is called from proc_exit.
+ */
 static void UnlinkPidFile(void)
 {
 	unlink(PidFile);
 }
 
+/*
+ * Set path to the pid file
+ */
+static void SetPidFname(char * datadir)
+{
+	snprintf(PidFile, sizeof(PidFile), "%s/%s", datadir, PIDFNAME);
+}
+
+/*
+ * Create the pid file
+ */
 static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
 		      int assert, int nbuf, char *execfile,
 		      int debuglvl, int netserver,
@@ -2192,7 +2217,7 @@ static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
 	/*
 	 * Creating pid file
 	 */
-	snprintf(PidFile, sizeof(PidFile), "%s/%s", datadir, PIDFNAME);
+	SetPidFname(datadir);
 	fd = open(PidFile, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (fd < 0) {
 		/*
