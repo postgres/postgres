@@ -290,6 +290,18 @@ extern void srandom(unsigned int seed);
 /* Define this as the appropriate snprintf format for 64-bit ints, if any */
 #undef INT64_FORMAT
 
+/* These must be defined as the alignment requirement (NOT the size) of
+ * each of the basic C data types (except char, which we assume has align 1).
+ * MAXIMUM_ALIGNOF is the largest alignment requirement for any C data type.
+ * ALIGNOF_LONG_LONG_INT need only be defined if HAVE_LONG_LONG_INT_64 is.
+ */
+#undef ALIGNOF_SHORT
+#undef ALIGNOF_INT
+#undef ALIGNOF_LONG
+#undef ALIGNOF_LONG_LONG_INT
+#undef ALIGNOF_DOUBLE
+#undef MAXIMUM_ALIGNOF
+
 /* Define as the base type of the last arg to accept */
 #undef SOCKET_SIZE_TYPE
 

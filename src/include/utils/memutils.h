@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.22 1999/03/25 03:49:34 tgl Exp $
+ * $Id: memutils.h,v 1.23 1999/03/25 19:05:19 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -30,50 +30,21 @@
 /* ----------------
  * Alignment macros: align a length or address appropriately for a given type.
  *
- * It'd be best to use offsetof to check how the compiler aligns stuff,
- * but not all compilers support that (still true)?  So we make the
- * conservative assumption that a type must be aligned on a boundary equal
- * to its own size, except on a few architectures where we know better.
+ * There used to be some incredibly crufty platform-dependent hackery here,
+ * but now we rely on the configure script to get the info for us. Much nicer.
  *
- * CAUTION: for the system tables, the struct declarations found in
- * src/include/pg_*.h had better be interpreted by the compiler in a way
- * that agrees with the workings of these macros.  In practice that means
- * being careful to lay out the columns of a system table in a way that avoids
- * wasted pad space.
- *
- * CAUTION: _ALIGN will not work if sizeof(TYPE) is not a power of 2.
- * There are machines where sizeof(double) is not, for example.
- * But such a size is almost certainly not an alignment boundary anyway.
+ * NOTE: _ALIGN will not work if ALIGNVAL is not a power of 2.
+ * That case seems extremely unlikely to occur in practice, however.
  * ----------------
  */
 
-#define _ALIGN(TYPE,LEN) \
-		(((long)(LEN) + (sizeof(TYPE) - 1)) & ~(sizeof(TYPE) - 1))
+#define _ALIGN(ALIGNVAL,LEN)	(((long)(LEN) + (ALIGNVAL-1)) & ~(ALIGNVAL-1))
 
-#define SHORTALIGN(LEN)			_ALIGN(short, (LEN))
-
-#if defined(m68k)
-#define INTALIGN(LEN)			_ALIGN(short, (LEN))
-#else
-#define INTALIGN(LEN)			_ALIGN(int, (LEN))
-#endif
-
-#if (defined(sun) && ! defined(sparc)) || defined(m68k)
-#define LONGALIGN(LEN)			_ALIGN(short, (LEN))
-#else
-#define LONGALIGN(LEN)			_ALIGN(long, (LEN))
-#endif
-
-#if defined(m68k)
-#define DOUBLEALIGN(LEN)		_ALIGN(short, (LEN))
-#define MAXALIGN(LEN)			_ALIGN(short, (LEN))
-#elif defined(sco)
-#define DOUBLEALIGN(LEN)		_ALIGN(int, (LEN))
-#define MAXALIGN(LEN)			_ALIGN(int, (LEN))
-#else
-#define DOUBLEALIGN(LEN)		_ALIGN(double, (LEN))
-#define MAXALIGN(LEN)			_ALIGN(double, (LEN))
-#endif
+#define SHORTALIGN(LEN)			_ALIGN(ALIGNOF_SHORT, (LEN))
+#define INTALIGN(LEN)			_ALIGN(ALIGNOF_INT, (LEN))
+#define LONGALIGN(LEN)			_ALIGN(ALIGNOF_LONG, (LEN))
+#define DOUBLEALIGN(LEN)		_ALIGN(ALIGNOF_DOUBLE, (LEN))
+#define MAXALIGN(LEN)			_ALIGN(MAXIMUM_ALIGNOF, (LEN))
 
 /*****************************************************************************
  *	  oset.h --			Fixed format ordered set definitions.				 *
