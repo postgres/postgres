@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.44 2003/05/23 22:33:20 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.45 2003/07/27 03:16:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,8 @@ initcap(PG_FUNCTION_ARGS)
 
 	while (m-- > 0)
 	{
-		if (isspace((unsigned char) ptr[-1]))
+		/* Oracle capitalizes after all non-alphanumeric */
+		if (!isalnum((unsigned char) ptr[-1]))
 			*ptr = toupper((unsigned char) *ptr);
 		else
 			*ptr = tolower((unsigned char) *ptr);
