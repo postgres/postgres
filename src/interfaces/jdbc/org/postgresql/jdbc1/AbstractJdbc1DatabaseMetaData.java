@@ -503,7 +503,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	{
 		if (Driver.logDebug)
 			Driver.debug("getSearchStringEscape");
-		return "\\";
+		return "\\\\";
 	}
 
 	/*
