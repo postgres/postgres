@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.49 1999/05/26 12:55:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.50 1999/07/11 02:04:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,7 +278,6 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				SubLink    *sublink = (SubLink *) expr;
 				List	   *qtrees;
 				Query	   *qtree;
-				List	   *llist;
 
 				pstate->p_hasSubLinks = true;
 				qtrees = parse_analyze(lcons(sublink->subselect, NIL), pstate);
@@ -293,36 +292,48 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				if (sublink->subLinkType != EXISTS_SUBLINK)
 				{
 					char	   *op = lfirst(sublink->oper);
-					List	   *left_expr = sublink->lefthand;
-					List	   *right_expr = ((Query *) sublink->subselect)->targetList;
+					List	   *left_list = sublink->lefthand;
+					List	   *right_list = qtree->targetList;
 					List	   *elist;
 
-					foreach(llist, left_expr)
-						lfirst(llist) = transformExpr(pstate, lfirst(llist), precedence);
+					foreach(elist, left_list)
+						lfirst(elist) = transformExpr(pstate, lfirst(elist),
+													  precedence);
 
-					if (length(left_expr) != length(right_expr))
-						elog(ERROR, "parser: Subselect has too many or too few fields.");
-
-					if (length(left_expr) > 1 &&
+					if (length(left_list) > 1 &&
 						strcmp(op, "=") != 0 && strcmp(op, "<>") != 0)
-						elog(ERROR, "parser: '%s' is not relational operator", op);
+						elog(ERROR, "parser: '%s' is not relational operator",
+							 op);
 
 					sublink->oper = NIL;
-					foreach(elist, left_expr)
+
+					/* Scan subquery's targetlist to find values that will be
+					 * matched against lefthand values.  We need to ignore
+					 * resjunk targets, so doing the outer iteration over
+					 * right_list is easier than doing it over left_list.
+					 */
+					while (right_list != NIL)
 					{
-						Node	   *lexpr = lfirst(elist);
-						Node	   *rexpr = lfirst(right_expr);
-						TargetEntry *tent = (TargetEntry *) rexpr;
+						TargetEntry *tent = (TargetEntry *) lfirst(right_list);
+						Node	   *lexpr;
 						Expr	   *op_expr;
 
-						op_expr = make_op(op, lexpr, tent->expr);
-
-						if (op_expr->typeOid != BOOLOID &&
-							sublink->subLinkType != EXPR_SUBLINK)
-							elog(ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
-						sublink->oper = lappend(sublink->oper, op_expr);
-						right_expr = lnext(right_expr);
+						if (! tent->resdom->resjunk)
+						{
+							if (left_list == NIL)
+								elog(ERROR, "parser: Subselect has too many fields.");
+							lexpr = lfirst(left_list);
+							left_list = lnext(left_list);
+							op_expr = make_op(op, lexpr, tent->expr);
+							if (op_expr->typeOid != BOOLOID &&
+								sublink->subLinkType != EXPR_SUBLINK)
+								elog(ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
+							sublink->oper = lappend(sublink->oper, op_expr);
+						}
+						right_list = lnext(right_list);
 					}
+					if (left_list != NIL)
+						elog(ERROR, "parser: Subselect has too few fields.");
 				}
 				else
 					sublink->oper = NIL;
