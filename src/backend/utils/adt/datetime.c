@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.6 1997/05/16 07:19:50 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.7 1997/05/30 15:02:48 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,9 +392,11 @@ date2tm(DateADT dateVal, int *tzp, struct tm *tm, double *fsec, char **tzn)
 	tx = localtime(&utime);
 
 #ifdef DATEDEBUG
+#ifdef HAVE_INT_TIMEZONE
 printf( "date2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
  tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, sec,
  tzname[0], tzname[1], tx->tm_isdst);
+#endif
 #endif
 	tm->tm_year = tx->tm_year + 1900;
 	tm->tm_mon = tx->tm_mon + 1;
@@ -411,6 +413,9 @@ printf( "date2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
 	if (tzn != NULL) *tzn = tzname[(tm->tm_isdst > 0)];
 
 #else /* !HAVE_INT_TIMEZONE */
+	tm->tm_gmtoff = tx->tm_gmtoff;
+	tm->tm_zone = tx->tm_zone;
+
 	*tzp = (tm->tm_isdst? (tm->tm_gmtoff - 3600): tm->tm_gmtoff); /* tm_gmtoff is Sun/DEC-ism */
 	if (tzn != NULL) *tzn = tm->tm_zone;
 #endif

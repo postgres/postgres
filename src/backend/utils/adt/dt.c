@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.22 1997/05/23 05:24:47 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.23 1997/05/30 15:02:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,12 @@ char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 
 char *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
  "Thursday", "Friday", "Saturday", NULL};
+
+/* TMODULO()
+ * Macro to replace modf(), which is broken on some platforms.
+ */
+#define TMODULO(t,q,u) {q = ((t < 0)? ceil(t / u): floor(t / u)); \
+                      if (q != 0) t -= rint(q * u);}
 
 
 /***************************************************************************** 
@@ -1556,6 +1562,9 @@ int j2day( int date)
  * Returns:
  *   0 on success
  *  -1 on out of range
+ *
+ * For dates within the system-supported time_t range, convert to the
+ *  local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 int
 datetime2tm( DateTime dt, int *tzp, struct tm *tm, double *fsec, char **tzn)
@@ -1568,7 +1577,9 @@ datetime2tm( DateTime dt, int *tzp, struct tm *tm, double *fsec, char **tzn)
 
 
     date0 = date2j(2000,1,1);
-    time = (modf( dt/86400, &date)*86400);
+
+    time = dt;
+    TMODULO(time,date,86400e0);
 
     if (time < 0) {
 	    time += 86400;
@@ -1594,24 +1605,30 @@ printf( "datetime2tm- date is %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_m
 printf( "datetime2tm- time is %02d:%02d:%02.0f\n", tm->tm_hour, tm->tm_min, sec);
 #endif
 
-    *fsec = modf(JROUND(sec),&sec);
-    tm->tm_sec = sec;
+    *fsec = JROUND(sec);
+    TMODULO(*fsec,tm->tm_sec,1);
 
 #ifdef DATEDEBUG
 printf( "datetime2tm- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, tm->tm_sec, *fsec);
 #endif
 
     if (tzp != NULL) {
-	/* XXX HACK to get time behavior compatible with Postgres v6.0 - tgl 97/04/07 */
 	if (IS_VALID_UTIME( tm->tm_year, tm->tm_mon, tm->tm_mday)) {
 	    utime = (dt + (date0-date2j(1970,1,1))*86400);
 
 #ifdef USE_POSIX_TIME
 	    tx = localtime(&utime);
 #ifdef DATEDEBUG
+#ifdef HAVE_INT_TIMEZONE
 printf( "datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
  tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, sec,
  tzname[0], tzname[1], tx->tm_isdst);
+#else
+printf( "datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s dst=%d\n",
+ tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, sec,
+ tx->tm_zone, tx->tm_isdst);
+#endif
+#else
 #endif
 	    tm->tm_year = tx->tm_year + 1900;
 	    tm->tm_mon = tx->tm_mon + 1;
@@ -1626,6 +1643,9 @@ printf( "datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
 	    if (tzn != NULL) *tzn = tzname[(tm->tm_isdst > 0)];
 
 #else /* !HAVE_INT_TIMEZONE */
+	    tm->tm_gmtoff = tx->tm_gmtoff;
+	    tm->tm_zone = tx->tm_zone;
+
 	    *tzp = (tm->tm_isdst? (tm->tm_gmtoff - 3600): tm->tm_gmtoff); /* tm_gmtoff is Sun/DEC-ism */
 	    if (tzn != NULL) *tzn = tm->tm_zone;
 #endif
@@ -1634,6 +1654,7 @@ printf( "datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
 	    *tzp = CTimeZone;	/* V7 conventions; don't know timezone? */
 	    if (tzn != NULL) *tzn = CTZName;
 #endif
+
 	} else {
 	    *tzp = 0;
 	    tm->tm_isdst = 0;
@@ -1653,9 +1674,11 @@ printf( "datetime2tm- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, t
 #endif
 
 #ifdef DATEDEBUG
+#ifdef USE_POSIX_TIME
 #ifdef HAVE_INT_TIMEZONE
 printf( "datetime2tm- timezone is %s; offset is %d (%d); daylight is %d\n",
  tzname[tm->tm_isdst != 0], ((tzp != NULL)? *tzp: 0), CTimeZone, CDayLight);
+#endif
 #endif
 #endif
 
@@ -1690,6 +1713,9 @@ printf( "tm2datetime- time is %f %02d:%02d:%02d %f\n", time, tm->tm_hour, tm->tm
 } /* tm2datetime() */
 
 
+/* timespan2tm()
+ * Convert a timespan data type to a tm structure.
+ */
 int
 timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec)
 {
@@ -1710,19 +1736,10 @@ timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec)
     time = span.time;
 #endif
 
-    funit = modf( (time / 86400), &iunit);
-    tm->tm_mday = iunit;
-    if (tm->tm_mday != 0) time -= rint(tm->tm_mday * 86400);
-
-    funit = modf( (time / 3600), &iunit);
-    tm->tm_hour = iunit;
-    if (tm->tm_hour != 0) time -= rint(tm->tm_hour * 3600e0);
-    funit = modf( (time / 60), &iunit);
-    tm->tm_min = iunit;
-    if (tm->tm_min != 0) time -= rint(tm->tm_min * 60e0);
-    funit = modf( time, &iunit);
-    tm->tm_sec = iunit;
-    if (tm->tm_sec != 0) time -= tm->tm_sec;
+    TMODULO(time, tm->tm_mday, 86400e0);
+    TMODULO(time, tm->tm_hour, 3600e0);
+    TMODULO(time, tm->tm_min, 60e0);
+    TMODULO(time, tm->tm_sec, 1);
     *fsec = time;
 
 #ifdef DATEDEBUG
@@ -1901,6 +1918,11 @@ printf( "ParseDateTime- set field[%d] to %s type %d\n", (nf-1), field[nf-1], fty
  *	Also supports input in compact time:
  *		"970207 152327"
  *		"97038 152327"
+ *
+ * Use the system-provided functions to get the current time zone
+ *  if not specified in the input string.
+ * If the date is outside the time_t system-supported time range,
+ *  then assume GMT time zone. - tgl 97/05/27
  */
 int
 DecodeDateTime( char *field[], int ftype[], int nf,
@@ -2090,7 +2112,6 @@ printf( " %02d:%02d:%02d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
 	return(((fmask & DTK_TIME_M) == DTK_TIME_M)? 1: -1);
 
     /* timezone not specified? then find local timezone if possible */
-    /* XXX HACK to get correct behavior relative to Postgres v6.0 - tgl 97/04/07 */
     if ((*dtype == DTK_DATE) && ((fmask & DTK_DATE_M) == DTK_DATE_M)
       && (tzp != NULL) && (! (fmask & DTK_M(TZ)))) {
 
@@ -2105,9 +2126,11 @@ printf( " %02d:%02d:%02d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
 
 #ifdef HAVE_INT_TIMEZONE
 	    *tzp = ((tm->tm_isdst > 0)? (timezone - 3600): timezone);
+
 #else /* !HAVE_INT_TIMEZONE */
-	    *tzp = tm->tm_gmtoff;
+	    *tzp = -(tm->tm_gmtoff); /* tm_gmtoff is Sun/DEC-ism */
 #endif
+
 #else /* !USE_POSIX_TIME */
 	    *tzp = CTimeZone;
 #endif
@@ -2803,7 +2826,7 @@ printf( "DecodeDateDelta- (%08x/%08x) field[%d] %s value is %d\n",
     };
 
     if (*fsec != 0) {
-	*fsec = modf( *fsec, &sec);
+	TMODULO(*fsec,sec,1);
 	tm->tm_sec += sec;
     };
 
