@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.16 2000/02/20 14:28:20 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.17 2000/02/21 19:40:41 petere Exp $
  */
 #include "postgres.h"
 #include "common.h"
@@ -246,14 +246,17 @@ volatile bool cancel_pressed;
 void
 handle_sigint(SIGNAL_ARGS)
 {
+    cancel_pressed = true;
+
+    if (copy_state)
+        return;
+
 	if (cancelConn == NULL)
 #ifndef WIN32
         siglongjmp(main_loop_jmp, 1);
 #else
 		return;
 #endif
-
-    cancel_pressed = true;
 
 	/* Try to send cancel request */
 	if (PQrequestCancel(cancelConn))
@@ -297,6 +300,9 @@ PSQLexec(const char *query)
 
 	cancelConn = pset.db;
 	res = PQexec(pset.db, query);
+    if (PQresultStatus(res) == PGRES_COPY_IN ||
+        PQresultStatus(res) == PGRES_COPY_OUT)
+        copy_state = true;
     cancelConn = NULL;
 
 	if (PQstatus(pset.db) == CONNECTION_BAD)
@@ -388,6 +394,9 @@ SendQuery(const char *query)
 
 	cancelConn = pset.db;
 	results = PQexec(pset.db, query);
+    if (PQresultStatus(results) == PGRES_COPY_IN ||
+        PQresultStatus(results) == PGRES_COPY_OUT)
+        copy_state = true;
     cancelConn = NULL;
 
 	if (results == NULL)

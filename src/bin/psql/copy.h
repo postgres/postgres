@@ -3,12 +3,14 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.h,v 1.7 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.h,v 1.8 2000/02/21 19:40:42 petere Exp $
  */
 #ifndef COPY_H
 #define COPY_H
 
 #include "libpq-fe.h"
+
+extern bool copy_state;
 
 /* handler for \copy */
 bool		do_copy(const char *args);
