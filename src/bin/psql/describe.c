@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.100 2004/07/12 20:41:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.101 2004/07/13 02:46:21 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1321,11 +1321,8 @@ add_tablespace_footer(char relkind, Oid tablespace, char **footers,
 			/* Should always be the case, but.... */
 			if(PQntuples(result1) > 0)
 			{
-				printfPQExpBuffer(&buf, _("Tablespace:"));
-				footers[(*count)++] = pg_strdup(buf.data);
-				printfPQExpBuffer(&buf, _("    \"%s\""),
-									  PQgetvalue(result1, 0, 0));
-	
+				printfPQExpBuffer(&buf, _("Tablespace: \"%s\""),
+					PQgetvalue(result1, 0, 0));
 				footers[(*count)++] = pg_strdup(buf.data);
 			}
 			PQclear(result1);
