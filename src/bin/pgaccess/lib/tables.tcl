@@ -813,6 +813,10 @@ set PgAcVar(mw,$wn,toprec) 0
 setScrollbar $wn
 if {$PgAcVar(mw,$wn,updatable)} then {
 	$wn.c bind q <Key> "Tables::editText $wn %A %K"
+	if {[info commands kanjiInput] == "kanjiInput"} then {
+		$wn.c bind q <Control-backslash> "pgaccess_kinput_start %W";
+		$wn.c bind q <Control-Kanji> "pg_access_kinput_start %W";
+	}
 } else {
 	$wn.c bind q <Key> {}
 }
@@ -2160,4 +2164,81 @@ proc vTclWindow.pgaw:Permissions {base} {
 		-in .pgaw:Permissions.fb -column 0 -row 0 -columnspan 1 -rowspan 1 
 	grid $base.fb.btncancel \
 		-in .pgaw:Permissions.fb -column 1 -row 0 -columnspan 1 -rowspan 1 
+}
+
+#
+# NOTE: following two procedures _kinput_trace_root and _kinput_trace_over 
+# were originaly part of kinput.tcl.
+# -- Tatuso Ishii 2000/08/18
+
+# kinput.tcl --
+#
+# This file contains Tcl procedures used to input Japanese text.
+#
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.7 2001/02/26 05:15:48 ishii Exp $
+#
+# Copyright (c) 1993  Software Research Associates, Inc.
+#
+# Permission to use, copy, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted, provided
+# that the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation, and that the name of Software Research Associates not be
+# used in advertising or publicity pertaining to distribution of the
+# software without specific, written prior permission.  Software Research
+# Associates makes no representations about the suitability of this software
+# for any purpose.  It is provided "as is" without express or implied
+# warranty.
+#
+
+# The procedure below is invoked in order to start Japanese text input
+# for the specified widget.  It sends a request to the input server to
+# start conversion on that widget.
+# Second argument specifies input style.  Valid values are "over" (for
+# over-the-spot style) and "root" (for root window style). See X11R5
+# Xlib manual for the meaning of these styles). The default is root
+# window style.
+
+proc pgaccess_kinput_start {w {style root}} {
+    global _kinput_priv
+    catch {unset _kinput_priv($w)}
+    if {$style=="over"} then {
+ 	set spot [_kinput_spot $w]
+	if {"$spot" != ""} then {
+	    trace variable _kinput_priv($w) w _pgaccess_kinput_trace_$style
+	    kanjiInput start $w \
+		-variable _kinput_priv($w) \
+		-inputStyle over \
+		-foreground [_kinput_attr $w -foreground] \
+		-background [_kinput_attr $w -background] \
+		-fonts [list [_kinput_attr $w -font] \
+			    [_kinput_attr $w -kanjifont]] \
+		-clientArea [_kinput_area $w] \
+		-spot $spot
+	    return
+	}
+    }
+    trace variable _kinput_priv($w) w _pgaccess_kinput_trace_root
+    kanjiInput start $w -variable _kinput_priv($w) -inputStyle root
+}
+
+# for root style
+proc _pgaccess_kinput_trace_root {name1 name2 op} {
+    global PgAcVar
+    set wn [string trimright $name2 ".c"]
+    upvar #0 $name1 trvar
+    set c $trvar($name2)
+    Tables::editText $wn $c $c
+    unset $trvar($name2)
+}
+
+# for over-the-spot style
+proc _pgaccess_kinput_trace_over {name1 name2 op} {
+    global PgAcVar
+    set wn [string trimright $name2 ".c"]
+    upvar #0 $name1 trvar
+    set c $trvar($name2)
+    Tables::editText $wn $c $c
+    kinput_send_spot $name2
+    unset $trvar($name2)
 }
