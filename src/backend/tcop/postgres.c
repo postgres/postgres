@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.381 2003/12/25 03:52:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.382 2004/01/06 17:36:31 neilc Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2073,7 +2073,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	/*
 	 * Set default values for command-line options.
 	 */
-	Noversion = false;
 	EchoQuery = false;
 
 	if (!IsUnderPostmaster)
@@ -2104,7 +2103,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	ctx = debug_context = PGC_POSTMASTER;
 	gucsource = PGC_S_ARGV;		/* initial switches came from command line */
 
-	while ((flag = getopt(argc, argv, "A:B:c:CD:d:Eef:FiNOPo:p:S:st:v:W:x:-:")) != -1)
+	while ((flag = getopt(argc, argv, "A:B:c:D:d:Eef:FiNOPo:p:S:st:v:W:x:-:")) != -1)
 		switch (flag)
 		{
 			case 'A':
@@ -2123,14 +2122,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 * specify the size of buffer pool
 				 */
 				SetConfigOption("shared_buffers", optarg, ctx, gucsource);
-				break;
-
-			case 'C':
-
-				/*
-				 * don't print version string
-				 */
-				Noversion = true;
 				break;
 
 			case 'D':			/* PGDATA directory */

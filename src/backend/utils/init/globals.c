@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.76 2003/11/29 19:52:01 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.77 2004/01/06 17:36:31 neilc Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -24,8 +24,6 @@
 
 
 ProtocolVersion FrontendProtocol = PG_PROTOCOL_LATEST;
-
-bool		Noversion = false;
 
 volatile bool InterruptPending = false;
 volatile bool QueryCancelPending = false;
