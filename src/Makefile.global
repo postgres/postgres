@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.82 1997/01/05 21:16:54 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.83 1997/01/06 10:09:04 bryanh Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -45,23 +45,21 @@
 # of the port.
 
 #  The name of the port.  Valid choices are:
+#   aix            IBM on AIX 3.2.5
 #   alpha          DEC Alpha AXP on OSF/1 2.0
-#   hpux           HP PA-RISC on HP-UX 9.0
-#   i386_solaris   i386 Solaris
-#   sparc_solaris  SUN SPARC on Solaris 2.4
-#   sunos4          SUN SPARC on SunOS 4.1.3
-#   ultrix4        DEC MIPS on Ultrix 4.4
-#   linux          Intel x86 on Linux 1.2 and Linux ELF
-#                  (For non-ELF Linux, see LINUX_ELF below).
 #   BSD44_derived  OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
 #   bsdi           BSD/OS 2.0, 2.01, 2.1
-#   aix            IBM on AIX 3.2.5
-#   irix5          SGI MIPS on IRIX 5.3
 #   dgux           DG/UX 5.4R3.10
-#  Some hooks are provided for
-#   svr4           Intel x86 on Intel SVR4
+#   hpux           HP PA-RISC on HP-UX 9.0
+#   i386_solaris   i386 Solaris
+#   irix5          SGI MIPS on IRIX 5.3 or better
+#   linux          Intel x86 on Linux 1.2 and Linux ELF
+#                  (For non-ELF Linux, see LINUX_ELF below).
 #   next           Motorola MC68K or Intel x86 on NeXTSTEP 3.2
-#  but these are guaranteed not to work as of yet.
+#   sparc_solaris  SUN SPARC on Solaris 2.4
+#   sunos4          SUN SPARC on SunOS 4.1.3
+#   svr4           Intel x86 on Intel SVR4
+#   ultrix4        DEC MIPS on Ultrix 4.4
 #
 #  Note that portname is defined here to be UNDEFINED to remind you
 #  to change it in Makefile.custom.
@@ -110,9 +108,6 @@ POSTDOCDIR= $(POSTGRESDIR)/doc
 # Where the header files necessary to build frontend programs get installed.
 HEADERDIR= $(POSTGRESDIR)/include
 
-# The port to run the postmaster on
-POSTPORT= 5432
-
 # NAMEDATALEN is the max length for system identifiers (e.g. table names,
 # attribute names, function names, etc.)
 #
@@ -159,11 +154,11 @@ ENFORCE_ALIGNMENT= true
 #    and READLINE_LIBDIR to reflect the location of the readline and history
 #    headers and libraries.
 #
-#USE_READLINE= true
+USE_READLINE= false
 
 # directories for the readline and history libraries.
-READLINE_INC= -I/home/tools/include
-READLINE_LIB= -L/home/tools/lib -lreadline
+#READLINE_INC= -I/home/tools/include
+#READLINE_LIB= -L/home/tools/lib -lreadline
 
 # use the following if your readline has a separate history lib
 #HISTORY_INC= -I/home/tools/include -I/home/tools/include/readline
@@ -515,16 +510,16 @@ RANLIB= touch
 
 INSTALL= /usr/ucb/install
 
-#
-# Random things that must be passed everywhere to enable 
-# everything to compile.  :-/
-#
-# The extra -I flag is to scoop up extra BSD-emulating headers.
+                                  #
+       # Random things that must be passed everywhere to enable
+                    # everything to compile.  :-/
+                                  #
+   # The extra -I flag is to scoop up extra BSD-emulating headers.
 # This needs to be fixed.  Things other than the backend should not be
-# accessing headers in the backend directory.
-CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
-LDADD_BE= -lsocket -lnsl -ll -ldl
-LD_ADD= -lsocket -lnsl
+            # accessing headers in the backend directory.
+          CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
+                  LDADD_BE= -lsocket -lnsl -ll -ldl
+                        LD_ADD= -lsocket -lnsl
 
 ifeq ($(CC), cc)
 CFLAGS_SL= -K PIC
@@ -548,14 +543,18 @@ LDADD_BE= -ll
 # RANLIB is not used on IRIX 5
 RANLIB= touch
 
-INSTALL= /sbin/bsdinst
+#If you have GNU install, by all means set CUSTOM_INSTALL to that in
+#Makefile.custom.  If you read the man page for /usr/bin/X11/bsdinst,
+#you will see it is not intended for end user use.  It chowns the files
+#it installs to root.
+INSTALL= /usr/bin/X11/bsdinst
 
 INSTLOPTS=      -m 444
 INSTL_EXE_OPTS= -m 555
 INSTL_LIB_OPTS= -m 664
 
 %.so: %.o
-	$(LD) -G -Bdynamic -o $@ $<
+	$(LD) -G -Bdynamic -o $@ $< $(LD_ADD)
 
 DASH_N=''
 BACKSLASH_C='\\\\c'
@@ -706,6 +705,11 @@ endif
 
 # This goes here so that customization in Makefile.custom is effective
 ##############################################################################
+
+ifeq($(CUSTOM_INSTALL),)
+INSTALL= $(CUSTOM_INSTALL)
+endif
+
 #
 # Flags for CC and LD. 
 

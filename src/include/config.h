@@ -118,6 +118,7 @@
 #  define SYSV_DIRENT
 #  define SB_PAD 44
 #  define HAS_TEST_AND_SET
+#  include <abi_mutex.h>
    typedef abilock_t slock_t;
 #endif
 
