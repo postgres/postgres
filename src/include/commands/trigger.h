@@ -37,7 +37,9 @@ extern DLLIMPORT TriggerData *CurrentTriggerData;
 #define TRIGGER_DEFERRED_DEFERRABLE		0x00000040
 #define TRIGGER_DEFERRED_INITDEFERRED	0x00000080
 #define TRIGGER_DEFERRED_HAS_BEFORE		0x00000100
-#define TRIGGER_DEFERRED_MASK			0x000001F0
+#define TRIGGER_DEFERRED_ROW_INSERTED	0x00000200
+#define TRIGGER_DEFERRED_KEY_CHANGED	0x00000400
+#define TRIGGER_DEFERRED_MASK			0x000007F0
 
 #define TRIGGER_FIRED_BY_INSERT(event)	\
 		(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
@@ -116,5 +118,11 @@ extern void DeferredTriggerSetState(ConstraintsSetStmt *stmt);
 extern void DeferredTriggerSaveEvent(Relation rel, int event,
 					HeapTuple oldtup, HeapTuple newtup);
 
+
+/*
+ * in utils/adt/ri_triggers.c
+ *
+ */
+extern bool RI_FKey_keyequal_upd(void);
 
 #endif	 /* TRIGGER_H */

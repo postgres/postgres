@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.11 2000/01/06 16:30:43 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.12 2000/01/06 20:46:51 wieck Exp $
  *
  * ----------
  */
@@ -463,6 +463,34 @@ HeapTuple
 RI_FKey_check_upd (FmgrInfo *proinfo)
 {
 	return RI_FKey_check(proinfo);
+}
+
+
+/* ----------
+ * RI_FKey_noaction_del -
+ *
+ *	This is here only to let the trigger manager trace for
+ *  "triggered data change violation"
+ * ----------
+ */
+HeapTuple
+RI_FKey_noaction_del (FmgrInfo *proinfo)
+{
+	return NULL;
+}
+
+
+/* ----------
+ * RI_FKey_noaction_upd -
+ *
+ *	This is here only to let the trigger manager trace for
+ *  "triggered data change violation"
+ * ----------
+ */
+HeapTuple
+RI_FKey_noaction_upd (FmgrInfo *proinfo)
+{
+	return NULL;
 }
 
 
@@ -2249,6 +2277,101 @@ RI_FKey_setdefault_upd (FmgrInfo *proinfo)
 	 */
 	elog(ERROR, "internal error #9 in ri_triggers.c");
 	return NULL;
+}
+
+
+/* ----------
+ * RI_FKey_keyequal_upd -
+ *
+ *	Check if we have a key change on update.
+ *
+ *	This is no real trigger procedure. It is used by the deferred
+ *	trigger queue manager to detect "triggered data change violation".
+ * ----------
+ */
+bool
+RI_FKey_keyequal_upd (void)
+{
+	TriggerData		   *trigdata;
+	int					tgnargs;
+	char			  **tgargs;
+	Relation			fk_rel;
+	Relation			pk_rel;
+	HeapTuple			new_row;
+	HeapTuple			old_row;
+	RI_QueryKey			qkey;
+
+	trigdata = CurrentTriggerData;
+	CurrentTriggerData	= NULL;
+
+	/* ----------
+	 * Check for the correct # of call arguments 
+	 * ----------
+	 */
+	tgnargs = trigdata->tg_trigger->tgnargs;
+	tgargs  = trigdata->tg_trigger->tgargs;
+	if (tgnargs < 4 || (tgnargs % 2) != 0)
+		elog(ERROR, "wrong # of arguments in call to RI_FKey_keyequal_upd()");
+	if (tgnargs > RI_MAX_ARGUMENTS)
+		elog(ERROR, "too many keys (%d max) in call to RI_FKey_keyequal_upd()",
+						RI_MAX_NUMKEYS);
+
+	/* ----------
+	 * Nothing to do if no column names to compare given
+	 * ----------
+	 */
+	if (tgnargs == 4)
+		return true;
+
+	/* ----------
+	 * Get the relation descriptors of the FK and PK tables and
+	 * the new and old tuple.
+	 * ----------
+	 */
+	fk_rel	= heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	pk_rel  = trigdata->tg_relation;
+	new_row = trigdata->tg_newtuple;
+	old_row = trigdata->tg_trigtuple;
+
+	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
+	{
+		/* ----------
+		 * MATCH <UNSPECIFIED>
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_UNSPECIFIED:
+			elog(ERROR, "MATCH <unspecified> not implemented yet");
+			break;
+
+		case RI_MATCH_TYPE_FULL:
+			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
+									0,
+									fk_rel, pk_rel,
+									tgnargs, tgargs);
+			heap_close(fk_rel, NoLock);
+
+			/* ----------
+			 * Return if key's are equal
+			 * ----------
+			 */
+			return ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
+													RI_KEYPAIR_PK_IDX);
+
+		/* ----------
+		 * Handle MATCH PARTIAL set null delete.
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_PARTIAL:
+			elog(ERROR, "MATCH PARTIAL not yet supported");
+			break;
+	}
+
+	/* ----------
+	 * Never reached
+	 * ----------
+	 */
+	elog(ERROR, "internal error #9 in ri_triggers.c");
+	return false;
 }
 
 

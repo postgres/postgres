@@ -1055,20 +1055,6 @@ deferredTriggerGetPreviousEvent(Oid relid, ItemPointer ctid)
 
 
 /* ----------
- * deferredTriggerCancelEvent()
- *
- *	Mark an event in the eventlist as cancelled because it isn't
- *	required anymore (replaced by anoter event).
- * ----------
- */
-static void
-deferredTriggerCancelEvent(DeferredTriggerEvent event)
-{
-	event->dte_event |= TRIGGER_DEFERRED_CANCELED;
-}
-
-
-/* ----------
  * deferredTriggerExecute()
  *
  *	Fetch the required tuples back from the heap and fire one
@@ -1112,10 +1098,11 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 	 * Setup the trigger information
 	 * ----------
 	 */
-	SaveTriggerData.tg_event    = event->dte_event | TRIGGER_EVENT_ROW;
+	SaveTriggerData.tg_event    = (event->dte_event & TRIGGER_EVENT_OPMASK) |
+														TRIGGER_EVENT_ROW;
 	SaveTriggerData.tg_relation = rel;
 
-	switch (event->dte_event)
+	switch (event->dte_event & TRIGGER_EVENT_OPMASK)
 	{
 		case TRIGGER_EVENT_INSERT:
 			SaveTriggerData.tg_trigtuple = &newtuple;
@@ -1656,13 +1643,13 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	MemoryContext			oldcxt;
 	DeferredTriggerEvent	new_event;
 	DeferredTriggerEvent	prev_event;
-	bool					prev_done = false;
 	int						new_size;
 	int						i;
 	int						ntriggers;
 	Trigger				  **triggers;
 	ItemPointerData			oldctid;
 	ItemPointerData			newctid;
+	TriggerData				SaveTriggerData;
 
 	if (deftrig_cxt == NULL)
 		elog(ERROR, 
@@ -1694,172 +1681,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 		ItemPointerSetInvalid(&(newctid));
 
 	/* ----------
-	 * Eventually modify the event and do some general RI violation checks
-	 * ----------
-	 */
-	switch (event)
-	{
-		case TRIGGER_EVENT_INSERT:
-			/* ----------
-			 * Don't know how to (surely) check if another tuple with
-			 * this meaning (from all FK's point of view) got deleted
-			 * in the same transaction. Thus not handled yet.
-			 * ----------
-			 */
-			break;
-
-		case TRIGGER_EVENT_UPDATE:
-			/* ----------
-			 * On UPDATE check if the tuple updated is a result
-			 * of the same transaction.
-			 * ----------
-			 */
-			if (oldtup->t_data->t_xmin != GetCurrentTransactionId())
-				break;
-
-			/* ----------
-			 * Look at the previous event to the same tuple if
-			 * any of its triggers has already been executed.
-			 * Such a situation would potentially violate RI
-			 * so we abort the transaction.
-			 * ----------
-			 */
-			prev_event = deferredTriggerGetPreviousEvent(rel->rd_id, &oldctid);
-			if (prev_event->dte_event & TRIGGER_DEFERRED_HAS_BEFORE	||
-					(prev_event->dte_n_items != 0 &&
-					 prev_event->dte_event & TRIGGER_DEFERRED_DONE))
-				prev_done = true;
-			else
-				for (i = 0; i < prev_event->dte_n_items; i++)
-				{
-					if (prev_event->dte_item[i].dti_state &
-									TRIGGER_DEFERRED_DONE)
-					{
-						prev_done = true;
-						break;
-					}
-				}
-
-			if (prev_done)
-			{
-				elog(NOTICE, "UPDATE of row inserted/updated in same "
-						"transaction violates");
-				elog(NOTICE, "referential integrity semantics. Other "
-						"triggers or IMMEDIATE ");
-				elog(ERROR, " constraints have already been executed.");
-			}
-
-			/* ----------
-			 * Anything's fine so far - i.e. none of the previous
-			 * events triggers has been executed up to now. Let's
-			 * the REAL event that happened so far.
-			 * ----------
-			 */
-			switch (prev_event->dte_event & TRIGGER_EVENT_OPMASK)
-			{
-				case TRIGGER_EVENT_INSERT:
-					/* ----------
-					 * The previous operation was an insert.
-					 * So the REAL new event is an INSERT of
-					 * the new tuple.
-					 * ----------
-					 */
-					event = TRIGGER_EVENT_INSERT;
-					ItemPointerSetInvalid(&oldctid);
-					deferredTriggerCancelEvent(prev_event);
-					break;
-
-				case TRIGGER_EVENT_UPDATE:
-					/* ----------
-					 * The previous operation was an UPDATE.
-					 * So the REAL new event is still an UPDATE
-					 * but from the original tuple to this new one.
-					 * ----------
-					 */
-					event = TRIGGER_EVENT_UPDATE;
-					ItemPointerCopy(&(prev_event->dte_oldctid), &oldctid);
-					deferredTriggerCancelEvent(prev_event);
-					break;
-			}
-
-			break;
-
-		case TRIGGER_EVENT_DELETE:
-			/* ----------
-			 * On DELETE check if the tuple updated is a result
-			 * of the same transaction.
-			 * ----------
-			 */
-			if (oldtup->t_data->t_xmin != GetCurrentTransactionId())
-				break;
-
-			/* ----------
-			 * Look at the previous event to the same tuple if
-			 * any of its triggers has already been executed.
-			 * Such a situation would potentially violate RI
-			 * so we abort the transaction.
-			 * ----------
-			 */
-			prev_event = deferredTriggerGetPreviousEvent(rel->rd_id, &oldctid);
-			if (prev_event->dte_event & TRIGGER_DEFERRED_HAS_BEFORE	||
-					(prev_event->dte_n_items != 0 &&
-					 prev_event->dte_event & TRIGGER_DEFERRED_DONE))
-				prev_done = true;
-			else
-				for (i = 0; i < prev_event->dte_n_items; i++)
-				{
-					if (prev_event->dte_item[i].dti_state &
-									TRIGGER_DEFERRED_DONE)
-					{
-						prev_done = true;
-						break;
-					}
-				}
-
-			if (prev_done)
-			{
-				elog(NOTICE, "DELETE of row inserted/updated in same "
-						"transaction violates");
-				elog(NOTICE, "referential integrity semantics. Other "
-						"triggers or IMMEDIATE ");
-				elog(ERROR, " constraints have already been executed.");
-			}
-
-			/* ----------
-			 * Anything's fine so far - i.e. none of the previous
-			 * events triggers has been executed up to now. Let's
-			 * the REAL event that happened so far.
-			 * ----------
-			 */
-			switch (prev_event->dte_event & TRIGGER_EVENT_OPMASK)
-			{
-				case TRIGGER_EVENT_INSERT:
-					/* ----------
-					 * The previous operation was an insert.
-					 * So the REAL new event is nothing.
-					 * ----------
-					 */
-					deferredTriggerCancelEvent(prev_event);
-					return;
-
-				case TRIGGER_EVENT_UPDATE:
-					/* ----------
-					 * The previous operation was an UPDATE.
-					 * So the REAL new event is a DELETE
-					 * but from the original tuple.
-					 * ----------
-					 */
-					event = TRIGGER_EVENT_DELETE;
-					ItemPointerCopy(&(prev_event->dte_oldctid), &oldctid);
-					deferredTriggerCancelEvent(prev_event);
-					break;
-			}
-
-			break;
-	}
-	
-	/* ----------
-	 * Create a new event and save it.
+	 * Create a new event 
 	 * ----------
 	 */
 	oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_cxt);
@@ -1871,7 +1693,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 				ntriggers * sizeof(DeferredTriggerEventItem);
 				
 	new_event = (DeferredTriggerEvent) palloc(new_size);
-	new_event->dte_event	= event;
+	new_event->dte_event	= event & TRIGGER_EVENT_OPMASK;
 	new_event->dte_relid	= rel->rd_id;
 	ItemPointerCopy(&oldctid, &(new_event->dte_oldctid));
 	ItemPointerCopy(&newctid, &(new_event->dte_newctid));
@@ -1888,9 +1710,183 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 			((rel->trigdesc->n_before_row[event] > 0) ?
 						TRIGGER_DEFERRED_HAS_BEFORE : 0);
 	}
+	MemoryContextSwitchTo(oldcxt);
 
+	switch (event & TRIGGER_EVENT_OPMASK)
+	{
+		case TRIGGER_EVENT_INSERT:
+			new_event->dte_event |= TRIGGER_DEFERRED_ROW_INSERTED;
+			new_event->dte_event |= TRIGGER_DEFERRED_KEY_CHANGED;
+			break;
+
+		case TRIGGER_EVENT_UPDATE:
+			/* ----------
+			 * On UPDATE check if the tuple updated has been inserted
+			 * or a foreign referenced key value that's changing now
+			 * has been updated once before in this transaction.
+			 * ----------
+			 */
+			if (oldtup->t_data->t_xmin != GetCurrentTransactionId())
+				prev_event = NULL;
+			else
+				prev_event = 
+					deferredTriggerGetPreviousEvent(rel->rd_id, &oldctid);
+
+			/* ----------
+			 * Now check if one of the referenced keys is changed.
+			 * ----------
+			 */
+			for (i = 0; i < ntriggers; i++)
+			{
+				bool	is_ri_trigger;
+				bool	key_unchanged;
+
+				/* ----------
+				 * We are interested in RI_FKEY triggers only.
+				 * ----------
+				 */
+				switch (triggers[i]->tgfoid)
+				{
+					case F_RI_FKEY_NOACTION_UPD:
+						is_ri_trigger = true;
+						new_event->dte_item[i].dti_state |=
+											TRIGGER_DEFERRED_DONE;
+						break;
+
+					case F_RI_FKEY_CASCADE_UPD:
+					case F_RI_FKEY_RESTRICT_UPD:
+					case F_RI_FKEY_SETNULL_UPD:
+					case F_RI_FKEY_SETDEFAULT_UPD:
+						is_ri_trigger = true;
+						break;
+					
+					default:
+						is_ri_trigger = false;
+						break;
+				}
+				if (!is_ri_trigger)
+					continue;
+
+				SaveTriggerData.tg_event     = TRIGGER_EVENT_UPDATE;
+				SaveTriggerData.tg_relation  = rel;
+				SaveTriggerData.tg_trigtuple = oldtup;
+				SaveTriggerData.tg_newtuple  = newtup;
+				SaveTriggerData.tg_trigger   = triggers[i];
+
+				CurrentTriggerData = &SaveTriggerData;
+				key_unchanged = RI_FKey_keyequal_upd();
+				CurrentTriggerData = NULL;
+				
+				if (key_unchanged)
+				{
+					/* ----------
+					 * The key hasn't changed, so no need later to invoke
+					 * the trigger at all. But remember other states from
+					 * the possible earlier event.
+					 * ----------
+					 */
+					new_event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
+
+					if (prev_event)
+					{
+						if (prev_event->dte_event & 
+									TRIGGER_DEFERRED_ROW_INSERTED)
+						{
+							/* ----------
+							 * This is a row inserted during our transaction.
+							 * So any key value is considered changed.
+							 * ----------
+							 */
+							new_event->dte_event |= 
+											TRIGGER_DEFERRED_ROW_INSERTED;
+							new_event->dte_event |= 
+											TRIGGER_DEFERRED_KEY_CHANGED;
+							new_event->dte_item[i].dti_state |=
+											TRIGGER_DEFERRED_KEY_CHANGED;
+						}
+						else
+						{
+							/* ----------
+							 * This is a row, previously updated. So
+							 * if this key has been changed before, we
+							 * still remember that it happened.
+							 * ----------
+							 */
+							if (prev_event->dte_item[i].dti_state &
+											TRIGGER_DEFERRED_KEY_CHANGED)
+							{
+								new_event->dte_item[i].dti_state |=
+											TRIGGER_DEFERRED_KEY_CHANGED;
+								new_event->dte_event |=
+											TRIGGER_DEFERRED_KEY_CHANGED;
+							}
+						}
+					}
+				}
+				else
+				{
+					/* ----------
+					 * Bomb out if this key has been changed before.
+					 * Otherwise remember that we do so.
+					 * ----------
+					 */
+					if (prev_event)
+					{
+						if (prev_event->dte_event &
+											TRIGGER_DEFERRED_ROW_INSERTED)
+							elog(ERROR, "triggered data change violation "
+									"on relation \"%s\"",
+									nameout(&(rel->rd_rel->relname)));
+
+						if (prev_event->dte_item[i].dti_state &
+											TRIGGER_DEFERRED_KEY_CHANGED)
+							elog(ERROR, "triggered data change violation "
+									"on relation \"%s\"",
+									nameout(&(rel->rd_rel->relname)));
+					}
+
+					/* ----------
+					 * This is the first change to this key, so let
+					 * it happen.
+					 * ----------
+					 */
+					new_event->dte_item[i].dti_state |=
+											TRIGGER_DEFERRED_KEY_CHANGED;
+					new_event->dte_event |= TRIGGER_DEFERRED_KEY_CHANGED;
+				}
+			}
+
+			break;
+
+		case TRIGGER_EVENT_DELETE:
+			/* ----------
+			 * On DELETE check if the tuple deleted has been inserted
+			 * or a possibly referenced key value has changed in this
+			 * transaction.
+			 * ----------
+			 */
+			if (oldtup->t_data->t_xmin != GetCurrentTransactionId())
+				break;
+
+			/* ----------
+			 * Look at the previous event to the same tuple.
+			 * ----------
+			 */
+			prev_event = deferredTriggerGetPreviousEvent(rel->rd_id, &oldctid);
+			if (prev_event->dte_event & TRIGGER_DEFERRED_KEY_CHANGED)
+				elog(ERROR, "triggered data change violation "
+						"on relation \"%s\"",
+						nameout(&(rel->rd_rel->relname)));
+
+			break;
+	}
+
+	/* ----------
+	 * Anything's fine up to here. Add the new event to the queue.
+	 * ----------
+	 */
+	oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_cxt);
 	deferredTriggerAddEvent(new_event);
-
 	MemoryContextSwitchTo(oldcxt);
 
 	return;

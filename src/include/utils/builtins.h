@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.93 1999/12/28 13:40:52 wieck Exp $
+ * $Id: builtins.h,v 1.94 2000/01/06 20:47:01 wieck Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -623,6 +623,8 @@ float64		numeric_float8(Numeric num);
 /* ri_triggers.c */
 HeapTuple	RI_FKey_check_ins(FmgrInfo *proinfo);
 HeapTuple	RI_FKey_check_upd(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_noaction_del(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_noaction_upd(FmgrInfo *proinfo);
 HeapTuple	RI_FKey_cascade_del(FmgrInfo *proinfo);
 HeapTuple	RI_FKey_cascade_upd(FmgrInfo *proinfo);
 HeapTuple	RI_FKey_restrict_del(FmgrInfo *proinfo);

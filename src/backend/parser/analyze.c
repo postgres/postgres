@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.126 1999/12/10 07:37:35 tgl Exp $
+ *	$Id: analyze.c,v 1.127 2000/01/06 20:46:49 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1015,141 +1015,141 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 			extras_after = lappend(extras_after, (Node *)fk_trigger);
 
-			if ((fkconstraint->actions & FKCONSTR_ON_DELETE_MASK) != 0)
+			/*
+			 * Build a CREATE CONSTRAINT TRIGGER statement for the 
+			 * ON DELETE action fired on the PK table !!!
+			 *
+			 */
+			fk_trigger = (CreateTrigStmt *)makeNode(CreateTrigStmt);
+			fk_trigger->trigname		= fkconstraint->constr_name;
+			fk_trigger->relname			= fkconstraint->pktable_name;
+			switch ((fkconstraint->actions & FKCONSTR_ON_DELETE_MASK)
+							>> FKCONSTR_ON_DELETE_SHIFT)
 			{
-				/*
-				 * Build a CREATE CONSTRAINT TRIGGER statement for the 
-				 * ON DELETE action fired on the PK table !!!
-				 *
-				 */
-				fk_trigger = (CreateTrigStmt *)makeNode(CreateTrigStmt);
-				fk_trigger->trigname		= fkconstraint->constr_name;
-				fk_trigger->relname			= fkconstraint->pktable_name;
-				switch ((fkconstraint->actions & FKCONSTR_ON_DELETE_MASK)
-								>> FKCONSTR_ON_DELETE_SHIFT)
-				{
-					case FKCONSTR_ON_KEY_RESTRICT:
-						fk_trigger->funcname = "RI_FKey_restrict_del";
-						break;
-					case FKCONSTR_ON_KEY_CASCADE:
-						fk_trigger->funcname = "RI_FKey_cascade_del";
-						break;
-					case FKCONSTR_ON_KEY_SETNULL:
-						fk_trigger->funcname = "RI_FKey_setnull_del";
-						break;
-					case FKCONSTR_ON_KEY_SETDEFAULT:
-						fk_trigger->funcname = "RI_FKey_setdefault_del";
-						break;
-					default:
-						elog(ERROR, "Only one ON DELETE action can be specified for FOREIGN KEY constraint");
-						break;
-				}
-				fk_trigger->before			= false;
-				fk_trigger->row				= true;
-				fk_trigger->actions[0]		= 'd';
-				fk_trigger->actions[1]		= '\0';
-				fk_trigger->lang			= NULL;
-				fk_trigger->text			= NULL;
-				fk_trigger->attr			= NIL;
-				fk_trigger->when			= NULL;
-				fk_trigger->isconstraint	= true;
-				fk_trigger->deferrable		= fkconstraint->deferrable;
-				fk_trigger->initdeferred	= fkconstraint->initdeferred;
-				fk_trigger->constrrelname	= stmt->relname;
+				case FKCONSTR_ON_KEY_NOACTION:
+					fk_trigger->funcname = "RI_FKey_noaction_del";
+					break;
+				case FKCONSTR_ON_KEY_RESTRICT:
+					fk_trigger->funcname = "RI_FKey_restrict_del";
+					break;
+				case FKCONSTR_ON_KEY_CASCADE:
+					fk_trigger->funcname = "RI_FKey_cascade_del";
+					break;
+				case FKCONSTR_ON_KEY_SETNULL:
+					fk_trigger->funcname = "RI_FKey_setnull_del";
+					break;
+				case FKCONSTR_ON_KEY_SETDEFAULT:
+					fk_trigger->funcname = "RI_FKey_setdefault_del";
+					break;
+				default:
+					elog(ERROR, "Only one ON DELETE action can be specified for FOREIGN KEY constraint");
+					break;
+			}
+			fk_trigger->before			= false;
+			fk_trigger->row				= true;
+			fk_trigger->actions[0]		= 'd';
+			fk_trigger->actions[1]		= '\0';
+			fk_trigger->lang			= NULL;
+			fk_trigger->text			= NULL;
+			fk_trigger->attr			= NIL;
+			fk_trigger->when			= NULL;
+			fk_trigger->isconstraint	= true;
+			fk_trigger->deferrable		= fkconstraint->deferrable;
+			fk_trigger->initdeferred	= fkconstraint->initdeferred;
+			fk_trigger->constrrelname	= stmt->relname;
 
-				fk_trigger->args		= NIL;
-				fk_trigger->args = lappend(fk_trigger->args,
-											fkconstraint->constr_name);
-				fk_trigger->args = lappend(fk_trigger->args,
-											stmt->relname);
-				fk_trigger->args = lappend(fk_trigger->args,
-											fkconstraint->pktable_name);
-				fk_trigger->args = lappend(fk_trigger->args,
-											fkconstraint->match_type);
-				fk_attr = fkconstraint->fk_attrs;
-				pk_attr = fkconstraint->pk_attrs;
-				while (fk_attr != NIL)
-				{
-					id = (Ident *)lfirst(fk_attr);
-					fk_trigger->args = lappend(fk_trigger->args, id->name);
+			fk_trigger->args		= NIL;
+			fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->constr_name);
+			fk_trigger->args = lappend(fk_trigger->args,
+										stmt->relname);
+			fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->pktable_name);
+			fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->match_type);
+			fk_attr = fkconstraint->fk_attrs;
+			pk_attr = fkconstraint->pk_attrs;
+			while (fk_attr != NIL)
+			{
+				id = (Ident *)lfirst(fk_attr);
+				fk_trigger->args = lappend(fk_trigger->args, id->name);
 
-					id = (Ident *)lfirst(pk_attr);
-					fk_trigger->args = lappend(fk_trigger->args, id->name);
+				id = (Ident *)lfirst(pk_attr);
+				fk_trigger->args = lappend(fk_trigger->args, id->name);
 
-					fk_attr = lnext(fk_attr);
-					pk_attr = lnext(pk_attr);
-				}
-
-				extras_after = lappend(extras_after, (Node *)fk_trigger);
+				fk_attr = lnext(fk_attr);
+				pk_attr = lnext(pk_attr);
 			}
 
-			if ((fkconstraint->actions & FKCONSTR_ON_UPDATE_MASK) != 0)
+			extras_after = lappend(extras_after, (Node *)fk_trigger);
+
+			/*
+			 * Build a CREATE CONSTRAINT TRIGGER statement for the 
+			 * ON UPDATE action fired on the PK table !!!
+			 *
+			 */
+			fk_trigger = (CreateTrigStmt *)makeNode(CreateTrigStmt);
+			fk_trigger->trigname		= fkconstraint->constr_name;
+			fk_trigger->relname			= fkconstraint->pktable_name;
+			switch ((fkconstraint->actions & FKCONSTR_ON_UPDATE_MASK)
+							>> FKCONSTR_ON_UPDATE_SHIFT)
 			{
-				/*
-				 * Build a CREATE CONSTRAINT TRIGGER statement for the 
-				 * ON UPDATE action fired on the PK table !!!
-				 *
-				 */
-				fk_trigger = (CreateTrigStmt *)makeNode(CreateTrigStmt);
-				fk_trigger->trigname		= fkconstraint->constr_name;
-				fk_trigger->relname			= fkconstraint->pktable_name;
-				switch ((fkconstraint->actions & FKCONSTR_ON_UPDATE_MASK)
-								>> FKCONSTR_ON_UPDATE_SHIFT)
-				{
-					case FKCONSTR_ON_KEY_RESTRICT:
-						fk_trigger->funcname = "RI_FKey_restrict_upd";
-						break;
-					case FKCONSTR_ON_KEY_CASCADE:
-						fk_trigger->funcname = "RI_FKey_cascade_upd";
-						break;
-					case FKCONSTR_ON_KEY_SETNULL:
-						fk_trigger->funcname = "RI_FKey_setnull_upd";
-						break;
-					case FKCONSTR_ON_KEY_SETDEFAULT:
-						fk_trigger->funcname = "RI_FKey_setdefault_upd";
-						break;
-					default:
-						elog(ERROR, "Only one ON UPDATE action can be specified for FOREIGN KEY constraint");
-						break;
-				}
-				fk_trigger->before			= false;
-				fk_trigger->row				= true;
-				fk_trigger->actions[0]		= 'u';
-				fk_trigger->actions[1]		= '\0';
-				fk_trigger->lang			= NULL;
-				fk_trigger->text			= NULL;
-				fk_trigger->attr			= NIL;
-				fk_trigger->when			= NULL;
-				fk_trigger->isconstraint	= true;
-				fk_trigger->deferrable		= fkconstraint->deferrable;
-				fk_trigger->initdeferred	= fkconstraint->initdeferred;
-				fk_trigger->constrrelname	= stmt->relname;
-
-				fk_trigger->args		= NIL;
-				fk_trigger->args = lappend(fk_trigger->args,
-											fkconstraint->constr_name);
-				fk_trigger->args = lappend(fk_trigger->args,
-											stmt->relname);
-				fk_trigger->args = lappend(fk_trigger->args,
-											fkconstraint->pktable_name);
-				fk_trigger->args = lappend(fk_trigger->args,
-											fkconstraint->match_type);
-				fk_attr = fkconstraint->fk_attrs;
-				pk_attr = fkconstraint->pk_attrs;
-				while (fk_attr != NIL)
-				{
-					id = (Ident *)lfirst(fk_attr);
-					fk_trigger->args = lappend(fk_trigger->args, id->name);
-
-					id = (Ident *)lfirst(pk_attr);
-					fk_trigger->args = lappend(fk_trigger->args, id->name);
-
-					fk_attr = lnext(fk_attr);
-					pk_attr = lnext(pk_attr);
-				}
-
-				extras_after = lappend(extras_after, (Node *)fk_trigger);
+				case FKCONSTR_ON_KEY_NOACTION:
+					fk_trigger->funcname = "RI_FKey_noaction_upd";
+					break;
+				case FKCONSTR_ON_KEY_RESTRICT:
+					fk_trigger->funcname = "RI_FKey_restrict_upd";
+					break;
+				case FKCONSTR_ON_KEY_CASCADE:
+					fk_trigger->funcname = "RI_FKey_cascade_upd";
+					break;
+				case FKCONSTR_ON_KEY_SETNULL:
+					fk_trigger->funcname = "RI_FKey_setnull_upd";
+					break;
+				case FKCONSTR_ON_KEY_SETDEFAULT:
+					fk_trigger->funcname = "RI_FKey_setdefault_upd";
+					break;
+				default:
+					elog(ERROR, "Only one ON UPDATE action can be specified for FOREIGN KEY constraint");
+					break;
 			}
+			fk_trigger->before			= false;
+			fk_trigger->row				= true;
+			fk_trigger->actions[0]		= 'u';
+			fk_trigger->actions[1]		= '\0';
+			fk_trigger->lang			= NULL;
+			fk_trigger->text			= NULL;
+			fk_trigger->attr			= NIL;
+			fk_trigger->when			= NULL;
+			fk_trigger->isconstraint	= true;
+			fk_trigger->deferrable		= fkconstraint->deferrable;
+			fk_trigger->initdeferred	= fkconstraint->initdeferred;
+			fk_trigger->constrrelname	= stmt->relname;
+
+			fk_trigger->args		= NIL;
+			fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->constr_name);
+			fk_trigger->args = lappend(fk_trigger->args,
+										stmt->relname);
+			fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->pktable_name);
+			fk_trigger->args = lappend(fk_trigger->args,
+										fkconstraint->match_type);
+			fk_attr = fkconstraint->fk_attrs;
+			pk_attr = fkconstraint->pk_attrs;
+			while (fk_attr != NIL)
+			{
+				id = (Ident *)lfirst(fk_attr);
+				fk_trigger->args = lappend(fk_trigger->args, id->name);
+
+				id = (Ident *)lfirst(pk_attr);
+				fk_trigger->args = lappend(fk_trigger->args, id->name);
+
+				fk_attr = lnext(fk_attr);
+				pk_attr = lnext(pk_attr);
+			}
+
+			extras_after = lappend(extras_after, (Node *)fk_trigger);
 		}
 	}
 
