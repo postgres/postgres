@@ -3710,8 +3710,8 @@ rm -fr conftest*
 fi
 
 
-echo $ac_n "checking whether 'long long int' is 64 bits using %lld""... $ac_c" 1>&6
-echo "configure:3715: checking whether 'long long int' is 64 bits using %lld" >&5
+echo $ac_n "checking whether 'long long int' is 64 bits""... $ac_c" 1>&6
+echo "configure:3715: checking whether 'long long int' is 64 bits" >&5
 if test "$cross_compiling" = yes; then
   echo "$ac_t""assuming not on target machine" 1>&6
 else
@@ -3754,7 +3754,7 @@ EOF
 if { (eval echo configure:3755: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
 then
   cat >> confdefs.h <<\EOF
-#define HAVE_LONG_LONG_INT_64_lld 1
+#define HAVE_LONG_LONG_INT_64 1
 EOF
  echo "$ac_t""yes" 1>&6
 else
