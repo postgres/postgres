@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.27 2003/08/01 01:01:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.28 2003/08/17 03:14:26 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -153,6 +153,10 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
     </para>
    </important>
 
+   <tip>
+    Restore performance can be improved by increasing <literal>SORT_MEM</>
+    (see <xref linkend="runtime-config-resource-memory">).
+   </tip>
   </sect2>
 
   <sect2 id="backup-dump-all">
