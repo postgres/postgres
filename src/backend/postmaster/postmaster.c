@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.379 2004/03/24 15:20:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.380 2004/04/12 16:19:18 momjian Exp $
  *
  * NOTES
  *
@@ -2017,35 +2017,6 @@ reaper_done:
 }
 
 
-#ifdef WIN32
-/* 
- * On WIN32, we cannot use socket functions inside
- * an APC (signal handler). If we do, select() will return
- * with incorrect return values, causing the postmaster to
- * enter a blocking accept(). We work around this by
- * running it on a separate thread. We still block the main 
- * thread until it is done, so we don't scribble over any
- * data from the wrong thread (pgstat functions aqre not
- * thread safe).
- */
-static DWORD WINAPI win32_pgstat_beterm_thread(LPVOID param)
-{
-	pgstat_beterm((int)param);
-	return 0;
-}
-
-static void win32_pgstat_beterm(int pid) {
-	HANDLE beterm_thread = CreateThread(NULL, 64*1024, win32_pgstat_beterm_thread, (LPVOID)pid, 0, NULL);
-	if (!beterm_thread)
-		ereport(FATAL,
-				(errmsg_internal("failed to create beterm sender thread: %i", (int)GetLastError())));
-	if (WaitForSingleObject(beterm_thread,INFINITE) != WAIT_OBJECT_0)
-		ereport(FATAL,
-				(errmsg_internal("failed to wait for beterm sender thread: %i", (int)GetLastError())));
-	CloseHandle(beterm_thread);
-}
-#endif
-
 /*
  * CleanupProc -- cleanup after terminated backend.
  *
@@ -2099,11 +2070,7 @@ CleanupProc(int pid,
 		else if (pid == BgWriterPID)
 			BgWriterPID = 0;
 		else
-#ifndef WIN32
 			pgstat_beterm(pid);
-#else
-   		    win32_pgstat_beterm(pid);
-#endif
 
 		return;
 	}

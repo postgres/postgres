@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.20 2004/03/02 18:35:59 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.21 2004/04/12 16:19:18 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -98,14 +98,48 @@ int			semctl(int semId, int semNum, int flag, union semun);
 int			semget(int semKey, int semNum, int flags);
 int			semop(int semId, struct sembuf * sops, int flag);
 
-#define sleep(sec)	(Sleep(sec * 1000), /* no return value */ 0)
 
+/* In backend/port/win32/signal.c */
+void pgwin32_signal_initialize(void);
+extern DLLIMPORT HANDLE pgwin32_signal_event;
+void pgwin32_dispatch_queued_signals(void);
+void pg_queue_signal(int signum);
+
+#define sigmask(sig) ( 1 << (sig-1) )
+
+/* Signal function return values */
+#undef SIG_DFL
+#undef SIG_ERR
+#undef SIG_IGN
+#define SIG_DFL ((pqsigfunc)0)
+#define SIG_ERR ((pqsigfunc)-1)
+#define SIG_IGN ((pqsigfunc)1)
 
 #ifndef FRONTEND
-/* In libpq/pqsignal.c */
 #define kill(pid,sig)   pqkill(pid,sig)
-int pqkill(int pid, int sig);
+extern int pqkill(int pid, int sig);
+
+#define pg_usleep(t) pgwin32_backend_usleep(t)
+void pgwin32_backend_usleep(long microsec);
 #endif
+
+/* In backend/port/win32/socket.c */
+#ifndef FRONTEND
+#define socket(af, type, protocol) pgwin32_socket(af, type, protocol)
+#define accept(s, addr, addrlen) pgwin32_accept(s, addr, addrlen)
+#define connect(s, name, namelen) pgwin32_connect(s, name, namelen)
+#define select(n, r, w, e, timeout) pgwin32_select(n, r, w, e, timeout)
+#define recv(s, buf, len, flags) pgwin32_recv(s, buf, len, flags)
+#define send(s, buf, len, flags) pgwin32_send(s, buf, len, flags)
+
+SOCKET pgwin32_socket(int af, int type, int protocol);
+SOCKET pgwin32_accept(SOCKET s, struct sockaddr* addr, int* addrlen);
+int pgwin32_connect(SOCKET s, const struct sockaddr* name, int namelen);
+int pgwin32_select(int nfds, fd_set* readfs, fd_set* writefds, fd_set* exceptfds, const struct timeval* timeout);
+int pgwin32_recv(SOCKET s, char* buf, int len, int flags);
+int pgwin32_send(SOCKET s, char* buf, int len, int flags);
+#endif
+
 
 /* Some extra signals */
 #define SIGHUP				1
@@ -179,3 +213,8 @@ int setitimer(int which, const struct itimerval *value, struct itimerval *ovalue
 #define EWOULDBLOCK WSAEWOULDBLOCK
 #define ECONNRESET WSAECONNRESET
 #define EINPROGRESS WSAEINPROGRESS
+#define ENOBUFS WSAENOBUFS
+#define EPROTONOSUPPORT WSAEPROTONOSUPPORT
+#define ECONNREFUSED WSAECONNREFUSED
+#define EBADFD WSAENOTSOCK
+#define EOPNOTSUPP WSAEOPNOTSUPP

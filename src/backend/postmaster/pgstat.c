@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.65 2004/04/05 03:16:21 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.66 2004/04/12 16:19:18 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -83,6 +83,7 @@ NON_EXEC_STATIC int	pgStatSock = -1;
 static int	pgStatPipe[2];
 static struct sockaddr_storage pgStatAddr;
 static int	pgStatPmPipe[2] = {-1, -1};
+static int  pgStatCollectorPmPipe[2] = {-1, -1};
 
 static int	pgStatPid;
 static time_t last_pgstat_start_time;
@@ -410,7 +411,7 @@ pgstat_init(void)
 	/*
 	 * Create the pipe that controls the statistics collector shutdown
 	 */
-	if (pgpipe(pgStatPmPipe) < 0)
+	if (pgpipe(pgStatPmPipe) < 0 || pgpipe(pgStatCollectorPmPipe) < 0)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
@@ -451,9 +452,9 @@ static pid_t
 pgstat_forkexec(STATS_PROCESS_TYPE procType)
 {
 	pid_t pid;
-	char *av[13];
+	char *av[15];
 	int ac = 0, bufc = 0, i;
-	char pgstatBuf[10][MAXPGPATH];
+	char pgstatBuf[12][MAXPGPATH];
 
 	av[ac++] = "postgres";
 	switch (procType)
@@ -475,6 +476,8 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatSock);
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPmPipe[0]);
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPmPipe[1]);
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatCollectorPmPipe[0]);
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatCollectorPmPipe[1]);
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPipe[0]);
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"%d",pgStatPipe[1]);
 
@@ -518,11 +521,13 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 static void
 pgstat_parseArgs(PGSTAT_FORK_ARGS)
 {
-	Assert(argc == 10);
+	Assert(argc == 12);
 	argc = 0;
 	pgStatSock 		= atoi(argv[argc++]);
 	pgStatPmPipe[0]	= atoi(argv[argc++]);
 	pgStatPmPipe[1]	= atoi(argv[argc++]);
+	pgStatCollectorPmPipe[0] = atoi(argv[argc++]);
+	pgStatCollectorPmPipe[1] = atoi(argv[argc++]);
 	pgStatPipe[0]	= atoi(argv[argc++]);
 	pgStatPipe[1]	= atoi(argv[argc++]);
 	MaxBackends		= atoi(argv[argc++]);
@@ -676,6 +681,12 @@ pgstat_close_sockets(void)
 	if (pgStatPmPipe[1] >= 0)
 		closesocket(pgStatPmPipe[1]);
 	pgStatPmPipe[1] = -1;
+	if (pgStatCollectorPmPipe[0] >= 0)
+		closesocket(pgStatCollectorPmPipe[0]);
+	pgStatCollectorPmPipe[0] = -1;
+	if (pgStatCollectorPmPipe[1] >= 0)
+		closesocket(pgStatCollectorPmPipe[1]);
+	pgStatCollectorPmPipe[1] = -1;
 }
 
 
@@ -1491,6 +1502,8 @@ pgstat_main(PGSTAT_FORK_ARGS)
 	 */
 	closesocket(pgStatPmPipe[1]);
 	pgStatPmPipe[1] = -1;
+	closesocket(pgStatCollectorPmPipe[1]);
+	pgStatCollectorPmPipe[1] = -1;
 
 	/*
 	 * Start a buffering process to read from the socket, so we have a
@@ -1547,7 +1560,6 @@ pgstat_mainChild(PGSTAT_FORK_ARGS)
 	fd_set		rfds;
 	int			readPipe;
 	int			pmPipe;
-	int			maxfd;
 	int			nready;
 	int			len = 0;
 	struct timeval timeout;
@@ -1564,7 +1576,7 @@ pgstat_mainChild(PGSTAT_FORK_ARGS)
 
 	closesocket(pgStatPipe[1]);
 	closesocket(pgStatSock);
-	pmPipe = pgStatPmPipe[0];
+	pmPipe = pgStatCollectorPmPipe[0];
 
 	/*
 	 * In the child we can have default SIGCHLD handling (in case we want
@@ -1666,14 +1678,11 @@ pgstat_mainChild(PGSTAT_FORK_ARGS)
 		 */
 		FD_ZERO(&rfds);
 		FD_SET(readPipe, &rfds);
-		FD_SET(pmPipe, &rfds);
-
-		maxfd = Max(readPipe, pmPipe);
 
 		/*
 		 * Now wait for something to do.
 		 */
-		nready = select(maxfd + 1, &rfds, NULL, NULL,
+		nready = select(readPipe+1, &rfds, NULL, NULL,
 						(need_statwrite) ? &timeout : NULL);
 		if (nready < 0)
 		{
@@ -1845,7 +1854,12 @@ pgstat_mainChild(PGSTAT_FORK_ARGS)
 	 * is still open.  If it is read-ready (ie, EOF), the postmaster must
 	 * have quit.
 	 */
-	if (FD_ISSET(pmPipe, &rfds))
+	FD_ZERO(&rfds);
+	FD_SET(pmPipe, &rfds);
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+	nready = select(pmPipe+1,&rfds,NULL,NULL,&timeout);
+	if (nready > 0 && FD_ISSET(pmPipe, &rfds)) 
 		pgstat_write_statsfile();
 }
 
