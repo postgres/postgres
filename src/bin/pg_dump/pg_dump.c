@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.312 2002/12/21 22:45:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.313 2002/12/27 17:10:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5496,12 +5496,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 	/* Dump Table Comments */
 	dumpTableComment(fout, tbinfo, reltypename, commentDeps);
 
-	if (commentDeps)
-	{
-		for (j = 0; (*commentDeps)[j] != NULL; j++)
-			free((void *) (*commentDeps)[j]);
-		free(commentDeps);
-	}
+	/* commentDeps now belongs to the archive entry ... don't free it! */
 
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(q);
