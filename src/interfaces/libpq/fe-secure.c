@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.52 2004/09/26 22:51:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.53 2004/09/27 23:38:45 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -512,7 +512,7 @@ verify_peer(PGconn *conn)
 
 	{
 		struct hostent hpstr;
-		char		buf[BUFSIZ];
+		char		buf[sizeof(struct hostent)];
 		int			herrno = 0;
 
 		/*
@@ -598,7 +598,7 @@ load_dh_file(int keylength)
 #ifdef WIN32
 	return NULL;
 #else
-	char		pwdbuf[BUFSIZ];
+	char		pwdbuf[sizeof(struct passwd)];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
 	FILE	   *fp;
@@ -745,7 +745,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 #ifdef WIN32
 	return 0;
 #else
-	char		pwdbuf[BUFSIZ];
+	char		pwdbuf[sizeof(struct passwd)];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
 	struct stat buf,
@@ -952,7 +952,7 @@ initialize_SSL(PGconn *conn)
 {
 #ifndef WIN32
 	struct stat buf;
-	char		pwdbuf[BUFSIZ];
+	char		pwdbuf[sizeof(struct passwd)];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
 	char		fnbuf[MAXPGPATH];

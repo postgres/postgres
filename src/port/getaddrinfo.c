@@ -12,7 +12,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.13 2004/09/27 23:24:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.14 2004/09/27 23:39:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ getaddrinfo(const char *node, const char *service,
 
 #ifdef FRONTEND
 			struct hostent hpstr;
-			char		buf[BUFSIZ];
+			char		buf[sizeof(struct hostent)];
 			int			herrno = 0;
 
 			pqGethostbyname(node, &hpstr, buf, sizeof(buf),
