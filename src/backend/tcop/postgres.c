@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.206 2001/01/24 19:43:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.207 2001/02/18 04:28:31 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -878,7 +878,7 @@ finish_xact_command(void)
 	/* Now commit the command */
 	if (DebugLvl >= 1)
 		elog(DEBUG, "CommitTransactionCommand");
-	set_ps_display("commit");	/* XXX probably the wrong place to do this */
+
 	CommitTransactionCommand();
 
 #ifdef SHOW_MEMORY_STATS
@@ -1680,7 +1680,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.206 $ $Date: 2001/01/24 19:43:09 $\n");
+		puts("$Revision: 1.207 $ $Date: 2001/02/18 04:28:31 $\n");
 	}
 
 	/*
@@ -1781,6 +1781,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		 */
 		ReadyForQuery(whereToSendOutput);
 
+		if (IsTransactionBlock())
+			set_ps_display("idle in transaction");
+		else
+			set_ps_display("idle");
+
 		/* ----------------
 		 *	 (2) deal with pending asynchronous NOTIFY from other backends,
 		 *	 and enable async.c's signal handler to execute NOTIFY directly.
@@ -1790,10 +1795,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		QueryCancelPending = false;	/* forget any earlier CANCEL signal */
 
 		EnableNotifyInterrupt();
-
-		if (!IsTransactionBlock())
-			set_ps_display("idle");
-		else	set_ps_display("idle in transaction");
 
 		/* Allow "die" interrupt to be processed while waiting */
 		ImmediateInterruptOK = true;
