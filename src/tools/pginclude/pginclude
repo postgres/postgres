@@ -5,7 +5,7 @@ do
 	sed 's/->[a-zA-Z0-9_\.]*//g' "$FILE" >/tmp/$$a
 	echo "#include \"postgres.h\"" >/tmp/$$.c
 	echo "#include \"/tmp/$$a\"" >>/tmp/$$.c
-	echo "void main() {" >>/tmp/$$.c
+	echo "void include_test() {" >>/tmp/$$.c
 	pgdefine "$FILE" >>/tmp/$$.c
 	echo "}" >>/tmp/$$.c
 	cc -Werror -Wall -I/pg/include -I/pg/backend -c /tmp/$$.c -o /tmp/$$.o >/tmp/$$ 2>&1
