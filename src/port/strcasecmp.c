@@ -1,4 +1,4 @@
-/* $Id: strcasecmp.c,v 1.10 2002/06/20 20:29:33 momjian Exp $ */
+/* $Id: strcasecmp.c,v 1.1 2002/07/18 04:13:59 momjian Exp $ */
 
 /*
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group

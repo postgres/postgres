@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.191 2002/07/17 02:54:01 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.192 2002/07/18 04:13:59 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -871,8 +871,8 @@ fi
 # have working "long long int" support -- see below.
 
 SNPRINTF=''
-AC_CHECK_FUNCS(snprintf, [], SNPRINTF='$(top_builddir)/src/backend/port/snprintf.o')
-AC_CHECK_FUNCS(vsnprintf, [], SNPRINTF='$(top_builddir)/src/backend/port/snprintf.o')
+AC_CHECK_FUNCS(snprintf, [], SNPRINTF='$(top_builddir)/src/port/snprintf.o')
+AC_CHECK_FUNCS(vsnprintf, [], SNPRINTF='$(top_builddir)/src/port/snprintf.o')
 AC_SUBST(SNPRINTF)
 
 
@@ -904,25 +904,25 @@ fi
 AC_SUBST(ISINF)
 
 
-AC_CHECK_FUNCS(getrusage, [], GETRUSAGE='$(top_builddir)/src/backend/port/getrusage.o')
+AC_CHECK_FUNCS(getrusage, [], GETRUSAGE='$(top_builddir)/src/port/getrusage.o')
 AC_SUBST(GETRUSAGE)
-AC_CHECK_FUNCS(srandom, [], SRANDOM='$(top_builddir)/src/backend/port/srandom.o')
+AC_CHECK_FUNCS(srandom, [], SRANDOM='$(top_builddir)/src/port/srandom.o')
 AC_SUBST(SRANDOM)
-AC_CHECK_FUNCS(gethostname, [], GETHOSTNAME='$(top_builddir)/src/backend/port/gethostname.o')
+AC_CHECK_FUNCS(gethostname, [], GETHOSTNAME='$(top_builddir)/src/port/gethostname.o')
 AC_SUBST(GETHOSTNAME)
-AC_CHECK_FUNCS(random, [], MISSING_RANDOM='$(top_builddir)/src/backend/port/random.o')
+AC_CHECK_FUNCS(random, [], MISSING_RANDOM='$(top_builddir)/src/port/random.o')
 AC_SUBST(MISSING_RANDOM)
-AC_CHECK_FUNCS(inet_aton, [], INET_ATON='$(top_builddir)/src/backend/port/inet_aton.o')
+AC_CHECK_FUNCS(inet_aton, [], INET_ATON='$(top_builddir)/src/port/inet_aton.o')
 AC_SUBST(INET_ATON)
-AC_CHECK_FUNCS(strerror, [], STRERROR='$(top_builddir)/src/backend/port/strerror.o')
+AC_CHECK_FUNCS(strerror, [], STRERROR='$(top_builddir)/src/port/strerror.o')
 AC_SUBST(STRERROR)
-AC_CHECK_FUNCS(strdup, [], STRDUP='$(top_builddir)/src/backend/port/strdup.o')
+AC_CHECK_FUNCS(strdup, [], STRDUP='$(top_builddir)/src/port/strdup.o')
 AC_SUBST(STRDUP)
-AC_CHECK_FUNCS(strtol, [], STRTOL='$(top_builddir)/src/backend/port/strtol.o')
+AC_CHECK_FUNCS(strtol, [], STRTOL='$(top_builddir)/src/port/strtol.o')
 AC_SUBST(STRTOL)
-AC_CHECK_FUNCS(strtoul, [], STRTOUL='$(top_builddir)/src/backend/port/strtoul.o')
+AC_CHECK_FUNCS(strtoul, [], STRTOUL='$(top_builddir)/src/port/strtoul.o')
 AC_SUBST(STRTOUL)
-AC_CHECK_FUNCS(strcasecmp, [], STRCASECMP='$(top_builddir)/src/backend/port/strcasecmp.o')
+AC_CHECK_FUNCS(strcasecmp, [], STRCASECMP='$(top_builddir)/src/port/strcasecmp.o')
 AC_SUBST(STRCASECMP)
 
 # Set path of dllinit.c for cygwin
@@ -1101,17 +1101,17 @@ main() {
   ],
   [ AC_MSG_RESULT(no)
 	# Force usage of our own snprintf, since system snprintf is broken
-	SNPRINTF='$(top_builddir)/src/backend/port/snprintf.o'
+	SNPRINTF='$(top_builddir)/src/port/snprintf.o'
 	INT64_FORMAT='"%lld"'
   ],
   [ AC_MSG_RESULT(assuming not on target machine)
 	# Force usage of our own snprintf, since we cannot test foreign snprintf
-	SNPRINTF='$(top_builddir)/src/backend/port/snprintf.o'
+	SNPRINTF='$(top_builddir)/src/port/snprintf.o'
 	INT64_FORMAT='"%lld"'
   ]) ],
   [ AC_MSG_RESULT(assuming not on target machine)
 	# Force usage of our own snprintf, since we cannot test foreign snprintf
-	SNPRINTF='$(top_builddir)/src/backend/port/snprintf.o'
+	SNPRINTF='$(top_builddir)/src/port/snprintf.o'
 	INT64_FORMAT='"%lld"'
   ])
   else

@@ -1,4 +1,4 @@
-/* $Id: gethostname.c,v 1.5 2001/08/24 14:07:49 petere Exp $ */
+/* $Id: gethostname.c,v 1.1 2002/07/18 04:13:59 momjian Exp $ */
 
 #include "c.h"
 

@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.15 2002/07/16 05:49:38 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.16 2002/07/18 04:13:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,9 +23,7 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS=dynloader.o pg_sema.o pg_shmem.o
 
-OBJS+=$(DLLINIT) $(GETHOSTNAME) $(GETRUSAGE) $(INET_ATON) $(ISINF) $(MEMCMP) \
-        $(MISSING_RANDOM) $(SNPRINTF) $(SRANDOM) $(STRCASECMP) $(STRDUP) \
-	$(STRERROR) $(STRTOL) $(STRTOUL)
+OBJS+=$(DLLINIT)
 
 OBJS+=$(TAS)
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/Attic/memcmp.c,v 1.2 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/memcmp.c,v 1.1 2002/07/18 04:13:59 momjian Exp $
  *
  * This file was taken from NetBSD and is used by SunOS because memcmp
  * on that platform does not properly compare negative bytes.

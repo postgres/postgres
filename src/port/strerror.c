@@ -1,4 +1,4 @@
-/* $Id: strerror.c,v 1.6 1999/07/15 23:03:18 momjian Exp $ */
+/* $Id: strerror.c,v 1.1 2002/07/18 04:13:59 momjian Exp $ */
 
 /*
  * strerror - map error number to descriptive string

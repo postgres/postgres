@@ -1,4 +1,4 @@
-/* $Id: isinf.c,v 1.18 2001/10/28 06:25:47 momjian Exp $ */
+/* $Id: isinf.c,v 1.1 2002/07/18 04:13:59 momjian Exp $ */
 
 #include "c.h"
 
