@@ -24,6 +24,10 @@
 #define HAS_TEST_AND_SET
 #endif
 
+#if defined(__arm32__)
+#define HAS_TEST_AND_SET
+#endif
+
 #if defined(__powerpc__)
 #define HAS_TEST_AND_SET
 typedef unsigned int slock_t;
