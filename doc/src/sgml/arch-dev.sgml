@@ -1,5 +1,14 @@
  <chapter id="overview">
-  <title>PostgreSQL from the Developer's Point of View</title>
+  <title>Overview of PostgreSQL Internals</title>
+
+  <note>
+   <title>Author</title>
+   <para>
+    This chapter originally appeared as a part of <xref id="SIM98">, Stefan Simkovics'
+    Master's Thesis prepared at Vienna University of Technology under the direction
+    of O.Univ.Prof.Dr. Georg Gottlob and Univ.Ass. Mag. Katrin Seyr.
+   </para>
+  </note>
 
   <para>
    This chapter gives an overview of the internal structure of the

@@ -274,7 +274,7 @@
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
-<BOOKBIBLIO ID="USERS-GUIDE">
+<BOOKBIBLIO ID="masters-thesis">
 
 Master's Thesis
 Enhancement of the ANSI SQL Implementation of PostgreSQL
@@ -307,15 +307,15 @@ Univ.Ass. Mag. Katrin Seyr
     </authorgroup>
 
     <othercredit>
+     <contrib>
+      with support by
+     </contrib>
      <honorific>O.Univ.Prof.Dr.</honorific>
      <firstname>Georg</firstname>
      <surname>Gottlob</surname>
      <honorific>Univ.Ass. Mag.</honorific>
      <firstname>Katrin</firstname>
      <surname>Seyr</surname>
-     <contrib>
-      with support by
-     </contrib>
     </othercredit>
     <abstract>
      <para>
