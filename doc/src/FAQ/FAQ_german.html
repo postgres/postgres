@@ -14,7 +14,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).</p>
 
-    <p>Letzte Aktualisierung der deutschen Übersetzung: Fr., den 02.01.2004, 07:30 CET</p>
+    <p>Letzte Aktualisierung der deutschen Übersetzung: Fr., den 05.03.2004, 23:30 CET</p>
 
     <p>Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL Website:</p>
     <ul>
@@ -126,7 +126,8 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <h2 align="center">Allgemeine Fragen</h2>
     <h4><a name="1.1">1.1</a>)	Was ist PostgreSQL? Wie wird es ausgesprochen?</h4>
-    <p>Die (englische) Aussprache ist "Post-Gres-Q-L".</p>
+    <p>Die (englische) Aussprache ist "Post-Gres-Q-L". Im allgemeinen Sprachgebrauch hat sich
+    auch "Postgres" durchgesetzt.</p>
 
     <p>PostgreSQL ist eine Weiterentwicklung des POSTGRES-Datenbank-Systems,
     eines zukunftsweisenden DBMS-Forschungsprototyps. Während PostgreSQL
@@ -140,7 +141,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     sind. Der aktuelle Koordinator ist Marc G. Fournier
     (<a href="mailto:scrappy@PostgreSQL.org">scrappy@PostgreSQL.org</a>) (Anmeldemöglichkeit: siehe unten).
     Dieses Team ist für die Gesamtentwicklung von PostgreSQL
-    verantwortlich.</p>
+    verantwortlich. Es handelt sich um ein Gemeinschaftsprojekt, das nicht
+    von einer bestimmten Firma kontrolliert wird. Lesen Sie die Entwickler-FAQ:
+    <a href="http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html">http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html</a>
+    wenn Sie an einer Mitarbeit interessiert sind.</p>
 
     <p>Die Autoren von PostgreSQL 1.01 waren Andrew Yu und Jolly Chen. Viele
     andere haben zur Portierung, zum Testen, zur Fehlersuche und zur
@@ -285,7 +289,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <h4><a name="1.7">1.7</a>) Was ist die neueste Version von PostgreSQL?</h4>
 
-    <p>Die neueste Version von PostgreSQL ist 7.4.1 .</p>
+    <p>Die neueste Version von PostgreSQL ist 7.4.2 .</p>
 
     <p>Die Freigabe einer neuen Version erfolgt im Schnitt ca. dreimal pro Jahr.</p>
 
@@ -385,7 +389,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
           Zuverlässigkeit und Funktionsumfang, dabei wird selbstredend ständig 
           an Performanz-Verbesserungen gearbeitet. Ein interessanter Vergleich
           zwischen PostgreSQL und MySQL befindet sich unter dieser URL:
-            <a href="http://openacs.org/philosophy/why-not-mysql.html">http://openacs.org/philosophy/why-not-mysql.html</a></p>
+            <a href="http://openacs.org/philosophy/why-not-mysql.html">http://openacs.org/philosophy/why-not-mysql.html</a>
+          Zu beachten ist außerdem, daß die MySQL-Hersteller zwar ihre Produkte
+          als Open-Source vertreiben, beim kommerziellen Einsatz müssen jedoch
+          gemäß den Nutzungsbedingungen Lizenzgebühren entrichtet werden.</p>
       </dd>
 
       <dt><b>Zuverlässigkeit</b></dt>
@@ -844,7 +851,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <p>Indizes beanspruchen nicht so viel Platz. Da sie jedoch die
     Daten beinhalten, die sie indizieren, können auch sie sehr groß werden.</p>
 
-    <p>NULL-Werte werden in Bitmaps gespeichert, wodurch sie sehr wenig
+    <p>NULL-Werte werden als Bitmaps gespeichert, wodurch sie sehr wenig
     Platz in Anspruch nehmen.</p>
 
     <h4><a name="4.7">4.7</a>) Wie finde ich heraus, welche Indizes oder Operationen in der Datenbank
