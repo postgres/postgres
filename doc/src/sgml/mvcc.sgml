@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.22 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.23 2002/02/18 16:13:10 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -40,7 +40,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.22 2002/01/20 22:19:56 petere
    <para>
     The main difference between multiversion and lock models is that
     in MVCC locks acquired for querying (reading) data don't conflict
-    with locks acquired for writing data and so reading never blocks
+    with locks acquired for writing data, and so reading never blocks
     writing and writing never blocks reading.
    </para>
   </sect1>
@@ -415,7 +415,7 @@ ERROR:  Can't serialize access due to concurrent update
 	<para>
 	 Acquired by <command>SELECT FOR UPDATE</command>
 	 and <command>LOCK TABLE</command>
-	 for <option>IN ROW SHARE MODE</option> statements.
+	 <option>IN ROW SHARE MODE</option> statements.
 	</para>
 
 	<para>
@@ -432,7 +432,7 @@ ERROR:  Can't serialize access due to concurrent update
 	<para>
 	 Acquired by <command>UPDATE</command>, <command>DELETE</command>,
 	 <command>INSERT</command> and <command>LOCK TABLE</command>
-	 for <option>IN ROW EXCLUSIVE MODE</option> statements.
+	 <option>IN ROW EXCLUSIVE MODE</option> statements.
 	</para>
 
 	<para>
@@ -449,8 +449,8 @@ ERROR:  Can't serialize access due to concurrent update
        <listitem>
 	<para>
 	 Acquired by <command>VACUUM</command> (without <option>FULL</option>)
-	 and <command>LOCK TABLE</command> table
-	 for <option>IN SHARE UPDATE EXCLUSIVE MODE</option>
+	 and <command>LOCK TABLE</command>
+	 <option>IN SHARE UPDATE EXCLUSIVE MODE</option>
 	 statements.
 	</para>
 
@@ -468,8 +468,8 @@ ERROR:  Can't serialize access due to concurrent update
        <listitem>
 	<para>
 	 Acquired by <command>CREATE INDEX</command>
-	 and <command>LOCK TABLE</command> table
-	 for <option>IN SHARE MODE</option>
+	 and <command>LOCK TABLE</command>
+	 <option>IN SHARE MODE</option>
 	 statements.
 	</para>
 
@@ -487,7 +487,7 @@ ERROR:  Can't serialize access due to concurrent update
        </term>
        <listitem>
 	<para>
-	 Acquired by <command>LOCK TABLE</command> for
+	 Acquired by <command>LOCK TABLE</command>
 	 <option>IN SHARE ROW EXCLUSIVE MODE</option> statements.
 	</para>
 
@@ -505,8 +505,8 @@ ERROR:  Can't serialize access due to concurrent update
        </term>
        <listitem>
 	<para>
-	 Acquired by <command>LOCK TABLE</command> table 
-	 for <option>IN EXCLUSIVE MODE</option> statements.
+	 Acquired by <command>LOCK TABLE</command>
+	 <option>IN EXCLUSIVE MODE</option> statements.
 	</para>
 
 	<para>
@@ -527,7 +527,8 @@ ERROR:  Can't serialize access due to concurrent update
 	 Acquired by <command>ALTER TABLE</command>,
 	 <command>DROP TABLE</command>,
 	 <command>VACUUM FULL</command> and <command>LOCK TABLE</command>
-	 statements.
+	 <option>IN ACCESS EXCLUSIVE MODE</option> (or plain
+	 <command>LOCK TABLE</command>) statements.
 	</para>
 
 	<para>
