@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Mar 29 00:07:11 EST 2004
+   Last updated: Fri Jun 4 00:09:16 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -965,11 +965,11 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    all databases. If you want to change the OID to something else, or if
    you want to make a copy of the table, with the original OIDs, there is
    no reason you can't do it:
-        CREATE TABLE new_table(old_oid oid, mycol int);
-        SELECT old_oid, mycol INTO new FROM old;
-        COPY new TO '/tmp/pgtable';
-        DELETE FROM new;
-        COPY new WITH OIDS FROM '/tmp/pgtable';
+        CREATE TABLE new_table(mycol int);
+        SELECT oid AS old_oid, mycol INTO tmp_table FROM old_table;
+        COPY tmp_table TO '/tmp/pgtable';
+        COPY new_table WITH OIDS FROM '/tmp/pgtable';
+        DROP TABLE tmp_table;
 
    OIDs are stored as 4-byte integers, and will overflow at 4 billion. No
    one has reported this ever happening, and we plan to have the limit

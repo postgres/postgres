@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Thu May  6 10:22:34 EDT 2004</P>
+    <P>Last updated: Fri Jun  4 00:09:16 EDT 2004</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1213,16 +1213,12 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     of the table, with the original <SMALL>OID</SMALL>s, there is no
     reason you can't do it:</P>
 <PRE>
-        CREATE TABLE new_table(old_oid oid, mycol int);
-        SELECT old_oid, mycol INTO new FROM old;
-        COPY new TO '/tmp/pgtable';
-        DELETE FROM new;
-        COPY new WITH OIDS FROM '/tmp/pgtable';
+        CREATE TABLE new_table(mycol int);
+        SELECT oid AS old_oid, mycol INTO tmp_table FROM old_table;
+        COPY tmp_table TO '/tmp/pgtable';
+        COPY new_table WITH OIDS FROM '/tmp/pgtable';
+        DROP TABLE tmp_table;
 </PRE>
-<!--
-    CREATE TABLE new_table (mycol int);
-    INSERT INTO new_table (oid, mycol) SELECT oid, mycol FROM old_table;
--->
     <P>O<SMALL>ID</SMALL>s are stored as 4-byte integers, and will
     overflow at 4 billion. No one has reported this ever happening, and
     we plan to have the limit removed before anyone does.</P>
