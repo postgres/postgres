@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.161.2.1 2004/02/13 22:26:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.161.2.2 2004/05/11 02:21:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,6 +343,9 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 			plan->extParam = bms_add_members(plan->extParam,
 											 initplan->plan->extParam);
+			/* allParam must include all members of extParam */
+			plan->allParam = bms_add_members(plan->allParam,
+											 plan->extParam);
 			initplan_cost += initplan->plan->total_cost;
 		}
 
