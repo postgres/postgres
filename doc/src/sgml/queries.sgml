@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.21 2003/04/10 01:22:44 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.22 2003/08/14 23:13:27 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -1208,10 +1208,10 @@ SELECT <replaceable>select_list</replaceable>
   </para>
 
   <para>
-   When using <literal>LIMIT</>, it is a good idea to use an
+   When using <literal>LIMIT</>, it is important to use an
    <literal>ORDER BY</> clause that constrains the result rows into a
    unique order.  Otherwise you will get an unpredictable subset of
-   the query's rows. --- You may be asking for the tenth through
+   the query's rows. You may be asking for the tenth through
    twentieth rows, but tenth through twentieth in what ordering?  The
    ordering is unknown, unless you specified <literal>ORDER BY</>.
   </para>

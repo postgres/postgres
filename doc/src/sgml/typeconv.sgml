@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.31 2003/05/26 00:11:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.32 2003/08/14 23:13:27 tgl Exp $
 -->
 
 <chapter Id="typeconv">
@@ -113,15 +113,16 @@ with, and perhaps converted to, the types of the target columns.
 </varlistentry>
 <varlistentry>
 <term>
-<literal>UNION</literal> and <literal>CASE</literal> constructs
+<literal>UNION</literal>, <literal>CASE</literal>, and <literal>ARRAY</literal> constructs
 </term>
 <listitem>
 <para>
-Since all query results from a unionized <literal>SELECT</literal> statement must appear in a single
-set of columns, the types of the results
-of each <literal>SELECT</> clause must be matched up and converted to a uniform set.
-Similarly, the branch expressions of a <literal>CASE</> construct must be converted to
-a common type so that the <literal>CASE</> expression as a whole has a known output type.
+Since all query results from a unionized <literal>SELECT</literal> statement
+must appear in a single set of columns, the types of the results of each
+<literal>SELECT</> clause must be matched up and converted to a uniform set.
+Similarly, the branch expressions of a <literal>CASE</> construct must be
+converted to a common type so that the <literal>CASE</> expression as a whole
+has a known output type.  The same holds for <literal>ARRAY</> constructs.
 </para>
 </listitem>
 </varlistentry>
@@ -754,7 +755,8 @@ padding spaces.
 </sect1>
 
 <sect1 id="typeconv-union-case">
-<title><literal>UNION</> and <literal>CASE</> Constructs</title>
+<title><literal>UNION</literal>, <literal>CASE</literal>, and
+<literal>ARRAY</literal> Constructs</title>
 
 <para>
 SQL <literal>UNION</> constructs must match up possibly dissimilar types to
@@ -762,12 +764,13 @@ become a single result set.  The resolution algorithm is applied separately
 to each output column of a union query.  The <literal>INTERSECT</> and
 <literal>EXCEPT</> constructs resolve dissimilar types in the same way as
 <literal>UNION</>.
-A <literal>CASE</> construct also uses the identical algorithm to match up its
-component expressions and select a result data type.
+A <literal>CASE</> construct uses the identical algorithm to match up its
+component expressions and select a result data type, as does <literal>ARRAY</>.
 </para>
 
 <procedure>
-<title><literal>UNION</> and <literal>CASE</> Type Resolution</title>
+<title><literal>UNION</literal>, <literal>CASE</literal>, and
+<literal>ARRAY</literal> Type Resolution</title>
 
 <step performance="required">
 <para>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.16 2003/08/10 01:20:34 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.17 2003/08/14 23:13:27 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -490,7 +490,7 @@ CREATE TABLE products (
     price numeric NOT NULL CHECK (price > 0)
 );
 </programlisting>
-    The order doesn't matter.  It does not necessarily affect in which
+    The order doesn't matter.  It does not necessarily determine in which
     order the constraints are checked.
    </para>
 
@@ -578,7 +578,7 @@ CREATE TABLE products (
     least) two rows in the table where the values of each of the
     corresponding columns that are part of the constraint are equal.
     However, null values are not considered equal in this
-    consideration.  That means, in the presence of a multicolumn
+    consideration.  That means even in the presence of a
     unique constraint it is possible to store an unlimited number of
     rows that contain a null value in at least one of the constrained
     columns.  This behavior conforms to the SQL standard, but we have
@@ -629,7 +629,7 @@ CREATE TABLE example (
     A primary key indicates that a column or group of columns can be
     used as a unique identifier for rows in the table.  (This is a
     direct consequence of the definition of a primary key.  Note that
-    a unique constraint does not, in fact, provide a unique identifier
+    a unique constraint does not, by itself, provide a unique identifier
     because it does not exclude null values.)  This is useful both for
     documentation purposes and for client applications.  For example,
     a GUI application that allows modifying row values probably needs
@@ -850,8 +850,9 @@ CREATE TABLE capitals (
    In this case, a row  of  capitals  <firstterm>inherits</firstterm>  all
    attributes  (name,  population,  and altitude) from its
    parent, cities.  The type  of  the  attribute  name  is
-   <type>text</type>,  a  native  <productname>PostgreSQL</productname>  type  for variable length
-   ASCII strings.  The type of the attribute population is
+   <type>text</type>,  a  native  <productname>PostgreSQL</productname>  type
+   for variable length character strings.  The type of the attribute
+   population is
    <type>float</type>,  a  native <productname>PostgreSQL</productname> type for double precision
    floating-point numbers.  State capitals have  an  extra
    attribute, state, that shows their state.  In <productname>PostgreSQL</productname>,
@@ -964,7 +965,7 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
    <para>
      In previous versions of <productname>PostgreSQL</productname>, the
      default was not to get access to child tables. This was found to
-     be error prone and is also in violation of the SQL standard. Under the old
+     be error prone and is also in violation of the SQL99 standard. Under the old
      syntax, to get the sub-tables you append <literal>*</literal> to the table name.
      For example
 <programlisting>
@@ -1180,7 +1181,8 @@ ALTER TABLE products RENAME TO items;
   <note>
    <para>
     To change the owner of a table, index, sequence, or view, use the
-    <command>ALTER TABLE</command> command.
+    <xref linkend="sql-altertable" endterm="sql-altertable-title">
+    command.
    </para>
   </note>
 
@@ -1192,7 +1194,8 @@ ALTER TABLE products RENAME TO items;
    <literal>USAGE</>, and <literal>ALL PRIVILEGES</>. For complete
    information on the different types of privileges supported by
    <productname>PostgreSQL</productname>, refer to the
-   <command>GRANT</command> reference page.  The following sections
+   <xref linkend="sql-grant" endterm="sql-grant-title">
+   reference page.  The following sections
    and chapters will also show you how those privileges are used.
   </para>
 
@@ -1453,8 +1456,8 @@ SHOW search_path;
  $user,public
 </screen>
     The first element specifies that a schema with the same name as
-    the current user is to be searched.  Since no such schema exists
-    yet, this entry is ignored.  The second element refers to the
+    the current user is to be searched.  If no such schema exists,
+    the entry is ignored.  The second element refers to the
     public schema that we have seen already.
    </para>
 
@@ -1737,7 +1740,7 @@ DROP TABLE products CASCADE;
    the possible dependencies varies with the type of the object.  You
    can also write <literal>RESTRICT</literal> instead of
    <literal>CASCADE</literal> to get the default behavior which is to
-   restrict drops of objects that other objects depend on.
+   prevent drops of objects that other objects depend on.
   </para>
 
   <note>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.81 2003/08/09 22:50:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.82 2003/08/14 23:13:27 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -450,14 +450,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 '{{1,2,3},{4,5,6},{7,8,9}}'
 </programlisting>
      This constant is a two-dimensional, 3-by-3 array consisting of three
-     subarrays of integers.
-    </para>
-
-    <para>
-     Individual array elements can be placed between double-quote
-     marks (<literal>"</literal>) <!-- " --> to avoid ambiguity
-     problems with respect to whitespace.  Without quote marks, the
-     array-value parser will skip leading whitespace.
+     subarrays of integers.  For more information see <xref linkend="arrays">.
     </para>
 
     <para>
@@ -1190,8 +1183,10 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     one of the two standard cast syntaxes is used to do a run-time
     conversion, it will internally invoke a registered function to
     perform the conversion.  By convention, these conversion functions
-    have the same name as their output type, but this is not something
-    that a portable application should rely on.)
+    have the same name as their output type, and thus the <quote>function-like
+    syntax</> is nothing more than a direct invocation of the underlying
+    conversion function.  Obviously, this is not something that a portable
+    application should rely on.)
    </para>
   </sect2>
 
@@ -1349,8 +1344,10 @@ SELECT ... WHERE x &lt;&gt; 0 AND y/x &gt; 1.5;
 <programlisting>
 SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
 </programlisting>
-    A <literal>CASE</> construct used in this fashion will defeat optimization attempts,
-    so it should only be done when necessary.
+    A <literal>CASE</> construct used in this fashion will defeat optimization
+    attempts, so it should only be done when necessary.  (In this particular
+    example, it would doubtless be best to sidestep the problem by writing
+    <literal>y &gt; 1.5*x</> instead.)
    </para>
   </sect2>
  </sect1>
