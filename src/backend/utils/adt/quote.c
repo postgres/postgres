@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.1 2000/09/05 20:25:13 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.2 2000/09/12 19:39:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ quote_ident(PG_FUNCTION_ARGS)
 
 	PG_FREE_IF_COPY(t, 0);
 
-	return result;
+	PG_RETURN_TEXT_P(result);
 }
 
 /*
@@ -63,7 +63,7 @@ quote_literal(PG_FUNCTION_ARGS)
 
 	PG_FREE_IF_COPY(t, 0);
 
-	return result;
+	PG_RETURN_TEXT_P(result);
 }
 
 
