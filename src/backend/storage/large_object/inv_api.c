@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.34 1998/08/19 02:02:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.35 1998/08/20 22:24:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -644,11 +644,8 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
 								&skey);
 		}
 
-		res = NULL;
 		do
 		{
-			if (res)
-				pfree(res);
 			res = index_getnext(obj_desc->iscan, ForwardScanDirection);
 
 			if (res == (RetrieveIndexResult) NULL)
@@ -668,7 +665,8 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
 			 */
 
 			tuple = heap_fetch(obj_desc->heap_r, SnapshotNow,
-							  &(res->heap_iptr), buffer);
+							  &res->heap_iptr, buffer);
+			pfree(res);
 		} while (tuple == (HeapTuple) NULL);
 
 		/* remember this tid -- we may need it for later reads/writes */
