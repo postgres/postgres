@@ -173,6 +173,8 @@ EXOTIC FEATURES
 * Allow queries across multiple databases
 * Allow nested transactions (Vadim)
 * Allow INSERT/UPDATE to return new.col or old.col (Philip)
+* SQL*Net listener that makes PostgreSQL appear as an Oracle database 
+  to clients
 
 MISC
 
