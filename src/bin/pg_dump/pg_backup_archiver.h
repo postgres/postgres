@@ -20,7 +20,10 @@
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
- *	Initial version. 
+ *		Initial version. 
+ *
+ * Modifications - 15-Sep-2000 - pjw@rhyme.com.au
+ *	-	Added braceDepth to sqlparseInfo to handle braces in rule definitions.
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +62,7 @@ typedef z_stream *z_streamp;
 
 #define K_VERS_MAJOR 1
 #define K_VERS_MINOR 4 
-#define K_VERS_REV 11 
+#define K_VERS_REV 14 
 
 /* Data block types */
 #define BLK_DATA 1
@@ -124,6 +127,7 @@ typedef struct {
 	sqlparseState		state;
 	char				lastChar;
 	char				quoteChar;
+	int					braceDepth;
 } sqlparseInfo;
 
 typedef struct _archiveHandle {

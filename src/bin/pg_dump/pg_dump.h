@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.51 2000/08/07 12:32:54 pjw Exp $
+ * $Id: pg_dump.h,v 1.52 2000/09/15 04:35:16 pjw Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -17,6 +17,12 @@
  * Modifications - 6/1/97 - igor@sba.miami.edu
  * - Added extern's for the functions that clear allocated memory
  *	 in pg_dump.c
+ *
+ * Modifications - 14-Sep-2000 - pjw@rhyme.com.au
+ *	- 	Added typedefn fields to typeinfo and relinfo
+ * 	- 	Added enum for findTypeByOid to allow special handling of
+ *		'0' OID.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -45,6 +51,7 @@ typedef struct _typeInfo
 	char	   *typdefault;
 	char	   *typrelid;
 	char	   *usename;
+	char	   *typedefn;
 	int			passedbyvalue;
 	int			isArray;
 } TypeInfo;
@@ -80,6 +87,7 @@ typedef struct _tableInfo
 	char	   *oid;
 	char	   *relname;
 	char	   *relacl;
+	char	   *viewdef;
 	bool		sequence;
 	int			numatts;		/* number of attributes */
 	int		   *inhAttrs;		/* an array of flags, one for each
@@ -87,6 +95,7 @@ typedef struct _tableInfo
 								 * attribute is an inherited attribute */
 	char	  **attnames;		/* the attribute names */
 	char	  **attoids;		/* oids of the various attributes */
+	char	  **atttypedefns;	/* formatted column type definitions */
 	char	  **typnames;		/* fill out attributes */
 	bool	   *notnull;		/* Not null constraints of an attribute */
 	char	  **adef_expr;		/* DEFAULT expressions */
@@ -197,7 +206,13 @@ extern void dumpSchemaIdx(Archive *fout,
 			  TableInfo *tblinfo,
 			  int numTables);
 
-extern char *findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid);
+typedef enum _OidOptions {
+	zeroAsOpaque = 1,
+	zeroAsAny = 2,
+    useBaseTypeName = 1024
+} OidOptions;
+
+extern char *findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid, OidOptions opts);
 extern char *findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid);
 extern int	findFuncByName(FuncInfo *finfo, int numFuncs, const char *name);
 extern int	findTableByName(TableInfo *tbinfo, int numTables, const char *relname);

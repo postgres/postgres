@@ -483,7 +483,7 @@ int ExecuteSqlCommandBuf(ArchiveHandle* AH, void *qryv, int bufLen)
 
 				case SQL_SCAN: /* Default state == 0, set in _allocAH */
 
-					if (qry[pos] == ';')
+					if (qry[pos] == ';' && AH->sqlparse.braceDepth == 0)
 					{
 						/* Send It & reset the buffer */
 						/* fprintf(stderr, "    sending: '%s'\n\n", AH->sqlBuf->data); */
@@ -507,7 +507,16 @@ int ExecuteSqlCommandBuf(ArchiveHandle* AH, void *qryv, int bufLen)
 						else if (qry[pos] == '*' && AH->sqlparse.lastChar == '/')
 						{
 							AH->sqlparse.state = SQL_IN_EXT_COMMENT;
+						} 
+						else if ( qry[pos] == '(' )
+						{
+							AH->sqlparse.braceDepth++;
 						}
+						else if (qry[pos] == ')')
+						{
+							AH->sqlparse.braceDepth--;
+						}
+
 						AH->sqlparse.lastChar = qry[pos];
 					}
 
