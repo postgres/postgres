@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.17 1997/11/10 15:15:40 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.18 1997/11/17 03:47:31 scrappy Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -281,8 +281,9 @@ InitUserid()
 static void
 InitCommunication()
 {
-	char	   *postid;
-	char	   *postport;
+        char *postid;       /* value of environment variable */
+        char *postport;     /* value of environment variable */
+        char *ipc_key;       /* value of environemnt variable */
 	IPCKey		key = 0;
 
 	/* ----------------
@@ -302,10 +303,15 @@ InitCommunication()
 		Assert(MyBackendTag >= 0);
 	}
 
-	/* ----------------
-	 *	try and get the ipc key from POSTPORT
-	 * ----------------
-	 */
+
+        ipc_key = getenv("IPC_KEY");
+        if (!PointerIsValid(ipc_key)) {
+            key = -1;
+        } else {
+            key = atoi(ipc_key);
+            Assert(MyBackendTag >= 0);
+        }
+     
 	postport = getenv("POSTPORT");
 
 	if (PointerIsValid(postport))
@@ -314,8 +320,6 @@ InitCommunication()
 
 		if (MyBackendTag == -1)
 			elog(FATAL, "InitCommunication: missing POSTID");
-
-		key = SystemPortAddressCreateIPCKey(address);
 
 		/*
 		 * Enable this if you are trying to force the backend to run as if
@@ -328,8 +332,11 @@ InitCommunication()
 		 * To enable emulation, run the following shell commands (in addition
 		 * to enabling this goto)
 		 *
-		 * % setenv POSTID 1 % setenv POSTPORT 4321 % postmaster & % kill -9
-		 * %1
+		 * % setenv POSTID 1 
+                 * % setenv POSTPORT 4321 
+                 * % setenv IPC_KEY 4321000
+                 * % postmaster & 
+                 * % kill -9 %1
 		 *
 		 * Upon doing this, Postmaster will have allocated the shared memory
 		 * resources that Postgres will attach to if you enable
