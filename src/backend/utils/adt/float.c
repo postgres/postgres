@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.109 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.110 2004/09/02 17:12:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,12 @@
 #endif
 #ifndef SHRT_MIN
 #define SHRT_MIN (-32768)
+#endif
+
+/* Recent HPUXen have isfinite() macro in place of more standard finite() */
+#if !defined(HAVE_FINITE) && defined(isfinite)
+#define finite(x) isfinite(x)
+#define HAVE_FINITE 1
 #endif
 
 /* not sure what the following should be, but better to make it over-sufficient */
