@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.20 1997/09/12 09:01:46 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.21 1997/09/13 03:12:55 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,10 +36,6 @@
 extern char *parseString;
 extern char *parseCh;
 
-int CurScanPosition(void);
-int DefaultStartPosition;
-int CheckStartPosition;
-
 /* some versions of lex define this as a macro */
 #if defined(yywrap)
 #undef yywrap
@@ -61,6 +57,7 @@ void unput(char);
 extern YYSTYPE yylval;
 
 int llen;
+char *ScanString;
 char literal[MAX_PARSE_BUFFER];
 
 %}
@@ -68,19 +65,26 @@ char literal[MAX_PARSE_BUFFER];
 	 * The longest pattern which matches an input string is always chosen.
 	 * For equal-length patterns, the first occurring in the rules list is chosen.
 	 * INITIAL is the starting condition, to which all non-conditional rules apply.
-	 * <xc> is an exclusive condition to allow embedded C-style comments.
 	 * When in an exclusive condition, only those rules defined for that condition apply.
-	 * So, when in condition <xc>, only strings which would terminate the "extended comment"
-	 *	trigger any action other than "ignore".
+	 *
+	 * Exclusive states change parsing rules while the state is active.
+	 * There are exclusive states for quoted strings, extended comments,
+	 *  and to eliminate parsing troubles for numeric strings.
+	 * Exclusive states:
+	 *  <xc> extended C-style comments - tgl 1997-07-12
+	 *  <xq> quoted strings - tgl 1997-07-30
+	 *  <xm> numeric strings with embedded minus sign - tgl 1997-09-05
+	 *
 	 * The "extended comment" syntax closely resembles allowable operator syntax.
-	 * Therefore, be sure to match _any_ candidate comment, including those with appended
+	 * So, when in condition <xc>, only strings which would terminate the
+	 *  "extended comment" trigger any action other than "ignore".
+	 * Be sure to match _any_ candidate comment, including those with appended
 	 *	operator-like symbols. - thomas 1997-07-14
 	 */
 
-	/* define an exclusive condition to allow extended C-style comments - tgl 1997-07-12 */
 %x xc
-	/* define an exclusive condition for quoted strings - tgl 1997-07-30 */
 %x xq
+%x xm
 
 	/* We used to allow double-quoted strings, but SQL doesn't so we won't either */
 quote			'
@@ -97,6 +101,7 @@ xcinside		[^*]*
 xcstar			[^/]
 
 digit			[0-9]
+number			[-+.0-9Ee]
 letter			[_A-Za-z]
 letter_or_digit [_A-Za-z0-9]
 
@@ -107,32 +112,30 @@ identifier		{letter}{letter_or_digit}*
 typecast		"::"
 
 self			[,()\[\].;$\:\+\-\*\/\<\>\=\|]
-selfm			{self}[\-][\.0-9]
-
 op_and_self		[\~\!\@\#\%\^\&\|\`\?\$\:\+\-\*\/\<\>\=]
-
 operator		{op_and_self}+
-operatorm		{op_and_self}+[\-][\.0-9]
+
+xminteger		{integer}/-
+xmreal			{real}/{space}*-{digit}
+xmstop			-
 
 integer			-?{digit}+
 real			-?{digit}+\.{digit}+([Ee][-+]?{digit}+)?
 
 param			\${integer}
 
-comment			"--".*\n
-comment2		"//".*\n
+comment			("--"|"//").*\n
 
 space			[ \t\n\f]
 other			.
 
-%%
-{sysfunc}		{
-						yylval.str = pstrdup(SystemFunctionHandler((char *)yytext));
-						return (SCONST);
-				}
+/* DO NOT PUT ANY COMMENTS IN THE FOLLOWING SECTION.
+ * AT&T lex does not properly handle C-style comments in this second lex block.
+ * So, put comments here. tgl - 1997-09-08
+ */
 
-{comment}		{ /* ignore */	}
-{comment2}		{ /* ignore */	}
+%%
+{comment}		{ /* ignore */ }
 
 {xcline}		{ /* ignore */ }
 
@@ -167,18 +170,26 @@ other			.
 					llen += yyleng-1;
 				}
 
+<xm>{space}*	{ /* ignore */ }
+<xm>{xmstop}	{
+					BEGIN(INITIAL);
+					return (yytext[0]);
+				}
+
+{sysfunc}		{
+						yylval.str = pstrdup(SystemFunctionHandler((char *)yytext));
+						return (SCONST);
+				}
+
 {typecast}		{ return TYPECAST; }
 
-{selfm}			{
-					yyless(yyleng-2);
+{self}/-[\.0-9]	{
 					return (yytext[0]);
 				}
 {self}			{ 	return (yytext[0]); }
-
-{operatorm}		{
-					yyless(yyleng-2);
+{operator}/-[\.0-9]	{
 					yylval.str = pstrdup((char*)yytext);
-						return (Op);
+					return (Op);
 				}
 {operator}		{
 					if (strcmp((char*)yytext,"!=") == 0)
@@ -191,7 +202,26 @@ other			.
 					yylval.ival = atoi((char*)&yytext[1]);
 					return (PARAM);
 				}
+
+{integer}/{space}*-{number}	{
+					BEGIN(xm);
+					ScanString = pstrdup((char*)yytext);
+					yylval.ival = atoi((char*)yytext);
+					return (ICONST);
+				}
+{real}/{space}*-{number} {
+					char* endptr;
+					BEGIN(xm);
+					errno = 0;
+					ScanString = pstrdup((char*)yytext);
+					yylval.dval = strtod(((char *)yytext),&endptr);
+					if (*endptr != '\0' || errno == ERANGE)
+					elog(WARN,"\tBad float8 input format\n");
+					CheckFloat8Val(yylval.dval);
+					return (FCONST);
+				}
 {integer}		{
+					ScanString = pstrdup((char*)yytext);
 					yylval.ival = atoi((char*)yytext);
 					return (ICONST);
 				}
@@ -199,6 +229,7 @@ other			.
 					char* endptr;
 
 					errno = 0;
+					ScanString = pstrdup((char*)yytext);
 					yylval.dval = strtod(((char *)yytext),&endptr);
 					if (*endptr != '\0' || errno == ERANGE)
 						elog(WARN,"\tBad float8 input format\n");
@@ -215,16 +246,6 @@ other			.
 
 					keyword = ScanKeywordLookup((char*)yytext);
 					if (keyword != NULL) {
-						if ( keyword->value == DEFAULT )
-						{
-							DefaultStartPosition = CurScanPosition () + yyleng + 1;
-							printf( "default offset is %d\n", DefaultStartPosition);
-						}
-						else if ( keyword->value == CHECK )
-						{
-							CheckStartPosition = CurScanPosition () + yyleng + 1;
-							printf( "check offset is %d\n", CheckStartPosition);
-						}
 						return (keyword->value);
 					}
 					else
@@ -241,7 +262,7 @@ other			.
 
 void yyerror(char message[])
 {
-	elog(WARN, "parser: %s at or near \"%s\"\n", message, yytext);
+	elog(WARN, "parser: %s at or near \"%s\"", message, yytext);
 }
 
 int yywrap()
@@ -266,8 +287,6 @@ init_io()
 #endif /* FLEX_SCANNER */
 	BEGIN INITIAL;
 }
-
-
 
 #if !defined(FLEX_SCANNER)
 /* get lex input from a string instead of from stdin */
@@ -294,16 +313,9 @@ unput(char c)
 	else if (c != 0)
 		*--parseCh = c;
 }
-
-int
-CurScanPosition(void)
-{
-	return (parseCh - parseString - yyleng);
-}
 #endif /* !defined(FLEX_SCANNER) */
 
 #ifdef FLEX_SCANNER
-static bool end_of_buf = false;
 /* input routine for flex to read input from a string instead of a file */
 int
 myinput(char* buf, int max)
@@ -321,29 +333,10 @@ myinput(char* buf, int max)
 			memcpy(buf, parseString, copylen);
 		buf[copylen] = '\0';
 		parseCh = parseString;
-		end_of_buf = false;
 		return copylen;
 	}
 	else
-	{
-		end_of_buf = true;
 		return 0; /* end of string */
-	}
 }
-
-int
-CurScanPosition(void)
-{
-	int spos;
-	
-	if ( end_of_buf )
-		spos = strlen (parseString) - strlen (yytext);
-	else
-		spos = yy_c_buf_p - yy_current_buffer->yy_ch_buf - yyleng;
-	
-	printf( "current position is %d\n", spos);
-	return (spos);
-}
-
 #endif /* FLEX_SCANNER */
 
