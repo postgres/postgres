@@ -258,7 +258,7 @@
    unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
    
    Commercial support for PostgreSQL is available at
-   http://www.pgsql.com/
+   http://www.pgsql.com/.
    
     1.7) What is the latest release of PostgreSQL?
     
@@ -311,7 +311,7 @@
    subscribe to the pgsql-hackers and pgsql-patches mailing lists. Third,
    submit high-quality patches to pgsql-patches.
    
-   There are about a dozen people who have COMMIT privileges to the
+   There are about a dozen people who have commit privileges to the
    PostgreSQL CVS archive. All of them have submitted so many
    high-quality patches that it was a pain for the existing committers to
    keep up, and we had confidence that patches they committed were likely
