@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
-"POT-Creation-Date: 2004-08-01 19:01-0300\n"
-"PO-Revision-Date: 2004-08-02 11:46+0800\n"
+"POT-Creation-Date: 2004-08-02 19:00-0300\n"
+"PO-Revision-Date: 2004-08-03 13:42+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -15,17 +15,17 @@ msgstr ""
 #: access/common/indextuple.c:57
 #, c-format
 msgid "number of index columns (%d) exceeds limit (%d)"
-msgstr ""
+msgstr "索引欄位數(%d)超過限制(%d)"
 
 #: access/common/indextuple.c:165
 #, c-format
 msgid "index row requires %lu bytes, maximum size is %lu"
-msgstr ""
+msgstr "索引資料行需要 %lu 個位元組，最大值是 %lu"
 
 #: access/common/heaptuple.c:578
 #, c-format
 msgid "number of columns (%d) exceeds limit (%d)"
-msgstr ""
+msgstr "欄位數(%d)超過限制(%d)"
 
 #: access/common/printtup.c:296
 #: tcop/fastpath.c:186
@@ -33,17 +33,17 @@ msgstr ""
 #: tcop/postgres.c:1480
 #, c-format
 msgid "unsupported format code: %d"
-msgstr ""
+msgstr "不被支援的格式代碼：%d"
 
 #: access/common/tupdesc.c:511
 #, c-format
 msgid "column \"%s\" cannot be declared SETOF"
-msgstr ""
+msgstr "無法將欄位\"%s\"宣告為SETOF"
 
 #: access/common/tupdesc.c:630
 #: access/common/tupdesc.c:661
 msgid "number of aliases does not match number of columns"
-msgstr ""
+msgstr "別名數量與欄位數量不符"
 
 #: access/common/tupdesc.c:655
 msgid "no column alias was provided"
@@ -56,34 +56,34 @@ msgstr ""
 #: access/hash/hashinsert.c:90
 #, c-format
 msgid "index row size %lu exceeds hash maximum %lu"
-msgstr ""
+msgstr "索引資料行大小 %lu 超過hash最大值 %lu"
 
 #: access/hash/hashsearch.c:145
 msgid "hash indexes do not support whole-index scans"
-msgstr ""
+msgstr "hash索引不支援完整索引掃描"
 
 #: access/hash/hashovfl.c:521
 #, c-format
 msgid "out of overflow pages in hash index \"%s\""
-msgstr ""
+msgstr "hash索引\"%s\"的overflow頁用盡"
 
 #: access/hash/hashutil.c:46
 msgid "hash indexes cannot contain null keys"
-msgstr ""
+msgstr "hash索引不含包含空鍵值"
 
 #: access/hash/hashutil.c:126
 #, c-format
 msgid "index \"%s\" is not a hash index"
-msgstr ""
+msgstr "索引\"%s\"不是一個hash索引"
 
 #: access/hash/hashutil.c:132
 #, c-format
 msgid "index \"%s\" has wrong hash version"
-msgstr ""
+msgstr "索引\"%s\"的hash版本不正確"
 
 #: access/hash/hashutil.c:133
 msgid "Please REINDEX it."
-msgstr ""
+msgstr "請執行REINDEX。"
 
 #: access/heap/heapam.c:608
 #: access/heap/heapam.c:643
@@ -98,7 +98,7 @@ msgstr "\"%s\"是一個索引"
 #: access/heap/heapam.c:683
 #, c-format
 msgid "\"%s\" is a special relation"
-msgstr ""
+msgstr "\"%s\"是一個特別relation"
 
 #: access/heap/heapam.c:618
 #: access/heap/heapam.c:653
@@ -106,12 +106,12 @@ msgstr ""
 #: catalog/aclchk.c:292
 #, c-format
 msgid "\"%s\" is a composite type"
-msgstr ""
+msgstr "\"%s\"是一個複合資料型別"
 
 #: access/heap/hio.c:109
 #, c-format
 msgid "row is too big: size %lu, maximum size %lu"
-msgstr ""
+msgstr "資料行太大：大小 %lu，最大值 %lu"
 
 #: access/index/indexam.c:134
 #: access/index/indexam.c:159
@@ -127,13 +127,13 @@ msgstr "\"%s\"不是一個索引"
 #: access/nbtree/nbtinsert.c:254
 #, c-format
 msgid "duplicate key violates unique constraint \"%s\""
-msgstr ""
+msgstr "重複的鍵值違反唯一限制\"%s\""
 
 #: access/nbtree/nbtinsert.c:404
 #: access/nbtree/nbtsort.c:499
 #, c-format
 msgid "index row size %lu exceeds btree maximum, %lu"
-msgstr ""
+msgstr "索引資料行大小 %lu 超過btree最大值 %lu"
 
 #: access/nbtree/nbtpage.c:169
 #: access/nbtree/nbtpage.c:350
@@ -145,7 +145,7 @@ msgstr "索引\"%s\"不是btree"
 #: access/nbtree/nbtpage.c:356
 #, c-format
 msgid "version mismatch in index \"%s\": file version %d, code version %d"
-msgstr ""
+msgstr "在索引\"%s\"發現版本不符：檔案版本 %d，code版本 %d"
 
 #: access/rtree/rtree.c:646
 msgid "variable-length rtree keys are not supported"
@@ -154,35 +154,35 @@ msgstr "不支援可變長度rtree keys"
 #: access/rtree/rtree.c:786
 #, c-format
 msgid "index row size %lu exceeds rtree maximum, %lu"
-msgstr ""
+msgstr "索引資料行大小 %lu 超過rtree最大值 %lu"
 
 #: access/transam/xact.c:399
 msgid "cannot have more than 2^32-1 commands in a transaction"
-msgstr ""
+msgstr "每筆交易不能超過2^32-1個命令"
 
-#. translator: %s represents an SQL statement name
+#  translator: %s represents an SQL statement name
 #: access/transam/xact.c:1951
 #, c-format
 msgid "%s cannot run inside a transaction block"
-msgstr ""
+msgstr "%s 不能在交易中執行"
 
-#. translator: %s represents an SQL statement name
+#  translator: %s represents an SQL statement name
 #: access/transam/xact.c:1961
 #, c-format
 msgid "%s cannot run inside a subtransaction"
-msgstr ""
+msgstr "%s 不能在子交易中執行"
 
-#. translator: %s represents an SQL statement name
+#  translator: %s represents an SQL statement name
 #: access/transam/xact.c:1973
 #, c-format
 msgid "%s cannot be executed from a function"
-msgstr ""
+msgstr "%s 不能在函式中執行"
 
-#. translator: %s represents an SQL statement name
+#  translator: %s represents an SQL statement name
 #: access/transam/xact.c:2024
 #, c-format
 msgid "%s may only be used in transaction blocks"
-msgstr ""
+msgstr "%s 只能在交易中被使用"
 
 #: access/transam/xact.c:2154
 msgid "there is already a transaction in progress"
@@ -204,7 +204,7 @@ msgstr "沒有這個savepoint"
 #: access/transam/slru.c:497
 #, c-format
 msgid "file \"%s\" doesn't exist, reading as zeroes"
-msgstr ""
+msgstr "檔案\"%s\"不存在，當成空檔案讀取"
 
 #: access/transam/slru.c:681
 #: access/transam/slru.c:688
@@ -241,17 +241,17 @@ msgstr "無法建立檔案\"%s\"：%m"
 #: access/transam/slru.c:696
 #, c-format
 msgid "could not seek in file \"%s\" to offset %u: %m"
-msgstr ""
+msgstr "無法移動至檔案\"%s\"的偏移位置 %u：%m"
 
 #: access/transam/slru.c:703
 #, c-format
 msgid "could not read from file \"%s\" at offset %u: %m"
-msgstr ""
+msgstr "無法讀取檔案\"%s\"於偏移位置 %u：%m"
 
 #: access/transam/slru.c:710
 #, c-format
 msgid "could not write to file \"%s\" at offset %u: %m"
-msgstr ""
+msgstr "無法寫入檔案\"%s\"於偏移位置 %u：%m"
 
 #: access/transam/slru.c:717
 #: access/transam/xlog.c:1557
@@ -308,18 +308,18 @@ msgstr "無法寫入備份狀態檔\"%s\"：%m"
 #: access/transam/xlog.c:5006
 #, c-format
 msgid "could not close log file %u, segment %u: %m"
-msgstr ""
+msgstr "無法關閉日誌檔 %u，區段 %u：%m"
 
 #: access/transam/xlog.c:1231
 #: access/transam/xlog.c:2386
 #, c-format
 msgid "could not seek in log file %u, segment %u to offset %u: %m"
-msgstr ""
+msgstr "無法在日誌檔 %u 中移動，區段 %u 至偏移位置 %u：%m"
 
 #: access/transam/xlog.c:1245
 #, c-format
 msgid "could not write to log file %u, segment %u at offset %u: %m"
-msgstr ""
+msgstr "無法寫入日誌檔 %u，區段 %u 於偏移位置 %u：%m"
 
 #: access/transam/xlog.c:1497
 #: access/transam/xlog.c:1589
@@ -328,7 +328,7 @@ msgstr ""
 #: access/transam/xlog.c:1866
 #, c-format
 msgid "could not open file \"%s\" (log file %u, segment %u): %m"
-msgstr ""
+msgstr "無法開啟檔案\"%s\"(日誌檔 %u，區段 %u)：%m"
 
 #: access/transam/xlog.c:1550
 #: access/transam/xlog.c:1675
@@ -365,7 +365,7 @@ msgstr ""
 #: access/transam/xlog.c:1777
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m"
-msgstr ""
+msgstr "無法將檔案\"%s\"重新命名為\"%s\"(初始化日誌檔 %u，區段 %u)：%m"
 
 #: access/transam/xlog.c:1931
 #: access/transam/xlog.c:2032
@@ -382,7 +382,7 @@ msgstr "無法刪除檔案\"%s\"：%m"
 #: access/transam/xlog.c:2013
 #, c-format
 msgid "archive file \"%s\" has wrong size: %lu instead of %lu"
-msgstr ""
+msgstr "備份檔\"%s\"大小不正確：%lu 而非 %lu"
 
 #: access/transam/xlog.c:2020
 #, c-format
@@ -392,12 +392,12 @@ msgstr "從備份還原日誌檔\"%s\""
 #: access/transam/xlog.c:2046
 #, c-format
 msgid "could not restore \"%s\" from archive: return code %d"
-msgstr ""
+msgstr "無法從備份檔\"%s\"還原：傳回碼 %d"
 
 #: access/transam/xlog.c:2105
 #, c-format
 msgid "could not open transaction log directory \"%s\": %m"
-msgstr ""
+msgstr "無法開啟交易日誌目錄\"%s\"：%m"
 
 #: access/transam/xlog.c:2150
 #, c-format
@@ -428,12 +428,12 @@ msgstr ""
 #: access/transam/xlog.c:2416
 #, c-format
 msgid "invalid record offset at %X/%X"
-msgstr ""
+msgstr "無效的記錄偏移位置於 %X/%X"
 
 #: access/transam/xlog.c:2394
 #, c-format
 msgid "could not read from log file %u, segment %u at offset %u: %m"
-msgstr ""
+msgstr "無法讀取日誌檔 %u，區段 %u 於偏移位置 %u：%m"
 
 #: access/transam/xlog.c:2424
 #, c-format
@@ -443,12 +443,12 @@ msgstr ""
 #: access/transam/xlog.c:2439
 #, c-format
 msgid "record with zero length at %X/%X"
-msgstr ""
+msgstr "記錄長度為0於 %X/%X"
 
 #: access/transam/xlog.c:2464
 #, c-format
 msgid "record length %u at %X/%X too long"
-msgstr ""
+msgstr "記錄長度 %u 於 %X/%X 太長"
 
 #: access/transam/xlog.c:2471
 #, c-format
@@ -492,7 +492,7 @@ msgstr ""
 
 #: access/transam/xlog.c:2627
 msgid "Incorrect XLOG_SEG_SIZE in page header."
-msgstr ""
+msgstr "page header中的XLOG_SEG_SIZE不正確"
 
 #: access/transam/xlog.c:2636
 #, c-format
@@ -519,7 +519,7 @@ msgstr "無法開啟\"%s\"：%m"
 #: access/transam/xlog.c:2735
 #, c-format
 msgid "syntax error in history file: %s"
-msgstr ""
+msgstr "歷史記錄檔中有語法錯誤：%s"
 
 #: access/transam/xlog.c:2736
 msgid "Expected a numeric timeline ID."
@@ -528,7 +528,7 @@ msgstr ""
 #: access/transam/xlog.c:2741
 #, c-format
 msgid "invalid data in history file: %s"
-msgstr ""
+msgstr "歷史記錄檔中有無效資料：%s"
 
 #: access/transam/xlog.c:2742
 msgid "Timeline IDs must be in increasing sequence."
@@ -537,7 +537,7 @@ msgstr ""
 #: access/transam/xlog.c:2755
 #, c-format
 msgid "invalid data in history file \"%s\""
-msgstr ""
+msgstr "歷史記錄檔\"%s\"中有無效資料"
 
 #: access/transam/xlog.c:2756
 msgid "Timeline IDs must be less than child timeline's ID."
@@ -546,7 +546,7 @@ msgstr ""
 #: access/transam/xlog.c:2992
 #, c-format
 msgid "could not link file \"%s\" to \"%s\": %m"
-msgstr ""
+msgstr "無法將檔案\"%s\"連結到\"%s\"：%m"
 
 #: access/transam/xlog.c:2999
 #: access/transam/xlog.c:3775
@@ -626,7 +626,7 @@ msgstr ""
 #: access/transam/xlog.c:3154
 #: access/transam/xlog.c:3184
 msgid "It looks like you need to initdb."
-msgstr ""
+msgstr "你可能需要執行initdb。"
 
 #: access/transam/xlog.c:3164
 msgid "incorrect checksum in control file"
@@ -699,7 +699,7 @@ msgstr ""
 #: access/transam/xlog.c:3250
 #: access/transam/xlog.c:3257
 msgid "It looks like you need to initdb or install locale support."
-msgstr ""
+msgstr "你可能需要執行initdb或安裝locale支援。"
 
 #: access/transam/xlog.c:3254
 #, c-format
@@ -724,11 +724,11 @@ msgstr ""
 #: access/transam/xlog.c:3553
 #, c-format
 msgid "could not open recovery command file \"%s\": %m"
-msgstr ""
+msgstr "無法開啟還原命令檔\"%s\"：%m"
 
 #: access/transam/xlog.c:3558
 msgid "starting archive recovery"
-msgstr ""
+msgstr "開始備份檔還原"
 
 #: access/transam/xlog.c:3602
 #, c-format
@@ -772,12 +772,12 @@ msgstr ""
 #: access/transam/xlog.c:3676
 #, c-format
 msgid "unrecognized recovery parameter \"%s\""
-msgstr ""
+msgstr "無法識別的還原參數\"%s\""
 
 #: access/transam/xlog.c:3684
 #, c-format
 msgid "syntax error in recovery command file: %s"
-msgstr ""
+msgstr "還原命令檔有語法錯誤：%s"
 
 #: access/transam/xlog.c:3686
 msgid "Lines should have the format parameter = 'value'."
@@ -795,27 +795,27 @@ msgstr ""
 
 #: access/transam/xlog.c:3821
 msgid "archive recovery complete"
-msgstr ""
+msgstr "備份檔還原完成"
 
 #: access/transam/xlog.c:3908
 #, c-format
 msgid "recovery stopping after commit of transaction %u, time %s"
-msgstr ""
+msgstr "還原在確認交易 %u 後停止，時間 %s"
 
 #: access/transam/xlog.c:3912
 #, c-format
 msgid "recovery stopping before commit of transaction %u, time %s"
-msgstr ""
+msgstr "還原在確認交易 %u 前停止，時間 %s"
 
 #: access/transam/xlog.c:3919
 #, c-format
 msgid "recovery stopping after abort of transaction %u, time %s"
-msgstr ""
+msgstr "還原在取消交易 %u 後停止，時間 %s"
 
 #: access/transam/xlog.c:3923
 #, c-format
 msgid "recovery stopping before abort of transaction %u, time %s"
-msgstr ""
+msgstr "還原在取消交易 %u 前停止，時間 %s"
 
 #: access/transam/xlog.c:3969
 msgid "control file contains invalid data"
@@ -824,26 +824,26 @@ msgstr "控制檔包含無效的資料"
 #: access/transam/xlog.c:3973
 #, c-format
 msgid "database system was shut down at %s"
-msgstr ""
+msgstr "資料庫系統於 %s 被關閉"
 
 #: access/transam/xlog.c:3977
 #, c-format
 msgid "database system shutdown was interrupted at %s"
-msgstr ""
+msgstr "關閉資料庫系統於 %s 被中斷"
 
 #: access/transam/xlog.c:3981
 #, c-format
 msgid "database system was interrupted while in recovery at %s"
-msgstr ""
+msgstr "資料庫系統還原於 %s 被中斷"
 
 #: access/transam/xlog.c:3983
 msgid "This probably means that some data is corrupted and you will have to use the last backup for recovery."
-msgstr ""
+msgstr "這表示部份資料可能損壞，你需要使用最後的備份進行還原。"
 
 #: access/transam/xlog.c:3987
 #, c-format
 msgid "database system was interrupted at %s"
-msgstr ""
+msgstr "資料庫系統於 %s 被中斷"
 
 #: access/transam/xlog.c:4019
 #, c-format
@@ -853,60 +853,60 @@ msgstr ""
 #: access/transam/xlog.c:4032
 #, c-format
 msgid "checkpoint record is at %X/%X"
-msgstr ""
+msgstr "檢查點記錄於 %X/%X"
 
 #: access/transam/xlog.c:4042
 #, c-format
 msgid "using previous checkpoint record at %X/%X"
-msgstr ""
+msgstr "使用前一個檢查點記錄於 %X/%X"
 
 #: access/transam/xlog.c:4048
 msgid "could not locate a valid checkpoint record"
-msgstr ""
+msgstr "找不到有效的檢查點記錄"
 
 #: access/transam/xlog.c:4055
 #, c-format
 msgid "redo record is at %X/%X; undo record is at %X/%X; shutdown %s"
-msgstr ""
+msgstr "redo記錄於 %X/%X，undo記錄於 %X/%X，關閉 %s"
 
 #: access/transam/xlog.c:4060
 #, c-format
 msgid "next transaction ID: %u; next OID: %u"
-msgstr ""
+msgstr "下一個交易ID：%u，下一個OID：%u"
 
 #: access/transam/xlog.c:4064
 msgid "invalid next transaction ID"
-msgstr ""
+msgstr "不合法的下一個交易ID"
 
 #: access/transam/xlog.c:4081
 msgid "invalid redo in checkpoint record"
-msgstr ""
+msgstr "檢查點記錄中有不合法的redo記錄"
 
 #: access/transam/xlog.c:4095
 msgid "invalid redo/undo record in shutdown checkpoint"
-msgstr ""
+msgstr "關閉檢查點中有不合法的redo/undo記錄"
 
 #: access/transam/xlog.c:4109
 msgid "database system was not properly shut down; automatic recovery in progress"
-msgstr ""
+msgstr "資料庫系統未被正常關閉，自動還原執行中"
 
 #: access/transam/xlog.c:4117
 msgid "automatic recovery in progress"
-msgstr ""
+msgstr "自動還原執行中"
 
 #: access/transam/xlog.c:4154
 #, c-format
 msgid "redo starts at %X/%X"
-msgstr ""
+msgstr "redo開始於 %X/%X"
 
 #: access/transam/xlog.c:4211
 #, c-format
 msgid "redo done at %X/%X"
-msgstr ""
+msgstr "redo完成於 %X/%X"
 
 #: access/transam/xlog.c:4219
 msgid "redo is not required"
-msgstr ""
+msgstr "不需要redo"
 
 #: access/transam/xlog.c:4243
 #, c-format
@@ -916,60 +916,60 @@ msgstr ""
 #: access/transam/xlog.c:4325
 #, c-format
 msgid "undo starts at %X/%X"
-msgstr ""
+msgstr "undo開始於 %X/%X"
 
 #: access/transam/xlog.c:4336
 #, c-format
 msgid "undo done at %X/%X"
-msgstr ""
+msgstr "undo完成於 %X/%X"
 
 #: access/transam/xlog.c:4341
 msgid "undo is not required"
-msgstr ""
+msgstr "不需要undo"
 
 #: access/transam/xlog.c:4401
 msgid "database system is ready"
-msgstr ""
+msgstr "資料庫系統待命"
 
 #: access/transam/xlog.c:4434
 msgid "invalid primary checkpoint link in control file"
-msgstr ""
+msgstr "控制檔中有無效的主要檢查點連結"
 
 #: access/transam/xlog.c:4437
 msgid "invalid secondary checkpoint link in control file"
-msgstr ""
+msgstr "控制檔中有無效的次要檢查點連結"
 
 #: access/transam/xlog.c:4447
 msgid "invalid primary checkpoint record"
-msgstr ""
+msgstr "無效的主檢查點記錄"
 
 #: access/transam/xlog.c:4450
 msgid "invalid secondary checkpoint record"
-msgstr ""
+msgstr "無效的次要檢查點記錄"
 
 #: access/transam/xlog.c:4457
 msgid "invalid resource manager ID in primary checkpoint record"
-msgstr ""
+msgstr "主要檢查點記錄中有無效的資源管理器ID"
 
 #: access/transam/xlog.c:4460
 msgid "invalid resource manager ID in secondary checkpoint record"
-msgstr ""
+msgstr "次要檢查點記錄中有無效的資源管理器ID"
 
 #: access/transam/xlog.c:4468
 msgid "invalid xl_info in primary checkpoint record"
-msgstr ""
+msgstr "主要檢查點記錄中有無效的xl_info"
 
 #: access/transam/xlog.c:4471
 msgid "invalid xl_info in secondary checkpoint record"
-msgstr ""
+msgstr "次要檢查點記錄中有無效的xl_info"
 
 #: access/transam/xlog.c:4478
 msgid "invalid length of primary checkpoint record"
-msgstr ""
+msgstr "主要檢查點記錄的長度無效"
 
 #: access/transam/xlog.c:4481
 msgid "invalid length of secondary checkpoint record"
-msgstr ""
+msgstr "次要檢查點記錄的長度無效"
 
 #: access/transam/xlog.c:4532
 msgid "shutting down"
@@ -997,29 +997,29 @@ msgstr ""
 #: access/transam/xlog.c:5031
 #, c-format
 msgid "could not fsync log file %u, segment %u: %m"
-msgstr ""
+msgstr "無法fsync日誌檔 %u，區段 %u：%m"
 
 #: access/transam/xlog.c:5039
 #, c-format
 msgid "could not fdatasync log file %u, segment %u: %m"
-msgstr ""
+msgstr "無法fdatasync日誌檔 %u，區段 %u：%m"
 
 #: bootstrap/bootstrap.c:302
 #: postmaster/postmaster.c:494
-#: tcop/postgres.c:2503
+#: tcop/postgres.c:2504
 #, c-format
 msgid "--%s requires a value"
-msgstr ""
+msgstr "--%s 需要一個值"
 
 #: bootstrap/bootstrap.c:307
 #: postmaster/postmaster.c:499
-#: tcop/postgres.c:2508
+#: tcop/postgres.c:2509
 #, c-format
 msgid "-c %s requires a value"
-msgstr ""
+msgstr "-c %s 需要一個值"
 
 #: bootstrap/bootstrap.c:335
-#: tcop/postgres.c:2576
+#: tcop/postgres.c:2577
 #, c-format
 msgid ""
 "%s does not know where to find the database system data.\n"
@@ -1053,32 +1053,32 @@ msgstr ""
 #: catalog/dependency.c:152
 #, c-format
 msgid "cannot drop %s because other objects depend on it"
-msgstr ""
+msgstr "無法刪除 %s，因為有其它物件依存於它"
 
 #: catalog/dependency.c:154
 msgid "Use DROP ... CASCADE to drop the dependent objects too."
-msgstr ""
+msgstr "使用DROP ... CASCADE刪除依存物件。"
 
 #: catalog/dependency.c:212
 #, c-format
 msgid "failed to drop all objects depending on %s"
-msgstr ""
+msgstr "刪除所有依存於 %s 的物件失敗"
 
 #: catalog/dependency.c:312
 #: catalog/dependency.c:717
 #, c-format
 msgid "cannot drop %s because it is required by the database system"
-msgstr ""
+msgstr "無法刪除 %s，因為資料庫系統需要它"
 
 #: catalog/dependency.c:451
 #, c-format
 msgid "cannot drop %s because %s requires it"
-msgstr ""
+msgstr "無法刪除 %s，因為 %s 需要它"
 
 #: catalog/dependency.c:453
 #, c-format
 msgid "You may drop %s instead."
-msgstr ""
+msgstr "你可以改為刪除 %s。"
 
 #: catalog/dependency.c:521
 #: catalog/dependency.c:674
@@ -1091,7 +1091,7 @@ msgstr ""
 #: catalog/dependency.c:679
 #, c-format
 msgid "%s depends on %s"
-msgstr ""
+msgstr "%s 依存於 %s"
 
 #: catalog/dependency.c:533
 #: catalog/dependency.c:686
@@ -1107,12 +1107,12 @@ msgstr ""
 #: catalog/dependency.c:1427
 #, c-format
 msgid "function %s"
-msgstr ""
+msgstr "函式 %s"
 
 #: catalog/dependency.c:1432
 #, c-format
 msgid "type %s"
-msgstr ""
+msgstr "型別 %s"
 
 #: catalog/dependency.c:1462
 #, c-format
@@ -1142,7 +1142,7 @@ msgstr ""
 #: catalog/dependency.c:1579
 #, c-format
 msgid "language %s"
-msgstr ""
+msgstr "語言 %s"
 
 #: catalog/dependency.c:1586
 #, c-format
@@ -1207,7 +1207,7 @@ msgstr ""
 #: catalog/dependency.c:1780
 #, c-format
 msgid "composite type %s"
-msgstr ""
+msgstr "複合型別 %s"
 
 #: catalog/dependency.c:1785
 #, c-format
@@ -1230,7 +1230,7 @@ msgstr ""
 #: catalog/aclchk.c:960
 #: catalog/aclchk.c:1119
 msgid "no privileges were granted"
-msgstr ""
+msgstr "未被賦予任何權限"
 
 #: catalog/aclchk.c:337
 #: catalog/aclchk.c:495
@@ -1239,7 +1239,7 @@ msgstr ""
 #: catalog/aclchk.c:964
 #: catalog/aclchk.c:1123
 msgid "not all privileges were granted"
-msgstr ""
+msgstr "只能賦予部份權限"
 
 #: catalog/aclchk.c:344
 #: catalog/aclchk.c:502
@@ -1248,7 +1248,7 @@ msgstr ""
 #: catalog/aclchk.c:971
 #: catalog/aclchk.c:1130
 msgid "no privileges could be revoked"
-msgstr ""
+msgstr "無法取消任何權限"
 
 #: catalog/aclchk.c:348
 #: catalog/aclchk.c:506
@@ -1257,7 +1257,7 @@ msgstr ""
 #: catalog/aclchk.c:975
 #: catalog/aclchk.c:1134
 msgid "not all privileges could be revoked"
-msgstr ""
+msgstr "只能取消部份權限"
 
 #: catalog/aclchk.c:413
 #, c-format
@@ -1402,52 +1402,52 @@ msgstr ""
 #: catalog/aclchk.c:1286
 #, c-format
 msgid "must be owner of relation %s"
-msgstr ""
+msgstr "必須是relation %s的擁有者"
 
 #: catalog/aclchk.c:1288
 #, c-format
 msgid "must be owner of database %s"
-msgstr ""
+msgstr "必須是資料庫%s的擁有者"
 
 #: catalog/aclchk.c:1290
 #, c-format
 msgid "must be owner of function %s"
-msgstr ""
+msgstr "必須是函式%s的擁有者"
 
 #: catalog/aclchk.c:1292
 #, c-format
 msgid "must be owner of operator %s"
-msgstr ""
+msgstr "必須是operator %s的擁有者"
 
 #: catalog/aclchk.c:1294
 #, c-format
 msgid "must be owner of type %s"
-msgstr ""
+msgstr "必須是型別%s的擁有者"
 
 #: catalog/aclchk.c:1296
 #, c-format
 msgid "must be owner of language %s"
-msgstr ""
+msgstr "必須是語言%s的擁有者"
 
 #: catalog/aclchk.c:1298
 #, c-format
 msgid "must be owner of schema %s"
-msgstr ""
+msgstr "必須是schema %s的擁有者"
 
 #: catalog/aclchk.c:1300
 #, c-format
 msgid "must be owner of operator class %s"
-msgstr ""
+msgstr "必須是operator class %s的擁有者"
 
 #: catalog/aclchk.c:1302
 #, c-format
 msgid "must be owner of conversion %s"
-msgstr ""
+msgstr "必須是conversion %s的擁有者"
 
 #: catalog/aclchk.c:1304
 #, c-format
 msgid "must be owner of tablespace %s"
-msgstr ""
+msgstr "必須是tablespace %s的擁有者"
 
 #: catalog/aclchk.c:1367
 #, c-format
@@ -1531,7 +1531,7 @@ msgstr ""
 #: catalog/pg_proc.c:127
 #: catalog/pg_proc.c:575
 msgid "cannot determine result data type"
-msgstr ""
+msgstr "無法識別結果資料型別"
 
 #: catalog/pg_aggregate.c:166
 msgid "An aggregate returning \"anyarray\" or \"anyelement\" must have one of them as its base type."
@@ -1552,7 +1552,7 @@ msgstr "函式 %s 不存在"
 #: catalog/pg_aggregate.c:286
 #, c-format
 msgid "function %s returns a set"
-msgstr ""
+msgstr "函式%s傳回一個set"
 
 #: catalog/pg_aggregate.c:317
 #: catalog/pg_aggregate.c:326
@@ -1563,11 +1563,11 @@ msgstr ""
 #: catalog/heap.c:220
 #, c-format
 msgid "permission denied to create \"%s.%s\""
-msgstr ""
+msgstr "建立\"%s.%s\"被拒絕"
 
 #: catalog/heap.c:222
 msgid "System catalog modifications are currently disallowed."
-msgstr ""
+msgstr "目前不允許修改系統catalog。"
 
 #: catalog/heap.c:359
 #: commands/tablecmds.c:2883
@@ -1609,16 +1609,16 @@ msgstr "relation \"%s\"已經存在"
 #: catalog/heap.c:1583
 #, c-format
 msgid "only table \"%s\" can be referenced in check constraint"
-msgstr ""
+msgstr "只有資料表\"%s\"可以在check constraint中被參照"
 
 #: catalog/heap.c:1592
 #: commands/typecmds.c:1870
 msgid "cannot use subquery in check constraint"
-msgstr ""
+msgstr "check constraint中不能使用子查詢"
 
 #: catalog/heap.c:1596
 msgid "cannot use aggregate function in check constraint"
-msgstr ""
+msgstr "check constraint中不能使用aggregate function"
 
 #: catalog/heap.c:1613
 #: commands/tablecmds.c:3678
@@ -1629,29 +1629,29 @@ msgstr ""
 #: catalog/heap.c:1622
 #, c-format
 msgid "check constraint \"%s\" already exists"
-msgstr ""
+msgstr "check constraint \"%s\"已經存在"
 
 #: catalog/heap.c:1771
 msgid "cannot use column references in default expression"
-msgstr ""
+msgstr "預設值expression中不能使用欄位參照"
 
 #: catalog/heap.c:1779
 msgid "default expression must not return a set"
-msgstr ""
+msgstr "預設值expression不能傳回一個set"
 
 #: catalog/heap.c:1787
 msgid "cannot use subquery in default expression"
-msgstr ""
+msgstr "預設值expression中不能使用子查詢"
 
 #: catalog/heap.c:1791
 msgid "cannot use aggregate function in default expression"
-msgstr ""
+msgstr "預設值expression中不能使用aggregate function"
 
 #: catalog/heap.c:1809
 #: rewrite/rewriteHandler.c:640
 #, c-format
 msgid "column \"%s\" is of type %s but default expression is of type %s"
-msgstr ""
+msgstr "欄位\"%s\"是型別 %s，但是預設值expression是型別 %s"
 
 #: catalog/heap.c:1814
 #: parser/analyze.c:2687
@@ -1719,8 +1719,8 @@ msgid "cross-database references are not implemented: %s"
 msgstr ""
 
 #: catalog/namespace.c:1200
-#: gram.y:2478
-#: gram.y:7388
+#: gram.y:2491
+#: gram.y:7401
 #: parser/parse_expr.c:1185
 #: parser/parse_target.c:733
 #, c-format
@@ -1833,7 +1833,7 @@ msgstr ""
 
 #: catalog/pg_proc.c:218
 msgid "Use DROP FUNCTION first."
-msgstr ""
+msgstr "請先執行DROP FUNCTION。"
 
 #: catalog/pg_proc.c:226
 #, c-format
@@ -1909,7 +1909,7 @@ msgid "SQL functions cannot have arguments of type %s"
 msgstr "SQL函式不能有%s型別的引數"
 
 #: catalog/pg_proc.c:811
-#: executor/functions.c:685
+#: executor/functions.c:689
 #, c-format
 msgid "SQL function \"%s\""
 msgstr "SQL函式\"%s\""
@@ -1917,7 +1917,7 @@ msgstr "SQL函式\"%s\""
 #: catalog/pg_type.c:198
 #, c-format
 msgid "invalid type internal size %d"
-msgstr ""
+msgstr "無效的型別內部大小 %d"
 
 #: catalog/pg_type.c:204
 #, c-format
@@ -2028,7 +2028,7 @@ msgstr ""
 #: commands/tablecmds.c:5239
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
-msgstr ""
+msgstr "索引\"%s\"於資料表\"%s\"不存在"
 
 #: commands/cluster.c:326
 #, c-format
@@ -2037,7 +2037,7 @@ msgstr "\"%s\"不是資料表\"%s\"的索引"
 
 #: commands/cluster.c:339
 msgid "cannot cluster on partial index"
-msgstr ""
+msgstr "無法cluter partial索引"
 
 #: commands/cluster.c:357
 msgid "cannot cluster when index access method does not handle null values"
@@ -2059,22 +2059,22 @@ msgstr "\"%s\"是系統catalog"
 
 #: commands/cluster.c:394
 msgid "cannot cluster temporary tables of other sessions"
-msgstr ""
+msgstr "無法cluster其它sessions的暫存資料表"
 
 #: commands/conversioncmds.c:66
 #, c-format
 msgid "source encoding \"%s\" does not exist"
-msgstr ""
+msgstr "來源編碼\"%s\"不存在"
 
 #: commands/conversioncmds.c:73
 #, c-format
 msgid "destination encoding \"%s\" does not exist"
-msgstr ""
+msgstr "目標編碼\"%s\"不存在"
 
 #: commands/conversioncmds.c:151
 #, c-format
 msgid "conversion \"%s\" already exists in schema \"%s\""
-msgstr ""
+msgstr "conversion \"%s\"已經存在於schema \"%s\""
 
 #: commands/comment.c:334
 #: commands/sequence.c:780
@@ -2116,10 +2116,10 @@ msgstr "\"%s\"不是view"
 #: parser/parse_relation.c:1651
 #: parser/parse_relation.c:1830
 #: parser/parse_type.c:94
-#: utils/adt/ruleutils.c:1271
+#: utils/adt/ruleutils.c:1296
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist"
-msgstr ""
+msgstr "欄位\"%s\"於relation \"%s\"不存在"
 
 #: commands/comment.c:435
 msgid "database name may not be qualified"
@@ -2142,7 +2142,7 @@ msgstr "rule \"%s\"不存在"
 #: commands/comment.c:589
 #, c-format
 msgid "there are multiple rules named \"%s\""
-msgstr ""
+msgstr "有多個rule名稱皆為\"%s\""
 
 #: commands/comment.c:590
 msgid "Specify a relation name as well as a rule name."
@@ -2209,14 +2209,14 @@ msgstr ""
 #: commands/functioncmds.c:1156
 #, c-format
 msgid "source data type %s does not exist"
-msgstr ""
+msgstr "來源資料型別 %s 不存在"
 
 #: commands/comment.c:1197
 #: commands/functioncmds.c:915
 #: commands/functioncmds.c:1163
 #, c-format
 msgid "target data type %s does not exist"
-msgstr ""
+msgstr "目標資料型別 %s 不存在"
 
 #: commands/comment.c:1207
 #: commands/functioncmds.c:1173
@@ -2229,7 +2229,7 @@ msgstr ""
 #: commands/functioncmds.c:1182
 #, c-format
 msgid "must be owner of type %s or type %s"
-msgstr ""
+msgstr "必須是型別 %s 或型別 %s 的擁有者"
 
 #: commands/copy.c:719
 #: commands/copy.c:727
@@ -2268,33 +2268,33 @@ msgstr ""
 #: commands/user.c:1353
 #: commands/user.c:1361
 msgid "conflicting or redundant options"
-msgstr ""
+msgstr "選項衝突或重覆"
 
 #: commands/dbcommands.c:137
 msgid "LOCATION is not supported anymore"
-msgstr ""
+msgstr "LOCATION已不被支援"
 
 #: commands/dbcommands.c:138
 msgid "Consider using tablespaces instead."
-msgstr ""
+msgstr "請考慮改用taplespace。"
 
 #: commands/dbcommands.c:161
 #, c-format
 msgid "%d is not a valid encoding code"
-msgstr ""
+msgstr "%d 不是有效的編碼代碼"
 
 #: commands/dbcommands.c:170
 #, c-format
 msgid "%s is not a valid encoding name"
-msgstr ""
+msgstr "%s 不是有效的編碼名稱"
 
 #: commands/dbcommands.c:191
 msgid "permission denied to create database"
-msgstr ""
+msgstr "建立資料庫被拒"
 
 #: commands/dbcommands.c:200
 msgid "must be superuser to create database for another user"
-msgstr ""
+msgstr "只有管理者能為其他使用者建立資料庫"
 
 #: commands/dbcommands.c:214
 #: commands/dbcommands.c:403
@@ -2311,12 +2311,12 @@ msgstr "範本資料庫\"%s\"不存在"
 #: commands/dbcommands.c:238
 #, c-format
 msgid "permission denied to copy database \"%s\""
-msgstr ""
+msgstr "複製資料庫\"%s\"被拒"
 
 #: commands/dbcommands.c:251
 #, c-format
 msgid "source database \"%s\" is being accessed by other users"
-msgstr ""
+msgstr "來源資料庫\"%s\"正在被其他使用者存取"
 
 #: commands/dbcommands.c:262
 #, c-format
@@ -2327,7 +2327,7 @@ msgstr "不合法的伺服器編碼 %d"
 #: commands/dbcommands.c:373
 #: commands/dbcommands.c:383
 msgid "could not initialize database directory"
-msgstr ""
+msgstr "無法初始化資料庫目錄"
 
 #: commands/dbcommands.c:354
 #, c-format
@@ -2337,16 +2337,16 @@ msgstr "目錄\"%s\"已經存在。"
 #: commands/dbcommands.c:374
 #, c-format
 msgid "Failing system command was: %s"
-msgstr ""
+msgstr "失敗的系統命令是：%s"
 
 #: commands/dbcommands.c:375
 #: commands/dbcommands.c:974
 msgid "Look in the postmaster's stderr log for more information."
-msgstr ""
+msgstr "請檢查postmaster的stderr記錄取得更多資訊。"
 
 #: commands/dbcommands.c:478
 msgid "cannot drop the currently open database"
-msgstr ""
+msgstr "無法刪除目前正在開啟的資料庫"
 
 #: commands/dbcommands.c:509
 msgid "cannot drop a template database"
@@ -2356,7 +2356,7 @@ msgstr "無法刪資範本資料庫"
 #: commands/dbcommands.c:639
 #, c-format
 msgid "database \"%s\" is being accessed by other users"
-msgstr ""
+msgstr "資料庫\"%s\"正在被其他使用者存取"
 
 #: commands/dbcommands.c:630
 msgid "current database may not be renamed"
@@ -2364,12 +2364,12 @@ msgstr "無法變更目前資料庫名稱"
 
 #: commands/dbcommands.c:664
 msgid "permission denied to rename database"
-msgstr ""
+msgstr "重新命名資料庫被拒"
 
 #: commands/dbcommands.c:972
 #, c-format
 msgid "could not remove database directory \"%s\""
-msgstr ""
+msgstr "無法刪除資料庫目錄\"%s\""
 
 #: commands/copy.c:204
 #: commands/copy.c:216
@@ -2410,19 +2410,19 @@ msgstr ""
 
 #: commands/copy.c:794
 msgid "cannot specify DELIMITER in BINARY mode"
-msgstr ""
+msgstr "不行在BINARY模式指定DELIMITER"
 
 #: commands/copy.c:799
 msgid "cannot specify CSV in BINARY mode"
-msgstr ""
+msgstr "不行在BINARY模式指定CSV"
 
 #: commands/copy.c:804
 msgid "cannot specify NULL in BINARY mode"
-msgstr ""
+msgstr "不行在BINARY模式指定NULL"
 
 #: commands/copy.c:827
 msgid "COPY delimiter must be a single character"
-msgstr ""
+msgstr "COPY分隔字元只能有一個字"
 
 #: commands/copy.c:835
 msgid "COPY quote available only in CSV mode"
@@ -2468,7 +2468,7 @@ msgstr ""
 #: executor/execMain.c:468
 #: tcop/utility.c:283
 msgid "transaction is read-only"
-msgstr ""
+msgstr "唯讀交易"
 
 #: commands/copy.c:915
 msgid "must be superuser to COPY to or from a file"
@@ -2481,7 +2481,7 @@ msgstr ""
 #: commands/copy.c:925
 #, c-format
 msgid "table \"%s\" does not have OIDs"
-msgstr ""
+msgstr "資料表\"%s\"沒有OID"
 
 #: commands/copy.c:951
 #, c-format
@@ -2501,12 +2501,12 @@ msgstr "無法複製到view \"%s\""
 #: commands/copy.c:1006
 #, c-format
 msgid "cannot copy to sequence \"%s\""
-msgstr ""
+msgstr "無法複製到sequence \"%s\""
 
 #: commands/copy.c:1011
 #, c-format
 msgid "cannot copy to non-table relation \"%s\""
-msgstr ""
+msgstr "無法複製到非資料表relation \"%s\""
 
 #: commands/copy.c:1030
 #, c-format
@@ -2522,26 +2522,26 @@ msgstr "\"%s\"是一個目錄"
 #: commands/copy.c:1052
 #, c-format
 msgid "cannot copy from view \"%s\""
-msgstr ""
+msgstr "無法從view \"%s\"複製"
 
 #: commands/copy.c:1057
 #, c-format
 msgid "cannot copy from sequence \"%s\""
-msgstr ""
+msgstr "無法從sequence \"%s\"複製"
 
 #: commands/copy.c:1062
 #, c-format
 msgid "cannot copy from non-table relation \"%s\""
-msgstr ""
+msgstr "無法從非資料表relation \"%s\"複製"
 
 #: commands/copy.c:1084
 msgid "relative path not allowed for COPY to file"
-msgstr ""
+msgstr "COPY至檔案不允許相對路徑"
 
 #: commands/copy.c:1093
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
-msgstr ""
+msgstr "無法開啟檔案\"%s\"以寫入：%m"
 
 #: commands/copy.c:1387
 #, c-format
@@ -2569,7 +2569,7 @@ msgstr ""
 
 #: commands/copy.c:1639
 msgid "invalid COPY file header (missing flags)"
-msgstr ""
+msgstr "無效的COPY檔案header(缺少旗標)"
 
 #: commands/copy.c:1645
 msgid "unrecognized critical flags in COPY file header"
@@ -2577,25 +2577,25 @@ msgstr ""
 
 #: commands/copy.c:1651
 msgid "invalid COPY file header (missing length)"
-msgstr ""
+msgstr "無效的COPY檔案header(缺少長度)"
 
 #: commands/copy.c:1659
 msgid "invalid COPY file header (wrong length)"
-msgstr ""
+msgstr "無效的COPY檔案header(長度不正確)"
 
 #: commands/copy.c:1738
 msgid "null OID in COPY data"
-msgstr ""
+msgstr "COPY資料中有空OID"
 
 #: commands/copy.c:1747
 #: commands/copy.c:1844
 msgid "invalid OID in COPY data"
-msgstr ""
+msgstr "COPY資料中有無效的OID"
 
 #: commands/copy.c:1767
 #, c-format
 msgid "missing data for column \"%s\""
-msgstr ""
+msgstr "欄位\"%s\"缺少資料"
 
 #: commands/copy.c:1777
 msgid "unterminated CSV quoted field"
@@ -2647,47 +2647,47 @@ msgstr ""
 
 #: commands/copy.c:2486
 msgid "invalid field size"
-msgstr ""
+msgstr "無效的field大小"
 
 #: commands/copy.c:2513
 msgid "incorrect binary data format"
-msgstr ""
+msgstr "不正確的binary資料格式"
 
 #: commands/copy.c:2698
 #: parser/parse_target.c:648
 #: parser/parse_target.c:658
 #, c-format
 msgid "column \"%s\" specified more than once"
-msgstr ""
+msgstr "欄位\"%s\"被指定多次"
 
 #: commands/functioncmds.c:84
 #, c-format
 msgid "SQL function cannot return shell type %s"
-msgstr ""
+msgstr "SQL函式不能傳回shell型別 %s"
 
 #: commands/functioncmds.c:89
 #, c-format
 msgid "return type %s is only a shell"
-msgstr ""
+msgstr "傳回型別 %s 只是一個shell"
 
 #: commands/functioncmds.c:115
 #, c-format
 msgid "type \"%s\" is not yet defined"
-msgstr ""
+msgstr "型別\"%s\"尚未被定義"
 
 #: commands/functioncmds.c:116
 msgid "Creating a shell type definition."
-msgstr ""
+msgstr "建立shell型別定義。"
 
 #: commands/functioncmds.c:166
 #, c-format
 msgid "SQL function cannot accept shell type %s"
-msgstr ""
+msgstr "SQL函式不接受shell型別 %s"
 
 #: commands/functioncmds.c:171
 #, c-format
 msgid "argument type %s is only a shell"
-msgstr ""
+msgstr "引數型別 %s 只是一個shell"
 
 #: commands/functioncmds.c:179
 #: parser/parse_oper.c:113
@@ -2698,7 +2698,7 @@ msgstr "%s型別不存在"
 
 #: commands/functioncmds.c:186
 msgid "functions cannot accept set arguments"
-msgstr ""
+msgstr "函式不接受set引數"
 
 #: commands/functioncmds.c:273
 msgid "no function body specified"
@@ -2706,7 +2706,7 @@ msgstr ""
 
 #: commands/functioncmds.c:280
 msgid "no language specified"
-msgstr ""
+msgstr "未指定語言"
 
 #: commands/functioncmds.c:342
 #, c-format
@@ -2727,34 +2727,34 @@ msgstr ""
 #: commands/functioncmds.c:751
 #, c-format
 msgid "\"%s\" is an aggregate function"
-msgstr ""
+msgstr "\"%s\"是一個aggregate function"
 
 #: commands/functioncmds.c:580
 msgid "Use DROP AGGREGATE to drop aggregate functions."
-msgstr ""
+msgstr "使用DROP AGGREGATE刪除aggregate functions。"
 
 #: commands/functioncmds.c:587
 #, c-format
 msgid "removing built-in function \"%s\""
-msgstr ""
+msgstr "刪除內建函式\"%s\""
 
 #: commands/functioncmds.c:686
 msgid "Use ALTER AGGREGATE to rename aggregate functions."
-msgstr ""
+msgstr "使用ALTER AGGREGATE重新命名aggregate functions。"
 
 #: commands/functioncmds.c:753
 msgid "Use ALTER AGGREGATE to change owner of aggregate functions."
-msgstr ""
+msgstr "使用ALTER AGGREGATE改變aggregate functions的擁有者。"
 
 #: commands/functioncmds.c:922
 #, c-format
 msgid "source data type %s is only a shell"
-msgstr ""
+msgstr "來源資料型別 %s 只是一個shell"
 
 #: commands/functioncmds.c:928
 #, c-format
 msgid "target data type %s is only a shell"
-msgstr ""
+msgstr "目標資料型別 %s 只是一個shell"
 
 #: commands/functioncmds.c:934
 #, c-format
@@ -2788,15 +2788,15 @@ msgstr ""
 
 #: commands/functioncmds.c:998
 msgid "cast function must not be volatile"
-msgstr ""
+msgstr "cast函式不能是volatile"
 
 #: commands/functioncmds.c:1003
 msgid "cast function must not be an aggregate function"
-msgstr ""
+msgstr "cast函式不能是aggregate function"
 
 #: commands/functioncmds.c:1007
 msgid "cast function must not return a set"
-msgstr ""
+msgstr "cast函式不能傳回set"
 
 #: commands/functioncmds.c:1031
 msgid "must be superuser to create a cast WITHOUT FUNCTION"
@@ -2821,7 +2821,7 @@ msgstr ""
 #: commands/define.c:249
 #, c-format
 msgid "%s requires a parameter"
-msgstr ""
+msgstr "%s需要一個參數"
 
 #: commands/define.c:105
 #: commands/define.c:116
@@ -2829,27 +2829,27 @@ msgstr ""
 #: commands/define.c:168
 #, c-format
 msgid "%s requires a numeric value"
-msgstr ""
+msgstr "%s需要一個numeric值"
 
 #: commands/define.c:136
 #, c-format
 msgid "%s does not take a parameter"
-msgstr ""
+msgstr "%s不需要參數"
 
 #: commands/define.c:197
 #, c-format
 msgid "argument of %s must be a name"
-msgstr ""
+msgstr "%s的引數必需是名稱"
 
 #: commands/define.c:233
 #, c-format
 msgid "argument of %s must be a type name"
-msgstr ""
+msgstr "%s的引數必需是型別名稱"
 
 #: commands/define.c:258
 #, c-format
 msgid "%s requires an integer value"
-msgstr ""
+msgstr "%s需要一個整數"
 
 #: commands/define.c:279
 #, c-format
@@ -2858,7 +2858,7 @@ msgstr "給 %s 的引數不合法：\"%s\""
 
 #: commands/opclasscmds.c:129
 msgid "must be superuser to create an operator class"
-msgstr ""
+msgstr "只有管理者能建立operator class"
 
 #: commands/opclasscmds.c:166
 #, c-format
@@ -2892,15 +2892,15 @@ msgstr ""
 #: commands/opclasscmds.c:303
 #, c-format
 msgid "Operator class \"%s\" already is the default."
-msgstr ""
+msgstr "operator class \"%s\"已經是預設的。"
 
 #: commands/opclasscmds.c:429
 msgid "btree operators must be binary"
-msgstr ""
+msgstr "btree operators必須是binary"
 
 #: commands/opclasscmds.c:433
 msgid "btree operators must return boolean"
-msgstr ""
+msgstr "btree operators必須傳回boolean"
 
 #: commands/opclasscmds.c:437
 msgid "btree operators must have index type as left input"
@@ -2935,12 +2935,12 @@ msgstr ""
 
 #: commands/indexcmds.c:119
 msgid "must specify at least one column"
-msgstr ""
+msgstr "至少需要指定一個欄位"
 
 #: commands/indexcmds.c:123
 #, c-format
 msgid "cannot use more than %d columns in an index"
-msgstr ""
+msgstr "索引中不能使用超過 %d 個欄位"
 
 #: commands/indexcmds.c:221
 #, c-format
@@ -2960,11 +2960,11 @@ msgstr ""
 #: parser/analyze.c:1185
 #, c-format
 msgid "multiple primary keys for table \"%s\" are not allowed"
-msgstr ""
+msgstr "資料表\"%s\"不允許多個主鍵"
 
 #: commands/indexcmds.c:285
 msgid "primary keys cannot be expressions"
-msgstr ""
+msgstr "主鍵不能是expressions"
 
 #: commands/indexcmds.c:315
 #: commands/indexcmds.c:453
@@ -3037,7 +3037,7 @@ msgstr ""
 #: commands/indexcmds.c:953
 #, c-format
 msgid "table \"%s\" has no indexes"
-msgstr ""
+msgstr "資料表\"%s\"沒有索引"
 
 #: commands/indexcmds.c:981
 msgid "can only reindex the currently open database"
@@ -3046,7 +3046,7 @@ msgstr ""
 #: commands/indexcmds.c:1064
 #, c-format
 msgid "table \"%s\" was reindexed"
-msgstr ""
+msgstr "資料表\"%s\"已重新索引"
 
 #: commands/operatorcmds.c:107
 #: commands/operatorcmds.c:115
@@ -3063,39 +3063,39 @@ msgid "operator procedure must be specified"
 msgstr ""
 
 #: commands/portalcmds.c:54
-#: commands/portalcmds.c:164
-#: commands/portalcmds.c:209
+#: commands/portalcmds.c:175
+#: commands/portalcmds.c:220
 msgid "invalid cursor name: must not be empty"
-msgstr ""
+msgstr "無效的cursor名稱：不能是空的"
 
 #: commands/portalcmds.c:80
 msgid "DECLARE CURSOR may not specify INTO"
-msgstr ""
+msgstr "DECLARE CURSOR不能使用INTO"
 
 #: commands/portalcmds.c:84
 msgid "DECLARE CURSOR ... FOR UPDATE is not supported"
-msgstr ""
+msgstr "DECLARE CURSOR ... FOR UPDATE未被支援"
 
 #: commands/portalcmds.c:85
 msgid "Cursors must be READ ONLY."
-msgstr ""
+msgstr "cursors必須是READ ONLY。"
 
-#: commands/portalcmds.c:172
-#: commands/portalcmds.c:219
+#: commands/portalcmds.c:183
+#: commands/portalcmds.c:230
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "cursor \"%s\"不存在"
 
-#: commands/portalcmds.c:326
+#: commands/portalcmds.c:337
 #: tcop/pquery.c:464
 #: tcop/pquery.c:1002
 #, c-format
 msgid "portal \"%s\" cannot be run"
 msgstr ""
 
-#: commands/portalcmds.c:382
+#: commands/portalcmds.c:393
 msgid "could not reposition held cursor"
-msgstr ""
+msgstr "無法重新定位持有的cursor"
 
 #: commands/prepare.c:61
 msgid "invalid statement name: must not be empty"
@@ -3107,16 +3107,16 @@ msgstr ""
 
 #: commands/prepare.c:168
 #: commands/prepare.c:173
-#: commands/prepare.c:536
+#: commands/prepare.c:537
 msgid "prepared statement is not a SELECT"
 msgstr ""
 
-#: commands/prepare.c:308
+#: commands/prepare.c:309
 #, c-format
 msgid "prepared statement \"%s\" already exists"
 msgstr ""
 
-#: commands/prepare.c:388
+#: commands/prepare.c:389
 #, c-format
 msgid "prepared statement \"%s\" does not exist"
 msgstr ""
@@ -3377,12 +3377,12 @@ msgstr ""
 #: commands/tablecmds.c:1300
 #, c-format
 msgid "cannot rename system column \"%s\""
-msgstr ""
+msgstr "無法重新命名系統欄位\"%s\""
 
 #: commands/tablecmds.c:1310
 #, c-format
 msgid "cannot rename inherited column \"%s\""
-msgstr ""
+msgstr "無法重新命名被繼承的欄位\"%s\""
 
 #: commands/tablecmds.c:1321
 #: commands/tablecmds.c:2875
@@ -3407,12 +3407,12 @@ msgstr ""
 #: commands/tablecmds.c:2490
 #, c-format
 msgid "column \"%s\" contains null values"
-msgstr ""
+msgstr "欄位\"%s\"包含空值"
 
 #: commands/tablecmds.c:2575
 #, c-format
 msgid "\"%s\" is not a table or view"
-msgstr ""
+msgstr "\"%s\"不是資料表或view"
 
 #: commands/tablecmds.c:2728
 #, c-format
@@ -3441,18 +3441,18 @@ msgstr ""
 #: commands/tablecmds.c:4559
 #, c-format
 msgid "cannot alter system column \"%s\""
-msgstr ""
+msgstr "無法修改系統欄位\"%s\""
 
 #: commands/tablecmds.c:3102
 #, c-format
 msgid "column \"%s\" is in a primary key"
-msgstr ""
+msgstr "欄位\"%s\"是主鍵"
 
 #: commands/tablecmds.c:3252
 #: commands/tablecmds.c:5278
 #, c-format
 msgid "\"%s\" is not a table or index"
-msgstr ""
+msgstr "\"%s\"不是資料表或索引"
 
 #: commands/tablecmds.c:3279
 #, c-format
@@ -3477,12 +3477,12 @@ msgstr ""
 #: commands/tablecmds.c:3435
 #, c-format
 msgid "cannot drop system column \"%s\""
-msgstr ""
+msgstr "無法刪除系統欄位\"%s\""
 
 #: commands/tablecmds.c:3442
 #, c-format
 msgid "cannot drop inherited column \"%s\""
-msgstr ""
+msgstr "無法刪除被繼承的欄位\"%s\""
 
 #: commands/tablecmds.c:3742
 #, c-format
@@ -3551,12 +3551,12 @@ msgstr "constraint \"%s\"不存在"
 #: commands/tablecmds.c:4521
 #, c-format
 msgid "multiple constraints named \"%s\" were dropped"
-msgstr ""
+msgstr "多個名稱為\"%s\"的constraints被刪除"
 
 #: commands/tablecmds.c:4566
 #, c-format
 msgid "cannot alter inherited column \"%s\""
-msgstr ""
+msgstr "無法修改被繼承的欄位\"%s\""
 
 #: commands/tablecmds.c:4606
 msgid "transform expression must not return a set"
@@ -3573,7 +3573,7 @@ msgstr ""
 #: commands/tablecmds.c:4633
 #, c-format
 msgid "column \"%s\" cannot be cast to type \"%s\""
-msgstr ""
+msgstr "欄位\"%s\"無法被轉換為型別\"%s\""
 
 #: commands/tablecmds.c:4659
 #, c-format
@@ -3583,7 +3583,7 @@ msgstr ""
 #: commands/tablecmds.c:4697
 #, c-format
 msgid "cannot alter type of column \"%s\" twice"
-msgstr ""
+msgstr "無法修改欄位\"%s\"的型別兩次"
 
 #: commands/tablecmds.c:4724
 #, c-format
@@ -3597,7 +3597,7 @@ msgstr ""
 #: commands/tablecmds.c:4825
 #, c-format
 msgid "%s depends on column \"%s\""
-msgstr ""
+msgstr "%s 依存於欄位\"%s\""
 
 #: commands/tablecmds.c:5138
 #, c-format
@@ -3662,12 +3662,12 @@ msgstr ""
 #: commands/trigger.c:294
 #, c-format
 msgid "function %s must return type \"trigger\""
-msgstr ""
+msgstr "函式 %s 必須傳回型別\"trigger\""
 
 #: commands/trigger.c:1160
 #, c-format
 msgid "trigger function %u returned null value"
-msgstr ""
+msgstr "trigger函 %u 式傳回空值"
 
 #: commands/trigger.c:1212
 #: commands/trigger.c:1325
@@ -3771,12 +3771,12 @@ msgstr ""
 
 #: commands/typecmds.c:636
 msgid "multiple default expressions"
-msgstr ""
+msgstr "多個預設的expressions"
 
 #: commands/typecmds.c:666
 #: commands/typecmds.c:675
 msgid "conflicting NULL/NOT NULL constraints"
-msgstr ""
+msgstr "NULL/NOT NULL限制發生衝突"
 
 #: commands/typecmds.c:694
 #: commands/typecmds.c:1520
@@ -3797,7 +3797,7 @@ msgstr ""
 #: commands/typecmds.c:1778
 #, c-format
 msgid "\"%s\" is not a domain"
-msgstr ""
+msgstr "\"%s\"不是一個domain"
 
 #: commands/typecmds.c:900
 #, c-format
@@ -3873,27 +3873,27 @@ msgstr ""
 
 #: commands/user.c:635
 msgid "user ID must be positive"
-msgstr ""
+msgstr "使用者ID必須是正數"
 
 #: commands/user.c:652
 msgid "must be superuser to create users"
-msgstr ""
+msgstr "只有管理者能建立使用者"
 
 #: commands/user.c:657
 #, c-format
 msgid "user name \"%s\" is reserved"
-msgstr ""
+msgstr "使用者名稱\"%s\"已被保留"
 
 #: commands/user.c:694
 #: commands/user.c:1249
 #, c-format
 msgid "user \"%s\" already exists"
-msgstr ""
+msgstr "使用者\"%s\"已經存在"
 
 #: commands/user.c:699
 #, c-format
 msgid "user ID %d is already assigned"
-msgstr ""
+msgstr "使用者ID %d已經被指派"
 
 #: commands/user.c:896
 #: commands/user.c:1009
@@ -3904,15 +3904,15 @@ msgstr ""
 #: utils/init/miscinit.c:309
 #, c-format
 msgid "user \"%s\" does not exist"
-msgstr ""
+msgstr "使用者\"%s\"不存在"
 
 #: commands/user.c:1074
 msgid "must be superuser to drop users"
-msgstr ""
+msgstr "只有管理者能刪除使用者"
 
 #: commands/user.c:1108
 msgid "current user cannot be dropped"
-msgstr ""
+msgstr "不能刪除目前的使用者"
 
 #: commands/user.c:1112
 msgid "session user cannot be dropped"
@@ -3921,12 +3921,12 @@ msgstr ""
 #: commands/user.c:1139
 #, c-format
 msgid "user \"%s\" cannot be dropped"
-msgstr ""
+msgstr "不能刪除使用者\"%s\""
 
 #: commands/user.c:1140
 #, c-format
 msgid "The user owns database \"%s\"."
-msgstr ""
+msgstr "使用者擁有資料庫\"%s\"。"
 
 #: commands/user.c:1241
 msgid "session user may not be renamed"
@@ -4094,7 +4094,7 @@ msgstr ""
 #: commands/vacuumlazy.c:770
 #: nodes/print.c:86
 #: storage/lmgr/deadlock.c:888
-#: tcop/postgres.c:3294
+#: tcop/postgres.c:3295
 #, c-format
 msgid "%s"
 msgstr ""
@@ -4340,7 +4340,7 @@ msgstr ""
 
 #: executor/execQual.c:256
 #: executor/execQual.c:284
-#: executor/execQual.c:2061
+#: executor/execQual.c:2023
 #: utils/adt/array_userfuncs.c:362
 #: utils/adt/arrayfuncs.c:217
 #: utils/adt/arrayfuncs.c:381
@@ -4350,102 +4350,92 @@ msgstr ""
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr ""
 
-#: executor/execQual.c:631
-#, c-format
-msgid "no value found for parameter \"%s\""
-msgstr ""
-
-#: executor/execQual.c:636
-#, c-format
-msgid "no value found for parameter %d"
-msgstr ""
-
-#: executor/execQual.c:843
+#: executor/execQual.c:805
 msgid "functions and operators can take at most one set argument"
 msgstr ""
 
-#: executor/execQual.c:898
-#: executor/execQual.c:942
-#: executor/execQual.c:1118
-#: executor/execQual.c:1216
-#: executor/execQual.c:3406
-#: executor/functions.c:549
-#: executor/functions.c:588
+#: executor/execQual.c:860
+#: executor/execQual.c:904
+#: executor/execQual.c:1080
+#: executor/execQual.c:1178
+#: executor/execQual.c:3368
+#: executor/functions.c:553
+#: executor/functions.c:592
 #: utils/adt/pgstatfuncs.c:191
 #: utils/fmgr/funcapi.c:39
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
 
-#: executor/execQual.c:1320
+#: executor/execQual.c:1282
 msgid "function returning row cannot return null value"
 msgstr ""
 
-#: executor/execQual.c:1402
+#: executor/execQual.c:1364
 msgid "table-function protocol for materialize mode was not followed"
 msgstr ""
 
-#: executor/execQual.c:1409
+#: executor/execQual.c:1371
 #, c-format
 msgid "unrecognized table-function returnMode: %d"
 msgstr ""
 
-#: executor/execQual.c:1526
+#: executor/execQual.c:1488
 msgid "IS DISTINCT FROM does not support set arguments"
 msgstr ""
 
-#: executor/execQual.c:1600
+#: executor/execQual.c:1562
 msgid "op ANY/ALL (array) does not support set arguments"
 msgstr ""
 
-#: executor/execQual.c:2047
+#: executor/execQual.c:2009
 msgid "cannot merge incompatible arrays"
 msgstr ""
 
-#: executor/execQual.c:2048
+#: executor/execQual.c:2010
 #, c-format
 msgid "Array with element type %s cannot be included in ARRAY construct with element type %s."
 msgstr ""
 
-#: executor/execQual.c:2081
+#: executor/execQual.c:2043
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr ""
 
-#: executor/execQual.c:2244
+#: executor/execQual.c:2206
 msgid "NULLIF does not support set arguments"
 msgstr ""
 
-#: executor/execQual.c:2425
+#: executor/execQual.c:2387
 #, c-format
 msgid "domain %s does not allow null values"
 msgstr ""
 
-#: executor/execQual.c:2455
+#: executor/execQual.c:2417
 #, c-format
 msgid "value for domain %s violates check constraint \"%s\""
 msgstr ""
 
-#: executor/execQual.c:2797
+#: executor/execQual.c:2759
 #: optimizer/util/clauses.c:425
 #: parser/parse_agg.c:74
 msgid "aggregate function calls may not be nested"
 msgstr ""
 
-#: executor/functions.c:167
+#: executor/functions.c:168
 #, c-format
 msgid "could not determine actual result type for function declared to return type %s"
 msgstr ""
 
-#: executor/functions.c:217
+#: executor/functions.c:218
 #, c-format
 msgid "could not determine actual type of argument declared %s"
 msgstr ""
 
-#: executor/functions.c:672
+#: executor/functions.c:676
 #, c-format
 msgid "SQL function \"%s\" statement %d"
 msgstr ""
 
-#: executor/functions.c:691
+#: executor/functions.c:695
 #, c-format
 msgid "SQL function \"%s\" during startup"
 msgstr ""
@@ -4502,7 +4492,7 @@ msgstr ""
 msgid "cannot open SELECT INTO query as cursor"
 msgstr ""
 
-#: executor/spi.c:1495
+#: executor/spi.c:1497
 #, c-format
 msgid "SQL query \"%s\""
 msgstr ""
@@ -4842,7 +4832,7 @@ msgstr ""
 #: libpq/hba.c:1054
 #, c-format
 msgid "could not open configuration file \"%s\": %m"
-msgstr "無法開啟設定檔\"%s\"\"?"
+msgstr "無法開啟設定檔\"%s\"：%m"
 
 #: libpq/hba.c:1115
 #, c-format
@@ -4944,6 +4934,7 @@ msgid "unrecognized address family %d"
 msgstr ""
 
 #  translator: %s is IPv4, IPv6, or Unix
+#. translator: %s is IPv4, IPv6, or Unix
 #: libpq/pqcomm.c:311
 #, c-format
 msgid "could not create %s socket: %m"
@@ -5087,6 +5078,16 @@ msgstr "%s：不合法的effective UID：%d\n"
 msgid "%s: could not determine user name (GetUserName failed)\n"
 msgstr ""
 
+#: nodes/params.c:112
+#, c-format
+msgid "no value found for parameter \"%s\""
+msgstr ""
+
+#: nodes/params.c:117
+#, c-format
+msgid "no value found for parameter %d"
+msgstr ""
+
 #: optimizer/path/allpaths.c:224
 msgid "SELECT FOR UPDATE is not supported for inheritance queries"
 msgstr ""
@@ -5121,7 +5122,7 @@ msgstr ""
 msgid "SELECT FOR UPDATE is not allowed in subqueries"
 msgstr ""
 
-#: optimizer/util/clauses.c:2268
+#: optimizer/util/clauses.c:2250
 #, c-format
 msgid "SQL function \"%s\" during inlining"
 msgstr ""
@@ -5131,7 +5132,7 @@ msgstr ""
 msgid "JOIN/ON clause refers to \"%s\", which is not part of JOIN"
 msgstr ""
 
-#: gram.y:5115
+#: gram.y:5128
 #: parser/parse_clause.c:420
 msgid "subquery in FROM must have an alias"
 msgstr ""
@@ -5398,8 +5399,8 @@ msgstr ""
 msgid "misplaced NOT DEFERRABLE clause"
 msgstr ""
 
-#: gram.y:2331
-#: gram.y:2346
+#: gram.y:2344
+#: gram.y:2359
 #: parser/analyze.c:2890
 #: parser/analyze.c:2914
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
@@ -5482,12 +5483,14 @@ msgid "Cannot cast type %s to %s in column %d."
 msgstr ""
 
 #  translator: first %s is name of a SQL construct, eg WHERE
+#. translator: first %s is name of a SQL construct, eg WHERE
 #: parser/parse_coerce.c:756
 #, c-format
 msgid "argument of %s must be type boolean, not type %s"
 msgstr "%s 的引數必須是boolean型別，而非%s型別"
 
 #  translator: %s is name of a SQL construct, eg WHERE
+#. translator: %s is name of a SQL construct, eg WHERE
 #: parser/parse_coerce.c:764
 #: parser/parse_coerce.c:803
 #, c-format
@@ -5495,6 +5498,7 @@ msgid "argument of %s must not return a set"
 msgstr "%s 的引數不能傳回set"
 
 #  translator: first %s is name of a SQL construct, eg LIMIT
+#. translator: first %s is name of a SQL construct, eg LIMIT
 #: parser/parse_coerce.c:795
 #, c-format
 msgid "argument of %s must be type integer, not type %s"
@@ -5506,6 +5510,7 @@ msgid "%s types %s and %s cannot be matched"
 msgstr ""
 
 #  translator: first %s is name of a SQL construct, eg CASE
+#. translator: first %s is name of a SQL construct, eg CASE
 #: parser/parse_coerce.c:918
 #, c-format
 msgid "%s could not convert type %s to %s"
@@ -5914,18 +5919,20 @@ msgid "unterminated quoted identifier"
 msgstr ""
 
 #  translator: %s is typically "syntax error"
+#. translator: %s is typically "syntax error"
 #: scan.l:621
 #, c-format
 msgid "%s at end of input"
 msgstr "在輸入末端發生 %s"
 
 #  translator: first %s is typically "syntax error"
+#. translator: first %s is typically "syntax error"
 #: scan.l:629
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "在\"%s\"附近發生 %s"
 
-#: y.tab.c:9328
+#: y.tab.c:9398
 msgid "syntax error: cannot back up"
 msgstr ""
 
@@ -5935,20 +5942,20 @@ msgid "time zone interval must be HOUR or HOUR TO MINUTE"
 msgstr "time zone interval必須是HOUR或HOUR TO MINUTE"
 
 #: gram.y:1001
-#: gram.y:5440
-#: gram.y:7503
+#: gram.y:5453
+#: gram.y:7516
 #, c-format
 msgid "INTERVAL(%d) precision must not be negative"
 msgstr ""
 
 #: gram.y:1007
-#: gram.y:5446
-#: gram.y:7509
+#: gram.y:5459
+#: gram.y:7522
 #, c-format
 msgid "INTERVAL(%d) precision reduced to maximum allowed, %d"
 msgstr ""
 
-#: gram.y:1853
+#: gram.y:1862
 #: utils/adt/ri_triggers.c:301
 #: utils/adt/ri_triggers.c:363
 #: utils/adt/ri_triggers.c:542
@@ -5967,201 +5974,201 @@ msgstr ""
 msgid "MATCH PARTIAL not yet implemented"
 msgstr ""
 
-#: gram.y:1939
+#: gram.y:1952
 msgid "CREATE TABLE AS may not specify INTO"
 msgstr ""
 
-#: gram.y:2398
+#: gram.y:2411
 msgid "CREATE ASSERTION is not yet implemented"
 msgstr ""
 
-#: gram.y:2414
+#: gram.y:2427
 msgid "DROP ASSERTION is not yet implemented"
 msgstr ""
 
-#: gram.y:3296
+#: gram.y:3309
 msgid "CREATE FUNCTION / OUT parameters are not implemented"
 msgstr ""
 
-#: gram.y:3303
+#: gram.y:3316
 msgid "CREATE FUNCTION / INOUT parameters are not implemented"
 msgstr ""
 
-#: gram.y:3464
+#: gram.y:3477
 #: utils/adt/regproc.c:639
 msgid "missing argument"
 msgstr "缺少引數"
 
-#: gram.y:3465
+#: gram.y:3478
 #: utils/adt/regproc.c:640
 msgid "Use NONE to denote the missing argument of a unary operator."
 msgstr ""
 
-#: gram.y:4494
+#: gram.y:4507
 msgid "column name list not allowed in CREATE TABLE / AS EXECUTE"
 msgstr ""
 
-#: gram.y:4965
+#: gram.y:4978
 msgid "LIMIT #,# syntax is not supported"
 msgstr "LIMIT #,#語法不被支援"
 
-#: gram.y:4966
+#: gram.y:4979
 msgid "Use separate LIMIT and OFFSET clauses."
 msgstr ""
 
-#: gram.y:5116
+#: gram.y:5129
 msgid "For example, FROM (SELECT ...) [AS] foo."
 msgstr ""
 
-#: gram.y:5543
+#: gram.y:5556
 msgid "precision for type float must be at least 1 bit"
 msgstr "float型別的精確度至少要有1個位元"
 
-#: gram.y:5551
+#: gram.y:5564
 msgid "precision for type float must be less than 54 bits"
 msgstr "float型別的精確度不能少於54個位元"
 
-#: gram.y:5565
-#: gram.y:5580
+#: gram.y:5578
+#: gram.y:5593
 #, c-format
 msgid "NUMERIC precision %d must be between 1 and %d"
 msgstr "NUMERIC的精確度%d必須在1和%d之間"
 
-#: gram.y:5570
+#: gram.y:5583
 #, c-format
 msgid "NUMERIC scale %d must be between 0 and precision %d"
 msgstr ""
 
-#: gram.y:5598
-#: gram.y:5613
+#: gram.y:5611
+#: gram.y:5626
 #, c-format
 msgid "DECIMAL precision %d must be between 1 and %d"
 msgstr "DECIMAL的精確度%d必須在1和%d之間"
 
-#: gram.y:5603
+#: gram.y:5616
 #, c-format
 msgid "DECIMAL scale %d must be between 0 and precision %d"
 msgstr ""
 
-#: gram.y:5663
-#: gram.y:5741
+#: gram.y:5676
+#: gram.y:5754
 #, c-format
 msgid "length for type %s must be at least 1"
 msgstr "%s 型別的長度必須至少為1"
 
-#: gram.y:5668
-#: gram.y:5746
+#: gram.y:5681
+#: gram.y:5759
 #, c-format
 msgid "length for type %s cannot exceed %d"
 msgstr "%s 型別的長度不能超過 %d"
 
-#: gram.y:5819
+#: gram.y:5832
 #, c-format
 msgid "TIMESTAMP(%d)%s precision must not be negative"
 msgstr ""
 
-#: gram.y:5825
+#: gram.y:5838
 #, c-format
 msgid "TIMESTAMP(%d)%s precision reduced to maximum allowed, %d"
 msgstr ""
 
-#: gram.y:5860
+#: gram.y:5873
 #, c-format
 msgid "TIME(%d)%s precision must not be negative"
 msgstr ""
 
-#: gram.y:5866
+#: gram.y:5879
 #, c-format
 msgid "TIME(%d)%s precision reduced to maximum allowed, %d"
 msgstr ""
 
-#: gram.y:6320
+#: gram.y:6333
 msgid "UNIQUE predicate is not yet implemented"
 msgstr ""
 
-#: gram.y:6555
+#: gram.y:6568
 #, c-format
 msgid "CURRENT_TIME(%d) precision must not be negative"
 msgstr ""
 
-#: gram.y:6561
+#: gram.y:6574
 #, c-format
 msgid "CURRENT_TIME(%d) precision reduced to maximum allowed, %d"
 msgstr ""
 
-#: gram.y:6609
+#: gram.y:6622
 #, c-format
 msgid "CURRENT_TIMESTAMP(%d) precision must not be negative"
 msgstr ""
 
-#: gram.y:6615
+#: gram.y:6628
 #, c-format
 msgid "CURRENT_TIMESTAMP(%d) precision reduced to maximum allowed, %d"
 msgstr ""
 
-#: gram.y:6662
+#: gram.y:6675
 #, c-format
 msgid "LOCALTIME(%d) precision must not be negative"
 msgstr ""
 
-#: gram.y:6668
+#: gram.y:6681
 #, c-format
 msgid "LOCALTIME(%d) precision reduced to maximum allowed, %d"
 msgstr ""
 
-#: gram.y:6716
+#: gram.y:6729
 #, c-format
 msgid "LOCALTIMESTAMP(%d) precision must not be negative"
 msgstr ""
 
-#: gram.y:6722
+#: gram.y:6735
 #, c-format
 msgid "LOCALTIMESTAMP(%d) precision reduced to maximum allowed, %d"
 msgstr ""
 
-#: gram.y:7950
+#: gram.y:7963
 msgid "OLD used in query that is not in a rule"
 msgstr ""
 
-#: gram.y:7959
+#: gram.y:7972
 msgid "NEW used in query that is not in a rule"
 msgstr ""
 
-#: y.tab.c:18855
+#: y.tab.c:18944
 msgid "syntax error; also virtual memory exhausted"
 msgstr ""
 
-#: gram.y:8184
-#: gram.y:8186
-#: y.tab.c:18859
+#: gram.y:8197
+#: gram.y:8199
+#: y.tab.c:18948
 msgid "syntax error"
 msgstr ""
 
-#: y.tab.c:18973
+#: y.tab.c:19062
 msgid "parser stack overflow"
 msgstr ""
 
-#: gram.y:8158
+#: gram.y:8171
 msgid "wrong number of parameters on left side of OVERLAPS expression"
 msgstr ""
 
-#: gram.y:8164
+#: gram.y:8177
 msgid "wrong number of parameters on right side of OVERLAPS expression"
 msgstr ""
 
-#: gram.y:8243
+#: gram.y:8256
 msgid "multiple ORDER BY clauses not allowed"
 msgstr ""
 
-#: gram.y:8251
+#: gram.y:8264
 msgid "multiple FOR UPDATE clauses not allowed"
 msgstr ""
 
-#: gram.y:8259
+#: gram.y:8272
 msgid "multiple OFFSET clauses not allowed"
 msgstr ""
 
-#: gram.y:8267
+#: gram.y:8280
 msgid "multiple LIMIT clauses not allowed"
 msgstr ""
 
@@ -6395,22 +6402,22 @@ msgstr ""
 "\n"
 
 #: postmaster/postmaster.c:1073
-#: tcop/postgres.c:2114
+#: tcop/postgres.c:2115
 msgid "Options:\n"
 msgstr "選項：\n"
 
 #: postmaster/postmaster.c:1075
-#: tcop/postgres.c:2116
+#: tcop/postgres.c:2117
 msgid "  -A 1|0          enable/disable run-time assert checking\n"
 msgstr "  -A 1|0          打開/關閉執行時期assert檢查\n"
 
 #: postmaster/postmaster.c:1077
-#: tcop/postgres.c:2118
+#: tcop/postgres.c:2119
 msgid "  -B NBUFFERS     number of shared buffers\n"
 msgstr "  -B NBUFFERS     共享暫存區的數量\n"
 
 #: postmaster/postmaster.c:1078
-#: tcop/postgres.c:2119
+#: tcop/postgres.c:2120
 msgid "  -c NAME=VALUE   set run-time parameter\n"
 msgstr "  -c NAME=VALUE   設定執行時期參數\n"
 
@@ -6419,12 +6426,12 @@ msgid "  -d 1-5          debugging level\n"
 msgstr "  -d 1-5          除錯等級\n"
 
 #: postmaster/postmaster.c:1080
-#: tcop/postgres.c:2121
+#: tcop/postgres.c:2122
 msgid "  -D DATADIR      database directory\n"
 msgstr "  -D DATADIR      資料庫目錄\n"
 
 #: postmaster/postmaster.c:1081
-#: tcop/postgres.c:2124
+#: tcop/postgres.c:2125
 msgid "  -F              turn fsync off\n"
 msgstr "  -F              關閉fsync\n"
 
@@ -6461,17 +6468,17 @@ msgid "  -S              silent mode (start in background without logging output
 msgstr "  -S              安靜模式(在背景啟動且不顯示訊息)\n"
 
 #: postmaster/postmaster.c:1092
-#: tcop/postgres.c:2131
+#: tcop/postgres.c:2132
 msgid "  --help          show this help, then exit\n"
 msgstr "  --help          顯示這份說明然後結束\n"
 
 #: postmaster/postmaster.c:1093
-#: tcop/postgres.c:2132
+#: tcop/postgres.c:2133
 msgid "  --version       output version information, then exit\n"
 msgstr "  --version       顯示版本資訊然後結束\n"
 
 #: postmaster/postmaster.c:1095
-#: tcop/postgres.c:2133
+#: tcop/postgres.c:2134
 msgid ""
 "\n"
 "Developer options:\n"
@@ -7243,7 +7250,7 @@ msgstr ""
 #: tcop/fastpath.c:304
 #: tcop/postgres.c:845
 #: tcop/postgres.c:1166
-#: tcop/postgres.c:1649
+#: tcop/postgres.c:1650
 msgid "current transaction is aborted, commands ignored until end of transaction block"
 msgstr ""
 
@@ -7268,7 +7275,7 @@ msgstr ""
 #: tcop/postgres.c:346
 #: tcop/postgres.c:357
 #: tcop/postgres.c:369
-#: tcop/postgres.c:3171
+#: tcop/postgres.c:3172
 #, c-format
 msgid "invalid frontend message type %d"
 msgstr ""
@@ -7300,7 +7307,7 @@ msgid "bind message has %d parameter formats but %d parameters"
 msgstr ""
 
 #: tcop/postgres.c:1345
-#: tcop/postgres.c:1726
+#: tcop/postgres.c:1727
 msgid "unnamed prepared statement does not exist"
 msgstr ""
 
@@ -7314,49 +7321,49 @@ msgstr ""
 msgid "incorrect binary data format in bind parameter %d"
 msgstr ""
 
-#: tcop/postgres.c:1580
-#: tcop/postgres.c:1779
+#: tcop/postgres.c:1581
+#: tcop/postgres.c:1780
 #, c-format
 msgid "portal \"%s\" does not exist"
 msgstr "portal \"%s\"不存在"
 
-#: tcop/postgres.c:1876
+#: tcop/postgres.c:1877
 msgid "terminating connection because of crash of another server process"
 msgstr ""
 
-#: tcop/postgres.c:1877
+#: tcop/postgres.c:1878
 msgid "The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory."
 msgstr ""
 
-#: tcop/postgres.c:1881
+#: tcop/postgres.c:1882
 msgid "In a moment you should be able to reconnect to the database and repeat your command."
 msgstr ""
 
-#: tcop/postgres.c:1997
+#: tcop/postgres.c:1998
 msgid "floating-point exception"
 msgstr "發生浮點數例外"
 
-#: tcop/postgres.c:1998
+#: tcop/postgres.c:1999
 msgid "An invalid floating-point operation was signaled. This probably means an out-of-range result or an invalid operation, such as division by zero."
 msgstr ""
 
-#: tcop/postgres.c:2034
+#: tcop/postgres.c:2035
 msgid "terminating connection due to administrator command"
 msgstr ""
 
-#: tcop/postgres.c:2044
+#: tcop/postgres.c:2045
 msgid "canceling query due to user request"
 msgstr "使用者要求取消查詢"
 
-#: tcop/postgres.c:2092
+#: tcop/postgres.c:2093
 msgid "stack depth limit exceeded"
 msgstr "超過堆疊深度限制"
 
-#: tcop/postgres.c:2093
+#: tcop/postgres.c:2094
 msgid "Increase the configuration parameter \"max_stack_depth\"."
 msgstr ""
 
-#: tcop/postgres.c:2111
+#: tcop/postgres.c:2112
 #, c-format
 msgid ""
 "%s is the PostgreSQL stand-alone backend.  It is not\n"
@@ -7364,7 +7371,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: tcop/postgres.c:2113
+#: tcop/postgres.c:2114
 #, c-format
 msgid ""
 "Usage:\n"
@@ -7375,63 +7382,63 @@ msgstr ""
 "  %s [選項]... [資料庫名稱]\n"
 "\n"
 
-#: tcop/postgres.c:2120
+#: tcop/postgres.c:2121
 msgid "  -d 0-5          debugging level (0 is off)\n"
 msgstr "  -d 0-5          除錯等級(0是關閉)\n"
 
-#: tcop/postgres.c:2122
+#: tcop/postgres.c:2123
 msgid "  -e              use European date input format (DMY)\n"
 msgstr "  -e              使用歐洲日期輸入格式(DMY)\n"
 
-#: tcop/postgres.c:2123
+#: tcop/postgres.c:2124
 msgid "  -E              echo query before execution\n"
 msgstr "  -E              顯示將要執行的查詢\n"
 
-#: tcop/postgres.c:2125
+#: tcop/postgres.c:2126
 msgid "  -N              do not use newline as interactive query delimiter\n"
 msgstr "  -N              在互動模式不使用換行符號做為查詢分隔符號\n"
 
-#: tcop/postgres.c:2126
+#: tcop/postgres.c:2127
 msgid "  -o FILENAME     send stdout and stderr to given file\n"
 msgstr "  -o 檔案名稱     將stdout和stderr寫入檔案\n"
 
-#: tcop/postgres.c:2127
+#: tcop/postgres.c:2128
 msgid "  -P              disable system indexes\n"
 msgstr "  -P              關閉系統索引\n"
 
-#: tcop/postgres.c:2128
+#: tcop/postgres.c:2129
 msgid "  -s              show statistics after each query\n"
 msgstr "  -s              執行每個查詢之後顯示統計資料\n"
 
-#: tcop/postgres.c:2129
+#: tcop/postgres.c:2130
 msgid "  -S WORK-MEM     set amount of memory for sorts (in kbytes)\n"
 msgstr "  -S WORK-MEM     設定排序可用的記憶體(單位是KB)\n"
 
-#: tcop/postgres.c:2130
+#: tcop/postgres.c:2131
 msgid "  --describe-config  describe configuration parameters, then exit\n"
 msgstr ""
 
-#: tcop/postgres.c:2134
+#: tcop/postgres.c:2135
 msgid "  -f s|i|n|m|h    forbid use of some plan types\n"
 msgstr ""
 
-#: tcop/postgres.c:2135
+#: tcop/postgres.c:2136
 msgid "  -i              do not execute queries\n"
 msgstr "  -i              不執行查詢\n"
 
-#: tcop/postgres.c:2136
+#: tcop/postgres.c:2137
 msgid "  -O              allow system table structure changes\n"
 msgstr "  -O              允許修改系統資料表結構\n"
 
-#: tcop/postgres.c:2137
+#: tcop/postgres.c:2138
 msgid "  -t pa|pl|ex     show timings after each query\n"
 msgstr "  -t pa|pl|ex     執行每個查詢之後顯示執行時間\n"
 
-#: tcop/postgres.c:2138
+#: tcop/postgres.c:2139
 msgid "  -W NUM          wait NUM seconds to allow attach from a debugger\n"
 msgstr "  -W NUM          等待NUM秒，讓除錯器可以連結\n"
 
-#: tcop/postgres.c:2139
+#: tcop/postgres.c:2140
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
@@ -7439,41 +7446,41 @@ msgstr ""
 "\n"
 "回報錯誤給<pgsql-bugs@postgresql.org>。\n"
 
-#: tcop/postgres.c:2264
+#: tcop/postgres.c:2265
 msgid "assert checking is not compiled in"
 msgstr "編譯時未加入assert檢查。"
 
-#: tcop/postgres.c:2653
+#: tcop/postgres.c:2654
 msgid "invalid command-line arguments for server process"
 msgstr "給伺服器行程的命令列引數不合法"
 
-#: tcop/postgres.c:2654
-#: tcop/postgres.c:2670
+#: tcop/postgres.c:2655
+#: tcop/postgres.c:2671
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "執行\"%s --help\"顯示更多資訊。"
 
-#: tcop/postgres.c:2668
+#: tcop/postgres.c:2669
 #, c-format
 msgid "%s: invalid command-line arguments"
 msgstr "%s：不合法的命令列引數"
 
-#: tcop/postgres.c:2678
+#: tcop/postgres.c:2679
 #, c-format
 msgid "%s: no database nor user name specified"
 msgstr "%s：未指定資料庫和使用者名稱"
 
-#: tcop/postgres.c:3084
+#: tcop/postgres.c:3085
 #, c-format
 msgid "invalid CLOSE message subtype %d"
 msgstr ""
 
-#: tcop/postgres.c:3114
+#: tcop/postgres.c:3115
 #, c-format
 msgid "invalid DESCRIBE message subtype %d"
 msgstr ""
 
-#: tcop/postgres.c:3349
+#: tcop/postgres.c:3350
 #, c-format
 msgid "disconnection: session time: %s%s%s%s%s"
 msgstr ""
@@ -7536,7 +7543,7 @@ msgstr "\"%s\"不是資料型別"
 msgid "Use DROP TYPE to remove a type."
 msgstr "使用DROP TYPE刪除資料型別。"
 
-#: tcop/utility.c:932
+#: tcop/utility.c:934
 msgid "must be superuser to do CHECKPOINT"
 msgstr "只有管理者能用CHECKPOINT"
 
@@ -7976,6 +7983,7 @@ msgid "time zone displacement out of range: \"%s\""
 msgstr ""
 
 #  translator: first %s is inet or cidr
+#. translator: first %s is inet or cidr
 #: utils/adt/datetime.c:3339
 #: utils/adt/network.c:93
 #, c-format
@@ -8185,7 +8193,7 @@ msgstr "\"%s\"不是數字"
 
 #: utils/adt/formatting.c:1685
 msgid "invalid AM/PM string"
-msgstr "不合法的AM/PM字串"
+msgstr "不?法的AM/PM字串"
 
 #: utils/adt/formatting.c:2031
 msgid "\"TZ\"/\"tz\" not supported"
@@ -8754,7 +8762,7 @@ msgstr ""
 msgid "improper type name"
 msgstr ""
 
-#: utils/adt/ruleutils.c:1629
+#: utils/adt/ruleutils.c:1715
 #, c-format
 msgid "rule \"%s\" has unsupported event type %d"
 msgstr ""
