@@ -1,0 +1,2 @@
+
+`echo "SELECT * FROM simple ORDER BY justint;" | time $FrontEnd`;

@@ -1,0 +1,5 @@
+
+if ( $TestDBMS =~ /^pgsql/ )
+{
+	`time $FrontEnd -c 'vacuum'`;
+}

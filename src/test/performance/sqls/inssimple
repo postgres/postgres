@@ -1,0 +1,29 @@
+
+#
+# Transactions are unsupported by MySQL - so for insertion of
+# 8192 rows, 1 INSERT per Xaction, we returned "Transactions unsupported"
+#
+if ( $TestDBMS =~ /^mysql/ && $XACTBLOCK eq '' )
+{
+	print STDERR " No_Xact\n";
+	return;
+}
+
+`> .sqlf`;	# clean file
+
+#
+# PgSQL specific: if all queries from inssimple.data must be executed in
+# single xaction ($XACTBLOCK ne '') then add BEGIN/END arround queries
+#
+`echo "BEGIN;" >> .sqlf` if ( $TestDBMS =~ /^pgsql/ && $XACTBLOCK ne '' );
+
+
+`cat sqls/inssimple.data >> .sqlf`;
+
+
+# PgSQL (see above)
+`echo "END;" >> .sqlf` if ( $TestDBMS =~ /^pgsql/ && $XACTBLOCK ne '' );
+
+# Ok - run queries
+`time $FrontEnd < .sqlf`;
+

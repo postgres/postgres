@@ -1,0 +1,14 @@
+
+`> .sqlf`;
+
+# PgSQL specific to execute all queries in single xaction
+`echo "BEGIN;" >> .sqlf` if ( $TestDBMS =~ /^pgsql/ && $XACTBLOCK ne '' );
+
+
+`cat sqls/slcsimple.data >> .sqlf`;
+
+
+`echo "END;" >> .sqlf` if ( $TestDBMS =~ /^pgsql/ && $XACTBLOCK ne '' );
+
+# Run queries
+`time $FrontEnd < .sqlf`;
