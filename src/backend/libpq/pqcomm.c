@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.9 1996/11/24 04:05:20 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.10 1996/12/26 22:07:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
 #ifndef WIN32
@@ -57,7 +58,7 @@
 
 #include <postgres.h>
 
-#include <libpq/pqsignal.h>	/* substitute for <signal.h> */
+#include <libpq/pqsignal.h>
 #include <libpq/auth.h>
 #include <libpq/libpq.h>	/* where the declarations go */
 
@@ -496,7 +497,7 @@ pq_regoob(void (*fptr)())
 #else /* hpux */
     fcntl(fd, F_SETOWN, getpid());
 #endif /* hpux */
-    (void) signal(SIGURG,fptr);
+    (void) pqsignal(SIGURG,fptr);
 #endif /* WIN32 */    
 }
 
@@ -504,7 +505,7 @@ void
 pq_unregoob()
 {
 #ifndef WIN32
-    signal(SIGURG,SIG_DFL);
+    pqsignal(SIGURG,SIG_DFL);
 #endif /* WIN32 */    
 }
 

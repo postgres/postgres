@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.12 1996/11/22 04:32:41 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.13 1996/12/26 22:06:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "access/skey.h"
 #include "access/strat.h"
 #include "utils/rel.h"
+#include "libpq/pqsignal.h"
 
 #include "storage/block.h"
 #include "storage/off.h"
@@ -291,10 +292,10 @@ BootstrapMain(int argc, char *argv[])
      *  initialize signal handlers
      * ----------------
      */
-    signal(SIGINT, (sig_func) die);
+    pqsignal(SIGINT, (sig_func) die);
 #ifndef win32
-    signal(SIGHUP, (sig_func) die); 
-    signal(SIGTERM, (sig_func) die);
+    pqsignal(SIGHUP, (sig_func) die); 
+    pqsignal(SIGTERM, (sig_func) die);
 #endif /* win32 */    
 
     /* --------------------
@@ -406,7 +407,7 @@ BootstrapMain(int argc, char *argv[])
      * ----------------
      */
 #ifndef win32    
-    signal(SIGHUP, handle_warn);
+    pqsignal(SIGHUP, handle_warn);
 
     if (sigsetjmp(Warn_restart, 1) != 0) {
 #else

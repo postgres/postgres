@@ -7,21 +7,23 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.23 1996/12/24 09:03:16 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.24 1996/12/26 22:08:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <signal.h>
 #include <string.h>
 #include <errno.h>
 #include "postgres.h"
 #include "libpq/pqcomm.h"
+#include "libpq/pqsignal.h"
 #include "libpq-fe.h"
-#include <signal.h>
 #include <sys/ioctl.h>
 #include TERMIOS_H_LOCATION
+
 
 #ifdef TIOCGWINSZ
 struct winsize screen_size;
@@ -1125,7 +1127,7 @@ PQprint(FILE *fout,
                 fout = popen(pagerenv, "w");
                 if (fout) {
                     usePipe = 1;
-                    signal(SIGPIPE, SIG_IGN);
+                    pqsignal(SIGPIPE, SIG_IGN);
                 } else
                   fout = stdout;
             }
@@ -1217,7 +1219,7 @@ PQprint(FILE *fout,
         free(fieldNames);
         if (usePipe) {
             pclose(fout);
-            signal(SIGPIPE, SIG_DFL);
+            pqsignal(SIGPIPE, SIG_DFL);
         }
         if (border)
           free(border);

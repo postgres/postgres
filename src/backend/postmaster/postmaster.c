@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.29 1996/12/26 17:49:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.30 1996/12/26 22:07:17 momjian Exp $
  *
  * NOTES
  *
@@ -40,7 +40,7 @@
 
 #include "postgres.h"
 
-#include "libpq/pqsignal.h"     /* substitute for <signal.h> */
+#include <signal.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -73,6 +73,7 @@
 #include "libpq/libpq.h"
 #include "libpq/auth.h"
 #include "libpq/pqcomm.h"
+#include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "version.h"
 #include "lib/dllist.h"
@@ -394,14 +395,14 @@ PostmasterMain(int argc, char *argv[])
     if (silentflag)
         pmdaemonize();
     
-    signal(SIGINT, pmdie);
+    pqsignal(SIGINT, pmdie);
 #ifndef WIN32
-    signal(SIGCHLD, reaper);
-    signal(SIGTTIN, SIG_IGN);
-    signal(SIGTTOU, SIG_IGN);
-    signal(SIGHUP, pmdie);
-    signal(SIGTERM, pmdie);
-    signal(SIGCONT, dumpstatus);
+    pqsignal(SIGCHLD, reaper);
+    pqsignal(SIGTTIN, SIG_IGN);
+    pqsignal(SIGTTOU, SIG_IGN);
+    pqsignal(SIGHUP, pmdie);
+    pqsignal(SIGTERM, pmdie);
+    pqsignal(SIGCONT, dumpstatus);
 #endif /* WIN32 */
     
 

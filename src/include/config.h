@@ -85,8 +85,7 @@
 #if defined(dgux)
 #  define LINUX_ELF
 #  define NEED_UNION_SEMUN 
-#  define __USE_POSIX_SIGNALS
-#  define -DUSE_POSIX_SIGNALS
+#  define USE_POSIX_SIGNALS
 #endif
 
 #if defined(hpux)

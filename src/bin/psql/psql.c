@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.41 1996/12/26 20:56:40 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.42 1996/12/26 22:07:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include "postgres.h"
 #include "libpq-fe.h"
+#include "pqsignal.h"
 #include "stringutils.h"
 #include "psqlHelp.h"
 #ifdef NEED_STRDUP
@@ -513,19 +514,10 @@ SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 	    break;
 	case PGRES_COPY_IN:
 	    *success_p = true;
-	    if (copy_in) {
+	    if (copy_in)
 		handleCopyIn(results, false, copystream);
-	    } else {
-		char            c;
-		/*
-		 * eat extra newline still in input buffer
-		 * 
-		 */
-		fflush(stdin);
-		if ((c = getc(stdin)) != '\n' && c != EOF)
-		    (void) ungetc(c, stdin);
+	    else
 		handleCopyIn(results, !settings->quiet, stdin);
-	    }
 	    break;
 	case PGRES_NONFATAL_ERROR:
 	case PGRES_FATAL_ERROR:
@@ -1676,15 +1668,18 @@ setFout(PsqlSettings * ps, char *fname)
 	else
 	    fclose(ps->queryFout);
     }
-    if (!fname)
+    if (!fname) {
 	ps->queryFout = stdout;
+	pqsignal(SIGPIPE, SIG_DFL);
+    }
     else {
 	if (*fname == '|') {
-	    signal(SIGPIPE, SIG_IGN);
+	    pqsignal(SIGPIPE, SIG_IGN);
 	    ps->queryFout = popen(fname + 1, "w");
 	    ps->pipe = 1;
 	} else {
 	    ps->queryFout = fopen(fname, "w");
+	    pqsignal(SIGPIPE, SIG_DFL);
 	    ps->pipe = 0;
 	}
 	if (!ps->queryFout) {

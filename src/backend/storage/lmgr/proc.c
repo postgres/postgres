@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.11 1996/11/27 07:17:48 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.12 1996/12/26 22:07:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *      This is so that we can support more backends. (system-wide semaphore
  *      sets run out pretty fast.)                -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.11 1996/11/27 07:17:48 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.12 1996/12/26 22:07:28 momjian Exp $
  */
 #include <sys/time.h>
 #ifndef WIN32
@@ -65,7 +65,7 @@
 
 #include "postgres.h"
 #include "miscadmin.h"
-#include "libpq/pqsignal.h"	/* substitute for <signal.h> */
+#include "libpq/pqsignal.h"
 
 #include "access/xact.h"
 #include "utils/hsearch.h"
@@ -157,7 +157,7 @@ InitProcess(IPCKey key)
      * ------------------
      */
 #ifndef WIN32
-    signal(SIGALRM, HandleDeadLock);
+    pqsignal(SIGALRM, HandleDeadLock);
 #endif /* WIN32 we'll have to figure out how to handle this later */
 
     SpinAcquire(ProcStructLock);

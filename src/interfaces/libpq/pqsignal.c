@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/pqsignal.c,v 1.2 1996/11/08 06:02:30 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/pqsignal.c,v 1.3 1996/12/26 22:08:30 momjian Exp $
  *
  * NOTES
  *	This shouldn't be in libpq, but the monitor and some other
@@ -18,12 +18,16 @@
  */
 #include <stdlib.h>
 
+#include <signal.h>
+
 #include "libpq/pqsignal.h"
 
 pqsigfunc
 pqsignal(int signo, pqsigfunc func)
 {
-#if defined(USE_POSIX_SIGNALS)
+#if !defined(USE_POSIX_SIGNALS)
+    return signal(signo, func);
+#else
     struct sigaction act, oact;
     
     act.sa_handler = func;
@@ -35,8 +39,5 @@ pqsignal(int signo, pqsigfunc func)
     if (sigaction(signo, &act, &oact) < 0)
 	return(SIG_ERR);
     return(oact.sa_handler);
-#else /* !USE_POSIX_SIGNALS */
-    exit(1); /* this should never be reached, pqsignal should only
-	      be called if USE_POSIX_SIGNALS is true*/
 #endif /* !USE_POSIX_SIGNALS */
 }

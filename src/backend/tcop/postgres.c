@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.23 1996/12/07 04:39:06 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.24 1996/12/26 22:07:40 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -15,11 +15,11 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "libpq/pqsignal.h"     /* substitute for <signal.h> */
 
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 #include <time.h>
 #include <setjmp.h>
 #include <sys/time.h>
@@ -77,6 +77,7 @@
 #include "tcop/fastpath.h"
 
 #include "libpq/libpq.h"
+#include "libpq/pqsignal.h"
 #include "rewrite/rewriteHandler.h" /* for QueryRewrite() */
 
 /* ----------------
@@ -820,15 +821,15 @@ PostgresMain(int argc, char *argv[])
      *  register signal handlers.
      * ----------------
      */
-    signal(SIGINT, die);
+    pqsignal(SIGINT, die);
 
 #ifndef WIN32
-    signal(SIGHUP, die);
-    signal(SIGTERM, die);
-    signal(SIGPIPE, die);
-    signal(SIGUSR1, quickdie);
-    signal(SIGUSR2, Async_NotifyHandler);
-    signal(SIGFPE, FloatExceptionHandler);
+    pqsignal(SIGHUP, die);
+    pqsignal(SIGTERM, die);
+    pqsignal(SIGPIPE, die);
+    pqsignal(SIGUSR1, quickdie);
+    pqsignal(SIGUSR2, Async_NotifyHandler);
+    pqsignal(SIGFPE, FloatExceptionHandler);
 #endif /* WIN32 */
     
     /* --------------------
@@ -1246,7 +1247,7 @@ PostgresMain(int argc, char *argv[])
      */
 
 #ifndef WIN32    
-    signal(SIGHUP, handle_warn);
+    pqsignal(SIGHUP, handle_warn);
 
     if (sigsetjmp(Warn_restart, 1) != 0) {
 #else
@@ -1271,7 +1272,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.23 $ $Date: 1996/12/07 04:39:06 $");
+        puts("$Revision: 1.24 $ $Date: 1996/12/26 22:07:40 $");
     }
     
     /* ----------------
