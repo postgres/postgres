@@ -4,10 +4,11 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-12-08 15:33-0200\n"
+"POT-Creation-Date: 2005-01-07 12:28-0200\n"
 "PO-Revision-Date: 2004-11-13 19:30-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <eulerto@yahoo.com.br>\n"
-"Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas.postgresql.org.br>\n"
+"Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas."
+"postgresql.org.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -179,7 +180,7 @@ msgstr "%s: nome da linguagem é um argumento requerido\n"
 #: createlang.c:210
 #, c-format
 msgid "%s: unsupported language \"%s\"\n"
-msgstr "%s: linguagem não suportada \"%s\"\n"
+msgstr "%s: linguagem \"%s\" não é suportada\n"
 
 #: createlang.c:211
 msgid ""
@@ -443,7 +444,7 @@ msgstr ""
 
 #: dropuser.c:104
 msgid "Enter name of user to drop: "
-msgstr "Informe o usuário a ser removido: "
+msgstr "Digite o nome do usuário a ser removido: "
 
 #: dropuser.c:110
 #, c-format
@@ -531,7 +532,7 @@ msgid ""
 "Read the description of the SQL command CLUSTER for details.\n"
 msgstr ""
 "\n"
-"Leia a descrição do comando SQL CLUSTER para obter mais detalhes.\n"
+"Leia a descrição do comando SQL CLUSTER para obter detalhes.\n"
 
 #: vacuumdb.c:135
 #, c-format
@@ -622,7 +623,7 @@ msgid ""
 "Read the description of the SQL command VACUUM for details.\n"
 msgstr ""
 "\n"
-"Leia a descrição do comando SQL VACUUM para obter mais detalhes.\n"
+"Leia a descrição do comando SQL VACUUM para obter detalhes.\n"
 
 #: common.c:33
 #, c-format
