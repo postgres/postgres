@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.129 2002/01/15 22:14:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.129.2.1 2002/05/01 01:27:31 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1004,7 +1004,7 @@ heap_get_latest_tid(Relation relation,
 					   snapshot, 0, (ScanKey) NULL);
 
 	linkend = true;
-	if ((t_data->t_infomask & HEAP_XMAX_COMMITTED) &&
+	if ((t_data->t_infomask & HEAP_XMIN_COMMITTED) != 0 &&
 		!ItemPointerEquals(tid, &ctid))
 		linkend = false;
 
