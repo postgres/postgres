@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.60 1998/02/03 19:26:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.61 1998/02/03 21:57:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 	pmem = PortalGetVariableMemory(vc_portal);
 	old = MemoryContextSwitchTo((MemoryContext) pmem);
 
-	if (va_spec == NIL || analyze)
+	if (va_spec != NIL && !analyze)
 		elog(ERROR,"Can't vacuum columns, only tables.  You can 'vacuum analyze' columns.");
 
 	foreach(le, va_spec)
