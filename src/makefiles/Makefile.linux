@@ -1,4 +1,7 @@
 ifdef LINUX_ELF
+# test for __ELF__ in C code so do not need LINUX_ELF defined
+# - thomas 1997-12-29
+#CFLAGS+= -DLINUX_ELF
 LDFLAGS+= -export-dynamic -Wl,-rpath -Wl,$(DESTDIR)$(LIBDIR)
 endif
 MK_NO_LORDER= true
