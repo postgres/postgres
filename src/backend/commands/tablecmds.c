@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.111 2004/06/05 19:48:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.112 2004/06/06 20:30:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,6 +194,8 @@ static void ATSimpleRecursion(List **wqueue, Relation rel,
 							  AlterTableCmd *cmd, bool recurse);
 static void ATOneLevelRecursion(List **wqueue, Relation rel,
 								AlterTableCmd *cmd);
+static void find_composite_type_dependencies(Oid typeOid,
+											 const char *origTblName);
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 							AlterTableCmd *cmd);
 static void ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
@@ -2282,6 +2284,18 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		newrel = NULL;
 
 	/*
+	 * If we need to rewrite the table, the operation has to be propagated
+	 * to tables that use this table's rowtype as a column type.
+	 *
+	 * (Eventually this will probably become true for scans as well, but
+	 * at the moment a composite type does not enforce any constraints,
+	 * so it's not necessary/appropriate to enforce them just during ALTER.)
+	 */
+	if (newrel)
+		find_composite_type_dependencies(oldrel->rd_rel->reltype,
+										 RelationGetRelationName(oldrel));
+
+	/*
 	 * Generate the constraint and default execution states
 	 */
 
@@ -2605,6 +2619,87 @@ ATOneLevelRecursion(List **wqueue, Relation rel,
 		relation_close(childrel, NoLock);
 	}
 }
+
+
+/*
+ * find_composite_type_dependencies
+ *
+ * Check to see if a table's rowtype is being used as a column in some
+ * other table (possibly nested several levels deep in composite types!).
+ * Eventually, we'd like to propagate the check or rewrite operation
+ * into other such tables, but for now, just error out if we find any.
+ *
+ * We assume that functions and views depending on the type are not reasons
+ * to reject the ALTER.  (How safe is this really?)
+ */
+static void
+find_composite_type_dependencies(Oid typeOid, const char *origTblName)
+{
+	Relation	depRel;
+	ScanKeyData key[2];
+	SysScanDesc depScan;
+	HeapTuple	depTup;
+
+	/*
+	 * We scan pg_depend to find those things that depend on the rowtype.
+	 * (We assume we can ignore refobjsubid for a rowtype.)
+	 */
+	depRel = relation_openr(DependRelationName, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelOid_pg_type));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(typeOid));
+
+	depScan = systable_beginscan(depRel, DependReferenceIndex, true,
+								 SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid(depTup = systable_getnext(depScan)))
+	{
+		Form_pg_depend pg_depend = (Form_pg_depend) GETSTRUCT(depTup);
+		Relation	rel;
+		Form_pg_attribute att;
+
+		/* Ignore dependees that aren't user columns of relations */
+		/* (we assume system columns are never of rowtypes) */
+		if (pg_depend->classid != RelOid_pg_class ||
+			pg_depend->objsubid <= 0)
+			continue;
+
+		rel = relation_open(pg_depend->objid, AccessShareLock);
+		att = rel->rd_att->attrs[pg_depend->objsubid - 1];
+
+		if (rel->rd_rel->relkind == RELKIND_RELATION)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot alter table \"%s\" because column \"%s\".\"%s\" uses its rowtype",
+							origTblName,
+							RelationGetRelationName(rel),
+							NameStr(att->attname))));
+		}
+		else if (OidIsValid(rel->rd_rel->reltype))
+		{
+			/*
+			 * A view or composite type itself isn't a problem, but we must
+			 * recursively check for indirect dependencies via its rowtype.
+			 */
+			find_composite_type_dependencies(rel->rd_rel->reltype,
+											 origTblName);
+		}
+
+		relation_close(rel, AccessShareLock);
+	}
+
+	systable_endscan(depScan);
+
+	relation_close(depRel, AccessShareLock);
+}
+
 
 /* 
  * ALTER TABLE ADD COLUMN

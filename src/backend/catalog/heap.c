@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.268 2004/06/06 04:52:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.269 2004/06/06 20:30:07 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -416,10 +416,7 @@ CheckAttributeType(const char *attname, Oid atttypid)
 	 * Warn user, but don't fail, if column to be created has UNKNOWN type
 	 * (usually as a result of a 'retrieve into' - jolly)
 	 *
-	 * Refuse any attempt to create a pseudo-type column or one that uses a
-	 * non-standalone composite type.  (We could support using table rowtypes
-	 * as attributes, if we were willing to make ALTER TABLE hugely more
-	 * complex, but for now let's limit the damage ...)
+	 * Refuse any attempt to create a pseudo-type column.
 	 */
 	if (atttypid == UNKNOWNOID)
 		ereport(WARNING,
@@ -433,16 +430,6 @@ CheckAttributeType(const char *attname, Oid atttypid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("column \"%s\" has pseudo-type %s",
-							attname, format_type_be(atttypid))));
-	}
-	else if (att_typtype == 'c')
-	{
-		Oid			typrelid = get_typ_typrelid(atttypid);
-
-		if (get_rel_relkind(typrelid) != RELKIND_COMPOSITE_TYPE)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("column \"%s\" has composite type %s",
 							attname, format_type_be(atttypid))));
 	}
 }
