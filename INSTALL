@@ -221,7 +221,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      mkdir /usr/local/pgsql/data
      chown postgres /usr/local/pgsql/data
      su - postgres
-     /usr/local/pgsql/initdb -D /usr/local/pgsql/data
+     /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
 
      The -D option specifies the location where the data will be stored. You
      can use any path you want, it does not have to be under the
