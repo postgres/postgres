@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.8 2000/04/05 21:51:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.9 2000/04/14 17:37:54 momjian Exp $
 Postgres documentation
 -->
 
@@ -179,15 +179,15 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
     The open database is the target for <command>VACUUM</command>.
    </para>
    <para>
-    We recommend that active production databases be cleaned nightly, in order
-    to keep statistics relatively current.  The <command>VACUUM</command>
-    query may be executed at any time, however.  In particular, after
-    copying a large class into <productname>Postgres</productname> 
-    or after deleting a large number of
-    records, it may be a good idea to issue a <command>VACUUM ANALYZE</command>
-    query.  This will update the system catalogs with the results of all
-    recent changes, and allow the <productname>Postgres</productname> 
-    query optimizer to make better choices in planning user queries.
+    We recommend that active production databases be
+    <command>VACUUMM</command>-ed nightly, in order to keep remove
+    expired rows. After copying a large class into
+    <productname>Postgres</productname> or after deleting a large number
+    of records, it may be a good idea to issue a <command>VACUUM
+    ANALYZE</command> query. This will update the system catalogs with
+    the results of all recent changes, and allow the
+    <productname>Postgres</productname> query optimizer to make better
+    choices in planning user queries.
    </para>
 
   </refsect2>
