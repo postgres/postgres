@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.279 2005/01/10 20:02:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.280 2005/01/27 03:17:17 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1985,99 +1985,149 @@ RelationTruncateIndexes(Oid heapId)
 /*
  *	 heap_truncate
  *
- *	 This routine deletes all data within the specified relation.
+ *	 This routine deletes all data within all the specified relations.
  *
  * This is not transaction-safe!  There is another, transaction-safe
- * implementation in commands/cluster.c.  We now use this only for
+ * implementation in commands/tablecmds.c.  We now use this only for
  * ON COMMIT truncation of temporary tables, where it doesn't matter.
  */
 void
-heap_truncate(Oid rid)
+heap_truncate(List *relids)
 {
-	Relation	rel;
-	Oid			toastrelid;
+	List	   *relations = NIL;
+	ListCell   *cell;
 
-	/* Open relation for processing, and grab exclusive access on it. */
-	rel = heap_open(rid, AccessExclusiveLock);
+	/* Open relations for processing, and grab exclusive access on each */
+	foreach(cell, relids)
+	{
+		Oid			rid = lfirst_oid(cell);
+		Relation	rel;
+		Oid			toastrelid;
+
+		rel = heap_open(rid, AccessExclusiveLock);
+		relations = lappend(relations, rel);
+
+		/* If there is a toast table, add it to the list too */
+		toastrelid = rel->rd_rel->reltoastrelid;
+		if (OidIsValid(toastrelid))
+		{
+			rel = heap_open(toastrelid, AccessExclusiveLock);
+			relations = lappend(relations, rel);
+		}
+	}
 
 	/* Don't allow truncate on tables that are referenced by foreign keys */
-	heap_truncate_check_FKs(rel);
+	heap_truncate_check_FKs(relations, true);
 
-	/*
-	 * Release any buffers associated with this relation.  If they're
-	 * dirty, they're just dropped without bothering to flush to disk.
-	 */
-	DropRelationBuffers(rel);
+	/* OK to do it */
+	foreach(cell, relations)
+	{
+		Relation	rel = lfirst(cell);
 
-	/* Now truncate the actual data */
-	RelationTruncate(rel, 0);
+		/*
+		 * Release any buffers associated with this relation.  If they're
+		 * dirty, they're just dropped without bothering to flush to disk.
+		 */
+		DropRelationBuffers(rel);
 
-	/* If this relation has indexes, truncate the indexes too */
-	RelationTruncateIndexes(rid);
+		/* Now truncate the actual data */
+		RelationTruncate(rel, 0);
 
-	/* If it has a toast table, recursively truncate that too */
-	toastrelid = rel->rd_rel->reltoastrelid;
-	if (OidIsValid(toastrelid))
-		heap_truncate(toastrelid);
+		/* If this relation has indexes, truncate the indexes too */
+		RelationTruncateIndexes(RelationGetRelid(rel));
 
-	/*
-	 * Close the relation, but keep exclusive lock on it until commit.
-	 */
-	heap_close(rel, NoLock);
+		/*
+		 * Close the relation, but keep exclusive lock on it until commit.
+		 */
+		heap_close(rel, NoLock);
+	}
 }
 
 /*
  * heap_truncate_check_FKs
- *		Check for foreign keys referencing a relation that's to be truncated
+ *		Check for foreign keys referencing a list of relations that
+ *		are to be truncated
  *
  * We disallow such FKs (except self-referential ones) since the whole point
  * of TRUNCATE is to not scan the individual rows to be thrown away.
  *
  * This is split out so it can be shared by both implementations of truncate.
- * Caller should already hold a suitable lock on the relation.
+ * Caller should already hold a suitable lock on the relations.
+ *
+ * tempTables is only used to select an appropriate error message.
  */
 void
-heap_truncate_check_FKs(Relation rel)
+heap_truncate_check_FKs(List *relations, bool tempTables)
 {
-	Oid			relid = RelationGetRelid(rel);
-	ScanKeyData key;
+	List	   *oids = NIL;
+	ListCell   *cell;
 	Relation	fkeyRel;
 	SysScanDesc fkeyScan;
 	HeapTuple	tuple;
 
 	/*
-	 * Fast path: if the relation has no triggers, it surely has no FKs
-	 * either.
+	 * Build a list of OIDs of the interesting relations.
+	 *
+	 * If a relation has no triggers, then it can neither have FKs nor be
+	 * referenced by a FK from another table, so we can ignore it.
 	 */
-	if (rel->rd_rel->reltriggers == 0)
+	foreach(cell, relations)
+	{
+		Relation	rel = lfirst(cell);
+
+		if (rel->rd_rel->reltriggers != 0)
+			oids = lappend_oid(oids, RelationGetRelid(rel));
+	}
+
+	/*
+	 * Fast path: if no relation has triggers, none has FKs either.
+	 */
+	if (oids == NIL)
 		return;
 
 	/*
-	 * Otherwise, must scan pg_constraint.	Right now, this is a seqscan
+	 * Otherwise, must scan pg_constraint.	Right now, it is a seqscan
 	 * because there is no available index on confrelid.
 	 */
 	fkeyRel = heap_openr(ConstraintRelationName, AccessShareLock);
 
-	ScanKeyInit(&key,
-				Anum_pg_constraint_confrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(relid));
-
 	fkeyScan = systable_beginscan(fkeyRel, NULL, false,
-								  SnapshotNow, 1, &key);
+								  SnapshotNow, 0, NULL);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(fkeyScan)))
 	{
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 
-		if (con->contype == CONSTRAINT_FOREIGN && con->conrelid != relid)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot truncate a table referenced in a foreign key constraint"),
-					 errdetail("Table \"%s\" references \"%s\" via foreign key constraint \"%s\".",
-							   get_rel_name(con->conrelid),
-							   RelationGetRelationName(rel),
-							   NameStr(con->conname))));
+		/* Not a foreign key */
+		if (con->contype != CONSTRAINT_FOREIGN)
+			continue;
+
+		/* Not for one of our list of tables */
+		if (! list_member_oid(oids, con->confrelid))
+			continue;
+
+		/* The referencer should be in our list too */
+		if (! list_member_oid(oids, con->conrelid))
+		{
+			if (tempTables)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unsupported ON COMMIT and foreign key combination"),
+						 errdetail("Table \"%s\" references \"%s\" via foreign key constraint \"%s\", but they do not have the same ON COMMIT setting.",
+								   get_rel_name(con->conrelid),
+								   get_rel_name(con->confrelid),
+								   NameStr(con->conname))));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot truncate a table referenced in a foreign key constraint"),
+						 errdetail("Table \"%s\" references \"%s\" via foreign key constraint \"%s\".",
+								   get_rel_name(con->conrelid),
+								   get_rel_name(con->confrelid),
+								   NameStr(con->conname)),
+						 errhint("Truncate table \"%s\" at the same time.",
+								 get_rel_name(con->conrelid))));
+		}
 	}
 
 	systable_endscan(fkeyScan);

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.234 2004/12/31 21:59:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.235 2005/01/27 03:17:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -891,7 +891,7 @@ _equalDropStmt(DropStmt *a, DropStmt *b)
 static bool
 _equalTruncateStmt(TruncateStmt *a, TruncateStmt *b)
 {
-	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(relations);
 
 	return true;
 }

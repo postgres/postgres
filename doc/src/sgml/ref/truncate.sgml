@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.17 2004/03/23 13:21:41 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.18 2005/01/27 03:17:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>TRUNCATE</refname>
-  <refpurpose>empty a table</refpurpose>
+  <refpurpose>empty a table or set of tables</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-truncate">
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
+TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...]
 </synopsis>
  </refsynopsisdiv>
 
@@ -28,10 +28,10 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
   <title>Description</title>
 
   <para>
-   <command>TRUNCATE</command> quickly removes all rows from a
-   table. It has the same effect as an unqualified
-   <command>DELETE</command> but since it does not actually scan the
-   table it is faster. This is most useful on large tables.
+   <command>TRUNCATE</command> quickly removes all rows from a set of
+   tables. It has the same effect as an unqualified
+   <command>DELETE</command> on each table, but since it does not actually
+   scan the tables it is faster. This is most useful on large tables.
   </para>
  </refsect1>
   
@@ -43,7 +43,7 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of the table to be truncated.
+      The name (optionally schema-qualified) of a table to be truncated.
      </para>
     </listitem>
    </varlistentry>
@@ -54,14 +54,15 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
   <title>Notes</title>
 
   <para>
-   <command>TRUNCATE</> cannot be used if there are foreign-key references
-   to the table from other tables.  Checking validity in such cases would
-   require table scans, and the whole point is not to do one.
+   <command>TRUNCATE</> cannot be used on a table that has foreign-key
+   references from other tables, unless all such tables are also truncated
+   in the same command.  Checking validity in such cases would require table
+   scans, and the whole point is not to do one.
   </para>
 
   <para>
    <command>TRUNCATE</> will not run any user-defined <literal>ON
-   DELETE</literal> triggers that might exist for the table.
+   DELETE</literal> triggers that might exist for the tables.
   </para>
  </refsect1>
 
@@ -69,10 +70,10 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
   <title>Examples</title>
 
   <para>
-   Truncate the table <literal>bigtable</literal>:
+   Truncate the tables <literal>bigtable</literal> and <literal>fattable</literal>:
 
 <programlisting>
-TRUNCATE TABLE bigtable;
+TRUNCATE TABLE bigtable, fattable;
 </programlisting>
   </para>
  </refsect1>

@@ -83,3 +83,19 @@ SELECT * FROM temptest;
 -- ON COMMIT is only allowed for TEMP
 
 CREATE TABLE temptest(col int) ON COMMIT DELETE ROWS;
+
+-- Test foreign keys
+BEGIN;
+CREATE TEMP TABLE temptest1(col int PRIMARY KEY);
+CREATE TEMP TABLE temptest2(col int REFERENCES temptest1)
+  ON COMMIT DELETE ROWS;
+INSERT INTO temptest1 VALUES (1);
+INSERT INTO temptest2 VALUES (1);
+COMMIT;
+SELECT * FROM temptest1;
+SELECT * FROM temptest2;
+
+BEGIN;
+CREATE TEMP TABLE temptest3(col int PRIMARY KEY) ON COMMIT DELETE ROWS;
+CREATE TEMP TABLE temptest4(col int REFERENCES temptest3);
+COMMIT;

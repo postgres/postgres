@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.295 2004/12/31 21:59:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.296 2005/01/27 03:17:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1815,7 +1815,7 @@ _copyTruncateStmt(TruncateStmt *from)
 {
 	TruncateStmt *newnode = makeNode(TruncateStmt);
 
-	COPY_NODE_FIELD(relation);
+	COPY_NODE_FIELD(relations);
 
 	return newnode;
 }

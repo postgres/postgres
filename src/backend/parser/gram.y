@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.481 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.482 2005/01/27 03:17:59 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2681,15 +2681,15 @@ attrs:		'.' attr_name
 /*****************************************************************************
  *
  *		QUERY:
- *				truncate table relname
+ *				truncate table relname1, relname2, ...
  *
  *****************************************************************************/
 
 TruncateStmt:
-			TRUNCATE opt_table qualified_name
+			TRUNCATE opt_table qualified_name_list
 				{
 					TruncateStmt *n = makeNode(TruncateStmt);
-					n->relation = $3;
+					n->relations = $3;
 					$$ = (Node *)n;
 				}
 		;

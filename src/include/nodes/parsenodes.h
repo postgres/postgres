@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.271 2004/12/31 22:03:34 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.272 2005/01/27 03:18:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1283,7 +1283,7 @@ typedef struct DropPropertyStmt
 typedef struct TruncateStmt
 {
 	NodeTag		type;
-	RangeVar   *relation;		/* relation to be truncated */
+	List	   *relations;		/* relations (RangeVars) to be truncated */
 } TruncateStmt;
 
 /* ----------------------

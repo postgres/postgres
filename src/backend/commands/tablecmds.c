@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.143 2005/01/24 23:21:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.144 2005/01/27 03:17:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,88 +525,113 @@ RemoveRelation(const RangeVar *relation, DropBehavior behavior)
 }
 
 /*
- * TruncateRelation
- *		Removes all the rows from a relation.
+ * ExecuteTruncate
+ * 		Executes a TRUNCATE command.
+ *
+ * This is a multi-relation truncate.  It first opens and grabs exclusive
+ * locks on all relations involved, checking permissions and otherwise
+ * verifying that the relation is OK for truncation.  When they are all
+ * open, it checks foreign key references on them, namely that FK references
+ * are all internal to the group that's being truncated.  Finally all
+ * relations are truncated and reindexed.
  */
 void
-TruncateRelation(const RangeVar *relation)
+ExecuteTruncate(List *relations)
 {
-	Relation	rel;
-	Oid			heap_relid;
-	Oid			toast_relid;
+	List		*rels = NIL;
+	ListCell	*cell;
 
-	/* Grab exclusive lock in preparation for truncate */
-	rel = heap_openrv(relation, AccessExclusiveLock);
-
-	/* Only allow truncate on regular tables */
-	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
-						RelationGetRelationName(rel))));
-
-	/* Permissions checks */
-	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   RelationGetRelationName(rel));
-
-	if (!allowSystemTableMods && IsSystemRelation(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied: \"%s\" is a system catalog",
-						RelationGetRelationName(rel))));
-
-	/*
-	 * We can never allow truncation of shared or nailed-in-cache
-	 * relations, because we can't support changing their relfilenode
-	 * values.
-	 */
-	if (rel->rd_rel->relisshared || rel->rd_isnailed)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot truncate system relation \"%s\"",
-						RelationGetRelationName(rel))));
-
-	/*
-	 * Don't allow truncate on temp tables of other backends ... their
-	 * local buffer manager is not going to cope.
-	 */
-	if (isOtherTempNamespace(RelationGetNamespace(rel)))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		  errmsg("cannot truncate temporary tables of other sessions")));
-
-	/*
-	 * Don't allow truncate on tables which are referenced by foreign keys
-	 */
-	heap_truncate_check_FKs(rel);
-
-	/*
-	 * Okay, here we go: create a new empty storage file for the relation,
-	 * and assign it as the relfilenode value.	The old storage file is
-	 * scheduled for deletion at commit.
-	 */
-	setNewRelfilenode(rel);
-
-	heap_relid = RelationGetRelid(rel);
-	toast_relid = rel->rd_rel->reltoastrelid;
-
-	heap_close(rel, NoLock);
-
-	/*
-	 * The same for the toast table, if any.
-	 */
-	if (OidIsValid(toast_relid))
+	foreach(cell, relations)
 	{
-		rel = relation_open(toast_relid, AccessExclusiveLock);
-		setNewRelfilenode(rel);
-		heap_close(rel, NoLock);
+		RangeVar   *rv = lfirst(cell);
+		Relation	rel;
+
+		/* Grab exclusive lock in preparation for truncate */
+		rel = heap_openrv(rv, AccessExclusiveLock);
+
+		/* Only allow truncate on regular tables */
+		if (rel->rd_rel->relkind != RELKIND_RELATION)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a table",
+						 RelationGetRelationName(rel))));
+
+		/* Permissions checks */
+		if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					RelationGetRelationName(rel));
+
+		if (!allowSystemTableMods && IsSystemRelation(rel))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied: \"%s\" is a system catalog",
+						 RelationGetRelationName(rel))));
+
+		/*
+		 * We can never allow truncation of shared or nailed-in-cache
+		 * relations, because we can't support changing their relfilenode
+		 * values.
+		 */
+		if (rel->rd_rel->relisshared || rel->rd_isnailed)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot truncate system relation \"%s\"",
+						 RelationGetRelationName(rel))));
+
+		/*
+		 * Don't allow truncate on temp tables of other backends ... their
+		 * local buffer manager is not going to cope.
+		 */
+		if (isOtherTempNamespace(RelationGetNamespace(rel)))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot truncate temporary tables of other sessions")));
+
+		/* Save it into the list of rels to truncate */
+		rels = lappend(rels, rel);
 	}
 
 	/*
-	 * Reconstruct the indexes to match, and we're done.
+	 * Check foreign key references.
 	 */
-	reindex_relation(heap_relid, true);
+	heap_truncate_check_FKs(rels, false);
+
+	/*
+	 * OK, truncate each table.
+	 */
+	foreach(cell, rels)
+	{
+		Relation	rel = lfirst(cell);
+		Oid			heap_relid;
+		Oid			toast_relid;
+
+		/*
+		 * Create a new empty storage file for the relation, and assign it as
+		 * the relfilenode value.	The old storage file is scheduled for
+		 * deletion at commit.
+		 */
+		setNewRelfilenode(rel);
+
+		heap_relid = RelationGetRelid(rel);
+		toast_relid = rel->rd_rel->reltoastrelid;
+
+		heap_close(rel, NoLock);
+
+		/*
+		 * The same for the toast table, if any.
+		 */
+		if (OidIsValid(toast_relid))
+		{
+			rel = relation_open(toast_relid, AccessExclusiveLock);
+			setNewRelfilenode(rel);
+			heap_close(rel, NoLock);
+		}
+
+		/*
+		 * Reconstruct the indexes to match, and we're done.
+		 */
+		reindex_relation(heap_relid, true);
+	}
 }
 
 /*----------
@@ -6013,6 +6038,7 @@ void
 PreCommit_on_commit_actions(void)
 {
 	ListCell   *l;
+	List	   *oids_to_truncate = NIL;
 
 	foreach(l, on_commits)
 	{
@@ -6029,8 +6055,7 @@ PreCommit_on_commit_actions(void)
 				/* Do nothing (there shouldn't be such entries, actually) */
 				break;
 			case ONCOMMIT_DELETE_ROWS:
-				heap_truncate(oc->relid);
-				CommandCounterIncrement();		/* XXX needed? */
+				oids_to_truncate = lappend_oid(oids_to_truncate, oc->relid);
 				break;
 			case ONCOMMIT_DROP:
 				{
@@ -6050,6 +6075,11 @@ PreCommit_on_commit_actions(void)
 					break;
 				}
 		}
+	}
+	if (oids_to_truncate != NIL)
+	{
+		heap_truncate(oids_to_truncate);
+		CommandCounterIncrement();				/* XXX needed? */
 	}
 }
 
