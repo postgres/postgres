@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.30 2000/02/19 22:10:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.31 2000/02/27 21:10:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -999,7 +999,10 @@ parse_pg_options(char *value)
 	if (!superuser()) {
 		elog(ERROR, "Only users with superuser privilege can set pg_options");
 	}
-	parse_options((char *) value, TRUE);
+	if (value == NULL)
+		read_pg_options(0);
+	else
+		parse_options((char *) value, TRUE);
 	return (TRUE);
 }
 
@@ -1112,6 +1115,9 @@ static struct VariableParsers
 };
 
 /*-----------------------------------------------------------------------*/
+/*
+ * Set the named variable, or reset to default value if value is NULL
+ */
 bool
 SetPGVariable(const char *name, const char *value)
 {
@@ -1119,7 +1125,7 @@ SetPGVariable(const char *name, const char *value)
 	char	   *val;
 
 	/* Make a modifiable copy for convenience of get_token */
-	val = pstrdup(value);
+	val = value ? pstrdup(value) : ((char *) NULL);
 
 	for (vp = VariableParsers; vp->name; vp++)
 	{
