@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.260 2004/04/20 16:56:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.261 2004/04/21 13:18:28 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -3580,7 +3580,7 @@ set semsys:seminfo_semmsl=32
 
        <para>
         See also <ulink
-        url="http://www.sunworld.com/swol-09-1997/swol-09-insidesolaris.html"></>
+        url="http://sunsite.uakom.sk/sunworldonline/swol-09-1997/swol-09-insidesolaris.html"></>
         for information on shared memory under
         <productname>Solaris</>.
        </para>
