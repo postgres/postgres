@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.3 1996/12/11 00:27:14 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.4 1997/01/13 17:22:25 momjian Exp $
 .TH "CREATE INDEX" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create index \(em construct a secondary index
@@ -61,6 +61,11 @@ computing a polygon for each and every instance in \*(lqmyclass\*(rq
 and then comparing it to the value on the other side of the operator.
 Obviously, the decision to build a functional index represents a
 tradeoff between space (for the index) and execution time.
+.PP
+The \fBunique\fR keyword causes the system to check for duplicate
+values when the index is created (if data already exist) and each
+time data is added.
+Attempts to insert or update non-duplicate data will generate an error.
 .PP
 Postgres provides btree, rtree and hash access methods for
 secondary indices.  The btree access method is an implementation of
