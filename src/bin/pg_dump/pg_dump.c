@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.110 1999/05/26 16:06:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.111 1999/05/26 19:45:53 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2626,7 +2626,6 @@ dumpACL(FILE *fout, TableInfo tbinfo)
 	/* Scan comma-separated ACL items */
 	for (tok = strtok(aclbuf, ","); tok != NULL; tok = strtok(NULL, ","))
 	{
-
 		/*
 		 * Token may start with '{' and/or '"'.  Actually only the start
 		 * of the string should have '{', but we don't verify that.
@@ -2668,7 +2667,10 @@ dumpACL(FILE *fout, TableInfo tbinfo)
 			else
 			{
 				*eqpos = '\0';	/* it's ok to clobber aclbuf */
-				fprintf(fout, "%s;\n", fmtId(tok, force_quotes));
+				if (strncmp(tok, "group ",strlen("group ")) == 0)
+					  fprintf(fout, "GROUP %s;\n",
+						fmtId(tok + sizeof("group ") - 1, force_quotes));
+				else	fprintf(fout, "%s;\n", fmtId(tok, force_quotes));
 			}
 		}
 		free(priv);
