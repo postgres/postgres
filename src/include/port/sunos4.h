@@ -1,4 +1,9 @@
 #define USE_POSIX_TIME
+#define HAS_TEST_AND_SET
+typedef unsigned char slock_t;
+
+/* sprintf() returns char *, not int, on SunOS 4.1.x */
+#define SPRINTF_CHAR
 
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321

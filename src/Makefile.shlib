@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.4 1998/11/12 05:27:00 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.5 1998/11/30 00:30:03 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -171,8 +171,10 @@ else
 endif
 	$(RANLIB) $@
 
+ifneq ($(shlib),)
 $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) $(SHLIB_LINK)
+endif
 
 # Rules to install regular and shared libraries
 
