@@ -14,7 +14,7 @@ import org.postgresql.PGConnection;
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
  * @author Csaba Nagy (ncsaba@yahoo.com)
- * @version $Revision: 1.7.4.1 $
+ * @version $Revision: 1.7.4.2 $
  */
 public class PooledConnectionImpl implements PooledConnection
 {
@@ -369,8 +369,8 @@ public class PooledConnectionImpl implements PooledConnection
                 } finally {
                     con = null;
                     st = null;
-                    return null;
                 }
+                return null;
             }
             else if (method.getName().equals("getConnection"))
             {
