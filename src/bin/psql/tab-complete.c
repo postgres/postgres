@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.122 2005/03/19 23:27:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.123 2005/04/04 07:19:44 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1186,7 +1186,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "MOVE") == 0)
 	{
 		static const char *const list_FETCH1[] =
-		{"ABSOLUT", "BACKWARD", "FORWARD", "RELATIVE", NULL};
+		{"ABSOLUTE", "BACKWARD", "FORWARD", "RELATIVE", NULL};
 
 		COMPLETE_WITH_LIST(list_FETCH1);
 	}
@@ -1201,16 +1201,17 @@ psql_completion(char *text, int start, int end)
 	}
 
 	/*
-	 * Complete FETCH <sth1> <sth2> with "FROM" or "TO". (Is there a
-	 * difference? If not, remove one.)
+	 * Complete FETCH <sth1> <sth2> with "FROM" or "IN". These are
+	 * equivalent, but we may as well tab-complete both: perhaps some
+	 * users prefer one variant or the other.
 	 */
 	else if (pg_strcasecmp(prev3_wd, "FETCH") == 0 ||
 			 pg_strcasecmp(prev3_wd, "MOVE") == 0)
 	{
-		static const char *const list_FROMTO[] =
-		{"FROM", "TO", NULL};
+		static const char *const list_FROMIN[] =
+		{"FROM", "IN", NULL};
 
-		COMPLETE_WITH_LIST(list_FROMTO);
+		COMPLETE_WITH_LIST(list_FROMIN);
 	}
 
 /* GRANT && REVOKE*/
