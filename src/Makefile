@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.3.2.2 1996/08/20 04:10:35 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.3.2.3 1996/10/25 09:23:42 scrappy Exp $
 #
 # NOTES
 #	objdir	- location of the objects and generated files (eg. obj)
@@ -26,6 +26,11 @@ ETAGS = etags
 XARGS = xargs
 
 .DEFAULT all:
+	@if test $(PORTNAME) = UNDEFINED; then \
+	  echo You must set the PORTNAME value in Makefile.global before ;\
+	  echo you can build Postgres. ;\
+	  false ;\
+	fi
 	$(MAKE) -C backend $@
 	$(MAKE) -C libpq $@
 ifeq ($(USE_TCL), true)
