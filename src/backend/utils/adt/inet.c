@@ -3,7 +3,8 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: inet.c,v 1.7 1998/10/21 02:48:22 momjian Exp $
+ *	$Id: inet.c,v 1.8 1998/10/21 04:25:25 momjian Exp $
+ *	Jon Postel RIP 16 Oct 1998
  */
 
 #include <sys/types.h>
