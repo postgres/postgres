@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.75 2003/09/25 06:58:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.76 2003/10/06 20:09:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,24 +386,48 @@ oprfuncid(Operator op)
  * Check for an "exact" match to the specified operand types.
  *
  * If one operand is an unknown literal, assume it should be taken to be
- * the same type as the other operand for this purpose.
+ * the same type as the other operand for this purpose.  Also, consider
+ * the possibility that the other operand is a domain type that needs to
+ * be reduced to its base type to find an "exact" match.
  */
 static Oid
 binary_oper_exact(Oid arg1, Oid arg2,
 				  FuncCandidateList candidates)
 {
+	FuncCandidateList	cand;
+	bool		was_unknown = false;
+
 	/* Unspecified type for one of the arguments? then use the other */
 	if ((arg1 == UNKNOWNOID) && (arg2 != InvalidOid))
-		arg1 = arg2;
-	else if ((arg2 == UNKNOWNOID) && (arg1 != InvalidOid))
-		arg2 = arg1;
-
-	while (candidates != NULL)
 	{
-		if (arg1 == candidates->args[0] &&
-			arg2 == candidates->args[1])
-			return candidates->oid;
-		candidates = candidates->next;
+		arg1 = arg2;
+		was_unknown = true;
+	}
+	else if ((arg2 == UNKNOWNOID) && (arg1 != InvalidOid))
+	{
+		arg2 = arg1;
+		was_unknown = true;
+	}
+
+	for (cand = candidates; cand != NULL; cand = cand->next)
+	{
+		if (arg1 == cand->args[0] && arg2 == cand->args[1])
+			return cand->oid;
+	}
+
+	if (was_unknown)
+	{
+		/* arg1 and arg2 are the same here, need only look at arg1 */
+		Oid		basetype = getBaseType(arg1);
+
+		if (basetype != arg1)
+		{
+			for (cand = candidates; cand != NULL; cand = cand->next)
+			{
+				if (basetype == cand->args[0] && basetype == cand->args[1])
+					return cand->oid;
+			}
+		}
 	}
 
 	return InvalidOid;
