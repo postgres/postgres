@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
 /**
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.35 2001/10/25 05:59:59 momjian Exp $
+ * $Id: DatabaseMetaData.java,v 1.36 2001/10/30 05:05:25 barry Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -2011,7 +2011,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			}
 
 			tuple[7] = null;						// Buffer length
-			tuple[8] = "0".getBytes();				// Decimal Digits - how to get this?
+			// Decimal digits = scale
+			// From the source (see e.g. backend/utils/adt/numeric.c, 
+			// function numeric()) the scale and precision can be calculated
+			// from the typmod value.
+			if (typname.equals("numeric") || typname.equals("decimal")) 
+			{ 
+			    int attypmod = r.getInt(8);
+			    tuple[8] =
+				Integer.toString((attypmod - VARHDRSZ) & 0xffff).getBytes();
+			}
+			else
+			    tuple[8] = "0".getBytes();
+
 			tuple[9] = "10".getBytes();				// Num Prec Radix - assume decimal
 			tuple[10] = Integer.toString(nullFlag.equals("f") ?
 										 java.sql.DatabaseMetaData.columnNullable :
