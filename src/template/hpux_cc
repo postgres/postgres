@@ -8,5 +8,6 @@ DLSUFFIX:.sl
 YFLAGS:-d
 YACC:
 CC:cc
+CPP:cc -E -Ae
 # Make aCC be first C++ compiler name tried...
 CCC:aCC
