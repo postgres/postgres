@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.94 2004/01/25 03:07:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.95 2004/03/22 03:38:24 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -351,11 +351,12 @@ permissionsList(const char *pattern)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
 					  "  c.relname as \"%s\",\n"
+					  "  CASE c.relkind WHEN 'r' THEN '%s' WHEN 'v' THEN '%s' WHEN 'S' THEN '%s' END as \"%s\",\n" 
 					  "  c.relacl as \"%s\"\n"
 					  "FROM pg_catalog.pg_class c\n"
 	"     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
 					  "WHERE c.relkind IN ('r', 'v', 'S')\n",
-					  _("Schema"), _("Table"), _("Access privileges"));
+					  _("Schema"), _("Name"), _("table"), _("view"), _("sequence"), _("Type"), _("Access privileges"));
 
 	/*
 	 * Unless a schema pattern is specified, we suppress system and temp

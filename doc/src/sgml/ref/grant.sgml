@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.38 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.39 2004/03/22 03:38:24 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -285,10 +285,10 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
 <programlisting>
 => \z mytable
 
-        Access privileges for database "lusitania"
- Schema |  Table  |           Access privileges
---------+---------+---------------------------------------
- public | mytable | {=r/postgres,miriam=arwdRxt/postgres,"group todos=arw/postgres"}
+                        Access privileges for database "lusitania"
+ Schema |  Name   | Type  |          Access privileges
+--------+---------+-------+-----------------------------------------------------------------
+ public | mytable | table | {=r/postgres,miriam=arwdRxt/postgres,"group todos=arw/postgres"}
 (1 row)
 </programlisting>
     The entries shown by <command>\z</command> are interpreted thus:

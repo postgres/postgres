@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.106 2004/02/13 05:10:02 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.107 2004/03/22 03:38:24 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -995,10 +995,10 @@ testdb=>
         <term><literal>\dp</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
 	<listitem>
 	<para>
-        Produces a list of all available tables with their
+        Produces a list of all available tables, views and sequences with their
         associated access privileges.
 	If <replaceable class="parameter">pattern</replaceable> is
-	specified, only tables whose names match the pattern are listed.
+	specified, only tables, views and sequences whose names match the pattern are listed.
 	</para>
 
 	<para>
@@ -1695,10 +1695,10 @@ lo_import 152801
         <term><literal>\z</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
         <listitem>
         <para>
-        Produces a list of all available tables with their
+        Produces a list of all available tables, views and sequences with their
         associated access privileges.
 	If a <replaceable class="parameter">pattern</replaceable> is
-	specified, only tables whose names match the pattern are listed.
+	specified, only tables,views and sequences whose names match the pattern are listed.
 	</para>
 
 	<para>
