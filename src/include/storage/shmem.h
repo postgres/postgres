@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.37 2002/06/20 20:29:52 momjian Exp $
+ * $Id: shmem.h,v 1.38 2002/08/17 13:04:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,8 +53,7 @@ extern DLLIMPORT SHMEM_OFFSET ShmemBase;
 #define SHM_OFFSET_VALID(xx_offs)\
   (((xx_offs) != 0) && ((xx_offs) != INVALID_OFFSET))
 
-
-/* shmemqueue.c */
+/* shmqueue.c */
 typedef struct SHM_QUEUE
 {
 	SHMEM_OFFSET prev;

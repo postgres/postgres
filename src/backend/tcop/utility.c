@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.171 2002/08/17 12:15:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.172 2002/08/17 13:04:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,8 +239,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 			/*
-			 * ******************************** portal manipulation ********************************
-			 *
+			 * ************************* portal manipulation ***************************
 			 */
 		case T_ClosePortalStmt:
 			{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.111 2002/08/01 05:18:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.112 2002/08/17 13:04:14 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1359,6 +1359,66 @@ LockShmemSize(int maxBackends)
 	return size;
 }
 
+/*
+ * GetLockStatusData - Return a summary of the lock manager's internal
+ * status, for use in a user-level statistical reporting function.
+ *
+ * This function should be passed a pointer to a LockData struct. It fills
+ * the structure with the appropriate information and returns. The goal
+ * is to hold the LockMgrLock for as short a time as possible; thus, the
+ * function simply makes a copy of the necessary data and releases the
+ * lock, allowing the caller to contemplate and format the data for
+ * as long as it pleases.
+ */
+void
+GetLockStatusData(LockData *data)
+{
+	HTAB		*holderTable;
+	PROCLOCK	*holder;
+	HASH_SEQ_STATUS seqstat;
+	int i = 0;
+
+	data->currIdx = 0;
+
+	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
+
+	holderTable = LockMethodTable[DEFAULT_LOCKMETHOD]->holderHash;
+
+	data->nelements = holderTable->hctl->nentries;
+
+	data->procs = (PGPROC *) palloc(sizeof(PGPROC) * data->nelements);
+	data->locks = (LOCK *) palloc(sizeof(LOCK) * data->nelements);
+	data->holders = (PROCLOCK *) palloc(sizeof(PROCLOCK) * data->nelements);
+
+	hash_seq_init(&seqstat, holderTable);
+
+	while ( (holder = hash_seq_search(&seqstat)) )
+	{
+		PGPROC	*proc;
+		LOCK	*lock;
+
+		/* Only do a shallow copy */
+		proc = (PGPROC *) MAKE_PTR(holder->tag.proc);
+		lock = (LOCK *) MAKE_PTR(holder->tag.lock);
+
+		memcpy(&(data->procs[i]), proc, sizeof(PGPROC));
+		memcpy(&(data->locks[i]), lock, sizeof(LOCK));
+		memcpy(&(data->holders[i]), holder, sizeof(PROCLOCK));
+
+		i++;
+	}
+
+	Assert(i == data->nelements);
+
+	LWLockRelease(LockMgrLock);
+}
+
+char *
+GetLockmodeName(LOCKMODE mode)
+{
+	Assert(mode <= MAX_LOCKMODES);
+	return lock_mode_names[mode];
+}
 
 #ifdef LOCK_DEBUG
 /*

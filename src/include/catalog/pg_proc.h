@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.255 2002/08/16 23:01:20 tgl Exp $
+ * $Id: pg_proc.h,v 1.256 2002/08/17 13:04:15 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2676,6 +2676,8 @@ DESCR("unary plus");
 DATA(insert OID = 1915 (  numeric_uplus    PGNSP PGUID 12 f f t f i 1 1700 "1700"  numeric_uplus - _null_ ));
 DESCR("unary plus");
 
+DATA(insert OID = 1920 (  pg_lock_status   PGNSP PGUID 12 f f f t v 0 0 "0" lock_status_srf - _null_ ));
+DESCR("view system lock information");
 DATA(insert OID = 1922 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 25 25"  has_table_privilege_name_name - _null_ ));
 DESCR("user privilege on relation by username, rel name");
 DATA(insert OID = 1923 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 26 25"  has_table_privilege_name_id - _null_ ));

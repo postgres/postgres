@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.26 2002/08/05 19:43:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.27 2002/08/17 13:04:14 momjian Exp $
 -->
 
  <chapter id="mvcc">
@@ -408,7 +408,7 @@ ERROR:  Can't serialize access due to concurrent update
     modes on the same table at the same time.  (However, a transaction
     never conflicts with itself --- for example, it may acquire
     <literal>ACCESS EXCLUSIVE</literal> lock and later acquire
-    <literal>ACCESS SHARE</literal> lock on the same table.)  Nonconflicting
+    <literal>ACCESS SHARE</literal> lock on the same table.)  Non-conflicting
     lock modes may be held concurrently by many transactions.  Notice in
     particular that some lock modes are self-conflicting (for example,
     <literal>ACCESS EXCLUSIVE</literal> cannot be held by more than one
@@ -416,6 +416,14 @@ ERROR:  Can't serialize access due to concurrent update
     <literal>ACCESS SHARE</literal> can be held by multiple transactions).
     Once acquired, a lock mode is held till end of transaction.
    </para>
+
+	<para>
+	 To examine a list of the currently outstanding locks in a
+	 database server, use the <literal>pg_locks</literal> system
+	 view. For more information on monitoring the status of the lock
+	 manager subsystem, refer to the <citetitle>Administrator's
+	 Guide</citetitle>.
+	</para>
 
      <variablelist>
       <title>Table-level lock modes</title>
