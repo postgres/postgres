@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.7 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.8 2002/11/15 00:47:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,7 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 			QueryDesc  *qdesc;
 			EState	   *state;
 
-			if (Show_executor_stats)
+			if (log_executor_stats)
 				ResetUsage();
 
 			qdesc = CreateQueryDesc(query, plan, outputDest, NULL);
@@ -172,7 +172,7 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 
 			RunQuery(qdesc, state);
 
-			if (Show_executor_stats)
+			if (log_executor_stats)
 				ShowUsage("EXECUTOR STATISTICS");
 		}
 

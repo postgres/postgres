@@ -152,10 +152,10 @@
 #
 #	Statistics
 #
-#show_parser_stats = false
-#show_planner_stats = false
-#show_executor_stats = false
-#show_statement_stats = false
+#log_parser_stats = false
+#log_planner_stats = false
+#log_executor_stats = false
+#log_statement_stats = false
 
 # requires BTREE_BUILD_STATS
 #show_btree_build_stats = false

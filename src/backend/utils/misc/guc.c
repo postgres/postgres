@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.101 2002/11/14 23:53:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.102 2002/11/15 00:47:22 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -79,17 +79,17 @@ static const char *assign_msglvl(int *var, const char *newval,
 #ifdef USE_ASSERT_CHECKING
 bool		assert_enabled = true;
 #endif
-bool		Log_statement = false;
-bool		Log_duration = false;
+bool		log_statement = false;
+bool		log_duration = false;
 bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
 bool		Debug_print_rewritten = false;
 bool		Debug_pretty_print = false;
 
-bool		Show_parser_stats = false;
-bool		Show_planner_stats = false;
-bool		Show_executor_stats = false;
-bool		Show_statement_stats = false;		/* this is sort of all
+bool		log_parser_stats = false;
+bool		log_planner_stats = false;
+bool		log_executor_stats = false;
+bool		log_statement_stats = false;		/* this is sort of all
 												 * three above together */
 bool		Show_btree_build_stats = false;
 
@@ -378,11 +378,11 @@ static struct config_bool
 #endif
 
 	{
-		{"log_statement", PGC_USERSET}, &Log_statement,
+		{"log_statement", PGC_USERSET}, &log_statement,
 		false, NULL, NULL
 	},
 	{
-		{"log_duration", PGC_USERSET}, &Log_duration,
+		{"log_duration", PGC_USERSET}, &log_duration,
 		false, NULL, NULL
 	},
 	{
@@ -403,19 +403,19 @@ static struct config_bool
 	},
 
 	{
-		{"show_parser_stats", PGC_USERSET}, &Show_parser_stats,
+		{"log_parser_stats", PGC_USERSET}, &log_parser_stats,
 		false, NULL, NULL
 	},
 	{
-		{"show_planner_stats", PGC_USERSET}, &Show_planner_stats,
+		{"log_planner_stats", PGC_USERSET}, &log_planner_stats,
 		false, NULL, NULL
 	},
 	{
-		{"show_executor_stats", PGC_USERSET}, &Show_executor_stats,
+		{"log_executor_stats", PGC_USERSET}, &log_executor_stats,
 		false, NULL, NULL
 	},
 	{
-		{"show_statement_stats", PGC_USERSET}, &Show_statement_stats,
+		{"log_statement_stats", PGC_USERSET}, &log_statement_stats,
 		false, NULL, NULL
 	},
 #ifdef BTREE_BUILD_STATS

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.308 2002/11/14 23:53:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.309 2002/11/15 00:47:22 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -368,15 +368,15 @@ pg_parse_query(StringInfo query_string, Oid *typev, int nargs)
 {
 	List	   *raw_parsetree_list;
 
-	if (Log_statement)
+	if (log_statement)
 		elog(LOG, "query: %s", query_string->data);
 
-	if (Show_parser_stats)
+	if (log_parser_stats)
 		ResetUsage();
 
 	raw_parsetree_list = parser(query_string, typev, nargs);
 
-	if (Show_parser_stats)
+	if (log_parser_stats)
 		ShowUsage("PARSER STATISTICS");
 
 	return raw_parsetree_list;
@@ -402,12 +402,12 @@ pg_analyze_and_rewrite(Node *parsetree)
 	/*
 	 * (1) Perform parse analysis.
 	 */
-	if (Show_parser_stats)
+	if (log_parser_stats)
 		ResetUsage();
 
 	querytree_list = parse_analyze(parsetree, NULL);
 
-	if (Show_parser_stats)
+	if (log_parser_stats)
 	{
 		ShowUsage("PARSE ANALYSIS STATISTICS");
 		ResetUsage();
@@ -444,7 +444,7 @@ pg_analyze_and_rewrite(Node *parsetree)
 
 	querytree_list = new_list;
 
-	if (Show_parser_stats)
+	if (log_parser_stats)
 		ShowUsage("REWRITER STATISTICS");
 
 #ifdef COPY_PARSE_PLAN_TREES
@@ -479,13 +479,13 @@ pg_plan_query(Query *querytree)
 	if (querytree->commandType == CMD_UTILITY)
 		return NULL;
 
-	if (Show_planner_stats)
+	if (log_planner_stats)
 		ResetUsage();
 
 	/* call the optimizer */
 	plan = planner(querytree);
 
-	if (Show_planner_stats)
+	if (log_planner_stats)
 		ShowUsage("PLANNER STATISTICS");
 
 #ifdef COPY_PARSE_PLAN_TREES
@@ -559,15 +559,15 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 			   *parsetree_item;
 	struct timeval start_t,
 				stop_t;
-	bool		save_Log_duration = Log_duration;
+	bool		save_log_duration = log_duration;
 
 	debug_query_string = query_string->data;
 
 	/*
-	 * We use save_Log_duration so "SET Log_duration = true" doesn't
+	 * We use save_log_duration so "SET log_duration = true" doesn't
 	 * report incorrect time because gettimeofday() wasn't called.
 	 */
-	if (save_Log_duration)
+	if (save_log_duration)
 		gettimeofday(&start_t, NULL);
 
 	/*
@@ -820,7 +820,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 				/*
 				 * execute the plan
 				 */
-				if (Show_executor_stats)
+				if (log_executor_stats)
 					ResetUsage();
 
 				if (dontExecute)
@@ -845,7 +845,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 					}
 				}
 
-				if (Show_executor_stats)
+				if (log_executor_stats)
 					ShowUsage("EXECUTOR STATISTICS");
 			}
 
@@ -933,7 +933,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 	if (xact_started)
 		finish_xact_command(false);
 
-	if (save_Log_duration)
+	if (save_log_duration)
 	{
 		gettimeofday(&stop_t, NULL);
 		if (stop_t.tv_usec < start_t.tv_usec)
@@ -1498,9 +1498,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 				{
 					case 'p':
 						if (optarg[1] == 'a')
-							tmp = "show_parser_stats";
+							tmp = "log_parser_stats";
 						else if (optarg[1] == 'l')
-							tmp = "show_planner_stats";
+							tmp = "log_planner_stats";
 						else
 							errs++;
 						break;
@@ -1607,8 +1607,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 	/*
 	 * Post-processing for command line options.
 	 */
-	if (Show_statement_stats &&
-		(Show_parser_stats || Show_planner_stats || Show_executor_stats))
+	if (log_statement_stats &&
+		(log_parser_stats || log_planner_stats || log_executor_stats))
 	{
 		elog(WARNING, "Query statistics are disabled because parser, planner, or executor statistics are on.");
 		SetConfigOption("show_statement_stats", "false", ctx, gucsource);
@@ -1781,7 +1781,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.308 $ $Date: 2002/11/14 23:53:27 $\n");
+		puts("$Revision: 1.309 $ $Date: 2002/11/15 00:47:22 $\n");
 	}
 
 	/*
@@ -2008,7 +2008,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 					 * Note: transaction command start/end is now done within
 					 * pg_exec_query_string(), not here.
 					 */
-					if (Show_statement_stats)
+					if (log_statement_stats)
 						ResetUsage();
 
 					pgstat_report_activity(parser_input->data);
@@ -2017,7 +2017,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 										 whereToSendOutput,
 										 QueryContext);
 
-					if (Show_statement_stats)
+					if (log_statement_stats)
 						ShowUsage("QUERY STATISTICS");
 				}
 				break;

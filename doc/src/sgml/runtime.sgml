@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.151 2002/11/14 23:53:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.152 2002/11/15 00:47:22 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1110,10 +1110,10 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term><varname>SHOW_STATEMENT_STATS</varname> (<type>boolean</type>)</term>
-      <term><varname>SHOW_PARSER_STATS</varname> (<type>boolean</type>)</term>
-      <term><varname>SHOW_PLANNER_STATS</varname> (<type>boolean</type>)</term>
-      <term><varname>SHOW_EXECUTOR_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>LOG_STATEMENT_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>LOG_PARSER_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>LOG_PLANNER_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>LOG_EXECUTOR_STATS</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         For each query, write performance statistics of the respective
@@ -2250,7 +2250,9 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
 
        <row>
         <entry><option>-tpa</option>, <option>-tpl</option>, <option>-te</option><footnoteref linkend="fn.runtime-config-short"></entry>
-        <entry><literal>show_parser_stats=on</>, <literal>show_planner_stats=on</>, <literal>show_executor_stats=on</></entry>
+        <entry><literal>log_parser_stats=on</>,
+        <literal>log_planner_stats=on</>, 
+	<literal>log_executor_stats=on</></entry>
        </row>
       </tbody>
      </tgroup>

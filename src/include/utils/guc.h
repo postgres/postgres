@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Id: guc.h,v 1.25 2002/11/14 23:53:27 momjian Exp $
+ * $Id: guc.h,v 1.26 2002/11/15 00:47:22 momjian Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -107,18 +107,18 @@ extern const char *assign_log_min_messages(const char *newval,
 						   bool doit, bool interactive);
 extern const char *assign_client_min_messages(const char *newval,
 						   bool doit, bool interactive);
-extern bool Log_statement;
-extern bool Log_duration;
+extern bool log_statement;
+extern bool log_duration;
 extern bool Debug_print_plan;
 extern bool Debug_print_parse;
 extern bool Debug_print_rewritten;
 extern bool Debug_pretty_print;
 
-extern bool Show_parser_stats;
-extern bool Show_planner_stats;
-extern bool Show_executor_stats;
-extern bool Show_statement_stats;
-extern bool Show_btree_build_stats;
+extern bool log_parser_stats;
+extern bool log_planner_stats;
+extern bool log_executor_stats;
+extern bool log_statement_stats;
+extern bool log_btree_build_stats;
 
 extern bool Explain_pretty_print;
 

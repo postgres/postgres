@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.66 2002/11/14 23:53:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.67 2002/11/15 00:47:22 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -238,10 +238,10 @@ psql_completion(char *text, int start, int end)
 		"debug_print_rewritten",
 		"debug_print_plan",
 		"debug_pretty_print",
-		"show_parser_stats",
-		"show_planner_stats",
-		"show_executor_stats",
-		"show_statement_stats",
+		"log_parser_stats",
+		"log_planner_stats",
+		"log_executor_stats",
+		"log_statement_stats",
 		"trace_notify",
 		"explain_pretty_print",
 		"sql_inheritance",
