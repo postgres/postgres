@@ -1,0 +1,837 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.1 2005/02/13 03:04:15 tgl Exp $
+-->
+
+<chapter id="indexam">
+ <title>Index Access Method Interface Definition</title>
+
+  <para>
+   This chapter defines the interface between the core
+   <productname>PostgreSQL</productname> system and <firstterm>index access
+   methods</>, which manage individual index types.  The core system
+   knows nothing about indexes beyond what is specified here, so it is
+   possible to develop entirely new index types by writing add-on code.
+  </para>
+
+  <para>
+   All indexes in <productname>PostgreSQL</productname> are what are known
+   technically as <firstterm>secondary indexes</>; that is, the index is
+   physically separate from the table file that it describes.  Each index
+   is stored as its own physical <firstterm>relation</> and so is described
+   by an entry in the <structname>pg_class</> catalog.  The contents of an
+   index are entirely under the control of its index access method.  In
+   practice, all index access methods divide indexes into standard-size
+   pages so that they can use the regular storage manager and buffer manager
+   to access the index contents.  (All the existing index access methods
+   furthermore use the standard page layout described in <xref
+   linkend="storage-page-layout">, and they all use the same format for index
+   tuple headers; but these decisions are not forced on an access method.)
+  </para>
+
+  <para>
+   An index is effectively a mapping from some data key values to
+   <firstterm>tuple identifiers</>, or <acronym>TIDs</>, of row versions
+   (tuples) in the index's parent table.  A TID consists of a
+   block number and an item number within that block (see <xref
+   linkend="storage-page-layout">).  This is sufficient
+   information to fetch a particular row version from the table.
+   Indexes are not directly aware that under MVCC, there may be multiple
+   extant versions of the same logical row; to an index, each tuple is
+   an independent object that needs its own index entry.  Thus, an
+   update of a row always creates all-new index entries for the row, even if
+   the key values did not change.  Index entries for dead tuples are
+   reclaimed (by vacuuming) when the dead tuples themselves are reclaimed.
+  </para>
+
+ <sect1 id="index-catalog">
+  <title>Catalog Entries for Indexes</title>
+
+  <para>
+   Each index access method is described by a row in the
+   <structname>pg_am</structname> system catalog (see
+   <xref linkend="catalog-pg-am">).  The principal contents of a
+   <structname>pg_am</structname> row are references to
+   <link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>
+   entries that identify the index access
+   functions supplied by the access method.  The APIs for these functions
+   are defined later in this chapter.  In addition, the
+   <structname>pg_am</structname> row specifies a few fixed properties of
+   the access method, such as whether it can support multi-column indexes.
+   There is not currently any special support
+   for creating or deleting <structname>pg_am</structname> entries;
+   anyone able to write a new access method is expected to be competent
+   to insert an appropriate row for themselves.
+  </para>
+
+  <para>
+   To be useful, an index access method must also have one or more
+   <firstterm>operator classes</> defined in
+   <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>,
+   <link linkend="catalog-pg-amop"><structname>pg_amop</structname></link>, and
+   <link linkend="catalog-pg-amproc"><structname>pg_amproc</structname></link>.
+   These entries allow the planner
+   to determine what kinds of query qualifications can be used with
+   indexes of this access method.  Operator classes are described
+   in <xref linkend="xindex">, which is prerequisite material for reading
+   this chapter.
+  </para>
+
+  <para>
+   An individual index is defined by a 
+   <link linkend="catalog-pg-class"><structname>pg_class</structname></link>
+   entry that describes it as a physical relation, plus a
+   <link linkend="catalog-pg-index"><structname>pg_index</structname></link>
+   entry that shows the logical content of the index &mdash; that is, the set
+   of index columns it has and the semantics of those columns, as captured by
+   the associated operator classes.  The index columns (key values) can be
+   either simple columns of the underlying table or expressions over the table
+   rows.  The index access method normally has no interest in where the index
+   key values come from (it is always handed precomputed key values) but it
+   will be very interested in the operator class information in
+   <structname>pg_index</structname>.  Both of these catalog entries can be
+   accessed as part of the <structname>Relation</> data structure that is
+   passed to all operations on the index.
+  </para>
+
+  <para>
+   Some of the flag columns of <structname>pg_am</structname> have nonobvious
+   implications.  The requirements of <structfield>amcanunique</structfield>
+   are discussed in <xref linkend="index-unique-checks">, and those of
+   <structfield>amconcurrent</structfield> in <xref linkend="index-locking">.
+   The <structfield>amcanmulticol</structfield> flag asserts that the
+   access method supports multi-column indexes, while
+   <structfield>amindexnulls</structfield> asserts that index entries are
+   created for NULL key values.  Since most indexable operators are
+   strict and hence cannot return TRUE for NULL inputs,
+   it is at first sight attractive to not store index entries for NULLs:
+   they could never be returned by an index scan anyway.  However, this
+   argument fails for a full-table index scan (one with no scan keys);
+   such a scan should include null rows.  In practice this means that
+   indexes that support ordered scans (have <structfield>amorderstrategy</>
+   nonzero) must index nulls, since the planner might decide to use such a
+   scan as a substitute for sorting.  Another restriction is that an index
+   access method that supports multiple index columns <emphasis>must</>
+   support indexing null values in columns after the first, because the planner
+   will assume the index can be used for queries on just the first
+   column(s).  For example, consider an index on (a,b) and a query with
+   <literal>WHERE a = 4</literal>.  The system will assume the index can be
+   used to scan for rows with <literal>a = 4</literal>, which is wrong if the
+   index omits rows where <literal>b</> is null.
+   It is, however, OK to omit rows where the first indexed column is null.
+   (GiST currently does so.)  Thus,
+   <structfield>amindexnulls</structfield> should be set true only if the
+   index access method indexes all rows, including arbitrary combinations of
+   null values.
+  </para>
+
+ </sect1>
+
+ <sect1 id="index-functions">
+  <title>Index Access Method Functions</title>
+
+  <para>
+   The index construction and maintenance functions that an index access
+   method must provide are:
+  </para>
+
+  <para>
+<programlisting>
+void
+ambuild (Relation heapRelation,
+         Relation indexRelation,
+         IndexInfo *indexInfo);
+</programlisting>
+   Build a new index.  The index relation has been physically created,
+   but is empty.  It must be filled in with whatever fixed data the
+   access method requires, plus entries for all tuples already existing
+   in the table.  Ordinarily the <function>ambuild</> function will call
+   <function>IndexBuildHeapScan()</> to scan the table for existing tuples
+   and compute the keys that need to be inserted into the index.
+  </para>
+
+  <para>
+<programlisting>
+InsertIndexResult
+aminsert (Relation indexRelation,
+          Datum *datums,
+          char *nulls,
+          ItemPointer heap_tid,
+          Relation heapRelation,
+          bool check_uniqueness);
+</programlisting>
+   Insert a new tuple into an existing index.  The <literal>datums</> and
+   <literal>nulls</> arrays give the key values to be indexed, and
+   <literal>heap_tid</> is the TID to be indexed.
+   If the access method supports unique indexes (its
+   <structname>pg_am</>.<structfield>amcanunique</> flag is true) then
+   <literal>check_uniqueness</> may be true, in which case the access method
+   must verify that there is no conflicting row; this is the only situation in
+   which the access method normally needs the <literal>heapRelation</>
+   parameter.  See <xref linkend="index-unique-checks"> for details.
+   The result is a struct that must be pfree'd by the caller.  (The result
+   struct is really quite useless and should be removed...)
+  </para>
+
+  <para>
+<programlisting>
+IndexBulkDeleteResult *
+ambulkdelete (Relation indexRelation,
+              IndexBulkDeleteCallback callback,
+              void *callback_state);
+</programlisting>
+   Delete tuple(s) from the index.  This is a <quote>bulk delete</> operation
+   that is intended to be implemented by scanning the whole index and checking
+   each entry to see if it should be deleted.
+   The passed-in <literal>callback</> function may be called, in the style
+   <literal>callback(<replaceable>TID</>, callback_state) returns bool</literal>,
+   to determine whether any particular index entry, as identified by its
+   referenced TID, is to be deleted.  Must return either NULL or a palloc'd
+   struct containing statistics about the effects of the deletion operation.
+  </para>
+
+  <para>
+<programlisting>
+IndexBulkDeleteResult *
+amvacuumcleanup (Relation indexRelation,
+                 IndexVacuumCleanupInfo *info,
+                 IndexBulkDeleteResult *stats);
+</programlisting>
+   Clean up after a <command>VACUUM</command> operation (one or more
+   <function>ambulkdelete</> calls).  An index access method does not have
+   to provide this function (if so, the entry in <structname>pg_am</> must
+   be zero).  If it is provided, it is typically used for bulk cleanup
+   such as reclaiming empty index pages.  <literal>info</>
+   provides some additional arguments such as a message level for statistical
+   reports, and <literal>stats</> is whatever the last
+   <function>ambulkdelete</> call returned.  <function>amvacuumcleanup</>
+   may replace or modify this struct before returning it.  If the result
+   is not NULL it must be a palloc'd struct.  The statistics it contains
+   will be reported by <command>VACUUM</> if <literal>VERBOSE</> is given.
+  </para>
+
+  <para>
+   The purpose of an index, of course, is to support scans for tuples matching
+   an indexable <literal>WHERE</> condition, often called a
+   <firstterm>qualifier</> or <firstterm>scan key</>.  The semantics of
+   index scanning are described more fully in <xref linkend="index-scanning">,
+   below.  The scan-related functions that an index access method must provide
+   are:
+  </para>
+
+  <para>
+<programlisting>
+IndexScanDesc
+ambeginscan (Relation indexRelation,
+             int nkeys,
+             ScanKey key);
+</programlisting>
+   Begin a new scan.  The <literal>key</> array (of length <literal>nkeys</>)
+   describes the scan key(s) for the index scan.  The result must be a
+   palloc'd struct. For implementation reasons the index access method
+   <emphasis>must</> create this struct by calling
+   <function>RelationGetIndexScan()</>.  In most cases
+   <function>ambeginscan</> itself does little beyond making that call;
+   the interesting parts of indexscan startup are in <function>amrescan</>.
+  </para>
+
+  <para>
+<programlisting>
+boolean
+amgettuple (IndexScanDesc scan,
+            ScanDirection direction);
+</programlisting>
+   Fetch the next tuple in the given scan, moving in the given
+   direction (forward or backward in the index).  Returns TRUE if a tuple was
+   obtained, FALSE if no matching tuples remain.  In the TRUE case the tuple
+   TID is stored into the <literal>scan</> structure.  Note that
+   <quote>success</> means only that the index contains an entry that matches
+   the scan keys, not that the tuple necessarily still exists in the heap or
+   will pass the caller's snapshot test.
+  </para>
+
+  <para>
+<programlisting>
+void
+amrescan (IndexScanDesc scan,
+          ScanKey key);
+</programlisting>
+   Restart the given scan, possibly with new scan keys (to continue using
+   the old keys, NULL is passed for <literal>key</>).  Note that it is not
+   possible for the number of keys to be changed.  In practice the restart
+   feature is used when a new outer tuple is selected by a nestloop join
+   and so a new key comparison value is needed, but the scan key structure
+   remains the same.  This function is also called by
+   <function>RelationGetIndexScan()</>, so it is used for initial setup
+   of an indexscan as well as rescanning.
+  </para>
+
+  <para>
+<programlisting>
+void
+amendscan (IndexScanDesc scan);
+</programlisting>
+   End a scan and release resources.  The <literal>scan</> struct itself
+   should not be freed, but any locks or pins taken internally by the
+   access method must be released.
+  </para>
+
+  <para>
+<programlisting>
+void
+ammarkpos (IndexScanDesc scan);
+</programlisting>
+   Mark current scan position.  The access method need only support one
+   remembered scan position per scan.
+  </para>
+
+  <para>
+<programlisting>
+void
+amrestrpos (IndexScanDesc scan);
+</programlisting>
+   Restore the scan to the most recently marked position.
+  </para>
+
+  <para>
+<programlisting>
+void
+amcostestimate (Query *root,
+                RelOptInfo *rel,
+                IndexOptInfo *index,
+                List *indexQuals,
+                Cost *indexStartupCost,
+                Cost *indexTotalCost,
+                Selectivity *indexSelectivity,
+                double *indexCorrelation);
+</programlisting>
+   Estimate the costs of an index scan.  This function is described fully
+   in <xref linkend="index-cost-estimation">, below.
+  </para>
+
+  <para>
+   By convention, the <literal>pg_proc</literal> entry for any index
+   access method function should show the correct number of arguments,
+   but declare them all as type <type>internal</> (since most of the arguments
+   have types that are not known to SQL, and we don't want users calling
+   the functions directly anyway).  The return type is declared as
+   <type>void</>, <type>internal</>, or <type>boolean</> as appropriate.
+  </para>
+
+ </sect1>
+
+ <sect1 id="index-scanning">
+  <title>Index Scanning</title>
+
+  <para>
+   In an index scan, the index access method is responsible for regurgitating
+   the TIDs of all the tuples it has been told about that match the
+   <firstterm>scan keys</>.  The access method is <emphasis>not</> involved in
+   actually fetching those tuples from the index's parent table, nor in
+   determining whether they pass the scan's time qualification test or other
+   conditions.
+  </para>
+
+  <para>
+   A scan key is the internal representation of a <literal>WHERE</> clause of
+   the form <replaceable>index_key</> <replaceable>operator</>
+   <replaceable>constant</>, where the index key is one of the columns of the
+   index and the operator is one of the members of the operator class
+   associated with that index column.  An index scan has zero or more scan
+   keys, which are implicitly ANDed &mdash; the returned tuples are expected
+   to satisfy all the indicated conditions.
+  </para>
+
+  <para>
+   The operator class may indicate that the index is <firstterm>lossy</> for a
+   particular operator; this implies that the index scan will return all the
+   entries that pass the scan key, plus possibly additional entries that do
+   not.  The core system's indexscan machinery will then apply that operator
+   again to the heap tuple to verify whether or not it really should be
+   selected.  For non-lossy operators, the index scan must return exactly the
+   set of matching entries, as there is no recheck.
+  </para>
+
+  <para>
+   Note that it is entirely up to the access method to ensure that it
+   correctly finds all and only the entries passing all the given scan keys.
+   Also, the core system will simply hand off all the <literal>WHERE</>
+   clauses that match the index keys and operator classes, without any
+   semantic analysis to determine whether they are redundant or
+   contradictory.  As an example, given
+   <literal>WHERE x &gt; 4 AND x &gt; 14</> where <literal>x</> is a b-tree
+   indexed column, it is left to the b-tree <function>amrescan</> function
+   to realize that the first scan key is redundant and can be discarded.
+   The extent of preprocessing needed during <function>amrescan</> will
+   depend on the extent to which the index access method needs to reduce
+   the scan keys to a <quote>normalized</> form.
+  </para>
+
+  <para>
+   The <function>amgettuple</> function has a <literal>direction</> argument,
+   which can be either <literal>ForwardScanDirection</> (the normal case)
+   or  <literal>BackwardScanDirection</>.  If the first call after
+   <function>amrescan</> specifies <literal>BackwardScanDirection</>, then the
+   set of matching index entries is to be scanned back-to-front rather than in
+   the normal front-to-back direction, so <function>amgettuple</> must return
+   the last matching tuple in the index, rather than the first one as it
+   normally would.  (This will only occur for access
+   methods that advertise they support ordered scans by setting
+   <structname>pg_am</>.<structfield>amorderstrategy</> nonzero.)  After the
+   first call, <function>amgettuple</> must be prepared to advance the scan in
+   either direction from the most recently returned entry.
+  </para>
+
+  <para>
+   The access method must support <quote>marking</> a position in a scan
+   and later returning to the marked position.  The same position may be
+   restored multiple times.  However, only one position need be remembered
+   per scan; a new <function>ammarkpos</> call overrides the previously
+   marked position.
+  </para>
+
+  <para>
+   Both the scan position and the mark position (if any) must be maintained
+   consistently in the face of concurrent insertions or deletions in the
+   index.  It is OK if a freshly-inserted entry is not returned by a scan that
+   would have found the entry if it had existed when the scan started, or for
+   the scan to return such an entry upon rescanning or backing
+   up even though it had not been returned the first time through.  Similarly,
+   a concurrent delete may or may not be reflected in the results of a scan.
+   What is important is that insertions or deletions not cause the scan to
+   miss or multiply return entries that were not themselves being inserted or
+   deleted.  (For an index type that does not set
+   <structname>pg_am</>.<structfield>amconcurrent</>, it is sufficient to
+   handle these cases for insertions or deletions performed by the same
+   backend that's doing the scan.  But when <structfield>amconcurrent</> is
+   true, insertions or deletions from other backends must be handled as well.)
+  </para>
+
+ </sect1>
+
+ <sect1 id="index-locking">
+  <title>Index Locking Considerations</title>
+
+  <para>
+   An index access method can choose whether it supports concurrent updates
+   of the index by multiple processes.  If the method's
+   <structname>pg_am</>.<structfield>amconcurrent</> flag is true, then
+   the core <productname>PostgreSQL</productname> system obtains
+   <literal>AccessShareLock</> on the index during an index scan, and
+   <literal>RowExclusiveLock</> when updating the index.  Since these lock
+   types do not conflict, the access method is responsible for handling any
+   fine-grained locking it may need.  An exclusive lock on the index as a whole
+   will be taken only during index creation, destruction, or
+   <literal>REINDEX</>.  When <structfield>amconcurrent</> is false,
+   <productname>PostgreSQL</productname> still obtains
+   <literal>AccessShareLock</> during index scans, but it obtains
+   <literal>AccessExclusiveLock</> during any update.  This ensures that
+   updaters have sole use of the index.  Note that this implicitly assumes
+   that index scans are read-only; an access method that might modify the
+   index during a scan will still have to do its own locking to handle the
+   case of concurrent scans.
+  </para>
+
+  <para>
+   Recall that a backend's own locks never conflict; therefore, even a
+   non-concurrent index type must be prepared to handle the case where
+   a backend is inserting or deleting entries in an index that it is itself
+   scanning.  (This is of course necessary to support an <command>UPDATE</>
+   that uses the index to find the rows to be updated.)
+  </para>
+
+  <para>
+   Building an index type that supports concurrent updates usually requires
+   extensive and subtle analysis of the required behavior.  For the b-tree
+   and hash index types, you can read about the design decisions involved in
+   <filename>src/backend/access/nbtree/README</> and
+   <filename>src/backend/access/hash/README</>.
+  </para>
+
+  <para>
+   Aside from the index's own internal consistency requirements, concurrent
+   updates create issues about consistency between the parent table (the
+   <firstterm>heap</>) and the index.  Because
+   <productname>PostgreSQL</productname> separates accesses 
+   and updates of the heap from those of the index, there are windows in
+   which the index may be inconsistent with the heap.  We handle this problem
+   with the following rules:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       A new heap entry is made before making its index entries.  (Therefore
+       a concurrent index scan is likely to fail to see the heap entry.
+       This is okay because the index reader would be uninterested in an
+       uncommitted row anyway.  But see <xref linkend="index-unique-checks">.)
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       When a heap entry is to be deleted (by <command>VACUUM</>), all its
+       index entries must be removed first.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       For concurrent index types, an indexscan must maintain a pin
+       on the index page holding the item last returned by
+       <function>amgettuple</>, and <function>ambulkdelete</> cannot delete
+       entries from pages that are pinned by other backends.  The need
+       for this rule is explained below.
+      </para>
+     </listitem>
+    </itemizedlist>
+
+   If an index is concurrent then it is possible for an index reader to
+   see an index entry just before it is removed by <command>VACUUM</>, and
+   then to arrive at the corresponding heap entry after that was removed by
+   <command>VACUUM</>.  (With a nonconcurrent index, this is not possible
+   because of the conflicting index-level locks that will be taken out.)
+   This creates no serious problems if that item
+   number is still unused when the reader reaches it, since an empty
+   item slot will be ignored by <function>heap_fetch()</>.  But what if a
+   third backend has already re-used the item slot for something else?
+   When using an MVCC-compliant snapshot, there is no problem because
+   the new occupant of the slot is certain to be too new to pass the
+   snapshot test.  However, with a non-MVCC-compliant snapshot (such as
+   <literal>SnapshotNow</>), it would be possible to accept and return
+   a row that does not in fact match the scan keys.  We could defend
+   against this scenario by requiring the scan keys to be rechecked
+   against the heap row in all cases, but that is too expensive.  Instead,
+   we use a pin on an index page as a proxy to indicate that the reader
+   may still be <quote>in flight</> from the index entry to the matching
+   heap entry.  Making <function>ambulkdelete</> block on such a pin ensures
+   that <command>VACUUM</> cannot delete the heap entry before the reader
+   is done with it.  This solution costs little in runtime, and adds blocking
+   overhead only in the rare cases where there actually is a conflict.
+  </para>
+
+  <para>
+   This solution requires that index scans be <quote>synchronous</>: we have
+   to fetch each heap tuple immediately after scanning the corresponding index
+   entry.  This is expensive for a number of reasons.  An
+   <quote>asynchronous</> scan in which we collect many TIDs from the index,
+   and only visit the heap tuples sometime later, requires much less index
+   locking overhead and may allow a more efficient heap access pattern.
+   Per the above analysis, we must use the synchronous approach for
+   non-MVCC-compliant snapshots, but an asynchronous scan would be safe
+   for a query using an MVCC snapshot.  This possibility is not exploited
+   as of <productname>PostgreSQL</productname> 8.0, but it is likely to be
+   investigated soon.
+  </para>
+
+ </sect1>
+
+ <sect1 id="index-unique-checks">
+  <title>Index Uniqueness Checks</title>
+
+  <para>
+   <productname>PostgreSQL</productname> enforces SQL uniqueness constraints
+   using <firstterm>unique indexes</>, which are indexes that disallow
+   multiple entries with identical keys.  An access method that supports this
+   feature sets <structname>pg_am</>.<structfield>amcanunique</> true.
+   (At present, only b-tree supports it.)
+  </para>
+
+  <para>
+   Because of MVCC, it is always necessary to allow duplicate entries to
+   exist physically in an index: the entries might refer to successive
+   versions of a single logical row.  The behavior we actually want to
+   enforce is that no MVCC snapshot could include two rows with equal
+   index keys.  This breaks down into the following cases that must be
+   checked when inserting a new row into a unique index:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       If a conflicting valid row has been deleted by the current transaction,
+       it's okay.  (In particular, since an UPDATE always deletes the old row
+       version before inserting the new version, this will allow an UPDATE on
+       a row without changing the key.)
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       If a conflicting row has been inserted by an as-yet-uncommitted
+       transaction, the would-be inserter must wait to see if that transaction
+       commits.  If it rolls back then there is no conflict.  If it commits
+       without deleting the conflicting row again, there is a uniqueness
+       violation.  (In practice we just wait for the other transaction to
+       end and then redo the visibility check in toto.)
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Similarly, if a conflicting valid row has been deleted by an
+       as-yet-uncommitted transaction, the would-be inserter must wait
+       for that transaction to commit or abort, and then repeat the test.
+      </para>
+     </listitem>
+    </itemizedlist>
+  </para>
+
+  <para>
+   We require the index access method to apply these tests itself, which
+   means that it must reach into the heap to check the commit status of
+   any row that is shown to have a duplicate key according to the index
+   contents.  This is without a doubt ugly and non-modular, but it saves
+   redundant work: if we did a separate probe then the index lookup for
+   a conflicting row would be essentially repeated while finding the place to
+   insert the new row's index entry.  What's more, there is no obvious way
+   to avoid race conditions unless the conflict check is an integral part
+   of insertion of the new index entry.
+  </para>
+
+  <para>
+   The main limitation of this scheme is that it has no convenient way
+   to support deferred uniqueness checks.
+  </para>
+
+ </sect1>
+
+ <sect1 id="index-cost-estimation">
+  <title>Index Cost Estimation Functions</title>
+
+  <para>
+   The amcostestimate function is given a list of WHERE clauses that have
+   been determined to be usable with the index.  It must return estimates
+   of the cost of accessing the index and the selectivity of the WHERE
+   clauses (that is, the fraction of parent-table rows that will be
+   retrieved during the index scan).  For simple cases, nearly all the
+   work of the cost estimator can be done by calling standard routines
+   in the optimizer; the point of having an amcostestimate function is
+   to allow index access methods to provide index-type-specific knowledge,
+   in case it is possible to improve on the standard estimates.
+  </para>
+
+  <para>
+   Each amcostestimate function must have the signature:
+
+<programlisting>
+void
+amcostestimate (Query *root,
+                RelOptInfo *rel,
+                IndexOptInfo *index,
+                List *indexQuals,
+                Cost *indexStartupCost,
+                Cost *indexTotalCost,
+                Selectivity *indexSelectivity,
+                double *indexCorrelation);
+</programlisting>
+
+   The first four parameters are inputs:
+
+   <variablelist>
+    <varlistentry>
+     <term>root</term>
+     <listitem>
+      <para>
+       The query being processed.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>rel</term>
+     <listitem>
+      <para>
+       The relation the index is on.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>index</term>
+     <listitem>
+      <para>
+       The index itself.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>indexQuals</term>
+     <listitem>
+      <para>
+       List of index qual clauses (implicitly ANDed);
+       a NIL list indicates no qualifiers are available.
+       Note that the list contains expression trees, not ScanKeys.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   The last four parameters are pass-by-reference outputs:
+
+   <variablelist>
+    <varlistentry>
+     <term>*indexStartupCost</term>
+     <listitem>
+      <para>
+       Set to cost of index start-up processing
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>*indexTotalCost</term>
+     <listitem>
+      <para>
+       Set to total cost of index processing
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>*indexSelectivity</term>
+     <listitem>
+      <para>
+       Set to index selectivity
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>*indexCorrelation</term>
+     <listitem>
+      <para>
+       Set to correlation coefficient between index scan order and
+       underlying table's order
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   Note that cost estimate functions must be written in C, not in SQL or
+   any available procedural language, because they must access internal
+   data structures of the planner/optimizer.
+  </para>
+
+  <para>
+   The index access costs should be computed in the units used by
+   <filename>src/backend/optimizer/path/costsize.c</filename>: a sequential disk block fetch
+   has cost 1.0, a nonsequential fetch has cost random_page_cost, and
+   the cost of processing one index row should usually be taken as
+   cpu_index_tuple_cost (which is a user-adjustable optimizer parameter).
+   In addition, an appropriate multiple of cpu_operator_cost should be charged
+   for any comparison operators invoked during index processing (especially
+   evaluation of the indexQuals themselves).
+  </para>
+
+  <para>
+   The access costs should include all disk and CPU costs associated with
+   scanning the index itself, but NOT the costs of retrieving or processing
+   the parent-table rows that are identified by the index.
+  </para>
+
+  <para>
+   The <quote>start-up cost</quote> is the part of the total scan cost that must be expended
+   before we can begin to fetch the first row.  For most indexes this can
+   be taken as zero, but an index type with a high start-up cost might want
+   to set it nonzero.
+  </para>
+
+  <para>
+   The indexSelectivity should be set to the estimated fraction of the parent
+   table rows that will be retrieved during the index scan.  In the case
+   of a lossy index, this will typically be higher than the fraction of
+   rows that actually pass the given qual conditions.
+  </para>
+
+  <para>
+   The indexCorrelation should be set to the correlation (ranging between
+   -1.0 and 1.0) between the index order and the table order.  This is used
+   to adjust the estimate for the cost of fetching rows from the parent
+   table.
+  </para>
+
+  <procedure>
+   <title>Cost Estimation</title>
+   <para>
+    A typical cost estimator will proceed as follows:
+   </para>
+
+   <step>
+    <para>
+     Estimate and return the fraction of parent-table rows that will be visited
+     based on the given qual conditions.  In the absence of any index-type-specific
+     knowledge, use the standard optimizer function <function>clauselist_selectivity()</function>:
+
+<programlisting>
+*indexSelectivity = clauselist_selectivity(root, indexQuals,
+                                           rel-&gt;relid, JOIN_INNER);
+</programlisting>
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Estimate the number of index rows that will be visited during the
+     scan.  For many index types this is the same as indexSelectivity times
+     the number of rows in the index, but it might be more.  (Note that the
+     index's size in pages and rows is available from the IndexOptInfo struct.)
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Estimate the number of index pages that will be retrieved during the scan.
+     This might be just indexSelectivity times the index's size in pages.
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Compute the index access cost.  A generic estimator might do this:
+
+<programlisting>
+    /*
+     * Our generic assumption is that the index pages will be read
+     * sequentially, so they have cost 1.0 each, not random_page_cost.
+     * Also, we charge for evaluation of the indexquals at each index row.
+     * All the costs are assumed to be paid incrementally during the scan.
+     */
+    cost_qual_eval(&amp;index_qual_cost, indexQuals);
+    *indexStartupCost = index_qual_cost.startup;
+    *indexTotalCost = numIndexPages +
+        (cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;
+</programlisting>
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Estimate the index correlation.  For a simple ordered index on a single
+     field, this can be retrieved from pg_statistic.  If the correlation
+     is not known, the conservative estimate is zero (no correlation).
+    </para>
+   </step>
+  </procedure>
+
+  <para>
+   Examples of cost estimator functions can be found in
+   <filename>src/backend/utils/adt/selfuncs.c</filename>.
+  </para>
+ </sect1>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-ecat-files:nil
+End:
+-->

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.95 2005/01/05 23:42:03 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.96 2005/02/13 03:04:15 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -289,9 +289,10 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_am</structname> stores information about index access
-   methods.  There is one row for each index access method supported by
-   the system.
+   The catalog <structname>pg_am</structname> stores information about index
+   access methods.  There is one row for each index access method supported by
+   the system.  The contents of this catalog are discussed in detail in
+   <xref linkend="indexam">.
   </para>
 
   <table>
@@ -452,20 +453,6 @@
     </tbody>
    </tgroup>
   </table>
-
-   <para>
-    An index access method that supports multiple columns (has
-    <structfield>amcanmulticol</structfield> true) <emphasis>must</>
-    support indexing null values in columns after the first, because the planner
-    will assume the index can be used for queries on just the first
-    column(s).  For example, consider an index on (a,b) and a query with
-    <literal>WHERE a = 4</literal>.  The system will assume the index can be used to scan for
-    rows with <literal>a = 4</literal>, which is wrong if the index omits rows where <literal>b</> is null.
-    It is, however, OK to omit rows where the first indexed column is null.
-    (GiST currently does so.)
-    <structfield>amindexnulls</structfield> should be set true only if the
-    index access method indexes all rows, including arbitrary combinations of null values.
-   </para>
 
  </sect1>
 

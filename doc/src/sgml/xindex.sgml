@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.38 2005/01/23 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.39 2005/02/13 03:04:15 tgl Exp $
 -->
 
 <sect1 id="xindex">
@@ -43,7 +43,7 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.38 2005/01/23 00:30:18 momjian E
    described in <classname>pg_am</classname>.  It is possible to add a
    new index method by defining the required interface routines and
    then creating a row in <classname>pg_am</classname> &mdash; but that is
-   far beyond the scope of this chapter.
+   beyond the scope of this chapter (see <xref linkend="indexam">).
   </para>
 
   <para>
@@ -514,7 +514,7 @@ CREATE OPERATOR &lt; (
    <listitem>
     <para>
      Although <productname>PostgreSQL</productname> can cope with
-     functions having the same name as long as they have different
+     functions having the same SQL name as long as they have different
      argument data types, C can only cope with one global function
      having a given name.  So we shouldn't name the C function
      something simple like <filename>abs_eq</filename>.  Usually it's
@@ -525,14 +525,12 @@ CREATE OPERATOR &lt; (
 
    <listitem>
     <para>
-     We could have made the <productname>PostgreSQL</productname> name
+     We could have made the SQL name
      of the function <filename>abs_eq</filename>, relying on
      <productname>PostgreSQL</productname> to distinguish it by
-     argument data types from any other
-     <productname>PostgreSQL</productname> function of the same name.
+     argument data types from any other SQL function of the same name.
      To keep the example simple, we make the function have the same
-     names at the C level and <productname>PostgreSQL</productname>
-     level.
+     names at the C level and SQL level.
     </para>
    </listitem>
   </itemizedlist>
