@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.44 2002/02/19 20:11:19 tgl Exp $
+ * $Id: index.h,v 1.45 2002/03/10 06:02:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "catalog/pg_index.h"
 #include "nodes/execnodes.h"
 
+#define DEFAULT_INDEX_TYPE	"btree"
 
 /* Typedef for callback function for IndexBuildHeapScan */
 typedef void (*IndexBuildCallback) (Relation index,

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.290 2002/03/10 06:00:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.291 2002/03/10 06:02:23 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -51,6 +51,7 @@
 #include <ctype.h>
 
 #include "access/htup.h"
+#include "catalog/index.h"
 #include "catalog/pg_type.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
@@ -2516,7 +2517,8 @@ index_opt_unique:  UNIQUE						{ $$ = TRUE; }
 		;
 
 access_method_clause:  USING access_method		{ $$ = $2; }
-		| /*EMPTY*/								{ $$ = "btree"; }
+		/* If btree changes as our default, update pg_get_indexdef() */
+		| /*EMPTY*/								{ $$ = DEFAULT_INDEX_TYPE; }
 		;
 
 index_params:  index_list						{ $$ = $1; }
