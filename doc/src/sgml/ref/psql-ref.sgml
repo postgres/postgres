@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.90 2003/06/28 00:12:39 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.91 2003/07/23 15:05:42 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -804,7 +804,7 @@ testdb=>
         Lists all available aggregate functions, together with the data
         type they operate on. If <replaceable
         class="parameter">pattern</replaceable>
-        is specified, only matching aggregates are shown.
+        is specified, only aggregates whose names match the pattern are shown.
         </para>
         </listitem>
       </varlistentry>
@@ -816,7 +816,7 @@ testdb=>
         <para>
         Lists all available conversions between character-set encodings.
 	If <replaceable class="parameter">pattern</replaceable>
-        is specified, only conversions whose name matches the pattern are
+        is specified, only conversions whose names match the pattern are
 	listed.
         </para>
         </listitem>
@@ -882,7 +882,8 @@ testdb=>
         Lists available functions, together with their argument and
         return types. If <replaceable
         class="parameter">pattern</replaceable>
-        is specified, only matching functions are shown. If the form
+        is specified, only functions whose names match the pattern are shown.
+	If the form
         <literal>\df+</literal> is used, additional information about
         each function, including language and description, is shown.
         </para>
@@ -916,7 +917,7 @@ testdb=>
 
 	<para>
 	If <replaceable class="parameter">pattern</replaceable> is
-	specified, only objects whose name matches the pattern are listed.
+	specified, only objects whose names match the pattern are listed.
 	</para>
 	</listitem>
       </varlistentry>
@@ -940,7 +941,7 @@ testdb=>
         <para>
         Lists all available schemas (namespaces). If <replaceable
         class="parameter">pattern</replaceable> (a regular expression)
-        is specified, only schemas whose name matches the pattern are listed.
+        is specified, only schemas whose names match the pattern are listed.
         </para>
         </listitem>
       </varlistentry>
@@ -952,7 +953,7 @@ testdb=>
         <para>
         Lists available operators with their operand and return types.
 	If <replaceable class="parameter">pattern</replaceable> is
-	specified, only operators whose name matches the pattern are listed.
+	specified, only operators whose names match the pattern are listed.
         </para>
         </listitem>
       </varlistentry>
@@ -965,7 +966,7 @@ testdb=>
         Produces a list of all available tables with their
         associated access privileges.
 	If <replaceable class="parameter">pattern</replaceable> is
-	specified, only tables whose name matches the pattern are listed.
+	specified, only tables whose names match the pattern are listed.
 	</para>
 
 	<para>
@@ -1671,7 +1672,7 @@ lo_import 152801
         Produces a list of all available tables with their
         associated access privileges.
 	If a <replaceable class="parameter">pattern</replaceable> is
-	specified, only tables whose name matches the pattern are listed.
+	specified, only tables whose names match the pattern are listed.
 	</para>
 
 	<para>
