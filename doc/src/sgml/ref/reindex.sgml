@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.23 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.24 2004/10/24 22:52:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -169,8 +169,9 @@ REINDEX { DATABASE | TABLE | INDEX } <replaceable class="PARAMETER">name</replac
   <para>
    If corruption is suspected in the indexes of any of the shared
    system catalogs (<structname>pg_database</structname>,
-   <structname>pg_group</structname>, or
-   <structname>pg_shadow</structname>), then a standalone server
+   <structname>pg_group</structname>,
+   <structname>pg_shadow</structname>, or
+   <structname>pg_tablespace</structname>), then a standalone server
    must be used to repair it.  <command>REINDEX</> will not process
    shared catalogs in multiuser mode.
   </para>
