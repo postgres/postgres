@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.52 1999/05/25 22:40:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.53 1999/06/12 19:22:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1432,6 +1432,7 @@ ExecTargetList(List *targetlist,
 	Datum		constvalue;
 	HeapTuple	newTuple;
 	bool		isNull;
+	static struct tupleDesc NullTupleDesc; /* we assume this inits to zeroes */
 
 	/*
 	 * debugging stuff
@@ -1441,35 +1442,15 @@ ExecTargetList(List *targetlist,
 	EV_printf("\n");
 
 	/*
-	 * Return a dummy tuple if the targetlist is empty. the dummy tuple is
-	 * necessary to differentiate between passing and failing the
-	 * qualification.
+	 * There used to be some klugy and demonstrably broken code here that
+	 * special-cased the situation where targetlist == NIL.  Now we just
+	 * fall through and return an empty-but-valid tuple.  We do, however,
+	 * have to cope with the possibility that targettype is NULL ---
+	 * heap_formtuple won't like that, so pass a dummy descriptor with
+	 * natts = 0 to deal with it.
 	 */
-	if (targetlist == NIL)
-	{
-
-		/*
-		 * I now think that the only time this makes any sense is when we
-		 * run a delete query.	Then we need to return something other
-		 * than nil so we know to delete the tuple associated with the
-		 * saved tupleid.. see what ExecutePlan does with the returned
-		 * tuple.. -cim 9/21/89
-		 *
-		 * It could also happen in queries like: retrieve (foo.all) where
-		 * bar.a = 3
-		 *
-		 * is this a new phenomenon? it might cause bogus behavior if we try
-		 * to free this tuple later!! I put a hook in ExecProject to watch
-		 * out for this case -mer 24 Aug 1992
-		 *
-		 * We must return dummy tuple!!! Try select t1.x from t1, t2 where
-		 * t1.y = 1 and t2.y = 1 - t2 scan target list will be empty and
-		 * so no one tuple will be returned! But Mer was right - dummy
-		 * tuple must be palloced... - vadim 03/01/1999
-		 */
-		*isDone = true;
-		return (HeapTuple) palloc(1);
-	}
+	if (targettype == NULL)
+		targettype = &NullTupleDesc;
 
 	/*
 	 * allocate an array of char's to hold the "null" information only if
@@ -1645,9 +1626,6 @@ ExecProject(ProjectionInfo *projInfo, bool *isDone)
 
 	/*
 	 * store the tuple in the projection slot and return the slot.
-	 *
-	 * If there's no projection target list we don't want to pfree the bogus
-	 * tuple that ExecTargetList passes back to us. -mer 24 Aug 1992
 	 */
 	return (TupleTableSlot *)
 		ExecStoreTuple(newTuple,/* tuple to store */
