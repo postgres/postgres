@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile,v 1.1 1996/12/31 07:26:26 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile,v 1.2 1997/01/08 07:32:15 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ ifneq ($(wildcard man), )
 	$(MAKE) -C man $@
 endif
 	@if test $@. = all. -o $@. = .; then \
-	echo All of Postgres95 is successfully made.  Ready to install. ;\
+	echo All of PostgreSQL is successfully made.  Ready to install. ;\
         fi
 
 TAGS:
