@@ -42,7 +42,7 @@ check_primary_key()
 	int			nargs;			/* # of args specified in CREATE TRIGGER */
 	char	  **args;			/* arguments: column names and table name */
 	int			nkeys;			/* # of key columns (= nargs / 2) */
-	char	  **kvals;			/* key values */
+	Datum	   *kvals;			/* key values */
 	char	   *relname;		/* referenced relation name */
 	Relation	rel;			/* triggered relation */
 	HeapTuple	tuple = NULL;	/* tuple to return */
@@ -107,7 +107,7 @@ check_primary_key()
 	 * We use SPI plan preparation feature, so allocate space to place key
 	 * values.
 	 */
-	kvals = (char **) palloc(nkeys * sizeof(char *));
+	kvals = (Datum *) palloc(nkeys * sizeof(Datum));
 
 	/*
 	 * Construct ident string as TriggerName $ TriggeredRelationId and try
@@ -228,7 +228,7 @@ check_foreign_key()
 	int			nrefs;			/* number of references (== # of plans) */
 	char		action;			/* 'R'estrict | 'S'etnull | 'C'ascade */
 	int			nkeys;			/* # of key columns */
-	char	  **kvals;			/* key values */
+	Datum	   *kvals;			/* key values */
 	char	   *relname;		/* referencing relation name */
 	Relation	rel;			/* triggered relation */
 	HeapTuple	trigtuple = NULL;		/* tuple to being changed */
@@ -310,7 +310,7 @@ check_foreign_key()
 	 * We use SPI plan preparation feature, so allocate space to place key
 	 * values.
 	 */
-	kvals = (char **) palloc(nkeys * sizeof(char *));
+	kvals = (Datum *) palloc(nkeys * sizeof(Datum));
 
 	/*
 	 * Construct ident string as TriggerName $ TriggeredRelationId and try
@@ -494,7 +494,7 @@ check_foreign_key()
 				elog(WARN, "%s: tuple referenced in %s",
 					 trigger->tgname, relname);
 		}
-#ifndef REFINT_QUIET
+#ifdef REFINT_VERBOSE
 		else
 			elog(NOTICE, "%s: %d tuple(s) of %s are %s",
 				 trigger->tgname, SPI_processed, relname,
