@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.20 1998/12/15 12:45:30 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.21 1998/12/16 11:53:44 vadim Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -172,12 +172,8 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 
 	if (!fail)
 	{
-		/* must not cache status of running xaction !!! */
-		if (xidstatus != XID_INPROGRESS)
-		{
-			TransactionIdStore(transactionId, &cachedTestXid);
-			cachedTestXidStatus = xidstatus;
-		}
+		TransactionIdStore(transactionId, &cachedTestXid);
+		cachedTestXidStatus = xidstatus;
 		return (bool)
 			(status == xidstatus);
 	}
@@ -230,11 +226,8 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 	 *
 	 * What's the hell ?! Why != XID_COMMIT ?!
 	 */
-	if (status != XID_INPROGRESS)
-	{
-		TransactionIdStore(transactionId, &cachedTestXid);
-		cachedTestXidStatus = status;
-	}
+	TransactionIdStore(transactionId, &cachedTestXid);
+	cachedTestXidStatus = status;
 
 }
 
@@ -588,14 +581,11 @@ TransactionIdAbort(TransactionId transactionId)
 	TransactionLogUpdate(transactionId, XID_ABORT);
 }
 
-#ifdef NOT_USED
 void
-TransactionIdSetInProgress(TransactionId transactionId)
+TransactionIdFlushCache()
 {
-	if (AMI_OVERRIDE)
-		return;
 
-	TransactionLogUpdate(transactionId, XID_INPROGRESS);
+	TransactionIdStore(AmiTransactionId, &cachedTestXid);
+	cachedTestXidStatus = XID_COMMIT;
+
 }
-
-#endif

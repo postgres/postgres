@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.26 1998/12/15 12:45:35 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.27 1998/12/16 11:53:44 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -516,6 +516,9 @@ CommandCounterIncrement()
 	/* make cache changes visible to me */
 	AtCommit_Cache();
 	AtStart_Cache();
+
+	TransactionIdFlushCache();
+	
 }
 
 void
@@ -792,6 +795,9 @@ static void
 StartTransaction()
 {
 	TransactionState s = CurrentTransactionState;
+
+	TransactionIdFlushCache();
+	FreeXactSnapshot();
 
 	/* ----------------
 	 *	Check the current transaction state.  If the transaction system

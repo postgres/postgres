@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.32 1998/12/15 12:46:24 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.33 1998/12/16 11:53:46 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -633,27 +633,21 @@ TransactionIdIsInProgress(TransactionId xid)
 /*
  * GetSnapshotData -- returns information about running transactions.
  *
- * InvalidTransactionId is used as terminator in snapshot->xip array.
- * If serialized is true then XID >= current xact ID will not be
- * placed in array. Current xact ID are never placed there (just
- * to reduce its length, xmin/xmax may be equal to cid).
- * MyProc->xmin will be setted if equal to InvalidTransactionId.
- *
  * Yet another strange func for this place...	- vadim 07/21/98
  */
 Snapshot
-GetSnapshotData(bool serialized)
+GetSnapshotData(void)
 {
 	Snapshot	snapshot = (Snapshot) malloc(sizeof(SnapshotData));
 	ShmemIndexEnt *result;
 	PROC	   *proc;
 	TransactionId cid = GetCurrentTransactionId();
 	uint32		count = 0;
-	uint32		have = 31;
+	uint32		have = 32;
 
 	Assert(ShmemIndex);
 
-	snapshot->xip = (TransactionId *) malloc(32 * sizeof(TransactionId));
+	snapshot->xip = (TransactionId *) malloc(have * sizeof(TransactionId));
 	snapshot->xmax = cid;
 	snapshot->xmin = cid;
 
@@ -667,15 +661,14 @@ GetSnapshotData(bool serialized)
 			if (MyProc->xmin == InvalidTransactionId)
 				MyProc->xmin = snapshot->xmin;
 			SpinRelease(ShmemIndexLock);
-			snapshot->xip[count] = InvalidTransactionId;
+			snapshot->xcnt = count;
 			return snapshot;
 		}
 		if (result->location == INVALID_OFFSET ||
 			strncmp(result->key, "PID ", 4) != 0)
 			continue;
 		proc = (PROC *) MAKE_PTR(result->location);
-		if (proc == MyProc || proc->xid < FirstTransactionId ||
-			(serialized && proc->xid >= cid))
+		if (proc == MyProc || proc->xid < FirstTransactionId)
 			continue;
 		if (proc->xid < snapshot->xmin)
 			snapshot->xmin = proc->xid;
@@ -684,7 +677,7 @@ GetSnapshotData(bool serialized)
 		if (have == 0)
 		{
 			snapshot->xip = (TransactionId *) realloc(snapshot->xip,
-								   (count + 33) * sizeof(TransactionId));
+								   (count + 32) * sizeof(TransactionId));
 			have = 32;
 		}
 		snapshot->xip[count] = proc->xid;

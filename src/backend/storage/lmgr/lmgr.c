@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.20 1998/12/15 12:46:30 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.21 1998/12/16 11:53:48 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,6 +325,7 @@ XactLockTableWait(TransactionId xid)
 
 	LockAcquire(LockTableId, &tag, ShareLock);
 
+	TransactionIdFlushCache();
 	/*
 	 * Transaction was committed/aborted/crashed - 
 	 * we have to update pg_log if transaction is still

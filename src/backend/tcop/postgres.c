@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.94 1998/10/16 06:05:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.95 1998/12/16 11:53:52 vadim Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -786,9 +786,10 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			}
 #endif
 
-			/* ----------------
+			SetQuerySnapshot();
+
+			/*
 			 *	 execute the plan
-			 *
 			 */
 			if (ShowExecutorStats)
 				ResetUsage();
@@ -1519,7 +1520,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.94 $ $Date: 1998/10/16 06:05:13 $\n");
+		puts("$Revision: 1.95 $ $Date: 1998/12/16 11:53:52 $\n");
 	}
 
 	/* ----------------

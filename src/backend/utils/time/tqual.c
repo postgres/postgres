@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.21 1998/12/15 12:46:40 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.22 1998/12/16 11:53:55 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,9 @@ extern bool PostgresIsInitialized;
 
 SnapshotData	SnapshotDirtyData;
 Snapshot		SnapshotDirty = &SnapshotDirtyData;
+
+Snapshot		QuerySnapshot = NULL;
+static Snapshot	SerializedSnapshot = NULL;
 
 /*
  * XXX Transaction system override hacks start here
@@ -435,4 +438,160 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 		return true;
 
 	return false;								/* updated by other */
+}
+
+bool
+HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
+{
+	if (AMI_OVERRIDE)
+		return true;
+
+	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	{
+		if (tuple->t_infomask & HEAP_XMIN_INVALID)		/* xid invalid or
+														 * aborted */
+			return false;
+
+		if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
+		{
+			if (CommandIdGEScanCommandId(tuple->t_cmin))
+				return false;	/* inserted after scan started */
+
+			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
+				return true;
+
+			Assert(TransactionIdIsCurrentTransactionId(tuple->t_xmax));
+
+			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+				return true;
+
+			if (CommandIdGEScanCommandId(tuple->t_cmax))
+				return true;	/* deleted after scan started */
+			else
+				return false;	/* deleted before scan started */
+		}
+
+		/*
+		 * this call is VERY expensive - requires a log table lookup.
+		 */
+
+		if (!TransactionIdDidCommit(tuple->t_xmin))
+		{
+			if (TransactionIdDidAbort(tuple->t_xmin))
+				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
+			return false;
+		}
+
+		tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+	}
+
+	/* 
+	 * By here, the inserting transaction has committed -
+	 * have to check when...
+	 */
+
+	if (tuple->t_xmin >= snapshot->xmax)
+		return false;
+	if (tuple->t_xmin >= snapshot->xmin)
+	{
+		uint32	i;
+		
+		for (i = 0; i < snapshot->xcnt; i++)
+		{
+			if (tuple->t_xmin == snapshot->xip[i])
+				return false;
+		}
+	}
+
+	if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
+		return true;
+
+	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+		return true;
+
+	if (!(tuple->t_infomask & HEAP_XMAX_COMMITTED))
+	{
+		if (TransactionIdIsCurrentTransactionId(tuple->t_xmax))
+		{
+			if (CommandIdGEScanCommandId(tuple->t_cmax))
+				return true;		/* deleted after scan started */
+			else
+				return false;		/* deleted before scan started */
+		}
+
+		if (!TransactionIdDidCommit(tuple->t_xmax))
+		{
+			if (TransactionIdDidAbort(tuple->t_xmax))
+				tuple->t_infomask |= HEAP_XMAX_INVALID;		/* aborted */
+			return true;
+		}
+
+		/* xmax transaction committed */
+		tuple->t_infomask |= HEAP_XMAX_COMMITTED;
+	}
+
+	if (tuple->t_xmax >= snapshot->xmax)
+		return true;
+	if (tuple->t_xmax >= snapshot->xmin)
+	{
+		uint32	i;
+		
+		for (i = 0; i < snapshot->xcnt; i++)
+		{
+			if (tuple->t_xmax == snapshot->xip[i])
+				return true;
+		}
+	}
+
+	return false;
+}
+
+void
+SetQuerySnapshot(void)
+{
+
+	/* 1st call in xaction */
+	if (SerializedSnapshot == NULL)
+	{
+		SerializedSnapshot = GetSnapshotData();
+		QuerySnapshot = SerializedSnapshot;
+		Assert(QuerySnapshot != NULL);
+		return;
+	}
+
+	if (QuerySnapshot != SerializedSnapshot)
+	{
+		free(QuerySnapshot->xip);
+		free(QuerySnapshot);
+	}
+
+	if (XactIsoLevel == XACT_SERIALIZED)
+		QuerySnapshot = SerializedSnapshot;
+	else
+		QuerySnapshot = GetSnapshotData();
+
+	Assert(QuerySnapshot != NULL);
+
+}
+
+void
+FreeXactSnapshot(void)
+{
+
+	if (QuerySnapshot != NULL && QuerySnapshot != SerializedSnapshot)
+	{
+		free(QuerySnapshot->xip);
+		free(QuerySnapshot);
+	}
+
+	QuerySnapshot = NULL;
+
+	if (SerializedSnapshot != NULL)
+	{
+		free(SerializedSnapshot->xip);
+		free(SerializedSnapshot);
+	}
+
+	SerializedSnapshot = NULL;
+
 }

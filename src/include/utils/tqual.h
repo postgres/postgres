@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.16 1998/12/15 12:47:01 vadim Exp $
+ * $Id: tqual.h,v 1.17 1998/12/16 11:52:11 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,8 @@
 typedef struct SnapshotData
 {
 	TransactionId	xmin;			/* XID < xmin are visible to me */
-	TransactionId	xmax;			/* XID > xmax are invisible to me */
+	TransactionId	xmax;			/* XID >= xmax are invisible to me */
+	uint32			xcnt;			/* # of xact below */
 	TransactionId  *xip;			/* array of xacts in progress */
 }			SnapshotData;
 
@@ -27,7 +28,9 @@ typedef SnapshotData *Snapshot;
 
 #define SnapshotNow					((Snapshot) 0x0)
 #define SnapshotSelf				((Snapshot) 0x1)
+
 extern	Snapshot					SnapshotDirty;
+extern	Snapshot					QuerySnapshot;
 
 #define IsSnapshotNow(snapshot)		((Snapshot) snapshot == SnapshotNow)
 #define IsSnapshotSelf(snapshot)	((Snapshot) snapshot == SnapshotSelf)
@@ -55,7 +58,11 @@ extern CommandId HeapSpecialCommandId;
 			((IsSnapshotDirty(snapshot)) ? \
 				HeapTupleSatisfiesDirty((tuple)->t_data) \
 			: \
-				HeapTupleSatisfiesNow((tuple)->t_data) \
+				((IsSnapshotNow(snapshot)) ? \
+					HeapTupleSatisfiesNow((tuple)->t_data) \
+				: \
+					HeapTupleSatisfiesSnapshot((tuple)->t_data, snapshot) \
+				) \
 			) \
 	) \
 )
@@ -87,9 +94,13 @@ extern CommandId HeapSpecialCommandId;
 extern bool		HeapTupleSatisfiesItself(HeapTupleHeader tuple);
 extern bool		HeapTupleSatisfiesNow(HeapTupleHeader tuple);
 extern bool		HeapTupleSatisfiesDirty(HeapTupleHeader tuple);
+extern bool		HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot);
 extern int		HeapTupleSatisfiesUpdate(HeapTuple tuple);
 
 extern void setheapoverride(bool on);
-extern Snapshot GetSnapshotData(bool serialized);
+
+extern Snapshot GetSnapshotData(void);
+extern void		SetQuerySnapshot(void);
+extern void		FreeXactSnapshot(void);
 
 #endif	 /* TQUAL_H */

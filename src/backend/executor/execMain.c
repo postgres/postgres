@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.60 1998/12/15 12:46:04 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.61 1998/12/16 11:53:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 		memset(estate->es_param_exec_vals, 0, queryDesc->plantree->nParamExec * sizeof(ParamExecData));
 	}
 
-	estate->es_snapshot = SnapshotNow;
+	estate->es_snapshot = QuerySnapshot;
 
 	result = InitPlan(queryDesc->operation,
 					  queryDesc->parsetree,
