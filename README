@@ -2,7 +2,7 @@
 PostgreSQL Data Base Management System (formerly known as Postgres, then
 as Postgres95).
   
-This directory contains the development version of 6.5 of the PostgreSQL
+This directory contains the development version of 6.5.1 of the PostgreSQL
 database server.  The server is not ANSI SQL compliant, but it gets
 closer with every release.  After you unzip and untar the distribution
 file, look at file INSTALL for the installation notes and file HISTORY

@@ -1,15 +1,13 @@
 README
-INSTALL
 HISTORY
 register.txt
 doc/Machine-specific FAQ's
-doc/TODO
 doc/bug.template
 update include/version.h.in after release, including subversion
-update backend/parser/scan.c and gram.c so  flex/bison not necessary
 update pgaccess
 update odbc
 update doc/src/sgml/release.sgml 
+update doc/src/sgml/install.sgml 
 update interfaces/libpq/libpq.rc
 update documentation
 	command-line arg printout from inside the program

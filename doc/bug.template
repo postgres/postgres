@@ -27,7 +27,7 @@ System Configuration
 
   Operating System (example: Linux 2.0.26 ELF) 	:
 
-  PostgreSQL version (example: PostgreSQL-6.5)  :   PostgreSQL-6.5
+  PostgreSQL version (example: PostgreSQL-6.5.1):   PostgreSQL-6.5.1
 
   Compiler used (example:  gcc 2.8.0)		:
 

@@ -1,6 +1,6 @@
 
 
-(1999-06-09)
+(1999-07-15)
 PostgreSQL has a Web site at http://www.postgresql.org/ which carries details
 on the latest release, upcoming features, and other information to make your
 work or play with PostgreSQL more productive.

@@ -1,8 +1,8 @@
 #include <winver.h>
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 6,5,0,0
- PRODUCTVERSION 6,5,0,0
+ FILEVERSION 6,5,1,0
+ PRODUCTVERSION 6,5,1,0
  FILEFLAGSMASK 0x3fL
  FILEFLAGS 0
  FILEOS VOS__WINDOWS32
@@ -15,13 +15,13 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "PostgreSQL Access Library\0"
-            VALUE "FileVersion", "6, 5, 0, 0\0"
+            VALUE "FileVersion", "6, 5, 1, 0\0"
             VALUE "InternalName", "libpq\0"
             VALUE "LegalCopyright", "Copyright (C) 1999\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "libpq.dll\0"
             VALUE "ProductName", "PostgreSQL\0"
-            VALUE "ProductVersion", "6, 5, 0, 0\0"
+            VALUE "ProductVersion", "6, 5, 1, 0\0"
         END
     END
     BLOCK "VarFileInfo"
