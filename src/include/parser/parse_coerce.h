@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.1 1998/05/09 23:31:34 thomas Exp $
+ * $Id: parse_coerce.h,v 1.2 1998/05/29 14:02:28 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,18 +27,33 @@ typedef enum CATEGORY {
 } CATEGORY;
 
 
+/* IS_BUILTIN_TYPE()
+ * Check for types which are in the core distribution.
+ * The built-in types can have more explicit support for type coersion, etc,
+ *  since we know apriori how they should behave.
+ * - thomas 1998-05-13
+ */
 #define IS_BUILTIN_TYPE(t) \
 		  (((t) == BOOLOID) \
 		|| ((t) == BPCHAROID) \
 		|| ((t) == VARCHAROID) \
 		|| ((t) == TEXTOID) \
-		|| ((t) == CASHOID) \
 		|| ((t) == INT4OID) \
 		|| ((t) == DATETIMEOID) \
 		|| ((t) == FLOAT8OID) \
-		|| ((t) == ABSTIMEOID) \
 		|| ((t) == TIMESTAMPOID) \
-		|| ((t) == RELTIMEOID))
+		|| ((t) == ABSTIMEOID) \
+		|| ((t) == RELTIMEOID) \
+		|| ((t) == CHAROID) \
+		|| ((t) == NAMEOID) \
+		|| ((t) == CASHOID) \
+		|| ((t) == POINTOID) \
+		|| ((t) == LSEGOID) \
+		|| ((t) == LINEOID) \
+		|| ((t) == BOXOID) \
+		|| ((t) == PATHOID) \
+		|| ((t) == POLYGONOID) \
+		|| ((t) == CIRCLEOID))
 
 
 /* IS_BINARY_COMPATIBLE()
@@ -53,14 +68,14 @@ typedef enum CATEGORY {
 		|| ((a) == VARCHAROID && (b) == BPCHAROID) \
 		|| ((a) == TEXTOID && (b) == BPCHAROID) \
 		|| ((a) == TEXTOID && (b) == VARCHAROID) \
-		|| ((a) == CASHOID && (b) == INT4OID) \
-		|| ((a) == INT4OID && (b) == CASHOID) \
 		|| ((a) == DATETIMEOID && (b) == FLOAT8OID) \
 		|| ((a) == FLOAT8OID && (b) == DATETIMEOID) \
 		|| ((a) == ABSTIMEOID && (b) == TIMESTAMPOID) \
-		|| ((a) == TIMESTAMPOID && (b) == ABSTIMEOID) \
 		|| ((a) == ABSTIMEOID && (b) == INT4OID) \
+		|| ((a) == TIMESTAMPOID && (b) == ABSTIMEOID) \
+		|| ((a) == TIMESTAMPOID && (b) == INT4OID) \
 		|| ((a) == INT4OID && (b) == ABSTIMEOID) \
+		|| ((a) == INT4OID && (b) == TIMESTAMPOID) \
 		|| ((a) == RELTIMEOID && (b) == INT4OID) \
 		|| ((a) == INT4OID && (b) == RELTIMEOID))
 
