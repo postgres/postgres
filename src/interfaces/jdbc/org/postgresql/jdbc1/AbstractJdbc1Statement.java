@@ -25,7 +25,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.27 2003/07/09 05:12:04 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.28 2003/07/22 05:17:09 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1035,21 +1035,36 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			{
 				sbuf.setLength(0);
 				sbuf.ensureCapacity(x.length() + (int)(x.length() / 10));
-				int i;
-
 				sbuf.append('\'');
-				for (i = 0 ; i < x.length() ; ++i)
-				{
-					char c = x.charAt(i);
-					if (c == '\\' || c == '\'')
-						sbuf.append((char)'\\');
-					sbuf.append(c);
-				}
+				escapeString(x, sbuf);
 				sbuf.append('\'');
 				bind(parameterIndex, sbuf.toString(), type);
 			}
 		}
 	}
+
+    private String escapeString(String p_input) {
+        // use the shared buffer object. Should never clash but this makes
+        // us thread safe!
+        synchronized (sbuf)
+        {
+            sbuf.setLength(0);
+            sbuf.ensureCapacity(p_input.length());
+            escapeString(p_input, sbuf);
+            return sbuf.toString();
+        }
+    }
+
+    private void escapeString(String p_input, StringBuffer p_output) {
+        for (int i = 0 ; i < p_input.length() ; ++i)
+        {
+            char c = p_input.charAt(i);
+            if (c == '\\' || c == '\'')
+                p_output.append((char)'\\');
+            p_output.append(c);
+        }
+    }
+
 
 	/*
 	 * Set a parameter to a Java array of bytes.  The driver converts this
@@ -1467,7 +1482,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				if (x instanceof Boolean)
 					bind(parameterIndex,((Boolean)x).booleanValue() ? "1" :"0", PG_BOOLEAN);
 				else
-					bind(parameterIndex, x.toString(), PG_INTEGER);
+					bind(parameterIndex, escapeString(x.toString()), PG_INTEGER);
 				break;
 			case Types.TINYINT:
 			case Types.SMALLINT:
@@ -1480,7 +1495,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				if (x instanceof Boolean)
 					bind(parameterIndex, ((Boolean)x).booleanValue() ? "1" : "0", PG_BOOLEAN);
 				else
-					bind(parameterIndex, x.toString(), PG_NUMERIC);
+					bind(parameterIndex, escapeString(x.toString()), PG_NUMERIC);
 				break;
 			case Types.CHAR:
 			case Types.VARCHAR:
@@ -1913,15 +1928,12 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	}
 
 	/*
-	 * There are a lot of setXXX classes which all basically do
-	 * the same thing.	We need a method which actually does the
-	 * set for us.
-	 *
-	 * @param paramIndex the index into the inString
-	 * @param s a string to be stored
-	 * @exception SQLException if something goes wrong
+     * Note if s is a String it should be escaped by the caller to avoid SQL
+     * injection attacks.  It is not done here for efficency reasons as
+     * most calls to this method do not require escaping as the source
+     * of the string is known safe (i.e. Integer.toString())
 	 */
-	protected void bind(int paramIndex, Object s, String type) throws SQLException
+	private void bind(int paramIndex, Object s, String type) throws SQLException
 	{
 		if (paramIndex < 1 || paramIndex > m_binds.length)
 			throw new PSQLException("postgresql.prep.range");
@@ -2072,7 +2084,9 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		if (timezoneLocation>7 && timezoneLocation+3 == s.length())
 		{
 			timezone = Integer.parseInt(s.substring(timezoneLocation+1,s.length()));
-			localoffset = java.util.Calendar.getInstance().getTimeZone().getOffset(millis);
+			localoffset = java.util.Calendar.getInstance().getTimeZone().getRawOffset();
+			if (java.util.Calendar.getInstance().getTimeZone().inDaylightTime(new java.sql.Date(millis)))
+				localoffset += 60*60*1000;
 			if (s.charAt(timezoneLocation)=='+')
 				timezone*=-1;
 		}
@@ -2101,7 +2115,9 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		if (timezoneLocation != -1 && timezoneLocation+3 == s.length())
 		{
 			timezone = Integer.parseInt(s.substring(timezoneLocation+1,s.length()));
-			localoffset = java.util.Calendar.getInstance().getTimeZone().getOffset(millis);
+			localoffset = java.util.Calendar.getInstance().getTimeZone().getRawOffset();
+			if (java.util.Calendar.getInstance().getTimeZone().inDaylightTime(new java.sql.Date(millis)))
+				localoffset += 60*60*1000;
 			if (s.charAt(timezoneLocation)=='+')
 				timezone*=-1;
 		}
@@ -2146,7 +2162,9 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		if (timezoneLocation>8 && timezoneLocation+3 == s.length())
 		{
 			timezone = Integer.parseInt(s.substring(timezoneLocation+1,s.length()));
-			localoffset = java.util.Calendar.getInstance().getTimeZone().getOffset(millis);
+			localoffset = java.util.Calendar.getInstance().getTimeZone().getRawOffset();
+			if (java.util.Calendar.getInstance().getTimeZone().inDaylightTime(new java.sql.Date(millis)))
+				localoffset += 60*60*1000;
 			if (s.charAt(timezoneLocation)=='+')
 				timezone*=-1;
 		}
