@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.10 1998/01/07 21:05:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.11 1998/01/11 21:16:01 scrappy Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -326,7 +326,7 @@ HandleFunctionRequest()
 			{					/* by-reference ... */
 				if (fip->arglen[i] < 0)
 				{				/* ... varlena */
-					if (!(p = palloc(argsize + VARHDRSZ)))
+					if (!(p = palloc(argsize + VARHDRSZ + 1))) /* Added +1 to solve memory leak - Peter 98 Jan 6 */
 					{
 						elog(ERROR, "HandleFunctionRequest: palloc failed");
 					}
