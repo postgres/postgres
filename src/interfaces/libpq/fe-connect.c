@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.4.2.3 1996/08/19 19:28:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.4.2.4 1996/09/21 08:19:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,11 @@ static void closePGconn(PGconn *conn);
  * ----------------
  */
 PGconn* 
-PQsetdb(char *pghost, char* pgport, char* pgoptions, char* pgtty, char* dbName)
+PQsetdb(const char *pghost, 
+        const char *pgport, 
+        const char *pgoptions, 
+        const char *pgtty, 
+        const char *dbName)
 {
   PGconn *conn;
   char *tmp;
