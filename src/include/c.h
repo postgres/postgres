@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.40 1998/06/15 18:39:51 momjian Exp $
+ * $Id: c.h,v 1.41 1998/06/20 04:34:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -616,7 +616,7 @@ typedef struct Exception
 
 #ifndef USE_ASSERT_CHECKING
 #define Assert(condition)
-#define AssertMacro(condition)	true
+#define AssertMacro(condition)	(void)true
 #define AssertArg(condition)
 #define AssertState(condition)
 #else
