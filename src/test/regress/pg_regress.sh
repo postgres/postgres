@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.18 2001/01/19 23:43:36 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.19 2001/02/18 17:53:55 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -420,10 +420,12 @@ fi
 
 # ----------
 # Create the regression database
+# We use template0 so that any installation-local cruft in template1
+# will not mess up the tests.
 # ----------
 
 message "creating database \"$dbname\""
-"$bindir/createdb" $encoding_opt $psql_options "$dbname"
+"$bindir/createdb" $encoding_opt $psql_options --template template0 "$dbname"
 if [ $? -ne 0 ]; then
     echo "$me: createdb failed"
     (exit 2); exit

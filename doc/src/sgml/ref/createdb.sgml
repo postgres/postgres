@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.16 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.17 2001/02/18 17:53:54 tgl Exp $
 Postgres documentation
 -->
 
@@ -41,7 +41,7 @@ Postgres documentation
 	Specifies the hostname of the machine on which the 
 	<application>postmaster</application>
 	is running.  If host begins with a slash, it is used 
-	as the directory for the unix domain socket.
+	as the directory for the Unix-domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -98,8 +98,17 @@ Postgres documentation
       <term>-D, --location <replaceable class="parameter">datadir</replaceable></term>
       <listitem>
        <para>
-	Specifies the alternative database location.  See also <xref
+	Specifies the alternative location for the database.  See also <xref
 	linkend="app-initlocation">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-T, --template <replaceable class="parameter">template</replaceable></term>
+      <listitem>
+       <para>
+        Specifies the template database from which to build this database.
        </para>
       </listitem>
      </varlistentry>
@@ -108,7 +117,7 @@ Postgres documentation
       <term>-E, --encoding <replaceable class="parameter">encoding</replaceable></term>
       <listitem>
        <para>
-        Specifies the character encoding scheme to be used with this database.
+        Specifies the character encoding scheme to be used in this database.
        </para>
       </listitem>
      </varlistentry>
@@ -140,6 +149,12 @@ Postgres documentation
     The options <literal>-h</literal>, <literal>-p</literal>, <literal>-U</literal>,
     <literal>-W</literal>, and <literal>-e</literal> are passed on literally to
     <xref linkend="app-psql">.
+
+    The options <literal>-D</literal>, <literal>-T</literal>, and
+    <literal>-E</literal> are converted into options for the underlying
+    SQL command <xref linkend="SQL-CREATEDATABASE"
+    endterm="SQL-CREATEDATABASE-title">, which see for more information
+    about them.
    </para>
   </refsect2>
 
@@ -168,7 +183,7 @@ Postgres documentation
       <listitem>
        <para>
        The comment/description for the database could not be created.
-       the database itself will have been created already. You can use the
+       The database itself will have been created already. You can use the
        <acronym>SQL</acronym> command <command>COMMENT ON DATABASE</command> to
        create the comment later on.
        </para>
@@ -199,10 +214,10 @@ Postgres documentation
    the <productname>Postgres</productname> interactive terminal
    <xref linkend="APP-PSQL">. Thus, there is nothing
    special about creating databases via this or other methods. This means
-   that the <application>psql</application> must be found by the script and that
-   a database server is running at the targeted host. Also, any default
+   that the <application>psql</application> program must be found by the script and that
+   a database server must be running at the targeted port. Also, any default
    settings and environment variables available to <application>psql</application>
-   and the <application>libpq</application> front-end library do apply.
+   and the <application>libpq</application> front-end library will apply.
   </para>
  </refsect1>
 
