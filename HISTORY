@@ -1,6 +1,52 @@
  
                                Release Notes
 
+                               Release 7.3.5
+
+     Release date: 2003-12-03
+
+   This has a variety of fixes from 7.3.4.
+     _________________________________________________________________
+
+Migration to version 7.3.5
+
+   A dump/restore is *not* required for those running 7.3.*.
+     _________________________________________________________________
+
+Changes
+
+     * Force zero_damaged_pages to be on during recovery from WAL
+     * Prevent  some  obscure  cases  of  "variable not in subplan target
+       lists"
+     * Force  stats  processes  to  detach  from  shared memory, ensuring
+       cleaner shutdown
+     * Make PQescapeBytea and byteaout consistent with each other (Joe)
+     * Added missing SPI_finish() calls to get_tuple_of_interest() (Joe)
+     * Fix  for  possible foreign key violation when rule rewrites INSERT
+       (Jan)
+     * Support qualified type names in PL/Tcl's spi_prepare command (Jan)
+     * Make  pg_dump  handle  a  procedural  language  handler located in
+       pg_catalog
+     * Make  pg_dump  handle  cases  where a custom opclass is in another
+       schema
+     * Make pg_dump dump binary-compatible casts correctly (Jan)
+     * Fix  insertion  of  expressions  containing  subqueries  into rule
+       bodies
+     * Fix  incorrect  argument  processing  in  clusterdb  script (Anand
+       Ranganathan)
+     * Fix problems with dropped columns in plpython triggers
+     * Repair  problems  with  to_char()  reading  past  end of its input
+       string (Karel)
+     * Fix GB18030 mapping errors (Tatsuo)
+     * Fix  several problems with SSL error handling and asynchronous SSL
+       I/O
+     * Remove  ability  to bind a list of values to a single parameter in
+       JDBC (prevents possible SQL-injection attacks)
+     * Fix some errors in HAVE_INT64_TIMESTAMP code paths
+     * Fix  corner case for btree search in parallel with first root page
+       split
+     _________________________________________________________________
+
                                Release 7.3.4
 
      Release date: 2003-07-24
