@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.15 1998/06/05 03:49:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.16 1998/06/15 19:28:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,9 +164,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 								lindx[i] = ((Const *) aind->lidx)->constvalue;
 							}
 							else
-							{
 								lindx[i] = 1;
-							}
 							if (lindx[i] > uindx[i])
 								elog(ERROR, "yyparse: lower index cannot be greater than upper index");
 
@@ -336,9 +334,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 		}
 
 		if (p_target == NIL)
-		{
 			p_target = tail_p_target = lcons(tent, NIL);
-		}
 		else
 		{
 			lnext(tail_p_target) = lcons(tent, NIL);
@@ -379,20 +375,14 @@ printf("parse_target: try coercing from %s to %s via text\n",
 		{
 		}
 		else if (can_coerce_type(1, &type_id, &text_id))
-		{
 			expr = coerce_type(pstate, expr, type_id, text_id);
-		}
 		else
-		{
 			expr = NULL;
-		}
 	}
 #endif
 
 	else
-	{
 		expr = NULL;
-	}
 
 	return expr;
 } /* coerce_target_expr() */
@@ -521,13 +511,9 @@ make_targetlist_expr(ParseState *pstate,
 				Oid typelem;
 
 				if (arrayRef && !(((A_Indices *) lfirst(arrayRef))->lidx))
-				{
 					typelem = typeidTypElem(attrtype);
-				}
 				else
-				{
 					typelem = attrtype;
-				}
 
 				expr = coerce_target_expr(pstate, expr, type_id, typelem);
 
@@ -550,9 +536,7 @@ printf("parse_target: attrtypmod is %d\n", (int4) attrtypmod);
 			 * Then explicitly size for storage...
 			 */
 			if (attrtypmod > 0)
-			{
 				expr = size_target_expr(pstate, expr, attrtype, attrtypmod);
-			}
 		}
 
 		if (arrayRef != NIL)

@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.14 1998/05/12 15:42:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.15 1998/06/15 19:30:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,9 +316,7 @@ pqReadData(PGconn *conn)
 		conn->inStart = 0;
 	}
 	else
-	{
 		conn->inStart = conn->inCursor = conn->inEnd = 0;
-	}
 	/* If the buffer is fairly full, enlarge it.
 	 * We need to be able to enlarge the buffer in case a single message
 	 * exceeds the initial buffer size.  We enlarge before filling the

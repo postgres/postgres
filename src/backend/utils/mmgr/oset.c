@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.7 1998/02/11 19:13:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.8 1998/06/15 19:29:53 momjian Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -68,9 +68,7 @@ OrderedSetGetHead(OrderedSet set)
 
 	elem = set->head;
 	if (elem->next)
-	{
 		return (OrderedElemGetBase(elem));
-	}
 	return (NULL);
 }
 
@@ -85,9 +83,7 @@ OrderedSetGetTail(OrderedSet set)
 
 	elem = set->tail;
 	if (elem->prev)
-	{
 		return (OrderedElemGetBase(elem));
-	}
 	return (NULL);
 }
 
@@ -101,9 +97,7 @@ OrderedElemGetPredecessor(OrderedElem elem)
 {
 	elem = elem->prev;
 	if (elem->prev)
-	{
 		return (OrderedElemGetBase(elem));
-	}
 	return (NULL);
 }
 
@@ -115,9 +109,7 @@ OrderedElemGetSuccessor(OrderedElem elem)
 {
 	elem = elem->next;
 	if (elem->next)
-	{
 		return (OrderedElemGetBase(elem));
-	}
 	return (NULL);
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.21 1998/03/31 23:30:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.22 1998/06/15 19:28:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,9 +162,7 @@ query_planner(Query *root,
 													 (Plan *) scan));
 					}
 					else
-					{
 						return ((Plan *) scan);
-					}
 				}
 				break;
 
@@ -308,9 +306,7 @@ subplanner(Query *root,
 	 * it.
 	 */
 	if (final_relation)
-	{
 		return (create_plan((Path *) final_relation->cheapestpath));
-	}
 	else
 	{
 		elog(NOTICE, "final relation is nil");
@@ -423,9 +419,7 @@ make_groupPlan(List **tlist,
 	}
 
 	if (length(glc) != 0)
-	{
 		elog(ERROR, "group attribute disappeared from target list");
-	}
 
 	/*
 	 * If non-GroupBy entries were removed from TL - we are to add Vars

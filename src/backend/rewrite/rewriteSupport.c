@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.20 1998/04/27 04:06:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.21 1998/06/15 19:29:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,9 +69,7 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 								   ruleTupdesc, &instead_is_null);
 
 	if (action_is_null || instead_is_null)
-	{
 		elog(ERROR, "internal error: rewrite rule not properly set up");
-	}
 
 	ruleaction = textout((struct varlena *) ruleaction);
 	rule_evqual_string = textout((struct varlena *) rule_evqual_string);

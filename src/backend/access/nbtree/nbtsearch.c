@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.35 1998/05/13 03:44:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.36 1998/06/15 19:27:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -541,9 +541,7 @@ _bt_firsteq(Relation rel,
 	while (offnum > limit
 		   && _bt_compare(rel, itupdesc, page,
 						  keysz, scankey, OffsetNumberPrev(offnum)) == 0)
-	{
 		offnum = OffsetNumberPrev(offnum);
-	}
 
 	return (offnum);
 }
@@ -616,9 +614,7 @@ _bt_compare(Relation rel,
 		 * - see new comments above...
 		 */
 		if (!P_RIGHTMOST(opaque))
-		{
 			elog(ERROR, "_bt_compare: invalid comparison to high key");
-		}
 
 #if 0
 
@@ -634,9 +630,7 @@ _bt_compare(Relation rel,
 
 		if (_bt_skeycmp(rel, keysz, scankey, page, itemid,
 						BTEqualStrategyNumber))
-		{
 			return (0);
-		}
 		return (1);
 #endif
 	}
@@ -676,9 +670,7 @@ _bt_compare(Relation rel,
 			tmpres = (long) -1; /* NOT_NULL "<" NULL */
 		}
 		else
-		{
 			tmpres = (long) FMGR_PTR2(&entry->sk_func, entry->sk_argument, datum);
-		}
 		result = tmpres;
 
 		/* if the keys are unequal, return the difference */
@@ -1090,9 +1082,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	if (ScanDirectionIsForward(dir))
 	{
 		if (!PageIsEmpty(page) && offnum < maxoff)
-		{
 			offnum = OffsetNumberNext(offnum);
-		}
 		else
 		{
 
@@ -1119,9 +1109,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 					start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
 
 					if (!PageIsEmpty(page) && start <= maxoff)
-					{
 						break;
-					}
 					else
 					{
 						blkno = opaque->btpo_next;
@@ -1145,9 +1133,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 		start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
 
 		if (offnum > start)
-		{
 			offnum = OffsetNumberPrev(offnum);
-		}
 		else
 		{
 
@@ -1196,9 +1182,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 
 					/* anything to look at here? */
 					if (!PageIsEmpty(page) && maxoff >= start)
-					{
 						break;
-					}
 					else
 					{
 						blkno = opaque->btpo_prev;
@@ -1278,13 +1262,9 @@ _bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 
 	/* if we've hit end of scan we don't have to do any work */
 	if (ScanDirectionIsForward(dir) && P_RIGHTMOST(opaque))
-	{
 		return (false);
-	}
 	else if (ScanDirectionIsBackward(dir) && P_LEFTMOST(opaque))
-	{
 		return (false);
-	}
 
 	/*
 	 * Okay, it's off the page; let _bt_step() do the hard work, and we'll
@@ -1371,13 +1351,9 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 			break;
 
 		if (ScanDirectionIsForward(dir))
-		{
 			offnum = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-		}
 		else
-		{
 			offnum = PageGetMaxOffsetNumber(page);
-		}
 
 		btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
 		itup = &(btitem->bti_itup);
@@ -1461,9 +1437,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		}
 		/* new stuff ends here */
 		else
-		{
 			ItemPointerSet(current, blkno, start);
-		}
 	}
 	else if (ScanDirectionIsBackward(dir))
 	{
@@ -1510,9 +1484,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		}
 	}
 	else
-	{
 		elog(ERROR, "Illegal scan direction %d", dir);
-	}
 
 	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, start));
 	itup = &(btitem->bti_itup);

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.45 1998/03/30 16:45:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.46 1998/06/15 19:28:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,9 +284,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					fputs("\\N", fp);	/* null indicator */
 
 				if (i == attr_count - 1)
-				{
 					fputc('\n', fp);
-				}
 				else
 				{
 
@@ -343,9 +341,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 	heap_endscan(scandesc);
 	if (binary)
-	{
 		pfree(nulls);
-	}
 	else
 	{
 		pfree(out_functions);
@@ -494,9 +490,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					}
 				}
 				else
-				{
 					indexPred[i] = NULL;
-				}
 			}
 		}
 	}
@@ -576,9 +570,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					nulls[i] = 'n';
 				}
 				else if (string == NULL)
-				{
 					done = 1;
-				}
 				else
 				{
 					values[i] =
@@ -592,25 +584,19 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					 */
 					if (!PointerIsValid(values[i]) &&
 						!(rel->rd_att->attrs[i]->attbyval))
-					{
 						elog(ERROR, "copy from line %d: Bad file format", lineno);
-					}
 				}
 			}
 #ifdef COPY_PATCH
 			if (!done)
-			{
 				CopyReadNewline(fp, &newline);
-			}
 #endif
 		}
 		else
 		{						/* binary */
 			fread(&len, sizeof(int32), 1, fp);
 			if (feof(fp))
-			{
 				done = 1;
-			}
 			else
 			{
 				if (oids)
@@ -799,9 +785,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					pfree((void *) values[i]);
 			}
 			else if (nulls[i] == 'n')
-			{
 				nulls[i] = ' ';
-			}
 		}
 
 		pfree(tuple);
@@ -959,9 +943,7 @@ GetIndexRelations(Oid main_relation_oid,
 	*index_rels = (Relation *) palloc(*n_indices * sizeof(Relation));
 
 	for (i = 0, scan = head; i < *n_indices; i++, scan = scan->next)
-	{
 		(*index_rels)[i] = index_open(scan->index_rel_oid);
-	}
 
 	for (i = 0, scan = head; i < *n_indices + 1; i++)
 	{
@@ -1075,9 +1057,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 							val = (val << 3) + VALUE(c);
 							c = getc(fp);
 							if (ISOCTAL(c))
-							{
 								val = (val << 3) + VALUE(c);
-							}
 							else
 							{
 								if (feof(fp))
@@ -1128,9 +1108,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 		{
 #ifdef COPY_PATCH
 			if (c == '\n')
-			{
 				*newline = 1;
-			}
 #endif
 			done = 1;
 		}

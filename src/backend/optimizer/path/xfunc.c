@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.14 1998/06/15 18:39:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.15 1998/06/15 19:28:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,13 +335,9 @@ xfunc_pullup(Query *queryInfo,
 							 (LispValue) get_locclauseinfo(parentpath)));
 	/* put new childpath into the path tree */
 	if (whichchild == INNER)
-	{
 		set_innerjoinpath(parentpath, (pathPtr) newkid);
-	}
 	else
-	{
 		set_outerjoinpath(parentpath, (pathPtr) newkid);
-	}
 
 	/*
 	 * * recompute parentpath cost from scratch -- the cost * of the join
@@ -497,9 +493,7 @@ xfunc_func_expense(LispValue node, LispValue args)
 			elog(ERROR, "Oper's function is undefined");
 	}
 	else
-	{
 		funcid = get_funcid((Func) node);
-	}
 
 	/* look up tuple in cache */
 	tupl = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(funcid), 0, 0, 0);
@@ -1188,9 +1182,7 @@ xfunc_fixvars(LispValue clause, /* clause being pulled up */
 			 tmpclause = lnext(tmpclause))
 			xfunc_fixvars(lfirst(tmpclause), rel, varno);
 	else
-	{
 		elog(ERROR, "Clause node of undetermined type");
-	}
 }
 
 
@@ -1411,9 +1403,7 @@ xfunc_LispRemove(LispValue foo, List bar)
 
 	for (temp = bar; !null(temp); temp = lnext(temp))
 		if (!equal((Node) (foo), (Node) (lfirst(temp))))
-		{
 			result = lappend(result, lfirst(temp));
-		}
 		else
 			sanity = true;		/* found a matching item to remove! */
 
@@ -1444,9 +1434,7 @@ xfunc_copyrel(Rel from, Rel *to)
 
 	/* COPY_CHECKARGS() */
 	if (to == NULL)
-	{
 		return false;
-	}
 
 	/* COPY_CHECKNULL() */
 	if (from == NULL)
@@ -1458,9 +1446,7 @@ xfunc_copyrel(Rel from, Rel *to)
 	/* COPY_NEW(c) */
 	newnode = (Rel) (*alloc) (classSize(Rel));
 	if (newnode == NULL)
-	{
 		return false;
-	}
 
 	/* ----------------
 	 *	copy node superclass fields

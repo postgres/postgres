@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.20 1998/05/12 21:43:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.21 1998/06/15 19:28:25 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -69,9 +69,7 @@ lo_open(Oid lobjId, int mode)
 #endif
 
 	if (fscxt == NULL)
-	{
 		fscxt = CreateGlobalMemory("Filesystem");
-	}
 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
 	lobjDesc = inv_open(lobjId, mode);
@@ -171,9 +169,7 @@ lo_creat(int mode)
 	Oid			lobjId;
 
 	if (fscxt == NULL)
-	{
 		fscxt = CreateGlobalMemory("Filesystem");
-	}
 
 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 

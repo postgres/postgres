@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.9 1998/03/30 16:46:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.10 1998/06/15 19:28:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,9 +138,7 @@ find_clause_joins(Query *root, Rel *outer_rel, List *joininfo_list)
 										joininfo);
 				}
 				else
-				{
 					rel = NULL;
-				}
 
 				if (rel != NULL)
 					join_list = lappend(join_list, rel);

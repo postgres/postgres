@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.8 1998/02/26 04:36:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.9 1998/06/15 19:29:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,9 +385,7 @@ lookupEdges(TgRecipe * r, char *name)
 	ntups = PQntuplesGroup(pbuf, 0);
 
 	if (ntups == 0)
-	{
 		return;
-	}
 
 	fromNode_attnum = PQfnumber(pbuf, 0, "fromNode");
 	fromPort_attnum = PQfnumber(pbuf, 0, "fromPort");

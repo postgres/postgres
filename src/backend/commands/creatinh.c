@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.29 1998/04/26 04:06:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.30 1998/06/15 19:28:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,9 +256,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 				 "MergeAttr: Can't inherit from non-existent superclass '%s'", name);
 		}
 		if (relation->rd_rel->relkind == 'S')
-		{
 			elog(ERROR, "MergeAttr: Can't inherit from sequence superclass '%s'", name);
-		}
 		tupleDesc = RelationGetTupleDescriptor(relation);
 		constr = tupleDesc->constr;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.3 1998/02/26 04:34:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.4 1998/06/15 19:28:59 momjian Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -38,9 +38,7 @@ pg_dlsym(void *handle, char *funcname)
 	func_ptr	f;
 
 	if (shl_findsym((shl_t *) & handle, funcname, TYPE_PROCEDURE, &f) == -1)
-	{
 		f = (func_ptr) NULL;
-	}
 	return (f);
 }
 

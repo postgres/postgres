@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.10 1998/05/29 14:00:24 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.11 1998/06/15 19:28:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,14 +79,10 @@ typenameType(char *s)
 	HeapTuple	tup;
 
 	if (s == NULL)
-	{
 		elog(ERROR, "type(): Null type");
-	}
 
 	if (!(tup = SearchSysCacheTuple(TYPNAME, PointerGetDatum(s), 0, 0, 0)))
-	{
 		elog(ERROR, "type name lookup of %s failed", s);
-	}
 	return ((Type) tup);
 }
 
@@ -209,9 +205,7 @@ typeidTypElem(Oid type_id)
 	if (!(typeTuple = SearchSysCacheTuple(TYPOID,
 										  ObjectIdGetDatum(type_id),
 										  0, 0, 0)))
-	{
 		elog(ERROR, "type id lookup of %u failed", type_id);
-	}
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 
 	return (type->typelem);

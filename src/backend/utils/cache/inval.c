@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.10 1998/02/23 17:43:23 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.11 1998/06/15 19:29:39 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -140,9 +140,7 @@ LocalInvalidInvalidate(LocalInvalid invalid, void (*function) ())
 			&((InvalidationUserData *) invalid)->dataP[-1];
 
 		if (PointerIsValid(function))
-		{
 			(*function) ((Pointer) &entryDataP->userData);
-		}
 
 		invalid = (Pointer) entryDataP->nextP;
 
@@ -485,17 +483,11 @@ RelationInvalidateRelationCache(Relation relation,
 	 * ----------------
 	 */
 	if (relationId == MyRelationRelationId)
-	{
 		objectId = tuple->t_oid;
-	}
 	else if (relationId == MyAttributeRelationId)
-	{
 		objectId = ((AttributeTupleForm) GETSTRUCT(tuple))->attrelid;
-	}
 	else if (relationId == MyAMRelationId)
-	{
 		objectId = tuple->t_oid;
-	}
 	else if (relationId == MyAMOPRelationId)
 	{
 		;						/* objectId is unused */

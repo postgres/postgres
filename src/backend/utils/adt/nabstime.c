@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.42 1998/02/26 04:37:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.43 1998/06/15 19:29:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,9 +131,7 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 
 #ifdef USE_POSIX_TIME
 	if (tzp != NULL)
-	{
 		tx = localtime((time_t *) &time);
-	}
 	else
 	{
 		tx = gmtime((time_t *) &time);

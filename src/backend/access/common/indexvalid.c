@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.18 1998/01/31 05:54:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.19 1998/06/15 19:27:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,9 +61,7 @@ index_keytest(IndexTuple tuple,
 		}
 
 		if (key[0].sk_flags & SK_ISNULL)
-		{
 			return (false);
-		}
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
@@ -79,9 +77,7 @@ index_keytest(IndexTuple tuple,
 		}
 
 		if (!test == !(key[0].sk_flags & SK_NEGATE))
-		{
 			return (false);
-		}
 
 		scanKeySize -= 1;
 		key++;

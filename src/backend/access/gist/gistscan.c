@@ -102,17 +102,11 @@ gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 	 * Set flags.
 	 */
 	if (RelationGetNumberOfBlocks(s->relation) == 0)
-	{
 		s->flags = ScanUnmarked;
-	}
 	else if (fromEnd)
-	{
 		s->flags = ScanUnmarked | ScanUncheckedPrevious;
-	}
 	else
-	{
 		s->flags = ScanUnmarked | ScanUncheckedNext;
-	}
 
 	s->scanFromEnd = fromEnd;
 
@@ -276,9 +270,7 @@ gistdropscan(IndexScanDesc s)
 	for (l = GISTScans;
 		 l != (GISTScanList) NULL && l->gsl_scan != s;
 		 l = l->gsl_next)
-	{
 		prev = l;
-	}
 
 	if (l == (GISTScanList) NULL)
 		elog(ERROR, "GiST scan list corrupted -- cannot find 0x%lx", s);

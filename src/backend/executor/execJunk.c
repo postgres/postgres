@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.10 1998/01/31 04:38:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.11 1998/06/15 19:28:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,9 +230,7 @@ ExecInitJunkFilter(List *targetList)
 		}
 	}
 	else
-	{
 		cleanMap = NULL;
-	}
 
 	/* ---------------------
 	 * Finally create and initialize the JunkFilter.

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.20 1998/02/26 04:31:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.21 1998/06/15 19:28:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,9 +354,7 @@ ExecHashTableCreate(Hash *node)
 	shmid = 0;
 
 	if (hashtable == NULL)
-	{
 		elog(ERROR, "not enough memory for hashjoin.");
-	}
 	/* ----------------
 	 *	initialize the hash table header
 	 * ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.32 1998/05/06 23:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.33 1998/06/15 19:28:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,9 +312,7 @@ Async_NotifyAtCommit()
 						if (kill(DatumGetInt32(d), SIGUSR2) < 0)
 						{
 							if (errno == ESRCH)
-							{
 								heap_delete(lRel, &lTuple->t_ctid);
-							}
 						}
 #endif
 					}
@@ -360,9 +358,7 @@ Async_NotifyAtAbort()
 	extern TransactionState CurrentTransactionState;
 
 	if (notifyIssued)
-	{
 		ClearPendingNotify();
-	}
 	notifyIssued = 0;
 	if (pendingNotifies)
 		DLFreeList(pendingNotifies);
@@ -446,9 +442,7 @@ Async_Listen(char *relname, int pid)
 			d = heap_getattr(htup, Anum_pg_listener_pid, tdesc, &isnull);
 			pid = DatumGetInt32(d);
 			if (pid == MyProcPid)
-			{
 				alreadyListener = 1;
-			}
 		}
 		ReleaseBuffer(b);
 	}
@@ -517,9 +511,7 @@ Async_Unlisten(char *relname, int pid)
 	RelationSetLockForWrite(lDesc);
 
 	if (lTuple != NULL)
-	{
 		heap_delete(lDesc, &lTuple->t_ctid);
-	}
 
 	RelationUnsetLockForWrite(lDesc);
 	heap_close(lDesc);
@@ -610,9 +602,7 @@ Async_NotifyFrontEnd()
 			pq_flush();
 		}
 		else
-		{
 			elog(NOTICE, "Async_NotifyFrontEnd: no asynchronous notification to frontend on interactive sessions");
-		}
 		ReleaseBuffer(b);
 	}
 	CommitTransactionCommand();

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.29 1998/05/29 14:00:21 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.30 1998/06/15 19:28:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,9 +90,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					result = (Node *) make_array_ref(temp, att->indirection);
 				}
 				else
-				{
 					result = temp;
-				}
 				break;
 			}
 		case T_A_Const:
@@ -465,9 +463,7 @@ parser_typecast(Value *expr, TypeName *typename, int16 atttypmod)
 		tp = (Type) typenameType(type_string);
 	}
 	else
-	{
 		tp = (Type) typenameType(typename->name);
-	}
 
 	len = typeLen(tp);
 

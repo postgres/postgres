@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.10 1998/05/19 18:05:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.11 1998/06/15 19:28:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -426,13 +426,9 @@ ExecEndNode(Plan *node, Plan *parent)
 		return;
 
 	foreach(subp, node->initPlan)
-	{
 		ExecEndSubPlan((SubPlan *) lfirst(subp));
-	}
 	foreach(subp, node->subPlan)
-	{
 		ExecEndSubPlan((SubPlan *) lfirst(subp));
-	}
 	if (node->chgParam != NULL)
 	{
 		freeList(node->chgParam);

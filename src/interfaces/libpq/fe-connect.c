@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.66 1998/05/06 23:51:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.67 1998/06/15 19:30:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,17 +328,11 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 		conn->pgoptions = strdup(pgoptions);
 
 	if (login)
-	{
 		conn->pguser = strdup(login);
-	}
 	else if ((tmp = getenv("PGUSER")) != NULL)
-	{
 		conn->pguser = strdup(tmp);
-	}
 	else
-	{
 		conn->pguser = fe_getauthname(conn->errorMessage);
-	}
 
 	if (conn->pguser == NULL)
 	{
@@ -348,17 +342,11 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 	}
 
 	if (pwd)
-	{
 		conn->pgpass = strdup(pwd);
-	}
 	else if ((tmp = getenv("PGPASSWORD")) != NULL)
-	{
 		conn->pgpass = strdup(tmp);
-	}
 	else
-	{
 		conn->pgpass = strdup(DefaultPassword);
-	}
 
 	if ((dbName == NULL) || dbName[0] == '\0')
 	{
@@ -465,9 +453,7 @@ connectDB(PGconn *conn)
 		len = sizeof(struct sockaddr_in);
 	}
 	else
-	{
 		len = UNIXSOCK_PATH(conn->raddr.un, portno);
-	}
 
 	/* Connect to the server  */
 	if ((conn->sock = socket(family, SOCK_STREAM, 0)) < 0)
@@ -846,9 +832,7 @@ void
 PQfinish(PGconn *conn)
 {
 	if (!conn)
-	{
 		fprintf(stderr, "PQfinish() -- pointer to PGconn is null\n");
-	}
 	else
 	{
 		closePGconn(conn);
@@ -864,9 +848,7 @@ void
 PQreset(PGconn *conn)
 {
 	if (!conn)
-	{
 		fprintf(stderr, "PQreset() -- pointer to PGconn is null\n");
-	}
 	else
 	{
 		closePGconn(conn);
@@ -941,18 +923,14 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 		while (*cp)
 		{
 			if (*cp == '=')
-			{
 				break;
-			}
 			if (isspace(*cp))
 			{
 				*cp++ = '\0';
 				while (*cp)
 				{
 					if (!isspace(*cp))
-					{
 						break;
-					}
 					cp++;
 				}
 				break;
@@ -975,9 +953,7 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 		while (*cp)
 		{
 			if (!isspace(*cp))
-			{
 				break;
-			}
 			cp++;
 		}
 
@@ -997,14 +973,10 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 				{
 					cp++;
 					if (*cp != '\0')
-					{
 						*cp2++ = *cp++;
-					}
 				}
 				else
-				{
 					*cp2++ = *cp++;
-				}
 			}
 			*cp2 = '\0';
 		}
@@ -1025,9 +997,7 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 				{
 					cp++;
 					if (*cp != '\0')
-					{
 						*cp2++ = *cp++;
-					}
 					continue;
 				}
 				if (*cp == '\'')
@@ -1048,9 +1018,7 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 		for (option = PQconninfoOptions; option->keyword != NULL; option++)
 		{
 			if (!strcmp(option->keyword, pname))
-			{
 				break;
-			}
 		}
 		if (option->keyword == NULL)
 		{
@@ -1112,9 +1080,7 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 		{
 			tmp = fe_getauthname(errortmp);
 			if (tmp)
-			{
 				option->val = strdup(tmp);
-			}
 		}
 
 		/* ----------
@@ -1125,9 +1091,7 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 		{
 			tmp = conninfo_getval("user");
 			if (tmp)
-			{
 				option->val = strdup(tmp);
-			}
 		}
 	}
 
@@ -1143,9 +1107,7 @@ conninfo_getval(char *keyword)
 	for (option = PQconninfoOptions; option->keyword != NULL; option++)
 	{
 		if (!strcmp(option->keyword, keyword))
-		{
 			return option->val;
-		}
 	}
 
 	return NULL;
@@ -1273,9 +1235,7 @@ PQtrace(PGconn *conn, FILE *debug_port)
 {
 	if (conn == NULL ||
 		conn->status == CONNECTION_BAD)
-	{
 		return;
-	}
 	PQuntrace(conn);
 	conn->Pfdebug = debug_port;
 }
@@ -1285,9 +1245,7 @@ PQuntrace(PGconn *conn)
 {
 	/* note: better allow untrace even when connection bad */
 	if (conn == NULL)
-	{
 		return;
-	}
 	if (conn->Pfdebug)
 	{
 		fflush(conn->Pfdebug);

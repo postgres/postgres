@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.37 1998/04/24 14:42:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.38 1998/06/15 19:29:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,9 +137,7 @@ RelationGetBufferWithBuffer(Relation relation,
 			bufHdr = &LocalBufferDescriptors[-buffer - 1];
 			if (bufHdr->tag.relId.relId == relation->rd_id &&
 				bufHdr->tag.blockNum == blockNumber)
-			{
 				return (buffer);
-			}
 		}
 	}
 	return (ReadBuffer(relation, blockNumber));
@@ -258,9 +256,7 @@ ReadBufferWithBufferLock(Relation reln,
 	}
 
 	if (!bufHdr)
-	{
 		return (InvalidBuffer);
-	}
 
 	/* if its already in the buffer pool, we're done */
 	if (found)
@@ -534,9 +530,7 @@ BufferAlloc(Relation reln,
 						 buf->tag.blockNum, buf->sb_relname);
 				}
 				else
-				{
 					buf->flags &= ~BM_DIRTY;
-				}
 			}
 
 			/*
@@ -607,9 +601,7 @@ BufferAlloc(Relation reln,
 				{
 					WaitIO(buf2, BufMgrLock);
 					if (buf2->flags & BM_IO_ERROR)
-					{
 						*foundPtr = FALSE;
-					}
 				}
 
 				SpinRelease(BufMgrLock);
@@ -697,9 +689,7 @@ WriteBuffer(Buffer buffer)
 	BufferDesc *bufHdr;
 
 	if (WriteMode == BUFFER_FLUSH_WRITE)
-	{
 		return (FlushBuffer(buffer, TRUE));
-	}
 	else
 	{
 
@@ -852,9 +842,7 @@ FlushBuffer(Buffer buffer, bool release)
 			 bufHdr->tag.blockNum, bufHdr->sb_relname);
 	}
 	else
-	{
 		bufHdr->flags &= ~BM_DIRTY;
-	}
 	if (release)
 		UnpinBuffer(bufHdr);
 	SpinRelease(BufMgrLock);
@@ -877,9 +865,7 @@ WriteNoReleaseBuffer(Buffer buffer)
 	BufferDesc *bufHdr;
 
 	if (WriteMode == BUFFER_FLUSH_WRITE)
-	{
 		return (FlushBuffer(buffer, FALSE));
-	}
 	else
 	{
 
@@ -1205,9 +1191,7 @@ ResetBufferPool()
 		if (BufferIsValid(i))
 		{
 			while (PrivateRefCount[i - 1] > 0)
-			{
 				ReleaseBuffer(i);
-			}
 		}
 		LastRefCount[i - 1] = 0;
 	}
@@ -1418,9 +1402,7 @@ ReleaseRelationBuffers(Relation rdesc)
 			buf = &LocalBufferDescriptors[i];
 			if ((buf->flags & BM_DIRTY) &&
 				(buf->tag.relId.relId == rdesc->rd_id))
-			{
 				buf->flags &= ~BM_DIRTY;
-			}
 		}
 		return;
 	}
@@ -1472,9 +1454,7 @@ DropBuffers(Oid dbid)
 	{
 		buf = &BufferDescriptors[i - 1];
 		if ((buf->tag.relId.dbId == dbid) && (buf->flags & BM_DIRTY))
-		{
 			buf->flags &= ~BM_DIRTY;
-		}
 	}
 	SpinRelease(BufMgrLock);
 }

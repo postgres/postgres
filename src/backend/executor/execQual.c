@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.32 1998/05/29 17:00:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.33 1998/06/15 19:28:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,16 +417,12 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 				case PARAM_NAMED:
 					if (thisParameterKind == paramList->kind &&
 						strcmp(paramList->name, thisParameterName) == 0)
-					{
 						matchFound = 1;
-					}
 					break;
 				case PARAM_NUM:
 					if (thisParameterKind == paramList->kind &&
 						paramList->id == thisParameterId)
-					{
 						matchFound = 1;
-					}
 					break;
 				case PARAM_OLD:
 				case PARAM_NEW:
@@ -454,9 +450,7 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 						 thisParameterKind);
 			}
 			if (!matchFound)
-			{
 				paramList++;
-			}
 		}						/* while */
 	}							/* if */
 
@@ -821,9 +815,7 @@ ExecMakeFunctionResult(Node *node,
 			 * its func cache.
 			 */
 			if (*isDone)
-			{
 				((Func *) node)->func_fcache = NULL;
-			}
 		}
 		return result;
 	}
@@ -1558,9 +1550,7 @@ ExecTargetList(List *targetlist,
 #endif
 				resind = fjRes->resno - 1;
 				if (fjIsNull[curNode])
-				{
 					null_head[resind] = 'n';
-				}
 				else
 				{
 					null_head[resind] = ' ';

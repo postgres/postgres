@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.32 1998/06/13 05:14:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.33 1998/06/15 19:28:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -995,9 +995,7 @@ GetCharSetByHost(char TableName[], int host, const char DataDir[])
 									/* Read the charset */
 									next_token(file, buf, sizeof(buf));
 									if (buf[0] != '\0')
-									{
 										strcpy(HostCharset, buf);
-									}
 								}
 							}
 							break;
@@ -1005,9 +1003,7 @@ GetCharSetByHost(char TableName[], int host, const char DataDir[])
 							/* Read the base charset */
 							next_token(file, buf, sizeof(buf));
 							if (buf[0] != '\0')
-							{
 								strcpy(BaseCharset, buf);
-							}
 							break;
 						case KEY_TABLE:
 							/* Read the original charset */
@@ -1046,9 +1042,7 @@ GetCharSetByHost(char TableName[], int host, const char DataDir[])
 	{
 		if (!strcasecmp(BaseCharset, ChArray[i]->Orig) &&
 			!strcasecmp(HostCharset, ChArray[i]->Dest))
-		{
 			strncpy(TableName, ChArray[i]->Table, 79);
-		}
 		free((struct CharsetItem *) ChArray[i]);
 	}
 }

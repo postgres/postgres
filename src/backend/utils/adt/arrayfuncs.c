@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.29 1998/03/30 16:47:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.30 1998/06/15 19:29:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,9 +157,7 @@ array_in(char *string,			/* input array in external form */
 			ndim++;
 		}
 		else
-		{
 			done = true;
-		}
 	}
 
 	if (ndim == 0)
@@ -170,9 +168,7 @@ array_in(char *string,			/* input array in external form */
 			for (i = 0; i < ndim; lBound[i++] = 1);
 		}
 		else
-		{
 			elog(ERROR, "array_in: Need to specify dimension");
-		}
 	}
 	else
 	{
@@ -273,9 +269,7 @@ _ArrayCount(char *str, int dim[], int typdelim)
 	char	   *q;
 
 	for (i = 0; i < MAXDIM; ++i)
-	{
 		temp[i] = dim[i] = 0;
-	}
 
 	if (strncmp(str, "{}", 2) == 0)
 		return (0);
@@ -292,9 +286,7 @@ _ArrayCount(char *str, int dim[], int typdelim)
 				case '\\':
 					/* skip escaped characters (\ and ") inside strings */
 					if (scanning_string && *(q + 1))
-					{
 						q++;
-					}
 					break;
 				case '\0':
 
@@ -343,9 +335,7 @@ _ArrayCount(char *str, int dim[], int typdelim)
 				q++;
 	}
 	for (i = 0; i < ndim; ++i)
-	{
 		dim[i] = temp[i];
-	}
 
 	return (ndim);
 }
@@ -493,13 +483,9 @@ _ReadArrayStr(char *arrayStr,
 			if (values[i])
 			{
 				if (typalign == 'd')
-				{
 					*nbytes += DOUBLEALIGN(*(int32 *) values[i]);
-				}
 				else
-				{
 					*nbytes += INTALIGN(*(int32 *) values[i]);
-				}
 			}
 			else
 			{
@@ -555,9 +541,7 @@ _ReadLOArray(char *str,
 			str = _AdvanceBy1word(str, &chunkfile);
 		}
 		else
-		{
 			elog(ERROR, "usage: <input file> -chunk DEFAULT/<access pattern file> -invert/-native [-noreorg <chunk file>]");
-		}
 	}
 
 	if (inputfile == NULL)
@@ -1040,9 +1024,7 @@ array_clip(ArrayType *array,
 								1, isNull);
 			}
 			else
-			{
 				_ReadArray(lowerIndx, upperIndx, len, fd, newfd, array, 1, isNull);
-			}
 		}
 #ifdef LOARRAY
 		LOclose(fd);
@@ -1245,9 +1227,7 @@ array_assgn(ArrayType *array,
 
 	if (!SanityCheckInput(ndim, n, dim, lb, upperIndx) ||
 		!SanityCheckInput(ndim, n, dim, lb, lowerIndx))
-	{
 		return ((char *) array);
-	}
 
 	for (i = 0; i < n; i++)
 		if (lowerIndx[i] > upperIndx[i])
@@ -1338,13 +1318,9 @@ system_cache_lookup(Oid element_type,
 	*typelem = typeStruct->typelem;
 	*typalign = typeStruct->typalign;
 	if (input)
-	{
 		*proc = typeStruct->typinput;
-	}
 	else
-	{
 		*proc = typeStruct->typoutput;
-	}
 }
 
 static Datum
@@ -1367,9 +1343,7 @@ _ArrayCast(char *value, bool byval, int len)
 		}
 	}
 	else
-	{
 		return (Datum) value;
-	}
 	return 0;
 }
 
@@ -1400,9 +1374,7 @@ ArrayCastAndSet(char *src,
 			}
 		}
 		else
-		{
 			memmove(dest, src, typlen);
-		}
 		inc = typlen;
 	}
 	else

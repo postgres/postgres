@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.16 1998/03/22 04:18:17 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.17 1998/06/15 19:30:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,9 +396,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 	strcpy(servbuf, PG_KRB_SRVNAM);
 	*(hostp = servbuf + (sizeof(PG_KRB_SRVNAM) - 1)) = '/';
 	if (hostname || *hostname)
-	{
 		strncpy(++hostp, hostname, MAXHOSTNAMELEN);
-	}
 	else
 	{
 		if (gethostname(++hostp, MAXHOSTNAMELEN) < 0)

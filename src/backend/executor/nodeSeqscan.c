@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.9 1998/03/30 16:46:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.10 1998/06/15 19:28:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,13 +129,9 @@ ExecSeqScan(SeqScan *node)
 	 * ----------------
 	 */
 	if ((outerPlan = outerPlan((Plan *) node)) != NULL)
-	{
 		slot = ExecProcNode(outerPlan, (Plan *) node);
-	}
 	else
-	{
 		slot = ExecScan(node, SeqNext);
-	}
 
 	S1_printf("ExecSeqScan: returned tuple slot: %d\n", slot);
 

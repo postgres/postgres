@@ -895,9 +895,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 			return false;
 		}
 		else
-		{
 			ECPGfinish(con);
-		}
 	}
 	
 	return true;

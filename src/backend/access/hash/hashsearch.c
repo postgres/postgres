@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.14 1997/09/08 21:40:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.15 1998/06/15 19:27:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,7 @@ _hash_search(Relation rel,
 		bucket = 0;
 	}
 	else
-	{
 		bucket = _hash_call(rel, metap, keyDatum);
-	}
 
 	blkno = BUCKET_TO_BLKNO(bucket);
 
@@ -109,9 +107,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	 * next tuple, we come back with a lock on that buffer.
 	 */
 	if (!_hash_step(scan, &buf, dir, metabuf))
-	{
 		return ((RetrieveIndexResult) NULL);
-	}
 
 	/* if we're here, _hash_step found a valid tuple */
 	current = &(scan->currentItemData);
@@ -225,9 +221,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	if (PageIsEmpty(page))
 	{
 		if (BlockNumberIsValid(opaque->hasho_nextblkno))
-		{
 			_hash_readnext(rel, &buf, &page, &opaque);
-		}
 		else
 		{
 			ItemPointerSetInvalid(current);
@@ -249,15 +243,11 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	if (ScanDirectionIsBackward(dir))
 	{
 		while (BlockNumberIsValid(opaque->hasho_nextblkno))
-		{
 			_hash_readnext(rel, &buf, &page, &opaque);
-		}
 	}
 
 	if (!_hash_step(scan, &buf, dir, metabuf))
-	{
 		return ((RetrieveIndexResult) NULL);
-	}
 
 	/* if we're here, _hash_step found a valid tuple */
 	current = &(scan->currentItemData);
@@ -321,13 +311,9 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 	 */
 	maxoff = PageGetMaxOffsetNumber(page);
 	if (ItemPointerIsValid(current))
-	{
 		offnum = ItemPointerGetOffsetNumber(current);
-	}
 	else
-	{
 		offnum = InvalidOffsetNumber;
-	}
 
 	/*
 	 * 'offnum' now points to the last tuple we have seen (if any).
@@ -371,9 +357,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 							Assert(opaque->hasho_bucket == bucket);
 							while (PageIsEmpty(page) &&
 							 BlockNumberIsValid(opaque->hasho_nextblkno))
-							{
 								_hash_readnext(rel, &buf, &page, &opaque);
-							}
 							maxoff = PageGetMaxOffsetNumber(page);
 							offnum = FirstOffsetNumber;
 						}
@@ -420,9 +404,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 							opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 							Assert(opaque->hasho_bucket == bucket);
 							while (BlockNumberIsValid(opaque->hasho_nextblkno))
-							{
 								_hash_readnext(rel, &buf, &page, &opaque);
-							}
 							maxoff = offnum = PageGetMaxOffsetNumber(page);
 						}
 						else

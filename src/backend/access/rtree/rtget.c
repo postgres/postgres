@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.9 1997/09/08 02:21:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.10 1998/06/15 19:28:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,13 +47,9 @@ rtgettuple(IndexScanDesc s, ScanDirection dir)
 
 	/* not cached, so we'll have to do some work */
 	if (ItemPointerIsValid(&(s->currentItemData)))
-	{
 		res = rtnext(s, dir);
-	}
 	else
-	{
 		res = rtfirst(s, dir);
-	}
 	return (res);
 }
 
@@ -98,13 +94,9 @@ rtfirst(IndexScanDesc s, ScanDirection dir)
 			maxoff = PageGetMaxOffsetNumber(p);
 
 			if (ScanDirectionIsBackward(dir))
-			{
 				n = OffsetNumberPrev(stk->rts_child);
-			}
 			else
-			{
 				n = OffsetNumberNext(stk->rts_child);
-			}
 			so->s_stack = stk->rts_parent;
 			pfree(stk);
 
@@ -158,13 +150,9 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 	n = ItemPointerGetOffsetNumber(&(s->currentItemData));
 
 	if (ScanDirectionIsForward(dir))
-	{
 		n = OffsetNumberNext(n);
-	}
 	else
-	{
 		n = OffsetNumberPrev(n);
-	}
 
 	b = ReadBuffer(s->relation, blk);
 	p = BufferGetPage(b);
@@ -190,13 +178,9 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 			po = (RTreePageOpaque) PageGetSpecialPointer(p);
 
 			if (ScanDirectionIsBackward(dir))
-			{
 				n = OffsetNumberPrev(stk->rts_child);
-			}
 			else
-			{
 				n = OffsetNumberNext(stk->rts_child);
-			}
 			so->s_stack = stk->rts_parent;
 			pfree(stk);
 
@@ -230,13 +214,9 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 			po = (RTreePageOpaque) PageGetSpecialPointer(p);
 
 			if (ScanDirectionIsBackward(dir))
-			{
 				n = PageGetMaxOffsetNumber(p);
-			}
 			else
-			{
 				n = FirstOffsetNumber;
-			}
 		}
 	}
 }
@@ -283,13 +263,9 @@ findnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 		}
 
 		if (ScanDirectionIsBackward(dir))
-		{
 			n = OffsetNumberPrev(n);
-		}
 		else
-		{
 			n = OffsetNumberNext(n);
-		}
 	}
 
 	return (n);
@@ -345,9 +321,7 @@ rtheapptr(Relation r, ItemPointer itemp)
 		ReleaseBuffer(b);
 	}
 	else
-	{
 		ItemPointerSetInvalid(ip);
-	}
 
 	return (ip);
 }

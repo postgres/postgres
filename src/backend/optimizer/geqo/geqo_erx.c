@@ -3,7 +3,7 @@
 * geqo_erx.c--
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.8 1998/02/26 04:32:20 momjian Exp $
+* $Id: geqo_erx.c,v 1.9 1998/06/15 19:28:34 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -228,9 +228,7 @@ gimme_tour(Edge *edge_table, Gene *new_gene, int num_gene)
 		/* find destination for the newly entered point */
 
 		if (edge_table[new_gene[i - 1]].unused_edges > 0)
-		{
 			new_gene[i] = gimme_gene(edge_table[(int) new_gene[i - 1]], edge_table);
-		}
 
 		else
 		{						/* cope with fault */

@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.23 1998/03/02 00:13:36 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.24 1998/06/15 19:29:32 momjian Exp $
  */
 
 #include <stdio.h>
@@ -122,9 +122,7 @@ printf( "cashin- negative symbol; string is '%s'\n", s);
 
 	}
 	else if (*s == psymbol)
-	{
 		s++;
-	}
 
 #ifdef CASHDEBUG
 printf( "cashin- string is '%s'\n", s);
@@ -687,9 +685,7 @@ cash_words_out(Cash *value)
 		p += 6;
 	}
 	else
-	{
 		*buf = 0;
-	}
 
 	m0 = *value % 100;			/* cents */
 	m1 = (*value / 100) % 1000; /* hundreds */

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.7 1998/04/06 02:38:04 momjian Exp $
+ * $Id: geqo_pool.c,v 1.8 1998/06/15 19:28:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,9 +66,7 @@ alloc_pool(int pool_size, int string_length)
 	/* all gene */
 	chromo = (Chromosome *) new_pool->data;		/* vector of all chromos */
 	for (i = 0; i < pool_size; i++)
-	{
 		chromo[i].string = palloc((string_length + 1) * sizeof(Gene));
-	}
 
 	return (new_pool);
 }

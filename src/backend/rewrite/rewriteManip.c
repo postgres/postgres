@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.13 1998/02/26 04:35:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.14 1998/06/15 19:29:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,9 +75,7 @@ OffsetVarNodes(Node *node, int offset)
 				List	   *l;
 
 				foreach(l, (List *) node)
-				{
 					OffsetVarNodes(lfirst(l), offset);
-				}
 			}
 			break;
 		default:
@@ -222,9 +220,7 @@ FindMatchingNew(List *tlist, int attno)
 		TargetEntry *tle = lfirst(i);
 
 		if (tle->resdom->resno == attno)
-		{
 			return (tle->expr);
-		}
 	}
 	return NULL;
 }
@@ -288,14 +284,10 @@ ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
 							((Var *) node)->varnoold = info->current_varno;
 						}
 						else
-						{
 							*nodePtr = make_null(((Var *) node)->vartype);
-						}
 					}
 					else
-					{
 						*nodePtr = n;
-					}
 				}
 				break;
 			}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.28 1998/05/29 17:00:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.29 1998/06/15 19:29:49 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -295,9 +295,7 @@ InitCommunication()
 
 	postid = getenv("POSTID");
 	if (!PointerIsValid(postid))
-	{
 		MyBackendTag = -1;
-	}
 	else
 	{
 		MyBackendTag = atoi(postid);
@@ -307,9 +305,7 @@ InitCommunication()
 
 	ipc_key = getenv("IPC_KEY");
 	if (!PointerIsValid(ipc_key))
-	{
 		key = -1;
-	}
 	else
 	{
 		key = atoi(ipc_key);
@@ -367,9 +363,7 @@ InitCommunication()
 		 * ----------------
 		 */
 		if (MyBackendTag == -1)
-		{
 			MyBackendTag = 1;
-		}
 
 		key = PrivateIPCKey;
 	}

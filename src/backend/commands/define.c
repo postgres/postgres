@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.24 1998/02/26 04:30:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.25 1998/06/15 19:28:15 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -130,9 +130,7 @@ compute_full_attributes(const List *parameters, int32 *byte_pct_p,
 		ParamString *param = (ParamString *) lfirst(pl);
 
 		if (strcasecmp(param->name, "iscachable") == 0)
-		{
 			*canCache_p = true;
-		}
 		else if (strcasecmp(param->name, "trusted") == 0)
 		{
 
@@ -177,9 +175,7 @@ compute_full_attributes(const List *parameters, int32 *byte_pct_p,
 			}
 		}
 		else if (strcasecmp(param->name, "outin_ratio") == 0)
-		{
 			*outin_ratio_p = atoi(param->val);
-		}
 	}
 }
 
@@ -394,13 +390,9 @@ DefineOperator(char *oprName,
 				elog(ERROR, "setof type not implemented for leftarg");
 
 			if (nodeTag(defel->arg) == T_String)
-			{
 				typeName1 = defGetString(defel);
-			}
 			else
-			{
 				elog(ERROR, "type for leftarg is malformed.");
-			}
 		}
 		else if (!strcasecmp(defel->defname, "rightarg"))
 		{
@@ -409,18 +401,12 @@ DefineOperator(char *oprName,
 				elog(ERROR, "setof type not implemented for rightarg");
 
 			if (nodeTag(defel->arg) == T_String)
-			{
 				typeName2 = defGetString(defel);
-			}
 			else
-			{
 				elog(ERROR, "type for rightarg is malformed.");
-			}
 		}
 		else if (!strcasecmp(defel->defname, "procedure"))
-		{
 			functionName = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "precedence"))
 		{
 			/* NOT IMPLEMENTED (never worked in v4.2) */
@@ -432,25 +418,15 @@ DefineOperator(char *oprName,
 			elog(NOTICE, "CREATE OPERATOR: associativity not implemented");
 		}
 		else if (!strcasecmp(defel->defname, "commutator"))
-		{
 			commutatorName = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "negator"))
-		{
 			negatorName = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "restrict"))
-		{
 			restrictionName = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "join"))
-		{
 			joinName = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "hashes"))
-		{
 			canHash = TRUE;
-		}
 		else if (!strcasecmp(defel->defname, "sort1"))
 		{
 			/* ----------------
@@ -462,9 +438,7 @@ DefineOperator(char *oprName,
 			sortName1 = defGetString(defel);
 		}
 		else if (!strcasecmp(defel->defname, "sort2"))
-		{
 			sortName2 = defGetString(defel);
-		}
 		else
 		{
 			elog(NOTICE, "DefineOperator: attribute \"%s\" not recognized",
@@ -476,9 +450,7 @@ DefineOperator(char *oprName,
 	 * make sure we have our required definitions
 	 */
 	if (functionName == NULL)
-	{
 		elog(ERROR, "Define: \"procedure\" unspecified");
-	}
 
 	/* ----------------
 	 *	now have OperatorCreate do all the work..
@@ -528,13 +500,9 @@ DefineAggregate(char *aggName, List *parameters)
 		 * sfunc1
 		 */
 		if (!strcasecmp(defel->defname, "sfunc1"))
-		{
 			stepfunc1Name = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "basetype"))
-		{
 			baseType = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "stype1"))
 		{
 			stepfunc1Type = defGetString(defel);
@@ -544,9 +512,7 @@ DefineAggregate(char *aggName, List *parameters)
 			 */
 		}
 		else if (!strcasecmp(defel->defname, "sfunc2"))
-		{
 			stepfunc2Name = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "stype2"))
 		{
 			stepfunc2Type = defGetString(defel);
@@ -564,13 +530,9 @@ DefineAggregate(char *aggName, List *parameters)
 			 */
 		}
 		else if (!strcasecmp(defel->defname, "initcond1"))
-		{
 			init1 = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "initcond2"))
-		{
 			init2 = defGetString(defel);
-		}
 		else
 		{
 			elog(NOTICE, "DefineAggregate: attribute \"%s\" not recognized",
@@ -647,25 +609,15 @@ DefineType(char *typeName, List *parameters)
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
 		if (!strcasecmp(defel->defname, "internallength"))
-		{
 			internalLength = defGetTypeLength(defel);
-		}
 		else if (!strcasecmp(defel->defname, "externallength"))
-		{
 			externalLength = defGetTypeLength(defel);
-		}
 		else if (!strcasecmp(defel->defname, "input"))
-		{
 			inputName = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "output"))
-		{
 			outputName = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "send"))
-		{
 			sendName = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "delimiter"))
 		{
 			char	   *p = defGetString(defel);
@@ -673,33 +625,21 @@ DefineType(char *typeName, List *parameters)
 			delimiter = p[0];
 		}
 		else if (!strcasecmp(defel->defname, "receive"))
-		{
 			receiveName = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "element"))
-		{
 			elemName = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "default"))
-		{
 			defaultValue = defGetString(defel);
-		}
 		else if (!strcasecmp(defel->defname, "passedbyvalue"))
-		{
 			byValue = true;
-		}
 		else if (!strcasecmp(defel->defname, "alignment"))
 		{
 			char	   *a = defGetString(defel);
 
 			if (!strcasecmp(a, "double"))
-			{
 				alignment = 'd';
-			}
 			else if (!strcasecmp(a, "int"))
-			{
 				alignment = 'i';
-			}
 			else
 			{
 				elog(ERROR, "DefineType: \"%s\" alignment  not recognized",

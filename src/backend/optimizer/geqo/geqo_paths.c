@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.8 1998/02/26 04:32:23 momjian Exp $
+ * $Id: geqo_paths.c,v 1.9 1998/06/15 19:28:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,9 +147,7 @@ set_paths(Rel *rel, Path *unorderedpath)
 		rel->pathlist = lremove(unorderedpath, rel->pathlist);
 	}
 	else
-	{
 		rel->unorderedpath = (Path *) unorderedpath;
-	}
 
 	return (cheapest);
 }

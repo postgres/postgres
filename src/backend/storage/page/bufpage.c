@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.17 1998/04/24 14:42:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.18 1998/06/15 19:29:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,9 +161,7 @@ PageAddItem(Page page,
 	upper = ((PageHeader) page)->pd_upper - alignedSize;
 
 	if (lower > upper)
-	{
 		return (InvalidOffsetNumber);
-	}
 
 	itemId = &((PageHeader) page)->pd_linp[offsetNumber - 1];
 	(*itemId).lp_off = upper;
@@ -342,9 +340,7 @@ PageGetFreeSpace(Page page)
 	space = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
 
 	if (space < sizeof(ItemIdData))
-	{
 		return (0);
-	}
 	space -= sizeof(ItemIdData);/* XXX not always true */
 
 	return (space);
@@ -464,8 +460,6 @@ PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
 	for (i = PageGetMaxOffsetNumber((Page) phdr) - 1; i >= 0; i--)
 	{
 		if (phdr->pd_linp[i].lp_off <= offset)
-		{
 			phdr->pd_linp[i].lp_off += size;
-		}
 	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.11 1998/06/15 18:39:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.12 1998/06/15 19:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,9 +594,7 @@ GetPortalByName(char *name)
 	AssertState(PortalManagerEnabled);
 
 	if (PointerIsValid(name))
-	{
 		PortalHashTableLookup(name, portal);
-	}
 	else
 	{
 		if (!PortalIsValid(BlankPortal))

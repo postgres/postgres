@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.29 1998/04/27 02:58:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.30 1998/06/15 19:28:33 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -238,9 +238,7 @@ _getPlan(Plan *node)
 	token = lsptok(NULL, &length);		/* now get the state */
 
 	if (length == 0)
-	{
 		node->state = (EState *) NULL;
-	}
 	else
 	{							/* Disgusting hack until I figure out what
 								 * to do here */
@@ -758,29 +756,17 @@ _readExpr()
 	token = lsptok(NULL, &length);		/* eat :opType */
 	token = lsptok(NULL, &length);		/* get opType */
 	if (!strncmp(token, "op", 2))
-	{
 		local_node->opType = OP_EXPR;
-	}
 	else if (!strncmp(token, "func", 4))
-	{
 		local_node->opType = FUNC_EXPR;
-	}
 	else if (!strncmp(token, "or", 2))
-	{
 		local_node->opType = OR_EXPR;
-	}
 	else if (!strncmp(token, "and", 3))
-	{
 		local_node->opType = AND_EXPR;
-	}
 	else if (!strncmp(token, "not", 3))
-	{
 		local_node->opType = NOT_EXPR;
-	}
 	else if (!strncmp(token, "subp", 4))
-	{
 		local_node->opType = SUBPLAN_EXPR;
-	}
 
 	token = lsptok(NULL, &length);		/* eat :oper */
 	local_node->oper = nodeRead(true);
@@ -953,13 +939,9 @@ _readConst()
 	token = lsptok(NULL, &length);		/* now read it */
 
 	if (!strncmp(token, "true", 4))
-	{
 		local_node->constisnull = true;
-	}
 	else
-	{
 		local_node->constisnull = false;
-	}
 
 
 	token = lsptok(NULL, &length);		/* get :constvalue */
@@ -981,13 +963,9 @@ _readConst()
 	token = lsptok(NULL, &length);		/* now read it */
 
 	if (!strncmp(token, "true", 4))
-	{
 		local_node->constbyval = true;
-	}
 	else
-	{
 		local_node->constbyval = false;
-	}
 
 	return (local_node);
 }
@@ -1019,13 +997,9 @@ _readFunc()
 	token = lsptok(NULL, &length);		/* now read it */
 
 	if (!strncmp(token, "true", 4))
-	{
 		local_node->funcisindex = true;
-	}
 	else
-	{
 		local_node->funcisindex = false;
-	}
 
 	token = lsptok(NULL, &length);		/* get :funcsize */
 	token = lsptok(NULL, &length);		/* now read it */
@@ -1264,13 +1238,9 @@ _readRel()
 	token = lsptok(NULL, &length);		/* now read it */
 
 	if (!strncmp(token, "true", 4))
-	{
 		local_node->indexed = true;
-	}
 	else
-	{
 		local_node->indexed = false;
-	}
 
 	token = lsptok(NULL, &length);		/* get :pages */
 	token = lsptok(NULL, &length);		/* now read it */
@@ -1817,13 +1787,9 @@ _readCInfo()
 	token = lsptok(NULL, &length);		/* now read it */
 
 	if (!strncmp(token, "true", 4))
-	{
 		local_node->notclause = true;
-	}
 	else
-	{
 		local_node->notclause = false;
-	}
 
 	token = lsptok(NULL, &length);		/* get :indexids */
 	local_node->indexids = nodeRead(true);		/* now read it */
@@ -1917,24 +1883,16 @@ _readJInfo()
 	token = lsptok(NULL, &length);		/* get :mergesortable */
 
 	if (!strncmp(token, "true", 4))
-	{
 		local_node->mergesortable = true;
-	}
 	else
-	{
 		local_node->mergesortable = false;
-	}
 
 	token = lsptok(NULL, &length);		/* get :hashjoinable */
 
 	if (!strncmp(token, "true", 4))
-	{
 		local_node->hashjoinable = true;
-	}
 	else
-	{
 		local_node->hashjoinable = false;
-	}
 
 	return (local_node);
 }
@@ -1979,193 +1937,99 @@ parsePlanString(void)
 	token = lsptok(NULL, &length);
 
 	if (!strncmp(token, "PLAN", length))
-	{
 		return_value = _readPlan();
-	}
 	else if (!strncmp(token, "RESULT", length))
-	{
 		return_value = _readResult();
-	}
 	else if (!strncmp(token, "APPEND", length))
-	{
 		return_value = _readAppend();
-	}
 	else if (!strncmp(token, "JOIN", length))
-	{
 		return_value = _readJoin();
-	}
 	else if (!strncmp(token, "NESTLOOP", length))
-	{
 		return_value = _readNestLoop();
-	}
 	else if (!strncmp(token, "MERGEJOIN", length))
-	{
 		return_value = _readMergeJoin();
-	}
 	else if (!strncmp(token, "HASHJOIN", length))
-	{
 		return_value = _readHashJoin();
-	}
 	else if (!strncmp(token, "SCAN", length))
-	{
 		return_value = _readScan();
-	}
 	else if (!strncmp(token, "SEQSCAN", length))
-	{
 		return_value = _readSeqScan();
-	}
 	else if (!strncmp(token, "INDEXSCAN", length))
-	{
 		return_value = _readIndexScan();
-	}
 	else if (!strncmp(token, "TEMP", length))
-	{
 		return_value = _readTemp();
-	}
 	else if (!strncmp(token, "SORT", length))
-	{
 		return_value = _readSort();
-	}
 	else if (!strncmp(token, "AGGREG", length))
-	{
 		return_value = _readAggreg();
-	}
 	else if (!strncmp(token, "SUBLINK", length))
-	{
 		return_value = _readSubLink();
-	}
 	else if (!strncmp(token, "AGG", length))
-	{
 		return_value = _readAgg();
-	}
 	else if (!strncmp(token, "UNIQUE", length))
-	{
 		return_value = _readUnique();
-	}
 	else if (!strncmp(token, "HASH", length))
-	{
 		return_value = _readHash();
-	}
 	else if (!strncmp(token, "RESDOM", length))
-	{
 		return_value = _readResdom();
-	}
 	else if (!strncmp(token, "EXPR", length))
-	{
 		return_value = _readExpr();
-	}
 	else if (!strncmp(token, "ARRAYREF", length))
-	{
 		return_value = _readArrayRef();
-	}
 	else if (!strncmp(token, "ARRAY", length))
-	{
 		return_value = _readArray();
-	}
 	else if (!strncmp(token, "VAR", length))
-	{
 		return_value = _readVar();
-	}
 	else if (!strncmp(token, "CONST", length))
-	{
 		return_value = _readConst();
-	}
 	else if (!strncmp(token, "FUNC", length))
-	{
 		return_value = _readFunc();
-	}
 	else if (!strncmp(token, "OPER", length))
-	{
 		return_value = _readOper();
-	}
 	else if (!strncmp(token, "PARAM", length))
-	{
 		return_value = _readParam();
-	}
 	else if (!strncmp(token, "ESTATE", length))
-	{
 		return_value = _readEState();
-	}
 	else if (!strncmp(token, "REL", length))
-	{
 		return_value = _readRel();
-	}
 	else if (!strncmp(token, "TLE", length))
-	{
 		return_value = _readTargetEntry();
-	}
 	else if (!strncmp(token, "RTE", length))
-	{
 		return_value = _readRangeTblEntry();
-	}
 	else if (!strncmp(token, "PATH", length))
-	{
 		return_value = _readPath();
-	}
 	else if (!strncmp(token, "INDEXPATH", length))
-	{
 		return_value = _readIndexPath();
-	}
 	else if (!strncmp(token, "JOINPATH", length))
-	{
 		return_value = _readJoinPath();
-	}
 	else if (!strncmp(token, "MERGEPATH", length))
-	{
 		return_value = _readMergePath();
-	}
 	else if (!strncmp(token, "HASHPATH", length))
-	{
 		return_value = _readHashPath();
-	}
 	else if (!strncmp(token, "ORDERKEY", length))
-	{
 		return_value = _readOrderKey();
-	}
 	else if (!strncmp(token, "JOINKEY", length))
-	{
 		return_value = _readJoinKey();
-	}
 	else if (!strncmp(token, "MERGEORDER", length))
-	{
 		return_value = _readMergeOrder();
-	}
 	else if (!strncmp(token, "CINFO", length))
-	{
 		return_value = _readCInfo();
-	}
 	else if (!strncmp(token, "JOINMETHOD", length))
-	{
 		return_value = _readJoinMethod();
-	}
 	else if (!strncmp(token, "JINFO", length))
-	{
 		return_value = _readJInfo();
-	}
 	else if (!strncmp(token, "HINFO", length))
-	{
 		return_value = _readHInfo();
-	}
 	else if (!strncmp(token, "ITER", length))
-	{
 		return_value = _readIter();
-	}
 	else if (!strncmp(token, "QUERY", length))
-	{
 		return_value = _readQuery();
-	}
 	else if (!strncmp(token, "SORTCLAUSE", length))
-	{
 		return_value = _readSortClause();
-	}
 	else if (!strncmp(token, "GROUPCLAUSE", length))
-	{
 		return_value = _readGroupClause();
-	}
 	else
-	{
 		elog(ERROR, "badly formatted planstring \"%.10s\"...\n", token);
-	}
 
 	return ((Node *) return_value);
 }
@@ -2202,9 +2066,7 @@ readDatum(Oid type)
 	if (byValue)
 	{
 		if (length > sizeof(Datum))
-		{
 			elog(ERROR, "readValue: byval & length = %d", length);
-		}
 		s = (char *) (&res);
 		for (i = 0; i < sizeof(Datum); i++)
 		{
@@ -2213,9 +2075,7 @@ readDatum(Oid type)
 		}
 	}
 	else if (length <= 0)
-	{
 		s = NULL;
-	}
 	else if (length >= 1)
 	{
 		s = (char *) palloc(length);
@@ -2230,9 +2090,7 @@ readDatum(Oid type)
 
 	token = lsptok(NULL, &tokenLength); /* skip the ']' */
 	if (token[0] != ']')
-	{
 		elog(ERROR, "readValue: ']' expected, length =%d", length);
-	}
 
 	return (res);
 }

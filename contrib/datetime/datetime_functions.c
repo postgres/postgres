@@ -97,13 +97,9 @@ hhmm_out(TimeADT *time)
 	tm->tm_sec = (((int) *time) % 60);
 
 	if (tm->tm_sec == 0)
-	{
 		sprintf(buf, "%02d:%02d", tm->tm_hour, tm->tm_min);
-	}
 	else
-	{
 		sprintf(buf, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
-	}
 
 	result = palloc(strlen(buf) + 1);
 

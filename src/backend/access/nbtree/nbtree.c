@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.25 1998/02/26 04:29:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.26 1998/06/15 19:27:56 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -267,20 +267,14 @@ btbuild(Relation heap,
 		 * into the btree.
 		 */
 		if (usefast)
-		{
 			_bt_spool(index, btitem, spool);
-		}
 		else
-		{
 			res = _bt_doinsert(index, btitem, isunique, heap);
-		}
 
 		pfree(btitem);
 		pfree(itup);
 		if (res)
-		{
 			pfree(res);
-		}
 	}
 
 	/* okay, all heap tuples are indexed */

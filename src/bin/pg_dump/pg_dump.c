@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.71 1998/05/06 23:53:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.72 1998/06/15 19:30:01 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -351,9 +351,7 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
 		do
 		{
 			if (PQgetisnull(res, tuple, field))
-			{
 				fprintf(fout, "NULL");
-			}
 			else
 			{
 				switch (PQftype(res, field))
@@ -613,9 +611,7 @@ main(int argc, char **argv)
 
 	/* open the output file */
 	if (filename == NULL)
-	{
 		g_fout = stdout;
-	}
 	else
 	{
 		g_fout = fopen(filename, "w");
@@ -688,9 +684,7 @@ main(int argc, char **argv)
 		tblinfo = dumpSchema(NULL, &numTables, tablename, acls);
 
 	if (!schemaOnly)
-	{
 		dumpClasses(tblinfo, numTables, g_fout, tablename, oids);
-	}
 
 	if (!dataOnly)				/* dump indexes and triggers at the end
 								 * for performance */
@@ -2011,9 +2005,7 @@ dumpFuncs(FILE *fout, FuncInfo *finfo, int numFuncs,
 	int			i;
 
 	for (i = 0; i < numFuncs; i++)
-	{
 		dumpOneFunc(fout, finfo, i, tinfo, numTypes);
-	}
 }
 
 /*
@@ -2228,9 +2220,7 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 		if (strcmp(agginfo[i].aggfinalfn, "-") == 0)
 			finalfunc[0] = '\0';
 		else
-		{
 			sprintf(finalfunc, "FINALFUNC = %s", agginfo[i].aggfinalfn);
-		}
 		if (sfunc1[0] != '\0' && sfunc2[0] != '\0')
 		{
 			comma1[0] = ',';
@@ -2581,9 +2571,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 								   fmtId(indinfo[i].indrelname));
 
 		if (strcmp(indinfo[i].indproc, "0") == 0)
-		{
 			funcname = NULL;
-		}
 		else
 		{
 
@@ -2729,9 +2717,7 @@ dumpTuples(PGresult *res, FILE *fout, int *attrmap)
 		for (j = 0; j < n; j++)
 		{
 			for (k = 0; k < m; k++)
-			{
 				outVals[attrmap[k]] = PQgetvalue(res, j, k);
-			}
 			for (k = 0; k < m; k++)
 			{
 				char	   *pval = outVals[k];

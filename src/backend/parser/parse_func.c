@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.18 1998/05/29 14:00:21 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.19 1998/06/15 19:28:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,9 +278,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 														   PointerGetDatum(funcname),
 														   0, 0, 0)))
 			 && IS_BINARY_COMPATIBLE(typeTypeId(tp), basetype))
-			{
 				return((Node *)lfirst(fargs));
-			}
 		}
 	}
 
@@ -668,13 +666,9 @@ func_select_candidate(int nargs,
 		{
 			if ((input_typeids[i] != UNKNOWNOID)
 			 && (current_typeids[i] == input_typeids[i]))
-			{
 				nmatch++;
-			}
 			else if (IS_BINARY_COMPATIBLE(current_typeids[i], input_typeids[i]))
-			{
 				nident++;
-			}
 		}
 
 		if ((nmatch + nident) == nargs)
@@ -791,9 +785,7 @@ printf("func_select_candidate- column #%d input type is %s\n",
 		for (current_candidate = candidates;
 			 current_candidate != NULL;
 			 current_candidate = current_candidate->next)
-		{
 			ncandidates++;
-		}
 	}
 
 	if (ncandidates == 1)
@@ -970,9 +962,7 @@ argtype_inherit(int nargs, Oid *oid_array)
 		{
 			arginh[i].self = oid_array[i];
 			if ((relid = typeidTypeRelid(oid_array[i])) != InvalidOid)
-			{
 				arginh[i].nsupers = find_inheritors(relid, &(arginh[i].supervec));
-			}
 			else
 			{
 				arginh[i].nsupers = 0;
@@ -1105,9 +1095,7 @@ find_inheritors(Oid relid, Oid **supervec)
 
 	}
 	else
-	{
 		*supervec = (Oid *) NULL;
-	}
 
 	return (nvisited);
 }

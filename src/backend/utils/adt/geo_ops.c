@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.32 1998/05/09 22:39:55 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.33 1998/06/15 19:29:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,9 +254,7 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 				s++;
 		}
 		else
-		{
 			return (FALSE);
-		}
 	}
 	*ss = s;
 
@@ -960,9 +958,7 @@ line_parallel(LINE *l1, LINE *l2)
 	return (FPeq(l1->m, l2->m));
 #endif
 	if (FPzero(l1->B))
-	{
 		return (FPzero(l2->B));
-	}
 
 	return (FPeq(l2->A, l1->A * (l2->B / l1->B)));
 }	/* line_parallel() */
@@ -977,13 +973,9 @@ line_perp(LINE *l1, LINE *l2)
 		return (FPeq(l1->m / l2->m, -1.0));
 #endif
 	if (FPzero(l1->A))
-	{
 		return (FPzero(l2->B));
-	}
 	else if (FPzero(l1->B))
-	{
 		return (FPzero(l2->A));
-	}
 
 	return (FPeq(((l1->A * l2->B) / (l1->B * l2->A)), -1.0));
 }	/* line_perp() */
@@ -1396,9 +1388,7 @@ path_distance(PATH *p1, PATH *p2)
 				min = tmp;
 			}
 			else
-			{
 				pfree(tmp);
-			}
 		}
 
 	return (min);
@@ -2007,9 +1997,7 @@ dist_ps(Point *pt, LSEG *lseg)
  * and through the input point
  */
 	if (lseg->p[1].x == lseg->p[0].x)
-	{
 		m = 0;
-	}
 	else if (lseg->p[1].y == lseg->p[0].y)
 	{							/* slope is infinite */
 		m = (double) DBL_MAX;
@@ -2140,9 +2128,7 @@ dist_sl(LSEG *lseg, LINE *line)
 			result = d2;
 		}
 		else
-		{
 			pfree(d2);
-		}
 	}
 
 	return (result);
@@ -2998,9 +2984,7 @@ make_bound_box(POLYGON *poly)
 		box_fill(&(poly->boundbox), x1, x2, y1, y2);
 	}
 	else
-	{
 		elog(ERROR, "Unable to create bounding box for empty polygon", NULL);
-	}
 }
 
 /*------------------------------------------------------------------
@@ -3717,9 +3701,7 @@ poly_center(POLYGON *poly)
 
 	}
 	else
-	{
 		result = NULL;
-	}
 
 	return (result);
 }	/* poly_center() */
@@ -3935,9 +3917,7 @@ circle_in(char *str)
 		while (isspace(*cp))
 			cp++;
 		if (*cp == LDELIM)
-		{
 			s = cp;
-		}
 	}
 
 	if (!pair_decode(s, &circle->center.x, &circle->center.y, &s))
@@ -3962,9 +3942,7 @@ circle_in(char *str)
 				s++;
 		}
 		else
-		{
 			elog(ERROR, "Bad circle external representation '%s'", str);
-		}
 	}
 
 	if (*s != '\0')
@@ -4511,9 +4489,7 @@ poly_circle(POLYGON *poly)
 	circle->center.y /= poly->npts;
 
 	for (i = 0; i < poly->npts; i++)
-	{
 		circle->radius += point_dt(&poly->p[i], &circle->center);
-	}
 	circle->radius /= poly->npts;
 
 	if (FPzero(circle->radius))
@@ -4570,23 +4546,17 @@ point_inside(Point *p, int npts, Point plist[])
 		y = plist[i].y - p->y;
 
 		if ((cross = lseg_crossing(x, y, px, py)) == HIT_IT)
-		{
 			return 2;
-		}
 		crossnum += cross;
 
 		px = x;
 		py = y;
 	}
 	if ((cross = lseg_crossing(x0, y0, px, py)) == HIT_IT)
-	{
 		return 2;
-	}
 	crossnum += cross;
 	if (crossnum != 0)
-	{
 		return 1;
-	}
 	return 0;
 }	/* point_inside() */
 

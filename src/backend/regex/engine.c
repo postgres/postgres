@@ -831,14 +831,10 @@ sopno		stopst;
 		/* how about a word boundary? */
 		if ((flagch == BOL || (lastc != OUT && !ISWORD(lastc))) &&
 			(c != OUT && ISWORD(c)))
-		{
 			flagch = BOW;
-		}
 		if ((lastc != OUT && ISWORD(lastc)) &&
 			(flagch == EOL || (c != OUT && !ISWORD(c))))
-		{
 			flagch = EOW;
-		}
 		if (flagch == BOW || flagch == EOW)
 		{
 			st = step(m->g, startst, stopst, st, flagch, st);
@@ -927,14 +923,10 @@ sopno		stopst;
 		/* how about a word boundary? */
 		if ((flagch == BOL || (lastc != OUT && !ISWORD(lastc))) &&
 			(c != OUT && ISWORD(c)))
-		{
 			flagch = BOW;
-		}
 		if ((lastc != OUT && ISWORD(lastc)) &&
 			(flagch == EOL || (c != OUT && !ISWORD(c))))
-		{
 			flagch = EOW;
-		}
 		if (flagch == BOW || flagch == EOW)
 		{
 			st = step(m->g, startst, stopst, st, flagch, st);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.13 1998/02/26 04:31:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.14 1998/06/15 19:28:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,9 +119,7 @@ PQnportals(int rule_p)
 		if (portals[i] && portals[i]->portal)
 		{
 			if (!rule_p || portals[i]->portal->rule_p)
-			{
 				++n;
-			}
 		}
 	}
 	return (n);
@@ -690,9 +688,7 @@ PQnotifies_init()
 	PQNotifyList *p;
 
 	if (pqNotifyList == NULL)
-	{
 		pqNotifyList = DLNewList();
-	}
 	else
 	{
 		/* clean all notifies */

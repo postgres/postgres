@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.7 1998/04/06 17:27:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.8 1998/06/15 19:28:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,9 +62,7 @@ FixedStackPop(FixedStack stack)
 	AssertArg(FixedStackIsValid(stack));
 
 	if (!PointerIsValid(stack->top))
-	{
 		return (NULL);
-	}
 
 	pointer = FixedStackGetItemBase(stack, stack->top);
 	stack->top = stack->top->next;
@@ -110,9 +108,7 @@ FixedStackContains(FixedStack stack, Pointer pointer)
 	for (next = stack->top; FixedItemIsValid(next); next = next->next)
 	{
 		if (next == item)
-		{
 			return (true);
-		}
 	}
 	return (false);
 }
@@ -125,9 +121,7 @@ FixedStackGetTop(FixedStack stack)
 	AssertArg(FixedStackIsValid(stack));
 
 	if (!PointerIsValid(stack->top))
-	{
 		return (NULL);
-	}
 
 	return (FixedStackGetItemBase(stack, stack->top));
 }
@@ -144,9 +138,7 @@ FixedStackGetNext(FixedStack stack, Pointer pointer)
 	item = FixedStackGetItem(stack, pointer)->next;
 
 	if (!PointerIsValid(item))
-	{
 		return (NULL);
-	}
 
 	return (FixedStackGetItemBase(stack, item));
 }

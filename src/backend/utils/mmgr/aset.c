@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.8 1997/09/08 20:57:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.9 1998/06/15 19:29:51 momjian Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -130,9 +130,7 @@ AllocSetReset(AllocSet set)
 	AssertArg(AllocSetIsValid(set));
 
 	while (AllocPointerIsValid(pointer = AllocSetGetFirst(set)))
-	{
 		AllocSetFree(set, pointer);
-	}
 }
 
 #ifdef NOT_USED
@@ -144,9 +142,7 @@ AllocSetReset_debug(char *file, int line, AllocSet set)
 	AssertArg(AllocSetIsValid(set));
 
 	while (AllocPointerIsValid(pointer = AllocSetGetFirst(set)))
-	{
 		AllocSetFree(set, pointer);
-	}
 }
 
 #endif
@@ -189,9 +185,7 @@ AllocSetAlloc(AllocSet set, Size size)
 	alloc = (AllocElem) malloc(sizeof(*alloc) + size);
 
 	if (!PointerIsValid(alloc))
-	{
 		elog(FATAL, "palloc failure: memory exhausted");
-	}
 
 	/* add to allocation list */
 	OrderedElemPushInto(&alloc->elemData, &set->setData);
@@ -298,9 +292,7 @@ AllocSetIterate(AllocSet set,
 	{
 
 		if (PointerIsValid(function))
-		{
 			(*function) (pointer);
-		}
 		count += 1;
 	}
 
@@ -319,9 +311,7 @@ AllocSetCount(AllocSet set)
 	for (pointer = AllocSetGetFirst(set);
 		 AllocPointerIsValid(pointer);
 		 pointer = AllocPointerGetNext(pointer))
-	{
 		count++;
-	}
 	return count;
 }
 
@@ -346,9 +336,7 @@ AllocSetGetFirst(AllocSet set)
 	alloc = (AllocElem) OrderedSetGetHead(&set->setData);
 
 	if (!AllocElemIsValid(alloc))
-	{
 		return (NULL);
-	}
 
 	return (AllocElemGetAllocPointer(alloc));
 }
@@ -369,9 +357,7 @@ AllocPointerGetNext(AllocPointer pointer)
 		OrderedElemGetSuccessor(&AllocPointerGetAllocElem(pointer)->elemData);
 
 	if (!AllocElemIsValid(alloc))
-	{
 		return (NULL);
-	}
 
 	return (AllocElemGetAllocPointer(alloc));
 }

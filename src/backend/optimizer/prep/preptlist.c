@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.10 1998/02/26 04:33:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.11 1998/06/15 19:28:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,9 +67,7 @@ preprocess_targetlist(List *tlist,
 	List	   *temp = NIL;
 
 	if (result_relation >= 1 && command_type != CMD_SELECT)
-	{
 		relid = getrelid(result_relation, range_table);
-	}
 
 	/*
 	 * for heap_formtuple to work, the targetlist must match the exact
@@ -171,9 +169,7 @@ expand_targetlist(List *tlist,
 		return (replace_matching_resname(ntlist, tlist));
 	}
 	else
-	{
 		return (tlist);
-	}
 
 }
 
@@ -210,9 +206,7 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 			t_list = lappend(t_list, matching_old_tl);
 		}
 		else
-		{
 			t_list = lappend(t_list, new_tle);
-		}
 	}
 
 	/*

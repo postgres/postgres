@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.28 1998/02/26 04:29:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.29 1998/06/15 19:27:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,9 +178,7 @@ nocache_index_getattr(IndexTuple tup,
 		/* first attribute is always at position zero */
 
 		if (attnum == 1)
-		{
 			return (Datum) fetchatt(&(att[0]), (char *) tup + data_off);
-		}
 		if (att[attnum]->attcacheoff != -1)
 		{
 			return (Datum) fetchatt(&(att[attnum]),
@@ -260,9 +258,7 @@ nocache_index_getattr(IndexTuple tup,
 									tp + att[attnum]->attcacheoff);
 		}
 		else if (attnum == 0)
-		{
 			return ((Datum) fetchatt(&(att[0]), (char *) tp));
-		}
 		else if (!IndexTupleAllFixed(tup))
 		{
 			int			j = 0;
@@ -482,9 +478,7 @@ CopyIndexTuple(IndexTuple source, IndexTuple *target)
 
 	size = IndexTupleSize(source);
 	if (*target == NULL)
-	{
 		*target = (IndexTuple) palloc(size);
-	}
 
 	ret = *target;
 	memmove((char *) ret, (char *) source, size);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.17 1998/04/27 04:04:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.18 1998/06/15 19:28:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,9 +80,7 @@ CatalogOpenIndices(int nIndices, char *names[], Relation idescs[])
 	int			i;
 
 	for (i = 0; i < nIndices; i++)
-	{
 		idescs[i] = index_openr(names[i]);
-	}
 }
 
 /*

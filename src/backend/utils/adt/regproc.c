@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.18 1998/04/26 04:07:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.19 1998/06/15 19:29:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,7 @@ regprocin(char *proname)
 										RelationGetTupleDescriptor(proc),
 												 &isnull);
 			if (isnull)
-			{
 				elog(FATAL, "regprocin: null procedure %s", proname);
-			}
 			break;
 		case 0:
 			result = (RegProcedure) 0;

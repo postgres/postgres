@@ -43,8 +43,6 @@ AppendVarray(Varray * array, void *value, CopyingFunct copy)
 	copy(value, VARRAY_NTH(array->val, array->size, array->nobj));
 	array->nobj++;
 	if (array->nobj >= array->maxObj)
-	{
 		ENLARGE_VARRAY(array, array->maxObj / 2);
-	}
 	return array->nobj;
 }

@@ -66,9 +66,7 @@ string_output(char *data, int size)
 	}
 
 	if (size < 0)
-	{
 		size = strlen(data);
-	}
 
 	/* adjust string length for escapes */
 	len = size;
@@ -90,9 +88,7 @@ string_output(char *data, int size)
 				break;
 			default:
 				if (NOTPRINTABLE(*p))
-				{
 					len += 3;
-				}
 		}
 	}
 	len++;
@@ -147,9 +143,7 @@ string_output(char *data, int size)
 					r += 3;
 				}
 				else
-				{
 					*r++ = c;
-				}
 		}
 	}
 	*r = '\0';
@@ -192,9 +186,7 @@ string_input(char *str, int size, int hdrsize, int *rtn_size)
 	int			len;
 
 	if ((str == NULL) || (hdrsize < 0))
-	{
 		return (char *) NULL;
-	}
 
 	/* Compute result size */
 	len = strlen(str);
@@ -223,22 +215,16 @@ string_input(char *str, int size, int hdrsize, int *rtn_size)
 
 	/* result has variable length */
 	if (size == 0)
-	{
 		size = len + 1;
-	}
 	else
 		/* result has variable length with maximum size */
 	if (size < 0)
-	{
 		size = MIN(len, -size) + 1;
-	}
 
 	result = (char *) palloc(hdrsize + size);
 	memset(result, 0, hdrsize + size);
 	if (rtn_size)
-	{
 		*rtn_size = size;
-	}
 
 	r = result + hdrsize;
 	for (p = str; *p;)
@@ -262,13 +248,9 @@ string_input(char *str, int size, int hdrsize, int *rtn_size)
 				case '7':
 					c = VALUE(c);
 					if (isdigit(*p))
-					{
 						c = (c << 3) + VALUE(*p++);
-					}
 					if (isdigit(*p))
-					{
 						c = (c << 3) + VALUE(*p++);
-					}
 					*r++ = c;
 					break;
 				case 'b':
@@ -294,9 +276,7 @@ string_input(char *str, int size, int hdrsize, int *rtn_size)
 			}
 		}
 		else
-		{
 			*r++ = c;
-		}
 	}
 
 	return ((char *) result);
@@ -380,9 +360,7 @@ c_textin(char *str)
 	int			len;
 
 	if (str == NULL)
-	{
 		return ((struct varlena *) NULL);
-	}
 
 	result = (struct varlena *) string_input(str, 0, VARHDRSZ, &len);
 	VARSIZE(result) = len;

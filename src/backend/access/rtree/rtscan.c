@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.15 1998/01/07 21:02:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.16 1998/06/15 19:28:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,17 +104,11 @@ rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 	 * Set flags.
 	 */
 	if (RelationGetNumberOfBlocks(s->relation) == 0)
-	{
 		s->flags = ScanUnmarked;
-	}
 	else if (fromEnd)
-	{
 		s->flags = ScanUnmarked | ScanUncheckedPrevious;
-	}
 	else
-	{
 		s->flags = ScanUnmarked | ScanUncheckedNext;
-	}
 
 	s->scanFromEnd = fromEnd;
 
@@ -133,9 +127,7 @@ rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 		p->s_stack = p->s_markstk = (RTSTACK *) NULL;
 		p->s_flags = 0x0;
 		for (i = 0; i < s->numberOfKeys; i++)
-		{
 			p->s_internalKey[i].sk_argument = s->keyData[i].sk_argument;
-		}
 	}
 	else
 	{
@@ -279,9 +271,7 @@ rtdropscan(IndexScanDesc s)
 	for (l = RTScans;
 		 l != (RTScanList) NULL && l->rtsl_scan != s;
 		 l = l->rtsl_next)
-	{
 		prev = l;
-	}
 
 	if (l == (RTScanList) NULL)
 		elog(ERROR, "rtree scan list corrupted -- cannot find 0x%lx", s);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.11 1998/02/26 04:32:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.12 1998/06/15 19:28:32 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -78,9 +78,7 @@ nodeTokenType(char *token, int length)
 		 * skip the optional '-' (i.e. negative number)
 		 */
 		if (*token == '-')
-		{
 			token++;
-		}
 
 		/*
 		 * See if there is a decimal point
@@ -127,9 +125,7 @@ lsptok(char *string, int *length)
 	{
 		local_str = string;
 		if (length == NULL)
-		{
 			return (NULL);
-		}
 	}
 
 	for (; *local_str == ' '
@@ -159,9 +155,7 @@ lsptok(char *string, int *length)
 	}
 	else if (*local_str == ')' || *local_str == '(' ||
 			 *local_str == '}' || *local_str == '{')
-	{
 		local_str++;
-	}
 	else
 	{
 		for (; *local_str != ' '
@@ -223,9 +217,7 @@ nodeRead(bool read_car_only)
 				this_value = (Node *) l;
 			}
 			else
-			{
 				this_value = nodeRead(false);
-			}
 			break;
 		case RIGHT_PAREN:
 			this_value = NULL;
@@ -241,13 +233,9 @@ nodeRead(bool read_car_only)
 				 * It might be NULL but it is an atom!
 				 */
 				if (read_car_only)
-				{
 					make_dotted_pair_cell = false;
-				}
 				else
-				{
 					make_dotted_pair_cell = true;
-				}
 			}
 			else
 			{
@@ -293,18 +281,12 @@ nodeRead(bool read_car_only)
 		lfirst(l) = this_value;
 
 		if (!read_car_only)
-		{
 			lnext(l) = nodeRead(false);
-		}
 		else
-		{
 			lnext(l) = NULL;
-		}
 		return_value = (Node *) l;
 	}
 	else
-	{
 		return_value = this_value;
-	}
 	return (return_value);
 }

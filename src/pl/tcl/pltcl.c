@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.2 1998/02/26 04:46:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.3 1998/06/15 19:30:27 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -302,14 +302,10 @@ pltcl_init_safe_interp(void)
 	 * Try to load the unknown procedure from pltcl_modules
 	 ************************************************************/
 	if (SPI_connect() != SPI_OK_CONNECT)
-	{
 		elog(ERROR, "pltcl_init_safe_interp(): SPI_connect failed");
-	}
 	pltcl_init_load_unknown();
 	if (SPI_finish() != SPI_OK_FINISH)
-	{
 		elog(ERROR, "pltcl_init_safe_interp(): SPI_finish failed");
-	}
 #endif							/* PLTCL_UNKNOWN_SUPPORT */
 }
 
@@ -336,13 +332,9 @@ pltcl_init_load_unknown(void)
 	spi_rc = SPI_exec("select 1 from pg_class "
 					  "where relname = 'pltcl_modules'", 1);
 	if (spi_rc != SPI_OK_SELECT)
-	{
 		elog(ERROR, "pltcl_init_load_unknown(): select from pg_class failed");
-	}
 	if (SPI_processed == 0)
-	{
 		return;
-	}
 
 	/************************************************************
 	 * Read all the row's from it where modname = 'unknown' in
@@ -411,17 +403,13 @@ pltcl_call_handler(FmgrInfo *proinfo,
 	 * Initialize interpreters on first call
 	 ************************************************************/
 	if (pltcl_firstcall)
-	{
 		pltcl_init_all();
-	}
 
 	/************************************************************
 	 * Connect to SPI manager
 	 ************************************************************/
 	if (SPI_connect() != SPI_OK_CONNECT)
-	{
 		elog(ERROR, "pltcl: cannot connect to SPI manager");
-	}
 	/************************************************************
 	 * Keep track about the nesting of Tcl-SPI-Tcl-... calls
 	 ************************************************************/
@@ -432,13 +420,9 @@ pltcl_call_handler(FmgrInfo *proinfo,
 	 * call appropriate subhandler
 	 ************************************************************/
 	if (CurrentTriggerData == NULL)
-	{
 		retval = pltcl_func_handler(proinfo, proargs, isNull);
-	}
 	else
-	{
 		retval = (Datum) pltcl_trigger_handler(proinfo);
-	}
 
 	pltcl_call_level--;
 
@@ -446,9 +430,7 @@ pltcl_call_handler(FmgrInfo *proinfo,
 	 * Disconnect from SPI manager
 	 ************************************************************/
 	if (SPI_finish() != SPI_OK_FINISH)
-	{
 		elog(ERROR, "pltcl: SPI_finish() failed");
-	}
 
 	return retval;
 }
@@ -576,26 +558,20 @@ pltcl_func_handler(FmgrInfo *proinfo,
 			{
 				prodesc->arg_is_rel[i] = 1;
 				if (i > 0)
-				{
 					strcat(proc_internal_args, " ");
-				}
 				sprintf(buf, "__PLTcl_Tup_%d", i + 1);
 				strcat(proc_internal_args, buf);
 				continue;
 			}
 			else
-			{
 				prodesc->arg_is_rel[i] = 0;
-			}
 
 			fmgr_info(typeStruct->typoutput, &(prodesc->arg_out_func[i]));
 			prodesc->arg_out_elem[i] = (Oid) (typeStruct->typelem);
 			prodesc->arg_out_len[i] = typeStruct->typlen;
 
 			if (i > 0)
-			{
 				strcat(proc_internal_args, " ");
-			}
 			sprintf(buf, "%d", i + 1);
 			strcat(proc_internal_args, buf);
 		}
@@ -680,9 +656,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		Tcl_DStringFree(&list_tmp);
 		pltcl_restart_in_progress = 1;
 		if (--pltcl_call_level == 0)
-		{
 			pltcl_restart_in_progress = 0;
-		}
 		siglongjmp(Warn_restart, 1);
 	}
 
@@ -742,15 +716,11 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		{
 			pltcl_restart_in_progress = 1;
 			if (--pltcl_call_level == 0)
-			{
 				pltcl_restart_in_progress = 0;
-			}
 			elog(ERROR, "pltcl: %s", pltcl_safe_interp->result);
 		}
 		if (--pltcl_call_level == 0)
-		{
 			pltcl_restart_in_progress = 0;
-		}
 		siglongjmp(Warn_restart, 1);
 	}
 
@@ -766,9 +736,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		pltcl_restart_in_progress = 1;
 		if (--pltcl_call_level == 0)
-		{
 			pltcl_restart_in_progress = 0;
-		}
 		siglongjmp(Warn_restart, 1);
 	}
 
@@ -956,9 +924,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 		Tcl_DStringFree(&tcl_newtup);
 		pltcl_restart_in_progress = 1;
 		if (--pltcl_call_level == 0)
-		{
 			pltcl_restart_in_progress = 0;
-		}
 		siglongjmp(Warn_restart, 1);
 	}
 
@@ -976,40 +942,26 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	/* A list of attribute names for argument TG_relatts */
 	Tcl_DStringAppendElement(&tcl_trigtup, "");
 	for (i = 0; i < tupdesc->natts; i++)
-	{
 		Tcl_DStringAppendElement(&tcl_trigtup, tupdesc->attrs[i]->attname.data);
-	}
 	Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
 	Tcl_DStringFree(&tcl_trigtup);
 	Tcl_DStringInit(&tcl_trigtup);
 
 	/* The when part of the event for TG_when */
 	if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
-	{
 		Tcl_DStringAppendElement(&tcl_cmd, "BEFORE");
-	}
 	else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
-	{
 		Tcl_DStringAppendElement(&tcl_cmd, "AFTER");
-	}
 	else
-	{
 		Tcl_DStringAppendElement(&tcl_cmd, "UNKNOWN");
-	}
 
 	/* The level part of the event for TG_level */
 	if (TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-	{
 		Tcl_DStringAppendElement(&tcl_cmd, "ROW");
-	}
 	else if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-	{
 		Tcl_DStringAppendElement(&tcl_cmd, "STATEMENT");
-	}
 	else
-	{
 		Tcl_DStringAppendElement(&tcl_cmd, "UNKNOWN");
-	}
 
 	/* Build the data list for the trigtuple */
 	pltcl_build_tuple_argument(trigdata->tg_trigtuple,
@@ -1067,9 +1019,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	 * Finally append the arguments from CREATE TRIGGER
 	 ************************************************************/
 	for (i = 0; i < trigdata->tg_trigger->tgnargs; i++)
-	{
 		Tcl_DStringAppendElement(&tcl_cmd, trigdata->tg_trigger->tgargs[i]);
-	}
 
 	/************************************************************
 	 * Call the Tcl function
@@ -1089,15 +1039,11 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 		{
 			pltcl_restart_in_progress = 1;
 			if (--pltcl_call_level == 0)
-			{
 				pltcl_restart_in_progress = 0;
-			}
 			elog(ERROR, "pltcl: %s", pltcl_safe_interp->result);
 		}
 		if (--pltcl_call_level == 0)
-		{
 			pltcl_restart_in_progress = 0;
-		}
 		siglongjmp(Warn_restart, 1);
 	}
 
@@ -1115,9 +1061,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	 * the magic strings OK or SKIP or a list from array get
 	 ************************************************************/
 	if (strcmp(pltcl_safe_interp->result, "OK") == 0)
-	{
 		return rettup;
-	}
 	if (strcmp(pltcl_safe_interp->result, "SKIP") == 0)
 	{
 		return (HeapTuple) NULL;;
@@ -1161,9 +1105,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 		ckfree(ret_values);
 		pltcl_restart_in_progress = 1;
 		if (--pltcl_call_level == 0)
-		{
 			pltcl_restart_in_progress = 0;
-		}
 		siglongjmp(Warn_restart, 1);
 	}
 
@@ -1190,9 +1132,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 		 ************************************************************/
 		attnum = SPI_fnumber(tupdesc, ret_values[i++]);
 		if (attnum == SPI_ERROR_NOATTRIBUTE)
-		{
 			elog(ERROR, "pltcl: invalid attribute '%s'", ret_values[--i]);
-		}
 
 		/************************************************************
 		 * Lookup the attribute type in the syscache
@@ -1233,9 +1173,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	pfree(modnulls);
 
 	if (rettup == NULL)
-	{
 		elog(ERROR, "pltcl: SPI_modifytuple() failed - RC = %d\n", SPI_result);
-	}
 
 	ckfree(ret_values);
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
@@ -1280,29 +1218,17 @@ pltcl_elog(ClientData cdata, Tcl_Interp * interp,
 	}
 
 	if (strcmp(argv[1], "NOTICE") == 0)
-	{
 		level = NOTICE;
-	}
 	else if (strcmp(argv[1], "WARN") == 0)
-	{
 		level = ERROR;
-	}
 	else if (strcmp(argv[1], "ERROR") == 0)
-	{
 		level = ERROR;
-	}
 	else if (strcmp(argv[1], "FATAL") == 0)
-	{
 		level = FATAL;
-	}
 	else if (strcmp(argv[1], "DEBUG") == 0)
-	{
 		level = DEBUG;
-	}
 	else if (strcmp(argv[1], "NOIND") == 0)
-	{
 		level = NOIND;
-	}
 	else
 	{
 		Tcl_AppendResult(interp, "Unknown elog level '", argv[1],
@@ -1356,15 +1282,11 @@ pltcl_quote(ClientData cdata, Tcl_Interp * interp,
 	while (*cp1)
 	{
 		if (*cp1 == '\'')
-		{
 			*cp2++ = '\'';
-		}
 		else
 		{
 			if (*cp1 == '\\')
-			{
 				*cp2++ = '\\';
-			}
 		}
 		*cp2++ = *cp1++;
 	}
@@ -1440,9 +1362,7 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
 				return TCL_ERROR;
 			}
 			if (Tcl_GetInt(interp, argv[i++], &count) != TCL_OK)
-			{
 				return TCL_ERROR;
-			}
 			continue;
 		}
 
@@ -1566,9 +1486,7 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
 	if (argc == query_idx + 1)
 	{
 		if (ntuples > 0)
-		{
 			pltcl_set_tuple_values(interp, arrayname, 0, tuples[0], tupdesc);
-		}
 		sprintf(buf, "%d", ntuples);
 		Tcl_SetResult(interp, buf, TCL_VOLATILE);
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
@@ -1653,9 +1571,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
 	 * Split the argument type list
 	 ************************************************************/
 	if (Tcl_SplitList(interp, argv[2], &nargs, &args) != TCL_OK)
-	{
 		return TCL_ERROR;
-	}
 
 	/************************************************************
 	 * Allocate the new querydesc structure
@@ -1698,9 +1614,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
 									  PointerGetDatum(args[i]),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
-		{
 			elog(ERROR, "pltcl: Cache lookup of type %s failed", args[i]);
-		}
 		qdesc->argtypes[i] = typeTup->t_oid;
 		fmgr_info(((TypeTupleForm) GETSTRUCT(typeTup))->typinput,
 				  &(qdesc->arginfuncs[i]));
@@ -1879,9 +1793,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
 				return TCL_ERROR;
 			}
 			if (Tcl_GetInt(interp, argv[i++], &count) != TCL_OK)
-			{
 				return TCL_ERROR;
-			}
 			continue;
 		}
 
@@ -1938,9 +1850,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
 		 * Split the argument values
 		 ************************************************************/
 		if (Tcl_SplitList(interp, argv[i++], &callnargs, &callargs) != TCL_OK)
-		{
 			return TCL_ERROR;
-		}
 
 		/************************************************************
 		 * Check that the # of arguments matches
@@ -2003,9 +1913,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
 		callargs = NULL;
 	}
 	else
-	{
 		callnargs = 0;
-	}
 
 	/************************************************************
 	 * Remember the index of the last processed call
@@ -2149,9 +2057,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
 	if (loop_body >= argc)
 	{
 		if (ntuples > 0)
-		{
 			pltcl_set_tuple_values(interp, arrayname, 0, tuples[0], tupdesc);
-		}
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		sprintf(buf, "%d", ntuples);
 		Tcl_SetResult(interp, buf, TCL_VOLATILE);
@@ -2283,9 +2189,7 @@ pltcl_set_tuple_values(Tcl_Interp * interp, char *arrayname,
 			pfree(outputstr);
 		}
 		else
-		{
 			Tcl_UnsetVar2(interp, *arrptr, *nameptr, 0);
-		}
 	}
 }
 

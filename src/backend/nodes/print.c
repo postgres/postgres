@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.14 1998/01/20 05:03:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.15 1998/06/15 19:28:32 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -69,9 +69,7 @@ pprint(void *obj)
 	for (;;)
 	{
 		for (j = 0; j < indentLev * 3; j++)
-		{
 			line[j] = ' ';
-		}
 		for (; j < 75 && s[i] != '\0'; i++, j++)
 		{
 			line[j] = s[i];
@@ -109,9 +107,7 @@ pprint(void *obj)
 						printf("%s\n", line);
 						/* print the line before : and resets */
 						for (j = 0; j < indentLev * 3; j++)
-						{
 							line[j] = ' ';
-						}
 					}
 					line[j] = s[i];
 					break;
@@ -123,9 +119,7 @@ pprint(void *obj)
 		printf("%s\n", line);
 	}
 	if (j != 0)
-	{
 		printf("%s\n", line);
-	}
 	fflush(stdout);
 	return;
 }
@@ -211,14 +205,10 @@ print_expr(Node *expr, List *rtable)
 			print_expr((Node *) get_rightop(e), rtable);
 		}
 		else
-		{
 			printf("an expr");
-		}
 	}
 	else
-	{
 		printf("not an expr");
-	}
 }
 
 /*
@@ -258,13 +248,9 @@ print_tl(List *tlist, List *rtable)
 
 		printf("\t%d %s\t", tle->resdom->resno, tle->resdom->resname);
 		if (tle->resdom->reskey != 0)
-		{
 			printf("(%d):\t", tle->resdom->reskey);
-		}
 		else
-		{
 			printf("    :\t");
-		}
 		print_expr(tle->expr, rtable);
 		printf("\n");
 	}

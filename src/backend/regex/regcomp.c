@@ -1643,13 +1643,9 @@ sopno		pos;
 	for (i = 1; i < NPAREN; i++)
 	{
 		if (p->pbegin[i] >= pos)
-		{
 			p->pbegin[i]++;
-		}
 		if (p->pend[i] >= pos)
-		{
 			p->pend[i]++;
-		}
 	}
 
 	memmove((char *) &p->strip[pos + 1], (char *) &p->strip[pos],

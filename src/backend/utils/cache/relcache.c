@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.39 1998/06/15 18:39:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.40 1998/06/15 19:29:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,9 +380,7 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 	 * ----------------
 	 */
 	if (!HeapTupleIsValid(pg_class_tuple))
-	{
 		return_tuple = pg_class_tuple;
-	}
 	else
 	{
 		/* ------------------
@@ -907,13 +905,9 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	 * ----------------
 	 */
 	if (relp->relhasrules)
-	{
 		RelationBuildRuleLock(relation);
-	}
 	else
-	{
 		relation->rd_rules = NULL;
-	}
 
 	/* Triggers */
 	if (relp->reltriggers > 0)
@@ -926,9 +920,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	 * ----------------
 	 */
 	if (OidIsValid(relam))
-	{
 		IndexedAccessMethodInitialize(relation);
-	}
 
 	/* ----------------
 	 *	initialize the relation lock manager information
@@ -993,9 +985,7 @@ IndexedAccessMethodInitialize(Relation relation)
 		support = (RegProcedure *) palloc(supportSize);
 	}
 	else
-	{
 		support = (RegProcedure *) NULL;
-	}
 
 	IndexSupportInitialize(strategy, support,
 						   relation->rd_att->attrs[0]->attrelid,
@@ -1346,9 +1336,7 @@ RelationFlushRelation(Relation *relationPtr,
 			int			j;
 
 			for (j = 0; j < relation->rd_rules->numLocks; j++)
-			{
 				pfree(relation->rd_rules->rules[j]);
-			}
 			pfree(relation->rd_rules->rules);
 			pfree(relation->rd_rules);
 		}
@@ -1460,9 +1448,7 @@ RelationFlushIndexes(Relation *r,
 	if (relation->rd_rel->relkind == RELKIND_INDEX &&	/* XXX style */
 		(!OidIsValid(accessMethodId) ||
 		 relation->rd_rel->relam == accessMethodId))
-	{
 		RelationFlushRelation(&relation, false);
-	}
 }
 
 #endif
@@ -1588,9 +1574,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 				}
 			}
 			else
-			{
 				smgrunlink(DEFAULT_SMGR, reln);
-			}
 		}
 		else if (!IsBootstrapProcessingMode() && !(reln->rd_istemp))
 

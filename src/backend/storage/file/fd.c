@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.31 1998/04/05 21:04:27 momjian Exp $
+ *	  $Id: fd.c,v 1.32 1998/06/15 19:29:11 momjian Exp $
  *
  * NOTES:
  *
@@ -533,9 +533,7 @@ FileInvalidate(File file)
 {
 	Assert(file > 0);
 	if (!FileIsNotOpen(file))
-	{
 		LruDelete(file);
-	}
 }
 
 #endif
@@ -583,9 +581,7 @@ tryAgain:
 	Insert(file);
 
 	if (fileName == NULL)
-	{
 		elog(ERROR, "fileNameOpenFile: NULL fname");
-	}
 	vfdP->fileName = malloc(strlen(fileName) + 1);
 	strcpy(vfdP->fileName, fileName);
 
@@ -709,9 +705,7 @@ FileRead(File file, char *buffer, int amount)
 	FileAccess(file);
 	returnCode = read(VfdCache[file].fd, buffer, amount);
 	if (returnCode > 0)
-	{
 		VfdCache[file].seekPos += returnCode;
-	}
 
 	return returnCode;
 }
@@ -815,9 +809,7 @@ FileSync(File file)
 	 */
 
 	if (VfdCache[file].fd < 0 || !(VfdCache[file].fdstate & FD_DIRTY))
-	{
 		returnCode = 0;
-	}
 	else
 	{
 		returnCode = fsync(VfdCache[file].fd);

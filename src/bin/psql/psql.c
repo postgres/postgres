@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.144 1998/05/15 01:57:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.145 1998/06/15 19:30:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,9 +307,7 @@ handle_sigint (SIGNAL_ARGS)
 		exit(1);				/* accept signal if no connection */
 	/* Try to send cancel request */
 	if (PQrequestCancel(cancelConn))
-	{
 		fprintf(stderr, "\nCANCEL request sent\n");
-	}
 	else
 	{
 		fprintf(stderr, "\nCannot send cancel request:\n%s\n",
@@ -1361,13 +1359,9 @@ do_copy(const char *args, PsqlSettings *pset)
 			strcat(query, " TO stdout");
 
 		if (from)
-		{
 			copystream = fopen(file, "r");
-		}
 		else
-		{
 			copystream = fopen(file, "w");
-		}
 		if (copystream == NULL)
 			fprintf(stderr,
 				"Unable to open file %s which to copy, errno = %s (%d).",
@@ -2176,9 +2170,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 		}
 		else
-		{
 			query_alloced = true;
-		}
 	}
 
 	interactive = ((source == stdin) && !pset->notty);
@@ -2321,9 +2313,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 							strcat(query, query_start);
 						}
 						else
-						{
 							strcpy(query, query_start);
-						}
 					}
 					line[i] = hold_char;
 					query_start = line + i;
@@ -2345,9 +2335,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 				/* inside a quote? */
 				if (in_quote && (line[i] != '\'' || was_bslash))
-				{
 					 /* do nothing */ ;
-				}
 				else if (xcomment != NULL)		/* inside an extended
 												 * comment? */
 				{
@@ -2375,9 +2363,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					break;
 				}
 				else if (line[i] == '\'')
-				{
 					in_quote ^= 1;
-				}
 				/* semi-colon? then send query now */
 				else if (!paren_level && line[i] == ';')
 				{
@@ -2411,9 +2397,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 				}
 				else if (paren_level && line[i] == ')')
-				{
 					paren_level--;
-				}
 			}
 		}
 
@@ -2544,9 +2528,7 @@ main(int argc, char **argv)
 			case 'c':
 				singleQuery = strdup(optarg);
 				if (singleQuery[0] == '\\')
-				{
 					singleSlashCmd = 1;
-				}
 				break;
 			case 'd':
 				dbname = optarg;
@@ -2625,9 +2607,7 @@ main(int argc, char **argv)
 		free(connect_string);
 	}
 	else
-	{
 		settings.db = PQsetdb(host, port, NULL, NULL, dbname);
-	}
 
 	dbname = PQdb(settings.db);
 
@@ -2642,9 +2622,7 @@ main(int argc, char **argv)
 	cancelConn = settings.db;	/* enable SIGINT to send cancel */
 
 	if (listDatabases)
-	{
 		exit(listAllDbs(&settings));
-	}
 	if (!settings.quiet && !settings.notty && !singleQuery && !qfilename)
 	{
 		printf("Welcome to the POSTGRESQL interactive sql monitor:\n");
@@ -2802,9 +2780,7 @@ handleCopyIn(PGresult *res, const bool mustprompt, FILE *copystream)
 			for (; buflen > 1 &&
 				 !(linedone = (c = getc(copystream)) == '\n' || c == EOF);
 				 --buflen)
-			{
 				*s++ = c;
-			}
 			if (c == EOF)
 			{
 				PQputline(res->conn, "\\.");
@@ -2816,9 +2792,7 @@ handleCopyIn(PGresult *res, const bool mustprompt, FILE *copystream)
 			if (firstload)
 			{
 				if (!strcmp(copybuf, "\\."))
-				{
 					copydone = true;
-				}
 				firstload = false;
 			}
 		}
@@ -2949,9 +2923,7 @@ make_connect_string(char *host, char *port, char *dbname,
 
 	connect_string = (char *) malloc(connect_string_len);
 	if (!connect_string)
-	{
 		return 0;
-	}
 	connect_string[0] = '\0';
 	if (host)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.21 1998/05/29 17:00:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.22 1998/06/15 19:29:13 momjian Exp $
  *
  * NOTES
  *
@@ -310,9 +310,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 			exitpg(3);
 		}
 		for (i = 0; i < semNum; i++)
-		{
 			array[i] = semStartValue;
-		}
 		semun.array = array;
 		errStatus = semctl(semId, 0, SETALL, semun);
 		if (errStatus == -1)
@@ -513,9 +511,7 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 		shmid = PrivateMemoryCreate(memKey, size);
 	}
 	else
-	{
 		shmid = shmget(memKey, size, IPC_CREAT | permission);
-	}
 
 	if (shmid < 0)
 	{
@@ -564,9 +560,7 @@ static void
 IpcMemoryDetach(int status, char *shmaddr)
 {
 	if (shmdt(shmaddr) < 0)
-	{
 		elog(NOTICE, "IpcMemoryDetach: shmdt(0x%x): %m", shmaddr);
-	}
 }
 
 /****************************************************************************/
@@ -582,13 +576,9 @@ IpcMemoryAttach(IpcMemoryId memId)
 	char	   *memAddress;
 
 	if (UsePrivateMemory)
-	{
 		memAddress = (char *) PrivateMemoryAttach(memId);
-	}
 	else
-	{
 		memAddress = (char *) shmat(memId, 0, 0);
-	}
 
 	/* if ( *memAddress == -1) { XXX ??? */
 	if (memAddress == (char *) -1)

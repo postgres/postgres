@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.17 1998/04/24 14:41:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.18 1998/06/15 19:28:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,18 +315,14 @@ ExecTee(Tee *node, Plan *parent)
 	/* XXX doesn't handle backwards direction yet */
 
 	if (parent == node->leftParent)
-	{
 		branch = leftPlace;
-	}
 	else if ((parent == node->rightParent) || (parent == (Plan *) node))
 
 		/*
 		 * the tee node could be the root node of the plan, in which case,
 		 * we treat it like a right-parent pull
 		 */
-	{
 		branch = rightPlace;
-	}
 	else
 	{
 		elog(ERROR, "A Tee node can only be executed from its left or right parent\n");
@@ -419,13 +415,9 @@ ExecTee(Tee *node, Plan *parent)
 	}
 
 	if (parent == node->leftParent)
-	{
 		teeState->tee_leftPlace = leftPlace + 1;
-	}
 	else
-	{
 		teeState->tee_rightPlace = rightPlace + 1;
-	}
 
 	return result;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.7 1997/09/08 02:23:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.8 1998/06/15 19:28:27 momjian Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -56,9 +56,7 @@ pqsignal(int signo, pqsigfunc func)
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
 	if (signo != SIGALRM)
-	{
 		act.sa_flags |= SA_RESTART;
-	}
 	if (sigaction(signo, &act, &oact) < 0)
 		return (SIG_ERR);
 	return (oact.sa_handler);

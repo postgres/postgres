@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.19 1998/05/26 17:29:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.20 1998/06/15 19:29:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,18 +189,14 @@ InitShmem(unsigned int key, unsigned int size)
 	 * allocator and binding table.
 	 */
 	if (!InitSpinLocks(ShmemBootstrap, IPCKeyGetSpinLockSemaphoreKey(key)))
-	{
 		return (FALSE);
-	}
 
 	/*
 	 * We have just allocated additional space for two spinlocks. Now
 	 * setup the global free space count
 	 */
 	if (ShmemBootstrap)
-	{
 		*ShmemFreeStart = currFreeSpace;
-	}
 
 	/* if ShmemFreeStart is NULL, then the allocator won't work */
 	Assert(*ShmemFreeStart);
@@ -256,9 +252,7 @@ InitShmem(unsigned int key, unsigned int size)
 
 	}
 	else
-	{
 		Assert(!ShmemBootstrap);
-	}
 	/* now release the lock acquired in ShmemHashInit */
 	SpinRelease(BindingLock);
 
@@ -303,16 +297,12 @@ ShmemAlloc(unsigned long size)
 		*ShmemFreeStart += size;
 	}
 	else
-	{
 		newSpace = NULL;
-	}
 
 	SpinRelease(ShmemLock);
 
 	if (!newSpace)
-	{
 		elog(NOTICE, "ShmemAlloc: out of memory ");
-	}
 	return (newSpace);
 }
 
@@ -420,13 +410,9 @@ ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr)
 	}
 
 	if (found)
-	{
 		*locationPtr = result->location;
-	}
 	else
-	{
 		result->location = *locationPtr;
-	}
 
 	SpinRelease(BindingLock);
 	return (TRUE);
@@ -473,9 +459,7 @@ ShmemPIDDestroy(int pid)
 	if (found)
 		return (location);
 	else
-	{
 		return (INVALID_OFFSET);
-	}
 }
 
 /*

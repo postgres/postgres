@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.9 1998/06/09 17:13:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.10 1998/06/15 19:29:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,9 +110,7 @@ ValidateBinary(char *path)
 	if (pwp)
 	{
 		if (pwp->pw_gid == buf.st_gid)
-		{
 			++in_grp;
-		}
 		else if (pwp->pw_name &&
 				 (gp = getgrgid(buf.st_gid)))
 		{

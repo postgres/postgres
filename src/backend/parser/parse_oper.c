@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.12 1998/05/29 14:00:22 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.13 1998/06/15 19:28:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,9 +217,7 @@ oper_select_candidate(int nargs,
 		{
 			if ((input_typeids[i] != UNKNOWNOID)
 			 && (current_typeids[i] == input_typeids[i]))
-			{
 				nmatch++;
-			}
 		}
 
 #ifdef PARSEDEBUG
@@ -257,9 +255,7 @@ printf("oper_select_candidate- reject candidate as possible match\n");
 	{
 		if (!can_coerce_type(1, &input_typeids[0], &candidates->args[0])
 		 || !can_coerce_type(1, &input_typeids[1], &candidates->args[1]))
-		{
 			ncandidates = 0;
-		}
 		return ((ncandidates == 1)? candidates->args: NULL);
 	}
 
@@ -283,14 +279,10 @@ printf("oper_select_candidate- reject candidate as possible match\n");
 			if (input_typeids[i] != UNKNOWNOID)
 			{
 				if (current_typeids[i] == input_typeids[i])
-				{
 					nmatch++;
-				}
 				else if (IsPreferredType(current_category, current_typeids[i])
 				 && can_coerce_type(1, &input_typeids[i], &current_typeids[i]))
-				{
 					nmatch++;
-				}
 			}
 		}
 
@@ -348,13 +340,9 @@ printf("oper_select_candidate- unable to coerce preferred candidate\n");
 	{
 		if ((input_typeids[i] != UNKNOWNOID)
 		 && (input_typeids[i] != InvalidOid))
-		{
 			current_type = input_typeids[i];
-		}
 		else
-		{
 			unknownOids = TRUE;
-		}
 	}
 
 	if (unknownOids && (current_type != UNKNOWNOID))
@@ -510,14 +498,10 @@ printf("oper_exact: commutative operator found\n");
 			}
 			/* disable for now... - thomas 1998-05-14 */
 			else
-			{
 				tup = NULL;
-			}
 		}
 		if (!HeapTupleIsValid(tup) && (!noWarnings))
-		{
 			op_error(op, arg1, arg2);
-		}
 	}
 
 	return tup;
@@ -589,9 +573,7 @@ printf("oper_inexact: found candidate\n");
 
 		}
 		else
-		{
 			tup = NULL;
-		}
 
 		/* Could not choose one, for whatever reason... */
 		if (!HeapTupleIsValid(tup))
@@ -757,9 +739,7 @@ right_oper(char *op, Oid arg)
 										  Int8GetDatum('r'));
 			}
 			else
-			{
 				tup = NULL;
-			}
 
 			if (!HeapTupleIsValid(tup))
 			{
@@ -846,9 +826,7 @@ op_error(char *op, Oid arg1, Oid arg2)
 				tp2 = NULL;
 
 	if (typeidIsValid(arg1))
-	{
 		tp1 = typeidType(arg1);
-	}
 	else
 	{
 		elog(ERROR, "Left hand side of operator '%s' has an unknown type"
@@ -856,9 +834,7 @@ op_error(char *op, Oid arg1, Oid arg2)
 	}
 
 	if (typeidIsValid(arg2))
-	{
 		tp2 = typeidType(arg2);
-	}
 	else
 	{
 		elog(ERROR, "Right hand side of operator %s has an unknown type"

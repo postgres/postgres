@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.12 1998/05/29 13:31:52 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.13 1998/06/15 19:29:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,9 +219,7 @@ NameComputeLength(Name name)
 	for (length = 0, charP = name->data;
 		 length < NAMEDATALEN && *charP != '\0';
 		 length++, charP++)
-	{
 		;
-	}
 	return (uint32) length;
 }
 

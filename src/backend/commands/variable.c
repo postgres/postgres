@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.5 1998/03/30 16:45:59 momjian Exp $
+ * $Id: variable.c,v 1.6 1998/06/15 19:28:17 momjian Exp $
  *
  */
 
@@ -365,9 +365,7 @@ parse_date(const char *value)
 			ecnt++;
 		}
 		else
-		{
 			elog(ERROR, "Bad value for date style (%s)", tok);
-		}
 		pfree(tok);
 	}
 

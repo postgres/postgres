@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.42 1998/06/13 20:22:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.43 1998/06/15 19:28:09 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -190,9 +190,7 @@ RelationNameGetObjectId(char *relationName,
 	pg_class_tuple = heap_getnext(pg_class_scan, 0, &buffer);
 
 	if (!HeapTupleIsValid(pg_class_tuple))
-	{
 		relationObjectId = InvalidOid;
-	}
 	else
 	{
 		relationObjectId = pg_class_tuple->t_oid;
@@ -385,9 +383,7 @@ ConstructTupleDescriptor(Oid heapoid,
 			IndexKeyType = IndexKey->tname;
 		}
 		else
-		{
 			IndexKeyType = NULL;
-		}
 
 		indexTupDesc->attrs[i] = (AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
 
@@ -805,9 +801,7 @@ UpdateIndexRelation(Oid indexoid,
 		pfree(predString);
 	}
 	else
-	{
 		predText = (text *) fmgr(F_TEXTIN, "");
-	}
 	predLen = VARSIZE(predText);
 	itupLen = predLen + sizeof(FormData_pg_index);
 	indexForm = (IndexTupleForm) palloc(itupLen);
@@ -942,9 +936,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 		pfree(predString);
 	}
 	else
-	{
 		predText = (text *) fmgr(F_TEXTIN, "");
-	}
 
 	/* open the index system catalog relation */
 	pg_index = heap_openr(IndexRelationName);
@@ -1027,9 +1019,7 @@ InitIndexStrategy(int numatts,
 													  strsize);
 	}
 	else
-	{
 		support = (RegProcedure *) NULL;
-	}
 
 	/* ----------------
 	 *	fill in the index strategy structure with information
@@ -1269,9 +1259,7 @@ index_destroy(Oid indexId)
 
 	while (tuple = heap_getnext(scan, 0, (Buffer *) NULL),
 		   HeapTupleIsValid(tuple))
-	{
 		heap_delete(catalogRelation, &tuple->t_ctid);
-	}
 	heap_endscan(scan);
 	heap_close(catalogRelation);
 
@@ -1410,9 +1398,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	 */
 	pg_class = heap_openr(RelationRelationName);
 	if (!RelationIsValid(pg_class))
-	{
 		elog(ERROR, "UpdateStats: could not open RELATION relation");
-	}
 	key[0].sk_argument = ObjectIdGetDatum(relid);
 
 	pg_class_scan =

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.8 1998/05/12 21:44:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.9 1998/06/15 19:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,7 @@ importFile(PGconn *conn, char *filename)
 	 */
 	lobjId = lo_creat(conn, INV_READ | INV_WRITE);
 	if (lobjId == 0)
-	{
 		fprintf(stderr, "can't create large object");
-	}
 
 	lobj_fd = lo_open(conn, lobjId, INV_WRITE);
 
@@ -66,9 +64,7 @@ importFile(PGconn *conn, char *filename)
 	{
 		tmp = lo_write(conn, lobj_fd, buf, nbytes);
 		if (tmp < nbytes)
-		{
 			fprintf(stderr, "error while reading \"%s\"", filename);
-		}
 	}
 
 	close(fd);
@@ -241,9 +237,7 @@ main(int argc, char **argv)
 /*	lobjOid = importFile(conn, in_filename); */
 	lobjOid = lo_import(conn, in_filename);
 	if (lobjOid == 0)
-	{
 		fprintf(stderr, "%s\n", PQerrorMessage(conn));
-	}
 /*
 	printf("\tas large object %d.\n", lobjOid);
 
@@ -257,9 +251,7 @@ main(int argc, char **argv)
 	printf("exporting large object to file \"%s\" ...\n", out_filename);
 /*	  exportFile(conn, lobjOid, out_filename); */
 	if (!lo_export(conn, lobjOid, out_filename))
-	{
 		fprintf(stderr, "%s\n", PQerrorMessage(conn));
-	}
 
 	res = PQexec(conn, "end");
 	PQclear(res);

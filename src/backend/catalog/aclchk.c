@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.10 1998/05/09 23:42:58 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.11 1998/06/15 19:28:06 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -200,13 +200,9 @@ get_grosysid(char *groname)
 	htp = SearchSysCacheTuple(GRONAME, PointerGetDatum(groname),
 							  0, 0, 0);
 	if (HeapTupleIsValid(htp))
-	{
 		id = ((Form_pg_group) GETSTRUCT(htp))->grosysid;
-	}
 	else
-	{
 		elog(ERROR, "non-existent group \"%s\"", groname);
-	}
 	return (id);
 }
 
@@ -219,13 +215,9 @@ get_groname(AclId grosysid)
 	htp = SearchSysCacheTuple(GROSYSID, PointerGetDatum(grosysid),
 							  0, 0, 0);
 	if (HeapTupleIsValid(htp))
-	{
 		name = (((Form_pg_group) GETSTRUCT(htp))->groname).data;
-	}
 	else
-	{
 		elog(NOTICE, "get_groname: group %d not found", grosysid);
-	}
 	return (name);
 }
 
@@ -267,9 +259,7 @@ in_group(AclId uid, AclId gid)
 			}
 	}
 	else
-	{
 		elog(NOTICE, "in_group: group %d not found", gid);
-	}
 	heap_close(relation);
 	return (found);
 }
@@ -290,9 +280,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 
 	/* if no acl is found, use world default */
 	if (!acl)
-	{
 		acl = acldefault(relname);
-	}
 
 	num = ACL_NUM(acl);
 	aidat = ACL_DAT(acl);

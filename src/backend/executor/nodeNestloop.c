@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.9 1998/02/26 04:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.10 1998/06/15 19:28:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,9 +120,7 @@ ExecNestLoop(NestLoop *node, Plan *parent)
 		needNewOuterTuple = false;
 
 		if (!TupIsNull(outerTupleSlot))
-		{
 			ENL1_printf("have outer tuple, deal with it");
-		}
 		else
 		{
 			ENL1_printf("outer tuple is nil, need new outer tuple");
@@ -196,9 +194,7 @@ ExecNestLoop(NestLoop *node, Plan *parent)
 			econtext->ecxt_innertuple = innerTupleSlot;
 
 			if (TupIsNull(innerTupleSlot))
-			{
 				ENL1_printf("couldn't get inner tuple - need new outer tuple");
-			}
 			else
 			{
 				ENL1_printf("got inner and outer tuples");

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.34 1998/02/26 04:36:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.35 1998/06/15 19:29:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.34 1998/02/26 04:36:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.35 1998/06/15 19:29:21 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -239,9 +239,7 @@ InitProcess(IPCKey key)
 		MyProc->sem.semKey = semKey;
 	}
 	else
-	{
 		MyProc->sem.semId = -1;
-	}
 
 	/* ----------------------
 	 * Release the lock.
@@ -271,9 +269,7 @@ InitProcess(IPCKey key)
 	 */
 	location = MAKE_OFFSET(MyProc);
 	if ((!ShmemPIDLookup(MyProcPid, &location)) || (location != MAKE_OFFSET(MyProc)))
-	{
 		elog(FATAL, "InitProc: ShmemPID table broken");
-	}
 
 	MyProc->errType = NO_ERROR;
 	SHMQueueElemInit(&(MyProc->links));
@@ -353,12 +349,9 @@ ProcKill(int exitStatus, int pid)
 
 	proc = (PROC *) MAKE_PTR(location);
 
-	if (proc != MyProc)
-	{
-		Assert(pid != MyProcPid);
-	}
-	else
-		MyProc = NULL;
+	Assert(proc == MyProc || pid != MyProcPid);
+
+	MyProc = NULL;
 
 	/* ---------------
 	 * Assume one lock table.
@@ -408,13 +401,9 @@ ProcQueueAlloc(char *name)
 	ShmemInitStruct(name, (unsigned) sizeof(PROC_QUEUE), &found);
 
 	if (!queue)
-	{
 		return (NULL);
-	}
 	if (!found)
-	{
 		ProcQueueInit(queue);
-	}
 	return (queue);
 }
 

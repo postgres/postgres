@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.20 1998/02/26 04:38:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.21 1998/06/15 19:30:00 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -126,9 +126,7 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 	for (i = 0; i < numInherits; i++)
 	{
 		if (strcmp(inhinfo[i].inhrel, oid) == 0)
-		{
 			numParents++;
-		}
 	}
 
 	*numParentsPtr = numParents;
@@ -396,9 +394,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				if (strInArray(tblinfo[i].attnames[j],
 							   tblinfo[parentInd].attnames,
 							   tblinfo[parentInd].numatts) != -1)
-				{
 					tblinfo[i].inhAttrs[j] = 1;
-				}
 			}
 		}
 	}
@@ -493,8 +489,6 @@ fmtId(const char *rawid)
 		cp = id;
 	}
 	else
-	{
 		cp = rawid;
-	}
 	return (cp);
 }	/* fmtId() */

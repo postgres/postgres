@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.13 1998/02/26 04:37:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.14 1998/06/15 19:29:40 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -251,9 +251,7 @@ op_mergesortable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
 		return TRUE;
 	}
 	else
-	{
 		return FALSE;
-	}
 }
 
 /*

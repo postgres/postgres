@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.10 1997/09/22 04:20:53 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.11 1998/06/15 19:29:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,9 +157,7 @@ SpinRelease(SPINLOCK lockid)
 		S_UNLOCK(&(slckP->shlock));
 	}
 	else
-	{
 		S_UNLOCK(&(slckP->shlock));
-	}
 	S_UNLOCK(&(slckP->exlock));
 	S_UNLOCK(&(slckP->locklock));
 #ifdef LOCKDEBUG

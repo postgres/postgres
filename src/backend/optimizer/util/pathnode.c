@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.7 1998/02/26 04:33:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.8 1998/06/15 19:28:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,9 +77,7 @@ set_cheapest(Rel *parent_rel, List *pathlist)
 		Path	   *path = (Path *) lfirst(p);
 
 		if (path_is_cheaper(path, cheapest_so_far))
-		{
 			cheapest_so_far = path;
-		}
 	}
 
 	parent_rel->cheapestpath = cheapest_so_far;
@@ -129,9 +127,7 @@ add_pathlist(Rel *parent_rel, List *unique_paths, List *new_paths)
 		{						/* (IsA(old_path,Path)) { */
 			new_path->parent = parent_rel;
 			if (!parent_rel->pruneable)
-			{
 				unique_paths = lcons(new_path, unique_paths);
-			}
 			else
 				unique_paths = lcons(new_path,
 									 LispRemove(old_path, unique_paths));
@@ -180,16 +176,12 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
 	}
 
 	if (old_path == NULL)
-	{
 		*noOther = true;
-	}
 	else
 	{
 		*noOther = false;
 		if (path_is_cheaper(new_path, old_path))
-		{
 			retval = old_path;
-		}
 	}
 
 	return (retval);
@@ -299,14 +291,10 @@ create_index_path(Query *root,
 		 * if no index keys were found, we can't order the path).
 		 */
 		if (pathnode->path.keys == NULL)
-		{
 			pathnode->path.p_ordering.ord.sortop = NULL;
-		}
 	}
 	else
-	{
 		pathnode->path.keys = NULL;
-	}
 
 	if (is_join_scan || restriction_clauses == NULL)
 	{
@@ -468,9 +456,7 @@ create_nestloop_path(Rel *joinrel,
 	/* add in expensive function costs -- JMH 7/7/92 */
 #if 0
 	if (XfuncMode != XFUNC_OFF)
-	{
 		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
-	}
 #endif
 	return (pathnode);
 }

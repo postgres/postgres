@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.10 1998/03/30 16:36:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.11 1998/06/15 19:28:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,9 +351,7 @@ agg_error(char *caller, char *aggname, Oid basetypeID)
 	 */
 
 	if (basetypeID == InvalidOid)
-	{
 		elog(ERROR, "%s: aggregate '%s' for all types does not exist", caller, aggname);
-	}
 	else
 	{
 		elog(ERROR, "%s: aggregate '%s' for '%s' does not exist", caller, aggname,

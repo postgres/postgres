@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.13 1998/02/26 04:37:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.14 1998/06/15 19:29:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,9 +165,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	MemSet(hashp, 0, sizeof(HTAB));
 
 	if (flags & HASH_FUNCTION)
-	{
 		hashp->hash = info->hash;
-	}
 	else
 	{
 		/* default */
@@ -185,9 +183,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 
 		/* hash table already exists, we're just attaching to it */
 		if (flags & HASH_ATTACH)
-		{
 			return (hashp);
-		}
 
 	}
 	else
@@ -204,9 +200,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	{
 		hashp->hctl = (HHDR *) hashp->alloc((unsigned long) sizeof(HHDR));
 		if (!hashp->hctl)
-		{
 			return (0);
-		}
 	}
 
 	if (!hdefault(hashp))
@@ -227,9 +221,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 		hctl->sshift = my_log2(info->ssize);
 	}
 	if (flags & HASH_FFACTOR)
-	{
 		hctl->ffactor = info->ffactor;
-	}
 
 	/*
 	 * SHM hash tables have fixed maximum size (allocate a maximal sized
@@ -251,9 +243,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 		hctl->datasize = info->datasize;
 	}
 	if (flags & HASH_ALLOC)
-	{
 		hashp->alloc = info->alloc;
-	}
 
 	if (init_htab(hashp, nelem))
 	{
@@ -327,9 +317,7 @@ init_htab(HTAB *hashp, int nelem)
 	nsegs = 1 << my_log2(nsegs);
 
 	if (nsegs > hctl->dsize)
-	{
 		hctl->dsize = nsegs;
-	}
 
 	/* Use two low order bits of points ???? */
 
@@ -452,9 +440,7 @@ call_hash(HTAB *hashp, char *k, int len)
 
 	bucket = hash_val & hctl->high_mask;
 	if (bucket > hctl->max_bucket)
-	{
 		bucket = bucket & hctl->low_mask;
-	}
 
 	return (bucket);
 }
@@ -534,9 +520,7 @@ hash_search(HTAB *hashp,
 			curr = GET_BUCKET(hashp, currIndex);
 
 			if (!memcmp((char *) &(curr->key), keyPtr, hctl->keysize))
-			{
 				break;
-			}
 			prevIndexPtr = &(curr->next);
 			currIndex = *prevIndexPtr;
 #if HASH_STATISTICS
@@ -608,9 +592,7 @@ hash_search(HTAB *hashp,
 
 		/* no free elements.  allocate another chunk of buckets */
 		if (!bucket_alloc(hashp))
-		{
 			return (NULL);
-		}
 		currIndex = hctl->freeBucketIndex;
 	}
 	Assert(currIndex != INVALID_INDEX);
@@ -754,13 +736,9 @@ expand_table(HTAB *hashp)
 
 		/* Allocate new segment if necessary */
 		if (new_segnum >= hctl->dsize)
-		{
 			dir_realloc(hashp);
-		}
 		if (!(hashp->dir[new_segnum] = seg_alloc(hashp)))
-		{
 			return (0);
-		}
 		hctl->nsegs++;
 	}
 
@@ -851,9 +829,7 @@ seg_alloc(HTAB *hashp)
 								  sizeof(SEGMENT) * hashp->hctl->ssize);
 
 	if (!segp)
-	{
 		return (0);
-	}
 
 	MemSet((char *) segp, 0,
 		   (long) sizeof(SEGMENT) * hashp->hctl->ssize);
@@ -887,9 +863,7 @@ bucket_alloc(HTAB *hashp)
 		hashp->alloc((unsigned long) BUCKET_ALLOC_INCR * bucketSize);
 
 	if (!tmpBucket)
-	{
 		return (0);
-	}
 
 	tmpIndex = MAKE_HASHOFFSET(hashp, tmpBucket);
 

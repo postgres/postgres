@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.17 1998/01/31 04:38:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.18 1998/06/15 19:29:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,9 +149,7 @@ handle_load(char *filename, char *funcname)
 		if (file_scanner == (DynamicFileList *) NULL)
 		{
 			if (stat(filename, &stat_buf) == -1)
-			{
 				elog(ERROR, "stat failed on file %s", filename);
-			}
 
 			for (file_scanner = file_list;
 				 file_scanner != (DynamicFileList *) NULL
@@ -168,9 +166,7 @@ handle_load(char *filename, char *funcname)
 		}
 	}
 	else
-	{
 		file_scanner = (DynamicFileList *) NULL;
-	}
 
 	/*
 	 * File not loaded yet.
@@ -202,13 +198,9 @@ handle_load(char *filename, char *funcname)
 		{
 			load_error = (char *) pg_dlerror();
 			if (file_scanner == file_list)
-			{
 				file_list = (DynamicFileList *) NULL;
-			}
 			else
-			{
 				file_tail->next = (DynamicFileList *) NULL;
-			}
 
 			free((char *) file_scanner);
 			elog(ERROR, "Load of file %s failed: %s", filename, load_error);
@@ -226,9 +218,7 @@ handle_load(char *filename, char *funcname)
 	retval = (func_ptr) pg_dlsym(file_scanner->handle, funcname);
 
 	if (retval == (func_ptr) NULL)
-	{
 		elog(ERROR, "Can't find function %s in file %s", funcname, filename);
-	}
 
 	return (retval);
 }
@@ -254,9 +244,7 @@ load_file(char *filename)
 	int			done = 0;
 
 	if (stat(filename, &stat_buf) == -1)
-	{
 		elog(ERROR, "stat failed on file %s", filename);
-	}
 
 	if (file_list != (DynamicFileList *) NULL
 		&& !NOT_EQUAL(stat_buf, *file_list))
@@ -272,17 +260,11 @@ load_file(char *filename)
 		while (!done)
 		{
 			if (file_scanner->next == (DynamicFileList *) NULL)
-			{
 				done = 1;
-			}
 			else if (!NOT_EQUAL(stat_buf, *(file_scanner->next)))
-			{
 				done = 1;
-			}
 			else
-			{
 				file_scanner = file_scanner->next;
-			}
 		}
 
 		if (file_scanner->next != (DynamicFileList *) NULL)

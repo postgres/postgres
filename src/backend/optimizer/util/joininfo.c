@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.6 1998/02/26 04:33:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.7 1998/06/15 19:28:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,13 +103,9 @@ other_join_clause_var(Var *var, Expr *clause)
 		r = (Var *) get_rightop(clause);
 
 		if (var_equal(var, l))
-		{
 			retval = r;
-		}
 		else if (var_equal(var, r))
-		{
 			retval = l;
-		}
 	}
 
 	return (retval);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.11 1998/02/26 04:37:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.12 1998/06/15 19:29:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,9 +288,7 @@ init_fcache(Oid foid,
 		retval->nargs = retval->func.fn_nargs;
 	}
 	else
-	{
 		retval->func.fn_addr = (func_ptr) NULL;
-	}
 
 
 	return (retval);
@@ -316,7 +314,5 @@ setFcache(Node *node, Oid foid, List *argList, ExprContext *econtext)
 		fnode->func_fcache = fcache;
 	}
 	else
-	{
 		elog(ERROR, "init_fcache: node must be Oper or Func!");
-	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.23 1998/03/31 23:30:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.24 1998/06/15 19:28:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,9 +333,7 @@ find_all_inheritors(List *unexamined_relids,
 											new_examined_relids);
 
 	if (new_unexamined_relids == NULL)
-	{
 		return (new_examined_relids);
-	}
 	else
 	{
 		return (find_all_inheritors(new_unexamined_relids,

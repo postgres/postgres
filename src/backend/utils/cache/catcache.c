@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.28 1998/06/15 18:39:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.29 1998/06/15 19:29:38 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -172,9 +172,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 		if (cp)
 			relation = heap_open(cp->relationId);
 		else
-		{
 			relation = heap_openr(cache->cc_relname);
-		}
 
 		didopen = 1;
 	}
@@ -325,9 +323,7 @@ comphash(long l, char *v)
 
 	i = 0;
 	while (l--)
-	{
 		i += *v++;
-	}
 	return (i);
 }
 
@@ -643,9 +639,7 @@ SystemCacheRelationFlushed(Oid relId)
 	for (cache = Caches; PointerIsValid(cache); cache = cache->cc_next)
 	{
 		if (cache->relationId == relId)
-		{
 			cache->relationId = InvalidOid;
-		}
 	}
 }
 
@@ -769,15 +763,11 @@ InitSysCache(char *relname,
 	{
 		cp->cc_key[i] = key[i];
 		if (!key[i])
-		{
 			elog(FATAL, "InitSysCache: called with 0 key[%d]", i);
-		}
 		if (key[i] < 0)
 		{
 			if (key[i] != ObjectIdAttributeNumber)
-			{
 				elog(FATAL, "InitSysCache: called with %d key[%d]", key[i], i);
-			}
 			else
 			{
 				cp->cc_klen[i] = sizeof(Oid);
@@ -990,9 +980,7 @@ SearchSysCache(struct catcache * cache,
 		 */
 		MemoryContextSwitchTo((MemoryContext) CacheCxt);
 		if (HeapTupleIsValid(ntp))
-		{
 			ntp = heap_copytuple(ntp);
-		}
 	}
 	else
 	{
@@ -1150,9 +1138,7 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 
 		/* OPT inline simplification of CatalogCacheIdInvalidate */
 		if (!PointerIsValid(function))
-		{
 			function = CatalogCacheIdInvalidate;
-		}
 
 		(*function) (ccp->id,
 				 CatalogCacheComputeTupleHashIndex(ccp, relation, tuple),

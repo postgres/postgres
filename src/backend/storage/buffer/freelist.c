@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.10 1998/06/15 18:39:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.11 1998/06/15 19:29:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,9 +105,7 @@ PinBuffer(BufferDesc *buf)
 		buf->flags &= ~BM_FREE;
 	}
 	else
-	{
 		NotInQueue(buf);
-	}
 
 	b = BufferDescriptorGetBuffer(buf) - 1;
 	Assert(PrivateRefCount[b] >= 0);

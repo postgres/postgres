@@ -145,9 +145,7 @@ crypt_loadpwdfile()
 		{						/* free the old data only if this is a
 								 * reload */
 			while (pwd_cache_count--)
-			{
 				free((void *) pwd_cache[pwd_cache_count]);
-			}
 			free((void *) pwd_cache);
 			pwd_cache = NULL;
 			pwd_cache_count = 0;

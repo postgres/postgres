@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.1 1998/03/10 05:23:40 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.2 1998/06/15 19:28:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,7 @@ pg_dlopen(char *filename)
 	if (!dl_initialized)
 	{
 		if (!dl_init(pg_pathname))
-		{
 			return NULL;
-		}
 
 		/*
 		 * if there are undefined symbols, we want dl to search from the

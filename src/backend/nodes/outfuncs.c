@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.35 1998/05/09 23:46:35 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.36 1998/06/15 19:28:32 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -690,9 +690,7 @@ _outFjoin(StringInfo str, Fjoin *node)
 
 	appendStringInfo(str, " :alwaysdone ");
 	for (i = 0; i < node->fj_nNodes; i++)
-	{
 		appendStringInfo(str, (node->fj_alwaysDone[i]) ? "true" : "false");
-	}
 }
 
 /*
@@ -779,13 +777,9 @@ _outConst(StringInfo str, Const *node)
 	appendStringInfo(str, node->constisnull ? "true" : "false");
 	appendStringInfo(str, " :constvalue ");
 	if (node->constisnull)
-	{
 		appendStringInfo(str, "<>");
-	}
 	else
-	{
 		_outDatum(str, node->constvalue, node->consttype);
-	}
 	appendStringInfo(str, " :constbyval ");
 	appendStringInfo(str, node->constbyval ? "true" : "false");
 }
@@ -1496,9 +1490,7 @@ _outDatum(StringInfo str, Datum value, Oid type)
 			 * without casting it to int first!! -mer 8 Jan 1991
 			 */
 			if (((int) length) <= -1)
-			{
 				length = VARSIZE(s);
-			}
 			sprintf(buf, " %d [ ", length);
 			appendStringInfo(str, buf);
 			for (i = 0; i < length; i++)

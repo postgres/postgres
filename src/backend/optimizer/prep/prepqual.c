@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.8 1998/02/26 04:32:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.9 1998/06/15 19:28:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,13 +129,9 @@ pull_args(Expr *qual)
 		return (make_orclause(pull_ors(t_list)));
 	}
 	else if (not_clause((Node *) qual))
-	{
 		return (make_notclause(pull_args(get_notclausearg(qual))));
-	}
 	else
-	{
 		return (qual);
-	}
 }
 
 /*
@@ -159,9 +155,7 @@ pull_ors(List *orlist)
 							   copyObject((Node *) lnext(orlist)))));
 	}
 	else
-	{
 		return (lcons(lfirst(orlist), pull_ors(lnext(orlist))));
-	}
 }
 
 /*
@@ -185,9 +179,7 @@ pull_ands(List *andlist)
 								copyObject((Node *) lnext(andlist)))));
 	}
 	else
-	{
 		return (lcons(lfirst(andlist), pull_ands(lnext(andlist))));
-	}
 }
 
 /*
@@ -219,9 +211,7 @@ find_nots(Expr *qual)
 		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
-		{
 			t_list = lappend(t_list, find_nots(lfirst(temp)));
-		}
 
 		return (make_andclause(t_list));
 	}
@@ -231,9 +221,7 @@ find_nots(Expr *qual)
 		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
-		{
 			t_list = lappend(t_list, find_nots(lfirst(temp)));
-		}
 		return (make_orclause(t_list));
 	}
 	else if (not_clause((Node *) qual))
@@ -277,9 +265,7 @@ push_nots(Expr *qual)
 				(make_opclause(op, get_leftop(qual), get_rightop(qual)));
 		}
 		else
-		{
 			return (make_notclause(qual));
-		}
 	}
 	else if (and_clause((Node *) qual))
 	{
@@ -293,9 +279,7 @@ push_nots(Expr *qual)
 		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
-		{
 			t_list = lappend(t_list, push_nots(lfirst(temp)));
-		}
 		return (make_orclause(t_list));
 	}
 	else if (or_clause((Node *) qual))
@@ -304,9 +288,7 @@ push_nots(Expr *qual)
 		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
-		{
 			t_list = lappend(t_list, push_nots(lfirst(temp)));
-		}
 		return (make_andclause(t_list));
 	}
 	else if (not_clause((Node *) qual))
@@ -357,9 +339,7 @@ normalize(Expr *qual)
 		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
-		{
 			t_list = lappend(t_list, normalize(lfirst(temp)));
-		}
 		return (make_andclause(t_list));
 	}
 	else if (or_clause((Node *) qual))
@@ -370,9 +350,7 @@ normalize(Expr *qual)
 		bool		has_andclause = FALSE;
 
 		foreach(temp, qual->args)
-		{
 			orlist = lappend(orlist, normalize(lfirst(temp)));
-		}
 		foreach(temp, orlist)
 		{
 			if (and_clause(lfirst(temp)))
@@ -427,9 +405,7 @@ or_normalize(List *orlist)
 								lnext(new_orlist))));
 	}
 	else
-	{
 		return (orlist);
-	}
 }
 
 /*
@@ -562,13 +538,9 @@ remove_ands(Expr *qual)
 		return ((List *) make_orclause((List *) t_list));
 	}
 	else if (not_clause((Node *) qual))
-	{
 		return ((List *) make_notclause((Expr *) remove_ands((Expr *) get_notclausearg(qual))));
-	}
 	else
-	{
 		return ((List *) qual);
-	}
 }
 
 /*****************************************************************************

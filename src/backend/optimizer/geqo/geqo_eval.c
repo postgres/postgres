@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.18 1998/02/26 04:32:21 momjian Exp $
+ * $Id: geqo_eval.c,v 1.19 1998/06/15 19:28:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,9 +131,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, Rel *outer_rel)
 					new_rels = lcons(gimme_clauseless_join(outer_rel, outer_rel), NIL); /* ??? MAU */
 				}
 				else
-				{
 					new_rels = lcons(gimme_clauseless_join(outer_rel, inner_rel), NIL);
-				}
 			}
 
 			/* process new_rel->pathlist */
@@ -221,9 +219,7 @@ gimme_clause_joins(Query *root, Rel *outer_rel, Rel *inner_rel)
 					rel = init_join_rel(outer_rel, get_join_rel(root, other_rels), joininfo);
 				}
 				else
-				{
 					rel = NULL;
-				}
 
 				if (rel != NULL)
 					join_list = lappend(join_list, rel);
@@ -700,18 +696,12 @@ geqo_joinrel_size(Rel *joinrel, Rel *outer_rel, Rel *inner_rel)
 	temp = (Cost) inner_rel->tuples * (Cost) outer_rel->tuples; /* cartesian product */
 
 	if (joinrel->clauseinfo)
-	{
 		temp = temp * product_selec(joinrel->clauseinfo);
-	}
 
 	if (temp >= (MAXINT - 1))
-	{
 		ntuples = ceil(geqo_log((double) temp, (double) GEQO_LOG_BASE));
-	}
 	else
-	{
 		ntuples = ceil((double) temp);
-	}
 
 	if (ntuples < 1)
 		ntuples = 1;			/* make the best case 1 instead of 0 */

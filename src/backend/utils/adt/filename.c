@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.14 1998/02/26 04:37:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.15 1998/06/15 19:29:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,14 +111,10 @@ filename_in(char *file)
 			ind = len + 1;
 		}
 		else
-		{
 			elog(ERROR, "Couldn't find %s in your environment", environment);
-		}
 	}
 	else
-	{
 		ind = 0;
-	}
 	strcat(str, file + ind);
 	return (str);
 }

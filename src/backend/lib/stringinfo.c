@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.9 1998/01/07 21:03:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.10 1998/06/15 19:28:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,7 @@ makeStringInfo()
 
 	res = (StringInfo) palloc(sizeof(StringInfoData));
 	if (res == NULL)
-	{
 		elog(ERROR, "makeStringInfo: Out of memory!");
-	}
 
 	size = 100;
 	res->data = palloc(size);
@@ -95,9 +93,7 @@ appendStringInfo(StringInfo str, char *buffer)
 		 */
 		newlen = 2 * str->len;
 		while (buflen + str->len >= newlen - 1)
-		{
 			newlen = 2 * newlen;
-		}
 
 		/*
 		 * allocate enough space.

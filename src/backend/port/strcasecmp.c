@@ -1,4 +1,4 @@
-/* $Id: strcasecmp.c,v 1.3 1998/02/11 19:11:10 momjian Exp $ */
+/* $Id: strcasecmp.c,v 1.4 1998/06/15 19:28:57 momjian Exp $ */
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -71,12 +71,8 @@ strcasecmp(char *s1, char *s2)
 		u1 = (unsigned char) *s1++;
 		u2 = (unsigned char) *s2++;
 		if (charmap[u1] != charmap[u2])
-		{
 			return charmap[u1] - charmap[u2];
-		}
 		if (u1 == '\0')
-		{
 			return 0;
-		}
 	}
 }

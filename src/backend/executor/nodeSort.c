@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.14 1998/02/26 04:31:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.15 1998/06/15 19:28:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,9 +181,7 @@ ExecSort(Sort *node)
 		SO1_printf(stderr, "ExecSort: sorting done.\n");
 	}
 	else
-	{
 		slot = (TupleTableSlot *) sortstate->csstate.cstate.cs_ResultTupleSlot;
-	}
 
 	SO1_printf("ExecSort: %s\n",
 			   "retrieving tuple from sorted relation");

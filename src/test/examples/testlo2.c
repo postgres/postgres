@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.7 1998/05/12 21:44:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.8 1998/06/15 19:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,7 @@ importFile(PGconn *conn, char *filename)
 	 */
 	lobjId = lo_creat(conn, INV_READ | INV_WRITE);
 	if (lobjId == 0)
-	{
 		fprintf(stderr, "can't create large object");
-	}
 
 	lobj_fd = lo_open(conn, lobjId, INV_WRITE);
 
@@ -62,9 +60,7 @@ importFile(PGconn *conn, char *filename)
 	{
 		tmp = lo_write(conn, lobj_fd, buf, nbytes);
 		if (tmp < nbytes)
-		{
 			fprintf(stderr, "error while reading \"%s\"", filename);
-		}
 	}
 
 	close(fd);

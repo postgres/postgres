@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.15 1998/01/07 21:01:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.16 1998/06/15 19:27:49 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -106,9 +106,7 @@ _hash_metapinit(Relation rel)
 		if ((1 << i) < (metap->hashm_bsize -
 						(DOUBLEALIGN(sizeof(PageHeaderData)) +
 						 DOUBLEALIGN(sizeof(HashPageOpaqueData)))))
-		{
 			break;
-		}
 	}
 	Assert(i);
 	metap->hashm_bmsize = 1 << i;
@@ -191,9 +189,7 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 	Buffer		buf;
 
 	if (blkno == P_NEW)
-	{
 		elog(ERROR, "_hash_getbuf: internal error: hash AM does not use P_NEW");
-	}
 	switch (access)
 	{
 		case HASH_WRITE:
@@ -395,14 +391,10 @@ _hash_pagedel(Relation rel, ItemPointer tid)
 	{
 		buf = _hash_freeovflpage(rel, buf);
 		if (BufferIsValid(buf))
-		{
 			_hash_relbuf(rel, buf, HASH_WRITE);
-		}
 	}
 	else
-	{
 		_hash_relbuf(rel, buf, HASH_WRITE);
-	}
 
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
@@ -545,9 +537,7 @@ _hash_splitpage(Relation rel,
 		opage = BufferGetPage(obuf);
 		_hash_checkpage(opage, LH_OVERFLOW_PAGE);
 		if (PageIsEmpty(opage))
-		{
 			elog(ERROR, "_hash_splitpage: empty overflow page %d", oblkno);
-		}
 		oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 	}
 

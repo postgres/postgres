@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.12 1998/05/12 21:44:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.13 1998/06/15 19:30:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,9 +51,7 @@ lo_open(PGconn *conn, Oid lobjId, int mode)
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
 		if (lo_initialize(conn) < 0)
-		{
 			return -1;
-		}
 	}
 
 	res = PQfn(conn, conn->lobjfuncs->fn_lo_open, &fd, &result_len, 1, argv, 2);
@@ -89,9 +87,7 @@ lo_close(PGconn *conn, int fd)
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
 		if (lo_initialize(conn) < 0)
-		{
 			return -1;
-		}
 	}
 
 	argv[0].isint = 1;
@@ -126,9 +122,7 @@ lo_read(PGconn *conn, int fd, char *buf, int len)
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
 		if (lo_initialize(conn) < 0)
-		{
 			return -1;
-		}
 	}
 
 	argv[0].isint = 1;
@@ -166,9 +160,7 @@ lo_write(PGconn *conn, int fd, char *buf, int len)
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
 		if (lo_initialize(conn) < 0)
-		{
 			return -1;
-		}
 	}
 
 	if (len <= 0)
@@ -211,9 +203,7 @@ lo_lseek(PGconn *conn, int fd, int offset, int whence)
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
 		if (lo_initialize(conn) < 0)
-		{
 			return -1;
-		}
 	}
 
 	argv[0].isint = 1;
@@ -259,9 +249,7 @@ lo_creat(PGconn *conn, int mode)
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
 		if (lo_initialize(conn) < 0)
-		{
 			return -1;
-		}
 	}
 
 	argv[0].isint = 1;
@@ -296,9 +284,7 @@ lo_tell(PGconn *conn, int fd)
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
 		if (lo_initialize(conn) < 0)
-		{
 			return -1;
-		}
 	}
 
 	argv[0].isint = 1;
@@ -333,9 +319,7 @@ lo_unlink(PGconn *conn, Oid lobjId)
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
 		if (lo_initialize(conn) < 0)
-		{
 			return -1;
-		}
 	}
 
 	argv[0].isint = 1;
@@ -546,37 +530,21 @@ lo_initialize(PGconn *conn)
 		fname = PQgetvalue(res, n, 0);
 		foid = (Oid) atoi(PQgetvalue(res, n, 1));
 		if (!strcmp(fname, "lo_open"))
-		{
 			lobjfuncs->fn_lo_open = foid;
-		}
 		else if (!strcmp(fname, "lo_close"))
-		{
 			lobjfuncs->fn_lo_close = foid;
-		}
 		else if (!strcmp(fname, "lo_creat"))
-		{
 			lobjfuncs->fn_lo_creat = foid;
-		}
 		else if (!strcmp(fname, "lo_unlink"))
-		{
 			lobjfuncs->fn_lo_unlink = foid;
-		}
 		else if (!strcmp(fname, "lo_lseek"))
-		{
 			lobjfuncs->fn_lo_lseek = foid;
-		}
 		else if (!strcmp(fname, "lo_tell"))
-		{
 			lobjfuncs->fn_lo_tell = foid;
-		}
 		else if (!strcmp(fname, "loread"))
-		{
 			lobjfuncs->fn_lo_read = foid;
-		}
 		else if (!strcmp(fname, "lowrite"))
-		{
 			lobjfuncs->fn_lo_write = foid;
-		}
 	}
 
 	PQclear(res);

@@ -104,38 +104,26 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 		{
 			result = (int) (*proc_fn) (p, value);
 			if (typlen > 0)
-			{
 				p += typlen;
-			}
 			else
-			{
 				p += INTALIGN(*(int32 *) p);
-			}
 		}
 		if (result)
 		{
 			if (!and)
-			{
 				return (1);
-			}
 		}
 		else
 		{
 			if (and)
-			{
 				return (0);
-			}
 		}
 	}
 
 	if (and && result)
-	{
 		return (1);
-	}
 	else
-	{
 		return (0);
-	}
 }
 
 /*

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.47 1998/05/26 03:44:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.48 1998/06/15 19:28:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,9 +364,7 @@ ExecCheckPerms(CmdType operation,
 		++i;
 	}
 	if (!ok)
-	{
 		elog(ERROR, "%s: %s", rname.data, aclcheck_error_strings[aclcheck_result]);
-	}
 }
 
 /* ===============================================================
@@ -660,9 +658,7 @@ EndPlan(Plan *plan, EState *estate)
 	 * ----------------
 	 */
 	if (intoRelationDesc != NULL)
-	{
 		heap_close(intoRelationDesc);
-	}
 }
 
 /* ----------------------------------------------------------------
@@ -1009,9 +1005,7 @@ ExecAppend(TupleTableSlot *slot,
 	 */
 	numIndices = resultRelationInfo->ri_NumIndices;
 	if (numIndices > 0)
-	{
 		ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate, false);
-	}
 	(estate->es_processed)++;
 	estate->es_lastoid = newId;
 
@@ -1218,9 +1212,7 @@ ExecReplace(TupleTableSlot *slot,
 
 	numIndices = resultRelationInfo->ri_NumIndices;
 	if (numIndices > 0)
-	{
 		ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate, true);
-	}
 
 	/* AFTER ROW UPDATE Triggers */
 	if (resultRelationDesc->trigdesc &&

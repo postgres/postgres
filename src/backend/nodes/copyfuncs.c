@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.41 1998/02/26 04:32:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.42 1998/06/15 19:28:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,7 @@ listCopy(List *list)
 	foreach(l, list)
 	{
 		if (newlist == NIL)
-		{
 			newlist = nl = lcons(lfirst(l), NIL);
-		}
 		else
 		{
 			lnext(nl) = lcons(lfirst(l), NIL);
@@ -842,9 +840,7 @@ _copyConst(Const *from)
 		}
 	}
 	else
-	{
 		newnode->constvalue = from->constvalue;
-	}
 	newnode->constisnull = from->constisnull;
 	newnode->constbyval = from->constbyval;
 	newnode->constisset = from->constisset;
@@ -1108,9 +1104,7 @@ CopyPathFields(Path *from, Path *newnode)
 		}
 	}
 	else
-	{
 		Node_Copy(from, newnode, p_ordering.ord.merge);
-	}
 
 	Node_Copy(from, newnode, keys);
 
@@ -1829,9 +1823,7 @@ copyObject(void *from)
 				foreach(l, list)
 				{
 					if (newlist == NIL)
-					{
 						newlist = nl = lcons(copyObject(lfirst(l)), NIL);
-					}
 					else
 					{
 						lnext(nl) = lcons(copyObject(lfirst(l)), NIL);

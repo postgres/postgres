@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.15 1998/04/24 14:42:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.16 1998/06/15 19:29:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,7 @@ setheapoverride(bool on)
 		HeapSpecialCommandId = GetCurrentCommandId();
 	}
 	else
-	{
 		HeapSpecialTransactionId = InvalidTransactionId;
-	}
 }
 
 #endif							/* !defined(GOODAMI) */

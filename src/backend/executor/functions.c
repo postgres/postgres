@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.16 1998/02/13 03:26:44 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.17 1998/06/15 19:28:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,9 +176,7 @@ postquel_start(execution_state *es)
 	 * 30-8-1996
 	 */
 	if (es->qd->operation == CMD_UTILITY)
-	{
 		return (TupleDesc) NULL;
-	}
 #endif
 	return ExecutorStart(es->qd, es->estate);
 }
@@ -218,9 +216,7 @@ postquel_end(execution_state *es)
 	 * 30-8-1996
 	 */
 	if (es->qd->operation == CMD_UTILITY)
-	{
 		return;
-	}
 #endif
 	ExecutorEnd(es->qd, es->estate);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.64 1998/04/27 04:05:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.65 1998/06/15 19:28:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,9 +333,7 @@ vc_getrels(NameData *VacRelP)
 		/* get a relation list entry for this guy */
 		old = MemoryContextSwitchTo((MemoryContext) portalmem);
 		if (vrl == (VRelList) NULL)
-		{
 			vrl = cur = (VRelList) palloc(sizeof(VRelListData));
-		}
 		else
 		{
 			cur->vrl_next = (VRelList) palloc(sizeof(VRelListData));
@@ -1029,9 +1027,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 				dowrite = true;
 			}
 			else
-			{
 				Assert(isempty);
-			}
 			--Vnpages;
 			Assert(Vnpages > 0);
 			/* get prev reapped page from Vvpl */
@@ -1054,9 +1050,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			}
 		}
 		else
-		{
 			Assert(!isempty);
-		}
 
 		vpc->vpd_blkno = blkno;
 		maxoff = PageGetMaxOffsetNumber(page);
@@ -1529,9 +1523,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
 			index_delete(indrel, &res->index_iptr);
 		}
 		else
-		{
 			nitups++;
-		}
 
 		/* be tidy */
 		pfree(res);
@@ -2219,9 +2211,7 @@ vc_clsindices(int nindices, Relation *Irel)
 		return;
 
 	while (nindices--)
-	{
 		index_close(Irel[nindices]);
-	}
 	pfree(Irel);
 
 }	/* vc_clsindices */

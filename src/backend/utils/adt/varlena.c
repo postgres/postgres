@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.35 1998/05/29 13:33:58 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.36 1998/06/15 19:29:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -657,13 +657,9 @@ byteaGetBit(text *v, int32 n)
 	byte = byteaGetByte(v, byteNo);
 
 	if (byte & (1 << bitNo))
-	{
 		return ((int32) 1);
-	}
 	else
-	{
 		return ((int32) 0);
-	}
 }
 
 /*-------------------------------------------------------------
@@ -729,9 +725,7 @@ byteaSetBit(text *v, int32 n, int32 newBit)
 	 * sanity check!
 	 */
 	if (newBit != 0 && newBit != 1)
-	{
 		elog(ERROR, "byteaSetByte: new bit must be 0 or 1");
-	}
 
 	/*
 	 * get the byte where the bit we want is stored.
@@ -744,13 +738,9 @@ byteaSetBit(text *v, int32 n, int32 newBit)
 	 * calculate the new value for that byte
 	 */
 	if (newBit == 0)
-	{
 		newByte = oldByte & (~(1 << bitNo));
-	}
 	else
-	{
 		newByte = oldByte | (1 << bitNo);
-	}
 
 	/*
 	 * NOTE: 'byteaSetByte' creates a copy of 'v' & sets the byte.

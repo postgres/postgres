@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.43 1998/05/29 17:00:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.44 1998/06/15 19:28:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,13 +89,9 @@ pq_init(int fd)
 		elog(FATAL, "pq_init: Couldn't initialize socket connection");
 	PQnotifies_init();
 	if (getenv("LIBPQ_DEBUG"))
-	{
 		Pfdebug = stderr;
-	}
 	else
-	{
 		Pfdebug = NULL;
-	}
 }
 
 /* -------------------------
@@ -229,9 +225,7 @@ PQgetline(char *s, int maxlen)
 		return (EOF);
 
 	if (fgets(s, maxlen - 1, Pfin) == NULL)
-	{
 		return feof(Pfin) ? EOF : 1;
-	}
 	else
 	{
 		for (; *s; s++)
@@ -643,9 +637,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 
 	*fdP = fd;
 	if (family == AF_UNIX)
-	{
 		chmod(sock_path, 0777);
-	}
 	return (STATUS_OK);
 }
 

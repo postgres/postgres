@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.12 1998/01/07 21:00:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.13 1998/06/15 19:27:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,9 +204,7 @@ _hash_insertonpg(Relation rel,
 	if (do_expand ||
 		(metap->hashm_nkeys / (metap->hashm_maxbucket + 1))
 		> metap->hashm_ffactor)
-	{
 		_hash_expandtable(rel, metabuf);
-	}
 	_hash_relbuf(rel, metabuf, HASH_READ);
 	return (res);
 }

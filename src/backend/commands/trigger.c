@@ -149,14 +149,10 @@ CreateTrigger(CreateTrigStmt *stmt)
 			ObjectIdGetDatum(((Form_pg_proc) GETSTRUCT(tuple))->prolang),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(langTup))
-		{
 			elog(ERROR, "CreateTrigger: cache lookup for PL failed");
-		}
 
 		if (((Form_pg_language) GETSTRUCT(langTup))->lanispl == false)
-		{
 			elog(ERROR, "CreateTrigger: only C and PL functions are supported");
-		}
 	}
 
 	MemSet(nulls, ' ', Natts_pg_trigger * sizeof(char));
@@ -598,9 +594,7 @@ ExecCallTriggerFunc(Trigger *trigger)
 {
 
 	if (trigger->tgfunc.fn_addr == NULL)
-	{
 		fmgr_info(trigger->tgfoid, &trigger->tgfunc);
-	}
 
 	if (trigger->tgfunc.fn_plhandler != NULL)
 	{

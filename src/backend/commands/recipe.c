@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.20 1998/02/26 04:30:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.21 1998/06/15 19:28:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,9 +387,7 @@ tg_rewriteQuery(TgRecipe * r,
 		{
 			tle = lfirst(tl);
 			if (tle->resdom != NULL)
-			{
 				tle->expr = tg_rewriteParamsInExpr(tle->expr, inputQlist);
-			}
 		}
 	}
 
@@ -401,9 +399,7 @@ tg_rewriteQuery(TgRecipe * r,
 	if (orig->qual)
 	{
 		if (nodeTag(orig->qual) == T_List)
-		{
 			elog(ERROR, "tg_rewriteQuery: Whoa! why is my qual a List???");
-		}
 		orig->qual = tg_rewriteParamsInExpr(orig->qual, inputQlist);
 	}
 
@@ -514,9 +510,7 @@ tg_replaceNumberedParam(Node *expression,
 					}
 				}
 				else
-				{
 					elog(NOTICE, "tg_replaceNumberedParam: unexpected paramkind value of %d", p->paramkind);
-				}
 			}
 			break;
 		case T_Expr:
@@ -626,15 +620,11 @@ tg_rewriteParamsInExpr(Node *expression, QueryTreeList *inputQlist)
 							{
 								tle = lfirst(tl);
 								if (strcmp(resname, tle->resdom->resname) == 0)
-								{
 									return tle->expr;
-								}
 							}
 						}
 						else
-						{
 							elog(ERROR, "tg_rewriteParamsInExpr:can't substitute for parameter %d when that input is unconnected", p->paramid);
-						}
 
 					}
 					else
@@ -648,9 +638,7 @@ tg_rewriteParamsInExpr(Node *expression, QueryTreeList *inputQlist)
 					}
 				}
 				else
-				{
 					elog(NOTICE, "tg_rewriteParamsInExpr: unexpected paramkind value of %d", p->paramkind);
-				}
 			}
 			break;
 		case T_Expr:
@@ -716,9 +704,7 @@ getParamTypes(TgElement * elem, Oid typev[])
 
 	parameterCount = 0;
 	for (i = 0; i < 8; i++)
-	{
 		typev[i] = 0;
-	}
 	for (j = 0; j < elem->inTypes->num; j++)
 	{
 		if (parameterCount == 8)
@@ -736,13 +722,9 @@ getParamTypes(TgElement * elem, Oid typev[])
 		{
 			toid = TypeGet(elem->inTypes->val[j], &defined);
 			if (!OidIsValid(toid))
-			{
 				elog(ERROR, "getParamTypes: arg type '%s' is not defined", t);
-			}
 			if (!defined)
-			{
 				elog(NOTICE, "getParamTypes: arg type '%s' is only a shell", t);
-			}
 		}
 		typev[parameterCount++] = toid;
 	}
@@ -904,9 +886,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 
 						sprintf(newquery, "select %s($1", funcName);
 						for (i = 1; i < parameterCount; i++)
-						{
 							sprintf(newquery, "%s,$%d", newquery, i);
-						}
 						sprintf(newquery, "%s)", newquery);
 					}
 					else
@@ -1071,9 +1051,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 										"result",
 										InvalidOid,
 										-1, 0, false))
-				{
 					elog(NOTICE, "tg_parseSubQuery: unexpected result from TupleDescInitEntry");
-				}
 				else
 				{
 					relid = heap_create_with_catalog(
@@ -1083,9 +1061,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 		}
 	}
 	else if (n->nodeType == TG_RECIPE_NODE)
-	{
 		elog(NOTICE, "tg_parseSubQuery: can't handle embedded recipes yet!");
-	}
 	else
 		elog(NOTICE, "unknown nodeType: %d", n->nodeType);
 
@@ -1134,9 +1110,7 @@ OffsetVarAttno(Node *node, int varno, int offset)
 				List	   *l;
 
 				foreach(l, (List *) node)
-				{
 					OffsetVarAttno(lfirst(l), varno, offset);
-				}
 			}
 			break;
 		default:
@@ -1174,9 +1148,7 @@ appendQlist(QueryTreeList *q1, QueryTreeList *q2)
 	for (i = 0; i < q1->len; i++)
 		newq->qtrees[i] = q1->qtrees[i];
 	for (j = 0; j < q2->len; j++)
-	{
 		newq->qtrees[i + j] = q2->qtrees[j];
-	}
 	return newq;
 }
 
@@ -1225,9 +1197,7 @@ replaceSeqScan(Plan *plan, Plan *parent,
 	Result	   *newPlan;
 
 	if (plan == NULL)
-	{
 		return;
-	}
 
 	if (plan->type == T_SeqScan)
 	{
@@ -1288,13 +1258,9 @@ replaceSeqScan(Plan *plan, Plan *parent,
 	else
 	{
 		if (plan->lefttree)
-		{
 			replaceSeqScan(plan->lefttree, plan, rt_ind, tplan);
-		}
 		if (plan->righttree)
-		{
 			replaceSeqScan(plan->righttree, plan, rt_ind, tplan);
-		}
 	}
 }
 
@@ -1352,14 +1318,10 @@ replaceTeeScans(Plan *plan, Query *parsetree, TeeInfo * teeInfo)
 			{
 				if (strcmp(teeInfo->val[i].tpi_relName,
 						   rte->refname) == 0)
-				{
 					tplan = teeInfo->val[i].tpi_plan;
-				}
 			}
 			if (tplan == NULL)
-			{
 				elog(NOTICE, "replaceTeeScans didn't find the corresponding tee plan");
-			}
 
 			/*
 			 * replace the sequential scan node with that var number with

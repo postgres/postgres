@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.5 1997/09/08 21:44:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.6 1998/06/15 19:28:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,9 +180,7 @@ find_all_join_paths(Query *root, List *joinrels)
 			 * wierd behavior.
 			 */
 			if (IsA_JoinPath(path))
-			{
 				((Path *) lfirst(path))->outerjoincost = (Cost) 0;
-			}
 
 			/*
 			 * do it iff it is a join path, which is not always true, esp
@@ -354,9 +352,7 @@ match_unsorted_outer(Rel *joinrel,
 		}
 
 		if (xmergeinfo)
-		{
 			clauses = xmergeinfo->jmethod.clauses;
-		}
 
 		if (clauses)
 		{
@@ -374,19 +370,13 @@ match_unsorted_outer(Rel *joinrel,
 								  joinrel->targetlist, clauses);
 		}
 		else
-		{
 			merge_pathkeys = outerpath->keys;
-		}
 
 		if (best_innerjoin &&
 			path_is_cheaper(best_innerjoin, cheapest_inner))
-		{
 			nestinnerpath = best_innerjoin;
-		}
 		else
-		{
 			nestinnerpath = cheapest_inner;
-		}
 
 		paths = lcons(create_nestloop_path(joinrel,
 										   outerrel,
@@ -429,13 +419,9 @@ match_unsorted_outer(Rel *joinrel,
 			 * wouldn't otherwise be considered.
 			 */
 			if (path_is_cheaper_than_sort)
-			{
 				mergeinnerpath->outerjoincost = outerpath->path_cost;
-			}
 			else
-			{
 				mergeinnerpath = cheapest_inner;
-			}
 
 			temp_node =
 				lcons(create_mergesort_path(joinrel,
@@ -453,9 +439,7 @@ match_unsorted_outer(Rel *joinrel,
 					  paths);
 		}
 		else
-		{
 			temp_node = paths;
-		}
 		jp_list = nconc(jp_list, temp_node);
 	}
 	return (jp_list);
@@ -518,9 +502,7 @@ match_unsorted_inner(Rel *joinrel,
 		}
 
 		if (xmergeinfo)
-		{
 			clauses = ((JoinMethod *) xmergeinfo)->clauses;
-		}
 
 		if (clauses)
 		{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.30 1998/03/20 04:22:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.31 1998/06/15 19:29:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,9 +227,7 @@ mdunlink(Relation reln)
 #else
 	v = &Md_fdvec[fd];
 	if (v != (MdfdVec *) NULL)
-	{
 		FileUnlink(v->mdfd_vfd);
-	}
 #endif
 	MemoryContextSwitchTo(oldcxt);
 
@@ -416,21 +414,15 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-	{
 		return (SM_FAIL);
-	}
 
 	status = SM_SUCCESS;
 	if ((nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
 		if (nbytes == 0)
-		{
 			MemSet(buffer, 0, BLCKSZ);
-		}
 		else
-		{
 			status = SM_FAIL;
-		}
 	}
 
 	return (status);
@@ -461,9 +453,7 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-	{
 		return (SM_FAIL);
-	}
 
 	status = SM_SUCCESS;
 	if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
@@ -500,9 +490,7 @@ mdflush(Relation reln, BlockNumber blocknum, char *buffer)
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-	{
 		return (SM_FAIL);
-	}
 
 	/* write and sync the block */
 	status = SM_SUCCESS;
@@ -705,9 +693,7 @@ mdnblocks(Relation reln)
 			v = v->mdfd_chain;
 		}
 		else
-		{
 			return ((segno * RELSEG_SIZE) + nblocks);
-		}
 	}
 #else
 	return (_mdnblocks(v->mdfd_vfd, BLCKSZ));
@@ -805,9 +791,7 @@ mdabort()
 		v = &Md_fdvec[i];
 		if (v != (MdfdVec *) NULL)
 #endif
-		{
 			v->mdfd_flags &= ~MDFD_DIRTY;
-		}
 	}
 
 	return (SM_SUCCESS);

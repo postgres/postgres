@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.15 1998/04/27 04:05:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.16 1998/06/15 19:28:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -662,9 +662,7 @@ match_clause_to_indexkey(Rel *rel,
 		else if (leftop
 				 && match_index_to_operand(indexkey,
 										   (Expr *) leftop, rel, index))
-		{
 			join_op = ((Oper *) ((Expr *) clause)->oper)->opno;
-		}
 
 		if (join_op && op_class(join_op, xclass, index->relam) &&
 			join_clause_p((Node *) clause))
@@ -943,9 +941,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 		!IsA(predicate->oper, Oper) ||
 		!IsA(pred_var, Var) ||
 		!IsA(pred_const, Const))
-	{
 		return false;
-	}
 
 	/*
 	 * The implication can't be determined unless the predicate and the
@@ -1161,9 +1157,7 @@ extract_restrict_clauses(List *clausegroup)
 		CInfo	   *cinfo = lfirst(l);
 
 		if (!join_clause_p((Node *) cinfo->clause))
-		{
 			restrict_cls = lappend(restrict_cls, cinfo);
-		}
 	}
 	return restrict_cls;
 }
@@ -1293,9 +1287,7 @@ create_index_paths(Query *root,
 			if (!(join_clause_p((Node *) clauseinfo->clause) &&
 				  equal_path_merge_ordering(index->ordering,
 											clauseinfo->mergesortorder)))
-			{
 				temp = false;
-			}
 		}
 
 		if (!join || temp)

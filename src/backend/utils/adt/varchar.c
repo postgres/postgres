@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.32 1998/05/29 13:33:24 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.33 1998/06/15 19:29:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,9 +98,7 @@ bpcharin(char *s, int dummy, int16 atttypmod)
 
 	/* blank pad the string if necessary */
 	for (; i < len; i++)
-	{
 		*r++ = ' ';
-	}
 	return (result);
 }
 
@@ -186,9 +184,7 @@ printf("'\n");
 
 	/* blank pad the string if necessary */
 	for (; i < rlen; i++)
-	{
 		*r++ = ' ';
-	}
 
 	return (result);
 } /* bpchar() */

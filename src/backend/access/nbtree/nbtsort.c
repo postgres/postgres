@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.29 1998/02/26 04:29:54 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.30 1998/06/15 19:27:59 momjian Exp $
  *
  * NOTES
  *
@@ -288,9 +288,7 @@ _bt_pqsift(BTPriQueue *q, int parent)
 		if (child < q->btpq_nelem - 1)
 		{
 			if (GREATER(&(q->btpq_queue[child]), &(q->btpq_queue[child + 1])))
-			{
 				++child;
-			}
 		}
 		if (GREATER(&(q->btpq_queue[parent]), &(q->btpq_queue[child])))
 		{
@@ -300,9 +298,7 @@ _bt_pqsift(BTPriQueue *q, int parent)
 			parent = child;
 		}
 		else
-		{
 			parent = child + 1;
-		}
 	}
 }
 
@@ -331,18 +327,14 @@ _bt_pqadd(BTPriQueue *q, BTPriQueueElem *e)
 				parent;
 
 	if (q->btpq_nelem >= MAXELEM)
-	{
 		elog(ERROR, "_bt_pqadd: queue overflow");
-	}
 
 	child = q->btpq_nelem++;
 	while (child > 0)
 	{
 		parent = child / 2;
 		if (GREATER(e, &(q->btpq_queue[parent])))
-		{
 			break;
-		}
 		else
 		{
 			q->btpq_queue[child] = q->btpq_queue[parent];		/* struct = */
@@ -424,9 +416,7 @@ _bt_tapecreate(char *fname)
 	BTTapeBlock *tape = (BTTapeBlock *) palloc(sizeof(BTTapeBlock));
 
 	if (tape == (BTTapeBlock *) NULL)
-	{
 		elog(ERROR, "_bt_tapecreate: out of memory");
-	}
 
 	tape->bttb_magic = BTTAPEMAGIC;
 
@@ -516,9 +506,7 @@ _bt_tapenext(BTTapeBlock *tape, char **pos)
 	BTItem		bti;
 
 	if (*pos >= tape->bttb_data + tape->bttb_top)
-	{
 		return ((BTItem) NULL);
-	}
 	bti = (BTItem) *pos;
 	itemsz = BTITEMSZ(bti);
 	*pos += DOUBLEALIGN(itemsz);
@@ -561,9 +549,7 @@ _bt_spoolinit(Relation index, int ntapes, bool isunique)
 	char	   *fname = (char *) palloc(sizeof(TAPETEMP) + 1);
 
 	if (btspool == (BTSpool *) NULL || fname == (char *) NULL)
-	{
 		elog(ERROR, "_bt_spoolinit: out of memory");
-	}
 	MemSet((char *) btspool, 0, sizeof(BTSpool));
 	btspool->bts_ntapes = ntapes;
 	btspool->bts_tape = 0;
@@ -575,9 +561,7 @@ _bt_spoolinit(Relation index, int ntapes, bool isunique)
 		(BTTapeBlock **) palloc(sizeof(BTTapeBlock *) * ntapes);
 	if (btspool->bts_itape == (BTTapeBlock **) NULL ||
 		btspool->bts_otape == (BTTapeBlock **) NULL)
-	{
 		elog(ERROR, "_bt_spoolinit: out of memory");
-	}
 
 	for (i = 0; i < ntapes; ++i)
 	{
@@ -621,9 +605,7 @@ _bt_spoolflush(BTSpool *btspool)
 	for (i = 0; i < btspool->bts_ntapes; ++i)
 	{
 		if (!EMPTYTAPE(btspool->bts_otape[i]))
-		{
 			_bt_tapewrite(btspool->bts_otape[i], 1);
-		}
 	}
 }
 
@@ -716,9 +698,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 				(BTSortKey *) palloc(it_ntup * sizeof(BTSortKey));
 			pos = itape->bttb_data;
 			for (i = 0; i < it_ntup; ++i)
-			{
 				_bt_setsortkey(index, _bt_tapenext(itape, &pos), &(parray[i]));
-			}
 
 			/*
 			 * qsort the pointer array.
@@ -790,9 +770,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 
 	/* insert this item into the current buffer */
 	if (btitem != (BTItem) NULL)
-	{
 		_bt_tapeadd(itape, btitem, itemsz);
-	}
 }
 
 /*
@@ -1008,9 +986,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 		 * shuffling).
 		 */
 		for (o = last_off; o > first_off; o = OffsetNumberPrev(o))
-		{
 			PageIndexTupleDelete(opage, o);
-		}
 		hii = PageGetItemId(opage, P_HIKEY);
 		ii = PageGetItemId(opage, first_off);
 		*hii = *ii;
@@ -1085,14 +1061,10 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 #endif							/* FASTBUILD_DEBUG && FASTBUILD_MERGE */
 #endif
 	if (last_bti == (BTItem) NULL)
-	{
 		first_off = P_FIRSTKEY;
-	}
 	else if (!_bt_itemcmp(index, _bt_nattr,
 						  bti, last_bti, BTEqualStrategyNumber))
-	{
 		first_off = off;
-	}
 	last_off = off;
 	last_bti = (BTItem) PageGetItem(npage, PageGetItemId(npage, off));
 
@@ -1226,9 +1198,7 @@ _bt_merge(Relation index, BTSpool *btspool)
 				do
 				{
 					if (_bt_taperead(itape) == 0)
-					{
 						tapedone[t] = 1;
-					}
 				} while (!tapedone[t] && EMPTYTAPE(itape));
 				if (!tapedone[t])
 				{
@@ -1237,9 +1207,7 @@ _bt_merge(Relation index, BTSpool *btspool)
 					_bt_setsortkey(index, _bt_tapenext(itape, &tapepos[t]),
 								   &(e.btpqe_item));
 					if (e.btpqe_item.btsk_item != (BTItem) NULL)
-					{
 						_bt_pqadd(&q, &e);
-					}
 				}
 			}
 
@@ -1334,9 +1302,7 @@ _bt_merge(Relation index, BTSpool *btspool)
 						do
 						{
 							if (_bt_taperead(itape) == 0)
-							{
 								tapedone[t] = 1;
-							}
 						} while (!tapedone[t] && EMPTYTAPE(itape));
 						if (!tapedone[t])
 						{
@@ -1372,9 +1338,7 @@ _bt_merge(Relation index, BTSpool *btspool)
 		 * pages instead of merging into a tape file.
 		 */
 		if (nruns <= btspool->bts_ntapes)
-		{
 			doleaf = true;
-		}
 	} while (nruns > 0);		/* pass */
 
 	_bt_uppershutdown(index, state);

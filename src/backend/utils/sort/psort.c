@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.40 1998/06/15 18:39:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.41 1998/06/15 19:29:54 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -1072,9 +1072,7 @@ resettape(FILE *file)
 
 	file = freopen(tp->tl_name, "w+", file);
 	if (file == NULL)
-	{
 		elog(FATAL, "could not freopen temporary file");
-	}
 }
 
 #endif

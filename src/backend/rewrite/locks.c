@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.9 1998/02/26 04:35:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.10 1998/06/15 19:29:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,9 +137,7 @@ matchLocks(CmdType event,
 	if (parsetree->commandType != CMD_SELECT)
 	{
 		if (parsetree->resultRelation != varno)
-		{
 			return (NULL);
-		}
 	}
 
 	nlocks = rulelocks->numLocks;
@@ -154,9 +152,7 @@ matchLocks(CmdType event,
 				thisLockWasTriggered(varno,
 									 oneLock->attrno,
 									 parsetree))
-			{
 				real_locks = lappend(real_locks, oneLock);
-			}
 		}
 	}
 

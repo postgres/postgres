@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.11 1998/02/26 04:31:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.12 1998/06/15 19:28:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,9 +351,7 @@ ExecCountSlotsAppend(Append *node)
 	int			nSlots = 0;
 
 	foreach(plan, unionplans)
-	{
 		nSlots += ExecCountSlotsNode((Plan *) lfirst(plan));
-	}
 	return nSlots + APPEND_NSLOTS;
 }
 
@@ -426,13 +424,9 @@ ExecProcAppend(Append *node)
 		whichplan = unionstate->as_whichplan;
 
 		if (ScanDirectionIsForward(direction))
-		{
 			unionstate->as_whichplan = whichplan + 1;
-		}
 		else
-		{
 			unionstate->as_whichplan = whichplan - 1;
-		}
 
 		/* ----------------
 		 *	return something from next node or an empty slot
@@ -484,9 +478,7 @@ ExecEndAppend(Append *node)
 	for (i = 0; i < nplans; i++)
 	{
 		if (initialized[i] == TRUE)
-		{
 			ExecEndNode((Plan *) nth(i, unionplans), (Plan *) node);
-		}
 	}
 
 	/* ----------------

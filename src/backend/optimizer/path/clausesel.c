@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.7 1998/04/27 04:05:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.8 1998/06/15 19:28:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,7 @@ set_clause_selectivities(List *clauseinfo_list, Cost new_selectivity)
 		clausenode = (CInfo *) lfirst(temp);
 		cost_clause = clausenode->selectivity;
 		if (FLOAT_IS_ZERO(cost_clause) || new_selectivity < cost_clause)
-		{
 			clausenode->selectivity = new_selectivity;
-		}
 	}
 }
 
@@ -225,18 +223,14 @@ compute_selec(Query *root, List *clauses, List *or_selectivities)
 	List	   *clause = lfirst(clauses);
 
 	if (clauses == NULL)
-	{
 		s1 = 1.0;
-	}
 	else if (IsA(clause, Param))
 	{
 		/* XXX How're we handling this before?? -ay */
 		s1 = 1.0;
 	}
 	else if (IsA(clause, Const))
-	{
 		s1 = ((bool) ((Const *) clause)->constvalue) ? 1.0 : 0.0;
-	}
 	else if (IsA(clause, Var))
 	{
 		Oid			relid = getrelid(((Var *) clause)->varno,
@@ -369,9 +363,7 @@ compute_selec(Query *root, List *clauses, List *or_selectivities)
 	 */
 
 	if (length(clauses) < 2)
-	{
 		return (s1);
-	}
 	else
 	{
 		/* Compute selectivity of the 'or'ed subclauses. */

@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.2 1998/05/07 16:17:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.3 1998/06/15 19:30:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,9 +327,7 @@ PQdisplayTuples(PGresult *res,
 
 	/* Zero the initial field lengths */
 	for (j = 0; j < nFields; j++)
-	{
 		fLength[j] = strlen(PQfname(res, j));
-	}
 	/* Find the max length of each field in the result */
 	/* will be somewhat time consuming for very large results */
 	if (fillAlign)
@@ -415,9 +413,7 @@ PQprintTuples(PGresult *res,
 	nTups = PQntuples(res);
 
 	if (colWidth > 0)
-	{
 		sprintf(formatString, "%%s %%-%ds", colWidth);
-	}
 	else
 		sprintf(formatString, "%%s %%s");
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.26 1998/02/26 04:36:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.27 1998/06/15 19:29:20 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -383,13 +383,9 @@ LockTabRename(LockTableId tableId)
 	LockTableId newTableId;
 
 	if (NumTables >= MAX_TABLES)
-	{
 		return (INVALID_TABLEID);
-	}
 	if (AllTables[tableId] == INVALID_TABLEID)
-	{
 		return (INVALID_TABLEID);
-	}
 
 	/* other modules refer to the lock table by a tableId */
 	newTableId = NumTables;
@@ -493,9 +489,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	}
 
 	if (LockingIsDisabled)
-	{
 		return (TRUE);
-	}
 
 	LOCK_PRINT("Acquire", lockName, lockt);
 	masterLock = ltable->ctl->masterLock;
@@ -606,9 +600,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	status = LockResolveConflicts(ltable, lock, lockt, myXid);
 
 	if (status == STATUS_OK)
-	{
 		GrantLock(lock, lockt);
-	}
 	else if (status == STATUS_FOUND)
 	{
 #ifdef USER_LOCKS
@@ -757,9 +749,7 @@ LockResolveConflicts(LOCKTAB *ltable,
 	for (i = 1; i <= nLockTypes; i++, tmpMask <<= 1)
 	{
 		if (lock->activeHolders[i] != myHolders[i])
-		{
 			bitmask |= tmpMask;
-		}
 	}
 
 	/* ------------------------
@@ -873,9 +863,7 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	}
 
 	if (LockingIsDisabled)
-	{
 		return (TRUE);
-	}
 
 	LOCK_PRINT("Release", lockName, lockt);
 
@@ -997,13 +985,9 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 		SpinRelease(masterLock);
 #ifdef USER_LOCKS
 		if ((is_user_lock) && (result))
-		{
 			elog(NOTICE, "LockRelease: you don't have a lock on this tag");
-		}
 		else
-		{
 			elog(NOTICE, "LockRelease: find xid, table corrupted");
-		}
 #else
 		elog(NOTICE, "LockReplace: xid table corrupted");
 #endif
@@ -1027,13 +1011,9 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	{
 #ifdef USER_LOCKS
 		if (result->queue.prev == INVALID_OFFSET)
-		{
 			elog(NOTICE, "LockRelease: xid.prev == INVALID_OFFSET");
-		}
 		if (result->queue.next == INVALID_OFFSET)
-		{
 			elog(NOTICE, "LockRelease: xid.next == INVALID_OFFSET");
-		}
 #endif
 		if (result->queue.next != INVALID_OFFSET)
 			SHMQueueDelete(&result->queue);
@@ -1165,9 +1145,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 	elog(NOTICE, "LockReleaseAll: tableId=%d, pid=%d", tableId, MyProcPid);
 #endif
 	if (is_user_lock_table)
-	{
 		tableId = 1;
-	}
 #endif
 
 	Assert(tableId < NumTables);

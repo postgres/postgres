@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.18 1998/02/26 04:37:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.19 1998/06/15 19:29:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,13 +506,9 @@ hashsel(Oid operatorObjectId,
 		}
 		ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
 		if (ntuples > 0)
-		{
 			resultData = 1.0 / (float64data) ntuples;
-		}
 		else
-		{
 			resultData = (float64data) (1.0 / 100.0);
-		}
 		result = &resultData;
 
 	}
@@ -573,13 +569,9 @@ hashnpage(Oid operatorObjectId,
 
 		ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
 		if (ntuples > 0)
-		{
 			tempData = 1.0 / (float64data) ntuples;
-		}
 		else
-		{
 			tempData = (float64data) (1.0 / 100.0);
-		}
 		temp = &tempData;
 
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.13 1998/04/02 07:27:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.14 1998/06/15 19:28:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,9 +75,7 @@ prune_joinrel(Rel *rel, List *other_rels)
 										 other_rel->pathlist);
 		}
 		else
-		{
 			result = nconc(result, lcons(other_rel, NIL));
-		}
 	}
 	return (result);
 }
@@ -110,15 +108,11 @@ prune_rel_paths(List *rel_list)
 			path = (Path *) lfirst(y);
 
 			if (!path->p_ordering.ord.sortop)
-			{
 				break;
-			}
 		}
 		cheapest = (JoinPath *) prune_rel_path(rel, path);
 		if (IsA_JoinPath(cheapest))
-		{
 			rel->size = compute_joinrel_size(cheapest);
-		}
 		else
 			elog(ERROR, "non JoinPath called");
 	}
@@ -149,9 +143,7 @@ prune_rel_path(Rel *rel, Path *unorderedpath)
 		rel->pathlist = lremove(unorderedpath, rel->pathlist);
 	}
 	else
-	{
 		rel->unorderedpath = (Path *) unorderedpath;
-	}
 
 	return (cheapest);
 }

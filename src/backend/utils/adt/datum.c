@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.9 1998/01/05 16:39:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.10 1998/06/15 19:29:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +56,7 @@ datumGetSize(Datum value, Oid type, bool byVal, Size len)
 	if (byVal)
 	{
 		if (len <= sizeof(Datum))
-		{
 			size = len;
-		}
 		else
 		{
 			elog(ERROR,
@@ -116,9 +114,7 @@ datumCopy(Datum value, Oid type, bool byVal, Size len)
 
 
 	if (byVal)
-	{
 		res = value;
-	}
 	else
 	{
 		if (value == 0)
@@ -131,9 +127,7 @@ datumCopy(Datum value, Oid type, bool byVal, Size len)
 		 */
 		s = (char *) palloc(realSize);
 		if (s == NULL)
-		{
 			elog(ERROR, "datumCopy: out of memory\n");
-		}
 		memmove(s, DatumGetPointer(value), realSize);
 		res = (Datum) s;
 	}

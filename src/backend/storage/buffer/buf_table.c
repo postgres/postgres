@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.10 1998/01/07 21:04:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.11 1998/06/15 19:29:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,9 +91,7 @@ BufTableLookup(BufferTag *tagPtr)
 		return (NULL);
 	}
 	if (!found)
-	{
 		return (NULL);
-	}
 	return (&(BufferDescriptors[result->id]));
 }
 
@@ -111,9 +109,7 @@ BufTableDelete(BufferDesc *buf)
 	 * BM_DELETED keeps us from removing buffer twice.
 	 */
 	if (buf->flags & BM_DELETED)
-	{
 		return (TRUE);
-	}
 
 	buf->flags |= BM_DELETED;
 

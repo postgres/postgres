@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.5 1997/09/08 02:32:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.6 1998/06/15 19:30:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,7 @@ main(int argc, char **argv)
 		printf("%ld\n", (long) pw->pw_uid);
 	}
 	else
-	{
 		printf("%ld\n", (long) getuid());
-	}
 
 	exit(0);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.14 1998/06/04 17:26:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.15 1998/06/15 19:28:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,9 +68,7 @@ createdb(char *dbname, char *dbpath)
 		sprintf(loc, "%s%c%s", dbpath, SEP_CHAR, dbname);
 	}
 	else
-	{
 		strcpy(loc, dbname);
-	}
 
 	lp = ExpandDatabasePath(loc);
 
@@ -114,9 +112,7 @@ destroydb(char *dbname)
 	check_permissions("destroydb", dbpath, dbname, &db_id, &user_id);
 
 	if (!OidIsValid(db_id))
-	{
 		elog(FATAL, "impossible: pg_database instance with invalid OID.");
-	}
 
 	/* stop the vacuum daemon */
 	stop_vacuum(dbpath, dbname);
@@ -224,15 +220,11 @@ check_permissions(char *command,
 
 	/* Make sure we are not mucking with the template database */
 	if (!strcmp(dbname, "template1"))
-	{
 		elog(ERROR, "%s cannot be executed on the template database.", command);
-	}
 
 	/* Check to make sure database is not the currently open database */
 	if (!strcmp(dbname, DatabaseName))
-	{
 		elog(ERROR, "%s cannot be executed on an open database", command);
-	}
 
 	/* Check to make sure database is owned by this user */
 
@@ -272,9 +264,7 @@ check_permissions(char *command,
 		*(path + VARSIZE(dbtext) - VARHDRSZ) = '\0';
 	}
 	else
-	{
 		*dbIdP = InvalidOid;
-	}
 
 	heap_close(dbrel);
 
@@ -322,9 +312,7 @@ stop_vacuum(char *dbpath, char *dbname)
 				dbname, SEP_CHAR, dbname);
 	}
 	else
-	{
 		sprintf(filename, "%s%c%s.vacuum", dbpath, SEP_CHAR, dbname);
-	}
 
 	if ((fp = AllocateFile(filename, "r")) != NULL)
 	{

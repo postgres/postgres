@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.39 1998/04/26 04:05:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.40 1998/06/15 19:27:45 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -508,9 +508,7 @@ BuildDescForRelation(List *schema, char *relname)
 			 * ----------------
 			 */
 			if (!strcmp(typename, relname))
-			{
 				TupleDescMakeSelfReference(desc, attnum, relname);
-			}
 			else
 				elog(ERROR, "DefineRelation: no such type %s",
 					 typename);

@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.13 1998/04/27 17:08:19 scrappy Exp $
+ *	$Id: oracle_compat.c,v 1.14 1998/06/15 19:29:36 momjian Exp $
  *
  */
 
@@ -54,9 +54,7 @@ lower(text *string)
 	ptr_ret = VARDATA(ret);
 
 	while (m--)
-	{
 		*ptr_ret++ = tolower((unsigned char)*ptr++);
-	}
 
 	return ret;
 }
@@ -94,9 +92,7 @@ upper(text *string)
 	ptr_ret = VARDATA(ret);
 
 	while (m--)
-	{
 		*ptr_ret++ = toupper((unsigned char)*ptr++);
-	}
 
 	return ret;
 }
@@ -141,13 +137,9 @@ initcap(text *string)
 	while (m--)
 	{
 		if (*(ptr_ret - 1) == ' ' || *(ptr_ret - 1) == '	')
-		{
 			*ptr_ret++ = toupper((unsigned char)*ptr++);
-		}
 		else
-		{
 			*ptr_ret++ = tolower((unsigned char)*ptr++);
-		}
 	}
 
 	return ret;
@@ -202,9 +194,7 @@ lpad(text *string1, int4 len, text *string2)
 	ptr1 = VARDATA(string1);
 
 	while (n--)
-	{
 		*ptr_ret++ = *ptr1++;
-	}
 
 	return ret;
 }
@@ -250,9 +240,7 @@ rpad(text *string1, int4 len, text *string2)
 	ptr_ret = VARDATA(ret);
 
 	while (n--)
-	{
 		*ptr_ret++ = *ptr1++;
-	}
 
 	ptr2 = VARDATA(string2);
 
@@ -306,15 +294,11 @@ btrim(text *string, text *set)
 		while (ptr2 <= end2)
 		{
 			if (*ptr == *ptr2)
-			{
 				break;
-			}
 			++ptr2;
 		}
 		if (*ptr != *ptr2)
-		{
 			break;
-		}
 		ptr++;
 		ptr2 = VARDATA(set);
 	}
@@ -329,15 +313,11 @@ btrim(text *string, text *set)
 		while (ptr2 <= end2)
 		{
 			if (*end == *ptr2)
-			{
 				break;
-			}
 			++ptr2;
 		}
 		if (*end != *ptr2)
-		{
 			break;
-		}
 		--end;
 		ptr2 = VARDATA(set);
 	}
@@ -391,15 +371,11 @@ ltrim(text *string, text *set)
 		while (ptr2 <= end2)
 		{
 			if (*ptr == *ptr2)
-			{
 				break;
-			}
 			++ptr2;
 		}
 		if (*ptr != *ptr2)
-		{
 			break;
-		}
 		ptr++;
 		ptr2 = VARDATA(set);
 	}
@@ -455,15 +431,11 @@ rtrim(text *string, text *set)
 		while (ptr2 <= end2)
 		{
 			if (*ptr == *ptr2)
-			{
 				break;
-			}
 			++ptr2;
 		}
 		if (*ptr != *ptr2)
-		{
 			break;
-		}
 		--ptr;
 		ptr2 = VARDATA(set);
 	}
@@ -479,9 +451,7 @@ rtrim(text *string, text *set)
 	ptr_ret = VARDATA(ret) + m - 1;
 
 	while (m--)
-	{
 		*ptr_ret-- = *ptr--;
-	}
 
 	return ret;
 }
@@ -524,9 +494,7 @@ substr(text *string, int4 m, int4 n)
 	ptr_ret = VARDATA(ret);
 
 	while (len--)
-	{
 		*ptr_ret++ = *ptr++;
-	}
 
 	return ret;
 }

@@ -7,7 +7,7 @@
 *
 *
 * IDENTIFICATION
-*	 $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/Attic/minspantree.c,v 1.4 1997/09/08 21:44:42 momjian Exp $
+*	 $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/Attic/minspantree.c,v 1.5 1998/06/15 19:28:38 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -88,9 +88,7 @@ minspantree(Query *root, List *join_rels, Rel *garel)
 		id2 = (int) lsecond(joinrel->relids);
 
 		if (id1 > id2)
-		{
 			tmprel_array[id2][id1] = *(Rel *) joinrel;
-		}
 		else
 		{
 			tmprel_array[id1][id2] = *(Rel *) joinrel;	/* ever reached? */
@@ -121,25 +119,17 @@ minspantree(Query *root, List *join_rels, Rel *garel)
 		{
 			garel[1] = tmprel_array[1][3];
 			if (rel12->cheapestpath->path_cost > rel23->cheapestpath->path_cost)
-			{
 				garel[2] = tmprel_array[2][3];
-			}
 			else
-			{
 				garel[2] = tmprel_array[1][2];
-			}
 		}
 		else
 		{
 			garel[1] = tmprel_array[1][2];
 			if (rel13->cheapestpath->path_cost > rel23->cheapestpath->path_cost)
-			{
 				garel[2] = tmprel_array[2][3];
-			}
 			else
-			{
 				garel[2] = tmprel_array[1][3];
-			}
 		}
 	}
 
@@ -169,13 +159,9 @@ minspantree(Query *root, List *join_rels, Rel *garel)
 				if (connectto[tempn] != 0)
 				{
 					if (n > tempn)
-					{
 						joinrel = (Rel *) &tmprel_array[tempn][n];
-					}
 					else
-					{
 						joinrel = (Rel *) &tmprel_array[n][tempn];
-					}
 					dist = joinrel->cheapestpath->path_cost;
 
 					if (dist < disttoconnect[tempn])
@@ -192,13 +178,9 @@ minspantree(Query *root, List *join_rels, Rel *garel)
 			}
 			n = nextn;
 			if (n > connectto[n])
-			{
 				garel[i] = tmprel_array[connectto[n]][n];
-			}
 			else
-			{
 				garel[i] = tmprel_array[n][connectto[n]];
-			}
 			i++;
 		}
 

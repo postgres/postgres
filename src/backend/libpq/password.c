@@ -48,9 +48,7 @@ verify_password(char *auth_arg, char *user, char *password)
 		test_pw = strtok(NULL, ":");
 		if (!test_user || !test_pw ||
 			test_user[0] == '\0' || test_pw[0] == '\0')
-		{
 			continue;
-		}
 
 		/* kill the newline */
 		if (test_pw[strlen(test_pw) - 1] == '\n')

@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.42 1998/05/29 17:00:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.43 1998/06/15 19:28:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,13 +349,9 @@ BootstrapMain(int argc, char *argv[])
 	}							/* while */
 
 	if (argc - optind > 1)
-	{
 		usage();
-	}
 	else if (argc - optind == 1)
-	{
 		dbName = argv[optind];
-	}
 
 	if (!DataDir)
 	{
@@ -485,9 +481,7 @@ boot_openrel(char *relname)
 	}
 
 	if (reldesc != NULL)
-	{
 		closerel(NULL);
-	}
 
 	if (!Quiet)
 		printf("Amopen: relation %s. attrsize %d\n", relname ? relname : "(null)",
@@ -499,9 +493,7 @@ boot_openrel(char *relname)
 	for (i = 0; i < numattr; i++)
 	{
 		if (attrtypes[i] == NULL)
-		{
 			attrtypes[i] = AllocateAttribute();
-		}
 		memmove((char *) attrtypes[i],
 				(char *) reldesc->rd_att->attrs[i],
 				ATTRIBUTE_TUPLE_SIZE);
@@ -553,9 +545,7 @@ closerel(char *name)
 	}
 
 	if (reldesc == NULL)
-	{
 		elog(ERROR, "Warning: no opened relation to close.\n");
-	}
 	else
 	{
 		if (!Quiet)
@@ -639,9 +629,7 @@ InsertOneTuple(Oid objectid)
 	pfree(tupDesc);				/* just free's tupDesc, not the attrtypes */
 
 	if (objectid != (Oid) 0)
-	{
 		tuple->t_oid = objectid;
-	}
 	heap_insert(reldesc, tuple);
 	pfree(tuple);
 	if (DebugMode)
@@ -735,9 +723,7 @@ InsertOneNull(int i)
 	if (DebugMode)
 		printf("Inserting null\n");
 	if (i < 0 || i >= MAXATTR)
-	{
 		elog(FATAL, "i out of range (too many attrs): %d\n", i);
-	}
 	values[i] = (char *) NULL;
 	Blanks[i] = 'n';
 }
@@ -787,9 +773,7 @@ cleanup()
 		exitpg(1);
 	}
 	if (reldesc != (Relation) NULL)
-	{
 		heap_close(reldesc);
-	}
 	CommitTransactionCommand();
 	exitpg(Warnings);
 }
@@ -823,9 +807,7 @@ gettype(char *type)
 		for (i = 0; i <= n_types; i++)
 		{
 			if (strncmp(type, Procid[i].name, NAMEDATALEN) == 0)
-			{
 				return (i);
-			}
 		}
 		if (DebugMode)
 			printf("bootstrap.c: External Type: %s\n", type);
@@ -869,9 +851,7 @@ AllocateAttribute()
 	(AttributeTupleForm) malloc(ATTRIBUTE_TUPLE_SIZE);
 
 	if (!PointerIsValid(attribute))
-	{
 		elog(FATAL, "AllocateAttribute: malloc failed");
-	}
 	MemSet(attribute, 0, ATTRIBUTE_TUPLE_SIZE);
 
 	return (attribute);
@@ -928,9 +908,7 @@ EnterString(char *str)
 
 	node = FindStr(str, len, 0);
 	if (node)
-	{
 		return (node->strnum);
-	}
 	else
 	{
 		node = AddStr(str, len, 0);
@@ -997,9 +975,7 @@ FindStr(char *str, int length, hashnode *mderef)
 			return (node);		/* no need to check */
 		}
 		else
-		{
 			node = node->next;
-		}
 	}
 	/* Couldn't find it in the list */
 	return (NULL);
@@ -1056,9 +1032,7 @@ AddStr(char *str, int strlength, int mderef)
 
 	hashresult = CompHash(str, strlength);
 	if (hashtable[hashresult] == NULL)
-	{
 		hashtable[hashresult] = newnode;
-	}
 	else
 	{							/* There is something in the list */
 		trail = hashtable[hashresult];
@@ -1135,9 +1109,7 @@ index_register(char *heap,
 		}
 	}
 	else
-	{
 		newind->il_params = (Datum *) NULL;
-	}
 
 	if (finfo != (FuncIndexInfo *) NULL)
 	{
@@ -1145,9 +1117,7 @@ index_register(char *heap,
 		memmove(newind->il_finfo, finfo, sizeof(FuncIndexInfo));
 	}
 	else
-	{
 		newind->il_finfo = (FuncIndexInfo *) NULL;
-	}
 
 	if (predInfo != NULL)
 	{
@@ -1156,9 +1126,7 @@ index_register(char *heap,
 		newind->il_predInfo->oldPred = predInfo->oldPred;
 	}
 	else
-	{
 		newind->il_predInfo = NULL;
-	}
 
 	newind->il_next = ILHead;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.52 1998/05/14 17:18:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.53 1998/06/15 19:30:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,9 +258,7 @@ PQconsumeInput(PGconn *conn)
 	 * Note that we will NOT block waiting for more input.
 	 */
 	if (pqReadData(conn) < 0)
-	{
 		strcpy(conn->asyncErrorMessage, conn->errorMessage);
-	}
 	/* Parsing of the data waits till later. */
 }
 
@@ -580,9 +578,7 @@ getAnotherTuple(PGconn *conn, int binary)
 			if (pqGetInt(&vlen, 4, conn))
 				return EOF;
 			if (binary == 0)
-			{
 				vlen = vlen - 4;
-			}
 			if (vlen < 0)
 				vlen = 0;
 			if (tup[i].value == NULL)
@@ -950,9 +946,7 @@ void
 PQputline(PGconn *conn, const char *s)
 {
 	if (conn && conn->sock >= 0)
-	{
 		(void) pqPutnchar(s, strlen(s), conn);
-	}
 }
 
 /*
@@ -1237,9 +1231,7 @@ PQfname(PGresult *res, int field_num)
 		return NULL;
 	}
 	if (res->attDescs)
-	{
 		return res->attDescs[field_num].name;
-	}
 	else
 		return NULL;
 }
@@ -1304,9 +1296,7 @@ PQftype(PGresult *res, int field_num)
 		return InvalidOid;
 	}
 	if (res->attDescs)
-	{
 		return res->attDescs[field_num].adtid;
-	}
 	else
 		return InvalidOid;
 }
@@ -1328,9 +1318,7 @@ PQfsize(PGresult *res, int field_num)
 		return 0;
 	}
 	if (res->attDescs)
-	{
 		return res->attDescs[field_num].adtsize;
-	}
 	else
 		return 0;
 }
@@ -1352,9 +1340,7 @@ PQfmod(PGresult *res, int field_num)
 		return 0;
 	}
 	if (res->attDescs)
-	{
 		return res->attDescs[field_num].adtmod;
-	}
 	else
 		return 0;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.27 1998/02/26 04:32:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.28 1998/06/15 19:28:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -678,9 +678,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 				while (indexkeys[pos] != 0)
 				{
 					if (varatt == indexkeys[pos])
-					{
 						break;
-					}
 					pos++;
 				}
 			}
@@ -689,14 +687,10 @@ fix_indxqual_references(Node *clause, Path *index_path)
 			return (newclause);
 		}
 		else
-		{
 			return (clause);
-		}
 	}
 	else if (IsA(clause, Const))
-	{
 		return (clause);
-	}
 	else if (IsA(clause, Param))
 	{
 		/* Function parameter used as index scan arg.  DZ - 27-8-1996 */
@@ -749,9 +743,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 				make_clause(expr->opType, expr->oper, new_subclauses);
 		}
 		else
-		{
 			return (clause);
-		}
 	}
 	else
 	{
@@ -776,13 +768,9 @@ fix_indxqual_references(Node *clause, Path *index_path)
 		 * (var const) ...) ?
 		 */
 		if (new_subclauses)
-		{
 			return (Node *) new_subclauses;
-		}
 		else
-		{
 			return (clause);
-		}
 	}
 }
 
@@ -1179,9 +1167,7 @@ make_unique(List *tlist, Plan *lefttree, char *uniqueAttr)
 	if (strcmp(uniqueAttr, "*") == 0)
 		node->uniqueAttr = NULL;
 	else
-	{
 		node->uniqueAttr = pstrdup(uniqueAttr);
-	}
 	return (node);
 }
 
@@ -1209,9 +1195,7 @@ generate_fjoin(List *tlist)
 			fjoinList = lappend(fjoinList, tlistElem);
 		}
 		else
-		{
 			newTlist = lappend(newTlist, tlistElem);
-		}
 	}
 
 	/*

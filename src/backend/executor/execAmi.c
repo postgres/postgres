@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.20 1998/02/27 16:11:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.21 1998/06/15 19:28:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,9 +124,7 @@ ExecOpenR(Oid relationOid, bool isindex)
 	 * ----------------
 	 */
 	if (isindex)
-	{
 		relation = index_open(relationOid);
-	}
 	else
 		relation = heap_open(relationOid);
 

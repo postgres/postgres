@@ -632,9 +632,7 @@ gistAdjustKeys(Relation r,
 			pfree(datum);
 	}
 	else
-	{
 		ReleaseBuffer(b);
-	}
 	pfree(evec);
 }
 
@@ -834,9 +832,7 @@ gistSplit(Relation r,
 	}
 
 	if ((bufblock = BufferGetBlockNumber(buffer)) != GISTP_ROOT)
-	{
 		PageRestoreTempPage(left, p);
-	}
 	WriteBuffer(leftbuf);
 	WriteBuffer(rightbuf);
 

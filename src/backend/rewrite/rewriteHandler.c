@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.15 1998/03/30 16:36:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.16 1998/06/15 19:29:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,9 +299,7 @@ ApplyRetrieveRule(Query *parsetree,
 		}
 	}
 	else
-	{
 		nothing = TRUE;
-	}
 
 	rtable = copyObject(parsetree->rtable);
 	foreach(rt, rtable)
@@ -337,9 +335,7 @@ ApplyRetrieveRule(Query *parsetree,
 		rtable = nconc(rtable, rule_rtable);
 	}
 	else
-	{
 		rtable = nconc(rtable, copyObject(rule_action->rtable));
-	}
 	parsetree->rtable = rtable;
 
 	rule_action->rtable = rtable;
@@ -566,9 +562,7 @@ fireRules(Query *parsetree,
 			 *--------------------------------------------------
 			 */
 			if ((info->event == CMD_INSERT) || (info->event == CMD_UPDATE))
-			{
 				FixNew(info, parsetree);
-			}
 
 			/*--------------------------------------------------
 			 * Step 3:
@@ -613,9 +607,7 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	 * only for a delete may the targetlist be NULL
 	 */
 	if (event != CMD_DELETE)
-	{
 		Assert(parsetree->targetList != NULL);
-	}
 
 	result_relation = parsetree->resultRelation;
 
@@ -844,8 +836,6 @@ CheckViewPerms(Relation view, List *rtable)
 
 		aclcheck_res = pg_aclcheck(rte->relname, uname.data, ACL_RD);
 		if (aclcheck_res != ACLCHECK_OK)
-		{
 			elog(ERROR, "%s: %s", rte->relname, aclcheck_error_strings[aclcheck_res]);
-		}
 	}
 }

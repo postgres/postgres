@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.87 1998/06/09 17:36:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.88 1998/06/15 19:29:00 momjian Exp $
  *
  * NOTES
  *
@@ -1067,9 +1067,7 @@ BackendStartup(Port *port)
 	static char envEntry[NR_ENVIRONMENT_VBL][2 * ARGV_SIZE];
 
 	for (i = 0; i < NR_ENVIRONMENT_VBL; ++i)
-	{
 		MemSet(envEntry[i], 0, 2 * ARGV_SIZE);
-	}
 
 	/*
 	 * Set up the necessary environment variables for the backend This

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.23 1998/03/30 17:39:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.24 1998/06/15 19:30:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,13 +62,9 @@ translate_escape(char *p, int isArray)
 		case '7':
 			c = DIGIT(c);
 			if (ISOCTAL(*s))
-			{
 				c = (c << 3) + DIGIT(*s++);
-			}
 			if (ISOCTAL(*s))
-			{
 				c = (c << 3) + DIGIT(*s++);
-			}
 			*p = c;
 			break;
 		case 'b':
@@ -102,13 +98,9 @@ translate_escape(char *p, int isArray)
 			 * the caller.
 			 */
 			if (isArray)
-			{
 				return p + 1;
-			}
 			else
-			{
 				*p = c;
-			}
 			break;
 		case '\0':
 
@@ -132,9 +124,7 @@ translate_escape(char *p, int isArray)
 	/* Shift the rest of the buffer over itself after the current char */
 	q = p + 1;
 	for (; *s;)
-	{
 		*q++ = *s++;
-	}
 	*q = '\0';
 #ifdef TCL_ARRAYS_DEBUG_ESCAPE
 	printf("   after  = '%s'\n", p);
@@ -158,9 +148,7 @@ tcl_value(char *value)
 	char	   *p;
 
 	if (!value)
-	{
 		return ((char *) NULL);
-	}
 
 #ifdef TCL_ARRAYS_DEBUG
 	printf("pq_value  = '%s'\n", value);
@@ -206,9 +194,7 @@ tcl_value(char *value)
 				}
 			}
 			if (!*p)
-			{
 				break;
-			}
 		}
 	}
 	else
@@ -225,9 +211,7 @@ tcl_value(char *value)
 				p = translate_escape(p, 0);
 			}
 			if (!*p)
-			{
 				break;
-			}
 		}
 	}
 #ifdef TCL_ARRAYS_DEBUG
@@ -1236,9 +1220,7 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_SetVar2(interp, argv[3], ".tupno", buffer, 0);
 
 		for (column = 0; column < ncols; column++)
-		{
 			Tcl_SetVar2(interp, argv[3], info[column].cname, PQgetvalue(result, tupno, column), 0);
-		}
 
 		Tcl_SetVar2(interp, argv[3], ".command", "update", 0);
 

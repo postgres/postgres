@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.21 1998/04/15 15:29:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.22 1998/06/15 19:28:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,34 +73,22 @@ set_tlist_references(Plan *plan)
 		return;
 
 	if (IsA_Join(plan))
-	{
 		set_join_tlist_references((Join *) plan);
-	}
 	else if (IsA(plan, SeqScan) &&plan->lefttree &&
 			 IsA_Temp(plan->lefttree))
-	{
 		set_tempscan_tlist_references((SeqScan *) plan);
-	}
 	else if (IsA(plan, Sort))
-	{
 		set_temp_tlist_references((Temp *) plan);
-	}
 	else if (IsA(plan, Result))
-	{
 		set_result_tlist_references((Result *) plan);
-	}
 	else if (IsA(plan, Hash))
-	{
 		set_tlist_references(plan->lefttree);
-	}
 	else if (IsA(plan, Choose))
 	{
 		List	   *x;
 
 		foreach(x, ((Choose *) plan)->chooseplanlist)
-		{
 			set_tlist_references((Plan *) lfirst(x));
-		}
 	}
 }
 
@@ -200,9 +188,7 @@ set_temp_tlist_references(Temp *temp)
 					  (source)->targetlist);
 	}
 	else
-	{
 		elog(ERROR, "calling set_temp_tlist_references with empty lefttree");
-	}
 }
 
 /*
@@ -326,9 +312,7 @@ replace_clause_joinvar_refs(Expr *clause,
 			return (NIL);
 	}
 	else if (single_node((Node *) clause))
-	{
 		return ((List *) clause);
-	}
 	else if (and_clause((Node *) clause))
 	{
 		List	   *andclause =
@@ -609,9 +593,7 @@ replace_result_clause(Node *clause,
 		((Var *) clause)->varattno = subplanVar->resdom->resno;
 	}
 	else if (IsA(clause, Aggreg))
-	{
 		replace_result_clause(((Aggreg *) clause)->target, subplanTargetList);
-	}
 	else if (is_funcclause(clause))
 	{
 		List	   *subExpr;
@@ -622,9 +604,7 @@ replace_result_clause(Node *clause,
 		 */
 		subExpr = ((Expr *) clause)->args;
 		foreach(t, subExpr)
-		{
 			replace_result_clause(lfirst(t), subplanTargetList);
-		}
 	}
 	else if (IsA(clause, ArrayRef))
 	{
@@ -635,13 +615,9 @@ replace_result_clause(Node *clause,
 		 * expression and its index expression...
 		 */
 		foreach(t, aref->refupperindexpr)
-		{
 			replace_result_clause(lfirst(t), subplanTargetList);
-		}
 		foreach(t, aref->reflowerindexpr)
-		{
 			replace_result_clause(lfirst(t), subplanTargetList);
-		}
 		replace_result_clause(aref->refexpr,
 							  subplanTargetList);
 		replace_result_clause(aref->refassgnexpr,
@@ -687,18 +663,14 @@ OperandIsInner(Node *opnd, int inner_relid)
 	 */
 	if (IsA(opnd, Var) &&
 		(inner_relid == ((Var *) opnd)->varno))
-	{
 		return true;
-	}
 	if (is_funcclause(opnd))
 	{
 		List	   *firstArg = lfirst(((Expr *) opnd)->args);
 
 		if (IsA(firstArg, Var) &&
 			(inner_relid == ((Var *) firstArg)->varno))
-		{
 			return true;
-		}
 	}
 	return false;
 }
@@ -864,9 +836,7 @@ del_agg_clause(Node *clause)
 	List	   *t;
 
 	if (IsA(clause, Var))
-	{
 		return clause;
-	}
 	else if (is_funcclause(clause))
 	{
 
@@ -875,9 +845,7 @@ del_agg_clause(Node *clause)
 		 * arguments...
 		 */
 		foreach(t, ((Expr *) clause)->args)
-		{
 			lfirst(t) = del_agg_clause(lfirst(t));
-		}
 	}
 	else if (IsA(clause, Aggreg))
 	{
@@ -895,13 +863,9 @@ del_agg_clause(Node *clause)
 		 * expression and its index expression...
 		 */
 		foreach(t, aref->refupperindexpr)
-		{
 			lfirst(t) = del_agg_clause(lfirst(t));
-		}
 		foreach(t, aref->reflowerindexpr)
-		{
 			lfirst(t) = del_agg_clause(lfirst(t));
-		}
 		aref->refexpr = del_agg_clause(aref->refexpr);
 		aref->refassgnexpr = del_agg_clause(aref->refassgnexpr);
 	}
@@ -921,9 +885,7 @@ del_agg_clause(Node *clause)
 			right = del_agg_clause(right);
 	}
 	else if (IsA(clause, Param) ||IsA(clause, Const))
-	{
 		return clause;
-	}
 	else
 	{
 

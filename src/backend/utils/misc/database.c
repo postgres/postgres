@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.9 1998/05/29 13:43:14 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.10 1998/06/15 19:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,9 +144,7 @@ ExpandDatabasePath(char *dbpath)
 	}
 	/* no path delimiter? then add the default path prefixes */
 	else
-	{
 		sprintf(buf, "%s%cbase%c%s", DataDir, SEP_CHAR, SEP_CHAR, dbpath);
-	}
 
 	path = palloc(strlen(buf) + 1);
 	strcpy(path, buf);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.25 1998/01/15 19:42:10 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.26 1998/06/15 19:27:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,9 +127,7 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 				}
 				/* get next offnum */
 				if (offset < maxoff)
-				{
 					offset = OffsetNumberNext(offset);
-				}
 				else
 				{				/* move right ? */
 					if (P_RIGHTMOST(opaque))
@@ -906,13 +904,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright)
 	 */
 
 	if (P_RIGHTMOST(ropaque))
-	{
 		itemid = PageGetItemId(rightpage, P_HIKEY);
-	}
 	else
-	{
 		itemid = PageGetItemId(rightpage, P_FIRSTKEY);
-	}
 	itemsz = ItemIdGetLength(itemid);
 	item = (BTItem) PageGetItem(rightpage, itemid);
 
@@ -1178,9 +1172,7 @@ _bt_pgaddtup(Relation rel,
 	first = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
 
 	if (afteritem == (BTItem) NULL)
-	{
 		itup_off = _bt_binsrch(rel, buf, keysz, itup_scankey, BT_INSERTION);
-	}
 	else
 	{
 		itup_off = first;
@@ -1358,9 +1350,7 @@ _bt_itemcmp(Relation rel,
 			compare = (strat == BTLessStrategyNumber) ? true : false;
 		}
 		else
-		{
 			compare = _bt_invokestrat(rel, i, strat, attrDatum1, attrDatum2);
-		}
 
 		if (compare)			/* true for one of ">, <, =" */
 		{
@@ -1430,9 +1420,7 @@ _bt_updateitem(Relation rel,
 
 	/* this should never happen (in theory) */
 	if (!BTItemSame(item, oldItem))
-	{
 		elog(FATAL, "_bt_getstackbuf was lying!!");
-	}
 
 	/*
 	 * It's  defined by caller (_bt_insertonpg)

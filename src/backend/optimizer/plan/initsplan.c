@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.11 1998/03/16 05:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.12 1998/06/15 19:28:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,9 +150,7 @@ initialize_base_rels_jinfo(Query *root, List *clauses)
 	List	   *clause;
 
 	foreach(clause, clauses)
-	{
 		add_clause_to_rels(root, lfirst(clause));
-	}
 	return;
 }
 

@@ -313,9 +313,7 @@ currval(struct varlena * seqin)
 	pfree(seqname);
 
 	if (elm->increment == 0)	/* nextval/read_info were not called */
-	{
 		elog(ERROR, "%s.currval is not yet defined in this session", elm->name);
-	}
 
 	result = elm->last;
 

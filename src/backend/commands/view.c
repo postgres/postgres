@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.21 1998/02/26 04:31:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.22 1998/06/15 19:28:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,9 +90,7 @@ DefineVirtualRelation(char *relname, List *tlist)
 		}
 	}
 	else
-	{
 		elog(ERROR, "attempted to define virtual relation with no attrs");
-	}
 
 	/*
 	 * now create the parametesr for keys/inheritance etc. All of them are

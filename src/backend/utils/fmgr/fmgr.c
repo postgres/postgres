@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.16 1998/03/07 06:03:28 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.17 1998/06/15 19:29:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,9 +50,7 @@ fmgr_pl(char *arg0,...)
 		{
 			va_start(pvar, arg0);
 			for (i = 1; i < fmgr_pl_finfo->fn_nargs; i++)
-			{
 				values.data[i] = va_arg(pvar, char *);
-			}
 			va_end(pvar);
 		}
 	}
@@ -91,9 +89,7 @@ fmgr_c(FmgrInfo *finfo,
 	 * instead.
 	 */
 	if (finfo->fn_plhandler != NULL)
-	{
 		return (*(finfo->fn_plhandler)) (finfo, values, isNull);
-	}
 
 	switch (n_arguments)
 	{

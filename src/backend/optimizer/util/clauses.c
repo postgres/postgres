@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.16 1998/02/26 04:33:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.17 1998/06/15 19:28:47 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -332,13 +332,9 @@ pull_constant_clauses(List *quals, List **constantQual)
 	foreach(q, quals)
 	{
 		if (!contain_var_clause(lfirst(q)))
-		{
 			constqual = lcons(lfirst(q), constqual);
-		}
 		else
-		{
 			restqual = lcons(lfirst(q), restqual);
-		}
 	}
 	freeList(quals);
 	*constantQual = constqual;
@@ -371,9 +367,7 @@ clause_relids_vars(Node *clause, List **relids, List **vars)
 		List	   *vi;
 
 		if (!intMember(var->varno, varno_list))
-		{
 			varno_list = lappendi(varno_list, var->varno);
-		}
 		foreach(vi, var_list)
 		{
 			Var		   *in_list = (Var *) lfirst(vi);
@@ -410,9 +404,7 @@ NumRelids(Node *clause)
 		Var		   *var = (Var *) lfirst(i);
 
 		if (!intMember(var->varno, var_list))
-		{
 			var_list = lconsi(var->varno, var_list);
-		}
 	}
 
 	return (length(var_list));
@@ -497,14 +489,10 @@ qual_clause_p(Node *clause)
 	/* How about Param-s ?	- vadim 02/03/98 */
 	if (IsA(get_leftop((Expr *) clause), Var) &&
 		IsA(get_rightop((Expr *) clause), Const))
-	{
 		return (true);
-	}
 	else if (IsA(get_rightop((Expr *) clause), Var) &&
 			 IsA(get_leftop((Expr *) clause), Const))
-	{
 		return (true);
-	}
 	return (false);
 }
 
@@ -519,17 +507,11 @@ void
 fix_opid(Node *clause)
 {
 	if (clause == NULL || single_node(clause))
-	{
 		;
-	}
 	else if (or_clause(clause) || and_clause(clause))
-	{
 		fix_opids(((Expr *) clause)->args);
-	}
 	else if (is_funcclause(clause))
-	{
 		fix_opids(((Expr *) clause)->args);
-	}
 	else if (IsA(clause, ArrayRef))
 	{
 		ArrayRef   *aref = (ArrayRef *) clause;
@@ -540,9 +522,7 @@ fix_opid(Node *clause)
 		fix_opid(aref->refassgnexpr);
 	}
 	else if (not_clause(clause))
-	{
 		fix_opid((Node *) get_notclausearg((Expr *) clause));
-	}
 	else if (is_opclause(clause))
 	{
 		replace_opid((Oper *) ((Expr *) clause)->oper);
@@ -550,9 +530,7 @@ fix_opid(Node *clause)
 		fix_opid((Node *) get_rightop((Expr *) clause));
 	}
 	else if (agg_clause(clause))
-	{
 		fix_opid(((Aggreg *) clause)->target);
-	}
 	else if (is_subplan(clause) &&
 			 ((SubPlan *) ((Expr *) clause)->oper)->sublink->subLinkType != EXISTS_SUBLINK)
 	{

@@ -52,13 +52,9 @@ gistgettuple(IndexScanDesc s, ScanDirection dir)
 
 	/* not cached, so we'll have to do some work */
 	if (ItemPointerIsValid(&(s->currentItemData)))
-	{
 		res = gistnext(s, dir);
-	}
 	else
-	{
 		res = gistfirst(s, dir);
-	}
 	return (res);
 }
 
@@ -103,13 +99,9 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 			maxoff = PageGetMaxOffsetNumber(p);
 
 			if (ScanDirectionIsBackward(dir))
-			{
 				n = OffsetNumberPrev(stk->gs_child);
-			}
 			else
-			{
 				n = OffsetNumberNext(stk->gs_child);
-			}
 			so->s_stack = stk->gs_parent;
 			pfree(stk);
 
@@ -163,13 +155,9 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 	n = ItemPointerGetOffsetNumber(&(s->currentItemData));
 
 	if (ScanDirectionIsForward(dir))
-	{
 		n = OffsetNumberNext(n);
-	}
 	else
-	{
 		n = OffsetNumberPrev(n);
-	}
 
 	b = ReadBuffer(s->relation, blk);
 	p = BufferGetPage(b);
@@ -195,13 +183,9 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 
 			if (ScanDirectionIsBackward(dir))
-			{
 				n = OffsetNumberPrev(stk->gs_child);
-			}
 			else
-			{
 				n = OffsetNumberNext(stk->gs_child);
-			}
 			so->s_stack = stk->gs_parent;
 			pfree(stk);
 
@@ -235,13 +219,9 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 
 			if (ScanDirectionIsBackward(dir))
-			{
 				n = PageGetMaxOffsetNumber(p);
-			}
 			else
-			{
 				n = FirstOffsetNumber;
-			}
 		}
 	}
 }
@@ -296,9 +276,7 @@ gistindex_keytest(IndexTuple tuple,
 		}
 
 		if (!test == !(key[0].sk_flags & SK_NEGATE))
-		{
 			return (false);
-		}
 
 		scanKeySize -= 1;
 		key++;
@@ -343,13 +321,9 @@ gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 			break;
 
 		if (ScanDirectionIsBackward(dir))
-		{
 			n = OffsetNumberPrev(n);
-		}
 		else
-		{
 			n = OffsetNumberNext(n);
-		}
 	}
 
 	return (n);
@@ -405,9 +379,7 @@ gistheapptr(Relation r, ItemPointer itemp)
 		ReleaseBuffer(b);
 	}
 	else
-	{
 		ItemPointerSetInvalid(ip);
-	}
 
 	return (ip);
 }

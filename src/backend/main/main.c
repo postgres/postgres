@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.20 1998/06/04 17:26:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.21 1998/06/15 19:28:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,7 @@ main(int argc, char *argv[])
 #if defined(__alpha)
 	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
 				   (unsigned long) NULL) < 0)
-	{
 		elog(NOTICE, "setsysinfo failed: %d\n", errno);
-	}
 #endif
 
 #endif							/* NOFIXADE || NOPRINTADE */

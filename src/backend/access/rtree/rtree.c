@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.23 1998/02/26 04:30:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.24 1998/06/15 19:28:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,9 +450,7 @@ rttighten(Relation r,
 			memmove(oldud, datum, VARSIZE(datum));
 		}
 		else
-		{
 			memmove(oldud, datum, att_size);
-		}
 		WriteBuffer(b);
 
 		/*
@@ -467,9 +465,7 @@ rttighten(Relation r,
 		pfree(tdatum);
 	}
 	else
-	{
 		ReleaseBuffer(b);
-	}
 	pfree(datum);
 }
 
@@ -587,9 +583,7 @@ dosplit(Relation r,
 	}
 
 	if ((bufblock = BufferGetBlockNumber(buffer)) != P_ROOT)
-	{
 		PageRestoreTempPage(left, p);
-	}
 	WriteBuffer(leftbuf);
 	WriteBuffer(rightbuf);
 
@@ -842,13 +836,9 @@ picksplit(Relation r,
 
 		/* okay, which page needs least enlargement? */
 		if (i == maxoff)
-		{
 			item_1 = itup;
-		}
 		else
-		{
 			item_1 = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
-		}
 
 		datum_alpha = ((char *) item_1) + sizeof(IndexTupleData);
 		union_dl = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_l, datum_alpha);

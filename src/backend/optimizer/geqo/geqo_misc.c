@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.7 1998/01/07 21:03:44 momjian Exp $
+ * $Id: geqo_misc.c,v 1.8 1998/06/15 19:28:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,16 +269,12 @@ geqo_print_rel(Query *root, Rel *rel)
 	printf("______________________________\n");
 	printf("(");
 	foreach(l, rel->relids)
-	{
 		printf("%d ", lfirsti(l));
-	}
 	printf("): size=%d width=%d\n", rel->size, rel->width);
 
 	printf("\tpath list:\n");
 	foreach(l, rel->pathlist)
-	{
 		geqo_print_path(root, lfirst(l), 1);
-	}
 
 	printf("\tcheapest path:\n");
 	geqo_print_path(root, rel->cheapestpath, 1);

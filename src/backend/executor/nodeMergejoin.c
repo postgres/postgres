@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.15 1998/06/15 18:39:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.16 1998/06/15 19:28:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -571,13 +571,9 @@ ExecMergeJoin(MergeJoin *node)
 				MJ_DEBUG_QUAL(mergeclauses, qualResult);
 
 				if (qualResult)
-				{
 					mergestate->mj_JoinState = EXEC_MJ_JOINTUPLES;
-				}
 				else
-				{
 					mergestate->mj_JoinState = EXEC_MJ_NEXTOUTER;
-				}
 				break;
 
 				/*
@@ -634,13 +630,9 @@ ExecMergeJoin(MergeJoin *node)
 				econtext->ecxt_innertuple = innerTupleSlot;
 
 				if (TupIsNull(innerTupleSlot))
-				{
 					mergestate->mj_JoinState = EXEC_MJ_NEXTOUTER;
-				}
 				else
-				{
 					mergestate->mj_JoinState = EXEC_MJ_JOINTEST;
-				}
 				break;
 
 				/*
@@ -863,13 +855,9 @@ ExecMergeJoin(MergeJoin *node)
 				MJ_DEBUG_MERGE_COMPARE(innerSkipQual, compareResult);
 
 				if (compareResult)
-				{
 					mergestate->mj_JoinState = EXEC_MJ_SKIPINNER;
-				}
 				else
-				{
 					mergestate->mj_JoinState = EXEC_MJ_JOINMARK;
-				}
 				break;
 
 				/*
@@ -986,13 +974,9 @@ ExecMergeJoin(MergeJoin *node)
 				MJ_DEBUG_MERGE_COMPARE(outerSkipQual, compareResult);
 
 				if (compareResult)
-				{
 					mergestate->mj_JoinState = EXEC_MJ_SKIPOUTER;
-				}
 				else
-				{
 					mergestate->mj_JoinState = EXEC_MJ_JOINMARK;
-				}
 
 				break;
 

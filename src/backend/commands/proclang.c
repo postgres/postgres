@@ -80,9 +80,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 								  PointerGetDatum(languageName),
 								  0, 0, 0);
 	if (HeapTupleIsValid(langTup))
-	{
 		elog(ERROR, "Language %s already exists", languageName);
-	}
 
 	/* ----------------
 	 * Lookup the PL handler function and check that it is
@@ -171,9 +169,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 								  PointerGetDatum(languageName),
 								  0, 0, 0);
 	if (!HeapTupleIsValid(langTup))
-	{
 		elog(ERROR, "Language %s doesn't exist", languageName);
-	}
 
 	if (!((Form_pg_language) GETSTRUCT(langTup))->lanispl)
 	{
@@ -195,9 +191,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	tup = heap_getnext(scanDesc, 0, (Buffer *) NULL);
 
 	if (!HeapTupleIsValid(tup))
-	{
 		elog(ERROR, "Language with name '%s' not found", languageName);
-	}
 
 	heap_delete(rdesc, &(tup->t_ctid));
 

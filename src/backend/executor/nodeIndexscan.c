@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.17 1998/03/30 16:46:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.18 1998/06/15 19:28:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,13 +279,9 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 					ExecEvalExpr(scanexpr, exprCtxt, &isNull, &isDone);
 				scan_keys[j].sk_argument = scanvalue;
 				if (isNull)
-				{
 					scan_keys[j].sk_flags |= SK_ISNULL;
-				}
 				else
-				{
 					scan_keys[j].sk_flags &= ~SK_ISNULL;
-				}
 			}
 		}
 	}
@@ -885,9 +881,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	 * ----------------
 	 */
 	if (have_runtime_keys)
-	{
 		indexstate->iss_RuntimeKeyInfo = (Pointer) runtimeKeyInfo;
-	}
 	else
 	{
 		indexstate->iss_RuntimeKeyInfo = NULL;

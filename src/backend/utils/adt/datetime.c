@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.22 1998/02/26 04:36:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.23 1998/06/15 19:29:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,13 +175,9 @@ int
 date_cmp(DateADT dateVal1, DateADT dateVal2)
 {
 	if (dateVal1 < dateVal2)
-	{
 		return -1;
-	}
 	else if (dateVal1 > dateVal2)
-	{
 		return 1;
-	}
 	return 0;
 }	/* date_cmp() */
 

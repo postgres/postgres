@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.10 1998/03/30 16:46:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.11 1998/06/15 19:28:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,9 +444,7 @@ xfunc_form_groups(Query *queryInfo, Stream root, Stream bottom)
 												  primjoin, NIL));
 			}
 			else
-			{
 				set_groupsel(temp, 1.0);
-			}
 		}
 		else
 /* a restriction, or 2-ary join pred */

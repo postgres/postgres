@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.40 1998/06/15 18:39:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.41 1998/06/15 19:29:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,9 +367,7 @@ ProcessUtility(Node *parsetree,
 									   stmt->definition);		/* rest */
 						break;
 					case TYPE_P:
-						{
 							DefineType(stmt->defname, stmt->definition);
-						}
 						break;
 					case AGGREGATE:
 						DefineAggregate(stmt->defname,	/* aggregate name */
@@ -479,9 +477,7 @@ ProcessUtility(Node *parsetree,
 							relationName = RewriteGetRuleEventRel(rulename);
 							aclcheck_result = pg_aclcheck(relationName, userName, ACL_RU);
 							if (aclcheck_result != ACLCHECK_OK)
-							{
 								elog(ERROR, "%s: %s", relationName, aclcheck_error_strings[aclcheck_result]);
-							}
 #endif
 							RemoveRewriteRule(rulename);
 						}
@@ -553,9 +549,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_VersionStmt:
-			{
 				elog(ERROR, "CREATE VERSION is not currently implemented");
-			}
 			break;
 
 		case T_CreatedbStmt:

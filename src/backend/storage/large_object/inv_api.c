@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.29 1998/04/27 04:06:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.30 1998/06/15 19:29:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,9 +527,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 		/* either append or replace a block, as required */
 		if (!HeapTupleIsValid(htup))
-		{
 			tuplen = inv_wrnew(obj_desc, buf, nbytes - nwritten);
-		}
 		else
 		{
 			if (obj_desc->offset > obj_desc->highbyte)
@@ -734,9 +732,7 @@ inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		}
 	}
 	else
-	{
 		nwritten = nbytes;
-	}
 
 	/*
 	 * Insert a new file system block tuple, index it, and write it out.

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.19 1998/04/27 04:04:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.20 1998/06/15 19:27:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,9 +157,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 		if (i == numberOfKeys || cur->sk_attno != attno)
 		{
 			if (cur->sk_attno != attno + 1 && i < numberOfKeys)
-			{
 				elog(ERROR, "_bt_orderkeys: key(s) for attribute %d missed", attno + 1);
-			}
 
 			/*
 			 * If = has been specified, no other key will be used. In case
@@ -373,9 +371,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 
 		/* btree doesn't support 'A is null' clauses, yet */
 		if (isNull || key[0].sk_flags & SK_ISNULL)
-		{
 			return (false);
-		}
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
@@ -391,9 +387,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 		}
 
 		if (!test == !(key[0].sk_flags & SK_NEGATE))
-		{
 			return (false);
-		}
 
 		keysz -= 1;
 		key++;

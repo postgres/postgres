@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.75 1998/06/09 17:13:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.76 1998/06/15 19:29:27 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -565,9 +565,7 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		 * function executor will crash.  DZ - 30-8-1996
 		 */
 		else
-		{
 			plan_list = lappend(plan_list, NULL);
-		}
 #endif
 	}
 
@@ -1177,9 +1175,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		exitpg(1);
 	}
 	else if (argc - optind == 1)
-	{
 		DBName = argv[optind];
-	}
 	else if ((DBName = userName) == NULL)
 	{
 		fprintf(stderr, "%s: USER undefined and no database specified\n",
@@ -1270,9 +1266,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	/* initialize */
 	if (!Quiet)
-	{
 		puts("\tInitPostgres()..");
-	}
 
 	InitPostgres(DBName);
 
@@ -1314,7 +1308,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.75 $ $Date: 1998/06/09 17:13:04 $");
+		puts("$Revision: 1.76 $ $Date: 1998/06/15 19:29:27 $");
 	}
 
 	/* ----------------

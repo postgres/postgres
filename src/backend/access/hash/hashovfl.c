@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.15 1998/01/07 21:01:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.16 1998/06/15 19:27:49 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -64,9 +64,7 @@ _hash_addovflpage(Relation rel, Buffer *metabufp, Buffer buf)
 	/* allocate an empty overflow page */
 	oaddr = _hash_getovfladdr(rel, metabufp);
 	if (oaddr == InvalidOvflAddress)
-	{
 		elog(ERROR, "_hash_addovflpage: problem with _hash_getovfladdr.");
-	}
 	ovflblkno = OADDR_TO_BLKNO(OADDR_OF(SPLITNUM(oaddr), OPAGENUM(oaddr)));
 	Assert(BlockNumberIsValid(ovflblkno));
 	ovflbuf = _hash_getbuf(rel, ovflblkno, HASH_WRITE);
@@ -171,9 +169,7 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 	if (offset > SPLITMASK)
 	{
 		if (++splitnum >= NCACHED)
-		{
 			elog(ERROR, OVMSG);
-		}
 		metap->OVFL_POINT = splitnum;
 		metap->SPARES[splitnum] = metap->SPARES[splitnum - 1];
 		metap->SPARES[splitnum - 1]--;
@@ -189,9 +185,7 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 
 		free_page++;
 		if (free_page >= NCACHED)
-		{
 			elog(ERROR, OVMSG);
-		}
 
 		/*
 		 * This is tricky.	The 1 indicates that you want the new page
@@ -205,17 +199,13 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 		 */
 		if (_hash_initbitmap(rel, metap, OADDR_OF(splitnum, offset),
 							 1, free_page))
-		{
 			elog(ERROR, "overflow_page: problem with _hash_initbitmap.");
-		}
 		metap->SPARES[splitnum]++;
 		offset++;
 		if (offset > SPLITMASK)
 		{
 			if (++splitnum >= NCACHED)
-			{
 				elog(ERROR, OVMSG);
-			}
 			metap->OVFL_POINT = splitnum;
 			metap->SPARES[splitnum] = metap->SPARES[splitnum - 1];
 			metap->SPARES[splitnum - 1]--;
@@ -252,18 +242,14 @@ found:
 
 	bit = 1 + bit + (i * BMPGSZ_BIT(metap));
 	if (bit >= metap->LAST_FREED)
-	{
 		metap->LAST_FREED = bit - 1;
-	}
 
 	/* Calculate the split number for this page */
 	for (i = 0; (i < splitnum) && (bit > metap->SPARES[i]); i++)
 		;
 	offset = (i ? bit - metap->SPARES[i - 1] : bit);
 	if (offset >= SPLITMASK)
-	{
 		elog(ERROR, OVMSG);
-	}
 
 	/* initialize this page */
 	oaddr = OADDR_OF(i, offset);
@@ -381,9 +367,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 		(splitnum ? metap->SPARES[splitnum - 1] : 0) + (addr & SPLITMASK) - 1;
 
 	if (ovflpgno < metap->LAST_FREED)
-	{
 		metap->LAST_FREED = ovflpgno;
-	}
 
 	bitmappage = (ovflpgno >> (metap->BSHIFT + BYTE_TO_BIT));
 	bitmapbit = ovflpgno & (BMPGSZ_BIT(metap) - 1);
@@ -403,13 +387,9 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	 * return that buffer with a write lock.
 	 */
 	if (BlockNumberIsValid(nextblkno))
-	{
 		return (_hash_getbuf(rel, nextblkno, HASH_WRITE));
-	}
 	else
-	{
 		return (InvalidBuffer);
-	}
 }
 
 
@@ -543,9 +523,7 @@ _hash_squeezebucket(Relation rel,
 	{
 		rblkno = ropaque->hasho_nextblkno;
 		if (ropaque != wopaque)
-		{
 			_hash_relbuf(rel, rbuf, HASH_WRITE);
-		}
 		rbuf = _hash_getbuf(rel, rblkno, HASH_WRITE);
 		rpage = BufferGetPage(rbuf);
 		_hash_checkpage(rpage, LH_OVERFLOW_PAGE);
@@ -621,9 +599,7 @@ _hash_squeezebucket(Relation rel,
 			 */
 			rbuf = _hash_freeovflpage(rel, rbuf);
 			if (BufferIsValid(rbuf))
-			{
 				_hash_relbuf(rel, rbuf, HASH_WRITE);
-			}
 
 			if (rblkno == wblkno)
 			{

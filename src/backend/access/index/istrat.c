@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.19 1998/04/27 04:04:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.20 1998/06/15 19:27:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,9 +309,7 @@ RelationGetStrategy(Relation relation,
 	for (index = 0; index < evaluation->maxStrategy; index += 1)
 	{
 		if (strategyMap->entry[index].sk_procedure == procedure)
-		{
 			break;
-		}
 	}
 
 	if (index == evaluation->maxStrategy)
@@ -347,9 +345,7 @@ RelationGetStrategy(Relation relation,
 	if (!StrategyNumberIsInBounds(strategy, evaluation->maxStrategy))
 	{
 		if (!StrategyNumberIsValid(strategy))
-		{
 			elog(ERROR, "RelationGetStrategy: corrupted evaluation");
-		}
 	}
 
 	return strategy;
@@ -465,9 +461,7 @@ RelationInvokeStrategy(Relation relation,
 								 (*termP)->operatorData[index].strategy);
 
 				if (!RegProcedureIsValid(entry->sk_procedure))
-				{
 					break;
-				}
 			}
 
 			if (index == (*termP)->degree)
@@ -582,9 +576,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		if (!OidIsValid(iform->indkey[attributeIndex]))
 		{
 			if (attributeIndex == 0)
-			{
 				elog(ERROR, "IndexSupportInitialize: no pg_index tuple");
-			}
 			break;
 		}
 
@@ -621,9 +613,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 			loc = &indexSupport[((attributeNumber - 1) * maxSupportNumber)];
 
 			for (support = maxSupportNumber; --support >= 0;)
-			{
 				loc[support] = InvalidOid;
-			}
 
 			entry[1].sk_argument =
 				ObjectIdGetDatum(operatorClassObjectId[attributeNumber - 1]);

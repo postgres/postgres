@@ -92,9 +92,7 @@ _replace_var(Var *var)
 	}
 
 	if ((i = lfirsti(vpe)) < 0) /* parameter is not assigned */
-	{
 		i = _new_param(var, PlannerQueryLevel - var->varlevelsup);
-	}
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;

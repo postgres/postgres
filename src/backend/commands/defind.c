@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.20 1998/01/05 16:38:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.21 1998/06/15 19:28:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,9 +94,7 @@ DefineIndex(char *heapRelationName,
 	 */
 	numberOfAttributes = length(attributeList);
 	if (numberOfAttributes <= 0)
-	{
 		elog(ERROR, "DefineIndex: must specify at least one attribute");
-	}
 
 	/*
 	 * compute heap relation id
@@ -369,9 +367,7 @@ CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid)
 	List	   *item;
 
 	foreach(item, predList)
-	{
 		CheckPredExpr(lfirst(item), rangeTable, baseRelOid);
-	}
 }
 
 static void
@@ -391,9 +387,7 @@ CheckPredExpr(Node *predicate, List *rangeTable, Oid baseRelOid)
 		elog(ERROR, "Unsupported partial-index predicate expression type");
 
 	foreach(clause, clauses)
-	{
 		CheckPredExpr(lfirst(clause), rangeTable, baseRelOid);
-	}
 }
 
 static void
@@ -408,9 +402,7 @@ CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid)
 	if (!IsA(predicate->oper, Oper) ||
 		!IsA(pred_var, Var) ||
 		!IsA(pred_const, Const))
-	{
 		elog(ERROR, "Unsupported partial-index predicate clause type");
-	}
 
 	if (getrelid(pred_var->varno, rangeTable) != baseRelOid)
 		elog(ERROR,
@@ -538,9 +530,7 @@ GetDefaultOpClass(Oid atttypid)
 								ObjectIdGetDatum(atttypid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	{
 		return 0;
-	}
 
 	return nameout(&(((Form_pg_opclass) GETSTRUCT(tuple))->opcname));
 }
@@ -564,9 +554,7 @@ RemoveIndex(char *name)
 								0, 0, 0);
 
 	if (!HeapTupleIsValid(tuple))
-	{
 		elog(ERROR, "index \"%s\" nonexistent", name);
-	}
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
 	{

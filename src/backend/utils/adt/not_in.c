@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.8 1998/01/31 04:38:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.9 1998/06/15 19:29:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,9 +89,7 @@ int4notin(int16 not_in_arg, char *relation_and_attr)
 
 		integer_value = DatumGetInt16(value);
 		if (left_side_argument == integer_value)
-		{
 			retval = false;
-		}
 	}
 
 	/* close the relation */
@@ -120,9 +118,7 @@ my_varattno(Relation rd, char *a)
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
 	{
 		if (!namestrcmp(&rd->rd_att->attrs[i]->attname, a))
-		{
 			return (i + 1);
-		}
 	}
 	return (-1);
 }

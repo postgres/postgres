@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.17 1998/05/06 23:50:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.18 1998/06/15 19:29:26 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -290,9 +290,7 @@ HandleFunctionRequest()
 	 */
 	fip = &last_fp;
 	if (!valid_fp_info(fid, fip))
-	{
 		update_fp_info(fid, fip);
-	}
 
 	if (fip->nargs != nargs)
 	{
@@ -308,9 +306,7 @@ HandleFunctionRequest()
 	for (i = 0; i < 8; ++i)
 	{
 		if (i >= nargs)
-		{
 			arg[i] = (char *) NULL;
-		}
 		else
 		{
 			argsize = pq_getint(4);
@@ -328,9 +324,7 @@ HandleFunctionRequest()
 					if (!(p = palloc(argsize + VARHDRSZ + 1)))	/* Added +1 to solve
 																 * memory leak - Peter
 																 * 98 Jan 6 */
-					{
 						elog(ERROR, "HandleFunctionRequest: palloc failed");
-					}
 					VARSIZE(p) = argsize + VARHDRSZ;
 					pq_getnchar(VARDATA(p), 0, argsize);
 				}
@@ -338,9 +332,7 @@ HandleFunctionRequest()
 				{				/* ... fixed */
 					/* XXX cross our fingers and trust "argsize" */
 					if (!(p = palloc(argsize + 1)))
-					{
 						elog(ERROR, "HandleFunctionRequest: palloc failed");
-					}
 					pq_getnchar(p, 0, argsize);
 				}
 				palloced |= (1 << i);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.12 1998/06/04 17:26:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.13 1998/06/15 19:28:17 momjian Exp $
  *
  * NOTES
  *	  At the point the version is defined, 2 physical relations are created
@@ -207,9 +207,7 @@ setAttrList(char *bname)
 		attrname = (rdesc->rd_att->attrs[i]->attname).data;
 
 		if (notfirst == 1)
-		{
 			sprintf(temp_buf, ", %s = new.%s", attrname, attrname);
-		}
 		else
 		{
 			sprintf(temp_buf, "%s = new.%s", attrname, attrname);

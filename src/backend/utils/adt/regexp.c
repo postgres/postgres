@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.17 1998/04/26 04:07:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.18 1998/06/15 19:29:36 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -97,15 +97,11 @@ RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 		for (oldest = 0, i = 1; i < rec; i++)
 		{
 			if (rev[i].cre_lru < rev[oldest].cre_lru)
-			{
 				oldest = i;
-			}
 		}
 	}
 	else
-	{
 		oldest = rec++;
-	}
 
 	/* if there was an old re, then de-allocate the space it used */
 	if (rev[oldest].cre_s != (char *) NULL)
@@ -115,9 +111,7 @@ RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 			rev[i].cre_lru =
 				(rev[i].cre_lru - rev[oldest].cre_lru) / 2;
 			if (rev[i].cre_lru > lru)
-			{
 				lru = rev[i].cre_lru;
-			}
 		}
 		pg95_regfree(&rev[oldest].cre_re);
 

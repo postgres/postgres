@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.23 1998/02/26 04:37:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.24 1998/06/15 19:29:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,9 +236,7 @@ ftoa(double value, char *ascii, int width, int prec1, char format)
 				/* output left of dp */
 				expon--;
 				if (*p)
-				{
 					*a++ = *p++;
-				}
 				else
 					*a++ = '0';
 			}

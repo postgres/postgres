@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.33 1998/02/26 04:33:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.34 1998/06/15 19:28:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,9 +111,7 @@ define_sets(Node *clause)
 	bool		oidbyval = typeByVal(t);
 
 	if (clause == NULL)
-	{
 		return;
-	}
 	else if (IsA(clause, LispList))
 	{
 		define_sets(lfirst(clause));
@@ -123,9 +121,7 @@ define_sets(Node *clause)
 	{
 		if (get_constisnull((Const) clause) ||
 			!get_constisset((Const) clause))
-		{
 			return;
-		}
 		setoid = SetDefine(((Const *) clause)->constvalue,
 						   typeidTypeName(((Const *) clause)->consttype));
 		set_constvalue((Const) clause, setoid);
@@ -134,22 +130,16 @@ define_sets(Node *clause)
 		set_constypeByVal((Const) clause, oidbyval);
 	}
 	else if (IsA(clause, Iter))
-	{
 		define_sets(((Iter *) clause)->iterexpr);
-	}
 	else if (single_node(clause))
-	{
 		return;
-	}
 	else if (or_clause(clause) || and_clause(clause))
 	{
 		List	   *temp;
 
 		/* mapcan */
 		foreach(temp, ((Expr *) clause)->args)
-		{
 			define_sets(lfirst(temp));
-		}
 	}
 	else if (is_funcclause(clause))
 	{
@@ -157,18 +147,12 @@ define_sets(Node *clause)
 
 		/* mapcan */
 		foreach(temp, ((Expr *) clause)->args)
-		{
 			define_sets(lfirst(temp));
-		}
 	}
 	else if (IsA(clause, ArrayRef))
-	{
 		define_sets(((ArrayRef *) clause)->refassgnexpr);
-	}
 	else if (not_clause(clause))
-	{
 		define_sets(get_notclausearg(clause));
-	}
 	else if (is_opclause(clause))
 	{
 		define_sets(get_leftop(clause));

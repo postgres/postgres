@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.11 1998/01/07 21:05:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.12 1998/06/15 19:29:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,9 +119,7 @@ RelationGetLRelId(Relation relation)
 	 */
 	if (strcmp(RelationGetRelationName(relation)->data,
 			   VariableRelationName) == 0)
-	{
 		return (VariableRelationLRelId);
-	}
 
 	return (linfo->lRelId);
 }
@@ -519,9 +517,7 @@ RelationUnsetLockForWrite(Relation relation)
 	 */
 	Assert(RelationIsValid(relation));
 	if (LockingDisabled())
-	{
 		return;
-	}
 
 	linfo = (LockInfo) relation->lockInfo;
 
@@ -598,9 +594,7 @@ RelationSetLockForTupleRead(Relation relation, ItemPointer itemPointer)
 	curXact = GetCurrentTransactionId();
 	if ((linfo->flags & ReadRelationLock) &&
 		TransactionIdEquals(curXact, linfo->transactionIdData))
-	{
 		return;
-	}
 
 	/* ----------------
 	 * If we don't already have a tuple lock this transaction

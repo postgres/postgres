@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.27 1998/02/26 04:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.28 1998/06/15 19:27:51 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -168,9 +168,7 @@ static void
 unpinsdesc(HeapScanDesc sdesc)
 {
 	if (BufferIsValid(sdesc->rs_pbuf))
-	{
 		ReleaseBuffer(sdesc->rs_pbuf);
-	}
 
 	/* ------------------------------------
 	 *	Scan will pin buffer one for each non-NULL tuple pointer
@@ -179,14 +177,10 @@ unpinsdesc(HeapScanDesc sdesc)
 	 * ------------------------------------
 	 */
 	if (BufferIsValid(sdesc->rs_cbuf))
-	{
 		ReleaseBuffer(sdesc->rs_cbuf);
-	}
 
 	if (BufferIsValid(sdesc->rs_nbuf))
-	{
 		ReleaseBuffer(sdesc->rs_nbuf);
-	}
 }
 
 /* ------------------------------------------
@@ -262,9 +256,7 @@ heapgettup(Relation relation,
 #endif							/* !defined(HEAPDEBUGALL) */
 
 	if (!ItemPointerIsValid(tid))
-	{
 		Assert(!PointerIsValid(tid));
-	}
 
 	/* ----------------
 	 *	return null immediately if relation is empty
@@ -313,9 +305,7 @@ heapgettup(Relation relation,
 		 * ----------------
 		 */
 		if (ItemPointerIsValid(tid) == false)
-		{
 			tid = NULL;
-		}
 		if (tid == NULL)
 		{
 			page = pages - 1;	/* final page */
@@ -333,9 +323,7 @@ heapgettup(Relation relation,
 		*b = RelationGetBufferWithBuffer(relation, page, *b);
 #ifndef NO_BUFFERISVALID
 		if (!BufferIsValid(*b))
-		{
 			elog(ERROR, "heapgettup: failed ReadBuffer");
-		}
 #endif
 
 		dp = (Page) BufferGetPage(*b);
@@ -380,9 +368,7 @@ heapgettup(Relation relation,
 		*b = RelationGetBufferWithBuffer(relation, page, *b);
 #ifndef NO_BUFFERISVALID
 		if (!BufferIsValid(*b))
-		{
 			elog(ERROR, "heapgettup: failed ReadBuffer");
-		}
 #endif
 
 		dp = (Page) BufferGetPage(*b);
@@ -398,13 +384,9 @@ heapgettup(Relation relation,
 	 */
 	lpp = PageGetItemId(dp, lineoff);
 	if (dir < 0)
-	{
 		linesleft = lineoff - 1;
-	}
 	else
-	{
 		linesleft = lines - lineoff;
-	}
 
 	/* ----------------
 	 *	advance the scan until we find a qualifying tuple or
@@ -476,21 +458,15 @@ heapgettup(Relation relation,
 
 #ifndef NO_BUFFERISVALID
 		if (!BufferIsValid(*b))
-		{
 			elog(ERROR, "heapgettup: failed ReadBuffer");
-		}
 #endif
 		dp = (Page) BufferGetPage(*b);
 		lines = lineoff = PageGetMaxOffsetNumber((Page) dp);
 		linesleft = lines - 1;
 		if (dir < 0)
-		{
 			lpp = PageGetItemId(dp, lineoff);
-		}
 		else
-		{
 			lpp = PageGetItemId(dp, FirstOffsetNumber);
-		}
 	}
 }
 
@@ -544,9 +520,7 @@ heap_open(Oid relationId)
 	r = (Relation) RelationIdGetRelation(relationId);
 
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
-	{
 		elog(ERROR, "%s is an index relation", r->rd_rel->relname.data);
-	}
 
 	return (r);
 }
@@ -573,9 +547,7 @@ heap_openr(char *relationName)
 	r = RelationNameGetRelation(relationName);
 
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
-	{
 		elog(ERROR, "%s is an index relation", r->rd_rel->relname.data);
-	}
 
 	return (r);
 }
@@ -1094,9 +1066,7 @@ heap_fetch(Relation relation,
 	 */
 
 	if (PointerIsValid(b))
-	{
 		*b = buffer;
-	}
 	else
 	{
 		tuple = heap_copytuple(tuple);
@@ -1402,9 +1372,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	 * ----------------
 	 */
 	if ((unsigned) DOUBLEALIGN(tup->t_len) <= PageGetFreeSpace((Page) dp))
-	{
 		RelationPutHeapTuple(relation, BufferGetBlockNumber(buffer), tup);
-	}
 	else
 	{
 		/* ----------------
@@ -1500,29 +1468,17 @@ heap_markpos(HeapScanDesc sdesc)
 	 * ----------------
 	 */
 	if (sdesc->rs_ptup != NULL)
-	{
 		sdesc->rs_mptid = sdesc->rs_ptup->t_ctid;
-	}
 	else
-	{
 		ItemPointerSetInvalid(&sdesc->rs_mptid);
-	}
 	if (sdesc->rs_ctup != NULL)
-	{
 		sdesc->rs_mctid = sdesc->rs_ctup->t_ctid;
-	}
 	else
-	{
 		ItemPointerSetInvalid(&sdesc->rs_mctid);
-	}
 	if (sdesc->rs_ntup != NULL)
-	{
 		sdesc->rs_mntid = sdesc->rs_ntup->t_ctid;
-	}
 	else
-	{
 		ItemPointerSetInvalid(&sdesc->rs_mntid);
-	}
 }
 
 /* ----------------
@@ -1568,9 +1524,7 @@ heap_restrpos(HeapScanDesc sdesc)
 	sdesc->rs_nbuf = InvalidBuffer;
 
 	if (!ItemPointerIsValid(&sdesc->rs_mptid))
-	{
 		sdesc->rs_ptup = NULL;
-	}
 	else
 	{
 		sdesc->rs_ptup = (HeapTuple)
@@ -1584,9 +1538,7 @@ heap_restrpos(HeapScanDesc sdesc)
 	}
 
 	if (!ItemPointerIsValid(&sdesc->rs_mctid))
-	{
 		sdesc->rs_ctup = NULL;
-	}
 	else
 	{
 		sdesc->rs_ctup = (HeapTuple)
@@ -1600,9 +1552,7 @@ heap_restrpos(HeapScanDesc sdesc)
 	}
 
 	if (!ItemPointerIsValid(&sdesc->rs_mntid))
-	{
 		sdesc->rs_ntup = NULL;
-	}
 	else
 	{
 		sdesc->rs_ntup = (HeapTuple)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.24 1998/05/09 23:43:45 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.25 1998/06/15 19:28:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,9 +364,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 									  0, 0, 0);
 
 			if (!HeapTupleIsValid(tup))
-			{
 				elog(ERROR, "RemoveFunction: type '%s' not found", typename);
-			}
 			argList[i] = tup->t_oid;
 		}
 	}
@@ -458,14 +456,10 @@ RemoveAggregate(char *aggName, char *aggType)
 	{
 		basetypeID = TypeGet(aggType, &defined);
 		if (!OidIsValid(basetypeID))
-		{
 			elog(ERROR, "RemoveAggregate: type '%s' does not exist", aggType);
-		}
 	}
 	else
-	{
 		basetypeID = 0;
-	}
 
 /*
 #ifndef NO_SECURITY

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.54 1998/06/15 18:39:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.55 1998/06/15 19:29:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,9 +188,7 @@ datetime_out(DateTime *dt)
 
 	}
 	else
-	{
 		EncodeSpecialDateTime(DT_INVALID, buf);
-	}
 
 	result = palloc(strlen(buf) + 1);
 
@@ -682,9 +680,7 @@ timespan_cmp(TimeSpan *timespan1, TimeSpan *timespan2)
 
 	}
 	else if (TIMESPAN_IS_INVALID(*timespan2))
-	{
 		return (-1);
-	}
 
 	span1 = timespan1->time;
 	if (timespan1->month != 0)
@@ -727,17 +723,11 @@ datetime_smaller(DateTime *datetime1, DateTime *datetime2)
 		dt2 = SetDateTime(dt2);
 
 	if (DATETIME_IS_INVALID(dt1))
-	{
 		*result = dt2;
-	}
 	else if (DATETIME_IS_INVALID(dt2))
-	{
 		*result = dt1;
-	}
 	else
-	{
 		*result = ((dt2 < dt1) ? dt2 : dt1);
-	}
 
 	return (result);
 }	/* datetime_smaller() */
@@ -764,17 +754,11 @@ datetime_larger(DateTime *datetime1, DateTime *datetime2)
 		dt2 = SetDateTime(dt2);
 
 	if (DATETIME_IS_INVALID(dt1))
-	{
 		*result = dt2;
-	}
 	else if (DATETIME_IS_INVALID(dt2))
-	{
 		*result = dt1;
-	}
 	else
-	{
 		*result = ((dt2 > dt1) ? dt2 : dt1);
-	}
 
 	return (result);
 }	/* datetime_larger() */
@@ -812,9 +796,7 @@ datetime_mi(DateTime *datetime1, DateTime *datetime2)
 
 	}
 	else
-	{
 		result->time = JROUND(dt1 - dt2);
-	}
 	result->month = 0;
 
 	return (result);
@@ -894,13 +876,9 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 				if (tm->tm_mday > mdays[tm->tm_mon - 1])
 				{
 					if ((tm->tm_mon == 2) && isleap(tm->tm_year))
-					{
 						tm->tm_mday = (mdays[tm->tm_mon - 1] + 1);
-					}
 					else
-					{
 						tm->tm_mday = mdays[tm->tm_mon - 1];
-					}
 				}
 
 #ifdef DATEDEBUG
@@ -912,9 +890,7 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 
 			}
 			else
-			{
 				DATETIME_INVALID(dt);
-			}
 		}
 
 		*result = dt;
@@ -1241,15 +1217,11 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 		}
 
 		if (tm2timespan(tm, fsec, result) != 0)
-		{
 			elog(ERROR, "Unable to decode datetime", NULL);
-		}
 
 	}
 	else
-	{
 		elog(ERROR, "Unable to decode datetime", NULL);
-	}
 
 	return (result);
 }	/* datetime_age() */
@@ -1676,9 +1648,7 @@ datetime_part(text *units, DateTime *datetime)
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == IGNORE)
-	{
 		type = DecodeSpecial(0, lowunits, &val);
-	}
 
 #ifdef DATEDEBUG
 	if (type == IGNORE)
@@ -1843,9 +1813,7 @@ timespan_part(text *units, TimeSpan *timespan)
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == IGNORE)
-	{
 		type = DecodeSpecial(0, lowunits, &val);
-	}
 
 #ifdef DATEDEBUG
 	if (type == IGNORE)
@@ -2701,9 +2669,7 @@ ParseDateTime(char *timestr, char *lowstr,
 			 * day later
 			 */
 			else
-			{
 				ftype[nf] = DTK_NUMBER;
-			}
 
 		}
 
@@ -2761,9 +2727,7 @@ ParseDateTime(char *timestr, char *lowstr,
 				/* otherwise something wrong... */
 			}
 			else
-			{
 				return -1;
-			}
 
 			/* ignore punctuation but use as delimiter */
 		}
@@ -2774,17 +2738,13 @@ ParseDateTime(char *timestr, char *lowstr,
 
 		}
 		else
-		{
 			return -1;
-		}
 
 		/* force in a delimiter */
 		*lp++ = '\0';
 		nf++;
 		if (nf > MAXDATEFIELDS)
-		{
 			return -1;
-		}
 #ifdef DATEDEBUG
 		printf("ParseDateTime- set field[%d] to %s type %d\n", (nf - 1), field[nf - 1], ftype[nf - 1]);
 #endif
@@ -3361,9 +3321,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
 		str = cp + 1;
 		tm->tm_sec = strtol(str, &cp, 10);
 		if (*cp == '\0')
-		{
 			*fsec = 0;
-		}
 		else if (*cp == '.')
 		{
 			str = cp;
@@ -3372,9 +3330,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
 				return -1;
 		}
 		else
-		{
 			return -1;
-		}
 	}
 
 	/* do a sanity check */
@@ -3498,19 +3454,13 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
 		*tmask = DTK_M(YEAR);
 		tm->tm_year = val;
 		if (tm->tm_year < 70)
-		{
 			tm->tm_year += 2000;
-		}
 		else if (tm->tm_year < 100)
-		{
 			tm->tm_year += 1900;
-		}
 
 	}
 	else
-	{
 		return -1;
-	}
 
 	return 0;
 }	/* DecodeNumber() */
@@ -3583,9 +3533,7 @@ DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, dou
 		if (cp == (str + 4))
 			return -1;
 		if (*cp == '.')
-		{
 			*fsec = strtod(cp, NULL);
-		}
 		*(str + 4) = '\0';
 		tm->tm_min = strtod((str + 2), &cp);
 		*(str + 2) = '\0';
@@ -3593,9 +3541,7 @@ DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, dou
 
 	}
 	else
-	{
 		return -1;
-	}
 
 	return 0;
 }	/* DecodeNumberField() */
@@ -3631,9 +3577,7 @@ DecodeTimezone(char *str, int *tzp)
 
 	}
 	else
-	{
 		min = 0;
-	}
 
 	tz = (hr * 60 + min) * 60;
 	if (*str == '-')
@@ -3658,9 +3602,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 #if USE_DATE_CACHE
 	if ((datecache[field] != NULL)
 		&& (strncmp(lowtoken, datecache[field]->token, TOKMAXLEN) == 0))
-	{
 		tp = datecache[field];
-	}
 	else
 	{
 #endif
@@ -3942,9 +3884,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
 #if USE_DATE_CACHE
 	if ((deltacache[field] != NULL)
 		&& (strncmp(lowtoken, deltacache[field]->token, TOKMAXLEN) == 0))
-	{
 		tp = deltacache[field];
-	}
 	else
 	{
 #endif
@@ -3962,13 +3902,9 @@ DecodeUnits(int field, char *lowtoken, int *val)
 	{
 		type = tp->type;
 		if ((type == TZ) || (type == DTZ))
-		{
 			*val = FROMVAL(tp);
-		}
 		else
-		{
 			*val = tp->value;
-		}
 	}
 
 	return (type);

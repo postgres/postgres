@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.50 1998/06/14 13:31:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.51 1998/06/15 19:28:07 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -291,9 +291,7 @@ heap_create(char *name,
 		rdesc->rd_rel->relchecks = tupDesc->constr->num_check;
 
 	for (i = 0; i < natts; i++)
-	{
 		rdesc->rd_att->attrs[i]->attrelid = relid;
-	}
 
 	rdesc->rd_id = relid;
 
@@ -933,9 +931,7 @@ RelationRemoveInheritance(Relation relation)
 	{
 		tuple = heap_getnext(scan, 0, (Buffer *) NULL);
 		if (!HeapTupleIsValid(tuple))
-		{
 			break;
-		}
 		heap_delete(catalogRelation, &tuple->t_ctid);
 	}
 
@@ -961,9 +957,7 @@ RelationRemoveInheritance(Relation relation)
 	{
 		tuple = heap_getnext(scan, 0, (Buffer *) NULL);
 		if (!HeapTupleIsValid(tuple))
-		{
 			break;
-		}
 		heap_delete(catalogRelation, &tuple->t_ctid);
 	}
 
@@ -1000,9 +994,7 @@ RelationRemoveIndexes(Relation relation)
 	{
 		tuple = heap_getnext(scan, 0, (Buffer *) NULL);
 		if (!HeapTupleIsValid(tuple))
-		{
 			break;
-		}
 
 		index_destroy(((IndexTupleForm) GETSTRUCT(tuple))->indexrelid);
 	}

@@ -405,9 +405,7 @@ ExecAgg(Agg *node)
 		 * the tuples we aggregate over share the same group column)
 		 */
 		if (!oneTuple)
-		{
 			oneTuple = heap_copytuple(outerslot->val);
-		}
 
 		nTuplesAgged++;
 	}
@@ -437,13 +435,9 @@ ExecAgg(Agg *node)
 				args[1] = (char *) value2[i];
 			}
 			else if (aggfns->xfn1.fn_addr != NULL)
-			{
 				args[0] = (char *) value1[i];
-			}
 			else if (aggfns->xfn2.fn_addr != NULL)
-			{
 				args[0] = (char *) value2[i];
-			}
 			else
 				elog(NOTICE, "ExecAgg: no valid transition functions??");
 			value1[i] = (Datum) fmgr_c(&aggfns->finalfn,
@@ -458,9 +452,7 @@ ExecAgg(Agg *node)
 			 */
 		}
 		else if (aggfns->xfn2.fn_addr != NULL)
-		{
 			value1[i] = value2[i];
-		}
 		else
 			elog(ERROR, "ExecAgg: no valid transition functions??");
 	}
@@ -475,9 +467,7 @@ ExecAgg(Agg *node)
 		aggstate->agg_done = ((Group *) outerPlan)->grpstate->grp_done;
 	}
 	else
-	{
 		aggstate->agg_done = TRUE;
-	}
 
 	/* ----------------
 	 *	form a projection tuple, store it in the result tuple

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidint2.c,v 1.5 1998/02/26 04:37:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidint2.c,v 1.6 1998/06/15 19:29:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,13 +31,9 @@ oidint2in(char *o)
 
 	oi->oi_oid = (Oid) pg_atoi(o, sizeof(Oid), '/');
 	if (*p == '\0')
-	{
 		oi->oi_int2 = 0;
-	}
 	else
-	{
 		oi->oi_int2 = (int16) pg_atoi(++p, sizeof(int2), '\0');
-	}
 
 	return (oi);
 }

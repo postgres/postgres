@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.16 1998/02/26 04:33:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.17 1998/06/15 19:28:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,27 +282,19 @@ index_selectivity(Oid indid,
 
 	i = 0;
 	foreach(xopno, opnos)
-	{
 		opno_array[i++] = lfirsti(xopno);
-	}
 
 	i = 0;
 	foreach(xattno, attnos)
-	{
 		attno_array[i++] = lfirsti(xattno);
-	}
 
 	i = 0;
 	foreach(value, values)
-	{
 		value_array[i++] = (char *) lfirst(value);
-	}
 
 	i = 0;
 	foreach(flag, flags)
-	{
 		flag_array[i++] = lfirsti(flag);
-	}
 
 	IndexSelectivity(indid,
 					 relid,

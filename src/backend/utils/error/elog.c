@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.28 1998/05/19 18:05:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.29 1998/06/15 19:29:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,9 +63,7 @@ elog(int lev, const char *fmt,...)
 
 	va_start(ap, fmt);
 	if (lev == DEBUG && Debugfile < 0)
-	{
 		return;
-	}
 	switch (lev)
 	{
 		case NOIND:
