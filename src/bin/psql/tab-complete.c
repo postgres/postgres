@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.118 2004/11/05 19:16:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.119 2004/12/24 15:42:05 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1807,11 +1807,11 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 			if (completion_squery->selcondition)
 				appendPQExpBuffer(&query_buffer, "%s AND ",
 								  completion_squery->selcondition);
-			appendPQExpBuffer(&query_buffer, "%s AND ",
-							  completion_squery->viscondition);
 			appendPQExpBuffer(&query_buffer, "substring(%s,1,%d)='%s'",
 							  completion_squery->result,
 							  string_length, e_text);
+			appendPQExpBuffer(&query_buffer, " AND %s",
+							  completion_squery->viscondition);
 
 			/*
 			 * When fetching relation names, suppress system catalogs
