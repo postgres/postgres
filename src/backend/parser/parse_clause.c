@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.19 1998/07/08 14:04:10 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.20 1998/07/09 14:34:05 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,12 +136,12 @@ parseFromClause(ParseState *pstate, List *frmList)
 static TargetEntry *
 find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 {
-	List	   *i;
-	int			real_rtable_pos = 0,
-				target_pos = 0;
+	List	    *i;
+	int			 real_rtable_pos = 0,
+				 target_pos = 0;
 	TargetEntry *target_result = NULL;
 
-	if (sortgroupby->range)
+	if (sortgroupby->range != NULL)
 		real_rtable_pos = refnameRangeTablePosn(pstate, sortgroupby->range, NULL);
 
 	foreach(i, tlist)
@@ -152,7 +152,8 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 		char	   *resname = resnode->resname;
 		int			test_rtable_pos = var->varno;
 
-		if (!sortgroupby->name)
+		/* no name specified? then must have been a column number instead... */
+		if (sortgroupby->name == NULL)
 		{
 			if (sortgroupby->resno == ++target_pos)
 			{
@@ -160,11 +161,13 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 				break;
 			}
 		}
+		/* otherwise, try to match name... */
 		else
 		{
-			if (!strcmp(resname, sortgroupby->name))
+			/* same name? */
+			if (strcmp(resname, sortgroupby->name) == 0)
 			{
-				if (sortgroupby->range)
+				if (sortgroupby->range != NULL)
 				{
 					if (real_rtable_pos == test_rtable_pos)
 					{
@@ -185,20 +188,33 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 		}
 	}
 
-	/*    BEGIN add missing target entry hack.
+
+	/* No name specified and no target found?
+	 * Then must have been an out-of-range column number instead...
+	 * - thomas 1998-07-09
+	 */
+	if ((sortgroupby->name == NULL) && (target_result == NULL))
+	{
+		elog(ERROR, "ORDER/GROUP BY position %d is not in target list",
+			sortgroupby->resno);
+	}
+
+
+	/* BEGIN add missing target entry hack.
 	 *
-	 *    Prior to this hack, this function returned NIL if no target_result.
-	 *    Thus, ORDER/GROUP BY required the attributes be in the target list.
-	 *    Now it constructs a new target entry which is appended to the end of
-	 *    the target list.   This target is set to be  resjunk = TRUE so that
-	 *    it will not be projected into the final tuple.
-	 *          daveh@insightdist.com    5/20/98
+	 * Prior to this hack, this function returned NIL if no target_result.
+	 * Thus, ORDER/GROUP BY required the attributes be in the target list.
+	 * Now it constructs a new target entry which is appended to the end of
+	 * the target list.   This target is set to be  resjunk = TRUE so that
+	 * it will not be projected into the final tuple.
+	 *       daveh@insightdist.com    5/20/98
 	 */  
-	if ( ! target_result && sortgroupby->name)   {
+	if ((target_result == NULL) && (sortgroupby->name != NULL)) {
+
 		List   *p_target = tlist;
 		TargetEntry *tent = makeNode(TargetEntry);
-		
-		if (sortgroupby->range)  {
+
+		if (sortgroupby->range != NULL) {
 			Attr *missingAttr = (Attr *)makeNode(Attr);
 			missingAttr->type = T_Attr;
 
@@ -211,7 +227,8 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 										&missingAttr->relname, NULL,
 										missingAttr->relname, TRUE);
 		}
-		else  {
+		else
+		{
 			Ident *missingIdent = (Ident *)makeNode(Ident);
 			missingIdent->type = T_Ident;
 
@@ -224,7 +241,7 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 		}
 
 		/* Add to the end of the target list */
-		while (lnext(p_target) != NIL)  {
+		while (lnext(p_target) != NIL) {
 			p_target = lnext(p_target);
 		}
 		lnext(p_target) = lcons(tent, NIL);
@@ -253,6 +270,7 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 		Resdom	   *resdom;
 
 		restarget = find_targetlist_entry(pstate, lfirst(grouplist), targetlist);
+
 		grpcl->entry = restarget;
 		resdom = restarget->resdom;
 		grpcl->grpOpoid = oprid(oper("<",
@@ -306,8 +324,8 @@ transformSortClause(ParseState *pstate,
 		TargetEntry *restarget;
 		Resdom	   *resdom;
 
-
 		restarget = find_targetlist_entry(pstate, sortby, targetlist);
+
 		sortcl->resdom = resdom = restarget->resdom;
 		sortcl->opoid = oprid(oper(sortby->useOp,
 								   resdom->restype,
