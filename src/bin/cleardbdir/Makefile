@@ -7,9 +7,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/cleardbdir/Attic/Makefile,v 1.2 1996/11/11 13:39:31 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/cleardbdir/Attic/Makefile,v 1.3 1996/11/12 02:54:30 bryanh Exp $
 #
 #-------------------------------------------------------------------------
+
+SRCDIR= ../..
+include ../../Makefile.global
 
 all: cleardbdir
 
