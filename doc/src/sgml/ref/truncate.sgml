@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.14 2003/09/19 21:04:19 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.15 2003/09/19 21:06:39 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -57,6 +57,11 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
    <command>TRUNCATE</> cannot be used if there are foreign-key references
    to the table from other tables.  Checking validity in such cases would
    require table scans, and the whole point is not to do one.
+  </para>
+
+  <para>
+   <command>TRUNCATE</> will not run any user-defined ON DELETE triggers
+   that might exist for the table.
   </para>
  </refsect1>
 
