@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Apr  2 12:26:57 EDT 2001
+Last updated:		Mon Apr  2 13:40:06 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -252,8 +252,9 @@ MISCELLANEOUS
 * Increase identifier length(NAMEDATALEN) if small performance hit
 * Create a background process for each database that runs while
   database is idle, finding superceeded rows, gathering stats and vacuuming
-* Transaction log, so re-do log can be on a separate disk with after-row
+* -Transaction log, so re-do log can be on a separate disk with after-row
   images (Vadim)
+* Implement UNDO using transaction log
 * Populate backend status area and write program to dump status data
 * Put sort files in their own directory
 * Allow autocommit so always in a transaction block
