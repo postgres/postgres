@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.1 1997/05/16 07:13:52 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.2 1997/06/01 04:23:12 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set \(em set run-time parameters for session
@@ -53,6 +53,21 @@ by default. See the GEQO README for more information.
 .nf
 GEQO
 	on	- turn the genetic optimizer 'on'
+	off	- duh
+.fi
+
+.PP
+.IR R_PLANS
+enables or disables right-hand evaluation of plans. This algorithm is
+.IR off
+by default.
+
+.if n .ta 5 +15 +40
+.if t .ta 0.5i +1.5i +3.0i
+.in 0
+.nf
+R_PLANS
+	on	- turn right-hand plan evaluation 'on'
 	off	- duh
 .fi
 
