@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.26 1996/08/27 06:52:34 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.27 1996/08/27 07:41:17 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -289,8 +289,6 @@ LDFLAGS+= $(LDFLAGS_BE)
 CFLAGS += -DARRAY_PATCH
 # enable patches to null insert/update code
 CFLAGS += -DNULL_PATCH
-# enable patches to array escape conversion code 
-CFLAGS += -DESCAPE_PATCH
 # enable patches for varchar and fsync
 CFLAGS += -DOPENLINK_PATCHES
 
