@@ -1,14 +1,16 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.2 1996/11/11 16:33:12 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.3 1996/11/12 11:09:13 bryanh Exp $
  */
 
 #include <float.h>		/* faked on sunos */
 #include <stdio.h>
+#include <string.h>   /* for memset() */
 
 #include <postgres.h>
+#include "libpq-fe.h"
 
 #include "utils/geo-decls.h"	/* includes <math.h> */
-#include "libpq-fe.h"
+#include "executor/executor.h"  /* For GetAttributeByName */
 
 #define P_MAXDIG 12
 #define LDELIM		'('
@@ -129,21 +131,21 @@ interpt_pp(p1,p2)
     int i,j;
     LSEG seg1, seg2;
     LINE *ln;
+    bool found;  /* We've found the intersection */
 
-    for (i = 0; i < p1->npts - 1; i++)
-      for (j = 0; j < p2->npts - 1; j++)
+    found = false;  /* Haven't found it yet */
+
+    for (i = 0; i < p1->npts - 1 && !found; i++)
+      for (j = 0; j < p2->npts - 1 && !found; j++)
        {
-	   regress_lseg_construct(&seg1, &p1->p[i], &p1->p[i+1]);
-	   regress_lseg_construct(&seg2, &p2->p[j], &p2->p[j+1]);
-	   if (lseg_intersect(&seg1, &seg2))
-	    {
-		ln = line_construct_pp(&seg2.p[0], &seg2.p[1]);
-		retval = interpt_sl(&seg1, ln);
-		goto exit;
-	    }
+           regress_lseg_construct(&seg1, &p1->p[i], &p1->p[i+1]);
+           regress_lseg_construct(&seg2, &p2->p[j], &p2->p[j+1]);
+           if (lseg_intersect(&seg1, &seg2)) found = true;
        }
 
-  exit:
+    ln = line_construct_pp(&seg2.p[0], &seg2.p[1]);
+    retval = interpt_sl(&seg1, ln);
+    
     return(retval);
 }
 
