@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.285 2004/05/30 23:40:40 neilc Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.286 2004/06/11 17:32:39 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -19,7 +19,6 @@ char	*input_filename = NULL;
 static int	QueryIsRule = 0, FoundInto = 0;
 static int	initializer = 0;
 static struct this_type actual_type[STRUCT_DEPTH];
-static char *actual_storage[STRUCT_DEPTH];
 static char *actual_startline[STRUCT_DEPTH];
 
 /* temporarily store struct members while creating the data structure */
@@ -4473,6 +4472,8 @@ single_var_declaration: storage_declaration
 			actual_type[struct_level].type_dimension = $2.type_dimension;
 			actual_type[struct_level].type_index = $2.type_index;
 			actual_type[struct_level].type_sizeof = $2.type_sizeof;
+
+			actual_startline[struct_level] = hashline_number();
 		}
 		variable_list ';'
 		{
@@ -4484,7 +4485,6 @@ single_var_declaration: storage_declaration
 			actual_type[struct_level].type_dimension = $1.type_dimension;
 			actual_type[struct_level].type_index = $1.type_index;
 			actual_type[struct_level].type_sizeof = $1.type_sizeof;
-			actual_storage[struct_level] = EMPTY;
 
 			actual_startline[struct_level] = hashline_number();
 		}
@@ -4610,6 +4610,8 @@ var_declaration: storage_declaration
 			actual_type[struct_level].type_dimension = $2.type_dimension;
 			actual_type[struct_level].type_index = $2.type_index;
 			actual_type[struct_level].type_sizeof = $2.type_sizeof;
+
+			actual_startline[struct_level] = hashline_number();
 		}
 		variable_list ';'
 		{
@@ -4621,7 +4623,6 @@ var_declaration: storage_declaration
 			actual_type[struct_level].type_dimension = $1.type_dimension;
 			actual_type[struct_level].type_index = $1.type_index;
 			actual_type[struct_level].type_sizeof = $1.type_sizeof;
-			actual_storage[struct_level] = EMPTY;
 			
 			actual_startline[struct_level] = hashline_number();
 		}
@@ -4637,18 +4638,15 @@ var_declaration: storage_declaration
 
 storage_declaration: storage_clause storage_modifier
 		{
-			actual_storage[struct_level] = cat2_str(mm_strdup($1), mm_strdup($2));
-			actual_startline[struct_level] = hashline_number();
+			$$ = cat2_str ($1, $2);
 		}
 		| storage_clause
 		{
-			actual_storage[struct_level] = mm_strdup($1);
-			actual_startline[struct_level] = hashline_number();
+			$$ = $1;
 		}
 		| storage_modifier
 		{
-			actual_storage[struct_level] = mm_strdup($1);
-			actual_startline[struct_level] = hashline_number();
+			$$ = $1;
 		}
 		;
 
@@ -4871,7 +4869,7 @@ struct_union_type_with_symbol: s_struct_union_symbol
 			
 			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = NULL;
-			free(actual_storage[struct_level--]);
+			struct_level--;
 			if (strncmp($1.su, "struct", sizeof("struct")-1) == 0)
 				su_type.type_enum = ECPGt_struct;
 			else
@@ -4921,7 +4919,7 @@ struct_union_type: struct_union_type_with_symbol	{ $$ = $1; }
 		{
 			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = NULL;
-			free(actual_storage[struct_level--]);
+			struct_level--;
 			$$ = cat_str(4, $1, make_str("{"), $4, make_str("}"));
 		}
 		;
@@ -5047,9 +5045,9 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 						mmerror(PARSE_ERROR, ET_ERROR, "pointer to varchar are not implemented");
 
 					if (strcmp(dimension, "0") == 0)
-						$$ = cat_str(7, mm_strdup(actual_storage[struct_level]), make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } *"), mm_strdup($2), $4);
+						$$ = cat_str(6, make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } *"), mm_strdup($2), $4);
 					else
-					   $$ = cat_str(8, mm_strdup(actual_storage[struct_level]), make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4);
+						$$ = cat_str(7, make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4);
 					break;
 
 				case ECPGt_char:
