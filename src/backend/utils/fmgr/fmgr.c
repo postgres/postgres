@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.11 1998/01/15 22:31:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.12 1998/01/31 05:22:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,8 @@
 #include "commands/trigger.h"
 
 
-static        FmgrInfo        *fmgr_pl_finfo;
+/* We don't make this static so fmgr_faddr() macros can access it */
+FmgrInfo        *fmgr_pl_finfo;
 
 static char      * 
 fmgr_pl(char *arg0, ...)
@@ -246,13 +247,6 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 		finfo->fn_addr = fcp->func;
 		finfo->fn_nargs = fcp->nargs;
 	}
-}
-
-func_ptr
-fmgr_faddr(FmgrInfo *finfo)
-{
-    fmgr_pl_finfo = finfo;
-    return finfo->fn_addr;
 }
 
 /*
