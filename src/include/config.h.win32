@@ -14,7 +14,9 @@
 
 #define MAXPGPATH 1024
 
+#define BLCKSZ	8192
+
 #define INDEX_MAX_KEYS		16
 
+#define HAVE_ATEXIT
 #define HAVE_MEMMOVE
-#define BLCKSZ	8192
