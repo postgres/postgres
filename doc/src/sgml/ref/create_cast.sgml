@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.15 2003/11/29 19:51:38 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.16 2004/02/15 06:27:37 neilc Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -147,9 +147,9 @@ SELECT 'The time is ' || CAST(now() AS text);
       <para>
        The function used to perform the cast.  The function name may
        be schema-qualified.  If it is not, the function will be looked
-       up in the path.  The argument type must be identical to the
-       source type, the result data type must match the target type of
-       the cast.
+       up in the schema search path.  The argument type must be
+       identical to the source type and the result data type must
+       match the target type of the cast.
       </para>
      </listitem>
     </varlistentry>
