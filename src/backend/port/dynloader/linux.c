@@ -10,15 +10,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.3 1998/01/01 06:02:02 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.4 1998/01/02 03:40:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#include <string.h>
+
+#include "postgres.h"
 #ifdef HAVE_DLD_H
 #include <dld.h>
 #endif
-#include "postgres.h"
 #include "dynloader.h"
 #include "utils/elog.h"
 #include "fmgr.h"
