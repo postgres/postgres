@@ -30,3 +30,8 @@ endif
 	$(CC) $(SO_FLAGS) -o $@ $<
 
 sqlmansect = 5sql
+
+# Unixware needs threads for everything that uses libpq
+CFLAGS += "$PTHREAD_CFLAGS"
+
+

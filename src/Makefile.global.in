@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.183 2004/05/13 23:05:54 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.184 2004/05/14 00:03:07 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -176,12 +176,6 @@ CFLAGS = @CFLAGS@
 ifeq ($(GCC), yes)
   CFLAGS += -Wall -Wmissing-prototypes -Wmissing-declarations
 endif
-
-# Unixware needs threads for everything that uses libpq
-ifeq ($(PORTNAME),unixware)
-  CFLAGS += "$PTHREAD_CFLAGS"
-endif
-
 
 # Kind-of compilers
 
