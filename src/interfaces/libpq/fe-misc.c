@@ -25,12 +25,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.51 2001/07/15 13:45:04 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.52 2001/07/20 17:45:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
+
+#include <errno.h>
+#include <signal.h>
+#include <time.h>
 
 #ifdef WIN32
 #include "win32.h"
@@ -38,10 +42,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 #endif
-
-#include <errno.h>
-#include <signal.h>
-#include <time.h>
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>

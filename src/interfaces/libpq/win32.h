@@ -21,3 +21,18 @@
  * crypt not available (yet)
  */
 #define crypt(a,b) a
+
+/*
+ * assumes that errno is used for sockets only
+ *
+ */
+
+#undef errno
+#undef EINTR
+#undef EAGAIN	/* doesn't apply on sockets */
+
+#define errno WSAGetLastError()
+#define EINTR WSAEINTR
+#define EWOULDBLOCK WSAEWOULDBLOCK
+#define ECONNRESET WSAECONNRESET
+#define EINPROGRESS WSAEINPROGRESS

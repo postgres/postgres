@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.168 2001/07/16 20:05:51 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.169 2001/07/20 17:45:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -736,9 +736,6 @@ connectNoDelay(PGconn *conn)
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not set socket to TCP no delay mode: %s\n"),
 						  strerror(errno));
-#ifdef WIN32
-		printf("Winsock error: %i\n", WSAGetLastError());
-#endif
 		return 0;
 	}
 
@@ -937,11 +934,7 @@ connectDBStart(PGconn *conn)
 	 */
 	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
-#ifndef WIN32
 		if (errno == EINPROGRESS || errno == 0)
-#else
-		if (WSAGetLastError() == WSAEINPROGRESS)
-#endif
 		{
 
 			/*
@@ -2142,7 +2135,11 @@ PQrequestCancel(PGconn *conn)
 		strcpy(conn->errorMessage.data,
 			   "PQrequestCancel() -- connection is not open\n");
 		conn->errorMessage.len = strlen(conn->errorMessage.data);
+#ifdef WIN32
+		WSASetLastError(save_errno);
+#else
 		errno = save_errno;
+#endif
 		return FALSE;
 	}
 
@@ -2184,11 +2181,12 @@ PQrequestCancel(PGconn *conn)
 	/* Sent it, done */
 #ifdef WIN32
 	closesocket(tmpsock);
+	WSASetLastError(save_errno);
 #else
 	close(tmpsock);
+	errno = save_errno;
 #endif
 
-	errno = save_errno;
 	return TRUE;
 
 cancel_errReturn:
@@ -2199,11 +2197,12 @@ cancel_errReturn:
 	{
 #ifdef WIN32
 		closesocket(tmpsock);
+		WSASetLastError(save_errno);
 #else
 		close(tmpsock);
+		errno = save_errno;
 #endif
 	}
-	errno = save_errno;
 	return FALSE;
 }
 
