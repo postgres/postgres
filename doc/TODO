@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct  3 22:28:32 EDT 2002
+Last updated:		Fri Oct  4 13:26:46 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -468,6 +468,7 @@ Optimizer / Executor
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
 * Use CHECK constraints to improve optimizer decisions
 * Check GUC geqo_threshold to see if it is still accurate
+* Allow sorting to use multiple work directories
 
 
 Miscellaneous
