@@ -4,7 +4,7 @@
  *	 The PostgreSQL locale utils.
  *
  *
- * $Id: pg_locale.h,v 1.7 2001/03/22 04:01:14 momjian Exp $
+ * $Id: pg_locale.h,v 1.8 2001/09/29 21:16:30 tgl Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -33,8 +33,14 @@ typedef struct PG_LocaleCategories
 			   *lc_messages;
 }			PG_LocaleCategories;
 
-
+/*
+ * Save locale category settings into PG memory  
+ */
 extern void PGLC_current(PG_LocaleCategories * lc);
+/*
+ * Free memory allocated in PGLC_current()
+ */
+extern void PGLC_free_categories(PG_LocaleCategories * lc);
 
 /*------
  * Return the POSIX lconv struct (contains number/money formatting information)
