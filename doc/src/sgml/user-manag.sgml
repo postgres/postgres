@@ -142,15 +142,17 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
   </para>
 
   <para>
-   Currently, there are five different privileges: select (read),
-   insert (append), update (write), delete, and
-   <literal>RULE</literal>, the permission to create a rewrite rule on
-   a table. The right to modify or destroy an object is always the
-   privilege of the owner only. To assign privileges, the
-   <command>GRANT</command> command is used. So, if
+   There are several different privileges: <literal>SELECT</literal>
+   (read), <literal>INSERT</literal> (append), <literal>UPDATE</literal>
+   (write), <literal>DELETE</literal>, <literal>RULE</literal>,
+   <literal>REFERENCES</literal> (foreign key), and
+   <literal>TRIGGER</literal>. (See the <command>GRANT</command> manual
+   page for more detailed information.) The right to modify or destroy
+   an object is always the privilege of the owner only. To assign
+   privileges, the <command>GRANT</command> command is used. So, if
    <literal>joe</literal> is an existing user, and
-   <literal>accounts</literal> is an existing table, write access can
-   be granted with
+   <literal>accounts</literal> is an existing table, write access can be
+   granted with
 <programlisting>
 GRANT UPDATE ON accounts TO joe;
 </programlisting>
