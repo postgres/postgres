@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/docbook.m4,v 1.6 2003/11/29 19:51:17 pgsql Exp $
+# $PostgreSQL: pgsql/config/docbook.m4,v 1.7 2003/12/13 20:25:18 momjian Exp $
 
 # PGAC_PROG_JADE
 # --------------
@@ -60,6 +60,7 @@ else
       for pgac_postfix in \
         sgml/stylesheets/nwalsh-modular \
         sgml/stylesheets/docbook \
+		sgml/docbook-dsssl \
         sgml/docbook/dsssl/modular \
         sgml/docbook/stylesheet/dsssl/modular \
         sgml/docbook/dsssl-stylesheets
