@@ -606,7 +606,7 @@ nextstep*) os=nextstep;;
    exit;;
 esac
 
-if test $need_tas = "yes"
+if test "X$need_tas" = "Xyes"
 then
 	
 	TAS=tas.o

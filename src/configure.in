@@ -42,7 +42,7 @@ nextstep*) os=nextstep;;
    exit;;
 esac
 
-if test $need_tas = "yes"
+if test "X$need_tas" = "Xyes"
 then
 	AC_LINK_FILES(backend/port/tas/${os}.s, backend/port/tas.s)
 	TAS=tas.o
