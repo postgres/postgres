@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.99 2003/09/15 00:26:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.100 2003/09/15 23:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -515,13 +515,58 @@ AtCommit_Notify(void)
 			}
 			else if (listener->notification == 0)
 			{
+				ItemPointerData ctid;
+				int			result;
+
 				rTuple = heap_modifytuple(lTuple, lRel,
 										  value, nulls, repl);
-				simple_heap_update(lRel, &lTuple->t_self, rTuple);
+				/*
+				 * We cannot use simple_heap_update here because the tuple
+				 * could have been modified by an uncommitted transaction;
+				 * specifically, since UNLISTEN releases exclusive lock on
+				 * the table before commit, the other guy could already have
+				 * tried to unlisten.  There are no other cases where we
+				 * should be able to see an uncommitted update or delete.
+				 * Therefore, our response to a HeapTupleBeingUpdated result
+				 * is just to ignore it.  We do *not* wait for the other
+				 * guy to commit --- that would risk deadlock, and we don't
+				 * want to block while holding the table lock anyway for
+				 * performance reasons.  We also ignore HeapTupleUpdated,
+				 * which could occur if the other guy commits between our
+				 * heap_getnext and heap_update calls.
+				 */
+				result = heap_update(lRel, &lTuple->t_self, rTuple,
+									 &ctid,
+									 GetCurrentCommandId(),
+									 false /* no wait for commit */);
+				switch (result)
+				{
+					case HeapTupleSelfUpdated:
+						/* Tuple was already updated in current command? */
+						elog(ERROR, "tuple already updated by self");
+						break;
+
+					case HeapTupleMayBeUpdated:
+						/* done successfully */
 
 #ifdef NOT_USED					/* currently there are no indexes */
-				CatalogUpdateIndexes(lRel, rTuple);
+						CatalogUpdateIndexes(lRel, rTuple);
 #endif
+						break;
+
+					case HeapTupleBeingUpdated:
+						/* ignore uncommitted tuples */
+						break;
+
+					case HeapTupleUpdated:
+						/* ignore just-committed tuples */
+						break;
+
+					default:
+						elog(ERROR, "unrecognized heap_update status: %u",
+							 result);
+						break;
+				}
 			}
 		}
 	}
@@ -803,7 +848,13 @@ ProcessIncomingNotify(void)
 					 relname, (int) sourcePID);
 
 			NotifyMyFrontEnd(relname, sourcePID);
-			/* Rewrite the tuple with 0 in notification column */
+			/*
+			 * Rewrite the tuple with 0 in notification column.
+			 *
+			 * simple_heap_update is safe here because no one else would
+			 * have tried to UNLISTEN us, so there can be no uncommitted
+			 * changes.
+			 */
 			rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);
 			simple_heap_update(lRel, &lTuple->t_self, rTuple);
 

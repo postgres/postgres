@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.154 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.155 2003/09/15 23:33:38 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1206,10 +1206,15 @@ simple_heap_insert(Relation relation, HeapTuple tup)
  *
  * NB: do not call this directly unless you are prepared to deal with
  * concurrent-update conditions.  Use simple_heap_delete instead.
+ *
+ * Normal, successful return value is HeapTupleMayBeUpdated, which
+ * actually means we did delete it.  Failure return codes are
+ * HeapTupleSelfUpdated, HeapTupleUpdated, or HeapTupleBeingUpdated
+ * (the last only possible if wait == false).
  */
 int
 heap_delete(Relation relation, ItemPointer tid,
-			ItemPointer ctid, CommandId cid)
+			ItemPointer ctid, CommandId cid, bool wait)
 {
 	ItemId		lp;
 	HeapTupleData tp;
@@ -1243,7 +1248,7 @@ l1:
 		ReleaseBuffer(buffer);
 		elog(ERROR, "attempted to delete invisible tuple");
 	}
-	else if (result == HeapTupleBeingUpdated)
+	else if (result == HeapTupleBeingUpdated && wait)
 	{
 		TransactionId xwait = HeapTupleHeaderGetXmax(tp.t_data);
 
@@ -1275,7 +1280,9 @@ l1:
 	}
 	if (result != HeapTupleMayBeUpdated)
 	{
-		Assert(result == HeapTupleSelfUpdated || result == HeapTupleUpdated);
+		Assert(result == HeapTupleSelfUpdated ||
+			   result == HeapTupleUpdated ||
+			   result == HeapTupleBeingUpdated);
 		*ctid = tp.t_data->t_ctid;
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
@@ -1369,7 +1376,10 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 	ItemPointerData ctid;
 	int			result;
 
-	result = heap_delete(relation, tid, &ctid, GetCurrentCommandId());
+	result = heap_delete(relation, tid,
+						 &ctid,
+						 GetCurrentCommandId(),
+						 true /* wait for commit */);
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
@@ -1396,10 +1406,15 @@ simple_heap_delete(Relation relation, ItemPointer tid)
  *
  * NB: do not call this directly unless you are prepared to deal with
  * concurrent-update conditions.  Use simple_heap_update instead.
+ *
+ * Normal, successful return value is HeapTupleMayBeUpdated, which
+ * actually means we *did* update it.  Failure return codes are
+ * HeapTupleSelfUpdated, HeapTupleUpdated, or HeapTupleBeingUpdated
+ * (the last only possible if wait == false).
  */
 int
 heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
-			ItemPointer ctid, CommandId cid)
+			ItemPointer ctid, CommandId cid, bool wait)
 {
 	ItemId		lp;
 	HeapTupleData oldtup;
@@ -1443,7 +1458,7 @@ l2:
 		ReleaseBuffer(buffer);
 		elog(ERROR, "attempted to update invisible tuple");
 	}
-	else if (result == HeapTupleBeingUpdated)
+	else if (result == HeapTupleBeingUpdated && wait)
 	{
 		TransactionId xwait = HeapTupleHeaderGetXmax(oldtup.t_data);
 
@@ -1475,7 +1490,9 @@ l2:
 	}
 	if (result != HeapTupleMayBeUpdated)
 	{
-		Assert(result == HeapTupleSelfUpdated || result == HeapTupleUpdated);
+		Assert(result == HeapTupleSelfUpdated ||
+			   result == HeapTupleUpdated ||
+			   result == HeapTupleBeingUpdated);
 		*ctid = oldtup.t_data->t_ctid;
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
@@ -1699,7 +1716,10 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 	ItemPointerData ctid;
 	int			result;
 
-	result = heap_update(relation, otid, tup, &ctid, GetCurrentCommandId());
+	result = heap_update(relation, otid, tup,
+						 &ctid,
+						 GetCurrentCommandId(),
+						 true /* wait for commit */);
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:

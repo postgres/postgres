@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.216 2003/08/08 21:41:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.217 2003/09/15 23:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1406,7 +1406,8 @@ ExecDelete(TupleTableSlot *slot,
 ldelete:;
 	result = heap_delete(resultRelationDesc, tupleid,
 						 &ctid,
-						 estate->es_snapshot->curcid);
+						 estate->es_snapshot->curcid,
+						 true /* wait for commit */);
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
@@ -1540,7 +1541,8 @@ lreplace:;
 	 */
 	result = heap_update(resultRelationDesc, tupleid, tuple,
 						 &ctid,
-						 estate->es_snapshot->curcid);
+						 estate->es_snapshot->curcid,
+						 true /* wait for commit */);
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
