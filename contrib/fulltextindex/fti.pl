@@ -17,7 +17,7 @@
 #
 # Example:
 #
-# 	fti.pl -u -d mydb -t mytable -c mycolumn -f myfile
+# 	fti.pl -u -d mydb -t mytable -c mycolumn,mycolumn2 -f myfile
 #	sort -o myoutfile myfile
 #	uniq myoutfile sorted-file
 #
@@ -140,10 +140,12 @@ sub main {
 	getopts('d:t:c:f:u');
 
 	if (!$opt_d || !$opt_t || !$opt_c || !$opt_f) {
-		print STDERR "usage: $0 [-u] -d database -t table -c column ".
+		print STDERR "usage: $0 [-u] -d database -t table -c column[,column...] ".
 		  "-f output-file\n";
 		return 1;
 	}
+
+	@cols = split(/,/, $opt_c);
 
 	if (defined($opt_u)) {
 		$uname = get_username();
@@ -166,7 +168,9 @@ sub main {
 
 	PQexec($PG_CONN, "begin");
 
-	$query = "declare C cursor for select $opt_c, oid from $opt_t";
+	$query = "declare C cursor for select (\"";
+	$query .= join("\" || ' ' || \"", @cols);
+	$query .= "\") as string, oid from $opt_t";
 	$res = PQexec($PG_CONN, $query);
 	if (!$res || (PQresultStatus($res) != $PGRES_COMMAND_OK)) {
 		print STDERR "Error declaring cursor!\n";

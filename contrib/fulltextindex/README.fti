@@ -3,11 +3,13 @@ An attempt at some sort of Full Text Indexing for PostgreSQL.
 The included software is an attempt to add some sort of Full Text Indexing
 support to PostgreSQL. I mean by this that we can ask questions like:
 
-	Give me all rows that have 'still' and 'nash' in the 'artist' field.
+	Give me all rows that have 'still' and 'nash' in the 'artist' or 'title'
+	fields.
 
 Ofcourse we can write this as:
 
-	select * from cds where artist ~* 'stills' and artist ~* 'nash';
+	select * from cds where (artist ~* 'stills' or title ~* 'stills') and 
+	(artist ~* 'nash' or title ~* 'nash');
 
 But this does not use any indices, and therefore, if your database
 gets very large, it will not have very high performance (the above query
@@ -15,8 +17,8 @@ requires at least one sequential scan, it probably takes 2 due to the
 self-join).
 
 The approach used by this add-on is to define a trigger on the table and
-column you want to do this queries on. On every insert in the table, it
-takes the value in the specified column, breaks the text in this column
+columns you want to do this queries on. On every insert in the table, it
+takes the value in the specified columns, breaks the text in these columns
 up into pieces, and stores all sub-strings into another table, together
 with a reference to the row in the original table that contained this
 sub-string (it uses the oid of that row).
@@ -24,8 +26,8 @@ sub-string (it uses the oid of that row).
 By now creating an index over the 'fti-table', we can search for
 substrings that occur in the original table. By making a join between
 the fti-table and the orig-table, we can get the actual rows we want
-(this can also be done by using subselects, and maybe there're other
-ways too).
+(this can also be done by using subselects - but subselects are currently
+inefficient in Postgres, and maybe there're other ways too).
 
 The trigger code also allows an array called StopWords, that prevents
 certain words from being indexed.
@@ -62,20 +64,22 @@ The create the function that contains the trigger::
 And finally define the trigger on the 'cds' table:
 
 	create trigger cds-fti-trigger after update or insert or delete on cds
-	    for each row execute procedure fti(cds-fti, artist);
+	    for each row execute procedure fti(cds-fti, artist, title);
 
 Here, the trigger will be defined on table 'cds', it will create
-sub-strings from the field 'artist', and it will place those sub-strings
-in the table 'cds-fti'.
+sub-strings from the fields 'artist' and 'title', and it will place 
+those sub-strings in the table 'cds-fti'.
 
 Now populate the table 'cds'. This will also populate the table 'cds-fti'.
-It's fastest to populate the table *before* you create the indices.
+It's fastest to populate the table *before* you create the indices.  Use the
+supplied 'fti.pl' to assist you with this.
 
 Before you start using the system, you should at least have the following
 indices:
 
-	create index cds-fti-idx on cds-fti (string, id);
-	create index cds-oid-idx on cds (oid);
+	create index cds-fti-idx on cds-fti (string); -- String matching
+	create index cds-fti-idx on cds-fti (id);     -- For deleting a cds row
+	create index cds-oid-idx on cds (oid);			 -- For joining cds to cds-fti
 
 To get the most performance out of this, you should have 'cds-fti'
 clustered on disk, ie. all rows with the same sub-strings should be
@@ -109,7 +113,7 @@ clustered  : same as above, only clustered : 4.501.321 rows
 A sequential scan of the artist_fti table (and thus also the clustered table)
 takes around 6:16 minutes....
 
-Unfortunately I cannot probide anybody else with this test-date, since I
+Unfortunately I cannot provide anybody else with this test-data, since I
 am not allowed to redistribute the data (it's a database being sold by
 a couple of wholesale companies). Anyways, it's megabytes, so you probably
 wouldn't want it in this distribution anyways.

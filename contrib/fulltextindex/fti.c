@@ -6,61 +6,87 @@
 #include "commands/trigger.h"
 
 /*
- * Trigger function takes 2 arguments:
-		1. relation in which to store the substrings
-		2. field to extract substrings from
+ *  Trigger function accepts variable number of arguments:
+ *
+ *		1. relation in which to store the substrings
+ *		2. fields to extract substrings from
+ *
+ *  The relation in which to insert *must* have the following layout:
+ *
+ *		string		varchar(#)
+ *		id			oid
+ *
+ *   where # is the largest size of the varchar columns being indexed
+ *
+ *	Example:
+ *
+ *  -- Create the SQL function based on the compiled shared object
+ *  create function fti() returns opaque as
+ *    '/usr/local/pgsql/lib/contrib/fti.so' language 'C';
+ *
+ *  -- Create the FTI table
+ *  create table product_fti (string varchar(255), id oid);
+ *
+ *  -- Create an index to assist string matches
+ *  create index product_fti_string_idx on product_fti (string);
+ *
+ *  -- Create an index to assist trigger'd deletes
+ *  create index product_fti_id_idx on product_fti (id);
+ *
+ *  -- Create an index on the product oid column to assist joins 
+ *  -- between the fti table and the product table
+ *  create index product_oid_idx on product (oid);
+ *
+ *  -- Create the trigger to perform incremental changes to the full text index.
+ *  create trigger product_fti_trig after update or insert or delete on product
+ *  for each row execute procedure fti(product_fti, title, artist);
+ *								       ^^^^^^^^^^^
+ *								       table where full text index is stored
+ *											        ^^^^^^^^^^^^^
+ *											        columns to index in the base table
+ *
+ *  After populating 'product', try something like:
+ *
+ *  SELECT DISTINCT(p.*) FROM product p, product_fti f1, product_fti f2 WHERE
+ *	f1.string ~ '^slippery' AND f2.string ~ '^wet' AND p.oid=f1.id AND p.oid=f2.id;
+ *
+ *  To check that your indicies are being used correctly, make sure you
+ *  EXPLAIN SELECT ... your test query above.
+ *
+ * CHANGELOG
+ * ---------
+ *
+ *	august 3 2001
+ *				 Extended fti function to accept more than one column as a
+ *				 parameter and all specified columns are indexed.  Changed
+ *				 all uses of sprintf to snprintf.  Made error messages more
+ *				 consistent.
+ *
+ *	march 4 1998 Changed breakup() to return less substrings. Only breakup
+ *				 in word parts which are in turn shortened from the start
+ *				 of the word (ie. word, ord, rd)
+ *				 Did allocation of substring buffer outside of breakup()
+ *
+ *	oct. 5 1997, fixed a bug in string breakup (where there are more nonalpha
+ *				 characters between words then 1).
+ *
+ *	oct 4-5 1997 implemented the thing, at least the basic functionallity
+ *				 of it all....
+ *
+ * TODO
+ * ----
+ *
+ *   prevent generating duplicate words for an oid in the fti table
+ *   save a plan for deletes
+ *   create a function that will make the index *after* we have populated
+ *   the main table (probably first delete all contents to be sure there's
+ *   nothing in it, then re-populate the fti-table)
+ *
+ *   can we do something with operator overloading or a seperate function
+ *   that can build the final query automatigally?
+ */
 
-   The relation in which to insert *must* have the following layout:
-
-		string		varchar(#)
-		id			oid
-
-	Example:
-
-create function fti() returns opaque as
-'/home/boekhold/src/postgresql-6.2/contrib/fti/fti.so' language 'C';
-
-create table title_fti (string varchar(25), id oid);
-create index title_fti_idx on title_fti (string);
-
-create trigger title_fti_trigger after update or insert or delete on product
-for each row execute procedure fti(title_fti, title);
-								   ^^^^^^^^^
-								   where to store index in
-											  ^^^^^
-											  which column to index
-
-ofcourse don't forget to create an index on title_idx, column string, else
-you won't notice much speedup :)
-
-After populating 'product', try something like:
-
-select p.* from product p, title_fti f1, title_fti f2 where
-	f1.string='slippery' and f2.string='wet' and f1.id=f2.id and p.oid=f1.id;
-*/
-
-/*
-	march 4 1998 Changed breakup() to return less substrings. Only breakup
-				 in word parts which are in turn shortened from the start
-				 of the word (ie. word, ord, rd)
-				 Did allocation of substring buffer outside of breakup()
-	oct. 5 1997, fixed a bug in string breakup (where there are more nonalpha
-				 characters between words then 1).
-
-	oct 4-5 1997 implemented the thing, at least the basic functionallity
-				 of it all....
-*/
-
-/* IMPROVEMENTS:
-
-   save a plan for deletes
-   create a function that will make the index *after* we have populated
-   the main table (probably first delete all contents to be sure there's
-   nothing in it, then re-populate the fti-table)
-
-   can we do something with operator overloading or a seperate function
-   that can build the final query automatigally?
-   */
+#define MAX_FTI_QUERY_LENGTH 8192
 
 extern Datum fti(PG_FUNCTION_ARGS);
 static char *breakup(char *, char *);
@@ -81,10 +107,10 @@ char	   *StopWords[] = {		/* list of words to skip in indexing */
 /* stuff for caching query-plans, stolen from contrib/spi/\*.c */
 typedef struct
 {
-	char	   *ident;
-	int			nplans;
-	void	  **splan;
-}			EPlan;
+	char	*ident;
+	int		nplans;
+	void	**splan;
+} EPlan;
 
 static EPlan *InsertPlans = NULL;
 static EPlan *DeletePlans = NULL;
@@ -99,7 +125,7 @@ PG_FUNCTION_INFO_V1(fti);
 Datum
 fti(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
+	TriggerData *trigdata;
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of arguments */
 	char	  **args;			/* arguments */
@@ -111,7 +137,7 @@ fti(PG_FUNCTION_ARGS)
 	bool		isinsert = false;
 	bool		isdelete = false;
 	int			ret;
-	char		query[8192];
+	char		query[MAX_FTI_QUERY_LENGTH];
 	Oid			oid;
 
 	/*
@@ -124,11 +150,15 @@ fti(PG_FUNCTION_ARGS)
 	 */
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "Full Text Indexing: not fired by trigger manager");
+		elog(ERROR, "Full Text Indexing: Not fired by trigger manager");
+
+	/* It's safe to cast now that we've checked */
+	trigdata = (TriggerData *) fcinfo->context;
+
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-		elog(ERROR, "Full Text Indexing: can't process STATEMENT events");
+		elog(ERROR, "Full Text Indexing: Can't process STATEMENT events");
 	if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
-		elog(ERROR, "Full Text Indexing: must be fired AFTER event");
+		elog(ERROR, "Full Text Indexing: Must be fired AFTER event");
 
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		isinsert = true;
@@ -148,11 +178,11 @@ fti(PG_FUNCTION_ARGS)
 		rettuple = trigdata->tg_newtuple;
 
 	if ((ret = SPI_connect()) < 0)
-		elog(ERROR, "Full Text Indexing: SPI_connect failed, returned %d\n", ret);
+		elog(ERROR, "Full Text Indexing: SPI_connect: Failed, returned %d\n", ret);
 
 	nargs = trigger->tgnargs;
-	if (nargs != 2)
-		elog(ERROR, "Full Text Indexing: trigger can only have 2 arguments");
+	if (nargs < 2)
+		elog(ERROR, "Full Text Indexing: Trigger must have at least 2 arguments\n");
 
 	args = trigger->tgargs;
 	indexname = args[0];
@@ -161,7 +191,7 @@ fti(PG_FUNCTION_ARGS)
 	/* get oid of current tuple, needed by all, so place here */
 	oid = rettuple->t_data->t_oid;
 	if (!OidIsValid(oid))
-		elog(ERROR, "Full Text Indexing: oid of current tuple is NULL");
+		elog(ERROR, "Full Text Indexing: Oid of current tuple is invalid");
 
 	if (isdelete)
 	{
@@ -169,8 +199,14 @@ fti(PG_FUNCTION_ARGS)
 		Oid		   *argtypes;
 		Datum		values[1];
 		EPlan	   *plan;
+		int i;
 
-		sprintf(query, "D%s$%s", args[0], args[1]);
+		snprintf(query, MAX_FTI_QUERY_LENGTH, "D%s", indexname);
+		for (i = 1; i < nargs; i++)
+		{
+			snprintf(query, MAX_FTI_QUERY_LENGTH, "%s$%s", query, args[i]);
+		}
+
 		plan = find_plan(query, &DeletePlans, &nDeletePlans);
 		if (plan->nplans <= 0)
 		{
@@ -178,15 +214,13 @@ fti(PG_FUNCTION_ARGS)
 
 			argtypes[0] = OIDOID;
 
-			sprintf(query, "DELETE FROM %s WHERE id = $1", indexname);
+			snprintf(query, MAX_FTI_QUERY_LENGTH, "DELETE FROM %s WHERE id = $1", indexname);
 			pplan = SPI_prepare(query, 1, argtypes);
 			if (!pplan)
-				elog(ERROR, "Full Text Indexing: SPI_prepare returned NULL "
-					 "in delete");
+				elog(ERROR, "Full Text Indexing: SPI_prepare: Returned NULL in delete");
 			pplan = SPI_saveplan(pplan);
 			if (pplan == NULL)
-				elog(ERROR, "Full Text Indexing: SPI_saveplan returned NULL "
-					 "in delete");
+				elog(ERROR, "Full Text Indexing: SPI_saveplan: Returned NULL in delete");
 
 			plan->splan = (void **) malloc(sizeof(void *));
 			*(plan->splan) = pplan;
@@ -197,21 +231,29 @@ fti(PG_FUNCTION_ARGS)
 
 		ret = SPI_execp(*(plan->splan), values, NULL, 0);
 		if (ret != SPI_OK_DELETE)
-			elog(ERROR, "Full Text Indexing: error executing plan in delete");
+			elog(ERROR, "Full Text Indexing: SPI_execp: Error executing plan in delete");
 	}
 
 	if (isinsert)
 	{
-		char	   *substring,
-				   *column;
-		void	   *pplan;
-		Oid		   *argtypes;
+		char		*substring;
+		char		*column;
+		void		*pplan;
+		Oid			*argtypes;
 		Datum		values[2];
 		int			colnum;
-		struct varlena *data;
-		EPlan	   *plan;
+		struct	varlena *data;
+		EPlan		*plan;
+		int 		i;
+		char		*buff;
+		char		*string;
 
-		sprintf(query, "I%s$%s", args[0], args[1]);
+		snprintf(query, MAX_FTI_QUERY_LENGTH, "I%s", indexname);
+		for (i = 1; i < nargs; i++)
+		{
+			snprintf(query, MAX_FTI_QUERY_LENGTH, "%s$%s", query, args[i]);
+		}
+
 		plan = find_plan(query, &InsertPlans, &nInsertPlans);
 
 		/* no plan yet, so allocate mem for argtypes */
@@ -224,67 +266,65 @@ fti(PG_FUNCTION_ARGS)
 			argtypes[1] = OIDOID;		/* id	  oid);    */
 
 			/* prepare plan to gain speed */
-			sprintf(query, "INSERT INTO %s (string, id) VALUES ($1, $2)",
+			snprintf(query, MAX_FTI_QUERY_LENGTH, "INSERT INTO %s (string, id) VALUES ($1, $2)",
 					indexname);
 			pplan = SPI_prepare(query, 2, argtypes);
 			if (!pplan)
-				elog(ERROR, "Full Text Indexing: SPI_prepare returned NULL "
-					 "in insert");
+				elog(ERROR, "Full Text Indexing: SPI_prepare: Returned NULL in insert");
 
 			pplan = SPI_saveplan(pplan);
 			if (pplan == NULL)
-				elog(ERROR, "Full Text Indexing: SPI_saveplan returned NULL"
-					 " in insert");
+				elog(ERROR, "Full Text Indexing: SPI_saveplan: Returned NULL in insert");
 
 			plan->splan = (void **) malloc(sizeof(void *));
 			*(plan->splan) = pplan;
 			plan->nplans = 1;
 		}
 
-
 		/* prepare plan for query */
-		colnum = SPI_fnumber(tupdesc, args[1]);
-		if (colnum == SPI_ERROR_NOATTRIBUTE)
-			elog(ERROR, "Full Text Indexing: column '%s' of '%s' not found",
-				 args[1], args[0]);
+		for (i = 0; i < nargs - 1; i++)
+		{
+			colnum = SPI_fnumber(tupdesc, args[i + 1]);
+			if (colnum == SPI_ERROR_NOATTRIBUTE)
+				elog(ERROR, "Full Text Indexing: SPI_fnumber: Column '%s' of '%s' not found", args[i + 1], indexname);
 
-		/* Get the char* representation of the column with name args[1] */
-		column = SPI_getvalue(rettuple, tupdesc, colnum);
+			/* Get the char* representation of the column */
+			column = SPI_getvalue(rettuple, tupdesc, colnum);
 
-		if (column)
-		{						/* make sure we don't try to index NULL's */
-			char	   *buff;
-			char	   *string = column;
-
-			while (*string != '\0')
+			/* make sure we don't try to index NULL's */
+			if (column)
 			{
-				*string = tolower((unsigned char) *string);
-				string++;
+				string = column;
+				while (*string != '\0')
+				{
+					*string = tolower((unsigned char) *string);
+					string++;
+				}
+
+				data = (struct varlena *) palloc(sizeof(int32) + strlen(column) + 1);
+				buff = palloc(strlen(column) + 1);
+				/* saves lots of calls in while-loop and in breakup() */
+
+				new_tuple = true;
+
+				while ((substring = breakup(column, buff)))
+				{
+					int			l;
+
+					l = strlen(substring);
+
+					data->vl_len = l + sizeof(int32);
+					memcpy(VARDATA(data), substring, l);
+					values[0] = PointerGetDatum(data);
+					values[1] = oid;
+
+					ret = SPI_execp(*(plan->splan), values, NULL, 0);
+					if (ret != SPI_OK_INSERT)
+						elog(ERROR, "Full Text Indexing: SPI_execp: Error executing plan in insert");
+				}
+				pfree(buff);
+				pfree(data);
 			}
-
-			data = (struct varlena *) palloc(sizeof(int32) + strlen(column) +1);
-			buff = palloc(strlen(column) + 1);
-			/* saves lots of calls in while-loop and in breakup() */
-
-			new_tuple = true;
-			while ((substring = breakup(column, buff)))
-			{
-				int			l;
-
-				l = strlen(substring);
-
-				data->vl_len = l + sizeof(int32);
-				memcpy(VARDATA(data), substring, l);
-				values[0] = PointerGetDatum(data);
-				values[1] = oid;
-
-				ret = SPI_execp(*(plan->splan), values, NULL, 0);
-				if (ret != SPI_OK_INSERT)
-					elog(ERROR, "Full Text Indexing: error executing plan "
-						 "in insert");
-			}
-			pfree(buff);
-			pfree(data);
 		}
 	}
 
