@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.209 2002/10/14 17:15:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.210 2002/10/15 01:48:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1583,8 +1583,6 @@ PQsetenvPoll(PGconn *conn)
 {
 	PGresult   *res;
 
-	static const char envname[] = "PGCLIENTENCODING";
-
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return PGRES_POLLING_FAILED;
 
@@ -1625,25 +1623,23 @@ PQsetenvPoll(PGconn *conn)
 			goto error_return;
 	}
 
-
-keep_going:						/* We will come back to here until there
-								 * is nothing left to parse. */
-	switch (conn->setenv_state)
+	/* We will loop here until there is nothing left to do in this call. */
+	for (;;)
 	{
-
-		case SETENV_STATE_ENCODINGS_SEND:
+		switch (conn->setenv_state)
+		{
+			case SETENV_STATE_ENCODINGS_SEND:
 			{
-				const char *env;
+				const char *env = getenv("PGCLIENTENCODING");
 
-				env = getenv(envname);
 				if (!env || *env == '\0')
 				{
 					/*
-					 * query server encoding if PGCLIENTENCODING is not
-					 * specified
+					 * PGCLIENTENCODING is not specified, so query server
+					 * for it.  We must use begin/commit in case autocommit
+					 * is off by default.
 					 */
-					if (!PQsendQuery(conn,
-									 "select getdatabaseencoding()"))
+					if (!PQsendQuery(conn, "begin; select getdatabaseencoding(); commit"))
 						goto error_return;
 
 					conn->setenv_state = SETENV_STATE_ENCODINGS_WAIT;
@@ -1662,11 +1658,14 @@ keep_going:						/* We will come back to here until there
 						goto error_return;
 					}
 					conn->client_encoding = encoding;
-				}
 
+					/* Move on to setting the environment options */
+					conn->setenv_state = SETENV_STATE_OPTION_SEND;
+				}
+				break;
 			}
 
-		case SETENV_STATE_ENCODINGS_WAIT:
+			case SETENV_STATE_ENCODINGS_WAIT:
 			{
 				if (PQisBusy(conn))
 					return PGRES_POLLING_READING;
@@ -1675,37 +1674,35 @@ keep_going:						/* We will come back to here until there
 
 				if (res)
 				{
-					char	   *encoding;
+					if (PQresultStatus(res) == PGRES_TUPLES_OK)
+					{
+						/* set client encoding in pg_conn struct */
+						char	   *encoding;
 
-					if (PQresultStatus(res) != PGRES_TUPLES_OK)
+						encoding = PQgetvalue(res, 0, 0);
+						if (!encoding)		/* this should not happen */
+							conn->client_encoding = PG_SQL_ASCII;
+						else
+							conn->client_encoding = pg_char_to_encoding(encoding);
+					}
+					else if (PQresultStatus(res) != PGRES_COMMAND_OK)
 					{
 						PQclear(res);
 						goto error_return;
 					}
-
-					/* set client encoding in pg_conn struct */
-					encoding = PQgetvalue(res, 0, 0);
-					if (!encoding)		/* this should not happen */
-						conn->client_encoding = PG_SQL_ASCII;
-					else
-						conn->client_encoding = pg_char_to_encoding(encoding);
 					PQclear(res);
-
-					/*
-					 * We have to keep going in order to clear up the
-					 * query
-					 */
-					goto keep_going;
+					/* Keep reading until PQgetResult returns NULL */
 				}
-
-				/* NULL result indicates that the query is finished */
-
-				/* Move on to setting the environment options */
-				conn->setenv_state = SETENV_STATE_OPTION_SEND;
-				goto keep_going;
+				else
+				{
+					/* NULL result indicates that the query is finished */
+					/* Move on to setting the environment options */
+					conn->setenv_state = SETENV_STATE_OPTION_SEND;
+				}
+				break;
 			}
 
-		case SETENV_STATE_OPTION_SEND:
+			case SETENV_STATE_OPTION_SEND:
 			{
 				/* Send an Environment Option */
 				char		setQuery[100];		/* note length limits in
@@ -1740,11 +1737,10 @@ keep_going:						/* We will come back to here until there
 					/* No more options to send, so we are done. */
 					conn->setenv_state = SETENV_STATE_IDLE;
 				}
-
-				goto keep_going;
+				break;
 			}
 
-		case SETENV_STATE_OPTION_WAIT:
+			case SETENV_STATE_OPTION_WAIT:
 			{
 				if (PQisBusy(conn))
 					return PGRES_POLLING_READING;
@@ -1758,33 +1754,29 @@ keep_going:						/* We will come back to here until there
 						PQclear(res);
 						goto error_return;
 					}
-					/* Don't need the result */
 					PQclear(res);
-
-					/*
-					 * We have to keep going in order to clear up the
-					 * query
-					 */
-					goto keep_going;
+					/* Keep reading until PQgetResult returns NULL */
 				}
-
-				/* NULL result indicates that the query is finished */
-
-				/* Send the next option */
-				conn->next_eo++;
-				conn->setenv_state = SETENV_STATE_OPTION_SEND;
-				goto keep_going;
+				else
+				{
+					/* NULL result indicates that the query is finished */
+					/* Send the next option */
+					conn->next_eo++;
+					conn->setenv_state = SETENV_STATE_OPTION_SEND;
+				}
+				break;
 			}
 
-		case SETENV_STATE_IDLE:
-			return PGRES_POLLING_OK;
+			case SETENV_STATE_IDLE:
+				return PGRES_POLLING_OK;
 
-		default:
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("invalid state %c, "
-						   "probably indicative of memory corruption\n"),
-							  conn->setenv_state);
-			goto error_return;
+			default:
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("invalid state %c, "
+												"probably indicative of memory corruption\n"),
+								  conn->setenv_state);
+				goto error_return;
+		}
 	}
 
 	/* Unreachable */
