@@ -19,7 +19,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.2 1996/10/28 09:00:52 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.3 1996/10/31 17:27:58 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ $(PORTNAME)/SUBSYS.o:
 	$(MAKE) -C $(PORTNAME) SUBSYS.o
 
 clean:
-	rm -f $(OBJS)
+	rm -f SUBSYS.o $(OBJS) 
 	$(MAKE) -C $(PORTNAME) clean
 
 depend dep:
