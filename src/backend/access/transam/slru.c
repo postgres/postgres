@@ -1,19 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * slru.c
- *		Simple LRU
+ *		Simple LRU buffering for transaction status logfiles
  *
- * This module replaces the old "pg_log" access code, which treated pg_log
- * essentially like a relation, in that it went through the regular buffer
- * manager.  The problem with that was that there wasn't any good way to
- * recycle storage space for transactions so old that they'll never be
- * looked up again.  Now we use specialized access code so that the commit
- * log can be broken into relatively small, independent segments.
- *
- * Portions Copyright (c) 2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/slru.c,v 1.1 2003/06/11 22:37:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/slru.c,v 1.2 2003/07/19 21:37:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,7 +356,7 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, TransactionId xid, bool forwrite)
 
 		LWLockRelease(ctl->locks->BufferLocks[slotno]);
 
-		/* Now it's okay to elog if we failed */
+		/* Now it's okay to ereport if we failed */
 		if (!ok)
 			SlruReportIOError(ctl, pageno, xid);
 
@@ -449,7 +442,7 @@ SimpleLruWritePage(SlruCtl ctl, int slotno)
 
 	LWLockRelease(ctl->locks->BufferLocks[slotno]);
 
-	/* Now it's okay to elog if we failed */
+	/* Now it's okay to ereport if we failed */
 	if (!ok)
 		SlruReportIOError(ctl, pageno, InvalidTransactionId);
 }
@@ -457,7 +450,7 @@ SimpleLruWritePage(SlruCtl ctl, int slotno)
 /*
  * Physical read of a (previously existing) page into a buffer slot
  *
- * On failure, we cannot just elog(ERROR) since caller has put state in
+ * On failure, we cannot just ereport(ERROR) since caller has put state in
  * shared memory that must be undone.  So, we return FALSE and save enough
  * info in static variables to let SlruReportIOError make the report.
  *
@@ -493,7 +486,9 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 			return false;
 		}
 
-		elog(LOG, "file %s doesn't exist, reading as zeroes", path);
+		ereport(LOG,
+				(errmsg("file \"%s\" doesn't exist, reading as zeroes",
+						path)));
 		MemSet(shared->page_buffer[slotno], 0, BLCKSZ);
 		return true;
 	}
@@ -520,7 +515,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 /*
  * Physical write of a page from a buffer slot
  *
- * On failure, we cannot just elog(ERROR) since caller has put state in
+ * On failure, we cannot just ereport(ERROR) since caller has put state in
  * shared memory that must be undone.  So, we return FALSE and save enough
  * info in static variables to let SlruReportIOError make the report.
  *
@@ -606,33 +601,49 @@ SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid)
 	int			offset = rpageno * BLCKSZ;
 	char		path[MAXPGPATH];
 
-	/* XXX TODO: provide xid as context in error messages */
-
 	SlruFileName(ctl, path, segno);
 	errno = slru_errno;
 	switch (slru_errcause)
 	{
 		case SLRU_OPEN_FAILED:
-			elog(ERROR, "open of %s failed: %m", path);
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not access status of transaction %u", xid),
+					 errdetail("open of file \"%s\" failed: %m",
+							   path)));
 			break;
 		case SLRU_CREATE_FAILED:
-			elog(ERROR, "creation of file %s failed: %m", path);
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not access status of transaction %u", xid),
+					 errdetail("creation of file \"%s\" failed: %m",
+							   path)));
 			break;
 		case SLRU_SEEK_FAILED:
-			elog(ERROR, "lseek of file %s, offset %u failed: %m",
-				 path, offset);
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not access status of transaction %u", xid),
+					 errdetail("lseek of file \"%s\", offset %u failed: %m",
+							   path, offset)));
 			break;
 		case SLRU_READ_FAILED:
-			elog(ERROR, "read of file %s, offset %u failed: %m",
-				 path, offset);
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not access status of transaction %u", xid),
+					 errdetail("read of file \"%s\", offset %u failed: %m",
+							   path, offset)));
 			break;
 		case SLRU_WRITE_FAILED:
-			elog(ERROR, "write of file %s, offset %u failed: %m",
-				 path, offset);
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not access status of transaction %u", xid),
+					 errdetail("write of file \"%s\", offset %u failed: %m",
+							   path, offset)));
 			break;
 		default:
 			/* can't get here, we trust */
-			elog(ERROR, "unknown SimpleLru I/O error");
+			elog(ERROR, "unrecognized SimpleLru error cause: %d",
+				 (int) slru_errcause);
 			break;
 	}
 }
@@ -799,7 +810,9 @@ restart:;
 	if (ctl->PagePrecedes(shared->latest_page_number, cutoffPage))
 	{
 		LWLockRelease(ctl->locks->ControlLock);
-		elog(LOG, "unable to truncate %s: apparent wraparound", ctl->Dir);
+		ereport(LOG,
+				(errmsg("unable to truncate \"%s\": apparent wraparound",
+						ctl->Dir)));
 		return;
 	}
 
@@ -855,7 +868,9 @@ SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
 
 	cldir = opendir(ctl->Dir);
 	if (cldir == NULL)
-		elog(ERROR, "could not open directory (%s): %m", ctl->Dir);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m", ctl->Dir)));
 
 	errno = 0;
 	while ((clde = readdir(cldir)) != NULL)
@@ -870,7 +885,9 @@ SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
 				found = true;
 				if (doDeletions)
 				{
-					elog(LOG, "removing file %s/%s", ctl->Dir, clde->d_name);
+					ereport(LOG,
+							(errmsg("removing file \"%s/%s\"",
+									ctl->Dir, clde->d_name)));
 					snprintf(path, MAXPGPATH, "%s/%s", ctl->Dir, clde->d_name);
 					unlink(path);
 				}
@@ -879,7 +896,9 @@ SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
 		errno = 0;
 	}
 	if (errno)
-		elog(ERROR, "could not read directory (%s): %m", ctl->Dir);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read directory \"%s\": %m", ctl->Dir)));
 	closedir(cldir);
 
 	return found;
