@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.20 2001/05/10 15:51:05 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.21 2001/05/31 18:27:18 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -27,6 +27,7 @@ WANTED_DIRS = \
 		pgbench		\
 		pgcrypto	\
 		rserv		\
+		rtree_gist	\
 		seg		\
 		soundex		\
 		spi		\

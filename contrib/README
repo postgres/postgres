@@ -133,6 +133,10 @@ rserv -
 	replication server
 	by Vadim B. Mikheev <vadim4o@email.com>
 
+rtree_gist -
+	Support for emulating RTREE indexing in GiST
+	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@stack.net>
+
 seg -
 	Confidence-interval datatype (GiST indexing example)
 	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>

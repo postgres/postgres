@@ -1,0 +1,92 @@
+This is R-Tree implementation using GiST.
+Code (for PG95) are taken from http://s2k-ftp.cs.berkeley.edu:8000/gist/pggist/
+and changed according to new version of GiST (7.1 and above)
+
+All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
+(oleg@sai.msu.su). See http://www.sai.msu.su/~megera/postgres/gist
+for additional information.
+
+CHANGES:
+     Tue May 29 17:04:16 MSD 2001
+     
+     1. Small fixes in polygon code
+        Thanks to Dave Blasby <dblasby@refractions.net>
+
+     Mon May 28 19:42:14 MSD 2001
+
+     1. Full implementation of R-tree using GiST - gist_box_ops,gist_poly_ops
+     2. gist_poly_ops is lossy
+     3. NULLs support
+     4. works with multi-key GiST
+     
+NOTICE:
+     This version will works only with postgresql version 7.1 and above
+     because of changes in interface of function calling.
+
+INSTALLATION:
+
+  gmake
+  gmake install
+  -- load functions
+  psql <database> < rtree_gist.sql
+
+REGRESSION TEST:
+
+   gmake installcheck
+
+EXAMPLE USAGE:
+
+   create table boxtmp (b box);
+   -- create index
+   create index bix on boxtmp using gist (b gist_box_ops);
+   -- query
+   select * from boxtmp where b && '(1000,1000,0,0)'::box;
+
+
+BENCHMARKS:
+
+ subdirectory bench contains benchmark suite.
+ Prerequisities: perl, DBI, DBD:Pg, Time::HiRes
+
+  cd ./bench
+  1. createdb TEST
+  2. psql TEST < ../box.sql
+  3. ./create_test.pl | psql TEST 
+     -- change $NUM - number of rows in test dataset
+  4. ./bench.pl - perl script to benchmark queries. 
+                  Run script without arguments to see available options.
+
+     a)test without GiST index, using built-in R-Tree
+       ./bench.pl -d TEST 
+     b)test R-Tree using GiST index
+       ./bench.pl -d TEST -g 
+
+
+RESULTS:
+
+1. One interesting thing is that insertion time for built-in R-Tree is 
+   about 8 times more than ones for GiST implementation of R-Tree !!!
+2. Postmaster requires much more memory for built-in R-Tree
+3. Search time depends on dataset. In our case we got:
+        +------------+-----------+--------------+
+        |Number boxes|R-tree, sec|R-tree using  |
+        |            |           |   GiST, sec  |
+        +------------+-----------+--------------+
+        |          10|      0.002|         0.002|
+        +------------+-----------+--------------+
+        |         100|      0.002|         0.002|
+        +------------+-----------+--------------+
+        |        1000|      0.002|         0.002|
+        +------------+-----------+--------------+
+        |       10000|      0.015|         0.025|
+        +------------+-----------+--------------+
+        |       20000|      0.029|         0.048|
+        +------------+-----------+--------------+
+        |       40000|      0.055|         0.092|
+        +------------+-----------+--------------+
+        |       80000|      0.113|         0.178|
+        +------------+-----------+--------------+
+        |      160000|      0.338|         0.337|
+        +------------+-----------+--------------+
+        |      320000|      0.674|         0.673|
+        +------------+-----------+--------------+

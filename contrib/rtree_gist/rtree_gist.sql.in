@@ -1,0 +1,284 @@
+begin transaction;
+--
+--
+--
+-- BOX ops
+--
+--
+--
+-- define the GiST support methods
+create function gbox_consistent(opaque,box,int4) returns bool as 'MODULE_PATHNAME' language 'C';
+
+create function gbox_compress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+
+create function rtree_decompress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+
+create function gbox_penalty(opaque,opaque,opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+
+create function gbox_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+
+create function gbox_union(bytea, opaque) returns box as 'MODULE_PATHNAME' language 'C';
+
+create function gbox_same(box, box, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+
+-- add a new opclass
+--INSERT INTO pg_opclass (opcname, opcdeftype)
+--   SELECT 'gist_box_ops', oid
+--   FROM pg_type
+--   WHERE typname = 'box';
+INSERT INTO pg_opclass (opcname, opcdeftype) values ( 'gist_box_ops', 0 );
+
+--SELECT oid, opcname FROM pg_opclass WHERE opcname = 'gist_box_ops';
+
+-- get the comparators for boxes and store them in a tmp table
+SELECT o.oid AS opoid, o.oprname
+INTO TABLE rt_ops_tmp
+FROM pg_operator o, pg_type t
+WHERE o.oprleft = t.oid 
+   and t.typname = 'box';
+
+-- using the tmp table, generate the amop entries 
+-- box_left
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy) 
+   SELECT am.oid, opcl.oid, c.opoid, 1
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_box_ops' 
+      and c.oprname = '<<';
+
+-- box_overleft
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy) 
+   SELECT am.oid, opcl.oid, c.opoid, 2
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_box_ops' 
+      and c.oprname = '&<';
+
+-- box_overlap
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy) 
+   SELECT am.oid, opcl.oid, c.opoid, 3
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_box_ops' 
+      and c.oprname = '&&';
+
+-- box_overright
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy) 
+   SELECT am.oid, opcl.oid, c.opoid, 4
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_box_ops' 
+      and c.oprname = '&>';
+
+-- box_right
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 5
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_box_ops' 
+      and c.oprname = '>>';
+
+-- box_same
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy) 
+   SELECT am.oid, opcl.oid, c.opoid, 6
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_box_ops' 
+      and c.oprname = '~=';
+
+-- box_contains
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 7
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_box_ops' 
+      and c.oprname = '~';
+
+-- box_contained
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 8
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_box_ops' 
+      and c.oprname = '@';
+
+DROP table rt_ops_tmp;
+
+-- add the entries to amproc for the support methods
+-- note the amprocnum numbers associated with each are specific!
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 1
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_box_ops'
+      and proname = 'gbox_consistent';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 2
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_box_ops'
+      and proname = 'gbox_union';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 3
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_box_ops'
+      and proname = 'gbox_compress';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 4
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_box_ops'
+      and proname = 'rtree_decompress';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 5
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_box_ops'
+      and proname = 'gbox_penalty';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 6
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_box_ops'
+      and proname = 'gbox_picksplit';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 7
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_box_ops'
+      and proname = 'gbox_same';
+
+--
+--
+--
+-- POLYGON ops
+--
+--
+--
+-- define the GiST support methods
+create function gpoly_consistent(opaque,polygon,int4) returns bool as 'MODULE_PATHNAME' language 'C';
+
+create function gpoly_compress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+
+create function gpoly_penalty(opaque,opaque,opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+
+create function gpoly_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+
+create function gpoly_union(bytea, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+
+create function gpoly_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+
+-- add a new opclass
+--INSERT INTO pg_opclass (opcname, opcdeftype)
+--   SELECT 'gist_poly_ops', oid
+--   FROM pg_type
+--   WHERE typname = 'polygon';
+INSERT INTO pg_opclass (opcname, opcdeftype) values ( 'gist_poly_ops', 0 );
+
+--SELECT oid, opcname FROM pg_opclass WHERE opcname = 'gist_poly_ops';
+
+-- get the comparators for polygons and store them in a tmp table
+-- hack for 757 (poly_contain_pt) Teodor
+SELECT o.oid AS opoid, o.oprname
+INTO TABLE rt_ops_tmp
+FROM pg_operator o, pg_type t
+WHERE o.oprleft = t.oid and o.oid <> 757
+   and t.typname = 'polygon';
+
+-- using the tmp table, generate the amop entries 
+-- poly_left
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy) 
+   SELECT am.oid, opcl.oid, c.opoid, 1
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_poly_ops' 
+      and c.oprname = '<<';
+
+-- poly_overleft
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy) 
+   SELECT am.oid, opcl.oid, c.opoid, 2
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_poly_ops' 
+      and c.oprname = '&<';
+
+-- poly_overlap
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy) 
+   SELECT am.oid, opcl.oid, c.opoid, 3
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_poly_ops' 
+      and c.oprname = '&&';
+
+-- poly_overright
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy) 
+   SELECT am.oid, opcl.oid, c.opoid, 4
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_poly_ops' 
+      and c.oprname = '&>';
+
+-- poly_right
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 5
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_poly_ops' 
+      and c.oprname = '>>';
+
+-- poly_same
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy) 
+   SELECT am.oid, opcl.oid, c.opoid, 6
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_poly_ops' 
+      and c.oprname = '~=';
+
+-- poly_contains
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 7
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_poly_ops' 
+      and c.oprname = '~';
+
+-- poly_contained
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 8
+   FROM pg_am am, pg_opclass opcl, rt_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_poly_ops' 
+      and c.oprname = '@';
+
+DROP table rt_ops_tmp;
+
+-- add the entries to amproc for the support methods
+-- note the amprocnum numbers associated with each are specific!
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 1
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_poly_ops'
+      and proname = 'gpoly_consistent';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 2
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_poly_ops'
+      and proname = 'gpoly_union';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 3
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_poly_ops'
+      and proname = 'gpoly_compress';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 4
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_poly_ops'
+      and proname = 'rtree_decompress';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 5
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_poly_ops'
+      and proname = 'gpoly_penalty';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 6
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_poly_ops'
+      and proname = 'gpoly_picksplit';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 7
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_poly_ops'
+      and proname = 'gpoly_same';
+
+end transaction;
+
