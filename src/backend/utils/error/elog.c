@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.69 2000/11/25 19:09:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.70 2000/12/01 19:52:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,12 +30,13 @@
 #include <syslog.h>
 #endif
 
+#include "commands/copy.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
-#include "commands/copy.h"
+#include "utils/memutils.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -374,7 +375,16 @@ elog(int lev, const char *fmt, ...)
 	if (lev > DEBUG && whereToSendOutput == Remote)
 	{
 		/* Send IPC message to the front-end program */
+		MemoryContext oldcxt;
 		char		msgtype;
+
+		/*
+		 * Since backend libpq may call palloc(), switch to a context where
+		 * there's fairly likely to be some free space.  After all the
+		 * pushups above, we don't want to drop the ball by running out of
+		 * space now...
+		 */
+		oldcxt = MemoryContextSwitchTo(ErrorContext);
 
 		if (lev == NOTICE)
 			msgtype = 'N';
@@ -402,6 +412,8 @@ elog(int lev, const char *fmt, ...)
 		 * much ...
 		 */
 		pq_flush();
+
+		MemoryContextSwitchTo(oldcxt);
 	}
 
 	if (lev > DEBUG && whereToSendOutput != Remote)
@@ -612,6 +624,7 @@ write_syslog(int level, const char *line)
 	static bool	openlog_done = false;
 	static unsigned long seq = 0;
 	static int	syslog_fac = LOG_LOCAL0;
+
 	int len = strlen(line);
 
 	if (Use_syslog == 0)
@@ -649,19 +662,21 @@ write_syslog(int level, const char *line)
 	/* or if the message contains embedded NewLine(s) '\n' */
 	if (len > PG_SYSLOG_LIMIT || strchr(line,'\n') != NULL )
 	{
-		static char	buf[PG_SYSLOG_LIMIT+1];
-		int chunk_nr = 0;
-		int buflen;
+		int		chunk_nr = 0;
 
 		while (len > 0)
 		{
-			int l;
-			int i;
+			char	buf[PG_SYSLOG_LIMIT+1];
+			int		buflen;
+			int		l;
+			int		i;
+
 			/* if we start at a newline, move ahead one char */
 			if (line[0] == '\n')
 			{
 				line++;
 				len--;
+				continue;
 			}
 
 			strncpy(buf, line, PG_SYSLOG_LIMIT);
@@ -681,9 +696,9 @@ write_syslog(int level, const char *line)
 				buflen = l;
 			else
 			{
-				/* try to divide in word boundary */
+				/* try to divide at word boundary */
 				i = l - 1;
-				while(i > 0 && !isspace(buf[i]))
+				while (i > 0 && !isspace(buf[i]))
 					i--;
 
 				if (i <= 0)	/* couldn't divide word boundary */
@@ -702,9 +717,11 @@ write_syslog(int level, const char *line)
 			len -= buflen;
 		}
 	}
-	/* message short enough */
 	else
+	{
+		/* message short enough */
 		syslog(level, "[%lu] %s", seq, line);
+	}
 }
 
 #endif /* ENABLE_SYSLOG */
