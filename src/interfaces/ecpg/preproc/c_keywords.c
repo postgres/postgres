@@ -25,7 +25,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"bool", SQL_BOOL},
 	{"char", CHAR_P},
 	{"const", S_CONST},
-	{"double", DOUBLE_P},
 	{"enum", SQL_ENUM},
 	{"extern", S_EXTERN},
 	{"float", FLOAT_P},

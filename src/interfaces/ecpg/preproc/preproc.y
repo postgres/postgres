@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.218 2003/05/16 04:59:22 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.219 2003/05/16 11:30:09 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4183,6 +4183,14 @@ ecpg_interval:	opt_interval	{ $$ = $1; }
 		;
 
 single_vt_type: common_type
+		| DOUBLE_P
+		{
+			$$.type_enum = ECPGt_double;
+			$$.type_str = make_str("double");
+			$$.type_dimension = make_str("-1");
+			$$.type_index = make_str("-1");
+			$$.type_sizeof = NULL;
+		}
 		| ECPGColLabelCommon ecpg_interval
 		{
 			if (strlen($2) != 0 && strcmp ($1, "datetime") != 0 && strcmp ($1, "interval") != 0)
@@ -4204,14 +4212,6 @@ single_vt_type: common_type
 			{
 				$$.type_enum = ECPGt_float;
 				$$.type_str = make_str("float");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
-				$$.type_sizeof = NULL;
-			}
-			else if (strcmp($1, "double") == 0)
-			{
-				$$.type_enum = ECPGt_double;
-				$$.type_str = make_str("double");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4671,7 +4671,7 @@ variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 			struct ECPGtype * type;
 			char *dimension = $3.index1; /* dimension of array */
 			char *length = $3.index2;    /* lenght of string */
-			char dim[14L], ascii_len[12];
+			char dim[14L];
 
 			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1));
 
@@ -5289,11 +5289,11 @@ symbol: ColLabel				{ $$ = $1; }
 
 /* Column identifier --- names that can be column, table, etc names.
  */
-ColId:	ident							{ $$ = $1; }
+ColId:	ident						{ $$ = $1; }
 		| unreserved_keyword			{ $$ = $1; }
-		| col_name_keyword				{ $$ = $1; }
-		| ECPGKeywords					{ $$ = $1; }
-		| CHAR_P						{ $$ = make_str("char"); }
+		| col_name_keyword			{ $$ = $1; }
+		| ECPGKeywords				{ $$ = $1; }
+		| CHAR_P				{ $$ = make_str("char"); }
 		;
 
 /* Type identifier --- names that can be type names.
