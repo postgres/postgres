@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.140 2002/09/26 04:41:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.141 2002/09/27 02:04:39 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2862,7 +2862,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    self-signed certificate, use the following
    <productname>OpenSSL</productname> command:
 <programlisting>
-openssl req -new -text -out cert.req
+cd <replaceable>$PGDATA</replaceable>
+openssl req -new -text -out server.req
 </programlisting>
    Fill out the information that <command>openssl</> asks for. Make sure
    that you enter the local host name as Common Name; the challenge
@@ -2871,14 +2872,13 @@ openssl req -new -text -out cert.req
    than four characters long. To remove the passphrase (as you must if
    you want automatic start-up of the server), run the commands
 <programlisting>
-openssl rsa -in privkey.pem -out cert.pem
+openssl rsa -in privkey.pem -out server.key
+rm privkey.pem
 </programlisting>
    Enter the old passphrase to unlock the existing key. Now do
 <programlisting>
-openssl req -x509 -in cert.req -text -key cert.pem -out cert.cert
-chmod og-rwx cert.pem
-cp cert.pem <replaceable>$PGDATA</replaceable>/server.key
-cp cert.cert <replaceable>$PGDATA</replaceable>/server.crt
+openssl req -x509 -in server.req -text -key server.key -out server.crt
+chmod og-rwx server.key
 </programlisting>
    to turn the certificate into a self-signed certificate and to copy the
    key and certificate to where the server will look for them.
