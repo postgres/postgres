@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.111 2003/08/05 17:39:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.112 2003/08/05 18:30:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,7 +699,20 @@ TrimTrailingZeros(char *str)
 
 
 /* ParseDateTime()
- * Break string into tokens based on a date/time context.
+ *	Break string into tokens based on a date/time context.
+ *	Returns 0 if successful, -1 if bogus input detected.
+ *
+ * timestr - the input string
+ * lowstr - workspace for field string storage (must be large enough for
+ *		a copy of the input string, including trailing null)
+ * field[] - pointers to field strings are returned in this array
+ * ftype[] - field type indicators are returned in this array
+ * maxfields - dimensions of the above two arrays
+ * *numfields - set to the actual number of fields detected
+ *
+ * The fields extracted from the input are stored as separate, null-terminated
+ * strings in the workspace at lowstr.  Any text is converted to lower case.
+ *
  * Several field types are assigned:
  *	DTK_NUMBER - digits and (possibly) a decimal point
  *	DTK_DATE - digits and two delimiters, or digits and text
@@ -707,22 +720,33 @@ TrimTrailingZeros(char *str)
  *	DTK_STRING - text (no digits)
  *	DTK_SPECIAL - leading "+" or "-" followed by text
  *	DTK_TZ - leading "+" or "-" followed by digits
+ *
  * Note that some field types can hold unexpected items:
  *	DTK_NUMBER can hold date fields (yy.ddd)
  *	DTK_STRING can hold months (January) and time zones (PST)
  *	DTK_DATE can hold Posix time zones (GMT-8)
  */
 int
-ParseDateTime(char *timestr, char *lowstr,
+ParseDateTime(const char *timestr, char *lowstr,
 			  char **field, int *ftype, int maxfields, int *numfields)
 {
 	int			nf = 0;
-	char	   *cp = timestr;
+	const char *cp = timestr;
 	char	   *lp = lowstr;
 
 	/* outer loop through fields */
 	while (*cp != '\0')
 	{
+		/* Ignore spaces between fields */
+		if (isspace((unsigned char) *cp))
+		{
+			cp++;
+			continue;
+		}
+
+		/* Record start of current field */
+		if (nf >= maxfields)
+			return -1;
 		field[nf] = lp;
 
 		/* leading digit? then date or time */
@@ -745,13 +769,13 @@ ParseDateTime(char *timestr, char *lowstr,
 			else if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
 				/* save delimiting character to use later */
-				char	   *dp = cp;
+				char	delim = *cp;
 
 				*lp++ = *cp++;
 				/* second field is all digits? then no embedded text month */
 				if (isdigit((unsigned char) *cp))
 				{
-					ftype[nf] = ((*dp == '.') ? DTK_NUMBER : DTK_DATE);
+					ftype[nf] = ((delim == '.') ? DTK_NUMBER : DTK_DATE);
 					while (isdigit((unsigned char) *cp))
 						*lp++ = *cp++;
 
@@ -759,18 +783,18 @@ ParseDateTime(char *timestr, char *lowstr,
 					 * insist that the delimiters match to get a
 					 * three-field date.
 					 */
-					if (*cp == *dp)
+					if (*cp == delim)
 					{
 						ftype[nf] = DTK_DATE;
 						*lp++ = *cp++;
-						while (isdigit((unsigned char) *cp) || (*cp == *dp))
+						while (isdigit((unsigned char) *cp) || (*cp == delim))
 							*lp++ = *cp++;
 					}
 				}
 				else
 				{
 					ftype[nf] = DTK_DATE;
-					while (isalnum((unsigned char) *cp) || (*cp == *dp))
+					while (isalnum((unsigned char) *cp) || (*cp == delim))
 						*lp++ = tolower((unsigned char) *cp++);
 				}
 			}
@@ -809,19 +833,13 @@ ParseDateTime(char *timestr, char *lowstr,
 			 */
 			if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
-				char	   *dp = cp;
+				char	delim = *cp;
 
 				ftype[nf] = DTK_DATE;
 				*lp++ = *cp++;
-				while (isdigit((unsigned char) *cp) || (*cp == *dp))
+				while (isdigit((unsigned char) *cp) || (*cp == delim))
 					*lp++ = *cp++;
 			}
-		}
-		/* skip leading spaces */
-		else if (isspace((unsigned char) *cp))
-		{
-			cp++;
-			continue;
 		}
 		/* sign? then special or numeric timezone */
 		else if ((*cp == '+') || (*cp == '-'))
@@ -851,12 +869,11 @@ ParseDateTime(char *timestr, char *lowstr,
 			else
 				return -1;
 		}
-		/* ignore punctuation but use as delimiter */
+		/* ignore other punctuation but use as delimiter */
 		else if (ispunct((unsigned char) *cp))
 		{
 			cp++;
 			continue;
-
 		}
 		/* otherwise, something is not right... */
 		else
@@ -865,14 +882,12 @@ ParseDateTime(char *timestr, char *lowstr,
 		/* force in a delimiter after each field */
 		*lp++ = '\0';
 		nf++;
-		if (nf > MAXDATEFIELDS)
-			return -1;
 	}
 
 	*numfields = nf;
 
 	return 0;
-}	/* ParseDateTime() */
+}
 
 
 /* DecodeDateTime()
