@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.28 1999/02/21 03:48:55 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.29 1999/05/06 23:07:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ tlistentry_member(Var *var, List *targetlist)
 {
 	if (var)
 	{
-		List	   *temp = NIL;
+		List	   *temp;
 
 		foreach(temp, targetlist)
 		{
@@ -95,7 +95,7 @@ matching_tlist_var(Var *var, List *targetlist)
 void
 add_var_to_tlist(RelOptInfo *rel, Var *var)
 {
-	Expr	   *oldvar = (Expr *) NULL;
+	Expr	   *oldvar;
 
 	oldvar = matching_tlist_var(var, rel->targetlist);
 
@@ -132,7 +132,6 @@ add_var_to_tlist(RelOptInfo *rel, Var *var)
 TargetEntry *
 create_tl_element(Var *var, int resdomno)
 {
-
 	return makeTargetEntry(makeResdom(resdomno,
 									  var->vartype,
 									  var->vartypmod,
@@ -190,34 +189,23 @@ get_actual_tlist(List *tlist)
  *
  * 'var' is the var node
  * 'tlist' is the target list
- * 'dots' is t if we must match dotfields to determine uniqueness
  *
- * Returns the resdom entry of the matching var node.
+ * Returns the resdom entry of the matching var node, or NULL if no match.
  *
  */
 Resdom *
 tlist_member(Var *var, List *tlist)
 {
-	List	   *i = NIL;
-	TargetEntry *temp_tle = (TargetEntry *) NULL;
-	TargetEntry *tl_elt = (TargetEntry *) NULL;
-
 	if (var)
 	{
+		List	   *i;
+
 		foreach(i, tlist)
 		{
-			temp_tle = (TargetEntry *) lfirst(i);
-			if (var_equal(var, get_expr(temp_tle)))
-			{
-				tl_elt = temp_tle;
-				break;
-			}
+			TargetEntry *tle = (TargetEntry *) lfirst(i);
+			if (var_equal(var, get_expr(tle)))
+				return tle->resdom;
 		}
-
-		if (tl_elt != NULL)
-			return tl_elt->resdom;
-		else
-			return (Resdom *) NULL;
 	}
 	return (Resdom *) NULL;
 }
@@ -228,14 +216,12 @@ tlist_member(Var *var, List *tlist)
 Resdom *
 tlist_resdom(List *tlist, Resdom *resnode)
 {
-	Resdom	   *resdom = (Resdom *) NULL;
-	List	   *i = NIL;
-	TargetEntry *temp_tle = (TargetEntry *) NULL;
+	List	   *i;
 
 	foreach(i, tlist)
 	{
-		temp_tle = (TargetEntry *) lfirst(i);
-		resdom = temp_tle->resdom;
+		TargetEntry *tle = (TargetEntry *) lfirst(i);
+		Resdom	   *resdom = tle->resdom;
 		/* Since resnos are supposed to be unique */
 		if (resnode->resno == resdom->resno)
 			return resdom;
@@ -288,7 +274,6 @@ match_varid(Var *test_var, List *tlist)
 		if (tlvar->varnoold == test_var->varnoold &&
 			tlvar->varoattno == test_var->varoattno)
 		{
-
 			if (tlvar->vartype == type_var)
 				return entry;
 		}
@@ -312,7 +297,7 @@ List *
 new_unsorted_tlist(List *targetlist)
 {
 	List	   *new_targetlist = (List *) copyObject((Node *) targetlist);
-	List	   *x = NIL;
+	List	   *x;
 
 	foreach(x, new_targetlist)
 	{
@@ -374,13 +359,10 @@ flatten_tlist(List *tlist)
 
 	foreach(temp, tlist)
 	{
-		TargetEntry *temp_entry = NULL;
-		List	   *vars;
+		TargetEntry *temp_entry = (TargetEntry *) lfirst(temp);
 
-		temp_entry = lfirst(temp);
-		vars = pull_var_clause((Node *) get_expr(temp_entry));
-		if (vars != NULL)
-			tlist_vars = nconc(tlist_vars, vars);
+		tlist_vars = nconc(tlist_vars,
+						   pull_var_clause((Node *) get_expr(temp_entry)));
 	}
 
 	foreach(temp, tlist_vars)
@@ -421,8 +403,8 @@ flatten_tlist(List *tlist)
 List *
 flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 {
-	List	   *x = NIL;
 	List	   *result = NIL;
+	List	   *x;
 
 	foreach(x, full_tlist)
 	{
@@ -450,94 +432,78 @@ flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 static Node *
 flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 {
+	List	   *temp;
+
 	if (tlistentry == NULL)
-	{
 		return NULL;
-	}
 	else if (IsA(tlistentry, Var))
-	{
-		return ((Node *) get_expr(match_varid((Var *) tlistentry,
-										   flat_tlist)));
-	}
+		return (Node *) get_expr(match_varid((Var *) tlistentry,
+											 flat_tlist));
+	else if (single_node(tlistentry))
+		return tlistentry;
 	else if (IsA(tlistentry, Iter))
 	{
-		((Iter *) tlistentry)->iterexpr = flatten_tlistentry((Node *) ((Iter *) tlistentry)->iterexpr,
+		((Iter *) tlistentry)->iterexpr =
+			flatten_tlistentry((Node *) ((Iter *) tlistentry)->iterexpr,
 							   flat_tlist);
 		return tlistentry;
 	}
-	else if (single_node(tlistentry))
+	else if (is_subplan(tlistentry))
 	{
+		/* do we need to support this case? */
+		elog(ERROR, "flatten_tlistentry: subplan case not implemented");
 		return tlistentry;
 	}
-	else if (is_funcclause(tlistentry))
+	else if (IsA(tlistentry, Expr))
 	{
-		Expr	   *expr = (Expr *) tlistentry;
-		List	   *temp_result = NIL;
-		List	   *elt = NIL;
-
-		foreach(elt, expr->args)
-			temp_result = lappend(temp_result,
-							flatten_tlistentry(lfirst(elt), flat_tlist));
-
-		return ((Node *) make_funcclause((Func *) expr->oper, temp_result));
+		/*
+		 * Recursively scan the arguments of an expression.
+		 * NOTE: this must come after is_subplan() case since
+		 * subplan is a kind of Expr node.
+		 */
+		foreach(temp, ((Expr *) tlistentry)->args)
+			lfirst(temp) = flatten_tlistentry(lfirst(temp), flat_tlist);
+		return tlistentry;
 	}
 	else if (IsA(tlistentry, Aggref))
 	{
+		/* XXX shouldn't this be recursing into the agg's target?
+		 * Seems to work though, so will leave it alone ... tgl 5/99
+		 */
 		return tlistentry;
 	}
 	else if (IsA(tlistentry, ArrayRef))
 	{
 		ArrayRef   *aref = (ArrayRef *) tlistentry;
-		List	   *temp = NIL;
-		List	   *elt = NIL;
 
-		foreach(elt, aref->refupperindexpr)
-			temp = lappend(temp, flatten_tlistentry(lfirst(elt), flat_tlist));
-		aref->refupperindexpr = temp;
-
-		temp = NIL;
-		foreach(elt, aref->reflowerindexpr)
-			temp = lappend(temp, flatten_tlistentry(lfirst(elt), flat_tlist));
-		aref->reflowerindexpr = temp;
-
+		foreach(temp, aref->refupperindexpr)
+			lfirst(temp) = flatten_tlistentry(lfirst(temp), flat_tlist);
+		foreach(temp, aref->reflowerindexpr)
+			lfirst(temp) = flatten_tlistentry(lfirst(temp), flat_tlist);
 		aref->refexpr = flatten_tlistentry(aref->refexpr, flat_tlist);
-
-		aref->refassgnexpr = flatten_tlistentry(aref->refassgnexpr, flat_tlist);
+		aref->refassgnexpr = flatten_tlistentry(aref->refassgnexpr,flat_tlist);
 
 		return tlistentry;
 	}
 	else if (case_clause(tlistentry))
 	{
 		CaseExpr   *cexpr = (CaseExpr *) tlistentry;
-		List	   *elt = NIL;
 
-		foreach(elt, cexpr->args)
+		foreach(temp, cexpr->args)
 		{
-			CaseWhen *cwhen = (CaseWhen *)lfirst(elt);
+			CaseWhen *cwhen = (CaseWhen *) lfirst(temp);
+			cwhen->expr = flatten_tlistentry(cwhen->expr, flat_tlist);
 			cwhen->result = flatten_tlistentry(cwhen->result, flat_tlist);
 		}
 		cexpr->defresult = flatten_tlistentry(cexpr->defresult, flat_tlist);
 
-		return ((Node *) cexpr);
+		return tlistentry;
 	}
 	else
 	{
-		Expr	   *expr, *final;
-		Var 	   *left, *right;
-
-		Assert(IsA(tlistentry, Expr));
-
-		expr = (Expr *) tlistentry;
-		left = (Var *) flatten_tlistentry((Node *) get_leftop(expr),
-								   flat_tlist);
-		right = (Var *) flatten_tlistentry((Node *) get_rightop(expr),
-								   flat_tlist);
-
-		final = make_opclause((Oper *) expr->oper, left, right);
-		final->opType = expr->opType;
-		final->typeOid = expr->typeOid;
-
-		return (Node *)final;
+		elog(ERROR, "flatten_tlistentry: Cannot handle node type %d",
+			 nodeTag(tlistentry));
+		return tlistentry;
 	}
 }
 

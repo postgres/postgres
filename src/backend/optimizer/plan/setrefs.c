@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.44 1999/05/03 00:38:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.45 1999/05/06 23:07:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,11 +36,12 @@
 static void set_join_tlist_references(Join *join);
 static void set_nonamescan_tlist_references(SeqScan *nonamescan);
 static void set_noname_tlist_references(Noname *noname);
-static List *replace_clause_joinvar_refs(Expr *clause,
-							List *outer_tlist, List *inner_tlist);
-static List *replace_subclause_joinvar_refs(List *clauses,
-							   List *outer_tlist, List *inner_tlist);
-static Var *replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist);
+static Node *replace_clause_joinvar_refs(Node *clause,
+										 List *outer_tlist,
+										 List *inner_tlist);
+static Var *replace_joinvar_refs(Var *var,
+								 List *outer_tlist,
+								 List *inner_tlist);
 static List *tlist_noname_references(Oid nonameid, List *tlist);
 static bool OperandIsInner(Node *opnd, int inner_relid);
 static List *pull_agg_clause(Node *clause);
@@ -104,27 +105,20 @@ set_join_tlist_references(Join *join)
 {
 	Plan	   *outer = ((Plan *) join)->lefttree;
 	Plan	   *inner = ((Plan *) join)->righttree;
+	List	   *outer_tlist = ((outer == NULL) ? NIL : outer->targetlist);
+	List	   *inner_tlist = ((inner == NULL) ? NIL : inner->targetlist);
 	List	   *new_join_targetlist = NIL;
-	TargetEntry *temp = (TargetEntry *) NULL;
-	List	   *entry = NIL;
-	List	   *inner_tlist = NULL;
-	List	   *outer_tlist = NULL;
-	TargetEntry *xtl = (TargetEntry *) NULL;
 	List	   *qptlist = ((Plan *) join)->targetlist;
+	List	   *entry;
 
 	foreach(entry, qptlist)
 	{
-		List	   *joinvar;
-
-		xtl = (TargetEntry *) lfirst(entry);
-		inner_tlist = ((inner == NULL) ? NIL : inner->targetlist);
-		outer_tlist = ((outer == NULL) ? NIL : outer->targetlist);
-		joinvar = replace_clause_joinvar_refs((Expr *) get_expr(xtl),
-											  outer_tlist,
-											  inner_tlist);
-
-		temp = makeTargetEntry(xtl->resdom, (Node *) joinvar);
-		new_join_targetlist = lappend(new_join_targetlist, temp);
+		TargetEntry *xtl = (TargetEntry *) lfirst(entry);
+		Node *joinvar = replace_clause_joinvar_refs(xtl->expr,
+													outer_tlist,
+													inner_tlist);
+		new_join_targetlist = lappend(new_join_targetlist,
+									  makeTargetEntry(xtl->resdom, joinvar));
 	}
 
 	((Plan *) join)->targetlist = new_join_targetlist;
@@ -182,15 +176,17 @@ set_noname_tlist_references(Noname *noname)
 
 /*
  * join_references
- *	   Creates a new set of join clauses by replacing the varno/varattno
+ *	   Creates a new set of join clauses by changing the varno/varattno
  *	   values of variables in the clauses to reference target list values
  *	   from the outer and inner join relation target lists.
+ *	   This is just an external interface for replace_clause_joinvar_refs.
  *
  * 'clauses' is the list of join clauses
  * 'outer_tlist' is the target list of the outer join relation
  * 'inner_tlist' is the target list of the inner join relation
  *
- * Returns the new join clauses.
+ * Returns the new join clauses.  The original clause structure is
+ * not modified.
  *
  */
 List *
@@ -198,9 +194,9 @@ join_references(List *clauses,
 				List *outer_tlist,
 				List *inner_tlist)
 {
-	return (replace_subclause_joinvar_refs(clauses,
-										   outer_tlist,
-										   inner_tlist));
+	return (List *) replace_clause_joinvar_refs((Node *) clauses,
+												outer_tlist,
+												inner_tlist);
 }
 
 /*
@@ -239,9 +235,9 @@ index_outerjoin_references(List *inner_indxqual,
 		if (OperandIsInner((Node *) get_rightop(clause), inner_relid))
 		{
 			Var		   *joinvar = (Var *)
-			replace_clause_joinvar_refs((Expr *) get_leftop(clause),
-										outer_tlist,
-										NIL);
+				replace_clause_joinvar_refs((Node *) get_leftop(clause),
+											outer_tlist,
+											NIL);
 
 			temp = make_opclause(replace_opid((Oper *) ((Expr *) clause)->oper),
 								 joinvar,
@@ -252,9 +248,9 @@ index_outerjoin_references(List *inner_indxqual,
 		{
 			/* inner scan on left */
 			Var		   *joinvar = (Var *)
-			replace_clause_joinvar_refs((Expr *) get_rightop(clause),
-										outer_tlist,
-										NIL);
+				replace_clause_joinvar_refs((Node *) get_rightop(clause),
+											outer_tlist,
+											NIL);
 
 			temp = make_opclause(replace_opid((Oper *) ((Expr *) clause)->oper),
 								 get_leftop(clause),
@@ -268,7 +264,6 @@ index_outerjoin_references(List *inner_indxqual,
 
 /*
  * replace_clause_joinvar_refs
- * replace_subclause_joinvar_refs
  * replace_joinvar_refs
  *
  *	  Replaces all variables within a join clause with a new var node
@@ -280,169 +275,177 @@ index_outerjoin_references(List *inner_indxqual,
  * 'inner_tlist' is the target list of the inner join relation
  *
  * Returns the new join clause.
+ * NB: it is critical that the original clause structure not be modified!
+ * The changes must be applied to a copy.
  *
+ * XXX the current implementation does not copy unchanged primitive
+ * nodes; they remain shared with the original.  Is this safe?
  */
-static List *
-replace_clause_joinvar_refs(Expr *clause,
+static Node *
+replace_clause_joinvar_refs(Node *clause,
 							List *outer_tlist,
 							List *inner_tlist)
 {
-	List	   *temp = NULL;
-
 	if (clause == NULL)
 		return NULL;
 	if (IsA(clause, Var))
 	{
-		temp = (List *) replace_joinvar_refs((Var *) clause,
-											 outer_tlist, inner_tlist);
+		Var	   *temp = replace_joinvar_refs((Var *) clause,
+											outer_tlist, inner_tlist);
 		if (temp != NULL)
-			return temp;
-		else if (clause != NULL)
-			return (List *) clause;
+			return (Node *) temp;
 		else
-			return NIL;
+			return clause;
 	}
-	else if (single_node((Node *) clause))
-		return (List *) clause;
-	else if (and_clause((Node *) clause))
+	else if (single_node(clause))
+		return clause;
+	else if (and_clause(clause))
 	{
-		List	   *andclause = replace_subclause_joinvar_refs(((Expr *) clause)->args,
-									   outer_tlist,
-									   inner_tlist);
-
-		return (List *) make_andclause(andclause);
+		return (Node *) make_andclause((List *)
+			replace_clause_joinvar_refs((Node *) ((Expr *) clause)->args,
+										outer_tlist,
+										inner_tlist));
 	}
-	else if (or_clause((Node *) clause))
+	else if (or_clause(clause))
 	{
-		List	   *orclause = replace_subclause_joinvar_refs(((Expr *) clause)->args,
-									   outer_tlist,
-									   inner_tlist);
-
-		return (List *) make_orclause(orclause);
+		return (Node *) make_orclause((List *)
+			replace_clause_joinvar_refs((Node *) ((Expr *) clause)->args,
+										outer_tlist,
+										inner_tlist));
 	}
 	else if (IsA(clause, ArrayRef))
 	{
-		ArrayRef   *aref = (ArrayRef *) clause;
+		ArrayRef   *oldnode = (ArrayRef *) clause;
+		ArrayRef   *newnode = makeNode(ArrayRef);
 
-		temp = replace_subclause_joinvar_refs(aref->refupperindexpr,
-											  outer_tlist,
-											  inner_tlist);
-		aref->refupperindexpr = (List *) temp;
-		temp = replace_subclause_joinvar_refs(aref->reflowerindexpr,
-											  outer_tlist,
-											  inner_tlist);
-		aref->reflowerindexpr = (List *) temp;
-		temp = replace_clause_joinvar_refs((Expr *) aref->refexpr,
-										   outer_tlist,
-										   inner_tlist);
-		aref->refexpr = (Node *) temp;
+		newnode->refattrlength = oldnode->refattrlength;
+		newnode->refelemlength = oldnode->refelemlength;
+		newnode->refelemtype = oldnode->refelemtype;
+		newnode->refelembyval = oldnode->refelembyval;
+		newnode->refupperindexpr = (List *)
+			replace_clause_joinvar_refs((Node *) oldnode->refupperindexpr,
+										outer_tlist,
+										inner_tlist);
+		newnode->reflowerindexpr = (List *)
+			replace_clause_joinvar_refs((Node *) oldnode->reflowerindexpr,
+										outer_tlist,
+										inner_tlist);
+		newnode->refexpr =
+			replace_clause_joinvar_refs(oldnode->refexpr,
+										outer_tlist,
+										inner_tlist);
+		newnode->refassgnexpr =
+			replace_clause_joinvar_refs(oldnode->refassgnexpr,
+										outer_tlist,
+										inner_tlist);
 
-		/*
-		 * no need to set refassgnexpr.  we only set that in the target
-		 * list on replaces, and this is an array reference in the
-		 * qualification.  if we got this far, it's 0x0 in the ArrayRef
-		 * structure 'clause'.
-		 */
-
-		return (List *) clause;
+		return (Node *) newnode;
 	}
-	else if (is_funcclause((Node *) clause))
+	else if (is_funcclause(clause))
 	{
-		List	   *funcclause = replace_subclause_joinvar_refs(((Expr *) clause)->args,
-									   outer_tlist,
-									   inner_tlist);
-
-		return ((List *) make_funcclause((Func *) ((Expr *) clause)->oper,
-										 funcclause));
+		return (Node *) make_funcclause(
+			(Func *) ((Expr *) clause)->oper,
+			(List *) replace_clause_joinvar_refs(
+				(Node *) ((Expr *) clause)->args,
+				outer_tlist,
+				inner_tlist));
 	}
-	else if (not_clause((Node *) clause))
+	else if (not_clause(clause))
 	{
-		List	   *notclause = replace_clause_joinvar_refs(get_notclausearg(clause),
-									outer_tlist,
-									inner_tlist);
-
-		return (List *) make_notclause((Expr *) notclause);
+		return (Node *) make_notclause((Expr *)
+				replace_clause_joinvar_refs(
+					(Node *) get_notclausearg((Expr *) clause),
+					outer_tlist,
+					inner_tlist));
 	}
-	else if (is_opclause((Node *) clause))
+	else if (is_opclause(clause))
 	{
-		Var		   *leftvar = (Var *) replace_clause_joinvar_refs((Expr *) get_leftop(clause),
-											outer_tlist,
-											inner_tlist);
-		Var		   *rightvar = (Var *) replace_clause_joinvar_refs((Expr *) get_rightop(clause),
-											outer_tlist,
-											inner_tlist);
+		return (Node *) make_opclause(
+			replace_opid((Oper *) ((Expr *) clause)->oper),
+			(Var *) replace_clause_joinvar_refs(
+				(Node *) get_leftop((Expr *) clause),
+				outer_tlist,
+				inner_tlist),
+			(Var *) replace_clause_joinvar_refs(
+				(Node *) get_rightop((Expr *) clause),
+				outer_tlist,
+				inner_tlist));
+	}
+	else if (IsA(clause, List))
+	{
+		List	   *t_list = NIL;
+		List	   *subclause;
 
-		return ((List *) make_opclause(replace_opid((Oper *) ((Expr *) clause)->oper),
-									   leftvar,
-									   rightvar));
+		foreach(subclause, (List *) clause)
+		{
+			t_list = lappend(t_list,
+							 replace_clause_joinvar_refs(lfirst(subclause),
+														 outer_tlist,
+														 inner_tlist));
+		}
+		return (Node *) t_list;
 	}
 	else if (is_subplan(clause))
 	{
-		((Expr *) clause)->args = replace_subclause_joinvar_refs(((Expr *) clause)->args,
-										   outer_tlist,
-										   inner_tlist);
-		((SubPlan *) ((Expr *) clause)->oper)->sublink->oper =
-			replace_subclause_joinvar_refs(((SubPlan *) ((Expr *) clause)->oper)->sublink->oper,
-										   outer_tlist,
-										   inner_tlist);
-		return (List *) clause;
+		/* This is a tad wasteful of space, but it works... */
+		Expr *newclause = (Expr *) copyObject(clause);
+		newclause->args = (List *)
+			replace_clause_joinvar_refs((Node *) newclause->args,
+										outer_tlist,
+										inner_tlist);
+		((SubPlan *) newclause->oper)->sublink->oper = (List *)
+			replace_clause_joinvar_refs(
+				(Node *) ((SubPlan *) newclause->oper)->sublink->oper,
+				outer_tlist,
+				inner_tlist);
+		return (Node *) newclause;
 	}
 	else if (IsA(clause, CaseExpr))
 	{
-		((CaseExpr *) clause)->args =
-			(List *) replace_subclause_joinvar_refs(((CaseExpr *) clause)->args,
-													outer_tlist,
-													inner_tlist);
+		CaseExpr   *oldnode = (CaseExpr *) clause;
+		CaseExpr   *newnode = makeNode(CaseExpr);
 
-		((CaseExpr *) clause)->defresult =
-			(Node *) replace_clause_joinvar_refs((Expr *) ((CaseExpr *) clause)->defresult,
-												 outer_tlist,
-												 inner_tlist);
-		return (List *) clause;
+		newnode->casetype = oldnode->casetype;
+		newnode->arg = oldnode->arg; /* XXX should always be null anyway ... */
+		newnode->args = (List *)
+			replace_clause_joinvar_refs((Node *) oldnode->args,
+										outer_tlist,
+										inner_tlist);
+		newnode->defresult =
+			replace_clause_joinvar_refs(oldnode->defresult,
+										outer_tlist,
+										inner_tlist);
+
+		return (Node *) newnode;
 	}
 	else if (IsA(clause, CaseWhen))
 	{
-		((CaseWhen *) clause)->expr =
-			(Node *) replace_clause_joinvar_refs((Expr *) ((CaseWhen *) clause)->expr,
-												 outer_tlist,
-												 inner_tlist);
+		CaseWhen   *oldnode = (CaseWhen *) clause;
+		CaseWhen   *newnode = makeNode(CaseWhen);
 
-		((CaseWhen *) clause)->result =
-			(Node *) replace_clause_joinvar_refs((Expr *) ((CaseWhen *) clause)->result,
-												 outer_tlist,
-												 inner_tlist);
-		return (List *) clause;
+		newnode->expr =
+			replace_clause_joinvar_refs(oldnode->expr,
+										outer_tlist,
+										inner_tlist);
+		newnode->result =
+			replace_clause_joinvar_refs(oldnode->result,
+										outer_tlist,
+										inner_tlist);
+
+		return (Node *) newnode;
 	}
-
-	/* shouldn't reach here */
-	elog(ERROR, "replace_clause_joinvar_refs: unsupported clause %d",
-		 nodeTag(clause));
-	return NULL;
-}
-
-static List *
-replace_subclause_joinvar_refs(List *clauses,
-							   List *outer_tlist,
-							   List *inner_tlist)
-{
-	List	   *t_list = NIL;
-	List	   *temp = NIL;
-	List	   *clause = NIL;
-
-	foreach(clause, clauses)
+	else
 	{
-		temp = replace_clause_joinvar_refs(lfirst(clause),
-										   outer_tlist,
-										   inner_tlist);
-		t_list = lappend(t_list, temp);
+		elog(ERROR, "replace_clause_joinvar_refs: unsupported clause %d",
+			 nodeTag(clause));
+		return NULL;
 	}
-	return t_list;
 }
 
 static Var *
 replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist)
 {
-	Resdom	   *outer_resdom = (Resdom *) NULL;
+	Resdom	   *outer_resdom;
 
 	outer_resdom = tlist_member(var, outer_tlist);
 
