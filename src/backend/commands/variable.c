@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.32 2000/03/17 05:29:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.33 2000/04/07 13:39:24 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,9 @@ static bool parse_max_expr_depth(char *);
 static bool show_XactIsoLevel(void);
 static bool reset_XactIsoLevel(void);
 static bool parse_XactIsoLevel(char *);
+static bool parse_random_seed(char *);
+static bool show_random_seed(void);
+static bool reset_random_seed(void);
 
 /*
  * get_token
@@ -1066,6 +1069,41 @@ reset_pg_options(void)
 }
 
 
+/*
+ * Random number seed
+ */
+static bool
+parse_random_seed(char *value)
+{
+	double seed = 0;
+
+	if (value == NULL)
+		reset_random_seed();
+	else
+	{
+		sscanf(value, "%lf", &seed);
+		setseed(&seed);
+	}
+	return (TRUE);
+}
+
+static bool
+show_random_seed(void)
+{
+	elog(NOTICE, "Seed for random number generator is not known");
+	return (TRUE);
+}
+
+static bool
+reset_random_seed(void)
+{
+	double seed = 0.5;
+
+	setseed(&seed);
+	return (TRUE);
+}
+
+
 /*-----------------------------------------------------------------------*/
 
 static struct VariableParsers
@@ -1154,6 +1192,9 @@ static struct VariableParsers
 	},
 	{
 		"pg_options", parse_pg_options, show_pg_options, reset_pg_options
+	},
+	{
+		"seed", parse_random_seed, show_random_seed, reset_random_seed
 	},
 	{
 		NULL, NULL, NULL, NULL

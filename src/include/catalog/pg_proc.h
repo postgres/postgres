@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.129 2000/03/24 02:41:44 tgl Exp $
+ * $Id: pg_proc.h,v 1.130 2000/04/07 13:39:49 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -489,7 +489,6 @@ DATA(insert OID = 233 (  dexp			   PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dex
 DESCR("natural exponential (e^x)");
 DATA(insert OID = 234 (  dlog1			   PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dlog1 - ));
 DESCR("natural logarithm");
-
 DATA(insert OID = 235 (  float8			   PGUID 11 f t t 1 f 701  "21" 100 0 0 100  i2tod - ));
 DESCR("convert int2 to float8");
 DATA(insert OID = 236 (  float4			   PGUID 11 f t t 1 f 700  "21" 100 0 0 100  i2tof - ));
@@ -1993,19 +1992,58 @@ DATA(insert OID = 1572 (  notlike			PGUID 11 f t t 2 f 16 "19 25" 100 0 0 100  n
 DESCR("does not match LIKE expression");
 
 /* SEQUENCEs nextval & currval functions */
-DATA(insert OID =  1574 (  nextval			PGUID 11 f t f 1 f 23 "25" 100 0 0 100  nextval - ));
+DATA(insert OID = 1574 (  nextval			PGUID 11 f t f 1 f 23 "25" 100 0 0 100  nextval - ));
 DESCR("sequence next value");
-DATA(insert OID =  1575 (  currval			PGUID 11 f t f 1 f 23 "25" 100 0 0 100  currval - ));
+DATA(insert OID = 1575 (  currval			PGUID 11 f t f 1 f 23 "25" 100 0 0 100  currval - ));
 DESCR("sequence current value");
-DATA(insert OID =  1576 (  setval			PGUID 11 f t f 2 f 23 "25 23" 100 0 0 100  setval - ));
+DATA(insert OID = 1576 (  setval			PGUID 11 f t f 2 f 23 "25 23" 100 0 0 100  setval - ));
 DESCR("sequence set value");
+
+DATA(insert OID = 1598 (  random			PGUID 11 f t f 0 f 701 "0" 100 0 0 100  drandom - ));
+DESCR("radians to degrees");
+DATA(insert OID = 1599 (  setseed			PGUID 11 f t t 1 f  23 "701" 100 0 0 100  setseed - ));
+DESCR("radians to degrees");
 
 /* OIDS 1600 - 1699 */
 
-DATA(insert OID = 1619 (  varchar	   PGUID 11 f t t 1 f 1043 "23" 100 0 0 100  int4_text - ));
+DATA(insert OID = 1600 (  asin				PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dasin - ));
+DESCR("arcsine");
+DATA(insert OID = 1601 (  acos				PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dacos - ));
+DESCR("arcsine");
+DATA(insert OID = 1602 (  atan				PGUID 11 f t t 1 f 701 "701" 100 0 0 100  datan - ));
+DESCR("arctangent");
+DATA(insert OID = 1603 (  atan2				PGUID 11 f t t 2 f 701 "701 701" 100 0 0 100  datan2 - ));
+DESCR("arctangent, two arguments");
+DATA(insert OID = 1604 (  sin				PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dsin - ));
+DESCR("sine");
+DATA(insert OID = 1605 (  cos				PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dcos - ));
+DESCR("cosine");
+DATA(insert OID = 1606 (  tan				PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dtan - ));
+DESCR("tangent");
+DATA(insert OID = 1607 (  cot				PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dcot - ));
+DESCR("cotangent");
+DATA(insert OID = 1608 (  degrees			PGUID 11 f t t 1 f 701 "701" 100 0 0 100  degrees - ));
+DESCR("radians to degrees");
+DATA(insert OID = 1609 (  radians			PGUID 11 f t t 1 f 701 "701" 100 0 0 100  radians - ));
+DESCR("radians to degrees");
+DATA(insert OID = 1610 (  pi				PGUID 11 f t t 0 f 701 "0" 100 0 0 100  dpi - ));
+DESCR("PI");
+
+DATA(insert OID = 1618 (  interval_mul		PGUID 11 f t t 2 f 1186 "1186 701" 100 0 0 100  interval_mul - ));
+DESCR("multiply interval");
+DATA(insert OID = 1619 (  varchar			PGUID 11 f t t 1 f 1043 "23" 100 0 0 100  int4_text - ));
 DESCR("convert int4 to varchar");
-DATA(insert OID = 1623 (  varchar	   PGUID 11 f t t 1 f 1043 "20" 100 0 0 100  int8_text - ));
+
+DATA(insert OID = 1620 (  ascii				PGUID 11 f t t 1 f 23 "25" 100 0 0 100  ascii - ));
+DESCR("convert first char to int4");
+DATA(insert OID = 1621 (  ichar				PGUID 11 f t t 1 f 25 "23" 100 0 0 100  ichar - ));
+DESCR("convert int4 to char");
+DATA(insert OID = 1622 (  repeat			PGUID 11 f t t 2 f 25 "25 23" 100 0 0 100  repeat - ));
+DESCR("replicate string int4 times");
+
+DATA(insert OID = 1623 (  varchar			PGUID 11 f t t 1 f 1043 "20" 100 0 0 100  int8_text - ));
 DESCR("convert int8 to varchar");
+DATA(insert OID = 1624 (  mul_d_interval	PGUID 11 f t t 2 f 1186 "701 1186" 100 0 0 100  mul_d_interval - ));
 
 /* OID's 1625 - 1639 LZTEXT data type */
 DATA(insert OID = 1626 ( lztextin             PGUID 11 f t t 1 f 1625 "0" 100 0 0 100  lztextin - ));
@@ -2218,7 +2256,7 @@ DATA(insert OID = 1708 ( round					PGUID 14 f t t 1 f 1700 "1700" 100 0 0 100	"s
 DESCR("value rounded to 'scale' of zero");
 DATA(insert OID = 1709 ( trunc					PGUID 11 f t t 2 f 1700 "1700 23" 100 0 0 100  numeric_trunc - ));
 DESCR("value truncated to 'scale'");
-DATA(insert OID = 1710 ( trunc					PGUID 14 f t t 1 f 1700 "1700" 100 0 0 100	"select numeric_trunc($1,0)" - ));
+DATA(insert OID = 1710 ( trunc					PGUID 14 f t t 1 f 1700 "1700" 100 0 0 100	"select trunc($1,0)" - ));
 DESCR("value truncated to 'scale' of zero");
 DATA(insert OID = 1711 ( ceil					PGUID 11 f t t 1 f 1700 "1700" 100 0 0 100	numeric_ceil - ));
 DESCR("smallest integer >= value");

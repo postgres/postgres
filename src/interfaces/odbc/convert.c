@@ -106,7 +106,7 @@ char *mapFuncs[][2] = {
 //	{ "SIN",         "sin"        },
 //	{ "SQRT",        "sqrt"       },
 //	{ "TAN",         "tan"        },
-//	{ "TRUNCATE",    "truncate"   },
+	{ "TRUNCATE",    "trunc"      },
 
 //	{ "CURDATE",     "curdate"    },
 //	{ "CURTIME",     "curtime"    },

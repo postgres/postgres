@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.23 2000/03/14 23:06:37 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.24 2000/04/07 13:39:41 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,72 +30,6 @@
 
 #include "miscadmin.h"
 #include "utils/builtins.h"
-
-
-#if 0
-
-
-static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
-static int DecodeNumber(int flen, char *field,
-	int fmask, int *tmask, struct tm * tm, double *fsec, int *is2digits);
-static int DecodeNumberField(int len, char *str,
-	int fmask, int *tmask, struct tm * tm, double *fsec, int *is2digits);
-static int	DecodeSpecial(int field, char *lowtoken, int *val);
-static int DecodeTime(char *str, int fmask, int *tmask,
-		   struct tm * tm, double *fsec);
-static int	DecodeTimezone(char *str, int *tzp);
-static int	DecodeUnits(int field, char *lowtoken, int *val);
-static int	EncodeSpecialTimestamp(Timestamp dt, char *str);
-static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
-static Timestamp dt2local(Timestamp dt, int timezone);
-static int	j2day(int jd);
-static double time2t(const int hour, const int min, const double sec);
-static int	interval2tm(Interval span, struct tm * tm, float8 *fsec);
-static int	tm2interval(struct tm * tm, double fsec, Interval *span);
-
-
-#define USE_DATE_CACHE 1
-#define ROUND_ALL 0
-
-int			day_tab[2][13] = {
-	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
-{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
-
-
-char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-"Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
-
-char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
-"Thursday", "Friday", "Saturday", NULL};
-
-/* TMODULO()
- * Macro to replace modf(), which is broken on some platforms.
- */
-#define TMODULO(t,q,u) \
-do { \
-	q = ((t < 0)? ceil(t / u): floor(t / u)); \
-	if (q != 0) \
-		t -= rint(q * u); \
-} while(0)
-
-static void GetEpochTime(struct tm * tm);
-
-#define UTIME_MINYEAR (1901)
-#define UTIME_MINMONTH (12)
-#define UTIME_MINDAY (14)
-#define UTIME_MAXYEAR (2038)
-#define UTIME_MAXMONTH (01)
-#define UTIME_MAXDAY (18)
-
-#define IS_VALID_UTIME(y,m,d) (((y > UTIME_MINYEAR) \
- || ((y == UTIME_MINYEAR) && ((m > UTIME_MINMONTH) \
-  || ((m == UTIME_MINMONTH) && (d >= UTIME_MINDAY))))) \
- && ((y < UTIME_MAXYEAR) \
- || ((y == UTIME_MAXYEAR) && ((m < UTIME_MAXMONTH) \
-  || ((m == UTIME_MAXMONTH) && (d <= UTIME_MAXDAY))))))
-
-
-#endif
 
 
 static double time2t(const int hour, const int min, const double sec);
@@ -1334,21 +1268,52 @@ interval_mi(Interval *span1, Interval *span2)
 }	/* interval_mi() */
 
 Interval   *
-interval_div(Interval *span1, float8 *arg2)
+interval_mul(Interval *span1, float8 *factor)
 {
 	Interval   *result;
+	double		months;
 
-	if ((!PointerIsValid(span1)) || (!PointerIsValid(arg2)))
+	if ((!PointerIsValid(span1)) || (!PointerIsValid(factor)))
 		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Interval))))
-		elog(ERROR, "Memory allocation failed, can't divide intervals");
+		elog(ERROR, "Memory allocation failed, can't multiply interval");
 
-	if (*arg2 == 0.0)
+	months = (span1->month * *factor);
+	result->month = rint(months);
+	result->time = JROUND(span1->time * *factor);
+	/* evaluate fractional months as 30 days */
+	result->time += JROUND((months - result->month) * 30 * 86400);
+
+	return result;
+}	/* interval_mul() */
+
+Interval   *
+mul_d_interval(float8 *factor, Interval *span1)
+{
+	return interval_mul(span1, factor);
+}	/* mul_d_interval() */
+
+Interval   *
+interval_div(Interval *span1, float8 *factor)
+{
+	Interval   *result;
+	double		months;
+
+	if ((!PointerIsValid(span1)) || (!PointerIsValid(factor)))
+		return NULL;
+
+	if (!PointerIsValid(result = palloc(sizeof(Interval))))
+		elog(ERROR, "Memory allocation failed, can't divide interval");
+
+	if (*factor == 0.0)
 		elog(ERROR, "interval_div:  divide by 0.0 error");
 
-	result->month = rint(span1->month / *arg2);
-	result->time = JROUND(span1->time / *arg2);
+	months = (span1->month / *factor);
+	result->month = rint(months);
+	result->time = JROUND(span1->time / *factor);
+	/* evaluate fractional months as 30 days */
+	result->time += JROUND((months - result->month) * 30 * 86400);
 
 	return result;
 }	/* interval_div() */

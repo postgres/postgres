@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.2 2000/03/14 23:06:51 thomas Exp $
+ * $Id: timestamp.h,v 1.3 2000/04/07 13:40:12 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,9 @@ extern text *timestamp_zone(text *zone, Timestamp *timestamp);
 extern Interval *interval_um(Interval *span);
 extern Interval *interval_pl(Interval *span1, Interval *span2);
 extern Interval *interval_mi(Interval *span1, Interval *span2);
-extern Interval *interval_div(Interval *span1, float8 *arg2);
+extern Interval *interval_mul(Interval *span1, float8 *factor);
+extern Interval *mul_d_interval(float8 *factor, Interval *span1);
+extern Interval *interval_div(Interval *span1, float8 *factor);
 
 extern Interval *timestamp_mi(Timestamp *dt1, Timestamp *dt2);
 extern Timestamp *timestamp_pl_span(Timestamp *dt, Interval *span);

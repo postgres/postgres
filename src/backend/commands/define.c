@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.38 2000/01/26 05:56:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.39 2000/04/07 13:39:24 thomas Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -377,24 +377,22 @@ DefineOperator(char *oprName,
 
 		if (!strcasecmp(defel->defname, "leftarg"))
 		{
-			/* see gram.y, must be setof */
-			if (nodeTag(defel->arg) == T_TypeName)
+			if ((nodeTag(defel->arg) == T_TypeName)
+				&& (((TypeName *)defel->arg)->setof))
 				elog(ERROR, "setof type not implemented for leftarg");
 
-			if (nodeTag(defel->arg) == T_String)
-				typeName1 = defGetString(defel);
-			else
+			typeName1 = defGetString(defel);
+			if (typeName1 == NULL)
 				elog(ERROR, "type for leftarg is malformed.");
 		}
 		else if (!strcasecmp(defel->defname, "rightarg"))
 		{
-			/* see gram.y, must be setof */
-			if (nodeTag(defel->arg) == T_TypeName)
+			if ((nodeTag(defel->arg) == T_TypeName)
+				&& (((TypeName *)defel->arg)->setof))
 				elog(ERROR, "setof type not implemented for rightarg");
 
-			if (nodeTag(defel->arg) == T_String)
-				typeName2 = defGetString(defel);
-			else
+			typeName2 = defGetString(defel);
+			if (typeName2 == NULL)
 				elog(ERROR, "type for rightarg is malformed.");
 		}
 		else if (!strcasecmp(defel->defname, "procedure"))
@@ -700,9 +698,19 @@ DefineType(char *typeName, List *parameters)
 static char *
 defGetString(DefElem *def)
 {
-	if (nodeTag(def->arg) != T_String)
+	char *string;
+
+	if (nodeTag(def->arg) == T_String)
+		string = strVal(def->arg);
+	else if (nodeTag(def->arg) == T_TypeName)
+		string = ((TypeName *)def->arg)->name;
+	else
+		string = NULL;
+#if 0
 		elog(ERROR, "Define: \"%s\" = what?", def->defname);
-	return strVal(def->arg);
+#endif
+
+	return string;
 }
 
 static double

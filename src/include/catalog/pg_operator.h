@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.72 2000/03/14 23:06:43 thomas Exp $
+ * $Id: pg_operator.h,v 1.73 2000/04/07 13:39:49 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -641,6 +641,8 @@ DATA(insert OID = 1567 (  "##"	  PGUID 0 b t f  601  603  600	  0  0 0 0 close_s
 DATA(insert OID = 1568 (  "##"	  PGUID 0 b t f  628  603  600	  0  0 0 0 close_lb - - ));
 DATA(insert OID = 1577 (  "##"	  PGUID 0 b t f  628  601  600	  0  0 0 0 close_ls - - ));
 DATA(insert OID = 1578 (  "##"	  PGUID 0 b t f  601  601  600	  0  0 0 0 close_lseg - - ));
+DATA(insert OID = 1583 (  "*"	  PGUID 0 b t f 1186  701 1186	  0  0 0 0 interval_mul - - ));
+DATA(insert OID = 1584 (  "*"	  PGUID 0 b t f  701 1186 1186	  0  0 0 0 mul_d_interval - - ));
 DATA(insert OID = 1585 (  "/"	  PGUID 0 b t f 1186  701 1186	  0  0 0 0 interval_div - - ));
 
 DATA(insert OID = 1586 (  "<>"	  PGUID 0 b t f  601  601	16 1586 1535 0 0 lseg_ne neqsel neqjoinsel ));

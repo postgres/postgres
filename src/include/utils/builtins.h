@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.107 2000/03/24 02:41:45 tgl Exp $
+ * $Id: builtins.h,v 1.108 2000/04/07 13:40:12 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -271,6 +271,21 @@ extern float64 dpow(float64 arg1, float64 arg2);
 extern float64 dexp(float64 arg1);
 extern float64 dlog1(float64 arg1);
 extern float64 dlog10(float64 arg1);
+extern float64 dacos(float64 arg1);
+extern float64 dasin(float64 arg1);
+extern float64 datan(float64 arg1);
+extern float64 datan2(float64 arg1, float64 arg2);
+extern float64 dcos(float64 arg1);
+extern float64 dcot(float64 arg1);
+extern float64 dsin(float64 arg1);
+extern float64 dtan(float64 arg1);
+extern float64 degrees(float64 arg1);
+extern float64 dpi(void);
+extern float64 radians(float64 arg1);
+extern float64 dtan(float64 arg1);
+extern float64 drandom(void);
+extern int32 setseed(float64 seed);
+
 extern float64 float48pl(float32 arg1, float64 arg2);
 extern float64 float48mi(float32 arg1, float64 arg2);
 extern float64 float48mul(float32 arg1, float64 arg2);
@@ -476,6 +491,9 @@ extern text *ltrim(text *string, text *set);
 extern text *rtrim(text *string, text *set);
 extern text	*substr(text *string, int4 m, int4 n);
 extern text *translate(text *string, text *from, text *to);
+extern text *ichar(int4 arg1);
+extern text *repeat(text *string, int4 count);
+extern int4 ascii(text *string);
 
 /* acl.c */
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.166 2000/03/31 02:11:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.167 2000/04/07 13:39:34 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -222,7 +222,9 @@ static void doNegateFloat(Value *v);
 %type <list>	OptSeqList
 %type <defelt>	OptSeqElem
 
+/*
 %type <dstmt>	def_rest
+*/
 %type <astmt>	insert_rest
 
 %type <node>	OptTableElement, ConstraintElem
@@ -249,7 +251,7 @@ static void doNegateFloat(Value *v);
 
 %type <typnam>	Typename, opt_type, SimpleTypename,
 				Generic, Numeric, Character, Datetime, Bit
-%type <str>		generic, character, datetime, bit
+%type <str>		typename, generic, numeric, character, datetime, bit
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float
@@ -259,7 +261,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	Iconst
 %type <str>		Sconst, comment_text
 %type <str>		UserId, var_value, zone_value
-%type <str>		ColId, ColLabel
+%type <str>		ColId, ColLabel, TokenId
 
 %type <node>	TableConstraint
 %type <list>	ColQualList
@@ -309,7 +311,7 @@ static void doNegateFloat(Value *v);
 		OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
-		SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SUBSTRING,
+		SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SOME, SUBSTRING,
 		TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
 		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
 		UNION, UNIQUE, UPDATE, USER, USING,
@@ -764,6 +766,11 @@ var_value:  Sconst
 					/* remove the trailing comma from the last element */
 					*(result+strlen(result)-1) = '\0';
 					$$ = result;
+				}
+		/* "OFF" is not a token, so it is handled by the name_list production */
+		| ON
+				{
+					$$ = "on";
 				}
 		| DEFAULT
 				{
@@ -1738,13 +1745,17 @@ DropTrigStmt:  DROP TRIGGER name ON relation_name
  *
  *****************************************************************************/
 
-DefineStmt:  CREATE def_type def_rest
+DefineStmt:  CREATE def_type def_name definition
 				{
-					$3->defType = $2;
-					$$ = (Node *)$3;
+					DefineStmt *n = makeNode(DefineStmt);
+					n->defType = $2;
+					n->defname = $3;
+					n->definition = $4;
+					$$ = (Node *)n;
 				}
 		;
 
+/*
 def_rest:  def_name definition
 				{
 					$$ = makeNode(DefineStmt);
@@ -1752,6 +1763,7 @@ def_rest:  def_name definition
 					$$->definition = $2;
 				}
 		;
+*/
 
 def_type:  OPERATOR							{ $$ = OPERATOR; }
 		| TYPE_P							{ $$ = TYPE_P; }
@@ -1760,8 +1772,12 @@ def_type:  OPERATOR							{ $$ = OPERATOR; }
 
 def_name:  PROCEDURE						{ $$ = "procedure"; }
 		| JOIN								{ $$ = "join"; }
-		| ColId								{ $$ = $1; }
 		| all_Op							{ $$ = $1; }
+		| typename							{ $$ = $1; }
+		| TokenId							{ $$ = $1; }
+		| INTERVAL							{ $$ = "interval"; }
+		| TIME								{ $$ = "time"; }
+		| TIMESTAMP							{ $$ = "timestamp"; }
 		;
 
 definition:  '(' def_list ')'				{ $$ = $2; }
@@ -1791,19 +1807,11 @@ def_elem:  def_name '=' def_arg
 				}
 		;
 
-def_arg:  ColId							{  $$ = (Node *)makeString($1); }
+def_arg:  func_return  					{  $$ = (Node *)$1; }
+		| TokenId						{  $$ = (Node *)makeString($1); }
 		| all_Op						{  $$ = (Node *)makeString($1); }
 		| NumericOnly					{  $$ = (Node *)$1; }
 		| Sconst						{  $$ = (Node *)makeString($1); }
-		| SETOF ColId
-				{
-					TypeName *n = makeNode(TypeName);
-					n->name = $2;
-					n->setof = TRUE;
-					n->arrayBounds = NULL;
-					n->typmod = -1;
-					$$ = (Node *)n;
-				}
 		;
 
 
@@ -3843,6 +3851,13 @@ SimpleTypename:  Generic
 		| Datetime
 		;
 
+typename:  generic								{ $$ = $1; }
+		| numeric								{ $$ = $1; }
+		| bit									{ $$ = $1; }
+		| character								{ $$ = $1; }
+		| datetime								{ $$ = $1; }
+		;
+
 Generic:  generic
 				{
 					$$ = makeNode(TypeName);
@@ -3890,6 +3905,13 @@ Numeric:  FLOAT opt_float
 					$$->name = xlateSqlType("numeric");
 					$$->typmod = $2;
 				}
+		;
+
+numeric:  FLOAT							{ $$ = xlateSqlType("float"); }
+		| DOUBLE PRECISION				{ $$ = xlateSqlType("float"); }
+		| DECIMAL 						{ $$ = xlateSqlType("decimal"); }
+		| DEC							{ $$ = xlateSqlType("decimal"); }
+		| NUMERIC 						{ $$ = xlateSqlType("numeric"); }
 		;
 
 opt_float:  '(' Iconst ')'
@@ -4217,6 +4239,7 @@ row_list:  row_list ',' a_expr
 		;
 
 sub_type:  ANY								{ $$ = ANY_SUBLINK; }
+		| SOME								{ $$ = ANY_SUBLINK; }
 		| ALL								{ $$ = ALL_SUBLINK; }
 		;
 
@@ -5291,19 +5314,25 @@ UserId:  IDENT							{ $$ = $1; };
  *  some of these keywords will have to be removed from this
  *  list due to shift/reduce conflicts in yacc. If so, move
  *  down to the ColLabel entity. - thomas 1997-11-06
- * These show up as operators, and will screw up the parsing if
- * allowed as identifiers or labels.
+ * Any tokens which show up as operators will screw up the parsing if
+ * allowed as identifiers, but are acceptable as ColLabels:
+ *  BETWEEN, IN, IS, ISNULL, NOTNULL, OVERLAPS
  * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
-		| BETWEEN						{ $$ = "between"; }
-		| IN							{ $$ = "in"; }
-		| IS							{ $$ = "is"; }
-		| ISNULL						{ $$ = "isnull"; }
-		| NOTNULL						{ $$ = "notnull"; }
-		| OVERLAPS						{ $$ = "overlaps"; }
  */
 ColId:  IDENT							{ $$ = $1; }
+		| TokenId						{ $$ = $1; }
 		| datetime						{ $$ = $1; }
-		| ABSOLUTE						{ $$ = "absolute"; }
+		| INTERVAL						{ $$ = "interval"; }
+		| TIME							{ $$ = "time"; }
+		| TIMESTAMP						{ $$ = "timestamp"; }
+		| TYPE_P						{ $$ = "type"; }
+		;
+
+/* Parser tokens to be used as identifiers.
+ * Tokens involving data types should appear in ColId only,
+ * since they will conflict with real TypeName productions.
+ */
+TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| ACCESS						{ $$ = "access"; }
 		| ACTION						{ $$ = "action"; }
 		| ADD							{ $$ = "add"; }
@@ -5350,7 +5379,6 @@ ColId:  IDENT							{ $$ = $1; }
 		| INSENSITIVE					{ $$ = "insensitive"; }
 		| INSERT						{ $$ = "insert"; }
 		| INSTEAD						{ $$ = "instead"; }
-		| INTERVAL						{ $$ = "interval"; }
 		| ISOLATION						{ $$ = "isolation"; }
 		| KEY							{ $$ = "key"; }
 		| LANGUAGE						{ $$ = "language"; }
@@ -5403,14 +5431,11 @@ ColId:  IDENT							{ $$ = $1; }
 		| SYSID							{ $$ = "sysid"; }
 		| TEMP							{ $$ = "temp"; }
 		| TEMPORARY						{ $$ = "temporary"; }
-		| TIME							{ $$ = "time"; }
-		| TIMESTAMP						{ $$ = "timestamp"; }
 		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }
 		| TIMEZONE_MINUTE				{ $$ = "timezone_minute"; }
 		| TRIGGER						{ $$ = "trigger"; }
 		| TRUNCATE						{ $$ = "truncate"; }
 		| TRUSTED						{ $$ = "trusted"; }
-		| TYPE_P						{ $$ = "type"; }
 		| UNLISTEN						{ $$ = "unlisten"; }
 		| UNTIL							{ $$ = "until"; }
 		| UPDATE						{ $$ = "update"; }
@@ -5433,24 +5458,14 @@ ColId:  IDENT							{ $$ = $1; }
  * Add other keywords to this list. Note that they appear here
  *  rather than in ColId if there was a shift/reduce conflict
  *  when used as a full identifier. - thomas 1997-11-06
- * These show up as operators, and will screw up the parsing if
- * allowed as identifiers or labels.
- * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
-		| ALL							{ $$ = "all"; }
-		| ANY							{ $$ = "any"; }
-		| EXCEPT						{ $$ = "except"; }
-		| INTERSECT						{ $$ = "intersect"; }
-		| LIKE							{ $$ = "like"; }
-		| NOT							{ $$ = "not"; }
-		| NULLIF						{ $$ = "nullif"; }
-		| NULL_P						{ $$ = "null"; }
-		| OR							{ $$ = "or"; }
-		| UNION							{ $$ = "union"; }
  */
 ColLabel:  ColId						{ $$ = $1; }
 		| ABORT_TRANS					{ $$ = "abort"; }
+		| ALL							{ $$ = "all"; }
 		| ANALYZE						{ $$ = "analyze"; }
+		| ANY							{ $$ = "any"; }
 		| ASC							{ $$ = "asc"; }
+		| BETWEEN						{ $$ = "between"; }
 		| BINARY						{ $$ = "binary"; }
 		| BIT							{ $$ = "bit"; }
 		| BOTH							{ $$ = "both"; }
@@ -5480,6 +5495,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| DO							{ $$ = "do"; }
 		| ELSE							{ $$ = "else"; }
 		| END_TRANS						{ $$ = "end"; }
+		| EXCEPT						{ $$ = "except"; }
 		| EXISTS						{ $$ = "exists"; }
 		| EXPLAIN						{ $$ = "explain"; }
 		| EXTEND						{ $$ = "extend"; }
@@ -5494,11 +5510,16 @@ ColLabel:  ColId						{ $$ = $1; }
 		| GROUP							{ $$ = "group"; }
 		| HAVING						{ $$ = "having"; }
 		| INITIALLY						{ $$ = "initially"; }
+		| IN							{ $$ = "in"; }
 		| INNER_P						{ $$ = "inner"; }
+		| INTERSECT						{ $$ = "intersect"; }
 		| INTO							{ $$ = "into"; }
+		| IS							{ $$ = "is"; }
+		| ISNULL						{ $$ = "isnull"; }
 		| JOIN							{ $$ = "join"; }
 		| LEADING						{ $$ = "leading"; }
 		| LEFT							{ $$ = "left"; }
+		| LIKE							{ $$ = "like"; }
 		| LISTEN						{ $$ = "listen"; }
 		| LOAD							{ $$ = "load"; }
 		| LOCAL							{ $$ = "local"; }
@@ -5508,11 +5529,17 @@ ColLabel:  ColId						{ $$ = $1; }
 		| NCHAR							{ $$ = "nchar"; }
 		| NEW							{ $$ = "new"; }
 		| NONE							{ $$ = "none"; }
+		| NOT							{ $$ = "not"; }
+		| NOTNULL						{ $$ = "notnull"; }
+		| NULLIF						{ $$ = "nullif"; }
+		| NULL_P						{ $$ = "null"; }
 		| NUMERIC						{ $$ = "numeric"; }
 		| OFFSET						{ $$ = "offset"; }
 		| ON							{ $$ = "on"; }
+		| OR							{ $$ = "or"; }
 		| ORDER							{ $$ = "order"; }
 		| OUTER_P						{ $$ = "outer"; }
+		| OVERLAPS						{ $$ = "overlaps"; }
 		| POSITION						{ $$ = "position"; }
 		| PRECISION						{ $$ = "precision"; }
 		| PRIMARY						{ $$ = "primary"; }
@@ -5525,6 +5552,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| SESSION_USER					{ $$ = "session_user"; }
 		| SETOF							{ $$ = "setof"; }
 		| SHOW							{ $$ = "show"; }
+		| SOME							{ $$ = "some"; }
 		| SUBSTRING						{ $$ = "substring"; }
 		| TABLE							{ $$ = "table"; }
 		| THEN							{ $$ = "then"; }
@@ -5532,6 +5560,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| TRANSACTION					{ $$ = "transaction"; }
 		| TRIM							{ $$ = "trim"; }
 		| TRUE_P						{ $$ = "true"; }
+		| UNION							{ $$ = "union"; }
 		| UNIQUE						{ $$ = "unique"; }
 		| USER							{ $$ = "user"; }
 		| USING							{ $$ = "using"; }

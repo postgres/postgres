@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.55 2000/03/23 07:40:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.56 2000/04/07 13:39:40 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1220,7 +1220,7 @@ dlog1(float64 arg1)
 	float64		result;
 	double		tmp;
 
-	if (!arg1)
+	if (!PointerIsValid(arg1))
 		return (float64) NULL;
 
 	result = (float64) palloc(sizeof(float64data));
@@ -1234,7 +1234,8 @@ dlog1(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-}
+} /* dlog1() */
+
 
 /*
  *		dlog10			- returns a pointer to the base 10 logarithm of arg1
@@ -1260,6 +1261,331 @@ dlog10(float64 arg1)
 	CheckFloat8Val(*result);
 	return result;
 } /* dlog10() */
+
+
+/*
+ *		dacos			- returns a pointer to the arccos of arg1 (radians)
+ */
+float64
+dacos(float64 arg1)
+{
+	float64		result;
+	double		tmp;
+
+	if (!PointerIsValid(arg1))
+		return (float64) NULL;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	tmp = *arg1;
+	errno = 0;
+	*result = (float64data) acos(tmp);
+	if (errno != 0
+#ifdef HAVE_FINITE
+		|| !finite(*result)
+#endif
+		)
+		elog(ERROR, "dacos(%f) input is out of range", *arg1);
+
+	CheckFloat8Val(*result);
+	return result;
+} /* dacos() */
+
+
+/*
+ *		dasin			- returns a pointer to the arcsin of arg1 (radians)
+ */
+float64
+dasin(float64 arg1)
+{
+	float64		result;
+	double		tmp;
+
+	if (!PointerIsValid(arg1))
+		return (float64) NULL;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	tmp = *arg1;
+	errno = 0;
+	*result = (float64data) asin(tmp);
+	if (errno != 0
+#ifdef HAVE_FINITE
+		|| !finite(*result)
+#endif
+		)
+		elog(ERROR, "dasin(%f) input is out of range", *arg1);
+
+	CheckFloat8Val(*result);
+	return result;
+} /* dasin() */
+
+
+/*
+ *		datan			- returns a pointer to the arctan of arg1 (radians)
+ */
+float64
+datan(float64 arg1)
+{
+	float64		result;
+	double		tmp;
+
+	if (!PointerIsValid(arg1))
+		return (float64) NULL;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	tmp = *arg1;
+	errno = 0;
+	*result = (float64data) atan(tmp);
+	if (errno != 0
+#ifdef HAVE_FINITE
+		|| !finite(*result)
+#endif
+		)
+		elog(ERROR, "atan(%f) input is out of range", *arg1);
+
+	CheckFloat8Val(*result);
+	return result;
+} /* datan() */
+
+
+/*
+ *		atan2			- returns a pointer to the arctan2 of arg1 (radians)
+ */
+float64
+datan2(float64 arg1, float64 arg2)
+{
+	float64		result;
+
+	if (!PointerIsValid(arg1) || !PointerIsValid(arg1))
+		return (float64) NULL;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	errno = 0;
+	*result = (float64data) atan2(*arg1, *arg2);
+	if (errno != 0
+#ifdef HAVE_FINITE
+		|| !finite(*result)
+#endif
+		)
+		elog(ERROR, "atan2(%f,%f) input is out of range", *arg1, *arg2);
+
+	CheckFloat8Val(*result);
+	return result;
+} /* datan2() */
+
+
+/*
+ *		dcos			- returns a pointer to the cosine of arg1 (radians)
+ */
+float64
+dcos(float64 arg1)
+{
+	float64		result;
+	double		tmp;
+
+	if (!PointerIsValid(arg1))
+		return (float64) NULL;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	tmp = *arg1;
+	errno = 0;
+	*result = (float64data) cos(tmp);
+	if (errno != 0
+#ifdef HAVE_FINITE
+		|| !finite(*result)
+#endif
+		)
+		elog(ERROR, "dcos(%f) input is out of range", *arg1);
+
+	CheckFloat8Val(*result);
+	return result;
+} /* dcos() */
+
+
+/*
+ *		dcot			- returns a pointer to the cotangent of arg1 (radians)
+ */
+float64
+dcot(float64 arg1)
+{
+	float64		result;
+	double		tmp;
+
+	if (!PointerIsValid(arg1))
+		return (float64) NULL;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	tmp = *arg1;
+	errno = 0;
+	*result = (float64data) tan(tmp);
+	if ((errno != 0) || (*result == 0.0)
+#ifdef HAVE_FINITE
+		|| !finite(*result)
+#endif
+		)
+		elog(ERROR, "dcot(%f) input is out of range", *arg1);
+
+	*result = 1.0/(*result);
+	CheckFloat8Val(*result);
+	return result;
+} /* dcot() */
+
+
+/*
+ *		dsin			- returns a pointer to the sine of arg1 (radians)
+ */
+float64
+dsin(float64 arg1)
+{
+	float64		result;
+	double		tmp;
+
+	if (!PointerIsValid(arg1))
+		return (float64) NULL;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	tmp = *arg1;
+	errno = 0;
+	*result = (float64data) sin(tmp);
+	if (errno != 0
+#ifdef HAVE_FINITE
+		|| !finite(*result)
+#endif
+		)
+		elog(ERROR, "dsin(%f) input is out of range", *arg1);
+
+	CheckFloat8Val(*result);
+	return result;
+} /* dsin() */
+
+
+/*
+ *		dtan			- returns a pointer to the tangent of arg1 (radians)
+ */
+float64
+dtan(float64 arg1)
+{
+	float64		result;
+	double		tmp;
+
+	if (!PointerIsValid(arg1))
+		return (float64) NULL;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	tmp = *arg1;
+	errno = 0;
+	*result = (float64data) tan(tmp);
+	if (errno != 0
+#ifdef HAVE_FINITE
+		|| !finite(*result)
+#endif
+		)
+		elog(ERROR, "dtan(%f) input is out of range", *arg1);
+
+	CheckFloat8Val(*result);
+	return result;
+} /* dtan() */
+
+
+#ifndef M_PI
+/* from my RH5.2 gcc math.h file - thomas 2000-04-03 */
+#define M_PI 3.14159265358979323846
+#endif
+
+
+/*
+ *		degrees		- returns a pointer to degrees converted from radians
+ */
+float64
+degrees(float64 arg1)
+{
+	float64		result;
+
+	if (!arg1)
+		return (float64) NULL;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	*result = ((*arg1) * (180.0 / M_PI));
+
+	CheckFloat8Val(*result);
+	return result;
+} /* degrees() */
+
+
+/*
+ *		dpi				- returns a pointer to degrees converted to radians
+ */
+float64
+dpi(void)
+{
+	float64		result;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	*result = (M_PI);
+
+	return result;
+} /* dpi() */
+
+
+/*
+ *		radians		- returns a pointer to radians converted from degrees
+ */
+float64
+radians(float64 arg1)
+{
+	float64		result;
+
+	if (!arg1)
+		return (float64) NULL;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	*result = ((*arg1) * (M_PI / 180.0));
+
+	CheckFloat8Val(*result);
+	return result;
+} /* radians() */
+
+
+/*
+ *		drandom   	- returns a random number
+ */
+float64
+drandom(void)
+{
+	float64		result;
+
+	result = (float64) palloc(sizeof(float64data));
+
+	/* result 0.0-1.0 */
+	*result = (((double) random()) / RAND_MAX);
+
+	CheckFloat8Val(*result);
+	return result;
+} /* drandom() */
+
+
+/*
+ *		setseed		- set seed for the random number generator
+ */
+int32
+setseed(float64 seed)
+{
+	int iseed = ((*seed) * RAND_MAX);
+
+	srandom((unsigned int) ((*seed) * RAND_MAX));
+
+	return iseed;
+} /* setseed() */
 
 
 /*

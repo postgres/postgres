@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.22 2000/03/15 17:24:18 tgl Exp $
+ *	$Id: oracle_compat.c,v 1.23 2000/04/07 13:39:41 thomas Exp $
  *
  */
 
@@ -448,50 +448,6 @@ rtrim(text *string, text *set)
 
 /********************************************************************
  *
- * substr
- *
- * Syntax:
- *
- *	 text *substr(text *string, int4 m, int4 n)
- *
- * Purpose:
- *
- *	 Returns a portion of string, beginning at character m, n
- *	 characters long. The first position of string is 1.
- *
- ********************************************************************/
-
-#ifdef NOT_USED
-text *
-substr(text *string, int4 m, int4 n)
-{
-	text	   *ret;
-	char	   *ptr,
-			   *ptr_ret;
-	int			len;
-
-	if ((string == (text *) NULL) ||
-		(m <= 0) || (n <= 0) ||
-		((len = VARSIZE(string) - VARHDRSZ - m + 1) <= 0))
-		return string;
-
-	len = len + 1 < n ? len + 1 : n;
-
-	ret = (text *) palloc(VARHDRSZ + len);
-	VARSIZE(ret) = VARHDRSZ + len;
-
-	ptr = VARDATA(string) + m - 1;
-	ptr_ret = VARDATA(ret);
-
-	while (len--)
-		*ptr_ret++ = *ptr++;
-
-	return ret;
-}
-#endif
-
-/********************************************************************
- *
  * translate
  *
  * Syntax:
@@ -573,3 +529,58 @@ translate(text *string, text *from, text *to)
 
 	return result;
 }
+
+
+int4
+ascii(text *string)
+{
+	if (!PointerIsValid(string))
+		return 0;
+
+	if (VARSIZE(string) <= VARHDRSZ)
+		return 0;
+
+	return ((int) *(VARDATA(string)));
+} /* ascii() */
+
+
+text *
+ichar(int4 cvalue)
+{
+	text   *result;
+
+	result = (text *) palloc(VARHDRSZ + 1);
+	VARSIZE(result) = VARHDRSZ + 1;
+	*VARDATA(result) = (char) cvalue;
+
+	return result;
+} /* ichar() */
+
+
+text *
+repeat(text *string, int4 count)
+{
+	text   *result;
+	int		slen, tlen;
+	int		i;
+	char   *cp;
+
+	if (count < 0)
+		count = 0;
+
+	slen = (VARSIZE(string)-VARHDRSZ);
+	tlen = (VARHDRSZ + (count * slen));
+
+	result = (text *) palloc(tlen);
+
+	VARSIZE(result) = tlen;
+	cp = VARDATA(result);
+	for (i = 0; i < count; i++)
+	{
+		memcpy(cp, VARDATA(string), slen);
+		cp += slen;
+	}
+
+	return result;
+} /* repeat() */
+
