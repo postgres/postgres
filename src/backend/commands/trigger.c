@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.59 2000/02/06 10:19:45 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.60 2000/02/13 13:21:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1201,8 +1201,6 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 			SaveTriggerData.tg_trigger   =
 					rel->trigdesc->tg_after_row[TRIGGER_EVENT_DELETE][itemno];
 			break;
-
-		default:
 	}
 
 	/* ----------

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.16 2000/01/26 05:58:09 momjian Exp $
+ * $Id: stringinfo.h,v 1.17 2000/02/13 13:21:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ extern void appendStringInfoChar(StringInfo str, char ch);
 #define appendStringInfoCharMacro(str,ch) \
 	(((str)->len + 1 >= (str)->maxlen) ? \
 	 appendStringInfoChar(str, ch) : \
-	 ((str)->data[(str)->len] = (ch), (str)->data[++(str)->len] = '\0'))
+	 (void)((str)->data[(str)->len] = (ch), (str)->data[++(str)->len] = '\0'))
 
 /*------------------------
  * appendBinaryStringInfo
