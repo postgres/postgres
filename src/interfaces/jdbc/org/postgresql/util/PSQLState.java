@@ -10,7 +10,7 @@
  
  package org.postgresql.util;
  
- public class PSQLState
+ public class PSQLState implements java.io.Serializable
  {
  	private String state;
 	
