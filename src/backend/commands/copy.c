@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.2.2.1 1996/08/24 20:53:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.2.2.2 1996/08/26 06:53:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -742,7 +742,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 	if (feof(fp)) {
 	    *isnull = (bool) false;
 	    return(NULL);
-	}else if (reading_from_input && attno == 0 && i == 0 && c == '.') {
+	}else if (reading_from_input && i == 0 && c == '.') {
 	    attribute[0] = c;
 	    c = getc(fp);
 	    if (c == '\n') {
