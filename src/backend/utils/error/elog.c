@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.100 2002/08/29 07:22:28 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.101 2002/09/02 02:47:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include <time.h>
 #include <fcntl.h>
-#include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>

@@ -39,7 +39,6 @@
 
 #include "postgres.h"
 
-#include <sys/types.h>
 #include <ctype.h>
 #include <limits.h>
 #include <assert.h>

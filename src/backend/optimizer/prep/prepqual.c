@@ -8,11 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.32 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.33 2002/09/02 02:47:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/types.h>
 
 #include "postgres.h"
 

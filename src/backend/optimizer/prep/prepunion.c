@@ -14,13 +14,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.76 2002/08/29 16:03:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.77 2002/09/02 02:47:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <sys/types.h>
 
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"

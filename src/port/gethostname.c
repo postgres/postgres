@@ -1,8 +1,7 @@
-/* $Id: gethostname.c,v 1.1 2002/07/18 04:13:59 momjian Exp $ */
+/* $Id: gethostname.c,v 1.2 2002/09/02 02:47:07 momjian Exp $ */
 
 #include "c.h"
 
-#include <sys/types.h>
 #include <string.h>
 
 #include <sys/utsname.h>

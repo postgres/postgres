@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.286 2002/08/29 21:02:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.287 2002/09/02 02:47:03 momjian Exp $
  *
  * NOTES
  *
@@ -65,7 +65,6 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <ctype.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/socket.h>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.93 2002/08/06 02:36:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.94 2002/09/02 02:47:03 momjian Exp $
  *
  * NOTES:
  *
@@ -40,7 +40,6 @@
 
 #include "postgres.h"
 
-#include <sys/types.h>
 #include <sys/file.h>
 #include <sys/param.h>
 #include <sys/stat.h>

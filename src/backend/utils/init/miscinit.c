@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.94 2002/07/25 10:07:12 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.95 2002/09/02 02:47:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/file.h>

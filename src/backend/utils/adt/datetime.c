@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.93 2002/08/04 06:44:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.94 2002/09/02 02:47:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include <ctype.h>
 #include <math.h>
-#include <sys/types.h>
 #include <errno.h>
 #include <float.h>
 #include <limits.h>

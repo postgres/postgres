@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.107 2002/08/29 21:02:12 momjian Exp $
+ * $Id: miscadmin.h,v 1.108 2002/09/02 02:47:07 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -23,7 +23,6 @@
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
 
-#include <sys/types.h>
 
 
 /*****************************************************************************

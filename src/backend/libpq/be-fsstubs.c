@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.62 2002/08/25 17:20:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.63 2002/09/02 02:47:02 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -35,7 +35,6 @@
 #include "postgres.h"
 
 #include <fcntl.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 

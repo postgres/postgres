@@ -8,17 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.25 2002/08/20 04:45:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.26 2002/09/02 02:47:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/types.h>
+#include "postgres.h"
+
 #include <sys/file.h>
 #include <time.h>
 
-#include "postgres.h"
 #include "miscadmin.h"
-
 #include "utils/builtins.h"
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.113 2002/09/02 01:05:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.114 2002/09/02 02:47:05 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -17,7 +17,6 @@
 
 #include <fcntl.h>
 #include <sys/file.h>
-#include <sys/types.h>
 #include <math.h>
 #include <unistd.h>
 

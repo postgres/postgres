@@ -1,4 +1,4 @@
-/* $Id: inet_aton.c,v 1.1 2002/07/18 04:13:59 momjian Exp $
+/* $Id: inet_aton.c,v 1.2 2002/09/02 02:47:07 momjian Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this
@@ -44,7 +44,6 @@
 
 #include "c.h"
 
-#include <sys/types.h>
 #include <netinet/in.h>
 #include <ctype.h>
 

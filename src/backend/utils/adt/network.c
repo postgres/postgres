@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.34 2001/10/25 05:49:45 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.35 2002/09/02 02:47:04 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -11,7 +11,6 @@
 #include "postgres.h"
 
 #include <errno.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

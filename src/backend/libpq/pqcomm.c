@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.137 2002/06/20 20:29:28 momjian Exp $
+ *	$Id: pqcomm.c,v 1.138 2002/09/02 02:47:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,6 @@
 #include <fcntl.h>
 #include <grp.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netdb.h>

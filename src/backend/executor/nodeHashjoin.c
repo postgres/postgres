@@ -8,11 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.40 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.41 2002/09/02 02:47:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/types.h>
 
 #include "postgres.h"
 

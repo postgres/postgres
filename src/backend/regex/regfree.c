@@ -39,7 +39,6 @@
 
 #include "postgres.h"
 
-#include <sys/types.h>
 
 #include "regex/regex.h"
 #include "regex/utils.h"

@@ -10,13 +10,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.116 2002/06/20 20:29:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.117 2002/09/02 02:47:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <sys/types.h>
 
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"

@@ -6,13 +6,12 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.109 2002/08/30 01:01:02 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.110 2002/09/02 02:47:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>

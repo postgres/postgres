@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.130 2002/08/15 16:36:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.131 2002/09/02 02:47:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,6 @@
  */
 #include "postgres.h"
 
-#include <sys/types.h>
 #include <sys/file.h>
 #include <math.h>
 #include <signal.h>

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.9 2002/06/20 20:29:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.10 2002/09/02 02:47:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include "access/clog.h"

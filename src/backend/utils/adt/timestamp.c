@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.70 2002/08/26 17:53:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.71 2002/09/02 02:47:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include <ctype.h>
 #include <math.h>
 #include <errno.h>
-#include <sys/types.h>
 #include <float.h>
 #include <limits.h>
 

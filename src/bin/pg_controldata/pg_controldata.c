@@ -6,13 +6,12 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.3 2002/08/21 22:24:34 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.4 2002/09/02 02:47:07 momjian Exp $
  */
 #include "postgres.h"
 
 #include <unistd.h>
 #include <time.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <locale.h>

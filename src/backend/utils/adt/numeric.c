@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.51 2002/08/26 17:53:58 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.52 2002/09/02 02:47:04 momjian Exp $
  *
  * ----------
  */
@@ -16,7 +16,6 @@
 #include <float.h>
 #include <math.h>
 #include <errno.h>
-#include <sys/types.h>
 
 #include "catalog/pg_type.h"
 #include "utils/array.h"

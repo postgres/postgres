@@ -16,17 +16,17 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.11 2001/10/25 05:49:44 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.12 2002/09/02 02:47:04 momjian Exp $";
 #endif
 
-#include <sys/types.h>
+#include "postgres.h"
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <errno.h>
 
-#include "postgres.h"
 #include "utils/builtins.h"
 
 #ifdef SPRINTF_CHAR

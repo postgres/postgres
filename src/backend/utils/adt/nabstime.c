@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.97 2002/09/01 00:58:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.98 2002/09/02 02:47:04 momjian Exp $
  *
  * NOTES
  *
@@ -20,7 +20,6 @@
 #include <ctype.h>
 #include <time.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <float.h>
 #include <limits.h>
 

@@ -9,14 +9,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.95 2002/08/25 17:20:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.96 2002/09/02 02:47:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <errno.h>
-#include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 

@@ -4,14 +4,14 @@
  * 30159 Hannover, Germany
  */
 
+#include "postgres.h"
+
 #include <stdio.h>
 #include <errno.h>
-#include <sys/types.h>
 #include "sys/ldr.h"
 #include <a.out.h>
 #include "ldfcn.h"
 
-#include "postgres.h"
 #include "dynloader.h"
 
 #ifndef HAVE_DLOPEN

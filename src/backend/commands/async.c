@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.89 2002/08/30 22:18:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.90 2002/09/02 02:47:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
-#include <sys/types.h>
 #include <netinet/in.h>
 
 #include "access/heapam.h"

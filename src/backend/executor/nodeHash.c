@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.64 2002/08/24 15:00:46 tgl Exp $
+ *	$Id: nodeHash.c,v 1.65 2002/09/02 02:47:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
  */
 #include "postgres.h"
 
-#include <sys/types.h>
 #include <math.h>
 
 #include "access/hash.h"
