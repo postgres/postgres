@@ -288,7 +288,7 @@ attributes are taken from. We often write a relation scheme as
     <parameter>D<subscript>i</subscript></parameter>,
     for each attribute
     <parameter>A<subscript>i</subscript></parameter>,
-    1 &lt;&equal; <literal>i</literal> &lt;&equal; <literal>k</literal>,
+    1 &lt;&equals; <literal>i</literal> &lt;&equals; <literal>k</literal>,
     where the values of the attributes are taken from. We often write
     a relation scheme as
     <literal>R(<parameter>A<subscript>1</subscript></parameter>,
@@ -325,11 +325,11 @@ attributes are taken from. We often write a relation scheme as
      integers. We define this by assigning a data type to each
      attribute. The type of <classname>SNAME</classname> will be
      <type>VARCHAR(20)</type> (this is the <acronym>SQL</acronym> type
-     for character strings of length &lt;&equal; 20),
+     for character strings of length &lt;&equals; 20),
      the type of <classname>SNO</classname> will be
      <type>INTEGER</type>. With the assignment of a data type we also have selected
      a domain for an attribute. The domain of <classname>SNAME</classname> is the set of all
-     character strings of length &lt;&equal; 20,
+     character strings of length &lt;&equals; 20,
      the domain of <classname>SNO</classname> is the set of
      all integer numbers.
     </para>

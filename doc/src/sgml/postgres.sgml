@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.22 1999/05/20 05:39:27 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.23 1999/05/22 02:27:24 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.23  1999/05/22 02:27:24  thomas
+Finish initial markup of cvs.sgml, and include it in the programmer's guide
+ and the integrated doc. Clean up other markup.
+
 Revision 1.22  1999/05/20 05:39:27  thomas
 Rearrange and consolidate the Admin Guide.
 Add reference pages for utilities and remove standalone chapters for same.
@@ -90,6 +94,7 @@ Move SQL reference pages up into the User's Guide.
 <!entity advanced SYSTEM "advanced.sgml">
 <!entity array    SYSTEM "array.sgml">
 <!entity datatype SYSTEM "datatype.sgml">
+<!entity datetime SYSTEM "datetime.sgml">
 <!entity environ  SYSTEM "environ.sgml">
 <!entity func     SYSTEM "func.sgml">
 <!entity inherit  SYSTEM "inherit.sgml">
@@ -351,8 +356,11 @@ Your name here...
     Additional related information.
    </Para>
   </PartIntro>
-  &docguide;
+   &datetime;
+   &docguide;
+<!--
    &contacts;
+-->
    &biblio;
  </Part>
 

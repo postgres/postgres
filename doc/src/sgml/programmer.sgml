@@ -1,10 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.14 1999/05/20 05:39:27 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.15 1999/05/22 02:27:24 thomas Exp $
 
 Postgres Programmer's Guide.
 - thomas 1998-10-27
 
 $Log: programmer.sgml,v $
+Revision 1.15  1999/05/22 02:27:24  thomas
+Finish initial markup of cvs.sgml, and include it in the programmer's guide
+ and the integrated doc. Clean up other markup.
+
 Revision 1.14  1999/05/20 05:39:27  thomas
 Rearrange and consolidate the Admin Guide.
 Add reference pages for utilities and remove standalone chapters for same.
@@ -94,6 +98,7 @@ Bigger updates to the installation instructions (install and config).
 <!entity bki      SYSTEM "bki.sgml">
 <!entity compiler SYSTEM "compiler.sgml">
 <!entity contacts SYSTEM "contacts.sgml">
+<!entity cvs      SYSTEM "cvs.sgml">
 <!entity docguide SYSTEM "docguide.sgml">
 <!entity geqo     SYSTEM "geqo.sgml">
 <!entity options  SYSTEM "pg_options.sgml">
@@ -216,6 +221,7 @@ Disable it until we put in some info.
 
 <!-- appendices -->
 
+  &cvs;
   &docguide;
 <!--
 &contacts;

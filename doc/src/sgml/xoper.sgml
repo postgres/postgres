@@ -186,7 +186,7 @@ SELECT (a + b) AS c FROM test_complex;
    <para>
     Providing NEGATOR is very helpful to the query optimizer since
     it allows expressions like NOT (x = y) to be simplified into
-    x <> y.  This comes up more often than you might think, because
+    x &lt;&gt; y.  This comes up more often than you might think, because
     NOTs can be inserted as a consequence of other rearrangements.
    </para>
 
@@ -225,21 +225,21 @@ SELECT (a + b) AS c FROM test_complex;
     These are the standard restriction estimators:
    <ProgramListing>
 	eqsel		for =
-	neqsel		for <>
-	intltsel	for < or <=
-	intgtsel	for > or >=
+	neqsel		for &lt;&gt;
+	intltsel	for &lt; or &lt;=
+	intgtsel	for &gt; or &gt;=
    </ProgramListing>
     It might seem a little odd that these are the categories, but they
     make sense if you think about it.  '=' will typically accept only
-    a small fraction of the rows in a table; '<>' will typically reject
-    only a small fraction.  '<' will accept a fraction that depends on
+    a small fraction of the rows in a table; '&lt;&gt;' will typically reject
+    only a small fraction.  '&lt;' will accept a fraction that depends on
     where the given constant falls in the range of values for that table
     column (which, it just so happens, is information collected by
     VACUUM ANALYZE and made available to the selectivity estimator).
-    '<=' will accept a slightly larger fraction than '<' for the same
+    '&lt;=' will accept a slightly larger fraction than '&lt;' for the same
     comparison constant, but they're close enough to not be worth
     distinguishing, especially since we're not likely to do better than a
-    rough guess anyhow.  Similar remarks apply to '>' and '>='.
+    rough guess anyhow.  Similar remarks apply to '&gt;' and '&gt;='.
    </para>
 
    <para>
@@ -249,48 +249,48 @@ SELECT (a + b) AS c FROM test_complex;
     matching operators (~, ~*, etc) use eqsel on the assumption that they'll
     usually only match a small fraction of the entries in a table.
    </para>
+   </sect2>
 
-  <sect2>
-   <title>JOIN</title>
+   <sect2>
+    <title>JOIN</title>
 
-   <para>
-    The JOIN clause, if provided, names a join selectivity
-    estimation function for the operator (note that this is a function
-    name, not an operator name).  JOIN clauses only make sense for
-    binary operators that return boolean.  The idea behind a join
-    selectivity estimator is to guess what fraction of the rows in a
-    pair of tables will satisfy a WHERE-clause condition of the form
-   <ProgramListing>
+    <para>
+     The JOIN clause, if provided, names a join selectivity
+     estimation function for the operator (note that this is a function
+     name, not an operator name).  JOIN clauses only make sense for
+     binary operators that return boolean.  The idea behind a join
+     selectivity estimator is to guess what fraction of the rows in a
+     pair of tables will satisfy a WHERE-clause condition of the form
+     <ProgramListing>
                 table1.field1 OP table2.field2
-   </ProgramListing>
-    for the current operator.  As with the RESTRICT clause, this helps
-    the optimizer very substantially by letting it figure out which
-    of several possible join sequences is likely to take the least work.
-   </para>
+     </ProgramListing>
+     for the current operator.  As with the RESTRICT clause, this helps
+     the optimizer very substantially by letting it figure out which
+     of several possible join sequences is likely to take the least work.
+    </para>
 
-   <para>
-    As before, this chapter will make no attempt to explain how to write
-    a join selectivity estimator function, but will just suggest that
-    you use one of the standard estimators if one is applicable:
-   <ProgramListing>
+    <para>
+     As before, this chapter will make no attempt to explain how to write
+     a join selectivity estimator function, but will just suggest that
+     you use one of the standard estimators if one is applicable:
+     <ProgramListing>
 	eqjoinsel	for =
-	neqjoinsel	for <>
-	intltjoinsel	for < or <=
-	intgtjoinsel	for > or >=
-   </ProgramListing>
-   </para>
+	neqjoinsel	for &lt;&gt;
+	intltjoinsel	for &lt; or &lt;=
+	intgtjoinsel	for &gt; or &gt;=
+    </ProgramListing>
+    </para>
+   </sect2>
 
-  </sect2>
+   <sect2>
+    <title>HASHES</title>
 
-  <sect2>
-   <title>HASHES</title>
-
-   <para>
-    The HASHES clause, if present, tells the system that it is OK to
-    use the hash join method for a join based on this operator.  HASHES
-    only makes sense for binary operators that return boolean --- and
-    in practice, the operator had better be equality for some data type.
-   </para>
+    <para>
+     The HASHES clause, if present, tells the system that it is OK to
+     use the hash join method for a join based on this operator.  HASHES
+     only makes sense for binary operators that return boolean --- and
+     in practice, the operator had better be equality for some data type.
+    </para>
 
    <para>
     The assumption underlying hash join is that the join operator can

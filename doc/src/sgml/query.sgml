@@ -158,9 +158,6 @@ COPY INTO weather FROM '/home/user/weather.txt'
    </para>
   </sect1>
 
- </Para>
- </sect1>
-
   <Sect1>
    <Title>Querying a Class</Title>
 
