@@ -8,13 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.37 2000/01/26 05:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.38 2000/02/24 01:59:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
+#include <errno.h>
+#include <float.h>
 
 #include "postgres.h"
+
 #include "access/heapam.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
@@ -32,6 +35,8 @@
 #include "utils/syscache.h"
 
 static void disallow_setop(char *op, Type optype, Node *operand);
+static bool fitsInFloat(Value *value);
+
 
 /* make_parsestate()
  * Allocate and initialize a new ParseState.
@@ -393,11 +398,25 @@ transformArraySubscripts(ParseState *pstate,
  * make_const
  *
  *	Convert a Value node (as returned by the grammar) to a Const node
- *	of the "natural" type for the constant.  For strings we produce
- *	a constant of type UNKNOWN ---- representation is the same as text,
- *	but this indicates to later type resolution that we're not sure that
- *	it should be considered text.  Explicit "NULL" constants are also
- *	typed as UNKNOWN.
+ *	of the "natural" type for the constant.  Note that this routine is
+ *	only used when there is no explicit cast for the constant, so we
+ *	have to guess what type is wanted.
+ *
+ *	For string literals we produce a constant of type UNKNOWN ---- whose
+ *	representation is the same as text, but it indicates to later type
+ *	resolution that we're not sure that it should be considered text.
+ *	Explicit "NULL" constants are also typed as UNKNOWN.
+ *
+ *  For integers and floats we produce int4, float8, or numeric depending
+ *	on the value of the number.  XXX In some cases it would be nice to take
+ *	context into account when determining the type to convert to, but in
+ *	other cases we can't delay the type choice.  One possibility is to invent
+ *	a dummy type "UNKNOWNNUMERIC" that's treated similarly to UNKNOWN;
+ *	that would allow us to do the right thing in examples like a simple
+ *	INSERT INTO table (numericcolumn) VALUES (1.234), since we wouldn't
+ *	have to resolve the unknown type until we knew the destination column
+ *	type.  On the other hand UNKNOWN has considerable problems of its own.
+ *	We would not like "SELECT 1.2 + 3.4" to claim it can't choose a type.
  */
 Const *
 make_const(Value *value)
@@ -419,16 +438,23 @@ make_const(Value *value)
 			break;
 
 		case T_Float:
+			if (fitsInFloat(value))
 			{
-				float64		dummy;
+				float64		fltval = (float64) palloc(sizeof(float64data));
 
-				dummy = (float64) palloc(sizeof(float64data));
-				*dummy = floatVal(value);
-
-				val = Float64GetDatum(dummy);
+				*fltval = floatVal(value);
+				val = Float64GetDatum(fltval);
 
 				typeid = FLOAT8OID;
 				typelen = sizeof(float64data);
+				typebyval = false;
+			}
+			else
+			{
+				val = PointerGetDatum(numeric_in(strVal(value), 0, -1));
+
+				typeid = NUMERICOID;
+				typelen = -1;	/* variable len */
 				typebyval = false;
 			}
 			break;
@@ -441,11 +467,11 @@ make_const(Value *value)
 			typebyval = false;
 			break;
 
-		case T_Null:
 		default:
-			if (nodeTag(value) != T_Null)
-				elog(NOTICE, "make_const: unknown type %d\n", nodeTag(value));
+			elog(NOTICE, "make_const: unknown type %d", nodeTag(value));
+			/* FALLTHROUGH */
 
+		case T_Null:
 			/* return a null const */
 			con = makeConst(UNKNOWNOID,
 							-1,
@@ -466,4 +492,46 @@ make_const(Value *value)
 					false);		/* not coerced */
 
 	return con;
+}
+
+/*
+ * Decide whether a T_Float value fits in float8, or must be treated as
+ * type "numeric".  We check the number of digits and check for overflow/
+ * underflow.  (With standard compilation options, Postgres' NUMERIC type
+ * can handle decimal exponents up to 1000, considerably more than most
+ * implementations of float8, so this is a sensible test.)
+ */
+static bool
+fitsInFloat(Value *value)
+{
+	const char	   *ptr;
+	int				ndigits;
+	char		   *endptr;
+
+	/*
+	 * Count digits, ignoring leading zeroes (but not trailing zeroes).
+	 * DBL_DIG is the maximum safe number of digits for "double".
+	 */
+	ptr = strVal(value);
+	while (*ptr == '+' || *ptr == '-' || *ptr == '0' || *ptr == '.')
+		ptr++;
+	ndigits = 0;
+	for (; *ptr; ptr++)
+	{
+		if (isdigit(*ptr))
+			ndigits++;
+		else if (*ptr == 'e' || *ptr == 'E')
+			break;				/* don't count digits in exponent */
+	}
+	if (ndigits > DBL_DIG)
+		return false;
+	/*
+	 * Use strtod() to check for overflow/underflow.
+	 */
+	errno = 0;
+	(void) strtod(strVal(value), &endptr);
+	if (*endptr != '\0' || errno != 0)
+		return false;
+
+	return true;
 }

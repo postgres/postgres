@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.149 2000/02/22 00:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.150 2000/02/24 01:59:17 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5606,14 +5606,17 @@ Oid param_type(int t)
 }
 
 /*
- *	The optimizer doesn't like '-' 4 for index use.  It only checks for
- *	Var '=' Const.  It wants an integer of -4, so we try to merge the
- *	minus into the constant.
+ * doNegate --- handle negation of a numeric constant.
  *
- *	This code is no longer essential as of 10/1999, since the optimizer
- *	now has a constant-subexpression simplifier.  However, we can save
- *	a few cycles throughout the parse and rewrite stages if we collapse
- *	the minus into the constant sooner rather than later...
+ * Formerly, we did this here because the optimizer couldn't cope with
+ * indexquals that looked like "var = -4" --- it wants "var = const"
+ * and a unary minus operator applied to a constant didn't qualify.
+ * As of Postgres 7.0, that problem doesn't exist anymore because there
+ * is a constant-subexpression simplifier in the optimizer.  However,
+ * there's still a good reason for doing this here, which is that we can
+ * postpone committing to a particular internal representation for simple
+ * negative constants.  It's better to leave "-123.456" in string form
+ * until we know what the desired type is.
  */
 static Node *
 doNegate(Node *n)
