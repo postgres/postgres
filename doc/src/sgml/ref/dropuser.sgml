@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.24 2003/03/24 14:32:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.25 2003/05/26 17:50:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -39,12 +39,11 @@ PostgreSQL documentation
   <para>
    <application>dropuser</application> is a shell script wrapper
    around the <acronym>SQL</acronym> command <xref
-   linkend="SQL-DROPUSER" endterm="SQL-DROPUSER-title">.  Thus, there
+   linkend="SQL-DROPUSER" endterm="SQL-DROPUSER-title">.  The database 
+   server must be running on the targeted host. There
    is nothing special about removing users via this or other
-   methods. This means that a database server is running at the
-   targeted host. Also, any default settings and environment variables
-   used by the <application>libpq</application> front-end library do
-   apply.
+   methods. Also, any default settings and environment variables
+   used by the <application>libpq</application> front-end library will apply.
   </para>
  </refsect1>
 

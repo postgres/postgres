@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.32 2003/03/24 14:32:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.33 2003/05/26 17:50:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -45,11 +45,17 @@ PostgreSQL documentation
   <para>
    <application>createuser</application> is a wrapper around the
    <acronym>SQL</acronym> command <xref linkend="SQL-CREATEUSER"
-   endterm="SQL-CREATEUSER-title">.  Thus, there is nothing special
-   about creating users via this or other methods. This means that a
-   database server must be running at the targeted host. Also, any
+   endterm="SQL-CREATEUSER-title">.  The database server must be 
+   running on the targeted host. There is nothing special
+   about creating users via this or other methods. Also, any
    default settings and environment variables used by the
    <application>libpq</application> front-end library will apply.
+  </para>
+
+  <para>
+   Passwords can only be added later, changed, or removed using the
+   <acronym>SQL</acronym> command <xref linkend="SQL-ALTERUSER" 
+   endterm="SQL-ALTERUSER-title">.
   </para>
 
  </refsect1>

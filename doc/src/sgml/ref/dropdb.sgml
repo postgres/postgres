@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.21 2003/03/24 14:32:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.22 2003/05/26 17:50:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -37,11 +37,11 @@ PostgreSQL documentation
   <para>
    <application>dropdb</application> is a wrapper around the
    <acronym>SQL</acronym> command <xref linkend="SQL-DROPDATABASE"
-   endterm="SQL-DROPDATABASE-title">.  Thus, there is nothing special
-   about dropping databases via this or other methods. This means that
-   a database server is running at the targeted host. Also, any
+   endterm="SQL-DROPDATABASE-title">.  The database server must be 
+   running on the targeted host. There is nothing special
+   about dropping databases via this or other methods. Also, any
    default settings and environment variables used by the
-   <application>libpq</application> front-end library do apply.
+   <application>libpq</application> front-end library will apply.
   </para>
  </refsect1>
 
