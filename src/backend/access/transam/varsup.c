@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.6 1996/11/05 11:12:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.7 1997/01/16 07:59:11 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,7 @@ VariableRelationPutNextXid(TransactionId xid)
 {
     Buffer buf;
     VariableRelationContents var;
+    int flushmode;
     
     /* ----------------
      * We assume that a spinlock has been acquire to guarantee
@@ -156,7 +157,9 @@ VariableRelationPutNextXid(TransactionId xid)
     
     TransactionIdStore(xid, &(var->nextXidData));
     
+    flushmode = SetBufferWriteMode (BUFFER_FLUSH_WRITE);
     WriteBuffer(buf);
+    (void) SetBufferWriteMode (flushmode);
 }
 
 /* --------------------------------
@@ -313,7 +316,7 @@ VariableRelationPutNextOid(Oid *oidP)
     if (! BufferIsValid(buf))
 	{
 	    SpinRelease(OidGenLockId);
-	    elog(WARN, "VariableRelationPutNextXid: ReadBuffer failed");
+	    elog(WARN, "VariableRelationPutNextOid: ReadBuffer failed");
 	}
     
     var = (VariableRelationContents) BufferGetBlock(buf);
