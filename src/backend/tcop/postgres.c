@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.153 2000/04/28 05:07:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.154 2000/04/30 21:29:23 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -127,7 +127,6 @@ bool		ExitAfterAbort = false;
 extern int	NBuffers;
 
 static bool EchoQuery = false;	/* default don't echo */
-time_t		tim;
 char		pg_pathname[MAXPGPATH];
 FILE	   *StatFp = NULL;
 
@@ -1453,7 +1452,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.153 $ $Date: 2000/04/28 05:07:34 $\n");
+		puts("$Revision: 1.154 $ $Date: 2000/04/30 21:29:23 $\n");
 	}
 
 	/*
@@ -1473,7 +1472,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
-		time(&tim);
+		/* Make sure we are in a valid memory context */
+		MemoryContextSwitchTo(TopMemoryContext);
 
 		if (Verbose)
 			TPRINTF(TRACE_VERBOSE, "AbortCurrentTransaction");
