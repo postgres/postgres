@@ -1,12 +1,15 @@
 
-                    PostgreSQL Native Win32 FAQ Using MinGW
+             Compiling PostgreSQL On Native Win32 FAQ Using MinGW
                                        
-   Last updated: Fri Oct 8 12:47:37 EDT 2004
+   Last updated: Thu Oct 14 18:22:57 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
    The most recent version of this document can be viewed at
    http://momjian.postgresql.org/main/writings/pgsql/project/win32.html.
+   
+   The FAQ for running PostgreSQL on native Win32 is at
+   http://pginstaller.projects.postgresql.org/FAQ_windows.html.
    
    The native Win32 port is built from source using MinGW tools.  There
    is also a precompiled binary installer called pginstaller which you
