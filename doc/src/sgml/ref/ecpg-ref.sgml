@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.6 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.7 2001/03/19 16:20:52 petere Exp $
 Postgres documentation
 -->
 
@@ -291,7 +291,7 @@ EXEC SQL WHENEVER not found sqlprint;
     One connects to a database using the following:
 
     <programlisting>
-EXEC SQL CONNECT <replaceable>dbname</replaceable>;
+EXEC SQL CONNECT TO <replaceable>dbname</replaceable>;
     </programlisting>
 
     where the database name is not quoted. Prior to version 2.1.0, the 
