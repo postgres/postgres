@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *  'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.18 1997/10/30 16:52:11 thomas Exp $
+ * $Id: variable.c,v 1.19 1997/11/07 06:43:16 thomas Exp $
  *
  */
 
@@ -156,12 +156,18 @@ reset_null(const char *value)
 }
 #endif
 
-static bool
+bool
 parse_geqo(const char *value)
 {
 	const char *rest;
 	char	   *tok,
 			   *val;
+
+	if (value == NULL)
+	{
+		reset_geqo();
+		return TRUE;
+	}
 
 	rest = get_token(&tok, &val, value);
 	if (tok == NULL)
@@ -197,7 +203,7 @@ parse_geqo(const char *value)
 	return TRUE;
 }
 
-static bool
+bool
 show_geqo()
 {
 
@@ -208,8 +214,8 @@ show_geqo()
 	return TRUE;
 }
 
-static bool
-reset_geqo()
+bool
+reset_geqo(void)
 {
 
 #ifdef GEQO
@@ -221,9 +227,14 @@ reset_geqo()
 	return TRUE;
 }
 
-static bool
+bool
 parse_r_plans(const char *value)
 {
+	if (value == NULL)
+	{
+		reset_r_plans();
+		return TRUE;
+	}
 
 	if (strcasecmp(value, "on") == 0)
 		_use_right_sided_plans_ = true;
@@ -235,7 +246,7 @@ parse_r_plans(const char *value)
 	return TRUE;
 }
 
-static bool
+bool
 show_r_plans()
 {
 
@@ -246,7 +257,7 @@ show_r_plans()
 	return TRUE;
 }
 
-static bool
+bool
 reset_r_plans()
 {
 
@@ -258,17 +269,24 @@ reset_r_plans()
 	return TRUE;
 }
 
-static bool
+bool
 parse_cost_heap(const char *value)
 {
-	float32		res = float4in((char *) value);
+	float32		res;
 
+	if (value == NULL)
+	{
+		reset_cost_heap();
+		return TRUE;
+	}
+
+	res = float4in((char *) value);
 	_cpu_page_wight_ = *res;
 
 	return TRUE;
 }
 
-static bool
+bool
 show_cost_heap()
 {
 
@@ -276,24 +294,31 @@ show_cost_heap()
 	return TRUE;
 }
 
-static bool
+bool
 reset_cost_heap()
 {
 	_cpu_page_wight_ = _CPU_PAGE_WEIGHT_;
 	return TRUE;
 }
 
-static bool
+bool
 parse_cost_index(const char *value)
 {
-	float32		res = float4in((char *) value);
+	float32		res;
 
+	if (value == NULL)
+	{
+		reset_cost_index();
+		return TRUE;
+	}
+
+	res = float4in((char *) value);
 	_cpu_index_page_wight_ = *res;
 
 	return TRUE;
 }
 
-static bool
+bool
 show_cost_index()
 {
 
@@ -301,19 +326,25 @@ show_cost_index()
 	return TRUE;
 }
 
-static bool
+bool
 reset_cost_index()
 {
 	_cpu_index_page_wight_ = _CPU_INDEX_PAGE_WEIGHT_;
 	return TRUE;
 }
 
-static bool
+bool
 parse_date(const char *value)
 {
 	char	   *tok;
 	int			dcnt = 0,
 				ecnt = 0;
+
+	if (value == NULL)
+	{
+		reset_date();
+		return TRUE;
+	}
 
 	while ((value = get_token(&tok, NULL, value)) != 0)
 	{
@@ -364,7 +395,7 @@ parse_date(const char *value)
 	return TRUE;
 }
 
-static bool
+bool
 show_date()
 {
 	char		buf[64];
@@ -391,7 +422,7 @@ show_date()
 	return TRUE;
 }
 
-static bool
+bool
 reset_date()
 {
 	DateStyle = USE_POSTGRES_DATES;
@@ -400,13 +431,35 @@ reset_date()
 	return TRUE;
 }
 
-static bool
+static char *defaultTZ = NULL;
+static char TZvalue[10];
+
+bool
 parse_timezone(const char *value)
 {
 	char	   *tok;
 
+	if (value == NULL)
+	{
+		reset_timezone();
+		return TRUE;
+	}
+
 	while ((value = get_token(&tok, NULL, value)) != 0)
 	{
+		if ((defaultTZ == NULL) && (getenv("TZ") != NULL))
+		{
+			defaultTZ = getenv("TZ");
+			if (defaultTZ == NULL)
+			{
+				defaultTZ = (char *) -1;
+			}
+			else
+			{
+				strcpy(TZvalue, defaultTZ);
+			}
+		}
+
 		setenv("TZ", tok, TRUE);
 		tzset();
 		PFREE(tok);
@@ -415,7 +468,7 @@ parse_timezone(const char *value)
 	return TRUE;
 } /* parse_timezone() */
 
-static bool
+bool
 show_timezone()
 {
 	char		buf[64];
@@ -431,10 +484,17 @@ show_timezone()
 	return TRUE;
 } /* show_timezone() */
 
-static bool
+bool
 reset_timezone()
 {
-	unsetenv("TZ");
+	if ((defaultTZ != NULL) && (defaultTZ != (char *) -1))
+	{
+		setenv("TZ", TZvalue, TRUE);
+	}
+	else
+	{
+		unsetenv("TZ");
+	}
 	tzset();
 
 	return TRUE;
@@ -457,12 +517,10 @@ struct VariableParsers
 		"timezone", parse_timezone, show_timezone, reset_timezone
 	},
 	{
-		"cost_heap", parse_cost_heap,
-		show_cost_heap, reset_cost_heap
+		"cost_heap", parse_cost_heap, show_cost_heap, reset_cost_heap
 	},
 	{
-		"cost_index", parse_cost_index,
-		show_cost_index, reset_cost_index
+		"cost_index", parse_cost_index, show_cost_index, reset_cost_index
 	},
 	{
 		"geqo", parse_geqo, show_geqo, reset_geqo
