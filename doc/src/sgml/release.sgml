@@ -64,7 +64,7 @@ problems reported by 6.4 users.
 
 
 <sect2>
-<title>Migration to v6.4</title>
+<title>Migration to v6.4.1</title>
 
 <para>
 A dump/restore is <emphasis>not</emphasis> required for those running

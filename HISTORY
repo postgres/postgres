@@ -8,11 +8,11 @@ PLACE HOLDER
 PostgreSQL 6.4.2             Sat Jan  2 11:04:05 EST 1999
 =========================================================
 
+Repackaged release to fix packaging problem of 6.4.1.
 A dump/restore is NOT required for those running 6.4.*.
 
 Changes
 -------
-Repackaged release to fix packaging problem of 6.4.1.
 Fix for datetime constant problem on some platforms(Thomas)
 
 
