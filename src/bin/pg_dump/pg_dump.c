@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.309 2002/11/29 16:38:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.310 2002/12/01 18:44:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1677,7 +1677,7 @@ getOperators(int *numOprs)
 		appendPQExpBuffer(query, "SELECT pg_operator.oid, oprname, "
 						  "oprnamespace, "
 						  "(select usename from pg_user where oprowner = usesysid) as usename, "
-						  "oprcode::oid "
+						  "oprcode::oid as oprcode "
 						  "from pg_operator");
 	}
 	else
@@ -1685,7 +1685,7 @@ getOperators(int *numOprs)
 		appendPQExpBuffer(query, "SELECT pg_operator.oid, oprname, "
 						  "0::oid as oprnamespace, "
 						  "(select usename from pg_user where oprowner = usesysid) as usename, "
-						  "oprcode::oid "
+						  "oprcode::oid as oprcode "
 						  "from pg_operator");
 	}
 
