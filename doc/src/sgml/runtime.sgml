@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.262 2004/04/22 04:18:37 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.263 2004/04/29 04:37:09 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -166,17 +166,17 @@ $ <userinput>postmaster -D /usr/local/pgsql/data</userinput>
    which will leave the server running in the foreground. This must be
    done while logged into the <productname>PostgreSQL</productname> user
    account. Without <option>-D</option>, the server will try to use
-   the data directory in the environment variable <envar>PGDATA</envar>.
-   If neither of these succeed, it will fail.
+   the data directory named by the environment variable <envar>PGDATA</envar>.
+   If that variable is not provided either, it will fail.
   </para>
 
   <para>
-   To start the <command>postmaster</command> in the
-   background, use the usual shell syntax:
+   Normally it is better to start the <command>postmaster</command> in the
+   background.  For this, use the usual shell syntax:
 <screen>
 $ <userinput>postmaster -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;</userinput>
 </screen>
-   It is an important to store the server's <systemitem>stdout</> and
+   It is important to store the server's <systemitem>stdout</> and
    <systemitem>stderr</> output somewhere, as shown above. It will help
    for auditing purposes and to diagnose problems. (See <xref
    linkend="logfile-maintenance"> for a more thorough discussion of log
@@ -206,11 +206,11 @@ pg_ctl start -l logfile
   <para>
    Normally, you will want to start the database server when the
    computer boots.<indexterm><primary>booting</><secondary>starting
-   the server during</></> Autostart scripts are operating
-   system-specific.  There are a few distributed with
+   the server during</></> Autostart scripts are operating-system-specific.
+   There are a few distributed with
    <productname>PostgreSQL</productname> in the
-   <filename>contrib/start-scripts</> directory. This may require root
-   privileges.
+   <filename>contrib/start-scripts</> directory. Installing one will require
+   root privileges.
   </para>
 
   <para>
@@ -229,9 +229,9 @@ su -c 'pg_ctl start -D /usr/local/pgsql/data -l serverlog' postgres
   </para>
 
   <para>
-   Here are a few more operating system specific suggestions. (Always
-   replace these with the proper installation directory and the user
-   name.)
+   Here are a few more operating-system-specific suggestions. (In each
+   case be sure to use the proper installation directory and user
+   name where we show generic values.)
 
    <itemizedlist>
     <listitem>
