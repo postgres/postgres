@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.73 2003/02/06 20:25:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.74 2003/03/27 16:45:01 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -78,6 +78,8 @@ extern char *filename_completion_function();
 static char **psql_completion(char *text, int start, int end);
 static char *create_command_generator(char *text, int state);
 static char *complete_from_query(char *text, int state);
+static char *complete_from_schema_query(char *text, int state);
+static char *_complete_from_query(int is_schema_query, char *text, int state);
 static char *complete_from_const(char *text, int state);
 static char *complete_from_list(char *text, int state);
 
@@ -124,43 +126,311 @@ initialize_readline(void)
  * the %s will be replaced by the text entered so far, the %d by its length.
  */
 
-#define Query_for_list_of_tables "SELECT relname FROM pg_catalog.pg_class WHERE (relkind='r' or relkind='v') and substr(relname,1,%d)='%s' and pg_catalog.pg_table_is_visible(oid)"
-#define Query_for_list_of_indexes "SELECT relname FROM pg_catalog.pg_class WHERE relkind='i' and substr(relname,1,%d)='%s' and pg_catalog.pg_table_is_visible(oid)"
-#define Query_for_list_of_databases "SELECT datname FROM pg_catalog.pg_database WHERE substr(datname,1,%d)='%s'"
-#define Query_for_list_of_attributes "SELECT a.attname FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c WHERE c.oid = a.attrelid and a.attnum>0 and not a.attisdropped and substr(a.attname,1,%d)='%s' and c.relname='%s' and pg_catalog.pg_table_is_visible(c.oid)"
-#define Query_for_list_of_users "SELECT usename FROM pg_catalog.pg_user WHERE substr(usename,1,%d)='%s'"
+#define Query_for_list_of_aggregates \
+" SELECT DISTINCT proname " \
+"   FROM pg_catalog.pg_proc" \
+"  WHERE proisagg " \
+"    AND substr(proname,1,%d)='%s'" \
+"        UNION" \
+" SELECT nspname || '.' AS relname" \
+"   FROM pg_catalog.pg_namespace" \
+"  WHERE substr(nspname,1,%d)='%s'" \
+"        UNION" \
+" SELECT DISTINCT nspname || '.' || proname AS relname" \
+"   FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n" \
+"  WHERE proisagg  " \
+"    AND substr(nspname || '.' || proname,1,%d)='%s'" \
+"    AND pronamespace = n.oid" \
+"    AND ('%s' ~ '^.*\\\\.' "\
+"     OR (SELECT TRUE "\
+"           FROM pg_catalog.pg_namespace "\
+"          WHERE substr(nspname,1,%d)='%s' "\
+"         HAVING COUNT(nspname)=1))"
+
+#define Query_for_list_of_attributes \
+"SELECT a.attname FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c "\
+" WHERE c.oid = a.attrelid "\
+"   AND a.attnum > 0 "\
+"   AND NOT a.attisdropped "\
+"   AND substr(a.attname,1,%d)='%s' "\
+"   AND c.relname='%s' "\
+"   AND pg_catalog.pg_table_is_visible(c.oid)"
+
+#define Query_for_list_of_databases \
+"SELECT datname FROM pg_catalog.pg_database "\
+" WHERE substr(datname,1,%d)='%s'"
+
+#define Query_for_list_of_datatypes \
+" SELECT pg_catalog.format_type(t.oid, NULL) "\
+"   FROM pg_catalog.pg_type t "\
+"  WHERE (t.typrelid = 0 "\
+"     OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid)) "\
+"    AND t.typname !~ '^_' "\
+"    AND substr(pg_catalog.format_type(t.oid, NULL),1,%d)='%s' "\
+"        UNION "\
+" SELECT nspname || '.' AS relname "\
+"   FROM pg_catalog.pg_namespace "\
+"  WHERE substr(nspname,1,%d)='%s' "\
+"        UNION "\
+" SELECT nspname || '.' || pg_catalog.format_type(t.oid, NULL) AS relname "\
+"   FROM pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
+"  WHERE(t.typrelid = 0 "\
+"     OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid)) "\
+"    AND t.typname !~ '^_' "\
+"    AND substr(nspname || '.' || pg_catalog.format_type(t.oid, NULL),1,%d)='%s' "\
+"    AND typnamespace = n.oid "\
+"    AND ('%s' ~ '^.*\\\\.' "\
+"     OR (SELECT TRUE "\
+"           FROM pg_catalog.pg_namespace "\
+"          WHERE substr(nspname,1,%d)='%s' "\
+"         HAVING COUNT(nspname)=1))"
+
+#define Query_for_list_of_domains \
+" SELECT typname "\
+"   FROM pg_catalog.pg_type t "\
+"  WHERE typtype = 'd' "\
+"    AND substr(typname,1,%d)='%s' "\
+"        UNION" \
+" SELECT nspname || '.' "\
+"   FROM pg_catalog.pg_namespace "\
+"  WHERE substr(nspname,1,%d)='%s' "\
+"        UNION "\
+" SELECT nspname || '.' || pg_catalog.format_type(t.oid, NULL) "\
+"   FROM pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
+"  WHERE typtype = 'd' "\
+"    AND substr(nspname || '.' || typname,1,%d)='%s' "\
+"    AND typnamespace = n.oid "\
+"    AND ('%s' ~ '^.*\\\\.' "\
+"     OR (SELECT TRUE "\
+"           FROM pg_catalog.pg_namespace "\
+"          WHERE substr(nspname,1,%d)='%s' "\
+"         HAVING COUNT(nspname)=1))"
+
+#define Query_for_list_of_functions \
+" SELECT DISTINCT proname || '()' "\
+"   FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n "\
+"  WHERE substr(proname,1,%d)='%s'"\
+"    AND pg_catalog.pg_function_is_visible(p.oid) "\
+"    AND pronamespace = n.oid "\
+"        UNION "\
+" SELECT nspname || '.' "\
+"   FROM pg_catalog.pg_namespace "\
+"  WHERE substr(nspname,1,%d)='%s' "\
+"        UNION "\
+" SELECT nspname || '.' || proname "\
+"   FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n "\
+"  WHERE substr(nspname || '.' || proname,1,%d)='%s' "\
+"    AND pronamespace = n.oid "\
+"    AND ('%s' ~ '^.*\\\\.' "\
+"     OR (SELECT TRUE "\
+"           FROM pg_catalog.pg_namespace "\
+"          WHERE substr(nspname,1,%d)='%s' "\
+"         HAVING COUNT(nspname)=1))"
+
+#define Query_for_list_of_indexes \
+" SELECT relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE relkind='i' "\
+"    AND substr(relname,1,%d)='%s' "\
+"    AND pg_catalog.pg_table_is_visible(c.oid) "\
+"    AND relnamespace = n.oid "\
+"    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
+"        UNION "\
+" SELECT nspname || '.' "\
+"   FROM pg_catalog.pg_namespace "\
+"  WHERE substr(nspname,1,%d)='%s' "\
+"        UNION "\
+" SELECT nspname || '.' || relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE relkind='i' "\
+"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND relnamespace = n.oid "\
+"    AND ('%s' ~ '^.*\\\\.' "\
+"     OR (SELECT TRUE "\
+"           FROM pg_catalog.pg_namespace "\
+"          WHERE substr(nspname,1,%d)='%s' "\
+"         HAVING COUNT(nspname)=1))"
+
+
+#define Query_for_list_of_languages \
+"SELECT lanname "\
+"  FROM pg_language "\
+" WHERE lanname != 'internal' "\
+"   AND substr(lanname,1,%d)='%s' "
+
+#define Query_for_list_of_schemas \
+"SELECT nspname FROM pg_catalog.pg_namespace "\
+" WHERE substr(nspname,1,%d)='%s'"
+
+#define Query_for_list_of_sequences \
+" SELECT relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE relkind='S' "\
+"    AND substr(relname,1,%d)='%s' "\
+"    AND pg_catalog.pg_table_is_visible(c.oid) "\
+"    AND relnamespace = n.oid "\
+"    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
+"        UNION "\
+" SELECT nspname || '.' "\
+"   FROM pg_catalog.pg_namespace "\
+"  WHERE substr(nspname,1,%d)='%s' "\
+"        UNION "\
+" SELECT nspname || '.' || relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE relkind='S' "\
+"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND relnamespace = n.oid "\
+"    AND ('%s' ~ '^.*\\\\.' "\
+"     OR (SELECT TRUE "\
+"           FROM pg_catalog.pg_namespace "\
+"          WHERE substr(nspname,1,%d)='%s' "\
+"         HAVING COUNT(nspname)=1))"
+
+#define Query_for_list_of_system_relations \
+"SELECT c.relname FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+" WHERE (c.relkind='r' OR c.relkind='v' OR c.relkind='s' OR c.relkind='S') "\
+"   AND substr(c.relname,1,%d)='%s' "\
+"   AND pg_catalog.pg_table_is_visible(c.oid)"\
+"   AND relnamespace = n.oid "\
+"   AND n.nspname = 'pg_catalog'"
+
+#define Query_for_list_of_tables \
+" SELECT relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE relkind='r' "\
+"    AND substr(relname,1,%d)='%s' "\
+"    AND pg_catalog.pg_table_is_visible(c.oid) "\
+"    AND relnamespace = n.oid "\
+"    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
+"        UNION "\
+" SELECT nspname || '.' "\
+"   FROM pg_catalog.pg_namespace "\
+"  WHERE substr(nspname  || '.',1,%d)='%s' "\
+"        UNION "\
+" SELECT nspname || '.' || relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE relkind='r' "\
+"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND relnamespace = n.oid "\
+"    AND ('%s' ~ '^.*\\\\.' "\
+"     OR (SELECT TRUE "\
+"           FROM pg_catalog.pg_namespace n1 "\
+"          WHERE substr(nspname ||'.',1,%d)='%s' "\
+"         HAVING COUNT(nspname)=1))"
+
+#define Query_for_list_of_tisv \
+" SELECT relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE (relkind='r' OR relkind='i' OR relkind='S' OR relkind='v') "\
+"    AND substr(relname,1,%d)='%s' "\
+"    AND pg_catalog.pg_table_is_visible(c.oid) "\
+"    AND relnamespace = n.oid "\
+"    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
+"        UNION "\
+" SELECT nspname || '.' "\
+"   FROM pg_catalog.pg_namespace "\
+"  WHERE substr(nspname,1,%d)='%s' "\
+"        UNION "\
+" SELECT nspname || '.' || relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE (relkind='r' OR relkind='i' OR relkind='S' OR relkind='v') "\
+"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND relnamespace = n.oid "\
+"    AND ('%s' ~ '^.*\\\\.' "\
+"     OR (SELECT TRUE "\
+"           FROM pg_catalog.pg_namespace "\
+"          WHERE substr(nspname,1,%d)='%s' "\
+"         HAVING COUNT(nspname)=1))"
+
+#define Query_for_list_of_tsv \
+" SELECT relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE (relkind='r' OR relkind='S' OR relkind='v') "\
+"    AND substr(relname,1,%d)='%s' "\
+"    AND pg_catalog.pg_table_is_visible(c.oid) "\
+"    AND relnamespace = n.oid "\
+"    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
+"        UNION "\
+" SELECT nspname || '.' "\
+"   FROM pg_catalog.pg_namespace "\
+"  WHERE substr(nspname,1,%d)='%s' "\
+"        UNION "\
+" SELECT nspname || '.' || relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE (relkind='r' OR relkind='S' OR relkind='v') "\
+"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND relnamespace = n.oid "\
+"    AND ('%s' ~ '^.*\\\\.' "\
+"     OR (SELECT TRUE "\
+"           FROM pg_catalog.pg_namespace "\
+"          WHERE substr(nspname,1,%d)='%s' "\
+"         HAVING COUNT(nspname)=1))"
+
+#define Query_for_list_of_views \
+" SELECT relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE relkind='v'"\
+"    AND substr(relname,1,%d)='%s' "\
+"    AND pg_catalog.pg_table_is_visible(c.oid) "\
+"    AND relnamespace = n.oid "\
+"    AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "\
+"        UNION "\
+" SELECT nspname || '.' "\
+"   FROM pg_catalog.pg_namespace "\
+"  WHERE substr(nspname,1,%d)='%s' "\
+"        UNION "\
+" SELECT nspname || '.' || relname "\
+"   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
+"  WHERE relkind='v' "\
+"    AND substr(nspname || '.' || relname,1,%d)='%s' "\
+"    AND relnamespace = n.oid "\
+"    AND ('%s' ~ '^.*\\\\.' "\
+"     OR (SELECT TRUE "\
+"           FROM pg_catalog.pg_namespace "\
+"          WHERE substr(nspname,1,%d)='%s' "\
+"         HAVING COUNT(nspname)=1))"
+
+#define Query_for_list_of_users \
+" SELECT usename "\
+"   FROM pg_catalog.pg_user "\
+"  WHERE substr(usename,1,%d)='%s'"
 
 /* This is a list of all "things" in Pgsql, which can show up after CREATE or
    DROP; and there is also a query to get a list of them.
 */
+
+#define WITH_SCHEMA 1
+#define NO_SCHEMA 0
+
 typedef struct
 {
 	char	   *name;
+	int        with_schema;
 	char	   *query;
 } pgsql_thing_t;
 
 pgsql_thing_t words_after_create[] = {
-	{"AGGREGATE", "SELECT DISTINCT proname FROM pg_catalog.pg_proc WHERE proisagg AND substr(proname,1,%d)='%s'"},
-	{"CAST", NULL},				/* Casts have complex structures for namees, so skip it */
-	{"CONVERSION", "SELECT conname FROM pg_catalog.pg_conversion WHERE substr(conname,1,%d)='%s'"},
-	{"DATABASE", Query_for_list_of_databases},
-	{"DOMAIN", "SELECT typname FROM pg_catalog.pg_type WHERE typtype = 'd' AND substr(typname,1,%d)='%s'"},
-	{"FUNCTION", "SELECT DISTINCT proname FROM pg_catalog.pg_proc WHERE substr(proname,1,%d)='%s'"},
-	{"GROUP", "SELECT groname FROM pg_catalog.pg_group WHERE substr(groname,1,%d)='%s'"},
-	{"LANGUAGE", "SELECT lanname FROM pg_catalog.pg_language WHERE substr(lanname,1,%d)='%s'"},
-	{"INDEX", Query_for_list_of_indexes},
-	{"OPERATOR", NULL},			/* Querying for this is probably not such
+	{"AGGREGATE", WITH_SCHEMA, Query_for_list_of_aggregates},
+	{"CAST", NULL, NULL},				/* Casts have complex structures for namees, so skip it */
+	{"CONVERSION", NO_SCHEMA, "SELECT conname FROM pg_catalog.pg_conversion WHERE substr(conname,1,%d)='%s'"},
+	{"DATABASE", NO_SCHEMA, Query_for_list_of_databases},
+	{"DOMAIN", WITH_SCHEMA, Query_for_list_of_domains},
+	{"FUNCTION", WITH_SCHEMA, Query_for_list_of_functions},
+	{"GROUP", NO_SCHEMA, "SELECT groname FROM pg_catalog.pg_group WHERE substr(groname,1,%d)='%s'"},
+	{"LANGUAGE", NO_SCHEMA, Query_for_list_of_languages},
+	{"INDEX", WITH_SCHEMA,  Query_for_list_of_indexes},
+	{"OPERATOR", NULL, NULL},			/* Querying for this is probably not such
 								 * a good idea. */
-	{"RULE", "SELECT rulename FROM pg_catalog.pg_rules WHERE substr(rulename,1,%d)='%s'"},
-	{"SCHEMA", "SELECT nspname FROM pg_catalog.pg_namespace WHERE substr(nspname,1,%d)='%s'"},
-	{"SEQUENCE", "SELECT relname FROM pg_catalog.pg_class WHERE relkind='S' and substr(relname,1,%d)='%s'"},
-	{"TABLE", Query_for_list_of_tables},
-	{"TEMP", NULL},				/* for CREATE TEMP TABLE ... */
-	{"TRIGGER", "SELECT tgname FROM pg_catalog.pg_trigger WHERE substr(tgname,1,%d)='%s'"},
-	{"TYPE", "SELECT typname FROM pg_catalog.pg_type WHERE substr(typname,1,%d)='%s'"},
-	{"UNIQUE", NULL},			/* for CREATE UNIQUE INDEX ... */
-	{"USER", Query_for_list_of_users},
-	{"VIEW", "SELECT viewname FROM pg_catalog.pg_views WHERE substr(viewname,1,%d)='%s'"},
+	{"RULE", NO_SCHEMA, "SELECT rulename FROM pg_catalog.pg_rules WHERE substr(rulename,1,%d)='%s'"},
+	{"SCHEMA", NO_SCHEMA, Query_for_list_of_schemas},
+	{"SEQUENCE", WITH_SCHEMA, Query_for_list_of_sequences},
+	{"TABLE", WITH_SCHEMA, Query_for_list_of_tables},
+	{"TEMP", NULL, NULL},				/* for CREATE TEMP TABLE ... */
+	{"TRIGGER", NO_SCHEMA, "SELECT tgname FROM pg_catalog.pg_trigger WHERE substr(tgname,1,%d)='%s'"},
+	{"TYPE", WITH_SCHEMA, Query_for_list_of_datatypes },
+	{"UNIQUE", NULL, NULL},			/* for CREATE UNIQUE INDEX ... */
+	{"USER", NO_SCHEMA,  Query_for_list_of_users},
+	{"VIEW", WITH_SCHEMA, Query_for_list_of_views},
 	{NULL, NULL}				/* end of list */
 };
 
@@ -168,12 +438,15 @@ pgsql_thing_t words_after_create[] = {
 /* A couple of macros to ease typing. You can use these to complete the given
    string with
    1) The results from a query you pass it. (Perhaps one of those above?)
-   2) The items from a null-pointer-terminated list.
-   3) A string constant
-   4) The list of attributes to the given table.
+   2) The results from a schema query you pass it.
+   3) The items from a null-pointer-terminated list.
+   4) A string constant
+   5) The list of attributes to the given table.
 */
 #define COMPLETE_WITH_QUERY(query) \
 do { completion_charp = query; matches = completion_matches(text, complete_from_query); } while(0)
+#define COMPLETE_WITH_SCHEMA_QUERY(query) \
+do { completion_charp = query; matches = completion_matches(text, complete_from_schema_query); } while(0)
 #define COMPLETE_WITH_LIST(list) \
 do { completion_charpp = list; matches = completion_matches(text, complete_from_list); } while(0)
 #define COMPLETE_WITH_CONST(string) \
@@ -314,8 +587,9 @@ psql_completion(char *text, int start, int end)
 
 	static char *backslash_commands[] = {
 		"\\a", "\\connect", "\\C", "\\cd", "\\copy", "\\copyright", 
-		"\\d", "\\da", "\\dd", "\\dD", "\\df", "\\di", "\\dl", "\\do",
-		"\\dp", "\\ds", "\\dS", "\\dt", "\\dT", "\\dv","\\du",
+		"\\d",  "\\da", "\\dc", "\\dC", "\\dd", "\\dD", "\\df", "\\di",
+		"\\dl", "\\dn", "\\do", "\\dp", "\\ds", "\\dS", "\\dt", "\\dT", 
+		"\\dv", "\\du",
 		"\\e", "\\echo", "\\encoding",
 		"\\f", "\\g", "\\h", "\\help", "\\H", "\\i", "\\l",
 		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
@@ -391,7 +665,7 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev4_wd, "ALTER") == 0 &&
 			 strcasecmp(prev3_wd, "TRIGGER") == 0 &&
 			 strcasecmp(prev_wd, "ON") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 
 	/*
 	 * If we detect ALTER TABLE <name>, suggest either ADD, DROP, ALTER,
@@ -448,7 +722,7 @@ psql_completion(char *text, int start, int end)
 /* ANALYZE */
 	/* If the previous word is ANALYZE, produce list of tables. */
 	else if (strcasecmp(prev_wd, "ANALYZE") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 	/* If we have ANALYZE <table>, complete with semicolon. */
 	else if (strcasecmp(prev2_wd, "ANALYZE") == 0)
 		COMPLETE_WITH_CONST(";");
@@ -456,7 +730,7 @@ psql_completion(char *text, int start, int end)
 /* CLUSTER */
 	/* If the previous word is CLUSTER, produce list of indexes. */
 	else if (strcasecmp(prev_wd, "CLUSTER") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_indexes);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes);
 	/* If we have CLUSTER <sth>, then add "ON" */
 	else if (strcasecmp(prev2_wd, "CLUSTER") == 0)
 		COMPLETE_WITH_CONST("ON");
@@ -506,7 +780,7 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev_wd, "\\copy") == 0 ||
 			 (strcasecmp(prev2_wd, "COPY") == 0 &&
 			  strcasecmp(prev_wd, "BINARY") == 0))
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 	/* If we have COPY|BINARY <sth>, complete it with "TO" or "FROM" */
 	else if (strcasecmp(prev2_wd, "COPY") == 0 ||
 			 strcasecmp(prev2_wd, "\\copy") == 0 ||
@@ -530,7 +804,7 @@ psql_completion(char *text, int start, int end)
 	/* Complete ... INDEX <name> ON with a list of tables  */
 	else if (strcasecmp(prev3_wd, "INDEX") == 0 &&
 			 strcasecmp(prev_wd, "ON") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 
 	/*
 	 * Complete INDEX <name> ON <table> with a list of table columns
@@ -581,7 +855,7 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev4_wd, "AS") == 0 &&
 			 strcasecmp(prev3_wd, "ON") == 0 &&
 			 strcasecmp(prev_wd, "TO") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 
 /* CREATE TABLE */
 	/* Complete CREATE TEMP with "TABLE" */
@@ -618,7 +892,7 @@ psql_completion(char *text, int start, int end)
 	/* Complete DELETE FROM with a list of tables */
 	else if (strcasecmp(prev2_wd, "DELETE") == 0 &&
 			 strcasecmp(prev_wd, "FROM") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 	/* Complete DELETE FROM <table> with "WHERE" (perhaps a safe idea?) */
 	else if (strcasecmp(prev3_wd, "DELETE") == 0 &&
 			 strcasecmp(prev2_wd, "FROM") == 0)
@@ -683,26 +957,51 @@ psql_completion(char *text, int start, int end)
 	 * Complete GRANT/REVOKE <sth> ON with a list of tables, views,
 	 * sequences, and indexes
 	 *
-	 * XXX should also offer DATABASE, FUNCTION, LANGUAGE, SCHEMA here
+	 * keywords DATABASE, FUNCTION, LANGUAGE, SCHEMA added to query result
+     * via UNION; seems to work intuitively
+     *
+     * Note: GRANT/REVOKE can get quite complex; tab-completion as implemented
+     * here will only work if the privilege list contains exactly one privilege
 	 */
 	else if ((strcasecmp(prev3_wd, "GRANT") == 0 ||
 			  strcasecmp(prev3_wd, "REVOKE") == 0) &&
 			 strcasecmp(prev_wd, "ON") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class "
-							"WHERE relkind in ('r','i','S','v') AND "
-							"substr(relname,1,%d)='%s' AND pg_catalog.pg_table_is_visible(oid)");
-	/* Complete "GRANT * ON * " with "TO" */
-	else if (strcasecmp(prev4_wd, "GRANT") == 0 &&
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "
+							" WHERE relkind in ('r','S','v')  "
+							"   AND substr(relname,1,%d)='%s' "
+                            "   AND pg_catalog.pg_table_is_visible(c.oid) "
+							"   AND relnamespace = n.oid "
+							"   AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "
+                            " UNION "
+                            "SELECT 'DATABASE' AS relname "
+                            " UNION "
+                            "SELECT 'FUNCTION' AS relname "
+                            " UNION "
+                            "SELECT 'LANGUAGE' AS relname "
+                            " UNION "
+                            "SELECT 'SCHEMA' AS relname ");
+
+	/* Complete "GRANT/REVOKE * ON * " with "TO" */
+	else if ((strcasecmp(prev4_wd, "GRANT") == 0 || 
+			  strcasecmp(prev4_wd, "REVOKE") == 0) &&
 			 strcasecmp(prev2_wd, "ON") == 0)
-		COMPLETE_WITH_CONST("TO");
-	/* Complete "REVOKE * ON * " with "FROM" */
-	else if (strcasecmp(prev4_wd, "REVOKE") == 0 &&
-			 strcasecmp(prev2_wd, "ON") == 0)
-		COMPLETE_WITH_CONST("FROM");
+	{
+		if(strcasecmp(prev_wd, "DATABASE") == 0)
+			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
+		else if(strcasecmp(prev_wd, "FUNCTION") == 0)
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions);
+		else if(strcasecmp(prev_wd, "LANGUAGE") == 0)
+			COMPLETE_WITH_QUERY(Query_for_list_of_languages);
+		else if(strcasecmp(prev_wd, "SCHEMA") == 0)
+			COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
+		else
+			COMPLETE_WITH_CONST("TO");
+	}
 
 	/*
 	 * TODO: to complete with user name we need prev5_wd -- wait for a
 	 * more general solution there
+     * same for GRANT <sth> ON { DATABASE | FUNCTION | LANGUAGE | SCHEMA } xxx TO
 	 */
 
 /* INSERT */
@@ -712,7 +1011,7 @@ psql_completion(char *text, int start, int end)
 	/* Complete INSERT INTO with table names */
 	else if (strcasecmp(prev2_wd, "INSERT") == 0 &&
 			 strcasecmp(prev_wd, "INTO") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 	/* Complete "INSERT INTO <table> (" with attribute names */
 	else if (rl_line_buffer[start - 1] == '(' &&
 			 strcasecmp(prev3_wd, "INSERT") == 0 &&
@@ -749,8 +1048,8 @@ psql_completion(char *text, int start, int end)
 	/* Complete LOCK [TABLE] with a list of tables */
 	else if (strcasecmp(prev_wd, "LOCK") == 0 ||
 	 		 (strcasecmp(prev_wd, "TABLE") == 0 &&
-			  strcasecmp(prev2_wd, "LOCK")))
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+			  strcasecmp(prev2_wd, "LOCK") == 0))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 
 	/* For the following, handle the case of a single table only for now */
 
@@ -765,7 +1064,7 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev_wd, "IN") == 0 &&
 			 (strcasecmp(prev3_wd, "LOCK") == 0 ||
 			  (strcasecmp(prev3_wd, "TABLE") == 0 &&
-			   strcasecmp(prev3_wd, "LOCK"))))
+			   strcasecmp(prev4_wd, "LOCK") == 0)))
 	{
 		char	   *lock_modes[] = {"ACCESS SHARE MODE",
 			"ROW SHARE MODE", "ROW EXCLUSIVE MODE",
@@ -790,11 +1089,11 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev2_wd, "REINDEX") == 0)
 	{
 		if (strcasecmp(prev_wd, "TABLE") == 0)
-			COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 		else if (strcasecmp(prev_wd, "DATABASE") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 		else if (strcasecmp(prev_wd, "INDEX") == 0)
-			COMPLETE_WITH_QUERY(Query_for_list_of_indexes);
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes);
 	}
 
 /* SELECT */
@@ -901,7 +1200,7 @@ psql_completion(char *text, int start, int end)
 
 /* TRUNCATE */
 	else if (strcasecmp(prev_wd, "TRUNCATE") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 
 /* UNLISTEN */
 	else if (strcasecmp(prev_wd, "UNLISTEN") == 0)
@@ -910,7 +1209,7 @@ psql_completion(char *text, int start, int end)
 /* UPDATE */
 	/* If prev. word is UPDATE suggest a list of tables */
 	else if (strcasecmp(prev_wd, "UPDATE") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 	/* Complete UPDATE <table> with "SET" */
 	else if (strcasecmp(prev2_wd, "UPDATE") == 0)
 		COMPLETE_WITH_CONST("SET");
@@ -929,7 +1228,7 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev2_wd, "VACUUM") == 0 &&
 			 (strcasecmp(prev_wd, "FULL") == 0 ||
 			  strcasecmp(prev_wd, "ANALYZE") == 0))
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 
 /* WHERE */
 	/* Simple case of the word before the where being the table name */
@@ -937,15 +1236,41 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_ATTR(prev2_wd);
 
 /* ... FROM ... */
+/* TODO: also include SRF ? */
 	else if (strcasecmp(prev_wd, "FROM") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsv);
 
 
 /* Backslash commands */
+/* TODO:  \dc \dd \dl */
 	else if (strcmp(prev_wd, "\\connect") == 0 || strcmp(prev_wd, "\\c") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_databases);
-	else if (strcmp(prev_wd, "\\d") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+	else if (strcmp(prev_wd, "\\d") == 0 || strcmp(prev_wd, "\\d+") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tisv);
+	else if (strcmp(prev_wd, "\\da") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_aggregates);
+	else if (strcmp(prev_wd, "\\dD") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_domains);
+	else if (strcmp(prev_wd, "\\df") == 0 || strcmp(prev_wd, "\\df+") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions);
+	else if (strcmp(prev_wd, "\\di") == 0 || strcmp(prev_wd, "\\di+") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes);
+	else if (strcmp(prev_wd, "\\dn") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
+	else if (strcmp(prev_wd, "\\dp") == 0 || strcmp(prev_wd, "\\z") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsv);
+	else if (strcmp(prev_wd, "\\ds") == 0 || strcmp(prev_wd, "\\ds+") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_sequences);
+	else if (strcmp(prev_wd, "\\dS") == 0 || strcmp(prev_wd, "\\dS+") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_system_relations);
+	else if (strcmp(prev_wd, "\\dt") == 0 || strcmp(prev_wd, "\\dt+") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
+	else if (strcmp(prev_wd, "\\dT") == 0 || strcmp(prev_wd, "\\dT+") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes);
+	else if (strcmp(prev_wd, "\\du") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_users);
+	else if (strcmp(prev_wd, "\\dv") == 0 || strcmp(prev_wd, "\\dv+") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views);
 	else if (strcmp(prev_wd, "\\h") == 0 || strcmp(prev_wd, "\\help") == 0)
 		COMPLETE_WITH_LIST(sql_commands);
 	else if (strcmp(prev_wd, "\\pset") == 0)
@@ -979,7 +1304,10 @@ psql_completion(char *text, int start, int end)
 		for (i = 0; words_after_create[i].name; i++)
 			if (strcasecmp(prev_wd, words_after_create[i].name) == 0)
 			{
-				COMPLETE_WITH_QUERY(words_after_create[i].query);
+				if(words_after_create[i].with_schema == WITH_SCHEMA)
+					COMPLETE_WITH_SCHEMA_QUERY(words_after_create[i].query);
+				else
+					COMPLETE_WITH_QUERY(words_after_create[i].query);
 				break;
 			}
 	}
@@ -1052,17 +1380,39 @@ create_command_generator(char *text, int state)
 }
 
 
-/* This creates a list of matching things, according to a query pointed to
-   by completion_charp. The query needs to have a %d and a %s in it, which will
-   be replaced by the string length of the text and the text itself. See some
-   example queries at the top.
-   The query may also have another %s in it, which will be replaced by the value
-   of completion_info_charp.
-   Ordinarily this would be used to get a list of matching tables or functions,
-   etc.
-*/
+/* The following two functions are wrappers for _complete_from_query */
+
 static char *
 complete_from_query(char *text, int state)
+{
+  return _complete_from_query(0, text, state);
+}
+
+static char *
+complete_from_schema_query(char *text, int state)
+{
+  return _complete_from_query(1, text, state);
+}
+
+
+/* This creates a list of matching things, according to a query pointed to
+   by completion_charp.
+   The query can be one of two kinds:
+   - A simple query which must contain a %d and a %s, which will be replaced 
+   by the string length of the text and the text itself. The query may also
+   have another %s in it, which will be replaced by the value of 
+   completion_info_charp.
+     or:
+   - A schema query used for completion of both schema and relation names;
+   these are more complex and must contain in the following order:
+     %d %s %d %s %d %s %s %d %s
+   where %d is the string length of the text and %s the text itself.
+
+   See top of file for examples of both kinds of query.
+*/
+
+static char *
+_complete_from_query(int is_schema_query, char *text, int state)
 {
 	static int	list_index,
 				string_length;
@@ -1083,10 +1433,20 @@ complete_from_query(char *text, int state)
 		if (completion_charp == NULL)
 			return NULL;
 
-		if (snprintf(query_buffer, BUF_SIZE, completion_charp, string_length, text, completion_info_charp) == -1)
+		if(is_schema_query)
 		{
-			ERROR_QUERY_TOO_LONG;
-			return NULL;
+		  if (snprintf(query_buffer, BUF_SIZE, completion_charp, string_length, text, string_length, text, string_length, text, text,  string_length, text,string_length,text) == -1)
+		  {
+		      ERROR_QUERY_TOO_LONG;
+		      return NULL;
+		  }
+		}
+		else {
+		  if (snprintf(query_buffer, BUF_SIZE, completion_charp, string_length, text, completion_info_charp) == -1)
+		    {
+		      ERROR_QUERY_TOO_LONG;
+		      return NULL;
+		    }
 		}
 
 		result = exec_query(query_buffer);
