@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Apr 18 00:21:33 EDT 2002
+Last updated:		Thu Apr 18 01:06:09 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -244,7 +244,8 @@ COMMANDS
 	o Change PL/PgSQL to use palloc() instead of malloc()
 	o Add untrusted version of plpython
 	o Add plsh server-side shell language (Peter E)
-	o Allow Java server-side programming (?) [java]
+	o Allow Java server-side programming, http://pljava.sourceforge.net
+	  [java]
 	o Fix problems with complex temporary table creation/destruction
 	  without using PL/PgSQL EXECUTE, needs cached plan invalidation
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
