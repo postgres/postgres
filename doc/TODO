@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Mar 13 22:00:15 EST 2005
+Last updated:		Mon Mar 14 11:36:52 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -680,14 +680,7 @@ Cache
 
 * Consider use of open/fcntl(O_DIRECT) to minimize OS caching,
   especially for WAL writes
-* Cache last known per-tuple offsets to speed long tuple access
-
-  While column offsets are already cached, the cache can not be used if
-  the tuple has NULLs or TOAST columns because these values change the
-  typical column offsets. Caching of such offsets could be accomplished
-  by remembering the previous offsets and use them again if the row has
-  the same pattern.
-
+* -Cache last known per-tuple offsets to speed long tuple access
 * Speed up COUNT(*)
 
   We could use a fixed row count and a +/- count to follow MVCC
