@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.27 2002/03/05 05:52:44 momjian Exp $
+ * $Id: wchar.c,v 1.28 2002/06/13 08:28:54 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -510,6 +510,31 @@ pg_uhc_mblen(const unsigned char *s)
 	return (len);
 }
 
+/*
+ *  * GB18030
+ *   * Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
+ *    */
+static int
+pg_gb18030_mblen(const unsigned char *s)
+{
+        int                     len;
+        if (*s <= 0x7f)
+        {                                                       /* ASCII */
+                len = 1;
+        }
+        else
+        {                                                       
+                if((*(s+1) >= 0x40 && *(s+1) <= 0x7e)|| (*(s+1) >= 0x80 && *(s+1) <= 0xfe))
+                        len = 2;
+                else if(*(s+1) >= 0x30 && *(s+1) <= 0x39)
+                        len = 4;
+                else
+                        len = 2;
+        }
+        return (len);
+}
+
+		
 pg_wchar_tbl pg_wchar_table[] = {
 	{pg_ascii2wchar_with_len, pg_ascii_mblen, 1},		/* 0; PG_SQL_ASCII	*/
 	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, 3},		/* 1; PG_EUC_JP */
@@ -544,6 +569,7 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{0, pg_gbk_mblen, 2},		/* 30; PG_GBK */
 	{0, pg_uhc_mblen, 2},		/* 31; PG_UHC */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 32; PG_WIN1250 */
+	{0, pg_gb18030_mblen, 2}       /* 33; PG_GB18030 */
 };
 
 /* returns the byte length of a word for mule internal code */

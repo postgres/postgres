@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.38 2002/03/05 05:52:50 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.39 2002/06/13 08:30:22 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -189,7 +189,7 @@ typedef enum pg_enc
 	PG_GBK,					/* GBK (Windows-936) */
 	PG_UHC,					/* UHC (Windows-949) */
 	PG_WIN1250,					/* windows-1250 */
-
+	PG_GB18030,					/* GB18030 */
 	_PG_LAST_ENCODING_			/* mark only */
 
 } pg_enc;

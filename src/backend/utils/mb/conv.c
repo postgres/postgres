@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.37 2002/03/06 06:10:26 momjian Exp $
+ * $Id: conv.c,v 1.38 2002/06/13 08:28:54 ishii Exp $
  *
  *
  */
@@ -48,6 +48,8 @@
 #include "Unicode/euc_jp_to_utf8.map"
 #include "Unicode/utf8_to_euc_cn.map"
 #include "Unicode/euc_cn_to_utf8.map"
+#include "Unicode/utf8_to_gb18030.map"
+#include "Unicode/gb18030_to_utf8.map"
 #include "Unicode/utf8_to_euc_kr.map"
 #include "Unicode/euc_kr_to_utf8.map"
 #include "Unicode/utf8_to_euc_tw.map"
@@ -510,6 +512,96 @@ mic2euc_cn(unsigned char *mic, unsigned char *p, int len)
 		else
 		{						/* should be ASCII */
 			*p++ = c1;
+		}
+	}
+	*p = '\0';
+}
+
+/*
+ * GB18030 ---> MIC
+ * Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
+ */
+static void
+gb180302mic(unsigned char *gb18030, unsigned char *p, int len)
+{
+	int			c1;
+	int			c2;
+
+	while (len > 0 && (c1 = *gb18030++))
+	{
+		if (c1 < 0x80)
+		{						/* should be ASCII */
+			len--;
+			*p++ = c1;
+		}
+		else if(c1 >= 0x81 && c1 <= 0xfe)
+		{
+			c2 = *gb18030++;
+			
+			if(c2 >= 0x30 && c2 <= 0x69){
+				len -= 4;
+				*p++ = c1;
+				*p++ = c2;
+				*p++ = *gb18030++;
+				*p++ = *gb18030++;
+				*p++ = *gb18030++;
+			}
+			else if ((c2 >=0x40 && c2 <= 0x7e) ||(c2 >=0x80 && c2 <= 0xfe)){
+				len -= 2;
+				*p++ = c1;
+				*p++ = c2;
+				*p++ = *gb18030++;
+			}
+			else{	/*throw the strange code*/
+				len--;
+			}
+		}
+	}
+	*p = '\0';
+}
+
+/*
+ * MIC ---> GB18030
+ * Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
+ */
+static void
+mic2gb18030(unsigned char *mic, unsigned char *p, int len)
+{
+	int			c1;
+	int			c2;
+
+	while (len > 0 && (c1 = *mic))
+	{
+		len -= pg_mic_mblen(mic++);
+
+		if (c1 <= 0x7f) /*ASCII*/
+		{					
+			*p++ = c1;
+		}
+		else if (c1 >= 0x81 && c1 <= 0xfe)
+		{		
+			c2 = *mic++;
+			
+			if((c2 >= 0x40 && c2 <= 0x7e) || (c2 >= 0x80 && c2 <= 0xfe)){
+				*p++ = c1;
+				*p++ = c2;
+			}
+			else if(c2 >= 0x30 && c2 <= 0x39){
+				*p++ = c1;
+				*p++ = c2;
+				*p++ = *mic++;
+				*p++ = *mic++;
+			}	
+			else{
+				mic--;
+				printBogusChar(&mic, &p);
+				mic--;
+				printBogusChar(&mic, &p);
+			}		
+		}
+		else{
+			mic--;
+			printBogusChar(&mic, &p);
 		}
 	}
 	*p = '\0';
@@ -1597,6 +1689,26 @@ euc_cn_to_utf(unsigned char *euc, unsigned char *utf, int len)
 }
 
 /*
+ * UTF-8 ---> GB18030
+ */
+static void
+utf_to_gb18030(unsigned char *utf, unsigned char *euc, int len)
+
+{
+	utf_to_local(utf, euc, ULmapGB18030,
+				 sizeof(ULmapGB18030) / sizeof(pg_utf_to_local), len);
+}
+
+/*
+ * GB18030 ---> UTF-8
+ */
+static void
+gb18030_to_utf(unsigned char *euc, unsigned char *utf, int len)
+{
+	local_to_utf(euc, utf, LUmapGB18030,
+		  sizeof(LUmapGB18030) / sizeof(pg_local_to_utf), PG_GB18030, len);
+}
+/*
  * UTF-8 ---> EUC_KR
  */
 static void
@@ -1935,6 +2047,9 @@ pg_enconv	pg_enconv_tbl[] =
 	{
 		PG_WIN1250, win12502mic, mic2win1250, win1250_to_utf, utf_to_win1250
 	},
+	{
+		PG_GB18030, gb180302mic, mic2gb18030, gb18030_to_utf, utf_to_gb18030
+	},
 };
 
 #else
@@ -2020,7 +2135,16 @@ pg_enconv	pg_enconv_tbl[] =
 		PG_BIG5, big52mic, mic2big5, 0, 0
 	},
 	{
+		PG_GBK, 0, 0, 0, 0
+	},
+	{
+		PG_UHC, 0, 0, 0, 0
+	},
+	{
 		PG_WIN1250, win12502mic, mic2win1250, 0, 0
+	},
+	{
+		PG_GB18030, gb180302mic, mic2gb18030, 0, 0
 	},
 };
 
