@@ -70,9 +70,10 @@ operating system's utility indent.
 
 2) What books are good for developers?
 
-I have two good books, An Introduction to Database Systems, by C.J. Date,
-Addison, Wesley and A Guide to the SQL Standard, by C.J. Date, et. al,
-Addison, Wesley.
+I have three good books, An Introduction to Database Systems, by C.J. Date,
+Addison, Wesley, A Guide to the SQL Standard, by C.J. Date, et. al,
+Addison, Wesley, and Transaction Processing:  Concepts and Techniques,
+by Jim Gray and Andreas Reuter, Morgan, Kaufmann.
 
 3) Why do we use palloc() and pfree() to allocate memory?
 
