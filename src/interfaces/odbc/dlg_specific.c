@@ -243,18 +243,17 @@ driver_optionsProc(HWND hdlg,
 		case WM_INITDIALOG:
 			SetWindowLong(hdlg, DWL_USER, lParam);	/* save for OK etc */
 			ci = (ConnInfo *) lParam;
+			CheckDlgButton(hdlg, DRV_OR_DSN, 0);
 			if (ci && ci->dsn && ci->dsn[0])
 			{
-				SetWindowText(hdlg, "Advanced Options (Common)");
-				driver_optionsDraw(hdlg, NULL, 0, TRUE);
+				SetWindowText(hdlg, "Advanced Options (per DSN)");
 			}
 			else
 			{
-				CheckDlgButton(hdlg, DRV_OR_DSN, 1);
 				SetWindowText(hdlg, "Advanced Options (Connection)");
 				ShowWindow(GetDlgItem(hdlg, DRV_OR_DSN), SW_HIDE);
-				driver_optionsDraw(hdlg, ci, 1, FALSE);
 			}
+			driver_optionsDraw(hdlg, ci, 1, FALSE);
 			break;
 
 		case WM_COMMAND:
@@ -262,7 +261,7 @@ driver_optionsProc(HWND hdlg,
 			{
 				case IDOK:
 					ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
-					driver_options_update(hdlg, IsDlgButtonChecked(hdlg, DRV_OR_DSN) ? ci : NULL,
+					driver_options_update(hdlg, IsDlgButtonChecked(hdlg, DRV_OR_DSN) ? NULL : ci,
 						ci && ci->dsn && ci->dsn[0]);
 
 				case IDCANCEL:
@@ -271,12 +270,12 @@ driver_optionsProc(HWND hdlg,
 
 				case IDDEFAULTS:
 					if (IsDlgButtonChecked(hdlg, DRV_OR_DSN))
+						driver_optionsDraw(hdlg, NULL, 2, TRUE);
+					else
 					{
 						ConnInfo   *ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
 						driver_optionsDraw(hdlg, ci, 0, FALSE);
 					}
-					else
-						driver_optionsDraw(hdlg, NULL, 2, TRUE);
 					break;
 
 				case DRV_OR_DSN:
@@ -285,14 +284,14 @@ driver_optionsProc(HWND hdlg,
 						mylog("DRV_OR_DSN clicked\n");
 						if (IsDlgButtonChecked(hdlg, DRV_OR_DSN))
 						{
-							ConnInfo   *ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
-							SetWindowText(hdlg, "Advanced Options (per DSN)");
-							driver_optionsDraw(hdlg, ci, ci ? 1 : 0, ci == NULL);
+							SetWindowText(hdlg, "Advanced Options (Common)");
+							driver_optionsDraw(hdlg, NULL, 0, TRUE);
 						}
 						else
 						{
-							SetWindowText(hdlg, "Advanced Options (Common)");
-							driver_optionsDraw(hdlg, NULL, 0, TRUE);
+							ConnInfo   *ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
+							SetWindowText(hdlg, "Advanced Options (per DSN)");
+							driver_optionsDraw(hdlg, ci, ci ? 1 : 0, ci == NULL);
 						}
 					}
 					break;
