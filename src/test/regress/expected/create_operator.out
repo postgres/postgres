@@ -8,7 +8,8 @@ QUERY: CREATE OPERATOR <% (
    leftarg = point,
    rightarg = widget,
    procedure = pt_in_widget,
-   commutator = >=%
+   commutator = >% ,
+   negator = >=%
 );
 QUERY: CREATE OPERATOR @#@ (
    rightarg = int4,		
