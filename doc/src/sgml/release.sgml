@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.319 2005/01/15 05:59:44 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp $
 -->
 
 <appendix id="release">
@@ -648,14 +648,18 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.319 2005/01/15 05:59:44 momjian
 
     <listitem>
      <para>
-      Improve optimizer row estimates for non-<command>VACUUM</command>ed
-      tables (Tom)
+      Improve optimizer rowcount estimates (Tom)
      </para>
      <para>
-      The system now uses the number of blocks in the table to estimate the 
-      number of rows in the table if it has never been 
-      <command>VACUUM</command>ed or <command>ANALYZE</command>d.  
-      Previously a fixed value was used in such cases.
+      Formerly the planner estimated table sizes using the values seen
+      by the last <command>VACUUM</command> or <command>ANALYZE</command>,
+      both as to physical table size (number of pages) and number of rows.
+      Now, the physical table size is obtained directly from the kernel,
+      and the number of rows is estimated by multiplying the table size
+      by the row density (rows per page) seen by the last
+      <command>VACUUM</command> or <command>ANALYZE</command>.  This should
+      produce more reliable estimates in cases where the table size has
+      changed significantly since the last housekeeping command.
      </para>
     </listitem>
 
@@ -1744,10 +1748,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.319 2005/01/15 05:59:44 momjian
 
     <listitem>
      <para>
-      Allow PL/pgSQL to understand <command>ELSEIF</> (Neil)
+      Accept <command>ELSEIF</> in PL/pgSQL (Neil)
      </para>
      <para>
-      Previously PL/pgSQL only understood <command>ELSIF</>.
+      Previously PL/pgSQL only allowed <command>ELSIF</>, but many people
+      are accustomed to spelling this keyword <command>ELSEIF</>.
      </para>
     </listitem>
 
