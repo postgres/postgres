@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.5 1996/07/23 03:35:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.6 1996/07/25 06:21:11 julian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -761,7 +761,7 @@ PQdisplayTuples(PGresult *res,
  * PQprintTuples()
  *
  * This is the routine that prints out the tuples that
- *  are returned from the backend.
+ * are returned from the backend.
  * Right now all columns are of fixed length,
  * this should be changed to allow wrap around for
  * tuples values that are wider.
