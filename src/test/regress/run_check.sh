@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.17 2000/05/18 15:58:43 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.18 2000/05/18 16:11:39 momjian Exp $
 
 # ----------
 # Check call syntax
@@ -67,6 +67,8 @@ else
     HOSTLOC=""
     USETCPIP=""
 fi
+
+unset PGHOST
 
 # ----------
 # Determine if echo -n works
