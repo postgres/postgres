@@ -47,7 +47,11 @@ ECPGstruct_member_dup(struct ECPGstruct_member * rm)
 				type = ECPGmake_struct_type(rm->type->u.members, rm->type->type, rm->type->struct_sizeof);
 				break;
 			case ECPGt_array:
-				type = ECPGmake_array_type(ECPGmake_simple_type(rm->type->u.element->type, rm->type->u.element->size), rm->type->size);
+				/* if this array does contain a struct again, we have to create the struct too */
+				if (rm->type->u.element->type == ECPGt_struct)
+					type = ECPGmake_struct_type(rm->type->u.element->u.members, rm->type->u.element->type, rm->type->u.element->struct_sizeof);
+				else
+					type = ECPGmake_array_type(ECPGmake_simple_type(rm->type->u.element->type, rm->type->u.element->size), rm->type->size);
 				break;
 			default:
 				type = ECPGmake_simple_type(rm->type->type, rm->type->size);

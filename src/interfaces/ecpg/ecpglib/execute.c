@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.26.2.3 2003/12/17 15:31:51 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.26.2.4 2004/01/28 09:55:53 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -190,7 +190,7 @@ free_variable(struct variable * var)
 {
 	struct variable *var_next;
 
-	if (var == (struct variable *) NULL)
+	if (var == NULL)
 		return;
 	var_next = var->next;
 	ECPGfree(var);
@@ -206,7 +206,7 @@ free_variable(struct variable * var)
 static void
 free_statement(struct statement * stmt)
 {
-	if (stmt == (struct statement *) NULL)
+	if (stmt == NULL)
 		return;
 	free_variable(stmt->inlist);
 	free_variable(stmt->outlist);
@@ -333,7 +333,7 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 	}
 	PQclear(query);
 	ECPGtypeinfocache_push(&(stmt->connection->cache_head), type, isarray, stmt->lineno);
-	ECPGlog("ECPGexecute line %d: TYPE database: %d C: %d array: %d\n", stmt->lineno, type, var->type, isarray);
+	ECPGlog("ECPGis_type_an_array line %d: TYPE database: %d C: %d array: %d\n", stmt->lineno, type, var->type, isarray);
 	return isarray;
 }
 
@@ -356,7 +356,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 		 */
 		if ((var->arrsize > 0 && ntuples > var->arrsize) || (var->ind_arrsize > 0 && ntuples > var->ind_arrsize))
 		{
-			ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d don't fit into array of %d\n",
+			ECPGlog("ECPGstore_result line %d: Incorrect number of matches: %d don't fit into array of %d\n",
 					stmt->lineno, ntuples, var->arrsize);
 			ECPGraise(stmt->lineno, INFORMIX_MODE(stmt->compat)?ECPG_INFORMIX_SUBSELECT_NOT_ONE:ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
 			return false;
