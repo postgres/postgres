@@ -11,8 +11,9 @@ esac
 
 THREAD_SUPPORT=yes
 NEED_REENTRANT_FUNCS=yes	# 5.6 2003-09-13
-if test "$GCC" != yes 
-then 	THREAD_CPPFLAGS="-mt"
+if test "$GCC" = yes 
+then	THREAD_LIBS="-pthread"
+else	THREAD_CPPFLAGS="-mt"
+	THREAD_LIBS="-lpthread"
 fi
-THREAD_LIBS="-pthread"
 
