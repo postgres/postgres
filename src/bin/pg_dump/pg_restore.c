@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.35 2002/07/04 03:04:55 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.36 2002/07/11 01:57:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,7 +384,8 @@ usage(const char *progname)
 		"  -f, --file=FILENAME      output file name\n"
 		"  -F, --format={c|t}       specify backup file format\n"
 		"  -h, --host=HOSTNAME      server host name\n"
-		"  -i, --index=NAME         restore named index\n"
+		"  -i, --ignore-version     proceed even when server version mismatches\n"
+		"  -I, --index=NAME         restore named index\n"
 		"  -l, --list               print summarized TOC of the archive\n"
 		"  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 		"                           output from this file\n"
@@ -422,7 +423,8 @@ usage(const char *progname)
 		"  -f FILENAME              output file name\n"
 		"  -F {c|t}                 specify backup file format\n"
 		"  -h HOSTNAME              server host name\n"
-		"  -i NAME                  restore named index\n"
+		"  -i                       proceed even when server version mismatches\n"
+		"  -I NAME                  restore named index\n"
 		"  -l                       print summarized TOC of the archive\n"
 		"  -L FILENAME              use specified table of contents for ordering\n"
 		"                           output from this file\n"
