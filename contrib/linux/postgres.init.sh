@@ -11,7 +11,6 @@
 # and then set USE_SYSLOG to "yes" below
 #
 #PGBIN="/opt/postgres/current/bin"	# not used
-
 PGACCOUNT="postgres"		# the postgres account (you called it something else?)
 POSTMASTER="postmaster"		# this probably won't change
 
@@ -19,7 +18,8 @@ USE_SYSLOG="yes"		# "yes" to enable syslog, "no" to go to /tmp/postgres.log
 FACILITY="local5"		# can assign local0-local7 as the facility for logging
 PGLOGFILE="/tmp/postgres.log"	# only used if syslog is disabled
 
-PGOPTS="-i -B 2048"
+PGOPTS="-B 256"
+#PGOPTS="-i -B 256"	# -i to enable TCP/IP rather than Unix socket
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -39,33 +39,31 @@ fi
 # See how we were called.
 case "$1" in
   start)
-  	if [ -f ${PGLOGFILE} ]
+	if [ -f ${PGLOGFILE} ]
 	then
 		mv ${PGLOGFILE} ${PGLOGFILE}.old
 	fi
 	echo -n "Starting postgres: "
 # force full login to get path names
+# my postgres runs CSH/TCSH so use proper syntax in redirection...
 	if [ ${USE_SYSLOG} = "yes" ]; then
-		su - ${PGACCOUNT} -c "(${POSTMASTER} ${PGOPTS} 2>&1 | logger -p ${FACILITY}.notice) &" > /dev/null 2>&1 &
+		su - ${PGACCOUNT} -c "(${POSTMASTER} ${PGOPTS} |& logger -p ${FACILITY}.notice) &" > /dev/null&
 	else
-		su - ${PGACCOUNT} -c "${POSTMASTER} ${PGOPTS} 2>>&1 ${PGLOGFILE} &" > /dev/null 2>&1 &
+		su - ${PGACCOUNT} -c "${POSTMASTER} ${PGOPTS} >>&! ${PGLOGFILE} &" > /dev/null&
 	fi
 	sleep 5
 	pid=`pidof ${POSTMASTER}`
 	echo -n "${POSTMASTER} [$pid]"
-	sleep 2
 #	touch /var/lock/subsys/${POSTMASTER}
-# use the name of the symlink
-	touch /var/lock/subsys/postgres
 	echo
 	;;
   stop)
-  	echo -n "Stopping postgres: "
+	echo -n "Stopping postgres: "
 	pid=`pidof ${POSTMASTER}`
 	if [ "$pid" != "" ] ; then
 		echo -n "${POSTMASTER} [$pid]"
 		kill -TERM $pid
-		sleep 3
+		sleep 1
 	fi
 	echo
 	;;
