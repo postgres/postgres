@@ -1,7 +1,7 @@
-all: test1 test2 test3 test4 perftest dyntest
+all: test1 test2 test3 test4 perftest dyntest dyntest2
 
 #LDFLAGS=-g -I /usr/local/pgsql/include -L/usr/local/pgsql/lib -lecpg -lpq -lcrypt
-LDFLAGS=-g -I../include -I/usr/include/postgresql  -L/usr/lib/postgresql -L../lib -lecpg -lpq -lcrypt
+LDFLAGS=-g -I../include -I/usr/include/postgresql  -L../lib -L/usr/lib/postgresql -lecpg -lpq -lcrypt 
 #LDFLAGS=-g -I/usr/include/postgresql -lecpg -lpq -lcrypt
 
 #ECPG=/usr/local/pgsql/bin/ecpg
@@ -16,9 +16,10 @@ test3: test3.c
 test4: test4.c
 perftest: perftest.c
 dyntest: dyntest.c
+dyntest2: dyntest2.c
 
 .pgc.c:
 	$(ECPG) $? 
 
 clean:
-	-/bin/rm test1 test2 test3 test4 perftest *.c log dyntest
+	-/bin/rm test1 test2 test3 test4 perftest *.c log dyntest dyntest2

@@ -1,0 +1,141 @@
+/* dynamic SQL test program
+ *
+ * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
+ *
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Attic/dyntest2.pgc,v 1.1 2000/03/03 13:24:06 meskes Exp $
+ */
+
+#include <stdio.h>
+
+exec sql include sql3types;
+exec sql include sqlca;
+
+void error()
+{
+   printf("\n#%d:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   exit(1);
+}
+
+int main(int argc,char **argv)
+{
+exec sql begin declare section;
+  int COUNT;
+  int INTVAR, BOOLVAR;
+  int INDEX;
+  int INDICATOR;
+  int TYPE,LENGTH,OCTET_LENGTH,PRECISION,SCALE,NULLABLE,RETURNED_OCTET_LENGTH;
+  int DATETIME_INTERVAL_CODE;
+  char NAME[120];
+  char STRINGVAR[1024];
+  float FLOATVAR;
+  double DOUBLEVAR;
+  char QUERY[1024];
+exec sql end declare section;
+  int done=0;
+  FILE *dbgs;
+
+  exec sql var BOOLVAR is bool;
+
+  if ((dbgs = fopen("log", "w")) != NULL)
+	ECPGdebug(1, dbgs);
+  
+  snprintf(QUERY,sizeof QUERY,"select * from %s",argc>1?argv[1]:"pg_tables");
+
+  exec sql whenever sqlerror do error();
+  
+  exec sql allocate descriptor MYDESC;
+  
+  exec sql connect to mm;
+  
+  exec sql prepare MYQUERY from :QUERY;
+  exec sql declare MYCURS cursor for MYQUERY;
+  
+  exec sql open MYCURS;
+  
+  while (1)
+  {  exec sql fetch in MYCURS into sql descriptor MYDESC;
+     
+     if (sqlca.sqlcode) break;
+     
+     exec sql get descriptor MYDESC :COUNT = count;
+     if (!done) 
+     {  printf("Count %d\n",COUNT);
+        done=1;
+     } 
+     
+     for (INDEX=1;INDEX<=COUNT;++INDEX)
+     {  exec sql get descriptor MYDESC value :INDEX 
+     		:TYPE = type,
+     		:LENGTH = length, :OCTET_LENGTH=octet_length,
+     		:RETURNED_OCTET_LENGTH=returned_octet_length,
+     		:PRECISION = precision, :SCALE=scale,
+     		:NULLABLE=nullable, :NAME=name,
+     		:INDICATOR=indicator;
+     	printf("%2d\t%s (type: %d length: %d precision: %d scale: %d
+		\toctet_length: %d returned_octet_length: %d nullable: %d)\n\t= "
+     			,INDEX,NAME,TYPE,LENGTH,PRECISION,SCALE
+     			,OCTET_LENGTH,RETURNED_OCTET_LENGTH,NULLABLE);
+     	if (INDICATOR==-1) printf("NULL\n");
+        else switch (TYPE)
+     	{
+	  case SQL3_BOOLEAN: 
+     	        exec sql get descriptor MYDESC value :INDEX :BOOLVAR=data;
+     		printf("%s\n",BOOLVAR ? "true":"false");
+     		break;
+     	   case SQL3_NUMERIC:
+     	   case SQL3_DECIMAL:
+     	        if (SCALE==0) 
+     	        {  exec sql get descriptor MYDESC value :INDEX :INTVAR=data;
+     	           printf("%d\n",INTVAR);
+     	        }
+     	        else
+     	        {  exec sql get descriptor MYDESC value :INDEX :FLOATVAR=data;
+     	           printf("%.*f\n",SCALE,FLOATVAR);
+     	        }
+     	        break;
+     	   case SQL3_INTEGER:
+     	   case SQL3_SMALLINT: 
+     	        exec sql get descriptor MYDESC value :INDEX :INTVAR=data;
+     	        printf("%d\n",INTVAR);
+     	        break;
+     	   case SQL3_FLOAT:
+     	   case SQL3_REAL:
+     	        exec sql get descriptor MYDESC value :INDEX :FLOATVAR=data;
+     	        printf("%.*f\n",PRECISION,FLOATVAR);
+     	        break;
+     	   case SQL3_DOUBLE_PRECISION:
+     	        exec sql get descriptor MYDESC value :INDEX :DOUBLEVAR=data;
+     	        printf("%.*f\n",PRECISION,DOUBLEVAR);
+     	        break;
+     	   case SQL3_DATE_TIME_TIMESTAMP:
+     	   	exec sql get descriptor MYDESC value :INDEX 
+     	   		:DATETIME_INTERVAL_CODE=datetime_interval_code,
+     	   		:STRINGVAR=data;
+     	        printf("%d \"%s\"\n",DATETIME_INTERVAL_CODE,STRINGVAR);
+     	        break;
+     	   case SQL3_INTERVAL:
+     	        exec sql get descriptor MYDESC value :INDEX :STRINGVAR=data;
+     	        printf("\"%s\"\n",STRINGVAR);
+     	        break;
+     	   case SQL3_CHARACTER:
+     	   case SQL3_CHARACTER_VARYING:
+     	        exec sql get descriptor MYDESC value :INDEX :STRINGVAR=data;
+     	        printf("\"%s\"\n",STRINGVAR);
+     	        break;
+     	   default:
+     	        exec sql get descriptor MYDESC value :INDEX :STRINGVAR=data;
+     	        printf("<\"%s\">\n",STRINGVAR);
+     	        break;
+     	}
+     }
+  }
+  
+  exec sql close MYCURS;
+  
+  exec sql deallocate descriptor MYDESC;
+
+  if (dbgs != NULL)
+	fclose(dbgs);
+
+  return 0;
+}
