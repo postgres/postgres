@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.58 2005/03/13 03:02:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.59 2005/03/13 03:44:51 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -469,7 +469,7 @@ initdb --locale=sv_SE
         <row>
          <entry><literal>SQL_ASCII</literal></entry>
          <entry><acronym>ASCII</acronym></entry>
-         <entry></entry>
+         <entry>English</entry>
          <entry></entry>
         </row>
         <row>
@@ -480,8 +480,8 @@ initdb --locale=sv_SE
         </row>
         <row>
          <entry><literal>UTF8</literal></entry>
-         <entry>UTF-8 (Unicode, 8-bit)</entry>
-         <entry></entry>
+         <entry>Unicode, 8-bit</entry>
+         <entry><emphasis>all</></entry>
          <entry>Unicode</entry>
         </row>
         <row>
