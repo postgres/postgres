@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.31 1997/09/20 16:29:38 thomas Exp $
+ * $Id: pg_proc.h,v 1.32 1997/10/25 05:29:48 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -180,6 +180,10 @@ DATA(insert OID = 105 (  eqjoinsel		   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 1
 DATA(insert OID = 106 (  neqjoinsel		   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	foo bar ));
 DATA(insert OID = 107 (  intltjoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	foo bar ));
 DATA(insert OID = 108 (  intgtjoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	foo bar ));
+
+DATA(insert OID = 112 (  int4_text		   PGUID 11 f t f 1 f  25 "23" 100 0 0 100	foo bar ));
+DATA(insert OID = 113 (  int2_text		   PGUID 11 f t f 1 f  25 "21" 100 0 0 100	foo bar ));
+DATA(insert OID = 114 (  oid_text		   PGUID 11 f t f 1 f  25 "26" 100 0 0 100	foo bar ));
 
 DATA(insert OID = 115 (  box_above		   PGUID 11 f t f 2 f  16 "603 603" 100 1 0 100  foo bar ));
 DATA(insert OID = 116 (  box_below		   PGUID 11 f t f 2 f  16 "603 603" 100 1 0 100  foo bar ));
@@ -625,6 +629,10 @@ DATA(insert OID = 789 (  intervalge		   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 
 
 /* OIDS 800 - 899 */
 
+DATA(insert OID = 817 (  text_oid		   PGUID 11 f t f 1 f 26 "25" 100 0 0 100  foo bar));
+DATA(insert OID = 818 (  text_int2		   PGUID 11 f t f 1 f 21 "25" 100 0 0 100  foo bar));
+DATA(insert OID = 819 (  text_int4		   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar));
+
 DATA(insert OID = 820 (  oidint2in		   PGUID 11 f t f 1 f 810 "0" 100 0 0 100  foo bar));
 DATA(insert OID = 821 (  oidint2out		   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar));
 DATA(insert OID = 822 (  oidint2lt		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100	foo bar));
@@ -686,6 +694,7 @@ DATA(insert OID =  899 (  cashsmaller	   PGUID 11 f t f 2 f 790 "790 790" 100 0 
 DATA(insert OID =  919 (  flt8_mul_cash		   PGUID 11 f t f 2 f 790 "701 790" 100 0 0 100  foo bar ));
 
 /* OIDS 900 - 999 */
+
 DATA(insert OID = 920 (  oidint4in		   PGUID 11 f t f 1 f 910 "0" 100 0 0 100  foo bar));
 DATA(insert OID = 921 (  oidint4out		   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar));
 DATA(insert OID = 922 (  oidint4lt		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100	foo bar));
@@ -857,8 +866,8 @@ DATA(insert OID = 1172 (  timespan_part    PGUID 11 f t f 2 f  701 "25 1186" 100
 
 DATA(insert OID = 1173 (  abstime_datetime	 PGUID 11 f t f 1 f 1184  "702" 100 0 0 100  foo bar ));
 DATA(insert OID = 1174 (  date_datetime		 PGUID 11 f t f 1 f 1184 "1082" 100 0 0 100  foo bar ));
-DATA(insert OID = 1175 (  timestamp_datetime PGUID 11 f t f 1 f 1184 "1296" 100 0 0 100  foo bar ));
-DATA(insert OID = 1176 (  datetime_datetime  PGUID 11 f t f 2 f 1184 "1082 1083" 100 0 0 100  foo bar ));
+DATA(insert OID = 1175 (  stamp_datetime     PGUID 11 f t f 1 f 1184 "1296" 100 0 0 100  foo bar ));
+DATA(insert OID = 1176 (  datet_datetime     PGUID 11 f t f 2 f 1184 "1082 1083" 100 0 0 100  foo bar ));
 DATA(insert OID = 1177 (  reltime_timespan	 PGUID 11 f t f 1 f 1186  "703" 100 0 0 100  foo bar ));
 DATA(insert OID = 1178 (  datetime_date		 PGUID 11 f t f 1 f 1082 "1184" 100 0 0 100  foo bar ));
 DATA(insert OID = 1179 (  abstime_date		 PGUID 11 f t f 1 f 1082  "702" 100 0 0 100  foo bar ));
@@ -898,32 +907,39 @@ DATA(insert OID = 1240 (  nameicregexeq    PGUID 11 f t f 2 f 16 "19 25" 100 0 0
 DATA(insert OID = 1241 (  nameicregexne    PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 1297 (  timestamp_in	   PGUID 11 f t f 1 f 1296 "0" 100 0 0 100	foo bar ));
-DATA(insert OID = 1298 (  timestamp_out    PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 1298 (  timestamp_out    PGUID 11 f t f 1 f   23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 1299 (  now			   PGUID 11 f t f 0 f 1296 "0" 100 0 0 100	foo bar ));
 
 /* OIDS 1300 - 1399 */
 
-DATA(insert OID = 1306 (  timestampeq	   PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
-DATA(insert OID = 1307 (  timestampne	   PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
-DATA(insert OID = 1308 (  timestamplt	   PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
-DATA(insert OID = 1309 (  timestampgt	   PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
-DATA(insert OID = 1310 (  timestample	   PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
-DATA(insert OID = 1311 (  timestampge	   PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
-/* reserve OIDs 1312-1319 for additional date/time conversion routines! tgl 97/04/01 */
-DATA(insert OID = 1314 (  datetime_cmp	   PGUID 11 f t f 2 f 23 "1184 1184" 100 0 0 100  foo bar ));
-DATA(insert OID = 1315 (  timespan_cmp	   PGUID 11 f t f 2 f 23 "1186 1186" 100 0 0 100  foo bar ));
+DATA(insert OID = 1306 (  timestampeq	   PGUID 11 f t f 2 f   16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID = 1307 (  timestampne	   PGUID 11 f t f 2 f   16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID = 1308 (  timestamplt	   PGUID 11 f t f 2 f   16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID = 1309 (  timestampgt	   PGUID 11 f t f 2 f   16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID = 1310 (  timestample	   PGUID 11 f t f 2 f   16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID = 1311 (  timestampge	   PGUID 11 f t f 2 f   16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID = 1314 (  datetime_cmp	   PGUID 11 f t f 2 f   23 "1184 1184" 100 0 0 100  foo bar ));
+DATA(insert OID = 1315 (  timespan_cmp	   PGUID 11 f t f 2 f   23 "1186 1186" 100 0 0 100  foo bar ));
+DATA(insert OID = 1316 (  datetime_time	   PGUID 11 f t f 1 f 1083 "1184" 100 0 0 100  foo bar ));
+DATA(insert OID = 1318 (  datetime_stamp   PGUID 11 f t f 1 f 1296 "1184" 100 0 0 100  foo bar ));
+DATA(insert OID = 1326 (  timespan_div	   PGUID 11 f t f 2 f 1186 "1186 701" 100 0 0 100	foo bar ));
 
 DATA(insert OID = 1339 (  date_zone    PGUID 14 f t f 2 f	25 "25 1184" 100 0 0 100  "select datetime_zone($1, $2)" - ));
 DATA(insert OID = 1340 (  text		   PGUID 14 f t f 1 f	25 "1184" 100 0 0 100  "select datetime_text($1)" - ));
 DATA(insert OID = 1341 (  text		   PGUID 14 f t f 1 f	25 "1186" 100 0 0 100  "select timespan_text($1)" - ));
-/* reserve OIDs 1339-1349 for additional date/time conversion routines! tgl 97/04/01 */
+DATA(insert OID = 1342 (  text		   PGUID 14 f t f 1 f	25 "23" 100 0 0 100  "select int4_text($1)" - ));
+DATA(insert OID = 1343 (  text		   PGUID 14 f t f 1 f	25 "21" 100 0 0 100  "select int2_text($1)" - ));
+DATA(insert OID = 1344 (  text		   PGUID 14 f t f 1 f	25 "26" 100 0 0 100  "select oid_text($1)" - ));
+DATA(insert OID = 1345 (  oid		   PGUID 14 f t f 1 f	26 "25" 100 0 0 100  "select text_oid($1)" - ));
+DATA(insert OID = 1346 (  int2		   PGUID 14 f t f 1 f	21 "25" 100 0 0 100  "select text_int2($1)" - ));
+DATA(insert OID = 1347 (  int4		   PGUID 14 f t f 1 f	23 "25" 100 0 0 100  "select text_int4($1)" - ));
 
 DATA(insert OID = 1350 (  datetime	   PGUID 14 f t f 1 f 1184 "1184" 100 0 0 100  "select $1" - ));
 DATA(insert OID = 1351 (  datetime	   PGUID 14 f t f 1 f 1184	 "25" 100 0 0 100  "select text_datetime($1)" - ));
 DATA(insert OID = 1352 (  datetime	   PGUID 14 f t f 1 f 1184	"702" 100 0 0 100  "select abstime_datetime($1)" - ));
 DATA(insert OID = 1353 (  datetime	   PGUID 14 f t f 1 f 1184 "1082" 100 0 0 100  "select date_datetime($1)" - ));
-DATA(insert OID = 1354 (  datetime	   PGUID 14 f t f 1 f 1184 "1296" 100 0 0 100  "select timestamp_datetime($1)" - ));
-DATA(insert OID = 1355 (  datetime	   PGUID 14 f t f 2 f 1184 "1082 1083" 100 0 0 100	"select datetime_datetime($1, $2)" - ));
+DATA(insert OID = 1354 (  datetime	   PGUID 14 f t f 1 f 1184 "1296" 100 0 0 100  "select stamp_datetime($1)" - ));
+DATA(insert OID = 1355 (  datetime	   PGUID 14 f t f 2 f 1184 "1082 1083" 100 0 0 100	"select datet_datetime($1, $2)" - ));
 DATA(insert OID = 1356 (  timespan	   PGUID 14 f t f 1 f 1186 "1186" 100 0 0 100  "select $1" - ));
 DATA(insert OID = 1357 (  timespan	   PGUID 14 f t f 1 f 1186	"703" 100 0 0 100  "select reltime_timespan($1)" - ));
 DATA(insert OID = 1358 (  timespan	   PGUID 14 f t f 1 f 1186 "1083" 100 0 0 100  "select time_timespan($1)" - ));
@@ -938,7 +954,7 @@ DATA(insert OID = 1366 (  abstime	   PGUID 14 f t f 1 f  702 "1184" 100 0 0 100 
 DATA(insert OID = 1367 (  reltime	   PGUID 14 f t f 1 f  703	"703" 100 0 0 100  "select $1" - ));
 DATA(insert OID = 1368 (  reltime	   PGUID 14 f t f 1 f  703 "1186" 100 0 0 100  "select timespan_reltime($1)" - ));
 DATA(insert OID = 1369 (  timestamp    PGUID 14 f t f 1 f 1296 "1296" 100 0 0 100  "select $1" - ));
-DATA(insert OID = 1370 (  timestamp    PGUID 14 f t f 1 f 1296 "1184" 100 0 0 100  "select datetime_timestamp($1)" - ));
+DATA(insert OID = 1370 (  timestamp    PGUID 14 f t f 1 f 1296 "1184" 100 0 0 100  "select datetime_stamp($1)" - ));
 
 DATA(insert OID = 1380 (  date_part    PGUID 14 f t f 2 f  701 "25 1184" 100 0 0 100  "select datetime_part($1, $2)" - ));
 DATA(insert OID = 1381 (  date_part    PGUID 14 f t f 2 f  701 "25 1186" 100 0 0 100  "select timespan_part($1, $2)" - ));
@@ -1112,8 +1128,6 @@ DATA(insert OID =  882 (  rtrim		   PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "sel
 DATA(insert OID =  883 (  substr	   PGUID 14 f t f 2 f 25 "25 23" 100 0 0 100  "select substr($1, $2, 10000)" - ));
 DATA(insert OID =  884 (  btrim		   PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
 DATA(insert OID =  885 (  btrim		   PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "select btrim($1, \' \')" - ));
-/* XXX Help, where should I go to  */
-DATA(insert OID =  1586 (  timespan_div PGUID 11 f t f 2 f 1186 "1186 701" 100 0 0 100	foo bar ));
 
 /* SEQUENCEs nextval & currval functions */
 DATA(insert OID =  1317 (  nextval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));
