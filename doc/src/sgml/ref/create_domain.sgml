@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.5 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.6 2002/09/20 03:39:15 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -108,9 +108,7 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
       <term><literal>NOT NULL</></term>
       <listitem>
        <para>
-        Values of this domain are not allowed to be NULL.  This is
-        equivalent to the column constraint <literal>CHECK (<replaceable
-        class="PARAMETER">column</replaceable> NOT NULL)</literal>.
+        Values of this domain are not allowed to be NULL.  
        </para>
       </listitem>
      </varlistentry>
