@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.8 2000/04/12 17:15:49 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.8.2.1 2000/10/19 18:39:03 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -1513,6 +1513,8 @@ dch_global(int arg, char *inout, int suf, int flag, FormatNode *node)
 	return -1;
 }
 
+#define AMPM_ERROR      elog(ERROR, "to_timestamp(): bad AM/PM string")
+
 /* ----------
  * Master function of TIME for:
  *					  TO_CHAR	- write (inout) formated string
@@ -1531,14 +1533,28 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 		case DCH_P_M:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_hour > 13 ? P_M_STR : A_M_STR));
+				strcpy(inout, ((tm->tm_hour > 11 
+					&& tm->tm_hour < 24) ? P_M_STR : A_M_STR));
 				return 3;
 
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, P_M_STR, 4) == 0 && tm->tm_hour < 13)
-					tm->tm_hour += 12;
+				if (tm->tm_hour < 1 || tm->tm_hour > 12) 
+					elog(ERROR, "to_timestamp(): AM/PM hour must be between 1 and 12"); 
+		
+				if (strncmp(inout, P_M_STR, 4) == 0)
+				{
+					if (tm->tm_hour < 12)
+						tm->tm_hour += 12;
+				} 
+				else if (strncmp(inout, A_M_STR, 4) == 0)
+				{
+					if (tm->tm_hour == 12)
+						tm->tm_hour = 0;
+				}
+				else
+					AMPM_ERROR;
 				return 3;
 			}
 
@@ -1546,14 +1562,28 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 		case DCH_PM:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_hour > 13 ? PM_STR : AM_STR));
+				strcpy(inout, ((tm->tm_hour > 11 
+					&& tm->tm_hour < 24) ? PM_STR : AM_STR));
 				return 1;
 
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, PM_STR, 2) == 0 && tm->tm_hour < 13)
-					tm->tm_hour += 12;
+				if (tm->tm_hour < 1 || tm->tm_hour > 12) 
+					elog(ERROR, "to_timestamp(): AM/PM hour must be between 1 and 12"); 
+		
+				if (strncmp(inout, PM_STR, 4) == 0)
+				{
+					if (tm->tm_hour < 12)
+						tm->tm_hour += 12;
+				} 
+				else if (strncmp(inout, AM_STR, 4) == 0)
+				{
+					if (tm->tm_hour == 12)
+						tm->tm_hour = 0;
+				}
+				else
+					AMPM_ERROR;
 				return 1;
 			}
 
@@ -1561,14 +1591,28 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 		case DCH_p_m:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_hour > 13 ? p_m_STR : a_m_STR));
+				strcpy(inout, ((tm->tm_hour > 11 
+					&& tm->tm_hour < 24) ? p_m_STR : a_m_STR));
 				return 3;
 
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, p_m_STR, 4) == 0 && tm->tm_hour < 13)
-					tm->tm_hour += 12;
+				if (tm->tm_hour < 1 || tm->tm_hour > 12) 
+					elog(ERROR, "to_timestamp(): AM/PM hour must be between 1 and 12"); 
+		
+				if (strncmp(inout, p_m_STR, 4) == 0)
+				{
+					if (tm->tm_hour < 12)
+						tm->tm_hour += 12;
+				} 
+				else if (strncmp(inout, a_m_STR, 4) == 0)
+				{
+					if (tm->tm_hour == 12)
+						tm->tm_hour = 0;
+				}
+				else
+					AMPM_ERROR;
 				return 3;
 			}
 
@@ -1576,14 +1620,28 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 		case DCH_pm:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_hour > 13 ? pm_STR : am_STR));
+				strcpy(inout, ((tm->tm_hour > 11 
+					&& tm->tm_hour < 24) ? pm_STR : am_STR));
 				return 1;
 
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, pm_STR, 2) == 0 && tm->tm_hour < 13)
-					tm->tm_hour += 12;
+				if (tm->tm_hour < 1 || tm->tm_hour > 12) 
+					elog(ERROR, "to_timestamp(): AM/PM hour must be between 1 and 12"); 
+		
+				if (strncmp(inout, pm_STR, 4) == 0)
+				{
+					if (tm->tm_hour < 12)
+						tm->tm_hour += 12;
+				} 
+				else if (strncmp(inout, am_STR, 4) == 0)
+				{
+					if (tm->tm_hour == 12)
+						tm->tm_hour = 0;
+				}
+				else
+					AMPM_ERROR;
 				return 1;
 			}
 
