@@ -8,6 +8,21 @@
 
 #define BLCKSZ	8192
 
+#if defined(hpux)
+#  define HAVE_TZSET
+#endif
+
+#if defined(i386_solaris) 
+#  define HAVE_TZSET
+#endif
+
+#if defined(sparc_solaris)
+#  define HAVE_TZSET
+#endif
+
+#if defined(svr4) 
+#  define HAVE_TZSET
+#endif
 
 #if defined(win32)
 #  define WIN32
@@ -15,20 +30,24 @@
 #  define USES_WINSOCK 
 #  define NOFILE	100
 #  define NEED_UNION_SEMUN
+#  define HAVE_TZSET
 #endif /* WIN32 */
 
 #if defined(__FreeBSD__) || \
     defined(__NetBSD__) || \
     defined(bsdi)
 #  define USE_LIMITS_H
+#  define USE_POSIX_TIME
 #endif
 
 #if defined(aix)
 #  define NEED_SYS_SELECT_H
+#  define HAVE_TZSET
 #endif
 
 #if defined(irix5)
 #  define NO_VFORK
+#  define HAVE_TZSET
 #endif
 
 /*
