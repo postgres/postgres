@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.75 1999/02/18 00:49:14 momjian Exp $
+ *  $Id: outfuncs.c,v 1.76 1999/02/23 08:01:47 thomas Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -42,9 +42,7 @@
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 
-#ifdef PARSEDEBUG
 #include "../parse.h"
-#endif
 
 static void _outDatum(StringInfo str, Datum value, Oid type);
 static void _outNode(StringInfo str, void *obj);
@@ -109,7 +107,6 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 			node->unique ? "true" : "false");
 }
 
-#ifdef PARSEDEBUG
 static void
 _outSelectStmt(StringInfo str, SelectStmt *node)
 {
@@ -123,8 +120,6 @@ _outFuncCall(StringInfo str, FuncCall *node)
 	appendStringInfo(str, "FUNCTION %s :args ", stringStringInfo(node->funcname));
 	_outNode(str, node->args);
 }
-
-#endif
 
 static void
 _outColumnDef(StringInfo str, ColumnDef *node)
@@ -1293,7 +1288,6 @@ static void
 _outAExpr(StringInfo str, A_Expr *node)
 {
 	appendStringInfo(str, "EXPR ");
-#ifdef PARSEDEBUG
 	switch (node->oper)
 	{
 		case AND:
@@ -1312,12 +1306,9 @@ _outAExpr(StringInfo str, A_Expr *node)
 			appendStringInfo(str, "NOTNULL");
 			break;
 		default:
-#endif
 			appendStringInfo(str, stringStringInfo(node->opname));
-#ifdef PARSEDEBUG
 			break;
 	}
-#endif
 	_outNode(str, node->lexpr);
 	_outNode(str, node->rexpr);
 	return;
@@ -1347,6 +1338,24 @@ static void
 _outIdent(StringInfo str, Ident *node)
 {
 	appendStringInfo(str, " IDENT \"%s\" ", stringStringInfo(node->name));
+	return;
+}
+
+static void
+_outAttr(StringInfo str, Attr *node)
+{
+	List	   *l;
+
+	appendStringInfo(str, " ATTR \"%s\" ", stringStringInfo(node->relname));
+
+	appendStringInfo(str, "(");
+	foreach(l, node->attrs)
+	{
+		_outNode(str, lfirst(l));
+		if (lnext(l))
+			appendStringInfo(str, ",");
+	}
+	appendStringInfo(str, ")");
 	return;
 }
 
@@ -1465,18 +1474,6 @@ _outNode(StringInfo str, void *obj)
 			case T_IndexElem:
 				_outIndexElem(str, obj);
 				break;
-
-#ifdef PARSEDEBUG
-			case T_VariableSetStmt:
-				break;
-			case T_SelectStmt:
-				_outSelectStmt(str, obj);
-				break;
-			case T_FuncCall:
-				_outFuncCall(str, obj);
-				break;
-#endif
-
 			case T_Query:
 				_outQuery(str, obj);
 				break;
@@ -1659,6 +1656,19 @@ _outNode(StringInfo str, void *obj)
 			case T_CaseWhen:
 				_outCaseWhen(str, obj);
 				break;
+
+			case T_VariableSetStmt:
+				break;
+			case T_SelectStmt:
+				_outSelectStmt(str, obj);
+				break;
+			case T_FuncCall:
+				_outFuncCall(str, obj);
+				break;
+			case T_Attr:
+				_outAttr(str, obj);
+				break;
+
 			default:
 				elog(NOTICE, "_outNode: don't know how to print type %d ",
 					 nodeTag(obj));
