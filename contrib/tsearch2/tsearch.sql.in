@@ -610,7 +610,7 @@ AS
 CREATE TYPE statinfo 
 	as (word text, ndoc int4, nentry int4);
 
---REATE FUNCTION tsstat_in(cstring)
+--CREATE FUNCTION tsstat_in(cstring)
 --RETURNS tsstat
 --AS 'MODULE_PATHNAME'
 --LANGUAGE 'C' with (isstrict);
