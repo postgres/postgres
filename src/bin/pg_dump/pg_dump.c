@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.351 2003/09/27 15:34:06 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.352 2003/09/27 22:10:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2237,14 +2237,13 @@ getTables(int *numTables)
 
 	/*
 	 * If the user is attempting to dump a specific table, check to ensure
-	 * that the specified table actually exists (and is a table or a view,
-	 * not a sequence).
+	 * that the specified table actually exists.  (This is a bit simplistic
+	 * since we don't fully check the combination of -n and -t switches.)
 	 */
 	if (selectTableName)
 	{
 		for (i = 0; i < ntups; i++)
-			if (strcmp(tblinfo[i].relname, selectTableName) == 0 &&
-				tblinfo[i].relkind != 'S')
+			if (strcmp(tblinfo[i].relname, selectTableName) == 0)
 				break;
 
 		/* Didn't find a match */
