@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.12 1997/03/19 07:44:45 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.13 1997/03/24 07:39:47 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -414,6 +414,9 @@ ConstructTupleDescriptor(Oid heapoid,
 	
 	to =   (char *) (indexTupDesc->attrs[ i ]);
 	memcpy(to, from, ATTRIBUTE_TUPLE_SIZE);
+	
+	((AttributeTupleForm) to)->attnum = i+1;
+	((AttributeTupleForm) to)->attcacheoff = -1;
 
 	/* if the keytype is defined, we need to change the tuple form's
 	   atttypid & attlen field to match that of the key's type */
@@ -656,8 +659,10 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
      * ----------------
      */
     replace[ Anum_pg_attribute_attnum - 1 ] = 'r';
+    replace[ Anum_pg_attribute_attcacheoff - 1 ] = 'r';
     
     value[ Anum_pg_attribute_attnum - 1 ] = Int16GetDatum(1);
+    value[ Anum_pg_attribute_attcacheoff - 1 ] = Int32GetDatum(-1);
     
     tuple = heap_addheader(Natts_pg_attribute,
 			   sizeof *(indexRelation->rd_att->attrs[0]),
