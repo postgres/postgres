@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.8 1997/09/08 21:42:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.9 1997/09/18 20:20:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ AggregateCreate(char *aggName,
 	Oid			fnArgs[8];
 	TupleDesc	tupDesc;
 
-	memset(fnArgs, 0, 8 * sizeof(Oid));
+	MemSet(fnArgs, 0, 8 * sizeof(Oid));
 
 	/* sanity checks */
 	if (!aggName)

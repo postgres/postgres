@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.14 1997/09/08 21:42:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.15 1997/09/18 20:20:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,7 +347,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	char	   *typename;
 	int			i;
 
-	memset(argList, 0, 8 * sizeof(Oid));
+	MemSet(argList, 0, 8 * sizeof(Oid));
 	for (i = 0; i < nargs; i++)
 	{
 /*		typename = ((TypeName*)(lfirst(argNameList)))->name; */

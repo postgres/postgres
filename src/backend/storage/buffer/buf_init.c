@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.13 1997/09/18 14:19:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.14 1997/09/18 20:21:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ InitBufferPool(IPCKey key)
 							(BMT_LIMIT * sizeof(bmtrace)) + sizeof(long),
 										   &foundDescs);
 	if (!foundDescs)
-		memset(CurTraceBuf, 0, (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long));
+		MemSet(CurTraceBuf, 0, (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long));
 
 	TraceBuf = (bmtrace *) & (CurTraceBuf[1]);
 #endif

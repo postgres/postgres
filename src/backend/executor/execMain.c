@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.25 1997/09/08 21:42:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.26 1997/09/18 20:20:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1286,7 +1286,7 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 			repl = (char *) palloc(rel->rd_att->natts * sizeof(char));
 			replNull = (char *) palloc(rel->rd_att->natts * sizeof(char));
 			replValue = (Datum *) palloc(rel->rd_att->natts * sizeof(Datum));
-			memset(repl, ' ', rel->rd_att->natts * sizeof(char));
+			MemSet(repl, ' ', rel->rd_att->natts * sizeof(char));
 		}
 
 		repl[attrdef[i].adnum - 1] = 'r';

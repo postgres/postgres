@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.10 1997/09/08 21:55:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.11 1997/09/18 20:22:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,7 +507,7 @@ lo_initialize(PGconn *conn)
 			   "FATAL: malloc() failed in lo_initialize()\n");
 		return -1;
 	}
-	memset((char *) lobjfuncs, 0, sizeof(PGlobjfuncs));
+	MemSet((char *) lobjfuncs, 0, sizeof(PGlobjfuncs));
 
 	/* ----------------
 	 * Execute the query to get all the functions at once

@@ -128,13 +128,13 @@ ExecAgg(Agg *node)
 	nulls = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_nulls;
 
 	value2 = (Datum *) palloc(sizeof(Datum) * nagg);
-	memset(value2, 0, sizeof(Datum) * nagg);
+	MemSet(value2, 0, sizeof(Datum) * nagg);
 
 	aggFuncInfo = (AggFuncInfo *) palloc(sizeof(AggFuncInfo) * nagg);
-	memset(aggFuncInfo, 0, sizeof(AggFuncInfo) * nagg);
+	MemSet(aggFuncInfo, 0, sizeof(AggFuncInfo) * nagg);
 
 	noInitValue = (int *) palloc(sizeof(int) * nagg);
-	memset(noInitValue, 0, sizeof(noInitValue) * nagg);
+	MemSet(noInitValue, 0, sizeof(noInitValue) * nagg);
 
 	outerPlan = outerPlan(node);
 	oneTuple = NULL;
@@ -524,9 +524,9 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
 	econtext->ecxt_values =
 		(Datum *) palloc(sizeof(Datum) * node->numAgg);
-	memset(econtext->ecxt_values, 0, sizeof(Datum) * node->numAgg);
+	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * node->numAgg);
 	econtext->ecxt_nulls = (char *) palloc(node->numAgg);
-	memset(econtext->ecxt_nulls, 0, node->numAgg);
+	MemSet(econtext->ecxt_nulls, 0, node->numAgg);
 
 	/*
 	 * initializes child nodes

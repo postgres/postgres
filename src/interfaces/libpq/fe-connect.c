@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.41 1997/09/08 21:55:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.42 1997/09/18 20:22:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ PQconnectdb(const char *conninfo)
 		   "FATAL: PQsetdb() -- unable to allocate memory for a PGconn");
 		return (PGconn *) NULL;
 	}
-	memset((char *) conn, 0, sizeof(PGconn));
+	MemSet((char *) conn, 0, sizeof(PGconn));
 
 	/* ----------
 	 * Parse the conninfo string and get the fallback resources
@@ -499,7 +499,7 @@ connectDB(PGconn *conn)
 	 *
 	 */
 	port = (Port *) malloc(sizeof(Port));
-	memset((char *) port, 0, sizeof(Port));
+	MemSet((char *) port, 0, sizeof(Port));
 
 	if (!(hp = gethostbyname(conn->pghost)) || hp->h_addrtype != AF_INET)
 	{
@@ -508,7 +508,7 @@ connectDB(PGconn *conn)
 					   conn->pghost);
 		goto connect_errReturn;
 	}
-	memset((char *) &port->raddr, 0, sizeof(port->raddr));
+	MemSet((char *) &port->raddr, 0, sizeof(port->raddr));
 	memmove((char *) &(port->raddr.sin_addr),
 			(char *) hp->h_addr,
 			hp->h_length);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.11 1997/09/12 04:07:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.12 1997/09/18 20:20:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ init_execution_state(FunctionCachePtr fcache,
 			paramLI =
 				(ParamListInfo) palloc((nargs + 1) * sizeof(ParamListInfoData));
 
-			memset(paramLI, 0, nargs * sizeof(ParamListInfoData));
+			MemSet(paramLI, 0, nargs * sizeof(ParamListInfoData));
 
 			estate->es_param_list_info = paramLI;
 

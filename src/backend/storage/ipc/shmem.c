@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.13 1997/09/08 21:47:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.14 1997/09/18 20:21:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,7 @@ InitShmem(unsigned int key, unsigned int size)
 	 * there is an entry there, someone else created the table. Otherwise,
 	 * we did and we have to initialize it.
 	 */
-	memset(item.key, 0, BTABLE_KEYSIZE);
+	MemSet(item.key, 0, BTABLE_KEYSIZE);
 	strncpy(item.key, "BindingTable", BTABLE_KEYSIZE);
 
 	result = (BindingEnt *)
@@ -407,7 +407,7 @@ ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr)
 	bool		found;
 
 	Assert(BindingTable);
-	memset(item.key, 0, BTABLE_KEYSIZE);
+	MemSet(item.key, 0, BTABLE_KEYSIZE);
 	sprintf(item.key, "PID %d", pid);
 
 	SpinAcquire(BindingLock);
@@ -455,7 +455,7 @@ ShmemPIDDestroy(int pid)
 
 	Assert(BindingTable);
 
-	memset(item.key, 0, BTABLE_KEYSIZE);
+	MemSet(item.key, 0, BTABLE_KEYSIZE);
 	sprintf(item.key, "PID %d", pid);
 
 	SpinAcquire(BindingLock);

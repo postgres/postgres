@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.8 1997/09/08 21:49:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.9 1997/09/18 20:22:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ static HTAB *PortalHashTable = NULL;
 
 #define PortalHashTableLookup(NAME, PORTAL) \
 	{	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
-		memset(key, 0, MAX_PORTALNAME_LEN); \
+		MemSet(key, 0, MAX_PORTALNAME_LEN); \
 		sprintf(key, "%s", NAME); \
 		hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 											 key, HASH_FIND, &found); \
@@ -139,7 +139,7 @@ static HTAB *PortalHashTable = NULL;
 	}
 #define PortalHashTableInsert(PORTAL) \
 	{	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
-		memset(key, 0, MAX_PORTALNAME_LEN); \
+		MemSet(key, 0, MAX_PORTALNAME_LEN); \
 		sprintf(key, "%s", PORTAL->name); \
 		hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 											 key, HASH_ENTER, &found); \
@@ -151,7 +151,7 @@ static HTAB *PortalHashTable = NULL;
 	}
 #define PortalHashTableDelete(PORTAL) \
 	{	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
-		memset(key, 0, MAX_PORTALNAME_LEN); \
+		MemSet(key, 0, MAX_PORTALNAME_LEN); \
 		sprintf(key, "%s", PORTAL->name); \
 		hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 											 key, HASH_REMOVE, &found); \

@@ -129,7 +129,7 @@ CreateTrigger(CreateTrigStmt * stmt)
 	}
 	heap_endscan(tgscan);
 
-	memset(fargtypes, 0, 8 * sizeof(Oid));
+	MemSet(fargtypes, 0, 8 * sizeof(Oid));
 	tuple = SearchSysCacheTuple(PRONAME,
 								PointerGetDatum(stmt->funcname),
 								0, PointerGetDatum(fargtypes), 0);
@@ -141,7 +141,7 @@ CreateTrigger(CreateTrigStmt * stmt)
 	if (((Form_pg_proc) GETSTRUCT(tuple))->prolang != ClanguageId)
 		elog(WARN, "CreateTrigger: only C functions are supported");
 
-	memset(nulls, ' ', Natts_pg_trigger * sizeof(char));
+	MemSet(nulls, ' ', Natts_pg_trigger * sizeof(char));
 
 	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(rel->rd_id);
 	values[Anum_pg_trigger_tgname - 1] = NameGetDatum(namein(stmt->trigname));
@@ -340,7 +340,7 @@ RelationBuildTriggers(Relation relation)
 	bool		isnull;
 	int			found;
 
-	memset(trigdesc, 0, sizeof(TriggerDesc));
+	MemSet(trigdesc, 0, sizeof(TriggerDesc));
 
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,

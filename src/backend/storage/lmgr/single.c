@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.4 1997/09/08 02:29:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.5 1997/09/18 20:21:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ SingleLockReln(LockInfo linfo, LOCKT lockt, int action)
 	 * LOCKTAG has two bytes of padding, unfortunately.  The hash function
 	 * will return miss if the padding bytes aren't zero'd.
 	 */
-	memset(&tag, 0, sizeof(tag));
+	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = linfo->lRelId.relId;
 	tag.dbId = linfo->lRelId.dbId;
 	BlockIdSet(&(tag.tupleId.ip_blkid), InvalidBlockNumber);
@@ -72,7 +72,7 @@ SingleLockPage(LockInfo linfo,
 	 * LOCKTAG has two bytes of padding, unfortunately.  The hash function
 	 * will return miss if the padding bytes aren't zero'd.
 	 */
-	memset(&tag, 0, sizeof(tag));
+	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = linfo->lRelId.relId;
 	tag.dbId = linfo->lRelId.dbId;
 	BlockIdCopy(&(tag.tupleId.ip_blkid), &(tidPtr->ip_blkid));

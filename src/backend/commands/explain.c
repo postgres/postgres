@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.13 1997/09/08 21:42:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.14 1997/09/18 20:20:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 		return;
 
 	es = (ExplainState *) malloc(sizeof(ExplainState));
-	memset(es, 0, sizeof(ExplainState));
+	MemSet(es, 0, sizeof(ExplainState));
 
 	es->printCost = true;		/* default */
 

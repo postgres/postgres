@@ -1,10 +1,10 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.14 1997/09/11 09:13:28 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.15 1997/09/18 20:22:54 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
 #include <stdio.h>
-#include <string.h>				/* for memset() */
+#include <string.h>				/* for MemSet() */
 
 #include <postgres.h>
 
@@ -288,7 +288,7 @@ char	   *string;
 		fprintf(stderr, "reverse_c16: palloc failed\n");
 		return (NULL);
 	}
-	memset(new_string, 0, 16);
+	MemSet(new_string, 0, 16);
 	for (i = 0; i < 16 && string[i]; ++i)
 		;
 	if (i == 16 || !string[i])

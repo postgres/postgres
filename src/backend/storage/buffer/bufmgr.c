@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.24 1997/09/18 14:20:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.25 1997/09/18 20:21:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,7 +271,7 @@ ReadBufferWithBufferLock(Relation reln,
 		if (extend)
 		{
 			/* new buffers are zero-filled */
-			memset((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
+			MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
 			smgrextend(bufHdr->bufsmgr, reln,
 					   (char *) MAKE_PTR(bufHdr->data));
 		}
@@ -286,7 +286,7 @@ ReadBufferWithBufferLock(Relation reln,
 	if (extend)
 	{
 		/* new buffers are zero-filled */
-		memset((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
+		MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
 		status = smgrextend(bufHdr->bufsmgr, reln,
 							(char *) MAKE_PTR(bufHdr->data));
 	}

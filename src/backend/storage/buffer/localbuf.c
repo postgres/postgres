@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.11 1997/09/08 21:46:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.12 1997/09/18 20:21:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ InitLocalBuffer(void)
 	 */
 	LocalBufferDescriptors =
 		(BufferDesc *) malloc(sizeof(BufferDesc) * NLocBuffer);
-	memset(LocalBufferDescriptors, 0, sizeof(BufferDesc) * NLocBuffer);
+	MemSet(LocalBufferDescriptors, 0, sizeof(BufferDesc) * NLocBuffer);
 	nextFreeLocalBuf = 0;
 
 	for (i = 0; i < NLocBuffer; i++)
@@ -246,7 +246,7 @@ InitLocalBuffer(void)
 
 	LocalRefCount =
 		(long *) malloc(sizeof(long) * NLocBuffer);
-	memset(LocalRefCount, 0, sizeof(long) * NLocBuffer);
+	MemSet(LocalRefCount, 0, sizeof(long) * NLocBuffer);
 }
 
 /*
@@ -283,7 +283,7 @@ LocalBufferSync(void)
 		}
 	}
 
-	memset(LocalRefCount, 0, sizeof(long) * NLocBuffer);
+	MemSet(LocalRefCount, 0, sizeof(long) * NLocBuffer);
 	nextFreeLocalBuf = 0;
 }
 
@@ -301,6 +301,6 @@ ResetLocalBufferPool(void)
 		buf->buf_id = -i - 2;
 	}
 
-	memset(LocalRefCount, 0, sizeof(long) * NLocBuffer);
+	MemSet(LocalRefCount, 0, sizeof(long) * NLocBuffer);
 	nextFreeLocalBuf = 0;
 }

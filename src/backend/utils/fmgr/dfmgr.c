@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.12 1997/09/12 04:08:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.13 1997/09/18 20:22:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,7 @@ handle_load(char *filename, char *funcname)
 				malloc(sizeof(DynamicFileList));
 			file_scanner = file_tail->next;
 		}
-		memset((char *) file_scanner, 0, sizeof(DynamicFileList));
+		MemSet((char *) file_scanner, 0, sizeof(DynamicFileList));
 
 		strcpy(file_scanner->filename, filename);
 		file_scanner->device = stat_buf.st_dev;

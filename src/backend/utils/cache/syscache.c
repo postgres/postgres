@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.8 1997/09/12 04:08:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.9 1997/09/18 20:22:25 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -332,7 +332,7 @@ static int32 SysCacheSize = lengthof(cacheinfo);
 void
 zerocaches()
 {
-	memset((char *) SysCache, 0, SysCacheSize * sizeof(struct catcache *));
+	MemSet((char *) SysCache, 0, SysCacheSize * sizeof(struct catcache *));
 }
 
 /*

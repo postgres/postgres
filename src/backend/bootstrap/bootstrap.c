@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.25 1997/09/08 21:42:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.26 1997/09/18 20:20:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -894,7 +894,7 @@ AllocateAttribute()
 	{
 		elog(FATAL, "AllocateAttribute: malloc failed");
 	}
-	memset(attribute, 0, ATTRIBUTE_TUPLE_SIZE);
+	MemSet(attribute, 0, ATTRIBUTE_TUPLE_SIZE);
 
 	return (attribute);
 }

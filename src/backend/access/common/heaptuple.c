@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.25 1997/09/12 04:07:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.26 1997/09/18 20:19:36 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -853,7 +853,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	tp = (char *) palloc(len);
 	tuple = (HeapTuple) tp;
 
-	memset(tp, 0, (int) len);
+	MemSet(tp, 0, (int) len);
 
 	tuple->t_len = len;
 	tuple->t_natts = numberOfAttributes;
@@ -1011,7 +1011,7 @@ heap_addheader(uint32 natts,	/* max domain index */
 	len += structlen;
 	tp = (char *) palloc(len);
 	tup = (HeapTuple) tp;
-	memset((char *) tup, 0, len);
+	MemSet((char *) tup, 0, len);
 
 	tup->t_len = (short) len;	/* XXX */
 	tp += tup->t_hoff = hoff;

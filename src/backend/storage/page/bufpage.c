@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.10 1997/09/08 02:29:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.11 1997/09/18 20:21:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,7 +202,7 @@ PageGetTempPage(Page page, Size specialSize)
 	/* clear out the middle */
 	size = (pageSize - sizeof(PageHeaderData)) + sizeof(ItemIdData);
 	size -= DOUBLEALIGN(specialSize);
-	memset((char *) &(thdr->pd_linp[0]), 0, size);
+	MemSet((char *) &(thdr->pd_linp[0]), 0, size);
 
 	/* set high, low water marks */
 	thdr->pd_lower = sizeof(PageHeaderData) - sizeof(ItemIdData);
@@ -311,7 +311,7 @@ PageRepairFragmentation(Page page)
 	{							/* nused != 0 */
 		itemidbase = (struct itemIdSortData *)
 			palloc(sizeof(struct itemIdSortData) * nused);
-		memset((char *) itemidbase, 0, sizeof(struct itemIdSortData) * nused);
+		MemSet((char *) itemidbase, 0, sizeof(struct itemIdSortData) * nused);
 		itemidptr = itemidbase;
 		for (i = 0; i < nline; i++)
 		{

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.25 1997/09/08 21:46:54 momjian Exp $
+ *	  $Id: fd.c,v 1.26 1997/09/18 20:21:24 momjian Exp $
  *
  * NOTES:
  *
@@ -423,7 +423,7 @@ AllocateVfd()
 
 		for (i = SizeVfdCache; i < 2 * SizeVfdCache; i++)
 		{
-			memset((char *) &(VfdCache[i]), 0, sizeof(VfdCache[0]));
+			MemSet((char *) &(VfdCache[i]), 0, sizeof(VfdCache[0]));
 			VfdCache[i].nextFree = i + 1;
 			VfdCache[i].fd = VFD_CLOSED;
 		}

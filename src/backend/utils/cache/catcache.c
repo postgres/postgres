@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.15 1997/09/18 14:20:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.16 1997/09/18 20:22:18 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -676,7 +676,7 @@ InitSysCache(char *relname,
 	 * ----------------
 	 */
 	cp = (CatCache *) palloc(sizeof(CatCache));
-	memset((char *) cp, 0, sizeof(CatCache));
+	MemSet((char *) cp, 0, sizeof(CatCache));
 
 	/* ----------------
 	 *	initialize the cache buckets (each bucket is a list header)

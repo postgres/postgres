@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.15 1997/09/18 14:20:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.16 1997/09/18 20:21:35 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -293,7 +293,7 @@ LockTabInit(char *tabName,
 	 */
 	if (!found)
 	{
-		memset(ltable->ctl, 0, sizeof(LOCKCTL));
+		MemSet(ltable->ctl, 0, sizeof(LOCKCTL));
 		ltable->ctl->masterLock = LockMgrLock;
 		ltable->ctl->tableId = NumTables;
 	}
@@ -518,8 +518,8 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	{
 		lock->mask = 0;
 		ProcQueueInit(&(lock->waitProcs));
-		memset((char *) lock->holders, 0, sizeof(int) * MAX_LOCKTYPES);
-		memset((char *) lock->activeHolders, 0, sizeof(int) * MAX_LOCKTYPES);
+		MemSet((char *) lock->holders, 0, sizeof(int) * MAX_LOCKTYPES);
+		MemSet((char *) lock->activeHolders, 0, sizeof(int) * MAX_LOCKTYPES);
 		lock->nHolding = 0;
 		lock->nActive = 0;
 
@@ -541,7 +541,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	 * word alignment and ensures hashing consistency).
 	 * ------------------
 	 */
-	memset(&item, 0, XID_TAGSIZE); /* must clear padding, needed */
+	MemSet(&item, 0, XID_TAGSIZE); /* must clear padding, needed */
 	TransactionIdStore(myXid, &item.tag.xid);
 	item.tag.lock = MAKE_OFFSET(lock);
 #if 0
@@ -571,7 +571,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 		XID_PRINT("LockAcquire: queueing XidEnt", result);
 		ProcAddLock(&result->queue);
 		result->nHolding = 0;
-		memset((char *) result->holders, 0, sizeof(int) * MAX_LOCKTYPES);
+		MemSet((char *) result->holders, 0, sizeof(int) * MAX_LOCKTYPES);
 	}
 
 	/* ----------------
@@ -683,7 +683,7 @@ LockResolveConflicts(LOCKTAB *ltable,
 	 * word alignment and ensures hashing consistency.
 	 * ------------------
 	 */
-	memset(&item, 0, XID_TAGSIZE);
+	MemSet(&item, 0, XID_TAGSIZE);
 	TransactionIdStore(xid, &item.tag.xid);
 	item.tag.lock = MAKE_OFFSET(lock);
 #if 0
@@ -705,7 +705,7 @@ LockResolveConflicts(LOCKTAB *ltable,
 		 * the lock stats.
 		 * ---------------
 		 */
-		memset(result->holders, 0, nLockTypes * sizeof(*(lock->holders)));
+		MemSet(result->holders, 0, nLockTypes * sizeof(*(lock->holders)));
 		result->nHolding = 0;
 	}
 
@@ -951,7 +951,7 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	 * word alignment and ensures hashing consistency).
 	 * ------------------
 	 */
-	memset(&item, 0, XID_TAGSIZE);
+	MemSet(&item, 0, XID_TAGSIZE);
 
 	TransactionIdStore(GetCurrentTransactionId(), &item.tag.xid);
 	item.tag.lock = MAKE_OFFSET(lock);

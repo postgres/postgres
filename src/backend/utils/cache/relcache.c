@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.24 1997/09/12 06:57:04 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.25 1997/09/18 20:22:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,7 @@ BuildDescInfoError(RelationBuildDescInfo buildinfo)
 {
 	static char errBuf[64];
 
-	memset(errBuf, 0, (int) sizeof(errBuf));
+	MemSet(errBuf, 0, (int) sizeof(errBuf));
 	switch (buildinfo.infotype)
 	{
 		case INFO_RELID:
@@ -494,7 +494,7 @@ AllocateRelationDesc(u_int natts, Form_pg_class relp)
 	 *	clear new reldesc
 	 * ----------------
 	 */
-	memset((char *) relation, 0, len);
+	MemSet((char *) relation, 0, len);
 
 	/* initialize attribute tuple form */
 	relation->rd_att = CreateTemplateTupleDesc(natts);
@@ -670,7 +670,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 			constr->num_check = relation->rd_rel->relchecks;
 			constr->check = (ConstrCheck *) palloc(constr->num_check *
 												   sizeof(ConstrCheck));
-			memset(constr->check, 0, constr->num_check * sizeof(ConstrCheck));
+			MemSet(constr->check, 0, constr->num_check * sizeof(ConstrCheck));
 			RelCheckFetch(relation);
 		}
 		else
@@ -1043,7 +1043,7 @@ formrdesc(char *relationName,
 	 */
 	len = sizeof(RelationData);
 	relation = (Relation) palloc(len);
-	memset((char *) relation, 0, len);
+	MemSet((char *) relation, 0, len);
 
 	/* ----------------
 	 *	don't open the unix file yet..
@@ -1063,7 +1063,7 @@ formrdesc(char *relationName,
 	 */
 	relation->rd_rel = (Form_pg_class)
 		palloc((Size) (sizeof(*relation->rd_rel)));
-	memset(relation->rd_rel, 0, sizeof(FormData_pg_class));
+	MemSet(relation->rd_rel, 0, sizeof(FormData_pg_class));
 	namestrcpy(&relation->rd_rel->relname, relationName);
 
 	/* ----------------
@@ -1106,7 +1106,7 @@ formrdesc(char *relationName,
 		relation->rd_att->attrs[i] =
 			(AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
 
-		memset((char *) relation->rd_att->attrs[i], 0,
+		MemSet((char *) relation->rd_att->attrs[i], 0,
 			   ATTRIBUTE_TUPLE_SIZE);
 		memmove((char *) relation->rd_att->attrs[i],
 				(char *) &att[i],
@@ -1657,7 +1657,7 @@ RelationInitialize(void)
 	 *	create global caches
 	 * ----------------
 	 */
-	memset(&ctl, 0, (int) sizeof(ctl));
+	MemSet(&ctl, 0, (int) sizeof(ctl));
 	ctl.keysize = sizeof(NameData);
 	ctl.datasize = sizeof(Relation);
 	RelationNameCache = hash_create(INITRELCACHESIZE, &ctl, HASH_ELEM);
@@ -1932,7 +1932,7 @@ init_irels(void)
 		}
 
 		ird = irel[relno] = (Relation) palloc(len);
-		memset(ird, 0, len);
+		MemSet(ird, 0, len);
 
 		/* then, read the Relation structure */
 		if ((nread = FileRead(fd, (char *) ird, len)) != len)

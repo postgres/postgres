@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.6 1997/09/08 02:29:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.7 1997/09/18 20:21:58 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -202,7 +202,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 	 * fp_info, since we can be interrupted (i.e., with an elog(WARN,
 	 * ...)) at any time.
 	 */
-	memset((char *) fip, 0, (int) sizeof(struct fp_info));
+	MemSet((char *) fip, 0, (int) sizeof(struct fp_info));
 	fip->funcid = InvalidOid;
 
 	func_htp = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(func_id),

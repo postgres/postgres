@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.12 1997/09/08 20:54:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.13 1997/09/18 20:19:46 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -122,8 +122,8 @@ _hash_metapinit(Relation rel)
 	lg2nelem = 1;				/* _hash_log2(MAX(nelem, 2)) */
 	nbuckets = 2;				/* 1 << lg2nelem */
 
-	memset((char *) metap->hashm_spares, 0, sizeof(metap->hashm_spares));
-	memset((char *) metap->hashm_mapp, 0, sizeof(metap->hashm_mapp));
+	MemSet((char *) metap->hashm_spares, 0, sizeof(metap->hashm_spares));
+	MemSet((char *) metap->hashm_mapp, 0, sizeof(metap->hashm_mapp));
 
 	metap->hashm_spares[lg2nelem] = 2;	/* lg2nelem + 1 */
 	metap->hashm_spares[lg2nelem + 1] = 2;		/* lg2nelem + 1 */
@@ -310,7 +310,7 @@ _hash_pageinit(Page page, Size size)
 	 * creating new pages is an infrequent occurrence and it makes me feel
 	 * good when I know they're empty.
 	 */
-	memset(page, 0, size);
+	MemSet(page, 0, size);
 
 	PageInit(page, size, sizeof(HashPageOpaqueData));
 }

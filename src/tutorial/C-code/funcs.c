@@ -38,7 +38,7 @@ concat16(char16 *arg1, char16 *arg2)
 {
 	char16	   *new_c16 = (char16 *) palloc(sizeof(char16));
 
-	memset(new_c16, 0, sizeof(char16));
+	MemSet(new_c16, 0, sizeof(char16));
 	strncpy((char *) new_c16, (char *) arg1, 16);
 	return (char16 *) (strncat((char *) new_c16, (char *) arg2, 16));
 }
@@ -52,7 +52,7 @@ copytext(text *t)
 	 */
 	text	   *new_t = (text *) palloc(VARSIZE(t));
 
-	memset(new_t, 0, VARSIZE(t));
+	MemSet(new_t, 0, VARSIZE(t));
 
 	VARSIZE(new_t) = VARSIZE(t);
 

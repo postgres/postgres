@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.21 1997/09/08 21:47:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.22 1997/09/18 20:21:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.21 1997/09/08 21:47:30 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.22 1997/09/18 20:21:39 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -217,7 +217,7 @@ InitProcess(IPCKey key)
 	 * ProcStructLock to 1 as we have acquired this spinlock above but
 	 * didn't record it since we didn't have MyProc until now.
 	 */
-	memset(MyProc->sLocks, 0, sizeof(MyProc->sLocks));
+	MemSet(MyProc->sLocks, 0, sizeof(MyProc->sLocks));
 	MyProc->sLocks[ProcStructLock] = 1;
 
 
@@ -271,7 +271,7 @@ InitProcess(IPCKey key)
 	 * this initialization is forever botched
 	 * ----------------
 	 */
-	memset(MyProc->sLocks, 0, MAX_SPINS * sizeof(*MyProc->sLocks));
+	MemSet(MyProc->sLocks, 0, MAX_SPINS * sizeof(*MyProc->sLocks));
 
 	/* -------------------------
 	 * Install ourselves in the binding table.	The name to
@@ -514,7 +514,7 @@ ProcSleep(PROC_QUEUE *queue,
 	 * to 0.
 	 * --------------
 	 */
-	memset(&timeval, 0, sizeof(struct itimerval));
+	MemSet(&timeval, 0, sizeof(struct itimerval));
 	timeval.it_value.tv_sec = DEADLOCK_TIMEOUT;
 
 	if (setitimer(ITIMER_REAL, &timeval, &dummy))

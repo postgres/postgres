@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.57 1997/09/08 21:46:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.58 1997/09/18 20:21:08 momjian Exp $
  *
  * NOTES
  *
@@ -1051,7 +1051,7 @@ BackendStartup(StartupInfo *packet,		/* client's startup packet */
 
 	for (i = 0; i < 4; ++i)
 	{
-		memset(envEntry[i], 0, 2 * ARGV_SIZE);
+		MemSet(envEntry[i], 0, 2 * ARGV_SIZE);
 	}
 
 	/*

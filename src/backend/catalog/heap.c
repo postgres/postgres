@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.28 1997/09/08 21:42:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.29 1997/09/18 20:20:11 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_creatr()			- Create an uncataloged heap relation
@@ -278,7 +278,7 @@ heap_creatr(char *name,
 	len = sizeof(RelationData);
 
 	rdesc = (Relation) palloc(len);
-	memset((char *) rdesc, 0, len);
+	MemSet((char *) rdesc, 0, len);
 
 	/* ----------
 	   create a new tuple descriptor from the one passed in
@@ -303,7 +303,7 @@ heap_creatr(char *name,
 
 	rdesc->rd_rel = (Form_pg_class) palloc(sizeof *rdesc->rd_rel);
 
-	memset((char *) rdesc->rd_rel, 0,
+	MemSet((char *) rdesc->rd_rel, 0,
 		   sizeof *rdesc->rd_rel);
 	namestrcpy(&(rdesc->rd_rel->relname), relname);
 	rdesc->rd_rel->relkind = RELKIND_UNCATALOGED;
@@ -1444,7 +1444,7 @@ InitTempRelList(void)
 	tempRels = (TempRelList *) malloc(sizeof(TempRelList));
 	tempRels->size = TEMP_REL_LIST_SIZE;
 	tempRels->rels = (Relation *) malloc(sizeof(Relation) * tempRels->size);
-	memset(tempRels->rels, 0, sizeof(Relation) * tempRels->size);
+	MemSet(tempRels->rels, 0, sizeof(Relation) * tempRels->size);
 	tempRels->num = 0;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.7 1997/09/08 21:48:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.8 1997/09/18 20:22:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ oidnamein(char *inStr)
 
 	oc = (OidName) palloc(sizeof(OidNameData));
 
-	memset(oc, 0, sizeof(OidNameData));
+	MemSet(oc, 0, sizeof(OidNameData));
 	for (inptr = inStr; *inptr && *inptr != ','; inptr++)
 		;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.48 1997/09/18 14:33:33 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.49 1997/09/18 20:22:03 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1378,7 +1378,7 @@ PostgresMain(int argc, char *argv[])
 		if (!Quiet)
 			printf("\tAbortCurrentTransaction() at %s\n", ctime(&tim));
 
-		memset(parser_input, 0, MAX_PARSE_BUFFER);
+		MemSet(parser_input, 0, MAX_PARSE_BUFFER);
 
 		AbortCurrentTransaction();
 	}
@@ -1391,7 +1391,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.48 $ $Date: 1997/09/18 14:33:33 $");
+		puts("$Revision: 1.49 $ $Date: 1997/09/18 20:22:03 $");
 	}
 
 	/* ----------------
@@ -1426,7 +1426,7 @@ PostgresMain(int argc, char *argv[])
 			{
 				/* new connection pending on our well-known port's socket */
 				newFE = (FrontEnd *) malloc(sizeof(FrontEnd));
-				memset(newFE, 0, sizeof(FrontEnd));
+				MemSet(newFE, 0, sizeof(FrontEnd));
 				newFE->fn_connected = false;
 				newFE->fn_done = false;
 				newPort = &(newFE->fn_port);
@@ -1502,7 +1502,7 @@ PostgresMain(int argc, char *argv[])
 		 *	 (1) read a command.
 		 * ----------------
 		 */
-		memset(parser_input, 0, MAX_PARSE_BUFFER);
+		MemSet(parser_input, 0, MAX_PARSE_BUFFER);
 
 		firstchar = ReadCommand(parser_input, multiplexedBackend);
 		/* process the command */

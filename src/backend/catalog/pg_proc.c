@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.8 1997/09/08 21:42:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.9 1997/09/18 20:20:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ ProcedureCreate(char *procedureName,
 	Assert(PointerIsValid(probin));
 
 	parameterCount = 0;
-	memset(typev, 0, 8 * sizeof(Oid));
+	MemSet(typev, 0, 8 * sizeof(Oid));
 	foreach(x, argList)
 	{
 		Value	   *t = lfirst(x);

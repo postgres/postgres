@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.7 1997/09/08 21:46:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.8 1997/09/18 20:21:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,7 +339,7 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 				int			this_varno = (int) ((Var *) node)->varno;
 				NameData	name_to_look_for;
 
-				memset(name_to_look_for.data, 0, NAMEDATALEN);
+				MemSet(name_to_look_for.data, 0, NAMEDATALEN);
 
 				if (this_varno == rt_index &&
 					((Var *) node)->varattno == attr_num)

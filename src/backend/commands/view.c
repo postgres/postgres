@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.11 1997/09/08 21:42:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.12 1997/09/18 20:20:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ MakeRetrieveViewRuleName(char *viewName)
 /*
 	char buf[100];
 
-	memset(buf, 0, sizeof(buf));
+	MemSet(buf, 0, sizeof(buf));
 	sprintf(buf, "_RET%.*s", NAMEDATALEN, viewName->data);
 	buf[15] = '\0';
 	namestrcpy(rule_name, buf);

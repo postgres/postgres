@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.22 1997/09/08 21:43:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.23 1997/09/18 20:20:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,7 +448,7 @@ pq_getinaddr(struct sockaddr_in * sin,
 {
 	struct hostent *hs;
 
-	memset((char *) sin, 0, sizeof(*sin));
+	MemSet((char *) sin, 0, sizeof(*sin));
 
 	if (host)
 	{
@@ -582,7 +582,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	if (!hostName)
 		hostName = "localhost";
 
-	memset((char *) &sin, 0, sizeof sin);
+	MemSet((char *) &sin, 0, sizeof sin);
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
@@ -731,7 +731,7 @@ StreamOpen(char *hostName, short portName, Port *port)
 		pqdebug("%s", PQerrormsg);
 		return (STATUS_ERROR);
 	}
-	memset((char *) &port->raddr, 0, sizeof(port->raddr));
+	MemSet((char *) &port->raddr, 0, sizeof(port->raddr));
 	memmove((char *) &(port->raddr.sin_addr),
 			(char *) hp->h_addr,
 			hp->h_length);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.22 1997/09/08 21:42:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.23 1997/09/18 20:20:14 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -283,7 +283,7 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 	 */
 	funcTupDesc = CreateTemplateTupleDesc(1);
 	funcTupDesc->attrs[0] = (AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
-	memset(funcTupDesc->attrs[0], 0, ATTRIBUTE_TUPLE_SIZE);
+	MemSet(funcTupDesc->attrs[0], 0, ATTRIBUTE_TUPLE_SIZE);
 
 	/*
 	 * Lookup the function for the return type.
@@ -679,8 +679,8 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	 *	initialize null[], replace[] and value[]
 	 * ----------------
 	 */
-	memset(nullv, ' ', Natts_pg_attribute);
-	memset(replace, ' ', Natts_pg_attribute);
+	MemSet(nullv, ' ', Natts_pg_attribute);
+	MemSet(replace, ' ', Natts_pg_attribute);
 
 	/* ----------------
 	 *	create the first attribute tuple.
@@ -840,8 +840,8 @@ UpdateIndexRelation(Oid indexoid,
 		attributeList = lnext(attributeList);
 	}
 
-	memset((char *) &indexForm->indkey[0], 0, sizeof indexForm->indkey);
-	memset((char *) &indexForm->indclass[0], 0, sizeof indexForm->indclass);
+	MemSet((char *) &indexForm->indkey[0], 0, sizeof indexForm->indkey);
+	MemSet((char *) &indexForm->indclass[0], 0, sizeof indexForm->indclass);
 
 	/* ----------------
 	 *	copy index key and op class information

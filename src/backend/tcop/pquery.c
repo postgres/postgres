@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.10 1997/09/08 21:47:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.11 1997/09/18 20:22:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ CreateExecutorState(void)
 	state->es_junkFilter = NULL;
 
 	refcount = (long *) palloc(NBuffers * sizeof(long));
-	memset((char *) refcount, 0, NBuffers * sizeof(long));
+	MemSet((char *) refcount, 0, NBuffers * sizeof(long));
 	state->es_refcount = (int *) refcount;
 
 	/* ----------------

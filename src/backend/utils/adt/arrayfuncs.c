@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.19 1997/09/08 21:48:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.20 1997/09/18 20:22:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,7 @@ array_in(char *string,			/* input array in external form */
 	{
 		char	   *emptyArray = palloc(sizeof(ArrayType));
 
-		memset(emptyArray, 0, sizeof(ArrayType));
+		MemSet(emptyArray, 0, sizeof(ArrayType));
 		*(int32 *) emptyArray = sizeof(ArrayType);
 		return emptyArray;
 	}
@@ -213,7 +213,7 @@ array_in(char *string,			/* input array in external form */
 								   &nbytes);
 		nbytes += ARR_OVERHEAD(ndim);
 		retval = (ArrayType *) palloc(nbytes);
-		memset(retval, 0, nbytes);
+		MemSet(retval, 0, nbytes);
 		memmove(retval, (char *) &nbytes, sizeof(int));
 		memmove((char *) ARR_NDIM_PTR(retval), (char *) &ndim, sizeof(int));
 		SET_LO_FLAG(false, retval);
@@ -240,7 +240,7 @@ array_in(char *string,			/* input array in external form */
 							   dim, typlen);
 		nbytes = bytes + ARR_OVERHEAD(ndim);
 		retval = (ArrayType *) palloc(nbytes);
-		memset(retval, 0, nbytes);
+		MemSet(retval, 0, nbytes);
 		memmove(retval, (char *) &nbytes, sizeof(int));
 		memmove((char *) ARR_NDIM_PTR(retval), (char *) &ndim, sizeof(int));
 		SET_LO_FLAG(true, retval);
@@ -391,7 +391,7 @@ _ReadArrayStr(char *arrayStr,
 	for (i = 0; i < ndim; indx[i++] = 0);
 	/* read array enclosed within {} */
 	values = (char **) palloc(nitems * sizeof(char *));
-	memset(values, 0, nitems * sizeof(char *));
+	MemSet(values, 0, nitems * sizeof(char *));
 	q = p = arrayStr;
 
 	while (!eoArray)
@@ -482,7 +482,7 @@ _ReadArrayStr(char *arrayStr,
 				if (!values[i])
 				{
 					values[i] = palloc(typlen);
-					memset(values[i], 0, typlen);
+					MemSet(values[i], 0, typlen);
 				}
 	}
 	else
@@ -788,7 +788,7 @@ array_dims(ArrayType *v, bool *isNull)
 	 * 33 since we assume 15 digits per number + ':' +'[]'
 	 */
 	save_p = p = (char *) palloc(nbytes + 4);
-	memset(save_p, 0, nbytes + 4);
+	MemSet(save_p, 0, nbytes + 4);
 	dimv = ARR_DIMS(v);
 	lb = ARR_LBOUND(v);
 	p += 4;

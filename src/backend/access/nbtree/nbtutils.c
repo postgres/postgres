@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.14 1997/09/08 21:41:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.15 1997/09/18 20:19:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 	nbytes = BTMaxStrategyNumber * sizeof(ScanKeyData);
 	xform = (ScanKey) palloc(nbytes);
 
-	memset(xform, 0, nbytes);
+	MemSet(xform, 0, nbytes);
 	map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
 									  BTMaxStrategyNumber,
 									  attno);
@@ -243,7 +243,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 
 			/* initialization for new attno */
 			attno = cur->sk_attno;
-			memset(xform, 0, nbytes);
+			MemSet(xform, 0, nbytes);
 			map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
 											  BTMaxStrategyNumber,
 											  attno);

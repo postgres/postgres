@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.27 1997/09/13 03:11:51 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.28 1997/09/18 20:21:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1036,7 +1036,7 @@ func_get_candidates(char *funcname, int nargs)
 						palloc(sizeof(struct _CandidateList));
 					current_candidate->args = (Oid *)
 						palloc(8 * sizeof(Oid));
-					memset(current_candidate->args, 0, 8 * sizeof(Oid));
+					MemSet(current_candidate->args, 0, 8 * sizeof(Oid));
 					for (i = 0; i < nargs; i++)
 					{
 						current_candidate->args[i] =
@@ -1475,7 +1475,7 @@ genxprod(InhPaths *arginh, int nargs)
 	for (;;)
 	{
 		oneres = (Oid *) palloc(MAXFARGS * sizeof(Oid));
-		memset(oneres, 0, MAXFARGS * sizeof(Oid));
+		MemSet(oneres, 0, MAXFARGS * sizeof(Oid));
 
 		for (i = nargs - 1; i >= 0 && cur[i] > arginh[i].nsupers; i--)
 			continue;

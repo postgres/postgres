@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.10 1997/09/08 21:49:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.11 1997/09/18 20:22:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 
 
 	hashp = (HTAB *) MEM_ALLOC((unsigned long) sizeof(HTAB));
-	memset(hashp, 0, sizeof(HTAB));
+	MemSet(hashp, 0, sizeof(HTAB));
 
 	if (flags & HASH_FUNCTION)
 	{
@@ -271,7 +271,7 @@ hdefault(HTAB *hashp)
 {
 	HHDR	   *hctl;
 
-	memset(hashp->hctl, 0, sizeof(HHDR));
+	MemSet(hashp->hctl, 0, sizeof(HHDR));
 
 	hctl = hashp->hctl;
 	hctl->bsize = DEF_BUCKET_SIZE;
@@ -829,7 +829,7 @@ dir_realloc(HTAB *hashp)
 	if (p != NULL)
 	{
 		memmove(p, *p_ptr, old_dirsize);
-		memset(*p_ptr + old_dirsize, 0, new_dirsize - old_dirsize);
+		MemSet(*p_ptr + old_dirsize, 0, new_dirsize - old_dirsize);
 		free((char *) *p_ptr);
 		*p_ptr = p;
 		hashp->hctl->dsize = new_dirsize;
@@ -855,7 +855,7 @@ seg_alloc(HTAB *hashp)
 		return (0);
 	}
 
-	memset((char *) segp, 0,
+	MemSet((char *) segp, 0,
 		   (long) sizeof(SEGMENT) * hashp->hctl->ssize);
 
 	segOffset = MAKE_HASHOFFSET(hashp, segp);

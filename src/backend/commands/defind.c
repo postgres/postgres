@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.16 1997/09/08 21:42:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.17 1997/09/18 20:20:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,7 +442,7 @@ FuncIndexArgs(IndexElem *funcIndex,
 	}
 	*opOidP = tuple->t_oid;
 
-	memset(argTypes, 0, 8 * sizeof(Oid));
+	MemSet(argTypes, 0, 8 * sizeof(Oid));
 
 	/*
 	 * process the function arguments

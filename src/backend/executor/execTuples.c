@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.9 1997/09/08 21:43:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.10 1997/09/18 20:20:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ ExecCreateTupleTable(int initialSize)	/* initial number of slots in
 	 *	clean out the slots we just allocated
 	 * ----------------
 	 */
-	memset(array, 0, initialSize * sizeof(TupleTableSlot));
+	MemSet(array, 0, initialSize * sizeof(TupleTableSlot));
 
 	/* ----------------
 	 *	initialize the new table and return it to the caller.

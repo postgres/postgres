@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.14 1997/09/13 12:05:32 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.15 1997/09/18 20:22:12 momjian Exp $
  */
 
 #include <stdio.h>
@@ -226,7 +226,7 @@ cash_out(Cash *in_value)
 	}
 
 	/* allow for trailing negative strings */
-	memset(buf, ' ', CASH_BUFSZ);
+	MemSet(buf, ' ', CASH_BUFSZ);
 	buf[TERMINATOR] = buf[LAST_PAREN] = '\0';
 
 	while (value || count > (point_pos - 2))

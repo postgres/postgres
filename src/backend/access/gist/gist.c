@@ -608,7 +608,7 @@ gistAdjustKeys(Relation r,
 			/* generate and insert new tuple */
 			tupDesc = r->rd_att;
 			isnull = (char *) palloc(r->rd_rel->relnatts);
-			memset(isnull, ' ', r->rd_rel->relnatts);
+			MemSet(isnull, ' ', r->rd_rel->relnatts);
 			newtup = (IndexTuple) index_formtuple(tupDesc,
 										 (Datum *) &centry.pred, isnull);
 			pfree(isnull);
@@ -1029,7 +1029,7 @@ GISTInitBuffer(Buffer b, uint32 f)
 	pageSize = BufferGetPageSize(b);
 
 	page = BufferGetPage(b);
-	memset(page, 0, (int) pageSize);
+	MemSet(page, 0, (int) pageSize);
 	PageInit(page, pageSize, sizeof(GISTPageOpaqueData));
 
 	opaque = (GISTPageOpaque) PageGetSpecialPointer(page);

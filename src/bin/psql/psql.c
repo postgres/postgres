@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.95 1997/09/13 13:03:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.96 1997/09/18 20:22:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1973,7 +1973,7 @@ main(int argc, char **argv)
 	bool		singleSlashCmd = 0;
 	int			c;
 
-	memset(&settings, 0, sizeof settings);
+	MemSet(&settings, 0, sizeof settings);
 	settings.opt.align = 1;
 	settings.opt.header = 1;
 	settings.queryFout = stdout;

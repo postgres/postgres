@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.18 1997/09/08 21:40:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.19 1997/09/18 20:19:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 
 	tp = (char *) palloc(size);
 	tuple = (IndexTuple) tp;
-	memset(tp, 0, (int) size);
+	MemSet(tp, 0, (int) size);
 
 	DataFill((char *) tp + hoff,
 			 tupleDescriptor,

@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.23 1997/09/08 21:41:28 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.24 1997/09/18 20:19:53 momjian Exp $
  *
  * NOTES
  *
@@ -565,7 +565,7 @@ _bt_spoolinit(Relation index, int ntapes, bool isunique)
 	{
 		elog(WARN, "_bt_spoolinit: out of memory");
 	}
-	memset((char *) btspool, 0, sizeof(BTSpool));
+	MemSet((char *) btspool, 0, sizeof(BTSpool));
 	btspool->bts_ntapes = ntapes;
 	btspool->bts_tape = 0;
 	btspool->isunique = isunique;
@@ -852,7 +852,7 @@ _bt_pagestate(Relation index, int flags, int level, bool doupper)
 {
 	BTPageState *state = (BTPageState *) palloc(sizeof(BTPageState));
 
-	memset((char *) state, 0, sizeof(BTPageState));
+	MemSet((char *) state, 0, sizeof(BTPageState));
 	_bt_blnewpage(index, &(state->btps_buf), &(state->btps_page), flags);
 	state->btps_firstoff = InvalidOffsetNumber;
 	state->btps_lastoff = P_HIKEY;
@@ -1216,7 +1216,7 @@ _bt_merge(Relation index, BTSpool *btspool)
 			 * _bt_taperead will return 0 only if the tape is actually at
 			 * EOF.
 			 */
-			memset((char *) &q, 0, sizeof(BTPriQueue));
+			MemSet((char *) &q, 0, sizeof(BTPriQueue));
 			goodtapes = 0;
 			for (t = 0; t < btspool->bts_ntapes; ++t)
 			{

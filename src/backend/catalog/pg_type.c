@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.10 1997/09/08 21:42:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.11 1997/09/18 20:20:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,7 +399,7 @@ TypeCreate(char *typeName,
 	/*
 	 * arguments to type input and output functions must be 0
 	 */
-	memset(argList, 0, 8 * sizeof(Oid));
+	MemSet(argList, 0, 8 * sizeof(Oid));
 
 	procs[0] = inputProcedure;
 	procs[1] = outputProcedure;

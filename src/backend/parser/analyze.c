@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.43 1997/09/18 14:32:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.44 1997/09/18 20:20:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2325,7 +2325,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 	 * transform relation name arguments into * varnodes of the
 	 * appropriate form.
 	 */
-	memset(&oid_array[0], 0, 8 * sizeof(Oid));
+	MemSet(&oid_array[0], 0, 8 * sizeof(Oid));
 
 	nargs = 0;
 	foreach(i, fargs)

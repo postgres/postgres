@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.7 1997/09/08 21:47:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.8 1997/09/18 20:21:38 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -128,7 +128,7 @@ MultiLockReln(LockInfo linfo, LOCKT lockt)
 	 * LOCKTAG has two bytes of padding, unfortunately.  The hash function
 	 * will return miss if the padding bytes aren't zero'd.
 	 */
-	memset(&tag, 0, sizeof(tag));
+	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = linfo->lRelId.relId;
 	tag.dbId = linfo->lRelId.dbId;
 	return (MultiAcquire(MultiTableId, &tag, lockt, RELN_LEVEL));
@@ -151,7 +151,7 @@ MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
 	 * LOCKTAG has two bytes of padding, unfortunately.  The hash function
 	 * will return miss if the padding bytes aren't zero'd.
 	 */
-	memset(&tag, 0, sizeof(tag));
+	MemSet(&tag, 0, sizeof(tag));
 
 	tag.relId = linfo->lRelId.relId;
 	tag.dbId = linfo->lRelId.dbId;
@@ -173,7 +173,7 @@ MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
 	 * LOCKTAG has two bytes of padding, unfortunately.  The hash function
 	 * will return miss if the padding bytes aren't zero'd.
 	 */
-	memset(&tag, 0, sizeof(tag));
+	MemSet(&tag, 0, sizeof(tag));
 
 
 	/* ----------------------------
@@ -247,7 +247,7 @@ MultiAcquire(LockTableId tableId,
 	 * for the lower levels.  Always start from the highest level and go
 	 * to the lowest level.
 	 */
-	memset(tmpTag, 0, sizeof(*tmpTag));
+	MemSet(tmpTag, 0, sizeof(*tmpTag));
 	tmpTag->relId = tag->relId;
 	tmpTag->dbId = tag->dbId;
 
@@ -319,7 +319,7 @@ MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
 	 * zero'd.
 	 * ------------------
 	 */
-	memset(&tag, 0, sizeof(LOCKTAG));
+	MemSet(&tag, 0, sizeof(LOCKTAG));
 
 	tag.relId = linfo->lRelId.relId;
 	tag.dbId = linfo->lRelId.dbId;
@@ -345,7 +345,7 @@ MultiReleaseReln(LockInfo linfo, LOCKT lockt)
 	 * zero'd.
 	 * ------------------
 	 */
-	memset(&tag, 0, sizeof(LOCKTAG));
+	MemSet(&tag, 0, sizeof(LOCKTAG));
 	tag.relId = linfo->lRelId.relId;
 	tag.dbId = linfo->lRelId.dbId;
 
@@ -401,7 +401,7 @@ MultiRelease(LockTableId tableId,
 	 * Must zero out the tag to set padding byes to zero and ensure hashing
 	 * consistency.
 	 */
-	memset(tmpTag, 0, sizeof(*tmpTag));
+	MemSet(tmpTag, 0, sizeof(*tmpTag));
 	tmpTag->relId = tag->relId;
 	tmpTag->dbId = tag->dbId;
 
