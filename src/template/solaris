@@ -11,7 +11,7 @@ esac
 
 # tools/thread/thread_test must be run
 # -D_POSIX_PTHREAD_SEMANTICS enables 5-arg getpwuid_r, among other things
-THREAD_CPPFLAGS="-D_POSIX_PTHREAD_SEMANTICS"
+THREAD_CPPFLAGS="-D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS"
 if test "$GCC" != yes 
 then	THREAD_CPPFLAGS="$THREAD_CPPFLAGS -mt"
 fi
