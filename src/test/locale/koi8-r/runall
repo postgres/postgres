@@ -1,0 +1,52 @@
+#! /bin/sh
+
+PATH=..:$PATH
+
+echo "Testing PostgreSQL compilation..."
+if ! test-pgsql-locale; then
+   exit 1
+fi
+
+LC_CTYPE=ru_RU.KOI8-R
+LC_COLLATE=$LC_CTYPE
+export LC_CTYPE LC_COLLATE
+
+echo "Testing LC_CTYPE..."
+if ! test-ctype > koi8-ctype.out; then
+   exit 1
+fi
+diff expected/koi8-ctype.out koi8-ctype.out
+
+echo "Testing LC_COLLATE..."
+perl ../sort-test.pl test-koi8-sort.in > test-koi8-sort.out
+diff expected/test-koi8-sort.out test-koi8-sort.out
+
+### If you have Python - uncomment the following two lines
+#python ../sort-test.py test-koi8-sort.in > test-koi8-sort.out
+#diff expected/test-koi8-sort.out test-koi8-sort.out
+
+
+abort() {
+   [ "$1" ] && echo "$*"
+   exit 1
+}
+
+for f in char varchar text; do
+   if echo $f | grep -q char; then
+      ftype="$f(60)"
+   else
+      ftype="$f"
+   fi
+   echo "Testing PgSQL: sort on $ftype type..."
+
+   destroydb testlocale >/dev/null 2>&1
+   createdb testlocale || abort "createdb failed"
+   psql -d testlocale -c "CREATE TABLE usastates (abbrev char2, name_en char(20), name_ru $ftype);"  >/dev/null 2>&1 || abort "createtable failed"
+   psql testlocale < test-koi8.sql.in > test-koi8-$f.sql.out 2>/dev/null || abort "test query failed"
+   diff expected/test-koi8-$f.sql.out test-koi8-$f.sql.out
+done
+echo "Testing PgSQL: select on regexp..."
+psql testlocale < test-koi8-select.sql.in > test-koi8-select.sql.out 2>/dev/null || abort "select query failed"
+diff expected/test-koi8-select.sql.out test-koi8-select.sql.out
+destroydb testlocale || abort "destroydb failed"
+echo "Finished."

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.33 1998/06/15 19:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.34 1998/06/16 06:41:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,7 +475,7 @@ bpcharlt(char *arg1, char *arg2)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (cmp == 0)
 		return (len1 < len2);
 	else
@@ -494,7 +494,7 @@ bpcharle(char *arg1, char *arg2)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (0 == cmp)
 		return (bool) (len1 <= len2 ? 1 : 0);
 	else
@@ -513,7 +513,7 @@ bpchargt(char *arg1, char *arg2)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (cmp == 0)
 		return (len1 > len2);
 	else
@@ -532,7 +532,7 @@ bpcharge(char *arg1, char *arg2)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (0 == cmp)
 		return (bool) (len1 >= len2 ? 1 : 0);
 	else
@@ -549,7 +549,7 @@ bpcharcmp(char *arg1, char *arg2)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if ((0 == cmp) && (len1 != len2))
 		return (int32) (len1 < len2 ? -1 : 1);
 	else
@@ -641,7 +641,7 @@ varcharlt(char *arg1, char *arg2)
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
 
-	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (cmp == 0)
 		return (len1 < len2);
 	else
@@ -660,7 +660,7 @@ varcharle(char *arg1, char *arg2)
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
 
-	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (0 == cmp)
 		return (bool) (len1 <= len2 ? 1 : 0);
 	else
@@ -679,7 +679,7 @@ varchargt(char *arg1, char *arg2)
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
 
-	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (cmp == 0)
 		return (len1 > len2);
 	else
@@ -698,7 +698,7 @@ varcharge(char *arg1, char *arg2)
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
 
-	cmp = strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2));
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (0 == cmp)
 		return (bool) (len1 >= len2 ? 1 : 0);
 	else
@@ -715,7 +715,7 @@ varcharcmp(char *arg1, char *arg2)
 
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
-	cmp = (strncmp(VARDATA(arg1), VARDATA(arg2), Min(len1, len2)));
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if ((0 == cmp) && (len1 != len2))
 		return (int32) (len1 < len2 ? -1 : 1);
 	else

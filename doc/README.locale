@@ -1,0 +1,17 @@
+
+1998 May 25
+
+   I extended locale support. Now ORDER BY (if PostgreSQL configured with
+--enable-locale) uses strcoll() for all text fields: char(n), varchar(n),
+text. (I am not sure about ORDER BY char2/char4/etc.)
+
+   I included test suite .../src/test/locale. I didn't include this in
+the regression test because not so much people require locale support. Read
+.../src/test/locale/README for details on the test suite.
+
+   Many thanks to Oleg Bartunov (oleg@sai.msu.su) and Thomas G. Lockhart
+(lockhart@alumni.caltech.edu) for hints, tips, help and discussion.
+
+Oleg.
+---- 
+    Oleg Broytmann     http://members.tripod.com/~phd2/     phd2@earthling.net

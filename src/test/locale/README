@@ -1,0 +1,27 @@
+
+1998 May 25
+
+   This directory contains a set of tests for locales. I provided one C
+program test-ctype.c to test CTYPE support in libc and installed
+localedata. Then there are test-sort.pl and test-sort.py that tests
+collating. (Also there is test-sort.py but it is commented out in scripts;
+uncomment it if you have Python interpreter installed).
+   To run a test for some locale (koi8, e.g) run
+make all test-$locale
+   (for example)
+make all test-koi8
+
+   Currently, only tests for koi8 locale (russian cyrillic for UN*X)
+provided in koi8 directory. Script `runall' calls test-pgsql-locale to test
+whether locale support had been compiled into PotgreSQL, test-ctype to test
+libc and localedata, test-sort.pl (uncomment test-sort.py, if you have
+Python interpreter installed) and does tests on PostgreSQL with
+test-koi8*.sql.in.
+
+   To add locale tests one need to create directory $locale and create
+Makefile (and other files) similar to koi8-r/*. Actually, the simplest (I
+think) method is just copy koi8-r directory and edit/replace files.
+
+Oleg.
+---- 
+    Oleg Broytmann     http://members.tripod.com/~phd2/     phd2@earthling.net

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.43 1998/05/29 13:37:29 thomas Exp $
+ * $Id: builtins.h,v 1.44 1998/06/16 06:41:51 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -428,6 +428,8 @@ extern char *textout(text *vlena);
 extern text *textcat(text *arg1, text *arg2);
 extern bool texteq(text *arg1, text *arg2);
 extern bool textne(text *arg1, text *arg2);
+extern int varstr_cmp(unsigned char *arg1, int len1, unsigned char *arg2, int len2);
+extern int text_cmp(text *arg1, text *arg2);
 extern bool text_lt(text *arg1, text *arg2);
 extern bool text_le(text *arg1, text *arg2);
 extern bool text_gt(text *arg1, text *arg2);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.36 1998/06/15 19:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.37 1998/06/16 06:41:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -468,116 +468,87 @@ textne(text *arg1, text *arg2)
 	return ((bool) !texteq(arg1, arg2));
 }
 
-/* text_lt()
+/* varstr_cmp()
+ * Comparison function for text strings with given lengths.
+ * Includes locale support, but must copy strings to temporary memory
+ *	to allow null-termination for inputs to strcoll().
+ * Returns -1, 0 or 1
+ */
+int
+varstr_cmp(unsigned char *arg1, int len1, unsigned char *arg2, int len2)
+{
+	int		result;
+	unsigned char *a1p, *a2p;
+
+#ifdef USE_LOCALE
+	a1p = (unsigned char *) palloc(len1 + 1);
+	a2p = (unsigned char *) palloc(len2 + 1);
+
+	memcpy(a1p, arg1, len1);
+	*(a1p + len1) = '\0';
+	memcpy(a2p, arg2, len2);
+	*(a2p + len2) = '\0';
+
+	result = strcoll(a1p, a2p);
+
+	pfree(a1p);
+	pfree(a2p);
+
+#else
+
+	a1p = arg1;
+	a2p = arg2;
+
+	result = strncmp(a1p, a2p, Min(len1, len2));
+	if ((result == 0) && (len1 != len2))
+		result = (len1 < len2) ? -1 : 1;
+#endif
+
+	return (result);
+}	/* varstr_cmp() */
+
+/* text_cmp()
  * Comparison function for text strings.
  * Includes locale support, but must copy strings to temporary memory
  *	to allow null-termination for inputs to strcoll().
  * XXX HACK code for textlen() indicates that there can be embedded nulls
  *	but it appears that most routines (incl. this one) assume not! - tgl 97/04/07
+ * Returns -1, 0 or 1
  */
-bool
-text_lt(text *arg1, text *arg2)
+int
+text_cmp(text *arg1, text *arg2)
 {
-	bool		result;
-
-#ifdef USE_LOCALE
-	int			cval;
-
-#endif
-	int			len;
-	unsigned char *a1p,
-			   *a2p;
+	unsigned char *a1p, *a2p;
+	int			len1, len2;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) FALSE);
 
-	len = (((VARSIZE(arg1) <= VARSIZE(arg2)) ? VARSIZE(arg1) : VARSIZE(arg2)) - VARHDRSZ);
-
-#ifdef USE_LOCALE
-	a1p = (unsigned char *) palloc(len + 1);
-	a2p = (unsigned char *) palloc(len + 1);
-
-	memcpy(a1p, VARDATA(arg1), len);
-	*(a1p + len) = '\0';
-	memcpy(a2p, VARDATA(arg2), len);
-	*(a2p + len) = '\0';
-
-	cval = strcoll(a1p, a2p);
-	result = ((cval < 0) || ((cval == 0) && (VARSIZE(arg1) < VARSIZE(arg2))));
-
-	pfree(a1p);
-	pfree(a2p);
-#else
 	a1p = (unsigned char *) VARDATA(arg1);
 	a2p = (unsigned char *) VARDATA(arg2);
 
-	while (len != 0 && *a1p == *a2p)
-	{
-		a1p++;
-		a2p++;
-		len--;
-	};
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
 
-	result = (len ? (*a1p < *a2p) : (VARSIZE(arg1) < VARSIZE(arg2)));
-#endif
+	return varstr_cmp(a1p, len1, a2p, len2);
+}	/* text_cmp() */
 
-	return (result);
+/* text_lt()
+ * Comparison function for text strings.
+ */
+bool
+text_lt(text *arg1, text *arg2)
+{
+	return (bool)(text_cmp(arg1, arg2) < 0);
 }	/* text_lt() */
 
 /* text_le()
  * Comparison function for text strings.
- * Includes locale support, but must copy strings to temporary memory
- *	to allow null-termination for inputs to strcoll().
- * XXX HACK code for textlen() indicates that there can be embedded nulls
- *	but it appears that most routines (incl. this one) assume not! - tgl 97/04/07
  */
 bool
 text_le(text *arg1, text *arg2)
 {
-	bool		result;
-
-#ifdef USE_LOCALE
-	int			cval;
-
-#endif
-	int			len;
-	unsigned char *a1p,
-			   *a2p;
-
-	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
-
-	len = (((VARSIZE(arg1) <= VARSIZE(arg2)) ? VARSIZE(arg1) : VARSIZE(arg2)) - VARHDRSZ);
-
-#ifdef USE_LOCALE
-	a1p = (unsigned char *) palloc(len + 1);
-	a2p = (unsigned char *) palloc(len + 1);
-
-	memcpy(a1p, VARDATA(arg1), len);
-	*(a1p + len) = '\0';
-	memcpy(a2p, VARDATA(arg2), len);
-	*(a2p + len) = '\0';
-
-	cval = strcoll(a1p, a2p);
-	result = ((cval < 0) || ((cval == 0) && (VARSIZE(arg1) <= VARSIZE(arg2))));
-
-	pfree(a1p);
-	pfree(a2p);
-#else
-	a1p = (unsigned char *) VARDATA(arg1);
-	a2p = (unsigned char *) VARDATA(arg2);
-
-	while (len != 0 && *a1p == *a2p)
-	{
-		a1p++;
-		a2p++;
-		len--;
-	};
-
-	result = (len ? (*a1p <= *a2p) : (VARSIZE(arg1) <= VARSIZE(arg2)));
-#endif
-
-	return (result);
+	return (bool)(text_cmp(arg1, arg2) <= 0);
 }	/* text_le() */
 
 bool
