@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.10 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.11 2005/03/24 02:11:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,7 @@ copydir(char *fromdir, char *todir)
 		return -1;
 	}
 
+	errno = 0;
 	while ((xlde = readdir(xldir)) != NULL)
 	{
 		snprintf(fromfl, MAXPGPATH, "%s/%s", fromdir, xlde->d_name);
@@ -68,6 +69,24 @@ copydir(char *fromdir, char *todir)
 			FreeDir(xldir);
 			return -1;
 		}
+		errno = 0;
+	}
+#ifdef WIN32
+
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	 * not in released version
+	 */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+	if (errno)
+	{
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not read directory \"%s\": %m", fromdir)));
+		FreeDir(xldir);
+		return -1;
 	}
 
 	FreeDir(xldir);
