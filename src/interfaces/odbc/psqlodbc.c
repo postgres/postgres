@@ -1,14 +1,15 @@
-/* Module:			psqlodbc.c
+
+/* Module:          psqlodbc.c
  *
- * Description:		This module contains the main entry point (DllMain) for the library.
- *					It also contains functions to get and set global variables for the
- *					driver in the registry.
+ * Description:     This module contains the main entry point (DllMain) for the library.
+ *                  It also contains functions to get and set global variables for the
+ *                  driver in the registry.
  *
- * Classes:			n/a
+ * Classes:         n/a
  *
- * API functions:	none
+ * API functions:   none
  *
- * Comments:		See "notice.txt" for copyright and license information.
+ * Comments:        See "notice.txt" for copyright and license information.
  *
  */
 
@@ -35,59 +36,57 @@ GLOBAL_VALUES globals;
 RETCODE SQL_API SQLDummyOrdinal(void);
 
 #ifdef WIN32
-HINSTANCE NEAR s_hModule;		/* Saved module handle. */
+HINSTANCE NEAR s_hModule;               /* Saved module handle. */
 
 /*	This is where the Driver Manager attaches to this Driver */
-BOOL		WINAPI
-DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
+BOOL WINAPI DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved) 
 {
-	WORD		wVersionRequested;
-	WSADATA		wsaData;
+WORD wVersionRequested; 
+WSADATA wsaData; 
 
-	switch (ul_reason_for_call)
-	{
-		case DLL_PROCESS_ATTACH:
-			s_hModule = hInst;	/* Save for dialog boxes */
+	switch (ul_reason_for_call) {
+	case DLL_PROCESS_ATTACH:
+		s_hModule = hInst;				/* Save for dialog boxes */
 
-			/* Load the WinSock Library */
-			wVersionRequested = MAKEWORD(1, 1);
+		/*	Load the WinSock Library */
+		wVersionRequested = MAKEWORD(1, 1); 
 
-			if (WSAStartup(wVersionRequested, &wsaData))
-				return FALSE;
+		if ( WSAStartup(wVersionRequested, &wsaData))
+			return FALSE;
 
-			/* Verify that this is the minimum version of WinSock */
-			if (LOBYTE(wsaData.wVersion) != 1 ||
-				HIBYTE(wsaData.wVersion) != 1)
-			{
-				WSACleanup();
-				return FALSE;
-			}
+		/*	Verify that this is the minimum version of WinSock */
+		if ( LOBYTE( wsaData.wVersion ) != 1 || 
+			HIBYTE( wsaData.wVersion ) != 1 ) { 
 
-			getGlobalDefaults(DBMS_NAME, ODBCINST_INI, FALSE);
-			break;
+			WSACleanup(); 
+			return FALSE;
+		}
 
-		case DLL_THREAD_ATTACH:
-			break;
+		getGlobalDefaults(DBMS_NAME, ODBCINST_INI, FALSE);
+		break;
 
-		case DLL_PROCESS_DETACH:
+	case DLL_THREAD_ATTACH:
+		break;
 
-			WSACleanup();
+	case DLL_PROCESS_DETACH:
 
-			return TRUE;
+		WSACleanup();
 
-		case DLL_THREAD_DETACH:
-			break;
+		return TRUE;
 
-		default:
-			break;
+	case DLL_THREAD_DETACH:
+		break;
+
+	default:
+		break;
 	}
 
-	return TRUE;
-
-	UNREFERENCED_PARAMETER(lpReserved);
+	return TRUE;                                                                
+                                                                                
+	UNREFERENCED_PARAMETER(lpReserved);                                         
 }
 
-#else							/* not WIN32 */
+#else	/* not WIN32 */
 
 #ifndef TRUE
 #define TRUE	(BOOL)1
@@ -98,7 +97,7 @@ DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 
 #ifdef __GNUC__
 
-/* This function is called at library initialization time.	*/
+/* This function is called at library initialization time.  */
 
 static BOOL
 __attribute__((constructor))
@@ -108,7 +107,7 @@ init(void)
 	return TRUE;
 }
 
-#else							/* not __GNUC__ */
+#else /* not __GNUC__ */
 
 /* These two functions do shared library initialziation on UNIX, well at least
  * on Linux. I don't know about other systems.
@@ -126,9 +125,9 @@ _fini(void)
 	return TRUE;
 }
 
-#endif	 /* not __GNUC__ */
+#endif /* not __GNUC__ */
 
-#endif	 /* not WIN32 */
+#endif /* not WIN32 */
 
 /*	This function is used to cause the Driver Manager to
 	call functions by number rather than name, which is faster.
@@ -136,8 +135,8 @@ _fini(void)
 	Driver Manager do this.  Also, the ordinal values of the
 	functions must match the value of fFunction in SQLGetFunctions()
 */
-RETCODE SQL_API
-SQLDummyOrdinal(void)
+RETCODE SQL_API SQLDummyOrdinal(void)
 {
 	return SQL_SUCCESS;
 }
+

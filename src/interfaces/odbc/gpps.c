@@ -13,7 +13,7 @@
 #ifndef WIN32
 
 #if HAVE_CONFIG_H
-#include "config.h"				/* produced by configure */
+#include "config.h"	/* produced by configure */
 #endif
 
 #include <stdio.h>
@@ -38,87 +38,83 @@
 
 
 DWORD
-GetPrivateProfileString(char *theSection,		/* section name */
-						char *theKey,	/* search key name */
-						char *theDefault,		/* default value if not
-												 * found */
-						char *theReturnBuffer,	/* return value stored
-												 * here */
-						size_t theReturnBufferLength,	/* byte length of return
-														 * buffer */
-						char *theIniFileName)	/* pathname of ini file to
-												 * search */
+GetPrivateProfileString(char *theSection,	/* section name */
+			char *theKey,		/* search key name */
+			char *theDefault,	/* default value if not found */
+			char *theReturnBuffer,	/* return value stored here */
+			size_t theReturnBufferLength,	/* byte length of return buffer */
+			char *theIniFileName)		/* pathname of ini file to search */
 {
-	char		buf[MAXPGPATH];
-	char	   *ptr = 0;
-	FILE	   *aFile = 0;
-	size_t		aLength;
-	char		aLine[2048];
-	char	   *aValue;
-	char	   *aStart;
-	char	   *aString;
-	size_t		aLineLength;
-	size_t		aReturnLength = 0;
+	char buf[MAXPGPATH];
+	char* ptr = 0;
+	FILE* aFile = 0;
+	size_t aLength;
+	char aLine[2048];
+	char *aValue;
+	char *aStart;
+	char *aString;
+	size_t aLineLength;
+	size_t aReturnLength = 0;
 
-	BOOL		aSectionFound = FALSE;
-	BOOL		aKeyFound = FALSE;
-	int			j = 0;
+	BOOL aSectionFound = FALSE;
+	BOOL aKeyFound = FALSE;
+	int j = 0;
 
 	j = strlen(theIniFileName) + 1;
-	ptr = (char *) getpwuid(getuid());	/* get user info */
+	ptr = (char*)getpwuid(getuid());	/* get user info */
 
-	if (ptr == NULL)
+	if( ptr == NULL)
 	{
-		if (MAXPGPATH - 1 < j)
-			theIniFileName[MAXPGPATH - 1] = '\0';
+		if( MAXPGPATH-1 < j )
+			theIniFileName[MAXPGPATH-1] = '\0';
 
-		sprintf(buf, "%s", theIniFileName);
+		sprintf(buf,"%s",theIniFileName);
 	}
-	ptr = ((struct passwd *) ptr)->pw_dir;		/* get user home dir */
-	if (ptr == NULL || *ptr == '\0')
+	ptr = ((struct passwd*)ptr)->pw_dir;	/* get user home dir */
+	if( ptr == NULL || *ptr == '\0' )
 		ptr = "/home";
 
-	/*
-	 * This doesn't make it so we find an ini file but allows normal
-	 * processing to continue further on down. The likelihood is that the
-	 * file won't be found and thus the default value will be returned.
-	 */
-	if (MAXPGPATH - 1 < strlen(ptr) + j)
+	/* This doesn't make it so we find an ini file but allows normal
+	 * processing to continue further on down. The likelihood is that
+	 * the file won't be found and thus the default value will be
+	 * returned.
+	*/
+	if( MAXPGPATH-1 < strlen(ptr) + j )
 	{
-		if (MAXPGPATH - 1 < strlen(ptr))
-			ptr[MAXPGPATH - 1] = '\0';
+		if( MAXPGPATH-1 < strlen(ptr) )
+			ptr[MAXPGPATH-1] = '\0';
 		else
-			theIniFileName[MAXPGPATH - 1 - strlen(ptr)] = '\0';
+			theIniFileName[MAXPGPATH-1-strlen(ptr)] = '\0';
 	}
 
-	sprintf(buf, "%s/%s", ptr, theIniFileName);
+	sprintf( buf, "%s/%s",ptr,theIniFileName );
 
-	/*
-	 * This code makes it so that a file in the users home dir overrides a
-	 * the "default" file as passed in
-	 */
-	aFile = (FILE *) (buf ? fopen(buf, PG_BINARY_R) : NULL);
-	if (!aFile)
-	{
-		sprintf(buf, "%s", theIniFileName);
-		aFile = (FILE *) (buf ? fopen(buf, PG_BINARY_R) : NULL);
+	  /* This code makes it so that a file in the users home dir
+	   * overrides a the "default" file as passed in
+	  */
+	aFile = (FILE*)(buf ? fopen(buf, PG_BINARY_R) : NULL);
+	if(!aFile) {
+		sprintf(buf,"%s",theIniFileName);
+		aFile = (FILE*)(buf ? fopen(buf, PG_BINARY_R) : NULL);
 	}
 
 
 	aLength = (theDefault == NULL) ? 0 : strlen(theDefault);
 
-	if (theReturnBufferLength == 0 || theReturnBuffer == NULL)
+	if(theReturnBufferLength == 0 || theReturnBuffer == NULL)
 	{
-		if (aFile)
+		if(aFile)
+		{
 			fclose(aFile);
+		}
 		return 0;
 	}
 
-	if (aFile == NULL)
+	if(aFile == NULL)
 	{
 		/* no ini file specified, return the default */
 
-		++aLength;				/* room for NULL char */
+		++aLength;	/* room for NULL char */
 		aLength = theReturnBufferLength < aLength ?
 			theReturnBufferLength : aLength;
 		strncpy(theReturnBuffer, theDefault, aLength);
@@ -127,77 +123,86 @@ GetPrivateProfileString(char *theSection,		/* section name */
 	}
 
 
-	while (fgets(aLine, sizeof(aLine), aFile) != NULL)
+	while(fgets(aLine, sizeof(aLine), aFile) != NULL)
 	{
 		aLineLength = strlen(aLine);
 		/* strip final '\n' */
-		if (aLineLength > 0 && aLine[aLineLength - 1] == '\n')
-			aLine[aLineLength - 1] = '\0';
-		switch (*aLine)
+		if(aLineLength > 0 && aLine[aLineLength - 1] == '\n')
 		{
-			case ' ':			/* blank line */
-			case ';':			/* comment line */
+			aLine[aLineLength - 1] = '\0';
+		}
+		switch(*aLine)
+		{
+			case ' ': /* blank line */
+			case ';': /* comment line */
 				continue;
-				break;
+			break;
 
-			case '[':			/* section marker */
+			case '[':	/* section marker */
 
-				if ((aString = strchr(aLine, ']')))
+				if( (aString = strchr(aLine, ']')) )
 				{
 					aStart = aLine + 1;
 					aString--;
-					while (isspace((unsigned char) *aStart))
-						aStart++;
-					while (isspace((unsigned char) *aString))
-						aString--;
-					*(aString + 1) = '\0';
+					while (isspace((unsigned char) *aStart)) aStart++;
+					while (isspace((unsigned char) *aString)) aString--;
+					*(aString+1) = '\0';
 
 					/* accept as matched if NULL key or exact match */
 
-					if (!theSection || !strcmp(aStart, theSection))
+					if(!theSection || !strcmp(aStart, theSection))
+					{
 						aSectionFound = TRUE;
+					}
 				}
 
-				break;
+			break;
 
 			default:
 
 				/* try to match value keys if in proper section */
 
-				if (aSectionFound)
+				if(aSectionFound)
 				{
 					/* try to match requested key */
 
-					if ((aString = aValue = strchr(aLine, '=')))
+					if( (aString = aValue = strchr(aLine, '=')) )
 					{
 						*aValue = '\0';
 						++aValue;
 
 						/* strip leading blanks in value field */
 
-						while (*aValue == ' ' && aValue < aLine + sizeof(aLine))
+						while(*aValue == ' ' && aValue < aLine + sizeof(aLine))
+						{
 							*aValue++ = '\0';
-						if (aValue >= aLine + sizeof(aLine))
+						}
+						if(aValue >= aLine + sizeof(aLine))
+						{
 							aValue = "";
+						}
 					}
 					else
+					{
 						aValue = "";
+					}
 
 					aStart = aLine;
-					while (isspace((unsigned char) *aStart))
-						aStart++;
+					while (isspace((unsigned char) *aStart)) aStart++;
 
 					/* strip trailing blanks from key */
 
-					if (aString)
+					if(aString)
 					{
-						while (--aString >= aStart && *aString == ' ')
+						while(--aString >= aStart && *aString == ' ')
+						{
 							*aString = '\0';
+						}
 					}
 
 					/* see if key is matched */
 
-					if (theKey == NULL || !strcmp(theKey, aStart))
+					if(theKey == NULL || !strcmp(theKey, aStart))
 					{
 						/* matched -- first, terminate value part */
 
@@ -208,7 +213,7 @@ GetPrivateProfileString(char *theSection,		/* section name */
 
 						aString = aValue + aLength - 1;
 
-						while (--aString > aValue && *aString == ' ')
+						while(--aString > aValue && *aString == ' ')
 						{
 							*aString = '\0';
 							--aLength;
@@ -216,7 +221,7 @@ GetPrivateProfileString(char *theSection,		/* section name */
 
 						/* unquote value if quoted */
 
-						if (aLength >= 2 && aValue[0] == '"' &&
+						if(aLength >= 2 && aValue[0] == '"' &&
 							aValue[aLength - 1] == '"')
 						{
 							/* string quoted with double quotes */
@@ -229,7 +234,7 @@ GetPrivateProfileString(char *theSection,		/* section name */
 						{
 							/* single quotes allowed also... */
 
-							if (aLength >= 2 && aValue[0] == '\'' &&
+							if(aLength >= 2 && aValue[0] == '\'' &&
 								aValue[aLength - 1] == '\'')
 							{
 								aValue[aLength - 1] = '\0';
@@ -241,23 +246,23 @@ GetPrivateProfileString(char *theSection,		/* section name */
 						/* compute maximum length copyable */
 
 						aLineLength = (aLength <
-						theReturnBufferLength - aReturnLength) ? aLength :
+							theReturnBufferLength - aReturnLength) ? aLength :
 							theReturnBufferLength - aReturnLength;
 
 						/* do the copy to return buffer */
 
-						if (aLineLength)
+						if(aLineLength)
 						{
 							strncpy(&theReturnBuffer[aReturnLength],
-									aValue, aLineLength);
+								aValue, aLineLength);
 							aReturnLength += aLineLength;
-							if (aReturnLength < theReturnBufferLength)
+							if(aReturnLength < theReturnBufferLength)
 							{
 								theReturnBuffer[aReturnLength] = '\0';
 								++aReturnLength;
 							}
 						}
-						if (aFile)
+						if(aFile)
 						{
 							fclose(aFile);
 							aFile = NULL;
@@ -267,16 +272,17 @@ GetPrivateProfileString(char *theSection,		/* section name */
 					}
 				}
 
-				break;
+			break;
 		}
 	}
 
-	if (aFile)
+	if(aFile)
+	{
 		fclose(aFile);
+	}
 
-	if (!aKeyFound)
-	{							/* key wasn't found return default */
-		++aLength;				/* room for NULL char */
+	if(!aKeyFound) {	/* key wasn't found return default */
+		++aLength;	/* room for NULL char */
 		aLength = theReturnBufferLength < aLength ?
 			theReturnBufferLength : aLength;
 		strncpy(theReturnBuffer, theDefault, aLength);
@@ -287,11 +293,10 @@ GetPrivateProfileString(char *theSection,		/* section name */
 }
 
 DWORD
-WritePrivateProfileString(char *theSection,		/* section name */
-						  char *theKey, /* write key name */
-						  char *theBuffer,		/* input buffer */
-						  char *theIniFileName) /* pathname of ini file to
-												 * write */
+WritePrivateProfileString(char *theSection,	/* section name */
+			  char *theKey,		/* write key name */
+			  char *theBuffer,	/* input buffer */
+			  char *theIniFileName)	/* pathname of ini file to write */
 {
 	return 0;
 }
@@ -302,74 +307,69 @@ WritePrivateProfileString(char *theSection,		/* section name */
  * I find out different.
  */
 DWORD
-WritePrivateProfileString(char *theSection,		/* section name */
-						  char *theKey, /* write key name */
-						  char *theBuffer,		/* input buffer */
-						  char *theIniFileName) /* pathname of ini file to
-												 * write */
+WritePrivateProfileString(char *theSection,	/* section name */
+			  char *theKey,		/* write key name */
+			  char *theBuffer,	/* input buffer */
+			  char *theIniFileName)	/* pathname of ini file to write */
 {
-	char		buf[MAXPGPATH];
-	char	   *ptr = 0;
-	FILE	   *aFile = 0;
-	size_t		aLength;
-	char		aLine[2048];
-	char	   *aValue;
-	char	   *aString;
-	size_t		aLineLength;
-	size_t		aReturnLength = 0;
+	char buf[MAXPGPATH];
+	char* ptr = 0;
+	FILE* aFile = 0;
+	size_t aLength;
+	char aLine[2048];
+	char *aValue;
+	char *aString;
+	size_t aLineLength;
+	size_t aReturnLength = 0;
 
-	BOOL		aSectionFound = FALSE;
-	BOOL		keyFound = FALSE;
-	int			j = 0;
+	BOOL aSectionFound = FALSE;
+	BOOL keyFound = FALSE;
+	int j = 0;
 
 	/* If this isn't correct processing we'll change it later  */
-	if (theSection == NULL || theKey == NULL || theBuffer == NULL ||
-		theIniFileName == NULL)
-		return 0;
+	if(theSection == NULL || theKey == NULL || theBuffer == NULL ||
+		theIniFileName == NULL) return 0;
 
 	aLength = strlen(theBuffer);
-	if (aLength == 0)
-		return 0;
+	if(aLength == 0) return 0;
 
 	j = strlen(theIniFileName) + 1;
-	ptr = (char *) getpwuid(getuid());	/* get user info */
+	ptr = (char*)getpwuid(getuid());	/* get user info */
 
-	if (ptr == NULL)
+	if( ptr == NULL)
 	{
-		if (MAXPGPATH - 1 < j)
-			theIniFileName[MAXPGPATH - 1] = '\0';
+		if( MAXPGPATH-1 < j )
+			theIniFileName[MAXPGPATH-1] = '\0';
 
-		sprintf(buf, "%s", theIniFileName);
+		sprintf(buf,"%s",theIniFileName);
 	}
-	ptr = ((struct passwd *) ptr)->pw_dir;		/* get user home dir */
-	if (ptr == NULL || *ptr == '\0')
+	ptr = ((struct passwd*)ptr)->pw_dir;	/* get user home dir */
+	if( ptr == NULL || *ptr == '\0' )
 		ptr = "/home";
 
 	/* This doesn't make it so we find an ini file but allows normal */
-	/* processing to continue further on down. The likelihood is that */
+	/*  processing to continue further on down. The likelihood is that */
 	/* the file won't be found and thus the default value will be */
 	/* returned. */
 	/* */
-	if (MAXPGPATH - 1 < strlen(ptr) + j)
+	if( MAXPGPATH-1 < strlen(ptr) + j )
 	{
-		if (MAXPGPATH - 1 < strlen(ptr))
-			ptr[MAXPGPATH - 1] = '\0';
+		if( MAXPGPATH-1 < strlen(ptr) )
+			ptr[MAXPGPATH-1] = '\0';
 		else
-			theIniFileName[MAXPGPATH - 1 - strlen(ptr)] = '\0';
+			theIniFileName[MAXPGPATH-1-strlen(ptr)] = '\0';
 	}
 
-	sprintf(buf, "%s/%s", ptr, theIniFileName);
+	sprintf( buf, "%s/%s",ptr,theIniFileName );
 
 	/* This code makes it so that a file in the users home dir */
-	/* overrides a the "default" file as passed in */
+	/*  overrides a the "default" file as passed in */
 	/* */
-	aFile = (FILE *) (buf ? fopen(buf, "r+") : NULL);
-	if (!aFile)
-	{
-		sprintf(buf, "%s", theIniFileName);
-		aFile = (FILE *) (buf ? fopen(buf, "r+") : NULL);
-		if (!aFile)
-			return 0;
+	aFile = (FILE*)(buf ? fopen(buf, "r+") : NULL);
+	if(!aFile) {
+		sprintf(buf,"%s",theIniFileName);
+		aFile = (FILE*)(buf ? fopen(buf, "r+") : NULL);
+		if(!aFile) return 0;
 	}
 
 
@@ -379,92 +379,104 @@ WritePrivateProfileString(char *theSection,		/* section name */
 	/* exists we have to overwrite it. If it doesn't exist */
 	/* we just write a new line to the file. */
 	/* */
-	while (fgets(aLine, sizeof(aLine), aFile) != NULL)
+	while(fgets(aLine, sizeof(aLine), aFile) != NULL)
 	{
 		aLineLength = strlen(aLine);
 		/* strip final '\n' */
-		if (aLineLength > 0 && aLine[aLineLength - 1] == '\n')
-			aLine[aLineLength - 1] = '\0';
-		switch (*aLine)
+		if(aLineLength > 0 && aLine[aLineLength - 1] == '\n')
 		{
-			case ' ':			/* blank line */
-			case ';':			/* comment line */
+			aLine[aLineLength - 1] = '\0';
+		}
+		switch(*aLine)
+		{
+			case ' ': /* blank line */
+			case ';': /* comment line */
 				continue;
-				break;
+			break;
 
-			case '[':			/* section marker */
+			case '[':	/* section marker */
 
-				if ((aString = strchr(aLine, ']')))
+				if( (aString = strchr(aLine, ']')) )
 				{
 					*aString = '\0';
 
 					/* accept as matched if key exact match */
 
-					if (!strcmp(aLine + 1, theSection))
+					if(!strcmp(aLine + 1, theSection))
+					{
 						aSectionFound = TRUE;
+					}
 				}
 
-				break;
+			break;
 
 			default:
 
 				/* try to match value keys if in proper section */
 
-				if (aSectionFound)
+				if(aSectionFound)
 				{
 					/* try to match requested key */
 
-					if ((aString = aValue = strchr(aLine, '=')))
+					if( (aString = aValue = strchr(aLine, '=')) )
 					{
 						*aValue = '\0';
 						++aValue;
 
 						/* strip leading blanks in value field */
 
-						while (*aValue == ' ' && aValue < aLine + sizeof(aLine))
+						while(*aValue == ' ' && aValue < aLine + sizeof(aLine))
+						{
 							*aValue++ = '\0';
-						if (aValue >= aLine + sizeof(aLine))
+						}
+						if(aValue >= aLine + sizeof(aLine))
+						{
 							aValue = "";
+						}
 					}
 					else
+					{
 						aValue = "";
+					}
 
 					/* strip trailing blanks from key */
 
-					if (aString)
+					if(aString)
 					{
-						while (--aString >= aLine && *aString == ' ')
+						while(--aString >= aLine && *aString == ' ')
+						{
 							*aString = '\0';
+						}
 					}
 
 					/* see if key is matched */
 
-					if (!strcmp(theKey, aLine))
+					if(!strcmp(theKey, aLine))
 					{
 						keyFound = TRUE;
 						/* matched -- first, terminate value part */
 
 						/* overwrite current value */
-						fseek(aFile, -aLineLength, SEEK_CUR);
+						fseek(aFile,-aLineLength,SEEK_CUR);
 						/* overwrite key and value */
-						sprintf(aLine, "%s = %s\n", theKey, theBuffer);
-						fputs(aLine, aFile);
+						sprintf(aLine,"%s = %s\n",theKey,theBuffer);
+						fputs(aLine,aFile);
+						}
 					}
 				}
+
+			break;
 		}
-
-		break;
 	}
-}
 
-if (!keyFound)
-{								/* theKey wasn't in file so  */
-	if (aFile)
+	if(!keyFound) {		/* theKey wasn't in file so  */
+	if(aFile)
+	{
 		fclose(aFile);
+	}
 
 	return aReturnLength > 0 ? aReturnLength - 1 : 0;
 }
-
 #endif
 
 
