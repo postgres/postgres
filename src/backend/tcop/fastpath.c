@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.55 2003/01/01 21:57:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.56 2003/01/07 22:32:10 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -97,7 +97,7 @@ SendFunctionResult(Datum retval, bool retbyval, int retlen)
 		{						/* by-reference ... */
 			if (retlen == -1)
 			{					/* ... varlena */
-				struct varlena *v = (struct varlena *) DatumGetPointer(retval);
+				struct varlena *v = PG_DETOAST_DATUM(retval);
 
 				pq_sendint(&buf, VARSIZE(v) - VARHDRSZ, VARHDRSZ);
 				pq_sendbytes(&buf, VARDATA(v), VARSIZE(v) - VARHDRSZ);
