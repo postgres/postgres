@@ -152,23 +152,23 @@ select 100 @< 4;
  f
 (1 row)
 
-select * from T_pkey1 order by key1 using @<;
+select * from T_pkey1 order by key1, key2 using @<;
  key1 |         key2         |                   txt                    
 ------+----------------------+------------------------------------------
-    1 | key1-2               | test key                                
     1 | key1-1               | test key                                
+    1 | key1-2               | test key                                
     1 | key1-3               | test key                                
     1 | KEY1-3               | should work                             
-    2 | key2-9               | test key                                
     2 | key2-3               | test key                                
+    2 | key2-9               | test key                                
 (6 rows)
 
-select * from T_pkey2 order by key1 using @<;
+select * from T_pkey2 order by key1, key2 using @<;
  key1 |         key2         |                   txt                    
 ------+----------------------+------------------------------------------
     1 | KEY1-3               | test key                                
     1 | KEY1-9               | test key                                
-    2 | KEY2-9               | test key                                
     2 | KEY2-3               | test key                                
+    2 | KEY2-9               | test key                                
 (4 rows)
 

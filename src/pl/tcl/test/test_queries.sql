@@ -68,6 +68,6 @@ select tcl_sum(key1) from T_pkey1 where key1 = 99;
 select 1 @< 2;
 select 100 @< 4;
 
-select * from T_pkey1 order by key1 using @<;
-select * from T_pkey2 order by key1 using @<;
+select * from T_pkey1 order by key1, key2 using @<;
+select * from T_pkey2 order by key1, key2 using @<;
 
