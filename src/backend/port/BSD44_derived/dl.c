@@ -58,17 +58,26 @@ BSD44_derived_dlerror(void)
 void *
 BSD44_derived_dlopen(char *file, int num)
 {
+#ifdef __mips__
+        (void) sprintf(error_message, "dlopen (%s) not supported", file);
+	return NULL;
+#else
 	void	*vp;
 
 	if ((vp = dlopen(file, num)) == (void *) NULL) {
 		(void) sprintf(error_message, "dlopen (%s) failed", file);
 	}
 	return(vp);
+#endif
 }
 
 void *
 BSD44_derived_dlsym(void *handle, char *name)
 {
+#ifdef __mips__
+	(void) sprintf(error_message, "dlsym (%s) failed", name);
+	return NULL;
+#else
 	void	*vp;
 	char	buf[BUFSIZ];
 
@@ -80,10 +89,13 @@ BSD44_derived_dlsym(void *handle, char *name)
 		(void) sprintf(error_message, "dlsym (%s) failed", name);
 	}
 	return(vp);
+#endif
 }
 
 void
 BSD44_derived_dlclose(void *handle)
 {
+#ifndef __mips__
 	dlclose(handle);
+#endif
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.2 1996/10/02 20:40:17 scrappy Exp $
+ * $Id: ipc.h,v 1.3 1996/10/11 03:56:27 scrappy Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -29,6 +29,9 @@
  * Many architectures have support for user-level spinlocks (i.e., an
  * atomic test-and-set instruction).  However, we have only written
  * spinlock code for the architectures listed.
+ * NB: for operating systems like NetBSD (covered by BSD44_derived),
+ *     we may in fact have different architectures, thus make the tests
+ *     based on portnames somewhat misleading.
  */
 #if defined(PORTNAME_aix) || \
     defined(PORTNAME_alpha) || \
@@ -43,6 +46,10 @@
     defined(PORTNAME_sparc) || \
     defined(PORTNAME_sparc_solaris)
 #define HAS_TEST_AND_SET
+#endif
+
+#if defined(PORTNAME_BSD44_derived) && defined(__mips__)
+#undef HAS_TEST_AND_SET
 #endif
 
 #if defined(HAS_TEST_AND_SET)

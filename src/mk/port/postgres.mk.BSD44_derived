@@ -6,7 +6,7 @@
 #
 # Copyright (c) 1994-5, Regents of the University of California
 #
-#    $Id: postgres.mk.BSD44_derived,v 1.2 1996/07/25 07:28:12 scrappy Exp $
+#    $Id: postgres.mk.BSD44_derived,v 1.3 1996/10/11 03:56:41 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 ifndef MK_PORT
@@ -29,7 +29,11 @@ LDADD+= -L/usr/local/lib -lfl
 #
 CFLAGS_SL = -fpic -DPIC
 
+ifeq ($(HOSTTYPE), mips)
+#SLSUFF=		.so
+else
 SLSUFF=		.so
+endif
 
 %.so: %.o
 	$(LD) -x -r -o $(objdir)/$(<F).obj $(objdir)/$(<F)
