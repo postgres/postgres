@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.33 1999/07/09 17:40:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.34 1999/07/10 17:03:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ pg_atoi(char *s, int size, int c)
 	switch (size)
 	{
 		case sizeof(int32):
-#if defined(HAVE_LONG_INT_64) || defined(HAVE_LONG_LONG_INT_64)
+#if defined(HAVE_LONG_INT_64)
 			/* won't get ERANGE on these with 64-bit longs... */
 			if (l < INT_MIN)
 			{
@@ -88,7 +88,7 @@ pg_atoi(char *s, int size, int c)
 				errno = ERANGE;
 				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
 			}
-#endif         /* HAVE_LONG_INT_64 or HAVE_LONG_LONG_INT_64 */
+#endif         /* HAVE_LONG_INT_64 */
 			break;
 		case sizeof(int16):
 			if (l < SHRT_MIN)
