@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Feb 12 23:36:00 EST 2004
+Last updated:		Thu Feb 12 23:47:05 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -332,7 +332,7 @@ Exotic Features
   to clients
 * Add two-phase commit to all distributed transactions with 
   offline/readonly server status or administrator notification for failure
-* Allow cross-db queries with transaction sematics
+* Allow cross-db queries with transaction semantics
 
 
 PERFORMANCE
@@ -460,7 +460,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * -Add checks for fclose() failure (Tom)
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1215 2004/02/13 04:36:02 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1215 2004/02/13 04:36:02 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1216 2004/02/13 04:47:13 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1216 2004/02/13 04:47:13 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
