@@ -437,7 +437,7 @@ dbf_put_record(dbhead * dbh, field * rec, u_long where)
 	format: sprintf format-string to get the right precision with real numbers
 
 	NOTE: this declaration of 'foo' can cause overflow when the contents-field
-	is longer the 127 chars (which is highly unlikely, cos it is not used
+	is longer the 127 chars (which is highly unlikely, because it is not used
 	in text-fields).
 */
 /*	REMEMBER THAT THERE'S A 0x1A AT THE END OF THE FILE, SO DON'T
@@ -488,11 +488,11 @@ dbf_put_record(dbhead * dbh, field * rec, u_long where)
 				if ((rec[t].db_type == 'N') && (rec[t].db_dec != 0))
 				{
 					fl = atof(rec[t].db_contents);
-					sprintf(format, "%%.%df", rec[t].db_dec);
-					sprintf(foo, format, fl);
+					snprintf(format, 32, "%%.%df", rec[t].db_dec);
+					snprintf(foo, 128, format, fl);
 				}
 				else
-					strcpy(foo, rec[t].db_contents);
+					strncpy(foo, rec[t].db_contents, 128);
 				if (strlen(foo) > rec[t].db_flen)
 					length = rec[t].db_flen;
 				else

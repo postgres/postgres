@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.12 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.13 2002/08/15 02:58:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,7 @@ vacuumlo(char *database, struct _param *param)
 		 * Postgres-ism and not portable to other DBMSs, but then this
 		 * whole program is a Postgres-ism.
 		 */
-		sprintf(buf, "DELETE FROM vacuum_l WHERE lo = \"%s\".\"%s\" ",
+		snprintf(buf, BUFSIZE, "DELETE FROM vacuum_l WHERE lo = \"%s\".\"%s\" ",
 				table, field);
 		res2 = PQexec(conn, buf);
 		if (PQresultStatus(res2) != PGRES_COMMAND_OK)

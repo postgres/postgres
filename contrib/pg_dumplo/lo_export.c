@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_export.c,v 1.8 2001/10/25 05:49:19 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_export.c,v 1.9 2002/08/15 02:58:29 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -110,8 +110,9 @@ pglo_export(LODumpMaster * pgLO)
 		/*
 		 * Query: find the LOs referenced by this column
 		 */
-		sprintf(Qbuff, "SELECT DISTINCT l.loid FROM \"%s\" x, pg_largeobject l WHERE x.\"%s\" = l.loid",
-				ll->lo_table, ll->lo_attr);
+		snprintf(Qbuff, QUERY_BUFSIZ,
+				 "SELECT DISTINCT l.loid FROM \"%s\" x, pg_largeobject l WHERE x.\"%s\" = l.loid",
+				 ll->lo_table, ll->lo_attr);
 
 		/* puts(Qbuff); */
 
@@ -140,7 +141,7 @@ pglo_export(LODumpMaster * pgLO)
 			if (pgLO->action != ACTION_SHOW)
 			{
 
-				sprintf(path, "%s/%s/%s", pgLO->space, pgLO->db,
+				snprintf(path, BUFSIZ, "%s/%s/%s", pgLO->space, pgLO->db,
 						ll->lo_table);
 
 				if (mkdir(path, DIR_UMASK) == -1)
@@ -152,7 +153,7 @@ pglo_export(LODumpMaster * pgLO)
 					}
 				}
 
-				sprintf(path, "%s/%s/%s/%s", pgLO->space, pgLO->db,
+				snprintf(path, BUFSIZ, "%s/%s/%s/%s", pgLO->space, pgLO->db,
 						ll->lo_table, ll->lo_attr);
 
 				if (mkdir(path, DIR_UMASK) == -1)
@@ -185,7 +186,7 @@ pglo_export(LODumpMaster * pgLO)
 					continue;
 				}
 
-				sprintf(path, "%s/%s/%s/%s/%s", pgLO->space,
+				snprintf(path, BUFSIZ, "%s/%s/%s/%s/%s", pgLO->space,
 						pgLO->db, ll->lo_table, ll->lo_attr, val);
 
 				if (lo_export(pgLO->conn, lo, path) < 0)

@@ -102,9 +102,10 @@ _rserv_log_()
 
 	if (keynum == ObjectIdAttributeNumber)
 	{
-		sprintf(oidbuf, "%u", rel->rd_rel->relhasoids
-		                      ? HeapTupleGetOid(tuple)
-		                      : InvalidOid);
+		snprintf(oidbuf, "%u", 64,
+				 rel->rd_rel->relhasoids
+		         ? HeapTupleGetOid(tuple)
+		         : InvalidOid);
 		key = oidbuf;
 	}
 	else
@@ -129,7 +130,7 @@ _rserv_log_()
 	else
 		okey = key;
 
-	sprintf(sql, "update _RSERV_LOG_ set logid = %d, logtime = now(), "
+	snprintf(sql, 8192, "update _RSERV_LOG_ set logid = %d, logtime = now(), "
 			"deleted = %d where reloid = %u and key = '%s'",
 			GetCurrentTransactionId(), deleted, rel->rd_id, okey);
 
@@ -148,7 +149,7 @@ _rserv_log_()
 		elog(ERROR, "_rserv_log_: duplicate tuples");
 	else if (SPI_processed == 0)
 	{
-		sprintf(sql, "insert into _RSERV_LOG_ "
+		snprintf(sql, 8192, "insert into _RSERV_LOG_ "
 				"(reloid, logid, logtime, deleted, key) "
 				"values (%u, %d, now(), %d, '%s')",
 				rel->rd_id, GetCurrentTransactionId(),
@@ -173,7 +174,7 @@ _rserv_log_()
 		else
 			okey = newkey;
 
-		sprintf(sql, "insert into _RSERV_LOG_ "
+		snprintf(sql, 8192, "insert into _RSERV_LOG_ "
 				"(reloid, logid, logtime, deleted, key) "
 				"values (%u, %d, now(), 0, '%s')",
 				rel->rd_id, GetCurrentTransactionId(), okey);
@@ -222,14 +223,15 @@ _rserv_sync_(int32 server)
 	buf[0] = 0;
 	for (xcnt = 0; xcnt < SerializableSnapshot->xcnt; xcnt++)
 	{
-		sprintf(buf + strlen(buf), "%s%u", (xcnt) ? ", " : "",
+		snprintf(buf + strlen(buf), 8192 - strlen(buf),
+				"%s%u", (xcnt) ? ", " : "",
 				SerializableSnapshot->xip[xcnt]);
 	}
 
 	if ((ret = SPI_connect()) < 0)
 		elog(ERROR, "_rserv_sync_: SPI_connect returned %d", ret);
 
-	sprintf(sql, "insert into _RSERV_SYNC_ "
+	snprintf(sql, 8192, "insert into _RSERV_SYNC_ "
 			"(server, syncid, synctime, status, minid, maxid, active) "
 	  "values (%u, currval('_rserv_sync_seq_'), now(), 0, %d, %d, '%s')",
 			server, SerializableSnapshot->xmin, SerializableSnapshot->xmax, active);

@@ -337,7 +337,7 @@ sql_exec_dumpdb(PGconn *conn)
 	char		todo[1024];
 
 	/* get the oid and database name from the system pg_database table */
-	sprintf(todo, "select oid,datname from pg_database");
+	snprintf(todo, 1024, "select oid,datname from pg_database");
 
 	sql_exec(conn, todo, 0);
 }
@@ -351,9 +351,9 @@ sql_exec_dumptable(PGconn *conn, int systables)
 
 	/* don't exclude the systables if this is set */
 	if (systables == 1)
-		sprintf(todo, "select relfilenode,relname from pg_class order by relname");
+		snprintf(todo, 1024, "select relfilenode,relname from pg_class order by relname");
 	else
-		sprintf(todo, "select relfilenode,relname from pg_class where relname not like 'pg_%%' order by relname");
+		snprintf(todo, 1024, "select relfilenode,relname from pg_class where relname not like 'pg_%%' order by relname");
 
 	sql_exec(conn, todo, 0);
 }
@@ -367,7 +367,7 @@ sql_exec_searchtable(PGconn *conn, const char *tablename)
 	char		todo[1024];
 
 	/* get the oid and tablename where the name matches tablename */
-	sprintf(todo, "select relfilenode,relname from pg_class where relname = '%s'", tablename);
+	snprintf(todo, 1024, "select relfilenode,relname from pg_class where relname = '%s'", tablename);
 
 	returnvalue = sql_exec(conn, todo, 1);
 
@@ -386,7 +386,7 @@ sql_exec_searchoid(PGconn *conn, int oid)
 	int			returnvalue;
 	char		todo[1024];
 
-	sprintf(todo, "select relfilenode,relname from pg_class where oid = %i", oid);
+	snprintf(todo, 1024, "select relfilenode,relname from pg_class where oid = %i", oid);
 
 	returnvalue = sql_exec(conn, todo, 1);
 

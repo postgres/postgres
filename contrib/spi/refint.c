@@ -112,7 +112,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 	 * Construct ident string as TriggerName $ TriggeredRelationId and try
 	 * to find prepared execution plan.
 	 */
-	sprintf(ident, "%s$%u", trigger->tgname, rel->rd_id);
+	snprintf(ident, 2 * NAMEDATALEN, "%s$%u", trigger->tgname, rel->rd_id);
 	plan = find_plan(ident, &PPlans, &nPPlans);
 
 	/* if there is no plan then allocate argtypes for preparation */
@@ -160,10 +160,10 @@ check_primary_key(PG_FUNCTION_ARGS)
 		 * Construct query: SELECT 1 FROM _referenced_relation_ WHERE
 		 * Pkey1 = $1 [AND Pkey2 = $2 [...]]
 		 */
-		sprintf(sql, "select 1 from %s where ", relname);
+		snprintf(sql, 8192, "select 1 from %s where ", relname);
 		for (i = 0; i < nkeys; i++)
 		{
-			sprintf(sql + strlen(sql), "%s = $%d %s",
+			snprintf(sql + strlen(sql), 8192 - strlen(sql), "%s = $%d %s",
 			  args[i + nkeys + 1], i + 1, (i < nkeys - 1) ? "and " : "");
 		}
 
@@ -320,7 +320,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	 * Construct ident string as TriggerName $ TriggeredRelationId and try
 	 * to find prepared execution plan(s).
 	 */
-	sprintf(ident, "%s$%u", trigger->tgname, rel->rd_id);
+	snprintf(ident, 2 * NAMEDATALEN, "%s$%u", trigger->tgname, rel->rd_id);
 	plan = find_plan(ident, &FPlans, &nFPlans);
 
 	/* if there is no plan(s) then allocate argtypes for preparation */
@@ -411,7 +411,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 			 */
 			if (action == 'r')
 
-				sprintf(sql, "select 1 from %s where ", relname);
+				snprintf(sql, 8192, "select 1 from %s where ", relname);
 
 			/*---------
 			 * For 'C'ascade action we construct DELETE query
@@ -438,7 +438,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 					char	   *nv;
 					int			k;
 
-					sprintf(sql, "update %s set ", relname);
+					snprintf(sql, 8192, "update %s set ", relname);
 					for (k = 1; k <= nkeys; k++)
 					{
 						int			is_char_type = 0;
@@ -461,7 +461,8 @@ check_foreign_key(PG_FUNCTION_ARGS)
 						 * is_char_type =1 i set ' ' for define a new
 						 * value
 						 */
-						sprintf(sql + strlen(sql), " %s = %s%s%s %s ",
+						snprintf(sql + strlen(sql), 8192 - strlen(sql),
+								" %s = %s%s%s %s ",
 								args2[k], (is_char_type > 0) ? "'" : "",
 								nv, (is_char_type > 0) ? "'" : "", (k < nkeys) ? ", " : "");
 						is_char_type = 0;
@@ -471,7 +472,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 				}
 				else
 /* DELETE */
-					sprintf(sql, "delete from %s where ", relname);
+					snprintf(sql, 8192, "delete from %s where ", relname);
 
 			}
 
@@ -483,10 +484,11 @@ check_foreign_key(PG_FUNCTION_ARGS)
 			 */
 			else if (action == 's')
 			{
-				sprintf(sql, "update %s set ", relname);
+				snprintf(sql, 8192, "update %s set ", relname);
 				for (i = 1; i <= nkeys; i++)
 				{
-					sprintf(sql + strlen(sql), "%s = null%s",
+					snprintf(sql + strlen(sql), 8192 - strlen(sql),
+							"%s = null%s",
 							args2[i], (i < nkeys) ? ", " : "");
 				}
 				strcat(sql, " where ");
@@ -495,7 +497,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 			/* Construct WHERE qual */
 			for (i = 1; i <= nkeys; i++)
 			{
-				sprintf(sql + strlen(sql), "%s = $%d %s",
+				snprintf(sql + strlen(sql), 8192 - strlen(sql), "%s = $%d %s",
 						args2[i], i, (i < nkeys) ? "and " : "");
 			}
 
@@ -545,7 +547,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 
 		relname = args[0];
 
-		sprintf(ident, "%s$%u", trigger->tgname, rel->rd_id);
+		snprintf(ident, 2 * NAMEDATALEN, "%s$%u", trigger->tgname, rel->rd_id);
 		plan = find_plan(ident, &FPlans, &nFPlans);
 		ret = SPI_execp(plan->splan[r], kvals, NULL, tcount);
 		/* we have no NULLs - so we pass   ^^^^  here */

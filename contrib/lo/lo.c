@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for managed LargeObjects.
  *
- *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.11 2001/12/07 04:18:31 inoue Exp $
+ *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.12 2002/08/15 02:58:29 momjian Exp $
  *
  */
 
@@ -92,7 +92,7 @@ lo_out(Blob * addr)
 		return (NULL);
 
 	result = (char *) palloc(32);
-	sprintf(result, "%u", *addr);
+	snprintf(result, 32, "%u", *addr);
 	return (result);
 }
 

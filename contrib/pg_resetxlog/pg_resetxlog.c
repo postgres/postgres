@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.18 2002/06/20 20:29:24 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.19 2002/08/15 02:58:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,7 @@ KillExistingXLOG(void)
 		if (strlen(xlde->d_name) == 16 &&
 			strspn(xlde->d_name, "0123456789ABCDEF") == 16)
 		{
-			sprintf(path, "%s/%s", XLogDir, xlde->d_name);
+			snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlde->d_name);
 			if (unlink(path) < 0)
 			{
 				perror(path);

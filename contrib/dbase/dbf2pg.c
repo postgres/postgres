@@ -308,7 +308,7 @@ do_create(PGconn *conn, char *table, dbhead * dbh)
 				if (dbh->db_fields[i].db_flen > 1)
 				{
 					strcat(query, " varchar");
-					sprintf(t, "(%d)",
+					snprintf(t, 20, "(%d)",
 							dbh->db_fields[i].db_flen);
 					strcat(query, t);
 				}
@@ -361,7 +361,7 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 				result;
 	char	   *query,
 			   *foo;
-	char		pgdate[10];
+	char		pgdate[11];
 
 	if (verbose > 1)
 		printf("Inserting records\n");
@@ -467,7 +467,7 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 				{
 					if ((strlen(foo) == 8) && isinteger(foo))
 					{
-						sprintf(pgdate, "%c%c%c%c-%c%c-%c%c",
+						snprintf(pgdate, 11, "%c%c%c%c-%c%c-%c%c",
 								foo[0], foo[1], foo[2], foo[3],
 								foo[4], foo[5], foo[6], foo[7]);
 						strcat(query, pgdate);

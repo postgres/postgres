@@ -106,7 +106,7 @@ msqlCreateDB(int a, char *b)
 {
 	char		tbuf[BUFSIZ];
 
-	sprintf(tbuf, "create database %s", b);
+	snprintf(tbuf, BUFSIZ, "create database %s", b);
 	return msqlQuery(a, tbuf) >= 0 ? 0 : -1;
 }
 
@@ -115,7 +115,7 @@ msqlDropDB(int a, char *b)
 {
 	char		tbuf[BUFSIZ];
 
-	sprintf(tbuf, "drop database %s", b);
+	snprintf(tbuf, BUFSIZ, "drop database %s", b);
 	return msqlQuery(a, tbuf) >= 0 ? 0 : -1;
 }
 
@@ -262,7 +262,9 @@ msqlListTables(int a)
 	m_result   *m;
 	char		tbuf[BUFSIZ];
 
-	sprintf(tbuf, "select relname from pg_class where relkind='r' and relowner=%d", getuid());
+	snprintf(tbuf, BUFSIZ,
+			 "select relname from pg_class where relkind='r' and relowner=%d",
+			 getuid());
 	if (msqlQuery(a, tbuf) > 0)
 	{
 		m = msqlStoreResult();
@@ -284,7 +286,9 @@ msqlListIndex(int a, char *b, char *c)
 	m_result   *m;
 	char		tbuf[BUFSIZ];
 
-	sprintf(tbuf, "select relname from pg_class where relkind='i' and relowner=%d", getuid());
+	snprintf(tbuf, BUFSIZ,
+			 "select relname from pg_class where relkind='i' and relowner=%d",
+			 getuid());
 	if (msqlQuery(a, tbuf) > 0)
 	{
 		m = msqlStoreResult();

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.17 2002/07/20 03:02:01 ishii Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.18 2002/08/15 02:58:29 momjian Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -310,26 +310,26 @@ doOne(CState * state, int n, int debug, int ttype)
 				gettimeofday(&(st->txn_begin), 0);
 			break;
 		case 1:
-			sprintf(sql, "update accounts set abalance = abalance + %d where aid = %d\n", st->delta, st->aid);
+			snprintf(sql, 256, "update accounts set abalance = abalance + %d where aid = %d\n", st->delta, st->aid);
 			break;
 		case 2:
-			sprintf(sql, "select abalance from accounts where aid = %d", st->aid);
+			snprintf(sql, 256, "select abalance from accounts where aid = %d", st->aid);
 			break;
 		case 3:
 			if (ttype == 0)
 			{
-			    sprintf(sql, "update tellers set tbalance = tbalance + %d where tid = %d\n",
+			    snprintf(sql, 256, "update tellers set tbalance = tbalance + %d where tid = %d\n",
 				    st->delta, st->tid);
 			    break;
 			}
 		case 4:
 			if (ttype == 0)
 			{
-			    sprintf(sql, "update branches set bbalance = bbalance + %d where bid = %d", st->delta, st->bid);
+			    snprintf(sql, 256, "update branches set bbalance = bbalance + %d where bid = %d", st->delta, st->bid);
 			    break;
 			}
 		case 5:
-			sprintf(sql, "insert into history(tid,bid,aid,delta,mtime) values(%d,%d,%d,%d,'now')",
+			snprintf(sql, 256, "insert into history(tid,bid,aid,delta,mtime) values(%d,%d,%d,%d,'now')",
 					st->tid, st->bid, st->aid, st->delta);
 			break;
 		case 6:
@@ -426,7 +426,7 @@ doSelectOnly(CState * state, int n, int debug)
 	{
 		case 0:
 			st->aid = getrand(1, naccounts * tps);
-			sprintf(sql, "select abalance from accounts where aid = %d", st->aid);
+			snprintf(sql, 256, "select abalance from accounts where aid = %d", st->aid);
 			break;
 	}
 
@@ -500,7 +500,7 @@ init(void)
 
 	for (i = 0; i < nbranches * tps; i++)
 	{
-		sprintf(sql, "insert into branches(bid,bbalance) values(%d,0)", i + 1);
+		snprintf(sql, 256, "insert into branches(bid,bbalance) values(%d,0)", i + 1);
 		res = PQexec(con, sql);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
@@ -512,7 +512,7 @@ init(void)
 
 	for (i = 0; i < ntellers * tps; i++)
 	{
-		sprintf(sql, "insert into tellers(tid,bid,tbalance) values (%d,%d,0)"
+		snprintf(sql, 256, "insert into tellers(tid,bid,tbalance) values (%d,%d,0)"
 				,i + 1, i / ntellers + 1);
 		res = PQexec(con, sql);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -550,7 +550,7 @@ init(void)
 			PQclear(res);
 		}
 
-		sprintf(sql, "%d\t%d\t%d\t\n", j, j / naccounts, 0);
+		snprintf(sql, 256, "%d\t%d\t%d\t\n", j, j / naccounts, 0);
 		if (PQputline(con, sql))
 		{
 			fprintf(stderr, "PQputline failed\n");

@@ -68,14 +68,14 @@ main(int argc, char **argv)
 		{
 			unset_result(relres);
 			if (strcmp(typname, "oid") == 0)
-				sprintf(query, "\
+				snprintf(query, 4000, "\
 					DECLARE c_matches BINARY CURSOR FOR \
 					SELECT	count(*)::int4 \
 						FROM \"%s\" t1, \"%s\" t2 \
 					WHERE t1.\"%s\" = t2.oid ",
 						relname, relname2, attname);
 			else
-				sprintf(query, "\
+				sprintf(query, 4000, "\
 					DECLARE c_matches BINARY CURSOR FOR \
 					SELECT	count(*)::int4 \
 						FROM \"%s\" t1, \"%s\" t2 \
