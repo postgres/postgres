@@ -11817,9 +11817,47 @@ if test "${pgac_cv_type_long_int_64+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   if test "$cross_compiling" = yes; then
-  pgac_cv_type_long_int_64=no
-{ echo "$as_me:$LINENO: WARNING: 64 bit arithmetic disabled when cross-compiling" >&5
-echo "$as_me: WARNING: 64 bit arithmetic disabled when cross-compiling" >&2;}
+  # If cross-compiling, check the size reported by the compiler and
+# trust that the arithmetic works.
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+static int test_array [1 - 2 * !(sizeof(long int) == 8)];
+test_array [0] = 0
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pgac_cv_type_long_int_64=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+pgac_cv_type_long_int_64=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
 else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
@@ -11893,9 +11931,47 @@ if test "${pgac_cv_type_long_long_int_64+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   if test "$cross_compiling" = yes; then
-  pgac_cv_type_long_long_int_64=no
-{ echo "$as_me:$LINENO: WARNING: 64 bit arithmetic disabled when cross-compiling" >&5
-echo "$as_me: WARNING: 64 bit arithmetic disabled when cross-compiling" >&2;}
+  # If cross-compiling, check the size reported by the compiler and
+# trust that the arithmetic works.
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+static int test_array [1 - 2 * !(sizeof(long long int) == 8)];
+test_array [0] = 0
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pgac_cv_type_long_long_int_64=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+pgac_cv_type_long_long_int_64=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
 else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
@@ -12012,25 +12088,29 @@ rm -f conftest.$ac_objext conftest.$ac_ext
 fi
 
 
+# If we found "long int" is 64 bits, assume snprintf handles it.  If
+# we found we need to use "long long int", better check.  We cope with
+# snprintfs that use either %lld, %qd, or %I64d as the format.  If
+# neither works, fall back to our own snprintf emulation (which we
+# know uses %lld).
 
-if test x"$HAVE_LONG_LONG_INT_64" = xyes ; then
+if test "$HAVE_LONG_LONG_INT_64" = yes ; then
   if test $pgac_need_repl_snprintf = no; then
-    echo "$as_me:$LINENO: checking whether snprintf handles 'long long int' as %lld" >&5
-echo $ECHO_N "checking whether snprintf handles 'long long int' as %lld... $ECHO_C" >&6
-    if test "$cross_compiling" = yes; then
-   echo "$as_me:$LINENO: result: cannot test (not on host machine)" >&5
-echo "${ECHO_T}cannot test (not on host machine)" >&6
-	# Force usage of our own snprintf, since we cannot test foreign snprintf
-        pgac_need_repl_snprintf=yes
-	INT64_FORMAT='"%lld"'
-
+    echo "$as_me:$LINENO: checking snprintf format for long long int" >&5
+echo $ECHO_N "checking snprintf format for long long int... $ECHO_C" >&6
+if test "${pgac_cv_snprintf_long_long_int_format+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  for pgac_format in '%lld' '%qd' '%I64d'; do
+if test "$cross_compiling" = yes; then
+  pgac_cv_snprintf_long_long_int_format=cross; break
 else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <stdio.h>
 typedef long long int int64;
-#define INT64_FORMAT "%lld"
+#define INT64_FORMAT "$pgac_format"
 
 int64 a = 20000001;
 int64 b = 40000005;
@@ -12064,91 +12144,38 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-   echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-	  INT64_FORMAT='"%lld"'
-
+  pgac_cv_snprintf_long_long_int_format=$pgac_format; break
 else
   echo "$as_me: program exited with status $ac_status" >&5
 echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-( exit $ac_status )
- echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-    echo "$as_me:$LINENO: checking whether snprintf handles 'long long int' as %qd" >&5
-echo $ECHO_N "checking whether snprintf handles 'long long int' as %qd... $ECHO_C" >&6
-    if test "$cross_compiling" = yes; then
-   echo "$as_me:$LINENO: result: cannot test (not on host machine)" >&5
-echo "${ECHO_T}cannot test (not on host machine)" >&6
-	# Force usage of our own snprintf, since we cannot test foreign snprintf
-        pgac_need_repl_snprintf=yes
-	INT64_FORMAT='"%lld"'
-
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-#include <stdio.h>
-typedef long long int int64;
-#define INT64_FORMAT "%qd"
-
-int64 a = 20000001;
-int64 b = 40000005;
-
-int does_int64_snprintf_work()
-{
-  int64 c;
-  char buf[100];
-
-  if (sizeof(int64) != 8)
-    return 0;     /* doesn't look like the right size */
-
-  c = a * b;
-  snprintf(buf, 100, INT64_FORMAT, c);
-  if (strcmp(buf, "800000140000005") != 0)
-    return 0;     /* either multiply or snprintf is busted */
-  return 1;
-}
-main() {
-  exit(! does_int64_snprintf_work());
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-   echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-    INT64_FORMAT='"%qd"'
-
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-( exit $ac_status )
- echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-	# Force usage of our own snprintf, since system snprintf is broken
-        pgac_need_repl_snprintf=yes
-	INT64_FORMAT='"%lld"'
-
 fi
 rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
+done
 fi
-rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
+
+LONG_LONG_INT_FORMAT=''
+
+case $pgac_cv_snprintf_long_long_int_format in
+  cross) echo "$as_me:$LINENO: result: cannot test (not on host machine)" >&5
+echo "${ECHO_T}cannot test (not on host machine)" >&6;;
+  ?*)    echo "$as_me:$LINENO: result: $pgac_cv_snprintf_long_long_int_format" >&5
+echo "${ECHO_T}$pgac_cv_snprintf_long_long_int_format" >&6
+         LONG_LONG_INT_FORMAT=$pgac_cv_snprintf_long_long_int_format;;
+  *)     echo "$as_me:$LINENO: result: none" >&5
+echo "${ECHO_T}none" >&6;;
+esac
+    if test "$LONG_LONG_INT_FORMAT" = ""; then
+      # Force usage of our own snprintf, since system snprintf is broken
+      pgac_need_repl_snprintf=yes
+      LONG_LONG_INT_FORMAT='%lld'
+    fi
   else
-    # here if we previously decided we needed to use our own snprintf
-    INT64_FORMAT='"%lld"'
+    # Here if we previously decided we needed to use our own snprintf
+    LONG_LONG_INT_FORMAT='%lld'
   fi
+  INT64_FORMAT="\"$LONG_LONG_INT_FORMAT\""
 else
   # Here if we are not using 'long long int' at all
   INT64_FORMAT='"%ld"'

@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.14 2002/07/27 20:10:03 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.15 2003/01/28 21:57:12 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -86,3 +86,51 @@ if test x"$pgac_cv_func_posix_signals" = xyes ; then
 fi
 HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS
+
+
+# PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT
+# ---------------------------------------
+# Determine which format snprintf uses for long long int.  We handle
+# %lld, %qd, %I64d.  The result is in shell variable
+# LONG_LONG_INT_FORMAT.
+AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT],
+[AC_MSG_CHECKING([snprintf format for long long int])
+AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_format,
+[for pgac_format in '%lld' '%qd' '%I64d'; do
+AC_TRY_RUN([#include <stdio.h>
+typedef long long int int64;
+#define INT64_FORMAT "$pgac_format"
+
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_snprintf_work()
+{
+  int64 c;
+  char buf[100];
+
+  if (sizeof(int64) != 8)
+    return 0;			/* doesn't look like the right size */
+
+  c = a * b;
+  snprintf(buf, 100, INT64_FORMAT, c);
+  if (strcmp(buf, "800000140000005") != 0)
+    return 0;			/* either multiply or snprintf is busted */
+  return 1;
+}
+main() {
+  exit(! does_int64_snprintf_work());
+}],
+[pgac_cv_snprintf_long_long_int_format=$pgac_format; break],
+[],
+[pgac_cv_snprintf_long_long_int_format=cross; break])
+done])dnl AC_CACHE_VAL
+
+LONG_LONG_INT_FORMAT=''
+
+case $pgac_cv_snprintf_long_long_int_format in
+  cross) AC_MSG_RESULT([cannot test (not on host machine)]);;
+  ?*)    AC_MSG_RESULT([$pgac_cv_snprintf_long_long_int_format])
+         LONG_LONG_INT_FORMAT=$pgac_cv_snprintf_long_long_int_format;;
+  *)     AC_MSG_RESULT(none);;
+esac])# PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.233 2003/01/25 05:19:45 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.234 2003/01/28 21:57:11 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -970,90 +970,25 @@ long long int foo = INT64CONST(0x1234567890123456);
 fi
 
 
-dnl If we found "long int" is 64 bits, assume snprintf handles it.
-dnl If we found we need to use "long long int", better check.
-dnl We cope with snprintfs that use either %lld or %qd as the format.
-dnl If neither works, fall back to our own snprintf emulation (which we
-dnl know uses %lld).
+# If we found "long int" is 64 bits, assume snprintf handles it.  If
+# we found we need to use "long long int", better check.  We cope with
+# snprintfs that use either %lld, %qd, or %I64d as the format.  If
+# neither works, fall back to our own snprintf emulation (which we
+# know uses %lld).
 
-if test x"$HAVE_LONG_LONG_INT_64" = xyes ; then
+if test "$HAVE_LONG_LONG_INT_64" = yes ; then
   if test $pgac_need_repl_snprintf = no; then
-    AC_MSG_CHECKING(whether snprintf handles 'long long int' as %lld)
-    AC_TRY_RUN([#include <stdio.h>
-typedef long long int int64;
-#define INT64_FORMAT "%lld"
-
-int64 a = 20000001;
-int64 b = 40000005;
-
-int does_int64_snprintf_work()
-{
-  int64 c;
-  char buf[100];
-
-  if (sizeof(int64) != 8)
-    return 0;			/* doesn't look like the right size */
-
-  c = a * b;
-  snprintf(buf, 100, INT64_FORMAT, c);
-  if (strcmp(buf, "800000140000005") != 0)
-    return 0;			/* either multiply or snprintf is busted */
-  return 1;
-}
-main() {
-  exit(! does_int64_snprintf_work());
-}],
-	[ AC_MSG_RESULT(yes)
-	  INT64_FORMAT='"%lld"'
-	],
-  [ AC_MSG_RESULT(no)
-    AC_MSG_CHECKING(whether snprintf handles 'long long int' as %qd)
-    AC_TRY_RUN([#include <stdio.h>
-typedef long long int int64;
-#define INT64_FORMAT "%qd"
- 
-int64 a = 20000001;
-int64 b = 40000005;
- 
-int does_int64_snprintf_work()
-{ 
-  int64 c;
-  char buf[100];
-
-  if (sizeof(int64) != 8)
-    return 0;     /* doesn't look like the right size */
-
-  c = a * b;
-  snprintf(buf, 100, INT64_FORMAT, c);
-  if (strcmp(buf, "800000140000005") != 0)
-    return 0;     /* either multiply or snprintf is busted */
-  return 1;
-}
-main() {
-  exit(! does_int64_snprintf_work());
-}],
-  [ AC_MSG_RESULT(yes)
-    INT64_FORMAT='"%qd"'
-  ],
-  [ AC_MSG_RESULT(no)
-	# Force usage of our own snprintf, since system snprintf is broken
-        pgac_need_repl_snprintf=yes
-	INT64_FORMAT='"%lld"'
-  ],
-  [ AC_MSG_RESULT([cannot test (not on host machine)])
-	# Force usage of our own snprintf, since we cannot test foreign snprintf
-        pgac_need_repl_snprintf=yes
-	INT64_FORMAT='"%lld"'
-  ]) ],
-  [ AC_MSG_RESULT([cannot test (not on host machine)])
-	# Force usage of our own snprintf, since we cannot test foreign snprintf
-        pgac_need_repl_snprintf=yes
-	INT64_FORMAT='"%lld"'
-  ])
+    PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT
+    if test "$LONG_LONG_INT_FORMAT" = ""; then
+      # Force usage of our own snprintf, since system snprintf is broken
+      pgac_need_repl_snprintf=yes
+      LONG_LONG_INT_FORMAT='%lld'
+    fi
   else
-    # here if we previously decided we needed to use our own snprintf
-    INT64_FORMAT='"%lld"'
+    # Here if we previously decided we needed to use our own snprintf
+    LONG_LONG_INT_FORMAT='%lld'
   fi
+  INT64_FORMAT="\"$LONG_LONG_INT_FORMAT\""
 else
   # Here if we are not using 'long long int' at all
   INT64_FORMAT='"%ld"'
