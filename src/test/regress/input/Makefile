@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/input/Attic/Makefile,v 1.1 1997/04/05 21:24:38 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/input/Attic/Makefile,v 1.2 1997/04/06 08:28:33 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,8 +18,9 @@ include ../../../Makefile.global
 # ... plus test query inputs
 #
 # INFILES is the files the regression test uses for input.
-INFILES= create_misc.sql \
-         create_function.sql 
+INFILES= copy.sql \
+         create_function_1.sql \
+         create_function_2.sql 
 
 all: $(INFILES)
 

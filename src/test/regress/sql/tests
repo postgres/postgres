@@ -1,10 +1,12 @@
-create_function
+create_function_1
 create_type
 create_table
+create_function_2
+copy
 create_misc
 create_aggregate
-create_view
 create_operator
+create_view
 create_index
 sanity_check
 reltime
@@ -28,4 +30,8 @@ point
 polygon
 text
 tinterval
+select
+select_into
+select_distinct
+select_distinct_on
 misc

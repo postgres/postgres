@@ -1,0 +1,9 @@
+QUERY: CREATE FUNCTION circle_in(opaque)
+   RETURNS circle
+   AS '_CWD_/regress_DLSUFFIX_'
+   LANGUAGE 'c';
+NOTICE:ProcedureCreate: type 'circle' is not yet defined
+QUERY: CREATE FUNCTION circle_out(opaque)
+   RETURNS opaque
+   AS '_CWD_/regress_DLSUFFIX_'
+   LANGUAGE 'c';

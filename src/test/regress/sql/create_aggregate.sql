@@ -22,5 +22,3 @@ CREATE AGGREGATE newcnt (
    initcond2 = '0'
 );
 
-VACUUM;
-
