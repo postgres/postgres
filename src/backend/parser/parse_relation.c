@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.56 2001/08/10 18:57:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.57 2001/10/22 22:47:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "access/heapam.h"
 #include "access/htup.h"
+#include "catalog/heap.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "parser/parsetree.h"
@@ -41,43 +42,6 @@ static bool isForUpdate(ParseState *pstate, char *relname);
 static List *expandNamesVars(ParseState *pstate, List *names, List *vars);
 static int	specialAttNum(char *a);
 static void warnAutoRange(ParseState *pstate, char *refname);
-
-
-/*
- * Information defining the "system" attributes of every relation.
- */
-static struct
-{
-	char	   *attrname;		/* name of system attribute */
-	int			attrnum;		/* its attribute number (always < 0) */
-	Oid			attrtype;		/* its type id */
-}			special_attr[] =
-
-{
-	{
-		"ctid", SelfItemPointerAttributeNumber, TIDOID
-	},
-	{
-		"oid", ObjectIdAttributeNumber, OIDOID
-	},
-	{
-		"xmin", MinTransactionIdAttributeNumber, XIDOID
-	},
-	{
-		"cmin", MinCommandIdAttributeNumber, CIDOID
-	},
-	{
-		"xmax", MaxTransactionIdAttributeNumber, XIDOID
-	},
-	{
-		"cmax", MaxCommandIdAttributeNumber, CIDOID
-	},
-	{
-		"tableoid", TableOidAttributeNumber, OIDOID
-	}
-};
-
-#define SPECIALS ((int) lengthof(special_attr))
 
 
 /*
@@ -1001,39 +965,31 @@ attnameAttNum(Relation rd, char *a)
 static int
 specialAttNum(char *a)
 {
-	int			i;
+	Form_pg_attribute sysatt;
 
-	for (i = 0; i < SPECIALS; i++)
-		if (strcmp(special_attr[i].attrname, a) == 0)
-			return special_attr[i].attrnum;
-
+	sysatt = SystemAttributeByName(a, true /* "oid" will be accepted */);
+	if (sysatt != NULL)
+		return sysatt->attnum;
 	return InvalidAttrNumber;
 }
 
 
-/* given attribute id, return type of that attribute */
 /*
+ * given attribute id, return type of that attribute
+ *
  *	This should only be used if the relation is already
  *	heap_open()'ed.  Use the cache version get_atttype()
  *	for access to non-opened relations.
- *
- * Note: we don't bother to check rd->rd_rel->relhasoids; we assume that
- * the caller will only ask about OID if that column has been found valid.
  */
 Oid
 attnumTypeId(Relation rd, int attid)
 {
-	if (attid < 0)
+	if (attid <= 0)
 	{
-		int			i;
+		Form_pg_attribute sysatt;
 
-		for (i = 0; i < SPECIALS; i++)
-		{
-			if (special_attr[i].attrnum == attid)
-				return special_attr[i].attrtype;
-		}
-		/* negative but not a valid system attr? */
-		elog(ERROR, "attnumTypeId: bogus attribute number %d", attid);
+		sysatt = SystemAttributeDefinition(attid, rd->rd_rel->relhasoids);
+		return sysatt->atttypid;
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.177 2001/10/06 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.178 2001/10/22 22:47:57 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -151,6 +151,7 @@ static Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
 
 /*
  * This function returns a Form_pg_attribute pointer for a system attribute.
+ * Note that we elog if the presented attno is invalid.
  */
 Form_pg_attribute
 SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
@@ -163,6 +164,30 @@ SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
 			 attno);
 	return SysAtt[-attno - 1];
 }
+
+/*
+ * If the given name is a system attribute name, return a Form_pg_attribute
+ * pointer for a prototype definition.  If not, return NULL.
+ */
+Form_pg_attribute
+SystemAttributeByName(const char *attname, bool relhasoids)
+{
+	int j;
+
+	for (j = 0; j < (int) lengthof(SysAtt); j++)
+	{
+		Form_pg_attribute att = SysAtt[j];
+
+		if (relhasoids || att->attnum != ObjectIdAttributeNumber)
+		{
+			if (strcmp(NameStr(att->attname), attname) == 0)
+				return att;
+		}
+	}
+
+	return NULL;
+}
+
 
 /* ----------------------------------------------------------------
  *				XXX END OF UGLY HARD CODED BADNESS XXX
@@ -350,16 +375,10 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids)
 	 */
 	for (i = 0; i < natts; i++)
 	{
-		for (j = 0; j < (int) lengthof(SysAtt); j++)
-		{
-			if (relhasoids || SysAtt[j]->attnum != ObjectIdAttributeNumber)
-			{
-				if (strcmp(NameStr(SysAtt[j]->attname),
-						   NameStr(tupdesc->attrs[i]->attname)) == 0)
-					elog(ERROR, "name of column \"%s\" conflicts with an existing system column",
-						 NameStr(SysAtt[j]->attname));
-			}
-		}
+		if (SystemAttributeByName(NameStr(tupdesc->attrs[i]->attname),
+								  relhasoids) != NULL)
+			elog(ERROR, "name of column \"%s\" conflicts with an existing system column",
+				 NameStr(tupdesc->attrs[i]->attname));
 		if (tupdesc->attrs[i]->atttypid == UNKNOWNOID)
 			elog(NOTICE, "Attribute '%s' has an unknown type"
 				 "\n\tProceeding with relation creation anyway",
