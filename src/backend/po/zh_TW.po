@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
-"POT-Creation-Date: 2004-09-17 01:01+0100\n"
-"PO-Revision-Date: 2004-09-17 13:39+0800\n"
+"POT-Creation-Date: 2004-09-21 01:02+0100\n"
+"PO-Revision-Date: 2004-09-21 09:36+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -229,8 +229,8 @@ msgstr "無法存取交易 %u 的狀態"
 
 #: access/transam/slru.c:638
 #: access/transam/xlog.c:1632
-#: libpq/hba.c:909
-#: libpq/hba.c:933
+#: libpq/hba.c:914
+#: libpq/hba.c:938
 #: utils/error/elog.c:1118
 #: utils/init/miscinit.c:734
 #: utils/init/miscinit.c:840
@@ -836,7 +836,7 @@ msgstr "還原在取消交易 %u 後停止，時間 %s"
 #: access/transam/xlog.c:3968
 #, c-format
 msgid "recovery stopping before abort of transaction %u, time %s"
-msgstr "還原在取消交易 %u 前停止，時間 %s"
+msgstr "還原取消交易 %u 前停止，時間 %s"
 
 #: access/transam/xlog.c:4010
 msgid "control file contains invalid data"
@@ -914,7 +914,7 @@ msgstr "檢查點記錄中有不合法的redo記錄"
 
 #: access/transam/xlog.c:4163
 msgid "invalid redo/undo record in shutdown checkpoint"
-msgstr "關閉檢查點中有不合法的redo/undo記錄"
+msgstr "關閉?查點中有不合法的redo/undo記錄"
 
 #: access/transam/xlog.c:4181
 msgid "automatic recovery in progress"
@@ -1080,7 +1080,7 @@ msgstr "如果您確定沒有備份動作正在進行，移除檔案 \"%s\" 並�
 #: access/transam/xlog.c:5442
 #, c-format
 msgid "could not write file \"%s\": %m"
-msgstr "無法寫入檔案 \"%s\": %m"
+msgstr "無法?入檔案 \"%s\": %m"
 
 #: access/transam/xlog.c:5404
 msgid "a backup is not in progress"
@@ -3589,7 +3589,7 @@ msgstr ""
 
 #: commands/tablecmds.c:2805
 msgid "column must be added to child tables too"
-msgstr "欄位也必須被加入子資料表"
+msgstr "欄位也必被加?子資料表"
 
 #: commands/tablecmds.c:2848
 #, c-format
@@ -4543,12 +4543,14 @@ msgid "ROW() column has type %s instead of type %s"
 msgstr ""
 
 #  translator: %s is a SQL statement name
+#. translator: %s is a SQL statement name
 #: executor/functions.c:114
 #, c-format
 msgid "%s is not allowed in a SQL function"
 msgstr "SQL函式不允許 %s"
 
 #  translator: %s is a SQL statement name
+#. translator: %s is a SQL statement name
 #: executor/functions.c:121
 #: executor/spi.c:1396
 #, c-format
@@ -4590,14 +4592,14 @@ msgstr ""
 msgid "could not read from hash-join temporary file: %m"
 msgstr ""
 
-#: executor/nodeHashjoin.c:630
-#: executor/nodeHashjoin.c:637
+#: executor/nodeHashjoin.c:632
+#: executor/nodeHashjoin.c:639
 #, c-format
 msgid "could not rewind hash-join temporary file: %m"
 msgstr ""
 
-#: executor/nodeHashjoin.c:688
-#: executor/nodeHashjoin.c:693
+#: executor/nodeHashjoin.c:690
+#: executor/nodeHashjoin.c:695
 #, c-format
 msgid "could not write to hash-join temporary file: %m"
 msgstr ""
@@ -4971,110 +4973,110 @@ msgstr ""
 msgid "authentication file token too long, skipping: \"%s\""
 msgstr ""
 
-#: libpq/hba.c:328
+#: libpq/hba.c:331
 #, c-format
 msgid "could not open secondary authentication file \"@%s\" as \"%s\": %m"
 msgstr ""
 
-#: libpq/hba.c:741
+#: libpq/hba.c:746
 #, c-format
 msgid "invalid IP address \"%s\" in pg_hba.conf file line %d: %s"
 msgstr ""
 
-#: libpq/hba.c:775
+#: libpq/hba.c:780
 #, c-format
 msgid "invalid IP mask \"%s\" in pg_hba.conf file line %d: %s"
 msgstr ""
 
-#: libpq/hba.c:789
+#: libpq/hba.c:794
 #, c-format
 msgid "IP address and mask do not match in pg_hba.conf file line %d"
 msgstr ""
 
-#: libpq/hba.c:847
+#: libpq/hba.c:852
 #, c-format
 msgid "invalid entry in pg_hba.conf file at line %d, token \"%s\""
 msgstr ""
 
-#: libpq/hba.c:852
+#: libpq/hba.c:857
 #, c-format
 msgid "missing field in pg_hba.conf file at end of line %d"
 msgstr ""
 
 #: guc-file.l:187
-#: libpq/hba.c:1058
+#: libpq/hba.c:1063
 #, c-format
 msgid "could not open configuration file \"%s\": %m"
 msgstr "無法開啟設定檔\"%s\"：%m"
 
-#: libpq/hba.c:1119
+#: libpq/hba.c:1124
 #, c-format
 msgid "invalid entry in pg_ident.conf file at line %d, token \"%s\""
 msgstr ""
 
-#: libpq/hba.c:1124
+#: libpq/hba.c:1129
 #, c-format
 msgid "missing entry in pg_ident.conf file at end of line %d"
 msgstr ""
 
-#: libpq/hba.c:1155
+#: libpq/hba.c:1160
 msgid "cannot use Ident authentication without usermap field"
 msgstr "無法使用Ident驗證，沒有usermap欄位"
 
-#: libpq/hba.c:1213
+#: libpq/hba.c:1218
 #, c-format
 msgid "could not open Ident usermap file \"%s\": %m"
 msgstr "無法開啟Ident usermap檔\"%s\"：%m"
 
-#: libpq/hba.c:1392
+#: libpq/hba.c:1397
 #, c-format
 msgid "could not create socket for Ident connection: %m"
 msgstr "無法為Ident連線建立socket：%m"
 
-#: libpq/hba.c:1408
+#: libpq/hba.c:1413
 #, c-format
 msgid "could not bind to local address \"%s\": %m"
 msgstr "無法bind至local位址\"%s\"：%m"
 
-#: libpq/hba.c:1420
+#: libpq/hba.c:1425
 #, c-format
 msgid "could not connect to Ident server at address \"%s\", port %s: %m"
 msgstr ""
 
-#: libpq/hba.c:1440
+#: libpq/hba.c:1445
 #, c-format
 msgid "could not send query to Ident server at address \"%s\", port %s: %m"
 msgstr ""
 
-#: libpq/hba.c:1455
+#: libpq/hba.c:1460
 #, c-format
 msgid "could not receive response from Ident server at address \"%s\", port %s: %m"
 msgstr ""
 
-#: libpq/hba.c:1465
+#: libpq/hba.c:1470
 #, c-format
 msgid "invalidly formatted response from Ident server: \"%s\""
 msgstr ""
 
-#: libpq/hba.c:1500
-#: libpq/hba.c:1531
-#: libpq/hba.c:1599
+#: libpq/hba.c:1505
+#: libpq/hba.c:1536
+#: libpq/hba.c:1604
 #, c-format
 msgid "could not get peer credentials: %m"
 msgstr ""
 
-#: libpq/hba.c:1509
-#: libpq/hba.c:1540
-#: libpq/hba.c:1610
+#: libpq/hba.c:1514
+#: libpq/hba.c:1545
+#: libpq/hba.c:1615
 #, c-format
 msgid "local user with ID %d does not exist"
 msgstr "本機使用者 ID %d 的使用者並不存在"
 
-#: libpq/hba.c:1622
+#: libpq/hba.c:1627
 msgid "Ident authentication is not supported on local connections on this platform"
 msgstr ""
 
-#: libpq/hba.c:1665
+#: libpq/hba.c:1670
 #, c-format
 msgid "IDENT code identifies remote user as \"%s\""
 msgstr ""
@@ -6152,7 +6154,7 @@ msgstr ""
 #: utils/adt/ri_triggers.c:2536
 #: utils/adt/ri_triggers.c:2659
 msgid "MATCH PARTIAL not yet implemented"
-msgstr ""
+msgstr "MATCH PARTIAL尚未實做"
 
 #: gram.y:1977
 msgid "CREATE TABLE AS may not specify INTO"
@@ -6160,11 +6162,11 @@ msgstr ""
 
 #: gram.y:2436
 msgid "CREATE ASSERTION is not yet implemented"
-msgstr ""
+msgstr "CREATE ASSERTION尚未實做"
 
 #: gram.y:2452
 msgid "DROP ASSERTION is not yet implemented"
-msgstr ""
+msgstr "DROP ASSERTION尚未實做"
 
 #: gram.y:3334
 msgid "CREATE FUNCTION / OUT parameters are not implemented"
@@ -6190,7 +6192,7 @@ msgstr ""
 
 #: gram.y:5022
 msgid "LIMIT #,# syntax is not supported"
-msgstr "LIMIT #,#語法不被支援"
+msgstr "LIMIT #,# 語法不被支援"
 
 #: gram.y:5023
 msgid "Use separate LIMIT and OFFSET clauses."
@@ -6402,7 +6404,7 @@ msgstr "無法建立共享記憶區段：%m"
 #: port/sysv_shmem.c:95
 #, c-format
 msgid "Failed system call was shmget(key=%lu, size=%u, 0%o)."
-msgstr "失敗的系統乎叫是shmget(key=%lu, size=%u, 0%o)。"
+msgstr "失敗的系統呼叫是shmget(key=%lu，size=%u，0%o)。"
 
 #: port/pg_shmem.c:99
 #: port/sysv_shmem.c:99
@@ -6487,7 +6489,7 @@ msgstr ""
 #: postmaster/postmaster.c:603
 #, c-format
 msgid "%s: the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16\n"
-msgstr "%s：暫存區數量(-B)至少要是連線數(-N)N?婥?蔨恥?漱6。\n"
+msgstr "%s：暫存區數量(-B)至少要是連線數(-N)的2倍或至少為16。\n"
 
 #: postmaster/postmaster.c:609
 #, c-format
@@ -6506,12 +6508,12 @@ msgstr "%s：找不到符合的postgres執行檔"
 
 #: postmaster/postmaster.c:719
 msgid "invalid list syntax for \"listen_addresses\""
-msgstr "\"listen_addresses\"的list語法錯誤"
+msgstr "\"listen_addresses\"的list語法錯?"
 
 #: postmaster/postmaster.c:738
 #, c-format
 msgid "could not create listen socket for \"%s\""
-msgstr ""
+msgstr "無法為\"%s\"建立接受連線的socket"
 
 #: postmaster/postmaster.c:767
 msgid "could not create Unix-domain socket"
@@ -6519,7 +6521,7 @@ msgstr "無法建立Unix-domain socket"
 
 #: postmaster/postmaster.c:775
 msgid "no socket created for listening"
-msgstr ""
+msgstr "接受連線用的socket未被建立"
 
 #: postmaster/postmaster.c:963
 #, c-format
@@ -6529,12 +6531,12 @@ msgstr "資料目錄\"%s\"不存在"
 #: postmaster/postmaster.c:968
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
-msgstr "無法讀取目錄 \"%s\"的權限: %m"
+msgstr "無法讀取目錄\"%s\"的權限：%m"
 
 #: postmaster/postmaster.c:983
 #, c-format
 msgid "data directory \"%s\" has group or world access"
-msgstr ""
+msgstr "資料目錄\"%s\"可以被群組或其他使用者存取"
 
 #: postmaster/postmaster.c:985
 msgid "Permissions should be u=rwx (0700)."
@@ -6555,7 +6557,7 @@ msgstr ""
 #: postmaster/postmaster.c:1041
 #, c-format
 msgid "%s: could not fork background process: %s\n"
-msgstr ""
+msgstr "%s：無法建立背景行程：%s\n"
 
 #: postmaster/postmaster.c:1063
 #, c-format
@@ -6600,7 +6602,7 @@ msgstr "  -B NBUFFERS     共享暫存區的數量\n"
 #: postmaster/postmaster.c:1093
 #: tcop/postgres.c:2120
 msgid "  -c NAME=VALUE   set run-time parameter\n"
-msgstr "  -c NAME=VALUE   設定執行時期參數\n"
+msgstr "  -c NAME=VALUE   設讚執行時期參數\n"
 
 #: postmaster/postmaster.c:1094
 msgid "  -d 1-5          debugging level\n"
@@ -6634,7 +6636,7 @@ msgstr "  -l              啟用SSL連線\n"
 
 #: postmaster/postmaster.c:1103
 msgid "  -N MAX-CONNECT  maximum number of allowed connections\n"
-msgstr "  -N MAX-CONNECT  允許的的最大連接數\n"
+msgstr "  -N MAX-CONNECT  允許的最大連接數\n"
 
 #: postmaster/postmaster.c:1104
 msgid "  -o OPTIONS      pass \"OPTIONS\" to each server process\n"
@@ -6693,21 +6695,21 @@ msgstr ""
 #: postmaster/postmaster.c:1176
 #, c-format
 msgid "select() failed in postmaster: %m"
-msgstr ""
+msgstr "postmaster中select()失敗：%m"
 
 #: postmaster/postmaster.c:1327
 #: postmaster/postmaster.c:1358
 msgid "incomplete startup packet"
-msgstr ""
+msgstr "起始封包不完整"
 
 #: postmaster/postmaster.c:1339
 msgid "invalid length of startup packet"
-msgstr ""
+msgstr "起始封包的長度不正確"
 
 #: postmaster/postmaster.c:1391
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
-msgstr ""
+msgstr "傳送SSL交談回應失敗：%m"
 
 #: postmaster/postmaster.c:1420
 #, c-format
@@ -6720,7 +6722,7 @@ msgstr ""
 
 #: postmaster/postmaster.c:1513
 msgid "no PostgreSQL user name specified in startup packet"
-msgstr ""
+msgstr "起始封包中未指定PostgreSQL使用者"
 
 #: postmaster/postmaster.c:1566
 msgid "the database system is starting up"
@@ -6738,27 +6740,27 @@ msgstr "資料庫系統正在復原模式"
 #: storage/ipc/sinval.c:105
 #: storage/lmgr/proc.c:231
 msgid "sorry, too many clients already"
-msgstr ""
+msgstr "對不起，用戶端過多"
 
 #: postmaster/postmaster.c:1808
 msgid "received SIGHUP, reloading configuration files"
-msgstr ""
+msgstr "收到SIGHUP，重新載入設定檔"
 
 #: postmaster/postmaster.c:1860
 msgid "received smart shutdown request"
-msgstr ""
+msgstr "收到智慧型關閉的要求"
 
 #: postmaster/postmaster.c:1896
 msgid "received fast shutdown request"
-msgstr ""
+msgstr "收到快速關閉的要求"
 
 #: postmaster/postmaster.c:1903
 msgid "aborting any active transactions"
-msgstr ""
+msgstr "中止任何進行中的交易"
 
 #: postmaster/postmaster.c:1941
 msgid "received immediate shutdown request"
-msgstr ""
+msgstr "收到立即關閉的要求"
 
 #: postmaster/postmaster.c:2014
 msgid "startup process"
@@ -6766,11 +6768,11 @@ msgstr "啟動行程"
 
 #: postmaster/postmaster.c:2017
 msgid "aborting startup due to startup process failure"
-msgstr ""
+msgstr "啟動行程失敗，中止啟動"
 
 #: postmaster/postmaster.c:2080
 msgid "background writer process"
-msgstr "background writer 行程"
+msgstr "background writer行程"
 
 #: postmaster/postmaster.c:2093
 msgid "archiver process"
@@ -6786,7 +6788,7 @@ msgstr "系統logger行程"
 
 #: postmaster/postmaster.c:2145
 msgid "all server processes terminated; reinitializing"
-msgstr "所有伺服器行程已中止; 重新初始化"
+msgstr "所有伺服器行程已中止，重新初始化"
 
 #: postmaster/postmaster.c:2191
 #: postmaster/postmaster.c:2201
@@ -6795,7 +6797,7 @@ msgstr "伺服器行程"
 
 #: postmaster/postmaster.c:2246
 msgid "terminating any other active server processes"
-msgstr "中止所有其他運行中的伺服器行程"
+msgstr "中止所有運行中的伺服器行程"
 
 #: postmaster/postmaster.c:2343
 #, c-format
@@ -6815,11 +6817,11 @@ msgstr ""
 #: postmaster/postmaster.c:2486
 #, c-format
 msgid "could not fork new process for connection: %m"
-msgstr "無法為連線建立新行程: %m"
+msgstr "無法為連線建立新行程：%m"
 
 #: postmaster/postmaster.c:2525
 msgid "could not fork new process for connection: "
-msgstr "無法為連線建立新行程:"
+msgstr "無法為連線建立新行程："
 
 #: postmaster/postmaster.c:2667
 #, c-format
@@ -6829,17 +6831,17 @@ msgstr "getnameinfo_all()失敗：%s"
 #: postmaster/postmaster.c:2676
 #, c-format
 msgid "connection received: host=%s port=%s"
-msgstr "連線已接收: host=%s port=%s"
+msgstr "連線已接收：host=%s port=%s"
 
 #: postmaster/postmaster.c:2748
 #, c-format
 msgid "connection authorized: user=%s database=%s"
-msgstr "連線已授權: user=%s database=%s"
+msgstr "連線已授權：user=%s database=%s"
 
 #: postmaster/postmaster.c:2924
 #, c-format
 msgid "could not exec backend process \"%s\": %m"
-msgstr "無法執行後端行程 \"%s\": %m"
+msgstr "無法執行後端行程 \"%s\"：%m"
 
 #: postmaster/postmaster.c:3321
 #, c-format
@@ -6849,7 +6851,7 @@ msgstr "無法fork啟動行程：%m"
 #: postmaster/postmaster.c:3325
 #, c-format
 msgid "could not fork background writer process: %m"
-msgstr "無法建立 background writer 行程: %m"
+msgstr "無法建立 background writer 行程：%m"
 
 #: postmaster/postmaster.c:3329
 #, c-format
@@ -6920,7 +6922,7 @@ msgstr ""
 #: postmaster/pgstat.c:257
 #, c-format
 msgid "could not resolve \"localhost\": %s"
-msgstr "無法解析 \"localhost\": %s"
+msgstr "無法解析\"localhost\"：%s"
 
 #: postmaster/pgstat.c:285
 #, c-format
@@ -6968,12 +6970,12 @@ msgstr ""
 
 #: postmaster/pgstat.c:418
 msgid "disabling statistics collector for lack of working socket"
-msgstr ""
+msgstr "沒有可用的socket，停用統計資料收集器"
 
 #: postmaster/pgstat.c:432
 #, c-format
 msgid "could not set statistics collector socket to nonblocking mode: %m"
-msgstr "無法將統計資料收集器 socket 設為非阻擋模式"
+msgstr "無法將統計資料收集器 socket 設為非阻擋模式：%m"
 
 #: postmaster/pgstat.c:571
 msgid "statistics collector startup skipped"
@@ -6982,7 +6984,7 @@ msgstr "跳過統計資料收集器啟動程序"
 #: postmaster/pgstat.c:605
 #, c-format
 msgid "could not fork statistics buffer: %m"
-msgstr "無法 fork 統計資料緩衝區: %m"
+msgstr "無法 fork 統計資料緩衝區：%m"
 
 #: postmaster/pgstat.c:963
 msgid "must be superuser to reset statistics counters"
@@ -7684,7 +7686,7 @@ msgstr "%s：不合法的命令列引數"
 #: tcop/postgres.c:2680
 #, c-format
 msgid "%s: no database nor user name specified"
-msgstr "%s：未指定資料庫和使用者名稱"
+msgstr "%s：未指定資料庫和使用者名?"
 
 #: tcop/postgres.c:3091
 #, c-format
@@ -9072,13 +9074,13 @@ msgstr "錯誤的資料型別: %u, 預期應為 %u"
 msgid "improper binary format in record column %d"
 msgstr ""
 
-#: utils/adt/selfuncs.c:3369
-#: utils/adt/selfuncs.c:3756
+#: utils/adt/selfuncs.c:3409
+#: utils/adt/selfuncs.c:3796
 msgid "case insensitive matching not supported on type bytea"
 msgstr "bytea 型別不支援不區分大小寫的匹配"
 
-#: utils/adt/selfuncs.c:3474
-#: utils/adt/selfuncs.c:3917
+#: utils/adt/selfuncs.c:3514
+#: utils/adt/selfuncs.c:3957
 msgid "regular-expression matching not supported on type bytea"
 msgstr "bytea 型別不支援正規表示式匹配"
 
@@ -9583,7 +9585,7 @@ msgstr "無法切換目錄到 \"%s\": %m"
 
 #: utils/init/postinit.c:375
 msgid "no users are defined in this database system"
-msgstr "沒有任何使用者被定義在這個資料庫系統"
+msgstr "沒有任何使用者被定義在這個資料庫系?"
 
 #: utils/init/postinit.c:376
 #, c-format
@@ -9593,6 +9595,10 @@ msgstr "您必須立刻執行 CREATE USER \"%s\" WITH SYSID %d CREATEUSER;。"
 #: utils/init/postinit.c:412
 msgid "connection limit exceeded for non-superusers"
 msgstr "非特權使用者連線數已達限制量"
+
+#: utils/mb/encnames.c:445
+msgid "encoding name too long"
+msgstr ""
 
 #: utils/mb/conv.c:376
 #, c-format
@@ -9609,8 +9615,13 @@ msgstr ""
 msgid "ignoring unconvertible %s character 0x%04x"
 msgstr ""
 
-#: utils/mb/encnames.c:445
-msgid "encoding name too long"
+#: utils/mb/wchar.c:832
+msgid "Unicode characters greater than or equal to 0x10000 are not supported"
+msgstr ""
+
+#: utils/mb/wchar.c:861
+#, c-format
+msgid "invalid byte sequence for encoding \"%s\": 0x%s"
 msgstr ""
 
 #: utils/mb/mbutils.c:252
@@ -9626,15 +9637,6 @@ msgstr ""
 #: utils/mb/mbutils.c:331
 #, c-format
 msgid "invalid destination encoding name \"%s\""
-msgstr ""
-
-#: utils/mb/wchar.c:832
-msgid "Unicode characters greater than or equal to 0x10000 are not supported"
-msgstr ""
-
-#: utils/mb/wchar.c:861
-#, c-format
-msgid "invalid byte sequence for encoding \"%s\": 0x%s"
 msgstr ""
 
 #: utils/misc/help_config.c:125
@@ -9847,7 +9849,7 @@ msgstr "如果這個參數被設置，伺服器將自動在背景運行並和任
 
 #: utils/misc/guc.c:476
 msgid "Logs each successful connection."
-msgstr "記錄每個成功的連線。"
+msgstr "記錄每個成功的連線皂"
 
 #: utils/misc/guc.c:484
 msgid "Logs end of a session, including duration"
