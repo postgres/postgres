@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.131 2003/11/29 19:51:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.132 2004/01/14 03:39:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,11 +70,9 @@ rewriteRuleAction(Query *parsetree,
 {
 	int			current_varno,
 				new_varno;
-	List	   *main_rtable;
 	int			rt_length;
 	Query	   *sub_action;
 	Query	  **sub_action_ptr;
-	List	   *rt;
 
 	/*
 	 * Make modifiable copies of rule action and qual (what we're passed
@@ -109,32 +107,32 @@ rewriteRuleAction(Query *parsetree,
 	 * Generate expanded rtable consisting of main parsetree's rtable plus
 	 * rule action's rtable; this becomes the complete rtable for the rule
 	 * action.	Some of the entries may be unused after we finish
-	 * rewriting, but if we tried to remove them we'd have a much harder
-	 * job to adjust RT indexes in the query's Vars.  It's OK to have
-	 * unused RT entries, since planner will ignore them.
+	 * rewriting, but we leave them all in place for two reasons:
+	 *
+	 *		* We'd have a much harder job to adjust the query's varnos
+	 *		  if we selectively removed RT entries.
+	 *
+	 *		* If the rule is INSTEAD, then the original query won't be
+	 *		  executed at all, and so its rtable must be preserved so that
+	 *		  the executor will do the correct permissions checks on it.
+	 *
+	 * RT entries that are not referenced in the completed jointree will be
+	 * ignored by the planner, so they do not affect query semantics.  But
+	 * any permissions checks specified in them will be applied during
+	 * executor startup (see ExecCheckRTEPerms()).  This allows us to check
+	 * that the caller has, say, insert-permission on a view, when the view
+	 * is not semantically referenced at all in the resulting query.
+	 *
+	 * When a rule is not INSTEAD, the permissions checks done on its copied
+	 * RT entries will be redundant with those done during execution of the
+	 * original query, but we don't bother to treat that case differently.
 	 *
 	 * NOTE: because planner will destructively alter rtable, we must ensure
 	 * that rule action's rtable is separate and shares no substructure
 	 * with the main rtable.  Hence do a deep copy here.
-	 *
-	 * Also, we must disable write-access checking in all the RT entries
-	 * copied from the main query.	This is safe since in fact the rule
-	 * action won't write on them, and it's necessary because the rule
-	 * action may have a different commandType than the main query,
-	 * causing ExecCheckRTEPerms() to make an inappropriate check.	The
-	 * read-access checks can be left enabled, although they're probably
-	 * redundant.
 	 */
-	main_rtable = (List *) copyObject(parsetree->rtable);
-
-	foreach(rt, main_rtable)
-	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
-
-		rte->checkForWrite = false;
-	}
-
-	sub_action->rtable = nconc(main_rtable, sub_action->rtable);
+	sub_action->rtable = nconc((List *) copyObject(parsetree->rtable),
+							   sub_action->rtable);
 
 	/*
 	 * Each rule action's jointree should be the main parsetree's jointree
