@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.6 1996/09/21 06:16:09 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.7 1996/09/21 06:20:19 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -106,7 +106,7 @@ POSTDOCDIR=	$(POSTGRESDIR)/doc
 HEADERDIR=	$(POSTGRESDIR)/include
 
 # The port to run the postmaster on
-POSTPORT= 6543
+POSTPORT= 5432
 
 # NAMEDATALEN is the max length for system identifiers (e.g. table names, 
 # attribute names, function names, etc.)  
@@ -282,7 +282,7 @@ CFLAGS+= -DPORTNAME_$(PORTNAME)
 CFLAGS += -I ../../backend/port/$(PORTNAME)
 
 # Globally pass the default TCP port for postmaster(1).
-CFLAGS+= -DPOSTPORT='"5432"'
+CFLAGS+= -DPOSTPORT='"$(POSTPORT)"'
 
 # include flags from mk/port/postgres.mk.$(PORTNAME)
 CFLAGS+= $(CFLAGS_BE)
