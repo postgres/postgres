@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.86 1998/08/25 21:34:04 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.87 1998/08/30 21:05:27 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -443,11 +443,41 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 
 		querytree = querytree_list->qtrees[i];
 
-		if (DebugPrintQuery == true)
+		if (DebugPrintQuery)
 		{
-			printf("\n---- \tquery is:\n%s\n", query_string);
-			printf("\n");
-			fflush(stdout);
+			if (DebugPrintQuery > 3) {
+				/* Print the query string as is if query debug level > 3 */
+				TPRINTF(TRACE_QUERY, "query: %s",query_string);
+			} else {
+				/* Print condensed query string to fit in one log line */
+				char	buff[8192+1];
+				char	c,
+						*s,
+						*d;
+				int 	n,
+						is_space=1;
+
+				for (s=query_string,d=buff,n=0; (c=*s) && (n<8192); s++) {
+					switch (c) {
+						case '\r':
+						case '\n':
+						case '\t':
+							c = ' ';
+							/* fall through */
+						case ' ':
+							if (is_space) continue;
+							is_space = 1;
+							break;
+						default:
+							is_space = 0;
+							break;
+					}
+					*d++ = c;
+					n++;
+				}
+				*d = '\0';
+				TPRINTF(TRACE_QUERY, "query: %s",buff);
+			}
 		}
 
 		/* don't rewrite utilites */
@@ -457,11 +487,10 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 			continue;
 		}
 
-		if (DebugPrintParse == true)
+		if (DebugPrintParse)
 		{
-			printf("\n---- \tparser outputs :\n");
+			TPRINTF(TRACE_PARSE, "parser outputs:");
 			nodeDisplay(querytree);
-			printf("\n");
 		}
 
 		/* rewrite queries (retrieve, append, delete, replace) */
@@ -906,9 +935,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	char			firstchar;
 	char			parser_input[MAX_PARSE_BUFFER];
 	char	   		*userName;
-	char	   		*remote_info;
-	char	   		*remote_host;
-	unsigned short 	remote_port = 0;
+
+	/* Used if verbose is set, must be initialized */
+	char	   		*remote_info = "interactive";
+	char	   		*remote_host = "";
+	unsigned short 	remote_port  = 0;
 
 	char	   		*DBDate = NULL;
 	extern int		optind;
@@ -1490,7 +1521,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.86 $ $Date: 1998/08/25 21:34:04 $");
+		puts("$Revision: 1.87 $ $Date: 1998/08/30 21:05:27 $");
 	}
 
 	/* ----------------
