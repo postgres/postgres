@@ -71,6 +71,12 @@
 /* Set to 1 if you have <dld.h> */
 #undef HAVE_DLD_H
 
+/* Set to 1 if you gettimeofday(a,b) vs gettimeofday(a) */
+#undef HAVE_GETTIMEOFDAY_2_ARGS
+#ifndef HAVE_GETTIMEOFDAY_2_ARGS
+# define gettimeofday(a,b) gettimeofday(a)
+#endif
+
 /* Set to 1 if you have fp_class() */
 #undef HAVE_FP_CLASS
 

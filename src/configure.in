@@ -451,6 +451,12 @@ AC_TRY_LINK([#include <time.h>],
             [AC_DEFINE(HAVE_INT_TIMEZONE) AC_MSG_RESULT(yes)],
             AC_MSG_RESULT(no))
 
+AC_MSG_CHECKING(for gettimeofday args)
+AC_TRY_LINK([#include <sys/time.h>], 
+            [struct timeval *tp; struct timezone *tzp; gettimeofday(tp,tzp); ], 
+            [AC_DEFINE(HAVE_GETTIMEOFDAY_2_ARGS) AC_MSG_RESULT(2 args)],
+            AC_MSG_RESULT(no))
+
 AC_MSG_CHECKING(for union semun)
 AC_TRY_LINK([#include <sys/types.h>
 #include <sys/ipc.h>
