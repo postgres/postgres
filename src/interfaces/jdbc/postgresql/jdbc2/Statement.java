@@ -6,6 +6,7 @@ package postgresql.jdbc2;
 // postgresql.jdbc1 package.
 
 import java.sql.*;
+import java.util.Vector;
 
 /**
  * A Statement object is used for executing a static SQL statement and
@@ -27,6 +28,7 @@ public class Statement implements java.sql.Statement
     SQLWarning warnings = null;	// The warnings chain.
     int timeout = 0;		// The timeout for a query (not used)
     boolean escapeProcessing = true;// escape processing flag
+    private Vector batch=null;
     
 	/**
 	 * Constructor for a Statement.  It simply sets the connection
@@ -325,17 +327,35 @@ public class Statement implements java.sql.Statement
     
     public void addBatch(String sql) throws SQLException
     {
-	throw postgresql.Driver.notImplemented();
+	if(batch==null)
+	    batch=new Vector();
+	batch.addElement(sql);
     }
     
     public void clearBatch() throws SQLException
     {
-	throw postgresql.Driver.notImplemented();
+	if(batch!=null)
+	    batch.removeAllElements();
     }
     
     public int[] executeBatch() throws SQLException
     {
-	throw postgresql.Driver.notImplemented();
+	if(batch==null || batch.isEmpty())
+	    throw new SQLException("The batch is empty.");
+	
+	int size=batch.size();
+	int[] result=new int[size];
+	int i=0;
+	this.execute("begin"); // PTM: check this when autoCommit is false
+	try {
+	    for(i=0;i<size;i++)
+		result[i]=this.executeUpdate((String)batch.elementAt(i));
+	    this.execute("commit"); // PTM: check this
+	} catch(SQLException e) {
+	    this.execute("abort"); // PTM: check this
+	    throw new SQLException("The result "+i+" \""+batch.elementAt(i)+"\" aborted.");
+	}
+	return result;
     }
     
     public java.sql.Connection getConnection() throws SQLException

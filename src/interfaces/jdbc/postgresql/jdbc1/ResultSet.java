@@ -386,7 +386,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
     String s = getString(columnIndex);
     if(s==null)
       return null;
-    SimpleDateFormat df = new SimpleDateFormat(connection.getDateStyle());
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
     try {
       return new java.sql.Date(df.parse(s).getTime());
     } catch (ParseException e) {
@@ -443,7 +443,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
 	TimeZone zone = TimeZone.getDefault();
 	zone.setRawOffset(TZ);
 	String nm = zone.getID();
-	s = s.substring(0,18) + nm;
+	s = s.substring(0,19) + nm;
 	try {
 	  java.util.Date d = df.parse(s);
 	  return new Timestamp(d.getTime());

@@ -312,7 +312,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setDate(int parameterIndex, java.sql.Date x) throws SQLException
 	{
-	  SimpleDateFormat df = new SimpleDateFormat("''"+connection.getDateStyle()+"''");
+	  SimpleDateFormat df = new SimpleDateFormat("''yyyy-MM-dd''");
 	  
 	  set(parameterIndex, df.format(x));
 	  
