@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.26 2000/07/04 06:11:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.27 2000/07/12 18:04:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,7 @@ remove_all_temp_relations(void)
 
 		next = lnext(l);		/* do this first, l is deallocated */
 
+		/* Indexes are dropped during heap drop */
 		if (temp_rel->relkind != RELKIND_INDEX)
 		{
 			char		relname[NAMEDATALEN];
@@ -115,8 +116,6 @@ remove_all_temp_relations(void)
 			strcpy(relname, temp_rel->user_relname);
 			heap_drop_with_catalog(relname, allowSystemTableMods);
 		}
-		else
-			index_drop(temp_rel->relid);
 
 		l = next;
 	}
@@ -235,7 +234,7 @@ invalidate_temp_relations(void)
  *
  * We also reject an attempt to rename a normal table to a name in use
  * as a temp table name.  That would fail later on anyway when rename.c
- * looks for a rename conflict, but we can give a more specific error 
+ * looks for a rename conflict, but we can give a more specific error
  * message for the problem here.
  *
  * It might seem that we need to check for attempts to rename the physical

@@ -15,7 +15,7 @@ MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
 $(POSTGRES_IMP):
 	@echo Making $@
 	$(MKLDEXPORT) postgres $(BINDIR) > $@
-	$(CC) -Wl,-bE:$(SRCDIR)/backend/$@ -o postgres $(OBJS) ../utils/version.o $(LDFLAGS)
+	$(CC) -Wl,-bE:$(SRCDIR)/backend/$@ -o postgres $(OBJS) $(LDFLAGS)
 
 %$(EXPSUFF):
 	$(MKLDEXPORT) $*.o `pwd` > $*$(EXPSUFF)
