@@ -1,6 +1,5 @@
 --
--- create.source
---
+-- COPY
 --
 
 -- CLASS POPULATION
@@ -54,3 +53,4 @@ COPY bt_name_heap FROM '_OBJWD_/data/hash.data';
 COPY bt_txt_heap FROM '_OBJWD_/data/desc.data';
 
 COPY bt_f8_heap FROM '_OBJWD_/data/hash.data';
+

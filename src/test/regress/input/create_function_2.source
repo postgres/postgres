@@ -1,5 +1,5 @@
 --
--- FUNCTION DEFINITIONS
+-- CREATE_FUNCTION_2
 --
 CREATE FUNCTION hobbies(person)
    RETURNS setof hobbies_r 
@@ -53,7 +53,7 @@ CREATE FUNCTION reverse_name(name)
    LANGUAGE 'c';
 
 --
--- FUNCTION DYNAMIC LOADING
+-- Function dynamic loading
 --
 LOAD '_OBJWD_/regress_DLSUFFIX_';
 

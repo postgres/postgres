@@ -1,5 +1,5 @@
 --
--- Check constraints
+-- CONSTRAINTS
 -- Constraints can be specified with:
 --  - DEFAULT clause
 --  - CHECK clauses

@@ -1,6 +1,7 @@
 --
 -- ARRAYS
 --
+
 SELECT * FROM arrtest;
 
 SELECT arrtest.a[1],

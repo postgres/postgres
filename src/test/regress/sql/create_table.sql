@@ -1,6 +1,5 @@
 --
--- create.source
---
+-- CREATE_TABLE
 --
 
 --
@@ -19,16 +18,16 @@ CREATE TABLE equipment_r (
 CREATE TABLE onek (
 	unique1		int4,
 	unique2		int4,
-	two		int4,
+	two			int4,
 	four		int4,
-	ten		int4,
+	ten			int4,
 	twenty		int4,
 	hundred		int4,
 	thousand	int4,
 	twothousand	int4,
 	fivethous	int4,
 	tenthous	int4,
-	odd		int4,
+	odd			int4,
 	even		int4,
 	stringu1	name,
 	stringu2	name,
@@ -38,16 +37,16 @@ CREATE TABLE onek (
 CREATE TABLE tenk1 (
 	unique1		int4,
 	unique2		int4,
-	two		int4,
+	two			int4,
 	four		int4,
-	ten		int4,
+	ten			int4,
 	twenty		int4,
 	hundred		int4,
 	thousand	int4,
 	twothousand	int4,
 	fivethous	int4,
 	tenthous	int4,
-	odd		int4,
+	odd			int4,
 	even		int4,
 	stringu1	name,
 	stringu2	name,
@@ -59,14 +58,14 @@ CREATE TABLE tenk2 (
 	unique2 	int4,
 	two 	 	int4,
 	four 		int4,
-	ten		int4,
+	ten			int4,
 	twenty 		int4,
 	hundred 	int4,
 	thousand 	int4,
-	twothousand 	int4,
+	twothousand int4,
 	fivethous 	int4,
 	tenthous	int4,
-	odd		int4,
+	odd			int4,
 	even		int4,
 	stringu1	name,
 	stringu2	name,
@@ -76,7 +75,7 @@ CREATE TABLE tenk2 (
 
 CREATE TABLE person (
 	name 		text,
-	age		int4,
+	age			int4,
 	location 	point
 );
 
@@ -128,7 +127,7 @@ CREATE TABLE shighway (
 ) INHERITS (road);
 
 CREATE TABLE real_city (
-	pop		int4,
+	pop			int4,
 	cname		text,
 	outline 	path
 );
@@ -145,42 +144,42 @@ CREATE TABLE real_city (
 --
 CREATE TABLE a_star (
 	class		char, 
-	a 		int4
+	a 			int4
 );
 
 CREATE TABLE b_star (
-	b 		text
+	b 			text
 ) INHERITS (a_star);
 
 CREATE TABLE c_star (
-	c 		name
+	c 			name
 ) INHERITS (a_star);
 
 CREATE TABLE d_star (
-	d 		float8
+	d 			float8
 ) INHERITS (b_star, c_star);
 
 CREATE TABLE e_star (
-	e 		int2
+	e 			int2
 ) INHERITS (c_star);
 
 CREATE TABLE f_star (
-	f 		polygon
+	f 			polygon
 ) INHERITS (e_star);
 
 CREATE TABLE aggtest (
-	a 		int2,
-	b		float4
+	a 			int2,
+	b			float4
 );
 
 CREATE TABLE arrtest (
-	a 		int2[],
-	b 		int4[][][],
-	c 		name[],
-	d		text[][], 
-	e 		float8[],
-	f		char(5)[],
-	g		varchar(5)[]
+	a 			int2[],
+	b 			int4[][][],
+	c 			name[],
+	d			text[][], 
+	e 			float8[],
+	f			char(5)[],
+	g			varchar(5)[]
 );
 
 CREATE TABLE hash_i4_heap (
@@ -207,8 +206,8 @@ CREATE TABLE hash_f8_heap (
 -- the data set is too large for what it's worth
 -- 
 -- CREATE TABLE hash_ovfl_heap (
---	x		int4,
---	y		int4
+--	x			int4,
+--	y			int4
 -- );
 
 CREATE TABLE bt_i4_heap (

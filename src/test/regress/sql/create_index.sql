@@ -1,5 +1,6 @@
 --
--- CREATE ancillary data structures (i.e. indices)
+-- CREATE_INDEX
+-- Create ancillary data structures (i.e. indices)
 --
 
 --

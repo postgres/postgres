@@ -1,6 +1,7 @@
 --
--- OPERATOR DEFINITIONS
+-- CREATE_OPERATOR
 --
+
 CREATE OPERATOR ## ( 
    leftarg = path,
    rightarg = path,

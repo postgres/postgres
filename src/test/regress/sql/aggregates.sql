@@ -1,6 +1,7 @@
 --
 -- AGGREGATES
 --
+
 SELECT avg(four) AS avg_1 FROM onek;
 
 SELECT avg(a) AS avg_32 FROM aggtest WHERE a < 100;

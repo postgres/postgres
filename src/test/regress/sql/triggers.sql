@@ -1,3 +1,6 @@
+--
+-- TRIGGERS
+--
 
 create table pkeys (pkey1 int4 not null, pkey2 text not null);
 create table fkeys (fkey1 int4, fkey2 text, fkey3 int);

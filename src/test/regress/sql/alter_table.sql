@@ -1,6 +1,7 @@
 --
 -- add attribute
 --
+
 CREATE TABLE tmp (initial int4);
 
 ALTER TABLE tmp ADD COLUMN a int4;

@@ -1,6 +1,5 @@
 --
--- install_plpgsql.source
---
+-- INSTALL_PLPGSQL
 --
 
 CREATE FUNCTION plpgsql_call_handler()
@@ -11,3 +10,4 @@ CREATE FUNCTION plpgsql_call_handler()
 CREATE TRUSTED PROCEDURAL LANGUAGE 'plpgsql'
    HANDLER plpgsql_call_handler
    LANCOMPILER 'PL/pgSQL';
+

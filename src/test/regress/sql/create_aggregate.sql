@@ -1,5 +1,5 @@
 --
--- AGGREGATE DEFINITIONS
+-- CREATE_AGGREGATE
 --
 
 -- all functions CREATEd

@@ -1,5 +1,6 @@
 --
--- VIRTUAL CLASS DEFINITIONS
+-- CREATE_VIEW
+-- Virtual class definitions
 --	(this also tests the query rewrite system)
 --
 

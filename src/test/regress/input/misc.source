@@ -1,6 +1,6 @@
 --
--- replace
---
+-- MISC
+
 --
 -- BTREE
 --
@@ -86,11 +86,11 @@ SELECT * FROM a_star*;
 
 SELECT * 
    FROM b_star* x
-   WHERE x.b = 'bumble'::text or x.a < 3;
+   WHERE x.b = text 'bumble' or x.a < 3;
 
 SELECT class, a 
    FROM c_star* x 
-   WHERE x.c ~ 'hi'::text;
+   WHERE x.c ~ text 'hi';
 
 SELECT class, b, c
    FROM d_star* x
@@ -148,7 +148,7 @@ SELECT * FROM e_star*;
 ALTER TABLE a_star* ADD COLUMN a text;
 
 --UPDATE b_star*
---   SET a = 'gazpacho'::text
+--   SET a = text 'gazpacho'
 --   WHERE aa > 4;
 
 SELECT class, aa, a FROM a_star*;
@@ -208,7 +208,7 @@ SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person* p;
 SELECT user_relns() AS user_relns
    ORDER BY user_relns;
 
---SELECT name(equipment(hobby_construct('skywalking'::text, 'mer'::text))) AS equip_name;
+--SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer'))) AS equip_name;
 
 
 --
@@ -222,3 +222,4 @@ SELECT user_relns() AS user_relns
 --
 -- rewrite rules
 --
+

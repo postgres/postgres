@@ -1,6 +1,5 @@
 --
--- create.source
---
+-- CREATE_TYPE
 --
 
 CREATE TYPE widget (
