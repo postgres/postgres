@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.28 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.29 2002/01/07 02:29:12 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -23,6 +23,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.28 2001/11/21 05:53:41 
    <primary>ODBC</primary>
   </indexterm>
 
+ <sect1 id="odbc-intro">
+  <title>Introduction</title>
+
   <note>
    <para>
     Background information originally by Tim Goeke
@@ -38,11 +41,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.28 2001/11/21 05:53:41 
    <acronym>ODBC</acronym> provides a product-neutral interface 
    between frontend applications and database servers,
    allowing a user or developer to write applications that are 
-   transportable between servers from different manufacturers..
+   portable between servers from different manufacturers..
   </para>
-
-  <sect1 id="odbc-background">
-   <title>Background</title>
 
    <para>
     The <acronym>ODBC</acronym> <acronym>API</acronym> matches up 
@@ -52,9 +52,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.28 2001/11/21 05:53:41 
    </para>
 
    <para>
-    The backend access come from <acronym>ODBC</acronym> drivers, 
+    The backend access comes from <acronym>ODBC</acronym> drivers, 
     or vendor-specific drivers that
-    allow data access.   <productname>psqlODBC</productname> is such a driver,
+    allow data access.   <productname>psqlODBC</productname>, which is included in the <productname>PostgreSQL</> distribution, is such a driver,
     along with others that are
     available, such as the <productname>OpenLink</productname> <acronym>ODBC</acronym> drivers.
    </para>
@@ -62,7 +62,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.28 2001/11/21 05:53:41 
    <para>
     Once you write an <acronym>ODBC</acronym> application, 
     you <emphasis>should</emphasis> be able to connect to <emphasis>any</emphasis>
-    back end database, regardless of the vendor, as long as the database schema
+    back-end database, regardless of the vendor, as long as the database schema
     is the same.
    </para>
 
@@ -71,8 +71,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.28 2001/11/21 05:53:41 
     and <productname>PostgreSQL</productname> servers that have
     exactly the same data.  Using <acronym>ODBC</acronym>, 
     your Windows application would make exactly the
-    same calls and the back end data source would look the same (to the Windows
-    app).
+    same calls and the back-end data source would look the same (to the Windows
+    application).
    </para>
   </sect1>
 
@@ -173,7 +173,7 @@ psql -d template1 -f <replaceable>LOCATION</>/odbc.sql
     <filename>~/.odbc.ini</filename> contains user-specified access information 
     for the <productname>psqlODBC</productname> driver. 
     The file uses conventions typical for <productname>Windows</productname> 
-    Registry files, but despite this restriction can be made to work.
+    Registry files.
    </para>
 
    <para>
@@ -186,12 +186,12 @@ psql -d template1 -f <replaceable>LOCATION</>/odbc.sql
     Each section must be labeled with the name given in 
     <literal>[ODBC Data Sources]</literal> and must contain the following entries: 
 
-    <programlisting>
+<programlisting>
 Driver = <replaceable>prefix</replaceable>/lib/libpsqlodbc.so
-Database=<replaceable>DatabaseName</replaceable>
-Servername=localhost
-Port=5432
-    </programlisting>
+Database = <replaceable>DatabaseName</replaceable>
+Servername = localhost
+Port = 5432
+</programlisting>
 
     <tip>
      <para>
@@ -212,7 +212,7 @@ Port=5432
     Here is an example <filename>.odbc.ini</filename> file, 
     showing access information for three databases:
 
-    <programlisting>
+<programlisting>
 [ODBC Data Sources]
 DataEntry = Read/Write Database
 QueryOnly = Read-only Database
@@ -246,7 +246,7 @@ Driver = /opt/postgres/current/lib/libpsqlodbc.so
 
 [ODBC]
 InstallDir = /opt/applix/axdata/axshlib
-    </programlisting>
+</programlisting>
    </para>
   </sect1>
 
@@ -298,19 +298,20 @@ InstallDir = /opt/applix/axdata/axshlib
      The <acronym>ODBC</acronym> <acronym>API</acronym>
      is the way to go.
      For <productname>Visual C++</productname> coding you can find out more at
-     Microsoft's web site or in your <productname>VC++</productname> docs.
+     Microsoft's web site or in your <productname>Visual C++</productname>
+     documentation.
     </para>
 
     <para>
      Visual Basic and the other <acronym>RAD</acronym> tools have <classname>Recordset</classname> objects 
      that use <acronym>ODBC</acronym>
      directly to access data.  Using the data-aware controls, you can quickly
-     link to the <acronym>ODBC</acronym> back end database 
+     link to the <acronym>ODBC</acronym> back-end database 
      (<emphasis>very</emphasis> quickly).
     </para>
 
     <para>
-     Playing around with MS Access will help you sort this out.  Try using
+     Playing around with <productname>MS Access</> will help you sort this out.  Try using
      <menuchoice><guimenu>File</><guimenuitem>Get External Data</></menuchoice>.
     </para>
 
@@ -354,7 +355,7 @@ InstallDir = /opt/applix/axdata/axshlib
      <title>Enabling <application>ApplixWare</application> Database Access</title>
 
      <para>
-      These instructions are for the <literal>4.4.2</literal> release of
+      These instructions are for the 4.4.2 release of
       <productname>ApplixWare</productname> on <productname>Linux</productname>.
       Refer to the <citetitle>Linux Sys Admin</citetitle> on-line book
       for more detailed information.
@@ -411,7 +412,7 @@ libFor elfodbc <replaceable>applixroot</replaceable>/applix/axdata/axshlib/lib
      <step performance="required">
       <para>
        Create <filename>.odbc.ini</filename> as 
-       described above.  You may also want to add the flag
+       described in <xref linkend="odbc-config">.  You may also want to add the flag
 
 <programlisting>
 TextAsLongVarchar=0
@@ -476,7 +477,7 @@ TextAsLongVarchar=0
      </step>
      <step performance="required">
       <para>
-       The <literal>Ready</literal> message will appear in the lower left corner of the data
+       The <quote>Ready</quote> message will appear in the lower left corner of the data
        window.  This indicates that you can now enter queries.
       </para>
      </step>
@@ -549,7 +550,7 @@ TextAsLongVarchar=0
 
        <listitem>
 	<para>
-	 The September release of <application>ApplixWare</application> v4.4.1 (the first release with official
+	 The September release of <application>ApplixWare</application> 4.4.1 (the first release with official
 	 <acronym>ODBC</acronym> support under Linux) shows problems when user names
 	 exceed eight (8) characters in length.
 	 Problem description contributed by Steve Campbell
@@ -574,7 +575,7 @@ TextAsLongVarchar=0
      The <application>axnet</application> program's security system
      seems a little suspect. <application>axnet</application> does things
      on behalf of the user and on a true
-     multiple user system it really should be run with root security 
+     multiuser system it really should be run with root security 
      (so it can read/write in each user's directory).  
      I would hesitate to recommend this, however, since we have no idea what 
      security holes this creates.
@@ -633,7 +634,7 @@ cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
 	Many of the error messages from <productname>ApplixWare</productname>
 	go to <filename>stderr</filename>, 
 	but I'm not sure where <filename>stderr</filename>
-	is sent, so <application>strace</application> is the way to find out.
+	is sent, so <command>strace</command> is the way to find out.
        </para>
       </note>
      </step>
@@ -641,16 +642,13 @@ cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
 
     <para>
      For example, after getting
-     a <literal>Cannot launch gateway on server</literal>, 
+     a <errorname>Cannot launch gateway on server</errorname>, 
      I ran <command>strace</command> on <literal>axnet</literal> and got
 
 <screen>
-[pid 27947] open("/usr/lib/libodbc.so", O_RDONLY) = -1 ENOENT
-(No such file or directory)
-[pid 27947] open("/lib/libodbc.so", O_RDONLY) = -1 ENOENT
-(No such file or directory)
-[pid 27947] write(2, "/usr2/applix/axdata/elfodbc:
-can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
+[pid 27947] open("/usr/lib/libodbc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 27947] open("/lib/libodbc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 27947] write(2, "/usr2/applix/axdata/elfodbc: can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
 </screen>  
      So what is happening is that <literal>applix elfodbc</literal> is searching for <filename>libodbc.so</filename>, but it
      cannot find it.  That is why <filename>axnet.cnf</filename> needed to be changed.
@@ -660,6 +658,8 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
    <sect2>
     <title>Running the <application>ApplixWare</application> Demo</title>
 
+    <comment>I think the condition this refers to is gone. -- petere 2002-01-07</comment>
+
     <para>
      In order to go through the 
      <citetitle>ApplixWare Data Tutorial</citetitle>, you need to create
@@ -668,6 +668,7 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
      on many of the database columns,
      and <productname>PostgreSQL</productname> does not currently allow this option.
     </para>
+
     <para>
      To get around this problem, you can do the following:
     </para>
@@ -717,7 +718,7 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
 
      <step performance="required">
       <para>
-       Select <command>File->Compile and Save</command>.
+       Select <menuchoice><guimenu>File</><guimenuitem>Compile and Save</></menuchoice>.
       </para>
      </step>
 
@@ -735,13 +736,13 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
 
      <step performance="required">
       <para>
-       Select <command>*->Run Macro</command>
+       Select <menuchoice><guimenu>*</><guimenuitem>Run Macro</guimenuitem></menuchoice>.
       </para>
      </step>
 
      <step performance="required">
       <para>
-       Enter the value <literal>sqldemo</literal>, then click <command>OK</command>.
+       Enter the value <literal>sqldemo</literal>, then click <guibutton>OK</guibutton>.
       </para>
 
       <para>
@@ -757,6 +758,7 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
      </step>
     </procedure>
    </sect2>
+
    <sect2>
     <title>Useful Macros</title>
 
@@ -766,12 +768,12 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
      macro file. This is an example 
      <filename>~/axhome/macros/login.am</filename> file:
 
-     <programlisting>
+<programlisting>
 macro login
 set_set_system_var@("sql_username@","tgl")
 set_system_var@("sql_passwd@","no$way")
 endmacro
-     </programlisting>
+</programlisting>
 
      <caution>
       <para>

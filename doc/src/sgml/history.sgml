@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.19 2002/01/07 02:29:12 petere Exp $
 -->
 
 <sect1 id="history">
@@ -9,7 +9,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
   The object-relational database management system now known as 
   <productname>PostgreSQL</productname> (and briefly called
   <productname>Postgres95</productname>) is derived from the
-  <productname>Postgres</productname> package written at the University of
+  <productname>POSTGRES</productname> package written at the University of
   California at Berkeley.  With over a decade of
   development behind it, <productname>PostgreSQL</productname> 
   is the most advanced open-source database available anywhere,
@@ -20,10 +20,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
  </para>
 
  <sect2>
-  <title>The Berkeley <productname>Postgres</productname> Project</title>
+  <title>The Berkeley <productname>POSTGRES</productname> Project</title>
 
   <para>
-   Implementation of the <productname>Postgres</productname> 
+   Implementation of the <productname>POSTGRES</productname> 
    <acronym>DBMS</acronym> began in 1986.  The
    initial  concepts  for  the  system  were  presented in
    <xref linkend="STON86">
@@ -60,24 +60,24 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
   </para>
 
   <para>
-   <productname>Postgres</productname> has been  used
+   <productname>POSTGRES</productname> has been  used
    to  implement  many  different
    research and production applications.  These include: a
    financial data analysis system, a  jet  engine  
    performance   monitoring   package,   an   asteroid  tracking
    database, a medical information database,  and  several
    geographic information systems.  
-   <productname>Postgres</productname> has also been
+   <productname>POSTGRES</productname> has also been
    used as an educational tool  at  several  universities.
    Finally,  
-   <ulink url="http://www.illustra.com/">Illustra  Information  Technologies</ulink>
-   (since merged into
-   <ulink url="http://www.informix.com/"><productname>Informix</productname></ulink>)
+   Illustra  Information  Technologies (later merged into
+   <ulink url="http://www.informix.com/"><productname>Informix</productname></ulink>,
+   which is now owned by <ulink url="http://www.ibm.com/">IBM</ulink>.)
    picked up
    the code and commercialized it.
-   <productname>Postgres</productname>  became  the  primary  data  manager
+   <productname>POSTGRES</productname>  became  the  primary  data manager
    for  the
-   <ulink url="http://www.sdsc.edu/0/Parts_Collabs/S2K/s2k_home.html">Sequoia 2000</ulink>
+   <ulink url="http://meteora.ucsd.edu/s2k/s2k_home.html">Sequoia 2000</ulink>
    scientific computing project in late 1992.
   </para>
 
@@ -88,7 +88,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
    support  was  taking  up large amounts of time that should
    have been devoted to database research.  In  an  effort
    to  reduce  this support burden, the Berkeley
-   <productname>Postgres</productname> project officially
+   <productname>POSTGRES</productname> project officially
    ended with Version 4.2.
   </para>
  </sect2>
@@ -98,10 +98,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
 
   <para>
    In 1994, Andrew Yu and Jolly Chen
-   added a SQL language interpreter to <productname>Postgres</productname>.
+   added a SQL language interpreter to <productname>POSTGRES</productname>.
    <productname>Postgres95</productname> was subsequently released to
    the Web to find its own way in the world as an
-   open-source descendant of the original <productname>Postgres</productname>
+   open-source descendant of the original <productname>POSTGRES</productname>
    Berkeley code.
   </para>
 
@@ -109,15 +109,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
    <productname>Postgres95</productname> code was completely
    ANSI C and trimmed in size by 25%. Many
    internal changes improved performance and maintainability. 
-   <productname>Postgres95</productname> v1.0.x ran about  30-50%
+   <productname>Postgres95</productname> release 1.0.x ran about  30-50%
    faster  on  the  Wisconsin  Benchmark compared to 
-   <productname>Postgres</productname> v4.2.
-   Apart from bug fixes, these were the major enhancements:
+   <productname>POSTGRES</productname>, Version 4.2.
+   Apart from bug fixes, the following were the major enhancements:
 
    <itemizedlist>
     <listitem>
      <para>
-      The query language <productname>Postquel</productname> was replaced with
+      The query language PostQUEL was replaced with
       <acronym>SQL</acronym> (implemented in the server).
       Subqueries were not supported until
       <productname>PostgreSQL</productname> (see below), but they
@@ -150,7 +150,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
 
     <listitem>
      <para>
-      The  large  object interface was overhauled. The Inversion large objects were
+      The  large-object interface was overhauled. The Inversion large objects were
       the  only  mechanism for  storing  large objects.
       (The Inversion file system was removed.)
      </para>
@@ -175,7 +175,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
      <para>
       <acronym>GNU</acronym> make (instead of  <acronym>BSD</acronym>  make)  was  used
       for  the build.  Also,  <productname>Postgres95</productname>  could  be
-      compiled with an unpatched <productname>gcc</productname>
+      compiled with an unpatched <productname>GCC</productname>
       (data alignment of  doubles  was fixed).
      </para>
     </listitem>
@@ -190,11 +190,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
    By 1996, it became clear that the name <quote>Postgres95</quote> would
    not stand the test of time. We chose a new name,
    <productname>PostgreSQL</productname>, to reflect the relationship
-   between the original <productname>Postgres</productname> and the more
+   between the original <productname>POSTGRES</productname> and the more
    recent versions with <acronym>SQL</acronym> capability.  At the same
    time, we set the version numbering to start at 6.0, putting the
-   numbers back into the sequence originally begun by the
-   <productname>Postgres</productname> Project.
+   numbers back into the sequence originally begun by the Berkeley
+   <productname>POSTGRES</productname> project.
   </para>
 
   <para>
@@ -212,9 +212,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
   <itemizedlist>
    <listitem>
     <para>
-     Table-level locking has been replaced with multiversion concurrency control,
+     Table-level locking has been replaced by multiversion concurrency control,
      which allows readers to continue reading consistent data during writer activity
-     and enables hot backups from pg_dump while the database stays available for
+     and enables hot backups from <application>pg_dump</> while the database stays available for
      queries.
     </para>
    </listitem>
@@ -244,7 +244,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.18 2001/11/28 20:49:10 pet
    <listitem>
     <para>
      Overall backend code speed has been increased by approximately 20-40%, 
-     and backend start-up time has decreased 80% since version 6.0 was released.
+     and backend start-up time has decreased by 80% since version 6.0 was released.
     </para>
    </listitem>
   </itemizedlist>

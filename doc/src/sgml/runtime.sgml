@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.100 2001/12/27 21:37:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.101 2002/01/07 02:29:13 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -128,9 +128,9 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    password to the database superuser.  After <command>initdb</command>,
    modify <filename>pg_hba.conf</filename> to use <literal>md5</> or
    <literal>password</>, instead of <literal>trust</>, authentication
-   <emphasis>before</> you first start the postmaster. (Other, possibly
+   <emphasis>before</> you start the server for the first time. (Other, possibly
    more convenient approaches include using <literal>ident</literal>
-   authentication or filesystem permissions to restrict connections.  See
+   authentication or file system permissions to restrict connections.  See
    <xref linkend="client-authentication"> for more information.)
   </para>
 
@@ -493,7 +493,7 @@ log_connections = yes
 syslog = 2
 </programlisting>
     As you see, options are one per line. The equal sign between name
-    and value is optional. White space is insignificant, blank lines
+    and value is optional. Whitespace is insignificant, blank lines
     are ignored. Hash marks (<quote>#</quote>) introduce comments
     anywhere.
    </para>
@@ -504,7 +504,7 @@ syslog = 2
     </indexterm>
     The configuration file is reread whenever the postmaster receives
     a <systemitem>SIGHUP</> signal (which is most easily sent by means
-    of <application>pg_ctl reload</>).  The postmaster also propagates
+    of <literal>pg_ctl reload</>).  The postmaster also propagates
     this signal to all already-running backend processes, so that
     existing sessions also get the new default.
     Alternatively, you can send the signal to only one backend process
@@ -886,7 +886,7 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>LOG_PID</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Prefixes each server log message with the process id of the
+        Prefixes each server log message with the process ID of the
         backend process. This is useful to sort out which messages
         pertain to which connection. The default is off.
        </para>

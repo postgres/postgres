@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.55 2001/12/08 03:24:23 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.56 2002/01/07 02:29:13 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -102,7 +102,8 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
 
    <para>
     SQL identifiers and key words must begin with a letter
-    (<literal>a</literal>-<literal>z</literal>) or underscore
+    (<literal>a</literal>-<literal>z</literal>, but also letters with
+    diacritical marks and non-Latin letters) or an underscore
     (<literal>_</literal>).  Subsequent characters in an identifier or
     key word can be letters, digits
     (<literal>0</literal>-<literal>9</literal>), or underscores,
@@ -200,9 +201,9 @@ UPDATE "my_table" SET "a" = 5;
    </indexterm>
 
    <para>
-    There are four kinds of <firstterm>implicitly typed
+    There are four kinds of <firstterm>implicitly-typed
     constants</firstterm> in <productname>PostgreSQL</productname>:
-    strings, bit strings, integers, and floating point numbers.
+    strings, bit strings, integers, and floating-point numbers.
     Constants can also be specified with explicit types, which can
     enable more accurate representation and more efficient handling by
     the system. The implicit constants are described below; explicit
@@ -266,12 +267,12 @@ SELECT 'foobar';
 SELECT 'foo'      'bar';
 </programlisting>
      is not valid syntax, and <productname>PostgreSQL</productname> is
-      consistant with <acronym>SQL9x</acronym> in this regard.
+      consistent with <acronym>SQL9x</acronym> in this regard.
     </para>
    </sect3>
 
    <sect3 id="sql-syntax-bit-strings">
-    <title>Bit String Constants</title>
+    <title>Bit-String Constants</title>
 
     <indexterm zone="sql-syntax-bit-strings">
      <primary>bit strings</primary>
@@ -279,12 +280,12 @@ SELECT 'foo'      'bar';
     </indexterm>
 
     <para>
-     Bit string constants look like string constants with a
+     Bit-string constants look like string constants with a
      <literal>B</literal> (upper or lower case) immediately before the
      opening quote (no intervening whitespace), e.g.,
      <literal>B'1001'</literal>.  The only characters allowed within
-     bit string constants are <literal>0</literal> and
-     <literal>1</literal>.  Bit string constants can be continued
+     bit-string constants are <literal>0</literal> and
+     <literal>1</literal>.  Bit-string constants can be continued
      across lines in the same way as regular string constants.
     </para>
    </sect3>
@@ -303,7 +304,7 @@ SELECT 'foo'      'bar';
    </sect3>
 
    <sect3>
-    <title>Floating Point Constants</title>
+    <title>Floating-Point Constants</title>
 
     <indexterm>
      <primary>floating point</primary>
@@ -311,7 +312,7 @@ SELECT 'foo'      'bar';
     </indexterm>
 
     <para>
-     Floating point constants are accepted in these general forms:
+     Floating-point constants are accepted in these general forms:
 <synopsis>
 <replaceable>digits</replaceable>.<optional><replaceable>digits</replaceable></optional><optional>e<optional>+-</optional><replaceable>digits</replaceable></optional>
 <optional><replaceable>digits</replaceable></optional>.<replaceable>digits</replaceable><optional>e<optional>+-</optional><replaceable>digits</replaceable></optional>
@@ -321,7 +322,7 @@ SELECT 'foo'      'bar';
      digits.  At least one digit must be before or after the decimal
      point. At least one digit must follow the exponent delimiter
       (<literal>e</literal>) if that field is present.
-     Thus, a floating point constant is distinguished from an integer
+     Thus, a floating-point constant is distinguished from an integer
      constant by the presence of either the decimal point or the
      exponent clause (or both).  There must not be a space or other
      characters embedded in the constant.
@@ -329,7 +330,7 @@ SELECT 'foo'      'bar';
 
      <informalexample>
       <para>
-       These are some examples of valid floating point constants:
+       These are some examples of valid floating-point constants:
        <literallayout>
 3.5
 4.
@@ -341,7 +342,7 @@ SELECT 'foo'      'bar';
      </informalexample>
 
     <para>
-     Floating point constants are of type <type>DOUBLE
+     Floating-point constants are of type <type>DOUBLE
      PRECISION</type>. <type>REAL</type> can be specified explicitly
      by using <acronym>SQL</acronym> string notation or
      <productname>PostgreSQL</productname> type notation:
@@ -385,9 +386,13 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 <replaceable>typename</replaceable> ( <replaceable>value</replaceable> )
 </synopsis>
      although this only works for types whose names are also valid as
-     function names.  (For example, <literal>double precision</literal>
-     can't be used this way --- but the equivalent <literal>float8</literal>
-     can.)
+     function names.  For example, <literal>double precision</literal>
+     can't be used this way, but the equivalent <literal>float8</literal>
+     can.  Also, the names <literal>interval</>, <literal>time</>, and
+     <literal>timestamp</> can only be used in this context if they are
+     double-quoted, because of parser conflicts.  Therefore, the use of
+     the function-like cast syntax leads to inconsistencies and should
+     probably be avoided in new applications.
     </para>
 
     <para>
@@ -429,8 +434,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     <para>
      Individual array elements can be placed between double-quote
      marks (<literal>"</literal>) <!-- " --> to avoid ambiguity
-     problems with respect to white space.  Without quote marks, the
-     array-value parser will skip leading white space.
+     problems with respect to whitespace.  Without quote marks, the
+     array-value parser will skip leading whitespace.
     </para>
 
     <para>
@@ -495,7 +500,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    <para>
     When working with non-SQL-standard operator names, you will usually
     need to separate adjacent operators with spaces to avoid ambiguity.
-    For example, if you have defined a left-unary operator named <literal>@</literal>,
+    For example, if you have defined a left unary operator named <literal>@</literal>,
     you cannot write <literal>X*@Y</literal>; you must write
     <literal>X* @Y</literal> to ensure that
     <productname>PostgreSQL</productname> reads it as two operator names
@@ -574,7 +579,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <listitem>
      <para>
-      The period (<literal>.</literal>) is used in floating point
+      The period (<literal>.</literal>) is used in floating-point
       constants, and to separate table and column names.
      </para>
     </listitem>
@@ -670,8 +675,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
        <listitem>
 	<para>
 	 The identity (transaction ID) of the inserting transaction for
-	 this tuple.  (Note: a tuple is an individual state of a row;
-	 each UPDATE of a row creates a new tuple for the same logical row.)
+	 this tuple.  (Note: A tuple is an individual state of a row;
+	 each update of a row creates a new tuple for the same logical row.)
 	</para>
        </listitem>
       </varlistentry>
@@ -733,7 +738,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      counter to wrap around.  Hence, it is bad practice to assume that OIDs
      are unique, unless you take steps to ensure that they are unique.
      Recommended practice when using OIDs for row identification is to create
-     a unique index on the OID column of each table for which the OID will be
+     a unique constraint on the OID column of each table for which the OID will be
      used.  Never assume that OIDs are unique across tables; use the
      combination of <structfield>tableoid</> and row OID if you need a database-wide
      identifier.  (Future releases of <productname>PostgreSQL</productname> are likely to use a separate
@@ -756,12 +761,6 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      In practice this limit is not a problem --- note that the limit is on
      number of SQL queries, not number of tuples processed.
     </para>
-
-    <para>
-     For further information on the system attributes consult
-     <xref linkend="STON87a">.
-    </para>
-
   </sect1>
 
 
@@ -916,7 +915,7 @@ $<replaceable>number</replaceable>
 <programlisting>
 CREATE FUNCTION dept (text) RETURNS dept
   AS 'SELECT * FROM dept WHERE name = $1'
-  LANGUAGE 'sql';
+  LANGUAGE SQL;
 </programlisting>
 
     Here the <literal>$1</literal> will be replaced by the first

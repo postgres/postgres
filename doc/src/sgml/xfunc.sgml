@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.45 2001/11/21 06:09:45 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.46 2002/01/07 02:29:14 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -59,13 +59,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.45 2001/11/21 06:09:45 thoma
 
   <para>
    Every kind
-   of  function  can take a base type, a composite type or
+   of  function  can take a base type, a composite type, or
    some combination as arguments (parameters).   In  addition, 
    every kind of function can return a base type or
    a composite type.  It's easiest to define <acronym>SQL</acronym> 
    functions, so we'll start with those.  Examples in this section 
    can also be found in <filename>funcs.sql</filename> 
    and <filename>funcs.c</filename> in the tutorial directory.
+  </para>
+
+  <para>
+   Throughout this chapter, it can be useful to look at the reference
+   page of the <command>CREATE FUNCTION</command> command to
+   understand the examples better.
   </para>
   </sect1>
 
@@ -268,7 +274,7 @@ SELECT name, double_salary(EMP) AS dream
     <para>
      Notice the use of the syntax <literal>$1.salary</literal>
      to select one field of the argument row value.  Also notice
-     how the calling SELECT command uses a table name to denote
+     how the calling <command>SELECT</> command uses a table name to denote
      the entire current row of that table as a composite value.
     </para>
 
@@ -376,7 +382,7 @@ ERROR:  parser: parse error at or near "."
 
     <para>
      Another way to use a function returning a row result is to declare a
-     second function accepting a rowtype parameter, and pass the function
+     second function accepting a row type parameter, and pass the function
      result to it:
 
 <programlisting>
@@ -400,15 +406,15 @@ SELECT getname(new_emp());
 
     <para>
      As previously mentioned, an SQL function may be declared as
-     returning <literal>SETOF</literal> <replaceable>sometype</>.
-     In this case the function's final SELECT query is executed to
+     returning <literal>SETOF <replaceable>sometype</></literal>.
+     In this case the function's final <command>SELECT</> query is executed to
      completion, and each row it outputs is returned as an element
      of the set.
     </para>
 
     <para>
      Functions returning sets may only be called in the target list
-     of a SELECT query.  For each row that the SELECT generates by itself,
+     of a <command>SELECT</> query.  For each row that the <command>SELECT</> generates by itself,
      the function returning set is invoked, and an output row is generated
      for each element of the function's result set.  An example:
 
@@ -449,9 +455,9 @@ SELECT name, listchildren(name) FROM nodes;
 (5 rows)
 </screen>
 
-     In the last SELECT,
-     notice that no output row appears for Child2, Child3, etc.
-     This happens because listchildren() returns an empty set
+     In the last <command>SELECT</command>,
+     notice that no output row appears for <literal>Child2</>, <literal>Child3</>, etc.
+     This happens because <function>listchildren</function> returns an empty set
      for those inputs, so no output rows are generated.
     </para>
    </sect2>
@@ -607,7 +613,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
    <note>
     <para>
-     The user id the <application>PostgreSQL</application> server runs
+     The user ID the <application>PostgreSQL</application> server runs
      as must be able to traverse the path to the file you intend to
      load.  Making the file or a higher-level directory not readable
      and/or not executable by the <quote>postgres</quote> user is a
@@ -671,7 +677,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     <para>
      <xref linkend="xfunc-c-type-table"> gives the C type required for
      parameters in the C functions that will be loaded into 
-     <productname>PostgreSQL</>
+     <productname>PostgreSQL</>.
      The <quote>Defined In</quote> column gives the header file that
      needs to be included to get the type definition.  (The actual
      definition may be in a different file that is included by the
@@ -1262,9 +1268,9 @@ concat_text(PG_FUNCTION_ARGS)
      At first glance, the version-1 coding conventions may appear to
      be just pointless obscurantism.  However, they do offer a number
      of improvements, because the macros can hide unnecessary detail.
-     An example is that in coding add_one_float8, we no longer need to
-     be aware that float8 is a pass-by-reference type.  Another
-     example is that the GETARG macros for variable-length types hide
+     An example is that in coding <function>add_one_float8</>, we no longer need to
+     be aware that <type>float8</type> is a pass-by-reference type.  Another
+     example is that the <literal>GETARG</> macros for variable-length types hide
      the need to deal with fetching <quote>toasted</quote> (compressed or
      out-of-line) values.  The old-style <function>copytext</function>
      and <function>concat_text</function> functions shown above are
@@ -1277,7 +1283,7 @@ concat_text(PG_FUNCTION_ARGS)
 
     <para>
      One big improvement in version-1 functions is better handling of NULL
-     inputs and results.  The macro <function>PG_ARGISNULL(n)</function>
+     inputs and results.  The macro <function>PG_ARGISNULL(<replaceable>n</>)</function>
      allows a function to test whether each input is NULL (of course, doing
      this is only necessary in functions not declared <quote>strict</>).
      As with the
@@ -1287,7 +1293,7 @@ concat_text(PG_FUNCTION_ARGS)
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function> until
      one has verified that the argument isn't NULL.
      To return a NULL result, execute <function>PG_RETURN_NULL()</function>;
-     this works in both strict and non-strict functions.
+     this works in both strict and nonstrict functions.
     </para>
 
     <para>
@@ -1323,7 +1329,7 @@ FROM emp
 WHERE name = 'Bill' OR name = 'Sam';
 </programlisting>
 
-     In the query above, we can define c_overpaid as:
+     In the query above, we can define <function>c_overpaid</> as:
      
 <programlisting>
 #include "postgres.h"
@@ -1371,13 +1377,13 @@ c_overpaid(PG_FUNCTION_ARGS)
      three arguments: the argument of type <type>TupleTableSlot*</type> passed into
      the  function, the name of the desired attribute, and a
      return parameter that tells whether  the  attribute
-     is  null.   <function>GetAttributeByName</function> returns a Datum
-     value that you can convert to the proper datatype by using the
+     is  null.   <function>GetAttributeByName</function> returns a <type>Datum</type>
+     value that you can convert to the proper data type by using the
      appropriate <function>DatumGet<replaceable>XXX</replaceable>()</function> macro.
     </para>
 
     <para>
-     The  following  query  lets  <productname>PostgreSQL</productname>  
+     The  following  command  lets  <productname>PostgreSQL</productname>  
      know  about  the <function>c_overpaid</function> function:
 
 <programlisting>

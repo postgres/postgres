@@ -9,22 +9,28 @@
   <primary>Tcl</primary>
  </indexterm>
 
-<Para>
-<literal>pgtcl</literal> is a Tcl package for front-end programs 
-to interface with <ProductName>PostgreSQL</ProductName>
-backends.  It makes most of the functionality of <literal>libpq</literal> available to
-Tcl scripts.
-</Para>
+ <sect1 id="pgtcl-intro">
+  <title>Introduction</title>
 
-<Para>
-This package was originally written by Jolly Chen.
-</Para>
+  <para>
+   <application>pgtcl</application> is a Tcl package for client
+   programs to interface with <ProductName>PostgreSQL</ProductName>
+   servers.  It makes most of the functionality of
+   <application>libpq</application> available to Tcl scripts.
+  </para>
 
-<Sect1 id="libpgtcl-commands">
-<Title>Commands</Title>
+  <para>
+   This package was originally written by Jolly Chen.
+  </para>
 
-<Para>
-<TABLE TOCENTRY="1">
+  <para>
+   <xref linkend="pgtcl-commands-table"> gives an overview over the
+   commands available in <application>pgtcl</application>. These
+   commands are described further on subsequent pages.
+  </para>
+
+
+<TABLE TOCENTRY="1" id="pgtcl-commands-table">
 <TITLE><literal>pgtcl</literal> Commands</TITLE>
 <TGROUP COLS="2">
 <THEAD>
@@ -106,33 +112,29 @@ This package was originally written by Jolly Chen.
 </TBODY>
 </TGROUP>
 </TABLE>
-</Para>
 
-<Para>
-These commands are described further on subsequent pages.
-</Para>
+  <para>
+   The <function>pg_lo_*</function> routines are interfaces to the
+   large object features of <ProductName>PostgreSQL</ProductName>.
+   The functions are designed to mimic the analogous file system
+   functions in the standard Unix file system interface.  The
+   <function>pg_lo_*</function> routines should be used within a
+   <command>BEGIN</command>/<command>COMMIT</command> transaction
+   block because the file descriptor returned by
+   <function>pg_lo_open</function> is only valid for the current
+   transaction.  <function>pg_lo_import</function> and
+   <function>pg_lo_export</function> <emphasis>must</emphasis> be used
+   in a <command>BEGIN</command>/<command>COMMIT</command> transaction
+   block.
+  </para>
 
-<Para>
-The pg_lo* routines are interfaces to the Large Object features of
-<ProductName>PostgreSQL</ProductName>.
-The functions are designed to mimic the analogous file system functions in
-the standard Unix file system interface.
-The pg_lo* routines should be used within a BEGIN/END transaction
-block because the file descriptor returned by pg_lo_open is only valid for
-the current transaction.  pg_lo_import and pg_lo_export MUST be used
-in a BEGIN/END transaction block.
-</Para>
+  <para>
+   <xref linkend="pgtcl-example"> shows a small example of how to use
+   the routines.
+  </para>
 
-</Sect1>
-
-<Sect1 id="libpgtcl-examples">
-<Title>Examples</Title>
-
-  <example>
+  <example id="pgtcl-example">
    <title><application>pgtcl</application> Example Program</title>
-
-   <para>
-    Here's a small example of how to use the routines:
 
 <programlisting>
 # getDBs :
@@ -151,10 +153,9 @@ proc getDBs { {host "localhost"} {port "5432"} } {
     pg_disconnect $conn
     return $datnames
 }
-</ProgramListing>
-   </para>
+</programlisting>
   </example>
-</Sect1>
+ </sect1>
 
 <Sect1 id="libpgtcl-loading">
 <Title>Loading <application>pgtcl</application> into your application</Title>
@@ -165,7 +166,7 @@ proc getDBs { {host "localhost"} {port "5432"} } {
     done with the Tcl <literal>load</> command.  Here is an example:
 
 <programlisting>
-	load libpgtcl[info sharedlibextension]
+load libpgtcl[info sharedlibextension]
 </programlisting>
 
     The use of <literal>info sharedlibextension</> is recommended in
@@ -174,11 +175,13 @@ proc getDBs { {host "localhost"} {port "5432"} } {
    </para>
 
    <para>
-    The <literal>load</> command will fail unless the system's dynamic loader
-    knows where to look for the <filename>libpgtcl</> shared library file.
-    You may need to work with <literal>ldconfig</>, or set the environment
-    variable <envar>LD_LIBRARY_PATH</>, or use some equivalent facility for
-    your platform to make it work.
+    The <literal>load</> command will fail unless the system's dynamic
+    loader knows where to look for the <filename>libpgtcl</> shared
+    library file.  You may need to work with <command>ldconfig</>, or
+    set the environment variable <envar>LD_LIBRARY_PATH</>, or use
+    some equivalent facility for your platform to make it work.  Refer
+    to the <productname>PostgreSQL</> installation instructions for
+    more information.
    </para>
 
    <para>
@@ -209,7 +212,7 @@ proc getDBs { {host "localhost"} {port "5432"} } {
 <REFNAMEDIV>
 <REFNAME>pg_connect
 </REFNAME>
-<REFPURPOSE>opens a connection to the backend server
+<REFPURPOSE>open a connection to the backend server
 </REFPURPOSE>
 <INDEXTERM ID="IX-PGTCL-PGCONNECT-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-PGTCL-PGCONNECT-2"><PRIMARY>pg_connect</PRIMARY></INDEXTERM>
@@ -363,7 +366,7 @@ for info about the available options in the newer syntax.
 <REFNAMEDIV>
 <REFNAME>pg_disconnect
 </REFNAME>
-<REFPURPOSE>closes a connection to the backend server
+<REFPURPOSE>close a connection to the backend server
 </REFPURPOSE>
 <INDEXTERM ID="IX-PGTCL-PGDISCONNECT-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-PGTCL-PGDISCONNECT-2"><PRIMARY>pg_connect</PRIMARY></INDEXTERM>
@@ -522,7 +525,7 @@ current default value for each option.
 <REFNAME>pg_exec
 </REFNAME>
 <REFPURPOSE>
-send a query string to the backend 
+send a command string to the server
 </REFPURPOSE>
 <INDEXTERM ID="IX-PGTCL-PGEXEC-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-PGTCL-PGEXEC-2"><PRIMARY>pg_connect</PRIMARY></INDEXTERM>
@@ -999,7 +1002,7 @@ This would work if table <classname>table</> has fields <structfield>control</> 
 <REFNAMEDIV>
 <REFNAME>pg_listen
 </REFNAME>
-<REFPURPOSE>sets or changes a callback for asynchronous NOTIFY messages
+<REFPURPOSE>set or change a callback for asynchronous NOTIFY messages
 </REFPURPOSE>
 <INDEXTERM ID="IX-PGTCL-PGLISTEN-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>notify</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-PGTCL-PGLISTEN-2"><PRIMARY>notify</PRIMARY></INDEXTERM>
@@ -1859,7 +1862,7 @@ None
 <REFNAMEDIV>
 <REFNAME>pg_lo_import
 </REFNAME>
-<REFPURPOSE>import a large object from a Unix file
+<REFPURPOSE>import a large object from a file
 </REFPURPOSE>
 <INDEXTERM ID="IX-PGTCL-PGLOIMPORT-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>import</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-PGTCL-PGLOIMPORT-2"><PRIMARY>pg_lo_import</PRIMARY></INDEXTERM>
@@ -1944,7 +1947,7 @@ None
 <REFNAMEDIV>
 <REFNAME>pg_lo_export
 </REFNAME>
-<REFPURPOSE>export a large object to a Unix file
+<REFPURPOSE>export a large object to a file
 </REFPURPOSE>
 <INDEXTERM ID="IX-PGTCL-PGLOEXPORT-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>export</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-PGTCL-PGLOEXPORT-2"><PRIMARY>pg_lo_export</PRIMARY></INDEXTERM>

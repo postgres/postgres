@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.18 2001/11/23 22:06:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.19 2002/01/07 02:29:12 petere Exp $
 -->
 
  <preface id="preface">
@@ -38,8 +38,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.18 2001/11/23 22:06:20 tgl E
     type.  In current commercial  systems,  possible  types
     include  floating  point  numbers,  integers, character
     strings, money, and dates.  It is  commonly  recognized
-    that  this model is inadequate for future data 
-    processing applications.
+    that  this model is inadequate for future data-processing applications.
     The relational  model  successfully  replaced  previous
     models  in  part  because  of its <quote>Spartan simplicity</quote>.
     However, this simplicity makes  the
@@ -76,7 +75,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.18 2001/11/23 22:06:20 tgl E
       <simpara>rules</simpara>
      </listitem>
      <listitem>
-      <simpara>transaction integrity</simpara>
+      <simpara>transactional integrity</simpara>
      </listitem>
     </itemizedlist>
    </para>

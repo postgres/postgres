@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.7 2001/11/21 05:53:41 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.8 2002/01/07 02:29:13 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -6,44 +6,74 @@
  <indexterm zone="plpython"><primary>PL/Python</></>
  <indexterm zone="plpython"><primary>Python</></>
 
- <note>
+ <sect1 id="plpython-intro">
+  <title>Introduction</title>
+
   <para>
-   This chapter is not fully developed yet.
+   The <application>PL/Python</application> procedural language allows
+   <productname>PostgreSQL</productname> functions to be written in
+   the <ulink url="http://www.python.org">Python</ulink> language.
   </para>
+
   <para>
-   The current version of PL/Python functions as a trusted language only;
-   access to the filesystem and other local resources are disabled.
-   Specifically, PL/Python uses the Python restricted execution environment,
-   further restricts it to prevent the use of the file open call, and
-   allows only modules from a specific list to be imported.  Presently,
-   that list includes:  array, bisect, binascii, calendar, cmath, codecs,
-   errno, marshal, math, md5, mpz, operator, pcre, pickle, random, re,
-   regex, sre, sha, string, StringIO, struct, time, whrandom, and zlib.
+   The current version of <application>PL/Python</application>
+   functions as a trusted language only; access to the file system and
+   other local resources is disabled.  Specifically,
+   <application>PL/Python</application> uses the Python restricted
+   execution environment, further restricts it to prevent the use of
+   the file <function>open</> call, and allows only modules from a
+   specific list to be imported.  Presently, that list includes:
+   array, bisect, binascii, calendar, cmath, codecs, errno, marshal,
+   math, md5, mpz, operator, pcre, pickle, random, re, regex, sre,
+   sha, string, StringIO, struct, time, whrandom, and zlib.
   </para>
+
   <para>
-   There is discussion on creating an untrusted language variant for a
+   In the current version, any database error encountered while
+   running a <application>PL/Python</application> function will result
+   in the immediate termination of that function by the server.  It is
+   not possible to trap error conditions using Python <literal>try
+   ... catch</literal> constructs.  For example, a syntax error in an
+   SQL statement passed to the <literal>plpy.execute()</literal> call
+   will terminate the function.  This behavior may be changed in a
    future release.
   </para>
-  <para>
-   In the current version, any postgresql error encountered while running
-   a PL/Python function will result in the immediate termination of that
-   function by the backend.  It is not possible to trap error conditions
-   using Python try ... catch constructs.  For example, a syntax error in
-   an SQL statement passed to the plpy.execute() call will terminate the
-   function.  This behavior may be changed in a future release.
-  </para>
- </note>
+ </sect1>
 
  <sect1 id="plpython-install">
   <title>Installation</title>
 
   <para>
-   ... needs to be worked out.
+   To build PL/Python, the <option>--with-python</option> option needs
+   to be specified when running <filename>configure</filename>.  If
+   after building and installing you have a file called
+   <filename>plpython.so</filename> (possibly a different extension),
+   then everything went well.  Otherwise you should have seen a notice
+   like this flying by:
+<screen>
+*** Cannot build PL/Python because libpython is not a shared library.
+*** You might have to rebuild your Python installation.  Refer to
+*** the documentation for details.
+</screen>
+   That means you have to rebuild (part of) your Python installation
+   to supply this shared library.
+  </para>
+
+  <para>
+   The catch is that the Python distribution or the Python maintainers
+   do not provide any direct way to do this.  The closest thing we can
+   offer you is the information in <ulink
+   url="http://www.python.org/doc/FAQ.html#3.30">Python FAQ
+   3.30</ulink>.  On some operating systems you don't really have to
+   build a shared library, but then you will have to convince the
+   PostgreSQL build system of this.  Consult the
+   <filename>Makefile</filename> in the
+   <filename>src/pl/plpython</filename> directory for details.
   </para>
  </sect1>
 
  <sect1 id="plpython-using">
-  <title>Using</title>
+  <title>Using PL/Python</title>
 
   <para>
    There are sample functions in

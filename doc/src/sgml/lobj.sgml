@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.24 2001/11/12 19:19:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.25 2002/01/07 02:29:12 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -106,19 +106,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.24 2001/11/12 19:19:39 petere
 
    <para>
     The  <productname>PostgreSQL</productname>  large  object interface is modeled after
-    the <acronym>Unix</acronym>  file  system  interface,  with  analogues  of
+    the <acronym>Unix</acronym>  file-system  interface,  with  analogues  of
     <function>open(2)</function>,  <function>read(2)</function>,
     <function>write(2)</function>,
     <function>lseek(2)</function>, etc.  User 
     functions call these routines to retrieve only the data  of
     interest  from a large object.  For example, if a large
     object type called <type>mugshot</type>  existed  that  stored  
-    photographs  of  faces, then a function called beard could
-    be declared on <type>mugshot</type> data.  Beard could look  at  the
+    photographs  of  faces, then a function called <function>beard</function> could
+    be declared on <type>mugshot</type> data.  <function>beard</> could look  at  the
     lower third of a photograph, and determine the color of
     the beard that appeared  there,  if  any.   The  entire
-    large  object value need not be buffered, or even 
-    examined, by the beard function.
+    large-object value need not be buffered, or even 
+    examined, by the <function>beard</function> function.
     Large objects may be accessed from dynamically-loaded <acronym>C</acronym>
     functions  or  database  client  programs that link the
     library.  <productname>PostgreSQL</productname> provides a set of routines that 
@@ -140,7 +140,7 @@ Oid lo_creat(PGconn *<replaceable class="parameter">conn</replaceable>, int <rep
      object.  The symbolic constants listed here are defined
      in the header file <filename>libpq/libpq-fs.h</filename>.
      The access type (read, write, or both) is controlled by
-     OR'ing together the bits <symbol>INV_READ</symbol>  and
+     or'ing together the bits <symbol>INV_READ</symbol>  and
      <symbol>INV_WRITE</symbol>.  The low-order sixteen bits of the mask have
      historically been used at Berkeley to designate the storage  manager  number on which the large object
      should reside.  These
@@ -156,12 +156,12 @@ inv_oid = lo_creat(INV_READ|INV_WRITE);
     <title>Importing a Large Object</title>
 
     <para>
-     To import a <acronym>UNIX</acronym> file as a large object, call
+     To import an operating system file as a large object, call
 <synopsis>
 Oid lo_import(PGconn *<replaceable class="parameter">conn</replaceable>, const char *<replaceable class="parameter">filename</replaceable>)
 </synopsis>
     <replaceable class="parameter">filename</replaceable> 
-     specifies the  <acronym>Unix</acronym>  path name  of
+     specifies the operating system name of
      the file to be imported as a large object.
     </para>
    </sect2>
@@ -171,13 +171,13 @@ Oid lo_import(PGconn *<replaceable class="parameter">conn</replaceable>, const c
 
     <para>
      To export a large object
-     into <acronym>UNIX</acronym> file, call
+     into an operating system file, call
 <synopsis>
 int lo_export(PGconn *<replaceable class="parameter">conn</replaceable>, Oid <replaceable class="parameter">lobjId</replaceable>, const char *<replaceable class="parameter">filename</replaceable>)
 </synopsis>
      The <parameter>lobjId</parameter> argument specifies  the  Oid  of  the  large
      object  to  export  and the <parameter>filename</parameter> argument specifies
-     the <acronym>UNIX</acronym> path name of the file.
+     the operating system name name of the file.
     </para>
    </sect2>
 
@@ -191,7 +191,7 @@ int lo_open(PGconn *conn, Oid lobjId, int mode)
 </synopsis>
      The <parameter>lobjId</parameter> argument specifies  the  Oid  of  the  large
      object  to  open.   The  <parameter>mode</parameter>  bits control whether the
-     object is opened  for  reading  (<symbol>INV_READ</>),  writing  or
+     object is opened  for  reading  (<symbol>INV_READ</>),  writing (<symbol>INV_WRITE</symbol>),  or
      both.
      A  large  object cannot be opened before it is created.
      <function>lo_open</function> returns a large object descriptor
@@ -241,9 +241,9 @@ int lo_read(PGconn *conn, int fd, char *buf, size_t len)
 int lo_lseek(PGconn *conn, int fd, int offset, int whence)
 </programlisting>
      This routine moves the current location pointer for the
-     large object described by fd to the new location specified 
-     by offset.  The valid values for whence are
-     SEEK_SET, SEEK_CUR, and SEEK_END.
+     large object described by <parameter>fd</> to the new location specified 
+     by <parameter>offset</>.  The valid values for <parameter>whence</> are
+     <symbol>SEEK_SET</>, <symbol>SEEK_CUR</>, and <symbol>SEEK_END</>.
 </para>
 </sect2>
 
@@ -255,7 +255,7 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence)
 <programlisting>
 int lo_close(PGconn *conn, int fd)
 </programlisting>
-     where  fd  is  a  large  object  descriptor returned by
+     where  <parameter>fd</>  is  a  large  object  descriptor returned by
      <function>lo_open</function>.  On success, <function>lo_close</function>
       returns zero.  On error, the return value is negative.
 </para>
@@ -281,8 +281,8 @@ Oid lo_unlink(PGconn *<replaceable class="parameter">conn</replaceable>, Oid lob
 <title>Server-side Built-in Functions</title>
 
 <para>
-     There  are two built-in registered functions, <acronym>lo_import</acronym>
-     and <acronym>lo_export</acronym> which  are  convenient  for  use
+     There  are two built-in registered functions, <function>lo_import</function>
+     and <function>lo_export</function> which  are  convenient  for  use
     in  <acronym>SQL</acronym>
      queries.
      Here is an example of their use
@@ -295,7 +295,7 @@ CREATE TABLE image (
 INSERT INTO image (name, raster)
     VALUES ('beautiful image', lo_import('/etc/motd'));
 
-SELECT lo_export(image.raster, '/tmp/motd') from image
+SELECT lo_export(image.raster, '/tmp/motd') FROM image
     WHERE name = 'beautiful image';
 </programlisting>
 </para>
@@ -305,24 +305,18 @@ SELECT lo_export(image.raster, '/tmp/motd') from image
 <title>Accessing Large Objects from <application>Libpq</application></title>
 
 <para>
-     Below is a sample program which shows how the large object  
+     <xref linkend="lo-example"> is a sample program which shows how the large object  
      interface
      in  <application>libpq</>  can  be used.  Parts of the program are 
-     commented out but are left in the source for  the  readers
+     commented out but are left in the source for  the  reader's
      benefit.  This program can be found in
-<filename>
-../src/test/examples
-</filename>
+     <filename>src/test/examples/testlo.c</filename> in the source distribution.
      Frontend applications which use the large object interface  
      in  <application>libpq</application>  should   include   the   header   file
      <filename>libpq/libpq-fs.h</filename> and link with the <application>libpq</application> library.
 </para>
-</sect1>
 
-<sect1 id="lo-example">
-<title>Example Program</title>
-
-  <example>
+  <example id="lo-example">
    <title>Large Objects with <application>Libpq</application> Example Program</title>
 <programlisting>
 /*--------------------------------------------------------------

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.19 2001/11/21 06:09:45 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.20 2002/01/07 02:29:13 petere Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -13,6 +13,9 @@
      Written by Jan Wieck.  Updates for 7.1 by Tom Lane.
     </para>
    </note>
+
+   <sect1 id="rules-intro">
+    <title>Introduction</title>
 
 <Para>
      Production rule systems are conceptually simple, but
@@ -42,6 +45,9 @@
  as well as
 <XRef LinkEnd="STON90b">.
 </para>
+
+  </sect1>
+
 <Sect1 id="querytree">
 <Title>What is a Query Tree?</Title>
 

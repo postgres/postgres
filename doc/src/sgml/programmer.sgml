@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.38 2001/05/12 22:51:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.39 2002/01/07 02:29:13 petere Exp $
 
 PostgreSQL Programmer's Guide.
 -->
@@ -16,30 +16,17 @@ PostgreSQL Programmer's Guide.
   &intro;
 ]]>
 
- <preface id="organization">
-  <title>Organization</title>
-
-  <para>
-   The first part of this manual is the description of the client-side
-   programming interfaces and support libraries for various languages.
-   The second part explains the <productname>PostgreSQL</productname>
-   approach to extensibility and describe how users can extend
-   <productname>PostgreSQL</productname> by adding user-defined types,
-   operators, aggregates, and both query language and programming
-   language functions.  After a discussion of the
-   <productname>PostgreSQL</productname> rule system, we discuss the
-   trigger and SPI interfaces.  The third part documents the
-   procedural languages available in the
-   <productname>PostgreSQL</productname> distribution.
-  </para>
-
-  <para>
-   Proficiency with Unix and C programming is assumed.
-  </para>
- </preface>
-
  <part id="programmer-client">
   <title>Client Interfaces</title>
+
+  <partintro>
+   <para>
+    This part of the manual is the description of the client-side
+    programming interfaces and support libraries for various
+    languages.
+   </para>
+  </partintro>
+
   &libpq;
   &lobj;
   &libpqpp;
@@ -53,6 +40,20 @@ PostgreSQL Programmer's Guide.
 
  <part id="programmer-server">
   <title>Server Programming</title>
+
+  <partintro>
+   <para>
+    This second part of the manual explains the
+    <productname>PostgreSQL</productname> approach to extensibility
+    and describe how users can extend
+    <productname>PostgreSQL</productname> by adding user-defined
+    types, operators, aggregates, and both query language and
+    programming language functions.  After a discussion of the
+    <productname>PostgreSQL</productname> rule system, we discuss the
+    trigger and SPI interfaces.
+   </para>
+  </partintro>
+
   &arch-pg;
   &extend;
   &xfunc;
@@ -69,6 +70,14 @@ PostgreSQL Programmer's Guide.
 
  <part id="programmer-pl">
   <title>Procedural Languages</title>
+
+  <partintro>
+   <para>
+    This part documents the procedural languages available in the
+    <productname>PostgreSQL</productname> distribution as well as
+    general issues concerning procedural languages.
+   </para>
+  </partintro>
 
   &xplang;
   &plsql;

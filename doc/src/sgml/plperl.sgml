@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.11 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.12 2002/01/07 02:29:13 petere Exp $
 -->
 
 <chapter id="plperl">
@@ -13,15 +13,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.11 2001/11/21 05:53:41 thom
   <primary>Perl</primary>
  </indexterm>
 
+ <sect1 id="intro">
+  <title>Introduction</title>
+
  <para>
-  PL/Perl allows you to write functions in the Perl programming
-  language that may be used in SQL queries as if they were built into
+  PL/Perl allows you to write functions in the <ulink
+  url="http://www.perl.com">Perl</ulink> programming language that may
+  be used in SQL queries as if they were built into
   <productname>PostgreSQL</productname>.
  </para>
 
  <para>
   The PL/Perl interpreter (when installed as trusted interpreter with 
-  default name <literal>plperl</>) interpreter is a full Perl interpreter. However, certain
+  default name <literal>plperl</>) is a full Perl interpreter. However, certain
   operations have been disabled in order to maintain the security of
   the system.  In general, the operations that are restricted are
   those that interact with the environment. This includes file handle
@@ -33,8 +37,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.11 2001/11/21 05:53:41 thom
  </para>
  <para>
   When PL/Perl is installed as <quote>untrusted</> interpreter (with name <literal>plperlu</literal>),
-  everything is permitted, and any Perl code can be loaded (by superuser only).
+  everything is permitted, and any Perl code can be loaded (by a superuser only).
  </para>
+ </sect1>
 
  <sect1 id="plperl-install">
   <title>Building and Installing</title>
@@ -54,10 +59,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.11 2001/11/21 05:53:41 thom
    fact:
 <screen>
 <computeroutput>
-*****
-* Cannot build PL/Perl because libperl is not a shared library.
-* Skipped.
-*****
+*** Cannot build PL/Perl because libperl is not a shared library.
+*** You might have to rebuild your Perl installation.  Refer to
+*** the documentation for details.
 </computeroutput>
 </screen>
    Therefore it is likely that you will have to re-build and install
@@ -84,7 +88,7 @@ gmake install
 <prompt>$</prompt> <userinput>createlang plperl template1</userinput>
 </screen>
    Alternatively, to create untrusted interpreter (where functions can only
-be created by superuser, but the functions are not restricted), use:
+be created by a superuser, but the functions are not restricted), use:
 <screen>
 <prompt>$</prompt> <userinput>createlang plperlu template1</userinput>
 </screen>
@@ -99,7 +103,7 @@ be created by superuser, but the functions are not restricted), use:
   <para>
    Assume you have the following table:
 <programlisting>
-CREATE TABLE EMPLOYEE (
+CREATE TABLE employee (
     name text,
     basesalary integer,
     bonus integer
@@ -111,7 +115,7 @@ CREATE TABLE EMPLOYEE (
 <programlisting>
 CREATE FUNCTION totalcomp(integer, integer) RETURNS integer
     AS 'return $_[0] + $_[1]'
-    LANGUAGE 'plperl';
+    LANGUAGE plperl;
 </programlisting>
 
    Notice that the arguments to the function are passed in
@@ -131,7 +135,7 @@ SELECT name, totalcomp(basesalary, bonus) FROM employee;
 CREATE FUNCTION empcomp(employee) RETURNS integer AS '
     my $emp = shift;
     return $emp->{''basesalary''} + $emp->{''bonus''};
-' LANGUAGE 'plperl';
+' LANGUAGE plperl;
 </programlisting>
    A tuple is passed as a reference to a hash. The keys are the names
    of the fields in the tuples. The hash values are values of the
@@ -151,7 +155,7 @@ CREATE FUNCTION empcomp(employee) RETURNS integer AS '
   </tip>
 
   <para>
-   The new function <function>empcomp</function> can used like:
+   The new function <function>empcomp</function> can be used like:
 <programlisting>
 SELECT name, empcomp(employee) FROM employee;
 </programlisting>
@@ -165,18 +169,22 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
     open(TEMP, ">/tmp/badfile");
     print TEMP "Gotcha!\n";
     return 1;
-' LANGUAGE 'plperl';
+' LANGUAGE plperl;
 </programlisting>
    The creation of the function will succeed, but executing it will not.
-
+  </para>
+  <para>
    Note that if same function was created by superuser using language 
    <literal>plperlu</>, execution would succeed.
   </para>
   <para>
-   Access to database itself from your Perl function can be done via 
-   an experimental module <ulink url="http://www.formenos.org/PgSPI/"><literal>DBD::PgSPI</literal></ulink>. This module makes available a <acronym>DBI</>-compliant
-   database-handle named <varname>$pg_dbh</varname>, and you can use that to make queries with
-   normal <acronym>DBI</> syntax.
+   Access to database itself from your Perl function can be done via
+   an experimental module <ulink
+   url="http://www.formenos.org/PgSPI/"><literal>DBD::PgSPI</literal></ulink>
+   (also on <ulink url="http://www.cpan.org">CPAN</ulink>). This
+   module makes available a <acronym>DBI</>-compliant database-handle
+   named <varname>$pg_dbh</varname>, and you can use that to perform
+   queries with normal <acronym>DBI</> syntax.
   </para>
 
  </sect1>

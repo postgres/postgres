@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.17 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.18 2002/01/07 02:29:11 petere Exp $
 -->
 
 <sect2 id="dfunc">
@@ -40,7 +40,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.17 2001/11/21 05:53:41 thoma
 
  <para>
   In the following examples we assume that your source code is in a
-  file <filename>foo.c</filename> and we will create an shared library
+  file <filename>foo.c</filename> and we will create a shared library
   <filename>foo.so</filename>.  The intermediate object file will be
   called <filename>foo.o</filename> unless otherwise noted.  A shared
   library can contain more than one object file, but we only use one
@@ -121,8 +121,8 @@ ld -b -o foo.sl foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><productname>Irix</productname></term>
-    <indexterm><primary>Irix</></>
+    <term><productname>IRIX</productname></term>
+    <indexterm><primary>IRIX</></>
     <listitem>
      <para>
       <acronym>PIC</acronym> is the default, no special compiler

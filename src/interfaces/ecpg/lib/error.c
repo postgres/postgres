@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.14 2001/12/23 12:17:41 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.15 2002/01/07 02:29:15 petere Exp $ */
 
 #include "postgres_fe.h"
 
@@ -54,7 +54,7 @@ ECPGraise(int line, int code, const char *str)
 
 		case ECPG_FLOAT_FORMAT:
 			snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),
-					 "Not correctly formatted floating point type: %s in line %d.", str, line);
+					 "Not correctly formatted floating-point type: %s in line %d.", str, line);
 			break;
 
 		case ECPG_CONVERT_BOOL:

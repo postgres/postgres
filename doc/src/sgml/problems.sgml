@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.11 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.12 2002/01/07 02:29:13 petere Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -252,7 +252,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.11 2001/11/21 05:53:41 th
    Do not spend all your time to figure out which changes in the input make
    the problem go away. This will probably not help solving it. If it turns
    out that the bug cannot be fixed right away, you will still have time to
-   find and share your work around. Also, once again, do not waste your time
+   find and share your work-around. Also, once again, do not waste your time
    guessing why the bug exists. We will find that out soon enough.
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.23 2001/11/28 20:49:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.24 2002/01/07 02:29:13 petere Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -137,7 +137,7 @@ CREATE TABLE weather (
     <type>varchar(80)</type> specifies a data type that can store
     arbitrary character strings up to 80 characters in length.
     <type>int</type> is the normal integer type.  <type>real</type> is
-    a type for storing single precision floating point numbers.
+    a type for storing single precision floating-point numbers.
     <type>date</type> should be self-explanatory.  (Yes, the column of
     type <type>date</type> is also named <literal>date</literal>.
     This may be convenient or confusing -- you choose.)

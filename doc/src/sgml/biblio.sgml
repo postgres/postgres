@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.16 2001/11/21 05:53:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.17 2002/01/07 02:29:11 petere Exp $
 -->
 
  <bibliography id="biblio">
@@ -147,76 +147,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.16 2001/11/21 05:53:40 thom
   <bibliodiv>
    <title>PostgreSQL-Specific Documentation</title>
    <para>This section is for related documentation.</para>
-
-   <biblioentry id="admin-guide">
-    <title>The <productname>PostgreSQL</productname> Administrator's Guide</title>
-    <titleabbrev>The Administrator's Guide</titleabbrev>
-    <editor>
-     <firstname>Thomas</firstname>
-     <surname>Lockhart</surname>
-    </editor>
-
-    <pubdate>2001-04-13</pubdate>
-    <publisher>
-     <publishername>The PostgreSQL Global Development Group</publishername>
-    </publisher>
-   </biblioentry>
-
-   <biblioentry id="dev-guide">
-    <title>The <productname>PostgreSQL</productname> Developer's Guide</title>
-    <titleabbrev>The Developer's Guide</titleabbrev>
-    <editor>
-     <firstname>Thomas</firstname>
-     <surname>Lockhart</surname>
-    </editor>
-
-    <pubdate>2001-04-13</pubdate>
-    <publisher>
-     <publishername>The PostgreSQL Global Development Group</publishername>
-    </publisher>
-   </biblioentry>
-
-   <biblioentry id="pro-guide">
-    <title>The <productname>PostgreSQL</productname> Programmer's Guide</title>
-    <titleabbrev>The Programmer's Guide</titleabbrev>
-    <editor>
-     <firstname>Thomas</firstname>
-     <surname>Lockhart</surname>
-    </editor>
-    
-    <pubdate>2001-04-13</pubdate>
-    <publisher>
-     <publishername>The PostgreSQL Global Development Group</publishername>
-    </publisher>
-   </biblioentry>
-
-   <biblioentry id="tutorial-guide">
-    <title>The <productname>PostgreSQL</productname> Tutorial Introduction</title>
-    <titleabbrev>The Tutorial</titleabbrev>
-    <editor>
-     <firstname>Thomas</firstname>
-     <surname>Lockhart</surname>
-    </editor>
-
-    <pubdate>2001-04-13</pubdate>
-    <publisher>
-     <publishername>The PostgreSQL Global Development Group</publishername>
-    </publisher>
-   </biblioentry>
-
-   <biblioentry id="users-guide">
-    <title>The <productname>PostgreSQL</productname> User's Guide</title>
-    <titleabbrev>The User's Guide</titleabbrev>
-    <editor>
-     <firstname>Thomas</firstname>
-     <surname>Lockhart</surname>
-    </editor>
-
-    <pubdate>2001-04-13</pubdate>
-    <publisher>
-     <publishername>The PostgreSQL Global Development Group</publishername>
-    </publisher>
-   </biblioentry>
 
    <biblioentry id="SIM98">
     <title>Enhancement of the ANSI SQL Implementation of PostgreSQL</title>

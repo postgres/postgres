@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.89 2001/12/27 21:36:57 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.90 2002/01/07 02:29:12 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -4506,7 +4506,7 @@ SELECT NULLIF(value, '(none)') ...
        <type>bigint</type>, <type>real</type>, <type>double
        precision</type>, <type>numeric</type>, <type>interval</type>.
        The result is of type <type>numeric</type> for any integer type
-       input, <type>double precision</type> for floating point input,
+       input, <type>double precision</type> for floating-point input,
        otherwise the same as the input data type.
       </entry>
      </row>
@@ -4555,7 +4555,7 @@ SELECT NULLIF(value, '(none)') ...
        data types: <type>smallint</type>, <type>integer</type>,
        <type>bigint</type>, <type>real</type>, <type>double
        precision</type>, <type>numeric</type>.  The result is of type
-       <type>double precision</type> for floating point input,
+       <type>double precision</type> for floating-point input,
        otherwise <type>numeric</type>.
       </entry>
      </row>
@@ -4571,7 +4571,7 @@ SELECT NULLIF(value, '(none)') ...
        The result is of type <type>bigint</type> for <type>smallint</type>
        or <type>integer</type> input, <type>numeric</type> for
        <type>bigint</type> 
-       input, <type>double precision</type> for floating point input,
+       input, <type>double precision</type> for floating-point input,
        otherwise the same as the input data type.
       </entry>
      </row>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.23 2001/12/04 01:49:17 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.24 2002/01/07 02:29:13 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -135,7 +135,7 @@
     Some properly installed and fully functional
     <productname>PostgreSQL</productname> installations can
     <quote>fail</quote> some of these regression tests due to
-    platform-specific artifacts such as varying floating point representation
+    platform-specific artifacts such as varying floating-point representation
     and time zone support. The tests are currently evaluated using a simple
     <application>diff</application> comparison against the outputs
     generated on a reference system, so the results are sensitive to
@@ -248,7 +248,7 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
    </sect2>
     
    <sect2>
-    <title>Floating point differences</title>
+    <title>Floating-point differences</title>
       
     <para>
      Some of the tests involve computing 64-bit (<type>double

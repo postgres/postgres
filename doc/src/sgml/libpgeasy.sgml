@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.7 2001/10/01 21:47:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.8 2002/01/07 02:29:12 petere Exp $
 -->
 
- <chapter id="pgeasy-chapter">
-  <title id="pgeasy"><application>libpgeasy</application> - Simplified C Library</title>
+ <chapter id="pgeasy">
+  <title><application>libpgeasy</application> - Simplified C Library</title>
 
   <note>
    <title>Author</title>
@@ -16,9 +16,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.7 2001/10/01 21:47
   </note>
 
   <para>
-   <productname>pgeasy</productname> allows you to cleanly interface
-   to the <productname>libpq</productname> library,
-   more like a 4GL SQL interface.
+   <application>pgeasy</application> allows you to cleanly interface
+   to the <application>libpq</application> library, more like a 4GL
+   SQL interface.  Refer to <xref linkend="libpq"> for more
+   information about <application>libpq</application>
   </para>
 
   <para>
@@ -111,8 +112,8 @@ void        unset_result(PGresult *oldres);
    For <literal>SELECT</literal> queries, <function>fetch</function>
    allows you to pass pointers as parameters, and on return the variables
    are filled with data from the binary cursor you opened.  These binary
-   cursors can not be used if you are running the
-   <productname>pgeasy</productname>
+   cursors cannot be used if you are running the
+   <application>pgeasy</application>
    client on a system with a different architecture than the database
    server.  If you pass a NULL pointer parameter, the column is skipped.
    <function>fetchwithnulls</function> allows you to retrieve the NULL

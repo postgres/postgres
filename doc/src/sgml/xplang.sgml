@@ -1,9 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.16 2001/11/21 06:09:45 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.17 2002/01/07 02:29:14 petere Exp $
 -->
 
  <chapter id="xplang">
   <title id="xplang-title">Procedural Languages</title>
+
+  <sect1 id="xplang-intro">
+   <title>Introduction</title>
 
   <para>
    <productname>PostgreSQL</productname> allows users to add new
@@ -23,11 +26,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.16 2001/11/21 06:09:45 thom
   </para>
 
   <para>
-   Writing a handler for a new procedural language is outside the
-   scope of this manual, although some information is provided in
-   the CREATE LANGUAGE reference page.  Several procedural languages are
-   available in the standard <productname>PostgreSQL</productname> distribution.
+   Writing a handler for a new procedural language is described in
+   <xref linkend="xfunc-plhandler">.  Several procedural languages are
+   available in the standard <productname>PostgreSQL</productname>
+   distribution, which can serve as examples.
   </para>
+  </sect1>
 
   <sect1 id="xplang-install">
    <title>Installing Procedural Languages</title>
@@ -73,7 +77,7 @@ createlang plpgsql template1
      </para>
     </step>
 
-    <step performance="required">
+    <step performance="required" id="xplang-install-cr1">
      <para>
       The handler must be declared with the command
 <synopsis>
@@ -88,43 +92,51 @@ CREATE FUNCTION <replaceable>handler_function_name</replaceable> ()
      </para>
     </step>
 
-    <step performance="required">
+    <step performance="required" id="xplang-install-cr2">
      <para>
       The PL must be declared with the command
 <synopsis>
 CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <replaceable>language-name</replaceable>
     HANDLER <replaceable>handler_function_name</replaceable>;
 </synopsis>
-      The optional key word <token>TRUSTED</token> tells
-      whether ordinary database users that have no superuser
-      privileges should be allowed to use this language to create functions
-      and trigger procedures. Since PL functions are
-      executed inside the database backend, the <acronym>TRUSTED</acronym>
-      flag should only be given for
-      languages that do not allow access to database backends
-      internals or the file system. The languages <application>PL/pgSQL</application>,
-      <application>PL/Tcl</application>, and <application>PL/Perl</application> are known to be trusted; the language <application>PL/TclU</application>
-      should <emphasis>not</emphasis> be marked trusted.
+      The optional key word <literal>TRUSTED</literal> tells whether
+      ordinary database users that have no superuser privileges should
+      be allowed to use this language to create functions and trigger
+      procedures. Since PL functions are executed inside the database
+      server, the <literal>TRUSTED</literal> flag should only be given
+      for languages that do not allow access to database server
+      internals or the file system. The languages
+      <application>PL/pgSQL</application>,
+      <application>PL/Tcl</application>,
+      <application>PL/Perl</application>, and
+      <application>PL/Python</application> are known to be trusted;
+      the languages <application>PL/TclU</application> and
+      <application>PL/PerlU</application> are designed to provide
+      unlimited functionality should <emphasis>not</emphasis> be
+      marked trusted.
      </para>
     </step>
    </procedure>
 
    <para>
-    In a default <productname>PostgreSQL</productname> installation, the
-    handler for the <application>PL/pgSQL</application> language is built and installed into the
-    <quote>library</quote> directory. If Tcl/Tk support is configured
-    in, the handlers for PL/Tcl and PL/TclU are also built and installed in
-    the same location.  Likewise, the PL/Perl handler is built and installed
-    if Perl support is configured.  The <filename>createlang</filename>
-    script automates the two CREATE steps described above.
+    In a default <productname>PostgreSQL</productname> installation,
+    the handler for the <application>PL/pgSQL</application> language
+    is built and installed into the <quote>library</quote>
+    directory. If Tcl/Tk support is configured in, the handlers for
+    PL/Tcl and PL/TclU are also built and installed in the same
+    location.  Likewise, the PL/Perl and PL/PerlU handlers are built
+    and installed if Perl support is configured, and PL/Python is
+    installed if Python support is configured.  The
+    <filename>createlang</filename> script automates <xref
+    linkend="xplang-install-cr1"> and <xref
+    linkend="xplang-install-cr2"> described above.
    </para>
 
-   <procedure>
-    <title>Example</title>
+   <example>
+    <title>Manual Installation of <application>PL/pgSQL</application></title>
 
-    <step performance="required">
      <para>
-      The following command tells the database where to find the 
+      The following command tells the database server where to find the 
       shared object for the <application>PL/pgSQL</application> language's call handler function.
 
 <programlisting>
@@ -132,9 +144,7 @@ CREATE FUNCTION plpgsql_call_handler () RETURNS OPAQUE AS
     '$libdir/plpgsql' LANGUAGE C;
 </programlisting>
      </para>
-    </step>
 
-    <step performance="Required">
      <para>
       The command
 <programlisting>
@@ -145,8 +155,7 @@ CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql
       should be invoked for functions and trigger procedures where the
       language attribute is <literal>plpgsql</literal>.
      </para>
-    </step>
-   </procedure>
+  </example>
 
   </sect1>
 

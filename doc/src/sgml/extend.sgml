@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.15 2002/01/07 02:29:11 petere Exp $
 -->
 
  <chapter id="extend">
@@ -18,7 +18,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thom
     </listitem>
     <listitem>
      <para>
-      types
+      data types
      </para>
     </listitem>
     <listitem>
@@ -56,17 +56,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thom
     extended   by   users.    By  comparison,  conventional
     database systems can only be extended by changing hardcoded  
     procedures within the <acronym>DBMS</acronym> or by loading modules
-    specially-written by the <acronym>DBMS</acronym> vendor.
+    specially written by the <acronym>DBMS</acronym> vendor.
    </para>
 
    <para>
     <productname>PostgreSQL</productname> is also unlike most  other  data  managers  in
     that  the server can incorporate user-written code into
     itself through dynamic loading.  That is, the user  can
-    specify  an  object code file (e.g., a compiled .o file
-    or shared library) that implements a new type or  function 
+    specify  an  object code file (e.g., a shared library) that implements a new type or  function 
     and <productname>PostgreSQL</productname> will load it as required.  Code written 
-    in <acronym>SQL</acronym> are even more trivial to add to the  server.
+    in <acronym>SQL</acronym> is even more trivial to add to the  server.
     This ability to modify its operation <quote>on the fly</quote> makes
     <productname>PostgreSQL</productname> uniquely suited for rapid prototyping  of  new
     applications and storage structures.
@@ -80,14 +79,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thom
     The <productname>PostgreSQL</productname> type system
     can be broken down in several ways.
     Types are divided into base types and composite  types.
-    Base  types  are those, like <firstterm>int4</firstterm>, that are implemented
-    in a language such as <productname>C</productname>.  They generally correspond  to
+    Base  types  are those, like <type>int4</type>, that are implemented
+    in a language such as C.  They generally correspond  to
     what are often known as <firstterm>abstract data types</firstterm>; <productname>PostgreSQL</productname>
     can only operate on such types through methods provided
     by  the  user and only understands the behavior of such
     types to the extent that the user describes them.  
     Composite  types  are  created whenever the user creates a
-    table.  EMP is an example of a composite  type.   
+    table.
    </para>
 
    <para>
@@ -100,10 +99,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thom
     <productname>PostgreSQL</productname>  base  types are further
     divided into built-in
     types and user-defined  types.   Built-in  types  (like
-    <firstterm>int4</firstterm>)  are  those  that  are  compiled
+    <type>int4</type>)  are  those  that  are  compiled
     into the system.
     User-defined types are those created by the user in the
-    manner to be described below.
+    manner to be described later.
    </para>
   </sect1>
 
@@ -118,7 +117,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thom
     information  given  here,  so  mark this page for later
     reference.
     All system catalogs have names  that  begin  with
-    <firstterm>pg_</firstterm>.
+    <literal>pg_</literal>.
     The  following  tables contain information that may be
     useful to the end user.  (There are many  other  system
     catalogs,  but there should rarely be a reason to query
@@ -149,15 +148,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thom
        </row>
        <row>
 	<entry>pg_index</entry>
-	<entry> secondary indexes</entry>
+	<entry> indexes</entry>
        </row>
        <row>
 	<entry>pg_proc</entry>
-	<entry> procedures (both C and SQL)</entry>
+	<entry> procedures/functions </entry>
        </row>
        <row>
 	<entry>pg_type</entry>
-	<entry> types (both base and complex)</entry>
+	<entry> data types (both base and complex)</entry>
        </row>
        <row>
 	<entry>pg_operator</entry>
@@ -165,7 +164,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thom
        </row>
        <row>
 	<entry>pg_aggregate</entry>
-	<entry> aggregates and aggregate functions</entry>
+	<entry> aggregate functions</entry>
        </row>
        <row>
 	<entry>pg_am</entry>
@@ -198,7 +197,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thom
      </mediaobject>
     </figure>
 
-    The Reference Manual gives a more detailed  explanation
+    The <citetitle>Developer's Guide</citetitle> gives a more detailed  explanation
     of  these catalogs and their columns.  However,
     <xref linkend="EXTEND-CATALOGS">
     shows the major entities and their  relationships
@@ -257,10 +256,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.14 2001/11/21 05:53:41 thom
        have obvious meanings, but there are many  
        (particularly  those  that  have  to  do with access
        methods) that do not.  The relationships between
-       pg_am,   pg_amop,   pg_amproc,  pg_operator  and
-       pg_opclass are particularly hard  to  understand
-       and  will  be described in depth (in the section
-       on interfacing types and operators  to  indexes)
+       <classname>pg_am</>, <classname>pg_amop</>, <classname>pg_amproc</>, <classname>pg_operator</>, and
+       <classname>pg_opclass</> are particularly hard  to  understand
+       and  will  be described in depth (in <xref linkend="xindex">)
        after we have discussed basic extensions.
       </para>
      </listitem>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.82 2002/01/04 17:02:02 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.83 2002/01/07 02:29:11 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -270,7 +270,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.82 2002/01/04 17:02:02 th
    paths, or have several possibilities for formats, such as the date
    and time types.
    Most of the input and output functions corresponding to the
-   base types (e.g., integers and floating point numbers) do some
+   base types (e.g., integers and floating-point numbers) do some
    error-checking.
    Some of the input and output functions are not invertible.  That is,
    the result of an output function may lose precision when compared to
@@ -354,7 +354,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.82 2002/01/04 17:02:02 th
    <para>
     Numeric types consist of two-, four-, and eight-byte integers,
     four- and eight-byte
-    floating point numbers and fixed-precision decimals.
+    floating-point numbers and fixed-precision decimals.
    </para>
 
    <para>
@@ -511,7 +511,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.82 2002/01/04 17:02:02 th
      numbers and carry out all calculations exactly.  It is especially
      recommended for storing monetary amounts and other quantities
      where exactness is required.  However, the <type>numeric</type>
-     type is very slow compared to the floating point types described
+     type is very slow compared to the floating-point types described
      in the next section.
     </para>
 
@@ -568,11 +568,11 @@ NUMERIC
 
 
    <sect2 id="datatype-float">
-    <title>Floating Point Types</title>
+    <title>Floating-Point Types</title>
 
     <para>
      The data types <type>real</type> and <type>double
-     precision</type> are inexact, variable precision numeric types.
+     precision</type> are inexact, variable-precision numeric types.
      In practice, these types are usually implementations of <acronym>IEEE</acronym> 754
      binary floating point (single and double precision,
      respectively), to the extent that the underlying processor,
@@ -606,7 +606,7 @@ NUMERIC
 
       <listitem>
        <para>
-        Comparing two floating point values for equality may or may
+        Comparing two floating-point values for equality may or may
         not work as expected.
        </para>
       </listitem>
@@ -682,14 +682,6 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      will never be duplicates, either.
     </para>
 
-     <important>
-      <para>
-       The implicit sequence created for the <type>serial</type> type will
-       <emphasis>not</emphasis> be automatically removed when the
-       table is dropped.
-      </para>
-     </important>
-
     <para>
      The type names <type>serial</type> and <type>serial4</type> are
      equivalent: both create <type>integer</type> columns.  The type
@@ -741,7 +733,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
    <para>
     Input is accepted in a variety of formats, including integer and
-    floating point literals, as well as <quote>typical</quote>
+    floating-point literals, as well as <quote>typical</quote>
     currency formatting, such as <literal>'$1,000.00'</literal>.
     Output is in the latter form.
    </para>
@@ -1165,8 +1157,6 @@ SELECT b, char_length(b) FROM test2;
     escape character.
    </para>
 
-   <sect2 id="datatype-binary-compat">
-    <title>Compatibility</title>
     <para>
      <type>Bytea</type> provides most of the functionality of the binary
      string type per SQL99 section 4.3. A comparison of SQL99 Binary
@@ -1248,7 +1238,6 @@ SELECT b, char_length(b) FROM test2;
       </tbody>
      </tgroup>
     </table>
-   </sect2>
   </sect1>
 
 
@@ -1335,7 +1324,7 @@ SELECT b, char_length(b) FROM test2;
     specifies the number of fractional digits retained in the seconds
     field. By default, there is no explicit bound on precision.  The
     effective limit of precision is determined by the underlying double
-    precision floating point number used to store values (in seconds
+    precision floating-point number used to store values (in seconds
     for <type>interval</type> and
     in seconds since 2000-01-01 for <type>timestamp</type>).  The
     useful range of <replaceable>p</replaceable> is from 0 to about

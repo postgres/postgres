@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.52 2002/01/02 00:41:26 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.53 2002/01/07 02:29:13 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1700,7 +1700,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
     <para>
      It is possible to hook into the error mechanism to notice that this
      happens. But currently it is impossible to tell what really
-     caused the abort (input/output conversion error, floating point
+     caused the abort (input/output conversion error, floating-point
      error, parse error). And it is possible that the database backend
      is in an inconsistent state at this point so returning to the upper
      executor or issuing more commands might corrupt the whole database.
