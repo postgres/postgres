@@ -1,14 +1,15 @@
 /*
+ *
+ *  This inet_aton() function was taken from the GNU C library and
+ *  incorporated into Postgres for those systems which do not have this
+ *  routine in their standard C libraries.
+ *
+ *  The function was been extracted whole from the file inet_aton.c in
+ *  Release 5.3.12 of the Linux C library, which is derived from the
+ *  GNU C library, by Bryan Henderson in October 1996.  The copyright
+ *  notice from that file is below.
+ */
 
-    This inet_aton() function was taken from the GNU C library and
-    incorporated into Postgres for those systems which do not have this
-    routine in their standard C libraries.
-
-    The function was been extracted whole from the file inet_aton.c in
-    Release 5.3.12 of the Linux C library, which is derived from the
-    GNU C library, by Bryan Henderson in October 1996.  The copyright
-    notice from that file is below.
-*/
 /*
  * Copyright (c) 1983, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
