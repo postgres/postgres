@@ -1120,5 +1120,10 @@ Fri Okt  5 08:37:01 CEST 2001
 Fri Okt  5 19:33:46 CEST 2001
 
 	- Make sure every call to ECPGraise is logged.
+
+Mon Okt  8 10:10:23 CEST 2001
+
+	- Fix include file so library is binary compatible again.
+
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.
