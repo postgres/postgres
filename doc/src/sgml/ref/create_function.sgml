@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.56 2004/05/16 23:22:07 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.57 2004/06/25 07:05:34 dennis Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -19,12 +19,12 @@ $PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.56 2004/05/16 23:22
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rettype</replaceable>
   { LANGUAGE <replaceable class="parameter">langname</replaceable>
     | IMMUTABLE | STABLE | VOLATILE
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
-    | [EXTERNAL] SECURITY INVOKER | [EXTERNAL] SECURITY DEFINER
+    | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
     | AS '<replaceable class="parameter">definition</replaceable>'
     | AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
   } ...
@@ -84,6 +84,18 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
      <listitem>
       <para>
        The name of a function to create.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">argname</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of an argument. Some languages (currently only PL/pgSQL) let
+       you use the name in the function body.  For other languages the
+       argument name is just extra documentation.
       </para>
      </listitem>
     </varlistentry>
