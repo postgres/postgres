@@ -9,7 +9,7 @@ MODULE FUNC.PY : SQL FUNCTION DEFINITION TUTORIAL
 This module is designed for being imported from python prompt
 
 In order to run the samples included here, first create a connection
-using :                        cnx = advanced.DB(...)
+using :                        cnx = func.DB(...)
 
 The "..." should be replaced with whatever arguments you need to open an
 existing database.  Usually all you need is the name of the database and,
@@ -189,13 +189,13 @@ def demo_cleanup(pgcnx):
 	print "DROP FUNCTION add_em(int4, int4)"
 	print "DROP FUNCTION one()"
 	print
-	print "DROP TABLE EMP"
+	print "DROP TABLE EMP CASCADE"
 	pgcnx.query("DROP FUNCTION clean_EMP()")
 	pgcnx.query("DROP FUNCTION high_pay()")
 	pgcnx.query("DROP FUNCTION new_emp()")
 	pgcnx.query("DROP FUNCTION add_em(int4, int4)")
 	pgcnx.query("DROP FUNCTION one()")
-	pgcnx.query("DROP TABLE EMP")
+	pgcnx.query("DROP TABLE EMP CASCADE")
 
 # main demo function
 def demo(pgcnx):
