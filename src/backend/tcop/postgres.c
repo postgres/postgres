@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.273 2002/07/29 22:14:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.274 2002/07/30 05:13:06 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -704,6 +704,9 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 		 */
 		MemoryContextSwitchTo(oldcontext);
 
+		if (StatementTimeout)
+			enable_sig_alarm(StatementTimeout, true);
+
 		/*
 		 * Inner loop handles the individual queries generated from a
 		 * single parsetree by analysis and rewrite.
@@ -718,9 +721,6 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 				start_xact_command();
 				xact_started = true;
 			}
-
-			if (StatementTimeout)
-				enable_sig_alarm(StatementTimeout, true);
 
 			/*
 			 * If we got a cancel signal in analysis or prior command,
@@ -796,8 +796,6 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 					ShowUsage("EXECUTOR STATISTICS");
 			}
 
-			disable_sig_alarm(true);
-
 			/*
 			 * In a query block, we want to increment the command counter
 			 * between queries so that the effects of early queries are
@@ -829,6 +827,8 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 				xact_started = false;
 			}
 		} /* end loop over queries generated from a parsetree */
+
+		disable_sig_alarm(true);
 
 		/*
 		 * If this is the last parsetree of the query string, close down
@@ -1693,7 +1693,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.273 $ $Date: 2002/07/29 22:14:11 $\n");
+		puts("$Revision: 1.274 $ $Date: 2002/07/30 05:13:06 $\n");
 	}
 
 	/*
