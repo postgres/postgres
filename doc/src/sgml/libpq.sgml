@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.60 2001/04/30 17:38:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.61 2001/04/30 22:21:22 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -718,7 +718,6 @@ PGresult *PQexec(PGconn *conn,
 </para>
 </listitem>
 </itemizedlist>
-</para>
 
 <para>
 The <function>PGresult</function> structure encapsulates the query result
@@ -1116,11 +1115,9 @@ This function is deprecated in favor of <function>PQoidValue</function>
 and is not thread-safe.
 </para>
 </listitem>
-
-
 </itemizedlist>
+
 </sect2>
-</para>
 </sect1>
 
 <sect1 id="libpq-async">

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.26 2001/04/30 17:38:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.27 2001/04/30 22:21:22 tgl Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -606,9 +606,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.26 2001/04/30 17:38:
        </synopsis>
       </para>
      </listitem>
-    </itemizedlist>
-   </para>
 </itemizedlist>
+
 </sect2>
 </sect1>
 
