@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.73 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.74 2002/06/25 17:26:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -931,6 +931,8 @@ rtpicksplit(Relation r,
 						  PointerGetDatum(&size_alpha));
 			FunctionCall2(&rtstate->sizeFn, union_dr,
 						  PointerGetDatum(&size_beta));
+			pfree(DatumGetPointer(union_dl));
+			pfree(DatumGetPointer(union_dr));
 
 			diff = (size_alpha - size_l) - (size_beta - size_r);
 
