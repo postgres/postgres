@@ -1,45 +1,45 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.3 2000/02/08 15:56:55 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.4 2000/02/16 17:24:48 thomas Exp $
  *
  *
  *   Portions Copyright (c) 1999-2000, PostgreSQL, Inc
  *
  *
- *   TO_CHAR(); TO_DATETIME(); TO_DATE(); TO_NUMBER();  
+ *   TO_CHAR(); TO_TIMESTAMP(); TO_DATE(); TO_NUMBER();  
  *
- *   The PostgreSQL routines for a DateTime/int/float/numeric formatting, 
+ *   The PostgreSQL routines for a timestamp/int/float/numeric formatting, 
  *   inspire with Oracle TO_CHAR() / TO_DATE() / TO_NUMBER() routines.  
  *
  *
  *   Cache & Memory:
  *	Routines use (itself) internal cache for format pictures. If 
- *	new format arg is same as a last format string, routines not 
+ *	new format arg is same as a last format string, routines do not 
  *	call the format-parser. 
  *	
- *	The cache use static buffer and is persistent across transactions. If
- *	format-picture is bigger than cache buffer, parser is called always. 
+ *	The cache uses a static buffer and is persistent across transactions.
+ *	If format-picture is bigger than cache buffer, parser is called always. 
  *
  *   NOTE for Number version:
  *	All in this version is implemented as keywords ( => not used
  * 	suffixes), because a format picture is for *one* item (number) 
- *	only. It not is as a datetime version, where each keyword (can) 
+ *	only. It not is as a timestamp version, where each keyword (can) 
  *	has suffix.  
  *
- *   NOTE for DateTime version:
- *	In this modul is *not* used POSIX 'struct tm' type, but 
+ *   NOTE for Timestamp routines:
+ *	In this module the POSIX 'struct tm' type is *not* used, but rather
  *	PgSQL type, which has tm_mon based on one (*non* zero) and
  *	year *not* based on 1900, but is used full year number.  
- *	Modul support AC / BC years.	 
+ *	Module supports AC / BC years.
  *
  *  Supported types for to_char():
  *		
- *		Timestamp, DateTime, Numeric, int4, int8, float4, float8
+ *		Timestamp, Numeric, int4, int8, float4, float8
  *
  *  Supported types for reverse conversion:
  *
- *		Datetime	- to_datetime()
+ *		Timestamp	- to_timestamp()
  *		Date		- to_date()
  *		Numeric		- to_number()		
  *  
@@ -108,7 +108,7 @@
 #define MAXDOUBLEWIDTH  128
 
 /* ----------
- * External (defined in PgSQL dt.c (datetime utils)) 
+ * External (defined in PgSQL dt.c (timestamp utils)) 
  * ----------
  */
 extern  char		*months[],	/* month abbreviation   */
@@ -1377,14 +1377,14 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
 			return strlen(p_inout)-1;		
 		}  else if (flag == FROM_CHAR) 
-			elog(ERROR, "to_datatime()/to_timestamp(): SSSS is not supported");
+			elog(ERROR, "to_datatime(): SSSS is not supported");
 	}	
 	return -1;	
 }
 
 #define CHECK_SEQ_SEARCH(_l, _s) {					\
 	if (_l <= 0) { 							\
-		elog(ERROR, "to_datatime()/to_timestamp(): bad value for %s", _s);		\
+		elog(ERROR, "to_datatime(): bad value for %s", _s);		\
 	}								\
 }
 
@@ -1600,7 +1600,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				return 1;
 			
 		}  else if (flag == FROM_CHAR)
-			elog(ERROR, "to_datatime()/to_timestamp(): WW is not supported");
+			elog(ERROR, "to_datatime(): WW is not supported");
 	case DCH_Q:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%d", (tm->tm_mon-1)/3+1);		
@@ -1611,7 +1611,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 	        	return 0;
 	        	
 	        } else if (flag == FROM_CHAR)
-			elog(ERROR, "to_datatime()/to_timestamp(): Q is not supported");
+			elog(ERROR, "to_datatime(): Q is not supported");
 			
 	case DCH_CC:
 		if (flag == TO_CHAR) {
@@ -1625,7 +1625,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			return strlen(p_inout)-1;
 			
 		} else if (flag == FROM_CHAR)
-			elog(ERROR, "to_datatime()/to_timestamp(): CC is not supported");
+			elog(ERROR, "to_datatime(): CC is not supported");
 	case DCH_Y_YYY:	
 		if (flag == TO_CHAR) {
 			i= YEAR_ABS(tm->tm_year) / 1000;
@@ -1764,7 +1764,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			return 0;
 			
 		} else if (flag == FROM_CHAR)
-			elog(ERROR, "to_datatime()/to_timestamp(): W is not supported");
+			elog(ERROR, "to_datatime(): W is not supported");
 			
 	case DCH_J:
 		if (flag == TO_CHAR) {
@@ -1773,7 +1773,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
 			return strlen(p_inout)-1;
 		} else if (flag == FROM_CHAR)
-			elog(ERROR, "to_datatime()/to_timestamp(): J is not supported");	
+			elog(ERROR, "to_datatime(): J is not supported");	
 	}	
 	return -1;	
 }
@@ -1783,11 +1783,11 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
  ***************************************************************************/
 
 /* -------------------
- * DATETIME to_char()
+ * TIMESTAMP to_char()
  * -------------------
  */
 text *
-datetime_to_char(DateTime *dt, text *fmt)
+timestamp_to_char(Timestamp *dt, text *fmt)
 {
 	static FormatNode	CacheFormat[ DCH_CACHE_SIZE +1];
 	static char		CacheStr[ DCH_CACHE_SIZE +1];
@@ -1814,14 +1814,14 @@ datetime_to_char(DateTime *dt, text *fmt)
 	tm->tm_mday	=1;	tm->tm_isdst	=0;
 	tm->tm_mon	=1;
 
-	if (DATETIME_IS_EPOCH(*dt))
+	if (TIMESTAMP_IS_EPOCH(*dt))
 	{
-		datetime2tm(SetDateTime(*dt), NULL, tm, &fsec, NULL);
-	} else if (DATETIME_IS_CURRENT(*dt)) {
-		datetime2tm(SetDateTime(*dt), &tz, tm, &fsec, &tzn);
+		timestamp2tm(SetTimestamp(*dt), NULL, tm, &fsec, NULL);
+	} else if (TIMESTAMP_IS_CURRENT(*dt)) {
+		timestamp2tm(SetTimestamp(*dt), &tz, tm, &fsec, &tzn);
 	} else {
-		if (datetime2tm(*dt, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "to_char(): Unable to convert datetime to tm");
+		if (timestamp2tm(*dt, &tz, tm, &fsec, &tzn) != 0)
+			elog(ERROR, "to_char(): Unable to convert timestamp to tm");
 	}
 
 	tm->tm_wday = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1) % 7; 
@@ -1902,32 +1902,22 @@ datetime_to_char(DateTime *dt, text *fmt)
 }
 
 
-/* -------------------
- * TIMESTAMP to_char()
- * -------------------
- */
-text *
-timestamp_to_char(time_t dt, text *fmt)
-{
-	return datetime_to_char( timestamp_datetime(dt), fmt);
-}
-
 /* ---------------------
- * TO_DATETIME()
+ * TO_TIMESTAMP()
  *
- * Make DateTime from date_str which is formated at argument 'fmt'  	 
- * ( to_datetime is reverse to_char() )
+ * Make Timestamp from date_str which is formated at argument 'fmt'  	 
+ * ( to_timestamp is reverse to_char() )
  * ---------------------
  */
-DateTime *
-to_datetime(text *date_str, text *fmt)
+Timestamp *
+to_timestamp(text *date_str, text *fmt)
 {
 	static FormatNode	CacheFormat[ DCH_CACHE_SIZE +1];
 	static char		CacheStr[ DCH_CACHE_SIZE +1];
 
 	FormatNode		*format;
 	int			flag=0;
-	DateTime		*result;
+	Timestamp		*result;
 	char			*str;
 	int			len=0,
 				fsec=0,
@@ -1942,7 +1932,7 @@ to_datetime(text *date_str, text *fmt)
 	tm->tm_mday	=1;	tm->tm_isdst	=0;
 	tm->tm_mon	=1;
 	
-	result = palloc(sizeof(DateTime));
+	result = palloc(sizeof(Timestamp));
 	
 	len 	= VARSIZE(fmt) - VARHDRSZ; 
 	
@@ -2060,8 +2050,8 @@ to_datetime(text *date_str, text *fmt)
 #ifdef DEBUG_TO_FROM_CHAR
 	NOTICE_TM; 
 #endif
-	if (tm2datetime(tm, fsec, &tz, result) != 0)
-        	elog(ERROR, "to_datatime()/to_timestamp(): can't convert 'tm' to datetime.");
+	if (tm2timestamp(tm, fsec, &tz, result) != 0)
+        	elog(ERROR, "to_datatime(): can't convert 'tm' to timestamp.");
 	
 	return result;
 }
@@ -2074,18 +2064,7 @@ to_datetime(text *date_str, text *fmt)
 DateADT  
 to_date(text *date_str, text *fmt)
 {
-	return datetime_date( to_datetime(date_str, fmt) );
-}
-
-/* ----------
- * TO_TIMESTAMP 
- * 	Make timestamp from date_str which is formated at argument 'fmt'  	 
- * ----------
- */
-time_t  
-to_timestamp(text *date_str, text *fmt)
-{
-	return datetime_timestamp( to_datetime(date_str, fmt) );
+	return timestamp_date( to_timestamp(date_str, fmt) );
 }
 
 /**********************************************************************

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.22 2000/01/26 05:58:38 momjian Exp $
+ * $Id: nabstime.h,v 1.23 2000/02/16 17:26:26 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,8 @@
 #define NABSTIME_H
 
 #include <time.h>
-#include "utils/dt.h"
+#include "utils/timestamp.h"
+#include "utils/datetime.h"
 
 
 /* ----------------------------------------------------------------
@@ -119,11 +120,51 @@ extern bool abstimele(AbsoluteTime t1, AbsoluteTime t2);
 extern bool abstimege(AbsoluteTime t1, AbsoluteTime t2);
 extern bool abstime_finite(AbsoluteTime time);
 
-extern AbsoluteTime datetime_abstime(DateTime *datetime);
-extern DateTime *abstime_datetime(AbsoluteTime abstime);
+extern AbsoluteTime timestamp_abstime(Timestamp *timestamp);
+extern Timestamp *abstime_timestamp(AbsoluteTime abstime);
 
 extern bool AbsoluteTimeIsBefore(AbsoluteTime time1, AbsoluteTime time2);
 
 extern void abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn);
+
+extern RelativeTime reltimein(char *timestring);
+extern char *reltimeout(RelativeTime timevalue);
+extern TimeInterval tintervalin(char *intervalstr);
+extern char *tintervalout(TimeInterval interval);
+extern RelativeTime interval_reltime(Interval *interval);
+extern Interval *reltime_interval(RelativeTime reltime);
+extern TimeInterval mktinterval(AbsoluteTime t1, AbsoluteTime t2);
+extern AbsoluteTime timepl(AbsoluteTime t1, RelativeTime t2);
+extern AbsoluteTime timemi(AbsoluteTime t1, RelativeTime t2);
+
+/* extern RelativeTime abstimemi(AbsoluteTime t1, AbsoluteTime t2);  static*/
+extern int	intinterval(AbsoluteTime t, TimeInterval interval);
+extern RelativeTime tintervalrel(TimeInterval interval);
+extern AbsoluteTime timenow(void);
+extern bool reltimeeq(RelativeTime t1, RelativeTime t2);
+extern bool reltimene(RelativeTime t1, RelativeTime t2);
+extern bool reltimelt(RelativeTime t1, RelativeTime t2);
+extern bool reltimegt(RelativeTime t1, RelativeTime t2);
+extern bool reltimele(RelativeTime t1, RelativeTime t2);
+extern bool reltimege(RelativeTime t1, RelativeTime t2);
+extern bool tintervalsame(TimeInterval i1, TimeInterval i2);
+extern bool tintervaleq(TimeInterval i1, TimeInterval i2);
+extern bool tintervalne(TimeInterval i1, TimeInterval i2);
+extern bool tintervallt(TimeInterval i1, TimeInterval i2);
+extern bool tintervalgt(TimeInterval i1, TimeInterval i2);
+extern bool tintervalle(TimeInterval i1, TimeInterval i2);
+extern bool tintervalge(TimeInterval i1, TimeInterval i2);
+extern bool tintervalleneq(TimeInterval i, RelativeTime t);
+extern bool tintervallenne(TimeInterval i, RelativeTime t);
+extern bool tintervallenlt(TimeInterval i, RelativeTime t);
+extern bool tintervallengt(TimeInterval i, RelativeTime t);
+extern bool tintervallenle(TimeInterval i, RelativeTime t);
+extern bool tintervallenge(TimeInterval i, RelativeTime t);
+extern bool tintervalct(TimeInterval i1, TimeInterval i2);
+extern bool tintervalov(TimeInterval i1, TimeInterval i2);
+extern AbsoluteTime tintervalstart(TimeInterval i);
+extern AbsoluteTime tintervalend(TimeInterval i);
+extern int32 int4reltime(int32 timevalue);
+extern text *timeofday(void);
 
 #endif	 /* NABSTIME_H */

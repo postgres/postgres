@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.17 2000/01/26 05:58:27 momjian Exp $
+ * $Id: parse_coerce.h,v 1.18 2000/02/16 17:26:16 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,9 @@ typedef enum CATEGORY
 		|| ((t) == INT4OID) \
 		|| ((t) == INT8OID) \
 		|| ((t) == FLOAT8OID) \
-		|| ((t) == DATETIMEOID) \
+		|| ((t) == NUMERICOID) \
 		|| ((t) == TIMESTAMPOID) \
+		|| ((t) == INTERVALOID) \
 		|| ((t) == ABSTIMEOID) \
 		|| ((t) == RELTIMEOID) \
 		|| ((t) == CHAROID) \
@@ -70,8 +71,8 @@ typedef enum CATEGORY
  * Check for types with the same underlying binary representation.
  * This allows us to cheat and directly exchange values without
  *	going through the trouble of calling a conversion function.
- * Remove equivalencing of FLOAT8 and DATETIME. They really are not
- *	close enough in behavior, with the DATETIME reserved values
+ * Remove equivalencing of FLOAT8 and TIMESTAMP. They really are not
+ *	close enough in behavior, with the TIMESTAMP reserved values
  *	and special formatting. - thomas 1999-01-24
  */
 #define IS_BINARY_COMPATIBLE(a,b) \
@@ -87,12 +88,8 @@ typedef enum CATEGORY
 		|| ((a) == INT4OID && (b) == REGPROCOID) \
 		|| ((a) == REGPROCOID && (b) == OIDOID) \
 		|| ((a) == REGPROCOID && (b) == INT4OID) \
-		|| ((a) == ABSTIMEOID && (b) == TIMESTAMPOID) \
 		|| ((a) == ABSTIMEOID && (b) == INT4OID) \
-		|| ((a) == TIMESTAMPOID && (b) == ABSTIMEOID) \
-		|| ((a) == TIMESTAMPOID && (b) == INT4OID) \
 		|| ((a) == INT4OID && (b) == ABSTIMEOID) \
-		|| ((a) == INT4OID && (b) == TIMESTAMPOID) \
 		|| ((a) == RELTIMEOID && (b) == INT4OID) \
 		|| ((a) == INT4OID && (b) == RELTIMEOID) \
 		|| ((a) == INETOID && (b) == CIDROID) \
@@ -104,21 +101,21 @@ typedef enum CATEGORY
 #define IS_HIGHER_TYPE(t) \
 		  (((t) == TEXTOID) \
 		|| ((t) == FLOAT8OID) \
-		|| ((t) == TIMESPANOID) \
-		|| ((t) == DATETIMEOID) \
+		|| ((t) == INTERVALOID) \
+		|| ((t) == TIMESTAMPOID) \
 		|| ((t) == POLYGONOID) \
 		|| ((t) == INETOID) )
 
 /* IS_HIGHEST_TYPE()
  * These types are the most general in each of the type categories.
- * Since timespan and datetime overload so many functions, let's
- *	give datetime the preference.
+ * Since interval and timestamp overload so many functions, let's
+ *	give timestamp the preference.
  * Since text is a generic string type let's leave it out too.
  */
 #define IS_HIGHEST_TYPE(t) \
 		  (((t) == FLOAT8OID) \
-		|| ((t) == DATETIMEOID) \
-		|| ((t) == TIMESPANOID))
+		|| ((t) == TIMESTAMPOID) \
+		|| ((t) == INTERVALOID))
 
 
 extern bool IsPreferredType(CATEGORY category, Oid type);

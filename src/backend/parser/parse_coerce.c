@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.29 2000/01/26 05:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.30 2000/02/16 17:24:37 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,18 +293,18 @@ TypeCategory(Oid inType)
 		case (INT8OID):
 		case (FLOAT4OID):
 		case (FLOAT8OID):
+		case (NUMERICOID):
 		case (CASHOID):
 			result = NUMERIC_TYPE;
 			break;
 
 		case (ABSTIMEOID):
 		case (TIMESTAMPOID):
-		case (DATETIMEOID):
 			result = DATETIME_TYPE;
 			break;
 
 		case (RELTIMEOID):
-		case (TIMESPANOID):
+		case (INTERVALOID):
 			result = TIMESPAN_TYPE;
 			break;
 
@@ -362,16 +362,18 @@ PreferredType(CATEGORY category, Oid type)
 		case (NUMERIC_TYPE):
 			if (type == OIDOID)
 				result = OIDOID;
+			else if (type == NUMERICOID)
+				result = NUMERICOID;
 			else
 				result = FLOAT8OID;
 			break;
 
 		case (DATETIME_TYPE):
-			result = DATETIMEOID;
+			result = TIMESTAMPOID;
 			break;
 
 		case (TIMESPAN_TYPE):
-			result = TIMESPANOID;
+			result = INTERVALOID;
 			break;
 
 		case (NETWORK_TYPE):
@@ -419,22 +421,25 @@ PromoteTypeToNext(Oid inType)
 			result = FLOAT8OID;
 			break;
 
+		case (NUMERICOID):
+			result = NUMERICOID;
+			break;
+
 		case (DATEOID):
 		case (ABSTIMEOID):
-		case (TIMESTAMPOID):
-			result = DATETIMEOID;
+			result = TIMESTAMPOID;
 			break;
 
 		case (TIMEOID):
 		case (RELTIMEOID):
-			result = TIMESPANOID;
+			result = INTERVALOID;
 			break;
 
 		case (BOOLOID):
 		case (TEXTOID):
 		case (FLOAT8OID):
-		case (DATETIMEOID):
-		case (TIMESPANOID):
+		case (TIMESTAMPOID):
+		case (INTERVALOID):
 		default:
 			result = inType;
 			break;

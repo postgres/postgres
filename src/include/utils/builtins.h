@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.101 2000/02/15 20:49:27 tgl Exp $
+ * $Id: builtins.h,v 1.102 2000/02/16 17:26:25 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -27,12 +27,14 @@
 #include "nodes/relation.h"		/* for amcostestimate parameters */
 #include "storage/itemptr.h"
 #include "utils/array.h"
-#include "utils/datetime.h"
-#include "utils/geo_decls.h"
 #include "utils/inet.h"
 #include "utils/int8.h"
-#include "utils/nabstime.h"
+#include "utils/geo_decls.h"
 #include "utils/numeric.h"
+#include "utils/datetime.h"
+#include "utils/timestamp.h"
+#include "utils/nabstime.h"
+#include "utils/date.h"
 
 /*
  *		Defined in adt/
@@ -204,46 +206,6 @@ extern int32 pqtest(struct varlena * vlena);
 
 /* arrayfuncs.c */
 
-/* date.c */
-extern RelativeTime reltimein(char *timestring);
-extern char *reltimeout(RelativeTime timevalue);
-extern TimeInterval tintervalin(char *intervalstr);
-extern char *tintervalout(TimeInterval interval);
-extern RelativeTime timespan_reltime(TimeSpan *timespan);
-extern TimeSpan *reltime_timespan(RelativeTime reltime);
-extern TimeInterval mktinterval(AbsoluteTime t1, AbsoluteTime t2);
-extern AbsoluteTime timepl(AbsoluteTime t1, RelativeTime t2);
-extern AbsoluteTime timemi(AbsoluteTime t1, RelativeTime t2);
-
-/* extern RelativeTime abstimemi(AbsoluteTime t1, AbsoluteTime t2);  static*/
-extern int	ininterval(AbsoluteTime t, TimeInterval interval);
-extern RelativeTime intervalrel(TimeInterval interval);
-extern AbsoluteTime timenow(void);
-extern bool reltimeeq(RelativeTime t1, RelativeTime t2);
-extern bool reltimene(RelativeTime t1, RelativeTime t2);
-extern bool reltimelt(RelativeTime t1, RelativeTime t2);
-extern bool reltimegt(RelativeTime t1, RelativeTime t2);
-extern bool reltimele(RelativeTime t1, RelativeTime t2);
-extern bool reltimege(RelativeTime t1, RelativeTime t2);
-extern bool intervalsame(TimeInterval i1, TimeInterval i2);
-extern bool intervaleq(TimeInterval i1, TimeInterval i2);
-extern bool intervalne(TimeInterval i1, TimeInterval i2);
-extern bool intervallt(TimeInterval i1, TimeInterval i2);
-extern bool intervalgt(TimeInterval i1, TimeInterval i2);
-extern bool intervalle(TimeInterval i1, TimeInterval i2);
-extern bool intervalge(TimeInterval i1, TimeInterval i2);
-extern bool intervalleneq(TimeInterval i, RelativeTime t);
-extern bool intervallenne(TimeInterval i, RelativeTime t);
-extern bool intervallenlt(TimeInterval i, RelativeTime t);
-extern bool intervallengt(TimeInterval i, RelativeTime t);
-extern bool intervallenle(TimeInterval i, RelativeTime t);
-extern bool intervallenge(TimeInterval i, RelativeTime t);
-extern bool intervalct(TimeInterval i1, TimeInterval i2);
-extern bool intervalov(TimeInterval i1, TimeInterval i2);
-extern AbsoluteTime intervalstart(TimeInterval i);
-extern AbsoluteTime intervalend(TimeInterval i);
-extern text *timeofday(void);
-
 /* filename.c */
 extern char *filename_in(char *file);
 extern char *filename_out(char *s);
@@ -325,9 +287,6 @@ extern bool float84lt(float64 arg1, float32 arg2);
 extern bool float84le(float64 arg1, float32 arg2);
 extern bool float84gt(float64 arg1, float32 arg2);
 extern bool float84ge(float64 arg1, float32 arg2);
-
-/* geo_ops.c, geo_selfuncs.c */
-extern double *box_area(BOX *box);
 
 /* misc.c */
 extern bool nullvalue(Datum value, bool *isNull);
@@ -432,19 +391,6 @@ extern ItemPointer text_tid(const text *);
 extern ItemPointer currtid_byreloid(Oid relOid, ItemPointer); 
 extern ItemPointer currtid_byrelname(const text* relName, ItemPointer); 
 
-/* timestamp.c */
-extern time_t timestamp_in(const char *timestamp_str);
-extern char *timestamp_out(time_t timestamp);
-extern time_t now(void);
-bool		timestampeq(time_t t1, time_t t2);
-bool		timestampne(time_t t1, time_t t2);
-bool		timestamplt(time_t t1, time_t t2);
-bool		timestampgt(time_t t1, time_t t2);
-bool		timestample(time_t t1, time_t t2);
-bool		timestampge(time_t t1, time_t t2);
-DateTime   *timestamp_datetime(time_t timestamp);
-time_t		datetime_timestamp(DateTime *datetime);
-
 /* varchar.c */
 extern char *bpcharin(char *s, int dummy, int32 atttypmod);
 extern char *bpcharout(char *s);
@@ -507,38 +453,6 @@ extern int32 byteaGetByte(struct varlena * v, int32 n);
 extern int32 byteaGetBit(struct varlena * v, int32 n);
 extern struct varlena *byteaSetByte(struct varlena * v, int32 n, int32 newByte);
 extern struct varlena *byteaSetBit(struct varlena * v, int32 n, int32 newBit);
-
-/* datetime.c */
-extern DateADT date_in(char *datestr);
-extern char *date_out(DateADT dateVal);
-extern bool date_eq(DateADT dateVal1, DateADT dateVal2);
-extern bool date_ne(DateADT dateVal1, DateADT dateVal2);
-extern bool date_lt(DateADT dateVal1, DateADT dateVal2);
-extern bool date_le(DateADT dateVal1, DateADT dateVal2);
-extern bool date_gt(DateADT dateVal1, DateADT dateVal2);
-extern bool date_ge(DateADT dateVal1, DateADT dateVal2);
-extern int	date_cmp(DateADT dateVal1, DateADT dateVal2);
-extern DateADT date_larger(DateADT dateVal1, DateADT dateVal2);
-extern DateADT date_smaller(DateADT dateVal1, DateADT dateVal2);
-extern int32 date_mi(DateADT dateVal1, DateADT dateVal2);
-extern DateADT date_pli(DateADT dateVal, int32 days);
-extern DateADT date_mii(DateADT dateVal, int32 days);
-extern DateTime *date_datetime(DateADT date);
-extern DateADT datetime_date(DateTime *datetime);
-extern DateTime *datetime_datetime(DateADT date, TimeADT *time);
-extern DateADT abstime_date(AbsoluteTime abstime);
-
-extern TimeADT *time_in(char *timestr);
-extern char *time_out(TimeADT *time);
-extern bool time_eq(TimeADT *time1, TimeADT *time2);
-extern bool time_ne(TimeADT *time1, TimeADT *time2);
-extern bool time_lt(TimeADT *time1, TimeADT *time2);
-extern bool time_le(TimeADT *time1, TimeADT *time2);
-extern bool time_gt(TimeADT *time1, TimeADT *time2);
-extern bool time_ge(TimeADT *time1, TimeADT *time2);
-extern int	time_cmp(TimeADT *time1, TimeADT *time2);
-extern TimeADT *datetime_time(DateTime *datetime);
-extern int32 int4reltime(int32 timevalue);
 
 /* like.c */
 extern bool namelike(NameData *n, struct varlena * p);

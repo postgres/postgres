@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.142 2000/02/15 03:26:38 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.143 2000/02/16 17:24:36 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5180,6 +5180,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| INITIALLY						{ $$ = "initially"; }
 		| INSENSITIVE					{ $$ = "insensitive"; }
 		| INSTEAD						{ $$ = "instead"; }
+		| INTERVAL						{ $$ = "interval"; }
 		| ISNULL						{ $$ = "isnull"; }
 		| ISOLATION						{ $$ = "isolation"; }
 		| KEY							{ $$ = "key"; }
@@ -5456,8 +5457,10 @@ xlateSqlType(char *name)
 		return "numeric";
 	else if (!strcasecmp(name, "char"))
 		return "bpchar";
-	else if (!strcasecmp(name, "interval"))
-		return "timespan";
+	else if (!strcasecmp(name, "datetime"))
+		return "timestamp";
+	else if (!strcasecmp(name, "timespan"))
+		return "interval";
 	else if (!strcasecmp(name, "boolean"))
 		return "bool";
 	else

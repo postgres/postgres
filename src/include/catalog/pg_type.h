@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.80 2000/02/15 03:28:31 thomas Exp $
+ * $Id: pg_type.h,v 1.81 2000/02/16 17:26:07 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -370,20 +370,17 @@ DESCR("hh:mm:ss, ANSI SQL time");
 /* OIDS 1100 - 1199 */
 DATA(insert OID = 1182 ( _date		 PGUID	-1 -1 f b t \054 0	1082 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1183 ( _time		 PGUID	-1 -1 f b t \054 0	1083 array_in array_out array_in array_out d _null_ ));
-DATA(insert OID = 1184 ( datetime	 PGUID	8  47 f b t \054 0	0 datetime_in datetime_out datetime_in datetime_out d _null_ ));
+DATA(insert OID = 1184 ( timestamp	 PGUID	8  47 f b t \054 0	0 timestamp_in timestamp_out timestamp_in timestamp_out d _null_ ));
 DESCR("date and time");
-#define DATETIMEOID		1184
-DATA(insert OID = 1185 ( _datetime	 PGUID	-1 -1 f b t \054 0	1184 array_in array_out array_in array_out d _null_ ));
-DATA(insert OID = 1186 ( timespan	 PGUID 12  47 f b t \054 0	0 timespan_in timespan_out timespan_in timespan_out d _null_ ));
+#define TIMESTAMPOID	1184
+DATA(insert OID = 1185 ( _timestamp	 PGUID	-1 -1 f b t \054 0	1184 array_in array_out array_in array_out d _null_ ));
+DATA(insert OID = 1186 ( interval	 PGUID 12  47 f b t \054 0	0 interval_in interval_out interval_in interval_out d _null_ ));
 DESCR("@ <number> <units>, time interval");
-#define TIMESPANOID		1186
-DATA(insert OID = 1187 ( _timespan	 PGUID	-1 -1 f b t \054 0	1186 array_in array_out array_in array_out d _null_ ));
+#define INTERVALOID		1186
+DATA(insert OID = 1187 ( _interval	 PGUID	-1 -1 f b t \054 0	1186 array_in array_out array_in array_out d _null_ ));
 
 /* OIDS 1200 - 1299 */
 DATA(insert OID = 1231 (  _numeric   PGUID -1  -1 f b t \054 0  1700 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1296 ( timestamp	 PGUID	4  19 t b t \054 0	0 timestamp_in timestamp_out timestamp_in timestamp_out i _null_ ));
-DESCR("date time timezone, limited-range ISO-formated date and time");
-#define TIMESTAMPOID	1296
 
 /* OIDS 1700 - 1799 */
 DATA(insert OID = 1700 ( numeric	   PGUID -1  -1 f b t \054 0  0 numeric_in numeric_out numeric_in numeric_out i _null_ ));
