@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.18 1998/09/01 04:32:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.19 1998/09/01 05:34:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,12 +31,12 @@
 Oid *
 oid8in(char *oidString)
 {
-	Oid		  **result;
+	Oid		   (*result)[];
 	int			nums;
 
 	if (oidString == NULL)
 		return NULL;
-	result = (Oid **) palloc(sizeof(Oid[8]));
+	result = (Oid (*)[]) palloc(sizeof(Oid[8]));
 	if ((nums = sscanf(oidString, "%d%d%d%d%d%d%d%d",
 					   &(*result)[0],
 					   &(*result)[1],
@@ -58,7 +58,7 @@ oid8in(char *oidString)
  *		oid8out - converts internal form to "num num ..."
  */
 char *
-oid8out(Oid **oidArray)
+oid8out(Oid (*oidArray)[])
 {
 	int			num;
 	Oid		   *sp;
