@@ -13,7 +13,7 @@ case "$host_os" in
     dgux*) PORTNAME='dgux';;
      aix*) PORTNAME='aix';;
 nextstep*) PORTNAME='nextstep';;
-  ultrix*) PORTNAME='ultrix';;
+  ultrix*) PORTNAME='ultrix4';;
 *) echo ""
    echo "*************************************************************"
    echo "configure does not currently recognize your operating system,"
