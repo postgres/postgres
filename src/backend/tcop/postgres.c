@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.210 2001/03/13 01:17:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.211 2001/03/14 15:14:35 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1034,7 +1034,7 @@ ProcessInterrupts(void)
 		ProcDiePending = false;
 		QueryCancelPending = false;	/* ProcDie trumps QueryCancel */
 		ImmediateInterruptOK = false; /* not idle anymore */
-		elog(FATAL, "The system is shutting down");
+		elog(FATAL, "This connection has been terminated by the administrator");
 	}
 	if (QueryCancelPending)
 	{
@@ -1692,7 +1692,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.210 $ $Date: 2001/03/13 01:17:06 $\n");
+		puts("$Revision: 1.211 $ $Date: 2001/03/14 15:14:35 $\n");
 	}
 
 	/*
