@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.214 2004/05/05 04:48:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.215 2004/05/07 19:12:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,8 +99,12 @@ static const struct msgstrings msgstringarray[] = {
 };
 
 
+/*
+ * Emit the right error message for a "DROP" command issued on a
+ * relation of the wrong type
+ */
 static void
-DropErrorMsg(char *relname, char wrongkind, char rightkind)
+DropErrorMsgWrongType(char *relname, char wrongkind, char rightkind)
 {
 	const struct msgstrings *rentry;
 	const struct msgstrings *wentry;
@@ -121,24 +125,37 @@ DropErrorMsg(char *relname, char wrongkind, char rightkind)
 			 (wentry->kind != '\0') ? errhint(wentry->drophint_msg) : 0));
 }
 
+/*
+ * Emit the right error message for a "DROP" command issued on a
+ * non-existent relation
+ */
+static void
+DropErrorMsgNonExistent(RangeVar *rel, char rightkind)
+{
+	const struct msgstrings *rentry;
+
+	for (rentry = msgstringarray; rentry->kind != '\0'; rentry++)
+	{
+		if (rentry->kind == rightkind)
+			ereport(ERROR,
+					(errcode(rentry->nonexistent_code),
+					 errmsg(rentry->nonexistent_msg, rel->relname)));
+	}
+
+	Assert(false); /* Should be impossible */
+}
+
 static void
 CheckDropPermissions(RangeVar *rel, char rightkind)
 {
-	const struct msgstrings *rentry;
 	Oid			relOid;
 	HeapTuple	tuple;
 	Form_pg_class classform;
 
-	for (rentry = msgstringarray; rentry->kind != '\0'; rentry++)
-		if (rentry->kind == rightkind)
-			break;
-	Assert(rentry->kind != '\0');
-
 	relOid = RangeVarGetRelid(rel, true);
 	if (!OidIsValid(relOid))
-		ereport(ERROR,
-				(errcode(rentry->nonexistent_code),
-				 errmsg(rentry->nonexistent_msg, rel->relname)));
+		DropErrorMsgNonExistent(rel, rightkind);
+
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(relOid),
 						   0, 0, 0);
@@ -148,7 +165,8 @@ CheckDropPermissions(RangeVar *rel, char rightkind)
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
 	if (classform->relkind != rightkind)
-		DropErrorMsg(rel->relname, classform->relkind, rightkind);
+		DropErrorMsgWrongType(rel->relname, classform->relkind,
+							  rightkind);
 
 	/* Allow DROP to either table owner or schema owner */
 	if (!pg_class_ownercheck(relOid, GetUserId()) &&
