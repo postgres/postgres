@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Aug 16 00:37:25 EDT 2004
+Last updated:		Mon Aug 16 12:14:34 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -374,6 +374,7 @@ Commands
 	o -Add ALTER SEQUENCE ... OWNER TO
 	o Add ALTER INDEX that works just like ALTER TABLE already does
 	  on an index
+	o Add ALTER INDEX syntax to work like ALTER TABLE indexname
 
 * CLUSTER
 	o Automatically maintain clustering on a table
