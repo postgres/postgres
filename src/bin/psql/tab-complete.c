@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.85 2003/09/07 15:26:54 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.86 2003/10/14 22:47:12 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -85,17 +85,20 @@ static char *complete_from_const(const char *text, int state);
 static char *complete_from_list(const char *text, int state);
 
 static PGresult *exec_query(char *query);
-char	   *quote_file_name(char *text, int match_type, char *quote_pointer);
 
-/*static char * dequote_file_name(char *text, char quote_char);*/
 static char *previous_word(int point, int skip);
+
+#if 0
+static char *quote_file_name(char *text, int match_type, char *quote_pointer);
+static char *dequote_file_name(char *text, char quote_char);
+#endif
 
 /* These variables are used to pass information into the completion functions.
    Realizing that this is the cardinal sin of programming, I don't see a better
    way. */
-char	   *completion_charp;	/* if you need to pass a string */
-char	  **completion_charpp;	/* if you need to pass a list of strings */
-char	   *completion_info_charp;		/* if you need to pass another
+static char	*completion_charp;		/* if you need to pass a string */
+static char	**completion_charpp;	/* if you need to pass a list of strings */
+static char *completion_info_charp;		/* if you need to pass another
 										 * string */
 
 /* Store how many records from a database query we want to return at most
@@ -124,7 +127,10 @@ initialize_readline(void)
 /*
  * Queries to get lists of names of various kinds of things, possibly
  * restricted to names matching a partially entered name.  In these queries,
- * the %s will be replaced by the text entered so far, the %d by its length.
+ * %s will be replaced by the text entered so far (suitably escaped to
+ * become a SQL literal string).  %d will be replaced by the length of the
+ * string (in unescaped form).  Beware that the allowed sequences of %s and
+ * %d are determined by _complete_from_query().
  */
 
 #define Query_for_list_of_aggregates \
@@ -400,6 +406,15 @@ initialize_readline(void)
 " SELECT usename "\
 "   FROM pg_catalog.pg_user "\
 "  WHERE substr(usename,1,%d)='%s'"
+
+/* the silly-looking length condition is just to eat up the current word */
+#define Query_for_table_owning_index \
+"SELECT c1.relname "\
+"  FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_index i"\
+" WHERE c1.oid=i.indrelid and i.indexrelid=c2.oid"\
+"       and (%d = length('%s'))"\
+"       and c2.relname='%s'"\
+"       and pg_catalog.pg_table_is_visible(c2.oid)"
 
 /* This is a list of all "things" in Pgsql, which can show up after CREATE or
    DROP; and there is also a query to get a list of them.
@@ -754,15 +769,8 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev3_wd, "CLUSTER") == 0 &&
 			 strcasecmp(prev_wd, "ON") == 0)
 	{
-		char		query_buffer[BUF_SIZE];		/* Some room to build
-												 * queries. */
-
-		if (snprintf(query_buffer, BUF_SIZE,
-					 "SELECT c1.relname FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_index i WHERE c1.oid=i.indrelid and i.indexrelid=c2.oid and c2.relname='%s' and pg_catalog.pg_table_is_visible(c2.oid)",
-					 prev2_wd) == -1)
-			ERROR_QUERY_TOO_LONG;
-		else
-			COMPLETE_WITH_QUERY(query_buffer);
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_table_owning_index);
 	}
 
 /* COMMENT */
@@ -1425,6 +1433,9 @@ complete_from_schema_query(const char *text, int state)
 	 %d %s %d %s %d %s %s %d %s
    where %d is the string length of the text and %s the text itself.
 
+   It is assumed that strings should be escaped to become SQL literals
+   (that is, what is in the query is actually ... '%s' ...)
+
    See top of file for examples of both kinds of query.
 */
 
@@ -1434,8 +1445,6 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 	static int	list_index,
 				string_length;
 	static PGresult *result = NULL;
-	char		query_buffer[BUF_SIZE];
-	const char *item;
 
 	/*
 	 * If this is the first time for this completion, we fetch a list of
@@ -1443,39 +1452,86 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 	 */
 	if (state == 0)
 	{
+		char		query_buffer[BUF_SIZE];
+		char	   *e_text;
+		char	   *e_info_charp;
+
 		list_index = 0;
 		string_length = strlen(text);
+
+		/* Free any prior result */
+		PQclear(result);
+		result = NULL;
 
 		/* Need to have a query */
 		if (completion_charp == NULL)
 			return NULL;
 
-		if (is_schema_query)
+		/* Set up suitably-escaped copies of textual inputs */
+		if (text)
 		{
-			if (snprintf(query_buffer, BUF_SIZE, completion_charp, string_length, text, string_length, text, string_length, text, text, string_length, text, string_length, text) == -1)
+			e_text = (char *) malloc(strlen(text) * 2 + 1);
+			if (!e_text)
+				return NULL;
+			PQescapeString(e_text, text, strlen(text));
+		}
+		else
+			e_text = NULL;
+
+		if (completion_info_charp)
+		{
+			e_info_charp = (char *)
+				malloc(strlen(completion_info_charp) * 2 + 1);
+			if (!e_info_charp)
 			{
-				ERROR_QUERY_TOO_LONG;
+				if (e_text)
+					free(e_text);
 				return NULL;
 			}
+			PQescapeString(e_info_charp, completion_info_charp,
+						   strlen(completion_info_charp));
+		}
+		else
+			e_info_charp = NULL;
+
+		if (is_schema_query)
+		{
+			if (snprintf(query_buffer, BUF_SIZE, completion_charp,
+						 string_length, e_text,
+						 string_length, e_text,
+						 string_length, e_text,
+						 e_text,
+						 string_length, e_text,
+						 string_length, e_text) == -1)
+				ERROR_QUERY_TOO_LONG;
+			else
+				result = exec_query(query_buffer);
 		}
 		else
 		{
-			if (snprintf(query_buffer, BUF_SIZE, completion_charp, string_length, text, completion_info_charp) == -1)
-			{
+			if (snprintf(query_buffer, BUF_SIZE, completion_charp,
+						 string_length, e_text, e_info_charp) == -1)
 				ERROR_QUERY_TOO_LONG;
-				return NULL;
-			}
+			else
+				result = exec_query(query_buffer);
 		}
 
-		result = exec_query(query_buffer);
+		if (e_text)
+			free(e_text);
+		if (e_info_charp)
+			free(e_info_charp);
 	}
 
 	/* Find something that matches */
 	if (result && PQresultStatus(result) == PGRES_TUPLES_OK)
+	{
+		const char *item;
+
 		while (list_index < PQntuples(result) &&
 			   (item = PQgetvalue(result, list_index++, 0)))
 			if (strncasecmp(text, item, string_length) == 0)
 				return xstrdup(item);
+	}
 
 	/* If nothing matches, free the db structure and return null */
 	PQclear(result);
@@ -1585,7 +1641,8 @@ exec_query(char *query)
 	assert(query[strlen(query) - 1] != ';');
 #endif
 
-	if (snprintf(query_buffer, BUF_SIZE, "%s LIMIT %d;", query, completion_max_records) == -1)
+	if (snprintf(query_buffer, BUF_SIZE, "%s LIMIT %d;",
+				 query, completion_max_records) == -1)
 	{
 		ERROR_QUERY_TOO_LONG;
 		return NULL;
@@ -1684,7 +1741,7 @@ previous_word(int point, int skip)
  * psql internal. Currently disable because it is reported not to
  * cooperate with certain versions of readline.
  */
-char *
+static char *
 quote_file_name(char *text, int match_type, char *quote_pointer)
 {
 	char	   *s;
