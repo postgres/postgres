@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.41 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.42 2004/03/02 22:05:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,9 +104,13 @@ ExecUnique(UniqueState *node)
 	 *
 	 * Note that we manage the copy ourselves.	We can't rely on the result
 	 * tuple slot to maintain the tuple reference because our caller may
-	 * replace the slot contents with a different tuple (see junk filter
-	 * handling in execMain.c).  We assume that the caller will no longer
-	 * be interested in the current tuple after he next calls us.
+	 * replace the slot contents with a different tuple.  We assume that
+	 * the caller will no longer be interested in the current tuple after
+	 * he next calls us.
+	 *
+	 * tgl 3/2004: the above concern is no longer valid; junkfilters used to
+	 * modify their input's return slot but don't anymore, and I don't think
+	 * anyplace else does either.  Not worth changing this code though.
 	 */
 	if (node->priorTuple != NULL)
 		heap_freetuple(node->priorTuple);
