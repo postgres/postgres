@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/monitor/Attic/monitor.c,v 1.4 1996/07/23 02:26:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/monitor/Attic/monitor.c,v 1.5 1996/07/23 03:03:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #ifndef WIN32
 #include <unistd.h>
 #endif
-#ifdef PORTNAME_sparc_solaris
+#if defined(PORTNAME_sparc_solaris) || defined(PORTNAME_i386_solaris)
 #include <netdb.h>	/* for MAXHOSTNAMELEN on some */
 #endif
 #include <sys/types.h>

@@ -109,6 +109,11 @@ Tcl_AppInit(interp)
      * then no user-specific startup file will be run under any conditions.
      */
 
+#if (TCL_MAJOR_VERSION <= 7) && (TCL_MINOR_VERSION < 5)
     tcl_RcFileName = "~/.tclshrc";
+#else
+    Tcl_SetVar(interp, "tcl_rcFileName", "~/.tclshrc", TCL_GLOBAL_ONLY);
+#endif
+
     return TCL_OK;
 }

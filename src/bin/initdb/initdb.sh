@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.3 1996/07/20 07:33:36 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.4 1996/07/23 03:03:19 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,10 +32,6 @@ BINDIR=_fUnKy_BINDIR_sTuFf_
 FILESDIR=$PGDATA/files
 PATH=$BINDIR:$PATH
 export PATH
-
-# OPENLINK Added an fsync option to postmaster
-# REQUIRES: pg95 compiled with -DOPENLINK_PATCHES, see README_OPENLINK
-# FSYNC=-F
 
 CMDNAME=`basename $0`
 
@@ -63,9 +59,9 @@ done
 # ----------------
 if test "$debug" -eq 1
 then
-    BACKENDARGS="-boot -C $FSYNC -d"
+    BACKENDARGS="-boot -C -F -d"
 else
-    BACKENDARGS="-boot -C $FSYNC -Q"
+    BACKENDARGS="-boot -C -F -Q"
 fi
 
 
@@ -220,9 +216,7 @@ then
     echo "vacuuming template1"
 fi
 
-    echo "vacuum" | postgres $FSYNC -Q template1 > /dev/null
+    echo "vacuum" | postgres -F -Q template1 > /dev/null
 fi
 
 rm -f /tmp/create.$$
-
-sync
