@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.9 1997/01/20 04:36:48 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.10 1997/01/23 19:43:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1105,14 +1105,19 @@ int
 BufferPoolCheckLeak()
 {
     register int i;
+    int error = 0;
     void PrintBufferDescs();
     
     for (i = 1; i <= NBuffers; i++) {
 	if (BufferIsValid(i)) {
-	    elog(NOTICE, "buffer leak detected in BufferPoolCheckLeak()");
-	    PrintBufferDescs();
-	    return(1);
+	    elog(NOTICE, 
+                 "buffer leak [%d] detected in BufferPoolCheckLeak()", i-1);
+            error = 1;
 	}
+    }
+    if(error) {
+      PrintBufferDescs();
+      return(1);
     }
     return(0);
 }
