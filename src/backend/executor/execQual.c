@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.95 2002/07/04 15:23:29 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.96 2002/07/04 16:44:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -931,7 +931,7 @@ ExecEvalDistinct(Expr *opClause,
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
 	fcinfo.flinfo = &(fcache->func);
 	argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
-	Assert(fcinfo->nargs == 2);
+	Assert(fcinfo.nargs == 2);
 
 	if (fcinfo.argnull[0] && fcinfo.argnull[1])
 	{
