@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.30 2005/01/01 05:43:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.31 2005/03/16 00:02:49 momjian Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -185,6 +185,33 @@ lc_collate_is_c(void)
 	localeptr = setlocale(LC_COLLATE, NULL);
 	if (!localeptr)
 		elog(ERROR, "invalid LC_COLLATE setting");
+
+	if (strcmp(localeptr, "C") == 0)
+		result = true;
+	else if (strcmp(localeptr, "POSIX") == 0)
+		result = true;
+	else
+		result = false;
+	return (bool) result;
+}
+
+
+/*
+ * We'd like to cache whether LC_CTYPE is C (or POSIX), so we can
+ * optimize a few code paths in various places.
+ */
+bool
+lc_ctype_is_c(void)
+{
+	/* Cache result so we only have to compute it once */
+	static int	result = -1;
+	char	   *localeptr;
+
+	if (result >= 0)
+		return (bool) result;
+	localeptr = setlocale(LC_CTYPE, NULL);
+	if (!localeptr)
+		elog(ERROR, "invalid LC_CTYPE setting");
 
 	if (strcmp(localeptr, "C") == 0)
 		result = true;

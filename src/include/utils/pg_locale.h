@@ -2,7 +2,7 @@
  *
  * PostgreSQL locale utilities
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_locale.h,v 1.19 2005/01/01 05:43:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_locale.h,v 1.20 2005/03/16 00:02:49 momjian Exp $
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
@@ -32,6 +32,7 @@ extern const char *locale_time_assign(const char *value,
 				   bool doit, GucSource source);
 
 extern bool lc_collate_is_c(void);
+extern bool lc_ctype_is_c(void);
 
 /*
  * Return the POSIX lconv struct (contains number/money formatting
