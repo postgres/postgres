@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.10 1997/04/22 03:30:36 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.11 1997/04/24 15:59:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -432,7 +432,7 @@ create_nestloop_node(JoinPath *best_path,
 
 	foreach (inner_qual, inner_indxqual)
 	{
-	    if ( !(qual_clause_p ((Node*)inner_qual)) )
+	    if ( !qual_clause_p ((Node*)lfirst(inner_qual)) )
 	    {
 	    	found = true;
 	    	break;
@@ -443,12 +443,18 @@ create_nestloop_node(JoinPath *best_path,
 	 * index clauses from the nestloop's join clauses and reset the 
 	 * inner(index) scan's qualification so that the var nodes refer to
 	 * the proper outer join relation attributes.
+	 *
+	 * XXX Re-moving index clauses doesn't work properly: 
+	 *    1. fix_indxqual_references may change varattno-s in 
+	 *       inner_indxqual;
+	 *    2. clauses may be commuted
+	 * I havn't time to fix it at the moment.   - vadim 04/24/97
 	 */
 	if  ( found )
 	{
 	    List *new_inner_qual = NIL;
 	    
-	    clauses = set_difference(clauses,inner_indxqual);
+	    clauses = set_difference(clauses,inner_indxqual);	/* XXX */
 	    new_inner_qual =
 		index_outerjoin_references(inner_indxqual,
 					   outer_node->targetlist,
