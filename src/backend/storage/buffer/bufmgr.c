@@ -8,30 +8,31 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.76 2000/03/14 22:46:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.77 2000/03/31 02:43:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *
  * BufferAlloc() -- lookup a buffer in the buffer table.  If
- *		it isn't there add it, but do not read it into memory.
+ *		it isn't there add it, but do not read data into memory.
  *		This is used when we are about to reinitialize the
  *		buffer so don't care what the current disk contents are.
- *		BufferAlloc() pins the new buffer in memory.
+ *		BufferAlloc() also pins the new buffer in memory.
  *
- * ReadBuffer() -- same as BufferAlloc() but reads the data
+ * ReadBuffer() -- like BufferAlloc() but reads the data
  *		on a buffer cache miss.
  *
  * ReleaseBuffer() -- unpin the buffer
  *
  * WriteNoReleaseBuffer() -- mark the buffer contents as "dirty"
  *		but don't unpin.  The disk IO is delayed until buffer
- *		replacement if WriteMode is BUFFER_LATE_WRITE.
+ *		replacement.
  *
  * WriteBuffer() -- WriteNoReleaseBuffer() + ReleaseBuffer()
  *
- * FlushBuffer() -- as above but never delayed write.
+ * FlushBuffer() -- Write buffer immediately.  Can unpin, or not,
+ *		depending on parameter.
  *
  * BufferSync() -- flush all dirty buffers in the buffer pool.
  *
@@ -70,11 +71,7 @@ extern long int LocalBufferFlushCount;
  */
 bool			SharedBufferChanged = false;
 
-static int	WriteMode = BUFFER_LATE_WRITE;		/* Delayed write is
-												 * default */
-
 static void WaitIO(BufferDesc *buf, SPINLOCK spinlock);
-
 static void StartBufferIO(BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(BufferDesc *buf);
 static void ContinueBufferIO(BufferDesc *buf, bool forInput);
@@ -97,7 +94,6 @@ static Buffer ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
 						 bool bufferLockHeld);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr, bool bufferLockHeld);
-static int	FlushBuffer(Buffer buffer, bool release);
 static void BufferSync(void);
 static int	BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
 void		PrintBufferDescs(void);
@@ -658,8 +654,7 @@ BufferAlloc(Relation reln,
 /*
  * WriteBuffer
  *
- *		Pushes buffer contents to disk if WriteMode is BUFFER_FLUSH_WRITE.
- *		Otherwise, marks contents as dirty.
+ *		Marks buffer contents as dirty (actual write happens later).
  *
  * Assume that buffer is pinned.  Assume that reln is
  *		valid.
@@ -675,28 +670,23 @@ WriteBuffer(Buffer buffer)
 {
 	BufferDesc *bufHdr;
 
-	if (WriteMode == BUFFER_FLUSH_WRITE)
-		return FlushBuffer(buffer, TRUE);
-	else
-	{
+	if (BufferIsLocal(buffer))
+		return WriteLocalBuffer(buffer, TRUE);
 
-		if (BufferIsLocal(buffer))
-			return WriteLocalBuffer(buffer, TRUE);
+	if (BAD_BUFFER_ID(buffer))
+		return FALSE;
 
-		if (BAD_BUFFER_ID(buffer))
-			return FALSE;
+	bufHdr = &BufferDescriptors[buffer - 1];
 
-		bufHdr = &BufferDescriptors[buffer - 1];
+	SharedBufferChanged = true;
 
-		SharedBufferChanged = true;
+	SpinAcquire(BufMgrLock);
+	Assert(bufHdr->refcount > 0);
+	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
+	UnpinBuffer(bufHdr);
+	SpinRelease(BufMgrLock);
+	CommitInfoNeedsSave[buffer - 1] = 0;
 
-		SpinAcquire(BufMgrLock);
-		Assert(bufHdr->refcount > 0);
-		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-		UnpinBuffer(bufHdr);
-		SpinRelease(BufMgrLock);
-		CommitInfoNeedsSave[buffer - 1] = 0;
-	}
 	return TRUE;
 }
 
@@ -778,9 +768,9 @@ DirtyBufferCopy(Oid dbid, Oid relid, BlockNumber blkno, char *dest)
  * 'buffer' is known to be dirty/pinned, so there should not be a
  * problem reading the BufferDesc members without the BufMgrLock
  * (nobody should be able to change tags, flags, etc. out from under
- * us).
+ * us).  Unpin if 'release' is TRUE.
  */
-static int
+int
 FlushBuffer(Buffer buffer, bool release)
 {
 	BufferDesc *bufHdr;
@@ -850,36 +840,27 @@ FlushBuffer(Buffer buffer, bool release)
 /*
  * WriteNoReleaseBuffer -- like WriteBuffer, but do not unpin the buffer
  *						   when the operation is complete.
- *
- *		We know that the buffer is for a relation in our private cache,
- *		because this routine is called only to write out buffers that
- *		were changed by the executing backend.
  */
 int
 WriteNoReleaseBuffer(Buffer buffer)
 {
 	BufferDesc *bufHdr;
 
-	if (WriteMode == BUFFER_FLUSH_WRITE)
-		return FlushBuffer(buffer, FALSE);
-	else
-	{
+	if (BufferIsLocal(buffer))
+		return WriteLocalBuffer(buffer, FALSE);
 
-		if (BufferIsLocal(buffer))
-			return WriteLocalBuffer(buffer, FALSE);
+	if (BAD_BUFFER_ID(buffer))
+		return STATUS_ERROR;
 
-		if (BAD_BUFFER_ID(buffer))
-			return STATUS_ERROR;
+	bufHdr = &BufferDescriptors[buffer - 1];
 
-		bufHdr = &BufferDescriptors[buffer - 1];
+	SharedBufferChanged = true;
 
-		SharedBufferChanged = true;
+	SpinAcquire(BufMgrLock);
+	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
+	SpinRelease(BufMgrLock);
+	CommitInfoNeedsSave[buffer - 1] = 0;
 
-		SpinAcquire(BufMgrLock);
-		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-		SpinRelease(BufMgrLock);
-		CommitInfoNeedsSave[buffer - 1] = 0;
-	}
 	return STATUS_OK;
 }
 
@@ -2001,16 +1982,6 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 }
 
 #endif	 /* BMTRACE */
-
-int
-SetBufferWriteMode(int mode)
-{
-	int			old;
-
-	old = WriteMode;
-	WriteMode = mode;
-	return old;
-}
 
 void
 SetBufferCommitInfoNeedsSave(Buffer buffer)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.26 2000/01/26 05:56:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.27 2000/03/31 02:43:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,6 @@ VariableRelationPutNextXid(TransactionId xid)
 {
 	Buffer		buf;
 	VariableRelationContents var;
-	int			flushmode;
 
 	/* ----------------
 	 * We assume that a spinlock has been acquire to guarantee
@@ -105,7 +104,7 @@ VariableRelationPutNextXid(TransactionId xid)
 
 	/* ----------------
 	 *	read the variable page, update the nextXid field and
-	 *	write the page back out to disk.
+	 *	write the page back out to disk (with immediate write).
 	 * ----------------
 	 */
 	buf = ReadBuffer(VariableRelation, 0);
@@ -120,9 +119,7 @@ VariableRelationPutNextXid(TransactionId xid)
 
 	TransactionIdStore(xid, &(var->nextXidData));
 
-	flushmode = SetBufferWriteMode(BUFFER_FLUSH_WRITE);
-	WriteBuffer(buf);
-	SetBufferWriteMode(flushmode);
+	FlushBuffer(buf, TRUE);
 }
 
 /* --------------------------------

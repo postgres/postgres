@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.34 2000/01/26 05:58:32 momjian Exp $
+ * $Id: bufmgr.h,v 1.35 2000/03/31 02:43:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,12 +55,6 @@ typedef bits16 BufferLock;
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
 
 extern int	ShowPinTrace;
-
-/*
- * BufferWriteModes (settable via SetBufferWriteMode)
- */
-#define BUFFER_FLUSH_WRITE		0		/* immediate write */
-#define BUFFER_LATE_WRITE		1		/* delayed write: mark as DIRTY */
 
 /*
  * Buffer context lock modes
@@ -165,6 +159,7 @@ extern int	WriteBuffer(Buffer buffer);
 extern int	WriteNoReleaseBuffer(Buffer buffer);
 extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 					 BlockNumber blockNum);
+extern int	FlushBuffer(Buffer buffer, bool release);
 
 extern void InitBufferPool(IPCKey key);
 extern void PrintBufferUsage(FILE *statfp);
@@ -182,7 +177,6 @@ extern void PrintPinnedBufs(void);
 extern int	BufferShmemSize(void);
 extern int	ReleaseBuffer(Buffer buffer);
 
-extern int	SetBufferWriteMode(int mode);
 extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
 
 extern void UnlockBuffers(void);
