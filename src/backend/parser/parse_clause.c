@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.107 2003/02/13 05:06:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.108 2003/02/13 05:53:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1118,7 +1118,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * the end of the target list.	This target is given resjunk = TRUE so
 	 * that it will not be projected into the final tuple.
 	 */
-	target_result = transformTargetEntry(pstate, node, expr, NULL, true, NULL);
+	target_result = transformTargetEntry(pstate, node, expr, NULL, true);
 	lappend(tlist, target_result);
 
 	return target_result;

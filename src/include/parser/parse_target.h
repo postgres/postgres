@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.28 2003/02/13 05:06:35 momjian Exp $
+ * $Id: parse_target.h,v 1.29 2003/02/13 05:53:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 extern List *transformTargetList(ParseState *pstate, List *targetlist);
 extern TargetEntry *transformTargetEntry(ParseState *pstate,
 					 Node *node, Node *expr,
-					 char *colname, bool resjunk, bool *retset);
+					 char *colname, bool resjunk);
 extern void updateTargetListEntry(ParseState *pstate, TargetEntry *tle,
 					  char *colname, int attrno,
 					  List *indirection);
