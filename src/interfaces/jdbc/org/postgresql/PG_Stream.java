@@ -5,13 +5,12 @@ import java.lang.*;
 import java.net.*;
 import java.util.*;
 import java.sql.*;
-import java.security.*;
 import org.postgresql.*;
 import org.postgresql.core.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: PG_Stream.java,v 1.12 2001/08/26 01:06:20 momjian Exp $
+ * $Id: PG_Stream.java,v 1.13 2001/08/26 17:08:48 momjian Exp $
  *
  * This class is used by Connection & PGlobj for communicating with the
  * backend.
@@ -29,25 +28,6 @@ public class PG_Stream
     BytePoolDim1 bytePoolDim1 = new BytePoolDim1();
     BytePoolDim2 bytePoolDim2 = new BytePoolDim2();
 
-   private static class PrivilegedSocket
-      implements PrivilegedExceptionAction
-   {
-      private String host;
-      private int port;
-
-      PrivilegedSocket(String host, int port)
-      {
-         this.host = host;
-         this.port = port;
-      }
-
-      public Object run() throws Exception
-      {
-         return new Socket(host, port);
-      }
-   }
-
-
   /**
    * Constructor:  Connect to the PostgreSQL back end and return
    * a stream connection.
@@ -58,13 +38,7 @@ public class PG_Stream
    */
   public PG_Stream(String host, int port) throws IOException
   {
-     PrivilegedSocket ps = new PrivilegedSocket(host, port);
-     try {
-        connection = (Socket)AccessController.doPrivileged(ps);
-     }
-     catch(PrivilegedActionException pae){
-        throw (IOException)pae.getException();
-     }
+    connection = new Socket(host, port);
 
     // Submitted by Jason Venner <jason@idiom.com> adds a 10x speed
     // improvement on FreeBSD machines (caused by a bug in their TCP Stack)
