@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.15 2001/11/18 20:35:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.16 2001/11/19 19:03:56 tgl Exp $
 Postgres documentation
 -->
 
@@ -27,18 +27,30 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
 
   <para>
    The <command>GRANT</command> command gives specific permissions on
-   an object (table, view, sequence) to a user or a group of users.
-   The special key word <literal>PUBLIC</literal> indicates that the
+   an object (table, view, sequence) to one or more users or groups of users.
+   These permissions are added to those already granted, if any.
+  </para>
+
+  <para>
+   The key word <literal>PUBLIC</literal> indicates that the
    privileges are to be granted to all users, including those that may
-   be created later.
+   be created later.  <literal>PUBLIC</literal> may be thought of as an
+   implicitly defined group that always includes all users.
+   Note that any particular user will have the sum
+   of privileges granted directly to him, privileges granted to any group he
+   is presently a member of, and privileges granted to
+   <literal>PUBLIC</literal>.
   </para>
 
   <para>
    Users other than the creator do not have any access privileges
-   unless the creator grants permissions, after the object is created.
+   to an object unless the creator grants permissions.
    There is no need to grant privileges to the creator of an object,
    as the creator automatically holds all privileges, and can also
-   drop the object.
+   drop the object.  (The creator could, however, choose to revoke
+   some of his own privileges for safety.  Note that the ability to
+   grant and revoke privileges is inherent in the creator and cannot
+   be lost.)
   </para>
 
   <para>

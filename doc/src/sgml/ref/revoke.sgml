@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.17 2001/11/18 20:35:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.18 2001/11/19 19:03:56 tgl Exp $
 Postgres documentation
 -->
 
@@ -27,9 +27,19 @@ REVOKE { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,.
 
   <para>
    <command>REVOKE</command> allows the creator of an object to revoke
-   permissions granted before, from a users or a group of users.  The
-   key word <literal>PUBLIC</literal> means to revoke this privilege
-   from all users.
+   previously granted permissions from one or more users or groups of users.
+   The key word <literal>PUBLIC</literal> refers to the implicitly defined
+   group of all users.
+  </para>
+
+  <para>
+   Note that any particular user will have the sum
+   of privileges granted directly to him, privileges granted to any group he
+   is presently a member of, and privileges granted to
+   <literal>PUBLIC</literal>.  Thus, for example, revoking SELECT privilege
+   from <literal>PUBLIC</literal> does not necessarily mean that all users
+   have lost SELECT privilege on the object: those who have it granted
+   directly or via a group will still have it.
   </para>
 
   <para>
@@ -52,7 +62,7 @@ REVOKE { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,.
   <title>Examples</title>
 
   <para>
-   Revoke insert privilege from all users on table
+   Revoke insert privilege for the public on table
    <literal>films</literal>:
 
 <programlisting>
@@ -93,7 +103,7 @@ REVOKE [ GRANT OPTION FOR ] { SELECT | INSERT | UPDATE | DELETE | REFERENCES }
     this privilege in cascade using the CASCADE keyword.
     If user1 gives a privilege WITH GRANT OPTION to user2,
     and user2 gives it to user3, then if user1 tries to revoke
-    this privilege it fails if he specify the RESTRICT
+    this privilege it fails if he specifies the RESTRICT
     keyword.
    </para>
   </refsect2>
