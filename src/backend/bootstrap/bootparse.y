@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.11 1998/01/05 03:30:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.12 1998/01/06 18:51:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,10 +79,10 @@ static Oid objectid;
 	int			ival;
 }
 
-%type <list>  arg_list
-%type <ielem> index_params index_on
-%type <ival> const ident
-%type <ival> optbootstrap optoideq tuple tuplelist
+%type <list>  boot_arg_list
+%type <ielem> boot_index_params boot_index_on
+%type <ival> boot_const boot_ident
+%type <ival> optbootstrap optoideq boot_tuple boot_tuplelist
 
 %token <ival> CONST ID
 %token OPEN XCLOSE XCREATE INSERT_TUPLE
@@ -98,26 +98,26 @@ static Oid objectid;
 %%
 
 TopLevel:
-		  Queries
+		  Boot_Queries
 		|
 		;
 
-Queries:
-		  A_Query
-		| Queries A_Query
+Boot_Queries:
+		  Boot_Query
+		| Boot_Queries Boot_Query
 		;
 
-A_Query :
-		  OpenStmt
-		| CloseStmt
-		| CreateStmt
-		| InsertStmt
-		| DeclareIndexStmt
-		| BuildIndsStmt
+Boot_Query :
+		  Boot_OpenStmt
+		| Boot_CloseStmt
+		| Boot_CreateStmt
+		| Boot_InsertStmt
+		| Boot_DeclareIndexStmt
+		| Boot_BuildIndsStmt
 		;
 
-OpenStmt:
-		  OPEN ident
+Boot_OpenStmt:
+		  OPEN boot_ident
 				{
 					DO_START;
 					boot_openrel(LexIDStr($2));
@@ -125,8 +125,8 @@ OpenStmt:
 				}
 		;
 
-CloseStmt:
-		  XCLOSE ident %prec low
+Boot_CloseStmt:
+		  XCLOSE boot_ident %prec low
 				{
 					DO_START;
 					closerel(LexIDStr($2));
@@ -140,13 +140,13 @@ CloseStmt:
 				}
 		;
 
-CreateStmt:
-		  XCREATE optbootstrap ident LPAREN
+Boot_CreateStmt:
+		  XCREATE optbootstrap boot_ident LPAREN
 				{
 					DO_START;
 					numattr=(int)0;
 				}
-		  typelist
+		  boot_typelist
 				{
 					if (!Quiet)
 						putchar('\n');
@@ -192,7 +192,7 @@ CreateStmt:
 				}
 		;
 
-InsertStmt:
+Boot_InsertStmt:
 		  INSERT_TUPLE optoideq
 				{
 					DO_START;
@@ -200,7 +200,7 @@ InsertStmt:
 						printf("tuple %d<", $2);
 					num_tuples_read = 0;
 				}
-		  LPAREN  tuplelist RPAREN
+		  LPAREN  boot_tuplelist RPAREN
 				{
 					if (num_tuples_read != numattr)
 						elog(ABORT,"incorrect number of values for tuple");
@@ -223,8 +223,8 @@ InsertStmt:
 				}
 		;
 
-DeclareIndexStmt:
-		  XDECLARE INDEX ident ON ident USING ident LPAREN index_params RPAREN
+Boot_DeclareIndexStmt:
+		  XDECLARE INDEX boot_ident ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
 					List *params;
 
@@ -239,25 +239,25 @@ DeclareIndexStmt:
 				}
 		;
 
-BuildIndsStmt:
+Boot_BuildIndsStmt:
 		  XBUILD INDICES		{ build_indices(); }
 
-index_params:
-		index_on ident
+boot_index_params:
+		boot_index_on boot_ident
 				{
 					IndexElem *n = (IndexElem*)$1;
 					n->class = LexIDStr($2);
 					$$ = n;
 				}
 
-index_on:
-		  ident
+boot_index_on:
+		  boot_ident
 				{
 					IndexElem *n = makeNode(IndexElem);
 					n->name = LexIDStr($1);
 					$$ = n;
 				}
-		| ident LPAREN arg_list RPAREN
+		| boot_ident LPAREN boot_arg_list RPAREN
 				{
 					IndexElem *n = makeNode(IndexElem);
 					n->name = LexIDStr($1);
@@ -265,12 +265,12 @@ index_on:
 					$$ = n;
 				}
 
-arg_list:
-		  ident
+boot_arg_list:
+		  boot_ident
 				{
 					$$ = lappend(NIL, makeString(LexIDStr($1)));
 				}
-		| arg_list COMMA ident
+		| boot_arg_list COMMA boot_ident
 				{
 					$$ = lappend((List*)$1, makeString(LexIDStr($3)));
 				}
@@ -280,13 +280,13 @@ optbootstrap:
 		|				{ $$ = 0; }
 		;
 
-typelist:
-		  typething
-		| typelist COMMA typething
+boot_typelist:
+		  boot_type_thing
+		| boot_typelist COMMA boot_type_thing
 		;
 
-typething:
-		  ident EQUALS ident
+boot_type_thing:
+		  boot_ident EQUALS boot_ident
 				{
 				   if(++numattr > MAXATTR)
 						elog(FATAL,"Too many attributes\n");
@@ -297,28 +297,28 @@ typething:
 		;
 
 optoideq:
-			OBJ_ID EQUALS ident { $$ = atol(LexIDStr($3));				}
+			OBJ_ID EQUALS boot_ident { $$ = atol(LexIDStr($3));				}
 		|						{ extern Oid newoid(); $$ = newoid();	}
 		;
 
-tuplelist:
-		   tuple
-		|  tuplelist tuple
-		|  tuplelist COMMA tuple
+boot_tuplelist:
+		   boot_tuple
+		|  boot_tuplelist boot_tuple
+		|  boot_tuplelist COMMA boot_tuple
 		;
 
-tuple:
-		  ident {InsertOneValue(objectid, LexIDStr($1), num_tuples_read++); }
-		| const {InsertOneValue(objectid, LexIDStr($1), num_tuples_read++); }
+boot_tuple:
+		  boot_ident {InsertOneValue(objectid, LexIDStr($1), num_tuples_read++); }
+		| boot_const {InsertOneValue(objectid, LexIDStr($1), num_tuples_read++); }
 		| NULLVAL
 			{ InsertOneNull(num_tuples_read++); }
 		;
 
-const :
+boot_const :
 		  CONST { $$=yylval.ival; }
 		;
 
-ident :
+boot_ident :
 		  ID	{ $$=yylval.ival; }
 		;
 %%

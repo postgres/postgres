@@ -60,11 +60,11 @@ check_primary_key()
 
 	/* Called by trigger manager ? */
 	if (!CurrentTriggerData)
-		elog(WARN, "check_primary_key: triggers are not initialized");
+		elog(ERROR, "check_primary_key: triggers are not initialized");
 
 	/* Should be called for ROW trigger */
 	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
-		elog(WARN, "check_primary_key: can't process STATEMENT events");
+		elog(ERROR, "check_primary_key: can't process STATEMENT events");
 
 	/* If INSERTion then must check Tuple to being inserted */
 	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
@@ -74,7 +74,7 @@ check_primary_key()
 	/* Not should be called for DELETE */
 	else if (TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event))
 
-		elog(WARN, "check_primary_key: can't process DELETE events");
+		elog(ERROR, "check_primary_key: can't process DELETE events");
 
 	/* If UPDATion the must check new Tuple, not old one */
 	else
@@ -85,7 +85,7 @@ check_primary_key()
 	args = trigger->tgargs;
 
 	if (nargs % 2 != 1)			/* odd number of arguments! */
-		elog(WARN, "check_primary_key: odd number of arguments should be specified");
+		elog(ERROR, "check_primary_key: odd number of arguments should be specified");
 
 	nkeys = nargs / 2;
 	relname = args[nkeys];
@@ -101,7 +101,7 @@ check_primary_key()
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
-		elog(WARN, "check_primary_key: SPI_connect returned %d", ret);
+		elog(ERROR, "check_primary_key: SPI_connect returned %d", ret);
 
 	/*
 	 * We use SPI plan preparation feature, so allocate space to place key
@@ -128,7 +128,7 @@ check_primary_key()
 
 		/* Bad guys may give us un-existing column in CREATE TRIGGER */
 		if (fnumber < 0)
-			elog(WARN, "check_primary_key: there is no attribute %s in relation %s",
+			elog(ERROR, "check_primary_key: there is no attribute %s in relation %s",
 				 args[i], SPI_getrelname(rel));
 
 		/* Well, get binary (in internal format) value of column */
@@ -171,7 +171,7 @@ check_primary_key()
 		/* Prepare plan for query */
 		pplan = SPI_prepare(sql, nkeys, argtypes);
 		if (pplan == NULL)
-			elog(WARN, "check_primary_key: SPI_prepare returned %d", SPI_result);
+			elog(ERROR, "check_primary_key: SPI_prepare returned %d", SPI_result);
 
 		/*
 		 * Remember that SPI_prepare places plan in current memory context
@@ -180,7 +180,7 @@ check_primary_key()
 		 */
 		pplan = SPI_saveplan(pplan);
 		if (pplan == NULL)
-			elog(WARN, "check_primary_key: SPI_saveplan returned %d", SPI_result);
+			elog(ERROR, "check_primary_key: SPI_saveplan returned %d", SPI_result);
 		plan->splan = (void **) malloc(sizeof(void *));
 		*(plan->splan) = pplan;
 		plan->nplans = 1;
@@ -193,13 +193,13 @@ check_primary_key()
 		/* we have no NULLs - so we pass   ^^^^   here */
 
 	if (ret < 0)
-		elog(WARN, "check_primary_key: SPI_execp returned %d", ret);
+		elog(ERROR, "check_primary_key: SPI_execp returned %d", ret);
 
 	/*
 	 * If there are no tuples returned by SELECT then ...
 	 */
 	if (SPI_processed == 0)
-		elog(WARN, "%s: tuple references non-existing key in %s",
+		elog(ERROR, "%s: tuple references non-existing key in %s",
 			 trigger->tgname, relname);
 
 	SPI_finish();
@@ -250,16 +250,16 @@ check_foreign_key()
 
 	/* Called by trigger manager ? */
 	if (!CurrentTriggerData)
-		elog(WARN, "check_foreign_key: triggers are not initialized");
+		elog(ERROR, "check_foreign_key: triggers are not initialized");
 
 	/* Should be called for ROW trigger */
 	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
-		elog(WARN, "check_foreign_key: can't process STATEMENT events");
+		elog(ERROR, "check_foreign_key: can't process STATEMENT events");
 
 	/* Not should be called for INSERT */
 	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
 
-		elog(WARN, "check_foreign_key: can't process INSERT events");
+		elog(ERROR, "check_foreign_key: can't process INSERT events");
 
 	/* Have to check tg_trigtuple - tuple being deleted */
 	trigtuple = CurrentTriggerData->tg_trigtuple;
@@ -278,18 +278,18 @@ check_foreign_key()
 
 	if (nargs < 5)				/* nrefs, action, key, Relation, key - at
 								 * least */
-		elog(WARN, "check_foreign_key: too short %d (< 5) list of arguments", nargs);
+		elog(ERROR, "check_foreign_key: too short %d (< 5) list of arguments", nargs);
 	nrefs = pg_atoi(args[0], sizeof(int), 0);
 	if (nrefs < 1)
-		elog(WARN, "check_foreign_key: %d (< 1) number of references specified", nrefs);
+		elog(ERROR, "check_foreign_key: %d (< 1) number of references specified", nrefs);
 	action = tolower(*(args[1]));
 	if (action != 'r' && action != 'c' && action != 's')
-		elog(WARN, "check_foreign_key: invalid action %s", args[1]);
+		elog(ERROR, "check_foreign_key: invalid action %s", args[1]);
 	nargs -= 2;
 	args += 2;
 	nkeys = (nargs - nrefs) / (nrefs + 1);
 	if (nkeys <= 0 || nargs != (nrefs + nkeys * (nrefs + 1)))
-		elog(WARN, "check_foreign_key: invalid number of arguments %d for %d references",
+		elog(ERROR, "check_foreign_key: invalid number of arguments %d for %d references",
 			 nargs + 2, nrefs);
 
 	rel = CurrentTriggerData->tg_relation;
@@ -304,7 +304,7 @@ check_foreign_key()
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
-		elog(WARN, "check_foreign_key: SPI_connect returned %d", ret);
+		elog(ERROR, "check_foreign_key: SPI_connect returned %d", ret);
 
 	/*
 	 * We use SPI plan preparation feature, so allocate space to place key
@@ -327,7 +327,7 @@ check_foreign_key()
 	 * else - check that we have exactly nrefs plan(s) ready
 	 */
 	else if (plan->nplans != nrefs)
-		elog(WARN, "%s: check_foreign_key: # of plans changed in meantime",
+		elog(ERROR, "%s: check_foreign_key: # of plans changed in meantime",
 			 trigger->tgname);
 
 	/* For each column in key ... */
@@ -338,7 +338,7 @@ check_foreign_key()
 
 		/* Bad guys may give us un-existing column in CREATE TRIGGER */
 		if (fnumber < 0)
-			elog(WARN, "check_foreign_key: there is no attribute %s in relation %s",
+			elog(ERROR, "check_foreign_key: there is no attribute %s in relation %s",
 				 args[i], SPI_getrelname(rel));
 
 		/* Well, get binary (in internal format) value of column */
@@ -367,7 +367,7 @@ check_foreign_key()
 
 			/* this shouldn't happen! SPI_ERROR_NOOUTFUNC ? */
 			if (oldval == NULL)
-				elog(WARN, "check_foreign_key: SPI_getvalue returned %d", SPI_result);
+				elog(ERROR, "check_foreign_key: SPI_getvalue returned %d", SPI_result);
 			newval = SPI_getvalue(newtuple, tupdesc, fnumber);
 			if (newval == NULL || strcmp(oldval, newval) != 0)
 				isequal = false;
@@ -439,7 +439,7 @@ check_foreign_key()
 			/* Prepare plan for query */
 			pplan = SPI_prepare(sql, nkeys, argtypes);
 			if (pplan == NULL)
-				elog(WARN, "check_foreign_key: SPI_prepare returned %d", SPI_result);
+				elog(ERROR, "check_foreign_key: SPI_prepare returned %d", SPI_result);
 
 			/*
 			 * Remember that SPI_prepare places plan in current memory
@@ -448,7 +448,7 @@ check_foreign_key()
 			 */
 			pplan = SPI_saveplan(pplan);
 			if (pplan == NULL)
-				elog(WARN, "check_foreign_key: SPI_saveplan returned %d", SPI_result);
+				elog(ERROR, "check_foreign_key: SPI_saveplan returned %d", SPI_result);
 
 			plan->splan[r] = pplan;
 
@@ -484,14 +484,14 @@ check_foreign_key()
 			/* we have no NULLs - so we pass   ^^^^	 here */
 
 		if (ret < 0)
-			elog(WARN, "check_foreign_key: SPI_execp returned %d", ret);
+			elog(ERROR, "check_foreign_key: SPI_execp returned %d", ret);
 
 		/* If action is 'R'estrict ... */
 		if (action == 'r')
 		{
 			/* If there is tuple returned by SELECT then ... */
 			if (SPI_processed > 0)
-				elog(WARN, "%s: tuple referenced in %s",
+				elog(ERROR, "%s: tuple referenced in %s",
 					 trigger->tgname, relname);
 		}
 #ifdef REFINT_VERBOSE

@@ -56,7 +56,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
     /* Lookup element type information */
     typ_tuple = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(elemtype),0,0,0);
     if (!HeapTupleIsValid(typ_tuple)) {
-        elog(WARN,"array_iterator: cache lookup failed for type %d", elemtype);
+        elog(ERROR,"array_iterator: cache lookup failed for type %d", elemtype);
         return 0;
     }
     typ_struct = (TypeTupleForm) GETSTRUCT(typ_tuple);
@@ -67,7 +67,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
     proc_fn = (func_ptr) NULL;
     fmgr_info(proc, &proc_fn, &pronargs);
     if ((proc_fn == NULL) || (pronargs != 2)) {
-	elog(WARN, "array_iterator: fmgr_info lookup failed for oid %d", proc);
+	elog(ERROR, "array_iterator: fmgr_info lookup failed for oid %d", proc);
         return (0);
     }
 

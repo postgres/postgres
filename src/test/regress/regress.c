@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.18 1998/01/05 03:35:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.19 1998/01/06 18:53:02 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -450,7 +450,7 @@ ttdummy()
 	if (TRIGGER_FIRED_AFTER(CurrentTriggerData->tg_event))
 		elog(ABORT, "ttdummy: must be fired before event");
 	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
-		elog (WARN, "ttdummy: can't process INSERT event");
+		elog (ABORT, "ttdummy: can't process INSERT event");
 	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
 		newtuple = CurrentTriggerData->tg_newtuple;
 	
@@ -506,7 +506,7 @@ ttdummy()
 			elog(ABORT, "ttdummy (%s): %s must be NOT NULL", relname, args[1]);
 		
 		if ( oldon != newon || oldoff != newoff )
-			elog (WARN, "ttdummy (%s): you can't change %s and/or %s columns (use set_ttdummy)",
+			elog (ABORT, "ttdummy (%s): you can't change %s and/or %s columns (use set_ttdummy)",
 					relname, args[0], args[1]);
 		
 		if ( newoff != TTDUMMY_INFINITY )

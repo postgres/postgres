@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.9 1998/01/05 03:31:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.10 1998/01/06 18:52:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,21 +76,18 @@ prune_joinrel(Rel *rel, List *other_rels)
 	return_list = cur;
 	
 	/* remove relations that do match, we use lnext so we can remove easily */
-	if (cur != NIL)
+	while (cur != NIL && lnext(cur) != NIL)
 	{
-		while (lnext(cur) != NIL)
-		{
-			Rel	*other_rel = (Rel *) lfirst(lnext(cur));
+		Rel	*other_rel = (Rel *) lfirst(lnext(cur));
 
-			if (same(rel->relids, other_rel->relids))
-			{
-				rel->pathlist = add_pathlist(rel,
-											 rel->pathlist,
-											 other_rel->pathlist);
-				lnext(cur) = lnext(lnext(cur)); /* delete it */
-			}
-			cur = lnext(cur);
+		if (same(rel->relids, other_rel->relids))
+		{
+			rel->pathlist = add_pathlist(rel,
+										 rel->pathlist,
+										 other_rel->pathlist);
+			lnext(cur) = lnext(lnext(cur)); /* delete it */
 		}
+		cur = lnext(cur);
 	}
 	return return_list;
 }

@@ -77,15 +77,15 @@ timetravel()
 
 	/* Called by trigger manager ? */
 	if (!CurrentTriggerData)
-		elog(WARN, "timetravel: triggers are not initialized");
+		elog(ERROR, "timetravel: triggers are not initialized");
 	
 	/* Should be called for ROW trigger */
 	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
-		elog(WARN, "timetravel: can't process STATEMENT events");
+		elog(ERROR, "timetravel: can't process STATEMENT events");
 	
 	/* Should be called BEFORE */
 	if (TRIGGER_FIRED_AFTER(CurrentTriggerData->tg_event))
-		elog(WARN, "timetravel: must be fired before event");
+		elog(ERROR, "timetravel: must be fired before event");
 
 	/* INSERT ? */
 	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
@@ -112,7 +112,7 @@ timetravel()
 	trigger = CurrentTriggerData->tg_trigger;
 
 	if (trigger->tgnargs != 2)
-		elog(WARN, "timetravel (%s): invalid (!= 2) number of arguments %d", 
+		elog(ERROR, "timetravel (%s): invalid (!= 2) number of arguments %d", 
 				relname, trigger->tgnargs);
 	
 	args = trigger->tgargs;
@@ -130,9 +130,9 @@ timetravel()
 	{
 		attnum[i] = SPI_fnumber (tupdesc, args[i]);
 		if ( attnum[i] < 0 )
-			elog(WARN, "timetravel (%s): there is no attribute %s", relname, args[i]);
+			elog(ERROR, "timetravel (%s): there is no attribute %s", relname, args[i]);
 		if (SPI_gettypeid (tupdesc, attnum[i]) != ABSTIMEOID)
-			elog(WARN, "timetravel (%s): attributes %s and %s must be of abstime type", 
+			elog(ERROR, "timetravel (%s): attributes %s and %s must be of abstime type", 
 					relname, args[0], args[1]);
 	}
 	
@@ -155,7 +155,7 @@ timetravel()
 		{
 			if ((chnattrs == 0 && DatumGetInt32 (oldon) >= NOEND_ABSTIME) || 
 				(chnattrs > 0 && DatumGetInt32 (newvals[0]) >= NOEND_ABSTIME))
-				elog (WARN, "timetravel (%s): %s ge %s", 
+				elog (ERROR, "timetravel (%s): %s ge %s", 
 						relname, args[0], args[1]);
 			newvals[chnattrs] = NOEND_ABSTIME;
 			chattrs[chnattrs] = attnum[1];
@@ -167,7 +167,7 @@ timetravel()
 										DatumGetInt32 (oldoff)) || 
 				(chnattrs > 0 && DatumGetInt32 (newvals[0]) >= 
 										DatumGetInt32 (oldoff)))
-				elog (WARN, "timetravel (%s): %s ge %s", 
+				elog (ERROR, "timetravel (%s): %s ge %s", 
 						relname, args[0], args[1]);
 		}
 		
@@ -182,11 +182,11 @@ timetravel()
 	
 	oldon = SPI_getbinval (trigtuple, tupdesc, attnum[0], &isnull);
 	if (isnull)
-		elog(WARN, "timetravel (%s): %s must be NOT NULL", relname, args[0]);
+		elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[0]);
 	
 	oldoff = SPI_getbinval (trigtuple, tupdesc, attnum[1], &isnull);
 	if (isnull)
-		elog(WARN, "timetravel (%s): %s must be NOT NULL", relname, args[1]);
+		elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[1]);
 	/*
 	 * If DELETE/UPDATE of tuple with stop_date neq INFINITY
 	 * then say upper Executor to skip operation for this tuple
@@ -195,13 +195,13 @@ timetravel()
 	{
 		newon = SPI_getbinval (newtuple, tupdesc, attnum[0], &isnull);
 		if (isnull)
-			elog(WARN, "timetravel (%s): %s must be NOT NULL", relname, args[0]);
+			elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[0]);
 		newoff = SPI_getbinval (newtuple, tupdesc, attnum[1], &isnull);
 		if (isnull)
-			elog(WARN, "timetravel (%s): %s must be NOT NULL", relname, args[1]);
+			elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[1]);
 		
 		if ( oldon != newon || oldoff != newoff )
-			elog (WARN, "timetravel (%s): you can't change %s and/or %s columns (use set_timetravel)",
+			elog (ERROR, "timetravel (%s): you can't change %s and/or %s columns (use set_timetravel)",
 					relname, args[0], args[1]);
 		
 		if ( newoff != NOEND_ABSTIME )
@@ -220,7 +220,7 @@ timetravel()
 	
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
-		elog(WARN, "timetravel (%s): SPI_connect returned %d", relname, ret);
+		elog(ERROR, "timetravel (%s): SPI_connect returned %d", relname, ret);
 	
 	/* Fetch tuple values and nulls */
 	cvals = (Datum *) palloc (natts * sizeof (Datum));
@@ -278,7 +278,7 @@ timetravel()
 		/* Prepare plan for query */
 		pplan = SPI_prepare(sql, natts, ctypes);
 		if (pplan == NULL)
-			elog(WARN, "timetravel (%s): SPI_prepare returned %d", relname, SPI_result);
+			elog(ERROR, "timetravel (%s): SPI_prepare returned %d", relname, SPI_result);
 		
 		/*
 		 * Remember that SPI_prepare places plan in current memory context
@@ -287,7 +287,7 @@ timetravel()
 		 */
 		pplan = SPI_saveplan(pplan);
 		if (pplan == NULL)
-			elog(WARN, "timetravel (%s): SPI_saveplan returned %d", relname, SPI_result);
+			elog(ERROR, "timetravel (%s): SPI_saveplan returned %d", relname, SPI_result);
 		
 		plan->splan = pplan;
 	}
@@ -298,7 +298,7 @@ timetravel()
 	ret = SPI_execp(plan->splan, cvals, cnulls, 0);
 	
 	if (ret < 0)
-		elog(WARN, "timetravel (%s): SPI_execp returned %d", relname, ret);
+		elog(ERROR, "timetravel (%s): SPI_execp returned %d", relname, ret);
 	
 	/* Tuple to return to upper Executor ... */
 	if (newtuple)									/* UPDATE */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.1 1998/01/05 18:42:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.2 1998/01/06 18:52:03 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -410,7 +410,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		 * pg_database table, there is still additional permissions
 		 * checking in dbcommands.c
 		 */
-		if (mode & ACL_AP)
+		if ((mode & ACL_WR) || (mode & ACL_AP))
 			return ACLCHECK_OK;
 	}
 

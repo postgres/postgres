@@ -110,13 +110,13 @@ int8in(char *str)
 
 #if HAVE_64BIT_INTS
 	if (!PointerIsValid(str))
-		elog(WARN, "Bad (null) int8 external representation", NULL);
+		elog(ERROR, "Bad (null) int8 external representation", NULL);
 
 	if (sscanf(str, INT64_FORMAT, result) != 1)
-		elog(WARN, "Bad int8 external representation '%s'", str);
+		elog(ERROR, "Bad int8 external representation '%s'", str);
 
 #else
-	elog(WARN, "64-bit integers are not supported", NULL);
+	elog(ERROR, "64-bit integers are not supported", NULL);
 	result = NULL;
 #endif
 
@@ -139,14 +139,14 @@ int8out(int64 * val)
 		return (NULL);
 
 	if ((len = snprintf(buf, MAXINT8LEN, INT64_FORMAT, *val)) < 0)
-		elog(WARN, "Unable to format int8", NULL);
+		elog(ERROR, "Unable to format int8", NULL);
 
 	result = PALLOC(len + 1);
 
 	strcpy(result, buf);
 
 #else
-	elog(WARN, "64-bit integers are not supported", NULL);
+	elog(ERROR, "64-bit integers are not supported", NULL);
 	result = NULL;
 #endif
 
@@ -328,10 +328,10 @@ int84(int64 * val)
 	int32		result;
 
 	if (!PointerIsValid(val))
-		elog(WARN, "Invalid (null) int64, can't convert int8 to int4", NULL);
+		elog(ERROR, "Invalid (null) int64, can't convert int8 to int4", NULL);
 
 	if ((*val < INT_MIN) || (*val > INT_MAX))
-		elog(WARN, "int8 conversion to int4 is out of range", NULL);
+		elog(ERROR, "int8 conversion to int4 is out of range", NULL);
 
 	result = *val;
 
@@ -345,7 +345,7 @@ int28		(int16 val)
 	int64	   *result;
 
 	if (!PointerIsValid(result = PALLOCTYPE(int64)))
-		elog(WARN, "Memory allocation failed, can't convert int8 to int2", NULL);
+		elog(ERROR, "Memory allocation failed, can't convert int8 to int2", NULL);
 
 	*result = val;
 
@@ -358,7 +358,7 @@ int82(int64 * val)
 	int16		result;
 
 	if (!PointerIsValid(val))
-		elog(WARN, "Invalid (null) int8, can't convert to int2", NULL);
+		elog(ERROR, "Invalid (null) int8, can't convert to int2", NULL);
 
 	result = *val;
 
@@ -383,7 +383,7 @@ dtoi8(float64 val)
 	int64	   *result = PALLOCTYPE(int64);
 
 	if ((*val < (-pow(2, 64) + 1)) || (*val > (pow(2, 64) - 1)))
-		elog(WARN, "Floating point conversion to int64 is out of range", NULL);
+		elog(ERROR, "Floating point conversion to int64 is out of range", NULL);
 
 	*result = *val;
 

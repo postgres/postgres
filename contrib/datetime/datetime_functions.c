@@ -47,23 +47,23 @@ hhmm_in(char *str)
     int ftype[MAXDATEFIELDS];
 
     if (!PointerIsValid(str))
-        elog(WARN,"Bad (null) time external representation",NULL);
+        elog(ERROR,"Bad (null) time external representation",NULL);
 
     if ((ParseDateTime( str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
      || (DecodeTimeOnly( field, ftype, nf, &dtype, tm, &fsec) != 0))
-        elog(WARN,"Bad time external representation '%s'",str);
+        elog(ERROR,"Bad time external representation '%s'",str);
 
     if (tm->tm_hour<0 || tm->tm_hour>24 || 
 	(tm->tm_hour==24 && (tm->tm_min!=0 || tm->tm_sec!=0 || fsec!= 0))) {
-        elog(WARN,
+        elog(ERROR,
 	     "time_in: hour must be limited to values 0 through 24:00 "
 	     "in \"%s\"",
 	     str);
     }
     if ((tm->tm_min < 0) || (tm->tm_min > 59))
-	elog(WARN,"Minute must be limited to values 0 through 59 in '%s'",str);
+	elog(ERROR,"Minute must be limited to values 0 through 59 in '%s'",str);
     if ((tm->tm_sec < 0) || ((tm->tm_sec + fsec) >= 60))
-	elog(WARN,"Second must be limited to values 0 through < 60 in '%s'",
+	elog(ERROR,"Second must be limited to values 0 through < 60 in '%s'",
 	     str);
 
     time = PALLOCTYPE(TimeADT);

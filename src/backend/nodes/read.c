@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.6 1998/01/05 03:31:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.7 1998/01/06 18:52:18 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -94,7 +94,7 @@ nodeTokenType(char *token, int length)
 
 		retval = (*token != '.') ? T_Integer : T_Float;
 	}
-	else if (isalpha(*token))
+	else if (isalpha(*token) || *token == '_')
 		retval = ATOM_TOKEN;
 	else if (*token == '(')
 		retval = LEFT_PAREN;
@@ -145,8 +145,12 @@ lsptok(char *string, int *length)
 
 	if (*local_str == '\"')
 	{
-		for (local_str++; *local_str != '\"'; (*length)++, local_str++);
-		(*length)++;
+		for (local_str++; *local_str != '\"'; (*length)++, local_str++)
+			;
+		if (*length == 2)
+			*length -= 2;	/* if "", return zero length */
+		else
+			(*length)++;
 		local_str++;
 	}
 	else if (*local_str == ')' || *local_str == '(' ||
@@ -225,12 +229,12 @@ nodeRead(bool read_car_only)
 		case AT_SYMBOL:
 			break;
 		case ATOM_TOKEN:
-			if (!strncmp(token, "nil", 3))
+			if (!strncmp(token, "\"\"", 2))
 			{
 				this_value = NULL;
 
 				/*
-				 * It might be "nil" but it is an atom!
+				 * It might be NULL but it is an atom!
 				 */
 				if (read_car_only)
 				{
@@ -283,6 +287,7 @@ nodeRead(bool read_car_only)
 		List	   *l = makeNode(List);
 
 		lfirst(l) = this_value;
+
 		if (!read_car_only)
 		{
 			lnext(l) = nodeRead(false);
