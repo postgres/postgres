@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.1 2004/07/01 00:49:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.2 2004/08/22 02:41:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "access/subtrans.h"
 #include "miscadmin.h"
 #include "storage/lwlock.h"
+#include "utils/tqual.h"
 
 
 /*
@@ -113,6 +114,9 @@ SubTransGetParent(TransactionId xid)
 	TransactionId *ptr;
 	TransactionId	parent;
 
+	/* Can't ask about stuff that might not be around anymore */
+	Assert(TransactionIdFollowsOrEquals(xid, RecentXmin));
+
 	/* Bootstrap and frozen XIDs have no parent */
 	if (!TransactionIdIsNormal(xid))
 		return InvalidTransactionId;
@@ -133,6 +137,13 @@ SubTransGetParent(TransactionId xid)
  * SubTransGetTopmostTransaction
  *
  * Returns the topmost transaction of the given transaction id.
+ *
+ * Because we cannot look back further than RecentXmin, it is possible
+ * that this function will lie and return an intermediate subtransaction ID
+ * instead of the true topmost parent ID.  This is OK, because in practice
+ * we only care about detecting whether the topmost parent is still running
+ * or is part of a current snapshot's list of still-running transactions.
+ * Therefore, any XID before RecentXmin is as good as any other.
  */
 TransactionId
 SubTransGetTopmostTransaction(TransactionId xid)
@@ -140,9 +151,14 @@ SubTransGetTopmostTransaction(TransactionId xid)
 	TransactionId parentXid = xid,
 				  previousXid = xid;
 
+	/* Can't ask about stuff that might not be around anymore */
+	Assert(TransactionIdFollowsOrEquals(xid, RecentXmin));
+
 	while (TransactionIdIsValid(parentXid))
 	{
 		previousXid = parentXid;
+		if (TransactionIdPrecedes(parentXid, RecentXmin))
+			break;
 		parentXid = SubTransGetParent(parentXid);
 	}
 
@@ -151,30 +167,6 @@ SubTransGetTopmostTransaction(TransactionId xid)
 	return previousXid;
 }
 
-/*
- * SubTransXidsHaveCommonAncestor
- *
- * Returns true iff the Xids have a common ancestor
- */
-bool
-SubTransXidsHaveCommonAncestor(TransactionId xid1, TransactionId xid2)
-{
-	if (TransactionIdEquals(xid1, xid2))
-		return true;
-
-	while (TransactionIdIsValid(xid1) && TransactionIdIsValid(xid2))
-	{
-		if (TransactionIdPrecedes(xid2, xid1))
-			xid1 = SubTransGetParent(xid1);
-		else
-			xid2 = SubTransGetParent(xid2);
-
-		if (TransactionIdEquals(xid1, xid2))
-			return true;
-	}
-
-	return false;
-}
 
 /*
  * Initialization of shared memory for Subtrans

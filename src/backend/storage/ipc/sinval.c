@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.68 2004/08/15 17:03:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.69 2004/08/22 02:41:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -526,7 +526,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	/*
 	 * Don't bother checking a very old transaction.
 	 */
-	if (TransactionIdPrecedes(xid, RecentGlobalXmin))
+	if (TransactionIdPrecedes(xid, RecentXmin))
 	{
 		xc_by_recent_xmin_inc();
 		return false;
@@ -912,6 +912,7 @@ CountActiveBackends(void)
 	return count;
 }
 
+#ifdef NOT_USED
 /*
  * GetUndoRecPtr -- returns oldest PGPROC->logRec.
  */
@@ -947,6 +948,7 @@ GetUndoRecPtr(void)
 
 	return (urec);
 }
+#endif /* NOT_USED */
 
 /*
  * BackendIdGetProc - given a BackendId, find its PGPROC structure

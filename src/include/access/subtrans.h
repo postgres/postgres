@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/subtrans.h,v 1.1 2004/07/01 00:51:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/subtrans.h,v 1.2 2004/08/22 02:41:58 tgl Exp $
  */
 #ifndef SUBTRANS_H
 #define SUBTRANS_H
@@ -20,7 +20,6 @@
 extern void SubTransSetParent(TransactionId xid, TransactionId parent);
 extern TransactionId SubTransGetParent(TransactionId xid);
 extern TransactionId SubTransGetTopmostTransaction(TransactionId xid);
-extern bool SubTransXidsHaveCommonAncestor(TransactionId xid1, TransactionId xid2);
 
 extern int	SUBTRANSShmemSize(void);
 extern void SUBTRANSShmemInit(void);

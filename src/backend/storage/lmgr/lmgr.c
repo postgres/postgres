@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.66 2004/07/28 14:23:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.67 2004/08/22 02:41:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,7 +345,7 @@ XactLockTableWait(TransactionId xid)
 	LOCKTAG		tag;
 	TransactionId myxid = GetTopTransactionId();
 
-	Assert(!SubTransXidsHaveCommonAncestor(xid, myxid));
+	Assert(!TransactionIdEquals(xid, myxid));
 
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = XactLockTableId;

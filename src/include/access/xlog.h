@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.54 2004/07/21 22:31:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.55 2004/08/22 02:41:58 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -134,10 +134,5 @@ extern void InitXLOGAccess(void);
 extern void CreateCheckPoint(bool shutdown, bool force);
 extern void XLogPutNextOid(Oid nextOid);
 extern XLogRecPtr GetRedoRecPtr(void);
-
-/* in storage/ipc/sinval.c, but don't want to declare in sinval.h because
- * we'd have to include xlog.h into that ...
- */
-extern XLogRecPtr GetUndoRecPtr(void);
 
 #endif   /* XLOG_H */
