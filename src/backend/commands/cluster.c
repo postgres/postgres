@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.39 1999/05/25 16:08:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.40 1999/07/15 15:18:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,6 @@
 #include <commands/command.h>
 #include <utils/builtins.h>
 #include <utils/excid.h>
-#include <utils/mcxt.h>
 #include <catalog/pg_proc.h>
 #include <catalog/pg_class.h>
 #include <optimizer/internal.h>

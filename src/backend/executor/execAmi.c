@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.36 1999/07/13 21:17:31 momjian Exp $
+ *	$Id: execAmi.c,v 1.37 1999/07/15 15:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 
 #include "executor/executor.h"
 #include "storage/smgr.h"
-#include "utils/mcxt.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeIndexscan.h"
 #include "executor/nodeSort.h"

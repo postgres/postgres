@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.19 1999/05/25 16:14:57 momjian Exp $
+ * $Id: psort.h,v 1.20 1999/07/15 15:21:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,6 @@ typedef struct Psortstate
 } Psortstate;
 
 #ifdef	EBUG
-#include "utils/elog.h"
 #include "storage/buf.h"
 #include "storage/bufmgr.h"
 

@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: keys.h,v 1.15 1999/05/25 22:43:09 momjian Exp $
+ * $Id: keys.h,v 1.16 1999/07/15 15:21:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef KEYS_H
 #define KEYS_H
 
-#include "nodes/nodes.h"
 #include "nodes/relation.h"
 
 extern bool match_indexkey_operand(int indexkey, Var *operand, RelOptInfo *rel);

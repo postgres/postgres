@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.18 1999/05/25 16:14:49 momjian Exp $
+ * $Id: array.h,v 1.19 1999/07/15 15:21:38 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array
@@ -23,6 +23,7 @@
 #define ARRAY_H
 
 #include <stdio.h>
+#include "utils/memutils.h"
 
 typedef struct
 {
@@ -97,11 +98,7 @@ typedef struct
  *------------------------------------------------------------------------
  */
 
-/* #if defined(irix5) */
-/* #define RETURN_NULL {*isNull = true; return(0); }*/
- /* #else *//* irix5 */
 #define RETURN_NULL {*isNull = true; return(0); }
- /* #endif *//* irix5 */
 #define NAME_LEN	30
 #define MAX_BUFF_SIZE BLCKSZ
 

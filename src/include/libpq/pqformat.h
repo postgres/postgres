@@ -5,14 +5,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqformat.h,v 1.4 1999/05/25 16:14:01 momjian Exp $
+ * $Id: pqformat.h,v 1.5 1999/07/15 15:21:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PQFORMAT_H
 #define PQFORMAT_H
 
-#include "postgres.h"
 #include "lib/stringinfo.h"
 
 #define pq_beginmessage(buf)  initStringInfo(buf)

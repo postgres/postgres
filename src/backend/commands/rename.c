@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.25 1999/05/25 16:08:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.26 1999/07/15 15:18:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 #include <commands/command.h>
 #include <storage/bufmgr.h>
 #include <utils/excid.h>
-#include <utils/mcxt.h>
 #include <catalog/pg_proc.h>
 #include <catalog/pg_class.h>
 #include <optimizer/internal.h>

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.14 1999/02/13 23:20:57 momjian Exp $
+ * $Id: rtree.h,v 1.15 1999/07/15 15:20:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,10 +17,6 @@
 #include <access/itup.h>
 #include <access/relscan.h>
 #include <access/sdir.h>
-#include <access/skey.h>
-#include <access/strat.h>
-#include <storage/block.h>
-#include <storage/off.h>
 
 /* see rtstrat.c for what all this is about */
 #define RTNStrategies					8

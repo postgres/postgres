@@ -16,12 +16,6 @@
 #include <access/itup.h>
 #include <access/relscan.h>
 #include <access/sdir.h>
-#include <storage/page.h>
-#include <storage/block.h>
-#include <utils/rel.h>
-#include <storage/off.h>
-
-#include <fmgr.h>
 
 /*
 ** You can have as many strategies as you please in GiSTs, as

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.56 1999/06/29 04:54:47 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.57 1999/07/15 15:19:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,6 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
-#include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "executor/execdebug.h" /* for NDirectFileRead */

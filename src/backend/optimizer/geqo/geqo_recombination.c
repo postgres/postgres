@@ -3,7 +3,7 @@
 * geqo_recombination.c
 *	 misc recombination procedures
 *
-* $Id: geqo_recombination.c,v 1.8 1999/07/14 01:19:53 momjian Exp $
+* $Id: geqo_recombination.c,v 1.9 1999/07/15 15:19:15 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -24,8 +24,6 @@
 #include "nodes/relation.h"
 #include "nodes/primnodes.h"
 
-#include "utils/palloc.h"
-#include "utils/elog.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/paths.h"
@@ -38,7 +36,6 @@
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
 
-#include "utils/mcxt.h"
 
 /*
  * init_tour

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.42 1999/06/06 20:19:35 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.43 1999/07/15 15:19:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,7 @@
 #include "utils/memutils.h"
 #include "access/xact.h"
 #include "utils/tqual.h"
+#include "access/transam.h"
 
 /* shared memory global variables */
 

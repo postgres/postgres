@@ -6,7 +6,6 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "access/xact.h"
-#include "utils/mcxt.h"
 
 time_t
 timestamp_in(const char *timestamp_str)

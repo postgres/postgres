@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.115 1999/06/03 04:01:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.116 1999/07/15 15:20:44 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -67,6 +67,8 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_trigger.h"
+#include "access/attnum.h"
+
 #include "libpq-fe.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.16 1999/05/25 22:43:05 momjian Exp $
+ * $Id: geqo.h,v 1.17 1999/07/15 15:21:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,6 @@
 #ifndef GEQO_H
 #define GEQO_H
 
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
 #include "nodes/relation.h"
 #include "optimizer/geqo_gene.h"
 

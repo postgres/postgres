@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.14 1999/07/14 01:19:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.15 1999/07/15 15:18:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include <access/iqual.h>
 #include <access/rtree.h>
 #include <storage/bufpage.h>
-#include <utils/mcxt.h>
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>

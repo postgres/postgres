@@ -6,15 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeUnique.h,v 1.8 1999/02/13 23:21:29 momjian Exp $
+ * $Id: nodeUnique.h,v 1.9 1999/07/15 15:21:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODEUNIQUE_H
 #define NODEUNIQUE_H
 
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 
 extern TupleTableSlot *ExecUnique(Unique *node);

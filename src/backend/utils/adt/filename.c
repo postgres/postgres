@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.18 1999/07/14 01:20:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.19 1999/07/15 15:20:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "postgres.h"
 #include <miscadmin.h>
 #include "utils/builtins.h"		/* where function declarations go */
-#include "utils/mcxt.h"
 
 char *
 filename_in(char *file)

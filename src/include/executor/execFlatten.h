@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execFlatten.h,v 1.8 1999/02/13 23:21:22 momjian Exp $
+ * $Id: execFlatten.h,v 1.9 1999/07/15 15:21:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 
 #include "nodes/relation.h"
 #include "nodes/execnodes.h"
-#include "nodes/parsenodes.h"
 
 extern Datum ExecEvalIter(Iter *iterNode, ExprContext *econtext, bool *resultIsNull, bool *iterIsDone);
 

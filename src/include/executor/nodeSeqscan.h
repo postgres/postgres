@@ -6,15 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSeqscan.h,v 1.8 1999/02/13 23:21:28 momjian Exp $
+ * $Id: nodeSeqscan.h,v 1.9 1999/07/15 15:21:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODESEQSCAN_H
 #define NODESEQSCAN_H
 
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 
 extern TupleTableSlot *ExecSeqScan(SeqScan *node);

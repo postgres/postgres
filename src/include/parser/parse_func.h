@@ -6,18 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.16 1999/06/17 22:21:40 tgl Exp $
+ * $Id: parse_func.h,v 1.17 1999/07/15 15:21:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSER_FUNC_H
 #define PARSER_FUNC_H
 
-#include <nodes/nodes.h>
-#include <nodes/pg_list.h>
-#include <nodes/parsenodes.h>
-#include <nodes/primnodes.h>
-#include <parser/parse_func.h>
 #include <parser/parse_node.h>
 
 

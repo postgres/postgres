@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.41 1999/07/14 01:19:42 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.42 1999/07/15 15:18:41 momjian Exp $
  *
  * NOTES
  *
@@ -53,8 +53,8 @@
 
 #include "access/nbtree.h"
 #include "storage/bufpage.h"
+#include "storage/bufmgr.h"
 #include "utils/memutils.h"
-#include "utils/mcxt.h"
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>

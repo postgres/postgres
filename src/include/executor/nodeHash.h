@@ -6,19 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHash.h,v 1.13 1999/05/25 16:13:55 momjian Exp $
+ * $Id: nodeHash.h,v 1.14 1999/07/15 15:21:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODEHASH_H
 #define NODEHASH_H
 
-#include "executor/hashjoin.h"
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h"
-#include "nodes/pg_list.h"
 #include "nodes/plannodes.h"
-#include "utils/syscache.h"
 
 extern TupleTableSlot *ExecHash(Hash *node);
 extern bool ExecInitHash(Hash *node, EState *estate, Plan *parent);

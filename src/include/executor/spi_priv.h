@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface private declarations
  *
- * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.5 1999/07/14 01:20:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.6 1999/07/15 15:21:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -11,8 +11,6 @@
 #define SPI_PRIV_H
 
 #include "executor/spi.h"
-#include "catalog/pg_type.h"
-#include "access/printtup.h"
 
 typedef struct
 {

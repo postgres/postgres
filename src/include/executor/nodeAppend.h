@@ -6,15 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeAppend.h,v 1.10 1999/02/13 23:21:25 momjian Exp $
+ * $Id: nodeAppend.h,v 1.11 1999/07/15 15:21:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODEAPPEND_H
 #define NODEAPPEND_H
 
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 
 extern bool ExecInitAppend(Append *node, EState *estate, Plan *parent);

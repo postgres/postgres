@@ -6,16 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.17 1999/05/25 22:43:10 momjian Exp $
+ * $Id: pathnode.h,v 1.18 1999/07/15 15:21:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PATHNODE_H
 #define PATHNODE_H
 
-#include "nodes/nodes.h"
 #include "nodes/relation.h"
-#include "nodes/parsenodes.h"
 
 /*
  * prototypes for pathnode.c

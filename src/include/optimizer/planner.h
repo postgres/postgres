@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planner.h,v 1.11 1999/05/13 07:29:11 tgl Exp $
+ * $Id: planner.h,v 1.12 1999/07/15 15:21:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
-#include "parser/parse_node.h"
 
 extern Plan *planner(Query *parse);
 extern Plan *union_planner(Query *parse);

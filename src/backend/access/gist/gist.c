@@ -14,6 +14,7 @@
 #include <postgres.h>
 
 #include <fmgr.h>
+#include <catalog/pg_index.h>
 #include <access/genam.h>
 #include <access/gist.h>
 #include <access/gistscan.h>

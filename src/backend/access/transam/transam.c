@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.27 1999/06/10 14:17:06 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.28 1999/07/15 15:18:44 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -21,7 +21,6 @@
 #include <access/transam.h>
 #include <access/xact.h>
 #include <access/heapam.h>
-#include <utils/mcxt.h>
 #include <catalog/catname.h>
 #include <storage/spin.h>
 #include <commands/vacuum.h>

@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.30 1999/05/25 22:42:54 momjian Exp $
+ * $Id: execnodes.h,v 1.31 1999/07/15 15:21:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECNODES_H
 #define EXECNODES_H
 
-#include <nodes/memnodes.h>
 #include <nodes/primnodes.h>
 #include <executor/hashjoin.h>
 #include <access/relscan.h>

@@ -6,15 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeIndexscan.h,v 1.8 1999/02/13 23:21:26 momjian Exp $
+ * $Id: nodeIndexscan.h,v 1.9 1999/07/15 15:21:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODEINDEXSCAN_H
 #define NODEINDEXSCAN_H
 
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 
 extern TupleTableSlot *ExecIndexScan(IndexScan *node);

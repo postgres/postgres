@@ -6,15 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.16 1999/05/26 12:56:50 momjian Exp $
+ * $Id: rewriteManip.h,v 1.17 1999/07/15 15:21:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef REWRITEMANIP_H
 #define REWRITEMANIP_H
 
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
 #include "rewrite/rewriteHandler.h"
 
 /* RewriteManip.c */

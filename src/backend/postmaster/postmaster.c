@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.108 1999/07/07 17:17:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.109 1999/07/15 15:19:38 momjian Exp $
  *
  * NOTES
  *
@@ -89,9 +89,7 @@
 #include "tcop/tcopprot.h"
 #include "commands/async.h"
 #include "nodes/nodes.h"
-#include "utils/mcxt.h"
 #include "storage/proc.h"
-#include "utils/elog.h"
 #ifndef HAVE_GETHOSTNAME
 #include "port-protos.h"		/* For gethostname() */
 #endif

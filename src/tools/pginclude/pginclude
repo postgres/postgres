@@ -1,0 +1,20 @@
+:
+trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a" 0 1 2 3 15
+find . \( -name CVS -a -prune \) -o -name '*.[ch]' -type f -print | while read FILE
+do
+	sed 's/->[a-zA-Z0-9_\.]*//g' "$FILE" >/tmp/$$a
+	echo "#include \"postgres.h\"" >/tmp/$$.c
+	echo "#include \"/tmp/$$a\"" >>/tmp/$$.c
+	echo "void main() {" >>/tmp/$$.c
+	pgdefine "$FILE" >>/tmp/$$.c
+	echo "}" >>/tmp/$$.c
+	cc -Werror -Wall -I/pg/include -I/pg/backend -c /tmp/$$.c -o /tmp/$$.o >/tmp/$$ 2>&1
+	if [ "$?" -ne 0 ]
+	then	echo "$FILE"
+		if [ "$1" = "-v" ]
+		then	cat /tmp/$$
+			nl /tmp/$$.c
+			echo
+		fi
+	fi
+done

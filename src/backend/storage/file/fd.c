@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.44 1999/07/14 01:19:53 momjian Exp $
+ *	  $Id: fd.c,v 1.45 1999/07/15 15:19:47 momjian Exp $
  *
  * NOTES:
  *
@@ -49,10 +49,7 @@
 
 #include "postgres.h"
 #include "miscadmin.h"			/* for DataDir */
-#include "utils/palloc.h"
 #include "storage/fd.h"
-#include "utils/elog.h"
-#include "utils/mcxt.h"
 
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.

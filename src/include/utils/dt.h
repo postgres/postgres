@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.40 1999/05/25 16:14:53 momjian Exp $
+ * $Id: dt.h,v 1.41 1999/07/15 15:21:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include <time.h>
 #include <math.h>
+#include <limits.h>
 
 /*
  * DateTime represents absolute time.

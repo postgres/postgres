@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.19 1999/02/13 23:21:03 momjian Exp $
+ * $Id: indexing.h,v 1.20 1999/07/15 15:20:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #define INDEXING_H
 
 #include <access/htup.h>
-#include <utils/rel.h>
 
 /*
  * Some definitions for indices on pg_attribute

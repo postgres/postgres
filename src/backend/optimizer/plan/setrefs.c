@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.50 1999/06/06 17:38:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.51 1999/07/15 15:19:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
 
-#include "utils/elog.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/makefuncs.h"
 

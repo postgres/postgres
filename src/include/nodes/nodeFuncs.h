@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeFuncs.h,v 1.8 1999/02/13 23:21:38 momjian Exp $
+ * $Id: nodeFuncs.h,v 1.9 1999/07/15 15:21:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODEFUNCS_H
 #define NODEFUNCS_H
 
-#include <nodes/nodes.h>
 #include <nodes/primnodes.h>
 
 extern bool single_node(Node *node);

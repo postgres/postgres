@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.21 1999/05/25 22:41:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.22 1999/07/15 15:19:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include "nodes/pg_list.h"
 #include "nodes/nodes.h"
 #include "nodes/relation.h"
-#include "utils/elog.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/keys.h"

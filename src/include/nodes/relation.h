@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.32 1999/05/25 22:43:01 momjian Exp $
+ * $Id: relation.h,v 1.33 1999/07/15 15:21:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,6 @@
 #define RELATION_H
 
 #include <nodes/parsenodes.h>
-#include <nodes/primnodes.h>
 
 /*
  * Relids

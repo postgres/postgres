@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.36 1999/05/25 16:08:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.37 1999/07/15 15:19:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,6 @@
 #include "access/skey.h"
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
 #include "catalog/index.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"

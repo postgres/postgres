@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.60 1999/05/25 16:07:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.61 1999/07/15 15:18:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@
 #include "utils/geo_decls.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
-#include "utils/mcxt.h"
 #include "utils/nabstime.h"
 #include "utils/portal.h"
 #include "utils/rel.h"

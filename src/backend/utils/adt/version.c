@@ -5,7 +5,7 @@
  *
  * IDENTIFICATION
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.7 1999/07/14 01:20:08 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.8 1999/07/15 15:20:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include "postgres.h"
 #include "version.h"
 
-#include "utils/mcxt.h"
 
 text	   *version(void);
 

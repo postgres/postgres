@@ -7,8 +7,6 @@
 #ifndef NODESUBPLAN_H
 #define NODESUBPLAN_H
 
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 
 extern Datum ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext);

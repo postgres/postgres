@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.24 1999/05/25 16:12:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.25 1999/07/15 15:20:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_selection.c,v 1.7 1999/02/13 23:16:13 momjian Exp $
+ * $Id: geqo_selection.c,v 1.8 1999/07/15 15:19:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,6 @@
 #include "nodes/relation.h"
 #include "nodes/primnodes.h"
 
-#include "utils/palloc.h"
-#include "utils/elog.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/paths.h"

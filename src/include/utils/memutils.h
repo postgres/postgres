@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.29 1999/07/14 01:20:29 momjian Exp $
+ * $Id: memutils.h,v 1.30 1999/07/15 15:21:41 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -30,7 +30,6 @@
  *	This is not needed by this include file, but by almost every file
  *	that includes this file.
  */
-#include "utils/mcxt.h"
 
 /* ----------------
  * Alignment macros: align a length or address appropriately for a given type.

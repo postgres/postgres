@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.12 1999/05/26 12:57:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.13 1999/07/15 15:21:50 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -47,7 +47,6 @@
 
 #include "executor/spi.h"
 #include "commands/trigger.h"
-#include "utils/elog.h"
 #include "utils/builtins.h"
 #include "fmgr.h"
 #include "access/heapam.h"

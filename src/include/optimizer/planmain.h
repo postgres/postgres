@@ -6,16 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.28 1999/06/06 17:38:09 tgl Exp $
+ * $Id: planmain.h,v 1.29 1999/07/15 15:21:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PLANMAIN_H
 #define PLANMAIN_H
 
-#include "nodes/nodes.h"
 #include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
 #include "nodes/relation.h"
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.6 1999/07/03 15:43:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.7 1999/07/15 15:20:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
-#include "utils/mcxt.h"
 #include "utils/temprel.h"
 #include "access/xact.h"
 #include "access/htup.h"

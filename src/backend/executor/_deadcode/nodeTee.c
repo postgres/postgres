@@ -14,7 +14,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *	$Id: nodeTee.c,v 1.3 1999/05/25 22:41:04 momjian Exp $
+ *	$Id: nodeTee.c,v 1.4 1999/07/15 15:19:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,7 @@
 #include <sys/file.h>
 #include "postgres.h"
 
-#include "utils/palloc.h"
 #include "utils/relcache.h"
-#include "utils/mcxt.h"
 #include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "optimizer/internal.h"

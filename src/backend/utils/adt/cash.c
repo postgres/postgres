@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.29 1999/07/14 01:19:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.30 1999/07/15 15:20:11 momjian Exp $
  */
 
 #include <stdio.h>
@@ -22,7 +22,6 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/cash.h"
-#include "utils/mcxt.h"
 
 static const char *num_word(Cash value);
 

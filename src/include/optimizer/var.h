@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: var.h,v 1.7 1999/02/13 23:21:54 momjian Exp $
+ * $Id: var.h,v 1.8 1999/07/15 15:21:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef VAR_H
 #define VAR_H
 
-#include "nodes/nodes.h"
 #include "nodes/primnodes.h"
 
 extern List *pull_varnos(Node *me);

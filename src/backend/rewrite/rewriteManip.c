@@ -6,14 +6,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.33 1999/07/13 21:17:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.34 1999/07/15 15:19:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
 #include "nodes/pg_list.h"
-#include "utils/elog.h"
 #include "nodes/nodes.h"
 #include "nodes/relation.h"
 #include "nodes/primnodes.h"

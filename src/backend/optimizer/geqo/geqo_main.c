@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.16 1999/05/25 16:09:16 momjian Exp $
+ * $Id: geqo_main.c,v 1.17 1999/07/15 15:19:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,6 @@
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
 
-#include "utils/palloc.h"
-#include "utils/elog.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/paths.h"

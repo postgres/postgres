@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/predmig.c,v 1.4 1999/05/25 22:41:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/predmig.c,v 1.5 1999/07/15 15:19:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,9 +39,6 @@
 #include "nodes/nodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
-#include "utils/palloc.h"
-#include "utils/elog.h"
-#include "optimizer/xfunc.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/internal.h"
 #include "optimizer/cost.h"

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lselect.h,v 1.12 1999/02/13 23:22:24 momjian Exp $
+ * $Id: lselect.h,v 1.13 1999/07/15 15:21:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,6 @@
 
 #include <stdio.h>
 
-#include "access/skey.h"
-#include "access/tupdesc.h"
-#include "access/htup.h"
 #include "utils/syscache.h"
 
 struct leftist

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.61 1999/05/25 16:11:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.62 1999/07/15 15:20:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,6 @@
 #include "../backend/parser/parse.h"
 #include "utils/builtins.h"
 #include "utils/acl.h"
-#include "utils/palloc.h"
 #include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteDefine.h"
 #include "tcop/tcopdebug.h"

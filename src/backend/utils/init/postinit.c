@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.40 1999/05/25 16:12:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.41 1999/07/15 15:20:34 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -60,9 +60,6 @@
 
 #include "utils/exc.h"			/* for EnableExceptionHandling, etc. */
 #include "fmgr.h"				/* for EnableDynamicFunctionManager, etc. */
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"			/* for EnableMemoryContext, etc. */
 #include "utils/inval.h"
 
 #include "catalog/catname.h"

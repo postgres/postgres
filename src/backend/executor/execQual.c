@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.53 1999/06/12 19:22:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.54 1999/07/15 15:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@
 #include "utils/builtins.h"
 #include "utils/fcache.h"
 #include "utils/fcache2.h"
-#include "utils/mcxt.h"
 #include "utils/memutils.h"
 
 

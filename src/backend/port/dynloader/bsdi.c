@@ -19,7 +19,6 @@
 #include <dld.h>
 #include "postgres.h"
 #include "dynloader.h"
-#include "utils/elog.h"
 #include "fmgr.h"
 
 extern char *pg_pathname;

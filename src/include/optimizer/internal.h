@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.21 1999/07/07 09:27:28 momjian Exp $
+ * $Id: internal.h,v 1.22 1999/07/15 15:21:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef INTERNAL_H
 #define INTERNAL_H
+
+#include "catalog/pg_index.h"
 
 /*
  *		---------- SHARED MACROS

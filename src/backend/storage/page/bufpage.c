@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.23 1999/07/03 00:32:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.24 1999/07/15 15:19:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "storage/item.h"
 #include "storage/buf.h"
 #include "storage/bufmgr.h"
-#include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "storage/bufpage.h"
 

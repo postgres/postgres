@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.89 1999/07/08 02:46:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.90 1999/07/15 15:18:48 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -57,7 +57,6 @@
 #include "tcop/tcopprot.h"
 #include "utils/catcache.h"
 #include "utils/builtins.h"
-#include "utils/mcxt.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"

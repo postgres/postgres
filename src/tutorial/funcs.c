@@ -9,7 +9,6 @@
 #include <string.h>
 #include <stdio.h>
 #include "postgres.h"			/* for variable length type */
-#include "utils/palloc.h"		/* for palloc */
 #include "executor/executor.h"	/* for GetAttributeByName() */
 #include "utils/geo_decls.h"	/* for point type */
 

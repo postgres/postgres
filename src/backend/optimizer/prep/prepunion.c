@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.33 1999/06/10 06:55:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.34 1999/07/15 15:19:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 
-#include "utils/elog.h"
 #include "utils/lsyscache.h"
 
 #include "optimizer/internal.h"

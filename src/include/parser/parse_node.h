@@ -5,18 +5,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.12 1999/05/13 07:29:19 tgl Exp $
+ * $Id: parse_node.h,v 1.13 1999/07/15 15:21:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSE_NODE_H
 #define PARSE_NODE_H
 
-#include <nodes/nodes.h>
-#include <nodes/pg_list.h>
-#include <nodes/primnodes.h>
 #include <nodes/parsenodes.h>
-#include <parser/parse_type.h>
 #include <utils/rel.h>
 
 /* state information used during parse analysis */

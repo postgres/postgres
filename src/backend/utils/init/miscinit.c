@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.29 1999/05/25 16:12:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.30 1999/07/15 15:20:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,6 @@
 
 #include "utils/portal.h"		/* for EnablePortalManager, etc. */
 #include "utils/exc.h"			/* for EnableExceptionHandling, etc. */
-#include "utils/mcxt.h"			/* for EnableMemoryContext, etc. */
-#include "utils/elog.h"
 #include "utils/builtins.h"
 
 #include "miscadmin.h"			/* where the declarations go */

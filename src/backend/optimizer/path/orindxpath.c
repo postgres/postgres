@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.25 1999/05/25 22:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.26 1999/07/15 15:19:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include "optimizer/paths.h"
 #include "optimizer/cost.h"
 #include "optimizer/plancat.h"
-#include "optimizer/xfunc.h"
 
 #include "parser/parsetree.h"
 

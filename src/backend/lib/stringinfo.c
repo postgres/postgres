@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.18 1999/07/14 01:19:46 momjian Exp $
+ *	  $Id: stringinfo.c,v 1.19 1999/07/15 15:19:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 
 #include "postgres.h"
 #include "lib/stringinfo.h"
-#include "utils/mcxt.h"
 
 #ifdef NOT_USED
 /*

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.5 1999/02/13 23:17:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.6 1999/07/15 15:19:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "postgres.h"
 #include "fmgr.h"
 #include "port-protos.h"
-#include "utils/elog.h"
 
 extern char *pg_pathname;
 

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.39 1999/05/25 22:41:19 momjian Exp $
+ * $Id: geqo_eval.c,v 1.40 1999/07/15 15:19:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,6 @@
 #include "nodes/relation.h"
 #include "nodes/primnodes.h"
 
-#include "utils/palloc.h"
-#include "utils/elog.h"
 #include "utils/portal.h"
 
 #include "optimizer/internal.h"

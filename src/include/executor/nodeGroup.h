@@ -6,15 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeGroup.h,v 1.11 1999/07/13 21:17:37 momjian Exp $
+ * $Id: nodeGroup.h,v 1.12 1999/07/15 15:21:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODEGROUP_H
 #define NODEGROUP_H
 
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 
 extern TupleTableSlot *ExecGroup(Group *node);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.19 1999/05/26 12:55:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.20 1999/07/15 15:19:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,6 @@
 
 #include "utils/syscache.h"
 #include "utils/builtins.h"		/* for namecpy */
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "catalog/pg_type.h"
 #include "storage/lmgr.h"
 #include "optimizer/planmain.h"

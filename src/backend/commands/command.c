@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.47 1999/06/19 04:54:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.48 1999/07/15 15:18:52 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -36,7 +36,6 @@
 #include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/mcxt.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/temprel.h"

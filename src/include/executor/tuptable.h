@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.12 1999/05/25 16:13:58 momjian Exp $
+ * $Id: tuptable.h,v 1.13 1999/07/15 15:21:14 momjian Exp $
  *
  * NOTES
  *	  The tuple table interface is getting pretty ugly.
@@ -17,8 +17,6 @@
 #ifndef TUPTABLE_H
 #define TUPTABLE_H
 
-#include <storage/buf.h>
-#include <access/tupdesc.h>
 #include <access/htup.h>
 
 /* ----------------

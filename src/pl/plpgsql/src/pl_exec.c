@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.12 1999/07/04 01:03:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.13 1999/07/15 15:21:47 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -50,7 +50,6 @@
 #include "executor/spi.h"
 #include "executor/spi_priv.h"
 #include "commands/trigger.h"
-#include "utils/elog.h"
 #include "utils/builtins.h"
 #include "fmgr.h"
 #include "access/heapam.h"

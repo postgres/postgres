@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.21 1999/07/14 01:20:15 momjian Exp $
+ * $Id: vacuum.h,v 1.22 1999/07/15 15:21:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,7 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_attribute.h"
 #include "nodes/pg_list.h"
-#include "storage/block.h"
 #include "storage/itemptr.h"
-#include "storage/off.h"
 
 
 typedef struct VAttListData

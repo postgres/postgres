@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.5 1999/07/03 00:32:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.6 1999/07/15 15:19:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@
 #include "optimizer/keys.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/tlist.h"	/* for get_expr */
-#include "optimizer/xfunc.h"
 #include "storage/buf_internals.h"		/* for NBuffers */
 #include "tcop/dest.h"
 #include "utils/syscache.h"

@@ -7,12 +7,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.6 1999/02/13 23:21:57 momjian Exp $
+ * $Id: parsetree.h,v 1.7 1999/07/15 15:21:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSETREE_H
 #define PARSETREE_H				/* include once only */
+
+#include "nodes/parsenodes.h"
+#include "nodes/pg_list.h"
 
 /* ----------------
  *		need pg_list.h for definitions of CAR(), etc. macros

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.111 1999/07/13 21:17:32 momjian Exp $
+ *	$Id: analyze.c,v 1.112 1999/07/15 15:19:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 #include "parse.h"
 
 #include "utils/builtins.h"
-#include "utils/mcxt.h"
 
 static Query *transformStmt(ParseState *pstate, Node *stmt);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);

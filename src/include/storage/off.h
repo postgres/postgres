@@ -6,13 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: off.h,v 1.7 1999/05/25 16:14:43 momjian Exp $
+ * $Id: off.h,v 1.8 1999/07/15 15:21:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef OFF_H
 #define OFF_H
 
+#include "storage/itemid.h"
 /*
  * OffsetNumber:
  *

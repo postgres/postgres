@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.37 1999/05/26 12:55:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.38 1999/07/15 15:19:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #include "parser/parse_target.h"
 #include "parser/parse_coerce.h"
 #include "nodes/print.h"
-
+#include "nodes/relation.h"
 #include "parse.h"
 
 

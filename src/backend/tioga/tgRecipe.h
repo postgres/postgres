@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tgRecipe.h,v 1.11 1999/05/25 22:42:09 momjian Exp $
+ * $Id: tgRecipe.h,v 1.12 1999/07/15 15:20:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include "libpq/libpq.h"
 #ifndef TIOGA_FRONTEND
 #include "libpq/libpq-be.h"
-#include "utils/elog.h"
 #include "utils/geo-decls.h"
 #else
 #include "libpq-fe.h"

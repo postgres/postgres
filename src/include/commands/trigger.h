@@ -9,11 +9,8 @@
 #ifndef TRIGGER_H
 #define TRIGGER_H
 
-#include "access/tupdesc.h"
-#include "access/htup.h"
 #include "nodes/parsenodes.h"
 #include "nodes/execnodes.h"
-#include "utils/rel.h"
 
 typedef uint32 TriggerEvent;
 

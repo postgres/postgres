@@ -3,7 +3,7 @@
 * geqo_erx.c
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.12 1999/07/14 01:19:51 momjian Exp $
+* $Id: geqo_erx.c,v 1.13 1999/07/15 15:19:11 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -37,8 +37,6 @@
 #include "nodes/relation.h"
 #include "nodes/primnodes.h"
 
-#include "utils/palloc.h"
-#include "utils/elog.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/paths.h"
@@ -51,7 +49,6 @@
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
 
-#include "utils/mcxt.h"
 
 static int	gimme_edge(Gene gene1, Gene gene2, Edge *edge_table);
 static void remove_gene(Gene gene, Edge edge, Edge *edge_table);

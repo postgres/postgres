@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.88 1999/06/17 15:15:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.89 1999/07/15 15:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
 #include "utils/builtins.h"
-#include "utils/palloc.h"
 #include "utils/acl.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -54,6 +53,7 @@
 #include "access/xact.h"
 #include "catalog/heap.h"
 #include "commands/trigger.h"
+#include "access/transam.h"
 
 void ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
 			   Query *parseTree);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.110 1999/07/03 00:32:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.111 1999/07/15 15:18:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,6 @@
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/inval.h"
-#include "utils/mcxt.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"

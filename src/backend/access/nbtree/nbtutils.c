@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.28 1999/07/14 01:19:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.29 1999/07/15 15:18:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "executor/execdebug.h"
 #include "fmgr.h"
 #include "storage/bufpage.h"
-#include "utils/mcxt.h"
 
 extern int	NIndexTupleProcessed;
 

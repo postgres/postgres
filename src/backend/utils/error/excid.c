@@ -7,14 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excid.c,v 1.6 1999/05/25 16:12:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excid.c,v 1.7 1999/07/15 15:20:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
-
-#include "utils/excid.h"
 
 /*****************************************************************************
  *	 Generic Recoverable Exceptions											 *

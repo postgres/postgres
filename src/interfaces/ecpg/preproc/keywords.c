@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.14 1999/07/13 21:17:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.15 1999/07/15 15:21:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "type.h"
 #include "preproc.h"
 #include "parser/keywords.h"
-#include "utils/elog.h"
 
 /*
  * List of (keyword-name, keyword-token-value) pairs.

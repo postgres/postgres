@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.32 1999/02/13 23:17:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.33 1999/07/15 15:19:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"		/* for textout */
 #include "utils/catcache.h"		/* for CacheContext */
-#include "utils/mcxt.h"			/* MemoryContext stuff */
 #include "utils/rel.h"			/* for Relation, RelationData ... */
 #include "utils/syscache.h"		/* for SearchSysCache */
 

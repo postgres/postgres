@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.26 1999/05/25 16:08:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.27 1999/07/15 15:18:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,6 @@
 #include "fmgr.h"
 #include "utils/fcache.h"
 #include "utils/datum.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/syscache.h"
 #include "catalog/pg_language.h"
 #include "access/heapam.h"

@@ -8,7 +8,6 @@
 /* do not include libpq-fe.h for backend-loaded functions*/
 /* #include "libpq-fe.h"  */
 #include "postgres.h"
-#include "utils/mcxt.h"
 
 typedef struct Complex
 {

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_gene.h,v 1.7 1999/02/13 23:21:45 momjian Exp $
+ * $Id: geqo_gene.h,v 1.8 1999/07/15 15:21:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,6 @@
 #define GEQO_GENE_H
 
 #include "nodes/nodes.h"
-#include "nodes/relation.h"
-#include "optimizer/geqo_gene.h"
 
 /* we presume that int instead of Relid
    is o.k. for Gene; so don't change it! */

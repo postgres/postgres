@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.8 1999/07/14 01:19:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.9 1999/07/15 15:19:08 momjian Exp $
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation
@@ -17,10 +17,7 @@
  */
 #include <string.h>
 #include "postgres.h"
-#include "utils/palloc.h"
-#include "utils/elog.h"
 #include "nodes/nodes.h"
-#include "utils/mcxt.h"
 
 /*
  * newNode -

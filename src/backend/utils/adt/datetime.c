@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.34 1999/07/14 01:19:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.35 1999/07/15 15:20:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "utils/nabstime.h"
 #include "utils/datetime.h"
 #include "access/xact.h"
-#include "utils/mcxt.h"
 
 static int	date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
 

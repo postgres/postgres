@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.19 1999/06/03 03:17:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.20 1999/07/15 15:19:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "executor/execdebug.h"
 #include "executor/nodeSort.h"
 #include "access/heapam.h"
-#include "utils/palloc.h"
 #include "utils/psort.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"

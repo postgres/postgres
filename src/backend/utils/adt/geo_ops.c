@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.42 1999/07/14 01:20:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.43 1999/07/15 15:20:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,6 @@
 #include "postgres.h"
 
 #include "utils/geo_decls.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
 
 #ifndef PI
 #define PI 3.1415926536

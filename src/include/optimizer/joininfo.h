@@ -6,16 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: joininfo.h,v 1.12 1999/05/25 22:43:08 momjian Exp $
+ * $Id: joininfo.h,v 1.13 1999/07/15 15:21:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef JOININFO_H
 #define JOININFO_H
 
-#include "nodes/nodes.h"
 #include "nodes/relation.h"
-#include "nodes/primnodes.h"
 
 extern JoinInfo *joininfo_member(List *join_relids, List *joininfo_list);
 extern JoinInfo *find_joininfo_node(RelOptInfo *this_rel, List *join_relids);

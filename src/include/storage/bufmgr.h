@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.26 1999/05/25 16:14:39 momjian Exp $
+ * $Id: bufmgr.h,v 1.27 1999/07/15 15:21:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,17 +54,6 @@ typedef bits16 BufferLock;
  */
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
 
-/*
- * BufferIsPinned
- *		True iff the buffer is pinned (and therefore valid)
- *
- * Note:
- *		Smenatics are identical to BufferIsValid
- *		XXX - need to remove either one eventually.
- */
-#define BufferIsPinned BufferIsValid
-
-
 extern int	ShowPinTrace;
 
 /*
@@ -100,6 +89,17 @@ extern int	ShowPinTrace;
 			(PrivateRefCount[(bufnum) - 1] > 0) \
 	) \
 )
+
+/*
+ * BufferIsPinned
+ *		True iff the buffer is pinned (and therefore valid)
+ *
+ * Note:
+ *		Smenatics are identical to BufferIsValid
+ *		XXX - need to remove either one eventually.
+ */
+#define BufferIsPinned BufferIsValid
+
 
 #define IncrBufferRefCount(buffer) \
 ( \

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.86 1999/05/25 22:41:14 momjian Exp $
+ *	$Id: outfuncs.c,v 1.87 1999/07/15 15:19:08 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -27,9 +27,7 @@
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
 #include "fmgr.h"
-#include "utils/elog.h"
 #include "utils/datum.h"
-#include "utils/palloc.h"
 
 #include "nodes/nodes.h"
 #include "nodes/execnodes.h"

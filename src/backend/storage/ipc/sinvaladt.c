@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.20 1999/05/28 17:03:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.21 1999/07/15 15:19:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "storage/sinvaladt.h"
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
-#include "utils/palloc.h"
 #include "utils/trace.h"
 
 /* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.27 1999/05/29 01:45:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.28 1999/07/15 15:20:22 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -21,8 +21,6 @@
 #include "utils/lsyscache.h"
 #include "access/tupmacs.h"
 #include "utils/rel.h"
-#include "utils/palloc.h"
-#include "utils/elog.h"
 #include "access/attnum.h"
 #include "access/heapam.h"
 

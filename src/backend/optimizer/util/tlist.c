@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.33 1999/05/25 22:41:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.34 1999/07/15 15:19:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "nodes/primnodes.h"
 #include "nodes/pg_list.h"
 #include "nodes/nodeFuncs.h"
-#include "utils/elog.h"
 #include "utils/lsyscache.h"
 
 #include "optimizer/internal.h"

@@ -7,12 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.7 1999/05/25 16:12:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.8 1999/07/15 15:20:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "utils/module.h"		/* where the declarations go */
 
 /*
  * BypassEnable

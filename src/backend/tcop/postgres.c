@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.119 1999/07/02 18:09:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.120 1999/07/15 15:19:59 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -69,7 +69,6 @@
 #include "tcop/tcopdebug.h"
 #include "tcop/tcopprot.h"		/* where declarations for this file go */
 #include "tcop/utility.h"
-#include "utils/mcxt.h"
 #include "utils/rel.h"
 #include "utils/ps_status.h"
 #include "utils/temprel.h"
@@ -78,10 +77,6 @@
 
 #ifdef NOT_USED
 #include "nodes/relation.h"
-#endif
-
-#ifdef NOT_USED
-#include "optimizer/xfunc.h"
 #endif
 
 #ifdef NOT_USED
@@ -1525,7 +1520,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.119 $ $Date: 1999/07/02 18:09:27 $\n");
+		puts("$Revision: 1.120 $ $Date: 1999/07/15 15:19:59 $\n");
 	}
 
 	/* ----------------

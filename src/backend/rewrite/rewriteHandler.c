@@ -6,20 +6,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.49 1999/07/13 21:17:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.50 1999/07/15 15:19:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
 #include "miscadmin.h"
-#include "utils/palloc.h"
-#include "utils/elog.h"
 #include "utils/rel.h"
 #include "nodes/pg_list.h"
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
-
+#include "parser/parse_type.h"
 #include "parser/parsetree.h"	/* for parsetree manipulation */
 #include "parser/parse_relation.h"
 #include "nodes/parsenodes.h"

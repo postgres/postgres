@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_language.l,v 1.3 1998/06/23 17:52:31 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_language.l,v 1.4 1999/07/15 15:21:45 momjian Exp $
 .TH "CREATE LANGUAGE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 create language - define a new language for functions
@@ -70,7 +70,6 @@ Following is a template for a PL handler written in 'C':
 
 #include "executor/spi.h"
 #include "commands/trigger.h"
-#include "utils/elog.h"
 #include "fmgr.h"		/* for FmgrValues struct */
 #include "access/heapam.h"
 #include "utils/syscache.h"

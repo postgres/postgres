@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.19 1999/05/25 22:41:20 momjian Exp $
+ * $Id: geqo_misc.c,v 1.20 1999/07/15 15:19:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,6 @@
 #include "nodes/relation.h"
 #include "nodes/primnodes.h"
 
-#include "utils/palloc.h"
-#include "utils/elog.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/paths.h"

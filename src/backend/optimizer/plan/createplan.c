@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.57 1999/05/25 22:41:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.58 1999/07/15 15:19:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
 #include "nodes/makefuncs.h"
 
 #include "utils/lsyscache.h"
-#include "utils/palloc.h"
 #include "utils/builtins.h"
 
 #include "optimizer/restrictinfo.h"
@@ -37,7 +36,6 @@
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/planner.h"
-#include "optimizer/xfunc.h"
 #include "optimizer/internal.h"
 
 

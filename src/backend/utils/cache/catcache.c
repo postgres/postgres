@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.43 1999/06/04 02:19:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.44 1999/07/15 15:20:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,6 @@
 #include "utils/builtins.h"
 #include "utils/portal.h"
 #include "utils/catcache.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
 #include "utils/rel.h"
 #include "storage/bufpage.h"
 #include "access/valid.h"

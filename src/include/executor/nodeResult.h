@@ -6,15 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeResult.h,v 1.8 1999/02/13 23:21:27 momjian Exp $
+ * $Id: nodeResult.h,v 1.9 1999/07/15 15:21:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODERESULT_H
 #define NODERESULT_H
 
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 
 extern TupleTableSlot *ExecResult(Result *node);

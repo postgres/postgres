@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.h,v 1.11 1999/05/25 22:43:07 momjian Exp $
+ * $Id: geqo_misc.h,v 1.12 1999/07/15 15:21:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,8 @@
 
 #include <stdio.h>
 
-#include "nodes/parsenodes.h"
-#include "optimizer/geqo_gene.h"
 #include "optimizer/geqo_recombination.h"
+#include "nodes/relation.h"
 
 extern void print_pool(FILE *fp, Pool *pool, int start, int stop);
 extern void print_gen(FILE *fp, Pool *pool, int generation);

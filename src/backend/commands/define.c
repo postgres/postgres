@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.29 1999/05/25 16:08:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.30 1999/07/15 15:18:53 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -50,9 +50,9 @@
 #include <fmgr.h>				/* for fmgr */
 #include <utils/builtins.h>		/* prototype for textin() */
 #include <commands/defrem.h>
-#include <optimizer/xfunc.h>
 #include <tcop/dest.h>
 #include <catalog/pg_shadow.h>
+#include <optimizer/cost.h>
 
 static char *defGetString(DefElem *def);
 static int	defGetTypeLength(DefElem *def);

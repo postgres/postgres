@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.30 1999/05/25 16:12:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.31 1999/07/15 15:20:34 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -31,7 +31,6 @@
 #include "storage/sinval.h"
 #include "storage/sinvaladt.h"
 #include "storage/lmgr.h"
-#include "utils/elog.h"
 #include "libpq/pqcomm.h"
 #include "catalog/catname.h"
 

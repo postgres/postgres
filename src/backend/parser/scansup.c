@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.13 1999/05/25 16:10:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.14 1999/07/15 15:19:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
-#include "utils/elog.h"
 
 /* ----------------
  *		scanstr

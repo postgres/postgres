@@ -6,15 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeAgg.h,v 1.9 1999/02/13 23:21:24 momjian Exp $
+ * $Id: nodeAgg.h,v 1.10 1999/07/15 15:21:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODEAGG_H
 #define NODEAGG_H
 
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 
 extern TupleTableSlot *ExecAgg(Agg *node);

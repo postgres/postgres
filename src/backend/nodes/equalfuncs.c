@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.39 1999/06/06 17:46:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.40 1999/07/15 15:19:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 
 #include "utils/builtins.h"		/* for namestrcmp() */
 #include "utils/datum.h"
-#include "utils/elog.h"
 #include "storage/itemptr.h"
 
 static bool equali(List *a, List *b);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.49 1999/05/26 12:56:33 momjian Exp $
+ * $Id: nodes.h,v 1.50 1999/07/15 15:21:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,13 +262,7 @@ typedef struct Node
  */
 extern Node *newNode(Size size, NodeTag tag);
 
-/*
- * nodes/{outfuncs.c,print.c}
- */
-#define nodeDisplay		pprint
-
 extern char *nodeToString(void *obj);
-extern void print(void *obj);
 
 /*
  * nodes/{readfuncs.c,read.c}

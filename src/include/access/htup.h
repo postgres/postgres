@@ -1,4 +1,4 @@
-/*-------------------------------------------------------------------------
+ /*-------------------------------------------------------------------------
  *
  * htup.h
  *	  POSTGRES heap tuple definitions.
@@ -6,17 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.22 1999/07/12 13:32:38 momjian Exp $
+ * $Id: htup.h,v 1.23 1999/07/15 15:20:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HTUP_H
 #define HTUP_H
 
-#include <utils/nabstime.h>
 #include <storage/bufpage.h>
-#include <storage/itemptr.h>
-#include <utils/memutils.h>
 
 #define MinHeapTupleBitmapSize	32		/* 8 * 4 */
 

@@ -27,7 +27,6 @@
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "storage/bufmgr.h"
-#include "utils/palloc.h"
 #include "utils/syscache.h"
 #include "optimizer/clauses.h"
 

@@ -6,17 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.12 1999/05/17 17:03:46 momjian Exp $
+ * $Id: parse_target.h,v 1.13 1999/07/15 15:21:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSE_TARGET_H
 #define PARSE_TARGET_H
 
-#include <nodes/pg_list.h>
-#include <nodes/nodes.h>
-#include <nodes/parsenodes.h>
-#include <nodes/primnodes.h>
 #include <parser/parse_node.h>
 
 #define EXPR_COLUMN_FIRST	1

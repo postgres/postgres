@@ -8,6 +8,8 @@
 #include "access/htup.h"
 #include "catalog/catname.h"
 #include "utils/numeric.h"
+#include "utils/memutils.h"
+#include "storage/bufpage.h"
 
 #include "extern.h"
 

@@ -15,9 +15,7 @@
 #include <limits.h>
 
 #include "postgres.h"
-#include "utils/palloc.h"
 #include "utils/int8.h"
-#include "utils/mcxt.h"
 
 #define MAXINT8LEN		25
 

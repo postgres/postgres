@@ -6,15 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.7 1999/02/13 23:21:57 momjian Exp $
+ * $Id: parse_oper.h,v 1.8 1999/07/15 15:21:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSE_OPER_H
 #define PARSE_OPER_H
 
-#include <parser/parse_func.h>
-#include <parser/parse_node.h>
+#include "access/htup.h"
 
 typedef HeapTuple Operator;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.20 1999/07/09 03:28:53 momjian Exp $
+ * $Id: acl.h,v 1.21 1999/07/15 15:21:38 momjian Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there
@@ -24,6 +24,7 @@
 
 #include <nodes/parsenodes.h>
 #include <utils/array.h>
+#include "utils/memutils.h"
 
 /*
  * AclId		system identifier for the user, group, etc.

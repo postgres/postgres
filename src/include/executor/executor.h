@@ -6,16 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.34 1999/06/17 15:15:53 momjian Exp $
+ * $Id: executor.h,v 1.35 1999/07/15 15:21:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECUTOR_H
 #define EXECUTOR_H
 
-#include <catalog/pg_index.h>
-#include <storage/bufmgr.h>
-#include <access/itup.h>
 #include <stdio.h>
 #include <executor/execdesc.h>
 

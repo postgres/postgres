@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.25 1999/07/14 01:19:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.26 1999/07/15 15:19:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,6 @@
 #include "storage/block.h"
 #include "storage/smgr.h"
 #include "utils/rel.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
 
 static void smgrshutdown(int dummy);
 

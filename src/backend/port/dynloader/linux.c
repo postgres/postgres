@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.11 1999/02/21 03:49:13 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.12 1999/07/15 15:19:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include <dld.h>
 #endif
 #include "dynloader.h"
-#include "utils/elog.h"
 #include "fmgr.h"
 
 #ifdef NOT_USED

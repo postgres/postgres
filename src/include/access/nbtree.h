@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.27 1999/05/25 22:04:55 momjian Exp $
+ * $Id: nbtree.h,v 1.28 1999/07/15 15:20:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,13 +15,8 @@
 
 #include <access/sdir.h>
 #include <access/relscan.h>
-#include <storage/itemid.h>
-#include <storage/page.h>
 #include <access/funcindex.h>
 #include <access/itup.h>
-#include <storage/bufmgr.h>		/* don't remove, required by
-								 * BT_READ/BT_WRITE */
-#include <storage/itemptr.h>
 
 /*
  *	BTPageOpaqueData -- At the end of every page, we store a pointer

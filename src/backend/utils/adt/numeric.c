@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.17 1999/07/14 01:20:06 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.18 1999/07/15 15:20:18 momjian Exp $
  *
  * ----------
  */
@@ -21,9 +21,7 @@
 
 #include "postgres.h"
 #include "utils/builtins.h"
-#include "utils/palloc.h"
 #include "utils/numeric.h"
-#include "utils/mcxt.h"
 
 /* ----------
  * Uncomment the following to enable compilation of dump_numeric()

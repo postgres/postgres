@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.19 1999/06/19 03:41:44 tgl Exp $
+ * $Id: clauses.h,v 1.20 1999/07/15 15:21:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef CLAUSES_H
 #define CLAUSES_H
 
-#include <nodes/primnodes.h>
 #include <nodes/relation.h>
 
 extern Expr *make_clause(int type, Node *oper, List *args);

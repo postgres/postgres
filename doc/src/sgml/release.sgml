@@ -39,7 +39,7 @@ Portability fixes for linux_ppc, Irix, linux_alpha, OpenBSD, alpha
 Remove QUERY_LIMIT, use SELECT...LIMIT
 Fix for EXPLAIN on inheritance(Tom)
 Patch to allow vacuum on multi-segment tables(Hiroshi)
-R=Tree optimizer selectivity fix(Tom)
+R-Tree optimizer selectivity fix(Tom)
 ACL file descriptor leak fix(Atsushi Ogawa)
 New expresssion subtree code(Tom)
 Avoid disk writes for read-only transactions(Vadim)

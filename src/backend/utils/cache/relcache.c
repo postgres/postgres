@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.62 1999/05/25 16:12:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.63 1999/07/15 15:20:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,6 @@
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/hsearch.h"
-#include "utils/mcxt.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"

@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.18 1999/07/14 01:19:51 momjian Exp $
+* $Id: geqo_params.c,v 1.19 1999/07/15 15:19:13 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -31,8 +31,6 @@
 #include "nodes/relation.h"
 #include "nodes/primnodes.h"
 
-#include "utils/palloc.h"
-#include "utils/elog.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/paths.h"
@@ -45,7 +43,6 @@
 
 #include "storage/fd.h"
 
-#include "utils/mcxt.h"
 
 /*
  * Parameter values read from the config file (or defaulted) are stored here

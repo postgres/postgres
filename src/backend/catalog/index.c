@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.81 1999/07/07 09:27:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.82 1999/07/15 15:18:49 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -30,6 +30,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_index.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
@@ -40,9 +41,9 @@
 #include "parser/parse_func.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
+#include "storage/bufpage.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
-#include "utils/mcxt.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"

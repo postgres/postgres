@@ -44,7 +44,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.20 1999/05/25 22:43:29 momjian Exp $
+ * $Id: dest.h,v 1.21 1999/07/15 15:21:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,6 @@
 #define DEST_H
 
 #include <access/htup.h>
-#include <access/tupdesc.h>
 
 /* ----------------
  *		CommandDest is a simplistic means of identifying the desired

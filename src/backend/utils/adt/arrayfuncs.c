@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.43 1999/05/25 16:11:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.44 1999/07/15 15:20:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include "storage/fd.h"
 #include "fmgr.h"
 #include "utils/array.h"
-#include "utils/elog.h"
 
 #include "libpq/libpq-fs.h"
 #include "libpq/be-fsstubs.h"

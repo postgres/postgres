@@ -6,7 +6,7 @@
 *	 CX operator according to Oliver et al
 *	 (Proc 2nd Int'l Conf on GA's)
 *
-* $Id: geqo_cx.c,v 1.6 1999/02/13 23:16:05 momjian Exp $
+* $Id: geqo_cx.c,v 1.7 1999/07/15 15:19:10 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -40,8 +40,6 @@
 #include "nodes/relation.h"
 #include "nodes/primnodes.h"
 
-#include "utils/palloc.h"
-#include "utils/elog.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/paths.h"

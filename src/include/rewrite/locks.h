@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: locks.h,v 1.11 1999/02/13 23:21:59 momjian Exp $
+ * $Id: locks.h,v 1.12 1999/07/15 15:21:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LOCKS_H
 #define LOCKS_H
 
-#include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "rewrite/prs2lock.h"
 

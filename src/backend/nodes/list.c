@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.22 1999/07/14 01:19:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.23 1999/07/15 15:19:07 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -26,9 +26,6 @@
 #include "nodes/pg_list.h"
 #include "nodes/parsenodes.h"
 #include "utils/builtins.h"		/* for namecpy */
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
 
 /*
  *	makeList

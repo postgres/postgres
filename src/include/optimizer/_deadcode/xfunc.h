@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xfunc.h,v 1.18 1999/05/25 22:43:14 momjian Exp $
+ * $Id: xfunc.h,v 1.1 1999/07/15 15:21:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,12 +32,6 @@
 #define XFUNC_UNKNOWN 0
 
 extern int	XfuncMode;			/* defined in tcop/postgres.c */
-
-/* defaults for function attributes used for expensive function calculations */
-#define BYTE_PCT 100
-#define PERBYTE_CPU 0
-#define PERCALL_CPU 0
-#define OUTIN_RATIO 100
 
 /* default width assumed for variable length attributes */
 #define VARLEN_DEFAULT 128;

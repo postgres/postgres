@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pos.h,v 1.7 1999/05/25 16:14:44 momjian Exp $
+ * $Id: pos.h,v 1.8 1999/07/15 15:21:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef POS_H
 #define POS_H
+
+#include "storage/off.h"
 
 /*
  * a 'position' used to be <pagenumber, offset> in postgres.  this has

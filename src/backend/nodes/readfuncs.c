@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.65 1999/07/13 21:17:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.66 1999/07/15 15:19:08 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -32,8 +32,6 @@
 #include "access/htup.h"
 #include "fmgr.h"
 #include "utils/builtins.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"

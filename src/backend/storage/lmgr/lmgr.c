@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.27 1999/06/10 14:17:11 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.28 1999/07/15 15:19:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,6 @@
 #include "storage/multilev.h"
 #include "storage/lmgr.h"
 
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
 #include "utils/rel.h"
 
 #include "catalog/catname.h"

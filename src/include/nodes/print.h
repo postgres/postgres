@@ -6,18 +6,20 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: print.h,v 1.10 1999/02/13 23:21:41 momjian Exp $
+ * $Id: print.h,v 1.11 1999/07/15 15:21:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PRINT_H
 #define PRINT_H
 
-#include "nodes/nodes.h"
-#include "nodes/plannodes.h"
 #include "nodes/parsenodes.h"
-#include "nodes/relation.h"
-#include "executor/tuptable.h"
+#include "nodes/plannodes.h"
+
+/*
+ * nodes/{outfuncs.c,print.c}
+ */
+#define nodeDisplay		pprint
 
 extern void print(void *obj);
 extern void pprint(void *obj);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.31 1999/07/07 17:17:50 momjian Exp $
+ * $Id: libpq.h,v 1.32 1999/07/15 15:21:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 
 #include "libpq/libpq-be.h"
 #include "tcop/dest.h"
-
+#include "utils/exc.h"
 
 /* ----------------
  * PQArgBlock

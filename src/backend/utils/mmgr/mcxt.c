@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.14 1999/05/25 16:12:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.15 1999/07/15 15:20:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +22,7 @@
 #include "nodes/memnodes.h"
 #include "nodes/nodes.h"
 
-#include "utils/mcxt.h"
-#include "utils/elog.h"
 
-#include "utils/palloc.h"
 
 #undef MemoryContextAlloc
 #undef MemoryContextFree

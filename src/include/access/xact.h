@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.20 1999/02/13 23:21:00 momjian Exp $
+ * $Id: xact.h,v 1.21 1999/07/15 15:20:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef XACT_H
 #define XACT_H
 
-#include <access/transam.h>
 #include <utils/nabstime.h>
+#include <access/transam.h>
 
 /* ----------------
  *		transaction state structure

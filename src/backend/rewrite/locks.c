@@ -6,12 +6,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.17 1999/02/13 23:17:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.18 1999/07/15 15:19:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"			/* for oid defs */
-#include "utils/elog.h"			/* for elog */
 #include "nodes/pg_list.h"		/* lisp support package */
 #include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"	/* Var node def */

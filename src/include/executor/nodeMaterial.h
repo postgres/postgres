@@ -6,15 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMaterial.h,v 1.10 1999/02/21 03:49:44 scrappy Exp $
+ * $Id: nodeMaterial.h,v 1.11 1999/07/15 15:21:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODEMATERIAL_H
 #define NODEMATERIAL_H
 
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 
 extern TupleTableSlot *ExecMaterial(Material *node);

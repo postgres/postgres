@@ -10,6 +10,11 @@
 
 #include <string.h>
 #include "postgres.h"
+
+/*
+ *	These are not needed by this file, but used by other programs
+ *	using SPI
+ */
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
 #include "nodes/execnodes.h"
@@ -23,10 +28,7 @@
 #include "nodes/params.h"
 #include "utils/fcache.h"
 #include "utils/datum.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/syscache.h"
-#include "utils/mcxt.h"
 #include "utils/portal.h"
 #include "utils/builtins.h"
 #include "catalog/pg_language.h"

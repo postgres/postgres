@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.14 1999/02/13 23:21:35 momjian Exp $
+ * $Id: libpq-be.h,v 1.15 1999/07/15 15:21:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "libpq/pqcomm.h"
 #include "libpq/hba.h"
 
 

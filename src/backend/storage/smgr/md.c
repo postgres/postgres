@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.46 1999/06/18 16:47:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.47 1999/07/15 15:19:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "storage/block.h"
 #include "storage/fd.h"
 #include "storage/smgr.h"		/* where the declarations go */
-#include "utils/mcxt.h"
 #include "utils/rel.h"
 
 #undef DIAGNOSTIC

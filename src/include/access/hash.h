@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.24 1999/05/25 22:42:30 momjian Exp $
+ * $Id: hash.h,v 1.25 1999/07/15 15:20:53 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -18,7 +18,6 @@
 
 #include <access/sdir.h>
 #include <access/funcindex.h>
-#include <storage/bufpage.h>
 #include <access/relscan.h>
 #include <access/itup.h>
 #include <utils/int8.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.31 1999/05/25 22:41:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.32 1999/07/15 15:19:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include "catalog/pg_type.h"
 
 #include "utils/lsyscache.h"
-#include "utils/palloc.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/planmain.h"

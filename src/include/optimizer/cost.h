@@ -6,17 +6,20 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.20 1999/05/25 22:43:04 momjian Exp $
+ * $Id: cost.h,v 1.21 1999/07/15 15:21:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef COST_H
 #define COST_H
 
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/pg_list.h"
 #include "nodes/relation.h"
+
+/* defaults for function attributes used for expensive function calculations */
+#define BYTE_PCT 100
+#define PERBYTE_CPU 0
+#define PERCALL_CPU 0
+#define OUTIN_RATIO 100
 
 /*
  * prototypes for costsize.c

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.23 1999/05/31 17:01:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.24 1999/07/15 15:20:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,7 @@
 #include	   "utils/dynahash.h"
 #include	   "utils/hsearch.h"
 #ifndef FRONTEND
-#include	   "utils/mcxt.h"
 #endif	 /* !FRONTEND */
-#include	   "utils/palloc.h"
 #include	   "utils/memutils.h"
 
 /*

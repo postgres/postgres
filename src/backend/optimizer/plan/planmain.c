@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.37 1999/06/12 19:38:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.38 1999/07/15 15:19:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,14 +31,10 @@
 #include "optimizer/keys.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
-#include "optimizer/xfunc.h"
 #include "optimizer/cost.h"
 
 #include "tcop/dest.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "nodes/memnodes.h"
-#include "utils/mcxt.h"
 #include "utils/lsyscache.h"
 
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual);

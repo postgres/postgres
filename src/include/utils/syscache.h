@@ -6,17 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.13 1999/02/13 23:22:32 momjian Exp $
+ * $Id: syscache.h,v 1.14 1999/07/15 15:21:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SYSCACHE_H
 #define SYSCACHE_H
 
-#include <access/attnum.h>
 #include <access/htup.h>
-#include <storage/buf.h>
-#include <utils/rel.h>
 
  /* #define CACHEDEBUG *//* turns DEBUG elogs on */
 
