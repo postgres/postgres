@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.75 2003/02/19 03:13:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.76 2003/03/13 01:30:29 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -179,7 +179,7 @@ UPDATE "my_table" SET "a" = 5;
    <para>
     Quoting an identifier also makes it case-sensitive, whereas
     unquoted names are always folded to lower case.  For example, the
-    identifiers <literal>FOO</literal>, <literal>foo</literal> and
+    identifiers <literal>FOO</literal>, <literal>foo</literal>, and
     <literal>"foo"</literal> are considered the same by
     <productname>PostgreSQL</productname>, but <literal>"Foo"</literal>
     and <literal>"FOO"</literal> are different from these three and
@@ -414,10 +414,10 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      function-call syntaxes can also be used to specify run-time type
      conversions of arbitrary expressions, as discussed in <xref
      linkend="sql-syntax-type-casts">.  But the form
-     <replaceable>type</replaceable> '<replaceable>string</replaceable>'
+     <literal><replaceable>type</replaceable> '<replaceable>string</replaceable>'</literal>
      can only be used to specify the type of a literal constant.
      Another restriction on
-     <replaceable>type</replaceable> '<replaceable>string</replaceable>'
+     <literal><replaceable>type</replaceable> '<replaceable>string</replaceable>'</literal>
      is that it does not work for array types; use <literal>::</literal>
      or <literal>CAST()</literal> to specify the type of an array constant.
     </para>
@@ -597,7 +597,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <listitem>
      <para>
-      The period (<literal>.</literal>) is used in floating-point
+      The period (<literal>.</literal>) is used in numeric
       constants, and to separate schema, table, and column names.
      </para>
     </listitem>
@@ -870,7 +870,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 
     <listitem>
      <para>
-      A positional parameter reference, in the body of a function declaration.
+      A positional parameter reference, in the body of a function definition.
      </para>
     </listitem>
 

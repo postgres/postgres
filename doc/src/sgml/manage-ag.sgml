@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.24 2002/11/15 03:11:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.25 2003/03/13 01:30:29 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -16,7 +16,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.24 2002/11/15 03:11:17 m
   them.
  </para>
 
- <sect1>
+ <sect1 id="manage-ag-overview">
   <title>Overview</title>
 
   <para>
@@ -24,8 +24,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.24 2002/11/15 03:11:17 m
    (<quote>database objects</quote>).  Generally, every database
    object (tables, functions, etc.) belongs to one and only one
    database.  (But there are a few system catalogs, for example
-   <literal>pg_database</>, that belong to a whole installation and
-   are accessible from each database within the installation.)  More
+   <literal>pg_database</>, that belong to a whole cluster and
+   are accessible from each database within the cluster.)  More
    accurately, a database is a collection of schemas and the schemas
    contain the tables, functions, etc.  So the full hierarchy is:
    server, database, schema, table (or something else instead of a
@@ -70,10 +70,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.24 2002/11/15 03:11:17 m
   </para>
 
   <para>
-   Databases are created with the query language command
+   Databases are created with the SQL command
    <command>CREATE DATABASE</command>:
 <synopsis>
-CREATE DATABASE <replaceable>name</>
+CREATE DATABASE <replaceable>name</>;
 </synopsis>
    where <replaceable>name</> follows the usual rules for
    <acronym>SQL</acronym> identifiers.  The current user automatically
@@ -93,14 +93,14 @@ CREATE DATABASE <replaceable>name</>
    question remains how the <emphasis>first</> database at any given
    site can be created. The first database is always created by the
    <command>initdb</> command when the data storage area is
-   initialized. (See <xref linkend="creating-cluster">.) By convention
-   this database is called <literal>template1</>. So to create the
+   initialized. (See <xref linkend="creating-cluster">.)
+   This database is called <literal>template1</>. So to create the
    first <quote>real</> database you can connect to
    <literal>template1</>.
   </para>
 
   <para>
-   The name <quote>template1</quote> is no accident: When a new
+   The name <literal>template1</literal> is no accident: When a new
    database is created, the template database is essentially cloned.
    This means that any changes you make in <literal>template1</> are
    propagated to all subsequently created databases. This implies that
@@ -118,9 +118,9 @@ CREATE DATABASE <replaceable>name</>
 createdb <replaceable class="parameter">dbname</replaceable>
 </synopsis>
 
-   <command>createdb</> does no magic. It connects to the template1
+   <command>createdb</> does no magic. It connects to the <literal>template1</>
    database and issues the <command>CREATE DATABASE</> command,
-   exactly as described above. It uses the <application>psql</> program
+   exactly as described above. It uses the <command>psql</> program
    internally. The reference page on <command>createdb</> contains the invocation
    details. Note that <command>createdb</> without any arguments will create
    a database with the current user name, which may or may not be what
@@ -174,7 +174,7 @@ createdb -O <replaceable>username</> <replaceable>dbname</>
    <literal>template1</>, that is, only the standard objects predefined by
    your version of <productname>PostgreSQL</productname>.
      <literal>template0</> should never be changed 
-   after <literal>initdb</>.  By instructing <command>CREATE DATABASE</> to
+   after <command>initdb</>.  By instructing <command>CREATE DATABASE</> to
    copy <literal>template0</> instead of <literal>template1</>, you can
    create a <quote>virgin</> user database that contains none of the
    site-local additions in <literal>template1</>.  This is particularly
@@ -198,7 +198,7 @@ createdb -T template0 <replaceable>dbname</>
 
   <para>
    It is possible to create additional template databases, and indeed
-   one might copy any database in an installation by specifying its name
+   one might copy any database in a cluster by specifying its name
    as the template for <command>CREATE DATABASE</>.  It is important to
    understand, however, that this is not (yet) intended as
    a general-purpose <quote><command>COPY DATABASE</command></quote> facility.  In particular, it is
@@ -206,7 +206,7 @@ createdb -T template0 <replaceable>dbname</>
    in progress)
    for the duration of the copying operation.  <command>CREATE DATABASE</>
    will check
-   that no backend processes (other than itself) are connected to
+   that no session (other than itself) is connected to
    the source database at the start of the operation, but this does not
    guarantee that changes cannot be made while the copy proceeds, which
    would result in an inconsistent copied database.  Therefore,
@@ -225,11 +225,9 @@ createdb -T template0 <replaceable>dbname</>
    If <literal>datallowconn</literal> is false, then no new connections
    to that database will be allowed (but existing sessions are not killed
    simply by setting the flag false).  The <literal>template0</literal>
-   database is normally marked <literal>datallowconn</literal> =
-   <literal>false</> to prevent modification of it.
+   database is normally marked <literal>datallowconn = false</> to prevent modification of it.
    Both <literal>template0</literal> and <literal>template1</literal>
-   should always be marked with <literal>datistemplate</literal> =
-   <literal>true</>.
+   should always be marked with <literal>datistemplate = true</>.
   </para>
 
   <para>
@@ -237,11 +235,11 @@ createdb -T template0 <replaceable>dbname</>
    it is a good idea to perform
    <command>VACUUM FREEZE</> or <command>VACUUM FULL FREEZE</> in that
    database.  If this is done when there are no other open transactions
-   in the same database, then it is guaranteed that all tuples in the
+   in the same database, then it is guaranteed that all rows in the
    database are <quote>frozen</> and will not be subject to transaction
    ID wraparound problems.  This is particularly important for a database
    that will have <literal>datallowconn</literal> set to false, since it
-   will be impossible to do routine maintenance <command>VACUUM</>s on
+   will be impossible to do routine maintenance <command>VACUUM</> in
    such a database.
    See <xref linkend="vacuum-for-wraparound"> for more information.
   </para>
@@ -295,7 +293,7 @@ ALTER DATABASE mydb SET geqo TO off;
 
    <para>
     It is possible to create a database in a location other than the
-    default location for the installation. Remember that all database access
+    default location for the installation. But remember that all database access
     occurs through the 
     database server, so any location specified must be
     accessible by the server.
@@ -317,7 +315,7 @@ ALTER DATABASE mydb SET geqo TO off;
    <para>
     To create the variable in the environment of the server process
     you must first shut down the server, define the variable,
-    initialize the data area, and finally restart the server. (See
+    initialize the data area, and finally restart the server. (See also
     <xref linkend="postmaster-shutdown"> and <xref
     linkend="postmaster-start">.) To set an environment variable, type
 <programlisting>
@@ -328,7 +326,7 @@ export PGDATA2
 <programlisting>
 setenv PGDATA2 /home/postgres/data
 </programlisting>
-    in <application>csh</> or <application>tcsh</>. You have to make sure that this environment
+    in <command>csh</> or <command>tcsh</>. You have to make sure that this environment
     variable is always defined in the server environment, otherwise
     you won't be able to access that database. Therefore you probably
     want to set it in some sort of shell start-up file or server
@@ -352,7 +350,7 @@ initlocation PGDATA2
    <para>
     To create a database within the new location, use the command
 <synopsis>
-CREATE DATABASE <replaceable>name</> WITH LOCATION = '<replaceable>location</>'
+CREATE DATABASE <replaceable>name</> WITH LOCATION '<replaceable>location</>';
 </synopsis>
     where <replaceable>location</> is the environment variable you
     used, <envar>PGDATA2</> in this example. The <command>createdb</>
@@ -386,9 +384,9 @@ gmake CPPFLAGS=-DALLOW_ABSOLUTE_DBPATHS all
   <para>
    Databases are destroyed with the command <command>DROP DATABASE</command>:
 <synopsis>
-DROP DATABASE <replaceable>name</>
+DROP DATABASE <replaceable>name</>;
 </synopsis>
-   Only the owner of the database (i.e., the user that created it), or
+   Only the owner of the database (i.e., the user that created it) or
    a superuser, can drop a database. Dropping a database removes all objects
    that were 
    contained within the database. The destruction of a database cannot
@@ -399,8 +397,8 @@ DROP DATABASE <replaceable>name</>
    You cannot execute the <command>DROP DATABASE</command> command
    while connected to the victim database. You can, however, be
    connected to any other database, including the <literal>template1</>
-   database, 
-   which would be the only option for dropping the last user database of a
+   database.
+   <literal>template1</> would be the only option for dropping the last user database of a
    given cluster.
   </para>
 

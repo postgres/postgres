@@ -1,8 +1,12 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.27 2003/03/13 01:30:29 petere Exp $
+-->
+
 <chapter Id="typeconv">
 <title>Type Conversion</title>
 
 <para>
-<acronym>SQL</acronym> queries can, intentionally or not, require
+<acronym>SQL</acronym> statements can, intentionally or not, require
 mixing of different data types in the same expression. 
 <productname>PostgreSQL</productname> has extensive facilities for
 evaluating mixed-type expressions.
@@ -14,7 +18,7 @@ to understand the details of the type conversion mechanism.
 However, the implicit conversions done by <productname>PostgreSQL</productname>
 can affect the results of a query.  When necessary, these results
 can be tailored by a user or programmer
-using <emphasis>explicit</emphasis> type coercion.
+using <emphasis>explicit</emphasis> type conversion.
 </para>
 
 <para>
@@ -27,7 +31,7 @@ operators.
 
 <para>
 The &cite-programmer; has more details on the exact algorithms used for
-implicit type conversion and coercion.
+implicit type conversion and conversion.
 </para>
 
 <sect1 id="typeconv-overview">
@@ -46,15 +50,16 @@ mixed-type expressions to be meaningful even with user-defined types.
 <para>
 The <productname>PostgreSQL</productname> scanner/parser decodes lexical
 elements into only five fundamental categories: integers, floating-point numbers, strings,
-names, and key words.  Most extended types are first tokenized into
+names, and key words.  Most extended types are first classified as
 strings. The <acronym>SQL</acronym> language definition allows specifying type
 names with strings, and this mechanism can be used in
 <productname>PostgreSQL</productname> to start the parser down the correct
 path. For example, the query
 
 <screen>
-tgl=> SELECT text 'Origin' AS "Label", point '(0,0)' AS "Value";
- Label  | Value
+SELECT text 'Origin' AS "label", point '(0,0)' AS "value";
+
+ label  | value
 --------+-------
  Origin | (0,0)
 (1 row)
@@ -62,7 +67,7 @@ tgl=> SELECT text 'Origin' AS "Label", point '(0,0)' AS "Value";
 
 has two literal constants, of type <type>text</type> and <type>point</type>.
 If a type is not specified for a string literal, then the placeholder type
-<firstterm>unknown</firstterm> is assigned initially, to be resolved in later
+<type>unknown</type> is assigned initially, to be resolved in later
 stages as described below.
 </para>
 
@@ -70,7 +75,6 @@ stages as described below.
 There are four fundamental <acronym>SQL</acronym> constructs requiring
 distinct type conversion rules in the <productname>PostgreSQL</productname>
 parser:
-</para>
 
 <variablelist>
 <varlistentry>
@@ -92,9 +96,8 @@ Function calls
 <listitem>
 <para>
 Much of the <productname>PostgreSQL</productname> type system is built around a
-rich set of functions. Function calls have one or more arguments which, for
-any specific query, must be matched to the functions available in the system
-catalog.  Since <productname>PostgreSQL</productname> permits function
+rich set of functions. Function calls can have one or more arguments.
+Since <productname>PostgreSQL</productname> permits function
 overloading, the function name alone does not uniquely identify the function
 to be called; the parser must select the right function based on the data
 types of the supplied arguments.
@@ -103,12 +106,12 @@ types of the supplied arguments.
 </varlistentry>
 <varlistentry>
 <term>
-Query targets
+Value Storage
 </term>
 <listitem>
 <para>
 <acronym>SQL</acronym> <command>INSERT</command> and <command>UPDATE</command> statements place the results of
-expressions into a table. The expressions in the query must be matched up
+expressions into a table. The expressions in the statement must be matched up
 with, and perhaps converted to, the types of the target columns.
 </para>
 </listitem>
@@ -119,22 +122,15 @@ with, and perhaps converted to, the types of the target columns.
 </term>
 <listitem>
 <para>
-Since all select results from a unionized <literal>SELECT</literal> statement must appear in a single
+Since all query results from a unionized <literal>SELECT</literal> statement must appear in a single
 set of columns, the types of the results
 of each <literal>SELECT</> clause must be matched up and converted to a uniform set.
-Similarly, the result expressions of a <literal>CASE</> construct must be coerced to
+Similarly, the branch expressions of a <literal>CASE</> construct must be converted to
 a common type so that the <literal>CASE</> expression as a whole has a known output type.
 </para>
 </listitem>
 </varlistentry>
 </variablelist>
-
-<para>
-Many of the general type conversion rules use simple conventions built on
-the <productname>PostgreSQL</productname> function and operator system tables.
-There are some heuristics included in the conversion rules to better support
-conventions for the <acronym>SQL</acronym> standard native types such as
-<type>smallint</type>, <type>integer</type>, and <type>real</type>.
 </para>
 
 <para>
@@ -157,7 +153,7 @@ a <firstterm>preferred type</firstterm> which is preferentially selected
 when there is ambiguity.
 In the user-defined category, each type is its own preferred type.
 Ambiguous expressions (those with multiple candidate parsing solutions)
-can often be resolved when there are multiple possible built-in types, but
+can therefore often be resolved when there are multiple possible built-in types, but
 they will raise an error when there are multiple choices for user-defined
 types.
 </para>
@@ -184,8 +180,7 @@ be converted to a user-defined type (of course, only if conversion is necessary)
 <para>
 User-defined types are not related. Currently, <productname>PostgreSQL</productname>
 does not have information available to it on relationships between types, other than
-hardcoded heuristics for built-in types and implicit relationships based on available functions
-in the catalog.
+hardcoded heuristics for built-in types and implicit relationships based on available functions.
 </para>
 </listitem>
 
@@ -195,12 +190,12 @@ There should be no extra overhead from the parser or executor
 if a query does not need implicit type conversion.
 That is, if a query is well formulated and the types already match up, then the query should proceed
 without spending extra time in the parser and without introducing unnecessary implicit conversion
-functions into the query.
+calls into the query.
 </para>
 
 <para>
 Additionally, if a query usually requires an implicit conversion for a function, and
-if then the user defines an explicit function with the correct argument types, the parser
+if then the user defines a new function with the correct argument types, the parser
 should use this new function and will no longer do the implicit conversion using the old function.
 </para>
 </listitem>
@@ -226,7 +221,7 @@ should use this new function and will no longer do the implicit conversion using
 <para>
 Select the operators to be considered from the
 <classname>pg_operator</classname> system catalog.  If an unqualified
-operator name is used (the usual case), the operators
+operator name was used (the usual case), the operators
 considered are those of the right name and argument count that are
 visible in the current search path (see <xref linkend="ddl-schemas-path">).
 If a qualified operator name was given, only operators in the specified
@@ -255,7 +250,7 @@ operators considered), use it.
 <substeps>
 <step performance="optional">
 <para>
-If one argument of a binary operator is <type>unknown</type> type,
+If one argument of a binary operator invocation is of the <type>unknown</type> type,
 then assume it is the same type as the other argument for this check.
 Other cases involving <type>unknown</type> will never find a match at
 this step.
@@ -272,9 +267,9 @@ Look for the best match.
 <step performance="required">
 <para>
 Discard candidate operators for which the input types do not match
-and cannot be coerced (using an implicit coercion function) to match.
+and cannot be converted (using an implicit conversion) to match.
 <type>unknown</type> literals are
-assumed to be coercible to anything for this purpose.  If only one
+assumed to be convertible to anything for this purpose.  If only one
 candidate remains, use it; else continue to the next step.
 </para>
 </step>
@@ -296,23 +291,22 @@ If only one candidate remains, use it; else continue to the next step.
 <step performance="required">
 <para>
 Run through all candidates and keep those that accept preferred types at
-the most positions where type coercion will be required.
+the most positions where type conversion will be required.
 Keep all candidates if none accept preferred types.
 If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
 <step performance="required">
 <para>
-If any input arguments are <quote>unknown</quote>, check the type
+If any input arguments are <type>unknown</type>, check the type
 categories accepted at those argument positions by the remaining
-candidates.  At each position, select the <quote>string</quote> category if any
-candidate accepts that category (this bias towards string is appropriate
-since an unknown-type literal does look like a string). Otherwise, if
+candidates.  At each position, select the <literal>string</literal> category if any
+candidate accepts that category.  (This bias towards string is appropriate
+since an unknown-type literal does look like a string.) Otherwise, if
 all the remaining candidates accept the same type category, select that
 category; otherwise fail because the correct choice cannot be deduced
-without more clues.  Also note whether any of the candidates accept a
-preferred data type within the selected category. Now discard operator
-candidates that do not accept the selected type category; furthermore,
+without more clues.  Now discard operator
+candidates that do not accept the selected type category.  Furthermore,
 if any candidate accepts a preferred type at a given argument position,
 discard candidates that accept non-preferred types for that argument.
 </para>
@@ -328,7 +322,9 @@ then fail.
 </step>
 </procedure>
 
-<bridgehead renderas="sect2">Examples</bridgehead>
+<para>
+Some examples follow.
+</para>
 
 <example>
 <title>Exponentiation Operator Type Resolution</title>
@@ -340,8 +336,9 @@ operator defined in the catalog, and it takes arguments of type
 The scanner assigns an initial type of <type>integer</type> to both arguments
 of this query expression:
 <screen>
-tgl=> SELECT 2 ^ 3 AS "Exp";
- Exp
+SELECT 2 ^ 3 AS "exp";
+
+ exp
 -----
    8
 (1 row)
@@ -351,30 +348,8 @@ So the parser does a type conversion on both operands and the query
 is equivalent to
 
 <screen>
-tgl=> SELECT CAST(2 AS double precision) ^ CAST(3 AS double precision) AS "Exp";
- Exp
------
-   8
-(1 row)
+SELECT CAST(2 AS double precision) ^ CAST(3 AS double precision) AS "exp";
 </screen>
-
-or
-
-<screen>
-tgl=> SELECT 2.0 ^ 3.0 AS "Exp";
- Exp
------
-   8
-(1 row)
-</screen>
-
-<note>
-<para>
-This last form has the least overhead, since no functions are called to do
-implicit type conversion. This is not an issue for small queries, but may
-have an impact on the performance of queries involving large tables.
-</para>
-</note>
 </para>
 </example>
 
@@ -383,15 +358,16 @@ have an impact on the performance of queries involving large tables.
 
 <para>
 A string-like syntax is used for working with string types as well as for
-working with complex extended types.
+working with complex extension types.
 Strings with unspecified type are matched with likely operator candidates.
 </para>
 
 <para>
 An example with one unspecified argument:
 <screen>
-tgl=> SELECT text 'abc' || 'def' AS "Text and Unknown";
- Text and Unknown
+SELECT text 'abc' || 'def' AS "text and unknown";
+
+ text and unknown
 ------------------
  abcdef
 (1 row)
@@ -405,10 +381,11 @@ be interpreted as of type <type>text</type>.
 </para>
 
 <para>
-Concatenation on unspecified types:
+Here is a concatenation on unspecified types:
 <screen>
-tgl=> SELECT 'abc' || 'def' AS "Unspecified";
- Unspecified
+SELECT 'abc' || 'def' AS "unspecified";
+
+ unspecified
 -------------
  abcdef
 (1 row)
@@ -421,7 +398,7 @@ are specified in the query. So, the parser looks for all candidate operators
 and finds that there are candidates accepting both string-category and
 bit-string-category inputs.  Since string category is preferred when available,
 that category is selected, and then the 
-<quote>preferred type</quote> for strings, <type>text</type>, is used as the specific
+preferred type for strings, <type>text</type>, is used as the specific
 type to resolve the unknown literals to.
 </para>
 </example>
@@ -437,27 +414,29 @@ entries is for type <type>float8</type>, which is the preferred type in
 the numeric category.  Therefore, <productname>PostgreSQL</productname>
 will use that entry when faced with a non-numeric input:
 <screen>
-tgl=> select @ text '-4.5' as "abs";
+SELECT @ '-4.5' AS "abs";
  abs
 -----
  4.5
 (1 row)
 </screen>
-Here the system has performed an implicit text-to-float8 conversion
-before applying the chosen operator.  We can verify that float8 and
+Here the system has performed an implicit conversion from <type>text</type> to <type>float8</type>
+before applying the chosen operator.  We can verify that <type>float8</type> and
 not some other type was used:
 <screen>
-tgl=> select @ text '-4.5e500' as "abs";
+SELECT @ '-4.5e500' AS "abs";
+
 ERROR:  Input '-4.5e500' is out of range for float8
 </screen>
 </para>
 
 <para>
 On the other hand, the postfix operator <literal>!</> (factorial)
-is defined only for integer data types, not for float8.  So, if we
+is defined only for integer data types, not for <type>float8</type>.  So, if we
 try a similar case with <literal>!</>, we get:
 <screen>
-tgl=> select text '20' ! as "factorial";
+SELECT '20' ! AS "factorial";
+
 ERROR:  Unable to identify a postfix operator '!' for type 'text'
         You may need to add parentheses or an explicit cast
 </screen>
@@ -465,7 +444,8 @@ This happens because the system can't decide which of the several
 possible <literal>!</> operators should be preferred.  We can help
 it out with an explicit cast:
 <screen>
-tgl=> select cast(text '20' as int8) ! as "factorial";
+SELECT CAST('20' AS int8) ! AS "factorial";
+
       factorial
 ---------------------
  2432902008176640000
@@ -491,7 +471,7 @@ tgl=> select cast(text '20' as int8) ! as "factorial";
 <para>
 Select the functions to be considered from the
 <classname>pg_proc</classname> system catalog.  If an unqualified
-function name is used, the functions
+function name was used, the functions
 considered are those of the right name and argument count that are
 visible in the current search path (see <xref linkend="ddl-schemas-path">).
 If a qualified function name was given, only functions in the specified
@@ -517,16 +497,18 @@ If one exists (there can be only one exact match in the set of
 functions considered), use it.
 (Cases involving <type>unknown</type> will never find a match at
 this step.)
-</para></step>
+</para>
+</step>
+
 <step performance="required">
 <para>
 If no exact match is found, see whether the function call appears
-to be a trivial type coercion request.  This happens if the function call
+to be a trivial type conversion request.  This happens if the function call
 has just one argument and the function name is the same as the (internal)
 name of some data type.  Furthermore, the function argument must be either
 an unknown-type literal or a type that is binary-compatible with the named
-data type.  When these conditions are met, the function argument is coerced
-to the named data type without any explicit function call.
+data type.  When these conditions are met, the function argument is converted
+to the named data type without any actual function call.
 </para>
 </step>
 <step performance="required">
@@ -537,9 +519,9 @@ Look for the best match.
 <step performance="required">
 <para>
 Discard candidate functions for which the input types do not match
-and cannot be coerced (using an implicit coercion function) to match.
+and cannot be converted (using an implicit conversion) to match.
 <type>unknown</type> literals are
-assumed to be coercible to anything for this purpose.  If only one
+assumed to be convertible to anything for this purpose.  If only one
 candidate remains, use it; else continue to the next step.
 </para>
 </step>
@@ -561,7 +543,7 @@ If only one candidate remains, use it; else continue to the next step.
 <step performance="required">
 <para>
 Run through all candidates and keep those that accept preferred types at
-the most positions where type coercion will be required.
+the most positions where type conversion will be required.
 Keep all candidates if none accept preferred types.
 If only one candidate remains, use it; else continue to the next step.
 </para>
@@ -570,13 +552,12 @@ If only one candidate remains, use it; else continue to the next step.
 <para>
 If any input arguments are <type>unknown</type>, check the type categories accepted
 at those argument positions by the remaining candidates.  At each position,
-select the <type>string</type> category if any candidate accepts that category
-(this bias towards string
-is appropriate since an unknown-type literal does look like a string).
+select the <type>string</type> category if any candidate accepts that category.
+(This bias towards string
+is appropriate since an unknown-type literal does look like a string.)
 Otherwise, if all the remaining candidates accept the same type category,
 select that category; otherwise fail because
-the correct choice cannot be deduced without more clues.  Also note whether
-any of the candidates accept a preferred data type within the selected category.
+the correct choice cannot be deduced without more clues.
 Now discard candidates that do not accept the selected type category;
 furthermore, if any candidate accepts a preferred type at a given argument
 position, discard candidates that accept non-preferred types for that
@@ -594,32 +575,41 @@ then fail.
 </step>
 </procedure>
 
-<bridgehead renderas="sect2">Examples</bridgehead>
+<para>
+Some examples follow.
+</para>
 
 <example>
-<title>Factorial Function Argument Type Resolution</title>
+<title>Rounding Function Argument Type Resolution</title>
 
 <para>
-There is only one <function>int4fac</function> function defined in the
-<classname>pg_proc</classname> catalog.
-So the following query automatically converts the <type>int2</type> argument
-to <type>int4</type>:
+There is only one <function>round</function> function with two
+arguments.  (The first is <type>numeric</type>, the second is
+<type>integer</type>.)  So the following query automatically converts
+the first argument of type <type>integer</type> to
+<type>numeric</type>:
 
 <screen>
-tgl=> SELECT int4fac(int2 '4');
- int4fac
----------
-      24
+SELECT round(4, 4);
+
+ round
+--------
+ 4.0000
 (1 row)
 </screen>
 
-and is actually transformed by the parser to
+That query is actually transformed by the parser to
 <screen>
-tgl=> SELECT int4fac(int4(int2 '4'));
- int4fac
----------
-      24
-(1 row)
+SELECT round(CAST (4 AS numeric), 4);
+</screen>
+</para>
+
+<para>
+Since numeric constants with decimal points are initially assigned the
+type <type>numeric</type>, the following query will require no type
+conversion and may therefore be slightly more efficient:
+<screen>
+SELECT round(4.0, 4);
 </screen>
 </para>
 </example>
@@ -628,15 +618,15 @@ tgl=> SELECT int4fac(int4(int2 '4'));
 <title>Substring Function Type Resolution</title>
 
 <para>
-There are two <function>substr</function> functions declared in <classname>pg_proc</classname>. However,
-only one takes two arguments, of types <type>text</type> and <type>int4</type>.
-</para>
+There are several <function>substr</function> functions, one of which
+takes types <type>text</type> and <type>integer</type>.  If called
+with a string constant of unspecified type, the system chooses the
+candidate function that accepts an argument of the preferred category
+<literal>string</literal> (namely of type <type>text</type>).
 
-<para>
-If called with a string constant of unspecified type, the type is matched up
-directly with the only candidate function type:
 <screen>
-tgl=> SELECT substr('1234', 3);
+SELECT substr('1234', 3);
+
  substr
 --------
      34
@@ -646,28 +636,26 @@ tgl=> SELECT substr('1234', 3);
 
 <para>
 If the string is declared to be of type <type>varchar</type>, as might be the case
-if it comes from a table, then the parser will try to coerce it to become <type>text</type>:
+if it comes from a table, then the parser will try to convert it to become <type>text</type>:
 <screen>
-tgl=> SELECT substr(varchar '1234', 3);
+SELECT substr(varchar '1234', 3);
+
  substr
 --------
      34
 (1 row)
 </screen>
-which is transformed by the parser to become
+
+This is transformed by the parser to effectively become
 <screen>
-tgl=> SELECT substr(text(varchar '1234'), 3);
- substr
---------
-     34
-(1 row)
+SELECT substr(CAST (varchar '1234' AS text), 3);
 </screen>
 </para>
 <para>
 <note>
 <para>
-Actually, the parser is aware that <type>text</type> and <type>varchar</type>
-are <firstterm>binary-compatible</>, meaning that one can be passed to a function that
+The parser is aware that <type>text</type> and <type>varchar</type>
+are binary-compatible, meaning that one can be passed to a function that
 accepts the other without doing any physical conversion.  Therefore, no
 explicit type conversion call is really inserted in this case.
 </para>
@@ -675,64 +663,67 @@ explicit type conversion call is really inserted in this case.
 </para>
 
 <para>
-And, if the function is called with an <type>int4</type>, the parser will
+And, if the function is called with an argument of type <type>integer</type>, the parser will
 try to convert that to <type>text</type>:
 <screen>
-tgl=> SELECT substr(1234, 3);
+SELECT substr(1234, 3);
+
  substr
 --------
      34
 (1 row)
 </screen>
-which actually executes as
+
+This actually executes as
 <screen>
-tgl=> SELECT substr(text(1234), 3);
- substr
---------
-     34
-(1 row)
+SELECT substr(CAST (1234 AS text), 3);
 </screen>
-This succeeds because there is a conversion function text(int4) in the
-system catalog.
+This automatic transformation can succeed because there is an
+implicitly invocable cast from <type>integer</type> to
+<type>text</type>.
 </para>
 </example>
 
 </sect1>
 
 <sect1 id="typeconv-query">
-<title>Query Targets</title>
+<title>Value Storage</title>
 
   <para>
-   Values to be inserted into a table are coerced to the destination
+   Values to be inserted into a table are converted to the destination
    column's data type according to the
    following steps.
   </para>
 
 <procedure>
-<title>Query Target Type Resolution</title>
+<title>Value Storage Type Conversion</title>
 
 <step performance="required">
 <para>
 Check for an exact match with the target.
-</para></step>
-<step performance="required">
-<para>
-Otherwise, try to coerce the expression to the target type.  This will succeed
-if the two types are known binary-compatible, or if there is a conversion
-function.  If the expression is an unknown-type literal, the contents of
-the literal string will be fed to the input conversion routine for the target
-type.
-</para></step>
+</para>
+</step>
 
 <step performance="required">
 <para>
-If the target is a fixed-length type (e.g. <type>char</type> or <type>varchar</type>
+Otherwise, try to convert the expression to the target type.  This will succeed
+if there is a registered cast between the two types.
+If the expression is an unknown-type literal, the contents of
+the literal string will be fed to the input conversion routine for the target
+type.
+</para>
+</step>
+
+<step performance="required">
+<para>
+If the target is a fixed-length type (e.g., <type>char</type> or <type>varchar</type>
 declared with a length) then try to find a sizing function for the target
 type.  A sizing function is a function of the same name as the type,
-taking two arguments of which the first is that type and the second is an
-integer, and returning the same type.  If one is found, it is applied,
+taking two arguments of which the first is that type and the second is of type
+<type>integer</type>, and returning the same type.  If one is found, it is applied,
 passing the column's declared length as the second parameter.
-</para></step>
+</para>
+</step>
 
 </procedure>
 
@@ -740,30 +731,31 @@ passing the column's declared length as the second parameter.
 <title><type>character</type> Storage Type Conversion</title>
 
 <para>
-For a target column declared as <type>character(20)</type> the following query
-ensures that the target is sized correctly:
+For a target column declared as <type>character(20)</type> the following statement
+ensures that the stored value is sized correctly:
 
 <screen>
-tgl=> CREATE TABLE vv (v character(20));
-CREATE
-tgl=> INSERT INTO vv SELECT 'abc' || 'def';
-INSERT 392905 1
-tgl=> SELECT v, length(v) FROM vv;
+CREATE TABLE vv (v character(20));
+INSERT INTO vv SELECT 'abc' || 'def';
+SELECT v, length(v) FROM vv;
+
           v           | length
 ----------------------+--------
  abcdef               |     20
 (1 row)
 </screen>
+</para>
 
+<para>
 What has really happened here is that the two unknown literals are resolved
 to <type>text</type> by default, allowing the <literal>||</literal> operator
 to be resolved as <type>text</type> concatenation.  Then the <type>text</type>
-result of the operator is coerced to <type>bpchar</type> (<quote>blank-padded
-char</>, the internal name of the character data type) to match the target
-column type.  (Since the parser knows that <type>text</type> and
-<type>bpchar</type> are binary-compatible, this coercion is implicit and does
+result of the operator is converted to <type>bpchar</type> (<quote>blank-padded
+char</>, the internal name of the <type>character</type> data type) to match the target
+column type.  (Since the types <type>text</type> and
+<type>bpchar</type> are binary-compatible, this conversion does
 not insert any real function call.)  Finally, the sizing function
-<literal>bpchar(bpchar, integer)</literal> is found in the system catalogs
+<literal>bpchar(bpchar, integer)</literal> is found in the system catalog
 and applied to the operator's result and the stored column length.  This
 type-specific function performs the required length check and addition of
 padding spaces.
@@ -783,78 +775,87 @@ to each output column of a union query.  The <literal>INTERSECT</> and
 A <literal>CASE</> construct also uses the identical algorithm to match up its
 component expressions and select a result data type.
 </para>
+
 <procedure>
 <title><literal>UNION</> and <literal>CASE</> Type Resolution</title>
 
 <step performance="required">
 <para>
 If all inputs are of type <type>unknown</type>, resolve as type
-<type>text</type> (the preferred type for string category).
-Otherwise, ignore the <type>unknown</type> inputs while choosing the type.
-</para></step>
+<type>text</type> (the preferred type of the string category).
+Otherwise, ignore the <type>unknown</type> inputs while choosing the result type.
+</para>
+</step>
 
 <step performance="required">
 <para>
 If the non-unknown inputs are not all of the same type category, fail.
-</para></step>
+</para>
+</step>
 
 <step performance="required">
 <para>
 Choose the first non-unknown input type which is a preferred type in
 that category or allows all the non-unknown inputs to be implicitly
-coerced to it.
-</para></step>
+converted to it.
+</para>
+</step>
 
 <step performance="required">
 <para>
-Coerce all inputs to the selected type.
-</para></step>
+Convert all inputs to the selected type.
+</para>
+</step>
 </procedure>
 
-<bridgehead renderas="sect2">Examples</bridgehead>
+<para>
+Some examples follow.
+</para>
 
 <example>
-<title>Underspecified Types in a Union</title>
+<title>Type Resolution with Underspecified Types in a Union</title>
 
 <para>
 <screen>
-tgl=> SELECT text 'a' AS "Text" UNION SELECT 'b';
- Text
+SELECT text 'a' AS "text" UNION SELECT 'b';
+
+ text
 ------
  a
  b
 (2 rows)
 </screen>
-Here, the unknown-type literal <literal>'b'</literal> will be resolved as type text.
+Here, the unknown-type literal <literal>'b'</literal> will be resolved as type <type>text</type>.
 </para>
 </example>
 
 <example>
-<title>Type Conversion in a Simple Union</title>
+<title>Type Resolution in a Simple Union</title>
 
 <para>
 <screen>
-tgl=> SELECT 1.2 AS "Numeric" UNION SELECT 1;
- Numeric
+SELECT 1.2 AS "numeric" UNION SELECT 1;
+
+ numeric
 ---------
        1
      1.2
 (2 rows)
 </screen>
 The literal <literal>1.2</> is of type <type>numeric</>,
-and the integer value <literal>1</> can be cast implicitly to
+and the <type>integer</type> value <literal>1</> can be cast implicitly to
 <type>numeric</>, so that type is used.
 </para>
 </example>
 
 <example>
-<title>Type Conversion in a Transposed Union</title>
+<title>Type Resolution in a Transposed Union</title>
 
 <para>
 <screen>
-tgl=> SELECT 1 AS "Real"
-tgl-> UNION SELECT CAST('2.2' AS REAL);
- Real
+SELECT 1 AS "real" UNION SELECT CAST('2.2' AS REAL);
+
+ real
 ------
     1
   2.2

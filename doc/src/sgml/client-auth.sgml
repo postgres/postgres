@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.45 2003/02/13 05:47:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.46 2003/03/13 01:30:26 petere Exp $
 -->
 
 <chapter id="client-authentication">
@@ -40,7 +40,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.45 2003/02/13 05:47:46
   runs. If all the users of a particular server also have accounts on
   the server's machine, it makes sense to assign database user names
   that match their operating system user names. However, a server that
-  accepts remote connections may have many users who have no local
+  accepts remote connections may have many database users who have no local operating system
   account, and in such cases there need be no connection between
   database user names and OS user names.
  </para>
@@ -64,7 +64,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.45 2003/02/13 05:47:46
   <para>
    The general format of the <filename>pg_hba.conf</filename> file is
    a set of records, one per line. Blank lines are ignored, as is any
-   text after the <quote>#</quote> comment character. A record is made
+   text after the <literal>#</literal> comment character. A record is made
    up of a number of fields which are separated by spaces and/or tabs.
    Fields can contain white space if the field value is quoted. Records
    cannot be continued across lines.
@@ -84,11 +84,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.45 2003/02/13 05:47:46
 
   <para>
    A record may have one of the three formats
-   <synopsis>
+<synopsis>
 local   <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 host    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-    </synopsis>
+</synopsis>
    The meaning of the fields is as follows:
 
    <variablelist>
@@ -96,7 +96,7 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
      <term><literal>local</literal></term>
      <listitem>
       <para>
-       This record matches connection attempts using Unix domain
+       This record matches connection attempts using Unix-domain
        sockets.  Without a record of this type, Unix-domain socket
        connections are disallowed
       </para>
@@ -181,11 +181,9 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
        numerically, not as domain or host names.)  Taken together they
        specify the client machine IP addresses that this record
        matches.  The precise logic is that
-       <blockquote>
-        <informalfigure>
-         <programlisting>(<replaceable>actual-IP-address</replaceable> xor <replaceable>IP-address-field</replaceable>) and <replaceable>IP-mask-field</replaceable></programlisting>
-        </informalfigure>
-       </blockquote>
+<programlisting>
+(<replaceable>actual-IP-address</replaceable> xor <replaceable>IP-address-field</replaceable>) and <replaceable>IP-mask-field</replaceable>
+</programlisting>
        must be zero for the record to match.  (Of course IP addresses
        can be spoofed but this consideration is beyond the scope of
        <productname>PostgreSQL</productname>.) If you machine supports
@@ -217,7 +215,7 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
          <para>
           The connection is allowed unconditionally. This method
           allows anyone that can connect to the
-          <productname>PostgreSQL</productname> database to login as
+          <productname>PostgreSQL</productname> database server to login as
           any <productname>PostgreSQL</productname> user they like,
           without the need for a password.  See <xref
           linkend="auth-trust"> for details.
@@ -251,7 +249,7 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
         <term><literal>crypt</></term>
         <listitem>
          <para>
-          Like <literal>md5</literal> method but uses older crypt
+          Like the <literal>md5</literal> method but uses older <function>crypt()</>
           encryption, which is needed for pre-7.2 clients.
           <literal>md5</literal> is preferred for 7.2 and later clients.
           See <xref linkend="auth-password"> for details.
@@ -263,7 +261,7 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
         <term><literal>password</></term>
         <listitem>
          <para>
-          Same as "md5", but the password is sent in clear text over the
+          Same as <literal>md5</>, but the password is sent in clear text over the
           network. This should not be used on untrusted networks.
           See <xref linkend="auth-password"> for details.
          </para>
@@ -306,11 +304,11 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
 
          <para>
           If you use the map <literal>sameuser</literal>, the user
-          names are assumed to be identical. If not, the map name is
+          names are required to be identical. If not, the map name is
           looked up in the file <filename>pg_ident.conf</filename>
           in the same directory as <filename>pg_hba.conf</filename>.
           The connection is accepted if that file contains an
-          entry for this map name with the ident-supplied user name
+          entry for this map name with the operating-system user name
           and the requested <productname>PostgreSQL</productname> user
           name.
          </para>
@@ -365,8 +363,8 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
    match parameters and weaker authentication methods, while later
    records will have looser match parameters and stronger authentication
    methods. For example, one might wish to use <literal>trust</>
-   authentication for local TCP connections but require a password for
-   remote TCP connections. In this case a record specifying
+   authentication for local TCP/IP connections but require a password for
+   remote TCP/IP connections. In this case a record specifying
    <literal>trust</> authentication for connections from 127.0.0.1 would
    appear before a record specifying password authentication for a wider
    range of allowed client IP addresses.
@@ -374,27 +372,26 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
 
   <important>
    <para>
-    Do not prevent the superuser from accessing the template1
-    database.  Various utility commands need access to template1.
+    Do not prevent the superuser from accessing the <literal>template1</literal>
+    database.  Various utility commands need access to <literal>template1</literal>.
    </para>
   </important>
 
   <para>
-    <indexterm>
-     <primary>SIGHUP</primary>
-    </indexterm>
    The <filename>pg_hba.conf</filename> file is read on start-up and when
-   the <application>postmaster</> receives a
-   <systemitem>SIGHUP</systemitem> signal. If you edit the file on an
-   active system, you will need to signal the <application>postmaster</>
+   the main server process (<command>postmaster</>) receives a
+   <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
+   signal. If you edit the file on an
+   active system, you will need to signal the <command>postmaster</>
    (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
    re-read the file.
   </para>
 
   <para>
    An example of a <filename>pg_hba.conf</filename> file is shown in
-   <xref linkend="example-pg-hba.conf">. See below for details on the
+   <xref linkend="example-pg-hba.conf">. See the next section for details on the
    different authentication methods.
+  </para>
 
    <example id="example-pg-hba.conf">
     <title>An example <filename>pg_hba.conf</filename> file</title>
@@ -462,7 +459,6 @@ local   all         @admins,+support                                md5
 local   db1,db2,@demodbs  all                                       md5
 </programlisting>
    </example>
-  </para>
  </sect1>
 
  <sect1 id="auth-methods">
@@ -479,8 +475,8 @@ local   db1,db2,@demodbs  all                                       md5
     <productname>PostgreSQL</productname> assumes that anyone who can
     connect to the server is authorized to access the database as
     whatever database user he specifies (including the database superuser).
-    This method should only be used when there is adequate system-level
-    protection on connections to the postmaster port.
+    This method should only be used when there is adequate operating system-level
+    protection on connections to the server.
    </para>
 
    <para>
@@ -488,8 +484,8 @@ local   db1,db2,@demodbs  all                                       md5
     convenient for local connections on a single-user workstation.  It
     is usually <emphasis>not</> appropriate by itself on a multiuser
     machine.  However, you may be able to use <literal>trust</> even
-    on a multiuser machine, if you restrict access to the postmaster's
-    socket file using file-system permissions.  To do this, set the
+    on a multiuser machine, if you restrict access to the server's
+    Unix-domain socket file using file-system permissions.  To do this, set the
     <varname>unix_socket_permissions</varname> (and possibly
     <varname>unix_socket_group</varname>) configuration parameters as
     described in <xref linkend="runtime-config-general">.  Or you
@@ -500,18 +496,18 @@ local   db1,db2,@demodbs  all                                       md5
 
    <para>
     Setting file-system permissions only helps for Unix-socket connections.
-    Local TCP connections are not restricted by it; therefore, if you want
-    to use permissions for local security, remove the <literal>host ...
+    Local TCP/IP connections are not restricted by it; therefore, if you want
+    to use file-system permissions for local security, remove the <literal>host ...
     127.0.0.1 ...</> line from <filename>pg_hba.conf</>, or change it to a
     non-<literal>trust</> authentication method.
    </para>
 
    <para>
-    <literal>trust</> authentication is only suitable for TCP connections
+    <literal>trust</> authentication is only suitable for TCP/IP connections
     if you trust every user on every machine that is allowed to connect
     to the server by the <filename>pg_hba.conf</> lines that specify
     <literal>trust</>.  It is seldom reasonable to use <literal>trust</>
-    for any TCP connections other than those from <systemitem>localhost</> (127.0.0.1).
+    for any TCP/IP connections other than those from <systemitem>localhost</> (127.0.0.1).
    </para>
 
   </sect2>
@@ -530,7 +526,7 @@ local   db1,db2,@demodbs  all                                       md5
    </indexterm>
 
    <para>
-    Password-based authentication methods include <literal>md5</>,
+    The password-based authentication methods are <literal>md5</>,
     <literal>crypt</>, and <literal>password</>. These methods operate
     similarly except for the way that the password is sent across the
     connection. If you are at all concerned about password
@@ -545,7 +541,7 @@ local   db1,db2,@demodbs  all                                       md5
     <productname>PostgreSQL</productname> database passwords are
     separate from operating system user passwords. The password for
     each database user is stored in the <literal>pg_shadow</> system
-    catalog table. Passwords can be managed with the query language
+    catalog table. Passwords can be managed with the SQL
     commands <command>CREATE USER</command> and <command>ALTER
     USER</command>, e.g., <userinput>CREATE USER foo WITH PASSWORD
     'secret';</userinput>. By default, that is, if no password has
@@ -554,15 +550,10 @@ local   db1,db2,@demodbs  all                                       md5
    </para>
 
    <para>
-    To restrict the set of users that are allowed to connect to certain
-    databases, list the users separated by commas, or in a separate
-    file. The file should contain user names separated by commas or one
-    user name per line, and be in the same directory as
-    <filename>pg_hba.conf</>. Mention the (base) name of the file
-    preceded with <literal>@</> in the user column. The
-    database column can similarly accept a list of values or
-    a file name. You can also specify group names by preceding the group
-    name with <literal>+</>.
+    To restrict the set of users that are allowed to connect to
+    certain databases, list the users in the <replaceable>user</>
+    column of <filename>pg_hba.conf</filename>, as explained in the
+    previous section.
    </para>
 
   </sect2>
@@ -598,11 +589,11 @@ local   db1,db2,@demodbs  all                                       md5
    <para>
     <productname>PostgreSQL</> operates like a normal Kerberos service.
     The name of the service principal is
-    <replaceable>servicename/hostname@realm</>, where
+    <literal><replaceable>servicename</>/<replaceable>hostname</>@<replaceable>realm</></literal>, where
     <replaceable>servicename</> is <literal>postgres</literal> (unless a
     different service name was selected at configure time with
     <literal>./configure --with-krb-srvnam=whatever</>).
-    <replaceable>hostname</> is the fully qualified domain name of the
+    <replaceable>hostname</> is the fully qualified host name of the
     server machine. The service principal's realm is the preferred realm
     of the server machine.
    </para>
@@ -610,7 +601,7 @@ local   db1,db2,@demodbs  all                                       md5
    <para>
     Client principals must have their <productname>PostgreSQL</> user
     name as their first component, for example
-    <replaceable>pgusername/otherstuff@realm</>. At present the realm of
+    <literal>pgusername/otherstuff@realm</>. At present the realm of
     the client is not checked by <productname>PostgreSQL</>; so if you
     have cross-realm authentication enabled, then any principal in any
     realm that can communicate with yours will be accepted.
@@ -619,9 +610,9 @@ local   db1,db2,@demodbs  all                                       md5
    <para>
     Make sure that your server key file is readable (and preferably only
     readable) by the <productname>PostgreSQL</productname> server
-    account (see <xref linkend="postgres-user">). The location of the
-    key file is specified with the <varname>krb_server_keyfile</> run
-    time configuration parameter. (See also <xref
+    account.  (See also <xref linkend="postgres-user">). The location of the
+    key file is specified with the <varname>krb_server_keyfile</> run-time
+    configuration parameter. (See also <xref
     linkend="runtime-config">.) The default is <filename>/etc/srvtab</>
     if you are using Kerberos 4 and
     <filename>FILE:/usr/local/pgsql/etc/krb5.keytab</> (or whichever
@@ -745,7 +736,7 @@ local   db1,db2,@demodbs  all                                       md5
     <productname>PostgreSQL</productname> checks whether that user is
     allowed to connect as the database user he is requesting to connect
     as. This is controlled by the ident map argument that follows the
-    <literal>ident</> keyword in the <filename>pg_hba.conf</filename>
+    <literal>ident</> key word in the <filename>pg_hba.conf</filename>
     file. There is a predefined ident map <literal>sameuser</literal>,
     which allows any operating system user to connect as the database
     user of the same name (if the latter exists). Other maps must be
@@ -753,10 +744,10 @@ local   db1,db2,@demodbs  all                                       md5
    </para>
 
    <para>
-    <indexterm><primary>pg_ident.conf</primary></indexterm> Ident maps
+    Ident maps
     other than <literal>sameuser</literal> are defined in the file
-    <filename>pg_ident.conf</filename> in the data directory, which
-    contains lines of the general form:
+    <filename>pg_ident.conf</filename><indexterm><primary>pg_ident.conf</primary></indexterm>
+    in the data directory, which contains lines of the general form:
 <synopsis>
 <replaceable>map-name</> <replaceable>ident-username</> <replaceable>database-username</>
 </synopsis>
@@ -771,13 +762,11 @@ local   db1,db2,@demodbs  all                                       md5
    </para>
 
   <para>
-    <indexterm>
-     <primary>SIGHUP</primary>
-    </indexterm>
    The <filename>pg_ident.conf</filename> file is read on start-up and
-   when the <application>postmaster</> receives a
-   <systemitem>SIGHUP</systemitem> signal. If you edit the file on an
-   active system, you will need to signal the <application>postmaster</>
+   when the main server process (<command>postmaster</>) receives a
+   <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
+   signal. If you edit the file on an
+   active system, you will need to signal the <command>postmaster</>
    (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
    re-read the file.
   </para>
@@ -788,14 +777,14 @@ local   db1,db2,@demodbs  all                                       md5
     linkend="example-pg-hba.conf"> is shown in <xref
     linkend="example-pg-ident.conf">. In this example setup, anyone
     logged in to a machine on the 192.168 network that does not have the
-    Unix user name <systemitem>bryanh</>, <systemitem>ann</>, or
-    <systemitem>robert</> would not be granted access. Unix user
-    <systemitem>robert</> would only be allowed access when he tries to
-    connect as <productname>PostgreSQL</> user <systemitem>bob</>, not
-    as <systemitem>robert</> or anyone else. <systemitem>ann</> would
-    only be allowed to connect as <systemitem>ann</>. User
-    <systemitem>bryanh</> would be allowed to connect as either
-    <systemitem>bryanh</> himself or as <systemitem>guest1</>.
+    Unix user name <literal>bryanh</>, <literal>ann</>, or
+    <literal>robert</> would not be granted access. Unix user
+    <literal>robert</> would only be allowed access when he tries to
+    connect as <productname>PostgreSQL</> user <literal>bob</>, not
+    as <literal>robert</> or anyone else. <literal>ann</> would
+    only be allowed to connect as <literal>ann</>. User
+    <literal>bryanh</> would be allowed to connect as either
+    <literal>bryanh</> himself or as <literal>guest1</>.
    </para>
 
    <example id="example-pg-ident.conf">
@@ -818,12 +807,12 @@ omicron       bryanh            guest1
    <title>PAM Authentication</title>
 
    <para>
-    This authentication type operates similarly to
-    <firstterm>password</firstterm> except that it uses PAM (Pluggable
+    This authentication method operates similarly to
+    <literal>password</literal> except that it uses PAM (Pluggable
     Authentication Modules) as the authentication mechanism. The
     default PAM service name is <literal>postgresql</literal>. You can
     optionally supply you own service name after the <literal>pam</>
-    keyword in the file. For more information about PAM, please read
+    key word in the file <filename>pg_hba.conf</filename>. For more information about PAM, please read
     the <ulink
     url="http://www.kernel.org/pub/linux/libs/pam/"><productname>Linux-PAM</>
     Page</ulink> and the <ulink

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.33 2003/02/19 04:06:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.34 2003/03/13 01:30:29 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -116,7 +116,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.33 2003/02/19 04:06:28 momjia
 
     <table tocentry="1" id="mvcc-isolevel-table">
      <title><acronym>SQL</acronym> Transaction Isolation Levels</title>
-     <titleabbrev>Isolation Levels</titleabbrev>
      <tgroup cols="4">
       <thead>
        <row>
@@ -222,7 +221,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.33 2003/02/19 04:06:28 momjia
     executed within its own transaction, even though they are not yet
     committed.)  In effect, a <command>SELECT</command> query
     sees a snapshot of the database as of the instant that that query
-    begins to run.  Notice that two successive <command>SELECT</command>s can
+    begins to run.  Notice that two successive <command>SELECT</command> commands can
     see different data, even though they are within a single transaction, if
     other transactions 
     commit changes during execution of the first <command>SELECT</command>.
@@ -232,7 +231,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.33 2003/02/19 04:06:28 momjia
     <command>UPDATE</command>, <command>DELETE</command>, and <command>SELECT
     FOR UPDATE</command> commands behave the same as <command>SELECT</command>
     in terms of searching for target rows: they will only find target rows
-    that were committed as of the query start time.  However, such a target
+    that were committed as of the command start time.  However, such a target
     row may have already been updated (or deleted or marked for update) by
     another concurrent transaction by the time it is found.  In this case, the
     would-be updater will wait for the first updating transaction to commit or
@@ -241,18 +240,18 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.33 2003/02/19 04:06:28 momjia
     updating the originally found row.  If the first updater commits, the
     second updater will ignore the row if the first updater deleted it,
     otherwise it will attempt to apply its operation to the updated version of
-    the row.  The query search condition (<literal>WHERE</> clause) is
+    the row.  The search condition of the command (the <literal>WHERE</> clause) is
     re-evaluated to see if the updated version of the row still matches the
     search condition.  If so, the second updater proceeds with its operation,
     starting from the updated version of the row.
    </para>
 
    <para>
-    Because of the above rule, it is possible for updating queries to see
-    inconsistent snapshots --- they can see the effects of concurrent updating
-    queries that affected the same rows they are trying to update, but they
-    do not see effects of those queries on other rows in the database.
-    This behavior makes Read Committed mode unsuitable for queries that
+    Because of the above rule, it is possible for an updating command to see an
+    inconsistent snapshot: it can see the effects of concurrent updating
+    commands that affected the same rows it is trying to update, but it
+    does not see effects of those commands on other rows in the database.
+    This behavior makes Read Committed mode unsuitable for commands that
     involve complex search conditions.  However, it is just right for simpler
     cases.  For example, consider updating bank balances with transactions
     like
@@ -266,17 +265,17 @@ COMMIT;
 
     If two such transactions concurrently try to change the balance of account
     12345, we clearly want the second transaction to start from the updated
-    version of the account's row.  Because each query is affecting only a
+    version of the account's row.  Because each command is affecting only a
     predetermined row, letting it see the updated version of the row does
     not create any troublesome inconsistency.
    </para>
 
    <para>
-    Since in Read Committed mode each new query starts with a new snapshot
+    Since in Read Committed mode each new command starts with a new snapshot
     that includes all transactions committed up to that instant, subsequent
-    queries in the same transaction will see the effects of the committed
+    commands in the same transaction will see the effects of the committed
     concurrent transaction in any case.  The point at issue here is whether
-    or not within a <emphasis>single</> query we see an absolutely consistent
+    or not within a <emphasis>single</> command we see an absolutely consistent
     view of the database.
    </para>
 
@@ -294,11 +293,11 @@ COMMIT;
 
    <indexterm>
     <primary>isolation levels</primary>
-    <secondary>read serializable</secondary>
+    <secondary>serializable</secondary>
    </indexterm>
 
    <para>
-    <firstterm>Serializable</firstterm> provides the strictest transaction
+    The level <firstterm>Serializable</firstterm> provides the strictest transaction
     isolation.  This level emulates serial transaction execution,
     as if transactions had been executed one after another, serially,
     rather than concurrently.  However, applications using this level must
@@ -317,7 +316,7 @@ COMMIT;
     <command>SELECT</command>
     sees a snapshot as of the start of the transaction, not as of the start
     of the current query within the transaction.  Thus, successive
-    <command>SELECT</command>s within a single transaction always see the same
+    <command>SELECT</command> commands within a single transaction always see the same
     data.
    </para>
 
@@ -354,7 +353,7 @@ ERROR:  Can't serialize access due to concurrent update
    </para>
 
    <para>
-    Note that only updating transactions may need to be retried --- read-only
+    Note that only updating transactions may need to be retried; read-only
     transactions will never have serialization conflicts.
    </para>
 
@@ -367,7 +366,7 @@ ERROR:  Can't serialize access due to concurrent update
     this mode is recommended only when updating transactions contain logic
     sufficiently complex that they may give wrong answers in Read
     Committed mode.  Most commonly, Serializable mode is necessary when
-    a transaction performs several successive queries that must see
+    a transaction executes several successive commands that must see
     identical views of the database.
    </para>
   </sect2>
@@ -401,29 +400,29 @@ ERROR:  Can't serialize access due to concurrent update
     <productname>PostgreSQL</productname>.
     Remember that all of these lock modes are table-level locks,
     even if the name contains the word
-    <quote>row</quote>.  The names of the lock modes are historical.
+    <quote>row</quote>; the names of the lock modes are historical.
     To some extent the names reflect the typical usage of each lock
     mode --- but the semantics are all the same.  The only real difference
     between one lock mode and another is the set of lock modes with
     which each conflicts.  Two transactions cannot hold locks of conflicting
     modes on the same table at the same time.  (However, a transaction
-    never conflicts with itself --- for example, it may acquire
+    never conflicts with itself.  For example, it may acquire
     <literal>ACCESS EXCLUSIVE</literal> lock and later acquire
     <literal>ACCESS SHARE</literal> lock on the same table.)  Non-conflicting
     lock modes may be held concurrently by many transactions.  Notice in
     particular that some lock modes are self-conflicting (for example,
-    <literal>ACCESS EXCLUSIVE</literal> cannot be held by more than one
+    an <literal>ACCESS EXCLUSIVE</literal> lock cannot be held by more than one
     transaction at a time) while others are not self-conflicting (for example,
-    <literal>ACCESS SHARE</literal> can be held by multiple transactions).
-    Once acquired, a lock mode is held till end of transaction.
+    an <literal>ACCESS SHARE</literal> lock can be held by multiple transactions).
+    Once acquired, a lock is held till end of transaction.
    </para>
 
-	<para>
-	 To examine a list of the currently outstanding locks in a
-	 database server, use the <literal>pg_locks</literal> system
-	 view. For more information on monitoring the status of the lock
-	 manager subsystem, refer to the &cite-admin;.
-	</para>
+   <para>
+    To examine a list of the currently outstanding locks in a database
+    server, use the <literal>pg_locks</literal> system view. For more
+    information on monitoring the status of the lock manager
+    subsystem, refer to the &cite-admin;.
+   </para>
 
      <variablelist>
       <title>Table-level lock modes</title>
@@ -482,7 +481,7 @@ ERROR:  Can't serialize access due to concurrent update
 	 acquire this lock mode on the target table (in addition to
 	 <literal>ACCESS SHARE</literal> locks on any other referenced
 	 tables).  In general, this lock mode will be acquired by any
-	 query that modifies the data in a table.
+	 command that modifies the data in a table.
 	</para>
        </listitem>
       </varlistentry>
@@ -557,7 +556,7 @@ ERROR:  Can't serialize access due to concurrent update
 	 EXCLUSIVE</literal>, <literal>SHARE</literal>, <literal>SHARE
 	 ROW EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
 	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
-	 This mode allows only concurrent <literal>ACCESS SHARE</literal>,
+	 This mode allows only concurrent <literal>ACCESS SHARE</literal> locks,
 	 i.e., only reads from the table can proceed in parallel with a
 	 transaction holding this lock mode.
 	</para>
@@ -596,13 +595,13 @@ ERROR:  Can't serialize access due to concurrent update
       </varlistentry>
      </variablelist>
 
-     <note>
+     <tip>
       <para>
        Only an <literal>ACCESS EXCLUSIVE</literal> lock blocks a
        <command>SELECT</command> (without <option>FOR UPDATE</option>)
        statement.
       </para>
-     </note>
+     </tip>
 
    </sect2>
 
@@ -635,7 +634,7 @@ ERROR:  Can't serialize access due to concurrent update
     <para>
      In addition to table and row locks, page-level share/exclusive locks are
      used to control read/write access to table pages in the shared buffer
-     pool.  These locks are released immediately after a tuple is fetched or
+     pool.  These locks are released immediately after a row is fetched or
      updated.  Application developers normally need not be concerned with
      page-level locks, but we mention them for completeness.
     </para>
@@ -777,7 +776,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     example, a banking application might wish to check that the sum of
     all credits in one table equals the sum of debits in another table,
     when both tables are being actively updated.  Comparing the results of two
-    successive <literal>SELECT SUM(...)</literal> commands will not work reliably under
+    successive <literal>SELECT sum(...)</literal> commands will not work reliably under
     Read Committed mode, since the second query will likely include the results
     of transactions not counted by the first.  Doing the two sums in a
     single serializable transaction will give an accurate picture of the
@@ -800,10 +799,11 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     Read Committed mode, or in Serializable mode be careful to obtain the
     lock(s) before performing queries.  An explicit lock obtained in a
     serializable transaction guarantees that no other transactions modifying
-    the table are still running --- but if the snapshot seen by the
+    the table are still running, but if the snapshot seen by the
     transaction predates obtaining the lock, it may predate some now-committed
     changes in the table.  A serializable transaction's snapshot is actually
-    frozen at the start of its first query (<literal>SELECT</>, <literal>INSERT</>,
+    frozen at the start of its first query or data-modification command
+    (<literal>SELECT</>, <literal>INSERT</>,
     <literal>UPDATE</>, or <literal>DELETE</>), so
     it's possible to obtain explicit locks before the snapshot is
     frozen.
@@ -819,9 +819,6 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     data, nonblocking read/write access is not currently offered for every
     index access method implemented
     in <productname>PostgreSQL</productname>.
-   </para>
-
-   <para>
     The various index types are handled as follows:
 
     <variablelist>
@@ -833,7 +830,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
        <para>
 	Short-term share/exclusive page-level locks are used for
 	read/write access. Locks are released immediately after each
-	index tuple is fetched or inserted.  B-tree indexes provide
+	index row is fetched or inserted.  B-tree indexes provide
 	the highest concurrency without deadlock conditions.
        </para>
       </listitem>
@@ -846,7 +843,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
       <listitem>
        <para>
 	Share/exclusive index-level locks are used for read/write access.
-	Locks are released after the statement (command) is done.
+	Locks are released after the command is done.
        </para>
       </listitem>
      </varlistentry>

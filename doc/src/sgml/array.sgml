@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.24 2002/11/11 20:14:02 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.25 2003/03/13 01:30:26 petere Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -10,8 +10,14 @@
  <para>
   <productname>PostgreSQL</productname> allows columns of a table to be
   defined as variable-length multidimensional arrays. Arrays of any
-  built-in type or user-defined type can be created.  To illustrate
-  their use, we create this table:
+  built-in type or user-defined type can be created.
+ </para>
+
+ <sect2>
+  <title>Declaration of Array Types</title>
+
+ <para>
+  To illustrate the use of array types, we create this table:
 <programlisting>
 CREATE TABLE sal_emp (
     name            text,
@@ -20,24 +26,27 @@ CREATE TABLE sal_emp (
 );
 </programlisting>
   As shown, an array data type is named by appending square brackets
-  (<literal>[]</>) to the data type name of the array elements.
-  The above command will create a table named
-  <structname>sal_emp</structname> with columns including
-  a <type>text</type> string (<structfield>name</structfield>),
-  a one-dimensional array of type
-  <type>integer</type> (<structfield>pay_by_quarter</structfield>),
-  which represents the employee's salary by quarter, and a
-  two-dimensional array of <type>text</type>
-  (<structfield>schedule</structfield>), which represents the
-  employee's weekly schedule.
+  (<literal>[]</>) to the data type name of the array elements.  The
+  above command will create a table named
+  <structname>sal_emp</structname> with a column of type
+  <type>text</type> (<structfield>name</structfield>), a
+  one-dimensional array of type <type>integer</type>
+  (<structfield>pay_by_quarter</structfield>), which represents the
+  employee's salary by quarter, and a two-dimensional array of
+  <type>text</type> (<structfield>schedule</structfield>), which
+  represents the employee's weekly schedule.
  </para>
+ </sect2>
+
+ <sect2>
+  <title>Array Value Input</title>
 
  <para>
-  Now we do some <command>INSERT</command>s.  Observe that to write an array
+  Now we can show some <command>INSERT</command> statements.  To write an array
   value, we enclose the element values within curly braces and separate them
   by commas.  If you know C, this is not unlike the syntax for
   initializing structures.  (More details appear below.)
-     
+
 <programlisting>
 INSERT INTO sal_emp
     VALUES ('Bill',
@@ -51,8 +60,21 @@ INSERT INTO sal_emp
 </programlisting>
  </para>
 
+ <note>
+  <para>
+   A limitation of the present array implementation is that individual
+   elements of an array cannot be SQL null values.  The entire array can be set
+   to null, but you can't have an array with some elements null and some
+   not.  Fixing this is on the to-do list.
+  </para>
+ </note>
+ </sect2>
+
+ <sect2>
+  <title>Array Value References</title>
+
  <para>
-  Now, we can run some queries on <structname>sal_emp</structname>.
+  Now, we can run some queries on the table.
   First, we show how to access a single element of an array at a time.
   This query retrieves the names of the employees whose pay changed in
   the second quarter:
@@ -91,7 +113,7 @@ SELECT pay_by_quarter[3] FROM sal_emp;
   We can also access arbitrary rectangular slices of an array, or
   subarrays.  An array slice is denoted by writing
   <literal><replaceable>lower-bound</replaceable>:<replaceable>upper-bound</replaceable></literal>
-  for one or more array dimensions.  This query retrieves the first
+  for one or more array dimensions.  For example, this query retrieves the first
   item on Bill's schedule for the first two days of the week:
      
 <programlisting>
@@ -109,7 +131,7 @@ SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
 SELECT schedule[1:2][1] FROM sal_emp WHERE name = 'Bill';
 </programlisting>
 
-  with the same result.  An array subscripting operation is taken to
+  with the same result.  An array subscripting operation is always taken to
   represent an array slice if any of the subscripts are written in the
   form
   <literal><replaceable>lower</replaceable>:<replaceable>upper</replaceable></literal>.
@@ -199,10 +221,15 @@ SELECT array_dims(schedule) FROM sal_emp WHERE name = 'Carol';
   array_lower</function> return the upper/lower bound of the
   given array dimension, respectively.
  </para>
+ </sect2>
+
+ <sect2>
+  <title>Searching in Arrays</title>
 
  <para>
   To search for a value in an array, you must check each value of the
-  array. This can be done by hand (if you know the size of the array):
+  array. This can be done by hand (if you know the size of the array).
+  For example:
 
 <programlisting>
 SELECT * FROM sal_emp WHERE pay_by_quarter[1] = 10000 OR
@@ -212,8 +239,8 @@ SELECT * FROM sal_emp WHERE pay_by_quarter[1] = 10000 OR
 </programlisting>
 
   However, this quickly becomes tedious for large arrays, and is not
-  helpful if the size of the array is unknown. Although it is not part
-  of the primary <productname>PostgreSQL</productname> distribution,
+  helpful if the size of the array is unknown. Although it is not built
+  into <productname>PostgreSQL</productname>,
   there is an extension available that defines new functions and
   operators for iterating over array values. Using this, the above
   query could be:
@@ -222,7 +249,7 @@ SELECT * FROM sal_emp WHERE pay_by_quarter[1] = 10000 OR
 SELECT * FROM sal_emp WHERE pay_by_quarter[1:4] *= 10000;
 </programlisting>
 
-  To search the entire array (not just specified columns), you could
+  To search the entire array (not just specified slices), you could
   use:
 
 <programlisting>
@@ -249,18 +276,11 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    Tables can obviously be searched easily.
   </para>
  </tip>
+ </sect2>
 
- <note>
-  <para>
-   A limitation of the present array implementation is that individual
-   elements of an array cannot be SQL null values.  The entire array can be set
-   to null, but you can't have an array with some elements null and some
-   not.  Fixing this is on the to-do list.
-  </para>
- </note>
+ <sect2>
+  <title>Array Input and Output Syntax</title>
 
- <formalpara>
-  <title>Array input and output syntax.</title>
   <para>
    The external representation of an array value consists of items that
    are interpreted according to the I/O conversion rules for the array's
@@ -280,10 +300,11 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    is not ignored, however: after skipping leading whitespace, everything
    up to the next right brace or delimiter is taken as the item value.
   </para>
- </formalpara>
+ </sect2>
 
- <formalpara>
-  <title>Quoting array elements.</title>
+ <sect2>
+  <title>Quoting Array Elements</title>
+
   <para>
    As shown above, when writing an array value you may write double
    quotes around any individual array
@@ -295,7 +316,6 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    Alternatively, you can use backslash-escaping to protect all data characters
    that would otherwise be taken as array syntax or ignorable white space.
   </para>
- </formalpara>
 
   <para>
    The array output routine will put double quotes around element values
@@ -308,7 +328,7 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    <productname>PostgreSQL</productname> releases.)
   </para>
 
- <tip>
+ <note>
   <para>
    Remember that what you write in an SQL command will first be interpreted
    as a string literal, and then as an array.  This doubles the number of
@@ -325,6 +345,7 @@ INSERT ... VALUES ('{"\\\\","\\""}');
    <type>bytea</> for example, we might need as many as eight backslashes
    in the command to get one backslash into the stored array element.)
   </para>
- </tip>
+ </note>
+ </sect2>
 
 </sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.111 2003/02/19 03:59:02 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.112 2003/03/13 01:30:28 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -9,52 +9,43 @@ $Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.111 2003/02/19 03:59:02 momj
    <primary>libpq</primary>
   </indexterm>
 
- <sect1 id="libpq-intro">
-  <title>Introduction</title>
-
   <para>
    <application>libpq</application> is the <acronym>C</acronym>
    application programmer's interface to
    <productname>PostgreSQL</productname>.  <application>libpq</application> is a set
-   of library routines that allow client programs to pass queries to the
+   of library functions that allow client programs to pass queries to the
    <productname>PostgreSQL</productname> backend server and to receive the
    results of these queries.  <application>libpq</application> is also the
    underlying engine for several other <productname>PostgreSQL</productname>
    application interfaces, including <application>libpq++</application> (C++),
-   <filename>libpgtcl</filename> (Tcl), <productname>Perl</productname>, and
-   <filename>ecpg</filename>.  So some aspects of <application>libpq</>'s behavior will be
+   <application>libpgtcl</application> (Tcl), <productname>Perl</productname>, and
+   <application>ECPG</application>.  So some aspects of <application>libpq</>'s behavior will be
    important to you if you use one of those packages.
   </para>
 
   <para>
-   Three short programs are included at the end of this section to show how
-   to write programs that use <filename>libpq</filename>.  There are several
-   complete examples of <filename>libpq</filename> applications in the
-   following directories:
-
-   <simplelist>
-    <member><filename>src/test/examples</filename></member>
-    <member><filename>src/bin/psql</filename></member>
-   </simplelist>
+   Three short programs are included at the end of this chapter (<xref linkend="libpq-example">) to show how
+   to write programs that use <application>libpq</application>.  There are also several
+   complete examples of <application>libpq</application> applications in the
+   directory <filename>src/test/examples</filename> in the source code distribution.
   </para>
 
   <para>
-   Frontend programs that use <filename>libpq</filename> must include the
+   Client programs that use <application>libpq</application> must include the
    header file <filename>libpq-fe.h</filename> and must link with the
-   <filename>libpq</filename> library.
+   <application>libpq</application> library.
   </para>
- </sect1>
 
  <sect1 id="libpq-connect">
   <title>Database Connection Functions</title>
 
   <para>
-   The following routines deal with making a connection to a
-   <productname>PostgreSQL</productname> backend server.  The
+   The following functions deal with making a connection to a
+   <productname>PostgreSQL</productname> backend server.  An
    application program can have several backend connections open at
    one time.  (One reason to do that is to access more than one
    database.)  Each connection is represented by a
-   <structname>PGconn</> object which is obtained from
+   <structname>PGconn</> object which is obtained from the function
    <function>PQconnectdb</> or <function>PQsetdbLogin</>.  Note that
    these functions will always return a non-null object pointer,
    unless perhaps there is too little memory even to allocate the
@@ -62,33 +53,40 @@ $Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.111 2003/02/19 03:59:02 momj
    should be called to check whether a connection was successfully
    made before queries are sent via the connection object.
 
-    <itemizedlist>
+   <variablelist>
+    <varlistentry>
+     <term><function>PQconnectdb</function></term>
      <listitem>
       <para>
-       <function>PQconnectdb</function> 
        Makes a new connection to the database server.
-       <synopsis>
-PGconn *PQconnectdb(const char *conninfo)
-       </synopsis>
+<synopsis>
+PGconn *PQconnectdb(const char *conninfo);
+</synopsis>
+</para>
 
-   This routine opens a new database connection using the parameters taken
+<para>
+   This function opens a new database connection using the parameters taken
    from the string <literal>conninfo</literal>.  Unlike <function>PQsetdbLogin</> below,
    the parameter set can be extended without changing the function signature,
-   so use either of this routine or the nonblocking analogues <function>PQconnectStart</>
-   and <function>PQconnectPoll</function> is preferred for application programming.  The passed string
-   can be empty to use all default parameters, or it can contain one or more
-   parameter settings separated by whitespace.
+   so use either of this function or the nonblocking analogues <function>PQconnectStart</>
+   and <function>PQconnectPoll</function> is preferred for new application programming.
    </para>
 
    <para>
+   The passed string
+   can be empty to use all default parameters, or it can contain one or more
+   parameter settings separated by whitespace.
    Each parameter setting is in the form <literal>keyword = value</literal>.
    (To write an empty value or a value containing
    spaces, surround it with single quotes, e.g.,
    <literal>keyword = 'a value'</literal>.
    Single quotes and backslashes within the value must be escaped with a
-   backslash, e.g., <literal>\'</literal> or <literal>\\</literal>.)
-   Spaces around the equal sign are optional.  The currently recognized
-   parameter keywords are:
+   backslash, i.e., <literal>\'</literal> and <literal>\\</literal>.)
+   Spaces around the equal sign are optional.
+   </para>
+
+   <para>
+   The currently recognized parameter key words are:
 
    <variablelist>
     <varlistentry>
@@ -109,21 +107,22 @@ PGconn *PQconnectdb(const char *conninfo)
      <term><literal>hostaddr</literal></term>
      <listitem>
      <para>
-      IP address of host to connect to. This should be in standard
-      IPv4 address format, e.g. <literal>172.28.40.9</>.  If your machine 
-      supports IPv6, you can also use those addresses. If a nonzero-length 
-      string is specified, TCP/IP communication is used.
+      IP address of host to connect to.  This should be in the
+      standard IPv4 address format, e.g., <literal>172.28.40.9</>.  If
+      your machine supports IPv6, you can also use those addresses. If
+      a nonzero-length string is specified, TCP/IP communication is
+      used.
      </para>
      <para>
-      Using <literal>hostaddr</> instead of host allows the application to avoid a host
+      Using <literal>hostaddr</> instead of <literal>host</> allows the application to avoid a host
       name look-up, which may be important in applications with time
       constraints. However, Kerberos authentication requires the host
-      name. The following therefore applies: If host is specified without
+      name. The following therefore applies: If <literal>host</> is specified without
       <literal>hostaddr</>, a host name lookup is forced. If <literal>hostaddr</> is specified without
-      host, the value for <literal>hostaddr</> gives the remote address; if Kerberos is
-      used, this causes a reverse name query. If both host and <literal>hostaddr</> are
+      <literal>host</>, the value for <literal>hostaddr</> gives the remote address; if Kerberos is
+      used, this causes a reverse name query. If both <literal>host</> and <literal>hostaddr</> are
       specified, the value for <literal>hostaddr</> gives the remote address; the value
-      for host is ignored, unless Kerberos is used, in which case that value
+      for <literal>host</> is ignored, unless Kerberos is used, in which case that value
       is used for Kerberos authentication. Note that authentication is likely
       to fail if <application>libpq</application> is passed a host name that is not the name of the
       machine at <literal>hostaddr</>.
@@ -176,7 +175,7 @@ PGconn *PQconnectdb(const char *conninfo)
      <term><literal>connect_timeout</literal></term>
      <listitem>
      <para>
-      Time space in seconds given to connect routine. Zero or not set means infinite.
+      Time space in seconds given to connection function. Zero or not set means infinite.
      </para>
      </listitem>
     </varlistentry>
@@ -185,7 +184,7 @@ PGconn *PQconnectdb(const char *conninfo)
      <term><literal>options</literal></term>
      <listitem>
       <para>
-       Trace/debug options to be sent to the server.
+       Configuration options to be sent to the server.
       </para>
      </listitem>
     </varlistentry>
@@ -194,7 +193,7 @@ PGconn *PQconnectdb(const char *conninfo)
      <term><literal>tty</literal></term>
      <listitem>
      <para>
-      A file or <acronym>tty</acronym> for optional debug output from the backend.
+      A file or <acronym>TTY</acronym> for optional debug output from the server.
      </para>
      </listitem>
     </varlistentry>
@@ -203,10 +202,10 @@ PGconn *PQconnectdb(const char *conninfo)
      <term><literal>requiressl</literal></term>
      <listitem>
      <para>
-      Set to 1 to require <acronym>SSL</acronym> connection to the server.
-      <application>Libpq</> will then refuse to connect if the server does not
+      If set to 1, an <acronym>SSL</acronym> connection to the server is required.
+      <application>libpq</> will then refuse to connect if the server does not
       accept an <acronym>SSL</acronym> connection.
-      Set to 0 (default) to negotiate with server.
+      If set to 0 (default), <application>libpq</> will negotiate the connection type with server.
       This option is only available if
       <productname>PostgreSQL</> is compiled with SSL support.
      </para>
@@ -218,7 +217,7 @@ PGconn *PQconnectdb(const char *conninfo)
      <listitem>
      <para>
       Service name to use for additional parameters.  It specifies a service
-      name in pg_service.conf that holds additional connection parameters.
+      name in <filename>pg_service.conf</filename> that holds additional connection parameters.
       This allows applications to specify only a service name so connection parameters 
       can be centrally maintained.  See 
       <filename><replaceable>PREFIX</>/share/pg_service.conf.sample</> for
@@ -232,14 +231,14 @@ PGconn *PQconnectdb(const char *conninfo)
    environment variable (see <xref linkend="libpq-envars">)
    is checked. If the  environment  variable is not set either,
    then hardwired defaults are used.
-   The return value is a pointer to an abstract <type>struct</type>
-   representing the connection to the backend.
    </para>
   </listitem>
+ </varlistentry>
 
+ <varlistentry>
+  <term><function>PQsetdbLogin</function></term>
   <listitem>
    <para>
-   <function>PQsetdbLogin</function>
        Makes a new connection to the database server.
 <synopsis>
 PGconn *PQsetdbLogin(const char *pghost,
@@ -248,43 +247,55 @@ PGconn *PQsetdbLogin(const char *pghost,
                      const char *pgtty,
                      const char *dbName,
                      const char *login,
-                     const char *pwd)
+                     const char *pwd);
 </synopsis>
+</para>
 
+<para>
    This is the predecessor of <function>PQconnectdb</function> with a fixed number
    of parameters but the same functionality.   
    </para>
   </listitem>
+ </varlistentry>
 
+ <varlistentry>
+  <term><function>PQsetdb</function></term>
   <listitem>
    <para>
-   <function>PQsetdb</function> Makes a new connection to the database server.
+   Makes a new connection to the database server.
 <synopsis>
 PGconn *PQsetdb(char *pghost,
                 char *pgport,
                 char *pgoptions,
                 char *pgtty,
-                char *dbName)
+                char *dbName);
 </synopsis>
+</para>
+
+<para>
    This is a macro that calls <function>PQsetdbLogin</function> with null pointers
    for the <parameter>login</> and <parameter>pwd</> parameters.  It is provided primarily
    for backward compatibility with old programs.
    </para>
   </listitem>
+ </varlistentry>
 
- <listitem>
+ <varlistentry>
+  <term><function>PQconnectStart</function></term>
+  <term><function>PQconnectPoll</function></term>
+  <listitem>
   <para>
-   <function>PQconnectStart</function>,
-   <function>PQconnectPoll</function>
    <indexterm><primary>nonblocking connection</primary></indexterm>
    Make a connection to the database server in a nonblocking manner.
 <synopsis>
-PGconn *PQconnectStart(const char *conninfo)
+PGconn *PQconnectStart(const char *conninfo);
 </synopsis>
 <synopsis>
-PostgresPollingStatusType PQconnectPoll(PGconn *conn)
+PostgresPollingStatusType PQconnectPoll(PGconn *conn);
 </synopsis>
-   These two routines are used to open a connection to a database server such
+</para>
+<para>
+   These two functions are used to open a connection to a database server such
    that your application's thread of execution is not blocked on remote I/O
    whilst doing so.
   </para>
@@ -322,11 +333,11 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn)
   </para>
 
   <para>
-   To begin, call <literal>conn=PQconnectStart("<replaceable>connection_info_string</>")</literal>.
-   If <varname>conn</varname> is NULL, then <application>libpq</> has been unable to allocate a new <structname>PGconn</>
+   To begin a nonblocking connection request, call <literal>conn = PQconnectStart("<replaceable>connection_info_string</>")</literal>.
+   If <varname>conn</varname> is null, then <application>libpq</> has been unable to allocate a new <structname>PGconn</>
    structure. Otherwise, a valid <structname>PGconn</> pointer is returned (though not yet
    representing a valid connection to the database). On return from
-   <function>PQconnectStart</function>, call <literal>status=PQstatus(conn)</literal>. If status equals
+   <function>PQconnectStart</function>, call <literal>status = PQstatus(conn)</literal>. If <varname>status</varname> equals
    <symbol>CONNECTION_BAD</symbol>, <function>PQconnectStart</function> has failed.
   </para>
   <para>
@@ -334,11 +345,11 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn)
    proceed with the connection sequence.  Loop thus: Consider a connection
    <quote>inactive</quote> by default. If <function>PQconnectPoll</function> last returned <symbol>PGRES_POLLING_ACTIVE</>,
    consider it <quote>active</quote> instead. If <function>PQconnectPoll(conn)</function> last returned
-   <symbol>PGRES_POLLING_READING</symbol>, perform a <function>select()</> for reading on <function>PQsocket(conn)</function>. If
+   <symbol>PGRES_POLLING_READING</symbol>, perform a <function>select()</> for reading on the socket determined using <function>PQsocket(conn)</function>. If
    it last returned <symbol>PGRES_POLLING_WRITING</symbol>, perform a <function>select()</> for writing on
-   <function>PQsocket(conn)</function>. If you have yet to call <function>PQconnectPoll</function>, i.e. after the call
+   that same socket. If you have yet to call <function>PQconnectPoll</function>, i.e., after the call
    to <function>PQconnectStart</function>, behave as if it last returned <symbol>PGRES_POLLING_WRITING</symbol>.  If
-   the <function>select()</> shows that the socket is ready, consider it <quote>active</quote>. If it has
+   <function>select()</> shows that the socket is ready, consider it <quote>active</quote>. If it has
    been decided that this connection is <quote>active</quote>, call <function>PQconnectPoll(conn)</function>
    again. If this call returns <symbol>PGRES_POLLING_FAILED</symbol>, the connection procedure
    has failed.  If this call returns <symbol>PGRES_POLLING_OK</symbol>, the connection has been
@@ -353,13 +364,13 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn)
 
   <para>
     At any time during connection, the status of the connection may be
-    checked, by calling <function>PQstatus</>. If this is <symbol>CONNECTION_BAD</>, then the
-    connection procedure has failed; if this is <function>CONNECTION_OK</>, then the
-    connection is ready.  Either of these states should be equally detectable
-    from the return value of <function>PQconnectPoll</>, as above. Other states may be
-    shown during (and only during) an asynchronous connection procedure. These
-    indicate the current stage of the connection procedure, and may be useful
-    to provide feedback to the user for example. These statuses may include:
+    checked, by calling <function>PQstatus</>. If this gives <symbol>CONNECTION_BAD</>, then the
+    connection procedure has failed; if it gives <function>CONNECTION_OK</>, then the
+    connection is ready.  Both of these states are equally detectable
+    from the return value of <function>PQconnectPoll</>, described above. Other states may also occur
+    during (and only during) an asynchronous connection procedure. These
+    indicate the current stage of the connection procedure and may be useful
+    to provide feedback to the user for example. These statuses are:
 
     <variablelist>
      <varlistentry>
@@ -433,7 +444,7 @@ switch(PQstatus(conn))
   </para>
 
   <para>
-   Note that if <function>PQconnectStart</function> returns a non-NULL pointer, you must call
+   Note that if <function>PQconnectStart</function> returns a non-null pointer, you must call
    <function>PQfinish</function> when you are finished with it, in order to dispose of
    the structure and any associated memory blocks. This must be done even if a
    call to <function>PQconnectStart</function> or <function>PQconnectPoll</function> failed.
@@ -441,23 +452,25 @@ switch(PQstatus(conn))
 
   <para>
    <function>PQconnectPoll</function> will currently block if
-   <application>libpq</> is compiled with <symbol>USE_SSL</symbol>
-   defined. This restriction may be removed in the future.
+   <application>libpq</> is compiled with SSL support. This restriction may be removed in the future.
   </para>
 
   <para>
-   These functions leave the socket in a nonblocking state as if 
+   Finally, these functions leave the socket in a nonblocking state as if 
    <function>PQsetnonblocking</function> had been called.
   </para>
- </listitem>
+  </listitem>
+ </varlistentry>
 
+ <varlistentry>
+  <term><function>PQconndefaults</function></term>
   <listitem>
    <para>
-   <function>PQconndefaults</function> Returns the default connection options.
+   Returns the default connection options.
 <synopsis>
-PQconninfoOption *PQconndefaults(void)
+PQconninfoOption *PQconndefaults(void);
 
-struct PQconninfoOption
+typedef struct
 {
     char   *keyword;   /* The keyword of the option */
     char   *envvar;    /* Fallback environment variable name */
@@ -470,13 +483,18 @@ struct PQconninfoOption
                           "*"       Password field - hide value
                           "D"       Debug option - don't show by default */
     int     dispsize;  /* Field size in characters for dialog */
-}
+} PQconninfoOption;
 </synopsis>
+</para>
+
+<para>
+   converts an escaped string representation of binary data into binary
+   data --- the reverse of <function>PQescapeBytea</function>.
    Returns a connection options array.  This may
    be used to determine all possible <function>PQconnectdb</function> options and their
    current default values.  The return value points to an array of
-   <structname>PQconninfoOption</structname> <type>struct</>s, which ends with an entry having a NULL
-   keyword pointer.  Note that the default values (<structfield>val</structfield> fields)
+   <structname>PQconninfoOption</structname> structures, which ends with an entry having a null
+   key-word pointer.  Note that the current default values (<structfield>val</structfield> fields)
    will depend on environment variables and other context.
    Callers must treat the connection options data as read-only.
    </para>
@@ -493,49 +511,64 @@ struct PQconninfoOption
     was not thread-safe, so the behavior has been changed.
    </para>
   </listitem>
+ </varlistentry>
 
+ <varlistentry>
+  <term><function>PQfinish</function></term>
   <listitem>
    <para>
-   <function>PQfinish</function>
-   Close  the  connection to the backend.  Also frees
+   Closes  the  connection to the server.  Also frees
    memory used by the <structname>PGconn</structname> object.
 <synopsis>
-void PQfinish(PGconn *conn)
+void PQfinish(PGconn *conn);
 </synopsis>
-   Note that even if the backend connection attempt fails (as
+</para>
+
+<para>
+   Note that even if the server connection attempt fails (as
    indicated by <function>PQstatus</function>), the application should call <function>PQfinish</function>
    to free the memory used by the <structname>PGconn</structname> object.
    The <structname>PGconn</> pointer should not be used after <function>PQfinish</function> has been called.
    </para>
   </listitem>
+ </varlistentry>
 
+ <varlistentry>
+  <term><function>PQreset</function></term>
   <listitem>
    <para>
-   <function>PQreset</function>
-   Reset the communication  port  with  the  backend.
+   Resets the communication channel to the server.
 <synopsis>
-void PQreset(PGconn *conn)
+void PQreset(PGconn *conn);
 </synopsis>
+</para>
+
+<para>
    This function will close the connection
-   to the backend and attempt to  reestablish  a  new
+   to the server and attempt to  reestablish  a  new
    connection to the same server, using all the same
    parameters previously used.  This may be useful for
    error recovery if a working connection is lost.
    </para>
   </listitem>
+ </varlistentry>
 
+ <varlistentry>
+  <term><function>PQresetStart</function></term>
+  <term><function>PQresetPoll</function></term>
   <listitem>
    <para>
-   <function>PQresetStart</function>
-   <function>PQresetPoll</function>
-   Reset the communication  port  with  the  backend, in a nonblocking manner.
+   Reset the communication channel to the server, in a nonblocking manner.
 <synopsis>
 int PQresetStart(PGconn *conn);
 </synopsis>
 <synopsis>
 PostgresPollingStatusType PQresetPoll(PGconn *conn);
 </synopsis>
-    These functions will close the connection to the backend and attempt to
+</para>
+
+<para>
+    These functions will close the connection to the server and attempt to
     reestablish a new connection to the same server, using all the same
     parameters previously used. This may be useful for error recovery if a
     working connection is lost. They differ from <function>PQreset</function> (above) in that they
@@ -543,13 +576,14 @@ PostgresPollingStatusType PQresetPoll(PGconn *conn);
     restrictions as <function>PQconnectStart</> and <function>PQconnectPoll</>.
    </para>
    <para>
-    Call <function>PQresetStart</function>. If it returns 0, the reset has failed. If it returns 1,
+    To initiate a connection reset, call <function>PQresetStart</function>. If it returns 0, the reset has failed. If it returns 1,
     poll the reset using <function>PQresetPoll</function> in exactly the same way as you would
     create the connection using <function>PQconnectPoll</function>.
    </para>
   </listitem>
+ </varlistentry>
 
- </itemizedlist>
+ </variablelist>
 </para>
 
 <para>
@@ -560,99 +594,117 @@ maintain the <structname>PGconn</structname> abstraction.  Use the accessor func
 at the contents of <structname>PGconn</structname>.  Avoid directly referencing the fields of the
 <structname>PGconn</> structure because they are subject to change in the future.
 (Beginning in <productname>PostgreSQL</productname> release 6.4, the
-definition of <type>struct PGconn</> is not even provided in <filename>libpq-fe.h</filename>.
+definition of the <type>struct</type> behind <structname>PGconn</> is not even provided in <filename>libpq-fe.h</filename>.
 If you have old code that accesses <structname>PGconn</structname> fields directly, you can keep using it
 by including <filename>libpq-int.h</filename> too, but you are encouraged to fix the code
 soon.)
 
-<itemizedlist>
+<variablelist>
+<varlistentry>
+<term><function>PQdb</function></term>
 <listitem>
 <para>
-<function>PQdb</function>  
          Returns the database name of the connection.
 <synopsis>
-char *PQdb(const PGconn *conn)
+char *PQdb(const PGconn *conn);
 </synopsis>
+</para>
+
+<para>
 <function>PQdb</> and the next several functions return the values established
 at connection.  These values are fixed for the life of the <structname>PGconn</>
 object.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQuser</function></term>
 <listitem>
 <para>
-<function>PQuser</function>
          Returns the user name of the connection.
 <synopsis>
-char *PQuser(const PGconn *conn)
+char *PQuser(const PGconn *conn);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQpass</function></term>
 <listitem>
 <para>
-<function>PQpass</function>
          Returns the password of the connection.
 <synopsis>
-char *PQpass(const PGconn *conn)
+char *PQpass(const PGconn *conn);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQhost</function></term>
 <listitem>
 <para>
-<function>PQhost</function>
          Returns the server host name of the connection.
 <synopsis>
-char *PQhost(const PGconn *conn)
+char *PQhost(const PGconn *conn);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQport</function></term>
 <listitem>
 <para>
-<function>PQport</function>
          Returns the port of the connection.
 <synopsis>
-char *PQport(const PGconn *conn)
+char *PQport(const PGconn *conn);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQtty</function></term>
 <listitem>
 <para>
-<function>PQtty</function>
-         Returns the debug <acronym>tty</acronym> of the connection.
+         Returns the debug <acronym>TTY</acronym> of the connection.
 <synopsis>
-char *PQtty(const PGconn *conn)
+char *PQtty(const PGconn *conn);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQoptions</function></term>
 <listitem>
 <para>
-<function>PQoptions</function>
-       Returns the backend options used in  the  connection.
+       Returns the configuration options passed in the connection request.
 <synopsis>
-char *PQoptions(const PGconn *conn)
+char *PQoptions(const PGconn *conn);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQstatus</function></term>
 <listitem>
 <para>
-<function>PQstatus</function>
          Returns the status of the connection. 
 <synopsis>
-ConnStatusType PQstatus(const PGconn *conn)
+ConnStatusType PQstatus(const PGconn *conn);
 </synopsis>
 </para>
 
       <para>
        The status can be one of a number of values.
        However, only two of these are
-       seen outside of an asynchronous connection procedure -
-       <literal>CONNECTION_OK</literal> or
+       seen outside of an asynchronous connection procedure:
+       <literal>CONNECTION_OK</literal> and
        <literal>CONNECTION_BAD</literal>. A good
        connection to the database has the status <literal>CONNECTION_OK</literal>.
        A failed connection
@@ -672,65 +724,93 @@ ConnStatusType PQstatus(const PGconn *conn)
        that might be seen.
       </para>
      </listitem>
+    </varlistentry>
 
+    <varlistentry>
+     <term><function>PQerrorMessage</function></term>
      <listitem>
       <para>
-       <function>PQerrorMessage</function>
        <indexterm><primary>error message</></>
        Returns the error message most recently generated by
        an operation on the connection.
-       <synopsis>
+<synopsis>
 char *PQerrorMessage(const PGconn* conn);
-       </synopsis>
+</synopsis>
       </para>
 
       <para>
-       Nearly all <application>libpq</> functions will set
+       Nearly all <application>libpq</> functions will set a message for
        <function>PQerrorMessage</function> if they fail.
-       Note that by <application>libpq</application> convention, a non-empty
-       <function>PQerrorMessage</function> will
+       Note that by <application>libpq</application> convention, a nonempty
+       <function>PQerrorMessage</function> result will
        include a trailing newline.
       </para>
      </listitem>
+    </varlistentry>
 
+    <varlistentry>
+     <term><function>PQsocket</function></term>
      <listitem>
       <para>
-       <function>PQbackendPID</function>
-       Returns the process <acronym>ID</acronym> of the backend server 
-      handling this connection.
-       <synopsis>
+       Obtains the file descriptor number of the connection socket to
+       the server.  A valid descriptor will be greater than or equal
+       to 0; a result of -1 indicates that no server connection is
+       currently open.
+<synopsis>
+int PQsocket(const PGconn *conn);
+</synopsis>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PQbackendPID</function></term>
+     <listitem>
+      <para>
+       Returns the process <acronym>ID</acronym> of the backend server process
+       handling this connection.
+<synopsis>
 int PQbackendPID(const PGconn *conn);
-       </synopsis>
+</synopsis>
+</para>
+
+<para>
        The backend <acronym>PID</acronym> is useful for debugging
        purposes and for comparison to <command>NOTIFY</command>
        messages (which include the <acronym>PID</acronym> of the
-       notifying backend).  Note that the <acronym>PID</acronym>
-       belongs to a process executing on the database server host, not
-       the local host!
+       notifying backend process).  Note that the
+       <acronym>PID</acronym> belongs to a process executing on the
+       database server host, not the local host!
       </para>
      </listitem>
+    </varlistentry>
 
+    <varlistentry>
+     <term><function>PQgetssl</function></term>
      <listitem>
       <para>
-       <function>PQgetssl</function>
        <indexterm><primary>SSL</></>
-       Returns the SSL structure used in the connection, or NULL
+       Returns the SSL structure used in the connection, or null
        if SSL is not in use. 
-       <synopsis>
+<synopsis>
 SSL *PQgetssl(const PGconn *conn);
-       </synopsis>
+</synopsis>
+</para>
+
+<para>
        This structure can be used to verify encryption levels, check
-       server certificate and more. Refer to the SSL documentation
+       server certificates, and more. Refer to the <productname>OpenSSL</> documentation
        for information about this structure.
       </para>
       <para>
-       You must define <literal>USE_SSL</literal> in order to get the
+       You must define <symbol>USE_SSL</symbol> in order to get the
        prototype for this function. Doing this will also 
        automatically include <filename>ssl.h</filename> from <productname>OpenSSL</productname>.
       </para>
      </listitem>
+    </varlistentry>
 
-    </itemizedlist>
+    </variablelist>
    </para>
   </sect1>
 
@@ -744,93 +824,136 @@ SQL queries and commands.
 </para>
 
 <sect2 id="libpq-exec-main">
-  <title>Main Routines</title>
-<itemizedlist>
+  <title>Main Functions</title>
+
+<variablelist>
+<varlistentry>
+<term><function>PQexec</function></term>
 <listitem>
 <para>
-<function>PQexec</function>
-          Submit a command to the server
-          and wait for the result.
+          Submits a command to the server
+          and waits for the result.
 <synopsis>
 PGresult *PQexec(PGconn *conn,
-                 const char *query);
+                 const char *command);
 </synopsis>
-          Returns a <structname>PGresult</structname> pointer or possibly a NULL pointer.
-          A non-NULL pointer will generally be returned except in
+</para>
+
+<para>
+          Returns a <structname>PGresult</structname> pointer or possibly a null pointer.
+          A non-null pointer will generally be returned except in
           out-of-memory conditions or serious errors such as inability
-          to send the command to the backend.
-          If a NULL is returned, it
+          to send the command to the server.
+          If a null pointer is returned, it
 	  should be treated like a <symbol>PGRES_FATAL_ERROR</symbol> result.  Use
 	  <function>PQerrorMessage</function> to get more information about the error.
 </para>
 </listitem>
-</itemizedlist>
+</varlistentry>
+</variablelist>
 
 <para>
 The <function>PGresult</function> structure encapsulates the result
-returned by the backend.
-<filename>libpq</filename> application programmers should be careful to
+returned by the server.
+<application>libpq</application> application programmers should be careful to
 maintain the <structname>PGresult</structname> abstraction.  Use the accessor functions below to get
 at the contents of <structname>PGresult</structname>.  Avoid directly referencing the fields of the
 <structname>PGresult</structname> structure because they are subject to change in the future.
 (Beginning in <productname>PostgreSQL</productname> 6.4, the
-definition of <type>struct PGresult</> is not even provided in <filename>libpq-fe.h</>.  If you
+definition of <type>struct</> behind <structname>PGresult</> is not even provided in <filename>libpq-fe.h</>.  If you
 have old code that accesses <structname>PGresult</structname> fields directly, you can keep using it
 by including <filename>libpq-int.h</filename> too, but you are encouraged to fix the code
 soon.)
 </para>
 
-<itemizedlist>
+<variablelist>
+<varlistentry>
+<term><function>PQresultStatus</function></term>
 <listitem>
 <para>
-<function>PQresultStatus</function>
           Returns the result status of the command.
 <synopsis>
-ExecStatusType PQresultStatus(const PGresult *res)
+ExecStatusType PQresultStatus(const PGresult *res);
 </synopsis>
+</para>
+
+<para>
 <function>PQresultStatus</function> can return one of the following values:
 
-<itemizedlist>
- <listitem>
-  <para><literal>PGRES_EMPTY_QUERY</literal> -- The string sent to the backend was empty.</para>
- </listitem>
- <listitem>
-  <para><literal>PGRES_COMMAND_OK</literal> -- Successful completion of a command returning no data</para>
- </listitem>
- <listitem>
-  <para><literal>PGRES_TUPLES_OK</literal> -- The query successfully executed</para>
- </listitem>
- <listitem>
-  <para><literal>PGRES_COPY_OUT</literal> -- Copy Out (from server) data transfer started</para>
- </listitem>
- <listitem>
-  <para><literal>PGRES_COPY_IN</literal> -- Copy In (to server) data transfer started</para>
- </listitem>
- <listitem>
-  <para><literal>PGRES_BAD_RESPONSE</literal> -- The server's response was not understood</para>
- </listitem>
- <listitem>
-  <para><literal>PGRES_NONFATAL_ERROR</literal></para>
- </listitem>
- <listitem>
-  <para><literal>PGRES_FATAL_ERROR</literal></para>
- </listitem>
-</itemizedlist>
+<variablelist>
+ <varlistentry>
+  <term><literal>PGRES_EMPTY_QUERY</literal></term>
+  <listitem>
+   <para>The string sent to the server was empty.</para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><literal>PGRES_COMMAND_OK</literal></term>
+  <listitem>
+   <para>Successful completion of a command returning no data.</para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><literal>PGRES_TUPLES_OK</literal></term>
+  <listitem>
+   <para>The query successfully executed.</para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><literal>PGRES_COPY_OUT</literal></term>
+  <listitem>
+   <para>Copy Out (from server) data transfer started.</para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><literal>PGRES_COPY_IN</literal></term>
+  <listitem>
+   <para>Copy In (to server) data transfer started.</para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><literal>PGRES_BAD_RESPONSE</literal></term>
+  <listitem>
+   <para>The server's response was not understood.</para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><literal>PGRES_NONFATAL_ERROR</literal></term>
+  <listitem>
+   <para>A nonfatal error occurred.</para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term><literal>PGRES_FATAL_ERROR</literal></term>
+  <listitem>
+   <para>A fatal error occurred.</para>
+  </listitem>
+ </varlistentry>
+</variablelist>
 
 If the result status is <literal>PGRES_TUPLES_OK</literal>, then the
-routines described below can be used to retrieve the rows returned by
+functions described below can be used to retrieve the rows returned by
 the query.  Note that a <command>SELECT</command> command that happens
 to retrieve zero rows still shows <literal>PGRES_TUPLES_OK</literal>.
 <literal>PGRES_COMMAND_OK</literal> is for commands that can never
 return rows (<command>INSERT</command>, <command>UPDATE</command>,
 etc.). A response of <literal>PGRES_EMPTY_QUERY</literal> often
-indicates a bug in the client software.
+exposes a bug in the client software.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQresStatus</function></term>
 <listitem>
 <para>
-<function>PQresStatus</function>
 	Converts the enumerated type returned by <function>PQresultStatus</> into
 	a string constant describing the status code.
 <synopsis>
@@ -838,15 +961,20 @@ char *PQresStatus(ExecStatusType status);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQresultErrorMessage</function></term>
 <listitem>
 <para>
-<function>PQresultErrorMessage</function>
-returns the error message associated with the query, or an empty string
+Returns the error message associated with the command, or an empty string
 if there was no error.
 <synopsis>
 char *PQresultErrorMessage(const PGresult *res);
 </synopsis>
+</para>
+
+<para>
 Immediately following a <function>PQexec</function> or <function>PQgetResult</function>
 call, <function>PQerrorMessage</function> (on the connection) will return the same
 string as <function>PQresultErrorMessage</function> (on the result).  However, a
@@ -857,66 +985,80 @@ know the status associated with a particular <structname>PGresult</structname>; 
 when you want to know the status from the latest operation on the connection.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQclear</function></term>
 <listitem>
 <para>
-<function>PQclear</function>
-          Frees  the  storage  associated with the <structname>PGresult</structname>.
-          Every query result should be freed via <function>PQclear</function> when
+          Frees  the  storage  associated with a <structname>PGresult</structname>.
+          Every command result should be freed via <function>PQclear</function> when
           it  is  no  longer needed.
 <synopsis>
 void PQclear(PQresult *res);
 </synopsis>
+</para>
+
+<para>
           You can keep a <structname>PGresult</structname> object around for as long as you
-          need it; it does not go away when you issue a new query,
+          need it; it does not go away when you issue a new command,
           nor even if you close the connection.  To get rid of it,
           you must call <function>PQclear</function>.  Failure to do this will
-          result in memory leaks in  the  frontend  application.
+          result in memory leaks in your client application.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQmakeEmptyPGresult</function></term>
 <listitem>
 <para>
-<function>PQmakeEmptyPGresult</function>
           Constructs an empty <structname>PGresult</structname> object with the given status.
 <synopsis>
 PGresult* PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
 </synopsis>
-This is <application>libpq</>'s internal routine to allocate and initialize an empty
+</para>
+
+<para>
+This is <application>libpq</>'s internal function to allocate and initialize an empty
 <structname>PGresult</structname> object.  It is exported because some applications find it
 useful to generate result objects (particularly objects with error
-status) themselves.  If <parameter>conn</parameter> is not NULL and status indicates an error,
-the connection's current error message is copied into the <structname>PGresult.</structname>
+status) themselves.  If <parameter>conn</parameter> is not null and <parameter>status</> indicates an error,
+the current error message of the specified connection is copied into the <structname>PGresult</structname>.
 Note that <function>PQclear</function> should eventually be called on the object, just
 as with a <structname>PGresult</structname> returned by <application>libpq</application> itself.
 </para>
 </listitem>
-</itemizedlist>
+</varlistentry>
+</variablelist>
 </sect2>
 
 <sect2 id="libpq-exec-escape-string">
-  <title>Escaping strings for inclusion in SQL queries</title>
+  <title>Escaping Strings for Inclusion in SQL Commands</title>
 
    <indexterm zone="libpq-exec-escape-string"><primary>escaping strings</></>
 
 <para>
-<function>PQescapeString</function>
-          Escapes a string for use within an SQL query.
+<function>PQescapeString</function> escapes a string for use within an SQL commmand.
 <synopsis>
 size_t PQescapeString (char *to, const char *from, size_t length);
 </synopsis>
-If you want to include strings that have been received
+</para>
+
+<para>
+If you want to use strings that have been received
 from a source that is not trustworthy (for example, because a random user
-entered them), you cannot directly include them in SQL
-queries for security reasons.  Instead, you have to quote special
-characters that are otherwise interpreted by the SQL parser.
+entered them), you should not directly include them in SQL
+commands for security reasons.  Instead, you have to escape certain
+characters that are otherwise interpreted specially by the SQL parser.
+<function>PQescapeString</> performs this operation.
 </para>
 <para>
-<function>PQescapeString</> performs this operation.  The
-<parameter>from</> points to the first character of the string that
+The
+parameter <parameter>from</> points to the first character of the string that
 is to be escaped, and the <parameter>length</> parameter counts the
-number of characters in this string (a terminating zero byte is
-neither necessary nor counted).  <parameter>to</> shall point to a
+number of characters in this string.  (A terminating zero byte is
+neither necessary nor counted.)  <parameter>to</> shall point to a
 buffer that is able to hold at least one more character than twice
 the value of <parameter>length</>, otherwise the behavior is
 undefined.  A call to <function>PQescapeString</> writes an escaped
@@ -936,297 +1078,355 @@ strings overlap.
 
 
  <sect2 id="libpq-exec-escape-bytea">
-  <title>Escaping binary strings for inclusion in SQL queries</title>
+  <title>Escaping Binary Strings for Inclusion in SQL Commands</title>
   <indexterm zone="libpq-exec-escape-bytea">
    <primary>escaping binary strings</primary>
   </indexterm>
-  <para>
-   <function>PQescapeBytea</function>
-   Escapes a binary string (<type>bytea</type> type) for use within an SQL query.
-   <synopsis>
-    unsigned char *PQescapeBytea(const unsigned char *from,
-                                         size_t from_length,
-                                         size_t *to_length);
-   </synopsis>
 
-   Certain <acronym>ASCII</acronym> characters <emphasis>must</emphasis>
-   be escaped (but all characters <emphasis>may</emphasis> be escaped)
-   when used as part of a <type>bytea</type>
-   string literal in an <acronym>SQL</acronym> statement. In general, to
-   escape a character, it is converted into the three digit octal number
-   equal to the decimal <acronym>ASCII</acronym> value, and preceded by
-   two backslashes. The single quote (') and backslash (\) characters have
-   special alternate escape sequences. See the &cite-user;
-   for more information. <function>PQescapeBytea
-   </function> performs this operation, escaping only the minimally
-   required characters.
+  <variablelist>
+  <varlistentry>
+  <term><function>PQescapeBytea</function></term>
+  <listitem>
+  <para>
+   Escapes binary data for use within an SQL command with the type <type>bytea</type>.
+<synopsis>
+unsigned char *PQescapeBytea(const unsigned char *from,
+                             size_t from_length,
+                             size_t *to_length);
+</synopsis>
+</para>
+
+<para>
+   Certain byte values <emphasis>must</emphasis> be escaped (but all
+   byte values <emphasis>may</emphasis> be escaped) when used as part
+   of a <type>bytea</type> literal in an <acronym>SQL</acronym>
+   statement. In general, to escape a byte, it is converted into the
+   three digit octal number equal to the octet value, and preceded by
+   two backslashes. The single quote (<literal>'</>) and backslash
+   (<literal>\</>) characters have special alternative escape
+   sequences. See the &cite-user; for more
+   information. <function>PQescapeBytea</function> performs this
+   operation, escaping only the minimally required bytes.
   </para>
 
   <para>
    The <parameter>from</parameter> parameter points to the first
-   character of the string that is to be escaped, and the
+   byte of the string that is to be escaped, and the
    <parameter>from_length</parameter> parameter reflects the number of
-   characters in this binary string (a terminating zero byte is
-   neither necessary nor counted).  The <parameter>to_length</parameter>
-   parameter shall point to a buffer suitable to hold the resultant
+   bytes in this binary string.  (A terminating zero byte is
+   neither necessary nor counted.)  The <parameter>to_length</parameter>
+   parameter points to a variable that will hold the resultant
    escaped string length. The result string length includes the terminating
    zero byte of the result.
   </para>
 
   <para>
    <function>PQescapeBytea</> returns an escaped version of the
-   <parameter>from</parameter> parameter binary string, to a
-   caller-provided buffer. The return string has all special
-   characters replaced so that they can be properly processed by the
-   <productname>PostgreSQL</> string literal parser, and the
-   <type>bytea</type> input function. A terminating zero byte is also
-   added.  The single quotes that must surround
-   <productname>PostgreSQL</> string literals are not part of the
-   result string.
+   <parameter>from</parameter> parameter binary string in memory allocated with <function>malloc()</>.
+   The return string has all special characters replaced
+   so that they can be properly processed by the PostgreSQL string literal
+   parser, and the <type>bytea</type> input function. A terminating zero
+   byte is also added.  The single quotes that must surround
+   PostgreSQL string literals are not part of the result string.
   </para>
+  </listitem>
+  </varlistentry>
 
+  <varlistentry>
+  <term><function>PQunescapeBytea</function></term>
+  <listitem>
   <para>
-   <function>PQunescapeBytea</function>
    Converts an escaped string representation of binary data into binary
-   data - the reverse of <function>PQescapeBytea</function>.
-   <synopsis>
-    unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
-   </synopsis>
+   data --- the reverse of <function>PQescapeBytea</function>.
+<synopsis>
+unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
+</synopsis>
+</para>
 
+<para>
    The <parameter>from</parameter> parameter points to an escaped string
-   such as might be returned by <function>PQgetvalue</function> of a
-   <type>BYTEA</type> column. <function>PQunescapeBytea</function> converts
-   this string representation into its binary representation, filling the supplied buffer.
-   It returns a pointer to the buffer which is NULL on error, and the size
-   of the buffer in <parameter>to_length</parameter>. The pointer may
-   subsequently be used as an argument to the function
-   <function>free(3)</function>.
+   such as might be returned by <function>PQgetvalue</function> when applied to a
+   <type>bytea</type> column. <function>PQunescapeBytea</function> converts
+   this string representation into its binary representation.
+   It returns a pointer to a buffer allocated with <function>malloc()</function>, or null on error, and puts the size
+   of the buffer in <parameter>to_length</parameter>.
   </para>
+  </listitem>
+  </varlistentry>
+  </variablelist>
    
  </sect2>
 
 
 <sect2 id="libpq-exec-select-info">
-  <title>Retrieving SELECT Result Information</title>
+  <title>Retrieving Query Result Information</title>
 
-<itemizedlist>
+<variablelist>
+<varlistentry>
+<term><function>PQntuples</function></term>
 <listitem>
 <para>
-<function>PQntuples</function>
-          Returns the number of tuples (rows)
+          Returns the number of rows (tuples)
           in the query result.
 <synopsis>
 int PQntuples(const PGresult *res);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQnfields</function></term>
 <listitem>
 <para>
-<function>PQnfields</function>
-          Returns   the   number    of    fields
-          (columns) in each row of the query result.
+          Returns the number of columns (fields)
+          in each row of the query result.
 <synopsis>
 int PQnfields(const PGresult *res);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
-
+<varlistentry>
+<term><function>PQfname</function></term>
 <listitem>
 <para>
-<function>PQfname</function>
- Returns the field (column) name associated with the given field index.
- Field  indices start at 0.
+ Returns the column name associated with the given column number.
+ Column numbers start at 0.
 <synopsis>
 char *PQfname(const PGresult *res,
-                    int field_index);
+              int column_number);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQfnumber</function></term>
 <listitem>
 <para>
-<function>PQfnumber</function>
-            Returns  the  field  (column)  index
-          associated with the given field name.
+            Returns  the  column number
+          associated with the given column name.
 <synopsis>
 int PQfnumber(const PGresult *res,
-              const char *field_name);
+              const char *column_name);
 </synopsis>
 </para>
 
 <para>
-        -1 is returned if the given name does not match any field.
+        -1 is returned if the given name does not match any column.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQftype</function></term>
 <listitem>
 <para>
-<function>PQftype</function>
-            Returns the field type associated with the
-          given  field  index.  The  integer  returned is an
-          internal coding of the type.  Field indices  start
+            Returns the column data type associated with the
+          given  column number.  The  integer  returned is the
+          internal OID number of the type.  Column numbers start
           at 0.
 <synopsis>
 Oid PQftype(const PGresult *res,
-            int field_index);
+            int column_number);
 </synopsis>
+</para>
+
+<para>
 You can query the system table <literal>pg_type</literal> to obtain
 the name and properties of the various data types. The <acronym>OID</acronym>s
-of the built-in data types are defined in <filename>src/include/catalog/pg_type.h</filename>
+of the built-in data types are defined in the file <filename>src/include/catalog/pg_type.h</filename>
 in the source tree.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQfmod</function></term>
 <listitem>
 <para>
-<function>PQfmod</function>
-          Returns  the type-specific modification data of the field
-          associated with the given field index.
-          Field indices start at 0.
+          Returns  the type-specific modification data of the column
+          associated with the given column number.
+          Column numbers start at 0.
 <synopsis>
 int PQfmod(const PGresult *res,
-           int field_index);
+           int column_number);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQfsize</function></term>
 <listitem>
 <para>
-<function>PQfsize</function>
-          Returns  the  size  in bytes of the field
-          associated with the given field index.
-          Field indices start at 0.
+          Returns  the  size  in bytes of the column
+          associated with the given column number.
+          Column numbers start at 0.
 <synopsis>
 int PQfsize(const PGresult *res,
-            int field_index);
+            int column_number);
 </synopsis>
-	<function>PQfsize</> returns the space allocated for this field in a database
-	tuple, in other words the size of the server's binary representation
-	of the data type.  -1 is returned if the field is variable size.
 </para>
 
+<para>
+	<function>PQfsize</> returns the space allocated for this column in a database
+	row, in other words the size of the server's binary representation
+	of the data type.  -1 is returned if the column has a variable size.
+</para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQbinaryTuples</function></term>
 <listitem>
 <para>
-<function>PQbinaryTuples</function>
-          Returns 1 if the <structname>PGresult</> contains binary tuple data,
-	  0 if it contains ASCII data.
+          Returns 1 if the <structname>PGresult</> contains binary row data
+	  and 0 if it contains text data.
 <synopsis>
 int PQbinaryTuples(const PGresult *res);
 </synopsis>
-Currently, binary tuple data can only be returned by a query that
+</para>
+
+<para>
+Currently, binary row data can only be returned by a query that
 extracts data from a binary cursor.
 </para>
 </listitem>
-</itemizedlist>
+</varlistentry>
+</variablelist>
 </sect2>
 
 <sect2 id="libpq-exec-select-values">
-  <title>Retrieving SELECT Result Values</title>
+  <title>Retrieving Query Result Values</title>
 
-<itemizedlist>
+<variablelist>
+<varlistentry>
+<term><function>PQgetvalue</function></term>
 <listitem>
 <para>
-<function>PQgetvalue</function>
-            Returns a single field  (column)  value of one tuple (row)
+            Returns a single column value of one row
 	    of a <structname>PGresult</structname>.
-	    Tuple and field indices start at 0.
+	    Row and colums indices start at 0.
 <synopsis>
 char* PQgetvalue(const PGresult *res,
-                 int tup_num,
-                 int field_num);
+                 int row_number,
+                 int column_number);
 </synopsis>
+</para>
+
+<para>
 For most queries, the value returned by <function>PQgetvalue</function>
 is a null-terminated character string  representation
-of the attribute value.  But if <function>PQbinaryTuples()</function> is 1,
+of the column value.  But if <function>PQbinaryTuples</function> returns 1,
 the  value  returned  by <function>PQgetvalue</function>  is  the  binary
 representation of the
 type in the internal format of the backend server
-(but not including the size word, if the field is variable-length).
+(but not including the size word, if the column is variable-length).
 It  is then the programmer's responsibility to cast and
-convert the data to the correct C type.  The pointer
+convert the data to the correct C type.
+</para>
+
+<para>
+The pointer
 returned  by  <function>PQgetvalue</function> points to storage that is
-part of the <structname>PGresult</structname> structure.  One should not modify it,
+part of the <structname>PGresult</structname> structure.  One should not modify the data it points to,
 and one must explicitly 
-copy the value into other storage if it is to
+copy the data into other storage if it is to
 be used past the lifetime of the  <structname>PGresult</structname>  structure itself.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQgetisnull</function></term>
 <listitem>
 <para>
-<function>PQgetisnull</function>
-           Tests a field for a NULL entry.
-           Tuple and field indices start at 0.
+           Tests a column for a null value.
+           Row and column numbers start at 0.
 <synopsis>
 int PQgetisnull(const PGresult *res,
-                int tup_num,
-                int field_num);
+                int row_number,
+                int column_number);
 </synopsis>
-            This function returns  1 if the field contains a NULL, 0 if
+</para>
+
+<para>
+            This function returns  1 if the column is null and 0 if
             it contains a non-null value.  (Note that <function>PQgetvalue</function>
-            will return an empty string, not a null pointer, for a NULL
-            field.)
+            will return an empty string, not a null pointer, for a null
+            column.)
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQgetlength</function></term>
 <listitem>
 <para>
-<function>PQgetlength</function>
-          Returns   the   length  of  a  field (attribute) value in bytes.
-          Tuple and field indices start at 0.
+          Returns   the   length  of  a  column value in bytes.
+          Row and column numbers start at 0.
 <synopsis>
 int PQgetlength(const PGresult *res,
-                int tup_num,
-                int field_num);
+                int row_number,
+                int column_number);
 </synopsis>
-This is the actual data length for the particular data value, that is the
+</para>
+
+<para>
+This is the actual data length for the particular data value, that is, the
 size of the object pointed to by <function>PQgetvalue</function>.  Note that for character-represented
 values, this size has little to do with the binary size reported by <function>PQfsize</function>.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQprint</function></term>
 <listitem>
 <para>
-<function>PQprint</function>
-          Prints out all the  tuples  and,  optionally,  the
-          attribute  names  to  the specified output stream.
-       <synopsis>
+          Prints out all the rows and,  optionally,  the
+          column names  to  the specified output stream.
+<synopsis>
 void PQprint(FILE* fout,      /* output stream */
              const PGresult *res,
              const PQprintOpt *po);
 
-struct {
+typedef struct {
     pqbool  header;      /* print output field headings and row count */
     pqbool  align;       /* fill align the fields */
     pqbool  standard;    /* old brain dead format */
-    pqbool  html3;       /* output html tables */
+    pqbool  html3;       /* output HTML tables */
     pqbool  expanded;    /* expand tables */
     pqbool  pager;       /* use pager for output if needed */
     char    *fieldSep;   /* field separator */
-    char    *tableOpt;   /* insert to HTML <replaceable>table ...</replaceable> */
-    char    *caption;    /* HTML <replaceable>caption</replaceable> */
-    char    **fieldName; /* null terminated array of replacement field names */
+    char    *tableOpt;   /* attributes for HTML table element */
+    char    *caption;    /* HTML table caption */
+    char    **fieldName; /* null-terminated array of replacement field names */
 } PQprintOpt;
-       </synopsis>
+</synopsis>
+</para>
+
+<para>
 This function was formerly used by <application>psql</application>
 to print query results, but this is no longer the case and this
 function is no longer actively supported.
 </para>
 </listitem>
-</itemizedlist>
+</varlistentry>
+</variablelist>
 </sect2>
 
 <sect2 id="libpq-exec-nonselect">
-  <title>Retrieving Non-SELECT Result Information</title>
+  <title>Retrieving Result Information for Other Commands</title>
 
-<itemizedlist>
+<variablelist>
+<varlistentry>
+<term><function>PQcmdStatus</function></term>
 <listitem>
 <para>
-<function>PQcmdStatus</function>
           Returns the command status string from the SQL command that
 	  generated the <structname>PGresult</structname>.
 <synopsis>
@@ -1234,71 +1434,85 @@ char * PQcmdStatus(PGresult *res);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQcmdTuples</function></term>
 <listitem>
 <para>
-<function>PQcmdTuples</function>
 	  Returns the number of rows affected by the SQL command.
 <synopsis>
 char * PQcmdTuples(PGresult *res);
 </synopsis>
+</para>
+
+<para>
           If the <acronym>SQL</acronym> command that generated the
-	  <structname>PGresult</structname> was <command>INSERT</command>,
-	  <command>UPDATE</command>, <command>DELETE</command>,
-	  <command>MOVE</command>, or <command>FETCH</command> this
-	  returns a string containing the number of rows affected.  If the
-	  command was anything else, it returns the empty string.
+	  <structname>PGresult</structname> was <command>INSERT</>, <command>UPDATE</>, or <command>DELETE</command>, this returns a
+	  string containing the number of rows affected.  If the
+          command was anything else, it returns the empty string.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQoidValue</function></term>
 <listitem>
 <para>
-<function>PQoidValue</function>
-      Returns the object ID of the inserted row, if the
-      <acronym>SQL</acronym> command was an <command>INSERT</command>
-      that inserted exactly one row into a table that has OIDs.
-      Otherwise, returns <literal>InvalidOid</literal>.
+          Returns the OID of the inserted row, if the
+	  <acronym>SQL</acronym> command was an <command>INSERT</command>
+	  that inserted exactly one row into a table that has OIDs.
+          Otherwise, returns <literal>InvalidOid</literal>.
 <synopsis>
 Oid PQoidValue(const PGresult *res);
 </synopsis>
+</para>
+
+<para>
           The type <type>Oid</type> and the constant
-      <literal>InvalidOid</literal> will be defined if you include the
-      <application>libpq</application> header file. They will both be
-      some integer type.
+          <literal>InvalidOid</literal> will be defined if you include
+          the <application>libpq</application> header file. They will
+          both be some integer type.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQoidStatus</function></term>
 <listitem>
 <para>
-<function>PQoidStatus</function>
-      Returns a string with the object ID
-      of the inserted row, if the <acronym>SQL</acronym> command
-      was an <command>INSERT</command>.  (The string will be
-      <literal>0</> if the <command>INSERT</command> did not
-      insert exactly one row, or if the target table does not have
-      OIDs.)  If the command was not an <command>INSERT</command>,
-      returns an empty string.
+          Returns a string with the OID of the inserted row, if the
+          <acronym>SQL</acronym> command was an
+          <command>INSERT</command>.  (The string will be
+          <literal>0</> if the <command>INSERT</command> did not
+          insert exactly one row, or if the target table does not have
+          OIDs.)  If the command was not an <command>INSERT</command>,
+          returns an empty string.
 <synopsis>
 char * PQoidStatus(const PGresult *res);
 </synopsis>
+</para>
+
+<para>
 This function is deprecated in favor of <function>PQoidValue</function>
 and is not thread-safe.
 </para>
 </listitem>
-</itemizedlist>
+</varlistentry>
+</variablelist>
 
 </sect2>
 </sect1>
 
 <sect1 id="libpq-async">
-<title>Asynchronous Query Processing</title>
+<title>Asynchronous Command Processing</title>
 
   <indexterm zone="libpq-async"><primary>nonblocking connection</></>
 
 <para>
 The <function>PQexec</function> function is adequate for submitting commands in
-simple synchronous
-applications.  It has a couple of major deficiencies however:
+normal, synchronous
+applications.  It has a couple of deficiencies, however, that can be of importance to some users:
 
 <itemizedlist>
 <listitem>
@@ -1310,9 +1524,10 @@ want to block waiting for the response.
 </listitem>
 <listitem>
 <para>
-Since control is buried inside <function>PQexec</function>, it is hard for the frontend
-to decide it would like to try to cancel the ongoing command.  (It can be
-done from a signal handler, but not otherwise.)
+Since the execution of the client application is suspended while it
+waits for the result, it is hard for the application to decide that it
+would like to try to cancel the ongoing command.  (It can be done from
+a signal handler, but not otherwise.)
 </para>
 </listitem>
 <listitem>
@@ -1333,98 +1548,115 @@ underlying functions that <function>PQexec</function> is built from:
 <para>
 Older programs that used this functionality as well as 
 <function>PQputline</function> and <function>PQputnbytes</function>
-could block waiting to send data to the backend. To
+could block waiting to send data to the server. To
 address that issue, the function <function>PQsetnonblocking</function>
 was added.
-</para>
-<para>
 Old applications can neglect to use <function>PQsetnonblocking</function>
-and get the older potentially blocking behavior.  Newer programs can use 
+and get the old potentially blocking behavior.  Newer programs can use 
 <function>PQsetnonblocking</function> to achieve a completely nonblocking
-connection to the backend.
+connection to the server.
 
-<itemizedlist>
+<variablelist>
+<varlistentry>
+ <term><function>PQsetnonblocking</function></term>
  <listitem>
    <para>
-    <function>PQsetnonblocking</function> Sets the nonblocking status of the
-    connection.
+    Sets the nonblocking status of the connection.
 <synopsis>
-int PQsetnonblocking(PGconn *conn, int arg)
+int PQsetnonblocking(PGconn *conn, int arg);
 </synopsis>
-    Sets the state of the connection to nonblocking if <parameter>arg</parameter> is 1,
+</para>
+
+<para>
+    Sets the state of the connection to nonblocking if <parameter>arg</parameter> is 1 and
     blocking if <parameter>arg</parameter> is 0.  Returns 0 if OK, -1 if error.
    </para>
    <para>
     In the nonblocking state, calls to
     <function>PQputline</function>, <function>PQputnbytes</function>,
-    <function>PQsendQuery</function> and <function>PQendcopy</function>
+    <function>PQsendQuery</function>, and <function>PQendcopy</function>
     will not block but instead return an error if they need to be called
     again.
    </para>
    <para>
     When a database connection has been set to nonblocking mode and
     <function>PQexec</function> is called, it will temporarily set the state
-    of the connection to blocking until the <function>PQexec</function> 
+    of the connection to blocking until the <function>PQexec</function> call
     completes. 
    </para>
    <para>
     More of <application>libpq</application> is expected to be made safe for 
-    <function>PQsetnonblocking</function> functionality in the near future.
+    the nonblocking mode in the future.
   </para>
  </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQisnonblocking</function></term>
 <listitem>
 <para>
-<function>PQisnonblocking</function>
        Returns the blocking status of the database connection.
 <synopsis>
-int PQisnonblocking(const PGconn *conn)
+int PQisnonblocking(const PGconn *conn);
 </synopsis>
-       Returns 1 if the connection is set to nonblocking mode,
+</para>
+
+<para>
+       Returns 1 if the connection is set to nonblocking mode and
        0 if blocking.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQsendQuery</function></term>
 <listitem>
 <para>
-<function>PQsendQuery</function>
-          Submit a command to the server without
+          Submits a command to the server without
 	  waiting for the result(s).  1 is returned if the command was
-	  successfully dispatched, 0 if not (in which case, use
+	  successfully dispatched and 0 if not (in which case, use
 	  <function>PQerrorMessage</> to get more information about the failure).
 <synopsis>
 int PQsendQuery(PGconn *conn,
-                const char *query);
+                const char *command);
 </synopsis>
+</para>
+
+<para>
 	  After successfully calling <function>PQsendQuery</function>, call
           <function>PQgetResult</function> one or more
 	  times to obtain the results.  <function>PQsendQuery</function> may not be called
-	  again (on the same connection) until <function>PQgetResult</function> has returned NULL,
+	  again (on the same connection) until <function>PQgetResult</function> has returned a null pointer,
 	  indicating that the command is done.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQgetResult</function></term>
 <listitem>
 <para>
-<function>PQgetResult</function>
-          Wait for the next result from a prior <function>PQsendQuery</function>,
-	  and return it.  NULL is returned when the query is complete
+          Waits for the next result from a prior <function>PQsendQuery</function>,
+	  and return it.  A null pointer is returned when the command is complete
 	  and there will be no more results.
 <synopsis>
 PGresult *PQgetResult(PGconn *conn);
 </synopsis>
-	  <function>PQgetResult</function> must be called repeatedly until it returns NULL,
+</para>
+
+<para>
+	  <function>PQgetResult</function> must be called repeatedly until it returns a null pointer,
 	  indicating that the command is done.  (If called when no command is
-	  active, <function>PQgetResult</function> will just return NULL at once.)
-	  Each non-NULL result from <function>PQgetResult</function> should be processed using
+	  active, <function>PQgetResult</function> will just return a null pointer at once.)
+	  Each non-null result from <function>PQgetResult</function> should be processed using
 	  the same <structname>PGresult</> accessor functions previously described.
 	  Don't forget to free each result object with <function>PQclear</function> when done with it.
-	  Note that <function>PQgetResult</function> will block only if a query is active and the
+	  Note that <function>PQgetResult</function> will block only if a command is active and the
 	  necessary response data has not yet been read by <function>PQconsumeInput</function>.
 </para>
 </listitem>
-
-</itemizedlist>
+</varlistentry>
+</variablelist>
 </para>
 
 <para>
@@ -1432,24 +1664,28 @@ Using <function>PQsendQuery</function> and <function>PQgetResult</function>
 solves one of <function>PQexec</function>'s problems:
 If a command string contains multiple <acronym>SQL</acronym> commands, the results of those
 commands can be obtained individually.  (This allows a simple form of
-overlapped processing, by the way: the frontend can be handling the
-results of one query while the backend is still working on later
+overlapped processing, by the way: the client can be handling the
+results of one command while the server is still working on later
 queries in the same command string.)  However, calling <function>PQgetResult</function> will
-still cause the frontend to block until the backend completes the
+still cause the client to block until the server completes the
 next <acronym>SQL</acronym> command.  This can be avoided by proper use of three more
 functions:
 
-<itemizedlist>
+<variablelist>
+<varlistentry>
+<term><function>PQconsumeInput</function></term>
 <listitem>
 <para>
-<function>PQconsumeInput</function>
-	  If input is available from the backend, consume it.
+	  If input is available from the server, consume it.
 <synopsis>
 int PQconsumeInput(PGconn *conn);
 </synopsis>
+</para>
+
+<para>
 <function>PQconsumeInput</function> normally returns 1 indicating <quote>no error</quote>,
 but returns 0 if there was some kind of trouble (in which case
-<function>PQerrorMessage</function> is set).  Note that the result does not say
+<function>PQerrorMessage</function> can be used).  Note that the result does not say
 whether any input data was actually collected. After calling
 <function>PQconsumeInput</function>, the application may check
 <function>PQisBusy</function> and/or <function>PQnotifies</function> to see if
@@ -1458,119 +1694,109 @@ their state has changed.
 <para>
 <function>PQconsumeInput</function> may be called even if the application is not
 prepared to deal with a result or notification just yet.  The
-routine will read available data and save it in a buffer, thereby
+function will read available data and save it in a buffer, thereby
 causing a <function>select()</function> read-ready indication to go away.  The
 application can thus use <function>PQconsumeInput</function> to clear the
 <function>select()</function> condition immediately, and then examine the results at leisure.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQisBusy</function></term>
 <listitem>
 <para>
-<function>PQisBusy</function>
-Returns 1 if a query is busy, that is, <function>PQgetResult</function> would block
+Returns 1 if a command is busy, that is, <function>PQgetResult</function> would block
 waiting for input.  A 0 return indicates that <function>PQgetResult</function> can
 be called with assurance of not blocking.
 <synopsis>
 int PQisBusy(PGconn *conn);
 </synopsis>
-<function>PQisBusy</function> will not itself attempt to read data from the backend;
+</para>
+
+<para>
+<function>PQisBusy</function> will not itself attempt to read data from the server;
 therefore <function>PQconsumeInput</function> must be invoked first, or the busy
 state will never end.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQflush</function></term>
 <listitem>
 <para>
-<function>PQflush</function> Attempt to flush any data queued to the backend,
+Attempts to flush any data queued to the server,
 returns 0 if successful (or if the send queue is empty) or <symbol>EOF</symbol> if it failed for
 some reason.
 <synopsis>
 int PQflush(PGconn *conn);
 </synopsis>
+</para>
+
+<para>
 <function>PQflush</function> needs to be called on a nonblocking connection 
 before calling <function>select()</function> to determine if a response has
 arrived.  If 0 is returned it ensures that there is no data queued to the 
-backend that has not actually been sent.  Only applications that have used
+server that has not actually been sent.  Only applications that have used
 <function>PQsetnonblocking</function> have a need for this.
 </para>
 </listitem>
-
-<listitem>
-<para>
-<function>PQsocket</function>
-	  Obtain the file descriptor number for the backend connection socket.
-	  A valid descriptor will be &gt;= 0; a result of -1 indicates that
-	  no backend connection is currently open.
-<synopsis>
-int PQsocket(const PGconn *conn);
-</synopsis>
-<function>PQsocket</function> should be used to obtain the backend socket descriptor
-in preparation for executing <function>select()</function>.  This allows an
-application using a blocking connection to wait for either backend responses or
-other conditions.
-If the result of <function>select()</function> indicates that data can be read from
-the backend socket, then <function>PQconsumeInput</function> should be called to read the
-data; after which, <function>PQisBusy</function>, <function>PQgetResult</function>,
-and/or <function>PQnotifies</function> can be used to process the response.
-</para>
-<para>
-Nonblocking connections (that have used <function>PQsetnonblocking</function>)
-should not use <function>select()</function> until <function>PQflush</function>
-has returned 0 indicating that there is no buffered data waiting to be sent
-to the backend.
-</para>
-</listitem>
-
-</itemizedlist>
+</varlistentry>
+</variablelist>
 </para>
 
 <para>
-A typical frontend using these functions will have a main loop that uses
-<function>select</function> to wait for all the conditions that it must
-respond to.  One of the conditions will be input available from the backend,
-which in <function>select</function>'s terms is readable data on the file
+A typical application using these functions will have a main loop that uses
+<function>select()</function> to wait for all the conditions that it must
+respond to.  One of the conditions will be input available from the server,
+which in terms of <function>select()</function> means readable data on the file
 descriptor identified by <function>PQsocket</function>.
 When the main loop detects input ready, it should call
 <function>PQconsumeInput</function> to read the input.  It can then call
 <function>PQisBusy</function>, followed by <function>PQgetResult</function>
 if <function>PQisBusy</function> returns false (0).  It can also call
-<function>PQnotifies</function> to detect <command>NOTIFY</command>
-messages (see <xref linkend="libpq-notify">).
+<function>PQnotifies</function> to detect <command>NOTIFY</> messages (see <xref linkend="libpq-notify">).
 </para>
 
 <para>
-A frontend that uses <function>PQsendQuery</function>/<function>PQgetResult</function>
-can also attempt to cancel a command that is still being processed by the backend.
+Nonblocking connections (that have used <function>PQsetnonblocking</function>)
+should not use <function>select()</function> until <function>PQflush</function>
+has returned 0 indicating that there is no buffered data waiting to be sent
+to the server.
 </para>
 
 <para>
-<itemizedlist>
+A client that uses <function>PQsendQuery</function>/<function>PQgetResult</function>
+can also attempt to cancel a command that is still being processed by the server.
+
+<variablelist>
+<varlistentry>
+<term><function>PQrequestCancel</function></term>
 <listitem>
 <para>
-<function>PQrequestCancel</function>
-	  Request that <productname>PostgreSQL</productname> abandon
+	  Requests that the server abandon
 	  processing of the current command.
 <synopsis>
 int PQrequestCancel(PGconn *conn);
 </synopsis>
+</para>
+
+<para>
 The return value is 1 if the cancel request was successfully
-dispatched, 0 if not.  (If not, <function>PQerrorMessage</function> tells why not.)
+dispatched and 0 if not.  (If not, <function>PQerrorMessage</function> tells why not.)
 Successful dispatch is no guarantee that the request will have any
 effect, however.  Regardless of the return value of <function>PQrequestCancel</function>,
 the application must continue with the normal result-reading
 sequence using <function>PQgetResult</function>.  If the cancellation
 is effective, the current command will terminate early and return
 an error result.  If the cancellation fails (say, because the
-backend was already done processing the command), then there will
+server was already done processing the command), then there will
 be no visible result at all.
-</para>
-</listitem>
-</itemizedlist>
 </para>
 
 <para>
-Note that if the current command is part of a transaction, cancellation
+Note that if the current command is part of a transaction block, cancellation
 will abort the whole transaction.
 </para>
 
@@ -1579,10 +1805,12 @@ will abort the whole transaction.
 So, it is also possible to use it in conjunction with plain
 <function>PQexec</function>, if the decision to cancel can be made in a signal
 handler.  For example, <application>psql</application> invokes
-<function>PQrequestCancel</function> from a <systemitem>SIGINT</> signal handler, thus allowing
-interactive cancellation of queries that it issues through <function>PQexec</function>.
-Note that <function>PQrequestCancel</function> will have no effect if the connection
-is not currently open or the backend is not currently processing a command.
+<function>PQrequestCancel</function> from a <symbol>SIGINT</> signal handler, thus allowing
+interactive cancellation of commands that it issues through <function>PQexec</function>.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 </para>
 
 </sect1>
@@ -1592,14 +1820,13 @@ is not currently open or the backend is not currently processing a command.
 
 <para>
 <productname>PostgreSQL</productname> provides a fast-path interface to send
-function calls to the backend.  This is a trapdoor into system internals and
+function calls to the server.  This is a trapdoor into system internals and
 can be a potential security hole.  Most users will not need this feature.
+</para>
 
-<itemizedlist>
-<listitem>
 <para>
-<function>PQfn</function>
-	Request execution of a backend function via the fast-path interface.
+The function <function>PQfn</function> requests execution of a server
+function via the fast-path interface:
 <synopsis>
 PGresult* PQfn(PGconn* conn,
                int fnid,
@@ -1608,21 +1835,7 @@ PGresult* PQfn(PGconn* conn,
                int result_is_int,
                const PQArgBlock *args,
                int nargs);
-</synopsis>
-     The <parameter>fnid</> argument is the object identifier of the function to be
-     executed.
-     <parameter>result_buf</parameter> is the buffer in which
-     to place the return value.  The caller must  have  allocated
-     sufficient space to store the return value (there is no check!).
-     The actual result length will be returned in the integer pointed
-     to  by  <parameter>result_len</parameter>.   If a 4-byte integer result is expected, set
-     <parameter>result_is_int</parameter> to 1; otherwise set it to 0.  (Setting <parameter>result_is_int</parameter> to 1
-     tells <application>libpq</> to byte-swap the value if necessary, so that it is
-     delivered as a proper int value for the client machine.  When
-     <parameter>result_is_int</> is 0, the byte string sent by the backend is returned
-     unmodified.)
-     <parameter>args</> and <parameter>nargs</> specify the arguments to be passed to the function.
-<synopsis>
+
 typedef struct {
     int len;
     int isint;
@@ -1632,13 +1845,29 @@ typedef struct {
     } u;
 } PQArgBlock;
 </synopsis>
-     <function>PQfn</function> always returns a valid <structname>PGresult*</structname>. The result status
+</para>
+
+<para>
+     The <parameter>fnid</> argument is the OID of the function to be
+     executed.
+     <parameter>result_buf</parameter> is the buffer in which
+     to place the return value.  The caller must  have  allocated
+     sufficient space to store the return value.  (There is no check!)
+     The actual result length will be returned in the integer pointed
+     to  by  <parameter>result_len</parameter>.   If a 4-byte integer result is expected, set
+     <parameter>result_is_int</parameter> to 1, otherwise set it to 0.  (Setting <parameter>result_is_int</parameter> to 1
+     tells <application>libpq</> to byte-swap the value if necessary, so that it is
+     delivered as a proper <type>int</type> value for the client machine.  When
+     <parameter>result_is_int</> is 0, the byte string sent by the server is returned
+     unmodified.)
+     <parameter>args</> and <parameter>nargs</> specify the arguments to be passed to the function.
+</para>
+
+<para>
+     <function>PQfn</function> always returns a valid <structname>PGresult</structname> pointer. The result status
      should be checked before the result is used.   The
      caller is responsible for  freeing  the  <structname>PGresult</structname>  with
      <function>PQclear</function> when it is no longer needed.
-</para>
-</listitem>
-</itemizedlist>
 </para>
 
 </sect1>
@@ -1649,29 +1878,28 @@ typedef struct {
   <indexterm zone="libpq-notify"><primary>NOTIFY</primary></indexterm>
 
 <para>
-<productname>PostgreSQL</productname> supports asynchronous notification via the
-<command>LISTEN</command> and <command>NOTIFY</command> commands.  A backend registers its interest in a particular
+<productname>PostgreSQL</productname> offers asynchronous notification via the
+<command>LISTEN</command> and <command>NOTIFY</command> commands.  A server-side session registers its interest in a particular
 notification condition with the <command>LISTEN</command> command (and can stop listening
-with the <command>UNLISTEN</command> command).  All backends listening on a
-particular condition will be notified asynchronously when a <command>NOTIFY</command> of that
-condition name is executed by any backend.  No additional information is
+with the <command>UNLISTEN</command> command).  All sessions listening on a
+particular condition will be notified asynchronously when a <command>NOTIFY</command> command with that
+condition name is executed by any session.  No additional information is
 passed from the notifier to the listener.  Thus, typically, any actual data
-that needs to be communicated is transferred through a database relation.
-Commonly the condition name is the same as the associated relation, but it is
-not necessary for there to be any associated relation.
+that needs to be communicated is transferred through a database table.
+Commonly, the condition name is the same as the associated table, but it is
+not necessary for there to be any associated table.
 </para>
 
 <para>
-<filename>libpq</filename> applications submit <command>LISTEN</command> and <command>UNLISTEN</command>
-commands as ordinary SQL command.  Subsequently, arrival of <command>NOTIFY</command>
-messages can be detected by calling <function>PQnotifies</function>.
+<application>libpq</application> applications submit <command>LISTEN</command> and <command>UNLISTEN</command>
+commands as ordinary SQL command.  The arrival of <command>NOTIFY</command>
+messages can subsequently be detected by calling <function>PQnotifies</function>.
+</para>
 
-<itemizedlist>
-<listitem>
 <para>
-<function>PQnotifies</function>
-          Returns  the next notification from a list of unhandled
-          notification messages received from the backend.  Returns NULL if
+The function <function>PQnotifies</function>
+          returns  the next notification from a list of unhandled
+          notification messages received from the server.  It returns a null pointer if
           there are no pending notifications.  Once a notification is
 	  returned from <function>PQnotifies</>, it is considered handled and will be
 	  removed from the list of notifications.
@@ -1679,59 +1907,58 @@ messages can be detected by calling <function>PQnotifies</function>.
 PGnotify* PQnotifies(PGconn *conn);
 
 typedef struct pgNotify {
-    char *relname;              /* name of relation containing data */
-    int  be_pid;                /* process id of backend */
+    char *relname;              /* notification name */
+    int  be_pid;                /* process ID of server process */
 } PGnotify;
 </synopsis>
 After processing a <structname>PGnotify</structname> object returned by <function>PQnotifies</function>,
 be sure to free it with <function>free()</function> to avoid a memory leak.
 </para>
+
 <note>
 <para>
  In <productname>PostgreSQL</productname> 6.4 and later,
- the <literal>be_pid</literal> is that of the notifying backend,
- whereas in earlier versions it was always the <acronym>PID</acronym> of your own backend.
+ the <literal>be_pid</literal> is that of the notifying backend process,
+ whereas in earlier versions it was always the <acronym>PID</acronym> of your own backend process.
 </para>
 </note>
-</listitem>
-</itemizedlist>
-</para>
 
 <para>
-The  second  sample program gives an example of the use
+<xref linkend="libpq-example-2"> gives a sample program that illustrates the use
 of asynchronous notification.
 </para>
 
 <para>
-<function>PQnotifies()</function> does not actually read backend data; it just
+<function>PQnotifies()</function> does not actually read data from the server; it just
 returns messages previously absorbed by another <application>libpq</application>
 function.  In prior releases of <application>libpq</application>, the only way
-to ensure timely receipt of <command>NOTIFY</command> messages was to constantly submit queries,
+to ensure timely receipt of <command>NOTIFY</> messages was to constantly submit commands,
 even empty ones, and then check <function>PQnotifies()</function> after each
 <function>PQexec()</function>.  While this still works, it is
 deprecated as a waste of processing power.
 </para>
+
 <para>
-A better way to check for <command>NOTIFY</command>
-messages when you have no useful queries to make is to call
+A better way to check for <command>NOTIFY</>
+messages when you have no useful commands to execute is to call
 <function>PQconsumeInput()</function>, then check
 <function>PQnotifies()</function>.
-You can use <function>select()</function> to wait for backend data to
-arrive, thereby using no <acronym>CPU</acronym> power unless there is something
+You can use <function>select()</function> to wait for data to
+arrive from the server, thereby using no <acronym>CPU</acronym> power unless there is something
 to do.  (See <function>PQsocket()</function> to obtain the file descriptor
 number to use with <function>select()</function>.)
-Note that this will work OK whether you submit queries with
+Note that this will work OK whether you submit commands with
 <function>PQsendQuery</function>/<function>PQgetResult</function> or simply
 use <function>PQexec</function>.  You should, however, remember to
 check <function>PQnotifies()</function> after each
 <function>PQgetResult</function> or <function>PQexec</function>, to see
-if any notifications came in during the processing of the query.
+if any notifications came in during the processing of the command.
 </para>
 
 </sect1>
 
 <sect1 id="libpq-copy">
-<title>Functions Associated with the COPY Command</title>
+<title>Functions Associated with the <command>COPY</command> Command</title>
 
 <indexterm zone="libpq-copy">
  <primary>COPY</primary>
@@ -1739,162 +1966,168 @@ if any notifications came in during the processing of the query.
 </indexterm>
 
 <para>
- The COPY command in <productname>PostgreSQL</productname> has options to  read  from
- or  write  to  the  network  connection  used by <filename>libpq</filename>.
+ The <command>COPY</command> command in <productname>PostgreSQL</productname> has options to  read  from
+ or  write  to  the  network  connection  used by <application>libpq</application>.
  Therefore, functions are necessary to access this  network
  connection directly so applications may take advantage of this capability.
 </para>
 
 <para>
- These functions should be executed only after obtaining a <literal>PGRES_COPY_OUT</literal>
- or <literal>PGRES_COPY_IN</literal> result object from <function>PQexec</function>
- or <function>PQgetResult</function>.
+ These functions should be executed only after obtaining a result
+ status of <literal>PGRES_COPY_OUT</literal> or
+ <literal>PGRES_COPY_IN</literal> from <function>PQexec</function> or
+ <function>PQgetResult</function>.
+</para>
+
+<variablelist>
+<varlistentry>
+<term><function>PQgetline</function></term>
+<listitem>
+<para>
+          Reads  a  newline-terminated  line  of  characters
+          (transmitted  by the server) into a buffer
+          string of size <parameter>length</>.
+<synopsis>
+int PQgetline(PGconn *conn,
+              char *buffer,
+              int length);
+</synopsis>
 </para>
 
 <para>
-<itemizedlist>
-<listitem>
-<para>
-<function>PQgetline</function>
-          Reads  a  newline-terminated  line  of  characters
-          (transmitted  by the backend server) into a buffer
-          string of size length.
-<synopsis>
-int PQgetline(PGconn *conn,
-              char *string,
-              int length)
-</synopsis>
-Like <function>fgets</function>,  this  routine copies up to length-1 characters
-into string. It is like <function>gets</function>, however, in that it converts
+This function copies up to <parameter>length</>-1 characters
+into the buffer and converts
 the terminating newline into a zero byte.
 <function>PQgetline</function> returns <symbol>EOF</symbol> at the end of input, 0 if the
 entire line has been read, and 1 if the buffer is full but the
 terminating newline has not yet been read.
 </para>
 <para>
-Notice that the application must check to see if a
+Note that the application must check to see if a
 new line consists of  the  two characters  <literal>\.</literal>,
-which  indicates  that the backend server has finished sending
-the results  of  the  copy  command.
+which  indicates  that the server has finished sending
+the results  of  the <command>COPY</command> command.
 If  the  application might
-receive lines that are more than length-1  characters  long,
-care is needed to be sure one recognizes the <literal>\.</literal> line correctly
+receive lines that are more than <parameter>length</>-1  characters  long,
+care is needed to be sure it recognizes the <literal>\.</literal> line correctly
 (and does not, for example, mistake the end of a long data line
 for a terminator line).
-The code in
-<filename>
-src/bin/psql/copy.c
-</filename>
-contains example routines that correctly handle the  copy protocol.
+The code in the file
+<filename>src/bin/psql/copy.c</filename>
+contains example functions that correctly handle the <command>COPY</command> protocol.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQgetlineAsync</function></term>
 <listitem>
 <para>
-<function>PQgetlineAsync</function>
           Reads  a  newline-terminated  line  of  characters
-          (transmitted  by the backend server) into a buffer
+          (transmitted  by the server) into a buffer
           without blocking.
 <synopsis>
 int PQgetlineAsync(PGconn *conn,
                    char *buffer,
-                   int bufsize)
+                   int length);
 </synopsis>
-This routine is similar to <function>PQgetline</function>, but it can be used
+</para>
+
+<para>
+This function is similar to <function>PQgetline</function>, but it can be used
 by applications
-that must read COPY data asynchronously, that is without blocking.
-Having issued the COPY command and gotten a <literal>PGRES_COPY_OUT</literal>
+that must read <command>COPY</command> data asynchronously, that is, without blocking.
+Having issued the <command>COPY</command> command and gotten a <literal>PGRES_COPY_OUT</literal>
 response, the
 application should call <function>PQconsumeInput</function> and
 <function>PQgetlineAsync</function> until the
-end-of-data signal is detected.  Unlike <function>PQgetline</function>, this routine takes
+end-of-data signal is detected.
+</para>
+<para>
+Unlike <function>PQgetline</function>, this function takes
 responsibility for detecting end-of-data.
 On each call, <function>PQgetlineAsync</function> will return data if a complete newline-
 terminated data line is available in <application>libpq</>'s input buffer, or if the
 incoming data line is too long to fit in the buffer offered by the caller.
 Otherwise, no data is returned until the rest of the line arrives.
-</para>
-<para>
-The routine returns -1 if the end-of-copy-data marker has been recognized,
+The function returns -1 if the end-of-copy-data marker has been recognized,
 or 0 if no data is available, or a positive number giving the number of
 bytes of data returned.  If -1 is returned, the caller must next call
 <function>PQendcopy</function>, and then return to normal processing.
+</para>
+<para>
 The data returned will not extend beyond a newline character.  If possible
 a whole line will be returned at one time.  But if the buffer offered by
-the caller is too small to hold a line sent by the backend, then a partial
+the caller is too small to hold a line sent by the server, then a partial
 data line will be returned.  This can be detected by testing whether the
 last returned byte is <literal>\n</literal> or not.
 The returned string is not null-terminated.  (If you want to add a
-terminating null, be sure to pass a <parameter>bufsize</parameter> one smaller than the room
+terminating null, be sure to pass a <parameter>length</parameter> one smaller than the room
 actually available.)
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQputline</function></term>
 <listitem>
 <para>
-<function>PQputline</function>
-Sends  a  null-terminated  string  to  the backend server.
-Returns 0 if OK, <symbol>EOF</symbol> if unable to send the string.
+Sends  a  null-terminated  string  to  the server.
+Returns 0 if OK and <symbol>EOF</symbol> if unable to send the string.
 <synopsis>
 int PQputline(PGconn *conn,
               const char *string);
 </synopsis>
+</para>
+
+<para>
 Note the application must explicitly  send  the  two
 characters  <literal>\.</literal> on a final line  to indicate to
-the backend that it has finished sending its data.
+the server that it has finished sending its data.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQputnbytes</function></term>
 <listitem>
 <para>
-<function>PQputnbytes</function>
-Sends  a  non-null-terminated  string  to  the backend server.
-Returns 0 if OK, <symbol>EOF</symbol> if unable to send the string.
+Sends  a  non-null-terminated  string  to  the server.
+Returns 0 if OK and <symbol>EOF</symbol> if unable to send the string.
 <synopsis>
 int PQputnbytes(PGconn *conn,
                 const char *buffer,
                 int nbytes);
 </synopsis>
+</para>
+
+<para>
 This is exactly like <function>PQputline</function>, except that the data buffer need
 not be null-terminated since the number of bytes to send is
 specified directly.
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQendcopy</function></term>
 <listitem>
 <para>
-<function>PQendcopy</function>
- Synchronizes with the backend.  This function waits until
- the  backend  has  finished  the  copy.  It should
- either be issued when the  last  string  has  been
- sent  to  the  backend using <function>PQputline</function> or when the
- last string has been  received  from  the  backend
- using <function>PGgetline</function>.  It must be issued or the backend
- may get <quote>out of sync</quote> with  the  frontend.   Upon
- return from this function, the backend is ready to
- receive the next SQL command.
- The return value is 0  on  successful  completion,
- nonzero otherwise.
+ Synchronizes with the server.
 <synopsis>
 int PQendcopy(PGconn *conn);
 </synopsis>
-</para>
-
-<para>
-As an example:
-
-<programlisting>
-PQexec(conn, "CREATE TABLE foo (a int4, b char(16), d double precision)");
-PQexec(conn, "COPY foo FROM STDIN");
-PQputline(conn, "3\thello world\t4.5\n");
-PQputline(conn,"4\tgoodbye world\t7.11\n");
-...
-PQputline(conn,"\\.\n");
-PQendcopy(conn);
-</programlisting>
-</para>
-</listitem>
-</itemizedlist>
+ This function waits until
+ the  server  has  finished  the copying.  It should
+ either be issued when the  last  string  has  been
+ sent  to  the  server using <function>PQputline</function> or when the
+ last string has been  received  from  the  server
+ using <function>PGgetline</function>.  It must be issued or the server
+ may get <quote>out of sync</quote> with  the client.   Upon
+ return from this function, the server is ready to
+ receive the next SQL command.
+ The return value is 0  on  successful  completion,
+ nonzero otherwise.
 </para>
 
 <para>
@@ -1902,63 +2135,80 @@ When using <function>PQgetResult</function>, the application should respond to
 a <literal>PGRES_COPY_OUT</literal> result by executing <function>PQgetline</function>
 repeatedly, followed by <function>PQendcopy</function> after the terminator line is seen.
 It should then return to the <function>PQgetResult</function> loop until
-<function>PQgetResult</function> returns NULL. Similarly a <literal>PGRES_COPY_IN</literal>
+<function>PQgetResult</function> returns a null pointer. Similarly a <literal>PGRES_COPY_IN</literal>
 result is processed by a series of <function>PQputline</function> calls followed by
 <function>PQendcopy</function>, then return to the <function>PQgetResult</function> loop.
 This arrangement will ensure that
-a copy in or copy out command embedded in a series of <acronym>SQL</acronym> commands
+a <command>COPY</command> command embedded in a series of <acronym>SQL</acronym> commands
 will be executed correctly.
 </para>
+
 <para>
-Older applications are likely to submit a copy in or copy out
+Older applications are likely to submit a <command>COPY</command>
 via <function>PQexec</function> and assume that the transaction is done after
 <function>PQendcopy</function>.
-This will work correctly only if the copy in/out is the only
+This will work correctly only if the <command>COPY</command> is the only
 <acronym>SQL</acronym> command in the command string.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+An example:
+
+<programlisting>
+PQexec(conn, "CREATE TABLE foo (a integer, b varchar(16), d double precision);");
+PQexec(conn, "COPY foo FROM STDIN;");
+PQputline(conn, "3\thello world\t4.5\n");
+PQputline(conn, "4\tgoodbye world\t7.11\n");
+...
+PQputline(conn, "\\.\n");
+PQendcopy(conn);
+</programlisting>
 </para>
 
 </sect1>
 
 <sect1 id="libpq-trace">
-<title><application>libpq</application> Tracing Functions</title>
+<title>Tracing Functions</title>
 
-<para>
-<itemizedlist>
+<variablelist>
+<varlistentry>
+<term><function>PQtrace</function></term>
 <listitem>
 <para>
-<function>PQtrace</function>
-          Enable  tracing of the frontend/backend communication to a debugging file stream.
+          Enables  tracing of the client/server communication to a debugging file stream.
 <synopsis>
 void PQtrace(PGconn *conn
-             FILE *debug_port)
+             FILE *stream);
 </synopsis>
 </para>
 </listitem>
+</varlistentry>
 
+<varlistentry>
+<term><function>PQuntrace</function></term>
 <listitem>
 <para>
-<function>PQuntrace</function>
-          Disable tracing started by <function>PQtrace</function>.
+          Disables tracing started by <function>PQtrace</function>.
 <synopsis>
-void PQuntrace(PGconn *conn)
+void PQuntrace(PGconn *conn);
 </synopsis>
 </para>
 </listitem>
-</itemizedlist>
-</para>
+</varlistentry>
+</variablelist>
 
 </sect1>
 
 <sect1 id="libpq-control">
-<title><application>libpq</application> Control Functions</title>
+<title>Notice Processing</title>
 
 <para>
-<itemizedlist>
-<listitem>
-<para>
-<function>PQsetNoticeProcessor</function>
+The function <function>PQsetNoticeProcessor</function>
 <indexterm><primary>notice processor</></>
-Control reporting of notice and warning messages generated by <application>libpq</>.
+controls the  reporting of notice and warning messages generated by the server.
 <synopsis>
 typedef void (*PQnoticeProcessor) (void *arg, const char *message);
 
@@ -1968,17 +2218,15 @@ PQsetNoticeProcessor(PGconn *conn,
                      void *arg);
 </synopsis>
 </para>
-</listitem>
-</itemizedlist>
-</para>
 
 <para>
-By default, <application>libpq</application> prints notice
-messages from the backend on <filename>stderr</filename>,
-as well as a few error messages that it generates by itself.
+By default, <application>libpq</application> prints notice messages
+from the server, as well as a few error messages that it generates by
+itself, on <filename>stderr</filename>.
 This behavior can be overridden by supplying a callback function that
-does something else with the messages.  The callback function is passed
-the text of the error message (which includes a trailing newline), plus
+does something else with the messages, a so-called notice processor.
+The callback function is passed
+the text of the message (which includes a trailing newline), plus
 a void pointer that is the same one passed to
 <function>PQsetNoticeProcessor</function>.
 (This pointer can be used to access application-specific state if needed.)
@@ -1997,7 +2245,7 @@ creation of a new <structname>PGconn</> object.
 
 <para>
 The return value is the pointer to the previous notice processor.
-If you supply a callback function pointer of NULL, no action is taken,
+If you supply a null callback function pointer, no action is taken,
 but the current pointer is returned.
 </para>
 
@@ -2006,7 +2254,7 @@ Once you have set a notice processor, you should expect that that function
 could be called as long as either the <structname>PGconn</> object or <structname>PGresult</> objects
 made from it exist.  At creation of a <structname>PGresult</>, the <structname>PGconn</>'s current
 notice processor pointer is copied into the <structname>PGresult</> for possible use by
-routines like <function>PQgetvalue</function>.
+functions like <function>PQgetvalue</function>.
 </para>
 
 </sect1>
@@ -2024,7 +2272,7 @@ connection parameter values, which will be used by
 <function>PQconnectdb</>, <function>PQsetdbLogin</> and
 <function>PQsetdb</> if no value is directly specified by the calling
 code.  These are useful to avoid hard-coding database connection
-information into simple client applications.
+information into simple client applications, for example.
 
 <itemizedlist>
 <listitem>
@@ -2045,7 +2293,7 @@ directory in which the socket file is stored (default <filename>/tmp</filename>)
 </indexterm>
 <envar>PGPORT</envar> sets the default TCP port number or Unix-domain
 socket file extension for communicating with the
-<productname>PostgreSQL</productname> backend.
+<productname>PostgreSQL</productname> server.
 </para>
 </listitem>
 <listitem>
@@ -2063,7 +2311,7 @@ socket file extension for communicating with the
  <primary><envar>PGUSER</envar></primary>
 </indexterm>
 <envar>PGUSER</envar>
-sets the user name used to connect to the database and for authentication.
+sets the user name used to connect to the database.
 </para>
 </listitem>
 <listitem>
@@ -2072,34 +2320,33 @@ sets the user name used to connect to the database and for authentication.
  <primary><envar>PGPASSWORD</envar></primary>
 </indexterm>
 <envar>PGPASSWORD</envar>
-sets the password used if the backend demands password
-authentication.  This functionality is deprecated for security
-reasons; consider migrating to use the <link linkend='pgpassfile'>
-<filename>$HOME/.pgpass</></link>
-file.
+sets the password used if the server demands password
+authentication.  This environment variable is deprecated for security
+reasons; consider migrating to use the <filename>$HOME/.pgpass</>
+file (see <xref linkend="libpq-pgpass">).
 </para>
 </listitem>
 <listitem>
 <para>
 <envar>PGREALM</envar> sets the Kerberos realm to  use  with  
 <productname>PostgreSQL</productname>, if  it is different from the local realm.
-If <envar>PGREALM</envar> is set, <productname>PostgreSQL</productname> 
+If <envar>PGREALM</envar> is set, <application>libpq</application>
 applications  will  attempt authentication  with  servers for this realm and use
 separate ticket files to avoid conflicts with  local
 ticket  files.   This  environment  variable is only
-used if Kerberos authentication is selected by the backend.
+used if Kerberos authentication is selected by the server.
 </para>
 </listitem>
 <listitem>
 <para>
 <envar>PGOPTIONS</envar> sets additional run-time  options  for  
-the <productname>PostgreSQL</productname> backend.
+the <productname>PostgreSQL</productname> server.
 </para>
 </listitem>
 <listitem>
 <para>
-<envar>PGTTY</envar> sets the file or tty on which  debugging  
-messages from the backend server are displayed.
+<envar>PGTTY</envar> sets the file or <acronym>TTY</> on which  debugging  
+messages from the server are displayed.
 </para>
 </listitem>
 <listitem>
@@ -2125,74 +2372,68 @@ option should be set to at least 2 seconds.
 </para>
 
 <para>
-The following environment variables can be used to specify user-level default
-behavior for every <productname>PostgreSQL</productname> session:
+The following environment variables can be used to specify default
+behavior for every <productname>PostgreSQL</productname> session.
 
 <itemizedlist>
 <listitem>
 <para>
 <envar>PGDATESTYLE</envar>
 sets the default style of date/time representation.
+(Equivalent to <literal>SET datestyle TO ...</literal>.)
 </para>
 </listitem>
 <listitem>
 <para>
 <envar>PGTZ</envar>
 sets the default time zone.
+(Equivalent to <literal>SET timezone TO ...</literal>.)
 </para>
 </listitem>
 <listitem>
 <para>
 <envar>PGCLIENTENCODING</envar>
-sets the default client encoding.
+sets the default client character set encoding.
+(Equivalent to <literal>SET client_encoding TO ...</literal>.)
 </para>
 </listitem>
-</itemizedlist>
-</para>
-
-<para>
-The following environment variables can be used to specify default internal
-behavior for every <productname>PostgreSQL</productname> session:
-
-<itemizedlist>
 <listitem>
 <para>
 <envar>PGGEQO</envar>
-sets the default mode for the genetic optimizer.
+sets the default mode for the genetic query optimizer.
+(Equivalent to <literal>SET geqo TO ...</literal>.)
 </para>
 </listitem>
 </itemizedlist>
-</para>
 
-<para>
-Refer to the <command>SET</command> <acronym>SQL</acronym> command
+Refer to the <acronym>SQL</acronym> command <command>SET</command>
 for information on correct values for these environment variables.
 </para>
 
 </sect1>
 
 
-<sect1 id="libpq-files">
-<title>Files</title>
+<sect1 id="libpq-pgpass">
+<title>The Password File</title>
 
-<indexterm zone="libpq-files">
- <primary>files</primary>
+<indexterm zone="libpq-pgpass">
+ <primary>password file</primary>
 </indexterm>
+<indexterm zone="libpq-pgpass">
+ <primary>.pgpass</primary>
+</indexterm>
+
 <para>
-<anchor id="pgpassfile">
-<indexterm>
- <primary>password</primary>
- <secondary>.pgpass</secondary>
-</indexterm>
-The <filename>.pgpass</filename> file in a user's home directory is a
-file that can contain passwords to be used if the connection requires
-a password. This file should have the format:
+The file <filename>.pgpass</filename> in a user's home directory is a file
+that can contain passwords to be used if the connection requires a
+password (and no password has been specified otherwise).
+This file should have lines of the following format:
 <synopsis>
 <replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
 </synopsis>
-Any of these may be a literal name, or <literal>*</literal>, which
+Each of these fields may be a literal name or <literal>*</literal>, which
 matches anything.  The first matching entry will be used, so put more-specific
-entries first.  When an entry contains <literal>:</literal> or
+entries first.  When an entry contain <literal>:</literal> or
 <literal>\</literal>, it must be escaped with <literal>\</literal>.
 </para>
 <para>
@@ -2212,12 +2453,12 @@ If the permissions are less strict than this, the file will be ignored.
 </indexterm>
 
 <para>
-<filename>libpq</filename> is thread-safe as of
+<application>libpq</application> is thread-safe as of
 <productname>PostgreSQL</productname> 7.0, so long as no two threads
 attempt to manipulate the same <structname>PGconn</> object at the same
-time. In particular, you cannot issue concurrent queries from different
+time. In particular, you cannot issue concurrent commands from different
 threads through the same connection object. (If you need to run
-concurrent queries, start up multiple connections.)
+concurrent commands, start up multiple connections.)
 </para>
 
 <para>
@@ -2234,17 +2475,17 @@ call <function>fe_setauthsvc</function> at all.
 </para>
 
 <para>
-<filename>Libpq</filename> clients using the <literal>crypt</literal>
-encryption method rely on the <literal>crypt()</literal> operating
-system function, which is often not thread-safe. It is better to use
-<literal>MD5</literal> encryption, which is thread-safe on all
+<application>libpq</application> applications that use the <literal>crypt</literal>
+authentication method rely on the <literal>crypt()</literal> operating
+system function, which is often not thread-safe. It is better to use the
+<literal>md5</literal> method, which is thread-safe on all
 platforms.
 </para>
 </sect1>
 
 
  <sect1 id="libpq-build">
-  <title>Building <application>Libpq</application> Programs</title>
+  <title>Building <application>libpq</application> Programs</title>
 
   <para>
    To build (i.e., compile and link) your <application>libpq</application> programs you need to
@@ -2317,7 +2558,7 @@ testlibpq.c:8:22: libpq-fe.h: No such file or directory
       <literal>-lpq</literal> so that the <application>libpq</application> library gets pulled
       in, as well as the option
       <literal>-L<replaceable>directory</replaceable></literal> to
-      point it to the directory where the <application>libpq</application> library resides.  (Again, the
+      point the compiler to the directory where the <application>libpq</application> library resides.  (Again, the
       compiler will search some directories by default.)  For maximum
       portability, put the <option>-L</option> option before the
       <option>-lpq</option> option.  For example:
@@ -2348,8 +2589,8 @@ testlibpq.o(.text+0xa4): undefined reference to `PQerrorMessage'
 <screen>
 /usr/bin/ld: cannot find -lpq
 </screen>
-      This means you forgot the <option>-L</option> or did not specify
-      the right path.
+      This means you forgot the <option>-L</option> option or did not specify
+      the right directory.
      </para>
     </listitem>
    </itemizedlist>

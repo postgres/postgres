@@ -1,23 +1,16 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.30 2002/11/08 20:26:12 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.31 2003/03/13 01:30:29 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
-
-  <sect1 id="regress-intro">
-   <title>Introduction</title>
 
   <para>
    The regression tests are a comprehensive set of tests for the SQL
    implementation in <productname>PostgreSQL</productname>.  They test
    standard SQL operations as well as the extended capabilities of
-   <productname>PostgreSQL</productname>.  The test suite was
-   originally developed by Jolly Chen and Andrew Yu, and was
-   extensively revised and repackaged by Marc Fournier and Thomas
-   Lockhart.  From <productname>PostgreSQL</productname> 6.1 onward
-   the regression tests are current for every official release.
+   <productname>PostgreSQL</productname>.  From
+   <productname>PostgreSQL</productname> 6.1 onward, the regression
+   tests are current for every official release.
   </para>
-
-  </sect1>
 
   <sect1 id="regress-run">
    <title>Running the Tests</title>
@@ -40,12 +33,12 @@
    To run the regression tests after building but before installation,
    type
 <screen>
-<prompt>$ </prompt><userinput>gmake check</userinput>
+gmake check
 </screen>
    in the top-level directory.  (Or you can change to
    <filename>src/test/regress</filename> and run the command there.)
    This will first build several auxiliary files, such as
-   platform-dependent <quote>expected</quote> files and some sample
+   some sample
    user-defined trigger functions, and then run the test driver
    script.  At the end you should see something like
 <screen>
@@ -66,7 +59,7 @@
     If you already did the build as root, you do not have to start all
     over.  Instead, make the regression test directory writable by
     some other user, log in as that user, and restart the tests.
-    For example,
+    For example
 <screen>
 <prompt>root# </prompt><userinput>chmod -R a+w src/test/regress</userinput>
 <prompt>root# </prompt><userinput>chmod -R a+w contrib/spi</userinput>
@@ -87,7 +80,7 @@
    <para>
     The parallel regression test starts quite a few processes under your
     user ID.  Presently, the maximum concurrency is twenty parallel test
-    scripts, which means sixty processes --- there's a backend, a <application>psql</>,
+    scripts, which means sixty processes: there's a server process, a <application>psql</>,
     and usually a shell parent process for the <application>psql</> for each test script.
     So if your system enforces a per-user limit on the number of processes,
     make sure this limit is at least seventy-five or so, else you may get
@@ -105,11 +98,9 @@
     too many child processes in parallel.  This may cause the parallel
     test run to lock up or fail.  In such cases, specify a different
     Bourne-compatible shell on the command line, for example:
-    <informalexample>
 <screen>
-<prompt>$ </prompt><userinput>gmake SHELL=/bin/ksh check</userinput>
+gmake SHELL=/bin/ksh check
 </screen>
-    </informalexample>
     If no non-broken shell is available, you can alter the parallel test
     schedule as suggested above.
    </para>
@@ -120,7 +111,7 @@
    initialize a data area and start the
    server, <![%standalone-ignore;[as explained in <xref linkend="runtime">, ]]> then type
 <screen>
-<prompt>$ </prompt><userinput>gmake installcheck</userinput>
+gmake installcheck
 </screen>
    The tests will expect to contact the server at the local host and the
    default port number, unless directed otherwise by <envar>PGHOST</envar> and <envar>PGPORT</envar>
@@ -137,7 +128,7 @@
     <quote>fail</quote> some of these regression tests due to
     platform-specific artifacts such as varying floating-point representation
     and time zone support. The tests are currently evaluated using a simple
-    <application>diff</application> comparison against the outputs
+    <command>diff</command> comparison against the outputs
     generated on a reference system, so the results are sensitive to
     small system differences.  When a test is reported as
     <quote>failed</quote>, always examine the differences between
@@ -150,12 +141,12 @@
    <para>
     The actual outputs of the regression tests are in files in the
     <filename>src/test/regress/results</filename> directory. The test
-    script uses <application>diff</application> to compare each output
+    script uses <command>diff</command> to compare each output
     file against the reference outputs stored in the
     <filename>src/test/regress/expected</filename> directory.  Any
     differences are saved for your inspection in
     <filename>src/test/regress/regression.diffs</filename>.  (Or you
-    can run <application>diff</application> yourself, if you prefer.)
+    can run <command>diff</command> yourself, if you prefer.)
    </para>
 
    <sect2>
@@ -183,7 +174,7 @@
      failures.  The regression test suite is set up to handle this
      problem by providing alternative result files that together are
      known to handle a large number of locales.  For example, for the
-     <quote>char</quote> test, the expected file
+     <literal>char</literal> test, the expected file
      <filename>char.out</filename> handles the <literal>C</> and <literal>POSIX</> locales,
      and the file <filename>char_1.out</filename> handles many other
      locales.  The regression test driver will automatically pick the
@@ -214,28 +205,28 @@
      fail if you run the test on the day of a daylight-saving time
      changeover, or the day before or after one.  These queries assume
      that the intervals between midnight yesterday, midnight today and
-     midnight tomorrow are exactly twenty-four hours -- which is wrong
+     midnight tomorrow are exactly twenty-four hours --- which is wrong
      if daylight-saving time went into or out of effect meanwhile.
     </para>
 
     <para>
      Most of the date and time results are dependent on the time zone
      environment.  The reference files are generated for time zone
-     <literal>PST8PDT</literal> (Berkeley, California) and there will be apparent
+     <literal>PST8PDT</literal> (Berkeley, California), and there will be apparent
      failures if the tests are not run with that time zone setting.
      The regression test driver sets environment variable
      <envar>PGTZ</envar> to <literal>PST8PDT</literal>, which normally
-     ensures proper results.  However, your system must provide library
+     ensures proper results.  However, your operating system must provide
      support for the <literal>PST8PDT</literal> time zone, or the time zone-dependent
      tests will fail. To verify that your machine does have this
      support, type the following:
 <screen>
-<prompt>$ </prompt><userinput>env TZ=PST8PDT date</userinput>
+env TZ=PST8PDT date
 </screen>
      The command above should have returned the current system time in
-     the <literal>PST8PDT</literal> time zone. If the <literal>PST8PDT</literal> database is not available,
+     the <literal>PST8PDT</literal> time zone. If the <literal>PST8PDT</literal> time zone is not available,
      then your system may have returned the time in GMT. If the
-     <literal>PST8PDT</literal> time zone is not available, you can set the time zone
+     <literal>PST8PDT</literal> time zone is missing, you can set the time zone
      rules explicitly:
 <programlisting>
 PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
@@ -250,7 +241,7 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
     </para>
 
     <para>
-     Some systems using older time zone libraries fail to apply
+     Some systems using older time-zone libraries fail to apply
      daylight-saving corrections to dates before 1970, causing
      pre-1970 <acronym>PDT</acronym> times to be displayed in <acronym>PST</acronym> instead.  This will
      result in localized differences in the test results.
@@ -261,8 +252,8 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
     <title>Floating-point differences</title>
       
     <para>
-     Some of the tests involve computing 64-bit (<type>double
-     precision</type>) numbers from table columns. Differences in
+     Some of the tests involve computing 64-bit floating-point numbers (<type>double
+     precision</type>) from table columns. Differences in
      results involving mathematical functions of <type>double
      precision</type> columns have been observed.  The <literal>float8</> and
      <literal>geometry</> tests are particularly prone to small differences
@@ -292,26 +283,26 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
 You might see differences in which the same rows are output in a
 different order than what appears in the expected file.  In most cases
 this is not, strictly speaking, a bug.  Most of the regression test
-scripts are not so pedantic as to use an ORDER BY for every single
-SELECT, and so their result row orderings are not well-defined
+scripts are not so pedantic as to use an <literal>ORDER BY</> for every single
+<literal>SELECT</>, and so their result row orderings are not well-defined
 according to the letter of the SQL specification.  In practice, since we are
 looking at the same queries being executed on the same data by the same
 software, we usually get the same result ordering on all platforms, and
-so the lack of ORDER BY isn't a problem.  Some queries do exhibit
+so the lack of <literal>ORDER BY</> isn't a problem.  Some queries do exhibit
 cross-platform ordering differences, however.  (Ordering differences
 can also be triggered by non-C locale settings.)
     </para>
 
     <para>
 Therefore, if you see an ordering difference, it's not something to
-worry about, unless the query does have an ORDER BY that your result
+worry about, unless the query does have an <literal>ORDER BY</> that your result
 is violating.  But please report it anyway, so that we can add an
-ORDER BY to that particular query and thereby eliminate the bogus
+<literal>ORDER BY</> to that particular query and thereby eliminate the bogus
 <quote>failure</quote> in future releases.
     </para>
 
     <para>
-You might wonder why we don't order all the regress test queries explicitly to
+You might wonder why we don't order all the regression test queries explicitly to
 get rid of this issue once and for all.  The reason is that that would
 make the regression tests less useful, not more, since they'd tend
 to exercise query plan types that produce ordered results to the
@@ -323,7 +314,7 @@ exclusion of those that don't.
     <title>The <quote>random</quote> test</title>
       
     <para>
-     There is at least one case in the <quote>random</quote> test
+     There is at least one case in the <literal>random</literal> test
      script that is intended to produce random results. This causes
      random to fail the regression test once in a while (perhaps once
      in every five to ten trials).  Typing
@@ -362,11 +353,11 @@ diff results/random.out expected/random.out
 testname/platformpattern=comparisonfilename
 </synopsis>
     The test name is just the name of the particular regression test
-    module.  The platform pattern is a pattern in the style of
-    <citerefentry><refentrytitle>expr</><manvolnum>1</></citerefentry> (that is, a regular expression with an implicit
+    module.  The platform pattern is a pattern in the style of the Unix
+    tool <command>expr</> (that is, a regular expression with an implicit
     <literal>^</literal> anchor
     at the start).  It is matched against the platform name as printed
-    by <filename>config.guess</filename> followed by
+    by <command>config.guess</command> followed by
     <literal>:gcc</literal> or <literal>:cc</literal>, depending on
     whether you use the GNU compiler or the system's native compiler
     (on systems where there is a difference).  The comparison file
@@ -387,7 +378,7 @@ testname/platformpattern=comparisonfilename
 horology/hppa=horology-no-DST-before-1970
 </programlisting>
     which will trigger on any machine for which the output of <command>config.guess</command>
-    begins with <quote><literal>hppa</literal></quote>.  Other lines
+    begins with <literal>hppa</literal>.  Other lines
     in <filename>resultmap</> select the variant comparison file for other
     platforms where it's appropriate.
    </para>

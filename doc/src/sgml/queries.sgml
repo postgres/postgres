@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.19 2002/11/11 20:14:03 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.20 2003/03/13 01:30:29 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -157,18 +157,17 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         row consisting of all columns in <replaceable>T1</replaceable>
         followed by all columns in <replaceable>T2</replaceable>.  If
         the tables have N and M rows respectively, the joined
-        table will have N * M rows.  A cross join is equivalent to an
-        <literal>INNER JOIN ON TRUE</literal>.
+        table will have N * M rows.
        </para>
 
-       <tip>
-        <para>
-         <literal>FROM <replaceable>T1</replaceable> CROSS JOIN
-         <replaceable>T2</replaceable></literal> is equivalent to
-         <literal>FROM <replaceable>T1</replaceable>,
-         <replaceable>T2</replaceable></literal>.
-        </para>
-       </tip>
+       <para>
+        <literal>FROM <replaceable>T1</replaceable> CROSS JOIN
+        <replaceable>T2</replaceable></literal> is equivalent to
+        <literal>FROM <replaceable>T1</replaceable>,
+        <replaceable>T2</replaceable></literal>.  It is also equivalent to
+        <literal>FROM <replaceable>T1</replaceable> INNER JOIN
+        <replaceable>T2</replaceable> ON TRUE</literal> (see below).
+       </para>
       </listitem>
      </varlistentry>
 
@@ -240,7 +239,6 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 
        <para>
         The possible types of qualified join are:
-       </para>
 
        <variablelist>
         <varlistentry>
@@ -302,6 +300,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
          </listitem>
         </varlistentry>
        </variablelist>
+       </para>
       </listitem>
      </varlistentry>
     </variablelist>
@@ -630,12 +629,12 @@ SELECT ... FROM fdt WHERE EXISTS (SELECT c1 FROM t2 WHERE c2 > fdt.c1)
     condition of the <literal>WHERE</> clause are eliminated from
     <literal>fdt</literal>. Notice the use of scalar subqueries as
     value expressions.  Just like any other query, the subqueries can
-    employ complex table expressions.  Notice how
+    employ complex table expressions.  Notice also how
     <literal>fdt</literal> is referenced in the subqueries.
     Qualifying <literal>c1</> as <literal>fdt.c1</> is only necessary
     if <literal>c1</> is also the name of a column in the derived
-    input table of the subquery.  Qualifying the column name adds
-    clarity even when it is not needed.  This shows how the column
+    input table of the subquery.  But qualifying the column name adds
+    clarity even when it is not needed.  This example shows how the column
     naming scope of an outer query extends into its inner queries.
    </para>
   </sect2>
@@ -663,7 +662,7 @@ SELECT <replaceable>select_list</replaceable>
 </synopsis>
 
    <para>
-    The <literal>GROUP BY</> clause is used to group together rows in
+    The <literal>GROUP BY</> clause is used to group together those rows in
     a table that share the same values in all the columns listed. The
     order in which the columns are listed does not matter.  The
     purpose is to reduce each group of rows sharing common values into
@@ -711,7 +710,7 @@ SELECT <replaceable>select_list</replaceable>
  c |   2
 (3 rows)
 </screen>
-    Here <literal>sum()</literal> is an aggregate function that
+    Here <literal>sum</literal> is an aggregate function that
     computes a single value over the entire group.  More information
     about the available aggregate functions can be found in <xref
     linkend="functions-aggregate">.
@@ -727,9 +726,8 @@ SELECT <replaceable>select_list</replaceable>
    </tip>
 
    <para>
-    Here is another example:  <function>sum(sales)</function> on a
-    table grouped by product code gives the total sales for each
-    product, not the total sales on all products.
+    Here is another example:  it calculates the total sales for each
+    product (rather than the total sales on all products).
 <programlisting>
 SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
     FROM products p LEFT JOIN sales s USING (product_id)
@@ -744,8 +742,8 @@ SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
     unnecessary, but this is not implemented yet.)  The column
     <literal>s.units</> does not have to be in the <literal>GROUP
     BY</> list since it is only used in an aggregate expression
-    (<function>sum()</function>), which represents the group of sales
-    of a product.  For each product, a summary row is returned about
+    (<literal>sum(...)</literal>), which represents the sales
+    of a product.  For each product, the query returns a summary row about
     all sales of the product.
    </para>
 
@@ -800,10 +798,11 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
     HAVING sum(p.price * s.units) > 5000;
 </programlisting>
     In the example above, the <literal>WHERE</> clause is selecting
-    rows by a column that is not grouped, while the <literal>HAVING</>
+    rows by a column that is not grouped (the expression is only true for
+    sales during the last four weeks), while the <literal>HAVING</>
     clause restricts the output to groups with total gross sales over
     5000.  Note that the aggregate expressions do not necessarily need
-    to be the same everywhere.
+    to be the same in all parts of the query.
    </para>
   </sect2>
  </sect1>
@@ -852,7 +851,7 @@ SELECT a, b, c FROM ...
     If more than one table has a column of the same name, the table
     name must also be given, as in
 <programlisting>
-SELECT tbl1.a, tbl2.b, tbl1.c FROM ...
+SELECT tbl1.a, tbl2.a, tbl1.b FROM ...
 </programlisting>
     (See also <xref linkend="queries-where">.)
    </para>
@@ -860,7 +859,7 @@ SELECT tbl1.a, tbl2.b, tbl1.c FROM ...
    <para>
     If an arbitrary value expression is used in the select list, it
     conceptually adds a new virtual column to the returned table.  The
-    value expression is evaluated once for each retrieved row, with
+    value expression is evaluated once for each result row, with
     the row's values substituted for any column references.  But the
     expressions in the select list do not have to reference any
     columns in the table expression of the <literal>FROM</> clause;
@@ -888,7 +887,7 @@ SELECT a AS value, b + c AS sum FROM ...
    </para>
 
    <para>
-    If no output column name is specified via AS, the system assigns a
+    If no output column name is specified using <literal>AS</>, the system assigns a
     default name.  For simple column references, this is the name of the
     referenced column.  For function 
     calls, this is the name of the function.  For complex expressions,
@@ -1129,7 +1128,7 @@ SELECT <replaceable>select_list</replaceable>
 
   <para>
    <literal>OFFSET</> says to skip that many rows before beginning to
-   return rows to the client.  <literal>OFFSET 0</> is the same as
+   return rows.  <literal>OFFSET 0</> is the same as
    omitting the <literal>OFFSET</> clause.  If both <literal>OFFSET</>
    and <literal>LIMIT</> appear, then <literal>OFFSET</> rows are
    skipped before starting to count the <literal>LIMIT</> rows that
@@ -1140,7 +1139,7 @@ SELECT <replaceable>select_list</replaceable>
    When using <literal>LIMIT</>, it is a good idea to use an
    <literal>ORDER BY</> clause that constrains the result rows into a
    unique order.  Otherwise you will get an unpredictable subset of
-   the query's rows---you may be asking for the tenth through
+   the query's rows. --- You may be asking for the tenth through
    twentieth rows, but tenth through twentieth in what ordering?  The
    ordering is unknown, unless you specified <literal>ORDER BY</>.
   </para>

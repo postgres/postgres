@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.128 2003/01/19 00:13:28 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.129 2003/03/13 01:30:28 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -69,7 +69,7 @@ su - postgres
       <acronym>GNU</> <application>make</> is often installed under
       the name <filename>gmake</filename>; this document will always
       refer to it by that name. (On some systems
-      <acronym>GNU</acronym> make is the default tool with the name
+      <acronym>GNU</acronym> <application>make</> is the default tool with the name
       <filename>make</>.) To test for <acronym>GNU</acronym>
       <application>make</application> enter
 <screen>
@@ -91,8 +91,8 @@ su - postgres
     <listitem>
      <para>
       <application>gzip</> is needed to unpack the distribution in the
-      first place.  If you are reading this, you probably already got
-      past that hurdle.
+      first place.<![%standalone-include;[  If you are reading this, you probably already got
+      past that hurdle.]]>
      </para>
     </listitem>
 
@@ -108,7 +108,7 @@ su - postgres
       specify the <option>--without-readline</option> option for
       <filename>configure</>.  (On <productname>NetBSD</productname>,
       the <filename>libedit</filename> library is
-      <productname>readline</productname>-compatible and is used if
+      <productname>Readline</productname>-compatible and is used if
       <filename>libreadline</filename> is not found.)
      </para>
     </listitem>
@@ -259,7 +259,7 @@ JAVACMD=$JAVA_HOME/bin/java
       <systemitem class="osname">Solaris</>), for other systems you
       can download an add-on package from here: <ulink
       url="http://www.postgresql.org/~petere/gettext.html" ></ulink>.
-      If you are using the <application>gettext</> implementation in
+      If you are using the <application>Gettext</> implementation in
       the <acronym>GNU</acronym> C library then you will additionally
       need the <productname>GNU Gettext</productname> package for some
       utility programs.  For any of the other implementations you will
@@ -278,7 +278,7 @@ JAVACMD=$JAVA_HOME/bin/java
   </para>
 
   <para>
-   If you are build from a <acronym>CVS</acronym> tree instead of
+   If you are building from a <acronym>CVS</acronym> tree instead of
    using a released source package, or if you want to do development,
    you also need the following packages:
 
@@ -427,7 +427,7 @@ JAVACMD=$JAVA_HOME/bin/java
 </screen>
      Versions prior to 7.0 do not have this
      <filename>postmaster.pid</> file. If you are using such a version
-     you must find out the process id of the server yourself, for
+     you must find out the process ID of the server yourself, for
      example by typing <userinput>ps ax | grep postmaster</>, and
      supply it to the <command>kill</> command.
     </para>
@@ -732,7 +732,7 @@ JAVACMD=$JAVA_HOME/bin/java
 
         <para>
          To use this option, you will need an implementation of the
-         <application>gettext</> API; see above.
+         <application>Gettext</> API; see above.
         </para>
        </listitem>
       </varlistentry>
@@ -1082,7 +1082,7 @@ All of PostgreSQL is successfully made. Ready to install.
 <screen>
 <userinput>gmake -C src/interfaces/python install</userinput>
 </screen>
-    If you do not have superuser access you are on your own: 
+    If you do not have root access you are on your own: 
     you can still take the required files and place them in 
     other directories where Python can find them, but how to 
     do that is left as an exercise.
@@ -1133,7 +1133,7 @@ All of PostgreSQL is successfully made. Ready to install.
    <para>
     After the installation you can make room by removing the built
     files from the source tree with the command <command>gmake
-    clean</>. This will preserve the files made by the configure
+    clean</>. This will preserve the files made by the <command>configure</command>
     program, so that you can rebuild everything with <command>gmake</>
     later on. To reset the source tree to the state in which it was
     distributed, use <command>gmake distclean</>. If you are going to
@@ -1143,8 +1143,8 @@ All of PostgreSQL is successfully made. Ready to install.
   </formalpara>
 
   <para>
-   If you perform a build and then discover that your configure
-   options were wrong, or if you change anything that configure
+   If you perform a build and then discover that your <command>configure</>
+   options were wrong, or if you change anything that <command>configure</>
    investigates (for example, software upgrades), then it's a good
    idea to do <command>gmake distclean</> before reconfiguring and
    rebuilding.  Without this, your changes in configuration choices
@@ -1207,7 +1207,7 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
    <para>
     On <systemitem class="osname">Cygwin</systemitem>, put the library
     directory in the <envar>PATH</envar> or move the
-    <filename>.dll</filename> files into the <filename>bin/</filename>
+    <filename>.dll</filename> files into the <filename>bin</filename>
     directory.
    </para>
 
@@ -1283,7 +1283,7 @@ set path = ( /usr/local/pgsql/bin $path )
      <seealso>man pages</seealso>
     </indexterm>
     To enable your system to find the <application>man</>
-    documentation, you need to add a line like the following to a
+    documentation, you need to add lines like the following to a
     shell start-up file unless you installed into a location that is
     searched by default.
 <programlisting>
@@ -1544,8 +1544,8 @@ gunzip -c user.ps.gz \
 	<entry>7.3</entry>
         <entry>2002-10-28,
 	 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>),
-	 11.00, 11.11, 32 &amp; 64 bit, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
-        <entry>gcc and cc; see also <filename>doc/FAQ_HPUX</filename></entry>
+	 11.00, 11.11, 32 and 64 bit, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
+        <entry><command>gcc</> and <command>cc</>; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">IRIX</></entry>
@@ -1585,7 +1585,7 @@ gunzip -c user.ps.gz \
 	<entry>7.3</entry>
 	<entry>2002-11-19,
 	 Permaine Cheung <email>pcheung@redhat.com</email>)</entry>
-	<entry>#undef HAS_TEST_AND_SET, remove slock_t typedef</entry>
+	<entry><literal>#undef HAS_TEST_AND_SET</>, remove <type>slock_t</> <literal>typedef</></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
@@ -1715,7 +1715,7 @@ gunzip -c user.ps.gz \
         <entry><systemitem>x86</></entry>
         <entry>7.3.1</entry>
         <entry>2002-12-11, Shibashish Satpathy (<email>shib@postmark.net</>)</entry>
-        <entry>5.0.4, gcc;  see also <filename>doc/FAQ_SCO</filename></entry>
+        <entry>5.0.4, <command>gcc</>;  see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
@@ -1723,7 +1723,7 @@ gunzip -c user.ps.gz \
 	<entry>7.3</entry>
 	<entry>2002-10-28,
 	 Andrew Sullivan (<email>andrew@libertyrms.info</email>)</entry>
-	<entry>Solaris 7 &amp; 8; see also <filename>doc/FAQ_Solaris</filename></entry>
+	<entry>Solaris 7 and 8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
@@ -1813,7 +1813,7 @@ gunzip -c user.ps.gz \
 	<entry>7.2</entry>
 	<entry>2001-11-29,
 	 Cyril Velter (<email>cyril.velter@libertysurf.fr</email>)</entry>
-        <entry>needs updates to semaphore code</entry>
+	<entry>needs updates to semaphore code</entry>
        </row>
      <row>
       <entry><systemitem class="osname">DG/UX 5.4R4.11</></entry>

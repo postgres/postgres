@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.38 2002/11/11 20:14:03 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.39 2003/03/13 01:30:28 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -83,8 +83,8 @@ CREATE INDEX test1_id_index ON test1 (id);
   </para>
 
   <para>
-   Indexes can benefit <command>UPDATE</command>s and
-   <command>DELETE</command>s with search conditions.  Indexes can also be
+   Indexes can also benefit <command>UPDATE</command> and
+   <command>DELETE</command> commands with search conditions.  Indexes can moreover be
    used in join queries.  Thus,
    an index defined on a column that is part of a join condition can
    significantly speed up queries with joins.
@@ -119,7 +119,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    By
    default, the <command>CREATE INDEX</command> command will create a
    B-tree index, which fits the most common situations.  In
-   particular, the <productname>PostgreSQL</productname> query optimizer
+   particular, the <productname>PostgreSQL</productname> query planner
    will consider using a B-tree index whenever an indexed column is
    involved in a comparison using one of these operators:
 
@@ -146,7 +146,7 @@ CREATE INDEX test1_id_index ON test1 (id);
 <synopsis>
 CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING RTREE (<replaceable>column</replaceable>);
 </synopsis>
-   The <productname>PostgreSQL</productname> query optimizer will
+   The <productname>PostgreSQL</productname> query planner will
    consider using an R-tree index whenever an indexed column is
    involved in a comparison using one of these operators:
 
@@ -172,7 +172,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     <primary>hash</primary>
     <see>indexes</see>
    </indexterm>
-   The query optimizer will consider using a hash index whenever an
+   The query planner will consider using a hash index whenever an
    indexed column is involved in a comparison using the
    <literal>=</literal> operator.  The following command is used to
    create a hash index:
@@ -196,9 +196,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    standard R-trees using Guttman's quadratic split algorithm.  The
    hash index is an implementation of Litwin's linear hashing.  We
    mention the algorithms used solely to indicate that all of these
-   access methods are fully dynamic and do not have to be optimized
-   periodically (as is the case with, for example, static hash access
-   methods).
+   index methods are fully dynamic and do not have to be optimized
+   periodically (as is the case with, for example, static hash methods).
   </para>
  </sect1>
 
@@ -242,17 +241,17 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   </para>
 
   <para>
-   The query optimizer can use a multicolumn index for queries that
-   involve the first <parameter>n</parameter> consecutive columns in
-   the index (when used with appropriate operators), up to the total
-   number of columns specified in the index definition.  For example,
+   The query planner can use a multicolumn index for queries that
+   involve the leftmost column in the index definition and any number
+   of columns listed to the right of it without a gap (when
+   used with appropriate operators).  For example,
    an index on <literal>(a, b, c)</literal> can be used in queries
    involving all of <literal>a</literal>, <literal>b</literal>, and
    <literal>c</literal>, or in queries involving both
    <literal>a</literal> and <literal>b</literal>, or in queries
    involving only <literal>a</literal>, but not in other combinations.
    (In a query involving <literal>a</literal> and <literal>c</literal>
-   the optimizer might choose to use the index for
+   the planner might choose to use the index for
    <literal>a</literal> only and treat <literal>c</literal> like an
    ordinary unindexed column.)
   </para>
@@ -296,7 +295,7 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
 
   <para>
    When an index is declared unique, multiple table rows with equal
-   indexed values will not be allowed.  NULL values are not considered
+   indexed values will not be allowed.  Null values are not considered
    equal.
   </para>
 
@@ -342,7 +341,7 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
 SELECT * FROM test1 WHERE lower(col1) = 'value';
 </programlisting>
    This query can use an index, if one has been
-   defined on the result of the <literal>lower(column)</literal>
+   defined on the result of the <literal>lower(col1)</literal>
    operation:
 <programlisting>
 CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
@@ -353,7 +352,7 @@ CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
    The function in the index definition can take more than one
    argument, but they must be table columns, not constants.
    Functional indexes are always single-column (namely, the function
-   result) even if the function uses more than one input field; there
+   result) even if the function uses more than one input column; there
    cannot be multicolumn indexes that contain function calls.
   </para>
 
@@ -377,29 +376,32 @@ CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
 CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <replaceable>opclass</replaceable> <optional>, ...</optional>);
 </synopsis>
    The operator class identifies the operators to be used by the index
-   for that column.  For example, a B-tree index on four-byte integers
+   for that column.  For example, a B-tree index on the type <type>int4</type>
    would use the <literal>int4_ops</literal> class; this operator
-   class includes comparison functions for four-byte integers.  In
+   class includes comparison functions for values of type <type>int4</type>.  In
    practice the default operator class for the column's data type is
    usually sufficient.  The main point of having operator classes is
    that for some data types, there could be more than one meaningful
    ordering.  For example, we might want to sort a complex-number data
    type either by absolute value or by real part.  We could do this by
    defining two operator classes for the data type and then selecting
-   the proper class when making an index.  There are also some
-   operator classes with special purposes:
+   the proper class when making an index.
+  </para>
+
+  <para>
+   There are also some built-in operator classes besides the default ones:
 
    <itemizedlist>
     <listitem>
      <para>
       The operator classes <literal>box_ops</literal> and
       <literal>bigbox_ops</literal> both support R-tree indexes on the
-      <literal>box</literal> data type.  The difference between them is
+      <type>box</type> data type.  The difference between them is
       that <literal>bigbox_ops</literal> scales box coordinates down,
       to avoid floating-point exceptions from doing multiplication,
       addition, and subtraction on very large floating-point
       coordinates.  If the field on which your rectangles lie is about
-      20 000 units square or larger, you should use
+      20 000 square units or larger, you should use
       <literal>bigbox_ops</literal>.
      </para>
     </listitem>
@@ -409,25 +411,25 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
   <para>
     The following query shows all defined operator classes:
 
-    <programlisting>
-SELECT am.amname AS acc_method,
-       opc.opcname AS ops_name
+<programlisting>
+SELECT am.amname AS index_method,
+       opc.opcname AS opclass_name
     FROM pg_am am, pg_opclass opc
     WHERE opc.opcamid = am.oid
-    ORDER BY acc_method, ops_name;
-    </programlisting>
+    ORDER BY index_method, opclass_name;
+</programlisting>
 
     It can be extended to show all the operators included in each class:
-    <programlisting>
-SELECT am.amname AS acc_method,
-       opc.opcname AS ops_name,
-       opr.oprname AS ops_comp
+<programlisting>
+SELECT am.amname AS index_method,
+       opc.opcname AS opclass_name,
+       opr.oprname AS opclass_operator
     FROM pg_am am, pg_opclass opc, pg_amop amop, pg_operator opr
     WHERE opc.opcamid = am.oid AND
           amop.amopclaid = opc.oid AND
           amop.amopopr = opr.oid
-    ORDER BY acc_method, ops_name, ops_comp;
-    </programlisting>
+    ORDER BY index_method, opclass_name, opclass_operator;
+</programlisting>
   </para>
  </sect1>
 
@@ -465,7 +467,7 @@ SELECT am.amname AS acc_method,
 
    <para>
     Suppose you are storing web server access logs in a database.
-    Most accesses originate from the IP range of your organization but
+    Most accesses originate from the IP address range of your organization but
     some are from elsewhere (say, employees on dial-up connections).
     If your searches by IP are primarily for outside accesses,
     you probably do not need to index the IP range that corresponds to your
@@ -575,16 +577,16 @@ SELECT * FROM orders WHERE order_nr = 3501;
    predicate must match the conditions used in the queries that
    are supposed to benefit from the index.  To be precise, a partial
    index can be used in a query only if the system can recognize that
-   the query's WHERE condition mathematically <firstterm>implies</>
-   the index's predicate.
+   the <literal>WHERE</> condition of the query mathematically implies
+   the predicate of the index.
    <productname>PostgreSQL</productname> does not have a sophisticated
    theorem prover that can recognize mathematically equivalent
-   predicates that are written in different forms.  (Not
+   expressions that are written in different forms.  (Not
    only is such a general theorem prover extremely difficult to
    create, it would probably be too slow to be of any real use.)
    The system can recognize simple inequality implications, for example
    <quote>x &lt; 1</quote> implies <quote>x &lt; 2</quote>; otherwise
-   the predicate condition must exactly match the query's WHERE condition
+   the predicate condition must exactly match the query's <literal>WHERE</> condition
    or the index will not be recognized to be usable.
   </para>
 
@@ -606,15 +608,18 @@ SELECT * FROM orders WHERE order_nr = 3501;
     a given subject and target combination, but there might be any number of
     <quote>unsuccessful</> entries.  Here is one way to do it:
 <programlisting>
-CREATE TABLE tests (subject text,
-                    target text,
-                    success bool,
-                    ...);
+CREATE TABLE tests (
+    subject text,
+    target text,
+    success boolean,
+    ...
+);
+
 CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
     WHERE success;
 </programlisting>
     This is a particularly efficient way of doing it when there are few
-    successful trials and many unsuccessful ones.
+    successful tests and many unsuccessful ones.
    </para>
   </example>
 

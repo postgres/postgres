@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.31 2003/01/19 00:13:28 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.32 2003/03/13 01:30:26 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -75,7 +75,7 @@
     <command>initdb</command> exactly which locale you want with the
     option <option>--locale</option>.  For example:
 <screen>
-<prompt>$ </><userinput>initdb --locale=sv_SE</>
+initdb --locale=sv_SE
 </screen>
    </para>
 
@@ -517,7 +517,7 @@ perl: warning: Falling back to the standard locale ("C").
      for a <productname>PostgreSQL</productname> installation. For example:
 
 <screen>
-$ <userinput>initdb -E EUC_JP</>
+initdb -E EUC_JP
 </screen>
 
      sets the default encoding to <literal>EUC_JP</literal> (Extended Unix Code for Japanese).
@@ -531,7 +531,7 @@ $ <userinput>initdb -E EUC_JP</>
      You can create a database with a different encoding:
 
 <screen>
-$ <userinput>createdb -E EUC_KR korean</>
+createdb -E EUC_KR korean
 </screen>
 
      will create a database named <database>korean</database> with <literal>EUC_KR</literal> encoding.

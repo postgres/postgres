@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.32 2003/02/19 04:06:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.33 2003/03/13 01:30:24 petere Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -344,14 +344,14 @@ SELECT name, altitude
 
     which returns:
 
-    <screen>
+<screen>
    name    | altitude
 -----------+----------
  Las Vegas |     2174
  Mariposa  |     1953
  Madison   |      845
 (3 rows)
-    </screen>
+</screen>
    </para>
 
    <para>

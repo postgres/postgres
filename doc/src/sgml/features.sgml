@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.17 2003/01/15 21:55:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.18 2003/03/13 01:30:28 petere Exp $
 -->
 
 <appendix id="features">
@@ -105,7 +105,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.17 2003/01/15 21:55:52 mo
 
    <para>
     The following features defined in <acronym>SQL99</acronym> are not
-    implemented in the current release of
+    implemented in this release of
     <productname>PostgreSQL</productname>. In a few cases, equivalent
     functionality is available.
 

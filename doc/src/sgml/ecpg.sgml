@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.41 2003/01/19 00:13:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.42 2003/03/13 01:30:28 petere Exp $
 -->
 
 <chapter id="ecpg">
@@ -44,7 +44,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.41 2003/01/19 00:13:28 momjia
    implementation is designed to match this standard as much as
    possible, and it is usually possible to port embedded
    <acronym>SQL</acronym> programs written for other
-   <acronym>RDBMS</acronym> to <productname>PostgreSQL</productname>
+   SQL databases to <productname>PostgreSQL</productname>
    with relative ease.
   </para>
 
@@ -124,30 +124,30 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
    <itemizedlist>
     <listitem>
      <simpara>
-      <literal><replaceable>userid</replaceable></literal>
+      <literal><replaceable>username</replaceable></literal>
      </simpara>
     </listitem>
 
     <listitem>
      <simpara>
-      <literal><replaceable>userid</replaceable>/<replaceable>password</replaceable></literal>
+      <literal><replaceable>username</replaceable>/<replaceable>password</replaceable></literal>
      </simpara>
     </listitem>
 
     <listitem>
      <simpara>
-      <literal><replaceable>userid</replaceable> IDENTIFIED BY <replaceable>password</replaceable></literal>
+      <literal><replaceable>username</replaceable> IDENTIFIED BY <replaceable>password</replaceable></literal>
      </simpara>
     </listitem>
 
     <listitem>
      <simpara>
-      <literal><replaceable>userid</replaceable> USING <replaceable>password</replaceable></literal>
+      <literal><replaceable>username</replaceable> USING <replaceable>password</replaceable></literal>
      </simpara>
     </listitem>
    </itemizedlist>
-   The <replaceable>userid</replaceable> and
-   <replaceable>password</replaceable> may be a constant text, a
+   The <replaceable>username</replaceable> and
+   <replaceable>password</replaceable> may be an SQL name, a
    character variable, or a character string.
   </para>
 
@@ -164,7 +164,7 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
   <para>
    To close a connection, use the following statement:
 <programlisting>
-EXEC SQL DISCONNECT [<replaceable>connection</replaceable>];
+EXEC SQL DISCONNECT <optional><replaceable>connection</replaceable></optional>;
 </programlisting>
    The <replaceable>connection</replaceable> can be specified
    in the following ways:
@@ -275,7 +275,7 @@ EXEC SQL COMMIT;
    other interfaces) via the <option>-t</option> command-line option
    to <command>ecpg</command> (see below) or via the <literal>EXEC SQL
    SET AUTOCOMMIT TO ON</literal> statement. In autocommit mode, each
-   query is automatically committed unless it is inside an explicit
+   command is automatically committed unless it is inside an explicit
    transaction block. This mode can be explicitly turned off using
    <literal>EXEC SQL SET AUTOCOMMIT TO OFF</literal>.
   </para>
@@ -324,16 +324,16 @@ char  foo[16], bar[16];
   <para>
    The special types <type>VARCHAR</type> and <type>VARCHAR2</type>
    are converted into a named <type>struct</> for every variable. A
-   declaration like:
+   declaration like
 <programlisting>
 VARCHAR var[180];
 </programlisting>
-   is converted into:
+   is converted into
 <programlisting>
 struct varchar_var { int len; char arr[180]; } var;
 </programlisting>
    This structure is suitable for interfacing with SQL datums of type
-   <type>VARCHAR</type>.
+   <type>varchar</type>.
   </para>
 
   <para>
@@ -389,7 +389,7 @@ struct sqlca
 
     long sqlerrd[6];
     /* 0: empty                                         */
-    /* 1: OID of processed tuple if applicable          */
+    /* 1: OID of processed row if applicable            */
     /* 2: number of rows processed in an INSERT, UPDATE */
     /*    or DELETE statement                           */
     /* 3: empty                                         */
@@ -400,7 +400,7 @@ struct sqlca
     /* 0: set to 'W' if at least one other is 'W'       */
     /* 1: if 'W' at least one character string          */
     /*    value was truncated when it was               */
-    /*    stored into a host variable.                  */
+    /*    stored into a host variable                   */
     /* 2: empty                                         */
     /* 3: empty                                         */
     /* 4: empty                                         */
@@ -418,7 +418,7 @@ struct sqlca
    If no error occurred in the last <acronym>SQL</acronym> statement,
    <literal>sqlca.sqlcode</literal> will be 0
    (<symbol>ECPG_NO_ERROR</>). If <literal>sqlca.sqlcode</literal> is
-   less that zero, this is a serious error, like the database
+   less than zero, this is a serious error, like the database
    definition does not match the query. If it is greater than zero, it
    is a normal error like the table did not contain the requested row.
   </para>
@@ -434,7 +434,7 @@ struct sqlca
 
    <variablelist>
     <varlistentry>
-     <term><computeroutput>-12, Out of memory in line %d.</computeroutput></term>
+     <term><computeroutput>-12: Out of memory in line %d.</computeroutput></term>
      <listitem>
       <para>
        Should not normally occur. This indicates your virtual memory
@@ -462,7 +462,7 @@ struct sqlca
        This means that the server has returned more arguments than we
        have matching variables.  Perhaps you have forgotten a couple
        of the host variables in the <command>INTO
-       :var1,:var2</command> list.
+       :var1, :var2</command> list.
       </para>
      </listitem>
     </varlistentry>
@@ -481,7 +481,7 @@ struct sqlca
      <term><computeroutput>-203 (ECPG_TOO_MANY_MATCHES): Too many matches line %d.</computeroutput></term>
      <listitem>
       <para>
-       This means the query has returned several rows but the
+       This means the query has returned multiple rows but the
        variables specified are not arrays. The
        <command>SELECT</command> command was not unique.
       </para>
@@ -627,7 +627,7 @@ struct sqlca
     </varlistentry>
 
     <varlistentry>
-     <term><computeroutput>-242 (ECPG_UNKNOWN_DESCRIPTOR_ITEM): Descriptor %s not found in line %d.</computeroutput></term>
+     <term><computeroutput>-242 (ECPG_UNKNOWN_DESCRIPTOR_ITEM): Unknown descriptor item %s in line %d.</computeroutput></term>
      <listitem>
       <para>
        The descriptor specified was not found. The statement you are trying to use has not been prepared.
@@ -656,12 +656,12 @@ struct sqlca
     </varlistentry>
 
     <varlistentry>
-     <term><computeroutput>-400 (ECPG_PGSQL): Postgres error: %s line %d.</computeroutput></term>
+     <term><computeroutput>-400 (ECPG_PGSQL): '%s' in line %d.</computeroutput></term>
      <listitem>
       <para>
        Some <productname>PostgreSQL</productname> error. The message
        contains the error message from the
-       <productname>PostgreSQL</productname> backend.
+       <productname>PostgreSQL</productname> server.
       </para>
      </listitem>
     </varlistentry>
@@ -670,7 +670,7 @@ struct sqlca
      <term><computeroutput>-401 (ECPG_TRANS): Error in transaction processing line %d.</computeroutput></term>
      <listitem>
       <para>
-       <productname>PostgreSQL</productname> signaled that we cannot
+       The <productname>PostgreSQL</productname> server signaled that we cannot
        start, commit, or rollback the transaction.
       </para>
      </listitem>
@@ -680,7 +680,7 @@ struct sqlca
      <term><computeroutput>-402 (ECPG_CONNECT): Could not connect to database %s in line %d.</computeroutput></term>
      <listitem>
       <para>
-       The connect to the database did not work.
+       The connection attempt to the database did not work.
       </para>
      </listitem>
     </varlistentry>
@@ -718,7 +718,7 @@ EXEC SQL INCLUDE <replaceable>filename</replaceable>;
 <programlisting>
 #include &lt;<replaceable>filename</replaceable>.h&gt;
 </programlisting>
-   because the file would not be subject to SQL command preprocessing.
+   because this file would not be subject to SQL command preprocessing.
    Naturally, you can continue to use the C
    <literal>#include</literal> directive to include other header
    files.
@@ -744,7 +744,7 @@ EXEC SQL INCLUDE <replaceable>filename</replaceable>;
    <acronym>SQL</acronym> statements you used to special function
    calls.  After compiling, you must link with a special library that
    contains the needed functions. These functions fetch information
-   from the arguments, perform the <acronym>SQL</acronym> query using
+   from the arguments, perform the <acronym>SQL</acronym> command using
    the <application>libpq</application> interface, and put the result
    in the arguments specified for output.
   </para>
@@ -766,7 +766,7 @@ ecpg prog1.pgc
   </para>
 
   <para>
-   The preprocessed file can be compiled normally, for example
+   The preprocessed file can be compiled normally, for example:
 <programlisting>
 cc -c prog1.c
 </programlisting>
@@ -823,82 +823,32 @@ ECPG = ecpg
      <function>ECPGdebug(int <replaceable>on</replaceable>, FILE
      *<replaceable>stream</replaceable>)</function> turns on debug
      logging if called with the first argument non-zero. Debug logging
-     is done on <replaceable>stream</replaceable>. Most
-     <acronym>SQL</acronym> statement log their arguments and results.
-    </para>
-
-    <para>
-     The most important function, <function>ECPGdo</function>, logs
-     all <acronym>SQL</acronym> statements with both the expanded
-     string, i.e. the string with all the input variables inserted,
-     and the result from the <productname>PostgreSQL</productname>
-     server. This can be very useful when searching for errors in your
-     <acronym>SQL</acronym> statements.
+     is done on <replaceable>stream</replaceable>.  The log contains
+     all <acronym>SQL</acronym> statements with all the input
+     variables inserted, and the results from the
+     <productname>PostgreSQL</productname> server. This can be very
+     useful when searching for errors in your <acronym>SQL</acronym>
+     statements.
     </para>
    </listitem>
 
    <listitem>
     <para>
-     <function>ECPGstatus()</function> This method returns true if we
+     <function>ECPGstatus()</function> returns true if you
      are connected to a database and false if not.
     </para>
    </listitem>
   </itemizedlist>
  </sect1>
 
- <sect1 id="ecpg-porting">
-  <title>Porting From Other <acronym>RDBMS</acronym> Packages</title>
-
-  <para>
-   The design of <application>ecpg</application> follows the SQL
-   standard. Porting from a standard RDBMS should not be a problem.
-   Unfortunately there is no such thing as a standard RDBMS. Therefore
-   <application>ecpg</application> tries to understand syntax
-   extensions as long as they do not create conflicts with the
-   standard.
-  </para>
-
-  <para>
-   The following list shows all the known incompatibilities. If you
-   find one not listed please notify the developers. Note, however,
-   that we list only incompatibilities from a preprocessor of another
-   RDBMS to <application>ecpg</application> and not
-   <application>ecpg</application> features that these RDBMS do not
-   support.
-  </para>
-
-  <variablelist>
-   <varlistentry>
-    <term>Syntax of <command>FETCH</command></term>
-    <indexterm><primary>FETCH</><secondary>embedded SQL</></indexterm>
-
-    <listitem>
-     <para>
-      The standard syntax for <command>FETCH</command> is:
-<synopsis>
-FETCH <optional><replaceable>direction</></> <optional><replaceable>amount</></> IN|FROM <replaceable>cursor</replaceable>
-</synopsis>
-      <indexterm><primary>Oracle</></>
-      <productname>Oracle</productname>, however, does not use the
-      keywords <literal>IN</literal> or <literal>FROM</literal>. This
-      feature cannot be added since it would create parsing conflicts.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </sect1>
-
  <sect1 id="ecpg-develop">
-  <title>For the Developer</title>
+  <title>Internals</title>
 
   <para>
-   This section explain how <application>ecpg</application> works
+   This section explain how <application>ECPG</application> works
    internally. This information can occasionally be useful to help
-   users understand how to use <application>ecpg</application>.
+   users understand how to use <application>ECPG</application>.
   </para>
-
-  <sect2>
-   <title>The Preprocessor</title>
 
    <para>
     The first four lines written by <command>ecpg</command> to the
@@ -910,8 +860,8 @@ FETCH <optional><replaceable>direction</></> <optional><replaceable>amount</></>
 
    <para>
     When it sees an <command>EXEC SQL</command> statement, it
-    intervenes and changes it. The command starts with <command>exec
-    sql</command> and ends with <command>;</command>. Everything in
+    intervenes and changes it. The command starts with <command>EXEC
+    SQL</command> and ends with <command>;</command>. Everything in
     between is treated as an <acronym>SQL</acronym> statement and
     parsed for variable substitution.
    </para>
@@ -920,16 +870,89 @@ FETCH <optional><replaceable>direction</></> <optional><replaceable>amount</></>
     Variable substitution occurs when a symbol starts with a colon
     (<literal>:</literal>). The variable with that name is looked up
     among the variables that were previously declared within a
-    <literal>EXEC SQL DECLARE</> section. Depending on whether the
-    variable is being use for input or output, a pointer to the
-    variable is output to allow access by the function.
+    <literal>EXEC SQL DECLARE</> section.
+   </para>
+
+   <para>
+    The most important function in the library is
+    <function>ECPGdo</function>, which takes care of executing most
+    commands. It takes a variable number of arguments. This can easily
+    add up to 50 or so arguments, and we hope this will not be a
+    problem on any platform.
+   </para>
+
+   <para>
+    The arguments are:
+
+    <variablelist>
+     <varlistentry>
+      <term>A line number</term>
+      <listitem>
+       <para>
+        This is the line number of the original line; used in error
+        messages only.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>A string</term>
+      <listitem>
+       <para>
+        This is the <acronym>SQL</acronym> command that is to be issued.
+        It is modified by the input variables, i.e., the variables that
+        where not known at compile time but are to be entered in the
+        command. Where the variables should go the string contains
+        <literal>?</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Input variables</term>
+      <listitem>
+       <para>
+        Every input variable causes ten arguments to be created.  (See below.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><parameter>ECPGt_EOIT</></term>
+      <listitem>
+       <para>
+        An <type>enum</> telling that there are no more input
+        variables.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Output variables</term>
+      <listitem>
+       <para>
+        Every output variable causes ten arguments to be created.
+        (See below.)  These variables are filled by the function.
+       </para>
+      </listitem>
+     </varlistentry>
+
+      <varlistentry>
+       <term><parameter>ECPGt_EORT</></term>
+       <listitem>
+       <para>
+        An <type>enum</> telling that there are no more variables.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
 
    <para>
     For every variable that is part of the <acronym>SQL</acronym>
-    query, the function gets other arguments:
+    command, the function gets ten arguments:
 
-    <itemizedlist>
+    <orderedlist>
      <listitem>
       <para>
        The type as a special symbol.
@@ -968,8 +991,7 @@ FETCH <optional><replaceable>direction</></> <optional><replaceable>amount</></>
 
      <listitem>
       <para>
-       A pointer to the value of the indicator variable or a pointer
-       to the pointer of the indicator variable.
+       A pointer to the indicator variable.
       </para>
      </listitem>
 
@@ -981,7 +1003,7 @@ FETCH <optional><replaceable>direction</></> <optional><replaceable>amount</></>
 
      <listitem>
       <para>
-       Number of elements in the indicator array (for array fetches).
+       The number of elements in the indicator array (for array fetches).
       </para>
      </listitem>
 
@@ -991,7 +1013,7 @@ FETCH <optional><replaceable>direction</></> <optional><replaceable>amount</></>
        array fetches).
       </para>
      </listitem>
-    </itemizedlist>
+    </orderedlist>
    </para>
 
    <para>
@@ -1039,92 +1061,9 @@ ECPGdo(__LINE__, NULL, "SELECT res FROM mytable WHERE index = ?     ",
         ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 147 "foo.pgc"
 </programlisting>
-    (The indentation in this manual is added for readability and not
+    (The indentation here is added for readability and not
     something the preprocessor does.)
    </para>
-  </sect2>
-
-  <sect2>
-   <title>The Library</title>
-
-   <para>
-    The most important function in the library is
-    <function>ECPGdo</function>. It takes a variable number of
-    arguments. Hopefully there are no computers that limit the number
-    of variables that can be accepted by a
-    <function>varargs()</function> function. This can easily add up to
-    50 or so arguments.
-   </para>
-
-   <para>
-    The arguments are:
-
-    <variablelist>
-     <varlistentry>
-      <term>A line number</term>
-      <listitem>
-       <para>
-        This is a line number of the original line; used in error
-        messages only.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>A string</term>
-      <listitem>
-       <para>
-        This is the <acronym>SQL</acronym> query that is to be issued.
-        It is modified by the input variables, i.e. the variables that
-        where not known at compile time but are to be entered in the
-        query. Where the variables should go the string contains
-        <literal>?</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Input variables</term>
-      <listitem>
-       <para>
-        As described in the section about the preprocessor, every
-        input variable gets ten arguments.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><parameter>ECPGt_EOIT</></term>
-      <listitem>
-       <para>
-        An <type>enum</> telling that there are no more input
-        variables.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Output variables</term>
-      <listitem>
-       <para>
-        As described in the section about the preprocessor, every
-        input variable gets ten arguments. These variables are filled
-        by the function.
-       </para>
-      </listitem>
-     </varlistentry>
-
-      <varlistentry>
-       <term><parameter>ECPGt_EORT</></term>
-       <listitem>
-       <para>
-        An <type>enum</> telling that there are no more variables.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </sect2>
  </sect1>
 </chapter>
 

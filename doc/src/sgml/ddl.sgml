@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.12 2003/02/19 04:06:27 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.13 2003/03/13 01:30:28 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -171,9 +171,9 @@ DROP TABLE products;
       The object identifier (object ID) of a row.  This is a serial
       number that is automatically added by
       <productname>PostgreSQL</productname> to all table rows (unless
-      the table was created <literal>WITHOUT OIDS</literal>, in which
+      the table was created using <literal>WITHOUT OIDS</literal>, in which
       case this column is not present).  This column is of type
-      <literal>oid</literal> (same name as the column); see <xref
+      <type>oid</type> (same name as the column); see <xref
       linkend="datatype-oid"> for more information about the type.
      </para>
     </listitem>
@@ -183,7 +183,7 @@ DROP TABLE products;
     <term><structfield>tableoid</></term>
     <listitem>
      <para>
-      The OID of the table containing this row.  This attribute is
+      The OID of the table containing this row.  This column is
       particularly handy for queries that select from inheritance
       hierarchies, since without it, it's difficult to tell which
       individual table a row came from.  The
@@ -221,7 +221,7 @@ DROP TABLE products;
     <listitem>
      <para>
       The identity (transaction ID) of the deleting transaction, or
-      zero for an undeleted tuple.  It is possible for this field to
+      zero for an undeleted tuple.  It is possible for this column to
       be nonzero in a visible tuple: That usually indicates that the
       deleting transaction hasn't committed yet, or that an attempted
       deletion was rolled back.
@@ -254,9 +254,42 @@ DROP TABLE products;
     </listitem>
    </varlistentry>
   </variablelist>
+
+   <para>
+    OIDs are 32-bit quantities and are assigned from a single cluster-wide
+    counter.  In a large or long-lived database, it is possible for the
+    counter to wrap around.  Hence, it is bad practice to assume that OIDs
+    are unique, unless you take steps to ensure that they are unique.
+    Recommended practice when using OIDs for row identification is to create
+    a unique constraint on the OID column of each table for which the OID will
+    be used.  Never assume that OIDs are unique across tables; use the
+    combination of <structfield>tableoid</> and row OID if you need a
+    database-wide identifier.  (Future releases of
+    <productname>PostgreSQL</productname> are likely to use a separate
+    OID counter for each table, so that <structfield>tableoid</>
+    <emphasis>must</> be included to arrive at a globally unique identifier.)
+   </para>
+
+   <para>
+    Transaction identifiers are also 32-bit quantities.  In a long-lived
+    database it is possible for transaction IDs to wrap around.  This
+    is not a fatal problem given appropriate maintenance procedures;
+    see the &cite-admin; for details.  However, it is
+    unwise to depend on uniqueness of transaction IDs over the long term
+    (more than one billion transactions).
+   </para>
+
+   <para>
+    Command
+    identifiers are also 32-bit quantities.  This creates a hard limit
+    of 2<superscript>32</> (4 billion) <acronym>SQL</acronym> commands
+    within a single transaction.  In practice this limit is not a
+    problem --- note that the limit is on number of
+    <acronym>SQL</acronym> commands, not number of tuples processed.
+   </para>
  </sect1>
 
- <sect1>
+ <sect1 id="ddl-default">
   <title>Default Values</title>
 
   <para>
@@ -279,7 +312,7 @@ DROP TABLE products;
    data type.  For example:
 <programlisting>
 CREATE TABLE products (
-    product_no integer PRIMARY KEY,
+    product_no integer,
     name text,
     price numeric <emphasis>DEFAULT 9.99</emphasis>
 );
@@ -1194,7 +1227,7 @@ GRANT SELECT ON accounts TO GROUP staff;
 REVOKE ALL ON accounts FROM PUBLIC;
 </programlisting>
    The special privileges of the table owner (i.e., the right to do
-   <command>DROP</>, <command>GRANT</>, <command>REVOKE</>, etc)
+   <command>DROP</>, <command>GRANT</>, <command>REVOKE</>, etc.)
    are always implicit in being the owner,
    and cannot be granted or revoked.  But the table owner can choose
    to revoke his own ordinary privileges, for example to make a
@@ -1214,7 +1247,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
   </indexterm>
 
   <para>
-   A <productname>PostgreSQL</productname> database cluster (installation)
+   A <productname>PostgreSQL</productname> database cluster
    contains one or more named databases.  Users and groups of users are
    shared across the entire cluster, but no other data is shared across
    databases.  Any given client connection to the server can access
@@ -1536,10 +1569,10 @@ REVOKE CREATE ON public FROM PUBLIC;
     no longer true: you may create such a table name if you wish, in
     any non-system schema.  However, it's best to continue to avoid
     such names, to ensure that you won't suffer a conflict if some
-    future version defines a system catalog named the same as your
+    future version defines a system table named the same as your
     table.  (With the default search path, an unqualified reference to
-    your table name would be resolved as the system catalog instead.)
-    System catalogs will continue to follow the convention of having
+    your table name would be resolved as the system table instead.)
+    System tables will continue to follow the convention of having
     names beginning with <literal>pg_</>, so that they will not
     conflict with unqualified user-table names so long as users avoid
     the <literal>pg_</> prefix.
@@ -1681,7 +1714,8 @@ REVOKE CREATE ON public FROM PUBLIC;
    linkend="ddl-constraints-fk">, with the orders table depending on
    it, would result in an error message such as this:
 <screen>
-<userinput>DROP TABLE products;</userinput>
+DROP TABLE products;
+
 NOTICE:  constraint $1 on table orders depends on table products
 ERROR:  Cannot drop table products because other objects depend on it
         Use DROP ... CASCADE to drop the dependent objects too

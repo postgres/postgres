@@ -1,10 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.29 2002/11/11 20:14:02 petere Exp $
-Date/time details
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.30 2003/03/13 01:30:27 petere Exp $
 -->
 
  <appendix id="datetime-appendix">
-  <title id="datetime-appendix-title">Date/Time Support</title>
+  <title>Date/Time Support</title>
 
   <para>
    <productname>PostgreSQL</productname> uses an internal heuristic
@@ -28,12 +27,10 @@ Date/time details
    <title>Date/Time Input Interpretation</title>
 
    <para>
-    The date/time types are all decoded using a common set of routines.
+    The date/time type inputs are all decoded using the following routine.
    </para>
 
    <procedure>
-    <title>Date/Time Input Interpretation</title>
-
     <step>
      <para>
       Break the input string into tokens and categorize each token as
@@ -61,7 +58,7 @@ Date/time details
 	If the token is numeric only, then it is either a single field
 	or an ISO 8601 concatenated date (e.g.,
 	<literal>19990113</literal> for January 13, 1999) or time
-	(e.g. <literal>141516</literal> for 14:15:16).
+	(e.g., <literal>141516</literal> for 14:15:16).
        </para>
       </step>
 
@@ -187,7 +184,7 @@ Date/time details
      <para>
       If BC has been specified, negate the year and add one for
       internal storage.  (There is no year zero in the Gregorian
-      calendar, so numerically <literal>1BC</literal> becomes year
+      calendar, so numerically 1 BC becomes year
       zero.)
      </para>
     </step>
@@ -195,8 +192,8 @@ Date/time details
     <step>
      <para>
       If BC was not specified, and if the year field was two digits in length, then
-      adjust the year to 4 digits. If the field was less than 70, then add 2000;
-      otherwise, add 1900.
+      adjust the year to four digits. If the field is less than 70, then add 2000,
+      otherwise add 1900.
 
       <tip>
        <para>
@@ -382,8 +379,8 @@ Date/time details
 
    <para>
     The key word <literal>ABSTIME</literal> is ignored for historical
-    reasons; in very old releases of
-    <productname>PostgreSQL</productname> invalid fields of type <type>abstime</type>
+    reasons: In very old releases of
+    <productname>PostgreSQL</productname>, invalid values of type <type>abstime</type>
     were emitted as <literal>Invalid Abstime</literal>. This is no
     longer the case however and this key word will likely be dropped in
     a future release.
@@ -406,7 +403,7 @@ Date/time details
 
    <para>
     The table is organized by time zone offset from <acronym>UTC</>,
-    rather than alphabetically; this is intended to facilitate
+    rather than alphabetically.  This is intended to facilitate
     matching local usage with recognized abbreviations for cases where
     these might differ.
    </para>
@@ -425,7 +422,7 @@ Date/time details
        <row>
 	<entry>NZDT</entry>
 	<entry>+13:00</entry>
-	<entry>New Zealand Daylight Time</entry>
+	<entry>New Zealand Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>IDLE</entry>
@@ -455,12 +452,12 @@ Date/time details
        <row>
 	<entry>CADT</entry>
 	<entry>+10:30</entry>
-	<entry>Central Australia Daylight Savings Time</entry>
+	<entry>Central Australia Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>SADT</entry>
 	<entry>+10:30</entry>
-	<entry>South Australian Daylight Time</entry>
+	<entry>South Australian Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>AEST</entry>
@@ -475,7 +472,7 @@ Date/time details
        <row>
 	<entry>GST</entry>
 	<entry>+10:00</entry>
-	<entry>Guam Standard Time, USSR Zone 9</entry>
+	<entry>Guam Standard Time, Russia zone 9</entry>
        </row>
        <row>
 	<entry>LIGT</entry>
@@ -500,7 +497,7 @@ Date/time details
        <row>
 	<entry>JST</entry>
 	<entry>+09:00</entry>
-	<entry>Japan Standard Time,USSR Zone 8</entry>
+	<entry>Japan Standard Time, Russia zone 8</entry>
        </row>
        <row>
 	<entry>KST</entry>
@@ -515,7 +512,7 @@ Date/time details
        <row>
 	<entry>WDT</entry>
 	<entry>+09:00</entry>
-	<entry>West Australian Daylight Time</entry>
+	<entry>West Australian Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>MT</entry>
@@ -535,7 +532,7 @@ Date/time details
        <row>
 	<entry>WADT</entry>
 	<entry>+08:00</entry>
-	<entry>West Australian Daylight Time</entry>
+	<entry>West Australian Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>WST</entry>
@@ -608,7 +605,7 @@ Date/time details
        <row>
 	<entry>EAST</entry>
 	<entry>+04:00</entry>
-	<entry>Antananarivo Savings Time</entry>
+	<entry>Antananarivo Summer Time</entry>
        </row>
        <row>
 	<entry>MUT</entry>
@@ -643,7 +640,7 @@ Date/time details
        <row>
 	<entry>EETDST</entry>
 	<entry>+03:00</entry>
-	<entry>Eastern Europe Daylight Savings Time</entry>
+	<entry>Eastern Europe Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>HMT</entry>
@@ -658,17 +655,17 @@ Date/time details
        <row>
 	<entry>CEST</entry>
 	<entry>+02:00</entry>
-	<entry>Central European Savings Time</entry>
+	<entry>Central European Summer Time</entry>
        </row>
        <row>
 	<entry>CETDST</entry>
 	<entry>+02:00</entry>
-	<entry>Central European Daylight Savings Time</entry>
+	<entry>Central European Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>EET</entry>
 	<entry>+02:00</entry>
-	<entry>Eastern Europe, USSR Zone 1</entry>
+	<entry>Eastern European Time, Russia zone 1</entry>
        </row>
        <row>
 	<entry>FWT</entry>
@@ -683,12 +680,12 @@ Date/time details
        <row>
 	<entry>MEST</entry>
 	<entry>+02:00</entry>
-	<entry>Middle Europe Summer Time</entry>
+	<entry>Middle European Summer Time</entry>
        </row>
        <row>
 	<entry>METDST</entry>
 	<entry>+02:00</entry>
-	<entry>Middle Europe Daylight Time</entry>
+	<entry>Middle Europe Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>SST</entry>
@@ -718,17 +715,17 @@ Date/time details
        <row>
 	<entry>MET</entry>
 	<entry>+01:00</entry>
-	<entry>Middle Europe Time</entry>
+	<entry>Middle European Time</entry>
        </row>
        <row>
 	<entry>MEWT</entry>
 	<entry>+01:00</entry>
-	<entry>Middle Europe Winter Time</entry>
+	<entry>Middle European Winter Time</entry>
        </row>
        <row>
 	<entry>MEZ</entry>
 	<entry>+01:00</entry>
-	<entry>Middle Europe Zone</entry>
+	<entry><foreignphrase>Mitteleuropäische Zeit</></entry>
        </row>
        <row>
 	<entry>NOR</entry>
@@ -748,37 +745,37 @@ Date/time details
        <row>
 	<entry>WETDST</entry>
 	<entry>+01:00</entry>
-	<entry>Western Europe Daylight Savings Time</entry>
+	<entry>Western European Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>GMT</entry>
-	<entry>+00:00</entry>
+	<entry>00:00</entry>
 	<entry>Greenwich Mean Time</entry>
        </row>
        <row>
 	<entry>UT</entry>
-	<entry>+00:00</entry>
+	<entry>00:00</entry>
 	<entry>Universal Time</entry>
        </row>
        <row>
 	<entry>UTC</entry>
-	<entry>+00:00</entry>
-	<entry>Universal Time, Coordinated</entry>
+	<entry>00:00</entry>
+	<entry>Universal Coordinated Time</entry>
        </row>
        <row>
 	<entry>Z</entry>
-	<entry>+00:00</entry>
+	<entry>00:00</entry>
 	<entry>Same as UTC</entry>
        </row>
        <row>
 	<entry>ZULU</entry>
-	<entry>+00:00</entry>
+	<entry>00:00</entry>
 	<entry>Same as UTC</entry>
        </row>
        <row>
 	<entry>WET</entry>
-	<entry>+00:00</entry>
-	<entry>Western Europe</entry>
+	<entry>00:00</entry>
+	<entry>Western European Time</entry>
        </row>
        <row>
 	<entry>WAT</entry>
@@ -788,12 +785,12 @@ Date/time details
        <row>
 	<entry>NDT</entry>
 	<entry>-02:30</entry>
-	<entry>Newfoundland Daylight Time</entry>
+	<entry>Newfoundland Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>ADT</entry>
 	<entry>-03:00</entry>
-	<entry>Atlantic Daylight Time</entry>
+	<entry>Atlantic Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>AWT</entry>
@@ -828,7 +825,7 @@ Date/time details
        <row>
 	<entry>EDT</entry>
 	<entry>-04:00</entry>
-	<entry>Eastern Daylight Time</entry>
+	<entry>Eastern Daylight-Saving Time</entry>
        </row>
        <!--
       <row>
@@ -840,7 +837,7 @@ Date/time details
        <row>
 	<entry>CDT</entry>
 	<entry>-05:00</entry>
-	<entry>Central Daylight Time</entry>
+	<entry>Central Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>EST</entry>
@@ -862,7 +859,7 @@ Date/time details
        <row>
 	<entry>MDT</entry>
 	<entry>-06:00</entry>
-	<entry>Mountain Daylight Time</entry>
+	<entry>Mountain Daylight-Saving Time</entry>
        </row>
        <!--
       <row>
@@ -879,12 +876,12 @@ Date/time details
        <row>
 	<entry>PDT</entry>
 	<entry>-07:00</entry>
-	<entry>Pacific Daylight Time</entry>
+	<entry>Pacific Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>AKDT</entry>
 	<entry>-08:00</entry>
-	<entry>Alaska Daylight Time</entry>
+	<entry>Alaska Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>PST</entry>
@@ -894,7 +891,7 @@ Date/time details
        <row>
 	<entry>YDT</entry>
 	<entry>-08:00</entry>
-	<entry>Yukon Daylight Time</entry>
+	<entry>Yukon Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>AKST</entry>
@@ -904,7 +901,7 @@ Date/time details
        <row>
 	<entry>HDT</entry>
 	<entry>-09:00</entry>
-	<entry>Hawaii/Alaska Daylight Time</entry>
+	<entry>Hawaii/Alaska Daylight-Saving Time</entry>
        </row>
        <row>
 	<entry>YST</entry>
@@ -919,7 +916,7 @@ Date/time details
        <row>
 	<entry>AHST</entry>
 	<entry>-10:00</entry>
-	<entry>Alaska-Hawaii Standard Time</entry>
+	<entry>Alaska/Hawaii Standard Time</entry>
        </row>
        <row>
 	<entry>HST</entry>
@@ -950,10 +947,10 @@ Date/time details
 
    <para>
     There are three naming conflicts between Australian time zone
-    names with time zones commonly used in North and South America:
+    names and time zone names commonly used in North and South America:
     <literal>ACST</literal>, <literal>CST</literal>, and
     <literal>EST</literal>.  If the run-time option
-    <varname>AUSTRALIAN_TIMEZONES</varname> is set to true then
+    <varname>australian_timezones</varname> is set to true then
     <literal>ACST</literal>, <literal>CST</literal>,
     <literal>EST</literal>, and <literal>SAT</literal> are interpreted
     as Australian time zone names, as shown in <xref
@@ -1002,29 +999,23 @@ Date/time details
 
   </sect1>
 
-  <sect1 id="units-history">
+  <sect1 id="datetime-units-history">
   <title>History of Units</title>
 
-  <note>
-   <para>
-    Contributed by José Soares (<email>jose@sferacarta.com</email>)
-   </para>
-  </note>
-
   <para>
-   The Julian Day was invented by the French scholar
+   The Julian Date was invented by the French scholar
    Joseph Justus Scaliger (1540-1609)
    and probably takes its name from the Scaliger's father,
    the Italian scholar Julius Caesar Scaliger (1484-1558).
    Astronomers have used the Julian period to assign a unique number to
-   every day since 1 January 4713 BC. This is the so-called Julian Day
+   every day since 1 January 4713 BC. This is the so-called Julian Date
    (JD). JD 0 designates the 24 hours from noon UTC on 1 January 4713 BC
    to noon UTC on 2 January 4713 BC.
   </para>
 
    <para>
-   The <quote>Julian Day</quote> is different from the <quote>Julian
-   Date</quote>.  The Julian date refers to the Julian calendar, which
+   The <quote>Julian Date</quote> is different from the <quote>Julian
+   Calendar</quote>.  The Julian calendar
    was introduced by Julius Caesar in 45 BC. It was in common use
    until the 1582, when countries started changing to the Gregorian
    calendar.  In the Julian calendar, the tropical year is

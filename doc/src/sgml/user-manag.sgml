@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.18 2002/11/11 20:14:04 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.19 2003/03/13 01:30:29 petere Exp $
 -->
 
 <chapter id="user-manag">
@@ -31,20 +31,20 @@ $Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.18 2002/11/11 20:14:04 
    per individual database). To create a user use the <command>CREATE
    USER</command> SQL command:
 <synopsis>
-CREATE USER <replaceable>name</replaceable>
+CREATE USER <replaceable>name</replaceable>;
 </synopsis>
    <replaceable>name</replaceable> follows the rules for SQL
    identifiers: either unadorned without special characters, or
    double-quoted. To remove an existing user, use the analogous
    <command>DROP USER</command> command:
 <synopsis>
-DROP USER <replaceable>name</replaceable>
+DROP USER <replaceable>name</replaceable>;
 </synopsis>
   </para>
 
   <para>
-   For convenience, the programs <application>createuser</application>
-   and <application>dropuser</application> are provided as wrappers
+   For convenience, the programs <command>createuser</command>
+   and <command>dropuser</command> are provided as wrappers
    around these SQL commands that can be called from the shell command
    line:
 <synopsis>
@@ -57,11 +57,11 @@ dropuser <replaceable>name</replaceable>
    In order to bootstrap the database system, a freshly initialized
    system always contains one predefined user. This user will have the
    fixed ID 1, and by default (unless altered when running
-   <application>initdb</application>) it will have the same name as
-   the operating system user that initialized the database
+   <command>initdb</command>) it will have the same name as the
+   operating system user that initialized the database
    cluster. Customarily, this user will be named
-   <systemitem>postgres</systemitem>. In order to create more users
-   you first have to connect as this initial user.
+   <literal>postgres</literal>. In order to create more users you
+   first have to connect as this initial user.
   </para>
 
   <para>
@@ -69,11 +69,11 @@ dropuser <replaceable>name</replaceable>
    database server.  The user name to use for a particular database
    connection is indicated by the client that is initiating the
    connection request in an application-specific fashion. For example,
-   the <application>psql</application> program uses the
+   the <command>psql</command> program uses the
    <option>-U</option> command line option to indicate the user to
    connect as.  Many applications assume the name of the current
    operating system user by default (including
-   <application>createuser</> and <application>psql</>).  Therefore it
+   <command>createuser</> and <command>psql</>).  Therefore it
    is convenient to maintain a naming correspondence between the two
    user sets.
   </para>
@@ -134,7 +134,7 @@ dropuser <replaceable>name</replaceable>
         make use of passwords. Database passwords are separate from
         operating system passwords. Specify a password upon user
         creation with <literal>CREATE USER
-        <replaceable>name</replaceable> PASSWORD 'string'</literal>. 
+        <replaceable>name</replaceable> PASSWORD '<replaceable>string</>'</literal>. 
        </para>
       </listitem>
      </varlistentry>
@@ -172,12 +172,12 @@ ALTER USER myname SET enable_indexscan TO off;
    management of privileges: privileges can be granted to, or revoked
    from, a group as a whole.  To create a group, use
 <synopsis>
-CREATE GROUP <replaceable>name</replaceable>
+CREATE GROUP <replaceable>name</replaceable>;
 </synopsis>
    To add users to or remove users from a group, use
 <synopsis>
-ALTER GROUP <replaceable>name</replaceable> ADD USER <replaceable>uname1</replaceable>, ...
-ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</replaceable>, ...
+ALTER GROUP <replaceable>name</replaceable> ADD USER <replaceable>uname1</replaceable>, ... ;
+ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</replaceable>, ... ;
 </synopsis>
   </para>
  </sect1>
@@ -247,7 +247,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <para>
    Functions and triggers allow users to insert code into the backend
    server that other users may execute without knowing it. Hence, both
-   mechanisms permit users to <firstterm>Trojan horse</firstterm>
+   mechanisms permit users to <quote>Trojan horse</quote>
    others with relative impunity. The only real protection is tight
    control over who can define functions.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.27 2002/04/18 14:28:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.28 2003/03/13 01:30:28 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -7,9 +7,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.27 2002/04/18 14:28:14 momjia
 
   <indexterm zone="largeobjects"><primary>large object</></>
   <indexterm><primary>BLOB</><see>large object</></>
-
-  <sect1 id="lo-intro">
-   <title>Introduction</title>
 
    <para>
     In <productname>PostgreSQL</productname> releases prior to 7.1,
@@ -19,9 +16,23 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.27 2002/04/18 14:28:14 momjia
     size of a data value was relatively low. To support the storage of
     larger atomic values, <productname>PostgreSQL</productname>
     provided and continues to provide a large object interface.  This
-    interface provides file-oriented access to user data that has been
-    declared to be a large object.
+    interface provides file-oriented access to user data that is stored in
+    a special large-object structure.
    </para>
+
+   <para>
+    This chapter describes the implementation and the programming and
+    query language interfaces to <productname>PostgreSQL</productname>
+    large object data.  We use the <application>libpq</application> C
+    library for the examples in this chapter, but most programming
+    interfaces native to <productname>PostgreSQL</productname> support
+    equivalent functionality.  Other interfaces may use the large
+    object interface internally to provide generic support for large
+    values.  This is not described here.
+   </para>
+
+  <sect1 id="lo-history">
+   <title>History</title>
 
    <para>
     <productname>POSTGRES 4.2</productname>, the indirect predecessor
@@ -50,21 +61,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.27 2002/04/18 14:28:14 momjia
     (nicknamed <quote><acronym>TOAST</acronym></quote>) that allows
     data rows to be much larger than individual data pages.  This
     makes the large object interface partially obsolete.  One
-    remaining advantage of the large object interface is that it
-    allows random access to the data, i.e., the ability to read or
-    write small chunks of a large value.  It is planned to equip
-    <acronym>TOAST</acronym> with such functionality in the future.
-   </para>
-
-   <para>
-    This section describes the implementation and the programming and
-    query language interfaces to <productname>PostgreSQL</productname>
-    large object data.  We use the <application>libpq</application> C
-    library for the examples in this section, but most programming
-    interfaces native to <productname>PostgreSQL</productname> support
-    equivalent functionality.  Other interfaces may use the large
-    object interface internally to provide generic support for large
-    values.  This is not described here.
+    remaining advantage of the large object interface is that it allows values up
+    to 2 GB in size, whereas <acronym>TOAST</acronym> can only handle 1 GB.
    </para>
 
   </sect1>
@@ -75,64 +73,45 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.27 2002/04/18 14:28:14 momjia
    <para>
     The large object implementation breaks  large
     objects  up  into  <quote>chunks</quote>  and  stores  the chunks in
-    tuples in the database.  A B-tree index guarantees fast
+    rows in the database.  A B-tree index guarantees fast
     searches for the correct chunk number when doing random
     access reads and writes.
    </para>
   </sect1>
 
   <sect1 id="lo-interfaces">
-   <title>Interfaces</title>
+   <title>Client Interfaces</title>
 
    <para>
-    The  facilities  <productname>PostgreSQL</productname> provides  to
-    access large objects,  both  in  the backend as part of user-defined
-    functions or the front end as part  of  an  application
-    using  the   interface, are described below. For users
-    familiar with <productname>POSTGRES 4.2</productname>,
-    <productname>PostgreSQL</productname> has a new set of
-    functions  providing  a  more  coherent  interface.
-
-    <note>
-     <para>
-      All large object manipulation <emphasis>must</emphasis> take
-      place within an SQL transaction. This requirement is strictly
-      enforced as of <productname>PostgreSQL 6.5</>, though it has been an
-      implicit requirement in previous versions, resulting in
-      misbehavior if ignored.
-     </para>
-    </note>
+    This section describes the facilities that
+    <productname>PostgreSQL</productname> client interface libraries
+    provide for accessing large objects.  All large object
+    manipulation using these functions <emphasis>must</emphasis> take
+    place within an SQL transaction block.  (This requirement is
+    strictly enforced as of <productname>PostgreSQL 6.5</>, though it
+    has been an implicit requirement in previous versions, resulting
+    in misbehavior if ignored.)
+    The  <productname>PostgreSQL</productname>  large  object interface is modeled after
+    the <acronym>Unix</acronym>  file-system  interface,  with  analogues  of
+    <function>open</function>,  <function>read</function>,
+    <function>write</function>,
+    <function>lseek</function>, etc.
    </para>
 
    <para>
-    The  <productname>PostgreSQL</productname>  large  object interface is modeled after
-    the <acronym>Unix</acronym>  file-system  interface,  with  analogues  of
-    <function>open(2)</function>,  <function>read(2)</function>,
-    <function>write(2)</function>,
-    <function>lseek(2)</function>, etc.  User 
-    functions call these routines to retrieve only the data  of
-    interest  from a large object.  For example, if a large
-    object type called <type>mugshot</type>  existed  that  stored  
-    photographs  of  faces, then a function called <function>beard</function> could
-    be declared on <type>mugshot</type> data.  <function>beard</> could look  at  the
-    lower third of a photograph, and determine the color of
-    the beard that appeared  there,  if  any.   The  entire
-    large-object value need not be buffered, or even 
-    examined, by the <function>beard</function> function.
-    Large objects may be accessed from dynamically-loaded <acronym>C</acronym>
-    functions  or  database  client  programs that link the
-    library.  <productname>PostgreSQL</productname> provides a set of routines that 
-    support opening, reading, writing, closing, and seeking on
-    large objects.
+    Client applications which use the large object interface in
+    <application>libpq</application> should include the header file
+    <filename>libpq/libpq-fs.h</filename> and link with the
+    <application>libpq</application> library.
    </para>
 
    <sect2>
     <title>Creating a Large Object</title>
 
     <para>
-     The routine
+     The function
 <synopsis>
-Oid lo_creat(PGconn *<replaceable class="parameter">conn</replaceable>, int <replaceable class="parameter">mode</replaceable>)
+Oid lo_creat(PGconn *conn, int mode);
 </synopsis>
      creates a new large  object.  
      <replaceable class="parameter">mode</replaceable>  is  a  bit mask
@@ -145,7 +124,11 @@ Oid lo_creat(PGconn *<replaceable class="parameter">conn</replaceable>, int <rep
      historically been used at Berkeley to designate the storage  manager  number on which the large object
      should reside.  These
      bits should always be zero now.
-     The commands below create a large object:
+     The return value is the OID that was assigned to the new large object.
+    </para>
+
+    <para>
+     An example:
 <programlisting>
 inv_oid = lo_creat(INV_READ|INV_WRITE);
 </programlisting>
@@ -158,11 +141,12 @@ inv_oid = lo_creat(INV_READ|INV_WRITE);
     <para>
      To import an operating system file as a large object, call
 <synopsis>
-Oid lo_import(PGconn *<replaceable class="parameter">conn</replaceable>, const char *<replaceable class="parameter">filename</replaceable>)
+Oid lo_import(PGconn *conn, const char *filename);
 </synopsis>
     <replaceable class="parameter">filename</replaceable> 
      specifies the operating system name of
      the file to be imported as a large object.
+     The return value is the OID that was assigned to the new large object.
     </para>
    </sect2>
 
@@ -173,7 +157,7 @@ Oid lo_import(PGconn *<replaceable class="parameter">conn</replaceable>, const c
      To export a large object
      into an operating system file, call
 <synopsis>
-int lo_export(PGconn *<replaceable class="parameter">conn</replaceable>, Oid <replaceable class="parameter">lobjId</replaceable>, const char *<replaceable class="parameter">filename</replaceable>)
+int lo_export(PGconn *conn, Oid lobjId, const char *filename);
 </synopsis>
      The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
      object  to  export  and the <parameter>filename</parameter> argument specifies
@@ -187,7 +171,7 @@ int lo_export(PGconn *<replaceable class="parameter">conn</replaceable>, Oid <re
     <para>
      To open an existing large object, call
 <synopsis>
-int lo_open(PGconn *conn, Oid lobjId, int mode)
+int lo_open(PGconn *conn, Oid lobjId, int mode);
 </synopsis>
      The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
      object  to  open.   The  <parameter>mode</parameter>  bits control whether the
@@ -205,10 +189,10 @@ int lo_open(PGconn *conn, Oid lobjId, int mode)
 <title>Writing Data to a Large Object</title>
 
 <para>
-     The routine
-<programlisting>
-int lo_write(PGconn *conn, int fd, const char *buf, size_t len)
-</programlisting>
+     The function
+<synopsis>
+int lo_write(PGconn *conn, int fd, const char *buf, size_t len);
+</synopsis>
      writes <parameter>len</parameter> bytes from <parameter>buf</parameter> to large object <parameter>fd</>.   The <parameter>fd</parameter>
      argument must have been returned by a previous <function>lo_open</function>.
      The number of bytes actually written is  returned.   In
@@ -220,10 +204,10 @@ int lo_write(PGconn *conn, int fd, const char *buf, size_t len)
 <title>Reading Data from a Large Object</title>
 
 <para>
-     The routine
-<programlisting>
-int lo_read(PGconn *conn, int fd, char *buf, size_t len)
-</programlisting>
+     The function
+<synopsis>
+int lo_read(PGconn *conn, int fd, char *buf, size_t len);
+</synopsis>
      reads <parameter>len</parameter> bytes from large object <parameter>fd</parameter> into <parameter>buf</parameter>. The  <parameter>fd</parameter>
      argument must have been returned by a previous <function>lo_open</function>.
      The number of bytes actually read is returned. In
@@ -237,13 +221,26 @@ int lo_read(PGconn *conn, int fd, char *buf, size_t len)
 <para>
      To change the current read or write location on a large
      object, call
-<programlisting>
-int lo_lseek(PGconn *conn, int fd, int offset, int whence)
-</programlisting>
-     This routine moves the current location pointer for the
+<synopsis>
+int lo_lseek(PGconn *conn, int fd, int offset, int whence);
+</synopsis>
+     This function moves the current location pointer for the
      large object described by <parameter>fd</> to the new location specified 
      by <parameter>offset</>.  The valid values for <parameter>whence</> are
-     <symbol>SEEK_SET</>, <symbol>SEEK_CUR</>, and <symbol>SEEK_END</>.
+     <symbol>SEEK_SET</> (seek from object start), <symbol>SEEK_CUR</> (seek from current position), and <symbol>SEEK_END</> (seek from object end).  The return value is the new location pointer.
+</para>
+</sect2>
+
+<sect2>
+<title>Obtaining the Seek Position of a Large Object</title>
+
+<para>
+     To obtain the current read or write location of a large object,
+     call
+<synopsis>
+int lo_tell(PGconn *conn, int fd);
+</synopsis>
+     If there is an error, the return value is negative.
 </para>
 </sect2>
 
@@ -252,9 +249,9 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence)
 
 <para>
      A large object may be closed by calling
-<programlisting>
-int lo_close(PGconn *conn, int fd)
-</programlisting>
+<synopsis>
+int lo_close(PGconn *conn, int fd);
+</synopsis>
      where  <parameter>fd</>  is  a  large  object  descriptor returned by
      <function>lo_open</function>.  On success, <function>lo_close</function>
       returns zero.  On error, the return value is negative.
@@ -267,7 +264,7 @@ int lo_close(PGconn *conn, int fd)
     <para>
      To remove a large object from the database, call
 <synopsis>
-int lo_unlink(PGconn *<replaceable class="parameter">conn</replaceable>, Oid lobjId)
+int lo_unlink(PGconn *conn, Oid lobjId);
 </synopsis>
      The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
      object  to  remove.  In the event of an error, the return value is negative.
@@ -278,14 +275,14 @@ int lo_unlink(PGconn *<replaceable class="parameter">conn</replaceable>, Oid lob
 </sect1>
 
 <sect1 id="lo-funcs">
-<title>Server-side Built-in Functions</title>
+<title>Server-side Functions</title>
 
 <para>
-     There  are two built-in registered functions, <function>lo_import</function>
-     and <function>lo_export</function> which  are  convenient  for  use
+     There  are two built-in server-side functions, <function>lo_import</function>
+     and <function>lo_export</function>, for large object access, which are available for use
     in  <acronym>SQL</acronym>
-     queries.
-     Here is an example of their use
+     commands.
+     Here is an example of their use:
 <programlisting>
 CREATE TABLE image (
     name            text,
@@ -301,23 +298,20 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
 </para>
 </sect1>
 
-<sect1 id="lo-libpq">
-<title>Accessing Large Objects from <application>Libpq</application></title>
+<sect1 id="lo-examplesect">
+<title>Example Program</title>
 
 <para>
      <xref linkend="lo-example"> is a sample program which shows how the large object  
      interface
      in  <application>libpq</>  can  be used.  Parts of the program are 
      commented out but are left in the source for  the  reader's
-     benefit.  This program can be found in
+     benefit.  This program can also be found in
      <filename>src/test/examples/testlo.c</filename> in the source distribution.
-     Frontend applications which use the large object interface  
-     in  <application>libpq</application>  should   include   the   header   file
-     <filename>libpq/libpq-fs.h</filename> and link with the <application>libpq</application> library.
 </para>
 
   <example id="lo-example">
-   <title>Large Objects with <application>Libpq</application> Example Program</title>
+   <title>Large Objects with <application>libpq</application> Example Program</title>
 <programlisting>
 /*--------------------------------------------------------------
  *

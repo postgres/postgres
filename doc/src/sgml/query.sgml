@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.28 2002/11/11 20:14:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.29 2003/03/13 01:30:29 petere Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -214,7 +214,7 @@ INSERT INTO weather VALUES ('San Francisco', 46, 50, 0.25, '1994-11-27');
     The <type>point</type> type requires a coordinate pair as input,
     as shown here:
 <programlisting>
-INSERT INTO cities  VALUES ('San Francisco', '(-194.0, 53.0)');
+INSERT INTO cities VALUES ('San Francisco', '(-194.0, 53.0)');
 </programlisting>
    </para>
 
@@ -296,7 +296,7 @@ SELECT * FROM weather;
    </para>
 
    <para>
-    You may specify any arbitrary expressions in the target list.  For 
+    You may specify any arbitrary expressions in the select list.  For 
     example, you can do:
 <programlisting>
 SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
@@ -339,7 +339,7 @@ SELECT * FROM weather
     <indexterm><primary>DISTINCT</primary></indexterm>
     <indexterm><primary>duplicate</primary></indexterm>
 
-    As a final note, you can request that the results of a select can
+    As a final note, you can request that the results of a query can
     be returned in sorted order or with duplicate rows removed:
 
 <programlisting>
@@ -710,7 +710,7 @@ SELECT city, max(temp_lo)
     <literal>WHERE</literal> clause must not contain aggregate functions;
     it makes no sense to try to use an aggregate to determine which rows
     will be inputs to the aggregates.  On the other hand,
-    <literal>HAVING</literal> clauses always contain aggregate functions.
+    <literal>HAVING</literal> clause always contains aggregate functions.
     (Strictly speaking, you are allowed to write a <literal>HAVING</literal>
     clause that doesn't use aggregates, but it's wasteful: The same condition
     could be used more efficiently at the <literal>WHERE</literal> stage.)
