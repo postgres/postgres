@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.8 1996/10/30 02:01:51 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.9 1996/10/31 05:54:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include <string.h>
 #include "postgres.h"
 #include "nodes/nodes.h"
+#include "nodes/params.h"
 #include "nodes/primnodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/relation.h"
