@@ -18,6 +18,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <config.h>
+
 /*
  * Can't get much more obvious than this.  Might need to replace localtime()
  * on older systems...
@@ -30,7 +32,7 @@ char *Sysfunc_system_date(void)
 	
 	time(&cur_time_secs);
 	cur_time_expanded = localtime(&cur_time_secs);
-#if defined(EUROPEAN_DATES) || defined(EUROPEAN_STYLE)
+#if defined(EUROPEAN_DATES)
 	sprintf(buf, "%02.2d-%02.2d-%04.4d", cur_time_expanded->tm_mday,
 			cur_time_expanded->tm_mon+1, cur_time_expanded->tm_year+1900);
 #else
