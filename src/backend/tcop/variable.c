@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements.
  *
- * $Id: variable.c,v 1.9 1997/05/20 10:31:42 vadim Exp $
+ * $Id: variable.c,v 1.10 1997/06/02 11:00:57 vadim Exp $
  *
  */
 
@@ -17,6 +17,7 @@
 extern Cost _cpu_page_wight_;
 extern Cost _cpu_index_page_wight_;
 extern bool _use_geqo_;
+extern int32 _use_geqo_rels_;
 extern bool _use_right_sided_plans_;
 
 /*-----------------------------------------------------------------------*/
@@ -33,27 +34,92 @@ struct PGVariables PGVariables =
 	};
 
 /*-----------------------------------------------------------------------*/
-static const char *get_token(char *buf, int size, const char *str)
-	{
-	if(!*str)
-		return NULL;
+static const char *get_token(char **tok, char **val, const char *str)
+{
+    const char *start;
+    int len = 0;
+	
+    *tok = *val = NULL;
+	
+    if ( !(*str) )
+	return NULL;
 		
-	/* skip white space */
-	while(*str && (*str == ' ' || *str == '\t'))
-		str++;
+    /* skip white spaces */
+    while ( *str == ' ' || *str == '\t' )
+	str++;
+    if ( *str == ',' || *str == '=' )
+	elog(WARN, "Syntax error near (%s): empty setting", str);
+    if ( !(*str) )
+	return NULL;
 	
-	/* copy until we hit white space or comma or end of string */
-	while(*str && *str != ' ' && *str != '\t' && *str != ',' && size-- > 1)
-		*buf++ = *str++;
+    start = str;
 	
-	*buf = '\0';
-	
-	/* skip white space and comma*/
-	while(*str && (*str == ' ' || *str == '\t' || *str == ','))
-		str++;
-	
-	return str;
-	}
+    /* 
+     * count chars in token until we hit white space or comma 
+     * or '=' or end of string
+     */
+    while ( *str && *str != ' ' && *str != '\t' 
+			&& *str != ','  && *str != '=' )
+    {
+	str++;
+	len++;
+    }
+    
+    *tok = (char*) palloc (len + 1);
+    strncpy (*tok, start, len);
+    (*tok)[len] = '\0';
+
+    /* skip white spaces */
+    while ( *str == ' ' || *str == '\t' )
+	str++;
+    
+    if ( !(*str) )
+    	return (NULL);
+    if ( *str == ',' )
+    	return (++str);
+
+    if ( *str != '=' )
+	elog(WARN, "Syntax error near (%s)", str);
+    
+    str++;		/* '=': get value */
+    len = 0;
+
+    /* skip white spaces */
+    while ( *str == ' ' || *str == '\t' )
+	str++;
+
+    if ( *str == ',' || !(*str) )
+	elog(WARN, "Syntax error near (=%s)", str);
+
+    start = str;
+
+    /* 
+     * count chars in token' value until we hit white space or comma 
+     * or end of string
+     */
+    while ( *str && *str != ' ' && *str != '\t' && *str != ',' )
+    {
+	str++;
+	len++;
+    }
+    
+    *val = (char*) palloc (len + 1);
+    strncpy (*val, start, len);
+    (*val)[len] = '\0';
+
+    /* skip white spaces */
+    while ( *str == ' ' || *str == '\t' )
+	str++;
+
+    if ( !(*str) )
+    	return (NULL);
+    if ( *str == ',' )
+    	return (++str);
+
+    elog(WARN, "Syntax error near (%s)", str);
+
+    return str;
+}
 	
 /*-----------------------------------------------------------------------*/
 static bool parse_null(const char *value)
@@ -73,14 +139,40 @@ static bool reset_null(const char *value)
 	
 static bool parse_geqo (const char *value)
 {
+    const char *rest;
+    char *tok, *val;
 
-    if ( strcasecmp (value, "on") == 0 )
+    rest = get_token (&tok, &val, value);
+    if ( tok == NULL )
+	elog(WARN, "Value undefined");
+
+    if ( rest )
+	elog(WARN, "Unacceptable data (%s)", rest);
+
+    if ( strcasecmp (tok, "on") == 0 )
+    {
+    	int32 geqo_rels = _use_geqo_rels_;
+    	
+    	if ( val != NULL )
+    	{
+    	    geqo_rels = pg_atoi (val, sizeof(int32), '\0');
+    	    if ( geqo_rels <= 1 )
+		elog(WARN, "Bad value for # of relations (%s)", val);
+    	    pfree (val);
+    	}
     	_use_geqo_ = true;
-    else if ( strcasecmp (value, "off") == 0 )
+    	_use_geqo_rels_ = geqo_rels;
+    }
+    else if ( strcasecmp (tok, "off") == 0 )
+    {
+    	if ( val != NULL )
+	    elog(WARN, "Unacceptable data (%s)", val);
     	_use_geqo_ = false;
+    }
     else
-	elog(WARN, "Bad value for GEQO (%s)", value);
+    	elog(WARN, "Bad value for GEQO (%s)", value);
     
+    pfree (tok);
     return TRUE;
 }
 
@@ -88,7 +180,7 @@ static bool show_geqo ()
 {
 
     if ( _use_geqo_ )
-    	elog (NOTICE, "GEQO is ON");
+    	elog (NOTICE, "GEQO is ON begining with %d relations", _use_geqo_rels_);
     else
     	elog (NOTICE, "GEQO is OFF");
     return TRUE;
@@ -102,6 +194,7 @@ static bool reset_geqo ()
 #else
     _use_geqo_ = false;
 #endif
+    _use_geqo_rels_ = GEQO_RELS;
     return TRUE;
 }
 	
@@ -184,12 +277,15 @@ static bool reset_cost_index ()
 }
 
 static bool parse_date(const char *value)
-	{
-	char tok[32];
+{
+	char *tok, *val;
 	int dcnt = 0, ecnt = 0;
 	
-	while((value = get_token(tok, sizeof(tok), value)) != 0)
-		{
+	while((value = get_token(&tok, &val, value)) != 0)
+	{
+		if ( val != NULL )
+			elog(WARN, "Syntax error near (%s)", val);
+		
 		/* Ugh. Somebody ought to write a table driven version -- mjl */
 		
 		if(!strcasecmp(tok, "iso"))
@@ -228,13 +324,14 @@ static bool parse_date(const char *value)
 			{
 			elog(WARN, "Bad value for date style (%s)", tok);
 			}
-		}
+		pfree (tok);
+	}
 	
 	if(dcnt > 1 || ecnt > 1)
 		elog(NOTICE, "Conflicting settings for date");
-		
+
 	return TRUE;
-	}
+}
 	
 static bool show_date()
 	{
