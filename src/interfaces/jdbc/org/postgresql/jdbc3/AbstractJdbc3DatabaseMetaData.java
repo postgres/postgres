@@ -271,7 +271,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public int getDatabaseMajorVersion() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return connection.getServerMajorVersion();
 	}
 
 	/**
@@ -283,7 +283,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public int getDatabaseMinorVersion() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return connection.getServerMinorVersion();
 	}
 
 	/**
@@ -296,7 +296,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public int getJDBCMajorVersion() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return 3; // This class implements JDBC 3.0
 	}
 
 	/**
@@ -309,7 +309,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public int getJDBCMinorVersion() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return 0; // This class implements JDBC 3.0
 	}
 
 	/**
@@ -349,7 +349,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public boolean supportsStatementPooling() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return false;
 	}
 
 }
