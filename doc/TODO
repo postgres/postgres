@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb  6 19:52:47 EST 2001
+Last updated:		Tue Feb  6 23:50:38 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -255,7 +255,7 @@ MISCELLANEOUS
 * -Use IPC_EXCL when creating shared memory and semaphores (Tom)
 * Encrpyt passwords in pg_shadow table using MD5 (Vince)
 * -Use flock() to prevent multiple postmasters on the same port (Tom)
-* Allow Java server-side programming
+* Allow Java server-side programming [java]
 
 PERFORMANCE
 -----------
