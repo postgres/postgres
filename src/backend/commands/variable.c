@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.14 1998/10/08 18:29:20 momjian Exp $
+ * $Id: variable.c,v 1.15 1998/10/08 23:50:28 tgl Exp $
  *
  */
 
@@ -32,7 +32,7 @@ static bool show_cost_index(void);
 static bool reset_cost_index(void);
 static bool parse_cost_index(const char *);
 static bool show_r_plans(void);
-static bool reset_r_plans();
+static bool reset_r_plans(void);
 static bool parse_r_plans(const char *);
 static bool reset_geqo(void);
 static bool show_geqo(void);
