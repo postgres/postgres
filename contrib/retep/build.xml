@@ -2,7 +2,7 @@
 
   build file to build the donated retep tools packages
 
-  $Id: build.xml,v 1.6 2001/05/16 17:09:25 momjian Exp $
+  $Id: build.xml,v 1.7 2001/05/17 03:22:53 momjian Exp $
 
 -->
 
@@ -35,8 +35,10 @@
 
   <!-- This target removes any class files from the build directory -->
   <target name="clean">
-    <delete dir="${dest}" />
-    <delete dir="${jars}" />
+    <delete>
+    <fileset dir="${dest}" />
+    <fileset dir="${jars}" />
+    </delete>
   </target>
 
   <!-- Builds the XML Tools -->

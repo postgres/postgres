@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.29 2001/05/17 00:29:52 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.30 2001/05/17 03:22:53 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,4 +37,3 @@ uninstall:
 
 clean distclean maintainer-clean:
 	$(ANT) -buildfile $(top_srcdir)/build.xml clean
-	rm -f org/postgresql/Driver.java

@@ -64,8 +64,6 @@ TYPES
 * Add IPv6 capability to INET/CIDR types
 * Add conversion function from text to inet
 * Store binary-compatible type information in the system
-* Allow nulls in arrays
-* Allow arrays to be ORDER'ed
 * Support construction of array result values in expressions
 * Remove Money type, add money formatting for decimal type
 * Declare typein/out functions in pg_proc with a special "C string" data type
@@ -78,10 +76,14 @@ TYPES
 * SELECT cash_out(2) crashes because of opaque
 * Add SQL standard function bit_length()
 * Make oid use unsigned int more reliably, pg_atoi()
+* ARRAYS
+	* Allow nulls in arrays
+	* Allow arrays to be ORDER'ed
+	* fix array handling in ECPG
 
 MULTILANGUAGE SUPPORT
 
-* Add nchar (as distinguished from ordinary varchar),
+* Add NCHAR (as distinguished from ordinary varchar),
 * Allow LOCALE on a per-column basis, default to ASCII
 * Support multiple simultaneous character sets, per SQL92
 * Reject character sequences those are not valid in their charset
@@ -112,12 +114,12 @@ INDEXES
 * Use indexes for min() and max()
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
-* Allow SELECT * FROM tab WHERE int2col = 4 use int2col index, int8,
+* Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
   float4, numeric/decimal too [optimizer]
 * Use indexes with CIDR '<<' (contains) operator
 * Allow LIKE indexing optimization for non-ASCII locales
 * Be smarter about insertion of already-ordered data into btree index
-* Gather more accurate dispersion statistics using indexes
+* -Gather more accurate dispersion statistics using indexes
 * Add deleted bit to index tuples to reduce heap access
 * Prevent index uniqueness checks when UPDATE does not modifying column
 
@@ -132,6 +134,14 @@ SYSTEM TABLES
 
 COMMANDS
 
+* Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
+* Auto-destroy sequence on DROP of table with SERIAL, perhaps with a separate
+  SERIAL type
+* Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
+* Allow RULE recompilation
+* Add BETWEEN ASYMMETRIC/SYMMETRIC
+* Change LIMIT val,val to offset,limit to match MySQL
+* Allow Pl/PgSQL's RAISE function to take expressions
 * ALTER
 	* ALTER TABLE ADD COLUMN to inherited table put column in wrong place
 	  [inheritance]
@@ -159,12 +169,6 @@ COMMANDS
 	* Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
 	* Disallow missing columns in INSERT ... VALUES, per ANSI
 	* Allow INSERT/UPDATE ... RETURNING new.col or old.col (Philip)
-* Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
-* Auto-destroy sequence on DROP of table with SERIAL, perhaps with a separate
-  SERIAL type
-* Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
-* Allow RULE recompilation
-* Add BETWEEN ASYMMETRIC/SYMMETRIC
 * SHOW/SET
 	* Add SHOW command to display locks
 	* Add a global RESET command for use with connection pooling
@@ -174,14 +178,11 @@ COMMANDS
 	* Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
 	* Add SHOW command to see locale
-* Change LIMIT val,val to offset,limit to match MySQL
-* Allow Pl/PgSQL's RAISE function to take expressions
 
 CLIENTS
 
 * Make NULL's come out at the beginning or end depending on the
   ORDER BY direction
-* fix array handling in ECPG
 * have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
 * allow psql \d to show primary and foreign keys
