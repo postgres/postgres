@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.24 2002/06/20 20:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.25 2002/08/12 00:36:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,13 +165,6 @@ struct Tuplesortstate
 	 * memory space consumed.
 	 */
 	void	   *(*readtup) (Tuplesortstate *state, int tapenum, unsigned int len);
-
-	/*
-	 * Obtain memory space occupied by a stored tuple.	(This routine is
-	 * only needed in the FINALMERGE case, since copytup, writetup, and
-	 * readtup are expected to adjust availMem appropriately.)
-	 */
-	unsigned int (*tuplesize) (Tuplesortstate *state, void *tup);
 
 	/*
 	 * This array holds pointers to tuples in sort memory.	If we are in
@@ -295,7 +288,6 @@ struct Tuplesortstate
 #define COPYTUP(state,tup)	((*(state)->copytup) (state, tup))
 #define WRITETUP(state,tape,tup)	((*(state)->writetup) (state, tape, tup))
 #define READTUP(state,tape,len) ((*(state)->readtup) (state, tape, len))
-#define TUPLESIZE(state,tup)	((*(state)->tuplesize) (state, tup))
 #define LACKMEM(state)		((state)->availMem < 0)
 #define USEMEM(state,amt)	((state)->availMem -= (amt))
 #define FREEMEM(state,amt)	((state)->availMem += (amt))
@@ -331,30 +323,16 @@ struct Tuplesortstate
  *
  * NOTES about memory consumption calculations:
  *
- * We count space requested for tuples against the SortMem limit.
+ * We count space allocated for tuples against the SortMem limit, plus
+ * the space used by the variable-size arrays memtuples and memtupindex.
  * Fixed-size space (primarily the LogicalTapeSet I/O buffers) is not
- * counted, nor do we count the variable-size memtuples and memtupindex
- * arrays.	(Even though those could grow pretty large, they should be
- * small compared to the tuples proper, so this is not unreasonable.)
+ * counted.
  *
- * The major deficiency in this approach is that it ignores palloc overhead.
- * The memory space actually allocated for a palloc chunk is always more
- * than the request size, and could be considerably more (as much as 2X
- * larger, in the current aset.c implementation).  So the space used could
- * be considerably more than SortMem says.
- *
- * One way to fix this is to add a memory management function that, given
- * a pointer to a palloc'd chunk, returns the actual space consumed by the
- * chunk.  This would be very easy in the current aset.c module, but I'm
- * hesitant to do it because it might be unpleasant to support in future
- * implementations of memory management.  (For example, a direct
- * implementation of palloc as malloc could not support such a function
- * portably.)
- *
- * A cruder answer is just to apply a fudge factor, say by initializing
- * availMem to only three-quarters of what SortMem indicates.  This is
- * probably the right answer if anyone complains that SortMem is not being
- * obeyed very faithfully.
+ * Note that we count actual space used (as shown by GetMemoryChunkSpace)
+ * rather than the originally-requested size.  This is important since
+ * palloc can add substantial overhead.  It's not a complete answer since
+ * we won't count any wasted space in palloc allocation blocks, but it's
+ * a lot better than what we were doing before 7.3.
  *
  *--------------------
  */
@@ -394,21 +372,18 @@ static void *copytup_heap(Tuplesortstate *state, void *tup);
 static void writetup_heap(Tuplesortstate *state, int tapenum, void *tup);
 static void *readtup_heap(Tuplesortstate *state, int tapenum,
 			 unsigned int len);
-static unsigned int tuplesize_heap(Tuplesortstate *state, void *tup);
 static int comparetup_index(Tuplesortstate *state,
 				 const void *a, const void *b);
 static void *copytup_index(Tuplesortstate *state, void *tup);
 static void writetup_index(Tuplesortstate *state, int tapenum, void *tup);
 static void *readtup_index(Tuplesortstate *state, int tapenum,
 			  unsigned int len);
-static unsigned int tuplesize_index(Tuplesortstate *state, void *tup);
 static int comparetup_datum(Tuplesortstate *state,
 				 const void *a, const void *b);
 static void *copytup_datum(Tuplesortstate *state, void *tup);
 static void writetup_datum(Tuplesortstate *state, int tapenum, void *tup);
 static void *readtup_datum(Tuplesortstate *state, int tapenum,
 			  unsigned int len);
-static unsigned int tuplesize_datum(Tuplesortstate *state, void *tup);
 
 /*
  * Since qsort(3) will not pass any context info to qsort_comparetup(),
@@ -453,6 +428,8 @@ tuplesort_begin_common(bool randomAccess)
 
 	state->memtupindex = NULL;	/* until and unless needed */
 
+	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
+
 	state->currentRun = 0;
 
 	/* Algorithm D variables will be initialized by inittapes, if needed */
@@ -478,7 +455,6 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 	state->copytup = copytup_heap;
 	state->writetup = writetup_heap;
 	state->readtup = readtup_heap;
-	state->tuplesize = tuplesize_heap;
 
 	state->tupDesc = tupDesc;
 	state->nKeys = nkeys;
@@ -520,7 +496,6 @@ tuplesort_begin_index(Relation indexRel,
 	state->copytup = copytup_index;
 	state->writetup = writetup_index;
 	state->readtup = readtup_index;
-	state->tuplesize = tuplesize_index;
 
 	state->indexRel = indexRel;
 	/* see comments below about btree dependence of this code... */
@@ -544,7 +519,6 @@ tuplesort_begin_datum(Oid datumType,
 	state->copytup = copytup_datum;
 	state->writetup = writetup_datum;
 	state->readtup = readtup_datum;
-	state->tuplesize = tuplesize_datum;
 
 	state->datumType = datumType;
 	state->sortOperator = sortOperator;
@@ -627,7 +601,6 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 	 */
 	if (isNull || state->datumTypeByVal)
 	{
-		USEMEM(state, sizeof(DatumTuple));
 		tuple = (DatumTuple *) palloc(sizeof(DatumTuple));
 		tuple->val = val;
 		tuple->isNull = isNull;
@@ -641,7 +614,6 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 		if (datalen == -1)		/* variable length type? */
 			datalen = VARSIZE((struct varlena *) DatumGetPointer(val));
 		tuplelen = datalen + MAXALIGN(sizeof(DatumTuple));
-		USEMEM(state, tuplelen);
 		newVal = (char *) palloc(tuplelen);
 		tuple = (DatumTuple *) newVal;
 		newVal += MAXALIGN(sizeof(DatumTuple));
@@ -649,6 +621,8 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 		tuple->val = PointerGetDatum(newVal);
 		tuple->isNull = false;
 	}
+
+	USEMEM(state, GetMemoryChunkSpace(tuple));
 
 	puttuple_common(state, (void *) tuple);
 }
@@ -669,10 +643,12 @@ puttuple_common(Tuplesortstate *state, void *tuple)
 			if (state->memtupcount >= state->memtupsize)
 			{
 				/* Grow the unsorted array as needed. */
+				FREEMEM(state, GetMemoryChunkSpace(state->memtuples));
 				state->memtupsize *= 2;
 				state->memtuples = (void **)
 					repalloc(state->memtuples,
 							 state->memtupsize * sizeof(void *));
+				USEMEM(state, GetMemoryChunkSpace(state->memtuples));
 			}
 			state->memtuples[state->memtupcount++] = tuple;
 
@@ -914,13 +890,13 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 			if (state->memtupcount > 0)
 			{
 				int			srcTape = state->memtupindex[0];
-				unsigned int tuplen;
+				Size		tuplen;
 				int			tupIndex;
 				void	   *newtup;
 
 				tup = state->memtuples[0];
 				/* returned tuple is no longer counted in our memory space */
-				tuplen = TUPLESIZE(state, tup);
+				tuplen = GetMemoryChunkSpace(tup);
 				state->availMem += tuplen;
 				state->mergeavailmem[srcTape] += tuplen;
 				tuplesort_heap_siftup(state, false);
@@ -1018,6 +994,8 @@ inittapes(Tuplesortstate *state)
 	 * Allocate the memtupindex array, same size as memtuples.
 	 */
 	state->memtupindex = (int *) palloc(state->memtupsize * sizeof(int));
+
+	USEMEM(state, GetMemoryChunkSpace(state->memtupindex));
 
 	/*
 	 * Convert the unsorted contents of memtuples[] into a heap. Each
@@ -1408,6 +1386,8 @@ mergepreread(Tuplesortstate *state)
 				/* Might need to enlarge arrays! */
 				if (tupIndex >= state->memtupsize)
 				{
+					FREEMEM(state, GetMemoryChunkSpace(state->memtuples));
+					FREEMEM(state, GetMemoryChunkSpace(state->memtupindex));
 					state->memtupsize *= 2;
 					state->memtuples = (void **)
 						repalloc(state->memtuples,
@@ -1415,6 +1395,8 @@ mergepreread(Tuplesortstate *state)
 					state->memtupindex = (int *)
 						repalloc(state->memtupindex,
 								 state->memtupsize * sizeof(int));
+					USEMEM(state, GetMemoryChunkSpace(state->memtuples));
+					USEMEM(state, GetMemoryChunkSpace(state->memtupindex));
 				}
 			}
 			/* store tuple, append to list for its tape */
@@ -1604,6 +1586,8 @@ tuplesort_heap_insert(Tuplesortstate *state, void *tuple,
 	 */
 	if (state->memtupcount >= state->memtupsize)
 	{
+		FREEMEM(state, GetMemoryChunkSpace(state->memtuples));
+		FREEMEM(state, GetMemoryChunkSpace(state->memtupindex));
 		state->memtupsize *= 2;
 		state->memtuples = (void **)
 			repalloc(state->memtuples,
@@ -1611,6 +1595,8 @@ tuplesort_heap_insert(Tuplesortstate *state, void *tuple,
 		state->memtupindex = (int *)
 			repalloc(state->memtupindex,
 					 state->memtupsize * sizeof(int));
+		USEMEM(state, GetMemoryChunkSpace(state->memtuples));
+		USEMEM(state, GetMemoryChunkSpace(state->memtupindex));
 	}
 	memtuples = state->memtuples;
 	memtupindex = state->memtupindex;
@@ -1761,8 +1747,9 @@ copytup_heap(Tuplesortstate *state, void *tup)
 {
 	HeapTuple	tuple = (HeapTuple) tup;
 
-	USEMEM(state, HEAPTUPLESIZE + tuple->t_len);
-	return (void *) heap_copytuple(tuple);
+	tuple = heap_copytuple(tuple);
+	USEMEM(state, GetMemoryChunkSpace(tuple));
+	return (void *) tuple;
 }
 
 /*
@@ -1784,7 +1771,7 @@ writetup_heap(Tuplesortstate *state, int tapenum, void *tup)
 		LogicalTapeWrite(state->tapeset, tapenum,
 						 (void *) &tuplen, sizeof(tuplen));
 
-	FREEMEM(state, HEAPTUPLESIZE + tuple->t_len);
+	FREEMEM(state, GetMemoryChunkSpace(tuple));
 	heap_freetuple(tuple);
 }
 
@@ -1794,7 +1781,7 @@ readtup_heap(Tuplesortstate *state, int tapenum, unsigned int len)
 	unsigned int tuplen = len - sizeof(unsigned int) + HEAPTUPLESIZE;
 	HeapTuple	tuple = (HeapTuple) palloc(tuplen);
 
-	USEMEM(state, tuplen);
+	USEMEM(state, GetMemoryChunkSpace(tuple));
 	/* reconstruct the HeapTupleData portion */
 	tuple->t_len = len - sizeof(unsigned int);
 	ItemPointerSetInvalid(&(tuple->t_self));
@@ -1809,14 +1796,6 @@ readtup_heap(Tuplesortstate *state, int tapenum, unsigned int len)
 							sizeof(tuplen)) != sizeof(tuplen))
 			elog(ERROR, "tuplesort: unexpected end of data");
 	return (void *) tuple;
-}
-
-static unsigned int
-tuplesize_heap(Tuplesortstate *state, void *tup)
-{
-	HeapTuple	tuple = (HeapTuple) tup;
-
-	return HEAPTUPLESIZE + tuple->t_len;
 }
 
 
@@ -1901,8 +1880,9 @@ copytup_index(Tuplesortstate *state, void *tup)
 	unsigned int tuplen = IndexTupleSize(tuple);
 	IndexTuple	newtuple;
 
-	USEMEM(state, tuplen);
 	newtuple = (IndexTuple) palloc(tuplen);
+	USEMEM(state, GetMemoryChunkSpace(newtuple));
+
 	memcpy(newtuple, tuple, tuplen);
 
 	return (void *) newtuple;
@@ -1923,7 +1903,7 @@ writetup_index(Tuplesortstate *state, int tapenum, void *tup)
 		LogicalTapeWrite(state->tapeset, tapenum,
 						 (void *) &tuplen, sizeof(tuplen));
 
-	FREEMEM(state, IndexTupleSize(tuple));
+	FREEMEM(state, GetMemoryChunkSpace(tuple));
 	pfree(tuple);
 }
 
@@ -1933,7 +1913,7 @@ readtup_index(Tuplesortstate *state, int tapenum, unsigned int len)
 	unsigned int tuplen = len - sizeof(unsigned int);
 	IndexTuple	tuple = (IndexTuple) palloc(tuplen);
 
-	USEMEM(state, tuplen);
+	USEMEM(state, GetMemoryChunkSpace(tuple));
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple,
 						tuplen) != tuplen)
 		elog(ERROR, "tuplesort: unexpected end of data");
@@ -1942,15 +1922,6 @@ readtup_index(Tuplesortstate *state, int tapenum, unsigned int len)
 							sizeof(tuplen)) != sizeof(tuplen))
 			elog(ERROR, "tuplesort: unexpected end of data");
 	return (void *) tuple;
-}
-
-static unsigned int
-tuplesize_index(Tuplesortstate *state, void *tup)
-{
-	IndexTuple	tuple = (IndexTuple) tup;
-	unsigned int tuplen = IndexTupleSize(tuple);
-
-	return tuplen;
 }
 
 
@@ -1981,8 +1952,21 @@ static void
 writetup_datum(Tuplesortstate *state, int tapenum, void *tup)
 {
 	DatumTuple *tuple = (DatumTuple *) tup;
-	unsigned int tuplen = tuplesize_datum(state, tup);
-	unsigned int writtenlen = tuplen + sizeof(unsigned int);
+	unsigned int tuplen;
+	unsigned int writtenlen;
+
+	if (tuple->isNull || state->datumTypeByVal)
+		tuplen = sizeof(DatumTuple);
+	else
+	{
+		int			datalen = state->datumTypeLen;
+
+		if (datalen == -1)		/* variable length type? */
+			datalen = VARSIZE((struct varlena *) DatumGetPointer(tuple->val));
+		tuplen = datalen + MAXALIGN(sizeof(DatumTuple));
+	}
+
+	writtenlen = tuplen + sizeof(unsigned int);
 
 	LogicalTapeWrite(state->tapeset, tapenum,
 					 (void *) &writtenlen, sizeof(writtenlen));
@@ -1992,7 +1976,7 @@ writetup_datum(Tuplesortstate *state, int tapenum, void *tup)
 		LogicalTapeWrite(state->tapeset, tapenum,
 						 (void *) &writtenlen, sizeof(writtenlen));
 
-	FREEMEM(state, tuplen);
+	FREEMEM(state, GetMemoryChunkSpace(tuple));
 	pfree(tuple);
 }
 
@@ -2002,7 +1986,7 @@ readtup_datum(Tuplesortstate *state, int tapenum, unsigned int len)
 	unsigned int tuplen = len - sizeof(unsigned int);
 	DatumTuple *tuple = (DatumTuple *) palloc(tuplen);
 
-	USEMEM(state, tuplen);
+	USEMEM(state, GetMemoryChunkSpace(tuple));
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple,
 						tuplen) != tuplen)
 		elog(ERROR, "tuplesort: unexpected end of data");
@@ -2015,25 +1999,6 @@ readtup_datum(Tuplesortstate *state, int tapenum, unsigned int len)
 		tuple->val = PointerGetDatum(((char *) tuple) +
 									 MAXALIGN(sizeof(DatumTuple)));
 	return (void *) tuple;
-}
-
-static unsigned int
-tuplesize_datum(Tuplesortstate *state, void *tup)
-{
-	DatumTuple *tuple = (DatumTuple *) tup;
-
-	if (tuple->isNull || state->datumTypeByVal)
-		return (unsigned int) sizeof(DatumTuple);
-	else
-	{
-		int			datalen = state->datumTypeLen;
-		int			tuplelen;
-
-		if (datalen == -1)		/* variable length type? */
-			datalen = VARSIZE((struct varlena *) DatumGetPointer(tuple->val));
-		tuplelen = datalen + MAXALIGN(sizeof(DatumTuple));
-		return (unsigned int) tuplelen;
-	}
 }
 
 

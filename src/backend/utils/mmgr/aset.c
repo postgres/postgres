@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.46 2002/06/20 20:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.47 2002/08/12 00:36:12 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -204,11 +204,11 @@ static void *AllocSetRealloc(MemoryContext context, void *pointer, Size size);
 static void AllocSetInit(MemoryContext context);
 static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
-
+static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
+static void AllocSetStats(MemoryContext context);
 #ifdef MEMORY_CONTEXT_CHECKING
 static void AllocSetCheck(MemoryContext context);
 #endif
-static void AllocSetStats(MemoryContext context);
 
 /*
  * This is the virtual function table for AllocSet contexts.
@@ -220,10 +220,11 @@ static MemoryContextMethods AllocSetMethods = {
 	AllocSetInit,
 	AllocSetReset,
 	AllocSetDelete,
-#ifdef MEMORY_CONTEXT_CHECKING
-	AllocSetCheck,
-#endif
+	AllocSetGetChunkSpace,
 	AllocSetStats
+#ifdef MEMORY_CONTEXT_CHECKING
+	, AllocSetCheck
+#endif
 };
 
 
@@ -951,6 +952,19 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 
 		return newPointer;
 	}
+}
+
+/*
+ * AllocSetGetChunkSpace
+ *		Given a currently-allocated chunk, determine the total space
+ *		it occupies (including all memory-allocation overhead).
+ */
+static Size
+AllocSetGetChunkSpace(MemoryContext context, void *pointer)
+{
+	AllocChunk	chunk = AllocPointerGetChunk(pointer);
+
+	return chunk->size + ALLOC_CHUNKHDRSZ;
 }
 
 /*

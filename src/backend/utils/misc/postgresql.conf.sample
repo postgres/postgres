@@ -57,7 +57,7 @@
 #
 #	Non-shared Memory Sizes
 #
-#sort_mem = 512			# min 32
+#sort_mem = 1024		# min 64
 #vacuum_mem = 8192		# min 1024
 
 

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.31 2002/08/10 20:29:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.32 2002/08/12 00:36:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,6 +222,39 @@ MemoryContextResetAndDeleteChildren(MemoryContext context)
 
 	MemoryContextDeleteChildren(context);
 	(*context->methods->reset) (context);
+}
+
+/*
+ * GetMemoryChunkSpace
+ *		Given a currently-allocated chunk, determine the total space
+ *		it occupies (including all memory-allocation overhead).
+ *
+ * This is useful for measuring the total space occupied by a set of
+ * allocated chunks.
+ */
+Size
+GetMemoryChunkSpace(void *pointer)
+{
+	StandardChunkHeader *header;
+
+	/*
+	 * Try to detect bogus pointers handed to us, poorly though we can.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
+	 * allocated chunk.
+	 */
+	Assert(pointer != NULL);
+	Assert(pointer == (void *) MAXALIGN(pointer));
+
+	/*
+	 * OK, it's probably safe to look at the chunk header.
+	 */
+	header = (StandardChunkHeader *)
+		((char *) pointer - STANDARDCHUNKHEADERSIZE);
+
+	AssertArg(MemoryContextIsValid(header->context));
+
+	return (*header->context->methods->get_chunk_space) (header->context,
+														 pointer);
 }
 
 /*

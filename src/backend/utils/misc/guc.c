@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.78 2002/08/07 17:26:24 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.79 2002/08/12 00:36:11 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -556,7 +556,7 @@ static struct config_int
 
 	{
 		{ "sort_mem", PGC_USERSET }, &SortMem,
-		512, 4 * BLCKSZ / 1024, INT_MAX, NULL, NULL
+		1024, 8 * BLCKSZ / 1024, INT_MAX, NULL, NULL
 	},
 
 	{

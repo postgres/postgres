@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.6 2002/06/20 20:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.7 2002/08/12 00:36:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,30 +154,15 @@ struct Tuplestorestate
  *
  * NOTES about memory consumption calculations:
  *
- * We count space requested for tuples against the maxKBytes limit.
- * Fixed-size space (primarily the BufFile I/O buffer) is not
- * counted, nor do we count the variable-size memtuples array.
- * (Even though that could grow pretty large, it should be small compared
- * to the tuples proper, so this is not unreasonable.)
+ * We count space allocated for tuples against the maxKBytes limit,
+ * plus the space used by the variable-size array memtuples.
+ * Fixed-size space (primarily the BufFile I/O buffer) is not counted.
  *
- * The major deficiency in this approach is that it ignores palloc overhead.
- * The memory space actually allocated for a palloc chunk is always more
- * than the request size, and could be considerably more (as much as 2X
- * larger, in the current aset.c implementation).  So the space used could
- * be considerably more than maxKBytes says.
- *
- * One way to fix this is to add a memory management function that, given
- * a pointer to a palloc'd chunk, returns the actual space consumed by the
- * chunk.  This would be very easy in the current aset.c module, but I'm
- * hesitant to do it because it might be unpleasant to support in future
- * implementations of memory management.  (For example, a direct
- * implementation of palloc as malloc could not support such a function
- * portably.)
- *
- * A cruder answer is just to apply a fudge factor, say by initializing
- * availMem to only three-quarters of what maxKBytes indicates.  This is
- * probably the right answer if anyone complains that maxKBytes is not being
- * obeyed very faithfully.
+ * Note that we count actual space used (as shown by GetMemoryChunkSpace)
+ * rather than the originally-requested size.  This is important since
+ * palloc can add substantial overhead.  It's not a complete answer since
+ * we won't count any wasted space in palloc allocation blocks, but it's
+ * a lot better than what we were doing before 7.3.
  *
  *--------------------
  */
@@ -227,6 +212,8 @@ tuplestore_begin_common(bool randomAccess, int maxKBytes)
 	else
 		state->memtupsize = 1;	/* won't really need any space */
 	state->memtuples = (void **) palloc(state->memtupsize * sizeof(void *));
+
+	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
 
 	return state;
 }
@@ -286,10 +273,12 @@ tuplestore_puttuple(Tuplestorestate *state, void *tuple)
 			if (state->memtupcount >= state->memtupsize)
 			{
 				/* Grow the array as needed. */
+				FREEMEM(state, GetMemoryChunkSpace(state->memtuples));
 				state->memtupsize *= 2;
 				state->memtuples = (void **)
 					repalloc(state->memtuples,
 							 state->memtupsize * sizeof(void *));
+				USEMEM(state, GetMemoryChunkSpace(state->memtuples));
 			}
 			state->memtuples[state->memtupcount++] = tuple;
 
@@ -631,8 +620,9 @@ copytup_heap(Tuplestorestate *state, void *tup)
 {
 	HeapTuple	tuple = (HeapTuple) tup;
 
-	USEMEM(state, HEAPTUPLESIZE + tuple->t_len);
-	return (void *) heap_copytuple(tuple);
+	tuple = heap_copytuple(tuple);
+	USEMEM(state, GetMemoryChunkSpace(tuple));
+	return (void *) tuple;
 }
 
 /*
@@ -657,7 +647,7 @@ writetup_heap(Tuplestorestate *state, void *tup)
 						 sizeof(tuplen)) != sizeof(tuplen))
 			elog(ERROR, "tuplestore: write failed");
 
-	FREEMEM(state, HEAPTUPLESIZE + tuple->t_len);
+	FREEMEM(state, GetMemoryChunkSpace(tuple));
 	heap_freetuple(tuple);
 }
 
@@ -667,7 +657,7 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	unsigned int tuplen = len - sizeof(unsigned int) + HEAPTUPLESIZE;
 	HeapTuple	tuple = (HeapTuple) palloc(tuplen);
 
-	USEMEM(state, tuplen);
+	USEMEM(state, GetMemoryChunkSpace(tuple));
 	/* reconstruct the HeapTupleData portion */
 	tuple->t_len = len - sizeof(unsigned int);
 	ItemPointerSetInvalid(&(tuple->t_self));
