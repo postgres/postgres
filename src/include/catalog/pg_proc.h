@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.187 2001/05/22 16:37:16 petere Exp $
+ * $Id: pg_proc.h,v 1.188 2001/05/24 09:29:29 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2463,6 +2463,14 @@ DATA(insert OID = 1798 (  oidin			   PGUID 12 f t t t 1 f 26 "0" 100 0 0 100	oid
 DESCR("(internal)");
 DATA(insert OID = 1799 (  oidout		   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100	oidout - ));
 DESCR("(internal)");
+
+
+DATA(insert OID = 1810 (  bit_length       PGUID 14 f t t t 1 f 23 "17" 100 0 0 100 "select octet_length($1) * 8" - ));
+DESCR("length in bits");
+DATA(insert OID = 1811 (  bit_length	   PGUID 14 f t t t 1 f	23 "25" 100 0 0 100 "select octet_length($1) * 8" - ));
+DESCR("length in bits");
+DATA(insert OID = 1812 (  bit_length       PGUID 14 f t t t 1 f 23 "1560" 100 0 0 100 "select length($1)" - ));
+DESCR("length in bits");
 
 /* Selectivity estimators for LIKE and related operators */
 DATA(insert OID = 1814 ( iclikesel			PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  iclikesel - ));

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.58 2001/05/12 22:51:34 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.59 2001/05/24 09:29:29 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -773,6 +773,14 @@
       </entry>
       <entry>'Postgre' || 'SQL'</entry>
       <entry>PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry>bit_length(<parameter>string</parameter>)</entry>
+      <entry><type>integer</type></entry>
+      <entry>number of bits in string</entry>
+      <entry>bit_length('jose')</entry>
+      <entry>32</entry>
      </row>
 
      <row>
