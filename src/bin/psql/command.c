@@ -58,7 +58,8 @@ static bool
  * Handles all the different commands that start with '\',
  * ordinarily called by MainLoop().
  *
- * 'line' is the current input line, which must start with a '\'
+ * 'line' is the current input line, which should not start with a '\'
+ * but with the actual command name
  * (that is taken care of by MainLoop)
  *
  * 'query_buf' contains the query-so-far, which may be modified by
@@ -89,16 +90,22 @@ HandleSlashCmds(PsqlSettings *pset,
 	my_line = xstrdup(line);
 
 	/*
-	 * Find the first whitespace (or backslash) line[blank_loc] will now
+	 * Find the first whitespace. line[blank_loc] will now
 	 * be the whitespace character or the \0 at the end
+     *
+     * Also look for a backslash, so stuff like \p\g works.
 	 */
-	blank_loc = strcspn(my_line, " \t");
+	blank_loc = strcspn(my_line, " \t\\");
 
+    if (my_line[blank_loc] == '\\')
+    {
+        continue_parse = &my_line[blank_loc];
+		my_line[blank_loc] = '\0';
+    }
 	/* do we have an option string? */
-	if (my_line[blank_loc] != '\0')
-	{
-		options_string = &my_line[blank_loc + 1];
-
+	else if (my_line[blank_loc] != '\0')
+    {
+        options_string = &my_line[blank_loc + 1];
 		my_line[blank_loc] = '\0';
 	}
 
@@ -198,7 +205,6 @@ HandleSlashCmds(PsqlSettings *pset,
 	}
 
 	cmd = my_line;
-
 	status = exec_command(cmd, options, options_string, query_buf, pset);
 
 	if (status == CMD_UNKNOWN)

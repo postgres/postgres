@@ -51,6 +51,16 @@ $MAKE preproc.c preproc.h pgc.c
 
 cd ../../..
 
+# Generate psql's help on SQL command from the SGML docs
+
+cd bin/psql
+
+rm -f sql_help.h
+
+$MAKE sql_help.h
+
+cd ../..
+
 # Clean up
 
 $MAKE distclean
