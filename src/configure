@@ -653,7 +653,7 @@ if test "X$elf" = "Xyes"
 then
 	ELF_SYS=true
 else
-	ELF_SYS=false
+	ELF_SYS=
 fi
 
 if test "X$need_tas" = "Xyes"
