@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.53 2001/08/17 15:11:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.54 2001/08/21 20:39:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,13 +347,13 @@ retry:
 	if (select(conn->sock + 1, &input_mask, (fd_set *) NULL, (fd_set *) NULL,
 			   &timeout) < 0)
 	{
-		if (errno == EINTR)
+		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
 			goto retry;
 
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("select() failed: %s\n"),
-						  strerror(errno));
+						  SOCK_STRERROR(SOCK_ERRNO));
 		return -1;
 	}
 
@@ -381,13 +381,13 @@ retry:
 	if (select(conn->sock + 1, (fd_set *) NULL, &input_mask, (fd_set *) NULL,
 			   &timeout) < 0)
 	{
-		if (errno == EINTR)
+		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
 			goto retry;
 
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("select() failed: %s\n"),
-						  strerror(errno));
+						  SOCK_STRERROR(SOCK_ERRNO));
 		return -1;
 	}
 	return FD_ISSET(conn->sock, &input_mask) ? 1 : 0;
@@ -467,25 +467,25 @@ tryAgain:
 					 conn->inBufSize - conn->inEnd, 0);
 	if (nread < 0)
 	{
-		if (errno == EINTR)
+		if (SOCK_ERRNO == EINTR)
 			goto tryAgain;
 		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
 #ifdef EAGAIN
-		if (errno == EAGAIN)
+		if (SOCK_ERRNO == EAGAIN)
 			return someread;
 #endif
 #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
-		if (errno == EWOULDBLOCK)
+		if (SOCK_ERRNO == EWOULDBLOCK)
 			return someread;
 #endif
 		/* We might get ECONNRESET here if using TCP and backend died */
 #ifdef ECONNRESET
-		if (errno == ECONNRESET)
+		if (SOCK_ERRNO == ECONNRESET)
 			goto definitelyFailed;
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not receive data from server: %s\n"),
-						  strerror(errno));
+						  SOCK_STRERROR(SOCK_ERRNO));
 		return -1;
 	}
 	if (nread > 0)
@@ -553,25 +553,25 @@ tryAgain2:
 					 conn->inBufSize - conn->inEnd, 0);
 	if (nread < 0)
 	{
-		if (errno == EINTR)
+		if (SOCK_ERRNO == EINTR)
 			goto tryAgain2;
 		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
 #ifdef EAGAIN
-		if (errno == EAGAIN)
+		if (SOCK_ERRNO == EAGAIN)
 			return 0;
 #endif
 #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
-		if (errno == EWOULDBLOCK)
+		if (SOCK_ERRNO == EWOULDBLOCK)
 			return 0;
 #endif
 		/* We might get ECONNRESET here if using TCP and backend died */
 #ifdef ECONNRESET
-		if (errno == ECONNRESET)
+		if (SOCK_ERRNO == ECONNRESET)
 			goto definitelyFailed;
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not receive data from server: %s\n"),
-						  strerror(errno));
+						  SOCK_STRERROR(SOCK_ERRNO));
 		return -1;
 	}
 	if (nread > 0)
@@ -653,7 +653,7 @@ pqFlush(PGconn *conn)
 			 * EPIPE or ECONNRESET, assume we've lost the backend
 			 * connection permanently.
 			 */
-			switch (errno)
+			switch (SOCK_ERRNO)
 			{
 #ifdef EAGAIN
 				case EAGAIN:
@@ -689,7 +689,7 @@ pqFlush(PGconn *conn)
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("could not send data to server: %s\n"),
-									  strerror(errno));
+									  SOCK_STRERROR(SOCK_ERRNO));
 					/* We don't assume it's a fatal error... */
 					return EOF;
 			}
@@ -772,11 +772,11 @@ retry:
 		if (select(conn->sock + 1, &input_mask, &output_mask, &except_mask,
 				   (struct timeval *) NULL) < 0)
 		{
-			if (errno == EINTR)
+			if (SOCK_ERRNO == EINTR)
 				goto retry;
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("select() failed: %s\n"),
-							  strerror(errno));
+							  SOCK_STRERROR(SOCK_ERRNO));
 			return EOF;
 		}
 	}
@@ -851,3 +851,27 @@ libpq_gettext(const char *msgid)
 	return dgettext("libpq", msgid);
 }
 #endif /* ENABLE_NLS */
+
+#ifdef WIN32
+/*
+ * strerror replacement for windows:
+ */
+const char*
+winsock_strerror(DWORD eno)
+{
+	if (!FormatMessage( 
+		FORMAT_MESSAGE_IGNORE_INSERTS |
+        FORMAT_MESSAGE_FROM_SYSTEM | /* always consider system table */
+        ((netmsgModule != NULL) ? FORMAT_MESSAGE_FROM_HMODULE : 0),
+        netmsgModule, /* module to get message from (NULL == system) */
+		eno,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        winsock_strerror_buf,sizeof(winsock_strerror_buf)-1,
+        NULL
+       )){
+      sprintf(winsock_strerror_buf,"Unknown socket error(%u)",eno);
+    }
+    winsock_strerror_buf[sizeof(winsock_strerror_buf)-1]='\0';
+    return winsock_strerror_buf;
+}
+#endif

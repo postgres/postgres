@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.71 2001/03/22 04:01:27 momjian Exp $
+ * $Id: libpq-fe.h,v 1.72 2001/08/21 20:39:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,21 @@ extern		"C"
 #endif
 
 #include <stdio.h>
+
+#ifdef WIN32
+    #define SOCK_ERRNO (WSAGetLastError ())
+	#define SOCK_STRERROR winsock_strerror
+#else
+    #define SOCK_ERRNO errno
+	#define SOCK_STRERROR strerror
+#endif
+
+
 /* postgres_ext.h defines the backend's externally visible types,
  * such as Oid.
  */
 #include "postgres_ext.h"
+
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #endif

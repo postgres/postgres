@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.175 2001/08/17 15:11:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.176 2001/08/21 20:39:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -703,7 +703,7 @@ connectMakeNonblocking(PGconn *conn)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not set socket to non-blocking mode: %s\n"),
-						  strerror(errno));
+						  SOCK_STRERROR(SOCK_ERRNO));
 		return 0;
 	}
 
@@ -727,7 +727,7 @@ connectNoDelay(PGconn *conn)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not set socket to TCP no delay mode: %s\n"),
-						  strerror(errno));
+						  SOCK_STRERROR(SOCK_ERRNO));
 		return 0;
 	}
 
@@ -750,7 +750,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 							  "\tIs the server running locally and accepting\n"
 							  "\tconnections on Unix domain socket \"%s\"?\n"
 							  ),
-						  strerror(errorno),
+						  SOCK_STRERROR(errorno),
 						  conn->raddr.un.sun_path);
 	else
 		printfPQExpBuffer(&conn->errorMessage,
@@ -759,7 +759,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 							  "\tIs the server running on host %s and accepting\n"
 							  "\tTCP/IP connections on port %s?\n"
 							  ),
-						  strerror(errorno),
+						  SOCK_STRERROR(errorno),
 						  conn->pghost
 						  ? conn->pghost
 						  : (conn->pghostaddr
@@ -882,7 +882,7 @@ connectDBStart(PGconn *conn)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not create socket: %s\n"),
-						  strerror(errno));
+						  SOCK_STRERROR(SOCK_ERRNO));
 		goto connect_errReturn;
 	}
 
@@ -914,7 +914,7 @@ connectDBStart(PGconn *conn)
 	 */
 	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
-		if (errno == EINPROGRESS || errno == EWOULDBLOCK || errno == 0)
+		if (SOCK_ERRNO == EINPROGRESS || SOCK_ERRNO == EWOULDBLOCK || SOCK_ERRNO == 0)
 		{
 			/*
 			 * This is fine - we're in non-blocking mode, and the
@@ -925,7 +925,7 @@ connectDBStart(PGconn *conn)
 		else
 		{
 			/* Something's gone wrong */
-			connectFailureMessage(conn, errno);
+			connectFailureMessage(conn, SOCK_ERRNO);
 			goto connect_errReturn;
 		}
 	}
@@ -945,7 +945,7 @@ connectDBStart(PGconn *conn)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not send SSL negotiation packet: %s\n"),
-							  strerror(errno));
+							  SOCK_STRERROR(SOCK_ERRNO));
 			goto connect_errReturn;
 		}
 		/* Now receive the postmasters response */
@@ -953,7 +953,7 @@ connectDBStart(PGconn *conn)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not receive server response to SSL negotiation packet: %s\n"),
-							  strerror(errno));
+							  SOCK_STRERROR(SOCK_ERRNO));
 			goto connect_errReturn;
 		}
 		if (SSLok == 'S')
@@ -1203,7 +1203,7 @@ keep_going:						/* We will come back to here until there
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("could not get socket error status: %s\n"),
-									  strerror(errno));
+									  SOCK_STRERROR(SOCK_ERRNO));
 					goto error_return;
 				}
 				else if (optval != 0)
@@ -1223,7 +1223,7 @@ keep_going:						/* We will come back to here until there
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("could not get client address from socket: %s\n"),
-									  strerror(errno));
+									  SOCK_STRERROR(SOCK_ERRNO));
 					goto error_return;
 				}
 
@@ -1262,7 +1262,7 @@ keep_going:						/* We will come back to here until there
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("could not send startup packet: %s\n"),
-									  strerror(errno));
+									  SOCK_STRERROR(SOCK_ERRNO));
 					goto error_return;
 				}
 
@@ -2097,7 +2097,7 @@ PQresetPoll(PGconn *conn)
 int
 PQrequestCancel(PGconn *conn)
 {
-	int			save_errno = errno;
+	int			save_errno = SOCK_ERRNO;
 	int			tmpsock = -1;
 	struct
 	{
@@ -2169,7 +2169,7 @@ PQrequestCancel(PGconn *conn)
 	return TRUE;
 
 cancel_errReturn:
-	strcat(conn->errorMessage.data, strerror(errno));
+	strcat(conn->errorMessage.data, SOCK_STRERROR(SOCK_ERRNO));
 	strcat(conn->errorMessage.data, "\n");
 	conn->errorMessage.len = strlen(conn->errorMessage.data);
 	if (tmpsock >= 0)

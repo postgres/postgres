@@ -23,19 +23,17 @@
  */
 #define crypt(a,b) (a)
 
-/*
- * Most of libpq uses "errno" to access error conditions from socket calls,
- * so on Windows we want to redirect those usages to WSAGetLastError().
- * Rather than #ifdef'ing every single place that has "errno", hack it up
- * with a macro instead.  But there are a few places that do need to touch
- * the regular errno variable.  For them, we #undef and then redefine errno.
- */
-
-#define errno WSAGetLastError()
-
 #undef EAGAIN	/* doesn't apply on sockets */
 #undef EINTR
 #define EINTR WSAEINTR
 #define EWOULDBLOCK WSAEWOULDBLOCK
 #define ECONNRESET WSAECONNRESET
 #define EINPROGRESS WSAEINPROGRESS
+
+/*
+ * Windows network messaging stuff:
+ */
+static HINSTANCE netmsgModule = NULL;
+
+static char winsock_strerror_buf[512];
+const char* winsock_strerror(DWORD eno);
