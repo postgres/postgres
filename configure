@@ -10027,16 +10027,16 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_func_getaddrinfo" >&5
 echo "${ECHO_T}$ac_cv_func_getaddrinfo" >&6
 if test $ac_cv_func_getaddrinfo = yes; then
-  echo "$as_me:$LINENO: checking for struct sockaddr_in6.sin6_len" >&5
-echo $ECHO_N "checking for struct sockaddr_in6.sin6_len... $ECHO_C" >&6
-if test "${ac_cv_member_struct_sockaddr_in6_sin6_len+set}" = set; then
+  echo "$as_me:$LINENO: checking for struct sockaddr_in6" >&5
+echo $ECHO_N "checking for struct sockaddr_in6... $ECHO_C" >&6
+if test "${ac_cv_type_struct_sockaddr_in6+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-#include <sys/socket.h>
-#include <netdb.h>
+$ac_includes_default
+#include <netinet/in.h>
 
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -10047,9 +10047,10 @@ else
 int
 main ()
 {
-static struct sockaddr_in6 ac_aggr;
-if (ac_aggr.sin6_len)
-return 0;
+if ((struct sockaddr_in6 *) 0)
+  return 0;
+if (sizeof (struct sockaddr_in6))
+  return 0;
   ;
   return 0;
 }
@@ -10066,23 +10067,18 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_member_struct_sockaddr_in6_sin6_len=yes
+  ac_cv_type_struct_sockaddr_in6=yes
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-ac_cv_member_struct_sockaddr_in6_sin6_len=no
+ac_cv_type_struct_sockaddr_in6=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:$LINENO: result: $ac_cv_member_struct_sockaddr_in6_sin6_len" >&5
-echo "${ECHO_T}$ac_cv_member_struct_sockaddr_in6_sin6_len" >&6
-if test $ac_cv_member_struct_sockaddr_in6_sin6_len = yes; then
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_SOCKADDR_IN6_SIN6_LEN 1
-_ACEOF
-
-HAVE_IPV6="yes"; cat >>confdefs.h <<\_ACEOF
+echo "$as_me:$LINENO: result: $ac_cv_type_struct_sockaddr_in6" >&5
+echo "${ECHO_T}$ac_cv_type_struct_sockaddr_in6" >&6
+if test $ac_cv_type_struct_sockaddr_in6 = yes; then
+  HAVE_IPV6="yes"; cat >>confdefs.h <<\_ACEOF
 #define HAVE_IPV6 1
 _ACEOF
 
