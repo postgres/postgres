@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.31 2000/12/03 14:41:47 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.32 2000/12/20 17:23:39 thomas Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]> Installation Instructions</title>
@@ -1133,6 +1133,13 @@ gunzip -c user.ps.gz \
         <entry>See also <filename>doc/FAQ_AIX</></entry>
        </row>
        <row>
+	<entry>BeOS 5.0.3</entry>
+	<entry>x86</entry>
+	<entry>7.1</entry>
+	<entry>2000-12-18, Cyril Velter(<email>cyril.velter@libertysurf.fr</>)</entry>
+        <entry>Requires new BONE networking stack</entry>
+       </row>
+       <row>
 	<entry>BSDI 4.01</entry>
 	<entry>x86</entry>
 	<entry>7.0</entry>
@@ -1215,6 +1222,13 @@ gunzip -c user.ps.gz \
 	<entry>7.0</entry>
 	<entry>2000-04-13, Tatsuo Ishii (<email>t-ishii@sra.co.jp</>)</entry>
 	<entry></>
+       </row>
+       <row>
+	<entry>MacOS-X Darwin</entry>
+	<entry>PowerPC</entry>
+	<entry>7.1</entry>
+	<entry>2000-12-11, Peter Bierman (<email>bierman@apple.com</>)</entry>
+	<entry>Darwin Beta-2 or higher</>
        </row>
        <row>
 	<entry>mklinux</entry>
@@ -1338,21 +1352,12 @@ gunzip -c user.ps.gz \
 
     <tbody>
      <row>
-      <entry>BeOS</entry>
-      <entry>x86</entry>
-      <entry>7.0</entry>
-      <entry>2000-05-01, Adam Haberlach (<email>adam@newsnipple.com</>)</entry>
-      <entry>Client-side coming soon?</entry>
-     </row>
-
-     <row>
       <entry>DGUX 5.4R4.11</entry>
       <entry>m88k</entry>
       <entry>6.3</entry>
       <entry>1998-03-01, Brian E Gallew (<email>geek+@cmu.edu</>)</entry>
       <entry>6.4 probably OK. Needs new maintainer.</entry>
      </row>
-
      <row>
       <entry>NetBSD 1.3</entry>
       <entry>VAX</entry>
@@ -1360,7 +1365,6 @@ gunzip -c user.ps.gz \
       <entry>1998-03-01, Tom I Helbekkmo (<email>tih@kpnQwest.no</>)</entry>
       <entry>7.0 should work.</entry>
      </row>
-
      <row>
       <entry>System V R4 4.4</entry>
       <entry>m88k</entry>
@@ -1368,7 +1372,6 @@ gunzip -c user.ps.gz \
       <entry>1998-03-01, Doug Winterburn (<email>dlw@seavme.xroads.com</>)</entry>
       <entry>Needs new TAS spinlock code</entry>
      </row>
-
      <row>
       <entry>System V R4</entry>
       <entry>MIPS</entry>
@@ -1376,7 +1379,6 @@ gunzip -c user.ps.gz \
       <entry>1998-10-28, Frank Ridderbusch (<email>ridderbusch.pad@sni.de</>)</entry>
       <entry>No 64-bit integer</entry>
      </row>
-
      <row>
       <entry>Ultrix</entry>
       <entry>MIPS, VAX</entry>
@@ -1384,15 +1386,6 @@ gunzip -c user.ps.gz \
       <entry>1998-03-01</entry>
       <entry>No recent reports. Obsolete?</entry>
      </row>
-
-     <row>
-      <entry>MacOS</entry>
-      <entry>all</entry>
-      <entry>6.x</entry>
-      <entry>1998-03-01</entry>
-      <entry>Not library compatible; use ODBC/JDBC.</entry>
-     </row>
-
      <row>
       <entry>NextStep</entry>
       <entry>x86</entry>
