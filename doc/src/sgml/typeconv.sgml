@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.39 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.40 2003/12/01 21:53:15 momjian Exp $
 -->
 
 <chapter Id="typeconv">
@@ -435,30 +435,6 @@ not some other type was used:
 SELECT @ '-4.5e500' AS "abs";
 
 ERROR:  "-4.5e500" is out of range for type double precision
-</screen>
-</para>
-
-<para>
-On the other hand, the postfix operator <literal>!</> (factorial)
-is defined only for integer data types, not for <type>float8</type>.  So, if we
-try a similar case with <literal>!</>, we get:
-<screen>
-SELECT '20' ! AS "factorial";
-
-ERROR:  operator is not unique: "unknown" !
-HINT:  Could not choose a best candidate operator. You may need to add explicit
-type casts.
-</screen>
-This happens because the system can't decide which of the several
-possible <literal>!</> operators should be preferred.  We can help
-it out with an explicit cast:
-<screen>
-SELECT CAST('20' AS int8) ! AS "factorial";
-
-      factorial
----------------------
- 2432902008176640000
-(1 row)
 </screen>
 </para>
 </example>
