@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.32 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.33 2004/01/11 05:46:58 neilc Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -104,7 +104,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
 </synopsis>
     where <replaceable class="parameter">infile</replaceable> is what
     you used as <replaceable class="parameter">outfile</replaceable>
-    for the <command>pg_dump</> command. The database <replaceable
+    for the <application>pg_dump</> command. The database <replaceable
     class="parameter">dbname</replaceable> will not be created by this
     command, you must create it yourself from <literal>template0</> before executing
     <application>psql</> (e.g., with <literal>createdb -T template0
@@ -163,7 +163,7 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
   </sect2>
 
   <sect2 id="backup-dump-all">
-   <title>Using <command>pg_dumpall</></title>
+   <title>Using <application>pg_dumpall</></title>
 
    <para>
     The above mechanism is cumbersome and inappropriate when backing

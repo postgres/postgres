@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.39 2003/12/14 00:10:32 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.40 2004/01/11 05:46:58 neilc Exp $
 -->
 
  <chapter id="performance-tips">
@@ -623,9 +623,9 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
   <title>Populating a Database</title>
 
   <para>
-   One may need to do a large number of table insertions when first
-   populating a database. Here are some tips and techniques for making that as
-   efficient as possible.
+   One may need to insert a large amount of data when first populating
+   a database. This section contains some suggestions on how to make
+   this process as efficient as possible.
   </para>
 
   <sect2 id="disable-autocommit">
@@ -643,7 +643,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     make sure the library does it when you want it done.)
     If you allow each insertion to be committed separately,
     <productname>PostgreSQL</productname> is doing a lot of work for each
-    row added.
+    row that is added.
     An additional benefit of doing all insertions in one transaction
     is that if the insertion of one row were to fail then the
     insertion of all rows inserted up to that point would be rolled

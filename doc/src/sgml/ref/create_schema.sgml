@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.10 2004/01/11 04:58:17 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.11 2004/01/11 05:46:58 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -101,9 +101,9 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
   <title>Notes</title>
 
   <para>
-   To create a schema, the invoking user must have <literal>CREATE</>
-   privilege for the current database.  (Of course, superusers bypass
-   this check.)
+   To create a schema, the invoking user must have the
+   <literal>CREATE</> privilege for the current database.  (Of course,
+   superusers bypass this check.)
   </para>
  </refsect1>
 
@@ -162,8 +162,8 @@ CREATE VIEW hollywood.winners AS
    SCHEMA</command> may appear in any order.  The present
    <productname>PostgreSQL</productname> implementation does not
    handle all cases of forward references in subcommands; it may
-   sometimes be necessary to reorder the subcommands to avoid forward
-   references.
+   sometimes be necessary to reorder the subcommands in order to avoid
+   forward references.
   </para>
 
   <para>

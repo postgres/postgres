@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.10 2004/01/10 02:21:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.11 2004/01/11 05:46:58 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -42,9 +42,9 @@ START TRANSACTION
   <title>Parameters</title>
 
   <para>
-   See under <xref linkend="sql-set-transaction"
-   endterm="sql-set-transaction-title"> about the meaning of the
-   parameters.
+   Refer to <xref linkend="sql-set-transaction"
+   endterm="sql-set-transaction-title"> for information on the meaning
+   of the parameters to this statement.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.28 2004/01/10 02:21:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.29 2004/01/11 05:46:58 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -76,9 +76,9 @@ BEGIN [ WORK | TRANSACTION ]
   </variablelist>
 
   <para>
-   See under <xref linkend="sql-set-transaction"
-   endterm="sql-set-transaction-title"> about the meaning of the
-   other parameters.
+   Refer to <xref linkend="sql-set-transaction"
+   endterm="sql-set-transaction-title"> for information on the meaning
+   of the other parameters to this statement.
   </para>
  </refsect1>
   
@@ -142,6 +142,7 @@ BEGIN;
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="sql-start-transaction" endterm="sql-start-transaction-title"></member>
    <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
    <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
   </simplelist>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.191 2004/01/04 16:43:52 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.192 2004/01/11 05:46:58 neilc Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -391,11 +391,11 @@ JAVACMD=$JAVA_HOME/bin/java
 </screen>
      If you need to preserve OIDs (such as when using them as
      foreign keys), then use the <option>-o</option> option when running
-     <command>pg_dumpall</>.
+     <application>pg_dumpall</>.
     </para>
 
     <para>
-     <command>pg_dumpall</command> does not
+     <application>pg_dumpall</application> does not
      save large objects.  Check
      <![%standalone-include[the documentation]]>
      <![%standalone-ignore[<xref linkend="backup-dump-caveats">]]>
@@ -403,9 +403,9 @@ JAVACMD=$JAVA_HOME/bin/java
     </para>
 
     <para>
-     To make the backup, you can use the <command>pg_dumpall</command>
+     To make the backup, you can use the <application>pg_dumpall</application>
      command from the version you are currently running.  For best
-     results, however, try to use the <command>pg_dumpall</command>
+     results, however, try to use the <application>pg_dumpall</application>
      command from <productname>PostgreSQL</productname> &version;,
      since this version contains bug fixes and improvements over older
      versions.  While this advice might seem idiosyncratic since you
