@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.85 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.86 2003/12/03 17:45:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ extern bool opclass_is_btree(Oid opclass);
 extern bool opclass_is_hash(Oid opclass);
 extern RegProcedure get_opcode(Oid opno);
 extern char *get_opname(Oid opno);
+extern void op_input_types(Oid opno, Oid *lefttype, Oid *righttype);
 extern bool op_mergejoinable(Oid opno, Oid *leftOp, Oid *rightOp);
 extern void op_mergejoin_crossops(Oid opno, Oid *ltop, Oid *gtop,
 					  RegProcedure *ltproc, RegProcedure *gtproc);

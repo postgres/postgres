@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.54 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.55 2003/12/03 17:45:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,12 +25,13 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
 
-static PathKeyItem *makePathKeyItem(Node *key, Oid sortop);
+static PathKeyItem *makePathKeyItem(Node *key, Oid sortop, bool checkType);
 static List *make_canonical_pathkey(Query *root, PathKeyItem *item);
 static Var *find_indexkey_var(Query *root, RelOptInfo *rel,
 				  AttrNumber varattno);
@@ -41,9 +42,28 @@ static Var *find_indexkey_var(Query *root, RelOptInfo *rel,
  *		create a PathKeyItem node
  */
 static PathKeyItem *
-makePathKeyItem(Node *key, Oid sortop)
+makePathKeyItem(Node *key, Oid sortop, bool checkType)
 {
 	PathKeyItem *item = makeNode(PathKeyItem);
+
+	/*
+	 * Some callers pass expressions that are not necessarily of the same
+	 * type as the sort operator expects as input (for example when dealing
+	 * with an index that uses binary-compatible operators).  We must relabel
+	 * these with the correct type so that the key expressions will be seen
+	 * as equal() to expressions that have been correctly labeled.
+	 */
+	if (checkType)
+	{
+		Oid			lefttype,
+					righttype;
+
+		op_input_types(sortop, &lefttype, &righttype);
+		if (exprType(key) != lefttype)
+			key = (Node *) makeRelabelType((Expr *) key,
+										   lefttype, -1,
+										   COERCE_DONTCARE);
+	}
 
 	item->key = key;
 	item->sortop = sortop;
@@ -70,9 +90,11 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 {
 	Expr	   *clause = restrictinfo->clause;
 	PathKeyItem *item1 = makePathKeyItem(get_leftop(clause),
-										 restrictinfo->left_sortop);
+										 restrictinfo->left_sortop,
+										 false);
 	PathKeyItem *item2 = makePathKeyItem(get_rightop(clause),
-										 restrictinfo->right_sortop);
+										 restrictinfo->right_sortop,
+										 false);
 	List	   *newset,
 			   *cursetlink;
 
@@ -668,7 +690,7 @@ build_index_pathkeys(Query *root,
 		}
 
 		/* OK, make a sublist for this sort key */
-		item = makePathKeyItem(indexkey, sortop);
+		item = makePathKeyItem(indexkey, sortop, true);
 		cpathkey = make_canonical_pathkey(root, item);
 
 		/*
@@ -785,7 +807,8 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 										tle->resdom->restypmod,
 										0);
 					outer_item = makePathKeyItem((Node *) outer_var,
-												 sub_item->sortop);
+												 sub_item->sortop,
+												 true);
 					/* score = # of mergejoin peers */
 					score = count_canonical_peers(root, outer_item);
 					/* +1 if it matches the proper query_pathkeys item */
@@ -893,7 +916,7 @@ make_pathkeys_for_sortclauses(List *sortclauses,
 		PathKeyItem *pathkey;
 
 		sortkey = get_sortgroupclause_expr(sortcl, tlist);
-		pathkey = makePathKeyItem(sortkey, sortcl->sortop);
+		pathkey = makePathKeyItem(sortkey, sortcl->sortop, true);
 
 		/*
 		 * The pathkey becomes a one-element sublist, for now;
@@ -937,7 +960,7 @@ cache_mergeclause_pathkeys(Query *root, RestrictInfo *restrictinfo)
 	{
 		oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(restrictinfo));
 		key = get_leftop(restrictinfo->clause);
-		item = makePathKeyItem(key, restrictinfo->left_sortop);
+		item = makePathKeyItem(key, restrictinfo->left_sortop, false);
 		restrictinfo->left_pathkey = make_canonical_pathkey(root, item);
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -945,7 +968,7 @@ cache_mergeclause_pathkeys(Query *root, RestrictInfo *restrictinfo)
 	{
 		oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(restrictinfo));
 		key = get_rightop(restrictinfo->clause);
-		item = makePathKeyItem(key, restrictinfo->right_sortop);
+		item = makePathKeyItem(key, restrictinfo->right_sortop, false);
 		restrictinfo->right_pathkey = make_canonical_pathkey(root, item);
 		MemoryContextSwitchTo(oldcontext);
 	}
