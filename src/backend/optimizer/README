@@ -3,25 +3,24 @@ Summary
 
 The optimizer generates optimial query plans by doing several steps:
 
-1) Take each relation in a query, and make a RelOptInfo structure for it. 
-Find each way of accessing the relation, called a Path, including
-sequential and index scans, and add it to the RelOptInfo.path_order
-list.
+1) Take each relation in a query, and make a RelOptInfo structure for
+it.  Find each way of accessing the relation, called a Path, including
+sequential and index scans, and add it to RelOptInfo.pathlist.
 
 2) Join each RelOptInfo to each other RelOptInfo as specified in the
 WHERE clause.  At this point each RelOptInfo is a single relation, so
-you are joining every relation to every relation it is joined to in the
-WHERE clause.
+you are joining every relation to every relation as joined in the WHERE
+clause.
 
 Joins occur using two RelOptInfos.  One is outer, the other inner. 
 Outers drive lookups of values in the inner.  In a nested loop, lookups
 of values in the inner occur by scanning to find each matching inner
-row.  In a mergejoin, inner rows are ordered, and are accessed in order,
-so only one scan of inner is required to perform the entire join.  In a
-hashjoin, inner rows are hashed for lookups.
+row.  In a mergejoin, inner and outer rows are ordered, and are accessed
+in order, so only one scan of inner is required to perform the entire
+join.  In a hashjoin, inner rows are hashed for lookups.
 
 Each unique join combination becomes a new RelOptInfo.  The RelOptInfo
-is now the joining of two relations.  RelOptInfo.path_order are various
+is now the joining of two relations.  RelOptInfo.pathlist are various
 paths to create the joined result, having different orderings depending
 on the join method used.
 
@@ -30,27 +29,34 @@ a new relation added to each RelOptInfo.  This continues until all
 relations have been joined into one RelOptInfo, and the cheapest Path is
 chosen.
 
-	SELECT 	*
-	FROM 	tab1, tab2, tab3, tab4
-	WHERE 	tab1.col = tab2.col AND
-		tab2.col = tab3.col AND
-		tab3.col = tab4.col
+    SELECT  *
+    FROM    tab1, tab2, tab3, tab4
+    WHERE   tab1.col = tab2.col AND
+        tab2.col = tab3.col AND
+        tab3.col = tab4.col
 
-	Tables 1, 2, 3, and 4 are joined as:
-	{1 2},{2 3},{3 4}
-	{1 2 3},{2 3 4}
-	{1 2 3 4}
+    Tables 1, 2, 3, and 4 are joined as:
+    {1 2},{2 3},{3 4}
+    {1 2 3},{2 3 4}
+    {1 2 3 4}
 
-	SELECT 	*
-	FROM 	tab1, tab2, tab3, tab4
-	WHERE 	tab1.col = tab2.col AND
-		tab1.col = tab3.col AND
-		tab1.col = tab4.col
+    SELECT  *
+    FROM    tab1, tab2, tab3, tab4
+    WHERE   tab1.col = tab2.col AND
+        tab1.col = tab3.col AND
+        tab1.col = tab4.col
 
-	Tables 1, 2, 3, and 4 are joined as:
-	{1 2},{1 3},{1 4}
-	{1 2 3},{1 3 4},{1,2,4}
-	{1 2 3 4}
+    Tables 1, 2, 3, and 4 are joined as:
+    {1 2},{1 3},{1 4}
+    {1 2 3},{1 3 4},{1,2,4}
+    {1 2 3 4}
+
+In the default left-handed joins, each RelOptInfo adds one
+single-relation RelOptInfo in each join pass, and the added RelOptInfo
+is always the inner relation in the join.  In right-handed joins, the
+added RelOptInfo is the outer relation in the join.  In bushy plans,
+multi-relation RelOptInfo's can be joined to other multi-relation
+RelOptInfo's. 
 
 Optimizer Functions
 -------------------
@@ -95,28 +101,28 @@ planner()
 ---subplanner()
     make list of relations in target
     make list of relations in where clause
-     split up the qual into restrictions (a=1) and joins (b=c)
-    find which relations can do merge sort and hash joins
-----find_paths()
-     find scan and all index paths for each relation not yet joined
-     one relation, return
-     find selectivity of columns used in joins
------find_join_paths()
+    split up the qual into restrictions (a=1) and joins (b=c)
+    find relation clauses can do merge sort and hash joins
+----make_one_rel()
+     set_base_rel_pathlist()
+      find scan and all index paths for each relation
+      find selectivity of columns used in joins
+-----make_one_rel_by_joins()
       jump to geqo if needed
       again:
-       find_join_rels():
+       make_rels_by_joins():
         for each joinrel:
-         find_clause_joins()
-          for each join on joinrel:
+         make_rels_by_clause_joins()
+          for each rel's joininfo list:
            if a join from the join clause adds only one relation, do the join
-         or find_clauseless_joins()
-       find_all_join_paths()
-        generate paths(nested,sortmerge) for joins found in find_join_rels()
-       prune_joinrels()
-        remove from the join list the relation we just added to each join
-       prune_rel_paths()
-        set cheapest and perhaps remove unordered path, recompute table sizes
-       if we have not done all the tables, go to again:
+         or make_rels_by_clauseless_joins()
+       update_rels_pathlist_for_joins()
+        generate nested,merge,hash join paths for new rel's created above
+       merge_rels_with_same_relids()
+        merge RelOptInfo paths that have the same relids because of joins
+       rels_set_cheapest()
+        set cheapest path
+       if all relations in one RelOptInfo, return
    do group(GROUP)
    do aggregate
    put back constants
@@ -129,17 +135,15 @@ planner()
 Optimizer Structures
 --------------------
 
-RelOptInfo		- Every relation
+RelOptInfo      - a relation or joined relations
 
- RestrictInfo	- restriction clauses
- JoinInfo		- join combinations
+ RestrictInfo   - restriction clauses
+ JoinInfo       - join clauses
 
- Path			- every way to access a relation(sequential, index)
-  IndexPath		- index scans
+ Path           - every way to generate a RelOptInfo(sequential,index,joins)
+  IndexPath     - index scans
+  NestPath      - nested joins
+  MergePath     - merge joins
+  HashPath      - hash joins
 
-  JoinPath		- joins
-   MergePath	- merge joins
-   HashPath		- hash joins
-
- PathOrder		- every ordering type (sort, merge of relations)
-
+ PathOrder      - every ordering type (sort, merge of relations)
