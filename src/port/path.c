@@ -8,13 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.10 2004/05/19 04:21:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.11 2004/05/21 20:56:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
+
 #include <ctype.h>
+
+#include "pg_config_paths.h"
+
 
 #ifndef WIN32
 #define	ISSEP(ch)	((ch) == '/')
@@ -109,16 +113,15 @@ get_progname(const char *argv0)
 void
 get_share_path(const char *my_exec_path, char *ret_path)
 {
-	if (relative_path(PGBINDIR, PGDATADIR))
+	if (relative_path(PGBINDIR, PGSHAREDIR))
 	{
-		/* Autoconf calls our /share 'datadir' */
 		StrNCpy(ret_path, my_exec_path, MAXPGPATH);
 		trim_directory(ret_path);	/* trim off binary */
 		trim_directory(ret_path);	/* trim off /bin */
 		strcat(ret_path, "/share");	/* add /share */
 	}
 	else
-		StrNCpy(ret_path, PGDATADIR, MAXPGPATH);
+		StrNCpy(ret_path, PGSHAREDIR, MAXPGPATH);
 }
 
 

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.107 2004/05/19 04:21:49 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.108 2004/05/21 20:56:49 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,14 +18,8 @@ NAME= pq
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 2
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) $(PTHREAD_CFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconfdir)"'
-override CFLAGS += $(PTHREAD_CFLAGS) \
-		     -DPGBINDIR=\"$(bindir)\" \
-		     -DPGDATADIR=\"$(datadir)\" \
-		     -DSYSCONFDIR='"$(sysconfdir)"' \
-		     -DINCLUDEDIR=\"$(includedir)\" \
-		     -DPKGINCLUDEDIR=\"$(pkgincludedir)\" \
-		     -DPKGLIBDIR=\"$(pkglibdir)\"
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port -DFRONTEND
+override CFLAGS += $(PTHREAD_CFLAGS)
 
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \

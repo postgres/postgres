@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.356 2004/05/21 05:07:54 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.357 2004/05/21 20:56:47 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1201,6 +1201,59 @@ AC_TRY_RUN([#include "$srcdir/src/tools/thread/thread_test.c"],
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
 fi
+
+# Adjust installation directories.
+#
+# These are initially set by the equivalent --xxxdir configure options.
+# We append "postgresql" to some of them, if the string does not already
+# contain "pgsql" or "postgres", in order to avoid directory clutter.
+
+if echo "$libexecdir" | egrep 'pgsql|postgres' >/dev/null 2>&1
+then
+  :
+else
+  libexecdir="$libexecdir/postgresql"
+fi
+
+if echo "$datadir" | egrep 'pgsql|postgres' >/dev/null 2>&1
+then
+  :
+else
+  datadir="$datadir/postgresql"
+fi
+
+if echo "$sysconfdir" | egrep 'pgsql|postgres' >/dev/null 2>&1
+then
+  :
+else
+  sysconfdir="$sysconfdir/postgresql"
+fi
+
+pkglibdir="$libdir"
+if echo "$pkglibdir" | egrep 'pgsql|postgres' >/dev/null 2>&1
+then
+  :
+else
+  pkglibdir="$pkglibdir/postgresql"
+fi
+AC_SUBST(pkglibdir)
+
+pkgincludedir="$includedir"
+if echo "$pkgincludedir" | egrep 'pgsql|postgres' >/dev/null 2>&1
+then
+  :
+else
+  pkgincludedir="$pkgincludedir/postgresql"
+fi
+AC_SUBST(pkgincludedir)
+
+if echo "$docdir" | egrep 'pgsql|postgres' >/dev/null 2>&1
+then
+  :
+else
+  docdir="$docdir/postgresql"
+fi
+
 
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.185 2004/05/21 05:07:55 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.186 2004/05/21 20:56:48 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -51,53 +51,22 @@ configure_args = @configure_args@
 ##########################################################################
 #
 # Installation directories
-#
-# These are set by the equivalent --xxxdir configure options.  We
-# append "postgresql" to some of them, if the string does not already
-# contain "pgsql" or "postgres", in order to avoid directory clutter.
 
 prefix := @prefix@
 exec_prefix := @exec_prefix@
 
 bindir := @bindir@
 sbindir := @sbindir@
-
 libexecdir := @libexecdir@
-ifeq "$(findstring pgsql, $(libexecdir))" ""
-ifeq "$(findstring postgres, $(libexecdir))" ""
-override libexecdir := $(libexecdir)/postgresql
-endif
-endif
 
 datadir := @datadir@
-ifeq "$(findstring pgsql, $(datadir))" ""
-ifeq "$(findstring postgres, $(datadir))" ""
-override datadir := $(datadir)/postgresql
-endif
-endif
-
 sysconfdir := @sysconfdir@
-ifeq "$(findstring pgsql, $(sysconfdir))" ""
-ifeq "$(findstring postgres, $(sysconfdir))" ""
-override sysconfdir := $(sysconfdir)/postgresql
-endif
-endif
 
 libdir := @libdir@
-pkglibdir = $(libdir)
-ifeq "$(findstring pgsql, $(pkglibdir))" ""
-ifeq "$(findstring postgres, $(pkglibdir))" ""
-override pkglibdir := $(pkglibdir)/postgresql
-endif
-endif
+pkglibdir := @pkglibdir@
 
 includedir := @includedir@
-pkgincludedir = $(includedir)
-ifeq "$(findstring pgsql, $(pkgincludedir))" ""
-ifeq "$(findstring postgres, $(pkgincludedir))" ""
-override pkgincludedir := $(pkgincludedir)/postgresql
-endif
-endif
+pkgincludedir := @pkgincludedir@
 includedir_server = $(pkgincludedir)/server
 includedir_internal = $(pkgincludedir)/internal
 
@@ -105,11 +74,6 @@ mandir := @mandir@
 sqlmansect_dummy = l
 
 docdir := @docdir@
-ifeq "$(findstring pgsql, $(docdir))" ""
-ifeq "$(findstring postgres, $(docdir))" ""
-override docdir := $(docdir)/postgresql
-endif
-endif
 
 localedir := @localedir@
 
