@@ -18,9 +18,9 @@
 #
 # POSTGRESQLSERVER=-YES-
 #
-# The startup bundle will now be read to go. To prevent this script from
+# The startup bundle will now be ready to go. To prevent this script from
 # starting PostgreSQL at system startup, simply change that line in
-# /etc/hostconfig to:
+# /etc/hostconfig back to:
 #
 # POSTGRESQLSERVER=-NO-
 #
