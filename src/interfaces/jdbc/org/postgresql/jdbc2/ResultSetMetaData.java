@@ -471,6 +471,21 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 	// ** JDBC 2 Extensions **
 
 	// This can hook into our PG_Object mechanism
+	/**
+	 * Returns the fully-qualified name of the Java class whose instances 
+	 * are manufactured if the method <code>ResultSet.getObject</code>
+	 * is called to retrieve a value from the column.
+	 * 
+	 * <code>ResultSet.getObject</code> may return a subclass of the class
+	 * returned by this method.
+	 *
+	 * @param column the first column is 1, the second is 2, ...
+	 * @return the fully-qualified name of the class in the Java programming
+	 *         language that would be used by the method
+	 *         <code>ResultSet.getObject</code> to retrieve the value in the specified
+	 *         column. This is the class name used for custom mapping.
+	 * @exception SQLException if a database access error occurs
+	 */
 	public String getColumnClassName(int column) throws SQLException
 	{
  /*
@@ -505,34 +520,47 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
      Types.TIMESTAMP,Types.TIMESTAMP
  */
 
-	int sql_type = getField(column).getSQLType();
+		Field field = getField(column);
+		int sql_type = field.getSQLType();
 
-     	switch (sql_type)
-        {
-       		case Types.BIT:
-         		return("java.lang.Boolean");
-       		case Types.SMALLINT:
-         		return("java.lang.Integer");
-       		case Types.INTEGER:
-         		return("java.lang.Integer");
-       		case Types.BIGINT:
-         		return("java.lang.Long");
-      		case Types.NUMERIC:
-         		return("java.math.BigDecimal");
-       		case Types.REAL:
-         		return("java.lang.Float");
-       		case Types.DOUBLE:
-         		return("java.lang.Double");
-       		case Types.CHAR:
-       		case Types.VARCHAR:
-         		return("java.lang.String");
-       		case Types.DATE:
-       		case Types.TIME:
-       		case Types.TIMESTAMP:
-         		return("java.sql.Timestamp");
-       		default:
-	 		throw org.postgresql.Driver.notImplemented();
-       }
-   }       
+		switch (sql_type)
+		{
+			case Types.BIT:
+				return("java.lang.Boolean");
+			case Types.SMALLINT:
+				return("java.lang.Short");
+			case Types.INTEGER:
+				return("java.lang.Integer");
+			case Types.BIGINT:
+				return("java.lang.Long");
+			case Types.NUMERIC:
+				return("java.math.BigDecimal");
+			case Types.REAL:
+				return("java.lang.Float");
+			case Types.DOUBLE:
+				return("java.lang.Double");
+			case Types.CHAR:
+			case Types.VARCHAR:
+				return("java.lang.String");
+			case Types.DATE:
+				return("java.sql.Date");
+			case Types.TIME:
+				return("java.sql.Time");
+			case Types.TIMESTAMP:
+				return("java.sql.Timestamp");
+			case Types.BINARY:
+			case Types.VARBINARY:
+				return("java.sql.Object");
+			case Types.ARRAY:
+				return("java.sql.Array");
+			default:
+				String type = field.getPGType();
+				if ("unknown".equals(type))
+				{
+					return("java.lang.String");
+				}
+				return("java.lang.Object");
+		}
+	}
 }
 

@@ -780,9 +780,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		switch (field.getSQLType())
 		{
 			case Types.BIT:
-				return new Boolean(getBoolean(columnIndex));
+				return getBoolean(columnIndex) ? Boolean.TRUE : Boolean.FALSE;
 			case Types.SMALLINT:
-				return new Short((short)getInt(columnIndex));
+				return new Short(getShort(columnIndex));
 			case Types.INTEGER:
 				return new Integer(getInt(columnIndex));
 			case Types.BIGINT:
