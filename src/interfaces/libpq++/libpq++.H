@@ -14,7 +14,7 @@
  *
  *   IDENTIFICATION
  *
- * $Id: libpq++.H,v 1.1.1.1 1996/07/09 06:22:18 scrappy Exp $
+ * $Id: libpq++.H,v 1.1.1.1.2.1 1996/08/21 04:31:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,10 @@ public:
     {return PQgetline(conn, string, length);};
   void putline(char* string)
     {PQputline(conn, string);};
+  const char *OidStatus()
+  {
+    return PQoidStatus(result);
+  }
   int endcopy()
     {return PQendcopy(conn);};
   ~PGdatabase() {}; // close connection and clean up
