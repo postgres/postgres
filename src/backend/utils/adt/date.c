@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.72 2002/09/04 20:31:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.73 2002/09/21 19:52:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,19 @@
 #include "utils/nabstime.h"
 #include "utils/timestamp.h"
 
+/*
+ * gcc's -ffast-math switch breaks routines that expect exact results from
+ * expressions like timeval / 3600, where timeval is double.
+ */
+#ifdef __FAST_MATH__
+#error -ffast-math is known to break this code
+#endif
 
-int			time2tm(TimeADT time, struct tm * tm, fsec_t *fsec);
-int			timetz2tm(TimeTzADT *time, struct tm * tm, fsec_t *fsec, int *tzp);
-int			tm2time(struct tm * tm, fsec_t fsec, TimeADT *result);
-int			tm2timetz(struct tm * tm, fsec_t fsec, int tz, TimeTzADT *result);
+
+static int	time2tm(TimeADT time, struct tm * tm, fsec_t *fsec);
+static int	timetz2tm(TimeTzADT *time, struct tm * tm, fsec_t *fsec, int *tzp);
+static int	tm2time(struct tm * tm, fsec_t fsec, TimeADT *result);
+static int	tm2timetz(struct tm * tm, fsec_t fsec, int tz, TimeTzADT *result);
 static void AdjustTimeForTypmod(TimeADT *time, int32 typmod);
 
 /*****************************************************************************
@@ -525,7 +533,7 @@ time_in(PG_FUNCTION_ARGS)
 /* tm2time()
  * Convert a tm structure to a time data type.
  */
-int
+static int
 tm2time(struct tm * tm, fsec_t fsec, TimeADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
@@ -542,7 +550,7 @@ tm2time(struct tm * tm, fsec_t fsec, TimeADT *result)
  * For dates within the system-supported time_t range, convert to the
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
-int
+static int
 time2tm(TimeADT time, struct tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
@@ -1285,7 +1293,7 @@ time_part(PG_FUNCTION_ARGS)
 /* tm2timetz()
  * Convert a tm structure to a time data type.
  */
-int
+static int
 tm2timetz(struct tm * tm, fsec_t fsec, int tz, TimeTzADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
@@ -1357,7 +1365,7 @@ timetz_out(PG_FUNCTION_ARGS)
  * For dates within the system-supported time_t range, convert to the
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
-int
+static int
 timetz2tm(TimeTzADT *time, struct tm * tm, fsec_t *fsec, int *tzp)
 {
 #ifdef HAVE_INT64_TIMESTAMP
