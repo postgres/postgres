@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.274 2001/11/12 21:04:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.275 2001/11/16 04:08:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -268,7 +268,8 @@ static void doNegateFloat(Value *v);
 %type <ival>	Iconst
 %type <str>		Sconst, comment_text
 %type <str>		UserId, opt_boolean, var_value, ColId_or_Sconst
-%type <str>		ColId, TypeFuncId, ColLabel
+%type <str>		ColId, ColLabel, type_name, func_name_keyword
+%type <str>		col_name_keyword, unreserved_keyword, reserved_keyword
 %type <node>	zone_value
 
 %type <node>	TableConstraint
@@ -296,8 +297,8 @@ static void doNegateFloat(Value *v);
  * This gets annoying when trying to also retain Postgres' nice
  *  type-extensible features, but we don't really have a choice.
  * - thomas 1997-10-11
- * NOTE: Whenever possible, try to add new keywords to the ColId list,
- * or failing that, at least to the ColLabel list.
+ * NOTE: don't forget to add new keywords to the appropriate one of
+ * the reserved-or-not-so-reserved keyword lists, below.
  */
 
 /* Keywords (in SQL92 reserved words) */
@@ -2631,13 +2632,13 @@ func_return:  func_type
 
 /*
  * We would like to make the second production here be ColId '.' ColId etc,
- * but that causes reduce/reduce conflicts.  TypeFuncId is next best choice.
+ * but that causes reduce/reduce conflicts.  type_name is next best choice.
  */
 func_type:	Typename
 				{
 					$$ = $1;
 				}
-		| TypeFuncId '.' ColId '%' TYPE_P
+		| type_name '.' ColId '%' TYPE_P
 				{
 					$$ = makeNode(TypeName);
 					$$->name = $1;
@@ -4073,7 +4074,7 @@ ConstTypename:  GenericType
 		| ConstDatetime
 		;
 
-GenericType:  TypeFuncId
+GenericType:  type_name
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType($1);
@@ -5659,21 +5660,60 @@ Sconst:  SCONST							{ $$ = $1; };
 UserId:  ColId							{ $$ = $1; };
 
 /*
- * Keyword classification lists.  Generally, every keyword present in
- * the Postgres grammar should be in one of these lists.  (Presently,
- * "AS" is the sole exception: it is our only completely-reserved word.)
+ * Name classification hierarchy.
  *
- * Put a new keyword into the earliest list (of TypeFuncId, ColId, ColLabel)
- * that it can go into without creating shift or reduce conflicts.  The
- * earlier lists define "less reserved" categories of keywords.  Notice that
- * each list includes by reference the ones before it.
+ * IDENT is the lexeme returned by the lexer for identifiers that match
+ * no known keyword.  In most cases, we can accept certain keywords as
+ * names, not only IDENTs.  We prefer to accept as many such keywords
+ * as possible to minimize the impact of "reserved words" on programmers.
+ * So, we divide names into several possible classes.  The classification
+ * is chosen in part to make keywords acceptable as names wherever possible.
  */
 
-/* Type/func identifier --- names that can be type and function names
- * (as well as ColIds --- ie, these are completely unreserved keywords).
+/* Column identifier --- names that can be column, table, etc names.
  */
-TypeFuncId:  IDENT						{ $$ = $1; }
-		| ABORT_TRANS					{ $$ = "abort"; }
+ColId:  IDENT							{ $$ = $1; }
+		| unreserved_keyword			{ $$ = $1; }
+		| col_name_keyword				{ $$ = $1; }
+		;
+
+/* Type identifier --- names that can be type names.
+ */
+type_name:  IDENT						{ $$ = $1; }
+		| unreserved_keyword			{ $$ = $1; }
+		;
+
+/* Function identifier --- names that can be function names.
+ */
+func_name:  IDENT						{ $$ = xlateSqlFunc($1); }
+		| unreserved_keyword			{ $$ = xlateSqlFunc($1); }
+		| func_name_keyword				{ $$ = xlateSqlFunc($1); }
+		;
+
+/* Column label --- allowed labels in "AS" clauses.
+ * This presently includes *all* Postgres keywords.
+ */
+ColLabel:  IDENT						{ $$ = $1; }
+		| unreserved_keyword			{ $$ = $1; }
+		| col_name_keyword				{ $$ = $1; }
+		| func_name_keyword				{ $$ = $1; }
+		| reserved_keyword				{ $$ = $1; }
+		;
+
+
+/*
+ * Keyword classification lists.  Generally, every keyword present in
+ * the Postgres grammar should appear in exactly one of these lists.
+ *
+ * Put a new keyword into the first list that it can go into without causing
+ * shift or reduce conflicts.  The earlier lists define "less reserved"
+ * categories of keywords.
+ */
+
+/* "Unreserved" keywords --- available for use as any kind of name.
+ */
+unreserved_keyword:
+		  ABORT_TRANS					{ $$ = "abort"; }
 		| ABSOLUTE						{ $$ = "absolute"; }
 		| ACCESS						{ $$ = "access"; }
 		| ACTION						{ $$ = "action"; }
@@ -5829,58 +5869,94 @@ TypeFuncId:  IDENT						{ $$ = $1; }
 		| ZONE							{ $$ = "zone"; }
 		;
 
-/* Column identifier --- names that can be column, table, etc names.
+/* Column identifier --- keywords that can be column, table, etc names.
  *
- * This contains the TypeFuncId list plus those keywords that conflict
- * only with typename productions, not with other uses.  Note that
- * most of these keywords will in fact be recognized as type names too;
- * they just have to have special productions for the purpose.
+ * Many of these keywords will in fact be recognized as type or function
+ * names too; but they have special productions for the purpose, and so
+ * can't be treated as "generic" type or function names.
  *
- * Most of these cannot be in TypeFuncId (ie, are not also usable as function
- * names) because they can be followed by '(' in typename productions, which
- * looks too much like a function call for a LALR(1) parser.
+ * The type names appearing here are not usable as function names
+ * because they can be followed by '(' in typename productions, which
+ * looks too much like a function call for an LR(1) parser.
  */
-ColId:  TypeFuncId						{ $$ = $1; }
-		| BIT							{ $$ = "bit"; }
+col_name_keyword:
+		  BIT							{ $$ = "bit"; }
 		| CHAR							{ $$ = "char"; }
 		| CHARACTER						{ $$ = "character"; }
+		| COALESCE						{ $$ = "coalesce"; }
 		| DEC							{ $$ = "dec"; }
 		| DECIMAL						{ $$ = "decimal"; }
+		| EXISTS						{ $$ = "exists"; }
+		| EXTRACT						{ $$ = "extract"; }
 		| FLOAT							{ $$ = "float"; }
 		| INTERVAL						{ $$ = "interval"; }
 		| NCHAR							{ $$ = "nchar"; }
 		| NONE							{ $$ = "none"; }
+		| NULLIF						{ $$ = "nullif"; }
 		| NUMERIC						{ $$ = "numeric"; }
+		| POSITION						{ $$ = "position"; }
 		| SETOF							{ $$ = "setof"; }
+		| SUBSTRING						{ $$ = "substring"; }
 		| TIME							{ $$ = "time"; }
 		| TIMESTAMP						{ $$ = "timestamp"; }
+		| TRIM							{ $$ = "trim"; }
 		| VARCHAR						{ $$ = "varchar"; }
 		;
 
-/* Column label --- allowed labels in "AS" clauses.
+/* Function identifier --- keywords that can be function names.
+ *
+ * Most of these are keywords that are used as operators in expressions;
+ * in general such keywords can't be column names because they would be
+ * ambiguous with variables, but they are unambiguous as function identifiers.
+ *
+ * Do not include POSITION, SUBSTRING, etc here since they have explicit
+ * productions in a_expr to support the goofy SQL9x argument syntax.
+ *  - thomas 2000-11-28
+ */
+func_name_keyword:
+		  BETWEEN						{ $$ = "between"; }
+		| BINARY						{ $$ = "binary"; }
+		| CROSS							{ $$ = "cross"; }
+		| FREEZE						{ $$ = "freeze"; }
+		| FULL							{ $$ = "full"; }
+		| ILIKE							{ $$ = "ilike"; }
+		| IN							{ $$ = "in"; }
+		| INNER_P						{ $$ = "inner"; }
+		| IS							{ $$ = "is"; }
+		| ISNULL						{ $$ = "isnull"; }
+		| JOIN							{ $$ = "join"; }
+		| LEFT							{ $$ = "left"; }
+		| LIKE							{ $$ = "like"; }
+		| NATURAL						{ $$ = "natural"; }
+		| NOTNULL						{ $$ = "notnull"; }
+		| OUTER_P						{ $$ = "outer"; }
+		| OVERLAPS						{ $$ = "overlaps"; }
+		| PUBLIC						{ $$ = "public"; }
+		| RIGHT							{ $$ = "right"; }
+		| VERBOSE						{ $$ = "verbose"; }
+		;
+
+/* Reserved keyword --- these keywords are usable only as a ColLabel.
  *
  * Keywords appear here if they could not be distinguished from variable,
- * type, or function names in some contexts.
- * When adding a ColLabel, consider whether it can be added to func_name.
+ * type, or function names in some contexts.  Don't put things here unless
+ * forced to.
  */
-ColLabel:  ColId						{ $$ = $1; }
-		| ALL							{ $$ = "all"; }
+reserved_keyword:
+		  ALL							{ $$ = "all"; }
 		| ANALYSE						{ $$ = "analyse"; } /* British */
 		| ANALYZE						{ $$ = "analyze"; }
 		| AND							{ $$ = "and"; }
 		| ANY							{ $$ = "any"; }
+		| AS							{ $$ = "as"; }
 		| ASC							{ $$ = "asc"; }
-		| BETWEEN						{ $$ = "between"; }
-		| BINARY						{ $$ = "binary"; }
 		| BOTH							{ $$ = "both"; }
 		| CASE							{ $$ = "case"; }
 		| CAST							{ $$ = "cast"; }
 		| CHECK							{ $$ = "check"; }
-		| COALESCE						{ $$ = "coalesce"; }
 		| COLLATE						{ $$ = "collate"; }
 		| COLUMN						{ $$ = "column"; }
 		| CONSTRAINT					{ $$ = "constraint"; }
-		| CROSS							{ $$ = "cross"; }
 		| CURRENT_DATE					{ $$ = "current_date"; }
 		| CURRENT_TIME					{ $$ = "current_time"; }
 		| CURRENT_TIMESTAMP				{ $$ = "current_timestamp"; }
@@ -5893,34 +5969,19 @@ ColLabel:  ColId						{ $$ = $1; }
 		| ELSE							{ $$ = "else"; }
 		| END_TRANS						{ $$ = "end"; }
 		| EXCEPT						{ $$ = "except"; }
-		| EXISTS						{ $$ = "exists"; }
-		| EXTRACT						{ $$ = "extract"; }
 		| FALSE_P						{ $$ = "false"; }
 		| FOR							{ $$ = "for"; }
 		| FOREIGN						{ $$ = "foreign"; }
-		| FREEZE						{ $$ = "freeze"; }
 		| FROM							{ $$ = "from"; }
-		| FULL							{ $$ = "full"; }
 		| GROUP							{ $$ = "group"; }
 		| HAVING						{ $$ = "having"; }
-		| ILIKE							{ $$ = "ilike"; }
-		| IN							{ $$ = "in"; }
 		| INITIALLY						{ $$ = "initially"; }
-		| INNER_P						{ $$ = "inner"; }
 		| INTERSECT						{ $$ = "intersect"; }
 		| INTO							{ $$ = "into"; }
-		| IS							{ $$ = "is"; }
-		| ISNULL						{ $$ = "isnull"; }
-		| JOIN							{ $$ = "join"; }
 		| LEADING						{ $$ = "leading"; }
-		| LEFT							{ $$ = "left"; }
-		| LIKE							{ $$ = "like"; }
 		| LIMIT							{ $$ = "limit"; }
-		| NATURAL						{ $$ = "natural"; }
 		| NEW							{ $$ = "new"; }
 		| NOT							{ $$ = "not"; }
-		| NOTNULL						{ $$ = "notnull"; }
-		| NULLIF						{ $$ = "nullif"; }
 		| NULL_P						{ $$ = "null"; }
 		| OFF							{ $$ = "off"; }
 		| OFFSET						{ $$ = "offset"; }
@@ -5929,65 +5990,24 @@ ColLabel:  ColId						{ $$ = $1; }
 		| ONLY							{ $$ = "only"; }
 		| OR							{ $$ = "or"; }
 		| ORDER							{ $$ = "order"; }
-		| OUTER_P						{ $$ = "outer"; }
-		| OVERLAPS						{ $$ = "overlaps"; }
-		| POSITION						{ $$ = "position"; }
 		| PRIMARY						{ $$ = "primary"; }
-		| PUBLIC						{ $$ = "public"; }
 		| REFERENCES					{ $$ = "references"; }
-		| RIGHT							{ $$ = "right"; }
 		| SELECT						{ $$ = "select"; }
 		| SESSION_USER					{ $$ = "session_user"; }
 		| SOME							{ $$ = "some"; }
-		| SUBSTRING						{ $$ = "substring"; }
 		| TABLE							{ $$ = "table"; }
 		| THEN							{ $$ = "then"; }
 		| TO							{ $$ = "to"; }
 		| TRAILING						{ $$ = "trailing"; }
-		| TRIM							{ $$ = "trim"; }
 		| TRUE_P						{ $$ = "true"; }
 		| UNION							{ $$ = "union"; }
 		| UNIQUE						{ $$ = "unique"; }
 		| USER							{ $$ = "user"; }
 		| USING							{ $$ = "using"; }
-		| VERBOSE						{ $$ = "verbose"; }
 		| WHEN							{ $$ = "when"; }
 		| WHERE							{ $$ = "where"; }
 		;
 
-/* Function identifier --- names that can be function names.
- *
- * This contains the TypeFuncId list plus some ColLabel keywords
- * that are used as operators in expressions; in general such keywords
- * can't be ColId because they would be ambiguous with variable names,
- * but they are unambiguous as function identifiers.
- *
- * Do not include POSITION, SUBSTRING, etc here since they have explicit
- * productions in a_expr to support the goofy SQL9x argument syntax.
- *  - thomas 2000-11-28
- */
-func_name:  TypeFuncId					{ $$ = xlateSqlFunc($1); }
-		| BETWEEN						{ $$ = xlateSqlFunc("between"); }
-		| BINARY						{ $$ = xlateSqlFunc("binary"); }
-		| CROSS							{ $$ = xlateSqlFunc("cross"); }
-		| FREEZE						{ $$ = xlateSqlFunc("freeze"); }
-		| FULL							{ $$ = xlateSqlFunc("full"); }
-		| ILIKE							{ $$ = xlateSqlFunc("ilike"); }
-		| IN							{ $$ = xlateSqlFunc("in"); }
-		| INNER_P						{ $$ = xlateSqlFunc("inner"); }
-		| IS							{ $$ = xlateSqlFunc("is"); }
-		| ISNULL						{ $$ = xlateSqlFunc("isnull"); }
-		| JOIN							{ $$ = xlateSqlFunc("join"); }
-		| LEFT							{ $$ = xlateSqlFunc("left"); }
-		| LIKE							{ $$ = xlateSqlFunc("like"); }
-		| NATURAL						{ $$ = xlateSqlFunc("natural"); }
-		| NOTNULL						{ $$ = xlateSqlFunc("notnull"); }
-		| OUTER_P						{ $$ = xlateSqlFunc("outer"); }
-		| OVERLAPS						{ $$ = xlateSqlFunc("overlaps"); }
-		| PUBLIC						{ $$ = xlateSqlFunc("public"); }
-		| RIGHT							{ $$ = xlateSqlFunc("right"); }
-		| VERBOSE						{ $$ = xlateSqlFunc("verbose"); }
-		;
 
 SpecialRuleRelation:  OLD
 				{
