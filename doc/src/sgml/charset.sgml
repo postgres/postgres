@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.24 2002/04/03 05:39:27 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.25 2002/07/24 05:51:56 ishii Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -326,7 +326,7 @@ perl: warning: Falling back to the standard locale ("C").
 
     <para>
      Tatsuo Ishii (<email>ishii@postgresql.org</email>),
-     last updated 2000-03-22.
+     last updated 2002-07-24.
      Check <ulink
       url="http://www.sra.co.jp/people/t-ishii/PostgreSQL/">Tatsuo's
       web site</ulink> for more information.
@@ -346,21 +346,19 @@ perl: warning: Falling back to the standard locale ("C").
     overridden when you create a database using
     <application>createdb</application> or by using the SQL command
     <command>CREATE DATABASE</>. So you can have multiple databases each with
-    a different encoding system.
+    a different encoding system. Note that <acronym>MB</acronym> can
+    handle single byte characters sets such as ISO-8859-1.
    </para>
 
+    <para>
+    Multibyte support is enabled by default since PostgreSQL version 7.3.
+    </para>
+
    <sect2>
-    <title>Enabling Multibyte Support</title>
+    <title>Supported character set encodings</title>
 
     <para>
-     Run configure with the multibyte option:
-
-<synopsis>
-./configure --enable-multibyte<optional>=<replaceable>encoding_system</replaceable></optional>
-</synopsis>
-
-     where <replaceable>encoding_system</replaceable> can be one of the
-     values in the following table:
+    Following encoding can be used as database encoding.
 
      <table tocentry="1">
       <title>Character Set Encodings</title>
@@ -508,23 +506,8 @@ perl: warning: Falling back to the standard locale ("C").
       <literal>LATIN8</>, and <literal>LATIN10</>.
      </para>
     </important>
+    </sect2>
     
-    <para>
-     Here is an example of configuring
-     <productname>PostgreSQL</productname> to use a Japanese encoding by
-     default:
-
-<screen>
-$ <userinput>./configure --enable-multibyte=EUC_JP</userinput>
-</screen>
-    </para>
-
-    <para>
-     If the encoding system is omitted (<literal>./configure --enable-multibyte</literal>),
-     <literal>SQL_ASCII</> is assumed.
-    </para>
-   </sect2>
-
    <sect2>
     <title>Setting the Encoding</title>
 
@@ -539,8 +522,8 @@ $ <userinput>initdb -E EUC_JP</>
      sets the default encoding to <literal>EUC_JP</literal> (Extended Unix Code for Japanese).
      Note that you can use <option>--encoding</option> instead of <option>-E</option> if you prefer
      to type longer option strings. 
-     If no <option>-E</> or <option>--encoding</option> option is given, the encoding
-     specified at configure time is used.
+     If no <option>-E</> or <option>--encoding</option> option is
+     given, SQL_ASCII is used.
     </para>
 
     <para>
@@ -583,14 +566,17 @@ $ <userinput>psql -l</userinput>
    </sect2>
 
    <sect2>
-    <title>Automatic encoding translation between server and
+    <title>Automatic encoding conversion between server and
      client</title>
 
     <para>
      <productname>PostgreSQL</productname> supports an automatic
-     encoding translation between server
-     and client for some encodings.  The available combinations are
-     listed in <xref linkend="multibyte-translation-table">.
+     encoding conversion between server and client for some
+     encodings. The conversion info is stored in pg_converson system
+     catalog. You can create a new conversion by using <command>CREATE
+     CONVERSION</command>. PostgreSQL comes with some predefined
+     conversions. They are listed in <xref
+     linkend="multibyte-translation-table">.
     </para>
 
      <table tocentry="1" id="multibyte-translation-table">
@@ -887,6 +873,18 @@ RESET CLIENT_ENCODING;
 	be overridden using any of the other methods mentioned above.)
        </para>
       </listitem>
+
+      <listitem>
+      <para>
+      Using client_encoding variable.
+
+      If client_encoding variable in postgresql.conf is set, that
+      client encoding is automatically selected when a connection to the
+      server is made.  (This can subsequently be overridden using any of the
+      other methods mentioned above.)
+       </para>
+      </listitem>
+
      </itemizedlist>
     </para>
    </sect2>
@@ -908,6 +906,10 @@ RESET CLIENT_ENCODING;
     For 7.2, <option>--enable-unicode-conversion</option> is not necessary.
     The Unicode conversion functionality is automatically enabled
     if <option>--enable-multibyte</option> is specified.
+    </para>
+    <para>
+    For 7.3, <option>--enable-unicode-conversion</option> nor
+    <option>--enable-multibyte</option> is needed.
     </para>
    </sect2>
 

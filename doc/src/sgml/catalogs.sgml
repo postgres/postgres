@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.46 2002/07/22 20:23:19 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.47 2002/07/24 05:51:55 ishii Exp $
  -->
 
 <chapter id="catalogs">
@@ -79,6 +79,11 @@
      <row>
       <entry>pg_constraint</entry>
       <entry>check constraints, unique / primary key constraints, foreign key constraints</entry>
+     </row>
+
+     <row>
+      <entry>pg_conversion</entry>
+      <entry>encoding conversion information</entry>
      </row>
 
      <row>
@@ -992,6 +997,85 @@
     table for the given relation.
    </para>
   </note>
+
+ </sect1>
+
+ <sect1 id="catalog-pg-conversion">
+  <title>pg_conversion</title>
+
+  <para>
+   This system catalog stores encoding conversion information. See
+   <command>CREATE CONVERSION</command> for more information.
+  </para>
+
+  <table>
+   <title>pg_conversion Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>conname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Conversion name (unique within a namespace)</entry>
+     </row>
+
+     <row>
+      <entry>connamespace</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_namespace.oid</entry>
+      <entry>
+       The OID of the namespace that contains this conversion
+      </entry>
+     </row>
+
+     <row>
+      <entry>conowner</entry>
+      <entry><type>int4</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>Owner (creator) of the namespace</entry>
+     </row>
+
+     <row>
+      <entry>conforencoding</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>Source(for) encoding ID</entry>
+     </row>
+
+     <row>
+      <entry>contoencoding</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>Destination(to) encoding ID</entry>
+     </row>
+
+     <row>
+      <entry>conproc</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>Conversion procedure</entry>
+     </row>
+
+     <row>
+      <entry>condefault</entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>true if this is the default conversion</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
 
  </sect1>
 
