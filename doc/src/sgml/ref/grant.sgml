@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.12 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.13 2001/11/11 19:24:28 momjian Exp $
 Postgres documentation
 -->
 
@@ -104,7 +104,7 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
      <term>REFERENCES</term>
      <listitem>
       <para>
-       To create of a table with a foreign key constraint, it is
+       To create a table with a foreign key constraint, it is
        necessary to have this privilege on the table with the primary
        key.
       </para>
