@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.48 2000/11/30 08:46:25 vadim Exp $
+ * $Id: nbtree.h,v 1.49 2000/12/28 13:00:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,8 +217,10 @@ typedef BTStackData *BTStack;
 									/* goes to the left sibling */
 #define	XLOG_BTREE_NEWROOT	0x40	/* new root page */
 
+#define	XLOG_BTREE_LEAF		0x80	/* leaf/internal page was changed */
+
 /*
- * All what we need to find changed index tuple (14 bytes)
+ * All what we need to find changed index tuple
  */
 typedef struct xl_btreetid
 {
@@ -227,7 +229,7 @@ typedef struct xl_btreetid
 } xl_btreetid;
 
 /*
- * This is what we need to know about delete - ALIGN(14) = 18 bytes.
+ * This is what we need to know about delete
  */
 typedef struct xl_btree_delete
 {
@@ -237,39 +239,33 @@ typedef struct xl_btree_delete
 #define	SizeOfBtreeDelete	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
 
 /* 
- * This is what we need to know about pure (without split) insert - 
- * 14 + [4+8] + btitem with key data. Note that we need in CommandID
- * and HeapNode (4 + 8 bytes) only for leaf page insert.
+ * This is what we need to know about pure (without split) insert
  */
 typedef struct xl_btree_insert
 {
 	xl_btreetid			target;		/* inserted tuple id */
-	/* [CommandID, HeapNode and ] BTITEM FOLLOWS AT END OF STRUCT */
+	/* BTITEM FOLLOWS AT END OF STRUCT */
 } xl_btree_insert;
 
 #define SizeOfBtreeInsert	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
 
 /* 
- * This is what we need to know about insert with split - 
- * 22 + {4 + 8 | left hi-key} + [btitem] + right sibling btitems. Note that
- * we need in CommandID and HeapNode (4 + 8 bytes) for leaf pages
- * and in left page hi-key for non-leaf ones.
+ * On insert with split we save items of both left and right siblings
+ * and restore content of both pages from log record
  */
 typedef struct xl_btree_split
 {
 	xl_btreetid			target;		/* inserted tuple id */
 	BlockIdData			otherblk;	/* second block participated in split: */
 									/* first one is stored in target' tid */
+	BlockIdData			parentblk;	/* parent block */
+	BlockIdData			leftblk;	/* prev left block */
 	BlockIdData			rightblk;	/* next right block */
-	/* 
-	 * We log all btitems from the right sibling. If new btitem goes on
-	 * the left sibling then we log it too and it will be the first
-	 * BTItemData at the end of this struct after CommandId and HeapNode
-	 * on the leaf pages and left page hi-key on non-leaf ones.
-	 */
+	uint16				leftlen;	/* len of left page items below */
+	/* LEFT AND RIGHT PAGES ITEMS FOLLOW AT THE END */
 } xl_btree_split;
 
-#define SizeOfBtreeSplit	(offsetof(xl_btree_split, rightblk) + sizeof(BlockIdData))
+#define SizeOfBtreeSplit	(offsetof(xl_btree_split, leftlen) + sizeof(uint16))
 
 /* 
  * New root log record. 
@@ -277,6 +273,7 @@ typedef struct xl_btree_split
 typedef struct xl_btree_newroot
 {
 	RelFileNode			node;
+	int32				level;
 	BlockIdData			rootblk;
 	/* 0 or 2 BTITEMS FOLLOW AT END OF STRUCT */
 } xl_btree_newroot;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.102 2000/12/27 23:59:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.103 2000/12/28 13:00:06 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -88,15 +88,15 @@
 
 #include "access/xlogutils.h"
 
-XLogRecPtr	log_heap_move(Relation reln, ItemPointerData from, HeapTuple newtup);
+XLogRecPtr	log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from, 
+							Buffer newbuf, HeapTuple newtup);
+XLogRecPtr	log_heap_clean(Relation reln, Buffer buffer);
 
 /* comments are in heap_update */
 static xl_heaptid	_locked_tuple_;
 static void _heap_unlock_tuple(void *data);
-static XLogRecPtr log_heap_update(Relation reln, ItemPointerData from, 
-									HeapTuple newtup, bool move);
-
-static void HeapPageCleanup(Buffer buffer);
+static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf, 
+			ItemPointerData from, Buffer newbuf, HeapTuple newtup, bool move);
 
 
 /* ----------------------------------------------------------------
@@ -1364,23 +1364,45 @@ heap_insert(Relation relation, HeapTuple tup)
 	/* XLOG stuff */
 	{
 		xl_heap_insert	xlrec;
+		xl_heap_header	xlhdr;
 		XLogRecPtr		recptr;
+		XLogRecData		rdata[3];
+		Page			page = BufferGetPage(buffer);
+		uint8			info = XLOG_HEAP_INSERT;
 
 		xlrec.target.node = relation->rd_node;
-		xlrec.target.cid = GetCurrentCommandId();
 		xlrec.target.tid = tup->t_self;
-		xlrec.t_natts = tup->t_data->t_natts;
-		xlrec.t_oid = tup->t_data->t_oid;
-		xlrec.t_hoff = tup->t_data->t_hoff;
-		xlrec.mask = tup->t_data->t_infomask;
-		
-		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_INSERT,
-			(char*) &xlrec, SizeOfHeapInsert, 
-			(char*) tup->t_data + offsetof(HeapTupleHeaderData, t_bits), 
-			tup->t_len - offsetof(HeapTupleHeaderData, t_bits));
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char*)&xlrec;
+		rdata[0].len = SizeOfHeapInsert;
+		rdata[0].next = &(rdata[1]);
 
-		PageSetLSN(BufferGetPage(buffer), recptr);
-		PageSetSUI(BufferGetPage(buffer), ThisStartUpID);
+		xlhdr.t_oid = tup->t_data->t_oid;
+		xlhdr.t_natts = tup->t_data->t_natts;
+		xlhdr.t_hoff = tup->t_data->t_hoff;
+		xlhdr.mask = tup->t_data->t_infomask;
+		rdata[1].buffer = buffer;
+		rdata[1].data = (char*)&xlhdr;
+		rdata[1].len = SizeOfHeapHeader;
+		rdata[1].next = &(rdata[2]);
+
+		rdata[2].buffer = buffer;
+		rdata[2].data = (char*) tup->t_data + offsetof(HeapTupleHeaderData, t_bits);
+		rdata[2].len = tup->t_len - offsetof(HeapTupleHeaderData, t_bits);
+		rdata[2].next = NULL;
+
+		/* If this is the single and first tuple on page... */
+		if (ItemPointerGetOffsetNumber(&(tup->t_self)) == FirstOffsetNumber &&
+			PageGetMaxOffsetNumber(page) == FirstOffsetNumber)
+		{
+			info |= XLOG_HEAP_INIT_PAGE;
+			rdata[1].buffer = rdata[2].buffer = InvalidBuffer;
+		}
+
+		recptr = XLogInsert(RM_HEAP_ID, info, rdata);
+
+		PageSetLSN(page, recptr);
+		PageSetSUI(page, ThisStartUpID);
 	}
 	END_CRIT_CODE;
 
@@ -1475,27 +1497,35 @@ l1:
 		return result;
 	}
 
-	/* XLOG stuff */
 	START_CRIT_CODE;
-	{
-		xl_heap_delete	xlrec;
-		XLogRecPtr		recptr;
-
-		xlrec.target.node = relation->rd_node;
-		xlrec.target.cid = GetCurrentCommandId();
-		xlrec.target.tid = tp.t_self;
-		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE,
-			(char*) &xlrec, SizeOfHeapDelete, NULL, 0);
-
-		PageSetLSN(dp, recptr);
-		PageSetSUI(dp, ThisStartUpID);
-	}
-
 	/* store transaction information of xact deleting the tuple */
 	TransactionIdStore(GetCurrentTransactionId(), &(tp.t_data->t_xmax));
 	tp.t_data->t_cmax = GetCurrentCommandId();
 	tp.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+	/* XLOG stuff */
+	{
+		xl_heap_delete	xlrec;
+		XLogRecPtr		recptr;
+		XLogRecData		rdata[2];
+
+		xlrec.target.node = relation->rd_node;
+		xlrec.target.tid = tp.t_self;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char*)&xlrec;
+		rdata[0].len = SizeOfHeapDelete;
+		rdata[0].next = &(rdata[1]);
+
+		rdata[1].buffer = buffer;
+		rdata[1].data = NULL;
+		rdata[1].len = 0;
+		rdata[1].next = NULL;
+
+		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE, rdata);
+
+		PageSetLSN(dp, recptr);
+		PageSetSUI(dp, ThisStartUpID);
+	}
 	END_CRIT_CODE;
 
 #ifdef TUPLE_TOASTER_ACTIVE
@@ -1673,8 +1703,8 @@ l2:
 
 	/* XLOG stuff */
 	{
-		XLogRecPtr	recptr = log_heap_update(relation, 
-								oldtup.t_self, newtup, false);
+		XLogRecPtr	recptr = log_heap_update(relation, buffer, oldtup.t_self, 
+												newbuf, newtup, false);
 
 		if (newbuf != buffer)
 		{
@@ -1967,62 +1997,139 @@ heap_restrpos(HeapScanDesc scan)
 	}
 }
 
-static XLogRecPtr
-log_heap_update(Relation reln, ItemPointerData from, 
-	HeapTuple newtup, bool move)
+XLogRecPtr
+log_heap_clean(Relation reln, Buffer buffer)
 {
-	char			tbuf[sizeof(xl_heap_update) + 2 * sizeof(TransactionId)];
-	xl_heap_update *xlrec = (xl_heap_update*) tbuf;
-	int				hsize = SizeOfHeapUpdate;
+	xl_heap_clean	xlrec;
 	XLogRecPtr		recptr;
+	XLogRecData		rdata[2];
 
-	xlrec->target.node = reln->rd_node;
-	xlrec->target.tid = from;
-	xlrec->newtid = newtup->t_self;
-	xlrec->t_natts = newtup->t_data->t_natts;
-	xlrec->t_oid = newtup->t_data->t_oid;
-	xlrec->t_hoff = newtup->t_data->t_hoff;
-	xlrec->mask = newtup->t_data->t_infomask;
+	xlrec.node = reln->rd_node;
+	xlrec.block = BufferGetBlockNumber(buffer);
+	rdata[0].buffer = InvalidBuffer;
+	rdata[0].data = (char*)&xlrec;
+	rdata[0].len = SizeOfHeapClean;
+	rdata[0].next = &(rdata[1]);
 
+	rdata[1].buffer = buffer;
+	rdata[1].data = NULL;
+	rdata[1].len = 0;
+	rdata[1].next = NULL;
+
+	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_CLEAN, rdata);
+
+	return(recptr);
+}
+
+static XLogRecPtr
+log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from, 
+				Buffer newbuf, HeapTuple newtup, bool move)
+{
+	char			tbuf[MAXALIGN(sizeof(xl_heap_header)) + 2 * sizeof(TransactionId)];
+	xl_heap_update	xlrec;
+	xl_heap_header *xlhdr = (xl_heap_header*) tbuf;
+	int				hsize = SizeOfHeapHeader;
+	XLogRecPtr		recptr;
+	XLogRecData		rdata[4];
+	Page			page = BufferGetPage(newbuf);
+	uint8			info = (move) ? XLOG_HEAP_MOVE : XLOG_HEAP_UPDATE;
+
+	xlrec.target.node = reln->rd_node;
+	xlrec.target.tid = from;
+	xlrec.newtid = newtup->t_self;
+	rdata[0].buffer = InvalidBuffer;
+	rdata[0].data = (char*)&xlrec;
+	rdata[0].len = SizeOfHeapUpdate;
+	rdata[0].next = &(rdata[1]);
+
+	rdata[1].buffer = oldbuf;
+	rdata[1].data = NULL;
+	rdata[1].len = 0;
+	rdata[1].next = &(rdata[2]);
+
+	xlhdr->t_oid = newtup->t_data->t_oid;
+	xlhdr->t_natts = newtup->t_data->t_natts;
+	xlhdr->t_hoff = newtup->t_data->t_hoff;
+	xlhdr->mask = newtup->t_data->t_infomask;
 	if (move)	/* remember xmin & xmax */
 	{
 		TransactionId	xmax;
 
-		xlrec->target.cid = (CommandId) newtup->t_data->t_xmin;
 		if (newtup->t_data->t_infomask & HEAP_XMAX_INVALID ||
 			newtup->t_data->t_infomask & HEAP_MARKED_FOR_UPDATE)
 			xmax = InvalidTransactionId;
 		else
 			xmax = newtup->t_data->t_xmax;
 		memcpy(tbuf + hsize, &xmax, sizeof(TransactionId));
-		hsize += sizeof(TransactionId);
+		memcpy(tbuf + hsize + sizeof(TransactionId), 
+				&(newtup->t_data->t_xmin), sizeof(TransactionId));
+		hsize += (2 * sizeof(TransactionId));
 	}
-	else
-		xlrec->target.cid = GetCurrentCommandId();
-		
-	recptr = XLogInsert(RM_HEAP_ID, 
-			(move) ? XLOG_HEAP_MOVE : XLOG_HEAP_UPDATE,
-			tbuf, hsize, 
-			(char*) newtup->t_data + offsetof(HeapTupleHeaderData, t_bits), 
-			newtup->t_len - offsetof(HeapTupleHeaderData, t_bits));
+	rdata[2].buffer = newbuf;
+	rdata[2].data = (char*)&xlhdr;
+	rdata[2].len = hsize;
+	rdata[2].next = &(rdata[3]);
+
+	rdata[3].buffer = newbuf;
+	rdata[3].data = (char*) newtup->t_data + offsetof(HeapTupleHeaderData, t_bits);
+	rdata[3].len = newtup->t_len - offsetof(HeapTupleHeaderData, t_bits);
+	rdata[3].next = NULL;
+
+	/* If new tuple is the single and first tuple on page... */
+	if (ItemPointerGetOffsetNumber(&(newtup->t_self)) == FirstOffsetNumber &&
+		PageGetMaxOffsetNumber(page) == FirstOffsetNumber)
+	{
+		info |= XLOG_HEAP_INIT_PAGE;
+		rdata[2].buffer = rdata[3].buffer = InvalidBuffer;
+	}
+
+	recptr = XLogInsert(RM_HEAP_ID, info, rdata);
 
 	return(recptr);
 }
 
 XLogRecPtr
-log_heap_move(Relation reln, ItemPointerData from, HeapTuple newtup)
+log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from, 
+				Buffer newbuf, HeapTuple newtup)
 {
-	return(log_heap_update(reln, from, newtup, true));
+	return(log_heap_update(reln, oldbuf, from, newbuf, newtup, true));
 }
 
 static void
-_heap_cleanup_page_(Page page)
+heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
-	OffsetNumber	maxoff = PageGetMaxOffsetNumber(page);
+	xl_heap_clean *xlrec = (xl_heap_clean*) XLogRecGetData(record);
+	Relation		reln;
+	Buffer			buffer;
+	Page			page;
+	OffsetNumber	maxoff;
 	OffsetNumber	offnum;
-	ItemId			lp;
 	HeapTupleHeader	htup;
+	ItemId			lp;
 
+	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
+		return;
+
+	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->node);
+
+	if (!RelationIsValid(reln))
+		return;
+
+	buffer = XLogReadBuffer(false, reln, xlrec->block);
+	if (!BufferIsValid(buffer))
+		elog(STOP, "heap_clean_redo: no block");
+
+	page = (Page) BufferGetPage(buffer);
+	if (PageIsNew((PageHeader) page))
+		elog(STOP, "heap_clean_redo: uninitialized page");
+
+	if (XLByteLE(lsn, PageGetLSN(page)))
+	{
+		UnlockAndReleaseBuffer(buffer);
+		return;
+	}
+
+	maxoff = PageGetMaxOffsetNumber(page);
 	for (offnum = FirstOffsetNumber;
 		 offnum <= maxoff;
 		 offnum = OffsetNumberNext(offnum))
@@ -2039,22 +2146,7 @@ _heap_cleanup_page_(Page page)
 	}
 
 	PageRepairFragmentation(page);
-
-}
-
-static OffsetNumber
-_heap_add_tuple_(Page page, HeapTupleHeader htup, uint32 len, OffsetNumber offnum)
-{
-	ItemId	lp = PageGetItemId(page, offnum);
-
-	if (len > PageGetFreeSpace(page) || 
-			lp->lp_flags & LP_USED || lp->lp_len != 0)
-		_heap_cleanup_page_(page);
-
-	offnum = PageAddItem(page, (Item)htup, len, offnum, 
-							LP_USED | OverwritePageMode);
-
-	return(offnum);
+	UnlockAndWriteBuffer(buffer);
 }
 
 static void
@@ -2068,22 +2160,20 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	ItemId			lp = NULL;
 	HeapTupleHeader	htup;
 
+	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
+		return;
+
 	if (!RelationIsValid(reln))
 		return;
+
 	buffer = XLogReadBuffer(false, reln, 
 						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
-		return;
+		elog(STOP, "heap_delete_%sdo: no block", (redo) ? "re" : "un");
 
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
-	{
-		PageInit(page, BufferGetPageSize(buffer), 0);
-		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);
-		UnlockAndWriteBuffer(buffer);
-		return;
-	}
+		elog(STOP, "heap_delete_%sdo: uninitialized page", (redo) ? "re" : "un");
 
 	if (redo)
 	{
@@ -2100,44 +2190,24 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
-	/* page removed by vacuum ? */
 	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
-	{
-		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);
-		UnlockAndWriteBuffer(buffer);
-		return;
-	}
+		elog(STOP, "heap_delete_%sdo: invalid lp", (redo) ? "re" : "un");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
 	if (redo)
 	{
 		htup->t_xmax = record->xl_xid;
-		htup->t_cmax = xlrec->target.cid;
-		htup->t_infomask &= ~(HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
-		htup->t_infomask |= HEAP_XMAX_COMMITTED;
+		htup->t_cmax = FirstCommandId;
+		htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+								HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
 		UnlockAndWriteBuffer(buffer);
 		return;
 	}
 
-	/* undo... is it our tuple ? */
-	if (htup->t_xmax != record->xl_xid || htup->t_cmax != xlrec->target.cid)
-	{
-		if (!InRecovery)
-			elog(STOP, "heap_delete_undo: invalid target tuple in rollback");
-		UnlockAndReleaseBuffer(buffer);
-		return;
-	}
-	else	/* undo DELETE */
-	{
-		htup->t_infomask |= HEAP_XMAX_INVALID;
-		UnlockAndWriteBuffer(buffer);
-		return;
-	}
-
+	elog(STOP, "heap_delete_undo: unimplemented");
 }
 
 static void
@@ -2148,34 +2218,32 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	Buffer			buffer;
 	Page			page;
 	OffsetNumber	offnum;
-	ItemId			lp;
 	HeapTupleHeader	htup;
+
+	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
+		return;
 
 	if (!RelationIsValid(reln))
 		return;
+
 	buffer = XLogReadBuffer((redo) ? true : false, reln, 
 						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
 		return;
 
 	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page))
-	{
-		PageInit(page, BufferGetPageSize(buffer), 0);
-		if (!redo)
-		{
-			PageSetLSN(page, lsn);
-			PageSetSUI(page, ThisStartUpID);
-			UnlockAndWriteBuffer(buffer);
-			return;
-		}
-	}
+	if (PageIsNew((PageHeader) page) &&
+		(!redo || !(record->xl_info & XLOG_HEAP_INIT_PAGE)))
+		elog(STOP, "heap_insert_%sdo: uninitialized page", (redo) ? "re" : "un");
 
 	if (redo)
 	{
 		char			tbuf[MaxTupleSize];
-		HeapTupleHeader	htup = (HeapTupleHeader) tbuf;
-		uint32			newlen = record->xl_len - SizeOfHeapInsert;
+		xl_heap_header	xlhdr;
+		uint32			newlen;
+
+		if (record->xl_info & XLOG_HEAP_INIT_PAGE)
+			PageInit(page, BufferGetPageSize(buffer), 0);
 
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
@@ -2184,27 +2252,25 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		}
 
 		offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
-		/* page removed by vacuum ? */
 		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
-		{
-			PageSetLSN(page, lsn);
-			PageSetSUI(page, ThisStartUpID);
-			UnlockAndWriteBuffer(buffer);
-			return;
-		}
+			elog(STOP, "heap_insert_redo: invalid max offset number");
 
+		newlen = record->xl_len - SizeOfHeapInsert - SizeOfHeapHeader;
+		memcpy((char*)&xlhdr, (char*)xlrec + SizeOfHeapInsert, SizeOfHeapHeader);
 		memcpy(tbuf + offsetof(HeapTupleHeaderData, t_bits), 
-			(char*)xlrec + SizeOfHeapInsert, newlen);
+			(char*)xlrec + SizeOfHeapInsert + SizeOfHeapHeader, newlen);
 		newlen += offsetof(HeapTupleHeaderData, t_bits);
-		htup->t_oid = xlrec->t_oid;
-		htup->t_natts = xlrec->t_natts;
-		htup->t_hoff = xlrec->t_hoff;
+		htup = (HeapTupleHeader) tbuf;
+		htup->t_oid = xlhdr.t_oid;
+		htup->t_natts = xlhdr.t_natts;
+		htup->t_hoff = xlhdr.t_hoff;
 		htup->t_xmin = record->xl_xid;
-		htup->t_cmin = xlrec->target.cid;
+		htup->t_cmin = FirstCommandId;
 		htup->t_xmax = htup->t_cmax = 0;
-		htup->t_infomask = HEAP_XMAX_INVALID | HEAP_XMIN_COMMITTED | xlrec->mask;
+		htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
 		
-		offnum = _heap_add_tuple_(page, htup, newlen, offnum);
+		offnum = PageAddItem(page, (Item)htup, newlen, offnum, 
+							LP_USED | OverwritePageMode);
 		if (offnum == InvalidOffsetNumber)
 			elog(STOP, "heap_insert_redo: failed to add tuple");
 		PageSetLSN(page, lsn);
@@ -2217,38 +2283,7 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	if (XLByteLT(PageGetLSN(page), lsn))	/* changes are not applied ?! */
 		elog(STOP, "heap_insert_undo: bad page LSN");
 
-	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
-	lp = PageGetItemId(page, offnum);
-
-	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
-	{
-		if (!InRecovery)
-			elog(STOP, "heap_insert_undo: unused/deleted target tuple in rollback");
-		if (ItemIdDeleted(lp))
-		{
-			lp->lp_flags &= ~LP_USED;
-			PageRepairFragmentation(page);
-			UnlockAndWriteBuffer(buffer);
-		}
-		else
-			UnlockAndReleaseBuffer(buffer);
-		return;
-	}
-	htup = (HeapTupleHeader) PageGetItem(page, lp);
-
-	/* is it our tuple ? */
-	Assert(PageGetSUI(page) == ThisStartUpID);
-	if (htup->t_xmin != record->xl_xid || htup->t_cmin != xlrec->target.cid)
-	{
-		if (!InRecovery)
-			elog(STOP, "heap_insert_undo: invalid target tuple in rollback");
-		UnlockAndReleaseBuffer(buffer);
-		return;
-	}
-
-	lp->lp_flags |= LP_DELETE;	/* mark for deletion */
-	MarkBufferForCleanup(buffer, HeapPageCleanup);
-
+	elog(STOP, "heap_insert_undo: unimplemented");
 }
 
 /*
@@ -2271,24 +2306,19 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 	if (!RelationIsValid(reln))
 		return;
 
+	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
+		goto newt;
+
 	/* Deal with old tuple version */
 
 	buffer = XLogReadBuffer(false, reln, 
-					ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
-		goto newt;
+		elog(STOP, "heap_update_%sdo: no block", (redo) ? "re" : "un");
 
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
-	{
-		if (samepage)
-			goto newsame;
-		PageInit(page, BufferGetPageSize(buffer), 0);
-		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);
-		UnlockAndWriteBuffer(buffer);
-		goto newt;
-	}
+		elog(STOP, "heap_update_%sdo: uninitialized old page", (redo) ? "re" : "un");
 
 	if (redo)
 	{
@@ -2307,16 +2337,9 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
-	/* page removed by vacuum ? */
 	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
-	{
-		if (samepage)
-			goto newsame;
-		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);
-		UnlockAndWriteBuffer(buffer);
-		goto newt;
-	}
+		elog(STOP, "heap_update_%sdo: invalid lp", (redo) ? "re" : "un");
+
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
 	if (redo)
@@ -2331,7 +2354,7 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 		else
 		{
 			htup->t_xmax = record->xl_xid;
-			htup->t_cmax = xlrec->target.cid;
+			htup->t_cmax = FirstCommandId;
 			htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 								HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 		}
@@ -2343,32 +2366,16 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 		goto newt;
 	}
 
-	/* undo... is it our tuple ? */
-	if ((! move && (htup->t_xmax != record->xl_xid || 
-					htup->t_cmax != xlrec->target.cid)) ||
-		xlrec->target.cid != (CommandId) htup->t_xmin ||
-		htup->t_cmin != (CommandId) record->xl_xid)
-	{
-		if (!InRecovery)
-			elog(STOP, "heap_update_undo: invalid old tuple in rollback");
-		UnlockAndReleaseBuffer(buffer);
-	}
-	else	/* undo */
-	{
-		if (move)
-		{
-			htup->t_infomask &= ~(HEAP_XMIN_INVALID | 
-									HEAP_MOVED_IN | HEAP_MOVED_OFF);
-			htup->t_infomask |= HEAP_XMIN_COMMITTED;
-		}
-		else
-			htup->t_infomask |= HEAP_XMAX_INVALID;
-		UnlockAndWriteBuffer(buffer);
-	}
+	elog(STOP, "heap_update_undo: unimplemented");
 
 	/* Deal with new tuple */
 
 newt:;
+
+	if (redo &&
+		((record->xl_info & XLR_BKP_BLOCK_2) ||
+		((record->xl_info & XLR_BKP_BLOCK_1) && samepage)))
+		return;
 
 	buffer = XLogReadBuffer((redo) ? true : false, reln, 
 					ItemPointerGetBlockNumber(&(xlrec->newtid)));
@@ -2378,23 +2385,19 @@ newt:;
 	page = (Page) BufferGetPage(buffer);
 
 newsame:;
-	if (PageIsNew((PageHeader) page))
-	{
-		PageInit(page, BufferGetPageSize(buffer), 0);
-		if (!redo)
-		{
-			PageSetLSN(page, lsn);
-			PageSetSUI(page, ThisStartUpID);
-			UnlockAndWriteBuffer(buffer);
-			return;
-		}
-	}
+	if (PageIsNew((PageHeader) page) &&
+		(!redo || !(record->xl_info & XLOG_HEAP_INIT_PAGE)))
+		elog(STOP, "heap_update_%sdo: uninitialized page", (redo) ? "re" : "un");
 
 	if (redo)
 	{
-		char	tbuf[MaxTupleSize];
-		int		hsize;
-		uint32	newlen;
+		char			tbuf[MaxTupleSize];
+		xl_heap_header	xlhdr;
+		int				hsize;
+		uint32			newlen;
+
+		if (record->xl_info & XLOG_HEAP_INIT_PAGE)
+			PageInit(page, BufferGetPageSize(buffer), 0);
 
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
@@ -2403,34 +2406,30 @@ newsame:;
 		}
 
 		offnum = ItemPointerGetOffsetNumber(&(xlrec->newtid));
-		/* page removed by vacuum ? */
 		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
-		{
-			PageSetLSN(page, lsn);
-			PageSetSUI(page, ThisStartUpID);
-			UnlockAndWriteBuffer(buffer);
-			return;
-		}
+			elog(STOP, "heap_update_redo: invalid max offset number");
 
-		hsize = SizeOfHeapUpdate;
+		hsize = SizeOfHeapUpdate + SizeOfHeapHeader;
 		if (move)
-			hsize += sizeof(TransactionId);
-		newlen = record->xl_len - hsize;
+			hsize += (2 * sizeof(TransactionId));
 
-		htup = (HeapTupleHeader) tbuf;
+		newlen = record->xl_len - hsize;
+		memcpy((char*)&xlhdr, (char*)xlrec + SizeOfHeapUpdate, SizeOfHeapHeader);
 		memcpy(tbuf + offsetof(HeapTupleHeaderData, t_bits), 
 			(char*)xlrec + hsize, newlen);
 		newlen += offsetof(HeapTupleHeaderData, t_bits);
-		htup->t_oid = xlrec->t_oid;
-		htup->t_natts = xlrec->t_natts;
-		htup->t_hoff = xlrec->t_hoff;
+		htup = (HeapTupleHeader) tbuf;
+		htup->t_oid = xlhdr.t_oid;
+		htup->t_natts = xlhdr.t_natts;
+		htup->t_hoff = xlhdr.t_hoff;
 		if (move)
 		{
-			htup->t_xmin = (TransactionId) xlrec->target.cid;
+			hsize = SizeOfHeapUpdate + SizeOfHeapHeader;
+			memcpy(&(htup->t_xmax), (char*)xlrec + hsize, sizeof(TransactionId));
+			memcpy(&(htup->t_xmin), 
+				(char*)xlrec + hsize + sizeof(TransactionId), sizeof(TransactionId));
 			TransactionIdStore(record->xl_xid, (TransactionId *) &(htup->t_cmin));
-			memcpy(&(htup->t_xmax), 
-					(char*)xlrec + SizeOfHeapUpdate, sizeof(TransactionId));
-			htup->t_infomask = xlrec->mask;
+			htup->t_infomask = xlhdr.mask;
 			htup->t_infomask &= ~(HEAP_XMIN_COMMITTED | 
 						HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
 			htup->t_infomask |= HEAP_MOVED_IN;
@@ -2438,13 +2437,13 @@ newsame:;
 		else
 		{
 			htup->t_xmin = record->xl_xid;
-			htup->t_cmin = xlrec->target.cid;
+			htup->t_cmin = FirstCommandId;
 			htup->t_xmax = htup->t_cmax = 0;
-			htup->t_infomask = HEAP_XMAX_INVALID | xlrec->mask;
+			htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
 		}
 		
-		offnum = _heap_add_tuple_(page, htup, newlen, 
-			ItemPointerGetOffsetNumber(&(xlrec->newtid)));
+		offnum = PageAddItem(page, (Item)htup, newlen, offnum,
+							LP_USED | OverwritePageMode);
 		if (offnum == InvalidOffsetNumber)
 			elog(STOP, "heap_update_redo: failed to add tuple");
 		PageSetLSN(page, lsn);
@@ -2457,40 +2456,8 @@ newsame:;
 	if (XLByteLT(PageGetLSN(page), lsn))	/* changes are not applied ?! */
 		elog(STOP, "heap_update_undo: bad new tuple page LSN");
 
-	offnum = ItemPointerGetOffsetNumber(&(xlrec->newtid));
-	lp = PageGetItemId(page, offnum);
+	elog(STOP, "heap_update_undo: unimplemented");
 
-	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
-	{
-		if (!InRecovery)
-			elog(STOP, "heap_update_undo: unused/deleted new tuple in rollback");
-		if (ItemIdDeleted(lp))
-		{
-			lp->lp_flags &= ~LP_USED;
-			PageRepairFragmentation(page);
-			UnlockAndWriteBuffer(buffer);
-		}
-		else
-			UnlockAndReleaseBuffer(buffer);
-		return;
-	}
-	htup = (HeapTupleHeader) PageGetItem(page, lp);
-
-	/* is it our tuple ? */
-	Assert(PageGetSUI(page) == ThisStartUpID);
-	if ((! move && (htup->t_xmin != record->xl_xid || 
-					htup->t_cmin != xlrec->target.cid)) ||
-		xlrec->target.cid != (CommandId) htup->t_xmin ||
-		htup->t_cmin != (CommandId) record->xl_xid)
-	{
-		if (!InRecovery)
-			elog(STOP, "heap_update_undo: invalid new tuple in rollback");
-		UnlockAndReleaseBuffer(buffer);
-		return;
-	}
-
-	lp->lp_flags |= LP_DELETE;	/* mark for deletion */
-	MarkBufferForCleanup(buffer, HeapPageCleanup);
 }
 
 static void
@@ -2539,6 +2506,7 @@ void heap_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8	info = record->xl_info & ~XLR_INFO_MASK;
 
+	info &= XLOG_HEAP_OPMASK;
 	if (info == XLOG_HEAP_INSERT)
 		heap_xlog_insert(true, lsn, record);
 	else if (info == XLOG_HEAP_DELETE)
@@ -2547,6 +2515,8 @@ void heap_redo(XLogRecPtr lsn, XLogRecord *record)
 		heap_xlog_update(true, lsn, record, false);
 	else if (info == XLOG_HEAP_MOVE)
 		heap_xlog_update(true, lsn, record, true);
+	else if (info == XLOG_HEAP_CLEAN)
+		heap_xlog_clean(true, lsn, record);
 	else
 		elog(STOP, "heap_redo: unknown op code %u", info);
 }
@@ -2555,6 +2525,7 @@ void heap_undo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8	info = record->xl_info & ~XLR_INFO_MASK;
 
+	info &= XLOG_HEAP_OPMASK;
 	if (info == XLOG_HEAP_INSERT)
 		heap_xlog_insert(false, lsn, record);
 	else if (info == XLOG_HEAP_DELETE)
@@ -2563,23 +2534,17 @@ void heap_undo(XLogRecPtr lsn, XLogRecord *record)
 		heap_xlog_update(false, lsn, record, false);
 	else if (info == XLOG_HEAP_MOVE)
 		heap_xlog_update(false, lsn, record, true);
+	else if (info == XLOG_HEAP_CLEAN)
+		heap_xlog_clean(false, lsn, record);
 	else
 		elog(STOP, "heap_undo: unknown op code %u", info);
 }
 
 static void
-HeapPageCleanup(Buffer buffer)
-{
-	Page page = (Page) BufferGetPage(buffer);
-	PageRepairFragmentation(page);
-}
-
-static void
 out_target(char *buf, xl_heaptid *target)
 {
-	sprintf(buf + strlen(buf), "node %u/%u; cid %u; tid %u/%u",
+	sprintf(buf + strlen(buf), "node %u/%u; tid %u/%u",
 		target->node.tblNode, target->node.relNode,
-		target->cid,
 		ItemPointerGetBlockNumber(&(target->tid)), 
 		ItemPointerGetOffsetNumber(&(target->tid)));
 }
@@ -2589,6 +2554,7 @@ heap_desc(char *buf, uint8 xl_info, char* rec)
 {
 	uint8	info = xl_info & ~XLR_INFO_MASK;
 
+	info &= XLOG_HEAP_OPMASK;
 	if (info == XLOG_HEAP_INSERT)
 	{
 		xl_heap_insert	*xlrec = (xl_heap_insert*) rec;

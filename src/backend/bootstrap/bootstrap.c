@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.101 2000/11/25 20:33:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.102 2000/12/28 13:00:12 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,8 @@ static MemoryContext nogc = NULL; /* special no-gc mem context */
 
 extern int	optind;
 extern char *optarg;
+
+extern void SetRedoRecPtr(void);
 
 /*
  *	At bootstrap time, we first declare all the indices to be built, and
@@ -349,6 +351,7 @@ BootstrapMain(int argc, char *argv[])
 		{
 			CreateDummyCaches();
 			CreateCheckPoint(false);
+			SetRedoRecPtr();
 		}
 		else if (xlogop == BS_XLOG_STARTUP)
 			StartupXLOG();

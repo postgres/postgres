@@ -3,7 +3,7 @@
  *
  * PostgreSQL transaction log manager
  *
- * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.14 2000/12/18 00:44:48 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.15 2000/12/28 13:00:25 vadim Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -13,12 +13,19 @@
 #include "access/xlogdefs.h"
 #include "access/xlogutils.h"
 
+typedef struct crc64
+{
+	uint32		crc1;
+	uint32		crc2;
+} crc64;
+
 typedef struct XLogRecord
 {
+	crc64		xl_crc;
 	XLogRecPtr	xl_prev;		/* ptr to previous record in log */
 	XLogRecPtr	xl_xact_prev;	/* ptr to previous record of this xact */
 	TransactionId xl_xid;		/* xact id */
-	uint16		xl_len;			/* len of record *data* on this page */
+	uint16		xl_len;			/* total len of record *data* */
 	uint8		xl_info;
 	RmgrId		xl_rmid;		/* resource manager inserted this record */
 
@@ -33,25 +40,30 @@ typedef struct XLogRecord
 	((char*)record + SizeOfXLogRecord)
 
 /*
- * When there is no space on current page we continue on the next
- * page with subrecord.
+ * When there is no space on current page we continue
+ * on the next page with subrecord.
  */
 typedef struct XLogSubRecord
 {
-	uint16		xl_len;
-	uint8		xl_info;
+	uint16		xl_len;			/* len of data left */
 
 	/* ACTUAL LOG DATA FOLLOWS AT END OF STRUCT */
 
 } XLogSubRecord;
 
-#define SizeOfXLogSubRecord DOUBLEALIGN(sizeof(XLogSubRecord))
+#define	SizeOfXLogSubRecord	DOUBLEALIGN(sizeof(XLogSubRecord))
 
 /*
- * XLOG uses only low 4 bits of xl_info. High 4 bits may be used
- * by rmgr...
+ * XLOG uses only low 4 bits of xl_info.
+ * High 4 bits may be used by rmgr...
+ *
+ * We support backup of 2 blocks per record only.
+ * If we backed up some of these blocks then we use
+ * flags below to signal rmgr about this on recovery.
  */
-#define XLR_TO_BE_CONTINUED		0x01
+#define XLR_SET_BKP_BLOCK(iblk)	(0x08 >> iblk)
+#define XLR_BKP_BLOCK_1			XLR_SET_BKP_BLOCK(0)	/* 0x08 */
+#define XLR_BKP_BLOCK_2			XLR_SET_BKP_BLOCK(1)	/* 0x04 */
 #define	XLR_INFO_MASK			0x0F
 
 /*
@@ -72,6 +84,7 @@ typedef struct XLogPageHeaderData
 
 typedef XLogPageHeaderData *XLogPageHeader;
 
+/* When record crosses page boundary */
 #define XLP_FIRST_IS_SUBRECORD	0x0001
 
 #define XLByteLT(left, right)		\
@@ -100,9 +113,22 @@ typedef struct RmgrData
 
 extern RmgrData RmgrTable[];
 
-extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, 
-			char *hdr, uint32 hdrlen,
-			char *buf, uint32 buflen);
+/*
+ * List of these structs is used to pass data to XLOG.
+ * If buffer is valid then XLOG will check if buffer must
+ * be backup-ed. For backup-ed buffer data will not be
+ * inserted into record (and XLOG sets
+ * XLR_BKP_BLOCK_X bit in xl_info).
+ */
+typedef struct XLogRecData
+{
+	Buffer				buffer;		/* buffer associated with this data */
+	char			   *data;
+	uint32				len;
+	struct XLogRecData *next;
+} XLogRecData;
+
+extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern void XLogFlush(XLogRecPtr RecPtr);
 
 extern void CreateCheckPoint(bool shutdown);

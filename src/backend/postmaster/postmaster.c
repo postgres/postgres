@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.201 2000/12/20 21:51:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.202 2000/12/28 13:00:20 vadim Exp $
  *
  * NOTES
  *
@@ -193,6 +193,8 @@ static unsigned int random_seed = 0;
 extern char *optarg;
 extern int	optind,
 			opterr;
+
+extern void GetRedoRecPtr(void);
 
 /*
  * postmaster.c - function prototypes
@@ -1533,6 +1535,7 @@ reaper(SIGNAL_ARGS)
 
 			/*
 			 * Startup succeeded - remember its ID
+			 * and RedoRecPtr
 			 */
 			SetThisStartUpID();
 
@@ -1633,7 +1636,10 @@ CleanupProc(int pid,
 		{
 			CheckPointPID = 0;
 			if (!FatalError)
+			{
 				checkpointed = time(NULL);
+				GetRedoRecPtr();
+			}
 		}
 		else
 		{

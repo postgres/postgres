@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.72 2000/11/30 08:46:21 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.73 2000/12/28 13:00:07 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -730,258 +730,24 @@ _bt_restscan(IndexScanDesc scan)
 	}
 }
 
-static bool
-_bt_cleanup_page(Page page, RelFileNode hnode)
-{
-	OffsetNumber	maxoff = PageGetMaxOffsetNumber(page);
-	BTPageOpaque	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-	OffsetNumber	offno;
-	ItemId			lp;
-	BTItem			item;
-	bool			result = false;
-
-	for (offno = P_FIRSTDATAKEY(pageop); offno <= maxoff; )
-	{
-		lp = PageGetItemId(page, offno);
-		item = (BTItem) PageGetItem(page, lp);
-		if (XLogIsValidTuple(hnode, &(item->bti_itup.t_tid)))
-			offno = OffsetNumberNext(offno);
-		else
-		{
-			PageIndexTupleDelete(page, offno);
-			maxoff = PageGetMaxOffsetNumber(page);
-			result = true;
-		}
-	}
-
-	return(result);
-}
-
-static bool
-_bt_add_item(Page page, OffsetNumber offno, 
-	char* item, Size size, RelFileNode hnode)
-{
-	BTPageOpaque	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-
-	if (offno > PageGetMaxOffsetNumber(page) + 1)
-	{
-		if (! (pageop->btpo_flags & BTP_REORDER))
-		{
-			elog(NOTICE, "btree_add_item: BTP_REORDER flag was expected");
-			pageop->btpo_flags |= BTP_REORDER;
-		}
-		offno = PageGetMaxOffsetNumber(page) + 1;
-	}
-
-	if (PageAddItem(page, (Item) item, size, offno,	
-			LP_USED) == InvalidOffsetNumber)
-	{
-#ifdef NOT_USED		/* it's not valid code currently */
-		/* ops, not enough space - try to deleted dead tuples */
-		bool		result;
-
-		if (! P_ISLEAF(pageop))
-			return(false);
-		result = _bt_cleanup_page(page, hnode);
-		if (!result || PageAddItem(page, (Item) item, size, offno,	
-				LP_USED) == InvalidOffsetNumber)
-#endif
-			return(false);
-	}
-
-	return(true);
-}
-
-/*
- * Remove from left sibling items belonging to right sibling
- * and change P_HIKEY
- */
 static void
-_bt_fix_left_page(Page page, XLogRecord *record, bool onleft)
+_bt_restore_page(Page page, char *from, int len)
 {
-	char		   *xlrec = (char*) XLogRecGetData(record);
-	BTPageOpaque	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-	Size			hsize = SizeOfBtreeSplit;
-	RelFileNode		hnode;
-	BTItemData		btdata;
-	OffsetNumber	maxoff = PageGetMaxOffsetNumber(page);
-	OffsetNumber	offno;
-	char		   *item;
-	Size			itemsz;
-	char		   *previtem = NULL;
-	char		   *lhikey = NULL;
-	Size			lhisize = 0;
+	BTItemData	btdata;
+	Size		itemsz;
+	char	   *end = from + len;
 
-	if (pageop->btpo_flags & BTP_LEAF)
+	for ( ;	from < end; )
 	{
-		hsize += (sizeof(CommandId) + sizeof(RelFileNode));
-		memcpy(&hnode, (char*)xlrec + SizeOfBtreeSplit + 
-					sizeof(CommandId), sizeof(RelFileNode));
-	}
-	else
-	{
-		lhikey = (char*)xlrec + hsize;
-		memcpy(&btdata, lhikey, sizeof(BTItemData));
-		lhisize = IndexTupleDSize(btdata.bti_itup) +
-					(sizeof(BTItemData) - sizeof(IndexTupleData));
-		hsize += lhisize;
-	}
-
-	if (! P_RIGHTMOST(pageop))
-		PageIndexTupleDelete(page, P_HIKEY);
-
-	if (onleft)		/* skip target item */
-	{
-		memcpy(&btdata, (char*)xlrec + hsize, sizeof(BTItemData));
-		itemsz = IndexTupleDSize(btdata.bti_itup) +
-					(sizeof(BTItemData) - sizeof(IndexTupleData));
-		hsize += itemsz;
-	}
-
-	for (item = (char*)xlrec + hsize; ; )
-	{
-		memcpy(&btdata, item, sizeof(BTItemData));
-		for (offno = P_FIRSTDATAKEY(pageop);
-			 offno <= maxoff;
-			 offno = OffsetNumberNext(offno))
-		{
-			ItemId	lp = PageGetItemId(page, offno);
-			BTItem	btitem = (BTItem) PageGetItem(page, lp);
-
-			if (BTItemSame(&btdata, btitem))
-			{
-				PageIndexTupleDelete(page, offno);
-				break;
-			}
-		}
-
+		memcpy(&btdata, from, sizeof(BTItemData));
 		itemsz = IndexTupleDSize(btdata.bti_itup) +
 					(sizeof(BTItemData) - sizeof(IndexTupleData));
 		itemsz = MAXALIGN(itemsz);
-
-		if (item + itemsz < (char*)xlrec + record->xl_len)
-		{
-			previtem = item;
-			item += itemsz;
-		}
-		else
-			break;
+		if (PageAddItem(page, (Item) from, itemsz,
+				FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
+			elog(STOP, "_bt_restore_page: can't add item to page");
+		from += itemsz;
 	}
-
-	/* time to insert hi-key */
-	if (pageop->btpo_flags & BTP_LEAF)
-	{
-		lhikey = (P_RIGHTMOST(pageop)) ? item : previtem;
-		memcpy(&btdata, lhikey, sizeof(BTItemData));
-		lhisize = IndexTupleDSize(btdata.bti_itup) +
-					(sizeof(BTItemData) - sizeof(IndexTupleData));
-	}
-
-	if (! _bt_add_item(page, 
-			P_HIKEY,
-			lhikey,
-			lhisize,
-			hnode))
-		elog(STOP, "btree_split_redo: failed to add hi key to left sibling");
-
-	return;
-}
-
-/*
- * UNDO insertion on *leaf* page: 
- * - find inserted tuple;
- * - delete it if heap tuple was inserted by the same xaction
- */
-static void
-_bt_del_item(Relation reln, Buffer buffer, BTItem btitem, bool insert, 
-				XLogRecPtr lsn, XLogRecord *record)
-{
-	char		   *xlrec = (char*) XLogRecGetData(record);
-	Page			page = (Page) BufferGetPage(buffer);
-	BTPageOpaque	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-	BlockNumber		blkno;
-	OffsetNumber	offno;
-	ItemId			lp;
-	BTItem			item;
-
-	for ( ; ; )
-	{
-		OffsetNumber	maxoff = PageGetMaxOffsetNumber(page);
-
-		for (offno = P_FIRSTDATAKEY(pageop);
-			 offno <= maxoff;
-			 offno = OffsetNumberNext(offno))
-		{
-			lp = PageGetItemId(page, offno);
-			item = (BTItem) PageGetItem(page, lp);
-			if (BTItemSame(item, btitem))
-				break;
-		}
-		if (offno <= maxoff)
-			break;
-		offno = InvalidOffsetNumber;
-		if (P_RIGHTMOST(pageop))
-			break;
-		blkno = pageop->btpo_next;
-		UnlockAndReleaseBuffer(buffer);
-		buffer = XLogReadBuffer(false, reln, blkno);
-		if (!BufferIsValid(buffer))
-			elog(STOP, "btree_%s_undo: lost right sibling",
-				(insert) ? "insert" : "split");
-		page = (Page) BufferGetPage(buffer);
-		if (PageIsNew((PageHeader) page))
-			elog(STOP, "btree_%s_undo: uninitialized right sibling",
-				(insert) ? "insert" : "split");
-		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-		if (XLByteLT(PageGetLSN(page), lsn))
-			break;
-	}
-
-	if (offno == InvalidOffsetNumber)	/* not found */
-	{
-		if (!InRecovery)
-			elog(STOP, "btree_%s_undo: lost target tuple in rollback",
-				(insert) ? "insert" : "split");
-		UnlockAndReleaseBuffer(buffer);
-		return;
-	}
-
-	lp = PageGetItemId(page, offno);
-
-	if (InRecovery)					/* check heap tuple */
-	{
-		if (!ItemIdDeleted(lp))
-		{
-			int			result;
-			CommandId	cid;
-			RelFileNode	hnode;
-			Size		hsize = (insert) ? SizeOfBtreeInsert : SizeOfBtreeSplit;
-
-			memcpy(&cid, (char*)xlrec + hsize, sizeof(CommandId));
-			memcpy(&hnode, (char*)xlrec + hsize + sizeof(CommandId), sizeof(RelFileNode));
-			result = XLogIsOwnerOfTuple(hnode, &(btitem->bti_itup.t_tid),
-						record->xl_xid, cid);
-			if (result < 0)	/* not owner */
-			{
-				UnlockAndReleaseBuffer(buffer);
-				return;
-			}
-		}
-		PageIndexTupleDelete(page, offno);
-		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-		pageop->btpo_flags |= BTP_REORDER;
-		UnlockAndWriteBuffer(buffer);
-		return;
-	}
-
-	/* normal rollback */
-	if (ItemIdDeleted(lp))	/* marked for deletion ?! */
-		elog(STOP, "btree_%s_undo: deleted target tuple in rollback",
-			(insert) ? "insert" : "split");
-
-	lp->lp_flags |= LP_DELETE;
-	MarkBufferForCleanup(buffer, IndexPageCleanup);
-	return;
 }
 
 static void
@@ -992,7 +758,7 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	Buffer				buffer;
 	Page				page;
 
-	if (!redo)
+	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
 		return;
 
 	xlrec = (xl_btree_delete*) XLogRecGetData(record);
@@ -1031,52 +797,41 @@ btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	Page				page;
 	BTPageOpaque		pageop;
 
+	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
+		return;
+
 	xlrec = (xl_btree_insert*) XLogRecGetData(record);
 	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->target.node);
 	if (!RelationIsValid(reln))
 		return;
-	buffer = XLogReadBuffer((redo) ? true : false, reln, 
+	buffer = XLogReadBuffer(false, reln, 
 				ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
-		return;
+		elog(STOP, "btree_insert_%sdo: block unfound", (redo) ? "re" : "un");
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
-		elog(STOP, "btree_insert_%s: uninitialized page",
-			(redo) ? "redo" : "undo");
+		elog(STOP, "btree_insert_%sdo: uninitialized page", (redo) ? "re" : "un");
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	if (redo)
 	{
 		if (XLByteLE(lsn, PageGetLSN(page)))
-			UnlockAndReleaseBuffer(buffer);
-		else
 		{
-			Size		hsize = SizeOfBtreeInsert;
-			RelFileNode	hnode;
-
-			if (P_ISLEAF(pageop))
-			{
-				hsize += (sizeof(CommandId) + sizeof(RelFileNode));
-				memcpy(&hnode, (char*)xlrec + SizeOfBtreeInsert + 
-							sizeof(CommandId), sizeof(RelFileNode));
-			}
-
-			if (! _bt_add_item(page, 
-					ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
-					(char*)xlrec + hsize,
-					record->xl_len - hsize,
-					hnode))
+			UnlockAndReleaseBuffer(buffer);
+			return;
+		}
+		if (PageAddItem(page, (Item)((char*)xlrec + SizeOfBtreeInsert),
+					record->xl_len - SizeOfBtreeInsert,
+					ItemPointerGetOffsetNumber(&(xlrec->target.tid)),	
+					LP_USED) == InvalidOffsetNumber)
 				elog(STOP, "btree_insert_redo: failed to add item");
 
-			PageSetLSN(page, lsn);
-			PageSetSUI(page, ThisStartUpID);
-			UnlockAndWriteBuffer(buffer);
-		}
+		PageSetLSN(page, lsn);
+		PageSetSUI(page, ThisStartUpID);
+		UnlockAndWriteBuffer(buffer);
 	}
 	else
 	{
-		BTItemData		btdata;
-
 		if (XLByteLT(PageGetLSN(page), lsn))
 			elog(STOP, "btree_insert_undo: bad page LSN");
 
@@ -1086,11 +841,7 @@ btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 			return;
 		}
 
-		memcpy(&btdata, (char*)xlrec + SizeOfBtreeInsert + 
-			sizeof(CommandId) + sizeof(RelFileNode), sizeof(BTItemData));
-
-		_bt_del_item(reln, buffer, &btdata, true, lsn, record);
-
+		elog(STOP, "btree_insert_undo: unimplemented");
 	}
 
 	return;
@@ -1099,17 +850,15 @@ btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 static void
 btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 {
-	xl_btree_split	   *xlrec;
+	xl_btree_split	   *xlrec = (xl_btree_split*) XLogRecGetData(record);
 	Relation			reln;
 	BlockNumber			blkno;
-	BlockNumber			parent;
 	Buffer				buffer;
 	Page				page;
 	BTPageOpaque		pageop;
 	char			   *op = (redo) ? "redo" : "undo";
-	bool				isleaf;
+	bool				isleaf = (record->xl_info & XLOG_BTREE_LEAF);
 
-	xlrec = (xl_btree_split*) XLogRecGetData(record);
 	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->target.node);
 	if (!RelationIsValid(reln))
 		return;
@@ -1122,81 +871,33 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 		elog(STOP, "btree_split_%s: lost left sibling", op);
 
 	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page))
-		elog(STOP, "btree_split_%s: uninitialized left sibling", op);
-
+	if (redo)
+		_bt_pageinit(page, BufferGetPageSize(buffer));
+	else if (PageIsNew((PageHeader) page))
+		elog(STOP, "btree_split_undo: uninitialized left sibling");
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-	isleaf = P_ISLEAF(pageop);
-	parent = pageop->btpo_parent;
 
 	if (redo)
 	{
-		if (XLByteLE(lsn, PageGetLSN(page)))
-			UnlockAndReleaseBuffer(buffer);
+		pageop->btpo_parent = BlockIdGetBlockNumber(&(xlrec->parentblk));
+		pageop->btpo_prev = BlockIdGetBlockNumber(&(xlrec->leftblk));
+		if (onleft)
+			pageop->btpo_next = BlockIdGetBlockNumber(&(xlrec->otherblk));
 		else
-		{
-			/* Delete items related to new right sibling */
-			_bt_fix_left_page(page, record, onleft);
+			pageop->btpo_next = ItemPointerGetBlockNumber(&(xlrec->target.tid));
+		pageop->btpo_flags = (isleaf) ? BTP_LEAF : 0;
 
-			if (onleft)
-			{
-				BTItemData	btdata;
-				Size		hsize = SizeOfBtreeSplit;
-				Size		itemsz;
-				RelFileNode	hnode;
+		_bt_restore_page(page, (char*)xlrec + SizeOfBtreeSplit, xlrec->leftlen);
 
-				pageop->btpo_next = BlockIdGetBlockNumber(&(xlrec->otherblk));
-				if (isleaf)
-				{
-					hsize += (sizeof(CommandId) + sizeof(RelFileNode));
-					memcpy(&hnode, (char*)xlrec + SizeOfBtreeSplit + 
-								sizeof(CommandId), sizeof(RelFileNode));
-				}
-				else
-				{
-					memcpy(&btdata, (char*)xlrec + hsize, sizeof(BTItemData));
-					itemsz = IndexTupleDSize(btdata.bti_itup) +
-								(sizeof(BTItemData) - sizeof(IndexTupleData));
-					hsize += itemsz;
-				}
-
-				memcpy(&btdata, (char*)xlrec + hsize, sizeof(BTItemData));
-				itemsz = IndexTupleDSize(btdata.bti_itup) +
-							(sizeof(BTItemData) - sizeof(IndexTupleData));
-
-				if (! _bt_add_item(page, 
-						ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
-						(char*)xlrec + hsize,
-						itemsz,
-						hnode))
-					elog(STOP, "btree_split_redo: failed to add item");
-			}
-			else
-				pageop->btpo_next = ItemPointerGetBlockNumber(&(xlrec->target.tid));
-
-			pageop->btpo_flags &= ~BTP_ROOT;
-
-			PageSetLSN(page, lsn);
-			PageSetSUI(page, ThisStartUpID);
-			UnlockAndWriteBuffer(buffer);
-		}
+		PageSetLSN(page, lsn);
+		PageSetSUI(page, ThisStartUpID);
+		UnlockAndWriteBuffer(buffer);
 	}
 	else	/* undo */
 	{
 		if (XLByteLT(PageGetLSN(page), lsn))
 			elog(STOP, "btree_split_undo: bad left sibling LSN");
-
-		if (! isleaf || ! onleft)
-			UnlockAndReleaseBuffer(buffer);
-		else
-		{
-			BTItemData		btdata;
-
-			memcpy(&btdata, (char*)xlrec + SizeOfBtreeSplit + 
-				sizeof(CommandId) + sizeof(RelFileNode), sizeof(BTItemData));
-
-			_bt_del_item(reln, buffer, &btdata, false, lsn, record);
-		}
+		elog(STOP, "btree_split_undo: unimplemented");
 	}
 
 	/* Right (new) sibling */
@@ -1207,105 +908,38 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 		elog(STOP, "btree_split_%s: lost right sibling", op);
 
 	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page))
-	{
-		if (!redo)
-			elog(STOP, "btree_split_undo: uninitialized right sibling");
-		PageInit(page, BufferGetPageSize(buffer), 0);
-	}
+	if (redo)
+		_bt_pageinit(page, BufferGetPageSize(buffer));
+	else if (PageIsNew((PageHeader) page))
+		elog(STOP, "btree_split_undo: uninitialized right sibling");
+	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	if (redo)
 	{
-		if (XLByteLE(lsn, PageGetLSN(page)))
-			UnlockAndReleaseBuffer(buffer);
-		else
-		{
-			Size		hsize = SizeOfBtreeSplit;
-			BTItemData	btdata;
-			Size		itemsz;
-			char	   *item;
+		pageop->btpo_parent = BlockIdGetBlockNumber(&(xlrec->parentblk));
+		pageop->btpo_prev = (onleft) ? 
+				ItemPointerGetBlockNumber(&(xlrec->target.tid)) :
+				BlockIdGetBlockNumber(&(xlrec->otherblk));
+		pageop->btpo_next = BlockIdGetBlockNumber(&(xlrec->rightblk));
+		pageop->btpo_flags = (isleaf) ? BTP_LEAF : 0;
 
-			_bt_pageinit(page, BufferGetPageSize(buffer));
-			pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-			if (isleaf)
-			{
-				pageop->btpo_flags |= BTP_LEAF;
-				hsize += (sizeof(CommandId) + sizeof(RelFileNode));
-			}
-			else
-			{
-				memcpy(&btdata, (char*)xlrec + hsize, sizeof(BTItemData));
-				itemsz = IndexTupleDSize(btdata.bti_itup) +
-							(sizeof(BTItemData) - sizeof(IndexTupleData));
-				hsize += itemsz;
-			}
-			if (onleft)		/* skip target item */
-			{
-				memcpy(&btdata, (char*)xlrec + hsize, sizeof(BTItemData));
-				itemsz = IndexTupleDSize(btdata.bti_itup) +
-							(sizeof(BTItemData) - sizeof(IndexTupleData));
-				hsize += itemsz;
-			}
+		_bt_restore_page(page,
+				(char*)xlrec + SizeOfBtreeSplit + xlrec->leftlen,
+				record->xl_len - SizeOfBtreeSplit - xlrec->leftlen);
 
-			for (item = (char*)xlrec + hsize;
-					item < (char*)xlrec + record->xl_len; )
-			{
-				memcpy(&btdata, item, sizeof(BTItemData));
-				itemsz = IndexTupleDSize(btdata.bti_itup) +
-							(sizeof(BTItemData) - sizeof(IndexTupleData));
-				itemsz = MAXALIGN(itemsz);
-				if (PageAddItem(page, (Item) item, itemsz, FirstOffsetNumber,	
-						LP_USED) == InvalidOffsetNumber)
-					elog(STOP, "btree_split_redo: can't add item to right sibling");
-				item += itemsz;
-			}
-
-			pageop->btpo_prev = (onleft) ? ItemPointerGetBlockNumber(&(xlrec->target.tid)) :
-					BlockIdGetBlockNumber(&(xlrec->otherblk));
-			pageop->btpo_next = BlockIdGetBlockNumber(&(xlrec->rightblk));
-			pageop->btpo_parent = parent;
-
-			PageSetLSN(page, lsn);
-			PageSetSUI(page, ThisStartUpID);
-			UnlockAndWriteBuffer(buffer);
-		}
+		PageSetLSN(page, lsn);
+		PageSetSUI(page, ThisStartUpID);
+		UnlockAndWriteBuffer(buffer);
 	}
 	else	/* undo */
 	{
 		if (XLByteLT(PageGetLSN(page), lsn))
 			elog(STOP, "btree_split_undo: bad right sibling LSN");
-
-		if (! isleaf || onleft)
-			UnlockAndReleaseBuffer(buffer);
-		else
-		{
-			char		tbuf[BLCKSZ];
-			int			cnt;
-			char	   *item;
-			Size		itemsz;
-
-			item = (char*)xlrec + SizeOfBtreeSplit +
-					sizeof(CommandId) + sizeof(RelFileNode);
-			for (cnt = 0; item < (char*)xlrec + record->xl_len; )
-			{
-				BTItem	btitem = (BTItem)
-					(tbuf + cnt * (MAXALIGN(sizeof(BTItemData))));
-				memcpy(btitem, item, sizeof(BTItemData));
-				itemsz = IndexTupleDSize(btitem->bti_itup) +
-							(sizeof(BTItemData) - sizeof(IndexTupleData));
-				itemsz = MAXALIGN(itemsz);
-				item += itemsz;
-				cnt++;
-			}
-			cnt -= ItemPointerGetOffsetNumber(&(xlrec->target.tid));
-			if (cnt < 0)
-				elog(STOP, "btree_split_undo: target item unfound in right sibling");
-
-			item = tbuf + cnt * (MAXALIGN(sizeof(BTItemData)));
-
-			_bt_del_item(reln, buffer, (BTItem)item, false, lsn, record);
-		}
+		elog(STOP, "btree_split_undo: unimplemented");
 	}
+
+	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
+		return;
 
 	/* Right (next) page */
 	blkno = BlockIdGetBlockNumber(&(xlrec->rightblk));
@@ -1314,52 +948,42 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 
 	buffer = XLogReadBuffer(false, reln, blkno);
 	if (!BufferIsValid(buffer))
-		elog(STOP, "btree_split_%s: lost next right page", op);
+		elog(STOP, "btree_split_redo: lost next right page");
 
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
-		elog(STOP, "btree_split_%s: uninitialized next right page", op);
+		elog(STOP, "btree_split_redo: uninitialized next right page");
 
-	if (redo)
+	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
-		if (XLByteLE(lsn, PageGetLSN(page)))
-			UnlockAndReleaseBuffer(buffer);
-		else
-		{
-			pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-			pageop->btpo_prev = (onleft) ? 
-					BlockIdGetBlockNumber(&(xlrec->otherblk)) :
-					ItemPointerGetBlockNumber(&(xlrec->target.tid));
-
-			PageSetLSN(page, lsn);
-			PageSetSUI(page, ThisStartUpID);
-			UnlockAndWriteBuffer(buffer);
-		}
-	}
-	else	/* undo */
-	{
-		if (XLByteLT(PageGetLSN(page), lsn))
-			elog(STOP, "btree_split_undo: bad next right page LSN");
-
 		UnlockAndReleaseBuffer(buffer);
+		return;
 	}
+	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
+	pageop->btpo_prev = (onleft) ? 
+			BlockIdGetBlockNumber(&(xlrec->otherblk)) :
+			ItemPointerGetBlockNumber(&(xlrec->target.tid));
 
+	PageSetLSN(page, lsn);
+	PageSetSUI(page, ThisStartUpID);
+	UnlockAndWriteBuffer(buffer);
 }
 
 static void
 btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
-	xl_btree_newroot   *xlrec;
+	xl_btree_newroot   *xlrec = (xl_btree_newroot*) XLogRecGetData(record);
 	Relation			reln;
 	Buffer				buffer;
 	Page				page;
+	BTPageOpaque		pageop;
 	Buffer				metabuf;
 	Page				metapg;
+	BTMetaPageData		md;
 
 	if (!redo)
 		return;
 
-	xlrec = (xl_btree_newroot*) XLogRecGetData(record);
 	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->node);
 	if (!RelationIsValid(reln))
 		return;
@@ -1370,74 +994,36 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	if (!BufferIsValid(buffer))
 		elog(STOP, "btree_newroot_redo: no metapage");
 	page = (Page) BufferGetPage(buffer);
+	_bt_pageinit(page, BufferGetPageSize(buffer));
+	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	if (PageIsNew((PageHeader) page) || XLByteLT(PageGetLSN(page), lsn))
-	{
-		BTPageOpaque	pageop;
+	pageop->btpo_flags |= BTP_ROOT;
+	pageop->btpo_prev = pageop->btpo_next = P_NONE;
+	pageop->btpo_parent = BTREE_METAPAGE;
 
-		_bt_pageinit(page, BufferGetPageSize(buffer));
-		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
+	if (record->xl_info & XLOG_BTREE_LEAF)
+		pageop->btpo_flags |= BTP_LEAF;
 
-		pageop->btpo_flags |= BTP_ROOT;
-		pageop->btpo_prev = pageop->btpo_next = P_NONE;
-		pageop->btpo_parent = BTREE_METAPAGE;
+	if (record->xl_len > SizeOfBtreeNewroot)
+		_bt_restore_page(page,
+				(char*)xlrec + SizeOfBtreeNewroot,
+				record->xl_len - SizeOfBtreeNewroot);
 
-		if (record->xl_len == SizeOfBtreeNewroot)	/* no childs */
-			pageop->btpo_flags |= BTP_LEAF;
-		else
-		{
-			BTItemData	btdata;
-			Size		itemsz;
-			char	   *item;
-
-			for (item = (char*)xlrec + SizeOfBtreeNewroot;
-					item < (char*)xlrec + record->xl_len; )
-			{
-				memcpy(&btdata, item, sizeof(BTItemData));
-				itemsz = IndexTupleDSize(btdata.bti_itup) +
-							(sizeof(BTItemData) - sizeof(IndexTupleData));
-				itemsz = MAXALIGN(itemsz);
-				if (PageAddItem(page, (Item) item, itemsz, FirstOffsetNumber,	
-						LP_USED) == InvalidOffsetNumber)
-					elog(STOP, "btree_newroot_redo: can't add item");
-				item += itemsz;
-			}
-		}
-
-		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);
-		UnlockAndWriteBuffer(buffer);
-	}
-	else
-		UnlockAndReleaseBuffer(buffer);
+	PageSetLSN(page, lsn);
+	PageSetSUI(page, ThisStartUpID);
+	UnlockAndWriteBuffer(buffer);
 
 	metapg = BufferGetPage(metabuf);
-	if (PageIsNew((PageHeader) metapg))
-	{
-		BTMetaPageData	md;
+	_bt_pageinit(metapg, BufferGetPageSize(metabuf));
+	md.btm_magic = BTREE_MAGIC;
+	md.btm_version = BTREE_VERSION;
+	md.btm_root = BlockIdGetBlockNumber(&(xlrec->rootblk));
+	md.btm_level = xlrec->level;
+	memcpy((char *) BTPageGetMeta(metapg), (char *) &md, sizeof(md));
 
-		_bt_pageinit(metapg, BufferGetPageSize(metabuf));
-		md.btm_magic = BTREE_MAGIC;
-		md.btm_version = BTREE_VERSION;
-		md.btm_root = P_NONE;
-		md.btm_level = 0;
-		memcpy((char *) BTPageGetMeta(metapg), (char *) &md, sizeof(md));
-	}
-
-	if (XLByteLT(PageGetLSN(metapg), lsn))
-	{
-		BTMetaPageData	   *metad = BTPageGetMeta(metapg);
-
-		metad->btm_root = BlockIdGetBlockNumber(&(xlrec->rootblk));
-		(metad->btm_level)++;
-		PageSetLSN(metapg, lsn);
-		PageSetSUI(metapg, ThisStartUpID);
-		UnlockAndWriteBuffer(metabuf);
-	}
-	else
-		UnlockAndReleaseBuffer(metabuf);
-
-	return;
+	PageSetLSN(metapg, lsn);
+	PageSetSUI(metapg, ThisStartUpID);
+	UnlockAndWriteBuffer(metabuf);
 }
 
 void
@@ -1445,6 +1031,7 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8	info = record->xl_info & ~XLR_INFO_MASK;
 
+	info &= ~XLOG_BTREE_LEAF;
 	if (info == XLOG_BTREE_DELETE)
 		btree_xlog_delete(true, lsn, record);
 	else if (info == XLOG_BTREE_INSERT)
@@ -1464,6 +1051,7 @@ btree_undo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8	info = record->xl_info & ~XLR_INFO_MASK;
 
+	info &= ~XLOG_BTREE_LEAF;
 	if (info == XLOG_BTREE_DELETE)
 		btree_xlog_delete(false, lsn, record);
 	else if (info == XLOG_BTREE_INSERT)
@@ -1492,6 +1080,7 @@ btree_desc(char *buf, uint8 xl_info, char* rec)
 {
 	uint8	info = xl_info & ~XLR_INFO_MASK;
 
+	info &= ~XLOG_BTREE_LEAF;
 	if (info == XLOG_BTREE_INSERT)
 	{
 		xl_btree_insert	*xlrec = (xl_btree_insert*) rec;

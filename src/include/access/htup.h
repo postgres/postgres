@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.42 2000/12/27 23:59:13 tgl Exp $
+ * $Id: htup.h,v 1.43 2000/12/28 13:00:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,13 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 #define	XLOG_HEAP_DELETE	0x10
 #define	XLOG_HEAP_UPDATE	0x20
 #define	XLOG_HEAP_MOVE		0x30
+#define	XLOG_HEAP_CLEAN		0x40
+#define XLOG_HEAP_OPMASK	0x70
+/*
+ * When we insert 1st item on new page in INSERT/UPDATE
+ * we can (and we do) restore entire page in redo
+ */
+#define	XLOG_HEAP_INIT_PAGE	0x80
 
 /*
  * All what we need to find changed tuple (18 bytes)
@@ -78,13 +85,10 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 typedef struct xl_heaptid
 {
 	RelFileNode			node;
-	CommandId			cid;		/* this is for "better" tuple' */
-									/* identification - it allows to avoid */
-									/* "compensation" records for undo */
 	ItemPointerData		tid;		/* changed tuple id */
 } xl_heaptid;
 
-/* This is what we need to know about delete - ALIGN(18) = 24 bytes */
+/* This is what we need to know about delete */
 typedef struct xl_heap_delete
 {
 	xl_heaptid			target;		/* deleted tuple id */
@@ -92,35 +96,44 @@ typedef struct xl_heap_delete
 
 #define	SizeOfHeapDelete	(offsetof(xl_heaptid, tid) + SizeOfIptrData)
 
-/* This is what we need to know about insert - 26 + data */
+typedef struct xl_heap_header
+{
+	Oid					t_oid;
+	int16				t_natts;
+	uint8				t_hoff;
+	uint8				mask;		/* low 8 bits of t_infomask */
+} xl_heap_header;
+
+#define SizeOfHeapHeader	(offsetof(xl_heap_header, mask) + sizeof(uint8))
+
+/* This is what we need to know about insert */
 typedef struct xl_heap_insert
 {
 	xl_heaptid			target;		/* inserted tuple id */
-	/* something from tuple header */
-	int16				t_natts;
-	Oid					t_oid;
-	uint8				t_hoff;
-	uint8				mask;		/* low 8 bits of t_infomask */
-	/* TUPLE DATA FOLLOWS AT END OF STRUCT */
+	/* xl_heap_header & TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_insert;
 
-#define SizeOfHeapInsert	(offsetof(xl_heap_insert, mask) + sizeof(uint8))
+#define SizeOfHeapInsert	(offsetof(xl_heaptid, tid) + SizeOfIptrData)
 
-/* This is what we need to know about update|move - 32|36 + data */
+/* This is what we need to know about update|move */
 typedef struct xl_heap_update
 {
 	xl_heaptid			target;		/* deleted tuple id */
 	ItemPointerData		newtid;		/* new inserted tuple id */
-	/* something from header of new tuple version */
-	Oid					t_oid;
-	int16				t_natts;
-	uint8				t_hoff;
-	uint8				mask;		/* low 8 bits of t_infomask */
-	/* NEW TUPLE DATA FOLLOWS AT END OF STRUCT */
-	/* (AFTER XMAX FOR MOVE OP) */
+	/* NEW TUPLE xl_heap_header (XMIN & XMAX FOR MOVE OP) */
+	/* and TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_update;
 
-#define SizeOfHeapUpdate	(offsetof(xl_heap_update, mask) + sizeof(uint8))
+#define SizeOfHeapUpdate	(offsetof(xl_heap_update, newtid) + SizeOfIptrData)
+
+/* This is what we need to know about page cleanup */
+typedef struct xl_heap_clean
+{
+	RelFileNode			node;
+	BlockNumber			block;
+} xl_heap_clean;
+
+#define	SizeOfHeapClean	(offsetof(xl_heap_clean, block) + sizeof(BlockNumber))
 
 /*
  * MaxTupleSize is the maximum allowed size of a tuple, including header and

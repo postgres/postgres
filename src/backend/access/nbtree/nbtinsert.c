@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.70 2000/12/03 10:27:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.71 2000/12/28 13:00:07 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -520,39 +520,40 @@ _bt_insertonpg(Relation rel,
 	{
 		/* XLOG stuff */
 		{
-			char				xlbuf[sizeof(xl_btree_insert) + 
-					sizeof(CommandId) + sizeof(RelFileNode)];
-			xl_btree_insert	   *xlrec = (xl_btree_insert*)xlbuf;
-			int					hsize = SizeOfBtreeInsert;
-			BTItemData			truncitem;
-			BTItem				xlitem = btitem;
-			Size				xlsize = IndexTupleDSize(btitem->bti_itup) + 
-							(sizeof(BTItemData) - sizeof(IndexTupleData));
+			xl_btree_insert		xlrec;
+			uint8				flag = XLOG_BTREE_INSERT;
 			XLogRecPtr			recptr;
+			XLogRecData			rdata[2];
 
-			xlrec->target.node = rel->rd_node;
-			ItemPointerSet(&(xlrec->target.tid), BufferGetBlockNumber(buf), newitemoff);
-			if (P_ISLEAF(lpageop))
- 			{
-				CommandId	cid = GetCurrentCommandId();
-				memcpy(xlbuf + hsize, &cid, sizeof(CommandId));
-				hsize += sizeof(CommandId);
-				memcpy(xlbuf + hsize, &(_xlheapRel->rd_node), sizeof(RelFileNode));
-				hsize += sizeof(RelFileNode);
-			}
-			/*
-			 * Read comments in _bt_pgaddtup
-			 */
-			else if (newitemoff == P_FIRSTDATAKEY(lpageop))
+			xlrec.target.node = rel->rd_node;
+			ItemPointerSet(&(xlrec.target.tid), BufferGetBlockNumber(buf), newitemoff);
+			rdata[0].buffer = InvalidBuffer;
+			rdata[0].data = (char*)&xlrec;
+			rdata[0].len = SizeOfBtreeInsert;
+			rdata[0].next = &(rdata[1]);
+
+			/* Read comments in _bt_pgaddtup */
+			if (!(P_ISLEAF(lpageop)) && newitemoff == P_FIRSTDATAKEY(lpageop))
 			{
-				truncitem = *btitem;
-				truncitem.bti_itup.t_info = sizeof(BTItemData);
-				xlitem = &truncitem;
-				xlsize = sizeof(BTItemData);
-			}
+				BTItemData	truncitem = *btitem;
 
-			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_INSERT,
-				xlbuf, hsize, (char*) xlitem, xlsize);
+				truncitem.bti_itup.t_info = sizeof(BTItemData);
+				rdata[1].data = (char*)&truncitem;
+				rdata[1].len = sizeof(BTItemData);
+			}
+			else
+			{
+				rdata[1].data = (char*)btitem;
+				rdata[1].len = IndexTupleDSize(btitem->bti_itup) + 
+							(sizeof(BTItemData) - sizeof(IndexTupleData));
+			}
+			rdata[1].buffer = buf;
+			rdata[1].next = NULL;
+
+			if (P_ISLEAF(lpageop))
+				flag |= XLOG_BTREE_LEAF;
+
+			recptr = XLogInsert(RM_BTREE_ID, flag, rdata);
 
 			PageSetLSN(page, recptr);
 			PageSetSUI(page, ThisStartUpID);
@@ -774,71 +775,63 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 */
 	START_CRIT_CODE;
 	{
-		char				xlbuf[sizeof(xl_btree_split) + 
-			sizeof(CommandId) + sizeof(RelFileNode) + BLCKSZ];
-		xl_btree_split	   *xlrec = (xl_btree_split*) xlbuf;
-		int					hsize = SizeOfBtreeSplit;
-		int					flag = (newitemonleft) ? 
-				XLOG_BTREE_SPLEFT : XLOG_BTREE_SPLIT;
-		BlockNumber			blkno;
-		XLogRecPtr			recptr;
+		xl_btree_split	xlrec;
+		int				flag = (newitemonleft) ? 
+								XLOG_BTREE_SPLEFT : XLOG_BTREE_SPLIT;
+		BlockNumber		blkno;
+		XLogRecPtr		recptr;
+		XLogRecData		rdata[4];
 
-		xlrec->target.node = rel->rd_node;
-		ItemPointerSet(&(xlrec->target.tid), *itup_blkno, *itup_off);
-		if (P_ISLEAF(lopaque))
-		{
-			CommandId	cid = GetCurrentCommandId();
-			memcpy(xlbuf + hsize, &cid, sizeof(CommandId));
-			hsize += sizeof(CommandId);
-			memcpy(xlbuf + hsize, &(_xlheapRel->rd_node), sizeof(RelFileNode));
-			hsize += sizeof(RelFileNode);
-		}
-		else
-		{
-			Size	itemsz = IndexTupleDSize(lhikey->bti_itup) + 
-						(sizeof(BTItemData) - sizeof(IndexTupleData));
-			memcpy(xlbuf + hsize, (char*) lhikey, itemsz);
-			hsize += itemsz;
-		}
+		xlrec.target.node = rel->rd_node;
+		ItemPointerSet(&(xlrec.target.tid), *itup_blkno, *itup_off);
 		if (newitemonleft)
 		{
-			/*
-			 * Read comments in _bt_pgaddtup.
-			 * Actually, seems that in non-leaf splits newitem shouldn't
-			 * go to first data key position on left page.
-			 */
-			if (! P_ISLEAF(lopaque) && *itup_off == P_FIRSTDATAKEY(lopaque))
-			{
-				BTItemData	truncitem = *newitem;
-				truncitem.bti_itup.t_info = sizeof(BTItemData);
-				memcpy(xlbuf + hsize, &truncitem, sizeof(BTItemData));
-				hsize += sizeof(BTItemData);
-			}
-			else
-			{
-				Size	itemsz = IndexTupleDSize(newitem->bti_itup) + 
-							(sizeof(BTItemData) - sizeof(IndexTupleData));
-				memcpy(xlbuf + hsize, (char*) newitem, itemsz);
-				hsize += itemsz;
-			}
 			blkno = BufferGetBlockNumber(rbuf);
-			BlockIdSet(&(xlrec->otherblk), blkno);
+			BlockIdSet(&(xlrec.otherblk), blkno);
 		}
 		else
 		{
 			blkno = BufferGetBlockNumber(buf);
-			BlockIdSet(&(xlrec->otherblk), blkno);
+			BlockIdSet(&(xlrec.otherblk), blkno);
 		}
-
-		BlockIdSet(&(xlrec->rightblk), ropaque->btpo_next);
-
+		BlockIdSet(&(xlrec.parentblk), lopaque->btpo_parent);
+		BlockIdSet(&(xlrec.leftblk), lopaque->btpo_prev);
+		BlockIdSet(&(xlrec.rightblk), ropaque->btpo_next);
 		/* 
 		 * Dirrect access to page is not good but faster - we should 
 		 * implement some new func in page API.
 		 */
-		recptr = XLogInsert(RM_BTREE_ID, flag, xlbuf, 
-			hsize, (char*)rightpage + ((PageHeader) rightpage)->pd_upper,
-			((PageHeader) rightpage)->pd_special - ((PageHeader) rightpage)->pd_upper);
+		xlrec.leftlen = ((PageHeader)leftpage)->pd_special -
+							((PageHeader)leftpage)->pd_upper;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char*)&xlrec;
+		rdata[0].len = SizeOfBtreeSplit;
+		rdata[0].next = &(rdata[1]);
+
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].data = (char*)leftpage + ((PageHeader)leftpage)->pd_upper;
+		rdata[1].len = xlrec.leftlen;
+		rdata[1].next = &(rdata[2]);
+
+		rdata[2].buffer = InvalidBuffer;
+		rdata[2].data = (char*)rightpage + ((PageHeader)rightpage)->pd_upper;
+		rdata[2].len = ((PageHeader)rightpage)->pd_special -
+							((PageHeader)rightpage)->pd_upper;
+		rdata[2].next = NULL;
+
+		if (!P_RIGHTMOST(ropaque))
+		{
+			rdata[2].next = &(rdata[3]);
+			rdata[3].buffer = sbuf;
+			rdata[3].data = NULL;
+			rdata[3].len = 0;
+			rdata[3].next = NULL;
+		}
+
+		if (P_ISLEAF(lopaque))
+			flag |= XLOG_BTREE_LEAF;
+
+		recptr = XLogInsert(RM_BTREE_ID, flag, rdata);
 
 		PageSetLSN(leftpage, recptr);
 		PageSetSUI(leftpage, ThisStartUpID);
@@ -1143,25 +1136,29 @@ _bt_getstackbuf(Relation rel, BTStack stack)
 void
 _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 {
-	Buffer		rootbuf;
-	Page		lpage,
-				rpage,
-				rootpage;
-	BlockNumber lbkno,
-				rbkno;
-	BlockNumber rootblknum;
-	BTPageOpaque rootopaque;
-	ItemId		itemid;
-	BTItem		item;
-	Size		itemsz;
-	BTItem		new_item;
-	Buffer		metabuf;
+	Buffer			rootbuf;
+	Page			lpage,
+					rpage,
+					rootpage;
+	BlockNumber		lbkno,
+					rbkno;
+	BlockNumber		rootblknum;
+	BTPageOpaque	rootopaque;
+	ItemId			itemid;
+	BTItem			item;
+	Size			itemsz;
+	BTItem			new_item;
+	Buffer			metabuf;
+	Page			metapg;
+	BTMetaPageData *metad;
 
 	/* get a new root page */
 	rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 	rootpage = BufferGetPage(rootbuf);
 	rootblknum = BufferGetBlockNumber(rootbuf);
-	metabuf = _bt_getbuf(rel, BTREE_METAPAGE,BT_WRITE);
+	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
+	metapg = BufferGetPage(metabuf);
+	metad = BTPageGetMeta(metapg);
 
 	/* NO ELOG(ERROR) from here till newroot op is logged */
 	START_CRIT_CODE;
@@ -1222,39 +1219,46 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		elog(STOP, "btree: failed to add rightkey to new root page");
 	pfree(new_item);
 
+	metad->btm_root = rootblknum;
+	(metad->btm_level)++;
+
 	/* XLOG stuff */
 	{
 		xl_btree_newroot	xlrec;
-		Page				metapg = BufferGetPage(metabuf);
-		BTMetaPageData	   *metad = BTPageGetMeta(metapg);
 		XLogRecPtr			recptr;
+		XLogRecData			rdata[2];
 
 		xlrec.node = rel->rd_node;
+		xlrec.level = metad->btm_level;
 		BlockIdSet(&(xlrec.rootblk), rootblknum);
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char*)&xlrec;
+		rdata[0].len = SizeOfBtreeNewroot;
+		rdata[0].next = &(rdata[1]);
 
 		/* 
 		 * Dirrect access to page is not good but faster - we should 
 		 * implement some new func in page API.
 		 */
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT,
-			(char*)&xlrec, SizeOfBtreeNewroot, 
-			(char*)rootpage + ((PageHeader) rootpage)->pd_upper,
-			((PageHeader) rootpage)->pd_special - ((PageHeader) rootpage)->pd_upper);
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].data = (char*)rootpage + ((PageHeader) rootpage)->pd_upper;
+		rdata[1].len = ((PageHeader)rootpage)->pd_special - 
+							((PageHeader)rootpage)->pd_upper;
+		rdata[1].next = NULL;
 
-		metad->btm_root = rootblknum;
-		(metad->btm_level)++;
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, rdata);
 
 		PageSetLSN(rootpage, recptr);
 		PageSetSUI(rootpage, ThisStartUpID);
 		PageSetLSN(metapg, recptr);
 		PageSetSUI(metapg, ThisStartUpID);
 
-		_bt_wrtbuf(rel, metabuf);
 	}
 	END_CRIT_CODE;
 
 	/* write and let go of the new root buffer */
 	_bt_wrtbuf(rel, rootbuf);
+	_bt_wrtbuf(rel, metabuf);
 
 	/* update and release new sibling, and finally the old root */
 	_bt_wrtbuf(rel, rbuf);

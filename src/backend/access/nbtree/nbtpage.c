@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.43 2000/12/03 10:27:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.44 2000/12/28 13:00:07 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -167,6 +167,9 @@ _bt_getroot(Relation rel, int access)
 			/* NO ELOG(ERROR) till meta is updated */
 			START_CRIT_CODE;
 
+			metad->btm_root = rootblkno;
+			metad->btm_level = 1;
+
 			_bt_pageinit(rootpage, BufferGetPageSize(rootbuf));
 			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 			rootopaque->btpo_flags |= (BTP_LEAF | BTP_ROOT);
@@ -175,22 +178,26 @@ _bt_getroot(Relation rel, int access)
 			{
 				xl_btree_newroot	xlrec;
 				XLogRecPtr			recptr;
+				XLogRecData			rdata;
 
 				xlrec.node = rel->rd_node;
+				xlrec.level = 1;
 				BlockIdSet(&(xlrec.rootblk), rootblkno);
+				rdata.buffer = InvalidBuffer;
+				rdata.data = (char*)&xlrec;
+				rdata.len = SizeOfBtreeNewroot;
+				rdata.next = NULL;
 
-				recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT,
-					(char*)&xlrec, SizeOfBtreeNewroot, NULL, 0);
+				recptr = XLogInsert(RM_BTREE_ID,
+							XLOG_BTREE_NEWROOT|XLOG_BTREE_LEAF, &rdata);
 
 				PageSetLSN(rootpage, recptr);
 				PageSetSUI(rootpage, ThisStartUpID);
 				PageSetLSN(metapg, recptr);
 				PageSetSUI(metapg, ThisStartUpID);
 			}
-			END_CRIT_CODE;
 
-			metad->btm_root = rootblkno;
-			metad->btm_level = 1;
+			END_CRIT_CODE;
 
 			_bt_wrtnorelbuf(rel, rootbuf);
 
@@ -408,11 +415,21 @@ _bt_pagedel(Relation rel, ItemPointer tid)
 	{
 		xl_btree_delete	xlrec;
 		XLogRecPtr		recptr;
+		XLogRecData		rdata[2];
 
 		xlrec.target.node = rel->rd_node;
 		xlrec.target.tid = *tid;
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE,
-			(char*) &xlrec, SizeOfBtreeDelete, NULL, 0);
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char*)&xlrec;
+		rdata[0].len = SizeOfBtreeDelete;
+		rdata[0].next = &(rdata[1]);
+
+		rdata[1].buffer = buf;
+		rdata[1].data = NULL;
+		rdata[1].len = 0;
+		rdata[1].next = NULL;
+
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE, rdata);
 
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);

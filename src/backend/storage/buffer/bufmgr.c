@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.99 2000/12/22 20:04:43 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.100 2000/12/28 13:00:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2207,4 +2207,17 @@ MarkBufferForCleanup(Buffer buffer, void (*CleanupFunc)(Buffer))
 	}
 	SpinRelease(BufMgrLock);
 	return;
+}
+
+RelFileNode
+BufferGetFileNode(Buffer buffer)
+{
+	BufferDesc *bufHdr;
+
+	if (BufferIsLocal(buffer))
+		bufHdr = &(LocalBufferDescriptors[-buffer - 1]);
+	else
+		bufHdr = &BufferDescriptors[buffer - 1];
+
+	return(bufHdr->tag.rnode);
 }

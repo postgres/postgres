@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.90 2000/12/22 00:51:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.91 2000/12/28 13:00:08 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -665,6 +665,7 @@ RecordTransactionCommit()
 
 	if (MyLastRecPtr.xrecoff != 0)
 	{
+		XLogRecData		rdata;
 		xl_xact_commit	xlrec;
 		struct timeval	delay;
 		XLogRecPtr		recptr;
@@ -672,12 +673,16 @@ RecordTransactionCommit()
 		BufmgrCommit();
 
 		xlrec.xtime = time(NULL);
+		rdata.buffer = InvalidBuffer;
+		rdata.data = (char *)(&xlrec);
+		rdata.len = SizeOfXactCommit;
+		rdata.next = NULL;
+
 		START_CRIT_CODE;
 		/*
 		 * SHOULD SAVE ARRAY OF RELFILENODE-s TO DROP
 		 */
-		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT,
-			(char*) &xlrec, SizeOfXactCommit, NULL, 0);
+		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT, &rdata);
 
 		/* 
 		 * Sleep before commit! So we can flush more than one
@@ -785,13 +790,18 @@ RecordTransactionAbort(void)
 
 	if (MyLastRecPtr.xrecoff != 0 && !TransactionIdDidCommit(xid))
 	{
+		XLogRecData		rdata;
 		xl_xact_abort	xlrec;
 		XLogRecPtr		recptr;
 
 		xlrec.xtime = time(NULL);
+		rdata.buffer = InvalidBuffer;
+		rdata.data = (char *)(&xlrec);
+		rdata.len = SizeOfXactAbort;
+		rdata.next = NULL;
+
 		START_CRIT_CODE;
-		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT,
-			(char*) &xlrec, SizeOfXactAbort, NULL, 0);
+		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT, &rdata);
 
 		TransactionIdAbort(xid);
 		MyProc->logRec.xrecoff = 0;

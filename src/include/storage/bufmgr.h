@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.47 2000/12/18 00:44:49 tgl Exp $
+ * $Id: bufmgr.h,v 1.48 2000/12/28 13:00:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,6 +183,7 @@ extern void DropBuffers(Oid dbid);
 extern void PrintPinnedBufs(void);
 extern int	BufferShmemSize(void);
 extern int	ReleaseBuffer(Buffer buffer);
+extern RelFileNode BufferGetFileNode(Buffer buffer);
 
 extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.179 2000/12/22 23:12:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.180 2000/12/28 13:00:18 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,10 @@
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 
+extern XLogRecPtr	log_heap_clean(Relation reln, Buffer buffer);
 extern XLogRecPtr	log_heap_move(Relation reln, 
-						ItemPointerData from, HeapTuple newtup);
+						Buffer oldbuf, ItemPointerData from,
+						Buffer newbuf, HeapTuple newtup);
 
 static MemoryContext vac_context = NULL;
 
@@ -65,7 +67,7 @@ static void vacuum_rel(Oid relid);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages, VacPageList fraged_pages);
 static void repair_frag(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages, VacPageList fraged_pages, int nindices, Relation *Irel);
 static void vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacpagelist);
-static void vacuum_page(Page page, VacPage vacpage);
+static void vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage);
 static void vacuum_index(VacPageList vacpagelist, Relation indrel, int num_tuples, int keep_tuples);
 static void scan_index(Relation indrel, int num_tuples);
 static void update_relstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats);
@@ -1070,7 +1072,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			if (last_vacuum_page->offsets_free > 0) /* there are dead tuples */
 			{					/* on this page - clean */
 				Assert(!isempty);
-				vacuum_page(page, last_vacuum_page);
+				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+				vacuum_page(onerel, buf, last_vacuum_page);
+				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 				dowrite = true;
 			}
 			else
@@ -1469,7 +1473,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						int			sv_offsets_used = destvacpage->offsets_used;
 
 						destvacpage->offsets_used = 0;
-						vacuum_page(ToPage, destvacpage);
+						vacuum_page(onerel, cur_buffer, destvacpage);
 						destvacpage->offsets_used = sv_offsets_used;
 					}
 
@@ -1496,7 +1500,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					{
 						XLogRecPtr	recptr = 
-							log_heap_move(onerel, tuple.t_self, &newtup);
+							log_heap_move(onerel, Cbuf, tuple.t_self,
+												cur_buffer, &newtup);
 
 						if (Cbuf != cur_buffer)
 						{
@@ -1609,7 +1614,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				ToPage = BufferGetPage(cur_buffer);
 				/* if this page was not used before - clean it */
 				if (!PageIsEmpty(ToPage) && cur_page->offsets_used == 0)
-					vacuum_page(ToPage, cur_page);
+					vacuum_page(onerel, cur_buffer, cur_page);
 			}
 			else
 				LockBuffer(cur_buffer, BUFFER_LOCK_EXCLUSIVE);
@@ -1661,7 +1666,8 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 
 			{
 				XLogRecPtr	recptr = 
-					log_heap_move(onerel, tuple.t_self, &newtup);
+					log_heap_move(onerel, buf, tuple.t_self,
+										cur_buffer, &newtup);
 
 				PageSetLSN(page, recptr);
 				PageSetSUI(page, ThisStartUpID);
@@ -1810,11 +1816,12 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 	{
 		Assert((*curpage)->blkno < (BlockNumber) blkno);
 		buf = ReadBuffer(onerel, (*curpage)->blkno);
+		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 		page = BufferGetPage(buf);
 		if ((*curpage)->offsets_used == 0)		/* this page was not used */
 		{
 			if (!PageIsEmpty(page))
-				vacuum_page(page, *curpage);
+				vacuum_page(onerel, buf, *curpage);
 		}
 		else
 /* this page was used */
@@ -1848,6 +1855,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 			Assert((*curpage)->offsets_used == num_tuples);
 			checked_moved += num_tuples;
 		}
+		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		WriteBuffer(buf);
 	}
 	Assert(num_moved == checked_moved);
@@ -1891,6 +1899,8 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 			vacpage->offsets_free > 0)
 		{
 			buf = ReadBuffer(onerel, vacpage->blkno);
+			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+			START_CRIT_CODE;
 			page = BufferGetPage(buf);
 			num_tuples = 0;
 			for (offnum = FirstOffsetNumber;
@@ -1919,6 +1929,13 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 			}
 			Assert(vacpage->offsets_free == num_tuples);
 			PageRepairFragmentation(page);
+			{
+				XLogRecPtr	recptr = log_heap_clean(onerel, buf);
+				PageSetLSN(page, recptr);
+				PageSetSUI(page, ThisStartUpID);
+			}
+			END_CRIT_CODE;
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			WriteBuffer(buf);
 		}
 
@@ -1969,7 +1986,6 @@ static void
 vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 {
 	Buffer		buf;
-	Page		page;
 	VacPage    *vacpage;
 	int			nblocks;
 	int			i;
@@ -1983,8 +1999,9 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 		if ((*vacpage)->offsets_free > 0)
 		{
 			buf = ReadBuffer(onerel, (*vacpage)->blkno);
-			page = BufferGetPage(buf);
-			vacuum_page(page, *vacpage);
+			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+			vacuum_page(onerel, buf, *vacpage);
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			WriteBuffer(buf);
 		}
 	}
@@ -2020,20 +2037,28 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
  *					 and repair its fragmentation.
  */
 static void
-vacuum_page(Page page, VacPage vacpage)
+vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 {
+	Page		page = BufferGetPage(buffer);
 	ItemId		itemid;
 	int			i;
 
 	/* There shouldn't be any tuples moved onto the page yet! */
 	Assert(vacpage->offsets_used == 0);
 
+	START_CRIT_CODE;
 	for (i = 0; i < vacpage->offsets_free; i++)
 	{
 		itemid = &(((PageHeader) page)->pd_linp[vacpage->offsets[i] - 1]);
 		itemid->lp_flags &= ~LP_USED;
 	}
 	PageRepairFragmentation(page);
+	{
+		XLogRecPtr	recptr = log_heap_clean(onerel, buffer);
+		PageSetLSN(page, recptr);
+		PageSetSUI(page, ThisStartUpID);
+	}
+	END_CRIT_CODE;
 
 }
 

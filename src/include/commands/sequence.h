@@ -46,12 +46,11 @@ typedef FormData_pg_sequence *Form_pg_sequence;
 
 /* XLOG stuff */
 #define	XLOG_SEQ_LOG			0x00
-#define	XLOG_SEQ_SET			0x10
 
 typedef struct xl_seq_rec
 {
 	RelFileNode				node;
-	int4					value;		/* last logged value */
+	/* SEQUENCE TUPLE DATA FOLLOWS AT THE END */
 } xl_seq_rec;
 
 extern Datum nextval(PG_FUNCTION_ARGS);

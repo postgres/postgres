@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.46 2000/12/08 20:10:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.47 2000/12/28 13:00:17 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,25 +306,38 @@ nextval(PG_FUNCTION_ARGS)
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
+		XLogRecData	rdata[2];
+		Page		page = BufferGetPage(buf);
+
+		xlrec.node = elm->rel->rd_node;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char*)&xlrec;
+		rdata[0].len = sizeof(xl_seq_rec);
+		rdata[0].next = &(rdata[1]);
+
+		seq->last_value = next;
+		seq->is_called = 't';
+		seq->log_cnt = 0;
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].data = (char*)page + ((PageHeader) page)->pd_upper;
+		rdata[1].len = ((PageHeader)page)->pd_special - 
+						((PageHeader)page)->pd_upper;
+		rdata[1].next = NULL;
+
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG|XLOG_NO_TRAN, rdata);
+
+		PageSetLSN(page, recptr);
+		PageSetSUI(page, ThisStartUpID);
 
 		if (fetch)		/* not all numbers were fetched */
 			log -= fetch;
-
-		xlrec.node = elm->rel->rd_node;
-		xlrec.value = next;
-
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG|XLOG_NO_TRAN,
-					(char*) &xlrec, sizeof(xlrec), NULL, 0);
-
-		PageSetLSN(BufferGetPage(buf), recptr);
-		PageSetSUI(BufferGetPage(buf), ThisStartUpID);
 	}
 
-	/* save info in sequence relation */
+	/* update on-disk data */
 	seq->last_value = last;		/* last fetched number */
+	seq->is_called = 't';
 	Assert(log >= 0);
 	seq->log_cnt = log;			/* how much is logged */
-	seq->is_called = 't';
 	END_CRIT_CODE;
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -385,25 +398,37 @@ do_setval(char *seqname, int32 next, bool iscalled)
 	elm->last = next;			/* last returned number */
 	elm->cached = next;			/* last cached number (forget cached values) */
 
-	/* save info in sequence relation */
 	START_CRIT_CODE;
-	seq->last_value = next;		/* last fetched number */
-	seq->is_called = iscalled ? 't' : 'f';
-	seq->log_cnt = (iscalled) ? 0 : 1;
-
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
+		XLogRecData	rdata[2];
+		Page		page = BufferGetPage(buf);
 
 		xlrec.node = elm->rel->rd_node;
-		xlrec.value = next;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char*)&xlrec;
+		rdata[0].len = sizeof(xl_seq_rec);
+		rdata[0].next = &(rdata[1]);
 
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_SET|XLOG_NO_TRAN,
-					(char*) &xlrec, sizeof(xlrec), NULL, 0);
+		seq->last_value = next;
+		seq->is_called = 't';
+		seq->log_cnt = 0;
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].data = (char*)page + ((PageHeader) page)->pd_upper;
+		rdata[1].len = ((PageHeader)page)->pd_special - 
+						((PageHeader)page)->pd_upper;
+		rdata[1].next = NULL;
 
-		PageSetLSN(BufferGetPage(buf), recptr);
-		PageSetSUI(BufferGetPage(buf), ThisStartUpID);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG|XLOG_NO_TRAN, rdata);
+
+		PageSetLSN(page, recptr);
+		PageSetSUI(page, ThisStartUpID);
 	}
+	/* save info in sequence relation */
+	seq->last_value = next;		/* last fetched number */
+	seq->is_called = iscalled ? 't' : 'f';
+	seq->log_cnt = (iscalled) ? 0 : 1;
 	END_CRIT_CODE;
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -708,50 +733,38 @@ get_param(DefElem *def)
 
 void seq_redo(XLogRecPtr lsn, XLogRecord *record)
 {
-	uint8				info = record->xl_info & ~XLR_INFO_MASK;
-	Relation			reln;
-	Buffer				buffer;
-	Page				page;
-	ItemId				lp;
-	HeapTupleData		tuple;
-	Form_pg_sequence	seq;
-	xl_seq_rec		   *xlrec;
+	uint8			info = record->xl_info & ~XLR_INFO_MASK;
+	Relation		reln;
+	Buffer			buffer;
+	Page			page;
+	char		   *item;
+	Size			itemsz;
+	xl_seq_rec	   *xlrec = (xl_seq_rec*) XLogRecGetData(record);
+	sequence_magic *sm;
 
-	if (info != XLOG_SEQ_LOG && info != XLOG_SEQ_SET)
+	if (info != XLOG_SEQ_LOG)
 		elog(STOP, "seq_redo: unknown op code %u", info);
-
-	xlrec = (xl_seq_rec*) XLogRecGetData(record);
 
 	reln = XLogOpenRelation(true, RM_SEQ_ID, xlrec->node);
 	if (!RelationIsValid(reln))
 		return;
 
-	buffer = XLogReadBuffer(false, reln, 0);
+	buffer = XLogReadBuffer(true, reln, 0);
 	if (!BufferIsValid(buffer))
 		elog(STOP, "seq_redo: can't read block of %u/%u", 
 			xlrec->node.tblNode, xlrec->node.relNode);
 
 	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page) ||
-		((sequence_magic *) PageGetSpecialPointer(page))->magic != SEQ_MAGIC)
-		elog(STOP, "seq_redo: uninitialized page of %u/%u",
-			xlrec->node.tblNode, xlrec->node.relNode);
 
-	if (XLByteLE(lsn, PageGetLSN(page)))
-	{
-		UnlockAndReleaseBuffer(buffer);
-		return;
-	}
+	PageInit((Page) page, BufferGetPageSize(buffer), sizeof(sequence_magic));
+	sm = (sequence_magic *) PageGetSpecialPointer(page);
+	sm->magic = SEQ_MAGIC;
 
-	lp = PageGetItemId(page, FirstOffsetNumber);
-	Assert(ItemIdIsUsed(lp));
-	tuple.t_data = (HeapTupleHeader) PageGetItem((Page) page, lp);
-
-	seq = (Form_pg_sequence) GETSTRUCT(&tuple);
-
-	seq->last_value = xlrec->value;		/* last logged value */
-	seq->is_called = 't';
-	seq->log_cnt = 0;
+	item = (char*)xlrec + sizeof(xl_seq_rec);
+	itemsz = record->xl_len - sizeof(xl_seq_rec);
+	itemsz = MAXALIGN(itemsz);
+	if (PageAddItem(page, (Item)item, itemsz, 
+			FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
 
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);
@@ -771,14 +784,12 @@ void seq_desc(char *buf, uint8 xl_info, char* rec)
 
 	if (info == XLOG_SEQ_LOG)
 		strcat(buf, "log: ");
-	else if (info == XLOG_SEQ_SET)
-		strcat(buf, "set: ");
 	else
 	{
 		strcat(buf, "UNKNOWN");
 		return;
 	}
 
-	sprintf(buf + strlen(buf), "node %u/%u; value %d",
-		xlrec->node.tblNode, xlrec->node.relNode, xlrec->value);
+	sprintf(buf + strlen(buf), "node %u/%u",
+		xlrec->node.tblNode, xlrec->node.relNode);
 }
