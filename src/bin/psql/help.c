@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.42 2001/10/25 05:49:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.43 2002/03/05 00:01:01 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "help.h"
@@ -229,6 +229,8 @@ slashUsage(void)
 	fprintf(fout, _(" \\t             show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
 	fprintf(fout, _(" \\T TEXT        set HTML table tag attributes\n"));
+	fprintf(fout, _(" \\timing        toggle timing of queries (currently %s)\n"),
+			ON(pset.timing));
 	fprintf(fout, _(" \\unset NAME    unset (delete) internal variable\n"));
 	fprintf(fout, _(" \\w FILENAME    write current query buffer to file\n"));
 	fprintf(fout, _(" \\x             toggle expanded output (currently %s)\n"),

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/settings.h,v 1.12 2001/10/28 06:25:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/settings.h,v 1.13 2002/03/05 00:01:02 momjian Exp $
  */
 #ifndef SETTINGS_H
 #define SETTINGS_H
@@ -50,6 +50,7 @@ typedef struct _psqlSettings
 
 	bool		issuper;		/* is the current user a superuser? (used
 								 * to form the prompt) */
+	bool		timing;			/* timing of all queries */
 } PsqlSettings;
 
 extern PsqlSettings pset;

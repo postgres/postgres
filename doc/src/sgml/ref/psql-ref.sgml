@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.61 2001/12/08 03:24:38 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.62 2002/03/05 00:00:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1114,6 +1114,16 @@ lo_import 152801
         Allows you to specify options to be placed within the <sgmltag>table</sgmltag>
 	tag in <acronym>HTML</acronym> tabular output mode. This command is
 	equivalent to <literal>\pset tableattr <replaceable class="parameter">table_options</replaceable></literal>.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\timing</literal>
+        <listitem>
+        <para>
+        Toggles a display of how long each query takes in seconds.
         </para>
         </listitem>
       </varlistentry>

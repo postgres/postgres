@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.42 2002/03/02 21:39:34 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.43 2002/03/05 00:01:03 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -276,8 +276,8 @@ psql_completion(char *text, int start, int end)
 		"\\e", "\\echo",
 		"\\encoding", "\\g", "\\h", "\\i", "\\l",
 		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
-		"\\o", "\\p", "\\pset", "\\q", "\\qecho", "\\r", "\\set", "\\t", "\\unset",
-		"\\x", "\\w", "\\z", "\\!", NULL
+		"\\o", "\\p", "\\pset", "\\q", "\\qecho", "\\r", "\\set", "\\t",
+		"\\timing", "\\unset", "\\x", "\\w", "\\z", "\\!", NULL
 	};
 
 	(void) end;					/* not used */

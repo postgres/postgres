@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.66 2002/02/25 21:37:42 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.67 2002/03/05 00:01:00 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -715,6 +715,24 @@ exec_command(const char *cmd,
 		free(value);
 	}
 
+	/* \timing -- toggle timing of queries */
+	else if (strcmp(cmd, "timing") == 0)
+	{
+		pset.timing = !pset.timing;
+		if (!quiet)
+		{
+			if (pset.timing)
+			{
+				puts(gettext(("Timing is on.")));
+			}
+			else
+			{
+				puts(gettext(("Timing is off.")));
+
+			}
+		}
+	}
+  
 	/* \unset */
 	else if (strcmp(cmd, "unset") == 0)
 	{
