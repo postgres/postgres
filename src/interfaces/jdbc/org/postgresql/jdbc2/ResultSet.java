@@ -797,12 +797,14 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     
     public void afterLast() throws SQLException
     {
-	current_row = rows.size() + 1;
+	if (rows.size() > 0)
+		current_row = rows.size();
     }
     
     public void beforeFirst() throws SQLException
     {
-	current_row = 0;
+	if (rows.size() > 0)
+		current_row = -1;
     }
     
     public void cancelRowUpdates() throws SQLException
@@ -946,7 +948,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     
     public int getRow() throws SQLException
     {
-	return current_row;
+	return current_row + 1;
     }
     
     // This one needs some thought, as not all ResultSets come from a statement
@@ -967,24 +969,24 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     
     public boolean isAfterLast() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return (current_row >= rows.size()  && rows.size() > 0);
     }
-    
+
     public boolean isBeforeFirst() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return (current_row < 0 && rows.size() > 0);
     }
-    
+
     public boolean isFirst() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return (current_row == 0 && rows.size() >= 0);
     }
-    
+
     public boolean isLast() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return (current_row == rows.size() -1  && rows.size() > 0);
     }
-    
+
     public boolean last() throws SQLException
     {
 	if (rows.size() <= 0)
