@@ -1,5 +1,5 @@
 AROPT:crs
-CFLAGS:-O2 -mieee
+CFLAGS:-mieee  # optimization removed because of egcs problem
 SHARED_LIB:-fpic
 ALL:
 SRCH_INC:
