@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.288 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.289 2002/09/26 05:17:00 momjian Exp $
  *
  * NOTES
  *
@@ -229,6 +229,8 @@ bool		ClientAuthInProgress = false;		/* T during new-client
  */
 
 static unsigned int random_seed = 0;
+
+static int	debug_flag = 0;
 
 extern char *optarg;
 extern int	optind,
@@ -452,6 +454,7 @@ PostmasterMain(int argc, char *argv[])
 					SetConfigOption("server_min_messages", debugstr,
 									PGC_POSTMASTER, PGC_S_ARGV);
 					pfree(debugstr);
+					debug_flag = atoi(optarg);
 					break;
 				}
 			case 'F':
@@ -2028,6 +2031,7 @@ DoBackend(Port *port)
 	char	   *remote_host;
 	char	   *av[ARGV_SIZE * 2];
 	int			ac = 0;
+	char		debugbuf[ARGV_SIZE];
 	char		protobuf[ARGV_SIZE];
 	char		dbbuf[ARGV_SIZE];
 	char		optbuf[ARGV_SIZE];
@@ -2207,6 +2211,15 @@ DoBackend(Port *port)
 	 */
 
 	av[ac++] = "postgres";
+
+	/*
+	 * Pass the requested debugging level along to the backend.
+	 */
+	if (debug_flag > 0)
+	{
+		sprintf(debugbuf, "-d%d", debug_flag);
+		av[ac++] = debugbuf;
+	}
 
 	/*
 	 * Pass any backend switches specified with -o in the postmaster's own

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.294 2002/09/25 20:31:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.295 2002/09/26 05:17:00 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1281,8 +1281,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 						 * -d 0 allows user to prevent postmaster debug
 						 * from propagating to backend.
 						 */
-						SetConfigOption("server_min_messages", "notice",
-										ctx, gucsource);
+						ResetPGVariable("server_min_messages");
 				}
 				break;
 
@@ -1698,7 +1697,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.294 $ $Date: 2002/09/25 20:31:40 $\n");
+		puts("$Revision: 1.295 $ $Date: 2002/09/26 05:17:00 $\n");
 	}
 
 	/*
