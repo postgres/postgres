@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.145 2003/09/27 14:06:21 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.146 2003/10/04 03:14:13 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1169,9 +1169,11 @@ All of PostgreSQL is successfully made. Ready to install.
     optimum performance. To achieve optimum performance, several server
     variables must be adjusted, the two most common being
     <varname>shared_buffers</varname> and <varname> sort_mem</varname>
-    mentioned in <xref linkend="runtime-config-resource-memory">. Other
-    parameters in <xref linkend="runtime-config-resource"> also affect 
-    performance.
+    mentioned in <![%standalone-include[the documentation]]>
+    <![%standalone-ignore[<xref linkend="runtime-config-resource-memory">]]>.
+    Other parameters in <![%standalone-include[the documentation]]>
+    <![%standalone-ignore[<xref linkend="runtime-config-resource">]]>
+    also affect performance.
    </para>
   </sect2>
 
