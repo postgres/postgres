@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.147 2003/09/05 02:08:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.148 2003/09/22 00:23:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -668,7 +668,7 @@ PQsendQuery(PGconn *conn, const char *query)
 
 /*
  * PQsendQueryParams
- *		Like PQsendQuery, but use 3.0 protocol so we can pass parameters
+ *		Like PQsendQuery, but use protocol 3.0 so we can pass parameters
  */
 int
 PQsendQueryParams(PGconn *conn,
@@ -704,7 +704,7 @@ PQsendQueryParams(PGconn *conn,
 /*
  * PQsendQueryPrepared
  *		Like PQsendQuery, but execute a previously prepared statement,
- *		using 3.0 protocol so we can pass parameters
+ *		using protocol 3.0 so we can pass parameters
  */
 int
 PQsendQueryPrepared(PGconn *conn,
@@ -773,7 +773,7 @@ PQsendQueryStart(PGconn *conn)
 
 /*
  * PQsendQueryGuts
- *		Common code for 3.0-protocol query sending
+ *		Common code for protocol-3.0 query sending
  *		PQsendQueryStart should be done already
  *
  * command may be NULL to indicate we use an already-prepared statement
@@ -795,7 +795,7 @@ PQsendQueryGuts(PGconn *conn,
 	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			 libpq_gettext("function requires at least 3.0 protocol\n"));
+			 libpq_gettext("function requires at least protocol version 3.0\n"));
 		return 0;
 	}
 
@@ -1131,7 +1131,7 @@ PQexec(PGconn *conn, const char *query)
 
 /*
  * PQexecParams
- *		Like PQexec, but use 3.0 protocol so we can pass parameters
+ *		Like PQexec, but use protocol 3.0 so we can pass parameters
  */
 PGresult *
 PQexecParams(PGconn *conn,
@@ -1155,7 +1155,7 @@ PQexecParams(PGconn *conn,
 /*
  * PQexecPrepared
  *		Like PQexec, but execute a previously prepared statement,
- *		using 3.0 protocol so we can pass parameters
+ *		using protocol 3.0 so we can pass parameters
  */
 PGresult *
 PQexecPrepared(PGconn *conn,
@@ -1429,7 +1429,7 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 		{
 			/* Ooops, no way to do this in 2.0 */
 			printfPQExpBuffer(&conn->errorMessage,
-			 libpq_gettext("function requires at least 3.0 protocol\n"));
+			 libpq_gettext("function requires at least protocol version 3.0\n"));
 			return -1;
 		}
 		else
@@ -1597,7 +1597,7 @@ PQputnbytes(PGconn *conn, const char *buffer, int nbytes)
  *		After completing the data transfer portion of a copy in/out,
  *		the application must call this routine to finish the command protocol.
  *
- * When using 3.0 protocol this is deprecated; it's cleaner to use PQgetResult
+ * When using protocol 3.0 this is deprecated; it's cleaner to use PQgetResult
  * to get the transfer status.	Note however that when using 2.0 protocol,
  * recovering from a copy failure often requires a PQreset.  PQendcopy will
  * take care of that, PQgetResult won't.

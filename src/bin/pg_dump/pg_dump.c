@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.347 2003/09/19 23:15:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.348 2003/09/22 00:23:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2481,7 +2481,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		{
 			if (j + 1 != atoi(PQgetvalue(res, j, i_attnum)))
 			{
-				write_msg(NULL, "invalid attribute numbering in table \"%s\"\n",
+				write_msg(NULL, "invalid column numbering in table \"%s\"\n",
 						  tbinfo->relname);
 				exit_nicely();
 			}
