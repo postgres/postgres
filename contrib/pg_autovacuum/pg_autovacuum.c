@@ -581,7 +581,7 @@ xid_wraparound_check(db_info * dbi)
 	{
 		PGresult   *res = NULL;
 
-		res = send_query("vacuum", dbi);
+		res = send_query("VACUUM", dbi);
 		/* FIXME: Perhaps should add a check for PQ_COMMAND_OK */
 		PQclear(res);
 		return 1;
@@ -733,7 +733,7 @@ check_stats_enabled(db_info * dbi)
 	PGresult   *res = NULL;
 	int			ret = 0;
 
-	res = send_query("show stats_row_level", dbi);
+	res = send_query("SHOW stats_row_level", dbi);
 	ret =
 		strcmp("on", PQgetvalue(res, 0, PQfnumber(res, "stats_row_level")));
 	PQclear(res);
@@ -1082,7 +1082,7 @@ main(int argc, char *argv[])
 								 */
 								if ((tbl->curr_vacuum_count - tbl->CountAtLastVacuum) >= tbl->vacuum_threshold)
 								{
-									snprintf(buf, sizeof(buf), "vacuum analyze %s", tbl->table_name);
+									snprintf(buf, sizeof(buf), "VACUUM ANALYZE \"%s\"", tbl->table_name);
 									if (args->debug >= 1)
 									{
 										sprintf(logbuffer, "Performing: %s", buf);
@@ -1096,7 +1096,7 @@ main(int argc, char *argv[])
 								}
 								else if ((tbl->curr_analyze_count - tbl->CountAtLastAnalyze) >= tbl->analyze_threshold)
 								{
-									snprintf(buf, sizeof(buf), "analyze %s", tbl->table_name);
+									snprintf(buf, sizeof(buf), "ANALYZE \"%s\"", tbl->table_name);
 									if (args->debug >= 1)
 									{
 										sprintf(logbuffer, "Performing: %s", buf);
