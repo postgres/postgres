@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.8 1999/02/13 23:15:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.9 1999/02/23 07:33:09 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,7 +215,7 @@ FjoinBumpOuterNodes(TargetEntry *tlist,
 
 	/*
 	 * If every function is done, then we are done flattening. Mark the
-	 * Fjoin node unitialized, it is time to get the next tuple from the
+	 * Fjoin node uninitialized, it is time to get the next tuple from the
 	 * plan and redo all of the flattening.
 	 */
 	if (funcIsDone)
