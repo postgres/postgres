@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.39 2000/02/07 23:10:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.40 2000/04/11 19:00:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,8 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 				Max(conn->outBufSize - conn->outCount, 0), nbytes);
 			return EOF;
 		}
+		/* fixup avail for while loop */
+		avail = Max(conn->outBufSize - conn->outCount, 0);
 	}
 
 	/* 
