@@ -1,0 +1,276 @@
+# -*- perl -*-
+# mysql2pgsql
+# Take a MySQL schema dump and turn it into SQL92 and PostgreSQL form.
+# Thomas Lockhart, (c) 2000, PostgreSQL Inc.
+# Thanks to Tim Perdue at SourceForge.Net for testing and feedback.
+#
+
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+    & eval 'exec perl -S $0 $argv:q'
+    if 0;
+
+use IO::File;
+use Getopt::Long;
+
+my $progname = "mysql2pgsql";
+my $version = "0.3";
+
+GetOptions("debug!", "verbose!", "version", "path=s", "help");
+
+my $debug = $opt_debug || 0;
+my $verbose = $opt_verbose || 0;
+my $pathfrom = $opt_path || "";
+
+$pathfrom = "$pathfrom/" if ($pathfrom =~ /.*[^\/]$/);
+
+print "$0: $progname version $version\n"
+    if ($opt_version || $opt_help);
+print "\t(c) 2000 Thomas Lockhart PostgreSQL Inc.\n"
+    if ($opt_version && $opt_verbose || $opt_help);
+
+if ($opt_help) {
+    print "$0 --verbose --version --help --path=dir infile ...\n";
+    exit;
+}
+
+while (@ARGV) {
+    my $ostem;
+
+    $iname = shift @ARGV;
+    $ostem = $iname;
+    $ostem = $1 if ($ostem =~ /.+\/([^\/]+)$/);
+    $ostem = $1 if ($ostem =~ /(.+)[.][^.]*$/);
+
+    $oname = "$ostem.sql92";
+    $pname = "$ostem.init";
+
+    print "$iname $oname $pname\n" if ($debug);
+
+    TransformDumpFile($iname, $oname, $pname);
+}
+
+exit;
+
+sub TransformDumpFile {
+    local ($iname, $oname, $pname) = @_;
+    local @dlines;
+    local @slines;
+    local @plines;
+    local @tables; # list of tables created
+    local %pkeys;
+    local %pseqs;
+    local %sequences;
+
+    open(IN, "<$iname") || die "Unable to open file $iname";
+
+    while (<IN>) {
+		chomp;
+		push @dlines, $_;
+    }
+
+    print "Calling CreateSchema with $#dlines lines\n" if ($debug);
+    @slines = CreateSchema(@dlines);
+
+    open(OUT, ">$oname") || die "Unable to open output file $oname";
+
+    foreach (@slines) {
+		print "> $_" if ($debug);
+		print OUT "$_";
+    }
+    close(OUT);
+
+    return if (! defined($pname));
+
+    @plines = PopulateSchema(@tables);
+
+    open(OUT, ">$pname") || die "Unable to open output file $pname";
+
+    foreach (@plines) {
+		print "> $_" if ($debug);
+		print OUT "$_";
+    }
+    close(OUT);
+}
+
+sub PopulateSchema {
+    local @tables = @_;
+    local @out;
+    local $pkey;
+    local $pseq;
+
+    foreach (@tables) {
+		$table = $_;
+		$tpath = "$pathfrom$table";
+
+		print "Table is $table\n" if ($debug);
+		push @out, "\n";
+		push @out, "copy $table from '$tpath.txt';\n";
+		if (defined($pkeys{$table})) {
+			foreach ($pkeys{$table}) {
+				$pkey = $_;
+				$pseq = $pseqs{$table};
+
+				print "Key for $table is $pkey on $pseq\n" if ($debug);
+
+#		//push @out, "\$value = select max($pkey) from $table;\n";
+				push @out, "select setval ('$pseq', (select max($pkey) from $table));\n";
+			}
+		}
+    }
+
+    return @out;
+}
+
+sub CreateSchema {
+    local @lines = @_;
+    local @out;
+
+#    undef $last;
+    local %knames;
+
+    push @out, "--\n";
+    push @out, "-- Generated from mysql2pgsql\n";
+    push @out, "-- (c) 2000, Thomas Lockhart, PostgreSQL Inc.\n";
+    push @out, "--\n";
+    push @out, "\n";
+
+    while (@lines) {
+		$_ = shift @lines;
+		print "< $_\n" if ($debug);
+		# Replace hash comments with SQL9x standard syntax
+		$_ = "-- $1" if (/^[\#](.*)/);
+
+		# Found a CREATE TABLE statement?
+		if (/(create\s+table)\s+(\w+)\s+([(])\s*$/i) {
+			$table = $2;
+			$table = "\"$1\"" if ($table =~ /^(user)$/);
+			push @tables, $table;
+			push @tabledef, "create table $table (";
+#	push @out, "$_\n";
+
+			while (@lines) {
+				$_ = shift @lines;
+				print "< $_\n" if ($debug);
+
+				# Replace int(11) with SQL9x standard syntax
+				while (/int\(\d*\)/gi) {
+					$_ = "$`integer$'";
+				}
+
+				# Replace float(10,2) with SQL9x standard syntax
+				while (/(float)\((\d+),\s*(\d+)\)/gi) {
+					$_ = "$`$1($2)$'";
+				}
+
+				# Replace smallinteger with SQL9x syntax
+				while (/smallinteger/gi) {
+					$_ = "$`integer$'";
+				}
+
+				# Replace mediumtext with PostgreSQL syntax
+				while (/(longtext|mediumtext|blob|largeblob)/gi) {
+					$_ = "$`text$'";
+				}
+
+				# Replace integer ... auto_increment with PostgreSQL syntax
+				while (/(\s*)(\w+)\s+integer\s+(.*)\s+auto_increment/gi) {
+					$serid = $table . "_pk_seq";
+					push @out, "-- serial identifier $serid will likely be truncated\n"
+						if (length($serid) >= 32);
+
+					if (length($serid) >= 32) {
+						$excess=(length($serid)-31);
+						$serid = substr($table,0,-($excess)) . "_pk_seq";
+						push @out, "-- serial identifier $serid was truncated\n";
+					}
+                    push @out, "CREATE SEQUENCE $serid;\n\n";
+					$pkeys{$table} = $2;
+					$pseqs{$table} = $serid;
+					push @out, "-- key is $pkeys{$table}, sequence is $pseqs{$table}\n" if ($debug);
+					$_ = "$`$1$2 integer default nextval('$serid') $3$'";
+				}
+
+				# Replace date with double-quoted name
+#	    while (/^(\s*)(date|time)(\s+)/gi) {
+#		$_ = "$1\"$2\"$3$'";
+#	    }
+
+				# Found "KEY"? Then remove it from the CREATE TABLE statement
+				# and instead write a CREATE INDEX statement.
+				if (/^\s*key\s+(\w+)\s*[(](\w[()\w\d,\s]*)[)][,]?/i) {
+					$iname = $1;
+					$column = $2;
+					$iname = $1 if ($iname =~ /^idx_(\w[\_\w\d]+)/);
+					# Sheesh, there can be upper bounds on index string sizes?
+					# Get rid of the length specifier (e.g. filename(45) -> filename)
+					while ($column =~ /(\w[\w\d])[(]\d+[)]/g) {
+						$column = "$`$1$'";
+					}
+#		$column = $1 if ($column =~ /(\w+)[(]\d+[)]/);
+#		push @out, "Index on $table($column) is $iname\n";
+					if (defined($knames{$iname})) {
+						push @out, "-- $iname already exists";
+#		    sprintf($iname, "idx_%_%s", $table, $iname);
+#		    $iname = "idx_" . $table . "_" . $column;
+						# Do not bother with more to the name; it will be too big anyway
+						$iname = $table . "_" . $column;
+						push @out, "; use $iname instead\n";
+					}
+					$knames{$iname} = $iname;
+					$keydef{$column} = $iname;
+#		push @out, "! $_\n";
+#		$last = $tabledef[$#tabledef];
+#		push @out, "? $#tabledef $last\n";
+#		push @out, "match $1\n" if ($last =~ /(.*),\s*$/);
+					# Remove the trailing comma from the previous line, if necessary
+					$tabledef[$#tabledef] = $1
+						if (($#tabledef > 0) && ($tabledef[$#tabledef] =~ /(.*),\s*$/));
+#		push @out, "? $tabledef[$#tabledef]\n";
+
+					# If this is the end of the statement, save it and exit loop
+				} elsif (/^\s*[)]\;/) {
+				push @tabledef, $_;
+#		push @out, "< $_\n";
+				last;
+
+				# Otherwise, just save the line
+			} else {
+#		push @out, "$last\n" if (defined($last));
+#		$last = $_;
+				push @tabledef, $_;
+#		push @out, "$_\n";
+			}
+		}
+
+			foreach $t (@tabledef) {
+				push @out, "$t\n";
+			}
+			undef @tabledef;
+
+			foreach $k (keys %keydef) {
+				push @out, "create index $keydef{$k} on $table ($k);\n";
+			}
+			undef %keydef;
+
+		} else {
+			push @out, "$_\n";
+		}
+    }
+
+#    push @out, "$last\n" if (defined($last));
+
+    foreach (keys %pkeys) {
+		my $val = $pkeys{$_};
+		print "key is $val\n" if ($debug);
+    }
+
+    return @out;
+}
+
+sub StripComma {
+    local $line = shift @_;
+
+    $line = "$1" if ($line =~ /(.*)[,]\s*$/);
+
+    return $line;
+}
