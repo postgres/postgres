@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.119 2003/06/25 03:50:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.120 2003/07/18 03:45:06 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -1062,8 +1062,9 @@ SELECT b, char_length(b) FROM test2;
     literal in an <acronym>SQL</acronym> statement. In general, to
     escape an octet, it is converted into the three-digit octal number
     equivalent of its decimal octet value, and preceded by two
-    backslashes. Some octet values have alternate escape sequences, as
-    shown in <xref linkend="datatype-binary-sqlesc">.
+    backslashes. <xref linkend="datatype-binary-sqlesc"> contains the
+    characters which must be escaped, and gives the alternate escape
+    sequences where applicable.
    </para>
 
    <table id="datatype-binary-sqlesc">
