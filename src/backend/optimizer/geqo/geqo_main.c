@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.14 1999/02/18 04:55:54 momjian Exp $
+ * $Id: geqo_main.c,v 1.15 1999/05/17 00:25:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,50 +70,40 @@ geqo(Query *root)
 	Chromosome *momma;
 	Chromosome *daddy;
 	Chromosome *kid;
-
-#if defined(ERX)
-	Edge	   *edge_table;		/* list of edges */
-	int			edge_failures = 0;
-	float		difference;
-
-#endif
-
-#if defined(CX) || defined(PX) || defined(OX1) || defined(OX2)
-	City	   *city_table;		/* list of cities */
-
-#endif
-
-#if defined(CX)
-	int			cycle_diffs = 0;
-	int			mutations = 0;
-
-#endif
-
-
 	int			number_of_rels;
-
 	Pool	   *pool;
 	int			pool_size,
 				number_generations,
 				status_interval;
-
 	Gene	   *best_tour;
 	RelOptInfo *best_rel;
-
-/*	Plan *best_plan; */
-
+#if defined(ERX)
+	Edge	   *edge_table;		/* list of edges */
+	int			edge_failures = 0;
+	float		difference;
+#endif
+#if defined(CX) || defined(PX) || defined(OX1) || defined(OX2)
+	City	   *city_table;		/* list of cities */
+#endif
+#if defined(CX)
+	int			cycle_diffs = 0;
+	int			mutations = 0;
+#endif
 
 /* set tour size */
 	number_of_rels = length(root->base_rel_list);
 
 /* set GA parameters */
-	geqo_params(number_of_rels);/* out of "$PGDATA/pg_geqo" file */
+	geqo_params(number_of_rels);	/* read "$PGDATA/pg_geqo" file */
 	pool_size = PoolSize;
 	number_generations = Generations;
 	status_interval = 10;
 
 /* seed random number generator */
 	srandom(RandomSeed);
+
+/* initialize plan evaluator */
+	geqo_eval_startup();
 
 /* allocate genetic pool memory */
 	pool = alloc_pool(pool_size, number_of_rels);

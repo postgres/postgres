@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.14 1999/02/15 03:22:01 momjian Exp $
+* $Id: geqo_params.c,v 1.15 1999/05/17 00:25:33 tgl Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -45,6 +45,16 @@
 
 #include "storage/fd.h"
 
+/*
+ * Parameter values read from the config file (or defaulted) are stored here
+ * by geqo_params().
+ */
+int			PoolSize;
+int			Generations;
+long		RandomSeed;
+double		SelectionBias;
+
+
 #define POOL_TAG		"Pool_Size"
 #define TRIAL_TAG		"Generations"
 #define RAND_TAG		"Random_Seed"
@@ -77,7 +87,7 @@ geqo_params(int string_length)
 
 	char	   *conf_file;
 
-/* these static variables are used to signal that a value has been set */
+	/* these flag variables signal that a value has been set from the file */
 	int			pool_size = 0;
 	int			number_trials = 0;
 	int			random_seed = 0;

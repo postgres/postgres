@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.36 1999/05/16 19:45:00 tgl Exp $
+ * $Id: geqo_eval.c,v 1.37 1999/05/17 00:25:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 
 #include "utils/palloc.h"
 #include "utils/elog.h"
+#include "utils/portal.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/paths.h"
@@ -49,6 +50,38 @@
 #include "optimizer/geqo.h"
 
 /*
+ * Variables set by geqo_eval_startup for use within a single GEQO run
+ */
+static MemoryContext geqo_eval_context;
+
+/*
+ * geqo_eval_startup:
+ *   Must be called during geqo_main startup (before geqo_eval may be called)
+ *
+ * The main thing we need to do here is prepare a private memory context for
+ * allocation of temp storage used while constructing a path in geqo_eval().
+ * Since geqo_eval() will be called many times, we can't afford to let all
+ * that memory go unreclaimed until end of statement.  We use a special
+ * named portal to hold the context, so that it will be freed even if
+ * we abort via elog(ERROR).  The working data is allocated in the portal's
+ * heap memory context.
+ */
+void
+geqo_eval_startup(void)
+{
+#define GEQO_PORTAL_NAME	"<geqo workspace>"
+	Portal geqo_portal = GetPortalByName(GEQO_PORTAL_NAME);
+
+	if (!PortalIsValid(geqo_portal)) {
+		/* First time through (within current transaction, that is) */
+		geqo_portal = CreatePortal(GEQO_PORTAL_NAME);
+		Assert(PortalIsValid(geqo_portal));
+	}
+
+	geqo_eval_context = (MemoryContext) PortalGetHeapMemory(geqo_portal);
+}
+
+/*
  * geqo_eval
  *
  * Returns cost of a query tree as an individual of the population.
@@ -56,23 +89,30 @@
 Cost
 geqo_eval(Query *root, Gene *tour, int num_gene)
 {
-	RelOptInfo *joinrel;
-	Cost		fitness;
-	List	   *temp;
+	MemoryContext	oldcxt;
+	RelOptInfo	   *joinrel;
+	Cost			fitness;
+	List		   *savelist;
 
-	/* remember root->join_rel_list ... */
-	/* because root->join_rel_list will be changed during the following */
-	temp = listCopy(root->join_rel_list);
+	/* preserve root->join_rel_list, which gimme_tree changes */
+	savelist = root->join_rel_list;
 
-	/* joinrel is readily processed query tree -- left-sided ! */
+	/* create a temporary allocation context for the path construction work */
+	oldcxt = MemoryContextSwitchTo(geqo_eval_context);
+	StartPortalAllocMode(DefaultAllocMode, 0);
+
+	/* construct the best path for the given combination of relations */
 	joinrel = gimme_tree(root, tour, 0, num_gene, NULL);
 
 	/* compute fitness */
 	fitness = (Cost) joinrel->cheapestpath->path_cost;
 
-	root->join_rel_list = temp;
+	/* restore join_rel_list */
+	root->join_rel_list = savelist;
 
-	pfree(joinrel);
+	/* release all the memory acquired within gimme_tree */
+	EndPortalAllocMode();
+	MemoryContextSwitchTo(oldcxt);
 
 	return fitness;
 }
