@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.21 2003/09/24 18:54:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.22 2003/09/29 23:40:26 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -180,9 +180,10 @@ REINDEX { DATABASE | TABLE | INDEX } <replaceable class="PARAMETER">name</replac
    is crash-safe and transaction-safe.  <command>REINDEX</> is not
    crash-safe for shared indexes, which is why this case is disallowed
    during normal operation.  If a failure occurs while reindexing one
-   of these catalogs in standalone mode, it is important that the failure
-   be rectified and the <command>REINDEX</> operation redone
-   before attempting to restart the regular server.
+   of these catalogs in standalone mode, it will not be possible to
+   restart the regular server until the problem is rectified.  (The
+   typical symptom of a partially rebuilt shared index is <quote>index is not
+   a btree</> errors.)
   </para>
 
   <para>

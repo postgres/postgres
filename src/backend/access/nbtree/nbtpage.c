@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.71 2003/09/25 06:57:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.72 2003/09/29 23:40:26 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -31,12 +31,16 @@
 /*
  *	_bt_metapinit() -- Initialize the metadata page of a new btree.
  *
+ * If markvalid is true, the index is immediately marked valid, else it
+ * will be invalid until _bt_metaproot() is called.
+ *
  * Note: there's no real need for any locking here.  Since the transaction
  * creating the index hasn't committed yet, no one else can even see the index
- * much less be trying to use it.
+ * much less be trying to use it.  (In a REINDEX-in-place scenario, that's
+ * not true, but we assume the caller holds sufficient locks on the index.)
  */
 void
-_bt_metapinit(Relation rel)
+_bt_metapinit(Relation rel, bool markvalid)
 {
 	Buffer		buf;
 	Page		pg;
@@ -57,7 +61,7 @@ _bt_metapinit(Relation rel)
 	_bt_pageinit(pg, BufferGetPageSize(buf));
 
 	metad = BTPageGetMeta(pg);
-	metad->btm_magic = BTREE_MAGIC;
+	metad->btm_magic = markvalid ? BTREE_MAGIC : 0;
 	metad->btm_version = BTREE_VERSION;
 	metad->btm_root = P_NONE;
 	metad->btm_level = 0;
@@ -85,7 +89,9 @@ _bt_metapinit(Relation rel)
 		rdata[0].len = SizeOfBtreeNewmeta;
 		rdata[0].next = NULL;
 
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWMETA, rdata);
+		recptr = XLogInsert(RM_BTREE_ID,
+							markvalid ? XLOG_BTREE_NEWMETA : XLOG_BTREE_INVALIDMETA,
+							rdata);
 
 		PageSetLSN(pg, recptr);
 		PageSetSUI(pg, ThisStartUpID);
@@ -611,6 +617,8 @@ _bt_metaproot(Relation rel, BlockNumber rootbknum, uint32 level)
 	START_CRIT_SECTION();
 
 	metad = BTPageGetMeta(metap);
+	Assert(metad->btm_magic == BTREE_MAGIC || metad->btm_magic == 0);
+	metad->btm_magic = BTREE_MAGIC;		/* it's valid now for sure */
 	metad->btm_root = rootbknum;
 	metad->btm_level = level;
 	metad->btm_fastroot = rootbknum;

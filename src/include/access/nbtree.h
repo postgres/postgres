@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.70 2003/08/08 21:42:32 momjian Exp $
+ * $Id: nbtree.h,v 1.71 2003/09/29 23:40:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,6 +198,7 @@ typedef BTItemData *BTItem;
 #define XLOG_BTREE_NEWROOT		0xA0	/* new root page */
 #define XLOG_BTREE_NEWMETA		0xB0	/* update metadata page */
 #define XLOG_BTREE_NEWPAGE		0xC0	/* new index page during build */
+#define XLOG_BTREE_INVALIDMETA	0xD0	/* new metadata, temp. invalid */
 
 /*
  * All that we need to find changed index tuple
@@ -448,7 +449,7 @@ extern void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
 /*
  * prototypes for functions in nbtpage.c
  */
-extern void _bt_metapinit(Relation rel);
+extern void _bt_metapinit(Relation rel, bool markvalid);
 extern Buffer _bt_getroot(Relation rel, int access);
 extern Buffer _bt_gettrueroot(Relation rel);
 extern Buffer _bt_getbuf(Relation rel, BlockNumber blkno, int access);

@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.76 2003/09/25 06:57:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.77 2003/09/29 23:40:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -514,6 +514,8 @@ static void
 _bt_uppershutdown(Relation index, BTPageState *state)
 {
 	BTPageState *s;
+	BlockNumber	rootblkno = P_NONE;
+	uint32		rootlevel = 0;
 
 	/*
 	 * Each iteration of this loop completes one more level of the tree.
@@ -537,7 +539,8 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 		if (s->btps_next == (BTPageState *) NULL)
 		{
 			opaque->btpo_flags |= BTP_ROOT;
-			_bt_metaproot(index, blkno, s->btps_level);
+			rootblkno = blkno;
+			rootlevel = s->btps_level;
 		}
 		else
 		{
@@ -556,6 +559,14 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 		_bt_slideleft(index, s->btps_buf, s->btps_page);
 		_bt_blwritepage(index, s->btps_buf);
 	}
+
+	/*
+	 * As the last step in the process, update the metapage to point to
+	 * the new root (unless we had no data at all, in which case it's
+	 * left pointing to "P_NONE").  This changes the index to the "valid"
+	 * state by updating its magic number.
+	 */
+	_bt_metaproot(index, rootblkno, rootlevel);
 }
 
 /*
@@ -672,7 +683,6 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 		}
 	}
 
-	/* Close down final pages, if we had any data at all */
-	if (state != NULL)
-		_bt_uppershutdown(index, state);
+	/* Close down final pages and rewrite the metapage */
+	_bt_uppershutdown(index, state);
 }

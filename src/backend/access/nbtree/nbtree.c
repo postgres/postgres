@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.105 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.106 2003/09/29 23:40:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,8 @@ btbuild(PG_FUNCTION_ARGS)
 			 RelationGetRelationName(index));
 
 	/* initialize the btree index metadata page */
-	_bt_metapinit(index);
+	/* mark it valid right away only if using slow build */
+	_bt_metapinit(index, !buildstate.usefast);
 
 	if (buildstate.usefast)
 	{
