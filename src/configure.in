@@ -16,7 +16,7 @@ case "$host_os" in
    sunos*) os=sunos4 ;;
    linux*) os=linux ;;
     bsdi*) os=bsdi ;;
- freebsd*|netbsd*) os=bsd ;;
+ freebsd*|netbsd|openbsd*) os=bsd ;;
     dgux*) os=dgux;;
      aix*) os=aix ;;
 nextstep*) os=nextstep;;
