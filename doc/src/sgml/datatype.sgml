@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.74 2001/11/21 05:53:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.75 2001/11/21 21:12:34 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1005,10 +1005,9 @@ SELECT b, char_length(b) FROM test2;
     octet values <emphasis>may</emphasis> be escaped) when used as part of
     a string literal in an <acronym>SQL</acronym> statement. In general,
     to escape an octet, it is converted into the three digit octal number
-    equivalent of its decimal octet value, and preceeded by two
-    backslashes. Octets with the decimal values 39 (single quote), and 92
-    (backslash), have special alternate escape sequences. Details are in
-    <xref linkend="datatype-binary-sqlesc">.
+    equivalent of its decimal octet value, and preceded by two
+    backslashes. Some octet values have alternate escape sequences, as
+    shown in <xref linkend="datatype-binary-sqlesc">.
    </para>
 
    <table id="datatype-binary-sqlesc">
@@ -1059,7 +1058,7 @@ SELECT b, char_length(b) FROM test2;
     octet and backslash are more than one character. <type>Bytea</type>
     output octets are also escaped. In general, each
     <quote>non-printable</quote> octet decimal value is converted into
-    its equivalent three digit octal value, and preceeded by one backslash.
+    its equivalent three digit octal value, and preceded by one backslash.
     Most <quote>printable</quote> octets are represented by their standard
     representation in the client character set. The octet with decimal
     value 92 (backslash) has a special alternate output representation.
@@ -1082,14 +1081,6 @@ SELECT b, char_length(b) FROM test2;
      <tbody>
 
       <row>
-       <entry> <literal> 39 </literal> </entry>
-       <entry> single quote </entry>
-       <entry> <literal> ' </literal> </entry>
-       <entry> <literal> select '\\047'::bytea; </literal></entry>
-       <entry> <literal> ' </literal></entry>
-      </row>
-
-      <row>
        <entry> <literal> 92 </literal> </entry>
        <entry> backslash </entry>
        <entry> <literal> \\ </literal> </entry>
@@ -1108,7 +1099,7 @@ SELECT b, char_length(b) FROM test2;
       <row>
        <entry> <literal> 32 to 126 </literal> </entry>
        <entry> <quote>printable</quote> octets </entry>
-       <entry> client character set representation </entry>
+       <entry> ASCII representation </entry>
        <entry> <literal>  select '\\176'::bytea; </literal> </entry>
        <entry> <literal> ~ </literal></entry>
       </row>
@@ -1119,12 +1110,12 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     <acronym>SQL</acronym> string literals (input strings) must be
-    preceeded with two backslashes due to the fact that they must pass
+    preceded with two backslashes due to the fact that they must pass
     through two parsers in the PostgreSQL backend. The first backslash
     is interpreted as an escape character by the string literal parser,
     and therefore is consumed, leaving the octets that follow.
-    The second backslash is recognized by <type>bytea</type> input function
-    as the prefix of a three digit octal value. For example, a string
+    The remaining backslash is recognized by the <type>bytea</type> input
+    function as the prefix of a three digit octal value. For example, a string
     literal passed to the backend as <literal>'\\001'</literal> becomes
     <literal>'\001'</literal> after passing through the string literal
     parser. The <literal>'\001'</literal> is then sent to the
@@ -1135,11 +1126,11 @@ SELECT b, char_length(b) FROM test2;
    <para>
     For a similar reason, a backslash must be input as
     <literal>'\\\\'</literal> (or <literal>'\\134'</literal>). The first
-    and third backslashes are interpreted as escape octets by the
-    string literal parser, and therefore are consumed, leaving the
-    second and forth backslashes untouched. The second and forth
-    backslashes are recognized by the <type>bytea</type> input function
-    as a single backslash. For example, a string literal passed to the
+    and third backslashes are interpreted as escape characters by the
+    string literal parser, and therefore are consumed, leaving two
+    backslashes in the string passed to the <type>bytea</type> input function,
+    which interprets them as representing a single backslash.
+    For example, a string literal passed to the
     backend as <literal>'\\\\'</literal> becomes <literal>'\\'</literal>
     after passing through the string literal parser. The
     <literal>'\\'</literal> is then sent to the <type>bytea</type> input
@@ -1169,7 +1160,7 @@ SELECT b, char_length(b) FROM test2;
     line feeds and carriage returns if your interface automatically
     translates these. Or you may have to double up on backslashes if
     the parser for your language or choice also treats them as an
-    escape octet.
+    escape character.
    </para>
 
    <sect2 id="datatype-binary-compat">
@@ -1246,7 +1237,7 @@ SELECT b, char_length(b) FROM test2;
 
        <row>
         <entry> A binary string literal is comprised of an even number of
-                hexidecimal digits, in single quotes, preceeded by <quote>X</quote>,
+                hexadecimal digits, in single quotes, preceded by <quote>X</quote>,
                 e.g. <literal>X'1a43fe'</literal></entry>
         <entry> A binary string literal is comprised of octets
                 escaped according to the rules shown in 
