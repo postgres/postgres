@@ -4,12 +4,13 @@
  * scan.l
  *	  lexical scanner for PostgreSQL
  *
+ * XXX The rules in this file must be kept in sync with psql's lexer!!!
+ *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.112 2003/11/29 19:51:52 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.113 2004/02/19 19:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +29,6 @@
 /* #include "parser/parse.h" */
 #include "utils/builtins.h"
 #include "mb/pg_wchar.h"
-
-/* No reason to constrain amount of data slurped */
-#define YY_READ_BUF_SIZE 16777216
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
@@ -102,6 +100,41 @@ unsigned char unescape_single_char(unsigned char c);
 %x xd
 %x xh
 %x xq
+
+/*
+ * In order to make the world safe for Windows and Mac clients as well as
+ * Unix ones, we accept either \n or \r as a newline.  A DOS-style \r\n
+ * sequence will be seen as two successive newlines, but that doesn't cause
+ * any problems.  Comments that start with -- and extend to the next
+ * newline are treated as equivalent to a single whitespace character.
+ *
+ * NOTE a fine point: if there is no newline following --, we will absorb
+ * everything to the end of the input as a comment.  This is correct.  Older
+ * versions of Postgres failed to recognize -- as a comment if the input
+ * did not end with a newline.
+ *
+ * XXX perhaps \f (formfeed) should be treated as a newline as well?
+ */
+
+space			[ \t\n\r\f]
+horiz_space		[ \t\f]
+newline			[\n\r]
+non_newline		[^\n\r]
+
+comment			("--"{non_newline}*)
+
+whitespace		({space}+|{comment})
+
+/*
+ * SQL requires at least one newline in the whitespace separating
+ * string literals that are to be concatenated.  Silly, but who are we
+ * to argue?  Note that {whitespace_with_newline} should not have * after
+ * it, whereas {whitespace} should generally have a * after it...
+ */
+
+special_whitespace		({space}+|{comment}{newline})
+horiz_whitespace		({horiz_space}|{comment})
+whitespace_with_newline	({horiz_whitespace}*{newline}{special_whitespace}*)
 
 /* Bit string
  * It is tempting to scan the string for only those characters
@@ -205,41 +238,6 @@ real			((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+
 
 param			\${integer}
 
-/*
- * In order to make the world safe for Windows and Mac clients as well as
- * Unix ones, we accept either \n or \r as a newline.  A DOS-style \r\n
- * sequence will be seen as two successive newlines, but that doesn't cause
- * any problems.  Comments that start with -- and extend to the next
- * newline are treated as equivalent to a single whitespace character.
- *
- * NOTE a fine point: if there is no newline following --, we will absorb
- * everything to the end of the input as a comment.  This is correct.  Older
- * versions of Postgres failed to recognize -- as a comment if the input
- * did not end with a newline.
- *
- * XXX perhaps \f (formfeed) should be treated as a newline as well?
- */
-
-space			[ \t\n\r\f]
-horiz_space		[ \t\f]
-newline			[\n\r]
-non_newline		[^\n\r]
-
-comment			("--"{non_newline}*)
-
-whitespace		({space}+|{comment})
-
-/*
- * SQL requires at least one newline in the whitespace separating
- * string literals that are to be concatenated.  Silly, but who are we
- * to argue?  Note that {whitespace_with_newline} should not have * after
- * it, whereas {whitespace} should generally have a * after it...
- */
-
-special_whitespace		({space}+|{comment}{newline})
-horiz_whitespace		({horiz_space}|{comment})
-whitespace_with_newline	({horiz_whitespace}*{newline}{special_whitespace}*)
-
 other			.
 
 /*
@@ -261,7 +259,9 @@ other			.
 					token_start = NULL;
 %}
 
-{whitespace}	{ /* ignore */ }
+{whitespace}	{
+					/* ignore */
+				}
 
 {xcstart}		{
 					token_start = yytext;
@@ -288,9 +288,13 @@ other			.
 						xcdepth--;
 				}
 
-<xc>{xcinside}	{ /* ignore */ }
+<xc>{xcinside}	{
+					/* ignore */
+				}
 
-<xc>{op_chars}	{ /* ignore */ }
+<xc>{op_chars}	{
+					/* ignore */
+				}
 
 <xc><<EOF>>		{ yyerror("unterminated /* comment"); }
 
@@ -319,9 +323,8 @@ other			.
 <xb>{xbcat}		{
 					/* ignore */
 				}
-<xb><<EOF>>		{
-					yyerror("unterminated bit string literal");
-				}
+<xb><<EOF>>		{ yyerror("unterminated bit string literal"); }
+
 {xhstart}		{
 					/* Hexadecimal bit type.
 					 * At some point we should simply pass the string
@@ -358,7 +361,6 @@ other			.
 					return keyword->value;
 				}
 
-
 {xqstart}		{
 					token_start = yytext;
 					BEGIN(xq);
@@ -386,7 +388,6 @@ other			.
 					/* ignore */
 				}
 <xq><<EOF>>		{ yyerror("unterminated quoted string"); }
-
 
 {xdstart}		{
 					token_start = yytext;
@@ -421,9 +422,13 @@ other			.
 				}
 <xd><<EOF>>		{ yyerror("unterminated quoted identifier"); }
 
-{typecast}		{ return TYPECAST; }
+{typecast}		{
+					return TYPECAST;
+				}
 
-{self}			{ return yytext[0]; }
+{self}			{
+					return yytext[0];
+				}
 
 {operator}		{
 					/*
@@ -571,7 +576,9 @@ other			.
 					return IDENT;
 				}
 
-{other}			{ return yytext[0]; }
+{other}			{
+					return yytext[0];
+				}
 
 %%
 
