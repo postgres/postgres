@@ -1,0 +1,205 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+DRIVERCONNDIALOG DIALOG DISCARDABLE  0, 0, 269, 133
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "PostgreSQL Connection"
+FONT 8, "MS Sans Serif"
+BEGIN
+    RTEXT           "&Database:",IDC_STATIC,16,25,37,8
+    EDITTEXT        DATABASE_EDIT,55,25,72,12,ES_AUTOHSCROLL
+    RTEXT           "&Server:",IDC_STATIC,26,40,27,8
+    EDITTEXT        SERVER_EDIT,55,40,72,12,ES_AUTOHSCROLL
+    RTEXT           "&Port:",IDC_STATIC,150,40,20,8
+    EDITTEXT        PORT_EDIT,172,40,72,12,ES_AUTOHSCROLL
+    RTEXT           "&User Name:",IDC_STATIC,16,56,37,8
+    EDITTEXT        USERNAME_EDIT,55,56,72,12,ES_AUTOHSCROLL
+    RTEXT           "Pass&word:",IDC_STATIC,137,56,33,8
+    EDITTEXT        PASSWORD_EDIT,172,56,72,12,ES_PASSWORD | ES_AUTOHSCROLL
+    GROUPBOX        "Options:",IDC_STATIC,25,71,200,25
+    CONTROL         "&ReadOnly:",READONLY_EDIT,"Button",BS_AUTOCHECKBOX | 
+                    BS_LEFTTEXT | BS_RIGHT | WS_GROUP | WS_TABSTOP,45,80,45,
+                    14
+    CONTROL         "&CommLog (Global):",COMMLOG_EDIT,"Button",
+                    BS_AUTOCHECKBOX | BS_LEFTTEXT | BS_RIGHT | WS_TABSTOP,
+                    100,80,75,14
+    CONTROL         "6.2",PG62_EDIT,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | 
+                    BS_RIGHT | WS_TABSTOP,185,80,25,14
+    DEFPUSHBUTTON   "OK",IDOK,84,108,40,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,146,108,40,14
+    CTEXT           "Please supply any missing information needed to connect.",
+                    IDC_STATIC,40,7,188,11
+END
+
+CONFIGDSN DIALOG DISCARDABLE  65, 43, 292, 151
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "PostgreSQL Driver Setup"
+FONT 8, "MS Sans Serif"
+BEGIN
+    RTEXT           "&Data Source:",IDC_DSNAMETEXT,5,30,50,12,NOT WS_GROUP
+    EDITTEXT        IDC_DSNAME,57,30,72,12,ES_AUTOHSCROLL | WS_GROUP
+    RTEXT           "Des&cription:",IDC_STATIC,135,30,39,12,NOT WS_GROUP
+    EDITTEXT        IDC_DESC,175,30,108,12,ES_AUTOHSCROLL
+    RTEXT           "Data&base:",IDC_STATIC,17,45,38,12,NOT WS_GROUP
+    EDITTEXT        IDC_DATABASE,57,45,72,12,ES_AUTOHSCROLL
+    RTEXT           "&Server:",IDC_STATIC,27,60,29,12,NOT WS_GROUP
+    EDITTEXT        IDC_SERVER,57,60,72,12,ES_AUTOHSCROLL
+    RTEXT           "&Port:",IDC_STATIC,153,60,22,12
+    EDITTEXT        IDC_PORT,175,60,37,12,ES_AUTOHSCROLL
+    RTEXT           "&User Name:",IDC_STATIC,17,75,39,12
+    EDITTEXT        IDC_USER,57,75,72,12,ES_AUTOHSCROLL
+    RTEXT           "Pass&word:",IDC_STATIC,141,75,34,12
+    EDITTEXT        IDC_PASSWORD,175,75,72,12,ES_PASSWORD | ES_AUTOHSCROLL
+    GROUPBOX        "Options:",IDC_STATIC,35,92,205,25
+    CONTROL         "&ReadOnly:",IDC_READONLY,"Button",BS_AUTOCHECKBOX | 
+                    BS_LEFTTEXT | BS_RIGHT | WS_GROUP | WS_TABSTOP,50,100,45,
+                    14
+    CONTROL         "&CommLog (Global):",IDC_COMMLOG,"Button",
+                    BS_AUTOCHECKBOX | BS_LEFTTEXT | BS_RIGHT | WS_TABSTOP,
+                    105,100,75,14
+    CONTROL         "6.2",IDC_PG62,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | 
+                    BS_RIGHT | WS_TABSTOP,195,100,25,14
+    DEFPUSHBUTTON   "OK",IDOK,85,129,40,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,145,129,40,14
+    CTEXT           "Change data source name, description, or options.  Then choose OK.",
+                    IDC_STATIC,44,5,180,17
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    DRIVERCONNDIALOG, DIALOG
+    BEGIN
+        RIGHTMARGIN, 268
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 6,30,0,0
+ PRODUCTVERSION 6,30,0,0
+ FILEFLAGSMASK 0x3L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "Comments", "PostgreSQL ODBC driver for Windows 95\0"
+            VALUE "CompanyName", "Insight Distribution Systems\0"
+            VALUE "FileDescription", "PostgreSQL Driver\0"
+            VALUE "FileVersion", " 6.30.0000\0"
+            VALUE "InternalName", "psqlodbc\0"
+            VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoft® is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
+            VALUE "OriginalFilename", "psqlodbc.dll\0"
+            VALUE "ProductName", "Microsoft Open Database Connectivity\0"
+            VALUE "ProductVersion", " 6.30.0000\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_BADDSN              "Invalid DSN entry, please recheck."
+    IDS_MSGTITLE            "Invalid DSN"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
