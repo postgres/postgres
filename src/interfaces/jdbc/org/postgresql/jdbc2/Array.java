@@ -1,14 +1,18 @@
 package org.postgresql.jdbc2;
 
-import java.text.*;
-import java.sql.*;
-import java.util.*;
-import java.math.BigDecimal;
 import org.postgresql.core.BaseConnection;
 import org.postgresql.core.BaseResultSet;
 import org.postgresql.core.BaseStatement;
 import org.postgresql.core.Field;
-import org.postgresql.util.*;
+import org.postgresql.util.PSQLException;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Vector;
 
 /*
  * Array is used collect one column of query result data.
@@ -176,7 +180,6 @@ public class Array implements java.sql.Array
 				break;
 			case Types.TIMESTAMP:
 				retVal = new Timestamp[ count ];
-				StringBuffer sbuf = null;
 				for ( ; count > 0; count-- )
 					((java.sql.Timestamp[])retVal)[i++] = AbstractJdbc2ResultSet.toTimestamp( arrayContents[(int)index++], rs, getBaseTypeName() );
 				break;

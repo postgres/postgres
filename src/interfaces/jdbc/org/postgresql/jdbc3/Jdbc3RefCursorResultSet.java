@@ -1,11 +1,10 @@
 package org.postgresql.jdbc3;
 
-import org.postgresql.core.QueryExecutor;
-import org.postgresql.core.Field;
-import org.postgresql.core.BaseStatement;
-import java.util.Vector;
-import org.postgresql.PGConnection;
 import org.postgresql.PGRefCursorResultSet;
+import org.postgresql.core.BaseStatement;
+import org.postgresql.core.Field;
+import org.postgresql.core.QueryExecutor;
+import java.util.Vector;
 
 /** A real result set based on a ref cursor.
  *

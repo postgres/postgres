@@ -1,9 +1,11 @@
 package org.postgresql.test.jdbc2;
 
 import org.postgresql.test.TestUtil;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
 import junit.framework.TestCase;
-import java.io.*;
-import java.sql.*;
 
 /*
  * ResultSet tests.

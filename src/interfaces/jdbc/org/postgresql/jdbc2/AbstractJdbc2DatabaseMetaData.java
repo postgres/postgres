@@ -1,12 +1,6 @@
 package org.postgresql.jdbc2;
 
-import org.postgresql.jdbc1.AbstractJdbc1ResultSet;
-import java.sql.*;
-import java.util.*;
-
-import org.postgresql.Driver;
-import org.postgresql.core.Field;
-import org.postgresql.util.PSQLException;
+import java.sql.SQLException;
 
 public abstract class AbstractJdbc2DatabaseMetaData extends org.postgresql.jdbc1.AbstractJdbc1DatabaseMetaData
 {

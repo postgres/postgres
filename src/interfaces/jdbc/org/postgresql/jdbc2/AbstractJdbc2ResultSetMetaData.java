@@ -1,11 +1,11 @@
 package org.postgresql.jdbc2;
 
 
-import java.lang.*;
-import java.sql.*;
-import java.util.*;
 import org.postgresql.core.Field;
-import org.postgresql.util.*;
+import org.postgresql.util.PSQLException;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.Vector;
 
 public abstract class AbstractJdbc2ResultSetMetaData extends org.postgresql.jdbc1.AbstractJdbc1ResultSetMetaData
 {
@@ -175,7 +175,6 @@ public abstract class AbstractJdbc2ResultSetMetaData extends org.postgresql.jdbc
 	{
 		Field f = getField(column);
 		String type_name = f.getPGType();
-		int sql_type = f.getSQLType();
 		int typmod = f.getMod();
 
 		// I looked at other JDBC implementations and couldn't find a consistent

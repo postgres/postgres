@@ -1,7 +1,6 @@
 package org.postgresql.jdbc2;
 
-import org.postgresql.util.*;
-import java.sql.*;
+import org.postgresql.util.MessageTranslator;
 
 /*
  * This class extends java.sql.BatchUpdateException, and provides our

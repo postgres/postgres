@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: MiscTest.java,v 1.9 2003/05/29 03:21:32 barry Exp $
+ * $Id: MiscTest.java,v 1.10 2003/05/29 04:39:48 barry Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -38,7 +38,7 @@ public class MiscTest extends TestCase
 
 			while (rs.next())
 			{
-				String s = rs.getString(1);
+				rs.getString(1);
 			}
 
 			rs.close();

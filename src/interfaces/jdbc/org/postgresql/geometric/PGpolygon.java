@@ -6,17 +6,16 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGpolygon.java,v 1.4 2003/03/07 18:39:43 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGpolygon.java,v 1.5 2003/05/29 04:39:48 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
 package org.postgresql.geometric;
 
-import java.io.Serializable;
-import java.sql.SQLException;
 import org.postgresql.util.PGobject;
 import org.postgresql.util.PGtokenizer;
-import org.postgresql.util.PSQLException;
+import java.io.Serializable;
+import java.sql.SQLException;
 
 public class PGpolygon extends PGobject implements Serializable, Cloneable
 {

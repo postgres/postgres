@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.17 2003/03/24 03:48:32 barry Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.18 2003/05/29 04:39:48 barry Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -337,7 +337,7 @@ public class DatabaseMetaDataTest extends TestCase
 		{
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
-			ResultSet rs = dbmd.getBestRowIdentifier(null,null,"pg_type",dbmd.bestRowSession,false);
+			ResultSet rs = dbmd.getBestRowIdentifier(null,null,"pg_type",DatabaseMetaData.bestRowSession,false);
 			rs.close();
 		} catch (SQLException sqle) {
 			fail(sqle.getMessage());

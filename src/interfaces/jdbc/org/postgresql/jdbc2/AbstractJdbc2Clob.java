@@ -1,14 +1,14 @@
 package org.postgresql.jdbc2;
 
 
-import java.lang.*;
-import java.io.*;
-import java.math.*;
-import java.text.*;
-import java.util.*;
-import java.sql.*;
 import org.postgresql.PGConnection;
-import org.postgresql.largeobject.*;
+import org.postgresql.largeobject.LargeObject;
+import org.postgresql.largeobject.LargeObjectManager;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.sql.Clob;
+import java.sql.SQLException;
 
 public class AbstractJdbc2Clob
 {

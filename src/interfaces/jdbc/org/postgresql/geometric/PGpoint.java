@@ -6,20 +6,18 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGpoint.java,v 1.4 2003/03/07 18:39:43 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGpoint.java,v 1.5 2003/05/29 04:39:48 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
 package org.postgresql.geometric;
 
-import java.awt.Point;
-import java.io.Serializable;
-import java.sql.SQLException;
 import org.postgresql.util.PGobject;
 import org.postgresql.util.PGtokenizer;
 import org.postgresql.util.PSQLException;
-
-import org.postgresql.util.*;
+import java.awt.Point;
+import java.io.Serializable;
+import java.sql.SQLException;
 
 /*
  * This implements a version of java.awt.Point, except it uses double

@@ -6,14 +6,13 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGtokenizer.java,v 1.6 2003/03/07 18:39:46 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGtokenizer.java,v 1.7 2003/05/29 04:39:51 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
 package org.postgresql.util;
 
-import java.sql.*;
-import java.util.*;
+import java.util.Vector;
 
 /*
  * It's mainly used by the geometric classes, but is useful in parsing any

@@ -1,12 +1,13 @@
 package org.postgresql.jdbc2;
 
 
-import java.io.*;
-import java.net.ConnectException;
-import java.sql.*;
-import org.postgresql.util.PSQLException;
+import java.io.PrintWriter;
+import java.sql.DriverManager;
+import java.sql.SQLData;
+import java.sql.SQLException;
+import java.sql.Types;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Connection.java,v 1.4 2003/03/07 18:39:44 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Connection.java,v 1.5 2003/05/29 04:39:48 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Connection which provides the jdbc1
  * methods.  The real Connection class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Connection

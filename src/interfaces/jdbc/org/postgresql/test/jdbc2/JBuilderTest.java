@@ -1,12 +1,14 @@
 package org.postgresql.test.jdbc2;
 
 import org.postgresql.test.TestUtil;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
 import junit.framework.TestCase;
-import java.sql.*;
-import java.math.BigDecimal;
 
 /*
- * $Id: JBuilderTest.java,v 1.7 2002/09/06 21:23:06 momjian Exp $
+ * $Id: JBuilderTest.java,v 1.8 2003/05/29 04:39:48 barry Exp $
  *
  * Some simple tests to check that the required components needed for JBuilder
  * stay working
@@ -54,7 +56,7 @@ public class JBuilderTest extends TestCase
 
 			while (rs.next())
 			{
-				double bd = rs.getDouble(1);
+				rs.getDouble(1);
 			}
 
 			rs.close();

@@ -324,7 +324,7 @@ public class DatabaseMetaDataPropertiesTest extends TestCase
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
 
-			assertTrue(dbmd.getDriverVersion().equals(pc.getDriver().getVersion()));
+			assertTrue(dbmd.getDriverVersion().equals(org.postgresql.Driver.getVersion()));
 			assertTrue(dbmd.getDriverMajorVersion() == pc.getDriver().getMajorVersion());
 			assertTrue(dbmd.getDriverMinorVersion() == pc.getDriver().getMinorVersion());
 

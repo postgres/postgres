@@ -250,7 +250,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 */
 	public String getDriverVersion() throws SQLException
 	{
-		String driverVersion = connection.this_driver.getVersion();
+		String driverVersion = Driver.getVersion();
 		if (Driver.logDebug)
 			Driver.debug("getDriverVersion " + driverVersion);
 		return driverVersion;
@@ -3412,7 +3412,6 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	{
 
 		Field f[] = new Field[18];
-		ResultSet r;	// ResultSet for the SQL query that we need to do
 		Vector v = new Vector();		// The new ResultSet tuple stuff
 
 		f[0] = new Field(connection, "TYPE_NAME", iVarcharOid, getMaxNameLength());

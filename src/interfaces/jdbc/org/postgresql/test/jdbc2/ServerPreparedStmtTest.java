@@ -1,10 +1,13 @@
 package org.postgresql.test.jdbc2;
 
-import org.postgresql.test.TestUtil;
 import org.postgresql.PGStatement;
+import org.postgresql.test.TestUtil;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
 import junit.framework.TestCase;
-import java.io.*;
-import java.sql.*;
 
 /*
  *  Tests for using server side prepared statements

@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: TimestampTest.java,v 1.10 2003/01/14 09:13:51 barry Exp $
+ * $Id: TimestampTest.java,v 1.11 2003/05/29 04:39:48 barry Exp $
  *
  * Test get/setTimestamp for both timestamp with time zone and
  * timestamp without time zone datatypes
@@ -24,8 +24,6 @@ public class TimestampTest extends TestCase
 	protected void setUp() throws Exception
 	{
 		con = TestUtil.openDB();
-		Statement stmt = con.createStatement();
-
 		TestUtil.createTable(con, TSWTZ_TABLE, "ts timestamp with time zone");
 		TestUtil.createTable(con, TSWOTZ_TABLE, "ts timestamp without time zone");
 	}

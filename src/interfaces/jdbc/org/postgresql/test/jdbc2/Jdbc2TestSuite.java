@@ -1,11 +1,6 @@
 package org.postgresql.test.jdbc2;
 
 import junit.framework.TestSuite;
-import junit.framework.TestCase;
-import junit.framework.Test;
-
-import java.sql.*;
-import java.lang.reflect.Method;
 
 /*
  * Executes all known tests for JDBC2 and includes some utility methods.

@@ -1,17 +1,18 @@
 package org.postgresql.test.jdbc3;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.sql.PooledConnection;
-import org.postgresql.test.jdbc2.optional.ConnectionPoolTest;
+import org.postgresql.jdbc3.Jdbc3ConnectionPool;
+import org.postgresql.jdbc3.Jdbc3PooledConnection;
 import org.postgresql.test.TestUtil;
-import org.postgresql.jdbc3.*;
+import org.postgresql.test.jdbc2.optional.ConnectionPoolTest;
+import java.sql.SQLException;
+
+import javax.sql.PooledConnection;
 
 /**
  * Tests JDBC3 implementation of ConnectionPoolDataSource.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  */
 public class Jdbc3ConnectionPoolTest extends ConnectionPoolTest
 {
