@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.81 2001/01/19 06:59:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.82 2001/01/19 07:03:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,10 +391,11 @@ tas(volatile slock_t *lock)
  */
 
 #define S_UNLOCK(lock) \
-do { \
-	volatile slock_t *lock_ = (volatile slock_t *) (lock); \
-	lock_->sema[0] = lock_->sema[1] = lock_->sema[2] = lock_->sema[3] = -1; \
-} while (0)
+	do { \
+		volatile slock_t *lock_ = (volatile slock_t *) (lock); \
+		lock_->sema[0] = lock_->sema[1] = \
+		lock_->sema[2] = lock_->sema[3] = -1; \
+	} while (0)
 
 #define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
 
