@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Group
+ * Copyright 2000-2003 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.39 2003/06/12 08:15:28 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.40 2003/07/25 21:48:45 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1004,7 +1004,9 @@ PageOutput(int lines, unsigned short int pager)
 		struct winsize screen_size;
 
 		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
-		if (result == -1 || lines > screen_size.ws_row || pager > 1)
+
+		/* >= accounts for a one-line prompt */
+		if (result == -1 || lines >= screen_size.ws_row || pager > 1)
 		{
 #endif
 			pagerprog = getenv("PAGER");
