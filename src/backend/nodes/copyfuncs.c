@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.111 2000/04/04 01:21:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.112 2000/04/08 00:21:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1369,8 +1369,9 @@ _copyStream(Stream *from)
 	return newnode;
 }
 
-/*
- *	parsenodes.h routines have no copy functions
+/* ****************************************************************
+ *					parsenodes.h copy functions
+ * ****************************************************************
  */
 
 static TargetEntry *
@@ -1467,14 +1468,7 @@ _copyQuery(Query *from)
 	Query	   *newnode = makeNode(Query);
 
 	newnode->commandType = from->commandType;
-	if (from->utilityStmt && nodeTag(from->utilityStmt) == T_NotifyStmt)
-	{
-		NotifyStmt *from_notify = (NotifyStmt *) from->utilityStmt;
-		NotifyStmt *n = makeNode(NotifyStmt);
-
-		n->relname = pstrdup(from_notify->relname);
-		newnode->utilityStmt = (Node *) n;
-	}
+	Node_Copy(from, newnode, utilityStmt);
 	newnode->resultRelation = from->resultRelation;
 	if (from->into)
 		newnode->into = pstrdup(from->into);
@@ -1510,10 +1504,117 @@ _copyQuery(Query *from)
 	return newnode;
 }
 
+static ClosePortalStmt *
+_copyClosePortalStmt(ClosePortalStmt *from)
+{
+	ClosePortalStmt	   *newnode = makeNode(ClosePortalStmt);
 
-/*
- *	mnodes.h routines have no copy functions
- */
+	if (from->portalname)
+		newnode->portalname = pstrdup(from->portalname);
+
+	return newnode;
+}
+
+static TruncateStmt *
+_copyTruncateStmt(TruncateStmt *from)
+{
+	TruncateStmt	   *newnode = makeNode(TruncateStmt);
+
+	newnode->relName = pstrdup(from->relName);
+
+	return newnode;
+}
+
+static NotifyStmt *
+_copyNotifyStmt(NotifyStmt *from)
+{
+	NotifyStmt	   *newnode = makeNode(NotifyStmt);
+
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+
+	return newnode;
+}
+
+static ListenStmt *
+_copyListenStmt(ListenStmt *from)
+{
+	ListenStmt	   *newnode = makeNode(ListenStmt);
+
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+
+	return newnode;
+}
+
+static UnlistenStmt *
+_copyUnlistenStmt(UnlistenStmt *from)
+{
+	UnlistenStmt	   *newnode = makeNode(UnlistenStmt);
+
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+
+	return newnode;
+}
+
+static TransactionStmt *
+_copyTransactionStmt(TransactionStmt *from)
+{
+	TransactionStmt	   *newnode = makeNode(TransactionStmt);
+
+	newnode->command = from->command;
+
+	return newnode;
+}
+
+static LoadStmt *
+_copyLoadStmt(LoadStmt *from)
+{
+	LoadStmt	   *newnode = makeNode(LoadStmt);
+
+	if (from->filename)
+		newnode->filename = pstrdup(from->filename);
+
+	return newnode;
+}
+
+static VariableSetStmt *
+_copyVariableSetStmt(VariableSetStmt *from)
+{
+	VariableSetStmt	   *newnode = makeNode(VariableSetStmt);
+
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+	if (from->value)
+		newnode->value = pstrdup(from->value);
+
+	return newnode;
+}
+
+static VariableResetStmt *
+_copyVariableResetStmt(VariableResetStmt *from)
+{
+	VariableResetStmt	   *newnode = makeNode(VariableResetStmt);
+
+	if (from->name)
+		newnode->name = pstrdup(from->name);
+
+	return newnode;
+}
+
+static LockStmt *
+_copyLockStmt(LockStmt *from)
+{
+	LockStmt	   *newnode = makeNode(LockStmt);
+
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	newnode->mode = from->mode;
+
+	return newnode;
+}
+
 
 /* ****************************************************************
  *					pg_list.h copy functions
@@ -1718,9 +1819,6 @@ copyObject(void *from)
 			/*
 			 * PARSE NODES
 			 */
-		case T_Query:
-			retval = _copyQuery(from);
-			break;
 		case T_TargetEntry:
 			retval = _copyTargetEntry(from);
 			break;
@@ -1741,6 +1839,39 @@ copyObject(void *from)
 			break;
 		case T_TypeCast:
 			retval = _copyTypeCast(from);
+			break;
+		case T_Query:
+			retval = _copyQuery(from);
+			break;
+		case T_ClosePortalStmt:
+			retval = _copyClosePortalStmt(from);
+			break;
+		case T_TruncateStmt:
+			retval = _copyTruncateStmt(from);
+			break;
+		case T_NotifyStmt:
+			retval = _copyNotifyStmt(from);
+			break;
+		case T_ListenStmt:
+			retval = _copyListenStmt(from);
+			break;
+		case T_UnlistenStmt:
+			retval = _copyUnlistenStmt(from);
+			break;
+		case T_TransactionStmt:
+			retval = _copyTransactionStmt(from);
+			break;
+		case T_LoadStmt:
+			retval = _copyLoadStmt(from);
+			break;
+		case T_VariableSetStmt:
+			retval = _copyVariableSetStmt(from);
+			break;
+		case T_VariableResetStmt:
+			retval = _copyVariableResetStmt(from);
+			break;
+		case T_LockStmt:
+			retval = _copyLockStmt(from);
 			break;
 
 			/*
