@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan  3 13:24:30 EST 2002
+Last updated:		Thu Jan  3 15:41:47 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -202,7 +202,7 @@ COMMANDS
 	o Allow dump/load of CSV format
 	o Change syntax to WITH DELIMITER, (keep old syntax around?)
 	o Allow COPY to report error lines and continue;  optionally
-	  allow error codes to be specified
+	  allow error codes to be specified; requires nested transactions
 * CURSOR
 	o Allow BINARY option to SELECT, like we do with DECLARE
 	o MOVE 0 should not move to end of cursor
