@@ -5,7 +5,7 @@ exec sql include sqlca;
 extern void ECPGdebug(int n, FILE *dbgs);
 
 exec sql whenever not found sqlprint;
-exec sql whenever sqlerror db_error(msg);
+exec sql whenever sqlerror do db_error(msg);
 
 void
 db_error (char *msg)
