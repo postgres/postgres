@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.26 1997/01/26 15:30:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.27 1997/01/26 20:15:06 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -102,13 +102,13 @@ static bool     IsEmptyQuery = false;
 
 char            relname[80];            /* current relation name */
 
-#if defined(WIN32) || defined(next)
+#if defined(WIN32) || defined(nextstep)
 jmp_buf    Warn_restart;
 #define sigsetjmp(x,y)  setjmp(x)
 #define siglongjmp longjmp
 #else
 sigjmp_buf Warn_restart;
-#endif /*defined(WIN32) || defined(next) */
+#endif /*defined(WIN32) || defined(nextstep) */
 int InWarn;
 
 extern int      NBuffers;
@@ -1282,7 +1282,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.26 $ $Date: 1997/01/26 15:30:48 $");
+        puts("$Revision: 1.27 $ $Date: 1997/01/26 20:15:06 $");
     }
     
     /* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.9 1996/12/04 03:06:04 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.10 1997/01/26 20:15:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@
 
 extern int tas(slock_t *lock);
 
-#if defined (next)
+#if defined (nextstep)
 /*
  * NEXTSTEP (mach)
  * slock_t is defined as a struct mutex.
