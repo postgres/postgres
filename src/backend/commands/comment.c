@@ -171,9 +171,15 @@ void CreateComments(Oid oid, char *comment) {
     }
 
   } else {
-    desctuple = heap_formtuple(tupDesc, values, nulls);
-    heap_insert(description, desctuple);
-    modified = TRUE;
+
+	/*** Only if comment is non-blank do we form a new tuple ***/
+
+	if ((comment != NULL) && (strlen(comment) > 0)) {
+		desctuple = heap_formtuple(tupDesc, values, nulls);
+		heap_insert(description, desctuple);
+		modified = TRUE;
+	}
+
   }
 
   /*** Complete the scan, update indices, if necessary ***/
