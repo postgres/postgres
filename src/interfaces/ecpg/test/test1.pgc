@@ -17,9 +17,9 @@ static void warn(void)
 
 /* comment */
 exec sql define AMOUNT 6;
+exec sql define NAMELEN 8;
 
 exec sql type intarray is int[AMOUNT];
-exec sql type string is char(8); 
 
 typedef int intarray[AMOUNT];
 
@@ -27,16 +27,19 @@ int
 main ()
 {
 exec sql begin declare section;
+exec sql ifdef NAMELEN;
+	typedef char string[NAMELEN];
         intarray amount;
 	int increment=100;
-        char name[AMOUNT][8];
+        char name[AMOUNT][NAMELEN];
 	char letter[AMOUNT][1];
 	struct name_letter_struct
 	{
-		char name[8];
+		char name[NAMELEN];
 		int amount;
 		char letter;
 	} name_letter[AMOUNT];
+exec sql endif;
         struct ind_struct
         {
                 short a;
@@ -62,8 +65,8 @@ exec sql end declare section;
         exec sql connect to pm;
 
 	strcpy(msg, "create");
-	exec sql at main create table "Test" (name char(8), amount int, letter char(1));
-	exec sql create table "Test" (name char(8), amount int, letter char(1));
+	exec sql at main create table "Test" (name char(NAMELEN), amount int, letter char(1));
+	exec sql create table "Test" (name char(NAMELEN), amount int, letter char(1));
 
 	strcpy(msg, "commit");
 	exec sql at main commit;
@@ -115,7 +118,7 @@ exec sql end declare section;
 	    int a = amount[i];
 	    exec sql end declare section;
 
-	    strncpy(n, name[i], 8);
+	    strncpy(n, name[i], NAMELEN);
             printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
 	    amount[i]+=1000;
 

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.89 2002/03/24 18:22:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.90 2002/04/05 11:39:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -837,14 +837,14 @@ cppline			{space}*#(.*\\{space})*.*
 					}
 
 <<EOF>>				{
+				  		if (yy_buffer == NULL) {
 				  		if ( preproc_tos > 0 ) 
 						{
 					  		preproc_tos = 0;
 							mmerror(PARSE_ERROR, ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
 				  		}
-
-				  		if (yy_buffer == NULL)
 							yyterminate();
+							}
 				  		else
 				  		{
 							struct _yy_buffer *yb = yy_buffer;
