@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_upgrade.1,v 1.4 1998/08/31 04:32:18 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_upgrade.1,v 1.5 1998/10/25 02:47:38 momjian Exp $
 .TH pg_upgrade UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 pg_upgrade - allows upgrade from a previous release without reloading data
@@ -15,7 +15,7 @@ First, to be safe, back up your data directory.
 Then, use:
 .nf
 
-	pg_dumpall -s >db.out
+	pg_dumpall -s -z >db.out
 
 .fi
 to dump out your old database definitions without any data.
