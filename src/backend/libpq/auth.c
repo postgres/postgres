@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.83 2002/08/18 03:03:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.84 2002/08/27 15:15:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -809,7 +809,7 @@ recv_and_check_password_packet(Port *port)
 		return STATUS_EOF;
 	}
 
-	/* Do not echo failed password to logs, for security. */
+	/* Do not echo password to logs, for security. */
 	elog(DEBUG5, "received password packet");
 
 	result = md5_crypt_verify(port, port->user, buf.data);

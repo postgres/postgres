@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.66 2002/08/18 03:03:26 momjian Exp $
+ * $Id: pqcomm.h,v 1.67 2002/08/27 15:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,10 +106,18 @@ typedef uint32 PacketLen;
 
 /*
  * Startup message parameters sizes.  These must not be changed without changing
- * the protcol version.  These are all strings that are '\0' terminated only if
+ * the protocol version.  These are all strings that are '\0' terminated only if
  * there is room.
  */
 
+/*
+ * FIXME: remove the fixed size limitations on database & user name, use
+ * variable length fields instead. The actual values will still be
+ * limited by NAMEDATALEN, but this will at least allow changing
+ * NAMEDATALEN to increase database & user name limits without changing
+ * the protocol. -neilc, 2002/08/27
+ */
+ 
 /* These should all be of near-unlimited length, perhap 10k */
 #define SM_DATABASE		64
 /* SM_USER should be the same size as the others.  bjm 2002-06-02 */
@@ -120,7 +128,7 @@ typedef uint32 PacketLen;
 #define SM_UNUSED		64
 #define SM_TTY			64
 
-typedef uint32 ProtocolVersion; /* Fe/Be protocol version nr. */
+typedef uint32 ProtocolVersion; /* Fe/Be protocol version number */
 
 typedef struct StartupPacket
 {
