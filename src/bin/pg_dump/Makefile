@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.26 2000/10/20 21:03:56 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.27 2000/11/30 20:36:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,10 +20,10 @@ override CPPFLAGS+= -I$(libpq_srcdir)
 all: submake pg_dump pg_restore pg_dumpall
 
 pg_dump: pg_dump.o common.o $(OBJS) $(libpq_builddir)/libpq.a 
-	$(CC) $(CFLAGS) -o $@ pg_dump.o common.o $(OBJS) $(libpq) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LDFLAGS) pg_dump.o common.o $(OBJS) $(libpq) $(LIBS) -o $@
 
 pg_restore: pg_restore.o $(OBJS) $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) -o $@ pg_restore.o $(OBJS) $(libpq) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LDFLAGS) pg_restore.o $(OBJS) $(libpq) $(LIBS) -o $@
 
 ../../utils/strdup.o:
 	$(MAKE) -C ../../utils strdup.o

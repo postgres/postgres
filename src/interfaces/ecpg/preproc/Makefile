@@ -1,3 +1,5 @@
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.72 2000/11/30 20:36:13 petere Exp $
+
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
@@ -9,7 +11,6 @@ PATCHLEVEL=0
 override CPPFLAGS+=-I$(srcdir)/../include -DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
 	-DINCLUDE_PATH=\"$(includedir)\" 
-# -DYYDEBUG -g
 
 OBJS=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o output.o\
     keywords.o c_keywords.o ../lib/typename.o descriptor.o variable.o
@@ -25,7 +26,7 @@ endif
 
 
 ecpg: $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) -o $@
 
 $(srcdir)/preproc.c $(srcdir)/preproc.h: preproc.y
 	$(YACC) -d $(YFLAGS) $<

@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.35 2000/11/14 21:11:59 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.36 2000/11/30 20:36:10 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -221,7 +221,7 @@ ifeq ($(PORTNAME), beos)
 endif
 
 # Pull in any extra -L options that the user might have specified.
-SHLIB_LINK := $(filter -L%, $(LDFLAGS)) $(SHLIB_LINK)
+SHLIB_LINK := $(filter -L%, $(LIBS)) $(SHLIB_LINK)
 
 ifeq ($(enable_rpath), yes)
 SHLIB_LINK += $(rpath)
@@ -262,7 +262,7 @@ ifneq ($(PORTNAME), aix)
 
 # Normal case
 $(shlib): $(OBJS)
-	$(LINK.shared) -o $@ $(OBJS) $(SHLIB_LINK)
+	$(LINK.shared) $(OBJS) $(SHLIB_LINK) -o $@
 # If we're using major and minor versions, then make a symlink to major-version-only.
 ifneq ($(shlib), lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION))
 	rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)

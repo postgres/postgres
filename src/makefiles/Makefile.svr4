@@ -2,7 +2,8 @@
 # symbol names to tell them what to export/import.
 #MAKE_EXPORTS= true
 
-LDFLAGS+= -lc /usr/ucblib/libucb.a -LD-Blargedynsym
+LIBS += -lc /usr/ucblib/libucb.a
+LDFLAGS += -LD-Blargedynsym
 
 DLSUFFIX = .so
 CFLAGS_SL =

@@ -1,12 +1,11 @@
 MK_NO_LORDER= true
-CXXFLAGS+= -I/usr/local/lib/gcc-lib/i386-pc-qnx4/egcs-2.91.60/include/g++
 AR= ar
 AROPT = cr
 LD= $(AR)
 LDREL= $(AROPT)
 LDOUT=
 LIBS= -lunix
-LDFLAGS=   $(LIBS)
+LDFLAGS=
 
 enable_shared = no
 DLSUFFIX = .so

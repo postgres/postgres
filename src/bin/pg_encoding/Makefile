@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.11 2000/09/17 13:02:37 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.12 2000/11/30 20:36:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,10 +14,10 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS= pg_encoding.o
 
-all: submake pg_encoding$(X)
+all: submake pg_encoding
 
-pg_encoding$(X): $(OBJS)
-	$(CC) -o $@ $(OBJS) $(libpq) $(LDFLAGS) $(CFLAGS)
+pg_encoding: $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(libpq) $(LIBS) -o $@
 
 .PHONY: submake
 

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.67 2000/10/20 21:03:39 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.68 2000/11/30 20:36:10 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ all: postgres $(POSTGRES_IMP)
 ifneq ($(PORTNAME), win)
 
 postgres: $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(export_dynamic)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $^ $(LIBS) -o $@
 
 else # win
 
@@ -80,7 +80,7 @@ $(top_builddir)/src/utils/dllinit.o: $(top_srcdir)/src/utils/dllinit.c
 # The postgres.o target is needed by the rule in Makefile.global that
 # creates the exports file when MAKE_EXPORTS = true.
 postgres.o: $(OBJS)
-	$(CC) $(LDREL) $(LDOUT) $@ $^ $(LDFLAGS)
+	$(CC) $(LDREL) $(LDFLAGS) $^ $(LIBS) -o $@
 
 
 # The following targets are specified in make commands that appear in
@@ -193,7 +193,7 @@ maintainer-clean: distclean
 # are up to date.  It saves the time of doing all the submakes.
 .PHONY: quick
 quick: $(OBJS)
-	$(CC) -o postgres $(OBJS) $(LDFLAGS) $(export_dynamic)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $^ $(LIBS) -o postgres
 
 depend dep: $(top_srcdir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h
 	for i in $(DIRS); do $(MAKE) -C $$i $@; done

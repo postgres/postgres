@@ -35,11 +35,11 @@ else
 	$(MKLDEXPORT) postgres . > $@
   endif
 endif
-	$(CC) -Wl,-bE:$(top_builddir)/src/backend/$@ -o postgres $(OBJS) $(LDFLAGS)
+	$(CC) -Wl,-bE:$(top_builddir)/src/backend/$@ -o postgres $(OBJS) $(LDFLAGS) $(LIBS)
 
 %$(EXPSUFF): %.o
 	$(MKLDEXPORT) $*.o > $*$(EXPSUFF)
 
 %$(DLSUFFIX): %.o %$(EXPSUFF)
 	@echo Making shared library $@ from $*.o, $*$(EXPSUFF) and postgres.imp
-	$(CC) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -Wl,-bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(LDFLAGS_SL)
+	$(CC) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -Wl,-bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(LIBS) $(LDFLAGS_SL)

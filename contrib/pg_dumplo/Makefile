@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/Makefile,v 1.7 2000/10/20 21:03:25 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/Makefile,v 1.8 2000/11/30 20:36:09 petere Exp $
 #
 
 subdir = contrib/pg_dumplo
@@ -12,7 +12,7 @@ override CPPFLAGS += -I$(libpq_srcdir)
 all: pg_dumplo
 
 pg_dumplo: $(OBJS) $(libpq_builddir)/libpq.a
-	$(CC) -o $@ $(OBJS) $(libpq) $(CFLAGS) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(libpq) $(LIBS) -o $@
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_dumplo$(X)	$(bindir)

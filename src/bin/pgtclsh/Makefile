@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.34 2000/10/20 21:04:00 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.35 2000/11/30 20:36:12 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,10 +39,10 @@ endif
 all: submake $(PROGRAMS)
 
 pgtclsh: pgtclAppInit.o
-	$(CC) $(CFLAGS) -o $@ $< $(libpgtcl) $(libpq) $(TCL_LIB_SPEC) $(TCL_LIBS) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(libpgtcl) $(libpq) $(TCL_LIB_SPEC) $(TCL_LIBS) $(LIBS) -o $@
 
 pgtksh: pgtkAppInit.o
-	$(CC) $(CFLAGS) -o $@ $< $(libpgtcl) $(libpq) $(TK_LIB_SPEC) $(TK_LIBS) $(TCL_LIB_SPEC) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(libpgtcl) $(libpq) $(TK_LIB_SPEC) $(TK_LIBS) $(TCL_LIB_SPEC) $(LIBS) -o $@
 
 .PHONY: submake
 submake:

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.26 2000/10/20 21:04:01 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.27 2000/11/30 20:36:12 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ OBJS=command.o common.o help.o input.o stringutils.o mainloop.o \
 	copy.o startup.o prompt.o variables.o large_obj.o print.o describe.o \
 	tab-complete.o
 
-all: submake psql$(X)
+all: submake psql
 
 ifdef STRDUP
 OBJS+=$(top_builddir)/src/utils/strdup.o
@@ -47,8 +47,8 @@ endif
 
 # End of hacks for picking up backend 'port' modules
 
-psql$(X): $(OBJS) $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(libpq) $(LDFLAGS)
+psql: $(OBJS) $(libpq_builddir)/libpq.a
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(libpq) $(LIBS) -o $@
 
 help.o: $(srcdir)/sql_help.h
 
