@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /*
- * $Id: Connection.java,v 1.43 2002/03/09 17:08:39 davec Exp $
+ * $Id: Connection.java,v 1.44 2002/03/21 02:39:06 davec Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -25,7 +25,6 @@ public abstract class Connection
 	private String PG_HOST;
 	private int PG_PORT;
 	private String PG_USER;
-	private String PG_PASSWORD;
 	private String PG_DATABASE;
 	private boolean PG_STATUS;
 	private String compatible;
@@ -52,11 +51,6 @@ public abstract class Connection
 	// src/include/libpq/pqcomm.h
 	protected static final int PG_PROTOCOL_LATEST_MAJOR = 2;
 	protected static final int PG_PROTOCOL_LATEST_MINOR = 0;
-	private static final int SM_DATABASE	= 64;
-	private static final int SM_USER	= 32;
-	private static final int SM_OPTIONS = 64;
-	private static final int SM_UNUSED	= 64;
-	private static final int SM_TTY = 64;
 
 	private static final int AUTH_REQ_OK = 0;
 	private static final int AUTH_REQ_KRB4 = 1;
@@ -65,8 +59,10 @@ public abstract class Connection
 	private static final int AUTH_REQ_CRYPT = 4;
 	private static final int AUTH_REQ_MD5 = 5;
 
-	// New for 6.3, salt value for crypt authorisation
-	private String salt;
+  	public final static int PGASYNC_IDLE = 0;				/* nothing's happening, dude */
+	public final static int PGASYNC_BUSY = 1;				/* query in progress */
+	public final static int PGASYNC_READY = 2;			/* result ready for PQgetResult */
+
 
 	// These are used to cache oids, PGTypes and SQLTypes
 	private static Hashtable sqlTypeCache = new Hashtable();  // oid -> SQLType
@@ -85,13 +81,14 @@ public abstract class Connection
 	public int pid;
 	public int ckey;
 
+  public int asyncStatus = PGASYNC_READY;
 	/*
 	 * This is called by Class.forName() from within org.postgresql.Driver
 	 */
 	public Connection()
 	{}
 
-   	public void cancelQuery() throws SQLException 
+   	public void cancelQuery() throws SQLException
 	{
       		PG_Stream cancelStream = null;
       		try {
@@ -104,7 +101,7 @@ public abstract class Connection
       		} catch (IOException e) {
          		throw new PSQLException ("postgresql.con.failed",e);
       		}
-      
+
       		// Now we need to construct and send a cancel packet
       		try {
          		cancelStream.SendInteger(16, 4);
@@ -149,12 +146,16 @@ public abstract class Connection
 
 		this_driver = d;
 		this_url = url;
+
 		PG_DATABASE = database;
 		PG_USER = info.getProperty("user");
-		PG_PASSWORD = info.getProperty("password", "");
+
+		String password = info.getProperty("password", "");
 		PG_PORT = port;
+
 		PG_HOST = host;
 		PG_STATUS = CONNECTION_BAD;
+
 		if (info.getProperty("compatible") == null)
 		{
 			compatible = d.getMajorVersion() + "." + d.getMinorVersion();
@@ -184,14 +185,10 @@ public abstract class Connection
 		// Now we need to construct and send a startup packet
 		try
 		{
-			// Ver 6.3 code
-			pg_stream.SendInteger(4 + 4 + SM_DATABASE + SM_USER + SM_OPTIONS + SM_UNUSED + SM_TTY, 4);
-			pg_stream.SendInteger(PG_PROTOCOL_LATEST_MAJOR, 2);
-			pg_stream.SendInteger(PG_PROTOCOL_LATEST_MINOR, 2);
-			pg_stream.Send(database.getBytes(), SM_DATABASE);
-
-			// This last send includes the unused fields
-			pg_stream.Send(PG_USER.getBytes(), SM_USER + SM_OPTIONS + SM_UNUSED + SM_TTY);
+			new StartupPacket(PG_PROTOCOL_LATEST_MAJOR,
+						PG_PROTOCOL_LATEST_MINOR,
+						PG_USER,
+						database).writeTo(pg_stream);
 
 			// now flush the startup packets to the backend
 			pg_stream.flush();
@@ -202,6 +199,7 @@ public abstract class Connection
 			do
 			{
 				int beresp = pg_stream.ReceiveChar();
+				String salt = null;
 				switch (beresp)
 				{
 					case 'E':
@@ -255,15 +253,15 @@ public abstract class Connection
 
 							case AUTH_REQ_PASSWORD:
 								DriverManager.println("postgresql: PASSWORD");
-								pg_stream.SendInteger(5 + PG_PASSWORD.length(), 4);
-								pg_stream.Send(PG_PASSWORD.getBytes());
+								pg_stream.SendInteger(5 + password.length(), 4);
+								pg_stream.Send(password.getBytes());
 								pg_stream.SendInteger(0, 1);
 								pg_stream.flush();
 								break;
 
 							case AUTH_REQ_CRYPT:
 								DriverManager.println("postgresql: CRYPT");
-								String crypted = UnixCrypt.crypt(salt, PG_PASSWORD);
+								String crypted = UnixCrypt.crypt(salt, password);
 								pg_stream.SendInteger(5 + crypted.length(), 4);
 								pg_stream.Send(crypted.getBytes());
 								pg_stream.SendInteger(0, 1);
@@ -272,7 +270,7 @@ public abstract class Connection
 
 							case AUTH_REQ_MD5:
 								DriverManager.println("postgresql: MD5");
-								byte[] digest = MD5Digest.encode(PG_USER, PG_PASSWORD, salt);
+								byte[] digest = MD5Digest.encode(PG_USER, password, salt);
 								pg_stream.SendInteger(5 + digest.length, 4);
 								pg_stream.Send(digest);
 								pg_stream.SendInteger(0, 1);
@@ -429,7 +427,7 @@ public abstract class Connection
 	 */
 	public java.sql.ResultSet ExecSQL(String sql, java.sql.Statement stat) throws SQLException
 	{
-		return new QueryExecutor(sql, stat, pg_stream, this).execute();
+		return new QueryExecutor2(sql, stat, pg_stream, this).execute();
 	}
 
 	/*
