@@ -76,6 +76,8 @@ public class PG_Stream
    * This is required when the backend uses the routines in the
    * src/backend/libpq/pqcomprim.c module.
    *
+   * As time goes by, this should become obsolete.
+   *
    * @param val the integer to be sent
    * @param siz the length of the integer in bytes (size of structure)
    * @exception IOException if an I/O error occurs
@@ -140,6 +142,17 @@ public class PG_Stream
   }
   
   /**
+   * Sends a packet, prefixed with the packet's length
+   * @param buf buffer to send
+   * @exception SQLException if an I/O Error returns
+   */
+  public void SendPacket(byte[] buf) throws IOException
+  {
+    SendInteger(buf.length+4,4);
+    Send(buf);
+  }
+  
+  /**
    * Receives a single character from the backend
    *
    * @return the character received
@@ -179,6 +192,33 @@ public class PG_Stream
 	    if (b < 0)
 	      throw new IOException("EOF");
 	    n = n | (b << (8 * i)) ;
+	  }
+      } catch (IOException e) {
+	throw new SQLException("Error reading from backend: " + e.toString());
+      }
+      return n;
+  }
+  
+  /**
+   * Receives an integer from the backend
+   *
+   * @param siz length of the integer in bytes
+   * @return the integer received from the backend
+   * @exception SQLException if an I/O error occurs
+   */
+  public int ReceiveIntegerR(int siz) throws SQLException
+  {
+    int n = 0;
+    
+    try
+      {
+	for (int i = 0 ; i < siz ; i++)
+	  {
+	    int b = pg_input.read();
+	    
+	    if (b < 0)
+	      throw new IOException("EOF");
+	    n = b | (n << 8);
 	  }
       } catch (IOException e) {
 	throw new SQLException("Error reading from backend: " + e.toString());
@@ -253,7 +293,7 @@ public class PG_Stream
 	  answer[i] = null;
 	else
 	  {
-	    int len = ReceiveInteger(4);
+	    int len = ReceiveIntegerR(4);
 	    if (!bin) 
 	      len -= 4;
 	    if (len < 0) 

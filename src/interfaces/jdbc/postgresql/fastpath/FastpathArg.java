@@ -94,11 +94,11 @@ public class FastpathArg
   {
     if(type) {
       // argument is an integer
-      s.SendIntegerReverse(4,4);	// size of an integer
-      s.SendIntegerReverse(value,4);	// integer value of argument
+      s.SendInteger(4,4);	// size of an integer
+      s.SendInteger(value,4);	// integer value of argument
     } else {
       // argument is a byte array
-      s.SendIntegerReverse(bytes.length,4);	// size of array
+      s.SendInteger(bytes.length,4);	// size of array
       s.Send(bytes);
     }
   }

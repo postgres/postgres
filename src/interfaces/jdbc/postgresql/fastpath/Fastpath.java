@@ -75,8 +75,10 @@ public class Fastpath
       stream.SendInteger(70,1);
       stream.SendInteger(0,1);
       
-      stream.SendIntegerReverse(fnid,4);
-      stream.SendIntegerReverse(args.length,4);
+      //stream.SendIntegerReverse(fnid,4);
+      //stream.SendIntegerReverse(args.length,4);
+      stream.SendInteger(fnid,4);
+      stream.SendInteger(args.length,4);
       
       for(int i=0;i<args.length;i++)
 	args[i].send(stream);
@@ -114,12 +116,12 @@ public class Fastpath
 	  // Function returned properly
 	  //
 	case 'G':
-	  int sz = stream.ReceiveInteger(4);
+	  int sz = stream.ReceiveIntegerR(4);
 	  DriverManager.println("G: size="+sz);  //debug
 	  
 	  // Return an Integer if
 	  if(resulttype)
-	    result = new Integer(stream.ReceiveInteger(sz));
+	    result = new Integer(stream.ReceiveIntegerR(sz));
 	  else {
 	    byte buf[] = new byte[sz];
 	    stream.Receive(buf,0,sz);

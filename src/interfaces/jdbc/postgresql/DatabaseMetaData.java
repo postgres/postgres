@@ -1925,30 +1925,28 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException
   {
-    // XXX-Not Implemented as grant is broken
-    return null;
-    //Field f[] = new Field[8];
-    //Vector v = new Vector();
-    //
-    //f[0] = new Field(connection,new String("TABLE_CAT"),iVarcharOid,32);
-    //f[1] = new Field(connection,new String("TABLE_SCHEM"),iVarcharOid,32);
-    //f[2] = new Field(connection,new String("TABLE_NAME"),iVarcharOid,32);
-    //f[3] = new Field(connection,new String("COLUMN_NAME"),iVarcharOid,32);
-    //f[4] = new Field(connection,new String("GRANTOR"),iVarcharOid,32);
-    //f[5] = new Field(connection,new String("GRANTEE"),iVarcharOid,32);
-    //f[6] = new Field(connection,new String("PRIVILEGE"),iVarcharOid,32);
-    //f[7] = new Field(connection,new String("IS_GRANTABLE"),iVarcharOid,32);
-    //
-    //// This is taken direct from the psql source
-    //ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner ORDER BY relname");
-    //while(r.next()) {
-    //byte[][] tuple = new byte[8][0];
-    //tuple[0] = tuple[1]= "default".getBytes();
-    //
-    //v.addElement(tuple);
-    //}
-    //
-    //return new ResultSet(connection,f,v,"OK",1);
+    Field f[] = new Field[8];
+    Vector v = new Vector();
+    
+    f[0] = new Field(connection,new String("TABLE_CAT"),iVarcharOid,32);
+    f[1] = new Field(connection,new String("TABLE_SCHEM"),iVarcharOid,32);
+    f[2] = new Field(connection,new String("TABLE_NAME"),iVarcharOid,32);
+    f[3] = new Field(connection,new String("COLUMN_NAME"),iVarcharOid,32);
+    f[4] = new Field(connection,new String("GRANTOR"),iVarcharOid,32);
+    f[5] = new Field(connection,new String("GRANTEE"),iVarcharOid,32);
+    f[6] = new Field(connection,new String("PRIVILEGE"),iVarcharOid,32);
+    f[7] = new Field(connection,new String("IS_GRANTABLE"),iVarcharOid,32);
+    
+    // This is taken direct from the psql source
+    ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner ORDER BY relname");
+    while(r.next()) {
+      byte[][] tuple = new byte[8][0];
+      tuple[0] = tuple[1]= "".getBytes();
+      DriverManager.println("relname=\""+r.getString(1)+"\" relacl=\""+r.getString(2)+"\"");
+      //v.addElement(tuple);
+    }
+    
+    return new ResultSet(connection,f,v,"OK",1);
   }
   
   /**

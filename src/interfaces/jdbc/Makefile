@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.4 1998/01/13 02:19:10 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.5 1998/02/02 13:16:38 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,8 +33,9 @@ all:	  postgresql.jar
 	@echo
 	@echo Then either add -Djdbc.drivers=postgresql.Driver to the
 	@echo commandline when running your application, or edit the
-	@echo "properties file (~/.hotjava/properties under unix), and"
-	@echo add a line containing jdbc.drivers=postgresql.Driver
+	@echo "properties file for your application (~/.hotjava/properties"
+	@echo "under unix for HotJava), and add a line containing"
+	@echo jdbc.drivers=postgresql.Driver
 	@echo
 	@echo More details are in the README file.
 	@echo ------------------------------------------------------------
@@ -76,8 +77,12 @@ OBJS=	postgresql/CallableStatement.class \
 	postgresql/util/PGobject.class \
 	postgresql/util/PGtokenizer.class
 
+# If you have problems with the first line, try the second one.
+# This is needed when compiling under Solaris, as the solaris sh doesn't
+# recognise $( )
 postgresql.jar: $(OBJS)
-	$(JAR) -c0vf $@ $$($(FIND) postgresql -name "*.class" -print)
+	$(JAR) -c0f $@ $$($(FIND) postgresql -name "*.class" -print)
+#	$(JAR) -c0f $@ `$(FIND) postgresql -name "*.class" -print`
 
 # This rule removes any temporary and compiled files from the source tree.
 clean:

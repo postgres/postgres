@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.32 1998/01/25 05:13:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.33 1998/02/02 13:16:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1532,6 +1532,7 @@ PrintBufferDescs()
 	if (IsUnderPostmaster)
 	{
 		SpinAcquire(BufMgrLock);
+#if 0
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
 			elog(NOTICE, "[%02d] (freeNext=%d, freePrev=%d, relname=%s, \
@@ -1540,6 +1541,7 @@ blockNum=%d, flags=0x%x, refcount=%d %d)",
 				 buf->sb_relname, buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i]);
 		}
+#endif
 		SpinRelease(BufMgrLock);
 	}
 	else

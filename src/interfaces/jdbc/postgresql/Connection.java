@@ -43,16 +43,16 @@ public class Connection implements java.sql.Connection
   public boolean CONNECTION_OK = true;
   public boolean CONNECTION_BAD = false;
   
-  private static final int STARTUP_LEN  = 288;	// Length of a startup packet
+  //private static final int STARTUP_LEN  = 288;	// Length of a startup packet
   
   // These are defined in src/include/libpq/pqcomm.h
-  private int STARTUP_CODE = STARTUP_USER;
-  private static final int STARTUP_USER = 7;	// User auth
-  private static final int STARTUP_KRB4 = 10;	// Kerberos 4 (unused)
-  private static final int STARTUP_KRB5 = 11;	// Kerberos 5 (unused)
-  private static final int STARTUP_HBA  = 12;	// Host Based
-  private static final int STARTUP_NONE = 13;	// Unauthenticated (unused)
-  private static final int STARTUP_PASS = 14;	// Password auth
+  //private int STARTUP_CODE = STARTUP_USER;
+  //private static final int STARTUP_USER = 7;	// User auth
+  //private static final int STARTUP_KRB4 = 10;	// Kerberos 4 (unused)
+  //private static final int STARTUP_KRB5 = 11;	// Kerberos 5 (unused)
+  //private static final int STARTUP_HBA  = 12;	// Host Based
+  //private static final int STARTUP_NONE = 13;	// Unauthenticated (unused)
+  //private static final int STARTUP_PASS = 14;	// Password auth
   
   private boolean autoCommit = true;
   private boolean readOnly = false;
@@ -61,8 +61,25 @@ public class Connection implements java.sql.Connection
   private String this_url;
   private String cursor = null;	// The positioned update cursor name
   
-  // This is false for US, true for European date formats
-  //protected boolean europeanDates = false;
+  // These are new for v6.3, they determine the current protocol versions
+  // supported by this version of the driver. They are defined in
+  // src/include/libpq/pqcomm.h
+  protected static final int PG_PROTOCOL_LATEST_MAJOR = 1;
+  protected static final int PG_PROTOCOL_LATEST_MINOR = 0;
+  private static final int SM_DATABASE	= 64;
+  private static final int SM_USER	= 32;
+  private static final int SM_OPTIONS	= 64;
+  private static final int SM_UNUSED	= 64;
+  private static final int SM_TTY	= 64;
+  
+  private static final int AUTH_REQ_OK       = 0;
+  private static final int AUTH_REQ_KRB4     = 1;
+  private static final int AUTH_REQ_KRB5     = 2;
+  private static final int AUTH_REQ_PASSWORD = 3;
+  private static final int AUTH_REQ_CRYPT    = 4;
+  
+  // New for 6.3, salt value for crypt authorisation
+  private String salt;
   
   /**
    * This is the current date style of the backend
@@ -120,7 +137,7 @@ public class Connection implements java.sql.Connection
    */
   public Connection(String host, int port, Properties info, String database, String url, Driver d) throws SQLException
   {
-    int len = STARTUP_LEN;	// Length of a startup packet
+    //int len = STARTUP_LEN;	// Length of a startup packet
     
     this_driver = d;
     this_url = new String(url);
@@ -131,6 +148,7 @@ public class Connection implements java.sql.Connection
     PG_HOST = new String(host);
     PG_STATUS = CONNECTION_BAD;
     
+    // Pre 6.3 code
     // This handles the auth property. Any value begining with p enables
     // password authentication, while anything begining with i enables
     // ident (RFC 1413) authentication. Any other values default to trust.
@@ -138,17 +156,17 @@ public class Connection implements java.sql.Connection
     // Also, the postgresql.auth system property can be used to change the
     // local default, if the auth property is not present.
     //
-    String auth = info.getProperty("auth",System.getProperty("postgresql.auth","trust")).toLowerCase();
-    if(auth.startsWith("p")) {
-      // Password authentication
-      STARTUP_CODE=STARTUP_PASS;
-    } else if(auth.startsWith("i")) {
-      // Ident (RFC 1413) authentication
-      STARTUP_CODE=STARTUP_HBA;
-    } else {
-      // Anything else defaults to trust authentication
-      STARTUP_CODE=STARTUP_USER;
-    }
+    //String auth = info.getProperty("auth",System.getProperty("postgresql.auth","trust")).toLowerCase();
+    //if(auth.startsWith("p")) {
+    //// Password authentication
+    //STARTUP_CODE=STARTUP_PASS;
+    //} else if(auth.startsWith("i")) {
+    //// Ident (RFC 1413) authentication
+    //STARTUP_CODE=STARTUP_HBA;
+    //} else {
+    //// Anything else defaults to trust authentication
+    //STARTUP_CODE=STARTUP_USER;
+    //}
     
     // Now make the initial connection
     try
@@ -161,21 +179,94 @@ public class Connection implements java.sql.Connection
       // Now we need to construct and send a startup packet
       try
 	{
-	  pg_stream.SendInteger(len, 4);			len -= 4;
-	  pg_stream.SendInteger(STARTUP_CODE, 4);		len -= 4;
-	  pg_stream.Send(database.getBytes(), 64);	len -= 64;
-	  pg_stream.Send(PG_USER.getBytes(), len);
+	  // Pre 6.3 code
+	  //pg_stream.SendInteger(len, 4);			len -= 4;
+	  //pg_stream.SendInteger(STARTUP_CODE, 4);		len -= 4;
+	  //pg_stream.Send(database.getBytes(), 64);	len -= 64;
+	  //pg_stream.Send(PG_USER.getBytes(), len);
+	  //
+	  //// Send the password packet if required
+	  //if(STARTUP_CODE == STARTUP_PASS) {
+	  //len=STARTUP_LEN;
+	  //pg_stream.SendInteger(len, 4);			len -= 4;
+	  //pg_stream.SendInteger(STARTUP_PASS, 4);		len -= 4;
+	  //pg_stream.Send(PG_USER.getBytes(), PG_USER.length());
+	  //len-=PG_USER.length();
+	  //pg_stream.SendInteger(0,1);			len -= 1;
+	  //pg_stream.Send(PG_PASSWORD.getBytes(), len);
+	  //}
 	  
-	  // Send the password packet if required
-	  if(STARTUP_CODE == STARTUP_PASS) {
-	    len=STARTUP_LEN;
-	    pg_stream.SendInteger(len, 4);			len -= 4;
-	    pg_stream.SendInteger(STARTUP_PASS, 4);		len -= 4;
-	    pg_stream.Send(PG_USER.getBytes(), PG_USER.length());
-	    len-=PG_USER.length();
-	    pg_stream.SendInteger(0,1);			len -= 1;
-	    pg_stream.Send(PG_PASSWORD.getBytes(), len);
-	  }
+	  // Ver 6.3 code
+	  pg_stream.SendInteger(4+4+SM_DATABASE+SM_USER+SM_OPTIONS+SM_UNUSED+SM_TTY,4);
+	  pg_stream.SendInteger(PG_PROTOCOL_LATEST_MAJOR,2);
+	  pg_stream.SendInteger(PG_PROTOCOL_LATEST_MINOR,2);
+	  pg_stream.Send(database.getBytes(),SM_DATABASE);
+	  pg_stream.Send(PG_USER.getBytes(),SM_USER+SM_OPTIONS+SM_UNUSED+SM_TTY);
+	  // The last send includes the unused fields
+	  
+	  // Now get the response from the backend, either an error message
+	  // or an authentication request
+	  int areq = -1; // must have a value here
+	  do {
+	    int beresp = pg_stream.ReceiveChar();
+	    switch(beresp)
+	      {
+	      case 'E':
+		throw new SQLException(pg_stream.ReceiveString(4096));
+		
+	      case 'R':
+		// Get the type of request
+		areq = pg_stream.ReceiveIntegerR(4);
+		
+		// Get the password salt if there is one
+		if(areq == AUTH_REQ_CRYPT) {
+		  byte[] rst = new byte[2];
+		  rst[0] = (byte)pg_stream.ReceiveChar();
+		  rst[1] = (byte)pg_stream.ReceiveChar();
+		  salt = new String(rst,0,2);
+		  DriverManager.println("Salt="+salt);
+		}
+		
+		// now send the auth packet
+		switch(areq)
+		  {
+		  case AUTH_REQ_OK:
+		    break;
+		    
+		  case AUTH_REQ_KRB4:
+		    DriverManager.println("postgresql: KRB4");
+		    throw new SQLException("Kerberos 4 not supported");
+		    
+		  case AUTH_REQ_KRB5:
+		    DriverManager.println("postgresql: KRB5");
+		    throw new SQLException("Kerberos 5 not supported");
+		    
+		  case AUTH_REQ_PASSWORD:
+		    DriverManager.println("postgresql: PASSWORD");
+		    pg_stream.SendInteger(5+PG_PASSWORD.length(),4);
+		    pg_stream.Send(PG_PASSWORD.getBytes());
+		    pg_stream.SendInteger(0,1);
+		    //pg_stream.SendPacket(PG_PASSWORD.getBytes());
+		    break;
+		    
+		  case AUTH_REQ_CRYPT:
+		    DriverManager.println("postgresql: CRYPT");
+		    String crypted = UnixCrypt.crypt(salt,PG_PASSWORD);
+		    pg_stream.SendInteger(5+crypted.length(),4);
+		    pg_stream.Send(crypted.getBytes());
+		    pg_stream.SendInteger(0,1);
+		    //pg_stream.SendPacket(UnixCrypt.crypt(salt,PG_PASSWORD).getBytes());
+		    break;
+		    
+		  default:
+		    throw new SQLException("Authentication type "+areq+" not supported");
+		  }
+		break;
+		
+	      default:
+		throw new SQLException("error getting authentication request");
+	      }
+	    } while(areq != AUTH_REQ_OK);
 	  
 	} catch (IOException e) {
 	  throw new SQLException("Connection failed: " + e.toString());
@@ -671,14 +762,14 @@ public class Connection implements java.sql.Connection
    */
   private Field[] ReceiveFields() throws SQLException
   {
-    int nf = pg_stream.ReceiveInteger(2), i;
+    int nf = pg_stream.ReceiveIntegerR(2), i;
     Field[] fields = new Field[nf];
     
     for (i = 0 ; i < nf ; ++i)
       {
 	String typname = pg_stream.ReceiveString(8192);
-	int typid = pg_stream.ReceiveInteger(4);
-	int typlen = pg_stream.ReceiveInteger(2);
+	int typid = pg_stream.ReceiveIntegerR(4);
+	int typlen = pg_stream.ReceiveIntegerR(2);
 	fields[i] = new Field(this, typname, typid, typlen);
       }
     return fields;
