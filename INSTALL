@@ -809,6 +809,8 @@ tests pass.
 |____________|_________|_______|(<marko@karppinen.fi>)________|_______________|
 |NetBSD      |arm32    |7.4    |2003-11-12, Patrick Welche    |1.6ZE/acorn32  |
 |____________|_________|_______|(<prlw1@newn.cam.ac.uk>)______|_______________|
+|NetBSD      |Sparc    |7.4.1  |2003-11-26, Peter Eisentraut  |1.6.1, 32-bit  |
+|____________|_________|_______|(<peter_e@gmx.net>)___________|_______________|
 |NetBSD      |x86      |7.4    |2003-10-24, Peter Eisentraut  |1.6            |
 |____________|_________|_______|(<peter_e@gmx.net>)___________|_______________|
 |OpenBSD     |Sparc    |7.4    |2003-11-01, Peter Eisentraut  |3.4            |
@@ -860,8 +862,6 @@ supported if given some attention.
 |__________|___________|_______|(<whunter@agile.tv>)___________|_________________|
 |NetBSD    |PPC        |7.2    |2001-11-28, Bill Studenmund    |1.5              |
 |__________|___________|_______|(<wrstuden@netbsd.org>)________|_________________|
-|NetBSD    |Sparc      |7.2    |2001-12-03, Matthew Green      |32- and 64-bit   |
-|__________|___________|_______|(<mrg@eterna.com.au>)__________|builds___________|
 |NetBSD    |VAX        |7.1    |2001-03-30, Tom I. Helbekkmo   |1.5              |
 |__________|___________|_______|(<tih@kpnQwest.no>)____________|_________________|
 |QNX 4 RTOS|x86        |7.2    |2001-12-10, Bernd Tegge        |needs updates to |
