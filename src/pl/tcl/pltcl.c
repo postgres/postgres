@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.48 2001/11/05 17:46:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.49 2002/01/24 19:31:36 tgl Exp $
  *
  **********************************************************************/
 
@@ -124,8 +124,6 @@ typedef struct pltcl_query_desc
 	Oid		   *argtypes;
 	FmgrInfo   *arginfuncs;
 	Oid		   *argtypelems;
-	bool	   *argbyvals;
-	Datum	   *argvalues;
 }	pltcl_query_desc;
 
 
@@ -819,9 +817,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	if (strcmp(interp->result, "OK") == 0)
 		return rettup;
 	if (strcmp(interp->result, "SKIP") == 0)
-	{
-		return (HeapTuple) NULL;;
-	}
+		return (HeapTuple) NULL;
 
 	/************************************************************
 	 * Convert the result value from the Tcl interpreter
@@ -889,6 +885,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		attnum = SPI_fnumber(tupdesc, ret_values[i++]);
 		if (attnum == SPI_ERROR_NOATTRIBUTE)
 			elog(ERROR, "pltcl: invalid attribute '%s'", ret_values[--i]);
+		if (attnum <= 0)
+			elog(ERROR, "pltcl: cannot set system attribute '%s'", ret_values[--i]);
 
 		/************************************************************
 		 * Lookup the attribute type in the syscache
@@ -1724,8 +1722,6 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	qdesc->argtypes = (Oid *) malloc(nargs * sizeof(Oid));
 	qdesc->arginfuncs = (FmgrInfo *) malloc(nargs * sizeof(FmgrInfo));
 	qdesc->argtypelems = (Oid *) malloc(nargs * sizeof(Oid));
-	qdesc->argbyvals = (bool *) malloc(nargs * sizeof(bool));
-	qdesc->argvalues = (Datum *) malloc(nargs * sizeof(Datum));
 
 	/************************************************************
 	 * Prepare to start a controlled return through all
@@ -1739,8 +1735,6 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		free(qdesc->argtypes);
 		free(qdesc->arginfuncs);
 		free(qdesc->argtypelems);
-		free(qdesc->argbyvals);
-		free(qdesc->argvalues);
 		free(qdesc);
 		ckfree((char *) args);
 		return TCL_ERROR;
@@ -1761,8 +1755,6 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		perm_fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
 					   &(qdesc->arginfuncs[i]));
 		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
-		qdesc->argbyvals[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typbyval;
-		qdesc->argvalues[i] = (Datum) NULL;
 		ReleaseSysCache(typeTup);
 	}
 
@@ -1879,6 +1871,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	int			loop_body;
 	Tcl_HashEntry *hashent;
 	pltcl_query_desc *qdesc;
+	Datum	   *argvalues = NULL;
 	char	   *volatile nulls = NULL;
 	char	   *volatile arrayname = NULL;
 	int			count = 0;
@@ -2033,15 +2026,6 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		if (sigsetjmp(Warn_restart, 1) != 0)
 		{
 			memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-			for (j = 0; j < callnargs; j++)
-			{
-				if (!qdesc->argbyvals[j] &&
-					qdesc->argvalues[j] != (Datum) NULL)
-				{
-					pfree(DatumGetPointer(qdesc->argvalues[j]));
-					qdesc->argvalues[j] = (Datum) NULL;
-				}
-			}
 			ckfree((char *) callargs);
 			callargs = NULL;
 			pltcl_restart_in_progress = 1;
@@ -2053,15 +2037,25 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		 * Setup the value array for the SPI_execp() using
 		 * the type specific input functions
 		 ************************************************************/
+		argvalues = (Datum *) palloc(callnargs * sizeof(Datum));
+
 		for (j = 0; j < callnargs; j++)
 		{
-			UTF_BEGIN;
-			qdesc->argvalues[j] =
-				FunctionCall3(&qdesc->arginfuncs[j],
-							  CStringGetDatum(UTF_U2E(callargs[j])),
-							  ObjectIdGetDatum(qdesc->argtypelems[j]),
-							  Int32GetDatum(-1));
-			UTF_END;
+			if (nulls && nulls[j] == 'n')
+			{
+				/* don't try to convert the input for a null */
+				argvalues[j] = (Datum) 0;
+			}
+			else
+			{
+				UTF_BEGIN;
+				argvalues[j] =
+					FunctionCall3(&qdesc->arginfuncs[j],
+								  CStringGetDatum(UTF_U2E(callargs[j])),
+								  ObjectIdGetDatum(qdesc->argtypelems[j]),
+								  Int32GetDatum(-1));
+				UTF_END;
+			}
 		}
 
 		/************************************************************
@@ -2088,14 +2082,6 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		for (j = 0; j < callnargs; j++)
-		{
-			if (!qdesc->argbyvals[j] && qdesc->argvalues[j] != (Datum) NULL)
-			{
-				pfree(DatumGetPointer(qdesc->argvalues[j]));
-				qdesc->argvalues[j] = (Datum) NULL;
-			}
-		}
 		pltcl_restart_in_progress = 1;
 		Tcl_SetResult(interp, "Transaction abort", TCL_VOLATILE);
 		return TCL_ERROR;
@@ -2104,20 +2090,8 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	/************************************************************
 	 * Execute the plan
 	 ************************************************************/
-	spi_rc = SPI_execp(qdesc->plan, qdesc->argvalues, nulls, count);
+	spi_rc = SPI_execp(qdesc->plan, argvalues, nulls, count);
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-
-	/************************************************************
-	 * For varlena data types, free the argument values
-	 ************************************************************/
-	for (j = 0; j < callnargs; j++)
-	{
-		if (!qdesc->argbyvals[j] && qdesc->argvalues[j] != (Datum) NULL)
-		{
-			pfree(DatumGetPointer(qdesc->argvalues[j]));
-			qdesc->argvalues[j] = (Datum) NULL;
-		}
-	}
 
 	/************************************************************
 	 * Check the return code from SPI_execp()
