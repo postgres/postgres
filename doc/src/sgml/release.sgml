@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.6 2002/12/18 23:38:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.7 2002/12/20 00:24:29 momjian Exp $
 -->
 
 <appendix id="release">
@@ -37,7 +37,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.6 2002/12/18 23:38:0
 <literallayout>
 Fix a core dump of COPY TO when client/server encodings don't match
   (Tom)
-Allow pg_dump to work with pre-7.2 servers (Tom)
+Allow pg_dump to work with pre-7.2 servers (Philip)
 contrib/adddepend fixes (Tom)
 Fix problem with deletion of per-user/per-database config settings
   (Tom)
