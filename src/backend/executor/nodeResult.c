@@ -27,7 +27,7 @@
  *				   SeqScan (emp.all)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.6 1998/02/13 03:26:52 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.7 1998/02/18 07:19:34 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,7 +291,8 @@ ExecReScanResult(Result *node, ExprContext *exprCtxt, Plan *parent)
 	 * if chgParam of subnode is not null then plan
 	 * will be re-scanned by first ExecProcNode.
 	 */
-	if (((Plan*) node)->lefttree->chgParam == NULL)
+	if (((Plan*) node)->lefttree && 
+			((Plan*) node)->lefttree->chgParam == NULL)
 		ExecReScan (((Plan*) node)->lefttree, exprCtxt, (Plan *) node);
 	
 }
