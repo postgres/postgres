@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.85 2002/03/06 06:09:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.86 2002/04/11 05:32:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static bool get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, Oid *dbLastSysOidP,
 			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
 			char *dbpath);
-static bool get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb);
+static bool have_createdb_privilege(void);
 static char *resolve_alt_dbpath(const char *dbpath, Oid dboid);
 static bool remove_dbdirs(const char *real_loc, const char *altloc);
 
@@ -67,8 +67,6 @@ createdb(const char *dbname, const char *dbowner,
 	char	   *target_dir;
 	char		src_loc[MAXPGPATH];
 	char		buf[2 * MAXPGPATH + 100];
-	bool		use_super,
-				use_createdb;
 	Oid			src_dboid;
 	int4		src_owner;
 	int			src_encoding;
@@ -91,21 +89,17 @@ createdb(const char *dbname, const char *dbowner,
 	else
 		datdba = GetUserId();
 
-	/* check permission to create database */
-	if (!get_user_info(GetUserId(), &use_super, &use_createdb))
-		elog(ERROR, "current user name is invalid");
-
 	if (datdba == (int32) GetUserId())
 	{
 		/* creating database for self: can be superuser or createdb */
-		if (!use_createdb && !use_super)
+		if (!superuser() && !have_createdb_privilege())
 			elog(ERROR, "CREATE DATABASE: permission denied");
 	}
 	else
 	{
 		/* creating database for someone else: must be superuser */
 		/* note that the someone else need not have any permissions */
-		if (!use_super)
+		if (!superuser())
 			elog(ERROR, "CREATE DATABASE: permission denied");
 	}
 
@@ -143,7 +137,7 @@ createdb(const char *dbname, const char *dbowner,
 	 */
 	if (!src_istemplate)
 	{
-		if (!use_super && GetUserId() != src_owner)
+		if (!superuser() && GetUserId() != src_owner )
 			elog(ERROR, "CREATE DATABASE: permission to copy \"%s\" denied",
 				 dbtemplate);
 	}
@@ -332,7 +326,6 @@ dropdb(const char *dbname)
 {
 	int4		db_owner;
 	bool		db_istemplate;
-	bool		use_super;
 	Oid			db_id;
 	char	   *alt_loc;
 	char	   *nominal_loc;
@@ -350,9 +343,6 @@ dropdb(const char *dbname)
 	if (IsTransactionBlock())
 		elog(ERROR, "DROP DATABASE: may not be called in a transaction block");
 
-	if (!get_user_info(GetUserId(), &use_super, NULL))
-		elog(ERROR, "current user name is invalid");
-
 	/*
 	 * Obtain exclusive lock on pg_database.  We need this to ensure that
 	 * no new backend starts up in the target database while we are
@@ -368,7 +358,7 @@ dropdb(const char *dbname)
 					 &db_istemplate, NULL, NULL, NULL, dbpath))
 		elog(ERROR, "DROP DATABASE: database \"%s\" does not exist", dbname);
 
-	if (!use_super && GetUserId() != db_owner)
+	if (GetUserId() != db_owner && !superuser())
 		elog(ERROR, "DROP DATABASE: permission denied");
 
 	/*
@@ -605,25 +595,23 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 }
 
 static bool
-get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb)
+have_createdb_privilege(void)
 {
 	HeapTuple	utup;
+	bool		retval;
 
 	utup = SearchSysCache(SHADOWSYSID,
-						  ObjectIdGetDatum(use_sysid),
+						  ObjectIdGetDatum(GetUserId()),
 						  0, 0, 0);
 
 	if (!HeapTupleIsValid(utup))
-		return false;
-
-	if (use_super)
-		*use_super = ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
-	if (use_createdb)
-		*use_createdb = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
+		retval = true;
+	else
+		retval = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
 
 	ReleaseSysCache(utup);
 
-	return true;
+	return retval;
 }
 
 

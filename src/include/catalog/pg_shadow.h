@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.18 2002/03/01 22:45:17 petere Exp $
+ * $Id: pg_shadow.h,v 1.19 2002/04/11 05:32:03 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -35,7 +35,7 @@ CATALOG(pg_shadow) BOOTSTRAP BKI_WITHOUT_OIDS
 	int4		usesysid;
 	bool		usecreatedb;
 	bool		usetrace;
-	bool		usesuper;
+	bool		usesuper;		/* read this field via superuser() only */
 	bool		usecatupd;
 	text		passwd;
 	int4		valuntil;

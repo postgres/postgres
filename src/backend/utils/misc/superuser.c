@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.20 2002/02/18 23:11:26 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.21 2002/04/11 05:32:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,11 @@
 
 /*
  * The Postgres user running this command has Postgres superuser privileges
+ *
+ * All code should use either of these two functions to find out
+ * whether a given user is a superuser, rather than evaluating
+ * pg_shadow.usesuper directly, so that the escape hatch built in for
+ * the single-user case works.
  */
 bool
 superuser(void)
