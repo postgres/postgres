@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.32 2002/09/05 00:43:07 tgl Exp $
+ * $Id: pg_config.h.in,v 1.32.2.1 2002/11/08 05:23:09 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -332,11 +332,6 @@
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #undef HAVE_FSEEKO
 
-#ifndef HAVE_FSEEKO
-#define fseeko(a, b, c) fseek((a), (b), (c))
-#define ftello(a) ftell((a))
-#endif
-
 /* Define if your cpp understands the ANSI stringizing operators in macros */
 #undef HAVE_STRINGIZE
 
@@ -423,6 +418,7 @@
 
 /* Set to 1 if you have gettimeofday(a) instead of gettimeofday(a,b) */
 #undef GETTIMEOFDAY_1ARG
+
 #ifdef GETTIMEOFDAY_1ARG
 # define gettimeofday(a,b) gettimeofday(a)
 #endif
@@ -444,9 +440,6 @@
 
 /* Set to 1 if you have isinf() */
 #undef HAVE_ISINF
-#ifndef HAVE_ISINF
-extern int isinf(double x);
-#endif
 
 /*
  *	These are all related to port/isinf.c 
@@ -459,9 +452,6 @@ extern int isinf(double x);
 
 /* Set to 1 if you have gethostname() */
 #undef HAVE_GETHOSTNAME
-#ifndef HAVE_GETHOSTNAME
-extern int gethostname(char *name, int namelen);
-#endif
 
 /* Set to 1 if struct tm has a tm_zone member */
 #undef HAVE_TM_ZONE
@@ -479,13 +469,6 @@ extern int gethostname(char *name, int namelen);
 /* Set to 1 if you have inet_aton() */
 #undef HAVE_INET_ATON
 
-#ifndef HAVE_INET_ATON
-# include <sys/types.h>
-# include <netinet/in.h>
-# include <arpa/inet.h>
-extern int inet_aton(const char *cp, struct in_addr * addr);
-#endif
-
 /* Set to 1 if you have fcvt() */
 #undef HAVE_FCVT
 
@@ -500,17 +483,6 @@ extern int inet_aton(const char *cp, struct in_addr * addr);
 
 /* Set to 1 if you have sigsetjmp() */
 #undef HAVE_SIGSETJMP
-
-/*
- * When there is no sigsetjmp, its functionality is provided by plain
- * setjmp. Incidentally, nothing provides setjmp's functionality in
- * that case.
- */
-#ifndef HAVE_SIGSETJMP
-# define sigjmp_buf jmp_buf
-# define sigsetjmp(x,y)	setjmp(x)
-# define siglongjmp longjmp
-#endif
 
 /* Set to 1 if you have sysconf() */
 #undef HAVE_SYSCONF
@@ -529,9 +501,6 @@ extern int inet_aton(const char *cp, struct in_addr * addr);
 
 /* Set to 1 if you have sigprocmask() */
 #undef HAVE_STRCASECMP
-#ifndef HAVE_STRCASECMP
-extern int strcasecmp(char *s1, char *s2);
-#endif
 
 /* Set to 1 if you have strtol() */
 #undef HAVE_STRTOL
@@ -541,21 +510,12 @@ extern int strcasecmp(char *s1, char *s2);
 
 /* Set to 1 if you have strdup() */
 #undef HAVE_STRDUP
-#ifndef HAVE_STRDUP
-extern char *strdup(char const *);
-#endif
 
 /* Set to 1 if you have random() */
 #undef HAVE_RANDOM
-#ifndef HAVE_RANDOM
-extern long random(void);
-#endif
 
 /* Set to 1 if you have srandom() */
 #undef HAVE_SRANDOM
-#ifndef HAVE_SRANDOM
-extern void srandom(unsigned int seed);
-#endif
 
 /* The random() function is expected to yield values 0 .. MAX_RANDOM_VALUE */
 /* Currently, all known implementations yield 0..2^31-1, so we just hardwire
@@ -574,10 +534,6 @@ extern void srandom(unsigned int seed);
 
 /* Define if the standard header unistd.h declares fdatasync() */
 #undef HAVE_DECL_FDATASYNC
-
-#if defined(HAVE_FDATASYNC) && !HAVE_DECL_FDATASYNC
-extern int fdatasync(int fildes);
-#endif
 
 /* Set to 1 if you have libz.a */
 #undef HAVE_LIBZ
@@ -669,23 +625,11 @@ extern int fdatasync(int fildes);
 /* Define if you have strtoq() */
 #undef HAVE_STRTOQ
 
-/* If strtoq() exists, rename it to the more standard strtoll() */
-#if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOLL) && defined(HAVE_STRTOQ)
-# define strtoll strtoq
-# define HAVE_STRTOLL 1
-#endif
-
 /* Define if you have strtoull() */
 #undef HAVE_STRTOULL
 
 /* Define if you have strtouq() */
 #undef HAVE_STRTOUQ
-
-/* If strtouq() exists, rename it to the more standard strtoull() */
-#if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOULL) && defined(HAVE_STRTOUQ)
-# define strtoull strtouq
-# define HAVE_STRTOULL 1
-#endif
 
 /* Define if you have atexit() */
 #undef HAVE_ATEXIT
@@ -727,9 +671,17 @@ extern int fdatasync(int fildes);
 
 #include "pg_config_os.h"
 
+
 /*
- * Provide default definitions for things that port-specific pg_config_os.h
- * files can set, but typically don't.
+ *------------------------------------------------------------------------
+ * Part 5: provide default declarations for various things that should be
+ * provided by the system headers or the port-specific pg_config_os.h file,
+ * but sometimes aren't.
+ *
+ * This must be last so that pg_config_os.h can override the defaults.
+ * In particular, we must not pull in any system header files until we
+ * have read pg_config_os.h (largefile support tends to break otherwise).
+ *------------------------------------------------------------------------
  */
 
 #ifndef DLLIMPORT
@@ -747,6 +699,73 @@ extern int fdatasync(int fildes);
 
 #ifndef SIGNAL_ARGS
 #define SIGNAL_ARGS  int postgres_signal_arg
+#endif
+
+/*
+ * Default "extern" declarations or macro substitutes for library routines.
+ * When necessary, these routines are provided by files in src/port/.
+ */
+#ifndef HAVE_FSEEKO
+#define fseeko(a, b, c) fseek((a), (b), (c))
+#define ftello(a) ftell((a))
+#endif
+
+#ifndef HAVE_ISINF
+extern int isinf(double x);
+#endif
+
+#ifndef HAVE_GETHOSTNAME
+extern int gethostname(char *name, int namelen);
+#endif
+
+#ifndef HAVE_INET_ATON
+# include <sys/types.h>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+extern int inet_aton(const char *cp, struct in_addr * addr);
+#endif
+
+/*
+ * When there is no sigsetjmp, its functionality is provided by plain
+ * setjmp. Incidentally, nothing provides setjmp's functionality in
+ * that case.
+ */
+#ifndef HAVE_SIGSETJMP
+# define sigjmp_buf jmp_buf
+# define sigsetjmp(x,y)	setjmp(x)
+# define siglongjmp longjmp
+#endif
+
+#ifndef HAVE_STRCASECMP
+extern int strcasecmp(char *s1, char *s2);
+#endif
+
+#ifndef HAVE_STRDUP
+extern char *strdup(char const *);
+#endif
+
+#ifndef HAVE_RANDOM
+extern long random(void);
+#endif
+
+#ifndef HAVE_SRANDOM
+extern void srandom(unsigned int seed);
+#endif
+
+#if defined(HAVE_FDATASYNC) && !HAVE_DECL_FDATASYNC
+extern int fdatasync(int fildes);
+#endif
+
+/* If strtoq() exists, rename it to the more standard strtoll() */
+#if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOLL) && defined(HAVE_STRTOQ)
+# define strtoll strtoq
+# define HAVE_STRTOLL 1
+#endif
+
+/* If strtouq() exists, rename it to the more standard strtoull() */
+#if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOULL) && defined(HAVE_STRTOUQ)
+# define strtoull strtouq
+# define HAVE_STRTOULL 1
 #endif
 
 
