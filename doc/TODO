@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jan 16 00:16:44 EST 2000
+Last updated:		Sun Jan 16 02:04:18 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -56,6 +56,8 @@ PARSER
 * -When using aggregates + GROUP BY, no rows in should yield no rows out(Tom)
 * -Allow HAVING to use comparisons that have no aggregates(Tom)
 * -Allow COUNT(DISTINCT col))(TOm)
+* SELECT 'x'::varchar(10) INTO newtable; fails
+* SELECT col::DECIMAL(12,10); fails
 
 VIEWS
 
