@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.51 2000/04/12 17:14:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.52 2000/05/11 03:54:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "commands/cluster.h"
 #include "commands/rename.h"
 #include "optimizer/internal.h"
@@ -80,25 +79,12 @@ cluster(char *oldrelname, char *oldindexname)
 	char		saveoldrelname[NAMEDATALEN];
 	char		saveoldindexname[NAMEDATALEN];
 
-
 	/*
-	 * Save the old names because they will get lost when the old
-	 * relations are destroyed.
+	 * Copy the arguments into local storage, because they are probably
+	 * in palloc'd storage that will go away when we commit a transaction.
 	 */
 	strcpy(saveoldrelname, oldrelname);
 	strcpy(saveoldindexname, oldindexname);
-
-	/*
-	 * I'm going to force all checking back into the commands.c function.
-	 *
-	 * Get the list if indicies for this relation. If the index we want is
-	 * among them, do not add it to the 'kill' list, as it will be handled
-	 * by the 'clean up' code which commits this transaction.
-	 *
-	 * I'm not using the SysCache, because this will happen but once, and the
-	 * slow way is the sure way in this case.
-	 *
-	 */
 
 	/*
 	 * Like vacuum, cluster spans transactions, so I'm going to handle it
@@ -108,12 +94,16 @@ cluster(char *oldrelname, char *oldindexname)
 	 * of the initial transaction.
 	 */
 
-	OldHeap = heap_openr(oldrelname, AccessExclusiveLock);
+	OldHeap = heap_openr(saveoldrelname, AccessExclusiveLock);
 	OIDOldHeap = RelationGetRelid(OldHeap);
 
-	OldIndex = index_openr(oldindexname);		/* Open old index relation	*/
+	OldIndex = index_openr(saveoldindexname); /* Open old index relation	*/
 	LockRelation(OldIndex, AccessExclusiveLock);
 	OIDOldIndex = RelationGetRelid(OldIndex);
+
+	/*
+	 * XXX Should check that index is in fact an index on this relation?
+	 */
 
 	heap_close(OldHeap, NoLock);/* do NOT give up the locks */
 	index_close(OldIndex);
@@ -129,7 +119,6 @@ cluster(char *oldrelname, char *oldindexname)
 	NewHeap = copy_heap(OIDOldHeap);
 	OIDNewHeap = RelationGetRelid(NewHeap);
 	strcpy(NewHeapName, RelationGetRelationName(NewHeap));
-
 
 	/* To make the new heap visible (which is until now empty). */
 	CommandCounterIncrement();
@@ -150,23 +139,14 @@ cluster(char *oldrelname, char *oldindexname)
 	CommitTransactionCommand();
 	StartTransactionCommand();
 
-
 	/* Destroy old heap (along with its index) and rename new. */
-	heap_drop_with_catalog(oldrelname);
+	heap_drop_with_catalog(saveoldrelname);
 
 	CommitTransactionCommand();
 	StartTransactionCommand();
 
 	renamerel(NewHeapName, saveoldrelname);
-	TypeRename(NewHeapName, saveoldrelname);
-
 	renamerel(NewIndexName, saveoldindexname);
-
-	/*
-	 * Again flush all the buffers.  XXX perhaps not needed?
-	 */
-	CommitTransactionCommand();
-	StartTransactionCommand();
 }
 
 static Relation
@@ -298,6 +278,8 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 				 Old_pg_index_Form->indisunique,
 				 Old_pg_index_Form->indisprimary);
 
+	setRelhasindexInplace(OIDNewHeap, true, false);
+
 	index_close(OldIndex);
 	heap_close(NewHeap, AccessExclusiveLock);
 }
@@ -311,9 +293,6 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 				LocalOldIndex;
 	IndexScanDesc ScanDesc;
 	RetrieveIndexResult ScanResult;
-	HeapTupleData LocalHeapTuple;
-	Buffer		LocalBuffer;
-	Oid			OIDNewHeapInsert;
 
 	/*
 	 * Open the relations I need. Scan through the OldHeap on the OldIndex
@@ -321,21 +300,24 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	 */
 	LocalNewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
 	LocalOldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
-	LocalOldIndex = (Relation) index_open(OIDOldIndex);
+	LocalOldIndex = index_open(OIDOldIndex);
 
 	ScanDesc = index_beginscan(LocalOldIndex, false, 0, (ScanKey) NULL);
 
 	while ((ScanResult = index_getnext(ScanDesc, ForwardScanDirection)) != NULL)
 	{
+		HeapTupleData LocalHeapTuple;
+		Buffer		LocalBuffer;
 
 		LocalHeapTuple.t_self = ScanResult->heap_iptr;
 		LocalHeapTuple.t_datamcxt = NULL;
 		LocalHeapTuple.t_data = NULL;
 		heap_fetch(LocalOldHeap, SnapshotNow, &LocalHeapTuple, &LocalBuffer);
-		OIDNewHeapInsert = heap_insert(LocalNewHeap, &LocalHeapTuple);
-		pfree(ScanResult);
+		heap_insert(LocalNewHeap, &LocalHeapTuple);
 		ReleaseBuffer(LocalBuffer);
+		pfree(ScanResult);
 	}
+
 	index_endscan(ScanDesc);
 
 	index_close(LocalOldIndex);

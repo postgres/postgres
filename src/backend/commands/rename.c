@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.42 2000/04/12 17:14:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.43 2000/05/11 03:54:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/pg_type.h"
 #include "utils/syscache.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
@@ -27,6 +28,8 @@
 #include "storage/smgr.h"
 #include "optimizer/prep.h"
 #include "utils/acl.h"
+#include "utils/relcache.h"
+
 
 /*
  *		renameatt		- changes the name of a attribute in a relation
@@ -180,6 +183,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	oldreltup;
+	char		relkind;
 	char		oldpath[MAXPGPATH],
 				newpath[MAXPGPATH],
 				toldpath[MAXPGPATH + 10],
@@ -195,10 +199,19 @@ renamerel(const char *oldrelname, const char *newrelname)
 			 newrelname);
 
 	/*
+	 * Instead of using heap_openr(), do it the hard way, so that we
+	 * can rename indexes as well as regular relations.
+	 */
+	targetrelation = RelationNameGetRelation(oldrelname);
+
+	if (!RelationIsValid(targetrelation))
+		elog(ERROR, "Relation '%s' does not exist", oldrelname);
+
+	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
-	targetrelation = heap_openr(oldrelname, AccessExclusiveLock);
+	LockRelation(targetrelation, AccessExclusiveLock);
 
 	/* ----------------
 	 *	RENAME TABLE within a transaction block is dangerous, because
@@ -214,6 +227,8 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 */
 	if (IsTransactionBlock() && !targetrelation->rd_myxactonly)
 		elog(NOTICE, "Caution: RENAME TABLE cannot be rolled back, so don't abort now");
+
+	relkind = targetrelation->rd_rel->relkind;
 
 	/*
 	 * Flush all blocks of the relation out of the buffer pool.  We need
@@ -304,4 +319,10 @@ renamerel(const char *oldrelname, const char *newrelname)
 	CatalogCloseIndices(Num_pg_class_indices, irelations);
 
 	heap_close(relrelation, RowExclusiveLock);
+
+	/*
+	 * Also rename the associated type, if any.
+	 */
+	if (relkind != RELKIND_INDEX)
+		TypeRename(oldrelname, newrelname);
 }

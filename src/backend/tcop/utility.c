@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.87 2000/04/25 10:38:38 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.88 2000/05/11 03:54:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
-#include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/cluster.h"
 #include "commands/command.h"
@@ -315,8 +314,6 @@ ProcessUtility(Node *parsetree,
 					 */
 					renamerel(relname,	/* old name */
 							  stmt->newname);	/* new name */
-					TypeRename(relname, /* old name */
-							   stmt->newname);	/* new name */
 				}
 				else
 				{
