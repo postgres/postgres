@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.34 2002/09/04 22:49:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.35 2002/09/21 18:39:26 tgl Exp $
  *
  **********************************************************************/
 
@@ -624,8 +624,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			{
 				if (procStruct->prorettype == VOIDOID)
 					 /* okay */ ;
-				else if (procStruct->prorettype == TRIGGEROID ||
-						 procStruct->prorettype == OPAQUEOID)
+				else if (procStruct->prorettype == TRIGGEROID)
 				{
 					free(prodesc->proname);
 					free(prodesc);

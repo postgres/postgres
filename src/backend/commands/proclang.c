@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.42 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.43 2002/09/21 18:39:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	char		languageName[NAMEDATALEN];
 	Oid			procOid,
 				valProcOid;
+	Oid			funcrettype;
 	Oid			typev[FUNC_MAX_ARGS];
 	char		nulls[Natts_pg_language];
 	Datum		values[Natts_pg_language];
@@ -80,10 +81,24 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	if (!OidIsValid(procOid))
 		elog(ERROR, "function %s() doesn't exist",
 			 NameListToString(stmt->plhandler));
-	if (get_func_rettype(procOid) != LANGUAGE_HANDLEROID)
-		elog(ERROR, "function %s() does not return type %s",
-			 NameListToString(stmt->plhandler),
-			 format_type_be(LANGUAGE_HANDLEROID));
+	funcrettype = get_func_rettype(procOid);
+	if (funcrettype != LANGUAGE_HANDLEROID)
+	{
+		/*
+		 * We allow OPAQUE just so we can load old dump files.  When we
+		 * see a handler function declared OPAQUE, change it to
+		 * LANGUAGE_HANDLER.
+		 */
+		if (funcrettype == OPAQUEOID)
+		{
+			elog(NOTICE, "CreateProceduralLanguage: changing return type of function %s() from OPAQUE to LANGUAGE_HANDLER",
+				 NameListToString(stmt->plhandler));
+			SetFunctionReturnType(procOid, LANGUAGE_HANDLEROID);
+		}
+		else
+			elog(ERROR, "CreateProceduralLanguage: function %s() must return LANGUAGE_HANDLER",
+				 NameListToString(stmt->plhandler));
+	}
 
 	/* validate the validator function */
 	if (stmt->plvalidator)

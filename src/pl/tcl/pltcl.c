@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.61 2002/09/04 20:31:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.62 2002/09/21 18:39:26 tgl Exp $
  *
  **********************************************************************/
 
@@ -1061,8 +1061,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 			{
 				if (procStruct->prorettype == VOIDOID)
 					 /* okay */ ;
-				else if (procStruct->prorettype == TRIGGEROID ||
-						 procStruct->prorettype == OPAQUEOID)
+				else if (procStruct->prorettype == TRIGGEROID)
 				{
 					free(prodesc->proname);
 					free(prodesc);

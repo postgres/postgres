@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.45 2002/09/04 20:31:42 momjian Exp $
+ * $Id: defrem.h,v 1.46 2002/09/21 18:39:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,7 @@
 
 #define DEFAULT_TYPDELIM		','
 
-/*
- * prototypes in indexcmds.c
- */
+/* commands/indexcmds.c */
 extern void DefineIndex(RangeVar *heapRelation,
 			char *indexRelationName,
 			char *accessMethodName,
@@ -35,24 +33,26 @@ extern void ReindexIndex(RangeVar *indexRelation, bool force);
 extern void ReindexTable(RangeVar *relation, bool force);
 extern void ReindexDatabase(const char *databaseName, bool force, bool all);
 
-/*
- * DefineFoo and RemoveFoo are now both in foocmds.c
- */
-
+/* commands/functioncmds.c */
 extern void CreateFunction(CreateFunctionStmt *stmt);
 extern void RemoveFunction(RemoveFuncStmt *stmt);
 extern void RemoveFunctionById(Oid funcOid);
+extern void SetFunctionReturnType(Oid funcOid, Oid newRetType);
+extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
 extern void CreateCast(CreateCastStmt *stmt);
 extern void DropCast(DropCastStmt *stmt);
 extern void DropCastById(Oid castOid);
 
+/* commands/operatorcmds.c */
 extern void DefineOperator(List *names, List *parameters);
 extern void RemoveOperator(RemoveOperStmt *stmt);
 extern void RemoveOperatorById(Oid operOid);
 
+/* commands/aggregatecmds.c */
 extern void DefineAggregate(List *names, List *parameters);
 extern void RemoveAggregate(RemoveAggrStmt *stmt);
 
+/* commands/typecmds.c */
 extern void DefineType(List *names, List *parameters);
 extern void RemoveType(List *names, DropBehavior behavior);
 extern void RemoveTypeById(Oid typeOid);
@@ -60,6 +60,7 @@ extern void DefineDomain(CreateDomainStmt *stmt);
 extern void RemoveDomain(List *names, DropBehavior behavior);
 extern Oid	DefineCompositeType(const RangeVar *typevar, List *coldeflist);
 
+/* commands/opclasscmds.c */
 extern void DefineOpClass(CreateOpClassStmt *stmt);
 extern void RemoveOpClass(RemoveOpClassStmt *stmt);
 extern void RemoveOpClassById(Oid opclassOid);

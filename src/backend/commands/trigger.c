@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.131 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.132 2002/09/21 18:39:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -75,6 +76,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	HeapTuple	tuple;
 	Oid			fargtypes[FUNC_MAX_ARGS];
 	Oid			funcoid;
+	Oid			funcrettype;
 	Oid			trigoid;
 	int			found = 0;
 	int			i;
@@ -217,22 +219,23 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	if (!OidIsValid(funcoid))
 		elog(ERROR, "CreateTrigger: function %s() does not exist",
 			 NameListToString(stmt->funcname));
-	tuple = SearchSysCache(PROCOID,
-						   ObjectIdGetDatum(funcoid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "CreateTrigger: function %s() does not exist",
-			 NameListToString(stmt->funcname));
-	if (((Form_pg_proc) GETSTRUCT(tuple))->prorettype != TRIGGEROID)
+	funcrettype = get_func_rettype(funcoid);
+	if (funcrettype != TRIGGEROID)
 	{
-		/* OPAQUE is deprecated, but allowed for backwards compatibility */
-		if (((Form_pg_proc) GETSTRUCT(tuple))->prorettype == OPAQUEOID)
-			elog(NOTICE, "CreateTrigger: OPAQUE is deprecated, use type TRIGGER instead to define trigger functions");
+		/*
+		 * We allow OPAQUE just so we can load old dump files.  When we
+		 * see a trigger function declared OPAQUE, change it to TRIGGER.
+		 */
+		if (funcrettype == OPAQUEOID)
+		{
+			elog(NOTICE, "CreateTrigger: changing return type of function %s() from OPAQUE to TRIGGER",
+				 NameListToString(stmt->funcname));
+			SetFunctionReturnType(funcoid, TRIGGEROID);
+		}
 		else
 			elog(ERROR, "CreateTrigger: function %s() must return TRIGGER",
 				 NameListToString(stmt->funcname));
 	}
-	ReleaseSysCache(tuple);
 
 	/*
 	 * Build the new pg_trigger tuple.

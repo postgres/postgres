@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.27 2002/08/22 00:01:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.28 2002/09/21 18:39:25 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -170,9 +170,10 @@ CREATE TRIGGER
   <para>
    In <productname>PostgreSQL</productname> versions before 7.3, it was
    necessary to declare trigger functions as returning the placeholder
-   type <type>opaque</>, rather than <type>trigger</>.  This is still
-   supported, but is deprecated because it is obscure and causes loss of
-   type safety.
+   type <type>opaque</>, rather than <type>trigger</>.  To support loading
+   of old dump files, <command>CREATE TRIGGER</> will accept a function
+   declared as returning <type>opaque</>, but it will issue a NOTICE and
+   change the function's declared return type to <type>trigger</>.
   </para>
 
   <para>

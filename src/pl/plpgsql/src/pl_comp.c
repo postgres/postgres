@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.52 2002/09/12 00:24:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.53 2002/09/21 18:39:26 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -217,8 +217,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 				if (procStruct->prorettype == VOIDOID ||
 					procStruct->prorettype == RECORDOID)
 					 /* okay */ ;
-				else if (procStruct->prorettype == TRIGGEROID ||
-						 procStruct->prorettype == OPAQUEOID)
+				else if (procStruct->prorettype == TRIGGEROID)
 					elog(ERROR, "plpgsql functions cannot return type %s"
 						 "\n\texcept when used as triggers",
 						 format_type_be(procStruct->prorettype));

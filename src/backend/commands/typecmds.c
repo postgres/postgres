@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.14 2002/09/19 22:48:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.15 2002/09/21 18:39:25 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -188,13 +188,19 @@ DefineType(List *names, List *parameters)
 
 	/*
 	 * Look to see if type already exists (presumably as a shell; if not,
-	 * TypeCreate will complain).  If it does then the declarations of the
-	 * I/O functions might use it.
+	 * TypeCreate will complain).  If it doesn't, create it as a shell,
+	 * so that the OID is known for use in the I/O function definitions.
 	 */
 	typoid = GetSysCacheOid(TYPENAMENSP,
 							CStringGetDatum(typeName),
 							ObjectIdGetDatum(typeNamespace),
 							0, 0);
+	if (!OidIsValid(typoid))
+	{
+		typoid = TypeShellMake(typeName, typeNamespace);
+		/* Make new shell type visible for modification below */
+		CommandCounterIncrement();
+	}
 
 	/*
 	 * Convert I/O proc names to OIDs
@@ -203,15 +209,18 @@ DefineType(List *names, List *parameters)
 	outputOid = findTypeIOFunction(outputName, typoid, true);
 
 	/*
-	 * Verify that I/O procs return the expected thing.  OPAQUE is an
-	 * allowed, but deprecated, alternative to the fully type-safe
-	 * choices.
+	 * Verify that I/O procs return the expected thing.  If we see OPAQUE,
+	 * complain and change it to the correct type-safe choice.
 	 */
 	resulttype = get_func_rettype(inputOid);
-	if (!(OidIsValid(typoid) && resulttype == typoid))
+	if (resulttype != typoid)
 	{
 		if (resulttype == OPAQUEOID)
-			elog(NOTICE, "DefineType: OPAQUE is deprecated, instead declare I/O functions using their true datatypes");
+		{
+			elog(NOTICE, "TypeCreate: changing return type of function %s from OPAQUE to %s",
+				 NameListToString(inputName), typeName);
+			SetFunctionReturnType(inputOid, typoid);
+		}
 		else
 			elog(ERROR, "Type input function %s must return %s",
 				 NameListToString(inputName), typeName);
@@ -220,7 +229,11 @@ DefineType(List *names, List *parameters)
 	if (resulttype != CSTRINGOID)
 	{
 		if (resulttype == OPAQUEOID)
-			elog(NOTICE, "DefineType: OPAQUE is deprecated, instead declare I/O functions using their true datatypes");
+		{
+			elog(NOTICE, "TypeCreate: changing return type of function %s from OPAQUE to CSTRING",
+				 NameListToString(outputName));
+			SetFunctionReturnType(outputOid, CSTRINGOID);
+		}
 		else
 			elog(ERROR, "Type output function %s must return cstring",
 				 NameListToString(outputName));
@@ -670,8 +683,8 @@ RemoveDomain(List *names, DropBehavior behavior)
 /*
  * Find a suitable I/O function for a type.
  *
- * typeOid is the type's OID, if it already exists as a shell type,
- * otherwise InvalidOid.
+ * typeOid is the type's OID (which will already exist, if only as a shell
+ * type).
  */
 static Oid
 findTypeIOFunction(List *procname, Oid typeOid, bool isOutput)
@@ -683,35 +696,15 @@ findTypeIOFunction(List *procname, Oid typeOid, bool isOutput)
 	{
 		/*
 		 * Output functions can take a single argument of the type, or two
-		 * arguments (data value, element OID).  The signature may use
-		 * OPAQUE in place of the actual type name; this is the only
-		 * possibility if the type doesn't yet exist as a shell.
+		 * arguments (data value, element OID).
 		 *
-		 * Note: although we could throw a NOTICE in this routine if OPAQUE
-		 * is used, we do not because of the probability that it'd be
-		 * duplicate with a notice issued in DefineType.
+		 * For backwards compatibility we allow OPAQUE in place of the actual
+		 * type name; if we see this, we issue a NOTICE and fix up the
+		 * pg_proc entry.
 		 */
-		if (OidIsValid(typeOid))
-		{
-			MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
-			argList[0] = typeOid;
-
-			procOid = LookupFuncName(procname, 1, argList);
-			if (OidIsValid(procOid))
-				return procOid;
-
-			argList[1] = OIDOID;
-
-			procOid = LookupFuncName(procname, 2, argList);
-			if (OidIsValid(procOid))
-				return procOid;
-
-		}
-
 		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
-		argList[0] = OPAQUEOID;
+		argList[0] = typeOid;
 
 		procOid = LookupFuncName(procname, 1, argList);
 		if (OidIsValid(procOid))
@@ -723,9 +716,37 @@ findTypeIOFunction(List *procname, Oid typeOid, bool isOutput)
 		if (OidIsValid(procOid))
 			return procOid;
 
-		/* Prefer type name over OPAQUE in the failure message. */
-		if (OidIsValid(typeOid))
-			argList[0] = typeOid;
+		/* No luck, try it with OPAQUE */
+		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+		argList[0] = OPAQUEOID;
+
+		procOid = LookupFuncName(procname, 1, argList);
+
+		if (!OidIsValid(procOid))
+		{
+			argList[1] = OIDOID;
+
+			procOid = LookupFuncName(procname, 2, argList);
+		}
+
+		if (OidIsValid(procOid))
+		{
+			/* Found, but must complain and fix the pg_proc entry */
+			elog(NOTICE, "TypeCreate: changing argument type of function %s from OPAQUE to %s",
+				 NameListToString(procname), format_type_be(typeOid));
+			SetFunctionArgType(procOid, 0, typeOid);
+			/*
+			 * Need CommandCounterIncrement since DefineType will likely
+			 * try to alter the pg_proc tuple again.
+			 */
+			CommandCounterIncrement();
+
+			return procOid;
+		}
+
+		/* Use type name, not OPAQUE, in the failure message. */
+		argList[0] = typeOid;
 
 		func_error("TypeCreate", procname, 1, argList, NULL);
 	}
@@ -733,8 +754,10 @@ findTypeIOFunction(List *procname, Oid typeOid, bool isOutput)
 	{
 		/*
 		 * Input functions can take a single argument of type CSTRING, or
-		 * three arguments (string, element OID, typmod).  The signature
-		 * may use OPAQUE in place of CSTRING.
+		 * three arguments (string, element OID, typmod).
+		 *
+		 * For backwards compatibility we allow OPAQUE in place of CSTRING;
+		 * if we see this, we issue a NOTICE and fix up the pg_proc entry.
 		 */
 		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
@@ -751,20 +774,35 @@ findTypeIOFunction(List *procname, Oid typeOid, bool isOutput)
 		if (OidIsValid(procOid))
 			return procOid;
 
+		/* No luck, try it with OPAQUE */
 		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
 		argList[0] = OPAQUEOID;
 
 		procOid = LookupFuncName(procname, 1, argList);
-		if (OidIsValid(procOid))
-			return procOid;
 
-		argList[1] = OIDOID;
-		argList[2] = INT4OID;
+		if (!OidIsValid(procOid))
+		{
+			argList[1] = OIDOID;
+			argList[2] = INT4OID;
 
-		procOid = LookupFuncName(procname, 3, argList);
+			procOid = LookupFuncName(procname, 3, argList);
+		}
+
 		if (OidIsValid(procOid))
+		{
+			/* Found, but must complain and fix the pg_proc entry */
+			elog(NOTICE, "TypeCreate: changing argument type of function %s from OPAQUE to CSTRING",
+				 NameListToString(procname));
+			SetFunctionArgType(procOid, 0, CSTRINGOID);
+			/*
+			 * Need CommandCounterIncrement since DefineType will likely
+			 * try to alter the pg_proc tuple again.
+			 */
+			CommandCounterIncrement();
+
 			return procOid;
+		}
 
 		/* Use CSTRING (preferred) in the error message */
 		argList[0] = CSTRINGOID;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.21 2002/09/18 21:35:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.22 2002/09/21 18:39:25 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -588,6 +588,85 @@ RemoveFunctionById(Oid funcOid)
 
 		heap_close(relation, RowExclusiveLock);
 	}
+}
+
+
+/*
+ * SetFunctionReturnType - change declared return type of a function
+ *
+ * This is presently only used for adjusting legacy functions that return
+ * OPAQUE to return whatever we find their correct definition should be.
+ * The caller should emit a suitable NOTICE explaining what we did.
+ */
+void
+SetFunctionReturnType(Oid funcOid, Oid newRetType)
+{
+	Relation	pg_proc_rel;
+	HeapTuple	tup;
+	Form_pg_proc procForm;
+
+	pg_proc_rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy(PROCOID,
+							 ObjectIdGetDatum(funcOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "SetFunctionReturnType: couldn't find tuple for function %u",
+			 funcOid);
+	procForm = (Form_pg_proc) GETSTRUCT(tup);
+
+	if (procForm->prorettype != OPAQUEOID)
+		elog(ERROR, "SetFunctionReturnType: function %u doesn't return OPAQUE",
+			 funcOid);
+
+	/* okay to overwrite copied tuple */
+	procForm->prorettype = newRetType;
+
+	/* update the catalog and its indexes */
+	simple_heap_update(pg_proc_rel, &tup->t_self, tup);
+
+	CatalogUpdateIndexes(pg_proc_rel, tup);
+
+	heap_close(pg_proc_rel, RowExclusiveLock);
+}
+
+
+/*
+ * SetFunctionArgType - change declared argument type of a function
+ *
+ * As above, but change an argument's type.
+ */
+void
+SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
+{
+	Relation	pg_proc_rel;
+	HeapTuple	tup;
+	Form_pg_proc procForm;
+
+	pg_proc_rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy(PROCOID,
+							 ObjectIdGetDatum(funcOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "SetFunctionArgType: couldn't find tuple for function %u",
+			 funcOid);
+	procForm = (Form_pg_proc) GETSTRUCT(tup);
+
+	if (argIndex < 0 || argIndex >= procForm->pronargs ||
+		procForm->proargtypes[argIndex] != OPAQUEOID)
+		elog(ERROR, "SetFunctionArgType: function %u doesn't take OPAQUE",
+			 funcOid);
+
+	/* okay to overwrite copied tuple */
+	procForm->proargtypes[argIndex] = newArgType;
+
+	/* update the catalog and its indexes */
+	simple_heap_update(pg_proc_rel, &tup->t_self, tup);
+
+	CatalogUpdateIndexes(pg_proc_rel, tup);
+
+	heap_close(pg_proc_rel, RowExclusiveLock);
 }
 
 

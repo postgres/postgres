@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.35 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.36 2002/09/21 18:39:25 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -262,8 +262,10 @@ CREATE TYPE
    forward references to the type name with the placeholder pseudo-type
    <type>OPAQUE</>.  The <type>cstring</> inputs and
    results also had to be declared as <type>OPAQUE</> before 7.3.
-   Use of <type>OPAQUE</> for this purpose is still supported, but it is
-   deprecated because it causes loss of type safety.
+   To support loading 
+   of old dump files, <command>CREATE TYPE</> will accept functions
+   declared using <type>opaque</>, but it will issue a NOTICE and
+   change the function's declaration to use the correct types.
   </para>
   </note>
 
