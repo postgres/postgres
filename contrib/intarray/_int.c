@@ -14,6 +14,7 @@
 
 #include <float.h>
 
+#include "catalog/pg_type.h"
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/rtree.h"
@@ -919,8 +920,10 @@ new_intArrayType(int num)
 	r = (ArrayType *) palloc(nbytes);
 
 	MemSet(r, 0, nbytes);
-	r->size = nbytes;
-	r->ndim = NDIM;
+	
+	ARR_SIZE(r) = nbytes;
+	ARR_NDIM(r) = NDIM;
+	ARR_ELEMTYPE(r) = INT4OID;
 	r->flags &= ~LEAFKEY;
 	*((int *) ARR_DIMS(r)) = num;
 	*((int *) ARR_LBOUND(r)) = 1;
