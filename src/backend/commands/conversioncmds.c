@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.4 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.5 2002/11/02 02:33:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,17 +38,14 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	int			for_encoding;
 	int			to_encoding;
 	Oid			funcoid;
-	Oid			funcnamespace;
-	char	   *dummy;
-
 	const char *for_encoding_name = stmt->for_encoding_name;
 	const char *to_encoding_name = stmt->to_encoding_name;
 	List	   *func_name = stmt->func_name;
-
 	static Oid	funcargs[] = {INT4OID, INT4OID, CSTRINGOID, CSTRINGOID, INT4OID};
 
 	/* Convert list of names to a name and namespace */
-	namespaceId = QualifiedNameGetCreationNamespace(stmt->conversion_name, &conversion_name);
+	namespaceId = QualifiedNameGetCreationNamespace(stmt->conversion_name,
+													&conversion_name);
 
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
@@ -70,17 +67,13 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	 */
 	funcoid = LookupFuncName(func_name, sizeof(funcargs) / sizeof(Oid), funcargs);
 	if (!OidIsValid(funcoid))
-		elog(ERROR, "Function %s does not exist", NameListToString(func_name));
+		func_error("CreateConversion", func_name,
+				   sizeof(funcargs) / sizeof(Oid), funcargs, NULL);
 
-	/* Check the rights for this function and name space */
-	funcnamespace = QualifiedNameGetCreationNamespace(func_name, &dummy);
-	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(funcnamespace));
-
+	/* Check we have EXECUTE rights for the function */
 	aclresult = pg_proc_aclcheck(funcoid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(funcnamespace));
+		aclcheck_error(aclresult, NameListToString(func_name));
 
 	/*
 	 * All seem ok, go ahead (possible failure would be a duplicate
@@ -96,21 +89,12 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 void
 DropConversionCommand(List *name, DropBehavior behavior)
 {
-	Oid			namespaceId;
-	char	   *conversion_name;
-	AclResult	aclresult;
+	Oid			conversionOid;
 
-	/* Convert list of names to a name and namespace */
-	namespaceId = QualifiedNameGetCreationNamespace(name, &conversion_name);
+	conversionOid = FindConversionByName(name);
 
-	/* Check we have creation rights in target namespace */
-	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(namespaceId));
+	if (!OidIsValid(conversionOid))
+		elog(ERROR, "conversion %s not found", NameListToString(name));
 
-	/*
-	 * Go ahead (possible failure would be: none existing conversion not
-	 * ower of this conversion
-	 */
-	ConversionDrop(conversion_name, namespaceId, GetUserId(), behavior);
+	ConversionDrop(conversionOid, behavior);
 }

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.4 2002/09/21 18:32:54 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.5 2002/11/02 02:33:03 tgl Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -14,8 +14,7 @@
  <refsynopsisdiv>
 <synopsis>
 CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
-    FOR <replaceable>source_encoding</replaceable>
-    TO <replaceable>dest_encoding</replaceable> FROM <replaceable>funcname</replaceable>
+    FOR <replaceable>source_encoding</replaceable> TO <replaceable>dest_encoding</replaceable> FROM <replaceable>funcname</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -24,18 +23,16 @@ CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
 
   <para>
    <command>CREATE CONVERSION</command> defines a new encoding
-   conversion. There are two kinds of conversions. A default
-   conversion is used for an automatic encoding conversion between
-   frontend and backend. There should be only one default conversion
-   for source/destination encodings pair in a schema. None default
-   conversion never be used for the automatic conversion. Instead it
-   can be used for CONVERT() function.
+   conversion.  Conversion names may be used in the CONVERT() function
+   to specify a particular encoding conversion.  Also, conversions that
+   are marked DEFAULT can be used for automatic encoding conversion between
+   frontend and backend. For this purpose, two conversions, from encoding A to
+   B AND from encoding B to A, must be defined.
  </para>
 
   <para>
    To be able to create a conversion, you must have the execute right
-   on the function and the usage right on the schema the function
-   belongs to.
+   on the function and the create right on the destination schema.
   </para>
 
    <variablelist>
@@ -49,11 +46,7 @@ CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
        The <literal>DEFAULT</> clause indicates that this conversion
        is the default for this particular source to destination
        encoding. There should be only one default encoding in a schema
-       for the encoding pair. A default encoding can be used for not
-       only CONVERT() function, but also for the automatic encoding
-       conversion between frontend and backend. For this purpose, two
-       conversions, from encoding A to B AND encoding B to A, must be
-       defined.
+       for the encoding pair.
       </para>
      </listitem>
     </varlistentry>
@@ -64,8 +57,8 @@ CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
      <listitem>
       <para>
        The name of the conversion. The conversion name may be
-       schema-qualified. If it is not, a conversion is defined in the
-       current schema. The conversion name must be unique with in a
+       schema-qualified. If it is not, the conversion is defined in the
+       current schema. The conversion name must be unique within a
        schema.
       </para>
      </listitem>
@@ -102,7 +95,7 @@ CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
        </para>
 
        <para>
-       The function must have following signature:
+       The function must have the following signature:
 
        <programlisting>
 	conv_proc(

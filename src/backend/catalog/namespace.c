@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.36 2002/09/23 20:43:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.37 2002/11/02 02:33:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1275,32 +1275,33 @@ PopSpecialNamespace(Oid namespaceId)
 Oid
 FindConversionByName(List *name)
 {
+	char	   *schemaname;
 	char	   *conversion_name;
 	Oid			namespaceId;
 	Oid			conoid;
 	List	   *lptr;
 
-	/* Convert list of names to a name and namespace */
-	namespaceId = QualifiedNameGetCreationNamespace(name, &conversion_name);
+	/* deconstruct the name list */
+	DeconstructQualifiedName(name, &schemaname, &conversion_name);
 
-	if (length(name) > 1)
+	if (schemaname)
 	{
-		/* Check we have usage rights in target namespace */
-		if (pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE) != ACLCHECK_OK)
-			return InvalidOid;
-
+		/* use exact schema given */
+		namespaceId = LookupExplicitNamespace(schemaname);
 		return FindConversion(conversion_name, namespaceId);
 	}
-
-	recomputeNamespacePath();
-
-	foreach(lptr, namespaceSearchPath)
+	else
 	{
-		Oid			namespaceId = (Oid) lfirsti(lptr);
+		/* search for it in search path */
+		recomputeNamespacePath();
 
-		conoid = FindConversion(conversion_name, namespaceId);
-		if (OidIsValid(conoid))
-			return conoid;
+		foreach(lptr, namespaceSearchPath)
+		{
+			namespaceId = (Oid) lfirsti(lptr);
+			conoid = FindConversion(conversion_name, namespaceId);
+			if (OidIsValid(conoid))
+				return conoid;
+		}
 	}
 
 	/* Not found in path */
@@ -1308,7 +1309,7 @@ FindConversionByName(List *name)
 }
 
 /*
- * FindDefaultConversionProc - find default encoding cnnversion proc
+ * FindDefaultConversionProc - find default encoding conversion proc
  */
 Oid
 FindDefaultConversionProc(int4 for_encoding, int4 to_encoding)

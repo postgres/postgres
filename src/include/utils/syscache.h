@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.53 2002/09/04 20:31:46 momjian Exp $
+ * $Id: syscache.h,v 1.54 2002/11/02 02:33:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
 #define CLAAMNAMENSP	9
 #define CLAOID			10
 #define CONDEFAULT		11
-#define CONNAMESP		12
+#define CONNAMENSP		12
 #define CONOID			13
 #define GRONAME			14
 #define GROSYSID		15

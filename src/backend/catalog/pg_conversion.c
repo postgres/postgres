@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.6 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.7 2002/11/02 02:33:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,16 +30,15 @@
 #include "utils/acl.h"
 #include "miscadmin.h"
 
-/* ----------------
+/*
  * ConversionCreate
  *
- * Add a new tuple to pg_coversion.
- * ---------------
+ * Add a new tuple to pg_conversion.
  */
 Oid
 ConversionCreate(const char *conname, Oid connamespace,
 				 int32 conowner,
-				 int4 conforencoding, int4 contoencoding,
+				 int32 conforencoding, int32 contoencoding,
 				 Oid conproc, bool def)
 {
 	int			i;
@@ -58,7 +57,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 		elog(ERROR, "no conversion name supplied");
 
 	/* make sure there is no existing conversion of same name */
-	if (SearchSysCacheExists(CONNAMESP,
+	if (SearchSysCacheExists(CONNAMENSP,
 							 PointerGetDatum(conname),
 							 ObjectIdGetDatum(connamespace),
 							 0, 0))
@@ -74,7 +73,8 @@ ConversionCreate(const char *conname, Oid connamespace,
 								  conforencoding,
 								  contoencoding))
 			elog(ERROR, "default conversion for %s to %s already exists",
-				 pg_encoding_to_char(conforencoding), pg_encoding_to_char(contoencoding));
+				 pg_encoding_to_char(conforencoding),
+				 pg_encoding_to_char(contoencoding));
 	}
 
 	/* open pg_conversion */
@@ -96,10 +96,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 	values[Anum_pg_conversion_conforencoding - 1] = Int32GetDatum(conforencoding);
 	values[Anum_pg_conversion_contoencoding - 1] = Int32GetDatum(contoencoding);
 	values[Anum_pg_conversion_conproc - 1] = ObjectIdGetDatum(conproc);
-	if (def == true)
-		values[Anum_pg_conversion_condefault - 1] = BoolGetDatum(def);
-	else
-		nulls[Anum_pg_conversion_condefault - 1] = 'n';
+	values[Anum_pg_conversion_condefault - 1] = BoolGetDatum(def);
 
 	tup = heap_formtuple(tupDesc, values, nulls);
 
@@ -110,11 +107,11 @@ ConversionCreate(const char *conname, Oid connamespace,
 	/* update the index if any */
 	CatalogUpdateIndexes(rel, tup);
 
-	myself.classId = get_system_catalog_relid(ConversionRelationName);
+	myself.classId = RelationGetRelid(rel);
 	myself.objectId = HeapTupleGetOid(tup);
 	myself.objectSubId = 0;
 
-	/* dependency on conversion procedure */
+	/* create dependency on conversion procedure */
 	referenced.classId = RelOid_pg_proc;
 	referenced.objectId = conproc;
 	referenced.objectSubId = 0;
@@ -126,79 +123,46 @@ ConversionCreate(const char *conname, Oid connamespace,
 	return oid;
 }
 
-/* ----------------
+/*
  * ConversionDrop
  *
- * Drop a conversion and do dependency check.
- * ---------------
+ * Drop a conversion after doing permission checks.
  */
 void
-ConversionDrop(const char *conname, Oid connamespace,
-			   int32 conowner, DropBehavior behavior)
+ConversionDrop(Oid conversionOid, DropBehavior behavior)
 {
-	Relation	rel;
-	TupleDesc	tupDesc;
 	HeapTuple	tuple;
-	HeapScanDesc scan;
-	ScanKeyData scanKeyData;
-	Form_pg_conversion body;
 	ObjectAddress object;
-	Oid			myoid;
 
-	/* sanity checks */
-	if (!conname)
-		elog(ERROR, "no conversion name supplied");
-
-	ScanKeyEntryInitialize(&scanKeyData,
-						   0,
-						   Anum_pg_conversion_connamespace,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(connamespace));
-
-	/* open pg_conversion */
-	rel = heap_openr(ConversionRelationName, AccessShareLock);
-	tupDesc = rel->rd_att;
-
-	scan = heap_beginscan(rel, SnapshotNow,
-						  1, &scanKeyData);
-
-	/* search for the target tuple */
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
-	{
-		body = (Form_pg_conversion) GETSTRUCT(tuple);
-		if (!strncmp(NameStr(body->conname), conname, NAMEDATALEN))
-			break;
-	}
-
+	tuple = SearchSysCache(CONOID,
+						   ObjectIdGetDatum(conversionOid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	{
-		elog(ERROR, "conversion %s not found", conname);
-		return;
-	}
+		elog(ERROR, "Conversion %u search from syscache failed",
+			 conversionOid);
 
-	if (!superuser() && ((Form_pg_conversion) GETSTRUCT(tuple))->conowner != GetUserId())
+	if (!superuser() &&
+		((Form_pg_conversion) GETSTRUCT(tuple))->conowner != GetUserId())
 		elog(ERROR, "permission denied");
 
-	myoid = HeapTupleGetOid(tuple);
-	heap_endscan(scan);
-	heap_close(rel, AccessShareLock);
+	ReleaseSysCache(tuple);
 
 	/*
 	 * Do the deletion
 	 */
 	object.classId = get_system_catalog_relid(ConversionRelationName);
-	object.objectId = myoid;
+	object.objectId = conversionOid;
 	object.objectSubId = 0;
 
 	performDeletion(&object, behavior);
 }
 
-/* ----------------
+/*
  * RemoveConversionById
  *
- * Remove a tuple from pg_conversion by Oid. This function is soley
+ * Remove a tuple from pg_conversion by Oid. This function is solely
  * called inside catalog/dependency.c
- * --------------- */
+ */
 void
 RemoveConversionById(Oid conversionOid)
 {
@@ -230,25 +194,23 @@ RemoveConversionById(Oid conversionOid)
 	heap_close(rel, RowExclusiveLock);
 }
 
-/* ----------------
+/*
  * FindDefaultConversion
  *
- * Find "default" conversion proc by for_encoding and to_encoding in this name space.
- * If found, returns the procedure's oid, otherwise InvalidOid.
- * ---------------
+ * Find "default" conversion proc by for_encoding and to_encoding in the
+ * given namespace.
+ *
+ * If found, returns the procedure's oid, otherwise InvalidOid.  Note that
+ * you get the procedure's OID not the conversion's OID!
  */
 Oid
-FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
+FindDefaultConversion(Oid name_space, int32 for_encoding, int32 to_encoding)
 {
 	CatCList   *catlist;
 	HeapTuple	tuple;
 	Form_pg_conversion body;
 	Oid			proc = InvalidOid;
 	int			i;
-
-	/* Check we have usage rights in target namespace */
-	if (pg_namespace_aclcheck(name_space, GetUserId(), ACL_USAGE) != ACLCHECK_OK)
-		return proc;
 
 	catlist = SearchSysCacheList(CONDEFAULT, 3,
 								 ObjectIdGetDatum(name_space),
@@ -260,7 +222,7 @@ FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
 	{
 		tuple = &catlist->members[i]->tuple;
 		body = (Form_pg_conversion) GETSTRUCT(tuple);
-		if (body->condefault == TRUE)
+		if (body->condefault)
 		{
 			proc = body->conproc;
 			break;
@@ -270,12 +232,11 @@ FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
 	return proc;
 }
 
-/* ----------------
- * FindConversionByName
+/*
+ * FindConversion
  *
  * Find conversion by namespace and conversion name.
- * Returns conversion oid.
- * ---------------
+ * Returns conversion OID.
  */
 Oid
 FindConversion(const char *conname, Oid connamespace)
@@ -286,13 +247,13 @@ FindConversion(const char *conname, Oid connamespace)
 	AclResult	aclresult;
 
 	/* search pg_conversion by connamespace and conversion name */
-	tuple = SearchSysCache(CONNAMESP,
+	tuple = SearchSysCache(CONNAMENSP,
 						   PointerGetDatum(conname),
 						   ObjectIdGetDatum(connamespace),
 						   0, 0);
-
 	if (!HeapTupleIsValid(tuple))
 		return InvalidOid;
+
 	procoid = ((Form_pg_conversion) GETSTRUCT(tuple))->conproc;
 	conoid = HeapTupleGetOid(tuple);
 
