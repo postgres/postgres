@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.3 1997/11/26 03:42:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.4 1997/12/23 19:36:20 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,8 +124,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				toid = param_type(paramno);
 				if (!OidIsValid(toid))
 				{
-					elog(WARN, "Parameter '$%d' is out of range",
-						 paramno);
+					elog(WARN, "Parameter '$%d' is out of range", paramno);
 				}
 				param = makeNode(Param);
 				param->paramkind = PARAM_NUM;
@@ -176,13 +175,13 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(lexpr) != BOOLOID)
-								elog(WARN,
-									 "left-hand side of AND is type '%s', not bool",
-									 typeidTypeName(exprType(lexpr)));
+								elog(WARN, "left-hand side of AND is type '%s', not bool",
+									typeidTypeName(exprType(lexpr)));
+
 							if (exprType(rexpr) != BOOLOID)
-								elog(WARN,
-									 "right-hand side of AND is type '%s', not bool",
-									 typeidTypeName(exprType(rexpr)));
+								elog(WARN, "right-hand side of AND is type '%s', not bool",
+									typeidTypeName(exprType(rexpr)));
+
 							expr->typeOid = BOOLOID;
 							expr->opType = AND_EXPR;
 							expr->args = makeList(lexpr, rexpr, -1);
@@ -196,12 +195,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(lexpr) != BOOLOID)
-								elog(WARN,
-									 "left-hand side of OR is type '%s', not bool",
+								elog(WARN, "left-hand side of OR is type '%s', not bool",
 									 typeidTypeName(exprType(lexpr)));
 							if (exprType(rexpr) != BOOLOID)
-								elog(WARN,
-									 "right-hand side of OR is type '%s', not bool",
+								elog(WARN, "right-hand side of OR is type '%s', not bool",
 									 typeidTypeName(exprType(rexpr)));
 							expr->typeOid = BOOLOID;
 							expr->opType = OR_EXPR;
@@ -215,8 +212,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(rexpr) != BOOLOID)
-								elog(WARN,
-								"argument to NOT is type '%s', not bool",
+								elog(WARN, "argument to NOT is type '%s', not bool",
 									 typeidTypeName(exprType(rexpr)));
 							expr->typeOid = BOOLOID;
 							expr->opType = NOT_EXPR;
@@ -251,7 +247,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			}
 		default:
 			/* should not reach here */
-			elog(WARN, "transformExpr: does not know how to transform %d\n",
+			elog(WARN, "transformExpr: does not know how to transform node %d",
 				 nodeTag(expr));
 			break;
 	}
@@ -423,7 +419,7 @@ parser_typecast(Value *expr, TypeName *typename, int typlen)
 			break;
 		default:
 			elog(WARN,
-			"parser_typecast: cannot cast this expression to type \"%s\"",
+			"parser_typecast: cannot cast this expression to type '%s'",
 				 typename->name);
 	}
 
@@ -608,7 +604,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen)
 			const_string = (char *) textout((struct varlena *) const_string);
 			break;
 		default:
-			elog(WARN, "unknown type %u ", exprType);
+			elog(WARN, "unknown type %u", exprType);
 	}
 
 	if (!exprType)
