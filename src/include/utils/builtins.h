@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.166 2001/10/08 19:55:07 tgl Exp $
+ * $Id: builtins.h,v 1.167 2001/10/13 16:34:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -588,6 +588,7 @@ extern Datum RI_FKey_setdefault_upd(PG_FUNCTION_ARGS);
  */
 extern Datum getdatabaseencoding(PG_FUNCTION_ARGS);
 extern Datum database_character_set(PG_FUNCTION_ARGS);
+extern Datum pg_client_encoding(PG_FUNCTION_ARGS);
 extern Datum PG_encoding_to_char(PG_FUNCTION_ARGS);
 extern Datum PG_char_to_encoding(PG_FUNCTION_ARGS);
 extern Datum PG_character_set_name(PG_FUNCTION_ARGS);
