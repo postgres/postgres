@@ -1,15 +1,13 @@
-
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
  *	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.3 2000/07/03 16:03:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.4 2000/11/22 00:00:55 tgl Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
  */
-
 
 #include <stdio.h>	
 #include <unistd.h>
@@ -17,12 +15,15 @@
 #include <string.h>
 #include <errno.h>                            
 
+/* We import postgres.h mostly to get the HAVE_GETOPT_LONG configure result. */
 #ifndef OUT_OF_PG
-	#include "postgres.h"
+#include "postgres.h"
 #endif
 
 #include <libpq-fe.h>
 #include <libpq/libpq-fs.h>
+
+#include "pg_dumplo.h" 
 
 #ifdef HAVE_GETOPT_LONG
 	#include <getopt.h>
@@ -33,8 +34,6 @@
 extern int 	errno;        
 
 char	*progname = NULL;
-
-#include "pg_dumplo.h" 
 
 int main(int argc, char **argv);
 static void usage(void);
@@ -97,11 +96,11 @@ main(int argc, char **argv)
 #else
 		while((arg = getopt(argc, argv, "?aehu:p:qd:l:t:irs:w")) != -1) {                
 #endif
-        		switch(arg) {
+			switch(arg) {
       			case '?':
       			case 'h':
       				usage();
-        		    	exit(RE_OK);
+					exit(RE_OK);
         		case 'u':    	
         			pgLO->user = strdup(optarg);
         			break;	 
@@ -127,11 +126,11 @@ main(int argc, char **argv)
         			break;
         		case 'e':	
         		case 'a':
- 				pgLO->action = ACTION_EXPORT_ALL;
- 				break;
- 			case 'w':
- 				pgLO->action = ACTION_SHOW;
- 				break;	
+					pgLO->action = ACTION_EXPORT_ALL;
+					break;
+				case 'w':
+					pgLO->action = ACTION_SHOW;
+					break;	
         		case 'r':
         			pgLO->remove = TRUE;
         			break;
@@ -139,10 +138,10 @@ main(int argc, char **argv)
         			pgLO->quiet = TRUE;	
         			break;
         		default:
-        			fprintf(stderr, "%s: bad arg!\n", progname);
+        			fprintf(stderr, "%s: bad arg -%c\n", progname, arg);
         			usage();
         			exit(RE_ERROR);
-        		}
+			}
 		}	
 	} else {
 		usage();
@@ -172,12 +171,12 @@ main(int argc, char **argv)
 	pgLO->conn = PQsetdbLogin(pgLO->host, NULL, NULL, NULL, pgLO->db, 
 			pgLO->user, pwd);
         
-        if (PQstatus(pgLO->conn) == CONNECTION_BAD) {
-                fprintf(stderr, "%s (connection): %s\n", progname, PQerrorMessage(pgLO->conn));
-                exit(RE_ERROR);
-        }  
-        pgLO->host = PQhost(pgLO->conn) ? PQhost(pgLO->conn) : "localhost";
-        pgLO->db   = PQdb(pgLO->conn); 
+	if (PQstatus(pgLO->conn) == CONNECTION_BAD) {
+		fprintf(stderr, "%s (connection): %s\n", progname, PQerrorMessage(pgLO->conn));
+		exit(RE_ERROR);
+	}  
+	pgLO->host = PQhost(pgLO->conn) ? PQhost(pgLO->conn) : "localhost";
+	pgLO->db   = PQdb(pgLO->conn); 
 	pgLO->user = PQuser(pgLO->conn);	
 	
 	
@@ -195,6 +194,7 @@ main(int argc, char **argv)
 		case ACTION_SHOW:
 		case ACTION_EXPORT_ALL:
 			load_lolist(pgLO);
+			/* FALL THROUGH */
 				
 		case ACTION_EXPORT_ATTR:
 			pglo_export(pgLO);

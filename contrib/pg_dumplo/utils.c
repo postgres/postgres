@@ -1,3 +1,13 @@
+/* -------------------------------------------------------------------------
+ * pg_dumplo
+ *
+ *	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/utils.c,v 1.2 2000/11/22 00:00:55 tgl Exp $
+ *
+ *					Karel Zak 1999-2000
+ * -------------------------------------------------------------------------
+ */
 
 #include <stdio.h>	
 #include <unistd.h>
@@ -56,22 +66,6 @@ index_file(LODumpMaster *pgLO)
 			exit(RE_ERROR);
 		}
 	}
-}
-
-int 
-check_res(LODumpMaster *pgLO) 
-{
-	if (!pgLO->res && PQresultStatus(pgLO->res) != PGRES_COMMAND_OK) {
-        	fprintf(stderr, "%s: %s\n", progname, PQerrorMessage(pgLO->conn));
-                PQclear(pgLO->res);
-                return FALSE;
-        }
-        if (PQresultStatus(pgLO->res) != PGRES_TUPLES_OK) {
-                fprintf(stderr, "%s: Tuples is not OK.\n", progname);
-                PQclear(pgLO->res);
-                return FALSE;
-        }
-        return TRUE;        
 }
 
 static 

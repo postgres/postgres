@@ -1,8 +1,20 @@
+/* -------------------------------------------------------------------------
+ * pg_dumplo
+ *
+ *	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/pg_dumplo.h,v 1.2 2000/11/22 00:00:55 tgl Exp $
+ *
+ *					Karel Zak 1999-2000
+ * -------------------------------------------------------------------------
+ */
 
-#ifndef _PG_LODUMP_H_
-#define _PG_LODUMP_H_
+#ifndef PG_DUMPLO_H
+#define PG_DUMPLO_H
 
-#define VERSION "0.0.5"
+#include "postgres_ext.h"
+
+#define VERSION "7.1.0"
 
 /* ----------
  * Define
@@ -10,7 +22,7 @@
  */        
 #define QUERY_BUFSIZ	(8*1024)
 #define DIR_UMASK	0755
-#define FILE_UMASK	0666 
+#define FILE_UMASK	0644
 
 #define	TRUE		1
 #define FALSE		0
@@ -20,16 +32,16 @@
 #define MAX_TABLE_NAME	128
 #define MAX_ATTR_NAME	128
 
-extern char *progname;
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 /* ----------
  * LO struct
  * ----------
  */
 typedef struct { 
-	char		*lo_table,
+	char	*lo_table,
 			*lo_attr;
-	long		lo_oid;
+	Oid		lo_oid;
 } LOlist;
 
 typedef struct {
@@ -58,11 +70,12 @@ typedef enum {
 	ACTION_IMPORT
 } PGLODUMP_ACTIONS;
 
+extern char *progname;
+
 extern void	notice		(LODumpMaster *pgLO, int set);
-extern int	check_res	(LODumpMaster *pgLO);
 extern void	index_file	(LODumpMaster *pgLO);
 extern void	load_lolist	(LODumpMaster *pgLO);
 extern void	pglo_export	(LODumpMaster *pgLO);
 extern void	pglo_import	(LODumpMaster *pgLO);
 
-#endif /* _PG_LODUMP_H */
+#endif /* PG_DUMPLO_H */

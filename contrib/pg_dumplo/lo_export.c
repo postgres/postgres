@@ -1,3 +1,13 @@
+/* -------------------------------------------------------------------------
+ * pg_dumplo
+ *
+ *	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_export.c,v 1.4 2000/11/22 00:00:55 tgl Exp $
+ *
+ *					Karel Zak 1999-2000
+ * -------------------------------------------------------------------------
+ */
 
 #include <stdio.h>	
 #include <unistd.h>
@@ -16,15 +26,6 @@
 
 extern int 	errno;        
 
-#define LOAD_LOLIST_QUERY "\
-	SELECT c.relname, a.attname \
-	FROM pg_class c, pg_attribute a, pg_type t \
-	WHERE a.attnum > 0 \
-		AND a.attrelid = c.oid \
-		AND a.atttypid = t.oid \
-		AND t.typname = 'oid' \
-		AND c.relname NOT LIKE 'pg_%'"
-
 
 void 
 load_lolist( LODumpMaster *pgLO ) 
@@ -34,19 +35,33 @@ load_lolist( LODumpMaster *pgLO )
 	int		n;
 
  	/* ----------
- 	 * Now find any candidate tables who have columns of type oid (the
-   	 * column oid is ignored, as it has attnum < 1)
+	 * Now find any candidate tables who have columns of type oid.
+	 *
+	 * NOTE: System tables including pg_largeobject will be ignored.
+	 * Otherwise we'd end up dumping all LOs, referenced or not.
+	 *
+	 * NOTE: the system oid column is ignored, as it has attnum < 1.
+	 * This shouldn't matter for correctness, but it saves time.
  	 * ----------
  	 */	
-	if (!(pgLO->res = PQexec(pgLO->conn, LOAD_LOLIST_QUERY))) {
-		
-		fprintf(stderr, "%s: Select from pg_class failed.\n", progname);
-    		exit(RE_ERROR);
-  	}
-	
+	pgLO->res = PQexec(pgLO->conn,
+					   "SELECT c.relname, a.attname "
+					   "FROM pg_class c, pg_attribute a, pg_type t "
+					   "WHERE a.attnum > 0 "
+					   "    AND a.attrelid = c.oid "
+					   "    AND a.atttypid = t.oid "
+					   "    AND t.typname = 'oid' "
+					   "    AND c.relkind = 'r' "
+					   "    AND c.relname NOT LIKE 'pg_%'");
+
+	if (PQresultStatus(pgLO->res) != PGRES_TUPLES_OK) {
+		fprintf(stderr, "%s: Failed to get LO OIDs:\n%s", progname,
+				PQerrorMessage(pgLO->conn));
+		exit(RE_ERROR);
+	}
+
 	if ((n = PQntuples(pgLO->res)) == 0) {
-		
-		fprintf(stderr, "%s: No large objects in the database.\n", progname);
+		fprintf(stderr, "%s: No OID columns in the database.\n", progname);
 		exit(RE_ERROR);
  	}
 	
@@ -61,10 +76,9 @@ load_lolist( LODumpMaster *pgLO )
 		ll->lo_table = strdup(PQgetvalue(pgLO->res, i, 0));
 		ll->lo_attr  = strdup(PQgetvalue(pgLO->res, i, 1));
 	}
+ 	ll->lo_table = ll->lo_attr = (char *) NULL;
 	
 	PQclear(pgLO->res);
- 	ll++;
- 	ll->lo_table = ll->lo_attr = (char *) NULL;
 }
 
 void 
@@ -91,24 +105,25 @@ pglo_export(LODumpMaster *pgLO)
 	for(ll=pgLO->lolist; ll->lo_table != NULL; ll++) {
 		
 		/* ----------
-		 * Query
+		 * Query: find the LOs referenced by this column
 		 * ----------
 		 */
-		sprintf(Qbuff, "SELECT DISTINCT x.\"%s\" FROM \"%s\" x, pg_largeobject l WHERE x.\"%s\" = l.loid",
-			ll->lo_attr, ll->lo_table, ll->lo_attr);
+		sprintf(Qbuff, "SELECT DISTINCT l.loid FROM \"%s\" x, pg_largeobject l WHERE x.\"%s\" = l.loid",
+				ll->lo_table, ll->lo_attr);
 		
 		/* puts(Qbuff); */
 			
 		pgLO->res = PQexec(pgLO->conn, Qbuff);
-	
-		if ((tuples = PQntuples(pgLO->res)) == 0) {
-		
+
+        if (PQresultStatus(pgLO->res) != PGRES_TUPLES_OK) {
+			fprintf(stderr, "%s: Failed to get LO OIDs:\n%s", progname,
+					PQerrorMessage(pgLO->conn));
+        }
+		else if ((tuples = PQntuples(pgLO->res)) == 0) {
 			if (!pgLO->quiet && pgLO->action == ACTION_EXPORT_ATTR)
-				printf("%s: no large objects in '%s'\n",
-					   progname, ll->lo_table);	
-			continue;
-		
-		} else if (check_res(pgLO)) {
+				printf("%s: no large objects in \"%s\".\"%s\"\n",
+					   progname, ll->lo_table, ll->lo_attr);	
+		} else {
 		
 			int	t;
 			char	*val;
@@ -117,9 +132,10 @@ pglo_export(LODumpMaster *pgLO)
 			 * Create DIR/FILE
 			 * ----------
 			 */
-			if (tuples && pgLO->action != ACTION_SHOW) {
+			if (pgLO->action != ACTION_SHOW) {
 			
-				sprintf(path, "%s/%s/%s", pgLO->space, pgLO->db, ll->lo_table);          
+				sprintf(path, "%s/%s/%s", pgLO->space, pgLO->db,
+						ll->lo_table);
 
 				if (mkdir(path, DIR_UMASK) == -1) {
 					if (errno != EEXIST) {
@@ -127,8 +143,9 @@ pglo_export(LODumpMaster *pgLO)
 						exit(RE_ERROR);					
 					}	
 				}
-				
-				sprintf(path, "%s/%s", path, ll->lo_attr);          
+
+				sprintf(path, "%s/%s/%s/%s", pgLO->space, pgLO->db,
+						ll->lo_table, ll->lo_attr);          
 				
 				if (mkdir(path, DIR_UMASK) == -1) {
 					if (errno != EEXIST) {
@@ -145,19 +162,14 @@ pglo_export(LODumpMaster *pgLO)
 			pgLO->counter += tuples;
 			
 			for(t=0; t<tuples; t++) {
-				
-				Oid lo = (Oid) 0;
+				Oid lo;
 				
 				val = PQgetvalue(pgLO->res, t, 0);
 				
-				if (!val)
-					continue;
-				else
-					lo = (Oid) atol(val);
+				lo = atooid(val);
 				
 				if (pgLO->action == ACTION_SHOW) {
-					printf("%s.%s: %ld\n", ll->lo_table, 
-						ll->lo_attr, (long) lo);
+					printf("%s.%s: %u\n", ll->lo_table, ll->lo_attr, lo);
 					continue;
 				}
 				
@@ -165,13 +177,15 @@ pglo_export(LODumpMaster *pgLO)
 					pgLO->db, ll->lo_table, ll->lo_attr, val);
 				
 				if (lo_export(pgLO->conn, lo, path) < 0) 
-					fprintf(stderr, "%s: %s\n", PQerrorMessage(pgLO->conn), progname);
+					fprintf(stderr, "%s: lo_export failed:\n%s", progname,
+							PQerrorMessage(pgLO->conn));
 					
 				else 
 					fprintf(pgLO->index, "%s\t%s\t%s\t%s/%s/%s/%s\n", val, 
 						ll->lo_table, ll->lo_attr, pgLO->db, ll->lo_table, ll->lo_attr, val);
 			}
 		}
-	}	
- }
 
+		PQclear(pgLO->res);
+	}
+}

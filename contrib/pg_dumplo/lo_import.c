@@ -1,3 +1,13 @@
+/* -------------------------------------------------------------------------
+ * pg_dumplo
+ *
+ *	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_import.c,v 1.2 2000/11/22 00:00:55 tgl Exp $
+ *
+ *					Karel Zak 1999-2000
+ * -------------------------------------------------------------------------
+ */
 
 #include <stdio.h>	
 #include <unistd.h>
@@ -20,7 +30,7 @@ void
 pglo_import(LODumpMaster *pgLO)
 {
 	LOlist		loa;
-	long 		new_oid;
+	Oid 		new_oid;
 	char		tab[MAX_TABLE_NAME], attr[MAX_ATTR_NAME],
 			path[BUFSIZ], lo_path[BUFSIZ],
 			Qbuff[QUERY_BUFSIZ];
@@ -33,7 +43,7 @@ pglo_import(LODumpMaster *pgLO)
 		if (! pgLO->remove && ! pgLO->quiet)
 			printf(Qbuff);
 		
-		sscanf(Qbuff, "%ld\t%s\t%s\t%s\n", &loa.lo_oid, tab, attr, path); 
+		sscanf(Qbuff, "%u\t%s\t%s\t%s\n", &loa.lo_oid, tab, attr, path); 
 		loa.lo_table = tab;
 		loa.lo_attr  = attr;
 
@@ -43,7 +53,7 @@ pglo_import(LODumpMaster *pgLO)
 		 * Import LO
 		 * ----------
 		 */
-		if ((new_oid = lo_import(pgLO->conn, lo_path)) <= 0) {
+		if ((new_oid = lo_import(pgLO->conn, lo_path)) == 0) {
 		
 			fprintf(stderr, "%s: %s\n", progname, PQerrorMessage(pgLO->conn));
 			
@@ -54,12 +64,12 @@ pglo_import(LODumpMaster *pgLO)
 
 		if (pgLO->remove) {
 			notice(pgLO, FALSE);
-			if (lo_unlink(pgLO->conn, (Oid) loa.lo_oid) < 0) 
-				fprintf(stderr, "%s: can't remove LO: %ld (%s)\n", 
+			if (lo_unlink(pgLO->conn, loa.lo_oid) < 0) 
+				fprintf(stderr, "%s: can't remove LO %u:\n%s", 
 					progname, loa.lo_oid, PQerrorMessage(pgLO->conn));
 					
 			else if (!pgLO->quiet)
-				printf("remove old %ld and create new %ld\n", 
+				printf("remove old %u and create new %u\n", 
 					loa.lo_oid, new_oid);	
 			notice(pgLO, TRUE);	
 		}
@@ -70,20 +80,20 @@ pglo_import(LODumpMaster *pgLO)
 		 * UPDATE oid in tab
 		 * ----------
 		 */
-		sprintf(Qbuff, "UPDATE %s SET %s=%ld WHERE %s=%ld", 
+		sprintf(Qbuff, "UPDATE \"%s\" SET \"%s\"=%u WHERE \"%s\"=%u", 
 			loa.lo_table, loa.lo_attr, new_oid, loa.lo_attr, loa.lo_oid);
 
 		/*fprintf(stderr, Qbuff);*/
 			
 		pgLO->res = PQexec(pgLO->conn, Qbuff);
 	
-		if (!pgLO->res && PQresultStatus(pgLO->res) != PGRES_COMMAND_OK) {
-		
-        		fprintf(stderr, "%s: %s\n",progname, PQerrorMessage(pgLO->conn));
-                	PQclear(pgLO->res);
-                	PQexec(pgLO->conn, "ROLLBACK");
+		if (PQresultStatus(pgLO->res) != PGRES_COMMAND_OK) {
+			fprintf(stderr, "%s: %s\n",progname, PQerrorMessage(pgLO->conn));
+			PQclear(pgLO->res);
+			PQexec(pgLO->conn, "ROLLBACK");
 			fprintf(stderr, "\n%s: ROLLBACK\n", progname);
 			exit(RE_ERROR);
-        	}	
+		}	
+		PQclear(pgLO->res);
 	}	
  }
