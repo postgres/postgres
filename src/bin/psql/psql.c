@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.113 1997/11/19 03:14:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.114 1997/11/24 13:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1747,7 +1747,7 @@ HandleSlashCmds(PsqlSettings *pset,
 							t0.typname AS result, \
 							t1.typname AS left_type, \
 							t2.typname AS right_type, \
-							obj_description(o.oid) as description \
+							obj_description(p.oid) as description \
 					FROM	pg_proc p, pg_type t0, \
 							pg_type t1, pg_type t2, \
 							pg_operator o \
@@ -1762,7 +1762,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					SELECT	o.oprname AS left_unary, \
 							t0.typname AS return_type, \
 							t1.typname AS operand, \
-							obj_description(o.oid) as description \
+							obj_description(p.oid) as description \
 					FROM	pg_operator o, pg_proc p, pg_type t0, pg_type t1 \
 					WHERE	RegprocToOid(o.oprcode) = p.oid AND \
 							o.oprresult = t0.oid AND \
@@ -1774,7 +1774,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					SELECT	o.oprname AS right_unary, \
 							t0.typname AS return_type, \
 							t1.typname AS operand, \
-							obj_description(o.oid) as description \
+							obj_description(p.oid) as description \
 					FROM	pg_operator o, pg_proc p, pg_type t0, pg_type t1 \
 					WHERE	RegprocToOid(o.oprcode) = p.oid AND \
 							o.oprresult = t0.oid AND \
