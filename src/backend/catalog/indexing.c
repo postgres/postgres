@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.32 1998/09/23 04:21:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.33 1998/10/02 05:10:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,9 +62,9 @@ char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] = {TriggerRelidIndex};
 
 
 static HeapTuple CatalogIndexFetchTuple(Relation heapRelation,
-					   Relation idesc,
-					   ScanKey skey,
-					   int16 num_keys);
+										Relation idesc,
+										ScanKey skey,
+										int16 num_keys);
 
 
 /*
@@ -213,6 +213,7 @@ CatalogHasIndex(char *catName, Oid catId)
 	return pgRelP->relhasindex;
 }
 
+
 /*
  *	CatalogIndexFetchTuple() -- Get a tuple that satisfies a scan key
  *								from a catalog relation.
@@ -253,6 +254,7 @@ CatalogIndexFetchTuple(Relation heapRelation,
 	return tuple;
 }
 
+
 /*
  * The remainder of the file is for individual index scan routines.  Each
  * index should be scanned according to how it was defined during bootstrap
@@ -288,6 +290,7 @@ AttributeNameIndexScan(Relation heapRelation,
 	return tuple;
 }
 
+
 HeapTuple
 AttributeNumIndexScan(Relation heapRelation,
 					  Oid relid,
@@ -317,6 +320,7 @@ AttributeNumIndexScan(Relation heapRelation,
 	return tuple;
 }
 
+
 HeapTuple
 ProcedureOidIndexScan(Relation heapRelation, Oid procId)
 {
@@ -337,7 +341,6 @@ ProcedureOidIndexScan(Relation heapRelation, Oid procId)
 
 	return tuple;
 }
-
 
 
 HeapTuple
@@ -377,7 +380,6 @@ ProcedureNameIndexScan(Relation heapRelation,
 }
 
 
-
 HeapTuple
 ProcedureSrcIndexScan(Relation heapRelation, text *procSrc)
 {
@@ -398,6 +400,7 @@ ProcedureSrcIndexScan(Relation heapRelation, text *procSrc)
 
 	return tuple;
 }
+
 
 HeapTuple
 TypeOidIndexScan(Relation heapRelation, Oid typeId)
@@ -420,6 +423,7 @@ TypeOidIndexScan(Relation heapRelation, Oid typeId)
 	return tuple;
 }
 
+
 HeapTuple
 TypeNameIndexScan(Relation heapRelation, char *typeName)
 {
@@ -441,6 +445,7 @@ TypeNameIndexScan(Relation heapRelation, char *typeName)
 	return tuple;
 }
 
+
 HeapTuple
 ClassNameIndexScan(Relation heapRelation, char *relName)
 {
@@ -460,6 +465,7 @@ ClassNameIndexScan(Relation heapRelation, char *relName)
 	index_close(idesc);
 	return tuple;
 }
+
 
 HeapTuple
 ClassOidIndexScan(Relation heapRelation, Oid relId)
