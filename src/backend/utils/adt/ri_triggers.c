@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.23 2001/03/22 06:16:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.24 2001/05/07 19:57:24 petere Exp $
  *
  * ----------
  */
@@ -941,6 +941,8 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	char		del_nulls[RI_MAX_NUMKEYS + 1];
 	bool		isnull;
 	int			i;
+	Oid			save_uid;
+	Oid			fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -978,6 +980,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	 * tuple.
 	 */
 	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
@@ -1081,8 +1084,13 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			/*
 			 * Now delete constraint
 			 */
+			save_uid = GetUserId();
+			SetUserId(fk_owner);
+
 			if (SPI_execp(qplan, del_values, del_nulls, 0) != SPI_OK_DELETE)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_cascade_del()");
+
+			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_cascade_del()");
@@ -1128,6 +1136,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	bool		isnull;
 	int			i;
 	int			j;
+	Oid			save_uid;
+	Oid			fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -1165,6 +1175,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 * and old tuple.
 	 */
 	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
@@ -1297,8 +1308,13 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			/*
 			 * Now update the existing references
 			 */
+			save_uid = GetUserId();
+			SetUserId(fk_owner);
+
 			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_cascade_upd()");
+
+			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_cascade_upd()");
@@ -1349,6 +1365,8 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	char		del_nulls[RI_MAX_NUMKEYS + 1];
 	bool		isnull;
 	int			i;
+	Oid			save_uid;
+	Oid			fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -1386,6 +1404,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	 * tuple.
 	 */
 	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
@@ -1493,8 +1512,13 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			/*
 			 * Now check for existing references
 			 */
+			save_uid = GetUserId();
+			SetUserId(fk_owner);
+
 			if (SPI_execp(qplan, del_values, del_nulls, 1) != SPI_OK_SELECT)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_restrict_del()");
+
+			SetUserId(save_uid);
 
 			if (SPI_processed > 0)
 				elog(ERROR, "%s referential integrity violation - "
@@ -1554,8 +1578,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	bool		isnull;
 	int			i;
 	Oid			save_uid;
-
-	save_uid = GetUserId();
+	Oid			fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -1593,6 +1616,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	 * and old tuple.
 	 */
 	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
@@ -1708,6 +1732,9 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			/*
 			 * Now check for existing references
 			 */
+			save_uid = GetUserId();
+			SetUserId(fk_owner);
+
 			SetUserId(RelationGetForm(pk_rel)->relowner);
 
 			if (SPI_execp(qplan, upd_values, upd_nulls, 1) != SPI_OK_SELECT)
@@ -1764,6 +1791,8 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	char		upd_nulls[RI_MAX_NUMKEYS + 1];
 	bool		isnull;
 	int			i;
+	Oid			save_uid;
+	Oid			fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -1801,6 +1830,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	 * tuple.
 	 */
 	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
@@ -1915,8 +1945,13 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			/*
 			 * Now update the existing references
 			 */
+			save_uid = GetUserId();
+			SetUserId(fk_owner);
+
 			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_setnull_del()");
+
+			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_setnull_del()");
@@ -1963,6 +1998,8 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	int			i;
 	int			match_type;
 	bool		use_cached_query;
+	Oid			save_uid;
+	Oid			fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -2000,6 +2037,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	 * tuple.
 	 */
 	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
@@ -2161,8 +2199,13 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			/*
 			 * Now update the existing references
 			 */
+			save_uid = GetUserId();
+			SetUserId(fk_owner);
+
 			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_setnull_upd()");
+
+			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_setnull_upd()");
@@ -2206,6 +2249,8 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	char		upd_nulls[RI_MAX_NUMKEYS + 1];
 	bool		isnull;
 	int			i;
+	Oid			save_uid;
+	Oid			fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -2243,6 +2288,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	 * tuple.
 	 */
 	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
@@ -2404,8 +2450,13 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			/*
 			 * Now update the existing references
 			 */
+			save_uid = GetUserId();
+			SetUserId(fk_owner);
+
 			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_setdefault_del()");
+
+			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_setdefault_del()");
@@ -2451,6 +2502,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	bool		isnull;
 	int			i;
 	int			match_type;
+	Oid			save_uid;
+	Oid			fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -2488,6 +2541,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	 * tuple.
 	 */
 	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	fk_owner = RelationGetForm(fk_rel)->relowner;
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
@@ -2676,8 +2730,13 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			/*
 			 * Now update the existing references
 			 */
+			save_uid = GetUserId();
+			SetUserId(fk_owner);
+
 			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_setdefault_upd()");
+
+			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_setdefault_upd()");
