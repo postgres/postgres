@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.3 2000/07/05 23:11:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.4 2000/08/06 04:40:08 tgl Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -106,7 +106,7 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 		elog(NOTICE, "Skipping \"%s\" --- only table owner can VACUUM it",
 			 RelationGetRelationName(onerel));
 		*/
-		heap_close(onerel, AccessExclusiveLock);
+		heap_close(onerel, NoLock);
 		CommitTransactionCommand();
 		return;
 	}
@@ -220,7 +220,8 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 
 	heap_endscan(scan);
 
-	heap_close(onerel, AccessShareLock);
+	/* close rel, but keep lock so it doesn't go away before commit */
+	heap_close(onerel, NoLock);
 
 	/* update statistics in pg_class */
 	update_attstats(relid, attr_cnt, vacattrstats);
@@ -388,8 +389,8 @@ bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len)
 /*
  *	update_attstats() -- update attribute statistics for one relation
  *
- *		Updates of pg_attribute statistics are handled by over-write.
- *		for reasons described above.
+ *		Updates of pg_attribute statistics are handled by over-write,
+ *		for reasons described above.  pg_statistic rows are added normally.
  *
  *		To keep things simple, we punt for pg_statistic, and don't try
  *		to compute or store rows for pg_statistic itself in pg_statistic.
@@ -510,7 +511,7 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 			 * deleted all the pg_statistic tuples for the rel, so we
 			 * just have to insert new ones here.
 			 *
-			 * Note vacuum_rel() has seen to it that we won't come here
+			 * Note analyze_rel() has seen to it that we won't come here
 			 * when vacuuming pg_statistic itself.
 			 */
 			if (VacAttrStatsLtGtValid(stats) && stats->initialized)
@@ -524,6 +525,7 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 							nonnull_cnt_d = stats->nonnull_cnt;		/* prevent overflow */
 				Datum		values[Natts_pg_statistic];
 				char		nulls[Natts_pg_statistic];
+				Relation	irelations[Num_pg_statistic_indices];
 
 				nullratio = null_cnt_d / (nonnull_cnt_d + null_cnt_d);
 				bestratio = best_cnt_d / (nonnull_cnt_d + null_cnt_d);
@@ -567,31 +569,12 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 
 				stup = heap_formtuple(sd->rd_att, values, nulls);
 
-				/* ----------------
-				 *	Watch out for oversize tuple, which can happen if
-				 *	all three of the saved data values are long.
-				 *	Our fallback strategy is just to not store the
-				 *	pg_statistic tuple at all in that case.  (We could
-				 *	replace the values by NULLs and still store the
-				 *	numeric stats, but presently selfuncs.c couldn't
-				 *	do anything useful with that case anyway.)
-				 *
-				 *	We could reduce the probability of overflow, but not
-				 *	prevent it, by storing the data values as compressed
-				 *	text; is that worth doing?	The problem should go
-				 *	away whenever long tuples get implemented...
-				 * ----------------
-				 */
-				if (MAXALIGN(stup->t_len) <= MaxTupleSize)
-				{
-					/* OK, store tuple and update indexes too */
-					Relation	irelations[Num_pg_statistic_indices];
+				/* store tuple and update indexes too */
+				heap_insert(sd, stup);
 
-					heap_insert(sd, stup);
-					CatalogOpenIndices(Num_pg_statistic_indices, Name_pg_statistic_indices, irelations);
-					CatalogIndexInsert(irelations, Num_pg_statistic_indices, sd, stup);
-					CatalogCloseIndices(Num_pg_statistic_indices, irelations);
-				}
+				CatalogOpenIndices(Num_pg_statistic_indices, Name_pg_statistic_indices, irelations);
+				CatalogIndexInsert(irelations, Num_pg_statistic_indices, sd, stup);
+				CatalogCloseIndices(Num_pg_statistic_indices, irelations);
 
 				/* release allocated space */
 				pfree(DatumGetPointer(values[Anum_pg_statistic_stacommonval - 1]));

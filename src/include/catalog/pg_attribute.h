@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.62 2000/07/31 22:39:06 tgl Exp $
+ * $Id: pg_attribute.h,v 1.63 2000/08/06 04:39:33 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -130,9 +130,11 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 * Possible values are
 	 *		'p': Value must be stored plain always
 	 *		'e': Value can be stored in "secondary" relation (if relation
-	 *			 has rellongrelid attached)
+	 *			 has one, see pg_class.reltoastrelid)
 	 *		'm': Value can be stored compressed inline
 	 *		'x': Value can be stored compressed inline or in "secondary"
+	 * Note that 'm' fields can also be moved out to secondary storage,
+	 * but only as a last resort ('e' and 'x' fields are moved first).
 	 *----------
 	 */
 
@@ -245,7 +247,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typsend"},	   24, 0,	4, 14, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1247, {"typalign"},	   18, 0,	1, 15, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1247, {"typstorage"},	   18, 0,	1, 16, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
-{ 1247, {"typdefault"},    25, 0,  -1, 17, 0, -1, -1, '\0'	, 'p', '\0', 'i', '\0', '\0' }
+{ 1247, {"typdefault"},    25, 0,  -1, 17, 0, -1, -1, '\0'	, 'x', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1247 typname			19 0 NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1247 typowner			23 0  4   2 0 -1 -1 t p f i f f));
@@ -263,7 +265,7 @@ DATA(insert OID = 0 ( 1247 typreceive		24 0  4  13 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1247 typsend			24 0  4  14 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1247 typalign			18 0  1  15 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1247 typstorage		18 0  1  16 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1247 typdefault		25 0 -1  17 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1247 typdefault		25 0 -1  17 0 -1 -1 f x f i f f));
 DATA(insert OID = 0 ( 1247 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1247 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1247 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
@@ -279,7 +281,7 @@ DATA(insert OID = 0 ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1262 datname			19 0 NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1262 datdba			23 0  4   2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1262 encoding			23 0  4   3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1262 datpath			25 0 -1   4 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1262 datpath			25 0 -1   4 0 -1 -1 f x f i f f));
 DATA(insert OID = 0 ( 1262 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1262 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1262 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
@@ -308,8 +310,8 @@ DATA(insert OID = 0 ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1255, {"properbyte_cpu"},		23, 0,	4, 13, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1255, {"propercall_cpu"},		23, 0,	4, 14, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1255, {"prooutin_ratio"},		23, 0,	4, 15, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"prosrc"},				25, 0, -1, 16, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"probin"},				17, 0, -1, 17, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }
+{ 1255, {"prosrc"},				25, 0, -1, 16, 0, -1, -1, '\0', 'x', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"probin"},				17, 0, -1, 17, 0, -1, -1, '\0', 'x', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1255 proname			19 0 NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1255 proowner			23 0  4   2 0 -1 -1 t p f i f f));
@@ -326,8 +328,8 @@ DATA(insert OID = 0 ( 1255 probyte_pct		23 0  4  12 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 properbyte_cpu	23 0  4  13 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 propercall_cpu	23 0  4  14 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 prooutin_ratio	23 0  4  15 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 prosrc			25 0 -1  16 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1255 probin			17 0 -1  17 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1255 prosrc			25 0 -1  16 0 -1 -1 f x f i f f));
+DATA(insert OID = 0 ( 1255 probin			17 0 -1  17 0 -1 -1 f x f i f f));
 DATA(insert OID = 0 ( 1255 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1255 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
@@ -346,7 +348,7 @@ DATA(insert OID = 0 ( 1260 usecreatedb		16	0	1	3 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1260 usetrace			16	0	1	4 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1260 usesuper			16	0	1	5 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1260 usecatupd		16	0	1	6 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1260 passwd			25	0  -1	7 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1260 passwd			25	0  -1	7 0 -1 -1 f x f i f f));
 DATA(insert OID = 0 ( 1260 valuntil			702 0	4	8 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1260 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1260 oid				26 0  4  -2 0 -1 -1 t p f i f f));
@@ -362,7 +364,7 @@ DATA(insert OID = 0 ( 1260 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  */
 DATA(insert OID = 0 ( 1261 groname			19 0 NAMEDATALEN  1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1261 grosysid			23 0  4   2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1261 grolist		  1007 0 -1   3 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1261 grolist		  1007 0 -1   3 0 -1 -1 f x f i f f));
 DATA(insert OID = 0 ( 1261 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1261 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1261 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
@@ -440,7 +442,7 @@ DATA(insert OID = 0 ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1259, {"relhaspkey"},    16, 0,	1, 18, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1259, {"relhasrules"},   16, 0,	1, 19, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1259, {"relhassubclass"},16, 0,	1, 20, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
-{ 1259, {"relacl"},		 1034, 0,  -1, 21, 0, -1, -1,	'\0', 'm', '\0', 'i', '\0', '\0' }
+{ 1259, {"relacl"},		 1034, 0,  -1, 21, 0, -1, -1,	'\0', 'x', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1259 relname			19 0 NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1259 reltype			26 0  4   2 0 -1 -1 t p f i f f));
@@ -462,7 +464,7 @@ DATA(insert OID = 0 ( 1259 relrefs			21 0  2  17 0 -1 -1 t p f s f f));
 DATA(insert OID = 0 ( 1259 relhaspkey		16 0  1  18 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1259 relhasrules		16 0  1  19 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1259 relhassubclass	16 0  1  20 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1259 relacl		  1034 0 -1  21 0 -1 -1 f m f i f f));
+DATA(insert OID = 0 ( 1259 relacl		  1034 0 -1  21 0 -1 -1 f x f i f f));
 DATA(insert OID = 0 ( 1259 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1259 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1259 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
@@ -477,8 +479,8 @@ DATA(insert OID = 0 ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  */
 DATA(insert OID = 0 ( 1215 adrelid			26 0  4   1 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1215 adnum			21 0  2   2 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1215 adbin			25 0 -1   3 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1215 adsrc			25 0 -1   4 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1215 adbin			25 0 -1   3 0 -1 -1 f x f i f f));
+DATA(insert OID = 0 ( 1215 adsrc			25 0 -1   4 0 -1 -1 f x f i f f));
 DATA(insert OID = 0 ( 1215 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1215 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1215 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
@@ -493,8 +495,8 @@ DATA(insert OID = 0 ( 1215 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  */
 DATA(insert OID = 0 ( 1216 rcrelid			26 0  4   1 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1216 rcname			19 0  NAMEDATALEN  2 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1216 rcbin			25 0 -1   3 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1216 rcsrc			25 0 -1   4 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1216 rcbin			25 0 -1   3 0 -1 -1 f x f i f f));
+DATA(insert OID = 0 ( 1216 rcsrc			25 0 -1   4 0 -1 -1 f x f i f f));
 DATA(insert OID = 0 ( 1216 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1216 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1216 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
@@ -520,7 +522,7 @@ DATA(insert OID = 0 ( 1219 tgdeferrable		16 0  1   9 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1219 tginitdeferred	16 0  1   10 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1219 tgnargs			21 0  2   11 0 -1 -1 t p f s f f));
 DATA(insert OID = 0 ( 1219 tgattr			22 0  INDEX_MAX_KEYS*2	12 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1219 tgargs			17 0 -1   13 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1219 tgargs			17 0 -1   13 0 -1 -1 f x f i f f));
 DATA(insert OID = 0 ( 1219 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1219 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1219 xmin				28 0  4  -3 0 -1 -1 t p f i f f));

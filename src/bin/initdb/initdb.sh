@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.101 2000/07/06 21:33:38 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.102 2000/08/06 04:39:22 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -519,8 +519,18 @@ if [ "$PwPrompt" ]; then
 fi
 
 
-echo "Enabling unlimited storage for pg_rewrite"
+echo "Enabling unlimited row width for system tables."
+echo "ALTER TABLE pg_attrdef CREATE TOAST TABLE" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "ALTER TABLE pg_description CREATE TOAST TABLE" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "ALTER TABLE pg_proc CREATE TOAST TABLE" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "ALTER TABLE pg_relcheck CREATE TOAST TABLE" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 echo "ALTER TABLE pg_rewrite CREATE TOAST TABLE" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "ALTER TABLE pg_statistic CREATE TOAST TABLE" \
         | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 

@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.108 2000/07/30 22:13:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.109 2000/08/06 04:39:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
- *		RelationInitialize				- initialize relcache
+ *		RelationCacheInitialize			- initialize relcache
+ *		RelationCacheInitializePhase2	- finish initializing relcache
  *		RelationIdCacheGetRelation		- get a reldesc from the cache (id)
  *		RelationNameCacheGetRelation	- get a reldesc from the cache (name)
  *		RelationIdGetRelation			- get a reldesc by relation id
@@ -217,6 +218,7 @@ static void write_irels(void);
 
 static void formrdesc(char *relationName, int natts,
 		  FormData_pg_attribute *att);
+static void fixrdesc(char *relationName);
 
 static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
@@ -1081,8 +1083,9 @@ IndexedAccessMethodInitialize(Relation relation)
  *		formrdesc
  *
  *		This is a special cut-down version of RelationBuildDesc()
- *		used by RelationInitialize() in initializing the relcache.
- *		The relation descriptor is built just from the supplied parameters.
+ *		used by RelationCacheInitialize() in initializing the relcache.
+ *		The relation descriptor is built just from the supplied parameters,
+ *		without actually looking at any system table entries.
  *
  * NOTE: we assume we are already switched into CacheMemoryContext.
  * --------------------------------
@@ -1115,18 +1118,23 @@ formrdesc(char *relationName,
 	RelationSetReferenceCount(relation, 1);
 
 	/* ----------------
+	 *	all entries built with this routine are nailed-in-cache
+	 * ----------------
+	 */
+	relation->rd_isnailed = true;
+
+	/* ----------------
 	 *	initialize relation tuple form
+	 *
+	 *	The data we insert here is pretty incomplete/bogus, but it'll
+	 *	serve to get us launched.  RelationCacheInitializePhase2() will
+	 *	read the real data from pg_class and replace what we've done here.
 	 * ----------------
 	 */
 	relation->rd_rel = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
 	MemSet(relation->rd_rel, 0, CLASS_TUPLE_SIZE);
-	strcpy(RelationGetPhysicalRelationName(relation), relationName);
 
-	/* ----------------
-	 *	initialize attribute tuple form
-	 * ----------------
-	 */
-	relation->rd_att = CreateTemplateTupleDesc(natts);
+	strcpy(RelationGetPhysicalRelationName(relation), relationName);
 
 	/*
 	 * For debugging purposes, it's important to distinguish between
@@ -1134,23 +1142,21 @@ formrdesc(char *relationName,
 	 * code in the buffer manager that traces allocations that has to know
 	 * about this.
 	 */
-
 	if (IsSystemRelationName(relationName))
-	{
-		relation->rd_rel->relowner = 6; /* XXX use sym const */
 		relation->rd_rel->relisshared = IsSharedSystemRelationName(relationName);
-	}
 	else
-	{
-		relation->rd_rel->relowner = 0;
 		relation->rd_rel->relisshared = false;
-	}
 
-	relation->rd_rel->relpages = 1;		/* XXX */
-	relation->rd_rel->reltuples = 1;	/* XXX */
+	relation->rd_rel->relpages = 1;
+	relation->rd_rel->reltuples = 1;
 	relation->rd_rel->relkind = RELKIND_RELATION;
 	relation->rd_rel->relnatts = (int16) natts;
-	relation->rd_isnailed = true;
+
+	/* ----------------
+	 *	initialize attribute tuple form
+	 * ----------------
+	 */
+	relation->rd_att = CreateTemplateTupleDesc(natts);
 
 	/* ----------------
 	 *	initialize tuple desc info
@@ -1187,12 +1193,62 @@ formrdesc(char *relationName,
 	 * the rdesc for pg_class must already exist.  Therefore we must do
 	 * the check (and possible set) after cache insertion.
 	 *
-	 * XXX I believe the above comment is misguided; we should be
-	 * running in bootstrap or init processing mode, and CatalogHasIndex
+	 * XXX I believe the above comment is misguided; we should be running
+	 * in bootstrap or init processing mode here, and CatalogHasIndex
 	 * relies on hard-wired info in those cases.
 	 */
 	relation->rd_rel->relhasindex =
 		CatalogHasIndex(relationName, RelationGetRelid(relation));
+}
+
+
+/* --------------------------------
+ *		fixrdesc
+ *
+ *		Update the phony data inserted by formrdesc() with real info
+ *		from pg_class.
+ * --------------------------------
+ */
+static void
+fixrdesc(char *relationName)
+{
+	RelationBuildDescInfo buildinfo;
+	HeapTuple	pg_class_tuple;
+	Form_pg_class relp;
+	Relation	relation;
+
+	/* ----------------
+	 *	find the tuple in pg_class corresponding to the given relation name
+	 * ----------------
+	 */
+	buildinfo.infotype = INFO_RELNAME;
+	buildinfo.i.info_name = relationName;
+
+	pg_class_tuple = ScanPgRelation(buildinfo);
+
+	if (!HeapTupleIsValid(pg_class_tuple))
+		elog(FATAL, "fixrdesc: no pg_class entry for %s",
+			 relationName);
+	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
+
+	/* ----------------
+	 *	find the pre-made relcache entry (better be there!)
+	 * ----------------
+	 */
+	relation = RelationNameCacheGetRelation(relationName);
+	if (!RelationIsValid(relation))
+		elog(FATAL, "fixrdesc: no existing relcache entry for %s",
+			 relationName);
+
+	/* ----------------
+	 *	and copy pg_class_tuple to relation->rd_rel.
+	 *	(See notes in AllocateRelationDesc())
+	 * ----------------
+	 */
+	Assert(relation->rd_rel != NULL);
+	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
+
+	heap_freetuple(pg_class_tuple);
 }
 
 
@@ -1829,7 +1885,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 }
 
 /* --------------------------------
- *		RelationInitialize
+ *		RelationCacheInitialize
  *
  *		This initializes the relation descriptor cache.
  * --------------------------------
@@ -1838,7 +1894,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 #define INITRELCACHESIZE		400
 
 void
-RelationInitialize(void)
+RelationCacheInitialize(void)
 {
 	MemoryContext oldcxt;
 	HASHCTL		ctl;
@@ -1870,6 +1926,8 @@ RelationInitialize(void)
 	 *	initialize the cache with pre-made relation descriptors
 	 *	for some of the more important system relations.  These
 	 *	relations should always be in the cache.
+	 *
+	 *	NB: see also the list in RelationCacheInitializePhase2().
 	 * ----------------
 	 */
 	formrdesc(RelationRelationName, Natts_pg_class, Desc_pg_class);
@@ -1891,6 +1949,34 @@ RelationInitialize(void)
 
 	MemoryContextSwitchTo(oldcxt);
 }
+
+/* --------------------------------
+ *		RelationCacheInitializePhase2
+ *
+ *		This completes initialization of the relcache after catcache
+ *		is functional and we are able to actually load data from pg_class.
+ * --------------------------------
+ */
+void
+RelationCacheInitializePhase2(void)
+{
+	/*
+	 * Get the real pg_class tuple for each nailed-in-cache relcache entry
+	 * that was made by RelationCacheInitialize(), and replace the phony
+	 * rd_rel entry made by formrdesc().  This is necessary so that we have,
+	 * for example, the correct toast-table info for tables that have such.
+	 */
+	if (!IsBootstrapProcessingMode())
+	{
+		fixrdesc(RelationRelationName);
+		fixrdesc(AttributeRelationName);
+		fixrdesc(ProcedureRelationName);
+		fixrdesc(TypeRelationName);
+		/* We don't bother to update the entries for pg_variable or pg_log. */
+	}
+}
+
+
 
 static void
 AttrDefaultFetch(Relation relation)
