@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.24 2000/01/31 04:35:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.25 2000/03/08 23:42:58 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -173,6 +173,10 @@ AllocSetReset(AllocSet set)
 	while (block != NULL)
 	{
 		next = block->next;
+#ifdef CLOBBER_FREED_MEMORY
+		/* Wipe freed memory for debugging purposes */
+		memset(block, 0x7F, ((char *) block->endptr) - ((char *) block));
+#endif
 		free(block);
 		block = next;
 	}
@@ -419,6 +423,10 @@ AllocSetFree(AllocSet set, AllocPointer pointer)
 			set->blocks = block->next;
 		else
 			prevblock->next = block->next;
+#ifdef CLOBBER_FREED_MEMORY
+		/* Wipe freed memory for debugging purposes */
+		memset(block, 0x7F, ((char *) block->endptr) - ((char *) block));
+#endif
 		free(block);
 	}
 	else
