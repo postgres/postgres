@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.29 2000/08/31 13:26:16 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.30 2000/09/05 09:02:18 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -80,6 +80,8 @@ static int exec_stmt(PLpgSQL_execstate * estate,
 		  PLpgSQL_stmt * stmt);
 static int exec_stmt_assign(PLpgSQL_execstate * estate,
 				 PLpgSQL_stmt_assign * stmt);
+static int exec_stmt_getdiag(PLpgSQL_execstate * estate,
+                                 PLpgSQL_stmt_getdiag * stmt);
 static int exec_stmt_if(PLpgSQL_execstate * estate,
 			 PLpgSQL_stmt_if * stmt);
 static int exec_stmt_loop(PLpgSQL_execstate * estate,
@@ -192,6 +194,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 						break;
 					case PLPGSQL_STMT_ASSIGN:
 						stmttype = "assignment";
+						break;
+					case PLPGSQL_STMT_GETDIAG:
+						stmttype = "get diagnostics";
 						break;
 					case PLPGSQL_STMT_IF:
 						stmttype = "if";
@@ -502,6 +507,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 					case PLPGSQL_STMT_ASSIGN:
 						stmttype = "assignment";
 						break;
+                                        case PLPGSQL_STMT_GETDIAG:
+                                                stmttype = "get diagnostics";
+                                                break;
 					case PLPGSQL_STMT_IF:
 						stmttype = "if";
 						break;
@@ -971,6 +979,10 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 			rc = exec_stmt_assign(estate, (PLpgSQL_stmt_assign *) stmt);
 			break;
 
+		case PLPGSQL_STMT_GETDIAG:
+			rc = exec_stmt_getdiag(estate, (PLpgSQL_stmt_getdiag *) stmt);
+			break;
+
 		case PLPGSQL_STMT_IF:
 			rc = exec_stmt_if(estate, (PLpgSQL_stmt_if *) stmt);
 			break;
@@ -1047,6 +1059,49 @@ exec_stmt_assign(PLpgSQL_execstate * estate, PLpgSQL_stmt_assign * stmt)
 	return PLPGSQL_RC_OK;
 }
 
+/* ----------
+ * exec_stmt_getdiag                    Put internal PG information into
+ *                                      specified variables.
+ * ----------
+ */
+static int
+exec_stmt_getdiag(PLpgSQL_execstate * estate, PLpgSQL_stmt_getdiag * stmt)
+{
+	int		i;
+	PLpgSQL_datum 	*var;
+	HeapTuple	typeTup;
+        bool            isnull = false;
+
+	for ( i=0 ; i < stmt->nitems ; i++) 
+	{
+		if ((stmt->targets[i] <= 0))
+			break;
+	
+		var = (estate->datums[stmt->targets[i]]);
+
+		if (var == NULL)
+			break;
+
+		switch (stmt->items[i])
+		{
+			case PLPGSQL_GETDIAG_PROCESSED: 
+
+				exec_assign_value(estate, var, (Datum)SPI_processed, INT4OID, &isnull);
+        			break;
+
+			case PLPGSQL_GETDIAG_RESULT:
+
+				exec_assign_value(estate, var, (Datum)SPI_result, INT4OID, &isnull);
+                                break;
+
+			default:
+			
+				elog(ERROR, "unknown attribute request %d in get_diagnostic", stmt->items[i]);
+		};
+	};
+	
+        return PLPGSQL_RC_OK;
+}
 
 /* ----------
  * exec_stmt_if				Evaluate a bool expression and

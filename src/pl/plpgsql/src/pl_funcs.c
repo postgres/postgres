@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.7 2000/08/31 13:26:16 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.8 2000/09/05 09:02:18 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -390,6 +390,7 @@ static void dump_raise(PLpgSQL_stmt_raise * stmt);
 static void dump_execsql(PLpgSQL_stmt_execsql * stmt);
 static void dump_dynexecute(PLpgSQL_stmt_dynexecute * stmt);
 static void dump_dynfors(PLpgSQL_stmt_dynfors * stmt);
+static void dump_getdiag(PLpgSQL_stmt_getdiag * stmt);
 static void dump_expr(PLpgSQL_expr * expr);
 
 
@@ -449,6 +450,9 @@ dump_stmt(PLpgSQL_stmt * stmt)
 			break;
 		case PLPGSQL_STMT_DYNFORS:
 			dump_dynfors((PLpgSQL_stmt_dynfors *) stmt);
+			break;
+		case PLPGSQL_STMT_GETDIAG:
+			dump_getdiag((PLpgSQL_stmt_getdiag *) stmt);
 			break;
 		default:
 			elog(ERROR, "plpgsql_dump: unknown cmd_type %d\n", stmt->cmd_type);
@@ -637,7 +641,7 @@ dump_return(PLpgSQL_stmt_return * stmt)
 {
 	dump_ind();
 	printf("RETURN ");
-	if (stmt->retrecno >= 0)
+	if (stmt->retrecno > 0)
 		printf("record %d", stmt->retrecno);
 	else
 	{
@@ -696,6 +700,45 @@ dump_dynfors(PLpgSQL_stmt_dynfors * stmt)
 
 	dump_ind();
 	printf("    ENDFORS\n");
+}
+
+static void
+dump_getdiag(PLpgSQL_stmt_getdiag * stmt)
+{
+	int			i;
+
+	dump_ind();
+	printf("GET DIAGNOSTICS SELECT ");
+	for (i = 0; i < stmt->nitems; i++)
+	{
+		if (i != 0)
+			printf(", ");
+
+	    switch (stmt->items[i])
+		{
+		    case PLPGSQL_GETDIAG_PROCESSED:
+				printf("PROCESSED");
+				break;
+
+			case PLPGSQL_GETDIAG_RESULT:
+				printf("RESULT");
+				break;
+
+			default:
+			    printf("???");
+				break;
+		}
+	}
+	printf(" INTO ");
+	for (i = 0; i < stmt->ntargets; i++)
+	{
+		if (i != 0)
+			printf(", ");
+
+		printf("{var %d}", stmt->targets[i]);
+	}
+
+	printf("\n");
 }
 
 static void

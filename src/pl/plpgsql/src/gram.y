@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.11 2000/08/31 13:26:15 wieck Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.12 2000/09/05 09:02:18 wieck Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -113,11 +113,14 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %type <stmt>	stmt_assign, stmt_if, stmt_loop, stmt_while, stmt_exit
 %type <stmt>	stmt_return, stmt_raise, stmt_execsql, stmt_fori
 %type <stmt>	stmt_fors, stmt_select, stmt_perform
-%type <stmt>	stmt_dynexecute, stmt_dynfors
+%type <stmt>	stmt_dynexecute, stmt_dynfors, stmt_getdiag
 
 %type <dtlist>	raise_params
 %type <ival>	raise_level, raise_param
 %type <str>	raise_msg
+
+%type <dtlist>	getdiag_items, getdiag_targets
+%type <ival>	getdiag_item, getdiag_target
 
 %type <ival>	lno
 
@@ -131,6 +134,7 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %token	K_DEBUG
 %token	K_DECLARE
 %token	K_DEFAULT
+%token	K_DIAGNOSTICS
 %token	K_DOTDOT
 %token	K_ELSE
 %token	K_END
@@ -139,6 +143,7 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %token	K_EXIT
 %token	K_FOR
 %token	K_FROM
+%token	K_GET
 %token	K_IF
 %token	K_IN
 %token	K_INTO
@@ -147,9 +152,11 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %token	K_NOTICE
 %token	K_NULL
 %token	K_PERFORM
+%token  K_PROCESSED
 %token	K_RAISE
 %token	K_RECORD
 %token	K_RENAME
+%token	K_RESULT
 %token	K_RETURN
 %token	K_REVERSE
 %token	K_SELECT
@@ -371,7 +378,7 @@ decl_rowtype	: T_ROW
 
 decl_varname	: T_WORD
 		    {
-		        $$.name = strdup(yytext);
+		        $$.name = plpgsql_tolower(strdup(yytext));
 			$$.lineno  = yylineno;
 		    }
 		;
@@ -576,6 +583,8 @@ proc_stmt	: pl_block
 			{ $$ = $1; }
 		| stmt_perform
 			{ $$ = $1; }
+		| stmt_getdiag
+			{ $$ = $1; }
 		;
 
 stmt_perform	: K_PERFORM lno expr_until_semi
@@ -609,6 +618,100 @@ stmt_assign	: assign_var lno K_ASSIGN expr_until_semi
 			$$ = (PLpgSQL_stmt *)new;
 		    }
 		;
+
+stmt_getdiag	: K_GET K_DIAGNOSTICS lno K_SELECT getdiag_items K_INTO getdiag_targets ';'
+                    {
+                        PLpgSQL_stmt_getdiag     *new;
+
+                        new = malloc(sizeof(PLpgSQL_stmt_getdiag));
+                        memset(new, 0, sizeof(PLpgSQL_stmt_getdiag));
+
+                        new->cmd_type = PLPGSQL_STMT_GETDIAG;
+                        new->lineno   = $3;
+                        new->nitems   = $5.nused;
+                        new->items    = malloc(sizeof(int) * $5.nused);
+                        new->ntargets = $7.nused;
+                        new->targets  = malloc(sizeof(int) * $7.nused);
+			memcpy(new->items, $5.dtnums, sizeof(int) * $5.nused);
+			memcpy(new->targets, $7.dtnums, sizeof(int) * $7.nused);
+
+                        if (new->nitems != new->ntargets) {
+			    plpgsql_error_lineno = new->lineno;
+                            plpgsql_comperrinfo();
+                            elog(ERROR, "number of diagnostic items does not match target list");
+                        };
+
+                        $$ = (PLpgSQL_stmt *)new;
+                    }
+                ;
+
+getdiag_items : getdiag_items ',' getdiag_item
+                    {
+                        if ($1.nused == $1.nalloc) {
+                            $1.nalloc *= 2;
+                            $1.dtnums = repalloc($1.dtnums, sizeof(int) * $1.nalloc);
+                        }
+                        $1.dtnums[$1.nused++] = $3;
+
+                        $$.nalloc = $1.nalloc;
+                        $$.nused  = $1.nused;
+                        $$.dtnums = $1.dtnums;
+                    }
+		| getdiag_item
+                    {
+                        $$.nalloc = 1;
+                        $$.nused  = 1;
+                        $$.dtnums = palloc(sizeof(int) * $$.nalloc);
+                        $$.dtnums[0] = $1;
+                    }
+                ;
+
+getdiag_item : K_PROCESSED
+                    {
+                        $$ = PLPGSQL_GETDIAG_PROCESSED;
+                    }
+		| K_RESULT
+                    {
+                        $$ = PLPGSQL_GETDIAG_RESULT;
+                    }
+		;
+
+getdiag_targets : getdiag_targets ',' getdiag_target
+                    {
+                        if ($1.nused == $1.nalloc) {
+                            $1.nalloc *= 2;
+                            $1.dtnums = repalloc($1.dtnums, sizeof(int) * $1.nalloc);
+                        }
+                        $1.dtnums[$1.nused++] = $3;
+
+                        $$.nalloc = $1.nalloc;
+                        $$.nused  = $1.nused;
+                        $$.dtnums = $1.dtnums;
+                    }
+		| getdiag_target
+                    {
+                        $$.nalloc = 1;
+                        $$.nused  = 1;
+                        $$.dtnums = palloc(sizeof(int) * $$.nalloc);
+                        $$.dtnums[0] = $1;
+                    }
+                ;
+
+
+getdiag_target     : T_VARIABLE
+                    {
+                        if (yylval.var->isconst) {
+                            plpgsql_comperrinfo();
+                            elog(ERROR, "%s is declared CONSTANT; can not receive diagnostics", yylval.var->refname);
+                        }
+                        $$ = yylval.var->varno;
+                    }
+                | T_RECFIELD
+                    {
+                        $$ = yylval.recfield->rfno;
+                    }
+                ;
+ 
 
 assign_var	: T_VARIABLE
 		    {
