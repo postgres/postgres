@@ -1,6 +1,6 @@
 <refentry id="SQL-SELECT">
  <refmeta>
-  <refentrytitle id="select-title">
+  <refentrytitle id="sql-select-title">
    SELECT
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>

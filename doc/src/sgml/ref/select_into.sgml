@@ -38,7 +38,7 @@ SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable
    </title>
    <para>
     All input fields are described in detail for
-    <xref linkend="select-title" endterm="select-title">.
+    <xref linkend="sql-select-title" endterm="sql-select-title">.
    </para>
   </refsect2>
 
@@ -51,7 +51,7 @@ SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable
    </title>
    <para>
     All output fields are described in detail for
-    <xref linkend="select-title" endterm="select-title">.
+    <xref linkend="sql-select-title" endterm="sql-select-title">.
    </para>
   </refsect2>
  </refsynopsisdiv>
