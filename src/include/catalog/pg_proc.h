@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.127 2000/03/14 23:06:44 thomas Exp $
+ * $Id: pg_proc.h,v 1.128 2000/03/19 01:12:18 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -484,7 +484,7 @@ DESCR("square root");
 DATA(insert OID = 231 (  dcbrt			   PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dcbrt - ));
 DESCR("cube root");
 DATA(insert OID = 232 (  dpow			   PGUID 11 f t t 2 f 701 "701 701" 100 0 0 100  dpow - ));
-DESCR("exponential (x^y)");
+DESCR("exponentiation (x^y)");
 DATA(insert OID = 233 (  dexp			   PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dexp - ));
 DESCR("natural exponential (e^x)");
 DATA(insert OID = 234 (  dlog1			   PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dlog1 - ));
@@ -1625,7 +1625,7 @@ DESCR("base 10 logarithm");
 DATA(insert OID = 1340 (  log				 PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dlog10 - ));
 DESCR("base 10 logarithm");
 DATA(insert OID = 1341 (  ln				 PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dlog1 - ));
-DESCR("base 10 logarithm");
+DESCR("natural logarithm");
 DATA(insert OID = 1342 (  round				 PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dround - ));
 DESCR("round to integral part");
 DATA(insert OID = 1343 (  trunc				 PGUID 11 f t t 1 f 701 "701" 100 0 0 100  dtrunc - ));
@@ -2270,8 +2270,8 @@ DATA(insert OID = 1739 ( numeric_power			PGUID 11 f t t 2 f 1700 "1700 1700" 100
 DESCR("m raised to the power of n");
 DATA(insert OID = 1740 ( numeric				PGUID 11 f t t 1 f 1700 "23" 100 0 0 100  int4_numeric - ));
 DESCR("(internal)");
-DATA(insert OID = 1741 ( log					PGUID 14 f t t 1 f 1700 "1700" 100 0 0 100  "select(10, $1)" - ));
-DESCR("logarithm base m of n");
+DATA(insert OID = 1741 ( log					PGUID 14 f t t 1 f 1700 "1700" 100 0 0 100  "select log(10, $1)" - ));
+DESCR("logarithm base 10 of n");
 DATA(insert OID = 1742 ( numeric				PGUID 11 f t t 1 f 1700 "700" 100 0 0 100  float4_numeric - ));
 DESCR("(internal)");
 DATA(insert OID = 1743 ( numeric				PGUID 11 f t t 1 f 1700 "701" 100 0 0 100  float8_numeric - ));
