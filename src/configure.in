@@ -526,7 +526,26 @@ using namespace std;
 #include <string>
 ], [],
     [AC_DEFINE(HAVE_CXX_STRING_HEADER) AC_MSG_RESULT(yes)],
-    [AC_MSG_RESULT(no)])
+    [AC_MSG_RESULT(no)
+
+    dnl If we found a <string> header then it's probably safe to assume
+    dnl class string exists.  But if not, check to make sure that <string.h>
+    dnl defines class string; libpq++ can't build without class string.
+    AC_MSG_CHECKING([for class string in C++])
+    AC_TRY_COMPILE([#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+], [string foo = "test"],
+    [AC_MSG_RESULT(yes)],
+    [AC_MSG_RESULT(no)
+     AC_MSG_WARN([
+***
+Disabling build of libpq++ because we cannot find class string in the
+system's C++ header files.
+***])
+     HAVECXX='false'
+])
+])
 
 fi
 
