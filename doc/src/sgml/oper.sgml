@@ -32,6 +32,25 @@ oprleft|oprright|oprresult|oprcode
 </ProgramListing>
 </Para>
 
+<Para>
+Users may invoke operators using the operator name, as in:
+
+<ProgramListing>
+select * from emp where salary < 40000;
+</ProgramListing>
+
+Alternatively, users may call the functions that implement the
+operators directly.  In this case, the query above would be expressed
+as:
+<ProgramListing>
+select * from emp where int4lt(salary, 40000);
+</ProgramListing>
+
+<Para>
+<Application>psql</Application>
+has a command (<Command>\dd</Command>) to show these operators.
+
+
 <sect1>
 <title>Lexical Precedence</title>
 
@@ -633,23 +652,149 @@ are several operators for this type.
 </TABLE>
 </Para>
 
+<Sect1>
+<title id="cidr-opers">IP V4 Operators</title>
 
 <Para>
-Users may invoke operators using the operator name, as in:
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName>IP V4 Operators</TITLE>
+<TITLEABBREV>Operators</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Operator</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY> &lt; </ENTRY>
+    <ENTRY>Less than</ENTRY>
+    <ENTRY>'192.168.1.5'::cidr &lt; '192.168.1.6'::cidr</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;= </ENTRY>
+    <ENTRY>Less than or equal</ENTRY>
+    <ENTRY>'192.168.1.5'::cidr &lt;= '192.168.1.5'::cidr</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> = </ENTRY>
+    <ENTRY>Equals</ENTRY>
+    <ENTRY>'192.168.1.5'::cidr = '192.168.1.5'::cidr</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> %gt;= </ENTRY>
+    <ENTRY>Greater or equal</ENTRY>
+    <ENTRY>'192.168.1.5'::cidr &gt;= '192.168.1.5'::cidr</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> %gt; </ENTRY>
+    <ENTRY>Greater</ENTRY>
+    <ENTRY>'192.168.1.5'::cidr %gt; '192.168.1.4'::cidr</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&gt; </ENTRY>
+    <ENTRY>Not equal</ENTRY>
+    <ENTRY>'192.168.1.5'::cidr &lt;&gt; '192.168.1.4'::cidr</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&lt; </ENTRY>
+    <ENTRY>is contained within</ENTRY>
+    <ENTRY>'192.168.1.5'::cidr &lt;&lt; '192.168.1/24'::cidr</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&lt;= </ENTRY>
+    <ENTRY>is contained within or equals</ENTRY>
+    <ENTRY>'192.168.1/24'::cidr &lt;&lt;= '192.168.1/24'::cidr</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt;&gt; </ENTRY>
+    <ENTRY>contains</ENTRY>
+    <ENTRY>'192.168.1/24'::cidr &gt;&gt; '192.168.1.5'::cidr</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt;&gt;= </ENTRY>
+    <ENTRY>contains or equals</ENTRY>
+    <ENTRY>'192.168.1/24'::cidr &gt;&gt;= '192.168.1/24'::cidr</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+</Sect1>
 
-<ProgramListing>
-select * from emp where salary < 40000;
-</ProgramListing>
-
-Alternatively, users may call the functions that implement the
-operators directly.  In this case, the query above would be expressed
-as:
-<ProgramListing>
-select * from emp where int4lt(salary, 40000);
-</ProgramListing>
+<Sect1>
+<title id="inet-opers">IP V4 Operators</title>
 
 <Para>
-<Application>psql</Application>
-has a command (<Command>\dd</Command>) to show these operators.
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName>IP V4 Operators</TITLE>
+<TITLEABBREV>Operators</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Operator</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY> &lt; </ENTRY>
+    <ENTRY>Less than</ENTRY>
+    <ENTRY>'192.168.1.5'::inet &lt; '192.168.1.6'::inet</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;= </ENTRY>
+    <ENTRY>Less than or equal</ENTRY>
+    <ENTRY>'192.168.1.5'::inet &lt;= '192.168.1.5'::inet</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> = </ENTRY>
+    <ENTRY>Equals</ENTRY>
+    <ENTRY>'192.168.1.5'::inet = '192.168.1.5'::inet</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> %gt;= </ENTRY>
+    <ENTRY>Greater or equal</ENTRY>
+    <ENTRY>'192.168.1.5'::inet &gt;= '192.168.1.5'::inet</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> %gt; </ENTRY>
+    <ENTRY>Greater</ENTRY>
+    <ENTRY>'192.168.1.5'::inet %gt; '192.168.1.4'::inet</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&gt; </ENTRY>
+    <ENTRY>Not equal</ENTRY>
+    <ENTRY>'192.168.1.5'::inet &lt;&gt; '192.168.1.4'::inet</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&lt; </ENTRY>
+    <ENTRY>is contained within</ENTRY>
+    <ENTRY>'192.168.1.5'::inet &lt;&lt; '192.168.1/24'::inet</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&lt;= </ENTRY>
+    <ENTRY>is contained within or equals</ENTRY>
+    <ENTRY>'192.168.1/24'::inet &lt;&lt;= '192.168.1/24'::inet</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt;&gt; </ENTRY>
+    <ENTRY>contains</ENTRY>
+    <ENTRY>'192.168.1/24'::inet &gt;&gt; '192.168.1.5'::inet</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt;&gt;= </ENTRY>
+    <ENTRY>contains or equals</ENTRY>
+    <ENTRY>'192.168.1/24'::inet &gt;&gt;= '192.168.1/24'::inet</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+</Sect1>
+
 </Chapter>
 

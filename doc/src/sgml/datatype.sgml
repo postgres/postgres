@@ -59,6 +59,11 @@ several possibilities for formats, such as date and time types.
     <ENTRY>fixed-length character string</ENTRY>
   </ROW>
   <ROW>
+    <ENTRY>cidr</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>IP version 4 network or host address</ENTRY>
+  </ROW>
+  <ROW>
     <ENTRY>circle</ENTRY>
     <ENTRY></ENTRY>
     <ENTRY>circle in 2D plane</ENTRY>
@@ -77,6 +82,11 @@ several possibilities for formats, such as date and time types.
     <ENTRY>float8</ENTRY>
     <ENTRY>real, double precision</ENTRY>
     <ENTRY>double-precision floating-point number</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>inet</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>IP version 4 network or host address</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>int2</ENTRY>
@@ -162,6 +172,14 @@ several possibilities for formats, such as date and time types.
 </TGROUP>
 </TABLE>
 </Para>
+
+<para>
+<note>
+<para>
+The <type>cidr</type> and <type>inet</type> types are designed to handle any IP type 
+but only ipv4 is handled in the current implementation.  
+Everything here that talks about ipv4 will apply to ipv6 in a future release.
+</note>
 
 <Para>
 <TABLE TOCENTRY="1">
@@ -500,17 +518,21 @@ This is set at compile time and may change in a future release.
 
 <Para>
 There are two fundamental kinds of date and time measurements:
- clock time and time interval.
-Both quantities have continuity and smoothness, as does time itself.
+ absolute clock times and relative time intervals.
+Both quantities should demonstrate continuity and smoothness, as does time itself.
 <ProductName>Postgres</ProductName> supplies two primary user-oriented 
 date and time types,
-<Type>datetime</Type> and timespan, as well as 
-the related <acronym>SQL92</acronym> types date and time.
+<Type>datetime</Type> and <Type>timespan</Type>, as well as 
+the related <acronym>SQL92</acronym> types <Type>timestamp</Type>,
+<Type>interval</Type>,
+<Type>date</Type> and <Type>time</Type>.
 </Para>
 
 <Para>
-Other date and time types are available
-also, mostly
+In a future release, <Type>datetime</Type> and <Type>timespan</Type> are likely
+to merge with the <acronym>SQL92</acronym> types <Type>timestamp</Type>,
+<Type>interval</Type>.
+Other date and time types are also available, mostly
 for historical reasons.
 </Para>
 
@@ -579,6 +601,9 @@ for historical reasons.
 </TBODY>
 </TGROUP>
 </TABLE>
+
+<type>timestamp</type> is currently implemented separately from
+<type>datetime</type>, although they share input and output routines.
 </Para>
 
 <Para>
@@ -652,13 +677,26 @@ for historical reasons.
 <ProductName>Postgres</ProductName> endevours to be compatible with
 <Acronym>SQL92</Acronym> definitions for typical usage.
 The <Acronym>SQL92</Acronym> standard has an odd mix of date and
-time types and capabilities. For example, although the date type 
+time types and capabilities. Two obvious problems are:
+
+<itemizedlist>
+<listitem>
+<para>
+Although the <type>date</type> type 
 does not have an associated time zone, the
-time type can. The default time zone is specified as a constant offset 
-from GMT/UTC;
- however, time zones in the real world can have no meaning unless 
-associated with a date as well
-as a time since the offset will vary through the year.
+<type>time</type> type can or does.
+
+<listitem>
+<para>
+The default time zone is specified as a constant integer offset 
+from GMT/UTC.
+
+</itemizedlist>
+
+However, time zones in the real world can have no meaning unless 
+associated with a date as well as a time
+since the offset may vary through the year with daylight savings
+time boundaries.
 
 <Para>
 To address these difficulties, <ProductName>Postgres</ProductName> 
@@ -1412,3 +1450,127 @@ Circles are output using the first syntax.
 
 </Sect1>
 
+<Sect1>
+<Title>IP Version 4 Networks and Host Addresses</Title>
+
+<Para>
+The <Type>cidr</Type> type stores networks specified 
+in <acronym>CIDR</acronym> notation.
+The <Type>inet</Type> type stores hosts and networks in CIDR notation.
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName>IP Version 4 Type</TITLE>
+<TITLEABBREV>IPV4</TITLEABBREV>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>IPV4 Type</ENTRY>
+    <ENTRY>Storage</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Range</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>cidr</ENTRY>
+    <ENTRY>variable</ENTRY>
+    <ENTRY>CIDR networks</ENTRY>
+    <ENTRY>Valid IPV4 CIDR blocks</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>inet</ENTRY>
+    <ENTRY>variable</ENTRY>
+    <ENTRY>nets and hosts</ENTRY>
+    <ENTRY>Valid IPV4 CIDR blocks</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Sect2>
+<Title><type>inet</type> for IP Networks</Title>
+
+<Para>
+The cidr type holds a CIDR network.
+The format for specifying networks is "x.x.x.x/y" where "x.x.x.x" is the
+network and "/y" is the number of bits in the netmask.
+If the "/y" part is left off, it is calculated using assumptions from
+the old class system except that it is extended to include at least
+all of the octets in the input.
+Here are some examples.
+
+<!-- There's a lot of examples here.
+  -- Take some out if you think there are too many...
+  -->
+
+<Para> 
+<TABLE TOCENTRY="1">
+<TGROUP COLS="4">
+<THEAD> 
+  <ROW> 
+    <ENTRY>Input</ENTRY>
+	<ENTRY>Output</ENTRY>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>select '192.168.1'::cidr</ENTRY>
+    <ENTRY>192.168.1/24</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>select '192.168'::cidr</ENTRY>
+    <ENTRY>192.168.0/24</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>select '128.1'::cidr</ENTRY>
+    <ENTRY>128.1/16</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>select '128':::cidr</ENTRY>
+    <ENTRY>128.0/16</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>select '128.1.2'::cidr</ENTRY>
+    <ENTRY>128.1.2/24</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>select '10.1.2'::cidr</ENTRY>
+    <ENTRY>10.1.2/24</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>select '10.1'::cidr</ENTRY>
+    <ENTRY>10.1/16</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>select '10'::cidr</ENTRY>
+    <ENTRY>10/8</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Sect2>
+<Title><type>inet</type> for IP Networks</Title>
+
+<Para>
+The inet type is designed to hold, in one field, all of the information
+about a host including the CIDR style subnet that it is in.
+Note that if you want to store proper CIDR networks, see the cidr type.
+The inet type is similar to the cidr type except that the bits in the
+host part can be non-zero.
+Functions exist to extract the various elements of the field.
+</Para>
+
+<Para>  
+The input format for this function is "x.x.x.x/y" where "x.x.x.x" is
+an internet host and y is the number of bits in the netmask.
+If the "/y" part is left off, it is treated as "/32."
+On output, the "/y" part is not printed if it is /32.
+This allows the type to be used as a straight host type by just leaving of
+the bits part.
+</Sect1>
+
+</chapter>

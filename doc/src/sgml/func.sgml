@@ -624,5 +624,64 @@ support functions.
 </TABLE>
 </Para>
 
+<sect1>
+<title id="cidr-funcs">IP V4 Functions</title>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName>IP V4 Functions</TITLE>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>Function</ENTRY>
+    <ENTRY>Returns</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Example</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+<ENTRY> broadcast(cidr) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> construct broadcast address as text </ENTRY>
+<ENTRY> broadcast('192.168.1.5/24') ==> '192.168.1.255' </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> broadcast(inet) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> construct broadcast address as text </ENTRY>
+<ENTRY> broadcast('192.168.1.5/24') ==> '192.168.1.255' </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> host(inet) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> extract host address as text </ENTRY>
+<ENTRY> host('192.168.1.5/24') ==> '192.168.1.5' </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> masklen(cidr) </ENTRY>
+<ENTRY> int4 </ENTRY>
+<ENTRY> calculate netmask length </ENTRY>
+<ENTRY> masklen('192.168.1.5/24') ==> 24</ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> masklen(inet) </ENTRY>
+<ENTRY> int4 </ENTRY>
+<ENTRY> calculate netmask length </ENTRY>
+<ENTRY> masklen('192.168.1.5/24') ==> 24 </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> netmask(inet) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> construct netmask as text </ENTRY>
+<ENTRY> netmask('192.168.1.5/24') ==> '255.255.255.0' </ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+</Sect1>
+
 </chapter>
 
