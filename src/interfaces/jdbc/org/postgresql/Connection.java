@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /*
- * $Id: Connection.java,v 1.40 2001/12/11 04:44:23 barry Exp $
+ * $Id: Connection.java,v 1.41 2002/02/26 02:15:54 davec Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -90,6 +90,40 @@ public abstract class Connection
 	 */
 	public Connection()
 	{}
+
+   	public void cancelQuery() throws SQLException 
+	{
+      		PG_Stream cancelStream = null;
+      		try {
+         		cancelStream = new PG_Stream(PG_HOST, PG_PORT);
+      		} catch (ConnectException cex) {
+         		// Added by Peter Mount <peter@retep.org.uk>
+         		// ConnectException is thrown when the connection cannot be made.
+         		// we trap this an return a more meaningful message for the end user
+        	 	throw new PSQLException ("postgresql.con.refused");
+      		} catch (IOException e) {
+         		throw new PSQLException ("postgresql.con.failed",e);
+      		}
+      
+      		// Now we need to construct and send a cancel packet
+      		try {
+         		cancelStream.SendInteger(16, 4);
+         		cancelStream.SendInteger(80877102, 4);
+         		cancelStream.SendInteger(pid, 4);
+         		cancelStream.SendInteger(ckey, 4);
+         		cancelStream.flush();
+      		}
+      		catch(IOException e) {
+         		throw new PSQLException("postgresql.con.failed",e);
+      		}
+      		finally {
+         		try {
+            			if(cancelStream != null)
+               				cancelStream.close();
+         		}
+         		catch(IOException e) {} // Ignore
+      		}
+   	}
 
 	/*
 	 * This method actually opens the connection. It is called by Driver.
@@ -266,8 +300,8 @@ public abstract class Connection
 		switch (beresp)
 		{
 			case 'K':
-				pid = pg_stream.ReceiveInteger(4);
-				ckey = pg_stream.ReceiveInteger(4);
+				pid = pg_stream.ReceiveIntegerR(4);
+				ckey = pg_stream.ReceiveIntegerR(4);
 				break;
 			case 'E':
 			case 'N':
@@ -281,6 +315,16 @@ public abstract class Connection
 		switch (beresp)
 		{
 			case 'Z':
+
+                              try
+                                 {
+                                    pg_stream.SendChar('Q');
+                                    pg_stream.SendChar(' ');
+                                    pg_stream.SendChar(0);
+                                    pg_stream.flush();
+                                 } catch (IOException e) {
+                                    throw new PSQLException("postgresql.con.ioerror",e);
+                                 }
 				break;
 			case 'E':
 			case 'N':
@@ -448,6 +492,7 @@ public abstract class Connection
 	 * @return the user name
 	 * @exception SQLException just in case...
 	 */
+            int lastMessage = 0;
 	public String getUserName() throws SQLException
 	{
 		return PG_USER;

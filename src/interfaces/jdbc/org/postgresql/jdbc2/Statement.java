@@ -211,6 +211,11 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 		return result;
 	}
 
+	public void Cancel() throws SQLException
+	{
+		connection.cancelQuery();
+	}
+
 	public java.sql.Connection getConnection() throws SQLException
 	{
 		return (java.sql.Connection)connection;

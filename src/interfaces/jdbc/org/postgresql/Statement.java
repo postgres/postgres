@@ -179,7 +179,7 @@ public abstract class Statement
 	 */
 	public void cancel() throws SQLException
 	{
-		// FIXME: Cancel feature has been available since 6.4. Implement it here!
+		throw new PSQLException("postgresql.unimplemented"); 
 	}
 
 	/*
