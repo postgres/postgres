@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.73 1999/07/07 17:17:47 momjian Exp $
+ *	$Id: pqcomm.c,v 1.73.2.1 1999/09/08 23:00:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,6 +339,10 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
  *		the Postmaster uses select() to tell when the server master
  *		socket is ready for accept().
  *
+ * NB: this can NOT call elog() because it is invoked in the postmaster,
+ * not in standard backend context.  If we get an error, the best we can do
+ * is log it to stderr.
+ *
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 int
@@ -352,7 +356,7 @@ StreamConnection(int server_fd, Port *port)
 							 (struct sockaddr *) & port->raddr,
 							 &addrlen)) < 0)
 	{
-		elog(ERROR, "postmaster: StreamConnection: accept: %m");
+		perror("postmaster: StreamConnection: accept");
 		return STATUS_ERROR;
 	}
 
@@ -361,7 +365,7 @@ StreamConnection(int server_fd, Port *port)
 	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
 					&addrlen) < 0)
 	{
-		elog(ERROR, "postmaster: StreamConnection: getsockname: %m");
+		perror("postmaster: StreamConnection: getsockname");
 		return STATUS_ERROR;
 	}
 
@@ -374,13 +378,13 @@ StreamConnection(int server_fd, Port *port)
 		pe = getprotobyname("TCP");
 		if (pe == NULL)
 		{
-			elog(ERROR, "postmaster: getprotobyname failed");
+			perror("postmaster: StreamConnection: getprotobyname");
 			return STATUS_ERROR;
 		}
 		if (setsockopt(port->sock, pe->p_proto, TCP_NODELAY,
 					   &on, sizeof(on)) < 0)
 		{
-			elog(ERROR, "postmaster: setsockopt failed: %m");
+			perror("postmaster: StreamConnection: setsockopt");
 			return STATUS_ERROR;
 		}
 	}
