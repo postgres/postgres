@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.56 2002/06/20 16:00:44 momjian Exp $
+ * $Id: DatabaseMetaData.java,v 1.57 2002/06/25 16:30:49 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -2500,7 +2500,7 @@ WHERE
 		f[13] = new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
 
 		java.sql.ResultSet rs = connection.ExecSQL(
-                "SELECT "
+                "SELECT distinct "
                   + "c.relname as prelname, "
                   + "c2.relname as frelname, "
                   + "t.tgconstrname, "
@@ -2676,8 +2676,8 @@ WHERE
       tuple[7] = fkeyColumns.toString().getBytes(); //FKCOLUMN_NAME
 
       tuple[8] =  rs.getBytes(4); //KEY_SEQ
-      tuple[11] = rs.getBytes(5); //FK_NAME
-      tuple[12] = rs.getBytes(3); //PK_NAME
+      tuple[11] = rs.getBytes(3); //FK_NAME
+      tuple[12] = rs.getBytes(5); //PK_NAME
 
       // DEFERRABILITY
       int deferrability = importedKeyNotDeferrable;
