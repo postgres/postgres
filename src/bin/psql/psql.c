@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.15 1996/07/31 02:11:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.15.2.1 1996/08/27 17:33:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ slashUsage(PsqlSettings *ps)
   fprintf(stderr,"\t \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption? ps->opt.caption: "");
   fprintf(stderr,"\t \\c <dbname>  -- connect to new database (currently '%s')\n", PQdb(ps->db));
   fprintf(stderr,"\t \\d [<table>] -- list tables in database or columns in <table>,* for all\n");
-  fprintf(stderr,"\t \\e [<fname>] -- edit the current query buffer or <fname>, \E execute too\n");
+  fprintf(stderr,"\t \\e [<fname>] -- edit the current query buffer or <fname>,\\E execute too\n");
   fprintf(stderr,"\t \\f [<sep>]   -- change field separater (currently '%s')\n", ps->opt.fieldSep);
   fprintf(stderr,"\t \\g [<fname>] -- send query to backend [and place results in <fname>]\n");
   fprintf(stderr,"\t \\g |<cmd>    -- send query to backend and pipe results into <cmd>\n");
@@ -988,6 +988,10 @@ MainLoop(PsqlSettings *settings, FILE *source)
   bool querySent = 0;
   bool interactive;
   READ_ROUTINE GetNextLine;
+  bool connected = 1;  
+    /* We are connected to the backend (last time we looked) */
+  bool eof = 0;
+    /* We've reached the end of our command input. */
 
   interactive = ((source == stdin) && !settings->notty);
 #define PROMPT "=> "
@@ -1012,9 +1016,13 @@ MainLoop(PsqlSettings *settings, FILE *source)
   query[0] = '\0';
   
   /* main loop for getting queries and executing them */
-  while ((line = GetNextLine(settings->prompt, source)) != NULL)
-    {
-	exitStatus = 0;
+  while (connected && !eof) {
+    line = GetNextLine(settings->prompt, source);
+    if (line == NULL) {   /* No more input.  Time to quit */
+      printf("EOF\n");  /* Goes on prompt line */
+      eof = 1;
+    } else {
+      exitStatus = 0;
       line = rightTrim(line); /* remove whitespaces on the right, incl. \n's */
 
       if (line[0] == '\0') {
@@ -1064,10 +1072,14 @@ MainLoop(PsqlSettings *settings, FILE *source)
 	  slashCmdStatus = HandleSlashCmds(settings,
 					   line, 
 					   query);
-	if (slashCmdStatus == 1)
+	if (slashCmdStatus == 1) {
+	  free(line);
 	  continue;
-	if (slashCmdStatus == 2)
+	}
+	if (slashCmdStatus == 2) {
+	  free(line);
 	  break;
+	}
 	if (slashCmdStatus == 0)
 	  sendQuery = 1;
       }
@@ -1095,11 +1107,16 @@ MainLoop(PsqlSettings *settings, FILE *source)
 
 	  exitStatus = SendQuery(settings, query);
           querySent = 1;
+          if (PQstatus(settings->db) == CONNECTION_BAD) {
+            connected = 0;
+            fprintf(stderr, "We have lost the connection to the backend, so "
+                    "further processing is impossible.  Terminating.\n");
+          }
 	}
-      
-       free(line); /* free storage malloc'd by GetNextLine */
-    } /* while */
-    return exitStatus;
+      free(line); /* free storage malloc'd by GetNextLine */
+    }      
+  } /* while */
+  return exitStatus;
 } 
 
 int
@@ -1196,7 +1213,7 @@ main(int argc, char **argv)
       settings.opt.tableOpt = optarg;
       break;
     case 'x':
-      settings.opt.expanded = 0;
+      settings.opt.expanded = 1;
       break;
     default:
       usage(argv[0]);
@@ -1274,7 +1291,9 @@ handleCopyOut(PGresult *res, bool quiet)
     while (!copydone) {
 	ret = PQgetline(res->conn, copybuf, COPYBUFSIZ);
 	
-	if (copybuf[0] == '.' && copybuf[1] =='\0') {
+	if (copybuf[0] == '\\' &&
+	    copybuf[1] == '.' &&
+	    copybuf[2] =='\0') {
 	    copydone = true;	/* don't print this... */
 	} else {
 	    fputs(copybuf, stdout);
@@ -1308,7 +1327,7 @@ handleCopyIn(PGresult *res, bool quiet)
     
     if (!quiet) {
 	fputs("Enter info followed by a newline\n", stdout);
-	fputs("End with a dot on a line by itself.\n", stdout);
+	fputs("End with a backslash and a period on a line by itself.\n", stdout);
     }
     
     /*
@@ -1337,14 +1356,14 @@ handleCopyIn(PGresult *res, bool quiet)
 	    }
 	    if (c == EOF) {
 		/* reading from stdin, but from a file */
-		PQputline(res->conn, ".");
+		PQputline(res->conn, "\\.");
 		copydone = true;
 		break;
 	    }
 	    *s = '\0';
 	    PQputline(res->conn, copybuf);
 	    if (firstload) {
-		if (!strcmp(copybuf, ".")) {
+		if (!strcmp(copybuf, "\\.")) {
 		    copydone = true;
 		}
 		firstload = false;
