@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.53 2000/01/19 02:59:03 petere Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.54 2000/04/14 00:42:06 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ CFLAGS+= $(KRBFLAGS)
 endif
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
-      pqexpbuffer.o dllist.o pqsignal.o @SNPRINTF@
+      pqexpbuffer.o dllist.o pqsignal.o @SNPRINTF@ @INET_ATON@
 
 ifdef MULTIBYTE
 OBJS+= common.o wchar.o conv.o big5.o
@@ -49,6 +49,10 @@ dllist.c:	$(SRCDIR)/backend/lib/dllist.c
 # this only gets done if configure finds system doesn't have snprintf()
 snprintf.c:	$(SRCDIR)/backend/port/snprintf.c
 	-$(LN_S) $(SRCDIR)/backend/port/snprintf.c .
+
+# this only gets done if configure finds system doesn't have inet_aton()
+inet_aton.c:	$(SRCDIR)/backend/port/inet_aton.c
+	-$(LN_S) $(SRCDIR)/backend/port/inet_aton.c .
 
 ifdef MULTIBYTE
 common.c: $(SRCDIR)/backend/utils/mb/common.c
@@ -89,7 +93,7 @@ install-headers: libpq-fe.h libpq-int.h
 
 clean: clean-shlib
 	rm -f lib$(NAME).a $(OBJS)
-	rm -f dllist.c snprintf.c common.c wchar.c conv.c big5.c
+	rm -f dllist.c snprintf.c inet_aton.c common.c wchar.c conv.c big5.c
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
