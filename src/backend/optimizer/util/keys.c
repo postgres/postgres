@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.11 1999/02/09 03:51:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.12 1999/02/09 06:30:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,25 +108,35 @@ extract_subkey(JoinKey *jk, int which_subkey)
 /*
  * samekeys--
  *	  Returns t iff two sets of path keys are equivalent.  They are
- *	  equivalent if the first subkey (var node) within each sublist of
- *	  list 'keys1' is contained within the corresponding sublist of 'keys2'.
+ *	  equivalent if the first Var nodes match the second Var nodes.
  *
  *	  XXX		It isn't necessary to check that each sublist exactly contain
  *				the same elements because if the routine that built these
  *				sublists together is correct, having one element in common
  *				implies having all elements in common.
+ *		Huh? bjm
  *
  */
 bool
 samekeys(List *keys1, List *keys2)
 {
 	List	   *key1,
-			   *key2;
+			   *key2,
+			   *key1a,
+			   *key2a;
 
-	for (key1 = keys1, key2 = keys2; key1 != NIL && key2 != NIL;
+	for (key1 = keys1, key2 = keys2;
+		 key1 != NIL && key2 != NIL;
 		 key1 = lnext(key1), key2 = lnext(key2))
-		if (!member(lfirst((List *)lfirst(key1)), lfirst(key2)))
+	{
+		for (key1a = lfirst(key1), key2a = lfirst(key2);
+			 key1a != NIL && key2a != NIL;
+			 key1a = lnext(key1a), key2a = lnext(key2a))
+			if (!equal(lfirst(key1a), lfirst(key2a)))
+				return false;
+		if (key1a != NIL)
 			return false;
+	}
 
 	/* Now the result should be true if list keys2 has at least as many
 	 * entries as keys1, ie, we did not fall off the end of keys2 first.
