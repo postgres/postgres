@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.42 1997/02/19 01:31:19 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.43 1997/03/02 02:17:32 momjian Exp $
  *
  * NOTES
  *
@@ -378,6 +378,7 @@ PostmasterMain(int argc, char *argv[])
     pqsignal(SIGHUP, pmdie);
     pqsignal(SIGTERM, pmdie);
     pqsignal(SIGCONT, dumpstatus);
+    pqsignal(SIGPIPE, SIG_IGN);
 
     status = ServerLoop();
     
