@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.160 2002/12/04 21:43:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.161 2002/12/06 05:17:03 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -841,7 +841,9 @@ env PGOPTIONS='-c geqo=off' psql
        <para>
         Sets the query optimizer's estimate of the cost of a
         nonsequentially fetched disk page. This is measured as a
-        multiple of the cost of a sequential page fetch.
+        multiple of the cost of a sequential page fetch. A higher
+        value makes it more likely a sequential scan will be used,
+        a lower value makes it more likely an index scan will be used.
        </para>
       </listitem>
      </varlistentry>
