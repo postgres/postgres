@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.26 1998/09/02 23:05:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.27 1998/09/07 05:35:30 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -384,9 +384,7 @@ GetIndexValue(HeapTuple tuple,
 		*attNull = FALSE;
 	}
 	else
-	{
-		returnVal = heap_getattr(tuple, attrNums[attOff],
-								 hTupDesc, attNull);
-	}
+		returnVal = heap_getattr(tuple, attrNums[attOff], hTupDesc, attNull);
+
 	return returnVal;
 }

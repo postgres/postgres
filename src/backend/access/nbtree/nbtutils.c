@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.22 1998/09/01 03:21:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.23 1998/09/07 05:35:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,8 +297,7 @@ _bt_formitem(IndexTuple itup)
 
 	/* make a copy of the index tuple with room for the sequence number */
 	tuplen = IndexTupleSize(itup);
-	nbytes_btitem = tuplen +
-		(sizeof(BTItemData) - sizeof(IndexTupleData));
+	nbytes_btitem = tuplen + (sizeof(BTItemData) - sizeof(IndexTupleData));
 
 	btitem = (BTItem) palloc(nbytes_btitem);
 	memmove((char *) &(btitem->bti_itup), (char *) itup, tuplen);

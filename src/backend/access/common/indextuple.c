@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.31 1998/09/01 03:20:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.32 1998/09/07 05:35:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,30 +300,7 @@ nocache_index_getattr(IndexTuple tup,
 			 * word!
 			 */
 
-			switch (att[j]->attlen)
-			{
-				case -1:
-					off = (att[j]->attalign == 'd') ?
-						DOUBLEALIGN(off) : INTALIGN(off);
-					break;
-				case sizeof(char):
-					break;
-				case sizeof(short):
-					off = SHORTALIGN(off);
-					break;
-				case sizeof(int32):
-					off = INTALIGN(off);
-					break;
-				default:
-					if (att[j]->attlen > sizeof(int32))
-						off = (att[j]->attalign == 'd') ?
-							DOUBLEALIGN(off) : LONGALIGN(off);
-					else
-						elog(ERROR, "nocache_index_getattr: attribute %d has len %d",
-							 j, att[j]->attlen);
-					break;
-
-			}
+			off = att_align(off, att[j]->attlen, att[j]->attalign);
 
 			att[j]->attcacheoff = off;
 
@@ -365,31 +342,8 @@ nocache_index_getattr(IndexTuple tup,
 				off = att[i]->attcacheoff;
 			else
 			{
-				switch (att[i]->attlen)
-				{
-					case -1:
-						off = (att[i]->attalign == 'd') ?
-							DOUBLEALIGN(off) : INTALIGN(off);
-						break;
-					case sizeof(char):
-						break;
-					case sizeof(short):
-						off = SHORTALIGN(off);
-						break;
-					case sizeof(int32):
-						off = INTALIGN(off);
-						break;
-					default:
-						if (att[i]->attlen < sizeof(int32))
-							elog(ERROR,
-							 "nocachegetiattr2: attribute %d has len %d",
-								 i, att[i]->attlen);
-						if (att[i]->attalign == 'd')
-							off = DOUBLEALIGN(off);
-						else
-							off = LONGALIGN(off);
-						break;
-				}
+				off = att_align(off, att[i]->attlen, att[i]->attalign);
+
 				if (usecache)
 					att[i]->attcacheoff = off;
 			}
@@ -418,30 +372,7 @@ nocache_index_getattr(IndexTuple tup,
 			}
 		}
 
-		switch (att[attnum]->attlen)
-		{
-			case -1:
-				off = (att[attnum]->attalign == 'd') ?
-					DOUBLEALIGN(off) : INTALIGN(off);
-				break;
-			case sizeof(char):
-				break;
-			case sizeof(short):
-				off = SHORTALIGN(off);
-				break;
-			case sizeof(int32):
-				off = INTALIGN(off);
-				break;
-			default:
-				if (att[attnum]->attlen < sizeof(int32))
-					elog(ERROR, "nocache_index_getattr: attribute %d has len %d",
-						 attnum, att[attnum]->attlen);
-				if (att[attnum]->attalign == 'd')
-					off = DOUBLEALIGN(off);
-				else
-					off = LONGALIGN(off);
-				break;
-		}
+		off = att_align(off, att[attnum]->attlen, att[attnum]->attalign);
 
 		return (Datum) fetchatt(&att[attnum], tp + off);
 	}

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.59 1998/09/01 04:27:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.60 1998/09/07 05:35:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -661,38 +661,9 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					}
 					else if (nulls[i] != 'n')
 					{
-						switch (attr[i]->attlen)
-						{
-							case -1:
-								if (attr[i]->attalign == 'd')
-									ptr = (char *) DOUBLEALIGN(ptr);
-								else
-									ptr = (char *) INTALIGN(ptr);
-								values[i] = (Datum) ptr;
-								ptr += *(uint32 *) ptr;
-								break;
-							case sizeof(char):
-								values[i] = (Datum) ptr;
-								ptr += attr[i]->attlen;
-								break;
-							case sizeof(short):
-								ptr = (char *) SHORTALIGN(ptr);
-								values[i] = (Datum) ptr;
-								ptr += attr[i]->attlen;
-								break;
-							case sizeof(int32):
-								ptr = (char *) INTALIGN(ptr);
-								values[i] = (Datum) ptr;
-								ptr += attr[i]->attlen;
-								break;
-							default:
-								if (attr[i]->attalign == 'd')
-									ptr = (char *) DOUBLEALIGN(ptr);
-								else
-									ptr = (char *) LONGALIGN(ptr);
-								values[i] = (Datum) ptr;
-								ptr += attr[i]->attlen;
-						}
+						ptr = att_align(ptr, attr[i]->attlen, attr[i]->attalign);
+						values[i] = (Datum) ptr;
+						ptr = att_addlength(ptr, attr[i]->attlen, ptr);
 					}
 				}
 			}

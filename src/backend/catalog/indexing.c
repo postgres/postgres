@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.30 1998/09/02 23:05:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.31 1998/09/07 05:35:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,25 +129,29 @@ CatalogIndexInsert(Relation *idescs,
 		Assert(index_tup);
 		index_form = (Form_pg_index) GETSTRUCT(index_tup);
 
-		/*
-		 * Compute the number of attributes we are indexing upon.
-		 */
-		for (attnumP = index_form->indkey, natts = 0;
-			 *attnumP != InvalidAttrNumber;
-			 attnumP++, natts++)
-			;
-
 		if (index_form->indproc != InvalidOid)
 		{
-			FIgetnArgs(&finfo) = natts;
+			int fatts;
+
+			/*
+			 * Compute the number of attributes we are indexing upon.
+			 */
+			for (attnumP = index_form->indkey, fatts = 0;
+				 *attnumP != InvalidAttrNumber && fatts < INDEX_MAX_KEYS;
+				 attnumP++, fatts++)
+				;
+			FIgetnArgs(&finfo) = fatts;
 			natts = 1;
 			FIgetProcOid(&finfo) = index_form->indproc;
 			*(FIgetname(&finfo)) = '\0';
 			finfoP = &finfo;
 		}
 		else
+		{
+			natts = RelationGetDescr(idescs[i])->natts;
 			finfoP = (FuncIndexInfo *) NULL;
-
+		}
+		
 		FormIndexDatum(natts,
 					   (AttrNumber *) index_form->indkey,
 					   heapTuple,
@@ -160,6 +164,7 @@ CatalogIndexInsert(Relation *idescs,
 								&heapTuple->t_ctid, heapRelation);
 		if (indexRes)
 			pfree(indexRes);
+
 		pfree(index_tup);
 	}
 }

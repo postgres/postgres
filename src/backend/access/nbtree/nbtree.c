@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.32 1998/09/01 04:27:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.33 1998/09/07 05:35:33 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -367,7 +367,7 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	btitem = _bt_formitem(itup);
 
 	res = _bt_doinsert(rel, btitem,
-					   IndexIsUnique(RelationGetRelid(rel)), heapRel);
+							 IndexIsUnique(RelationGetRelid(rel)), heapRel);
 
 	pfree(btitem);
 	pfree(itup);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.43 1998/09/04 18:21:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.44 1998/09/07 05:35:27 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -68,44 +68,8 @@ ComputeDataSize(TupleDesc tupleDesc,
 		if (nulls[i] != ' ')
 			continue;
 
-		switch (att[i]->attlen)
-		{
-			case -1:
-
-				/*
-				 * This is the size of the disk representation and so must
-				 * include the additional sizeof long.
-				 */
-				if (att[i]->attalign == 'd')
-				{
-					data_length = DOUBLEALIGN(data_length)
-						+ VARSIZE(DatumGetPointer(value[i]));
-				}
-				else
-				{
-					data_length = INTALIGN(data_length)
-						+ VARSIZE(DatumGetPointer(value[i]));
-				}
-				break;
-			case sizeof(char):
-				data_length++;
-				break;
-			case sizeof(short):
-				data_length = SHORTALIGN(data_length + sizeof(short));
-				break;
-			case sizeof(int32):
-				data_length = INTALIGN(data_length + sizeof(int32));
-				break;
-			default:
-				if (att[i]->attlen < sizeof(int32))
-					elog(ERROR, "ComputeDataSize: attribute %d has len %d",
-						 i, att[i]->attlen);
-				if (att[i]->attalign == 'd')
-					data_length = DOUBLEALIGN(data_length) + att[i]->attlen;
-				else
-					data_length = LONGALIGN(data_length) + att[i]->attlen;
-				break;
-		}
+		data_length = att_align(data_length, att[i]->attlen, att[i]->attalign);
+		data_length = att_addlength(data_length, att[i]->attlen, value[i]);
 	}
 
 	return data_length;
@@ -160,57 +124,34 @@ DataFill(char *data,
 			*bitP |= bitmask;
 		}
 
+		data = (char *)att_align((long)data, att[i]->attlen, att[i]->attalign);
 		switch (att[i]->attlen)
 		{
 			case -1:
 				*infomask |= HEAP_HASVARLENA;
-				if (att[i]->attalign == 'd')
-					data = (char *) DOUBLEALIGN(data);
-				else
-					data = (char *) INTALIGN(data);
 				data_length = VARSIZE(DatumGetPointer(value[i]));
 				memmove(data, DatumGetPointer(value[i]), data_length);
-				data += data_length;
 				break;
 			case sizeof(char):
 				*data = att[i]->attbyval ?
 					DatumGetChar(value[i]) : *((char *) value[i]);
-				data += sizeof(char);
 				break;
 			case sizeof(int16):
-				data = (char *) SHORTALIGN(data);
 				*(short *) data = (att[i]->attbyval ?
 								   DatumGetInt16(value[i]) :
 								   *((short *) value[i]));
-				data += sizeof(short);
 				break;
 			case sizeof(int32):
-				data = (char *) INTALIGN(data);
 				*(int32 *) data = (att[i]->attbyval ?
 								   DatumGetInt32(value[i]) :
 								   *((int32 *) value[i]));
-				data += sizeof(int32);
 				break;
 			default:
-				if (att[i]->attlen < sizeof(int32))
-					elog(ERROR, "DataFill: attribute %d has len %d",
-						 i, att[i]->attlen);
-				if (att[i]->attalign == 'd')
-				{
-					data = (char *) DOUBLEALIGN(data);
-					memmove(data, DatumGetPointer(value[i]),
-							att[i]->attlen);
-					data += att[i]->attlen;
-				}
-				else
-				{
-					data = (char *) LONGALIGN(data);
-					memmove(data, DatumGetPointer(value[i]),
-							att[i]->attlen);
-					data += att[i]->attlen;
-				}
+				memmove(data, DatumGetPointer(value[i]),
+						att[i]->attlen);
 				break;
 		}
+		data = (char *)att_addlength((long)data, att[i]->attlen, value[i]);
 	}
 }
 
@@ -557,53 +498,11 @@ nocachegetattr(HeapTuple tup,
 			 * Fix me when going to a machine with more than a four-byte
 			 * word!
 			 */
-
-			switch (att[j]->attlen)
-			{
-				case -1:
-					off = (att[j]->attalign == 'd') ?
-						DOUBLEALIGN(off) : INTALIGN(off);
-					break;
-				case sizeof(char):
-					break;
-				case sizeof(short):
-					off = SHORTALIGN(off);
-					break;
-				case sizeof(int32):
-					off = INTALIGN(off);
-					break;
-				default:
-					if (att[j]->attlen > sizeof(int32))
-						off = (att[j]->attalign == 'd') ?
-							DOUBLEALIGN(off) : LONGALIGN(off);
-					else
-						elog(ERROR, "nocache_index_getattr: attribute %d has len %d",
-							 j, att[j]->attlen);
-					break;
-			}
+			off = att_align(off, att[j]->attlen, att[j]->attalign);
 
 			att[j]->attcacheoff = off;
 
-			switch (att[j]->attlen)
-			{
-				case sizeof(char):
-					off++;
-					break;
-				case sizeof(short):
-					off += sizeof(short);
-					break;
-				case sizeof(int32):
-					off += sizeof(int32);
-					break;
-				case -1:
-					Assert(!VARLENA_FIXED_SIZE(att[j]) ||
-						   att[j]->atttypmod == VARSIZE(tp + off));
-					off += VARSIZE(tp + off);
-					break;
-				default:
-					off += att[j]->attlen;
-					break;
-			}
+			off = att_addlength(off, att[j]->attlen, tp + off);
 		}
 
 		return (Datum) fetchatt(&(att[attnum]), tp + att[attnum]->attcacheoff);
@@ -640,83 +539,19 @@ nocachegetattr(HeapTuple tup,
 				off = att[i]->attcacheoff;
 			else
 			{
-				switch (att[i]->attlen)
-				{
-					case -1:
-						off = (att[i]->attalign == 'd') ?
-							DOUBLEALIGN(off) : INTALIGN(off);
-						break;
-					case sizeof(char):
-						break;
-					case sizeof(short):
-						off = SHORTALIGN(off);
-						break;
-					case sizeof(int32):
-						off = INTALIGN(off);
-						break;
-					default:
-						if (att[i]->attlen < sizeof(int32))
-							elog(ERROR,
-							  "nocachegetattr2: attribute %d has len %d",
-								 i, att[i]->attlen);
-						if (att[i]->attalign == 'd')
-							off = DOUBLEALIGN(off);
-						else
-							off = LONGALIGN(off);
-						break;
-				}
+				off = att_align(off, att[i]->attlen, att[i]->attalign);
+
 				if (usecache)
 					att[i]->attcacheoff = off;
 			}
 
-			switch (att[i]->attlen)
-			{
-				case sizeof(char):
-					off++;
-					break;
-				case sizeof(short):
-					off += sizeof(short);
-					break;
-				case sizeof(int32):
-					off += sizeof(int32);
-					break;
-				case -1:
-					Assert(!VARLENA_FIXED_SIZE(att[i]) ||
-						   att[i]->atttypmod == VARSIZE(tp + off));
-					off += VARSIZE(tp + off);
-					if (!VARLENA_FIXED_SIZE(att[i]))
-						usecache = false;
-					break;
-				default:
-					off += att[i]->attlen;
-					break;
-			}
+			off = att_addlength(off, att[i]->attlen, tp + off);
+
+			if (att[i]->attlen == -1 && !VARLENA_FIXED_SIZE(att[i]))
+				usecache = false;
 		}
 
-		switch (att[attnum]->attlen)
-		{
-			case -1:
-				off = (att[attnum]->attalign == 'd') ?
-					DOUBLEALIGN(off) : INTALIGN(off);
-				break;
-			case sizeof(char):
-				break;
-			case sizeof(short):
-				off = SHORTALIGN(off);
-				break;
-			case sizeof(int32):
-				off = INTALIGN(off);
-				break;
-			default:
-				if (att[attnum]->attlen < sizeof(int32))
-					elog(ERROR, "nocachegetattr3: attribute %d has len %d",
-						 attnum, att[attnum]->attlen);
-				if (att[attnum]->attalign == 'd')
-					off = DOUBLEALIGN(off);
-				else
-					off = LONGALIGN(off);
-				break;
-		}
+		off = att_align(off, att[attnum]->attlen, att[attnum]->attalign);
 
 		return (Datum) fetchatt(&(att[attnum]), tp + off);
 	}

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.5 1998/09/01 03:27:37 momjian Exp $
+ * $Id: tupmacs.h,v 1.6 1998/09/07 05:35:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,4 +62,53 @@
 	(char *) (T) \
 )
 
+#define att_align(cur_offset, attlen, attalign) \
+( \
+	((attlen) < sizeof(int32)) ? \
+	( \
+		((attlen) == -1) ? \
+		( \
+			((attalign) == 'd') ? 	DOUBLEALIGN(cur_offset) : \
+									INTALIGN(cur_offset) \
+		) \
+		: \
+		( \
+			((attlen) == sizeof(char)) ? \
+			( \
+				(cur_offset) \
+			) \
+			: \
+			( \
+				AssertMacro((attlen) == sizeof(short)), \
+				SHORTALIGN(cur_offset) \
+			) \
+		) \
+	) \
+	: \
+	( \
+		((attlen) == sizeof(int32)) ? \
+		( \
+			INTALIGN(cur_offset) \
+		) \
+		: \
+		( \
+			AssertMacro((attlen) > sizeof(int32)), \
+			((attalign) == 'd') ? 	DOUBLEALIGN(cur_offset) : \
+									LONGALIGN(cur_offset) \
+		) \
+	) \
+)
+	
+#define att_addlength(cur_offset, attlen, attval) \
+( \
+	((attlen) != -1) ? \
+	( \
+		(cur_offset) + (attlen) \
+	) \
+	: \
+	( \
+		(cur_offset) + VARSIZE(DatumGetPointer(attval)) \
+	) \
+)
+	
 #endif

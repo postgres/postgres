@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.60 1998/09/01 04:27:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.61 1998/09/07 05:35:37 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -64,8 +64,7 @@
 #define NTUPLES_PER_PAGE(natts) (BLCKSZ/((natts)*AVG_TUPLE_SIZE))
 
 /* non-export function prototypes */
-static Oid
-			RelationNameGetObjectId(char *relationName, Relation pg_class);
+static Oid	RelationNameGetObjectId(char *relationName, Relation pg_class);
 static Oid	GetHeapRelationOid(char *heapRelationName, char *indexRelationName);
 static TupleDesc BuildFuncTupleDesc(FuncIndexInfo *funcInfo);
 static TupleDesc ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
@@ -73,12 +72,11 @@ static TupleDesc ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
 						 int numatts, AttrNumber *attNums);
 
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
-static Oid	UpdateRelationRelation(Relation indexRelation);
+static Oid UpdateRelationRelation(Relation indexRelation);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts,
 						Oid indexoid);
-static void
-			AppendAttributeTuples(Relation indexRelation, int numatts);
+static void AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					FuncIndexInfo *funcInfo, int natts,
 					AttrNumber *attNums, Oid *classOids, Node *predicate,
@@ -552,11 +550,9 @@ UpdateRelationRelation(Relation indexRelation)
 						   sizeof(*indexRelation->rd_rel),
 						   (char *) indexRelation->rd_rel);
 
-	/* ----------------
-	 *	the new tuple must have the same oid as the relcache entry for the
-	 *	index.	sure would be embarassing to do this sort of thing in polite
-	 *	company.
-	 * ----------------
+	/*
+	 *	The new tuple must have the same oid as the heap_create() we just
+	 *	did.
 	 */
 	tuple->t_oid = RelationGetRelid(indexRelation);
 	heap_insert(pg_class, tuple);
@@ -1078,7 +1074,7 @@ index_create(char *heapRelationName,
 
 	/* ----------------
 	 *	  add index to catalogs
-	 *	  (append RELATION tuple)
+	 *	  (INSERT pg_class tuple)
 	 * ----------------
 	 */
 	indexoid = UpdateRelationRelation(indexRelation);
@@ -1264,8 +1260,7 @@ FormIndexDatum(int numberOfAttributes,
 			   char *nullv,
 			   FuncIndexInfoPtr fInfo)
 {
-	AttrNumber	i;
-	int			offset;
+	AttrNumber	attOff;
 	bool		isNull;
 
 	/* ----------------
@@ -1275,18 +1270,16 @@ FormIndexDatum(int numberOfAttributes,
 	 * ----------------
 	 */
 
-	for (i = 1; i <= numberOfAttributes; i++)
+	for (attOff = 0; attOff < numberOfAttributes; attOff++)
 	{
-		offset = AttrNumberGetAttrOffset(i);
-
-		datum[offset] = PointerGetDatum(GetIndexValue(heapTuple,
+		datum[attOff] = PointerGetDatum(GetIndexValue(heapTuple,
 													  heapDescriptor,
-													  offset,
+													  attOff,
 													  attributeNumber,
 													  fInfo,
 													  &isNull));
 
-		nullv[offset] = (isNull) ? 'n' : ' ';
+		nullv[attOff] = (isNull) ? 'n' : ' ';
 	}
 }
 
