@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.6 1998/09/01 04:30:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.7 1998/10/01 22:45:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,8 +99,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId)
 			{
 				Const	   *con = (Const *) node;
 
-				val = (Datum) textout((struct varlena *)
-									  con->constvalue);
+				val = (Datum) textout((struct varlena *)con->constvalue);
 				infunc = typeidInfunc(targetTypeId);
 				con = makeNode(Const);
 				con->consttype = targetTypeId;
@@ -109,10 +108,10 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId)
 				/* use "-1" for varchar() type */
 				con->constvalue = (Datum) fmgr(infunc,
 											   val,
-											 typeidTypElem(targetTypeId),
+											   typeidTypElem(targetTypeId),
 											   -1);
 				con->constisnull = false;
-				con->constbyval = true;
+				con->constbyval = typeByVal(typeidType(targetTypeId));
 				con->constisset = false;
 				result = (Node *) con;
 			}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.34 1998/09/01 04:27:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.35 1998/10/01 22:45:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,8 +332,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 
 			for (i = 0; i < constr->num_check; i++)
 			{
-				Constraint *cdef = (Constraint *) makeNode(Constraint); /* palloc(sizeof(Constrai
-																		 * nt)); */
+				Constraint *cdef = (Constraint *) makeNode(Constraint);
 
 				cdef->contype = CONSTR_CHECK;
 				if (check[i].ccname[0] == '$')
