@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.232 2001/09/08 01:10:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.233 2001/09/21 17:06:12 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -967,12 +967,12 @@ die(SIGNAL_ARGS)
 }
 
 /*
- * Shutdown signal from postmaster during client authentication.
+ * Timeout or shutdown signal from postmaster during client authentication.
  * Simply exit(0).
  *
  * XXX: possible future improvement: try to send a message indicating
  * why we are disconnecting.  Problem is to be sure we don't block while
- * doing so nor mess up the authentication message exchange.
+ * doing so, nor mess up the authentication message exchange.
  */
 void
 authdie(SIGNAL_ARGS)
@@ -1167,16 +1167,6 @@ PostgresMain(int argc, char *argv[],
 	}
 
 	SetProcessingMode(InitProcessing);
-
-	/*
-	 * If under postmaster, initialize libpq and enable reporting of
-	 * elog errors to the client.
-	 */
-	if (IsUnderPostmaster)
-	{
-		pq_init();				/* initialize libpq at backend startup */
-		whereToSendOutput = Remote;	/* now safe to elog to client */
-	}
 
 	/*
 	 * Set default values for command-line options.
@@ -1736,7 +1726,7 @@ PostgresMain(int argc, char *argv[],
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.232 $ $Date: 2001/09/08 01:10:20 $\n");
+		puts("$Revision: 1.233 $ $Date: 2001/09/21 17:06:12 $\n");
 	}
 
 	/*

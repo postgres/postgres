@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.241 2001/09/08 01:10:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.242 2001/09/21 17:06:12 tgl Exp $
  *
  * NOTES
  *
@@ -190,6 +190,8 @@ bool		NetServer = false;	/* listen on TCP/IP */
 bool		EnableSSL = false;
 bool		SilentMode = false; /* silent mode (-S) */
 
+int			PreAuthDelay = 0;
+int			AuthenticationTimeout = 60;
 int			CheckPointTimeout = 300;
 
 /* Startup/shutdown state */
@@ -1942,14 +1944,36 @@ DoBackend(Port *port)
 	MyProcPid = getpid();
 
 	/*
+	 * Initialize libpq and enable reporting of elog errors to the client.
+	 * Must do this now because authentication uses libpq to send messages.
+	 */
+	pq_init();					/* initialize libpq to talk to client */
+	whereToSendOutput = Remote;	/* now safe to elog to client */
+
+	/*
 	 * We arrange for a simple exit(0) if we receive SIGTERM or SIGQUIT
 	 * during any client authentication related communication. Otherwise
 	 * the postmaster cannot shutdown the database FAST or IMMED cleanly
-	 * if a buggy client blocks a backend during authentication.
+	 * if a buggy client blocks a backend during authentication.  We also
+	 * will exit(0) after a time delay, so that a broken client can't hog
+	 * a connection indefinitely.
+	 *
+	 * PreAuthDelay is a debugging aid for investigating problems in the
+	 * authentication cycle: it can be set in postgresql.conf to allow
+	 * time to attach to the newly-forked backend with a debugger.
+	 * (See also the -W backend switch, which we allow clients to pass
+	 * through PGOPTIONS, but it is not honored until after authentication.)
 	 */
 	pqsignal(SIGTERM, authdie);
 	pqsignal(SIGQUIT, authdie);
+	pqsignal(SIGALRM, authdie);
 	PG_SETMASK(&AuthBlockSig);
+
+	if (PreAuthDelay > 0)
+		sleep(PreAuthDelay);
+
+	if (! enable_sigalrm_interrupt(AuthenticationTimeout * 1000))
+		elog(FATAL, "DoBackend: Unable to set timer for auth timeout");
 
 	/*
 	 * Receive the startup packet (which might turn out to be a cancel
@@ -1963,9 +1987,11 @@ DoBackend(Port *port)
 	ClientAuthentication(MyProcPort); /* might not return, if failure */
 
 	/*
-	 * Done with authentication.  Prevent SIGTERM/SIGQUIT again until
-	 * backend startup is complete.
+	 * Done with authentication.  Disable timeout, and prevent SIGTERM/SIGQUIT
+	 * again until backend startup is complete.
 	 */
+	if (! disable_sigalrm_interrupt())
+		elog(FATAL, "DoBackend: Unable to disable timer for auth timeout");
 	PG_SETMASK(&BlockSig);
 
 	/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.46 2001/09/07 00:27:30 tgl Exp $
+ * $Id: proc.h,v 1.47 2001/09/21 17:06:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,5 +153,8 @@ extern void HandleDeadLock(SIGNAL_ARGS);
 extern void ProcWaitForSignal(void);
 extern void ProcCancelWaitForSignal(void);
 extern void ProcSendSignal(BackendId procId);
+
+extern bool enable_sigalrm_interrupt(int delayms);
+extern bool disable_sigalrm_interrupt(void);
 
 #endif	 /* PROC_H */

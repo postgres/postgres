@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.82 2001/09/21 03:32:35 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.83 2001/09/21 17:06:12 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1014,6 +1014,20 @@ env PGOPTIONS='-c geqo=off' psql
         and <literal>SAT</literal> are interpreted as Australian
         time zones rather than as North American Central/Eastern
         time zones and Saturday. The default is false.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>AUTHENTICATION_TIMEOUT</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Maximum time to complete client authentication, in seconds.
+	If a would-be client has not completed the authentication protocol
+	in this much time, the server unceremoniously breaks the connection.
+	This prevents hung clients from occupying a connection indefinitely.
+	This option can only be set at server start or in the
+	<filename>postgresql.conf</filename> file.
        </para>
       </listitem>
      </varlistentry>

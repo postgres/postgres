@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.50 2001/09/21 03:32:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.51 2001/09/21 17:06:12 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -41,6 +41,8 @@
 
 /* XXX these should be in other modules' header files */
 extern bool Log_connections;
+extern int	PreAuthDelay;
+extern int	AuthenticationTimeout;
 extern int	CheckPointTimeout;
 extern int	CommitDelay;
 extern int	CommitSiblings;
@@ -319,6 +321,12 @@ static struct config_int
 
 	{"max_locks_per_transaction", PGC_POSTMASTER, &max_locks_per_xact,
 	 64, 10, INT_MAX, NULL, NULL},
+
+	{"authentication_timeout", PGC_SIGHUP, &AuthenticationTimeout,
+	60, 1, 600, NULL, NULL},
+
+	{"pre_auth_delay", PGC_SIGHUP, &PreAuthDelay,
+	0, 0, 60, NULL, NULL},
 
 	{"checkpoint_segments", PGC_SIGHUP, &CheckPointSegments,
 	3, 1, INT_MAX, NULL, NULL},

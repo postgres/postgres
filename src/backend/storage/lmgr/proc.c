@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.107 2001/09/07 00:27:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.108 2001/09/21 17:06:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,18 +327,7 @@ LockWaitCancel(void)
 	waitingForLock = false;
 
 	/* Turn off the deadlock timer, if it's still running (see ProcSleep) */
-#ifndef __BEOS__
-	{
-		struct itimerval timeval,
-					dummy;
-
-		MemSet(&timeval, 0, sizeof(struct itimerval));
-		setitimer(ITIMER_REAL, &timeval, &dummy);
-	}
-#else
-	/* BeOS doesn't have setitimer, but has set_alarm */
-	set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM);
-#endif	 /* __BEOS__ */
+	disable_sigalrm_interrupt();
 
 	/* Unlink myself from the wait queue, if on it (might not be anymore!) */
 	LockLockTable();
@@ -501,12 +490,6 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	bool		early_deadlock = false;
 	PROC	   *proc;
 	int			i;
-#ifndef __BEOS__
-	struct itimerval timeval,
-				dummy;
-#else
-	bigtime_t	time_interval;
-#endif
 
 	/*
 	 * Determine where to add myself in the wait queue.
@@ -629,21 +612,9 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	 *
 	 * By delaying the check until we've waited for a bit, we can avoid
 	 * running the rather expensive deadlock-check code in most cases.
-	 *
-	 * Need to zero out struct to set the interval and the microseconds
-	 * fields to 0.
 	 */
-#ifndef __BEOS__
-	MemSet(&timeval, 0, sizeof(struct itimerval));
-	timeval.it_value.tv_sec = DeadlockTimeout / 1000;
-	timeval.it_value.tv_usec = (DeadlockTimeout % 1000) * 1000;
-	if (setitimer(ITIMER_REAL, &timeval, &dummy))
+	if (! enable_sigalrm_interrupt(DeadlockTimeout))
 		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
-#else
-	time_interval = DeadlockTimeout * 1000000;	/* usecs */
-	if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
-		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
-#endif
 
 	/*
 	 * If someone wakes us between SpinRelease and IpcSemaphoreLock,
@@ -664,14 +635,8 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	/*
 	 * Disable the timer, if it's still running
 	 */
-#ifndef __BEOS__
-	MemSet(&timeval, 0, sizeof(struct itimerval));
-	if (setitimer(ITIMER_REAL, &timeval, &dummy))
+	if (! disable_sigalrm_interrupt())
 		elog(FATAL, "ProcSleep: Unable to disable timer for process wakeup");
-#else
-	if (set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM) < 0)
-		elog(FATAL, "ProcSleep: Unable to disable timer for process wakeup");
-#endif
 
 	/*
 	 * Now there is nothing for LockWaitCancel to do.
@@ -946,6 +911,69 @@ ProcSendSignal(BackendId procId)
 
 	if (proc != NULL)
 		IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
+}
+
+
+/*****************************************************************************
+ * SIGALRM interrupt support
+ *
+ * Maybe these should be in pqsignal.c?
+ *****************************************************************************/
+
+/*
+ * Enable the SIGALRM interrupt to fire after the specified delay
+ *
+ * Delay is given in milliseconds.  Caller should be sure a SIGALRM
+ * signal handler is installed before this is called.
+ *
+ * Returns TRUE if okay, FALSE on failure.
+ */
+bool
+enable_sigalrm_interrupt(int delayms)
+{
+#ifndef __BEOS__
+	struct itimerval timeval,
+				dummy;
+
+	MemSet(&timeval, 0, sizeof(struct itimerval));
+	timeval.it_value.tv_sec = delayms / 1000;
+	timeval.it_value.tv_usec = (delayms % 1000) * 1000;
+	if (setitimer(ITIMER_REAL, &timeval, &dummy))
+		return false;
+#else
+	/* BeOS doesn't have setitimer, but has set_alarm */
+	bigtime_t	time_interval;
+
+	time_interval = delayms * 1000;	/* usecs */
+	if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
+		return false;
+#endif
+
+	return true;
+}
+
+/*
+ * Disable the SIGALRM interrupt, if it has not yet fired
+ *
+ * Returns TRUE if okay, FALSE on failure.
+ */
+bool
+disable_sigalrm_interrupt(void)
+{
+#ifndef __BEOS__
+	struct itimerval timeval,
+				dummy;
+
+	MemSet(&timeval, 0, sizeof(struct itimerval));
+	if (setitimer(ITIMER_REAL, &timeval, &dummy))
+		return false;
+#else
+	/* BeOS doesn't have setitimer, but has set_alarm */
+	if (set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM) < 0)
+		return false;
+#endif
+
+	return true;
 }
 
 
