@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.7 1996/12/04 03:06:27 bryanh Exp $
+ * $Id: buf_internals.h,v 1.8 1997/01/16 07:53:26 vadim Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -200,7 +200,7 @@ extern int NLocBuffer;
 extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
 				    bool *foundPtr);
 extern int WriteLocalBuffer(Buffer buffer, bool release);
-extern int FlushLocalBuffer(Buffer buffer);
+extern int FlushLocalBuffer(Buffer buffer, bool release);
 extern void InitLocalBuffer(void);
 extern void LocalBufferSync(void);
 extern void ResetLocalBufferPool(void);
