@@ -3241,16 +3241,16 @@ Typename:  Array opt_array_bounds
 				{
 					$$ = cat2_str($1, $2.str);
 				}
-		| Character	{ $$ = $1; }
 		| SETOF Array
 				{
 					$$ = cat2_str(make1_str("setof"), $2);
 				}
 		;
 
-Array:  Generic
+Array:  Generic			{ $$ = $1; }
 		| Datetime	{ $$ = $1; }
 		| Numeric	{ $$ = $1; }
+		| Character	{ $$ = $1; }
 		;
 
 Generic:  generic
