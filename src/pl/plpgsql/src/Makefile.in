@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.15 1999/03/20 18:00:38 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.16 1999/03/21 02:27:46 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,10 @@ CFLAGS+= -I$(LIBPQDIR) -I$(SRCDIR)/include
 # For fmgr.h
 CFLAGS+= -I$(SRCDIR)/backend
 
+# If using flex, ask for a case-insensitive, lex-compatible lexer.
+ifneq (,$(findstring flex,$(LEX)))
 LFLAGS+= -i -l
+endif
 
 OBJS=	pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 
@@ -67,7 +70,7 @@ pl_gram.c pl.tab.h:	gram.y
 	rm -f y.tab.c y.tab.h
 
 pl_scan.c:	scan.l
-	$(LEX) $<
+	$(LEX) $(LFLAGS) $<
 	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <lex.yy.c >pl_scan.c
 	rm -f lex.yy.c
 

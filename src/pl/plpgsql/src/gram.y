@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.3 1999/03/21 01:07:07 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.4 1999/03/21 02:27:47 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -39,8 +39,6 @@
 #include "stdio.h"
 #include "string.h"
 #include "plpgsql.h"
-
-extern	int	yylineno;			/* not always declared by lexer... */
 
 #include "pl_scan.c"
 
