@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Oct 20 20:36:15 EDT 2002
+Last updated:		Mon Oct 21 16:34:56 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -291,6 +291,7 @@ Clients
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * -Have pg_dump use ADD PRIMARY KEY after COPY, for performance (Neil Conway)
 * Add schema, cast, and conversion backslash commands to psql
+* Allow pg_dump to dump a specific schema
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
