@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.14 2004/06/11 00:57:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.15 2004/06/11 04:17:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,7 @@ start_postmaster(void)
 #ifndef WIN32
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < \"%s\" >> \"%s\" 2>&1 &%s",
 #else
-		snprintf(cmd, MAXPGPATH, "%sSTART /B \"%s\" %s < \"%s\" >> \"%s\" 2>&1%s",
+		snprintf(cmd, MAXPGPATH, "%sSTART /B %s %s < \"%s\" >> \"%s\" 2>&1%s",
 #endif
 				 SYSTEMQUOTE, pgexec, post_opts, DEVNULL, log_file,
 				 SYSTEMQUOTE);
@@ -270,7 +270,7 @@ start_postmaster(void)
 #ifndef WIN32
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < \"%s\" 2>&1 &%s",
 #else
-		snprintf(cmd, MAXPGPATH, "%sSTART /B \"%s\" %s < \"%s\" 2>&1%s",
+		snprintf(cmd, MAXPGPATH, "%sSTART /B %s %s < \"%s\" 2>&1%s",
 #endif
 				 SYSTEMQUOTE, pgexec, post_opts, DEVNULL, SYSTEMQUOTE);
 
