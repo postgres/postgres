@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.38 1997/08/21 01:34:44 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.39 1997/08/22 03:17:55 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -84,7 +84,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
     Attr		*attr;
 
     ColumnDef		*coldef;
-    ConstaintDef	*constrdef;
+    ConstraintDef	*constrdef;
     TypeName		*typnam;
     DefElem		*defelt;
     ParamString		*param;
@@ -352,7 +352,8 @@ columnDef:  Id Typename OptDefault opt_null
 		}
 	;
 
-OptDefault:  DEFAULT default_expr	{ 
+OptDefault:  DEFAULT default_expr
+				{ 
 				    int deflen = CurScanPosition() - DefaultStartPosition;
 				    char *defval;
 				    
@@ -453,8 +454,7 @@ default_expr_list: default_expr_or_null
 		{ $$ = lappend($1, $3); }
 	;
 
-opt_null:	PNULL		{ $$ = false; }
-	| NOT PNULL		{ $$ = true; }
+opt_null: NOT PNULL		{ $$ = true; }
 	| NOTNULL		{ $$ = true; }
 	| /* EMPTY */		{ $$ = false; }
 	;
@@ -610,7 +610,7 @@ ConstraintElem:
 	;
 
 ConstraintDef:  CHECK a_expr	{ 
-				    ConstaintDef *constr = palloc (sizeof(ConstaintDef));
+				    ConstraintDef *constr = palloc (sizeof(ConstraintDef));
 				    int chklen = CurScanPosition() - CheckStartPosition;
 				    char *check;
 				    
@@ -621,7 +621,7 @@ ConstraintDef:  CHECK a_expr	{
 				    check[chklen] = 0;
 				    constr->type = CONSTR_CHECK;
 				    constr->name = NULL;
-				    constr->expr = check;
+				    constr->def = (void*) check;
 				    $$ = constr;
 				}
 	;
