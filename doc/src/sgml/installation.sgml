@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.88 2002/10/26 20:12:25 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.89 2002/10/26 20:15:42 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1602,10 +1602,10 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.2</entry>
-	<entry>2001-11-15,
-	 Thomas Lockhart (<email>lockhart@fourpalms.org</email>)</entry>
-	<entry>2.0.x, 2.2.x, 2.4.x</entry>
+	<entry>7.3</entry>
+	<entry>2002-10-26,
+	 Alvaro Herrera (<email>alvherre@dcc.uchile.cl</email>)</entry>
+	<entry>2.4</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">MacOS X</></entry>
