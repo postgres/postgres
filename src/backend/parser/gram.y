@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.116 1999/11/30 03:57:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.117 1999/12/06 18:02:43 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -143,7 +143,6 @@ static Node *doNegate(Node *n);
 
 %type <boolean>	TriggerActionTime, TriggerForSpec, PLangTrusted
 
-%type <ival>	OptConstrTrigDeferrable, OptConstrTrigInitdeferred
 %type <str>		OptConstrFromTable
 
 %type <str>		TriggerEvents, TriggerFuncArg
@@ -249,8 +248,10 @@ static Node *doNegate(Node *n);
 %type <node>	TableConstraint
 %type <list>	ColPrimaryKey, ColQualList, ColQualifier
 %type <node>	ColConstraint, ColConstraintElem
-%type <list>	key_actions, key_action
-%type <str>		key_match, key_reference
+%type <ival>	key_actions, key_action, key_reference
+%type <str>		key_match
+%type <ival>	ConstraintAttributeSpec, ConstraintDeferrabilitySpec,
+				ConstraintTimeSpec
 
 %type <list>	constraints_set_list
 %type <list>	constraints_set_namelist
@@ -976,9 +977,24 @@ ColPrimaryKey:  PRIMARY KEY
 ColConstraint:
 		CONSTRAINT name ColConstraintElem
 				{
-						Constraint *n = (Constraint *)$3;
-						if (n != NULL) n->name = $2;
-						$$ = $3;
+					switch (nodeTag($3))
+					{
+						case T_Constraint:
+							{
+								Constraint *n = (Constraint *)$3;
+								if (n != NULL) n->name = $2;
+							}
+							break;
+						case T_FkConstraint:
+							{
+								FkConstraint *n = (FkConstraint *)$3;
+								if (n != NULL) n->constr_name = $2;
+							}
+							break;
+						default:
+							break;
+					}
+					$$ = $3;
 				}
 		| ColConstraintElem
 				{ $$ = $1; }
@@ -1060,10 +1076,25 @@ ColConstraintElem:  CHECK '(' a_expr ')'
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
-			| REFERENCES ColId opt_column_list key_match key_actions
+			| REFERENCES ColId opt_column_list key_match key_actions 
 				{
-					elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented");
-					$$ = NULL;
+					/* XXX
+					 *	Need ConstraintAttributeSpec as $6 -- Jan
+					 */
+					FkConstraint *n = makeNode(FkConstraint);
+					n->constr_name		= NULL;
+					n->pktable_name		= $2;
+					n->fk_attrs			= NIL;
+					n->pk_attrs			= $3;
+					n->match_type		= $4;
+					n->actions			= $5;
+					n->deferrable		= true;
+					n->initdeferred		= false;
+					/*
+					n->deferrable		= ($6 & 1) != 0;
+					n->initdeferred		= ($6 & 2) != 0;
+					*/
+					$$ = (Node *)n;
 				}
 		;
 
@@ -1073,9 +1104,24 @@ ColConstraintElem:  CHECK '(' a_expr ')'
  */
 TableConstraint:  CONSTRAINT name ConstraintElem
 				{
-						Constraint *n = (Constraint *)$3;
-						if (n != NULL) n->name = $2;
-						$$ = $3;
+					switch (nodeTag($3))
+					{
+						case T_Constraint:
+							{
+								Constraint *n = (Constraint *)$3;
+								if (n != NULL) n->name = $2;
+							}
+							break;
+						case T_FkConstraint:
+							{
+								FkConstraint *n = (FkConstraint *)$3;
+								if (n != NULL) n->constr_name = $2;
+							}
+							break;
+						default:
+							break;
+					}
+					$$ = $3;
 				}
 		| ConstraintElem
 				{ $$ = $1; }
@@ -1110,31 +1156,51 @@ ConstraintElem:  CHECK '(' a_expr ')'
 					n->keys = $4;
 					$$ = (Node *)n;
 				}
-		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
+		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions ConstraintAttributeSpec
 				{
-					elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented");
-					$$ = NULL;
+					FkConstraint *n = makeNode(FkConstraint);
+					n->constr_name		= NULL;
+					n->pktable_name		= $7;
+					n->fk_attrs			= $4;
+					n->pk_attrs			= $8;
+					n->match_type		= $9;
+					n->actions			= $10;
+					n->deferrable		= ($11 & 1) != 0;
+					n->initdeferred		= ($11 & 2) != 0;
+					$$ = (Node *)n;
 				}
 		;
 
-key_match:  MATCH FULL					{ $$ = NULL; }
-		| MATCH PARTIAL					{ $$ = NULL; }
-		| /*EMPTY*/						{ $$ = NULL; }
+key_match:  MATCH FULL
+			{
+				$$ = "FULL";
+			}
+		| MATCH PARTIAL
+			{
+				elog(ERROR, "FOREIGN KEY match type PARTIAL not implemented yet");
+				$$ = "PARTIAL";
+			}
+		| /*EMPTY*/
+			{
+				elog(ERROR, "FOREIGN KEY match type UNSPECIFIED not implemented yet");
+				$$ = "UNSPECIFIED";
+			}
 		;
 
-key_actions:  key_action key_action		{ $$ = NIL; }
-		| key_action					{ $$ = NIL; }
-		| /*EMPTY*/						{ $$ = NIL; }
+key_actions:  key_action key_action		{ $$ = $1 | $2; }
+		| key_action					{ $$ = $1; }
+		| /*EMPTY*/						{ $$ = 0; }
 		;
 
-key_action:  ON DELETE key_reference	{ $$ = NIL; }
-		| ON UPDATE key_reference		{ $$ = NIL; }
+key_action:  ON DELETE key_reference	{ $$ = $3 << FKCONSTR_ON_DELETE_SHIFT; }
+		| ON UPDATE key_reference		{ $$ = $3 << FKCONSTR_ON_UPDATE_SHIFT; }
 		;
 
-key_reference:  NO ACTION				{ $$ = NULL; }
-		| CASCADE						{ $$ = NULL; }
-		| SET DEFAULT					{ $$ = NULL; }
-		| SET NULL_P					{ $$ = NULL; }
+key_reference:  NO ACTION				{ $$ = FKCONSTR_ON_KEY_NOACTION; }
+		| RESTRICT						{ $$ = FKCONSTR_ON_KEY_RESTRICT; }
+		| CASCADE						{ $$ = FKCONSTR_ON_KEY_CASCADE; }
+		| SET NULL_P					{ $$ = FKCONSTR_ON_KEY_SETNULL; }
+		| SET DEFAULT					{ $$ = FKCONSTR_ON_KEY_SETDEFAULT; }
 		;
 
 OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
@@ -1329,14 +1395,14 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				}
 		| CREATE CONSTRAINT TRIGGER name AFTER TriggerOneEvent ON
 				relation_name OptConstrFromTable 
-				OptConstrTrigDeferrable OptConstrTrigInitdeferred
+				ConstraintAttributeSpec
 				FOR EACH ROW EXECUTE PROCEDURE name '(' TriggerFuncArgs ')'
 				{
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
 					n->trigname = $4;
 					n->relname = $8;
-					n->funcname = $17;
-					n->args = $19;
+					n->funcname = $16;
+					n->args = $18;
 					n->before = false;
 					n->row = true;
 					n->actions[0] = $6;
@@ -1346,22 +1412,9 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 					n->attr = NULL;		/* unused */
 					n->when = NULL;		/* unused */
 
-					/*
-					 * Check that the DEFERRABLE and INITIALLY combination
-					 * makes sense
-					 */
 					n->isconstraint  = true;
-					if ($11 == 1)
-					{
-						if ($10 == 0)
-							elog(ERROR, "INITIALLY DEFERRED constraint "
-										"cannot be NOT DEFERRABLE");
-						n->deferrable = true;
-						n->initdeferred = true;
-					} else {
-						n->deferrable = ($10 == 1);
-						n->initdeferred = false;
-					}
+					n->deferrable = ($10 & 1) != 0;
+					n->initdeferred = ($10 & 2) != 0;
 
 					n->constrrelname = $9;
 					$$ = (Node *)n;
@@ -1443,33 +1496,43 @@ OptConstrFromTable:			/* Empty */
 				}
 		;
 
-OptConstrTrigDeferrable:	/* Empty */
-				{
-					$$ = -1;
-				}
-		| DEFERRABLE
-				{
-					$$ = 1;
-				}
-		| NOT DEFERRABLE
-				{
+ConstraintAttributeSpec: /* Empty */
+			{ $$ = 0; }
+		| ConstraintDeferrabilitySpec
+			{ $$ = $1; }
+		| ConstraintDeferrabilitySpec ConstraintTimeSpec
+			{
+				if ($1 == 0 && $2 != 0)
+					elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+				$$ = $1 | $2;
+			}
+		| ConstraintTimeSpec
+			{
+				if ($1 != 0)
+					$$ = 3;
+				else
 					$$ = 0;
-				}
+			}
+		| ConstraintTimeSpec ConstraintDeferrabilitySpec
+			{
+				if ($2 == 0 && $1 != 0)
+					elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+				$$ = $1 | $2;
+			}
 		;
 
-OptConstrTrigInitdeferred:	/* Empty */
-				{
-					$$ = -1;
-				}
-		| INITIALLY DEFERRED
-				{
-					$$ = 1;
-				}
-		| INITIALLY IMMEDIATE
-				{
-					$$ = 0;
-				}
+ConstraintDeferrabilitySpec: NOT DEFERRABLE
+			{ $$ = 0; }
+		| DEFERRABLE
+			{ $$ = 1; }
 		;
+
+ConstraintTimeSpec: INITIALLY IMMEDIATE
+			{ $$ = 0; }
+		| INITIALLY DEFERRED
+			{ $$ = 2; }
+		;
+		
 
 DropTrigStmt:  DROP TRIGGER name ON relation_name
 				{

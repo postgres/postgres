@@ -6,8 +6,22 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.3 1999/11/22 17:56:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.4 1999/12/06 18:02:44 wieck Exp $
  *
+ * ----------
+ */
+
+
+/* ----------
+ * Internal TODO:
+ *
+ *		Finish functions for MATCH FULL:
+ *			setnull_del
+ *			setnull_upd
+ *			setdefault_del
+ *			setdefault_upd
+ *
+ *		Add MATCH PARTIAL logic
  * ----------
  */
 
@@ -52,8 +66,12 @@
 #define RI_KEYS_NONE_NULL				2
 
 
-#define RI_PLAN_TYPE_CHECK_FULL			0
-#define RI_PLAN_TYPE_CASCADE_DEL_FULL	1
+#define RI_PLAN_CHECK_LOOKUPPK_NOCOLS	1
+#define RI_PLAN_CHECK_LOOKUPPK			2
+#define RI_PLAN_CASCADE_DEL_DODELETE	1
+#define RI_PLAN_CASCADE_UPD_DOUPDATE	1
+#define RI_PLAN_RESTRICT_DEL_CHECKREF	1
+#define RI_PLAN_RESTRICT_UPD_CHECKREF	1
 
 
 /* ----------
@@ -195,7 +213,8 @@ RI_FKey_check (FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4) {
-		ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid, 1,
+		ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
+								RI_PLAN_CHECK_LOOKUPPK_NOCOLS,
 								fk_rel, pk_rel,
 								tgnargs, tgargs);
 
@@ -273,9 +292,10 @@ RI_FKey_check (FmgrInfo *proinfo)
 		 * ----------
 		 */
 		case RI_MATCH_TYPE_FULL:
-			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid, 2,
-												fk_rel, pk_rel,
-												tgnargs, tgargs);
+			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
+										RI_PLAN_CHECK_LOOKUPPK,
+										fk_rel, pk_rel,
+										tgnargs, tgargs);
 
 			switch (ri_NullCheck(fk_rel, new_row, &qkey, RI_KEYPAIR_FK_IDX))
 			{
@@ -382,7 +402,7 @@ RI_FKey_check (FmgrInfo *proinfo)
 				else
 					check_nulls[i] = ' ';
 			}
-			check_nulls[RI_MAX_NUMKEYS] = '\0';
+			check_nulls[i] = '\0';
 
 			/* ----------
 			 * Now check that foreign key exists in PK table
@@ -515,9 +535,10 @@ RI_FKey_cascade_del (FmgrInfo *proinfo)
 		 */
 		case RI_MATCH_TYPE_UNSPECIFIED:
 		case RI_MATCH_TYPE_FULL:
-			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid, 1,
-												fk_rel, pk_rel,
-												tgnargs, tgargs);
+			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
+									RI_PLAN_CASCADE_DEL_DODELETE,
+									fk_rel, pk_rel,
+									tgnargs, tgargs);
 
 			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
 			{
@@ -601,13 +622,13 @@ RI_FKey_cascade_del (FmgrInfo *proinfo)
 				else
 					del_nulls[i] = ' ';
 			}
-			del_nulls[RI_MAX_NUMKEYS] = '\0';
+			del_nulls[i] = '\0';
 
 			/* ----------
 			 * Now delete constraint
 			 * ----------
 			 */
-			if (SPI_execp(qplan, del_values, del_nulls, 1) != SPI_OK_DELETE)
+			if (SPI_execp(qplan, del_values, del_nulls, 0) != SPI_OK_DELETE)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_cascade_del()");
 			
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -642,12 +663,220 @@ RI_FKey_cascade_del (FmgrInfo *proinfo)
 HeapTuple
 RI_FKey_cascade_upd (FmgrInfo *proinfo)
 {
-	TriggerData			*trigdata;
+	TriggerData		   *trigdata;
+	int					tgnargs;
+	char			  **tgargs;
+	Relation			fk_rel;
+	Relation			pk_rel;
+	HeapTuple			new_row;
+	HeapTuple			old_row;
+	RI_QueryKey			qkey;
+	void			   *qplan;
+	Datum				upd_values[RI_MAX_NUMKEYS * 2];
+	char				upd_nulls[RI_MAX_NUMKEYS * 2 + 1];
+	bool				isnull;
+	int					i;
+	int					j;
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
 
-	elog(NOTICE, "RI_FKey_cascade_upd() called\n");
+	/* ----------
+	 * Check that this is a valid trigger call on the right time and event.
+	 * ----------
+	 */
+	if (trigdata == NULL)
+		elog(ERROR, "RI_FKey_cascade_upd() not fired by trigger manager");
+	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) || 
+				!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
+		elog(ERROR, "RI_FKey_cascade_upd() must be fired AFTER ROW");
+	if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		elog(ERROR, "RI_FKey_cascade_upd() must be fired for UPDATE");
+
+	/* ----------
+	 * Check for the correct # of call arguments 
+	 * ----------
+	 */
+	tgnargs = trigdata->tg_trigger->tgnargs;
+	tgargs  = trigdata->tg_trigger->tgargs;
+	if (tgnargs < 4 || (tgnargs % 2) != 0)
+		elog(ERROR, "wrong # of arguments in call to RI_FKey_cascade_upd()");
+	if (tgnargs > RI_MAX_ARGUMENTS)
+		elog(ERROR, "too many keys (%d max) in call to RI_FKey_cascade_upd()",
+						RI_MAX_NUMKEYS);
+
+	/* ----------
+	 * Nothing to do if no column names to compare given
+	 * ----------
+	 */
+	if (tgnargs == 4)
+		return NULL;
+
+	/* ----------
+	 * Get the relation descriptors of the FK and PK tables and
+	 * the old tuple.
+	 * ----------
+	 */
+	fk_rel	= heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	pk_rel  = trigdata->tg_relation;
+	new_row = trigdata->tg_newtuple;
+	old_row = trigdata->tg_trigtuple;
+
+	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
+	{
+		/* ----------
+		 * SQL3 11.9 <referential constraint definition>
+		 *	Gereral rules 7) a) i):
+		 * 		MATCH <unspecified> or MATCH FULL
+		 *			... ON UPDATE CASCADE
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_UNSPECIFIED:
+		case RI_MATCH_TYPE_FULL:
+			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
+									RI_PLAN_CASCADE_UPD_DOUPDATE,
+									fk_rel, pk_rel,
+									tgnargs, tgargs);
+
+			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			{
+				case RI_KEYS_ALL_NULL:
+				case RI_KEYS_SOME_NULL:
+					/* ----------
+					 * No update - MATCH FULL means there cannot be any
+					 * reference to old key if it contains NULL
+					 * ----------
+					 */
+					heap_close(fk_rel, NoLock);
+					return NULL;
+					
+				case RI_KEYS_NONE_NULL:
+					/* ----------
+					 * Have a full qualified key - continue below
+					 * ----------
+					 */
+					break;
+			}
+			heap_close(fk_rel, NoLock);
+
+			/* ----------
+			 * No need to do anything if old and new keys are equal
+			 * ----------
+			 */
+			if (ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
+													RI_KEYPAIR_PK_IDX))
+				return NULL;
+
+			if (SPI_connect() != SPI_OK_CONNECT)
+				elog(NOTICE, "SPI_connect() failed in RI_FKey_restrict_upd()");
+
+			/* ----------
+			 * Fetch or prepare a saved plan for the restrict delete
+			 * lookup for foreign references
+			 * ----------
+			 */
+			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
+			{
+				char		buf[256];
+				char		querystr[8192];
+				char		qualstr[8192];
+				char		*querysep;
+				char		*qualsep;
+				Oid			queryoids[RI_MAX_NUMKEYS * 2];
+
+				/* ----------
+				 * The query string built is
+				 *    UPDATE <fktable> SET fkatt1 = $1 [, ...]
+				 *			WHERE fkatt1 = $n [AND ...]
+				 * The type id's for the $ parameters are those of the
+				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * eventually fail if the parser cannot identify some way
+				 * how to compare these two types by '='.
+				 * ----------
+				 */
+				sprintf(querystr, "UPDATE \"%s\" SET", 
+									tgargs[RI_FK_RELNAME_ARGNO]);
+				qualstr[0] = '\0';
+				querysep = "";
+				qualsep = "WHERE";
+				for (i = 0, j = qkey.nkeypairs; i < qkey.nkeypairs; i++, j++)
+				{
+					sprintf(buf, "%s \"%s\" = $%d", querysep, 
+										tgargs[4 + i * 2], i + 1);
+					strcat(querystr, buf);
+					sprintf(buf, " %s \"%s\" = $%d", qualsep,
+										tgargs[4 + i * 2], j + 1);
+					strcat(qualstr, buf);
+					querysep = ",";
+					qualsep = "AND";
+					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
+					queryoids[j] = queryoids[i];
+				}
+				strcat(querystr, qualstr);
+
+				/* ----------
+				 * Prepare, save and remember the new plan.
+				 * ----------
+				 */
+				qplan = SPI_prepare(querystr, qkey.nkeypairs * 2, queryoids);
+				qplan = SPI_saveplan(qplan);
+				ri_HashPreparedPlan(&qkey, qplan);
+			}
+
+			/* ----------
+			 * We have a plan now. Build up the arguments for SPI_execp()
+			 * from the key values in the updated PK tuple.
+			 * ----------
+			 */
+			for (i = 0, j = qkey.nkeypairs; i < qkey.nkeypairs; i++, j++)
+			{
+				upd_values[i] = SPI_getbinval(new_row,
+									pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX],
+									&isnull);
+				if (isnull) 
+					upd_nulls[i] = 'n';
+				else
+					upd_nulls[i] = ' ';
+
+				upd_values[j] = SPI_getbinval(old_row,
+									pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX],
+									&isnull);
+				if (isnull) 
+					upd_nulls[j] = 'n';
+				else
+					upd_nulls[j] = ' ';
+			}
+			upd_nulls[j] = '\0';
+
+			/* ----------
+			 * Now update the existing references
+			 * ----------
+			 */
+			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
+				elog(ERROR, "SPI_execp() failed in RI_FKey_cascade_upd()");
+			
+			if (SPI_finish() != SPI_OK_FINISH)
+				elog(NOTICE, "SPI_finish() failed in RI_FKey_cascade_upd()");
+
+			return NULL;
+
+		/* ----------
+		 * Handle MATCH PARTIAL restrict update.
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_PARTIAL:
+			elog(ERROR, "MATCH PARTIAL not yet supported");
+			return NULL;
+	}
+
+	/* ----------
+	 * Never reached
+	 * ----------
+	 */
+	elog(ERROR, "internal error #4 in ri_triggers.c");
 	return NULL;
 }
 
@@ -661,12 +890,196 @@ RI_FKey_cascade_upd (FmgrInfo *proinfo)
 HeapTuple
 RI_FKey_restrict_del (FmgrInfo *proinfo)
 {
-	TriggerData			*trigdata;
+	TriggerData		   *trigdata;
+	int					tgnargs;
+	char			  **tgargs;
+	Relation			fk_rel;
+	Relation			pk_rel;
+	HeapTuple			old_row;
+	RI_QueryKey			qkey;
+	void			   *qplan;
+	Datum				del_values[RI_MAX_NUMKEYS];
+	char				del_nulls[RI_MAX_NUMKEYS + 1];
+	bool				isnull;
+	int					i;
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
 
-	elog(NOTICE, "RI_FKey_restrict_del() called\n");
+	/* ----------
+	 * Check that this is a valid trigger call on the right time and event.
+	 * ----------
+	 */
+	if (trigdata == NULL)
+		elog(ERROR, "RI_FKey_restrict_del() not fired by trigger manager");
+	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) || 
+				!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
+		elog(ERROR, "RI_FKey_restrict_del() must be fired AFTER ROW");
+	if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
+		elog(ERROR, "RI_FKey_restrict_del() must be fired for DELETE");
+
+	/* ----------
+	 * Check for the correct # of call arguments 
+	 * ----------
+	 */
+	tgnargs = trigdata->tg_trigger->tgnargs;
+	tgargs  = trigdata->tg_trigger->tgargs;
+	if (tgnargs < 4 || (tgnargs % 2) != 0)
+		elog(ERROR, "wrong # of arguments in call to RI_FKey_restrict_del()");
+	if (tgnargs > RI_MAX_ARGUMENTS)
+		elog(ERROR, "too many keys (%d max) in call to RI_FKey_restrict_del()",
+						RI_MAX_NUMKEYS);
+
+	/* ----------
+	 * Nothing to do if no column names to compare given
+	 * ----------
+	 */
+	if (tgnargs == 4)
+		return NULL;
+
+	/* ----------
+	 * Get the relation descriptors of the FK and PK tables and
+	 * the old tuple.
+	 * ----------
+	 */
+	fk_rel	= heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	pk_rel  = trigdata->tg_relation;
+	old_row = trigdata->tg_trigtuple;
+
+	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
+	{
+		/* ----------
+		 * SQL3 11.9 <referential constraint definition>
+		 *	Gereral rules 6) a) iv):
+		 * 		MATCH <unspecified> or MATCH FULL
+		 *			... ON DELETE CASCADE
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_UNSPECIFIED:
+		case RI_MATCH_TYPE_FULL:
+			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
+									RI_PLAN_RESTRICT_DEL_CHECKREF,
+									fk_rel, pk_rel,
+									tgnargs, tgargs);
+
+			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			{
+				case RI_KEYS_ALL_NULL:
+				case RI_KEYS_SOME_NULL:
+					/* ----------
+					 * No check - MATCH FULL means there cannot be any
+					 * reference to old key if it contains NULL
+					 * ----------
+					 */
+					heap_close(fk_rel, NoLock);
+					return NULL;
+					
+				case RI_KEYS_NONE_NULL:
+					/* ----------
+					 * Have a full qualified key - continue below
+					 * ----------
+					 */
+					break;
+			}
+			heap_close(fk_rel, NoLock);
+
+			if (SPI_connect() != SPI_OK_CONNECT)
+				elog(NOTICE, "SPI_connect() failed in RI_FKey_restrict_del()");
+
+			/* ----------
+			 * Fetch or prepare a saved plan for the restrict delete
+			 * lookup for foreign references
+			 * ----------
+			 */
+			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
+			{
+				char		buf[256];
+				char		querystr[8192];
+				char		*querysep;
+				Oid			queryoids[RI_MAX_NUMKEYS];
+
+				/* ----------
+				 * The query string built is
+				 *    SELECT oid FROM <fktable> WHERE fkatt1 = $1 [AND ...]
+				 * The type id's for the $ parameters are those of the
+				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * eventually fail if the parser cannot identify some way
+				 * how to compare these two types by '='.
+				 * ----------
+				 */
+				sprintf(querystr, "SELECT oid FROM \"%s\"", 
+									tgargs[RI_FK_RELNAME_ARGNO]);
+				querysep = "WHERE";
+				for (i = 0; i < qkey.nkeypairs; i++)
+				{
+					sprintf(buf, " %s \"%s\" = $%d", querysep, 
+										tgargs[4 + i * 2], i + 1);
+					strcat(querystr, buf);
+					querysep = "AND";
+					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
+				}
+
+				/* ----------
+				 * Prepare, save and remember the new plan.
+				 * ----------
+				 */
+				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
+				qplan = SPI_saveplan(qplan);
+				ri_HashPreparedPlan(&qkey, qplan);
+			}
+
+			/* ----------
+			 * We have a plan now. Build up the arguments for SPI_execp()
+			 * from the key values in the deleted PK tuple.
+			 * ----------
+			 */
+			for (i = 0; i < qkey.nkeypairs; i++)
+			{
+				del_values[i] = SPI_getbinval(old_row,
+									pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX],
+									&isnull);
+				if (isnull) 
+					del_nulls[i] = 'n';
+				else
+					del_nulls[i] = ' ';
+			}
+			del_nulls[i] = '\0';
+
+			/* ----------
+			 * Now check for existing references
+			 * ----------
+			 */
+			if (SPI_execp(qplan, del_values, del_nulls, 1) != SPI_OK_SELECT)
+				elog(ERROR, "SPI_execp() failed in RI_FKey_restrict_del()");
+			
+			if (SPI_processed > 0)
+				elog(ERROR, "%s referential integrity violation - "
+							"key in %s still referenced from %s",
+						tgargs[RI_CONSTRAINT_NAME_ARGNO],
+						tgargs[RI_PK_RELNAME_ARGNO],
+						tgargs[RI_FK_RELNAME_ARGNO]);
+
+			if (SPI_finish() != SPI_OK_FINISH)
+				elog(NOTICE, "SPI_finish() failed in RI_FKey_restrict_del()");
+
+			return NULL;
+
+		/* ----------
+		 * Handle MATCH PARTIAL restrict delete.
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_PARTIAL:
+			elog(ERROR, "MATCH PARTIAL not yet supported");
+			return NULL;
+	}
+
+	/* ----------
+	 * Never reached
+	 * ----------
+	 */
+	elog(ERROR, "internal error #3 in ri_triggers.c");
 	return NULL;
 }
 
@@ -680,12 +1093,206 @@ RI_FKey_restrict_del (FmgrInfo *proinfo)
 HeapTuple
 RI_FKey_restrict_upd (FmgrInfo *proinfo)
 {
-	TriggerData			*trigdata;
+	TriggerData		   *trigdata;
+	int					tgnargs;
+	char			  **tgargs;
+	Relation			fk_rel;
+	Relation			pk_rel;
+	HeapTuple			new_row;
+	HeapTuple			old_row;
+	RI_QueryKey			qkey;
+	void			   *qplan;
+	Datum				upd_values[RI_MAX_NUMKEYS];
+	char				upd_nulls[RI_MAX_NUMKEYS + 1];
+	bool				isnull;
+	int					i;
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
 
-	elog(NOTICE, "RI_FKey_restrict_upd() called\n");
+	/* ----------
+	 * Check that this is a valid trigger call on the right time and event.
+	 * ----------
+	 */
+	if (trigdata == NULL)
+		elog(ERROR, "RI_FKey_restrict_upd() not fired by trigger manager");
+	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) || 
+				!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
+		elog(ERROR, "RI_FKey_restrict_upd() must be fired AFTER ROW");
+	if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		elog(ERROR, "RI_FKey_restrict_upd() must be fired for UPDATE");
+
+	/* ----------
+	 * Check for the correct # of call arguments 
+	 * ----------
+	 */
+	tgnargs = trigdata->tg_trigger->tgnargs;
+	tgargs  = trigdata->tg_trigger->tgargs;
+	if (tgnargs < 4 || (tgnargs % 2) != 0)
+		elog(ERROR, "wrong # of arguments in call to RI_FKey_restrict_upd()");
+	if (tgnargs > RI_MAX_ARGUMENTS)
+		elog(ERROR, "too many keys (%d max) in call to RI_FKey_restrict_upd()",
+						RI_MAX_NUMKEYS);
+
+	/* ----------
+	 * Nothing to do if no column names to compare given
+	 * ----------
+	 */
+	if (tgnargs == 4)
+		return NULL;
+
+	/* ----------
+	 * Get the relation descriptors of the FK and PK tables and
+	 * the old tuple.
+	 * ----------
+	 */
+	fk_rel	= heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	pk_rel  = trigdata->tg_relation;
+	new_row = trigdata->tg_newtuple;
+	old_row = trigdata->tg_trigtuple;
+
+	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
+	{
+		/* ----------
+		 * SQL3 11.9 <referential constraint definition>
+		 *	Gereral rules 6) a) iv):
+		 * 		MATCH <unspecified> or MATCH FULL
+		 *			... ON DELETE CASCADE
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_UNSPECIFIED:
+		case RI_MATCH_TYPE_FULL:
+			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
+									RI_PLAN_RESTRICT_UPD_CHECKREF,
+									fk_rel, pk_rel,
+									tgnargs, tgargs);
+
+			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			{
+				case RI_KEYS_ALL_NULL:
+				case RI_KEYS_SOME_NULL:
+					/* ----------
+					 * No check - MATCH FULL means there cannot be any
+					 * reference to old key if it contains NULL
+					 * ----------
+					 */
+					heap_close(fk_rel, NoLock);
+					return NULL;
+					
+				case RI_KEYS_NONE_NULL:
+					/* ----------
+					 * Have a full qualified key - continue below
+					 * ----------
+					 */
+					break;
+			}
+			heap_close(fk_rel, NoLock);
+
+			/* ----------
+			 * No need to check anything if old and new keys are equal
+			 * ----------
+			 */
+			if (ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
+													RI_KEYPAIR_PK_IDX))
+				return NULL;
+
+			if (SPI_connect() != SPI_OK_CONNECT)
+				elog(NOTICE, "SPI_connect() failed in RI_FKey_restrict_upd()");
+
+			/* ----------
+			 * Fetch or prepare a saved plan for the restrict delete
+			 * lookup for foreign references
+			 * ----------
+			 */
+			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
+			{
+				char		buf[256];
+				char		querystr[8192];
+				char		*querysep;
+				Oid			queryoids[RI_MAX_NUMKEYS];
+
+				/* ----------
+				 * The query string built is
+				 *    SELECT oid FROM <fktable> WHERE fkatt1 = $1 [AND ...]
+				 * The type id's for the $ parameters are those of the
+				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * eventually fail if the parser cannot identify some way
+				 * how to compare these two types by '='.
+				 * ----------
+				 */
+				sprintf(querystr, "SELECT oid FROM \"%s\"", 
+									tgargs[RI_FK_RELNAME_ARGNO]);
+				querysep = "WHERE";
+				for (i = 0; i < qkey.nkeypairs; i++)
+				{
+					sprintf(buf, " %s \"%s\" = $%d", querysep, 
+										tgargs[4 + i * 2], i + 1);
+					strcat(querystr, buf);
+					querysep = "AND";
+					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
+				}
+
+				/* ----------
+				 * Prepare, save and remember the new plan.
+				 * ----------
+				 */
+				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
+				qplan = SPI_saveplan(qplan);
+				ri_HashPreparedPlan(&qkey, qplan);
+			}
+
+			/* ----------
+			 * We have a plan now. Build up the arguments for SPI_execp()
+			 * from the key values in the updated PK tuple.
+			 * ----------
+			 */
+			for (i = 0; i < qkey.nkeypairs; i++)
+			{
+				upd_values[i] = SPI_getbinval(old_row,
+									pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX],
+									&isnull);
+				if (isnull) 
+					upd_nulls[i] = 'n';
+				else
+					upd_nulls[i] = ' ';
+			}
+			upd_nulls[i] = '\0';
+
+			/* ----------
+			 * Now check for existing references
+			 * ----------
+			 */
+			if (SPI_execp(qplan, upd_values, upd_nulls, 1) != SPI_OK_SELECT)
+				elog(ERROR, "SPI_execp() failed in RI_FKey_restrict_upd()");
+			
+			if (SPI_processed > 0)
+				elog(ERROR, "%s referential integrity violation - "
+							"key in %s still referenced from %s",
+						tgargs[RI_CONSTRAINT_NAME_ARGNO],
+						tgargs[RI_PK_RELNAME_ARGNO],
+						tgargs[RI_FK_RELNAME_ARGNO]);
+
+			if (SPI_finish() != SPI_OK_FINISH)
+				elog(NOTICE, "SPI_finish() failed in RI_FKey_restrict_upd()");
+
+			return NULL;
+
+		/* ----------
+		 * Handle MATCH PARTIAL restrict update.
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_PARTIAL:
+			elog(ERROR, "MATCH PARTIAL not yet supported");
+			return NULL;
+	}
+
+	/* ----------
+	 * Never reached
+	 * ----------
+	 */
+	elog(ERROR, "internal error #4 in ri_triggers.c");
 	return NULL;
 }
 
@@ -704,7 +1311,7 @@ RI_FKey_setnull_del (FmgrInfo *proinfo)
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
 
-	elog(NOTICE, "RI_FKey_setnull_del() called\n");
+	elog(ERROR, "RI_FKey_setnull_del() called\n");
 	return NULL;
 }
 
@@ -723,7 +1330,7 @@ RI_FKey_setnull_upd (FmgrInfo *proinfo)
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
 
-	elog(NOTICE, "RI_FKey_setnull_upd() called\n");
+	elog(ERROR, "RI_FKey_setnull_upd() called\n");
 	return NULL;
 }
 
@@ -742,7 +1349,7 @@ RI_FKey_setdefault_del (FmgrInfo *proinfo)
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
 
-	elog(NOTICE, "RI_FKey_setdefault_del() called\n");
+	elog(ERROR, "RI_FKey_setdefault_del() called\n");
 	return NULL;
 }
 
@@ -761,7 +1368,7 @@ RI_FKey_setdefault_upd (FmgrInfo *proinfo)
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
 
-	elog(NOTICE, "RI_FKey_setdefault_upd() called\n");
+	elog(ERROR, "RI_FKey_setdefault_upd() called\n");
 	return NULL;
 }
 

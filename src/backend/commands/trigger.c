@@ -394,6 +394,8 @@ RelationRemoveTriggers(Relation rel)
 		stmt.relname = pstrdup(RelationGetRelationName(refrel));
 		stmt.trigname = nameout(&pg_trigger->tgname);
 
+		elog(NOTICE, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"", stmt.relname);
+
 		DropTrigger(&stmt);
 
 		pfree(stmt.relname);

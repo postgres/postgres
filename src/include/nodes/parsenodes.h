@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.87 1999/11/30 03:57:29 momjian Exp $
+ * $Id: parsenodes.h,v 1.88 1999/12/06 18:02:47 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,37 @@ typedef struct Constraint
 	char	   *cooked_expr;	/* nodeToString representation */
 	List	   *keys;			/* list of primary keys */
 } Constraint;
+
+
+/* ----------
+ * Definitions for FOREIGN KEY constraints in CreateStmt
+ * ----------
+ */
+#define FKCONSTR_ON_KEY_NOACTION		0x0000
+#define FKCONSTR_ON_KEY_RESTRICT		0x0001
+#define FKCONSTR_ON_KEY_CASCADE			0x0002
+#define FKCONSTR_ON_KEY_SETNULL			0x0004
+#define FKCONSTR_ON_KEY_SETDEFAULT		0x0008
+
+#define FKCONSTR_ON_DELETE_MASK			0x000F
+#define FKCONSTR_ON_DELETE_SHIFT		0
+
+#define FKCONSTR_ON_UPDATE_MASK			0x00F0
+#define FKCONSTR_ON_UPDATE_SHIFT		4
+
+typedef struct FkConstraint
+{
+	NodeTag		type;
+	char	   *constr_name;		/* Constraint name */
+	char	   *pktable_name;		/* Primary key table name */
+	List	   *fk_attrs;			/* Attributes of foreign key */
+	List	   *pk_attrs;			/* Corresponding attrs in PK table */
+	char	   *match_type;			/* FULL or PARTIAL */
+	int32		actions;			/* ON DELETE/UPDATE actions */
+	bool		deferrable;			/* DEFERRABLE */
+	bool		initdeferred;		/* INITIALLY DEFERRED */
+} FkConstraint;
+
 
 /* ----------------------
  *		Create/Drop TRIGGER Statements

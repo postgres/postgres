@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.56 1999/11/23 20:07:02 momjian Exp $
+ * $Id: nodes.h,v 1.57 1999/12/06 18:02:46 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,7 +215,8 @@ typedef enum NodeTag
 	T_JoinExpr,
 	T_CaseExpr,
 	T_CaseWhen,
-	T_RowMark
+	T_RowMark,
+	T_FkConstraint
 } NodeTag;
 
 /*
