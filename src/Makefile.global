@@ -1,3 +1,4 @@
+# Generated automatically from Makefile.global.in by configure.
 #----------------------------------------------------------------------------
 #
 # Makefile.global--
@@ -7,31 +8,31 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.96 1997/01/19 22:12:18 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.97 1997/01/24 01:23:23 scrappy Exp $
 #
 # NOTES
-#    Essentially all Postgres make files include this file and use the 
-#    variables it sets.  
+#    Essentially all Postgres make files include this file and use the
+#    variables it sets.
 #
 #    To override the default setting, create a Makefile.custom in this
 #    directory and put your defines there. (Makefile.custom is included
 #    near the end of this file).  Sometimes, a variable gets set in
 #    Makefile.global after Makefile.custom has been included, so you can't
 #    simply set that variable in Makefile.custom.  In those cases, there is
-#    often another variable (like CUSTOM_COPT) that you can set in 
+#    often another variable (like CUSTOM_COPT) that you can set in
 #    Makefile.custom that influences the later setting of the true variable
 #    of interest (like CFLAGS) by Makefile.global.
 #
 #
-#    If you change any of these defines you probably have to 
+#    If you change any of these defines you probably have to
 #       make clean; make
-#    since no dependencies are created for these. (of course you can 
+#    since no dependencies are created for these. (of course you can
 #    be crafty and check what files really depend on them and just remake
 #    those).
-#        
-#    Before including this file, you must set the SRCDIR variable to the 
-#    path of the top of the Postgres source tree (the directory that 
-#    contains this file).  
+#
+#    Before including this file, you must set the SRCDIR variable to the
+#    path of the top of the Postgres source tree (the directory that
+#    contains this file).
 #
 #-------------------------------------------------------------------------
 
@@ -52,7 +53,7 @@
 #   dgux           DG/UX 5.4R3.10
 #   hpux           HP PA-RISC on HP-UX 9.0
 #   i386_solaris   i386 Solaris
-#   irix5          SGI MIPS on IRIX 5.3 or better
+#   irix5          SGI MIPS on IRIX 5.3
 #   linux          Intel x86 on Linux 1.2 and Linux ELF
 #                  (For non-ELF Linux, see LINUX_ELF below).
 #   nextstep       Motorola MC68K or Intel x86 on NeXTSTEP 3.2 or greater
@@ -71,7 +72,7 @@ PORTNAME= UNDEFINED
 # Ignore LINUX_ELF if you're not using Linux.  But if you are, and you're
 # compiling to a.out (which means you're using the dld dynamic loading 
 # library), set LINUX_ELF to null in Makefile.custom.
-LINUX_ELF= true
+LINUX_ELF= 1
 
 LIBPQDIR:= $(SRCDIR)/libpq
 
@@ -97,7 +98,8 @@ LIBDIR= $(POSTGRESDIR)/lib
 
 # This is the directory where IPC utilities ipcs and ipcrm are located
 #
-IPCSDIR= /usr/bin
+IPCS=/usr/bin/ipcs
+IPCRM=/usr/bin/ipcrm
 
 # Where the man pages (suitable for use with "man") get installed.
 POSTMANDIR= $(POSTGRESDIR)/man
@@ -133,7 +135,7 @@ OIDNAMELEN= 36
 # (that is, prepend '#', don't set it to "0" or "no").
 
 # Compile libpq++
-#HAVE_Cplusplus= true
+HAVE_Cplusplus=true
 
 # Commenting out CASSERT will make things go a LOT faster, but you will
 # also loose a lot of useful error-checking.
@@ -154,7 +156,7 @@ ENFORCE_ALIGNMENT= true
 #    and READLINE_LIBDIR to reflect the location of the readline and history
 #    headers and libraries.
 #
-USE_READLINE= false
+USE_READLINE=true
 
 # directories for the readline and history libraries.
 #READLINE_INC= -I/home/tools/include
@@ -232,8 +234,8 @@ YFLAGS= -d
 # Installation. 
 #
 # For many ports, INSTALL is overridden below.
-INSTALL= install
-RANLIB= ranlib 
+INSTALL= /usr/bin/install
+RANLIB= ranlib
 
 INSTLOPTS= -c -m 444
 INSTL_EXE_OPTS= -c -m 555
@@ -252,7 +254,7 @@ INSTL_LIB_OPTS= -c -m 664
 # you do echo "no newline after this\c".
 
 DASH_N= -n
-BACKSLASH_C=
+BACKSLASH_C= 
 
 
 ##############################################################################
@@ -295,20 +297,22 @@ endif
 # Shared libraries.
 # This is overridden for many PORTNAMEs below.
 
+# NAT: autoconf needs to know about DLSUFFIX
 DLSUFFIX= .so
 
-#----------------------------------------------------------------------
-ifeq ($(PORTNAME), BSD44_derived)
-# cc is gcc, but never mind about that...
+#
+# CC
+#
 CC= gcc
 
-INSTALL= /usr/bin/install
-RANLIB=	/usr/bin/ranlib
-
-# FreeBSD 2.1R with new Flex v2.5.2 in /usr/local
+#
+# LEX
+#
 LEX= flex
-LDADD_BE= -L/usr/local/lib -lfl
+LD_ADD_BE = -lfl
 
+# SHARED LIBRARIES
+#
 CFLAGS_SL= -fpic -DPIC
 
 %.so: %.o
@@ -320,19 +324,20 @@ CFLAGS_SL= -fpic -DPIC
 	@rm -f $@
 	$(LD) -x -Bshareable -Bforcearchive \
 	  -o $@ $@.pic
-endif
 
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), aix)
-# might want to try installbsd instead 
-INSTALL= /usr/ucb/install
-
 # the -lm is because "pow" is defined in libbsd.a and we want pow(3m)
+# NAT: autoconf should look to see whether libbsd has the functions
+# NAT: we need from it, and if so include it.  Similarly -lm.  -ll is
+# NAT: for lex.  -lld is the shared library stuff that needs attention.
 LDADD_BE= -lm -lbsd -ll -lld
 
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
+# NAT: is there any harm in always defining this?  Does it have meaning
+# NAT: in BSD systems?  How do I write an autoconf test for this?
 MAKE_EXPORTS= true
 
 #
@@ -343,25 +348,22 @@ MAKE_EXPORTS= true
 # The HAVE_ANSI_CPP flag indicates that cc isn't ANSI but also doesn't
 # have a Reiser (pcc-style) cpp.
 #
+# NAT: autoconf should test for this by building a program that tests
+# NAT: the optimizer limits and the signed chars thing.
 CFLAGS_BE= -qchars=signed -qmaxmem=4000
 
-
+# NAT: ldexport stuff.  I don't understand this.
 EXPSUFF= .exp
-
-POSTGRES_EXP= $(SRCDIR)/backend/postgres$(EXPSUFF)
 
 MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
 
 %$(EXPSUFF):  %.o
 	$(MKLDEXPORT) $< `pwd` > $@
 
-$(POSTGRES_EXP): 
-	$(MAKE) -C $(SRCDIR)/backend postgres.exp
-
-%.so: %.o %$(EXPSUFF) $(POSTGRES_EXP)
-	@echo Making share library $@ from $*.o, $*$(EXPSUFF), and postgres.exp
+%.so: %.o %$(EXPSUFF)
+	@echo The link stage here:
 	$(LD) -H512 -T512 -o $@ -e _nostart \
-	  -bI:$(POSTGRES_EXP) -bE:$*$(EXPSUFF) \
+	  -bI:$(LIBDIR)/postgres$(EXPSUFF) -bE:$*$(EXPSUFF) \
 	  $*.o -lm -lc 2>/dev/null
 endif
 
@@ -379,24 +381,25 @@ CFLAGS_BE= -DNOFIXADE
 else
 CFLAGS_BE= -DNOPRINTADE
 endif
+# NAT: autoconf should test for this.  What symbol does libln.a give us?
 LDADD_BE= -lln
 
 # use the regex library
+# NAT: autoconf should test for this, but how?
 USE_REGEX= 1
 
+# NAT: autoconf should tell us which of these nasty definitions to use.
 %.so:  %.o
 	$(LD) -shared -expect_unresolved '*' -o $@ $<
-
-DASH_N=
-BACKSLASH_C= '\\\\c'
 
 endif
 
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), bsdi)
-CC= gcc
 
+# NAT: how should autoconf test for pre-2.1. bsdi?  grep for those
+# NAT: strings in the return value from uname?
 PRE_BSDI_2_1= false
 ifeq ($(shell uname -r), 2.0)
 PRE_BSDI_2_1= true
@@ -405,18 +408,15 @@ ifeq ($(shell uname -r), 2.01)
 PRE_BSDI_2_1= true
 endif
 
+# NAT: autoconf needs tests for -lipc, -lcompat, -ldld, -ltermap
+
 ifeq ($(PRE_BSDI_2_1), false)
 # cc is gcc v1.42
 # gcc is gcc v2.7.2
-  LEX= lex
-  LDADD_BE= -ltermcap -ldl
-  ifeq ($(shell uname -r), 2.1)
-    LDADD_BE+= -lipc
-  endif
+  LDADD_BE= -ltermcap -ldl -lipc
 else
 # cc is gcc v1.42
 # gcc is gcc v2.6.3
-  LEX= flex
 # use the regex library
   USE_REGEX= 1
   CFLAGS_BE= -DPRE_BSDI_2_1
@@ -429,25 +429,21 @@ endif
 
 #--------------------------------------------------------------------------
 
+# NAT: autoconf needs tests for -fpic
+
 ifeq ($(PORTNAME), dgux)
 CFLAGS_SL= -fpic
 %.so: %.o
 	$(CC) -shared -o $@ $<
 
-CC= gcc
-
 LDADD_BE= -ldl -lfl
-
-LEX= flex
-YACC= bison -y
-
-INSTALL=/usr/bin/X11/bsdinst
 
 endif
 
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), hpux)
+# NAT: autoconf needs to test for -W l,-E export symbols
 # -W l,-E	export symbols for linking with the shared libraries 
 #		dynamic loader
 
@@ -460,6 +456,8 @@ endif
 ifeq ($(CC), gcc)
   LDADD_BE+= /usr/lib/libdld.sl
 endif
+
+# NAT: autoconf needs to check the HPUX version.  How?
 
 ifdef ENFORCE_ALIGNMENT
    CFLAGS_BE= -DNOFIXADE
@@ -480,50 +478,36 @@ else
    endif
 endif
 
+# NAT: autoconf needs to check the (extended) ANSI flag
 # (extended) ANSI flag for cc (-Ae is same as -Aa -D_HPUX_SOURCE)
 ifeq ($(CC), cc)
 CFLAGS_BE+= -Ae
 endif
 
-# This is a script from the MIT X11 distribution. 
-INSTALL= bsdinst
-
-# RANLIB is not used on HP-UX
-RANLIB= touch
-
+# NAT: shared library stuff needs to be detected by autoconf
 CFLAGS_SL= +z
 DLSUFFIX= .sl
 
 %.sl: %.o
 	$(LD) -b -o $@ $<
 
-DASH_N= ''
-BACKSLASH_C= '\\\\c'
-
 endif
 
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), i386_solaris)
-# cc won't work!
-CC= gcc
-
-# RANLIB is not used on solaris
-RANLIB= touch
-
-INSTALL= /usr/ucb/install
-
-                                  #
-       # Random things that must be passed everywhere to enable
-                    # everything to compile.  :-/
-                                  #
-   # The extra -I flag is to scoop up extra BSD-emulating headers.
+#
+# Random things that must be passed everywhere to enable 
+# everything to compile.  :-/
+#
+# The extra -I flag is to scoop up extra BSD-emulating headers.
 # This needs to be fixed.  Things other than the backend should not be
-            # accessing headers in the backend directory.
-          CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
-                  LDADD_BE= -lsocket -lnsl -ll -ldl
-                        LD_ADD= -lsocket -lnsl
+# accessing headers in the backend directory.
+CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
+# NAT: autoconf needs to know about -lsocket, -lnsl
+LDADD_BE= -lsocket -lnsl -ll -ldl
 
+# NAT: autoconf needs to know about -fPIC etc
 ifeq ($(CC), cc)
 CFLAGS_SL= -K PIC
 else
@@ -533,42 +517,23 @@ endif
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
 
-DASH_N=''
-BACKSLASH_C='\\\\c'
-
 endif
 
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), irix5)
+# NAT: autoconf needs to figure out -ll
 LDADD_BE= -ll
 
-# RANLIB is not used on IRIX 5
-RANLIB= touch
-
-#If you have GNU install, by all means set CUSTOM_INSTALL to that in
-#Makefile.custom.  If you read the man page for /usr/bin/X11/bsdinst,
-#you will see it is not intended for end user use.  It chowns the files
-#it installs to root.
-INSTALL= /usr/bin/X11/bsdinst
-
-IPCSDIR= /usr/sbin
-
-INSTLOPTS=      -m 444
-INSTL_EXE_OPTS= -m 555
-INSTL_LIB_OPTS= -m 664
-
 %.so: %.o
-	$(LD) -G -Bdynamic -o $@ $< $(LD_ADD)
-
-DASH_N=''
-BACKSLASH_C='\\\\c'
+	$(LD) -G -Bdynamic -o $@ $<
 
 endif
 
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), linux)
+# NAT: how can autoconf work out the ELF stuff?
 ifndef LINUX_ELF
 DLSUFFIX= .o
 LDADD_BE= -ldld
@@ -579,32 +544,28 @@ LDFLAGS_BE= -rdynamic
 endif
 MK_NO_LORDER= true
 
-CC= gcc
-
 # use the regex library
+# NAT: what is the regex library and how can autoconf find it?
 USE_REGEX= 1
 
+# NAT: autoconf needs to know about -fpic and other shared library
+# NAT: isms
 CFLAGS_SL= -fpic
 %.so: %.o
 	$(CC) -shared -o $@ $<
 
 # The Linux gnulib #defines the problem away for you and calls 
 # the BSD routines if you give it the right flags.
+# NAT: what problem, and how can autoconf test for -lbsd needed?
 LDADD_BE+= -lbsd
-
-LEX= flex
 
 endif
 
 #---------------------------------------------------------------------------
 
-ifeq ($(PORTNAME), sunos4)
-# cc won't work!
-CC= gcc
+ifeq ($(PORTNAME), sparc)
 
-INSTALL= /usr/bin/install
-RANLIB= /usr/bin/ranlib
-
+# NAT: autoconf needs to know about gcc vs cc and -PIC vs -fPIC
 ifeq ($(CC), cc)
 CFLAGS_SL= -PIC
 else
@@ -612,6 +573,7 @@ CFLAGS_SL= -fPIC
 endif
 LDADD_BE= -lln -ldl
 
+# NAT: autoconf also needs to know about -Bdynamic
 %.so: %.o
 	$(LD) -dc -dp -Bdynamic -o $@ $<
 endif
@@ -619,103 +581,88 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), sparc_solaris)
-# cc won't work!
-CC= gcc
 
-LDADD_BE= -lsocket -lnsl -ll -ldl
-LD_ADD= -lsocket -lnsl
-
-# RANLIB is not used on solaris
-RANLIB= touch
-
-INSTALL= /usr/ucb/install
+# NAT: autoconf needs to know about dynamic loading libraries
+LDADD_BE= -ll -ldl
 
 #
 # Random things that must be passed everywhere to enable 
 # everything to compile.  :-/
 #
 # The extra -I flag is to scoop up extra BSD-emulating headers.
+# NAT: autoconf needs to know about BSD-emulating headers (see
+# NAT: the i386 port), -lsocket and -lnsl
 CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
 LDADD_BE+= -lsocket -lnsl
 
+# NAT: autoconf needs to know about -K PIC vs -fPIC
 ifeq ($(CC), cc)
 CFLAGS_SL= -K PIC
 else
 CFLAGS_SL= -fPIC
 endif
 
+# NAT: autoconf needs to know about dynamic loading
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
-
-DASH_N= ''
-BACKSLASH_C= '\\\\c'
 
 endif
 
 #-----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), svr4)
+# NAT: autoconf needs to know about -W0 and why you need it
 CFLAGS+= -W0
-YACC= bison -y
 
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
+# NAT: autoconf needs to know about MAKE_EXPORTS
 MAKE_EXPORTS= true
-
-# RANLIB is not used on svr4
-RANLIB= touch
-
-# GNU install
-INSTALL= /home/tools/bin/install
 
 #
 # Random things that must be passed everywhere to enable
 # everything to compile.  :-/
 #
 # The extra -I flag is to scoop up extra BSD-emulating headers.
+# NAT: autoconf needs to know about BSD-emulating headers,
+# NAT: -lsocket, -lnsl -lc libucb -ll and -ldl
 CFLAGS_BE+= -I$(SRCDIR)/backend/port/svr4
 LDADD_BE= -lsocket -lnsl -lc /usr/ucblib/libucb.a -ll -ldl
+# NAT: autoconf needs to know about -LD-Blargedynsym
 LDFLAGS_BE= -LD-Blargedynsym
 
+# NAT: autoconf needs to know about dynamic loading
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
 
-DASH_N= ''
-BACKSLASH_C= '\\\\c'
 endif
 
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), ultrix4)
+# NAT: autoconf needs to know about the different types of alignment
+# NAT: enforcement.
 ifdef ENFORCE_ALIGNMENT
 CFLAGS_BE= -DNOFIXADE
 endif
+# NAT: autoconf needs to know about dynamic loading
 LDADD_BE= -ldl -lln
 
+# NAT: autoconf needs to know about NO_BEFOREINSTL - what is it used
+# NAT: for and how do I test for it?
 # install creates intermediate directories
 NO_BEFOREINSTL= true
 
-INSTALL= /usr/bin/install
-RANLIB= /usr/bin/ranlib
-
+# NAT: autoconf needs to know about dynamic loading
 CFLAGS_SL= -G 0
 DLSUFFIX= .o
 
 endif
 
 
-#---------------------------------------------------------------------------
-ifeq ($(PORTNAME), nextstep)
-LDADD_BE+= -lipc
-AROPT= rc
-DLSUFFIX= .o
-endif
-
-#---------------------------------------------------------------------------
-# All others need -lm
-
-ifneq ($(PORTNAME), nextstep)
-LD_ADD+= -lm
+ifneq ($(PORTNAME), next)
+# NAT: autoconf needs to know about -lm
+LDADD_BE+= -lm
 endif
 
 # This goes here so that customization in Makefile.custom is effective
@@ -723,7 +670,7 @@ endif
 
 ifneq ($(CUSTOM_INSTALL),)
 INSTALL= $(CUSTOM_INSTALL)
-endif
+endif   
 
 #
 # Flags for CC and LD. 
@@ -800,6 +747,6 @@ CFLAGS+= -D$(PORTNAME)
 
 # include port-specific flags
 CFLAGS+= $(CFLAGS_BE)
-LD_ADD+= $(LDADD_BE)
+LDADD+= $(LDADD_BE)
 LDFLAGS+= $(LDFLAGS_BE)
 
