@@ -4,7 +4,7 @@
  *	  Functions for the built-in type bit() and varying bit().
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.6 2000/07/28 02:13:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.7 2000/08/07 20:15:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ zpbit_in(char *s, int dummy, int32 atttypmod)
 
 	if (len > MaxAttrSize)
 		elog(ERROR, "zpbit_in: length of bit() must be less than %ld",
-			 (MaxAttrSize - VARHDRSZ - VARBITHDRSZ) * BITSPERBYTE);
+			 (long) ((MaxAttrSize - VARHDRSZ - VARBITHDRSZ) * BITSPERBYTE));
 
 	result = (bits8 *) palloc(len);
 	/* set to 0 so that *r is always initialised and strin is zero-padded */
@@ -338,7 +338,7 @@ varbit_in(char *s, int dummy, int32 atttypmod)
 
 	if (len > MaxAttrSize)
 		elog(ERROR, "varbit_in: length of bit() must be less than %ld",
-			 (MaxAttrSize - VARHDRSZ - VARBITHDRSZ) * BITSPERBYTE);
+			 (long) ((MaxAttrSize - VARHDRSZ - VARBITHDRSZ) * BITSPERBYTE));
 
 	result = (bits8 *) palloc(len);
 	/* set to 0 so that *r is always initialised and strin is zero-padded */

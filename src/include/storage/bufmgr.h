@@ -7,36 +7,21 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.39 2000/06/15 03:33:00 momjian Exp $
+ * $Id: bufmgr.h,v 1.40 2000/08/07 20:15:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BUFMGR_H
 #define BUFMGR_H
 
-
 #include "storage/buf_internals.h"
 
-/*
- * the maximum size of a disk block for any possible installation.
- *
- * in theory this could be anything, but in practice this is actually
- * limited to 2^13 bytes because we have limited ItemIdData.lp_off and
- * ItemIdData.lp_len to 13 bits (see itemid.h).
- *
- * limit is now 2^15.  Took four bits from ItemIdData.lp_flags and gave
- * two apiece to ItemIdData.lp_len and lp_off. darrenk 01/06/98
- *
- */
-
-#define MAXBLCKSZ		32768
 
 typedef void *Block;
 
 /* special pageno for bget */
 #define P_NEW	InvalidBlockNumber		/* grow the file to get a new page */
 
-typedef bits16 BufferLock;
 
 /**********************************************************************
 

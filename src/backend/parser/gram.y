@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.183 2000/08/07 06:54:51 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.184 2000/08/07 20:16:13 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4153,10 +4153,11 @@ Bit:  bit '(' Iconst ')'
 					$$ = makeNode(TypeName);
 					$$->name = $1;
 					if ($3 < 1)
-						elog(ERROR,"length for type '%s' must be at least 1",$1);
-					else if ($3 > (MaxAttrSize * sizeof(char)))
-						elog(ERROR,"length for type '%s' cannot exceed %ld",$1,
-							 (MaxAttrSize * sizeof(char)));
+						elog(ERROR,"length for type '%s' must be at least 1",
+							 $1);
+					else if ($3 > (MaxAttrSize * BITSPERBYTE))
+						elog(ERROR,"length for type '%s' cannot exceed %d",
+							 $1, (MaxAttrSize * BITSPERBYTE));
 					$$->typmod = $3;
 				}
 		| bit
@@ -4187,10 +4188,11 @@ Character:  character '(' Iconst ')'
 					$$ = makeNode(TypeName);
 					$$->name = $1;
 					if ($3 < 1)
-						elog(ERROR,"length for type '%s' must be at least 1",$1);
+						elog(ERROR,"length for type '%s' must be at least 1",
+							 $1);
 					else if ($3 > MaxAttrSize)
-						elog(ERROR,"length for type '%s' cannot exceed %ld",$1,
-							 MaxAttrSize);
+						elog(ERROR,"length for type '%s' cannot exceed %d",
+							 $1, MaxAttrSize);
 
 					/* we actually implement these like a varlen, so
 					 * the first 4 bytes is the length. (the difference

@@ -7,38 +7,48 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.10 2000/01/26 05:58:33 momjian Exp $
+ * $Id: itemid.h,v 1.11 2000/08/07 20:15:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ITEMID_H
 #define ITEMID_H
 
+
+/*
+ * An item pointer (also called line pointer) on a buffer page
+ */
+typedef struct ItemIdData
+{								/* line pointers */
+	unsigned	lp_off:15,		/* offset to start of tuple */
+				lp_flags:2,		/* flags for tuple */
+				lp_len:15;		/* length of tuple */
+} ItemIdData;
+
+typedef ItemIdData *ItemId;
+
+/*
+ * lp_flags contains these flags:
+ */
+#define LP_USED			0x01	/* this line pointer is being used */
+/* currently, there is one unused flag bit ... */
+
+
+/*
+ * Item offsets, lengths, and flags are represented by these types when
+ * they're not actually stored in an ItemIdData.
+ */
 typedef uint16 ItemOffset;
 typedef uint16 ItemLength;
 
 typedef bits16 ItemIdFlags;
 
 
-
-typedef struct ItemIdData
-{								/* line pointers */
-	unsigned	lp_off:15,		/* offset to find tup */
-	/* can be reduced by 2 if necc. */
-				lp_flags:2,		/* flags on tuple */
-				lp_len:15;		/* length of tuple */
-} ItemIdData;
-
-typedef struct ItemIdData *ItemId;
-
-#ifndef LP_USED
-#define LP_USED			0x01	/* this line pointer is being used */
-#endif
-
 /* ----------------
  *		support macros
  * ----------------
  */
+
 /*
  *		ItemIdGetLength
  */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.33 2000/07/04 01:49:43 vadim Exp $
+ * $Id: htup.h,v 1.34 2000/08/07 20:15:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,16 @@
 
 #define MinHeapTupleBitmapSize	32		/* 8 * 4 */
 
-/* check these, they are likely to be more severely limited by t_hoff */
-
+/*
+ * MaxHeapAttributeNumber limits the number of (user) columns in a table.
+ * The key limit on this value is that the size of the fixed overhead for
+ * a tuple, plus the size of the null-values bitmap (at 1 bit per column),
+ * plus MAXALIGN alignment, must fit into t_hoff which is uint8.  On most
+ * machines the absolute upper limit without making t_hoff wider would be
+ * about 1700.  Note, however, that depending on column data types you will
+ * likely also be running into the disk-block-based limit on overall tuple
+ * size if you have more than a thousand or so columns.  TOAST won't help.
+ */
 #define MaxHeapAttributeNumber	1600	/* 8 * 200 */
 
 /*
@@ -130,13 +138,32 @@ typedef struct xl_heap_move
 
 #endif	/* XLOG */
 
-#define MinTupleSize	(MAXALIGN(sizeof (PageHeaderData)) + \
-						 MAXALIGN(sizeof(HeapTupleHeaderData)) + \
-						 MAXALIGN(sizeof(char)))
 
-#define MaxTupleSize	(BLCKSZ - MinTupleSize)
+/*
+ * MaxTupleSize is the maximum allowed size of a tuple, including header and
+ * MAXALIGN alignment padding.  Basically it's BLCKSZ minus the other stuff
+ * that has to be on a disk page.  The "other stuff" includes access-method-
+ * dependent "special space", which we assume will be no more than
+ * MaxSpecialSpace bytes (currently, on heap pages it's actually zero).
+ *
+ * NOTE: we do not need to count an ItemId for the tuple because
+ * sizeof(PageHeaderData) includes the first ItemId on the page.
+ */
+#define MaxSpecialSpace  32
 
-#define MaxAttrSize		(MaxTupleSize - MAXALIGN(sizeof(HeapTupleHeaderData)))
+#define MaxTupleSize	\
+	(BLCKSZ - MAXALIGN(sizeof(PageHeaderData) + MaxSpecialSpace))
+
+
+/*
+ * MaxAttrSize is a somewhat arbitrary upper limit on the declared size of
+ * data fields of char(n) and similar types.  It need not have anything
+ * directly to do with the *actual* upper limit of varlena values, which
+ * is currently 1Gb (see struct varattrib in postgres.h).  I've set it
+ * at 10Mb which seems like a reasonable number --- tgl 8/6/00.
+ */
+#define MaxAttrSize		(10 * 1024 * 1024)
+
 
 #define SelfItemPointerAttributeNumber			(-1)
 #define ObjectIdAttributeNumber					(-2)

@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.129 2000/08/07 00:51:38 tgl Exp $
+ * $Id: config.h.in,v 1.130 2000/08/07 20:15:44 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -106,12 +106,16 @@
 #define DEF_NBUFFERS (DEF_MAXBACKENDS > 8 ? DEF_MAXBACKENDS * 2 : 16)
 
 /*
- * Size of a disk block --- currently, this limits the size of a tuple.
- * You can set it bigger if you need bigger tuples.
+ * Size of a disk block --- this also limits the size of a tuple.
+ * You can set it bigger if you need bigger tuples (although TOAST
+ * should reduce the need to have large tuples, since fields can now
+ * be spread across multiple tuples).
+ *
+ * The maximum possible value of BLCKSZ is currently 2^15 (32768).
+ * This is determined by the 15-bit widths of the lp_off and lp_len
+ * fields in ItemIdData (see include/storage/itemid.h).
  *
  * CAUTION: changing BLCKSZ requires an initdb.
- *
- * currently must be <= 32k bjm
  */
 #define BLCKSZ	8192
 
@@ -212,6 +216,12 @@
  * DEFAULT_MAX_EXPR_DEPTH: default value of max_expr_depth SET variable.
  */
 #define DEFAULT_MAX_EXPR_DEPTH	10000
+
+/*
+ * You can try changing this if you have a machine with bytes of another
+ * size, but no guarantee...
+ */
+#define BITSPERBYTE		8
 
 /*
  *------------------------------------------------------------------------

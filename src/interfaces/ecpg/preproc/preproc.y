@@ -3114,12 +3114,13 @@ Bit:  bit '(' Iconst ')'
                                         if (atol($3) < 1)
 					{
                                                 sprintf(errortext,"length for type '%s' must be at least 1",$1);  
-						mmerror(ET_ERROR, errortext);
+												mmerror(ET_ERROR, errortext);
 					}
-                                        else if (atol($3) > (MaxAttrSize *sizeof(char)))
+                                        else if (atol($3) > (MaxAttrSize * BITSPERBYTE))
 					{
-                                                sprintf(errortext, "length for type '%s' cannot exceed %ld", $1,    
-                                                         (MaxAttrSize * sizeof(char)));
+                                                sprintf(errortext, "length for type '%s' cannot exceed %d", $1,
+                                                         (MaxAttrSize * BITSPERBYTE));
+												mmerror(ET_ERROR, errortext);
 					}
                                 }
                 | bit
@@ -3147,7 +3148,7 @@ Character:  character '(' Iconst ')'
 					}
 					else if (atol($3) > MaxAttrSize)
 					{
-						sprintf(errortext, "length for type '%s' cannot exceed %ld", $1, MaxAttrSize);
+						sprintf(errortext, "length for type '%s' cannot exceed %d", $1, MaxAttrSize);
 						mmerror(ET_ERROR, errortext);
 					}
 

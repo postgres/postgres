@@ -18,8 +18,6 @@ struct varbita
 	bits8		vl_dat[1];
 };
 
-#undef BITSPERBYTE				/* sometimes declared in <values.h> */
-#define BITSPERBYTE		8
 #define VARBITHDRSZ		sizeof(int32)
 /* Number of bits in this bit string */
 #define VARBITLEN(PTR)		(((struct varbita *)VARDATA(PTR))->vl_len)
