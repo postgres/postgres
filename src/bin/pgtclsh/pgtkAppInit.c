@@ -11,10 +11,6 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#ifndef lint
-static char sccsid[] = "@(#) tkAppInit.c 1.12 94/12/17 16:30:56";
-#endif /* not lint */
-
 #include "tk.h"
 #include "libpgtcl.h"
 
@@ -46,9 +42,7 @@ int *tclDummyMathPtr = (int *) matherr;
  */
 
 int
-main(argc, argv)
-    int argc;			/* Number of command-line arguments. */
-    char **argv;		/* Values of command-line arguments. */
+main(int argc, char **argv)
 {
     Tk_Main(argc, argv, Tcl_AppInit);
     return 0;			/* Needed only to prevent compiler warning. */
@@ -74,11 +68,8 @@ main(argc, argv)
  */
 
 int
-Tcl_AppInit(interp)
-    Tcl_Interp *interp;		/* Interpreter for application. */
+Tcl_AppInit(Tcl_Interp *interp)
 {
-    Tk_Window main;
-
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
@@ -97,7 +88,7 @@ Tcl_AppInit(interp)
      * where "Mod" is the name of the module.
      */
 
-    if (Pg_Init(interp) == TCL_ERROR) { 
+    if (Pgtcl_Init(interp) == TCL_ERROR) { 
       return TCL_ERROR;
     }
     /*
