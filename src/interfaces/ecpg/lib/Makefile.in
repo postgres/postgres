@@ -3,8 +3,10 @@ include $(SRCDIR)/Makefile.global
 
 PQ_INCLUDE=-I$(SRCDIR)/include -I$(SRCDIR)/interfaces/libpq
 
-SO_MAJOR_VERSION=0
-SO_MINOR_VERSION=5
+SO_MAJOR_VERSION=1
+SO_MINOR_VERSION=0
+
+PORTNAME=@PORTNAME@
 
 # Shared library stuff
 shlib := 
