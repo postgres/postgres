@@ -8,5 +8,5 @@ USE_LOCALE:no
 DLSUFFIX:.so
 YFLAGS:-d
 YACC:
-CC:gcc2
+CC:gcc
 
