@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.73 1999/02/07 13:54:58 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.74 1999/02/07 14:20:11 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 	 * Make our own private copy of the current queries snapshot data
 	 */
 	if (QuerySnapshot == NULL)
-		estate->es_snapshot = NULL
+		estate->es_snapshot = NULL;
 	else
 	{
 		estate->es_snapshot = (Snapshot)palloc(sizeof(SnapshotData));
