@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.49.4.1 2004/02/03 17:56:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.49.4.2 2004/11/24 22:44:27 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -106,6 +106,7 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 	int			regcomp_result;
 	int			regexec_result;
 	cached_re_str re_temp;
+	char		errMsg[100];
 
 	/* Convert data string to wide characters */
 	data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
@@ -143,7 +144,17 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 
 			pfree(data);
 
-			return (regexec_result == 0);
+			if (regexec_result != REG_OKAY && regexec_result != REG_NOMATCH)
+			{
+				/* re failed??? */
+				pg_regerror(regexec_result, &re_array[0].cre_re,
+							errMsg, sizeof(errMsg));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
+						 errmsg("regular expression failed: %s", errMsg)));
+			}
+
+			return (regexec_result == REG_OKAY);
 		}
 	}
 
@@ -165,11 +176,9 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 
 	pfree(pattern);
 
-	if (regcomp_result != 0)
+	if (regcomp_result != REG_OKAY)
 	{
 		/* re didn't compile */
-		char		errMsg[100];
-
 		pg_regerror(regcomp_result, &re_temp.cre_re, errMsg, sizeof(errMsg));
 		/* XXX should we pg_regfree here? */
 		ereport(ERROR,
@@ -221,7 +230,17 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 
 	pfree(data);
 
-	return (regexec_result == 0);
+	if (regexec_result != REG_OKAY && regexec_result != REG_NOMATCH)
+	{
+		/* re failed??? */
+		pg_regerror(regexec_result, &re_array[0].cre_re,
+					errMsg, sizeof(errMsg));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
+				 errmsg("regular expression failed: %s", errMsg)));
+	}
+
+	return (regexec_result == REG_OKAY);
 }
 
 
