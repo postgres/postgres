@@ -2,7 +2,7 @@
  * conversion between client encoding and server internal encoding
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: conv.c,v 1.4 1998/12/14 04:59:58 momjian Exp $
+ * $Id: conv.c,v 1.5 1999/02/02 18:51:23 momjian Exp $
  */
 #include <stdio.h>
 #include <string.h>
@@ -370,6 +370,94 @@ mic2euc_tw(unsigned char *mic, unsigned char *p, int len)
 }
 
 /*
+ * Big5 ---> MIC
+ */
+static void
+big52mic(unsigned char *big5, unsigned char *p, int len)
+{
+  unsigned short c1;
+  unsigned short big5buf, cnsBuf;
+  unsigned char lc;
+  char bogusBuf[2];
+  int i;
+
+  while (len > 0 && (c1 = *big5++))
+    {
+      if (c1 <= 0x007fU) {	/* ASCII */
+	len--;
+	*p++ = c1;
+      } else {
+	len  -= 2;
+	big5buf = c1 << 8;
+	c1 = *big5++;
+	big5buf |= c1;
+	cnsBuf = BIG5toCNS(big5buf, &lc);
+	if (lc != 0) {
+	  if (lc == LC_CNS11643_3 || lc == LC_CNS11643_4) {
+	    *p++ = 0x9d;	/* LCPRV2 */
+	  }
+	  *p++ = lc;	/* Plane No. */
+	  *p++ = (cnsBuf >> 8) & 0x00ff;
+	  *p++ = cnsBuf & 0x00ff;
+	} else {	/* cannot convert */
+	  big5 -= 2;
+	  *p++ = '(';
+	  for (i=0;i<2;i++) {
+	    sprintf(bogusBuf,"%02x",*big5++);
+	    *p++ = bogusBuf[0];
+	    *p++ = bogusBuf[1];
+	  }
+	  *p++ = ')';
+	}
+      }
+    }
+  *p = '\0';
+}
+
+/*
+ * MIC ---> Big5
+ */
+static void
+mic2big5(unsigned char *mic, unsigned char *p, int len)
+{
+  int l;
+  unsigned short			c1;
+  unsigned short big5buf, cnsBuf;
+
+  while (len > 0 && (c1 = *mic))
+    {
+      l = pg_mic_mblen(mic++);
+      len -= l;
+
+      /* 0x9d means LCPRV2 */
+      if (c1 == LC_CNS11643_1 || c1 == LC_CNS11643_2 || c1 == 0x9d)
+	{
+	  if (c1 == 0x9d) {
+	    c1 = *mic++;	/* get plane no. */
+	  }
+	  cnsBuf = (*mic++)<<8;
+	  cnsBuf |= (*mic++) & 0x00ff;
+	  big5buf = CNStoBIG5(cnsBuf, c1);
+	  if (big5buf == 0) {	/* cannot convert to Big5! */
+	    mic -= l;
+	    printBogusChar(&mic, &p);
+	  } else {
+	    *p++ = (big5buf >> 8) & 0x00ff;
+	    *p++ = big5buf & 0x00ff;
+	  }
+	}
+      else if (c1 <= 0x7f) /* ASCII */
+	{
+	  *p++ = c1;
+	} else {			/* cannot convert to Big5! */
+	  mic--;
+	  printBogusChar(&mic, &p);
+	}
+    }
+  *p = '\0';
+}
+
+/*
  * LATINn ---> MIC
  */
 static void
@@ -514,5 +602,6 @@ pg_encoding_conv_tbl pg_conv_tbl[] = {
 	{LATIN4, "LATIN4", 0, latin42mic, mic2latin4},		/* ISO 8859 Latin 4 */
 	{LATIN5, "LATIN5", 0, latin52mic, mic2latin5},		/* ISO 8859 Latin 5 */
 	{SJIS, "SJIS", 1, sjis2mic, mic2sjis},		/* SJIS */
+	{BIG5, "BIG5", 1, big52mic, mic2big5},		/* Big5 */
 	{-1, "", 0, 0, 0}			/* end mark */
 };

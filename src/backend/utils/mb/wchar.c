@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.4 1998/09/01 04:33:26 momjian Exp $
+ * $Id: wchar.c,v 1.5 1999/02/02 18:51:23 momjian Exp $
  */
 
 #include "mb/pg_wchar.h"
@@ -396,6 +396,25 @@ pg_sjis_mblen(const unsigned char *s)
 	return (len);
 }
 
+/*
+ * Big5
+ */
+static int
+pg_big5_mblen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s > 0x7f)
+	{							/* kanji? */
+		len = 2;
+	}
+	else
+	{							/* should be ASCII */
+		len = 1;
+	}
+	return (len);
+}
+
 pg_wchar_tbl pg_wchar_table[] = {
 	{pg_ascii2wchar_with_len, pg_ascii_mblen},
 	{pg_eucjp2wchar_with_len, pg_eucjp_mblen},
@@ -429,7 +448,8 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{0, 0},
 	{0, 0},
 	{0, 0},
-	{0, pg_sjis_mblen}
+	{0, pg_sjis_mblen},
+	{0, pg_big5_mblen}
 };
 
 /* returns the byte length of a word for mule internal code */

@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.5 1998/09/25 01:46:25 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.6 1999/02/02 18:51:25 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -11,7 +11,7 @@
 #define EUC_JP 1				/* EUC for Japanese */
 #define EUC_CN 2				/* EUC for Chinese */
 #define EUC_KR 3				/* EUC for Korean */
-#define EUC_TW 3				/* EUC for Taiwan */
+#define EUC_TW 4				/* EUC for Taiwan */
 #define UNICODE 5				/* Unicode UTF-8 */
 #define MULE_INTERNAL 6			/* Mule internal code */
 #define LATIN1 7				/* ISO-8859 Latin 1 */
@@ -25,6 +25,7 @@
 #define LATIN9 15				/* ISO-8859 Latin 9 */
 /* followings are for client encoding only */
 #define SJIS 32					/* Shift JIS */
+#define BIG5 33					/* Big5 */
 
 #ifdef MULTIBYTE
 typedef unsigned int pg_wchar;
@@ -122,6 +123,8 @@ extern int	GetDatabaseEncoding(void);
 extern void SetDatabaseEncoding(int);
 extern void SetTemplateEncoding(int);
 extern int	GetTemplateEncoding(void);
+extern unsigned short BIG5toCNS(unsigned short, unsigned char *);
+extern unsigned short CNStoBIG5(unsigned short, unsigned char);
 
 #endif	 /* MULTIBYTE */
 

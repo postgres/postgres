@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.42 1999/01/17 06:19:34 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.43 1999/02/02 18:51:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       dllist.o pqsignal.o
 
 ifdef MULTIBYTE
-OBJS+= common.o wchar.o conv.o
+OBJS+= common.o wchar.o conv.o big5.o
 endif
 
 # If crypt is a separate library, rather than part of libc,
@@ -62,6 +62,9 @@ wchar.c: $(SRCDIR)/backend/utils/mb/wchar.c
 
 conv.c: $(SRCDIR)/backend/utils/mb/conv.c
 	-$(LN_S) $(SRCDIR)/backend/utils/mb/conv.c .
+
+big5.c: $(SRCDIR)/backend/utils/mb/big5.c
+	-$(LN_S) $(SRCDIR)/backend/utils/mb/big5.c .
 endif
 
 # The following rules cause dependencies in the backend directory to 
@@ -142,7 +145,7 @@ beforeinstall-headers:
 .PHONY: clean
 clean:
 	rm -f libpq.a $(shlib) $(OBJS)
-	rm -f dllist.c common.c wchar.c conv.c
+	rm -f dllist.c common.c wchar.c conv.c big5.c
 ifeq ($(PORTNAME), win)
 	rm -f pq.def
 endif

@@ -3,14 +3,14 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.4 1998/09/25 01:46:23 momjian Exp $ */
+ * $Id: mbutils.c,v 1.5 1999/02/02 18:51:23 momjian Exp $ */
 
 #include <stdio.h>
 #include <string.h>
 
 #include "mb/pg_wchar.h"
 
-static client_encoding = -1;
+static int client_encoding = -1;
 static void (*client_to_mic) ();/* something to MIC */
 static void (*client_from_mic) ();		/* MIC to something */
 static void (*server_to_mic) ();/* something to MIC */

@@ -1,4 +1,4 @@
-postgresql 6.4 multi-byte (MB) support README	  Dec 16 1998
+postgresql 6.5 multi-byte (MB) support README	  Jan 26 1999
 
 						Tatsuo Ishii
 						t-ishii@sra.co.jp
@@ -113,6 +113,7 @@ Supported encodings for PGCLIENTENCODING are:
 	EUC_CN			Chinese EUC
 	EUC_KR			Korean EUC
 	EUC_TW			Taiwan EUC
+	BIG5			Traditional chinese
 	MULE_INTERNAL		Mule internal
 	LATIN1			ISO 8859-1 English and some European languages
 	LATIN2			ISO 8859-2 English and some European languages
@@ -168,6 +169,12 @@ Unicode: http://www.unicode.org/
 	UTF-8 is defined here.
 
 5. History
+
+Jan 26, 1999
+	* Add support Big5 for fronend encoding
+	  (you need to create a database with EUC_TW to use Big5)
+	* Add regression test case for EUC_TW
+	  (contributed by Jonah Kuo <jonahkuo@mail.ttn.com.tw>)
 
 Dec 15, 1998
 	* Bugs related to SQL_ASCII support fixed

@@ -1,4 +1,4 @@
-postgresql 6.4 multi-byte (MB) support README	       1998/12/16 作成
+postgresql 6.5 multi-byte (MB) support README	       1999/1/26 作成
 
 							石井達夫
 						t-ishii@sra.co.jp
@@ -130,7 +130,7 @@ initdb/createdb/create database におけるエンコーディングの指定について
 
   環境変数 PGCLIENTENCODING が設定されている場合はその値が優先され、バッ
   クエンド側と異なるエンコーディングが使用できます。設定可能なエンコー
-  ディングは、上記に加え、SJIS (シフトJIS)が指定できます。
+  ディングは、上記に加え、SJIS (シフトJIS)と BiG5 が指定できます。
 
 	ちなみに、SJIS は JISX0201 の 1バイトカナ、いわゆる「半角カタ
 	カナ」もサポートしています(決して「半角カタカナ」の使用をお勧
@@ -205,6 +205,13 @@ initdb/createdb/create database におけるエンコーディングの指定について
     ただきました。
 
 改定履歴：
+
+  1999/1/26 Big5 サポート追加
+	* Big5 がフロントエンド側のエンコーディングとして利用できるよ
+	  うになりました。この場合、バックエンド側のエンコーディングは
+	  EUC_TW または MULE_INTERNAL とします。
+	* EUC_TW の regression test ケースを追加
+	  (contributed by Jonah Kuo <jonahkuo@mail.ttn.com.tw>)
 
   1998/12/16 本ドキュメント修正。
 	* Makefile.custom で MB=EUC_JP などと設定する方法は 6.4 以降
