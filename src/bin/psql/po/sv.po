@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.22 2004/04/02 13:47:56 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.23 2004/04/09 05:54:01 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-04-02 15:42+0200\n"
-"PO-Revision-Date: 2004-04-02 15:45+0200\n"
+"POT-Creation-Date: 2004-04-09 07:50+0200\n"
+"PO-Revision-Date: 2004-04-09 07:52+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -884,7 +884,7 @@ msgid "%s: unknown transaction status\n"
 msgstr "%s: okänd transaktionsstatus\n"
 
 #: large_obj.c:258 describe.c:80 describe.c:131 describe.c:204 describe.c:266
-#: describe.c:313 describe.c:413 describe.c:693 describe.c:1365
+#: describe.c:313 describe.c:413 describe.c:693 describe.c:1371
 msgid "Description"
 msgstr "Beskrivning"
 
@@ -984,13 +984,13 @@ msgstr ""
 "\n"
 
 #: describe.c:79 describe.c:121 describe.c:191 describe.c:264 describe.c:359
-#: describe.c:413 describe.c:1358 describe.c:1464 describe.c:1512
+#: describe.c:413 describe.c:1364 describe.c:1470 describe.c:1518
 msgid "Schema"
 msgstr "Schema"
 
 #: describe.c:79 describe.c:121 describe.c:191 describe.c:264 describe.c:306
-#: describe.c:359 describe.c:413 describe.c:1358 describe.c:1465
-#: describe.c:1513 describe.c:1610
+#: describe.c:359 describe.c:413 describe.c:1364 describe.c:1471
+#: describe.c:1519 describe.c:1616
 msgid "Name"
 msgstr "Namn"
 
@@ -1014,7 +1014,7 @@ msgstr "Resultatdatatyp"
 msgid "Argument data types"
 msgstr "Argumentdatatyp"
 
-#: describe.c:130 describe.c:306 describe.c:1360 describe.c:1611
+#: describe.c:130 describe.c:306 describe.c:1366 describe.c:1617
 msgid "Owner"
 msgstr "Ägare"
 
@@ -1066,19 +1066,19 @@ msgstr "Kodning"
 msgid "List of databases"
 msgstr "Lista med databaser"
 
-#: describe.c:359 describe.c:487 describe.c:1359
+#: describe.c:359 describe.c:487 describe.c:1365
 msgid "table"
 msgstr "tabell"
 
-#: describe.c:359 describe.c:487 describe.c:1359
+#: describe.c:359 describe.c:487 describe.c:1365
 msgid "view"
 msgstr "vy"
 
-#: describe.c:359 describe.c:487 describe.c:1359
+#: describe.c:359 describe.c:487 describe.c:1365
 msgid "sequence"
 msgstr "sekvens"
 
-#: describe.c:359 describe.c:680 describe.c:1360 describe.c:1466
+#: describe.c:359 describe.c:680 describe.c:1366 describe.c:1472
 msgid "Type"
 msgstr "Typ"
 
@@ -1111,7 +1111,7 @@ msgstr "operator"
 msgid "data type"
 msgstr "datatyp"
 
-#: describe.c:487 describe.c:1359
+#: describe.c:487 describe.c:1365
 msgid "index"
 msgstr "index"
 
@@ -1185,25 +1185,29 @@ msgstr "Sammansatt typ \"%s.%s\""
 msgid "?%c? \"%s.%s\""
 msgstr "?%c? \"%s.%s\""
 
-#: describe.c:858
+#: describe.c:859
 msgid "PRIMARY KEY, "
 msgstr "PRIMÄRNYCKEL, "
 
-#: describe.c:860
+#: describe.c:861
 msgid "UNIQUE, "
 msgstr "UNIK, "
 
-#: describe.c:866
+#: describe.c:867
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "för tabell \"%s.%s\""
 
-#: describe.c:870
+#: describe.c:871
 #, c-format
 msgid ", predicate (%s)"
 msgstr ", predikat (%s)"
 
-#: describe.c:904
+#: describe.c:874
+msgid ", CLUSTER"
+msgstr ", KLUSTER"
+
+#: describe.c:908
 #, c-format
 msgid ""
 "View definition:\n"
@@ -1212,173 +1216,177 @@ msgstr ""
 "Vydefinition:\n"
 "%s"
 
-#: describe.c:910 describe.c:1129
+#: describe.c:914 describe.c:1135
 msgid "Rules:"
 msgstr "Regler:"
 
-#: describe.c:1065
+#: describe.c:1069
 msgid "Indexes:"
 msgstr "Index:"
 
-#: describe.c:1073
+#: describe.c:1077
 #, c-format
 msgid "    \"%s\""
 msgstr "    \"%s\""
 
-#: describe.c:1079
+#: describe.c:1083
 msgid " PRIMARY KEY,"
 msgstr " PRIMÄRNYCKEL,"
 
-#: describe.c:1081
+#: describe.c:1085
 msgid " UNIQUE,"
 msgstr " UNIK,"
 
-#: describe.c:1099
+#: describe.c:1096
+msgid " CLUSTER"
+msgstr " KLUSTER"
+
+#: describe.c:1105
 msgid "Check constraints:"
 msgstr "Kontrollera integritetsvillkor:"
 
-#: describe.c:1103 describe.c:1118
+#: describe.c:1109 describe.c:1124
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    \"%s\" %s"
 
-#: describe.c:1114
+#: describe.c:1120
 msgid "Foreign-key constraints:"
 msgstr "Främmande nyckel-villkor:"
 
-#: describe.c:1148
+#: describe.c:1154
 msgid "Triggers:"
 msgstr "Utlösare:"
 
-#: describe.c:1170
+#: describe.c:1176
 msgid "Inherits"
 msgstr "Ärver"
 
-#: describe.c:1257
+#: describe.c:1263
 msgid "User name"
 msgstr "Användarnamn"
 
-#: describe.c:1257
+#: describe.c:1263
 msgid "User ID"
 msgstr "Användar-ID"
 
-#: describe.c:1258
+#: describe.c:1264
 msgid "superuser, create database"
 msgstr "superanvändare, skapa databas"
 
-#: describe.c:1259
+#: describe.c:1265
 msgid "superuser"
 msgstr "superanvändare"
 
-#: describe.c:1259
+#: describe.c:1265
 msgid "create database"
 msgstr "skapa databas"
 
-#: describe.c:1260
+#: describe.c:1266
 msgid "Attributes"
 msgstr "Attribut"
 
-#: describe.c:1260
+#: describe.c:1266
 msgid "Groups"
 msgstr "Grupper"
 
-#: describe.c:1273
+#: describe.c:1279
 msgid "List of database users"
 msgstr "Lista med databasanvändare"
 
-#: describe.c:1300
+#: describe.c:1306
 msgid "Group name"
 msgstr "Gruppnamn"
 
-#: describe.c:1300
+#: describe.c:1306
 msgid "Group ID"
 msgstr "Grupp-ID"
 
-#: describe.c:1313
+#: describe.c:1319
 msgid "List of database groups"
 msgstr "Lista med databasgrupper"
 
-#: describe.c:1360
+#: describe.c:1366
 msgid "special"
 msgstr "särskild"
 
-#: describe.c:1375
+#: describe.c:1381
 msgid "Table"
 msgstr "Tabell"
 
-#: describe.c:1421
+#: describe.c:1427
 msgid "No matching relations found.\n"
 msgstr "Inga matchande relationer funna.\n"
 
-#: describe.c:1423
+#: describe.c:1429
 msgid "No relations found.\n"
 msgstr "Inga relationer funna.\n"
 
-#: describe.c:1428
+#: describe.c:1434
 msgid "List of relations"
 msgstr "Lista med relationer"
 
-#: describe.c:1467
+#: describe.c:1473
 msgid "Modifier"
 msgstr "Modifierare"
 
-#: describe.c:1481
+#: describe.c:1487
 msgid "List of domains"
 msgstr "Lista av domäner"
 
-#: describe.c:1514
+#: describe.c:1520
 msgid "Source"
 msgstr "Källa"
 
-#: describe.c:1515
+#: describe.c:1521
 msgid "Destination"
 msgstr "Mål"
 
-#: describe.c:1516 describe.c:1573
+#: describe.c:1522 describe.c:1579
 msgid "yes"
 msgstr "ja"
 
-#: describe.c:1517 describe.c:1571
+#: describe.c:1523 describe.c:1577
 msgid "no"
 msgstr "nej"
 
-#: describe.c:1518
+#: describe.c:1524
 msgid "Default?"
 msgstr "Standard?"
 
-#: describe.c:1532
+#: describe.c:1538
 msgid "List of conversions"
 msgstr "Lista med konverteringar"
 
-#: describe.c:1567
+#: describe.c:1573
 msgid "Source type"
 msgstr "Källtyp"
 
-#: describe.c:1568
+#: describe.c:1574
 msgid "Target type"
 msgstr "Måltyp"
 
-#: describe.c:1569
+#: describe.c:1575
 msgid "(binary compatible)"
 msgstr "(binärkompatibel)"
 
-#: describe.c:1570
+#: describe.c:1576
 msgid "Function"
 msgstr "Funktion"
 
-#: describe.c:1572
+#: describe.c:1578
 msgid "in assignment"
 msgstr "i tilldelning"
 
-#: describe.c:1574
+#: describe.c:1580
 msgid "Implicit?"
 msgstr "Implicit?"
 
-#: describe.c:1582
+#: describe.c:1588
 msgid "List of casts"
 msgstr "Lista med typomvandlingar"
 
-#: describe.c:1624
+#: describe.c:1630
 msgid "List of schemas"
 msgstr "Lista med scheman"
 
@@ -2908,8 +2916,4 @@ msgstr ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ tabell [ (kolumn "
 "[, ...] ) ] ]"
 
-#~ msgid "parse error at the end of line\n"
-#~ msgstr "parsfel vid radslutet\n"
 
-#~ msgid "BEGIN [ WORK | TRANSACTION ]"
-#~ msgstr "BEGIN [ WORK | TRANSACTION ]"
