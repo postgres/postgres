@@ -21,7 +21,6 @@
 
 /*********top interface**********/
 
-static void *plan_getparser = NULL;
 static Oid	current_parser_id = InvalidOid;
 
 void
@@ -31,20 +30,22 @@ init_prs(Oid id, WParserInfo * prs)
 	bool		isnull;
 	Datum		pars[1];
 	int			stat;
+	void *plan;
+	char buf[1024], *nsp;
 
 	arg[0] = OIDOID;
 	pars[0] = ObjectIdGetDatum(id);
 
 	memset(prs, 0, sizeof(WParserInfo));
 	SPI_connect();
-	if (!plan_getparser)
-	{
-		plan_getparser = SPI_saveplan(SPI_prepare("select prs_start, prs_nexttoken, prs_end, prs_lextype, prs_headline from pg_ts_parser where oid = $1", 1, arg));
-		if (!plan_getparser)
-			ts_error(ERROR, "SPI_prepare() failed");
-	}
+	nsp=get_namespace(TSNSP_FunctionOid);
+	sprintf(buf, "select prs_start, prs_nexttoken, prs_end, prs_lextype, prs_headline from %s.pg_ts_parser where oid = $1", nsp);
+	pfree(nsp);
+	plan= SPI_prepare(buf, 1, arg);
+	if (!plan)
+		ts_error(ERROR, "SPI_prepare() failed");
 
-	stat = SPI_execp(plan_getparser, pars, " ", 1);
+	stat = SPI_execp(plan, pars, " ", 1);
 	if (stat < 0)
 		ts_error(ERROR, "SPI_execp return %d", stat);
 	if (SPI_processed > 0)
@@ -64,6 +65,7 @@ init_prs(Oid id, WParserInfo * prs)
 	}
 	else
 		ts_error(ERROR, "No parser with id %d", id);
+	SPI_freeplan(plan);
 	SPI_finish();
 }
 
@@ -130,8 +132,6 @@ findprs(Oid id)
 	return findprs(id); /* qsort changed order!! */ ;
 }
 
-static void *plan_name2id = NULL;
-
 Oid
 name2id_prs(text *name)
 {
@@ -140,6 +140,8 @@ name2id_prs(text *name)
 	Datum		pars[1];
 	int			stat;
 	Oid			id = findSNMap_t(&(PList.name2id_map), name);
+	char buf[1024], *nsp;
+	void *plan;
 
 	arg[0] = TEXTOID;
 	pars[0] = PointerGetDatum(name);
@@ -148,20 +150,21 @@ name2id_prs(text *name)
 		return id;
 
 	SPI_connect();
-	if (!plan_name2id)
-	{
-		plan_name2id = SPI_saveplan(SPI_prepare("select oid from pg_ts_parser where prs_name = $1", 1, arg));
-		if (!plan_name2id)
-			ts_error(ERROR, "SPI_prepare() failed");
-	}
+	nsp = get_namespace(TSNSP_FunctionOid);
+	sprintf(buf, "select oid from %s.pg_ts_parser where prs_name = $1", nsp);
+	pfree(nsp);
+	plan= SPI_prepare(buf, 1, arg);
+	if (!plan)
+		ts_error(ERROR, "SPI_prepare() failed");
 
-	stat = SPI_execp(plan_name2id, pars, " ", 1);
+	stat = SPI_execp(plan, pars, " ", 1);
 	if (stat < 0)
 		ts_error(ERROR, "SPI_execp return %d", stat);
 	if (SPI_processed > 0)
 		id = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
 	else
 		ts_error(ERROR, "No parser '%s'", text2char(name));
+	SPI_freeplan(plan);
 	SPI_finish();
 	addSNMap_t(&(PList.name2id_map), name, id);
 	return id;
@@ -239,7 +242,7 @@ token_type(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	Datum		result;
-
+        SET_FUNCOID();
 	if (SRF_IS_FIRSTCALL())
 	{
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -260,7 +263,7 @@ token_type_byname(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	Datum		result;
-
+        SET_FUNCOID();
 	if (SRF_IS_FIRSTCALL())
 	{
 		text	   *name = PG_GETARG_TEXT_P(0);
@@ -284,7 +287,7 @@ token_type_current(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	Datum		result;
-
+        SET_FUNCOID();
 	if (SRF_IS_FIRSTCALL())
 	{
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -306,6 +309,7 @@ Datum		set_curprs(PG_FUNCTION_ARGS);
 Datum
 set_curprs(PG_FUNCTION_ARGS)
 {
+        SET_FUNCOID();
 	findprs(PG_GETARG_OID(0));
 	current_parser_id = PG_GETARG_OID(0);
 	PG_RETURN_VOID();
@@ -317,7 +321,7 @@ Datum
 set_curprs_byname(PG_FUNCTION_ARGS)
 {
 	text	   *name = PG_GETARG_TEXT_P(0);
-
+        SET_FUNCOID();
 	DirectFunctionCall1(
 						set_curprs,
 						ObjectIdGetDatum(name2id_prs(name))
@@ -440,7 +444,7 @@ parse(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	Datum		result;
-
+        SET_FUNCOID();
 	if (SRF_IS_FIRSTCALL())
 	{
 		text	   *txt = PG_GETARG_TEXT_P(1);
@@ -464,7 +468,7 @@ parse_byname(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	Datum		result;
-
+        SET_FUNCOID();
 	if (SRF_IS_FIRSTCALL())
 	{
 		text	   *name = PG_GETARG_TEXT_P(0);
@@ -491,7 +495,7 @@ parse_current(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	Datum		result;
-
+        SET_FUNCOID();
 	if (SRF_IS_FIRSTCALL())
 	{
 		text	   *txt = PG_GETARG_TEXT_P(0);
@@ -515,13 +519,17 @@ Datum		headline(PG_FUNCTION_ARGS);
 Datum
 headline(PG_FUNCTION_ARGS)
 {
-	TSCfgInfo  *cfg = findcfg(PG_GETARG_OID(0));
 	text	   *in = PG_GETARG_TEXT_P(1);
 	QUERYTYPE  *query = (QUERYTYPE *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(2)));
 	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
 	HLPRSTEXT	prs;
 	text	   *out;
-	WParserInfo *prsobj = findprs(cfg->prs_id);
+	TSCfgInfo  *cfg;
+	WParserInfo *prsobj;
+
+        SET_FUNCOID();
+	cfg = findcfg(PG_GETARG_OID(0));
+	prsobj = findprs(cfg->prs_id);
 
 	memset(&prs, 0, sizeof(HLPRSTEXT));
 	prs.lenwords = 32;
@@ -557,7 +565,9 @@ headline_byname(PG_FUNCTION_ARGS)
 {
 	text	   *cfg = PG_GETARG_TEXT_P(0);
 
-	Datum		out = DirectFunctionCall4(
+	Datum		out;
+        SET_FUNCOID();
+	out = DirectFunctionCall4(
 										  headline,
 									  ObjectIdGetDatum(name2id_cfg(cfg)),
 										  PG_GETARG_DATUM(1),
@@ -574,6 +584,7 @@ Datum		headline_current(PG_FUNCTION_ARGS);
 Datum
 headline_current(PG_FUNCTION_ARGS)
 {
+        SET_FUNCOID();
 	PG_RETURN_DATUM(DirectFunctionCall4(
 										headline,
 										ObjectIdGetDatum(get_currcfg()),

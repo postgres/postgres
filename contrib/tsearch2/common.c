@@ -1,8 +1,28 @@
 #include "postgres.h"
+
+#include "postgres.h"
+#include "fmgr.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_namespace.h"
+#include "utils/syscache.h"
+
+#include "ts_cfg.h"
+#include "dict.h"
+#include "wparser.h"
+#include "snmap.h"
+#include "common.h"
+#include "tsvector.h"
+
+
+
 #include "common.h"
 #include "wparser.h"
 #include "ts_cfg.h"
 #include "dict.h"
+
+
+Oid TSNSP_FunctionOid = InvalidOid;
+
 
 text *
 char2text(char *in)
@@ -100,3 +120,45 @@ text_cmp(text *a, text *b)
 	return (int) VARSIZE(a) - (int) VARSIZE(b);
 
 }
+
+char*
+get_namespace(Oid funcoid) {
+        HeapTuple       tuple;
+        Form_pg_proc    proc;
+        Form_pg_namespace nsp;
+        Oid             nspoid;   
+        char *txt;
+
+        tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcoid), 0, 0, 0);
+        if (!HeapTupleIsValid(tuple))
+                elog(ERROR, "cache lookup failed for proc oid %u", funcoid);
+        proc=(Form_pg_proc) GETSTRUCT(tuple);
+        nspoid = proc->pronamespace;
+        ReleaseSysCache(tuple);
+
+        tuple = SearchSysCache(NAMESPACEOID, ObjectIdGetDatum(nspoid), 0, 0, 0);
+        if (!HeapTupleIsValid(tuple))
+                elog(ERROR, "cache lookup failed for namespace oid %u", nspoid);
+        nsp = (Form_pg_namespace) GETSTRUCT(tuple);
+        txt = pstrdup( NameStr((nsp->nspname)) );
+        ReleaseSysCache(tuple);
+
+        return txt;
+}
+
+Oid
+get_oidnamespace(Oid funcoid) {
+        HeapTuple       tuple;
+        Form_pg_proc    proc;
+        Oid             nspoid;   
+
+        tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcoid), 0, 0, 0);
+        if (!HeapTupleIsValid(tuple))
+                elog(ERROR, "cache lookup failed for proc oid %u", funcoid);
+        proc=(Form_pg_proc) GETSTRUCT(tuple);
+        nspoid = proc->pronamespace;
+        ReleaseSysCache(tuple);
+
+        return nspoid;
+}
+

@@ -12,7 +12,7 @@ DROP OPERATOR || (tsvector, tsvector);
 DROP OPERATOR @@ (tsvector, tsquery);
 DROP OPERATOR @@ (tsquery, tsvector);
 
-DROP AGGREGATE stat(tsvector);
+--DROP AGGREGATE stat(tsvector);
 
 DROP TABLE pg_ts_dict;
 DROP TABLE pg_ts_parser;
@@ -24,7 +24,7 @@ DROP TYPE tokenout CASCADE;
 DROP TYPE tsvector CASCADE;
 DROP TYPE tsquery CASCADE;
 DROP TYPE gtsvector CASCADE;
-DROP TYPE tsstat CASCADE;
+--DROP TYPE tsstat CASCADE;
 DROP TYPE statinfo CASCADE;
 DROP TYPE tsdebug CASCADE;
 
@@ -59,8 +59,6 @@ DROP FUNCTION gtsvector_penalty(internal,internal,internal);
 DROP FUNCTION gtsvector_picksplit(internal, internal);
 DROP FUNCTION gtsvector_union(internal, internal);
 DROP FUNCTION reset_tsearch();
-DROP FUNCTION stat(text);
-DROP FUNCTION stat(text,stat);
 DROP FUNCTION tsearch2() CASCADE;
 DROP FUNCTION _get_parser_from_curcfg();
 

@@ -19,8 +19,6 @@
 
 /*********top interface**********/
 
-static void *plan_getdict = NULL;
-
 void
 init_dict(Oid id, DictInfo * dict)
 {
@@ -28,20 +26,22 @@ init_dict(Oid id, DictInfo * dict)
 	bool		isnull;
 	Datum		pars[1];
 	int			stat;
+	void *plan;
+	char buf[1024];
+	char *nsp = get_namespace(TSNSP_FunctionOid);
 
 	arg[0] = OIDOID;
 	pars[0] = ObjectIdGetDatum(id);
 
 	memset(dict, 0, sizeof(DictInfo));
 	SPI_connect();
-	if (!plan_getdict)
-	{
-		plan_getdict = SPI_saveplan(SPI_prepare("select dict_init, dict_initoption, dict_lexize from pg_ts_dict where oid = $1", 1, arg));
-		if (!plan_getdict)
-			ts_error(ERROR, "SPI_prepare() failed");
-	}
+	sprintf(buf,"select dict_init, dict_initoption, dict_lexize from %s.pg_ts_dict where oid = $1", nsp);
+	pfree(nsp);
+	plan= SPI_prepare(buf, 1, arg);
+	if (!plan)
+		ts_error(ERROR, "SPI_prepare() failed");
 
-	stat = SPI_execp(plan_getdict, pars, " ", 1);
+	stat = SPI_execp(plan, pars, " ", 1);
 	if (stat < 0)
 		ts_error(ERROR, "SPI_execp return %d", stat);
 	if (SPI_processed > 0)
@@ -63,6 +63,7 @@ init_dict(Oid id, DictInfo * dict)
 	}
 	else
 		ts_error(ERROR, "No dictionary with id %d", id);
+	SPI_freeplan(plan);
 	SPI_finish();
 }
 
@@ -133,8 +134,6 @@ finddict(Oid id)
 	return finddict(id); /* qsort changed order!! */ ;
 }
 
-static void *plan_name2id = NULL;
-
 Oid
 name2id_dict(text *name)
 {
@@ -143,6 +142,8 @@ name2id_dict(text *name)
 	Datum		pars[1];
 	int			stat;
 	Oid			id = findSNMap_t(&(DList.name2id_map), name);
+	void *plan;
+	char buf[1024], *nsp;
 
 	arg[0] = TEXTOID;
 	pars[0] = PointerGetDatum(name);
@@ -150,21 +151,22 @@ name2id_dict(text *name)
 	if (id)
 		return id;
 
+	nsp = get_namespace(TSNSP_FunctionOid);
 	SPI_connect();
-	if (!plan_name2id)
-	{
-		plan_name2id = SPI_saveplan(SPI_prepare("select oid from pg_ts_dict where dict_name = $1", 1, arg));
-		if (!plan_name2id)
-			ts_error(ERROR, "SPI_prepare() failed");
-	}
+	sprintf(buf,"select oid from %s.pg_ts_dict where dict_name = $1", nsp);
+	pfree(nsp);
+	plan= SPI_prepare(buf, 1, arg);
+	if (!plan)
+		ts_error(ERROR, "SPI_prepare() failed");
 
-	stat = SPI_execp(plan_name2id, pars, " ", 1);
+	stat = SPI_execp(plan, pars, " ", 1);
 	if (stat < 0)
 		ts_error(ERROR, "SPI_execp return %d", stat);
 	if (SPI_processed > 0)
 		id = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
 	else
 		ts_error(ERROR, "No dictionary with name '%s'", text2char(name));
+	SPI_freeplan(plan);
 	SPI_finish();
 	addSNMap_t(&(DList.name2id_map), name, id);
 	return id;
@@ -179,12 +181,14 @@ Datum
 lexize(PG_FUNCTION_ARGS)
 {
 	text	   *in = PG_GETARG_TEXT_P(1);
-	DictInfo   *dict = finddict(PG_GETARG_OID(0));
+	DictInfo   *dict;
 	char	  **res,
 			  **ptr;
 	Datum	   *da;
 	ArrayType  *a;
 
+	SET_FUNCOID();
+	dict = finddict(PG_GETARG_OID(0));
 
 	ptr = res = (char **) DatumGetPointer(
 									  FunctionCall3(&(dict->lexize_info),
@@ -241,8 +245,8 @@ lexize_byname(PG_FUNCTION_ARGS)
 {
 	text	   *dictname = PG_GETARG_TEXT_P(0);
 	Datum		res;
+        SET_FUNCOID();
 
-	strdup("simple");
 	res = DirectFunctionCall3(
 							  lexize,
 							  ObjectIdGetDatum(name2id_dict(dictname)),
@@ -263,6 +267,7 @@ Datum		set_curdict(PG_FUNCTION_ARGS);
 Datum
 set_curdict(PG_FUNCTION_ARGS)
 {
+        SET_FUNCOID();
 	finddict(PG_GETARG_OID(0));
 	currect_dictionary_id = PG_GETARG_OID(0);
 	PG_RETURN_VOID();
@@ -274,7 +279,7 @@ Datum
 set_curdict_byname(PG_FUNCTION_ARGS)
 {
 	text	   *dictname = PG_GETARG_TEXT_P(0);
-
+        SET_FUNCOID();
 	DirectFunctionCall1(
 						set_curdict,
 						ObjectIdGetDatum(name2id_dict(dictname))
@@ -289,7 +294,7 @@ Datum
 lexize_bycurrent(PG_FUNCTION_ARGS)
 {
 	Datum		res;
-
+        SET_FUNCOID();
 	if (currect_dictionary_id == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

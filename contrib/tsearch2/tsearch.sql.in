@@ -57,9 +57,9 @@ CREATE FUNCTION dex_lexize(internal,internal,int4)
 
 insert into pg_ts_dict select 
 	'simple', 
-	(select oid from pg_proc where proname='dex_init'),
+	'dex_init(text)',
 	null,
-	(select oid from pg_proc where proname='dex_lexize'),
+	'dex_lexize(internal,internal,int4)',
 	'Simple example of dictionary.'
 ;
 	 
@@ -76,9 +76,9 @@ CREATE FUNCTION snb_lexize(internal,internal,int4)
 
 insert into pg_ts_dict select 
 	'en_stem', 
-	(select oid from pg_proc where proname='snb_en_init'),
+	'snb_en_init(text)',
 	'DATA_PATH/english.stop',
-	(select oid from pg_proc where proname='snb_lexize'),
+	'snb_lexize(internal,internal,int4)',
 	'English Stemmer. Snowball.'
 ;
 
@@ -89,9 +89,9 @@ CREATE FUNCTION snb_ru_init(text)
 
 insert into pg_ts_dict select 
 	'ru_stem', 
-	(select oid from pg_proc where proname='snb_ru_init'),
+	'snb_ru_init(text)',
 	'DATA_PATH/russian.stop',
-	(select oid from pg_proc where proname='snb_lexize'),
+	'snb_lexize(internal,internal,int4)',
 	'Russian Stemmer. Snowball.'
 ;
 	 
@@ -108,9 +108,9 @@ CREATE FUNCTION spell_lexize(internal,internal,int4)
 
 insert into pg_ts_dict select 
 	'ispell_template', 
-	(select oid from pg_proc where proname='spell_init'),
+	'spell_init(text)',
 	null,
-	(select oid from pg_proc where proname='spell_lexize'),
+	'spell_lexize(internal,internal,int4)',
 	'ISpell interface. Must have .dict and .aff files'
 ;
 
@@ -127,9 +127,9 @@ CREATE FUNCTION syn_lexize(internal,internal,int4)
 
 insert into pg_ts_dict select 
 	'synonym', 
-	(select oid from pg_proc where proname='syn_init'),
+	'syn_init(text)',
 	null,
-	(select oid from pg_proc where proname='syn_lexize'),
+	'syn_lexize(internal,internal,int4)',
 	'Example of synonym dictionary'
 ;
 
@@ -227,11 +227,11 @@ CREATE FUNCTION prsd_headline(internal,internal,internal)
 
 insert into pg_ts_parser select
 	'default',
-	(select oid from pg_proc where proname='prsd_start'),	
-	(select oid from pg_proc where proname='prsd_getlexeme'),	
-	(select oid from pg_proc where proname='prsd_end'),	
-	(select oid from pg_proc where proname='prsd_headline'),
-	(select oid from pg_proc where proname='prsd_lextype'),
+	'prsd_start(internal,int4)',
+	'prsd_getlexeme(internal,internal,internal)',
+	'prsd_end(internal)',
+	'prsd_headline(internal,internal,internal)',
+	'prsd_lextype(internal)',
 	'Parser from OpenFTS v0.34'
 ;	
 

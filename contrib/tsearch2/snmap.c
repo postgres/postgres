@@ -13,7 +13,12 @@
 static int
 compareSNMapEntry(const void *a, const void *b)
 {
-	return strcmp(((SNMapEntry *) a)->key, ((SNMapEntry *) b)->key);
+	if ( ((SNMapEntry *) a)->nsp < ((SNMapEntry *) b)->nsp ) 
+		return -1;
+	else if ( ((SNMapEntry *) a)->nsp > ((SNMapEntry *) b)->nsp )
+		return 1;
+	else 
+		return strcmp(((SNMapEntry *) a)->key, ((SNMapEntry *) b)->key);
 }
 
 void
@@ -37,6 +42,7 @@ addSNMap(SNMap * map, char *key, Oid value)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
+	map->list[map->len].nsp = get_oidnamespace(TSNSP_FunctionOid);
 	map->list[map->len].value = value;
 	map->len++;
 	if (map->len > 1)
@@ -59,6 +65,7 @@ findSNMap(SNMap * map, char *key)
 	SNMapEntry	ks;
 
 	ks.key = key;
+	ks.nsp = get_oidnamespace(TSNSP_FunctionOid);
 	ks.value = 0;
 
 	if (map->len == 0 || !map->list)

@@ -25,10 +25,6 @@
 
 /*********top interface**********/
 
-static void *plan_getcfg_bylocale = NULL;
-static void *plan_getcfg = NULL;
-static void *plan_getmap = NULL;
-static void *plan_name2id = NULL;
 static Oid	current_cfg_id = 0;
 
 void
@@ -42,7 +38,10 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 				j;
 	text	   *ptr;
 	text	   *prsname = NULL;
+	char *nsp=get_namespace(TSNSP_FunctionOid);
+	char buf[1024];
 	MemoryContext oldcontext;
+	void *plan;
 
 	arg[0] = OIDOID;
 	arg[1] = OIDOID;
@@ -51,14 +50,13 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 
 	memset(cfg, 0, sizeof(TSCfgInfo));
 	SPI_connect();
-	if (!plan_getcfg)
-	{
-		plan_getcfg = SPI_saveplan(SPI_prepare("select prs_name from pg_ts_cfg where oid = $1", 1, arg));
-		if (!plan_getcfg)
-			ts_error(ERROR, "SPI_prepare() failed");
-	}
 
-	stat = SPI_execp(plan_getcfg, pars, " ", 1);
+	sprintf(buf, "select prs_name from %s.pg_ts_cfg where oid = $1", nsp);
+	plan= SPI_prepare(buf, 1, arg);
+	if (!plan)
+		ts_error(ERROR, "SPI_prepare() failed");
+
+	stat = SPI_execp(plan, pars, " ", 1);
 	if (stat < 0)
 		ts_error(ERROR, "SPI_execp return %d", stat);
 	if (SPI_processed > 0)
@@ -75,16 +73,16 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 	else
 		ts_error(ERROR, "No tsearch cfg with id %d", id);
 
+	SPI_freeplan(plan);
+
 	arg[0] = TEXTOID;
-	if (!plan_getmap)
-	{
-		plan_getmap = SPI_saveplan(SPI_prepare("select lt.tokid, pg_ts_cfgmap.dict_name from pg_ts_cfgmap, pg_ts_cfg, token_type( $1 ) as lt where lt.alias = pg_ts_cfgmap.tok_alias and pg_ts_cfgmap.ts_name = pg_ts_cfg.ts_name and pg_ts_cfg.oid= $2 order by lt.tokid desc;", 2, arg));
-		if (!plan_getmap)
-			ts_error(ERROR, "SPI_prepare() failed");
-	}
+	sprintf(buf, "select lt.tokid, map.dict_name from %s.pg_ts_cfgmap as map, %s.pg_ts_cfg as cfg, %s.token_type( $1 ) as lt where lt.alias =  map.tok_alias and map.ts_name = cfg.ts_name and cfg.oid= $2 order by lt.tokid desc;", nsp, nsp, nsp);
+	plan= SPI_prepare(buf, 2, arg);
+	if (!plan)
+		ts_error(ERROR, "SPI_prepare() failed");
 
 	pars[0] = PointerGetDatum(prsname);
-	stat = SPI_execp(plan_getmap, pars, " ", 0);
+	stat = SPI_execp(plan, pars, " ", 0);
 	if (stat < 0)
 		ts_error(ERROR, "SPI_execp return %d", stat);
 	if (SPI_processed <= 0)
@@ -136,9 +134,11 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 			pfree(a);
 	}
 
+	SPI_freeplan(plan);
 	SPI_finish();
 	cfg->prs_id = name2id_prs(prsname);
 	pfree(prsname);
+	pfree(nsp);
 	for (i = 0; i < cfg->len; i++)
 	{
 		for (j = 0; j < cfg->map[i].len; j++)
@@ -235,6 +235,9 @@ name2id_cfg(text *name)
 	Datum		pars[1];
 	int			stat;
 	Oid			id = findSNMap_t(&(CList.name2id_map), name);
+	void *plan;
+	char *nsp;
+	char buf[1024];
 
 	arg[0] = TEXTOID;
 	pars[0] = PointerGetDatum(name);
@@ -242,16 +245,15 @@ name2id_cfg(text *name)
 	if (id)
 		return id;
 
+	nsp=get_namespace(TSNSP_FunctionOid);
 	SPI_connect();
-	if (!plan_name2id)
-	{
-		plan_name2id = SPI_saveplan(SPI_prepare("select oid from pg_ts_cfg where ts_name = $1", 1, arg));
-		if (!plan_name2id)
-			/* internal error */
-			elog(ERROR, "SPI_prepare() failed");
-	}
+        sprintf(buf, "select oid from %s.pg_ts_cfg where ts_name = $1", nsp);
+	plan= SPI_prepare(buf, 1, arg);
+	if (!plan)
+		/* internal error */
+		elog(ERROR, "SPI_prepare() failed");
 
-	stat = SPI_execp(plan_name2id, pars, " ", 1);
+	stat = SPI_execp(plan, pars, " ", 1);
 	if (stat < 0)
 		/* internal error */
 		elog(ERROR, "SPI_execp return %d", stat);
@@ -268,6 +270,7 @@ name2id_cfg(text *name)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("no tsearch config")));
 
+	SPI_freeplan(plan);
 	SPI_finish();
 	addSNMap_t(&(CList.name2id_map), name, id);
 	return id;
@@ -549,22 +552,25 @@ get_currcfg(void)
 	Datum		pars[1];
 	bool		isnull;
 	int			stat;
+        char buf[1024];
+        char *nsp;
+	void *plan;
 
 	if (current_cfg_id > 0)
 		return current_cfg_id;
 
+        nsp=get_namespace(TSNSP_FunctionOid);
 	SPI_connect();
-	if (!plan_getcfg_bylocale)
-	{
-		plan_getcfg_bylocale = SPI_saveplan(SPI_prepare("select oid from pg_ts_cfg where locale = $1 ", 1, arg));
-		if (!plan_getcfg_bylocale)
-			/* internal error */
-			elog(ERROR, "SPI_prepare() failed");
-	}
+        sprintf(buf, "select oid from %s.pg_ts_cfg where locale = $1 ", nsp);
+	pfree(nsp);
+	plan = SPI_prepare(buf, 1, arg);
+	if (!plan)
+		/* internal error */
+		elog(ERROR, "SPI_prepare() failed");
 
 	curlocale = setlocale(LC_CTYPE, NULL);
 	pars[0] = PointerGetDatum(char2text((char *) curlocale));
-	stat = SPI_execp(plan_getcfg_bylocale, pars, " ", 1);
+	stat = SPI_execp(plan, pars, " ", 1);
 
 	if (stat < 0)
 		/* internal error */
@@ -577,6 +583,7 @@ get_currcfg(void)
 				 errmsg("could not find tsearch config by locale")));
 
 	pfree(DatumGetPointer(pars[0]));
+	SPI_freeplan(plan);
 	SPI_finish();
 	return current_cfg_id;
 }
@@ -586,6 +593,7 @@ Datum		set_curcfg(PG_FUNCTION_ARGS);
 Datum
 set_curcfg(PG_FUNCTION_ARGS)
 {
+        SET_FUNCOID();
 	findcfg(PG_GETARG_OID(0));
 	current_cfg_id = PG_GETARG_OID(0);
 	PG_RETURN_VOID();
@@ -597,7 +605,7 @@ Datum
 set_curcfg_byname(PG_FUNCTION_ARGS)
 {
 	text	   *name = PG_GETARG_TEXT_P(0);
-
+        SET_FUNCOID();
 	DirectFunctionCall1(
 						set_curcfg,
 						ObjectIdGetDatum(name2id_cfg(name))
@@ -611,6 +619,7 @@ Datum		show_curcfg(PG_FUNCTION_ARGS);
 Datum
 show_curcfg(PG_FUNCTION_ARGS)
 {
+        SET_FUNCOID();
 	PG_RETURN_OID(get_currcfg());
 }
 
@@ -619,6 +628,8 @@ Datum		reset_tsearch(PG_FUNCTION_ARGS);
 Datum
 reset_tsearch(PG_FUNCTION_ARGS)
 {
+        SET_FUNCOID();
 	ts_error(NOTICE, "TSearch cache cleaned");
 	PG_RETURN_VOID();
 }
+

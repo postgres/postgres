@@ -7,6 +7,7 @@ typedef struct
 {
 	char	   *key;
 	Oid			value;
+	Oid			nsp;
 }	SNMapEntry;
 
 typedef struct

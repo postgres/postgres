@@ -404,7 +404,7 @@ tsvector_in(PG_FUNCTION_ARGS)
 			   *cur;
 	int4		i,
 				buflen = 256;
-
+        SET_FUNCOID();
 	state.prsbuf = buf;
 	state.len = 32;
 	state.word = (char *) palloc(state.len);
@@ -723,7 +723,10 @@ to_tsvector(PG_FUNCTION_ARGS)
 	text	   *in = PG_GETARG_TEXT_P(1);
 	PRSTEXT		prs;
 	tsvector   *out = NULL;
-	TSCfgInfo  *cfg = findcfg(PG_GETARG_INT32(0));
+	TSCfgInfo  *cfg;
+
+        SET_FUNCOID();
+	cfg = findcfg(PG_GETARG_INT32(0));
 
 	prs.lenwords = 32;
 	prs.curwords = 0;
@@ -749,7 +752,9 @@ Datum
 to_tsvector_name(PG_FUNCTION_ARGS)
 {
 	text	   *cfg = PG_GETARG_TEXT_P(0);
-	Datum		res = DirectFunctionCall3(
+	Datum		res;
+        SET_FUNCOID();
+	res = DirectFunctionCall3(
 										  to_tsvector,
 										  Int32GetDatum(name2id_cfg(cfg)),
 										  PG_GETARG_DATUM(1),
@@ -763,7 +768,9 @@ to_tsvector_name(PG_FUNCTION_ARGS)
 Datum
 to_tsvector_current(PG_FUNCTION_ARGS)
 {
-	Datum		res = DirectFunctionCall3(
+	Datum		res;
+        SET_FUNCOID();
+	res = DirectFunctionCall3(
 										  to_tsvector,
 										  Int32GetDatum(get_currcfg()),
 										  PG_GETARG_DATUM(0),
@@ -809,12 +816,15 @@ tsearch2(PG_FUNCTION_ARGS)
 	Trigger    *trigger;
 	Relation	rel;
 	HeapTuple	rettuple = NULL;
-	TSCfgInfo  *cfg = findcfg(get_currcfg());
 	int			numidxattr,
 				i;
 	PRSTEXT		prs;
 	Datum		datum = (Datum) 0;
 	Oid			funcoid = InvalidOid;
+	TSCfgInfo  *cfg;
+
+        SET_FUNCOID();
+	cfg = findcfg(get_currcfg());
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		/* internal error */
