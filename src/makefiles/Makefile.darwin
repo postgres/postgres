@@ -4,4 +4,4 @@ DLSUFFIX = .so
 CFLAGS_SL = -bundle -undefined suppress
  
 %.so: %.o
-        $(CC) $(CFLAGS) $(CFLAGS_SL) -o $@ $<
+	$(CC) $(CFLAGS) $(CFLAGS_SL) -o $@ $<
