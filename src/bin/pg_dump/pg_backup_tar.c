@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.32 2002/10/25 01:33:17 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.32.2.1 2003/01/10 23:51:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 #include <unistd.h>
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
