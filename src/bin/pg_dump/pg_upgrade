@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.20 2002/01/09 21:50:52 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.21 2002/01/10 03:05:48 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -164,7 +164,7 @@ fi
 
 # Now vacuum each result database in case our transaction increase
 # causes all the XID's to be marked with the frozen XID.
-psql -l | while read DB
+psql -d template1 -At -c "SELECT datname FROM pg_database" | while read DB
 do
 	echo "VACUUM;" | psql "$DB"
 	if [ $? -ne 0 ]
@@ -179,12 +179,16 @@ pg_dumpall -s > $TMPFILE 2>/dev/null
 
 # flush buffers to disk
 pg_ctl stop
+if [ "$?" -ne 0 ]
+then	echo "Unable to stop database server.;  exiting" 1>&2
+	exit 1
+fi
 
 echo "Commit fixes complete, moving data files..."
 
 cat "$SCHEMA" | while read LINE
 do
-	if /bin/echo "$LINE" | grep -q "^\\\\connect "
+	if /bin/echo "$LINE" | grep -q "^\\\\connect [^	]*$"
 	then	OLDDB="$DB"
 		DB="`/bin/echo \"$LINE\" | cut -d' ' -f2`"
 		if [ "$DB" = "-" ]
@@ -251,19 +255,37 @@ do
 	fi
 done
 
-# set max transaction id, check < 2gig
-
 # 7.1 has non-compressed log file format
 if [ "$SRCVERSION" = "7.1" ]
-# pg_log is oid 1269 in 7.1
-LOGSIZE=`ls -l "$OLDDIR"/global/1269 "$OLDDIR"/global/1269.* 2>/dev/null |
-awk -F'  *' '
-	BEGIN 	{sum=0;}
-		{sum += $5;}
-	END	{print sum;}'`
+then
+	# pg_log is oid 1269 in 7.1
+	LOGSIZE=`ls -l "$OLDDIR"/global/1269 "$OLDDIR"/global/1269.* 2>/dev/null |
+	awk -F'  *' '
+		BEGIN 	{sum=0;}
+			{sum += $5;}
+		END	{print sum;}'`
+
+# check < 2gig
+
+# set max transaction id
+
+else
+	# how to handle 7.2?
+	rm -r data/pg_clog &&
+	mv "$OLDDIR"/data/pg_clog data/pg_clog &&
+	mv "$OLDDIR"/data/global/pg_control data/global/pg_control
+	if [ "$?" -ne 0 ]
+	then	echo "Moving of transaction and control files failed.;  exiting" 1>&2
+		exit 1
+	fi
 fi
 
-echo "You must stop/start the postmaster before doing anything else."
+pg_ctl start
+if [ "$?" -ne 0 ]
+then	echo "Unable to restart database server.;  exiting" 1>&2
+	exit 1
+fi
+
 echo "You may remove the $OLDDIR directory with 'rm -r $OLDDIR'."
 
 exit 0
