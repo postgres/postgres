@@ -1,15 +1,25 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.17 1998/04/26 04:09:43 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.18 1998/04/27 03:41:33 momjian Exp $
 .TH "CREATE TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
 create table - create a new class
 .SH SYNOPSIS
 .nf
-\fBcreate table\fR classname \fB(\fPattname type [\fBdefault\fP value] [\fBnot null\fP]
-	[\fB,\fP attname type [\fBdefault\fP value] [\fBnot null\fP] [, ...] ]\fB )\fP
-	[\fBinherits\fR \fB(\fR classname [\fB,\fR classname] \fB)\fR]
-	[\fBconstraint\fR cname \fBcheck\fR \fB(\fR test \fB)\fR [, \fBcheck\fR \fB(\fR test \fB)\fR ] ]
+\fBcreate table\fR classname
+  \fB(\fP
+	attname type
+		[\fBdefault\fP value]
+		[[\fBnot null\fP] [\fBunique\fP] | [\fBprimary key\fP]]
+		[\fBreferences\fP classname \fB(\fP attname \fB)\fP]
+		[\fBcheck (\fP condition\fB )\fP]
+	[\fB,\fP attname type [constraint] [\fB,\fP ...] ]
+	[\fB, primary key ( \fPattname, attname[,...] \fB)\fP]
+	[\fB, unique ( \fPattname, attname[,...] \fB)\fP]
+	[\fB, foreign key ( \fPattname, attname[,...] \fB) references\fP classname]
+	[\fB,\fP [\fBconstraint\fR cname] \fBcheck\fR \fB(\fR test \fB)\fR [, \fBcheck\fR \fB(\fR test \fB)\fR ] ]
+  \fB)\fP
+  [\fBinherits\fR \fB(\fR classname [\fB,\fR classname] \fB)\fR]
 .fi
 .SH DESCRIPTION
 .BR "Create Table"
@@ -62,10 +72,12 @@ for a further discussion of this point.
 .PP
 The optional
 .BR constraint
-clause specifies a list of constraints or tests which new or updated entries
+clauses specify constraints or tests which new or updated entries
 must satisfy for an insert or update operation to succeed. Each constraint
 must evaluate to a boolean expression. Multiple attributes may be referenced within
-a single constraint.
+a single constraint.  The use of \fBprimary key (\fPattname[\fB,\fP...]\fB)\fP
+as a table constraint
+is mutually incompatible with \fBprimary key\fP used as a column constraint.
 .PP
 The new class is created as a heap with no initial data.  A class can
 have no more than 1600 attributes (realistically, this is limited by the
@@ -92,8 +104,8 @@ create table permemp (plan name) inherits (emp)
 --Create class emppay with attributes name and wage with
 --a default salary and constraints on wage range
 --
-create table emppay (name text not null, wage float4 default 10.00)
-constraint empcon check (wage > 5.30 and wage <= 30.00), check (name <> '')
+create table emppay (name text not null, wage float4 default 10.00
+constraint empcon check (wage > 5.30 and wage <= 30.00), check (name <> ''))
 .fi
 .nf
 --
@@ -112,5 +124,26 @@ create table tictactoe (game int4, board char[][])
 --
 create table newemp (name text, manager newemp)
 .fi
+.nf
+--
+--Create a table using SQL92 syntax
+create table component
+(
+        assembly        char(8)         not null
+                                        references job (id),
+        product         char(8)         not null
+                                        references product (id),
+        sorting         int,
+        qty             int		check (qty >= 0),
+
+        primary key (assembly, product),
+        unique (assembly, product, sorting),
+        constraint not_same check (assembly != product)
+)
+.fi
+.PP
+.SH BUGS
+The \fBforeign key\fP and \fBreferences\fP keywords are parsed but not yet
+implemented in PostgreSQL 6.3.1.
 .SH "SEE ALSO"
 drop table(l).
