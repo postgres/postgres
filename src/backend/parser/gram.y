@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.347 2002/07/18 23:11:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.348 2002/07/20 05:58:34 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3136,6 +3136,7 @@ CreateCastStmt: CREATE CAST '(' ConstTypename AS ConstTypename ')'
 					n->implicit = $10;
 					$$ = (Node *)n;
 				}
+		;
 
 opt_assignment:  AS ASSIGNMENT					{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
@@ -3150,6 +3151,7 @@ DropCastStmt: DROP CAST '(' ConstTypename AS ConstTypename ')' opt_drop_behavior
 					n->behavior = $8;
 					$$ = (Node *)n;
 				}
+		;
 
 
 
