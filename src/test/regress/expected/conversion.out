@@ -25,677 +25,313 @@ DROP CONVERSION myconv;
 DROP CONVERSION mydef;
 --
 -- make sure all pre-defined conversions are fine.
--- UNICODE --> SQL_ASCII
-SELECT CONVERT('foo' USING utf8_to_ascii);
+-- SQL_ASCII --> MULE_INTERNAL
+SELECT CONVERT('foo' USING ascii_to_mic);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'SQL_ASCII');
+SELECT CONVERT('foo', 'SQL_ASCII', 'MULE_INTERNAL');
  convert 
 ---------
  foo
 (1 row)
 
--- SQL_ASCII --> UNICODE
-SELECT CONVERT('foo' USING ascii_to_utf8);
+-- MULE_INTERNAL --> SQL_ASCII
+SELECT CONVERT('foo' USING mic_to_ascii);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'SQL_ASCII', 'UNICODE');
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'SQL_ASCII');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> LATIN1
-SELECT CONVERT('foo' USING utf8_to_iso8859_1);
+-- KOI8R --> MULE_INTERNAL
+SELECT CONVERT('foo' USING koi8r_to_mic);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'LATIN1');
+SELECT CONVERT('foo', 'KOI8R', 'MULE_INTERNAL');
  convert 
 ---------
  foo
 (1 row)
 
--- LATIN1 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_1_to_utf8);
+-- MULE_INTERNAL --> KOI8R
+SELECT CONVERT('foo' USING mic_to_koi8r);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'LATIN1', 'UNICODE');
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'KOI8R');
  convert 
 ---------
  foo
 (1 row)
 
--- EUC_JP --> UNICODE
-SELECT CONVERT('foo' USING euc_jp_to_utf8);
+-- ISO-8859-5 --> MULE_INTERNAL
+SELECT CONVERT('foo' USING iso_8859_5_to_mic);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'EUC_JP', 'UNICODE');
+SELECT CONVERT('foo', 'ISO-8859-5', 'MULE_INTERNAL');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> EUC_JP
-SELECT CONVERT('foo' USING utf8_to_euc_jp);
+-- MULE_INTERNAL --> ISO-8859-5
+SELECT CONVERT('foo' USING mic_to_iso_8859_5);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'EUC_JP');
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'ISO-8859-5');
  convert 
 ---------
  foo
 (1 row)
 
--- EUC_KR --> UNICODE
-SELECT CONVERT('foo' USING euc_kr_to_utf8);
+-- WIN1251 --> MULE_INTERNAL
+SELECT CONVERT('foo' USING win1251_to_mic);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'EUC_KR', 'UNICODE');
+SELECT CONVERT('foo', 'WIN1251', 'MULE_INTERNAL');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> EUC_KR
-SELECT CONVERT('foo' USING utf8_to_euc_kr);
+-- MULE_INTERNAL --> WIN1251
+SELECT CONVERT('foo' USING mic_to_win1251);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'EUC_KR');
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'WIN1251');
  convert 
 ---------
  foo
 (1 row)
 
--- EUC_CN --> UNICODE
-SELECT CONVERT('foo' USING euc_cn_to_utf8);
+-- ALT --> MULE_INTERNAL
+SELECT CONVERT('foo' USING win866_to_mic);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'EUC_CN', 'UNICODE');
+SELECT CONVERT('foo', 'ALT', 'MULE_INTERNAL');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> EUC_CN
-SELECT CONVERT('foo' USING utf8_to_euc_cn);
+-- MULE_INTERNAL --> ALT
+SELECT CONVERT('foo' USING mic_to_win866);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'EUC_CN');
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'ALT');
  convert 
 ---------
  foo
 (1 row)
 
--- EUC_TW --> UNICODE
-SELECT CONVERT('foo' USING euc_tw_to_utf8);
+-- KOI8R --> WIN1251
+SELECT CONVERT('foo' USING koi8r_to_win1251);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'EUC_TW', 'UNICODE');
+SELECT CONVERT('foo', 'KOI8R', 'WIN1251');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> EUC_TW
-SELECT CONVERT('foo' USING utf8_to_euc_tw);
+-- WIN1251 --> KOI8R
+SELECT CONVERT('foo' USING win1251_to_koi8r);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'EUC_TW');
+SELECT CONVERT('foo', 'WIN1251', 'KOI8R');
  convert 
 ---------
  foo
 (1 row)
 
--- SJIS --> UNICODE
-SELECT CONVERT('foo' USING sjis_to_utf8);
+-- KOI8R --> ALT
+SELECT CONVERT('foo' USING koi8r_to_win866);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'SJIS', 'UNICODE');
+SELECT CONVERT('foo', 'KOI8R', 'ALT');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> SJIS
-SELECT CONVERT('foo' USING utf8_to_sjis);
+-- ALT --> KOI8R
+SELECT CONVERT('foo' USING win866_to_koi8r);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'SJIS');
+SELECT CONVERT('foo', 'ALT', 'KOI8R');
  convert 
 ---------
  foo
 (1 row)
 
--- BIG5 --> UNICODE
-SELECT CONVERT('foo' USING big5_to_utf8);
+-- ALT --> WIN1251
+SELECT CONVERT('foo' USING win866_to_win1251);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'BIG5', 'UNICODE');
+SELECT CONVERT('foo', 'ALT', 'WIN1251');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> BIG5
-SELECT CONVERT('foo' USING utf8_to_big5);
+-- WIN1251 --> ALT
+SELECT CONVERT('foo' USING win1251_to_win866);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'BIG5');
+SELECT CONVERT('foo', 'WIN1251', 'ALT');
  convert 
 ---------
  foo
 (1 row)
 
--- GBK --> UNICODE
-SELECT CONVERT('foo' USING gbk_to_utf8);
+-- ISO-8859-5 --> KOI8R
+SELECT CONVERT('foo' USING iso_8859_5_to_koi8r);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'GBK', 'UNICODE');
+SELECT CONVERT('foo', 'ISO-8859-5', 'KOI8R');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> GBK
-SELECT CONVERT('foo' USING utf8_to_gbk);
+-- KOI8R --> ISO-8859-5
+SELECT CONVERT('foo' USING koi8r_to_iso_8859_5);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'GBK');
+SELECT CONVERT('foo', 'KOI8R', 'ISO-8859-5');
  convert 
 ---------
  foo
 (1 row)
 
--- GB18030 --> UNICODE
-SELECT CONVERT('foo' USING gb18030_to_utf8);
+-- ISO-8859-5 --> WIN1251
+SELECT CONVERT('foo' USING iso_8859_5_to_win1251);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'GB18030', 'UNICODE');
+SELECT CONVERT('foo', 'ISO-8859-5', 'WIN1251');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> GB18030
-SELECT CONVERT('foo' USING utf8_to_gb18030);
+-- WIN1251 --> ISO-8859-5
+SELECT CONVERT('foo' USING win1251_to_iso_8859_5);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'GB18030');
+SELECT CONVERT('foo', 'WIN1251', 'ISO-8859-5');
  convert 
 ---------
  foo
 (1 row)
 
--- UHC --> UNICODE
-SELECT CONVERT('foo' USING uhc_to_utf8);
+-- ISO-8859-5 --> ALT
+SELECT CONVERT('foo' USING iso_8859_5_to_win866);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UHC', 'UNICODE');
+SELECT CONVERT('foo', 'ISO-8859-5', 'ALT');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> UHC
-SELECT CONVERT('foo' USING utf8_to_uhc);
+-- ALT --> ISO-8859-5
+SELECT CONVERT('foo' USING win866_to_iso_8859_5);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'UHC');
+SELECT CONVERT('foo', 'ALT', 'ISO-8859-5');
  convert 
 ---------
  foo
 (1 row)
 
--- JOHAB --> UNICODE
-SELECT CONVERT('foo' USING johab_to_utf8);
+-- EUC_CN --> MULE_INTERNAL
+SELECT CONVERT('foo' USING euc_cn_to_mic);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'JOHAB', 'UNICODE');
+SELECT CONVERT('foo', 'EUC_CN', 'MULE_INTERNAL');
  convert 
 ---------
  foo
 (1 row)
 
--- UNICODE --> JOHAB
-SELECT CONVERT('foo' USING utf8_to_johab);
+-- MULE_INTERNAL --> EUC_CN
+SELECT CONVERT('foo' USING mic_to_euc_cn);
  convert 
 ---------
  foo
 (1 row)
 
-SELECT CONVERT('foo', 'UNICODE', 'JOHAB');
- convert 
----------
- foo
-(1 row)
-
--- TCVN --> UNICODE
-SELECT CONVERT('foo' USING tcvn_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'TCVN', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> TCVN
-SELECT CONVERT('foo' USING utf8_to_tcvn);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'TCVN');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> LATIN2
-SELECT CONVERT('foo' USING utf8_to_iso8859_2);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'LATIN2');
- convert 
----------
- foo
-(1 row)
-
--- LATIN2 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_2_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'LATIN2', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> LATIN3
-SELECT CONVERT('foo' USING utf8_to_iso8859_3);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'LATIN3');
- convert 
----------
- foo
-(1 row)
-
--- LATIN3 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_3_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'LATIN3', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> LATIN4
-SELECT CONVERT('foo' USING utf8_to_iso8859_4);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'LATIN4');
- convert 
----------
- foo
-(1 row)
-
--- LATIN4 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_4_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'LATIN4', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> LATIN5
-SELECT CONVERT('foo' USING utf8_to_iso8859_9);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'LATIN5');
- convert 
----------
- foo
-(1 row)
-
--- LATIN5 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_9_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'LATIN5', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> LATIN6
-SELECT CONVERT('foo' USING utf8_to_iso8859_10);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'LATIN6');
- convert 
----------
- foo
-(1 row)
-
--- LATIN6 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_10_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'LATIN6', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> LATIN7
-SELECT CONVERT('foo' USING utf8_to_iso8859_13);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'LATIN7');
- convert 
----------
- foo
-(1 row)
-
--- LATIN7 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_13_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'LATIN7', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> LATIN8
-SELECT CONVERT('foo' USING utf8_to_iso8859_14);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'LATIN8');
- convert 
----------
- foo
-(1 row)
-
--- LATIN8 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_14_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'LATIN8', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> LATIN9
-SELECT CONVERT('foo' USING utf8_to_iso8859_15);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'LATIN9');
- convert 
----------
- foo
-(1 row)
-
--- LATIN9 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_15_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'LATIN9', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> LATIN10
-SELECT CONVERT('foo' USING utf8_to_iso8859_16);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'LATIN10');
- convert 
----------
- foo
-(1 row)
-
--- LATIN10 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_16_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'LATIN10', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> ISO-8859-5
-SELECT CONVERT('foo' USING utf8_to_iso8859_5);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'ISO-8859-5');
- convert 
----------
- foo
-(1 row)
-
--- ISO-8859-5 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_5_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'ISO-8859-5', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> ISO-8859-6
-SELECT CONVERT('foo' USING utf8_to_iso8859_6);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'ISO-8859-6');
- convert 
----------
- foo
-(1 row)
-
--- ISO-8859-6 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_6_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'ISO-8859-6', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> ISO-8859-7
-SELECT CONVERT('foo' USING utf8_to_iso8859_7);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'ISO-8859-7');
- convert 
----------
- foo
-(1 row)
-
--- ISO-8859-7 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_7_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'ISO-8859-7', 'UNICODE');
- convert 
----------
- foo
-(1 row)
-
--- UNICODE --> ISO-8859-8
-SELECT CONVERT('foo' USING utf8_to_iso8859_8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'UNICODE', 'ISO-8859-8');
- convert 
----------
- foo
-(1 row)
-
--- ISO-8859-8 --> UNICODE
-SELECT CONVERT('foo' USING iso8859_8_to_utf8);
- convert 
----------
- foo
-(1 row)
-
-SELECT CONVERT('foo', 'ISO-8859-8', 'UNICODE');
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'EUC_CN');
  convert 
 ---------
  foo
@@ -779,6 +415,32 @@ SELECT CONVERT('foo', 'MULE_INTERNAL', 'SJIS');
  foo
 (1 row)
 
+-- EUC_KR --> MULE_INTERNAL
+SELECT CONVERT('foo' USING euc_kr_to_mic);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'EUC_KR', 'MULE_INTERNAL');
+ convert 
+---------
+ foo
+(1 row)
+
+-- MULE_INTERNAL --> EUC_KR
+SELECT CONVERT('foo' USING mic_to_euc_kr);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'EUC_KR');
+ convert 
+---------
+ foo
+(1 row)
+
 -- EUC_TW --> BIG5
 SELECT CONVERT('foo' USING euc_tw_to_big5);
  convert 
@@ -852,6 +514,994 @@ SELECT CONVERT('foo' USING mic_to_big5);
 (1 row)
 
 SELECT CONVERT('foo', 'MULE_INTERNAL', 'BIG5');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN2 --> MULE_INTERNAL
+SELECT CONVERT('foo' USING iso_8859_2_to_mic);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN2', 'MULE_INTERNAL');
+ convert 
+---------
+ foo
+(1 row)
+
+-- MULE_INTERNAL --> LATIN2
+SELECT CONVERT('foo' USING mic_to_iso_8859_2);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'LATIN2');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN1250 --> MULE_INTERNAL
+SELECT CONVERT('foo' USING win1250_to_mic);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN1250', 'MULE_INTERNAL');
+ convert 
+---------
+ foo
+(1 row)
+
+-- MULE_INTERNAL --> WIN1250
+SELECT CONVERT('foo' USING mic_to_win1250);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'WIN1250');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN2 --> WIN1250
+SELECT CONVERT('foo' USING iso_8859_2_to_win1250);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN2', 'WIN1250');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN1250 --> LATIN2
+SELECT CONVERT('foo' USING win1250_to_iso_8859_2);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN1250', 'LATIN2');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN1 --> MULE_INTERNAL
+SELECT CONVERT('foo' USING iso_8859_1_to_mic);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN1', 'MULE_INTERNAL');
+ convert 
+---------
+ foo
+(1 row)
+
+-- MULE_INTERNAL --> LATIN1
+SELECT CONVERT('foo' USING mic_to_iso_8859_1);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'LATIN1');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN3 --> MULE_INTERNAL
+SELECT CONVERT('foo' USING iso_8859_3_to_mic);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN3', 'MULE_INTERNAL');
+ convert 
+---------
+ foo
+(1 row)
+
+-- MULE_INTERNAL --> LATIN3
+SELECT CONVERT('foo' USING mic_to_iso_8859_3);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'LATIN3');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN4 --> MULE_INTERNAL
+SELECT CONVERT('foo' USING iso_8859_4_to_mic);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN4', 'MULE_INTERNAL');
+ convert 
+---------
+ foo
+(1 row)
+
+-- MULE_INTERNAL --> LATIN4
+SELECT CONVERT('foo' USING mic_to_iso_8859_4);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'MULE_INTERNAL', 'LATIN4');
+ convert 
+---------
+ foo
+(1 row)
+
+-- SQL_ASCII --> UNICODE
+SELECT CONVERT('foo' USING ascii_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'SQL_ASCII', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> SQL_ASCII
+SELECT CONVERT('foo' USING utf_8_to_ascii);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'SQL_ASCII');
+ convert 
+---------
+ foo
+(1 row)
+
+-- BIG5 --> UNICODE
+SELECT CONVERT('foo' USING big5_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'BIG5', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> BIG5
+SELECT CONVERT('foo' USING utf_8_to_big5);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'BIG5');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> KOI8R
+SELECT CONVERT('foo' USING utf_8_to_koi8r);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'KOI8R');
+ convert 
+---------
+ foo
+(1 row)
+
+-- KOI8R --> UNICODE
+SELECT CONVERT('foo' USING koi8r_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'KOI8R', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> WIN1251
+SELECT CONVERT('foo' USING utf_8_to_win1251);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'WIN1251');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN1251 --> UNICODE
+SELECT CONVERT('foo' USING win1251_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN1251', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> ALT
+SELECT CONVERT('foo' USING utf_8_to_win866);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'ALT');
+ convert 
+---------
+ foo
+(1 row)
+
+-- ALT --> UNICODE
+SELECT CONVERT('foo' USING win866_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'ALT', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- EUC_CN --> UNICODE
+SELECT CONVERT('foo' USING euc_cn_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'EUC_CN', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> EUC_CN
+SELECT CONVERT('foo' USING utf_8_to_euc_cn);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'EUC_CN');
+ convert 
+---------
+ foo
+(1 row)
+
+-- EUC_JP --> UNICODE
+SELECT CONVERT('foo' USING euc_jp_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'EUC_JP', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> EUC_JP
+SELECT CONVERT('foo' USING utf_8_to_euc_jp);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'EUC_JP');
+ convert 
+---------
+ foo
+(1 row)
+
+-- EUC_KR --> UNICODE
+SELECT CONVERT('foo' USING euc_kr_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'EUC_KR', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> EUC_KR
+SELECT CONVERT('foo' USING utf_8_to_euc_kr);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'EUC_KR');
+ convert 
+---------
+ foo
+(1 row)
+
+-- EUC_TW --> UNICODE
+SELECT CONVERT('foo' USING euc_tw_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'EUC_TW', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> EUC_TW
+SELECT CONVERT('foo' USING utf_8_to_euc_tw);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'EUC_TW');
+ convert 
+---------
+ foo
+(1 row)
+
+-- GB18030 --> UNICODE
+SELECT CONVERT('foo' USING gb18030_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'GB18030', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> GB18030
+SELECT CONVERT('foo' USING utf_8_to_gb18030);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'GB18030');
+ convert 
+---------
+ foo
+(1 row)
+
+-- GBK --> UNICODE
+SELECT CONVERT('foo' USING gbk_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'GBK', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> GBK
+SELECT CONVERT('foo' USING utf_8_to_gbk);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'GBK');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> LATIN2
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_2);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'LATIN2');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN2 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_2_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN2', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> LATIN3
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_3);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'LATIN3');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN3 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_3_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN3', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> LATIN4
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_4);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'LATIN4');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN4 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_4_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN4', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> LATIN5
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_9);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'LATIN5');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN5 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_9_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN5', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> LATIN6
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_10);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'LATIN6');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN6 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_10_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN6', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> LATIN7
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_13);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'LATIN7');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN7 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_13_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN7', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> LATIN8
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_14);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'LATIN8');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN8 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_14_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN8', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> LATIN9
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_15);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'LATIN9');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN9 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_15_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN9', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> LATIN10
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_16);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'LATIN10');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN10 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_16_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN10', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> ISO-8859-5
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_5);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'ISO-8859-5');
+ convert 
+---------
+ foo
+(1 row)
+
+-- ISO-8859-5 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_5_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'ISO-8859-5', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> ISO-8859-6
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_6);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'ISO-8859-6');
+ convert 
+---------
+ foo
+(1 row)
+
+-- ISO-8859-6 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_6_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'ISO-8859-6', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> ISO-8859-7
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_7);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'ISO-8859-7');
+ convert 
+---------
+ foo
+(1 row)
+
+-- ISO-8859-7 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_7_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'ISO-8859-7', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> ISO-8859-8
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'ISO-8859-8');
+ convert 
+---------
+ foo
+(1 row)
+
+-- ISO-8859-8 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_8_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'ISO-8859-8', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- LATIN1 --> UNICODE
+SELECT CONVERT('foo' USING iso_8859_1_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'LATIN1', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> LATIN1
+SELECT CONVERT('foo' USING utf_8_to_iso_8859_1);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'LATIN1');
+ convert 
+---------
+ foo
+(1 row)
+
+-- JOHAB --> UNICODE
+SELECT CONVERT('foo' USING johab_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'JOHAB', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> JOHAB
+SELECT CONVERT('foo' USING utf_8_to_johab);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'JOHAB');
+ convert 
+---------
+ foo
+(1 row)
+
+-- SJIS --> UNICODE
+SELECT CONVERT('foo' USING sjis_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'SJIS', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> SJIS
+SELECT CONVERT('foo' USING utf_8_to_sjis);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'SJIS');
+ convert 
+---------
+ foo
+(1 row)
+
+-- TCVN --> UNICODE
+SELECT CONVERT('foo' USING tcvn_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'TCVN', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> TCVN
+SELECT CONVERT('foo' USING utf_8_to_tcvn);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'TCVN');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UHC --> UNICODE
+SELECT CONVERT('foo' USING uhc_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UHC', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> UHC
+SELECT CONVERT('foo' USING utf_8_to_uhc);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'UHC');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> WIN1250
+SELECT CONVERT('foo' USING utf_8_to_win1250);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'WIN1250');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN1250 --> UNICODE
+SELECT CONVERT('foo' USING win1250_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN1250', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> WIN1256
+SELECT CONVERT('foo' USING utf_8_to_win1256);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'WIN1256');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN1256 --> UNICODE
+SELECT CONVERT('foo' USING win1256_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN1256', 'UNICODE');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UNICODE --> WIN874
+SELECT CONVERT('foo' USING utf_8_to_win874);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UNICODE', 'WIN874');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN874 --> UNICODE
+SELECT CONVERT('foo' USING win874_to_utf_8);
+ convert 
+---------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN874', 'UNICODE');
  convert 
 ---------
  foo

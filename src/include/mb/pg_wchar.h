@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.41 2002/07/29 08:04:55 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.42 2002/08/14 02:45:10 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -327,5 +327,9 @@ extern char	   *pg_verifymbstr(const unsigned char *mbstr, int len);
 extern void	pg_ascii2mic(unsigned char *src, unsigned char *dest, int len);
 extern void	pg_mic2ascii(unsigned char *src, unsigned char *dest, int len);
 extern void	pg_print_bogus_char(unsigned char **mic, unsigned char **p);
+extern void	latin2mic(unsigned char *l, unsigned char *p, int len, int lc);
+extern void	mic2latin(unsigned char *mic, unsigned char *p, int len, int lc);
+extern void	latin2mic_with_table(unsigned char *l, unsigned char *p, int len, int lc, unsigned char *tab);
+extern void	mic2latin_with_table(unsigned char *mic, unsigned char *p, int len, int lc, unsigned char *tab);
 
 #endif   /* PG_WCHAR_H */
