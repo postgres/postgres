@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.2 2001/09/07 15:01:45 momjian Exp $
+ * $Id: encnames.c,v 1.3 2001/10/11 14:20:35 ishii Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -43,17 +43,30 @@ pg_encname pg_encname_tbl[] =
 	{ "euckr",	PG_EUC_KR },		/* EUC-KR; RFC1557,Choi */
 	{ "euctw",	PG_EUC_TW },		/* EUC-TW; ???  */
 	{ "iso88591",	PG_LATIN1 },		/* ISO-8859-1; RFC1345,KXS2 */
+	{ "iso885910",	PG_ISO_8859_10 },	/* ISO-8859-10; RFC1345,KXS2 */
+	{ "iso885913",	PG_ISO_8859_13 },	/* ISO-8859-13; RFC1345,KXS2 */
+	{ "iso885914",	PG_ISO_8859_14 },	/* ISO-8859-14; RFC1345,KXS2 */
+	{ "iso885915",	PG_ISO_8859_15 },	/* ISO-8859-15; RFC1345,KXS2 */
+	{ "iso885916",	PG_ISO_8859_16 },	/* ISO-8859-15; RFC1345,KXS2 */
 	{ "iso88592",	PG_LATIN2 },		/* ISO-8859-2; RFC1345,KXS2 */
 	{ "iso88593",	PG_LATIN3 },		/* ISO-8859-3; RFC1345,KXS2 */
 	{ "iso88594",	PG_LATIN4 },		/* ISO-8859-4; RFC1345,KXS2 */
-	{ "iso88595",	PG_LATIN5 },		/* ISO-8859-5; RFC1345,KXS2 */
-	{ "koi8",	PG_KOI8R },		/* _dirty_ alias for KOI8-R (back compatibility) */
+	{ "iso88595",	PG_ISO_8859_5 },	/* ISO-8859-5; RFC1345,KXS2 */
+	{ "iso88596",	PG_ISO_8859_6 },	/* ISO-8859-6; RFC1345,KXS2 */
+	{ "iso88597",	PG_ISO_8859_7 },	/* ISO-8859-7; RFC1345,KXS2 */
+	{ "iso88598",	PG_ISO_8859_8 },	/* ISO-8859-8; RFC1345,KXS2 */
+	{ "iso88599",	PG_LATIN5 },		/* ISO-8859-9; RFC1345,KXS2 */
+	{ "koi8",	PG_KOI8R },		/* _dirty_ alias for KOI8-R (backward compatibility) */
 	{ "koi8r",	PG_KOI8R },		/* KOI8-R; RFC1489 */
 	{ "latin1",	PG_LATIN1 },		/* alias for ISO-8859-1 */
 	{ "latin2",	PG_LATIN2 },		/* alias for ISO-8859-2 */
 	{ "latin3",	PG_LATIN3 },		/* alias for ISO-8859-3 */
 	{ "latin4",	PG_LATIN4 },		/* alias for ISO-8859-4 */
-	{ "latin5",	PG_LATIN5 },		/* alias for ISO-8859-5 */
+	{ "latin5",	PG_LATIN5 },		/* alias for ISO-8859-9 */
+	{ "latin6",	PG_ISO_8859_10},	/* alias for ISO-8859-10 */
+	{ "latin7",	PG_ISO_8859_13},	/* alias for ISO-8859-13 */
+	{ "latin8",	PG_ISO_8859_14},	/* alias for ISO-8859-14 */
+	{ "latin9",	PG_ISO_8859_15},	/* alias for ISO-8859-15 */
 	{ "mskanji",	PG_SJIS },		/* alias for Shift_JIS */
 	{ "muleinternal",PG_MULE_INTERNAL },
 	{ "shiftjis",	PG_SJIS },		/* Shift_JIS; JIS X 0202-1991 */
@@ -61,7 +74,7 @@ pg_encname pg_encname_tbl[] =
 	{ "sqlascii",	PG_SQL_ASCII },
 	{ "unicode",	PG_UTF8 },		/* alias for UTF-8 */
 	{ "utf8",	PG_UTF8 },		/* UTF-8; RFC2279 */
-	{ "win", 	PG_WIN1251 },		/* _dirty_ alias for windows-1251 (back compatibility) */
+	{ "win", 	PG_WIN1251 },		/* _dirty_ alias for windows-1251 (backward compatibility) */
 	{ "win1250",	PG_WIN1250 },		/* alias for Windows-1250 */
 	{ "win1251",	PG_WIN1251 },		/* alias for Windows-1251 */
 	{ "windows1250",PG_WIN1250 },		/* Windows-1251; Microsoft */
@@ -94,6 +107,15 @@ pg_enc2name pg_enc2name_tbl[] =
 	{ "KOI8",	PG_KOI8R },
 	{ "WIN",	PG_WIN1251 },
 	{ "ALT",	PG_ALT },
+	{ "ISO_8859_5", PG_ISO_8859_5 },
+	{ "ISO_8859_6", PG_ISO_8859_6 },
+	{ "ISO_8859_7", PG_ISO_8859_7 },
+	{ "ISO_8859_8", PG_ISO_8859_8 },
+	{ "ISO_8859_10", PG_ISO_8859_10 },
+	{ "ISO_8859_13", PG_ISO_8859_13 },
+	{ "ISO_8859_14", PG_ISO_8859_14 },
+	{ "ISO_8859_15", PG_ISO_8859_15 },
+	{ "ISO_8859_16", PG_ISO_8859_16 },
 	{ "SJIS",	PG_SJIS },
 	{ "BIG5",	PG_BIG5 },
 	{ "WIN1250",	PG_WIN1250 }

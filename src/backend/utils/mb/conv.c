@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.30 2001/09/25 01:27:03 ishii Exp $
+ * $Id: conv.c,v 1.31 2001/10/11 14:20:35 ishii Exp $
  *
  *
  */
@@ -22,10 +22,28 @@
 #include "Unicode/utf8_to_iso8859_3.map"
 #include "Unicode/utf8_to_iso8859_4.map"
 #include "Unicode/utf8_to_iso8859_5.map"
+#include "Unicode/utf8_to_iso8859_6.map"
+#include "Unicode/utf8_to_iso8859_7.map"
+#include "Unicode/utf8_to_iso8859_8.map"
+#include "Unicode/utf8_to_iso8859_9.map"
+#include "Unicode/utf8_to_iso8859_10.map"
+#include "Unicode/utf8_to_iso8859_13.map"
+#include "Unicode/utf8_to_iso8859_14.map"
+#include "Unicode/utf8_to_iso8859_15.map"
+#include "Unicode/utf8_to_iso8859_16.map"
 #include "Unicode/iso8859_2_to_utf8.map"
 #include "Unicode/iso8859_3_to_utf8.map"
 #include "Unicode/iso8859_4_to_utf8.map"
 #include "Unicode/iso8859_5_to_utf8.map"
+#include "Unicode/iso8859_6_to_utf8.map"
+#include "Unicode/iso8859_7_to_utf8.map"
+#include "Unicode/iso8859_8_to_utf8.map"
+#include "Unicode/iso8859_9_to_utf8.map"
+#include "Unicode/iso8859_10_to_utf8.map"
+#include "Unicode/iso8859_13_to_utf8.map"
+#include "Unicode/iso8859_14_to_utf8.map"
+#include "Unicode/iso8859_15_to_utf8.map"
+#include "Unicode/iso8859_16_to_utf8.map"
 #include "Unicode/utf8_to_euc_jp.map"
 #include "Unicode/euc_jp_to_utf8.map"
 #include "Unicode/utf8_to_euc_cn.map"
@@ -1168,7 +1186,7 @@ utf2ascii(unsigned char *utf, unsigned char *ascii, int len)
  * ISO8859-1 ---> UTF-8
  */
 static void
-latin1_to_utf(unsigned char *iso, unsigned char *utf, int len)
+iso8859_1_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
 	unsigned short c;
 
@@ -1189,7 +1207,7 @@ latin1_to_utf(unsigned char *iso, unsigned char *utf, int len)
  * UTF-8 ---> ISO8859-1
  */
 static void
-utf_to_latin1(unsigned char *utf, unsigned char *iso, int len)
+utf_to_iso8859_1(unsigned char *utf, unsigned char *iso, int len)
 {
 	unsigned short c,
 				c1,
@@ -1301,6 +1319,7 @@ utf_to_local(unsigned char *utf, unsigned char *iso,
 	*iso = '\0';
 }
 
+#ifdef NOT_USED
 /*
  * UTF-8 ---> ISO8859-2
  */
@@ -1333,10 +1352,11 @@ utf_to_latin4(unsigned char *utf, unsigned char *iso, int len)
  */
 static void
 utf_to_latin5(unsigned char *utf, unsigned char *iso, int len)
-
 {
 	utf_to_local(utf, iso, ULmapISO8859_5, sizeof(ULmapISO8859_5) / sizeof(pg_utf_to_local), len);
 }
+#endif /* NOT_USED */
+
 /*
  * Cyrillic charsets
  */
@@ -1436,6 +1456,7 @@ local_to_utf(unsigned char *iso, unsigned char *utf,
 	*utf = '\0';
 }
 
+#ifdef NOT_USED
 /*
  * ISO-8859-2 ---> UTF-8
  */
@@ -1471,6 +1492,33 @@ latin5_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
 	local_to_utf(iso, utf, LUmapISO8859_5, sizeof(LUmapISO8859_5) / sizeof(pg_local_to_utf), PG_LATIN5, len);
 }
+#endif /* NOT_USED */
+
+#define UTF_ISO8859(_id_) \
+static void \
+utf_to_iso8859_##_id_(unsigned char *utf, unsigned char *iso, int len) \
+{ \
+	utf_to_local(utf, iso, ULmapISO8859_##_id_, sizeof(ULmapISO8859_##_id_) / sizeof(pg_utf_to_local), len); \
+} \
+static void \
+iso8859_##_id_##_to_utf(unsigned char *iso, unsigned char *utf, int len) \
+{ \
+	local_to_utf(iso, utf, LUmapISO8859_##_id_, sizeof(LUmapISO8859_##_id_) / sizeof(pg_local_to_utf), PG_LATIN1, len); \
+}
+
+UTF_ISO8859(2);
+UTF_ISO8859(3);
+UTF_ISO8859(4);
+UTF_ISO8859(5);
+UTF_ISO8859(6);
+UTF_ISO8859(7);
+UTF_ISO8859(8);
+UTF_ISO8859(9);
+UTF_ISO8859(10);
+UTF_ISO8859(13);
+UTF_ISO8859(14);
+UTF_ISO8859(15);
+UTF_ISO8859(16);
 
 /*
  * KOI8-R ---> UTF-8
@@ -1639,14 +1687,23 @@ pg_enconv pg_enconv_tbl[] =
 	{ PG_EUC_TW,	euc_tw2mic, mic2euc_tw, euc_tw_to_utf, utf_to_euc_tw},
 	{ PG_UTF8, 	0, 0, 0, 0},
 	{ PG_MULE_INTERNAL, 0, 0, 0, 0},
-	{ PG_LATIN1,	latin12mic, mic2latin1, latin1_to_utf, utf_to_latin1},
-	{ PG_LATIN2,	latin22mic, mic2latin2, latin2_to_utf, utf_to_latin2},
-	{ PG_LATIN3,	latin32mic, mic2latin3, latin3_to_utf, utf_to_latin3},
-	{ PG_LATIN4,	latin42mic, mic2latin4, latin4_to_utf, utf_to_latin4},
-	{ PG_LATIN5,	iso2mic, mic2iso, latin5_to_utf, utf_to_latin5},
+	{ PG_LATIN1,	latin12mic, mic2latin1, iso8859_1_to_utf, utf_to_iso8859_1},
+	{ PG_LATIN2,	latin22mic, mic2latin2, iso8859_2_to_utf, utf_to_iso8859_2},
+	{ PG_LATIN3,	latin32mic, mic2latin3, iso8859_3_to_utf, utf_to_iso8859_3},
+	{ PG_LATIN4,	latin42mic, mic2latin4, iso8859_4_to_utf, utf_to_iso8859_4},
+	{ PG_LATIN5,	iso2mic, mic2iso, iso8859_9_to_utf, utf_to_iso8859_9},
 	{ PG_KOI8R,	koi8r2mic, mic2koi8r, KOI8R_to_utf, utf_to_KOI8R},
 	{ PG_WIN1251,	win12512mic, mic2win1251, WIN1251_to_utf, utf_to_WIN1251},
 	{ PG_ALT,	alt2mic, mic2alt, ALT_to_utf, utf_to_ALT},
+	{ PG_ISO_8859_5,	0, 0, iso8859_5_to_utf, utf_to_iso8859_5},
+	{ PG_ISO_8859_6,	0, 0, iso8859_6_to_utf, utf_to_iso8859_6},
+	{ PG_ISO_8859_7,	0, 0, iso8859_7_to_utf, utf_to_iso8859_7},
+	{ PG_ISO_8859_8,	0, 0, iso8859_8_to_utf, utf_to_iso8859_8},
+	{ PG_ISO_8859_10,	0, 0, iso8859_10_to_utf, utf_to_iso8859_10},
+	{ PG_ISO_8859_13,	0, 0, iso8859_13_to_utf, utf_to_iso8859_13},
+	{ PG_ISO_8859_14,	0, 0, iso8859_14_to_utf, utf_to_iso8859_14},
+	{ PG_ISO_8859_15,	0, 0, iso8859_15_to_utf, utf_to_iso8859_15},
+	{ PG_ISO_8859_16,	0, 0, iso8859_16_to_utf, utf_to_iso8859_16},
 	{ PG_SJIS,	sjis2mic, mic2sjis, sjis_to_utf, utf_to_sjis},
 	{ PG_BIG5,	big52mic, mic2big5, big5_to_utf, utf_to_big5},
 	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0},
@@ -1671,6 +1728,15 @@ pg_enconv pg_enconv_tbl[] =
 	{ PG_KOI8R,	koi8r2mic, mic2koi8r, 0, 0},
 	{ PG_WIN1251,	win12512mic, mic2win1251, 0, 0},
 	{ PG_ALT,	alt2mic, mic2alt, 0, 0},
+	{ PG_ISO_8859_5,	0, 0, 0, 0},
+	{ PG_ISO_8859_6,	0, 0, 0, 0},
+	{ PG_ISO_8859_7,	0, 0, 0, 0},
+	{ PG_ISO_8859_8,	0, 0, 0, 0},
+	{ PG_ISO_8859_10,	0, 0, 0, 0},
+	{ PG_ISO_8859_13,	0, 0, 0, 0},
+	{ PG_ISO_8859_14,	0, 0, 0, 0},
+	{ PG_ISO_8859_15,	0, 0, 0, 0},
+	{ PG_ISO_8859_16,	0, 0, 0, 0},
 	{ PG_SJIS,	sjis2mic, mic2sjis, 0, 0},
 	{ PG_BIG5,	big52mic, mic2big5, 0, 0},
 	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0},

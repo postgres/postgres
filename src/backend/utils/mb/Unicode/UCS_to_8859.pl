@@ -2,13 +2,13 @@
 #
 # Copyright 2001 by PostgreSQL Global Development Group
 #
-# $Id: UCS_to_8859.pl,v 1.2 2000/11/26 10:40:43 ishii Exp $
+# $Id: UCS_to_8859.pl,v 1.3 2001/10/11 14:20:35 ishii Exp $
 #
 # Generate UTF-8 <--> ISO8859 code conversion tables from
 # map files provided by Unicode organization.
 # Unfortunately it is prohibited by the organization
 # to distribute the map files. So if you try to use this script,
-# you have to obtain "8859-[2-5].TXT" from the organization's ftp site.
+# you have to obtain "8859-[2-16].TXT" from the organization's ftp site.
 # We assume the file include three tab-separated columns:
 #		 ISO/IEC 8859 code in hex
 #		 UCS-2 code in hex
@@ -16,7 +16,7 @@
 
 require "ucs2utf.pl";
 
-@charsets = (2,3,4,5);
+@charsets = (2,3,4,5,6,7,8,9,10,13,14,15,16);
 foreach $charset (@charsets) {
 
 #
