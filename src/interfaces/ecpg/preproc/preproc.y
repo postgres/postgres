@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.250 2003/08/01 11:25:55 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.251 2003/08/06 15:54:06 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -5290,9 +5290,9 @@ UsingConst: AllConst
 		{
 			if ($1[1] != '?') /* found a constant */
 			{
-				char *length = mm_alloc(sizeof("INT_MAX")+1);
+				char *length = mm_alloc(32);
 
-				sprintf(length, "%d", strlen($1));
+				sprintf(length, "%d", (int) strlen($1));
 				add_variable(&argsinsert, new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0), &no_indicator);
 			}
 		}
