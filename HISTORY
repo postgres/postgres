@@ -638,7 +638,7 @@ Changes
    Ensure that sequence counters do not go backwards after a crash (Tom)
    Fix pgaccess kanji-coversion key binding (Tatsuo)
    Optimizer improvements (Tom)
-   cash I/O improvements (Tom)
+   Cash I/O improvements (Tom)
    New Russian FAQ
    Compile fix for missing AuthBlockSig (Heiko)
    Additional time zones and time zone fixes (Thomas)
