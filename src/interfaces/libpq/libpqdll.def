@@ -88,3 +88,5 @@ EXPORTS
 	PQsetClientEncoding	@ 85
 	PQsetnonblocking	@ 86
 	PQfreeNotify		@ 87
+	PQescapeString		@ 88
+	PQescapeBytea		@ 89
