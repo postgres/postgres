@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.63 2004/10/12 15:44:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.64 2004/10/25 06:27:21 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -432,8 +432,8 @@ decl_cursor_args :
 						memcpy(ftmp, $2->fieldnames, nfields * sizeof(char *));
 						memcpy(vtmp, $2->varnos, nfields * sizeof(int));
 
-						pfree((char *)($2->fieldnames));
-						pfree((char *)($2->varnos));
+						pfree($2->fieldnames);
+						pfree($2->varnos);
 
 						$2->fieldnames = ftmp;
 						$2->varnos = vtmp;

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2004, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.82 2004/10/25 00:46:41 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.83 2004/10/25 06:27:21 neilc Exp $
  * ----------
  */
 #include "postgres.h"
@@ -910,7 +910,7 @@ pgstat_vacuum_tabstat(void)
 	/*
 	 * Free the dbid list.
 	 */
-	pfree((char *) dbidlist);
+	pfree(dbidlist);
 
 	/*
 	 * Tell the caller how many removeable objects we found
