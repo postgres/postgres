@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.9 2003/11/14 17:30:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.10 2003/11/14 18:32:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@
 
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <locale.h>
 #include <signal.h>
@@ -112,8 +113,10 @@ char	   *system_views_file;
 char	   *effective_user;
 bool		testpath = true;
 bool		made_new_pgdata = false;
+bool		found_existing_pgdata = false;
 char		infoversion[100];
-bool		not_ok = false;
+bool		caught_signal = false;
+bool		output_failed = false;
 
 /* defaults */
 int			n_connections = 10;
@@ -159,6 +162,7 @@ static char *expanded_path(char *);
 #endif
 static char **readfile(char *);
 static void writefile(char *, char **);
+static void pclose_check(FILE *stream);
 static char *get_id(void);
 static char *get_encoding_id(char *);
 static char *get_short_version(void);
@@ -206,22 +210,20 @@ static void *xmalloc(size_t);
 do { \
 	fflush(stdout); \
 	fflush(stderr); \
-	pg = popen(cmd, PG_BINARY_W); \
+	pg = popen(cmd, "w"); \
 	if (pg == NULL) \
 		exit_nicely(); \
 } while (0)
 
 #define PG_CMD_CLOSE \
 do { \
-	if ((pclose(pg) >> 8) & 0xff) \
-		exit_nicely(); \
+	pclose_check(pg); \
 } while (0)
 
 #define PG_CMD_PUTLINE \
 do { \
-	if (fputs(*line, pg) < 0) \
-		exit_nicely(); \
-	fflush(pg); \
+	if (fputs(*line, pg) < 0 || fflush(pg) < 0) \
+		output_failed = true; \
 } while (0)
 
 #ifndef WIN32
@@ -460,6 +462,41 @@ writefile(char *path, char **lines)
 		exit_nicely();
 }
 
+/* pclose() plus useful error reporting */
+static void
+pclose_check(FILE *stream)
+{
+	int		exitstatus;
+
+	exitstatus = pclose(stream);
+
+	if (exitstatus == 0)
+		return;					/* all is well */
+
+	if (exitstatus == -1)
+	{
+		/* pclose() itself failed, and hopefully set errno */
+		perror("pclose failed");
+	}
+	else if (WIFEXITED(exitstatus))
+	{
+		fprintf(stderr, "child process exited with exit code %d\n",
+				WEXITSTATUS(exitstatus));
+	}
+	else if (WIFSIGNALED(exitstatus))
+	{
+		fprintf(stderr, "child process was terminated by signal %d\n",
+				WTERMSIG(exitstatus));
+	}
+	else
+	{
+		fprintf(stderr, "child process exited with unexpected status %d\n",
+				exitstatus);
+	}
+
+	exit_nicely();
+}
+
 /* source stolen from FreeBSD /src/bin/mkdir/mkdir.c and adapted */
 
 /*
@@ -585,7 +622,7 @@ exit_nicely(void)
 			if (!rmtree(pg_data, true))
 				fprintf(stderr, "%s: failed\n", progname);
 		}
-		else
+		else if (found_existing_pgdata)
 		{
 			fprintf(stderr,
 					"%s: removing contents of data directory \"%s\"\n",
@@ -593,13 +630,16 @@ exit_nicely(void)
 			if (!rmtree(pg_data, false))
 				fprintf(stderr, "%s: failed\n", progname);
 		}
+		/* otherwise died during startup, do nothing! */
 	}
 	else
 	{
-        fprintf(stderr,
-				"%s: data directory \"%s\" not removed at user's request\n",
-				progname, pg_data);
+		if (made_new_pgdata || found_existing_pgdata)
+			fprintf(stderr,
+					"%s: data directory \"%s\" not removed at user's request\n",
+					progname, pg_data);
 	}
+
 	exit(1);
 }
 
@@ -874,7 +914,7 @@ find_postgres(char *path)
 	if (fgets(line, sizeof(line), pgver) == NULL)
 		perror("fgets failure");
 
-	pclose(pgver);
+	pclose_check(pgver);
 
 	if (strcmp(line, PG_VERSIONSTR) != 0)
 		return FIND_WRONG_VERSION;
@@ -1839,7 +1879,7 @@ trapsig(int signum)
 {
 	/* handle systems that reset the handler, like Windows (grr) */
 	pqsignal(signum, trapsig);
-	not_ok = true;
+	caught_signal = true;
 }
 
 /*
@@ -1848,14 +1888,19 @@ trapsig(int signum)
 static void
 check_ok()
 {
-	if (not_ok)
+	if (caught_signal)
 	{
-		printf("Caught Signal.\n");
+		printf("caught signal\n");
+		exit_nicely();
+	}
+	else if (output_failed)
+	{
+		printf("failed to write to child process\n");
 		exit_nicely();
 	}
 	else
 	{
-		/* no signal caught */
+		/* all seems well */
 		printf("ok\n");
 	}
 }
@@ -2329,6 +2374,11 @@ main(int argc, char *argv[])
 	pqsignal(SIGTERM, trapsig);
 #endif
 
+	/* Ignore SIGPIPE when writing to backend, so we can clean up */
+#ifdef SIGPIPE
+	pqsignal(SIGPIPE, SIG_IGN);
+#endif
+
 	switch (check_data_dir())
 	{
 		case 0:
@@ -2354,11 +2404,12 @@ main(int argc, char *argv[])
 			if (chmod(pg_data, 0700) != 0)
 			{
 				perror(pg_data);
-				/* don't exit_nicely(), it'll try to remove pg_data contents */
-				exit(1);
+				exit_nicely();
 			}
 			else
 				check_ok();
+
+			found_existing_pgdata = true;
 			break;
 
 		case 2:
@@ -2369,14 +2420,12 @@ main(int argc, char *argv[])
 					"the directory \"%s\" or run %s\n"
 					"with an argument other than \"%s\".\n",
 					progname, pg_data, pg_data, progname, pg_data);
-			/* don't exit_nicely(), it'll try to remove pg_data contents */
-			exit(1);
+			exit(1);			/* no further message needed */
 
 		default:
 			/* Trouble accessing directory */
 			perror(pg_data);
-			/* don't exit_nicely(), it'll try to remove pg_data contents */
-			exit(1);
+			exit_nicely();
 	}
 
 	/* Create required subdirectories */
