@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.98 2003/06/24 23:14:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.99 2003/06/25 04:32:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -599,11 +599,11 @@ select_common_type(List *typeids, const char *context)
 	List	   *l;
 
 	Assert(typeids != NIL);
-	ptype = lfirsto(typeids);
+	ptype = getBaseType(lfirsto(typeids));
 	pcategory = TypeCategory(ptype);
 	foreach(l, lnext(typeids))
 	{
-		Oid			ntype = lfirsto(l);
+		Oid			ntype = getBaseType(lfirsto(l));
 
 		/* move on to next one if no new information... */
 		if ((ntype != InvalidOid) && (ntype != UNKNOWNOID) && (ntype != ptype))
