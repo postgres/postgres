@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.21 2001/02/10 02:31:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.22 2001/06/01 19:54:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,8 @@ DLNewList(void)
 	Dllist	   *l;
 
 	l = (Dllist *) malloc(sizeof(Dllist));
+	if (l == NULL)
+		elog(ERROR, "Memory exhausted in DLNewList");
 	l->dll_head = 0;
 	l->dll_tail = 0;
 
@@ -66,6 +68,8 @@ DLNewElem(void *val)
 	Dlelem	   *e;
 
 	e = (Dlelem *) malloc(sizeof(Dlelem));
+	if (e == NULL)
+		elog(ERROR, "Memory exhausted in DLNewElem");
 	e->dle_next = 0;
 	e->dle_prev = 0;
 	e->dle_val = val;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.56 2001/05/27 09:59:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.57 2001/06/01 19:52:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -646,8 +646,11 @@ init_sequence(char *caller, char *name)
 		 * as the backend does, so we use plain malloc for them.
 		 */
 		elm = (SeqTable) malloc(sizeof(SeqTableData));
-		elm->name = malloc(strlen(name) + 1);
-		strcpy(elm->name, name);
+		if (elm == NULL)
+			elog(ERROR, "Memory exhausted in init_sequence");
+		elm->name = strdup(name);
+		if (elm->name == NULL)
+			elog(ERROR, "Memory exhausted in init_sequence");
 		elm->rel = seqrel;
 		elm->relid = RelationGetRelid(seqrel);
 		elm->cached = elm->last = elm->increment = 0;
