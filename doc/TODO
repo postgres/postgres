@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Aug 30 21:36:25 EDT 2002
+Last updated:		Sat Aug 31 21:32:13 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -94,7 +94,7 @@ Data Types
 	o Store binary-compatible type information in the system
 	o Allow better handling of numeric constants, type conversion 
 	  [typeconv]
-	o SELECT col FROM tab WHERE numeric_col = 10.1 fails, requires quotes
+	o -SELECT col FROM tab WHERE numeric_col = 10.1 fails, requires quotes
 
 * ARRAYS
 	o Allow nulls in arrays
