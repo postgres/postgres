@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.25 2002/01/06 00:37:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.26 2002/02/18 16:04:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1009,10 +1009,15 @@ compute_minimal_stats(VacAttrStats *stats,
 		{
 			/*----------
 			 * Estimate the number of distinct values using the estimator
-			 * proposed by Chaudhuri et al (see citation above).  This is
-			 *		sqrt(n/r) * max(f1,1) + f2 + f3 + ...
-			 * where fk is the number of distinct values that occurred
-			 * exactly k times in our sample of r rows (from a total of n).
+			 * proposed by Haas and Stokes in IBM Research Report RJ 10025:
+			 *		n*d / (n - f1 + f1*n/N)
+			 * where f1 is the number of distinct values that occurred
+			 * exactly once in our sample of n rows (from a total of N),
+			 * and d is the total number of distinct values in the sample.
+			 * This is their Duj1 estimator; the other estimators they
+			 * recommend are considerably more complex, and are numerically
+			 * very unstable when n is much smaller than N.
+			 *
 			 * We assume (not very reliably!) that all the multiply-occurring
 			 * values are reflected in the final track[] list, and the other
 			 * nonnull values all appeared but once.  (XXX this usually
@@ -1021,12 +1026,19 @@ compute_minimal_stats(VacAttrStats *stats,
 			 *----------
 			 */
 			int			f1 = nonnull_cnt - summultiple;
-			double		term1;
+			int			d = f1 + nmultiple;
+			double		numer, denom, stadistinct;
 
-			if (f1 < 1)
-				f1 = 1;
-			term1 = sqrt(totalrows / (double) numrows) * f1;
-			stats->stadistinct = floor(term1 + nmultiple + 0.5);
+			numer = (double) numrows * (double) d;
+			denom = (double) (numrows - f1) +
+				(double) f1 * (double) numrows / totalrows;
+			stadistinct = numer / denom;
+			/* Clamp to sane range in case of roundoff error */
+			if (stadistinct < (double) d)
+				stadistinct = (double) d;
+			if (stadistinct > totalrows)
+				stadistinct = totalrows;
+			stats->stadistinct = floor(stadistinct + 0.5);
 		}
 
 		/*
@@ -1313,20 +1325,32 @@ compute_scalar_stats(VacAttrStats *stats,
 		{
 			/*----------
 			 * Estimate the number of distinct values using the estimator
-			 * proposed by Chaudhuri et al (see citation above).  This is
-			 *		sqrt(n/r) * max(f1,1) + f2 + f3 + ...
-			 * where fk is the number of distinct values that occurred
-			 * exactly k times in our sample of r rows (from a total of n).
+			 * proposed by Haas and Stokes in IBM Research Report RJ 10025:
+			 *		n*d / (n - f1 + f1*n/N)
+			 * where f1 is the number of distinct values that occurred
+			 * exactly once in our sample of n rows (from a total of N),
+			 * and d is the total number of distinct values in the sample.
+			 * This is their Duj1 estimator; the other estimators they
+			 * recommend are considerably more complex, and are numerically
+			 * very unstable when n is much smaller than N.
+			 *
 			 * Overwidth values are assumed to have been distinct.
 			 *----------
 			 */
 			int			f1 = ndistinct - nmultiple + toowide_cnt;
-			double		term1;
+			int			d = f1 + nmultiple;
+			double		numer, denom, stadistinct;
 
-			if (f1 < 1)
-				f1 = 1;
-			term1 = sqrt(totalrows / (double) numrows) * f1;
-			stats->stadistinct = floor(term1 + nmultiple + 0.5);
+			numer = (double) numrows * (double) d;
+			denom = (double) (numrows - f1) +
+				(double) f1 * (double) numrows / totalrows;
+			stadistinct = numer / denom;
+			/* Clamp to sane range in case of roundoff error */
+			if (stadistinct < (double) d)
+				stadistinct = (double) d;
+			if (stadistinct > totalrows)
+				stadistinct = totalrows;
+			stats->stadistinct = floor(stadistinct + 0.5);
 		}
 
 		/*
