@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Mar  6 14:52:03 EST 2003
+Last updated:		Thu Mar  6 14:52:53 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -458,7 +458,7 @@ Source Code
 	o ecpg improvements?
 	o Add decoded type, length, precision
 	o Compression?
-	o Report server version number
+	o Report server version number, database encoding, client encoding
 
 
 ---------------------------------------------------------------------------
