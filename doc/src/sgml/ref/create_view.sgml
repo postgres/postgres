@@ -14,28 +14,21 @@ Constructs a virtual table
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-21</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   CREATE VIEW <REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>
-       AS SELECT <REPLACEABLE CLASS="PARAMETER">query</REPLACEABLE>
+CREATE VIEW <REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>
+    AS SELECT <REPLACEABLE CLASS="PARAMETER">query</REPLACEABLE>
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATEVIEW-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -62,14 +55,11 @@ An SQL query which will provide the columns and rows of the view.
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATEVIEW-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -79,6 +69,7 @@ An SQL query which will provide the columns and rows of the view.
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -133,7 +124,7 @@ An SQL query which will provide the columns and rows of the view.
  
  <REFSECT1 ID="R1-SQL-CREATEVIEW-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-21</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
@@ -147,7 +138,7 @@ An SQL query which will provide the columns and rows of the view.
   
   <REFSECT2 ID="R2-SQL-CREATEVIEW-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
@@ -159,7 +150,7 @@ An SQL query which will provide the columns and rows of the view.
   
   <REFSECT2 ID="R2-SQL-CREATEVIEW-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     Bugs
@@ -177,17 +168,17 @@ An SQL query which will provide the columns and rows of the view.
    Create a view consisting of all Comedy films:
   </PARA>
   <ProgramListing>
-   CREATE VIEW kinds AS
-         SELECT *
-         FROM films
-         WHERE kind = 'Comedy';
+CREATE VIEW kinds AS
+    SELECT *
+    FROM films
+    WHERE kind = 'Comedy';
 
-   SELECT * FROM kinds;
+SELECT * FROM kinds;
 
-   code |title                    |did| date_prod|kind      |len
-   -----+-------------------------+---+----------+----------+------
-   UA502|Bananas                  |105|1971-07-13|Comedy    | 01:22
-   C_701|There's a Girl in my Soup|107|1970-06-11|Comedy    | 01:36
+code |title                    |did| date_prod|kind      |len
+-----+-------------------------+---+----------+----------+------
+UA502|Bananas                  |105|1971-07-13|Comedy    | 01:22
+C_701|There's a Girl in my Soup|107|1970-06-11|Comedy    | 01:36
   </ProgramListing>
   
  </REFSECT1>
@@ -201,7 +192,7 @@ An SQL query which will provide the columns and rows of the view.
   
   <REFSECT2 ID="R2-SQL-CREATEVIEW-5">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
@@ -209,13 +200,13 @@ An SQL query which will provide the columns and rows of the view.
    <PARA>
    SQL92 specifies some additional capabilities for the CREATE VIEW statement:
    </PARA>
-   <programlisting>
-    CREATE VIEW <replaceable class="parameter">view</replaceable> [ <replaceable class="parameter">column</replaceable> [, ...] ]
-      AS SELECT <replaceable class="parameter">expression</replaceable> [AS <replaceable class="parameter">colname</replaceable>] [, ...]
-         FROM <replaceable class="parameter">table</replaceable>
-         [WHERE <replaceable class="parameter">condition</replaceable>]
-         [ WITH [ CASCADE | LOCAL ] CHECK OPTION ]
-   </programlisting>
+   <synopsis>
+CREATE VIEW <replaceable class="parameter">view</replaceable> [ <replaceable class="parameter">column</replaceable> [, ...] ]
+    AS SELECT <replaceable class="parameter">expression</replaceable> [AS <replaceable class="parameter">colname</replaceable>] [, ...]
+    FROM <replaceable class="parameter">table</replaceable>
+    [ WHERE <replaceable class="parameter">condition</replaceable> ]
+    [ WITH [ CASCADE | LOCAL ] CHECK OPTION ]
+   </synopsis>
 
    <VARIABLELIST>
     <VARLISTENTRY>
@@ -226,7 +217,7 @@ An SQL query which will provide the columns and rows of the view.
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>CHECK OPTION</ReturnValue>
+	  CHECK OPTION
 	 </TERM>
 	 <LISTITEM>
 	  <PARA> This option is to do with updatable views.
@@ -238,7 +229,7 @@ An SQL query which will provide the columns and rows of the view.
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>LOCAL</ReturnValue>
+	  LOCAL
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -248,7 +239,7 @@ An SQL query which will provide the columns and rows of the view.
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>CASCADE</ReturnValue>
+	  CASCADE
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>

@@ -182,7 +182,7 @@ The keyword COLUMN is noise and can be omitted.
 <Quote>[*]</Quote> following a name of a table indicates that statement
      should be run over that table and all tables below it in the
      inheritance hierarchy.
-    The PostgreSQL User's Guide has further
+    The <citetitle>PostgreSQL User's Guide</citetitle> has further
      information on inheritance.
 
 <PARA>

@@ -14,31 +14,25 @@
   </REFPURPOSE>             
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP TRIGGER <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> ON <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+DROP TRIGGER <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> ON <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPTRIGGER-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE></ReturnValue>
+	  <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -48,7 +42,7 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE></ReturnValue>
+	  <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -57,14 +51,11 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPTRIGGER-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -74,6 +65,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -108,7 +100,7 @@
  
  <REFSECT1 ID="R1-SQL-DROPTRIGGER-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
@@ -121,17 +113,17 @@
   
   <REFSECT2 ID="R2-SQL-DROPTRIGGER-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    The <command>DROP TRIGGER</command> statement is a PostgreSQL
+    <command>DROP TRIGGER</command> is a <productname>Postgres</productname>
     language extension.
    </PARA>
    <PARA>
-    Refer to the <command>CREATE TRIGGER</command> statement for
+    Refer to <command>CREATE TRIGGER</command> for
     information on how to create triggers.
    </PARA>
   </REFSECT2>
@@ -141,10 +133,11 @@
    Usage
   </TITLE>
   <PARA>
-   Destroy the <literal>if_dist_exists</literal> trigger on table <literal>films</literal>:
+   Destroy the <literal>if_dist_exists</literal> trigger
+ on table <literal>films</literal>:
   </PARA>
   <ProgramListing>
-   DROP TRIGGER if_dist_exists ON films;
+DROP TRIGGER if_dist_exists ON films;
   </ProgramListing>
  </REFSECT1>
  
@@ -157,13 +150,14 @@
   
   <REFSECT2 ID="R2-SQL-DROPTRIGGER-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    There is no <command>DROP TRIGGER</command> statement in SQL92.
+    There is no <command>DROP TRIGGER</command> statement in
+ <acronym>SQL92</acronym>.
    </PARA>
   </refsect2>
  </refsect1>

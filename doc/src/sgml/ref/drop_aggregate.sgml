@@ -17,7 +17,7 @@
    <DATE>1998-04-15</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP AGGREGATE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>
+DROP AGGREGATE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPAGGREGATE-1">
@@ -29,16 +29,10 @@
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">name</replaceable></ReturnValue>
+	  <replaceable class="parameter">name</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -48,12 +42,12 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">type</replaceable></ReturnValue>
+	  <replaceable class="parameter">type</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
           The type of an existing aggregate function.
-          (Refer to PostgreSQL User's Guide chapter 4 for
+          (Refer to the <citetitle>PostgreSQL User's Guide</citetitle> for
 	   further information about data types).
 	   <comment>This should become a cross-reference rather than a
 	    hard-coded chapter number</comment>
@@ -61,9 +55,6 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPAGGREGATE-2">
@@ -78,6 +69,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -94,7 +86,7 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>WARN RemoveAggregate: aggregate '<replaceable class="parameter">name</replaceable>' for 'type' does not exist</ReturnValue>
+	  <ReturnValue>WARN RemoveAggregate: aggregate '<replaceable class="parameter">name</replaceable>' for '<replaceable class="parameter">type</replaceable>' does not exist</ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -131,7 +123,8 @@
     Notes
    </TITLE>
    <PARA>
-    The <command>DROP AGGREGATE</command> statement is a PostgreSQL
+    The <command>DROP AGGREGATE</command> statement is a
+<productname>Postgres</productname>
     language extension.
    </PARA>
    <PARA>
@@ -150,7 +143,7 @@
    <literal>int4</literal>:
   </PARA>
   <ProgramListing>
-   DROP AGGREGATE myavg int4;
+DROP AGGREGATE myavg int4;
   </ProgramListing>
  </REFSECT1>
  
@@ -169,7 +162,7 @@
     SQL92
    </TITLE>
    <PARA>
-   There is no DROP AGGREGATE statement in SQL92.
+   There is no DROP AGGREGATE statement in <acronym>SQL92</acronym>.
    </PARA>
   </refsect2>
  </refsect1>

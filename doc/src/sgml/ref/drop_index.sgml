@@ -17,7 +17,7 @@
    <DATE>1998-04-15</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP INDEX <REPLACEABLE CLASS="PARAMETER">index_name</REPLACEABLE>
+DROP INDEX <REPLACEABLE CLASS="PARAMETER">index_name</REPLACEABLE>
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPINDEX-1">
@@ -29,12 +29,6 @@
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -47,9 +41,6 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPINDEX-2">
@@ -64,6 +55,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -84,7 +76,7 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   This message occurs if "<REPLACEABLE CLASS="PARAMETER">index_name</REPLACEABLE>"
+	   This message occurs if <REPLACEABLE CLASS="PARAMETER">index_name</REPLACEABLE>
  is not an index in the database.
 	  </PARA>
 	 </LISTITEM>
@@ -117,11 +109,12 @@
     Notes
    </TITLE>
    <PARA>
-    <command>DROP INDEX</command> is a PostgreSQL language extension.
+    <command>DROP INDEX</command> is a <productname>Postgres</productname>
+ language extension.
    </PARA>
    <PARA>
     Refer to the <command>CREATE INDEX</command> statement for 
-    information on how to create indices.
+    information on how to create indexes.
    </PARA>
   </REFSECT2>
   
@@ -133,7 +126,7 @@
    This command will remove the <literal>title_idx</literal> index:
   </PARA>
   <ProgramListing>
-   DROP INDEX title_idx;
+DROP INDEX title_idx;
   </ProgramListing>
  </REFSECT1>
  
@@ -152,9 +145,11 @@
     SQL92
    </TITLE>
    <PARA>
-SQL92 defines commands by which to access a generic relational database.
-Indices are an implementation-dependent feature and hence
-there is no <command>DROP INDEX</command> statement in SQL92.
+<acronym>SQL92</acronym> defines commands by which to access
+ a generic relational database.
+Indexes are an implementation-dependent feature and hence
+there are no index-specific commands or definitions in the
+<acronym>SQL92</acronym> language.
    </PARA>
   </refsect2>
  </refsect1>

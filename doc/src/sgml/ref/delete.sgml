@@ -31,16 +31,10 @@
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">table</replaceable></ReturnValue>
+	  <replaceable class="parameter">table</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -50,7 +44,7 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">condition</replaceable></ReturnValue>
+	  <replaceable class="parameter">condition</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -64,9 +58,6 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DELETE-2">
@@ -81,6 +72,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -97,7 +89,7 @@
 	  </PARA>
 	  <PARA>
 	   If <replaceable class="parameter">count</replaceable> is 0,
-	   no rows are deleted.
+	   no rows were deleted.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -139,26 +131,27 @@
    Remove all films but musicals:
   </PARA>
   <ProgramListing>
-   DELETE FROM films WHERE kind &lt;&gt; 'Musical';
+DELETE FROM films WHERE kind &lt;&gt; 'Musical';
 
-   SELECT * FROM films;
+SELECT * FROM films;
 
-   code |title                    |did| date_prod|kind      |len
-   -----+-------------------------+---+----------+----------+------
-   UA501|West Side Story          |105|1961-01-03|Musical   | 02:32
-   TC901|The King and I           |109|1956-08-11|Musical   | 02:13
-   WD101|Bed Knobs and Broomsticks|111|          |Musical   | 01:57
+code |title                    |did| date_prod|kind      |len
+-----+-------------------------+---+----------+----------+------
+UA501|West Side Story          |105|1961-01-03|Musical   | 02:32
+TC901|The King and I           |109|1956-08-11|Musical   | 02:13
+WD101|Bed Knobs and Broomsticks|111|          |Musical   | 01:57
+(3 rows)
   </ProgramListing>
   <para>
-   Clear the table films:
+   Clear the table <literal>films</literal>:
   </para>
   <programlisting>
-   DELETE FROM films;
+DELETE FROM films;
    
-   SELECT * FROM films;
-   code|title|did|date_prod|kind|len
-   ----+-----+---+---------+----+---
-   (0 rows)
+SELECT * FROM films;
+code|title|did|date_prod|kind|len
+----+-----+---+---------+----+---
+(0 rows)
   </programlisting>      
  </REFSECT1>
  
@@ -177,14 +170,15 @@
     SQL92
    </TITLE>
    <PARA>
-   SQL92 defines a different syntax for a positioned DELETE statement:
+   <acronym>SQL92</acronym> allows a positioned DELETE statement:
    </PARA>
    
    <synopsis>
-    DELETE FROM <replaceable class="parameter">table</replaceable> WHERE CURRENT OF <replaceable class="parameter">cursor</replaceable>
+DELETE FROM <replaceable class="parameter">table</replaceable> WHERE CURRENT OF <replaceable class="parameter">cursor</replaceable>
    </synopsis>
    <para>
-   where <replaceable class="parameter">cursor</replaceable> identifies an open cursor.</para>
+   where <replaceable class="parameter">cursor</replaceable> identifies an open cursor. Interactive cursors in <productname>Postgres</productname> are read-only.
+</para>
   </refsect2>
  </refsect1>
 </REFENTRY>

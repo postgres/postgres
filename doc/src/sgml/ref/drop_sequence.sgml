@@ -14,31 +14,25 @@
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP SEQUENCE <REPLACEABLE CLASS="PARAMETER">seqname</REPLACEABLE> [, ...]
+DROP SEQUENCE <REPLACEABLE CLASS="PARAMETER">seqname</REPLACEABLE> [, ...]
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPSEQUENCE-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><REPLACEABLE CLASS="PARAMETER">seqname</REPLACEABLE></ReturnValue>
+	  <REPLACEABLE CLASS="PARAMETER">seqname</REPLACEABLE>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -47,14 +41,11 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPSEQUENCE-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -64,6 +55,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -84,7 +76,7 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   This message occurs if the sequence specified does not exist.
+	   This message occurs if the specified sequence does not exist.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -97,7 +89,7 @@
  
  <REFSECT1 ID="R1-SQL-DROPSEQUENCE-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
@@ -111,13 +103,14 @@
   
   <REFSECT2 ID="R2-SQL-DROPSEQUENCE-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    The <command>DROP SEQUENCE</command> statement is a PostgreSQL
+    The <command>DROP SEQUENCE</command> statement is a
+ <productname>Postgres</productname>
     language extension.
    </PARA>
    <PARA>
@@ -134,7 +127,7 @@
    To remove sequence <literal>serial</literal> from database:
   </PARA>
   <ProgramListing>
-   DROP SEQUENCE serial
+DROP SEQUENCE serial
   </ProgramListing>
  </REFSECT1>
  
@@ -147,13 +140,13 @@
   
   <REFSECT2 ID="R2-SQL-DROPSEQUENCE-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    There is no <command>DROP SEQUENCE</command> statement in SQL92.
+    There is no <command>DROP SEQUENCE</command> in <acronym>SQL92</acronym>.
    </PARA>
   </refsect2>
  </refsect1>

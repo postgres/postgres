@@ -40,9 +40,10 @@ CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable class="parameter">langname<
 	  <PARA>
 	   <function> TRUSTED</function> specifies that the call handler for
 	   the language is safe; that is, it offers an unprivileged user
-	   no functionality to get around access restrictions. If
+	   no functionality to bypass access restrictions. If
 	   this keyword is omitted when registering the language,
-	   only users with the PostgreSQL superuser privilege can use
+	   only users with the <productname>Postgres</productname>
+superuser privilege can use
 	   this language to create new functions
 	   (like the 'C' language).  
 	  </PARA>
@@ -58,17 +59,17 @@ CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable class="parameter">langname<
 	   The name of the new procedural language.
 	   The language name is case insensitive. A procedural 
 	   language cannot override one of the built-in languages of
-	   PostgreSQL.
+	   <productname>Postgres</productname>.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY> 
 	<VARLISTENTRY>
 	 <TERM>
-	  <replaceable class="parameter">call_handler</replaceable>
+	  HANDLER <replaceable class="parameter">call_handler</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   The argument for <function>HANDLER</function> is the name
+	   <replaceable class="parameter">call_handler</replaceable> is the name
 	   of a previously
 	   registered function that will be called to execute the PL
 	   procedures.
@@ -86,7 +87,7 @@ CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable class="parameter">langname<
 	   inserted in the <literal>LANCOMPILER</literal> attribute
 	   of the new
 	   <filename>pg_language</filename> entry. At present,
-	   PostgreSQL doesn't use
+	   <productname>Postgres</productname> does not use
 	   this attribute in any way.
 	  </PARA>
 	 </LISTITEM>
@@ -364,7 +365,8 @@ CREATE PROCEDURAL LANGUAGE 'plsample'
     SQL92
    </TITLE>
    <PARA>
-    There is no <command>CREATE LANGUAGE</command> statement in SQL92.
+    There is no <command>CREATE LANGUAGE</command> statement in
+ <acronym>SQL92</acronym>.
    </PARA>
   </refsect2>
  </refsect1>

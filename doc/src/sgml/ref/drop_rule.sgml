@@ -14,31 +14,25 @@
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP RULE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
+DROP RULE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPRULE-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">name</replaceable></ReturnValue>
+	  <replaceable class="parameter">name</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -47,14 +41,11 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPRULE-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -64,6 +55,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -97,37 +89,40 @@
  
  <REFSECT1 ID="R1-SQL-DROPRULE-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <PARA>
-   <command>DROP RULE</command> drops a rule from the specified PostgreSQL rule
-   system. PostgreSQL will immediately cease enforcing it and
+   <command>DROP RULE</command> drops a rule from the specified
+ <productname>Postgres</productname> rule
+   system. <productname>Postgres</productname>
+ will immediately cease enforcing it and
    will purge its definition from the system catalogs.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-DROPRULE-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    The <command>DROP RULE</command> statement is a PostgreSQL
+    The <command>DROP RULE</command> statement is a
+ <productname>Postgres</productname>
     language extension.
    </PARA>
    <PARA>
-    Refer to the <command>CREATE RULE</command> statement for
+    Refer to <command>CREATE RULE</command> for
     information on how to create rules.
    </PARA>
   </refsect2>
 
   <REFSECT2 ID="R2-SQL-DROPRULE-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
    Bugs
@@ -160,13 +155,13 @@
   
   <REFSECT2 ID="R2-SQL-DROPRULE-5">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-   There is no DROP RULE statement in SQL92.
+   There is no <command>DROP RULE</command> in SQL92.
    </PARA>
   </refsect2>
  </refsect1>

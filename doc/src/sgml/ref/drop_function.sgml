@@ -18,7 +18,7 @@
    <DATE>1998-04-15</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [<replaceable class="parameter">type</replaceable> [, ...]] )
+DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">type</replaceable> [, ...] ] )
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPFUNCTION-1">
@@ -30,12 +30,6 @@
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -58,9 +52,6 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPFUNCTION-2">
@@ -75,6 +66,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -91,13 +83,12 @@
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
-	   WARN RemoveFunction: Function "<replaceable class="parameter">name</replaceable>" ("<replaceable class="parameter">types</replaceable>") does not exist</ReturnValue>
+	  <ReturnValue>WARN RemoveFunction: Function "<replaceable class="parameter">name</replaceable>" ("<replaceable class="parameter">types</replaceable>") does not exist</ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
 	   This message is given if the function specified does not
-exist into database.
+exist in the current database.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -131,11 +122,12 @@ exist into database.
     Notes
    </TITLE>
    <PARA>
-    Refer to the <citerefentry>
-     <refentrytitle>
-      CREATE FUNCTION</refentrytitle>
+    Refer to <citerefentry>
+<refentrytitle>
+CREATE FUNCTION
+</refentrytitle>
     </citerefentry>
- statement to create aggregate functions.
+ to create aggregate functions.
    </PARA>
   </REFSECT2>
   
@@ -147,7 +139,7 @@ exist into database.
    This command removes the square root function:
   </PARA>
   <ProgramListing>
-   DROP FUNCTION sqrt(int4);
+DROP FUNCTION sqrt(int4);
   </ProgramListing>
  </REFSECT1>
  <REFSECT1 ID="R1-SQL-DROPFUNCTION-3">
@@ -164,8 +156,8 @@ exist into database.
   <TITLE>
    Compatibility
   </TITLE>
-  <PARA
-   >DROP FUNCTION statement is a PostgreSQL language extension.
+  <PARA>
+DROP FUNCTION is a <productname>Postgres</productname> language extension.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-DROPFUNCTION-4">
@@ -176,9 +168,10 @@ exist into database.
     SQL/PSM
    </TITLE>
    <PARA>
-   The SQL/PSM DROP FUNCTION statement has the following syntax:
+SQL/PSM is a proposed standard to enable function extensibility.
+The SQL/PSM DROP FUNCTION statement has the following syntax:
     <programlisting>
-     DROP [ SPECIFIC ] FUNCTION <replaceable class="parameter">name</replaceable> { RESTRICT | CASCADE }</programlisting>
+DROP [ SPECIFIC ] FUNCTION <replaceable class="parameter">name</replaceable> { RESTRICT | CASCADE }</programlisting>
    </PARA>
   </refsect2>
  </refsect1>

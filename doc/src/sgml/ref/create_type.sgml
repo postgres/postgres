@@ -14,46 +14,39 @@
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-21</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   CREATE TYPE <replaceable class="parameter">typename</replaceable> (
-        INTERNALLENGTH = (<replaceable class="parameter">internallength</replaceable> | VARIABLE)
-     [, EXTERNALLENGTH = (<replaceable class="parameter">externallength</replaceable> | VARIABLE) ]
+CREATE TYPE <replaceable class="parameter">typename</replaceable> (
 <comment>
 Why are parentheses required around the length parameters?
 </comment>
-      , INPUT     = <replaceable class="parameter">input_function</replaceable>
-      , OUTPUT    = <replaceable class="parameter">output_function</replaceable>
-     [, ELEMENT   = <replaceable class="parameter">element</replaceable>]
-     [, DELIMITER = <replaceable class="parameter">delimiter</replaceable>]
-     [, DEFAULT   = "<replaceable class="parameter">default</replaceable>" ]
-     [, SEND      = <replaceable class="parameter">send_function</replaceable> ]
-     [, RECEIVE   = <replaceable class="parameter">receive_function</replaceable> ]
-     [, PASSEDBYVALUE])
+    INPUT             = <replaceable class="parameter">input_function</replaceable>
+    , OUTPUT          = <replaceable class="parameter">output_function</replaceable>
+    , INTERNALLENGTH  = (<replaceable class="parameter">internallength</replaceable> | VARIABLE)
+    [ , EXTERNALLENGTH = (<replaceable class="parameter">externallength</replaceable> | VARIABLE) ]
+    [ , ELEMENT        = <replaceable class="parameter">element</replaceable> ]
+    [ , DELIMITER      = <replaceable class="parameter">delimiter</replaceable> ]
+    [ , DEFAULT        = "<replaceable class="parameter">default</replaceable>" ]
+    [ , SEND           = <replaceable class="parameter">send_function</replaceable> ]
+    [ , RECEIVE        = <replaceable class="parameter">receive_function</replaceable> ]
+    [ , PASSEDBYVALUE ]
+)
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATETYPE-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
 	   <replaceable class="parameter">typename</replaceable>
-	  </ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -63,9 +56,7 @@ Why are parentheses required around the length parameters?
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
-	   <replaceable class="parameter">internallength</replaceable>
-	  </ReturnValue>
+INTERNALLENGTH <replaceable class="parameter">internallength</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -76,9 +67,7 @@ Why are parentheses required around the length parameters?
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
-	   <replaceable class="parameter">externallength</replaceable>
-	  </ReturnValue>
+EXTERNALLENGTH <replaceable class="parameter">externallength</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -89,9 +78,7 @@ Why are parentheses required around the length parameters?
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
-	   <replaceable class="parameter">input_function</replaceable>
-	  </ReturnValue>
+	 INPUT <replaceable class="parameter">input_function</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -103,9 +90,7 @@ Why are parentheses required around the length parameters?
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
-	   <replaceable class="parameter">output_function</replaceable>
-	  </ReturnValue>
+	 OUTPUT <replaceable class="parameter">output_function</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -117,9 +102,7 @@ Why are parentheses required around the length parameters?
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
 	   <replaceable class="parameter">element</replaceable>
-	  </ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -130,9 +113,7 @@ Why are parentheses required around the length parameters?
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
 	   <replaceable class="parameter">delimiter</replaceable>
-	  </ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -142,9 +123,7 @@ Why are parentheses required around the length parameters?
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
 	   <replaceable class="parameter">default</replaceable
-	    ></ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -155,9 +134,7 @@ Why are parentheses required around the length parameters?
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
 	   <replaceable class="parameter">send_function</replaceable>
-	  </ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -170,9 +147,7 @@ Why are parentheses required around the length parameters?
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue>
 	   <replaceable class="parameter">receive_function</replaceable>
-	  </ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -184,14 +159,11 @@ Why are parentheses required around the length parameters?
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATETYPE-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -201,6 +173,7 @@ Why are parentheses required around the length parameters?
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -225,7 +198,7 @@ Why are parentheses required around the length parameters?
  
  <REFSECT1 ID="R1-SQL-CREATETYPE-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-21</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
@@ -383,16 +356,19 @@ it with the fact that the data is not present></comment>
   </refsect2>
   <REFSECT2 ID="R2-SQL-CREATETYPE-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    Refer to DROP TYPE statement to drop types.
+    Refer to <command>DROP TYPE</command> to remove an existing type.
    </PARA>
    <PARA>
-    See also CREATE  FUNCTION,  CREATE  OPERATOR and large_objects.</para>
+    See also <command>CREATE  FUNCTION</command>,
+  <command>CREATE  OPERATOR</command> and the chapter on Large Objects
+in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
+</para>
   </REFSECT2>
  </refsect1>
  
@@ -402,18 +378,16 @@ it with the fact that the data is not present></comment>
    Compatibility
   </TITLE>
   <PARA>
-   CREATE TYPE statement is a PostgreSQL language extension.
-  </PARA>
 
   <REFSECT2 ID="R2-SQL-CREATETYPE-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL3
    </TITLE>
    <PARA>
-   CREATE TYPE is a SQL3 statement.
+   <command>CREATE TYPE</command> is an <acronym>SQL3</acronym> statement.
    </PARA>
   
  </REFSECT2>

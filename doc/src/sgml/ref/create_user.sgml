@@ -14,35 +14,25 @@
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-21</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   
-   CREATE USER<REPLACEABLE CLASS="PARAMETER"> username</REPLACEABLE>
-         [WITH PASSWORD <REPLACEABLE CLASS="PARAMETER">password</REPLACEABLE>]
-         [CREATEDB   | NOCREATEDB]
-         [CREATEUSER | NOCREATEUSER]
-         [IN GROUP     <REPLACEABLE CLASS="PARAMETER">groupname</REPLACEABLE> [, ...] ]
-         [VALID UNTIL  '<REPLACEABLE CLASS="PARAMETER">abstime</REPLACEABLE>']
-   
-   
+CREATE USER<REPLACEABLE CLASS="PARAMETER"> username</REPLACEABLE>
+    [ WITH PASSWORD <REPLACEABLE CLASS="PARAMETER">password</REPLACEABLE> ]
+    [ CREATEDB   | NOCREATEDB ]
+    [ CREATEUSER | NOCREATEUSER ]
+    [ IN GROUP     <REPLACEABLE CLASS="PARAMETER">groupname</REPLACEABLE> [, ...] ]
+    [ VALID UNTIL  '<REPLACEABLE CLASS="PARAMETER">abstime</REPLACEABLE>' ]
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATEUSER-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -63,8 +53,8 @@
 	   The WITH PASSWORD clause sets the user's password within
 	   the "<filename>pg_shadow</filename>" table. For this reason,
 	   <filename>"pg_shadow</filename>" is no
-	   longer accessible to the instance of PostgreSQL that the
-	   PostgreSQL user's password is initially set to NULL.
+	   longer accessible to the instance of <productname>Postgres</productname> that the
+	   <productname>Postgres</productname> user's password is initially set to NULL.
 	   <comment>The text here has got garbled.</comment> 
 	   When a
 	   user's password in the "<filename>pg_shadow</filename>"
@@ -72,7 +62,7 @@
 	   authentication proceeds as it historically has (HBA,
 	   PG_PASSWORD, etc). However, if a password is set for a
 	   user, a new authentication system supplants any other
-	   configured for the PostgreSQL instance, and the password
+	   configured for the <productname>Postgres</productname> instance, and the password
 	   stored in the "<filename>pg_shadow</filename>" table is used
 	   for authentication.
 	   For more details on how this authentication system
@@ -105,7 +95,7 @@
 	  <PARA>
 	   These clauses determine whether a user will be permitted to
 	   create new
-	   users in an instance of PostgreSQL.
+	   users in an instance of <productname>Postgres</productname>.
 	   Omitting this clause will set the user's value of this
 	   attribute to be NOCREATEUSER.
 	  </PARA>
@@ -128,7 +118,7 @@
 	 <LISTITEM>
 	  <PARA>
 	   The VALID UNTIL clause sets an absolute time after which the
-	   user's PostgreSQL login is no longer valid. Please note that
+	   user's <productname>Postgres</productname> login is no longer valid. Please note that
 	   if a user does not have a password defined in the
 	   "<filename>pg_shadow</filename>"
 	   table, the valid until date will not be checked
@@ -140,14 +130,11 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-CREATEUSER-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -157,6 +144,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -192,19 +180,20 @@ this error message.</comment>
  
  <REFSECT1 ID="R1-SQL-CREATEUSER-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-21</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <PARA>
-   CREATE USER will add a new user to an instance of PostgreSQL.
+   CREATE USER will add a new user to an instance of 
+<productname>Postgres</productname>.
   </PARA>
   <PARA>
    The new user will be given a <filename>usesysid</filename> of:
    '<command>SELECT MAX(usesysid) + 1 FROM pg_shadow</command>'.
    This means that 
-   PostgreSQL users' <filename>usesysid</filename>s will not
+   <productname>Postgres</productname> users' <filename>usesysid</filename>s will not
    correspond to their operating
    system(OS) user ids. The exception to this rule is
    the '<literal>postgres</literal>' user, whose OS user id
@@ -213,19 +202,19 @@ this error message.</comment>
    If you still want the
    OS user id and the <filename>usesysid</filename> to match
    for any given user,
-    use the "createuser" script provided with the PostgreSQL
+    use the "createuser" script provided with the <productname>Postgres</productname>
    distribution.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-CREATEUSER-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    CREATE USER statement is a PostgreSQL language extension.
+    CREATE USER statement is a <productname>Postgres</productname> language extension.
    </PARA>
    <para>
    Use DROP USER or ALTER USER statements to remove or modify a user
@@ -292,7 +281,7 @@ this error message.</comment>
   
   <REFSECT2 ID="R2-SQL-CREATEUSER-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-21</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92

@@ -15,31 +15,25 @@
   
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP USER <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE>
+DROP USER <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE>
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPUSER-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE></ReturnValue>
+	  <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -48,14 +42,11 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPUSER-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -65,6 +56,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -98,35 +90,35 @@
  
  <REFSECT1 ID="R1-SQL-DROPUSER-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <PARA>
-   The <command>DROP USER</command> statement removes the named
+   <command>DROP USER</command> removes the specified
    user from the database,
    along with any databases owned by the user. It
    does not remove tables, views, or triggers owned by the
    named user in databases not owned by the user. This statement
-   can be used in the place of the <command>destroyuser</command>
+   can be used in place of the <application>destroyuser</application>
    script, regardless of how the user was created.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-DROPUSER-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    The <command>DROP USER</command> statement is a PostgreSQL
+    <command>DROP USER</command> is a <productname>Postgres</productname>
     language extension.
    </PARA>
    <PARA>
-    Refer to the <command>CREATE USER</command> and
-    <command>ALTER USER</command> statements for information on
+    Refer to <command>CREATE USER</command> and
+    <command>ALTER USER</command> for information on
     how to create or modify user accounts.
    </PARA>
   </REFSECT2>
@@ -139,7 +131,7 @@
    To drop a user account:
   </PARA>
   <ProgramListing>
-   DROP USER Jonathan;
+DROP USER Jonathan;
   </ProgramListing>
  </REFSECT1>
  
@@ -152,13 +144,13 @@
   
   <REFSECT2 ID="R2-SQL-DROPUSER-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    There is no <command>DROP USER</command> statement in SQL92.
+    There is no <command>DROP USER</command> in <acronym>SQL92</acronym>.
    </PARA>
   </refsect2>
  </refsect1>

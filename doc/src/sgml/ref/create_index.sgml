@@ -41,7 +41,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
 	 <LISTITEM>
 	  <PARA>
 	   Causes the system to check for
-	   duplicate values when the index is created (if data
+	   duplicate values in the table when the index is created (if data
 	   already exist) and each time data is added. Attempts to
 	   insert or update non-duplicate data will generate an
 	   error.
@@ -76,7 +76,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable>
 	  <PARA>
 	   the name of the access method which is to be used for
 	   the index. The default access method is BTREE.
-	   Postgres provides three access methods for secondary indices:
+	   Postgres provides three access methods for secondary indexes:
 	   <variablelist>
 	    <varlistentry>
 	     <term>BTREE</term>
@@ -208,14 +208,14 @@ SELECT am.amname AS acc_name,
    Description
   </TITLE>
   <PARA>
-   This command constructs an index 
+  <command>CREATE INDEX</command> constructs an index 
  <replaceable class="parameter">index_name</replaceable>.
 on the specified
 <replaceable class="parameter">table</replaceable>.
 
 <tip>
 <para>
-Indices are primarily used to enhance database performance.
+Indexes are primarily used to enhance database performance.
 But inappropriate use will result in slower performance.
 </tip>
 
@@ -236,7 +236,7 @@ But inappropriate use will result in slower performance.
     on the result of a user-defined function
     <replaceable class="parameter">func_name</replaceable> applied
     to one or more attributes of a single class. These functional
-    indices can be used to obtain fast access to data
+    indexes can be used to obtain fast access to data
     based on operators that would normally require some
     transformation to apply them to the base data.
    </para>
@@ -250,7 +250,7 @@ But inappropriate use will result in slower performance.
    </TITLE>
    <PARA>
     Currently, only the BTREE access method supports multi-column
-    indices. Up to 7 keys may be specified.
+    indexes. Up to 7 keys may be specified.
    </PARA>
    <para>
     Use <command>DROP INDEX</command>

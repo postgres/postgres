@@ -14,47 +14,38 @@
   </REFPURPOSE>
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP VIEW <REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>
+DROP VIEW <REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPVIEW-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE></ReturnValue>
+	  <REPLACEABLE CLASS="PARAMETER">view</REPLACEABLE>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   The name of an existing view to drop.
+	   The name of an existing view.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPVIEW-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -64,6 +55,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -99,7 +91,7 @@
  
  <REFSECT1 ID="R1-SQL-DROPVIEW-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
@@ -112,16 +104,18 @@
 
   <REFSECT2 ID="R2-SQL-DROPVIEW-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    The PostgreSQL <command>DROP TABLE</command> statement also drops views.
+    The <productname>Postgres</productname>
+ <command>DROP TABLE</command> statement also drops views.
    </PARA>
 <PARA>
-    Refer to the<command> CREATE VIEW</command> statement for information on how to create views.
+    Refer to <command>CREATE VIEW</command>
+ for information on how to create views.
    </PARA>
   </REFSECT2>
   
@@ -133,7 +127,7 @@
    This command will remove the view called <literal>kinds</literal>:
   </PARA>
   <ProgramListing>
-   DROP VIEW kinds
+DROP VIEW kinds;
   </ProgramListing>
  </REFSECT1>
  
@@ -146,19 +140,28 @@
   
   <REFSECT2 ID="R2-SQL-DROPVIEW-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    SQL92 specifies some additional capabilities for
+    <acronym>SQL92</acronym> specifies some additional capabilities for
     <command>DROP VIEW</command>:
    </PARA>
    
    <synopsis>
-    DROP VIEW <replaceable class="parameter">view</replaceable> {RESTRICT | CASCADE}
+DROP VIEW <replaceable class="parameter">view</replaceable> { RESTRICT | CASCADE }
    </synopsis>
+
+  <REFSECT3 ID="R3-SQL-DROPVIEW-1">
+   <REFSECT3INFO>
+    <DATE>1998-09-22</DATE>
+   </REFSECT3INFO>
+   <TITLE>
+    Inputs
+   </TITLE>
+   <PARA>
    <variablelist>
     <varlistentry>
      <term>RESTRICT</term>
@@ -179,10 +182,21 @@
      </listitem>
     </varlistentry>
    </variablelist>
+</refsect3>
+
+  <REFSECT3 ID="R3-SQL-DROPVIEW-2">
+   <REFSECT3INFO>
+    <DATE>1998-09-22</DATE>
+   </REFSECT3INFO>
+   <TITLE>
+    Notes
+   </TITLE>
+<para>
    <tip>
     <para>
-     At present, to remove a referenced view from a PostgreSQL database, 
-     you must drop it by hand.
+     At present, to remove a referenced view from a
+ <productname>Postgres</productname> database, 
+     you must drop it explicitly.
     </para>
    </tip>
   </refsect2>

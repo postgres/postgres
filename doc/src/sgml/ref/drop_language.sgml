@@ -17,7 +17,7 @@
    <DATE>1998-04-15</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP PROCEDURAL LANGUAGE '<REPLACEABLE CLASS="PARAMETER">langname</REPLACEABLE>'
+DROP PROCEDURAL LANGUAGE '<REPLACEABLE CLASS="PARAMETER">langname</REPLACEABLE>'
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPLANGUAGE-1">
@@ -29,16 +29,10 @@
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><REPLACEABLE CLASS="PARAMETER">langname</REPLACEABLE></ReturnValue>
+	  <REPLACEABLE CLASS="PARAMETER">langname</REPLACEABLE>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -47,9 +41,6 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPLANGUAGE-2">
@@ -64,6 +55,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -107,7 +99,7 @@
   </TITLE>
   <PARA>
    <command>DROP PROCEDURAL LANGUAGE</command> will remove the definition
-   of the previously registered procedural language with the name
+   of the previously registered procedural language having the name
    '<replaceable class="parameter">langname</replaceable>'.
   </PARA>
   
@@ -120,10 +112,10 @@
    </TITLE>
    <PARA>
     The <command>DROP PROCEDURAL LANGUAGE</command> statement is
-    a PostgreSQL language extension.
+    a <productname>Postgres</productname> language extension.
    </PARA>
    <PARA>
-    Refer to the <command>CREATE PROCEDURAL LANGUAGE</command> statement
+    Refer to <command>CREATE PROCEDURAL LANGUAGE</command>
     for information on how to create procedural languages.
    </PARA>
   </refsect2>
@@ -153,7 +145,7 @@
    This command removes the PL/Sample language:
   </PARA>
   <ProgramListing>
-   DROP PROCEDURAL LANGUAGE 'plsample'
+DROP PROCEDURAL LANGUAGE 'plsample'
   </ProgramListing>
  </REFSECT1>
  
@@ -172,7 +164,8 @@
     SQL92
    </TITLE>
    <PARA>
-    There is no DROP PROCEDURAL LANGUAGE statement in SQL92.
+    There is no <command>DROP PROCEDURAL LANGUAGE</command> in 
+<acronym>SQL92</acronym>.
    </PARA>
   </refsect2>
  </refsect1>

@@ -259,6 +259,16 @@ and expect data to come back in a text format.
     <productname>Postgres</productname>
  does not have an explicit <command>OPEN cursor</command>
     statement; a cursor is considered to be open when it is declared.
+
+<note>
+<para>
+In <acronym>SQL92</acronym> cursors are only available in
+embedded applications. <application>ecpg</application>, the
+embedded SQL preprocessor for <productname>Postgres</productname>,
+supports the <acronym>SQL92</acronym> conventions, including those
+involving DECLARE and OPEN statements.
+</note>
+
    </PARA>
   </REFSECT2>
  </refsect1>
@@ -271,8 +281,8 @@ and expect data to come back in a text format.
    To declare a cursor:
   </PARA>
   <ProgramListing>
-   DECLARE liahona CURSOR
-      FOR SELECT * FROM films;
+DECLARE liahona CURSOR
+    FOR SELECT * FROM films;
   </ProgramListing>
  </REFSECT1>
 

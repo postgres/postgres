@@ -15,27 +15,21 @@
   
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> [, ...]
+DROP TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> [, ...]
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPTABLE-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -48,14 +42,11 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPTABLE-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -65,6 +56,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -85,7 +77,7 @@
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   If table/view specified doesn't exist into database.
+	   If the specified table or view does not exist in the database.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -98,32 +90,32 @@
  
  <REFSECT1 ID="R1-SQL-DROPTABLE-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-22</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
-  <PARA><command>
-   </command>DROP TABLE removes tables and views from the database.
+  <PARA>
+<command>DROP TABLE</command> removes tables and views from the database.
    Only its owner may destroy a table or view. A table
-   may be emptied of rows, but not destroyed, by using DELETE.
+   may be emptied of rows, but not destroyed, by using <command>DELETE</command>.
   </PARA>
   <PARA>
-   If a table being destroyed has secondary indices on it,
+   If a table being destroyed has secondary indexes on it,
    they will be removed first. The removal of just a
-   secondary index will not affect the indexed table.
+   secondary index will not affect the contents of the underlying table.
   </PARA>
   
   <REFSECT2 ID="R2-SQL-DROPTABLE-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    Refer to the <command>CREATE TABLE</command> and
-    <command>ALTER TABLE</command> statements for information on
+    Refer to <command>CREATE TABLE</command> and
+    <command>ALTER TABLE</command> for information on
     how to create or modify tables.
    </PARA>
   </REFSECT2>
@@ -138,7 +130,7 @@
    <command>distributors</command> tables:
   </PARA>
   <ProgramListing>
-   DROP TABLE films, distributors
+DROP TABLE films, distributors
   </ProgramListing>
  </REFSECT1>
  
@@ -151,7 +143,7 @@
   
   <REFSECT2 ID="R2-SQL-DROPTABLE-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-22</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
@@ -160,7 +152,7 @@
     SQL92 specifies some additional capabilities for DROP TABLE:
    </PARA>
    <synopsis>
-    DROP TABLE <replaceable class="parameter">table</replaceable> { RESTRICT | CASCADE }
+DROP TABLE <replaceable class="parameter">table</replaceable> { RESTRICT | CASCADE }
    </synopsis>
    <variablelist>
     <varlistentry>
@@ -185,7 +177,7 @@
     <tip>
     <para>
      At present, to remove a referenced view you must drop
-     it by hand.
+     it explicitly.
     </para>
    </tip>
    </refsect2>

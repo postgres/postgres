@@ -15,25 +15,25 @@
   
  <REFSYNOPSISDIV>
   <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-11</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   CREATE TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> (
-        <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE> [DEFAULT <REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE>] [CONSTRAINT <REPLACEABLE CLASS="PARAMETER">column_constraint</REPLACEABLE>] [, ...]
-        [, <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> ...]
-        [, CONSTRAINT <REPLACEABLE CLASS="PARAMETER">table_constraint</REPLACEABLE>]
-        ) [INHERITS ( <REPLACEABLE CLASS="PARAMETER">inherited_table</REPLACEABLE> [, ...] )]
+CREATE TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> (
+    <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE> [ DEFAULT <REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE> | <REPLACEABLE>column_constraint_clause</REPLACEABLE> | PRIMARY KEY } [ ... ] ]
+    [, ... ]
+    [, PRIMARY KEY ( <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [, ...] ) ]
+    [, <REPLACEABLE>table_constraint_clause</REPLACEABLE> ]
+    ) [ INHERITS ( <REPLACEABLE>inherited_table</REPLACEABLE> [, ...] ) ]
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-CREATETABLE-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     Inputs
    </TITLE>
    <PARA>
-   </PARA>
    
    <VARIABLELIST>
     <VARLISTENTRY>
@@ -64,16 +64,16 @@
      </TERM>
      <LISTITEM>
       <PARA>
-       The type of the column.
-       (Refer to the <ProductName>Postgres</ProductName> User's Guide for
-       further information about data types).
+       The type of the column. This may include array specifiers.
+       Refer to the <citetitle>PostgreSQL User's Guide</citetitle> for
+       further information about data types and arrays.
       </PARA>
      </LISTITEM>
     </VARLISTENTRY>
     
     <VARLISTENTRY>
      <TERM>
-      <REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE>
+     DEFAULT <REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -85,37 +85,63 @@
     
     <VARLISTENTRY>
      <TERM>
-      <REPLACEABLE CLASS="PARAMETER">inherited_table</REPLACEABLE>
+      <REPLACEABLE>column_constraint_clause</REPLACEABLE>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       The optional column constraint clause specifies a list of integrity 
+       constraints which new or updated entries must satisfy for
+       an insert or update operation to succeed. Each constraint
+       must evaluate to a boolean expression. Although <acronym>SQL92</acronym>
+requires the <REPLACEABLE CLASS="PARAMETER">column_constraint_clause</REPLACEABLE>
+ to refer to that column only, <ProductName>Postgres</ProductName>
+ allows multiple columns
+       to be referenced within a single column constraint.
+       See the column constraint clause for more information.
+      </PARA>
+     </LISTITEM>
+    </VARLISTENTRY>
+
+    <VARLISTENTRY>
+     <TERM>
+      <REPLACEABLE>table_constraint_clause</REPLACEABLE>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       The optional table CONSTRAINT clause specifies a list of integrity 
+       constraints which new or updated entries must satisfy for
+       an insert or update operation to succeed. Each constraint
+       must evaluate to a boolean expression. Multiple columns
+       may be referenced within a single constraint.
+       See the table constraint clause for more information.
+      </PARA>
+     </LISTITEM>
+    </VARLISTENTRY>
+
+    <VARLISTENTRY>
+     <TERM>
+     INHERITS <REPLACEABLE CLASS="PARAMETER">inherited_table</REPLACEABLE>
      </TERM>
      <LISTITEM>
       <PARA>
        The optional INHERITS clause specifies a collection of table
        names from which this table automatically inherits all fields.
-       If any inherited field name appears more than once, PostgreSQL
-       reports an error. PostgreSQL automatically allows the created
+       If any inherited field name appears more than once, 
+<productname>Postgres</productname>
+       reports an error.
+ <productname>Postgres</productname> automatically allows the created
        table to inherit functions on tables above it in the inheritance
-       hierarchy. Inheritance of functions is done according
+       hierarchy.
+<note>
+<title>Aside</title>
+<para>
+ Inheritance of functions is done according
        to the conventions of the Common Lisp Object System (CLOS).
+</note>
       </PARA>
      </LISTITEM>
     </VARLISTENTRY>
     
-    <VARLISTENTRY>
-     <TERM>
-      <REPLACEABLE CLASS="PARAMETER">column_constraint</REPLACEABLE>
-      <REPLACEABLE CLASS="PARAMETER">table_constraint</REPLACEABLE>
-     </TERM>
-     <LISTITEM>
-      <PARA>
-       The optional CONSTRAINT clause specifies a list of integrity 
-       constraints which new or updated entries must satisfy for
-       an insert or update operation to succeed. Each constraint
-       must evaluate to a boolean expression. Multiple columns
-       may be referenced within a single constraint.
-       See CONSTRAINT clause for more information.
-      </PARA>
-     </LISTITEM>
-    </VARLISTENTRY>
    </VARIABLELIST>
    
    
@@ -123,7 +149,7 @@
   
   <REFSECT2 ID="R2-SQL-CREATETABLE-2">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     Outputs
@@ -158,13 +184,26 @@
 	   Message returned if table creation failed.
 	   This is usually accompanied by some descriptive text, such as:
 	   <ProgramListing>
-   amcreate: "<replaceable class="parameter">table</replaceable>" relation already exists
+amcreate: "<replaceable class="parameter">table</replaceable>" relation already exists
 	   </ProgramListing>
 	   which occurs at runtime, if the table specified already exists
 	   in the database.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
+
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>ERROR:  DEFAULT: type mismatched</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   if data type of default value doesn't match the
+	   column definition's data type.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+
        </VARIABLELIST>
       </PARA>
      </LISTITEM>
@@ -175,13 +214,13 @@
  
  <REFSECT1 ID="R1-SQL-CREATETABLE-1">
   <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
+   <DATE>1998-09-11</DATE>
   </REFSECT1INFO>
   <TITLE>
    Description
   </TITLE>
   <PARA>
-   CREATE TABLE will enter a new table into the current data
+   <command>CREATE TABLE</command> will enter a new table into the current data
    base. The table will be "owned" by the user issuing the
    command.
    
@@ -194,34 +233,35 @@
    a system catalog table.
   </PARA>
   
-  <REFSECT2 ID="R2-SQL-DEFAULTCLAUSE-1">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
+
+  <REFSECT1 ID="R1-SQL-DEFAULTCLAUSE-1">
+   <REFSECT1INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT1INFO>
    <TITLE>
-    DEFAULT clause
+    DEFAULT Clause
    </TITLE>
    <PARA>
     <SYNOPSIS>
-     DEFAULT <REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE>
+DEFAULT <REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE>
     </SYNOPSIS>
-   <PARA>
-    The DEFAULT clause assigns a default data value to a column.
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+
+  <REFSECT2 ID="R2-SQL-DEFAULTCLAUSE-1">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+   Inputs
+  </TITLE>
+  <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
-	  <ReturnValue><replaceable class="parameter">value</replaceable></ReturnValue>
+	 <replaceable class="parameter">value</replaceable>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
-	   The possible values for expression are:
+	   The possible values for the default value expression are:
 	   <itemizedlist>
 	    <listitem>
 	     <simpara>
@@ -243,19 +283,24 @@
 	 </listitem>
 	</VARLISTENTRY>
 	
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>ERROR:  DEFAULT: type mismatched</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   if data type of default value doesn't match the
-	   column definition's data type.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
        </variablelist>
-      <PARA>
+  <REFSECT2 ID="R2-SQL-DEFAULTCLAUSE-2">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+   Outputs
+  </TITLE>
+  <PARA>
+
+  <REFSECT2 ID="R2-SQL-DEFAULTCLAUSE-3">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+   Description
+  </TITLE>
+  <PARA>
        The DEFAULT clause assigns a default data value to a column
        (via a column definition in the CREATE TABLE statement). 
        The data type of a default value must match the column definition's
@@ -273,7 +318,8 @@
        is the value of the specified function at the time of the INSERT.
       </PARA>
       <PARA>
-       There are two types of niladic functions:<variablelist>
+       There are two types of niladic functions:
+<variablelist>
 	<varlistentry>
 	 <term>niladic USER</term>
 	 <listitem>
@@ -325,53 +371,208 @@
 	 </listitem>
 	</varlistentry>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-NOTNULL-1">
+
+<para>
+In the current release (v6.4), <productname>Postgres</productname>
+evaluates all default expressions at the time the table is defined.
+Hence, functions which are "non-cacheable" such as
+ <function>CURRENT_TIMESTAMP</function> may not produce the desired
+effect. For the particular case of date/time types, one can work
+around this behavior by using 
+<quote>
+DEFAULT TEXT 'now'
+</quote>
+instead of
+<quote>
+DEFAULT 'now'
+</quote>
+or
+<quote>
+DEFAULT CURRENT_TIMESTAMP
+</quote>.
+This forces <productname>Postgres</productname> to consider the constant a string
+type and then to convert the value to <type>timestamp</type> at runtime.
+
+  <REFSECT2 ID="R2-SQL-DEFAULTCLAUSE-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
-    NOT NULL constraint
+  Usage
+   </TITLE>
+   <PARA>
+   To assign a constant value as the default for the
+ columns <literal>did</literal> and <literal>number</literal>,
+   and a string literal to the column <literal>did</literal>:
+  
+  <ProgramListing>
+CREATE TABLE video_sales (
+    did      VARCHAR(40) DEFAULT 'luso films',
+    number   INTEGER DEFAULT 0,
+    total    CASH DEFAULT '$0.0'
+);
+  </ProgramListing>
+
+   <PARA>
+   To assign an existing sequence
+ as the default for the column <literal>did</literal>,
+   and a literal to the column <literal>name</literal>:
+  
+  <ProgramListing>
+CREATE TABLE distributors (
+    did      DECIMAL(3)  DEFAULT NEXTVAL('serial'),
+    name     VARCHAR(40) DEFAULT 'luso films'
+);
+  </ProgramListing>
+
+  </REFSECT1>
+  
+  <REFSECT1 ID="R1-SQL-COLUMNCONSTRAINT-1">
+   <REFSECT1INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT1INFO>
+   <TITLE>
+   Column CONSTRAINT Clause
+   </TITLE>
+   <para>
+   <SYNOPSIS>
+[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] { NOT NULL | UNIQUE | PRIMARY KEY | CHECK <replaceable class="parameter">constraint</replaceable> } [, ...]
+   </SYNOPSIS>
+
+  <REFSECT2 ID="R2-SQL-COLUMNCONSTRAINT-1">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Inputs
+   </TITLE>
+   <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	   <replaceable class="parameter">name</replaceable>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+          An arbitrary name given to the integrity constraint. 
+If <replaceable class="parameter">name</replaceable> is not specified,
+ it is generated from the table and column names,
+which should ensure uniqueness for
+ <replaceable class="parameter">name</replaceable>.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+
+    <VARLISTENTRY>
+     <TERM>
+     NOT NULL
+     </TERM>
+     <LISTITEM>
+      <PARA>
+The column is not allowed to contain NULL values.
+This is equivalent to the column constraint
+ CHECK (<REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> NOT NULL).
+      </PARA>
+     </LISTITEM>
+    </VARLISTENTRY>
+    
+    <VARLISTENTRY>
+     <TERM>
+     UNIQUE
+     </TERM>
+     <LISTITEM>
+      <PARA>
+The column must have unique values. In <ProductName>Postgres</ProductName>
+this is enforced by an implicit creation of a unique index on the table.
+      </PARA>
+     </LISTITEM>
+    </VARLISTENTRY>
+
+    <VARLISTENTRY>
+     <TERM>
+     PRIMARY KEY
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       This column is a primary key, which implies that uniqueness is
+enforced by the system and that other tables may rely on this column
+as a unique identifier for rows.
+       See PRIMARY KEY for more information.
+      </PARA>
+     </LISTITEM>
+    </VARLISTENTRY>
+    
+	<VARLISTENTRY>
+	 <TERM>
+	   <replaceable class="parameter">constraint</replaceable>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The definition of the constraint.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </VARIABLELIST>
+
+  <REFSECT2 ID="R2-SQL-COLUMNCONSTRAINT-2">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Description
+   </TITLE>
+   <para>
+    A Constraint is a named rule: an SQL object which helps define
+    valid sets of values by putting limits on the results of INSERT,
+    UPDATE or DELETE operations performed on a Base Table. 
+   </para>
+   <para>
+    There are two ways to define integrity constraints:
+    table constraints, covered later, and column constraints, covered here.
+   </para>
+   <para>
+    A column constraint is an integrity constraint defined as part
+    of a column definition, and logically becomes a table
+    constraint as soon as it is created. The column
+    constraints available are:
+    <simplelist columns="1">
+     <member>PRIMARY KEY</member>
+     <member>REFERENCES</member>
+     <member>UNIQUE</member>
+     <member>CHECK</member>
+     <member>NOT NULL</member>
+    </simplelist></para>
+   <note>
+    <para>
+     <productname>Postgres</productname> does not yet 
+(at release 6.4) support
+     REFERENCES integrity constraints. The parser
+accepts the REFERENCES syntax but ignores the clause.
+    </para>
+   </note>
+   
+  <REFSECT2 ID="R2-SQL-NOTNULL-1">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    NOT NULL Constraint
    </TITLE>
    <SYNOPSIS>
-    [ CONSTRAINT <replaceable class="parameter">name</replaceable> ] NOT NULL 
+[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] NOT NULL 
    </SYNOPSIS>
    <PARA>
     The NOT NULL constraint specifies a rule that a column may
     contain only non-null values. 
    </PARA>
    <PARA>
-    The NOT NULL constraint is a column constraint. 
+    The NOT NULL constraint is a column constraint only, and not allowed
+as a table constraint.
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue><replaceable class="parameter">name</replaceable></ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The optional name of a constraint.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
-  
+
   <REFSECT3 ID="R3-SQL-NOTNULL-1">
    <REFSECT3INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT3INFO>
    <TITLE>
     Outputs
@@ -381,6 +582,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -401,34 +603,434 @@
      </LISTITEM>
     </VARLISTENTRY>
    </VARIABLELIST> 
-  </REFSECT3>
-  </REFSECT2>
-  
+
+  <REFSECT3 ID="R3-SQL-NOTNULL-2">
+   <REFSECT3INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT3INFO>
+   <TITLE>
+Description
+</title>
+<para>
+
+  <REFSECT3 ID="R3-SQL-NOTNULL-3">
+   <REFSECT3INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT3INFO>
+   <TITLE>
+Usage
+</title>
+
+  <PARA>
+   Define two NOT NULL column constraints on the table
+ <classname>distributors</classname>,
+one of which being a named constraint:
+  </PARA>
+  <ProgramListing>
+CREATE TABLE distributors (
+    did      DECIMAL(3) CONSTRAINT no_null NOT NULL,
+    name     VARCHAR(40) NOT NULL
+);
+  </ProgramListing>
+
   <REFSECT2 ID="R2-SQL-UNIQUECLAUSE-1">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
-    UNIQUE constraint
+    UNIQUE Constraint
    </TITLE>
-   <para>
-    Table Constraint definition
-   </para>
    <synopsis>
-    [ CONSTRAINT <replaceable class="parameter">name</replaceable> ] UNIQUE ( <replaceable class="parameter">column</replaceable> [, ...] )
+[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] UNIQUE
    </SYNOPSIS>
-   <para>
-    Column Constraint definition
-   </para>
-   <synopsis>
-    [ CONSTRAINT <replaceable class="parameter">name</replaceable> ] UNIQUE
-   </SYNOPSIS>
+
    <refsect3>
-    <title>Parameters</title>
+    <title>Inputs</title>
+<para>
     <variablelist>
      <varlistentry>
       <term>
-       <replaceable class="parameter">name</replaceable>
+      CONSTRAINT <replaceable class="parameter">name</replaceable>
+      </term>
+      <listitem>
+       <para>
+	An arbitrary label given to a constraint.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </refsect3>
+
+   <refsect3>
+    <title>Outputs</title>
+    <PARA>
+    <VARIABLELIST>
+     <VARLISTENTRY>
+      <TERM>
+<replaceable>status</replaceable>
+      </TERM>
+      <LISTITEM>
+       <PARA>
+	<VARIABLELIST>
+	 <VARLISTENTRY>
+	  <TERM>
+<returnvalue>ERROR: Cannot insert a duplicate key into a unique index.</returnvalue>
+	  </term>
+	  <listitem>
+	   <para>
+	    This error occurs at runtime if one tries to insert a
+	    duplicate value into a column.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist></para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </refsect3>
+
+   <refsect3>
+    <title>
+Description
+    </title>
+
+    <PARA>
+     The UNIQUE constraint specifies a rule that a group of one or
+     more distinct columns of a table may contain only unique values.
+    </para>
+    <para>
+     The column definitions of the specified columns do not have to
+     include a NOT NULL constraint to be included in a UNIQUE
+     constraint.  Having more than one null value in a column without a
+     NOT NULL constraint, does not violate a UNIQUE constraint.
+(This deviates from the <acronym>SQL92</acronym> definition, but
+is a more sensible convention. See the section on compatibility
+for more details.).
+    </PARA>
+    <PARA>
+     Each UNIQUE column constraint must name a column that is
+     different from the set of columns named by any other UNIQUE or
+     PRIMARY KEY constraint defined for the table.
+    </PARA>
+    <Note>
+     <Para>
+      <productname>Postgres</productname> automatically creates a unique
+ index for each UNIQUE constraint, to assure
+      data integrity. See CREATE INDEX for more information.
+     </Para>
+    </Note>
+
+  <REFSECT3 ID="R3-SQL-UNIQUECLAUSE-3">
+   <TITLE>
+Usage
+</title>
+
+  <PARA>
+   Defines a UNIQUE column constraint for the table distributors.
+   UNIQUE column constraints can only be defined on one column
+   of the table:
+  <ProgramListing>
+   CREATE TABLE distributors (
+        did      DECIMAL(3),
+        name     VARCHAR(40) UNIQUE
+        );
+  </ProgramListing>
+which is equivalent to the following specified as a table constraint:
+  <ProgramListing>
+CREATE TABLE distributors (
+    did      DECIMAL(3),
+    name     VARCHAR(40),
+    UNIQUE(name)
+);
+  </ProgramListing>
+  
+  <REFSECT2 ID="R2-SQL-CHECK-1">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+<title>
+The CHECK Constraint
+</title>
+  <SYNOPSIS>
+[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] CHECK ( <replaceable>condition</replaceable> [, ...] ) 
+  </SYNOPSIS>
+   <refsect3 id="R3-SQL-CHECK-1">
+    <title>Inputs</title>
+   <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">name</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   An arbitrary name given to a constraint.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <replaceable>condition</replaceable>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   Any valid conditional expression evaluating to a boolean result.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </variablelist>
+  </REFSECT3>
+
+  <REFSECT3 ID="R3-SQL-CHECK-2">
+   <REFSECT3INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT3INFO>
+    <TITLE>
+     Outputs
+    </TITLE>
+    <PARA>
+     <VARIABLELIST>
+      <VARLISTENTRY>
+       <TERM>
+<replaceable>status</replaceable>
+       </TERM>
+       <LISTITEM>
+	<PARA>
+
+     <VARIABLELIST>
+      <VARLISTENTRY>
+       <TERM>
+	<ReturnValue>
+	 ERROR:  ExecAppend: rejected due to CHECK constraint
+	 "<replaceable class="parameter">table_column</replaceable>".
+	</ReturnValue>
+       </TERM>
+       <LISTITEM>
+	<PARA>
+	 This error occurs at runtime if one tries to insert an illegal
+	 value into a column subject to a CHECK constraint.
+	</PARA>
+       </LISTITEM>
+      </VARLISTENTRY>
+     </variablelist>
+       </LISTITEM>
+      </VARLISTENTRY>
+     </variablelist>
+   </REFSECT3>
+
+   <refsect3>
+    <title>Description</title>
+    <para>
+     The CHECK constraint specifies a restriction on allowed values
+within a column.
+     The CHECK constraint is also allowed as a table constraint.
+    </PARA>
+    <PARA>
+     The SQL92 CHECK column constraints can only be defined on, and
+     refer to, one column of the table. <productname>Postgres</productname>
+ does not have
+     this restriction.
+    </PARA>
+   </refsect3>
+  </REFSECT2>
+  
+  <REFSECT2 ID="R2-SQL-PRIMARYKEY-1">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    PRIMARY KEY Constraint
+   </TITLE>
+   <SYNOPSIS>
+[ CONSTRAINT <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> ] PRIMARY KEY 
+   </SYNOPSIS>
+   
+   <refsect3>
+    <title>Inputs</title>
+    <PARA>
+     <VARIABLELIST>
+      <VARLISTENTRY>
+       <TERM>
+CONSTRAINT <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
+       </TERM>
+       <LISTITEM>
+	<PARA>
+	 An arbitrary name for the constraint.
+	</PARA>
+       </LISTITEM>
+      </VARLISTENTRY>
+     </VARIABLELIST>
+    </para>
+   </refsect3>
+
+   <refsect3>
+    <title>Outputs</title>
+    <variablelist>
+     <varlistentry>
+      <term>
+<returnvalue>ERROR: Cannot insert a duplicate key into a unique index.</returnvalue>
+      </term>
+      <listitem>
+       <para>
+	This occurs at run-time if one tries to insert a duplicate value into
+	a column subject to a PRIMARY KEY constraint.
+      </PARA>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </refsect3>
+
+   <refsect3>
+    <title>Description</title>
+    <PARA>
+     The PRIMARY KEY column constraint specifies that a column of a table
+ may contain only unique
+     (non-duplicate), non-NULL values. The definition of
+     the specified column does not have to include an explicit NOT NULL
+     constraint to be included in a PRIMARY KEY constraint. 
+    </PARA>
+    <PARA>
+     Only one PRIMARY KEY can be specified for a table.
+    </PARA>
+   </REFSECT3>
+   
+   <REFSECT3 ID="R3-SQL-PRIMARYKEY-3">
+    <REFSECT3INFO>
+     <DATE>1998-09-11</DATE>
+    </REFSECT3INFO>
+    <TITLE>
+     Notes
+    </TITLE>
+    <PARA>
+     <productname>Postgres</productname> automatically creates
+ a unique index to assure
+     data integrity. (See CREATE INDEX statement)
+    </PARA>
+    <PARA>
+     The PRIMARY KEY constraint should name a set of columns that is
+     different from other sets of columns named by any UNIQUE constraint
+     defined for the same table, since it will result in duplication
+of equivalent indexes and unproductive additional runtime overhead.
+However, <productname>Postgres</productname> does not specifically
+disallow this.
+    </PARA>
+   </refsect3>
+
+  <REFSECT1 ID="R1-SQL-TABLECONSTRAINT-1">
+   <REFSECT1INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT1INFO>
+   <TITLE>
+   Table CONSTRAINT Clause
+   </TITLE>
+   <para>
+   <SYNOPSIS>
+[ CONSTRAINT name ] { PRIMARY KEY |  UNIQUE } ( <replaceable class="parameter">column</replaceable> [, ...] )
+[ CONSTRAINT name ] CHECK ( <replaceable>constraint</replaceable> )
+   </SYNOPSIS>
+   <PARA>
+
+  <REFSECT2 ID="R2-SQL-TABLECONSTRAINT-1">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+<title>
+Inputs
+</title>
+
+<para>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	 CONSTRAINT <replaceable class="parameter">name</replaceable>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+          An arbitrary name given to an integrity constraint.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	   <replaceable class="parameter">column</replaceable> [, ...]
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The column name(s) for which to define a unique index
+and, for PRIMARY KEY, a NOT NULL constraint.
+	  </PARA>
+	 </LISTITEM>
+	<VARLISTENTRY>
+	 <TERM>
+	  CHECK ( <replaceable class="parameter">constraint</replaceable> )
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   A boolean expression to be evaluated as the constraint.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </VARIABLELIST>
+
+  <REFSECT2 ID="R2-SQL-TABLECONSTRAINT-2">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+<title>
+Outputs
+</title>
+
+<para>
+The possible outputs for the table constraint clause are the same
+as for the corresponding portions of the column constraint clause.
+
+  <REFSECT2 ID="R2-SQL-TABLECONSTRAINT-3">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+<title>
+Description
+</title>
+
+   <para>
+    A table constraint is an integrity constraint defined on one or
+    more columns of a base table. The four variations of "Table
+    Constraint" are:
+    <simplelist columns="1">
+     <member>UNIQUE</member>
+     <member>CHECK</member>
+     <member>PRIMARY KEY</member>
+     <member>FOREIGN KEY</member>
+    </simplelist>
+   </para>
+   <note>
+    <para>
+     <productname>Postgres</productname> does not yet 
+(as of version 6.4) support FOREIGN KEY
+integrity constraints. The parser understands the FOREIGN KEY syntax,
+but only prints a notice and otherwise ignores the clause.
+     Foreign keys may be partially emulated by triggers (See the CREATE TRIGGER
+     statement).
+    </para>
+   </note>
+   
+  <REFSECT2 ID="R2-SQL-UNIQUECLAUSE-4">
+   <REFSECT2INFO>
+    <DATE>1998-09-11</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    UNIQUE Constraint
+   </TITLE>
+   <para>
+   <synopsis>
+[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] UNIQUE ( <replaceable class="parameter">column</replaceable> [, ...] )
+   </SYNOPSIS>
+   <refsect3>
+    <title>Inputs</title>
+    <variablelist>
+     <varlistentry>
+      <term>
+      CONSTRAINT <replaceable class="parameter">name</replaceable>
       </term>
       <listitem>
        <para>
@@ -451,10 +1053,10 @@
    <refsect3>
     <title>Outputs</title>
     <PARA>
-    </PARA>
     <VARIABLELIST>
      <VARLISTENTRY>
       <TERM>
+<replaceable>status</replaceable>
       </TERM>
       <LISTITEM>
        <PARA>
@@ -470,254 +1072,63 @@
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	</variablelist></para>
+	</variablelist>
       </listitem>
      </varlistentry>
     </variablelist>
    </refsect3>
+
    <refsect3>
-    <title>Description</title>
+    <title>
+Description
+    </title>
+
     <PARA>
      The UNIQUE constraint specifies a rule that a group of one or
      more distinct columns of a table may contain only unique values.
+The behavior of the UNIQUE table constraint is the same as that for column
+constraints, with the additional capability to span multiple columns.
     </para>
     <para>
-     The column definitions of the specified columns do not have to
-     include a NOT NULL constraint to be included in a UNIQUE
-     constraint.  Having more than one null value in a column without a
-     NOT NULL constraint, does not violate a UNIQUE constraint.
-    </PARA>
-    <PARA>
-     Each UNIQUE constraint must name a set of columns that is
-     different from the set of columns named by any other UNIQUE or
-     PRIMARY KEY constraint defined for the Table.
-    </PARA>
-    <Note>
-     <Para>
-      PostgreSQL automatically creates a unique index for each UNIQUE
-      constraint, to assure
-      data integrity. See CREATE INDEX for more information.
-     </Para>
-    </Note>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-CONSTRAINT-1">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    CONSTRAINT clause
-   </TITLE>
-   <para>
-    Table constraint definition
-   </para>
-   <SYNOPSIS>
-    [ CONSTRAINT name ] 
-    { PRIMARY KEY constraint | 
-    UNIQUE constraint | 
-    CHECK constraint }  
-   </SYNOPSIS>
-   <PARA>
-    Column constraint definition 
-   </PARA>
-   <SYNOPSIS>
-    [ CONSTRAINT name ] 
-    { NOT NULL constraint |
-    PRIMARY KEY constraint | 
-    UNIQUE constraint | 
-    CHECK constraint }  
-   </SYNOPSIS>
-   <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>
-	   <replaceable class="parameter">name</replaceable>
-	  </ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          An arbitrary name given to an integrity constraint.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>
-	   <replaceable class="parameter">constraint</replaceable>
-	  </ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The definition of the constraint.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </VARIABLELIST>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
-   <para>
-    A Constraint is a named rule: a SQL object which helps define
-    valid sets of values by putting limits on the results of INSERT,
-    UPDATE or DELETE operations performed on a Base table. 
-   </para>
-   <para>
-    There are two ways to define integrity constraints:
-    Table constraint and Column constraint.
-   </para>
-   <para>
-    A Table Constraint is an integrity Constraint defined on one or
-    more Columns of a Base table. The four variations of "Table
-    Constraint" are:
-    <simplelist columns="1">
-     <member>PRIMARY KEY</member>
-     <member>FOREIGN KEY</member>
-     <member>UNIQUE</member>
-     <member>CHECK</member>
-    </simplelist>
-   </para>
-   <para>
-    A column constraint is an integrity constraint defined as part
-    of a column definition, and logically becomes a table
-    constraint as soon as it is created. The column
-    constraints available are:
-    <simplelist columns="1">
-     <member>PRIMARY KEY</member>
-     <member>REFERENCES</member>
-     <member>UNIQUE</member>
-     <member>CHECK</member>
-     <member>NOT NULL</member>
-    </simplelist></para>
-   <note>
-    <para>
-     PostgreSQL does not yet (at release 6.3.2) support the FOREIGN KEY or
-     REFERENCES integrity constraints, although the parser will accept them.
-     Foreign keys may be partially emulated by triggers (See CREATE TRIGGER
-     statement)
-    </para>
-   </note>
-   <note>
-    <para>
-     PostgreSQL does not yet support either DOMAINs or ASSERTIONs.
-    </para>
-   </note>
-   
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-CHECK-1">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <title>The CHECK constraint</title>
-  <SYNOPSIS>
-   [ CONSTRAINT name ] CHECK ( condition [, ...] ) 
-  </SYNOPSIS>
-   <refsect3 id="R3-SQL-CHECK-1">
-    <title>Inputs</title>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue><replaceable class="parameter">name</replaceable></ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   An arbitrary name given to a constraint.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>condition</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Any valid conditional expression.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-  </REFSECT3>
+See the section on the UNIQUE column constraint for more details.
 
-  <REFSECT3 ID="R3-SQL-CHECK-2">
-   <REFSECT3INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT3INFO>
-    <TITLE>
-     Outputs
-    </TITLE>
-    <PARA>
-     <VARIABLELIST>
-      <VARLISTENTRY>
-       <TERM>
-	<ReturnValue>
-	 ERROR:  ExecAppend: rejected due to CHECK constraint
-	 "<replaceable class="parameter">table_column</replaceable>".
-	</ReturnValue>
-       </TERM>
-       <LISTITEM>
-	<PARA>
-	 This error occurs at runtime if one tries to insert an illegal
-	 value into a column subject to a CHECK constraint.
-	</PARA>
-       </LISTITEM>
-      </VARLISTENTRY>
-     </variablelist>
-   </REFSECT3>
-   <refsect3>
-    <title>Description</title>
-    <para>
-     The CHECK constraint specifies a rule that a group of one or
-     more columns of a table may contain only those values allowed by
-     the rule.
-     The CHECK constraint is either a table constraint or a column
-     constraint.
-    </PARA>
-    <PARA>
-     PostgreSQL automatically creates an unique index to assure
-     data integrity (See CREATE INDEX statement).
-     The SQL92 CHECK column constraints can only be defined on, and
-     refer to, one column of the table. PostgreSQL does not have
-     this restriction.
-    </PARA>
-   </refsect3>
+  <REFSECT3 ID="R3-SQL-UNIQUECLAUSE-4">
+   <TITLE>
+Usage
+</title>
+
+  <PARA>
+   Define a UNIQUE table constraint for the table distributors:
+  <ProgramListing>
+CREATE TABLE distributors (
+    did      DECIMAL(03),
+    name     VARCHAR(40),
+    UNIQUE(name)
+);
+  </ProgramListing>
+
+
   </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-PRIMARYKEY-1">
+
+  <REFSECT2 ID="R2-SQL-PRIMARYKEY-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
-    PRIMARY KEY clause
+    PRIMARY KEY Constraint
    </TITLE>
-   <PARA>
-   Table constraint definition
-   </PARA>
+<para>
    <SYNOPSIS>
     [ CONSTRAINT <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> ] PRIMARY KEY ( <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [, ...] ) 
    </SYNOPSIS>
-   <PARA>
-    Column constraint definition
-   </PARA> 
-   <SYNOPSIS>
-    [ CONSTRAINT <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> ] PRIMARY KEY 
-   </SYNOPSIS>
    
    <refsect3>
-    <title>Parameters</title>
+    <title>Inputs</title>
     <PARA>
      <VARIABLELIST>
       <VARLISTENTRY>
        <TERM>
-	<ReturnValue><REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE></ReturnValue>
+CONSTRAINT <ReturnValue><REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE></ReturnValue>
        </TERM>
        <LISTITEM>
 	<PARA>
@@ -727,19 +1138,27 @@
       </VARLISTENTRY>
       <VARLISTENTRY>
        <TERM>
-	<ReturnValue><REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE></ReturnValue>
+<REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [, ...]
        </TERM>
        <LISTITEM>
 	<PARA>
-	 The name of a column in the table.
+	 The names of one or more columns in the table.
 	</PARA>
        </LISTITEM>
       </VARLISTENTRY>
      </VARIABLELIST>
     </para>
    </refsect3>
+
    <refsect3>
     <title>Outputs</title>
+    <variablelist>
+     <varlistentry>
+      <term>
+<replaceable>status</replaceable>
+</term>
+<listitem>
+<para>
     <variablelist>
      <varlistentry>
       <term>ERROR: Cannot insert a duplicate key into a unique index.</term>
@@ -751,41 +1170,30 @@
       </listitem>
      </varlistentry>
     </variablelist>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </refsect3>
+
    <refsect3>
     <title>Description</title>
     <PARA>
      The PRIMARY KEY constraint specifies a rule that a group of one
      or more distinct columns of a table may contain only unique,
-     (not duplicates), non-null values. The column definitions of
+     (non duplicate), non-null values. The column definitions of
      the specified columns do not have to include a NOT NULL
-     constraint to be included in a PRIMARY KEY constraint. 
+     constraint to be included in a PRIMARY KEY constraint.
+
+The PRIMARY KEY table constraint is similar to that for column constraints,
+with the additional capability of encompassing multiple columns.
     </PARA>
     <PARA>
-     A table's set of valid values may be constrained by only one
-     PRIMARY KEY constraint at a time. 
-    </PARA>
-    <PARA>
-     The PRIMARY KEY constraint must name a set of columns that is
-     different from the set of columns named by any UNIQUE constraint
-     defined for the same table. 
-    </PARA>
+Refer to the section on the PRIMARY KEY column constraint for more
+information.
    </REFSECT3>
    
-   <REFSECT3 ID="R3-SQL-PRIMARYKEY-3">
-    <REFSECT3INFO>
-     <DATE>1998-04-15</DATE>
-    </REFSECT3INFO>
-    <TITLE>
-     Notes
-    </TITLE>
-    <PARA>
-     PostgreSQL automatically creates an unique index to assure
-     data integrity. (See CREATE INDEX statement)
-    </PARA>
-   </refsect3>
-   
   </REFSECT2>
+
  </refsect1>
  
  <REFSECT1 ID="R1-SQL-CREATETABLE-2">
@@ -823,16 +1231,6 @@
   </ProgramListing>
    
   <PARA>
-   Define two NOT NULL column constraints on the table distributors
-  </PARA>
-  <ProgramListing>
-   CREATE TABLE distributors (
-        did      DECIMAL(3) CONSTRAINT no_null NOT NULL,
-        name     VARCHAR(40) NOT NULL
-        );
-  </ProgramListing>
-
-  <PARA>
    Define a UNIQUE table constraint for the table films.
    UNIQUE table constraints can be defined on one or more
    columns of the table
@@ -849,26 +1247,6 @@
        );
   </ProgramListing>
   
-  <PARA>
-   Defines a UNIQUE column constraint for the table distributors.
-   UNIQUE column constraints can only be defined on one column
-   of the table (the following two examples are equivalents).
-  </PARA>
-  <ProgramListing>
-   CREATE TABLE distributors (
-        did      DECIMAL(03),
-        name     VARCHAR(40) UNIQUE,
-        UNIQUE(name)
-        );
-  </ProgramListing>
-
-  <ProgramListing>
-   CREATE TABLE distributors (
-        did      DECIMAL(3),
-        name     VARCHAR(40) UNIQUE
-        );
-  </ProgramListing>
-
   <PARA>
    Define a CHECK column constraint.
   </PARA>
@@ -910,7 +1288,7 @@
   <PARA>
    Defines a PRIMARY KEY column constraint for table distributors.
    PRIMARY KEY column constraints can only be defined on one column
-   of the table (the following two examples are equivalents)
+   of the table (the following two examples are equivalent)
   </PARA>
   <ProgramListing>
    CREATE TABLE distributors (
@@ -924,27 +1302,17 @@
         name     VARCHAR(40)
         );
   </ProgramListing>
-  <para>
-   To assign a sequence as the default for the column did,
-   and a literal to the column name
-  </PARA>
-  
-  <ProgramListing>
-       CREATE TABLE distributors (
-              did      DECIMAL(3) DEFAULT NEXTVAL('serial'),
-              name     VARCHAR(40) DEFAULT 'luso films'
-              );
-  </ProgramListing>
   
   <REFSECT2 ID="R2-SQL-CREATETABLE-3">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     Notes
    </TITLE>
    <PARA>
-    CREATE TABLE/INHERITS is a PostgreSQL language extension.
+    CREATE TABLE/INHERITS is a <productname>Postgres</productname>
+ language extension.
    </PARA>
   </refsect2>
   
@@ -955,17 +1323,16 @@
    Compatibility
   </TITLE>
   <PARA>
-  </PARA>
   
   <REFSECT2 ID="R2-SQL-CREATETABLE-4">
    <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
+    <DATE>1998-09-11</DATE>
    </REFSECT2INFO>
    <TITLE>
     SQL92
    </TITLE>
    <PARA>
-    In addition to normal CREATE TABLE, SQL92 also defines a
+    In addition to the normal CREATE TABLE, SQL92 also defines a
     CREATE TEMPORARY TABLE statement:
    </PARA>
    <synopsis>
@@ -996,16 +1363,18 @@
              ) ON COMMIT DELETE ROWS
    </programlisting> 
    <para>
-Temporary tables are not currently available in <productname>Postgres</productname>.
+Temporary tables are not currently available
+ in <productname>Postgres</productname>.
 <tip>
    <para>
-    In the current release of <productname>Postgres</productname> (v6.4), to create a temporary
+    In the current release of <productname>Postgres</productname>
+ (v6.4), to create a temporary
     table you must create and drop the table by explicit commands.
 </tip>
    
    <REFSECT3 ID="R3-SQL-UNIQUECLAUSE-1">
     <REFSECT3INFO>
-     <DATE>1998-04-15</DATE>
+     <DATE>1998-09-11</DATE>
     </REFSECT3INFO>
     <TITLE>
      UNIQUE clause
@@ -1034,7 +1403,7 @@ Temporary tables are not currently available in <productname>Postgres</productna
    
    <REFSECT3 ID="R3-SQL-NOTNULL-4">
     <REFSECT3INFO>
-     <DATE>1998-04-15</DATE>
+     <DATE>1998-09-11</DATE>
     </REFSECT3INFO>
     <TITLE>
      NOT NULL clause
@@ -1059,7 +1428,7 @@ the column. Not our problem...
 
    <REFSECT3 ID="R3-SQL-DEFAULTCLAUSE-1">
     <REFSECT3INFO>
-     <DATE>1998-04-15</DATE>
+     <DATE>1998-09-11</DATE>
     </REFSECT3INFO>
     <TITLE>
      DEFAULT clause
@@ -1079,15 +1448,21 @@ the column. Not our problem...
    
    <REFSECT3 ID="R3-SQL-CONSTRAINT-3">
     <REFSECT3INFO>
-     <DATE>1998-04-15</DATE>
+     <DATE>1998-09-11</DATE>
     </REFSECT3INFO>
     <TITLE>
      CONSTRAINT clause
     </TITLE>
     <PARA>
-     SQL92 specifies some additional capabilities for CONSTRAINTs,
+     SQL92 specifies some additional capabilities for constraints,
      and also defines assertions and domain constraints.
-    </PARA>
+   <note>
+    <para>
+     <productname>Postgres</productname> does not yet support 
+either domains or assertions.
+    </para>
+   </note>
+
     <PARA>
      An assertion is a special type of integrity constraint and share
      the same namespace as other constraints.
@@ -1193,7 +1568,7 @@ the column. Not our problem...
    
    <REFSECT3 ID="R3-SQL-CHECK-4">
     <REFSECT3INFO>
-     <DATE>1998-04-15</DATE>
+     <DATE>1998-09-11</DATE>
     </REFSECT3INFO>
     <TITLE>
      CHECK clause
@@ -1257,7 +1632,7 @@ affect a column or a table.
    
    <REFSECT3 ID="R3-SQL-PRIMARYKEY-1">
     <REFSECT3INFO>
-     <DATE>1998-04-15</DATE>
+     <DATE>1998-09-11</DATE>
     </REFSECT3INFO>
     <TITLE>
      PRIMARY KEY clause

@@ -17,7 +17,7 @@
    <DATE>1998-04-15</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   DROP DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
+DROP DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
   </SYNOPSIS>
   
   <REFSECT2 ID="R2-SQL-DROPDATABASE-1">
@@ -29,12 +29,6 @@
    </TITLE>
    <PARA>
    </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-     </TERM>
-     <LISTITEM>
-      <PARA>
        <VARIABLELIST>
 	<VARLISTENTRY>
 	 <TERM>
@@ -47,9 +41,6 @@
 	 </LISTITEM>
 	</VARLISTENTRY>
        </variablelist>
-     </LISTITEM>
-    </VARLISTENTRY>
-   </VARIABLELIST>
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-DROPDATABASE-2">
@@ -64,6 +55,7 @@
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
+<replaceable>status</replaceable>
      </TERM>
      <LISTITEM>
       <PARA>
@@ -81,6 +73,16 @@
 	<VARLISTENTRY>
 	 <TERM>
 	  <ReturnValue>WARN: destroydb: database "<replaceable class="parameter">name</replaceable>" does not exist.</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   This message occurs if the specified database does not exist.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>ERROR:  destroydb cannot be executed on an open database</ReturnValue>
 	 </TERM>
 	 <LISTITEM>
 	  <PARA>
@@ -116,17 +118,19 @@
    <TITLE>
     Notes
    </TITLE>
-   <PARA>
-    <warning>
-     <para>
-      This query should NOT be executed interactively.
-      The <command>destroydb</command> script should be used instead.
-     </para>
-    </warning>
-    <comment>Some explanation would be desirable here!</comment>
-   </PARA>
+
    <para>
-    DROP DATABASE statement is a PostgreSQL language extension.
+    DROP DATABASE statement is a <productname>Postgres</productname>
+ language extension.
+
+    <tip>
+     <para>
+      This query cannot be executed while connected to the target
+database. It is usually preferable to use the
+ <command>destroydb</command> script instead.
+     </para>
+    </tip>
+
    </para>
    <para>
     Refer to the <command>CREATE DATABASE</command> statement for
@@ -150,7 +154,7 @@
     SQL92
    </TITLE>
    <PARA>
-   There is no DROP DATABASE statement in SQL92.
+   There is no <command>DROP DATABASE</command> in <acronym>SQL92</acronym>.
    </PARA>
   </refsect2>
  </refsect1>
