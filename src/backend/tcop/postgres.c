@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.143 2000/02/19 22:10:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.144 2000/02/20 04:26:35 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1256,7 +1256,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		(ShowParserStats || ShowPlannerStats || ShowExecutorStats))
 	{
 		fprintf(stderr, "-s can not be used together with -t.\n");
-		proc_exit(1);
+		proc_exit(0);
 	}
 
 	if (!DataDir)
@@ -1264,7 +1264,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		fprintf(stderr, "%s does not know where to find the database system "
 				"data.  You must specify the directory that contains the "
 				"database system either by specifying the -D invocation "
-			 "option or by setting the PGDATA environment variable.\n\n",
+				"option or by setting the PGDATA environment variable.\n\n",
 				argv[0]);
 		proc_exit(1);
 	}
@@ -1324,7 +1324,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		if (errs || argc != optind || DBName == NULL)
 		{
 			usage(argv[0]);
-			proc_exit(1);
+			proc_exit(0);
 		}
 		pq_init();				/* initialize libpq at backend startup */
 		whereToSendOutput = Remote;
@@ -1337,7 +1337,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		if (errs || argc - optind > 1)
 		{
 			usage(argv[0]);
-			proc_exit(1);
+			proc_exit(0);
 		}
 		else if (argc - optind == 1)
 			DBName = argv[optind];
@@ -1345,7 +1345,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		{
 			fprintf(stderr, "%s: USER undefined and no database specified\n",
 					argv[0]);
-			proc_exit(1);
+			proc_exit(0);
 		}
 
 		/*
@@ -1503,14 +1503,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.143 $ $Date: 2000/02/19 22:10:47 $\n");
+		puts("$Revision: 1.144 $ $Date: 2000/02/20 04:26:35 $\n");
 	}
 
 	/*
 	 * Initialize the deferred trigger manager
 	 */
 	if (DeferredTriggerInit() != 0)
-		proc_exit(1);
+		proc_exit(0);
 
 	SetProcessingMode(NormalProcessing);
 
