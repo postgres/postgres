@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.78 2001/01/14 22:21:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.79 2001/01/19 06:57:25 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -29,6 +29,7 @@
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
 #include "commands/trigger.h"
+#include "commands/variable.h"	/* for set_default_client_encoding() */
 #include "miscadmin.h"
 #include "storage/backendid.h"
 #include "storage/proc.h"
