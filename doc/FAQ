@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Nov 27 19:36:57 EST 2001
+   Last updated: Wed Nov 28 16:11:32 EST 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -564,8 +564,8 @@
    the postgres PID. You can set breakpoints in the debugger and issue
    queries from psql. If you are debugging postgres startup, you can set
    PGOPTIONS="-W n", then start psql. This will cause startup to delay
-   for n seconds so you can attach with the debugger and trace through
-   the startup sequence.
+   for n seconds so you can attach to the process with the debugger, set
+   any breakpoints, and continue through the startup sequence.
    
    The postgres program has -s, -A, and -t options that can be very
    useful for debugging and performance measurements.
