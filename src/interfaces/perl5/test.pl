@@ -2,7 +2,7 @@
 
 #-------------------------------------------------------
 #
-# $Id: test.pl,v 1.5 1997/09/25 21:14:47 mergl Exp $
+# $Id: test.pl,v 1.6 1998/02/20 21:25:45 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -13,7 +13,7 @@
 
 ######################### We start with some black magic to print on failure.
 
-BEGIN { $| = 1; print "1..50\n"; }
+BEGIN { $| = 1; print "1..46\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Pg;
 $loaded = 1;
@@ -23,6 +23,7 @@ print "ok 1\n";
 
 $dbmain = 'template1';
 $dbname = 'pgperltest';
+$dbhost = 'localhost';
 $trace  = '/tmp/pgtrace.out';
 $cnt    = 2;
 $DEBUG  = 0; # set this to 1 for traces
@@ -88,7 +89,7 @@ $SIG{PIPE} = sub { print "broken pipe\n" };
 ######################### create and connect to test database
 # 2-4
 
-$conn = Pg::connectdb("dbname=$dbmain");
+$conn = Pg::connectdb("dbname=$dbmain host=$dbhost");
 cmp_eq(PGRES_CONNECTION_OK, $conn->status);
 
 # might fail if $dbname doesn't exist => don't check resultStatus
@@ -97,7 +98,7 @@ $result = $conn->exec("DROP DATABASE $dbname");
 $result = $conn->exec("CREATE DATABASE $dbname");
 cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
 
-$conn = Pg::connectdb("dbname=$dbname");
+$conn = Pg::connectdb("dbname=$dbname host=$dbhost");
 cmp_eq(PGRES_CONNECTION_OK, $conn->status);
 
 ######################### debug, PQtrace
@@ -178,7 +179,7 @@ $result = $conn->exec("END");
 cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
 
 ######################### select from person, PQgetvalue
-# 35-48
+# 31-44
 
 $result = $conn->exec("SELECT * FROM person");
 cmp_eq(PGRES_TUPLES_OK, $result->resultStatus);
@@ -200,14 +201,11 @@ for ($k = 0; $k < $result->nfields; $k++) {
     cmp_eq($k, $fnumber);
 }
 
-for ($k = 0; $k < $result->ntuples; $k++) {
-    $string = "";
-    for ($l = 0; $l < $result->nfields; $l++) {
-        $string .= $result->getvalue($k, $l) . " ";
-    }
-    $i = $k + 1;
-    cmp_eq("$i Edmund Mergl ", $string);
+$string = "";
+while (@row = $result->fetchrow) {
+    $string = join(" ", @row);
 }
+cmp_eq("5 Edmund Mergl", $string);
 
 ######################### debug, PQuntrace
 
@@ -217,9 +215,9 @@ if ($DEBUG) {
 }
 
 ######################### disconnect and drop test database
-# 49-50
+# 45-46
 
-$conn = Pg::connectdb("dbname=$dbmain");
+$conn = Pg::connectdb("dbname=$dbmain host=$dbhost");
 cmp_eq(PGRES_CONNECTION_OK, $conn->status);
 
 $result = $conn->exec("DROP DATABASE $dbname");

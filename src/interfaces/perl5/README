@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: README,v 1.4 1997/09/25 21:14:46 mergl Exp $
+# $Id: README,v 1.5 1998/02/20 21:25:42 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -9,7 +9,7 @@
 DESCRIPTION:
 ------------
 
-This is version 1.6.3 of pgsql_perl5 (previously called pg95perl5).
+This is version 1.7.0 of pgsql_perl5 (previously called pg95perl5).
 
 Pgsql_perl5 is an interface between Larry Wall's language perl version 5 and 
 the database PostgreSQL (previously Postgres95). This has been done by using 
@@ -49,7 +49,7 @@ REQUIREMENTS:
 -------------
 
   - build, test and install Perl 5         (at least 5.002)
-  - build, test and install PostgreSQL     (at least 6.2)
+  - build, test and install PostgreSQL     (at least 6.3)
 
 
 PLATFORMS:
@@ -85,6 +85,9 @@ Run 'make test'.
 Note, that the user running this script must have been created with the access 
 rights to create databases *AND* users ! Do not run this script as root ! 
 
+If testing fails with the message 'login failed', please check if access 
+to the database template1 as well as pgperltest is not protected via pg_hba.conf. 
+
 If you are using the shared library libpq.so check if your dynamic loader 
 finds libpq.so. With Linux the command /sbin/ldconfig -v should tell you, 
 where it finds libpq.so. If ldconfig does not find libpq.so, either add an 
@@ -98,6 +101,22 @@ If you have compile errors like "XS_VERSION_BOOTCHECK undeclared", make a
           'find .../lib/perl5 -name XSUB.h -print'
 If this file is not present, you need to recompile and reinstall perl. 
 
+Also RedHat 5.0 seems to have an incomplete perl-installation: if 
+you get error message during the installation complaining about a 
+missing perllocal.pod, you need to recompile and reinstall perl. 
+
+SGI users: if you get segmentation faults make sure, you use the malloc which 
+           comes with perl when compiling perl (the default is not to).
+           "David R. Noble" <drnoble@engsci.sandia.gov>
+
+HP users: if you get error messages like:
+              can't open shared library: .../lib/libpq.sl
+              No such file or directory
+          when running the test script, try to replace the
+          'shared' option in the LDDFLAGS with 'archive'.
+          Dan Lauterbach <danla@dimensional.com>
+
+
 
 DOCUMENTATION:
 --------------
@@ -108,6 +127,6 @@ installation to read the documentation.
 
 ---------------------------------------------------------------------------
 
-   Edmund Mergl <E.Mergl@bawue.de>                       September 25, 1997
+   Edmund Mergl <E.Mergl@bawue.de>                       February 20, 1998
 
 ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.4 1997/09/25 21:14:44 mergl Exp $
+ * $Id: Pg.xs,v 1.5 1998/02/20 21:25:36 mergl Exp $
  *
  * Copyright (c) 1997  Edmund Mergl
  *
@@ -9,12 +9,21 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include <string.h>
 
 #include "libpq-fe.h"
 
+typedef struct pg_conn *PG_conn;
+typedef struct pg_result *PG_result;
 
-typedef struct pg_conn* PG_conn;
-typedef struct pg_result* PG_result;
+typedef struct pg_results
+{
+  PGresult *result;
+  int row;
+} PGresults;
+
+typedef struct pg_results *PG_results;
+
 
 static double
 constant(name, arg)
@@ -188,6 +197,30 @@ PGconn *
 PQconnectdb(conninfo)
 	char *	conninfo
 	CODE:
+		/* convert dbname to lower case if not surrounded by double quotes */
+		char *ptr = strstr(conninfo, "dbname");
+		if (ptr) {
+			ptr += 6;
+			while (*ptr && *ptr++ != '=') {
+				;
+			}
+			while (*ptr && (*ptr == ' ' || *ptr == '\t')) {
+				ptr++;
+			}
+			if (*ptr == '"') {
+				*ptr++ = ' ';
+				while (*ptr && *ptr != '"') {
+					ptr++;
+				}
+				if (*ptr == '"') {
+					*ptr++ = ' ';
+				}
+			} else {
+				while (*ptr && *ptr != ' ' && *ptr != '\t') {
+					*ptr++ = tolower(*ptr);
+				}
+			}
+		}
 		RETVAL = PQconnectdb((const char *)conninfo);
 	OUTPUT:
 		RETVAL
@@ -377,11 +410,8 @@ PQcmdStatus(res)
 char *
 PQoidStatus(res)
 	PGresult *	res
-	PREINIT:
-		const char *GAGA;
 	CODE:
-		GAGA = PQoidStatus(res);
-		RETVAL = (char *)GAGA;
+		RETVAL = (char *)PQoidStatus(res);
 	OUTPUT:
 		RETVAL
 
@@ -389,11 +419,8 @@ PQoidStatus(res)
 char *
 PQcmdTuples(res)
 	PGresult *	res
-	PREINIT:
-		const char *GAGA;
 	CODE:
-		GAGA = PQcmdTuples(res);
-		RETVAL = (char *)GAGA;
+		RETVAL = (char *)PQcmdTuples(res);
 	OUTPUT:
 		RETVAL
 
@@ -585,6 +612,30 @@ PG_conn
 connectdb(conninfo)
 	char *	conninfo
 	CODE:
+		/* convert dbname to lower case if not surrounded by double quotes */
+		char *ptr = strstr(conninfo, "dbname");
+		if (ptr) {
+			ptr += 6;
+			while (*ptr && *ptr++ != '=') {
+				;
+			}
+			while (*ptr && (*ptr == ' ' || *ptr == '\t')) {
+				ptr++;
+			}
+			if (*ptr == '"') {
+				*ptr++ = ' ';
+				while (*ptr && *ptr != '"') {
+					ptr++;
+				}
+				if (*ptr == '"') {
+					*ptr++ = ' ';
+				}
+			} else {
+				while (*ptr && *ptr != ' ' && *ptr != '\t') {
+					*ptr++ = tolower(*ptr);
+				}
+			}
+		}
 		RETVAL = PQconnectdb((const char *)conninfo);
 	OUTPUT:
 		RETVAL
@@ -692,14 +743,18 @@ PQuntrace(conn)
 	PG_conn	conn
 
 
-
-PG_result
+PG_results
 PQexec(conn, query)
 	PG_conn	conn
 	char *	query
 	CODE:
-		RETVAL = PQexec(conn, query);
-                if (! RETVAL) { RETVAL = (PGresult *)calloc(1, sizeof(PGresult)); }
+		RETVAL = (PG_results)calloc(1, sizeof(PGresults));
+		if (RETVAL) {
+			RETVAL->result = PQexec((PGconn *)conn, query);
+			if (!RETVAL->result) {
+				RETVAL->result = (PG_result)calloc(1, sizeof(PGresult));
+			}
+		}
 	OUTPUT:
 		RETVAL
 
@@ -826,133 +881,172 @@ lo_export(conn, lobjId, filename)
 
 
 
-MODULE = Pg		PACKAGE = PG_result		PREFIX = PQ
+MODULE = Pg		PACKAGE = PG_results		PREFIX = PQ
 
 PROTOTYPES: DISABLE
 
 
 void
 DESTROY(res)
-	PG_result	res
+	PG_results	res
 	CODE:
 		/* printf("DESTROY result\n"); */
-		PQclear(res);
-
+		PQclear(res->result);
+		Safefree(res);
 
 ExecStatusType
 PQresultStatus(res)
-	PG_result	res
-
+	PG_results	res
+	CODE:
+		RETVAL = PQresultStatus(res->result);
+	OUTPUT:
+		RETVAL
 
 int
 PQntuples(res)
-	PG_result	res
+	PG_results	res
+	CODE:
+		RETVAL = PQntuples(res->result);
+	OUTPUT:
+		RETVAL
 
 
 int
 PQnfields(res)
-	PG_result	res
+	PG_results	res
+	CODE:
+		RETVAL = PQnfields(res->result);
+	OUTPUT:
+		RETVAL
 
 
 char *
 PQfname(res, field_num)
-	PG_result	res
+	PG_results	res
 	int	field_num
+	CODE:
+		RETVAL = PQfname(res->result, field_num);
+	OUTPUT:
+		RETVAL
 
 
 int
 PQfnumber(res, field_name)
-	PG_result	res
+	PG_results	res
 	char *	field_name
+	CODE:
+		RETVAL = PQfnumber(res->result, field_name);
+	OUTPUT:
+		RETVAL
 
 
 Oid
 PQftype(res, field_num)
-	PG_result	res
+	PG_results	res
 	int	field_num
+	CODE:
+		RETVAL = PQftype(res->result, field_num);
+	OUTPUT:
+		RETVAL
 
 
 short
 PQfsize(res, field_num)
-	PG_result	res
+	PG_results	res
 	int	field_num
+	CODE:
+		RETVAL = PQfsize(res->result, field_num);
+	OUTPUT:
+		RETVAL
 
 
 char *
 PQcmdStatus(res)
-	PG_result	res
+	PG_results	res
+	CODE:
+		RETVAL = PQcmdStatus(res->result);
+	OUTPUT:
+		RETVAL
 
 
 char *
 PQoidStatus(res)
-	PG_result	res
-	PREINIT:
-		const char *GAGA;
+	PG_results	res
 	CODE:
-		GAGA = PQoidStatus(res);
-		RETVAL = (char *)GAGA;
+		RETVAL = (char *)PQoidStatus(res->result);
 	OUTPUT:
 		RETVAL
 
 
 char *
 PQcmdTuples(res)
-	PG_result	res
-	PREINIT:
-		const char *GAGA;
+	PG_results	res
 	CODE:
-		GAGA = PQcmdTuples(res);
-		RETVAL = (char *)GAGA;
+		RETVAL = (char *)PQcmdTuples(res->result);
 	OUTPUT:
 		RETVAL
 
 
 char *
 PQgetvalue(res, tup_num, field_num)
-	PG_result	res
+	PG_results	res
 	int	tup_num
 	int	field_num
+	CODE:
+		RETVAL = PQgetvalue(res->result, tup_num, field_num);
+	OUTPUT:
+		RETVAL
 
 
 int
 PQgetlength(res, tup_num, field_num)
-	PG_result	res
+	PG_results	res
 	int	tup_num
 	int	field_num
+	CODE:
+		RETVAL = PQgetlength(res->result, tup_num, field_num);
+	OUTPUT:
+		RETVAL
 
 
 int
 PQgetisnull(res, tup_num, field_num)
-	PG_result	res
+	PG_results	res
 	int	tup_num
 	int	field_num
+	CODE:
+		RETVAL = PQgetisnull(res->result, tup_num, field_num);
+	OUTPUT:
+		RETVAL
 
 
 void
 PQdisplayTuples(res, fp, fillAlign, fieldSep, printHeader, quiet)
-	PGresult *	res
+	PG_results	res
 	FILE *	fp
 	int	fillAlign
 	char *	fieldSep
 	int	printHeader
 	int	quiet
 	CODE:
-		PQdisplayTuples(res, fp, fillAlign, (const char *)fieldSep, printHeader, quiet);
+		PQdisplayTuples(res->result, fp, fillAlign, (const char *)fieldSep, printHeader, quiet);
 
 
 void
 PQprintTuples(res, fout, printAttName, terseOutput, width)
-	PG_result	res
+	PG_results	res
 	FILE *	fout
 	int	printAttName
 	int	terseOutput
 	int	width
+	CODE:
+		PQprintTuples(res->result, fout, printAttName, terseOutput, width);
 
 
 void
 PQprint(res, fout, header, align, standard, html3, expanded, pager, fieldSep, tableOpt, caption, ...)
 	FILE *	fout
-	PG_result	res
+	PG_results	res
 	bool	header
 	bool	align
 	bool	standard
@@ -979,6 +1073,28 @@ PQprint(res, fout, header, align, standard, html3, expanded, pager, fieldSep, ta
 		for (i = 11; i < items; i++) {
 			ps.fieldName[i - 11] = (char *)SvPV(ST(i), na);
 		}
-		PQprint(fout, res, &ps);
+		PQprint(fout, res->result, &ps);
 		Safefree(ps.fieldName);
 
+
+void
+PQfetchrow(res)
+	PG_results	res
+	PPCODE:
+		if (res && res->result) {
+			int cols = PQnfields(res->result);
+			if (PQntuples(res->result) > res->row) {
+				int col = 0;
+				EXTEND(sp, cols);
+				while (col < cols) {
+					if (PQgetisnull(res->result, res->row, col)) {
+						PUSHs(&sv_undef);
+					} else {
+						char *val = PQgetvalue(res->result, res->row, col);
+						PUSHs(sv_2mortal((SV*)newSVpv(val, 0)));
+					}
+					++col;
+				}
+				++res->row;
+			}
+		}

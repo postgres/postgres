@@ -1,5 +1,14 @@
 Revision history for Perl extension Pg.
 
+1.7.0   Feb 20 1998
+	- adapted to PostgreSQL-6.3:
+	  add host=localhost to the conninfo-string
+	  of test.pl and example-scripts
+	- connectdb() converts dbname to lower case,
+	  unless it is surrounded by double quotes
+	- added new method fetchrow, now you can do:
+	  while (@row = $result->fetchrow)
+
 1.6.3   Sep 25 1997
 	- README update
 

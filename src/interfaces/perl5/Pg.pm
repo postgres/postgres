@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: Pg.pm,v 1.4 1997/09/25 21:14:43 mergl Exp $
+# $Id: Pg.pm,v 1.5 1998/02/20 21:25:35 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -8,7 +8,7 @@
 
 package Pg;
 
-use strict;
+#use strict;
 use Carp;
 use vars qw($VERSION @ISA @EXPORT $AUTOLOAD);
 
@@ -84,7 +84,7 @@ require 5.002;
 	PGRES_InvalidOid
 );
 
-$Pg::VERSION = '1.6.3';
+$Pg::VERSION = '1.7.0';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -115,24 +115,20 @@ sub doQuery {
     my $query     = shift;
     my $array_ref = shift;
 
-    my ($result, $status, $nfields, $ntuples, $i, $j);
+    my ($result, $status, $i, $j);
 
-    $result = PQexec($conn, $query);
-    $status = PQresultStatus($result);
-    return($status) if (2 != $status);
-
-    $nfields = PQnfields($result);
-    $ntuples = PQntuples($result);
-    for ($i=0; $i < $ntuples; $i++) {
-        for ($j=0; $j < $nfields; $j++) {
-            $$array_ref[$i][$j] = PQgetvalue($result, $i, $j);
+    if ($result = $conn->exec($query)) {
+        if (2 == ($status = $result->resultStatus)) {
+            for $i (0..$result->ntuples - 1) {
+                for $j (0..$result->nfields - 1) {
+                    $$array_ref[$i][$j] = $result->getvalue($i, $j);
+                }
+            }
         }
     }
-
-    PQclear($result);
-
-    return 1;
+    return $status;
 }
+
 
 1;
 
@@ -192,6 +188,11 @@ about freeing the connection- and result-structures.
 Perl calls the destructor whenever the last reference 
 to an object goes away. 
 
+The method fetchrow can be used to fetch the next row from 
+the server: while (@row = $result->fetchrow).
+Columns which have NULL as value will be set to C<undef>.
+
+
 =head2 old style
 
 All functions and constants are imported into the calling 
@@ -204,7 +205,6 @@ to be freed by the user:
 
     PQsetdb, use PQfinish to free memory.
     PQexec,  use PQclear to free memory.
-
 
 Pg.pm contains one convenience function: doQuery. It fills a
 two-dimensional array with the result of your query. Usage:
@@ -252,12 +252,14 @@ identification. Before using $conn you should call $conn->status to ensure,
 that the connection was properly made. Use the methods below to access 
 the contents of the PGconn structure.
 
-    $conn = Pg::connectdb("option = value")
+    $conn = Pg::connectdb("option1=value option2=value ...")
 
 Opens a new connection to the backend using connection information in a string. 
-The connection identifier $conn ( a pointer to the PGconn structure ) must be 
-used in subsequent commands for unique identification. Before using $conn you 
-should call $conn->status to ensure, that the connection was properly made. 
+Possible options are: dbname, host, user, password, authtype, port, tty, options. 
+The database-name will be converted to lower-case, unless it is surrounded by 
+double quotes. The connection identifier $conn (a pointer to the PGconn structure) 
+must be used in subsequent commands for unique identification. Before using $conn 
+you should call $conn->status to ensure, that the connection was properly made. 
 Use the methods below to access the contents of the PGconn structure.
 
     $Option_ref = Pg::conndefaults()
