@@ -1825,14 +1825,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getCatalogs() throws SQLException
   {
-    // We don't use catalogs, so we simply return a single catalog name "".
-    Field f[] = new Field[1];
-    Vector v = new Vector();
-    byte[][] tuple = new byte[1][0];
-    f[0] = new Field(connection,"TABLE_CAT",iVarcharOid,32);
-    tuple[0] = "".getBytes();
-    v.addElement(tuple);
-    return new ResultSet(connection,f,v,"OK",1);
+      return connection.createStatement().executeQuery("select datname as TABLE_CAT from pg_database;");
   }
 
   /**
