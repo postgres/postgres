@@ -43,7 +43,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 10:01:18 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA11295
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 11:01:17 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA61760;
 	Fri, 24 Dec 1999 10:31:13 -0500 (EST)
@@ -129,7 +129,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 18:31:03 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA26244
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:31:02 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA57851;
 	Fri, 24 Dec 1999 19:23:31 -0500 (EST)
@@ -212,7 +212,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 21:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA02578
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:31:09 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id WAA89135;
 	Fri, 24 Dec 1999 22:11:12 -0500 (EST)
@@ -486,7 +486,7 @@ From owner-pgsql-hackers@hub.org Sun Dec 26 08:31:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA17976
 	for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:31:07 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id JAA90738;
 	Sun, 26 Dec 1999 09:21:58 -0500 (EST)
@@ -909,7 +909,7 @@ From owner-pgsql-hackers@hub.org Thu Dec 30 08:01:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA10317
 	for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 09:01:08 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id IAA87902;
 	Thu, 30 Dec 1999 08:34:22 -0500 (EST)
@@ -1006,7 +1006,7 @@ From owner-pgsql-patches@hub.org Sun Jan  2 23:01:38 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA16274
 	for <pgman@candle.pha.pa.us>; Mon, 3 Jan 2000 00:01:28 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id XAA02655 for <pgman@candle.pha.pa.us>; Sun, 2 Jan 2000 23:45:55 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id XAA02655 for <pgman@candle.pha.pa.us>; Sun, 2 Jan 2000 23:45:55 -0500 (EST)
 Received: from hub.org (hub.org [216.126.84.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id XAA13828;
 	Sun, 2 Jan 2000 23:40:47 -0500 (EST)
@@ -1424,7 +1424,7 @@ From owner-pgsql-hackers@hub.org Tue Jan  4 10:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA17522
 	for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:31:00 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id LAA01541 for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:27:30 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id LAA01541 for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:27:30 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id LAA09992;
 	Tue, 4 Jan 2000 11:18:07 -0500 (EST)
@@ -5048,4 +5048,1194 @@ Darren
 TIP 3: if posting/reading through Usenet, please send an appropriate
 subscribe-nomail command to majordomo@postgresql.org so that your
 message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M18443=candle.pha.pa.us=pgman@postgresql.org Mon Feb  4 19:16:17 2002
+Return-path: <pgsql-hackers-owner+M18443=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g150GGP03822
+	for <pgman@candle.pha.pa.us>; Mon, 4 Feb 2002 19:16:16 -0500 (EST)
+Received: (qmail 77444 invoked by alias); 5 Feb 2002 00:16:11 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 5 Feb 2002 00:16:11 -0000
+Received: from snoopy.mohawksoft.com (h0050bf7a618d.ne.mediaone.net [24.147.138.78])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g150Esl77040
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Feb 2002 19:14:54 -0500 (EST)
+	(envelope-from markw@mohawksoft.com)
+Received: from mohawksoft.com (localhost [127.0.0.1])
+	by snoopy.mohawksoft.com (8.11.6/8.11.6) with ESMTP id g150AWh08676
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Feb 2002 19:10:33 -0500
+Message-ID: <3C5F22F8.C9B958F0@mohawksoft.com>
+Date: Mon, 04 Feb 2002 19:10:32 -0500
+From: mlw <markw@mohawksoft.com>
+X-Mailer: Mozilla 4.78 [en] (X11; U; Linux 2.4.17 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Replication
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+I re-wrote RServ.pm to C, and wrote a replication daemon. It works, but it
+works like the whole rserv project. I don't like it.
+
+OK, what the hell do we need to do to get PostgreSQL replicating?
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M18445=candle.pha.pa.us=pgman@postgresql.org Mon Feb  4 19:57:01 2002
+Return-path: <pgsql-hackers-owner+M18445=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g150v0P06518
+	for <pgman@candle.pha.pa.us>; Mon, 4 Feb 2002 19:57:00 -0500 (EST)
+Received: (qmail 90440 invoked by alias); 5 Feb 2002 00:56:59 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 5 Feb 2002 00:56:59 -0000
+Received: from www1.navtechinc.com ([192.234.226.140])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g150rMl89885
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Feb 2002 19:53:22 -0500 (EST)
+	(envelope-from ssinger@navtechinc.com)
+Received: from pcNavYkfAdm1.ykf.navtechinc.com (wall [192.234.226.190])
+	by www1.navtechinc.com (8.9.3/8.9.3) with ESMTP id AAA06047;
+	Tue, 5 Feb 2002 00:53:22 GMT
+Received: from localhost (ssinger@localhost)
+	by pcNavYkfAdm1.ykf.navtechinc.com (8.9.3/8.9.3) with ESMTP id AAA10675;
+	Tue, 5 Feb 2002 00:52:43 GMT
+Date: Tue, 5 Feb 2002 00:52:43 +0000 (GMT)
+From: Steven <ssinger@navtechinc.com>
+X-X-Sender: <ssinger@pcNavYkfAdm1.ykf.navtechinc.com>
+To: mlw <markw@mohawksoft.com>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+In-Reply-To: <3C5F22F8.C9B958F0@mohawksoft.com>
+Message-ID: <Pine.LNX.4.33.0202050040190.24027-100000@pcNavYkfAdm1.ykf.navtechinc.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Mon, 4 Feb 2002, mlw wrote:
+
+I've developed a replacement for Rserv and we are planning on releasing 
+it as open source(ie as a contrib module).  
+
+Like Rserv its trigger based but its much more flexible.
+The key adventages it has over Rserv is that it has
+-Support for multiple slaves
+-It Perserves transactions while doing the mirroring. Ie  If rows A,B are 
+originally added in the same transaction they will be mirrored in the same 
+transaction.
+
+We have plans on adding filtering based on data/selective mirroring as 
+well. (Ie only rows with COUNTRY='Canada' go to 
+slave A, and  rows with COUNTRY='China' go to slave B).
+But I'm not sure when I'll get to that.
+
+Support for conflict resolution(If allow edits to be made on the slaves) 
+would be nice.
+
+I hope to be able to send a tarball with the source to the pgpatches list 
+within the next few days.
+
+We've been using the system operationally for a number of months and have
+been happy with it.
+
+> I re-wrote RServ.pm to C, and wrote a replication daemon. It works, but it
+> works like the whole rserv project. I don't like it. 
+> OK, what the hell do we need to do to get PostgreSQL replicating?
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 4: Don't 'kill -9' the postmaster
+> 
+
+-- 
+Steven Singer                                       ssinger@navtechinc.com
+Aircraft Performance Systems                Phone:  519-747-1170 ext 282
+Navtech Systems Support Inc.                AFTN:   CYYZXNSX SITA: YYZNSCR
+Waterloo, Ontario                           ARINC:  YKFNSCR
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M18447=candle.pha.pa.us=pgman@postgresql.org Mon Feb  4 20:06:57 2002
+Return-path: <pgsql-hackers-owner+M18447=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1516vP07508
+	for <pgman@candle.pha.pa.us>; Mon, 4 Feb 2002 20:06:57 -0500 (EST)
+Received: (qmail 92753 invoked by alias); 5 Feb 2002 01:06:55 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 5 Feb 2002 01:06:55 -0000
+Received: from inflicted.crimelabs.net (crimelabs.net [66.92.101.112])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g150vhl91978
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Feb 2002 19:57:44 -0500 (EST)
+	(envelope-from bpalmer@crimelabs.net)
+Received: from mizer.crimelabs.net (mizer.crimelabs.net [192.168.88.10])
+	by inflicted.crimelabs.net (Postfix) with ESMTP
+	id 9D6EE8779; Mon,  4 Feb 2002 19:57:46 -0500 (EST)
+Date: Mon, 4 Feb 2002 19:57:34 -0500 (EST)
+From: bpalmer <bpalmer@crimelabs.net>
+To: mlw <markw@mohawksoft.com>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+In-Reply-To: <3C5F22F8.C9B958F0@mohawksoft.com>
+Message-ID: <Pine.BSO.4.43.0202041955420.17121-100000@mizer.crimelabs.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+>
+> OK, what the hell do we need to do to get PostgreSQL replicating?
+
+I hope you understand that replication,  done right,  is a massive
+project.  I know that Darren any myself (and the rest of the pg-repl
+folks) have been waiting till 7.2 went gold till we did anymore work.  I
+think we hope to have master / slave replicatin working for 7.3 and then
+target multimaster for 7.4.  At least that's the hope.
+
+- Brandon
+
+----------------------------------------------------------------------------
+ c: 646-456-5455                                            h: 201-798-4983
+ b. palmer,  bpalmer@crimelabs.net           pgp:crimelabs.net/bpalmer.pgp5
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M18449=candle.pha.pa.us=pgman@postgresql.org Mon Feb  4 21:16:56 2002
+Return-path: <pgsql-hackers-owner+M18449=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g152GtP10503
+	for <pgman@candle.pha.pa.us>; Mon, 4 Feb 2002 21:16:55 -0500 (EST)
+Received: (qmail 6711 invoked by alias); 5 Feb 2002 02:16:53 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 5 Feb 2002 02:16:53 -0000
+Received: from snoopy.mohawksoft.com (h0050bf7a618d.ne.mediaone.net [24.147.138.78])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g151qSl99469
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Feb 2002 20:52:28 -0500 (EST)
+	(envelope-from markw@mohawksoft.com)
+Received: from mohawksoft.com (localhost [127.0.0.1])
+	by snoopy.mohawksoft.com (8.11.6/8.11.6) with ESMTP id g151lph09147;
+	Mon, 4 Feb 2002 20:47:51 -0500
+Message-ID: <3C5F39C7.970F4549@mohawksoft.com>
+Date: Mon, 04 Feb 2002 20:47:51 -0500
+From: mlw <markw@mohawksoft.com>
+X-Mailer: Mozilla 4.78 [en] (X11; U; Linux 2.4.17 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Steven <ssinger@navtechinc.com>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+References: <Pine.LNX.4.33.0202050040190.24027-100000@pcNavYkfAdm1.ykf.navtechinc.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Steven wrote:
+> 
+> On Mon, 4 Feb 2002, mlw wrote:
+> 
+> I've developed a replacement for Rserv and we are planning on releasing
+> it as open source(ie as a contrib module).
+> 
+> Like Rserv its trigger based but its much more flexible.
+> The key adventages it has over Rserv is that it has
+> -Support for multiple slaves
+> -It Perserves transactions while doing the mirroring. Ie  If rows A,B are
+> originally added in the same transaction they will be mirrored in the same
+> transaction.
+
+I did a similar thing. I took the rserv trigger "as is," but rewrote the
+replication support code. What I eventually did was write a "snapshot daemon"
+which created snapshot files. Then a "slave daemon" which would check the last
+snapshot applied and apply all the snapshots, in order, as needed. One would
+run one of these daemons per slave server.
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M18448=candle.pha.pa.us=pgman@postgresql.org Mon Feb  4 20:57:25 2002
+Return-path: <pgsql-hackers-owner+M18448=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g151vOP09239
+	for <pgman@candle.pha.pa.us>; Mon, 4 Feb 2002 20:57:24 -0500 (EST)
+Received: (qmail 99828 invoked by alias); 5 Feb 2002 01:57:19 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 5 Feb 2002 01:57:19 -0000
+Received: from snoopy.mohawksoft.com (h0050bf7a618d.ne.mediaone.net [24.147.138.78])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g151s0l99529
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Feb 2002 20:54:00 -0500 (EST)
+	(envelope-from markw@mohawksoft.com)
+Received: from mohawksoft.com (localhost [127.0.0.1])
+	by snoopy.mohawksoft.com (8.11.6/8.11.6) with ESMTP id g151nah09156;
+	Mon, 4 Feb 2002 20:49:37 -0500
+Message-ID: <3C5F3A30.A4C46FB8@mohawksoft.com>
+Date: Mon, 04 Feb 2002 20:49:36 -0500
+From: mlw <markw@mohawksoft.com>
+X-Mailer: Mozilla 4.78 [en] (X11; U; Linux 2.4.17 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: bpalmer <bpalmer@crimelabs.net>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+References: <Pine.BSO.4.43.0202041955420.17121-100000@mizer.crimelabs.net>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+bpalmer wrote:
+> 
+> >
+> > OK, what the hell do we need to do to get PostgreSQL replicating?
+> 
+> I hope you understand that replication,  done right,  is a massive
+> project.  I know that Darren any myself (and the rest of the pg-repl
+> folks) have been waiting till 7.2 went gold till we did anymore work.  I
+> think we hope to have master / slave replicatin working for 7.3 and then
+> target multimaster for 7.4.  At least that's the hope.
+
+I do know how hard replication is. I also understand how important it is.
+
+If you guys have a project going, and need developers, I am more than willing.
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M18450=candle.pha.pa.us=pgman@postgresql.org Mon Feb  4 21:42:13 2002
+Return-path: <pgsql-hackers-owner+M18450=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g152gCP11957
+	for <pgman@candle.pha.pa.us>; Mon, 4 Feb 2002 21:42:13 -0500 (EST)
+Received: (qmail 14229 invoked by alias); 5 Feb 2002 02:42:09 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 5 Feb 2002 02:42:09 -0000
+Received: from www1.navtechinc.com ([192.234.226.140])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g152SBl10682
+	for <pgsql-hackers@postgresql.org>; Mon, 4 Feb 2002 21:28:11 -0500 (EST)
+	(envelope-from ssinger@navtechinc.com)
+Received: from pcNavYkfAdm1.ykf.navtechinc.com (wall [192.234.226.190])
+	by www1.navtechinc.com (8.9.3/8.9.3) with ESMTP id CAA06384;
+	Tue, 5 Feb 2002 02:28:13 GMT
+Received: from localhost (ssinger@localhost)
+	by pcNavYkfAdm1.ykf.navtechinc.com (8.9.3/8.9.3) with ESMTP id CAA10682;
+	Tue, 5 Feb 2002 02:27:35 GMT
+Date: Tue, 5 Feb 2002 02:27:35 +0000 (GMT)
+From: Steven <ssinger@navtechinc.com>
+X-X-Sender: <ssinger@pcNavYkfAdm1.ykf.navtechinc.com>
+To: mlw <markw@mohawksoft.com>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+In-Reply-To: <3C5F39C7.970F4549@mohawksoft.com>
+Message-ID: <Pine.LNX.4.33.0202050159591.26756-100000@pcNavYkfAdm1.ykf.navtechinc.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+DBMirror doesn't use snapshot's instead it records a log of transactions 
+that are committed to the database in a pair of tables.  
+In the case of an INSERT this is the row that is being added.
+In the case of a delete the primary key of the row being deleted.
+
+And in the case of an UPDATE, the primary key before the update along with 
+all of the data the row should have after an update.
+
+Then for each slave database a perl script walks though the transactions 
+that are pending for that host and reconstructs SQL to send the row edits 
+to that host.  A record of the fact that transaction Y has been sent to 
+host X is also kept.
+
+When transaction X has been sent to all of the hosts that are in the 
+system it is then deleted from the Pending tables.
+
+I suspect that all of the information I'm storing in the Pending tables is 
+also being stored by Postgres in its log but I haven't investigated how 
+the information could be extracted(or how long it is kept for).  That 
+would  reduce the extra storage overhead that the replication system 
+imposes.
+
+As I remember(Its been a while since I've looked at it) RServ uses OID's 
+in its tables to point to the data that needs to be replicated.  We tried 
+a similar approach but found difficulties with doing partial updates.
+
+
+
+
+
+
+On Mon, 4 Feb 2002, mlw wrote:
+
+> I did a similar thing. I took the rserv trigger "as is," but rewrote the
+> replication support code. What I eventually did was write a "snapshot daemon"
+> which created snapshot files. Then a "slave daemon" which would check the last
+> snapshot applied and apply all the snapshots, in order, as needed. One would
+> run one of these daemons per slave server.
+
+
+
+
+ 
+
+-- 
+Steven Singer                                       ssinger@navtechinc.com
+Aircraft Performance Systems                Phone:  519-747-1170 ext 282
+Navtech Systems Support Inc.                AFTN:   CYYZXNSX SITA: YYZNSCR
+Waterloo, Ontario                           ARINC:  YKFNSCR
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M18554=candle.pha.pa.us=pgman@postgresql.org Thu Feb  7 02:49:48 2002
+Return-path: <pgsql-hackers-owner+M18554=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g177nlP04347
+	for <pgman@candle.pha.pa.us>; Thu, 7 Feb 2002 02:49:47 -0500 (EST)
+Received: (qmail 22556 invoked by alias); 7 Feb 2002 07:49:49 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 7 Feb 2002 07:49:49 -0000
+Received: from linuxworld.com.au (www.linuxworld.com.au [203.34.46.50])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g177QfE19572
+	for <pgsql-hackers@postgresql.org>; Thu, 7 Feb 2002 02:26:42 -0500 (EST)
+	(envelope-from swm@linuxworld.com.au)
+Received: from localhost (swm@localhost)
+	by linuxworld.com.au (8.11.4/8.11.4) with ESMTP id g177RiU06086;
+	Thu, 7 Feb 2002 18:27:45 +1100
+Date: Thu, 7 Feb 2002 18:27:44 +1100 (EST)
+From: Gavin Sherry <swm@linuxworld.com.au>
+To: mlw <markw@mohawksoft.com>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+In-Reply-To: <3C5F22F8.C9B958F0@mohawksoft.com>
+Message-ID: <Pine.LNX.4.21.0202071751240.5160-100000@linuxworld.com.au>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Mon, 4 Feb 2002, mlw wrote:
+
+> I re-wrote RServ.pm to C, and wrote a replication daemon. It works, but it
+> works like the whole rserv project. I don't like it.
+> 
+> OK, what the hell do we need to do to get PostgreSQL replicating?
+
+The trigger model is not a very sophisticated one. I think I have a better
+-- though more complicated -- one. This model would be able to handle
+multiple masters and master->slave.
+
+First of all, all machines in the cluster would have to be aware all the
+machines in the cluster. This would have to be stored in a new system
+table.
+
+The FE/BE protocol would need to be modified to accepted parsed node trees
+generated by pg_analyze_and_rewrite(). These could then be dispatched by 
+the executing server, inside of pg_exec_query_string, to all other servers
+in the cluster (excluding itself). Naturally, this dispatch would need to
+be non-blocking.
+
+pg_exec_query_string() would need to check that nodetags to make sure
+selects and perhaps some commands are not dispatched.
+
+Before the executing server runs finish_xact_command(), it would check
+that the query was successfully executed on all machines otherwise
+abort. Such a system would need a few configuration options: whether or
+not you abort on failed replication to slaves, the ability to replicate
+only certain tables, etc.
+
+Naturally, this would slow down writes to the system (possibly a lot
+depending on the performance difference between the executing machine and
+the least powerful machine in the cluster), but most usages of postgresql
+are read intensive, not write.
+
+Any reason this model would not work?
+
+Gavin
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M18558=candle.pha.pa.us=pgman@postgresql.org Thu Feb  7 08:31:00 2002
+Return-path: <pgsql-hackers-owner+M18558=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g17DUxP13923
+	for <pgman@candle.pha.pa.us>; Thu, 7 Feb 2002 08:30:59 -0500 (EST)
+Received: (qmail 91796 invoked by alias); 7 Feb 2002 13:30:55 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 7 Feb 2002 13:30:55 -0000
+Received: from snoopy.mohawksoft.com (h0050bf7a618d.ne.mediaone.net [24.147.138.78])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g17Cw0E87782
+	for <pgsql-hackers@postgresql.org>; Thu, 7 Feb 2002 07:58:01 -0500 (EST)
+	(envelope-from markw@mohawksoft.com)
+Received: from mohawksoft.com (localhost [127.0.0.1])
+	by snoopy.mohawksoft.com (8.11.6/8.11.6) with ESMTP id g17CqNt16887;
+	Thu, 7 Feb 2002 07:52:24 -0500
+Message-ID: <3C627887.CC9FF837@mohawksoft.com>
+Date: Thu, 07 Feb 2002 07:52:23 -0500
+From: mlw <markw@mohawksoft.com>
+X-Mailer: Mozilla 4.78 [en] (X11; U; Linux 2.4.17 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Gavin Sherry <swm@linuxworld.com.au>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+References: <Pine.LNX.4.21.0202071751240.5160-100000@linuxworld.com.au>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Gavin Sherry wrote:
+> Naturally, this would slow down writes to the system (possibly a lot
+> depending on the performance difference between the executing machine and
+> the least powerful machine in the cluster), but most usages of postgresql
+> are read intensive, not write.
+> 
+> Any reason this model would not work?
+
+What, then is the purpose of replication to multiple masters?
+
+I can think of only two reasons why you want replication. (1) Redundancy, make
+sure that if one server dies, then another server has the same data and is used
+seamlessly. (2) Increase performance over one system.
+
+In reason (1) I submit that a server load balance which sits on top of
+PostgreSQL, and executes writes on both servers while distributing reads would
+be best. This is a HUGE project. The load balancer must know EXACTLY how the
+system is configured, which includes all functions and everything. 
+
+In reason (2) your system would fail to provide the scalability that would be
+needed. If writes take a long time, but reads are fine, what is the difference
+between the trigger based replicator?
+
+I have in the back of my mind, an idea of patching into the WAL stuff, and
+using that mechanism to push changes out to the slaves.
+
+Where one machine is still the master, but no trigger stuff, just a WAL patch.
+Perhaps some shared memory paradigm to manage WAL visibility? I'm not sure
+exactly, the idea hasn't completely formed yet.
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M18574=candle.pha.pa.us=pgman@postgresql.org Thu Feb  7 12:51:42 2002
+Return-path: <pgsql-hackers-owner+M18574=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g17HpfP16661
+	for <pgman@candle.pha.pa.us>; Thu, 7 Feb 2002 12:51:41 -0500 (EST)
+Received: (qmail 62955 invoked by alias); 7 Feb 2002 17:50:42 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 7 Feb 2002 17:50:42 -0000
+Received: from www1.navtechinc.com ([192.234.226.140])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g17HnTE62256
+	for <pgsql-hackers@postgresql.org>; Thu, 7 Feb 2002 12:49:29 -0500 (EST)
+	(envelope-from ssinger@navtechinc.com)
+Received: from pcNavYkfAdm1.ykf.navtechinc.com (wall [192.234.226.190])
+	by www1.navtechinc.com (8.9.3/8.9.3) with ESMTP id RAA07908;
+	Thu, 7 Feb 2002 17:49:31 GMT
+Received: from localhost (ssinger@localhost)
+	by pcNavYkfAdm1.ykf.navtechinc.com (8.9.3/8.9.3) with ESMTP id RAA05687;
+	Thu, 7 Feb 2002 17:48:52 GMT
+Date: Thu, 7 Feb 2002 17:48:51 +0000 (GMT)
+From: Steven Singer <ssinger@navtechinc.com>
+X-X-Sender: <ssinger@pcNavYkfAdm1.ykf.navtechinc.com>
+To: Gavin Sherry <swm@linuxworld.com.au>
+cc: mlw <markw@mohawksoft.com>,
+   PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+In-Reply-To: <Pine.LNX.4.21.0202071751240.5160-100000@linuxworld.com.au>
+Message-ID: <Pine.LNX.4.33.0202071735360.6435-100000@pcNavYkfAdm1.ykf.navtechinc.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+
+What you describe sounds like a form of a two-stage commit protocol.
+
+If the command worked on two of the replicated databases but failed on a 
+third then the executing server would have to be able to undo the command
+on the replicated databases as well as itself.
+
+The problems with two stage commit type approches to replication are 
+1) Speed as you mentioned.  Write speed isn't a concern for some 
+applications but it is very important in others.
+
+and 
+2) All of the databases must be able to communicate with each other at 
+all times in order for any edits to work.   If the servers are 
+connected over some sort of WAN that periodically has short outages this 
+is a problem.   Also if your using replication because you want to be able 
+to take down one of the databases for short periods of time without 
+bringing down the others your in trouble.
+
+
+btw: I posted the alternative to Rserv that I mentioned the other day to 
+the  pg-patches mailing list.  If anyone is intreasted you should be able 
+to grab it off the archives.
+
+On Thu, 7 Feb 2002, Gavin Sherry wrote:
+
+> 
+> First of all, all machines in the cluster would have to be aware all the
+> machines in the cluster. This would have to be stored in a new system
+> table.
+> 
+> The FE/BE protocol would need to be modified to accepted parsed node trees
+> generated by pg_analyze_and_rewrite(). These could then be dispatched by 
+> the executing server, inside of pg_exec_query_string, to all other servers
+> in the cluster (excluding itself). Naturally, this dispatch would need to
+> be non-blocking.
+> 
+> pg_exec_query_string() would need to check that nodetags to make sure
+> selects and perhaps some commands are not dispatched.
+> 
+> Before the executing server runs finish_xact_command(), it would check
+> that the query was successfully executed on all machines otherwise
+> abort. Such a system would need a few configuration options: whether or
+> not you abort on failed replication to slaves, the ability to replicate
+> only certain tables, etc.
+> 
+> Naturally, this would slow down writes to the system (possibly a lot
+> depending on the performance difference between the executing machine and
+> the least powerful machine in the cluster), but most usages of postgresql
+> are read intensive, not write.
+> 
+> Any reason this model would not work?
+> 
+> Gavin
+> 
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 4: Don't 'kill -9' the postmaster
+> 
+
+-- 
+Steven Singer                                       ssinger@navtechinc.com
+Aircraft Performance Systems                Phone:  519-747-1170 ext 282
+Navtech Systems Support Inc.                AFTN:   CYYZXNSX SITA: YYZNSCR
+Waterloo, Ontario                           ARINC:  YKFNSCR
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M18590=candle.pha.pa.us=pgman@postgresql.org Thu Feb  7 17:50:42 2002
+Return-path: <pgsql-hackers-owner+M18590=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g17MoeP27121
+	for <pgman@candle.pha.pa.us>; Thu, 7 Feb 2002 17:50:40 -0500 (EST)
+Received: (qmail 39930 invoked by alias); 7 Feb 2002 22:50:17 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 7 Feb 2002 22:50:17 -0000
+Received: from odin.fts.net (wall.icgate.net [209.26.177.2])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g17Ma4E38041
+	for <pgsql-hackers@postgresql.org>; Thu, 7 Feb 2002 17:36:04 -0500 (EST)
+	(envelope-from fharvell@odin.fts.net)
+Received: from odin.fts.net (fharvell@localhost)
+	by odin.fts.net (8.11.6/8.11.6) with ESMTP id g17MZhR17707;
+	Thu, 7 Feb 2002 17:35:43 -0500
+Message-ID: <200202072235.g17MZhR17707@odin.fts.net>
+X-Mailer: exmh version 2.2 06/23/2000 with nmh-1.0.4
+From: F Harvell <fharvell@fts.net>
+To: mlw <markw@mohawksoft.com>
+cc: Gavin Sherry <swm@linuxworld.com.au>,
+   PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication 
+In-Reply-To: Message from mlw
+    of "Thu, 07 Feb 2002 07:52:23 EST."
+    <3C627887.CC9FF837@mohawksoft.com> 
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Date: Thu, 07 Feb 2002 17:35:43 -0500
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+I'm not that familiar with the whole replication issues in PostgreSQL,
+however, I would be partial to replication that was based upon the
+playback of the (a?) journal file.  (I believe that the WAL is a
+journal file.)
+
+By being based upon a journal file, it would be possible to accomplish
+two significant items.  First, it would be possible to "restore" a
+database to an exact state just before a failure.  Most commercial
+databases provide the ability to do this.  Banks, etc. log the journal
+files directly to tape to provide a complete transaction history such
+that they can rebuild their database from any given snapshot.  (Note
+that the journal file needs to be "editable" as a failure may be
+"delete from x" with a missing where clause.)
+
+This leads directly into the second advantage, the ability to have a
+replicated database operating anywhere, over any connection on any
+server.  Speed of writes would not be a factor.  In essence, as long
+as the replicated database had a snapshot of the database and then was
+provided with all journal files since the snapshot, it would be
+possible to build a current database.  If the replicant got behind in
+the processing, it would catch up when things slowed down.
+
+In my opionion, the first advantage is in many ways most important.
+Replication becomes simply the restoration of the database in realtime
+on a second server.  The "replication" task becomes the definition of
+a protocol for distributing the journal file.  At least one major
+database vendor does replication (shadowing) in exactly this mannor.
+
+Maybe I'm all wet and the journal file and journal playback already
+exists.  If so, IMHO, basing replication off of this would be the
+right direction.
+
+
+On Thu, 07 Feb 2002 07:52:23 EST, mlw wrote:
+> 
+> I have in the back of my mind, an idea of patching into the WAL stuff, and
+> using that mechanism to push changes out to the slaves.
+> 
+> Where one machine is still the master, but no trigger stuff, just a WAL patch.
+> Perhaps some shared memory paradigm to manage WAL visibility? I'm not sure
+> exactly, the idea hasn't completely formed yet.
+> 
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M18605=candle.pha.pa.us=pgman@postgresql.org Fri Feb  8 00:50:08 2002
+Return-path: <pgsql-hackers-owner+M18605=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g185o7P27878
+	for <pgman@candle.pha.pa.us>; Fri, 8 Feb 2002 00:50:07 -0500 (EST)
+Received: (qmail 17348 invoked by alias); 8 Feb 2002 05:50:03 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 8 Feb 2002 05:50:03 -0000
+Received: from lakemtao03.mgt.cox.net (mtao3.east.cox.net [68.1.17.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g185cTE15241
+	for <pgsql-hackers@postgresql.org>; Fri, 8 Feb 2002 00:38:29 -0500 (EST)
+	(envelope-from darren.johnson@cox.net)
+Received: from cox.net ([68.10.181.230]) by lakemtao03.mgt.cox.net
+          (InterMail vM.5.01.04.05 201-253-122-122-105-20011231) with ESMTP
+          id <20020208053833.YKTV6710.lakemtao03.mgt.cox.net@cox.net>
+          for <pgsql-hackers@postgresql.org>;
+          Fri, 8 Feb 2002 00:38:33 -0500
+Message-ID: <3C636232.6060206@cox.net>
+Date: Fri, 08 Feb 2002 00:29:22 -0500
+From: Darren Johnson <darren.johnson@cox.net>
+User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; m18) Gecko/20001108 Netscape6/6.0
+X-Accept-Language: en
+MIME-Version: 1.0
+To: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+References: <Pine.LNX.4.33.0202071735360.6435-100000@pcNavYkfAdm1.ykf.navtechinc.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+ >
+ > The problems with two stage commit type approches to replication are
+
+IMHO the biggest problem with two phased commit is it doesn't scale.
+The more servers
+you add to the replica the slower it goes.  Also there's the potential
+for dead locks across
+server boundaries.
+
+ >
+ > 2) All of the databases must be able to communicate with each other at
+ > all times in order for any edits to work.   If the servers are
+ > connected over some sort of WAN that periodically has short outages this
+ > is a problem.   Also if your using replication because you want to be 
+able
+ > to take down one of the databases for short periods of time without
+ > bringing down the others your in trouble.
+
+All true for two phased commit protocol.  To have multi master
+replication, you must have all
+systems communicating, but you can use a multicast group communication
+system instead of
+2PC.  Using total order messaging, you can ensure all changes are
+delivered to all servers in the
+replica in the same order.   This group communication system also allows
+failures to be detected
+while other servers in the replica continue processing.
+
+A few of us are working with this theory, and trying to integrate with
+7.2.  There is a working
+model for 6.4, but its very limited.  (insert, update, and deletes)  We
+are currently hosted at
+
+http://gborg.postgresql.org/project/pgreplication/projdisplay.php
+But the site has been down the last 2 days.  I've contacted the web
+master, but haven't seen
+any results yet.  If any one knows what going on with gborg, I'd
+appreciate a status.
+
+Darren
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M18617=candle.pha.pa.us=pgman@postgresql.org Fri Feb  8 06:20:44 2002
+Return-path: <pgsql-hackers-owner+M18617=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g18BKhP06132
+	for <pgman@candle.pha.pa.us>; Fri, 8 Feb 2002 06:20:43 -0500 (EST)
+Received: (qmail 90815 invoked by alias); 8 Feb 2002 11:20:40 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 8 Feb 2002 11:20:40 -0000
+Received: from laptop.kieser.demon.co.uk (kieser.demon.co.uk [62.49.6.72])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g18B9ZE89589
+	for <pgsql-hackers@postgresql.org>; Fri, 8 Feb 2002 06:09:36 -0500 (EST)
+	(envelope-from brad@kieser.net)
+Received: from laptop.kieser.demon.co.uk (localhost.localdomain [127.0.0.1])
+	by laptop.kieser.demon.co.uk (Postfix) with SMTP
+	id 598393A132; Fri,  8 Feb 2002 11:09:36 +0000 (GMT)
+From: Bradley Kieser <brad@kieser.net>
+Date: Fri, 08 Feb 2002 11:09:36 GMT
+Message-ID: <20020208.11093600@laptop.kieser.demon.co.uk>
+Subject: Re: [HACKERS] Replication
+To: Darren Johnson <darren.johnson@cox.net>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+In-Reply-To: <3C636232.6060206@cox.net>
+References: <Pine.LNX.4.33.0202071735360.6435-100000@pcNavYkfAdm1.ykf.navtechinc.com> <3C636232.6060206@cox.net>
+X-Mailer: Mozilla/3.0 (compatible; StarOffice/5.2;Linux)
+X-Priority: 3 (Normal)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by postgresql.org id g18BJoF90352
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Darren,
+Given that different replication strategies will probably be developed 
+for PG, do you envisage DBAs to be able to select the type of replication 
+for their installation? I.e. Replication being selectable rther like 
+storage structures?
+
+Would be a killer bit of flexibility, given how enormous the impact of 
+replication will be to corporate adoption of PG.
+
+Brad 
+
+
+>>>>>>>>>>>>>>>>>> Original Message <<<<<<<<<<<<<<<<<<
+
+On 2/8/02, 5:29:22 AM, Darren Johnson <darren.johnson@cox.net> wrote 
+regarding Re: [HACKERS] Replication:
+
+
+>  >
+>  > The problems with two stage commit type approches to replication are
+
+> IMHO the biggest problem with two phased commit is it doesn't scale.
+> The more servers
+> you add to the replica the slower it goes.  Also there's the potential
+> for dead locks across
+> server boundaries.
+
+>  >
+>  > 2) All of the databases must be able to communicate with each other at
+>  > all times in order for any edits to work.   If the servers are
+>  > connected over some sort of WAN that periodically has short outages this
+>  > is a problem.   Also if your using replication because you want to be
+> able
+>  > to take down one of the databases for short periods of time without
+>  > bringing down the others your in trouble.
+
+> All true for two phased commit protocol.  To have multi master
+> replication, you must have all
+> systems communicating, but you can use a multicast group communication
+> system instead of
+> 2PC.  Using total order messaging, you can ensure all changes are
+> delivered to all servers in the
+> replica in the same order.   This group communication system also allows
+> failures to be detected
+> while other servers in the replica continue processing.
+
+> A few of us are working with this theory, and trying to integrate with
+> 7.2.  There is a working
+> model for 6.4, but its very limited.  (insert, update, and deletes)  We
+> are currently hosted at
+
+> http://gborg.postgresql.org/project/pgreplication/projdisplay.php
+> But the site has been down the last 2 days.  I've contacted the web
+> master, but haven't seen
+> any results yet.  If any one knows what going on with gborg, I'd
+> appreciate a status.
+
+> Darren
+
+
+> ---------------------------(end of broadcast)---------------------------
+> TIP 2: you can get off all lists at once with the unregister command
+>     (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M18642=candle.pha.pa.us=pgman@postgresql.org Fri Feb  8 12:40:36 2002
+Return-path: <pgsql-hackers-owner+M18642=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g18HeZP08450
+	for <pgman@candle.pha.pa.us>; Fri, 8 Feb 2002 12:40:35 -0500 (EST)
+Received: (qmail 74089 invoked by alias); 8 Feb 2002 17:40:30 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 8 Feb 2002 17:40:30 -0000
+Received: from lakemtao03.mgt.cox.net (mtao3.east.cox.net [68.1.17.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g18HbwE73437
+	for <pgsql-hackers@postgresql.org>; Fri, 8 Feb 2002 12:37:58 -0500 (EST)
+	(envelope-from darren.johnson@cox.net)
+Received: from cox.net ([68.10.181.230]) by lakemtao03.mgt.cox.net
+          (InterMail vM.5.01.04.05 201-253-122-122-105-20011231) with ESMTP
+          id <20020208173804.DKQS6710.lakemtao03.mgt.cox.net@cox.net>;
+          Fri, 8 Feb 2002 12:38:04 -0500
+Message-ID: <3C63FB71.206@cox.net>
+Date: Fri, 08 Feb 2002 11:23:13 -0500
+From: Darren Johnson <darren.johnson@cox.net>
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; m18) Gecko/20010131 Netscape6/6.01
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Bradley Kieser <brad@kieser.net>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Replication
+References: <Pine.LNX.4.33.0202071735360.6435-100000@pcNavYkfAdm1.ykf.navtechinc.com> <3C636232.6060206@cox.net> <20020208.11093600@laptop.kieser.demon.co.uk>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> 
+> Given that different replication strategies will probably be developed 
+> for PG, do you envisage DBAs to be able to select the type of replication 
+> for their installation? I.e. Replication being selectable rther like 
+> storage structures?
+
+I can't speak for other replication solutions, but we are using the 
+--with-replication or
+-r parameter when starting postmaster.  Some day I hope there will be 
+parameters for
+master/slave partial/full and sync/async,  but it will be some time 
+before we cross those
+bridges.
+
+Darren
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M18658=candle.pha.pa.us=pgman@postgresql.org Fri Feb  8 14:42:40 2002
+Return-path: <pgsql-hackers-owner+M18658=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g18JgdP28166
+	for <pgman@candle.pha.pa.us>; Fri, 8 Feb 2002 14:42:39 -0500 (EST)
+Received: (qmail 18650 invoked by alias); 8 Feb 2002 19:42:39 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 8 Feb 2002 19:42:39 -0000
+Received: from enigma.trueimpact.net (enigma.trueimpact.net [209.82.45.201])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g18JYBE17341
+	for <pgsql-hackers@postgresql.org>; Fri, 8 Feb 2002 14:34:11 -0500 (EST)
+	(envelope-from rjonasz@trueimpact.com)
+Received: from nietzsche.trueimpact.net (unknown [209.82.45.200])
+	by enigma.trueimpact.net (Postfix) with ESMTP id A785066B04
+	for <pgsql-hackers@postgresql.org>; Fri,  8 Feb 2002 14:33:28 -0500 (EST)
+Date: Fri, 8 Feb 2002 14:34:34 -0500 (EST)
+From: Randall Jonasz <rjonasz@trueimpact.com>
+X-X-Sender: <rjonasz@nietzsche.trueimpact.net>
+To: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+In-Reply-To: <3C627887.CC9FF837@mohawksoft.com>
+Message-ID: <20020208142932.H6545-100000@nietzsche.trueimpact.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+I've been looking into database replication theory lately and have found
+some interesting papers discussing various approaches.  (Here's
+one paper that struck me as being very helpful,
+http://citeseer.nj.nec.com/460405.html )  So far I favour an
+eager replication system which is predicated on a read local/write all
+available. The system should not depend on two phase commit or primary
+copy algorithms.  The former leads to the whole system being as quick as
+the slowest machine.  In addition, 2 phase commit involves 2n messages for
+each transaction which does not scale well at all.  This idea will also
+have to take into account a crashed node which did not ack a transaction.
+The primary copy algorithms I've seen suffer from a single point of
+failure and potential bottlenecks at the primary node.
+
+Instead I like the master to master or peer to peer algorithm as discussed
+in the above paper.  This approach accounts for network partitions, nodes
+leaving and joining a cluster and the ability to commit a transaction once
+the communication module has determined the total order of the said
+transaction, i.e. no need for waiting for acks.   This scales well and
+research has shown it to increase the number of transactions/second a
+database cluster can handle over a single node.
+
+Postgres-R is another interesting approach which I think should be taken
+seriously. Anyone interested can read a paper on this at
+http://citeseer.nj.nec.com/330257.html
+
+Anyways, my two cents
+
+Randall Jonasz
+Software Engineer
+Click2net Inc.
+
+
+On Thu, 7 Feb 2002, mlw wrote:
+
+> Gavin Sherry wrote:
+> > Naturally, this would slow down writes to the system (possibly a lot
+> > depending on the performance difference between the executing machine and
+> > the least powerful machine in the cluster), but most usages of postgresql
+> > are read intensive, not write.
+> >
+> > Any reason this model would not work?
+>
+> What, then is the purpose of replication to multiple masters?
+>
+> I can think of only two reasons why you want replication. (1) Redundancy, make
+> sure that if one server dies, then another server has the same data and is used
+> seamlessly. (2) Increase performance over one system.
+>
+> In reason (1) I submit that a server load balance which sits on top of
+> PostgreSQL, and executes writes on both servers while distributing reads would
+> be best. This is a HUGE project. The load balancer must know EXACTLY how the
+> system is configured, which includes all functions and everything.
+>
+> In reason (2) your system would fail to provide the scalability that would be
+> needed. If writes take a long time, but reads are fine, what is the difference
+> between the trigger based replicator?
+>
+> I have in the back of my mind, an idea of patching into the WAL stuff, and
+> using that mechanism to push changes out to the slaves.
+>
+> Where one machine is still the master, but no trigger stuff, just a WAL patch.
+> Perhaps some shared memory paradigm to manage WAL visibility? I'm not sure
+> exactly, the idea hasn't completely formed yet.
+>
+> ---------------------------(end of broadcast)---------------------------
+> TIP 5: Have you checked our extensive FAQ?
+>
+> http://www.postgresql.org/users-lounge/docs/faq.html
+>
+>
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M18660=candle.pha.pa.us=pgman@postgresql.org Fri Feb  8 15:20:32 2002
+Return-path: <pgsql-hackers-owner+M18660=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g18KKSP03731
+	for <pgman@candle.pha.pa.us>; Fri, 8 Feb 2002 15:20:29 -0500 (EST)
+Received: (qmail 28961 invoked by alias); 8 Feb 2002 20:20:27 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 8 Feb 2002 20:20:27 -0000
+Received: from inflicted.crimelabs.net (crimelabs.net [66.92.101.112])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g18KC7E27667
+	for <pgsql-hackers@postgresql.org>; Fri, 8 Feb 2002 15:12:07 -0500 (EST)
+	(envelope-from bpalmer@crimelabs.net)
+Received: from mizer.crimelabs.net (mizer.crimelabs.net [192.168.88.10])
+	by inflicted.crimelabs.net (Postfix) with ESMTP
+	id 1066F8787; Fri,  8 Feb 2002 15:12:08 -0500 (EST)
+Date: Fri, 8 Feb 2002 15:12:00 -0500 (EST)
+From: bpalmer <bpalmer@crimelabs.net>
+To: Randall Jonasz <rjonasz@trueimpact.com>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+In-Reply-To: <20020208142932.H6545-100000@nietzsche.trueimpact.net>
+Message-ID: <Pine.BSO.4.43.0202081510130.21860-100000@mizer.crimelabs.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+I've not looked at the first paper,  but I wil.
+
+> Postgres-R is another interesting approach which I think should be taken
+> seriously. Anyone interested can read a paper on this at
+> http://citeseer.nj.nec.com/330257.html
+
+I would point you to the info on gborg,  but it seems to be down at the
+moment.
+
+- Brandon
+
+----------------------------------------------------------------------------
+ c: 646-456-5455                                            h: 201-798-4983
+ b. palmer,  bpalmer@crimelabs.net           pgp:crimelabs.net/bpalmer.pgp5
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M18666=candle.pha.pa.us=pgman@postgresql.org Fri Feb  8 17:41:03 2002
+Return-path: <pgsql-hackers-owner+M18666=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g18Mf2P18046
+	for <pgman@candle.pha.pa.us>; Fri, 8 Feb 2002 17:41:03 -0500 (EST)
+Received: (qmail 63057 invoked by alias); 8 Feb 2002 22:41:02 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 8 Feb 2002 22:41:02 -0000
+Received: from lakemtao03.mgt.cox.net (mtao3.east.cox.net [68.1.17.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g18MR9E60361
+	for <pgsql-hackers@postgresql.org>; Fri, 8 Feb 2002 17:27:11 -0500 (EST)
+	(envelope-from darren.johnson@cox.net)
+Received: from cox.net ([68.10.181.230]) by lakemtao03.mgt.cox.net
+          (InterMail vM.5.01.04.05 201-253-122-122-105-20011231) with ESMTP
+          id <20020208222634.GTRG6710.lakemtao03.mgt.cox.net@cox.net>;
+          Fri, 8 Feb 2002 17:26:34 -0500
+Message-ID: <3C643F0F.70303@cox.net>
+Date: Fri, 08 Feb 2002 16:11:43 -0500
+From: Darren Johnson <darren.johnson@cox.net>
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; m18) Gecko/20010131 Netscape6/6.01
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Randall Jonasz <rjonasz@trueimpact.com>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+References: <20020208142932.H6545-100000@nietzsche.trueimpact.net>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+> I've been looking into database replication theory lately and have found
+> some interesting papers discussing various approaches.  (Here's
+> one paper that struck me as being very helpful,
+> http://citeseer.nj.nec.com/460405.html )
+
+
+Here is another one from that same group, that addresses  the WAN issues.
+
+> http://www.cnds.jhu.edu/pub/papers/cnds-2002-1.pdf
+
+
+enjoy,
+
+Darren
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M18674=candle.pha.pa.us=pgman@postgresql.org Fri Feb  8 19:20:30 2002
+Return-path: <pgsql-hackers-owner+M18674=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g190KTP26980
+	for <pgman@candle.pha.pa.us>; Fri, 8 Feb 2002 19:20:29 -0500 (EST)
+Received: (qmail 88124 invoked by alias); 9 Feb 2002 00:20:27 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 9 Feb 2002 00:20:27 -0000
+Received: from localhost.localdomain (bgp01077650bgs.wanarb01.mi.comcast.net [68.40.135.112])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g190H3E87489
+	for <pgsql-hackers@postgresql.org>; Fri, 8 Feb 2002 19:17:03 -0500 (EST)
+	(envelope-from camber@ais.org)
+Received: from localhost (camber@localhost)
+	by localhost.localdomain (8.11.6/8.11.6) with ESMTP id g190H0P18427;
+	Fri, 8 Feb 2002 19:17:00 -0500
+X-Authentication-Warning: localhost.localdomain: camber owned process doing -bs
+Date: Fri, 8 Feb 2002 19:17:00 -0500 (EST)
+From: Brian Bruns <camber@ais.org>
+X-X-Sender: <camber@localhost.localdomain>
+To: Randall Jonasz <rjonasz@trueimpact.com>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Replication
+In-Reply-To: <20020208142932.H6545-100000@nietzsche.trueimpact.net>
+Message-ID: <Pine.LNX.4.33.0202081904190.18420-100000@localhost.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> > I have in the back of my mind, an idea of patching into the WAL stuff, and
+> > using that mechanism to push changes out to the slaves.
+> >
+> > Where one machine is still the master, but no trigger stuff, just a WAL patch.
+> > Perhaps some shared memory paradigm to manage WAL visibility? I'm not sure
+> > exactly, the idea hasn't completely formed yet.
+> >
+
+FWIW, Sybase Replication Server does just such a thing.  
+
+They have a secondary log marker (prevents the log from truncating past 
+the oldest unreplicated transaction).  A thread within the system called 
+the "rep agent" (but it use to be a separate process call the LTM), reads 
+the log and forwards it to the rep server, once the rep server has the 
+whole transaction and it is written to a stable device (aka synced to 
+disk) the rep server responds to the LTM telling him it's OK to move the 
+log marker forward.
+
+Anyway, once the replication server proper has the transaction it uses a 
+publish/subscribe methodology to see who wants get the update.
+
+Bidirectional replication is done by making two oneway replications.  The 
+whole thing is table based, it marks the tables as replicated or not in 
+the database to save the trip to the repserver on un replicated tables.
+
+Plus you can take parts of a database (replicate all rows where the 
+country is "us" to this server and all the rows with "uk" to that server).  
+Or opposite you can roll up smaller regional databases to bigger ones, 
+it's very flexible.
+
+
+Cheers,
+
+Brian
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
 
