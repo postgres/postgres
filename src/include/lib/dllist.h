@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.9 1999/02/13 23:21:30 momjian Exp $
+ * $Id: dllist.h,v 1.10 1999/05/31 23:48:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@ extern void DLRemove(Dlelem *); /* removes node from list */
 extern void DLAddHead(Dllist *list, Dlelem *node);
 extern void DLAddTail(Dllist *list, Dlelem *node);
 extern Dlelem *DLRemHead(Dllist *list); /* remove and return the head */
+extern void DLMoveToFront(Dlelem *); /* move node to front of its list */
 
 #define DLE_VAL(x)	(x->dle_val)
 
