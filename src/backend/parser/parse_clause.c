@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.87 2002/03/26 19:15:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.88 2002/04/15 06:05:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,8 +467,8 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
  *
  *	  Aside from the primary return value (the transformed joinlist item)
  *	  this routine also returns an integer list of the rangetable indexes
- *	  of all the base relations represented in the joinlist item.  This
- *	  list is needed for checking JOIN/ON conditions in higher levels.
+ *	  of all the base and join relations represented in the joinlist item.
+ *	  This list is needed for checking JOIN/ON conditions in higher levels.
  */
 static Node *
 transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
@@ -495,7 +495,8 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 	{
 		/* A newfangled join expression */
 		JoinExpr   *j = (JoinExpr *) n;
-		List	   *l_containedRels,
+		List	   *my_containedRels,
+				   *l_containedRels,
 				   *r_containedRels,
 				   *l_colnames,
 				   *r_colnames,
@@ -517,9 +518,10 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		j->rarg = transformFromClauseItem(pstate, j->rarg, &r_containedRels);
 
 		/*
-		 * Generate combined list of relation indexes
+		 * Generate combined list of relation indexes for possible use
+		 * by transformJoinOnClause below.
 		 */
-		*containedRels = nconc(l_containedRels, r_containedRels);
+		my_containedRels = nconc(l_containedRels, r_containedRels);
 
 		/*
 		 * Check for conflicting refnames in left and right subtrees. Must
@@ -705,7 +707,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		else if (j->quals)
 		{
 			/* User-written ON-condition; transform it */
-			j->quals = transformJoinOnClause(pstate, j, *containedRels);
+			j->quals = transformJoinOnClause(pstate, j, my_containedRels);
 		}
 		else
 		{
@@ -767,6 +769,11 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		/* assume new rte is at end */
 		j->rtindex = length(pstate->p_rtable);
 		Assert(rte == rt_fetch(j->rtindex, pstate->p_rtable));
+
+		/*
+		 * Include join RTE in returned containedRels list
+		 */
+		*containedRels = lconsi(j->rtindex, my_containedRels);
 
 		return (Node *) j;
 	}
