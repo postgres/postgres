@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.119 2000/01/31 14:02:27 wieck Exp $
+ * $Id: pg_proc.h,v 1.120 2000/02/10 19:51:46 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2229,6 +2229,13 @@ DATA(insert OID = 699 (  host					PGUID 11 f t t 1 f 25 "869" 100 0 0 100  netwo
 DESCR("host address");
 DATA(insert OID = 683 (  network				PGUID 11 f t t 1 f 25 "869" 100 0 0 100  network_network - ));
 DESCR("network address");
+
+DATA(insert OID =  1691 (  boolle			   PGUID 11 f t t 2 f 16 "16 16" 100 0 0 100  boolle - ));
+DESCR("less-than-or-equal");
+DATA(insert OID =  1692 (  boolge			   PGUID 11 f t t 2 f 16 "16 16" 100 0 0 100  boolge - ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 1693 (  btboolcmp			   PGUID 11 f t t 2 f 23 "16 16" 100 0 0 100  btboolcmp - ));
+DESCR("btree less-equal-greater");
 
 /* OID's 1700 - 1799 NUMERIC data type */
 DATA(insert OID = 1701 ( numeric_in				PGUID 11 f t t 3 f 1700 "0 0 23" 100 0 0 100  numeric_in - ));

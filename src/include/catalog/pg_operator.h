@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.66 2000/01/26 05:57:58 momjian Exp $
+ * $Id: pg_operator.h,v 1.67 2000/02/10 19:51:45 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -96,11 +96,13 @@ DATA(insert OID =  76 ( ">"		   PGUID 0 b t f  23  20  16 418  80   0   0 int48g
 DATA(insert OID =  80 ( "<="	   PGUID 0 b t f  23  20  16 430  76   0   0 int48le scalarltsel scalarltjoinsel ));
 DATA(insert OID =  82 ( ">="	   PGUID 0 b t f  23  20  16 420  37   0   0 int48ge scalargtsel scalargtjoinsel ));
 
-DATA(insert OID =  58 ( "<"		   PGUID 0 b t f  16  16  16  59   0   0   0 boollt scalarltsel scalarltjoinsel ));
-DATA(insert OID =  59 ( ">"		   PGUID 0 b t f  16  16  16  58   0   0   0 boolgt scalargtsel scalargtjoinsel ));
+DATA(insert OID =  58 ( "<"		   PGUID 0 b t f  16  16  16  59   1695   0   0 boollt scalarltsel scalarltjoinsel ));
+DATA(insert OID =  59 ( ">"		   PGUID 0 b t f  16  16  16  58   1694   0   0 boolgt scalargtsel scalargtjoinsel ));
 DATA(insert OID =  85 ( "<>"	   PGUID 0 b t f  16  16  16  85  91   0   0 boolne neqsel neqjoinsel ));
 DATA(insert OID =  91 ( "="		   PGUID 0 b t t  16  16  16  91  85  58  58 booleq eqsel eqjoinsel ));
 #define BooleanEqualOperator   91
+DATA(insert OID = 1694 (  "<="	   PGUID 0 b t f  16  16  16 1695 59  0  0 boolle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1695 (  ">="	   PGUID 0 b t f  16  16  16 1694 58  0  0 boolge scalargtsel scalargtjoinsel ));
 
 DATA(insert OID =  92 ( "="		   PGUID 0 b t t  18  18  16  92 630 631 631 chareq eqsel eqjoinsel ));
 DATA(insert OID =  93 ( "="		   PGUID 0 b t t  19  19  16  93 643 660 660 nameeq eqsel eqjoinsel ));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.21 2000/01/26 05:57:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.22 2000/02/10 19:51:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,6 +117,18 @@ bool
 boolgt(bool arg1, bool arg2)
 {
 	return arg1 > arg2;
+}
+
+bool
+boolle(bool arg1, bool arg2)
+{
+	return arg1 <= arg2;
+}
+
+bool
+boolge(bool arg1, bool arg2)
+{
+	return arg1 >= arg2;
 }
 
 bool

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.99 2000/01/26 05:58:37 momjian Exp $
+ * $Id: builtins.h,v 1.100 2000/02/10 19:51:52 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -44,6 +44,8 @@ extern bool booleq(bool arg1, bool arg2);
 extern bool boolne(bool arg1, bool arg2);
 extern bool boollt(bool arg1, bool arg2);
 extern bool boolgt(bool arg1, bool arg2);
+extern bool boolle(bool arg1, bool arg2);
+extern bool boolge(bool arg1, bool arg2);
 extern bool istrue(bool arg1);
 extern bool isfalse(bool arg1);
 
@@ -181,6 +183,7 @@ extern int32 btabstimecmp(AbsoluteTime a, AbsoluteTime b);
 extern int32 btcharcmp(char a, char b);
 extern int32 btnamecmp(NameData *a, NameData *b);
 extern int32 bttextcmp(struct varlena * a, struct varlena * b);
+extern int32 btboolcmp(bool a, bool b);
 
 /* support routines for the rtree access method, by opclass */
 extern BOX *rt_box_union(BOX *a, BOX *b);

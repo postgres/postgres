@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.32 2000/01/28 17:23:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.33 2000/02/10 19:51:38 momjian Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class
@@ -206,4 +206,10 @@ bttextcmp(struct varlena * a, struct varlena * b)
 		return -1;
 	else
 		return 1;
+}
+
+int32
+btboolcmp(bool a, bool b)
+{
+	return (int32) ((uint8) a - (uint8) b);
 }
