@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.70 1999/05/10 16:10:34 momjian Exp $
+ *  $Id: pqcomm.c,v 1.71 1999/05/21 01:25:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,8 +196,8 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	if ((fd = socket(family, SOCK_STREAM, 0)) < 0)
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"FATAL: StreamServerPort: socket() failed: errno=%d\n",
-				errno);
+				 "FATAL: StreamServerPort: socket() failed: %s\n",
+				 strerror(errno));
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
@@ -211,8 +211,8 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 					sizeof(one))) == -1)
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH, 
-				"FATAL: StreamServerPort: setsockopt (SO_REUSEADDR) failed: errno=%d\n",
-				errno);
+				 "FATAL: StreamServerPort: setsockopt(SO_REUSEADDR) failed: %s\n",
+				 strerror(errno));
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
@@ -265,8 +265,8 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	if (err < 0)
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,
-				"FATAL: StreamServerPort: bind() failed: errno=%d\n", errno);
-		pqdebug("%s", PQerrormsg);
+				 "FATAL: StreamServerPort: bind() failed: %s\n",
+				 strerror(errno));
 		strcat(PQerrormsg,
 			   "\tIs another postmaster already running on that port?\n");
 		if (family == AF_UNIX)
@@ -281,6 +281,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 			strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
 		}
 		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
 	}
 
@@ -441,7 +442,8 @@ pq_recvbuf(void)
 			 * if we have a hard communications failure ...
 			 * So just write the message to the postmaster log.
 			 */
-			fprintf(stderr, "pq_recvbuf: recv() failed, errno=%d\n", errno);
+			fprintf(stderr, "pq_recvbuf: recv() failed: %s\n",
+					strerror(errno));
 			return EOF;
 		}
 		if (r == 0)
@@ -609,7 +611,8 @@ pq_flush(void)
 			 * tries to write to the client, which would cause a recursive
 			 * flush attempt!  So just write it out to the postmaster log.
 			 */
-			fprintf(stderr, "pq_flush: send() failed, errno %d\n", errno);
+			fprintf(stderr, "pq_flush: send() failed: %s\n",
+					strerror(errno));
 			/* We drop the buffered data anyway so that processing
 			 * can continue, even though we'll probably quit soon.
 			 */
