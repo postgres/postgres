@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Aug 15 13:47:16 EDT 2002
+Last updated:		Fri Aug 16 00:31:51 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -68,6 +68,7 @@ Administration
 * -Prevent SIGHUP and 'pg_ctl reload' from changing command line
   specified parameters to postgresql.conf defaults (Peter E)
 * Allow easy display of usernames in a group
+* Allow configuration files to be specified in a different directory
 
 
 Data Types
