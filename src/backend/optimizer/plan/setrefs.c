@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.97 2003/08/08 21:41:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.97.4.1 2004/05/11 13:15:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,6 @@ set_plan_references(Plan *plan, List *rtable)
 		case T_Sort:
 		case T_Unique:
 		case T_SetOp:
-		case T_Limit:
 
 			/*
 			 * These plan types don't actually bother to evaluate their
@@ -201,6 +200,15 @@ set_plan_references(Plan *plan, List *rtable)
 			 * reprocessing subplans that also appear in lower levels of
 			 * the plan tree!
 			 */
+			break;
+		case T_Limit:
+			/*
+			 * Like the plan types above, Limit doesn't evaluate its
+			 * tlist or quals.  It does have live expressions for
+			 * limit/offset, however.
+			 */
+			fix_expr_references(plan, ((Limit *) plan)->limitOffset);
+			fix_expr_references(plan, ((Limit *) plan)->limitCount);
 			break;
 		case T_Agg:
 		case T_Group:
