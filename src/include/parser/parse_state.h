@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_state.h,v 1.2 1996/10/13 04:26:39 momjian Exp $
+ * $Id: parse_state.h,v 1.3 1996/10/13 17:13:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 typedef struct ParseState {
     int 	p_last_resno; 
     List 	*p_target_resnos;
-    Relation 	p_parser_current_rel;
+    Relation 	p_current_rel;
     List 	*p_rtable;
     int 	p_query_is_rule;
     int		p_numAgg;
