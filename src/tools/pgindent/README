@@ -2,7 +2,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and *.l
 files.
 
 Get the list of typedef's included in pgindent by running this on the
-pgsql/bin directory:
+pgsql/bin and pgsql/lib directories:
 
 	/src/tools/find_typedef
 
