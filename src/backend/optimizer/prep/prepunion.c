@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.16 1997/12/29 01:12:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.17 1997/12/29 04:31:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,14 +177,12 @@ plan_union_queries(Query *parse)
 	{
 		parse->uniqueFlag = "*";
 		parse->sortClause = transformSortClause(NULL, NIL,
-			((Plan *) lfirst(union_plans))->targetlist, "*");
+			parse->sortClause,
+			parse->targetList, "*");
 	}
 	else
-	{
 		/* needed so we don't take the flag from the first query */
 		parse->uniqueFlag = NULL;
-		parse->sortClause = NIL;
-	}
 
 	parse->havingQual = NULL;
 	parse->qry_numAgg = 0;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.5 1997/12/29 02:09:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.6 1997/12/29 04:31:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,10 +249,11 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
  */
 List *
 transformSortClause(ParseState *pstate,
-					List *orderlist, List *targetlist,
+					List *orderlist,
+					List *sortlist,
+					List *targetlist,
 					char *uniqueFlag)
 {
-	List	   *sortlist = NIL;
 	List	   *s = NIL;
 
 	while (orderlist != NIL)
@@ -262,6 +263,8 @@ transformSortClause(ParseState *pstate,
 		TargetEntry *restarget;
 		Resdom	   *resdom;
 
+		sortlist = NIL;	/* we create it on the fly here */
+		
 		restarget = find_targetlist_entry(pstate, sortby, targetlist);
 		if (restarget == NULL)
 			elog(WARN, "The field being ordered by must appear in the target list");
