@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.12 2004/08/01 17:32:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.13 2004/08/12 21:00:23 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,9 +20,12 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-START TRANSACTION
-    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]
-    [ READ WRITE | READ ONLY ]
+START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable> [, ...] ]
+
+where <replaceable class="parameter">transaction_mode</replaceable> is one of:
+
+    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }
+    READ WRITE | READ ONLY
 </synopsis>
  </refsynopsisdiv>
 
@@ -30,10 +33,10 @@ START TRANSACTION
   <title>Description</title>
 
   <para>
-   This command begins a new transaction. If the isolation level or
+   This command begins a new transaction block. If the isolation level or
    read/write mode is specified, the new transaction has those
    characteristics, as if <xref linkend="sql-set-transaction"
-   endterm="sql-set-transaction-title"> was executed. It is the same
+   endterm="sql-set-transaction-title"> was executed. This is the same
    as the <xref linkend="sql-begin" endterm="sql-begin-title"> command.
   </para>
  </refsect1>
@@ -52,8 +55,25 @@ START TRANSACTION
   <title>Compatibility</title>
 
   <para>
-   This command conforms to the SQL standard; but see also the
-   compatibility section of <xref linkend="sql-set-transaction"
+   In the standard, it is not necessary to issue <command>START TRANSACTION</>
+   to start a transaction block: any SQL command implicitly begins a block.
+   <productname>PostgreSQL</productname>'s behavior can be seen as implicitly
+   issuing a <command>COMMIT</command> after each command that does not
+   follow <command>START TRANSACTION</> (or <command>BEGIN</command>),
+   and it is therefore often called <quote>autocommit</>.
+   Other relational database systems may offer an autocommit feature
+   as a convenience.
+  </para>
+
+  <para>
+   The SQL standard requires commas between successive <replaceable
+   class="parameter">transaction_modes</replaceable>, but for historical
+   reasons <productname>PostgreSQL</productname> allows the commas to be
+   omitted.
+  </para>
+
+  <para>
+   See also the compatibility section of <xref linkend="sql-set-transaction"
    endterm="sql-set-transaction-title">.
   </para>
  </refsect1>

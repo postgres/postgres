@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.224 2004/08/12 19:12:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.225 2004/08/12 21:00:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,23 +333,21 @@ ProcessUtility(Node *parsetree,
 					case TRANS_STMT_BEGIN:
 					case TRANS_STMT_START:
 						{
+							ListCell   *lc;
+
 							BeginTransactionBlock();
-
-							if (stmt->options)
+							foreach(lc, stmt->options)
 							{
-								ListCell   *head;
+								DefElem    *item = (DefElem *) lfirst(lc);
 
-								foreach(head, stmt->options)
-								{
-									DefElem    *item = (DefElem *) lfirst(head);
-
-									if (strcmp(item->defname, "transaction_isolation") == 0)
-										SetPGVariable("transaction_isolation",
-											list_make1(item->arg), false);
-									else if (strcmp(item->defname, "transaction_read_only") == 0)
-										SetPGVariable("transaction_read_only",
-											list_make1(item->arg), false);
-								}
+								if (strcmp(item->defname, "transaction_isolation") == 0)
+									SetPGVariable("transaction_isolation",
+												  list_make1(item->arg),
+												  false);
+								else if (strcmp(item->defname, "transaction_read_only") == 0)
+									SetPGVariable("transaction_read_only",
+												  list_make1(item->arg),
+												  false);
 							}
 						}
 						break;

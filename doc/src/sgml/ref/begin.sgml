@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.32 2004/08/08 01:48:31 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.33 2004/08/12 21:00:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,9 +20,12 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-BEGIN [ WORK | TRANSACTION ]
-    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]
-    [ READ WRITE | READ ONLY ]
+BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</replaceable> [, ...] ]
+
+where <replaceable class="parameter">transaction_mode</replaceable> is one of:
+
+    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }
+    READ WRITE | READ ONLY
 </synopsis>
  </refsynopsisdiv>
  
@@ -101,8 +104,13 @@ BEGIN [ WORK | TRANSACTION ]
    Issuing <command>BEGIN</> when already inside a transaction block will
    provoke a warning message.  The state of the transaction is not affected.
    To nest transactions within a transaction block, use savepoints 
-   (See <xref linkend="sql-start-transaction" endterm="sql-start-transaction-title">
-   for more information).
+   (see <xref linkend="sql-savepoint" endterm="sql-savepoint-title">).
+  </para>
+
+  <para>
+   For reasons of backwards compatibility, the commas between successive
+   <replaceable class="parameter">transaction_modes</replaceable> may be
+   omitted.
   </para>
  </refsect1>
 
@@ -123,15 +131,10 @@ BEGIN;
 
   <para>
    <command>BEGIN</command> is a <productname>PostgreSQL</productname>
-   language extension.  There is no explicit <command>BEGIN</command>
-   command in the SQL standard; transaction initiation is
-   always implicit and it terminates either with a
-   <command>COMMIT</command> or <command>ROLLBACK</command> statement.
-  </para>
-
-  <para>
-   Other relational database systems may offer an autocommit feature
-   as a convenience.
+   language extension.  It is equivalent to the SQL-standard command
+   <xref linkend="sql-start-transaction"
+   endterm="sql-start-transaction-title">, which see for additional
+   compatibility information.
   </para>
 
   <para>

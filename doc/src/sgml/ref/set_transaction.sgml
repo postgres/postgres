@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.19 2003/11/29 19:51:39 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.20 2004/08/12 21:00:22 tgl Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <refmeta>
   <refentrytitle id="SQL-SET-TRANSACTION-TITLE">SET TRANSACTION</refentrytitle>
@@ -16,13 +16,13 @@
 
  <refsynopsisdiv>
 <synopsis>
-SET TRANSACTION
-    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]
-    [ READ WRITE | READ ONLY ]
+SET TRANSACTION <replaceable class="parameter">transaction_mode</replaceable> [, ...]
+SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transaction_mode</replaceable> [, ...]
 
-SET SESSION CHARACTERISTICS AS TRANSACTION
-    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]
-    [ READ WRITE | READ ONLY ]
+where <replaceable class="parameter">transaction_mode</replaceable> is one of:
+
+    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }
+    READ WRITE | READ ONLY
 </synopsis>
  </refsynopsisdiv>
 
@@ -34,7 +34,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION
    characteristics of the current transaction. It has no effect on any
    subsequent transactions.  <command>SET SESSION
    CHARACTERISTICS</command> sets the default transaction
-   characteristics for each transaction of a session.  <command>SET
+   characteristics for subsequent transactions of a session.  <command>SET
    TRANSACTION</command> can override it for an individual
    transaction.
   </para>
@@ -47,7 +47,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION
 
   <para>
    The isolation level of a transaction determines what data the
-   transaction can see when other transactions are running concurrently.
+   transaction can see when other transactions are running concurrently:
 
    <variablelist>
     <varlistentry>
@@ -64,28 +64,35 @@ SET SESSION CHARACTERISTICS AS TRANSACTION
      <term><literal>SERIALIZABLE</literal></term>
      <listitem>
       <para>
-       The current transaction can only see rows committed before
-       first query or data-modification statement was executed in this transaction.
+       All statements of the current transaction can only see rows committed
+       before the first query or data-modification statement was executed in
+       this transaction.
       </para>
       <tip>
        <para>
         Intuitively, serializable means that two concurrent
         transactions will leave the database in the same state as if
-        the two has been executed strictly after one another in either
-        order.
+        the two had been executed strictly one after the other (in one
+        order or the other).
        </para>
       </tip>
      </listitem>
     </varlistentry>
    </variablelist>
 
-   The level <literal>READ UNCOMMITTED</literal> is mapped to
-   <literal>READ COMMITTED</literal>, the level <literal>REPEATABLE
-   READ</literal> is mapped to <literal>SERIALIZABLE</literal>, The
-   transaction isolation level cannot be set after the first query or
+   The SQL standard defines two additional levels, <literal>READ
+   UNCOMMITTED</literal> and <literal>REPEATABLE READ</literal>.
+   In <productname>PostgreSQL</productname> <literal>READ
+   UNCOMMITTED</literal> is treated as
+   <literal>READ COMMITTED</literal>, while <literal>REPEATABLE
+   READ</literal> is treated as <literal>SERIALIZABLE</literal>.
+  </para>
+
+  <para>
+   The transaction isolation level cannot be changed after the first query or
    data-modification statement (<command>SELECT</command>,
    <command>INSERT</command>, <command>DELETE</command>,
-   <command>UPDATE</command>, <command>FETCH</command>,
+   <command>UPDATE</command>, <command>FETCH</command>, or
    <command>COPY</command>) of a transaction has been executed.  See
    <xref linkend="mvcc"> for more information about transaction
    isolation and concurrency control.
@@ -112,13 +119,27 @@ SET SESSION CHARACTERISTICS AS TRANSACTION
   <title>Notes</title>
 
   <para>
-   The session default transaction isolation level can also be set
-   with the command
-<programlisting>
-SET default_transaction_isolation = '<replaceable>value</replaceable>'
-</programlisting>
-   and in the configuration file.  Consult <xref linkend="runtime-config"> for more
-   information.
+   If <command>SET TRANSACTION</command> is executed without a prior
+   <command>START TRANSACTION</command> or  <command>BEGIN</command>,
+   it will appear to have no effect, since the transaction will immediately
+   end.
+  </para>
+
+  <para>
+   It is possible to dispense with <command>SET TRANSACTION</command> by
+   instead specifying the desired <replaceable
+   class="parameter">transaction_modes</replaceable> in
+   <command>START TRANSACTION</command>.
+  </para>
+
+  <para>
+   The session default transaction modes can also be set by setting the
+   configuration parameters <xref linkend="guc-default-transaction-isolation">
+   and <xref linkend="guc-default-transaction-read-only">.
+   (In fact <command>SET SESSION CHARACTERISTICS</command> is just a
+   verbose equivalent for setting these variables with <command>SET</>.)
+   This allows them to be set in the configuration file.  Consult <xref
+   linkend="runtime-config"> for more information.
   </para>
  </refsect1>
 
@@ -131,7 +152,7 @@ SET default_transaction_isolation = '<replaceable>value</replaceable>'
    isolation level in the standard; in
    <productname>PostgreSQL</productname> the default is ordinarily
    <literal>READ COMMITTED</literal>, but you can change it as
-   described above.  Because of multiversion concurrency control, the
+   mentioned above.  Because of multiversion concurrency control, the
    <literal>SERIALIZABLE</literal> level is not truly
    serializable. See <xref linkend="mvcc"> for details.
   </para>
@@ -139,7 +160,15 @@ SET default_transaction_isolation = '<replaceable>value</replaceable>'
   <para>
    In the SQL standard, there is one other transaction characteristic
    that can be set with these commands: the size of the diagnostics
-   area.  This concept is only for use in embedded SQL.
+   area.  This concept is specific to embedded SQL, and therefore is
+   not implemented in the <productname>PostgreSQL</productname> server.
+  </para>
+
+  <para>
+   The SQL standard requires commas between successive <replaceable
+   class="parameter">transaction_modes</replaceable>, but for historical
+   reasons <productname>PostgreSQL</productname> allows the commas to be
+   omitted.
   </para>
  </refsect1>
 </refentry>

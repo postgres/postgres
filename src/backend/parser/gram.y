@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.470 2004/08/12 19:12:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.471 2004/08/12 21:00:28 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -161,11 +161,11 @@ static void doNegateFloat(Value *v);
 
 %type <dbehavior>	opt_drop_behavior
 
-%type <list>	createdb_opt_list copy_opt_list
-%type <defelt>	createdb_opt_item copy_opt_item
+%type <list>	createdb_opt_list copy_opt_list transaction_mode_list
+%type <defelt>	createdb_opt_item copy_opt_item transaction_mode_item
 
 %type <ival>	opt_lock lock_type cast_context
-%type <boolean>	opt_force opt_or_replace transaction_access_mode
+%type <boolean>	opt_force opt_or_replace
 				opt_grant_grant_option opt_revoke_grant_option
 				opt_nowait
 
@@ -222,7 +222,7 @@ static void doNegateFloat(Value *v);
 				target_list update_target_list insert_column_list
 				insert_target_list def_list indirection opt_indirection
 				group_clause TriggerFuncArgs select_limit
-				opt_select_limit opclass_item_list transaction_mode_list
+				opt_select_limit opclass_item_list
 				transaction_mode_list_or_empty
 				TableFuncElementList
 				prep_type_clause prep_type_list
@@ -4021,38 +4021,32 @@ opt_transaction:	WORK							{}
 			| /*EMPTY*/								{}
 		;
 
-transaction_mode_list:
+transaction_mode_item:
 			ISOLATION LEVEL iso_level
-					{ $$ = list_make1(makeDefElem("transaction_isolation",
-												  makeStringConst($3, NULL))); }
-			| transaction_access_mode
-					{ $$ = list_make1(makeDefElem("transaction_read_only",
-												  makeIntConst($1))); }
-			| ISOLATION LEVEL iso_level transaction_access_mode
-					{
-						$$ = list_make2(makeDefElem("transaction_isolation",
-													makeStringConst($3, NULL)),
-										makeDefElem("transaction_read_only",
-													makeIntConst($4)));
-					}
-			| transaction_access_mode ISOLATION LEVEL iso_level
-					{
-						$$ = list_make2(makeDefElem("transaction_read_only",
-													makeIntConst($1)),
-										makeDefElem("transaction_isolation",
-													makeStringConst($4, NULL)));
-					}
+					{ $$ = makeDefElem("transaction_isolation",
+									   makeStringConst($3, NULL)); }
+			| READ ONLY
+					{ $$ = makeDefElem("transaction_read_only",
+									   makeIntConst(TRUE)); }
+			| READ WRITE
+					{ $$ = makeDefElem("transaction_read_only",
+									   makeIntConst(FALSE)); }
+		;
+
+/* Syntax with commas is SQL-spec, without commas is Postgres historical */
+transaction_mode_list:
+			transaction_mode_item
+					{ $$ = list_make1($1); }
+			| transaction_mode_list ',' transaction_mode_item
+					{ $$ = lappend($1, $3); }
+			| transaction_mode_list transaction_mode_item
+					{ $$ = lappend($1, $2); }
 		;
 
 transaction_mode_list_or_empty:
 			transaction_mode_list
 			| /* EMPTY */
 					{ $$ = NIL; }
-		;
-
-transaction_access_mode:
-			READ ONLY { $$ = TRUE; }
-			| READ WRITE { $$ = FALSE; }
 		;
 
 
