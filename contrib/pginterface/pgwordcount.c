@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 		else
 			sprintf(query,"\
 				UPDATE words \
-				SET matches = matches + 1
+				SET matches = matches + 1 \
 				WHERE word = '%s'",	line);
 		doquery(query);
 		row++;
