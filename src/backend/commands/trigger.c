@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.174 2004/10/30 20:52:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.175 2004/11/14 02:04:14 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1624,9 +1624,6 @@ ltrmark:;
 		ItemId		lp;
 
 		buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
-
-		if (!BufferIsValid(buffer))
-			elog(ERROR, "ReadBuffer failed");
 
 		dp = (PageHeader) BufferGetPage(buffer);
 		lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));

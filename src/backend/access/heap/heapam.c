@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.180 2004/10/26 16:05:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.181 2004/11/14 02:04:12 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -191,8 +191,6 @@ heapgettup(Relation relation,
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,
 									   ItemPointerGetBlockNumber(tid));
-		if (!BufferIsValid(*buffer))
-			elog(ERROR, "ReadBuffer failed");
 
 		LockBuffer(*buffer, BUFFER_LOCK_SHARE);
 
@@ -226,8 +224,6 @@ heapgettup(Relation relation,
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,
 									   page);
-		if (!BufferIsValid(*buffer))
-			elog(ERROR, "ReadBuffer failed");
 
 		LockBuffer(*buffer, BUFFER_LOCK_SHARE);
 
@@ -266,8 +262,6 @@ heapgettup(Relation relation,
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,
 									   page);
-		if (!BufferIsValid(*buffer))
-			elog(ERROR, "ReadBuffer failed");
 
 		LockBuffer(*buffer, BUFFER_LOCK_SHARE);
 
@@ -360,8 +354,6 @@ heapgettup(Relation relation,
 		*buffer = ReleaseAndReadBuffer(*buffer,
 									   relation,
 									   page);
-		if (!BufferIsValid(*buffer))
-			elog(ERROR, "ReadBuffer failed");
 
 		LockBuffer(*buffer, BUFFER_LOCK_SHARE);
 		dp = (Page) BufferGetPage(*buffer);
@@ -941,11 +933,6 @@ heap_release_fetch(Relation relation,
 	buffer = ReleaseAndReadBuffer(*userbuf, relation,
 								  ItemPointerGetBlockNumber(tid));
 
-	if (!BufferIsValid(buffer))
-		elog(ERROR, "ReadBuffer(\"%s\", %lu) failed",
-			 RelationGetRelationName(relation),
-			 (unsigned long) ItemPointerGetBlockNumber(tid));
-
 	/*
 	 * Need share lock on buffer to examine tuple commit status.
 	 */
@@ -1049,14 +1036,7 @@ heap_get_latest_tid(Relation relation,
 	 * get the buffer from the relation descriptor Note that this does a
 	 * buffer pin.
 	 */
-
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
-
-	if (!BufferIsValid(buffer))
-		elog(ERROR, "ReadBuffer(\"%s\", %lu) failed",
-			 RelationGetRelationName(relation),
-			 (unsigned long) ItemPointerGetBlockNumber(tid));
-
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 	/*
@@ -1304,10 +1284,6 @@ heap_delete(Relation relation, ItemPointer tid,
 	Assert(ItemPointerIsValid(tid));
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
-
-	if (!BufferIsValid(buffer))
-		elog(ERROR, "ReadBuffer failed");
-
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 	dp = (PageHeader) BufferGetPage(buffer);
@@ -1528,8 +1504,6 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	Assert(ItemPointerIsValid(otid));
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(otid));
-	if (!BufferIsValid(buffer))
-		elog(ERROR, "ReadBuffer failed");
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 	dp = (PageHeader) BufferGetPage(buffer);
@@ -1863,10 +1837,6 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer,
 	int			result;
 
 	*buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
-
-	if (!BufferIsValid(*buffer))
-		elog(ERROR, "ReadBuffer failed");
-
 	LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
 
 	dp = (PageHeader) BufferGetPage(*buffer);
