@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.118 1999/07/19 02:27:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.119 1999/09/01 23:05:20 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -160,7 +160,7 @@ usage(const char *progname)
 	fprintf(stderr,
 			"\t -v          \t\t verbose\n");
 	fprintf(stderr,
-			"\t -z          \t\t dump ACLs (grant/revoke)\n");
+			"\t -x          \t\t do not dump ACL's (grant/revoke)\n");
 	fprintf(stderr,
 			"\nIf dbname is not supplied, then the DATABASE environment "
 			"variable value is used.\n");
