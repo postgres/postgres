@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.68 2001/09/04 00:18:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.69 2001/09/07 22:02:32 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -826,6 +826,42 @@ as with a PGresult returned by libpq itself.
 </listitem>
 </itemizedlist>
 </sect2>
+
+<sect2 id="libpq-exec-escape-string">
+  <title>Escaping strings for inclusion in SQL queries</title>
+<para>
+<function>PQescapeString</function>
+          Escapes a string for use within an SQL query.
+<synopsis>
+size_t PQescapeString (char *to, const char *from, size_t length);
+</synopsis>
+If you want to include strings which have been received
+from a source which is not trustworthy (for example, because they were
+transmitted across a network), you cannot directly include them in SQL
+queries for security reasons.  Instead, you have to quote special
+characters which are otherwise interpreted by the SQL parser.
+</para>
+<para>
+<function>PQescapeString</> performs this operation.  The
+<parameter>from</> points to the first character of the string which
+is to be escaped, and the <parameter>length</> parameter counts the
+number of characters in this string (a terminating NUL character is
+neither necessary nor counted).  <parameter>to</> shall point to a
+buffer which is able to hold at least one more character than twice
+the value of <parameter>length</>, otherwise the behavior is
+undefined.  A call to <function>PQescapeString</> writes an escaped
+version of the <parameter>from</> string to the <parameter>to</>
+buffer, replacing special characters so that they cannot cause any
+harm, and adding a terminating NUL character.  The single quotes which
+must surround PostgreSQL string literals are not part of the result
+string.
+</para>
+<para>
+<function>PQescapeString</> returns the number of characters written
+to <parameter>to</>, not including the terminating NUL character.
+Behavior is undefined when the <parameter>to</> and <parameter>from</>
+strings overlap.
+</para>
 
 <sect2 id="libpq-exec-select-info">
   <title>Retrieving SELECT Result Information</title>
