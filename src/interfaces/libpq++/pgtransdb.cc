@@ -1,20 +1,20 @@
 /*-------------------------------------------------------------------------
- *
- *   FILE
- *	pgtransdb.cpp
- *
- *   DESCRIPTION
- *      implementation of the PgTransaction class.
- *   PgConnection encapsulates a transaction querying to backend
- *
- * Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgtransdb.cc,v 1.4 2001/05/09 17:29:10 momjian Exp $
- *
- *-------------------------------------------------------------------------
- */
- 
+*
+*	FILE
+*	pgtransdb.cpp
+*
+*	DESCRIPTION
+*	   implementation of the PgTransaction class.
+*	PgConnection encapsulates a transaction querying to backend
+*
+* Copyright (c) 1994, Regents of the University of California
+*
+* IDENTIFICATION
+*	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgtransdb.cc,v 1.5 2002/07/02 16:32:19 momjian Exp $
+*
+*-------------------------------------------------------------------------
+*/
+
 #include "pgtransdb.h"
 
 // ****************************************************************
@@ -23,10 +23,10 @@
 //
 // ****************************************************************
 // Make a connection to the specified database with default environment
-// See PQconnectdb() for conninfo usage. 
+// See PQconnectdb() for conninfo usage.
 PgTransaction::PgTransaction(const char* conninfo)
-   : PgDatabase(conninfo),
-     pgCommitted(true)
+		: PgDatabase(conninfo),
+		pgCommitted(true)
 {
 	BeginTransaction();
 }
@@ -34,7 +34,8 @@ PgTransaction::PgTransaction(const char* conninfo)
 // Destructor: End the transaction block
 PgTransaction::~PgTransaction()
 {
-	if (!pgCommitted) Exec("ABORT");
+	if (!pgCommitted)
+		Exec("ABORT");
 }
 
 // Begin the transaction block

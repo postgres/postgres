@@ -1,24 +1,24 @@
 /*-------------------------------------------------------------------------
- *
- * pgcursordb.h
- *    
- *
- *   DESCRIPTION
- *		Postgres Cursor Database Class: 
- *		   Query Postgres backend using a cursor
- *
- *   NOTES
- *      Currently under construction.
- *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- *
- *  $Id: pgcursordb.h,v 1.11 2002/06/20 20:29:54 momjian Exp $
- *
- *-------------------------------------------------------------------------
- */
- 
+*
+* pgcursordb.h
+*
+*
+*	DESCRIPTION
+*		Postgres Cursor Database Class:
+*		   Query Postgres backend using a cursor
+*
+*	NOTES
+*	   Currently under construction.
+*
+* Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+* Portions Copyright (c) 1994, Regents of the University of California
+*
+*
+*  $Id: pgcursordb.h,v 1.12 2002/07/02 16:32:19 momjian Exp $
+*
+*-------------------------------------------------------------------------
+*/
+
 #ifndef PGCURSORDB_H
 #define PGCURSORDB_H
 
@@ -41,40 +41,50 @@
 // manipulates data through it.  The interface will introduce some
 // ease of use through the methods that will allow cursor specific
 // operations, like fetch, forward, etc.
-class DLLIMPORT PgCursor : public PgTransaction {
+class DLLIMPORT PgCursor : public PgTransaction
+{
 public:
-  PgCursor(const char* conninfo, const char* cursor);	// use reasonable & environment defaults
-  // connect to the database with given environment and database name
-  //  PgCursor(const PgConnection&, const char* cursor);
-  ~PgCursor();	// close connection and clean up
-  
-  // Commands associated with cursor interface
-  int Declare(PGSTD string query, bool binary = false);	// Declare a cursor with given name
-  int Fetch(const char* dir = "FORWARD");		// Fetch ALL tuples in given direction
-  int Fetch(unsigned num, const char* dir = "FORWARD");	// Fetch specified amount of tuples
-  int Close();	// Close the cursor
-  
-  // Accessors to the cursor name
-  const char* Cursor() const { return pgCursor.c_str(); }
-  // TODO: Setter has same name as getter--ouch!
-  // OBSOLESCENT
-  void Cursor(PGSTD string cursor) { pgCursor = cursor; }
-  
+	PgCursor(const char* conninfo, const char* cursor); // use reasonable & environment defaults
+	// connect to the database with given environment and database name
+	//	PgCursor(const PgConnection&, const char* cursor);
+	~PgCursor();	// close connection and clean up
+
+	// Commands associated with cursor interface
+	int Declare(PGSTD string query, bool binary = false);	// Declare a cursor with given name
+	int Fetch(const char* dir = "FORWARD");		// Fetch ALL tuples in given direction
+	int Fetch(unsigned num, const char* dir = "FORWARD");	// Fetch specified amount of tuples
+	int Close();	// Close the cursor
+
+	// Accessors to the cursor name
+	const char* Cursor() const
+	{
+		return pgCursor.c_str();
+	}
+	// TODO: Setter has same name as getter--ouch!
+	// OBSOLESCENT
+	void Cursor(PGSTD string cursor)
+	{
+		pgCursor = cursor;
+	}
+
 protected:
-  int Fetch(PGSTD string num, PGSTD string dir);
-  
+	int Fetch(PGSTD string num, PGSTD string dir);
+
 protected:
-  PGSTD string pgCursor;
-  
+	PGSTD string pgCursor;
+
 protected:
-  PgCursor() : PgTransaction() {}	// Do not connect
+	PgCursor() : PgTransaction()
+	{}	// Do not connect
+
 
 private:
-// We don't support copying of PgCursor objects,
-// so make copy constructor and assignment op private.
-   PgCursor(const PgCursor&);
-   PgCursor& operator= (const PgCursor&);
-}; // End PgCursor Class Declaration
+	// We don't support copying of PgCursor objects,
+	// so make copy constructor and assignment op private.
+	PgCursor(const PgCursor&);
+	PgCursor& operator= (const PgCursor&);
+}
+; // End PgCursor Class Declaration
 
 
 #undef PGSTD

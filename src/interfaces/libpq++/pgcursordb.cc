@@ -1,22 +1,22 @@
 /*-------------------------------------------------------------------------
- *
- *   FILE
- *	pgcursordb.cpp
- *
- *   DESCRIPTION
- *      implementation of the PgCursor class.
- *   PgCursor encapsulates a cursor interface to the backend
- *
- * Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.7 2002/06/15 18:49:29 momjian Exp $
- *
- *-------------------------------------------------------------------------
- */
- 
+*
+*	FILE
+*	pgcursordb.cpp
+*
+*	DESCRIPTION
+*	   implementation of the PgCursor class.
+*	PgCursor encapsulates a cursor interface to the backend
+*
+* Copyright (c) 1994, Regents of the University of California
+*
+* IDENTIFICATION
+*	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.8 2002/07/02 16:32:19 momjian Exp $
+*
+*-------------------------------------------------------------------------
+*/
+
 #include "pgcursordb.h"
- 
+
 #ifdef HAVE_NAMESPACE_STD
 using namespace std;
 #endif
@@ -30,17 +30,18 @@ using namespace std;
 // Make a connection to the specified database with default environment
 // See PQconnectdb() for conninfo usage
 PgCursor::PgCursor(const char* conninfo, const char* cursor)
-   : PgTransaction(conninfo), pgCursor(cursor)
+		: PgTransaction(conninfo), pgCursor(cursor)
 {}
 
 // Do not make a connection to the backend -- just query
 // Connection should not be closed after the object destructs since some
 // other object is using the connection
 //PgCursor::PgCursor(const PgConnection& conn, const char* cursor)
-//   : PgTransaction(conn), pgCursor(cursor)
+//	 : PgTransaction(conn), pgCursor(cursor)
 //{}
 
 // Destructor: End the transaction block
+
 PgCursor::~PgCursor()
 {
 	Close();
@@ -57,7 +58,7 @@ int PgCursor::Declare(string query, bool binary)
 {
 	string cmd = "DECLARE " + pgCursor;
 	if ( binary )
-	     cmd += " BINARY";
+		cmd += " BINARY";
 	cmd += " CURSOR FOR " + query;
 	return ExecCommandOk( cmd.c_str() );
 }

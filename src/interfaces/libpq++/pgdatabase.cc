@@ -1,20 +1,20 @@
 /*-------------------------------------------------------------------------
- *
- *   FILE
- *      pgdatabase.cpp
- *
- *   DESCRIPTION
- *      implementation of the PgDatabase class.
- *   PgDatabase encapsulates some utility routines
- *
- * Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.12 2001/09/30 22:30:37 tgl Exp $
- *
- *-------------------------------------------------------------------------
- */
- 
+*
+*	FILE
+*	   pgdatabase.cpp
+*
+*	DESCRIPTION
+*	   implementation of the PgDatabase class.
+*	PgDatabase encapsulates some utility routines
+*
+* Copyright (c) 1994, Regents of the University of California
+*
+* IDENTIFICATION
+*	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.13 2002/07/02 16:32:19 momjian Exp $
+*
+*-------------------------------------------------------------------------
+*/
+
 #include "pgdatabase.h"
 
 #ifdef HAVE_NAMESPACE_STD
@@ -23,11 +23,11 @@ using namespace std;
 
 
 // OBSOLESCENT (uses PQprint(), which is no longer being maintained)
-void PgDatabase::DisplayTuples(FILE *out, 
-	bool fillAlign, 
-	const char* fieldSep, 
-	bool printHeader,
-	bool /* quiet */) const
+void PgDatabase::DisplayTuples(FILE *out,
+							   bool fillAlign,
+							   const char* fieldSep,
+							   bool printHeader,
+							   bool /* quiet */) const
 {
 	PQprintOpt po;
 
@@ -38,16 +38,16 @@ void PgDatabase::DisplayTuples(FILE *out,
 	po.tableOpt = po.caption = 0;
 	po.fieldName = 0;
 
-	PQprint(out,pgResult,&po);
+	PQprint(out, pgResult, &po);
 }
 
 
 
 // OBSOLESCENT (uses PQprint(), which is no longer being maintained)
-void PgDatabase::PrintTuples(FILE *out, 
-	bool printAttName, 
-	bool terseOutput,
-	bool fillAlign) const
+void PgDatabase::PrintTuples(FILE *out,
+							 bool printAttName,
+							 bool terseOutput,
+							 bool fillAlign) const
 {
 	PQprintOpt po;
 
@@ -58,124 +58,124 @@ void PgDatabase::PrintTuples(FILE *out,
 	po.fieldSep = (char *) (terseOutput ? "" : "|");
 	po.fieldName = 0;
 
-	PQprint(out,pgResult,&po);
+	PQprint(out, pgResult, &po);
 }
 
 
 
 int PgDatabase::Tuples() const
-{ 
-return PQntuples(pgResult); 
+{
+	return PQntuples(pgResult);
 }
 
 
 int PgDatabase::CmdTuples() const
 {
-const char *a = PQcmdTuples(pgResult);
-return a[0] ? atoi(a) : -1;
+	const char *a = PQcmdTuples(pgResult);
+	return a[0] ? atoi(a) : -1;
 }
 
 
 // TODO: Make const?
 int PgDatabase::Fields()
-{ 
-return PQnfields(pgResult); 
+{
+	return PQnfields(pgResult);
 }
 
 
 const char* PgDatabase::FieldName(int field_num) const
-{ 
-return PQfname(pgResult, field_num); 
+{
+	return PQfname(pgResult, field_num);
 }
 
 
 int PgDatabase::FieldNum(const char* field_name) const
-{ 
-return PQfnumber(pgResult, field_name); 
+{
+	return PQfnumber(pgResult, field_name);
 }
 
 
 Oid PgDatabase::FieldType(int field_num) const
-{ 
-return PQftype(pgResult, field_num); 
+{
+	return PQftype(pgResult, field_num);
 }
 
 
 Oid PgDatabase::FieldType(const char* field_name) const
-{ 
-return PQftype(pgResult, FieldNum(field_name)); 
+{
+	return PQftype(pgResult, FieldNum(field_name));
 }
 
 
 int PgDatabase::FieldSize(int field_num) const
-{ 
-return PQfsize(pgResult, field_num); 
+{
+	return PQfsize(pgResult, field_num);
 }
 
 
 int PgDatabase::FieldSize(const char* field_name) const
-{ 
-return PQfsize(pgResult, FieldNum(field_name)); 
+{
+	return PQfsize(pgResult, FieldNum(field_name));
 }
 
 
 const char* PgDatabase::GetValue(int tup_num, int field_num) const
-{ 
-return PQgetvalue(pgResult, tup_num, field_num); 
+{
+	return PQgetvalue(pgResult, tup_num, field_num);
 }
 
 
 const char* PgDatabase::GetValue(int tup_num, const char* field_name) const
-{ 
-return PQgetvalue(pgResult, tup_num, FieldNum(field_name)); 
+{
+	return PQgetvalue(pgResult, tup_num, FieldNum(field_name));
 }
 
 
 bool PgDatabase::GetIsNull(int tup_num, int field_num) const
-{ 
-return PQgetisnull(pgResult, tup_num, field_num); 
+{
+	return PQgetisnull(pgResult, tup_num, field_num);
 }
 
 
 bool PgDatabase::GetIsNull(int tup_num, const char* field_name) const
-{ 
-return PQgetisnull(pgResult, tup_num, FieldNum(field_name)); 
+{
+	return PQgetisnull(pgResult, tup_num, FieldNum(field_name));
 }
 
 
 int PgDatabase::GetLength(int tup_num, int field_num) const
-{ 
-return PQgetlength(pgResult, tup_num, field_num); 
+{
+	return PQgetlength(pgResult, tup_num, field_num);
 }
 
 
 int PgDatabase::GetLength(int tup_num, const char* field_name) const
-{ 
-return PQgetlength(pgResult, tup_num, FieldNum(field_name)); 
+{
+	return PQgetlength(pgResult, tup_num, FieldNum(field_name));
 }
 
 
 int PgDatabase::GetLine(char str[], int length)
-{ 
-return PQgetline(pgConn, str, length); 
+{
+	return PQgetline(pgConn, str, length);
 }
 
 
 void PgDatabase::PutLine(const char str[])
-{ 
-PQputline(pgConn, str); 
+{
+	PQputline(pgConn, str);
 }
 
 
 const char* PgDatabase::OidStatus() const
-{ 
-return PQoidStatus(pgResult); 
+{
+	return PQoidStatus(pgResult);
 }
 
 
 int PgDatabase::EndCopy()
-{ 
-return PQendcopy(pgConn); 
+{
+	return PQendcopy(pgConn);
 }
 
 
