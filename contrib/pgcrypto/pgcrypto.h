@@ -26,13 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.h,v 1.1 2000/10/31 13:11:28 petere Exp $
+ * $Id: pgcrypto.h,v 1.2 2001/01/09 16:07:13 momjian Exp $
  */
 
 #ifndef _PG_CRYPTO_H
 #define _PG_CRYPTO_H
-
-#include <sys/types.h>
 
 typedef struct _pg_digest pg_digest;
 struct _pg_digest {

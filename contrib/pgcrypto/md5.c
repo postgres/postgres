@@ -1,4 +1,5 @@
-/*	$Id: md5.c,v 1.2 2000/12/04 01:20:38 tgl Exp $	*/
+/*	$Id: md5.c,v 1.3 2001/01/09 16:07:13 momjian Exp $	*/
+/*     $KAME: md5.c,v 1.3 2000/02/22 14:01:17 itojun Exp $     */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +31,6 @@
  */
 
 #include <postgres.h>
-#include "pgcrypto.h"
 
 #include "md5.h"
 
@@ -91,7 +91,7 @@
 #define MD5_D0	0x10325476
 
 /* Integer part of 4294967296 times abs(sin(i)), where i is in radians. */
-static const uint32_t T[65] = {
+static const uint32 T[65] = {
 	0,
 	0xd76aa478, 	0xe8c7b756,	0x242070db,	0xc1bdceee,
 	0xf57c0faf,	0x4787c62a, 	0xa8304613,	0xfd469501,
@@ -114,7 +114,7 @@ static const uint32_t T[65] = {
 	0xf7537e82, 	0xbd3af235, 	0x2ad7d2bb, 	0xeb86d391,
 };
 
-static const uint8_t md5_paddat[MD5_BUFLEN] = {
+static const uint8 md5_paddat[MD5_BUFLEN] = {
 	0x80,	0,	0,	0,	0,	0,	0,	0,
 	0,	0,	0,	0,	0,	0,	0,	0,
 	0,	0,	0,	0,	0,	0,	0,	0,
@@ -125,7 +125,7 @@ static const uint8_t md5_paddat[MD5_BUFLEN] = {
 	0,	0,	0,	0,	0,	0,	0,	0,	
 };
 
-static void md5_calc (uint8_t *, md5_ctxt *);
+static void md5_calc (uint8 *, md5_ctxt *);
 
 void md5_init(ctxt)
 	md5_ctxt *ctxt;
@@ -141,7 +141,7 @@ void md5_init(ctxt)
 
 void md5_loop(ctxt, input, len)
 	md5_ctxt *ctxt;
-	uint8_t *input;
+	uint8 *input;
 	unsigned int len; /* number of bytes */
 {
 	unsigned int gap, i;
@@ -155,7 +155,7 @@ void md5_loop(ctxt, input, len)
 		md5_calc(ctxt->md5_buf, ctxt);
 
 		for (i = gap; i + MD5_BUFLEN <= len; i += MD5_BUFLEN) {
-			md5_calc((uint8_t *)(input + i), ctxt);
+			md5_calc((uint8 *)(input + i), ctxt);
 		}
 		
 		ctxt->md5_i = len - i;
@@ -207,7 +207,7 @@ void md5_pad(ctxt)
 }
 
 void md5_result(digest, ctxt)
-	uint8_t *digest;
+	uint8 *digest;
 	md5_ctxt *ctxt;
 {
 	/* 4 byte words */
@@ -227,24 +227,24 @@ void md5_result(digest, ctxt)
 }
 
 #if BYTE_ORDER == BIG_ENDIAN
-uint32_t X[16];
+uint32 X[16];
 #endif
 
 static void md5_calc(b64, ctxt)
-	uint8_t *b64;
+	uint8 *b64;
 	md5_ctxt *ctxt;
 {
-	uint32_t A = ctxt->md5_sta;
-	uint32_t B = ctxt->md5_stb;
-	uint32_t C = ctxt->md5_stc;
-	uint32_t D = ctxt->md5_std;
+	uint32 A = ctxt->md5_sta;
+	uint32 B = ctxt->md5_stb;
+	uint32 C = ctxt->md5_stc;
+	uint32 D = ctxt->md5_std;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	uint32_t *X = (uint32_t *)b64;
+	uint32 *X = (uint32 *)b64;
 #endif	
 #if BYTE_ORDER == BIG_ENDIAN
 	/* 4 byte words */
 	/* what a brute force but fast! */
-	uint8_t *y = (uint8_t *)X;
+	uint8 *y = (uint8 *)X;
 	y[ 0] = b64[ 3]; y[ 1] = b64[ 2]; y[ 2] = b64[ 1]; y[ 3] = b64[ 0];
 	y[ 4] = b64[ 7]; y[ 5] = b64[ 6]; y[ 6] = b64[ 5]; y[ 7] = b64[ 4];
 	y[ 8] = b64[11]; y[ 9] = b64[10]; y[10] = b64[ 9]; y[11] = b64[ 8];

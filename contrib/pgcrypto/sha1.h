@@ -1,4 +1,5 @@
-/*	$Id: sha1.h,v 1.2 2000/12/04 01:20:38 tgl Exp $	*/
+/*	$Id: sha1.h,v 1.3 2001/01/09 16:07:13 momjian Exp $	*/
+/*     $KAME: sha1.h,v 1.4 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,18 +40,18 @@
 
 struct sha1_ctxt {
 	union {
-		uint8_t		b8[20];
-		uint32_t	b32[5];
+		uint8		b8[20];
+		uint32		b32[5];
 	} h;
 	union {
-		uint8_t		b8[8];
-		uint64_t	b64[1];
+		uint8		b8[8];
+		uint64		b64[1];
 	} c;
 	union {
-		uint8_t		b8[64];
-		uint32_t	b32[16];
+		uint8		b8[64];
+		uint32		b32[16];
 	} m;
-	uint8_t			count;
+	uint8			count;
 };
 
 extern void sha1_init (struct sha1_ctxt *);

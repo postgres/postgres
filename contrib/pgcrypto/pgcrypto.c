@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.c,v 1.2 2000/11/20 20:36:56 tgl Exp $
+ * $Id: pgcrypto.c,v 1.3 2001/01/09 16:07:13 momjian Exp $
  */
 
 #include <postgres.h>
@@ -91,7 +91,7 @@ digest(PG_FUNCTION_ARGS)
 	to_hex(p, hlen, VARDATA(res));
 	
 	PG_FREE_IF_COPY(arg, 0);
-	PG_FREE_IF_COPY(name, 0);	// unnecessary i guess
+	PG_FREE_IF_COPY(name, 0);
 	
 	PG_RETURN_TEXT_P(res);
 }
@@ -112,7 +112,7 @@ digest_exists(PG_FUNCTION_ARGS)
 	
 	res = find_digest(&_hbuf, name, 1);
 	
-	PG_FREE_IF_COPY(name, 0);	// unnecessary i guess
+	PG_FREE_IF_COPY(name, 0);
 
 	if (res != NULL)
 		PG_RETURN_BOOL(true);
