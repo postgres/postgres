@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.47 1999/02/15 01:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.48 1999/02/15 02:04:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,8 +385,7 @@ create_indexscan_node(IndexPath *best_path,
 								lcons(index_clause, NIL));
 
 		if (lossy)
-			qpqual = nconc(qpqual,
-						   lcons((List *) copyObject(index_clause), NIL));
+			qpqual = lappend(qpqual, (List *) copyObject(index_clause));
 	}
 	else
 	{
@@ -1200,8 +1199,7 @@ generate_fjoin(List *tlist)
 									  inner,
 									  results,
 									  alwaysDone);
-		tempList = lcons(fjoinNode, NIL);
-		tempList = nconc(tempList, fjoinList);
+		tempList = lcons(fjoinNode, fjoinList);
 		newTlist = lappend(newTlist, tempList);
 	}
 	return newTlist;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.25 1999/02/14 05:27:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.26 1999/02/15 02:04:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,7 +422,6 @@ match_unsorted_inner(RelOptInfo *joinrel,
 {
 	Path	   *innerpath = (Path *) NULL;
 	List	   *mp_list = NIL;
-	List	   *temp_node = NIL;
 	PathOrder  *innerpath_ordering = NULL;
 	Cost		temp1 = 0.0;
 	bool		temp2 = false;
@@ -482,7 +481,8 @@ match_unsorted_inner(RelOptInfo *joinrel,
 								  joinrel->targetlist,
 								  clauses);
 
-				temp_node = lcons(create_mergejoin_path(joinrel,
+				mp_list = lappend(mp_list,
+								  create_mergejoin_path(joinrel,
 												outerrel->size,
 												innerrel->size,
 												outerrel->width,
@@ -493,10 +493,7 @@ match_unsorted_inner(RelOptInfo *joinrel,
 												xmergeinfo->m_ordering,
 												matchedJoinClauses,
 												outerkeys,
-												NIL),
-						  NIL);
-
-				mp_list = nconc(mp_list, temp_node);
+												NIL));
 			}
 		}
 	}

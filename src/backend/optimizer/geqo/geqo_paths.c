@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.20 1999/02/13 23:16:11 momjian Exp $
+ * $Id: geqo_paths.c,v 1.21 1999/02/15 02:04:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,10 +66,9 @@ geqo_prune_rels(List *rel_list)
 static List *
 geqo_prune_rel(RelOptInfo *rel, List *other_rels)
 {
-	List	   *i = NIL;
 	List	   *t_list = NIL;
-	List	   *temp_node = NIL;
-	RelOptInfo *other_rel = (RelOptInfo *) NULL;
+	List	   *i;
+	RelOptInfo *other_rel;
 
 	foreach(i, other_rels)
 	{
@@ -79,12 +78,10 @@ geqo_prune_rel(RelOptInfo *rel, List *other_rels)
 			rel->pathlist = add_pathlist(rel,
 										 rel->pathlist,
 										 other_rel->pathlist);
-			t_list = nconc(t_list, NIL);		/* XXX is this right ? */
 		}
 		else
 		{
-			temp_node = lcons(other_rel, NIL);
-			t_list = nconc(t_list, temp_node);
+			t_list = lappend(t_list, other_rel);
 		}
 	}
 	return t_list;

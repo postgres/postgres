@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.20 1999/02/13 23:16:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.21 1999/02/15 02:04:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,11 +410,10 @@ new_matching_subkeys(Var *subkey,
 					 List *join_rel_tlist,
 					 List *joinclauses)
 {
-	Expr	   *joinclause = NULL;
 	List	   *t_list = NIL;
-	List	   *temp = NIL;
-	List	   *i = NIL;
-	Expr	   *tlist_other_var = (Expr *) NULL;
+	Expr	   *joinclause;
+	List	   *i;
+	Expr	   *tlist_other_var;
 
 	foreach(i, joinclauses)
 	{
@@ -436,8 +435,7 @@ new_matching_subkeys(Var *subkey,
 			 * am not sure of this.
 			 */
 
-			temp = lcons(tlist_other_var, NIL);
-			t_list = nconc(t_list, temp);
+			t_list = lappend(t_list, tlist_other_var);
 		}
 	}
 	return t_list;

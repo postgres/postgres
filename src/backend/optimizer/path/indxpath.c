@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.45 1999/02/15 01:06:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.46 1999/02/15 02:04:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,14 +170,13 @@ find_index_paths(Query *root,
 
 		if (joinclausegroups != NIL)
 		{
-			List	   *new_join_paths = create_index_paths(root, rel,
-															index,
-														joinclausegroups,
-															true);
-			List	   *innerjoin_paths = index_innerjoin(root, rel, joinclausegroups, index);
-
-			rel->innerjoin = nconc(rel->innerjoin, innerjoin_paths);
-			joinpaths = new_join_paths;
+			joinpaths = create_index_paths(root, rel,
+										   index,
+										   joinclausegroups,
+										   true);
+			rel->innerjoin = nconc(rel->innerjoin,
+								   index_innerjoin(root, rel,
+												   joinclausegroups, index));
 		}
 
 		/*
@@ -1360,7 +1359,6 @@ create_index_paths(Query *root,
 	foreach(i, clausegroup_list)
 	{
 		RestrictInfo *restrictinfo;
-		List	   *temp_node = NIL;
 		bool		temp = true;
 
 		clausegroup = lfirst(i);
@@ -1377,8 +1375,7 @@ create_index_paths(Query *root,
 		if (!join || temp)
 		{						/* restriction, ordering scan */
 			temp_path = create_index_path(root, rel, index, clausegroup, join);
-			temp_node = lcons(temp_path, NIL);
-			ip_list = nconc(ip_list, temp_node);
+			ip_list = lappend(ip_list, temp_path);
 		}
 	}
 	return ip_list;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.21 1999/02/14 04:56:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.22 1999/02/15 02:04:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,6 @@ find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
 {
 	RelOptInfo *inner_rel;
 	List	   *t_list = NIL;
-	List	   *temp_node = NIL;
 	List	   *i = NIL;
 
 	foreach(i, inner_rels)
@@ -173,11 +172,10 @@ find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
 		inner_rel = (RelOptInfo *) lfirst(i);
 		if (nonoverlap_rels(inner_rel, outer_rel))
 		{
-			temp_node = lcons(init_join_rel(outer_rel,
-											inner_rel,
-											(JoinInfo *) NULL),
-							  NIL);
-			t_list = nconc(t_list, temp_node);
+			t_list = lappend(t_list,
+							 init_join_rel(outer_rel,
+										   inner_rel,
+										   (JoinInfo *) NULL));
 		}
 	}
 
@@ -278,24 +276,21 @@ new_join_tlist(List *tlist,
 {
 	int			resdomno = first_resdomno - 1;
 	TargetEntry *xtl = NULL;
-	List	   *temp_node = NIL;
 	List	   *t_list = NIL;
 	List	   *i = NIL;
 	List	   *join_list = NIL;
 	bool		in_final_tlist = false;
 
-
 	foreach(i, tlist)
 	{
 		xtl = lfirst(i);
+		/* XXX surely this is wrong?  join_list is never changed?  tgl 2/99 */
 		in_final_tlist = (join_list == NIL);
 		if (in_final_tlist)
 		{
 			resdomno += 1;
-			temp_node = lcons(create_tl_element(get_expr(xtl),
-										resdomno),
-					  NIL);
-			t_list = nconc(t_list, temp_node);
+			t_list = lappend(t_list, 
+							 create_tl_element(get_expr(xtl), resdomno));
 		}
 	}
 
@@ -479,7 +474,6 @@ List *
 final_join_rels(List *join_rel_list)
 {
 	List	   *xrel = NIL;
-	List	   *temp = NIL;
 	List	   *t_list = NIL;
 
 	/*
@@ -504,8 +498,7 @@ final_join_rels(List *join_rel_list)
 		}
 		if (final)
 		{
-			temp = lcons(rel, NIL);
-			t_list = nconc(t_list, temp);
+			t_list = lappend(t_list, rel);
 		}
 	}
 
