@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.114 2002/01/31 18:31:44 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.115 2002/01/31 21:20:03 momjian Exp $
 -->
 
 <appendix id="release">
@@ -378,7 +378,7 @@ Improve PL/pgSQL error reporting, including location of error (Tom)
 Allow IS or FOR key words in cursor declaration, for compatibility (Bruce)
 Fix for SELECT ... FOR UPDATE (Tom)
 Fix for PERFORM returning multiple rows (Tom)
-Make PL/PgSQL use the server's type coercion code (Tom)
+Make PL/pgSQL use the server's type coercion code (Tom)
 Memory leak fix (Jan, Tom)
 Make trailing semicolon optional (Tom)
 </literallayout>
@@ -585,7 +585,7 @@ Add new pg_resetxlog options (Bruce, Tom)
      <programlisting>
 Remove unused WAL segements of large transactions (Tom)
 Multiaction rule fix (Tom)
-Pl/pgSQL memory allocation fix (Jan)
+PL/pgSQL memory allocation fix (Jan)
 VACUUM buffer fix (Tom)
 Regression test fixes (Tom)
 pg_dump fixes for GRANT/REVOKE/comments on views, user-defined types (Tom)
@@ -626,7 +626,7 @@ Cygwin build (Jason Tishler)
 
     <para>
      <programlisting>
-Fix PL/PgSQL SELECTs when returning no rows
+Fix PL/pgSQL SELECTs when returning no rows
 Fix for psql backslash core dump
 Referential integrity permission fix
 Optimizer fixes
@@ -834,7 +834,7 @@ Fix OVERLAPS operators conform to SQL92 spec regarding NULLs (Tom)
 Fix lpad() and rpad() to handle length less than input string (Tom)
 Fix use of NOTIFY in some rules (Tom)
 Overhaul btree code (Tom)
-Fix NOT NULL use in Pl/PgSQL variables (Tom)
+Fix NOT NULL use in Pl/pgSQL variables (Tom)
 Overhaul GIST code (Oleg)
 Fix CLUSTER to preserve constraints and column default (Tom)
 Improved deadlock detection handling (Tom)
