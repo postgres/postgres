@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.51 2001/11/13 02:05:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.52 2001/11/15 23:31:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -192,76 +192,12 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 			elog(NOTICE, "Error occurred while executing PL/pgSQL function %s",
 				 error_info_func->fn_name);
 			if (error_info_stmt != NULL)
-			{
-				char	   *stmttype;
-
-				switch (error_info_stmt->cmd_type)
-				{
-					case PLPGSQL_STMT_BLOCK:
-						stmttype = "blocks variable initialization";
-						break;
-					case PLPGSQL_STMT_ASSIGN:
-						stmttype = "assignment";
-						break;
-					case PLPGSQL_STMT_GETDIAG:
-						stmttype = "get diagnostics";
-						break;
-					case PLPGSQL_STMT_IF:
-						stmttype = "if";
-						break;
-					case PLPGSQL_STMT_LOOP:
-						stmttype = "loop";
-						break;
-					case PLPGSQL_STMT_WHILE:
-						stmttype = "while";
-						break;
-					case PLPGSQL_STMT_FORI:
-						stmttype = "for with integer loopvar";
-						break;
-					case PLPGSQL_STMT_FORS:
-						stmttype = "for over select rows";
-						break;
-					case PLPGSQL_STMT_SELECT:
-						stmttype = "select into variables";
-						break;
-					case PLPGSQL_STMT_EXIT:
-						stmttype = "exit";
-						break;
-					case PLPGSQL_STMT_RETURN:
-						stmttype = "return";
-						break;
-					case PLPGSQL_STMT_RAISE:
-						stmttype = "raise";
-						break;
-					case PLPGSQL_STMT_EXECSQL:
-						stmttype = "SQL statement";
-						break;
-					case PLPGSQL_STMT_DYNEXECUTE:
-						stmttype = "execute statement";
-						break;
-					case PLPGSQL_STMT_DYNFORS:
-						stmttype = "for over execute statement";
-						break;
-					case PLPGSQL_STMT_FETCH:
-						stmttype = "fetch";
-						break;
-					case PLPGSQL_STMT_CLOSE:
-						stmttype = "close";
-						break;
-					default:
-						stmttype = "unknown";
-						break;
-				}
 				elog(NOTICE, "line %d at %s", error_info_stmt->lineno,
-					 stmttype);
-			}
+					 plpgsql_stmt_typename(error_info_stmt));
+			else if (error_info_text != NULL)
+				elog(NOTICE, "%s", error_info_text);
 			else
-			{
-				if (error_info_text != NULL)
-					elog(NOTICE, "%s", error_info_text);
-				else
-					elog(NOTICE, "no more error information available");
-			}
+				elog(NOTICE, "no more error information available");
 
 			error_info_func = NULL;
 			error_info_stmt = NULL;
@@ -504,70 +440,12 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 			elog(NOTICE, "Error occurred while executing PL/pgSQL function %s",
 				 error_info_func->fn_name);
 			if (error_info_stmt != NULL)
-			{
-				char	   *stmttype;
-
-				switch (error_info_stmt->cmd_type)
-				{
-					case PLPGSQL_STMT_BLOCK:
-						stmttype = "blocks variable initialization";
-						break;
-					case PLPGSQL_STMT_ASSIGN:
-						stmttype = "assignment";
-						break;
-					case PLPGSQL_STMT_GETDIAG:
-						stmttype = "get diagnostics";
-						break;
-					case PLPGSQL_STMT_IF:
-						stmttype = "if";
-						break;
-					case PLPGSQL_STMT_LOOP:
-						stmttype = "loop";
-						break;
-					case PLPGSQL_STMT_WHILE:
-						stmttype = "while";
-						break;
-					case PLPGSQL_STMT_FORI:
-						stmttype = "for with integer loopvar";
-						break;
-					case PLPGSQL_STMT_FORS:
-						stmttype = "for over select rows";
-						break;
-					case PLPGSQL_STMT_SELECT:
-						stmttype = "select into variables";
-						break;
-					case PLPGSQL_STMT_EXIT:
-						stmttype = "exit";
-						break;
-					case PLPGSQL_STMT_RETURN:
-						stmttype = "return";
-						break;
-					case PLPGSQL_STMT_RAISE:
-						stmttype = "raise";
-						break;
-					case PLPGSQL_STMT_EXECSQL:
-						stmttype = "SQL statement";
-						break;
-					case PLPGSQL_STMT_DYNEXECUTE:
-						stmttype = "execute statement";
-						break;
-					case PLPGSQL_STMT_DYNFORS:
-						stmttype = "for over execute statement";
-						break;
-					default:
-						stmttype = "unknown";
-						break;
-				}
 				elog(NOTICE, "line %d at %s", error_info_stmt->lineno,
-					 stmttype);
-			}
+					 plpgsql_stmt_typename(error_info_stmt));
+			else if (error_info_text != NULL)
+				elog(NOTICE, "%s", error_info_text);
 			else
-			{
-				if (error_info_text != NULL)
-					elog(NOTICE, "%s", error_info_text);
-				else
-					elog(NOTICE, "no more error information available");
-			}
+				elog(NOTICE, "no more error information available");
 
 			error_info_func = NULL;
 			error_info_stmt = NULL;
@@ -2412,7 +2290,7 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 		HeapTuple	typetup;
 		Form_pg_type typeStruct;
 		FmgrInfo	finfo_output;
-		void	   *curplan = NULL;
+		void	   *curplan;
 
 		/* ----------
 		 * We evaluate the string expression after the
@@ -2471,6 +2349,9 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 	{
 		/* ----------
 		 * This is an OPEN cursor
+		 *
+		 * Note: parser should already have checked that statement supplies
+		 * args iff cursor needs them, but we check again to be safe.
 		 * ----------
 		 */
 		if (stmt->argquery != NULL)
@@ -2483,6 +2364,9 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 			 */
 			PLpgSQL_stmt_select set_args;
 
+			if (curvar->cursor_explicit_argrow < 0)
+				elog(ERROR, "arguments given for cursor without arguments");
+
 			memset(&set_args, 0, sizeof(set_args));
 			set_args.cmd_type = PLPGSQL_STMT_SELECT;
 			set_args.lineno = stmt->lineno;
@@ -2492,6 +2376,11 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 
 			if (exec_stmt_select(estate, &set_args) != PLPGSQL_RC_OK)
 				elog(ERROR, "open cursor failed during argument processing");
+		}
+		else
+		{
+			if (curvar->cursor_explicit_argrow >= 0)
+				elog(ERROR, "arguments required for cursor");
 		}
 
 		query = curvar->cursor_explicit_expr;

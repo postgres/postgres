@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.22 2001/11/05 17:46:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.23 2001/11/15 23:31:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -598,8 +598,9 @@ extern void plpgsql_ns_rename(char *oldname, char *newname);
  * Other functions in pl_funcs.c
  * ----------
  */
-extern void plpgsql_dumptree(PLpgSQL_function * func);
 extern char *plpgsql_tolower(char *s);
+extern const char *plpgsql_stmt_typename(PLpgSQL_stmt * stmt);
+extern void plpgsql_dumptree(PLpgSQL_function * func);
 
 /* ----------
  * Externs in gram.y and scan.l

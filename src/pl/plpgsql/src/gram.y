@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.27 2001/10/09 15:59:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.28 2001/11/15 23:31:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -351,7 +351,9 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 					{
 						plpgsql_ns_rename($2, $4);
 					}
-				| decl_varname K_CURSOR decl_cursor_args decl_is_from K_SELECT decl_cursor_query
+				| decl_varname K_CURSOR
+					{ plpgsql_ns_push(NULL); }
+				  decl_cursor_args decl_is_from K_SELECT decl_cursor_query
 					{
 						PLpgSQL_var *new;
 						PLpgSQL_expr *curname_def;
@@ -359,6 +361,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						char		*cp1;
 						char		*cp2;
 
+						/* pop local namespace for cursor args */
 						plpgsql_ns_pop();
 
 						new = malloc(sizeof(PLpgSQL_var));
@@ -381,22 +384,21 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 								*cp2++ = '\\';
 							*cp2++ = *cp1++;
 						}
-						*cp2++ = '\'';
-						*cp2 = '\0';
+						strcpy(cp2, "'::refcursor");
 						curname_def->query = strdup(buf);
 						new->default_val = curname_def;
 
 						new->datatype = plpgsql_parse_datatype("refcursor");
 
-						new->cursor_explicit_expr = $6;
-						if ($3 == NULL)
+						new->cursor_explicit_expr = $7;
+						if ($4 == NULL)
 							new->cursor_explicit_argrow = -1;
 						else
-							new->cursor_explicit_argrow = $3->rowno;
+							new->cursor_explicit_argrow = $4->rowno;
 
 						plpgsql_adddatum((PLpgSQL_datum *)new);
 						plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, new->varno,
-												$1.name);
+										   $1.name);
 					}
 				;
 
@@ -416,15 +418,17 @@ decl_cursor_args :
 					{
 						$$ = NULL;
 					}
-				| decl_cursor_openparen decl_cursor_arglist ')'
+				| '(' decl_cursor_arglist ')'
 					{
+						/* Copy the temp arrays to malloc'd storage */
+						int nfields = $2->nfields;
 						char **ftmp;
 						int *vtmp;
 
-						ftmp = malloc($2->nfields * sizeof(char *));
-						vtmp = malloc($2->nfields * sizeof(int));
-						memcpy(ftmp, $2->fieldnames, $2->nfields * sizeof(char *));
-						memcpy(vtmp, $2->varnos, $2->nfields * sizeof(int));
+						ftmp = malloc(nfields * sizeof(char *));
+						vtmp = malloc(nfields * sizeof(int));
+						memcpy(ftmp, $2->fieldnames, nfields * sizeof(char *));
+						memcpy(vtmp, $2->varnos, nfields * sizeof(int));
 
 						pfree((char *)($2->fieldnames));
 						pfree((char *)($2->varnos));
@@ -449,6 +453,12 @@ decl_cursor_arglist : decl_cursor_arg
 						new->refname = strdup("*internal*");
 						new->lineno = yylineno;
 						new->rowtypeclass = InvalidOid;
+						/*
+						 * We make temporary fieldnames/varnos arrays that
+						 * are much bigger than necessary.  We will resize
+						 * them to just the needed size in the
+						 * decl_cursor_args production.
+						 */
 						new->fieldnames = palloc(1024 * sizeof(char *));
 						new->varnos = palloc(1024 * sizeof(int));
 						new->nfields = 1;
@@ -464,6 +474,8 @@ decl_cursor_arglist : decl_cursor_arg
 
 						$1->fieldnames[i] = $3->refname;
 						$1->varnos[i] = $3->varno;
+
+						$$ = $1;
 					}
 				;
 
@@ -484,15 +496,9 @@ decl_cursor_arg : decl_varname decl_datatype
 
 						plpgsql_adddatum((PLpgSQL_datum *)new);
 						plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, new->varno,
-												$1.name);
+										   $1.name);
 						
 						$$ = new;
-					}
-				;
-
-decl_cursor_openparen : '('
-					{
-						plpgsql_ns_push(NULL);
 					}
 				;
 
