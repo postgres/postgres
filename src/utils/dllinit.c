@@ -1,3 +1,6 @@
+#include <cygwin/version.h>
+#if CYGWIN_VERSION_DLL_MAJOR < 1001
+
 /* dllinit.c -- Portable DLL initialization.
    Copyright (C) 1998 Free Software Foundation, Inc.
    Contributed by Mumit Khan (khan@xraylith.wisc.edu).
@@ -102,3 +105,5 @@ DllMain(
 	}
 	return TRUE;
 }
+
+#endif /* CYGWIN_VERSION_DLL_MAJOR < 1001 */
