@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.51 2001/03/05 18:42:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.52 2001/03/05 19:00:01 petere Exp $
 Postgres documentation
 -->
 
@@ -196,7 +196,7 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
 	    The value for the seed to be used by the
 	    <function>random</function> function. Allowed
 	    values are floating point numbers between 0 and 1, which
-	    are then multiplied by RAND_MAX. This product will
+	    are then multiplied by 2^31-1. This product will
 	    silently overflow if a number outside the range is used.
 	   </para>
 
