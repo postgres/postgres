@@ -4961,7 +4961,7 @@ msgid "Unable to identify an equality operator for type '%s'"
 msgstr ""
 
 #: ../executor/nodeAppend.c:293
-msgid "ExecProcAppend: subnode is NULL"
+msgid "ExecAppend: subnode is NULL"
 msgstr ""
 
 #: ../executor/nodeHash.c:66

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.44 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.45 2004/09/24 01:36:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,7 +293,7 @@ ExecProcNode(PlanState *node)
 			break;
 
 		case T_AppendState:
-			result = ExecProcAppend((AppendState *) node);
+			result = ExecAppend((AppendState *) node);
 			break;
 
 			/*

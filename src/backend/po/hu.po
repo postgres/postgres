@@ -2,7 +2,7 @@
 # Zoltan Kovacs <kovzol@math.u-szeged.hu>, 2001.
 # Robert Zana <zerobert@freemail.hu>, 2001.
 #
-# $PostgreSQL: pgsql/src/backend/po/hu.po,v 1.6 2003/11/29 19:51:53 pgsql Exp $
+# $PostgreSQL: pgsql/src/backend/po/hu.po,v 1.7 2004/09/24 01:36:34 neilc Exp $
 #
 msgid ""
 msgstr ""
@@ -4925,7 +4925,7 @@ msgid "Unable to identify an equality operator for type '%s'"
 msgstr ""
 
 #: ../executor/nodeAppend.c:293
-msgid "ExecProcAppend: subnode is NULL"
+msgid "ExecAppend: subnode is NULL"
 msgstr ""
 
 #: ../executor/nodeHash.c:66

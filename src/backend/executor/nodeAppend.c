@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.59 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.60 2004/09/24 01:36:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
 /* INTERFACE ROUTINES
  *		ExecInitAppend	- initialize the append node
- *		ExecProcAppend	- retrieve the next tuple from the node
+ *		ExecAppend		- retrieve the next tuple from the node
  *		ExecEndAppend	- shut down the append node
  *		ExecReScanAppend - rescan the append node
  *
@@ -90,7 +90,7 @@ exec_append_initialize_next(AppendState *appendstate)
 		/*
 		 * if scanning in reverse, we start at the last scan in the list
 		 * and then proceed back to the first.. in any case we inform
-		 * ExecProcAppend that we are at the end of the line by returning
+		 * ExecAppend that we are at the end of the line by returning
 		 * FALSE
 		 */
 		appendstate->as_whichplan = appendstate->as_firstplan;
@@ -134,7 +134,7 @@ exec_append_initialize_next(AppendState *appendstate)
  *	   (This is potentially wasteful, since the entire result of the
  *		append node may not be scanned, but this way all of the
  *		structures get allocated in the executor's top level memory
- *		block instead of that of the call to ExecProcAppend.)
+ *		block instead of that of the call to ExecAppend.)
  *
  *		Special case: during an EvalPlanQual recheck query of an inherited
  *		target relation, we only want to initialize and scan the single
@@ -246,15 +246,13 @@ ExecCountSlotsAppend(Append *node)
 }
 
 /* ----------------------------------------------------------------
- *	   ExecProcAppend
+ *	   ExecAppend
  *
  *		Handles the iteration over the multiple scans.
- *
- *	   NOTE: Can't call this ExecAppend, that name is used in execMain.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProcAppend(AppendState *node)
+ExecAppend(AppendState *node)
 {
 	EState	   *estate;
 	int			whichplan;
@@ -310,7 +308,7 @@ ExecProcAppend(AppendState *node)
 		if (exec_append_initialize_next(node))
 		{
 			ExecSetSlotDescriptorIsNew(result_slot, true);
-			return ExecProcAppend(node);
+			return ExecAppend(node);
 		}
 		else
 			return ExecClearTuple(result_slot);
