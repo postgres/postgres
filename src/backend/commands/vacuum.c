@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.133 1999/12/29 10:13:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.134 2000/01/10 04:09:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,8 @@ static int	vc_cmp_blk(const void *left, const void *right);
 static int	vc_cmp_offno(const void *left, const void *right);
 static int	vc_cmp_vtlinks(const void *left, const void *right);
 static bool vc_enough_space(VPageDescr vpd, Size len);
+static char *vc_show_rusage(struct rusage *ru0);
+
 
 void
 vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
@@ -637,12 +639,11 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 	Size		min_tlen = MaxTupleSize;
 	Size		max_tlen = 0;
 	int32		i;
-	struct rusage ru0,
-				ru1;
 	bool		do_shrinking = true;
 	VTupleLink	vtlinks = (VTupleLink) palloc(100 * sizeof(VTupleLinkData));
 	int			num_vtlinks = 0;
 	int			free_vtlinks = 100;
+	struct rusage ru0;
 
 	getrusage(RUSAGE_SELF, &ru0);
 
@@ -987,25 +988,21 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 		pfree(vtlinks);
 	}
 
-	getrusage(RUSAGE_SELF, &ru1);
-
 	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, Reapped %u, Empty %u, New %u; \
 Tup %u: Vac %u, Keep/VTL %u/%u, Crash %u, UnUsed %u, MinLen %u, MaxLen %u; \
-Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. \
-Elapsed %u/%u sec.",
+Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. %s",
 		 nblocks, changed_pages, vacuum_pages->vpl_num_pages, empty_pages,
 		 new_pages, num_tuples, tups_vacuumed,
 		 nkeep, vacrelstats->num_vtlinks, ncrash,
 		 nunused, min_tlen, max_tlen, free_size, usable_free_size,
 		 empty_end_pages, fraged_pages->vpl_num_pages,
-		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
-		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
+		 vc_show_rusage(&ru0));
 
 }	/* vc_scanheap */
 
 
 /*
- *	vc_rpfheap() -- try to repaire relation' fragmentation
+ *	vc_rpfheap() -- try to repair relation's fragmentation
  *
  *		This routine marks dead tuples as unused and tries re-use dead space
  *		by moving tuples (and inserting indices if needed). It constructs
@@ -1016,7 +1013,8 @@ Elapsed %u/%u sec.",
  */
 static void
 vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
-		   VPageList vacuum_pages, VPageList fraged_pages, int nindices, Relation *Irel)
+		   VPageList vacuum_pages, VPageList fraged_pages,
+		   int nindices, Relation *Irel)
 {
 	TransactionId myXID;
 	CommandId	myCID;
@@ -1040,14 +1038,13 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 	InsertIndexResult iresult;
 	VPageListData Nvpl;
 	VPageDescr	cur_page = NULL,
-				last_fraged_page,
 				last_vacuum_page,
 				vpc,
 			   *vpp;
 	int			cur_item = 0;
 	IndDesc    *Idesc,
 			   *idcur;
-	int			last_fraged_block,
+	int			last_move_dest_block = -1,
 				last_vacuum_block,
 				i = 0;
 	Size		tuple_len;
@@ -1060,8 +1057,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 	bool		isempty,
 				dowrite,
 				chain_tuple_moved;
-	struct rusage ru0,
-				ru1;
+	struct rusage ru0;
 
 	getrusage(RUSAGE_SELF, &ru0);
 
@@ -1078,26 +1074,32 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 
 	Nvpl.vpl_num_pages = 0;
 	num_fraged_pages = fraged_pages->vpl_num_pages;
-	last_fraged_page = fraged_pages->vpl_pagedesc[num_fraged_pages - 1];
-	last_fraged_block = last_fraged_page->vpd_blkno;
 	Assert(vacuum_pages->vpl_num_pages > vacuum_pages->vpl_empty_end_pages);
 	vacuumed_pages = vacuum_pages->vpl_num_pages - vacuum_pages->vpl_empty_end_pages;
 	last_vacuum_page = vacuum_pages->vpl_pagedesc[vacuumed_pages - 1];
 	last_vacuum_block = last_vacuum_page->vpd_blkno;
-	Assert(last_vacuum_block >= last_fraged_block);
 	cur_buffer = InvalidBuffer;
 	num_moved = 0;
 
 	vpc = (VPageDescr) palloc(sizeof(VPageDescrData) + MaxOffsetNumber * sizeof(OffsetNumber));
 	vpc->vpd_offsets_used = vpc->vpd_offsets_free = 0;
 
+	/*
+	 * Scan pages backwards from the last nonempty page, trying to move
+	 * tuples down to lower pages.  Quit when we reach a page that we
+	 * have moved any tuples onto.  Note that if a page is still in the
+	 * fraged_pages list (list of candidate move-target pages) when we
+	 * reach it, we will remove it from the list.  This ensures we never
+	 * move a tuple up to a higher page number.
+	 *
+	 * NB: this code depends on the vacuum_pages and fraged_pages lists
+	 * being in order, and on fraged_pages being a subset of vacuum_pages.
+	 */
 	nblocks = vacrelstats->num_pages;
-	for (blkno = nblocks - vacuum_pages->vpl_empty_end_pages - 1;; blkno--)
+	for (blkno = nblocks - vacuum_pages->vpl_empty_end_pages - 1;
+		 blkno > last_move_dest_block;
+		 blkno--)
 	{
-		/* if it's reapped page and it was used by me - quit */
-		if (blkno == last_fraged_block && last_fraged_page->vpd_offsets_used > 0)
-			break;
-
 		buf = ReadBuffer(onerel, blkno);
 		page = BufferGetPage(buf);
 
@@ -1117,21 +1119,24 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			else
 				Assert(isempty);
 			--vacuumed_pages;
-			Assert(vacuumed_pages > 0);
-			/* get prev reapped page from vacuum_pages */
-			last_vacuum_page = vacuum_pages->vpl_pagedesc[vacuumed_pages - 1];
-			last_vacuum_block = last_vacuum_page->vpd_blkno;
-			if (blkno == last_fraged_block)		/* this page in
-												 * fraged_pages too */
+			if (vacuumed_pages > 0)
 			{
-				--num_fraged_pages;
-				Assert(num_fraged_pages > 0);
-				Assert(last_fraged_page->vpd_offsets_used == 0);
-				/* get prev reapped page from fraged_pages */
-				last_fraged_page = fraged_pages->vpl_pagedesc[num_fraged_pages - 1];
-				last_fraged_block = last_fraged_page->vpd_blkno;
+				/* get prev reapped page from vacuum_pages */
+				last_vacuum_page = vacuum_pages->vpl_pagedesc[vacuumed_pages - 1];
+				last_vacuum_block = last_vacuum_page->vpd_blkno;
 			}
-			Assert(last_fraged_block <= last_vacuum_block);
+			else
+			{
+				last_vacuum_page = NULL;
+				last_vacuum_block = -1;
+			}
+			if (num_fraged_pages > 0 &&
+				blkno ==
+				fraged_pages->vpl_pagedesc[num_fraged_pages-1]->vpd_blkno)
+			{
+				/* page is in fraged_pages too; remove it */
+				--num_fraged_pages;
+			}
 			if (isempty)
 			{
 				ReleaseBuffer(buf);
@@ -1217,10 +1222,10 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 				HeapTupleData tp = tuple;
 				Size		tlen = tuple_len;
 				VTupleMove	vtmove = (VTupleMove)
-				palloc(100 * sizeof(VTupleMoveData));
+					palloc(100 * sizeof(VTupleMoveData));
 				int			num_vtmove = 0;
 				int			free_vtmove = 100;
-				VPageDescr	to_vpd = fraged_pages->vpl_pagedesc[0];
+				VPageDescr	to_vpd = NULL;
 				int			to_item = 0;
 				bool		freeCbuf = false;
 				int			ti;
@@ -1276,17 +1281,20 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 				/* first, can chain be moved ? */
 				for (;;)
 				{
-					if (!vc_enough_space(to_vpd, tlen))
+					if (to_vpd == NULL ||
+						!vc_enough_space(to_vpd, tlen))
 					{
-						if (to_vpd != last_fraged_page &&
-						 !vc_enough_space(to_vpd, vacrelstats->min_tlen))
+						/* if to_vpd no longer has enough free space to be
+						 * useful, remove it from fraged_pages list
+						 */
+						if (to_vpd != NULL &&
+							!vc_enough_space(to_vpd, vacrelstats->min_tlen))
 						{
-							Assert(num_fraged_pages > to_item + 1);
+							Assert(num_fraged_pages > to_item);
 							memmove(fraged_pages->vpl_pagedesc + to_item,
-								fraged_pages->vpl_pagedesc + to_item + 1,
-									sizeof(VPageDescr *) * (num_fraged_pages - to_item - 1));
+									fraged_pages->vpl_pagedesc + to_item + 1,
+									sizeof(VPageDescr) * (num_fraged_pages - to_item - 1));
 							num_fraged_pages--;
-							Assert(last_fraged_page == fraged_pages->vpl_pagedesc[num_fraged_pages - 1]);
 						}
 						for (i = 0; i < num_fraged_pages; i++)
 						{
@@ -1477,6 +1485,8 @@ moving chain: failed to add item with len = %u to page %u",
 					newtup.t_datamcxt = NULL;
 					newtup.t_data = (HeapTupleHeader) PageGetItem(ToPage, newitemid);
 					ItemPointerSet(&(newtup.t_self), vtmove[ti].vpd->vpd_blkno, newoff);
+					if (((int) vtmove[ti].vpd->vpd_blkno) > last_move_dest_block)
+						last_move_dest_block = vtmove[ti].vpd->vpd_blkno;
 
 					/*
 					 * Set t_ctid pointing to itself for last tuple in
@@ -1545,23 +1555,17 @@ moving chain: failed to add item with len = %u to page %u",
 				{
 					WriteBuffer(cur_buffer);
 					cur_buffer = InvalidBuffer;
-
 					/*
-					 * If no one tuple can't be added to this page -
-					 * remove page from fraged_pages. - vadim 11/27/96
-					 *
-					 * But we can't remove last page - this is our
-					 * "show-stopper" !!!	- vadim 02/25/98
+					 * If previous target page is now too full to add
+					 * *any* tuple to it, remove it from fraged_pages.
 					 */
-					if (cur_page != last_fraged_page &&
-						!vc_enough_space(cur_page, vacrelstats->min_tlen))
+					if (!vc_enough_space(cur_page, vacrelstats->min_tlen))
 					{
-						Assert(num_fraged_pages > cur_item + 1);
+						Assert(num_fraged_pages > cur_item);
 						memmove(fraged_pages->vpl_pagedesc + cur_item,
 								fraged_pages->vpl_pagedesc + cur_item + 1,
-								sizeof(VPageDescr *) * (num_fraged_pages - cur_item - 1));
+								sizeof(VPageDescr) * (num_fraged_pages - cur_item - 1));
 						num_fraged_pages--;
-						Assert(last_fraged_page == fraged_pages->vpl_pagedesc[num_fraged_pages - 1]);
 					}
 				}
 				for (i = 0; i < num_fraged_pages; i++)
@@ -1623,6 +1627,9 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 			cur_page->vpd_offsets_used++;
 			num_moved++;
 			cur_page->vpd_free = ((PageHeader) ToPage)->pd_upper - ((PageHeader) ToPage)->pd_lower;
+			if (((int) cur_page->vpd_blkno) > last_move_dest_block)
+				last_move_dest_block = cur_page->vpd_blkno;
+
 			vpc->vpd_offsets[vpc->vpd_offsets_free++] = offnum;
 
 			/* insert index' tuples if needed */
@@ -1789,14 +1796,10 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 	}
 	Assert(num_moved == checked_moved);
 
-	getrusage(RUSAGE_SELF, &ru1);
-
-	elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u; Tuple(s) moved: %u. \
-Elapsed %u/%u sec.",
+	elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u; Tuple(s) moved: %u. %s",
 		 RelationGetRelationName(onerel),
 		 nblocks, blkno, num_moved,
-		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
-		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
+		 vc_show_rusage(&ru0));
 
 	if (Nvpl.vpl_num_pages > 0)
 	{
@@ -1950,13 +1953,16 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages)
 
 /*
  *	vc_vacpage() -- free dead tuples on a page
- *					 and repaire its fragmentation.
+ *					 and repair its fragmentation.
  */
 static void
 vc_vacpage(Page page, VPageDescr vpd)
 {
 	ItemId		itemid;
 	int			i;
+
+	/* There shouldn't be any tuples moved onto the page yet! */
+	Assert(vpd->vpd_offsets_used == 0);
 
 	for (i = 0; i < vpd->vpd_offsets_free; i++)
 	{
@@ -1978,8 +1984,7 @@ vc_scanoneind(Relation indrel, int num_tuples)
 	IndexScanDesc iscan;
 	int			nitups;
 	int			nipages;
-	struct rusage ru0,
-				ru1;
+	struct rusage ru0;
 
 	getrusage(RUSAGE_SELF, &ru0);
 
@@ -2000,12 +2005,9 @@ vc_scanoneind(Relation indrel, int num_tuples)
 	nipages = RelationGetNumberOfBlocks(indrel);
 	vc_updstats(RelationGetRelid(indrel), nipages, nitups, false, NULL);
 
-	getrusage(RUSAGE_SELF, &ru1);
-
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u. Elapsed %u/%u sec.",
+	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u. %s",
 		 RelationGetRelationName(indrel), nipages, nitups,
-		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
-		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
+		 vc_show_rusage(&ru0));
 
 	if (nitups != num_tuples)
 		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u).\
@@ -2036,8 +2038,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples)
 	int			num_index_tuples;
 	int			num_pages;
 	VPageDescr	vp;
-	struct rusage ru0,
-				ru1;
+	struct rusage ru0;
 
 	getrusage(RUSAGE_SELF, &ru0);
 
@@ -2081,13 +2082,10 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples)
 	num_pages = RelationGetNumberOfBlocks(indrel);
 	vc_updstats(RelationGetRelid(indrel), num_pages, num_index_tuples, false, NULL);
 
-	getrusage(RUSAGE_SELF, &ru1);
-
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u: Deleted %u. Elapsed %u/%u sec.",
+	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u: Deleted %u. %s",
 		 RelationGetRelationName(indrel), num_pages,
 		 num_index_tuples - keep_tuples, tups_vacuumed,
-		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
-		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
+		 vc_show_rusage(&ru0));
 
 	if (num_index_tuples != num_tuples + keep_tuples)
 		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u).\
@@ -2905,3 +2903,39 @@ vc_enough_space(VPageDescr vpd, Size len)
 	return false;
 
 }	/* vc_enough_space */
+
+
+/*
+ * Compute elapsed time since ru0 usage snapshot, and format into
+ * a displayable string.  Result is in a static string, which is
+ * tacky, but no one ever claimed that the Postgres backend is
+ * threadable...
+ */
+static char *
+vc_show_rusage(struct rusage *ru0)
+{
+	static char		result[64];
+	struct rusage	ru1;
+
+	getrusage(RUSAGE_SELF, &ru1);
+
+	if (ru1.ru_stime.tv_usec < ru0->ru_stime.tv_usec)
+	{
+		ru1.ru_stime.tv_sec--;
+		ru1.ru_stime.tv_usec += 1000000;
+	}
+	if (ru1.ru_utime.tv_usec < ru0->ru_utime.tv_usec)
+	{
+		ru1.ru_utime.tv_sec--;
+		ru1.ru_utime.tv_usec += 1000000;
+	}
+
+	snprintf(result, sizeof(result),
+			 "CPU %d.%02ds/%d.%02du sec.",
+			 (int) (ru1.ru_stime.tv_sec - ru0->ru_stime.tv_sec),
+			 (int) (ru1.ru_stime.tv_usec - ru0->ru_stime.tv_usec) / 10000,
+			 (int) (ru1.ru_utime.tv_sec - ru0->ru_utime.tv_sec),
+			 (int) (ru1.ru_utime.tv_usec - ru0->ru_utime.tv_usec) / 10000);
+
+	return result;
+}
