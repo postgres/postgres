@@ -148,6 +148,17 @@ WHERE p1.oid != p2.oid AND
     NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.proargtypes[7] < p2.proargtypes[7]);
 
+-- Look for functions that return type "internal" and do not have any
+-- "internal" argument.  Such a function would be a security hole since
+-- it might be used to call an internal function from an SQL command.
+-- As of 7.3 this query should find only internal_in.
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE p1.prorettype = 'internal'::regtype AND NOT
+    ('(' || oidvectortypes(p1.proargtypes) || ')') ~ '[^a-z0-9_]internal[^a-z0-9_]';
+
+
 -- **************** pg_cast ****************
 
 -- Look for casts from and to the same type.  This is not harmful, but

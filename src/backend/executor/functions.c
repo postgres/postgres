@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.54 2002/08/05 02:30:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.55 2002/08/23 16:41:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,36 +86,35 @@ static void ShutdownSQLFunction(Datum arg);
 static execution_state *
 init_execution_state(char *src, Oid *argOidVect, int nargs)
 {
-	execution_state *newes;
-	execution_state *nextes;
+	execution_state *firstes;
 	execution_state *preves;
 	List	   *queryTree_list,
 			   *qtl_item;
 
-	newes = (execution_state *) palloc(sizeof(execution_state));
-	nextes = newes;
-	preves = (execution_state *) NULL;
-
 	queryTree_list = pg_parse_and_rewrite(src, argOidVect, nargs);
+
+	firstes = NULL;
+	preves = NULL;
 
 	foreach(qtl_item, queryTree_list)
 	{
 		Query	   *queryTree = lfirst(qtl_item);
 		Plan	   *planTree;
+		execution_state *newes;
 		EState	   *estate;
 
 		planTree = pg_plan_query(queryTree);
 
-		if (!nextes)
-			nextes = (execution_state *) palloc(sizeof(execution_state));
+		newes = (execution_state *) palloc(sizeof(execution_state));
 		if (preves)
-			preves->next = nextes;
+			preves->next = newes;
+		else
+			firstes = newes;
 
-		nextes->next = NULL;
-		nextes->status = F_EXEC_START;
-
-		nextes->qd = CreateQueryDesc(queryTree, planTree, None, NULL);
-		estate = CreateExecutorState();
+		newes->next = NULL;
+		newes->status = F_EXEC_START;
+		newes->qd = CreateQueryDesc(queryTree, planTree, None, NULL);
+		newes->estate = estate = CreateExecutorState();
 
 		if (nargs > 0)
 		{
@@ -124,7 +123,7 @@ init_execution_state(char *src, Oid *argOidVect, int nargs)
 
 			paramLI = (ParamListInfo) palloc((nargs + 1) * sizeof(ParamListInfoData));
 
-			MemSet(paramLI, 0, nargs * sizeof(ParamListInfoData));
+			MemSet(paramLI, 0, (nargs + 1) * sizeof(ParamListInfoData));
 
 			estate->es_param_list_info = paramLI;
 
@@ -139,12 +138,11 @@ init_execution_state(char *src, Oid *argOidVect, int nargs)
 		}
 		else
 			estate->es_param_list_info = (ParamListInfo) NULL;
-		nextes->estate = estate;
-		preves = nextes;
-		nextes = (execution_state *) NULL;
+
+		preves = newes;
 	}
 
-	return newes;
+	return firstes;
 }
 
 
@@ -195,7 +193,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	 */
 	fcache->typlen = typeStruct->typlen;
 
-	if (typeStruct->typtype == 'b' || typeStruct->typtype == 'd')
+	if (typeStruct->typtype != 'c')
 	{
 		/* The return type is not a relation, so just use byval */
 		fcache->typbyval = typeStruct->typbyval;
@@ -484,7 +482,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		fcache = (SQLFunctionCachePtr) fcinfo->flinfo->fn_extra;
 	}
 	es = fcache->func_state;
-	Assert(es);
 
 	/*
 	 * Find first unfinished query in function.
@@ -492,14 +489,12 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	while (es && es->status == F_EXEC_DONE)
 		es = es->next;
 
-	Assert(es);
-
 	/*
 	 * Execute each command in the function one after another until we're
 	 * executing the final command and get a result or we run out of
 	 * commands.
 	 */
-	while (es != (execution_state *) NULL)
+	while (es)
 	{
 		result = postquel_execute(es, fcinfo, fcache);
 		if (es->status != F_EXEC_DONE)

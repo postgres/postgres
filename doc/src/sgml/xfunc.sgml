@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.55 2002/08/22 00:01:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.56 2002/08/23 16:41:37 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -170,22 +170,26 @@ CREATE FUNCTION tp1 (integer, numeric) RETURNS numeric AS '
      <command>DELETE</command>) as well
      as <command>SELECT</command> queries.  However, the final command 
      must be a <command>SELECT</command> that returns whatever is
-     specified as the function's return type.
+     specified as the function's return type.  Alternatively, if you
+     want to define a SQL function that performs actions but has no
+     useful value to return, you can define it as returning <type>void</>.
+     In that case it must not end with a <command>SELECT</command>.
+     For example:
 
 <programlisting>
-CREATE FUNCTION clean_EMP () RETURNS integer AS '
+CREATE FUNCTION clean_EMP () RETURNS void AS '
     DELETE FROM EMP 
         WHERE EMP.salary &lt;= 0;
-    SELECT 1 AS ignore_this;
 ' LANGUAGE SQL;
 
 SELECT clean_EMP();
 </programlisting>
 
 <screen>
- x
----
- 1
+ clean_emp
+-----------
+
+(1 row)
 </screen>
     </para>
 

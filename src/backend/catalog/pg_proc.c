@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.89 2002/08/22 00:01:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.90 2002/08/23 16:41:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,24 +266,18 @@ ProcedureCreate(const char *procedureName,
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/* dependency on return type */
-	if (OidIsValid(returnType))
-	{
-		referenced.classId = RelOid_pg_type;
-		referenced.objectId = returnType;
-		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-	}
+	referenced.classId = RelOid_pg_type;
+	referenced.objectId = returnType;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/* dependency on input types */
 	for (i = 0; i < parameterCount; i++)
 	{
-		if (OidIsValid(typev[i]))
-		{
-			referenced.classId = RelOid_pg_type;
-			referenced.objectId = typev[i];
-			referenced.objectSubId = 0;
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-		}
+		referenced.classId = RelOid_pg_type;
+		referenced.objectId = typev[i];
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	heap_freetuple(tup);
@@ -324,10 +318,10 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 	int			rellogcols;		/* # of nondeleted columns in rel */
 	int			colindex;		/* physical column index */
 
-	/* guard against empty function body; OK only if no return type */
+	/* guard against empty function body; OK only if void return type */
 	if (queryTreeList == NIL)
 	{
-		if (rettype != InvalidOid)
+		if (rettype != VOIDOID)
 			elog(ERROR, "function declared to return %s, but no SELECT provided",
 				 format_type_be(rettype));
 		return;
@@ -340,13 +334,12 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 	tlist = parse->targetList;
 
 	/*
-	 * The last query must be a SELECT if and only if there is a return
-	 * type.
+	 * The last query must be a SELECT if and only if return type isn't VOID.
 	 */
-	if (rettype == InvalidOid)
+	if (rettype == VOIDOID)
 	{
 		if (cmd == CMD_SELECT)
-			elog(ERROR, "function declared with no return type, but final statement is a SELECT");
+			elog(ERROR, "function declared to return void, but final statement is a SELECT");
 		return;
 	}
 
@@ -573,13 +566,15 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	tuple = SearchSysCache(PROCOID, funcoid, 0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup of function %u failed", funcoid);
-
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
+	functyptype = get_typtype(proc->prorettype);
+
 	/* Disallow pseudotypes in arguments and result */
-	/* except that return type can be RECORD */
-	if (get_typtype(proc->prorettype) == 'p' &&
-		proc->prorettype != RECORDOID)
+	/* except that return type can be RECORD or VOID */
+	if (functyptype == 'p' &&
+		proc->prorettype != RECORDOID &&
+		proc->prorettype != VOIDOID)
 		elog(ERROR, "SQL functions cannot return type %s",
 			 format_type_be(proc->prorettype));
 
@@ -595,9 +590,6 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		elog(ERROR, "null prosrc");
 
 	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
-
-	/* check typtype to see if we have a predetermined return type */
-	functyptype = get_typtype(proc->prorettype);
 
 	querytree_list = pg_parse_and_rewrite(prosrc, proc->proargtypes, proc->pronargs);
 	checkretval(proc->prorettype, functyptype, querytree_list);

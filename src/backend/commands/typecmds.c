@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.10 2002/08/22 00:01:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.11 2002/08/23 16:41:37 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -203,19 +203,27 @@ DefineType(List *names, List *parameters)
 	outputOid = findTypeIOFunction(outputName, typoid, true);
 
 	/*
-	 * Verify that I/O procs return the expected thing.  OPAQUE is an allowed
-	 * (but deprecated) alternative to the fully type-safe choices.
+	 * Verify that I/O procs return the expected thing.  OPAQUE is an allowed,
+	 * but deprecated, alternative to the fully type-safe choices.
 	 */
 	resulttype = get_func_rettype(inputOid);
-	if (!((OidIsValid(typoid) && resulttype == typoid) ||
-		  resulttype == OPAQUEOID))
-		elog(ERROR, "Type input function %s must return %s or OPAQUE",
-			 NameListToString(inputName), typeName);
+	if (!(OidIsValid(typoid) && resulttype == typoid))
+	{
+		if (resulttype == OPAQUEOID)
+			elog(NOTICE, "DefineType: OPAQUE is deprecated, instead declare I/O functions using their true datatypes");
+		else
+			elog(ERROR, "Type input function %s must return %s",
+				 NameListToString(inputName), typeName);
+	}
 	resulttype = get_func_rettype(outputOid);
-	if (!(resulttype == CSTRINGOID ||
-		  resulttype == OPAQUEOID))
-		elog(ERROR, "Type output function %s must return CSTRING or OPAQUE",
-			 NameListToString(outputName));
+	if (resulttype != CSTRINGOID)
+	{
+		if (resulttype == OPAQUEOID)
+			elog(NOTICE, "DefineType: OPAQUE is deprecated, instead declare I/O functions using their true datatypes");
+		else
+			elog(ERROR, "Type output function %s must return cstring",
+				 NameListToString(outputName));
+	}
 
 	/*
 	 * now have TypeCreate do all the real work.
@@ -671,6 +679,10 @@ findTypeIOFunction(List *procname, Oid typeOid, bool isOutput)
 		 * or two arguments (data value, element OID).  The signature
 		 * may use OPAQUE in place of the actual type name; this is the
 		 * only possibility if the type doesn't yet exist as a shell.
+		 *
+		 * Note: although we could throw a NOTICE in this routine if OPAQUE
+		 * is used, we do not because of the probability that it'd be
+		 * duplicate with a notice issued in DefineType.
 		 */
 		if (OidIsValid(typeOid))
 		{
