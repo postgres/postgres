@@ -65,27 +65,10 @@ SELECT '' AS four, ABSTIME_TBL.*
   WHERE ABSTIME_TBL.f1 <?>
 	tinterval '["Apr 1 1950 00:00:00" "Dec 30 1999 23:00:00"]';
 
--- these four queries should return the same answer
--- the "infinity" and "-infinity" tuples in ABSTIME_TBL cannot be added and
--- therefore, should not show up in the results.
-SELECT '' AS three, ABSTIME_TBL.*
-  WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year') -- +3 years
-	< abstime 'Jan 14 14:00:00 1977';
-
-SELECT '' AS three, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year ago')	-- -3 years
-	< abstime 'Jan 14 14:00:00 1971';
-
-SELECT '' AS three, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year')        -- -(+3) years
-	< abstime 'Jan 14 14:00:00 1971';
-
-SELECT '' AS three, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year ago')    -- -(-3) years
-        < abstime 'Jan 14 14:00:00 1977';
-
-SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
-   WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1)
-	< abstime 'Jan 14 14:00:00 1971'
-   ORDER BY abstime, reltime;
-
+SELECT '' AS four, f1 AS abstime,
+  date_part('year', f1) AS year, date_part('month', f1) AS month,
+  date_part('day',f1) AS day, date_part('hour', f1) AS hour,
+  date_part('minute', f1) AS minute, date_part('second', f1) AS second
+  FROM ABSTIME_TBL
+  WHERE isfinite(f1) and f1 <> abstime 'current'
+  ORDER BY abstime;

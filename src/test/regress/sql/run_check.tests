@@ -31,8 +31,9 @@ parallel	group2
  	test	circle
  	test	date
  	test	time
- 	test	interval
  	test	timestamp
+ 	test	interval
+	test	abstime
  	test	reltime
 	test	tinterval
 	test	inet
@@ -42,7 +43,6 @@ parallel	group2
 	test	opr_sanity
 endparallel
 
-test	abstime		# Depends on the reltime test
 test	geometry	# Depends on point, lseg, box, path, polygon and circle
 test	horology	# Depends on interval, timestamp, reltime and abstime
 

@@ -20,10 +20,10 @@ circle
 geometry
 date
 time
-interval
 timestamp
-reltime
+interval
 abstime
+reltime
 tinterval
 horology
 inet
