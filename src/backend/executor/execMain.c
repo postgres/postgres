@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.194 2002/12/15 21:01:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.195 2002/12/18 00:14:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,22 @@
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 
+
+typedef struct execRowMark
+{
+	Relation	relation;
+	Index		rti;
+	char		resname[32];
+} execRowMark;
+
+typedef struct evalPlanQual
+{
+	Index		rti;
+	EState	   *estate;
+	PlanState  *planstate;
+	struct evalPlanQual *next;	/* stack of active PlanQual plans */
+	struct evalPlanQual *free;	/* list of free PlanQual plans */
+} evalPlanQual;
 
 /* decls for local routines only used within this module */
 static void InitPlan(QueryDesc *queryDesc);
@@ -69,6 +85,9 @@ static void ExecUpdate(TupleTableSlot *slot, ItemPointer tupleid,
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
 static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
+static void EvalPlanQualStart(evalPlanQual *epq, EState *estate,
+							  evalPlanQual *priorepq);
+static void EvalPlanQualStop(evalPlanQual *epq);
 
 /* end of local decls */
 
@@ -365,21 +384,6 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
  * ===============================================================
  */
 
-typedef struct execRowMark
-{
-	Relation	relation;
-	Index		rti;
-	char		resname[32];
-} execRowMark;
-
-typedef struct evalPlanQual
-{
-	Plan	   *plan;			/* XXX temporary */
-	PlanState  *planstate;
-	Index		rti;
-	EState		estate;
-	struct evalPlanQual *free;
-} evalPlanQual;
 
 /* ----------------------------------------------------------------
  *		InitPlan
@@ -518,10 +522,10 @@ InitPlan(QueryDesc *queryDesc)
 	}
 
 	/* mark EvalPlanQual not active */
-	estate->es_origPlan = plan;
+	estate->es_topPlan = plan;
 	estate->es_evalPlanQual = NULL;
-	estate->es_evTuple = NULL;
 	estate->es_evTupleNull = NULL;
+	estate->es_evTuple = NULL;
 	estate->es_useEvalPlan = false;
 
 	/*
@@ -1594,7 +1598,6 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	Relation	relation;
 	HeapTupleData tuple;
 	HeapTuple	copyTuple = NULL;
-	int			rtsize;
 	bool		endNode;
 
 	Assert(rti != 0);
@@ -1686,15 +1689,13 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	/*
 	 * Need to run a recheck subquery.	Find or create a PQ stack entry.
 	 */
-	epq = (evalPlanQual *) estate->es_evalPlanQual;
-	rtsize = length(estate->es_range_table);
+	epq = estate->es_evalPlanQual;
 	endNode = true;
 
 	if (epq != NULL && epq->rti == 0)
 	{
 		/* Top PQ stack entry is idle, so re-use it */
-		Assert(!(estate->es_useEvalPlan) &&
-			   epq->estate.es_evalPlanQual == NULL);
+		Assert(!(estate->es_useEvalPlan) && epq->next == NULL);
 		epq->rti = rti;
 		endNode = false;
 	}
@@ -1706,26 +1707,21 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	 * forget all what we done after Ra was suspended. Cool? -:))
 	 */
 	if (epq != NULL && epq->rti != rti &&
-		epq->estate.es_evTuple[rti - 1] != NULL)
+		epq->estate->es_evTuple[rti - 1] != NULL)
 	{
 		do
 		{
 			evalPlanQual *oldepq;
 
-			/* pop previous PlanQual from the stack */
-			epqstate = &(epq->estate);
-			oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;
-			Assert(oldepq->rti != 0);
 			/* stop execution */
-			ExecEndNode(epq->planstate);
-			ExecDropTupleTable(epqstate->es_tupleTable, true);
-			epqstate->es_tupleTable = NULL;
-			heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
-			epqstate->es_evTuple[epq->rti - 1] = NULL;
+			EvalPlanQualStop(epq);
+			/* pop previous PlanQual from the stack */
+			oldepq = epq->next;
+			Assert(oldepq && oldepq->rti != 0);
 			/* push current PQ to freePQ stack */
 			oldepq->free = epq;
 			epq = oldepq;
-			estate->es_evalPlanQual = (Pointer) epq;
+			estate->es_evalPlanQual = epq;
 		} while (epq->rti != rti);
 	}
 
@@ -1740,62 +1736,26 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 
 		if (newepq == NULL)		/* first call or freePQ stack is empty */
 		{
-			newepq = (evalPlanQual *) palloc(sizeof(evalPlanQual));
+			newepq = (evalPlanQual *) palloc0(sizeof(evalPlanQual));
 			newepq->free = NULL;
-
-			/*
-			 * Each stack level has its own copy of the plan tree.	This
-			 * is wasteful, but necessary until plan trees are fully
-			 * read-only.
-			 */
-			newepq->plan = copyObject(estate->es_origPlan);
-
-			/*
-			 * Init stack level's EState.  We share top level's copy of
-			 * es_result_relations array and other non-changing status. We
-			 * need our own tupletable, es_param_exec_vals, and other
-			 * changeable state.
-			 */
-			epqstate = &(newepq->estate);
-			memcpy(epqstate, estate, sizeof(EState));
-			epqstate->es_direction = ForwardScanDirection;
-			if (estate->es_origPlan->nParamExec > 0)
-				epqstate->es_param_exec_vals = (ParamExecData *)
-					palloc(estate->es_origPlan->nParamExec *
-						   sizeof(ParamExecData));
-			epqstate->es_tupleTable = NULL;
-			epqstate->es_per_tuple_exprcontext = NULL;
-
-			/*
-			 * Each epqstate must have its own es_evTupleNull state, but
-			 * all the stack entries share es_evTuple state.  This allows
-			 * sub-rechecks to inherit the value being examined by an
-			 * outer recheck.
-			 */
-			epqstate->es_evTupleNull = (bool *) palloc(rtsize * sizeof(bool));
-			if (epq == NULL)
-				/* first PQ stack entry */
-				epqstate->es_evTuple = (HeapTuple *)
-					palloc0(rtsize * sizeof(HeapTuple));
-			else
-				/* later stack entries share the same storage */
-				epqstate->es_evTuple = epq->estate.es_evTuple;
+			newepq->estate = NULL;
+			newepq->planstate = NULL;
 		}
 		else
 		{
-			/* recycle previously used EState */
-			epqstate = &(newepq->estate);
+			/* recycle previously used PlanQual */
+			Assert(newepq->estate == NULL);
+			epq->free = NULL;
 		}
 		/* push current PQ to the stack */
-		epqstate->es_evalPlanQual = (Pointer) epq;
+		newepq->next = epq;
 		epq = newepq;
-		estate->es_evalPlanQual = (Pointer) epq;
+		estate->es_evalPlanQual = epq;
 		epq->rti = rti;
 		endNode = false;
 	}
 
 	Assert(epq->rti == rti);
-	epqstate = &(epq->estate);
 
 	/*
 	 * Ok - we're requested for the same RTE.  Unfortunately we still have
@@ -1804,39 +1764,36 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	 * could make that work if insertion of the target tuple were
 	 * integrated with the Param mechanism somehow, so that the upper plan
 	 * nodes know that their children's outputs have changed.
+	 *
+	 * Note that the stack of free evalPlanQual nodes is quite useless at
+	 * the moment, since it only saves us from pallocing/releasing the
+	 * evalPlanQual nodes themselves.  But it will be useful once we
+	 * implement ReScan instead of end/restart for re-using PlanQual nodes.
 	 */
 	if (endNode)
 	{
 		/* stop execution */
-		ExecEndNode(epq->planstate);
-		ExecDropTupleTable(epqstate->es_tupleTable, true);
-		epqstate->es_tupleTable = NULL;
+		EvalPlanQualStop(epq);
 	}
+
+	/*
+	 * Initialize new recheck query.
+	 *
+	 * Note: if we were re-using PlanQual plans via ExecReScan, we'd need
+	 * to instead copy down changeable state from the top plan (including
+	 * es_result_relation_info, es_junkFilter) and reset locally changeable
+	 * state in the epq (including es_param_exec_vals, es_evTupleNull).
+	 */
+	EvalPlanQualStart(epq, estate, epq->next);
 
 	/*
 	 * free old RTE' tuple, if any, and store target tuple where
 	 * relation's scan node will see it
 	 */
+	epqstate = epq->estate;
 	if (epqstate->es_evTuple[rti - 1] != NULL)
 		heap_freetuple(epqstate->es_evTuple[rti - 1]);
 	epqstate->es_evTuple[rti - 1] = copyTuple;
-
-	/*
-	 * Initialize for new recheck query; be careful to copy down state
-	 * that might have changed in top EState.
-	 */
-	epqstate->es_result_relation_info = estate->es_result_relation_info;
-	epqstate->es_junkFilter = estate->es_junkFilter;
-	if (estate->es_origPlan->nParamExec > 0)
-		memset(epqstate->es_param_exec_vals, 0,
-			   estate->es_origPlan->nParamExec * sizeof(ParamExecData));
-	memset(epqstate->es_evTupleNull, false, rtsize * sizeof(bool));
-	epqstate->es_useEvalPlan = false;
-	Assert(epqstate->es_tupleTable == NULL);
-	epqstate->es_tupleTable =
-		ExecCreateTupleTable(estate->es_tupleTable->size);
-
-	epq->planstate = ExecInitNode(epq->plan, epqstate);
 
 	return EvalPlanQualNext(estate);
 }
@@ -1844,41 +1801,41 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 static TupleTableSlot *
 EvalPlanQualNext(EState *estate)
 {
-	evalPlanQual *epq = (evalPlanQual *) estate->es_evalPlanQual;
-	EState	   *epqstate = &(epq->estate);
-	evalPlanQual *oldepq;
+	evalPlanQual *epq = estate->es_evalPlanQual;
+	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 
 	Assert(epq->rti != 0);
 
 lpqnext:;
+	oldcontext = MemoryContextSwitchTo(epq->estate->es_query_cxt);
 	slot = ExecProcNode(epq->planstate);
+	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * No more tuples for this PQ. Continue previous one.
 	 */
 	if (TupIsNull(slot))
 	{
+		evalPlanQual *oldepq;
+
 		/* stop execution */
-		ExecEndNode(epq->planstate);
-		ExecDropTupleTable(epqstate->es_tupleTable, true);
-		epqstate->es_tupleTable = NULL;
-		heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
-		epqstate->es_evTuple[epq->rti - 1] = NULL;
+		EvalPlanQualStop(epq);
 		/* pop old PQ from the stack */
-		oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;
-		if (oldepq == (evalPlanQual *) NULL)
+		oldepq = epq->next;
+		if (oldepq == NULL)
 		{
-			epq->rti = 0;		/* this is the first (oldest) */
-			estate->es_useEvalPlan = false;		/* PQ - mark as free and	  */
-			return (NULL);		/* continue Query execution   */
+			/* this is the first (oldest) PQ - mark as free */
+			epq->rti = 0;
+			estate->es_useEvalPlan = false;
+			/* and continue Query execution */
+			return (NULL);
 		}
 		Assert(oldepq->rti != 0);
 		/* push current PQ to freePQ stack */
 		oldepq->free = epq;
 		epq = oldepq;
-		epqstate = &(epq->estate);
-		estate->es_evalPlanQual = (Pointer) epq;
+		estate->es_evalPlanQual = epq;
 		goto lpqnext;
 	}
 
@@ -1888,40 +1845,130 @@ lpqnext:;
 static void
 EndEvalPlanQual(EState *estate)
 {
-	evalPlanQual *epq = (evalPlanQual *) estate->es_evalPlanQual;
-	EState	   *epqstate = &(epq->estate);
-	evalPlanQual *oldepq;
+	evalPlanQual *epq = estate->es_evalPlanQual;
 
 	if (epq->rti == 0)			/* plans already shutdowned */
 	{
-		Assert(epq->estate.es_evalPlanQual == NULL);
+		Assert(epq->next == NULL);
 		return;
 	}
 
 	for (;;)
 	{
+		evalPlanQual *oldepq;
+
 		/* stop execution */
-		ExecEndNode(epq->planstate);
-		ExecDropTupleTable(epqstate->es_tupleTable, true);
-		epqstate->es_tupleTable = NULL;
-		if (epqstate->es_evTuple[epq->rti - 1] != NULL)
-		{
-			heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
-			epqstate->es_evTuple[epq->rti - 1] = NULL;
-		}
+		EvalPlanQualStop(epq);
 		/* pop old PQ from the stack */
-		oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;
-		if (oldepq == (evalPlanQual *) NULL)
+		oldepq = epq->next;
+		if (oldepq == NULL)
 		{
-			epq->rti = 0;		/* this is the first (oldest) */
-			estate->es_useEvalPlan = false;		/* PQ - mark as free */
+			/* this is the first (oldest) PQ - mark as free */
+			epq->rti = 0;
+			estate->es_useEvalPlan = false;
 			break;
 		}
 		Assert(oldepq->rti != 0);
 		/* push current PQ to freePQ stack */
 		oldepq->free = epq;
 		epq = oldepq;
-		epqstate = &(epq->estate);
-		estate->es_evalPlanQual = (Pointer) epq;
+		estate->es_evalPlanQual = epq;
 	}
+}
+
+/*
+ * Start execution of one level of PlanQual.
+ *
+ * This is a cut-down version of ExecutorStart(): we copy some state from
+ * the top-level estate rather than initializing it fresh.
+ */
+static void
+EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
+{
+	EState	   *epqstate;
+	int			rtsize;
+	MemoryContext oldcontext;
+
+	rtsize = length(estate->es_range_table);
+
+	epq->estate = epqstate = CreateExecutorState();
+
+	oldcontext = MemoryContextSwitchTo(epqstate->es_query_cxt);
+
+	/*
+	 * The epqstates share the top query's copy of unchanging state such
+	 * as the snapshot, rangetable, result-rel info, and external Param info.
+	 * They need their own copies of local state, including a tuple table,
+	 * es_param_exec_vals, etc.
+	 */
+	epqstate->es_direction = ForwardScanDirection;
+	epqstate->es_snapshot = estate->es_snapshot;
+	epqstate->es_range_table = estate->es_range_table;
+	epqstate->es_result_relations = estate->es_result_relations;
+	epqstate->es_num_result_relations = estate->es_num_result_relations;
+	epqstate->es_result_relation_info = estate->es_result_relation_info;
+	epqstate->es_junkFilter = estate->es_junkFilter;
+	epqstate->es_into_relation_descriptor = estate->es_into_relation_descriptor;
+	epqstate->es_param_list_info = estate->es_param_list_info;
+	if (estate->es_topPlan->nParamExec > 0)
+		epqstate->es_param_exec_vals = (ParamExecData *)
+			palloc0(estate->es_topPlan->nParamExec * sizeof(ParamExecData));
+	epqstate->es_rowMark = estate->es_rowMark;
+	epqstate->es_instrument = estate->es_instrument;
+	epqstate->es_topPlan = estate->es_topPlan;
+	/*
+	 * Each epqstate must have its own es_evTupleNull state, but
+	 * all the stack entries share es_evTuple state.  This allows
+	 * sub-rechecks to inherit the value being examined by an
+	 * outer recheck.
+	 */
+	epqstate->es_evTupleNull = (bool *) palloc0(rtsize * sizeof(bool));
+	if (priorepq == NULL)
+		/* first PQ stack entry */
+		epqstate->es_evTuple = (HeapTuple *)
+			palloc0(rtsize * sizeof(HeapTuple));
+	else
+		/* later stack entries share the same storage */
+		epqstate->es_evTuple = priorepq->estate->es_evTuple;
+
+	epqstate->es_tupleTable =
+		ExecCreateTupleTable(estate->es_tupleTable->size);
+
+	epq->planstate = ExecInitNode(estate->es_topPlan, epqstate);
+
+	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
+ * End execution of one level of PlanQual.
+ *
+ * This is a cut-down version of ExecutorEnd(); basically we want to do most
+ * of the normal cleanup, but *not* close result relations (which we are
+ * just sharing from the outer query).
+ */
+static void
+EvalPlanQualStop(evalPlanQual *epq)
+{
+	EState	   *epqstate = epq->estate;
+	MemoryContext oldcontext;
+
+	oldcontext = MemoryContextSwitchTo(epqstate->es_query_cxt);
+
+	ExecEndNode(epq->planstate);
+
+	ExecDropTupleTable(epqstate->es_tupleTable, true);
+	epqstate->es_tupleTable = NULL;
+
+	if (epqstate->es_evTuple[epq->rti - 1] != NULL)
+	{
+		heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
+		epqstate->es_evTuple[epq->rti - 1] = NULL;
+	}
+
+	MemoryContextSwitchTo(oldcontext);
+
+	FreeExecutorState(epqstate);
+
+	epq->estate = NULL;
+	epq->planstate = NULL;
 }
