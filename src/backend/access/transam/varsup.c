@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.28 2000/04/12 17:14:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.29 2000/07/25 20:18:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 static void GetNewObjectIdBlock(Oid *oid_return, int oid_block_size);
 static void VariableRelationGetNextOid(Oid *oid_return);
 static void VariableRelationGetNextXid(TransactionId *xidP);
-static void VariableRelationPutNextOid(Oid *oidP);
+static void VariableRelationPutNextOid(Oid oid);
 
 /* ---------------------
  *		spin lock for oid generation
@@ -30,7 +30,12 @@ static void VariableRelationPutNextOid(Oid *oidP);
  */
 int			OidGenLockId;
 
+/* ---------------------
+ *		pointer to "variable cache" in shared memory (set up by shmem.c)
+ * ---------------------
+ */
 VariableCache ShmemVariableCache = NULL;
+
 
 /* ----------------------------------------------------------------
  *			  variable relation query/update routines
@@ -48,7 +53,7 @@ VariableRelationGetNextXid(TransactionId *xidP)
 	VariableRelationContents var;
 
 	/* ----------------
-	 * We assume that a spinlock has been acquire to guarantee
+	 * We assume that a spinlock has been acquired to guarantee
 	 * exclusive access to the variable relation.
 	 * ----------------
 	 */
@@ -76,6 +81,7 @@ VariableRelationGetNextXid(TransactionId *xidP)
 	var = (VariableRelationContents) BufferGetBlock(buf);
 
 	TransactionIdStore(var->nextXidData, xidP);
+
 	ReleaseBuffer(buf);
 }
 
@@ -90,7 +96,7 @@ VariableRelationPutNextXid(TransactionId xid)
 	VariableRelationContents var;
 
 	/* ----------------
-	 * We assume that a spinlock has been acquire to guarantee
+	 * We assume that a spinlock has been acquired to guarantee
 	 * exclusive access to the variable relation.
 	 * ----------------
 	 */
@@ -133,7 +139,7 @@ VariableRelationGetNextOid(Oid *oid_return)
 	VariableRelationContents var;
 
 	/* ----------------
-	 * We assume that a spinlock has been acquire to guarantee
+	 * We assume that a spinlock has been acquired to guarantee
 	 * exclusive access to the variable relation.
 	 * ----------------
 	 */
@@ -141,14 +147,12 @@ VariableRelationGetNextOid(Oid *oid_return)
 	/* ----------------
 	 *	if the variable relation is not initialized, then we
 	 *	assume we are running at bootstrap time and so we return
-	 *	an invalid object id -- during this time GetNextBootstrapObjectId
-	 *	should be called instead..
+	 *	an invalid object id (this path should never be taken, probably).
 	 * ----------------
 	 */
 	if (!RelationIsValid(VariableRelation))
 	{
-		if (PointerIsValid(oid_return))
-			(*oid_return) = InvalidOid;
+		(*oid_return) = InvalidOid;
 		return;
 	}
 
@@ -162,32 +166,12 @@ VariableRelationGetNextOid(Oid *oid_return)
 	if (!BufferIsValid(buf))
 	{
 		SpinRelease(OidGenLockId);
-		elog(ERROR, "VariableRelationGetNextXid: ReadBuffer failed");
+		elog(ERROR, "VariableRelationGetNextOid: ReadBuffer failed");
 	}
 
 	var = (VariableRelationContents) BufferGetBlock(buf);
 
-	if (PointerIsValid(oid_return))
-	{
-
-		/* ----------------
-		 * nothing up my sleeve...	what's going on here is that this code
-		 * is guaranteed never to be called until all files in data/base/
-		 * are created, and the template database exists.  at that point,
-		 * we want to append a pg_database tuple.  the first time we do
-		 * this, the oid stored in pg_variable will be bogus, so we use
-		 * a bootstrap value defined at the top of this file.
-		 *
-		 * this comment no longer holds true.  This code is called before
-		 * all of the files in data/base are created and you can't rely
-		 * on system oid's to be less than BootstrapObjectIdData. mer 9/18/91
-		 * ----------------
-		 */
-		if (OidIsValid(var->nextOid))
-			(*oid_return) = var->nextOid;
-		else
-			(*oid_return) = BootstrapObjectIdData;
-	}
+	(*oid_return) = var->nextOid;
 
 	ReleaseBuffer(buf);
 }
@@ -197,13 +181,13 @@ VariableRelationGetNextOid(Oid *oid_return)
  * --------------------------------
  */
 static void
-VariableRelationPutNextOid(Oid *oidP)
+VariableRelationPutNextOid(Oid oid)
 {
 	Buffer		buf;
 	VariableRelationContents var;
 
 	/* ----------------
-	 * We assume that a spinlock has been acquire to guarantee
+	 * We assume that a spinlock has been acquired to guarantee
 	 * exclusive access to the variable relation.
 	 * ----------------
 	 */
@@ -214,16 +198,6 @@ VariableRelationPutNextOid(Oid *oidP)
 	 */
 	if (!RelationIsValid(VariableRelation))
 		return;
-
-	/* ----------------
-	 *	sanity check
-	 * ----------------
-	 */
-	if (!PointerIsValid(oidP))
-	{
-		SpinRelease(OidGenLockId);
-		elog(ERROR, "VariableRelationPutNextOid: invalid oid pointer");
-	}
 
 	/* ----------------
 	 *	read the variable page, update the nextXid field and
@@ -240,7 +214,7 @@ VariableRelationPutNextOid(Oid *oidP)
 
 	var = (VariableRelationContents) BufferGetBlock(buf);
 
-	var->nextOid = (*oidP);
+	var->nextOid = oid;
 
 	WriteBuffer(buf);
 }
@@ -253,20 +227,20 @@ VariableRelationPutNextOid(Oid *oidP)
 /* ----------------
  *		GetNewTransactionId
  *
- *		In the version 2 transaction system, transaction id's are
- *		restricted in several ways.
+ *		Transaction IDs are allocated via a cache in shared memory.
+ *		Each time we need more IDs, we advance the "next XID" value
+ *		in pg_variable by VAR_XID_PREFETCH and set the cache to
+ *		show that many XIDs as available.  Then, allocating those XIDs
+ *		requires just a spinlock and not a buffer read/write cycle.
  *
- *		-- Old comments removed
+ *		Since the cache is shared across all backends, cached but unused
+ *		XIDs are not lost when a backend exits, only when the postmaster
+ *		quits or forces shared memory reinit.  So we can afford to have
+ *		a pretty big value of VAR_XID_PREFETCH.
  *
- *		Second, since we may someday preform compression of the data
- *		in the log and time relations, we cause the numbering of the
- *		transaction ids to begin at 512.  This means that some space
- *		on the page of the log and time relations corresponding to
- *		transaction id's 0 - 510 will never be used.  This space is
- *		in fact used to store the version number of the postgres
- *		transaction log and will someday store compression information
- *		about the log.	-- this is also old comments...
- *
+ *		This code does not worry about initializing the transaction counter
+ *		(see transam.c's InitializeTransactionLog() for that).  We also
+ *		ignore the possibility that the counter could someday wrap around.
  * ----------------
  */
 
@@ -352,44 +326,65 @@ ReadNewTransactionId(TransactionId *xid)
  *		GetNewObjectIdBlock
  *
  *		This support function is used to allocate a block of object ids
- *		of the given size.	applications wishing to do their own object
- *		id assignments should use this
+ *		of the given size.
  * ----------------
  */
 static void
-GetNewObjectIdBlock(Oid *oid_return,	/* place to return the new object
-										 * id */
+GetNewObjectIdBlock(Oid *oid_return,	/* place to return the first new
+										 * object id */
 					int oid_block_size) /* number of oids desired */
 {
+	Oid			firstfreeoid;
 	Oid			nextoid;
 
 	/* ----------------
-	 *	SOMEDAY obtain exclusive access to the variable relation page
-	 *	That someday is today -mer 6 Aug 1992
+	 *  Obtain exclusive access to the variable relation page
 	 * ----------------
 	 */
 	SpinAcquire(OidGenLockId);
 
 	/* ----------------
 	 *	get the "next" oid from the variable relation
-	 *	and give it to the caller.
 	 * ----------------
 	 */
-	VariableRelationGetNextOid(&nextoid);
-	if (PointerIsValid(oid_return))
-		(*oid_return) = nextoid;
+	VariableRelationGetNextOid(&firstfreeoid);
 
 	/* ----------------
-	 *	now increment the variable relation's next oid
-	 *	field by the size of the oid block requested.
+	 *	Allocate the range of OIDs to be returned to the caller.
+	 *
+	 *	There are two things going on here.
+	 *
+	 *	One: in a virgin database pg_variable will initially contain zeroes,
+	 *	so we will read out firstfreeoid = InvalidOid.  We want to start
+	 *	allocating OIDs at BootstrapObjectIdData instead (OIDs below that
+	 *	are reserved for static assignment in the initial catalog data).
+	 *
+	 *	Two: if a database is run long enough, the OID counter will wrap
+	 *	around.  We must not generate an invalid OID when that happens,
+	 *	and it seems wise not to generate anything in the reserved range.
+	 *	Therefore we advance to BootstrapObjectIdData in this case too.
+	 *
+	 *	The comparison here assumes that Oid is an unsigned type.
+	 */
+	nextoid = firstfreeoid + oid_block_size;
+
+	if (! OidIsValid(firstfreeoid) || nextoid < firstfreeoid)
+	{
+		/* Initialization or wraparound time, force it up to safe range */
+		firstfreeoid = BootstrapObjectIdData;
+		nextoid = firstfreeoid + oid_block_size;
+	}
+
+	(*oid_return) = firstfreeoid;
+
+	/* ----------------
+	 *	Update the variable relation to show the block range as used.
 	 * ----------------
 	 */
-	nextoid += oid_block_size;
-	VariableRelationPutNextOid(&nextoid);
+	VariableRelationPutNextOid(nextoid);
 
 	/* ----------------
-	 *	SOMEDAY relinquish our lock on the variable relation page
-	 *	That someday is today -mer 6 Apr 1992
+	 *	Relinquish our lock on the variable relation page
 	 * ----------------
 	 */
 	SpinRelease(OidGenLockId);
@@ -406,9 +401,14 @@ GetNewObjectIdBlock(Oid *oid_return,	/* place to return the new object
  *		relation by 32 for each backend.
  *
  *		Note:  32 has no special significance.	We don't want the
- *			   number to be too large because if when the backend
+ *			   number to be too large because when the backend
  *			   terminates, we lose the oids we cached.
  *
+ *		Question: couldn't we use a shared-memory cache just like XIDs?
+ *		That would allow a larger interval between pg_variable updates
+ *		without cache losses.  Note, however, that we can assign an OID
+ *		without even a spinlock from the backend-local OID cache.
+ *		Maybe two levels of caching would be good.
  * ----------------
  */
 
@@ -431,11 +431,7 @@ GetNewObjectId(Oid *oid_return) /* place to return the new object id */
 		int			oid_block_size = VAR_OID_PREFETCH;
 
 		/* ----------------
-		 *		during bootstrap time, we want to allocate oids
-		 *		one at a time.	Otherwise there might be some
-		 *		bootstrap oid's left in the block we prefetch which
-		 *		would be passed out after the variable relation was
-		 *		initialized.  This would be bad.
+		 *		Make sure pg_variable is open.
 		 * ----------------
 		 */
 		if (!RelationIsValid(VariableRelation))
@@ -469,12 +465,11 @@ GetNewObjectId(Oid *oid_return) /* place to return the new object id */
 void
 CheckMaxObjectId(Oid assigned_oid)
 {
-	Oid			pass_oid;
-
+	Oid			temp_oid;
 
 	if (prefetched_oid_count == 0)		/* make sure next/max is set, or
 										 * reload */
-		GetNewObjectId(&pass_oid);
+		GetNewObjectId(&temp_oid);
 
 	/* ----------------
 	 *	If we are below prefetched limits, do nothing
@@ -488,7 +483,6 @@ CheckMaxObjectId(Oid assigned_oid)
 	 *	If we are here, we are coming from a 'copy from' with oid's
 	 *
 	 *	If we are in the prefetched oid range, just bump it up
-	 *
 	 * ----------------
 	 */
 
@@ -506,21 +500,19 @@ CheckMaxObjectId(Oid assigned_oid)
 	 *	but we are loading oid's that we can not guarantee are unique
 	 *	anyway, so we must rely on the user
 	 *
-	 *
 	 * We now:
 	 *	  set the variable relation with the new max oid
 	 *	  force the backend to reload its oid cache
 	 *
-	 * We use the oid cache so we don't have to update the variable
-	 * relation every time
-	 *
+	 * By reloading the oid cache, we don't have to update the variable
+	 * relation every time when sequential OIDs are being loaded by COPY.
 	 * ----------------
 	 */
 
-	pass_oid = assigned_oid;
-	VariableRelationPutNextOid(&pass_oid);		/* not modified */
-	prefetched_oid_count = 0;	/* force reload */
-	pass_oid = assigned_oid;
-	GetNewObjectId(&pass_oid);	/* throw away returned oid */
+	SpinAcquire(OidGenLockId);
+	VariableRelationPutNextOid(assigned_oid);
+	SpinRelease(OidGenLockId);
 
+	prefetched_oid_count = 0;	/* force reload */
+	GetNewObjectId(&temp_oid);	/* cause target OID to be allocated */
 }
