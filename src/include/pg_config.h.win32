@@ -19,6 +19,7 @@
 #define BLCKSZ	8192
 
 #define INDEX_MAX_KEYS		16
+#define FUNC_MAX_ARGS		INDEX_MAX_KEYS
 
 #define HAVE_ATEXIT
 #define HAVE_MEMMOVE
