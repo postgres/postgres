@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.3 1996/10/31 11:09:37 scrappy Exp $
+ * $Id: port-protos.h,v 1.4 1997/01/03 04:59:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,10 +35,17 @@
  * begin with an underscore is fairly tricky, and some versions of
  * NetBSD (like 1.0, and 1.0A pre June 1995) have no dlerror.)
  */
-#define	pg_dlopen(f)	BSD44_derived_dlopen(f, 1)
-#define	pg_dlsym	BSD44_derived_dlsym
-#define	pg_dlclose	BSD44_derived_dlclose
-#define	pg_dlerror	BSD44_derived_dlerror
+#if !defined(__FreeBSD__)
+# define	pg_dlopen(f)	BSD44_derived_dlopen(f, 1)
+# define	pg_dlsym	BSD44_derived_dlsym
+# define	pg_dlclose	BSD44_derived_dlclose
+# define	pg_dlerror	BSD44_derived_dlerror
+#else
+# define	pg_dlopen(f)	dlopen(f, 1)
+# define	pg_dlsym	dlsym
+# define	pg_dlclose	dlclose
+# define	pg_dlerror	dlerror
+#endif
 
 char *		BSD44_derived_dlerror(void);
 void *		BSD44_derived_dlopen(const char *filename, int num);

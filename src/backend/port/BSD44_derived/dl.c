@@ -45,6 +45,8 @@ static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
 
 #include "port-protos.h"
 
+#if !defined(__FreeBSD__) 
+
 static char	error_message[BUFSIZ];
 
 char *
@@ -101,3 +103,5 @@ BSD44_derived_dlclose(void *handle)
 	dlclose(handle);
 #endif
 }
+
+#endif /* __FreeBSD__ */
