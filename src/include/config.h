@@ -13,6 +13,8 @@
 #define MAXPATHLEN      80
 #endif
 
+#define HAVE_MEMMOVE
+
 #if defined(sequent) 
 #  define NEED_UNION_SEMUN 
 #endif
@@ -62,6 +64,7 @@
 
 #if defined(sparc)
 #  define USE_POSIX_TIME
+#  undef HAVE_MEMMOVE
 #endif
 
 #if defined(sparc_solaris)
@@ -103,7 +106,6 @@
 #  define USE_LIMITS_H
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
-#  define HAVE_MEMMOVE
 #endif
 
 #if defined(bsdi)
