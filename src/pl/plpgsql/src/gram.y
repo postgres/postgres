@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.19 2001/05/21 14:22:18 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.20 2001/05/31 17:15:40 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -355,7 +355,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 					{
 						plpgsql_ns_rename($2, $4);
 					}
-				| decl_varname K_CURSOR decl_cursor_args K_IS K_SELECT decl_cursor_query
+				| decl_varname K_CURSOR decl_cursor_args decl_is_from K_SELECT decl_cursor_query
 					{
 						PLpgSQL_var *new;
 						PLpgSQL_expr *curname_def;
@@ -499,7 +499,9 @@ decl_cursor_openparen : '('
 						plpgsql_ns_push(NULL);
 					}
 				;
-				
+
+decl_is_from	:	K_IS |		/* Oracle */
+					K_FOR;		/* ANSI */
 
 decl_aliasitem	: T_WORD
 					{
