@@ -530,7 +530,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
     <variablelist>
      <varlistentry>
       <term>
-       XACTISOLEVEL
+       XACTISOLEVEL | TRANSACTION ISOLATION LEVEL
       </term>
       <listitem>
        <para>
@@ -556,15 +556,88 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  </term>
 	  <listitem>
 	   <para>
-	    Sets the cost of a heap scan to the default value.
+		Sets the isolation level for transactions to
+		'SERIALIZABLE' or 'COMMITTED'.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+
+    <variablelist>
+     <varlistentry>
+      <term>
+       CLIENT_ENCODING | NAMES
+      </term>
+      <listitem>
+       <para>
+	Sets the multi-byte client encoding
+	
+	<variablelist>
+	 <varlistentry>
+	  <term>
+	   <replaceable class="parameter">value</replaceable>
+	  </term>
+	  <listitem>
+	   <para>
+		Sets the multi-byte client encoding.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+   </para>
+	 
+	 <varlistentry>
+	  <term>
+	   DEFAULT
+	  </term>
+	  <listitem>
+	   <para>
+		Sets the multi-byte client encoding.
 	   </para>
 	  </listitem>
 	 </varlistentry>
 	</variablelist>
        </para>
        <para>
-	The frontend may be initialized by setting the PGCOSTHEAP
-	environment variable.
+	This is only enabled if multi-byte was specified to configure.
+       </para>
+
+    <variablelist>
+     <varlistentry>
+      <term>
+       SERVER_ENCODING
+      </term>
+      <listitem>
+       <para>
+	Sets the multi-byte server encoding
+	
+	<variablelist>
+	 <varlistentry>
+	  <term>
+	   <replaceable class="parameter">value</replaceable>
+	  </term>
+	  <listitem>
+	   <para>
+		Sets the multi-byte server encoding.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+   </para>
+	 
+	 <varlistentry>
+	  <term>
+	   DEFAULT
+	  </term>
+	  <listitem>
+	   <para>
+		Sets the multi-byte server encoding.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+       <para>
+	This is only enabled if multi-byte was specified to configure.
        </para>
 
 
