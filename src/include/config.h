@@ -8,19 +8,15 @@
 
 #define BLCKSZ	8192
 
-#if defined(aix)
-#define TERMIOS_H_LOCATION <termios.h>
-#else
-#define TERMIOS_H_LOCATION <sys/termios.h>
-#endif
-
 #if !defined(nextstep)
 #define USE_VALUES_H
 #endif
 
 #define HAVE_MEMMOVE
+#define HAVE_TERMIOS_H
 
 #if defined(aix)
+#  undef HAVE_TERMIOS_H
 #  define CLASS_CONFLICT 
 #  define DISABLE_XOPEN_NLS 
 #  define NEED_ISINF

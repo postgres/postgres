@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.27 1997/01/08 23:25:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.28 1997/01/24 17:47:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,11 @@
 #include "libpq/pqsignal.h"
 #include "libpq-fe.h"
 #include <sys/ioctl.h>
-#include TERMIOS_H_LOCATION
+#ifndef HAVE_TERMIOS_H
+# include <sys/termios.h>
+#else
+# include <termios.h>
+#endif
 
 
 #ifdef TIOCGWINSZ
