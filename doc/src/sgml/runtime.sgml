@@ -62,7 +62,7 @@
     the log file:
 
     <ProgramListing>
-% postmaster -d >& pm.log &
+% postmaster -d > pm.log 2>&1 &
     </ProgramListing>
 
     If you do not wish to see these messages, you can type

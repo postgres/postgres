@@ -546,7 +546,7 @@ Compile the program.  Type
 
 <ProgramListing>
 $ cd /usr/src/pgsql/src
-$ gmake all >& make.log &
+$ gmake all > make.log 2>&1 &
 $ tail -f make.log
 </ProgramListing>
 </Para>
@@ -589,7 +589,7 @@ then recompile again.
      be specified on the command line using the COPT variable.
      For example, typing
 <ProgramListing>
-$ gmake COPT="-g" all >& make.log &
+$ gmake COPT="-g" all > make.log 2>&1 &
 </ProgramListing>
      would invoke your compiler's <option>-g</option> option in all steps of the
      build.  See <filename>src/Makefile.global.in</filename> for further details.
@@ -601,7 +601,7 @@ $ gmake COPT="-g" all >& make.log &
  Install the program.  Type
 <ProgramListing>
 $ cd /usr/src/pgsql/src
-$ gmake install >& make.install.log &
+$ gmake install > make.install.log 2>&1 &
 $ tail -f make.install.log
 </ProgramListing>
 </Para>
