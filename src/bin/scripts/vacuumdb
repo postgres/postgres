@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.18 2001/09/22 04:28:12 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.19 2001/09/30 22:17:51 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ dbname=
 alldb=
 quiet=0
 
-while [ $# -gt 0 ]
+while [ "$#" -gt 0 ]
 do
     case "$1" in
 	--help|-\?)
@@ -160,7 +160,7 @@ for db in $dbname
 do
         [ "$alldb" -a "$quiet" -ne 1 ] && echo "Vacuuming $db"
 	${PATHNAME}psql $PSQLOPT $ECHOOPT -c "VACUUM $full $verbose $analyze $table" -d $db
-	if [ $? -ne 0 ]; then
+	if [ "$?" -ne 0 ]; then
 	    echo "$CMDNAME: vacuum $table $db failed" 1>&2
 	    exit 1
 	fi

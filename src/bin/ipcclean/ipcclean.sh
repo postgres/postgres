@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.11 2001/05/24 15:53:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.12 2001/09/30 22:17:50 momjian Exp $
 #
 
 CMDNAME=`basename $0`
@@ -74,14 +74,14 @@ if [ `uname` = 'Linux' ]; then
         # (This check is conceptually phony, but it's
         # useful anyway in practice.)
         ps hj $ipcs_cpid $ipcs_lpid >/dev/null 2>&1
-        if [ $? -eq 0 ]; then
+        if [ "$?" -eq 0 ]; then
             echo "skipped; process still exists (pid $ipcs_cpid or $ipcs_lpid)."
 	    continue
 	fi
 
         # try remove
         ipcrm shm $ipcs_shmid
-        if [ $? -eq 0 ]; then
+        if [ "$?" -eq 0 ]; then
             did_anything=t
         else
             exit
@@ -93,7 +93,7 @@ if [ `uname` = 'Linux' ]; then
         echo -n "Semaphore $val ... "
         # try remove
         ipcrm sem $val
-        if [ $? -eq 0 ]; then
+        if [ "$?" -eq 0 ]; then
             did_anything=t
         else
             exit

@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.12 2001/05/17 21:12:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.13 2001/09/30 22:17:51 momjian Exp $
 
 CMDNAME=`basename $0`
 
@@ -77,7 +77,7 @@ cleanschema=
 globals_only=
 
 
-while [ $# -gt 0 ] ; do
+while [ "$#" -gt 0 ] ; do
     case $1 in
         --help)
                 usage=t

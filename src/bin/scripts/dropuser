@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.13 2001/09/22 04:28:12 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.14 2001/09/30 22:17:51 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -34,7 +34,7 @@ else
 fi
 
 
-while [ $# -gt 0 ]
+while [ "$#" -gt 0 ]
 do
     case "$1" in
 	--help|-\?)
@@ -121,7 +121,7 @@ fi
 if [ -z "$DelUser" ]; then
 	$ECHO_N "Enter name of user to delete: "$ECHO_C
 	read DelUser
-	[ $? -ne 0 ] && exit 1
+	[ "$?" -ne 0 ] && exit 1
 fi
 
 
@@ -130,7 +130,7 @@ if [ "$forcedel" = f ]; then
 	$ECHO_N "Are you sure? (y/n) "$ECHO_C
 	read REPLY
 
-	[ $? -eq 1 ] && exit 1
+	[ "$?" -eq 1 ] && exit 1
 	[ "$REPLY" != "y" -a "$REPLY" != "Y" ] && exit 0
 fi
 
@@ -139,7 +139,7 @@ DelUser=`echo "$DelUser" | sed 's/\"/\\\"/g'`
 
 ${PATHNAME}psql $PSQLOPT -d template1 -c "DROP USER \"$DelUser\""
 
-if [ $? -ne 0 ]; then
+if [ "$?" -ne 0 ]; then
 	echo "$CMDNAME: deletion of user \"$DelUser\" failed" 1>&2
 	exit 1
 fi

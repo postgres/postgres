@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.30 2001/09/22 04:28:12 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.31 2001/09/30 22:17:51 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ fi
 # ----------
 # Get options, language name and dbname
 # ----------
-while [ $# -gt 0 ]
+while [ "$#" -gt 0 ]
 do
     case "$1" in 
 	--help|-\?)
@@ -237,7 +237,7 @@ if [ "$showsql" = yes ]; then
 	echo "$sqlcmd"
 fi
 res=`$PSQL "$sqlcmd"`
-if [ $? -ne 0 ]; then
+if [ "$?" -ne 0 ]; then
 	echo "$CMDNAME: external error" 1>&2
 	exit 1
 fi
@@ -270,7 +270,7 @@ if [ "$handlerexists" = no ]; then
 		echo "$sqlcmd"
 	fi
 	$PSQL "$sqlcmd"
-	if [ $? -ne 0 ]; then
+	if [ "$?" -ne 0 ]; then
 		echo "$CMDNAME: language installation failed" 1>&2
 		exit 1
 	fi
@@ -281,7 +281,7 @@ if [ "$showsql" = yes ]; then
 	echo "$sqlcmd"
 fi
 $PSQL "$sqlcmd"
-if [ $? -ne 0 ]; then
+if [ "$?" -ne 0 ]; then
 	echo "$CMDNAME: language installation failed" 1>&2
 	exit 1
 fi

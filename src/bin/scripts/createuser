@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.21 2001/09/22 04:28:12 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.22 2001/09/30 22:17:51 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -39,7 +39,7 @@ else
 fi
 
 
-while [ $# -gt 0 ]
+while [ "$#" -gt 0 ]
 do
     case "$1" in
 	--help|-\?)
@@ -174,7 +174,7 @@ trap 'stty echo >/dev/null 2>&1' 1 2 3 15
 if [ -z "$NewUser" ]; then
 	$ECHO_N "Enter name of user to add: "$ECHO_C
 	read NewUser
-	[ $? -ne 0 ] && exit 1
+	[ "$?" -ne 0 ] && exit 1
 fi
 
 if [ "$PwPrompt" ]; then
@@ -198,7 +198,7 @@ fi
 if [ -z "$CanCreateDb" ]; then
 	$ECHO_N "Shall the new user be allowed to create databases? (y/n) "$ECHO_C
 	read REPLY
-	[ $? -ne 0 ] && exit 1
+	[ "$?" -ne 0 ] && exit 1
 	if [ "$REPLY" = "y" -o "$REPLY" = "Y" ]; then
 		CanCreateDb=t
 	else
@@ -209,7 +209,7 @@ fi
 if [ -z "$CanAddUser" ]; then
 	$ECHO_N "Shall the new user be allowed to create more new users? (y/n) "$ECHO_C
 	read REPLY
-	[ $? -ne 0 ] && exit 1
+	[ "$?" -ne 0 ] && exit 1
 	if [ "$REPLY" = "y" -o "$REPLY" = "Y" ]; then
 		CanAddUser=t
 	else
@@ -239,7 +239,7 @@ SUBQUERY=
 [ "$CanAddUser" = f ] &&  QUERY="$QUERY NOCREATEUSER"
 
 ${PATHNAME}psql -c "$QUERY" -d template1 $PSQLOPT
-if [ $? -ne 0 ]; then
+if [ "$?" -ne 0 ]; then
 	echo "$CMDNAME: creation of user \"$NewUser\" failed" 1>&2
 	exit 1
 fi

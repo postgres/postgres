@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.11 2001/02/18 18:33:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.12 2001/09/30 22:17:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -125,10 +125,10 @@ trap 'echo "Caught signal." ; exit_nicely' 1 2 3 15
 # umask must disallow access to group, other for files and dirs
 umask 077
 
-if [ ! -d $PGALTDATA ]; then
+if [ ! -d "$PGALTDATA" ]; then
 	echo "Creating directory $PGALTDATA"
 	mkdir "$PGALTDATA"
-	if [ $? -ne 0 ]; then
+	if [ "$?" -ne 0 ]; then
             echo "$CMDNAME: could not create $PGALTDATA" 1>&2
             echo "Make sure $PGALTDATA is a valid path and that you have permission to access it." 1>&2
             exit_nicely
@@ -139,10 +139,10 @@ else
 fi
 
 
-if [ ! -d $PGALTDATA/base ]; then
+if [ ! -d "$PGALTDATA"/base ]; then
 	echo "Creating directory $PGALTDATA/base"
 	mkdir "$PGALTDATA/base"
-	if [ $? -ne 0 ]; then
+	if [ "$?" -ne 0 ]; then
             echo "$CMDNAME: could not create $PGALTDATA/base" 1>&2
             echo "Make sure $PGALTDATA/base is a valid path and that you have permission to access it." 1>&2
             exit_nicely
