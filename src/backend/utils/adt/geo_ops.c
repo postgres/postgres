@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.9 1997/05/23 05:24:53 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.10 1997/06/01 03:39:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -986,8 +986,7 @@ path_close(PATH *path)
 {
     PATH *result;
 
-    result = path_copy(path);
-    if (PointerIsValid(result))
+    if (PointerIsValid((char *)(result = path_copy(path))))
 	result->closed = TRUE;
 
     return(result);
@@ -998,8 +997,7 @@ path_open(PATH *path)
 {
     PATH *result;
 
-    result = path_copy(path);
-    if (PointerIsValid(result))
+    if (PointerIsValid((char *)(result = path_copy(path))))
 	result->closed = FALSE;
 
     return(result);
@@ -2637,7 +2635,7 @@ poly_path(POLYGON *poly)
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.9 1997/05/23 05:24:53 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.10 1997/06/01 03:39:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
