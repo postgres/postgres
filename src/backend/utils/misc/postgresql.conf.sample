@@ -185,6 +185,14 @@
 #log_disconnections = false
 #log_duration = false
 #log_pid = false
+#log_line_prefix = ''		# e.g. '<%u%%%d> ' 
+				# %u=user name %d=database name
+				# %r=remote host and port
+				# %p=PID %t=timestamp %i=command tag
+				# %c=session id %l=session line number
+				# %s=session start timestamp
+				# %x=stop here in non-session processes
+				# %%='%'
 #log_statement = false
 #log_timestamp = false
 #log_hostname = false

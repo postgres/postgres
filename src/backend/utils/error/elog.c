@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.126 2003/11/29 19:52:01 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.127 2004/03/09 04:43:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,7 @@ PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
 bool		Log_timestamp = false;		/* show timestamps in stderr
 										 * output */
 bool		Log_pid = false;	/* show PIDs in stderr output */
+char       *Log_line_prefix = ""; /* format for extra log line info */
 
 #ifdef HAVE_SYSLOG
 /*
@@ -146,7 +147,7 @@ static const char *error_severity(int elevel);
 static const char *print_timestamp(void);
 static const char *print_pid(void);
 static void append_with_tabs(StringInfo buf, const char *str);
-
+static const char *log_line_prefix(void);
 
 /*
  * errstart --- begin an error-reporting cycle
@@ -1022,6 +1023,138 @@ write_syslog(int level, const char *line)
 }
 #endif   /* HAVE_SYSLOG */
 
+/*
+ * Format tag info for log lines 
+ */
+static const char * 
+log_line_prefix(void)
+{
+
+	/* static accumulator for line numbers */
+	static int log_line_number = 0;
+ 
+	/* space for option string + one of each option, plus some room to spare */
+	/* Note: if more identifiers are built in this will have to increase */
+	static char *result = NULL;
+	int format_len = strlen(Log_line_prefix);
+	int result_len = 2*NAMEDATALEN + format_len +120 ;
+
+	if (result == NULL)
+		result = malloc(result_len);
+	result[0] = '\0';
+
+	if (format_len > 0)
+	{
+		int i,j;
+		char * dbname = NULL;
+		char * username = NULL;
+		time_t stamp_time;
+		log_line_number++;
+		if (MyProcPort != NULL)
+		{
+			dbname  = MyProcPort->database_name;
+			username = MyProcPort->user_name;
+			if (dbname == NULL || *dbname == '\0')
+				dbname = gettext("[unknown]");
+			if (username == NULL || *username == '\0')
+				username = gettext("[unknown]");
+		}
+
+		/*
+		 * invariant through each iteration of this loop:
+		 *  . j is the index of the trailing null on result
+		 *  . result_len - j is the number of chars we have room for
+		 *    including the trailing null
+		 *  . there is room to write at least one more non-null char plus the
+		 *    trailing null
+		 */
+		for (i = 0, j=0; i < format_len && j < result_len-1; i++)
+		{
+			if(Log_line_prefix[i] != '%')
+			{
+				/* literal char, just copy */
+				result[j]=Log_line_prefix[i];
+				j++;
+				result[j] = '\0';
+				continue;
+			}
+			else if (i == format_len - 1)
+			{
+				/* format error - skip it */
+				continue;
+			}
+
+			/* go to char after '%' */
+			i++;
+
+			/* in postmaster and friends, skip non-applicable options,
+			 * stop if %x is seen
+			 */
+			if (MyProcPort == NULL)
+			{
+				if (Log_line_prefix[i] == 'x')
+					break;
+				if (strchr("udcsir",Log_line_prefix[i]) != NULL)
+					continue;
+			}
+
+			/* process the option */
+			switch (Log_line_prefix[i])
+			{
+				case 'u': 
+					j += snprintf(result+j,result_len-j,"%s",username);
+					break;
+				case 'd': 
+					j += snprintf(result+j,result_len-j,"%s",dbname);
+					break;
+				case 'c':
+					j += snprintf(result+j,result_len-j,"%lx.%lx",
+								  (long)(MyProcPort->session_start.tv_sec),
+								  (long)MyProcPid);
+					break;
+				case 'p':
+					j += snprintf(result+j,result_len-j,"%ld",(long)MyProcPid);
+					break;
+				case 'l':
+					j += snprintf(result+j,result_len-j,"%d",log_line_number);
+					break;
+				case 't':
+					stamp_time = time(NULL);
+					j += strftime(result+j, result_len-j, "%Y-%m-%d %H:%M:%S",
+							 localtime(&stamp_time));
+					break;
+				case 's':
+					j += strftime(result+j, result_len-j, "%Y-%m-%d %H:%M:%S",
+							 localtime(&(MyProcPort->session_start.tv_sec)));
+					break;
+				case 'i':
+					j += snprintf(result+j,result_len-j,"%s",
+								  MyProcPort->commandTag);
+					break;
+				case 'r':
+					j += snprintf(result+j,result_len-j,"%s",
+								  MyProcPort->remote_host);
+					if (!LogSourcePort && strlen(MyProcPort->remote_port))
+						j += snprintf(result+j,result_len-j,"(%s)",
+									  MyProcPort->remote_port);
+					break;
+				case 'x': 
+					/* non-postmaster case - just ignore */
+					break;
+				case '%': 
+					result[j] = '%';
+					j++;
+					result[j] = '\0';
+					break;
+				default:
+					/* format error - skip it */
+					break;
+			}
+		}
+	}
+	return result;
+}
+
 
 /*
  * Write error report to server's log
@@ -1033,7 +1166,8 @@ send_message_to_server_log(ErrorData *edata)
 
 	initStringInfo(&buf);
 
-	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
+	appendStringInfo(&buf, "%s%s:  ", 
+					 log_line_prefix(), error_severity(edata->elevel));
 
 	if (Log_error_verbosity >= PGERROR_VERBOSE)
 	{
@@ -1066,18 +1200,21 @@ send_message_to_server_log(ErrorData *edata)
 	{
 		if (edata->detail)
 		{
+			appendStringInfoString(&buf, log_line_prefix() );
 			appendStringInfoString(&buf, gettext("DETAIL:  "));
 			append_with_tabs(&buf, edata->detail);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->hint)
 		{
+			appendStringInfoString(&buf, log_line_prefix() );
 			appendStringInfoString(&buf, gettext("HINT:  "));
 			append_with_tabs(&buf, edata->hint);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->context)
 		{
+			appendStringInfoString(&buf, log_line_prefix() );
 			appendStringInfoString(&buf, gettext("CONTEXT:  "));
 			append_with_tabs(&buf, edata->context);
 			appendStringInfoChar(&buf, '\n');
@@ -1086,11 +1223,13 @@ send_message_to_server_log(ErrorData *edata)
 		{
 			/* assume no newlines in funcname or filename... */
 			if (edata->funcname && edata->filename)
-				appendStringInfo(&buf, gettext("LOCATION:  %s, %s:%d\n"),
+				appendStringInfo(&buf, gettext("%sLOCATION:  %s, %s:%d\n"),
+								 log_line_prefix(),
 								 edata->funcname, edata->filename,
 								 edata->lineno);
 			else if (edata->filename)
-				appendStringInfo(&buf, gettext("LOCATION:  %s:%d\n"),
+				appendStringInfo(&buf, gettext("%sLOCATION:  %s:%d\n"),
+								 log_line_prefix(),
 								 edata->filename, edata->lineno);
 		}
 	}
@@ -1100,6 +1239,7 @@ send_message_to_server_log(ErrorData *edata)
 	 */
 	if (edata->elevel >= log_min_error_statement && debug_query_string != NULL)
 	{
+		appendStringInfoString(&buf, log_line_prefix() );
 		appendStringInfoString(&buf, gettext("STATEMENT:  "));
 		append_with_tabs(&buf, debug_query_string);
 		appendStringInfoChar(&buf, '\n');
