@@ -1,10 +1,7 @@
-#include <ctype.h>
-#include <errno.h>
+#include "postgres_fe.h"
+
 #include <time.h>
-#include <float.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <ctype.h>
 #include <math.h>
 
 #include "extern.h"
@@ -1057,8 +1054,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				 */
 				StrNCpy(*tzn, tm->tm_zone, MAXTZLEN + 1);
 				if (strlen(tm->tm_zone) > MAXTZLEN)
-					elog(WARNING, "Invalid timezone \'%s\'",
-						 tm->tm_zone);
+					tm->tm_isdst = -1;
 		}
 	}
 	else
@@ -1077,8 +1073,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				 */
 				StrNCpy(*tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
 				if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
-					elog(WARNING, "Invalid timezone \'%s\'",
-						 tzname[tm->tm_isdst]);
+					tm->tm_isdst = -1;
 			}
 	}
 	else

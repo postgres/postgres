@@ -1,10 +1,6 @@
-#include <math.h>
+#include "postgres_fe.h"
 #include <time.h>
-#include <string.h>
-#include <errno.h>
-#include <float.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <math.h>
 
 #ifdef __FAST_MATH__
 #error -ffast-math is known to break this code

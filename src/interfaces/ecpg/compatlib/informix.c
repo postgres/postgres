@@ -287,7 +287,10 @@ int
 dectoasc(Decimal *np, char *cp, int len, int right)
 {
 	char *str;
-	Numeric *nres;
+	Numeric *nres = PGTYPESnumeric_new();
+
+	if (nres == NULL)
+		return -1211;
 
 	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
 		return -1211;

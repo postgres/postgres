@@ -1,10 +1,8 @@
-#include <ctype.h>
-#include <errno.h>
+#include "postgres_fe.h"
+
 #include <time.h>
+#include <ctype.h>
 #include <float.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
 #include "extern.h"
 #include "dt.h"
