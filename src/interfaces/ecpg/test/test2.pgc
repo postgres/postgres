@@ -23,13 +23,14 @@ exec sql begin declare section;
 	struct personal_indicator {	int ind_name;
 					birthinfo ind_birth;
 				  } ind_personal, *i;
-	float ind_married;
-	ind children;
 	ind ind_children;
-	char *married = NULL;
 	c testname="Petra";
 	char *query="select name, born, age, married, children from meskes where name = :var1";
 exec sql end declare section;
+
+	exec sql char *married = NULL;
+	exec sql float ind_married;
+	exec sql ind children;
 
 	exec sql var ind_married is long;
 

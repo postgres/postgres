@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.59 2003/02/13 13:11:52 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.60 2003/02/14 13:17:13 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -314,6 +314,10 @@ main(int argc, char *const argv[])
 
 				/* we need several includes */
 				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These four include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#include <ecpgerrno.h>\n#include <sqlca.h>\n#line 1 \"%s\"\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, input_filename);
+
+				/* add some compatibility headers */
+				if (compat == ECPG_COMPAT_INFORMIX)
+					fprintf(yyout, "/* Needed for informix compatibility */\n#include <ecpg_informix.h>\n");
 
 				/* and parse the source */
 				yyparse();

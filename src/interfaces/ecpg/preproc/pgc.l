@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.103 2003/02/13 20:37:28 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.104 2003/02/14 13:17:13 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,7 +423,6 @@ cppline			{space}*#(.*\\{space})*.*
 			  /* are we simulating Informix? */
                           if (compat == ECPG_COMPAT_INFORMIX)
 			  {
-			  	printf ("unput $\n");
 			  	unput(':');
 			  }
 			  else
@@ -559,6 +558,12 @@ cppline			{space}*#(.*\\{space})*.*
 						keyword = ScanECPGKeywordLookup( yytext);
 						if (keyword != NULL)
 							return keyword->value;
+
+						/* Is it a C keyword? */
+						keyword = ScanCKeywordLookup(yytext);
+						if (keyword != NULL)
+							return keyword->value;
+
 
 						/* How about a DEFINE? */
 						for (ptr = defines; ptr; ptr = ptr->next)
@@ -697,6 +702,7 @@ cppline			{space}*#(.*\\{space})*.*
 
 <C>{exec_sql}{define}{space}*	{ BEGIN(def_ident); }
 <C>{exec_sql}{include}{space}*	{ BEGIN(incl); }
+<C>{informix_special}{include}{space}*	{ BEGIN(incl); }
 
 <C,xskip>{exec_sql}{ifdef}{space}*	{ ifcond = TRUE; BEGIN(xcond); }
 <C,xskip>{exec_sql}{ifndef}{space}* { ifcond = FALSE; BEGIN(xcond); }
@@ -832,32 +838,45 @@ cppline			{space}*#(.*\\{space})*.*
 							i-- )
 					  		{}
 
-						/* Remove trailing '"' if it exists */
-						if (yytext[i] == '"') 
+						yytext[i+1] = '\0';
+						yyin = NULL;
+
+						/* If file name is enclosed in '"' remove these and look only in '.' */
+						if (yytext[0] == '"' && yytext[i] == '"') 
+						{
 							yytext[i] = '\0';
-						else
-						  	yytext[i+1] = '\0';
-
-						/* also remove starting '"' */
-						if (yytext[0] == '"')
 							memmove(yytext, yytext+1, strlen(yytext));
-
-					  	yyin = NULL;
-					  	for (ip = include_paths; yyin == NULL && ip != NULL; ip = ip->next)
-					  	{
-							if (strlen(ip->path) + strlen(yytext) + 3 > MAXPGPATH)
-							{
-								fprintf(stderr, "Error: Path %s/%s is too long in line %d, skipping.\n", ip->path, yytext, yylineno);
-								continue;
-							}
-							snprintf (inc_file, sizeof(inc_file), "%s/%s", ip->path, yytext);
-							yyin = fopen( inc_file, "r" );
+						
+							strncpy(inc_file, yytext, sizeof(inc_file));
+							yyin = fopen(inc_file, "r");
 							if (!yyin)
 							{
 								if (strcmp(inc_file + strlen(inc_file) - 2, ".h"))
 								{
 									strcat(inc_file, ".h");
-									yyin = fopen( inc_file, "r" );
+									yyin = fopen(inc_file, "r");
+								}
+							}
+							
+						}
+						else
+						{
+						  	for (ip = include_paths; yyin == NULL && ip != NULL; ip = ip->next)
+						  	{
+								if (strlen(ip->path) + strlen(yytext) + 3 > MAXPGPATH)
+								{
+									fprintf(stderr, "Error: Path %s/%s is too long in line %d, skipping.\n", ip->path, yytext, yylineno);
+									continue;
+								}
+								snprintf (inc_file, sizeof(inc_file), "%s/%s", ip->path, yytext);
+								yyin = fopen(inc_file, "r");
+								if (!yyin)
+								{
+									if (strcmp(inc_file + strlen(inc_file) - 2, ".h"))
+									{
+										strcat(inc_file, ".h");
+										yyin = fopen( inc_file, "r" );
+									}
 								}
 							}
 						}

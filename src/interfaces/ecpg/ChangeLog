@@ -1332,5 +1332,12 @@ Thu Feb 13 14:06:28 CET 2003
 	- Started working on an Informix compatibility mode. With option "-C
 	  INFORMIX" set, ecpg now accepts "$" as alias for "exec sql" and to
 	  denote variables inside SQL statements.
+
+
+Fri Feb 14 14:14:25 CET 2003
+
+	- Synced parser and keyword file.
+	- More work on Informix compatibility. 
 	- Set ecpg version to 2.12.0.
+	- Set library to 3.4.2.
 

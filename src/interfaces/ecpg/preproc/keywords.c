@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.55 2002/10/21 13:09:31 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.56 2003/02/14 13:17:13 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
  */
 static ScanKeyword ScanKeywords[] = {
 	/* name, value */
-	{"abort", ABORT_TRANS},
+	{"abort", ABORT_P},
 	{"absolute", ABSOLUTE},
 	{"access", ACCESS},
 	{"action", ACTION},
@@ -49,7 +49,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
 	{"before", BEFORE},
-	{"begin", BEGIN_TRANS},
+	{"begin", BEGIN_P},
 	{"between", BETWEEN},
 	{"bigint", BIGINT},
 	{"binary", BINARY},
@@ -115,7 +115,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"else", ELSE},
 	{"encoding", ENCODING},
 	{"encrypted", ENCRYPTED},
-	{"end", END_TRANS},
+	{"end", END_P},
 	{"escape", ESCAPE},
 	{"except", EXCEPT},
 	{"exclusive", EXCLUSIVE},
@@ -226,6 +226,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"position", POSITION},
 	{"precision", PRECISION},
 	{"prepare", PREPARE},
+	{"preserve", PRESERVE},
 	{"primary", PRIMARY},
 	{"prior", PRIOR},
 	{"privileges", PRIVILEGES},
@@ -246,6 +247,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"right", RIGHT},
 	{"rollback", ROLLBACK},
 	{"row", ROW},
+	{"rows", ROWS},
 	{"rule", RULE},
 	{"schema", SCHEMA},
 	{"scroll", SCROLL},

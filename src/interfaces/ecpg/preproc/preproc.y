@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.207 2003/02/13 20:37:28 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.208 2003/02/14 13:17:13 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -177,11 +177,11 @@ make_name(void)
 %token	TYPECAST
 
 /* ordinary key words in alphabetical order */
-%token <keyword> ABORT_TRANS ABSOLUTE ACCESS ACTION ADD AFTER
+%token <keyword> ABORT_P ABSOLUTE ACCESS ACTION ADD AFTER
         AGGREGATE ALL ALTER ANALYSE ANALYZE AND ANY AS ASC
 	ASSERTION ASSIGNMENT AT AUTHORIZATION
 
-        BACKWARD BEFORE BEGIN_TRANS BETWEEN BIGINT BINARY BIT
+        BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
         BOOLEAN BOTH BY
 
         CACHE CALLED CASCADE CASE CAST CHAIN CHAR_P
@@ -194,7 +194,7 @@ make_name(void)
         DATABASE DAY_P DEALLOCATE DEC DECIMAL DECLARE DEFAULT
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
 	DESC DISTINCT DO DOMAIN_P DOUBLE DROP
-        EACH ELSE ENCODING ENCRYPTED END_TRANS ESCAPE EXCEPT EXCLUSIVE
+        EACH ELSE ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUSIVE
         EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
         FALSE_P FETCH FLOAT_P FOR FORCE FOREIGN FORWARD FREEZE FROM
@@ -368,12 +368,12 @@ make_name(void)
 %type  <str>	CreateConversionStmt any_operator opclass_item_list
 %type  <str>	iso_level type_list CharacterWithLength ConstCharacter
 %type  <str>	CharacterWithoutLength BitWithLength BitWithoutLength
-%type  <str>	ConstBit GenericType TableFuncElementList
+%type  <str>	ConstBit GenericType TableFuncElementList opt_analyze
 %type  <str>	opt_sort_clause transaction_access_mode
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare opt_ecpg_using ecpg_into
-%type  <str>	storage_clause opt_initializer c_anything
+%type  <str>	storage_declaration storage_clause opt_initializer c_anything
 %type  <str>	variable_list variable c_thing c_term
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
 %type  <str>	ECPGRelease execstring server_name ECPGVarDeclaration
@@ -416,6 +416,12 @@ statements: /*EMPTY*/
 
 statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 		| ecpgstart stmt ';'
+		| ecpgstart ECPGVarDeclaration
+		{
+			fprintf(yyout, "%s", $2);
+                        free($2);
+			output_line_number();
+		}
 		| ECPGDeclaration
 		| c_thing		{ fprintf(yyout, "%s", $1); free($1); }
 		| CPP_LINE		{ fprintf(yyout, "%s", $1); free($1); }
@@ -651,12 +657,6 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 				mmerror(PARSE_ERROR, ET_ERROR, "no at option for var statement.\n");
 
 			output_simple_statement($1);
-		}
-		| ECPGVarDeclaration
-		{
-			fprintf(yyout, "%s", $1);
-                        free($1);
-			output_line_number();
 		}
 		| ECPGWhenever
 		{
@@ -996,6 +996,9 @@ AlterTableStmt:
 /* ALTER TABLE <relation> DROP CONSTRAINT ... */
 		| ALTER TABLE relation_expr DROP CONSTRAINT name opt_drop_behavior
 			{ $$ = cat_str(5, make_str("alter table"), $3, make_str("drop constraint"), $6, $7); }
+/* ALTER TABLE <relation> SET WITHOUT OIDS  */
+		| ALTER TABLE relation_expr SET WITHOUT OIDS
+			{ $$ = cat_str(3, make_str("alter table"), $3, make_str("set without oids")); }
  /* ALTER TABLE <name> CREATE TOAST TABLE */
 		| ALTER TABLE qualified_name CREATE TOAST TABLE
 			{ $$ = cat_str(3, make_str("alter table"), $3, make_str("create toast table")); }
@@ -1358,7 +1361,11 @@ OptSeqElem:  CACHE NumConst
 			{ $$ = cat2_str(make_str("maxvalue"), $2); }
 		| MINVALUE NumConst
 			{ $$ = cat2_str(make_str("minvalue"), $2); }
-		| START opt_by NumConst
+		| NO MAXVALUE
+			{ $$ = make_str("no maxvalue"); }
+		| NO MINVALUE
+			{ $$ = make_str("no minvalue"); }
+		| START opt_with NumConst
 			{ $$ = cat_str(3, make_str("start"), $2, $3); }
 		;
 
@@ -1547,8 +1554,6 @@ DefineStmt:  CREATE AGGREGATE func_name definition
 			{ $$ = cat_str(3, make_str("create type"), $3, $4); }
 		| CREATE TYPE_P any_name AS rowdefinition
 			{ $$ = cat_str(4, make_str("create type"), $3, make_str("as"), $5); }
-		| CREATE CHARACTER SET opt_as any_name GET definition opt_collate
-			{ $$ = cat_str(6, make_str("create character set"), $4, $5, make_str("get"), $7, $8); }
 		;
 
 rowdefinition: '(' TableFuncElementList ')'
@@ -1692,7 +1697,6 @@ direction:	FORWARD		{ $$ = make_str("forward"); }
 
 fetch_how_many: IntConst	{ $$ = $1; }
 		| ALL		{ $$ = make_str("all"); }
-		| LAST		{ $$ = make_str("last"); }
 		| NEXT		{ $$ = make_str("next"); }
 		| PRIOR		{ $$ = make_str("prior"); }
 		;
@@ -1757,9 +1761,6 @@ GrantStmt:	GRANT privileges ON privilege_target TO grantee_list opt_grant_grant_
 
 RevokeStmt:  REVOKE opt_revoke_grant_option privileges ON privilege_target FROM grantee_list opt_drop_behavior
 			{
-			  if (strcmp($8, "drop cascade") == 0)
-				mmerror(PARSE_ERROR, ET_WARNING, "Not implemented REVOKE ... CASCADE will be send to backend");
-			
 			  $$ = cat_str(9, make_str("revoke"), $2, $3, make_str("on"), $5, make_str("from"), $7, $8);
 			}
 			  
@@ -2035,10 +2036,10 @@ any_operator:
 				{ $$ = cat_str(3, $1, make_str("."), $3); }
 			;
 
-CreateCastStmt:		CREATE CAST '(' ConstTypename AS ConstTypename ')'
+CreateCastStmt:		CREATE CAST '(' Typename AS Typename ')'
 				WITH FUNCTION function_with_argtypes cast_context
 			{ $$ = cat_str(6, make_str("create cast ("), $4, make_str("as"), $6, make_str(") with function"), $10); }
-			| CREATE CAST '(' ConstTypename AS ConstTypename ')'
+			| CREATE CAST '(' Typename AS Typename ')'
 				WITHOUT FUNCTION cast_context
 			{ $$ = cat_str(6, make_str("create cast ("), $4, make_str("as"), $6, make_str(") without function"), $10); }
 		;
@@ -2048,7 +2049,7 @@ cast_context: AS ASSIGNMENT   { $$ = make_str("as assignment"); }
 		;
 
 
-DropCastStmt: DROP CAST '(' ConstTypename AS ConstTypename ')' opt_drop_behavior
+DropCastStmt: DROP CAST '(' Typename AS Typename ')' opt_drop_behavior
 			{ $$ = cat_str(6, make_str("drop cast ("), $4, make_str("as"), $6, make_str(")"), $8); }
 		;
 
@@ -2181,11 +2182,11 @@ UnlistenStmt:  UNLISTEN qualified_name
  *		(also older versions END / ABORT)
  *
  *****************************************************************************/
-TransactionStmt:  ABORT_TRANS opt_transaction		{ $$ = make_str("rollback"); }
-		| BEGIN_TRANS opt_transaction		{ $$ = make_str("begin transaction"); }
+TransactionStmt:  ABORT_P opt_transaction		{ $$ = make_str("rollback"); }
+		| BEGIN_P opt_transaction		{ $$ = make_str("begin transaction"); }
 		| START TRANSACTION transaction_mode_list_or_empty	{ $$ = cat2_str(make_str("start transaction"), $3); }
 		| COMMIT opt_transaction		{ $$ = make_str("commit"); }
-		| END_TRANS opt_transaction		{ $$ = make_str("commit"); }
+		| END_P opt_transaction		{ $$ = make_str("commit"); }
 		| ROLLBACK opt_transaction		{ $$ = make_str("rollback"); }
 		;
 
@@ -2413,11 +2414,16 @@ opt_name_list:	'(' name_list ')'
  *
  *****************************************************************************/
 
-ExplainStmt:  EXPLAIN opt_verbose OptimizableStmt
-			{ $$ = cat_str(3, make_str("explain"), $2, $3); }
-		| EXPLAIN analyze_keyword opt_verbose OptimizableStmt
+ExplainStmt:  EXPLAIN opt_analyze opt_verbose OptimizableStmt
 			{ $$ = cat_str(4, make_str("explain"), $2, $3, $4); }
+/*		| EXPLAIN opt_analyze opt_verbose ExecuteStmt
+			{ $$ = cat_str(4, make_str("explain"), $2, $3, $4); }*/
 		;
+
+opt_analyze:
+	analyze_keyword                 { $$ = $1; }
+	| /* EMPTY */			{ $$ = EMPTY; }
+	;
 
 /*
 
@@ -2939,8 +2945,8 @@ TableFuncElement:	ColId Typename	{ $$ = cat2_str($1, $2); }
 
 Typename:  SimpleTypename opt_array_bounds
 			{ $$ = cat2_str($1, $2.str); }
-		| SETOF SimpleTypename
-			{ $$ = cat2_str(make_str("setof"), $2); }
+		| SETOF SimpleTypename opt_array_bounds
+			{ $$ = cat_str(3, make_str("setof"), $2, $3); }
 		;
 
 
@@ -3628,7 +3634,7 @@ in_expr:  select_with_parens
  * same as CASE WHEN a IS NOT NULL THEN a WHEN b IS NOT NULL THEN b ... END
  * - thomas 1998-11-09
  */
-case_expr:	CASE case_arg when_clause_list case_default END_TRANS
+case_expr:	CASE case_arg when_clause_list case_default END_P
 			{ $$ = cat_str(5, make_str("case"), $2, $3, $4, make_str("end")); }
 		| NULLIF '(' a_expr ',' a_expr ')'
 			{ $$ = cat_str(5, make_str("nullif("), $3, make_str(","), $5, make_str(")")); }
@@ -4140,29 +4146,25 @@ single_vt_declaration: type_declaration		{ $$ = $1; }
 		| single_var_declaration	{ $$ = $1; }
 		;
 	
-single_var_declaration: storage_clause storage_modifier
-		{
-			actual_storage[struct_level] = cat2_str(mm_strdup($1), mm_strdup($2));
-			actual_startline[struct_level] = hashline_number();
-		}
+single_var_declaration: storage_declaration
 		single_vt_type
 		{
-			actual_type[struct_level].type_enum = $4.type_enum;
-			actual_type[struct_level].type_dimension = $4.type_dimension;
-			actual_type[struct_level].type_index = $4.type_index;
-			actual_type[struct_level].type_sizeof = $4.type_sizeof;
+			actual_type[struct_level].type_enum = $2.type_enum;
+			actual_type[struct_level].type_dimension = $2.type_dimension;
+			actual_type[struct_level].type_index = $2.type_index;
+			actual_type[struct_level].type_sizeof = $2.type_sizeof;
 
 			/* we do not need the string "varchar" for output */
 			/* so replace it with an empty string */
-			if ($4.type_enum == ECPGt_varchar)
+			if ($2.type_enum == ECPGt_varchar)
 			{
-				free($4.type_str);
-				$4.type_str=EMPTY;
+				free($2.type_str);
+				$2.type_str=EMPTY;
 			}
 		}
-		variable_list 
+		variable_list ';'
 		{
-			$$ = cat_str(6, actual_startline[struct_level], $1, $2, $4.type_str, $6, make_str(";\n"));
+			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
 		}
 		;
 
@@ -4225,9 +4227,9 @@ ECPGDeclaration: sql_startdeclare
 		}
 		;
 
-sql_startdeclare: ecpgstart BEGIN_TRANS DECLARE SQL_SECTION ';' {};
+sql_startdeclare: ecpgstart BEGIN_P DECLARE SQL_SECTION ';' {};
 
-sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION ';' {};
+sql_enddeclare: ecpgstart END_P DECLARE SQL_SECTION ';' {};
 
 var_type_declarations:	/*EMPTY*/			{ $$ = EMPTY; }
 		| vt_declarations			{ $$ = $1; }
@@ -4305,29 +4307,32 @@ type_declaration: S_TYPEDEF
 		$$ = make_str("");
 	};
 
-var_declaration: storage_clause storage_modifier
-		{
-			actual_storage[struct_level] = cat2_str(mm_strdup($1), mm_strdup($2));
-			actual_startline[struct_level] = hashline_number();
-		}
+var_declaration: storage_declaration
 		type
 		{
-			actual_type[struct_level].type_enum = $4.type_enum;
-			actual_type[struct_level].type_dimension = $4.type_dimension;
-			actual_type[struct_level].type_index = $4.type_index;
-			actual_type[struct_level].type_sizeof = $4.type_sizeof;
+			actual_type[struct_level].type_enum = $2.type_enum;
+			actual_type[struct_level].type_dimension = $2.type_dimension;
+			actual_type[struct_level].type_index = $2.type_index;
+			actual_type[struct_level].type_sizeof = $2.type_sizeof;
 
 			/* we do not need the string "varchar" for output */
 			/* so replace it with an empty string */
-			if ($4.type_enum == ECPGt_varchar)
+			if ($2.type_enum == ECPGt_varchar)
 			{
-				free($4.type_str);
-				$4.type_str=EMPTY;
+				free($2.type_str);
+				$2.type_str=EMPTY;
 			}
 		}
 		variable_list ';'
 		{
-			$$ = cat_str(6, actual_startline[struct_level], $1, $2, $4.type_str, $6, make_str(";\n"));
+			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
+		}
+		;
+
+storage_declaration: storage_clause storage_modifier
+		{
+			actual_storage[struct_level] = cat2_str(mm_strdup($1), mm_strdup($2));
+			actual_startline[struct_level] = hashline_number();
 		}
 		;
 
@@ -5221,7 +5226,7 @@ ECPGColLabel:  ECPGColLabelCommon			{ $$ = $1; }
 /* "Unreserved" keywords --- available for use as any kind of name.
  */
 unreserved_keyword:
-		  ABORT_TRANS					{ $$ = make_str("abort"); }
+		  ABORT_P					{ $$ = make_str("abort"); }
 		| ABSOLUTE						{ $$ = make_str("absolute"); }
 		| ACCESS						{ $$ = make_str("access"); }
 		| ACTION						{ $$ = make_str("action"); }
@@ -5234,7 +5239,7 @@ unreserved_keyword:
 		| AT							{ $$ = make_str("at"); }
 		| BACKWARD						{ $$ = make_str("backward"); }
 		| BEFORE						{ $$ = make_str("before"); }
-		| BEGIN_TRANS					{ $$ = make_str("begin"); }
+		| BEGIN_P					{ $$ = make_str("begin"); }
 		| BY							{ $$ = make_str("by"); }
 		| CACHE							{ $$ = make_str("cache"); }
 		| CASCADE						{ $$ = make_str("cascade"); }
@@ -5293,7 +5298,6 @@ unreserved_keyword:
 		| KEY							{ $$ = make_str("key"); }
 		| LANCOMPILER						{ $$ = make_str("lancompiler"); }
 		| LANGUAGE						{ $$ = make_str("language"); }
-		| LAST							{ $$ = make_str("last"); }
 		| LEVEL							{ $$ = make_str("level"); }
 		| LISTEN						{ $$ = make_str("listen"); }
 		| LOAD							{ $$ = make_str("load"); }
@@ -5504,7 +5508,7 @@ reserved_keyword:
 		| DISTINCT						{ $$ = make_str("distinct"); }
 		| DO							{ $$ = make_str("do"); }
 		| ELSE							{ $$ = make_str("else"); }
-		| END_TRANS						{ $$ = make_str("end"); }
+		| END_P						{ $$ = make_str("end"); }
 		| EXCEPT						{ $$ = make_str("except"); }
 		| FALSE_P						{ $$ = make_str("false"); }
 		| FOR							{ $$ = make_str("for"); }

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.18 2003/02/13 18:13:22 tgl Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.19 2003/02/14 13:17:13 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -13,7 +13,6 @@
 /* This should hold the back-end error message from 
  * the last back-end operation. */
 static char *ECPGerr;
-
 
 void
 ECPGraise(int line, int code, const char *str)
