@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.57 2002/08/02 18:15:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.58 2002/08/09 18:06:57 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1021,11 +1021,11 @@ listTables(const char *infotype, const char *name, bool desc)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-			 "SELECT c.relname as \"%s\",\n"
-			 "  n.nspname as \"%s\",\n"
+			 "SELECT n.nspname as \"%s\",\n"
+			 "  c.relname as \"%s\",\n"
 			 "  CASE c.relkind WHEN 'r' THEN '%s' WHEN 'v' THEN '%s' WHEN 'i' THEN '%s' WHEN 'S' THEN '%s' WHEN 's' THEN '%s' END as \"%s\",\n"
 			 "  u.usename as \"%s\"",
-			 _("Name"), _("Schema"), _("table"), _("view"), _("index"), _("sequence"),
+			 _("Schema"), _("Name"), _("table"), _("view"), _("index"), _("sequence"),
 			 _("special"), _("Type"), _("Owner"));
 
 	if (desc)
@@ -1068,7 +1068,7 @@ listTables(const char *infotype, const char *name, bool desc)
 	if (name)
 		appendPQExpBuffer(&buf, "  AND c.relname ~ '^%s'\n", name);
 
-	appendPQExpBuffer(&buf, "ORDER BY 2,1;");
+	appendPQExpBuffer(&buf, "ORDER BY 1,2;");
 
 	res = PSQLexec(buf.data);
 	termPQExpBuffer(&buf);
