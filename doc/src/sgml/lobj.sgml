@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.16 2001/02/09 19:24:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.17 2001/09/10 03:02:06 ishii Exp $
 -->
 
  <chapter id="largeObjects">
@@ -204,7 +204,7 @@ int lo_write(PGconn *conn, int fd, const char *buf, size_t len)
 <programlisting>
 int lo_read(PGconn *conn, int fd, char *buf, size_t len)
 </programlisting>
-     reads len bytes from large object fd into byf. The  fd
+     reads len bytes from large object fd into buf. The  fd
      argument must have been returned by a previous <function>lo_open</function>.
      The number of bytes actually read is returned. In
      the event of an error, the return value is negative.
