@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.221 2003/01/08 21:33:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.222 2003/01/30 19:49:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	"Database-Password", "*", 20},
 
 	{"connect_timeout", "PGCONNECT_TIMEOUT", NULL, NULL,
-	"Connect-timeout", "", 10}, /* strlen( INT32_MAX) == 10 */
+	"Connect-timeout", "", 10}, /* strlen(INT32_MAX) == 10 */
 
 	{"dbname", "PGDATABASE", NULL, NULL,
 	"Database-Name", "", 20},
@@ -315,8 +315,14 @@ PQconnectStart(const char *conninfo)
 	tmp = conninfo_getval(connOptions, "password");
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
 	if (conn->pgpass == NULL || conn->pgpass[0] == '\0')
+	{
+		if (conn->pgpass)
+			free(conn->pgpass);
 		conn->pgpass = PasswordFromFile(conn->pghost, conn->pgport,
-									 conn->dbName, conn->pguser);
+										conn->dbName, conn->pguser);
+		if (conn->pgpass == NULL)
+			conn->pgpass = strdup(DefaultPassword);
+	}
 	tmp = conninfo_getval(connOptions, "connect_timeout");
 	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
 #ifdef USE_SSL
@@ -506,14 +512,13 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	else
 		conn->dbName = strdup(dbName);
 
-	/*
-	 * getPasswordFromFile mallocs its result, so we don't need strdup
-	 * here
-	 */
 	if (pwd)
 		conn->pgpass = strdup(pwd);
 	else if ((tmp = getenv("PGPASSWORD")) != NULL)
 		conn->pgpass = strdup(tmp);
+	else if ((tmp = PasswordFromFile(conn->pghost, conn->pgport,
+									 conn->dbName, conn->pguser)) != NULL)
+		conn->pgpass = tmp;
 	else
 		conn->pgpass = strdup(DefaultPassword);
 
@@ -2946,7 +2951,7 @@ pwdfMatchesString(char *buf, char *token)
 	return NULL;
 }
 
-/* get a password from the password file. */
+/* Get a password from the password file. Return value is malloc'd. */
 char *
 PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 {
@@ -2972,17 +2977,15 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 
 	/* Look for it in the home dir */
 	home = getenv("HOME");
-	if (home)
-	{
-		pgpassfile = malloc(strlen(home) + 1 + strlen(PGPASSFILE) + 1);
-		if (!pgpassfile)
-		{
-			fprintf(stderr, libpq_gettext("out of memory\n"));
-			return NULL;
-		}
-	}
-	else
+	if (!home)
 		return NULL;
+
+	pgpassfile = malloc(strlen(home) + 1 + strlen(PGPASSFILE) + 1);
+	if (!pgpassfile)
+	{
+		fprintf(stderr, libpq_gettext("out of memory\n"));
+		return NULL;
+	}
 
 	sprintf(pgpassfile, "%s/%s", home, PGPASSFILE);
 
@@ -3014,12 +3017,18 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	{
 		char	   *t = buf,
 				   *ret;
+		int			len;
 
 		fgets(buf, LINELEN - 1, fp);
-		if (strlen(buf) == 0)
+
+		len = strlen(buf);
+		if (len == 0)
 			continue;
 
-		buf[strlen(buf) - 1] = 0;
+		/* Remove trailing newline */
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = 0;
+
 		if ((t = pwdfMatchesString(t, hostname)) == NULL ||
 			(t = pwdfMatchesString(t, port)) == NULL ||
 			(t = pwdfMatchesString(t, dbname)) == NULL ||
