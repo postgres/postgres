@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.80 2004/10/28 18:55:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.81 2004/11/01 14:33:10 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2004, PostgreSQL Global Development Group
@@ -111,7 +111,7 @@
 #define MAXDOUBLEWIDTH	128
 
 /* ----------
- * External (defined in PgSQL dt.c (timestamp utils))
+ * External (defined in PgSQL datetime.c (timestamp utils))
  * ----------
  */
 extern char *months[],			/* month abbreviation	*/
