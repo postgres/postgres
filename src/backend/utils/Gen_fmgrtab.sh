@@ -9,20 +9,18 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.27 2003/11/29 19:51:57 pgsql Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.28 2004/01/04 05:57:21 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
 
 : ${AWK='awk'}
-: ${CPP='cc -E'}
 
 cleanup(){
-    [ x"$noclean" != x"t" ] && rm -f "$CPPTMPFILE" "$RAWFILE" "$$-$OIDSFILE" "$$-$TABLEFILE"
+    [ x"$noclean" != x"t" ] && rm -f "$SORTEDFILE" "$$-$OIDSFILE" "$$-$TABLEFILE"
 }
 
-BKIOPTS=
 noclean=
 
 #
@@ -31,12 +29,6 @@ noclean=
 while [ $# -gt 0 ]
 do
     case $1 in
-	-D)
-            BKIOPTS="$BKIOPTS -D$2"
-            shift;;
-	-D*)
-            BKIOPTS="$BKIOPTS $1"
-            ;;
         --noclean)
             noclean=t
             ;;
@@ -44,17 +36,15 @@ do
             echo "$CMDNAME generates fmgroids.h and fmgrtab.c from pg_proc.h."
             echo
             echo "Usage:"
-            echo "  $CMDNAME [ -D define [...] ]"
+            echo "  $CMDNAME inputfile"
             echo
-            echo "The environment variables CPP and AWK determine which C"
-            echo "preprocessor and Awk program to use. The defaults are"
-            echo "\`cc -E' and \`awk'."
+            echo "The environment variable AWK determines which Awk program"
+            echo "to use. The default is \`awk'."
             echo
             echo "Report bugs to <pgsql-bugs@postgresql.org>."
             exit 0
             ;;
-	--) shift; break;;
-	-*)
+        -*)
             echo "$CMDNAME: invalid option: $1"
             exit 1
             ;;
@@ -71,8 +61,7 @@ if [ x"$INFILE" = x ] ; then
     exit 1
 fi
 
-CPPTMPFILE="$$-fmgrtmp.c"
-RAWFILE="$$-fmgr.raw"
+SORTEDFILE="$$-fmgr.data"
 OIDSFILE=fmgroids.h
 TABLEFILE=fmgrtab.c
 
@@ -84,34 +73,14 @@ trap 'echo "Caught signal." ; cleanup ; exit 1' 1 2 15
 # Generate the file containing raw pg_proc tuple data
 # (but only for "internal" language procedures...).
 #
-# Unlike genbki.sh, which can run through cpp last, we have to
-# deal with preprocessor statements first (before we sort the
-# function table by oid).
-#
 # Note assumption here that prolang == $5 and INTERNALlanguageId == 12.
 #
-$AWK '
-BEGIN		{ raw = 0; }
-/^DATA/		{ print; next; }
-/^BKI_BEGIN/	{ raw = 1; next; }
-/^BKI_END/	{ raw = 0; next; }
-raw == 1	{ print; next; }' $INFILE | \
+egrep '^DATA' $INFILE | \
 sed 	-e 's/^.*OID[^=]*=[^0-9]*//' \
 	-e 's/(//g' \
 	-e 's/[ 	]*).*$//' | \
-$AWK '
-/^#/		{ print; next; }
-$5 == "12"	{ print; next; }' > $CPPTMPFILE
-
-if [ $? -ne 0 ]; then
-    cleanup
-    echo "$CMDNAME failed"
-    exit 1
-fi
-
-$CPP $BKIOPTS $CPPTMPFILE | \
-egrep '^[ ]*[0-9]' | \
-sort -n > $RAWFILE
+$AWK '$5 == "12" { print }' | \
+sort -n > $SORTEDFILE
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -165,7 +134,7 @@ FuNkYfMgRsTuFf
 
 # Note assumption here that prosrc == $(NF-2).
 
-tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' < $RAWFILE | \
+tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' < $SORTEDFILE | \
 $AWK '
 BEGIN	{ OFS = ""; }
 	{ if (seenit[$(NF-2)]++ == 0) print "#define F_", $(NF-2), " ", $1; }' >> "$$-$OIDSFILE"
@@ -215,7 +184,7 @@ FuNkYfMgRtAbStUfF
 
 # Note assumption here that prosrc == $(NF-2).
 
-$AWK '{ print "extern Datum", $(NF-2), "(PG_FUNCTION_ARGS);"; }' $RAWFILE >> "$$-$TABLEFILE"
+$AWK '{ print "extern Datum", $(NF-2), "(PG_FUNCTION_ARGS);"; }' $SORTEDFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -242,7 +211,7 @@ $AWK 'BEGIN {
 }
 { printf ("  { %d, \"%s\", %d, %s, %s, %s },\n"), \
 	$1, $(NF-2), $11, Bool[$8], Bool[$9], $(NF-2)
-}' $RAWFILE >> "$$-$TABLEFILE"
+}' $SORTEDFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then
     cleanup

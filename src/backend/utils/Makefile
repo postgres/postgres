@@ -1,7 +1,7 @@
 #
 # Makefile for utils
 #
-# $PostgreSQL: pgsql/src/backend/utils/Makefile,v 1.21 2003/11/29 19:51:57 pgsql Exp $
+# $PostgreSQL: pgsql/src/backend/utils/Makefile,v 1.22 2004/01/04 05:57:21 tgl Exp $
 #
 
 subdir = src/backend/utils/
@@ -24,7 +24,7 @@ $(SUBDIRS:%=%-recursive): fmgroids.h
 	$(MAKE) -C $(subst -recursive,,$@) SUBSYS.o
 
 fmgroids.h fmgrtab.c: Gen_fmgrtab.sh $(top_srcdir)/src/include/catalog/pg_proc.h
-	CPP='$(CPP)' AWK='$(AWK)' $(SHELL) $< $(top_srcdir)/src/include/catalog/pg_proc.h
+	AWK='$(AWK)' $(SHELL) $< $(top_srcdir)/src/include/catalog/pg_proc.h
 
 
 clean:

@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.31 2003/11/29 19:51:42 pgsql Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.32 2004/01/04 05:57:21 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -20,11 +20,9 @@
 #-------------------------------------------------------------------------
 
 : ${AWK='awk'}
-: ${CPP='cc -E'}
 
 CMDNAME=`basename $0`
 
-BKIOPTS=
 INCLUDE_DIRS=
 OUTPUT_PREFIX=
 INFILES=
@@ -36,12 +34,6 @@ major_version=
 while [ $# -gt 0 ]
 do
     case $1 in
-	-D)
-            BKIOPTS="$BKIOPTS -D$2"
-            shift;;
-	-D*)
-            BKIOPTS="$BKIOPTS $1"
-            ;;
         -I)
             INCLUDE_DIRS="$INCLUDE_DIRS $2"
             shift;;
@@ -63,21 +55,20 @@ do
             echo "$CMDNAME generates system catalog bootstrapping files."
             echo
             echo "Usage:"
-            echo "  $CMDNAME [ -D define [...] ] [ -I dir ] --set-version=VERSION -o prefix files..."
+            echo "  $CMDNAME [ -I dir ] --set-version=VERSION -o prefix files..."
             echo
             echo "Options:"
             echo "  -I  path to postgres_ext.h and pg_config_manual.h files"
             echo "  -o  prefix of output files"
             echo "  --set-version  PostgreSQL version number for initdb cross-check"
             echo
-            echo "The environment variables CPP and AWK determine which C"
-            echo "preprocessor and Awk program to use. The defaults are"
-            echo "\`cc -E' and \`awk'."
+            echo "The environment variable AWK determines which Awk program"
+            echo "to use. The default is \`awk'."
             echo
             echo "Report bugs to <pgsql-bugs@postgresql.org>."
             exit 0
             ;;
-	-*)
+        -*)
             echo "$CMDNAME: invalid option: $1"
             exit 1
             ;;
@@ -108,12 +99,8 @@ if [ x"$major_version" = x"" ] ; then
     exit 1
 fi
 
-if [ x"$TMPDIR" = x"" ] ; then
-    TMPDIR=/tmp
-fi
 
-
-TMPFILE="$TMPDIR/genbkitmp$$.c"
+TMPFILE="genbkitmp$$.c"
 
 trap "rm -f $TMPFILE ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.description.$$" 0 1 2 3 15
 
@@ -214,7 +201,6 @@ sed -e "s/;[ 	]*$//g" \
 # ----------------
 BEGIN {
 	inside = 0;
-	raw = 0;
 	bootstrap = "";
 	shared_relation = "";
 	without_oids = "";
@@ -236,14 +222,6 @@ BEGIN {
 comment_level > 0 { next; }
 
 /^[ 	]*$/      { next; }
-
-# ----------------
-#	anything in a BKI_BEGIN .. BKI_END block should be passed
-#	along without interpretation.
-# ----------------
-/^BKI_BEGIN/ 	{ raw = 1; next; }
-/^BKI_END/ 	{ raw = 0; next; }
-raw == 1 	{ print; next; }
 
 # ----------------
 #	DATA() statements are basically passed right through after
@@ -410,9 +388,8 @@ END {
 
 echo "# PostgreSQL $major_version" >${OUTPUT_PREFIX}.bki.$$
 
-$CPP $BKIOPTS $TMPFILE | \
 sed -e '/^[ 	]*$/d' \
-    -e 's/[ 	][ 	]*/ /g' >>${OUTPUT_PREFIX}.bki.$$ || exit
+    -e 's/[ 	][ 	]*/ /g' $TMPFILE >>${OUTPUT_PREFIX}.bki.$$ || exit
 
 #
 # Sanity check: if one of the sed/awk/etc commands fails, we'll probably
