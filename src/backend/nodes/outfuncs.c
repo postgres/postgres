@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.18 1998/01/07 05:50:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.19 1998/01/07 05:54:11 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1007,8 +1007,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 	appendStringInfo(str, " :relname ");
 	appendStringInfo(str, node->relname);
 
-	sprintf(buf, " :inh %d ", node->inh);
-	appendStringInfo(str, buf);
+	appendStringInfo(str, " :inh ");
 	appendStringInfo(str, node->inh ? "true" : "false");
 
 	appendStringInfo(str, " :refname ");
