@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.96 2002/10/29 03:29:42 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.97 2002/10/29 03:47:41 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1547,9 +1547,9 @@ gunzip -c user.ps.gz \
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>Alpha</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-16,
-	 Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
-	<entry>2.2.18; tested at SourceForge</entry>
+	<entry>2002-10-28,
+	 Magnus Naeslund(f) (<email>mag@fbab.net</email>)</entry>
+	<entry>2.4.19-pre6</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
