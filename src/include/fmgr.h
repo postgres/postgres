@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.36 2004/12/31 22:03:19 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.37 2005/03/22 20:13:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,22 @@ extern void fmgr_info_cxt(Oid functionId, FmgrInfo *finfo,
  */
 extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
 			   MemoryContext destcxt);
+
+/*
+ * This macro initializes all the fields of a FunctionCallInfoData except
+ * for the arg[] and argnull[] arrays.  Performance testing has shown that
+ * the fastest way to set up argnull[] for small numbers of arguments is to
+ * explicitly set each required element to false, so we don't try to zero
+ * out the argnull[] array in the macro.
+ */
+#define InitFunctionCallInfoData(Fcinfo, Flinfo, Nargs, Context, Resultinfo) \
+	do { \
+		(Fcinfo).flinfo = (Flinfo); \
+		(Fcinfo).context = (Context); \
+		(Fcinfo).resultinfo = (Resultinfo); \
+		(Fcinfo).isnull = false; \
+		(Fcinfo).nargs = (Nargs); \
+	} while (0)
 
 /*
  * This macro invokes a function given a filled-in FunctionCallInfoData

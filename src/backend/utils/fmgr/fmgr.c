@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.89 2005/02/02 22:40:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.90 2005/03/22 20:13:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -846,23 +846,6 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
  */
 
 /*
- * This macro initializes all the fields of a FunctionCallInfoData except
- * for the arg[] and argnull[] arrays.  Performance testing has shown that
- * the fastest way to set up argnull[] for small numbers of arguments is to
- * explicitly set each required element to false, so we don't try to zero
- * out the argnull[] array in the macro.
- */
-#define InitFunctionCallInfoData(Fcinfo, Flinfo, Nargs) \
-	do { \
-		(Fcinfo).flinfo = (Flinfo); \
-		(Fcinfo).context = NULL; \
-		(Fcinfo).resultinfo = NULL; \
-		(Fcinfo).isnull = false; \
-		(Fcinfo).nargs = (Nargs); \
-	} while (0)
-
-
-/*
  * These are for invocation of a specifically named function with a
  * directly-computed parameter list.  Note that neither arguments nor result
  * are allowed to be NULL.	Also, the function cannot be one that needs to
@@ -874,7 +857,7 @@ DirectFunctionCall1(PGFunction func, Datum arg1)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, NULL, 1);
+	InitFunctionCallInfoData(fcinfo, NULL, 1, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.argnull[0] = false;
@@ -894,7 +877,7 @@ DirectFunctionCall2(PGFunction func, Datum arg1, Datum arg2)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, NULL, 2);
+	InitFunctionCallInfoData(fcinfo, NULL, 2, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -917,7 +900,7 @@ DirectFunctionCall3(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, NULL, 3);
+	InitFunctionCallInfoData(fcinfo, NULL, 3, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -942,7 +925,7 @@ DirectFunctionCall4(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, NULL, 4);
+	InitFunctionCallInfoData(fcinfo, NULL, 4, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -969,7 +952,7 @@ DirectFunctionCall5(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, NULL, 5);
+	InitFunctionCallInfoData(fcinfo, NULL, 5, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -999,7 +982,7 @@ DirectFunctionCall6(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, NULL, 6);
+	InitFunctionCallInfoData(fcinfo, NULL, 6, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1031,7 +1014,7 @@ DirectFunctionCall7(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, NULL, 7);
+	InitFunctionCallInfoData(fcinfo, NULL, 7, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1065,7 +1048,7 @@ DirectFunctionCall8(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, NULL, 8);
+	InitFunctionCallInfoData(fcinfo, NULL, 8, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1102,7 +1085,7 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, NULL, 9);
+	InitFunctionCallInfoData(fcinfo, NULL, 9, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1144,7 +1127,7 @@ FunctionCall1(FmgrInfo *flinfo, Datum arg1)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 1);
+	InitFunctionCallInfoData(fcinfo, flinfo, 1, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.argnull[0] = false;
@@ -1168,7 +1151,7 @@ FunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 2);
+	InitFunctionCallInfoData(fcinfo, flinfo, 2, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1191,7 +1174,7 @@ FunctionCall3(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 3);
+	InitFunctionCallInfoData(fcinfo, flinfo, 3, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1216,7 +1199,7 @@ FunctionCall4(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 4);
+	InitFunctionCallInfoData(fcinfo, flinfo, 4, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1243,7 +1226,7 @@ FunctionCall5(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 5);
+	InitFunctionCallInfoData(fcinfo, flinfo, 5, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1273,7 +1256,7 @@ FunctionCall6(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 6);
+	InitFunctionCallInfoData(fcinfo, flinfo, 6, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1305,7 +1288,7 @@ FunctionCall7(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 7);
+	InitFunctionCallInfoData(fcinfo, flinfo, 7, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1339,7 +1322,7 @@ FunctionCall8(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 8);
+	InitFunctionCallInfoData(fcinfo, flinfo, 8, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1376,7 +1359,7 @@ FunctionCall9(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 9);
+	InitFunctionCallInfoData(fcinfo, flinfo, 9, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1423,7 +1406,7 @@ OidFunctionCall1(Oid functionId, Datum arg1)
 
 	fmgr_info(functionId, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 1);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 1, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.argnull[0] = false;
@@ -1446,7 +1429,7 @@ OidFunctionCall2(Oid functionId, Datum arg1, Datum arg2)
 
 	fmgr_info(functionId, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 2);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 2, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1472,7 +1455,7 @@ OidFunctionCall3(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 3);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 3, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1500,7 +1483,7 @@ OidFunctionCall4(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 4);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 4, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1530,7 +1513,7 @@ OidFunctionCall5(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 5);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 5, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1563,7 +1546,7 @@ OidFunctionCall6(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 6);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 6, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1598,7 +1581,7 @@ OidFunctionCall7(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 7);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 7, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1635,7 +1618,7 @@ OidFunctionCall8(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 8);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 8, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -1675,7 +1658,7 @@ OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 9);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 9, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;

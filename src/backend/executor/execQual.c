@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.173 2005/03/16 21:38:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.174 2005/03/22 20:13:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -832,8 +832,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	if (!fcache->setArgsValid)
 	{
 		/* Need to prep callinfo structure */
-		MemSet(&fcinfo, 0, sizeof(fcinfo));
-		fcinfo.flinfo = &(fcache->func);
+		InitFunctionCallInfoData(fcinfo, &(fcache->func), 0, NULL, NULL);
 		argDone = ExecEvalFuncArgs(&fcinfo, arguments, econtext);
 		if (argDone == ExprEndResult)
 		{
@@ -1046,9 +1045,6 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 	if (isDone)
 		*isDone = ExprSingleResult;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &(fcache->func);
-
 	/* inlined, simplified version of ExecEvalFuncArgs */
 	i = 0;
 	foreach(arg, fcache->args)
@@ -1067,7 +1063,8 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 					 errmsg("set-valued function called in context that cannot accept a set")));
 		i++;
 	}
-	fcinfo.nargs = i;
+
+	InitFunctionCallInfoData(fcinfo, &(fcache->func), i, NULL, NULL);
 
 	/*
 	 * If function is strict, and there are any NULL arguments, skip
@@ -1084,7 +1081,7 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 			}
 		}
 	}
-	/* fcinfo.isnull = false; */	/* handled by MemSet */
+	/* fcinfo.isnull = false; */	/* handled by InitFunctionCallInfoData */
 	result = FunctionCallInvoke(&fcinfo);
 	*isNull = fcinfo.isnull;
 
@@ -1132,8 +1129,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	 * doesn't actually get to see the resultinfo, but set it up anyway
 	 * because we use some of the fields as our own state variables.
 	 */
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.resultinfo = (Node *) &rsinfo;
+	InitFunctionCallInfoData(fcinfo, NULL, 0, NULL, (Node *) &rsinfo);
 	rsinfo.type = T_ReturnSetInfo;
 	rsinfo.econtext = econtext;
 	rsinfo.expectedDesc = expectedDesc;
@@ -1499,8 +1495,7 @@ ExecEvalDistinct(FuncExprState *fcache,
 	argList = fcache->args;
 
 	/* Need to prep callinfo structure */
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &(fcache->func);
+	InitFunctionCallInfoData(fcinfo, &(fcache->func), 0, NULL, NULL);
 	argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
 	if (argDone != ExprSingleResult)
 		ereport(ERROR,
@@ -1573,8 +1568,7 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	}
 
 	/* Need to prep callinfo structure */
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &(sstate->fxprstate.func);
+	InitFunctionCallInfoData(fcinfo, &(sstate->fxprstate.func), 0, NULL, NULL);
 	argDone = ExecEvalFuncArgs(&fcinfo, sstate->fxprstate.args, econtext);
 	if (argDone != ExprSingleResult)
 		ereport(ERROR,
@@ -2287,8 +2281,7 @@ ExecEvalNullIf(FuncExprState *nullIfExpr,
 	argList = nullIfExpr->args;
 
 	/* Need to prep callinfo structure */
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &(nullIfExpr->func);
+	InitFunctionCallInfoData(fcinfo, &(nullIfExpr->func), 0, NULL, NULL);
 	argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
 	if (argDone != ExprSingleResult)
 		ereport(ERROR,

@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.130 2005/03/16 21:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.131 2005/03/22 20:13:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,18 +373,9 @@ advance_transition_function(AggState *aggstate,
 
 	/*
 	 * OK to call the transition function
-	 *
-	 * This is heavily-used code, so manually zero just the necessary fields
-	 * instead of using MemSet().  Compare FunctionCall2().
 	 */
-
-	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
-	fcinfo.context = (void *) aggstate;
-	fcinfo.resultinfo = NULL;
-	fcinfo.isnull = false;
-
-	fcinfo.flinfo = &peraggstate->transfn;
-	fcinfo.nargs = 2;
+	InitFunctionCallInfoData(fcinfo, &(peraggstate->transfn), 2,
+							 (void *) aggstate, NULL);
 	fcinfo.arg[0] = pergroupstate->transValue;
 	fcinfo.argnull[0] = pergroupstate->transValueIsNull;
 	fcinfo.arg[1] = newVal;
@@ -556,10 +547,8 @@ finalize_aggregate(AggState *aggstate,
 	{
 		FunctionCallInfoData fcinfo;
 
-		MemSet(&fcinfo, 0, sizeof(fcinfo));
-		fcinfo.context = (void *) aggstate;
-		fcinfo.flinfo = &peraggstate->finalfn;
-		fcinfo.nargs = 1;
+		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn), 1,
+								 (void *) aggstate, NULL);
 		fcinfo.arg[0] = pergroupstate->transValue;
 		fcinfo.argnull[0] = pergroupstate->transValueIsNull;
 		if (fcinfo.flinfo->fn_strict && pergroupstate->transValueIsNull)
