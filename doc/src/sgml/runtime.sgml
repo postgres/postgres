@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.288 2004/10/15 16:50:29 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.289 2004/10/17 22:01:49 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1305,7 +1305,9 @@ SET ENABLE_SEQSCAN TO OFF;
       <varname>bgwriter_maxpages</varname> reduce the extra I/O load
       caused by the background writer, but leave more work to be done
       at checkpoint time.  To reduce load spikes at checkpoints,
-      increase the values.
+      increase the values.  To disable background writing entirely,
+      set <varname>bgwriter_percent</varname> and/or
+      <varname>bgwriter_maxpages</varname> to zero.
      </para>
     </sect3>
 

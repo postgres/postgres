@@ -98,9 +98,9 @@
 
 # - Background writer -
 
-#bgwriter_delay = 200		# 10-5000 milliseconds
-#bgwriter_percent = 1		# 1-100% of dirty buffers
-#bgwriter_maxpages = 100	# 1-1000 buffers max at once
+#bgwriter_delay = 200		# 10-10000 milliseconds between rounds
+#bgwriter_percent = 1		# 0-100% of dirty buffers in each round
+#bgwriter_maxpages = 100	# 0-1000 buffers max per round
 
 
 #---------------------------------------------------------------------------
