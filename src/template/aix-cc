@@ -1,5 +1,5 @@
 AROPT:crs
-CFLAGS:-qchars=signed -qmaxmem=4000
+CFLAGS:-qchars=signed -qmaxmem=8192 -qhalt=w -qsrcmsg
 SHARED_LIB:
 ALL:
 SRCH_INC:
@@ -8,3 +8,4 @@ USE_LOCALE:no
 DLSUFFIX:.so
 YFLAGS:-d
 YACC:
+CC:xlc

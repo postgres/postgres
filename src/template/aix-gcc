@@ -1,0 +1,11 @@
+AROPT:crs
+CFLAGS:-fsigned-chars
+SHARED_LIB:
+ALL:
+SRCH_INC:
+SRCH_LIB:
+USE_LOCALE:no
+DLSUFFIX:.so
+YFLAGS:-d
+YACC:
+CC:gcc
