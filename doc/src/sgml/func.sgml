@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.126 2002/09/24 20:14:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.127 2002/10/05 19:03:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -491,11 +491,11 @@ PostgreSQL documentation
         <entry>01110</entry>
        </row>
        <row>
-        <entry>B'10001' << 3</entry>
+        <entry>B'10001' &lt;&lt; 3</entry>
         <entry>01000</entry>
        </row>
        <row>
-        <entry>B'10001' >> 2</entry>
+        <entry>B'10001' &gt;&gt; 2</entry>
         <entry>00100</entry>
        </row>
       </tbody>
@@ -2726,7 +2726,7 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
 
    <para>
     There are two special cases of bracket expressions:  the bracket
-    expressions <literal>[[:<:]]</literal> and
+    expressions <literal>[[:&lt;:]]</literal> and
     <literal>[[:>:]]</literal> match the null string at the beginning
     and end of a word respectively.  A word is defined as a sequence
     of word characters which is neither preceded nor followed by word
@@ -3277,11 +3277,11 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
 	<entry><literal>MI</literal></entry>
-	<entry>minus sign in specified position (if number < 0)</entry>
+	<entry>minus sign in specified position (if number &lt; 0)</entry>
        </row>
        <row>
 	<entry><literal>PL</literal></entry>
-	<entry>plus sign in specified position (if number > 0)</entry>
+	<entry>plus sign in specified position (if number &gt; 0)</entry>
        </row>
        <row>
 	<entry><literal>SG</literal></entry>
@@ -4293,12 +4293,17 @@ SELECT timeofday();
    </informalexample>
 
    <para>
-    It is quite important to realize that
-    <function>CURRENT_TIMESTAMP</function> and related functions all return
-    the time as of the start of the current transaction; their values do not
-    increment while a transaction is running.  But
-    <function>timeofday()</function> returns the actual current time.
+    It is important to realize that
+    <function>CURRENT_TIMESTAMP</function> and related functions return
+    the start time of the current transaction; their values do not
+    change during the transaction. <function>timeofday()</function>
+    returns the wall clock time and does advance during transactions.
    </para>
+
+   <note>  
+    Many other database systems advance these values more
+    frequently.
+   </note>
 
    <para>
     All the date/time data types also accept the special literal value
