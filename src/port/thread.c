@@ -7,12 +7,40 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.2 2003/08/08 03:09:56 momjian Exp $
+ * $Id: thread.c,v 1.3 2003/08/14 05:27:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
+/*
+ *	Threading sometimes requires specially-named versions of functions
+ *	that return data in static buffers, like strerror_r() instead of
+ *	strerror().  Other operating systems use pthread_setspecific()
+ *	and pthread_getspecific() internally to allow standard library
+ *	functions to return static data to threaded applications.
+ *
+ *	Additional confusion exists because many operating systems that
+ *	use pthread_setspecific/pthread_getspecific() also have *_r versions
+ *	of standard library functions for compatibility with operating systems
+ *	that require them.  However, internally, these *_r functions merely
+ *	call the thread-safe standard library functions.
+ *
+ *	For example, BSD/OS 4.3 uses Bind 8.2.3 for getpwuid().  Internally,
+ *	getpwuid() calls pthread_setspecific/pthread_getspecific() to return
+ *	static data to the caller in a thread-safe manner.  However, BSD/OS
+ *	also has getpwuid_r(), which merely calls getpwuid() and shifts
+ *	around the arguments to match the getpwuid_r() function declaration.
+ *	Therefore, while BSD/OS has getpwuid_r(), it isn't required.  It also
+ *	doesn't have strerror_r(), so we can't fall back to only using *_r
+ *	functions for threaded programs.
+ *
+ *	The current setup is to assume either all standard functions are
+ *	thread-safe (NEED_REENTRANT_FUNC_NAMES=no), or the operating system
+ *	requires reentrant function names (NEED_REENTRANT_FUNC_NAMES=yes).
+ */
+ 
 
 /*
  * Wrapper around strerror and strerror_r to use the former if it is
@@ -34,19 +62,20 @@ pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 
 /*
  * Wrapper around getpwuid() or getpwuid_r() to mimic POSIX getpwuid_r()
- * behaviour, if it is not available.
+ * behaviour, if it is not available or required.
  */
 int
-pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
-		   size_t buflen, struct passwd ** result)
+pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
+		   size_t buflen, struct passwd **result)
 {
 #if defined(USE_THREADS) && defined(HAVE_GETPWUID_R)
-
 	/*
-	 * broken (well early POSIX draft) getpwuid_r() which returns 'struct
-	 * passwd *'
+	 * Early POSIX draft of getpwuid_r() returns 'struct passwd *'.
+	 *    getpwuid_r(uid, resultbuf, buffer, buflen)
+	 * Do we need to support it?  bjm 2003-08-14
 	 */
-	*result = getpwuid_r(uid, resultbuf, buffer, buflen);
+	/* POSIX version */
+	getpwuid_r(uid, resultbuf, buffer, buflen, result);
 #else
 	/* no getpwuid_r() available, just use getpwuid() */
 	*result = getpwuid(uid);
@@ -56,13 +85,13 @@ pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
 
 /*
  * Wrapper around gethostbyname() or gethostbyname_r() to mimic
- * POSIX gethostbyname_r() behaviour, if it is not available.
+ * POSIX gethostbyname_r() behaviour, if it is not available or required.
  */
 int
 pqGethostbyname(const char *name,
-				struct hostent * resbuf,
+				struct hostent *resbuf,
 				char *buf, size_t buflen,
-				struct hostent ** result,
+				struct hostent **result,
 				int *herrno)
 {
 #if defined(USE_THREADS) && defined(HAVE_GETHOSTBYNAME_R)
