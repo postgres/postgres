@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.21 2000/04/12 17:16:51 momjian Exp $
+ * $Id: fd.h,v 1.22 2000/06/02 03:58:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
  * Use them for all file activity...
  *
  *	File fd;
- *	fd = FilePathOpenFile("foo", O_RDONLY);
+ *	fd = FilePathOpenFile("foo", O_RDONLY, 0600);
  *
  *	AllocateFile();
  *	FreeFile();
@@ -64,8 +64,10 @@ extern void FileMarkDirty(File file);
 extern FILE *AllocateFile(char *name, char *mode);
 extern void FreeFile(FILE *);
 
+/* If you've really really gotta have a plain kernel FD, use this */
+extern int	BasicOpenFile(FileName fileName, int fileFlags, int fileMode);
+
 /* Miscellaneous support routines */
-extern bool ReleaseDataFile(void);
 extern void closeAllVfds(void);
 extern void AtEOXact_Files(void);
 extern int	pg_fsync(int fd);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.68 2000/05/25 23:30:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.69 2000/06/02 03:58:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1129,10 +1129,11 @@ _mdfd_blind_getseg(char *dbname, char *relname, Oid dbid, Oid relid,
 	}
 #endif
 
+	/* call fd.c to allow other FDs to be closed if needed */
 #ifndef __CYGWIN32__
-	fd = open(path, O_RDWR, 0600);
+	fd = BasicOpenFile(path, O_RDWR, 0600);
 #else
-	fd = open(path, O_RDWR | O_BINARY, 0600);
+	fd = BasicOpenFile(path, O_RDWR | O_BINARY, 0600);
 #endif
 
 	if (fd < 0)

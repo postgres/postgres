@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.13 2000/04/12 17:14:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.14 2000/06/02 03:58:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,6 @@ bool		StopIfError = false;
 
 SPINLOCK	ControlFileLockId;
 SPINLOCK	XidGenLockId;
-
-extern bool ReleaseDataFile(void);
 
 extern VariableCache ShmemVariableCache;
 
@@ -738,22 +736,13 @@ XLogFileInit(uint32 log, uint32 seg)
 	XLogFileName(path, log, seg);
 	unlink(path);
 
-tryAgain:
 #ifndef __CYGWIN__
-	fd = open(path, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(path, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
 #else
-	fd = open(path, O_RDWR | O_CREAT | O_EXCL | O_BINARY, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(path, O_RDWR | O_CREAT | O_EXCL | O_BINARY, S_IRUSR | S_IWUSR);
 #endif
-	if (fd < 0 && (errno == EMFILE || errno == ENFILE))
-	{
-		fd = errno;
-		if (!ReleaseDataFile())
-			elog(STOP, "Create(logfile %u seg %u) failed: %d (and no one data file can be closed)",
-				 logId, logSeg, fd);
-		goto tryAgain;
-	}
 	if (fd < 0)
-		elog(STOP, "Init(logfile %u seg %u) failed: %d",
+		elog(STOP, "Open(logfile %u seg %u) failed: %d",
 			 logId, logSeg, errno);
 
 	if (lseek(fd, XLogSegSize - 1, SEEK_SET) != (off_t) (XLogSegSize - 1))
@@ -783,20 +772,11 @@ XLogFileOpen(uint32 log, uint32 seg, bool econt)
 
 	XLogFileName(path, log, seg);
 
-tryAgain:
 #ifndef __CYGWIN__
-	fd = open(path, O_RDWR);
+	fd = BasicOpenFile(path, O_RDWR, S_IRUSR | S_IWUSR);
 #else
-	fd = open(path, O_RDWR | O_BINARY);
+	fd = BasicOpenFile(path, O_RDWR | O_BINARY, S_IRUSR | S_IWUSR);
 #endif
-	if (fd < 0 && (errno == EMFILE || errno == ENFILE))
-	{
-		fd = errno;
-		if (!ReleaseDataFile())
-			elog(STOP, "Open(logfile %u seg %u) failed: %d (and no one data file can be closed)",
-				 logId, logSeg, fd);
-		goto tryAgain;
-	}
 	if (fd < 0)
 	{
 		if (econt && errno == ENOENT)
@@ -1102,20 +1082,11 @@ UpdateControlFile()
 {
 	int			fd;
 
-tryAgain:
 #ifndef __CYGWIN__
-	fd = open(ControlFilePath, O_RDWR);
+	fd = BasicOpenFile(ControlFilePath, O_RDWR, S_IRUSR | S_IWUSR);
 #else
-	fd = open(ControlFilePath, O_RDWR | O_BINARY);
+	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_BINARY, S_IRUSR | S_IWUSR);
 #endif
-	if (fd < 0 && (errno == EMFILE || errno == ENFILE))
-	{
-		fd = errno;
-		if (!ReleaseDataFile())
-			elog(STOP, "Open(cntlfile) failed: %d (and no one data file can be closed)",
-				 fd);
-		goto tryAgain;
-	}
 	if (fd < 0)
 		elog(STOP, "Open(cntlfile) failed: %d", errno);
 
@@ -1174,9 +1145,9 @@ BootStrapXLOG()
 #endif
 
 #ifndef __CYGWIN__
-	fd = open(ControlFilePath, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
 #else
-	fd = open(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | O_BINARY, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | O_BINARY, S_IRUSR | S_IWUSR);
 #endif
 	if (fd < 0)
 		elog(STOP, "BootStrapXLOG failed to create control file (%s): %d",
@@ -1288,20 +1259,11 @@ StartupXLOG()
 	/*
 	 * Open/read Control file
 	 */
-tryAgain:
 #ifndef __CYGWIN__
-	fd = open(ControlFilePath, O_RDWR);
+	fd = BasicOpenFile(ControlFilePath, O_RDWR, S_IRUSR | S_IWUSR);
 #else
-	fd = open(ControlFilePath, O_RDWR | O_BINARY);
+	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_BINARY, S_IRUSR | S_IWUSR);
 #endif
-	if (fd < 0 && (errno == EMFILE || errno == ENFILE))
-	{
-		fd = errno;
-		if (!ReleaseDataFile())
-			elog(STOP, "Open(\"%s\") failed: %d (and no one data file can be closed)",
-				 ControlFilePath, fd);
-		goto tryAgain;
-	}
 	if (fd < 0)
 		elog(STOP, "Open(\"%s\") failed: %d", ControlFilePath, errno);
 

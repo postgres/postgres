@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.57 2000/05/31 00:28:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.58 2000/06/02 03:58:32 tgl Exp $
  *
  * NOTES:
  *
@@ -203,6 +203,45 @@ pg_fsync(int fd)
 }
 
 /*
+ * BasicOpenFile --- same as open(2) except can free other FDs if needed
+ *
+ * This is exported for use by places that really want a plain kernel FD,
+ * but need to be proof against running out of FDs.  Once an FD has been
+ * successfully returned, it is the caller's responsibility to ensure that
+ * it will not be leaked on elog()!  Most users should *not* call this
+ * routine directly, but instead use the VFD abstraction level, which
+ * provides protection against descriptor leaks as well as management of
+ * files that need to be open for more than a short period of time.
+ *
+ * Ideally this should be the *only* direct call of open() in the backend.
+ * In practice, the postmaster calls open() directly, and there are some
+ * direct open() calls done early in backend startup.  Those are OK since
+ * this module wouldn't have any open files to close at that point anyway.
+ */
+int
+BasicOpenFile(FileName fileName, int fileFlags, int fileMode)
+{
+	int		fd;
+
+tryAgain:
+	fd = open(fileName, fileFlags, fileMode);
+
+	if (fd >= 0)
+		return fd;				/* success! */
+
+	if ((errno == EMFILE || errno == ENFILE) && nfile > 0)
+	{
+		DO_DB(elog(DEBUG, "BasicOpenFile: not enough descs, retry, er= %d",
+				   errno));
+		errno = 0;
+		ReleaseLruFile();
+		goto tryAgain;
+	}
+
+	return -1;					/* failure */
+}
+
+/*
  * pg_nofile: determine number of filedescriptors that fd.c is allowed to use
  */
 static long
@@ -348,7 +387,6 @@ LruInsert(File file)
 
 	if (FileIsNotOpen(file))
 	{
-
 		while (nfile + numAllocatedFiles >= pg_nofile())
 			ReleaseLruFile();
 
@@ -357,15 +395,8 @@ LruInsert(File file)
 		 * to overall system file table being full.  So, be prepared to
 		 * release another FD if necessary...
 		 */
-tryAgain:
-		vfdP->fd = open(vfdP->fileName, vfdP->fileFlags, vfdP->fileMode);
-		if (vfdP->fd < 0 && (errno == EMFILE || errno == ENFILE))
-		{
-			errno = 0;
-			ReleaseLruFile();
-			goto tryAgain;
-		}
-
+		vfdP->fd = BasicOpenFile(vfdP->fileName, vfdP->fileFlags,
+								 vfdP->fileMode);
 		if (vfdP->fd < 0)
 		{
 			DO_DB(elog(DEBUG, "RE_OPEN FAILED: %d",
@@ -409,22 +440,6 @@ ReleaseLruFile()
 	 */
 	Assert(VfdCache[0].lruMoreRecently != 0);
 	LruDelete(VfdCache[0].lruMoreRecently);
-}
-
-/*
- * Force one kernel file descriptor to be released (temporarily).
- */
-bool
-ReleaseDataFile()
-{
-	DO_DB(elog(DEBUG, "ReleaseDataFile. Opened %d", nfile));
-
-	if (nfile <= 0)
-		return (false);
-	Assert(VfdCache[0].lruMoreRecently != 0);
-	LruDelete(VfdCache[0].lruMoreRecently);
-
-	return (true);
 }
 
 static File
@@ -617,16 +632,7 @@ fileNameOpenFile(FileName fileName,
 	while (nfile + numAllocatedFiles >= pg_nofile())
 		ReleaseLruFile();
 
-tryAgain:
-	vfdP->fd = open(fileName, fileFlags, fileMode);
-	if (vfdP->fd < 0 && (errno == EMFILE || errno == ENFILE))
-	{
-		DO_DB(elog(DEBUG, "fileNameOpenFile: not enough descs, retry, er= %d",
-				   errno));
-		errno = 0;
-		ReleaseLruFile();
-		goto tryAgain;
-	}
+	vfdP->fd = BasicOpenFile(fileName, fileFlags, fileMode);
 
 	if (vfdP->fd < 0)
 	{
@@ -990,6 +996,8 @@ FileMarkDirty(File file)
  * fd.c will automatically close all files opened with AllocateFile at
  * transaction commit or abort; this prevents FD leakage if a routine
  * that calls AllocateFile is terminated prematurely by elog(ERROR).
+ *
+ * Ideally this should be the *only* direct call of fopen() in the backend.
  */
 
 FILE *
@@ -1005,7 +1013,7 @@ AllocateFile(char *name, char *mode)
 TryAgain:
 	if ((file = fopen(name, mode)) == NULL)
 	{
-		if (errno == EMFILE || errno == ENFILE)
+		if ((errno == EMFILE || errno == ENFILE) && nfile > 0)
 		{
 			DO_DB(elog(DEBUG, "AllocateFile: not enough descs, retry, er= %d",
 					   errno));
