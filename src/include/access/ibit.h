@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ibit.h,v 1.1 1996/08/27 21:50:15 scrappy Exp $
+ * $Id: ibit.h,v 1.2 1996/10/19 04:09:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	IBIT_H
 #define IBIT_H
 
-#include "c.h"
 #include "utils/memutils.h"
 
 typedef struct IndexAttributeBitMapData {
