@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.230 2004/12/13 18:05:08 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.231 2004/12/21 01:02:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -4412,6 +4412,13 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        1230 microseconds = 2.021230 seconds. 
       </para>
      </listitem>
+
+     <listitem>
+      <para><function>to_char</function>'s day of the week numbering
+        (see the 'D' formatting pattern) is different from that of the 
+        <function>extract</function> function.
+      </para>
+     </listitem>
     </itemizedlist>
    </para>
 
@@ -5146,6 +5153,11 @@ SELECT EXTRACT(DECADE FROM TIMESTAMP '2001-02-16 20:38:40');
 SELECT EXTRACT(DOW FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>5</computeroutput>
 </screen>
+       <para>
+        Note that <function>extract</function>'s day of the week numbering is 
+        different from that of the <function>to_char</function> function.
+       </para>
+
       </listitem>
      </varlistentry>
 
