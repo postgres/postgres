@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.73 2000/03/14 23:06:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.74 2000/03/17 05:29:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,11 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
+
+int	max_expr_depth = DEFAULT_MAX_EXPR_DEPTH;
+
+static int	expr_depth_counter = 0;
+
 static Node *parser_typecast_constant(Value *expr, TypeName *typename);
 static Node *parser_typecast_expression(ParseState *pstate,
 										Node *expr, TypeName *typename);
@@ -39,6 +44,20 @@ static Node *transformAttr(ParseState *pstate, Attr *att, int precedence);
 static Node *transformIdent(ParseState *pstate, Ident *ident, int precedence);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 								  List *indirection);
+
+
+/*
+ * Initialize for parsing a new query.
+ *
+ * We reset the expression depth counter here, in case it was left nonzero
+ * due to elog()'ing out of the last parsing operation.
+ */
+void
+parse_expr_init(void)
+{
+	expr_depth_counter = 0;
+}
+
 
 /*
  * transformExpr -
@@ -54,6 +73,17 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 	if (expr == NULL)
 		return NULL;
+
+	/*
+	 * Guard against an overly complex expression leading to coredump
+	 * due to stack overflow here, or in later recursive routines that
+	 * traverse expression trees.  Note that this is very unlikely to
+	 * happen except with pathological queries; but we don't want someone
+	 * to be able to crash the backend quite that easily...
+	 */
+	if (++expr_depth_counter > max_expr_depth)
+		elog(ERROR, "Expression too complex: nesting depth exceeds max_expr_depth = %d",
+			 max_expr_depth);
 
 	switch (nodeTag(expr))
 	{
@@ -531,6 +561,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				 " (internal error)", nodeTag(expr));
 			break;
 	}
+
+	expr_depth_counter--;
 
 	return result;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.43 2000/01/26 05:56:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.44 2000/03/17 05:29:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
 #include "parser/parser.h"
+#include "parser/parse_expr.h"
 
 #if defined(FLEX_SCANNER)
 extern void DeleteBuffer(void);
@@ -46,6 +47,8 @@ parser(char *str, Oid *typev, int nargs)
 	parsetree = NIL;			/* in case parser forgets to set it */
 
 	parser_init(typev, nargs);
+	parse_expr_init();
+
 	yyresult = yyparse();
 
 #if defined(FLEX_SCANNER)

@@ -1,8 +1,14 @@
-
-
-/* the purpose of this file is to reduce the use of #ifdef's through
- * the code base by those porting the software, and to facilitate the
- * eventual use of autoconf to build the server 
+/*
+ * PostgreSQL configuration-settings file.
+ *
+ * config.h.in is processed by configure to produce config.h.
+ *
+ * If you want to modify any of the tweakable settings in the first part
+ * of this file, you can do it in config.h.in before running configure,
+ * or in config.h afterwards.  Of course, if you edit config.h, then your
+ * changes will be overwritten the next time you run configure.
+ *
+ * $Id: config.h.in,v 1.110 2000/03/17 05:29:06 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -11,7 +17,7 @@
 /*
  * Default runtime limit on number of backend server processes per postmaster;
  * this is just the default setting for the postmaster's -N switch.
- * (Actual value is set by configure script.)
+ * (Actual value is now set by configure script.)
  */
 #undef DEF_MAXBACKENDS
 
@@ -70,16 +76,10 @@
 /* 
  * DEF_PGPORT is the TCP port number on which the Postmaster listens by
  * default.  This can be overriden by command options, environment variables,
- * and the postconfig hook. (set by configure script)
+ * and the postconfig hook. (now set by configure script)
  */ 
 
 #undef DEF_PGPORT 
-
-/*
- * If you do not plan to use Host based authentication,
- * comment out the following line (set by build script)
- */
-#undef HBA
 
 /*
  * As soon as the backend blocks on a lock, it waits this number of seconds
@@ -88,12 +88,6 @@
  * a rare event, and checking is an expensive operation.
  */
 #define DEADLOCK_CHECK_TIMER 1
-
-/*
- * This flag enables the use of indexes in plans generated for function
- * executions which normally are always executed with sequential scans.
- */
-#define INDEXSCAN_PATCH 
 
 /*
  * Maximum number of columns in an index and maximum number of arguments
@@ -120,16 +114,6 @@
  * ops faster at the cost of safety, of course!        
  */
 /* #define UNSAFE_FLOATS */
-
-/*
- * There is a bug in the function executor. The backend crashes while trying to
- * execute an sql function containing an utility command (create, notify, ...).
- * The bug is part in the planner, which returns a number of plans different
- * than the number of commands if there are utility commands in the query, and
- * in part in the function executor which assumes that all commands are normal
- * query commands and causes a SIGSEGV trying to execute commands without plan.
- */
-#define FUNC_UTIL_PATCH
 
 /*
  * Define this to make libpgtcl's "pg_result -assign" command process C-style
@@ -188,7 +172,7 @@
 #define FASTBUILD /* access/nbtree/nbtsort.c */
 
 /*
- * TBL_FREE_CMD_MEMORY: free memory allocated for an user query inside
+ * TBL_FREE_CMD_MEMORY: free memory allocated for a user query inside
  * transaction block after this query is done. 
  */
 #define TBL_FREE_CMD_MEMORY
@@ -233,8 +217,21 @@
 #define MAXPGPATH		1024
 
 /*
+ * DEFAULT_MAX_EXPR_DEPTH: default value of max_expr_depth SET variable.
+ */
+#define DEFAULT_MAX_EXPR_DEPTH	10000
+
+/*
+ * Leftover cruft for enabling long-since-verified patches.
+ * You don't want to touch these.
+ */
+#define INDEXSCAN_PATCH 
+#define FUNC_UTIL_PATCH
+
+
+/*
  *------------------------------------------------------------------------
- * The following is set using configure.  
+ * Everything past here is set by the configure script.
  *------------------------------------------------------------------------
  */
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.15 2000/03/05 13:30:19 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.16 2000/03/17 05:29:06 tgl Exp $
  */
 
 /*-----------
@@ -195,6 +195,7 @@ char ** psql_completion(char *text, int start, int end)
 		"client_encoding",
 		"server_encoding",
 		"KSQO",
+		"max_expr_depth",
 		"XactIsoLevel",
 		"PG_Options",
         NULL

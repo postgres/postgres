@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.31 2000/02/27 21:10:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.32 2000/03/17 05:29:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/paths.h"
+#include "parser/parse_expr.h"
 #include "utils/builtins.h"
 #include "utils/tqual.h"
 #include "utils/trace.h"
@@ -86,6 +87,9 @@ static bool parse_geqo(char *);
 static bool show_ksqo(void);
 static bool reset_ksqo(void);
 static bool parse_ksqo(char *);
+static bool reset_max_expr_depth(void);
+static bool show_max_expr_depth(void);
+static bool parse_max_expr_depth(char *);
 static bool show_XactIsoLevel(void);
 static bool reset_XactIsoLevel(void);
 static bool parse_XactIsoLevel(char *);
@@ -935,6 +939,44 @@ reset_ksqo()
 	return TRUE;
 }
 
+/*
+ * MAX_EXPR_DEPTH
+ */
+static bool
+parse_max_expr_depth(char *value)
+{
+	int			newval;
+
+	if (value == NULL)
+	{
+		reset_max_expr_depth();
+		return TRUE;
+	}
+
+	newval = pg_atoi(value, sizeof(int), '\0');
+
+	if (newval < 10)			/* somewhat arbitrary limit */
+		elog(ERROR, "Bad value for MAX_EXPR_DEPTH (%s)", value);
+
+	max_expr_depth = newval;
+
+	return TRUE;
+}
+
+static bool
+show_max_expr_depth()
+{
+	elog(NOTICE, "MAX_EXPR_DEPTH is %d", max_expr_depth);
+	return TRUE;
+}
+
+static bool
+reset_max_expr_depth(void)
+{
+	max_expr_depth = DEFAULT_MAX_EXPR_DEPTH;
+	return TRUE;
+}
+
 /* SET TRANSACTION */
 
 static bool
@@ -1102,6 +1144,10 @@ static struct VariableParsers
 #endif
 	{
 		"ksqo", parse_ksqo, show_ksqo, reset_ksqo
+	},
+	{
+		"max_expr_depth", parse_max_expr_depth,
+		show_max_expr_depth, reset_max_expr_depth
 	},
 	{
 		"XactIsoLevel", parse_XactIsoLevel, show_XactIsoLevel, reset_XactIsoLevel

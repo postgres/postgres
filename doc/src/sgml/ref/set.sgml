@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.31 2000/02/27 21:07:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.32 2000/03/17 05:29:03 tgl Exp $
 Postgres documentation
 -->
 
@@ -766,6 +766,30 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
         The KSQO algorithm used to be absolutely essential for queries
 	with many OR'ed AND clauses, but in Postgres 7.0 and later
 	the standard planner handles these queries fairly successfully.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>MAX_EXPR_DEPTH</term>
+      <listitem>
+       <para>
+        Sets the maximum expression nesting depth that the parser will
+	accept.  The default value is high enough for any normal query,
+	but you can raise it if you need to.  (But if you raise it too high,
+	you run the risk of backend crashes due to stack overflow.)
+
+	<variablelist>
+	 <varlistentry>
+	  <term><replaceable class="parameter">integer</replaceable></term>
+	  <term>ON</term>
+	  <listitem>
+	   <para>
+	    Maximum depth.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
        </para>
       </listitem>
      </varlistentry>
