@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.63 2004/03/27 17:32:42 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.64 2004/03/27 17:59:35 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1728,9 +1728,8 @@ pgstat_mainChild(PGSTAT_FORK_ARGS)
 
 			while (nread < targetlen)
 			{
-				len = piperead(readPipe,
-						   ((char *) &msg) + nread,
-						   targetlen - nread);
+				len = piperead(readPipe, ((char *) &msg) + nread,
+								targetlen - nread);
 				if (len < 0)
 				{
 					if (errno == EINTR)
