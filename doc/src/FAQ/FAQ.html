@@ -12,7 +12,7 @@
   alink="#0000FF">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sun Oct 14 19:27:20 EDT 2001</P>
+    <P>Last updated: Mon Nov 12 02:38:47 EST 2001</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1202,9 +1202,9 @@ BYTEA           bytea           variable-length byte array (null-safe)
     default to the current time?<BR>
     </H4>
 
-    <P>Use <I>now()</I>:</P>
+    <P>Use <I>CURRENT_TIMESTAMP</I>:</P>
 <PRE>
-<CODE>CREATE TABLE test (x int, modtime timestamp DEFAULT now() );
+<CODE>CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 </CODE>
 </PRE>
 

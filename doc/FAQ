@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Oct 14 19:27:20 EDT 2001
+   Last updated: Mon Nov 12 02:38:47 EST 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -938,8 +938,8 @@ BYTEA           bytea           variable-length byte array (null-safe)
    
     4.22) How do I create a column that will default to the current time?
     
-   Use now():
-CREATE TABLE test (x int, modtime timestamp DEFAULT now() );
+   Use CURRENT_TIMESTAMP:
+CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
     4.23) Why are my subqueries using IN so slow?
     
