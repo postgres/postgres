@@ -8,9 +8,10 @@
 	o doc/bug.template
 	o bump interface version numbers
 		- src/interfaces/*/Makefile (major releases only)
+		- src/interfaces/*/*/Makefile (major releases only)
 		- src/interfaces/libpq/libpq.rc.in (major and minor releases)
 		- src/include/pg_config.h.win32 (major and minor releases)
-		- port/win32ver.rc (major and minor releases)
+		- src/port/win32ver.rc (major and minor releases)
 
 * Release notes
 	o scan cvs logs, use pgcvslog and flags in comments
@@ -28,6 +29,7 @@
 	document all new features
 	update help output from inside the programs
 	doc/src/sgml/ref manual pages
+	convert any literal "<" and ">" characters, use tools/find_gt_lt
 
 * Ports
 	update config.guess and config.sub at the start of beta
