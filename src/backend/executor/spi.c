@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.35 1999/03/09 13:39:00 scrappy Exp $
+ * $Id: spi.c,v 1.36 1999/03/30 01:37:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ extern void ShowUsage(void);
 int
 SPI_connect()
 {
-	char									pname[64];
+	char					pname[64];
 	PortalVariableMemory	pvmem;
 
 	/*

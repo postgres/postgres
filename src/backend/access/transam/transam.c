@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.24 1999/02/21 03:48:28 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.25 1999/03/30 01:37:21 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -174,8 +174,7 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 	{
 		TransactionIdStore(transactionId, &cachedTestXid);
 		cachedTestXidStatus = xidstatus;
-		return (bool)
-			(status == xidstatus);
+		return (bool) (status == xidstatus);
 	}
 
 	/* ----------------

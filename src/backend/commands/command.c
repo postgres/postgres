@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.41 1999/03/23 05:40:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.42 1999/03/30 01:37:22 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -71,8 +71,7 @@ PortalCleanup(Portal portal)
 	 * ----------------
 	 */
 	context = MemoryContextSwitchTo((MemoryContext) PortalGetHeapMemory(portal));
-	PortalExecutorHeapMemory = (MemoryContext)
-		PortalGetHeapMemory(portal);
+	PortalExecutorHeapMemory = (MemoryContext) PortalGetHeapMemory(portal);
 
 	/* ----------------
 	 *	tell the executor to shutdown the query
@@ -210,7 +209,7 @@ PerformPortalFetch(char *name,
 	 * ----------------
 	 */
 	MemoryContextSwitchTo(
-			 (MemoryContext) PortalGetHeapMemory(GetPortalByName(NULL)));
+				(MemoryContext) PortalGetHeapMemory(GetPortalByName(NULL)));
 }
 
 /* --------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.20 1999/02/13 23:14:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.21 1999/03/30 01:37:21 momjian Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -211,8 +211,7 @@ TransBlockGetXidStatus(Block tblock,
 	 *	return the transaction status to the caller
 	 * ----------------
 	 */
-	return (XidStatus)
-		(bit1 | bit2);
+	return (XidStatus) (bit1 | bit2);
 }
 
 /* --------------------------------
