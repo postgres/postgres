@@ -447,12 +447,14 @@ abstime_tbl
 aggtest      
 arrtest      
 b_star       
+box_tbl      
 bprime       
 bt_c16_heap  
 bt_f8_heap   
 bt_i4_heap   
 bt_txt_heap  
 c_star       
+circle_tbl   
 city         
 d_star       
 datetime_tbl 
@@ -462,6 +464,8 @@ emp
 equipment_r  
 f_star       
 fast_emp4000 
+float4_tbl   
+float8_tbl   
 hash_c16_heap
 hash_f8_heap 
 hash_i4_heap 
@@ -469,10 +473,16 @@ hash_txt_heap
 hobbies_r    
 iexit        
 ihighway     
+int2_tbl     
+int4_tbl     
 iportaltest  
+lseg_tbl     
 onek         
 onek2        
+path_tbl     
 person       
+point_tbl    
+polygon_tbl  
 ramp         
 real_city    
 reltime_tbl  
@@ -488,5 +498,5 @@ timespan_tbl
 tinterval_tbl
 toyemp       
 xacttest     
-(46 rows)
+(56 rows)
 
