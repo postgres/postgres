@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.297 2004/12/18 04:21:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.298 2004/12/18 18:36:33 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -4427,7 +4427,9 @@ sysctl -w kern.sysv.shmseg
 sysctl -w kern.sysv.shmall
 </programlisting>
         In OS X 10.3, these commands have been moved to <filename>/etc/rc</>
-        and must be edited there.
+        and must be edited there.  Note that <filename>/etc/rc</> is usually
+        overwritten by OS X updates (such as 10.3.6 to 10.3.7) so you
+        should expect to have to redo your editing after each update.
        </para>
       </listitem>
      </varlistentry>
