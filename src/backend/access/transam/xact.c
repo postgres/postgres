@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.184 2004/08/30 02:54:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.185 2004/08/30 19:00:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3462,12 +3462,30 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 	if (info == XLOG_XACT_COMMIT)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) XLogRecGetData(record);
+		TransactionId *sub_xids;
+		TransactionId max_xid;
 		int			i;
 
 		TransactionIdCommit(record->xl_xid);
+
 		/* Mark committed subtransactions as committed */
-		TransactionIdCommitTree(xlrec->nsubxacts,
-					   (TransactionId *) &(xlrec->xnodes[xlrec->nrels]));
+		sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
+		TransactionIdCommitTree(xlrec->nsubxacts, sub_xids);
+
+		/* Make sure nextXid is beyond any XID mentioned in the record */
+		max_xid = record->xl_xid;
+		for (i = 0; i < xlrec->nsubxacts; i++)
+		{
+			if (TransactionIdPrecedes(max_xid, sub_xids[i]))
+				max_xid = sub_xids[i];
+		}
+		if (TransactionIdFollowsOrEquals(max_xid,
+										 ShmemVariableCache->nextXid))
+		{
+			ShmemVariableCache->nextXid = max_xid;
+			TransactionIdAdvance(ShmemVariableCache->nextXid);
+		}
+
 		/* Make sure files supposed to be dropped are dropped */
 		for (i = 0; i < xlrec->nrels; i++)
 		{
@@ -3478,12 +3496,30 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 	else if (info == XLOG_XACT_ABORT)
 	{
 		xl_xact_abort *xlrec = (xl_xact_abort *) XLogRecGetData(record);
+		TransactionId *sub_xids;
+		TransactionId max_xid;
 		int			i;
 
 		TransactionIdAbort(record->xl_xid);
-		/* mark subtransactions as aborted */
-		TransactionIdAbortTree(xlrec->nsubxacts,
-					   (TransactionId *) &(xlrec->xnodes[xlrec->nrels]));
+
+		/* Mark subtransactions as aborted */
+		sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
+		TransactionIdAbortTree(xlrec->nsubxacts, sub_xids);
+
+		/* Make sure nextXid is beyond any XID mentioned in the record */
+		max_xid = record->xl_xid;
+		for (i = 0; i < xlrec->nsubxacts; i++)
+		{
+			if (TransactionIdPrecedes(max_xid, sub_xids[i]))
+				max_xid = sub_xids[i];
+		}
+		if (TransactionIdFollowsOrEquals(max_xid,
+										 ShmemVariableCache->nextXid))
+		{
+			ShmemVariableCache->nextXid = max_xid;
+			TransactionIdAdvance(ShmemVariableCache->nextXid);
+		}
+
 		/* Make sure files supposed to be dropped are dropped */
 		for (i = 0; i < xlrec->nrels; i++)
 		{
