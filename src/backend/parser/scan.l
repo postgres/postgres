@@ -4,12 +4,12 @@
  * scan.l
  *	  lexical scanner for PostgreSQL
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.95 2002/06/11 15:41:37 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.96 2002/06/20 20:29:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,10 +4,10 @@
  *	  POSTGRES free space map for quickly finding free space in relations
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: freespace.h,v 1.6 2001/11/05 17:46:35 momjian Exp $
+ * $Id: freespace.h,v 1.7 2002/06/20 20:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

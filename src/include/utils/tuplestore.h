@@ -10,10 +10,10 @@
  * A temporary file is used to handle the data if it exceeds the
  * space limit specified by the caller.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuplestore.h,v 1.6 2001/11/05 17:46:36 momjian Exp $
+ * $Id: tuplestore.h,v 1.7 2002/06/20 20:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,10 +3,10 @@
  * analyze.c
  *	  transform the parse tree into a query tree
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.236 2002/06/13 02:04:46 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.237 2002/06/20 20:29:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

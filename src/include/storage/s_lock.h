@@ -60,10 +60,10 @@
  *	when using the SysV semaphore code.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: s_lock.h,v 1.98 2002/05/05 00:03:29 tgl Exp $
+ *	  $Id: s_lock.h,v 1.99 2002/06/20 20:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -26,10 +26,10 @@
  * the backend's "backend/libpq" is quite separate from "interfaces/libpq".
  * All that remains is similarities of names to trap the unwary...
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.136 2002/06/14 04:23:17 momjian Exp $
+ *	$Id: pqcomm.c,v 1.137 2002/06/20 20:29:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

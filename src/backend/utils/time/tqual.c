@@ -12,11 +12,11 @@
  * exclusive lock on the containing relation, instead.)
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.55 2002/06/15 19:54:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.56 2002/06/20 20:29:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

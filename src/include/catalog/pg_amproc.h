@@ -11,10 +11,10 @@
  * Note: the primary key for this table is <amopclaid, amprocnum>.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.34 2001/11/05 17:46:32 momjian Exp $
+ * $Id: pg_amproc.h,v 1.35 2002/06/20 20:29:44 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

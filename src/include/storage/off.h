@@ -4,10 +4,10 @@
  *	  POSTGRES disk "offset" definitions.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: off.h,v 1.13 2001/11/05 17:46:35 momjian Exp $
+ * $Id: off.h,v 1.14 2002/06/20 20:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

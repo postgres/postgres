@@ -4,10 +4,10 @@
  *	  POSTGRES LIBPQ buffer structure definitions.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.50 2002/03/04 01:46:03 tgl Exp $
+ * $Id: libpq.h,v 1.51 2002/06/20 20:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

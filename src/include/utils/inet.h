@@ -4,10 +4,10 @@
  *	  Declarations for operations on INET datatypes.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inet.h,v 1.12 2001/11/05 17:46:36 momjian Exp $
+ * $Id: inet.h,v 1.13 2002/06/20 20:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

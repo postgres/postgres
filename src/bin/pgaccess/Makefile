@@ -2,10 +2,10 @@
 #
 # Makefile for src/bin/pgaccess
 #
-# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.16 2001/02/18 18:34:01 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.17 2002/06/20 20:29:42 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

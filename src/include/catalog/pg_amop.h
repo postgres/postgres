@@ -13,10 +13,10 @@
  * for multiple strategy numbers of a single opclass.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.45 2001/11/05 17:46:32 momjian Exp $
+ * $Id: pg_amop.h,v 1.46 2002/06/20 20:29:43 momjian Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki

@@ -4,12 +4,12 @@
  *	  This file contains heap tuple accessor and mutator routines, as well
  *	  as various tuple utilities.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.76 2002/06/15 19:54:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.77 2002/06/20 20:29:24 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros

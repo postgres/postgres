@@ -4,10 +4,10 @@
  *	  support for the POSTGRES executor module
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.65 2002/05/24 18:57:57 tgl Exp $
+ * $Id: executor.h,v 1.66 2002/06/20 20:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -5,10 +5,10 @@
  *	  (separated out from original istrat.h to avoid circular refs)
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.25 2001/11/05 17:46:31 momjian Exp $
+ * $Id: strat.h,v 1.26 2002/06/20 20:29:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

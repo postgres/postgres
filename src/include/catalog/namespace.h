@@ -4,10 +4,10 @@
  *	  prototypes for functions in backend/catalog/namespace.c
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.14 2002/05/17 20:53:33 tgl Exp $
+ * $Id: namespace.h,v 1.15 2002/06/20 20:29:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,11 +4,11 @@
  *	  strategy map data for GiSTs.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/Attic/giststrat.c,v 1.19 2001/10/28 06:25:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/Attic/giststrat.c,v 1.20 2002/06/20 20:29:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

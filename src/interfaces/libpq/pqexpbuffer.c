@@ -14,10 +14,10 @@
  * a usable vsnprintf(), then a copy of our own implementation of it will
  * be linked into libpq.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.12 2001/10/25 05:50:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.13 2002/06/20 20:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

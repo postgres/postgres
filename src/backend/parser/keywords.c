@@ -3,12 +3,12 @@
  * keywords.c
  *	  lexical token lookup for reserved words in PostgreSQL
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.115 2002/06/20 16:00:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.116 2002/06/20 20:29:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

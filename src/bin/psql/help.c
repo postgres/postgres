@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.50 2002/03/19 03:01:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.51 2002/06/20 20:29:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "help.h"
@@ -321,7 +321,7 @@ print_copyright(void)
 {
 	puts(
 		 "PostgreSQL Data Base Management System\n\n"
-		 "Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n\n"
+		 "Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group\n\n"
 		 "This software is based on Postgres95, formerly known as Postgres, which\n"
 		 "contains the following notice:\n\n"
 		 "Portions Copyright(c) 1994 - 7 Regents of the University of California\n\n"

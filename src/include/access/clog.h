@@ -3,10 +3,10 @@
  *
  * PostgreSQL transaction-commit-log manager
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clog.h,v 1.5 2001/11/05 17:46:31 momjian Exp $
+ * $Id: clog.h,v 1.6 2002/06/20 20:29:42 momjian Exp $
  */
 #ifndef CLOG_H
 #define CLOG_H

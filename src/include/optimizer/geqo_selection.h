@@ -3,10 +3,10 @@
  * geqo_selection.h
  *	  prototypes for selection routines in optimizer/geqo
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_selection.h,v 1.12 2001/11/05 17:46:34 momjian Exp $
+ * $Id: geqo_selection.h,v 1.13 2002/06/20 20:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

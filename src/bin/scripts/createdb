@@ -7,12 +7,12 @@
 #    This program runs psql with the "-c" option to create
 #    the requested database.
 #
-# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.22 2002/06/11 22:21:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.23 2002/06/20 20:29:42 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

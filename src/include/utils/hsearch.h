@@ -4,10 +4,10 @@
  *	  for hash tables, particularly hash tables in shared memory
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.26 2002/03/09 17:35:37 tgl Exp $
+ * $Id: hsearch.h,v 1.27 2002/06/20 20:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -10,11 +10,11 @@
  *   NOTES
  *      Currently under construction.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgtransdb.h,v 1.8 2001/07/11 22:12:43 momjian Exp $
+ *  $Id: pgtransdb.h,v 1.9 2002/06/20 20:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

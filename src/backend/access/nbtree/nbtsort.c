@@ -31,11 +31,11 @@
  * incurring a lot of cascading splits during early insertions.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.63 2001/11/10 23:51:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.64 2002/06/20 20:29:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

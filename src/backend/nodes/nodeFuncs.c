@@ -3,12 +3,12 @@
  * nodeFuncs.c
  *	  All node routines more complicated than simple access/modification
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.17 2002/03/21 16:00:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.18 2002/06/20 20:29:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

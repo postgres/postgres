@@ -7,10 +7,10 @@
  *	everything in Tcl is a string, but in C, pointers to data structures
  *	are needed.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclId.h,v 1.17 2001/10/25 05:50:12 momjian Exp $
+ * $Id: pgtclId.h,v 1.18 2002/06/20 20:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -2,10 +2,10 @@
 #
 # Makefile for src/bin/initdb
 #
-# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.26 2001/05/08 16:28:46 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.27 2002/06/20 20:29:41 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

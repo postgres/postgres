@@ -4,10 +4,10 @@
  *	  POSTGRES portal definitions.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.33 2002/05/21 22:05:55 tgl Exp $
+ * $Id: portal.h,v 1.34 2002/06/20 20:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -10,11 +10,11 @@
  * parse_analyze.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.52 2002/04/20 21:56:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.53 2002/06/20 20:29:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

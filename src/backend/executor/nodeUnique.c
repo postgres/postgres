@@ -3,12 +3,12 @@
  * nodeUnique.c
  *	  Routines to handle unique'ing of queries where appropriate
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.33 2001/10/25 05:49:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.34 2002/06/20 20:29:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

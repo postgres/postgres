@@ -8,10 +8,10 @@
  * record in the Oper or Func node.  This saves repeated lookup of info
  * about the function.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.22 2002/04/27 03:45:03 tgl Exp $
+ * $Id: fcache.h,v 1.23 2002/06/20 20:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

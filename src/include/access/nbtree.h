@@ -4,10 +4,10 @@
  *	  header file for postgres btree access method implementation.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.61 2002/05/24 18:57:56 tgl Exp $
+ * $Id: nbtree.h,v 1.62 2002/06/20 20:29:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

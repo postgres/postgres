@@ -5,10 +5,10 @@
  *	  standard operators and index access methods.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: selfuncs.h,v 1.5 2002/03/01 04:09:28 tgl Exp $
+ * $Id: selfuncs.h,v 1.6 2002/06/20 20:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,12 +3,12 @@
  * memcmp.c
  *	  compares memory bytes
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/Attic/memcmp.c,v 1.1 2001/12/20 21:23:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/Attic/memcmp.c,v 1.2 2002/06/20 20:29:33 momjian Exp $
  *
  * This file was taken from NetBSD and is used by SunOS because memcmp
  * on that platform does not properly compare negative bytes.

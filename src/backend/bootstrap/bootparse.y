@@ -4,12 +4,12 @@
  * bootparse.y
  *	  yacc parser grammar for the "backend" initialization program.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.47 2002/06/11 13:40:50 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.48 2002/06/20 20:29:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

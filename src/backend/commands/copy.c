@@ -2,12 +2,12 @@
  *
  * copy.c
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.157 2002/06/20 16:00:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.158 2002/06/20 20:29:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

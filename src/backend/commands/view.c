@@ -3,10 +3,10 @@
  * view.c
  *	  use rewrite rules to construct views
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.63 2002/04/19 23:13:54 tgl Exp $
+ *	$Id: view.c,v 1.64 2002/06/20 20:29:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

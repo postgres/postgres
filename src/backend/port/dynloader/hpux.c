@@ -3,12 +3,12 @@
  * dynloader.c
  *	  dynamic loader for HP-UX using the shared library mechanism
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.19 2001/10/25 05:49:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.20 2002/06/20 20:29:33 momjian Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the

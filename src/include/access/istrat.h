@@ -4,10 +4,10 @@
  *	  POSTGRES index strategy definitions.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: istrat.h,v 1.24 2002/02/19 20:11:19 tgl Exp $
+ * $Id: istrat.h,v 1.25 2002/06/20 20:29:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

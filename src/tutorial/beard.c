@@ -3,12 +3,12 @@
  * beard.c
  *	  sample routines to use large objects
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/tutorial/Attic/beard.c,v 1.7 2001/11/05 17:46:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/tutorial/Attic/beard.c,v 1.8 2002/06/20 20:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

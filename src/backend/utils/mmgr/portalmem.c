@@ -3,12 +3,12 @@
  * portalmem.c
  *	  backend portal memory context management stuff
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.48 2002/05/21 22:05:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.49 2002/06/20 20:29:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

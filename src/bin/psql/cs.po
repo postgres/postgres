@@ -1,7 +1,7 @@
 # Czech message translation file for psql
 # Karel Zak <zakkr@zf.jcu.cz>, August 2001.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Attic/cs.po,v 1.2 2001/12/21 22:30:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Attic/cs.po,v 1.3 2002/06/20 20:29:42 momjian Exp $
 #
 msgid ""
 msgstr ""
@@ -820,12 +820,12 @@ msgstr ""
 
 #: startup.c:670
 msgid ""
-"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group\n"
 "Portions Copyright (c) 1996, Regents of the University of California\n"
 "Read the file COPYRIGHT or use the command \\copyright to see the\n"
 "usage and distribution terms."
 msgstr ""
-"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group\n"
 "Portions Copyright (c) 1996, Regents of the University of California\n"
 "Ètìte soubor COPYRIGHT nebo pou¾íte pøíkaz \\copyright pro podmínky\n"
 "pou¾ítí a distribuce."

@@ -4,11 +4,11 @@
  *	  Code for the 'function cache' used in Oper and Func nodes.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.44 2002/04/27 03:45:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.45 2002/06/20 20:29:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

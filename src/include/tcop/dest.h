@@ -41,10 +41,10 @@
  * The palloc'd object is pfree'd by the DestReceiver's cleanup function.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.30 2002/02/27 19:36:13 tgl Exp $
+ * $Id: dest.h,v 1.31 2002/06/20 20:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

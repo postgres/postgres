@@ -24,10 +24,10 @@
 # template0 is made just by copying the completed template1.
 #
 #
-# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.155 2002/05/21 19:06:00 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.156 2002/06/20 20:29:41 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

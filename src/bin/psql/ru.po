@@ -1,7 +1,7 @@
 # PSQL Translated Messages in Russian Language (KOI8-R)
 # Serguei A. Mokhov <stgunya@yahoo.com>, August-September 2001.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Attic/ru.po,v 1.4 2001/09/16 23:06:33 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Attic/ru.po,v 1.5 2002/06/20 20:29:42 momjian Exp $
 #
 msgid ""
 msgstr ""
@@ -865,12 +865,12 @@ msgstr "multibyte"
 
 #: startup.c:674
 msgid ""
-"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group\n"
 "Portions Copyright (c) 1996, Regents of the University of California\n"
 "Read the file COPYRIGHT or use the command \\copyright to see the\n"
 "usage and distribution terms."
 msgstr ""
-"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group\n"
 "Portions Copyright (c) 1996, Regents of the University of California\n"
 "Читайте файл COPYRIGHT или наберите команду \\copyright для условий\n"
 "пользования и распространения."

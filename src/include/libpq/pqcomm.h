@@ -6,10 +6,10 @@
  * NOTE: for historical reasons, this does not correspond to pqcomm.c.
  * pqcomm.c's routines are declared in libpq.h.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.63 2002/06/03 22:57:47 momjian Exp $
+ * $Id: pqcomm.h,v 1.64 2002/06/20 20:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

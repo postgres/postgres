@@ -4,10 +4,10 @@
  *	  prototypes for tlist.c.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.31 2001/11/05 17:46:34 momjian Exp $
+ * $Id: tlist.h,v 1.32 2002/06/20 20:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

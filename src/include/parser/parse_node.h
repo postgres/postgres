@@ -3,10 +3,10 @@
  * parse_node.h
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.30 2002/04/16 23:08:12 tgl Exp $
+ * $Id: parse_node.h,v 1.31 2002/06/20 20:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

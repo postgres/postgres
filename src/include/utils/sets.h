@@ -4,10 +4,10 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sets.h,v 1.13 2002/03/29 19:06:26 tgl Exp $
+ * $Id: sets.h,v 1.14 2002/06/20 20:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

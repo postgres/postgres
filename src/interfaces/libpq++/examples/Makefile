@@ -2,10 +2,10 @@
 #
 # Makefile for libpq++ examples
 #
-# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/Makefile,v 1.13 2002/06/15 18:49:29 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/Makefile,v 1.14 2002/06/20 20:29:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -6,12 +6,12 @@
  *	  This code manages relations that reside in (presumably stable)
  *	  main memory.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.30 2001/11/05 17:46:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.31 2002/06/20 20:29:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

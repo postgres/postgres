@@ -20,12 +20,12 @@
  * for transmitted ints, whereas the backend modules (as of this writing)
  * still handle either network or little-endian byte order.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.75 2002/06/15 22:06:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.76 2002/06/20 20:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -7,11 +7,11 @@
  * sem_init).  We can cope with the kind made with sem_open, however.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.4 2002/05/05 16:14:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.5 2002/06/20 20:29:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

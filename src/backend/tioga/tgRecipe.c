@@ -7,12 +7,12 @@
  *
  *		this file must be kept current with recipe-schema.sql
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.21 2002/03/06 06:10:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.22 2002/06/20 20:29:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,12 +3,12 @@
  * syscache.c
  *	  System cache management routines
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.79 2002/04/18 20:01:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.80 2002/06/20 20:29:39 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform

@@ -4,12 +4,12 @@
 # dropuser--
 #    Utility for removing a user from the PostgreSQL database.
 #
-# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.17 2002/04/12 09:42:32 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.18 2002/06/20 20:29:42 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #

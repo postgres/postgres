@@ -4,10 +4,10 @@
  *	  prototypes for OSF/1-specific routines
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: osf.h,v 1.8 2002/02/12 23:40:43 tgl Exp $
+ * $Id: osf.h,v 1.9 2002/06/20 20:29:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

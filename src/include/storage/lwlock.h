@@ -4,10 +4,10 @@
  *	  Lightweight lock manager
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lwlock.h,v 1.5 2002/02/19 20:11:19 tgl Exp $
+ * $Id: lwlock.h,v 1.6 2002/06/20 20:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

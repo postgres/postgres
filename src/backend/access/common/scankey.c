@@ -3,12 +3,12 @@
  * scan.c
  *	  scan direction and key code
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.20 2001/10/06 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.21 2002/06/20 20:29:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

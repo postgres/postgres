@@ -10,10 +10,10 @@
  * guarantee that there can only be one matching row for a key combination.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.43 2002/06/19 13:46:09 tgl Exp $
+ * $Id: catcache.h,v 1.44 2002/06/20 20:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

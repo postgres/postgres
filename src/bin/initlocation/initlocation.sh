@@ -4,12 +4,12 @@
 # initlocation.sh--
 #     Create a secondary PostgreSQL database storage area.  
 # 
-# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.13 2002/02/24 23:59:36 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.14 2002/06/20 20:29:41 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -4,10 +4,10 @@
  *	  include file for the bootstrapping code
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.29 2002/04/27 21:24:34 tgl Exp $
+ * $Id: bootstrap.h,v 1.30 2002/06/20 20:29:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

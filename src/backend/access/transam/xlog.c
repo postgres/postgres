@@ -4,10 +4,10 @@
  *		PostgreSQL transaction log manager
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.97 2002/06/11 13:40:50 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.98 2002/06/20 20:29:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

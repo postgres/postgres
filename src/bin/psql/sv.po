@@ -1,7 +1,7 @@
 # Swedish message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Attic/sv.po,v 1.2 2001/12/10 13:02:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Attic/sv.po,v 1.3 2002/06/20 20:29:42 momjian Exp $
 #
 # Use these quotes: "%s"
 #
@@ -823,12 +823,12 @@ msgstr "multibyte"
 
 #: startup.c:670
 msgid ""
-"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group\n"
 "Portions Copyright (c) 1996, Regents of the University of California\n"
 "Read the file COPYRIGHT or use the command \\copyright to see the\n"
 "usage and distribution terms."
 msgstr ""
-"Delar Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Delar Copyright (c) 1996-2002, PostgreSQL Global Development Group\n"
 "Delar Copyright (c) 1996, Regents of the University of California\n"
 "Läs filen COPYRIGHT or eller använd kommandot \\copyright för att beskåda\n"
 "användnings- och kopieringsvillkor."

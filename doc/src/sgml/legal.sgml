@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.13 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.14 2002/06/20 20:29:24 momjian Exp $
 -->
 
 <copyright>
- <year>1996-2001</year>
+ <year>1996-2002</year>
  <holder>The PostgreSQL Global Development Group</holder>
 </copyright>
 
@@ -11,7 +11,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.13 2001/11/21 05:53:41 thoma
  <title>Legal Notice</title>
 
  <para>
-  <productname>PostgreSQL</productname> is Copyright &copy; 1996-2001
+  <productname>PostgreSQL</productname> is Copyright &copy; 1996-2002
   by the PostgreSQL Global Development Group and is distributed under
   the terms of the license of the University of California below.
  </para>

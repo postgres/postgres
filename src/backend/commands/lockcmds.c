@@ -3,12 +3,12 @@
  * lockcmds.c
  *	  Lock command support code
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/lockcmds.c,v 1.2 2002/04/27 03:45:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/lockcmds.c,v 1.3 2002/06/20 20:29:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

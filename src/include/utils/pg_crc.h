@@ -3,10 +3,10 @@
  *
  * PostgreSQL 64-bit CRC support
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_crc.h,v 1.7 2002/04/23 15:45:30 tgl Exp $
+ * $Id: pg_crc.h,v 1.8 2002/06/20 20:29:53 momjian Exp $
  */
 #ifndef PG_CRC_H
 #define PG_CRC_H

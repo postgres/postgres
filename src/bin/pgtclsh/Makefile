@@ -3,10 +3,10 @@
 # Makefile for src/bin/pgtclsh
 # (a tclsh workalike with pgtcl commands installed)
 #
-# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.38 2002/05/24 18:10:17 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.39 2002/06/20 20:29:42 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

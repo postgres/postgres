@@ -4,10 +4,10 @@
  *	  Index scan key qualification definitions.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: iqual.h,v 1.18 2001/11/05 17:46:31 momjian Exp $
+ * $Id: iqual.h,v 1.19 2002/06/20 20:29:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

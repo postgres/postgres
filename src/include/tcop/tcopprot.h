@@ -4,10 +4,10 @@
  *	  prototypes for postgres.c.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.48 2002/04/20 21:56:15 petere Exp $
+ * $Id: tcopprot.h,v 1.49 2002/06/20 20:29:52 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two

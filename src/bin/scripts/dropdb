@@ -6,12 +6,12 @@
 #
 #    this program runs psql to drop the requested database.
 #
-# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.15 2002/04/12 09:37:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.16 2002/06/20 20:29:42 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

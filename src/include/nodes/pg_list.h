@@ -4,10 +4,10 @@
  *	  POSTGRES generic list package
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.27 2002/04/09 20:35:55 tgl Exp $
+ * $Id: pg_list.h,v 1.28 2002/06/20 20:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

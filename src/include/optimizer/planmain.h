@@ -4,10 +4,10 @@
  *	  prototypes for various files in optimizer/plan
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.58 2002/06/16 00:09:12 momjian Exp $
+ * $Id: planmain.h,v 1.59 2002/06/20 20:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

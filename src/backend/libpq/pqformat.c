@@ -13,10 +13,10 @@
  * Incoming messages are read directly off the wire, as it were, but there
  * are still data-conversion tasks to be performed.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.20 2002/03/04 01:46:03 tgl Exp $
+ *	$Id: pqformat.c,v 1.21 2002/06/20 20:29:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

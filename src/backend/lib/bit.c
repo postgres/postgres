@@ -3,12 +3,12 @@
  * bit.c
  *	  Standard bit array code.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.14 2001/10/25 05:49:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.15 2002/06/20 20:29:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

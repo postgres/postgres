@@ -3,12 +3,12 @@
  * recipe.c
  *	  routines for handling execution of Tioga recipes
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.16 2002/03/06 06:09:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.17 2002/06/20 20:29:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

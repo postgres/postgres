@@ -8,10 +8,10 @@
  * postgres.h.
  *
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres_fe.h,v 1.5 2001/11/05 17:46:31 momjian Exp $
+ * $Id: postgres_fe.h,v 1.6 2002/06/20 20:29:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

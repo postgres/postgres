@@ -3,10 +3,10 @@
  *
  * PostgreSQL transaction log manager
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.30 2002/05/17 01:19:19 tgl Exp $
+ * $Id: xlog.h,v 1.31 2002/06/20 20:29:43 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H

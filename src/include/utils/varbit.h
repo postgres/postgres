@@ -5,10 +5,10 @@
  *
  * Code originally contributed by Adriaan Joubert.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: varbit.h,v 1.13 2001/10/28 06:26:10 momjian Exp $
+ * $Id: varbit.h,v 1.14 2002/06/20 20:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
