@@ -62,6 +62,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	protected org.postgresql.jdbc2.Statement statement;
 
 	private StringBuffer sbuf = null;
+	protected byte[][] rowBuffer=null;
+	protected String sqlQuery=null;
 
 	/*
 	 * Create a new ResultSet - Note that we create ResultSets to
@@ -110,12 +112,17 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	 */
 	public boolean next() throws SQLException
 	{
-	    if (rows == null)
-		throw new PSQLException("postgresql.con.closed");
+    if (rows == null)
+       throw new PSQLException("postgresql.con.closed");
+
 
 		if (++current_row >= rows.size())
 			return false;
+
 		this_row = (byte [][])rows.elementAt(current_row);
+
+		rowBuffer=new byte[this_row.length][];
+		System.arraycopy(this_row,0,rowBuffer,0,this_row.length);
 		return true;
 	}
 
@@ -640,6 +647,35 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		return getBinaryStream(findColumn(columnName));
 	}
 
+	public java.net.URL getURL(int columnIndex) throws SQLException
+	{
+		return null;
+	}
+
+	public java.net.URL getURL(String columnName) throws SQLException
+	{
+		return null;
+
+	}
+
+	public void updateRef(int colIndex,java.sql.Ref ref) throws SQLException {
+
+	}
+	public void updateRef(String colName,java.sql.Ref ref) throws SQLException {
+	}
+	public void updateBlob(int colIndex,java.sql.Blob blob) throws SQLException {
+	}
+	public void updateBlob(String colName,java.sql.Blob blob) throws SQLException {
+	}
+	public void updateClob(int colIndex,java.sql.Clob clob) throws SQLException {
+	}
+	public void updateClob(String colName,java.sql.Clob clob) throws SQLException {
+	}
+	public void updateArray(int colIndex,java.sql.Array array) throws SQLException {
+	}
+	public void updateArray(String colName,java.sql.Array array) throws SQLException {
+	}
+
 	/*
 	 * The first warning reported by calls on this ResultSet is
 	 * returned.  Subsequent ResultSet warnings will be chained
@@ -896,8 +932,13 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	{
 		if (rows.size() <= 0)
 			return false;
+
 		current_row = 0;
 		this_row = (byte [][])rows.elementAt(current_row);
+
+		rowBuffer=new byte[this_row.length][];
+		System.arraycopy(this_row,0,rowBuffer,0,this_row.length);
+
 		return true;
 	}
 
@@ -1137,8 +1178,13 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		final int rows_size = rows.size();
 		if (rows_size <= 0)
 			return false;
+
 		current_row = rows_size - 1;
 		this_row = (byte [][])rows.elementAt(current_row);
+
+		rowBuffer=new byte[this_row.length][];
+		System.arraycopy(this_row,0,rowBuffer,0,this_row.length);
+
 		return true;
 	}
 
@@ -1159,6 +1205,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		if (--current_row < 0)
 			return false;
 		this_row = (byte [][])rows.elementAt(current_row);
+		System.arraycopy(this_row,0,rowBuffer,0,this_row.length);
 		return true;
 	}
 
@@ -1598,7 +1645,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	/**
 	* Parse a string and return a timestamp representing its value.
 	*
-	* The driver is set to return ISO date formated strings. We modify this 
+	* The driver is set to return ISO date formated strings. We modify this
 	* string from the ISO format to a format that Java can understand. Java
 	* expects timezone info as 'GMT+09:00' where as ISO gives '+09'.
 	* Java also expects fractional seconds to 3 places where postgres
@@ -1625,6 +1672,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		synchronized (resultSet)
 		{
 			SimpleDateFormat df = null;
+			if ( org.postgresql.Driver.logDebug ) org.postgresql.Driver.debug("the data from the DB is "+s);
 
 			// If first time, create the buffer, otherwise clear it.
 			if (resultSet.sbuf == null)
@@ -1693,7 +1741,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 			}
 			else if (slen == 19)
 			{
-				// No tz or fractional second info. 
+				// No tz or fractional second info.
 				// I'm not sure if it is
 				// possible to have a string in this format, as pg
 				// should give us tz qualified timestamps back, but it was
@@ -1702,7 +1750,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 			}
 			else
 			{
-				// We must just have a date. This case is 
+				// We must just have a date. This case is
 				// needed if this method is called on a date
 				// column
 				df = new SimpleDateFormat("yyyy-MM-dd");
@@ -1711,6 +1759,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 			try
 			{
 				// All that's left is to parse the string and return the ts.
+				if ( org.postgresql.Driver.logDebug ) org.postgresql.Driver.debug( "" + df.parse(resultSet.sbuf.toString()).getTime() );
+
 				return new Timestamp(df.parse(resultSet.sbuf.toString()).getTime());
 			}
 			catch (ParseException e)
@@ -1718,6 +1768,10 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 				throw new PSQLException("postgresql.res.badtimestamp", new Integer(e.getErrorOffset()), s);
 			}
 		}
+	}
+
+	public void setSQLQuery(String sqlQuery) {
+		this.sqlQuery=sqlQuery;
 	}
 }
 
