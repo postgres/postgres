@@ -6475,7 +6475,7 @@ X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
 X-Spam-Status: Yes, hits=5.0 required=5.0 tests=RCVD_IN_OSIRUSOFT_COM,X_OSIRU_SPAM_SRC version=2.20
 X-Spam-Flag: YES
 X-Spam-Level: *****
-X-Spam-Checker-Version: SpamAssassin 2.20 (devel $Id: win32,v 1.2 2002/09/16 02:47:05 momjian Exp $)
+X-Spam-Checker-Version: SpamAssassin 2.20 (devel $Id: win32,v 1.3 2002/09/16 02:50:20 momjian Exp $)
 X-Spam-Report: Detailed Report
 SPAM: -------------------- Start SpamAssassin results ----------------------
   SPAM: This mail is probably spam.  The original message has been altered
@@ -7502,4 +7502,66 @@ See how fun Microsoft makes things?
 Mike Mascari
 mascarm@mascari.com
 
+
+From pgsql-hackers-owner+M28774@postgresql.org Thu Sep 12 15:12:54 2002
+Return-path: <pgsql-hackers-owner+M28774@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8CJCqE21744
+	for <pgman@candle.pha.pa.us>; Thu, 12 Sep 2002 15:12:52 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 77755476CA2; Thu, 12 Sep 2002 15:12:48 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 98016476ABD; Thu, 12 Sep 2002 15:12:31 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 3A604476A7F; Thu, 12 Sep 2002 15:12:28 -0400 (EDT)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP
+	id B93FD475D87; Thu, 12 Sep 2002 15:12:20 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.5/8.12.5) with ESMTP id g8CJC9Ko009064;
+	Thu, 12 Sep 2002 15:12:09 -0400 (EDT)
+To: Curt Sampson <cjs@cynic.net>
+cc: Justin Clift <justin@postgresql.org>,
+   PostgreSQL Hackers Mailing List <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] PGXLOG variable worthwhile? 
+In-Reply-To: <Pine.NEB.4.44.0209130127550.891-100000@angelic.cynic.net> 
+References: <Pine.NEB.4.44.0209130127550.891-100000@angelic.cynic.net>
+Comments: In-reply-to Curt Sampson <cjs@cynic.net>
+	message dated "Fri, 13 Sep 2002 01:28:39 +0900"
+Date: Thu, 12 Sep 2002 15:12:09 -0400
+Message-ID: <9063.1031857929@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: ORr
+
+Curt Sampson <cjs@cynic.net> writes:
+> On Thu, 12 Sep 2002, Justin Clift wrote:
+>> Am just wondering if we've ever considered adding a PGXLOG environment
+>> variable that would point to the pg_xlog directory?
+
+> IMHO, a much better way to support this is to put this information into
+> the config file. That way it can't easily change when you happen to, say,
+> start postgres in the wrong window.
+
+Yes.  We rejected environment-variable-based xlog location for reasons
+that apply equally well to Windows.  The xlog location *must* be stored
+in a physical file in the data directory; anything else is too unsafe.
+The current technology for that is a symlink.
+
+While it doesn't have to be a symlink as opposed to some sort of config
+file, I don't have the slightest problem with saying that we don't
+support relocation of xlog on older Windoid platforms.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
 
