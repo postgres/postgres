@@ -26,17 +26,18 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.77 1999/12/22 04:23:31 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.78 2000/01/13 18:22:10 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 exit_nicely(){
     echo
     echo "$CMDNAME failed."
-    if [ "$noclean" -eq 0 ]
-	then
+    if [ "$noclean" -eq 0 ]; then
         echo "Removing $PGDATA."
         rm -rf "$PGDATA" || echo "Failed."
+        echo "Removing temp file $TEMPFILE."
+        rm -rf "$TEMPFILE" || echo "Failed."
     else
         echo "Data directory $PGDATA will not be removed at user's request."
     fi
@@ -53,7 +54,11 @@ then
 fi
 
 EffectiveUser=`id -n -u 2>/dev/null || whoami 2>/dev/null`
-TEMPFILE="/tmp/initdb.$$"
+if [ "$TMPDIR" ]; then
+    TEMPFILE="$TMPDIR/initdb.$$"
+else
+    TEMPFILE="/tmp/initdb.$$"
+fi
 
 #
 # Find out where we're located
@@ -547,10 +552,17 @@ echo "CREATE VIEW pg_indexes AS \
         | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Loading pg_description."
-echo "COPY pg_description FROM '$TEMPLATE_DESCR'" \
+echo "COPY pg_description FROM STDIN" > $TEMPFILE
+cat "$TEMPLATE_DESCR" >> $TEMPFILE
+cat "$GLOBAL_DESCR" >> $TEMPFILE
+
+cat $TEMPFILE \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-echo "COPY pg_description FROM '$GLOBAL_DESCR'" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+if [ "$noclean" -eq 0 ]
+then
+    rm -f "$TEMPFILE" || exit_nicely
+fi
+
 echo "Vacuuming database."
 echo "VACUUM ANALYZE" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
