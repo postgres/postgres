@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.95 2002/06/30 09:34:13 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.96 2002/07/01 06:56:10 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,14 +89,14 @@ static struct _if_value
  * We use exclusive states for quoted strings, extended comments,
  * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
- *	<xb> bit string literal
+ *	<xbit> bit string literal
  *	<xc> extended C-style comments - thomas 1997-07-12
  *	<xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
  *	<xh> hexadecimal numeric string - thomas 1997-11-16
  *	<xq> quoted strings - thomas 1997-07-30
  */
 
-%x xb
+%x xbit
 %x xc
 %x xd
 %x xdc
@@ -108,10 +108,10 @@ static struct _if_value
 
 /* Bit string
  */
-xbstart			[bB]{quote}
-xbstop			{quote}
-xbinside		[^']*
-xbcat			{quote}{whitespace_with_newline}{quote}
+xbitstart		[bB]{quote}
+xbitstop		{quote}
+xbitinside		[^']*
+xbitcat			{quote}{whitespace_with_newline}{quote}
 
 /* Hexadecimal number
  */
@@ -318,13 +318,13 @@ cppline			{space}*#(.*\\{space})*.*
 
 <xc><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated /* comment"); }
 
-<SQL>{xbstart}	{
+<SQL>{xbitstart}	{
 						token_start = yytext;
-						BEGIN(xb);
+						BEGIN(xbit);
 						startlit();
 						addlitchar('b');
 					}
-<xb>{xbstop}	{
+<xbit>{xbitstop}	{
 						BEGIN(SQL);
 						if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
 							mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string input.");
@@ -333,10 +333,10 @@ cppline			{space}*#(.*\\{space})*.*
 					}
 
 <xh>{xhinside}	|
-<xb>{xbinside}	{ addlit(yytext, yyleng); }
+<xbit>{xbitinside}	{ addlit(yytext, yyleng); }
 <xh>{xhcat}		|
-<xb>{xbcat}		{ /* ignore */ }
-<xb><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated bit string"); }
+<xbit>{xbitcat}		{ /* ignore */ }
+<xbit><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated bit string"); }
 
 <SQL>{xhstart}		{
 						token_start = yytext;
@@ -378,7 +378,7 @@ cppline			{space}*#(.*\\{space})*.*
 <xq>{xqdouble}		{ addlitchar('\''); }
 <xq>{xqinside}		{ addlit(yytext, yyleng); }
 <xq>{xqescape}  	{ addlit(yytext, yyleng); }
-<xq>{xqoctesc}          { addlit(yytext, yyleng); } /* addlitchar does not work here since character must remain octal */
+<xq>{xqoctesc}          { addlit(yytext, yyleng); }
 <xq>{xqcat}			{ /* ignore */ }
 
 <xq><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated quoted string"); }
