@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.33 1999/02/15 03:22:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.34 1999/04/05 02:07:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 extern int	NBuffers;
 
 static int	compute_attribute_width(TargetEntry *tlistentry);
+static double relation_byte_size (int tuples, int width);
 static double base_log(double x, double b);
 static int	compute_targetlist_width(List *targetlist);
 
@@ -323,27 +324,35 @@ cost_hashjoin(Cost outercost,
 	Cost		temp = 0;
 	int			outerpages = page_size(outersize, outerwidth);
 	int			innerpages = page_size(innersize, innerwidth);
-	int			nrun = ceil((double) outerpages / (double) NBuffers);
 
-	if (outerpages < innerpages)
-		return _disable_cost_;
 	if (!_enable_hashjoin_)
 		temp += _disable_cost_;
 
-	/*
-	 * temp += outercost + (nrun + 1) * innercost;
+	/* Bias against putting larger relation on inside.
 	 *
-	 * the innercost shouldn't be used it.  Instead the cost of hashing the
-	 * innerpath should be used
-	 *
-	 * ASSUME innercost is 1 for now -- a horrible hack - jolly temp +=
-	 * outercost + (nrun + 1);
-	 *
-	 * But we must add innercost to result.		- vadim 04/24/97
+	 * Code used to use "outerpages < innerpages" but that has
+	 * poor resolution when both relations are small.
 	 */
-	temp += outercost + innercost + (nrun + 1);
+	if (relation_byte_size(outersize, outerwidth) <
+		relation_byte_size(innersize, innerwidth))
+		temp += _disable_cost_;
 
-	temp += _cpu_page_wight_ * (outersize + nrun * innersize);
+	/* cost of source data */
+	temp += outercost + innercost;
+
+	/* cost of computing hash function: must do it once per tuple */
+	temp += _cpu_page_wight_ * (outersize + innersize);
+
+	/* cost of main-memory hashtable */
+	temp += (innerpages < NBuffers) ? innerpages : NBuffers;
+
+	/* if inner relation is too big then we will need to "batch" the join,
+	 * which implies writing and reading most of the tuples to disk an
+	 * extra time.
+	 */
+	if (innerpages > NBuffers)
+		temp += 2 * (outerpages + innerpages);
+
 	Assert(temp >= 0);
 
 	return temp;
@@ -459,6 +468,19 @@ compute_joinrel_size(JoinPath *joinpath)
 }
 
 /*
+ * relation_byte_size
+ *    Estimate the storage space in bytes for a given number of tuples
+ *    of a given width (size in bytes).
+ *    To avoid overflow with big relations, result is a double.
+ */
+
+static double
+relation_byte_size (int tuples, int width)
+{
+	return ((double) tuples) * ((double) (width + sizeof(HeapTupleData)));
+}
+
+/*
  * page_size
  *	  Returns an estimate of the number of pages covered by a given
  *	  number of tuples of a given width (size in bytes).
@@ -466,10 +488,9 @@ compute_joinrel_size(JoinPath *joinpath)
 int
 page_size(int tuples, int width)
 {
-	int			temp = 0;
+	int			temp;
 
-	temp = ceil((double) (tuples * (width + sizeof(HeapTupleData)))
-				/ BLCKSZ);
+	temp = (int) ceil(relation_byte_size(tuples, width) / BLCKSZ);
 	Assert(temp >= 0);
 	return temp;
 }
