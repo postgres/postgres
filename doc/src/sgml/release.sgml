@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.198 2003/07/17 00:55:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.199 2003/07/23 04:08:42 momjian Exp $
 -->
 
 <appendix id="release">
@@ -58,6 +58,47 @@ Object owners can allow grantees to grant the privilege to others (grant option)
 ]]></literallayout>
 
  </sect1>
+
+
+  <sect1 id="release-7-3-4">
+   <title>Release 7.3.4</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2003-07-24</simpara>
+   </note>
+
+   <para>
+    This has a variety of fixes from 7.3.3.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.3.4</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those
+     running 7.3.*.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+<literallayout>
+Fix rare possibility of recovery failure after a system crash (Tom)
+Fix bugs in interval-to-time conversion (Tom)
+Add constraint names in a few places in pg_dump (Rod)
+Improve performance of functions with many parameters (Tom)
+Fix to_ascii() buffer overruns (Tom)
+Prevent restore of database comments from throwing an error (Tom)
+Work around buggy strxfrm() present in some Solaris releases (Tom)
+Properly escape jdbc setObject() strings to improve security (Barry)
+</literallayout>
+    </para>
+   </sect2>
+  </sect1>
 
 
   <sect1 id="release-7-3-3">

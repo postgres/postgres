@@ -28,8 +28,11 @@
 
 ---------------------------------------------------------------------------
 
-Major Version Library Numbers
-=============================
+                       Library Version Changes
+                       =======================
+
+Major Version
+=============
 
 The major version number should be updated whenever the source of the
 library changes to make it binary incompatible. Such changes include,
