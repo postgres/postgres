@@ -14,7 +14,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).</p>
 
-    <p>Letzte Aktualisierung der deutschen Übersetzung: Fr., den 02.07.2004, 23:30 CET</p>
+    <p>Letzte Aktualisierung der deutschen Übersetzung: Di., den 26.10.2004, 22:30 MEZ</p>
 
     <p>Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL Website:</p>
     <ul>
@@ -67,7 +67,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 <a href="#3.9">3.9</a>) Was befindet sich im Verzeichnis <em>pgsql_tmp/</em>?<br />
 <a href="#3.10">3.10</a>) Warum muß ich bei jeder neuen Hauptversion von PostgreSQL
      die komplette Datenbank exportieren und anschließend reimportieren?<br />
-
+<a href="#3.11">3.11</a>) Welche Hardware eignet sich für den Betrieb mit PostgreSQL?<br />
 <h2 align="center">Fragen zum Betrieb</h2>
 
 <a href="#4.1">4.1</a>) Worin besteht der Unterschied zwischen <em>Binary Cursors</em> und <em>Normal Cursors?</em><br />
@@ -203,29 +203,16 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <h4><a name="1.4">1.4</a>)	Welche Nicht-Unix-Portierungen sind verfügbar?</h4>
 
-    <p><em>Client</em></p>
+    <p>Ab Version 8.0 läuft PostgreSQL auf Microsoft NT-basierten Betriebssystemen
+    wie Windows 2000, XP und Server 2003. Ein vorgefertigtes Installationspaket
+    (derzeit noch im Beta-Stadium) kann von <a href="http://pgfoundry.org/projects/pginstaller">http://pgfoundry.org/projects/pginstaller</a>
+    heruntergeladen werden. Einen Überblick über den aktuellen Stand bietet die Win32-FAQ:
+    <a href="http://pginstaller.projects.postgresql.org/FAQ_windows.html">http://pginstaller.projects.postgresql.org/FAQ_windows.html</a>.</p>
 
-    <p>Es ist möglich, die <em>libpq</em> C-Bibliothek, psql sowie andere Client-
-    Anwendungen und Schnittstellen für den Einsatz auf MS-Windows-Plattformen
-    zu kompilieren. In diesem Fall läuft der Client auf MS-Windows und steht
-    über TCP/IP mit einem Server in Verbindung, der auf einer der
-    unterstützten Unix-Plattformen läuft. Die Distribution enthält
-    die Datei win32.mak, mit der Win32 libpq-Bibliothek und <em>psql</em> erzeugt
-    werden können.</p>
-
-    <p><em>Server</em></p>
-
-    <p>Der Datenbankserver selber kann mit Hilfe der Cygwin-Umgebung
-    (Unix/NT-Portierungsbibliotheken) auf Windows NT/2000 zum Laufen
-    gebracht werden. Hierzu bitte lesen Sie die in der Distribution
-    enthaltene Datei <em>pgsql/doc/FAQ_MSWIN</em> oder die MS-Windows-FAQ unter
-    <a href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</a>.</p>
-
-    <p>Eine eigenständige Portierung auf MS Win NT/2000/XP befindet sich
-    in der Vorbereitung.</p>
-
-    <p>Weitere Informationen zum Status von PostgreSQL auf der Microsoft-Plattform
-    befinden sich unter <a href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</a> (en.) sowie  <a href="http://momjian.postgresql.org/main/writings/pgsql/win32.html"> http://momjian.postgresql.org/main/writings/pgsql/win32.html</a> (en.).</p>
+    <p>Unter Windows 95/98/ME ist es nur möglich, den Datenbankserver mit Hilfe
+    der Cygwin-Umgebung (Unix-Portierungsbibliotheken) zu betreiben. Weitere 
+    Informationen hierzu gibt es in der CYGWIN-FAQ:
+    <a href="http://www.postgresql.org/docs/faqs/text/FAQ_CYGWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_CYGWIN</a>.</p>
 
     <p>Eine Portierung für Novell Netware 6 gibt es unter <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
 
@@ -290,9 +277,9 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <h4><a name="1.7">1.7</a>) Was ist die neueste Version von PostgreSQL?</h4>
 
-    <p>Die neueste Version von PostgreSQL ist 7.4.3 .</p>
+    <p>Die neueste Version von PostgreSQL ist 7.4.6 .</p>
 
-    <p>Die Freigabe einer neuen Version erfolgt im Schnitt jede 6 bis 8 Monaten.</p>
+    <p>Die Freigabe einer neuen Version erfolgt im Schnitt alle 6 bis 8 Monaten.</p>
 
     <h4><a name="1.8">1.8</a>) Welche Dokumentation ist für PostgreSQL verfügbar?</h4>
 
@@ -573,9 +560,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <p>PostgreSQL ist standardmäßig so eingestellt, dass Verbindungen nur vom
     lokalen Rechner über Unix Domain Sockets möglich sind. Verbindungen
     von anderen Rechnern über TCP/IP sind nur möglich, wenn der <em>postmaster</em>
-    mit der <em>-i</em> Option gestartet wird und / oder die Option tcpip_sockets 
-    in postgresql.conf eingeschaltet wird, und die host-basierte Authentifizierung in
-    der Datei <em>$PGDATA/pg_hba.conf</em> entsprechend angepasst ist.</p>
+    mit der <em>-i</em> Option gestartet wird und / oder die Option <tt>listen_addresses</tt>
+    (in 7.x-Versionen: <tt>tcpip_sockets</tt>) in postgresql.conf eingeschaltet wird, und die 
+    host-basierte Authentifizierung in der Datei <em>$PGDATA/pg_hba.conf</em> 
+    entsprechend angepasst ist.</p>
 
 
     <h4><a name="3.6">3.6</a>) Wie optimiere ich die Datenbank für bessere Leistung?</h4>
@@ -722,6 +710,17 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     und Einlesen zu übertragen. Die jeweilige Dokumentation gibt an, ob für
     die betreffende Version <em>pg_upgrade</em> verfügbar ist.</p>
 
+
+    <h4><a name="3.11">3.11</a>) Welche Hardware eignet sich für den Betrieb mit PostgreSQL?</h4>
+
+    <p>PostgreSQL läuft auf fast jeder Hardware-Kombination. Im PC-Bereich
+    gibt es allerdings sehr große Abweichungen in der Qualität. Für einen
+    Arbeitsplatz- oder Entwicklungsrechner mag dies nicht so bedeutend sein,
+    im Server-Betrieb jedoch lohnt sich auf jeden Fall die Investition
+    in teurere Bestandteile (Stichwörter ECC-Speicher, SCSI, Hauptplatinen
+    und Netzteile von namhaften Herstellern).
+    </p>
+
     <hr />
 
     <h2 align="center">Fragen zum Betrieb</h2>
@@ -834,23 +833,23 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     groß sein. Die Größe der PostgreSQL-Datenbankdatei, die diese Daten enthält,
     liegt ungefähr bei 6,4 MB:</p>
 <pre>
-    36 Bytes: jeder Zeilenkopf (ungefähr)
+    32 Bytes: jeder Zeilenkopf (ungefähr)
    +24 Bytes: ein Integer-Feld und ein Textfeld
    + 4 Bytes: Zeiger auf der Datenseite auf den Tupel
    -----------------------------------------------
-    64 Bytes pro Zeile
+    60 Bytes pro Zeile
 </pre>
     <p>Die Größe einer Datenseite in PostgreSQL beträgt 8192 Bytes (8 KB), also:</p>
 <pre>
    8192 Bytes pro Seite
-   ---------------------   =  128 Zeilen pro Seite (abgerundet)
+   ---------------------   =  136 Zeilen pro Seite (abgerundet)
      64 Bytes pro Zeile
 
    100.000 Datenzeilen
-   -----------------------  =  782 Datenbankseiten (aufgerundet)
+   -----------------------  =  735 Datenbankseiten (aufgerundet)
        128 Zeilen pro Seite
 
-   782 Datenbankseiten * 8192 Bytes pro Seite  =  6.406.144 Byte (6,4 MB)
+   735 Datenbankseiten * 8192 Bytes pro Seite  =  6.021.120 Byte (6 MB)
 </pre>
     <p>Indizes beanspruchen nicht so viel Platz. Da sie jedoch die
     Daten beinhalten, die sie indizieren, können auch sie sehr groß werden.</p>
@@ -884,6 +883,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     Abfragenoptimierer die Anzahl der Tabellenzeilen und kann besser
     entscheiden, ob Indizes verwendet werden sollen. Statistiken sind auch
     bei der Feststellung optimaler <small>JOIN</small>-Reihenfolge und -Methoden wertvoll.</p>
+
+    <p>In Versionen vor 8.0 werden Indizes oft nicht benutzt, wenn die
+    jeweiligen Datentypen nicht genau übereinstimmen. Dies gilt besonders für 
+    Spalten mit numerischen und Integer-Werten.</p>
 
     <p>Indizes werden normalerweise nicht in <small>ORDER BY</small>-Abfrage oder in JOINs
     verwendet. Ein sequentieller Scan mit anschließendem explizitem
