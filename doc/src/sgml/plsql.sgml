@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.20 2001/02/19 19:49:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.21 2001/02/21 17:50:38 petere Exp $
 -->
 
  <chapter id="plsql">
-  <title>PL/pgSQL - SQL Procedural Language</title>
+  <title>PL/pgSQL - <acronym>SQL</acronym> Procedural Language</title>
 
   <para>
    PL/pgSQL is a loadable procedural language for the
@@ -64,8 +64,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.20 2001/02/19 19:49:52
    <para>
     For all expressions and <acronym>SQL</acronym> statements used in
     the function, the PL/pgSQL bytecode interpreter creates a
-    prepared execution plan using the SPI manager's SPI_prepare() and
-    SPI_saveplan() functions. This is done the first time the individual
+    prepared execution plan using the <acronym>SPI</acronym> manager's <function>SPI_prepare()</function> and
+    <function>SPI_saveplan()</function> functions. This is done the first time the individual
     statement is processed in the PL/pgSQL function. Thus, a function with
     conditional code that contains many statements for which execution
     plans would be required, will only prepare and save those plans
@@ -107,14 +107,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.20 2001/02/19 19:49:52
     <para>
      PL/pgSQL is a block oriented language. A block is defined as
 
-     <programlisting>
-[&lt;&lt;label&gt;&gt;]
-[DECLARE
-    <replaceable>declarations</replaceable>]
+<synopsis>
+<optional>&lt;&lt;label&gt;&gt;</optional>
+<optional>DECLARE
+    <replaceable>declarations</replaceable></optional>
 BEGIN
     <replaceable>statements</replaceable>
 END;
-     </programlisting>
+</synopsis>
     </para>
 
     <para>
@@ -141,12 +141,12 @@ END;
     <title>Comments</title>
 
     <para>
-     There are two types of comments in PL/pgSQL. A double dash '--'
-     starts a comment that extends to the end of the line. A '/*'
-     starts a block comment that extends to the next occurrence of '*/'.
+     There are two types of comments in PL/pgSQL. A double dash <literal>--</literal>
+     starts a comment that extends to the end of the line. A <literal>/*</literal>
+     starts a block comment that extends to the next occurrence of <literal>*/</literal>.
      Block comments cannot be nested, but double dash comments can be
      enclosed into a block comment and a double dash can hide
-     the block comment delimiters '/*' and '*/'.
+     the block comment delimiters <literal>/*</literal> and <literal>*/</literal>.
     </para>
    </sect2>
 
@@ -160,16 +160,16 @@ END;
      sub-blocks must be declared in the declarations section of a block,
      except for the loop variable of a FOR-loop iterating over a range
      of integer values. Parameters given to a PL/pgSQL function are
-     automatically declared with the usual identifiers $n.
+     automatically declared with the usual identifiers <literal>$1</literal>, <literal>$2</literal>, etc.
      The declarations have the following syntax:
     </para>
     <variablelist>
 
      <varlistentry>
       <term>
-<replaceable>name</replaceable> [ CONSTANT ]
-<replaceable>type</replaceable> [ NOT NULL ] [ DEFAULT | :=
-	<replaceable>value</replaceable> ];
+<replaceable>name</replaceable> <optional> CONSTANT </optional>
+<replaceable>type</replaceable> <optional> NOT NULL </optional> <optional> DEFAULT | :=
+	<replaceable>value</replaceable> </optional>;
       </term>
       <listitem>
        <para>
@@ -182,7 +182,7 @@ END;
        </para>
        <para>
 	The default value is evaluated every time the block is entered. So
-	assigning '<replaceable>now</replaceable>' to a variable of type
+	assigning <literal>'now'</literal> to a variable of type
 	<type>timestamp</type> causes the variable to have the
 	time of the actual function call, not when the function was
 	precompiled into its bytecode.
@@ -208,7 +208,7 @@ END;
        </para>
        <para>
 	The fields of the rowtype inherit the table's field sizes 
-	or precision for char() etc. data types.
+	or precision for <type>char()</type> etc. data types.
        </para>
       </listitem>
      </varlistentry>
@@ -246,7 +246,7 @@ END;
        </para>
        <para>
 	This aliasing is required for composite types given as arguments to
-	a function. The dot notation $1.salary as in SQL functions is not
+	a function. The dot notation $1.salary as in <acronym>SQL</acronym> functions is not
 	allowed in PL/pgSQL.
        </para>
       </listitem>
@@ -311,16 +311,16 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
      Using the <replaceable>table.field</replaceable>%TYPE
      causes PL/pgSQL to look up the attributes definitions at the
      first call to the function during the lifetime of a backend.
-     Suppose we have a table with a char(20) attribute and some PL/pgSQL functions
+     Suppose we have a table with a <type>char(20)</type> attribute and some PL/pgSQL functions
      that deal with its content in local variables. Now someone
-     decides that char(20) isn't enough, dumps the table, drops it,
+     decides that <type>char(20)</type> is not enough, dumps the table, drops it,
      recreates it now with the attribute in question defined as
-     char(40) and restores the data. Ha - he forgot about the
+     <type>char(40)</type> and restores the data. Hah - he forgot about the
      functions. The computations inside them will truncate the values
      to 20 characters. But if they are defined using the
      <replaceable>table.field</replaceable>%TYPE
      declarations, they will automagically handle the size change or
-     if the new table schema defines the attribute as text type.
+     if the new table schema defines the attribute as <type>text</type> type.
     </para>
    </sect2>
 
@@ -332,15 +332,15 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
     <para>
      All expressions used in PL/pgSQL statements are processed using
      the backend's executor. Expressions that appear to contain
-     constants may in fact require run-time evaluation (e.g. 'now' for the
+     constants may in fact require runtime evaluation (e.g., <literal>'now'</literal> for the
      <type>timestamp</type> type) so
      it is impossible for the PL/pgSQL parser
      to identify real constant values other than the NULL keyword. All
      expressions are evaluated internally by executing a query
-     <programlisting>
-      SELECT <replaceable>expression</replaceable>
-     </programlisting>
-     using the SPI manager. In the expression, occurrences of variable
+<synopsis>
+SELECT <replaceable>expression</replaceable>
+</synopsis>
+     using the <acronym>SPI</acronym> manager. In the expression, occurrences of variable
      identifiers are substituted by parameters and the actual values from
      the variables are passed to the executor in the parameter array. All
      expressions used in a PL/pgSQL function are only prepared and
@@ -353,7 +353,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
      effects to the interpretation of constant values. In detail there
      is a difference between what the two functions
 
-     <programlisting>
+<programlisting>
 CREATE FUNCTION logfunc1 (text) RETURNS timestamp AS '
     DECLARE
         logtxt ALIAS FOR $1;
@@ -362,11 +362,11 @@ CREATE FUNCTION logfunc1 (text) RETURNS timestamp AS '
         RETURN ''now'';
     END;
 ' LANGUAGE 'plpgsql';
-     </programlisting>
+</programlisting>
 
      and
 
-     <programlisting>
+<programlisting>
 CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
     DECLARE
         logtxt ALIAS FOR $1;
@@ -377,31 +377,33 @@ CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
         RETURN curtime;
     END;
 ' LANGUAGE 'plpgsql';
-     </programlisting>
+</programlisting>
 
-     do. In the case of logfunc1(), the <productname>Postgres</productname>
-     main parser
-     knows when preparing the plan for the INSERT, that the string 'now'
-     should be interpreted as <type>timestamp</type> because the target field of logtable
-     is of that type. Thus, it will make a constant from it at this time
-     and this constant value is then used in all invocations of logfunc1()
-     during the lifetime of the backend. Needless to say that this isn't what the
-     programmer wanted.
+     do. In the case of <function>logfunc1()</function>, the
+     <productname>Postgres</productname> main parser knows when
+     preparing the plan for the INSERT, that the string
+     <literal>'now'</literal> should be interpreted as
+     <type>timestamp</type> because the target field of logtable is of
+     that type. Thus, it will make a constant from it at this time and
+     this constant value is then used in all invocations of
+     <function>logfunc1()</function> during the lifetime of the
+     backend. Needless to say that this isn't what the programmer
+     wanted.
     </para>
     <para>
-     In the case of logfunc2(), the <productname>Postgres</productname> 
+     In the case of <function>logfunc2()</function>, the <productname>Postgres</productname> 
      main parser does not know
-     what type 'now' should become and therefore it returns a data type of
-     text containing the string 'now'. During the assignment
+     what type <literal>'now'</literal> should become and therefore it returns a data type of
+     <type>text</type> containing the string <literal>'now'</literal>. During the assignment
      to the local variable curtime, the PL/pgSQL interpreter casts this
-     string to the timestamp type by calling the text_out() and timestamp_in()
+     string to the timestamp type by calling the <function>text_out()</function> and <function>timestamp_in()</function>
      functions for the conversion.
     </para>
     <para>
      This type checking done by the <productname>Postgres</productname> main
      parser got implemented after PL/pgSQL was nearly done.
      It is a difference between 6.3 and 6.4 and affects all functions
-     using the prepared plan feature of the SPI manager.
+     using the prepared plan feature of the <acronym>SPI</acronym> manager.
      Using a local
      variable in the above manner is currently the only way in PL/pgSQL to get
      those values interpreted correctly.
@@ -433,12 +435,12 @@ CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
        <para>
 	An assignment of a value to a variable or row/record field is
 	written as
-	<programlisting>
-	 <replaceable>identifier</replaceable> := <replaceable>expression</replaceable>;
-	</programlisting>
+<synopsis>
+<replaceable>identifier</replaceable> := <replaceable>expression</replaceable>;
+</synopsis>
 	If the expressions result data type doesn't match the variables
 	data type, or the variable has a size/precision that is known
-	(as for char(20)), the result value will be implicitly casted by
+	(as for <type>char(20)</type>), the result value will be implicitly cast by
 	the PL/pgSQL bytecode interpreter using the result types output- and
 	the variables type input-functions. Note that this could potentially
 	result in runtime errors generated by the types input functions.
@@ -446,9 +448,9 @@ CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
        <para>
 	An assignment of a complete selection into a record or row can
 	be done by
-	<programlisting>
+<synopsis>
 SELECT  INTO <replaceable>target</replaceable> <replaceable>expressions</replaceable> FROM ...;
-	</programlisting>
+</synopsis>
 	<replaceable>target</replaceable> can be a record, a row variable or a
 	comma separated list of variables and record-/row-fields.  Note that
 	this is quite different from Postgres' normal interpretation of
@@ -463,15 +465,15 @@ SELECT  INTO <replaceable>target</replaceable> <replaceable>expressions</replace
 	grouping, sorting etc. that can be given for a SELECT statement.
        </para>
        <para>
-	There is a special variable named FOUND of type bool that can be used
+	There is a special variable named FOUND of type <type>boolean</type> that can be used
 	immediately after a SELECT INTO to check if an assignment had success.
 
-	<programlisting>
+<programlisting>
 SELECT INTO myrec * FROM EMP WHERE empname = myname;
 IF NOT FOUND THEN
     RAISE EXCEPTION ''employee % not found'', myname;
 END IF;
-	</programlisting>
+</programlisting>
 
 	If the selection returns multiple rows, only the first is moved
 	into the target fields. All others are silently discarded.
@@ -488,11 +490,11 @@ END IF;
 	is to execute a SELECT query or doing an assignment (resulting
 	in a PL/pgSQL internal SELECT). But there are cases where someone
 	is not interested in the function's result.
-	<programlisting>
+<synopsis>
 PERFORM <replaceable>query</replaceable>
-	</programlisting>
-	executes a 'SELECT <replaceable>query</replaceable>' over the
-	SPI manager and discards the result. Identifiers like local
+</synopsis>
+	executes a <literal>SELECT <replaceable>query</replaceable></literal> over the
+	<acronym>SPI</acronym> manager and discards the result. Identifiers like local
 	variables are still substituted into parameters.
        </para>
       </listitem>
@@ -501,14 +503,13 @@ PERFORM <replaceable>query</replaceable>
      <varlistentry>
       <term>Executing dynamic queries</term>
       <listitem>
-       <cmdsynopsis>
-        <command>EXECUTE</command>
-        <arg choice="req"><replaceable class="command">query-string</replaceable></arg>
-       </cmdsynopsis>
-	   
-	   <para>
-       where <replaceable>query-string</replaceable> is a string
-	   of type TEXT containing the <replaceable>query</replaceable> to be executed.
+       <para>
+<synopsis>
+EXECUTE <replaceable class="command">query-string</replaceable>
+</synopsis>
+       where <replaceable>query-string</replaceable> is a string of
+       type <type>text</type> containing the <replaceable>query</replaceable> to be
+       executed.
        </para>
 	    
        <para>
@@ -557,17 +558,17 @@ EXECUTE ''UPDATE tbl SET ''
       <term>Obtaining other results status</term>
       <listitem>
        <para>
-	<programlisting>
-GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> [ , ... ]
-	</programlisting>
+<synopsis>
+GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional>
+</synopsis>
 	This command allows retrieval of system status indicators.  Each
 	<replaceable>item</replaceable> is a keyword identifying a state
 	value to be assigned to the specified variable (which should be of
 	the right datatype to receive it).  The currently available status
-	items are <keyword>ROW_COUNT</>, the number of rows processed by
-	the last SQL query sent down to the SQL engine; and
-	<keyword>RESULT_OID</>, the Oid of the last row inserted by the
-	most recent SQL query.  Note that <keyword>RESULT_OID</> is only
+	items are <varname>ROW_COUNT</>, the number of rows processed by
+	the last <acronym>SQL</acronym> query sent down to the <acronym>SQL</acronym> engine; and
+	<varname>RESULT_OID</>, the Oid of the last row inserted by the
+	most recent <acronym>SQL</acronym> query.  Note that <varname>RESULT_OID</> is only
 	useful after an INSERT query.
        </para>
       </listitem>
@@ -577,9 +578,9 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
       <term>Returning from the function</term>
       <listitem>
        <para>
-	<programlisting>
+<synopsis>
 RETURN <replaceable>expression</replaceable>
-	</programlisting>
+</synopsis>
 	The function terminates and the value of <replaceable>expression</replaceable>
 	will be returned to the upper executor. The return value of a function
 	cannot be undefined. If control reaches the end of the top-level block
@@ -600,10 +601,10 @@ RETURN <replaceable>expression</replaceable>
 	As indicated in the above examples there is a RAISE statement that
 	can throw messages into the <productname>Postgres</productname>
 	elog mechanism.
-	<programlisting>
-RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' [, <replaceable class="parameter">identifier</replaceable> [...]];
-	</programlisting>
-	Inside the format, "<literal>%</literal>" is used as a placeholder for the
+<synopsis>
+RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">identifier</replaceable> <optional>...</optional></optional>;
+</synopsis>
+	Inside the format, <literal>%</literal> is used as a placeholder for the
 	subsequent comma-separated identifiers. Possible levels are
 	DEBUG (silently suppressed in production running databases), NOTICE 
 	(written into the database log and forwarded to the client application)
@@ -616,15 +617,15 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
       <term>Conditionals</term>
       <listitem>
        <para>
-	<programlisting>
+<synopsis>
 IF <replaceable>expression</replaceable> THEN
     <replaceable>statements</replaceable>
-[ELSE
-    <replaceable>statements</replaceable>]
+<optional>ELSE
+    <replaceable>statements</replaceable></optional>
 END IF;
-	</programlisting>
+</synopsis>
 	The <replaceable>expression</replaceable> must return a value that
-	is a boolean or can be casted into a boolean.
+	is of type <type>boolean</type> or can be casted to a <type>boolean</type>.
        </para>
       </listitem>
      </varlistentry>
@@ -636,60 +637,60 @@ Loops
       <listitem>
        <para>
 	There are multiple types of loops.
-	<programlisting>
-[&lt;&lt;label&gt;&gt;]
+<synopsis>
+<optional>&lt;&lt;label&gt;&gt;</optional>
 LOOP
     <replaceable>statements</replaceable>
 END LOOP;
-	</programlisting>
+</synopsis>
 	An unconditional loop that must be terminated explicitly
 	by an EXIT statement. The optional label can be used by
 	EXIT statements of nested loops to specify which level of
 	nesting should be terminated.
-	<programlisting>
-[&lt;&lt;label&gt;&gt;]
+<synopsis>
+<optional>&lt;&lt;label&gt;&gt;</optional>
 WHILE <replaceable>expression</replaceable> LOOP
     <replaceable>statements</replaceable>
 END LOOP;
-	</programlisting>
+</synopsis>
 	A conditional loop that is executed as long as the evaluation
 	of <replaceable>expression</replaceable> is true.
-	<programlisting>
-[&lt;&lt;label&gt;&gt;]
-FOR <replaceable>name</replaceable> IN [ REVERSE ] <replaceable>expression</replaceable> .. <replaceable>expression</replaceable> LOOP
+<synopsis>
+<optional>&lt;&lt;label&gt;&gt;</optional>
+FOR <replaceable>name</replaceable> IN <optional> REVERSE </optional> <replaceable>expression</replaceable> .. <replaceable>expression</replaceable> LOOP
     <replaceable>statements</replaceable>
 END LOOP;
-	</programlisting>
+</synopsis>
 	A loop that iterates over a range of integer values. The variable
 	<replaceable>name</replaceable> is automatically created as type
 	integer and exists only inside the loop. The two expressions giving
 	the lower and upper bound of the range are evaluated only when entering
 	the loop. The iteration step is always 1.
-	<programlisting>
-[&lt;&lt;label&gt;&gt;]
+<synopsis>
+<optional>&lt;&lt;label&gt;&gt;</optional>
 FOR <replaceable>record | row</replaceable> IN <replaceable>select_clause</replaceable> LOOP
     <replaceable>statements</replaceable>
 END LOOP;
-	</programlisting>
+</synopsis>
 	The record or row is assigned all the rows resulting from the select
 	clause and the loop body is executed for each row. If the loop is
 	terminated with an EXIT statement, the last assigned row is still
 	accessible after the loop.
-	<programlisting>
-[&lt;&lt;label&gt;&gt;]
+<synopsis>
+<optional>&lt;&lt;label&gt;&gt;</optional>
 FOR <replaceable>record | row</replaceable> IN EXECUTE <replaceable>text_expression</replaceable> LOOP
     <replaceable>statements</replaceable>
 END LOOP;
-	</programlisting>
+</synopsis>
 	This is like the previous form, except that the source SELECT
 	statement is specified as a string expression, which is evaluated
 	and re-planned on each entry to the FOR loop.  This allows the
 	programmer to choose the speed of a pre-planned query or the
 	flexibility of a dynamic query, just as with a plain EXECUTE
 	statement.
-	<programlisting>
-EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replaceable> ];
-	</programlisting>
+<synopsis>
+EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <replaceable>expression</replaceable> </optional>;
+</synopsis>
 	If no <replaceable>label</replaceable> given,
 	the innermost loop is terminated and the
 	statement following END LOOP is executed next.
@@ -727,7 +728,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
 
     <variablelist>
      <varlistentry>
-      <term>NEW</term>
+      <term><varname>NEW</varname></term>
       <listitem>
        <para>
 	Data type RECORD; variable holding the new database row on INSERT/UPDATE
@@ -737,7 +738,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
      </varlistentry>
 
      <varlistentry>
-      <term>OLD</term>
+      <term><varname>OLD</varname></term>
       <listitem>
        <para>
 	Data type RECORD; variable holding the old database row on UPDATE/DELETE
@@ -747,47 +748,47 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
      </varlistentry>
 
      <varlistentry>
-      <term>TG_NAME</term>
+      <term><varname>TG_NAME</varname></term>
       <listitem>
        <para>
-	Data type name; variable that contains the name of the trigger actually
+	Data type <type>name</type>; variable that contains the name of the trigger actually
 	fired.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>TG_WHEN</term>
+      <term><varname>TG_WHEN</varname></term>
       <listitem>
        <para>
-	Data type text; a string of either 'BEFORE' or 'AFTER' depending on the
+	Data type <type>text</type>; a string of either <literal>'BEFORE'</literal> or <literal>'AFTER'</literal> depending on the
 	triggers definition.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>TG_LEVEL</term>
+      <term><varname>TG_LEVEL</varname></term>
       <listitem>
        <para>
-	Data type text; a string of either 'ROW' or 'STATEMENT' depending on the
+	Data type <type>text</type>; a string of either <literal>'ROW'</literal> or <literal>'STATEMENT'</literal> depending on the
 	triggers definition.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>TG_OP</term>
+      <term><varname>TG_OP</varname></term>
       <listitem>
        <para>
-	Data type text; a string of 'INSERT', 'UPDATE' or 'DELETE' telling
+	Data type <type>text</type>; a string of <literal>'INSERT'</literal>, <literal>'UPDATE'</literal>, or <literal>'DELETE'</literal> telling
 	for which operation the trigger is actually fired.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>TG_RELID</term>
+      <term><varname>TG_RELID</varname></term>
       <listitem>
        <para>
 	Data type oid; the object ID of the table that caused the
@@ -797,7 +798,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
      </varlistentry>
 
      <varlistentry>
-      <term>TG_RELNAME</term>
+      <term><varname>TG_RELNAME</varname></term>
       <listitem>
        <para>
 	Data type name; the name of the table that caused the trigger
@@ -807,7 +808,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
      </varlistentry>
 
      <varlistentry>
-      <term>TG_NARGS</term>
+      <term><varname>TG_NARGS</varname></term>
       <listitem>
        <para>
 	Data type integer; the number of arguments given to the trigger
@@ -817,10 +818,10 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
      </varlistentry>
 
      <varlistentry>
-      <term>TG_ARGV[]</term>
+      <term><varname>TG_ARGV[]</varname></term>
       <listitem>
        <para>
-	Data type array of text; the arguments from the CREATE TRIGGER statement.
+	Data type array of <type>text</type>; the arguments from the CREATE TRIGGER statement.
 	The index counts from 0 and can be given as an expression. Invalid
 	indices (&lt; 0 or &gt;= tg_nargs) result in a NULL value.
        </para>
@@ -880,57 +881,57 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
    <title>Examples</title>
 
    <para>
-    Here are only a few functions to demonstrate how easy PL/pgSQL
-    functions can be written. For more complex examples the programmer
+    Here are only a few functions to demonstrate how easy it is to write PL/pgSQL
+    functions. For more complex examples the programmer
     might look at the regression test for PL/pgSQL.
    </para>
 
    <para>
-    One painful detail of writing functions in PL/pgSQL is the handling
-    of single quotes. The function's source text on CREATE FUNCTION must
+    One painful detail in writing functions in PL/pgSQL is the handling
+    of single quotes. The function's source text in the <command>CREATE FUNCTION</command> command must
     be a literal string. Single quotes inside of literal strings must be
     either doubled or quoted with a backslash. We are still looking for
     an elegant alternative. In the meantime, doubling the single quotes
     as in the examples below should be used. Any solution for this
     in future versions of <productname>Postgres</productname> will be
-    upward compatible.
+    forward compatible.
    </para>
 
-   <sect2>
-    <title>Some Simple PL/pgSQL Functions</title>
+   <example>
+    <title>A Simple PL/pgSQL Functions</title>
 
     <para>
      The following two PL/pgSQL functions are identical to their
      counterparts from the C language function discussion.
 
-     <programlisting>
+<programlisting>
 CREATE FUNCTION add_one (integer) RETURNS integer AS '
     BEGIN
         RETURN $1 + 1;
     END;
 ' LANGUAGE 'plpgsql';
-    </programlisting>
+</programlisting>
 
-    <programlisting>
+<programlisting>
 CREATE FUNCTION concat_text (text, text) RETURNS text AS '
     BEGIN
         RETURN $1 || $2;
     END;
 ' LANGUAGE 'plpgsql';
-     </programlisting>
+</programlisting>
     </para>
 
-   </sect2>
+   </example>
 
-   <sect2>
-    <title>PL/pgSQL Function on Composite Type</title>
+   <example>
+    <title>A PL/pgSQL Function on a Composite Type</title>
 
     <para>
-     Again it is the PL/pgSQL equivalent to the example from
-     The C functions.
+     Again, this is the PL/pgSQL equivalent to the example from
+     the C functions.
 
-     <programlisting>
-CREATE FUNCTION c_overpaid (EMP, integer) RETURNS bool AS '
+<programlisting>
+CREATE FUNCTION c_overpaid (EMP, integer) RETURNS boolean AS '
     DECLARE
         emprec ALIAS FOR $1;
         sallim ALIAS FOR $2;
@@ -941,21 +942,21 @@ CREATE FUNCTION c_overpaid (EMP, integer) RETURNS bool AS '
         RETURN emprec.salary > sallim;
     END;
 ' LANGUAGE 'plpgsql';
-     </programlisting>
+</programlisting>
     </para>
 
-   </sect2>
+   </example>
 
-   <sect2>
-    <title>PL/pgSQL Trigger Procedure</title>
+   <example>
+    <title>A PL/pgSQL Trigger Procedure</title>
 
     <para>
-     This trigger ensures, that any time a row is inserted or updated
+     This trigger ensures that any time a row is inserted or updated
      in the table, the current user name and time are stamped into the
      row. And it ensures that an employees name is given and that the
      salary is a positive value.
 
-     <programlisting>
+<programlisting>
 CREATE TABLE emp (
     empname text,
     salary integer,
@@ -986,9 +987,9 @@ CREATE FUNCTION emp_stamp () RETURNS OPAQUE AS '
 
 CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
     FOR EACH ROW EXECUTE PROCEDURE emp_stamp();
-     </programlisting>
+</programlisting>
     </para>
-   </sect2>
+   </example>
   </sect1>
  </chapter>
 
