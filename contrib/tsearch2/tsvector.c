@@ -635,8 +635,10 @@ uniqueWORD(WORD * a, int4 l)
 					res->alen *= 2;
 					res->pos.apos = (uint16 *) repalloc(res->pos.apos, sizeof(uint16) * res->alen);
 				}
-				res->pos.apos[res->pos.apos[0] + 1] = LIMITPOS(ptr->pos.pos);
-				res->pos.apos[0]++;
+				if ( res->pos.apos[0]==0 || res->pos.apos[res->pos.apos[0]] != LIMITPOS(ptr->pos.pos) ) { 
+					res->pos.apos[res->pos.apos[0] + 1] = LIMITPOS(ptr->pos.pos);
+					res->pos.apos[0]++;
+				}
 			}
 		}
 		ptr++;
