@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.14 2003/01/07 21:42:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.15 2003/01/09 18:27:39 tgl Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -11,6 +11,9 @@
 
 #include <errno.h>
 #include <unistd.h>
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
 
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
