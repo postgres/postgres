@@ -1,0 +1,56 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.TH ECPG UNIX 2/11/98 PostgreSQL PostgreSQL
+.SH NAME
+ecpg - embedded SQL preprocessor for C
+.SH SYNOPSIS
+.BR ecpg
+[\c
+.BR "-v"
+]
+[\c
+.BR "-d"
+]
+[\c
+.BR "-o"
+outfile
+]
+file1
+[file2]
+[...]
+.in -5n
+.SH DESCRIPTION
+ecpg an embedded SQL in C package for PostgreSQL. It enables you to
+develop C programs with embedded SQL code.
+.PP
+.IR "ecpg"
+understands the following command-line options:
+.TP
+.BR "-v"
+Print version information.
+.TP
+.BR "-d"
+Turn on debugging.
+.TP
+.BR "-o" " outfile"
+Specifies that
+.IR "ecpg"
+should write all its output to 
+.IR "outfile". If no such option is given the output is written to foo.c
+if the input file was name foo.pgc or to foo.bar.c if the input file was
+foo.bar.
+.TP
+.BR "file1, file2, ..."
+The files to be processed.
+.SH "BUGS"
+This version of ecpg is not able to handle structures inside the sql declare
+blocks.
+.TP
+The return code is alway -1 in case of an error. You cannot see which error
+occured by examining the return code.
+.SH "RETURN VALUE"
+.IR ecpg
+returns 0 to the shell on successful completion, -1 for errors,
+.SH "SEE ALSO"
+cc(1).
+
