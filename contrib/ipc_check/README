@@ -1,0 +1,22 @@
+
+This simple perl script was designed under FreeBSD, and, right now, is
+limited to it.  It provides a simple way of determining and directing
+administrators in what has to be done to get IPC working, and configured.
+
+Usage:
+
+ipc_check.pl 
+
+	- simply checks for semaphores and shared memory being enabled
+	- if one or other is not enabled, appropriate "options" are provided
+	  to get it compiled into the kernel
+
+ipc_check.pl -B <# of buffers>
+
+	- checks to see if there are sufficient shared memory buffers to
+	  run the postmaster with a -B option as provided
+	- if insufficient buffers are provided, appropriate 'sysctl' commands,
+	  and instructions, are provided to the administrator to increase
+          them
+
+
