@@ -10,19 +10,19 @@ INSERT INTO INT8_TBL VALUES('4567890123456789','4567890123456789');
 INSERT INTO INT8_TBL VALUES('4567890123456789','-4567890123456789');
 -- bad inputs
 INSERT INTO INT8_TBL(q1) VALUES ('      ');
-ERROR:  invalid input syntax for type bigint: "      "
+ERROR:  invalid input syntax for integer: "      "
 INSERT INTO INT8_TBL(q1) VALUES ('xxx');
-ERROR:  invalid input syntax for type bigint: "xxx"
+ERROR:  invalid input syntax for integer: "xxx"
 INSERT INTO INT8_TBL(q1) VALUES ('3908203590239580293850293850329485');
-ERROR:  integer out of range
+ERROR:  value "3908203590239580293850293850329485" is out of range for type bigint
 INSERT INTO INT8_TBL(q1) VALUES ('-1204982019841029840928340329840934');
-ERROR:  integer out of range
+ERROR:  value "-1204982019841029840928340329840934" is out of range for type bigint
 INSERT INTO INT8_TBL(q1) VALUES ('- 123');
-ERROR:  invalid input syntax for type bigint: "- 123"
+ERROR:  invalid input syntax for integer: "- 123"
 INSERT INTO INT8_TBL(q1) VALUES ('  345     5');
-ERROR:  invalid input syntax for type bigint: "  345     5"
+ERROR:  invalid input syntax for integer: "  345     5"
 INSERT INTO INT8_TBL(q1) VALUES ('');
-ERROR:  invalid input syntax for type bigint: ""
+ERROR:  invalid input syntax for integer: ""
 SELECT * FROM INT8_TBL;
         q1        |        q2         
 ------------------+-------------------
@@ -63,6 +63,8 @@ SELECT '' AS five, q1, q2, q1 - q2 AS minus FROM INT8_TBL;
       | 4567890123456789 | -4567890123456789 |  9135780246913578
 (5 rows)
 
+SELECT '' AS three, q1, q2, q1 * q2 AS multiply FROM INT8_TBL;
+ERROR:  bigint out of range
 SELECT '' AS three, q1, q2, q1 * q2 AS multiply FROM INT8_TBL
  WHERE q1 < 1000 or (q2 > 0 and q2 < 1000);
  three |        q1        |        q2        |      multiply      

@@ -144,64 +144,74 @@ SELECT '' AS three, i.* FROM INT4_TBL i WHERE (i.f1 % int4 '2') = int2 '0';
 (3 rows)
 
 SELECT '' AS five, i.f1, i.f1 * int2 '2' AS x FROM INT4_TBL i;
- five |     f1      |    x    
-------+-------------+---------
-      |           0 |       0
-      |      123456 |  246912
-      |     -123456 | -246912
-      |  2147483647 |      -2
-      | -2147483647 |       2
-(5 rows)
+ERROR:  integer out of range
+SELECT '' AS five, i.f1, i.f1 * int2 '2' AS x FROM INT4_TBL i
+WHERE abs(f1) < 1073741824;
+ five |   f1    |    x    
+------+---------+---------
+      |       0 |       0
+      |  123456 |  246912
+      | -123456 | -246912
+(3 rows)
 
 SELECT '' AS five, i.f1, i.f1 * int4 '2' AS x FROM INT4_TBL i;
- five |     f1      |    x    
-------+-------------+---------
-      |           0 |       0
-      |      123456 |  246912
-      |     -123456 | -246912
-      |  2147483647 |      -2
-      | -2147483647 |       2
-(5 rows)
+ERROR:  integer out of range
+SELECT '' AS five, i.f1, i.f1 * int4 '2' AS x FROM INT4_TBL i
+WHERE abs(f1) < 1073741824;
+ five |   f1    |    x    
+------+---------+---------
+      |       0 |       0
+      |  123456 |  246912
+      | -123456 | -246912
+(3 rows)
 
 SELECT '' AS five, i.f1, i.f1 + int2 '2' AS x FROM INT4_TBL i;
+ERROR:  integer out of range
+SELECT '' AS five, i.f1, i.f1 + int2 '2' AS x FROM INT4_TBL i
+WHERE f1 < 2147483646;
  five |     f1      |      x      
 ------+-------------+-------------
       |           0 |           2
       |      123456 |      123458
       |     -123456 |     -123454
-      |  2147483647 | -2147483647
       | -2147483647 | -2147483645
-(5 rows)
+(4 rows)
 
 SELECT '' AS five, i.f1, i.f1 + int4 '2' AS x FROM INT4_TBL i;
+ERROR:  integer out of range
+SELECT '' AS five, i.f1, i.f1 + int4 '2' AS x FROM INT4_TBL i
+WHERE f1 < 2147483646;
  five |     f1      |      x      
 ------+-------------+-------------
       |           0 |           2
       |      123456 |      123458
       |     -123456 |     -123454
-      |  2147483647 | -2147483647
       | -2147483647 | -2147483645
-(5 rows)
+(4 rows)
 
 SELECT '' AS five, i.f1, i.f1 - int2 '2' AS x FROM INT4_TBL i;
- five |     f1      |     x      
-------+-------------+------------
-      |           0 |         -2
-      |      123456 |     123454
-      |     -123456 |    -123458
-      |  2147483647 | 2147483645
-      | -2147483647 | 2147483647
-(5 rows)
+ERROR:  integer out of range
+SELECT '' AS five, i.f1, i.f1 - int2 '2' AS x FROM INT4_TBL i
+WHERE f1 > -2147483647;
+ five |     f1     |     x      
+------+------------+------------
+      |          0 |         -2
+      |     123456 |     123454
+      |    -123456 |    -123458
+      | 2147483647 | 2147483645
+(4 rows)
 
 SELECT '' AS five, i.f1, i.f1 - int4 '2' AS x FROM INT4_TBL i;
- five |     f1      |     x      
-------+-------------+------------
-      |           0 |         -2
-      |      123456 |     123454
-      |     -123456 |    -123458
-      |  2147483647 | 2147483645
-      | -2147483647 | 2147483647
-(5 rows)
+ERROR:  integer out of range
+SELECT '' AS five, i.f1, i.f1 - int4 '2' AS x FROM INT4_TBL i
+WHERE f1 > -2147483647;
+ five |     f1     |     x      
+------+------------+------------
+      |          0 |         -2
+      |     123456 |     123454
+      |    -123456 |    -123458
+      | 2147483647 | 2147483645
+(4 rows)
 
 SELECT '' AS five, i.f1, i.f1 / int2 '2' AS x FROM INT4_TBL i;
  five |     f1      |      x      

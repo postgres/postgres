@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.298 2004/10/01 02:00:43 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.299 2004/10/04 14:42:46 tgl Exp $
 -->
 
 <appendix id="release">
@@ -255,6 +255,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.298 2004/10/01 02:00:43 neilc E
       just the assigned-to positions.
      </para>
     </listitem>
+
+     <listitem>
+      <para>
+       Overflow in integer arithmetic operations is now detected and
+       reported as an error.
+      </para>
+     </listitem>
 
      <listitem>
       <para>
@@ -1227,6 +1234,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.298 2004/10/01 02:00:43 neilc E
       surprising result.
      </para>
     </listitem>
+
+     <listitem>
+      <para>
+       Overflow in integer arithmetic operations is now detected (Tom)
+      </para>
+     </listitem>
 
     <listitem>
       <para>

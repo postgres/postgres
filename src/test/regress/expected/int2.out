@@ -14,7 +14,7 @@ INSERT INTO INT2_TBL(f1) VALUES ('32767');
 INSERT INTO INT2_TBL(f1) VALUES ('-32767');
 -- bad input values -- should give errors
 INSERT INTO INT2_TBL(f1) VALUES ('100000');
-ERROR:  value "100000" is out of range for type shortint
+ERROR:  value "100000" is out of range for type smallint
 INSERT INTO INT2_TBL(f1) VALUES ('asdf');
 ERROR:  invalid input syntax for integer: "asdf"
 INSERT INTO INT2_TBL(f1) VALUES ('    ');
@@ -144,14 +144,15 @@ SELECT '' AS three, i.* FROM INT2_TBL i WHERE (i.f1 % int4 '2') = int2 '0';
 (3 rows)
 
 SELECT '' AS five, i.f1, i.f1 * int2 '2' AS x FROM INT2_TBL i;
- five |   f1   |   x   
-------+--------+-------
-      |      0 |     0
-      |   1234 |  2468
-      |  -1234 | -2468
-      |  32767 |    -2
-      | -32767 |     2
-(5 rows)
+ERROR:  smallint out of range
+SELECT '' AS five, i.f1, i.f1 * int2 '2' AS x FROM INT2_TBL i
+WHERE abs(f1) < 16384;
+ five |  f1   |   x   
+------+-------+-------
+      |     0 |     0
+      |  1234 |  2468
+      | -1234 | -2468
+(3 rows)
 
 SELECT '' AS five, i.f1, i.f1 * int4 '2' AS x FROM INT2_TBL i;
  five |   f1   |   x    
@@ -164,14 +165,16 @@ SELECT '' AS five, i.f1, i.f1 * int4 '2' AS x FROM INT2_TBL i;
 (5 rows)
 
 SELECT '' AS five, i.f1, i.f1 + int2 '2' AS x FROM INT2_TBL i;
+ERROR:  smallint out of range
+SELECT '' AS five, i.f1, i.f1 + int2 '2' AS x FROM INT2_TBL i
+WHERE f1 < 32766;
  five |   f1   |   x    
 ------+--------+--------
       |      0 |      2
       |   1234 |   1236
       |  -1234 |  -1232
-      |  32767 | -32767
       | -32767 | -32765
-(5 rows)
+(4 rows)
 
 SELECT '' AS five, i.f1, i.f1 + int4 '2' AS x FROM INT2_TBL i;
  five |   f1   |   x    
@@ -184,14 +187,16 @@ SELECT '' AS five, i.f1, i.f1 + int4 '2' AS x FROM INT2_TBL i;
 (5 rows)
 
 SELECT '' AS five, i.f1, i.f1 - int2 '2' AS x FROM INT2_TBL i;
- five |   f1   |   x   
-------+--------+-------
-      |      0 |    -2
-      |   1234 |  1232
-      |  -1234 | -1236
-      |  32767 | 32765
-      | -32767 | 32767
-(5 rows)
+ERROR:  smallint out of range
+SELECT '' AS five, i.f1, i.f1 - int2 '2' AS x FROM INT2_TBL i
+WHERE f1 > -32767;
+ five |  f1   |   x   
+------+-------+-------
+      |     0 |    -2
+      |  1234 |  1232
+      | -1234 | -1236
+      | 32767 | 32765
+(4 rows)
 
 SELECT '' AS five, i.f1, i.f1 - int4 '2' AS x FROM INT2_TBL i;
  five |   f1   |   x    

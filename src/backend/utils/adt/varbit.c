@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.42 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.43 2004/10/04 14:42:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1310,7 +1310,7 @@ bittoint8(PG_FUNCTION_ARGS)
 	if (VARBITLEN(arg) > sizeof(result) * BITS_PER_BYTE)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
+				 errmsg("bigint out of range")));
 
 	result = 0;
 	for (r = VARBITS(arg); r < VARBITEND(arg); r++)

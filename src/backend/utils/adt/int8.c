@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.55 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.56 2004/10/04 14:42:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,12 +24,15 @@
 
 #define MAXINT8LEN		25
 
+#define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
+
 typedef struct
 {
 	int64		current;
 	int64		finish;
 	int64		step;
 } generate_series_fctx;
+
 
 /***********************************************************************
  **
@@ -67,7 +70,6 @@ scanint8(const char *str, bool errorOK, int64 *result)
 	if (*ptr == '-')
 	{
 		ptr++;
-		sign = -1;
 
 		/*
 		 * Do an explicit check for INT64_MIN.	Ugly though this is, it's
@@ -75,12 +77,15 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		 * portably.
 		 */
 #ifndef INT64_IS_BUSTED
-		if (strcmp(ptr, "9223372036854775808") == 0)
+		if (strncmp(ptr, "9223372036854775808", 19) == 0)
 		{
-			*result = -INT64CONST(0x7fffffffffffffff) - 1;
-			return true;
+			tmp = -INT64CONST(0x7fffffffffffffff) - 1;
+			ptr += 19;
+			goto gotdigits;
 		}
 #endif
+
+		sign = -1;
 	}
 	else if (*ptr == '+')
 		ptr++;
@@ -93,7 +98,8 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			errmsg("invalid input syntax for type bigint: \"%s\"", str)));
+					 errmsg("invalid input syntax for integer: \"%s\"",
+							str)));
 	}
 
 	/* process digits */
@@ -108,10 +114,13 @@ scanint8(const char *str, bool errorOK, int64 *result)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("integer out of range")));
+						 errmsg("value \"%s\" is out of range for type bigint",
+								str)));
 		}
 		tmp = newtmp;
 	}
+
+gotdigits:
 
 	/* allow trailing whitespace, but not other trailing chars */
 	while (*ptr != '\0' && isspace((unsigned char) *ptr))
@@ -124,7 +133,8 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			errmsg("invalid input syntax for type bigint: \"%s\"", str)));
+					 errmsg("invalid input syntax for integer: \"%s\"",
+							str)));
 	}
 
 	*result = (sign < 0) ? -tmp : tmp;
@@ -485,58 +495,118 @@ int28ge(PG_FUNCTION_ARGS)
 Datum
 int8um(PG_FUNCTION_ARGS)
 {
-	int64		val = PG_GETARG_INT64(0);
+	int64		arg = PG_GETARG_INT64(0);
+	int64		result;
 
-	PG_RETURN_INT64(-val);
+	result = -arg;
+	/* overflow check (needed for INT64_MIN) */
+	if (arg != 0 && SAMESIGN(result, arg))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int8up(PG_FUNCTION_ARGS)
 {
-	int64		val = PG_GETARG_INT64(0);
+	int64		arg = PG_GETARG_INT64(0);
 
-	PG_RETURN_INT64(val);
+	PG_RETURN_INT64(arg);
 }
 
 Datum
 int8pl(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int64		val2 = PG_GETARG_INT64(1);
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+	int64		result;
 
-	PG_RETURN_INT64(val1 + val2);
+	result = arg1 + arg2;
+	/*
+	 * Overflow check.  If the inputs are of different signs then their sum
+	 * cannot overflow.  If the inputs are of the same sign, their sum
+	 * had better be that sign too.
+	 */
+	if (SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int8mi(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int64		val2 = PG_GETARG_INT64(1);
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+	int64		result;
 
-	PG_RETURN_INT64(val1 - val2);
+	result = arg1 - arg2;
+	/*
+	 * Overflow check.  If the inputs are of the same sign then their
+	 * difference cannot overflow.  If they are of different signs then
+	 * the result should be of the same sign as the first input.
+	 */
+	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int8mul(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int64		val2 = PG_GETARG_INT64(1);
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+	int64		result;
 
-	PG_RETURN_INT64(val1 * val2);
+	result = arg1 * arg2;
+	/*
+	 * Overflow check.  We basically check to see if result / arg2 gives
+	 * arg1 again.  There are two cases where this fails: arg2 = 0 (which
+	 * cannot overflow) and arg1 = INT64_MIN, arg2 = -1 (where the division
+	 * itself will overflow and thus incorrectly match).
+	 *
+	 * Since the division is likely much more expensive than the actual
+	 * multiplication, we'd like to skip it where possible.  The best
+	 * bang for the buck seems to be to check whether both inputs are in
+	 * the int32 range; if so, no overflow is possible.
+	 */
+	if (!(arg1 == (int64) ((int32) arg1) &&
+		  arg2 == (int64) ((int32) arg2)) &&
+		arg2 != 0 &&
+		(result/arg2 != arg1 || (arg2 == -1 && arg1 < 0 && result < 0)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int8div(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int64		val2 = PG_GETARG_INT64(1);
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+	int64		result;
 
-	if (val2 == 0)
+	if (arg2 == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	PG_RETURN_INT64(val1 / val2);
+	result = arg1 / arg2;
+	/*
+	 * Overflow check.  The only possible overflow case is for
+	 * arg1 = INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN,
+	 * which can't be represented on a two's-complement machine.
+	 */
+	if (arg2 == -1 && arg1 < 0 && result < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 /* int8abs()
@@ -546,8 +616,15 @@ Datum
 int8abs(PG_FUNCTION_ARGS)
 {
 	int64		arg1 = PG_GETARG_INT64(0);
+	int64		result;
 
-	PG_RETURN_INT64((arg1 < 0) ? -arg1 : arg1);
+	result = (arg1 < 0) ? -arg1 : arg1;
+	/* overflow check (needed for INT64_MIN) */
+	if (result < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 /* int8mod()
@@ -556,20 +633,16 @@ int8abs(PG_FUNCTION_ARGS)
 Datum
 int8mod(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int64		val2 = PG_GETARG_INT64(1);
-	int64		result;
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
 
-	if (val2 == 0)
+	if (arg2 == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+	/* No overflow is possible */
 
-	result = val1 / val2;
-	result *= val2;
-	result = val1 - result;
-
-	PG_RETURN_INT64(result);
+	PG_RETURN_INT64(arg1 % arg2);
 }
 
 
@@ -577,18 +650,26 @@ Datum
 int8inc(PG_FUNCTION_ARGS)
 {
 	int64		arg = PG_GETARG_INT64(0);
+	int64		result;
 
-	PG_RETURN_INT64(arg + 1);
+	result = arg + 1;
+	/* Overflow check */
+	if (arg > 0 && result < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int8larger(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int64		val2 = PG_GETARG_INT64(1);
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
 	int64		result;
 
-	result = ((val1 > val2) ? val1 : val2);
+	result = ((arg1 > arg2) ? arg1 : arg2);
 
 	PG_RETURN_INT64(result);
 }
@@ -596,11 +677,11 @@ int8larger(PG_FUNCTION_ARGS)
 Datum
 int8smaller(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int64		val2 = PG_GETARG_INT64(1);
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		arg2 = PG_GETARG_INT64(1);
 	int64		result;
 
-	result = ((val1 < val2) ? val1 : val2);
+	result = ((arg1 < arg2) ? arg1 : arg2);
 
 	PG_RETURN_INT64(result);
 }
@@ -608,83 +689,172 @@ int8smaller(PG_FUNCTION_ARGS)
 Datum
 int84pl(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int32		val2 = PG_GETARG_INT32(1);
+	int64		arg1 = PG_GETARG_INT64(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	int64		result;
 
-	PG_RETURN_INT64(val1 + val2);
+	result = arg1 + arg2;
+	/*
+	 * Overflow check.  If the inputs are of different signs then their sum
+	 * cannot overflow.  If the inputs are of the same sign, their sum
+	 * had better be that sign too.
+	 */
+	if (SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int84mi(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int32		val2 = PG_GETARG_INT32(1);
+	int64		arg1 = PG_GETARG_INT64(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	int64		result;
 
-	PG_RETURN_INT64(val1 - val2);
+	result = arg1 - arg2;
+	/*
+	 * Overflow check.  If the inputs are of the same sign then their
+	 * difference cannot overflow.  If they are of different signs then
+	 * the result should be of the same sign as the first input.
+	 */
+	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int84mul(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int32		val2 = PG_GETARG_INT32(1);
+	int64		arg1 = PG_GETARG_INT64(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	int64		result;
 
-	PG_RETURN_INT64(val1 * val2);
+	result = arg1 * arg2;
+	/*
+	 * Overflow check.  We basically check to see if result / arg1 gives
+	 * arg2 again.  There is one case where this fails: arg1 = 0 (which
+	 * cannot overflow).
+	 *
+	 * Since the division is likely much more expensive than the actual
+	 * multiplication, we'd like to skip it where possible.  The best
+	 * bang for the buck seems to be to check whether both inputs are in
+	 * the int32 range; if so, no overflow is possible.
+	 */
+	if (arg1 != (int64) ((int32) arg1) &&
+		result/arg1 != arg2)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int84div(PG_FUNCTION_ARGS)
 {
-	int64		val1 = PG_GETARG_INT64(0);
-	int32		val2 = PG_GETARG_INT32(1);
+	int64		arg1 = PG_GETARG_INT64(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	int64		result;
 
-	if (val2 == 0)
+	if (arg2 == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	PG_RETURN_INT64(val1 / val2);
+	result = arg1 / arg2;
+	/*
+	 * Overflow check.  The only possible overflow case is for
+	 * arg1 = INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN,
+	 * which can't be represented on a two's-complement machine.
+	 */
+	if (arg2 == -1 && arg1 < 0 && result < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int48pl(PG_FUNCTION_ARGS)
 {
-	int32		val1 = PG_GETARG_INT32(0);
-	int64		val2 = PG_GETARG_INT64(1);
+	int32		arg1 = PG_GETARG_INT32(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+	int64		result;
 
-	PG_RETURN_INT64(val1 + val2);
+	result = arg1 + arg2;
+	/*
+	 * Overflow check.  If the inputs are of different signs then their sum
+	 * cannot overflow.  If the inputs are of the same sign, their sum
+	 * had better be that sign too.
+	 */
+	if (SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int48mi(PG_FUNCTION_ARGS)
 {
-	int32		val1 = PG_GETARG_INT32(0);
-	int64		val2 = PG_GETARG_INT64(1);
+	int32		arg1 = PG_GETARG_INT32(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+	int64		result;
 
-	PG_RETURN_INT64(val1 - val2);
+	result = arg1 - arg2;
+	/*
+	 * Overflow check.  If the inputs are of the same sign then their
+	 * difference cannot overflow.  If they are of different signs then
+	 * the result should be of the same sign as the first input.
+	 */
+	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int48mul(PG_FUNCTION_ARGS)
 {
-	int32		val1 = PG_GETARG_INT32(0);
-	int64		val2 = PG_GETARG_INT64(1);
+	int32		arg1 = PG_GETARG_INT32(0);
+	int64		arg2 = PG_GETARG_INT64(1);
+	int64		result;
 
-	PG_RETURN_INT64(val1 * val2);
+	result = arg1 * arg2;
+	/*
+	 * Overflow check.  We basically check to see if result / arg2 gives
+	 * arg1 again.  There is one case where this fails: arg2 = 0 (which
+	 * cannot overflow).
+	 *
+	 * Since the division is likely much more expensive than the actual
+	 * multiplication, we'd like to skip it where possible.  The best
+	 * bang for the buck seems to be to check whether both inputs are in
+	 * the int32 range; if so, no overflow is possible.
+	 */
+	if (arg2 != (int64) ((int32) arg2) &&
+		result/arg2 != arg1)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("bigint out of range")));
+	PG_RETURN_INT64(result);
 }
 
 Datum
 int48div(PG_FUNCTION_ARGS)
 {
-	int32		val1 = PG_GETARG_INT32(0);
-	int64		val2 = PG_GETARG_INT64(1);
+	int32		arg1 = PG_GETARG_INT32(0);
+	int64		arg2 = PG_GETARG_INT64(1);
 
-	if (val2 == 0)
+	if (arg2 == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
-
-	PG_RETURN_INT64(val1 / val2);
+	/* No overflow is possible */
+	PG_RETURN_INT64((int64) arg1 / arg2);
 }
 
 /* Binary arithmetics
@@ -757,21 +927,21 @@ int8shr(PG_FUNCTION_ARGS)
 Datum
 int48(PG_FUNCTION_ARGS)
 {
-	int32		val = PG_GETARG_INT32(0);
+	int32		arg = PG_GETARG_INT32(0);
 
-	PG_RETURN_INT64((int64) val);
+	PG_RETURN_INT64((int64) arg);
 }
 
 Datum
 int84(PG_FUNCTION_ARGS)
 {
-	int64		val = PG_GETARG_INT64(0);
+	int64		arg = PG_GETARG_INT64(0);
 	int32		result;
 
-	result = (int32) val;
+	result = (int32) arg;
 
 	/* Test for overflow by reverse-conversion. */
-	if ((int64) result != val)
+	if ((int64) result != arg)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
@@ -782,24 +952,24 @@ int84(PG_FUNCTION_ARGS)
 Datum
 int28(PG_FUNCTION_ARGS)
 {
-	int16		val = PG_GETARG_INT16(0);
+	int16		arg = PG_GETARG_INT16(0);
 
-	PG_RETURN_INT64((int64) val);
+	PG_RETURN_INT64((int64) arg);
 }
 
 Datum
 int82(PG_FUNCTION_ARGS)
 {
-	int64		val = PG_GETARG_INT64(0);
+	int64		arg = PG_GETARG_INT64(0);
 	int16		result;
 
-	result = (int16) val;
+	result = (int16) arg;
 
 	/* Test for overflow by reverse-conversion. */
-	if ((int64) result != val)
+	if ((int64) result != arg)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
+				 errmsg("smallint out of range")));
 
 	PG_RETURN_INT16(result);
 }
@@ -807,10 +977,10 @@ int82(PG_FUNCTION_ARGS)
 Datum
 i8tod(PG_FUNCTION_ARGS)
 {
-	int64		val = PG_GETARG_INT64(0);
+	int64		arg = PG_GETARG_INT64(0);
 	float8		result;
 
-	result = val;
+	result = arg;
 
 	PG_RETURN_FLOAT8(result);
 }
@@ -821,23 +991,23 @@ i8tod(PG_FUNCTION_ARGS)
 Datum
 dtoi8(PG_FUNCTION_ARGS)
 {
-	float8		val = PG_GETARG_FLOAT8(0);
+	float8		arg = PG_GETARG_FLOAT8(0);
 	int64		result;
 
-	/* Round val to nearest integer (but it's still in float form) */
-	val = rint(val);
+	/* Round arg to nearest integer (but it's still in float form) */
+	arg = rint(arg);
 
 	/*
 	 * Does it fit in an int64?  Avoid assuming that we have handy
 	 * constants defined for the range boundaries, instead test for
 	 * overflow by reverse-conversion.
 	 */
-	result = (int64) val;
+	result = (int64) arg;
 
-	if ((float8) result != val)
+	if ((float8) result != arg)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
+				 errmsg("bigint out of range")));
 
 	PG_RETURN_INT64(result);
 }
@@ -845,10 +1015,10 @@ dtoi8(PG_FUNCTION_ARGS)
 Datum
 i8tof(PG_FUNCTION_ARGS)
 {
-	int64		val = PG_GETARG_INT64(0);
+	int64		arg = PG_GETARG_INT64(0);
 	float4		result;
 
-	result = val;
+	result = arg;
 
 	PG_RETURN_FLOAT4(result);
 }
@@ -859,24 +1029,24 @@ i8tof(PG_FUNCTION_ARGS)
 Datum
 ftoi8(PG_FUNCTION_ARGS)
 {
-	float4		val = PG_GETARG_FLOAT4(0);
+	float4		arg = PG_GETARG_FLOAT4(0);
 	int64		result;
-	float8		dval;
+	float8		darg;
 
-	/* Round val to nearest integer (but it's still in float form) */
-	dval = rint(val);
+	/* Round arg to nearest integer (but it's still in float form) */
+	darg = rint(arg);
 
 	/*
 	 * Does it fit in an int64?  Avoid assuming that we have handy
 	 * constants defined for the range boundaries, instead test for
 	 * overflow by reverse-conversion.
 	 */
-	result = (int64) dval;
+	result = (int64) darg;
 
-	if ((float8) result != dval)
+	if ((float8) result != darg)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
+				 errmsg("bigint out of range")));
 
 	PG_RETURN_INT64(result);
 }
@@ -884,13 +1054,13 @@ ftoi8(PG_FUNCTION_ARGS)
 Datum
 i8tooid(PG_FUNCTION_ARGS)
 {
-	int64		val = PG_GETARG_INT64(0);
+	int64		arg = PG_GETARG_INT64(0);
 	Oid			result;
 
-	result = (Oid) val;
+	result = (Oid) arg;
 
 	/* Test for overflow by reverse-conversion. */
-	if ((int64) result != val)
+	if ((int64) result != arg)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("OID out of range")));
@@ -901,9 +1071,9 @@ i8tooid(PG_FUNCTION_ARGS)
 Datum
 oidtoi8(PG_FUNCTION_ARGS)
 {
-	Oid			val = PG_GETARG_OID(0);
+	Oid			arg = PG_GETARG_OID(0);
 
-	PG_RETURN_INT64((int64) val);
+	PG_RETURN_INT64((int64) arg);
 }
 
 Datum
@@ -929,13 +1099,13 @@ text_int8(PG_FUNCTION_ARGS)
 Datum
 int8_text(PG_FUNCTION_ARGS)
 {
-	/* val is int64, but easier to leave it as Datum */
-	Datum		val = PG_GETARG_DATUM(0);
+	/* arg is int64, but easier to leave it as Datum */
+	Datum		arg = PG_GETARG_DATUM(0);
 	char	   *s;
 	int			len;
 	text	   *result;
 
-	s = DatumGetCString(DirectFunctionCall1(int8out, val));
+	s = DatumGetCString(DirectFunctionCall1(int8out, arg));
 	len = strlen(s);
 
 	result = (text *) palloc(VARHDRSZ + len);

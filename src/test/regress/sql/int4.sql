@@ -63,15 +63,33 @@ SELECT '' AS three, i.* FROM INT4_TBL i WHERE (i.f1 % int4 '2') = int2 '0';
 
 SELECT '' AS five, i.f1, i.f1 * int2 '2' AS x FROM INT4_TBL i;
 
+SELECT '' AS five, i.f1, i.f1 * int2 '2' AS x FROM INT4_TBL i
+WHERE abs(f1) < 1073741824;
+
 SELECT '' AS five, i.f1, i.f1 * int4 '2' AS x FROM INT4_TBL i;
+
+SELECT '' AS five, i.f1, i.f1 * int4 '2' AS x FROM INT4_TBL i
+WHERE abs(f1) < 1073741824;
 
 SELECT '' AS five, i.f1, i.f1 + int2 '2' AS x FROM INT4_TBL i;
 
+SELECT '' AS five, i.f1, i.f1 + int2 '2' AS x FROM INT4_TBL i
+WHERE f1 < 2147483646;
+
 SELECT '' AS five, i.f1, i.f1 + int4 '2' AS x FROM INT4_TBL i;
+
+SELECT '' AS five, i.f1, i.f1 + int4 '2' AS x FROM INT4_TBL i
+WHERE f1 < 2147483646;
 
 SELECT '' AS five, i.f1, i.f1 - int2 '2' AS x FROM INT4_TBL i;
 
+SELECT '' AS five, i.f1, i.f1 - int2 '2' AS x FROM INT4_TBL i
+WHERE f1 > -2147483647;
+
 SELECT '' AS five, i.f1, i.f1 - int4 '2' AS x FROM INT4_TBL i;
+
+SELECT '' AS five, i.f1, i.f1 - int4 '2' AS x FROM INT4_TBL i
+WHERE f1 > -2147483647;
 
 SELECT '' AS five, i.f1, i.f1 / int2 '2' AS x FROM INT4_TBL i;
 

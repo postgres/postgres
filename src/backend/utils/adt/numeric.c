@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.79 2004/08/30 02:54:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.80 2004/10/04 14:42:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1826,7 +1826,7 @@ numeric_int8(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot convert NaN to integer")));
+				 errmsg("cannot convert NaN to bigint")));
 
 	/* Convert to variable format and thence to int8 */
 	init_var(&x);
@@ -1835,7 +1835,7 @@ numeric_int8(PG_FUNCTION_ARGS)
 	if (!numericvar_to_int8(&x, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
+				 errmsg("bigint out of range")));
 
 	free_var(&x);
 
@@ -1874,7 +1874,7 @@ numeric_int2(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot convert NaN to integer")));
+				 errmsg("cannot convert NaN to smallint")));
 
 	/* Convert to variable format and thence to int8 */
 	init_var(&x);
@@ -1883,7 +1883,7 @@ numeric_int2(PG_FUNCTION_ARGS)
 	if (!numericvar_to_int8(&x, &val))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
+				 errmsg("smallint out of range")));
 
 	free_var(&x);
 
@@ -1894,7 +1894,7 @@ numeric_int2(PG_FUNCTION_ARGS)
 	if ((int64) result != val)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
+				 errmsg("smallint out of range")));
 
 	PG_RETURN_INT16(result);
 }
