@@ -48,9 +48,9 @@ INSERT INTO foo VALUES(2,1,'Mary');
 -- sql, proretset = f, prorettype = b
 CREATE FUNCTION getfoo(int) RETURNS int AS 'SELECT $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
- getfoo 
---------
-      1
+ t1 
+----
+  1
 (1 row)
 
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
@@ -65,10 +65,10 @@ DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS setof int AS 'SELECT fooid FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
- getfoo 
---------
-      1
-      1
+ t1 
+----
+  1
+  1
 (2 rows)
 
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
@@ -84,8 +84,8 @@ DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS setof text AS 'SELECT fooname FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
- getfoo 
---------
+ t1  
+-----
  Joe
  Ed
 (2 rows)
@@ -139,9 +139,9 @@ DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS int AS 'DECLARE fooint int; BEGIN SELECT fooid into fooint FROM foo WHERE fooid = $1; RETURN fooint; END;' LANGUAGE 'plpgsql';
 SELECT * FROM getfoo(1) AS t1;
- getfoo 
---------
-      1
+ t1 
+----
+  1
 (1 row)
 
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
