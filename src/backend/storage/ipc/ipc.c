@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.27 1998/06/27 04:53:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.28 1998/06/27 13:24:20 momjian Exp $
  *
  * NOTES
  *
@@ -215,14 +215,15 @@ on_shmem_exit(void (*function) (), caddr_t arg)
 }
 
 /* ----------------------------------------------------------------
- *		clear_proc_exit
+ *		on_exit_reset
  *
  *		this function clears all proc_exit() registered functions.
  * ----------------------------------------------------------------
  */
 void
-clear_proc_exit(void)
+on_exit_reset(void)
 {
+	on_shmem_exit_index = 0;
 	on_proc_exit_index = 0;
 }
 
