@@ -62,3 +62,7 @@ unix domain sockets, which don't work on NT.  Start the postmaster with
 environment variable to 'localhost' or supply the hostname on the
 command line.
 
+Also, the cygnus-bindir has to be placed in the path before the
+NT-directories, because the sort.exe has to be take for cygnus, not
+NT.
+
