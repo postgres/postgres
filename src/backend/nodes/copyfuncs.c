@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.61 1999/02/04 03:19:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.62 1999/02/05 19:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1343,7 +1343,7 @@ _copyRestrictInfo(RestrictInfo * from)
 	Node_Copy(from, newnode, indexids);
 	Node_Copy(from, newnode, mergejoinorder);
 	newnode->hashjoinoperator = from->hashjoinoperator;
-	newnode->cinfojoinid = listCopy(from->cinfojoinid);
+	newnode->restrictinfojoinid = listCopy(from->restrictinfojoinid);
 
 	return newnode;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.48 1999/02/04 03:19:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.49 1999/02/05 19:59:25 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -2087,13 +2087,13 @@ parsePlanString(void)
 		return_value = _readJoinKey();
 	else if (!strncmp(token, "MERGEORDER", length))
 		return_value = _readMergeOrder();
-	else if (!strncmp(token, "CLAUSEINFO", length))
+	else if (!strncmp(token, "RETRICTINFO", length))
 		return_value = _readRestrictInfo();
 	else if (!strncmp(token, "JOINMETHOD", length))
 		return_value = _readJoinMethod();
 	else if (!strncmp(token, "JOININFO", length))
 		return_value = _readJoinInfo();
-	else if (!strncmp(token, "HINFO", length))
+	else if (!strncmp(token, "HASHINFO", length))
 		return_value = _readHashInfo();
 	else if (!strncmp(token, "ITER", length))
 		return_value = _readIter();

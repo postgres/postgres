@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.36 1999/02/03 21:16:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.37 1999/02/05 19:59:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,7 +321,7 @@ create_indexscan_node(IndexPath *best_path,
 
 	/*
 	 * Extract the(first if conjunct, only if disjunct) clause from the
-	 * clauseinfo list.
+	 * restrictinfo list.
 	 */
 	Expr	   *index_clause = (Expr *) NULL;
 	List	   *indxqual = NIL;

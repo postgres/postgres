@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.64 1999/02/04 01:46:54 momjian Exp $
+ *  $Id: outfuncs.c,v 1.65 1999/02/05 19:59:25 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1107,7 +1107,7 @@ _outMergeOrder(StringInfo str, MergeOrder *node)
 static void
 _outRestrictInfo(StringInfo str, RestrictInfo * node)
 {
-	appendStringInfo(str, " CINFO :clause ");
+	appendStringInfo(str, " RESTRICTINFO :clause ");
 	_outNode(str, node->clause);
 
 	appendStringInfo(str, 

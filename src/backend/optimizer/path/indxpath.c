@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.37 1999/02/03 21:16:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.38 1999/02/05 19:59:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ static List *group_clauses_by_indexkey(RelOptInfo * rel, RelOptInfo * index,
 static List *group_clauses_by_ikey_for_joins(RelOptInfo * rel, RelOptInfo * index,
 								int *indexkeys, Oid *classes, List *join_cinfo_list, List *restr_cinfo_list);
 static RestrictInfo *match_clause_to_indexkey(RelOptInfo * rel, RelOptInfo * index, int indexkey,
-						 int xclass, RestrictInfo * clauseInfo, bool join);
+						 int xclass, RestrictInfo * restrictInfo, bool join);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
 		  List *joininfo_list);
 static bool one_pred_test(Expr *predicate, List *restrictinfo_list);
@@ -571,14 +571,14 @@ group_clauses_by_ikey_for_joins(RelOptInfo * rel,
  *
  */
 static RestrictInfo *
-match_clause_to_indexkey(RelOptInfo * rel,
-						 RelOptInfo * index,
+match_clause_to_indexkey(RelOptInfo *rel,
+						 RelOptInfo *index,
 						 int indexkey,
 						 int xclass,
-						 RestrictInfo * clauseInfo,
+						 RestrictInfo *restrictInfo,
 						 bool join)
 {
-	Expr	   *clause = clauseInfo->clause;
+	Expr	   *clause = restrictInfo->clause;
 	Var		   *leftop,
 			   *rightop;
 	Oid			join_op = InvalidOid;
@@ -761,7 +761,7 @@ match_clause_to_indexkey(RelOptInfo * rel,
 	}
 
 	if (isIndexable)
-		return clauseInfo;
+		return restrictInfo;
 
 	return NULL;
 }
@@ -1208,7 +1208,7 @@ indexable_joinclauses(RelOptInfo * rel, RelOptInfo * index,
 		{
 			List	   *clauses = lfirst(clausegroups);
 
-			((RestrictInfo *) lfirst(clauses))->cinfojoinid = joininfo->otherrels;
+			((RestrictInfo *) lfirst(clauses))->restrictinfojoinid = joininfo->otherrels;
 		}
 		cg_list = nconc(cg_list, clausegroups);
 	}
@@ -1298,7 +1298,7 @@ index_innerjoin(Query *root, RelOptInfo * rel, List *clausegroup_list,
 		pathnode->indexkeys = index->indexkeys;
 		pathnode->indexqual = clausegroup;
 
-		pathnode->path.joinid = ((RestrictInfo *) lfirst(clausegroup))->cinfojoinid;
+		pathnode->path.joinid = ((RestrictInfo *) lfirst(clausegroup))->restrictinfojoinid;
 
 		pathnode->path.path_cost = cost_index((Oid) lfirsti(index->relids),
 					   (int) temp_pages,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.14 1999/02/04 03:19:10 momjian Exp $
+ * $Id: relation.h,v 1.15 1999/02/05 19:59:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,7 @@ typedef struct RestrictInfo
 
 	/* hashjoin only */
 	Oid			hashjoinoperator;
-	Relid		cinfojoinid;
+	Relid		restrictinfojoinid;
 } RestrictInfo;
 
 typedef struct JoinMethod
