@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.93 2002/10/20 20:47:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.94 2002/11/15 01:26:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ btbuild(PG_FUNCTION_ARGS)
 	buildstate.indtuples = 0;
 
 #ifdef BTREE_BUILD_STATS
-	if (Show_btree_build_stats)
+	if (log_btree_build_stats)
 		ResetUsage();
 #endif   /* BTREE_BUILD_STATS */
 
@@ -169,7 +169,7 @@ btbuild(PG_FUNCTION_ARGS)
 	}
 
 #ifdef BTREE_BUILD_STATS
-	if (Show_btree_build_stats)
+	if (log_btree_build_stats)
 	{
 		ShowUsage("BTREE BUILD STATS");
 		ResetUsage();

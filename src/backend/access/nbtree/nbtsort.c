@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.69 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.70 2002/11/15 01:26:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ void
 _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 {
 #ifdef BTREE_BUILD_STATS
-	if (Show_btree_build_stats)
+	if (log_btree_build_stats)
 	{
 		ShowUsage("BTREE BUILD (Spool) STATISTICS");
 		ResetUsage();

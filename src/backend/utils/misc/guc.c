@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.102 2002/11/15 00:47:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.103 2002/11/15 01:26:09 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -91,7 +91,7 @@ bool		log_planner_stats = false;
 bool		log_executor_stats = false;
 bool		log_statement_stats = false;		/* this is sort of all
 												 * three above together */
-bool		Show_btree_build_stats = false;
+bool		log_btree_build_stats = false;
 
 bool		Explain_pretty_print = true;
 
@@ -420,7 +420,7 @@ static struct config_bool
 	},
 #ifdef BTREE_BUILD_STATS
 	{
-		{"show_btree_build_stats", PGC_SUSET}, &Show_btree_build_stats,
+		{"log_btree_build_stats", PGC_SUSET}, &log_btree_build_stats,
 		false, NULL, NULL
 	},
 #endif

@@ -158,7 +158,7 @@
 #log_statement_stats = false
 
 # requires BTREE_BUILD_STATS
-#show_btree_build_stats = false
+#log_btree_build_stats = false
 
 
 #
