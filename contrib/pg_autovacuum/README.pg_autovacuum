@@ -35,7 +35,7 @@ have been resolved.  Please report any problems to the hackers list.
 
 pg_autovacuum requires that the statistics system be enabled and
 reporting row level stats.  The overhead of the stats system has been
-shown to be significant costly under certain workloads.  For instance,
+shown to have a significant cost under certain workloads.  For instance,
 a tight loop of queries performing "select 1" was found to run nearly
 30% slower when stats were enabled.  However, in practice, with more
 realistic workloads, the stats system overhead is usually nominal.
