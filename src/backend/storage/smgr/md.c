@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.41 1999/02/13 23:18:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.42 1999/04/05 22:25:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,10 +33,11 @@
  *	The magnetic disk storage manager keeps track of open file descriptors
  *	in its own descriptor pool.  This happens for two reasons.	First, at
  *	transaction boundaries, we walk the list of descriptors and flush
- *	anything that we've dirtied in the current transaction.  Second, we
- *	have to support relations of > 4GBytes.  In order to do this, we break
- *	relations up into chunks of < 2GBytes and store one chunk in each of
- *	several files that represent the relation.
+ *	anything that we've dirtied in the current transaction.  Second, we want
+ *	to support relations larger than the OS' file size limit (often 2GBytes).
+ *	In order to do that, we break relations up into chunks of < 2GBytes
+ *	and store one chunk in each of several files that represent the relation.
+ *	See the BLCKSZ and RELSEG_SIZE configuration constants in include/config.h.
  */
 
 typedef struct _MdfdVec
@@ -58,30 +59,6 @@ static MemoryContext MdCxt;
 
 #define MDFD_DIRTY		(uint16) 0x01
 #define MDFD_FREE		(uint16) 0x02
-
-/*
- * RELSEG_SIZE appears to be the number of segments that can
- * be in a disk file.  It was defined as 262144 based on 8k
- * blocks, but now that the block size can be changed, this
- * has to be calculated at compile time.  Otherwise, the file
- * size limit would not work out to 2-gig (2147483648).
- *
- * The number needs to be (2 ** 31) / BLCKSZ, but to be keep
- * the math under MAXINT, pre-divide by 256 and use ...
- *
- *			 (((2 ** 23) / BLCKSZ) * (2 ** 8))
- *
- * 07 Jan 98  darrenk
- *
- * Now possibly let the OS handle it...
- *
- * 19 Mar 98  darrenk
- *
- */
-
-#ifndef LET_OS_MANAGE_FILESIZE
-#define RELSEG_SIZE		((8388608 / BLCKSZ) * 256)
-#endif
 
 /* routines declared here */
 static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);
