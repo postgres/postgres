@@ -663,7 +663,19 @@ fi
 ## Header files
 ##
 dnl sys/socket.h and sys/types.h are required by AC_FUNC_ACCEPT_ARGTYPES
-AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h netinet/tcp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/types.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h])
+AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/types.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h])
+
+dnl At least on IRIX, cpp test for netinet/tcp.h will fail unless netinet/in.h
+dnl is included first.  So can't just use AC_CHECK_HEADERS; do it this way:
+AC_CHECK_HEADERS([netinet/in.h])
+AC_MSG_CHECKING([for netinet/tcp.h])
+AC_TRY_CPP([
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#include <netinet/tcp.h>
+], [AC_DEFINE(HAVE_NETINET_TCP_H) AC_MSG_RESULT(yes)],
+[AC_MSG_RESULT(no)])
 
 AC_CHECK_HEADERS([readline/readline.h readline.h], [break])
 AC_CHECK_HEADERS([readline/history.h history.h], [break])
