@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.122 2004/11/21 22:27:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.123 2004/11/30 03:50:29 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -398,7 +398,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 											&fcinfo->isnull);
 
 			/*
-			 * If the functions return type isn't by value, copy the value
+			 * If the function's return type isn't by value, copy the value
 			 * into upper executor memory context.
 			 */
 			if (!fcinfo->isnull && !func->fn_retbyval)
@@ -426,7 +426,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 	error_context_stack = plerrcontext.previous;
 
 	/*
-	 * Return the functions result
+	 * Return the function's result
 	 */
 	return estate.retval;
 }
