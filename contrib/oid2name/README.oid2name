@@ -101,6 +101,10 @@ $ du * | while read SIZE OID
 1950    23903  = customers
 ...
 
+This can be done in psql with:  (each page is typically 8k)
+
+test=> SELECT relpages, relname FROM pg_class ORDER BY relpages DESC;
+
 
 ---------------------------------------------------------------------------
 
