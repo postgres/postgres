@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.55 2000/05/27 03:39:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.56 2000/05/27 03:58:20 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,6 @@ CFLAGS+= -DFRONTEND
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
-SHLIB_LINK += $(KRBLIBS)
 endif
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
