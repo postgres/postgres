@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116.2.1 2003/12/05 15:50:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116.2.2 2004/05/25 19:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,14 +124,14 @@ next_token(FILE *fp, char *buf, const int bufsz)
 
 			if (buf >= end_buf)
 			{
+				*buf = '\0';
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("authentication file token too long, skipping: \"%s\"",
-								buf)));
+								start_buf)));
 				/* Discard remainder of line */
 				while ((c = getc(fp)) != EOF && c != '\n')
 					;
-				buf[0] = '\0';
 				break;
 			}
 
