@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.211 2003/10/08 03:49:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.212 2003/10/09 19:05:09 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1863,8 +1863,8 @@ SET ENABLE_SEQSCAN TO OFF;
         Prefixes each message in the server log file with the process ID of
         the server process. This is useful to sort out which messages
         pertain to which connection. The default is off.  This parameter
-        does not affect messages logged via <application>syslog</>, which always contain
-        the process ID.
+        does not affect messages logged via <application>syslog</>, which 
+        always contain the process ID.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.25 2003/09/12 22:17:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.26 2003/10/09 19:05:09 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -422,13 +422,14 @@ VACUUM
 
   <para>
    The simplest production-grade approach to managing log output is to
-   send it all to <application>syslog</> and let
-   <application>syslog</> deal with file rotation. To do this, set
-   the configurations parameter <literal>syslog</> to 2 (to log to <application>syslog</> only) in
-   <filename>postgresql.conf</>. Then you can send a
-   <literal>SIGHUP</literal> signal to the <application>syslog</>
-   daemon whenever you want to force it to start writing a new log
-   file.
+   send it all to <application>syslog</> and let <application>syslog</> 
+   deal with file rotation. To do this, set the configurations parameter 
+   <literal>syslog</> to 2 (to log to <application>syslog</> only) in 
+   <filename>postgresql.conf</>. Then you can send a <literal>SIGHUP</literal> 
+   signal to the <application>syslog</> daemon whenever you want to force it 
+   to start writing a new log file.  If you want to automate log rotation, 
+   the logrotate program can be configured to work with log files from syslog.
+
   </para>
 
   <para>
