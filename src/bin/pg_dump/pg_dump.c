@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.95 1998/11/15 07:09:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.96 1998/12/05 22:09:57 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -92,9 +92,8 @@ static int	findLastBuiltinOid(void);
 static bool isViewRule(char *relname);
 static void setMaxOid(FILE *fout);
 
-static char *AddAcl(char *s, const char *add);
-static char *GetPrivledges(char *s);
-static ACL *ParseACL(const char *acls, int *count);
+static void AddAcl(char *aclbuf, const char *keyword);
+static char *GetPrivileges(const char *s);
 static void becomeUser(FILE *fout, const char *username);
 
 extern char *optarg;
@@ -1464,7 +1463,51 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		tblinfo[i].ntrig = atoi(PQgetvalue(res, i, i_reltriggers));
 
-		/* Get CHECK constraints */
+		/* Exclude inherited CHECKs from CHECK constraints total.
+		 * If a constraint matches by name and condition with a constraint
+		 * belonging to a parent class, we assume it was inherited.
+		 */
+		if (tblinfo[i].ncheck > 0)
+		{
+			PGresult	*res2;
+			int			ntups2;
+
+ 			if (g_verbose)
+				fprintf(stderr, "%s excluding inherited CHECK constraints "
+						"for relation: '%s' %s\n",
+						g_comment_start,
+						tblinfo[i].relname,
+						g_comment_end);
+
+			sprintf(query, "SELECT rcname from pg_relcheck, pg_inherits as i "
+					"where rcrelid = '%s'::oid "
+					" and rcrelid = i.inhrel"
+					" and exists "
+					"  (select * from pg_relcheck as c "
+					"    where c.rcname = pg_relcheck.rcname "
+					"      and c.rcsrc = pg_relcheck.rcsrc "
+					"      and c.rcrelid = i.inhparent) ",
+					tblinfo[i].oid);
+			res2 = PQexec(g_conn, query);
+			if (!res2 ||
+				PQresultStatus(res2) != PGRES_TUPLES_OK)
+			{
+				fprintf(stderr, "getTables(): SELECT (for inherited CHECK) failed\n");
+				exit_nicely(g_conn);
+			}
+			ntups2 = PQntuples(res2);
+			tblinfo[i].ncheck -= ntups2;
+			if (tblinfo[i].ncheck < 0)
+			{
+				fprintf(stderr, "getTables(): found more inherited CHECKs than total for "
+						"relation %s\n",
+						tblinfo[i].relname);
+				exit_nicely(g_conn);
+			}
+			PQclear(res2);
+		}
+
+		/* Get non-inherited CHECK constraints, if any */
 		if (tblinfo[i].ncheck > 0)
 		{
 			PGresult   *res2;
@@ -1480,7 +1523,13 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						g_comment_end);
 
 			sprintf(query, "SELECT rcname, rcsrc from pg_relcheck "
-					"where rcrelid = '%s'::oid ",
+					"where rcrelid = '%s'::oid "
+					"   and not exists "
+					"  (select * from pg_relcheck as c, pg_inherits as i "
+					"   where i.inhrel = pg_relcheck.rcrelid "
+					"     and c.rcname = pg_relcheck.rcname "
+					"     and c.rcsrc = pg_relcheck.rcsrc "
+					"     and c.rcrelid = i.inhparent) ",
 					tblinfo[i].oid);
 			res2 = PQexec(g_conn, query);
 			if (!res2 ||
@@ -1504,10 +1553,10 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				char	   *name = PQgetvalue(res2, i2, i_rcname);
 				char	   *expr = PQgetvalue(res2, i2, i_rcsrc);
 
-				query[0] = 0;
+				query[0] = '\0';
 				if (name[0] != '$')
-					sprintf(query, "CONSTRAINT %s ", name);
-				sprintf(query, "%sCHECK (%s)", query, expr);
+					sprintf(query, "CONSTRAINT %s ", fmtId(name));
+				sprintf(query + strlen(query), "CHECK (%s)", expr);
 				tblinfo[i].check_expr[i2] = strdup(query);
 			}
 			PQclear(res2);
@@ -2411,119 +2460,46 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
  *
  * Matthew C. Aycock 12/02/97
  */
-/*
- * This will return a new string: "s,add"
+
+/* Append a keyword to a keyword list, inserting comma if needed.
+ * Caller must make aclbuf big enough for all possible keywords.
  */
-static char *
-AddAcl(char *s, const char *add)
+static void
+AddAcl (char *aclbuf, const char *keyword)
 {
-	char	   *t;
-
-	if (s == (char *) NULL)
-		return strdup(add);
-
-	t = (char *) calloc((strlen(s) + strlen(add) + 1), sizeof(char));
-	sprintf(t, "%s,%s", s, add);
-
-	return t;
+	if (*aclbuf)
+		strcat(aclbuf, ",");
+	strcat(aclbuf, keyword);
 }
 
 /*
- * This will take a string of 'arwR' and return a
+ * This will take a string of 'arwR' and return a malloced,
  * comma delimited string of SELECT,INSERT,UPDATE,DELETE,RULE
  */
 static char *
-GetPrivledges(char *s)
+GetPrivileges(const char *s)
 {
-	char	   *acls = NULL;
+	char		aclbuf[100];
 
-	/* Grant All	 == arwR */
-	/* INSERT		 == a	*/
-	/* UPDATE/DELETE == w	*/
-	/* SELECT		 == r	*/
-	/* RULE			 == R	*/
-
-	if (strstr(s, "arwR"))
-		return strdup("ALL");
+	aclbuf[0] = '\0';
 
 	if (strchr(s, 'a'))
-		acls = AddAcl(acls, "INSERT");
+		AddAcl(aclbuf, "INSERT");
 
 	if (strchr(s, 'w'))
-		acls = AddAcl(acls, "UPDATE,DELETE");
+		AddAcl(aclbuf, "UPDATE,DELETE");
 
 	if (strchr(s, 'r'))
-		acls = AddAcl(acls, "SELECT");
+		AddAcl(aclbuf, "SELECT");
 
 	if (strchr(s, 'R'))
-		acls = AddAcl(acls, "RULES");
+		AddAcl(aclbuf, "RULE");
 
-	return acls;
-}
+	/* Special-case when they're all there */
+	if (strcmp(aclbuf, "INSERT,UPDATE,DELETE,SELECT,RULE") == 0)
+		return strdup("ALL");
 
-/* This will parse the acl string of TableInfo
- * into a two deminsional aray:
- *	  user | Privledges
- * So to reset the acls I need to grant these priviledges
- * to user
- */
-static ACL *
-ParseACL(const char *acls, int *count)
-{
-	ACL		   *ParsedAcl = NULL;
-	int			i,
-				len,
-				NumAcls = 1,	/* There is always public */
-				AclLen = 0;
-	char	   *s = NULL,
-			   *user = NULL,
-			   *priv = NULL,
-			   *tok;
-
-	AclLen = strlen(acls);
-
-	if (AclLen == 0)
-	{
-		*count = 0;
-		return (ACL *) NULL;
-	}
-
-	for (i = 0; i < AclLen; i++)
-		if (acls[i] == ',')
-			NumAcls++;
-
-	ParsedAcl = (ACL *) calloc(AclLen, sizeof(ACL));
-	if (!ParsedAcl)
-	{
-		fprintf(stderr, "Could not allocate space for ACLS!\n");
-		exit_nicely(g_conn);
-	}
-
-	s = strdup(acls);
-
-	/* Setup up public */
-	ParsedAcl[0].user = NULL;	/* indicates PUBLIC */
-	tok = strtok(s, ",");
-	ParsedAcl[0].privledges = GetPrivledges(strchr(tok, '='));
-
-	/* Do the rest of the users */
-	i = 1;
-	while ((i < NumAcls) && ((tok = strtok(NULL, ",")) != (char *) NULL))
-	{
-		/* User name is string up to = in tok */
-		len = strchr(tok, '=') - tok - 1;
-		user = (char *) calloc(len + 1, sizeof(char));
-		strncpy(user, tok + 1, len);
-		if (user[len - 1] == '\"')
-			user[len - 1] = (char) NULL;
-		priv = GetPrivledges(tok + len + 2);
-		ParsedAcl[i].user = user;
-		ParsedAcl[i].privledges = priv;
-		i++;
-	}
-
-	*count = NumAcls;
-	return ParsedAcl;
+	return strdup(aclbuf);
 }
 
 /*
@@ -2535,46 +2511,70 @@ ParseACL(const char *acls, int *count)
 static void
 dumpACL(FILE *fout, TableInfo tbinfo)
 {
-	int			k,
-				l;
-	ACL		   *ACLlist;
+	const char *acls = tbinfo.relacl;
+	char	   *aclbuf,
+			   *tok,
+			   *eqpos,
+			   *priv;
 
-	ACLlist = ParseACL(tbinfo.relacl, &l);
-	if (ACLlist == (ACL *) NULL)
+	if (strlen(acls) == 0)
+		return;					/* table has default permissions */
+
+	/* Revoke Default permissions for PUBLIC.
+	 * Is this actually necessary, or is it just a waste of time?
+	 */
+	fprintf(fout,
+			"REVOKE ALL on %s from PUBLIC;\n",
+			fmtId(tbinfo.relname));
+
+	/* Make a working copy of acls so we can use strtok */
+	aclbuf = strdup(acls);
+
+	/* Scan comma-separated ACL items */
+	for (tok = strtok(aclbuf, ","); tok != NULL; tok = strtok(NULL, ","))
 	{
-		if (l == 0)
-		{
-			return;
-		}
-		else
+		/* Token may start with '{' and/or '"'.  Actually only the start of
+		 * the string should have '{', but we don't verify that.
+		 */
+		if (*tok == '{')
+			tok++;
+		if (*tok == '"')
+			tok++;
+
+		/* User name is string up to = in tok */
+		eqpos = strchr(tok, '=');
+		if (! eqpos)
 		{
 			fprintf(stderr, "Could not parse ACL list for '%s'...Exiting!\n",
 					tbinfo.relname);
 			exit_nicely(g_conn);
 		}
-	}
 
-	/* Revoke Default permissions for PUBLIC */
-	fprintf(fout,
-			"REVOKE ALL on %s from PUBLIC;\n",
-			fmtId(tbinfo.relname));
-
-	for (k = 0; k < l; k++)
-	{
-		if (ACLlist[k].privledges != (char *) NULL)
+		/* Parse the privileges (right-hand side).  Skip if there are none. */
+		priv = GetPrivileges(eqpos + 1);
+		if (*priv)
 		{
-			/* If you change this code, bear in mind fmtId() can be
-			 * used only once per printf() call...
-			 */
 			fprintf(fout,
 					"GRANT %s on %s to ",
-					ACLlist[k].privledges, fmtId(tbinfo.relname));
-			if (ACLlist[k].user == (char *) NULL)
+					priv, fmtId(tbinfo.relname));
+			/* Note: fmtId() can only be called once per printf, so don't
+			 * try to merge printing of username into the above printf.
+			 */
+			if (eqpos == tok)
+			{
+				/* Empty left-hand side means "PUBLIC" */
 				fprintf(fout, "PUBLIC;\n");
+			}
 			else
-				fprintf(fout, "%s;\n", fmtId(ACLlist[k].user));
+			{
+				*eqpos = '\0';	/* it's ok to clobber aclbuf */
+				fprintf(fout, "%s;\n", fmtId(tok));
+			}
 		}
+		free(priv);
 	}
+
+	free(aclbuf);
 }
 
 
@@ -2592,9 +2592,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 	int			i,
 				j,
 				k;
-	char		q[MAXQUERYLEN],
-				id1[MAXQUERYLEN],
-				id2[MAXQUERYLEN];
+	char		q[MAXQUERYLEN];
 	char	  **parentRels;		/* list of names of parent relations */
 	int			numParents;
 	int			actual_atts;	/* number of attrs in this CREATE statment */
@@ -2632,67 +2630,53 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 
 			becomeUser(fout, tblinfo[i].usename);
 
-			sprintf(q, "CREATE TABLE %s (", fmtId(tblinfo[i].relname));
+			sprintf(q, "CREATE TABLE %s (\n\t", fmtId(tblinfo[i].relname));
 			actual_atts = 0;
 			for (j = 0; j < tblinfo[i].numatts; j++)
 			{
 				if (tblinfo[i].inhAttrs[j] == 0)
 				{
+					if (actual_atts > 0)
+						strcat(q, ",\n\t");
+					sprintf(q + strlen(q), "%s ",
+							fmtId(tblinfo[i].attnames[j]));
 
 					/* Show lengths on bpchar and varchar */
 					if (!strcmp(tblinfo[i].typnames[j], "bpchar"))
 					{
-						sprintf(q, "%s%s%s char",
-								q,
-								(actual_atts > 0) ? ", " : "",
-								fmtId(tblinfo[i].attnames[j]));
-
-						sprintf(q, "%s(%d)",
-								q,
+						sprintf(q + strlen(q), "char(%d)",
 								tblinfo[i].atttypmod[j] - VARHDRSZ);
-						actual_atts++;
 					}
 					else if (!strcmp(tblinfo[i].typnames[j], "varchar"))
 					{
-						sprintf(q, "%s%s%s %s",
-								q,
-								(actual_atts > 0) ? ", " : "",
-								fmtId(tblinfo[i].attnames[j]),
+						sprintf(q + strlen(q), "%s",
 								tblinfo[i].typnames[j]);
-						if(tblinfo[i].atttypmod[j] != -1) {
-						        sprintf(q, "%s(%d)",
-								q,
-								tblinfo[i].atttypmod[j] - VARHDRSZ);
+						if (tblinfo[i].atttypmod[j] != -1)
+						{
+							sprintf(q + strlen(q), "(%d)",
+									tblinfo[i].atttypmod[j] - VARHDRSZ);
 						}
-						else {
-						        sprintf(q, "%s", q);
-						}
-						actual_atts++;
 					}
 					else
 					{
-						strcpy(id1, fmtId(tblinfo[i].attnames[j]));
-						strcpy(id2, fmtId(tblinfo[i].typnames[j]));
-						sprintf(q, "%s%s%s %s",
-								q,
-								(actual_atts > 0) ? ", " : "",
-								id1,
-								id2);
-						actual_atts++;
+						sprintf(q + strlen(q), "%s",
+								fmtId(tblinfo[i].typnames[j]));
 					}
 					if (tblinfo[i].adef_expr[j] != NULL)
-						sprintf(q, "%s DEFAULT %s", q, tblinfo[i].adef_expr[j]);
+						sprintf(q + strlen(q), " DEFAULT %s",
+								tblinfo[i].adef_expr[j]);
 					if (tblinfo[i].notnull[j])
-						sprintf(q, "%s NOT NULL", q);
+						strcat(q, " NOT NULL");
+					actual_atts++;
 				}
 			}
 
 			/* put the CONSTRAINTS inside the table def */
 			for (k = 0; k < tblinfo[i].ncheck; k++)
 			{
-				sprintf(q, "%s%s %s",
-						q,
-						(actual_atts + k > 0) ? ", " : "",
+				if (actual_atts + k > 0)
+					strcat(q, ",\n\t");
+				sprintf(q + strlen(q), "%s",
 						tblinfo[i].check_expr[k]);
 			}
 
@@ -2700,11 +2684,10 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 
 			if (numParents > 0)
 			{
-				sprintf(q, "%s inherits ( ", q);
+				strcat(q, "\ninherits (");
 				for (k = 0; k < numParents; k++)
 				{
-					sprintf(q, "%s%s%s",
-							q,
+					sprintf(q + strlen(q), "%s%s",
 							(k > 0) ? ", " : "",
 							fmtId(parentRels[k]));
 				}

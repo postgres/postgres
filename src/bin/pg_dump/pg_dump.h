@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.35 1998/10/06 22:14:21 momjian Exp $
+ * $Id: pg_dump.h,v 1.36 1998/12/05 22:09:56 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -150,18 +150,6 @@ typedef struct _oprInfo
 	char	   *oprrsortop;
 	char	   *usename;
 } OprInfo;
-
-/*
- * This is some support functions to fix the acl problem of pg_dump
- *
- * Matthew C. Aycock 12/02/97
- */
-typedef struct _AclType
-{
-	char	   *user;
-	char	   *privledges;
-} ACL;
-
 
 /* global decls */
 extern bool g_force_quotes;		/* double-quotes for identifiers flag */
