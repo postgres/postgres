@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.15 2001/05/09 21:11:26 momjian Exp $
+ * $Id: Connection.java,v 1.16 2001/06/01 20:57:58 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -267,7 +267,8 @@ public abstract class Connection
       //
       firstWarning = null;
 
-      java.sql.ResultSet initrset = ExecSQL("set datestyle to 'ISO'; select getdatabaseencoding()");
+      java.sql.ResultSet initrset = ExecSQL("set datestyle to 'ISO'; " +
+        "select case when pg_encoding_to_char(1) = 'SQL_ASCII' then 'UNKNOWN' else getdatabaseencoding() end");
 
       String dbEncoding = null;
       //retrieve DB properties
@@ -319,6 +320,11 @@ public abstract class Connection
 
         } else if (dbEncoding.equals("WIN")) {
           dbEncoding = "Cp1252";
+        } else if (dbEncoding.equals("UNKNOWN")) {
+          //This isn't a multibyte database so we don't have an encoding to use
+          //We leave dbEncoding null which will cause the default encoding for the
+          //JVM to be used
+          dbEncoding = null;
         } else {
           dbEncoding = null;
         }
