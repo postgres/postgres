@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.60 2001/03/17 20:54:13 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.61 2001/03/18 00:30:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1003,8 +1003,9 @@ XLogWrite(XLogwrtRqst WriteRqst)
 
 			/* update pg_control, unless someone else already did */
 			SpinAcquire(ControlFileLockId);
-			if (ControlFile->logId != openLogId ||
-				ControlFile->logSeg != openLogSeg + 1)
+			if (ControlFile->logId < openLogId ||
+				(ControlFile->logId == openLogId &&
+				 ControlFile->logSeg < openLogSeg + 1))
 			{
 				ControlFile->logId = openLogId;
 				ControlFile->logSeg = openLogSeg + 1;
