@@ -2,6 +2,7 @@ package org.postgresql.test;
 
 import java.sql.*;
 import junit.framework.TestCase;
+import java.util.Properties;
 
 /*
  * Utility class for JDBC tests
@@ -61,10 +62,21 @@ public class TestUtil
 	 */
 	public static java.sql.Connection openDB()
 	{
+		return openDB(new Properties());
+	}
+
+	/*
+	 * Helper - opens a connection with the allowance for passing
+	 * additional parameters, like "compatible".
+	 */
+	public static java.sql.Connection openDB(Properties props)
+	{
+		props.setProperty("user",getUser());
+		props.setProperty("password",getPassword());
 		try
 		{
 			Class.forName("org.postgresql.Driver");
-			return java.sql.DriverManager.getConnection(getURL(), getUser(), getPassword());
+			return java.sql.DriverManager.getConnection(getURL(), props);
 		}
 		catch (ClassNotFoundException ex)
 		{
