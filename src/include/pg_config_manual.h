@@ -6,7 +6,7 @@
  * for developers.  If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $Id: pg_config_manual.h,v 1.1 2003/04/06 22:45:23 petere Exp $
+ * $Id: pg_config_manual.h,v 1.2 2003/04/18 01:03:42 momjian Exp $
  *------------------------------------------------------------------------
  */
 
@@ -134,6 +134,22 @@
 # define HAVE_UNIX_SOCKETS 1
 #endif
 
+/*
+ * Define this if your operating system supports link()
+ */
+#if !defined(__QNX__) && !defined(__BEOS__) && \
+	!defined(__CYGWIN__) && !defined(WIN32)
+# define HAVE_WORKING_LINK 1
+#endif
+  
+/*
+ * Define this if your operating system has _timezone rather than timezone
+ */
+#if defined(__CYGWIN__) || defined(WIN32)
+# define HAVE_INT_TIMEZONE		/* has int _timezone */
+# define HAVE_UNDERSCORE_TIMEZONE 1
+#endif
+  
 /*
  * This is the default directory in which AF_UNIX socket files are
  * placed.  Caution: changing this risks breaking your existing client

@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../include/c.h"
+
 #define NUL				'\0'
 
 #ifndef TRUE
@@ -94,11 +96,7 @@ char	  **argv;
 			in_file = stdin;
 		else
 		{
-#ifndef __CYGWIN__
-			if ((in_file = fopen(*argv, "r")) == NULL)
-#else
-			if ((in_file = fopen(*argv, "rb")) == NULL)
-#endif
+			if ((in_file = fopen(*argv, PG_BINARY_R)) == NULL)
 				halt("PERROR:  Can not open file %s\n", argv[0]);
 			argv++;
 		}

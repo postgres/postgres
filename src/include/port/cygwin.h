@@ -1,10 +1,9 @@
-/* $Header: /cvsroot/pgsql/src/include/port/cygwin.h,v 1.1 2003/03/21 17:18:34 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/include/port/cygwin.h,v 1.2 2003/04/18 01:03:42 momjian Exp $ */
+
+#include <port/win32defs.h>
 
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
-
-#define tzname _tzname			/* should be in time.h? */
-#define HAVE_INT_TIMEZONE		/* has int _timezone */
 
 #include <cygwin/version.h>
 

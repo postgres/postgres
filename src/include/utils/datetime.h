@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.37 2003/04/04 04:50:44 tgl Exp $
+ * $Id: datetime.h,v 1.38 2003/04/18 01:03:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,13 +214,6 @@ do { \
 	q = ((t < 0)? ceil(t / u): floor(t / u)); \
 	if (q != 0) t -= rint(q * u); \
 } while(0)
-#endif
-
-/* Global variable holding time zone information. */
-#if defined(__CYGWIN__) || defined(N_PLAT_NLM)
-#define TIMEZONE_GLOBAL _timezone
-#else
-#define TIMEZONE_GLOBAL timezone
 #endif
 
 /*

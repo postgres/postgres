@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.137 2003/04/06 22:45:23 petere Exp $
+ * $Id: c.h,v 1.138 2003/04/18 01:03:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
  */
 
 #include "pg_config.h"
-#include "pg_config_manual.h"
+#include "pg_config_manual.h"	/* must be after pg_config.h */
 #include "pg_config_os.h"
 #include "postgres_ext.h"
 
@@ -65,10 +65,8 @@
 #endif
 #include <sys/types.h>
 
-#ifdef __CYGWIN__
 #include <errno.h>
 #include <sys/fcntl.h>			/* ensure O_BINARY is available */
-#endif
 #ifdef HAVE_SUPPORTDEFS_H
 #include <SupportDefs.h>
 #endif
@@ -319,6 +317,14 @@ typedef unsigned long int uint64;
 /* Select timestamp representation (float8 or int64) */
 #if defined(USE_INTEGER_DATETIMES) && !defined(INT64_IS_BUSTED)
 #define HAVE_INT64_TIMESTAMP
+#endif
+
+/* Global variable holding time zone information. */
+#ifndef HAVE_UNDERSCORE_TIMEZONE
+#define TIMEZONE_GLOBAL timezone
+#else
+#define TIMEZONE_GLOBAL _timezone
+#define tzname _tzname			/* should be in time.h? */
 #endif
 
 /* sig_atomic_t is required by ANSI C, but may be missing on old platforms */
@@ -680,7 +686,7 @@ typedef NameData *Name;
  * ----------------------------------------------------------------
  */
 
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(WIN32)
 #define PG_BINARY	O_BINARY
 #define PG_BINARY_R "rb"
 #define PG_BINARY_W "wb"
