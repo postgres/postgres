@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.57.2.1 2002/08/22 05:27:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.57.2.2 2002/08/22 22:17:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,7 +293,7 @@ show_datestyle(void)
 	}
 
 	snprintf(buf, sizeof(buf), "DateStyle is %s with %s conventions",
-			 dstyle, EuroDates ? "European" : "US (NonEuropean");
+			 dstyle, EuroDates ? "European" : "US (NonEuropean)");
 
 	elog(NOTICE, buf, NULL);
 
