@@ -45,10 +45,26 @@ static char *Sysfunc_system_date(void)
 	return &buf[0];
 }
 
+static char *Sysfunc_system_time(void)
+{
+	time_t	cur_time_secs;
+	struct	tm *cur_time_expanded;
+	static	char buf[10]; /* Just for safety, y'understand... */
+	
+	time(&cur_time_secs);
+	cur_time_expanded = localtime(&cur_time_secs);
+	sprintf(buf, "%2.2d:%2.2d:%2.2d", cur_time_expanded->tm_hour,
+		cur_time_expanded->tm_min, cur_time_expanded->tm_sec);
+
+	return &buf[0];
+}
+
 char *SystemFunctionHandler(char *funct)
 {
 	if (!strcmp(funct, "SYS_DATE"))
 		return Sysfunc_system_date();
+	if (!strcmp(funct, "SYS_TIME"))
+		return Sysfunc_system_time();
 	return "*unknown function*";
 }
 
