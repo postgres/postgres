@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Sep 29 20:49:54 EDT 2001
+Last updated:		Sun Sep 30 15:01:01 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -308,7 +308,7 @@ MISCELLANEOUS
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
 * Improve dynamic memory allocation by introducing tuple-context memory
   allocation (Tom)
-* Allow GUC configuration of maximum number of open files
+* -Allow GUC configuration of maximum number of open files
 * -Improve statistics storage in pg_class [performance] (Tom)
 * Add connection pooling [pool]
 * Allow persistent backends [persistent]
