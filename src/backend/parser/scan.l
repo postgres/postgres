@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.24 1997/10/15 01:12:21 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.25 1997/10/30 01:55:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,8 +241,13 @@ other			.
 					return (FCONST);
 				}
 {integer}		{
+					char* endptr;
+
+					errno = 0;
 					ScanString = pstrdup((char*)yytext);
-					yylval.ival = atoi((char*)yytext);
+					yylval.ival = strtol((char *)yytext,&endptr,10);
+					if (*endptr != '\0' || errno == ERANGE)
+						elog(WARN,"\tBad integer input format\n");
 					return (ICONST);
 				}
 {real}			{
@@ -250,9 +255,9 @@ other			.
 
 					errno = 0;
 					ScanString = pstrdup((char*)yytext);
-					yylval.dval = strtod(((char *)yytext),&endptr);
+					yylval.dval = strtod((char *)yytext,&endptr);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(WARN,"\tBad float8 input format\n");
+						elog(WARN,"\tBad float input format\n");
 					CheckFloat8Val(yylval.dval);
 					return (FCONST);
 				}
