@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.29 2000/10/19 04:53:41 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.30 2000/10/20 14:00:49 thomas Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1014,7 +1014,7 @@ env PGOPTIONS='--geqo=off' psql
       <listitem>
        <para>
         Enables <acronym>SSL</> connections. Please read
-        <xref linkend="ssl"> before using this. The default
+        <xref linkend="ssl-tcp"> before using this. The default
         is off.
        </para>
       </listitem>
@@ -1637,7 +1637,7 @@ set semsys:seminfo_semmsl=32
   </para>
  </sect1>
 
- <sect1 id="ssl">
+ <sect1 id="ssl-tcp">
   <title>Secure TCP/IP Connections with SSL</title>
 
   <para>
@@ -1654,7 +1654,8 @@ set semsys:seminfo_semmsl=32
    can be started with the argument <option>-l</> (ell) to enable
    SSL connections. When starting in SSL mode, the postmaster will look
    for the files <filename>server.key</> and <filename>server.crt</> in
-   the data directory. These files should contain the server private key
+   the data directory (pointed to by <envar>PGDATA</envar>).
+    These files should contain the server private key
    and certificate respectively. These files must be set up correctly
    before an SSL-enabled server can start. If the private key is protected
    with a passphrase, the postmaster will prompt for the passphrase and will
@@ -1664,7 +1665,8 @@ set semsys:seminfo_semmsl=32
   <para>
    The postmaster will listen for both standard and SSL connections
    on the same TCP/IP port, and will negotiate with any connecting
-   client wether to use SSL or not. See <xref linkend="client-authentication">
+   client whether or not to use SSL.
+    See <xref linkend="client-authentication">
    about how to force on the server side the use of SSL for certain
    connections.
   </para>
@@ -1695,63 +1697,7 @@ openssl x509 -inform PEM -outform PEM -in newreq.pem -out newkey_no_passphrase.p
   </para>
  </sect1>
 
- <sect1 id="ssl">
-  <title>Secure TCP/IP Connection with SSL</title>
-
-  <para>
-   PostgreSQL has native support for connections over SSL to encrypt
-   client/server communications for increased security. This requires
-   <productname>OpenSSL</productname> to be installed on both client
-   and server systems and support enabled at compile-time using
-   the configure script.
-  </para>
-
-  <para>
-   With SSL support compiled in, the Postgres backend can be 
-   started with argument -l to enable SSL connections. 
-   When starting in SSL mode, the postmaster will look for the 
-   files <filename>server.key</filename> and
-   <filename>server.cert</filename> in the <envar>PGDATA</envar>
-   directory. These files should contain the server private key and
-   certificate respectively. If the private key is protected with a 
-   passphrase, the postmaster will prompt for the passphrase and not 
-   start until it has been provided.
-  </para>
-
-  <para>
-   The postmaster will listen for both standard and SSL connections
-   on the same TCP/IP port, and will negotiate with any connecting
-   client wether to use SSL or not. Use the <filename>pg_hba.conf</filename>
-   file to optionally require SSL in order to accept a connection.
-  </para>
-
-  <para>
-   For details on how to create your server private key and certificate,
-   refer to the OpenSSL documentation. A simple self-signed certificate
-   can be used to get started testing, but a certificate signed by a CA
-   (either one of the global CAs or a local one) should be used in 
-   production so the client can verify the servers identity. To create
-   a quick self-signed certificate, use the <filename>CA.pl</filename>
-   script included in OpenSSL:
-<programlisting>
-   CA.pl -newcert
-</programlisting>
-   Fill out the information the script asks for. Make sure to enter
-   the local hostname as Common Name. The script will generate a key
-   which is passphrase protected. To remove the passphrase (required
-   if you want automatic startup of the postmaster), run the command
-<programlisting>
-   openssl x509 -inform PEM -outform PEM -in newreq.pem -out newkey_no_passphrase.pem
-</programlisting>
-   Enter the old passphrase to unlock the existing key. Copy the file
-   <filename>newreq.pem</filename> to <filename>PGDATA/server.cert</filename>
-   and <filename>newkey_no_passphrase.pem</filename> to 
-   <filename>PGDATA/server.key</filename>. Remove the PRIVATE KEY part
-   from the <filename>server.cert</filename> using any text editor.
-  </para>
- </sect1>
-
- <sect1 id="ssh">
+ <sect1 id="ssh-tunnels">
   <title>Secure TCP/IP Connections with SSH tunnels</title>
 
   <note>
