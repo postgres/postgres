@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.268 2003/07/22 16:39:55 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.269 2003/07/23 17:27:28 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -320,14 +320,14 @@ done
 IFS=$ac_save_IFS
 
 #
-# Enable libpq to be thread-safe
+# Enable libpq to be thread-safeness
 #
-AC_MSG_CHECKING([allow threaded libpq])
-PGAC_ARG_BOOL(with, threads, no, [  --with-threads          allow libpq and ecpg to be thread-safe],
-              [AC_DEFINE([USE_THREADS], 1, [Define to 1 to build libpq and ecpg to be thread-safe. (--with-threads)])])
+AC_MSG_CHECKING([allow thread-safe libpq and ecpg])
+PGAC_ARG_BOOL(with, threads, no, [  --enable-thread-safeness allow libpq and ecpg to be thread-safe],
+              [AC_DEFINE([USE_THREADS], 1, [Define to 1 to build libpq and ecpg to be thread-safe. (--enable-thread-safeness)])])
 
-AC_MSG_RESULT([$with_threads])
-AC_SUBST(with_threads)
+AC_MSG_RESULT([$enable_thread_safeness])
+AC_SUBST(enable_thread_safeness)
 
 #
 # Tcl/Tk
@@ -965,7 +965,7 @@ AC_FUNC_FSEEKO
 # For each platform, we need to know about any special compile and link
 # libraries, and whether the normal C function names are thread-safe.
 #
-if test "$with_threads" = yes; then
+if test "$enable_thread_safeness" = yes; then
 AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([pthread.h not found, required for --with-threads])])
 
 if test "$SUPPORTS_THREADS" != yes; then
@@ -991,7 +991,7 @@ AC_SUBST(THREAD_LIBS)
 # One trick here is that if we don't call AC_CHECK_FUNCS, the
 # functions are marked "not found", which is perfect.
 #
-if test "$with_threads" = yes -a "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
+if test "$enable_thread_safeness" = yes -a "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
 _CFLAGS="$CFLAGS"
 _LIB="$LIBS"
 CFLAGS="$CFLAGS $TREAD_CFLAGS"

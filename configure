@@ -855,7 +855,7 @@ Optional Packages:
   --with-libraries=DIRS   look for additional libraries in DIRS
   --with-libs=DIRS        alternative spelling of --with-libraries
   --with-pgport=PORTNUM   change default port number 5432
-  --with-threads          allow libpq and ecpg to be thread-safe
+  --enable-thread-safeness allow libpq and ecpg to be thread-safe
   --with-tcl              build Tcl and Tk interfaces
   --without-tk            do not build Tk interfaces if Tcl is enabled
   --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR
@@ -2811,10 +2811,10 @@ done
 IFS=$ac_save_IFS
 
 #
-# Enable libpq to be thread-safe
+# Enable libpq to be thread-safeness
 #
-echo "$as_me:$LINENO: checking allow threaded libpq" >&5
-echo $ECHO_N "checking allow threaded libpq... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking allow thread-safe libpq and ecpg" >&5
+echo $ECHO_N "checking allow thread-safe libpq and ecpg... $ECHO_C" >&6
 
 
 
@@ -2846,8 +2846,8 @@ else
 fi;
 
 
-echo "$as_me:$LINENO: result: $with_threads" >&5
-echo "${ECHO_T}$with_threads" >&6
+echo "$as_me:$LINENO: result: $enable_thread_safeness" >&5
+echo "${ECHO_T}$enable_thread_safeness" >&6
 
 
 #
@@ -12807,7 +12807,7 @@ fi
 # For each platform, we need to know about any special compile and link
 # libraries, and whether the normal C function names are thread-safe.
 #
-if test "$with_threads" = yes; then
+if test "$enable_thread_safeness" = yes; then
 if test "${ac_cv_header_pthread_h+set}" = set; then
   echo "$as_me:$LINENO: checking for pthread.h" >&5
 echo $ECHO_N "checking for pthread.h... $ECHO_C" >&6
@@ -12949,7 +12949,7 @@ fi
 # One trick here is that if we don't call AC_CHECK_FUNCS, the
 # functions are marked "not found", which is perfect.
 #
-if test "$with_threads" = yes -a "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
+if test "$enable_thread_safeness" = yes -a "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
 _CFLAGS="$CFLAGS"
 _LIB="$LIBS"
 CFLAGS="$CFLAGS $TREAD_CFLAGS"
@@ -17807,7 +17807,7 @@ s,@CPP@,$CPP,;t t
 s,@GCC@,$GCC,;t t
 s,@autodepend@,$autodepend,;t t
 s,@INCLUDES@,$INCLUDES,;t t
-s,@with_threads@,$with_threads,;t t
+s,@enable_thread_safeness@,$enable_thread_safeness,;t t
 s,@with_tcl@,$with_tcl,;t t
 s,@with_tk@,$with_tk,;t t
 s,@with_perl@,$with_perl,;t t
