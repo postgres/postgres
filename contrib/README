@@ -134,7 +134,7 @@ pgbench -
 	by Tatsuo Ishii <t-ishii@sra.co.jp>
 
 pgcrypto -
-	Cryptographic hash functions
+	Cryptographic functions
 	by Marko Kreen <marko@l-t.ee>
 
 retep -

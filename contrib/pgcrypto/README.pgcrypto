@@ -9,10 +9,12 @@ INSTALLATION
 
 Edit makefile, if you want to use any external library.
 
-NB!  Default randomness source is /dev/urandom device.  If you
-do not have it, you also need to edit Makefile to let pgcrypto
-use either OpenSSL PRNG or libc random() PRNG.  Using libc random()
-is discouraged.
+NB!  Default randomness source is libc random() function.  This
+is so only to get pgcrypto build everywhere.  Randomness is
+needed for gen_salt() function.  So if you plan using it, you
+should definitely change that by editing Makefile.  You should
+be using urandom device if your OS supports it, otherwise link
+pgcrypto against OpenSSL library and use its PRNG.
 
 After editing Makefile:
 

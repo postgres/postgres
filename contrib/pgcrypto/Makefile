@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.7 2001/09/23 04:12:44 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.8 2001/09/29 03:11:58 momjian Exp $
 #
 
 subdir = contrib/pgcrypto
@@ -21,7 +21,7 @@ cryptsrc = builtin
 #              This works ofcouse only with cryptolib = openssl
 #
 # 'silly'    - use libc random() - very weak
-random = dev
+random = silly
 random_dev = \"/dev/urandom\"
 
 ##########################
@@ -60,24 +60,18 @@ ifeq ($(random), silly)
 CRYPTO_CFLAGS += -DRAND_SILLY
 endif
 
-NAME	:= pgcrypto
-SRCS	+= pgcrypto.c px.c px-hmac.c px-crypt.c misc.c \
-		crypt-gensalt.c random.c
-OBJS	:= $(SRCS:.c=.o)
-SHLIB_LINK := $(CRYPTO_LDFLAGS)
-SO_MAJOR_VERSION = 0
-SO_MINOR_VERSION = 1
+MODULE_big	:= pgcrypto
+SRCS		+= pgcrypto.c px.c px-hmac.c px-crypt.c misc.c \
+			crypt-gensalt.c random.c
+OBJS		:= $(SRCS:.c=.o)
+DOCS		:= README.pgcrypto
+DATA_built	:= pgcrypto.sql
+EXTRA_CLEAN	:= gen-rtab
 
-override CPPFLAGS	+= $(CRYPTO_CFLAGS) -I$(srcdir) 
-override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
-rpath :=
+PG_CPPFLAGS	:= $(CRYPTO_CFLAGS) -I$(srcdir) 
+SHLIB_LINK 	:= $(CRYPTO_LDFLAGS)
 
-all: all-lib $(NAME).sql
-
-include $(top_srcdir)/src/Makefile.shlib
-
-$(NAME).sql: $(NAME).sql.in
-	sed 's,@MODULE_FILENAME@,$$libdir/$(NAME),g' $< >$@
+include $(top_srcdir)/contrib/contrib-global.mk
 
 rijndael.o: rijndael.tbl
 
@@ -85,16 +79,3 @@ rijndael.tbl:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DPRINT_TABS rijndael.c -o gen-rtab
 	./gen-rtab > rijndael.tbl
 
-install: all installdirs
-	$(INSTALL_SHLIB) $(shlib)	$(DESTDIR)$(pkglibdir)/pgcrypto$(DLSUFFIX)
-	$(INSTALL_DATA) $(NAME).sql	$(DESTDIR)$(datadir)/contrib/$(NAME).sql
-	$(INSTALL_DATA) README.$(NAME)	$(DESTDIR)$(docdir)/contrib/README.$(NAME)
-
-installdirs:
-	$(mkinstalldirs) $(pkglibdir) $(datadir)/contrib $(docdir)/contrib
-
-uninstall: uninstall-lib
-	rm -f $(DESTDIR)$(pkglibdir)/pgcrypto$(DLSUFFIX) $(datadir)/contrib/$(NAME).sql $(docdir)/contrib/README.$(NAME)
-
-clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) $(NAME).sql gen-rtab
