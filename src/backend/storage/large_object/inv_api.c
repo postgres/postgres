@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.65 2000/01/26 05:56:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.66 2000/04/08 04:37:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,10 +278,20 @@ inv_drop(Oid lobjId)
 {
 	Relation	r;
 
-	r = (Relation) RelationIdGetRelation(lobjId);
-	if (!RelationIsValid(r) || r->rd_rel->relkind != RELKIND_LOBJECT)
+	r = RelationIdGetRelation(lobjId);
+	if (!RelationIsValid(r))
 		return -1;
 
+	if (r->rd_rel->relkind != RELKIND_LOBJECT)
+	{
+		/* drop relcache refcount from RelationIdGetRelation */
+		RelationDecrementReferenceCount(r);
+		return -1;
+	}
+
+	/* Since heap_drop_with_catalog will destroy the relcache entry,
+	 * there's no need to drop the refcount in this path.
+	 */
 	heap_drop_with_catalog(RelationGetRelationName(r));
 	return 1;
 }
