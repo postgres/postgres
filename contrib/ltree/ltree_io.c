@@ -498,21 +498,20 @@ lquery_out(PG_FUNCTION_ARGS)
 			   *ptr;
 	int			i,
 				j,
-				totallen = 0;
+				totallen = 1;
 	lquery_level *curqlevel;
 	lquery_variant *curtlevel;
 
 	curqlevel = LQUERY_FIRST(in);
 	for (i = 0; i < in->numlevel; i++)
 	{
-		if (curqlevel->numvar)
-			totallen = (curqlevel->numvar * 4) + 1 + curqlevel->totallen;
-		else
-			totallen = 2 * 11 + 4;
 		totallen++;
+		if (curqlevel->numvar)
+			totallen += 1 + (curqlevel->numvar * 4) + curqlevel->totallen;
+		else
+			totallen += 2 * 11 + 4;
 		curqlevel = LQL_NEXT(curqlevel);
 	}
-
 
 	ptr = buf = (char *) palloc(totallen);
 	curqlevel = LQUERY_FIRST(in);
