@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.26.2.1 2002/11/22 16:25:53 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.26.2.2 2003/01/31 22:25:18 tgl Exp $
  *
  *********************************************************************
  */
@@ -127,7 +127,8 @@ typedef struct PLyTypeInfo
  */
 typedef struct PLyProcedure
 {
-	char	   *proname;
+	char	   *proname;		/* SQL name of procedure */
+	char	   *pyname;			/* Python name of procedure */
 	TransactionId fn_xmin;
 	CommandId	fn_cmin;
 	PLyTypeInfo result;			/* also used to store info for trigger
@@ -1050,7 +1051,7 @@ static PLyProcedure *
 PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 					 HeapTuple procTup, char *key)
 {
-	char		procName[256];
+	char		procName[NAMEDATALEN+256];
 
 	DECLARE_EXC();
 	Form_pg_proc procStruct;
@@ -1073,8 +1074,10 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 		elog(FATAL, "plpython: Procedure name would overrun buffer");
 
 	proc = PLy_malloc(sizeof(PLyProcedure));
-	proc->proname = PLy_malloc(strlen(procName) + 1);
-	strcpy(proc->proname, procName);
+	proc->proname = PLy_malloc(strlen(NameStr(procStruct->proname)) + 1);
+	strcpy(proc->proname, NameStr(procStruct->proname));
+	proc->pyname = PLy_malloc(strlen(procName) + 1);
+	strcpy(proc->pyname, procName);
 	proc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 	proc->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
 	PLy_typeinfo_init(&proc->result);
@@ -1235,21 +1238,21 @@ PLy_procedure_compile(PLyProcedure * proc, const char *src)
 	/*
 	 * insert the function code into the interpreter
 	 */
-	msrc = PLy_procedure_munge_source(proc->proname, src);
+	msrc = PLy_procedure_munge_source(proc->pyname, src);
 	crv = PyObject_CallMethod(proc->interp, "r_exec", "s", msrc);
 	free(msrc);
 
 	if ((crv != NULL) && (!PyErr_Occurred()))
 	{
 		int			clen;
-		char		call[256];
+		char		call[NAMEDATALEN+256];
 
 		Py_DECREF(crv);
 
 		/*
 		 * compile a call to the function
 		 */
-		clen = snprintf(call, sizeof(call), "%s()", proc->proname);
+		clen = snprintf(call, sizeof(call), "%s()", proc->pyname);
 		if ((clen < 0) || (clen >= sizeof(call)))
 			elog(ERROR, "plpython: string would overflow buffer.");
 		proc->code = Py_CompileString(call, "<string>", Py_eval_input);
@@ -1321,6 +1324,8 @@ PLy_procedure_delete(PLyProcedure * proc)
 	Py_XDECREF(proc->me);
 	if (proc->proname)
 		PLy_free(proc->proname);
+	if (proc->pyname)
+		PLy_free(proc->pyname);
 	for (i = 0; i < proc->nargs; i++)
 		if (proc->args[i].is_rel == 1)
 		{
@@ -2748,9 +2753,12 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
 }
 
 
-/* Get the last procedure name called by the backend ( the innermost,
+/*
+ * Get the last procedure name called by the backend ( the innermost,
  * If a plpython procedure call calls the backend and the backend calls
  * another plpython procedure )
+ *
+ * NB: this returns SQL name, not the internal Python procedure name
  */
 
 char *
