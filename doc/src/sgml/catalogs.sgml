@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.25 2001/09/13 15:55:22 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.26 2001/10/15 22:47:47 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -63,7 +63,7 @@
 
      <row>
       <entry>pg_attribute</entry>
-      <entry>table columns (attributes, fields)</entry>
+      <entry>table columns (<quote>attributes</quote>, <quote>fields</quote>)</entry>
      </row>
 
      <row>
@@ -73,7 +73,7 @@
 
      <row>
       <entry>pg_database</entry>
-      <entry>databases</entry>
+      <entry>databases within this database cluster</entry>
      </row>
 
      <row>
@@ -83,7 +83,7 @@
 
      <row>
       <entry>pg_group</entry>
-      <entry>user groups</entry>
+      <entry>groups of database users</entry>
      </row>
 
      <row>
@@ -162,8 +162,7 @@
   <para>
    More detailed documentation of most catalogs follow below.  The
    catalogs that relate to index access methods are explained in the
-   <citetitle>Programmer's Guide</citetitle>.  Some catalogs don't
-   have any documentation, yet.
+   <citetitle>Programmer's Guide</citetitle>.
   </para>
 
  </section>
@@ -210,13 +209,13 @@
      <row>
       <entry>aggtransfn</entry>
       <entry><type>regproc</type> (function)</entry>
-      <entry></entry>
+      <entry>pg_proc.oid</entry>
       <entry>Transition function</entry>
      </row>
      <row>
       <entry>aggfinalfn</entry>
       <entry><type>regproc</type> (function)</entry>
-      <entry></entry>
+      <entry>pg_proc.oid</entry>
       <entry>Final function</entry>
      </row>
      <row>
@@ -431,7 +430,7 @@
       <entry></entry>
       <entry>
        Always -1 in storage, but when loaded into a tuple descriptor
-       in memory this may be updated cache the offset of the attribute
+       in memory this may be updated to cache the offset of the attribute
        within the tuple.
       </entry>
      </row>
@@ -653,7 +652,8 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>True if this table is shared across all databases in the
-      cluster.</entry>
+      cluster.  Only certain system catalogs (such as
+      <structname>pg_database</structname>) are shared.</entry>
      </row>
 
      <row>
@@ -741,7 +741,9 @@
       <entry>relhasrules</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>Table has rules</entry>
+      <entry>Table has rules; see
+       <structname>pg_rewrite</structname> catalog
+      </entry>
      </row>
 
      <row>
@@ -772,12 +774,17 @@
 
   <para>
    The <structname>pg_database</structname> catalog stores information
-   about the available databases.  The
-   <structname>pg_database</structname> table is shared between all
-   databases of a cluster.  Databases are created with the
-   <command>CREATE DATABASE</command>.  Consult the
+   about the available databases.  Databases are created with the
+   <command>CREATE DATABASE</command> command.  Consult the
    <citetitle>Administrator's Guide</citetitle> for details about the
    meaning of some of the parameters.
+  </para>
+
+  <para>
+   Unlike most system catalogs, <structname>pg_database</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_database</structname> per cluster, not
+   one per database.
   </para>
 
   <table>
@@ -959,6 +966,14 @@
    Guide</citetitle> for information about user permission management.
   </para>
 
+  <para>
+   Because user and group identities are cluster-wide,
+   <structname>pg_group</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_group</structname> per cluster, not
+   one per database.
+  </para>
+
   <table>
    <title>pg_group Columns</title>
 
@@ -1039,7 +1054,7 @@
 
      <row>
       <entry>indproc</entry>
-      <entry><type>oid</type></entry>
+      <entry><type>regproc</type></entry>
       <entry>pg_proc.oid</entry>
       <entry>The registered procedure if this is a functional index</entry>
      </row>
@@ -1086,7 +1101,8 @@
       <entry>indisprimary</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>If true, this index is a unique index that represents the primary key of the table.</entry>
+      <entry>If true, this index represents the primary key of the table.
+      (indisunique should always be true when this is true.)</entry>
      </row>
 
      <row>
@@ -1147,7 +1163,7 @@
       <entry><type>oid</type></entry>
       <entry>pg_class.oid</entry>
       <entry>
-       This is the reference to the parent table, from which the table
+       This is the reference to the parent table, which the table
        referenced by <structfield>inhrelid</structfield> inherited
        from.
       </entry>
@@ -1158,7 +1174,7 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       If there is more than one subtable/parent pair (multiple
+       If there is more than one parent for a subtable (multiple
        inheritance), this number tells the order in which the
        inherited columns are to be arranged.  The count starts at 1.
       </entry>
@@ -1242,6 +1258,132 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>not currently used</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-largeobject">
+  <title>pg_largeobject</title>
+
+  <para>
+   <structname>pg_largeobject</structname> holds the data making up
+   <quote>large objects</quote>.  A large object is identified by an
+   OID assigned when it is created.  Each large object is broken into
+   segments or <quote>pages</> small enough to be conveniently stored as rows
+   in <structname>pg_largeobject</structname>.
+   The amount of data per page is defined to be LOBLKSIZE (which is currently
+   BLCKSZ/4, or typically 2Kbytes).
+  </para>
+
+  <table>
+   <title>pg_largeobject Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>loid</entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>Identifier of the large object that includes this page</entry>
+     </row>
+
+     <row>
+      <entry>pageno</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>Page number of this page within its large object
+      (counting from zero)</entry>
+     </row>
+
+     <row>
+      <entry>data</entry>
+      <entry><type>bytea</type></entry>
+      <entry></entry>
+      <entry>
+       Actual data stored in the large object.
+       This will never be more than LOBLKSIZE bytes, and may be less.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Each row of <structname>pg_largeobject</structname> holds data
+   for one page of a large object, beginning at
+   byte offset (pageno * LOBLKSIZE) within the object.  The implementation
+   allows sparse storage: pages may be missing, and may be shorter than
+   LOBLKSIZE bytes even if they are not the last page of the object.
+   Missing regions within a large object read as zeroes.
+  </para>
+
+ </section>
+
+
+ <section id="catalog-pg-listener">
+  <title>pg_listener</title>
+
+  <para>
+   <structname>pg_listener</structname> supports the <command>LISTEN</>
+   and <command>NOTIFY</> commands.  A listener creates an entry in
+   <structname>pg_listener</structname> for each notification name
+   it is listening for.  A notifier scans <structname>pg_listener</structname>
+   and updates each matching entry to show that a notification has occurred.
+   The notifier also sends a signal (using the PID recorded in the table)
+   to awaken the listener from sleep.
+  </para>
+
+  <table>
+   <title>pg_listener Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>relname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Notify condition name.  (The name need not match any actual
+      relation in the database; the term <quote>relname</> is historical.)
+      </entry>
+     </row>
+
+     <row>
+      <entry>listenerpid</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>PID of the backend process that created this entry.</entry>
+     </row>
+
+     <row>
+      <entry>notification</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       Zero if no event is pending for this listener.  If an event is
+       pending, the PID of the backend that sent the notification.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -1489,7 +1631,8 @@
       <entry>proretset</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>Function returns a set (probably not functional)</entry>
+      <entry>Function returns a set (ie, multiple values of the specified
+      datatype)</entry>
      </row>
 
      <row>
@@ -1542,7 +1685,7 @@
        This tells the function handler how to invoke the function.  It
        might be the actual source code of the function for interpreted
        languages, a link symbol, a file name, or just about anything
-       else, depending the implementation language/call convention.
+       else, depending on the implementation language/call convention.
       </entry>
      </row>
 
@@ -1550,11 +1693,25 @@
       <entry>probin</entry>
       <entry><type>bytea</type></entry>
       <entry></entry>
-      <entry>?</entry>
+      <entry>Additional information about how to invoke the function.
+      Again, the interpretation is language-specific.
+      </entry>
      </row>
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+  Currently, prosrc contains the function's C-language name (link symbol)
+  for compiled functions, both built-in and dynamically loaded.  For all
+  other language types, prosrc contains the function's source text.
+  </para>
+
+  <para>
+  Currently, probin is unused except for dynamically-loaded C functions,
+  for which it gives the name of the shared library file containing the
+  function.
+  </para>
 
  </section>
 
@@ -1608,7 +1765,7 @@
       <entry>rcsrc</entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>A human-readable representation of the consraint expression</entry>
+      <entry>A human-readable representation of the constraint expression</entry>
      </row>
     </tbody>
    </tgroup>
@@ -1624,6 +1781,93 @@
  </section>
 
 
+ <section id="catalog-pg-rewrite">
+  <title>pg_rewrite</title>
+
+  <para>
+   This system catalog stores rewrite rules for tables and views.
+  </para>
+
+  <table>
+   <title>pg_rewrite Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>rulename</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Rule name</entry>
+     </row>
+
+     <row>
+      <entry>ev_type</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Event type that the rule is for: '1' = SELECT,
+      '2' = UPDATE, '3' = INSERT, '4' = DELETE</entry>
+     </row>
+
+     <row>
+      <entry>ev_class</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The table this rule is for</entry>
+     </row>
+
+     <row>
+      <entry>ev_attr</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>The column this rule is for (currently, always zero to
+      indicate the whole table)</entry>
+     </row>
+
+     <row>
+      <entry>is_instead</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if the rule is an INSTEAD rule</entry>
+     </row>
+
+     <row>
+      <entry>ev_qual</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Expression tree (in the form of a nodeToString representation)
+      for the rule's qualifying condition</entry>
+     </row>
+
+     <row>
+      <entry>ev_action</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Query tree (in the form of a nodeToString representation)
+      for the rule's action</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <note>
+   <para>
+    <structname>pg_class</structname>.<structfield>relhasrules</structfield>
+    must be true if a table has any rules in this catalog.
+   </para>
+  </note>
+
+ </section>
+
+
  <section id="catalog-pg-shadow">
   <title>pg_shadow</title>
 
@@ -1631,13 +1875,21 @@
    <structname>pg_shadow</structname> contains information about
    database users.  The name stems from the fact that this table
    should not be readable by the public since it contains passwords.
-   <structname>pg_user</structname> is a view on
+   <structname>pg_user</structname> is a publicly readable view on
    <structname>pg_shadow</structname> that blanks out the password field.
   </para>
 
   <para>
    The <citetitle>Administrator's Guide</citetitle> contains detailed
    information about user and permission management.
+  </para>
+
+  <para>
+   Because user identities are cluster-wide,
+   <structname>pg_shadow</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_shadow</structname> per cluster, not
+   one per database.
   </para>
 
   <table>
@@ -1743,6 +1995,20 @@
    <filename>src/include/catalog/pg_statistic.h</filename>.
   </para>
 
+  <para>
+   <structname>pg_statistic</structname> should not be readable by the
+   public, since even statistical information about a table's contents
+   may be considered sensitive.  (Example: minimum and maximum values
+   of a salary column might be quite interesting.)
+   <structname>pg_stats</structname> is a publicly readable view on
+   <structname>pg_statistic</structname> that only exposes information
+   about those tables that are readable by the current user.
+   <structname>pg_stats</structname> is also designed to present the
+   information in a more readable format than the underlying
+   <structname>pg_statistic</structname> table --- at the cost that
+   its schema must be extended whenever new slot types are added.
+  </para>
+
   <table>
    <title>pg_statistic Columns</title>
 
@@ -1843,8 +2109,143 @@
  </section>
 
 
+ <section id="catalog-pg-trigger">
+  <title>pg_trigger</title>
+
+  <para>
+   This system catalog stores triggers on tables.  See under
+   <command>CREATE TRIGGER</command> for more information.
+  </para>
+
+  <table>
+   <title>pg_trigger Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>tgrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The table this trigger is on</entry>
+     </row>
+
+     <row>
+      <entry>tgname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Trigger name (need not be unique)</entry>
+     </row>
+
+     <row>
+      <entry>tgfoid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>The function to be called</entry>
+     </row>
+
+     <row>
+      <entry>tgtype</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>Bitmask identifying trigger conditions</entry>
+     </row>
+
+     <row>
+      <entry>tgenabled</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if trigger is enabled (not presently checked everywhere
+      it should be, so disabling a trigger by setting this false does not
+      work reliably)</entry>
+     </row>
+
+     <row>
+      <entry>tgisconstraint</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if trigger is a RI constraint</entry>
+     </row>
+
+     <row>
+      <entry>tgconstrname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>RI constraint name</entry>
+     </row>
+
+     <row>
+      <entry>tgconstrrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The table referenced by an RI constraint</entry>
+     </row>
+
+     <row>
+      <entry>tgdeferrable</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if deferrable</entry>
+     </row>
+
+     <row>
+      <entry>tginitdeferred</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if initially deferred</entry>
+     </row>
+
+     <row>
+      <entry>tgnargs</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>Number of argument strings passed to trigger function</entry>
+     </row>
+
+     <row>
+      <entry>tgattr</entry>
+      <entry><type>int2vector</type></entry>
+      <entry></entry>
+      <entry>Currently unused</entry>
+     </row>
+
+     <row>
+      <entry>tgargs</entry>
+      <entry><type>bytea</type></entry>
+      <entry></entry>
+      <entry>Argument strings to pass to trigger, each null-terminated</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <note>
+   <para>
+    <structname>pg_class</structname>.<structfield>reltriggers</structfield>
+    needs to match up with the entries in this table.
+   </para>
+  </note>
+
+ </section>
+
+
  <section id="catalog-pg-type">
   <title>pg_type</title>
+
+  <para>
+   This catalog stores information about datatypes.  Scalar types
+   (<quote>base types</>) are created with <command>CREATE TYPE</command>.
+   A complex type is also created for each table in the database, to
+   represent the row structure of the table.
+  </para>
 
   <table>
    <title>pg_type Columns</title>
@@ -1913,8 +2314,8 @@
       <entry></entry>
       <entry>
        <structfield>typtype</structfield> is <literal>b</literal> for
-       a basic type and <literal>c</literal> for a catalog type (i.e.,
-       a table).  If <structfield>typtype</structfield> is
+       a base type and <literal>c</literal> for a complex type (i.e.,
+       a table's row type).  If <structfield>typtype</structfield> is
        <literal>c</literal>, <structfield>typrelid</structfield> is
        the OID of the type's entry in
        <structname>pg_class</structname>.
@@ -1925,7 +2326,10 @@
       <entry>typisdefined</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>???</entry>
+      <entry>True if the type is defined, false if this is a placeholder
+      entry for a not-yet-defined type.  When typisdefined is false,
+      nothing except the type name and OID can be relied on.
+      </entry>
      </row>
 
      <row>
@@ -1940,7 +2344,7 @@
       <entry><type>oid</type></entry>
       <entry>pg_class.oid</entry>
       <entry>
-       If this is a catalog type (see
+       If this is a complex type (see
        <structfield>typtype</structfield>), then this field points to
        the <structfield>pg_class</structfield> entry that defines the
        corresponding table. A table could theoretically be used as a
