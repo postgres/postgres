@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.7 1997/10/09 05:06:12 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.8 1997/10/17 05:38:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,16 +24,50 @@
 /*
  *		boolin			- converts "t" or "f" to 1 or 0
  *
- * Check explicitly for "true/TRUE" and allow any odd ASCII value to be "true".
- * This handles "true/false", "yes/no", "1/0". - thomas 1997-10-05
+ * Check explicitly for "true/false" and TRUE/FALSE, 1/0, YES/NO.
+ * Reject other values. - thomas 1997-10-05
+ * For now, allow old behavior of everything FALSE if not TRUE.
+ * After v6.2.1 release, then enable code to reject goofy values.
+ * Also, start checking the entire string rather than just the first character.
+ * - thomas 1997-10-16
+ *
+ * In the switch statement, check the most-used possibilities first.
  */
 bool
 boolin(char *b)
 {
-	if (b == NULL)
-		elog(WARN, "Bad input string for type bool");
-	return ((bool) (((*b) == 't') || ((*b) == 'T') || ((*b) & 1)));
-}
+	switch(*b) {
+		case 't':
+		case 'T':
+			return (TRUE);
+			break;
+
+		case 'f':
+		case 'F':
+			return (FALSE);
+			break;
+
+		case 'y':
+		case 'Y':
+		case '1':
+			return (TRUE);
+			break;
+
+		case 'n':
+		case 'N':
+		case '0':
+			return (FALSE);
+			break;
+
+		default:
+#if FALSE
+			elog(WARN,"Invalid input string '%s'\n", b);
+#endif
+			break;
+	}
+
+	return (FALSE);
+} /* boolin() */
 
 /*
  *		boolout			- converts 1 or 0 to "t" or "f"
@@ -46,7 +80,7 @@ boolout(bool b)
 	*result = (b) ? 't' : 'f';
 	result[1] = '\0';
 	return (result);
-}
+} /* boolout() */
 
 /*****************************************************************************
  *	 PUBLIC ROUTINES														 *
