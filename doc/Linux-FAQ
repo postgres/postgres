@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for Postgres95
 Linux Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 ====================================================
-last updated:           Fri Oct 25 18:40:00 BST 1996
+last updated:           Mon Oct 28 10:25:00 BST 1996
 
 current maintainer:     Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 original author:        Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
@@ -13,6 +13,9 @@ Changes in this version (* = modified, + = new, - = removed):
 -0.*)   Bugs in Postgres95 V1.08
 *1.3)   [REDHAT] Why do I get problems with missing libdl and dlfcn.h?
 *1.4)   [SLACKWARE 3.1] Why do I get problems with missing libdl and dlfcn.h?
+*1.5)   My compile of the backend dies complaining about the include file 
+        dlfcn.h missing
+*1.9)   Why do I get problems with ld.so?
 *1.13)  What are the references in X11_LIB to libsocket and libnsl in
         src/Makefile.global?
 
@@ -123,14 +126,14 @@ Section 1:      Compiling Postgres95
 
                 ftp://ftp.redhat.com/pub/redhat/devel/i386/RedHat/RPMS/ld.so-1.7.14-4.i386.rpm
 
+        Install the RPM file in the usual way and off you go!
+
         There has been one report of a corrupted system resulting from
         programs accessing these libraries while updating them (not
         altogether surprising). Consequently it is a good idea to reboot 
         the system before installing the new libraries and to
         have as little running as possible during this upgrade. Going
         into single-user mode is probably a good idea!
-
-        Install the RPM file in the usual way and off you go!
 
         If you want to do it the hard way, you can obtain the library and the 
         header file from:
@@ -194,7 +197,7 @@ Section 1:      Compiling Postgres95
 1.5)    My compile of the backend dies complaining about the include file 
         dlfcn.h missing
 
-        See the answer to question 1.2. Don't forget that if you are using
+        See the answer to question 1.3/1.4. Don't forget that if you are using
         an a.out system you must first have installed the dld package
         (which is not supplied with most a.out systems) to have dlfcn.h
         at all. See Question 1.11.
@@ -247,7 +250,7 @@ Section 1:      Compiling Postgres95
         ELF for dynamic loading, then you have messed up your installation
         or (more likely) upgrade of Linux.
 
-        See the answers to Question 1.2. You may need to install
+        See the answers to Question 1.3/1.4. You may need to install
         ld.so.x.y.z in /lib and run ldconfig.
 
         The most recent stable release of the ld package is 1.7.14
@@ -397,4 +400,11 @@ Section 4:      Spurious Problems in Need of Verification
 
         I haven't been able to repeat this problem! Nobody else has
         reported anything similar.
+
+
+****************************************************************************
+Dr. Andrew C.R. Martin,         University College London & SciTech Software
+EMAIL: martin@biochem.ucl.ac.uk                Tel:(Work) +44(0)171 419 3890
+URL: http://www.biochem.ucl.ac.uk/~martin          (Home) +44(0)1372 275775
+****************************************************************************
 
