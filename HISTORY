@@ -82,8 +82,12 @@
        DateStyle
      * The oidrand(), oidsrand(), and userfntest() functions have been
        removed.
-     * 'now' will no longer work as a column default; now() should be
-       used instead
+     * 'now' will no longer work as a column default; now() or
+       CURRENT_TIMESTAMP should be used instead
+     * 'today' will no longer work as a column default; CURRENT_DATE
+       should be used instead
+     * Dollar sign ($) is no longer allowed in operator names
+     * Dollar sign ($) can be a non-first character in identifiers
      _________________________________________________________________
    
                                   Changes

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.214 2003/10/21 01:25:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.215 2003/10/22 05:09:12 momjian Exp $
 -->
 
 <appendix id="release">
@@ -130,8 +130,10 @@ required for those wishing to migrate data from any previous release.</para>
      <listitem><para> Ambiguous date values now must match the ordering specified by DateStyle</para></listitem>
      <listitem><para> The <function>oidrand()</function>, <function>oidsrand()</function>,
 	and <function>userfntest()</function> functions have been removed.</para></listitem>
-     <listitem><para> <literal>'now'</literal> will no longer work as a column default; <function>now()</> should be
-        used instead</para></listitem>
+     <listitem><para> <literal>'now'</literal> will no longer work as a column default; <function>now()</> or
+        <function>CURRENT_TIMESTAMP</> should be used instead</para></listitem>
+     <listitem><para> <literal>'today'</literal> will no longer work as a column default; <function>CURRENT_DATE</> 
+        should be used instead</para></listitem>
      <listitem><para> Dollar sign (<literal>$</>) is no longer allowed in operator names</para></listitem>
      <listitem><para> Dollar sign (<literal>$</>) can be a non-first character in identifiers</para></listitem>
 </itemizedlist></para></sect2>
