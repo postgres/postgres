@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.1 2000/01/15 12:38:09 ishii Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.2 2000/04/08 18:32:24 tgl Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -527,7 +527,7 @@ int main(int argc, char **argv) {
 	exit(1);
       }
 #ifndef __CYGWIN32__
-#ifdef HAVE_RLIMIT_NOFILE	/* most platform uses RLIMIT_NOFILE */
+#ifdef RLIMIT_NOFILE		/* most platform uses RLIMIT_NOFILE */
       if (getrlimit(RLIMIT_NOFILE,&rlim) == -1) {
 #else	/* but BSD doesn't ... */
       if (getrlimit(RLIMIT_OFILE,&rlim) == -1) {
