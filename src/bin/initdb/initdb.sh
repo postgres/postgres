@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.74 1999/12/18 03:31:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.75 1999/12/18 04:04:24 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -111,6 +111,7 @@ template_only=0
 #       fail, and in that case the argument _must_ be the name of the effective
 #       user.
 POSTGRES_SUPERUSERNAME="$EffectiveUser"
+POSTGRES_SUPERUSERID="`id -u 2>/dev/null || echo 0`"
 
 Password='_null_'
 
