@@ -288,7 +288,7 @@ SPI_fnumber(TupleDesc tupdesc, char *fname)
 
 	for (res = 0; res < tupdesc->natts; res++)
 	{
-		if (strcmp(tupdesc->attrs[res]->attname.data, fname) == 0)
+		if (strcasecmp(tupdesc->attrs[res]->attname.data, fname) == 0)
 			return (res + 1);
 	}
 
