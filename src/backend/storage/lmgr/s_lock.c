@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.26 2004/03/15 16:18:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.27 2004/03/23 21:39:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ void
 s_lock(volatile slock_t *lock, const char *file, int line)
 {
 	/*
-	 * We loop tightly for awhile, then delay using select() and try
+	 * We loop tightly for awhile, then delay using pg_usleep() and try
 	 * again. Preferably, "awhile" should be a small multiple of the
 	 * maximum time we expect a spinlock to be held.  100 iterations seems
 	 * about right.  In most multi-CPU scenarios, the spinlock is probably
@@ -53,7 +53,7 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 	 * finish 100 iterations.  However, on a uniprocessor, the tight loop
 	 * is just a waste of cycles, so don't iterate thousands of times.
 	 *
-	 * Once we do decide to block, we use randomly increasing select()
+	 * Once we do decide to block, we use randomly increasing pg_usleep()
 	 * delays. The first delay is 10 msec, then the delay randomly
 	 * increases to about one second, after which we reset to 10 msec and
 	 * start again.  The idea here is that in the presence of heavy
