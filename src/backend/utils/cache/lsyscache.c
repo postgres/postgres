@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.78 2002/08/05 02:30:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.79 2002/08/22 00:01:44 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1164,6 +1164,34 @@ get_typtype(Oid typid)
 	}
 	else
 		return '\0';
+}
+
+/*
+ * getTypeOutputInfo
+ *
+ *		Get info needed for printing values of a type
+ *
+ * Returns true if data valid (a false result probably means it's a shell type)
+ */
+bool
+getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
+				  bool *typIsVarlena)
+{
+	HeapTuple	typeTuple;
+	Form_pg_type pt;
+
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(type),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(typeTuple))
+		elog(ERROR, "getTypeOutputInfo: Cache lookup of type %u failed", type);
+	pt = (Form_pg_type) GETSTRUCT(typeTuple);
+
+	*typOutput = pt->typoutput;
+	*typElem = pt->typelem;
+	*typIsVarlena = (!pt->typbyval) && (pt->typlen == -1);
+	ReleaseSysCache(typeTuple);
+	return OidIsValid(*typOutput);
 }
 
 

@@ -1,33 +1,44 @@
 --
 -- CREATE_FUNCTION_1
 --
-CREATE FUNCTION widget_in(opaque)
+CREATE FUNCTION widget_in(cstring)
    RETURNS widget
    AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE 'c';
 WARNING:  ProcedureCreate: type widget is not yet defined
-CREATE FUNCTION widget_out(opaque)
-   RETURNS opaque
+CREATE FUNCTION widget_out(widget)
+   RETURNS cstring
    AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE 'c';
+WARNING:  Argument type "widget" is only a shell
+CREATE FUNCTION int44in(cstring)
+   RETURNS city_budget
+   AS '@abs_builddir@/regress@DLSUFFIX@'
+   LANGUAGE 'c';
+WARNING:  ProcedureCreate: type city_budget is not yet defined
+CREATE FUNCTION int44out(city_budget)
+   RETURNS cstring
+   AS '@abs_builddir@/regress@DLSUFFIX@'
+   LANGUAGE 'c';
+WARNING:  Argument type "city_budget" is only a shell
 CREATE FUNCTION check_primary_key ()
-	RETURNS opaque
+	RETURNS trigger
 	AS '@abs_builddir@/../../../contrib/spi/refint@DLSUFFIX@'
 	LANGUAGE 'C';
 CREATE FUNCTION check_foreign_key ()
-	RETURNS opaque
+	RETURNS trigger
 	AS '@abs_builddir@/../../../contrib/spi/refint@DLSUFFIX@'
 	LANGUAGE 'C';
 CREATE FUNCTION autoinc ()
-	RETURNS opaque
+	RETURNS trigger
 	AS '@abs_builddir@/../../../contrib/spi/autoinc@DLSUFFIX@'
 	LANGUAGE 'C';
 CREATE FUNCTION funny_dup17 ()
-        RETURNS opaque
+        RETURNS trigger
         AS '@abs_builddir@/regress@DLSUFFIX@'
         LANGUAGE 'C';
 CREATE FUNCTION ttdummy ()
-        RETURNS opaque
+        RETURNS trigger
         AS '@abs_builddir@/regress@DLSUFFIX@'
         LANGUAGE 'C';
 CREATE FUNCTION set_ttdummy (int4)

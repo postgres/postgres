@@ -1,21 +1,21 @@
 --
 --	PostgreSQL code for LargeObjects
 --
---	$Id: lo.sql.in,v 1.6 2000/11/21 21:51:58 tgl Exp $
+--	$Id: lo.sql.in,v 1.7 2002/08/22 00:01:39 tgl Exp $
 --
 --
 --	Create the data type
 --
 
 -- used by the lo type, it takes an oid and returns an lo object
-create function lo_in(opaque)
-	returns opaque
+create function lo_in(cstring)
+	returns lo
 	as 'MODULE_PATHNAME'
 	language 'c';
 
 -- used by the lo type, it returns the oid of the object
-create function lo_out(opaque)
-	returns opaque
+create function lo_out(lo)
+	returns cstring
 	as 'MODULE_PATHNAME'
 	language 'c';
 
@@ -51,6 +51,6 @@ create function lo(oid)
 
 -- This is used in triggers
 create function lo_manage()
-	returns opaque
+	returns trigger
 	as 'MODULE_PATHNAME'
 	language 'c';

@@ -11,19 +11,19 @@ SET search_path = public;
 --
 --
 -- define the GiST support methods
-create function gbox_consistent(opaque,box,int4) returns bool as 'MODULE_PATHNAME' language 'C';
+create function gbox_consistent(internal,box,int4) returns bool as 'MODULE_PATHNAME' language 'C';
 
-create function gbox_compress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gbox_compress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
-create function rtree_decompress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function rtree_decompress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
-create function gbox_penalty(opaque,opaque,opaque) returns opaque as 'MODULE_PATHNAME' language 'C' with (isstrict);
+create function gbox_penalty(internal,internal,internal) returns internal as 'MODULE_PATHNAME' language 'C' with (isstrict);
 
-create function gbox_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gbox_picksplit(internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
-create function gbox_union(bytea, opaque) returns box as 'MODULE_PATHNAME' language 'C';
+create function gbox_union(bytea, internal) returns box as 'MODULE_PATHNAME' language 'C';
 
-create function gbox_same(box, box, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gbox_same(box, box, internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
 -- create the operator class
 CREATE OPERATOR CLASS gist_box_ops
@@ -36,13 +36,13 @@ CREATE OPERATOR CLASS gist_box_ops
 	OPERATOR	6	~= ,
 	OPERATOR	7	~ ,
 	OPERATOR	8	@ ,
-	FUNCTION	1	gbox_consistent (opaque, box, int4),
-	FUNCTION	2	gbox_union (bytea, opaque),
-	FUNCTION	3	gbox_compress (opaque),
-	FUNCTION	4	rtree_decompress (opaque),
-	FUNCTION	5	gbox_penalty (opaque, opaque, opaque),
-	FUNCTION	6	gbox_picksplit (opaque, opaque),
-	FUNCTION	7	gbox_same (box, box, opaque);
+	FUNCTION	1	gbox_consistent (internal, box, int4),
+	FUNCTION	2	gbox_union (bytea, internal),
+	FUNCTION	3	gbox_compress (internal),
+	FUNCTION	4	rtree_decompress (internal),
+	FUNCTION	5	gbox_penalty (internal, internal, internal),
+	FUNCTION	6	gbox_picksplit (internal, internal),
+	FUNCTION	7	gbox_same (box, box, internal);
 
 
 --
@@ -53,9 +53,9 @@ CREATE OPERATOR CLASS gist_box_ops
 --
 --
 -- define the GiST support methods
-create function gpoly_consistent(opaque,polygon,int4) returns bool as 'MODULE_PATHNAME' language 'C';
+create function gpoly_consistent(internal,polygon,int4) returns bool as 'MODULE_PATHNAME' language 'C';
 
-create function gpoly_compress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gpoly_compress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
 -- create the operator class
 CREATE OPERATOR CLASS gist_poly_ops
@@ -68,13 +68,13 @@ CREATE OPERATOR CLASS gist_poly_ops
 	OPERATOR	6	~=	RECHECK ,
 	OPERATOR	7	~	RECHECK ,
 	OPERATOR	8	@	RECHECK ,
-	FUNCTION	1	gpoly_consistent (opaque, polygon, int4),
-	FUNCTION	2	gbox_union (bytea, opaque),
-	FUNCTION	3	gpoly_compress (opaque),
-	FUNCTION	4	rtree_decompress (opaque),
-	FUNCTION	5	gbox_penalty (opaque, opaque, opaque),
-	FUNCTION	6	gbox_picksplit (opaque, opaque),
-	FUNCTION	7	gbox_same (box, box, opaque),
+	FUNCTION	1	gpoly_consistent (internal, polygon, int4),
+	FUNCTION	2	gbox_union (bytea, internal),
+	FUNCTION	3	gpoly_compress (internal),
+	FUNCTION	4	rtree_decompress (internal),
+	FUNCTION	5	gbox_penalty (internal, internal, internal),
+	FUNCTION	6	gbox_picksplit (internal, internal),
+	FUNCTION	7	gbox_same (box, box, internal),
 	STORAGE		box;
 
 

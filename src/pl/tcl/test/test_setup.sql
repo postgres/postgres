@@ -58,7 +58,7 @@ create function check_pkey1_exists(int4, bpchar) returns bool as '
 --
 -- Trigger function on every change to T_pkey1
 --
-create function trig_pkey1_before() returns opaque as '
+create function trig_pkey1_before() returns trigger as '
     #
     # Create prepared plans on the first call
     #
@@ -152,7 +152,7 @@ create trigger pkey1_before before insert or update or delete on T_pkey1
 -- Trigger function to check for duplicate keys in T_pkey2
 -- and to force key2 to be upper case only without leading whitespaces
 --
-create function trig_pkey2_before() returns opaque as '
+create function trig_pkey2_before() returns trigger as '
     #
     # Prepare plan on first call
     #
@@ -195,7 +195,7 @@ create trigger pkey2_before before insert or update on T_pkey2
 -- in T_pkey2 are done so the trigger for primkey check on T_dta2
 -- fired on our updates will see the new key values in T_pkey2.
 --
-create function trig_pkey2_after() returns opaque as '
+create function trig_pkey2_after() returns trigger as '
     #
     # Prepare plans on first call
     #
@@ -282,7 +282,7 @@ create trigger pkey2_after after update or delete on T_pkey2
 --
 -- Generic trigger function to check references in T_dta1 and T_dta2
 --
-create function check_primkey() returns opaque as '
+create function check_primkey() returns trigger as '
     #
     # For every trigger/relation pair we create
     # a saved plan and hold them in GD

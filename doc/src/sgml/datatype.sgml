@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.99 2002/08/19 19:33:33 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.100 2002/08/22 00:01:40 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -3095,6 +3095,146 @@ SELECT SUBSTRING(b FROM 1 FOR 2) FROM test;
     <structfield>ctid</>.  A tuple ID is a pair
     (block number, tuple index within block) that identifies the
     physical location of the tuple within its table.
+   </para>
+
+  </sect1>
+
+  <sect1 id="datatype-pseudo">
+   <title>Pseudo-Types</title>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>record</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>any</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>anyarray</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>void</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>trigger</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>language_handler</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>cstring</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>internal</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>opaque</primary>
+   </indexterm>
+
+   <para>
+    The <productname>PostgreSQL</productname> type system contains a number
+    of special-purpose entries that are collectively called
+    <firstterm>pseudo-types</>.  A pseudo-type cannot be used as a column
+    datatype, but it can be used to declare a function's argument or result
+    type.  Each of the available pseudo-types is useful in situations where
+    a function's behavior does not correspond to simply taking or returning
+    a value of a specific SQL datatype.
+   </para>
+
+   <para>
+    <table tocentry="1">
+     <title>Pseudo-Types</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+	<entry>Type name</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+
+       <row>
+	<entry><type>record</></entry>
+	<entry>Identifies a function returning an unspecified tuple type</entry>
+       </row>
+
+       <row>
+	<entry><type>any</></entry>
+	<entry>Indicates that a function accepts any input datatype whatever</entry>
+       </row>
+
+       <row>
+	<entry><type>anyarray</></entry>
+	<entry>Indicates that a function accepts any array datatype</entry>
+       </row>
+
+       <row>
+	<entry><type>void</></entry>
+	<entry>Indicates that a function returns no value</entry>
+       </row>
+
+       <row>
+	<entry><type>trigger</></entry>
+	<entry>A trigger function is declared to return <type>trigger</></entry>
+       </row>
+
+       <row>
+	<entry><type>language_handler</></entry>
+	<entry>A procedural language call handler is declared to return <type>language_handler</></entry>
+       </row>
+
+       <row>
+	<entry><type>cstring</></entry>
+	<entry>Indicates a function takes or returns a null-terminated C string</entry>
+       </row>
+
+       <row>
+	<entry><type>internal</></entry>
+	<entry>Indicates that a function accepts or returns a server-internal
+	data type</entry>
+       </row>
+
+       <row>
+	<entry><type>opaque</></entry>
+	<entry>An obsolete type name that formerly served all the above purposes</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    Functions coded in C (whether built-in or dynamically loaded) may be
+    declared to take or return any of these pseudo datatypes.  It is up to
+    the function author to ensure that the function will behave safely
+    when a pseudo-type is used as an argument type.
+   </para>
+
+   <para>
+    Functions coded in procedural languages may use pseudo-types only as
+    allowed by their implementation languages.  At present the procedural
+    languages all forbid use of a pseudo-type as argument type, and allow
+    only <type>void</> as a result type (plus <type>trigger</> when the
+    function is used as a trigger).
+   </para>
+
+   <para>
+    The <type>internal</> pseudo-type is used to declare functions that are
+    meant only to be called internally by the database system, and not by
+    direct invocation in a SQL query.  If a function has at least one
+    <type>internal</>-type argument then it cannot be called from SQL.
+    To preserve the type safety of this restriction it is important to
+    follow this coding rule: do not create any function that is declared
+    to return <type>internal</> unless it has at least one <type>internal</>
+    argument.
    </para>
 
   </sect1>

@@ -18,13 +18,12 @@
 
 SELECT p1.oid, p1.typname
 FROM pg_type as p1
-WHERE (p1.typlen <= 0 AND p1.typlen != -1) OR
-    p1.typtype not in('b', 'c', 'd', 'p') OR
+WHERE p1.typnamespace = 0 OR
+    (p1.typlen <= 0 AND p1.typlen != -1) OR
+    (p1.typtype not in ('b', 'c', 'd', 'p')) OR
     NOT p1.typisdefined OR
-    (p1.typalign != 'c' AND p1.typalign != 's' AND
-     p1.typalign != 'i' AND p1.typalign != 'd') OR
-    (p1.typstorage != 'p' AND p1.typstorage != 'x' AND
-     p1.typstorage != 'e' AND p1.typstorage != 'm');
+    (p1.typalign not in ('c', 's', 'i', 'd')) OR
+    (p1.typstorage not in ('p', 'x', 'e', 'm'));
 
 -- Look for "pass by value" types that can't be passed by value.
 
@@ -76,26 +75,45 @@ WHERE p1.typtype != 'c' AND
     (p1.typinput = 0 OR p1.typoutput = 0);
 
 -- Check for bogus typinput routines
--- FIXME: ought to check prorettype, but there are special cases that make it
--- hard: prorettype might be binary-compatible with the type but not the same,
--- and for array types array_in's result has nothing to do with anything.
 
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typinput = p2.oid AND p1.typtype = 'b' AND
-    (p2.pronargs != 1 OR p2.proretset) AND
-    (p2.pronargs != 3 OR p2.proretset OR p2.proargtypes[2] != 'int4'::regtype);
+WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    ((p2.pronargs = 1 AND p2.proargtypes[0] = 'cstring'::regtype) OR
+     (p2.pronargs = 3 AND p2.proargtypes[0] = 'cstring'::regtype AND
+      p2.proargtypes[1] = 'oid'::regtype AND
+      p2.proargtypes[2] = 'int4'::regtype));
+
+-- As of 7.3, this check finds SET and refcursor, which are borrowing
+-- other types' I/O routines
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    (p1.typelem != 0 AND p1.typlen < 0) AND NOT
+    (p2.prorettype = p1.oid AND NOT p2.proretset);
+
+-- Varlena array types will point to array_in
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND
+    (p1.typelem != 0 AND p1.typlen < 0) AND NOT
+    (p2.oid = 'array_in'::regproc);
 
 -- Check for bogus typoutput routines
--- The first OR subclause detects bogus non-array cases,
--- the second one detects bogus array cases.
--- FIXME: ought to check prorettype, but not clear what it should be.
+
+-- As of 7.3, this check finds SET and refcursor, which are borrowing
+-- other types' I/O routines
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typoutput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    ((p2.pronargs = 1 AND p2.proargtypes[0] = p1.oid) OR
+     (p2.oid = 'array_out'::regproc AND
+      p1.typelem != 0));
 
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typoutput = p2.oid AND p1.typtype = 'b' AND
-    (p2.pronargs != 1 OR p2.proretset) AND
-    (p2.pronargs != 2 OR p2.proretset OR p1.typelem = 0);
+WHERE p1.typoutput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    (p2.prorettype = 'cstring'::regtype AND NOT p2.proretset);
 
 -- **************** pg_class ****************
 

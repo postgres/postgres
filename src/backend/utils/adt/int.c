@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.51 2002/06/20 20:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.52 2002/08/22 00:01:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,59 +142,6 @@ int2vectoreq(PG_FUNCTION_ARGS)
 	int16	   *arg2 = (int16 *) PG_GETARG_POINTER(1);
 
 	PG_RETURN_BOOL(memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(int16)) == 0);
-}
-
-/*
- * Type int44 has no real-world use, but the regression tests use it.
- * It's a four-element vector of int4's.
- */
-
-/*
- *		int44in			- converts "num num ..." to internal form
- *
- *		Note: Fills any missing positions with zeroes.
- */
-Datum
-int44in(PG_FUNCTION_ARGS)
-{
-	char	   *input_string = PG_GETARG_CSTRING(0);
-	int32	   *result = (int32 *) palloc(4 * sizeof(int32));
-	int			i;
-
-	i = sscanf(input_string,
-			   "%d, %d, %d, %d",
-			   &result[0],
-			   &result[1],
-			   &result[2],
-			   &result[3]);
-	while (i < 4)
-		result[i++] = 0;
-
-	PG_RETURN_POINTER(result);
-}
-
-/*
- *		int44out		- converts internal form to "num num ..."
- */
-Datum
-int44out(PG_FUNCTION_ARGS)
-{
-	int32	   *an_array = (int32 *) PG_GETARG_POINTER(0);
-	char	   *result = (char *) palloc(16 * 4);		/* Allow 14 digits +
-														 * sign */
-	int			i;
-	char	   *walk;
-
-	walk = result;
-	for (i = 0; i < 4; i++)
-	{
-		pg_ltoa(an_array[i], walk);
-		while (*++walk != '\0')
-			;
-		*walk++ = ' ';
-	}
-	*--walk = '\0';
-	PG_RETURN_CSTRING(result);
 }
 
 

@@ -27,7 +27,7 @@
 #
 #  		create index fti_idx on my_fti_table (string,id);
 #
-#		create function fti() returns opaque as
+#		create function fti() returns trigger as
 #			'/path/to/fti/file/fti.so'
 #		language 'C';
 #

@@ -1,5 +1,5 @@
 
-CREATE FUNCTION "recordchange" () RETURNS opaque AS
+CREATE FUNCTION "recordchange" () RETURNS trigger AS
 '/usr/local/pgsql/lib/pending.so', 'recordchange' LANGUAGE 'C';
 
 CREATE TABLE "MirrorHost" (

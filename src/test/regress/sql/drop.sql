@@ -24,9 +24,9 @@ DROP FUNCTION equipment(hobbies_r);
 
 DROP FUNCTION user_relns();
 
-DROP FUNCTION widget_in(opaque);
+DROP FUNCTION widget_in(cstring);
 
-DROP FUNCTION widget_out(opaque);
+DROP FUNCTION widget_out(widget);
 
 DROP FUNCTION pt_in_widget(point,widget);
 

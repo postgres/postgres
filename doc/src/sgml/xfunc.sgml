@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.54 2002/07/30 16:20:03 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.55 2002/08/22 00:01:40 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -2071,12 +2071,9 @@ SELECT * FROM vw_getfoo;
     <quote>normal</quote> function, which must be written in a
     compiled language such as C and registered with
     <productname>PostgreSQL</productname> as taking no arguments and
-    returning the <type>opaque</type> type, a placeholder for
-    unspecified or undefined types.  This prevents the call handler
-    from being called directly as a function from queries.  (However,
-    arguments may be supplied in the actual call to the handler when a
-    function in the language offered by the handler is to be
-    executed.)
+    returning the <type>language_handler</type> type.
+    This special pseudo-type identifies the handler as a call handler
+    and prevents it from being called directly in queries.
    </para>
 
    <note>
@@ -2203,7 +2200,7 @@ plsample_call_handler(PG_FUNCTION_ARGS)
     The following commands then register the sample procedural
     language:
 <programlisting>
-CREATE FUNCTION plsample_call_handler () RETURNS opaque
+CREATE FUNCTION plsample_call_handler () RETURNS language_handler
     AS '/usr/local/pgsql/lib/plsample'
     LANGUAGE C;
 CREATE LANGUAGE plsample

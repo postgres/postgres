@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_johab/utf8_and_johab.c,v 1.1 2002/07/16 09:25:06 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_johab/utf8_and_johab.c,v 1.2 2002/08/22 00:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,10 +27,10 @@ extern Datum utf8_to_johab(PG_FUNCTION_ARGS);
  * conv_proc(
  *		INTEGER,	-- source encoding id
  *		INTEGER,	-- destination encoding id
- *		OPAQUE,		-- source string (null terminated C string)
- *		OPAQUE,		-- destination string (null terminated C string)
+ *		CSTRING,	-- source string (null terminated C string)
+ *		CSTRING,	-- destination string (null terminated C string)
  *		INTEGER		-- source string length
- * ) returns INTEGER;	-- dummy. returns nothing, actually.
+ * ) returns VOID;
  * ----------
  */
 Datum

@@ -5,13 +5,13 @@ BEGIN TRANSACTION;
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-CREATE FUNCTION seg_in(opaque)
-RETURNS opaque
+CREATE FUNCTION seg_in(cstring)
+RETURNS seg
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c';
 
-CREATE FUNCTION seg_out(opaque)
-RETURNS opaque
+CREATE FUNCTION seg_out(seg)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c';
 
@@ -216,25 +216,25 @@ CREATE OPERATOR ~ (
 
 
 -- define the GiST support methods
-CREATE FUNCTION gseg_consistent(opaque,seg,int4) RETURNS bool
+CREATE FUNCTION gseg_consistent(internal,seg,int4) RETURNS bool
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION gseg_compress(opaque) RETURNS opaque 
+CREATE FUNCTION gseg_compress(internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION gseg_decompress(opaque) RETURNS opaque 
+CREATE FUNCTION gseg_decompress(internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION gseg_penalty(opaque,opaque,opaque) RETURNS opaque
+CREATE FUNCTION gseg_penalty(internal,internal,internal) RETURNS internal
 	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION gseg_picksplit(opaque, opaque) RETURNS opaque
+CREATE FUNCTION gseg_picksplit(internal, internal) RETURNS internal
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION gseg_union(bytea, opaque) RETURNS seg 
+CREATE FUNCTION gseg_union(bytea, internal) RETURNS seg 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION gseg_same(seg, seg, opaque) RETURNS opaque 
+CREATE FUNCTION gseg_same(seg, seg, internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 
@@ -250,13 +250,13 @@ CREATE OPERATOR CLASS gist_seg_ops
 	OPERATOR	6	= ,
 	OPERATOR	7	@ ,
 	OPERATOR	8	~ ,
-	FUNCTION	1	gseg_consistent (opaque, seg, int4),
-	FUNCTION	2	gseg_union (bytea, opaque),
-	FUNCTION	3	gseg_compress (opaque),
-	FUNCTION	4	gseg_decompress (opaque),
-	FUNCTION	5	gseg_penalty (opaque, opaque, opaque),
-	FUNCTION	6	gseg_picksplit (opaque, opaque),
-	FUNCTION	7	gseg_same (seg, seg, opaque);
+	FUNCTION	1	gseg_consistent (internal, seg, int4),
+	FUNCTION	2	gseg_union (bytea, internal),
+	FUNCTION	3	gseg_compress (internal),
+	FUNCTION	4	gseg_decompress (internal),
+	FUNCTION	5	gseg_penalty (internal, internal, internal),
+	FUNCTION	6	gseg_picksplit (internal, internal),
+	FUNCTION	7	gseg_same (seg, seg, internal);
 
 
 END TRANSACTION;

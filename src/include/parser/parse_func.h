@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.41 2002/06/20 20:29:51 momjian Exp $
+ * $Id: parse_func.h,v 1.42 2002/08/22 00:01:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,6 @@ extern Oid	find_aggregate_func(const char *caller, List *aggname,
 
 extern Oid	LookupFuncName(List *funcname, int nargs, const Oid *argtypes);
 extern Oid	LookupFuncNameTypeNames(List *funcname, List *argtypes,
-									bool opaqueOK, const char *caller);
+									const char *caller);
 
 #endif   /* PARSE_FUNC_H */

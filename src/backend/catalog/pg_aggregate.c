@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.53 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.54 2002/08/22 00:01:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,13 +67,13 @@ AggregateCreate(const char *aggName,
 	/* handle transfn */
 	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	fnArgs[0] = aggTransType;
-	if (OidIsValid(aggBaseType))
+	if (aggBaseType == ANYOID)
+		nargs = 1;
+	else
 	{
 		fnArgs[1] = aggBaseType;
 		nargs = 2;
 	}
-	else
-		nargs = 1;
 	transfn = LookupFuncName(aggtransfnName, nargs, fnArgs);
 	if (!OidIsValid(transfn))
 		func_error("AggregateCreate", aggtransfnName, nargs, fnArgs, NULL);

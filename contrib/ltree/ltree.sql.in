@@ -3,13 +3,13 @@ BEGIN;
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-CREATE FUNCTION ltree_in(opaque)
-RETURNS opaque
+CREATE FUNCTION ltree_in(cstring)
+RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION ltree_out(opaque)
-RETURNS opaque
+CREATE FUNCTION ltree_out(ltree)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
@@ -232,13 +232,13 @@ CREATE OPERATOR CLASS ltree_ops
 
 
 --lquery type
-CREATE FUNCTION lquery_in(opaque)
-RETURNS opaque
+CREATE FUNCTION lquery_in(cstring)
+RETURNS lquery
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION lquery_out(opaque)
-RETURNS opaque
+CREATE FUNCTION lquery_out(lquery)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
@@ -284,13 +284,13 @@ CREATE OPERATOR ^~ (
 	RESTRICT = contsel, JOIN = contjoinsel
 );
 
-CREATE FUNCTION ltxtq_in(opaque)
-RETURNS opaque
+CREATE FUNCTION ltxtq_in(cstring)
+RETURNS ltxtquery
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION ltxtq_out(opaque)
-RETURNS opaque
+CREATE FUNCTION ltxtq_out(ltxtquery)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
@@ -339,13 +339,13 @@ CREATE OPERATOR ^@ (
 );
 
 --GiST support for ltree
-CREATE FUNCTION ltree_gist_in(opaque)
-RETURNS opaque
+CREATE FUNCTION ltree_gist_in(cstring)
+RETURNS ltree_gist
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
    
-CREATE FUNCTION ltree_gist_out(opaque)
-RETURNS opaque
+CREATE FUNCTION ltree_gist_out(ltree_gist)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
    
@@ -357,13 +357,13 @@ CREATE TYPE ltree_gist (
 );    
 
 
-create function ltree_consistent(opaque,opaque,int2) returns bool as 'MODULE_PATHNAME' language 'C';
-create function ltree_compress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
-create function ltree_decompress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
-create function ltree_penalty(opaque,opaque,opaque) returns opaque as 'MODULE_PATHNAME' language 'C' with(isstrict);
-create function ltree_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
-create function ltree_union(bytea, opaque) returns int4 as 'MODULE_PATHNAME' language 'C';
-create function ltree_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function ltree_consistent(internal,internal,int2) returns bool as 'MODULE_PATHNAME' language 'C';
+create function ltree_compress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
+create function ltree_decompress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
+create function ltree_penalty(internal,internal,internal) returns internal as 'MODULE_PATHNAME' language 'C' with(isstrict);
+create function ltree_picksplit(internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
+create function ltree_union(bytea, internal) returns int4 as 'MODULE_PATHNAME' language 'C';
+create function ltree_same(internal, internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
 CREATE OPERATOR CLASS gist_ltree_ops
     DEFAULT FOR TYPE ltree USING gist AS
@@ -378,13 +378,13 @@ CREATE OPERATOR CLASS gist_ltree_ops
 	OPERATOR	13	~ (lquery, ltree) ,
 	OPERATOR	14	@ (ltree, ltxtquery) ,
 	OPERATOR	15	@ (ltxtquery, ltree) ,
-	FUNCTION	1	ltree_consistent (opaque, opaque, int2),
-	FUNCTION	2	ltree_union (bytea, opaque),
-	FUNCTION	3	ltree_compress (opaque),
-	FUNCTION	4	ltree_decompress (opaque),
-	FUNCTION	5	ltree_penalty (opaque, opaque, opaque),
-	FUNCTION	6	ltree_picksplit (opaque, opaque),
-	FUNCTION	7	ltree_same (opaque, opaque, opaque),
+	FUNCTION	1	ltree_consistent (internal, internal, int2),
+	FUNCTION	2	ltree_union (bytea, internal),
+	FUNCTION	3	ltree_compress (internal),
+	FUNCTION	4	ltree_decompress (internal),
+	FUNCTION	5	ltree_penalty (internal, internal, internal),
+	FUNCTION	6	ltree_picksplit (internal, internal),
+	FUNCTION	7	ltree_same (internal, internal, internal),
 	STORAGE		ltree_gist;
 
 
@@ -566,12 +566,12 @@ CREATE OPERATOR ?@ (
 );
 
 --GiST support for ltree[]
-create function _ltree_consistent(opaque,opaque,int2) returns bool as 'MODULE_PATHNAME' language 'C';
-create function _ltree_compress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
-create function _ltree_penalty(opaque,opaque,opaque) returns opaque as 'MODULE_PATHNAME' language 'C' with(isstrict);
-create function _ltree_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
-create function _ltree_union(bytea, opaque) returns int4 as 'MODULE_PATHNAME' language 'C';
-create function _ltree_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function _ltree_consistent(internal,internal,int2) returns bool as 'MODULE_PATHNAME' language 'C';
+create function _ltree_compress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
+create function _ltree_penalty(internal,internal,internal) returns internal as 'MODULE_PATHNAME' language 'C' with(isstrict);
+create function _ltree_picksplit(internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
+create function _ltree_union(bytea, internal) returns int4 as 'MODULE_PATHNAME' language 'C';
+create function _ltree_same(internal, internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
 CREATE OPERATOR CLASS gist__ltree_ops
     DEFAULT FOR TYPE _ltree USING gist AS
@@ -581,13 +581,13 @@ CREATE OPERATOR CLASS gist__ltree_ops
 	OPERATOR	13	~ (lquery, _ltree)	RECHECK ,
 	OPERATOR	14	@ (_ltree, ltxtquery)	RECHECK ,
 	OPERATOR	15	@ (ltxtquery, _ltree)	RECHECK ,
-	FUNCTION	1	_ltree_consistent (opaque, opaque, int2),
-	FUNCTION	2	_ltree_union (bytea, opaque),
-	FUNCTION	3	_ltree_compress (opaque),
-	FUNCTION	4	ltree_decompress (opaque),
-	FUNCTION	5	_ltree_penalty (opaque, opaque, opaque),
-	FUNCTION	6	_ltree_picksplit (opaque, opaque),
-	FUNCTION	7	_ltree_same (opaque, opaque, opaque),
+	FUNCTION	1	_ltree_consistent (internal, internal, int2),
+	FUNCTION	2	_ltree_union (bytea, internal),
+	FUNCTION	3	_ltree_compress (internal),
+	FUNCTION	4	ltree_decompress (internal),
+	FUNCTION	5	_ltree_penalty (internal, internal, internal),
+	FUNCTION	6	_ltree_picksplit (internal, internal),
+	FUNCTION	7	_ltree_same (internal, internal, internal),
 	STORAGE		ltree_gist;
 
 

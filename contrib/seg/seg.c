@@ -114,14 +114,6 @@ seg_in(char *str)
 	return (result);
 }
 
-/*
- * You might have noticed a slight inconsistency between the following
- * declaration and the SQL definition:
- *	   CREATE FUNCTION seg_out(opaque) RETURNS opaque ...
- * The reason is that the argument passed into seg_out is really just a
- * pointer. POSTGRES thinks all output functions are:
- *	   char *out_func(char *);
- */
 char *
 seg_out(SEG * seg)
 {

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.2 2002/07/22 13:00:00 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.3 2002/08/22 00:01:40 tgl Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -108,10 +108,10 @@ CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
 	conv_proc(
 	INTEGER,	-- source encoding id
 	INTEGER,	-- destination encoding id
-	OPAQUE,		-- source string (null terminated C string)
-	OPAQUE,		-- destination string (null terminated C string)
+	CSTRING,	-- source string (null terminated C string)
+	CSTRING,	-- destination string (null terminated C string)
 	INTEGER		-- source string length
-	) returns INTEGER;	-- dummy. returns nothing, actually.
+	) returns VOID;
        </programlisting>
       </para>
      </listitem>

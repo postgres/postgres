@@ -5,13 +5,13 @@ SET search_path = public;
 
 -- TXTIDX type
 
-CREATE FUNCTION txtidx_in(opaque)
-RETURNS opaque
+CREATE FUNCTION txtidx_in(cstring)
+RETURNS txtidx
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION txtidx_out(opaque)
-RETURNS opaque
+CREATE FUNCTION txtidx_out(txtidx)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
@@ -34,13 +34,13 @@ LANGUAGE 'c' with (isstrict);
 
 --QUERYTYPES
 --without morphology
-CREATE FUNCTION qtxt_in(opaque)
-RETURNS opaque
+CREATE FUNCTION qtxt_in(cstring)
+RETURNS query_txt
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION qtxt_out(opaque)
-RETURNS opaque
+CREATE FUNCTION qtxt_out(query_txt)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
@@ -51,15 +51,21 @@ output = qtxt_out
 );
 
 --with morphology
-CREATE FUNCTION mqtxt_in(opaque)
-RETURNS opaque
+CREATE FUNCTION mqtxt_in(cstring)
+RETURNS mquery_txt
 AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict);
+
+--same C output function as for query_txt
+CREATE FUNCTION mqtxt_out(mquery_txt)
+RETURNS cstring
+AS 'MODULE_PATHNAME', 'qtxt_out'
 LANGUAGE 'c' with (isstrict);
 
 CREATE TYPE mquery_txt (
 internallength = -1,
 input = mqtxt_in,
-output = qtxt_out
+output = mqtxt_out
 );
 
 --only for debug
@@ -115,19 +121,19 @@ CREATE OPERATOR ~# (
 );
 
 --Trigger
-create function tsearch() returns opaque as
+create function tsearch() returns trigger as
         'MODULE_PATHNAME'
         language 'C';
 
 --GiST
 --GiST key type
-CREATE FUNCTION gtxtidx_in(opaque)
-RETURNS opaque
+CREATE FUNCTION gtxtidx_in(cstring)
+RETURNS gtxtidx
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION gtxtidx_out(opaque)
-RETURNS opaque
+CREATE FUNCTION gtxtidx_out(gtxtidx)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
@@ -138,25 +144,25 @@ output = gtxtidx_out
 );
 
 -- support functions
-CREATE FUNCTION gtxtidx_consistent(gtxtidx,opaque,int4) RETURNS bool
+CREATE FUNCTION gtxtidx_consistent(gtxtidx,internal,int4) RETURNS bool
         AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION gtxtidx_compress(opaque) RETURNS opaque
+CREATE FUNCTION gtxtidx_compress(internal) RETURNS internal
         AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION gtxtidx_decompress(opaque) RETURNS opaque
+CREATE FUNCTION gtxtidx_decompress(internal) RETURNS internal
         AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION gtxtidx_penalty(opaque,opaque,opaque) RETURNS opaque
+CREATE FUNCTION gtxtidx_penalty(internal,internal,internal) RETURNS internal
         AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION gtxtidx_picksplit(opaque, opaque) RETURNS opaque
+CREATE FUNCTION gtxtidx_picksplit(internal, internal) RETURNS internal
         AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION gtxtidx_union(bytea, opaque) RETURNS _int4
+CREATE FUNCTION gtxtidx_union(bytea, internal) RETURNS _int4
         AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION gtxtidx_same(gtxtidx, gtxtidx, opaque) RETURNS opaque
+CREATE FUNCTION gtxtidx_same(gtxtidx, gtxtidx, internal) RETURNS internal
         AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 -- create the operator class
@@ -164,13 +170,13 @@ CREATE OPERATOR CLASS gist_txtidx_ops
     DEFAULT FOR TYPE txtidx USING gist AS
 	OPERATOR	1	@@ (txtidx, query_txt)	RECHECK ,
 	OPERATOR	2	## (txtidx, mquery_txt)	RECHECK ,
-	FUNCTION	1	gtxtidx_consistent (gtxtidx, opaque, int4),
-	FUNCTION	2	gtxtidx_union (bytea, opaque),
-	FUNCTION	3	gtxtidx_compress (opaque),
-	FUNCTION	4	gtxtidx_decompress (opaque),
-	FUNCTION	5	gtxtidx_penalty (opaque, opaque, opaque),
-	FUNCTION	6	gtxtidx_picksplit (opaque, opaque),
-	FUNCTION	7	gtxtidx_same (gtxtidx, gtxtidx, opaque),
+	FUNCTION	1	gtxtidx_consistent (gtxtidx, internal, int4),
+	FUNCTION	2	gtxtidx_union (bytea, internal),
+	FUNCTION	3	gtxtidx_compress (internal),
+	FUNCTION	4	gtxtidx_decompress (internal),
+	FUNCTION	5	gtxtidx_penalty (internal, internal, internal),
+	FUNCTION	6	gtxtidx_picksplit (internal, internal),
+	FUNCTION	7	gtxtidx_same (gtxtidx, gtxtidx, internal),
 	STORAGE		gtxtidx;
 
 

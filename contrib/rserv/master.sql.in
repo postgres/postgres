@@ -79,7 +79,7 @@ create sequence _rserv_sync_seq_;
 drop function _rserv_log_();
 
 CREATE FUNCTION _rserv_log_()
-	RETURNS opaque
+	RETURNS trigger
 	AS '@MODULE_FILENAME@'
 	LANGUAGE 'c'
 ;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.149 2002/08/20 17:54:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.150 2002/08/22 00:01:40 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Type OPAQUE is now deprecated in favor of pseudo-types cstring, trigger, etc
 Files larger than 2 GB are now supported (if supported by the operating system)
 SERIAL no longer implies UNIQUE; specify explicitly if index is wanted
 pg_dump -n and -N options have been removed.  The new behavior is like -n but knows about key words.

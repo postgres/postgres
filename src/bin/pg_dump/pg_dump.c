@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.288 2002/08/20 17:54:44 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.289 2002/08/22 00:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1899,6 +1899,7 @@ getAggregates(int *numAggs)
 			write_msg(NULL, "WARNING: owner of aggregate function \"%s\" appears to be invalid\n",
 					  agginfo[i].aggname);
 		agginfo[i].aggacl = strdup(PQgetvalue(res, i, i_aggacl));
+		agginfo[i].anybasetype = false; /* computed when it's dumped */
 		agginfo[i].fmtbasetype = NULL; /* computed when it's dumped */
 	}
 
@@ -3044,7 +3045,7 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delq, "DROP TYPE %s.",
 					  fmtId(tinfo->typnamespace->nspname));
-	appendPQExpBuffer(delq, "%s;\n",
+	appendPQExpBuffer(delq, "%s CASCADE;\n",
 					  fmtId(tinfo->typname));
 
 	appendPQExpBuffer(q,
@@ -4502,7 +4503,6 @@ static char *
 format_aggregate_signature(AggInfo *agginfo, Archive *fout, bool honor_quotes)
 {
 	PQExpBufferData buf;
-	bool anybasetype;
 
 	initPQExpBuffer(&buf);
 	if (honor_quotes)
@@ -4511,19 +4511,17 @@ format_aggregate_signature(AggInfo *agginfo, Archive *fout, bool honor_quotes)
 	else
 		appendPQExpBuffer(&buf, "%s", agginfo->aggname);
 
-	anybasetype = (strcmp(agginfo->aggbasetype, "0") == 0);
-
 	/* If using regtype or format_type, fmtbasetype is already quoted */
 	if (fout->remoteVersion >= 70100)
 	{
-		if (anybasetype)
+		if (agginfo->anybasetype)
 			appendPQExpBuffer(&buf, "(*)");
 		else
 			appendPQExpBuffer(&buf, "(%s)", agginfo->fmtbasetype);
 	}
 	else
 	{
-		if (anybasetype)
+		if (agginfo->anybasetype)
 			appendPQExpBuffer(&buf, "(*)");
 		else
 			appendPQExpBuffer(&buf, "(%s)",
@@ -4568,6 +4566,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	int			i_aggfinalfn;
 	int			i_aggtranstype;
 	int			i_agginitval;
+	int			i_anybasetype;
 	int			i_fmtbasetype;
 	int			i_convertok;
 	const char *aggtransfn;
@@ -4575,7 +4574,6 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	const char *aggtranstype;
 	const char *agginitval;
 	bool		convertok;
-	bool		anybasetype;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(agginfo->aggnamespace->nspname);
@@ -4586,6 +4584,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "agginitval, "
+						  "proargtypes[0] = 'pg_catalog.\"any\"'::pg_catalog.regtype as anybasetype, "
 						  "proargtypes[0]::pg_catalog.regtype as fmtbasetype, "
 						  "'t'::boolean as convertok "
 						  "from pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
@@ -4598,6 +4597,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 		appendPQExpBuffer(query, "SELECT aggtransfn, aggfinalfn, "
 						  "format_type(aggtranstype, NULL) as aggtranstype, "
 						  "agginitval, "
+						  "aggbasetype = 0 as anybasetype, "
 						  "CASE WHEN aggbasetype = 0 THEN '-' "
 						  "ELSE format_type(aggbasetype, NULL) END as fmtbasetype, "
 						  "'t'::boolean as convertok "
@@ -4611,6 +4611,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 						  "aggfinalfn, "
 						  "(select typname from pg_type where oid = aggtranstype1) as aggtranstype, "
 						  "agginitval1 as agginitval, "
+						  "aggbasetype = 0 as anybasetype, "
 						  "(select typname from pg_type where oid = aggbasetype) as fmtbasetype, "
 						  "(aggtransfn2 = 0 and aggtranstype2 = 0 and agginitval2 is null) as convertok "
 						  "from pg_aggregate "
@@ -4640,6 +4641,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	i_aggfinalfn = PQfnumber(res, "aggfinalfn");
 	i_aggtranstype = PQfnumber(res, "aggtranstype");
 	i_agginitval = PQfnumber(res, "agginitval");
+	i_anybasetype = PQfnumber(res, "anybasetype");
 	i_fmtbasetype = PQfnumber(res, "fmtbasetype");
 	i_convertok = PQfnumber(res, "convertok");
 
@@ -4647,6 +4649,8 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	aggfinalfn = PQgetvalue(res, 0, i_aggfinalfn);
 	aggtranstype = PQgetvalue(res, 0, i_aggtranstype);
 	agginitval = PQgetvalue(res, 0, i_agginitval);
+	/* we save anybasetype so that dumpAggACL can use it later */
+	agginfo->anybasetype = (PQgetvalue(res, 0, i_anybasetype)[0] == 't');
 	/* we save fmtbasetype so that dumpAggACL can use it later */
 	agginfo->fmtbasetype = strdup(PQgetvalue(res, 0, i_fmtbasetype));
 	convertok = (PQgetvalue(res, 0, i_convertok)[0] == 't');
@@ -4669,13 +4673,12 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 		return;
 	}
 
-	anybasetype = (strcmp(agginfo->aggbasetype, "0") == 0);
-
 	if (g_fout->remoteVersion >= 70300)
 	{
 		/* If using 7.3's regproc or regtype, data is already quoted */
 		appendPQExpBuffer(details, "    BASETYPE = %s,\n    SFUNC = %s,\n    STYPE = %s",
-						  anybasetype ? "'any'" : agginfo->fmtbasetype,
+						  agginfo->anybasetype ? "'any'" :
+						  agginfo->fmtbasetype,
 						  aggtransfn,
 						  aggtranstype);
 	}
@@ -4683,7 +4686,8 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	{
 		/* format_type quotes, regproc does not */
 		appendPQExpBuffer(details, "    BASETYPE = %s,\n    SFUNC = %s,\n    STYPE = %s",
-						  anybasetype ? "'any'" : agginfo->fmtbasetype,
+						  agginfo->anybasetype ? "'any'" :
+						  agginfo->fmtbasetype,
 						  fmtId(aggtransfn),
 						  aggtranstype);
 	}
@@ -4691,7 +4695,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	{
 		/* need quotes all around */
 		appendPQExpBuffer(details, "    BASETYPE = %s,\n",
-						  anybasetype ? "'any'" :
+						  agginfo->anybasetype ? "'any'" :
 						  fmtId(agginfo->fmtbasetype));
 		appendPQExpBuffer(details, "    SFUNC = %s,\n",
 						  fmtId(aggtransfn));

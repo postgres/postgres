@@ -4,7 +4,7 @@
 --  darcy@druid.net
 --  http://www.druid.net/darcy/
 -- 
---  $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.sql.in,v 1.1 2001/08/23 16:50:33 tgl Exp $
+--  $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.sql.in,v 1.2 2002/08/22 00:01:38 tgl Exp $
 --
 --  best viewed with tabs set to 4
 --
@@ -13,13 +13,13 @@
 --	Input and output functions and the type itself:
 --
 
-create function chkpass_in(opaque)
-	returns opaque
+create function chkpass_in(cstring)
+	returns chkpass
 	as 'MODULE_PATHNAME'
 	language 'c';
 
-create function chkpass_out(opaque)
-	returns opaque
+create function chkpass_out(chkpass)
+	returns cstring
 	as 'MODULE_PATHNAME'
 	language 'c';
 

@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.19 2002/07/20 05:16:59 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.20 2002/08/22 00:01:50 tgl Exp $
  *
  *********************************************************************
  */
@@ -447,7 +447,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
  * this action.  MODIFY means the tuple has been modified, so update
  * tuple and perform action.  SKIP and MODIFY assume the trigger fires
  * BEFORE the event and is ROW level.  postgres expects the function
- * to take no arguments and return an argument of type opaque.
+ * to take no arguments and return an argument of type trigger.
  */
 HeapTuple
 PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)

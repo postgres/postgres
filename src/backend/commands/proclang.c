@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.40 2002/08/13 17:22:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.41 2002/08/22 00:01:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,17 +71,18 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		elog(ERROR, "Language %s already exists", languageName);
 
 	/*
-	 * Lookup the PL handler function and check that it is of return type
-	 * Opaque
+	 * Lookup the PL handler function and check that it is of the expected
+	 * return type
 	 */
 	MemSet(typev, 0, sizeof(typev));
 	procOid = LookupFuncName(stmt->plhandler, 0, typev);
 	if (!OidIsValid(procOid))
 		elog(ERROR, "function %s() doesn't exist",
 			 NameListToString(stmt->plhandler));
-	if (get_func_rettype(procOid) != InvalidOid)
-		elog(ERROR, "function %s() does not return type \"opaque\"",
-			 NameListToString(stmt->plhandler));
+	if (get_func_rettype(procOid) != LANGUAGE_HANDLEROID)
+		elog(ERROR, "function %s() does not return type %s",
+			 NameListToString(stmt->plhandler),
+			 format_type_be(LANGUAGE_HANDLEROID));
 
 	/* validate the validator function */
 	if (stmt->plvalidator)
@@ -91,6 +92,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		if (!OidIsValid(valProcOid))
 			elog(ERROR, "function %s(oid) doesn't exist",
 				 NameListToString(stmt->plvalidator));
+		/* return value is ignored, so we don't check the type */
 	}
 	else
 		valProcOid = InvalidOid;

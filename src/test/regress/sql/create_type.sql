@@ -18,10 +18,28 @@ CREATE TYPE city_budget (
 
 -- Test type-related default values (broken in releases before PG 7.2)
 
+-- Make dummy I/O routines using the existing internal support for int4, text
+CREATE FUNCTION int42_in(cstring)
+   RETURNS int42
+   AS 'int4in'
+   LANGUAGE 'internal' WITH (isStrict);
+CREATE FUNCTION int42_out(int42)
+   RETURNS cstring
+   AS 'int4out'
+   LANGUAGE 'internal' WITH (isStrict);
+CREATE FUNCTION text_w_default_in(cstring)
+   RETURNS text_w_default
+   AS 'textin'
+   LANGUAGE 'internal' WITH (isStrict);
+CREATE FUNCTION text_w_default_out(text_w_default)
+   RETURNS cstring
+   AS 'textout'
+   LANGUAGE 'internal' WITH (isStrict);
+
 CREATE TYPE int42 (
    internallength = 4,
-   input = int4in,
-   output = int4out,
+   input = int42_in,
+   output = int42_out,
    alignment = int4,
    default = 42,
    passedbyvalue
@@ -29,8 +47,8 @@ CREATE TYPE int42 (
 
 CREATE TYPE text_w_default (
    internallength = variable,
-   input = textin,
-   output = textout,
+   input = text_w_default_in,
+   output = text_w_default_out,
    alignment = int4,
    default = 'zippo'
 );

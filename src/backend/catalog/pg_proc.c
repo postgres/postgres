@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.88 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.89 2002/08/22 00:01:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -502,7 +502,8 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 		elog(ERROR, "there is no built-in function named \"%s\"", prosrc);
 
 	ReleaseSysCache(tuple);
-	PG_RETURN_BOOL(true);
+
+	PG_RETURN_VOID();
 }
 
 
@@ -545,9 +546,9 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	(void) fetch_finfo_record(libraryhandle, prosrc);
 
 	ReleaseSysCache(tuple);
-	PG_RETURN_BOOL(true);
-}
 
+	PG_RETURN_VOID();
+}
 
 
 /*
@@ -567,6 +568,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	Datum		tmp;
 	char	   *prosrc;
 	char		functyptype;
+	int			i;
 
 	tuple = SearchSysCache(PROCOID, funcoid, 0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
@@ -574,8 +576,19 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
-	if (!OidIsValid(proc->prorettype))
-			elog(ERROR, "SQL functions cannot return type \"opaque\"");
+	/* Disallow pseudotypes in arguments and result */
+	/* except that return type can be RECORD */
+	if (get_typtype(proc->prorettype) == 'p' &&
+		proc->prorettype != RECORDOID)
+		elog(ERROR, "SQL functions cannot return type %s",
+			 format_type_be(proc->prorettype));
+
+	for (i = 0; i < proc->pronargs; i++)
+	{
+		if (get_typtype(proc->proargtypes[i]) == 'p')
+			elog(ERROR, "SQL functions cannot have arguments of type %s",
+				 format_type_be(proc->proargtypes[i]));
+	}
 
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
@@ -590,5 +603,6 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	checkretval(proc->prorettype, functyptype, querytree_list);
 
 	ReleaseSysCache(tuple);
-	PG_RETURN_BOOL(true);
+
+	PG_RETURN_VOID();
 }

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.50 2002/03/06 06:10:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.51 2002/08/22 00:01:51 tgl Exp $
  */
 
 #include "postgres.h"
@@ -26,6 +26,8 @@ extern Datum overpaid(PG_FUNCTION_ARGS);
 extern Datum boxarea(PG_FUNCTION_ARGS);
 extern char *reverse_name(char *string);
 extern int	oldstyle_length(int n, text *t);
+extern Datum int44in(PG_FUNCTION_ARGS);
+extern Datum int44out(PG_FUNCTION_ARGS);
 
 /*
 ** Distance from a point to a path
@@ -683,4 +685,62 @@ set_ttdummy(PG_FUNCTION_ARGS)
 	ttoff = true;
 
 	PG_RETURN_INT32(1);
+}
+
+
+/*
+ * Type int44 has no real-world use, but the regression tests use it.
+ * It's a four-element vector of int4's.
+ */
+
+/*
+ *		int44in			- converts "num num ..." to internal form
+ *
+ *		Note: Fills any missing positions with zeroes.
+ */
+PG_FUNCTION_INFO_V1(int44in);
+
+Datum
+int44in(PG_FUNCTION_ARGS)
+{
+	char	   *input_string = PG_GETARG_CSTRING(0);
+	int32	   *result = (int32 *) palloc(4 * sizeof(int32));
+	int			i;
+
+	i = sscanf(input_string,
+			   "%d, %d, %d, %d",
+			   &result[0],
+			   &result[1],
+			   &result[2],
+			   &result[3]);
+	while (i < 4)
+		result[i++] = 0;
+
+	PG_RETURN_POINTER(result);
+}
+
+/*
+ *		int44out		- converts internal form to "num num ..."
+ */
+PG_FUNCTION_INFO_V1(int44out);
+
+Datum
+int44out(PG_FUNCTION_ARGS)
+{
+	int32	   *an_array = (int32 *) PG_GETARG_POINTER(0);
+	char	   *result = (char *) palloc(16 * 4);		/* Allow 14 digits +
+														 * sign */
+	int			i;
+	char	   *walk;
+
+	walk = result;
+	for (i = 0; i < 4; i++)
+	{
+		pg_ltoa(an_array[i], walk);
+		while (*++walk != '\0')
+			;
+		*walk++ = ' ';
+	}
+	*--walk = '\0';
+	PG_RETURN_CSTRING(result);
 }

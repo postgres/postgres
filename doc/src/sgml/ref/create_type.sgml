@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.31 2002/08/15 16:36:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.32 2002/08/22 00:01:40 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -226,21 +226,46 @@ CREATE TYPE
    operators and functions defined for the type.   Naturally,
    <replaceable class="parameter">output_function</replaceable>
    performs the reverse transformation.  The input function may be
-   declared as taking one argument of type <type>opaque</type>,
+   declared as taking one argument of type <type>cstring</type>,
    or as taking three arguments of types
-   <type>opaque</type>, <type>OID</type>, <type>int4</type>.
+   <type>cstring</type>, <type>OID</type>, <type>int4</type>.
    (The first argument is the input text as a C string, the second
    argument is the element type in case this is an array type,
    and the third is the typmod of the destination column, if known.)
+   It should return a value of the datatype itself.
    The output function may be
-   declared as taking one argument of type <type>opaque</type>,
-   or as taking two arguments of types
-   <type>opaque</type>, <type>OID</type>.
-   (The first argument is actually of the data type itself, but since the
-   output function must be declared first, it's easier to declare it as
-   accepting type <type>opaque</type>.  The second argument is again
-   the array element type for array types.)
+   declared as taking one argument of the new datatype,  or as taking
+   two arguments of which the second is type <type>OID</type>.
+   (The second argument is again the array element type for array types.)
+   The output function should return type <type>cstring</type>.
   </para>
+
+  <para>
+   You should at this point be wondering how the input and output functions
+   can be declared to have results or inputs of the new type, when they have
+   to be created before the new type can be created.  The answer is that the
+   input function must be created first, then the output function, then the
+   datatype.
+   <productname>PostgreSQL</productname> will first see the name of the new
+   datatype as the return type of the input function.  It will create a
+   <quote>shell</> type, which is simply a placeholder entry in
+   <literal>pg_type</>, and link the input function definition to the shell
+   type.  Similarly the output function will be linked to the (now already
+   existing) shell type.  Finally, <command>CREATE TYPE</> replaces the
+   shell entry with a complete type definition, and the new type can be used.
+  </para>
+
+  <note>
+  <para>
+   In <productname>PostgreSQL</productname> versions before 7.3, it was
+   customary to avoid creating a shell type by replacing the functions'
+   forward references to the type name with the placeholder pseudo-type
+   <type>OPAQUE</>.  The <type>cstring</> inputs and
+   results also had to be declared as <type>OPAQUE</> before 7.3.
+   Use of <type>OPAQUE</> for this purpose is still supported, but it is
+   deprecated because it causes loss of type safety.
+  </para>
+  </note>
 
   <para>
    New  base  data  types  can be fixed length, in which case

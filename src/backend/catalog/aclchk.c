@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.74 2002/08/07 21:45:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.75 2002/08/22 00:01:41 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -376,7 +376,7 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		char		replaces[Natts_pg_proc];
 
 		oid = LookupFuncNameTypeNames(func->funcname, func->funcargs,
-									  true, stmt->is_grant ? "GRANT" : "REVOKE");
+									  stmt->is_grant ? "GRANT" : "REVOKE");
 
 		relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
 		tuple = SearchSysCache(PROCOID,

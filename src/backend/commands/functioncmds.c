@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.17 2002/08/11 17:44:12 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.18 2002/08/22 00:01:42 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -61,7 +61,9 @@
  * allow a shell type to be used, or even created if the specified return type
  * doesn't exist yet.  (Without this, there's no way to define the I/O procs
  * for a new type.)  But SQL function creation won't cope, so error out if
- * the target language is SQL.
+ * the target language is SQL.  (We do this here, not in the SQL-function
+ * validator, so as not to produce a WARNING and then an ERROR for the same
+ * condition.)
  */
 static void
 compute_return_type(TypeName *returnType, Oid languageOid,
@@ -76,7 +78,8 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		if (!get_typisdefined(rettype))
 		{
 			if (languageOid == SQLlanguageId)
-				elog(ERROR, "SQL functions cannot return shell types");
+				elog(ERROR, "SQL function cannot return shell type \"%s\"",
+					 TypeNameToString(returnType));
 			else
 				elog(WARNING, "Return type \"%s\" is only a shell",
 					 TypeNameToString(returnType));
@@ -85,29 +88,32 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 	else
 	{
 		char      *typnam = TypeNameToString(returnType);
+		Oid			namespaceId;
+		AclResult	aclresult;
+		char	   *typname;
 
-		if (strcmp(typnam, "opaque") == 0)
-			rettype = InvalidOid;
-		else
-		{
-			Oid			namespaceId;
-			AclResult	aclresult;
-			char	   *typname;
+		/*
+		 * Only C-coded functions can be I/O functions.  We enforce this
+		 * restriction here mainly to prevent littering the catalogs with
+		 * shell types due to simple typos in user-defined function
+		 * definitions.
+		 */
+		if (languageOid != INTERNALlanguageId &&
+			languageOid != ClanguageId)
+			elog(ERROR, "Type \"%s\" does not exist", typnam);
 
-			if (languageOid == SQLlanguageId)
-				elog(ERROR, "Type \"%s\" does not exist", typnam);
-			elog(WARNING, "ProcedureCreate: type %s is not yet defined",
-				 typnam);
-			namespaceId = QualifiedNameGetCreationNamespace(returnType->names,
-															&typname);
-			aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
-											  ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, get_namespace_name(namespaceId));
-			rettype = TypeShellMake(typname, namespaceId);
-			if (!OidIsValid(rettype))
-				elog(ERROR, "could not create type %s", typnam);
-		}
+		/* Otherwise, go ahead and make a shell type */
+		elog(WARNING, "ProcedureCreate: type %s is not yet defined",
+			 typnam);
+		namespaceId = QualifiedNameGetCreationNamespace(returnType->names,
+														&typname);
+		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
+										  ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, get_namespace_name(namespaceId));
+		rettype = TypeShellMake(typname, namespaceId);
+		if (!OidIsValid(rettype))
+			elog(ERROR, "could not create type %s", typnam);
 	}
 
 	*prorettype_p = rettype;
@@ -138,25 +144,24 @@ compute_parameter_types(List *argTypes, Oid languageOid,
 		if (OidIsValid(toid))
 		{
 			if (!get_typisdefined(toid))
-				elog(WARNING, "Argument type \"%s\" is only a shell",
-					 TypeNameToString(t));
+			{
+				/* As above, hard error if language is SQL */
+				if (languageOid == SQLlanguageId)
+					elog(ERROR, "SQL function cannot accept shell type \"%s\"",
+						 TypeNameToString(t));
+				else
+					elog(WARNING, "Argument type \"%s\" is only a shell",
+						 TypeNameToString(t));
+			}
 		}
 		else
 		{
-			char      *typnam = TypeNameToString(t);
-
-			if (strcmp(typnam, "opaque") == 0)
-			{
-				if (languageOid == SQLlanguageId)
-					elog(ERROR, "SQL functions cannot have arguments of type \"opaque\"");
-				toid = InvalidOid;
-			}
-			else
-				elog(ERROR, "Type \"%s\" does not exist", typnam);
+			elog(ERROR, "Type \"%s\" does not exist",
+				 TypeNameToString(t));
 		}
 
 		if (t->setof)
-			elog(ERROR, "functions cannot accept set arguments");
+			elog(ERROR, "Functions cannot accept set arguments");
 
 		parameterTypes[parameterCount++] = toid;
 	}
@@ -492,7 +497,7 @@ RemoveFunction(RemoveFuncStmt *stmt)
 	 * Find the function, do permissions and validity checks
 	 */
 	funcOid = LookupFuncNameTypeNames(functionName, argTypes, 
-									  true, "RemoveFunction");
+									  "RemoveFunction");
 
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(funcOid),
@@ -621,6 +626,23 @@ CreateCast(CreateCastStmt *stmt)
 	if (sourcetypeid == targettypeid)
 		elog(ERROR, "source data type and target data type are the same");
 
+	/* No shells, no pseudo-types allowed */
+	if (!get_typisdefined(sourcetypeid))
+		elog(ERROR, "source data type %s is only a shell",
+			 TypeNameToString(stmt->sourcetype));
+
+	if (!get_typisdefined(targettypeid))
+		elog(ERROR, "target data type %s is only a shell",
+			 TypeNameToString(stmt->targettype));
+
+	if (get_typtype(sourcetypeid) == 'p')
+		elog(ERROR, "source data type %s is a pseudo-type",
+			 TypeNameToString(stmt->sourcetype));
+
+	if (get_typtype(targettypeid) == 'p')
+		elog(ERROR, "target data type %s is a pseudo-type",
+			 TypeNameToString(stmt->targettype));
+
 	if (!pg_type_ownercheck(sourcetypeid, GetUserId())
 		&& !pg_type_ownercheck(targettypeid, GetUserId()))
 		elog(ERROR, "must be owner of type %s or type %s",
@@ -642,7 +664,6 @@ CreateCast(CreateCastStmt *stmt)
 	{
 		funcid = LookupFuncNameTypeNames(stmt->func->funcname,
 										 stmt->func->funcargs,
-										 false,
 										 "CreateCast");
 
 		tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcid), 0, 0, 0);

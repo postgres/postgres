@@ -16,16 +16,23 @@
 -- that test creates some bogus operators...
 -- **************** pg_proc ****************
 -- Look for illegal values in pg_proc fields.
--- NOTE: currently there are a few pg_proc entries that have prorettype = 0.
--- Someday that ought to be cleaned up.
+-- NOTE: in reality pronargs could be more than 10, but I'm too lazy to put
+-- a larger number of proargtypes check clauses in here.  If we ever have
+-- more-than-10-arg functions in the standard catalogs, extend this query.
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
-WHERE (p1.prolang = 0 OR p1.prorettype = 0 OR
-       p1.pronargs < 0 OR p1.pronargs > 16)
-	AND p1.proname !~ '^pl[^_]+_call_handler$'
-	AND p1.proname !~ '^RI_FKey_'
-	AND p1.proname !~ 'costestimate$'
-	AND p1.proname != 'update_pg_pwd_and_pg_group';
+WHERE p1.prolang = 0 OR p1.prorettype = 0 OR
+       p1.pronargs < 0 OR p1.pronargs > 10 OR
+       (p1.proargtypes[0] = 0 AND p1.pronargs > 0) OR
+       (p1.proargtypes[1] = 0 AND p1.pronargs > 1) OR
+       (p1.proargtypes[2] = 0 AND p1.pronargs > 2) OR
+       (p1.proargtypes[3] = 0 AND p1.pronargs > 3) OR
+       (p1.proargtypes[4] = 0 AND p1.pronargs > 4) OR
+       (p1.proargtypes[5] = 0 AND p1.pronargs > 5) OR
+       (p1.proargtypes[6] = 0 AND p1.pronargs > 6) OR
+       (p1.proargtypes[7] = 0 AND p1.pronargs > 7) OR
+       (p1.proargtypes[8] = 0 AND p1.pronargs > 8) OR
+       (p1.proargtypes[9] = 0 AND p1.pronargs > 9);
  oid | proname 
 -----+---------
 (0 rows)
@@ -217,7 +224,7 @@ WHERE c.castfunc = 0 AND NOT c.castimplicit;
 SELECT *
 FROM pg_cast c
 WHERE c.castfunc = 0 AND
-    NOT EXISTS (SELECT * FROM pg_cast k
+    NOT EXISTS (SELECT 1 FROM pg_cast k
                 WHERE k.castfunc = 0 AND
                     k.castsource = c.casttarget AND
                     k.casttarget = c.castsource);
@@ -341,7 +348,7 @@ WHERE p1.oprlsortop != 0 AND
 
 SELECT p1.oid, p1.oprname FROM pg_operator AS p1
 WHERE p1.oprlsortop != 0 AND NOT
-      EXISTS(SELECT * FROM pg_operator AS p2 WHERE
+      EXISTS(SELECT 1 FROM pg_operator AS p2 WHERE
         p2.oprname = '<' AND
         p2.oprleft = p1.oprleft AND
         p2.oprright = p1.oprright AND
@@ -352,7 +359,7 @@ WHERE p1.oprlsortop != 0 AND NOT
 
 SELECT p1.oid, p1.oprname FROM pg_operator AS p1
 WHERE p1.oprlsortop != 0 AND NOT
-      EXISTS(SELECT * FROM pg_operator AS p2 WHERE
+      EXISTS(SELECT 1 FROM pg_operator AS p2 WHERE
         p2.oprname = '>' AND
         p2.oprleft = p1.oprleft AND
         p2.oprright = p1.oprright AND
@@ -468,15 +475,17 @@ WHERE p1.oprcode = p2.oid AND
 -- If oprrest is set, the operator must return boolean,
 -- and it must link to a proc with the right signature
 -- to be a restriction selectivity estimator.
--- The proc signature we want is: float8 proc(opaque, oid, opaque, int4)
+-- The proc signature we want is: float8 proc(internal, oid, internal, int4)
 SELECT p1.oid, p1.oprname, p2.oid, p2.proname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprrest = p2.oid AND
     (p1.oprresult != 'bool'::regtype OR
      p2.prorettype != 'float8'::regtype OR p2.proretset OR
      p2.pronargs != 4 OR
-     p2.proargtypes[0] != 0 OR p2.proargtypes[1] != 'oid'::regtype OR
-     p2.proargtypes[2] != 0 OR p2.proargtypes[3] != 'int4'::regtype);
+     p2.proargtypes[0] != 'internal'::regtype OR
+     p2.proargtypes[1] != 'oid'::regtype OR
+     p2.proargtypes[2] != 'internal'::regtype OR
+     p2.proargtypes[3] != 'int4'::regtype);
  oid | oprname | oid | proname 
 -----+---------+-----+---------
 (0 rows)
@@ -484,15 +493,16 @@ WHERE p1.oprrest = p2.oid AND
 -- If oprjoin is set, the operator must be a binary boolean op,
 -- and it must link to a proc with the right signature
 -- to be a join selectivity estimator.
--- The proc signature we want is: float8 proc(opaque, oid, opaque)
+-- The proc signature we want is: float8 proc(internal, oid, internal)
 SELECT p1.oid, p1.oprname, p2.oid, p2.proname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprjoin = p2.oid AND
     (p1.oprkind != 'b' OR p1.oprresult != 'bool'::regtype OR
      p2.prorettype != 'float8'::regtype OR p2.proretset OR
      p2.pronargs != 3 OR
-     p2.proargtypes[0] != 0 OR p2.proargtypes[1] != 'oid'::regtype OR
-     p2.proargtypes[2] != 0);
+     p2.proargtypes[0] != 'internal'::regtype OR
+     p2.proargtypes[1] != 'oid'::regtype OR
+     p2.proargtypes[2] != 'internal'::regtype);
  oid | oprname | oid | proname 
 -----+---------+-----+---------
 (0 rows)
@@ -547,7 +557,7 @@ WHERE a.aggfnoid = p.oid AND
      a.aggtranstype != p2.prorettype OR
      a.aggtranstype != p2.proargtypes[0] OR
      NOT ((p2.pronargs = 2 AND p.proargtypes[0] = p2.proargtypes[1]) OR
-          (p2.pronargs = 1 AND p.proargtypes[0] = 0)));
+          (p2.pronargs = 1 AND p.proargtypes[0] = '"any"'::regtype)));
  aggfnoid | proname | oid |   proname   
 ----------+---------+-----+-------------
      2121 | max     | 768 | int4larger

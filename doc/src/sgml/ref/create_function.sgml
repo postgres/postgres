@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.41 2002/07/24 19:11:07 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.42 2002/08/22 00:01:40 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -67,16 +67,17 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
      <listitem>
       <para>
        The data type(s) of the function's arguments, if any.  The
-       input types may be base or complex types,
-       <literal>opaque</literal>, or the same as the type of an
-       existing column.  <literal>Opaque</literal> indicates
-       that the function accepts arguments of a non-SQL type such as
-       <type>char *</type>.
-	The type of a column is indicated using <replaceable
+       input types may be base, complex, or domain types,
+       or the same as the type of an existing column.
+	The type of a column is referenced by writing <replaceable
 	class="parameter">tablename</replaceable>.<replaceable
 	class="parameter">columnname</replaceable><literal>%TYPE</literal>;
 	using this can sometimes help make a function independent from
 	changes to the definition of a table.
+	Depending on the implementation language it may also be allowed
+	to specify <quote>pseudo-types</> such as <type>cstring</>.
+	Pseudo-types indicate that the actual argument type is either
+	incompletely specified, or outside the set of ordinary SQL datatypes.
       </para>
      </listitem>
     </varlistentry>
@@ -87,15 +88,13 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
      <listitem>
       <para>
        The return data type.  The return type may be specified as a
-       base type, complex type, <literal>setof</literal> type,
-       <literal>opaque</literal>, or the same as the type of an
+       base, complex, or domain type, or the same as the type of an
        existing column.
+       Depending on the implementation language it may also be allowed
+       to specify <quote>pseudo-types</> such as <type>cstring</>.
        The <literal>setof</literal>
        modifier indicates that the function will return a set of
-       items, rather than a single item.  Functions with a declared
-       return type of <literal>opaque</literal> do not return a value.
-       These cannot be called directly; trigger functions make use of
-       this feature.
+       items, rather than a single item.
       </para>
      </listitem>
     </varlistentry>

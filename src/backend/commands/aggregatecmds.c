@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.3 2002/07/12 18:43:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.4 2002/08/22 00:01:41 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -28,6 +28,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -104,29 +105,23 @@ DefineAggregate(List *names, List *parameters)
 		elog(ERROR, "Define: \"sfunc\" unspecified");
 
 	/*
-	 * Handle the aggregate's base type (input data type).  This can be
-	 * specified as 'ANY' for a data-independent transition function, such
-	 * as COUNT(*).
+	 * look up the aggregate's base type (input datatype) and transtype.
+	 *
+	 * We have historically allowed the command to look like basetype = 'ANY'
+	 * so we must do a case-insensitive comparison for the name ANY.  Ugh.
+	 *
+	 * basetype can be a pseudo-type, but transtype can't, since we need
+	 * to be able to store values of the transtype.
 	 */
-	baseTypeId = LookupTypeName(baseType);
-	if (OidIsValid(baseTypeId))
-	{
-		/* no need to allow aggregates on as-yet-undefined types */
-		if (!get_typisdefined(baseTypeId))
-			elog(ERROR, "Type \"%s\" is only a shell",
-				 TypeNameToString(baseType));
-	}
+	if (strcasecmp(TypeNameToString(baseType), "ANY") == 0)
+		baseTypeId = ANYOID;
 	else
-	{
-		char      *typnam = TypeNameToString(baseType);
+		baseTypeId = typenameTypeId(baseType);
 
-		if (strcasecmp(typnam, "ANY") != 0)
-			elog(ERROR, "Type \"%s\" does not exist", typnam);
-		baseTypeId = InvalidOid;
-	}
-
-	/* handle transtype --- no special cases here */
 	transTypeId = typenameTypeId(transType);
+	if (get_typtype(transTypeId) == 'p')
+		elog(ERROR, "Aggregate transition datatype cannot be %s",
+			 format_type_be(transTypeId));
 
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
@@ -159,14 +154,13 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 	 * if a basetype is passed in, then attempt to find an aggregate for
 	 * that specific type.
 	 *
-	 * else if the basetype is blank, then attempt to find an aggregate with
-	 * a basetype of zero.	This is valid. It means that the aggregate is
-	 * to apply to all basetypes (eg, COUNT).
+	 * else attempt to find an aggregate with a basetype of ANYOID.
+	 * This means that the aggregate is to apply to all basetypes (eg, COUNT).
 	 */
 	if (aggType)
 		basetypeID = typenameTypeId(aggType);
 	else
-		basetypeID = InvalidOid;
+		basetypeID = ANYOID;
 
 	procOid = find_aggregate_func("RemoveAggregate", aggName, basetypeID);
 

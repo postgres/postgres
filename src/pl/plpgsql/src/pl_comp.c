@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.46 2002/08/15 16:36:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.47 2002/08/22 00:01:50 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -212,15 +212,25 @@ plpgsql_compile(Oid fn_oid, int functype)
 								ObjectIdGetDatum(procStruct->prorettype),
 									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
-			{
-				if (!OidIsValid(procStruct->prorettype))
-					elog(ERROR, "plpgsql functions cannot return type \"opaque\""
-						 "\n\texcept when used as triggers");
-				else
-					elog(ERROR, "cache lookup for return type %u failed",
-						 procStruct->prorettype);
-			}
+				elog(ERROR, "cache lookup for return type %u failed",
+					 procStruct->prorettype);
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
+			/* Disallow pseudotype result, except VOID */
+			if (typeStruct->typtype == 'p')
+			{
+				if (procStruct->prorettype == VOIDOID)
+					/* okay */;
+				else if (procStruct->prorettype == TRIGGEROID ||
+						 procStruct->prorettype == OPAQUEOID)
+					elog(ERROR, "plpgsql functions cannot return type %s"
+						 "\n\texcept when used as triggers",
+						 format_type_be(procStruct->prorettype));
+				else
+					elog(ERROR, "plpgsql functions cannot return type %s",
+						 format_type_be(procStruct->prorettype));
+			}
+
 			if (typeStruct->typrelid != InvalidOid)
 				function->fn_retistuple = true;
 			else
@@ -248,14 +258,14 @@ plpgsql_compile(Oid fn_oid, int functype)
 							ObjectIdGetDatum(procStruct->proargtypes[i]),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
-				{
-					if (!OidIsValid(procStruct->proargtypes[i]))
-						elog(ERROR, "plpgsql functions cannot take type \"opaque\"");
-					else
-						elog(ERROR, "cache lookup for argument type %u failed",
-							 procStruct->proargtypes[i]);
-				}
+					elog(ERROR, "cache lookup for argument type %u failed",
+						 procStruct->proargtypes[i]);
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
+				/* Disallow pseudotype argument */
+				if (typeStruct->typtype == 'p')
+					elog(ERROR, "plpgsql functions cannot take type %s",
+						 format_type_be(procStruct->proargtypes[i]));
 
 				if (typeStruct->typrelid != InvalidOid)
 				{

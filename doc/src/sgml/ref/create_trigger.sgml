@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.26 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.27 2002/08/22 00:01:40 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -66,7 +66,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       <listitem>
        <para>
 	A user-supplied function that is declared as taking no arguments
-	and returning type <literal>opaque</>.
+	and returning type <literal>trigger</>.
        </para>
       </listitem>
      </varlistentry>
@@ -165,6 +165,14 @@ CREATE TRIGGER
   <para>
    To create a trigger on a table, the user must have the
    <literal>TRIGGER</literal> privilege on the table.
+  </para>
+
+  <para>
+   In <productname>PostgreSQL</productname> versions before 7.3, it was
+   necessary to declare trigger functions as returning the placeholder
+   type <type>opaque</>, rather than <type>trigger</>.  This is still
+   supported, but is deprecated because it is obscure and causes loss of
+   type safety.
   </para>
 
   <para>

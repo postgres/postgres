@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for ISSNs.
 --
---	$Id: isbn_issn.sql.in,v 1.5 2002/07/30 17:34:37 tgl Exp $
+--	$Id: isbn_issn.sql.in,v 1.6 2002/08/22 00:01:39 tgl Exp $
 --
 
 -- Adjust this setting to control where the objects get created.
@@ -12,13 +12,13 @@ SET search_path = public;
 --	Input and output functions and the type itself:
 --
 
-create function issn_in(opaque)
-	returns opaque
+create function issn_in(cstring)
+	returns issn
 	as 'MODULE_PATHNAME'
 	language 'c';
 
-create function issn_out(opaque)
-	returns opaque
+create function issn_out(issn)
+	returns cstring
 	as 'MODULE_PATHNAME'
 	language 'c';
 
@@ -123,19 +123,19 @@ create operator <> (
 --
 --	PostgreSQL code for ISBNs.
 --
---	$Id: isbn_issn.sql.in,v 1.5 2002/07/30 17:34:37 tgl Exp $
+--	$Id: isbn_issn.sql.in,v 1.6 2002/08/22 00:01:39 tgl Exp $
 --
 --
 --	Input and output functions and the type itself:
 --
 
-create function isbn_in(opaque)
-	returns opaque
+create function isbn_in(cstring)
+	returns isbn
 	as 'MODULE_PATHNAME'
 	language 'c';
 
-create function isbn_out(opaque)
-	returns opaque
+create function isbn_out(isbn)
+	returns cstring
 	as 'MODULE_PATHNAME'
 	language 'c';
 

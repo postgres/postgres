@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.17 2002/01/07 02:29:14 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.18 2002/08/22 00:01:40 tgl Exp $
 -->
 
  <chapter id="xplang">
@@ -82,10 +82,10 @@ createlang plpgsql template1
       The handler must be declared with the command
 <synopsis>
 CREATE FUNCTION <replaceable>handler_function_name</replaceable> ()
-    RETURNS OPAQUE AS
+    RETURNS LANGUAGE_HANDLER AS
     '<replaceable>path-to-shared-object</replaceable>' LANGUAGE C;
 </synopsis>
-      The special return type of <type>OPAQUE</type> tells
+      The special return type of <type>LANGUAGE_HANDLER</type> tells
       the database that this function does not return one of
       the defined <acronym>SQL</acronym> data types and is not directly usable
       in <acronym>SQL</acronym> statements.
@@ -140,7 +140,7 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <re
       shared object for the <application>PL/pgSQL</application> language's call handler function.
 
 <programlisting>
-CREATE FUNCTION plpgsql_call_handler () RETURNS OPAQUE AS
+CREATE FUNCTION plpgsql_call_handler () RETURNS LANGUAGE_HANDLER AS
     '$libdir/plpgsql' LANGUAGE C;
 </programlisting>
      </para>

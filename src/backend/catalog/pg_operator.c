@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.75 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.76 2002/08/22 00:01:41 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -464,9 +464,9 @@ OperatorCreate(const char *operatorName,
 	if (restrictionName)
 	{
 		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
-		typeId[0] = 0;			/* Query (opaque type) */
+		typeId[0] = INTERNALOID;	/* Query */
 		typeId[1] = OIDOID;		/* operator OID */
-		typeId[2] = 0;			/* args list (opaque type) */
+		typeId[2] = INTERNALOID;	/* args list */
 		typeId[3] = INT4OID;	/* varRelid */
 
 		restOid = LookupFuncName(restrictionName, 4, typeId);
@@ -482,9 +482,9 @@ OperatorCreate(const char *operatorName,
 	if (joinName)
 	{
 		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
-		typeId[0] = 0;			/* Query (opaque type) */
+		typeId[0] = INTERNALOID;	/* Query */
 		typeId[1] = OIDOID;		/* operator OID */
-		typeId[2] = 0;			/* args list (opaque type) */
+		typeId[2] = INTERNALOID;	/* args list */
 
 		joinOid = LookupFuncName(joinName, 3, typeId);
 		if (!OidIsValid(joinOid))

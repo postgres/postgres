@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.23 2002/04/19 16:36:08 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.24 2002/08/22 00:01:40 tgl Exp $
 -->
 
  <chapter id="triggers">
@@ -26,7 +26,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.23 2002/04/19 16:36:08 tgl
    <para>
     The trigger function must be defined before the trigger itself can be
     created.  The trigger function must be declared as a 
-    function taking no arguments and returning type <literal>opaque</>.
+    function taking no arguments and returning type <literal>trigger</>.
     (The trigger function receives its input through a TriggerData
     structure, not in the form of ordinary function arguments.)
     If the function is written in C, it must use the <quote>version 1</>
@@ -536,7 +536,7 @@ trigf(PG_FUNCTION_ARGS)
     Now, compile and create the trigger function:
 
     <programlisting>
-CREATE FUNCTION trigf () RETURNS OPAQUE AS 
+CREATE FUNCTION trigf () RETURNS TRIGGER AS 
 '...path_to_so' LANGUAGE 'C';
 
 CREATE TABLE ttest (x int4);

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.62 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.63 2002/08/22 00:01:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,10 +17,10 @@
 
 #include "access/heapam.h"
 #include "access/printtup.h"
-#include "catalog/pg_type.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-#include "utils/syscache.h"
+#include "utils/lsyscache.h"
+
 
 static void printtup_setup(DestReceiver *self, int operation,
 						   const char *portalName, TupleDesc typeinfo);
@@ -32,31 +32,6 @@ static void printtup_cleanup(DestReceiver *self);
  *		printtup / debugtup support
  * ----------------------------------------------------------------
  */
-
-/* ----------------
- *		getTypeOutputInfo -- get info needed for printing values of a type
- * ----------------
- */
-bool
-getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
-				  bool *typIsVarlena)
-{
-	HeapTuple	typeTuple;
-	Form_pg_type pt;
-
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(type),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "getTypeOutputInfo: Cache lookup of type %u failed", type);
-	pt = (Form_pg_type) GETSTRUCT(typeTuple);
-
-	*typOutput = pt->typoutput;
-	*typElem = pt->typelem;
-	*typIsVarlena = (!pt->typbyval) && (pt->typlen == -1);
-	ReleaseSysCache(typeTuple);
-	return OidIsValid(*typOutput);
-}
 
 /* ----------------
  *		Private state for a printtup destination object

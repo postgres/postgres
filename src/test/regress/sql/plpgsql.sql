@@ -107,7 +107,7 @@ create unique index PHone_name on PHone using btree (slotname bpchar_ops);
 -- * AFTER UPDATE on Room
 -- *	- If room no changes let wall slots follow
 -- ************************************************************
-create function tg_room_au() returns opaque as '
+create function tg_room_au() returns trigger as '
 begin
     if new.roomno != old.roomno then
         update WSlot set roomno = new.roomno where roomno = old.roomno;
@@ -124,7 +124,7 @@ create trigger tg_room_au after update
 -- * AFTER DELETE on Room
 -- *	- delete wall slots in this room
 -- ************************************************************
-create function tg_room_ad() returns opaque as '
+create function tg_room_ad() returns trigger as '
 begin
     delete from WSlot where roomno = old.roomno;
     return old;
@@ -139,7 +139,7 @@ create trigger tg_room_ad after delete
 -- * BEFORE INSERT or UPDATE on WSlot
 -- *	- Check that room exists
 -- ************************************************************
-create function tg_wslot_biu() returns opaque as '
+create function tg_wslot_biu() returns trigger as '
 begin
     if count(*) = 0 from Room where roomno = new.roomno then
         raise exception ''Room % does not exist'', new.roomno;
@@ -156,7 +156,7 @@ create trigger tg_wslot_biu before insert or update
 -- * AFTER UPDATE on PField
 -- *	- Let PSlots of this field follow
 -- ************************************************************
-create function tg_pfield_au() returns opaque as '
+create function tg_pfield_au() returns trigger as '
 begin
     if new.name != old.name then
         update PSlot set pfname = new.name where pfname = old.name;
@@ -173,7 +173,7 @@ create trigger tg_pfield_au after update
 -- * AFTER DELETE on PField
 -- *	- Remove all slots of this patchfield
 -- ************************************************************
-create function tg_pfield_ad() returns opaque as '
+create function tg_pfield_ad() returns trigger as '
 begin
     delete from PSlot where pfname = old.name;
     return old;
@@ -188,7 +188,7 @@ create trigger tg_pfield_ad after delete
 -- * BEFORE INSERT or UPDATE on PSlot
 -- *	- Ensure that our patchfield does exist
 -- ************************************************************
-create function tg_pslot_biu() returns opaque as '
+create function tg_pslot_biu() returns trigger as '
 declare
     pfrec	record;
     rename new to ps;
@@ -209,7 +209,7 @@ create trigger tg_pslot_biu before insert or update
 -- * AFTER UPDATE on System
 -- *	- If system name changes let interfaces follow
 -- ************************************************************
-create function tg_system_au() returns opaque as '
+create function tg_system_au() returns trigger as '
 begin
     if new.name != old.name then
         update IFace set sysname = new.name where sysname = old.name;
@@ -226,7 +226,7 @@ create trigger tg_system_au after update
 -- * BEFORE INSERT or UPDATE on IFace
 -- *	- set the slotname to IF.sysname.ifname
 -- ************************************************************
-create function tg_iface_biu() returns opaque as '
+create function tg_iface_biu() returns trigger as '
 declare
     sname	text;
     sysrec	record;
@@ -254,7 +254,7 @@ create trigger tg_iface_biu before insert or update
 -- * AFTER INSERT or UPDATE or DELETE on Hub
 -- *	- insert/delete/rename slots as required
 -- ************************************************************
-create function tg_hub_a() returns opaque as '
+create function tg_hub_a() returns trigger as '
 declare
     hname	text;
     dummy	integer;
@@ -312,7 +312,7 @@ end;
 -- *	- prevent from manual manipulation
 -- *	- set the slotname to HS.hubname.slotno
 -- ************************************************************
-create function tg_hslot_biu() returns opaque as '
+create function tg_hslot_biu() returns trigger as '
 declare
     sname	text;
     xname	HSlot.slotname%TYPE;
@@ -351,7 +351,7 @@ create trigger tg_hslot_biu before insert or update
 -- * BEFORE DELETE on HSlot
 -- *	- prevent from manual manipulation
 -- ************************************************************
-create function tg_hslot_bd() returns opaque as '
+create function tg_hslot_bd() returns trigger as '
 declare
     hubrec	record;
 begin
@@ -374,7 +374,7 @@ create trigger tg_hslot_bd before delete
 -- * BEFORE INSERT on all slots
 -- *	- Check name prefix
 -- ************************************************************
-create function tg_chkslotname() returns opaque as '
+create function tg_chkslotname() returns trigger as '
 begin
     if substr(new.slotname, 1, 2) != tg_argv[0] then
         raise exception ''slotname must begin with %'', tg_argv[0];
@@ -403,7 +403,7 @@ create trigger tg_chkslotname before insert
 -- * BEFORE INSERT or UPDATE on all slots with slotlink
 -- *	- Set slotlink to empty string if NULL value given
 -- ************************************************************
-create function tg_chkslotlink() returns opaque as '
+create function tg_chkslotlink() returns trigger as '
 begin
     if new.slotlink isnull then
         new.slotlink := '''';
@@ -432,7 +432,7 @@ create trigger tg_chkslotlink before insert or update
 -- * BEFORE INSERT or UPDATE on all slots with backlink
 -- *	- Set backlink to empty string if NULL value given
 -- ************************************************************
-create function tg_chkbacklink() returns opaque as '
+create function tg_chkbacklink() returns trigger as '
 begin
     if new.backlink isnull then
         new.backlink := '''';
@@ -455,7 +455,7 @@ create trigger tg_chkbacklink before insert or update
 -- * BEFORE UPDATE on PSlot
 -- *	- do delete/insert instead of update if name changes
 -- ************************************************************
-create function tg_pslot_bu() returns opaque as '
+create function tg_pslot_bu() returns trigger as '
 begin
     if new.slotname != old.slotname then
         delete from PSlot where slotname = old.slotname;
@@ -484,7 +484,7 @@ create trigger tg_pslot_bu before update
 -- * BEFORE UPDATE on WSlot
 -- *	- do delete/insert instead of update if name changes
 -- ************************************************************
-create function tg_wslot_bu() returns opaque as '
+create function tg_wslot_bu() returns trigger as '
 begin
     if new.slotname != old.slotname then
         delete from WSlot where slotname = old.slotname;
@@ -513,7 +513,7 @@ create trigger tg_wslot_bu before update
 -- * BEFORE UPDATE on PLine
 -- *	- do delete/insert instead of update if name changes
 -- ************************************************************
-create function tg_pline_bu() returns opaque as '
+create function tg_pline_bu() returns trigger as '
 begin
     if new.slotname != old.slotname then
         delete from PLine where slotname = old.slotname;
@@ -542,7 +542,7 @@ create trigger tg_pline_bu before update
 -- * BEFORE UPDATE on IFace
 -- *	- do delete/insert instead of update if name changes
 -- ************************************************************
-create function tg_iface_bu() returns opaque as '
+create function tg_iface_bu() returns trigger as '
 begin
     if new.slotname != old.slotname then
         delete from IFace where slotname = old.slotname;
@@ -571,7 +571,7 @@ create trigger tg_iface_bu before update
 -- * BEFORE UPDATE on HSlot
 -- *	- do delete/insert instead of update if name changes
 -- ************************************************************
-create function tg_hslot_bu() returns opaque as '
+create function tg_hslot_bu() returns trigger as '
 begin
     if new.slotname != old.slotname or new.hubname != old.hubname then
         delete from HSlot where slotname = old.slotname;
@@ -600,7 +600,7 @@ create trigger tg_hslot_bu before update
 -- * BEFORE UPDATE on PHone
 -- *	- do delete/insert instead of update if name changes
 -- ************************************************************
-create function tg_phone_bu() returns opaque as '
+create function tg_phone_bu() returns trigger as '
 begin
     if new.slotname != old.slotname then
         delete from PHone where slotname = old.slotname;
@@ -627,7 +627,7 @@ create trigger tg_phone_bu before update
 -- * AFTER INSERT or UPDATE or DELETE on slot with backlink
 -- *	- Ensure that the opponent correctly points back to us
 -- ************************************************************
-create function tg_backlink_a() returns opaque as '
+create function tg_backlink_a() returns trigger as '
 declare
     dummy	integer;
 begin
@@ -781,7 +781,7 @@ end;
 -- * AFTER INSERT or UPDATE or DELETE on slot with slotlink
 -- *	- Ensure that the opponent correctly points back to us
 -- ************************************************************
-create function tg_slotlink_a() returns opaque as '
+create function tg_slotlink_a() returns trigger as '
 declare
     dummy	integer;
 begin

@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.59 2002/07/20 05:16:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.60 2002/08/22 00:01:50 tgl Exp $
  *
  **********************************************************************/
 
@@ -1051,14 +1051,33 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 			{
 				free(prodesc->proname);
 				free(prodesc);
-				if (!OidIsValid(procStruct->prorettype))
-					elog(ERROR, "pltcl functions cannot return type \"opaque\""
-						 "\n\texcept when used as triggers");
-				else
-					elog(ERROR, "pltcl: cache lookup for return type %u failed",
-						 procStruct->prorettype);
+				elog(ERROR, "pltcl: cache lookup for return type %u failed",
+					 procStruct->prorettype);
 			}
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
+			/* Disallow pseudotype result, except VOID */
+			if (typeStruct->typtype == 'p')
+			{
+				if (procStruct->prorettype == VOIDOID)
+					/* okay */;
+				else if (procStruct->prorettype == TRIGGEROID ||
+						 procStruct->prorettype == OPAQUEOID)
+				{
+					free(prodesc->proname);
+					free(prodesc);
+					elog(ERROR, "pltcl functions cannot return type %s"
+						 "\n\texcept when used as triggers",
+						 format_type_be(procStruct->prorettype));
+				}
+				else
+				{
+					free(prodesc->proname);
+					free(prodesc);
+					elog(ERROR, "pltcl functions cannot return type %s",
+						 format_type_be(procStruct->prorettype));
+				}
+			}
 
 			if (typeStruct->typrelid != InvalidOid)
 			{
@@ -1090,13 +1109,19 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 				{
 					free(prodesc->proname);
 					free(prodesc);
-					if (!OidIsValid(procStruct->proargtypes[i]))
-						elog(ERROR, "pltcl functions cannot take type \"opaque\"");
-					else
-						elog(ERROR, "pltcl: cache lookup for argument type %u failed",
-							 procStruct->proargtypes[i]);
+					elog(ERROR, "pltcl: cache lookup for argument type %u failed",
+						 procStruct->proargtypes[i]);
 				}
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
+				/* Disallow pseudotype argument */
+				if (typeStruct->typtype == 'p')
+				{
+					free(prodesc->proname);
+					free(prodesc);
+					elog(ERROR, "pltcl functions cannot take type %s",
+						 format_type_be(procStruct->proargtypes[i]));
+				}
 
 				if (typeStruct->typrelid != InvalidOid)
 				{

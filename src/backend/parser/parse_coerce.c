@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.79 2002/07/20 05:29:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.80 2002/08/22 00:01:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 	Node	   *result;
 
 	if (targetTypeId == inputTypeId ||
-		targetTypeId == InvalidOid ||
 		node == NULL)
 	{
 		/* no conversion needed, but constraints may need to be applied */
@@ -96,6 +95,12 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		result = (Node *) newcon;
 		if (targetTypeId != baseTypeId)
 			result = (Node *) TypeConstraints(result, targetTypeId);
+	}
+	else if (targetTypeId == ANYOID ||
+			 targetTypeId == ANYARRAYOID)
+	{
+		/* assume can_coerce_type verified that implicit coercion is okay */
+		result = node;
 	}
 	else if (IsBinaryCompatible(inputTypeId, targetTypeId))
 	{
@@ -213,18 +218,10 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
 		if (inputTypeId == targetTypeId)
 			continue;
 
-		/*
-		 * one of the known-good transparent conversions? then drop
-		 * through...
-		 */
-		if (IsBinaryCompatible(inputTypeId, targetTypeId))
-			continue;
-
-		/* don't know what to do for the output type? then quit... */
-		if (targetTypeId == InvalidOid)
+		/* don't choke on references to no-longer-existing types */
+		if (!typeidIsValid(inputTypeId))
 			return false;
-		/* don't know what to do for the input type? then quit... */
-		if (inputTypeId == InvalidOid)
+		if (!typeidIsValid(targetTypeId))
 			return false;
 
 		/*
@@ -238,17 +235,43 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
 			continue;
 		}
 
+		/* accept if target is ANY */
+		if (targetTypeId == ANYOID)
+			continue;
+
+		/* if target is ANYARRAY and source is a varlena array type, accept */
+		if (targetTypeId == ANYARRAYOID)
+		{
+			Oid typOutput;
+			Oid typElem;
+			bool typIsVarlena;
+
+			if (getTypeOutputInfo(inputTypeId, &typOutput, &typElem,
+								  &typIsVarlena))
+			{
+				if (OidIsValid(typElem) && typIsVarlena)
+					continue;
+			}
+			/*
+			 * Otherwise reject; this assumes there are no explicit coercions
+			 * to ANYARRAY.  If we don't reject then parse_coerce would have
+			 * to repeat the above test.
+			 */
+			return false;
+		}
+
+		/*
+		 * one of the known-good transparent conversions? then drop
+		 * through...
+		 */
+		if (IsBinaryCompatible(inputTypeId, targetTypeId))
+			continue;
+
 		/*
 		 * If input is a class type that inherits from target, no problem
 		 */
 		if (typeInheritsFrom(inputTypeId, targetTypeId))
 			continue;
-
-		/* don't choke on references to no-longer-existing types */
-		if (!typeidIsValid(inputTypeId))
-			return false;
-		if (!typeidIsValid(targetTypeId))
-			return false;
 
 		/*
 		 * Else, try for run-time conversion using functions: look for a

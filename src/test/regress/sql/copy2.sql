@@ -6,14 +6,14 @@ CREATE TABLE x (
 	e text
 );
 
-CREATE FUNCTION fn_x_before () RETURNS OPAQUE AS '
+CREATE FUNCTION fn_x_before () RETURNS TRIGGER AS '
   BEGIN
 		NEW.e := ''before trigger fired''::text;
 		return NEW;
 	END;
 ' language 'plpgsql';
 
-CREATE FUNCTION fn_x_after () RETURNS OPAQUE AS '
+CREATE FUNCTION fn_x_after () RETURNS TRIGGER AS '
   BEGIN
 		UPDATE x set e=''after trigger fired'' where c=''stuff'';
 		return NULL;

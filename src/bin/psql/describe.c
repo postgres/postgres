@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.62 2002/08/16 23:01:19 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.63 2002/08/22 00:01:47 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -68,13 +68,14 @@ describeAggregates(const char *pattern, bool verbose)
 
 	/*
 	 * There are two kinds of aggregates: ones that work on particular
-	 * types and ones that work on all (denoted by input type = 0)
+	 * types and ones that work on all (denoted by input type = "any")
 	 */
 	printfPQExpBuffer(&buf,
 			 "SELECT n.nspname as \"%s\",\n"
 			 "  p.proname AS \"%s\",\n"
 			 "  CASE p.proargtypes[0]\n"
-			 "    WHEN 0 THEN CAST('%s' AS pg_catalog.text)\n"
+			 "    WHEN 'pg_catalog.\"any\"'::pg_catalog.regtype\n"
+			 "    THEN CAST('%s' AS pg_catalog.text)\n"
 			 "    ELSE pg_catalog.format_type(p.proargtypes[0], NULL)\n"
 			 "  END AS \"%s\",\n"
 			 "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"\n"
@@ -146,12 +147,11 @@ describeFunctions(const char *pattern, bool verbose)
 			   "\n     LEFT JOIN pg_catalog.pg_user u ON u.usesysid = p.proowner\n");
 
 	/*
-	 * we skip in/out funcs by excluding functions that take some
-	 * arguments, but have no types defined for those arguments
+	 * we skip in/out funcs by excluding functions that take or return cstring
 	 */
 	appendPQExpBuffer(&buf,
-					  "WHERE p.prorettype <> 0\n"
-					  "      AND (p.pronargs = 0 OR pg_catalog.oidvectortypes(p.proargtypes) <> '')\n"
+					  "WHERE p.prorettype <> 'pg_catalog.cstring'::pg_catalog.regtype\n"
+					  "      AND p.proargtypes[0] <> 'pg_catalog.cstring'::pg_catalog.regtype\n"
 					  "      AND NOT p.proisagg\n");
 
 	processNamePattern(&buf, pattern, true, false,
@@ -436,7 +436,10 @@ objectDescription(const char *pattern)
 			 "  CAST('%s' AS pg_catalog.text) as object\n"
 			 "  FROM pg_catalog.pg_proc p\n"
 			 "       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
-		"  WHERE (p.pronargs = 0 or pg_catalog.oidvectortypes(p.proargtypes) <> '') AND NOT p.proisagg\n",
+
+			 "  WHERE p.prorettype <> 'pg_catalog.cstring'::pg_catalog.regtype\n"
+			 "      AND p.proargtypes[0] <> 'pg_catalog.cstring'::pg_catalog.regtype\n"
+			 "      AND NOT p.proisagg\n",
 			 _("function"));
 	processNamePattern(&buf, pattern, true, false,
 					   "n.nspname", "p.proname", NULL,

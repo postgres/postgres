@@ -128,13 +128,13 @@ complex_out(Complex *complex)
   <function>complex_out</function> before creating the type:
 
 <programlisting>
-CREATE FUNCTION complex_in(opaque)
+CREATE FUNCTION complex_in(cstring)
     RETURNS complex
     AS '<replaceable>PGROOT</replaceable>/tutorial/complex'
     LANGUAGE C;
 
-CREATE FUNCTION complex_out(opaque)
-    RETURNS opaque
+CREATE FUNCTION complex_out(complex)
+    RETURNS cstring
     AS '<replaceable>PGROOT</replaceable>/tutorial/complex'
     LANGUAGE C;
 </programlisting>
@@ -149,6 +149,10 @@ CREATE TYPE complex (
     output = complex_out
 );
 </programlisting>
+
+  Notice that the declarations of the input and output functions must
+  reference the not-yet-defined type.  This is allowed, but will draw
+  warning messages that may be ignored.
  </para>
 
  <para>

@@ -5,13 +5,13 @@ BEGIN TRANSACTION;
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-CREATE FUNCTION cube_in(opaque)
-RETURNS opaque
+CREATE FUNCTION cube_in(cstring)
+RETURNS cube
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' WITH (isStrict);
 
-CREATE FUNCTION cube_out(opaque)
-RETURNS opaque
+CREATE FUNCTION cube_out(cube)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' WITH (isStrict);
 
@@ -192,25 +192,25 @@ CREATE OPERATOR ~ (
 
 
 -- define the GiST support methods
-CREATE FUNCTION g_cube_consistent(opaque,cube,int4) RETURNS bool
+CREATE FUNCTION g_cube_consistent(internal,cube,int4) RETURNS bool
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_cube_compress(opaque) RETURNS opaque 
+CREATE FUNCTION g_cube_compress(internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_cube_decompress(opaque) RETURNS opaque 
+CREATE FUNCTION g_cube_decompress(internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_cube_penalty(opaque,opaque,opaque) RETURNS opaque
+CREATE FUNCTION g_cube_penalty(internal,internal,internal) RETURNS internal
 	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION g_cube_picksplit(opaque, opaque) RETURNS opaque
+CREATE FUNCTION g_cube_picksplit(internal, internal) RETURNS internal
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_cube_union(bytea, opaque) RETURNS cube 
+CREATE FUNCTION g_cube_union(bytea, internal) RETURNS cube 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_cube_same(cube, cube, opaque) RETURNS opaque 
+CREATE FUNCTION g_cube_same(cube, cube, internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 
@@ -226,13 +226,13 @@ CREATE OPERATOR CLASS gist_cube_ops
 	OPERATOR	6	= ,
 	OPERATOR	7	@ ,
 	OPERATOR	8	~ ,
-	FUNCTION	1	g_cube_consistent (opaque, cube, int4),
-	FUNCTION	2	g_cube_union (bytea, opaque),
-	FUNCTION	3	g_cube_compress (opaque),
-	FUNCTION	4	g_cube_decompress (opaque),
-	FUNCTION	5	g_cube_penalty (opaque, opaque, opaque),
-	FUNCTION	6	g_cube_picksplit (opaque, opaque),
-	FUNCTION	7	g_cube_same (cube, cube, opaque);
+	FUNCTION	1	g_cube_consistent (internal, cube, int4),
+	FUNCTION	2	g_cube_union (bytea, internal),
+	FUNCTION	3	g_cube_compress (internal),
+	FUNCTION	4	g_cube_decompress (internal),
+	FUNCTION	5	g_cube_penalty (internal, internal, internal),
+	FUNCTION	6	g_cube_picksplit (internal, internal),
+	FUNCTION	7	g_cube_same (cube, cube, internal);
 
 
 END TRANSACTION;

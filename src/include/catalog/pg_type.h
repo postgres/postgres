@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.127 2002/08/05 02:30:50 tgl Exp $
+ * $Id: pg_type.h,v 1.128 2002/08/22 00:01:48 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -505,13 +505,30 @@ DATA(insert OID = 2211 ( _regtype      PGNSP PGUID -1 f b t \054 0 2206 array_in
 /*
  * pseudo-types 
  *
- * types with typtype='p' are special types that represent classes of types
- * that are not easily defined in advance. Currently there is only one pseudo
- * type -- record. The record type is used to specify that the value is a
- * tuple, but of unknown structure until runtime. 
+ * types with typtype='p' represent various special cases in the type system.
+ *
+ * These cannot be used to define table columns, but are valid as function
+ * argument and result types (if supported by the function's implementation
+ * language).
  */
-DATA(insert OID = 2249 ( record        PGNSP PGUID  4 t p t \054 0 0 oidin oidout          i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2249 ( record			PGNSP PGUID  4 t p t \054 0 0 record_in record_out	i p f 0 -1 0 _null_ _null_ ));
 #define RECORDOID		2249
+DATA(insert OID = 2275 ( cstring		PGNSP PGUID  4 t p t \054 0 0 cstring_in cstring_out	i p f 0 -1 0 _null_ _null_ ));
+#define CSTRINGOID		2275
+DATA(insert OID = 2276 ( any			PGNSP PGUID  4 t p t \054 0 0 any_in any_out	i p f 0 -1 0 _null_ _null_ ));
+#define ANYOID			2276
+DATA(insert OID = 2277 ( anyarray		PGNSP PGUID  4 t p t \054 0 0 anyarray_in anyarray_out	i p f 0 -1 0 _null_ _null_ ));
+#define ANYARRAYOID		2277
+DATA(insert OID = 2278 ( void			PGNSP PGUID  4 t p t \054 0 0 void_in void_out	i p f 0 -1 0 _null_ _null_ ));
+#define VOIDOID			2278
+DATA(insert OID = 2279 ( trigger		PGNSP PGUID  4 t p t \054 0 0 trigger_in trigger_out	i p f 0 -1 0 _null_ _null_ ));
+#define TRIGGEROID		2279
+DATA(insert OID = 2280 ( language_handler	PGNSP PGUID  4 t p t \054 0 0 language_handler_in language_handler_out	i p f 0 -1 0 _null_ _null_ ));
+#define LANGUAGE_HANDLEROID		2280
+DATA(insert OID = 2281 ( internal		PGNSP PGUID  4 t p t \054 0 0 internal_in internal_out	i p f 0 -1 0 _null_ _null_ ));
+#define INTERNALOID		2281
+DATA(insert OID = 2282 ( opaque			PGNSP PGUID  4 t p t \054 0 0 opaque_in opaque_out	i p f 0 -1 0 _null_ _null_ ));
+#define OPAQUEOID		2282
 
 /*
  * prototypes for functions in pg_type.c

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.1 2002/07/29 22:14:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.2 2002/08/22 00:01:40 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -260,13 +260,13 @@ CREATE OPERATOR CLASS gist__int_ops
         OPERATOR        7       @,
         OPERATOR        8       ~,
         OPERATOR        20      @@ (_int4, query_int),
-        FUNCTION        1       g_int_consistent (opaque, _int4, int4),
-        FUNCTION        2       g_int_union (bytea, opaque),
-        FUNCTION        3       g_int_compress (opaque),
-        FUNCTION        4       g_int_decompress (opaque),
-        FUNCTION        5       g_int_penalty (opaque, opaque, opaque),
-        FUNCTION        6       g_int_picksplit (opaque, opaque),
-        FUNCTION        7       g_int_same (_int4, _int4, opaque);
+        FUNCTION        1       g_int_consistent (internal, _int4, int4),
+        FUNCTION        2       g_int_union (bytea, internal),
+        FUNCTION        3       g_int_compress (internal),
+        FUNCTION        4       g_int_decompress (internal),
+        FUNCTION        5       g_int_penalty (internal, internal, internal),
+        FUNCTION        6       g_int_picksplit (internal, internal),
+        FUNCTION        7       g_int_same (_int4, _int4, internal);
   </programlisting>  
 
   <para>

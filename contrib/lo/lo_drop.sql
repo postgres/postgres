@@ -6,16 +6,10 @@
 -- remove our test table
 drop table a;
 
--- now drop any sql based functions associated with the lo type
-drop function oid(lo);
+-- now drop the type and associated C functions
+drop type lo CASCADE;
 
--- now drop the type
-drop type lo;
-
--- as the type is gone, remove the C based functions
-drop function lo_in(opaque);
-drop function lo_out(opaque);
-drop function lo(oid);
+-- the trigger function has no dependency on the type, so drop separately
 drop function lo_manage();
 
 -- the lo stuff is now removed from the system

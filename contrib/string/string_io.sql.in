@@ -9,21 +9,21 @@
 
 -- Define the new output functions.
 --
-create function c_charout(opaque) returns int4
+create function c_charout(bpchar) returns cstring
   as 'MODULE_PATHNAME' 
   language 'c';
 
-create function c_textout(opaque) returns int4
+create function c_textout(text) returns cstring
   as 'MODULE_PATHNAME' 
   language 'c';
 
-create function c_varcharout(opaque) returns int4
+create function c_varcharout(varchar) returns cstring
   as 'MODULE_PATHNAME' 
   language 'c';
 
 -- This is not needed because escapes are handled by the parser
 --
--- create function c_textin(opaque)
+-- create function c_textin(cstring)
 --   returns text
 --   as 'MODULE_PATHNAME' 
 --   language 'c';

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: printtup.h,v 1.20 2002/06/20 20:29:43 momjian Exp $
+ * $Id: printtup.h,v 1.21 2002/08/22 00:01:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,5 @@ extern void debugtup(HeapTuple tuple, TupleDesc typeinfo,
 /* XXX this one is really in executor/spi.c */
 extern void spi_printtup(HeapTuple tuple, TupleDesc tupdesc,
 			 DestReceiver *self);
-
-extern bool getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
-				  bool *typIsVarlena);
 
 #endif   /* PRINTTUP_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.134 2002/08/08 01:44:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.135 2002/08/22 00:01:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1264,10 +1264,7 @@ func_error(const char *caller, List *funcname,
 	{
 		if (i)
 			appendStringInfo(&argbuf, ", ");
-		if (OidIsValid(argtypes[i]))
-			appendStringInfo(&argbuf, format_type_be(argtypes[i]));
-		else
-			appendStringInfo(&argbuf, "opaque");
+		appendStringInfo(&argbuf, format_type_be(argtypes[i]));
 	}
 
 	if (caller == NULL)
@@ -1289,7 +1286,7 @@ func_error(const char *caller, List *funcname,
  *		Convenience routine to check that a function exists and is an
  *		aggregate.
  *
- * Note: basetype is InvalidOid if we are looking for an aggregate on
+ * Note: basetype is ANYOID if we are looking for an aggregate on
  * all types.
  */
 Oid
@@ -1303,7 +1300,7 @@ find_aggregate_func(const char *caller, List *aggname, Oid basetype)
 
 	if (!OidIsValid(oid))
 	{
-		if (basetype == InvalidOid)
+		if (basetype == ANYOID)
 			elog(ERROR, "%s: aggregate %s(*) does not exist",
 				 caller, NameListToString(aggname));
 		else
@@ -1322,7 +1319,7 @@ find_aggregate_func(const char *caller, List *aggname, Oid basetype)
 
 	if (!pform->proisagg)
 	{
-		if (basetype == InvalidOid)
+		if (basetype == ANYOID)
 			elog(ERROR, "%s: function %s(*) is not an aggregate",
 				 caller, NameListToString(aggname));
 		else
@@ -1366,12 +1363,9 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes)
  *		Like LookupFuncName, but the argument types are specified by a
  *		list of TypeName nodes.  Also, if we fail to find the function
  *		and caller is not NULL, then an error is reported via func_error.
- *
- * "opaque" is accepted as a typename only if opaqueOK is true.
  */
 Oid
-LookupFuncNameTypeNames(List *funcname, List *argtypes, bool opaqueOK,
-						const char *caller)
+LookupFuncNameTypeNames(List *funcname, List *argtypes, const char *caller)
 {
 	Oid		funcoid;
 	Oid		argoids[FUNC_MAX_ARGS];
@@ -1389,15 +1383,10 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool opaqueOK,
 		TypeName   *t = (TypeName *) lfirst(argtypes);
 
 		argoids[i] = LookupTypeName(t);
-		if (!OidIsValid(argoids[i]))
-		{
-			char      *typnam = TypeNameToString(t);
 
-			if (opaqueOK && strcmp(typnam, "opaque") == 0)
-				argoids[i] = InvalidOid;
-			else
-				elog(ERROR, "Type \"%s\" does not exist", typnam);
-		}
+		if (!OidIsValid(argoids[i]))
+			elog(ERROR, "Type \"%s\" does not exist",
+				 TypeNameToString(t));
 
 		argtypes = lnext(argtypes);
 	}

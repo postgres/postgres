@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.193 2002/08/20 04:46:00 momjian Exp $
+ * $Id: builtins.h,v 1.194 2002/08/22 00:01:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,8 +93,6 @@ extern Datum int2out(PG_FUNCTION_ARGS);
 extern Datum int2vectorin(PG_FUNCTION_ARGS);
 extern Datum int2vectorout(PG_FUNCTION_ARGS);
 extern Datum int2vectoreq(PG_FUNCTION_ARGS);
-extern Datum int44in(PG_FUNCTION_ARGS);
-extern Datum int44out(PG_FUNCTION_ARGS);
 extern Datum int4in(PG_FUNCTION_ARGS);
 extern Datum int4out(PG_FUNCTION_ARGS);
 extern Datum i2toi4(PG_FUNCTION_ARGS);
@@ -342,6 +340,26 @@ extern Datum oidvectorlt(PG_FUNCTION_ARGS);
 extern Datum oidvectorle(PG_FUNCTION_ARGS);
 extern Datum oidvectorge(PG_FUNCTION_ARGS);
 extern Datum oidvectorgt(PG_FUNCTION_ARGS);
+
+/* pseudotypes.c */
+extern Datum record_in(PG_FUNCTION_ARGS);
+extern Datum record_out(PG_FUNCTION_ARGS);
+extern Datum cstring_in(PG_FUNCTION_ARGS);
+extern Datum cstring_out(PG_FUNCTION_ARGS);
+extern Datum any_in(PG_FUNCTION_ARGS);
+extern Datum any_out(PG_FUNCTION_ARGS);
+extern Datum anyarray_in(PG_FUNCTION_ARGS);
+extern Datum anyarray_out(PG_FUNCTION_ARGS);
+extern Datum void_in(PG_FUNCTION_ARGS);
+extern Datum void_out(PG_FUNCTION_ARGS);
+extern Datum trigger_in(PG_FUNCTION_ARGS);
+extern Datum trigger_out(PG_FUNCTION_ARGS);
+extern Datum language_handler_in(PG_FUNCTION_ARGS);
+extern Datum language_handler_out(PG_FUNCTION_ARGS);
+extern Datum internal_in(PG_FUNCTION_ARGS);
+extern Datum internal_out(PG_FUNCTION_ARGS);
+extern Datum opaque_in(PG_FUNCTION_ARGS);
+extern Datum opaque_out(PG_FUNCTION_ARGS);
 
 /* regexp.c */
 extern Datum nameregexeq(PG_FUNCTION_ARGS);

@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.31 2002/06/15 19:54:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.32 2002/08/22 00:01:49 tgl Exp $
  *
  **********************************************************************/
 
@@ -619,14 +619,33 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			{
 				free(prodesc->proname);
 				free(prodesc);
-				if (!OidIsValid(procStruct->prorettype))
-					elog(ERROR, "plperl functions cannot return type \"opaque\""
-						 "\n\texcept when used as triggers");
-				else
-					elog(ERROR, "plperl: cache lookup for return type %u failed",
-						 procStruct->prorettype);
+				elog(ERROR, "plperl: cache lookup for return type %u failed",
+					 procStruct->prorettype);
 			}
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
+			/* Disallow pseudotype result, except VOID */
+			if (typeStruct->typtype == 'p')
+			{
+				if (procStruct->prorettype == VOIDOID)
+					/* okay */;
+				else if (procStruct->prorettype == TRIGGEROID ||
+						 procStruct->prorettype == OPAQUEOID)
+				{
+					free(prodesc->proname);
+					free(prodesc);
+					elog(ERROR, "plperl functions cannot return type %s"
+						 "\n\texcept when used as triggers",
+						 format_type_be(procStruct->prorettype));
+				}
+				else
+				{
+					free(prodesc->proname);
+					free(prodesc);
+					elog(ERROR, "plperl functions cannot return type %s",
+						 format_type_be(procStruct->prorettype));
+				}
+			}
 
 			if (typeStruct->typrelid != InvalidOid)
 			{
@@ -657,13 +676,19 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				{
 					free(prodesc->proname);
 					free(prodesc);
-					if (!OidIsValid(procStruct->proargtypes[i]))
-						elog(ERROR, "plperl functions cannot take type \"opaque\"");
-					else
-						elog(ERROR, "plperl: cache lookup for argument type %u failed",
-							 procStruct->proargtypes[i]);
+					elog(ERROR, "plperl: cache lookup for argument type %u failed",
+						 procStruct->proargtypes[i]);
 				}
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
+				/* Disallow pseudotype argument */
+				if (typeStruct->typtype == 'p')
+				{
+					free(prodesc->proname);
+					free(prodesc);
+					elog(ERROR, "plperl functions cannot take type %s",
+						 format_type_be(procStruct->proargtypes[i]));
+				}
 
 				if (typeStruct->typrelid != InvalidOid)
 					prodesc->arg_is_rel[i] = 1;

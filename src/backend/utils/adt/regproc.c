@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.72 2002/07/29 22:14:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.73 2002/08/22 00:01:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
 #include "utils/syscache.h"
 
 static void parseNameAndArgTypes(const char *string, const char *caller,
-								 const char *type0_spelling,
+								 bool allowNone,
 								 List **names, int *nargs, Oid *argtypes);
 
 
@@ -260,7 +260,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	 * datatype cannot be used for any system column that needs to receive
 	 * data during bootstrap.
 	 */
-	parseNameAndArgTypes(pro_name_or_oid, "regprocedurein", "opaque",
+	parseNameAndArgTypes(pro_name_or_oid, "regprocedurein", false,
 						 &names, &nargs, argtypes);
 
 	clist = FuncnameGetCandidates(names, nargs);
@@ -325,10 +325,7 @@ format_procedure(Oid procedure_oid)
 
 			if (i > 0)
 				appendStringInfoChar(&buf, ',');
-			if (OidIsValid(thisargtype))
-				appendStringInfo(&buf, "%s", format_type_be(thisargtype));
-			else
-				appendStringInfo(&buf, "opaque");
+			appendStringInfo(&buf, "%s", format_type_be(thisargtype));
 		}
 		appendStringInfoChar(&buf, ')');
 
@@ -584,7 +581,7 @@ regoperatorin(PG_FUNCTION_ARGS)
 	 * datatype cannot be used for any system column that needs to receive
 	 * data during bootstrap.
 	 */
-	parseNameAndArgTypes(opr_name_or_oid, "regoperatorin", "none",
+	parseNameAndArgTypes(opr_name_or_oid, "regoperatorin", true,
 						 &names, &nargs, argtypes);
 	if (nargs == 1)
 		elog(ERROR, "regoperatorin: use NONE to denote the missing argument of a unary operator");
@@ -1036,12 +1033,12 @@ stringToQualifiedNameList(const char *string, const char *caller)
  * the argtypes array should be of size FUNC_MAX_ARGS).  The function or
  * operator name is returned to *names as a List of Strings.
  *
- * If type0_spelling is not NULL, it is a name to be accepted as a
- * placeholder for OID 0.
+ * If allowNone is TRUE, accept "NONE" and return it as InvalidOid (this is
+ * for unary operators).
  */
 static void
 parseNameAndArgTypes(const char *string, const char *caller,
-					 const char *type0_spelling,
+					 bool allowNone,
 					 List **names, int *nargs, Oid *argtypes)
 {
 	char	   *rawname;
@@ -1147,9 +1144,9 @@ parseNameAndArgTypes(const char *string, const char *caller,
 			*ptr2 = '\0';
 		}
 
-		if (type0_spelling && strcasecmp(typename, type0_spelling) == 0)
+		if (allowNone && strcasecmp(typename, "none") == 0)
 		{
-			/* Special case for OPAQUE or NONE */
+			/* Special case for NONE */
 			typeid = InvalidOid;
 			typmod = -1;
 		}

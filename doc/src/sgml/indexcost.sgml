@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.11 2002/03/22 19:20:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.12 2002/08/22 00:01:40 tgl Exp $
 -->
 
  <chapter id="indexcost">
@@ -261,15 +261,8 @@ amcostestimate (Query *root,
   <para>
    By convention, the <literal>pg_proc</literal> entry for an
    <literal>amcostestimate</literal> function should show
-
-   <programlisting>
-prorettype = 0
-pronargs = 8
-proargtypes = 0 0 0 0 0 0 0 0
-   </programlisting>
-
-   We use zero ("opaque") for all the arguments since none of them have types
-   that are known in pg_type.
+   eight arguments all declared as <type>internal</> (since none of them have
+   types that are known to SQL), and the return type is <type>void</>.
   </para>
  </chapter>
 

@@ -4,13 +4,13 @@ begin transaction;
 SET search_path = public;
 
 -- create type of int4 key
-CREATE FUNCTION int4key_in(opaque)
-RETURNS opaque
+CREATE FUNCTION int4key_in(cstring)
+RETURNS int4key
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION int4key_out(opaque)
-RETURNS opaque
+CREATE FUNCTION int4key_out(int4key)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
@@ -29,19 +29,19 @@ output = int4key_out
 --
 --
 -- define the GiST support methods
-create function gint4_consistent(opaque,int4,int2) returns bool as 'MODULE_PATHNAME' language 'C';
+create function gint4_consistent(internal,int4,int2) returns bool as 'MODULE_PATHNAME' language 'C';
 
-create function gint4_compress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gint4_compress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
-create function btree_decompress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function btree_decompress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
-create function gint4_penalty(opaque,opaque,opaque) returns opaque as 'MODULE_PATHNAME' language 'C' with(isstrict);
+create function gint4_penalty(internal,internal,internal) returns internal as 'MODULE_PATHNAME' language 'C' with(isstrict);
 
-create function gint4_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gint4_picksplit(internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
-create function gint4_union(bytea, opaque) returns int4 as 'MODULE_PATHNAME' language 'C';
+create function gint4_union(bytea, internal) returns int4 as 'MODULE_PATHNAME' language 'C';
 
-create function gint4_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gint4_same(internal, internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
 -- Create the operator class
 CREATE OPERATOR CLASS gist_int4_ops
@@ -51,13 +51,13 @@ CREATE OPERATOR CLASS gist_int4_ops
 	OPERATOR	3	= ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
-	FUNCTION	1	gint4_consistent (opaque, int4, int2),
-	FUNCTION	2	gint4_union (bytea, opaque),
-	FUNCTION	3	gint4_compress (opaque),
-	FUNCTION	4	btree_decompress (opaque),
-	FUNCTION	5	gint4_penalty (opaque, opaque, opaque),
-	FUNCTION	6	gint4_picksplit (opaque, opaque),
-	FUNCTION	7	gint4_same (opaque, opaque, opaque),
+	FUNCTION	1	gint4_consistent (internal, int4, int2),
+	FUNCTION	2	gint4_union (bytea, internal),
+	FUNCTION	3	gint4_compress (internal),
+	FUNCTION	4	btree_decompress (internal),
+	FUNCTION	5	gint4_penalty (internal, internal, internal),
+	FUNCTION	6	gint4_picksplit (internal, internal),
+	FUNCTION	7	gint4_same (internal, internal, internal),
 	STORAGE		int4key;
 
 
@@ -70,13 +70,13 @@ CREATE OPERATOR CLASS gist_int4_ops
 --
 -- create type of timestamp key
 
-CREATE FUNCTION tskey_in(opaque)
-RETURNS opaque
+CREATE FUNCTION tskey_in(cstring)
+RETURNS tskey
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION tskey_out(opaque)
-RETURNS opaque
+CREATE FUNCTION tskey_out(tskey)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
@@ -86,17 +86,17 @@ input = tskey_in,
 output = tskey_out
 );
 
-create function gts_consistent(opaque,timestamp,int2) returns bool as 'MODULE_PATHNAME' language 'C';
+create function gts_consistent(internal,timestamp,int2) returns bool as 'MODULE_PATHNAME' language 'C';
       
-create function gts_compress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gts_compress(internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
-create function gts_penalty(opaque,opaque,opaque) returns opaque as 'MODULE_PATHNAME' language 'C' with(isstrict);
+create function gts_penalty(internal,internal,internal) returns internal as 'MODULE_PATHNAME' language 'C' with(isstrict);
    
-create function gts_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gts_picksplit(internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
       
-create function gts_union(bytea, opaque) returns int4 as 'MODULE_PATHNAME' language 'C';
+create function gts_union(bytea, internal) returns int4 as 'MODULE_PATHNAME' language 'C';
 
-create function gts_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gts_same(internal, internal, internal) returns internal as 'MODULE_PATHNAME' language 'C';
 
 -- Create the operator class
 CREATE OPERATOR CLASS gist_timestamp_ops
@@ -106,13 +106,13 @@ CREATE OPERATOR CLASS gist_timestamp_ops
 	OPERATOR	3	= ,
 	OPERATOR	4	>= ,
 	OPERATOR	5	> ,
-	FUNCTION	1	gts_consistent (opaque, timestamp, int2),
-	FUNCTION	2	gts_union (bytea, opaque),
-	FUNCTION	3	gts_compress (opaque),
-	FUNCTION	4	btree_decompress (opaque),
-	FUNCTION	5	gts_penalty (opaque, opaque, opaque),
-	FUNCTION	6	gts_picksplit (opaque, opaque),
-	FUNCTION	7	gts_same (opaque, opaque, opaque),
+	FUNCTION	1	gts_consistent (internal, timestamp, int2),
+	FUNCTION	2	gts_union (bytea, internal),
+	FUNCTION	3	gts_compress (internal),
+	FUNCTION	4	btree_decompress (internal),
+	FUNCTION	5	gts_penalty (internal, internal, internal),
+	FUNCTION	6	gts_picksplit (internal, internal),
+	FUNCTION	7	gts_same (internal, internal, internal),
 	STORAGE		tskey;
 
 

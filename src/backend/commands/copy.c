@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.165 2002/08/19 15:08:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.166 2002/08/22 00:01:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/relcache.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 #ifdef MULTIBYTE

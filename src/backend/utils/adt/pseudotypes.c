@@ -1,0 +1,234 @@
+/*-------------------------------------------------------------------------
+ *
+ * pseudotypes.c
+ *	  Functions for the system pseudo-types.
+ *
+ * A pseudo-type isn't really a type and never has any operations, but
+ * we do need to supply input and output functions to satisfy the links
+ * in the pseudo-type's entry in pg_type.  In most cases the functions
+ * just throw an error if invoked.  (XXX the error messages here cover
+ * the most common case, but might be confusing in some contexts.  Can
+ * we do better?)
+ *
+ *
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.1 2002/08/22 00:01:43 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
+#include "postgres.h"
+
+#include "utils/builtins.h"
+
+
+/*
+ * record_in		- input routine for pseudo-type RECORD.
+ */
+Datum
+record_in(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot accept a constant of type %s", "RECORD");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * record_out		- output routine for pseudo-type RECORD.
+ */
+Datum
+record_out(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot display a value of type %s", "RECORD");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+
+/*
+ * cstring_in		- input routine for pseudo-type CSTRING.
+ */
+Datum
+cstring_in(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot accept a constant of type %s", "CSTRING");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * cstring_out		- output routine for pseudo-type CSTRING.
+ */
+Datum
+cstring_out(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot display a value of type %s", "CSTRING");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+
+/*
+ * any_in		- input routine for pseudo-type ANY.
+ */
+Datum
+any_in(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot accept a constant of type %s", "ANY");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * any_out		- output routine for pseudo-type ANY.
+ */
+Datum
+any_out(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot display a value of type %s", "ANY");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+
+/*
+ * anyarray_in		- input routine for pseudo-type ANYARRAY.
+ */
+Datum
+anyarray_in(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot accept a constant of type %s", "ANYARRAY");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * anyarray_out		- output routine for pseudo-type ANYARRAY.
+ */
+Datum
+anyarray_out(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot display a value of type %s", "ANYARRAY");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+
+/*
+ * void_in		- input routine for pseudo-type VOID.
+ *
+ * We allow this so that PL functions can return VOID without any special
+ * hack in the PL handler.  Whatever value the PL thinks it's returning
+ * will just be ignored.
+ */
+Datum
+void_in(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_VOID();			/* you were expecting something different? */
+}
+
+/*
+ * void_out		- output routine for pseudo-type VOID.
+ *
+ * We allow this so that "SELECT function_returning_void(...)" works.
+ */
+Datum
+void_out(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_CSTRING(pstrdup(""));
+}
+
+
+/*
+ * trigger_in		- input routine for pseudo-type TRIGGER.
+ */
+Datum
+trigger_in(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot accept a constant of type %s", "TRIGGER");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * trigger_out		- output routine for pseudo-type TRIGGER.
+ */
+Datum
+trigger_out(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot display a value of type %s", "TRIGGER");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+
+/*
+ * language_handler_in		- input routine for pseudo-type LANGUAGE_HANDLER.
+ */
+Datum
+language_handler_in(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot accept a constant of type %s", "LANGUAGE_HANDLER");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * language_handler_out		- output routine for pseudo-type LANGUAGE_HANDLER.
+ */
+Datum
+language_handler_out(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot display a value of type %s", "LANGUAGE_HANDLER");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+
+/*
+ * internal_in		- input routine for pseudo-type INTERNAL.
+ */
+Datum
+internal_in(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot accept a constant of type %s", "INTERNAL");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * internal_out		- output routine for pseudo-type INTERNAL.
+ */
+Datum
+internal_out(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot display a value of type %s", "INTERNAL");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+
+/*
+ * opaque_in		- input routine for pseudo-type OPAQUE.
+ */
+Datum
+opaque_in(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot accept a constant of type %s", "OPAQUE");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * opaque_out		- output routine for pseudo-type OPAQUE.
+ */
+Datum
+opaque_out(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot display a value of type %s", "OPAQUE");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}

@@ -99,14 +99,6 @@ cube_in(char *str)
 	return ((NDBOX *) result);
 }
 
-/*
- * You might have noticed a slight inconsistency between the following
- * declaration and the SQL definition:
- *	   CREATE FUNCTION cube_out(opaque) RETURNS opaque ...
- * The reason is that the argument pass into cube_out is really just a
- * pointer. POSTGRES thinks all output functions are:
- *	   char *out_func(char *);
- */
 char *
 cube_out(NDBOX *cube)
 {

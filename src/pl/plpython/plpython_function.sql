@@ -92,7 +92,7 @@ return words'
 -- vigorously resisted all efforts at correction.  they have
 -- since gone bankrupt...
 
-CREATE FUNCTION users_insert() returns opaque
+CREATE FUNCTION users_insert() returns trigger
 	AS
 'if TD["new"]["fname"] == None or TD["new"]["lname"] == None:
 	return "SKIP"
@@ -108,7 +108,7 @@ return rv'
 	LANGUAGE 'plpython';
 
 
-CREATE FUNCTION users_update() returns opaque
+CREATE FUNCTION users_update() returns trigger
 	AS
 'if TD["event"] == "UPDATE":
 	if TD["old"]["fname"] != TD["new"]["fname"] and TD["old"]["fname"] == TD["args"][0]:
@@ -117,7 +117,7 @@ return None'
 	LANGUAGE 'plpython';
 
 
-CREATE FUNCTION users_delete() RETURNS opaque
+CREATE FUNCTION users_delete() RETURNS trigger
 	AS
 'if TD["old"]["fname"] == TD["args"][0]:
 	return "SKIP"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.9 2002/08/15 16:36:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.10 2002/08/22 00:01:42 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -49,7 +49,7 @@
 #include "utils/syscache.h"
 
 
-static Oid findTypeIOFunction(List *procname, bool isOutput);
+static Oid findTypeIOFunction(List *procname, Oid typeOid, bool isOutput);
 
 /*
  * DefineType
@@ -75,6 +75,7 @@ DefineType(List *names, List *parameters)
 	char	   *shadow_type;
 	List	   *pl;
 	Oid			typoid;
+	Oid			resulttype;
 
 	/* Convert list of names to a name and namespace */
 	typeNamespace = QualifiedNameGetCreationNamespace(names, &typeName);
@@ -116,7 +117,13 @@ DefineType(List *names, List *parameters)
 			delimiter = p[0];
 		}
 		else if (strcasecmp(defel->defname, "element") == 0)
+		{
 			elemType = typenameTypeId(defGetTypeName(defel));
+			/* disallow arrays of pseudotypes */
+			if (get_typtype(elemType) == 'p')
+				elog(ERROR, "Array element type cannot be %s",
+					 format_type_be(elemType));
+		}
 		else if (strcasecmp(defel->defname, "default") == 0)
 			defaultValue = defGetString(defel);
 		else if (strcasecmp(defel->defname, "passedbyvalue") == 0)
@@ -179,9 +186,36 @@ DefineType(List *names, List *parameters)
 	if (outputName == NIL)
 		elog(ERROR, "Define: \"output\" unspecified");
 
-	/* Convert I/O proc names to OIDs */
-	inputOid = findTypeIOFunction(inputName, false);
-	outputOid = findTypeIOFunction(outputName, true);
+	/*
+	 * Look to see if type already exists (presumably as a shell; if not,
+	 * TypeCreate will complain).  If it does then the declarations of the
+	 * I/O functions might use it.
+	 */
+	typoid = GetSysCacheOid(TYPENAMENSP,
+							CStringGetDatum(typeName),
+							ObjectIdGetDatum(typeNamespace),
+							0, 0);
+
+	/*
+	 * Convert I/O proc names to OIDs
+	 */
+	inputOid = findTypeIOFunction(inputName, typoid, false);
+	outputOid = findTypeIOFunction(outputName, typoid, true);
+
+	/*
+	 * Verify that I/O procs return the expected thing.  OPAQUE is an allowed
+	 * (but deprecated) alternative to the fully type-safe choices.
+	 */
+	resulttype = get_func_rettype(inputOid);
+	if (!((OidIsValid(typoid) && resulttype == typoid) ||
+		  resulttype == OPAQUEOID))
+		elog(ERROR, "Type input function %s must return %s or OPAQUE",
+			 NameListToString(inputName), typeName);
+	resulttype = get_func_rettype(outputOid);
+	if (!(resulttype == CSTRINGOID ||
+		  resulttype == OPAQUEOID))
+		elog(ERROR, "Type output function %s must return CSTRING or OPAQUE",
+			 NameListToString(outputName));
 
 	/*
 	 * now have TypeCreate do all the real work.
@@ -377,10 +411,9 @@ DefineDomain(CreateDomainStmt *stmt)
 	basetypeoid = HeapTupleGetOid(typeTup);
 
 	/*
-	 * What we really don't want is domains of domains.  This could cause all sorts
-	 * of neat issues if we allow that.
-	 *
-	 * With testing, we may determine complex types should be allowed
+	 * Base type must be a plain base type.  Domains over pseudo types would
+	 * create a security hole.  Domains of domains might be made to work in
+	 * the future, but not today.  Ditto for domains over complex types.
 	 */
 	typtype = baseType->typtype;
 	if (typtype != 'b')
@@ -621,51 +654,108 @@ RemoveDomain(List *names, DropBehavior behavior)
 
 /*
  * Find a suitable I/O function for a type.
+ *
+ * typeOid is the type's OID, if it already exists as a shell type,
+ * otherwise InvalidOid.
  */
 static Oid
-findTypeIOFunction(List *procname, bool isOutput)
+findTypeIOFunction(List *procname, Oid typeOid, bool isOutput)
 {
 	Oid			argList[FUNC_MAX_ARGS];
-	int			nargs;
 	Oid			procOid;
 
-	/*
-	 * First look for a 1-argument func with all argtypes 0. This is
-	 * valid for all kinds of procedure.
-	 */
-	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
-	procOid = LookupFuncName(procname, 1, argList);
-
-	if (!OidIsValid(procOid))
+	if (isOutput)
 	{
 		/*
-		 * Alternatively, input procedures may take 3 args (data
-		 * value, element OID, atttypmod); the pg_proc argtype
-		 * signature is 0,OIDOID,INT4OID.  Output procedures may
-		 * take 2 args (data value, element OID).
+		 * Output functions can take a single argument of the type,
+		 * or two arguments (data value, element OID).  The signature
+		 * may use OPAQUE in place of the actual type name; this is the
+		 * only possibility if the type doesn't yet exist as a shell.
 		 */
-		if (isOutput)
+		if (OidIsValid(typeOid))
 		{
-			/* output proc */
-			nargs = 2;
-			argList[1] = OIDOID;
-		}
-		else
-		{
-			/* input proc */
-			nargs = 3;
-			argList[1] = OIDOID;
-			argList[2] = INT4OID;
-		}
-		procOid = LookupFuncName(procname, nargs, argList);
+			MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
-		if (!OidIsValid(procOid))
-			func_error("TypeCreate", procname, 1, argList, NULL);
+			argList[0] = typeOid;
+
+			procOid = LookupFuncName(procname, 1, argList);
+			if (OidIsValid(procOid))
+				return procOid;
+
+			argList[1] = OIDOID;
+
+			procOid = LookupFuncName(procname, 2, argList);
+			if (OidIsValid(procOid))
+				return procOid;
+
+		}
+
+		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+		argList[0] = OPAQUEOID;
+
+		procOid = LookupFuncName(procname, 1, argList);
+		if (OidIsValid(procOid))
+			return procOid;
+
+		argList[1] = OIDOID;
+
+		procOid = LookupFuncName(procname, 2, argList);
+		if (OidIsValid(procOid))
+			return procOid;
+
+		/* Prefer type name over OPAQUE in the failure message. */
+		if (OidIsValid(typeOid))
+			argList[0] = typeOid;
+
+		func_error("TypeCreate", procname, 1, argList, NULL);
+	}
+	else
+	{
+		/*
+		 * Input functions can take a single argument of type CSTRING,
+		 * or three arguments (string, element OID, typmod).  The signature
+		 * may use OPAQUE in place of CSTRING.
+		 */
+		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+		argList[0] = CSTRINGOID;
+
+		procOid = LookupFuncName(procname, 1, argList);
+		if (OidIsValid(procOid))
+			return procOid;
+
+		argList[1] = OIDOID;
+		argList[2] = INT4OID;
+
+		procOid = LookupFuncName(procname, 3, argList);
+		if (OidIsValid(procOid))
+			return procOid;
+
+		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+		argList[0] = OPAQUEOID;
+
+		procOid = LookupFuncName(procname, 1, argList);
+		if (OidIsValid(procOid))
+			return procOid;
+
+		argList[1] = OIDOID;
+		argList[2] = INT4OID;
+
+		procOid = LookupFuncName(procname, 3, argList);
+		if (OidIsValid(procOid))
+			return procOid;
+
+		/* Use CSTRING (preferred) in the error message */
+		argList[0] = CSTRINGOID;
+
+		func_error("TypeCreate", procname, 1, argList, NULL);
 	}
 
-	return procOid;
+	return InvalidOid;			/* keep compiler quiet */
 }
+
 
 /*-------------------------------------------------------------------
  * DefineCompositeType

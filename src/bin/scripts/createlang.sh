@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.37 2002/08/10 16:57:32 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.38 2002/08/22 00:01:47 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -270,7 +270,7 @@ fi
 # Create the call handler and the language
 # ----------
 if [ "$handlerexists" = no ]; then
-	sqlcmd="CREATE FUNCTION \"$handler\" () RETURNS OPAQUE AS '$PGLIB/${object}' LANGUAGE C;"
+	sqlcmd="CREATE FUNCTION \"$handler\" () RETURNS LANGUAGE_HANDLER AS '$PGLIB/${object}' LANGUAGE C;"
 	if [ "$showsql" = yes ]; then
 		echo "$sqlcmd"
 	fi

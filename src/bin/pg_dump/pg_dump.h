@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.97 2002/08/19 19:33:35 tgl Exp $
+ * $Id: pg_dump.h,v 1.98 2002/08/22 00:01:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,7 @@ typedef struct _aggInfo
 	NamespaceInfo *aggnamespace;	/* link to containing namespace */
 	char	   *usename;
 	char	   *aggacl;
+	bool		anybasetype;	/* is the basetype "any"? */
 	char	   *fmtbasetype;	/* formatted type name */
 } AggInfo;
 

@@ -7,13 +7,13 @@ BEGIN TRANSACTION;
 SET search_path = public;
 
 -- Query type
-CREATE FUNCTION bqarr_in(opaque)
-RETURNS opaque
+CREATE FUNCTION bqarr_in(cstring)
+RETURNS query_int
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION bqarr_out(opaque)
-RETURNS opaque
+CREATE FUNCTION bqarr_out(query_int)
+RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE 'c' with (isstrict);
 
@@ -200,25 +200,25 @@ CREATE OPERATOR & (
 --------------
 
 -- define the GiST support methods
-CREATE FUNCTION g_int_consistent(opaque,_int4,int4) RETURNS bool
+CREATE FUNCTION g_int_consistent(internal,_int4,int4) RETURNS bool
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_int_compress(opaque) RETURNS opaque 
+CREATE FUNCTION g_int_compress(internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_int_decompress(opaque) RETURNS opaque 
+CREATE FUNCTION g_int_decompress(internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_int_penalty(opaque,opaque,opaque) RETURNS opaque
+CREATE FUNCTION g_int_penalty(internal,internal,internal) RETURNS internal
 	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION g_int_picksplit(opaque, opaque) RETURNS opaque
+CREATE FUNCTION g_int_picksplit(internal, internal) RETURNS internal
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_int_union(bytea, opaque) RETURNS _int4 
+CREATE FUNCTION g_int_union(bytea, internal) RETURNS _int4 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_int_same(_int4, _int4, opaque) RETURNS opaque 
+CREATE FUNCTION g_int_same(_int4, _int4, internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 
@@ -231,38 +231,38 @@ CREATE OPERATOR CLASS gist__int_ops
 	OPERATOR	7	@,
 	OPERATOR	8	~,
 	OPERATOR	20	@@ (_int4, query_int),
-	FUNCTION	1	g_int_consistent (opaque, _int4, int4),
-	FUNCTION	2	g_int_union (bytea, opaque),
-	FUNCTION	3	g_int_compress (opaque),
-	FUNCTION	4	g_int_decompress (opaque),
-	FUNCTION	5	g_int_penalty (opaque, opaque, opaque),
-	FUNCTION	6	g_int_picksplit (opaque, opaque),
-	FUNCTION	7	g_int_same (_int4, _int4, opaque);
+	FUNCTION	1	g_int_consistent (internal, _int4, int4),
+	FUNCTION	2	g_int_union (bytea, internal),
+	FUNCTION	3	g_int_compress (internal),
+	FUNCTION	4	g_int_decompress (internal),
+	FUNCTION	5	g_int_penalty (internal, internal, internal),
+	FUNCTION	6	g_int_picksplit (internal, internal),
+	FUNCTION	7	g_int_same (_int4, _int4, internal);
 
 
 ---------------------------------------------
 -- intbig
 ---------------------------------------------
 -- define the GiST support methods
-CREATE FUNCTION g_intbig_consistent(opaque,_int4,int4) RETURNS bool
+CREATE FUNCTION g_intbig_consistent(internal,_int4,int4) RETURNS bool
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_intbig_compress(opaque) RETURNS opaque 
+CREATE FUNCTION g_intbig_compress(internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_intbig_decompress(opaque) RETURNS opaque 
+CREATE FUNCTION g_intbig_decompress(internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_intbig_penalty(opaque,opaque,opaque) RETURNS opaque
+CREATE FUNCTION g_intbig_penalty(internal,internal,internal) RETURNS internal
 	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
-CREATE FUNCTION g_intbig_picksplit(opaque, opaque) RETURNS opaque
+CREATE FUNCTION g_intbig_picksplit(internal, internal) RETURNS internal
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_intbig_union(bytea, opaque) RETURNS _int4 
+CREATE FUNCTION g_intbig_union(bytea, internal) RETURNS _int4 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-CREATE FUNCTION g_intbig_same(_int4, _int4, opaque) RETURNS opaque 
+CREATE FUNCTION g_intbig_same(_int4, _int4, internal) RETURNS internal 
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 -- register the opclass for indexing (not as default)
@@ -274,12 +274,12 @@ CREATE OPERATOR CLASS gist__intbig_ops
 	OPERATOR	7	@	RECHECK,
 	OPERATOR	8	~	RECHECK,
 	OPERATOR	20	@@ (_int4, query_int)	RECHECK,
-	FUNCTION	1	g_intbig_consistent (opaque, _int4, int4),
-	FUNCTION	2	g_intbig_union (bytea, opaque),
-	FUNCTION	3	g_intbig_compress (opaque),
-	FUNCTION	4	g_intbig_decompress (opaque),
-	FUNCTION	5	g_intbig_penalty (opaque, opaque, opaque),
-	FUNCTION	6	g_intbig_picksplit (opaque, opaque),
-	FUNCTION	7	g_intbig_same (_int4, _int4, opaque);
+	FUNCTION	1	g_intbig_consistent (internal, _int4, int4),
+	FUNCTION	2	g_intbig_union (bytea, internal),
+	FUNCTION	3	g_intbig_compress (internal),
+	FUNCTION	4	g_intbig_decompress (internal),
+	FUNCTION	5	g_intbig_penalty (internal, internal, internal),
+	FUNCTION	6	g_intbig_picksplit (internal, internal),
+	FUNCTION	7	g_intbig_same (_int4, _int4, internal);
 
 END TRANSACTION;

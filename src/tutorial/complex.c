@@ -48,14 +48,6 @@ complex_in(char *str)
 	return result;
 }
 
-/*
- * You might have noticed a slight inconsistency between the following
- * declaration and the SQL definition:
- *	   CREATE FUNCTION complex_out(opaque) RETURNS opaque ...
- * The reason is that the argument pass into complex_out is really just a
- * pointer. POSTGRES thinks all output functions are:
- *	   char *out_func(char *);
- */
 char *
 complex_out(Complex * complex)
 {
@@ -64,8 +56,8 @@ complex_out(Complex * complex)
 	if (complex == NULL)
 		return NULL;
 
-	result = (char *) palloc(60);
-	sprintf(result, "(%g,%g)", complex->x, complex->y);
+	result = (char *) palloc(100);
+	snprintf(result, 100, "(%g,%g)", complex->x, complex->y);
 	return result;
 }
 

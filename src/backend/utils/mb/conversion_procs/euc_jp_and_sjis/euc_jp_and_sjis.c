@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.1 2002/07/16 09:25:05 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.2 2002/08/22 00:01:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,10 +47,10 @@ extern Datum mic_to_sjis(PG_FUNCTION_ARGS);
  * conv_proc(
  *		INTEGER,	-- source encoding id
  *		INTEGER,	-- destination encoding id
- *		OPAQUE,		-- source string (null terminated C string)
- *		OPAQUE,		-- destination string (null terminated C string)
+ *		CSTRING,	-- source string (null terminated C string)
+ *		CSTRING,	-- destination string (null terminated C string)
  *		INTEGER		-- source string length
- * ) returns INTEGER;	-- dummy. returns nothing, actually.
+ * ) returns VOID;
  * ----------
  */
 

@@ -89,7 +89,7 @@ RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 $result = $conn->exec("create sequence _rserv_sync_seq_");
 RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 
-$result = $conn->exec("CREATE FUNCTION _rserv_log_() RETURNS opaque" .
+$result = $conn->exec("CREATE FUNCTION _rserv_log_() RETURNS trigger" .
 					  " AS '@MODULE_FILENAME@' LANGUAGE 'c'");
 RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
 

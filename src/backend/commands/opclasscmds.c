@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.3 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.4 2002/08/22 00:01:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					elog(ERROR, "DefineOpClass: procedure number %d appears more than once",
 						 item->number);
 				funcOid = LookupFuncNameTypeNames(item->name, item->args,
-												  true, "DefineOpClass");
+												  "DefineOpClass");
 				/* Caller must have execute permission on functions */
 				aclresult = pg_proc_aclcheck(funcOid, GetUserId(),
 											 ACL_EXECUTE);
