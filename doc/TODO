@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Sep 27 10:15:31 EDT 2004
+Last updated:		Mon Sep 27 10:17:45 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -610,6 +610,11 @@ Cache
   We could use a fixed row count and a +/- count to follow MVCC
   visibility rules, or a single cached value could be used and
   invalidated if anyone modifies the table. [count]
+
+* Consider automatic caching of queries at various levels:
+	o Parsed query tree
+	o Query execute plan
+	o Query results
 
 
 Vacuum
