@@ -252,6 +252,13 @@ AC_SUBST(enable_rpath)
 
 
 #
+# --enable-debug adds -g to compiler flags
+#
+PGAC_ARG_BOOL(enable, debug, no,
+              [  --enable-debug          build with debugging symbols (-g)])
+
+
+#
 # C compiler
 #
 
@@ -263,9 +270,20 @@ PGAC_ARG_REQ(with, CC, [], [CC=$with_CC])
 # On AIX, default compiler to xlc.
 if test "$template" = aix && test -z "$CC" ; then CC=xlc; fi
 
+# Save CFLAGS from the environment
+has_environ_CFLAGS="${CFLAGS+yes}"
+save_CFLAGS=$CFLAGS
+
 AC_PROG_CC
 # Read the template
 . "$srcdir/src/template/$template" || exit
+
+if test "$has_environ_CFLAGS" = yes; then
+  CFLAGS=$save_CFLAGS
+fi
+if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
+  CFLAGS="$CFLAGS -g"
+fi
 echo "using CFLAGS=$CFLAGS"
 # Check if the compiler still works with the template settings
 AC_PROG_CC_WORKS
@@ -289,13 +307,6 @@ AC_DEFINE_UNQUOTED(PG_VERSION_STR, ["PostgreSQL $VERSION on $host, compiled by $
 PGAC_ARG_BOOL(enable, depend, no, [  --enable-depend         turn on automatic dependency tracking],
               [autodepend=yes])
 AC_SUBST(autodepend)
-
-
-#
-# --enable-debug adds -g to compiler flags
-#
-PGAC_ARG_BOOL(enable, debug, no, [  --enable-debug          build with debugging symbols (-g)],
-              [CFLAGS="$CFLAGS -g"])
 
 
 #
@@ -548,9 +559,9 @@ PGAC_ARG_OPTARG(with, CXX, [  --with-CXX              build C++ modules (libpq++
   # If the user has specified CXXFLAGS in the environment, leave it
   # alone, else use a default.
 
-  has_cmdline_CXXFLAGS="${CXXFLAGS+yes}"
+  has_environ_CXXFLAGS="${CXXFLAGS+yes}"
   AC_PROG_CXX
-  if test "$has_cmdline_CXXFLAGS" != yes; then
+  if test "$has_environ_CXXFLAGS" != yes; then
     if test "$GXX" = yes; then
       CXXFLAGS=-O2
     else
