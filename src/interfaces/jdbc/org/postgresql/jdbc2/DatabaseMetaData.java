@@ -179,7 +179,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getDatabaseProductVersion() throws SQLException
   {
-    return ("6.5.2");
+    return ("7.0.2");
   }
   
   /**
@@ -363,7 +363,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getIdentifierQuoteString() throws SQLException
   {
-    return null;
+    return "\"";
   }
   
   /**
@@ -1654,10 +1654,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     StringBuffer sql = new StringBuffer("select relname,oid from pg_class where (");
     boolean notFirst=false;
     for(int i=0;i<types.length;i++) {
-      if(notFirst)
-	sql.append(" or ");
       for(int j=0;j<getTableTypes.length;j++)
 	if(getTableTypes[j][0].equals(types[i])) {
+	  if(notFirst)
+	    sql.append(" or ");
 	  sql.append(getTableTypes[j][1]);
 	  notFirst=true;
 	}
@@ -1706,7 +1706,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   //
   // IMPORTANT: the query must be enclosed in ( )
   private static final String getTableTypes[][] = {
-    {"TABLE",		"(relkind='r' and relname !~ '^pg_' and relname !~ '^xinv')"},
+    {"TABLE",		"(relkind='r' and relhasrules='f' and relname !~ '^pg_' and relname !~ '^xinv')"},
+    {"VIEW",		"(relkind='r' and relhasrules='t' and relname !~ '^pg_' and relname !~ '^xinv')"},
     {"INDEX",		"(relkind='i' and relname !~ '^pg_' and relname !~ '^xinx')"},
     {"LARGE OBJECT",	"(relkind='r' and relname ~ '^xinv')"},
     {"SEQUENCE",	"(relkind='S' and relname !~ '^pg_')"},
@@ -1717,7 +1718,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   // These are the default tables, used when NULL is passed to getTables
   // The choice of these provide the same behaviour as psql's \d
   private static final String defaultTableTypes[] = {
-    "TABLE","INDEX","SEQUENCE"
+    "TABLE","VIEW","INDEX","SEQUENCE"
   };
   
   /**
