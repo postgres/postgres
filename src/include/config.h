@@ -9,7 +9,7 @@
 #define BLCKSZ	8192
 
 /* Define to enable readline/history support in psql */
-/* #undef HAVE_LIBREADLINE */
+#define HAVE_LIBREADLINE 
 
 /* These two defines are not used until HAVE_LIBREADLINE
  * are also defined
@@ -29,7 +29,7 @@
 #define HAVE_ISINF
 #define HAVE_CBRT
 #define HAVE_RINT
-#define HAVE_RUSAGE
+#define HAVE_GETRUSAGE
 
 #if defined(aix)
 #  undef HAVE_SYS_SELECT_H
@@ -107,7 +107,7 @@
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  undef HAVE_ISINF 
-#  undef HAVE_RUSAGE 
+#  undef HAVE_GETRUSAGE 
 #  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
@@ -179,7 +179,7 @@
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  undef HAVE_ISINF 
-#  undef HAVE_RUSAGE 
+#  undef HAVE_GETRUSAGE 
 #  define NO_EMPTY_STMTS
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
@@ -198,7 +198,7 @@ typedef unsigned char slock_t;
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  undef HAVE_ISINF 
-#  undef HAVE_RUSAGE 
+#  undef HAVE_GETRUSAGE 
 #  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.16 1997/01/24 23:48:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.17 1997/01/25 19:29:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
 #include <commands/vacuum.h>
 #include <storage/bufpage.h>
 #include "storage/shmem.h"
-#ifndef HAVE_RUSAGE
+#ifndef HAVE_GETRUSAGE
 # include <rusagestub.h>
 #else 
 # include <sys/time.h>
