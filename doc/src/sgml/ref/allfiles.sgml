@@ -122,5 +122,7 @@
 <!entity pgDump             system "pg_dump.sgml">
 <!entity pgDumpall          system "pg_dumpall.sgml">
 <!entity pgUpgrade          system "pg_upgrade.sgml">
+<!entity postgres           system "postgres-ref.sgml">
+<!entity postmaster         system "postmaster.sgml">
 <!entity psqlRef            system "psql-ref.sgml">
 <!entity vacuumdb           system "vacuumdb.sgml">

@@ -1,37 +1,40 @@
-<REFENTRY ID="APP-VACUUMDB">
-<REFMETA>
-<REFENTRYTITLE>
-<application>vacuumdb</application>
-</REFENTRYTITLE>
-<REFMISCINFO>Application</REFMISCINFO>
-</REFMETA>
-<REFNAMEDIV>
-<REFNAME id="vacuumdb">
-<application>vacuumdb</application>
-</REFNAME>
-<REFPURPOSE>
-Clean and analyze a <productname>Postgres</productname> database
-</REFPURPOSE>
+<refentry id="APP-VACUUMDB">
+ <refmeta>
+  <refentrytitle>
+   <application>vacuumdb</application>
+  </refentrytitle>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname id="vacuumdb">
+   <application>vacuumdb</application>
+  </refname>
+  <refpurpose>
+   Clean and analyze a <productname>Postgres</productname> database
+  </refpurpose>
  </refnamediv>
-<REFSYNOPSISDIV>
-<REFSYNOPSISDIVINFO>
-<DATE>1998-10-04</DATE>
-</REFSYNOPSISDIVINFO>
-<SYNOPSIS>
-vacuumdb [ --analyze | -z ] [ --verbose | -v ] [ <replaceable class="parameter">dbname</replaceable> ]
-vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
-    [ --table '<replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column</replaceable> [,...] ) ]' ]
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-10-04</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+vacuumdb [ --analyze | -z ] [ --verbose | -v ] [ <replaceable
+    class="parameter">dbname</replaceable> ]
+vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p
+   <replaceable class="parameter">port</replaceable> ]
+    [ --table '<replaceable class="parameter">table</replaceable> [ (
+   <replaceable class="parameter">column</replaceable> [,...] ) ]' ]
     [ <replaceable class="parameter">dbname</replaceable> ]
-</SYNOPSIS>
+  </synopsis>
 
-  <REFSECT2 ID="R2-APP-VACUUMDB-1">
-   <REFSECT2INFO>
-    <DATE>1998-10-04</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-APP-VACUUMDB-1">
+   <refsect2info>
+    <date>1998-10-04</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     <application>vacuumdb</application> accepts the following command line arguments:
     
     <variablelist>
@@ -80,10 +83,12 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replacea
      
      <varlistentry>
       <term>
-       --table <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]
+       --table <replaceable class="parameter">table</replaceable> [
+       (<replaceable class="parameter">column</replaceable> [,...]) ]
       </term>
       <term>
-       -t <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]
+       -t <replaceable class="parameter">table</replaceable> [
+       (<replaceable class="parameter">column</replaceable> [,...]) ]
       </term>
       <listitem>
        <para>
@@ -148,14 +153,14 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replacea
    </para>
   </refsect2>
 
-  <REFSECT2 ID="R2-APP-VACUUMDB-2">
-   <REFSECT2INFO>
-    <DATE>1998-10-04</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-APP-VACUUMDB-2">
+   <refsect2info>
+    <date>1998-10-04</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     <application>vacuumdb</application> executes a <command>VACUUM</command> command
     on the specified database, so has not explicit external output.
 
@@ -163,7 +168,8 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replacea
      <varlistentry>
       <term>
        ERROR:  Can't vacuum columns, only tables.  You can 'vacuum analyze' columns.
-       vacuumdb: database vacuum failed on <replaceable class="parameter">dbname</replaceable>.
+       vacuumdb: database vacuum failed on <replaceable
+	class="parameter">dbname</replaceable>.
       </term>
       <listitem>
        <para>
@@ -221,15 +227,15 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replacea
   </refsect2>
  </refsynopsisdiv>
  
- <REFSECT1 ID="R1-APP-VACUUMDB-1">
-  <REFSECT1INFO>
-   <DATE>1998-10-04</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-APP-VACUUMDB-1">
+  <refsect1info>
+   <date>1998-10-04</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
+  </title>
   
-  <PARA>
+  <para>
    <application>vacuumdb</application> is a utility for cleaning a
    <productname>Postgres</productname> database.
    <application>vacuumdb</application> will also generate internal statistics
@@ -237,27 +243,27 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replacea
   </para>
  </refsect1>
 
- <REFSECT1 ID="R1-APP-VACUUMDB-2">
-  <REFSECT1INFO>
-   <DATE>1998-10-04</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-APP-VACUUMDB-2">
+  <refsect1info>
+   <date>1998-10-04</date>
+  </refsect1info>
+  <title>
    Notes
-  </TITLE>
+  </title>
   
   <para>
-   See <xref linkend="vacuum" endterm="vacuum"> for more details.
+   See <xref endterm="vacuum" linkend="vacuum"> for more details.
   </para>
  </refsect1>
  
- <REFSECT1 ID="R1-APP-VACUUMDB-3">
-  <REFSECT1INFO>
-   <DATE>1998-10-04</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-APP-VACUUMDB-3">
+  <refsect1info>
+   <date>1998-10-04</date>
+  </refsect1info>
+  <title>
    Usage
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    To clean a database of the same name as the user:
    
    <programlisting>
@@ -280,12 +286,12 @@ vacuumdb [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replacea
    </programlisting>
   </para>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

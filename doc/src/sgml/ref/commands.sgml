@@ -87,12 +87,13 @@ functions supported by <productname>Postgres</productname>.
 -->
 
  <chapter Id="utilities">
-  <title>Utility Applications</title>
+  <title>Applications</title>
 
   <abstract>
    <para>
-    This is reference information for the 
-    <productname>Postgres</productname> support utilities.
+    This is reference information for  
+    <productname>Postgres</productname> applications
+    and support utilities.
    </para>
   </abstract>
 
@@ -106,6 +107,8 @@ functions supported by <productname>Postgres</productname>.
    &pgAdmin;
    &pgDump;
    &pgDumpall;
+   &postgres;
+   &postmaster;
    &psqlRef;
    &vacuumdb;
 
