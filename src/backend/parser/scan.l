@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.48 1999/05/03 19:09:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.49 1999/05/12 07:12:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,11 @@
 #include "parser/scansup.h"
 #include "parse.h"
 #include "utils/builtins.h"
+
+#ifdef  YY_READ_BUF_SIZE
+#undef  YY_READ_BUF_SIZE
+#endif
+#define YY_READ_BUF_SIZE	MAX_PARSE_BUFFER
 
 #ifdef  YY_READ_BUF_SIZE
 #undef  YY_READ_BUF_SIZE
@@ -157,10 +162,11 @@ operator		{op_and_self}+
 xmstop			-
 
 integer			[\-]?{digit}+
+decimal			[\-]?(({digit}*\.{digit}+)|({digit}+\.{digit}*))
+real			[\-]?((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
 /*
-real			[\-]?{digit}+\.{digit}+([Ee][-+]?{digit}+)?
-*/
 real			[\-]?(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({digit}+[Ee][-+]?{digit}+))
+*/
 
 param			\${integer}
 
@@ -339,14 +345,34 @@ other			.
 					if (*endptr != '\0' || errno == ERANGE)
 					{
 						errno = 0;
+#if 0
 						yylval.dval = strtod(((char *)yytext),&endptr);
 						if (*endptr != '\0' || errno == ERANGE)
 							elog(ERROR,"Bad integer input '%s'",yytext);
 						CheckFloat8Val(yylval.dval);
 						elog(NOTICE,"Integer input '%s' is out of range; promoted to float", yytext);
 						return FCONST;
+#endif
+						yylval.str = pstrdup((char*)yytext);
+						return SCONST;
 					}
 					return ICONST;
+				}
+{decimal}/{space}*-{number} {
+					char* endptr;
+
+					BEGIN(xm);
+					if (strlen((char *)yytext) <= 17)
+					{
+						errno = 0;
+						yylval.dval = strtod(((char *)yytext),&endptr);
+						if (*endptr != '\0' || errno == ERANGE)
+							elog(ERROR,"Bad float8 input '%s'",yytext);
+						CheckFloat8Val(yylval.dval);
+						return FCONST;
+					}
+					yylval.str = pstrdup((char*)yytext);
+					return SCONST;
 				}
 {real}/{space}*-{number} {
 					char* endptr;
@@ -367,14 +393,33 @@ other			.
 					if (*endptr != '\0' || errno == ERANGE)
 					{
 						errno = 0;
+#if 0
 						yylval.dval = strtod(((char *)yytext),&endptr);
 						if (*endptr != '\0' || errno == ERANGE)
 							elog(ERROR,"Bad integer input '%s'",yytext);
 						CheckFloat8Val(yylval.dval);
 						elog(NOTICE,"Integer input '%s' is out of range; promoted to float", yytext);
 						return FCONST;
+#endif
+						yylval.str = pstrdup((char*)yytext);
+						return SCONST;
 					}
 					return ICONST;
+				}
+{decimal}		{
+					char* endptr;
+
+					if (strlen((char *)yytext) <= 17)
+					{
+						errno = 0;
+						yylval.dval = strtod((char *)yytext,&endptr);
+						if (*endptr != '\0' || errno == ERANGE)
+							elog(ERROR,"Bad float input '%s'",yytext);
+						CheckFloat8Val(yylval.dval);
+						return FCONST;
+					}
+					yylval.str = pstrdup((char*)yytext);
+					return SCONST;
 				}
 {real}			{
 					char* endptr;
