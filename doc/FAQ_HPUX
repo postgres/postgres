@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.1
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2001/02/20 19:06:16 $
+last updated:           $Date: 2001/03/20 00:18:21 $
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
@@ -103,3 +103,10 @@ Any other error is cause for suspicion.  In particular, if you see
 failures in the datetime test on HPUX 9, you probably forgot to
 install the libm patch PHSS_4630 --- see item 1.1 above.
 
+The parallel regression test script (gmake check) is known to lock up
+when run under HP's default Bourne shell, at least in HPUX 10.20.  This
+appears to be a shell bug, not the fault of the script.  If you see that
+the tests have stopped making progress and only a shell process is
+consuming CPU, kill the shell and start over with
+	gmake SHELL=/bin/ksh check
+to use ksh instead.
